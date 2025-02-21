@@ -54,13 +54,7 @@ struct _ged_obj_material {
     fastf_t a;
 };
 
-struct _ged_bot_dump_client_data {
-    struct ged *gedp;
-    FILE *fp;
-    int fd;
-    char *file_ext;
-
-    int using_dbot_dump;
+struct bot_dump_obj {
     struct bu_list HeadObjMaterials;
     struct bu_vls obj_materials_file;
     FILE *obj_materials_fp;
@@ -69,6 +63,25 @@ struct _ged_bot_dump_client_data {
     int curr_obj_green;
     int curr_obj_blue;
     fastf_t curr_obj_alpha;
+};
+
+struct bot_dump_sat {
+    int curr_body_id;
+    int curr_lump_id;
+    int curr_shell_id;
+    int curr_face_id;
+    int curr_loop_id;
+    int curr_edge_id;
+    int curr_line_num;
+};
+
+struct _ged_bot_dump_client_data {
+    struct ged *gedp;
+    FILE *fp;
+    int fd;
+    char *file_ext;
+
+    int using_dbot_dump;
 
     enum otype output_type;
     int binary;
@@ -78,15 +91,25 @@ struct _ged_bot_dump_client_data {
     char *output_directory;	/* directory name to hold output files */
     unsigned int total_faces;
     int v_offset;
-    int curr_line_num;
 
-    int curr_body_id;
-    int curr_lump_id;
-    int curr_shell_id;
-    int curr_face_id;
-    int curr_loop_id;
-    int curr_edge_id;
+    // Format specific info
+    struct bot_dump_obj obj;
+    struct bot_dump_sat sat;
 };
+
+#define V3ARGS_SCALE(_a) (_a)[X]*d->cfactor, (_a)[Y]*d->cfactor, (_a)[Z]*d->cfactor
+
+extern void dxf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name);
+
+extern void obj_free_materials(struct bot_dump_obj *o);
+extern void obj_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name);
+extern void obj_write_data(struct _ged_bot_dump_client_data *d, struct ged *gedp, FILE *fp);
+
+extern void sat_write_header(FILE *fp);
+extern void sat_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name);
+
+extern void stl_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name);
+extern void stl_write_bot_binary(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, int fd, char *name);
 
 __END_DECLS
 

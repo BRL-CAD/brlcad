@@ -54,7 +54,6 @@
 #include "../../ged_private.h"
 #include "./ged_bot_dump.h"
 
-#define V3ARGS_SCALE(_a) (_a)[X]*d->cfactor, (_a)[Y]*d->cfactor, (_a)[Z]*d->cfactor
 
 static char usage[] = "[-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]";
 
@@ -68,483 +67,6 @@ lswap(unsigned int *v)
     r =*v;
     *v = ((r & 0xff) << 24) | ((r & 0xff00) << 8) | ((r & 0xff0000) >> 8)
 	| ((r & 0xff000000) >> 24);
-}
-
-
-static struct _ged_obj_material *
-obj_get_material(struct _ged_bot_dump_client_data *d, int red, int green, int blue, fastf_t transparency)
-{
-    struct _ged_obj_material *gomp;
-
-    for (BU_LIST_FOR(gomp, _ged_obj_material, &d->HeadObjMaterials)) {
-	if (gomp->r == red &&
-	    gomp->g == green &&
-	    gomp->b == blue &&
-	    ZERO(gomp->a - transparency)) {
-	    return gomp;
-	}
-    }
-
-    BU_GET(gomp, struct _ged_obj_material);
-    BU_LIST_APPEND(&d->HeadObjMaterials, &gomp->l);
-    gomp->r = red;
-    gomp->g = green;
-    gomp->b = blue;
-    gomp->a = transparency;
-    bu_vls_init(&gomp->name);
-    bu_vls_printf(&gomp->name, "matl_%d", ++d->num_obj_materials);
-
-    /* Write out newmtl to mtl file */
-    fprintf(d->obj_materials_fp, "newmtl %s\n", bu_vls_addr(&gomp->name));
-    fprintf(d->obj_materials_fp, "Kd %f %f %f\n",
-	    (fastf_t)gomp->r / 255.0,
-	    (fastf_t)gomp->g / 255.0,
-	    (fastf_t)gomp->b / 255.0);
-    fprintf(d->obj_materials_fp, "d %f\n", gomp->a);
-    fprintf(d->obj_materials_fp, "illum 1\n");
-
-    return gomp;
-}
-
-
-static void
-obj_free_materials(struct _ged_bot_dump_client_data *d) {
-    struct _ged_obj_material *gomp;
-
-    while (BU_LIST_WHILE(gomp, _ged_obj_material, &d->HeadObjMaterials)) {
-	BU_LIST_DEQUEUE(&gomp->l);
-	bu_vls_free(&gomp->name);
-	BU_PUT(gomp, struct _ged_obj_material);
-    }
-}
-
-
-static void
-sat_write_header(FILE *fp)
-{
-    time_t now;
-
-    /* SAT header consists of three lines:
-     *
-     * 1: SAT_version num_records num_objects history_boolean
-     * 2: strlen product_id_str strlen version_str strlen date_str
-     * 3: cnv_to_mm resabs_value resnor_value
-     *
-     * When num_records is zero, it looks for an end marker.
-     */
-    fprintf(fp, "400 0 1 0\n");
-
-    time(&now);
-    fprintf(fp, "%ld BRL-CAD(%s)-bot_dump 16 ACIS 8.0 Unknown %ld %s",
-	    (long)strlen(brlcad_version())+18, brlcad_version(), (long)strlen(ctime(&now)) - 1, ctime(&now));
-
-    /* FIXME: this includes abs tolerance info, should probably output ours */
-    fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
-}
-
-
-static void
-sat_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
-{
-    int i, j;
-    fastf_t *vertices;
-    int *faces;
-    int first_vertex;
-    int first_coedge;
-    int first_face;
-    int num_vertices = bot->num_vertices;
-    int num_faces = bot->num_faces;
-
-    vertices = bot->vertices;
-    faces = bot->faces;
-
-    d->curr_body_id = d->curr_line_num;
-    d->curr_lump_id = d->curr_body_id + 1;
-    d->curr_shell_id = d->curr_lump_id + 1;
-    d->curr_face_id = d->curr_shell_id + 1 + num_vertices*2 + num_faces*6;
-
-    fprintf(fp, "-%d body $-1 $%d $-1 $-1 #\n", d->curr_body_id, d->curr_lump_id);
-    fprintf(fp, "-%d lump $-1 $-1 $%d $%d #\n", d->curr_lump_id, d->curr_shell_id, d->curr_body_id);
-    fprintf(fp, "-%d shell $-1 $-1 $-1 $%d $-1 $%d #\n", d->curr_shell_id, d->curr_face_id, d->curr_lump_id);
-
-    d->curr_line_num += 3;
-
-    /* Dump out vertices */
-    first_vertex = d->curr_line_num;
-    for (i = 0; i < num_vertices; i++) {
-	d->curr_edge_id = -1;
-	for (j = 0; j < num_faces; j++) {
-	    if (faces[3*j]+first_vertex == d->curr_line_num) {
-		d->curr_edge_id = first_vertex + num_vertices*2 + num_faces*3 + j*3;
-		break;
-	    } else if (faces[3*j+1]+first_vertex == d->curr_line_num) {
-		d->curr_edge_id = first_vertex + num_vertices*2 + num_faces*3 + j*3 + 1;
-		break;
-	    } else if (faces[3*j+2]+first_vertex == d->curr_line_num) {
-		d->curr_edge_id = first_vertex + num_vertices*2 + num_faces*3 + j*3 + 2;
-		break;
-	    }
-	}
-
-	fprintf(fp, "-%d vertex $-1 $%d $%d #\n", d->curr_line_num, d->curr_edge_id, d->curr_line_num+num_vertices);
-	++d->curr_line_num;
-    }
-
-    /* Dump out points */
-    for (i = 0; i < num_vertices; i++) {
-	fprintf(fp, "-%d point $-1 %f %f %f #\n", d->curr_line_num, V3ARGS_SCALE(&vertices[3*i]));
-	++d->curr_line_num;
-    }
-
-    /* Dump out coedges */
-    first_coedge = d->curr_line_num;
-    d->curr_loop_id = first_coedge+num_faces*7;
-    for (i = 0; i < num_faces; i++) {
-	fprintf(fp, "-%d coedge $-1 $%d $%d $%d $%d forward $%d $-1 #\n",
-		d->curr_line_num, d->curr_line_num+1, d->curr_line_num+2, d->curr_line_num,
-		d->curr_line_num+num_faces*3, d->curr_loop_id);
-	++d->curr_line_num;
-	fprintf(fp, "-%d coedge $-1 $%d $%d $%d $%d forward $%d $-1 #\n",
-		d->curr_line_num, d->curr_line_num+1, d->curr_line_num-1, d->curr_line_num,
-		d->curr_line_num+num_faces*3, d->curr_loop_id);
-	++d->curr_line_num;
-	fprintf(fp, "-%d coedge $-1 $%d $%d $%d $%d forward $%d $-1 #\n",
-		d->curr_line_num, d->curr_line_num-2, d->curr_line_num-1, d->curr_line_num,
-		d->curr_line_num+num_faces*3,  d->curr_loop_id);
-	++d->curr_line_num;
-	++d->curr_loop_id;
-    }
-
-    /* Dump out edges */
-    for (i = 0; i < num_faces; i++) {
-	fprintf(fp, "-%d edge $-1 $%d $%d $%d $%d forward #\n", d->curr_line_num,
-		faces[3*i]+first_vertex, faces[3*i+1]+first_vertex,
-		first_coedge + i*3, d->curr_line_num + num_faces*5);
-	++d->curr_line_num;
-	fprintf(fp, "-%d edge $-1 $%d $%d $%d $%d forward #\n", d->curr_line_num,
-		faces[3*i+1]+first_vertex, faces[3*i+2]+first_vertex,
-		first_coedge + i*3 + 1, d->curr_line_num + num_faces*5);
-	++d->curr_line_num;
-	fprintf(fp, "-%d edge $-1 $%d $%d $%d $%d forward #\n", d->curr_line_num,
-		faces[3*i+2]+first_vertex, faces[3*i]+first_vertex,
-		first_coedge + i*3 + 2, d->curr_line_num + num_faces*5);
-	++d->curr_line_num;
-    }
-
-    /* Dump out faces */
-    first_face = d->curr_line_num;
-    for (i = 0; i < num_faces-1; i++) {
-	fprintf(fp, "-%d face $-1 $%d $%d $%d $-1 $%d forward single #\n",
-		d->curr_line_num, d->curr_line_num+1, d->curr_line_num+num_faces,
-		d->curr_shell_id, d->curr_line_num + num_faces*5);
-	++d->curr_line_num;
-    }
-    fprintf(fp, "-%d face $-1 $-1 $%d $%d $-1 $%d forward single #\n",
-	    d->curr_line_num, d->curr_line_num+num_faces, d->curr_shell_id,
-	    d->curr_line_num + num_faces*5);
-    ++d->curr_line_num;
-
-    /* Dump out loops */
-    for (i = 0; i < num_faces; i++) {
-	fprintf(fp, "-%d loop $-1 $-1 $%d $%d #\n",
-		d->curr_line_num, first_coedge+i*3, first_face+i);
-	++d->curr_line_num;
-    }
-
-    /* Dump out straight-curves for each edge */
-    for (i = 0; i < num_faces; i++) {
-	point_t A;
-	point_t B;
-	point_t C;
-	vect_t BmA;
-	vect_t CmB;
-	vect_t AmC;
-	int vi;
-
-	vi = 3*faces[3*i];
-	VSET(A, vertices[vi], vertices[vi+1], vertices[vi+2]);
-	vi = 3*faces[3*i+1];
-	VSET(B, vertices[vi], vertices[vi+1], vertices[vi+2]);
-	vi = 3*faces[3*i+2];
-	VSET(C, vertices[vi], vertices[vi+1], vertices[vi+2]);
-	VSUB2(BmA, B, A);
-	VSUB2(CmB, C, B);
-	VSUB2(AmC, A, C);
-	VUNITIZE(BmA);
-	VUNITIZE(CmB);
-	VUNITIZE(AmC);
-
-	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", d->curr_line_num, V3ARGS_SCALE(A), V3ARGS(BmA));
-	++d->curr_line_num;
-	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", d->curr_line_num, V3ARGS_SCALE(B), V3ARGS(CmB));
-	++d->curr_line_num;
-	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", d->curr_line_num, V3ARGS_SCALE(C), V3ARGS(AmC));
-	++d->curr_line_num;
-    }
-
-    /* Dump out plane-surfaces for each face */
-    for (i = 0; i < num_faces; i++) {
-	point_t A;
-	point_t B;
-	point_t C;
-	point_t center;
-	vect_t BmA;
-	vect_t CmA;
-	vect_t norm;
-	int vi;
-	fastf_t sf = 1.0/3.0;
-
-	vi = 3*faces[3*i];
-	VSET(A, vertices[vi], vertices[vi+1], vertices[vi+2]);
-	vi = 3*faces[3*i+1];
-	VSET(B, vertices[vi], vertices[vi+1], vertices[vi+2]);
-	vi = 3*faces[3*i+2];
-	VSET(C, vertices[vi], vertices[vi+1], vertices[vi+2]);
-
-	VADD3(center, A, B, C);
-	VSCALE(center, center, sf);
-
-	VSUB2(BmA, B, A);
-	VSUB2(CmA, C, A);
-	if (bot->orientation != RT_BOT_CW) {
-	    VCROSS(norm, BmA, CmA);
-	} else {
-	    VCROSS(norm, CmA, BmA);
-	}
-	VUNITIZE(norm);
-
-	VUNITIZE(BmA);
-
-	fprintf(fp, "-%d plane-surface $-1 %f %f %f %f %f %f %f %f %f forward_v I I I I #\n",
-		d->curr_line_num, V3ARGS_SCALE(A), V3ARGS(norm), V3ARGS(BmA));
-
-	++d->curr_line_num;
-    }
-}
-
-
-static void
-dxf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name)
-{
-    fastf_t *vertices;
-    int num_faces, *faces;
-    point_t A;
-    point_t B;
-    point_t C;
-    int i, vi;
-
-    vertices = bot->vertices;
-    num_faces = bot->num_faces;
-    faces = bot->faces;
-
-    for (i = 0; i < num_faces; i++) {
-	vi = 3*faces[3*i];
-	VSET(A, vertices[vi], vertices[vi+1], vertices[vi+2]);
-	vi = 3*faces[3*i+1];
-	VSET(B, vertices[vi], vertices[vi+1], vertices[vi+2]);
-	vi = 3*faces[3*i+2];
-	VSET(C, vertices[vi], vertices[vi+1], vertices[vi+2]);
-
-	VSCALE(A, A, d->cfactor);
-	VSCALE(B, B, d->cfactor);
-	VSCALE(C, C, d->cfactor);
-
-	fprintf(fp, "0\n3DFACE\n8\n%s\n62\n7\n", name);
-	fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
-		10, A[X], 20, A[Y], 30, A[Z]);
-	fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
-		11, B[X], 21, B[Y], 31, B[Z]);
-	fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
-		12, C[X], 22, C[Y], 32, C[Z]);
-	fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
-		12, C[X], 22, C[Y], 32, C[Z]);
-    }
-
-}
-
-
-static void
-obj_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name)
-{
-    int num_vertices;
-    fastf_t *vertices;
-    int num_faces, *faces;
-    point_t A;
-    point_t B;
-    point_t C;
-    vect_t BmA;
-    vect_t CmA;
-    vect_t norm;
-    int i, vi;
-    struct _ged_obj_material *gomp;
-
-    if (d->using_dbot_dump) {
-	gomp = obj_get_material(d, d->curr_obj_red,
-				    d->curr_obj_green,
-				    d->curr_obj_blue,
-				    d->curr_obj_alpha);
-	fprintf(fp, "usemtl %s\n", bu_vls_addr(&gomp->name));
-    }
-
-    num_vertices = bot->num_vertices;
-    vertices = bot->vertices;
-    num_faces = bot->num_faces;
-    faces = bot->faces;
-
-    fprintf(fp, "g %s\n", name);
-
-    for (i = 0; i < num_vertices; i++) {
-	fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(&vertices[3*i]));
-    }
-
-    if (d->normals) {
-	for (i = 0; i < num_faces; i++) {
-	    vi = 3*faces[3*i];
-	    VSET(A, vertices[vi], vertices[vi+1], vertices[vi+2]);
-	    vi = 3*faces[3*i+1];
-	    VSET(B, vertices[vi], vertices[vi+1], vertices[vi+2]);
-	    vi = 3*faces[3*i+2];
-	    VSET(C, vertices[vi], vertices[vi+1], vertices[vi+2]);
-
-	    VSUB2(BmA, B, A);
-	    VSUB2(CmA, C, A);
-	    if (bot->orientation != RT_BOT_CW) {
-		VCROSS(norm, BmA, CmA);
-	    } else {
-		VCROSS(norm, CmA, BmA);
-	    }
-	    VUNITIZE(norm);
-
-	    fprintf(fp, "vn %f %f %f\n", V3ARGS(norm));
-	}
-    }
-
-    if (d->normals) {
-	for (i = 0; i < num_faces; i++) {
-	    fprintf(fp, "f %d//%d %d//%d %d//%d\n", faces[3*i]+d->v_offset, i+1, faces[3*i+1]+d->v_offset, i+1, faces[3*i+2]+d->v_offset, i+1);
-	}
-    } else {
-	for (i = 0; i < num_faces; i++) {
-	    fprintf(fp, "f %d %d %d\n", faces[3*i]+d->v_offset, faces[3*i+1]+d->v_offset, faces[3*i+2]+d->v_offset);
-	}
-    }
-
-    d->v_offset += num_vertices;
-}
-
-
-static void
-stl_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name)
-{
-    fastf_t *vertices;
-    int num_faces, *faces;
-    point_t A;
-    point_t B;
-    point_t C;
-    vect_t BmA;
-    vect_t CmA;
-    vect_t norm;
-    int i, vi;
-
-    vertices = bot->vertices;
-    num_faces = bot->num_faces;
-    faces = bot->faces;
-
-    fprintf(fp, "solid %s\n", name);
-    for (i = 0; i < num_faces; i++) {
-	vi = 3*faces[3*i];
-	VSET(A, vertices[vi], vertices[vi+1], vertices[vi+2]);
-	vi = 3*faces[3*i+1];
-	VSET(B, vertices[vi], vertices[vi+1], vertices[vi+2]);
-	vi = 3*faces[3*i+2];
-	VSET(C, vertices[vi], vertices[vi+1], vertices[vi+2]);
-
-	VSUB2(BmA, B, A);
-	VSUB2(CmA, C, A);
-	if (bot->orientation != RT_BOT_CW) {
-	    VCROSS(norm, BmA, CmA);
-	} else {
-	    VCROSS(norm, CmA, BmA);
-	}
-	VUNITIZE(norm);
-
-	fprintf(fp, "  facet normal %f %f %f\n", V3ARGS(norm));
-	fprintf(fp, "    outer loop\n");
-	fprintf(fp, "      vertex %f %f %f\n", V3ARGS_SCALE(A));
-	fprintf(fp, "      vertex %f %f %f\n", V3ARGS_SCALE(B));
-	fprintf(fp, "      vertex %f %f %f\n", V3ARGS_SCALE(C));
-	fprintf(fp, "    endloop\n");
-	fprintf(fp, "  endfacet\n");
-    }
-    fprintf(fp, "endsolid %s\n", name);
-}
-
-
-static void
-stl_write_bot_binary(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, int fd, char *UNUSED(name))
-{
-    fastf_t *vertices;
-    size_t num_faces;
-    int *faces;
-    point_t A;
-    point_t B;
-    point_t C;
-    vect_t BmA;
-    vect_t CmA;
-    vect_t norm;
-    unsigned long i, j, vi;
-
-    vertices = bot->vertices;
-    num_faces = bot->num_faces;
-    faces = bot->faces;
-
-    /* Write out the vertex data for each triangle */
-    for (i = 0; (size_t)i < num_faces; i++) {
-	float flts[12];
-	float *flt_ptr;
-	unsigned char vert_buffer[50];
-	int ret;
-
-	vi = 3*faces[3*i];
-	VSET(A, vertices[vi], vertices[vi+1], vertices[vi+2]);
-	vi = 3*faces[3*i+1];
-	VSET(B, vertices[vi], vertices[vi+1], vertices[vi+2]);
-	vi = 3*faces[3*i+2];
-	VSET(C, vertices[vi], vertices[vi+1], vertices[vi+2]);
-
-	VSUB2(BmA, B, A);
-	VSUB2(CmA, C, A);
-	if (bot->orientation != RT_BOT_CW) {
-	    VCROSS(norm, BmA, CmA);
-	} else {
-	    VCROSS(norm, CmA, BmA);
-	}
-	VUNITIZE(norm);
-
-	VSCALE(A, A, d->cfactor);
-	VSCALE(B, B, d->cfactor);
-	VSCALE(C, C, d->cfactor);
-
-	memset(vert_buffer, 0, sizeof(vert_buffer));
-
-	flt_ptr = flts;
-	VMOVE(flt_ptr, norm);
-	flt_ptr += 3;
-	VMOVE(flt_ptr, A);
-	flt_ptr += 3;
-	VMOVE(flt_ptr, B);
-	flt_ptr += 3;
-	VMOVE(flt_ptr, C);
-
-	bu_cv_htonf(vert_buffer, (const unsigned char *)flts, 12);
-	for (j = 0; j < 12; j++) {
-	    lswap((unsigned int *)&vert_buffer[j*4]);
-	}
-	ret = write(fd, vert_buffer, 50);
-	if (ret < 0) {
-	    perror("write");
-	}
-    }
 }
 
 
@@ -624,15 +146,23 @@ _ged_bot_dump(struct _ged_bot_dump_client_data *d, struct directory *dp, const s
 		    fp = fopen(bu_vls_addr(&file_name), "wb+");
 		    if (fp == NULL) {
 			perror(bu_vls_addr(&file_name));
-			bu_log("Cannot open ASCII output file (%s) for writing\n", bu_vls_addr(&file_name));
+			bu_log("Cannot open STL ASCII output file (%s) for writing\n", bu_vls_addr(&file_name));
 			bu_vls_free(&file_name);
 			return;
 		    }
+		    stl_write_bot(d, bot, fp, dp->d_namep);
 		    fclose(fp);
 		}
 		break;
 
 	    case OTYPE_DXF:
+		fp = fopen(bu_vls_addr(&file_name), "wb+");
+		if (fp == NULL) {
+		    perror(bu_vls_addr(&file_name));
+		    bu_log("Cannot open DXF output file (%s) for writing\n", bu_vls_addr(&file_name));
+		    bu_vls_free(&file_name);
+		    return;
+		}
 		fprintf(fp,
 			"0\nSECTION\n2\nHEADER\n999\n%s (BOT from %s)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
 			dp->d_namep, db_g_name);
@@ -641,8 +171,15 @@ _ged_bot_dump(struct _ged_bot_dump_client_data *d, struct directory *dp, const s
 		fclose(fp);
 		break;
 	    case OTYPE_OBJ:
+		fp = fopen(bu_vls_addr(&file_name), "wb+");
+		if (fp == NULL) {
+		    perror(bu_vls_addr(&file_name));
+		    bu_log("Cannot open OBJ output file (%s) for writing\n", bu_vls_addr(&file_name));
+		    bu_vls_free(&file_name);
+		    return;
+		}
 		d->v_offset = 1;
-		fprintf(fp, "mtllib %s\n", bu_vls_addr(&d->obj_materials_file));
+		fprintf(fp, "mtllib %s\n", bu_vls_addr(&d->obj.obj_materials_file));
 		if (!pathp) {
 		    obj_write_bot(d, bot, fp, dp->d_namep);
 		} else {
@@ -653,7 +190,15 @@ _ged_bot_dump(struct _ged_bot_dump_client_data *d, struct directory *dp, const s
 		fclose(fp);
 		break;
 	    case OTYPE_SAT:
-		d->curr_line_num = 0;
+		fp = fopen(bu_vls_addr(&file_name), "wb+");
+		if (fp == NULL) {
+		    perror(bu_vls_addr(&file_name));
+		    bu_log("Cannot open SAT output file (%s) for writing\n", bu_vls_addr(&file_name));
+		    bu_vls_free(&file_name);
+		    return;
+		}
+
+		d->sat.curr_line_num = 0;
 
 		sat_write_header(fp);
 
@@ -777,8 +322,9 @@ bot_dump_get_args(struct _ged_bot_dump_client_data *d, struct ged *gedp, int arg
     d->output_directory = NULL;
     d->total_faces = 0;
     d->v_offset = 1;
-    d->curr_line_num = 0;
     bu_optind = 1;
+
+    d->sat.curr_line_num = 0;
 
     /* Get command line options. */
     while ((c = bu_getopt(argc, (char * const *)argv, "bno:m:t:u:")) != -1) {
@@ -1102,211 +648,6 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-static void
-write_data_arrows(struct _ged_bot_dump_client_data *d, struct bv_data_arrow_state *gdasp, FILE *fp, int sflag)
-{
-    register int i;
-
-    if (gdasp->gdas_draw) {
-	struct _ged_obj_material *gomp;
-
-	gomp = obj_get_material(d, gdasp->gdas_color[0],
-				    gdasp->gdas_color[1],
-				    gdasp->gdas_color[2],
-				    1);
-	fprintf(fp, "usemtl %s\n", bu_vls_addr(&gomp->name));
-
-	if (sflag)
-	    fprintf(fp, "g sdata_arrows\n");
-	else
-	    fprintf(fp, "g data_arrows\n");
-
-	for (i = 0; i < gdasp->gdas_num_points; i += 2) {
-	    point_t A, B;
-	    point_t BmA;
-	    point_t offset;
-	    point_t perp1, perp2;
-	    point_t a_base;
-	    point_t a_pt1, a_pt2, a_pt3, a_pt4;
-
-	    VMOVE(A, gdasp->gdas_points[i]);
-	    VMOVE(B, gdasp->gdas_points[i+1]);
-
-	    VSUB2(BmA, B, A);
-
-	    VUNITIZE(BmA);
-	    VSCALE(offset, BmA, -gdasp->gdas_tip_length);
-
-	    bn_vec_perp(perp1, BmA);
-	    VUNITIZE(perp1);
-
-	    VCROSS(perp2, BmA, perp1);
-	    VUNITIZE(perp2);
-
-	    VSCALE(perp1, perp1, gdasp->gdas_tip_width);
-	    VSCALE(perp2, perp2, gdasp->gdas_tip_width);
-
-	    VADD2(a_base, B, offset);
-	    VADD2(a_pt1, a_base, perp1);
-	    VADD2(a_pt2, a_base, perp2);
-	    VSUB2(a_pt3, a_base, perp1);
-	    VSUB2(a_pt4, a_base, perp2);
-
-	    fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(A));
-	    fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(B));
-	    fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(a_pt1));
-	    fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(a_pt2));
-	    fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(a_pt3));
-	    fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(a_pt4));
-	}
-
-	for (i = 0; i < gdasp->gdas_num_points; i += 2) {
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset, (i/2*6)+d->v_offset+1);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+1, (i/2*6)+d->v_offset+2);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+1, (i/2*6)+d->v_offset+3);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+1, (i/2*6)+d->v_offset+4);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+1, (i/2*6)+d->v_offset+5);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+2, (i/2*6)+d->v_offset+3);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+3, (i/2*6)+d->v_offset+4);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+4, (i/2*6)+d->v_offset+5);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+5, (i/2*6)+d->v_offset+2);
-	}
-
-	d->v_offset += ((gdasp->gdas_num_points/2)*6);
-    }
-}
-
-
-static void
-write_data_axes(struct _ged_bot_dump_client_data *d, struct bv_data_axes_state *bndasp, FILE *fp, int sflag)
-{
-    register int i;
-
-    if (bndasp->draw) {
-	fastf_t halfAxesSize;
-	struct _ged_obj_material *gomp;
-
-	halfAxesSize = bndasp->size * 0.5;
-
-	gomp = obj_get_material(d, bndasp->color[0],
-				    bndasp->color[1],
-				    bndasp->color[2],
-				    1);
-	fprintf(fp, "usemtl %s\n", bu_vls_addr(&gomp->name));
-
-	if (sflag)
-	    fprintf(fp, "g sdata_axes\n");
-	else
-	    fprintf(fp, "g data_axes\n");
-
-	for (i = 0; i < bndasp->num_points; ++i) {
-	    point_t A, B;
-
-	    /* draw X axis with x/y offsets */
-	    VSET(A,
-		 bndasp->points[i][X] - halfAxesSize,
-		 bndasp->points[i][Y],
-		 bndasp->points[i][Z]);
-	    VSET(B,
-		 bndasp->points[i][X] + halfAxesSize,
-		 bndasp->points[i][Y],
-		 bndasp->points[i][Z]);
-
-	    fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(A));
-	    fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(B));
-
-	    /* draw Y axis with x/y offsets */
-	    VSET(A,
-		 bndasp->points[i][X],
-		 bndasp->points[i][Y] - halfAxesSize,
-		 bndasp->points[i][Z]);
-	    VSET(B,
-		 bndasp->points[i][X],
-		 bndasp->points[i][Y] + halfAxesSize,
-		 bndasp->points[i][Z]);
-
-	    fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(A));
-	    fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(B));
-
-	    /* draw Z axis with x/y offsets */
-	    VSET(A,
-		 bndasp->points[i][X],
-		 bndasp->points[i][Y],
-		 bndasp->points[i][Z] - halfAxesSize);
-	    VSET(B,
-		 bndasp->points[i][X],
-		 bndasp->points[i][Y],
-		 bndasp->points[i][Z] + halfAxesSize);
-
-	    fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(A));
-	    fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(B));
-	}
-
-	for (i = 0; i < bndasp->num_points; ++i) {
-	    fprintf(fp, "l %d %d\n", (i*6)+d->v_offset, (i*6)+d->v_offset+1);
-	    fprintf(fp, "l %d %d\n", (i*6)+d->v_offset+2, (i*6)+d->v_offset+3);
-	    fprintf(fp, "l %d %d\n", (i*6)+d->v_offset+4, (i*6)+d->v_offset+5);
-	}
-
-
-	d->v_offset += (bndasp->num_points*6);
-    }
-}
-
-
-static void
-write_data_lines(struct _ged_bot_dump_client_data *d, struct bv_data_line_state *gdlsp, FILE *fp, int sflag)
-{
-    register int i;
-
-    if (gdlsp->gdls_draw) {
-	struct _ged_obj_material *gomp;
-
-	gomp = obj_get_material(d, gdlsp->gdls_color[0],
-				    gdlsp->gdls_color[1],
-				    gdlsp->gdls_color[2],
-				    1);
-	fprintf(fp, "usemtl %s\n", bu_vls_addr(&gomp->name));
-
-	if (sflag)
-	    fprintf(fp, "g sdata_lines\n");
-	else
-	    fprintf(fp, "g data_lines\n");
-
-	for (i = 0; i < gdlsp->gdls_num_points; i += 2) {
-	    point_t A, B;
-
-	    VMOVE(A, gdlsp->gdls_points[i]);
-	    VMOVE(B, gdlsp->gdls_points[i+1]);
-
-	    fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(A));
-	    fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(B));
-	}
-
-	for (i = 0; i < gdlsp->gdls_num_points; i += 2) {
-	    fprintf(fp, "l %d %d\n", i+d->v_offset, i+d->v_offset+1);
-	}
-
-	d->v_offset += gdlsp->gdls_num_points;
-    }
-}
-
-
-static void
-obj_write_data(struct _ged_bot_dump_client_data *d, struct ged *gedp, FILE *fp)
-{
-    write_data_arrows(d, &gedp->ged_gvp->gv_tcl.gv_data_arrows, fp, 0);
-    write_data_arrows(d, &gedp->ged_gvp->gv_tcl.gv_sdata_arrows, fp, 1);
-
-    write_data_axes(d, &gedp->ged_gvp->gv_tcl.gv_data_axes, fp, 0);
-    write_data_axes(d, &gedp->ged_gvp->gv_tcl.gv_sdata_axes, fp, 1);
-
-    write_data_lines(d, &gedp->ged_gvp->gv_tcl.gv_data_lines, fp, 0);
-    write_data_lines(d, &gedp->ged_gvp->gv_tcl.gv_sdata_lines, fp, 1);
-}
-
-
 static int
 data_dump(struct _ged_bot_dump_client_data *d, struct ged *gedp, FILE *fp)
 {
@@ -1402,10 +743,10 @@ dl_botdump(struct _ged_bot_dump_client_data *d)
 
 		/* Write out object color */
 		if (d->output_type == OTYPE_OBJ) {
-		    d->curr_obj_red = sp->s_color[0];
-		    d->curr_obj_green = sp->s_color[1];
-		    d->curr_obj_blue = sp->s_color[2];
-		    d->curr_obj_alpha = sp->s_os->transparency;
+		    d->obj.curr_obj_red = sp->s_color[0];
+		    d->obj.curr_obj_green = sp->s_color[1];
+		    d->obj.curr_obj_blue = sp->s_color[2];
+		    d->obj.curr_obj_alpha = sp->s_os->transparency;
 		}
 
 		bot = (struct rt_bot_internal *)intern.idb_ptr;
@@ -1534,31 +875,31 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 
 		    char *cp;
 
-		    bu_vls_trunc(&d->obj_materials_file, 0);
+		    bu_vls_trunc(&d->obj.obj_materials_file, 0);
 
 		    cp = strrchr(d->output_file, '.');
 		    if (!cp)
-			bu_vls_printf(&d->obj_materials_file, "%s.mtl", d->output_file);
+			bu_vls_printf(&d->obj.obj_materials_file, "%s.mtl", d->output_file);
 		    else {
 			/* ignore everything after the last '.' */
 			*cp = '\0';
-			bu_vls_printf(&d->obj_materials_file, "%s.mtl", d->output_file);
+			bu_vls_printf(&d->obj.obj_materials_file, "%s.mtl", d->output_file);
 			*cp = '.';
 		    }
 
-		    BU_LIST_INIT(&d->HeadObjMaterials);
+		    BU_LIST_INIT(&d->obj.HeadObjMaterials);
 
-		    d->obj_materials_fp = fopen(bu_vls_cstr(&d->obj_materials_file), "wb+");
-		    if (d->obj_materials_fp == NULL) {
-			bu_vls_printf(gedp->ged_result_str, "%s: failed to open %s\n", cmd_name, bu_vls_cstr(&d->obj_materials_file));
-			bu_vls_free(&d->obj_materials_file);
+		    d->obj.obj_materials_fp = fopen(bu_vls_cstr(&d->obj.obj_materials_file), "wb+");
+		    if (d->obj.obj_materials_fp == NULL) {
+			bu_vls_printf(gedp->ged_result_str, "%s: failed to open %s\n", cmd_name, bu_vls_cstr(&d->obj.obj_materials_file));
+			bu_vls_free(&d->obj.obj_materials_file);
 			fclose(fp);
 			return BRLCAD_ERROR;
 		    }
 
-		    d->num_obj_materials = 0;
+		    d->obj.num_obj_materials = 0;
 
-		    fprintf(fp, "mtllib %s\n", bu_vls_cstr(&d->obj_materials_file));
+		    fprintf(fp, "mtllib %s\n", bu_vls_cstr(&d->obj.obj_materials_file));
 		}
 		break;
 	    case OTYPE_SAT:
@@ -1591,7 +932,7 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	    case OTYPE_OBJ:
 		d->file_ext = ".obj";
 
-		BU_LIST_INIT(&d->HeadObjMaterials);
+		BU_LIST_INIT(&d->obj.HeadObjMaterials);
 
 		{
 		    char *cp;
@@ -1608,16 +949,16 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 			return BRLCAD_ERROR;
 		    }
 
-		    bu_vls_trunc(&d->obj_materials_file, 0);
-		    bu_vls_printf(&d->obj_materials_file, "%s.mtl", cp);
+		    bu_vls_trunc(&d->obj.obj_materials_file, 0);
+		    bu_vls_printf(&d->obj.obj_materials_file, "%s.mtl", cp);
 
-		    bu_vls_printf(&filepath, "%s/%s", d->output_directory, bu_vls_cstr(&d->obj_materials_file));
+		    bu_vls_printf(&filepath, "%s/%s", d->output_directory, bu_vls_cstr(&d->obj.obj_materials_file));
 
 
-		    d->obj_materials_fp = fopen(bu_vls_addr(&filepath), "wb+");
-		    if (d->obj_materials_fp == NULL) {
-			bu_vls_printf(gedp->ged_result_str, "%s: failed to open %s\n", cmd_name, bu_vls_addr(&filepath));
-			bu_vls_free(&d->obj_materials_file);
+		    d->obj.obj_materials_fp = fopen(bu_vls_cstr(&filepath), "wb+");
+		    if (d->obj.obj_materials_fp == NULL) {
+			bu_vls_printf(gedp->ged_result_str, "%s: failed to open %s\n", cmd_name, bu_vls_cstr(&filepath));
+			bu_vls_free(&d->obj.obj_materials_file);
 			bu_vls_free(&filepath);
 			return BRLCAD_ERROR;
 		    }
@@ -1625,7 +966,7 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_free(&filepath);
 		}
 
-		d->num_obj_materials = 0;
+		d->obj.num_obj_materials = 0;
 
 		break;
 	    case OTYPE_SAT:
@@ -1681,9 +1022,9 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (d->output_type == OTYPE_OBJ) {
-	bu_vls_free(&d->obj_materials_file);
-	obj_free_materials(d);
-	fclose(d->obj_materials_fp);
+	bu_vls_free(&d->obj.obj_materials_file);
+	obj_free_materials(&d->obj);
+	fclose(d->obj.obj_materials_fp);
     }
 
     return BRLCAD_OK;

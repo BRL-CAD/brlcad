@@ -39,6 +39,10 @@ set(
   bot_sync.c
   bot_vertex_fuse.c
   dump/bot_dump.c
+  dump/dxf.c
+  dump/obj.c
+  dump/sat.c
+  dump/stl.c
   edbot.c
   check.cpp
   decimate.cpp
