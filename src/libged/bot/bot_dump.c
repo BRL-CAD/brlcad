@@ -54,7 +54,7 @@
 #include "../ged_private.h"
 
 
-#define V3ARGS_SCALE(_a) (_a)[X]*cfactor, (_a)[Y]*cfactor, (_a)[Z]*cfactor
+#define V3ARGS_SCALE(_a) (_a)[X]*d->cfactor, (_a)[Y]*d->cfactor, (_a)[Z]*d->cfactor
 
 static char usage[] = "[-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]";
 
@@ -79,35 +79,34 @@ struct _ged_bot_dump_client_data {
     FILE *fp;
     int fd;
     char *file_ext;
+
+    int using_dbot_dump;
+    struct bu_list HeadObjMaterials;
+    struct bu_vls obj_materials_file;
+    FILE *obj_materials_fp;
+    int num_obj_materials;
+    int curr_obj_red;
+    int curr_obj_green;
+    int curr_obj_blue;
+    fastf_t curr_obj_alpha;
+
+    enum otype output_type;
+    int binary;
+    int normals;
+    fastf_t cfactor;
+    char *output_file;	/* output filename */
+    char *output_directory;	/* directory name to hold output files */
+    unsigned int total_faces;
+    int v_offset;
+    int curr_line_num;
+
+    int curr_body_id;
+    int curr_lump_id;
+    int curr_shell_id;
+    int curr_face_id;
+    int curr_loop_id;
+    int curr_edge_id;
 };
-
-// TODO - ew, globals.  Need to shove these into the client data state.
-static int using_dbot_dump;
-struct bu_list HeadObjMaterials = BU_LIST_INIT_ZERO;
-struct bu_vls obj_materials_file = BU_VLS_INIT_ZERO;
-FILE *obj_materials_fp;
-int num_obj_materials;
-int curr_obj_red;
-int curr_obj_green;
-int curr_obj_blue;
-fastf_t curr_obj_alpha;
-
-static enum otype output_type;
-static int binary;
-static int normals;
-static fastf_t cfactor;
-static char *output_file;	/* output filename */
-static char *output_directory;	/* directory name to hold output files */
-static unsigned int total_faces;
-static int v_offset;
-static int curr_line_num;
-
-static int curr_body_id;
-static int curr_lump_id;
-static int curr_shell_id;
-static int curr_face_id;
-static int curr_loop_id;
-static int curr_edge_id;
 
 /* Byte swaps a four byte value */
 static void
@@ -122,11 +121,11 @@ lswap(unsigned int *v)
 
 
 static struct _ged_obj_material *
-obj_get_material(int red, int green, int blue, fastf_t transparency)
+obj_get_material(struct _ged_bot_dump_client_data *d, int red, int green, int blue, fastf_t transparency)
 {
     struct _ged_obj_material *gomp;
 
-    for (BU_LIST_FOR(gomp, _ged_obj_material, &HeadObjMaterials)) {
+    for (BU_LIST_FOR(gomp, _ged_obj_material, &d->HeadObjMaterials)) {
 	if (gomp->r == red &&
 	    gomp->g == green &&
 	    gomp->b == blue &&
@@ -136,32 +135,32 @@ obj_get_material(int red, int green, int blue, fastf_t transparency)
     }
 
     BU_GET(gomp, struct _ged_obj_material);
-    BU_LIST_APPEND(&HeadObjMaterials, &gomp->l);
+    BU_LIST_APPEND(&d->HeadObjMaterials, &gomp->l);
     gomp->r = red;
     gomp->g = green;
     gomp->b = blue;
     gomp->a = transparency;
     bu_vls_init(&gomp->name);
-    bu_vls_printf(&gomp->name, "matl_%d", ++num_obj_materials);
+    bu_vls_printf(&gomp->name, "matl_%d", ++d->num_obj_materials);
 
     /* Write out newmtl to mtl file */
-    fprintf(obj_materials_fp, "newmtl %s\n", bu_vls_addr(&gomp->name));
-    fprintf(obj_materials_fp, "Kd %f %f %f\n",
+    fprintf(d->obj_materials_fp, "newmtl %s\n", bu_vls_addr(&gomp->name));
+    fprintf(d->obj_materials_fp, "Kd %f %f %f\n",
 	    (fastf_t)gomp->r / 255.0,
 	    (fastf_t)gomp->g / 255.0,
 	    (fastf_t)gomp->b / 255.0);
-    fprintf(obj_materials_fp, "d %f\n", gomp->a);
-    fprintf(obj_materials_fp, "illum 1\n");
+    fprintf(d->obj_materials_fp, "d %f\n", gomp->a);
+    fprintf(d->obj_materials_fp, "illum 1\n");
 
     return gomp;
 }
 
 
 static void
-obj_free_materials(void) {
+obj_free_materials(struct _ged_bot_dump_client_data *d) {
     struct _ged_obj_material *gomp;
 
-    while (BU_LIST_WHILE(gomp, _ged_obj_material, &HeadObjMaterials)) {
+    while (BU_LIST_WHILE(gomp, _ged_obj_material, &d->HeadObjMaterials)) {
 	BU_LIST_DEQUEUE(&gomp->l);
 	bu_vls_free(&gomp->name);
 	BU_PUT(gomp, struct _ged_obj_material);
@@ -194,7 +193,7 @@ sat_write_header(FILE *fp)
 
 
 static void
-sat_write_bot(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
+sat_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
 {
     int i, j;
     fastf_t *vertices;
@@ -208,97 +207,97 @@ sat_write_bot(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
     vertices = bot->vertices;
     faces = bot->faces;
 
-    curr_body_id = curr_line_num;
-    curr_lump_id = curr_body_id + 1;
-    curr_shell_id = curr_lump_id + 1;
-    curr_face_id = curr_shell_id + 1 + num_vertices*2 + num_faces*6;
+    d->curr_body_id = d->curr_line_num;
+    d->curr_lump_id = d->curr_body_id + 1;
+    d->curr_shell_id = d->curr_lump_id + 1;
+    d->curr_face_id = d->curr_shell_id + 1 + num_vertices*2 + num_faces*6;
 
-    fprintf(fp, "-%d body $-1 $%d $-1 $-1 #\n", curr_body_id, curr_lump_id);
-    fprintf(fp, "-%d lump $-1 $-1 $%d $%d #\n", curr_lump_id, curr_shell_id, curr_body_id);
-    fprintf(fp, "-%d shell $-1 $-1 $-1 $%d $-1 $%d #\n", curr_shell_id, curr_face_id, curr_lump_id);
+    fprintf(fp, "-%d body $-1 $%d $-1 $-1 #\n", d->curr_body_id, d->curr_lump_id);
+    fprintf(fp, "-%d lump $-1 $-1 $%d $%d #\n", d->curr_lump_id, d->curr_shell_id, d->curr_body_id);
+    fprintf(fp, "-%d shell $-1 $-1 $-1 $%d $-1 $%d #\n", d->curr_shell_id, d->curr_face_id, d->curr_lump_id);
 
-    curr_line_num += 3;
+    d->curr_line_num += 3;
 
     /* Dump out vertices */
-    first_vertex = curr_line_num;
+    first_vertex = d->curr_line_num;
     for (i = 0; i < num_vertices; i++) {
-	curr_edge_id = -1;
+	d->curr_edge_id = -1;
 	for (j = 0; j < num_faces; j++) {
-	    if (faces[3*j]+first_vertex == curr_line_num) {
-		curr_edge_id = first_vertex + num_vertices*2 + num_faces*3 + j*3;
+	    if (faces[3*j]+first_vertex == d->curr_line_num) {
+		d->curr_edge_id = first_vertex + num_vertices*2 + num_faces*3 + j*3;
 		break;
-	    } else if (faces[3*j+1]+first_vertex == curr_line_num) {
-		curr_edge_id = first_vertex + num_vertices*2 + num_faces*3 + j*3 + 1;
+	    } else if (faces[3*j+1]+first_vertex == d->curr_line_num) {
+		d->curr_edge_id = first_vertex + num_vertices*2 + num_faces*3 + j*3 + 1;
 		break;
-	    } else if (faces[3*j+2]+first_vertex == curr_line_num) {
-		curr_edge_id = first_vertex + num_vertices*2 + num_faces*3 + j*3 + 2;
+	    } else if (faces[3*j+2]+first_vertex == d->curr_line_num) {
+		d->curr_edge_id = first_vertex + num_vertices*2 + num_faces*3 + j*3 + 2;
 		break;
 	    }
 	}
 
-	fprintf(fp, "-%d vertex $-1 $%d $%d #\n", curr_line_num, curr_edge_id, curr_line_num+num_vertices);
-	++curr_line_num;
+	fprintf(fp, "-%d vertex $-1 $%d $%d #\n", d->curr_line_num, d->curr_edge_id, d->curr_line_num+num_vertices);
+	++d->curr_line_num;
     }
 
     /* Dump out points */
     for (i = 0; i < num_vertices; i++) {
-	fprintf(fp, "-%d point $-1 %f %f %f #\n", curr_line_num, V3ARGS_SCALE(&vertices[3*i]));
-	++curr_line_num;
+	fprintf(fp, "-%d point $-1 %f %f %f #\n", d->curr_line_num, V3ARGS_SCALE(&vertices[3*i]));
+	++d->curr_line_num;
     }
 
     /* Dump out coedges */
-    first_coedge = curr_line_num;
-    curr_loop_id = first_coedge+num_faces*7;
+    first_coedge = d->curr_line_num;
+    d->curr_loop_id = first_coedge+num_faces*7;
     for (i = 0; i < num_faces; i++) {
 	fprintf(fp, "-%d coedge $-1 $%d $%d $%d $%d forward $%d $-1 #\n",
-		curr_line_num, curr_line_num+1, curr_line_num+2, curr_line_num,
-		curr_line_num+num_faces*3, curr_loop_id);
-	++curr_line_num;
+		d->curr_line_num, d->curr_line_num+1, d->curr_line_num+2, d->curr_line_num,
+		d->curr_line_num+num_faces*3, d->curr_loop_id);
+	++d->curr_line_num;
 	fprintf(fp, "-%d coedge $-1 $%d $%d $%d $%d forward $%d $-1 #\n",
-		curr_line_num, curr_line_num+1, curr_line_num-1, curr_line_num,
-		curr_line_num+num_faces*3, curr_loop_id);
-	++curr_line_num;
+		d->curr_line_num, d->curr_line_num+1, d->curr_line_num-1, d->curr_line_num,
+		d->curr_line_num+num_faces*3, d->curr_loop_id);
+	++d->curr_line_num;
 	fprintf(fp, "-%d coedge $-1 $%d $%d $%d $%d forward $%d $-1 #\n",
-		curr_line_num, curr_line_num-2, curr_line_num-1, curr_line_num,
-		curr_line_num+num_faces*3,  curr_loop_id);
-	++curr_line_num;
-	++curr_loop_id;
+		d->curr_line_num, d->curr_line_num-2, d->curr_line_num-1, d->curr_line_num,
+		d->curr_line_num+num_faces*3,  d->curr_loop_id);
+	++d->curr_line_num;
+	++d->curr_loop_id;
     }
 
     /* Dump out edges */
     for (i = 0; i < num_faces; i++) {
-	fprintf(fp, "-%d edge $-1 $%d $%d $%d $%d forward #\n", curr_line_num,
+	fprintf(fp, "-%d edge $-1 $%d $%d $%d $%d forward #\n", d->curr_line_num,
 		faces[3*i]+first_vertex, faces[3*i+1]+first_vertex,
-		first_coedge + i*3, curr_line_num + num_faces*5);
-	++curr_line_num;
-	fprintf(fp, "-%d edge $-1 $%d $%d $%d $%d forward #\n", curr_line_num,
+		first_coedge + i*3, d->curr_line_num + num_faces*5);
+	++d->curr_line_num;
+	fprintf(fp, "-%d edge $-1 $%d $%d $%d $%d forward #\n", d->curr_line_num,
 		faces[3*i+1]+first_vertex, faces[3*i+2]+first_vertex,
-		first_coedge + i*3 + 1, curr_line_num + num_faces*5);
-	++curr_line_num;
-	fprintf(fp, "-%d edge $-1 $%d $%d $%d $%d forward #\n", curr_line_num,
+		first_coedge + i*3 + 1, d->curr_line_num + num_faces*5);
+	++d->curr_line_num;
+	fprintf(fp, "-%d edge $-1 $%d $%d $%d $%d forward #\n", d->curr_line_num,
 		faces[3*i+2]+first_vertex, faces[3*i]+first_vertex,
-		first_coedge + i*3 + 2, curr_line_num + num_faces*5);
-	++curr_line_num;
+		first_coedge + i*3 + 2, d->curr_line_num + num_faces*5);
+	++d->curr_line_num;
     }
 
     /* Dump out faces */
-    first_face = curr_line_num;
+    first_face = d->curr_line_num;
     for (i = 0; i < num_faces-1; i++) {
 	fprintf(fp, "-%d face $-1 $%d $%d $%d $-1 $%d forward single #\n",
-		curr_line_num, curr_line_num+1, curr_line_num+num_faces,
-		curr_shell_id, curr_line_num + num_faces*5);
-	++curr_line_num;
+		d->curr_line_num, d->curr_line_num+1, d->curr_line_num+num_faces,
+		d->curr_shell_id, d->curr_line_num + num_faces*5);
+	++d->curr_line_num;
     }
     fprintf(fp, "-%d face $-1 $-1 $%d $%d $-1 $%d forward single #\n",
-	    curr_line_num, curr_line_num+num_faces, curr_shell_id,
-	    curr_line_num + num_faces*5);
-    ++curr_line_num;
+	    d->curr_line_num, d->curr_line_num+num_faces, d->curr_shell_id,
+	    d->curr_line_num + num_faces*5);
+    ++d->curr_line_num;
 
     /* Dump out loops */
     for (i = 0; i < num_faces; i++) {
 	fprintf(fp, "-%d loop $-1 $-1 $%d $%d #\n",
-		curr_line_num, first_coedge+i*3, first_face+i);
-	++curr_line_num;
+		d->curr_line_num, first_coedge+i*3, first_face+i);
+	++d->curr_line_num;
     }
 
     /* Dump out straight-curves for each edge */
@@ -324,12 +323,12 @@ sat_write_bot(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
 	VUNITIZE(CmB);
 	VUNITIZE(AmC);
 
-	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", curr_line_num, V3ARGS_SCALE(A), V3ARGS(BmA));
-	++curr_line_num;
-	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", curr_line_num, V3ARGS_SCALE(B), V3ARGS(CmB));
-	++curr_line_num;
-	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", curr_line_num, V3ARGS_SCALE(C), V3ARGS(AmC));
-	++curr_line_num;
+	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", d->curr_line_num, V3ARGS_SCALE(A), V3ARGS(BmA));
+	++d->curr_line_num;
+	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", d->curr_line_num, V3ARGS_SCALE(B), V3ARGS(CmB));
+	++d->curr_line_num;
+	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", d->curr_line_num, V3ARGS_SCALE(C), V3ARGS(AmC));
+	++d->curr_line_num;
     }
 
     /* Dump out plane-surfaces for each face */
@@ -366,15 +365,15 @@ sat_write_bot(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
 	VUNITIZE(BmA);
 
 	fprintf(fp, "-%d plane-surface $-1 %f %f %f %f %f %f %f %f %f forward_v I I I I #\n",
-		curr_line_num, V3ARGS_SCALE(A), V3ARGS(norm), V3ARGS(BmA));
+		d->curr_line_num, V3ARGS_SCALE(A), V3ARGS(norm), V3ARGS(BmA));
 
-	++curr_line_num;
+	++d->curr_line_num;
     }
 }
 
 
 static void
-dxf_write_bot(struct rt_bot_internal *bot, FILE *fp, char *name)
+dxf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name)
 {
     fastf_t *vertices;
     int num_faces, *faces;
@@ -395,9 +394,9 @@ dxf_write_bot(struct rt_bot_internal *bot, FILE *fp, char *name)
 	vi = 3*faces[3*i+2];
 	VSET(C, vertices[vi], vertices[vi+1], vertices[vi+2]);
 
-	VSCALE(A, A, cfactor);
-	VSCALE(B, B, cfactor);
-	VSCALE(C, C, cfactor);
+	VSCALE(A, A, d->cfactor);
+	VSCALE(B, B, d->cfactor);
+	VSCALE(C, C, d->cfactor);
 
 	fprintf(fp, "0\n3DFACE\n8\n%s\n62\n7\n", name);
 	fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
@@ -414,7 +413,7 @@ dxf_write_bot(struct rt_bot_internal *bot, FILE *fp, char *name)
 
 
 static void
-obj_write_bot(struct rt_bot_internal *bot, FILE *fp, char *name)
+obj_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name)
 {
     int num_vertices;
     fastf_t *vertices;
@@ -428,11 +427,11 @@ obj_write_bot(struct rt_bot_internal *bot, FILE *fp, char *name)
     int i, vi;
     struct _ged_obj_material *gomp;
 
-    if (using_dbot_dump) {
-	gomp = obj_get_material(curr_obj_red,
-				    curr_obj_green,
-				    curr_obj_blue,
-				    curr_obj_alpha);
+    if (d->using_dbot_dump) {
+	gomp = obj_get_material(d, d->curr_obj_red,
+				    d->curr_obj_green,
+				    d->curr_obj_blue,
+				    d->curr_obj_alpha);
 	fprintf(fp, "usemtl %s\n", bu_vls_addr(&gomp->name));
     }
 
@@ -447,7 +446,7 @@ obj_write_bot(struct rt_bot_internal *bot, FILE *fp, char *name)
 	fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(&vertices[3*i]));
     }
 
-    if (normals) {
+    if (d->normals) {
 	for (i = 0; i < num_faces; i++) {
 	    vi = 3*faces[3*i];
 	    VSET(A, vertices[vi], vertices[vi+1], vertices[vi+2]);
@@ -469,22 +468,22 @@ obj_write_bot(struct rt_bot_internal *bot, FILE *fp, char *name)
 	}
     }
 
-    if (normals) {
+    if (d->normals) {
 	for (i = 0; i < num_faces; i++) {
-	    fprintf(fp, "f %d//%d %d//%d %d//%d\n", faces[3*i]+v_offset, i+1, faces[3*i+1]+v_offset, i+1, faces[3*i+2]+v_offset, i+1);
+	    fprintf(fp, "f %d//%d %d//%d %d//%d\n", faces[3*i]+d->v_offset, i+1, faces[3*i+1]+d->v_offset, i+1, faces[3*i+2]+d->v_offset, i+1);
 	}
     } else {
 	for (i = 0; i < num_faces; i++) {
-	    fprintf(fp, "f %d %d %d\n", faces[3*i]+v_offset, faces[3*i+1]+v_offset, faces[3*i+2]+v_offset);
+	    fprintf(fp, "f %d %d %d\n", faces[3*i]+d->v_offset, faces[3*i+1]+d->v_offset, faces[3*i+2]+d->v_offset);
 	}
     }
 
-    v_offset += num_vertices;
+    d->v_offset += num_vertices;
 }
 
 
 static void
-stl_write_bot(struct rt_bot_internal *bot, FILE *fp, char *name)
+stl_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name)
 {
     fastf_t *vertices;
     int num_faces, *faces;
@@ -531,7 +530,7 @@ stl_write_bot(struct rt_bot_internal *bot, FILE *fp, char *name)
 
 
 static void
-stl_write_bot_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
+stl_write_bot_binary(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 {
     fastf_t *vertices;
     size_t num_faces;
@@ -571,9 +570,9 @@ stl_write_bot_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 	}
 	VUNITIZE(norm);
 
-	VSCALE(A, A, cfactor);
-	VSCALE(B, B, cfactor);
-	VSCALE(C, C, cfactor);
+	VSCALE(A, A, d->cfactor);
+	VSCALE(B, B, d->cfactor);
+	VSCALE(C, C, d->cfactor);
 
 	memset(vert_buffer, 0, sizeof(vert_buffer));
 
@@ -599,15 +598,19 @@ stl_write_bot_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 
 
 void
-_ged_bot_dump(struct directory *dp, const struct db_full_path *pathp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_g_name)
+_ged_bot_dump(struct _ged_bot_dump_client_data *d, struct directory *dp, const struct db_full_path *pathp, struct rt_bot_internal *bot)
 {
+    const char *db_g_name = d->gedp->dbip->dbi_filename;
+    FILE *fp = d->fp;
+    int fd = d->fd;
+    const char *file_ext = d->file_ext;
     int ret;
 
-    if (output_directory) {
+    if (d->output_directory) {
 	char *cp;
 	struct bu_vls file_name = BU_VLS_INIT_ZERO;
 
-	bu_vls_strcpy(&file_name, output_directory);
+	bu_vls_strcpy(&file_name, d->output_directory);
 	bu_vls_putc(&file_name, '/');
 	cp = dp->d_namep;
 	while (*cp != '\0') {
@@ -623,9 +626,9 @@ _ged_bot_dump(struct directory *dp, const struct db_full_path *pathp, struct rt_
 	bu_vls_strcat(&file_name, file_ext);
 
 
-	switch (output_type) {
+	switch (d->output_type) {
 	    case OTYPE_STL:
-		if (binary) {
+		if (d->binary) {
 		    char buf[81];	/* need exactly 80 chars for header */
 		    unsigned char tot_buffer[4];
 
@@ -652,13 +655,13 @@ _ged_bot_dump(struct directory *dp, const struct db_full_path *pathp, struct rt_
 			perror("write");
 		    }
 
-		    stl_write_bot_binary(bot, fd, dp->d_namep);
+		    stl_write_bot_binary(d, bot, fd, dp->d_namep);
 
 		    /* Re-position pointer to 80th byte */
 		    bu_lseek(fd, 80, SEEK_SET);
 
 		    /* Write out number of triangles */
-		    *(uint32_t *)tot_buffer = htonl((unsigned long)total_faces);
+		    *(uint32_t *)tot_buffer = htonl((unsigned long)d->total_faces);
 		    lswap((unsigned int *)tot_buffer);
 		    ret = write(fd, tot_buffer, 4);
 		    if (ret < 0) {
@@ -682,28 +685,28 @@ _ged_bot_dump(struct directory *dp, const struct db_full_path *pathp, struct rt_
 		fprintf(fp,
 			"0\nSECTION\n2\nHEADER\n999\n%s (BOT from %s)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
 			dp->d_namep, db_g_name);
-		dxf_write_bot(bot, fp, dp->d_namep);
+		dxf_write_bot(d, bot, fp, dp->d_namep);
 		fprintf(fp, "0\nENDSEC\n0\nEOF\n");
 		fclose(fp);
 		break;
 	    case OTYPE_OBJ:
-		v_offset = 1;
-		fprintf(fp, "mtllib %s\n", bu_vls_addr(&obj_materials_file));
+		d->v_offset = 1;
+		fprintf(fp, "mtllib %s\n", bu_vls_addr(&d->obj_materials_file));
 		if (!pathp) {
-		    obj_write_bot(bot, fp, dp->d_namep);
+		    obj_write_bot(d, bot, fp, dp->d_namep);
 		} else {
 		    char *pathstr = db_path_to_string(pathp);
-		    obj_write_bot(bot, fp, pathstr);
+		    obj_write_bot(d, bot, fp, pathstr);
 		    bu_free(pathstr, "free path");
 		}
 		fclose(fp);
 		break;
 	    case OTYPE_SAT:
-		curr_line_num = 0;
+		d->curr_line_num = 0;
 
 		sat_write_header(fp);
 
-		sat_write_bot(bot, fp, dp->d_namep);
+		sat_write_bot(d, bot, fp, dp->d_namep);
 		fprintf(fp, "End-of-ACIS-data\n");
 		fclose(fp);
 		break;
@@ -715,7 +718,7 @@ _ged_bot_dump(struct directory *dp, const struct db_full_path *pathp, struct rt_
 		    bu_vls_free(&file_name);
 		    return;
 		}
-		stl_write_bot(bot, fp, dp->d_namep);
+		stl_write_bot(d, bot, fp, dp->d_namep);
 		fclose(fp);
 		break;
 	}
@@ -724,36 +727,36 @@ _ged_bot_dump(struct directory *dp, const struct db_full_path *pathp, struct rt_
 
     } else {
 	/* If we get to this point and need fp - check for it */
-	if (!binary && !fp) {
+	if (!d->binary && !fp) {
 	    bu_log("_ged_bot_dump: non-binay file requested but fp is NULL!\n");
 	    return;
 	}
-	switch (output_type) {
+	switch (d->output_type) {
 	    case OTYPE_STL:
-		if (binary) {
-		    total_faces += bot->num_faces;
-		    stl_write_bot_binary(bot, fd, dp->d_namep);
+		if (d->binary) {
+		    d->total_faces += bot->num_faces;
+		    stl_write_bot_binary(d, bot, fd, dp->d_namep);
 		} else {
-		    stl_write_bot(bot, fp, dp->d_namep);
+		    stl_write_bot(d, bot, fp, dp->d_namep);
 		}
 		break;
 	    case OTYPE_DXF:
-		dxf_write_bot(bot, fp, dp->d_namep);
+		dxf_write_bot(d, bot, fp, dp->d_namep);
 		break;
 	    case OTYPE_OBJ:
 		if (!pathp) {
-		    obj_write_bot(bot, fp, dp->d_namep);
+		    obj_write_bot(d, bot, fp, dp->d_namep);
 		} else {
 		    char *pathstr = db_path_to_string(pathp);
-		    obj_write_bot(bot, fp, pathstr);
+		    obj_write_bot(d, bot, fp, pathstr);
 		    bu_free(pathstr, "free path");
 		}
 		break;
 	    case OTYPE_SAT:
-		sat_write_bot(bot, fp, dp->d_namep);
+		sat_write_bot(d, bot, fp, dp->d_namep);
 		break;
 	    default:
-		stl_write_bot(bot, fp, dp->d_namep);
+		stl_write_bot(d, bot, fp, dp->d_namep);
 		break;
 	}
     }
@@ -802,7 +805,7 @@ bot_dump_leaf(struct db_tree_state *UNUSED(tsp),
     }
 
     bot = (struct rt_bot_internal *)intern.idb_ptr;
-    _ged_bot_dump(dp, pathp, bot, gbdcdp->fp, gbdcdp->fd, gbdcdp->file_ext, gbdcdp->gedp->dbip->dbi_filename);
+    _ged_bot_dump(gbdcdp, dp, pathp, bot);
     rt_db_free_internal(&intern);
 
     return curtree;
@@ -810,46 +813,46 @@ bot_dump_leaf(struct db_tree_state *UNUSED(tsp),
 
 
 static int
-bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
+bot_dump_get_args(struct _ged_bot_dump_client_data *d, struct ged *gedp, int argc, const char *argv[])
 {
     int c;
     int specified_t = 0;
 
-    output_type = OTYPE_STL;
-    binary = 0;
-    normals = 0;
-    cfactor = 1.0;
-    output_file = NULL;
-    output_directory = NULL;
-    total_faces = 0;
-    v_offset = 1;
-    curr_line_num = 0;
+    d->output_type = OTYPE_STL;
+    d->binary = 0;
+    d->normals = 0;
+    d->cfactor = 1.0;
+    d->output_file = NULL;
+    d->output_directory = NULL;
+    d->total_faces = 0;
+    d->v_offset = 1;
+    d->curr_line_num = 0;
     bu_optind = 1;
 
     /* Get command line options. */
     while ((c = bu_getopt(argc, (char * const *)argv, "bno:m:t:u:")) != -1) {
 	switch (c) {
 	    case 'b':		/* Binary output file */
-		binary=1;
+		d->binary=1;
 		break;
 	    case 'n':		/* Binary output file */
-		normals=1;
+		d->normals=1;
 		break;
 	    case 'm':
-		output_directory = bu_optarg;
+		d->output_directory = bu_optarg;
 		break;
 	    case 'o':		/* Output file name. */
-		output_file = bu_optarg;
+		d->output_file = bu_optarg;
 		break;
 	    case 't':
 		if (BU_STR_EQUAL("dxf", bu_optarg))
-		    output_type = OTYPE_DXF;
+		    d->output_type = OTYPE_DXF;
 		else if (BU_STR_EQUAL("obj", bu_optarg))
-		    output_type = OTYPE_OBJ;
+		    d->output_type = OTYPE_OBJ;
 		else if (BU_STR_EQUAL("sat", bu_optarg))
-		    output_type = OTYPE_SAT;
+		    d->output_type = OTYPE_SAT;
 		else if (BU_STR_EQUAL("stl", bu_optarg))
-		    output_type = OTYPE_STL;
+		    d->output_type = OTYPE_STL;
 		else {
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
 		    return BRLCAD_ERROR;
@@ -857,11 +860,11 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 		specified_t = 1;
 		break;
 	    case 'u':
-		cfactor = bu_units_conversion(bu_optarg);
-		if (ZERO(cfactor))
-		    cfactor = 1.0;
+		d->cfactor = bu_units_conversion(bu_optarg);
+		if (ZERO(d->cfactor))
+		    d->cfactor = 1.0;
 		else
-		    cfactor = 1.0 / cfactor;
+		    d->cfactor = 1.0 / d->cfactor;
 
 		break;
 	    default:
@@ -875,18 +878,18 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
      */
     if (!specified_t) {
 	struct bu_vls ext = BU_VLS_INIT_ZERO;
-	if (!bu_path_component(&ext, output_file, BU_PATH_EXT)) {
+	if (!bu_path_component(&ext, d->output_file, BU_PATH_EXT)) {
 	    bu_vls_printf(gedp->ged_result_str,
 			  "WARNING: no format type '-t' specified, defaulting to stl\n");
 	} else {
 	    if (BU_STR_EQUAL("dxf", bu_vls_cstr(&ext)))
-		output_type = OTYPE_DXF;
+		d->output_type = OTYPE_DXF;
 	    else if (BU_STR_EQUAL("obj", bu_vls_cstr(&ext)))
-		output_type = OTYPE_OBJ;
+		d->output_type = OTYPE_OBJ;
 	    else if (BU_STR_EQUAL("sat", bu_vls_cstr(&ext)))
-		output_type = OTYPE_SAT;
+		d->output_type = OTYPE_SAT;
 	    else if (BU_STR_EQUAL("stl", bu_vls_cstr(&ext)))
-		output_type = OTYPE_STL;
+		d->output_type = OTYPE_STL;
 	    else {
 		bu_vls_printf(gedp->ged_result_str,
 			      "WARNING: unrecognized filename type, defaulting to stl\n");
@@ -915,6 +918,11 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
+    struct _ged_bot_dump_client_data ld;
+    struct _ged_bot_dump_client_data *d = &ld;
+    d->gedp = gedp;
+    d->using_dbot_dump = 0;
+
     /* save the command name */
     cmd_name = argv[0];
 
@@ -927,9 +935,9 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    using_dbot_dump = 0;
+    d->using_dbot_dump = 0;
 
-    if (bot_dump_get_args(gedp, argc, argv) & BRLCAD_ERROR)
+    if (bot_dump_get_args(d, gedp, argc, argv) & BRLCAD_ERROR)
 	return BRLCAD_ERROR;
 
     if (bu_optind > argc) {
@@ -937,35 +945,35 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (output_file && output_directory) {
+    if (d->output_file && d->output_directory) {
 	fprintf(stderr, "ERROR: options \"-o\" and \"-m\" are mutually exclusive\n");
 	return BRLCAD_ERROR;
     }
 
-    if (!output_file && !output_directory) {
-	if (binary) {
+    if (!d->output_file && !d->output_directory) {
+	if (d->binary) {
 	    bu_vls_printf(gedp->ged_result_str, "Can't output binary to stdout\nUsage: %s %s\n", argv[0], usage);
 	    return BRLCAD_ERROR;
 	}
 	fp = stdout;
 
 	/* Set this to something non-null in order to possibly write eof */
-	output_file = "stdout";
+	d->output_file = "stdout";
     }
 
 
-    if (output_file) {
+    if (d->output_file) {
 
-	switch (output_type) {
+	switch (d->output_type) {
 	    case OTYPE_STL:
-		if (binary) {
+		if (d->binary) {
 		    char buf[81];	/* need exactly 80 chars for header */
 
 		    /* Open binary output file */
-		    fd = open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+		    fd = open(d->output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
 		    if (fd < 0) {
 			perror(cmd_name);
-			bu_vls_printf(gedp->ged_result_str, "Cannot open binary output file (%s) for writing\n", output_file);
+			bu_vls_printf(gedp->ged_result_str, "Cannot open binary output file (%s) for writing\n", d->output_file);
 			return BRLCAD_ERROR;
 		    }
 
@@ -984,19 +992,19 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 			perror("write");
 		    }
 		} else {
-		    fp = fopen(output_file, "wb+");
+		    fp = fopen(d->output_file, "wb+");
 		    if (fp == NULL) {
 			perror(argv[0]);
-			bu_vls_printf(gedp->ged_result_str, "Cannot open STL ascii output file (%s) for writing\n", output_file);
+			bu_vls_printf(gedp->ged_result_str, "Cannot open STL ascii output file (%s) for writing\n", d->output_file);
 			return BRLCAD_ERROR;
 		    }
 		}
 		break;
 	    case OTYPE_DXF:
-		fp = fopen(output_file, "wb+");
+		fp = fopen(d->output_file, "wb+");
 		if (fp == NULL) {
 		    perror(cmd_name);
-		    bu_vls_printf(gedp->ged_result_str, "Cannot open DXF ascii output file (%s) for writing\n", output_file);
+		    bu_vls_printf(gedp->ged_result_str, "Cannot open DXF ascii output file (%s) for writing\n", d->output_file);
 		    return BRLCAD_ERROR;
 		}
 
@@ -1006,28 +1014,28 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 			argv[argc-1]);
 		break;
 	    case OTYPE_SAT:
-		fp = fopen(output_file, "wb+");
+		fp = fopen(d->output_file, "wb+");
 		if (fp == NULL) {
 		    perror(cmd_name);
-		    bu_vls_printf(gedp->ged_result_str, "Cannot open SAT ascii output file (%s) for writing\n", output_file);
+		    bu_vls_printf(gedp->ged_result_str, "Cannot open SAT ascii output file (%s) for writing\n", d->output_file);
 		    return BRLCAD_ERROR;
 		}
 
 		sat_write_header(fp);
 		break;
 	    default:
-		fp = fopen(output_file, "wb+");
+		fp = fopen(d->output_file, "wb+");
 		if (fp == NULL) {
 		    perror(cmd_name);
-		    bu_vls_printf(gedp->ged_result_str, "Cannot open ascii output file (%s) for writing\n", output_file);
+		    bu_vls_printf(gedp->ged_result_str, "Cannot open ascii output file (%s) for writing\n", d->output_file);
 		    return BRLCAD_ERROR;
 		}
 		break;
 	}
     }
 
-    if (output_directory) {
-	switch (output_type) {
+    if (d->output_directory) {
+	switch (d->output_type) {
 	    case OTYPE_DXF:
 		file_ext = ".dxf";
 		break;
@@ -1052,6 +1060,10 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 
     MAT_IDN(mat);
 
+    d->file_ext = file_ext;
+    d->fp = fp;
+    d->fd = fd;
+
     if (argc < 1) {
 	/* dump all the bots */
 	FOR_ALL_DIRECTORY_START(dp, gedp->dbip) {
@@ -1072,7 +1084,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
-	    _ged_bot_dump(dp, NULL, bot, fp, fd, file_ext, gedp->dbip->dbi_filename);
+	    _ged_bot_dump(d, dp, NULL, bot);
 	    rt_db_free_internal(&intern);
 
 	} FOR_ALL_DIRECTORY_END;
@@ -1080,13 +1092,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	int ac = 1;
 	int ncpu = 1;
 	char *av[2];
-	struct _ged_bot_dump_client_data gbdcdp = {NULL, NULL, 0, NULL};
-
 	av[1] = (char *)0;
-	gbdcdp.gedp = gedp;
-	gbdcdp.fp = fp;
-	gbdcdp.fd = fd;
-	gbdcdp.file_ext = file_ext;
 
 	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	for (i = 0; i < argc; ++i) {
@@ -1099,7 +1105,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 			       0,
 			       0,
 			       bot_dump_leaf,
-			       (void *)&gbdcdp);
+			       (void *)d);
 	    if (ret < 0) {
 		perror("db_walk_tree");
 	    }
@@ -1107,18 +1113,18 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    if (output_file) {
+    if (d->output_file) {
 
-	switch (output_type) {
+	switch (d->output_type) {
 	    case OTYPE_STL:
-		if (binary) {
+		if (d->binary) {
 		    unsigned char tot_buffer[4];
 
 		    /* Re-position pointer to 80th byte */
 		    bu_lseek(fd, 80, SEEK_SET);
 
 		    /* Write out number of triangles */
-		    *(uint32_t *)tot_buffer = htonl((unsigned long)total_faces);
+		    *(uint32_t *)tot_buffer = htonl((unsigned long)d->total_faces);
 		    lswap((unsigned int *)tot_buffer);
 		    ret = write(fd, tot_buffer, 4);
 		    if (ret < 0) {
@@ -1147,14 +1153,14 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 
 
 static void
-write_data_arrows(struct bv_data_arrow_state *gdasp, FILE *fp, int sflag)
+write_data_arrows(struct _ged_bot_dump_client_data *d, struct bv_data_arrow_state *gdasp, FILE *fp, int sflag)
 {
     register int i;
 
     if (gdasp->gdas_draw) {
 	struct _ged_obj_material *gomp;
 
-	gomp = obj_get_material(gdasp->gdas_color[0],
+	gomp = obj_get_material(d, gdasp->gdas_color[0],
 				    gdasp->gdas_color[1],
 				    gdasp->gdas_color[2],
 				    1);
@@ -1205,24 +1211,24 @@ write_data_arrows(struct bv_data_arrow_state *gdasp, FILE *fp, int sflag)
 	}
 
 	for (i = 0; i < gdasp->gdas_num_points; i += 2) {
-	    fprintf(fp, "l %d %d\n", (i/2*6)+v_offset, (i/2*6)+v_offset+1);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+v_offset+1, (i/2*6)+v_offset+2);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+v_offset+1, (i/2*6)+v_offset+3);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+v_offset+1, (i/2*6)+v_offset+4);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+v_offset+1, (i/2*6)+v_offset+5);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+v_offset+2, (i/2*6)+v_offset+3);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+v_offset+3, (i/2*6)+v_offset+4);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+v_offset+4, (i/2*6)+v_offset+5);
-	    fprintf(fp, "l %d %d\n", (i/2*6)+v_offset+5, (i/2*6)+v_offset+2);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset, (i/2*6)+d->v_offset+1);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+1, (i/2*6)+d->v_offset+2);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+1, (i/2*6)+d->v_offset+3);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+1, (i/2*6)+d->v_offset+4);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+1, (i/2*6)+d->v_offset+5);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+2, (i/2*6)+d->v_offset+3);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+3, (i/2*6)+d->v_offset+4);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+4, (i/2*6)+d->v_offset+5);
+	    fprintf(fp, "l %d %d\n", (i/2*6)+d->v_offset+5, (i/2*6)+d->v_offset+2);
 	}
 
-	v_offset += ((gdasp->gdas_num_points/2)*6);
+	d->v_offset += ((gdasp->gdas_num_points/2)*6);
     }
 }
 
 
 static void
-write_data_axes(struct bv_data_axes_state *bndasp, FILE *fp, int sflag)
+write_data_axes(struct _ged_bot_dump_client_data *d, struct bv_data_axes_state *bndasp, FILE *fp, int sflag)
 {
     register int i;
 
@@ -1232,7 +1238,7 @@ write_data_axes(struct bv_data_axes_state *bndasp, FILE *fp, int sflag)
 
 	halfAxesSize = bndasp->size * 0.5;
 
-	gomp = obj_get_material(bndasp->color[0],
+	gomp = obj_get_material(d, bndasp->color[0],
 				    bndasp->color[1],
 				    bndasp->color[2],
 				    1);
@@ -1287,26 +1293,26 @@ write_data_axes(struct bv_data_axes_state *bndasp, FILE *fp, int sflag)
 	}
 
 	for (i = 0; i < bndasp->num_points; ++i) {
-	    fprintf(fp, "l %d %d\n", (i*6)+v_offset, (i*6)+v_offset+1);
-	    fprintf(fp, "l %d %d\n", (i*6)+v_offset+2, (i*6)+v_offset+3);
-	    fprintf(fp, "l %d %d\n", (i*6)+v_offset+4, (i*6)+v_offset+5);
+	    fprintf(fp, "l %d %d\n", (i*6)+d->v_offset, (i*6)+d->v_offset+1);
+	    fprintf(fp, "l %d %d\n", (i*6)+d->v_offset+2, (i*6)+d->v_offset+3);
+	    fprintf(fp, "l %d %d\n", (i*6)+d->v_offset+4, (i*6)+d->v_offset+5);
 	}
 
 
-	v_offset += (bndasp->num_points*6);
+	d->v_offset += (bndasp->num_points*6);
     }
 }
 
 
 static void
-write_data_lines(struct bv_data_line_state *gdlsp, FILE *fp, int sflag)
+write_data_lines(struct _ged_bot_dump_client_data *d, struct bv_data_line_state *gdlsp, FILE *fp, int sflag)
 {
     register int i;
 
     if (gdlsp->gdls_draw) {
 	struct _ged_obj_material *gomp;
 
-	gomp = obj_get_material(gdlsp->gdls_color[0],
+	gomp = obj_get_material(d, gdlsp->gdls_color[0],
 				    gdlsp->gdls_color[1],
 				    gdlsp->gdls_color[2],
 				    1);
@@ -1328,52 +1334,52 @@ write_data_lines(struct bv_data_line_state *gdlsp, FILE *fp, int sflag)
 	}
 
 	for (i = 0; i < gdlsp->gdls_num_points; i += 2) {
-	    fprintf(fp, "l %d %d\n", i+v_offset, i+v_offset+1);
+	    fprintf(fp, "l %d %d\n", i+d->v_offset, i+d->v_offset+1);
 	}
 
-	v_offset += gdlsp->gdls_num_points;
+	d->v_offset += gdlsp->gdls_num_points;
     }
 }
 
 
 static void
-obj_write_data(struct ged *gedp, FILE *fp)
+obj_write_data(struct _ged_bot_dump_client_data *d, struct ged *gedp, FILE *fp)
 {
-    write_data_arrows(&gedp->ged_gvp->gv_tcl.gv_data_arrows, fp, 0);
-    write_data_arrows(&gedp->ged_gvp->gv_tcl.gv_sdata_arrows, fp, 1);
+    write_data_arrows(d, &gedp->ged_gvp->gv_tcl.gv_data_arrows, fp, 0);
+    write_data_arrows(d, &gedp->ged_gvp->gv_tcl.gv_sdata_arrows, fp, 1);
 
-    write_data_axes(&gedp->ged_gvp->gv_tcl.gv_data_axes, fp, 0);
-    write_data_axes(&gedp->ged_gvp->gv_tcl.gv_sdata_axes, fp, 1);
+    write_data_axes(d, &gedp->ged_gvp->gv_tcl.gv_data_axes, fp, 0);
+    write_data_axes(d, &gedp->ged_gvp->gv_tcl.gv_sdata_axes, fp, 1);
 
-    write_data_lines(&gedp->ged_gvp->gv_tcl.gv_data_lines, fp, 0);
-    write_data_lines(&gedp->ged_gvp->gv_tcl.gv_sdata_lines, fp, 1);
+    write_data_lines(d, &gedp->ged_gvp->gv_tcl.gv_data_lines, fp, 0);
+    write_data_lines(d, &gedp->ged_gvp->gv_tcl.gv_sdata_lines, fp, 1);
 }
 
 
 static int
-data_dump(struct ged *gedp, FILE *fp)
+data_dump(struct _ged_bot_dump_client_data *d, struct ged *gedp, FILE *fp)
 {
-    switch (output_type) {
+    switch (d->output_type) {
 	case OTYPE_DXF:
 	    break;
 	case OTYPE_OBJ:
-	    if (output_directory) {
+	    if (d->output_directory) {
 		char *cp;
 		struct bu_vls filepath = BU_VLS_INIT_ZERO;
 		FILE *data_fp;
 
-		cp = strrchr(output_directory, '/');
+		cp = strrchr(d->output_directory, '/');
 		if (!cp)
-		    cp = (char *)output_directory;
+		    cp = (char *)d->output_directory;
 		else
 		    ++cp;
 
 		if (*cp == '\0') {
-		    bu_vls_printf(gedp->ged_result_str, "data_dump: bad dirname - %s\n", output_directory);
+		    bu_vls_printf(gedp->ged_result_str, "data_dump: bad dirname - %s\n", d->output_directory);
 		    return BRLCAD_ERROR;
 		}
 
-		bu_vls_printf(&filepath, "%s/%s_data.obj", output_directory, cp);
+		bu_vls_printf(&filepath, "%s/%s_data.obj", d->output_directory, cp);
 
 		data_fp = fopen(bu_vls_addr(&filepath), "wb+");
 		if (data_fp == NULL) {
@@ -1383,11 +1389,11 @@ data_dump(struct ged *gedp, FILE *fp)
 		}
 
 		bu_vls_free(&filepath);
-		obj_write_data(gedp, data_fp);
+		obj_write_data(d, gedp, data_fp);
 		fclose(data_fp);
 	    } else
 		if (fp) {
-		  obj_write_data(gedp, fp);
+		  obj_write_data(d, gedp, fp);
 		} else {
 		  bu_vls_printf(gedp->ged_result_str, "data_dump: bad FILE fp\n");
 		  return BRLCAD_ERROR;
@@ -1405,8 +1411,10 @@ data_dump(struct ged *gedp, FILE *fp)
 }
 
 static void
-dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file_ext, int out_type, int *red, int *green, int *blue, fastf_t *alpha)
+dl_botdump(struct _ged_bot_dump_client_data *d)
 {
+    struct bu_list *hdlp = d->gedp->ged_gdp->gd_headDisplay;
+    struct db_i *dbip = d->gedp->dbip;
     int ret;
     mat_t mat;
     struct display_list *gdlp;
@@ -1442,15 +1450,15 @@ dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file
 		}
 
 		/* Write out object color */
-		if (out_type == OTYPE_OBJ) {
-		    (*red) = sp->s_color[0];
-		    (*green) = sp->s_color[1];
-		    (*blue) = sp->s_color[2];
-		    (*alpha) = sp->s_os->transparency;
+		if (d->output_type == OTYPE_OBJ) {
+		    d->curr_obj_red = sp->s_color[0];
+		    d->curr_obj_green = sp->s_color[1];
+		    d->curr_obj_blue = sp->s_color[2];
+		    d->curr_obj_alpha = sp->s_os->transparency;
 		}
 
 		bot = (struct rt_bot_internal *)intern.idb_ptr;
-		_ged_bot_dump(dp, NULL, bot, fp, fd, file_ext, dbip->dbi_filename);
+		_ged_bot_dump(d, dp, NULL, bot);
 		rt_db_free_internal(&intern);
 	    }
 	}
@@ -1484,9 +1492,12 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    using_dbot_dump = 1;
+    struct _ged_bot_dump_client_data ld;
+    struct _ged_bot_dump_client_data *d = &ld;
+    d->gedp = gedp;
+    d->using_dbot_dump = 0;
 
-    if (bot_dump_get_args(gedp, argc, argv) == BRLCAD_ERROR)
+    if (bot_dump_get_args(d, gedp, argc, argv) == BRLCAD_ERROR)
 	return BRLCAD_ERROR;
 
     if (bu_optind != argc) {
@@ -1494,33 +1505,33 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (output_file && output_directory) {
+    if (d->output_file && d->output_directory) {
 	fprintf(stderr, "ERROR: options \"-o\" and \"-m\" are mutually exclusive\n");
 	return BRLCAD_ERROR;
     }
 
-    if (!output_file && !output_directory) {
-	if (binary) {
+    if (!d->output_file && !d->output_directory) {
+	if (d->binary) {
 	    bu_vls_printf(gedp->ged_result_str, "Can't output binary to stdout\nUsage: %s %s", cmd_name, usage);
 	    return BRLCAD_ERROR;
 	}
 	fp = stdout;
 
 	/* Set this to something non-null in order to possibly write eof */
-	output_file = "stdout";
+	d->output_file = "stdout";
     }
 
-    if (output_file) {
-	switch (output_type) {
+    if (d->output_file) {
+	switch (d->output_type) {
 	    case OTYPE_STL:
-		if (binary) {
+		if (d->binary) {
 		    char buf[81];	/* need exactly 80 chars for header */
 
 		    /* Open binary output file */
-		    fd = open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+		    fd = open(d->output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
 		    if (fd < 0) {
 			perror(cmd_name);
-			bu_vls_printf(gedp->ged_result_str, "Cannot open binary output file (%s) for writing\n", output_file);
+			bu_vls_printf(gedp->ged_result_str, "Cannot open binary output file (%s) for writing\n", d->output_file);
 			return BRLCAD_ERROR;
 		    }
 
@@ -1539,20 +1550,20 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 			perror("write");
 		    }
 		} else {
-		    fp = fopen(output_file, "wb+");
+		    fp = fopen(d->output_file, "wb+");
 		    if (fp == NULL) {
 			perror(argv[0]);
-			bu_vls_printf(gedp->ged_result_str, "Cannot open STL ascii output file (%s) for writing\n", output_file);
+			bu_vls_printf(gedp->ged_result_str, "Cannot open STL ascii output file (%s) for writing\n", d->output_file);
 			return BRLCAD_ERROR;
 		    }
 		}
 		break;
 	    case OTYPE_DXF:
 		/* Open ASCII output file */
-		fp = fopen(output_file, "wb+");
+		fp = fopen(d->output_file, "wb+");
 		if (fp == NULL) {
 		    perror(argv[0]);
-		    bu_vls_printf(gedp->ged_result_str, "Cannot open DXF output file (%s) for writing\n", output_file);
+		    bu_vls_printf(gedp->ged_result_str, "Cannot open DXF output file (%s) for writing\n", d->output_file);
 		    return BRLCAD_ERROR;
 		}
 
@@ -1563,47 +1574,47 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case OTYPE_OBJ:
 		{
-		    fp = fopen(output_file, "wb+");
+		    fp = fopen(d->output_file, "wb+");
 		    if (fp == NULL) {
 			perror(argv[0]);
-			bu_vls_printf(gedp->ged_result_str, "Cannot open SAT output file (%s) for writing\n", output_file);
+			bu_vls_printf(gedp->ged_result_str, "Cannot open SAT output file (%s) for writing\n", d->output_file);
 			return BRLCAD_ERROR;
 		    }
 
 		    char *cp;
 
-		    bu_vls_trunc(&obj_materials_file, 0);
+		    bu_vls_trunc(&d->obj_materials_file, 0);
 
-		    cp = strrchr(output_file, '.');
+		    cp = strrchr(d->output_file, '.');
 		    if (!cp)
-			bu_vls_printf(&obj_materials_file, "%s.mtl", output_file);
+			bu_vls_printf(&d->obj_materials_file, "%s.mtl", d->output_file);
 		    else {
 			/* ignore everything after the last '.' */
 			*cp = '\0';
-			bu_vls_printf(&obj_materials_file, "%s.mtl", output_file);
+			bu_vls_printf(&d->obj_materials_file, "%s.mtl", d->output_file);
 			*cp = '.';
 		    }
 
-		    BU_LIST_INIT(&HeadObjMaterials);
+		    BU_LIST_INIT(&d->HeadObjMaterials);
 
-		    obj_materials_fp = fopen(bu_vls_addr(&obj_materials_file), "wb+");
-		    if (obj_materials_fp == NULL) {
-			bu_vls_printf(gedp->ged_result_str, "%s: failed to open %s\n", cmd_name, bu_vls_addr(&obj_materials_file));
-			bu_vls_free(&obj_materials_file);
+		    d->obj_materials_fp = fopen(bu_vls_cstr(&d->obj_materials_file), "wb+");
+		    if (d->obj_materials_fp == NULL) {
+			bu_vls_printf(gedp->ged_result_str, "%s: failed to open %s\n", cmd_name, bu_vls_cstr(&d->obj_materials_file));
+			bu_vls_free(&d->obj_materials_file);
 			fclose(fp);
 			return BRLCAD_ERROR;
 		    }
 
-		    num_obj_materials = 0;
+		    d->num_obj_materials = 0;
 
-		    fprintf(fp, "mtllib %s\n", bu_vls_addr(&obj_materials_file));
+		    fprintf(fp, "mtllib %s\n", bu_vls_cstr(&d->obj_materials_file));
 		}
 		break;
 	    case OTYPE_SAT:
-		fp = fopen(output_file, "wb+");
+		fp = fopen(d->output_file, "wb+");
 		if (fp == NULL) {
 		    perror(argv[0]);
-		    bu_vls_printf(gedp->ged_result_str, "Cannot open SAT output file (%s) for writing\n", output_file);
+		    bu_vls_printf(gedp->ged_result_str, "Cannot open SAT output file (%s) for writing\n", d->output_file);
 		    return BRLCAD_ERROR;
 		}
 
@@ -1611,51 +1622,51 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		/* Open ASCII output file */
-		fp = fopen(output_file, "wb+");
+		fp = fopen(d->output_file, "wb+");
 		if (fp == NULL) {
 		    perror(argv[0]);
-		    bu_vls_printf(gedp->ged_result_str, "Cannot open ascii output file (%s) for writing\n", output_file);
+		    bu_vls_printf(gedp->ged_result_str, "Cannot open ascii output file (%s) for writing\n", d->output_file);
 		    return BRLCAD_ERROR;
 		}
 		break;
 	}
     }
 
-    if (output_directory) {
-	switch (output_type) {
+    if (d->output_directory) {
+	switch (d->output_type) {
 	    case OTYPE_DXF:
-		file_ext = ".dxf";
+		d->file_ext = ".dxf";
 		break;
 	    case OTYPE_OBJ:
-		file_ext = ".obj";
+		d->file_ext = ".obj";
 
-		BU_LIST_INIT(&HeadObjMaterials);
+		BU_LIST_INIT(&d->HeadObjMaterials);
 
 		{
 		    char *cp;
 		    struct bu_vls filepath = BU_VLS_INIT_ZERO;
 
-		    cp = strrchr(output_directory, '/');
+		    cp = strrchr(d->output_directory, '/');
 		    if (!cp)
-			cp = (char *)output_directory;
+			cp = (char *)d->output_directory;
 		    else
 			++cp;
 
 		    if (*cp == '\0') {
-			bu_vls_printf(gedp->ged_result_str, "%s: bad dirname - %s\n", cmd_name, output_directory);
+			bu_vls_printf(gedp->ged_result_str, "%s: bad dirname - %s\n", cmd_name, d->output_directory);
 			return BRLCAD_ERROR;
 		    }
 
-		    bu_vls_trunc(&obj_materials_file, 0);
-		    bu_vls_printf(&obj_materials_file, "%s.mtl", cp);
+		    bu_vls_trunc(&d->obj_materials_file, 0);
+		    bu_vls_printf(&d->obj_materials_file, "%s.mtl", cp);
 
-		    bu_vls_printf(&filepath, "%s/%s", output_directory, bu_vls_addr(&obj_materials_file));
+		    bu_vls_printf(&filepath, "%s/%s", d->output_directory, bu_vls_cstr(&d->obj_materials_file));
 
 
-		    obj_materials_fp = fopen(bu_vls_addr(&filepath), "wb+");
-		    if (obj_materials_fp == NULL) {
+		    d->obj_materials_fp = fopen(bu_vls_addr(&filepath), "wb+");
+		    if (d->obj_materials_fp == NULL) {
 			bu_vls_printf(gedp->ged_result_str, "%s: failed to open %s\n", cmd_name, bu_vls_addr(&filepath));
-			bu_vls_free(&obj_materials_file);
+			bu_vls_free(&d->obj_materials_file);
 			bu_vls_free(&filepath);
 			return BRLCAD_ERROR;
 		    }
@@ -1663,34 +1674,38 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_free(&filepath);
 		}
 
-		num_obj_materials = 0;
+		d->num_obj_materials = 0;
 
 		break;
 	    case OTYPE_SAT:
-		file_ext = ".sat";
+		d->file_ext = ".sat";
 		break;
 	    case OTYPE_STL:
 	    default:
-		file_ext = ".stl";
+		d->file_ext = ".stl";
 		break;
 	}
     }
 
-    dl_botdump(gedp->ged_gdp->gd_headDisplay, gedp->dbip, fp, fd, file_ext, output_type, &curr_obj_red, &curr_obj_green, &curr_obj_blue, &curr_obj_alpha);
+    d->fp = fp;
+    d->fd = fd;
+    d->file_ext = file_ext;
 
-    data_dump(gedp, fp);
+    dl_botdump(d);
 
-    if (output_file) {
-	switch (output_type) {
+    data_dump(d, gedp, fp);
+
+    if (d->output_file) {
+	switch (d->output_type) {
 	    case OTYPE_STL:
-		if (binary) {
+		if (d->binary) {
 		    unsigned char tot_buffer[4];
 
 		    /* Re-position pointer to 80th byte */
 		    bu_lseek(fd, 80, SEEK_SET);
 
 		    /* Write out number of triangles */
-		    *(uint32_t *)tot_buffer = htonl((unsigned long)total_faces);
+		    *(uint32_t *)tot_buffer = htonl((unsigned long)d->total_faces);
 		    lswap((unsigned int *)tot_buffer);
 		    ret = write(fd, tot_buffer, 4);
 		    if (ret < 0) {
@@ -1714,10 +1729,10 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (output_type == OTYPE_OBJ) {
-	bu_vls_free(&obj_materials_file);
-	obj_free_materials();
-	fclose(obj_materials_fp);
+    if (d->output_type == OTYPE_OBJ) {
+	bu_vls_free(&d->obj_materials_file);
+	obj_free_materials(d);
+	fclose(d->obj_materials_fp);
     }
 
     return BRLCAD_OK;
