@@ -1,4 +1,4 @@
-/*               B O T _ D U M P _ G L T F . C P P
+/*                   G L T F . C P P
  * BRL-CAD
  *
  * Copyright (c) 2025 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot_dump_gltf.cpp
+/** @file gltf.cpp
  *
  */
 

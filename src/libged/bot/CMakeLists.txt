@@ -28,7 +28,6 @@ set(
   bot_condense.c
   bot.cpp
   bot_decimate.c
-  bot_dump.c
   bot_exterior.c
   bot_face_fuse.c
   bot_face_sort.c
@@ -39,6 +38,7 @@ set(
   bot_split.c
   bot_sync.c
   bot_vertex_fuse.c
+  dump/bot_dump.c
   edbot.c
   check.cpp
   decimate.cpp
@@ -64,7 +64,8 @@ target_link_libraries(ged-bot ${BOT_LIBS})
 cmakefiles(
   CMakeLists.txt
   ${BOT_SRCS}
-  bot_dump_gltf.cpp
+  dump/gltf.cpp
+  dump/ged_bot_dump.h
 )
 
 # Local Variables:

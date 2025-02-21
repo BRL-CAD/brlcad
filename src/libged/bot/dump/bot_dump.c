@@ -51,62 +51,13 @@
 #include "bv/defines.h"
 #include "dm.h"
 
-#include "../ged_private.h"
-
+#include "../../ged_private.h"
+#include "./ged_bot_dump.h"
 
 #define V3ARGS_SCALE(_a) (_a)[X]*d->cfactor, (_a)[Y]*d->cfactor, (_a)[Z]*d->cfactor
 
 static char usage[] = "[-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]";
 
-enum otype {
-    OTYPE_DXF = 1,
-    OTYPE_OBJ,
-    OTYPE_SAT,
-    OTYPE_STL
-};
-
-struct _ged_obj_material {
-    struct bu_list l;
-    struct bu_vls name;
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
-    fastf_t a;
-};
-
-struct _ged_bot_dump_client_data {
-    struct ged *gedp;
-    FILE *fp;
-    int fd;
-    char *file_ext;
-
-    int using_dbot_dump;
-    struct bu_list HeadObjMaterials;
-    struct bu_vls obj_materials_file;
-    FILE *obj_materials_fp;
-    int num_obj_materials;
-    int curr_obj_red;
-    int curr_obj_green;
-    int curr_obj_blue;
-    fastf_t curr_obj_alpha;
-
-    enum otype output_type;
-    int binary;
-    int normals;
-    fastf_t cfactor;
-    char *output_file;	/* output filename */
-    char *output_directory;	/* directory name to hold output files */
-    unsigned int total_faces;
-    int v_offset;
-    int curr_line_num;
-
-    int curr_body_id;
-    int curr_lump_id;
-    int curr_shell_id;
-    int curr_face_id;
-    int curr_loop_id;
-    int curr_edge_id;
-};
 
 /* Byte swaps a four byte value */
 static void
