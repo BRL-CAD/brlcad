@@ -106,7 +106,7 @@ extern int dxf_setup(struct _ged_bot_dump_client_data *d, const char *fname, con
 extern int dxf_finish(struct _ged_bot_dump_client_data *d);
 extern void dxf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name);
 
-extern int obj_setup(struct _ged_bot_dump_client_data *d, const char *fname);
+extern int obj_setup(struct _ged_bot_dump_client_data *d, const char *fname, int mtl_only);
 extern int obj_finish(struct _ged_bot_dump_client_data *d);
 extern void obj_free_materials(struct bot_dump_obj *o);
 extern void obj_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name);

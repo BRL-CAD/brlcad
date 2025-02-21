@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <string.h>
+
 #include "./ged_bot_dump.h"
 
 static struct _ged_obj_material *
@@ -63,18 +65,50 @@ obj_get_material(struct bot_dump_obj *o, int red, int green, int blue, fastf_t t
 }
 
 int
-obj_setup(struct _ged_bot_dump_client_data *d, const char *fname)
+obj_setup(struct _ged_bot_dump_client_data *d, const char *fname, int mtl_only)
 {
     if (!d)
 	return BRLCAD_ERROR;
 
     struct ged *gedp = d->gedp;
 
-    d->fp = fopen(fname, "wb+");
-    if (d->fp == NULL) {
-	perror("obj_setup");
-	bu_vls_printf(gedp->ged_result_str, "Cannot open OBJ ascii output file (%s) for writing\n", fname);
-	return BRLCAD_ERROR;
+    if (!mtl_only) {
+	d->fp = fopen(fname, "wb+");
+	if (d->fp == NULL) {
+	    perror("obj_setup");
+	    bu_vls_printf(gedp->ged_result_str, "Cannot open OBJ ascii output file (%s) for writing\n", fname);
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    if (d->material_info) {
+	char *cp;
+
+	bu_vls_trunc(&d->obj.obj_materials_file, 0);
+
+	cp = strrchr(fname, '.');
+	if (!cp)
+	    bu_vls_printf(&d->obj.obj_materials_file, "%s.mtl", fname);
+	else {
+	    /* ignore everything after the last '.' */
+	    *cp = '\0';
+	    bu_vls_printf(&d->obj.obj_materials_file, "%s.mtl", fname);
+	    *cp = '.';
+	}
+
+	BU_LIST_INIT(&d->obj.HeadObjMaterials);
+
+	d->obj.obj_materials_fp = fopen(bu_vls_cstr(&d->obj.obj_materials_file), "wb+");
+	if (d->obj.obj_materials_fp == NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "obj_setup: failed to open %s\n", bu_vls_cstr(&d->obj.obj_materials_file));
+	    bu_vls_free(&d->obj.obj_materials_file);
+	    return BRLCAD_ERROR;
+	}
+
+	d->obj.num_obj_materials = 0;
+
+	if (!mtl_only)
+	    fprintf(d->fp, "mtllib %s\n", bu_vls_cstr(&d->obj.obj_materials_file));
     }
 
     return BRLCAD_OK;
@@ -88,6 +122,12 @@ obj_finish(struct _ged_bot_dump_client_data *d)
 	return BRLCAD_ERROR;
 
     fclose(d->fp);
+
+    if (d->material_info) {
+	bu_vls_free(&d->obj.obj_materials_file);
+	obj_free_materials(&d->obj);
+	fclose(d->obj.obj_materials_fp);
+    }
 
     return BRLCAD_OK;
 }
