@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2024-XX-XX  Release X.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed dbconcat treatment of a '/' prefix character - Cliff Yapp
 * fixed bb '-o' in MGED - Chris McGregor
 * removed obsolete -b and -t options from rtshot - Cliff Yapp
 * removed obsolete rt_bot_minpieces variable from rt - Cliff Yapp
