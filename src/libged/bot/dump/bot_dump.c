@@ -503,6 +503,11 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    if (d->view_data || write_displayed) {
+	GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+	GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    }
+
     if (!bu_vls_strlen(&d->output_file) && !bu_vls_strlen(&d->output_directory)) {
 	d->fp = stdout;
 	bu_vls_sprintf(&d->output_file, "stdout");
@@ -564,7 +569,20 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    if (argc < 1) {
+    if (bu_vls_strlen(&d->output_directory)) {
+	switch (d->output_type) {
+	    case OTYPE_OBJ:
+		if (obj_setup(d, bu_vls_cstr(&d->output_file), 1) != BRLCAD_OK) {
+		    bot_client_data_cleanup(d);
+		    return BRLCAD_ERROR;
+		}
+	    default:
+		break;
+	}
+    }
+
+
+    if (argc < 1 && !write_displayed) {
 	mat_t mat;
 	MAT_IDN(mat);
 	/* dump all the bots */
@@ -590,6 +608,8 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	    rt_db_free_internal(&intern);
 
 	} FOR_ALL_DIRECTORY_END;
+    } else if (write_displayed) {
+	dl_botdump(d);
     } else {
 	int ac = 1;
 	int ncpu = 1;
@@ -614,6 +634,9 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    if (d->view_data && d->fp) {
+	viewdata_dump(d, gedp, d->fp);
+    }
 
     if (bu_vls_cstr(&d->output_file)) {
 
@@ -641,160 +664,23 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-
-
 int
 ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int print_help = 0;
+    int ac = argc + 3;
+    const char **av = (const char **)bu_calloc(ac, sizeof(char *), "av");
+    av[0] = argv[0];
+    av[1] = "--displayed";
+    av[2] = "--viewdata";
+    av[3] = "--materials";
+    for (int i = 1; i < argc; i++)
+	av[i+3] = argv[i];
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    int ret = ged_bot_dump_core(gedp, ac, (const char **)av);
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
+    bu_free(av, "av");
 
-    struct _ged_bot_dump_client_data ld;
-    struct _ged_bot_dump_client_data *d = &ld;
-    bot_client_data_init(d);
-    d->gedp = gedp;
-    d->material_info = 1;
-
-    struct bu_opt_desc od[9];
-    BU_OPT(od[0], "h", "help",             "",      NULL,          &print_help,          "Print help and exit");
-    BU_OPT(od[1], "?", "",                 "",      NULL,          &print_help,          "");
-    BU_OPT(od[2], "b", "",                 "",      NULL,          &d->binary,           "Use binary version of output format");
-    BU_OPT(od[3], "n", "normals",          "",      NULL,          &d->normals,          "If supported, write out normals");
-    BU_OPT(od[4], "m", "output-directory", "dir",   &bu_opt_vls,   &d->output_directory, "Output multiple files into this directory");
-    BU_OPT(od[5], "o", "output-file",      "file",  &bu_opt_vls,   &d->output_file,      "Specify an output filename");
-    BU_OPT(od[6], "t", "",                 "fmt",   &bot_opt_fmt,  &d->output_type,      "Specify an output format type");
-    BU_OPT(od[7], "u", "",                 "unit",  &bot_opt_unit, &d->cfactor,          "Specify an output unit");
-    BU_OPT_NULL(od[8]);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	_ged_cmd_help(gedp, usage, od);
-	bot_client_data_cleanup(d);
-	return GED_HELP;
-    }
-
-    /* parse standard options */
-    int opt_ret = bu_opt_parse(NULL, argc, argv, od);
-
-    if (print_help) {
-	_ged_cmd_help(gedp, usage, od);
-	bot_client_data_cleanup(d);
-	return BRLCAD_OK;
-    }
-
-    argc = opt_ret;
-
-    if (bu_vls_strlen(&d->output_file) && bu_vls_strlen(&d->output_directory)) {
-	fprintf(stderr, "ERROR: options \"-o\" and \"-m\" are mutually exclusive\n");
-	bot_client_data_cleanup(d);
-	return BRLCAD_ERROR;
-    }
-
-    if (!bu_vls_strlen(&d->output_file) && !bu_vls_strlen(&d->output_directory)) {
-	d->fp = stdout;
-	bu_vls_sprintf(&d->output_file, "stdout");
-    }
-
-    if (d->binary && d->fp == stdout) {
-	bu_vls_printf(gedp->ged_result_str, "Can't output binary format to stdout\n");
-	bot_client_data_cleanup(d);
-	return BRLCAD_ERROR;
-    }
-
-    // If we don't have an explicit format, see if we can deduce it from the
-    // filename.  If not, go with STL.
-    if (d->output_type == OTYPE_UNSET) {
-	struct bu_vls ext = BU_VLS_INIT_ZERO;
-	if (bu_path_component(&ext, bu_vls_cstr(&d->output_file), BU_PATH_EXT))
-	    d->output_type = bot_fmt_type(bu_vls_cstr(&ext));
-	if (d->output_type == OTYPE_UNSET) {
-	    bu_vls_printf(gedp->ged_result_str, "WARNING: no format type '-t' specified, defaulting to stl\n");
-	    d->output_type = OTYPE_STL;
-	}
-    }
-
-    d->file_ext = bot_fmt_ext(d->output_type, d->binary);
-
-
-    if (bu_vls_strlen(&d->output_file)) {
-	switch (d->output_type) {
-	    case OTYPE_STL:
-		if (stl_setup(d, bu_vls_cstr(&d->output_file)) != BRLCAD_OK) {
-		    bot_client_data_cleanup(d);
-		    return BRLCAD_ERROR;
-		}
-		break;
-	    case OTYPE_DXF:
-		if (dxf_setup(d, bu_vls_cstr(&d->output_file), argv[argc-1], NULL) != BRLCAD_OK) {
-		    bot_client_data_cleanup(d);
-		    return BRLCAD_ERROR;
-		}
-		break;
-	    case OTYPE_OBJ:
-		if (obj_setup(d, bu_vls_cstr(&d->output_file), 0) != BRLCAD_OK) {
-		    bot_client_data_cleanup(d);
-		    return BRLCAD_ERROR;
-		}
-		break;
-	    case OTYPE_SAT:
-		if (sat_setup(d, bu_vls_cstr(&d->output_file)) != BRLCAD_OK) {
-		    bot_client_data_cleanup(d);
-		    return BRLCAD_ERROR;
-		}
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Unsupported format!\n");
-		bot_client_data_cleanup(d);
-		return BRLCAD_ERROR;
-	}
-    }
-
-    if (bu_vls_strlen(&d->output_directory)) {
-	switch (d->output_type) {
-	    case OTYPE_OBJ:
-		if (obj_setup(d, bu_vls_cstr(&d->output_file), 1) != BRLCAD_OK) {
-		    bot_client_data_cleanup(d);
-		    return BRLCAD_ERROR;
-		}
-	    default:
-		break;
-	}
-    }
-
-    dl_botdump(d);
-
-    viewdata_dump(d, gedp, d->fp);
-
-    if (bu_vls_cstr(&d->output_file)) {
-	switch (d->output_type) {
-	    case OTYPE_STL:
-		stl_finish(d);
-		break;
-	    case OTYPE_DXF:
-		dxf_finish(d);
-		break;
-	    case OTYPE_OBJ:
-		obj_finish(d);
-		break;
-	    case OTYPE_SAT:
-		sat_finish(d);
-		break;
-	    default:
-		bu_log("Unsupported type??\n");
-		break;
-	}
-    }
-
-    bot_client_data_cleanup(d);
-    return BRLCAD_OK;
+    return ret;
 }
 
 /*
