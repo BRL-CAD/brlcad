@@ -302,6 +302,115 @@ bot_opt_unit(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *s
     return 1;
 }
 
+static int
+viewdata_dump(struct _ged_bot_dump_client_data *d, struct ged *gedp, FILE *fp)
+{
+    switch (d->output_type) {
+	case OTYPE_DXF:
+	    break;
+	case OTYPE_OBJ:
+	    if (bu_vls_strlen(&d->output_directory)) {
+		char *cp;
+		struct bu_vls filepath = BU_VLS_INIT_ZERO;
+		FILE *data_fp;
+
+		cp = strrchr(bu_vls_cstr(&d->output_directory), '/');
+		if (!cp)
+		    cp = (char *)bu_vls_cstr(&d->output_directory);
+		else
+		    ++cp;
+
+		if (*cp == '\0') {
+		    bu_vls_printf(gedp->ged_result_str, "viewdata_dump: bad dirname - %s\n", bu_vls_cstr(&d->output_directory));
+		    return BRLCAD_ERROR;
+		}
+
+		bu_vls_printf(&filepath, "%s/%s_data.obj", bu_vls_cstr(&d->output_directory), cp);
+
+		data_fp = fopen(bu_vls_addr(&filepath), "wb+");
+		if (data_fp == NULL) {
+		    bu_vls_printf(gedp->ged_result_str, "viewdata_dump: failed to open %s\n", bu_vls_addr(&filepath));
+		    bu_vls_free(&filepath);
+		    return BRLCAD_ERROR;
+		}
+
+		bu_vls_free(&filepath);
+		obj_write_data(d, gedp, data_fp);
+		fclose(data_fp);
+	    } else
+		if (fp) {
+		  obj_write_data(d, gedp, fp);
+		} else {
+		  bu_vls_printf(gedp->ged_result_str, "viewdata_dump: bad FILE fp\n");
+		  return BRLCAD_ERROR;
+		}
+
+	    break;
+	case OTYPE_SAT:
+	    break;
+	case OTYPE_STL:
+	default:
+	    break;
+    }
+
+    return BRLCAD_OK;
+}
+
+static void
+dl_botdump(struct _ged_bot_dump_client_data *d)
+{
+    struct bu_list *hdlp = d->gedp->ged_gdp->gd_headDisplay;
+    struct db_i *dbip = d->gedp->dbip;
+    int ret;
+    mat_t mat;
+    struct display_list *gdlp;
+
+    MAT_IDN(mat);
+
+    for (BU_LIST_FOR(gdlp, display_list, hdlp)) {
+	struct bv_scene_obj *sp;
+
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+		struct directory *dp;
+		struct rt_db_internal intern;
+		struct rt_bot_internal *bot;
+
+		if (!sp->s_u_data)
+		    continue;
+		struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
+
+		dp = bdata->s_fullpath.fp_names[bdata->s_fullpath.fp_len-1];
+
+		/* get the internal form */
+		ret = rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource);
+
+		if (ret < 0) {
+		    bu_log("rt_get_internal failure %d on %s\n", ret, dp->d_namep);
+		    continue;
+		}
+
+		if (ret != ID_BOT) {
+		    bu_log("%s is not a bot (ignored)\n", dp->d_namep);
+		    rt_db_free_internal(&intern);
+		    continue;
+		}
+
+		/* Write out object color */
+		if (d->output_type == OTYPE_OBJ) {
+		    d->obj.curr_obj_red = sp->s_color[0];
+		    d->obj.curr_obj_green = sp->s_color[1];
+		    d->obj.curr_obj_blue = sp->s_color[2];
+		    d->obj.curr_obj_alpha = sp->s_os->transparency;
+		}
+
+		bot = (struct rt_bot_internal *)intern.idb_ptr;
+		_ged_bot_dump(d, dp, NULL, bot);
+		rt_db_free_internal(&intern);
+	    }
+	}
+
+}
+
 void
 bot_client_data_init(struct _ged_bot_dump_client_data *d)
 {
@@ -532,114 +641,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-static int
-data_dump(struct _ged_bot_dump_client_data *d, struct ged *gedp, FILE *fp)
-{
-    switch (d->output_type) {
-	case OTYPE_DXF:
-	    break;
-	case OTYPE_OBJ:
-	    if (bu_vls_strlen(&d->output_directory)) {
-		char *cp;
-		struct bu_vls filepath = BU_VLS_INIT_ZERO;
-		FILE *data_fp;
 
-		cp = strrchr(bu_vls_cstr(&d->output_directory), '/');
-		if (!cp)
-		    cp = (char *)bu_vls_cstr(&d->output_directory);
-		else
-		    ++cp;
-
-		if (*cp == '\0') {
-		    bu_vls_printf(gedp->ged_result_str, "data_dump: bad dirname - %s\n", bu_vls_cstr(&d->output_directory));
-		    return BRLCAD_ERROR;
-		}
-
-		bu_vls_printf(&filepath, "%s/%s_data.obj", bu_vls_cstr(&d->output_directory), cp);
-
-		data_fp = fopen(bu_vls_addr(&filepath), "wb+");
-		if (data_fp == NULL) {
-		    bu_vls_printf(gedp->ged_result_str, "data_dump: failed to open %s\n", bu_vls_addr(&filepath));
-		    bu_vls_free(&filepath);
-		    return BRLCAD_ERROR;
-		}
-
-		bu_vls_free(&filepath);
-		obj_write_data(d, gedp, data_fp);
-		fclose(data_fp);
-	    } else
-		if (fp) {
-		  obj_write_data(d, gedp, fp);
-		} else {
-		  bu_vls_printf(gedp->ged_result_str, "data_dump: bad FILE fp\n");
-		  return BRLCAD_ERROR;
-		}
-
-	    break;
-	case OTYPE_SAT:
-	    break;
-	case OTYPE_STL:
-	default:
-	    break;
-    }
-
-    return BRLCAD_OK;
-}
-
-static void
-dl_botdump(struct _ged_bot_dump_client_data *d)
-{
-    struct bu_list *hdlp = d->gedp->ged_gdp->gd_headDisplay;
-    struct db_i *dbip = d->gedp->dbip;
-    int ret;
-    mat_t mat;
-    struct display_list *gdlp;
-
-    MAT_IDN(mat);
-
-    for (BU_LIST_FOR(gdlp, display_list, hdlp)) {
-	struct bv_scene_obj *sp;
-
-	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-		struct directory *dp;
-		struct rt_db_internal intern;
-		struct rt_bot_internal *bot;
-
-		if (!sp->s_u_data)
-		    continue;
-		struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
-
-		dp = bdata->s_fullpath.fp_names[bdata->s_fullpath.fp_len-1];
-
-		/* get the internal form */
-		ret = rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource);
-
-		if (ret < 0) {
-		    bu_log("rt_get_internal failure %d on %s\n", ret, dp->d_namep);
-		    continue;
-		}
-
-		if (ret != ID_BOT) {
-		    bu_log("%s is not a bot (ignored)\n", dp->d_namep);
-		    rt_db_free_internal(&intern);
-		    continue;
-		}
-
-		/* Write out object color */
-		if (d->output_type == OTYPE_OBJ) {
-		    d->obj.curr_obj_red = sp->s_color[0];
-		    d->obj.curr_obj_green = sp->s_color[1];
-		    d->obj.curr_obj_blue = sp->s_color[2];
-		    d->obj.curr_obj_alpha = sp->s_os->transparency;
-		}
-
-		bot = (struct rt_bot_internal *)intern.idb_ptr;
-		_ged_bot_dump(d, dp, NULL, bot);
-		rt_db_free_internal(&intern);
-	    }
-	}
-
-}
 
 
 int
@@ -769,7 +771,7 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 
     dl_botdump(d);
 
-    data_dump(d, gedp, d->fp);
+    viewdata_dump(d, gedp, d->fp);
 
     if (bu_vls_cstr(&d->output_file)) {
 	switch (d->output_type) {
