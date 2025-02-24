@@ -84,6 +84,8 @@ obj_setup(struct _ged_bot_dump_client_data *d, const char *fname, int mtl_only)
     if (d->material_info) {
 	char *cp;
 
+	bu_vls_init(&d->obj.obj_materials_file);
+
 	bu_vls_trunc(&d->obj.obj_materials_file, 0);
 
 	cp = strrchr(fname, '.');
