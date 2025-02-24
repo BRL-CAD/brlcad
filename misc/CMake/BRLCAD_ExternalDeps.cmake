@@ -501,7 +501,7 @@ function(rpath_build_dir_process ROOT_DIR lf)
   endif(APPLE)
 endfunction(rpath_build_dir_process)
 
-# Utility routines for bext management
+# bext repository management
 include(BRLCAD_EXT_Setup)
 
 #####################################################################
@@ -509,7 +509,7 @@ include(BRLCAD_EXT_Setup)
 # keep the build directory copies of ${BRLCAD_EXT_DIR}/install files
 # in sync with the BRLCAD_EXT_DIR originals, if they change.
 #####################################################################
-function(brlcad_process_ext)
+function(brlcad_bext_process)
 
   if(BRLCAD_DISABLE_RELOCATION)
     return()
@@ -935,7 +935,7 @@ function(brlcad_process_ext)
   foreach(ef ${TP_NOINST_FILES})
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BRLCAD_EXT_NOINSTALL_DIR}/${ef})
   endforeach(ef ${TP_NOINST_FILES})
-endfunction(brlcad_process_ext)
+endfunction(brlcad_bext_process)
 
 #####################################################################
 # We want find_package calls that re-run every time configure is run,

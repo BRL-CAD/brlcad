@@ -206,90 +206,16 @@ include(BRLCAD_Environment_Setup)
 # an incorrect include directory for Eigen based on bext build info.
 set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 
-# Populate these early, even though their main use is in
-# misc/CMake/BRLCAD_ExternalDeps.cmake - find_program and find_package calls
-# may also make use of them, particularly BRLCAD_EXT_NOINSTALL_DIR
-set(BRLCAD_EXT_DIR_ENV "$ENV{BRLCAD_EXT_DIR}")
-if(BRLCAD_EXT_DIR_ENV AND NOT DEFINED BRLCAD_EXT_DIR)
-  set(BRLCAD_EXT_DIR ${BRLCAD_EXT_DIR_ENV})
-endif(BRLCAD_EXT_DIR_ENV AND NOT DEFINED BRLCAD_EXT_DIR)
+#---------------------------------------------------------------------
+# Prepare External dependencies (bext) repository management
+include(BRLCAD_ExternalDeps)
 
-if(DEFINED BRLCAD_EXT_DIR)
-  # Make sure we cache the BRLCAD_EXT_DIR setting - if we don't, then a re-configure
-  # with CMake is going to ignore a previously specified directory
-  set(BRLCAD_EXT_DIR "${BRLCAD_EXT_DIR}" CACHE PATH "BRL-CAD external dependency sources")
-
-  if(NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
-    set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_DIR}/install")
-  endif(NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
-  # Need to handle the case where BRLCAD_EXT_DIR is a symlink - if it
-  # is, we need to expand the symlink in order for the tar tricks we use
-  # later for file copying to work...
-  if(DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
-    file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" EXT_PATH)
-    set(BRLCAD_EXT_INSTALL_DIR "${EXT_PATH}")
-  endif(DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
-
-  # For noinstall we don't need to worry about symlinks since we'll be using
-  # the contents in place.
-  if(NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
-    set(BRLCAD_EXT_NOINSTALL_DIR "${BRLCAD_EXT_DIR}/noinstall")
-  endif(NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
-endif(DEFINED BRLCAD_EXT_DIR)
-
-# If we're doing the non-src-other build, we've got to have bext for at least a
-# few custom components no matter how many system packages are installed.
-if(NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
-  message(
-    WARNING
-    "External dependencies will be downloaded, configured, and built automatically as-needed. Set BRLCAD_EXT_DIR to specify instead."
-  )
-  message(
-    STATUS
-    "BRLCAD_EXT_DIR specifies prebuilt external dependencies directory\n"
-    "containing 'install' and 'noinstall' folders, outputs from installing\n"
-    "https://github.com/BRL-CAD/bext.\n"
-  )
-endif(NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
-
-# By default, we don't bundle bext into the source tarball for performance
-# reasons, but the support is there if the dev wants to pay the price in time
-# and disk space.
-if(NOT DEFINED CPACK_INCLUDE_EXT)
-  set(CPACK_INCLUDE_EXT OFF)
-endif(NOT DEFINED CPACK_INCLUDE_EXT)
-
-# Before we do a lot of configure work, check whether we've got a type mismatch
-# between bext and the BRL-CAD build type. If not, on Windows at least, it's a
-# fatal error.
+# Sets the bext SHA1 hash.  There are also some steps in this process that need
+# to happen early to allow find_package and find_program to work as expected.
 #
-# NOTE: This test must come AFTER the inclusion of BRLCAD_Build_Types
-if(CMAKE_BUILD_TYPE AND EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
-  find_program(DUMPBIN_EXEC dumpbin)
-  set(TEST_BINFILE ${BRLCAD_EXT_NOINSTALL_DIR}/bin/strclear.exe)
-  if(DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
-    # dumpbin doesn't like CMake style paths
-    file(TO_NATIVE_PATH "${TEST_BINFILE}" TBFN)
-    # https://stackoverflow.com/a/28304716/2037687
-    execute_process(COMMAND ${DUMPBIN_EXEC} /dependents ${TBFN} OUTPUT_VARIABLE DB_OUT ERROR_VARIABLE DB_OUT)
-    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-      if("${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*" OR "${DB_OUT}" MATCHES ".*MSVCP[0-9]*D.dll.*")
-        message(
-          FATAL_ERROR
-          "Release build specified, but supplied bext binaries in ${BRLCAD_EXT_DIR} are compiled as Debug binaries."
-        )
-      endif("${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*" OR "${DB_OUT}" MATCHES ".*MSVCP[0-9]*D.dll.*")
-    endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-      if(NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*" AND NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*D.dll.*")
-        message(
-          FATAL_ERROR
-          "Debug build specified, but supplied bext binaries in ${BRLCAD_EXT_DIR} are compiled as Release binaries."
-        )
-      endif(NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*d.dll.*" AND NOT "${DB_OUT}" MATCHES ".*MSVCP[0-9]*D.dll.*")
-    endif("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-  endif(DUMPBIN_EXEC AND EXISTS ${TEST_BINFILE})
-endif(CMAKE_BUILD_TYPE AND EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
+# If a pre-existing bext install directory is specified, we also check the
+# types on platforms where bext and the main BRL-CAD's build type must align.
+brlcad_bext_init()
 
 #---------------------------------------------------------------------
 # Define various utilities.
@@ -2167,8 +2093,7 @@ add_subdirectory(misc/tools)
 include(${CMAKE_SOURCE_DIR}/src/source_dirs.cmake)
 
 # Now we have the necessary info - trigger the primary management logic
-include(BRLCAD_ExternalDeps)
-brlcad_process_ext()
+brlcad_bext_process()
 
 # Define some Tcl related variables for libtclcad
 if(BRLCAD_ITCL_BUILD)

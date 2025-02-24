@@ -33,7 +33,6 @@ set(
   make_rpm.sh
   news2tracker.sh
   template.sh
-  update_bext.sh
   ws.sh
   sandbox/metaring.sh
   sandbox/orbit.sh

@@ -118,7 +118,7 @@ jobs:
         shell: cmd
         run: |
           call "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
-          cmake -S . -B build_winstd -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_BUNDLED_LIBS=Bundled -DBRLCAD_ENABLE_QT=ON -DCMAKE_BUILD_TYPE=Release
+          cmake -S . -B build_winstd -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_BUNDLED_LIBS=Bundled -DBRLCAD_ENABLE_QT=ON -DCMAKE_BUILD_TYPE=Release -DBRLCAD_BEXT_CLEANUP=ON
 
       - name: Build
         shell: cmd
@@ -187,7 +187,7 @@ jobs:
       - name: Configure
         run: |
           export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
-          cmake -S . -G Ninja -B build_linux -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_ENABLE_QT=ON
+          cmake -S . -G Ninja -B build_linux -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_ENABLE_QT=ON -DBRLCAD_BEXT_CLEANUP=ON
 
       - name: Build
         run: |
@@ -297,6 +297,6 @@ jobs:
         run: |
           cmake -E make_directory ./build_archives
           export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
-          cmake -S . -B build_archives -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_PARALLEL=1 -DCPACK_INCLUDE_EXT=OFF
+          cmake -S . -B build_archives -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_BEXT_CLEANUP=ON
           cmake --build build_archives --config Release --target distcheck-source_archives
 

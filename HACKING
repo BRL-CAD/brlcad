@@ -1380,17 +1380,11 @@ Release steps are as follows:
 
 #####################################################################
 # 08: Update the bext submodule in BRL-CAD's main repository.
+      (TODO - this can probably be scripted...)
 
-    rm -rf src/bext && git checkout -- src/bext
-    git submodule update --init
-    git submodule update --remote
-    git add src/bext
-    cd src/bext
-    BSHA1=$(git log -1 --pretty=format:"%h")
-    cd ../..
-    git commit -m "Update bext submodule to SHA1 $BSHA1"
+    # NON-AUTO: Update BEXT_SHA1 hash in misc/CMake/BRLCAD_EXT_Setup.cmake
+    git commit -m "Update bext submodule to SHA1 <hashval>"
     git push
-    rm -rf src/bext && git checkout -- src/bext
 
 #####################################################################
 # 09: Update ChangeLog.  Use the YYYY-MM-DD of previous NEWS entry.

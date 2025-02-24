@@ -45,15 +45,12 @@ set(NOT_DISTCHECK_READY 0)
 set(CMAKE_BINARY_DIR "@CMAKE_BINARY_DIR@")
 
 # Avoid empty items in lists, so we don't trigger a CMake warning
-# Also ignore src/bext submodule
 function(scrub_list SLIST)
   set(NONEMPTY)
   foreach(sf ${${SLIST}})
-    if(NOT "${sf}" STREQUAL "src/bext")
-      if(NOT "${sf}" STREQUAL "")
-        list(APPEND NONEMPTY "${sf}")
-      endif(NOT "${sf}" STREQUAL "")
-    endif(NOT "${sf}" STREQUAL "src/bext")
+    if(NOT "${sf}" STREQUAL "")
+      list(APPEND NONEMPTY "${sf}")
+    endif(NOT "${sf}" STREQUAL "")
   endforeach(sf ${${SLIST}})
   string(REGEX REPLACE "^;" "" NONEMPTY "${NONEMPTY}")
   set(${SLIST} ${NONEMPTY} PARENT_SCOPE)

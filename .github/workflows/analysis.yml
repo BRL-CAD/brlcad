@@ -118,7 +118,7 @@ jobs:
       - name: Configure
         run: |
           export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
-          cmake -S . -B build_lcov -DBRLCAD_ENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_ENABLE_QT=ON
+          cmake -S . -B build_lcov -DBRLCAD_ENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_ENABLE_QT=ON -DBRLCAD_BEXT_CLEANUP=ON
 
       - name: Build
         run: |
