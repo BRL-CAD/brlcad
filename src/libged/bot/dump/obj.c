@@ -113,6 +113,8 @@ obj_setup(struct _ged_bot_dump_client_data *d, const char *fname, int mtl_only)
 	    fprintf(d->fp, "mtllib %s\n", bu_vls_cstr(&d->obj.obj_materials_file));
     }
 
+    d->obj.v_offset = 1;
+
     return BRLCAD_OK;
 }
 

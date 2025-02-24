@@ -220,7 +220,7 @@ bot_dump_leaf(struct db_tree_state *UNUSED(tsp),
     return curtree;
 }
 
-static char usage[] = "bot dump [-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]";
+static char usage[] = "bot dump [-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n\n";
 
 enum otype
 bot_fmt_type(const char *t)
@@ -480,7 +480,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT_NULL(od[11]);
 
     /* must be wanting help */
-    if (argc == 1) {
+    if (!argc) {
 	_ged_cmd_help(gedp, usage, od);
 	bot_client_data_cleanup(d);
 	return GED_HELP;

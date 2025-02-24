@@ -73,6 +73,8 @@ sat_setup(struct _ged_bot_dump_client_data *d, const char *fname)
 	return BRLCAD_ERROR;
     }
 
+    d->sat.curr_line_num = 0;
+
     sat_write_header(d->fp);
 
     return BRLCAD_OK;
