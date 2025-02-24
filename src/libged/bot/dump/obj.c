@@ -125,7 +125,8 @@ obj_finish(struct _ged_bot_dump_client_data *d)
     if (!d)
 	return BRLCAD_ERROR;
 
-    fclose(d->fp);
+    if (!bu_vls_strlen(&d->output_directory))
+	fclose(d->fp);
 
     if (d->material_info) {
 	bu_vls_free(&d->obj.obj_materials_file);

@@ -87,8 +87,10 @@ sat_finish(struct _ged_bot_dump_client_data *d)
     if (!d)
 	return BRLCAD_ERROR;
 
-    fprintf(d->fp, "End-of-ACIS-data\n");
-    fclose(d->fp);
+    if (!bu_vls_strlen(&d->output_directory)) {
+	fprintf(d->fp, "End-of-ACIS-data\n");
+	fclose(d->fp);
+    }
 
     return BRLCAD_OK;
 }

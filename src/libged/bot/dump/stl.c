@@ -64,16 +64,16 @@ stl_setup(struct _ged_bot_dump_client_data *d, const char *fname)
 	/* Write out STL header if output file is binary */
 	memset(buf, 0, sizeof(buf));
 	bu_strlcpy(buf, "BRL-CAD generated STL FILE", sizeof(buf));
-	ret = write(d->fd, &buf, 80);
-	if (ret < 0) {
+	if (write(d->fd, &buf, 80) < 0) {
 	    perror("write");
+	    ret = BRLCAD_ERROR;
 	}
 
 	/* write a place keeper for the number of triangles */
 	memset(buf, 0, 4);
-	ret = write(d->fd, &buf, 4);
-	if (ret < 0) {
+	if (write(d->fd, &buf, 4) < 0) {
 	    perror("write");
+	    ret = BRLCAD_ERROR;
 	}
     } else {
 	d->fp = fopen(fname, "wb+");
@@ -84,7 +84,7 @@ stl_setup(struct _ged_bot_dump_client_data *d, const char *fname)
 	}
     }
 
-    return (ret != BRLCAD_OK) ? BRLCAD_ERROR : BRLCAD_OK;
+    return ret;
 }
 
 int
@@ -111,7 +111,8 @@ stl_finish(struct _ged_bot_dump_client_data *d)
 
 	close(d->fd);
     } else {
-	fclose(d->fp);
+	if (!bu_vls_strlen(&d->output_directory))
+	    fclose(d->fp);
     }
 
     return (ret != BRLCAD_OK) ? BRLCAD_ERROR : BRLCAD_OK;

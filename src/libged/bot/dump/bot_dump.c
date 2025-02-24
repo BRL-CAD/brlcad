@@ -33,6 +33,7 @@
 #include "bio.h"
 #include "bnetwork.h"
 
+#include "bu/app.h" // bu_mkdir
 #include "bu/cv.h"
 #include "bu/getopt.h"
 #include "bu/units.h"
@@ -81,33 +82,40 @@ _ged_bot_dump(struct _ged_bot_dump_client_data *d, struct directory *dp, const s
 	}
 	bu_vls_strcat(&file_name, file_ext);
 
+	bu_mkdir(bu_vls_cstr(&d->output_directory));
 
 	switch (d->output_type) {
 	    case OTYPE_STL:
-		if (stl_setup(d, bu_vls_cstr(&d->output_file)) != BRLCAD_OK)
+		if (stl_setup(d, bu_vls_cstr(&file_name)) != BRLCAD_OK)
 		    return;
 
+
 		if (d->binary) {
+		    fd = d->fd;
 		    stl_write_bot_binary(d, bot, fd, dp->d_namep);
 		} else {
+		    fp = d->fp;
 		    stl_write_bot(d, bot, fp, dp->d_namep);
 		}
 
 		stl_finish(d);
 		break;
 	    case OTYPE_DXF:
-		if (dxf_setup(d, bu_vls_cstr(&d->output_file), dp->d_namep, db_g_name) != BRLCAD_OK)
+		if (dxf_setup(d, bu_vls_cstr(&file_name), dp->d_namep, db_g_name) != BRLCAD_OK)
 		    return;
+
+		fp = d->fp;
 		dxf_write_bot(d, bot, fp, dp->d_namep);
 		dxf_finish(d);
 		break;
 	    case OTYPE_OBJ:
-		if (obj_setup(d, bu_vls_cstr(&d->output_file), 0) != BRLCAD_OK)
+		if (obj_setup(d, bu_vls_cstr(&file_name), 0) != BRLCAD_OK)
 		    return;
 
 		d->obj.v_offset = 1;
 
 		fprintf(d->fp, "mtllib %s\n", bu_vls_addr(&d->obj.obj_materials_file));
+		fp = d->fp;
 		if (!pathp) {
 		    obj_write_bot(d, bot, d->fp, dp->d_namep);
 		} else {
@@ -121,8 +129,9 @@ _ged_bot_dump(struct _ged_bot_dump_client_data *d, struct directory *dp, const s
 		break;
 	    case OTYPE_SAT:
 		d->sat.curr_line_num = 0;
-		if (sat_setup(d, bu_vls_cstr(&d->output_file)) != BRLCAD_OK)
+		if (sat_setup(d, bu_vls_cstr(&file_name)) != BRLCAD_OK)
 		    return;
+		fp = d->fp;
 		sat_write_bot(d, bot, fp, dp->d_namep);
 		sat_finish(d);
 		break;
@@ -522,9 +531,12 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     // If we don't have an explicit format, see if we can deduce it from the
     // filename.  If not, go with STL.
     if (d->output_type == OTYPE_UNSET) {
-	struct bu_vls ext = BU_VLS_INIT_ZERO;
-	if (bu_path_component(&ext, bu_vls_cstr(&d->output_file), BU_PATH_EXT))
-	    d->output_type = bot_fmt_type(bu_vls_cstr(&ext));
+	if (bu_vls_strlen(&d->output_file)) {
+	    struct bu_vls ext = BU_VLS_INIT_ZERO;
+	    if (bu_path_component(&ext, bu_vls_cstr(&d->output_file), BU_PATH_EXT))
+		d->output_type = bot_fmt_type(bu_vls_cstr(&ext));
+	    bu_vls_free(&ext);
+	}
 	if (d->output_type == OTYPE_UNSET) {
 	    bu_vls_printf(gedp->ged_result_str, "WARNING: no format type '-t' specified, defaulting to stl\n");
 	    d->output_type = OTYPE_STL;
