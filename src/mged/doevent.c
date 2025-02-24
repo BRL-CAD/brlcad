@@ -119,7 +119,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
     struct mged_dm *save_dm_list;
     int status;
 
-    if (eventPtr->type == DestroyNotify || (unsigned long)eventPtr->xany.window == 0)
+    if (eventPtr->type == DestroyNotify || (unsigned long)eventPtr->xany.window == 0 || !MGED_STATE)
 	return TCL_OK;
 
     // The set_curr_dm logic here appears to be important for Multipane mode -
