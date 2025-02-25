@@ -238,6 +238,28 @@ main(int ac, char *av[])
 	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, ofile);
     std::remove(ofile);
 
+    // STL - units
+    ofile = "arb4_units.stl";
+    s_av[0] = "bot";
+    s_av[1] = "dump";
+    s_av[2] = "-t";
+    s_av[3] = "stl";
+    s_av[4] = "-u";
+    s_av[5] = "10";
+    s_av[6] = "-o";
+    s_av[7] = ofile;
+    s_av[8] = "arb4.bot";
+    ged_exec_bot(gedp, 9, s_av);
+
+    if (bu_vls_strlen(gedp->ged_result_str))
+	bu_log("%s\n", bu_vls_cstr(gedp->ged_result_str));
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    bu_dir(input_file, MAXPATHLEN, av[1], "arb4_units.stl", NULL);
+    if (!txt_same(input_file, ofile))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, ofile);
+    std::remove(ofile);
+
 
     // STL - binary
     ofile = "arb4_binary_out.stl";

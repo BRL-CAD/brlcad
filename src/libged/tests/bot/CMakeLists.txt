@@ -9,6 +9,7 @@ cmakefiles(
   arb4.stl
   arb4_binary.stl
   arb4_norm.obj
+  arb4_units.stl
   half_subtracts.g
   manifold_fixable.g
   tgc.g
