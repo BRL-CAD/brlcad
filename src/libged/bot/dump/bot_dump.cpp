@@ -312,6 +312,10 @@ bot_opt_unit(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *s
     return 1;
 }
 
+// TODO - right now this is not at all general, and in fact will only write out a few
+// Tcl specific data containers.  Needs to be rethought.  Probably should be revisited
+// after we switch to the new drawing path, which uses bview scene objects - that will
+// likely make writing out a scene simpler overall.
 static int
 viewdata_dump(struct _ged_bot_dump_client_data *d, struct ged *gedp, FILE *fp)
 {
