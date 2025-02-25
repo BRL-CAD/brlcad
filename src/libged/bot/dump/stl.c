@@ -111,8 +111,7 @@ stl_finish(struct _ged_bot_dump_client_data *d)
 
 	close(d->fd);
     } else {
-	if (!bu_vls_strlen(&d->output_directory))
-	    fclose(d->fp);
+	fclose(d->fp);
     }
 
     return (ret != BRLCAD_OK) ? BRLCAD_ERROR : BRLCAD_OK;

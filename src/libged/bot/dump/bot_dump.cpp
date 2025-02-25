@@ -657,7 +657,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	viewdata_dump(d, gedp, d->fp);
     }
 
-    if (bu_vls_cstr(&d->output_file)) {
+    if (!bu_vls_strlen(&d->output_directory)) {
 
 	switch (d->output_type) {
 	    case OTYPE_STL:

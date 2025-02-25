@@ -118,7 +118,7 @@ main(int ac, char *av[])
     struct ged *gedp = NULL;
     const char *s_av[15] = {NULL};
     char input_file[MAXPATHLEN] = {0};
-    const char *ofile = NULL;
+    char output_file[MAXPATHLEN] = {0};
 
     if (ac != 2)
 	bu_exit(EXIT_FAILURE, "%s <directory>", av[0]);
@@ -136,13 +136,13 @@ main(int ac, char *av[])
 	bu_exit(EXIT_FAILURE, "Could not open %s", input_file);
 
     // DXF
-    ofile = "arb4_out.dxf";
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_out.dxf", NULL);
     s_av[0] = "bot";
     s_av[1] = "dump";
     s_av[2] = "-t";
     s_av[3] = "dxf";
     s_av[4] = "-o";
-    s_av[5] = ofile;
+    s_av[5] = output_file;
     s_av[6] = "arb4.bot";
     ged_exec_bot(gedp, 7, s_av);
 
@@ -151,18 +151,18 @@ main(int ac, char *av[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     bu_dir(input_file, MAXPATHLEN, av[1], "arb4.dxf", NULL);
-    if (!txt_same(input_file, ofile))
-	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, ofile);
-    std::remove(ofile);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    std::remove(output_file);
 
     // OBJ
-    ofile = "arb4_out.obj";
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_out.obj", NULL);
     s_av[0] = "bot";
     s_av[1] = "dump";
     s_av[2] = "-t";
     s_av[3] = "obj";
     s_av[4] = "-o";
-    s_av[5] = ofile;
+    s_av[5] = output_file;
     s_av[6] = "arb4.bot";
     ged_exec_bot(gedp, 7, s_av);
 
@@ -171,20 +171,20 @@ main(int ac, char *av[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     bu_dir(input_file, MAXPATHLEN, av[1], "arb4.obj", NULL);
-    if (!txt_same(input_file, ofile))
-	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, ofile);
-    std::remove(ofile);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    std::remove(output_file);
 
 
     // OBJ - with normals
-    ofile = "arb4_norm_out.obj";
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_norm_out.obj", NULL);
     s_av[0] = "bot";
     s_av[1] = "dump";
     s_av[2] = "-t";
     s_av[3] = "obj";
     s_av[4] = "-n";
     s_av[5] = "-o";
-    s_av[6] = ofile;
+    s_av[6] = output_file;
     s_av[7] = "arb4.bot";
     ged_exec_bot(gedp, 8, s_av);
 
@@ -193,19 +193,19 @@ main(int ac, char *av[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     bu_dir(input_file, MAXPATHLEN, av[1], "arb4_norm.obj", NULL);
-    if (!txt_same(input_file, ofile))
-	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, ofile);
-    std::remove(ofile);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    std::remove(output_file);
 
 
     // SAT
-    ofile = "arb4_out.sat";
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_out.sat", NULL);
     s_av[0] = "bot";
     s_av[1] = "dump";
     s_av[2] = "-t";
     s_av[3] = "sat";
     s_av[4] = "-o";
-    s_av[5] = ofile;
+    s_av[5] = output_file;
     s_av[6] = "arb4.bot";
     ged_exec_bot(gedp, 7, s_av);
 
@@ -214,18 +214,18 @@ main(int ac, char *av[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     bu_dir(input_file, MAXPATHLEN, av[1], "arb4.sat", NULL);
-    if (!txt_same(input_file, ofile))
-	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, ofile);
-    std::remove(ofile);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    std::remove(output_file);
 
     // STL - ASCII
-    ofile = "arb4_out.stl";
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_out.stl", NULL);
     s_av[0] = "bot";
     s_av[1] = "dump";
     s_av[2] = "-t";
     s_av[3] = "stl";
     s_av[4] = "-o";
-    s_av[5] = ofile;
+    s_av[5] = output_file;
     s_av[6] = "arb4.bot";
     ged_exec_bot(gedp, 7, s_av);
 
@@ -234,12 +234,12 @@ main(int ac, char *av[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     bu_dir(input_file, MAXPATHLEN, av[1], "arb4.stl", NULL);
-    if (!txt_same(input_file, ofile))
-	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, ofile);
-    std::remove(ofile);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    std::remove(output_file);
 
     // STL - units
-    ofile = "arb4_units.stl";
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_units_out.stl", NULL);
     s_av[0] = "bot";
     s_av[1] = "dump";
     s_av[2] = "-t";
@@ -247,7 +247,7 @@ main(int ac, char *av[])
     s_av[4] = "-u";
     s_av[5] = "10";
     s_av[6] = "-o";
-    s_av[7] = ofile;
+    s_av[7] = output_file;
     s_av[8] = "arb4.bot";
     ged_exec_bot(gedp, 9, s_av);
 
@@ -256,20 +256,20 @@ main(int ac, char *av[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     bu_dir(input_file, MAXPATHLEN, av[1], "arb4_units.stl", NULL);
-    if (!txt_same(input_file, ofile))
-	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, ofile);
-    std::remove(ofile);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    std::remove(output_file);
 
 
     // STL - binary
-    ofile = "arb4_binary_out.stl";
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_binary_out.stl", NULL);
     s_av[0] = "bot";
     s_av[1] = "dump";
     s_av[2] = "-t";
     s_av[3] = "stl";
     s_av[4] = "-b";
     s_av[5] = "-o";
-    s_av[6] = ofile;
+    s_av[6] = output_file;
     s_av[7] = "arb4.bot";
     ged_exec_bot(gedp, 8, s_av);
 
@@ -278,9 +278,66 @@ main(int ac, char *av[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     bu_dir(input_file, MAXPATHLEN, av[1], "arb4_binary.stl", NULL);
-    if (!txt_same(input_file, ofile))
-	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, ofile);
-    std::remove(ofile);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    std::remove(output_file);
+
+    /* Next tests look at output in a directory.  The directory must already be
+     * present, so create it up front. */
+    const char *odir = "arbs_stl_output";
+    bu_mkdir(odir);
+
+    // STL - unpushed comb
+    s_av[0] = "bot";
+    s_av[1] = "dump";
+    s_av[2] = "-t";
+    s_av[3] = "stl";
+    s_av[4] = "-m";
+    s_av[5] = odir;
+    s_av[6] = "arbs";
+    ged_exec_bot(gedp, 7, s_av);
+
+    if (bu_vls_strlen(gedp->ged_result_str))
+	bu_log("%s\n", bu_vls_cstr(gedp->ged_result_str));
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    bu_dir(input_file, MAXPATHLEN, av[1], "arbs_stl",  "arb4_bot.stl", NULL);
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, odir, "arb4_bot.stl", NULL);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    std::remove(output_file);
+
+    // STL - pushed comb
+    s_av[0] = "bot";
+    s_av[1] = "dump";
+    s_av[2] = "-t";
+    s_av[3] = "stl";
+    s_av[4] = "-m";
+    s_av[5] = odir;
+    s_av[6] = "arbs_pushed";
+    ged_exec_bot(gedp, 7, s_av);
+
+    if (bu_vls_strlen(gedp->ged_result_str))
+	bu_log("%s\n", bu_vls_cstr(gedp->ged_result_str));
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    bu_dir(input_file, MAXPATHLEN, av[1], "arbs_stl",  "arb4_bot_01.stl", NULL);
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, odir, "arb4_bot_01.stl", NULL);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    std::remove(output_file);
+
+    bu_dir(input_file, MAXPATHLEN, av[1], "arbs_stl",  "arb4_bot_02.stl", NULL);
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, odir, "arb4_bot_02.stl", NULL);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    std::remove(output_file);
+
+    bu_dir(input_file, MAXPATHLEN, av[1], "arbs_stl",  "arb4_bot_03.stl", NULL);
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, odir, "arb4_bot_03.stl", NULL);
+    if (!txt_same(input_file, output_file))
+	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
+    std::remove(output_file);
 
     ged_close(gedp);
 
