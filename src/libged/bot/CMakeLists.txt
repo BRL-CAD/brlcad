@@ -38,7 +38,7 @@ set(
   bot_split.c
   bot_sync.c
   bot_vertex_fuse.c
-  dump/bot_dump.c
+  dump/bot_dump.cpp
   dump/dxf.c
   dump/obj.c
   dump/sat.c

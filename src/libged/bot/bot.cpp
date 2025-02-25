@@ -968,6 +968,7 @@ const struct bu_cmdtab _bot_cmds[] = {
     { "check",      _bot_cmd_check},
     { "chull",      _bot_cmd_chull},
     { "decimate",   _bot_cmd_decimate},
+    { "dump",       _bot_cmd_dump},
     { "extrude",    _bot_cmd_extrude},
     { "flip",       _bot_cmd_flip},
     { "get",        _bot_cmd_get},
