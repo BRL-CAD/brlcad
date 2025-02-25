@@ -433,10 +433,12 @@ bot_client_data_init(struct _ged_bot_dump_client_data *d)
     d->gedp = NULL;
     d->binary = 0;
     d->cfactor = 1.0;
+    d->material_info = 0;
     d->normals = 0;
     d->output_type = OTYPE_UNSET;
     d->total_faces = 0;
     d->using_dbot_dump = 0;
+    d->view_data = 0;
     bu_vls_init(&d->output_file);
     bu_vls_init(&d->output_directory);
 }
