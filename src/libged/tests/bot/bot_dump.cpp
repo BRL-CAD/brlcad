@@ -339,6 +339,9 @@ main(int ac, char *av[])
 	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
     std::remove(output_file);
 
+    // Remove output directory
+    std::remove(odir);
+
     ged_close(gedp);
 
     return 0;
