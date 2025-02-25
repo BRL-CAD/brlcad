@@ -1,4 +1,5 @@
 brlcad_addexec(ged_test_bot_dump "bot_dump.cpp" "libged" TEST)
+brlcad_add_test(NAME ged_test_bot_dumping COMMAND ged_test_bot_dump "${CMAKE_CURRENT_SOURCE_DIR}")
 
 cmakefiles(
   CMakeLists.txt
