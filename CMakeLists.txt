@@ -215,7 +215,7 @@ include(BRLCAD_ExternalDeps)
 #
 # If a pre-existing bext install directory is specified, we also check the
 # types on platforms where bext and the main BRL-CAD's build type must align.
-brlcad_bext_init()
+brlcad_bext_init(b053baaf86fe80fbc06fd6106eae1a5532e1f9b9)
 
 #---------------------------------------------------------------------
 # Define various utilities.

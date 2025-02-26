@@ -33,15 +33,12 @@ include(CMakeParseArguments)
 
 
 # Preliminary setup and variable population
-function(brlcad_bext_init)
+function(brlcad_bext_init BEXT_SHA1)
 
   # **************************************************************************
-  # **************************************************************************
-  # In lieu of a submodule, we store the hash for the targeted bext repository
-  # in the top level CMakeLists.txt file.  This needs to be updated whenever
-  # BRL-CAD needs to target a new version of bext.
-  set(BEXT_SHA1 b053baaf86fe80fbc06fd6106eae1a5532e1f9b9)
-  # **************************************************************************
+  # We store the targeted bext repository hash (BEXT_SHA1) in the top
+  # level CMakeLists.txt file, passed as an arg.  The hash needs to be
+  # updated whenever BRL-CAD needs to target a new version of bext.
   # **************************************************************************
 
   # Populate these early, even though their main use is in
