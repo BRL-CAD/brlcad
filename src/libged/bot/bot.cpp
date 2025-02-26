@@ -266,7 +266,7 @@ _bot_cmd_get(void *bs, int argc, const char **argv)
 extern "C" int
 _bot_cmd_set(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot set <orientation|type> <objname> <val>";
+    const char *usage_string = "bot set <orientation|type> <objname> <val>\nbot set thickness <objname> <#|F#:#,F#:#,...>";
     const char *purpose_string = "Set BoT object properties";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -345,6 +345,16 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 		bot->face_mode = (struct bu_bitv *)NULL;
 	    }
 	}
+    }
+
+    if (BU_STR_EQUAL(argv[0], "thickness")) {
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+	if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "BoT is not plate mode - thickness can only be set on plate-mode BoTs");
+	    return BRLCAD_ERROR;
+	}
+	bu_log("TODO - unimplemented\n");
+	return BRLCAD_ERROR;
     }
 
     if (rt_db_put_internal(gb->dp, gb->gedp->dbip, gb->intern, &rt_uniresource) < 0) {
