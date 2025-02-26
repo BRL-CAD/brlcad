@@ -135,8 +135,23 @@ gltf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot,
 
     // Triangles
     tinygltf::Buffer tris;
-    tris.data.resize(bot->num_faces * sizeof(int) * 3);
-    std::memcpy(tris.data.data(), bot->faces, tris.data.size());
+    tris.data.resize(bot->num_faces * sizeof(unsigned int) * 3);
+    // Per https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html it looks
+    // like INT is a no-go data type here in general, even if tinygltf can
+    // handle it.  Convert to unsigned int.  (TODO - we probably should do
+    // that in the bot data structure anyway?   When do we need negative
+    // numbers in the faces array?)
+    unsigned int *ufaces = (unsigned int *)bu_calloc(bot->num_faces * 3, sizeof(unsigned int), "ufaces");
+    for (size_t i = 0; i < bot->num_faces*3; i++) {
+	if (bot->faces[i] < 0) {
+	    // Shouldn't happen
+	    ufaces[i] = 0;
+	} else {
+	    ufaces[i] = (unsigned int)bot->faces[i];
+	}
+    }
+    std::memcpy(tris.data.data(), ufaces, tris.data.size());
+    bu_free(ufaces, "ufaces");
     model.buffers.push_back(tris);
 
     size_t tris_buffer_ind = model.buffers.size() - 1;
@@ -153,7 +168,7 @@ gltf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot,
     tinygltf::Accessor triAccessor;
     triAccessor.bufferView = tris_view_accessor;
     triAccessor.byteOffset = 0;
-    triAccessor.componentType = TINYGLTF_COMPONENT_TYPE_INT;
+    triAccessor.componentType = TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT;
     triAccessor.count = bot->num_faces;
     triAccessor.type = TINYGLTF_TYPE_SCALAR;
     model.accessors.push_back(triAccessor);
