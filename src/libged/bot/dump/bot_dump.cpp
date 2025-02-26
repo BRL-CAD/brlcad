@@ -86,10 +86,16 @@ _ged_bot_dump(struct _ged_bot_dump_client_data *d, struct directory *dp, const s
 	bu_mkdir(bu_vls_cstr(&d->output_directory));
 
 	switch (d->output_type) {
+	    case OTYPE_GLB:
+	    case OTYPE_GLTF:
+		if (gltf_setup(d, bu_vls_cstr(&file_name)) != BRLCAD_OK)
+		    return;
+		gltf_write_bot(d, bot, dp->d_namep);
+		gltf_finish(d);
+		break;
 	    case OTYPE_STL:
 		if (stl_setup(d, bu_vls_cstr(&file_name)) != BRLCAD_OK)
 		    return;
-
 
 		if (d->binary) {
 		    fd = d->fd;
@@ -145,24 +151,39 @@ _ged_bot_dump(struct _ged_bot_dump_client_data *d, struct directory *dp, const s
 	bu_vls_free(&file_name);
 
     } else {
-	/* If we get to this point and need fp - check for it */
-	if (!d->binary && !fp) {
-	    bu_log("_ged_bot_dump: non-binay file requested but fp is NULL!\n");
-	    return;
-	}
+
 	switch (d->output_type) {
+	    case OTYPE_GLB:
+	    case OTYPE_GLTF:
+		gltf_write_bot(d, bot, dp->d_namep);
+		break;
 	    case OTYPE_STL:
 		if (d->binary) {
 		    d->total_faces += bot->num_faces;
 		    stl_write_bot_binary(d, bot, fd, dp->d_namep);
 		} else {
+		    /* Need fp - check for it */
+		    if (!fp) {
+			bu_log("_ged_bot_dump: non-binay file requested but fp is NULL!\n");
+			return;
+		    }
 		    stl_write_bot(d, bot, fp, dp->d_namep);
 		}
 		break;
 	    case OTYPE_DXF:
+		/* Need fp - check for it */
+		if (!fp) {
+		    bu_log("_ged_bot_dump: non-binay file requested but fp is NULL!\n");
+		    return;
+		}
 		dxf_write_bot(d, bot, fp, dp->d_namep);
 		break;
 	    case OTYPE_OBJ:
+		/* Need fp - check for it */
+		if (!fp) {
+		    bu_log("_ged_bot_dump: non-binay file requested but fp is NULL!\n");
+		    return;
+		}
 		if (!pathp) {
 		    obj_write_bot(d, bot, fp, dp->d_namep);
 		} else {
@@ -172,9 +193,19 @@ _ged_bot_dump(struct _ged_bot_dump_client_data *d, struct directory *dp, const s
 		}
 		break;
 	    case OTYPE_SAT:
+		/* Need fp - check for it */
+		if (!fp) {
+		    bu_log("_ged_bot_dump: non-binay file requested but fp is NULL!\n");
+		    return;
+		}
 		sat_write_bot(d, bot, fp, dp->d_namep);
 		break;
 	    default:
+		/* Need fp - check for it */
+		if (!fp) {
+		    bu_log("_ged_bot_dump: non-binay file requested but fp is NULL!\n");
+		    return;
+		}
 		stl_write_bot(d, bot, fp, dp->d_namep);
 		break;
 	}
@@ -240,6 +271,10 @@ bot_fmt_type(const char *t)
 
     if (BU_STR_EQUAL("dxf", t))
 	return OTYPE_DXF;
+    if (BU_STR_EQUAL("glb", t))
+	return OTYPE_GLB;
+    if (BU_STR_EQUAL("gltf", t))
+	return OTYPE_GLTF;
     if (BU_STR_EQUAL("obj", t))
 	return OTYPE_OBJ;
     if (BU_STR_EQUAL("sat", t))
@@ -253,13 +288,19 @@ bot_fmt_type(const char *t)
 const char *
 bot_fmt_ext(enum otype o, int UNUSED(binary))
 {
-    static const char *edxf = ".dxf";
-    static const char *eobj = ".obj";
-    static const char *esat = ".sat";
-    static const char *estl = ".stl";
+    static const char *edxf  = ".dxf";
+    static const char *eglb  = ".glb";
+    static const char *egltf = ".gltf";
+    static const char *eobj  = ".obj";
+    static const char *esat  = ".sat";
+    static const char *estl  = ".stl";
 
     if (o == OTYPE_DXF)
 	return edxf;
+    if (o == OTYPE_GLB)
+	return eglb;
+    if (o == OTYPE_GLTF)
+	return egltf;
     if (o == OTYPE_OBJ)
 	return eobj;
     if (o == OTYPE_SAT)
@@ -533,12 +574,6 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_sprintf(&d->output_file, "stdout");
     }
 
-    if (d->binary && d->fp == stdout) {
-	bu_vls_printf(gedp->ged_result_str, "Can't output binary format to stdout\n");
-	bot_client_data_cleanup(d);
-	return BRLCAD_ERROR;
-    }
-
     // If we don't have an explicit format, see if we can deduce it from the
     // filename.  If not, go with STL.
     if (d->output_type == OTYPE_UNSET) {
@@ -554,7 +589,18 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    // By now type is set - assign extension
+    // GLB files are inherently binary
+    if (d->output_type == OTYPE_GLB)
+	d->binary = 1;
+
+    // Sanity
+    if (d->binary && d->fp == stdout) {
+	bu_vls_printf(gedp->ged_result_str, "Can't output binary format to stdout\n");
+	bot_client_data_cleanup(d);
+	return BRLCAD_ERROR;
+    }
+
+    // Type is set - assign extension
     d->file_ext = bot_fmt_ext(d->output_type, d->binary);
 
     if (bu_vls_strlen(&d->output_file)) {
@@ -562,6 +608,13 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	switch (d->output_type) {
 	    case OTYPE_DXF:
 		if (dxf_setup(d, bu_vls_cstr(&d->output_file), argv[argc-1], NULL) != BRLCAD_OK) {
+		    bot_client_data_cleanup(d);
+		    return BRLCAD_ERROR;
+		}
+		break;
+	    case OTYPE_GLB:
+	    case OTYPE_GLTF:
+		if (gltf_setup(d, bu_vls_cstr(&d->output_file)) != BRLCAD_OK) {
 		    bot_client_data_cleanup(d);
 		    return BRLCAD_ERROR;
 		}
@@ -664,17 +717,21 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     if (!bu_vls_strlen(&d->output_directory)) {
 
 	switch (d->output_type) {
-	    case OTYPE_STL:
-		stl_finish(d);
-		break;
 	    case OTYPE_DXF:
 		dxf_finish(d);
+		break;
+	    case OTYPE_GLB:
+	    case OTYPE_GLTF:
+		gltf_finish(d);
+		break;
+	    case OTYPE_OBJ:
+		obj_finish(d);
 		break;
 	    case OTYPE_SAT:
 		sat_finish(d);
 		break;
-	    case OTYPE_OBJ:
-		obj_finish(d);
+	    case OTYPE_STL:
+		stl_finish(d);
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Error - don't know how to finalize file!\n");
@@ -694,7 +751,7 @@ _bot_cmd_dump(void* bs, int argc, const char** argv)
     struct ged* gedp = gb->gedp;
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
-    const char *usage_string = "bot dump [-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n\n";
+    const char *usage_string = "bot dump [-b] [-n] [-m directory] [-o file] [-t dxf|glb|gltf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n\n";
     const char* purpose_string = "Export raw BoT information, without any processing.";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;

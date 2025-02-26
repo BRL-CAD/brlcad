@@ -29,35 +29,81 @@
 #include <string>
 #include <vector>
 
+#define TINYGLTF_IMPLEMENTATION
+#define TINYGLTF_NO_STB_IMAGE
+#define TINYGLTF_NO_STB_IMAGE_WRITE
 #include "tiny_gltf.h"
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "ged_bot.h"
+#include "../ged_bot.h"
+#include "./ged_bot_dump.h"
 
-int
-gltf_write_bot(struct rt_bot_internal *bot, const char *filename, const char *name, int binary)
-{
-    if (!bot || !filename)
-	return BRLCAD_ERROR;
 
+struct bot_dump_gltf_internal {
     tinygltf::Model model;
+    std::string filename;
+};
+
+static void
+gltf_internal(struct _ged_bot_dump_client_data *d, const char *fname)
+{
+    d->gltf.i = new bot_dump_gltf_internal;
+    d->gltf.i->filename = std::string(fname);
+
+    tinygltf::Model &model = d->gltf.i->model;
+
     tinygltf::Asset& asset = model.asset;
     asset.version = "2.0";
     asset.generator = "BRL-CAD bot dump command";
 
     tinygltf::Scene scene;
-    scene.name = "gscene";
+    scene.name = "default";
     model.scenes.push_back(scene);
-    model.defaultScene = 0;
+    model.defaultScene = model.scenes.size() - 1;
+}
 
-    tinygltf::Node node;
-    node.name = "gnode";
-    model.nodes.push_back(node);
-    model.scenes[0].nodes.push_back(0);
+int
+gltf_setup(struct _ged_bot_dump_client_data *d, const char *fname)
+{
+    // If we're writing out one file per bot, we need to keep
+    // deleting and recreating the internal.  Otherwise, we
+    // accumulate meshes in one structure.
+    if (!d->gltf.i)
+	gltf_internal(d, fname);
 
-    tinygltf::Mesh mesh;
-    mesh.name = name;
+    return BRLCAD_OK;
+}
+
+int
+gltf_finish(struct _ged_bot_dump_client_data *d)
+{
+    tinygltf::Model &model = d->gltf.i->model;
+    std::string &filename = d->gltf.i->filename;
+
+    tinygltf::TinyGLTF writer;
+
+    bool result = writer.WriteGltfSceneToFile(&model, filename, false, true, true, d->binary);
+    if (!result) {
+	if (d->binary) {
+	    bu_log("Error: unable to write BoT to glb file %s", filename.c_str());
+	} else {
+	    bu_log("Error: unable to write BoT to glTF file %s", filename.c_str());
+	}
+	return BRLCAD_ERROR;
+    }
+
+    delete d->gltf.i;
+    d->gltf.i = NULL;
+
+    return BRLCAD_OK;
+}
+
+void
+gltf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, char *name)
+{
+
+    tinygltf::Model &model = d->gltf.i->model;
 
     // Vertices
     tinygltf::Buffer verts;
@@ -65,65 +111,77 @@ gltf_write_bot(struct rt_bot_internal *bot, const char *filename, const char *na
     std::memcpy(verts.data.data(), bot->vertices, verts.data.size());
     model.buffers.push_back(verts);
 
+    size_t vert_buffer_ind = model.buffers.size() - 1;
+
+    tinygltf::BufferView vertsView;
+    vertsView.buffer = vert_buffer_ind;
+    vertsView.byteOffset = 0;
+    vertsView.byteLength = verts.data.size();
+    vertsView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
+    model.bufferViews.push_back(vertsView);
+
+    size_t vert_view_accessor = model.bufferViews.size() - 1;
+
+    tinygltf::Accessor vertAccessor;
+    vertAccessor.bufferView = vert_view_accessor;
+    vertAccessor.byteOffset = 0;
+    // Toggle on whether fastf_t is float or double...
+    vertAccessor.componentType = (sizeof(fastf_t) == sizeof(double)) ? TINYGLTF_COMPONENT_TYPE_DOUBLE : TINYGLTF_COMPONENT_TYPE_FLOAT;
+    vertAccessor.count = bot->num_vertices;
+    vertAccessor.type = TINYGLTF_TYPE_VEC3;
+    model.accessors.push_back(vertAccessor);
+
+    size_t vert_accessor = model.accessors.size() - 1;
+
     // Triangles
     tinygltf::Buffer tris;
     tris.data.resize(bot->num_faces * sizeof(int) * 3);
     std::memcpy(tris.data.data(), bot->faces, tris.data.size());
     model.buffers.push_back(tris);
 
-    // Buffer views
-    tinygltf::BufferView vertsView;
-    vertsView.buffer = 0;
-    vertsView.byteOffset = 0;
-    vertsView.byteLength = verts.data.size();
-    vertsView.target = TINYGLTF_TARGET_ARRAY_BUFFER;
-    model.bufferViews.push_back(vertsView);
+    size_t tris_buffer_ind = model.buffers.size() - 1;
 
     tinygltf::BufferView trisView;
-    trisView.buffer = 1;
+    trisView.buffer = tris_buffer_ind;
     trisView.byteOffset = 0;
     trisView.byteLength = tris.data.size();
     trisView.target = TINYGLTF_TARGET_ELEMENT_ARRAY_BUFFER;
     model.bufferViews.push_back(trisView);
 
-    // Accessors
-    tinygltf::Accessor vertAccessor;
-    vertAccessor.bufferView = 0;
-    vertAccessor.byteOffset = 0;
-    // TODO - this should toggle on whether fastf_t is float or double...
-    vertAccessor.componentType = TINYGLTF_COMPONENT_TYPE_DOUBLE;
-    vertAccessor.count = 3;
-    vertAccessor.type = TINYGLTF_TYPE_VEC3;
-    model.accessors.push_back(vertAccessor);
+    size_t tris_view_accessor = model.bufferViews.size() - 1;
 
     tinygltf::Accessor triAccessor;
-    triAccessor.bufferView = 1;
+    triAccessor.bufferView = tris_view_accessor;
     triAccessor.byteOffset = 0;
     triAccessor.componentType = TINYGLTF_COMPONENT_TYPE_INT;
-    triAccessor.count = 3;
+    triAccessor.count = bot->num_faces;
     triAccessor.type = TINYGLTF_TYPE_SCALAR;
     model.accessors.push_back(triAccessor);
 
-    // Tell tinygltf where our mesh primitive is
+    size_t tri_accessor = model.accessors.size() - 1;
+
+    // Mesh
     tinygltf::Primitive primitive;
-    primitive.attributes["POSITION"] = 0;
-    primitive.indices = 1;
+    primitive.attributes["POSITION"] = vert_accessor;
+    primitive.indices = tri_accessor;
     primitive.mode = TINYGLTF_MODE_TRIANGLES;
+
+    tinygltf::Mesh mesh;
+    mesh.name = name;
     mesh.primitives.push_back(primitive);
-
     model.meshes.push_back(mesh);
-    model.nodes[0].mesh = 0;
 
-    tinygltf::TinyGLTF writer;
-    bool result = writer.WriteGltfSceneToFile(&model, std::string(filename), false, true, true, binary);
-    if (!result) {
-	bu_log("Error: unable to write BoT to glTF file %s", filename);
-	return BRLCAD_ERROR;
-    }
+    size_t mesh_ind = model.meshes.size() - 1;
 
-    return BRLCAD_OK;
+    tinygltf::Node node;
+    node.name = name;
+    node.mesh = mesh_ind;
+    model.nodes.push_back(node);
+
+    size_t node_ind = model.nodes.size() - 1;
+
+    model.scenes[model.defaultScene].nodes.push_back(node_ind);
 }
-
 
 // Local Variables:
 // tab-width: 8

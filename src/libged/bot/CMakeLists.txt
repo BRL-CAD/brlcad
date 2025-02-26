@@ -40,6 +40,7 @@ set(
   bot_vertex_fuse.c
   dump/bot_dump.cpp
   dump/dxf.c
+  dump/gltf.cpp
   dump/obj.c
   dump/sat.c
   dump/stl.c
@@ -68,7 +69,6 @@ target_link_libraries(ged-bot ${BOT_LIBS})
 cmakefiles(
   CMakeLists.txt
   ${BOT_SRCS}
-  dump/gltf.cpp
   dump/ged_bot_dump.h
 )
 

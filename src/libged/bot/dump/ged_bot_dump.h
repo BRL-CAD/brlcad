@@ -41,6 +41,8 @@ __BEGIN_DECLS
 enum otype {
     OTYPE_UNSET = 0,
     OTYPE_DXF,
+    OTYPE_GLB,
+    OTYPE_GLTF,
     OTYPE_OBJ,
     OTYPE_SAT,
     OTYPE_STL
@@ -77,6 +79,11 @@ struct bot_dump_sat {
     int curr_line_num;
 };
 
+struct bot_dump_gltf_internal;
+struct bot_dump_gltf {
+    struct bot_dump_gltf_internal *i;
+};
+
 struct _ged_bot_dump_client_data {
     struct ged *gedp;
     FILE *fp;
@@ -98,6 +105,7 @@ struct _ged_bot_dump_client_data {
     // Format specific info
     struct bot_dump_obj obj;
     struct bot_dump_sat sat;
+    struct bot_dump_gltf gltf;
 };
 
 #define V3ARGS_SCALE(_a) (_a)[X]*d->cfactor, (_a)[Y]*d->cfactor, (_a)[Z]*d->cfactor
@@ -105,6 +113,10 @@ struct _ged_bot_dump_client_data {
 extern int dxf_setup(struct _ged_bot_dump_client_data *d, const char *fname, const char *objname, const char *gname);
 extern int dxf_finish(struct _ged_bot_dump_client_data *d);
 extern void dxf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, FILE *fp, char *name);
+
+extern int gltf_setup(struct _ged_bot_dump_client_data *d, const char *fname);
+extern int gltf_finish(struct _ged_bot_dump_client_data *d);
+extern void gltf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, char *name);
 
 extern int obj_setup(struct _ged_bot_dump_client_data *d, const char *fname, int mtl_only);
 extern int obj_finish(struct _ged_bot_dump_client_data *d);
