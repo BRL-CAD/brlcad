@@ -478,6 +478,7 @@ bot_client_data_init(struct _ged_bot_dump_client_data *d)
     d->gedp = NULL;
     d->binary = 0;
     d->cfactor = 1.0;
+    d->full_precision = 0;
     d->material_info = 0;
     d->normals = 0;
     d->output_type = OTYPE_UNSET;
@@ -524,7 +525,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bu_opt_desc od[12];
+    struct bu_opt_desc od[13];
     BU_OPT(od[ 0], "h", "help",             "",      NULL,          &print_help,          "Print help and exit");
     BU_OPT(od[ 1], "?", "",                 "",      NULL,          &print_help,          "");
     BU_OPT(od[ 2], "b", "",                 "",      NULL,          &d->binary,           "Use binary version of output format");
@@ -533,12 +534,13 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(od[ 5], "o", "output-file",      "file",  &bu_opt_vls,   &d->output_file,      "Specify an output filename");
     BU_OPT(od[ 6], "t", "",                 "fmt",   &bot_opt_fmt,  &d->output_type,      "Specify an output format type");
     BU_OPT(od[ 7], "u", "",                 "unit",  &bot_opt_unit, &d->cfactor,          "Specify an output unit");
+    BU_OPT(od[ 8], "F", "full-precision",   "",      NULL,          &d->full_precision,   "Write full floating point precision (non-standard for glTF).");
     // TODO - use these options to fold dbot variations into the core function, and then
     // rework dbot version to just construct a new argc/argv array and call this.
-    BU_OPT(od[ 8], "",  "displayed",        "",      NULL,          &write_displayed,     "Write out displayed geometry");
-    BU_OPT(od[ 9], "",  "viewdata",         "",      NULL,          &d->view_data,        "Write out non-geometry view data");
-    BU_OPT(od[10], "",  "materials",        "",      NULL,          &d->material_info,    "Write out material info");
-    BU_OPT_NULL(od[11]);
+    BU_OPT(od[ 9], "",  "displayed",        "",      NULL,          &write_displayed,     "Write out displayed geometry");
+    BU_OPT(od[10], "",  "viewdata",         "",      NULL,          &d->view_data,        "Write out non-geometry view data");
+    BU_OPT(od[11], "",  "materials",        "",      NULL,          &d->material_info,    "Write out material info");
+    BU_OPT_NULL(od[12]);
 
     /* must be wanting help */
     if (!argc) {

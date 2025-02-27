@@ -107,19 +107,29 @@ gltf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot,
 
     // Vertices
     tinygltf::Buffer verts;
-    verts.data.resize(bot->num_vertices * sizeof(float) * 3);
 
-    // Per https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html it looks
-    // like DOUBLE is not a standard way to encode vertex info, even though
-    // tinygltf does support it with TINYGLTF_COMPONENT_TYPE_DOUBLE.  It is
-    // unfortunate that the standard doesn't allow us to do lossless export in
-    // this format, but we don't want to create glTF files that other importers
-    // won't be able to read - step the vertex data down to floats.
-    float *fverts = (float *)bu_calloc(bot->num_vertices * 3, sizeof(float), "fverts");
-    for (size_t i = 0; i < bot->num_vertices*3; i++)
-	fverts[i] = static_cast<float>(bot->vertices[i]);
-    std::memcpy(verts.data.data(), fverts, verts.data.size());
-    bu_free(fverts, "fverts");
+    if (d->full_precision) {
+
+	// tinygltf provides a TINYGLTF_COMPONENT_TYPE_DOUBLE type to write out
+	// DOUBLE data, but that output produces a non-standard glb/glTF file.
+	// BRL-CAD can read them back in, but other libraries such as
+	// AssetImport can not.
+	verts.data.resize(bot->num_vertices * sizeof(fastf_t) * 3);
+	std::memcpy(verts.data.data(), bot->vertices, verts.data.size());
+
+    } else {
+
+	// Per https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html DOUBLE
+	// is not a standard way to encode vertex info.  Step the vertex data
+	// down to floats.
+	verts.data.resize(bot->num_vertices * sizeof(float) * 3);
+	float *fverts = (float *)bu_calloc(bot->num_vertices * 3, sizeof(float), "fverts");
+	for (size_t i = 0; i < bot->num_vertices*3; i++)
+	    fverts[i] = static_cast<float>(bot->vertices[i]);
+	std::memcpy(verts.data.data(), fverts, verts.data.size());
+	bu_free(fverts, "fverts");
+
+    }
     model.buffers.push_back(verts);
 
     size_t vert_buffer_ind = model.buffers.size() - 1;
@@ -136,7 +146,12 @@ gltf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot,
     tinygltf::Accessor vertAccessor;
     vertAccessor.bufferView = vert_view_accessor;
     vertAccessor.byteOffset = 0;
-    vertAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
+    if (d->full_precision) {
+	// Non-standard tinygltf glTF type
+	vertAccessor.componentType = (sizeof(fastf_t) == sizeof(double)) ? TINYGLTF_COMPONENT_TYPE_DOUBLE : TINYGLTF_COMPONENT_TYPE_FLOAT;
+    } else {
+	vertAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
+    }
     vertAccessor.count = bot->num_vertices;
     vertAccessor.type = TINYGLTF_TYPE_VEC3;
     model.accessors.push_back(vertAccessor);

@@ -89,6 +89,7 @@ struct _ged_bot_dump_client_data {
     FILE *fp;
     int fd;
     const char *file_ext;
+    int full_precision;
 
     int using_dbot_dump;
     int view_data;

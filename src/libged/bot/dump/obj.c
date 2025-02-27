@@ -181,7 +181,11 @@ obj_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, 
     fprintf(fp, "g %s\n", name);
 
     for (i = 0; i < num_vertices; i++) {
-	fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(&vertices[3*i]));
+	if (d->full_precision) {
+	    fprintf(fp, "v %0.17f %0.17f %0.17f\n", V3ARGS_SCALE(&vertices[3*i]));
+	} else {
+	    fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(&vertices[3*i]));
+	}
     }
 
     if (d->normals) {
@@ -202,7 +206,11 @@ obj_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, 
 	    }
 	    VUNITIZE(norm);
 
-	    fprintf(fp, "vn %f %f %f\n", V3ARGS(norm));
+	    if (d->full_precision) {
+		fprintf(fp, "vn %0.17f %0.17f %0.17f\n", V3ARGS(norm));
+	    } else {
+		fprintf(fp, "vn %f %f %f\n", V3ARGS(norm));
+	    }
 	}
     }
 

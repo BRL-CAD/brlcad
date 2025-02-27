@@ -144,7 +144,11 @@ sat_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, 
 
     /* Dump out points */
     for (i = 0; i < num_vertices; i++) {
-	fprintf(fp, "-%d point $-1 %f %f %f #\n", d->sat.curr_line_num, V3ARGS_SCALE(&vertices[3*i]));
+	if (d->full_precision) {
+	    fprintf(fp, "-%d point $-1 %0.17f %0.17f %0.17f #\n", d->sat.curr_line_num, V3ARGS_SCALE(&vertices[3*i]));
+	} else {
+	    fprintf(fp, "-%d point $-1 %f %f %f #\n", d->sat.curr_line_num, V3ARGS_SCALE(&vertices[3*i]));
+	}
 	++d->sat.curr_line_num;
     }
 
@@ -226,12 +230,21 @@ sat_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, 
 	VUNITIZE(CmB);
 	VUNITIZE(AmC);
 
-	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", d->sat.curr_line_num, V3ARGS_SCALE(A), V3ARGS(BmA));
-	++d->sat.curr_line_num;
-	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", d->sat.curr_line_num, V3ARGS_SCALE(B), V3ARGS(CmB));
-	++d->sat.curr_line_num;
-	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", d->sat.curr_line_num, V3ARGS_SCALE(C), V3ARGS(AmC));
-	++d->sat.curr_line_num;
+	if (d->full_precision) {
+	    fprintf(fp, "-%d straight-curve $-1 %0.17f %0.17f %0.17f %0.17f %0.17f %0.17f I I #\n", d->sat.curr_line_num, V3ARGS_SCALE(A), V3ARGS(BmA));
+	    ++d->sat.curr_line_num;
+	    fprintf(fp, "-%d straight-curve $-1 %0.17f %0.17f %0.17f %0.17f %0.17f %0.17f I I #\n", d->sat.curr_line_num, V3ARGS_SCALE(B), V3ARGS(CmB));
+	    ++d->sat.curr_line_num;
+	    fprintf(fp, "-%d straight-curve $-1 %0.17f %0.17f %0.17f %0.17f %0.17f %0.17f I I #\n", d->sat.curr_line_num, V3ARGS_SCALE(C), V3ARGS(AmC));
+	    ++d->sat.curr_line_num;
+	} else {
+	    fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", d->sat.curr_line_num, V3ARGS_SCALE(A), V3ARGS(BmA));
+	    ++d->sat.curr_line_num;
+	    fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", d->sat.curr_line_num, V3ARGS_SCALE(B), V3ARGS(CmB));
+	    ++d->sat.curr_line_num;
+	    fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", d->sat.curr_line_num, V3ARGS_SCALE(C), V3ARGS(AmC));
+	    ++d->sat.curr_line_num;
+	}
     }
 
     /* Dump out plane-surfaces for each face */
@@ -267,9 +280,13 @@ sat_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, 
 
 	VUNITIZE(BmA);
 
-	fprintf(fp, "-%d plane-surface $-1 %f %f %f %f %f %f %f %f %f forward_v I I I I #\n",
-		d->sat.curr_line_num, V3ARGS_SCALE(A), V3ARGS(norm), V3ARGS(BmA));
-
+	if (d->full_precision) {
+	    fprintf(fp, "-%d plane-surface $-1 %0.17f %0.17f %0.17f %0.17f %0.17f %0.17f %0.17f %0.17f %0.17f forward_v I I I I #\n",
+		    d->sat.curr_line_num, V3ARGS_SCALE(A), V3ARGS(norm), V3ARGS(BmA));
+	} else {
+	    fprintf(fp, "-%d plane-surface $-1 %f %f %f %f %f %f %f %f %f forward_v I I I I #\n",
+		    d->sat.curr_line_num, V3ARGS_SCALE(A), V3ARGS(norm), V3ARGS(BmA));
+	}
 	++d->sat.curr_line_num;
     }
 }

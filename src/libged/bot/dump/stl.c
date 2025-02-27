@@ -152,11 +152,19 @@ stl_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, 
 	}
 	VUNITIZE(norm);
 
-	fprintf(fp, "  facet normal %f %f %f\n", V3ARGS(norm));
-	fprintf(fp, "    outer loop\n");
-	fprintf(fp, "      vertex %f %f %f\n", V3ARGS_SCALE(A));
-	fprintf(fp, "      vertex %f %f %f\n", V3ARGS_SCALE(B));
-	fprintf(fp, "      vertex %f %f %f\n", V3ARGS_SCALE(C));
+	if (d->full_precision) {
+	    fprintf(fp, "  facet normal %0.17f %0.17f %0.17f\n", V3ARGS(norm));
+	    fprintf(fp, "    outer loop\n");
+	    fprintf(fp, "      vertex %0.17f %0.17f %0.17f\n", V3ARGS_SCALE(A));
+	    fprintf(fp, "      vertex %0.17f %0.17f %0.17f\n", V3ARGS_SCALE(B));
+	    fprintf(fp, "      vertex %0.17f %0.17f %0.17f\n", V3ARGS_SCALE(C));
+	} else {
+	    fprintf(fp, "  facet normal %f %f %f\n", V3ARGS(norm));
+	    fprintf(fp, "    outer loop\n");
+	    fprintf(fp, "      vertex %f %f %f\n", V3ARGS_SCALE(A));
+	    fprintf(fp, "      vertex %f %f %f\n", V3ARGS_SCALE(B));
+	    fprintf(fp, "      vertex %f %f %f\n", V3ARGS_SCALE(C));
+	}
 	fprintf(fp, "    endloop\n");
 	fprintf(fp, "  endfacet\n");
     }

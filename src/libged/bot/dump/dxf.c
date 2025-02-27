@@ -97,14 +97,25 @@ dxf_write_bot(struct _ged_bot_dump_client_data *d, struct rt_bot_internal *bot, 
 	VSCALE(C, C, d->cfactor);
 
 	fprintf(fp, "0\n3DFACE\n8\n%s\n62\n7\n", name);
-	fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
-		10, A[X], 20, A[Y], 30, A[Z]);
-	fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
-		11, B[X], 21, B[Y], 31, B[Z]);
-	fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
-		12, C[X], 22, C[Y], 32, C[Z]);
-	fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
-		12, C[X], 22, C[Y], 32, C[Z]);
+	if (d->full_precision) {
+	    fprintf(fp, "%d\n%0.17f\n%d\n%0.17f\n%d\n%0.17f\n",
+		    10, A[X], 20, A[Y], 30, A[Z]);
+	    fprintf(fp, "%d\n%0.17f\n%d\n%0.17f\n%d\n%0.17f\n",
+		    11, B[X], 21, B[Y], 31, B[Z]);
+	    fprintf(fp, "%d\n%0.17f\n%d\n%0.17f\n%d\n%0.17f\n",
+		    12, C[X], 22, C[Y], 32, C[Z]);
+	    fprintf(fp, "%d\n%0.17f\n%d\n%0.17f\n%d\n%0.17f\n",
+		    12, C[X], 22, C[Y], 32, C[Z]);
+	} else {
+	    fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+		    10, A[X], 20, A[Y], 30, A[Z]);
+	    fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+		    11, B[X], 21, B[Y], 31, B[Z]);
+	    fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+		    12, C[X], 22, C[Y], 32, C[Z]);
+	    fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+		    12, C[X], 22, C[Y], 32, C[Z]);
+	}
     }
 
 }
