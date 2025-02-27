@@ -406,7 +406,8 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 	    // Split the string accordingly
 	    char *face_id_str = targ;
 	    *c = '\0';
-	    char *thickness_str = c++;
+	    c++;
+	    char *thickness_str = c;
 
 	    if (bu_opt_int(NULL, 1, (const char **)&face_id_str, &face_id) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Invalid face index specification: %s\n", face_id_str);
