@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2024-XX-XX  Release X.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* added bot support for plate mode thickness get/set cmds - Cliff Yapp
 * fixed dbconcat treatment of a '/' prefix character - Cliff Yapp
 * fixed bb '-o' in MGED - Chris McGregor
 * removed obsolete -b and -t options from rtshot - Cliff Yapp

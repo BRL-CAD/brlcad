@@ -188,18 +188,19 @@ _bot_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char 
 extern "C" int
 _bot_cmd_get(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot get <faces|minEdge|maxEdge|orientation|type|vertices> <objname>";
+    const char *usage_string = "bot get <faces|minEdge|maxEdge|orientation|thickness|type|vertices> <objname>";
     const char *purpose_string = "Report specific information about a BoT shape";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
+    struct ged *gedp = gb->gedp;
 
     argc--; argv++;
 
     if (argc != 2) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
+	bu_vls_printf(gedp->ged_result_str, "%s", usage_string);
 	return BRLCAD_ERROR;
     }
 
@@ -208,6 +209,41 @@ _bot_cmd_get(void *bs, int argc, const char **argv)
     }
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+
+    /* Thickness is a special case, since we may need to report multiple values if we have a plate
+     * mode bot with non-uniform thickness. */
+    if (BU_STR_EQUAL(argv[0], "thickness")) {
+	if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
+	    bu_vls_printf(gedp->ged_result_str, "BoT is not plate mode - thicknesses can only be set on plate-mode BoTs");
+	    return BRLCAD_ERROR;
+	}
+
+	// Check if our thickness is uniform across the bot.  If it is, return
+	// one number.  Otherwise print each face's thickness.  (TODO - the
+	// latter would probably be more readable if we printed ranges of face
+	// indexes with the same thickness, but deferring doing that until we
+	// have a use case that needs it.  (The which command has printing of
+	// ranges, so it might be a useful reference.)
+	fastf_t seed = bot->thickness[0];
+	int uniform = 1;
+	for (size_t i = 1; i < bot->num_faces; i++) {
+	    if (!NEAR_EQUAL(seed, bot->thickness[i], 0.1*BN_TOL_DIST)) {
+		uniform = 0;
+		break;
+	    }
+	}
+
+	if (uniform) {
+	    bu_vls_printf(gedp->ged_result_str, "%g", seed);
+	    return BRLCAD_OK;
+	} else {
+	    for (size_t i = 0; i < bot->num_faces; i++) {
+		bu_vls_printf(gedp->ged_result_str, "%zd:%g\n", i, bot->thickness[i]);
+	    }
+	    return BRLCAD_OK;
+	}
+    }
+
 
     fastf_t propVal = rt_bot_propget(bot, argv[0]);
 
@@ -223,39 +259,39 @@ _bot_cmd_get(void *bs, int argc, const char **argv)
 	    if (BU_STR_EQUAL(argv[0], "orientation")) {
 		switch (intprop) {
 		    case RT_BOT_UNORIENTED:
-			bu_vls_printf(gb->gedp->ged_result_str, "none");
+			bu_vls_printf(gedp->ged_result_str, "none");
 			break;
 		    case RT_BOT_CCW:
-			bu_vls_printf(gb->gedp->ged_result_str, "ccw");
+			bu_vls_printf(gedp->ged_result_str, "ccw");
 			break;
 		    case RT_BOT_CW:
-			bu_vls_printf(gb->gedp->ged_result_str, "cw");
+			bu_vls_printf(gedp->ged_result_str, "cw");
 			break;
 		}
 	    } else if (BU_STR_EQUAL(argv[0], "type") || BU_STR_EQUAL(argv[0], "mode")) {
 		switch (intprop) {
 		    case RT_BOT_SURFACE:
-			bu_vls_printf(gb->gedp->ged_result_str, "surface");
+			bu_vls_printf(gedp->ged_result_str, "surface");
 			break;
 		    case RT_BOT_SOLID:
-			bu_vls_printf(gb->gedp->ged_result_str, "solid");
+			bu_vls_printf(gedp->ged_result_str, "solid");
 			break;
 		    case RT_BOT_PLATE:
-			bu_vls_printf(gb->gedp->ged_result_str, "plate");
+			bu_vls_printf(gedp->ged_result_str, "plate");
 			break;
 		    case RT_BOT_PLATE_NOCOS:
-			bu_vls_printf(gb->gedp->ged_result_str, "plate_nocos");
+			bu_vls_printf(gedp->ged_result_str, "plate_nocos");
 			break;
 		}
 	    } else {
-		bu_vls_printf(gb->gedp->ged_result_str, "%d", (int) propVal);
+		bu_vls_printf(gedp->ged_result_str, "%d", (int) propVal);
 	    }
 	} else {
 	    /* float result */
-	    bu_vls_printf(gb->gedp->ged_result_str, "%f", propVal);
+	    bu_vls_printf(gedp->ged_result_str, "%f", propVal);
 	}
     } else {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s is not a valid argument!", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s is not a valid argument!", argv[1]);
 	return BRLCAD_ERROR;
     }
 
@@ -266,18 +302,20 @@ _bot_cmd_get(void *bs, int argc, const char **argv)
 extern "C" int
 _bot_cmd_set(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot set <orientation|type> <objname> <val>\nbot set thickness <objname> <#|F#:#,F#:#,...>";
+    bool processed = false;
+    const char *usage_string = "bot set <orientation|type> <objname> <val>\nbot set thickness <objname> <#|#:#>";
     const char *purpose_string = "Set BoT object properties";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
+    struct ged *gedp = gb->gedp;
 
     argc--; argv++;
 
     if (argc != 3) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
+	bu_vls_printf(gedp->ged_result_str, "%s", usage_string);
 	return BRLCAD_ERROR;
     }
 
@@ -285,12 +323,10 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (!BU_STR_EQUAL(argv[0], "orientation") && !BU_STR_EQUAL(argv[0], "type") && !BU_STR_EQUAL(argv[0], "mode")) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
-	return BRLCAD_ERROR;
-    }
-
     if (BU_STR_EQUAL(argv[0], "orientation")) {
+
+	processed = true;
+
 	int mode = INT_MAX;
 	struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
 	if (BU_STR_EQUIV(argv[2], "none") || BU_STR_EQUIV(argv[2], "unoriented") || BU_STR_EQUIV(argv[2], "no")) {
@@ -303,13 +339,16 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 	    mode = RT_BOT_CW;
 	}
 	if (mode == INT_MAX) {
-	    bu_vls_printf(gb->gedp->ged_result_str, "Possible orientations are: none (no), ccw (rh), and cw (lh)");
+	    bu_vls_printf(gedp->ged_result_str, "Possible orientations are: none (no), ccw (rh), and cw (lh)");
 	    return BRLCAD_ERROR;
 	}
 	bot->orientation = mode;
     }
 
     if (BU_STR_EQUAL(argv[0], "type") || BU_STR_EQUAL(argv[0], "mode")) {
+
+	processed = true;
+
 	int mode = INT_MAX;
 	struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
 	if (BU_STR_EQUIV(argv[2], "surface") || BU_STR_EQUIV(argv[2], "surf")) {
@@ -325,7 +364,7 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 	    mode = RT_BOT_PLATE_NOCOS;
 	}
 	if (mode == INT_MAX) {
-	    bu_vls_printf(gb->gedp->ged_result_str, "Possible types are: surface solid plate plate_nocos");
+	    bu_vls_printf(gedp->ged_result_str, "Possible types are: surface solid plate plate_nocos");
 	    return BRLCAD_ERROR;
 	}
 	int old_mode = bot->mode;
@@ -348,17 +387,58 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
     }
 
     if (BU_STR_EQUAL(argv[0], "thickness")) {
+
+	processed = true;
+
 	struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
 	if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
-	    bu_vls_printf(gb->gedp->ged_result_str, "BoT is not plate mode - thickness can only be set on plate-mode BoTs");
+	    bu_vls_printf(gedp->ged_result_str, "BoT is not plate mode - thickness can only be set on plate-mode BoTs");
 	    return BRLCAD_ERROR;
 	}
-	bu_log("TODO - unimplemented\n");
+
+	// See which argument type we have
+	char *targ = bu_strdup(argv[2]);
+	char *c = strchr(targ, ':');
+	int face_id = 0;
+	fastf_t thickness = 0;
+	if (c) {
+	    // We have a colon separated argument, which should be a face index and thickness value.
+	    // Split the string accordingly
+	    char *face_id_str = targ;
+	    *c = '\0';
+	    char *thickness_str = c++;
+
+	    if (bu_opt_int(NULL, 1, (const char **)&face_id_str, &face_id) < 0) {
+		bu_vls_printf(gedp->ged_result_str, "Invalid face index specification: %s\n", face_id_str);
+		bu_free(targ, "targ");
+		return BRLCAD_ERROR;
+	    }
+	    if (bu_opt_fastf_t(NULL, 1, (const char **)&thickness_str, &thickness) < 0) {
+		bu_vls_printf(gedp->ged_result_str, "Invalid index specification: %s\n", thickness_str);
+		bu_free(targ, "targ");
+		return BRLCAD_ERROR;
+	    }
+	    bot->thickness[face_id] = thickness;
+	} else {
+	    if (bu_opt_fastf_t(NULL, 1, (const char **)&targ, &thickness) < 0) {
+		bu_vls_printf(gedp->ged_result_str, "Invalid thickness specification: %s\n", targ);
+		bu_free(targ, "targ");
+		return BRLCAD_ERROR;
+	    }
+	    for (size_t i = 0; i < bot->num_faces; i++)
+		bot->thickness[i] = thickness;
+	}
+	bu_free(targ, "targ");
+    }
+
+    // If we didn't have a subcommand that we knew how to handle, report an error
+    if (!processed) {
+	bu_vls_printf(gedp->ged_result_str, "%s", usage_string);
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_put_internal(gb->dp, gb->gedp->dbip, gb->intern, &rt_uniresource) < 0) {
-	bu_vls_printf(gb->gedp->ged_result_str, "Failed to update BoT");
+    if (rt_db_put_internal(gb->dp, gedp->dbip, gb->intern, &rt_uniresource) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Failed to update BoT");
 	return BRLCAD_ERROR;
     }
 
