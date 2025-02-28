@@ -44,6 +44,11 @@
 #include "rt/nmg_conv.h"
 #include "rt/primitives/bot.h"
 
+// TODO - investigate geogram's isotropic remeshing to see if it can help us
+// deal with plate mode bots having lots of long, super-thin triangles (they
+// seem to be really messing with performance in newer Manifold releases...)
+// https://github.com/BrunoLevy/geogram/wiki/Remeshing
+
 static bool
 bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
 {
