@@ -80,15 +80,21 @@ bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip
     if (nbot->num_vertices < 3)
 	return BRLCAD_ERROR;
 
-    manifold::Mesh bot_mesh;
-    for (size_t j = 0; j < nbot->num_vertices ; j++)
-	bot_mesh.vertPos.push_back(glm::vec3(nbot->vertices[3*j], nbot->vertices[3*j+1], nbot->vertices[3*j+2]));
+    manifold::MeshGL64 bot_mesh;
+    for (size_t j = 0; j < nbot->num_vertices*3 ; j++)
+	bot_mesh.vertProperties.insert(bot_mesh.vertProperties.end(), nbot->vertices[j]);
     if (nbot->orientation == RT_BOT_CW) {
-	for (size_t j = 0; j < nbot->num_faces; j++)
-	    bot_mesh.triVerts.push_back(glm::ivec3(nbot->faces[3*j], nbot->faces[3*j+2], nbot->faces[3*j+1]));
+	for (size_t j = 0; j < nbot->num_faces; j++) {
+	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), nbot->faces[3*j+0]);
+	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), nbot->faces[3*j+2]);
+	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), nbot->faces[3*j+1]);
+	}
     } else {
-	for (size_t j = 0; j < nbot->num_faces; j++)
-	    bot_mesh.triVerts.push_back(glm::ivec3(nbot->faces[3*j], nbot->faces[3*j+1], nbot->faces[3*j+2]));
+	for (size_t j = 0; j < nbot->num_faces; j++) {
+	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), nbot->faces[3*j+0]);
+	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), nbot->faces[3*j+1]);
+	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), nbot->faces[3*j+2]);
+	}
     }
 
     manifold::Manifold bot_manifold = manifold::Manifold(bot_mesh);
@@ -309,7 +315,7 @@ manifold_do_bool(
 	    pn[2] = hf_ip->eqn[2];
 	    if (op == OP_INTERSECT)
 		VSCALE(pn, pn, -1);
-	    manifold::Manifold trimmed = lm->TrimByPlane(glm::vec3(pn[0], pn[1], pn[2]), hf_ip->eqn[3]);
+	    manifold::Manifold trimmed = lm->TrimByPlane(linalg::vec<double, 3>(pn[0], pn[1], pn[2]), hf_ip->eqn[3]);
 	    result = new manifold::Manifold(trimmed);
 	}
 
@@ -361,8 +367,8 @@ manifold_do_bool(
 		// write out the failing inputs to files to aid in debugging
 		if (evar && strlen(evar)) {
 		    std::cerr << "Manifold op: " << (int)manifold_op << "\n";
-		    manifold::ExportMesh(std::string(tl->tr_d.td_name)+std::string(".glb"), lm->GetMesh(), {});
-		    manifold::ExportMesh(std::string(tr->tr_d.td_name)+std::string(".glb"), rm->GetMesh(), {});
+		    manifold::ExportMesh(std::string(tl->tr_d.td_name)+std::string(".glb"), lm->GetMeshGL(), {});
+		    manifold::ExportMesh(std::string(tr->tr_d.td_name)+std::string(".glb"), rm->GetMeshGL(), {});
 		    bu_exit(EXIT_FAILURE, "Exiting to avoid overwriting debug outputs from Manifold boolean failure.");
 		}
 #endif
@@ -371,8 +377,8 @@ manifold_do_bool(
 
 #if 0
 	    // If we're debugging and need to capture glb for a "successful" case, these can be uncommented
-	    manifold::ExportMesh(std::string(tl->tr_d.td_name)+std::string(".glb"), lm->GetMesh(), {});
-	    manifold::ExportMesh(std::string(tr->tr_d.td_name)+std::string(".glb"), rm->GetMesh(), {});
+	    manifold::ExportMesh(std::string(tl->tr_d.td_name)+std::string(".glb"), lm->GetMeshGL(), {});
+	    manifold::ExportMesh(std::string(tr->tr_d.td_name)+std::string(".glb"), rm->GetMeshGL(), {});
 	    manifold::ExportMesh(std::string("out-") + std::string(tl->tr_d.td_name)+std::to_string(op)+std::string(tr->tr_d.td_name)+std::string(".glb"), bool_out.GetMesh(), {});
 #endif
 
@@ -1065,7 +1071,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 
     if (ftree->tr_d.td_d) {
 	manifold::Manifold *om = (manifold::Manifold *)ftree->tr_d.td_d;
-	manifold::Mesh rmesh = om->GetMesh();
+	manifold::MeshGL64 rmesh = om->GetMeshGL64();
 	struct rt_bot_internal *bot;
 	BU_GET(bot, struct rt_bot_internal);
 	bot->magic = RT_BOT_INTERNAL_MAGIC;
@@ -1074,20 +1080,14 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	bot->thickness = NULL;
 	bot->face_mode = (struct bu_bitv *)NULL;
 	bot->bot_flags = 0;
-	bot->num_vertices = (int)rmesh.vertPos.size();
-	bot->num_faces = (int)rmesh.triVerts.size();
-	bot->vertices = (double *)calloc(rmesh.vertPos.size()*3, sizeof(double));
-	bot->faces = (int *)calloc(rmesh.triVerts.size()*3, sizeof(int));
-	for (size_t j = 0; j < rmesh.vertPos.size(); j++) {
-	    bot->vertices[3*j] = rmesh.vertPos[j].x;
-	    bot->vertices[3*j+1] = rmesh.vertPos[j].y;
-	    bot->vertices[3*j+2] = rmesh.vertPos[j].z;
-	}
-	for (size_t j = 0; j < rmesh.triVerts.size(); j++) {
-	    bot->faces[3*j] = rmesh.triVerts[j].x;
-	    bot->faces[3*j+1] = rmesh.triVerts[j].y;
-	    bot->faces[3*j+2] = rmesh.triVerts[j].z;
-	}
+	bot->num_vertices = (int)rmesh.vertProperties.size()/3;
+	bot->num_faces = (int)rmesh.triVerts.size()/3;
+	bot->vertices = (double *)calloc(rmesh.vertProperties.size(), sizeof(double));
+	bot->faces = (int *)calloc(rmesh.triVerts.size(), sizeof(int));
+	for (size_t j = 0; j < rmesh.vertProperties.size(); j++)
+	    bot->vertices[j] = rmesh.vertProperties[j];
+	for (size_t j = 0; j < rmesh.triVerts.size(); j++)
+	    bot->faces[j] = rmesh.triVerts[j];
 	delete om;
 	ftree->tr_d.td_d = NULL;
 
