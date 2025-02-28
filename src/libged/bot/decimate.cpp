@@ -30,6 +30,7 @@
 
 #include "vmath.h"
 #include "bu/str.h"
+#include "bg/trimesh.h"
 #include "rt/db5.h"
 #include "rt/db_internal.h"
 #include "rt/db_io.h"
@@ -49,8 +50,9 @@ decimate_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
 	bu_vls_printf(str, "Options:\n%s\n", option_help);
 	bu_free(option_help, "help str");
     }
-    bu_vls_printf(str, "Available decimation error metrics are:\n");
-    bu_vls_printf(str, "    1 (Quadric - default)\n");
+    bu_vls_printf(str, "Available decimation methods are:\n");
+    bu_vls_printf(str, "   GCT (default) - specify with feature-size option\n");
+    bu_vls_printf(str, "   Simple - specify with merge-tol option\n");
 }
 
 extern "C" int
@@ -69,10 +71,12 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 
     int print_help = 0;
     double feature_size = 1.0;
+    double merge_tol = -FLT_MAX;
 
     struct bu_opt_desc d[5];
     BU_OPT(d[0], "h",      "help",     "",            NULL, &print_help,   "Print help");
     BU_OPT(d[1], "f", "feature-size", "#", &bu_opt_fastf_t, &feature_size, "Feature size");
+    BU_OPT(d[1], "t", "merge-tol",    "#", &bu_opt_fastf_t, &merge_tol, "Tolerance for merging vertices");
     BU_OPT_NULL(d[2]);
 
     // We know we're the decimate command - start processing args
@@ -104,6 +108,85 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
     struct rt_bot_internal *input_bot = (struct rt_bot_internal*)gb->intern->idb_ptr;
     RT_BOT_CK_MAGIC(input_bot);
 
+
+    if (merge_tol > -FLT_MAX) {
+
+	bu_log("INPUT BoT has %zu vertices and %zu faces, merge_tol = %f\n", input_bot->num_vertices, input_bot->num_faces, merge_tol);
+
+	int *ofaces = NULL;
+	int n_ofaces = 0;
+	struct bg_trimesh_decimation_settings s= BG_TRIMESH_DECIMATION_SETTINGS_INIT;
+	s.feature_size = merge_tol;
+	int ret = bg_trimesh_decimate(&ofaces, &n_ofaces, input_bot->faces, (int)input_bot->num_faces, (point_t *)input_bot->vertices, (int)input_bot->num_vertices, &s);
+	if (bu_vls_strlen(&s.msgs)) {
+	    bu_log("%s", bu_vls_cstr(&s.msgs));
+	}
+	bu_vls_free(&s.msgs);
+	if (ret != BRLCAD_OK) {
+	    bu_free(ofaces, "ofaces");
+	    return BRLCAD_ERROR;
+	}
+
+	int *gcfaces = NULL;
+	point_t *opnts = NULL;
+	int n_opnts;
+
+	// Trim out any unused points
+	int n_gcfaces = bg_trimesh_3d_gc(&gcfaces, &opnts, &n_opnts, ofaces, n_ofaces, (point_t *)input_bot->vertices);
+	if (n_gcfaces != n_ofaces) {
+	    bu_free(gcfaces, "gcfaces");
+	    bu_free(opnts , "opnts");
+	    bu_free(ofaces, "ofaces");
+	    bu_vls_free(&output_bot_name);
+	    return BRLCAD_ERROR;
+	}
+
+	bu_log("OUTPUT BoT has %d vertices and %d faces, merge_tol = %f\n", n_opnts, n_gcfaces, s.feature_size);
+
+	// Indices may be updated after gc, so the old array is obsolete
+	bu_free(ofaces, "ofaces");
+
+	// New bot time
+	struct rt_bot_internal *nbot;
+	BU_ALLOC(nbot, struct rt_bot_internal);
+	nbot->magic = RT_BOT_INTERNAL_MAGIC;
+	nbot->mode = input_bot->mode;
+	nbot->orientation = input_bot->orientation;
+	nbot->thickness = NULL; // TODO
+	nbot->face_mode = NULL; // TODO
+	nbot->num_faces = n_ofaces;
+	nbot->num_vertices = n_opnts;
+	nbot->faces = gcfaces;
+	nbot->vertices = (fastf_t *)opnts;
+
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_type = ID_BOT;
+	intern.idb_meth = &OBJ[ID_BOT];
+	intern.idb_ptr = (void *)nbot;
+
+	struct directory *dp = db_diradd(dbip, bu_vls_cstr(&output_bot_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&gb->intern->idb_type);
+	if (dp == RT_DIR_NULL) {
+	    bu_free(gcfaces, "gcfaces");
+	    bu_free(opnts , "opnts");
+	    bu_vls_free(&output_bot_name);
+	    return BRLCAD_ERROR;
+	}
+	bu_vls_free(&output_bot_name);
+
+	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+	    bu_free(gcfaces, "gcfaces");
+	    bu_free(opnts , "opnts");
+	    bu_log("Failed to write %s to database\n", bu_vls_cstr(&output_bot_name));
+	    rt_db_free_internal(&intern);
+	    bu_vls_free(&output_bot_name);
+	    return BRLCAD_ERROR;
+	}
+
+	return BRLCAD_OK;
+    }
+
     bu_log("INPUT BoT has %zu vertices and %zu faces, feature_size = %f\n", input_bot->num_vertices, input_bot->num_faces, feature_size);
 
     struct directory *dp = db_diradd(dbip, bu_vls_cstr(&output_bot_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&gb->intern->idb_type);
@@ -112,6 +195,7 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	return BRLCAD_ERROR;
     }
     bu_vls_free(&output_bot_name);
+
     if (rt_db_put_internal(dp, dbip, gb->intern, &rt_uniresource) < 0) {
 	return BRLCAD_ERROR;
     }

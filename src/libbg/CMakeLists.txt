@@ -51,6 +51,7 @@ set(
   chull3d.cpp
   clip.c
   clipper.cpp
+  decimate.cpp
   lseg_lseg.cpp
   lseg_pt.c
   obr.c

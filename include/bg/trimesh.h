@@ -34,6 +34,7 @@
 #include "common.h"
 #include "vmath.h"
 #include "bg/defines.h"
+#include "bu/vls.h"
 
 __BEGIN_DECLS
 
@@ -148,9 +149,10 @@ struct bg_trimesh_decimation_settings {
     fastf_t feature_size;  // Smallest feature size (mm) to leave undecimated
     fastf_t max_runtime;   // If the decimation takes more than max_runtime seconds, abort
     size_t max_threads;    // Don't use more than max_threads when processing.
+    struct bu_vls msgs;    // Messages reported during decimation
 };
 #define BG_TRIMESH_DECIMATION_METHOD_DEFAULT 0
-#define BG_TRIMESH_DECIMATION_SETTINGS_INIT {BG_TRIMESH_DECIMATION_METHOD_DEFAULT, 0.0, 0.0, 0}
+#define BG_TRIMESH_DECIMATION_SETTINGS_INIT {BG_TRIMESH_DECIMATION_METHOD_DEFAULT, 0.0, 0.0, 0, BU_VLS_INIT_ZERO}
 
 /**
  * @brief
