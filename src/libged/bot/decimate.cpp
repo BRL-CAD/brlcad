@@ -151,6 +151,10 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	BU_ALLOC(nbot, struct rt_bot_internal);
 	nbot->magic = RT_BOT_INTERNAL_MAGIC;
 	nbot->mode = input_bot->mode;
+	// We're not mapping plate mode thickness info at the moment, so we
+	// can't persist a plate mode type
+	if (nbot->mode == RT_BOT_PLATE || nbot->mode == RT_BOT_PLATE_NOCOS)
+	    nbot->mode = RT_BOT_SURFACE;
 	nbot->orientation = input_bot->orientation;
 	nbot->thickness = NULL; // TODO
 	nbot->face_mode = NULL; // TODO
