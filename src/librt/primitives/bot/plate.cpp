@@ -416,6 +416,26 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	/* 5 */ pts[12] = pnts[5][X]; pts[13] = pnts[5][Y]; pts[14] = pnts[5][Z];
 	/* 6 */ pts[15] = pnts[2][X]; pts[16] = pnts[2][Y]; pts[17] = pnts[2][Z];
 
+	// To minimize coplanarity with neighboring faces if the source BoT is
+	// planar, bump all points out very slightly from the arb center point.
+	point_t pcenter = VINIT_ZERO;
+	for (size_t j = 0; j < 6; j++) {
+	    point_t apnt;
+	    VMOVE(apnt, ((point_t *)pts)[j]);
+	    VADD2(pcenter, pcenter, apnt);
+	}
+	VSCALE(pcenter, pcenter, 1.0/6.0);
+
+	for (size_t j = 0; j < 6; j++) {
+	    point_t apnt;
+	    vect_t bumpv;
+	    VMOVE(apnt, ((point_t *)pts)[j]);
+	    VSUB2(bumpv, apnt, pcenter);
+	    VUNITIZE(bumpv);
+	    VSCALE(bumpv, bumpv, 1 + VUNITIZE_TOL);
+	    VADD2(((point_t *)pts)[j], apnt, bumpv);
+	}
+
 	int faces[24];
 	faces[ 0] = 0; faces[ 1] = 1; faces[ 2] = 4;  // 1 2 5
 	faces[ 3] = 2; faces[ 4] = 3; faces[ 5] = 5;  // 3 4 6
