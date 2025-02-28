@@ -73,11 +73,11 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
     double feature_size = 1.0;
     double merge_tol = -FLT_MAX;
 
-    struct bu_opt_desc d[5];
+    struct bu_opt_desc d[4];
     BU_OPT(d[0], "h",      "help",     "",            NULL, &print_help,   "Print help");
     BU_OPT(d[1], "f", "feature-size", "#", &bu_opt_fastf_t, &feature_size, "Feature size");
-    BU_OPT(d[1], "t", "merge-tol",    "#", &bu_opt_fastf_t, &merge_tol, "Tolerance for merging vertices");
-    BU_OPT_NULL(d[2]);
+    BU_OPT(d[2], "t", "merge-tol",    "#", &bu_opt_fastf_t, &merge_tol, "Tolerance for merging vertices");
+    BU_OPT_NULL(d[3]);
 
     // We know we're the decimate command - start processing args
     argc--; argv++;
