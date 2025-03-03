@@ -41,6 +41,7 @@
 #include "ged/commands.h"
 #include "ged/database.h"
 #include "ged/objects.h"
+#include "../ged_private.h"
 #include "./ged_bot.h"
 
 
@@ -72,7 +73,7 @@ struct botDataAdapter {
 
 
 static bool
-bot_remesh(struct ged *UNUSED(gedp), struct rt_bot_internal *bot, double voxelSize)
+bot_remesh_vdb(struct ged *UNUSED(gedp), struct rt_bot_internal *bot, double voxelSize)
 {
     const float exteriorBandWidth = 10.0;
     const float interiorBandWidth = std::numeric_limits<float>::max();
@@ -152,7 +153,7 @@ bot_remesh(struct ged *UNUSED(gedp), struct rt_bot_internal *bot, double voxelSi
 #else /* OPENVDB_ABI_VERSION_NUMBER */
 
 static bool
-bot_remesh(struct ged *gedp, struct rt_bot_internal *UNUSED(bot), double UNUSED(voxelSize))
+bot_remesh_vdb(struct ged *gedp, struct rt_bot_internal *UNUSED(bot), double UNUSED(voxelSize))
 {
     bu_vls_printf(gedp->ged_result_str,
 		  "WARNING: BoT remeshing is unavailable.\n"
@@ -169,39 +170,17 @@ bot_remesh(struct ged *gedp, struct rt_bot_internal *UNUSED(bot), double UNUSED(
 extern "C" int
 _bot_cmd_remesh(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] remesh <objname> <output_bot>";
-    const char *purpose_string = "Store a remeshed version of the BoT in object <output_bot>";
-    if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return BRLCAD_OK;
-    }
-
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
-
-    argc--; argv++;
-
-    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
-	return BRLCAD_ERROR;
-    }
-
     struct ged *gedp = gb->gedp;
     const char *input_bot_name = gb->dp->d_namep;
-    const char *output_bot_name;
-    struct directory *dp_input;
-    struct directory *dp_output;
-    struct rt_bot_internal *input_bot;
-
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    dp_input = dp_output = RT_DIR_NULL;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s\n%s", usage_string, purpose_string);
-	return GED_HELP;
+    const char *usage_string = "bot [options] remesh <objname> <output_bot>";
+    const char *purpose_string = "Store a remeshed version of the BoT in object <output_bot>";
+    if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
     }
 
     /* check that we are using a version 5 database */
@@ -213,46 +192,93 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (argc > 3) {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: unexpected arguments encountered\n");
-	bu_vls_printf(gedp->ged_result_str, "%s\n%s", usage_string, purpose_string);
-	return BRLCAD_ERROR;
+    int print_help = 0;
+    int use_vdb = 0;
+    struct bu_vls output_bot_name = BU_VLS_INIT_ZERO;
+
+    struct bu_opt_desc d[7];
+    BU_OPT(d[0], "h", "help",                  "",         NULL,  &print_help,      "Print help");
+    BU_OPT(d[1], "o", "output",           "oname",  &bu_opt_vls,  &output_bot_name, "Name to use for output BoT");
+    BU_OPT(d[2],  "", "vdb",                   "",         NULL,  &use_vdb,         "Use OpenVDB based remeshing");
+    BU_OPT_NULL(d[3]);
+
+
+    argc--; argv++;
+
+    int ac = bu_opt_parse(NULL, argc, argv, d);
+    argc = ac;
+
+    if (print_help || !argc) {
+	_ged_cmd_help(gedp, usage_string, d);
+	bu_vls_free(&output_bot_name);
+	return GED_HELP;
     }
 
-    output_bot_name = input_bot_name;
-    if (argc > 1)
-	output_bot_name = (char *)argv[1];
-
-    if (!BU_STR_EQUAL(input_bot_name, output_bot_name)) {
-	GED_CHECK_EXISTS(gedp, output_bot_name, LOOKUP_QUIET, BRLCAD_ERROR);
+    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
+	bu_vls_free(&output_bot_name);
+	return BRLCAD_ERROR;
     }
 
     if (gb->intern->idb_major_type != DB5_MAJORTYPE_BRLCAD || gb->intern->idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a BOT primitive\n", input_bot_name);
+	bu_vls_free(&output_bot_name);
 	return BRLCAD_ERROR;
     }
 
-    input_bot = (struct rt_bot_internal *)gb->intern->idb_ptr;
+    struct directory *dp_input = RT_DIR_NULL;
+    struct directory *dp_output = RT_DIR_NULL;
+
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if ((bu_vls_strlen(&output_bot_name) && argc > 1) || argc > 2) {
+	bu_vls_printf(gedp->ged_result_str, "Unexpected arguments\n");
+	bu_vls_free(&output_bot_name);
+	return BRLCAD_ERROR;
+    }
+
+    if (!bu_vls_strlen(&output_bot_name) && argc == 2)
+	bu_vls_printf(&output_bot_name, "%s", argv[1]);
+
+    // If we've got no specified output, we're overwriting
+    if (!bu_vls_strlen(&output_bot_name))
+	bu_vls_printf(&output_bot_name, "%s", input_bot_name);
+
+
+    if (!BU_STR_EQUAL(input_bot_name, bu_vls_cstr(&output_bot_name))) {
+	GED_CHECK_EXISTS(gedp, bu_vls_cstr(&output_bot_name), LOOKUP_QUIET, BRLCAD_ERROR);
+    }
+
+    struct rt_bot_internal *input_bot = (struct rt_bot_internal *)gb->intern->idb_ptr;
     RT_BOT_CK_MAGIC(input_bot);
 
     bu_log("INPUT BoT has %zu vertices and %zu faces\n", input_bot->num_vertices, input_bot->num_faces);
 
     /* TODO: stash a backup if overwriting the original */
 
-    bool ok = bot_remesh(gedp, input_bot, 50);
-    if (!ok) {
+    if (use_vdb) {
+	bool ok = bot_remesh_vdb(gedp, input_bot, 50);
+	if (!ok) {
+	    bu_vls_free(&output_bot_name);
+	    return BRLCAD_ERROR;
+	}
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "TODO - expose geogram remeshing\n");
+	bu_vls_free(&output_bot_name);
 	return BRLCAD_ERROR;
     }
 
     bu_log("OUTPUT BoT has %zu vertices and %zu faces\n", input_bot->num_vertices, input_bot->num_faces);
 
-    if (BU_STR_EQUAL(input_bot_name, output_bot_name)) {
+    if (BU_STR_EQUAL(input_bot_name, bu_vls_cstr(&output_bot_name))) {
 	dp_output = dp_input;
     } else {
-	GED_DB_DIRADD(gedp, dp_output, output_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&gb->intern->idb_type, BRLCAD_ERROR);
+	GED_DB_DIRADD(gedp, dp_output, bu_vls_cstr(&output_bot_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&gb->intern->idb_type, BRLCAD_ERROR);
     }
 
     GED_DB_PUT_INTERNAL(gedp, dp_output, gb->intern, wdbp->wdb_resp, BRLCAD_ERROR);
+
+    bu_vls_free(&output_bot_name);
 
     return BRLCAD_OK;
 }
