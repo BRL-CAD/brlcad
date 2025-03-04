@@ -3,7 +3,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 brlcad_find_package(MANIFOLD REQUIRED)
 brlcad_find_package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
 brlcad_find_package(REGEX REQUIRED)
-brlcad_find_package(GEOGRAM REQUIRED SYSPATTERN geogram)
+brlcad_find_package(Geogram REQUIRED SYSPATTERN geogram)
 find_package_gte(REQUIRED)
 add_definitions(-DUSE_GEOGRAM)
 
@@ -437,7 +437,7 @@ set(
   ${librt_deps}
   ${OPENNURBS_LIBRARIES}
   ${MANIFOLD_LIBRARIES}
-  ${GEOGRAM_LIBRARY}
+  ${Geogram_LIBRARY}
   ${MMESH_LIBRARY}
   ${REGEX_LIBRARIES}
   ${WINSOCK_LIB}
@@ -454,7 +454,7 @@ set(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/vds
   ${REGEX_INCLUDE_DIRS}
-  ${GEOGRAM_INCLUDE_DIR}
+  ${Geogram_INCLUDE_DIR}
   ${MANIFOLD_INCLUDE_DIRS}
   ${MMESH_INCLUDE_DIR}
 )

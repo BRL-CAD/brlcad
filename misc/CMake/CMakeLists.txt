@@ -32,7 +32,7 @@ set(
   FindBRLCAD.cmake
   FindBSON.cmake
   FindGECODE.cmake
-  FindGEOGRAM.cmake
+  FindGeogram.cmake
   FindGTE.cmake
   FindIlmBase.cmake
   FindLEMON.cmake
