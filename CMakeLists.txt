@@ -203,18 +203,13 @@ include(BRLCAD_Environment_Setup)
 
 # We do NOT want CMake looking in the User Package Registry - have encountered
 # at least one case where stale or incorrect information there has resulted in
-# an incorrect include directory for Eigen based on bext build info.
+# an incorrect include directory for Eigen
 set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 
 #---------------------------------------------------------------------
-# Prepare External dependencies (bext) repository management
+# Prepare to manage and build BRL-CAD's external dependencies.
+# Specifies a specific commit hash to use in the 'bext' repository.
 include(BRLCAD_ExternalDeps)
-
-# Sets the bext SHA1 hash.  There are also some steps in this process that need
-# to happen early to allow find_package and find_program to work as expected.
-#
-# If a pre-existing bext install directory is specified, we also check the
-# types on platforms where bext and the main BRL-CAD's build type must align.
 brlcad_bext_init(f11907cb9d1e5894ee395d4d2b25820ecd1257ed)
 
 #---------------------------------------------------------------------
