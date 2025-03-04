@@ -34,7 +34,6 @@ TTK_STUB_LIBRARY       = path to ttk stub library
 
 #]=======================================================================]
 
-include(CMakeFindFrameworks)
 
 set(_TCL_SEARCHES)
 
@@ -400,36 +399,10 @@ if(TCL_ENABLE_TK)
   endif()
 endif(TCL_ENABLE_TK)
 
-cmake_find_frameworks(Tcl)
-if(TCL_ENABLE_TK)
-  cmake_find_frameworks(Tk)
-endif(TCL_ENABLE_TK)
-
-set(TCL_FRAMEWORK_INCLUDES)
-if(Tcl_FRAMEWORKS)
-  if(NOT TCL_INCLUDE_PATH)
-    foreach(dir ${Tcl_FRAMEWORKS})
-      set(TCL_FRAMEWORK_INCLUDES ${TCL_FRAMEWORK_INCLUDES} ${dir}/Headers)
-    endforeach()
-  endif()
-endif()
-
-if(TCL_ENABLE_TK)
-  set(TK_FRAMEWORK_INCLUDES)
-  if(Tk_FRAMEWORKS)
-    if(NOT TK_INCLUDE_PATH)
-      foreach(dir ${Tk_FRAMEWORKS})
-        set(TK_FRAMEWORK_INCLUDES ${TK_FRAMEWORK_INCLUDES} ${dir}/Headers ${dir}/PrivateHeaders)
-      endforeach()
-    endif()
-  endif()
-endif(TCL_ENABLE_TK)
-
 set(
   TCLTK_POSSIBLE_INCLUDE_PATHS
   "${TCL_LIBRARY_PATH_PARENT}/include"
   "${TCL_INCLUDE_PATH}"
-  ${TCL_FRAMEWORK_INCLUDES}
   "${TCL_TCLSH_PATH_PARENT}/include"
 )
 if(TCL_ENABLE_TK)
@@ -438,7 +411,6 @@ if(TCL_ENABLE_TK)
     ${TCLTK_POSSIBLE_INCLUDE_PATHS}
     "${TCL_LIBRARY_PATH_PARENT}/include"
     "${TCL_INCLUDE_PATH}"
-    ${TCL_FRAMEWORK_INCLUDES}
     "${TCL_TCLSH_PATH_PARENT}/include"
   )
 endif(TCL_ENABLE_TK)
