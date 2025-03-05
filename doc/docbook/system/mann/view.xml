@@ -111,6 +111,7 @@ subcommands:
       [<emphasis>args</emphasis>]
     </term>
     <listitem>
+      <para><emphasis remap="B" role="bold">Not Implemented.</emphasis></para>
       <para>
 	Manipulate options for the faceplate.
       </para>
