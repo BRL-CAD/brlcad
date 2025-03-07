@@ -2,9 +2,9 @@ brlcad_find_package(MANIFOLD REQUIRED)
 
 set(BOT_LIBS libged libbg libbu ${MANIFOLD_LIBRARIES})
 
-brlcad_find_package(GEOGRAM REQUIRED SYSPATTERN geogram)
-set(BOT_LOCAL_INCLUDE_DIRS ${BOT_LOCAL_INCLUDE_DIRS} ${GEOGRAM_INCLUDE_DIR})
-set(BOT_LIBS ${BOT_LIBS} ${GEOGRAM_LIBRARY})
+brlcad_find_package(Geogram REQUIRED SYSPATTERN geogram)
+set(BOT_LOCAL_INCLUDE_DIRS ${BOT_LOCAL_INCLUDE_DIRS} ${Geogram_INCLUDE_DIR})
+set(BOT_LIBS ${BOT_LIBS} ${Geogram_LIBRARY})
 
 if(BRLCAD_ENABLE_OPENMESH)
   brlcad_find_package(OpenMesh)
