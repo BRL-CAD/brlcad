@@ -31,6 +31,14 @@
 #  include <openvdb/tools/MeshToVolume.h>
 #endif /* OPENVDB_ABI_VERSION_NUMBER */
 
+#include "geogram/basic/process.h"
+#include <geogram/basic/command_line.h>
+#include <geogram/basic/command_line_args.h>
+#include "geogram/mesh/mesh.h"
+#include "geogram/mesh/mesh_geometry.h"
+#include "geogram/mesh/mesh_preprocessing.h"
+#include "geogram/mesh/mesh_remesh.h"
+
 #include "vmath.h"
 #include "bu/str.h"
 #include "rt/db5.h"
@@ -165,6 +173,127 @@ bot_remesh_vdb(struct ged *gedp, struct rt_bot_internal *UNUSED(bot), double UNU
 #endif /* OPENVDB_ABI_VERSION_NUMBER */
 
 
+static int
+bot_remesh_geogram(struct rt_bot_internal **obot, struct ged *gedp, struct rt_bot_internal *bot)
+{
+    // Geogram libraries like to print a lot - shut down
+    // the I/O channels until we can clear the logger
+    int serr = -1;
+    int sout = -1;
+    int stderr_stashed = -1;
+    int stdout_stashed = -1;
+    int fnull = open("/dev/null", O_WRONLY);
+    if (fnull == -1) {
+	/* https://gcc.gnu.org/ml/gcc-patches/2005-05/msg01793.html */
+	fnull = open("nul", O_WRONLY);
+    }
+    if (fnull != -1) {
+	serr = fileno(stderr);
+	sout = fileno(stdout);
+	stderr_stashed = dup(serr);
+	stdout_stashed = dup(sout);
+	dup2(fnull, serr);
+	dup2(fnull, sout);
+	close(fnull);
+    }
+
+    // Make sure geogram is initialized
+    GEO::initialize();
+
+    // Quell logging messages
+    GEO::Logger::instance()->unregister_all_clients();
+
+    // Put I/O channels back where they belong
+    if (fnull != -1) {
+	fflush(stderr);
+	dup2(stderr_stashed, serr);
+	close(stderr_stashed);
+	fflush(stdout);
+	dup2(stdout_stashed, sout);
+	close(stdout_stashed);
+    }
+
+    GEO::CmdLine::import_arg_group("standard");
+    GEO::CmdLine::import_arg_group("algo");
+    GEO::CmdLine::import_arg_group("remesh");
+
+    fastf_t nb_pts = bot->num_vertices * 10;
+    std::string nbpts = std::to_string(nb_pts);
+    GEO::CmdLine::set_arg("remesh:nb_pts", nbpts.c_str());
+
+    GEO::Mesh gm;
+    gm.vertices.assign_points((double *)bot->vertices, 3, bot->num_vertices);
+    for (size_t i = 0; i < bot->num_faces; i++) {
+	GEO::index_t f = gm.facets.create_polygon(3);
+	gm.facets.set_vertex(f, 0, bot->faces[3*i+0]);
+	gm.facets.set_vertex(f, 1, bot->faces[3*i+1]);
+	gm.facets.set_vertex(f, 2, bot->faces[3*i+2]);
+    }
+
+    // After the initial raw load, do a repair pass to set up
+    // Geogram's internal mesh data
+    double epsilon = 1e-6 * (0.01 * GEO::bbox_diagonal(gm));
+
+    GEO::mesh_repair(gm, GEO::MeshRepairMode(GEO::MESH_REPAIR_DEFAULT), epsilon);
+
+    // Do some small connected component removal
+    double area = GEO::Geom::mesh_area(gm,3);
+    double min_comp_area = 0.03 * area;
+    if (min_comp_area > 0.0) {
+	double nb_f_removed = gm.facets.nb();
+	GEO::remove_small_connected_components(gm, min_comp_area);
+	nb_f_removed -= gm.facets.nb();
+	if(nb_f_removed > 0 || nb_f_removed < 0) {
+	    GEO::mesh_repair(gm, GEO::MESH_REPAIR_DEFAULT, epsilon);
+	}
+    }
+
+    GEO::Mesh remesh;
+    GEO::remesh_smooth(gm, remesh, nb_pts);
+
+    struct rt_bot_internal *nbot;
+    BU_GET(nbot, struct rt_bot_internal);
+    nbot->magic = RT_BOT_INTERNAL_MAGIC;
+    nbot->mode = RT_BOT_SURFACE; // TODO - check if it is solid.
+    nbot->orientation = RT_BOT_CCW;
+    nbot->thickness = NULL;
+    nbot->face_mode = (struct bu_bitv *)NULL;
+    nbot->bot_flags = 0;
+    nbot->num_vertices = (int)remesh.vertices.nb();
+    nbot->num_faces = (int)remesh.facets.nb();
+    nbot->vertices = (double *)calloc(nbot->num_vertices*3, sizeof(double));
+    nbot->faces = (int *)calloc(nbot->num_faces*3, sizeof(int));
+
+    int j = 0;
+    for(GEO::index_t v = 0; v < gm.vertices.nb(); v++) {
+	double gm_v[3];
+	const double *p = gm.vertices.point_ptr(v);
+	for (int i = 0; i < 3; i++)
+	    gm_v[i] = p[i];
+	nbot->vertices[3*j] = gm_v[0];
+	nbot->vertices[3*j+1] = gm_v[1];
+	nbot->vertices[3*j+2] = gm_v[2];
+	j++;
+    }
+
+    j = 0;
+    for (GEO::index_t f = 0; f < gm.facets.nb(); f++) {
+	double tri_verts[3];
+	for (int i = 0; i < 3; i++)
+	    tri_verts[i] = gm.facets.vertex(f, i);
+	// TODO - CW vs CCW orientation handling?
+	nbot->faces[3*j] = tri_verts[0];
+	nbot->faces[3*j+1] = tri_verts[1];
+	nbot->faces[3*j+2] = tri_verts[2];
+	j++;
+    }
+
+    *obot = nbot;
+
+    bu_vls_sprintf(gedp->ged_result_str, "remeshed\n");
+    return BRLCAD_OK;
+}
+
 
 
 extern "C" int
@@ -263,9 +392,39 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
     } else {
-	bu_vls_printf(gedp->ged_result_str, "TODO - expose geogram remeshing\n");
-	bu_vls_free(&output_bot_name);
-	return BRLCAD_ERROR;
+	struct rt_bot_internal *obot = NULL;
+	if (bot_remesh_geogram(&obot, gedp, input_bot) != BRLCAD_OK || !obot) {
+	    bu_vls_free(&output_bot_name);
+	    return BRLCAD_ERROR;
+	}
+
+	// If we're repairing and we were able to fix it, write out the result
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_type = ID_BOT;
+	intern.idb_meth = &OBJ[ID_BOT];
+	intern.idb_ptr = (void *)obot;
+
+	const char *rname = bu_vls_cstr(&output_bot_name);
+	struct directory *dp = db_diradd(gedp->dbip, rname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+	if (dp == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Failed to write out new BoT %s\n", rname);
+	    rt_db_free_internal(&intern);
+	    bu_vls_free(&output_bot_name);
+	    return BRLCAD_ERROR;
+	}
+
+	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Failed to write out new BoT %s\n", rname);
+	    rt_db_free_internal(&intern);
+	    bu_vls_free(&output_bot_name);
+	    return BRLCAD_ERROR;
+	}
+
+	rt_db_free_internal(&intern);
+	bu_vls_printf(gedp->ged_result_str, "Remesh complete\n");
+	return BRLCAD_OK;
     }
 
     bu_log("OUTPUT BoT has %zu vertices and %zu faces\n", input_bot->num_vertices, input_bot->num_faces);

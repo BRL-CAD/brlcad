@@ -2,6 +2,10 @@ brlcad_find_package(MANIFOLD REQUIRED)
 
 set(BOT_LIBS libged libbg libbu ${MANIFOLD_LIBRARIES})
 
+brlcad_find_package(GEOGRAM REQUIRED SYSPATTERN geogram)
+set(BOT_LOCAL_INCLUDE_DIRS ${BOT_LOCAL_INCLUDE_DIRS} ${GEOGRAM_INCLUDE_DIR})
+set(BOT_LIBS ${BOT_LIBS} ${GEOGRAM_LIBRARY})
+
 if(BRLCAD_ENABLE_OPENMESH)
   brlcad_find_package(OpenMesh)
   if(OPENMESH_INCLUDE_DIRS)
@@ -18,6 +22,7 @@ if(BRLCAD_ENABLE_OPENVDB)
   set(BOT_LIBS ${BOT_LIBS} ${OpenVDB_LIBRARIES} ${IlmBase_LIBRARIES} ${Tbb_LIBRARIES})
   # disable warnings due to unquellable issues in Boost and IlmBase/half headers
   set_property(SOURCE remesh.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
+  set(BOT_LOCAL_INCLUDE_DIRS ${BOT_LOCADL_INCLUDE_DIRS} ${OpenVDB_INCLUDE_DIRS} ${Tbb_INCLUDE_DIRS} ${IlmBase_INCLUDE_DIRS})
 endif(BRLCAD_ENABLE_OPENVDB)
 
 # TODO - investigate https://github.com/nissmar/VSA to see if it could be
@@ -60,10 +65,8 @@ target_include_directories(
   ged-bot
   BEFORE
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${MANIFOLD_INCLUDE_DIRS} ${BRLCAD_SOURCE_DIR}/src/libbu
-) # for fort.h
-if(BRLCAD_ENABLE_OPENVDB)
-  target_include_directories(ged-bot SYSTEM PRIVATE ${OpenVDB_INCLUDE_DIRS} ${Tbb_INCLUDE_DIRS} ${IlmBase_INCLUDE_DIRS})
-endif(BRLCAD_ENABLE_OPENVDB)
+  ) # for fort.h
+target_include_directories(ged-bot SYSTEM PRIVATE ${BOT_LOCAL_INCLUDE_DIRS})
 target_link_libraries(ged-bot ${BOT_LIBS})
 
 cmakefiles(
