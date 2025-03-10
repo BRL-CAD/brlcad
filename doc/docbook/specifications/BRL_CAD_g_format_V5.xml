@@ -195,7 +195,7 @@
 	  <listitem>
 	    <para>
 	      An 8-bit Magic1 element that holds a specific magic number value used for
-	      database integrity checking.
+	      database integrity checking. The value of Magic1 is 0x76.
 	    </para>
 	  </listitem>
 	  <listitem>
@@ -241,7 +241,7 @@
 	  <listitem>
 	    <para>
 	      An 8-bit Magic2 element that holds a specific magic number value used for database
-	      integrity checking.
+	      integrity checking. The value of Magic2 is 0x35.
 	    </para>
 	  </listitem>
 	</itemizedlist>
@@ -670,7 +670,8 @@
 		  order to support direct concatenation of two existing databases into one new
 		  database, additional header objects may appear elsewhere in the database The
 		  header object has no object name, object attributes, or object body (e.g.,
-		  NP=0, AP=0, BP=0). Major_Type=RESERVED, Minor_Type=0.
+		  NP=0, AP=0, BP=0). Major_Type=RESERVED, Minor_Type=0. OWid, NWid, AWid, and BWid
+      must all have value 00. AZ and BZ must have value 000.
 		</para>
 	      </entry>
 	    </row>
