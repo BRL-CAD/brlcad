@@ -51,6 +51,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* user request for a way to scan arbs in a .g looking for invalid
+  definitions (non-convex, non-planar faces, etc.)
+
 * implement nirt flag to report a secondary ray fired in the direction
   of the hit point surface normal.
 
