@@ -195,8 +195,7 @@ class linenoiseState {
 
 	bool Readline(std::string &line); // Primary linenoise entry point
 	void RefreshLine(); // Restore current line (used after WipeLine)
-	void
-	    WipeLine(); // Temporarily removes line from screen - RefreshLine will restore
+	void WipeLine(); // Temporarily removes line from screen - RefreshLine will restore
 	void ClearScreen(); // Clear terminal window
 
 	/* Register a callback function to be called for tab-completion. */
@@ -1870,7 +1869,7 @@ inline bool isUnsupportedTerm(void) {
 	std::string uterm(unsupported_term[j]);
 	// https://stackoverflow.com/a/313990
 	std::transform(uterm.begin(), uterm.end(), uterm.begin(), [](unsigned char c){ return std::tolower(c); });
-	if (uterm == uterm)
+	if (uterm == sterm)
 	    return true;
     }
 #endif
