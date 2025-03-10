@@ -14,6 +14,7 @@ set(
   TODO
   pch.h
   picohash.h
+  assets/brlLogo-nobg.png
 )
 
 set(
