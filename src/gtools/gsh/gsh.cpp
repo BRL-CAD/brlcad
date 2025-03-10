@@ -331,10 +331,6 @@ Gsh_ClearScreen(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), voi
 
 GshState::GshState()
 {
-    const char *ncmd = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(ncmd, "1"))
-	new_cmd_forms = true;
-
     BU_GET(gedp, struct ged);
     ged_init(gedp);
     BU_GET(gedp->ged_gvp, struct bview);
@@ -740,13 +736,6 @@ main(int argc, const char **argv)
 	bu_exit(EXIT_SUCCESS, NULL);
     }
 
-    /* If we're using new (qged style) commands, set the relevant env variables.
-     * Do this *before* we create the GshState instance. */
-    if (new_cmd_forms) {
-	bu_setenv("LIBGED_DBI_STATE", "1", 1);
-	bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
-    }
-
     /* If anything went wrong during LIBGED initialization, let the user know */
     const char *ged_init_str = ged_init_msgs();
     if (strlen(ged_init_str)) {
@@ -755,6 +744,16 @@ main(int argc, const char **argv)
 
     // Use a C++ class to manage info we will need
     std::shared_ptr<GshState> gs = std::make_shared<GshState>();
+
+    // If we're using the new command forms, there's a little bit
+    // of setup to do at the moment (eventually, once this cmd
+    // behavior is the default, ged setup will do this automatically)
+    gs->new_cmd_forms = (new_cmd_forms) ? true : false;
+    if (gs->new_cmd_forms) {
+	gs->gedp->dbi_state = new DbiState(gs->gedp);
+	gs->gedp->new_cmd_forms = 1;
+	bu_setenv("DM_SWRAST", "1", 1);
+    }
 
     // If we're non-interactive, just evaluate and exit without getting into
     // linenoise and threading.  First, see if we've got a viable .g file.

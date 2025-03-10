@@ -141,8 +141,7 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_lod = bv_mesh_lod_context_create(argv[0]);
 
     // If enabled, set up the DbiState container for fast structure access
-    const char *use_dbi_state = getenv("LIBGED_DBI_STATE");
-    if (use_dbi_state)
+    if (gedp->new_cmd_forms)
 	gedp->dbi_state = new DbiState(gedp);
 
     // Set the view units, if we have a view

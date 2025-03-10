@@ -165,6 +165,8 @@ ged_init(struct ged *gedp)
     gedp->dbi_state = NULL;
 
     gedp->ged_interp = NULL;
+
+    gedp->new_cmd_forms = 0;
 }
 
 struct ged *
@@ -368,13 +370,6 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     db_update_nref(gedp->dbip, &rt_uniresource);
 
     gedp->ged_lod = bv_mesh_lod_context_create(filename);
-
-    const char *use_dbi_state = getenv("LIBGED_DBI_STATE");
-    if (use_dbi_state) {
-	gedp->dbi_state = new DbiState(gedp);
-    } else {
-	gedp->dbi_state = NULL;
-    }
 
     return gedp;
 }

@@ -59,7 +59,6 @@ extern "C" int
 ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 {
     const char *av[10] = {NULL};
-    const char *ncmd = NULL;
     fastf_t fs_percent = 0.0;
     int confirmed = 0;
     int new_file_size = 0;
@@ -154,8 +153,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
      * views to their original state when we open the garbage collected
      * database.  Save the who list. (TODO - do we need to save views?  Or
      * will drawing without resize work?) */
-    ncmd = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(ncmd, "1")) {
+    if (gedp->new_cmd_forms) {
 	BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
 	std::vector<std::string> wpaths = bvs->list_drawn_paths(-1, false);
 	for (size_t i = 0; i < wpaths.size(); i++) {

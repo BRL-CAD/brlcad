@@ -2722,8 +2722,7 @@ aborted:
 	summary_reports(gedp, &state);
 
 	if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
-	    const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
-	    if (BU_STR_EQUAL(nview, "1")) {
+	    if (gedp->new_cmd_forms) {
 		struct bview *view = gedp->ged_gvp;
 		bv_vlblock_obj(ged_gqa_plot.vbp, view, "gqa::overlaps");
 	    } else {

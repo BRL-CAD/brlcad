@@ -57,8 +57,7 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     gedp->dbip = NULL;
 
     /* Clean up any old acceleration states, if present */
-    const char *use_dbi_state = getenv("LIBGED_DBI_STATE");
-    if (use_dbi_state && gedp->dbi_state)
+    if (gedp->dbi_state)
 	delete gedp->dbi_state;
     gedp->dbi_state = NULL;
     if (gedp->ged_lod)

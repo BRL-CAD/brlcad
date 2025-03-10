@@ -38,7 +38,7 @@ extern "C" void img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_s
 
 int
 main(int ac, char *av[]) {
-    struct ged *dbp;
+    struct ged *gedp;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     int need_help = 0;
     int run_unstable_tests = 0;
@@ -70,8 +70,6 @@ main(int ac, char *av[]) {
 
     /* Enable all the experimental logic */
     bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
-    bu_setenv("LIBGED_DBI_STATE", "1", 1);
 
     if (!bu_file_exists(av[1], NULL)) {
 	printf("ERROR: [%s] does not exist, expecting .g file\n", av[1]);
@@ -95,17 +93,22 @@ main(int ac, char *av[]) {
 
     /* Open the temp file */
     const char *s_av[15] = {NULL};
-    dbp = ged_open("db", "moss_select_tmp.g", 1);
+    gedp = ged_open("db", "moss_select_tmp.g", 1);
+
+    // Set up new cmd data (not yet done by default in ged_open
+    gedp->dbi_state = new DbiState(gedp);
+    gedp->new_cmd_forms = 1;
+    bu_setenv("DM_SWRAST", "1", 1);
 
     // Set callback so database changes will update dbi_state
-    db_add_changed_clbk(dbp->dbip, &ged_changed_callback, (void *)dbp);
+    db_add_changed_clbk(gedp->dbip, &ged_changed_callback, (void *)gedp);
 
     // Set up a basic view and set view name
-    BU_ALLOC(dbp->ged_gvp, struct bview);
-    bv_init(dbp->ged_gvp, &dbp->ged_views);
-    bv_set_add_view(&dbp->ged_views, dbp->ged_gvp);
-    bu_ptbl_ins(&dbp->ged_free_views, (long *)dbp->ged_gvp);
-    bu_vls_sprintf(&dbp->ged_gvp->gv_name, "default");
+    BU_ALLOC(gedp->ged_gvp, struct bview);
+    bv_init(gedp->ged_gvp, &gedp->ged_views);
+    bv_set_add_view(&gedp->ged_views, gedp->ged_gvp);
+    bu_ptbl_ins(&gedp->ged_free_views, (long *)gedp->ged_gvp);
+    bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
 
     /* To generate images that will allow us to check if the drawing
      * is proceeding as expected, we use the swrast off-screen dm. */
@@ -114,9 +117,9 @@ main(int ac, char *av[]) {
     s_av[2] = "swrast";
     s_av[3] = "SW";
     s_av[4] = NULL;
-    ged_exec_dm(dbp, 4, s_av);
+    ged_exec_dm(gedp, 4, s_av);
 
-    struct bview *v = dbp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
     struct dm *dmp = (struct dm *)v->dmp;
     dm_set_width(dmp, 512);
     dm_set_height(dmp, 512);
@@ -132,14 +135,14 @@ main(int ac, char *av[]) {
     v->dmp = dmp;
     v->gv_width = dm_get_width(dmp);
     v->gv_height = dm_get_height(dmp);
-    v->gv_base2local = dbp->dbip->dbi_base2local;
-    v->gv_local2base = dbp->dbip->dbi_local2base;
+    v->gv_base2local = gedp->dbip->dbi_base2local;
+    v->gv_local2base = gedp->dbip->dbi_local2base;
 
     s_av[0] = "ae";
     s_av[1] = "35";
     s_av[2] = "25";
     s_av[3] = NULL;
-    ged_exec_ae(dbp, 3, s_av);
+    ged_exec_ae(gedp, 3, s_av);
 
     /***** Basic CSG wireframe ****/
     bu_log("Sanity - basic wireframe, no selection...\n");
@@ -149,19 +152,19 @@ main(int ac, char *av[]) {
     s_av[2] = "csg";
     s_av[3] = "0";
     s_av[4] = NULL;
-    ged_exec_view(dbp, 4, s_av);
+    ged_exec_view(gedp, 4, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 3, s_av);
+    ged_exec_draw(gedp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
-    img_cmp(1, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(1, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
     bu_log("Done.\n");
 
     bu_log("Selecting a single object...\n");
@@ -169,9 +172,9 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g/tor.r/tor";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(2, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(2, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("De-selected object...\n");
@@ -179,9 +182,9 @@ main(int ac, char *av[]) {
     s_av[1] = "rm";
     s_av[2] = "all.g/tor.r/tor";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(1, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(1, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Select higher level object...\n");
@@ -189,9 +192,9 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g/tor.r";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(2, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(2, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Select object below selected object (should be no-op)...\n");
@@ -199,9 +202,9 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g/tor.r/tor";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(2, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(2, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Select second object...\n");
@@ -209,79 +212,79 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g/box.r";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(3, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(3, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
     bu_log("Select top level object...\n");
     s_av[0] = "select";
     s_av[1] = "add";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(4, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(4, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Expand selection list to solid objects...\n");
     s_av[0] = "select";
     s_av[1] = "expand";
     s_av[2] = NULL;
-    ged_exec_select(dbp, 2, s_av);
+    ged_exec_select(gedp, 2, s_av);
 
-    img_cmp(4, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(4, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
     bu_log("De-select one object...\n");
     s_av[0] = "select";
     s_av[1] = "rm";
     s_av[2] = "all.g/tor.r/tor";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(5, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(5, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Collapse selected paths...\n");
     s_av[0] = "select";
     s_av[1] = "collapse";
     s_av[2] = NULL;
-    ged_exec_select(dbp, 2, s_av);
+    ged_exec_select(gedp, 2, s_av);
 
-    img_cmp(5, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(5, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Check correct highlighting after Z, selection change and redraw...\n");
 
     s_av[0] = "Z";
     s_av[1] = NULL;
-    ged_exec_Z(dbp, 1, s_av);
+    ged_exec_Z(gedp, 1, s_av);
 
     s_av[0] = "select";
     s_av[1] = "rm";
     s_av[2] = "all.g/box.r";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 3, s_av);
+    ged_exec_draw(gedp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
-    img_cmp(6, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(6, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
     bu_log("Check correct highlighting after clear...\n");
 
     s_av[0] = "select";
     s_av[1] = "clear";
     s_av[2] = NULL;
-    ged_exec_select(dbp, 2, s_av);
+    ged_exec_select(gedp, 2, s_av);
 
-    img_cmp(1, dbp, av[1], true, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(1, gedp, av[1], true, clear_images, soft_fail, 0, "select_clear", "select");
 
     /***** Basic Mesh wireframe, no LoD ****/
 
@@ -290,15 +293,15 @@ main(int ac, char *av[]) {
     s_av[1] = "rel";
     s_av[2] = "0.0002";
     s_av[3] = NULL;
-    ged_exec_tol(dbp, 3, s_av);
+    ged_exec_tol(gedp, 3, s_av);
 
     s_av[0] = "facetize";
     s_av[1] = "-r";
     s_av[2] = "all.g";
     s_av[3] = "all.bot";
     s_av[4] = NULL;
-    ged_exec_facetize(dbp, 4, s_av);
-    dbp->dbi_state->update();
+    ged_exec_facetize(gedp, 4, s_av);
+    gedp->dbi_state->update();
 
 
     s_av[0] = "view";
@@ -306,19 +309,19 @@ main(int ac, char *av[]) {
     s_av[2] = "mesh";
     s_av[3] = "0";
     s_av[4] = NULL;
-    ged_exec_view(dbp, 4, s_av);
+    ged_exec_view(gedp, 4, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m1";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 3, s_av);
+    ged_exec_draw(gedp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
-    img_cmp(7, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(7, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
     bu_log("Done.\n");
 
     bu_log("Selecting a single object...\n");
@@ -326,9 +329,9 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(8, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(8, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("De-selected object...\n");
@@ -336,9 +339,9 @@ main(int ac, char *av[]) {
     s_av[1] = "rm";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(7, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(7, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Select higher level object...\n");
@@ -346,9 +349,9 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(8, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(8, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Select object below selected object (should be no-op)...\n");
@@ -356,9 +359,9 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(8, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(8, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Select second object...\n");
@@ -366,79 +369,79 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot/facetize_all.g/facetize_box.r";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(9, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(9, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
     bu_log("Select top level object...\n");
     s_av[0] = "select";
     s_av[1] = "add";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(10, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(10, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Expand selection list to solid objects...\n");
     s_av[0] = "select";
     s_av[1] = "expand";
     s_av[2] = NULL;
-    ged_exec_select(dbp, 2, s_av);
+    ged_exec_select(gedp, 2, s_av);
 
-    img_cmp(10, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(10, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
     bu_log("De-select one object...\n");
     s_av[0] = "select";
     s_av[1] = "rm";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(11, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(11, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Collapse selected paths...\n");
     s_av[0] = "select";
     s_av[1] = "collapse";
     s_av[2] = NULL;
-    ged_exec_select(dbp, 2, s_av);
+    ged_exec_select(gedp, 2, s_av);
 
-    img_cmp(11, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(11, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Check correct highlighting after Z, selection change and redraw...\n");
 
     s_av[0] = "Z";
     s_av[1] = NULL;
-    ged_exec_Z(dbp, 1, s_av);
+    ged_exec_Z(gedp, 1, s_av);
 
     s_av[0] = "select";
     s_av[1] = "rm";
     s_av[2] = "all.bot/facetize_all.g/facetize_box.r";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m1";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 3, s_av);
+    ged_exec_draw(gedp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
-    img_cmp(12, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(12, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
     bu_log("Check correct highlighting after clear...\n");
 
     s_av[0] = "select";
     s_av[1] = "clear";
     s_av[2] = NULL;
-    ged_exec_select(dbp, 2, s_av);
+    ged_exec_select(gedp, 2, s_av);
 
-    img_cmp(7, dbp, av[1], true, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(7, gedp, av[1], true, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     /***** LoD CSG wireframe ****/
@@ -446,7 +449,7 @@ main(int ac, char *av[]) {
     s_av[1] = "rel";
     s_av[2] = "0.01";
     s_av[3] = NULL;
-    ged_exec_tol(dbp, 3, s_av);
+    ged_exec_tol(gedp, 3, s_av);
 
     bu_log("Sanity - basic LoD wireframe, no selection...\n");
 
@@ -455,19 +458,19 @@ main(int ac, char *av[]) {
     s_av[2] = "csg";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec_view(dbp, 4, s_av);
+    ged_exec_view(gedp, 4, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 3, s_av);
+    ged_exec_draw(gedp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
-    img_cmp(13, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(13, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
     bu_log("Done.\n");
 
     bu_log("Selecting a single object...\n");
@@ -475,9 +478,9 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g/tor.r/tor";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(14, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(14, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("De-selected object...\n");
@@ -485,9 +488,9 @@ main(int ac, char *av[]) {
     s_av[1] = "rm";
     s_av[2] = "all.g/tor.r/tor";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(13, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(13, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Select higher level object...\n");
@@ -495,9 +498,9 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g/tor.r";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(14, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(14, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Select object below selected object (should be no-op)...\n");
@@ -505,9 +508,9 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g/tor.r/tor";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(14, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(14, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Select second object...\n");
@@ -515,112 +518,112 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.g/box.r";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(15, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(15, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
     bu_log("Select top level object...\n");
     s_av[0] = "select";
     s_av[1] = "add";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(16, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(16, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Expand selection list to solid objects...\n");
     s_av[0] = "select";
     s_av[1] = "expand";
     s_av[2] = NULL;
-    ged_exec_select(dbp, 2, s_av);
+    ged_exec_select(gedp, 2, s_av);
 
-    img_cmp(16, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(16, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
     bu_log("De-select one object...\n");
     s_av[0] = "select";
     s_av[1] = "rm";
     s_av[2] = "all.g/tor.r/tor";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(17, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(17, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Collapse selected paths...\n");
     s_av[0] = "select";
     s_av[1] = "collapse";
     s_av[2] = NULL;
-    ged_exec_select(dbp, 2, s_av);
+    ged_exec_select(gedp, 2, s_av);
 
-    img_cmp(17, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(17, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
 
     bu_log("Check correct highlighting after Z, selection change and redraw...\n");
 
     s_av[0] = "Z";
     s_av[1] = NULL;
-    ged_exec_Z(dbp, 1, s_av);
+    ged_exec_Z(gedp, 1, s_av);
 
     s_av[0] = "select";
     s_av[1] = "rm";
     s_av[2] = "all.g/box.r";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 3, s_av);
+    ged_exec_draw(gedp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
-    img_cmp(18, dbp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(18, gedp, av[1], false, clear_images, soft_fail, 0, "select_clear", "select");
 
     bu_log("Check correct highlighting after clear...\n");
 
     s_av[0] = "select";
     s_av[1] = "clear";
     s_av[2] = NULL;
-    ged_exec_select(dbp, 2, s_av);
+    ged_exec_select(gedp, 2, s_av);
 
-    img_cmp(13, dbp, av[1], true, clear_images, soft_fail, 0, "select_clear", "select");
+    img_cmp(13, gedp, av[1], true, clear_images, soft_fail, 0, "select_clear", "select");
 
     /***** LoD Mesh wireframe ****/
 
     // Temporary - remove when above CSG tests can be enabled
     s_av[0] = "Z";
     s_av[1] = NULL;
-    ged_exec_Z(dbp, 1, s_av);
+    ged_exec_Z(gedp, 1, s_av);
 
     s_av[0] = "view";
     s_av[1] = "lod";
     s_av[2] = "mesh";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec_view(dbp, 4, s_av);
+    ged_exec_view(gedp, 4, s_av);
 
     s_av[0] = "view";
     s_av[1] = "lod";
     s_av[2] = "scale";
     s_av[3] = "0.8";
     s_av[4] = NULL;
-    ged_exec_view(dbp, 4, s_av);
+    ged_exec_view(gedp, 4, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m1";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 3, s_av);
+    ged_exec_draw(gedp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
-    img_cmp(19, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
+    img_cmp(19, gedp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
     bu_log("Done.\n");
 
     bu_log("Selecting a single object...\n");
@@ -628,9 +631,9 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(20, dbp, av[1], false, clear_images, soft_fail, 12, "select_clear", "select");
+    img_cmp(20, gedp, av[1], false, clear_images, soft_fail, 12, "select_clear", "select");
 
 
     bu_log("De-selected object...\n");
@@ -638,9 +641,9 @@ main(int ac, char *av[]) {
     s_av[1] = "rm";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(19, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
+    img_cmp(19, gedp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
 
 
     bu_log("Select higher level object...\n");
@@ -648,9 +651,9 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(20, dbp, av[1], false, clear_images, soft_fail, 12, "select_clear", "select");
+    img_cmp(20, gedp, av[1], false, clear_images, soft_fail, 12, "select_clear", "select");
 
 
     bu_log("Select object below selected object (should be no-op)...\n");
@@ -658,9 +661,9 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(20, dbp, av[1], false, clear_images, soft_fail, 12, "select_clear", "select");
+    img_cmp(20, gedp, av[1], false, clear_images, soft_fail, 12, "select_clear", "select");
 
 
     bu_log("Select second object...\n");
@@ -668,82 +671,82 @@ main(int ac, char *av[]) {
     s_av[1] = "add";
     s_av[2] = "all.bot/facetize_all.g/facetize_box.r";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(21, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
+    img_cmp(21, gedp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
 
     bu_log("Select top level object...\n");
     s_av[0] = "select";
     s_av[1] = "add";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(22, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
+    img_cmp(22, gedp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
 
 
     bu_log("Expand selection list to solid objects...\n");
     s_av[0] = "select";
     s_av[1] = "expand";
     s_av[2] = NULL;
-    ged_exec_select(dbp, 2, s_av);
+    ged_exec_select(gedp, 2, s_av);
 
-    img_cmp(22, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
+    img_cmp(22, gedp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
 
     bu_log("De-select one object...\n");
     s_av[0] = "select";
     s_av[1] = "rm";
     s_av[2] = "all.bot/facetize_all.g/facetize_tor.r/tor.r.bot";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
-    img_cmp(23, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
+    img_cmp(23, gedp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
 
 
     bu_log("Collapse selected paths...\n");
     s_av[0] = "select";
     s_av[1] = "collapse";
     s_av[2] = NULL;
-    ged_exec_select(dbp, 2, s_av);
+    ged_exec_select(gedp, 2, s_av);
 
-    img_cmp(23, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
+    img_cmp(23, gedp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
 
 
     bu_log("Check correct highlighting after Z, selection change and redraw...\n");
 
     s_av[0] = "Z";
     s_av[1] = NULL;
-    ged_exec_Z(dbp, 1, s_av);
+    ged_exec_Z(gedp, 1, s_av);
 
     s_av[0] = "select";
     s_av[1] = "rm";
     s_av[2] = "all.bot/facetize_all.g/facetize_box.r";
     s_av[3] = NULL;
-    ged_exec_select(dbp, 3, s_av);
+    ged_exec_select(gedp, 3, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m1";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 3, s_av);
+    ged_exec_draw(gedp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
-    img_cmp(24, dbp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
+    img_cmp(24, gedp, av[1], false, clear_images, soft_fail, 10, "select_clear", "select");
 
     bu_log("Check correct highlighting after clear...\n");
 
     s_av[0] = "select";
     s_av[1] = "clear";
     s_av[2] = NULL;
-    ged_exec_select(dbp, 2, s_av);
+    ged_exec_select(gedp, 2, s_av);
 
-    img_cmp(19, dbp, av[1], true, clear_images, soft_fail, 10, "select_clear", "select");
+    img_cmp(19, gedp, av[1], true, clear_images, soft_fail, 10, "select_clear", "select");
 
 
-    ged_close(dbp);
+    ged_close(gedp);
 
     /* Remove the local cache files */
     bu_dirclear(lcache);

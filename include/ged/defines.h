@@ -332,6 +332,11 @@ struct ged {
     // bv.h gv_callback (only used by MGED?)
 
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
+
+    // The following is used instead of environment variables to select old or new
+    // command paths.  Primarily relates to the next generation drawing setup with
+    // view objects and the new BoT LoD logic.
+    int new_cmd_forms;
 };
 
 // Create and destroy a ged container.  Handles all initialization - no

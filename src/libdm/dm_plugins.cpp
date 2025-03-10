@@ -152,7 +152,7 @@ dm_list_types(struct bu_vls *list, const char *separator)
     }
 
     /* Report anything not included in the priority list but still available */
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    const char *cmd2 = getenv("DM_SWRAST");
     int report_swrast = 0;
     if (BU_STR_EQUAL(cmd2, "1"))
 	report_swrast = 1;
@@ -196,7 +196,7 @@ dm_validXType(const char *dpy_string, const char *name)
 	return 0;
     }
 
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    const char *cmd2 = getenv("DM_SWRAST");
     int report_swrast = 0;
     if (BU_STR_EQUAL(cmd2, "1"))
 	report_swrast = 1;

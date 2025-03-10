@@ -94,7 +94,6 @@ void
 QgViewCtrl::fbclear_cmd()
 {
     QTCAD_SLOT("QgViewCtrl::fbclear_cmd", 1);
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
     const char *av[2] = {NULL};
     av[0] = "fbclear";
     ged_exec_fbclear(gedp, 1, (const char **)av);
@@ -169,7 +168,6 @@ void
 QgViewCtrl::raytrace_cmd()
 {
     QTCAD_SLOT("QgViewCtrl::raytrace_cmd", 1);
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
     const char *av[4] = {NULL};
     struct bu_vls pid_str = BU_VLS_INIT_ZERO;
 

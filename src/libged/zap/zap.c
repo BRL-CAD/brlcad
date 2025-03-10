@@ -99,8 +99,7 @@ int
 ged_zap_core(struct ged *gedp, int argc, const char *argv[])
 {
 
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(cmd2, "1"))
+    if (gedp->new_cmd_forms)
 	return ged_zap2_core(gedp, argc, argv);
 
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);

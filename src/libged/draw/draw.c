@@ -1628,8 +1628,7 @@ extern int ged_draw2_core(struct ged *gedp, int argc, const char *argv[]);
 int
 ged_draw_core(struct ged *gedp, int argc, const char *argv[])
 {
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(cmd2, "1"))
+    if (gedp->new_cmd_forms)
 	return ged_draw2_core(gedp, argc, argv);
 
     return ged_draw_guts(gedp, argc, argv, _GED_DRAW_WIREFRAME);
@@ -1646,8 +1645,7 @@ extern int ged_redraw2_core(struct ged *gedp, int argc, const char *argv[]);
 int
 ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 {
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(cmd2, "1"))
+    if (gedp->new_cmd_forms)
 	return ged_redraw2_core(gedp, argc, argv);
 
     int ret;

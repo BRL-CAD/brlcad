@@ -53,7 +53,6 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
 
     const char *bin;
     char rt[256] = {0};
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -68,7 +67,7 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (BU_STR_EQUAL(cmd2, "1")) {
+    if (gedp->new_cmd_forms) {
 	args = argc + 9 + 2 + (int)ged_who_argc(gedp);
     } else {
 	args = argc + 7 + 2 + (int)ged_who_argc(gedp);
@@ -90,7 +89,7 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
     vp = &gd_rt_cmd[0];
     *vp++ = rt;
 
-    if (BU_STR_EQUAL(cmd2, "1")) {
+    if (gedp->new_cmd_forms) {
 	*vp++ = "-F";
 	// TODO - look up dm type for this...
 	*vp++ = "/dev/qtgl";

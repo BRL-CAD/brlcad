@@ -291,10 +291,15 @@ QgModel::QgModel(QObject *p, const char *npath)
 {
     // There are commands such as open that we want to work even without
     // a database instance opened - rather than using ged_open to create
-    // a gedp, we sure one is always available - callers should use the
+    // a gedp, be sure one is always available - callers should use the
     // libged "open" command to open a .g file.
     BU_GET(gedp, struct ged);
     ged_init(gedp);
+
+    // Set up new cmd data (not yet done by default in ged_init
+    gedp->dbi_state = new DbiState(gedp);
+    gedp->new_cmd_forms = 1;
+    bu_setenv("DM_SWRAST", "1", 1);
 
     // By default we will use this built-in view, to guarantee that ged_gvp is
     // always valid.  It will usually be overridden by application provided views,
@@ -819,8 +824,6 @@ QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
     changed_dp.clear();
 
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
-
     if (!ged_cmd_exists(argv[0])) {
 	const char *ccmd = NULL;
 	int edist = ged_cmd_lookup(&ccmd, argv[0]);
@@ -892,7 +895,6 @@ QgModel::draw(const char *inst_path)
     argv[0] = "draw";
     argv[1] = inst_path;
 
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
     int ret = ged_exec_draw(gedp, 2, argv);
 
     emit view_change(QG_VIEW_DRAWN);
@@ -925,7 +927,6 @@ QgModel::erase(const char *inst_path)
     argv[0] = "erase";
     argv[1] = inst_path;
 
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
     int ret = ged_exec_erase(gedp, 2, argv);
 
     emit view_change(QG_VIEW_DRAWN);

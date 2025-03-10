@@ -425,8 +425,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     fp = NULL;
 
     if (draw_eye_path) {
-	const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
-	if (BU_STR_EQUAL(nview, "1")) {
+	if (gedp->new_cmd_forms) {
 	    struct bview *view = gedp->ged_gvp;
 	    bv_vlblock_obj(preview_vbp, view, "preview::eye_path");
 	} else {

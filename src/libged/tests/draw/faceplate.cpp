@@ -37,7 +37,7 @@ extern "C" void img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_s
 
 int
 main(int ac, char *av[]) {
-    struct ged *dbp;
+    struct ged *gedp;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     int need_help = 0;
     int run_unstable_tests = 0;
@@ -69,8 +69,6 @@ main(int ac, char *av[]) {
 
     /* Enable all the experimental logic */
     bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
-    bu_setenv("LIBGED_DBI_STATE", "1", 1);
 
     if (!bu_file_exists(av[1], NULL)) {
 	printf("ERROR: [%s] does not exist, expecting .g file\n", av[1]);
@@ -79,14 +77,19 @@ main(int ac, char *av[]) {
 
     /* Open the temp file, then dbconcat argv[1] into it */
     bu_vls_sprintf(&fname, "%s/moss.g", av[1]);
-    dbp = ged_open("db", bu_vls_cstr(&fname), 1);
+    gedp = ged_open("db", bu_vls_cstr(&fname), 1);
+
+    // Set up new cmd data (not yet done by default in ged_open
+    gedp->dbi_state = new DbiState(gedp);
+    gedp->new_cmd_forms = 1;
+    bu_setenv("DM_SWRAST", "1", 1);
 
     // Set up a basic view and set view name
-    BU_ALLOC(dbp->ged_gvp, struct bview);
-    bv_init(dbp->ged_gvp, &dbp->ged_views);
-    bv_set_add_view(&dbp->ged_views, dbp->ged_gvp);
-    bu_ptbl_ins(&dbp->ged_free_views, (long *)dbp->ged_gvp);
-    bu_vls_sprintf(&dbp->ged_gvp->gv_name, "default");
+    BU_ALLOC(gedp->ged_gvp, struct bview);
+    bv_init(gedp->ged_gvp, &gedp->ged_views);
+    bv_set_add_view(&gedp->ged_views, gedp->ged_gvp);
+    bu_ptbl_ins(&gedp->ged_free_views, (long *)gedp->ged_gvp);
+    bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
 
     /* To generate images that will allow us to check if the drawing
      * is proceeding as expected, we use the swrast off-screen dm. */
@@ -96,9 +99,9 @@ main(int ac, char *av[]) {
     s_av[2] = "swrast";
     s_av[3] = "SW";
     s_av[4] = NULL;
-    ged_exec_dm(dbp, 4, s_av);
+    ged_exec_dm(gedp, 4, s_av);
 
-    struct bview *v = dbp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
     struct dm *dmp = (struct dm *)v->dmp;
     dm_set_width(dmp, 512);
     dm_set_height(dmp, 512);
@@ -114,29 +117,29 @@ main(int ac, char *av[]) {
     v->dmp = dmp;
     v->gv_width = dm_get_width(dmp);
     v->gv_height = dm_get_height(dmp);
-    v->gv_base2local = dbp->dbip->dbi_base2local;
-    v->gv_local2base = dbp->dbip->dbi_local2base;
+    v->gv_base2local = gedp->dbip->dbi_base2local;
+    v->gv_local2base = gedp->dbip->dbi_local2base;
 
     /***** Sanity - basic wireframe draw *****/
     bu_log("Testing basic db wireframe draw...\n");
     s_av[0] = "draw";
     s_av[1] = "all.g";
     s_av[2] = NULL;
-    ged_exec_draw(dbp, 2, s_av);
+    ged_exec_draw(gedp, 2, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
     s_av[0] = "ae";
     s_av[1] = "35";
     s_av[2] = "25";
     s_av[3] = NULL;
-    ged_exec_ae(dbp, 3, s_av);
-    img_cmp(1, dbp, av[1], true, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_ae(gedp, 3, s_av);
+    img_cmp(1, gedp, av[1], true, clear_images, soft_fail, 0, "faceplate_clear", "fp");
 
     // Check that everything is in fact cleared
-    img_cmp(0, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    img_cmp(0, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
     bu_log("Done.\n");
 
     /***** Center Dot *****/
@@ -146,13 +149,13 @@ main(int ac, char *av[]) {
     s_av[2] = "center_dot";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec_view(dbp, 4, s_av);
-    img_cmp(2, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_view(gedp, 4, s_av);
+    img_cmp(2, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
 
     // Check that turning off works
     s_av[3] = "0";
-    ged_exec_view(dbp, 4, s_av);
-    img_cmp(0, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_view(gedp, 4, s_av);
+    img_cmp(0, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
     bu_log("Done.\n");
 
     /***** Grid *****/
@@ -163,13 +166,13 @@ main(int ac, char *av[]) {
     s_av[2] = "grid";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec_view(dbp, 4, s_av);
-    img_cmp(3, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_view(gedp, 4, s_av);
+    img_cmp(3, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
 
     // Check that turning off works
     s_av[3] = "0";
-    ged_exec_view(dbp, 4, s_av);
-    img_cmp(0, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_view(gedp, 4, s_av);
+    img_cmp(0, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
     bu_log("Done.\n");
 
     /***** Params *****/
@@ -182,15 +185,15 @@ main(int ac, char *av[]) {
     s_av[3] = "font_size";
     s_av[4] = "10";
     s_av[5] = NULL;
-    ged_exec_view(dbp, 5, s_av);
+    ged_exec_view(gedp, 5, s_av);
 
     s_av[0] = "view";
     s_av[1] = "faceplate";
     s_av[2] = "params";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec_view(dbp, 4, s_av);
-    img_cmp(4, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_view(gedp, 4, s_av);
+    img_cmp(4, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
 
     bu_log("Testing turning on frames per second reporting...\n");
 
@@ -204,13 +207,13 @@ main(int ac, char *av[]) {
     s_av[3] = "fps";
     s_av[4] = "0";
     s_av[5] = NULL;
-    ged_exec_view(dbp, 5, s_av);
-    img_cmp(5, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_view(gedp, 5, s_av);
+    img_cmp(5, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
 
     // Check that turning off works
     s_av[3] = "0";
-    ged_exec_view(dbp, 4, s_av);
-    img_cmp(0, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_view(gedp, 4, s_av);
+    img_cmp(0, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
     bu_log("Done.\n");
 
     // Restore default font size
@@ -220,7 +223,7 @@ main(int ac, char *av[]) {
     s_av[3] = "font_size";
     s_av[4] = "20";
     s_av[5] = NULL;
-    ged_exec_view(dbp, 5, s_av);
+    ged_exec_view(gedp, 5, s_av);
 
 
 
@@ -231,13 +234,13 @@ main(int ac, char *av[]) {
     s_av[2] = "scale";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec_view(dbp, 4, s_av);
-    img_cmp(6, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_view(gedp, 4, s_av);
+    img_cmp(6, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
 
     // Check that turning off works
     s_av[3] = "0";
-    ged_exec_view(dbp, 4, s_av);
-    img_cmp(0, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_view(gedp, 4, s_av);
+    img_cmp(0, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
     bu_log("Done.\n");
 
 
@@ -248,13 +251,13 @@ main(int ac, char *av[]) {
     s_av[2] = "view_axes";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec_view(dbp, 4, s_av);
-    img_cmp(7, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_view(gedp, 4, s_av);
+    img_cmp(7, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
 
     // Check that turning off works
     s_av[3] = "0";
-    ged_exec_view(dbp, 4, s_av);
-    img_cmp(0, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_view(gedp, 4, s_av);
+    img_cmp(0, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
     bu_log("Done.\n");
 
     /***** Model axes *****/
@@ -264,13 +267,13 @@ main(int ac, char *av[]) {
     s_av[2] = "model_axes";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec_view(dbp, 4, s_av);
-    img_cmp(8, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_view(gedp, 4, s_av);
+    img_cmp(8, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
 
     // Check that turning off works
     s_av[3] = "0";
-    ged_exec_view(dbp, 4, s_av);
-    img_cmp(0, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_view(gedp, 4, s_av);
+    img_cmp(0, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
     bu_log("Done.\n");
 
     /***** Framebuffer *****/
@@ -280,42 +283,42 @@ main(int ac, char *av[]) {
     s_av[0] = "png2fb";
     s_av[1] = bu_vls_cstr(&fb_img);
     s_av[2] = NULL;
-    ged_exec_png2fb(dbp, 2, s_av);
+    ged_exec_png2fb(gedp, 2, s_av);
 
     s_av[0] = "view";
     s_av[1] = "faceplate";
     s_av[2] = "fb";
     s_av[3] = "1";
     s_av[4] = NULL;
-    ged_exec_view(dbp, 4, s_av);
-    img_cmp(9, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_view(gedp, 4, s_av);
+    img_cmp(9, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
 
     // Check that turning off works
     s_av[3] = "0";
-    ged_exec_view(dbp, 4, s_av);
-    img_cmp(0, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_view(gedp, 4, s_av);
+    img_cmp(0, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
 
     // Re-enable and make sure clear works
     s_av[3] = "1";
-    ged_exec_view(dbp, 4, s_av);
-    img_cmp(9, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_view(gedp, 4, s_av);
+    img_cmp(9, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
 
     s_av[0] = "fbclear";
     s_av[1] = NULL;
-    ged_exec_fbclear(dbp, 1, s_av);
-    img_cmp(0, dbp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
+    ged_exec_fbclear(gedp, 1, s_av);
+    img_cmp(0, gedp, av[1], false, clear_images, soft_fail, 0, "faceplate_clear", "fp");
 
     s_av[0] = "view";
     s_av[1] = "faceplate";
     s_av[2] = "fb";
     s_av[3] = "0";
     s_av[4] = NULL;
-    ged_exec_view(dbp, 4, s_av);
+    ged_exec_view(gedp, 4, s_av);
 
     bu_log("Done.\n");
 
 
-    ged_close(dbp);
+    ged_close(gedp);
 
     return 0;
 }

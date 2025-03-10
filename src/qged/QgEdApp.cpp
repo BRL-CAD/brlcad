@@ -161,10 +161,6 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
 
     /* Let LIBRT know to process comb instance specifiers in paths */
     bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
-    /* Let LIBGED know to initialize its instance state container */
-    bu_setenv("LIBGED_DBI_STATE", "1", 1);
-    /* Let LIBGED know to use new command forms */
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
 
     mdl = new QgModel();
 

@@ -189,7 +189,7 @@ poly_general(struct ged *gedp)
 
 int
 main(int ac, char *av[]) {
-    struct ged *dbp;
+    struct ged *gedp;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     int need_help = 0;
     int soft_fail = 0;
@@ -219,8 +219,6 @@ main(int ac, char *av[]) {
 
     /* Enable all the experimental logic */
     bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
-    bu_setenv("LIBGED_DBI_STATE", "1", 1);
 
     if (!bu_file_exists(av[1], NULL)) {
 	printf("ERROR: [%s] does not exist, expecting .g file\n", av[1]);
@@ -244,17 +242,22 @@ main(int ac, char *av[]) {
 
     /* Open the temp file */
     const char *s_av[15] = {NULL};
-    dbp = ged_open("db", "moss_tmp.g", 1);
+    gedp = ged_open("db", "moss_tmp.g", 1);
+
+    // Set up new cmd data (not yet done by default in ged_open
+    gedp->dbi_state = new DbiState(gedp);
+    gedp->new_cmd_forms = 1;
+    bu_setenv("DM_SWRAST", "1", 1);
 
     // Set callback so database changes will update dbi_state
-    db_add_changed_clbk(dbp->dbip, &ged_changed_callback, (void *)dbp);
+    db_add_changed_clbk(gedp->dbip, &ged_changed_callback, (void *)gedp);
 
     // Set up a basic view and set view name
-    BU_ALLOC(dbp->ged_gvp, struct bview);
-    bv_init(dbp->ged_gvp, &dbp->ged_views);
-    bv_set_add_view(&dbp->ged_views, dbp->ged_gvp);
-    bu_ptbl_ins(&dbp->ged_free_views, (long *)dbp->ged_gvp);
-    bu_vls_sprintf(&dbp->ged_gvp->gv_name, "default");
+    BU_ALLOC(gedp->ged_gvp, struct bview);
+    bv_init(gedp->ged_gvp, &gedp->ged_views);
+    bv_set_add_view(&gedp->ged_views, gedp->ged_gvp);
+    bu_ptbl_ins(&gedp->ged_free_views, (long *)gedp->ged_gvp);
+    bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
 
     /* To generate images that will allow us to check if the drawing
      * is proceeding as expected, we use the swrast off-screen dm. */
@@ -263,9 +266,9 @@ main(int ac, char *av[]) {
     s_av[2] = "swrast";
     s_av[3] = "SW";
     s_av[4] = NULL;
-    ged_exec_dm(dbp, 4, s_av);
+    ged_exec_dm(gedp, 4, s_av);
 
-    struct bview *v = dbp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
     struct dm *dmp = (struct dm *)v->dmp;
     dm_set_width(dmp, 512);
     dm_set_height(dmp, 512);
@@ -284,90 +287,90 @@ main(int ac, char *av[]) {
     v->gv_height = dm_get_height(dmp);
     dm_set_vp(dmp, &v->gv_scale);
 
-    v->gv_base2local = dbp->dbip->dbi_base2local;
-    v->gv_local2base = dbp->dbip->dbi_local2base;
+    v->gv_base2local = gedp->dbip->dbi_base2local;
+    v->gv_local2base = gedp->dbip->dbi_local2base;
 
     /***** Basic wireframe draw *****/
     bu_log("Testing basic db wireframe draw...\n");
     s_av[0] = "draw";
     s_av[1] = "all.g";
     s_av[2] = NULL;
-    ged_exec_draw(dbp, 2, s_av);
+    ged_exec_draw(gedp, 2, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
     s_av[0] = "ae";
     s_av[1] = "35";
     s_av[2] = "25";
     s_av[3] = NULL;
-    ged_exec_ae(dbp, 3, s_av);
-    img_cmp(1, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    ged_exec_ae(gedp, 3, s_av);
+    img_cmp(1, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
 
     // Check that everything is in fact cleared
-    img_cmp(0, dbp, av[1], false, clear_images, soft_fail, 0, "clear", "v");
+    img_cmp(0, gedp, av[1], false, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Polygon circle *****/
     bu_log("Testing view polygon circle draw...\n");
-    poly_circ(dbp);
-    img_cmp(2, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    poly_circ(gedp);
+    img_cmp(2, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
 
     // Check that everything is in fact cleared
-    img_cmp(0, dbp, av[1], false, clear_images, soft_fail, 0, "clear", "v");
+    img_cmp(0, gedp, av[1], false, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Polygon ellipse *****/
     bu_log("Testing view polygon ellipse draw...\n");
-    poly_ell(dbp);
-    img_cmp(3, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    poly_ell(gedp);
+    img_cmp(3, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Polygon square *****/
     bu_log("Testing view polygon square draw...\n");
-    poly_sq(dbp);
-    img_cmp(4, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    poly_sq(gedp);
+    img_cmp(4, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Polygon rectangle *****/
     bu_log("Testing view polygon rectangle draw...\n");
-    poly_rect(dbp);
-    img_cmp(5, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    poly_rect(gedp);
+    img_cmp(5, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Polygon general *****/
     bu_log("Testing view general polygon draw...\n");
-    poly_general(dbp);
-    img_cmp(6, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    poly_general(gedp);
+    img_cmp(6, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Test draw UP and DOWN *****/
     bu_log("Testing UP and DOWN visibility control of drawn objects...\n");
-    poly_general(dbp);
+    poly_general(gedp);
     s_av[0] = "view";
     s_av[1] = "obj";
     s_av[2] = "g1";
     s_av[3] = "draw";
     s_av[4] = "DOWN";
     s_av[5] = NULL;
-    ged_exec_view(dbp, 5, s_av);
+    ged_exec_view(gedp, 5, s_av);
     // Should be an empty scene - make sure we don't clear after this
     // comparison, as we want to re-enable the drawing of this object.
-    img_cmp(0, dbp, av[1], false, clear_images, soft_fail, 0, "clear", "v");
+    img_cmp(0, gedp, av[1], false, clear_images, soft_fail, 0, "clear", "v");
 
     s_av[4] = "UP";
     s_av[5] = NULL;
-    ged_exec_view(dbp, 5, s_av);
+    ged_exec_view(gedp, 5, s_av);
     // Enabling the draw should produce the same visual as the general polygon
     // draw test above, so we can check using the same image
-    img_cmp(6, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    img_cmp(6, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Test view polygon booleans: union ****/
     bu_log("Testing view polygon boolean operation: union...\n");
-    poly_circ(dbp);
-    poly_ell(dbp);
+    poly_circ(gedp);
+    poly_ell(gedp);
     s_av[0] = "view";
     s_av[1] = "obj";
     s_av[2] = "c1";
@@ -376,7 +379,7 @@ main(int ac, char *av[]) {
     s_av[5] = "u";
     s_av[6] = "e1";
     s_av[7] = NULL;
-    ged_exec_view(dbp, 7, s_av);
+    ged_exec_view(gedp, 7, s_av);
 
     // Result is stored in c1 - turn off e1
     s_av[0] = "view";
@@ -385,16 +388,16 @@ main(int ac, char *av[]) {
     s_av[3] = "draw";
     s_av[4] = "DOWN";
     s_av[5] = NULL;
-    ged_exec_view(dbp, 5, s_av);
+    ged_exec_view(gedp, 5, s_av);
 
     // See if we got what we expected
-    img_cmp(7, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    img_cmp(7, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Test view polygon booleans: subtraction ****/
     bu_log("Testing view polygon boolean operation: subtraction...\n");
-    poly_circ(dbp);
-    poly_ell(dbp);
+    poly_circ(gedp);
+    poly_ell(gedp);
     s_av[0] = "view";
     s_av[1] = "obj";
     s_av[2] = "c1";
@@ -403,7 +406,7 @@ main(int ac, char *av[]) {
     s_av[5] = "-";
     s_av[6] = "e1";
     s_av[7] = NULL;
-    ged_exec_view(dbp, 7, s_av);
+    ged_exec_view(gedp, 7, s_av);
 
     // Result is stored in c1 - turn off e1
     s_av[0] = "view";
@@ -412,16 +415,16 @@ main(int ac, char *av[]) {
     s_av[3] = "draw";
     s_av[4] = "DOWN";
     s_av[5] = NULL;
-    ged_exec_view(dbp, 5, s_av);
+    ged_exec_view(gedp, 5, s_av);
 
     // See if we got what we expected
-    img_cmp(8, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    img_cmp(8, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Test view polygon booleans: intersection ****/
     bu_log("Testing view polygon boolean operation: intersection...\n");
-    poly_circ(dbp);
-    poly_ell(dbp);
+    poly_circ(gedp);
+    poly_ell(gedp);
     s_av[0] = "view";
     s_av[1] = "obj";
     s_av[2] = "c1";
@@ -430,7 +433,7 @@ main(int ac, char *av[]) {
     s_av[5] = "+";
     s_av[6] = "e1";
     s_av[7] = NULL;
-    ged_exec_view(dbp, 7, s_av);
+    ged_exec_view(gedp, 7, s_av);
 
     // Result is stored in c1 - turn off e1
     s_av[0] = "view";
@@ -439,31 +442,31 @@ main(int ac, char *av[]) {
     s_av[3] = "draw";
     s_av[4] = "DOWN";
     s_av[5] = NULL;
-    ged_exec_view(dbp, 5, s_av);
+    ged_exec_view(gedp, 5, s_av);
 
     // See if we got what we expected
-    img_cmp(9, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    img_cmp(9, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
 
     /***** Test color ****/
     bu_log("Testing setting view object color...\n");
-    poly_general(dbp);
+    poly_general(gedp);
     s_av[0] = "view";
     s_av[1] = "obj";
     s_av[2] = "g1";
     s_av[3] = "color";
     s_av[4] = "0/255/0";
     s_av[5] = NULL;
-    ged_exec_view(dbp, 5, s_av);
+    ged_exec_view(gedp, 5, s_av);
 
     // See if we got what we expected
-    img_cmp(10, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    img_cmp(10, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Test fill ****/
     bu_log("Testing enabling polygon fill...\n");
-    poly_general(dbp);
+    poly_general(gedp);
     s_av[0] = "view";
     s_av[1] = "obj";
     s_av[2] = "g1";
@@ -473,10 +476,10 @@ main(int ac, char *av[]) {
     s_av[6] = "10";
     s_av[7] = "3";
     s_av[8] = NULL;
-    ged_exec_view(dbp, 8, s_av);
+    ged_exec_view(gedp, 8, s_av);
 
     // See if we got what we expected
-    img_cmp(11, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    img_cmp(11, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Test label ****/
@@ -484,11 +487,11 @@ main(int ac, char *av[]) {
     s_av[0] = "draw";
     s_av[1] = "all.g";
     s_av[2] = NULL;
-    ged_exec_draw(dbp, 2, s_av);
+    ged_exec_draw(gedp, 2, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -503,49 +506,49 @@ main(int ac, char *av[]) {
     s_av[10] = "-13.526";
     s_av[11] = "8";
     s_av[12] = NULL;
-    ged_exec_view(dbp, 12, s_av);
+    ged_exec_view(gedp, 12, s_av);
 
-    img_cmp(12, dbp, av[1], false, clear_images, soft_fail, 30, "clear", "v");
+    img_cmp(12, gedp, av[1], false, clear_images, soft_fail, 30, "clear", "v");
 
     s_av[0] = "ae";
     s_av[1] = "10";
     s_av[2] = "4";
     s_av[3] = "11";
     s_av[4] = NULL;
-    ged_exec_ae(dbp, 4, s_av);
-    img_cmp(13, dbp, av[1], false, clear_images, soft_fail, 30, "clear", "v");
+    ged_exec_ae(gedp, 4, s_av);
+    img_cmp(13, gedp, av[1], false, clear_images, soft_fail, 30, "clear", "v");
 
     s_av[0] = "ae";
     s_av[1] = "270";
     s_av[2] = "0";
     s_av[3] = "0";
     s_av[4] = NULL;
-    ged_exec_ae(dbp, 4, s_av);
-    img_cmp(14, dbp, av[1], false, clear_images, soft_fail, 30, "clear", "v");
+    ged_exec_ae(gedp, 4, s_av);
+    img_cmp(14, gedp, av[1], false, clear_images, soft_fail, 30, "clear", "v");
 
     s_av[0] = "ae";
     s_av[1] = "48";
     s_av[2] = "16";
     s_av[3] = "143";
     s_av[4] = NULL;
-    ged_exec_ae(dbp, 4, s_av);
-    img_cmp(15, dbp, av[1], false, clear_images, soft_fail, 50, "clear", "v");
+    ged_exec_ae(gedp, 4, s_av);
+    img_cmp(15, gedp, av[1], false, clear_images, soft_fail, 50, "clear", "v");
 
     s_av[0] = "ae";
     s_av[1] = "40";
     s_av[2] = "-15";
     s_av[3] = "180";
     s_av[4] = NULL;
-    ged_exec_ae(dbp, 4, s_av);
-    img_cmp(16, dbp, av[1], false, clear_images, soft_fail, 60, "clear", "v");
+    ged_exec_ae(gedp, 4, s_av);
+    img_cmp(16, gedp, av[1], false, clear_images, soft_fail, 60, "clear", "v");
 
     s_av[0] = "ae";
     s_av[1] = "250";
     s_av[2] = "5";
     s_av[3] = "-140";
     s_av[4] = NULL;
-    ged_exec_ae(dbp, 4, s_av);
-    img_cmp(17, dbp, av[1], true, clear_images, soft_fail, 35, "clear", "v");
+    ged_exec_ae(gedp, 4, s_av);
+    img_cmp(17, gedp, av[1], true, clear_images, soft_fail, 35, "clear", "v");
 
     // Restore view to ae 35/25
     s_av[0] = "ae";
@@ -553,7 +556,7 @@ main(int ac, char *av[]) {
     s_av[2] = "25";
     s_av[3] = "0";
     s_av[4] = NULL;
-    ged_exec_ae(dbp, 4, s_av);
+    ged_exec_ae(gedp, 4, s_av);
     bu_log("Done.\n");
 
     /***** Test axes ****/
@@ -561,11 +564,11 @@ main(int ac, char *av[]) {
     s_av[0] = "draw";
     s_av[1] = "all.g";
     s_av[2] = NULL;
-    ged_exec_draw(dbp, 2, s_av);
+    ged_exec_draw(gedp, 2, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -576,9 +579,9 @@ main(int ac, char *av[]) {
     s_av[6] = "1";
     s_av[7] = "1";
     s_av[8] = NULL;
-    ged_exec_view(dbp, 8, s_av);
+    ged_exec_view(gedp, 8, s_av);
 
-    img_cmp(18, dbp, av[1], false, clear_images, soft_fail, 0, "clear", "v");
+    img_cmp(18, gedp, av[1], false, clear_images, soft_fail, 0, "clear", "v");
 
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -587,9 +590,9 @@ main(int ac, char *av[]) {
     s_av[4] = "axes_color";
     s_av[5] = "0/0/255";
     s_av[6] = NULL;
-    ged_exec_view(dbp, 6, s_av);
+    ged_exec_view(gedp, 6, s_av);
 
-    img_cmp(19, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    img_cmp(19, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Test shaded modes ****/
@@ -599,28 +602,28 @@ main(int ac, char *av[]) {
     s_av[2] = "mesh";
     s_av[3] = "0";
     s_av[4] = NULL;
-    ged_exec_view(dbp, 4, s_av);
+    ged_exec_view(gedp, 4, s_av);
 
     s_av[0] = "facetize";
     s_av[1] = "-r";
     s_av[2] = "all.g";
     s_av[3] = "all.bot";
     s_av[4] = NULL;
-    ged_exec_facetize(dbp, 4, s_av);
-    dbp->dbi_state->update();
+    ged_exec_facetize(gedp, 4, s_av);
+    gedp->dbi_state->update();
 
 
     s_av[0] = "draw";
     s_av[1] = "-m1";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 3, s_av);
+    ged_exec_draw(gedp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
-    img_cmp(20, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    img_cmp(20, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Testing shaded mode 2 drawing (unevaluated primitive shading). (Note: does not use Level-of-Detail)...\n");
@@ -628,13 +631,13 @@ main(int ac, char *av[]) {
     s_av[1] = "-m2";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 3, s_av);
+    ged_exec_draw(gedp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
-    img_cmp(21, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    img_cmp(21, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Testing mode 3 drawing (evaluated wireframe)...\n");
@@ -642,13 +645,13 @@ main(int ac, char *av[]) {
     s_av[1] = "-m3";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 3, s_av);
+    ged_exec_draw(gedp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
-    img_cmp(22, dbp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
+    img_cmp(22, gedp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Testing mode 4 drawing (hidden lines)...\n");
@@ -656,13 +659,13 @@ main(int ac, char *av[]) {
     s_av[1] = "-m4";
     s_av[2] = "all.bot";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 3, s_av);
+    ged_exec_draw(gedp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
-    img_cmp(23, dbp, av[1], true, clear_images, soft_fail, 35, "clear", "v");
+    img_cmp(23, gedp, av[1], true, clear_images, soft_fail, 35, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Testing mode 5 drawing (point based triangles)...\n");
@@ -670,13 +673,13 @@ main(int ac, char *av[]) {
     s_av[1] = "-m5";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 3, s_av);
+    ged_exec_draw(gedp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
-    img_cmp(24, dbp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
+    img_cmp(24, gedp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Test clearing of previous drawing mode (shaded and wireframe)...\n");
@@ -684,19 +687,19 @@ main(int ac, char *av[]) {
     s_av[1] = "-m2";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 3, s_av);
+    ged_exec_draw(gedp, 3, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 4, s_av);
+    ged_exec_draw(gedp, 4, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
-    img_cmp(1, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    img_cmp(1, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
 
@@ -705,27 +708,27 @@ main(int ac, char *av[]) {
     s_av[1] = "-m2";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 3, s_av);
+    ged_exec_draw(gedp, 3, s_av);
 
     s_av[0] = "draw";
     s_av[1] = "-A";
     s_av[2] = "-m0";
     s_av[3] = "all.g";
     s_av[4] = NULL;
-    ged_exec_draw(dbp, 4, s_av);
+    ged_exec_draw(gedp, 4, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
-    img_cmp(25, dbp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    img_cmp(25, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
 
     // Done with moss.g
     s_av[0] = "closedb";
     s_av[1] = NULL;
-    ged_exec_closedb(dbp, 1, s_av);
+    ged_exec_closedb(gedp, 1, s_av);
     bu_file_delete("moss_tmp.g");
 
     /* The rook model is a more appropriate test case for mode 3, since its
@@ -734,23 +737,23 @@ main(int ac, char *av[]) {
     s_av[0] = "opendb";
     s_av[1] = bu_vls_cstr(&fname);
     s_av[2] = NULL;
-    ged_exec_opendb(dbp, 2, s_av);
+    ged_exec_opendb(gedp, 2, s_av);
 
     bu_log("Testing mode 3 drawing (evaluated wireframe)...\n");
     s_av[0] = "draw";
     s_av[1] = "-m3";
     s_av[2] = "scene.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 3, s_av);
+    ged_exec_draw(gedp, 3, s_av);
 
     s_av[0] = "autoview";
     s_av[1] = NULL;
-    ged_exec_autoview(dbp, 1, s_av);
+    ged_exec_autoview(gedp, 1, s_av);
 
-    img_cmp(26, dbp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
+    img_cmp(26, gedp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
     bu_log("Done.\n");
 
-    ged_close(dbp);
+    ged_close(gedp);
 
     /* Remove the local cache files */
     bu_dirclear(lcache);

@@ -1064,8 +1064,7 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fas
 size_t
 ged_who_argc(struct ged *gedp)
 {
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(cmd2, "1")) {
+    if (gedp->new_cmd_forms) {
 	if (!gedp || !gedp->ged_gvp || !gedp->dbi_state)
 	    return 0;
 	BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
@@ -1100,9 +1099,10 @@ int
 ged_who_argv(struct ged *gedp, char **start, const char **end)
 {
     char **vp = start;
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(cmd2, "1")) {
-	if (!gedp || !gedp->ged_gvp || !gedp->dbi_state)
+    if (!gedp)
+	return 0;
+    if (gedp->new_cmd_forms) {
+	if (!gedp->ged_gvp || !gedp->dbi_state)
 	    return 0;
 	BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
 	if (bvs) {
@@ -1427,8 +1427,7 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	    extremum[1][i] = -INFINITY;
 	}
 
-	const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-	if (BU_STR_EQUAL(cmd2, "1")) {
+	if (gedp->new_cmd_forms) {
 	    VSETALL(extremum[0],  INFINITY);
 	    VSETALL(extremum[1], -INFINITY);
 	    struct bu_ptbl *db_objs = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS);
@@ -1578,15 +1577,15 @@ ged_rt_output_handler_helper(struct ged_subprocess* rrtp, bu_process_io_t type)
 void
 _ged_rt_output_handler(void *clientData, int mask)
 {
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(cmd2, "1")) {
+    struct ged_subprocess *rrtp = (struct ged_subprocess *)clientData;
+    if ((rrtp == (struct ged_subprocess *)NULL) || (rrtp->gedp == (struct ged *)NULL))
+	return;
+
+    struct ged *gedp = rrtp->gedp;
+    if (gedp->new_cmd_forms) {
 	_ged_rt_output_handler2(clientData, mask);
 	return;
     }
-    struct ged_subprocess *rrtp = (struct ged_subprocess *)clientData;
-
-    if ((rrtp == (struct ged_subprocess *)NULL) || (rrtp->gedp == (struct ged *)NULL))
-	return;
 
     BU_CKMAG(rrtp, GED_CMD_MAGIC, "ged subprocess");
 
@@ -1597,7 +1596,6 @@ _ged_rt_output_handler(void *clientData, int mask)
 	    return;
 
 	int retcode = 0;
-	struct ged *gedp = rrtp->gedp;
 
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
@@ -1721,8 +1719,7 @@ _ged_rt_write(struct ged *gedp,
      * remove the -1 case.) */
     if (argc >= 0) {
 	if (!argc) {
-	    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-	    if (BU_STR_EQUAL(cmd2, "1")) {
+	    if (gedp->new_cmd_forms) {
 		BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
 		if (bvs) {
 		    std::vector<std::string> drawn_paths = bvs->list_drawn_paths(-1, true);

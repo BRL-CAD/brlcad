@@ -379,7 +379,7 @@ l_line(struct ged *gedp, int v_id, int l_id, int x0, int y0, int z0, int x1, int
 
 int
 main(int ac, char *av[]) {
-    struct ged *dbp;
+    struct ged *gedp;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     int need_help = 0;
     int run_unstable_tests = 0;
@@ -403,8 +403,6 @@ main(int ac, char *av[]) {
 
     /* Enable all the experimental logic */
     bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
-    bu_setenv("LIBGED_DBI_STATE", "1", 1);
 
     if (!bu_file_exists(av[1], NULL)) {
 	printf("ERROR: [%s] does not exist, expecting .g file\n", av[1]);
@@ -428,12 +426,18 @@ main(int ac, char *av[]) {
 
     /* Open the temp file */
     const char *s_av[15] = {NULL};
-    dbp = ged_open("db", "moss_quad_tmp.g", 1);
+    gedp = ged_open("db", "moss_quad_tmp.g", 1);
+
+    // Set up new cmd data (not yet done by default in ged_open
+    gedp->dbi_state = new DbiState(gedp);
+    gedp->new_cmd_forms = 1;
+    bu_setenv("DM_SWRAST", "1", 1);
+
     // We don't want the default GED views for this test
-    bv_set_rm_view(&dbp->ged_views, NULL);
+    bv_set_rm_view(&gedp->ged_views, NULL);
 
     // Set callback so database changes will update dbi_state
-    db_add_changed_clbk(dbp->dbip, &ged_changed_callback, (void *)dbp);
+    db_add_changed_clbk(gedp->dbip, &ged_changed_callback, (void *)gedp);
 
     // Set up the views.  Unlike the other drawing tests, we are explicitly
     // out to test the behavior of multiple views and dms, so we need to
@@ -444,11 +448,11 @@ main(int ac, char *av[]) {
 	struct bview *v;
 	BU_GET(v, struct bview);
 	if (!i)
-	    dbp->ged_gvp = v;
-	bv_init(v, &dbp->ged_views);
+	    gedp->ged_gvp = v;
+	bv_init(v, &gedp->ged_views);
 	bu_vls_sprintf(&v->gv_name, "V%zd", i);
-	bv_set_add_view(&dbp->ged_views, v);
-	bu_ptbl_ins(&dbp->ged_free_views, (long *)v);
+	bv_set_add_view(&gedp->ged_views, v);
+	bu_ptbl_ins(&gedp->ged_free_views, (long *)v);
 
 	/* To generate images that will allow us to check if the drawing
 	 * is proceeding as expected, we use the swrast off-screen dm. */
@@ -461,7 +465,7 @@ main(int ac, char *av[]) {
 	bu_vls_sprintf(&dm_name, "SW%zd", i);
 	s_av[5] = bu_vls_cstr(&dm_name);
 	s_av[6] = NULL;
-	ged_exec_dm(dbp, 6, s_av);
+	ged_exec_dm(gedp, 6, s_av);
 	bu_vls_free(&dm_name);
 
 	struct dm *dmp = (struct dm *)v->dmp;
@@ -479,8 +483,8 @@ main(int ac, char *av[]) {
 	v->dmp = dmp;
 	v->gv_width = dm_get_width(dmp);
 	v->gv_height = dm_get_height(dmp);
-	v->gv_base2local = dbp->dbip->dbi_base2local;
-	v->gv_local2base = dbp->dbip->dbi_local2base;
+	v->gv_base2local = gedp->dbip->dbi_base2local;
+	v->gv_local2base = gedp->dbip->dbi_local2base;
     }
 
     /* Set distinct view az/el for each of the four quad views */
@@ -492,25 +496,25 @@ main(int ac, char *av[]) {
     s_av[5] = "25";
     s_av[6] = "0";
     s_av[7] = NULL;
-    ged_exec_view(dbp, 7, s_av);
+    ged_exec_view(gedp, 7, s_av);
 
     s_av[2] = "V1";
     s_av[4] = "90";
     s_av[5] = "0";
     s_av[6] = "0";
-    ged_exec_view(dbp, 7, s_av);
+    ged_exec_view(gedp, 7, s_av);
 
     s_av[2] = "V2";
     s_av[4] = "0";
     s_av[5] = "90";
     s_av[6] = "0";
-    ged_exec_view(dbp, 7, s_av);
+    ged_exec_view(gedp, 7, s_av);
 
     s_av[2] = "V3";
     s_av[4] = "0";
     s_av[5] = "0";
     s_av[6] = "90";
-    ged_exec_view(dbp, 7, s_av);
+    ged_exec_view(gedp, 7, s_av);
 
 
     /************************************/
@@ -520,51 +524,51 @@ main(int ac, char *av[]) {
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 4, s_av);
+    ged_exec_draw(gedp, 4, s_av);
 
-    img_cmp(0, 1, dbp, av[1], false, soft_fail);
-    img_cmp(1, 1, dbp, av[1], false, soft_fail);
-    img_cmp(2, 1, dbp, av[1], false, soft_fail);
-    img_cmp(3, 1, dbp, av[1], true, soft_fail);
+    img_cmp(0, 1, gedp, av[1], false, soft_fail);
+    img_cmp(1, 1, gedp, av[1], false, soft_fail);
+    img_cmp(2, 1, gedp, av[1], false, soft_fail);
+    img_cmp(3, 1, gedp, av[1], true, soft_fail);
 
     /* Make sure "Z" clears everything */
     s_av[0] = "Z";
-    ged_exec_Z(dbp, 1, s_av);
+    ged_exec_Z(gedp, 1, s_av);
 
     for (int i = 0; i < 4; i++)
-	dm_refresh(dbp, i);
+	dm_refresh(gedp, i);
 
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, -1, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, -1, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
     /************************************/
     /* Check behavior of a view element */
     bu_log("View object, shared views drawing test...\n");
-    poly_circ(dbp, 1, 0);
-    img_cmp(0, 2, dbp, av[1], false, soft_fail);
-    img_cmp(1, 2, dbp, av[1], false, soft_fail);
-    img_cmp(2, 2, dbp, av[1], false, soft_fail);
-    img_cmp(3, 2, dbp, av[1], true, soft_fail);
+    poly_circ(gedp, 1, 0);
+    img_cmp(0, 2, gedp, av[1], false, soft_fail);
+    img_cmp(1, 2, gedp, av[1], false, soft_fail);
+    img_cmp(2, 2, gedp, av[1], false, soft_fail);
+    img_cmp(3, 2, gedp, av[1], true, soft_fail);
 
     /* Make sure "Z" clears everything */
     s_av[0] = "Z";
-    ged_exec_Z(dbp, 1, s_av);
+    ged_exec_Z(gedp, 1, s_av);
 
     for (int i = 0; i < 4; i++)
-	dm_refresh(dbp, i);
+	dm_refresh(gedp, i);
 
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, -1, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, -1, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
     /***************************************************/
     /* Check view independent behavior - basic drawing */
     bu_log("Basic independent views drawing test - V1 active\n");
 
-    struct bu_ptbl *views = bv_set_views(&dbp->ged_views);
+    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
     for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
 	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
 	v->independent = 1;
@@ -576,12 +580,12 @@ main(int ac, char *av[]) {
     s_av[3] = "-m0";
     s_av[4] = "all.g";
     s_av[5] = NULL;
-    ged_exec_draw(dbp, 5, s_av);
+    ged_exec_draw(gedp, 5, s_av);
 
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, 1, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, 1, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
     bu_log("Basic independent views drawing test - V0, V1 active\n");
     s_av[0] = "draw";
@@ -590,12 +594,12 @@ main(int ac, char *av[]) {
     s_av[3] = "-m0";
     s_av[4] = "all.g";
     s_av[5] = NULL;
-    ged_exec_draw(dbp, 5, s_av);
+    ged_exec_draw(gedp, 5, s_av);
 
-    img_cmp(0, 1, dbp, av[1], false, soft_fail);
-    img_cmp(1, 1, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+    img_cmp(0, 1, gedp, av[1], false, soft_fail);
+    img_cmp(1, 1, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
     bu_log("Basic independent views drawing test - V0, V1, V3 active\n");
     s_av[0] = "draw";
@@ -604,12 +608,12 @@ main(int ac, char *av[]) {
     s_av[3] = "-m0";
     s_av[4] = "all.g";
     s_av[5] = NULL;
-    ged_exec_draw(dbp, 5, s_av);
+    ged_exec_draw(gedp, 5, s_av);
 
-    img_cmp(0, 1, dbp, av[1], false, soft_fail);
-    img_cmp(1, 1, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, 1, dbp, av[1], false, soft_fail);
+    img_cmp(0, 1, gedp, av[1], false, soft_fail);
+    img_cmp(1, 1, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, 1, gedp, av[1], false, soft_fail);
 
     bu_log("Basic independent views drawing test - all active\n");
     s_av[0] = "draw";
@@ -618,12 +622,12 @@ main(int ac, char *av[]) {
     s_av[3] = "-m0";
     s_av[4] = "all.g";
     s_av[5] = NULL;
-    ged_exec_draw(dbp, 5, s_av);
+    ged_exec_draw(gedp, 5, s_av);
 
-    img_cmp(0, 1, dbp, av[1], false, soft_fail);
-    img_cmp(1, 1, dbp, av[1], false, soft_fail);
-    img_cmp(2, 1, dbp, av[1], false, soft_fail);
-    img_cmp(3, 1, dbp, av[1], false, soft_fail);
+    img_cmp(0, 1, gedp, av[1], false, soft_fail);
+    img_cmp(1, 1, gedp, av[1], false, soft_fail);
+    img_cmp(2, 1, gedp, av[1], false, soft_fail);
+    img_cmp(3, 1, gedp, av[1], false, soft_fail);
 
     /* Make sure "Z" clears in the expected way */
     bu_log("Independent views - clear.\n");
@@ -631,88 +635,88 @@ main(int ac, char *av[]) {
     s_av[1] = "-V";
     s_av[2] = "V0";
     s_av[3] = NULL;
-    ged_exec_Z(dbp, 3, s_av);
+    ged_exec_Z(gedp, 3, s_av);
 
     for (int i = 0; i < 4; i++)
-	dm_refresh(dbp, i);
+	dm_refresh(gedp, i);
 
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, 1, dbp, av[1], false, soft_fail);
-    img_cmp(2, 1, dbp, av[1], false, soft_fail);
-    img_cmp(3, 1, dbp, av[1], false, soft_fail);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, 1, gedp, av[1], false, soft_fail);
+    img_cmp(2, 1, gedp, av[1], false, soft_fail);
+    img_cmp(3, 1, gedp, av[1], false, soft_fail);
 
     s_av[0] = "Z";
     s_av[1] = "-V";
     s_av[2] = "V2";
     s_av[3] = NULL;
-    ged_exec_Z(dbp, 3, s_av);
+    ged_exec_Z(gedp, 3, s_av);
 
     for (int i = 0; i < 4; i++)
-	dm_refresh(dbp, i);
+	dm_refresh(gedp, i);
 
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, 1, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, 1, dbp, av[1], false, soft_fail);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, 1, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, 1, gedp, av[1], false, soft_fail);
 
 
     s_av[0] = "Z";
     s_av[1] = "-V";
     s_av[2] = "V3";
     s_av[3] = NULL;
-    ged_exec_Z(dbp, 3, s_av);
+    ged_exec_Z(gedp, 3, s_av);
 
     for (int i = 0; i < 4; i++)
-	dm_refresh(dbp, i);
+	dm_refresh(gedp, i);
 
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, 1, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, 1, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
     s_av[0] = "Z";
     s_av[1] = "-V";
     s_av[2] = "V1";
     s_av[3] = NULL;
-    ged_exec_Z(dbp, 3, s_av);
+    ged_exec_Z(gedp, 3, s_av);
 
     for (int i = 0; i < 4; i++)
-	dm_refresh(dbp, i);
+	dm_refresh(gedp, i);
 
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, -1, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, -1, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
     /**************************************************/
     /* Check view independent behavior - view element */
     bu_log("Independent views - view object drawing test. V2\n");
-    poly_circ(dbp, 2, 1);
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, -1, dbp, av[1], false, soft_fail);
-    img_cmp(2, 3, dbp, av[1], false, soft_fail);
-    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+    poly_circ(gedp, 2, 1);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, -1, gedp, av[1], false, soft_fail);
+    img_cmp(2, 3, gedp, av[1], false, soft_fail);
+    img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
     bu_log("Independent views - view object drawing test. V3\n");
-    poly_circ(dbp, 3, 1);
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, -1, dbp, av[1], false, soft_fail);
-    img_cmp(2, 3, dbp, av[1], false, soft_fail);
-    img_cmp(3, 3, dbp, av[1], false, soft_fail);
+    poly_circ(gedp, 3, 1);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, -1, gedp, av[1], false, soft_fail);
+    img_cmp(2, 3, gedp, av[1], false, soft_fail);
+    img_cmp(3, 3, gedp, av[1], false, soft_fail);
 
     bu_log("Independent views - view object drawing test. V0\n");
-    poly_circ(dbp, 0, 1);
-    img_cmp(0, 3, dbp, av[1], false, soft_fail);
-    img_cmp(1, -1, dbp, av[1], false, soft_fail);
-    img_cmp(2, 3, dbp, av[1], false, soft_fail);
-    img_cmp(3, 3, dbp, av[1], false, soft_fail);
+    poly_circ(gedp, 0, 1);
+    img_cmp(0, 3, gedp, av[1], false, soft_fail);
+    img_cmp(1, -1, gedp, av[1], false, soft_fail);
+    img_cmp(2, 3, gedp, av[1], false, soft_fail);
+    img_cmp(3, 3, gedp, av[1], false, soft_fail);
 
     bu_log("Independent views - view object drawing test. V1\n");
-    poly_circ(dbp, 1, 1);
-    img_cmp(0, 3, dbp, av[1], false, soft_fail);
-    img_cmp(1, 3, dbp, av[1], false, soft_fail);
-    img_cmp(2, 3, dbp, av[1], false, soft_fail);
-    img_cmp(3, 3, dbp, av[1], false, soft_fail);
+    poly_circ(gedp, 1, 1);
+    img_cmp(0, 3, gedp, av[1], false, soft_fail);
+    img_cmp(1, 3, gedp, av[1], false, soft_fail);
+    img_cmp(2, 3, gedp, av[1], false, soft_fail);
+    img_cmp(3, 3, gedp, av[1], false, soft_fail);
 
 
     /* Make sure "Z" clears in the expected way */
@@ -721,27 +725,27 @@ main(int ac, char *av[]) {
     s_av[1] = "-V";
     s_av[2] = "V0";
     s_av[3] = NULL;
-    ged_exec_Z(dbp, 3, s_av);
+    ged_exec_Z(gedp, 3, s_av);
 
     for (int i = 0; i < 4; i++)
-	dm_refresh(dbp, i);
+	dm_refresh(gedp, i);
 
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, 3, dbp, av[1], false, soft_fail);
-    img_cmp(2, 3, dbp, av[1], false, soft_fail);
-    img_cmp(3, 3, dbp, av[1], false, soft_fail);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, 3, gedp, av[1], false, soft_fail);
+    img_cmp(2, 3, gedp, av[1], false, soft_fail);
+    img_cmp(3, 3, gedp, av[1], false, soft_fail);
 
     bu_log("Independent views - view obj clearing - V2\n");
     s_av[0] = "Z";
     s_av[1] = "-V";
     s_av[2] = "V2";
     s_av[3] = NULL;
-    ged_exec_Z(dbp, 3, s_av);
+    ged_exec_Z(gedp, 3, s_av);
 
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, 3, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, 3, dbp, av[1], false, soft_fail);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, 3, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, 3, gedp, av[1], false, soft_fail);
 
 
     bu_log("Independent views - view obj clearing - V3\n");
@@ -749,36 +753,36 @@ main(int ac, char *av[]) {
     s_av[1] = "-V";
     s_av[2] = "V3";
     s_av[3] = NULL;
-    ged_exec_Z(dbp, 3, s_av);
+    ged_exec_Z(gedp, 3, s_av);
 
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, 3, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, 3, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
     bu_log("Independent views - view obj clearing - V1\n");
     s_av[0] = "Z";
     s_av[1] = "-V";
     s_av[2] = "V1";
     s_av[3] = NULL;
-    ged_exec_Z(dbp, 3, s_av);
+    ged_exec_Z(gedp, 3, s_av);
 
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, -1, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, -1, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
     // Scrub all data out of the views, switch back to non-independent
-    scene_clear(dbp, 0, 0);
-    scene_clear(dbp, 1, 1);
-    scene_clear(dbp, 2, 2);
-    scene_clear(dbp, 3, 3);
+    scene_clear(gedp, 0, 0);
+    scene_clear(gedp, 1, 1);
+    scene_clear(gedp, 2, 2);
+    scene_clear(gedp, 3, 3);
 
     for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
 	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
 	v->independent = 0;
     }
-    scene_clear(dbp, 0, -1);
+    scene_clear(gedp, 0, -1);
 
     /***************************************************/
     /* Check shared view behavior - non-local line drawing */
@@ -788,25 +792,25 @@ main(int ac, char *av[]) {
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 4, s_av);
+    ged_exec_draw(gedp, 4, s_av);
 
-    vline(dbp, 1, -200, -200, -200, 200, 200, 200);
-    img_cmp(0, 4, dbp, av[1], false, soft_fail);
-    img_cmp(1, 4, dbp, av[1], false, soft_fail);
-    img_cmp(2, 4, dbp, av[1], false, soft_fail);
-    img_cmp(3, 4, dbp, av[1], false, soft_fail);
+    vline(gedp, 1, -200, -200, -200, 200, 200, 200);
+    img_cmp(0, 4, gedp, av[1], false, soft_fail);
+    img_cmp(1, 4, gedp, av[1], false, soft_fail);
+    img_cmp(2, 4, gedp, av[1], false, soft_fail);
+    img_cmp(3, 4, gedp, av[1], false, soft_fail);
 
     /* Make sure we've cleared everything */
     s_av[0] = "Z";
-    ged_exec_Z(dbp, 1, s_av);
+    ged_exec_Z(gedp, 1, s_av);
 
     for (int i = 0; i < 4; i++)
-	dm_refresh(dbp, i);
+	dm_refresh(gedp, i);
 
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, -1, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, -1, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
     /***************************************************/
     /* Check shared view behavior - local line drawing.
@@ -818,38 +822,38 @@ main(int ac, char *av[]) {
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 4, s_av);
+    ged_exec_draw(gedp, 4, s_av);
 
-    l_line(dbp, 0, 0, -200, -100, -100, 200, 100, 100);
-    img_cmp(0, 5, dbp, av[1], false, soft_fail);
-    img_cmp(1, 1, dbp, av[1], false, soft_fail);
-    img_cmp(2, 1, dbp, av[1], false, soft_fail);
-    img_cmp(3, 1, dbp, av[1], false, soft_fail);
-
-
-    l_line(dbp, 2, 2, -50, -50, -30, 100, -70, 80);
-    img_cmp(0, 5, dbp, av[1], false, soft_fail);
-    img_cmp(1, 1, dbp, av[1], false, soft_fail);
-    img_cmp(2, 5, dbp, av[1], false, soft_fail);
-    img_cmp(3, 1, dbp, av[1], false, soft_fail);
+    l_line(gedp, 0, 0, -200, -100, -100, 200, 100, 100);
+    img_cmp(0, 5, gedp, av[1], false, soft_fail);
+    img_cmp(1, 1, gedp, av[1], false, soft_fail);
+    img_cmp(2, 1, gedp, av[1], false, soft_fail);
+    img_cmp(3, 1, gedp, av[1], false, soft_fail);
 
 
-    l_line(dbp, 1, 1, 50, -20, 10, 130, 70, -80);
-    img_cmp(0, 5, dbp, av[1], false, soft_fail);
-    img_cmp(1, 5, dbp, av[1], false, soft_fail);
-    img_cmp(2, 5, dbp, av[1], false, soft_fail);
-    img_cmp(3, 1, dbp, av[1], false, soft_fail);
+    l_line(gedp, 2, 2, -50, -50, -30, 100, -70, 80);
+    img_cmp(0, 5, gedp, av[1], false, soft_fail);
+    img_cmp(1, 1, gedp, av[1], false, soft_fail);
+    img_cmp(2, 5, gedp, av[1], false, soft_fail);
+    img_cmp(3, 1, gedp, av[1], false, soft_fail);
 
 
-    l_line(dbp, 3, 3, 0, 0, 0, 100, 100, 100);
-    img_cmp(0, 5, dbp, av[1], false, soft_fail);
-    img_cmp(1, 5, dbp, av[1], false, soft_fail);
-    img_cmp(2, 5, dbp, av[1], false, soft_fail);
-    img_cmp(3, 5, dbp, av[1], false, soft_fail);
+    l_line(gedp, 1, 1, 50, -20, 10, 130, 70, -80);
+    img_cmp(0, 5, gedp, av[1], false, soft_fail);
+    img_cmp(1, 5, gedp, av[1], false, soft_fail);
+    img_cmp(2, 5, gedp, av[1], false, soft_fail);
+    img_cmp(3, 1, gedp, av[1], false, soft_fail);
+
+
+    l_line(gedp, 3, 3, 0, 0, 0, 100, 100, 100);
+    img_cmp(0, 5, gedp, av[1], false, soft_fail);
+    img_cmp(1, 5, gedp, av[1], false, soft_fail);
+    img_cmp(2, 5, gedp, av[1], false, soft_fail);
+    img_cmp(3, 5, gedp, av[1], false, soft_fail);
 
 
     // Add a shared line to all four views
-    vline(dbp, 4, 0, 0, 0, 10, 10, -100);
+    vline(gedp, 4, 0, 0, 0, 10, 10, -100);
     // Turn the shared line green
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -857,61 +861,61 @@ main(int ac, char *av[]) {
     s_av[3] = "color";
     s_av[4] = "0/255/0";
     s_av[5] = NULL;
-    ged_exec_view(dbp, 5, s_av);
-    img_cmp(0, 6, dbp, av[1], false, soft_fail);
-    img_cmp(1, 6, dbp, av[1], false, soft_fail);
-    img_cmp(2, 6, dbp, av[1], false, soft_fail);
-    img_cmp(3, 6, dbp, av[1], false, soft_fail);
+    ged_exec_view(gedp, 5, s_av);
+    img_cmp(0, 6, gedp, av[1], false, soft_fail);
+    img_cmp(1, 6, gedp, av[1], false, soft_fail);
+    img_cmp(2, 6, gedp, av[1], false, soft_fail);
+    img_cmp(3, 6, gedp, av[1], false, soft_fail);
 
     // Scrub view specific data
     bu_log("Clearing view-specific data only...\n");
-    scene_clear(dbp, 0, 0);
+    scene_clear(gedp, 0, 0);
     for (int i = 0; i < 4; i++)
-	dm_refresh(dbp, i);
+	dm_refresh(gedp, i);
 
-    img_cmp(0, 7, dbp, av[1], false, soft_fail);
-    img_cmp(1, 6, dbp, av[1], false, soft_fail);
-    img_cmp(2, 6, dbp, av[1], false, soft_fail);
-    img_cmp(3, 6, dbp, av[1], false, soft_fail);
+    img_cmp(0, 7, gedp, av[1], false, soft_fail);
+    img_cmp(1, 6, gedp, av[1], false, soft_fail);
+    img_cmp(2, 6, gedp, av[1], false, soft_fail);
+    img_cmp(3, 6, gedp, av[1], false, soft_fail);
 
-    scene_clear(dbp, 1, 1);
+    scene_clear(gedp, 1, 1);
     for (int i = 0; i < 4; i++)
-	dm_refresh(dbp, i);
+	dm_refresh(gedp, i);
 
-    img_cmp(0, 7, dbp, av[1], false, soft_fail);
-    img_cmp(1, 7, dbp, av[1], false, soft_fail);
-    img_cmp(2, 6, dbp, av[1], false, soft_fail);
-    img_cmp(3, 6, dbp, av[1], false, soft_fail);
+    img_cmp(0, 7, gedp, av[1], false, soft_fail);
+    img_cmp(1, 7, gedp, av[1], false, soft_fail);
+    img_cmp(2, 6, gedp, av[1], false, soft_fail);
+    img_cmp(3, 6, gedp, av[1], false, soft_fail);
 
 
-    scene_clear(dbp, 2, 2);
+    scene_clear(gedp, 2, 2);
     for (int i = 0; i < 4; i++)
-	dm_refresh(dbp, i);
+	dm_refresh(gedp, i);
 
-    img_cmp(0, 7, dbp, av[1], false, soft_fail);
-    img_cmp(1, 7, dbp, av[1], false, soft_fail);
-    img_cmp(2, 7, dbp, av[1], false, soft_fail);
-    img_cmp(3, 6, dbp, av[1], false, soft_fail);
+    img_cmp(0, 7, gedp, av[1], false, soft_fail);
+    img_cmp(1, 7, gedp, av[1], false, soft_fail);
+    img_cmp(2, 7, gedp, av[1], false, soft_fail);
+    img_cmp(3, 6, gedp, av[1], false, soft_fail);
 
 
-    scene_clear(dbp, 3, 3);
+    scene_clear(gedp, 3, 3);
     for (int i = 0; i < 4; i++)
-	dm_refresh(dbp, i);
+	dm_refresh(gedp, i);
 
-    img_cmp(0, 7, dbp, av[1], false, soft_fail);
-    img_cmp(1, 7, dbp, av[1], false, soft_fail);
-    img_cmp(2, 7, dbp, av[1], false, soft_fail);
-    img_cmp(3, 7, dbp, av[1], false, soft_fail);
+    img_cmp(0, 7, gedp, av[1], false, soft_fail);
+    img_cmp(1, 7, gedp, av[1], false, soft_fail);
+    img_cmp(2, 7, gedp, av[1], false, soft_fail);
+    img_cmp(3, 7, gedp, av[1], false, soft_fail);
 
 
-    scene_clear(dbp, 0, -1);
+    scene_clear(gedp, 0, -1);
     for (int i = 0; i < 4; i++)
-	dm_refresh(dbp, i);
+	dm_refresh(gedp, i);
 
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, -1, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, -1, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
     // Reset the stage - clearing only shared
     bu_log("Restore drawn data for shared-only clearing test...\n");
@@ -919,12 +923,12 @@ main(int ac, char *av[]) {
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 4, s_av);
-    l_line(dbp, 0, 0, -200, -100, -100, 200, 100, 100);
-    l_line(dbp, 2, 2, -50, -50, -30, 100, -70, 80);
-    l_line(dbp, 1, 1, 50, -20, 10, 130, 70, -80);
-    l_line(dbp, 3, 3, 0, 0, 0, 100, 100, 100);
-    vline(dbp, 4, 0, 0, 0, 10, 10, -100);
+    ged_exec_draw(gedp, 4, s_av);
+    l_line(gedp, 0, 0, -200, -100, -100, 200, 100, 100);
+    l_line(gedp, 2, 2, -50, -50, -30, 100, -70, 80);
+    l_line(gedp, 1, 1, 50, -20, 10, 130, 70, -80);
+    l_line(gedp, 3, 3, 0, 0, 0, 100, 100, 100);
+    vline(gedp, 4, 0, 0, 0, 10, 10, -100);
     // Turn the shared line green
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -932,32 +936,32 @@ main(int ac, char *av[]) {
     s_av[3] = "color";
     s_av[4] = "0/255/0";
     s_av[5] = NULL;
-    ged_exec_view(dbp, 5, s_av);
+    ged_exec_view(gedp, 5, s_av);
 
-    img_cmp(0, 6, dbp, av[1], false, soft_fail);
-    img_cmp(1, 6, dbp, av[1], false, soft_fail);
-    img_cmp(2, 6, dbp, av[1], false, soft_fail);
-    img_cmp(3, 6, dbp, av[1], false, soft_fail);
+    img_cmp(0, 6, gedp, av[1], false, soft_fail);
+    img_cmp(1, 6, gedp, av[1], false, soft_fail);
+    img_cmp(2, 6, gedp, av[1], false, soft_fail);
+    img_cmp(3, 6, gedp, av[1], false, soft_fail);
 
     s_av[0] = "Z";
     s_av[1] = "-S";
     s_av[2] = NULL;
-    ged_exec_Z(dbp, 2, s_av);
+    ged_exec_Z(gedp, 2, s_av);
 
-    img_cmp(0, 8, dbp, av[1], false, soft_fail);
-    img_cmp(1, 8, dbp, av[1], false, soft_fail);
-    img_cmp(2, 8, dbp, av[1], false, soft_fail);
-    img_cmp(3, 8, dbp, av[1], false, soft_fail);
+    img_cmp(0, 8, gedp, av[1], false, soft_fail);
+    img_cmp(1, 8, gedp, av[1], false, soft_fail);
+    img_cmp(2, 8, gedp, av[1], false, soft_fail);
+    img_cmp(3, 8, gedp, av[1], false, soft_fail);
 
-    scene_clear(dbp, 0, 0);
-    scene_clear(dbp, 1, 1);
-    scene_clear(dbp, 2, 2);
-    scene_clear(dbp, 3, 3);
+    scene_clear(gedp, 0, 0);
+    scene_clear(gedp, 1, 1);
+    scene_clear(gedp, 2, 2);
+    scene_clear(gedp, 3, 3);
 
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, -1, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, -1, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
 
     // Reset the stage - clearing everything test
@@ -966,12 +970,12 @@ main(int ac, char *av[]) {
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 4, s_av);
-    l_line(dbp, 0, 0, -200, -100, -100, 200, 100, 100);
-    l_line(dbp, 2, 2, -50, -50, -30, 100, -70, 80);
-    l_line(dbp, 1, 1, 50, -20, 10, 130, 70, -80);
-    l_line(dbp, 3, 3, 0, 0, 0, 100, 100, 100);
-    vline(dbp, 4, 0, 0, 0, 10, 10, -100);
+    ged_exec_draw(gedp, 4, s_av);
+    l_line(gedp, 0, 0, -200, -100, -100, 200, 100, 100);
+    l_line(gedp, 2, 2, -50, -50, -30, 100, -70, 80);
+    l_line(gedp, 1, 1, 50, -20, 10, 130, 70, -80);
+    l_line(gedp, 3, 3, 0, 0, 0, 100, 100, 100);
+    vline(gedp, 4, 0, 0, 0, 10, 10, -100);
     // Turn the shared line green
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -979,25 +983,25 @@ main(int ac, char *av[]) {
     s_av[3] = "color";
     s_av[4] = "0/255/0";
     s_av[5] = NULL;
-    ged_exec_view(dbp, 5, s_av);
+    ged_exec_view(gedp, 5, s_av);
 
-    img_cmp(0, 6, dbp, av[1], false, soft_fail);
-    img_cmp(1, 6, dbp, av[1], false, soft_fail);
-    img_cmp(2, 6, dbp, av[1], false, soft_fail);
-    img_cmp(3, 6, dbp, av[1], false, soft_fail);
+    img_cmp(0, 6, gedp, av[1], false, soft_fail);
+    img_cmp(1, 6, gedp, av[1], false, soft_fail);
+    img_cmp(2, 6, gedp, av[1], false, soft_fail);
+    img_cmp(3, 6, gedp, av[1], false, soft_fail);
 
     bu_log("Clearing everything...\n");
-    scene_clear(dbp, 0, 0);
-    scene_clear(dbp, 1, 1);
-    scene_clear(dbp, 2, 2);
-    scene_clear(dbp, 3, 3);
-    scene_clear(dbp, 0, -1);
+    scene_clear(gedp, 0, 0);
+    scene_clear(gedp, 1, 1);
+    scene_clear(gedp, 2, 2);
+    scene_clear(gedp, 3, 3);
+    scene_clear(gedp, 0, -1);
     for (int i = 0; i < 4; i++)
-	dm_refresh(dbp, i);
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, -1, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+	dm_refresh(gedp, i);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, -1, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
     // Next, test a mix of shared and independent views
     bu_log("Testing mixed shared and independent views\n");
@@ -1013,12 +1017,12 @@ main(int ac, char *av[]) {
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 3, s_av);
+    ged_exec_draw(gedp, 3, s_av);
 
-    img_cmp(0, -1, dbp, av[1], false, soft_fail);
-    img_cmp(1, 1, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, 1, dbp, av[1], false, soft_fail);
+    img_cmp(0, -1, gedp, av[1], false, soft_fail);
+    img_cmp(1, 1, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, 1, gedp, av[1], false, soft_fail);
 
     // Populate an independent view
     s_av[0] = "draw";
@@ -1027,22 +1031,22 @@ main(int ac, char *av[]) {
     s_av[3] = "-m0";
     s_av[4] = "all.g";
     s_av[5] = NULL;
-    ged_exec_draw(dbp, 5, s_av);
+    ged_exec_draw(gedp, 5, s_av);
 
-    img_cmp(0, 1, dbp, av[1], false, soft_fail);
-    img_cmp(1, 1, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, 1, dbp, av[1], false, soft_fail);
+    img_cmp(0, 1, gedp, av[1], false, soft_fail);
+    img_cmp(1, 1, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, 1, gedp, av[1], false, soft_fail);
 
     // Clear shared views
     s_av[0] = "Z";
     s_av[1] = NULL;
-    ged_exec_Z(dbp, 1, s_av);
+    ged_exec_Z(gedp, 1, s_av);
 
-    img_cmp(0, 1, dbp, av[1], false, soft_fail);
-    img_cmp(1, -1, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+    img_cmp(0, 1, gedp, av[1], false, soft_fail);
+    img_cmp(1, -1, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
     // Draw specifying a view, but this time specifying a shared view.
     // Should be a no-op - we can mix shared and independent view
@@ -1056,16 +1060,16 @@ main(int ac, char *av[]) {
     s_av[3] = "-m0";
     s_av[4] = "all.g";
     s_av[5] = NULL;
-    ged_exec_draw(dbp, 5, s_av);
+    ged_exec_draw(gedp, 5, s_av);
 
-    img_cmp(0, 1, dbp, av[1], false, soft_fail);
-    img_cmp(1, -1, dbp, av[1], false, soft_fail);
-    img_cmp(2, -1, dbp, av[1], false, soft_fail);
-    img_cmp(3, -1, dbp, av[1], false, soft_fail);
+    img_cmp(0, 1, gedp, av[1], false, soft_fail);
+    img_cmp(1, -1, gedp, av[1], false, soft_fail);
+    img_cmp(2, -1, gedp, av[1], false, soft_fail);
+    img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
     //bu_setenv("BV_LOG", "1", 1);
 
-    ged_close(dbp);
+    ged_close(gedp);
 
     /* Remove the local cache files */
     bu_dirclear(lcache);

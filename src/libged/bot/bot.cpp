@@ -661,9 +661,8 @@ _bot_cmd_sync(void *bs, int argc, const char **argv)
 static void
 _bot_vlblock_plot(struct ged *gedp, struct bv_vlblock *vbp, const char *sname)
 {
-    const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
     struct bview *view = gedp->ged_gvp;
-    if (BU_STR_EQUAL(nview, "1")) {
+    if (gedp->new_cmd_forms) {
 	struct bu_vls nroot = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&nroot, "bot::%s", sname);
 	bv_vlblock_obj(vbp, view, bu_vls_cstr(&nroot));

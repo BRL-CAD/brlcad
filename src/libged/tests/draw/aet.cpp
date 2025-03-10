@@ -134,7 +134,7 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, int soft_fail)
 
 int
 main(int ac, char *av[]) {
-    struct ged *dbp;
+    struct ged *gedp;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     int need_help = 0;
     int run_unstable_tests = 0;
@@ -158,8 +158,6 @@ main(int ac, char *av[]) {
 
     /* Enable all the experimental logic */
     bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
-    bu_setenv("LIBGED_DBI_STATE", "1", 1);
 
     if (!bu_file_exists(av[1], NULL)) {
 	printf("ERROR: [%s] does not exist, expecting .g file\n", av[1]);
@@ -176,9 +174,15 @@ main(int ac, char *av[]) {
 
     /* Open the temp file */
     const char *s_av[15] = {NULL};
-    dbp = ged_open("db", "moss_aet_tmp.g", 1);
+    gedp = ged_open("db", "moss_aet_tmp.g", 1);
+
+    // Set up new cmd data (not yet done by default in ged_open
+    gedp->dbi_state = new DbiState(gedp);
+    gedp->new_cmd_forms = 1;
+    bu_setenv("DM_SWRAST", "1", 1);
+
     // We don't want the default GED views for this test
-    bv_set_rm_view(&dbp->ged_views, NULL);
+    bv_set_rm_view(&gedp->ged_views, NULL);
 
     // Set up the views.  Unlike the other drawing tests, we are explicitly
     // out to test the behavior of multiple views and dms, so we need to
@@ -189,12 +193,12 @@ main(int ac, char *av[]) {
     for (size_t i = 0; i < 4; i++) {
 	BU_GET(views[i], struct bview);
 	if (!i)
-	    dbp->ged_gvp = views[i];
+	    gedp->ged_gvp = views[i];
 	struct bview *v = views[i];
-	bv_init(v, &dbp->ged_views);
+	bv_init(v, &gedp->ged_views);
 	bu_vls_sprintf(&v->gv_name, "V%zd", i);
-	bv_set_add_view(&dbp->ged_views, v);
-	bu_ptbl_ins(&dbp->ged_free_views, (long *)v);
+	bv_set_add_view(&gedp->ged_views, v);
+	bu_ptbl_ins(&gedp->ged_free_views, (long *)v);
 
 	/* To generate images that will allow us to check if the drawing
 	 * is proceeding as expected, we use the swrast off-screen dm. */
@@ -207,7 +211,7 @@ main(int ac, char *av[]) {
 	bu_vls_sprintf(&dm_name, "SW%zd", i);
 	s_av[5] = bu_vls_cstr(&dm_name);
 	s_av[6] = NULL;
-	ged_exec_dm(dbp, 6, s_av);
+	ged_exec_dm(gedp, 6, s_av);
 	bu_vls_free(&dm_name);
 
 	struct dm *dmp = (struct dm *)v->dmp;
@@ -225,8 +229,8 @@ main(int ac, char *av[]) {
 	v->dmp = dmp;
 	v->gv_width = dm_get_width(dmp);
 	v->gv_height = dm_get_height(dmp);
-	v->gv_base2local = dbp->dbip->dbi_base2local;
-	v->gv_local2base = dbp->dbip->dbi_local2base;
+	v->gv_base2local = gedp->dbip->dbi_base2local;
+	v->gv_local2base = gedp->dbip->dbi_local2base;
     }
 
     /* Set distinct view az/el for each of the four quad views.  For
@@ -259,13 +263,13 @@ main(int ac, char *av[]) {
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec_draw(dbp, 4, s_av);
+    ged_exec_draw(gedp, 4, s_av);
 
     // Sanity
-    img_cmp(0, 1, dbp, av[1], soft_fail);
-    img_cmp(1, 1, dbp, av[1], soft_fail);
-    img_cmp(2, 1, dbp, av[1], soft_fail);
-    img_cmp(3, 1, dbp, av[1], soft_fail);
+    img_cmp(0, 1, gedp, av[1], soft_fail);
+    img_cmp(1, 1, gedp, av[1], soft_fail);
+    img_cmp(2, 1, gedp, av[1], soft_fail);
+    img_cmp(3, 1, gedp, av[1], soft_fail);
 
     // Resize dm to larger dimensions
     bu_log("Resize to 600x600...\n");
@@ -281,10 +285,10 @@ main(int ac, char *av[]) {
 	// stable without adjustment.
 	bv_update(views[i]);
     }
-    img_cmp(0, 2, dbp, av[1], soft_fail);
-    img_cmp(1, 2, dbp, av[1], soft_fail);
-    img_cmp(2, 2, dbp, av[1], soft_fail);
-    img_cmp(3, 2, dbp, av[1], soft_fail);
+    img_cmp(0, 2, gedp, av[1], soft_fail);
+    img_cmp(1, 2, gedp, av[1], soft_fail);
+    img_cmp(2, 2, gedp, av[1], soft_fail);
+    img_cmp(3, 2, gedp, av[1], soft_fail);
 
     // Shrink back to default dimensions
     bu_log("Shrink to 512x512...\n");
@@ -300,10 +304,10 @@ main(int ac, char *av[]) {
 	// stable without adjustment.
 	bv_update(views[i]);
     }
-    img_cmp(0, 1, dbp, av[1], soft_fail);
-    img_cmp(1, 1, dbp, av[1], soft_fail);
-    img_cmp(2, 1, dbp, av[1], soft_fail);
-    img_cmp(3, 1, dbp, av[1], soft_fail);
+    img_cmp(0, 1, gedp, av[1], soft_fail);
+    img_cmp(1, 1, gedp, av[1], soft_fail);
+    img_cmp(2, 1, gedp, av[1], soft_fail);
+    img_cmp(3, 1, gedp, av[1], soft_fail);
 
     // Cycle through a bunch of resizes
     bu_log("Cycle through multiple resizes...\n");
@@ -332,14 +336,14 @@ main(int ac, char *av[]) {
 	// stable without adjustment.
 	bv_update(views[i]);
     }
-    img_cmp(0, 1, dbp, av[1], soft_fail);
-    img_cmp(1, 1, dbp, av[1], soft_fail);
-    img_cmp(2, 1, dbp, av[1], soft_fail);
-    img_cmp(3, 1, dbp, av[1], soft_fail);
+    img_cmp(0, 1, gedp, av[1], soft_fail);
+    img_cmp(1, 1, gedp, av[1], soft_fail);
+    img_cmp(2, 1, gedp, av[1], soft_fail);
+    img_cmp(3, 1, gedp, av[1], soft_fail);
 
 
 
-    ged_close(dbp);
+    ged_close(gedp);
 
     return 0;
 }
