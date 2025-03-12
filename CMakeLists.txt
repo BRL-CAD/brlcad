@@ -2133,22 +2133,19 @@ if(BRLCAD_EXTRADOCS)
     distclean("${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf")
   endif(BRLCAD_EXTRADOCS_PDF)
 
-  # TODO - with CMake 3.20, add_custom_command supports generator expressions in
-  # OUTPUT, so once we can require that version we should look at retiring this
-  # use of CMAKE_CFG_INTDIR
   # For the html files, we need brlcad.css
   add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/doc/docbook/brlcad_css-${CMAKE_CFG_INTDIR}-done
+    OUTPUT ${CMAKE_BINARY_DIR}/doc/docbook/brlcad_css-done
     COMMAND
       "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_SOURCE_DIR}/doc/docbook/css/brlcad.css
       $<TARGET_FILE_DIR:db_dir_info>/${RBIN_DIR}/${DOC_DIR}/html/css/brlcad.css
-    COMMAND "${CMAKE_COMMAND}" -E touch ${CMAKE_BINARY_DIR}/doc/docbook/brlcad_css-${CMAKE_CFG_INTDIR}-done
+    COMMAND "${CMAKE_COMMAND}" -E touch ${CMAKE_BINARY_DIR}/doc/docbook/brlcad_css-done
     DEPENDS ${CMAKE_SOURCE_DIR}/doc/docbook/css/brlcad.css
   )
-  add_custom_target(brlcad_css DEPENDS ${CMAKE_BINARY_DIR}/doc/docbook/brlcad_css-${CMAKE_CFG_INTDIR}-done)
+  add_custom_target(brlcad_css DEPENDS ${CMAKE_BINARY_DIR}/doc/docbook/brlcad_css-done)
   set_target_properties(brlcad_css PROPERTIES FOLDER "DocBook")
   install(FILES ${CMAKE_SOURCE_DIR}/doc/docbook/css/brlcad.css DESTINATION ${DOC_DIR}/html/css)
-  distclean(${CMAKE_CFG_INTDIR}/${DOC_DIR}/html/css/brlcad.css)
+  distclean(${DOC_DIR}/html/css/brlcad.css)
 
   # Include CMake macros for DocBook.
   include(DocBook)

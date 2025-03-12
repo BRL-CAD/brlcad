@@ -13,16 +13,13 @@ endif(BUILD_TESTING)
 distclean("${CMAKE_CURRENT_BINARY_DIR}/benchmark")
 
 if(BUILD_TESTING)
-  # TODO - with CMake 3.20, add_custom_command supports generator expressions in
-  # OUTPUT, so once we can require that version we should look at retiring this
-  # use of CMAKE_CFG_INTDIR
   add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/benchmark-${CMAKE_CFG_INTDIR}-done
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/benchmark-done
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/run.sh $<TARGET_FILE_DIR:bark>/benchmark
-    COMMAND "${CMAKE_COMMAND}" -E touch ${CMAKE_CURRENT_BINARY_DIR}/benchmark-${CMAKE_CFG_INTDIR}-done
+    COMMAND "${CMAKE_COMMAND}" -E touch ${CMAKE_CURRENT_BINARY_DIR}/benchmark-done
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/run.sh
   )
-  add_custom_target(benchmark_cp ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/benchmark-${CMAKE_CFG_INTDIR}-done)
+  add_custom_target(benchmark_cp ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/benchmark-done)
   set_target_properties(benchmark_cp PROPERTIES FOLDER "Benchmark")
 endif(BUILD_TESTING)
 distclean(${CMAKE_BINARY_DIR}/${BIN_DIR}/benchmark)

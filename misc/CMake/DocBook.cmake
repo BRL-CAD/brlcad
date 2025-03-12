@@ -242,9 +242,6 @@ if(NOT COMMAND ADD_DOCBOOK)
               # directory...
               set(${fmt}_EXTRAS ${${fmt}_EXTRAS} "${extra_out}")
 
-              # Use CMAKE_CFG_INTDIR for build system output list, but
-              # need BUILD_TYPE form of path for scripts and install
-              # commands.
               set(${fmt}_EXTRA "${CMAKE_BINARY_DIR}/${${fmt}_DIR}${outdir}/${extra_out}")
               set(outputs ${outputs} ${${fmt}_EXTRA})
               install(FILES "${${fmt}_EXTRA}" DESTINATION ${${fmt}_DIR}${outdir})

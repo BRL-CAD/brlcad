@@ -133,7 +133,7 @@ if(TARGET btclsh)
   # to run all of them at once.
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
-    COMMAND ${CMAKE_COMMAND} -DCONFIG=$<CONFIG> -DBTCLSH=$<TARGET_FILE:btclsh> -P ${index_cmds_file}
+    COMMAND ${CMAKE_COMMAND} -DBTCLSH=$<TARGET_FILE:btclsh> -P ${index_cmds_file}
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel
     DEPENDS ${index_depends_files} ${index_cpy_targets}
   )
