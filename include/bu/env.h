@@ -125,8 +125,8 @@ BU_EXPORT extern ssize_t bu_mem(int type, size_t *sz);
  * was requested.
  *
  * Caller should NOT free either the main string return from bu_editor or the
- * pointer assigned to editor_opt.  Both outputs may both change contents from
- * one call to the next, so caller should duplicate the string outputs if they
+ * pointer assigned to editor_opt.  Both outputs may change contents from one
+ * call to the next, so caller should duplicate the string outputs if they
  * wish to preserve them beyond the next bu_editor call.
  */
 BU_EXPORT const char *bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **check_for_editors);
