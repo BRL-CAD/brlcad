@@ -55,10 +55,11 @@ set(
 # installing rt_ecmds.h.  Applications external to the main
 # BRL-CAD build may also want to exploit the callback API.
 set(RT_ECMD_SCANNER ${CMAKE_BINARY_DIR}/CMakeTmp/rt_ecmd_scanner${CMAKE_EXECUTABLE_SUFFIX})
+set(RT_ECMD_SCANNER_SRC "${CMAKE_CURRENT_SOURCE_DIR}/primitives/rt_ecmd_scanner.cpp")
 try_compile(
   ged_hdr_scanner
   "${CMAKE_BINARY_DIR}/CMakeTmp"
-  SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/primitives/rt_ecmd_scanner.cpp"
+  SOURCES "${RT_ECMD_SCANNER_SRC}"
   OUTPUT_VARIABLE RT_SCANNER_BLD_OUT
   COPY_FILE "${RT_ECMD_SCANNER}"
 )
@@ -81,6 +82,7 @@ add_custom_command(
   OUTPUT ${RT_ECMD_HDR}
   COMMAND ${RT_ECMD_SCANNER} ${RT_PFILE_OUT} ${RT_ECMD_HDR}
   COMMENT "[RT_ECMD_SCANNER] Scanning for RT editing mode flags"
+  DEPENDS "${RT_ECMD_SCANNER_SRC}"
 )
 distclean(${RT_ECMD_HDR})
 foreach(esf ${LIBRT_PRIMEDIT_SOURCES})

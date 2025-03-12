@@ -58,7 +58,7 @@ process_file(
     }
 
     std::regex define_str_regex("#define.*");
-    std::regex ecmd_str_regex(".*(ECMD_[A-Z_]+)[ \t]+([0-9]+).*");
+    std::regex ecmd_str_regex(".*(ECMD_[0-9A-Z_]+)[ \t]+([0-9]+).*");
     std::string sline;
     while (std::getline(fs, sline)) {
 	if (!std::regex_match(sline, define_str_regex))
