@@ -653,7 +653,7 @@ g_cmdline(
 	if (gret & GED_MORE) {
 	    // If we're being asked for more input, the return string holds
 	    // the prompt for the next input
-	    l.get()->prompt = rstr;
+	    l.get()->SetPrompt(rstr);
 	    if (!tmp_av.size()) {
 		// The first time through, we store the argv contents here since we
 		// didn't know to do it earlier.  Subsequent passes will handle the
@@ -679,7 +679,8 @@ g_cmdline(
 	    tmp_av.clear();
 
 	    // In case we had a custom prompt from MORE, restore our standard prompt
-	    l.get()->prompt = (bu_interactive()) ? std::string(DEFAULT_GSH_PROMPT) : std::string("");
+	    std::string p = (bu_interactive()) ? std::string(DEFAULT_GSH_PROMPT) : std::string("");
+	    l.get()->SetPrompt(p);
 	}
 
 	print_mutex.lock();
@@ -803,7 +804,8 @@ main(int argc, const char **argv)
     //gs.get()->l->EnableMultiLine();
 
     // If we're handling commands from stdin, we want an empty prompt
-    gs.get()->l->prompt = (bu_interactive()) ? std::string(DEFAULT_GSH_PROMPT) : std::string("");
+    std::string p = (bu_interactive()) ? std::string(DEFAULT_GSH_PROMPT) : std::string("");
+    gs.get()->l->SetPrompt(p);
 
     // Launch blocking linenoise input gathering in a separate thread, to allow
     // us to integrate input from async commands into terminal output while

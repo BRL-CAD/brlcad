@@ -970,7 +970,7 @@ main(int argc, const char **argv)
     /* Start the interactive loop */
     np = (silent_mode == SILENT_YES) ? "": NIRT_PROMPT;
     l = new linenoise::linenoiseState();
-    l->prompt = std::string(np);
+    l->SetPrompt(np);
     line.clear();
     while (true) {
 	auto quit = l->Readline(line);
