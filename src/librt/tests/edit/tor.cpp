@@ -340,19 +340,20 @@ main(int argc, char *argv[])
     VMOVE(edit_tor->h, orig_tor->h);
     MAT_IDN(s->acc_rot_sol);
     s->e_inpara = 1;
-    VSET(s->e_para, 10, 5, 20);
+    VSET(s->e_para, 5, 5, 5);
     s->vp->gv_rotate_about = 'k';
+    VMOVE(s->e_keypoint, edit_tor->v);
+    s->mv_context = 1;
 
     // set cmp vals to expected
-    VSET(cmp_tor->v, 9.81075968362813811,5.24683896844185682,20.06130519123564682);
-    VSET(cmp_tor->h, 0.39407267558562353,0.63410305535343836,0.66529695741692851);
+    VMOVE(cmp_tor->v, orig_tor->v);
+    VSET(cmp_tor->h, 0.57315612572226449,0.57695134825421179,0.58190995634607534);
 
     rt_solid_edit_process(s);
 
     if (tor_diff("RT_SOLID_EDIT_ROT (k)", cmp_tor, edit_tor))
 	bu_exit(1, "ERROR: RT_SOLID_EDIT_ROT(k) failed rotating tor\n");
 
-    bu_log("RT_SOLID_EDIT_ROT(k) SUCCESS: original v value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->v), V3ARGS(edit_tor->v));
     bu_log("RT_SOLID_EDIT_ROT(k) SUCCESS: original h value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->h), V3ARGS(edit_tor->h));
 
 
