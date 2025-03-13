@@ -34,36 +34,47 @@
 #include "raytrace.h"
 #include "rt/rt_ecmds.h"
 
+
+struct directory *
+make_tor(struct rt_wdb *wdbp)
+{
+    const char *objname = "tor";
+    struct rt_tor_internal *tor;
+    BU_ALLOC(tor, struct rt_tor_internal);
+    tor->magic = RT_TOR_INTERNAL_MAGIC;
+    VSET(tor->v, 0, 0, 0);
+    VSET(tor->h, 0, 0, 1);
+    tor->r_a = 20;
+    tor->r_h = 2;
+
+    wdb_export(wdbp, objname, (void *)tor, ID_TOR, 1.0);
+
+    struct directory *dp = db_lookup(wdbp->dbip, objname, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL)
+	bu_exit(1, "ERROR: Unable to create tor object: %s\n", objname);
+
+    return dp;
+}
+
 int
 main(int argc, char *argv[])
 {
-    const char *usage = "rt_edit_test_tor file.g testnum";
-    long test_num = 0;
-    const char *objname = "tor";
     bu_setprogname(argv[0]);
-    argc--; argv++;
+    if (argc != 1)
+	return BRLCAD_ERROR;
 
-    if (argc < 2)
-	bu_exit(1, "%s", usage);
-
-    struct db_i *dbip = db_open(argv[0], DB_OPEN_READWRITE);
+    struct db_i *dbip = db_open_inmem();
     if (dbip == DBI_NULL)
-        bu_exit(1, "ERROR: Unable to read from %s\n", argv[0]);
+        bu_exit(1, "ERROR: Unable to create database instance\n");
 
-    if (db_dirbuild(dbip) < 0)
-        bu_exit(1, "ERROR: db_dirbuild failed on %s\n", argv[0]);
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
 
-    db_update_nref(dbip, &rt_uniresource);
+    struct directory *dp = make_tor(wdbp);
 
-    struct directory *dp = db_lookup(dbip, objname, LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL)
-        bu_exit(1, "ERROR: Unable to look up object %s\n", objname);
-
+    // We'll refer to the original for reference
     struct rt_db_internal intern;
     rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource);
-
-    if (intern.idb_type != ID_TOR)
-        bu_exit(1, "ERROR: %s - incorrect object type %d\n", objname, intern.idb_type);
+    struct rt_tor_internal *orig_tor = (struct rt_tor_internal *)intern.idb_ptr;
 
     struct bn_tol tol = BN_TOL_INIT_TOL;
     struct db_full_path fp;
@@ -78,29 +89,28 @@ main(int argc, char *argv[])
 
     // Set up rt_solid_edit container
     struct rt_solid_edit *s = rt_solid_edit_create(&fp, dbip, &tol, v);
+    struct rt_tor_internal *edit_tor = (struct rt_tor_internal *)s->es_int.idb_ptr;
 
-    // Get test number
-    bu_sscanf(argv[1], "%ld", &test_num);
 
-    switch (test_num) {
-	case 1:
-	    EDOBJ[intern.idb_type].ft_set_edit_mode(s, ECMD_TOR_R1);
-	    s->es_scale = 2.0;
-	    rt_solid_edit_process(s);
-	    break;
-	case 2:
-	    break;
-	case 3:
-	    break;
-	case 4:
-	    break;
-	default:
-	    rt_solid_edit_destroy(s);
-	    bu_exit(1, "ERROR: unknown test number %ld\n", test_num);
-	    break;
-    }
+    // Now, try modifying some of the parameters
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_TOR_R1);
+    s->es_scale = 2.0;
+    rt_solid_edit_process(s);
+    if (!NEAR_EQUAL(edit_tor->r_a, 40, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: ECMD_TOR_R1 failed - unable to scale tor parameter r_a\n");
+    if (!VNEAR_EQUAL(edit_tor->v, orig_tor->v, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: ECMD_TOR_R1 changed tor parameter v\n");
+    if (!VNEAR_EQUAL(edit_tor->h, orig_tor->h, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: ECMD_TOR_R1 changed tor parameter h\n");
+    if (!NEAR_EQUAL(edit_tor->r_h, orig_tor->r_h, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: ECMD_TOR_R1 changed tor parameter r_h\n");
+
+    bu_log("SUCCESS: original r_a value %g modified to %g\n", orig_tor->r_a, edit_tor->r_a);
 
     rt_solid_edit_destroy(s);
+
+    db_close(dbip);
+
     return 0;
 }
 
