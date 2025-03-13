@@ -301,7 +301,6 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 {
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
     struct ged *gedp = gb->gedp;
-    const char *input_bot_name = gb->dp->d_namep;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -348,6 +347,7 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
+    const char *input_bot_name = gb->dp->d_namep;
     if (gb->intern->idb_major_type != DB5_MAJORTYPE_BRLCAD || gb->intern->idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a BOT primitive\n", input_bot_name);
 	bu_vls_free(&output_bot_name);
