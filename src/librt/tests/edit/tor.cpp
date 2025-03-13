@@ -115,12 +115,20 @@ main(int argc, char *argv[])
     struct bview *v;
     BU_GET(v, struct bview);
     bv_init(v, NULL);
+    VSET(v->gv_aet, 45, 35, 0);
+    bv_mat_aet(v);
+    bv_update(v);
     bu_vls_sprintf(&v->gv_name, "default");
     v->gv_width = 512;
     v->gv_height = 512;
 
     // Set up rt_solid_edit container
     struct rt_solid_edit *s = rt_solid_edit_create(&fp, dbip, &tol, v);
+    // MGED has this set, apparently... need to dig into when it is and isn't set more,
+    // but for now just turn it on.
+    s->mv_context = 1;
+
+    // We'll want to directly check and reset the working torus
     struct rt_tor_internal *edit_tor = (struct rt_tor_internal *)s->es_int.idb_ptr;
 
 
@@ -271,18 +279,17 @@ main(int argc, char *argv[])
     s->es_scale = 1.0;
     s->e_inpara = 0;
     MAT_IDN(s->acc_rot_sol);
-    VSETALL(s->e_para, 0);
     VMOVE(edit_tor->v, orig_tor->v);
     VMOVE(cmp_tor->v, orig_tor->v);
 
     // Set rotation values - rotate about view center
     s->e_inpara = 1;
-    VSET(s->e_para, 10, 5, 20);
+    VSET(s->e_para, 5, 5, 5);
     s->vp->gv_rotate_about = 'v';
 
     // set cmp vals to expected
-    VSET(cmp_tor->v, 9.40068965447370530,4.65191166950628698,20.37122362155455590);
-    VSET(cmp_tor->h, 0.39407267558562348,0.63410305535343825,0.66529695741692840);
+    VSET(cmp_tor->v, 11.23303317584687910,4.16614044477699519,19.53105832935626651);
+    VSET(cmp_tor->h, 0.57315612572226438,0.57695134825421168,0.58190995634607523);
 
     rt_solid_edit_process(s);
 
@@ -298,7 +305,7 @@ main(int argc, char *argv[])
     VMOVE(edit_tor->h, orig_tor->h);
     MAT_IDN(s->acc_rot_sol);
     s->e_inpara = 1;
-    VSET(s->e_para, 10, 5, 20);
+    VSET(s->e_para, 5, 5, 5);
     s->vp->gv_rotate_about = 'e';
 
     // set cmp vals to expected
@@ -319,7 +326,7 @@ main(int argc, char *argv[])
     VMOVE(edit_tor->h, orig_tor->h);
     MAT_IDN(s->acc_rot_sol);
     s->e_inpara = 1;
-    VSET(s->e_para, 10, 5, 20);
+    VSET(s->e_para, 5, 5, 5);
     s->vp->gv_rotate_about = 'm';
 
     // set cmp vals to expected
@@ -343,7 +350,6 @@ main(int argc, char *argv[])
     VSET(s->e_para, 5, 5, 5);
     s->vp->gv_rotate_about = 'k';
     VMOVE(s->e_keypoint, edit_tor->v);
-    s->mv_context = 1;
 
     // set cmp vals to expected
     VMOVE(cmp_tor->v, orig_tor->v);
