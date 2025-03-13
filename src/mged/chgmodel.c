@@ -322,7 +322,7 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	/* In solid edit mode,
 	 * perform the equivalent of "press sxy" and "p xyz"
 	 */
-	if (be_s_trans(NULL, NULL, 0, NULL) == TCL_ERROR)
+	if (be_s_trans(ctp, NULL, 0, NULL) == TCL_ERROR)
 	    return TCL_ERROR;
 	return f_param(clientData, interp, argc, argv);
     }
