@@ -79,20 +79,44 @@ rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol 
     BU_GET(s, struct rt_solid_edit);
     BU_GET(s->m, struct rt_solid_edit_map);
     s->m->i = new RT_Edit_Map_Internal;
-    s->ipe_ptr = NULL;
-
-    s->tol = tol;
-    s->vp = v;
 
     RT_DB_INTERNAL_INIT(&s->es_int);
 
-    MAT_IDN(s->model_changes);
     MAT_IDN(s->acc_rot_sol);
-    s->solid_edit_rotate = 0;
-    s->solid_edit_translate = 0;
-    s->solid_edit_scale = 0;
-    s->solid_edit_pick = 0;
+    MAT_IDN(s->e_invmat);
+    MAT_IDN(s->e_mat);
+    MAT_IDN(s->incr_change);
+    MAT_IDN(s->model_changes);
+    VSETALL(s->curr_e_axes_pos , 0);
+    VSETALL(s->e_axes_pos , 0);
+    VSETALL(s->e_keypoint, 0);
+    VSETALL(s->e_mparam, 0);
+    VSETALL(s->e_para, 0);
+    VSETALL(s->edit_absolute_model_tran, 0);
+    VSETALL(s->edit_absolute_view_tran, 0);
+    VSETALL(s->last_edit_absolute_model_tran, 0);
+    VSETALL(s->last_edit_absolute_view_tran, 0);
+    s->acc_sc_sol = 1.0;
+    s->base2local = 1.0;
     s->e_inpara = 0;
+    s->e_keyfixed = 0;
+    s->e_keytag = NULL;
+    s->e_mvalid = 0;
+    s->edit_absolute_scale = 0.0;
+    s->edit_flag = 0;
+    s->es_scale = 0.0;
+    s->ipe_ptr = NULL;
+    s->local2base = 1.0;
+    s->mv_context = 0;
+    s->solid_edit_pick = 0;
+    s->solid_edit_rotate = 0;
+    s->solid_edit_scale = 0;
+    s->solid_edit_translate = 0;
+    s->tol = tol;
+    s->u_ptr = NULL;
+    s->update_views = 0;
+    s->vlfree = NULL;
+    s->vp = v;
 
     BU_GET(s->log_str, struct bu_vls);
     bu_vls_init(s->log_str);
