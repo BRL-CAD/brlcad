@@ -270,6 +270,7 @@ main(int argc, char *argv[])
     // Reset
     s->es_scale = 1.0;
     s->e_inpara = 0;
+    MAT_IDN(s->acc_rot_sol);
     VSETALL(s->e_para, 0);
     VMOVE(edit_tor->v, orig_tor->v);
     VMOVE(cmp_tor->v, orig_tor->v);
@@ -292,16 +293,17 @@ main(int argc, char *argv[])
     bu_log("RT_SOLID_EDIT_ROT(v) SUCCESS: original h value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->h), V3ARGS(edit_tor->h));
 
 
-    // TODO - Set rotation values - rotate about eye
+    // Set rotation values - rotate about eye
     VMOVE(edit_tor->v, orig_tor->v);
     VMOVE(edit_tor->h, orig_tor->h);
+    MAT_IDN(s->acc_rot_sol);
     s->e_inpara = 1;
     VSET(s->e_para, 10, 5, 20);
     s->vp->gv_rotate_about = 'e';
 
     // set cmp vals to expected
-    VMOVE(cmp_tor->v, orig_tor->v);
-    VMOVE(cmp_tor->h, orig_tor->h);
+    VSET(cmp_tor->v, -34.17718171935537441,91.14560863205100816,29.84109252635111176);
+    VSET(cmp_tor->h, 0.39407267558562353,0.63410305535343836,0.66529695741692851);
 
     rt_solid_edit_process(s);
 
@@ -312,44 +314,46 @@ main(int argc, char *argv[])
     bu_log("RT_SOLID_EDIT_ROT(e) SUCCESS: original h value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->h), V3ARGS(edit_tor->h));
 
 
-    // TODO - Set rotation values - rotate about model center
+    // Set rotation values - rotate about model center
     VMOVE(edit_tor->v, orig_tor->v);
     VMOVE(edit_tor->h, orig_tor->h);
+    MAT_IDN(s->acc_rot_sol);
     s->e_inpara = 1;
     VSET(s->e_para, 10, 5, 20);
     s->vp->gv_rotate_about = 'm';
 
     // set cmp vals to expected
-    VMOVE(cmp_tor->v, orig_tor->v);
-    VMOVE(cmp_tor->h, orig_tor->h);
+    VSET(cmp_tor->v, 9.40068965447370530,4.65191166950628698,20.37122362155455590);
+    VSET(cmp_tor->h, 0.39407267558562353,0.63410305535343836,0.66529695741692851);
 
     rt_solid_edit_process(s);
 
-    if (tor_diff("RT_SOLID_EDIT_ROT (e)", cmp_tor, edit_tor))
-	bu_exit(1, "ERROR: RT_SOLID_EDIT_ROT(e) failed rotating tor\n");
+    if (tor_diff("RT_SOLID_EDIT_ROT (m)", cmp_tor, edit_tor))
+	bu_exit(1, "ERROR: RT_SOLID_EDIT_ROT(m) failed rotating tor\n");
 
-    bu_log("RT_SOLID_EDIT_ROT(e) SUCCESS: original v value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->v), V3ARGS(edit_tor->v));
-    bu_log("RT_SOLID_EDIT_ROT(e) SUCCESS: original h value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->h), V3ARGS(edit_tor->h));
+    bu_log("RT_SOLID_EDIT_ROT(m) SUCCESS: original v value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->v), V3ARGS(edit_tor->v));
+    bu_log("RT_SOLID_EDIT_ROT(m) SUCCESS: original h value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->h), V3ARGS(edit_tor->h));
 
 
-    // TODO - Set rotation values - rotate about keypoint
+    // Set rotation values - rotate about keypoint
     VMOVE(edit_tor->v, orig_tor->v);
     VMOVE(edit_tor->h, orig_tor->h);
+    MAT_IDN(s->acc_rot_sol);
     s->e_inpara = 1;
     VSET(s->e_para, 10, 5, 20);
     s->vp->gv_rotate_about = 'k';
 
     // set cmp vals to expected
-    VMOVE(cmp_tor->v, orig_tor->v);
-    VMOVE(cmp_tor->h, orig_tor->h);
+    VSET(cmp_tor->v, 9.81075968362813811,5.24683896844185682,20.06130519123564682);
+    VSET(cmp_tor->h, 0.39407267558562353,0.63410305535343836,0.66529695741692851);
 
     rt_solid_edit_process(s);
 
-    if (tor_diff("RT_SOLID_EDIT_ROT (e)", cmp_tor, edit_tor))
-	bu_exit(1, "ERROR: RT_SOLID_EDIT_ROT(e) failed rotating tor\n");
+    if (tor_diff("RT_SOLID_EDIT_ROT (k)", cmp_tor, edit_tor))
+	bu_exit(1, "ERROR: RT_SOLID_EDIT_ROT(k) failed rotating tor\n");
 
-    bu_log("RT_SOLID_EDIT_ROT(e) SUCCESS: original v value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->v), V3ARGS(edit_tor->v));
-    bu_log("RT_SOLID_EDIT_ROT(e) SUCCESS: original h value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->h), V3ARGS(edit_tor->h));
+    bu_log("RT_SOLID_EDIT_ROT(k) SUCCESS: original v value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->v), V3ARGS(edit_tor->v));
+    bu_log("RT_SOLID_EDIT_ROT(k) SUCCESS: original h value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->h), V3ARGS(edit_tor->h));
 
 
     rt_solid_edit_destroy(s);
