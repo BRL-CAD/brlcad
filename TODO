@@ -2144,9 +2144,6 @@ The following binaries are not yet available on Windows.  The reason
 is identified in parentheses.
 
 bombardier (possibly just a problem with the build logic)
-fbcolor    (TERMLIB)
-fbpoint    (TERMLIB)
-fbzoom     (TERMLIB)
 remrt      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
 rtsrv      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
 ttcp       (not ported)
