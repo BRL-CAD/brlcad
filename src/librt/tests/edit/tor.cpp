@@ -117,6 +117,9 @@ main(int argc, char *argv[])
     bv_init(v, NULL);
     VSET(v->gv_aet, 45, 35, 0);
     bv_mat_aet(v);
+    v->gv_size = 73.3197;
+    v->gv_isize = 1.0 / v->gv_size;
+    v->gv_scale = 0.5 * v->gv_size;
     bv_update(v);
     bu_vls_sprintf(&v->gv_name, "default");
     v->gv_width = 512;
@@ -309,8 +312,8 @@ main(int argc, char *argv[])
     s->vp->gv_rotate_about = 'e';
 
     // set cmp vals to expected
-    VSET(cmp_tor->v, -34.17718171935537441,91.14560863205100816,29.84109252635111176);
-    VSET(cmp_tor->h, 0.39407267558562353,0.63410305535343836,0.66529695741692851);
+    VSET(cmp_tor->v, 11.40534719696836596,4.16282380897874571,19.36178344500957493);
+    VSET(cmp_tor->h, 0.57315612572226449,0.57695134825421179,0.58190995634607534);
 
     rt_solid_edit_process(s);
 
@@ -330,8 +333,8 @@ main(int argc, char *argv[])
     s->vp->gv_rotate_about = 'm';
 
     // set cmp vals to expected
-    VSET(cmp_tor->v, 9.40068965447370530,4.65191166950628698,20.37122362155455590);
-    VSET(cmp_tor->h, 0.39407267558562353,0.63410305535343836,0.66529695741692851);
+    VSET(cmp_tor->v, 11.23303317584687910,4.16614044477699519,19.53105832935626651);
+    VSET(cmp_tor->h, 0.57315612572226449,0.57695134825421179,0.58190995634607534);
 
     rt_solid_edit_process(s);
 
