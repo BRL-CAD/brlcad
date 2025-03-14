@@ -31,16 +31,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   CMake find_package style.  If possible, try to also support
   older style variables in FindBRLCAD.cmake
 
-* Teach CMake's configure driven bext to cache SHA1 and check
-  against upstream to detect when the configure-cloned copy
-  has become obsolete.  Refactor src/bext validation logic to
-  be reusable for both cases.  Another possible approach here
-  would be to key everything off of the src/bext SHA1, rather
-  than RELEASE cloning from upstream.  That way, older BRL-CAD
-  checkouts would also clone older bext versions automatically
-  rather than trying to build against newer version - got bit
-  by that recently working with linenoise testing.
-
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
