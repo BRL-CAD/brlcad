@@ -77,9 +77,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   useful for documenting the build system.
   https://github.com/CMakePP/CMinx
 
-* bu_snooze() appears to be broken on Windows (and should probably have
-  some functionality / unit tests)
-
 * Windows installer does not respect the "add to path" checkbox
   and always adds BRL-CAD to the system path
 

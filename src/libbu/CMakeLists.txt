@@ -103,7 +103,7 @@ set(
   sort.c
   sscanf.c
   scan.c
-  snooze.c
+  snooze.cpp
   str.c
   tc.c
   tcllist.c

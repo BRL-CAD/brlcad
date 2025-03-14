@@ -34,6 +34,7 @@ set(
   ptbl.c
   realpath.c
   semaphore.c
+  snooze.c
   sort.c
   str.c
   str_isprint.c
@@ -789,6 +790,11 @@ endif(BUILD_TESTING)
 #
 brlcad_add_test(NAME bu_file_realpath_1 COMMAND bu_test realpath 1)
 brlcad_add_test(NAME bu_file_realpath_2 COMMAND bu_test realpath 2)
+
+#
+#  *********** snooze.c tests ************
+#
+brlcad_add_test(NAME bu_snooze COMMAND bu_test snooze)
 
 #
 #  *********** bu_dlopen/bu_dlsym test ************
