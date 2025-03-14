@@ -115,7 +115,6 @@ rt_solid_edit_generic_strans(
 	    MAT_DELTAS_VEC_NEG(mat, delta);
 	} else {
 	    /* move solid to position s->e_para */
-	    /* move solid to position s->e_para */
 	    MAT4X3PNT(work, s->e_invmat, s->e_keypoint);
 	    VSUB2(delta, work, s->e_para);
 	    MAT_IDN(mat);

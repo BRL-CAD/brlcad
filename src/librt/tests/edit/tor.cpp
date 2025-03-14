@@ -127,8 +127,9 @@ main(int argc, char *argv[])
 
     // Set up rt_solid_edit container
     struct rt_solid_edit *s = rt_solid_edit_create(&fp, dbip, &tol, v);
-    // MGED has this set, apparently... need to dig into when it is and isn't set more,
-    // but for now just turn it on.
+
+    // MGED normally has this set, but the user can explicitly disable
+    // it.  For most of our testing, have it on.
     s->mv_context = 1;
 
     // We'll want to directly check and reset the working torus
@@ -273,12 +274,33 @@ main(int argc, char *argv[])
     bu_log("RT_SOLID_EDIT_TRANS SUCCESS: original v value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->v), V3ARGS(edit_tor->v));
 
 
+    // Test a translate without mv_context set
+    s->mv_context = 0;
+    MAT_IDN(s->acc_rot_sol);
+    VMOVE(edit_tor->v, orig_tor->v);
+    VMOVE(cmp_tor->v, orig_tor->v);
+    VSET(s->e_keypoint, 0, 0, 0);
+    s->e_inpara = 1;
+    VSET(s->e_para, 20, 55, 40);
+
+    // set cmp vals to expected
+    VSET(cmp_tor->v, 30, 60, 60);
+
+    rt_solid_edit_process(s);
+
+    if (tor_diff("RT_SOLID_EDIT_TRANS", cmp_tor, edit_tor))
+	bu_exit(1, "ERROR: RT_SOLID_EDIT_TRANS failed translating tor\n");
+
+    bu_log("RT_SOLID_EDIT_TRANS (mv_context == 0) SUCCESS: original v value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->v), V3ARGS(edit_tor->v));
+
+
     /**********************
        RT_SOLID_EDIT_ROT
      **********************/
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, RT_SOLID_EDIT_ROT);
 
     // Reset
+    s->mv_context = 1;
     s->es_scale = 1.0;
     s->e_inpara = 0;
     MAT_IDN(s->acc_rot_sol);
@@ -364,6 +386,29 @@ main(int argc, char *argv[])
 	bu_exit(1, "ERROR: RT_SOLID_EDIT_ROT(k) failed rotating tor\n");
 
     bu_log("RT_SOLID_EDIT_ROT(k) SUCCESS: original h value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->h), V3ARGS(edit_tor->h));
+
+
+    // Test a rotation without mv_context
+    s->mv_context = 0;
+
+    VMOVE(edit_tor->v, orig_tor->v);
+    VMOVE(edit_tor->h, orig_tor->h);
+    MAT_IDN(s->acc_rot_sol);
+    s->e_inpara = 1;
+    VSET(s->e_para, 5, 5, 5);
+    s->vp->gv_rotate_about = 'k';
+    VMOVE(s->e_keypoint, edit_tor->v);
+
+    // set cmp vals to expected
+    VMOVE(cmp_tor->v, orig_tor->v);
+    VSET(cmp_tor->h, 0.57315612572226449,0.57695134825421179,0.58190995634607534);
+
+    rt_solid_edit_process(s);
+
+    if (tor_diff("RT_SOLID_EDIT_ROT (k)", cmp_tor, edit_tor))
+	bu_exit(1, "ERROR: RT_SOLID_EDIT_ROT(k) failed rotating tor\n");
+
+    bu_log("RT_SOLID_EDIT_ROT(k) (mv_context == 0) SUCCESS: original h value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->h), V3ARGS(edit_tor->h));
 
 
     rt_solid_edit_destroy(s);
