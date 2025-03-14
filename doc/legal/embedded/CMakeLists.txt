@@ -9,6 +9,7 @@ brlcad_manage_files(chull2d.txt                ${DOC_DIR}/legal/embedded TRIGGER
 brlcad_manage_files(clipper.txt                ${DOC_DIR}/legal/embedded TRIGGER libbg)
 brlcad_manage_files(db_faa-info.txt            ${DOC_DIR}/legal/embedded TRIGGER libgcv)
 brlcad_manage_files(db_nist-info.txt           ${DOC_DIR}/legal/embedded TRIGGER libgcv)
+brlcad_manage_files(date.txt                   ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(damlev.txt                 ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(dehumanize.txt             ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(delaunator.txt             ${DOC_DIR}/legal/embedded TRIGGER libbg)
@@ -80,7 +81,6 @@ brlcad_manage_files(whereami.txt               ${DOC_DIR}/legal/embedded TRIGGER
 brlcad_manage_files(winmmap.txt                ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(x24.txt                    ${DOC_DIR}/legal/embedded TRIGGER libdm)
 brlcad_manage_files(xxhash.txt                 ${DOC_DIR}/legal/embedded TRIGGER libbu)
-brlcad_manage_files(y2038.txt                  ${DOC_DIR}/legal/embedded TRIGGER libbu)
 
 cmakefiles(CMakeLists.txt)
 

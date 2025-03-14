@@ -20,17 +20,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
 set_source_files_properties("${BU_MIME_TYPES_H_FILE}" PROPERTIES GENERATED TRUE)
 build_cfg_hdr("${BU_MIME_TYPES_H_FILE}" ${INCLUDE_DIR}/brlcad/bu)
 
-# Year 2038+ support
-set_property(SOURCE y2038/time64.c PROPERTY EXTERNAL 1)
-include(CheckCCompilerFlag)
-check_c_compiler_flag(-fPIC HAVE_FPIC)
-if(HAVE_FPIC)
-  set_property(SOURCE y2038/time64.c APPEND PROPERTY COMPILE_FLAGS "-fPIC")
-endif(HAVE_FPIC)
-
 set(
   LIBBU_SOURCES
-  y2038/time64.c
   affinity.c
   argv.c
   avs.c
@@ -51,7 +42,7 @@ set(
   dir.c
   dirent.c
   damlevlim.cpp
-  datetime.c
+  datetime.cpp
   dylib.c
   encode.c
   endian.c
@@ -150,7 +141,7 @@ set(
 set(BU_INCLUDE_DIRS ${BRLCAD_BINARY_DIR}/include ${BRLCAD_SOURCE_DIR}/include)
 
 # locally used but not needed by users of the library
-set(BU_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/y2038 ${BSON_INCLUDE_DIR} ${LMDB_INCLUDE_DIR} ${UUID_INCLUDE_DIR})
+set(BU_LOCAL_INCLUDE_DIRS ${BSON_INCLUDE_DIR} ${LMDB_INCLUDE_DIR} ${UUID_INCLUDE_DIR})
 
 brlcad_addlib(libbu "${LIBBU_SOURCES}" "${BU_LIBS}" "${BU_INCLUDE_DIRS}" "${BU_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
@@ -169,15 +160,6 @@ foreach(bt ${bu_atgts})
   target_compile_definitions(${bt} PRIVATE EXECUTABLE_SUFFIX=\"${CMAKE_EXECUTABLE_SUFFIX}\")
   target_compile_definitions(${bt} PRIVATE SHARED_LIBRARY_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\")
   target_compile_definitions(${bt} PRIVATE SIZEOF_VOID_P=${CMAKE_SIZEOF_VOID_P})
-
-  # OpenBSD doesn't define __WORD_SIZE, used by y2038/time64.h.  Remove this
-  # once we can replace y2038 with a C++ based solution
-  if(${CMAKE_WORD_SIZE} MATCHES "32BIT")
-    target_compile_definitions(${bt} PRIVATE __OS_WORDSIZE=32)
-  endif(${CMAKE_WORD_SIZE} MATCHES "32BIT")
-  if(${CMAKE_WORD_SIZE} MATCHES "64BIT")
-    target_compile_definitions(${bt} PRIVATE __OS_WORDSIZE=64)
-  endif(${CMAKE_WORD_SIZE} MATCHES "64BIT")
 
   # Define the various relative paths for bu_dir
   include(Path_Setup)
@@ -209,6 +191,7 @@ set(
   CMakeLists.txt
   bitv.h
   charclass.h
+  date.h
   fort.h
   mime.cmake
   parallel.h
@@ -222,11 +205,6 @@ set(
   uce-dirent.h
   whereami.h
   xxhash.h
-  y2038/LICENSE
-  y2038/README.txt
-  y2038/time64.h
-  y2038/time64_config.h
-  y2038/time64_limits.h
 )
 cmakefiles(${bu_ignore_files})
 

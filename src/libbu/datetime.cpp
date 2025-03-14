@@ -38,9 +38,12 @@
 #include "bu/log.h"
 #include "bu/time.h"
 #include "bu/parallel.h"
+#include "bu/str.h"
 #include "bu/vls.h"
 
-#include "y2038/time64.h"
+// https://github.com/HowardHinnant/date
+// Using until we can rely on C++20 features
+#include "./date.h"
 
 /* for strict c90 */
 #ifndef HAVE_DECL_GETTIMEOFDAY
@@ -49,57 +52,30 @@ extern int gettimeofday(struct timeval *, void *);
 
 int BU_SEM_DATETIME;
 
-// TODO - See about using the actively maintained library related to the C++20
-// standard's date support (https://github.com/HowardHinnant/date) for this, so
-// we can get the improved C++ chrono behavior guaranteed by the standard for
-// year 2038 support rather than relying on y2038.  (Depending on when we get
-// to this, may just be able to use C++20 directly if we're already using it
-// rather than requiring HowardHinnant/date.)
 void
 bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
 {
     static const char *nulltime = "0000-00-00T00:00:00Z";
-    struct tm loctime;
-    struct tm* retval;
-    Time64_T some_time;
-    int fail = 0;
 
-    if (!vls_gmtime)
-	return;
-
-    BU_CK_VLS(vls_gmtime);
-
-    some_time = (Time64_T)time_val;
-    if (some_time == (Time64_T)(-1)) {
-	/* time error: but set something, an invalid "NULL" time. */
-	bu_vls_sprintf(vls_gmtime, "%s", nulltime);
-	return;
-    }
-
-    memset(&loctime, 0, sizeof(loctime));
-
+    // NOTE - once we bump to C++20 we can used std::format and remove date.h
+    std::string iso;
     bu_semaphore_acquire(BU_SEM_DATETIME);
-    retval = gmtime64(&some_time);
-    if (retval)
-	loctime = *retval; /* struct copy */
-    else
-	fail = 1;
+    try {
+	auto sval = std::chrono::seconds(time_val);
+	auto tmpt = std::chrono::system_clock::time_point(sval);
+	iso = date::format("%FT%TZ", date::floor<std::chrono::seconds>(tmpt));
+    } catch (...) {
+	bu_log("Exception thrown by date.h\n");
+    }
     bu_semaphore_release(BU_SEM_DATETIME);
 
-    if (fail) {
-	/* time error: but set something, an invalid "NULL" time. */
+    if (!iso.length()) {
+	/* error: but set something, an invalid "NULL" time. */
 	bu_vls_sprintf(vls_gmtime, "%s", nulltime);
 	return;
     }
 
-    /* put the UTC time in the desired ISO format: "yyyy-mm-ddThh:mm:ssZ" */
-    bu_vls_sprintf(vls_gmtime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
-		   loctime.tm_year + 1900,
-		   loctime.tm_mon + 1,
-		   loctime.tm_mday,
-		   loctime.tm_hour,
-		   loctime.tm_min,
-		   loctime.tm_sec);
+    bu_vls_sprintf(vls_gmtime, "%s", iso.c_str());
 }
 
 
