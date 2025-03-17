@@ -1348,7 +1348,16 @@ _ged_editit(const char *editstring, const char *filename)
 
 	    snprintf(buffer, RT_MAXLINE, "%s %s", editor, file);
 
-	    CreateProcess(NULL, buffer, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+	    if (!CreateProcess(NULL, buffer, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi)) {
+		DWORD ec = GetLastError();
+		LPSTR mb = NULL;
+		size_t mblen = FormatMessageA(
+			FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL, ec, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&mb, 0, NULL);
+		std::string mstr(mb, mblen);
+		LocalFree(mb);
+		bu_log("CreateProcess failed: %s\n", mstr.c_str());
+	    }
 	    WaitForSingleObject(pi.hProcess, INFINITE);
 	    return 1;
 #else
