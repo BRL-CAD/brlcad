@@ -416,11 +416,11 @@ editor_file_check(char *bu_editor, const char *estr, const char **elist)
 #define KATE_EDITOR "kate"
 #define MICRO_EDITOR "micro"
 #define NANO_EDITOR "nano"
-#define NOTEPADPP_EDITOR "C:/Program Files/Notepad++/notepad++"
+#define NOTEPADPP_EDITOR "C:/Program Files/Notepad++/notepad++.exe"
 #define TEXTEDIT_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
 #define VIM_EDITOR "vim"
 #define VI_EDITOR "vi"
-#define WORDPAD_EDITOR "C:/Program Files/Windows NT/Accessories/wordpad"
+#define WORDPAD_EDITOR "C:/Program Files/Windows NT/Accessories/wordpad.exe"
 #define YEDIT_EDITOR "yedit"
 
 const char *
@@ -525,6 +525,19 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
     return NULL;
 
 do_opt:
+    // Paths with spaces are Bad News - one of the BRL-CAD code paths for using
+    // bu_editor outputs splits strings by spaces.  We can't do much on other
+    // platforms, but on Windows (where such paths are more common to begin
+    // with) we can try to use the short paths API.
+#ifdef HAVE_WINDOWS_H
+    char sp[MAX_PATH];
+    DWORD r = GetShortPathNameA(bu_editor, sp, MAX_PATH);
+    if (r != 0 && r < MAX_PATH) {
+	// Unless short path call failed, use sp
+	snprintf(bu_editor, MAXPATHLEN, "%s", sp);
+    }
+#endif
+
     // If the caller didn't supply an option pointer, just return the editor
     // string
     if (!editor_opt)
