@@ -333,6 +333,17 @@ struct ged {
 
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
 
+    // Information to use when invoking a text editor.  Note that option argv
+    // arrays, if defined by calling apps, are the responsibility of the caller
+    // to allocate and free.
+    char ged_editor[MAXPATHLEN];
+    int ged_editor_optcnt;
+    const char **ged_editor_opts;
+    char ged_terminal[MAXPATHLEN];
+    int ged_terminal_optcnt;
+    const char **ged_terminal_opts;
+
+
     // The following is used instead of environment variables to select old or new
     // command paths.  Primarily relates to the next generation drawing setup with
     // view objects and the new BoT LoD logic.

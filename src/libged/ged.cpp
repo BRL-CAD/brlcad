@@ -158,6 +158,14 @@ ged_init(struct ged *gedp)
     gedp->ged_delete_io_handler = NULL;
     gedp->ged_io_data = NULL;
 
+    /* Editor info */
+    memset(gedp->ged_editor, '\0', sizeof(gedp->ged_editor) - 1);
+    gedp->ged_editor_optcnt = 0;
+    gedp->ged_editor_opts = NULL;
+    memset(gedp->ged_terminal, '\0', sizeof(gedp->ged_terminal) - 1);
+    gedp->ged_terminal_optcnt = 0;
+    gedp->ged_terminal_opts = NULL;
+
     /* ? */
     gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;
