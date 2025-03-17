@@ -337,10 +337,10 @@ struct ged {
     // arrays, if defined by calling apps, are the responsibility of the caller
     // to allocate and free.
     char ged_editor[MAXPATHLEN];
-    int ged_editor_optcnt;
+    int ged_editor_opt_cnt;
     const char **ged_editor_opts;
     char ged_terminal[MAXPATHLEN];
-    int ged_terminal_optcnt;
+    int ged_terminal_opt_cnt;
     const char **ged_terminal_opts;
 
 

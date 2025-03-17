@@ -160,10 +160,10 @@ ged_init(struct ged *gedp)
 
     /* Editor info */
     memset(gedp->ged_editor, '\0', sizeof(gedp->ged_editor) - 1);
-    gedp->ged_editor_optcnt = 0;
+    gedp->ged_editor_opt_cnt = 0;
     gedp->ged_editor_opts = NULL;
     memset(gedp->ged_terminal, '\0', sizeof(gedp->ged_terminal) - 1);
-    gedp->ged_terminal_optcnt = 0;
+    gedp->ged_terminal_opt_cnt = 0;
     gedp->ged_terminal_opts = NULL;
 
     /* ? */

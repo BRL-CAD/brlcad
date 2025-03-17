@@ -1231,10 +1231,35 @@ _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bv_vlblock *vbp, const char 
     }
 }
 
+char *
+_ged_parse_editstring(
+	const char **editor, const char **editor_opt,
+	const char **terminal, const char **terminal_opt,
+	const char *editstring)
+{
+    char **avtmp = (char **)NULL;
+    char *editstring_cpy = (char *)bu_calloc(2*strlen(editstring), sizeof(char), "editstring_cpy");
+    bu_str_escape(editstring, "\\", editstring_cpy, 2*strlen(editstring));
+    avtmp = (char **)bu_calloc(5, sizeof(char *), "ged_editit: editstring args");
+    bu_argv_from_string(avtmp, 4, editstring_cpy);
+
+    if (avtmp[0] && !BU_STR_EQUAL(avtmp[0], "(null)"))
+	*terminal = avtmp[0];
+    if (avtmp[1] && !BU_STR_EQUAL(avtmp[1], "(null)"))
+	*terminal_opt = avtmp[1];
+    if (avtmp[2] && !BU_STR_EQUAL(avtmp[2], "(null)"))
+	*editor = avtmp[2];
+    if (avtmp[3] && !BU_STR_EQUAL(avtmp[3], "(null)"))
+	*editor_opt = avtmp[3];
+
+    bu_free((void *)avtmp, "ged_editit: avtmp");
+    return editstring_cpy;
+}
+
 int
 _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
 {
-
+    int ret = 1;
     if (!gedp)
 	return 0;
 
@@ -1243,11 +1268,10 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
     int status = 0;
 #endif
     int pid = 0;
-    char **avtmp = (char **)NULL;
-    const char *terminal = (char *)NULL;
-    const char *terminal_opt = (char *)NULL;
     const char *editor = (char *)NULL;
     const char *editor_opt = (char *)NULL;
+    const char *terminal = (char *)NULL;
+    const char *terminal_opt = (char *)NULL;
     const char *file = (const char *)filename;
 
 #if defined(SIGINT) && defined(SIGQUIT)
@@ -1261,30 +1285,38 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
     }
 
     char *editstring_cpy = NULL;
+    struct bu_vls tmp_editor_opt = BU_VLS_INIT_ZERO;
+    struct bu_vls tmp_terminal_opt = BU_VLS_INIT_ZERO;
 
     /* convert the edit string into pieces suitable for arguments to execlp */
 
     if (editstring != NULL) {
-	editstring_cpy = (char *)bu_calloc(2*strlen(editstring), sizeof(char), "editstring_cpy");
-	bu_str_escape(editstring, "\\", editstring_cpy, 2*strlen(editstring));
-	avtmp = (char **)bu_calloc(5, sizeof(char *), "ged_editit: editstring args");
-	bu_argv_from_string(avtmp, 4, editstring_cpy);
+	// Highest precedence - parse an edit string, if we have one
+	editstring_cpy = _ged_parse_editstring(&editor, &editor_opt, &terminal, &terminal_opt, editstring);
+    } else if (strlen(gedp->ged_editor)) {
+	/* Second highest precedence - assemble ged struct info into editit form, if defined */
+	for (int i = 0; i < gedp->ged_editor_opt_cnt - 1; i++)
+	    bu_vls_printf(&tmp_editor_opt, "%s ", gedp->ged_editor_opts[i]);
+	bu_vls_printf(&tmp_editor_opt, "%s", gedp->ged_editor_opts[gedp->ged_editor_opt_cnt - 1]);
 
-	if (avtmp[0] && !BU_STR_EQUAL(avtmp[0], "(null)"))
-	    terminal = avtmp[0];
-	if (avtmp[1] && !BU_STR_EQUAL(avtmp[1], "(null)"))
-	    terminal_opt = avtmp[1];
-	if (avtmp[2] && !BU_STR_EQUAL(avtmp[2], "(null)"))
-	    editor = avtmp[2];
-	if (avtmp[3] && !BU_STR_EQUAL(avtmp[3], "(null)"))
-	    editor_opt = avtmp[3];
+	for (int i = 0; i < gedp->ged_terminal_opt_cnt - 1; i++)
+	    bu_vls_printf(&tmp_terminal_opt, "%s ", gedp->ged_terminal_opts[i]);
+	bu_vls_printf(&tmp_terminal_opt, "%s", gedp->ged_terminal_opts[gedp->ged_terminal_opt_cnt - 1]);
+
+	editor= (const char *)gedp->ged_editor;
+	editor_opt = bu_vls_cstr(&tmp_editor_opt);
+	terminal = (const char *)gedp->ged_terminal;
+	terminal_opt = bu_vls_cstr(&tmp_terminal_opt);
     } else {
+	// If neither an edit string nor gedp are telling us what to use,
+	// try to find something
 	editor = bu_editor(&editor_opt, 0, 0, NULL);
     }
 
     if (!editor) {
 	bu_log("INTERNAL ERROR: editit editor missing\n");
-	return 0;
+	ret = 0;
+	goto editit_cleanup;
     }
 
     /* print a message to let the user know they need to quit their
@@ -1324,7 +1356,8 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
 #ifdef HAVE_UNISTD_H
     if ((pid = fork()) < 0) {
 	perror("fork");
-	return 0;
+	ret = 0;
+	goto editit_cleanup;
     }
 #endif
 
@@ -1405,12 +1438,12 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
     (void)signal(SIGQUIT, s3);
 #endif
 
-    if (editstring != NULL) {
-	bu_free((void *)avtmp, "ged_editit: avtmp");
-	bu_free(editstring_cpy, "editstring copy");
-    }
+editit_cleanup:
+    bu_free(editstring_cpy, "editstring copy");
+    bu_vls_free(&tmp_editor_opt);
+    bu_vls_free(&tmp_terminal_opt);
 
-    return 1;
+    return ret;
 }
 
 void
