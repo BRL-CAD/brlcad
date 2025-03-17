@@ -225,7 +225,8 @@ GED_EXPORT extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
 				       int copy);
 
 /* defined in editit.c */
-GED_EXPORT extern int _ged_editit(const char *editstring,
+GED_EXPORT extern int _ged_editit(struct ged *gedp,
+	               const char *editstring,
 		       const char *file);
 
 GED_EXPORT extern int _ged_get_obj_bounds2(struct ged *gedp,

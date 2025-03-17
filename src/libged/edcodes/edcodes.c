@@ -280,7 +280,7 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 	fclose(f_srt);
     }
 
-    if (_ged_editit(editstring, tmpfil)) {
+    if (_ged_editit(gedp, editstring, tmpfil)) {
 	av[0] = "rcodes";
 	av[2] = NULL;
 	status = ged_exec_rcodes(gedp, 2, (const char **)av);

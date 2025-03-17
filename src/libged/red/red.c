@@ -840,7 +840,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
     }
 
     /* Edit the file */
-    if (_ged_editit(editstring, _ged_tmpfil)) {
+    if (_ged_editit(gedp, editstring, _ged_tmpfil)) {
 
 	/* specifically avoid CHECK_READ_ONLY; above so that we can
 	 * delay checking if the geometry is read-only until here so

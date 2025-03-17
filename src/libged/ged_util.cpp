@@ -1232,8 +1232,12 @@ _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bv_vlblock *vbp, const char 
 }
 
 int
-_ged_editit(const char *editstring, const char *filename)
+_ged_editit(struct ged *gedp, const char *editstring, const char *filename)
 {
+
+    if (!gedp)
+	return 0;
+
 #ifdef HAVE_UNISTD_H
     int xpid = 0;
     int status = 0;

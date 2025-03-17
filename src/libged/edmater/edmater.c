@@ -97,7 +97,7 @@ ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (_ged_editit(editstring, tmpfil)) {
+    if (_ged_editit(gedp, editstring, tmpfil)) {
 	av[0] = "rmater";
 	av[2] = NULL;
 	status = ged_exec_rmater(gedp, 2, av);

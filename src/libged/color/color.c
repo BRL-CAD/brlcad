@@ -162,7 +162,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     }
     (void)fclose(fp);
 
-    if (!_ged_editit(editstring, (const char *)tmpfil)) {
+    if (!_ged_editit(gedp, editstring, (const char *)tmpfil)) {
 	bu_vls_printf(gedp->ged_result_str, "%s: editor returned bad status. Aborted\n", argv[0]);
 	return BRLCAD_ERROR;
     }

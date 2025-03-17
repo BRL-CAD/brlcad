@@ -57,7 +57,7 @@ ged_editit_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     } else {
 	char *edstr = bu_strdup((char *)argv[2]);
-	ret = _ged_editit(edstr, argv[4]);
+	ret = _ged_editit(gedp, edstr, argv[4]);
 	bu_free(edstr, "free tmp editstring copy");
 	return ret;
     }
