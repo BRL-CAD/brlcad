@@ -46,15 +46,6 @@
 #define V3BASE2LOCAL(_pt)	(_pt)[X]*s->dbip->dbi_base2local, (_pt)[Y]*s->dbip->dbi_base2local, (_pt)[Z]*s->dbip->dbi_base2local
 #define V4BASE2LOCAL(_pt)	(_pt)[X]*s->dbip->dbi_base2local, (_pt)[Y]*s->dbip->dbi_base2local, (_pt)[Z]*s->dbip->dbi_base2local, (_pt)[W]*s->dbip->dbi_base2local
 
-/* editors to test, in order of discovery preference (EDITOR overrides) */
-#define WIN_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""
-#define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
-#define EMACS_EDITOR "emacs"
-#define VIM_EDITOR "vim"
-#define VI_EDITOR "vi"
-#define NANO_EDITOR "nano"
-#define ED_EDITOR "ed"
-
 /* used to invoke the above editor if X11 is in use */
 #define XTERM_COMMAND "xterm"
 
