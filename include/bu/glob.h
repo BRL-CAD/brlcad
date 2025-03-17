@@ -37,16 +37,13 @@ __BEGIN_DECLS
  *  @brief Routines and structures for getting a list of entities that
  *  match a given pattern.
  *
- *  TODO - grab and adjust implementation from:
- *  https://github.com/openbsd/src/blob/master/lib/libc/gen/glob.c
- *
  */
 /** @{ */
 /** @file bu/glob.h */
 
 
 /**
- * Representation of a path element, for use with bu_glob() callbacks.
+ * representation of a path element, for use with bu_glob() callbacks.
  */
 struct bu_dirent {
     struct bu_vls *name;
@@ -54,7 +51,7 @@ struct bu_dirent {
 };
 
 /**
- * Information about a path element (file, directory, object, etc),
+ * information about a path element (file, directory, object, etc),
  * for use with bu_glob() callbacks.
  */
 struct bu_stat {
@@ -64,66 +61,65 @@ struct bu_stat {
 };
 
 
-#define BU_GLOB_APPEND   0x0001 /* Append to output from previous call. */
-#define BU_GLOB_DOOFFS   0x0002 /* Use gl_offs. */
-#define BU_GLOB_ERR      0x0004 /* Return on error. */
-#define BU_GLOB_MARK     0x0008 /* Append / to matching directories. */
-#define BU_GLOB_NOCHECK  0x0010 /* Return pattern itself if nothing matches. */
-#define BU_GLOB_NOSORT   0x0020 /* Don't sort. */
-#define BU_GLOB_NOESCAPE 0x1000 /* Disable backslash escaping. */
-
-#define BU_GLOB_NOSPACE (-1) /* Malloc call failed. */
-#define BU_GLOB_ABORTED (-2) /* Unignored error. */
-#define BU_GLOB_NOMATCH (-3) /* No match and GLOB_NOCHECK not set. */
-
-#define BU_GLOB_BRACE    0x0080 /* Expand braces ala csh. */
-#define BU_GLOB_MAGCHAR  0x0100 /* Pattern had globbing characters. */
-#define BU_GLOB_NOMAGIC  0x0200 /* GLOB_NOCHECK without magic chars (csh). */
-#define BU_GLOB_LIMIT    0x2000 /* Limit pattern match output to ARG_MAX */
-#define BU_GLOB_KEEPSTAT 0x4000 /* Retain stat data for paths in gl_statv. */
-
 /**
- * Used by bu_glob() to specify behavior and callbacks.  Also holds returned
- * results.
+ * main structure used by bu_glob() to specify behavior, callbacks,
+ * and return results.
  */
 struct bu_glob_context {
 
+#define BU_GLOB_APPEND     0x0001  /**< Append to output from previous call. */
+#define BU_GLOB_NOSORT     0x0020  /**< Don't sort. */
+#define BU_GLOB_NOESCAPE   0x2000  /**< Disable backslash escaping. */
+#define BU_GLOB_ALTDIRFUNC 0x0040  /**< use alternate functions. */
     int gl_flags;                /**< flags customizing globbing behavior */
 
     /* Return values */
+
     int gl_pathc;                /**< count of total paths so far */
     int gl_matchc;               /**< count of paths matching pattern */
-    struct bu_vls **gl_pathv;    /**< list of paths matching pattern - TODO - should this be a bu_ptbl?*/
+    struct bu_vls **gl_pathv;    /**< list of paths matching pattern */
 
     /* Callback functions */
+
     struct bu_glob_context *(*gl_opendir)(const char *);
     int (*gl_readdir)(struct bu_dirent *, struct bu_glob_context *);
     void (*gl_closedir)(struct bu_glob_context *);
 
     int (*gl_lstat)(const char *, struct bu_stat *, struct bu_glob_context *);
     int (*gl_stat)(const char *, struct bu_stat *, struct bu_glob_context *);
+
+#define BU_GLOB_NOMATCH (-1)     /**< No match. */
+#define BU_GLOB_ABORTED (-2)     /**< Unignored error. */
     int (*gl_errfunc)(const char *, int, struct bu_glob_context *);
 
     /* For caller use */
+
     void *data;                  /**< data passed to all callbacks */
 
     /* Private */
+
     void *priv;               /**< For internal use only */
 };
 typedef struct bu_glob_context bu_glob_t;
 
 
 /**
- * create and initialize a globbing context for use prior to calling bu_glob()
+ * declaration statement initialization of a bu_glob struct
  */
-BU_EXPORT struct bu_glob_context *bu_glob_create(void);
+#define BU_GLOB_INIT_ZERO {0, 0, 0, NULL, (struct bu_glob_context *(*)(const char *))NULL, (int(*)(struct bu_dirent *, struct bu_glob_context *))NULL, (void(*)(struct bu_glob_context *))NULL, (int(*)(const char *, struct bu_stat *, struct bu_glob_context *))NULL, (int(*)(const char *, struct bu_stat *, struct bu_glob_context *))NULL, (int(*)(const char *, int, struct bu_glob_context *))NULL, NULL, NULL}
+
+
+/**
+ * initialize a globbing context for use prior to calling bu_glob()
+ */
+BU_EXPORT struct bu_glob_context *bu_glob_init(void);
 
 
 /**
  * release any resources allocated during bu_glob(), including any
  * returned paths
  */
-BU_EXPORT extern void bu_glob_destroy(struct bu_glob_context *);
+BU_EXPORT extern void bu_glob_free(struct bu_glob_context *);
 
 
 /**
