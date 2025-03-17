@@ -530,9 +530,9 @@ do_opt:
     // platforms, but on Windows (where such paths are more common to begin
     // with) we can try to use the short paths API.
 #ifdef HAVE_WINDOWS_H
-    char sp[MAX_PATH];
-    DWORD r = GetShortPathNameA(bu_editor, sp, MAX_PATH);
-    if (r != 0 && r < MAX_PATH) {
+    char sp[MAXPATHLEN];
+    DWORD r = GetShortPathNameA(bu_editor, sp, MAXPATHLEN);
+    if (r != 0 && r < MAXPATHLEN) {
 	// Unless short path call failed, use sp
 	snprintf(bu_editor, MAXPATHLEN, "%s", sp);
     }
