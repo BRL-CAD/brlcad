@@ -1356,7 +1356,7 @@ _ged_editit(const char *editstring, const char *filename)
 			NULL, ec, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&mb, 0, NULL);
 		std::string mstr(mb, mblen);
 		LocalFree(mb);
-		bu_log("CreateProcess failed: %s\n", mstr.c_str());
+		bu_log("CreateProcess failed with editor \"%s\" and file \"%s\": %s\n", editor, file, mstr.c_str());
 	    }
 	    WaitForSingleObject(pi.hProcess, INFINITE);
 	    return 1;
