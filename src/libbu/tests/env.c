@@ -80,10 +80,19 @@ editor_tests(void)
     }
     bu_log("bu_test executable: %s\n", btest_path);
 
+    // If we have a space in btest_path, it may be changed in processing
+    // by bu_editor on some platforms - we'll need to be careful about
+    // what checks we do.
+    int path_with_space = (strchr(btest_path, ' ')) ? 1 : 0;
+
     // Set the EDITOR variable and exercise the EDITOR code path
     bu_setenv("EDITOR", btest_path, 1);
     e = bu_editor(&eopt, 0, 0, NULL);
-    if (!e || !(BU_STR_EQUAL(e, getenv("EDITOR")))) {
+    if (!e) {
+	bu_log("EDITOR value %s did not produce an editor path\n", getenv("EDITOR"));
+	return -1;
+    }
+    if (!path_with_space && !(BU_STR_EQUAL(e, getenv("EDITOR")))) {
 	bu_log("Failed to return EDITOR value %s with bu_editor\n", getenv("EDITOR"));
 	return -1;
     }
@@ -101,6 +110,7 @@ editor_tests(void)
     e = bu_editor(&eopt, 0, 3, elist);
     if (!BU_STR_EQUAL(e, elist[1])) {
 	bu_log("Failed to return list entry %s\n", elist[1]);
+	bu_free(de, "default editor");
 	return -1;
     }
     bu_log("Second list entry returned: %s\n", elist[1]);
@@ -112,6 +122,7 @@ editor_tests(void)
     e = bu_editor(&eopt, 0, 4, elist);
     if (e) {
 	bu_log("Failed to stop after checking user supplied entries\n");
+	bu_free(de, "default editor");
 	return -1;
     }
     bu_log("As requested, list check skipped libbu internal testing after all entries failed.\n");
@@ -120,6 +131,7 @@ editor_tests(void)
     e = bu_editor(&eopt, 0, 3, elist);
     if (!BU_STR_EQUAL(e, de)) {
 	bu_log("After unsuccessful list, failed to fall back to libbu's internal list\n");
+	bu_free(de, "default editor");
 	return -1;
     }
     bu_log("As requested, fallback internal libbu check succeeded after list check failed: %s\n", e);
