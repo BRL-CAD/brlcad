@@ -23,7 +23,25 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "bio.h"
+
 #include "bu.h"
+
+static void
+shrink_path(struct bu_vls *tp, const char *lp)
+{
+    if (!tp || !lp)
+	return;
+    bu_vls_sprintf(tp, "%s", lp);
+#ifdef HAVE_WINDOWS_H
+    char sp[MAXPATHLEN];
+    DWORD r = GetShortPathNameA(bu_editor, lp, MAXPATHLEN);
+    if (r != 0 && r < MAXPATHLEN) {
+	// Unless short path call failed, use sp
+	bu_vls_sprintf(tp, "%s", sp);
+    }
+#endif
+}
 
 static int
 editor_tests(void)
@@ -80,23 +98,28 @@ editor_tests(void)
     }
     bu_log("bu_test executable: %s\n", btest_path);
 
-    // If we have a space in btest_path, it may be changed in processing
-    // by bu_editor on some platforms - we'll need to be careful about
-    // what checks we do.
-    int path_with_space = (strchr(btest_path, ' ')) ? 1 : 0;
-
     // Set the EDITOR variable and exercise the EDITOR code path
     bu_setenv("EDITOR", btest_path, 1);
+
+    // bu_editor outputs may be processed to produce more compact paths on on
+    // some platforms - we'll need to replicate that with our test paths to be
+    // able to do correct comparisons.
+    struct bu_vls check_path = BU_VLS_INIT_ZERO;
+    shrink_path(&check_path, getenv("EDITOR"));
+
     e = bu_editor(&eopt, 0, 0, NULL);
     if (!e) {
 	bu_log("EDITOR value %s did not produce an editor path\n", getenv("EDITOR"));
+	bu_vls_free(&check_path);
 	return -1;
     }
-    if (!path_with_space && !(BU_STR_EQUAL(e, getenv("EDITOR")))) {
-	bu_log("Failed to return EDITOR value %s with bu_editor\n", getenv("EDITOR"));
+    if (!(BU_STR_EQUAL(e, bu_vls_cstr(&check_path)))) {
+	bu_log("Failed to return EDITOR value %s with bu_editor\n", bu_vls_cstr(&check_path));
+	bu_vls_free(&check_path);
 	return -1;
     }
-    bu_log("EDITOR value returned with bu_editor: %s\n", btest_path);
+    bu_log("EDITOR value returned with bu_editor: %s\n", e);
+    bu_vls_free(&check_path);
 
     // Unset the EDITOR env var and prepare a list of "editors" to provide.
     bu_setenv("EDITOR", "", 1);
