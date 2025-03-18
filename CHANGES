@@ -155,6 +155,18 @@ MGED features
 	Early idea in 3D space navigation that doesn't seemed to have
 	panned out in practice.
 
+GED commands
+	removing command-line-supplied edit string support from the
+	following libged commands.  New method will be to set the
+	desired editor and terminal options in struct ged, or if
+	operating at the user level) to set the relevant environment
+	variables.
+	edcolor (-E opt)
+	edcodes (-E opt)
+	editit (-e opt)
+	edmater (-E opt)
+	red (-E opt)
+
 7.40
 ----
 include/bu/process.h

@@ -1231,12 +1231,59 @@ _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bv_vlblock *vbp, const char 
     }
 }
 
-char *
-_ged_parse_editstring(
-	const char **editor, const char **editor_opt,
-	const char **terminal, const char **terminal_opt,
-	const char *editstring)
+/* print a message to let the user know they need to quit their
+     * editor before the application will come back to life.
+     */
+
+static void
+editit_msg(const char *editor, int opts_cnt, const char **editor_opts, const char *file, const char *terminal)
 {
+    size_t length;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls sep = BU_VLS_INIT_ZERO;
+    char *editor_basename;
+
+    if (!editor)
+	return;
+
+    if (terminal && opts_cnt > 0) {
+	bu_vls_sprintf(&str, "Invoking [%s ", editor);
+	for (int i = 0; i < opts_cnt; i++)
+	    bu_vls_printf(&str, "%s ", editor_opts[i]);
+	bu_vls_printf(&str, "%s] via %s\n\n", file, terminal);
+	bu_log("%s", bu_vls_cstr(&str));
+    } else if (terminal) {
+	bu_log("Invoking [%s %s] via %s\n\n", editor, file, terminal);
+    } else if (opts_cnt > 0) {
+	bu_vls_sprintf(&str, "Invoking [%s ", editor);
+	for (int i = 0; i < opts_cnt; i++)
+	    bu_vls_printf(&str, "%s ", editor_opts[i]);
+	bu_vls_printf(&str, "%s]\n\n", file);
+	bu_log("%s", bu_vls_cstr(&str));
+    } else {
+	bu_log("Invoking [%s %s]\n\n", editor, file);
+    }
+    editor_basename = bu_path_basename(editor, NULL);
+    bu_vls_sprintf(&str, "\nNOTE: You must QUIT %s before %s will respond and continue.\n", editor_basename, bu_getprogname());
+    for (length = bu_vls_strlen(&str) - 2; length > 0; length--) {
+	bu_vls_putc(&sep, '*');
+    }
+    bu_log("%s%s%s\n\n", bu_vls_addr(&sep), bu_vls_addr(&str), bu_vls_addr(&sep));
+    bu_vls_free(&str);
+    bu_vls_free(&sep);
+    bu_free(editor_basename, "editor_basename free");
+}
+
+
+/* Edit string breakdown has some limitations - eventually this should go away */
+static void
+editit_parse_editstring(char **editor, char **terminal, char **editor_opt, char **terminal_opt, const char *editstring)
+{
+    /* Convert the edit string into pieces suitable for arguments to execlp.
+     * Because we are using bu_argv_from_string, there are some limitations on
+     * what can successfully be passed through the various layers of logic
+     * using this approach.  For more robust handling use the struct ged
+     * entries to assign this information before calling _ged_editit. */
     char **avtmp = (char **)NULL;
     char *editstring_cpy = (char *)bu_calloc(2*strlen(editstring), sizeof(char), "editstring_cpy");
     bu_str_escape(editstring, "\\", editstring_cpy, 2*strlen(editstring));
@@ -1244,16 +1291,16 @@ _ged_parse_editstring(
     bu_argv_from_string(avtmp, 4, editstring_cpy);
 
     if (avtmp[0] && !BU_STR_EQUAL(avtmp[0], "(null)"))
-	*terminal = avtmp[0];
+	*terminal = bu_strdup(avtmp[0]);
     if (avtmp[1] && !BU_STR_EQUAL(avtmp[1], "(null)"))
-	*terminal_opt = avtmp[1];
+	*terminal_opt = bu_strdup(avtmp[1]);
     if (avtmp[2] && !BU_STR_EQUAL(avtmp[2], "(null)"))
-	*editor = avtmp[2];
+	*editor = bu_strdup(avtmp[2]);
     if (avtmp[3] && !BU_STR_EQUAL(avtmp[3], "(null)"))
-	*editor_opt = avtmp[3];
+	*editor_opt = bu_strdup(avtmp[3]);
 
     bu_free((void *)avtmp, "ged_editit: avtmp");
-    return editstring_cpy;
+    bu_free(editstring_cpy, "editstring copy");
 }
 
 int
@@ -1268,84 +1315,93 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
     int status = 0;
 #endif
     int pid = 0;
-    const char *editor = (char *)NULL;
-    const char *editor_opt = (char *)NULL;
-    const char *terminal = (char *)NULL;
-    const char *terminal_opt = (char *)NULL;
-    const char *file = (const char *)filename;
+    char *editor = (char *)NULL;
+    char *editor_opt = (char *)NULL;
+    char *terminal = (char *)NULL;
+    char *terminal_opt = (char *)NULL;
+
+    int eac = 0;
+    char *eargv[MAXPATHLEN] = {NULL};
+    int listexec = 0;
 
 #if defined(SIGINT) && defined(SIGQUIT)
     void (*s2)(int);
     void (*s3)(int);
 #endif
 
-    if (!file) {
+    if (!filename) {
 	bu_log("INTERNAL ERROR: editit filename missing\n");
 	return 0;
     }
 
-    char *editstring_cpy = NULL;
-    struct bu_vls tmp_editor_opt = BU_VLS_INIT_ZERO;
-    struct bu_vls tmp_terminal_opt = BU_VLS_INIT_ZERO;
+    if (editstring) {
 
-    /* convert the edit string into pieces suitable for arguments to execlp */
-
-    if (editstring != NULL) {
 	// Highest precedence - parse an edit string, if we have one
-	editstring_cpy = _ged_parse_editstring(&editor, &editor_opt, &terminal, &terminal_opt, editstring);
+	editit_parse_editstring(&editor, &terminal, &editor_opt, &terminal_opt, editstring);
+
+	// Produce the editing message
+	editit_msg(editor, (editor_opt) ? 1 : 0, (const char **)&editor_opt, filename, terminal);
+
+	// Tell exec logic we're in list mode
+	listexec = 1;
+
     } else if (strlen(gedp->ged_editor)) {
+
 	/* Second highest precedence - assemble ged struct info into editit form, if defined */
-	for (int i = 0; i < gedp->ged_editor_opt_cnt - 1; i++)
-	    bu_vls_printf(&tmp_editor_opt, "%s ", gedp->ged_editor_opts[i]);
-	bu_vls_printf(&tmp_editor_opt, "%s", gedp->ged_editor_opts[gedp->ged_editor_opt_cnt - 1]);
+	editor = bu_strdup(gedp->ged_editor);
 
-	for (int i = 0; i < gedp->ged_terminal_opt_cnt - 1; i++)
-	    bu_vls_printf(&tmp_terminal_opt, "%s ", gedp->ged_terminal_opts[i]);
-	bu_vls_printf(&tmp_terminal_opt, "%s", gedp->ged_terminal_opts[gedp->ged_terminal_opt_cnt - 1]);
+	// If we're going to use a terminal, stage that first - unlike editstring
+	// mode, we'll be feeding the argv array directly to exec
+	if (strlen(gedp->ged_terminal)) {
+	    terminal = bu_strdup(gedp->ged_terminal);
+	    eargv[0] = terminal;
+	    eac = 1;
+	    for (int i = 0; i < gedp->ged_terminal_opt_cnt; i++) {
+		eargv[eac] = bu_strdup(gedp->ged_terminal_opts[i]);
+		eac++;
+	    }
+	}
 
-	editor= (const char *)gedp->ged_editor;
-	editor_opt = bu_vls_cstr(&tmp_editor_opt);
-	terminal = (const char *)gedp->ged_terminal;
-	terminal_opt = bu_vls_cstr(&tmp_terminal_opt);
+	// Terminal handled - add editor and any opts
+	eargv[eac] = editor;
+	eac++;
+	for (int i = 0; i < gedp->ged_editor_opt_cnt; i++) {
+	    eargv[eac] = bu_strdup(gedp->ged_editor_opts[i]);
+	    eac++;
+	}
+
+	// Last comes the filename
+	eargv[eac] = bu_strdup(filename);
+	eac++;
+
+	// Produce the editing message
+	editit_msg(editor, gedp->ged_editor_opt_cnt, gedp->ged_editor_opts, filename, terminal);
+
     } else {
+
 	// If neither an edit string nor gedp are telling us what to use,
 	// try to find something
-	editor = bu_editor(&editor_opt, 0, 0, NULL);
+	const char *eo = NULL;
+	editor = bu_strdup(bu_editor((const char **)&eo, 0, 0, NULL));
+	eargv[0] = editor;
+	eac = 1;
+	if (eo) {
+	    eargv[1] = bu_strdup(eo);
+	    eac++;
+	}
+
+	// Append filename
+	eargv[eac] = bu_strdup(filename);
+	eac++;
+
+	// Produce the editing message
+	editit_msg(editor, (eo) ? 1 : 0, (const char **)&eo, filename, terminal);
     }
 
     if (!editor) {
 	bu_log("INTERNAL ERROR: editit editor missing\n");
 	ret = 0;
 	goto editit_cleanup;
-    }
-
-    /* print a message to let the user know they need to quit their
-     * editor before the application will come back to life.
-     */
-    {
-	size_t length;
-	struct bu_vls str = BU_VLS_INIT_ZERO;
-	struct bu_vls sep = BU_VLS_INIT_ZERO;
-	char *editor_basename;
-
-	if (terminal && editor_opt) {
-	    bu_log("Invoking [%s %s %s] via %s\n\n", editor, editor_opt, file, terminal);
-	} else if (terminal) {
-	    bu_log("Invoking [%s %s] via %s\n\n", editor, file, terminal);
-	} else if (editor_opt) {
-	    bu_log("Invoking [%s %s %s]\n\n", editor, editor_opt, file);
-	} else {
-	    bu_log("Invoking [%s %s]\n\n", editor, file);
-	}
-	editor_basename = bu_path_basename(editor, NULL);
-	bu_vls_sprintf(&str, "\nNOTE: You must QUIT %s before %s will respond and continue.\n", editor_basename, bu_getprogname());
-	for (length = bu_vls_strlen(&str) - 2; length > 0; length--) {
-	    bu_vls_putc(&sep, '*');
-	}
-	bu_log("%s%s%s\n\n", bu_vls_addr(&sep), bu_vls_addr(&str), bu_vls_addr(&sep));
-	bu_vls_free(&str);
-	bu_vls_free(&sep);
-	bu_free(editor_basename, "editor_basename free");
     }
 
 #if defined(SIGINT) && defined(SIGQUIT)
@@ -1371,9 +1427,7 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
 #endif
 
 	{
-
 #if defined(_WIN32) && !defined(__CYGWIN__)
-	    char buffer[RT_MAXLINE + 1] = {0};
 	    STARTUPINFO si = {0};
 	    PROCESS_INFORMATION pi = {0};
 	    si.cb = sizeof(STARTUPINFO);
@@ -1383,9 +1437,20 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
 	    si.lpDesktop = NULL;
 	    si.dwFlags = 0;
 
-	    snprintf(buffer, RT_MAXLINE, "%s %s", editor, file);
+	    // Windows doesn't have terminal launches, so we just append all the args
+	    struct bu_vls buffer = BU_VLS_INIT_ZERO;
+	    if (listexec) {
+		bu_vls_printf(&buffer, "%s " , editor);
+		if (editor_opt)
+		    bu_vls_printf(&buffer, "%s " , editor_opt);
+		bu_vls_printf(&buffer, "%s" , filename);
+	    } else {
+		for (int i = 0; i < eac - 1; i++)
+		    bu_vls_printf(&buffer, "%s " , eargv[i]);
+		bu_vls_printf(&buffer, "%s" , eargv[eac - 1]);
+	    }
 
-	    if (!CreateProcess(NULL, buffer, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi)) {
+	    if (!CreateProcess(NULL, bu_vls_cstr(&buffer), NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi)) {
 		DWORD ec = GetLastError();
 		LPSTR mb = NULL;
 		size_t mblen = FormatMessageA(
@@ -1393,31 +1458,43 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
 			NULL, ec, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&mb, 0, NULL);
 		std::string mstr(mb, mblen);
 		LocalFree(mb);
-		bu_log("CreateProcess failed with editor \"%s\" and file \"%s\": %s\n", editor, file, mstr.c_str());
+		fprintf(stderr, "CreateProcess failed with editor \"%s\" and file \"%s\": %s\n", eargv[0], filename, mstr.c_str());
 	    }
 	    WaitForSingleObject(pi.hProcess, INFINITE);
+	    bu_vls_free(&buffer);
 	    return 1;
 #else
+
+	    /* If we're using TextEdit close stdout/stderr so we don't get blather
+	     * about service registration failure */
 	    char *editor_basename = bu_path_basename(editor, NULL);
 	    if (BU_STR_EQUAL(editor_basename, "TextEdit")) {
-		/* close stdout/stderr so we don't get blather from TextEdit about service registration failure */
 		close(fileno(stdout));
 		close(fileno(stderr));
 	    }
 	    bu_free(editor_basename, "editor_basename free");
 
-	    if (!terminal && !editor_opt) {
-		(void)execlp(editor, editor, file, NULL);
-	    } else if (!terminal) {
-		(void)execlp(editor, editor, editor_opt, file, NULL);
-	    } else if (terminal && !terminal_opt) {
-		(void)execlp(terminal, terminal, editor, file, NULL);
-	    } else if (terminal && !editor_opt) {
-		(void)execlp(terminal, terminal, terminal_opt, editor, file, NULL);
+	    // Non-Windows platforms might be doing one of several things.  If we're
+	    // listexec, then av isn't necessarily in execution order and we need to be
+	    // careful about what goes where
+	    if (listexec) {
+		if (!terminal && !editor_opt) {
+		    (void)execlp(editor, editor, filename, NULL);
+		} else if (!terminal) {
+		    (void)execlp(editor, editor, editor_opt, filename, NULL);
+		} else if (terminal && !terminal_opt) {
+		    (void)execlp(terminal, terminal, editor, filename, NULL);
+		} else if (terminal && !editor_opt) {
+		    (void)execlp(terminal, terminal, terminal_opt, editor, filename, NULL);
+		} else {
+		    (void)execlp(terminal, terminal, terminal_opt, editor, editor_opt, filename, NULL);
+		}
 	    } else {
-		(void)execlp(terminal, terminal, terminal_opt, editor, editor_opt, file, NULL);
+		// Not doing listexec, so we can just go with the av array.
+		(void)execvp(eargv[0], (char * const *)eargv);
 	    }
 #endif
+
 	    /* should not reach */
 	    perror(editor);
 	    bu_exit(1, NULL);
@@ -1439,9 +1516,16 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
 #endif
 
 editit_cleanup:
-    bu_free(editstring_cpy, "editstring copy");
-    bu_vls_free(&tmp_editor_opt);
-    bu_vls_free(&tmp_terminal_opt);
+    for (int i = 0; i < eac; i++)
+	bu_free(eargv[i], "eargv");
+
+    if (listexec) {
+	// listexec isn't using eargv
+	bu_free(editor, "editor");
+	bu_free(editor_opt, "editor_opt");
+	bu_free(terminal, "terminal");
+	bu_free(terminal_opt, "terminal_opt");
+    }
 
     return ret;
 }

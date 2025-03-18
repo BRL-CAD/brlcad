@@ -128,7 +128,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     bu_optind = 1;
-    /* First, grab the editstring off of the argv list */
+    /* First, grab the editstring (if present) off of the argv list */
     while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != -1) {
 	switch (c) {
 	    case 'E' :
