@@ -500,7 +500,8 @@ void wrt_view(struct mged_state *s, mat_t out, const mat_t change, const mat_t i
 void wrt_point(mat_t out, const mat_t change, const mat_t in, const point_t point);
 
 /* tedit.c */
-int get_editor_string(struct mged_state *s, struct bu_vls *editstring);
+int get_editor(struct mged_state *s);
+void clear_editor(struct mged_state *s);
 
 /* titles.c */
 void create_text_overlay(struct mged_state *s, struct bu_vls *vp);

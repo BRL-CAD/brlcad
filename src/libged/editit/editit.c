@@ -45,22 +45,57 @@
 int
 ged_editit_core(struct ged *gedp, int argc, const char *argv[])
 {
+    const char *usage = "editit [opts] <filename>";
     int ret = 0;
+    int print_help = 0;
+
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    /* FIXME: this should NOT assume that argv[2] and argv[4] are the
-     * edit string and temp file.  should use bu_getopt().
-     */
-    if (argc != 5) {
-	bu_vls_printf(gedp->ged_result_str, "Internal Error: \"%s -e editstring -f tmpfile\" is malformed (argc == %d)", argv[0], argc);
-	return BRLCAD_ERROR;
-    } else {
-	char *edstr = bu_strdup((char *)argv[2]);
-	ret = _ged_editit(gedp, edstr, argv[4]);
-	bu_free(edstr, "free tmp editstring copy");
-	return ret;
+    struct bu_vls editstring = BU_VLS_INIT_ZERO;
+    struct bu_vls filename = BU_VLS_INIT_ZERO;
+
+    struct bu_opt_desc d[5];
+    BU_OPT(d[0], "h", "help",   "",              NULL,        &print_help, "Print help and exit");
+    BU_OPT(d[1], "?", "",       "",              NULL,        &print_help, "");
+    BU_OPT(d[0], "e",  "",      "<editstring>",  &bu_opt_vls, &editstring, "Specify edit string (deprecated)");
+    BU_OPT(d[1], "f",  "",      "<file>",        &bu_opt_vls, &filename,   "Specify file to edit");
+    BU_OPT_NULL(d[2]);
+
+    argc-=(argc>0); argv+=(argc>0); /* done with command name argv[0] */
+
+    if (!argc) {
+	/* must be wanting help */
+	_ged_cmd_help(gedp, usage, d);
+	return GED_HELP;
     }
+
+    /* parse standard options */
+    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+
+    if (print_help) {
+	_ged_cmd_help(gedp, usage, d);
+	return BRLCAD_OK;
+    }
+
+    /* adjust argc to match the leftovers of the options parsing */
+    argc = opt_ret;
+
+    /* Only one specifier for a filename */
+    if (argc && bu_vls_strlen(&filename)) {
+	_ged_cmd_help(gedp, usage, d);
+	return BRLCAD_ERROR;
+    }
+
+    /* If we got a filename without -f, populate it now */
+    if (argc)
+	bu_vls_sprintf(&filename, "%s", argv[0]);
+
+
+    ret = _ged_editit(gedp, bu_vls_cstr(&editstring), bu_vls_cstr(&filename));
+    bu_vls_free(&editstring);
+    bu_vls_free(&filename);
+    return ret;
 }
 
 

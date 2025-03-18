@@ -902,7 +902,7 @@ readsolid(struct mged_state *s)
 
 
 int
-get_editor_string(struct mged_state *s, struct bu_vls *editstring)
+get_editor(struct mged_state *s)
 {
     /* There are two possible situations for MGED - in classic mode
      * the assumption is made that the command window is a controlling
@@ -910,7 +910,7 @@ get_editor_string(struct mged_state *s, struct bu_vls *editstring)
      * that controlling window.  In GUI mode, the editor will be launched
      * either as a separate GUI application or in a separate terminal. */
     int need_terminal = 0;
-    const char *editor = (char *)NULL;
+    const char *editor = NULL;
     const char *editor_opt = (char *)NULL;
 
     if (s->classic_mged) {
@@ -931,30 +931,58 @@ get_editor_string(struct mged_state *s, struct bu_vls *editstring)
 	return 0;
     }
 
-    if (!need_terminal) {
-	bu_vls_sprintf(editstring, "(null) (null) %s %s", editor, editor_opt?editor_opt:"(null)");
-	return 1;
+    // Copy editor into ged struct
+    snprintf(s->gedp->ged_editor, MAXPATHLEN, "%s", editor);
+
+    // If we have an editor option, we'll need to set it up ourselves
+    if (editor_opt) {
+	s->gedp->ged_editor_opt_cnt = 1;
+	s->gedp->ged_editor_opts = (const char **)bu_calloc(s->gedp->ged_editor_opt_cnt + 1, sizeof(char *), "opt array");
+	s->gedp->ged_editor_opts[0] = bu_strdup(editor_opt);
     }
+
+    if (!need_terminal)
+	return 1;
 
     // If we do need a terminal, try to find one
     const char *terminal = bu_which(XTERM_COMMAND);
-    /* look a little harder if we found nothing */
-    if (!terminal) {
+    if (!terminal)
 	terminal = bu_which("/usr/X11R6/bin/" XTERM_COMMAND);
-    }
-    if (!terminal) {
+    if (!terminal)
 	terminal = bu_which("/usr/X11/bin/" XTERM_COMMAND);
+
+    if (terminal) {
+	snprintf(s->gedp->ged_terminal, MAXPATHLEN, "%s", terminal);
+	s->gedp->ged_terminal_opt_cnt = 1;
+	s->gedp->ged_terminal_opts = (const char **)bu_calloc(s->gedp->ged_terminal_opt_cnt + 1, sizeof(char *), "opt array");
+	s->gedp->ged_terminal_opts[0] = bu_strdup("-e");
     }
-
-    const char *terminal_opt = (char *)NULL;
-    if (terminal)
-	terminal_opt = "-e";
-
-    bu_vls_sprintf(editstring, "%s %s %s %s", terminal?terminal:"(null)", terminal_opt?terminal_opt:"(null)", editor, editor_opt?editor_opt:"(null)");
 
     return 1;
 }
 
+void
+clear_editor(struct mged_state *s)
+{
+    if (!s || !s->gedp)
+	return;
+    s->gedp->ged_editor[0] = '\0';
+    s->gedp->ged_terminal[0] = '\0';
+    if (s->gedp->ged_editor_opt_cnt) {
+	for (int i = 0; i < s->gedp->ged_editor_opt_cnt; i++)
+	    bu_free((char *)s->gedp->ged_editor_opts[i], "editor opt");
+	bu_free(s->gedp->ged_editor_opts, "editor_opts array");
+	s->gedp->ged_editor_opts = NULL;
+	s->gedp->ged_editor_opt_cnt = 0;
+    }
+    if (s->gedp->ged_terminal_opt_cnt) {
+	for (int i = 0; i < s->gedp->ged_terminal_opt_cnt; i++)
+	    bu_free((char *)s->gedp->ged_terminal_opts[i], "terminal opt");
+	bu_free(s->gedp->ged_terminal_opts, "terminal_opts array");
+	s->gedp->ged_terminal_opts = NULL;
+	s->gedp->ged_terminal_opt_cnt = 0;
+    }
+}
 
 /*
  * Local Variables:

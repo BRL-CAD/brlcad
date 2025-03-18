@@ -1334,7 +1334,7 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
 	return 0;
     }
 
-    if (editstring) {
+    if (editstring && strlen(editstring)) {
 
 	// Highest precedence - parse an edit string, if we have one
 	editit_parse_editstring(&editor, &terminal, &editor_opt, &terminal_opt, editstring);
