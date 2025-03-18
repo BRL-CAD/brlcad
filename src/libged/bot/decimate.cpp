@@ -51,8 +51,9 @@ decimate_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
 	bu_free(option_help, "help str");
     }
     bu_vls_printf(str, "Available decimation methods are:\n");
-    bu_vls_printf(str, "   GCT (default) - specify with feature-size option\n");
-    bu_vls_printf(str, "   Simple - specify with merge-tol option\n");
+    bu_vls_printf(str, "   GCT (default) - method triggered by -f option\n");
+    bu_vls_printf(str, "   Classical - triggered with -c, -n, or -e options\n");
+    bu_vls_printf(str, "   Simple - triggered with -t option\n");
 }
 
 extern "C" int
@@ -71,13 +72,20 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 
     int print_help = 0;
     double feature_size = 1.0;
+    fastf_t max_chord_error = -1.0;
+    fastf_t max_normal_error = -1.0;
+    fastf_t min_edge_length = -1.0;
     double merge_tol = -FLT_MAX;
 
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h",      "help",     "",            NULL, &print_help,   "Print help");
-    BU_OPT(d[1], "f", "feature-size", "#", &bu_opt_fastf_t, &feature_size, "Feature size");
-    BU_OPT(d[2], "t", "merge-tol",    "#", &bu_opt_fastf_t, &merge_tol, "Tolerance for merging vertices");
-    BU_OPT_NULL(d[3]);
+    struct bu_opt_desc d[8];
+    BU_OPT(d[0], "h", "help",              "",            NULL, &print_help,       "Print help");
+    BU_OPT(d[1], "?", "",                  "",            NULL, &print_help,       "");
+    BU_OPT(d[2], "c", "max-cord-error",   "#", &bu_opt_fastf_t, &max_chord_error,  "Maximum chord error length");
+    BU_OPT(d[3], "n", "max-normal-error", "#", &bu_opt_fastf_t, &max_normal_error, "Maximum normal error length");
+    BU_OPT(d[4], "e", "min-edge-length",  "#", &bu_opt_fastf_t, &min_edge_length,  "Minimum edge length");
+    BU_OPT(d[5], "f", "feature-size",     "#", &bu_opt_fastf_t, &feature_size,     "Feature size");
+    BU_OPT(d[6], "t", "merge-tol",        "#", &bu_opt_fastf_t, &merge_tol,        "Tolerance for merging vertices");
+    BU_OPT_NULL(d[7]);
 
     // We know we're the decimate command - start processing args
     argc--; argv++;
@@ -90,6 +98,18 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	return GED_HELP;
     }
 
+    /* Sanity check options */
+    int old_method = (max_chord_error > 0 || max_normal_error > 0 || min_edge_length > 0) ? 1 : 0;
+    int simple_method = (merge_tol > 0) ? 1 : 0;
+    int gct_method = (NEAR_EQUAL(feature_size, 1.0, VUNITIZE_TOL)) ? 0 : 1;
+    int mcnt = old_method + simple_method + gct_method;
+    if (mcnt > 1) {
+	decimate_usage(gedp->ged_result_str, "bot decimate", d);
+	return BRLCAD_ERROR;
+    }
+
+
+    // Setup
     if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
     }
@@ -107,6 +127,37 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 
     struct rt_bot_internal *input_bot = (struct rt_bot_internal*)gb->intern->idb_ptr;
     RT_BOT_CK_MAGIC(input_bot);
+
+
+    /* Old method */
+    if (max_chord_error > 0 || max_normal_error > 0 || min_edge_length > 0) {
+	/* convert maximum error, edge length, and feature size to mm */
+	if (max_chord_error > 0.0)
+	    max_chord_error = max_chord_error * gedp->dbip->dbi_local2base;
+
+	if (min_edge_length > 0.0)
+	    min_edge_length = min_edge_length * gedp->dbip->dbi_local2base;
+
+	/* use the old decimation routine */
+	if (rt_bot_decimate(input_bot, max_chord_error, max_normal_error, min_edge_length) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "rt_bot_decimate error\n");
+	    return BRLCAD_ERROR;
+	}
+
+	struct directory *dp = db_diradd(dbip, bu_vls_cstr(&output_bot_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&gb->intern->idb_type);
+	if (dp == RT_DIR_NULL) {
+	    bu_vls_free(&output_bot_name);
+	    return BRLCAD_ERROR;
+	}
+	bu_vls_free(&output_bot_name);
+
+	if (rt_db_put_internal(dp, dbip, gb->intern, &rt_uniresource) < 0) {
+	    bu_log("Failed to write %s to database\n", bu_vls_cstr(&output_bot_name));
+	    return BRLCAD_ERROR;
+	}
+
+	return BRLCAD_OK;
+    }
 
 
     if (merge_tol > -FLT_MAX) {
