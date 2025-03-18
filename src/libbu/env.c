@@ -525,6 +525,27 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
     return NULL;
 
 do_opt:
+
+    // If the caller didn't supply an option pointer, just return the editor
+    // string
+    if (!editor_opt)
+	return (const char *)bu_editor;
+
+    // Supply any options needed (normally graphical editor needing to be
+    // non-graphical due to no_gui being set, for example.)
+    snprintf(bu_editor_tmp, MAXPATHLEN, "%s", bu_which("emacs"));
+    if (BU_STR_EQUAL(bu_editor, bu_editor_tmp) && etype == 1) {
+	// Non-graphical emacs requires an option
+	sprintf(bu_editor_opt, "-nw");
+    }
+
+    if (BU_STR_EQUAL(bu_editor, NOTEPADPP_EDITOR)) {
+	// TODO - looks like we should be using -multiInst and -nosession together
+	// (https://superuser.com/questions/459705/open-two-instances-of-notepad) so need
+	// to update the bu_editor API to support returning an array of options.
+	sprintf(bu_editor_opt, "-multiInst");
+    }
+
     // Paths with spaces are Bad News - one of the BRL-CAD code paths for using
     // bu_editor outputs splits strings by spaces.  We can't do much on other
     // platforms, but on Windows (where such paths are more common to begin
@@ -537,20 +558,6 @@ do_opt:
 	snprintf(bu_editor, MAXPATHLEN, "%s", sp);
     }
 #endif
-
-    // If the caller didn't supply an option pointer, just return the editor
-    // string
-    if (!editor_opt)
-	return (const char *)bu_editor;
-
-    // Supply any options needed (normally graphical editor needing to be
-    // non-graphical due to no_gui being set, for example.)
-
-    snprintf(bu_editor_tmp, MAXPATHLEN, "%s", bu_which("emacs"));
-    if (BU_STR_EQUAL(bu_editor, bu_editor_tmp) && etype == 1) {
-	// Non-graphical emacs requires an option
-	sprintf(bu_editor_opt, "-nw");
-    }
 
     return (const char *)bu_editor;
 }
