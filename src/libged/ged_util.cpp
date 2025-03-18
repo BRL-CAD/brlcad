@@ -1450,7 +1450,9 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
 		bu_vls_printf(&buffer, "%s" , eargv[eac - 1]);
 	    }
 
-	    if (!CreateProcess(NULL, bu_vls_cstr(&buffer), NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi)) {
+	    // Note - CreateProcess requires us to use bu_vls_addr here to get
+	    // something usable as an LPSTR - const char * won't work.
+	    if (!CreateProcess(NULL, bu_vls_addr(&buffer), NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi)) {
 		DWORD ec = GetLastError();
 		LPSTR mb = NULL;
 		size_t mblen = FormatMessageA(
