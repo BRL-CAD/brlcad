@@ -35,11 +35,15 @@ shrink_path(struct bu_vls *tp, const char *lp)
     bu_vls_sprintf(tp, "%s", lp);
 #ifdef HAVE_WINDOWS_H
     char sp[MAXPATHLEN];
-    DWORD r = GetShortPathNameA(bu_editor, lp, MAXPATHLEN);
+    char *llp = bu_strdup(lp);
+    DWORD r = GetShortPathNameA(llp, sp, MAXPATHLEN);
+    bu_log("r: %d  sp:%s llp: %s\n", r, sp, llp);
     if (r != 0 && r < MAXPATHLEN) {
 	// Unless short path call failed, use sp
 	bu_vls_sprintf(tp, "%s", sp);
     }
+    bu_free(llp, "llp");
+    bu_log("%s\n", bu_vls_cstr(tp));
 #endif
 }
 
@@ -119,7 +123,6 @@ editor_tests(void)
 	return -1;
     }
     bu_log("EDITOR value returned with bu_editor: %s\n", e);
-    bu_vls_free(&check_path);
 
     // Unset the EDITOR env var and prepare a list of "editors" to provide.
     bu_setenv("EDITOR", "", 1);
@@ -131,9 +134,11 @@ editor_tests(void)
 
     // Make sure the list returns the btest_path entry
     e = bu_editor(&eopt, 0, 3, elist);
-    if (!BU_STR_EQUAL(e, elist[1])) {
+    shrink_path(&check_path, elist[1]);
+    if (!BU_STR_EQUAL(e, bu_vls_cstr(&check_path))) {
 	bu_log("Failed to return list entry %s\n", elist[1]);
 	bu_free(de, "default editor");
+	bu_vls_free(&check_path);
 	return -1;
     }
     bu_log("Second list entry returned: %s\n", elist[1]);
@@ -146,6 +151,7 @@ editor_tests(void)
     if (e) {
 	bu_log("Failed to stop after checking user supplied entries\n");
 	bu_free(de, "default editor");
+	bu_vls_free(&check_path);
 	return -1;
     }
     bu_log("As requested, list check skipped libbu internal testing after all entries failed.\n");
@@ -155,11 +161,13 @@ editor_tests(void)
     if (!BU_STR_EQUAL(e, de)) {
 	bu_log("After unsuccessful list, failed to fall back to libbu's internal list\n");
 	bu_free(de, "default editor");
+	bu_vls_free(&check_path);
 	return -1;
     }
     bu_log("As requested, fallback internal libbu check succeeded after list check failed: %s\n", e);
 
     bu_free(de, "default editor");
+    bu_vls_free(&check_path);
     return 0;
 }
 
