@@ -900,6 +900,26 @@ readsolid(struct mged_state *s)
     return ret_val;
 }
 
+static int
+have_terminal(struct mged_state *s)
+{
+    // If we do need a terminal, try to find one
+    const char *terminal = bu_which(XTERM_COMMAND);
+    if (!terminal)
+	terminal = bu_which("/usr/X11R6/bin/" XTERM_COMMAND);
+    if (!terminal)
+	terminal = bu_which("/usr/X11/bin/" XTERM_COMMAND);
+
+    if (terminal) {
+	snprintf(s->gedp->ged_terminal, MAXPATHLEN, "%s", terminal);
+	s->gedp->ged_terminal_opt_cnt = 1;
+	s->gedp->ged_terminal_opts = (const char **)bu_calloc(s->gedp->ged_terminal_opt_cnt + 1, sizeof(char *), "opt array");
+	s->gedp->ged_terminal_opts[0] = bu_strdup("-e");
+	return 1;
+    }
+
+    return 0;
+}
 
 int
 get_editor(struct mged_state *s)
@@ -917,13 +937,50 @@ get_editor(struct mged_state *s)
 	// Console editors only
 	editor = bu_editor(&editor_opt, 1, 0, NULL);
     } else {
-	// First try GUI editors only
-	editor = bu_editor(&editor_opt, 2, 0, NULL);
+
+	// Because we know we're willing to try setting up to use
+	// a terminal, we do a little extra checking of any user
+	// specified editors.  Define a "short circuiting" list
+	// to specify that will prevent libbu's default lists from
+	// being invoked
+	const char *check_for_editors[2] = {"MGED_NULL_EDITOR", NULL};
+
+	// First check for user-specified GUI editors
+	editor = bu_editor(&editor_opt, 2, 2, (const char **)check_for_editors);
 	if (!editor) {
+	    // First check for user-specified console editors
 	    // Falling back to console, will need terminal
-	    need_terminal = 1;
-	    editor = bu_editor(&editor_opt, 1, 0, NULL);
+	    editor = bu_editor(&editor_opt, 1, 2, (const char **)check_for_editors);
+	    if (editor)
+		need_terminal = 1;
 	}
+
+	// If the user specified editor can't be launched without a terminal,
+	// check if we can do that.  If not, we'll have to fall back to other
+	// options
+	if (need_terminal) {
+	    int h = have_terminal(s);
+	    if (!h)
+		editor = NULL;
+	}
+
+	// If initial attempts didn't find an editor, be more aggressive
+	if (!editor) {
+	    editor = bu_editor(&editor_opt, 2, 0, NULL);
+	    if (!editor) {
+		// Falling back to console, will need terminal
+		editor = bu_editor(&editor_opt, 1, 0, NULL);
+		if (editor)
+		    need_terminal = 1;
+	    }
+
+	    if (need_terminal) {
+		int h = have_terminal(s);
+		if (!h)
+		    editor = NULL;
+	    }
+	}
+
     }
 
     if (!editor) {
@@ -939,23 +996,6 @@ get_editor(struct mged_state *s)
 	s->gedp->ged_editor_opt_cnt = 1;
 	s->gedp->ged_editor_opts = (const char **)bu_calloc(s->gedp->ged_editor_opt_cnt + 1, sizeof(char *), "opt array");
 	s->gedp->ged_editor_opts[0] = bu_strdup(editor_opt);
-    }
-
-    if (!need_terminal)
-	return 1;
-
-    // If we do need a terminal, try to find one
-    const char *terminal = bu_which(XTERM_COMMAND);
-    if (!terminal)
-	terminal = bu_which("/usr/X11R6/bin/" XTERM_COMMAND);
-    if (!terminal)
-	terminal = bu_which("/usr/X11/bin/" XTERM_COMMAND);
-
-    if (terminal) {
-	snprintf(s->gedp->ged_terminal, MAXPATHLEN, "%s", terminal);
-	s->gedp->ged_terminal_opt_cnt = 1;
-	s->gedp->ged_terminal_opts = (const char **)bu_calloc(s->gedp->ged_terminal_opt_cnt + 1, sizeof(char *), "opt array");
-	s->gedp->ged_terminal_opts[0] = bu_strdup("-e");
     }
 
     return 1;
