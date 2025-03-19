@@ -865,7 +865,7 @@ struct bu_structparse wgl_vparse[] = {
 };
 
 /* Forward declare for dm_wgl_impl */
-struct dm *wgl_open(void *ctx, void *vinterp, int argc, char *argv[]);
+struct dm *wgl_open(void *ctx, void *vinterp, int argc, const char *argv[]);
 
 struct dm_impl dm_wgl_impl = {
     wgl_open,
@@ -983,7 +983,7 @@ struct dm_impl dm_wgl_impl = {
  *
  */
 struct dm *
-wgl_open(void *UNUSED(ctx), void *vinterp, int argc, char *argv[])
+wgl_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
 {
     static int count = 0;
     GLfloat backgnd[4];

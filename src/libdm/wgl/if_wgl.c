@@ -1149,7 +1149,7 @@ wgl_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 /*
  * read count pixels into pixelp starting at x, y
  */
-static int
+static ssize_t
 wgl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t n;
@@ -1203,7 +1203,7 @@ wgl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 /*
  * write count pixels from pixelp starting at xstart, ystart
  */
-static int
+static ssize_t
 wgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
     size_t scan_count;	/* # pix on this scanline */

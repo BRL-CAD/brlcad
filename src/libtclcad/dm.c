@@ -2782,9 +2782,6 @@ Dmo_Init(Tcl_Interp *interp)
 }
 
 
-/* from libdm/query.c */
-extern int dm_validXType(const char *dpy_string, const char *name);
-
 static int
 dm_validXType_tcl(void *clientData, int argc, const char **argv)
 {

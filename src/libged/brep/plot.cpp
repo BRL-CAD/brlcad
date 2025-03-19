@@ -169,7 +169,7 @@ void plotcurveonsurface(const ON_Curve *curve,
 	ON_3dPoint pt1, pt2;
 	pt2d = curve->PointAt(curve->Domain().ParameterAt((double)i/plotres));
 	pt3d = surface->PointAt(pt2d.x, pt2d.y);
-	pt1 = pt2;
+	pt1 = pt2d;
 	pt2 = pt3d;
 	if (i != 0) {
 	    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
