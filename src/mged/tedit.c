@@ -58,8 +58,36 @@ static int j;
 
 int writesolid(struct mged_state *), readsolid(struct mged_state *);
 
+/*
+ *
+ * No-frills edit - opens an editor on the supplied
+ * file name.
+ *
+ */
 int
-f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+editit(struct mged_state *s, const char *tempfile) {
+    int argc = 3;
+    const char *av[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+
+    CHECK_DBI_NULL;
+
+    if (!ged_set_editor(s->gedp, s->classic_mged))
+	return TCL_ERROR;
+
+    av[0] = "editit";
+    av[1] = "-f";
+    av[2] = tempfile;
+    av[3] = NULL;
+
+    ged_exec(s->gedp, argc, (const char **)av);
+
+    ged_clear_editor(s->gedp);
+    return TCL_OK;
+}
+
+
+int
+f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char **UNUSED(argv))
 {
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
@@ -95,7 +123,7 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     (void)fclose(fp);
 
-    if (editit(s, argv[0], tmpfil) == TCL_OK) {
+    if (editit(s, tmpfil) == TCL_OK) {
 	if (readsolid(s)) {
 	    bu_file_delete(tmpfil);
 	    return TCL_ERROR;

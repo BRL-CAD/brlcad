@@ -74,34 +74,6 @@ char ctemp[7];
 
 /*
  *
- * No-frills edit - opens an editor on the supplied
- * file name.
- *
- */
-int
-editit(struct mged_state *s, const char *command, const char *tempfile) {
-    int argc = 3;
-    const char *av[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
-
-    CHECK_DBI_NULL;
-
-    if (!ged_set_editor(s->gedp, s->classic_mged))
-	return TCL_ERROR;
-
-    av[0] = command;
-    av[1] = "-f";
-    av[2] = tempfile;
-    av[3] = NULL;
-
-    ged_exec(s->gedp, argc, (const char **)av);
-
-    ged_clear_editor(s->gedp);
-    return TCL_OK;
-}
-
-
-/*
- *
  * control routine for editing color
  */
 int

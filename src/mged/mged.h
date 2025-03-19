@@ -572,9 +572,6 @@ extern void mged_vls_struct_parse_old(struct mged_state *s, struct bu_vls *vls, 
 /* mater.c */
 void mged_color_soltab(struct mged_state *s);
 
-/* utility1.c */
-int editit(struct mged_state *s, const char *command, const char *tempfile);
-
 int Wdb_Init(Tcl_Interp *interp);
 int wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);
 void wdb_deleteProc(ClientData clientData);
