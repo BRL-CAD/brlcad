@@ -411,6 +411,42 @@ main(int argc, char *argv[])
     bu_log("RT_SOLID_EDIT_ROT(k) (mv_context == 0) SUCCESS: original h value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->h), V3ARGS(edit_tor->h));
 
 
+
+    /****************************
+       RT_SOLID_EDIT_SCALE - XY
+     ****************************/
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, RT_SOLID_EDIT_SCALE);
+
+    // Reset
+    VMOVE(edit_tor->v, orig_tor->v);
+    VMOVE(edit_tor->h, orig_tor->h);
+    MAT_IDN(s->acc_rot_sol);
+    s->e_inpara = 0;
+
+    // TODO - prepare mousevec.
+    // TODO - call xy method to prepare inputs
+    // rt_solid_edit_process
+    // compare to expected
+
+
+    /****************************
+       RT_SOLID_EDIT_TRANS - XY
+     ****************************/
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, RT_SOLID_EDIT_TRANS);
+
+    // Reset
+    VMOVE(edit_tor->v, orig_tor->v);
+    VMOVE(edit_tor->h, orig_tor->h);
+    MAT_IDN(s->acc_rot_sol);
+    s->e_inpara = 0;
+
+    // TODO - prepare mousevec.
+    // TODO - call xy method to prepare inputs
+    // rt_solid_edit_process
+    // compare to expected
+
+
+
     rt_solid_edit_destroy(s);
 
     db_close(dbip);
