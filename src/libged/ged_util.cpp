@@ -1532,7 +1532,8 @@ editit_cleanup:
     return ret;
 }
 
-
+/* Terminals to try. */
+#define UXTERM_COMMAND "uxterm"
 #define XTERM_COMMAND "xterm"
 
 /* Can the mac terminal be used to launch applications?  Doesn't seem like it
@@ -1542,20 +1543,47 @@ editit_cleanup:
 static int
 have_terminal(struct ged *gedp)
 {
+    const char *terminal_list[] = {
+	UXTERM_COMMAND, XTERM_COMMAND,
+	NULL
+    };
+
     bu_ptbl_reset(&gedp->terminal_opts);
 
-    // If we do need a terminal, try to find one
-    const char *terminal = bu_which(XTERM_COMMAND);
-    if (!terminal)
-        terminal = bu_which("/usr/X11R6/bin/" XTERM_COMMAND);
-    if (!terminal)
-        terminal = bu_which("/usr/X11/bin/" XTERM_COMMAND);
+    // Try to find a terminal emulator
+    int i = 0;
+    const char *terminal = terminal_list[i];
+    const char *terminal_fullpath = NULL;
+    struct bu_vls twp = BU_VLS_INIT_ZERO;
+    while (terminal && !terminal_fullpath) {
 
-    if (terminal) {
-        snprintf(gedp->terminal, MAXPATHLEN, "%s", terminal);
-        static const char *topt = "-e";
-        bu_ptbl_ins(&gedp->terminal_opts, (long *)topt);
-        return 1;
+	// Check the default which lookup
+	terminal_fullpath = bu_which(terminal_list[i]);
+
+	// If that didn't work, try some common paths
+	if (!terminal_fullpath) {
+	    bu_vls_sprintf(&twp, "/usr/X11R6/bin/%s", terminal_list[i]);
+	    terminal_fullpath = bu_which(bu_vls_cstr(&twp));
+	}
+	if (!terminal_fullpath) {
+	    bu_vls_sprintf(&twp, "/usr/X11/bin/%s", terminal_list[i]);
+	    terminal_fullpath = bu_which(bu_vls_cstr(&twp));
+	}
+
+	if (terminal_fullpath)
+	    break;
+
+	// Nope, try the next one
+	i++;
+	terminal = terminal_list[i];
+    }
+    bu_vls_free(&twp);
+
+    if (terminal_fullpath) {
+	snprintf(gedp->terminal, MAXPATHLEN, "%s", terminal_fullpath);
+	static const char *topt = "-e";
+	bu_ptbl_ins(&gedp->terminal_opts, (long *)topt);
+	return 1;
     }
 
     return 0;
