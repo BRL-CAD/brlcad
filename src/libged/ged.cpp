@@ -159,12 +159,12 @@ ged_init(struct ged *gedp)
     gedp->ged_io_data = NULL;
 
     /* Editor info */
-    memset(gedp->ged_editor, '\0', sizeof(gedp->ged_editor) - 1);
-    gedp->ged_editor_opt_cnt = 0;
-    gedp->ged_editor_opts = NULL;
-    memset(gedp->ged_terminal, '\0', sizeof(gedp->ged_terminal) - 1);
-    gedp->ged_terminal_opt_cnt = 0;
-    gedp->ged_terminal_opts = NULL;
+    gedp->app_editors_cnt = 0;
+    gedp->app_editors = NULL;
+    memset(gedp->editor, '\0', sizeof(gedp->editor));
+    BU_PTBL_INIT(&gedp->editor_opts);
+    memset(gedp->terminal, '\0', sizeof(gedp->terminal));
+    BU_PTBL_INIT(&gedp->terminal_opts);
 
     /* ? */
     gedp->ged_output_script = NULL;
@@ -249,6 +249,8 @@ ged_free(struct ged *gedp)
     if (gedp->ged_fbs)
 	BU_PUT(gedp->ged_fbs, struct fbserv_obj);
 
+    bu_ptbl_free(&gedp->editor_opts);
+    bu_ptbl_free(&gedp->terminal_opts);
 
     /* Free internal containers */
     delete gedp->i->i;

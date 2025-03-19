@@ -1345,19 +1345,19 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
 	// Tell exec logic we're in list mode
 	listexec = 1;
 
-    } else if (strlen(gedp->ged_editor)) {
+    } else if (strlen(gedp->editor)) {
 
 	/* Second highest precedence - assemble ged struct info into editit form, if defined */
-	editor = bu_strdup(gedp->ged_editor);
+	editor = bu_strdup(gedp->editor);
 
 	// If we're going to use a terminal, stage that first - unlike editstring
 	// mode, we'll be feeding the argv array directly to exec
-	if (strlen(gedp->ged_terminal)) {
-	    terminal = bu_strdup(gedp->ged_terminal);
+	if (strlen(gedp->terminal)) {
+	    terminal = bu_strdup(gedp->terminal);
 	    eargv[0] = terminal;
 	    eac = 1;
-	    for (int i = 0; i < gedp->ged_terminal_opt_cnt; i++) {
-		eargv[eac] = bu_strdup(gedp->ged_terminal_opts[i]);
+	    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->terminal_opts); i++) {
+		eargv[eac] = bu_strdup((const char *)BU_PTBL_GET(&gedp->terminal_opts, i));
 		eac++;
 	    }
 	}
@@ -1365,8 +1365,8 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
 	// Terminal handled - add editor and any opts
 	eargv[eac] = editor;
 	eac++;
-	for (int i = 0; i < gedp->ged_editor_opt_cnt; i++) {
-	    eargv[eac] = bu_strdup(gedp->ged_editor_opts[i]);
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->editor_opts); i++) {
+	    eargv[eac] = bu_strdup((const char *)BU_PTBL_GET(&gedp->editor_opts, i));
 	    eac++;
 	}
 
@@ -1375,18 +1375,18 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
 	eac++;
 
 	// Produce the editing message
-	editit_msg(editor, gedp->ged_editor_opt_cnt, gedp->ged_editor_opts, filename, terminal);
+	editit_msg(editor, BU_PTBL_LEN(&gedp->editor_opts), (const char **)gedp->editor_opts.buffer, filename, terminal);
 
     } else {
 
 	// If neither an edit string nor gedp are telling us what to use,
 	// try to find something
-	const char *eo = NULL;
-	editor = bu_strdup(bu_editor((const char **)&eo, 0, 0, NULL));
+	struct bu_ptbl eo = BU_PTBL_INIT_ZERO;
+	editor = bu_strdup(bu_editor(&eo, 0, 0, NULL));
 	eargv[0] = editor;
 	eac = 1;
-	if (eo) {
-	    eargv[1] = bu_strdup(eo);
+	for (size_t i = 0; i < BU_PTBL_LEN(&eo); i++) {
+	    eargv[eac] = bu_strdup((const char *)BU_PTBL_GET(&eo, i));
 	    eac++;
 	}
 
@@ -1395,7 +1395,7 @@ _ged_editit(struct ged *gedp, const char *editstring, const char *filename)
 	eac++;
 
 	// Produce the editing message
-	editit_msg(editor, (eo) ? 1 : 0, (const char **)&eo, filename, terminal);
+	editit_msg(editor, (BU_PTBL_LEN(&eo)) ? 1 : 0, (const char **)eo.buffer, filename, terminal);
     }
 
     if (!editor) {

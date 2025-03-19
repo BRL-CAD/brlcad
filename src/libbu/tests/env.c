@@ -50,7 +50,7 @@ static int
 editor_tests(void)
 {
     const char *e = NULL;
-    const char *eopt = NULL;
+    struct bu_ptbl eopts = BU_PTBL_INIT_ZERO;
 
     // Unset the EDITOR variable
     bu_setenv("EDITOR", "", 1);
@@ -58,24 +58,26 @@ editor_tests(void)
     // First, check that we can find *something* - will select GUI
     // editor first, but should fall back on console editors if
     // GUI not found.
-    e = bu_editor(&eopt, 0, 0, NULL);
+    e = bu_editor(&eopts, 0, 0, NULL);
     if (!e) {
 	bu_log("Failed to identify default editor.\n");
+	bu_ptbl_free(&eopts);
 	return -1;
     }
     bu_log("Default editor: %s\n", e);
 
     // Some environments may not have a graphical editor, but we should
     // *always* be able to find a console editor
-    e = bu_editor(&eopt, 1, 0, NULL);
+    e = bu_editor(&eopts, 1, 0, NULL);
     if (!e) {
 	bu_log("Failed to identify default console editor.\n");
+	bu_ptbl_free(&eopts);
 	return -1;
     }
     bu_log("Default console editor: %s\n", e);
 
     // Exercise the code path for GUI only, even though NULL is technically OK.
-    e = bu_editor(&eopt, 2, 0, NULL);
+    e = bu_editor(&eopts, 2, 0, NULL);
     if (e)
 	bu_log("Default GUI editor: %s\n", e);
 
@@ -97,6 +99,7 @@ editor_tests(void)
 	bu_dir(btest_path, MAXPATHLEN, BU_DIR_BIN, "..", "src", "libbu", "tests", btest_exec, BU_DIR_EXT, NULL);
     if (!bu_file_exists(btest_path, NULL)) {
 	bu_log("Failed to locate bu_test executable\n");
+	bu_ptbl_free(&eopts);
 	return -1;
     }
     bu_log("bu_test executable: %s\n", btest_path);
@@ -110,34 +113,81 @@ editor_tests(void)
     struct bu_vls check_path = BU_VLS_INIT_ZERO;
     shrink_path(&check_path, getenv("EDITOR"));
 
-    e = bu_editor(&eopt, 0, 0, NULL);
+    e = bu_editor(&eopts, 0, 0, NULL);
     if (!e) {
 	bu_log("EDITOR value %s did not produce an editor path\n", getenv("EDITOR"));
 	bu_vls_free(&check_path);
+	bu_ptbl_free(&eopts);
 	return -1;
     }
     if (!(BU_STR_EQUAL(e, bu_vls_cstr(&check_path)))) {
 	bu_log("Failed to return EDITOR value %s with bu_editor\n", bu_vls_cstr(&check_path));
 	bu_vls_free(&check_path);
+	bu_ptbl_free(&eopts);
 	return -1;
     }
     bu_log("EDITOR value returned with bu_editor: %s\n", e);
 
+
+    // We want to make sure the editor option setting is working, but to do so we
+    // need to trigger a case we know should produce an option - most cases will not.
+    // To make this work, we need a valid path on the filesystem with the "emacs"
+    // name, and since there's no guarantee the user has emacs installed we make
+    // a file in the same location as bu_test to use as a target.  We then use EDITOR
+    // to look for that file specifically.
+    struct bu_vls bp = BU_VLS_INIT_ZERO;
+    if (bu_path_component(&bp , btest_path, BU_PATH_DIRNAME)) {
+	char epath[MAXPATHLEN] = {'\0'};
+	bu_dir(epath, MAXPATHLEN, bu_vls_cstr(&bp), "emacs", NULL);
+	FILE *fp = fopen(epath, "w");
+	fprintf(fp, "BRL-CAD");
+	fclose(fp);
+	bu_setenv("EDITOR", epath, 1);
+	e = bu_editor(&eopts, 1, 0, NULL);
+	bu_file_delete(epath);
+	if (!e) {
+	    bu_log("EDITOR value %s did not produce an editor path\n", getenv("EDITOR"));
+	    bu_vls_free(&check_path);
+	    bu_ptbl_free(&eopts);
+	    bu_vls_free(&bp);
+	    return -1;
+	}
+	if (!BU_PTBL_LEN(&eopts)) {
+	    bu_log("Expected editor option, but no option returned\n");
+	    bu_vls_free(&check_path);
+	    bu_ptbl_free(&eopts);
+	    bu_vls_free(&bp);
+	    return -1;
+	}
+	const char *emacs_opt = (const char *)BU_PTBL_GET(&eopts, 0);
+	if (!(BU_STR_EQUAL(emacs_opt, "-nw"))) {
+	    bu_log("Failed to return EDITOR value %s with bu_editor\n", bu_vls_cstr(&check_path));
+	    bu_vls_free(&check_path);
+	    bu_ptbl_free(&eopts);
+	    bu_vls_free(&bp);
+	    return -1;
+	}
+	bu_log("Console mode lookup for %s returned with editor option: %s\n", e, emacs_opt);
+    }
+    bu_vls_free(&bp);
+
+
     // Unset the EDITOR env var and prepare a list of "editors" to provide.
     bu_setenv("EDITOR", "", 1);
-    char *de = bu_strdup(bu_editor(&eopt, 0, 0, NULL));
+    char *de = bu_strdup(bu_editor(&eopts, 0, 0, NULL));
     const char *elist[4] = {NULL};
     elist[0] = "non-existent-editor1";
     elist[1] = btest_path;
     elist[2] = de;
 
     // Make sure the list returns the btest_path entry
-    e = bu_editor(&eopt, 0, 3, elist);
+    e = bu_editor(&eopts, 0, 3, elist);
     shrink_path(&check_path, elist[1]);
     if (!BU_STR_EQUAL(e, bu_vls_cstr(&check_path))) {
 	bu_log("Failed to return list entry %s\n", elist[1]);
 	bu_free(de, "default editor");
 	bu_vls_free(&check_path);
+	bu_ptbl_free(&eopts);
 	return -1;
     }
     bu_log("Second list entry returned: %s\n", elist[1]);
@@ -146,27 +196,30 @@ editor_tests(void)
     elist[0] = "non-existent-editor1";
     elist[1] = "non-existent-editor2";
     elist[2] = "non-existent-editor3";
-    e = bu_editor(&eopt, 0, 4, elist);
+    e = bu_editor(&eopts, 0, 4, elist);
     if (e) {
 	bu_log("Failed to stop after checking user supplied entries\n");
 	bu_free(de, "default editor");
 	bu_vls_free(&check_path);
+	bu_ptbl_free(&eopts);
 	return -1;
     }
     bu_log("As requested, list check skipped libbu internal testing after all entries failed.\n");
 
     // Check "fall back on internal libbu search" mode
-    e = bu_editor(&eopt, 0, 3, elist);
+    e = bu_editor(&eopts, 0, 3, elist);
     if (!BU_STR_EQUAL(e, de)) {
 	bu_log("After unsuccessful list, failed to fall back to libbu's internal list\n");
 	bu_free(de, "default editor");
 	bu_vls_free(&check_path);
+	bu_ptbl_free(&eopts);
 	return -1;
     }
     bu_log("As requested, fallback internal libbu check succeeded after list check failed: %s\n", e);
 
     bu_free(de, "default editor");
     bu_vls_free(&check_path);
+    bu_ptbl_free(&eopts);
     return 0;
 }
 

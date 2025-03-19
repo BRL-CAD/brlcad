@@ -24,6 +24,7 @@
 #include "common.h"
 
 #include "bu/defines.h"
+#include "bu/ptbl.h"
 
 __BEGIN_DECLS
 
@@ -124,12 +125,12 @@ BU_EXPORT extern ssize_t bu_mem(int type, size_t *sz);
  * returning (for example) nano from an EDITOR setting when a GUI editor type
  * was requested.
  *
- * Caller should NOT free either the main string return from bu_editor or the
- * pointer assigned to editor_opt.  Both outputs may change contents from one
- * call to the next, so caller should duplicate the string outputs if they
- * wish to preserve them beyond the next bu_editor call.
+ * Caller should NOT free the main string return from bu_editor or the contents
+ * of the editor_opts bu_ptbl. The caller has ownership of the editor_opts
+ * bu_ptbl container however, so they ARE responsible for for freeing the table
+ * itself once use of editor_opts is complete.
  */
-BU_EXPORT const char *bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **check_for_editors);
+BU_EXPORT const char *bu_editor(struct bu_ptbl *editor_opts, int etype, int check_for_cnt, const char **check_for_editors);
 
 /** @} */
 

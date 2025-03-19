@@ -903,6 +903,8 @@ readsolid(struct mged_state *s)
 static int
 have_terminal(struct mged_state *s)
 {
+    bu_ptbl_reset(&s->gedp->terminal_opts);
+
     // If we do need a terminal, try to find one
     const char *terminal = bu_which(XTERM_COMMAND);
     if (!terminal)
@@ -911,10 +913,9 @@ have_terminal(struct mged_state *s)
 	terminal = bu_which("/usr/X11/bin/" XTERM_COMMAND);
 
     if (terminal) {
-	snprintf(s->gedp->ged_terminal, MAXPATHLEN, "%s", terminal);
-	s->gedp->ged_terminal_opt_cnt = 1;
-	s->gedp->ged_terminal_opts = (const char **)bu_calloc(s->gedp->ged_terminal_opt_cnt + 1, sizeof(char *), "opt array");
-	s->gedp->ged_terminal_opts[0] = bu_strdup("-e");
+	snprintf(s->gedp->terminal, MAXPATHLEN, "%s", terminal);
+	static const char *topt = "-e";
+	bu_ptbl_ins(&s->gedp->terminal_opts, (long *)topt);
 	return 1;
     }
 
@@ -931,11 +932,10 @@ get_editor(struct mged_state *s)
      * either as a separate GUI application or in a separate terminal. */
     int need_terminal = 0;
     const char *editor = NULL;
-    const char *editor_opt = (char *)NULL;
 
     if (s->classic_mged) {
 	// Console editors only
-	editor = bu_editor(&editor_opt, 1, 0, NULL);
+	editor = bu_editor(&s->gedp->editor_opts, 1, s->gedp->app_editors_cnt, s->gedp->app_editors);
     } else {
 
 	// Because we know we're willing to try setting up to use
@@ -946,11 +946,11 @@ get_editor(struct mged_state *s)
 	const char *check_for_editors[2] = {"MGED_NULL_EDITOR", NULL};
 
 	// First check for user-specified GUI editors
-	editor = bu_editor(&editor_opt, 2, 2, (const char **)check_for_editors);
+	editor = bu_editor(&s->gedp->editor_opts, 2, 2, (const char **)check_for_editors);
 	if (!editor) {
 	    // First check for user-specified console editors
 	    // Falling back to console, will need terminal
-	    editor = bu_editor(&editor_opt, 1, 2, (const char **)check_for_editors);
+	    editor = bu_editor(&s->gedp->editor_opts, 1, 2, (const char **)check_for_editors);
 	    if (editor)
 		need_terminal = 1;
 	}
@@ -966,10 +966,10 @@ get_editor(struct mged_state *s)
 
 	// If initial attempts didn't find an editor, be more aggressive
 	if (!editor) {
-	    editor = bu_editor(&editor_opt, 2, 0, NULL);
+	    editor = bu_editor(&s->gedp->editor_opts, 2, s->gedp->app_editors_cnt, s->gedp->app_editors);
 	    if (!editor) {
 		// Falling back to console, will need terminal
-		editor = bu_editor(&editor_opt, 1, 0, NULL);
+		editor = bu_editor(&s->gedp->editor_opts, 1, s->gedp->app_editors_cnt, s->gedp->app_editors);
 		if (editor)
 		    need_terminal = 1;
 	    }
@@ -989,14 +989,7 @@ get_editor(struct mged_state *s)
     }
 
     // Copy editor into ged struct
-    snprintf(s->gedp->ged_editor, MAXPATHLEN, "%s", editor);
-
-    // If we have an editor option, we'll need to set it up ourselves
-    if (editor_opt) {
-	s->gedp->ged_editor_opt_cnt = 1;
-	s->gedp->ged_editor_opts = (const char **)bu_calloc(s->gedp->ged_editor_opt_cnt + 1, sizeof(char *), "opt array");
-	s->gedp->ged_editor_opts[0] = bu_strdup(editor_opt);
-    }
+    snprintf(s->gedp->editor, MAXPATHLEN, "%s", editor);
 
     return 1;
 }
@@ -1006,22 +999,10 @@ clear_editor(struct mged_state *s)
 {
     if (!s || !s->gedp)
 	return;
-    s->gedp->ged_editor[0] = '\0';
-    s->gedp->ged_terminal[0] = '\0';
-    if (s->gedp->ged_editor_opt_cnt) {
-	for (int i = 0; i < s->gedp->ged_editor_opt_cnt; i++)
-	    bu_free((char *)s->gedp->ged_editor_opts[i], "editor opt");
-	bu_free(s->gedp->ged_editor_opts, "editor_opts array");
-	s->gedp->ged_editor_opts = NULL;
-	s->gedp->ged_editor_opt_cnt = 0;
-    }
-    if (s->gedp->ged_terminal_opt_cnt) {
-	for (int i = 0; i < s->gedp->ged_terminal_opt_cnt; i++)
-	    bu_free((char *)s->gedp->ged_terminal_opts[i], "terminal opt");
-	bu_free(s->gedp->ged_terminal_opts, "terminal_opts array");
-	s->gedp->ged_terminal_opts = NULL;
-	s->gedp->ged_terminal_opt_cnt = 0;
-    }
+    s->gedp->editor[0] = '\0';
+    s->gedp->terminal[0] = '\0';
+    bu_ptbl_reset(&s->gedp->editor_opts);
+    bu_ptbl_reset(&s->gedp->terminal_opts);
 }
 
 /*

@@ -424,12 +424,10 @@ editor_file_check(char *bu_editor, const char *estr, const char **elist)
 #define YEDIT_EDITOR "yedit"
 
 const char *
-bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **check_for_editors)
+bu_editor(struct bu_ptbl *editor_opts, int etype, int check_for_cnt, const char **check_for_editors)
 {
     int i;
     static char bu_editor[MAXPATHLEN] = {0};
-    static char bu_editor_opt[MAXPATHLEN] = {0};
-    static char bu_editor_tmp[MAXPATHLEN] = {0};
     const char *e_str = NULL;
     const char **ncompat_list = NULL;
     // Arrays for internal editor checking, in priority order.
@@ -445,6 +443,10 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
 	ncompat_list = gui_editor_list;
     if (etype == 2)
 	ncompat_list = nongui_editor_list;
+
+    // Reset the editor_opts ptbl
+    if (editor_opts)
+	bu_ptbl_reset(editor_opts);
 
     // BRLCAD_EDITOR_GUI takes precedence, if set and GUI is an option
     if (!etype || etype == 2) {
@@ -485,8 +487,6 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
 		// calling application, it means a) we weren't successful
 		// and b) the application is requesting we not use libbu's
 		// own list to continue.
-		if (editor_opt)
-		    *editor_opt = NULL;
 		return NULL;
 	    }
 	    if (editor_file_check(bu_editor, check_for_editors[i], ncompat_list))
@@ -520,30 +520,37 @@ bu_editor(const char **editor_opt, int etype, int check_for_cnt, const char **ch
     }
 
     // If we have nothing after all that, we're done
-    if (editor_opt)
-	*editor_opt = NULL;
     return NULL;
 
 do_opt:
 
-    // If the caller didn't supply an option pointer, just return the editor
+    // If the caller didn't supply an option bu_ptbl, just return the editor
     // string
-    if (!editor_opt)
+    if (!editor_opts)
 	return (const char *)bu_editor;
 
-    // Supply any options needed (normally graphical editor needing to be
-    // non-graphical due to no_gui being set, for example.)
-    snprintf(bu_editor_tmp, MAXPATHLEN, "%s", bu_which("emacs"));
-    if (BU_STR_EQUAL(bu_editor, bu_editor_tmp) && etype == 1) {
-	// Non-graphical emacs requires an option
-	sprintf(bu_editor_opt, "-nw");
+    // If we're doing a console editor but we've got emacs, we need to add
+    // the -nw option.
+    struct bu_vls rootname = BU_VLS_INIT_ZERO;
+    if (bu_path_component(&rootname, bu_editor, BU_PATH_BASENAME_EXTLESS)) {
+	if (BU_STR_EQUAL(bu_vls_cstr(&rootname), "emacs") && etype == 1) {
+	    // Non-graphical emacs requires an option
+	    static const char *eopt = "-nw";
+	    bu_ptbl_ins(editor_opts, (long *)eopt);
+	}
     }
+    bu_vls_free(&rootname);
 
+    // Use both -multiInst and -nosession together for Notepad++ so we
+    // get a stand-alone version rather than adding our editing file
+    // to an existing instance - that produces unexpected results for
+    // commands expecting to wait on the launched editor. See
+    // https://superuser.com/questions/459705/open-two-instances-of-notepad
     if (BU_STR_EQUAL(bu_editor, NOTEPADPP_EDITOR)) {
-	// TODO - looks like we should be using -multiInst and -nosession together
-	// (https://superuser.com/questions/459705/open-two-instances-of-notepad) so need
-	// to update the bu_editor API to support returning an array of options.
-	sprintf(bu_editor_opt, "-multiInst");
+	static const char *miopt = "-multiInst";
+	static const char *nsopt = "-nosession";
+	bu_ptbl_ins(editor_opts, (long *)miopt);
+	bu_ptbl_ins(editor_opts, (long *)nsopt);
     }
 
     // Paths with spaces are Bad News - one of the BRL-CAD code paths for using

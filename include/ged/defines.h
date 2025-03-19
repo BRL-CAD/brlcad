@@ -333,16 +333,13 @@ struct ged {
 
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
 
-    // Information to use when invoking a text editor.  Note that option argv
-    // arrays, if defined by calling apps, are the responsibility of the caller
-    // to allocate and free.
-    char ged_editor[MAXPATHLEN];
-    int ged_editor_opt_cnt;
-    const char **ged_editor_opts;
-    char ged_terminal[MAXPATHLEN];
-    int ged_terminal_opt_cnt;
-    const char **ged_terminal_opts;
-
+    // Information to use when invoking a text editor.
+    int app_editors_cnt;
+    const char **app_editors;
+    char editor[MAXPATHLEN];
+    struct bu_ptbl editor_opts;
+    char terminal[MAXPATHLEN];
+    struct bu_ptbl terminal_opts;
 
     // The following is used instead of environment variables to select old or new
     // command paths.  Primarily relates to the next generation drawing setup with
