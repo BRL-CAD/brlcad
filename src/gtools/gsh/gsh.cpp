@@ -356,6 +356,9 @@ GshState::GshState()
 
     // Tell libged how to clear the screen
     ged_clbk_set(gedp, "clear", BU_CLBK_POST, &Gsh_ClearScreen, (void *)this);
+
+    // Set up a (non-graphical) editor for commands needing to launch one
+    ged_set_editor(gedp, 1);
 }
 
 GshState::~GshState()
