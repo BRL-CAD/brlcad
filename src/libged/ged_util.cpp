@@ -1532,6 +1532,119 @@ editit_cleanup:
     return ret;
 }
 
+
+#define XTERM_COMMAND "xterm"
+
+/* Can the mac terminal be used to launch applications?  Doesn't seem like it
+ * in initial trials, but maybe there's some trick? */
+#define MAC_BINARY "/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal"
+
+static int
+have_terminal(struct ged *gedp)
+{
+    bu_ptbl_reset(&gedp->terminal_opts);
+
+    // If we do need a terminal, try to find one
+    const char *terminal = bu_which(XTERM_COMMAND);
+    if (!terminal)
+        terminal = bu_which("/usr/X11R6/bin/" XTERM_COMMAND);
+    if (!terminal)
+        terminal = bu_which("/usr/X11/bin/" XTERM_COMMAND);
+
+    if (terminal) {
+        snprintf(gedp->terminal, MAXPATHLEN, "%s", terminal);
+        static const char *topt = "-e";
+        bu_ptbl_ins(&gedp->terminal_opts, (long *)topt);
+        return 1;
+    }
+
+    return 0;
+}
+
+int
+ged_set_editor(struct ged *gedp, int non_gui)
+{
+    /* There are two possible situations - in classic mode the assumption is
+     * made that the command window is a controlling terminal, and an editor
+     * should be launched that will utilize that controlling window.  In GUI
+     * mode, the editor will be launched either as a separate GUI application
+     * or in a separate terminal. */
+    int need_terminal = 0;
+    const char *editor = NULL;
+
+    if (non_gui) {
+        // Console editors only
+        editor = bu_editor(&gedp->editor_opts, 1, gedp->app_editors_cnt, gedp->app_editors);
+    } else {
+
+        // Because we know we're willing to try setting up to use
+        // a terminal, we do a little extra checking of any user
+        // specified editors.  Define a "short circuiting" list
+        // to specify that will prevent libbu's default lists from
+        // being invoked
+        const char *check_for_editors[2] = {"MGED_NULL_EDITOR", NULL};
+
+        // First check for user-specified GUI editors
+        editor = bu_editor(&gedp->editor_opts, 2, 2, (const char **)check_for_editors);
+        if (!editor) {
+            // First check for user-specified console editors
+            // Falling back to console, will need terminal
+            editor = bu_editor(&gedp->editor_opts, 1, 2, (const char **)check_for_editors);
+            if (editor)
+                need_terminal = 1;
+        }
+
+        // If the user specified editor can't be launched without a terminal,
+        // check if we can do that.  If not, we'll have to fall back to other
+        // options
+        if (need_terminal) {
+            int h = have_terminal(gedp);
+            if (!h)
+                editor = NULL;
+        }
+
+        // If initial attempts didn't find an editor, be more aggressive
+        if (!editor) {
+            editor = bu_editor(&gedp->editor_opts, 2, gedp->app_editors_cnt, gedp->app_editors);
+            if (!editor) {
+                // Falling back to console, will need terminal
+                editor = bu_editor(&gedp->editor_opts, 1, gedp->app_editors_cnt, gedp->app_editors);
+                if (editor)
+                    need_terminal = 1;
+            }
+
+            if (need_terminal) {
+                int h = have_terminal(gedp);
+                if (!h)
+                    editor = NULL;
+            }
+        }
+
+    }
+
+    if (!editor) {
+        // No suitable editor found
+        return 0;
+    }
+
+    // Copy editor into ged struct
+    snprintf(gedp->editor, MAXPATHLEN, "%s", editor);
+
+    return 1;
+}
+
+void
+ged_clear_editor(struct ged *gedp)
+{
+    if (!gedp)
+        return;
+    gedp->editor[0] = '\0';
+    gedp->terminal[0] = '\0';
+    bu_ptbl_reset(&gedp->editor_opts);
+    bu_ptbl_reset(&gedp->terminal_opts);
+}
+
+
 void
 _ged_rt_set_eye_model(struct ged *gedp,
 		      vect_t eye_model)

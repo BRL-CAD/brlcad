@@ -902,6 +902,26 @@ GED_EXPORT int ged_pnts(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_stat(struct ged *gedp, int argc, const char *argv[]);
 
 
+/**
+ * Use bu_editor to set up an editor for use with GED
+ * commands that require launching a text editor.
+ *
+ * Will first try to respect environment variables (including looking for
+ * terminal options to launch text editors normally used only in graphical
+ * mode) and then fall back to lookups.
+ *
+ * Applications may supply their own argv array of editors to check using
+ * app_editors_cnt and app_editors in the ged struct - see bu_editor
+ * documentation for more details.
+ */
+GED_EXPORT extern int ged_set_editor(struct ged *gedp, int non_gui);
+
+/**
+ * Clear editor data set by ged_set_editor.  User specified app_editors data
+ * is left unchanged.
+ */
+GED_EXPORT extern void ged_clear_editor(struct ged *gedp);
+
 
 /* Debugging command for brep plotting */
 GED_EXPORT extern int ged_dplot(struct ged *gedp, int argc, const char *argv[]);

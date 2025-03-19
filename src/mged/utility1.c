@@ -85,7 +85,7 @@ editit(struct mged_state *s, const char *command, const char *tempfile) {
 
     CHECK_DBI_NULL;
 
-    if (!get_editor(s))
+    if (!ged_set_editor(s->gedp, s->classic_mged))
 	return TCL_ERROR;
 
     av[0] = command;
@@ -95,7 +95,7 @@ editit(struct mged_state *s, const char *command, const char *tempfile) {
 
     ged_exec(s->gedp, argc, (const char **)av);
 
-    clear_editor(s);
+    ged_clear_editor(s->gedp);
     return TCL_OK;
 }
 
@@ -113,12 +113,12 @@ f_edcolor(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, cons
 
     CHECK_DBI_NULL;
 
-    if (!get_editor(s))
+    if (!ged_set_editor(s->gedp, s->classic_mged))
 	return TCL_ERROR;
 
     ged_exec(s->gedp, argc, argv);
 
-    clear_editor(s);
+    ged_clear_editor(s->gedp);
     return TCL_OK;
 }
 
@@ -140,12 +140,12 @@ f_edcodes(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    if (!get_editor(s))
+    if (!ged_set_editor(s->gedp, s->classic_mged))
 	return TCL_ERROR;
 
     ged_exec(s->gedp, argc, argv);
 
-    clear_editor(s);
+    ged_clear_editor(s->gedp);
     return TCL_OK;
 }
 
@@ -168,12 +168,12 @@ f_edmater(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    if (!get_editor(s))
+    if (!ged_set_editor(s->gedp, s->classic_mged))
 	return TCL_ERROR;
 
     ged_exec(s->gedp, argc, argv);
 
-    clear_editor(s);
+    ged_clear_editor(s->gedp);
     return TCL_OK;
 }
 
@@ -196,7 +196,7 @@ f_red(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv
 	return TCL_ERROR;
     }
 
-    get_editor(s);
+    ged_set_editor(s->gedp, s->classic_mged);
 
     if (ged_exec(s->gedp, argc, argv) & BRLCAD_ERROR) {
 	mged_pr_output(interpreter);
@@ -206,7 +206,7 @@ f_red(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv
 	Tcl_AppendResult(interpreter, bu_vls_addr(s->gedp->ged_result_str), (char *)NULL);
     }
 
-    clear_editor(s);
+    ged_clear_editor(s->gedp);
     return TCL_OK;
 }
 
