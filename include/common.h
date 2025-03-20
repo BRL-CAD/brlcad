@@ -474,8 +474,9 @@ typedef _TCHAR TCHAR;
 
 
 /* workaround for system Eigen on Mac */
-#define alloca(x) malloc(x)
-
+#ifndef alloca
+#  define alloca(x) malloc(x)
+#endif
 
 /**
  * globally disable certain warnings.  do NOT add new warnings here
