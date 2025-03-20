@@ -413,9 +413,9 @@ main(int argc, char *argv[])
 
 
     /****************************
-       RT_SOLID_EDIT_SCALE - XY
+       ECMD_TOR_R1 - XY
      ****************************/
-    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, RT_SOLID_EDIT_SCALE);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_TOR_R1);
 
     // Reset
     VMOVE(edit_tor->v, orig_tor->v);
