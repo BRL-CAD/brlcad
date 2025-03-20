@@ -118,10 +118,6 @@ __BEGIN_DECLS
 /* Container for defining sub-command structures */
 #define _GED_FUNTAB_UNLIMITED -1
 
-#define DG_GED_MAX 2047.0
-#define DG_GED_MIN -2048.0
-
-
 #define GED_CMD_RECURSION_LIMIT 100
 
 /* Callback management related structures */

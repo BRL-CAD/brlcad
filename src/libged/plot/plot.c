@@ -111,9 +111,9 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
     }
 
     if (Three_D)
-        pl_3space(fp, (int)DG_GED_MIN, (int)DG_GED_MIN, (int)DG_GED_MIN, (int)DG_GED_MAX, (int)DG_GED_MAX, (int)DG_GED_MAX);
+        pl_3space(fp, (int)GED_MIN, (int)GED_MIN, (int)GED_MIN, (int)GED_MAX, (int)GED_MAX, (int)GED_MAX);
     else
-        pl_space(fp, (int)DG_GED_MIN, (int)DG_GED_MIN, (int)DG_GED_MAX, (int)DG_GED_MAX);
+        pl_space(fp, (int)GED_MIN, (int)GED_MIN, (int)GED_MAX, (int)GED_MAX);
     pl_erase(fp);
     Dashing = 0;
     pl_linmod(fp, "solid");
@@ -169,18 +169,18 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
                                  sp->s_color[1],
                                  sp->s_color[2]);
                         pl_3line(fp,
-                                 (int)(start[X] * DG_GED_MAX),
-                                 (int)(start[Y] * DG_GED_MAX),
-                                 (int)(start[Z] * DG_GED_MAX),
-                                 (int)(fin[X] * DG_GED_MAX),
-                                 (int)(fin[Y] * DG_GED_MAX),
-                                 (int)(fin[Z] * DG_GED_MAX));
+                                 (int)(start[X] * GED_MAX),
+                                 (int)(start[Y] * GED_MAX),
+                                 (int)(start[Z] * GED_MAX),
+                                 (int)(fin[X] * GED_MAX),
+                                 (int)(fin[Y] * GED_MAX),
+                                 (int)(fin[Z] * GED_MAX));
                     } else {
                         pl_line(fp,
-                                (int)(start[0] * DG_GED_MAX),
-                                (int)(start[1] * DG_GED_MAX),
-                                (int)(fin[0] * DG_GED_MAX),
-                                (int)(fin[1] * DG_GED_MAX));
+                                (int)(start[0] * GED_MAX),
+                                (int)(start[1] * GED_MAX),
+                                (int)(fin[0] * GED_MAX),
+                                (int)(fin[1] * GED_MAX));
                     }
                 }
             }

@@ -506,7 +506,7 @@ ged_vnirt_core(struct ged *gedp, int argc, const char *argv[])
 	sscanf(argv[argc-1], "%lf", &scan[Y]) != 1) {
 	return BRLCAD_ERROR;
     }
-    scan[Z] = DG_GED_MAX;
+    scan[Z] = GED_MAX;
     argc -= 2;
 
     av = (char **)bu_calloc(1, sizeof(char *) * (argc + 4), "gd_vnirt_cmd: av");
