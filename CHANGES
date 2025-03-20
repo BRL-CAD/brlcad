@@ -1775,3 +1775,5 @@ s/RT_VLIST_SET_POINT_SIZE\(/BV_VLIST_SET_POINT_SIZE\(&rt_vlfree, /g
 s/RT_VLIST_SET_LINE_WIDTH\(/BV_VLIST_SET_LINE_WIDTH\(&rt_vlfree, /g
 s/bu_shader_to_list\(/rt_shader_to_list\(/g
 s/bu_shader_to_key_eq\(/rt_shader_to_key_eq\(/g
+s/_GED_MAX_LEVELS/_GED_TRACE_MAX_LEVELS/g
+

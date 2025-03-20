@@ -90,10 +90,10 @@ ged_trace(struct directory *dp,
     int i;
     int id;
 
-    if (pathpos >= _GED_MAX_LEVELS) {
-	bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "nesting exceeds %d levels\n", _GED_MAX_LEVELS);
+    if (pathpos >= _GED_TRACE_MAX_LEVELS) {
+	bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "nesting exceeds %d levels\n", _GED_TRACE_MAX_LEVELS);
 
-	for (i = 0; i < _GED_MAX_LEVELS; i++)
+	for (i = 0; i < _GED_TRACE_MAX_LEVELS; i++)
 	    bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "/%s", gtdp->gtd_path[i]->d_namep);
 
 	bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "\n");

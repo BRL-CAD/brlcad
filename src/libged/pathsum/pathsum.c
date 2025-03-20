@@ -97,7 +97,7 @@ ged_pathsum_core(struct ged *gedp, int argc, const char *argv[])
 	char *tok;
 	tok = strtok((char *)argv[pos_in], "/");
 	while (tok) {
-	    if (gtd.gtd_objpos >= _GED_MAX_LEVELS)
+	    if (gtd.gtd_objpos >= _GED_TRACE_MAX_LEVELS)
 		break;
 	    if ((gtd.gtd_obj[gtd.gtd_objpos++] = db_lookup(gedp->dbip, tok, LOOKUP_NOISY)) == RT_DIR_NULL) {
 		return BRLCAD_ERROR;
@@ -127,7 +127,7 @@ ged_pathsum_core(struct ged *gedp, int argc, const char *argv[])
 	/* path not found */
 	bu_vls_printf(gedp->ged_result_str, "PATH:  ");
 	/* NOTE: gtd.gtd_obj size is limited to _GED_MAX_LEVLES - make sure our loop bounds dont exceed */
-	for (i = 0; i < FMIN(gtd.gtd_objpos, _GED_MAX_LEVELS); i++) {
+	for (i = 0; i < FMIN(gtd.gtd_objpos, _GED_TRACE_MAX_LEVELS); i++) {
 	    bu_vls_printf(gedp->ged_result_str, "/%s", gtd.gtd_obj[i]->d_namep);
 	}
 	bu_vls_printf(gedp->ged_result_str, "  NOT FOUND\n");

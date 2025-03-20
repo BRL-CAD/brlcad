@@ -65,11 +65,11 @@ GED_EXPORT extern int ged_log(struct ged *gedp, int argc, const char *argv[]);
 
 /* defined in trace.c */
 
-#define _GED_MAX_LEVELS 12
+#define _GED_TRACE_MAX_LEVELS 12
 struct _ged_trace_data {
     struct ged *gtd_gedp;
-    struct directory *gtd_path[_GED_MAX_LEVELS];
-    struct directory *gtd_obj[_GED_MAX_LEVELS];
+    struct directory *gtd_path[_GED_TRACE_MAX_LEVELS];
+    struct directory *gtd_obj[_GED_TRACE_MAX_LEVELS];
     mat_t gtd_xform;
     int gtd_objpos;
     int gtd_prflag;
