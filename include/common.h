@@ -473,8 +473,8 @@ typedef _TCHAR TCHAR;
 #endif
 
 
-/* workaround for system Eigen on Mac */
-#ifndef alloca
+/* workaround for system Eigen on Mac which uses alloca without proper includes */
+#if defined(__APPLE__) && !defined(alloca)
 #  define alloca(x) malloc(x)
 #endif
 
