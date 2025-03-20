@@ -123,7 +123,11 @@ static std::string read_line
 	char a;
 	is.get(a);
 
-	if ((a == '\n') || (a == '\r'))
+	/* ignore ancient mac, pretend these don't exist */
+	if (a == '\r')
+	    continue;
+
+	if (a == '\n')
 	    break;
 
 	ret += a;
