@@ -61,7 +61,7 @@ adc_view_to_adc_grid(struct bv_adc_state *adcs, mat_t model2view)
 }
 
 /* From include/dm.h */
-#define INV_GED 0.00048828125
+#define INV_BV 0.00048828125
 
 void
 adc_reset(struct bv_adc_state *adcs, mat_t view2model, mat_t model2view)
@@ -72,7 +72,7 @@ adc_reset(struct bv_adc_state *adcs, mat_t view2model, mat_t model2view)
 
     VSETALL(adcs->pos_view, 0.0);
     MAT4X3PNT(adcs->pos_model, view2model, adcs->pos_view);
-    adcs->dst = (adcs->dv_dist * INV_GED + 1.0) * M_SQRT1_2;
+    adcs->dst = (adcs->dv_dist * INV_BV + 1.0) * M_SQRT1_2;
     adcs->a1 = adcs->a2 = 45.0;
     adc_view_to_adc_grid(adcs, model2view);
 

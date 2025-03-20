@@ -465,7 +465,7 @@ ged_vnirt_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int status;
-    fastf_t sf = 1.0 * INV_GED;
+    fastf_t sf = 1.0 * INV_BV;
     vect_t view_ray_orig;
     vect_t center_model;
     double scan[3];
@@ -506,7 +506,7 @@ ged_vnirt_core(struct ged *gedp, int argc, const char *argv[])
 	sscanf(argv[argc-1], "%lf", &scan[Y]) != 1) {
 	return BRLCAD_ERROR;
     }
-    scan[Z] = GED_MAX;
+    scan[Z] = BV_MAX;
     argc -= 2;
 
     av = (char **)bu_calloc(1, sizeof(char *) * (argc + 4), "gd_vnirt_cmd: av");

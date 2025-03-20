@@ -1645,7 +1645,7 @@ void gl_zclip_hook(const struct bu_structparse *sdp,
 {
     struct gl_vars *mvars = (struct gl_vars *)base;
     struct dm *dmp = mvars->this_dm;
-    fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
+    fastf_t bounds[6] = { BV_MIN, BV_MAX, BV_MIN, BV_MAX, BV_MIN, BV_MAX };
 
     if (mvars->zclipping_on) {
 	bounds[4] = -1.0;

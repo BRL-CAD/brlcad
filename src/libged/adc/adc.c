@@ -194,7 +194,7 @@ ged_adc_core(struct ged *gedp,
 		else
 		    gedp->ged_gvp->gv_s->gv_adc.a1 = user_pt[0];
 
-		gedp->ged_gvp->gv_s->gv_adc.dv_a1 = (1.0 - (gedp->ged_gvp->gv_s->gv_adc.a1 / 45.0)) * GED_MAX;
+		gedp->ged_gvp->gv_s->gv_adc.dv_a1 = (1.0 - (gedp->ged_gvp->gv_s->gv_adc.a1 / 45.0)) * BV_MAX;
 	    }
 
 	    return BRLCAD_OK;
@@ -215,7 +215,7 @@ ged_adc_core(struct ged *gedp,
 		else
 		    gedp->ged_gvp->gv_s->gv_adc.a2 = user_pt[0];
 
-		gedp->ged_gvp->gv_s->gv_adc.dv_a2 = (1.0 - (gedp->ged_gvp->gv_s->gv_adc.a2 / 45.0)) * GED_MAX;
+		gedp->ged_gvp->gv_s->gv_adc.dv_a2 = (1.0 - (gedp->ged_gvp->gv_s->gv_adc.a2 / 45.0)) * BV_MAX;
 	    }
 
 	    return BRLCAD_OK;
@@ -236,7 +236,7 @@ ged_adc_core(struct ged *gedp,
 		else
 		    gedp->ged_gvp->gv_s->gv_adc.dst = user_pt[0] / gv_scale;
 
-		gedp->ged_gvp->gv_s->gv_adc.dv_dist = (gedp->ged_gvp->gv_s->gv_adc.dst / M_SQRT1_2 - 1.0) * GED_MAX;
+		gedp->ged_gvp->gv_s->gv_adc.dv_dist = (gedp->ged_gvp->gv_s->gv_adc.dst / M_SQRT1_2 - 1.0) * BV_MAX;
 	    }
 
 	    return BRLCAD_OK;
@@ -257,7 +257,7 @@ ged_adc_core(struct ged *gedp,
 		else
 		    gedp->ged_gvp->gv_s->gv_adc.dv_dist = user_pt[0];
 
-		gedp->ged_gvp->gv_s->gv_adc.dst = (gedp->ged_gvp->gv_s->gv_adc.dv_dist * INV_GED + 1.0) * M_SQRT1_2;
+		gedp->ged_gvp->gv_s->gv_adc.dst = (gedp->ged_gvp->gv_s->gv_adc.dv_dist * INV_BV + 1.0) * M_SQRT1_2;
 	    }
 
 	    return BRLCAD_OK;
@@ -271,7 +271,7 @@ ged_adc_core(struct ged *gedp,
 	if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_pos) {
 		gedp->ged_gvp->gv_s->gv_adc.pos_grid[X] += user_pt[0] / gv_scale;
-		adc_grid_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_view2model, GED_MAX);
+		adc_grid_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_view2model, BV_MAX);
 		MAT4X3PNT(gedp->ged_gvp->gv_s->gv_adc.pos_model, gedp->ged_gvp->gv_view2model, gedp->ged_gvp->gv_s->gv_adc.pos_view);
 	    }
 
@@ -286,7 +286,7 @@ ged_adc_core(struct ged *gedp,
 	if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_pos) {
 		gedp->ged_gvp->gv_s->gv_adc.pos_grid[Y] += user_pt[0] / gv_scale;
-		adc_grid_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_view2model, GED_MAX);
+		adc_grid_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_view2model, BV_MAX);
 		MAT4X3PNT(gedp->ged_gvp->gv_s->gv_adc.pos_model, gedp->ged_gvp->gv_view2model, gedp->ged_gvp->gv_s->gv_adc.pos_view);
 	    }
 
@@ -314,7 +314,7 @@ ged_adc_core(struct ged *gedp,
 		}
 
 		gedp->ged_gvp->gv_s->gv_adc.pos_grid[Z] = 0.0;
-		adc_grid_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_view2model, GED_MAX);
+		adc_grid_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_view2model, BV_MAX);
 		MAT4X3PNT(gedp->ged_gvp->gv_s->gv_adc.pos_model, gedp->ged_gvp->gv_view2model, gedp->ged_gvp->gv_s->gv_adc.pos_model);
 	    }
 
@@ -330,7 +330,7 @@ ged_adc_core(struct ged *gedp,
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_pos) {
 		double pval = (gedp->dbip) ? (user_pt[0] * gedp->dbip->dbi_local2base) : user_pt[0];
 		gedp->ged_gvp->gv_s->gv_adc.pos_model[X] += pval;
-		adc_model_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view, GED_MAX);
+		adc_model_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view, BV_MAX);
 		adc_view_to_adc_grid(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view);
 	    }
 
@@ -346,7 +346,7 @@ ged_adc_core(struct ged *gedp,
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_pos) {
 		double pval = (gedp->dbip) ? (user_pt[0] * gedp->dbip->dbi_local2base) : user_pt[0];
 		gedp->ged_gvp->gv_s->gv_adc.pos_model[Y] += pval;
-		adc_model_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view, GED_MAX);
+		adc_model_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view, BV_MAX);
 		adc_view_to_adc_grid(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view);
 	    }
 
@@ -362,7 +362,7 @@ ged_adc_core(struct ged *gedp,
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_pos) {
 		double pval = (gedp->dbip) ? (user_pt[0] * gedp->dbip->dbi_local2base) : user_pt[0];
 		gedp->ged_gvp->gv_s->gv_adc.pos_model[Z] += pval;
-		adc_model_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view, GED_MAX);
+		adc_model_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view, BV_MAX);
 		adc_view_to_adc_grid(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view);
 	    }
 
@@ -387,7 +387,7 @@ ged_adc_core(struct ged *gedp,
 		VMOVE(gedp->ged_gvp->gv_s->gv_adc.pos_model, user_pt);
 	    }
 
-	    adc_model_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view, GED_MAX);
+	    adc_model_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view, BV_MAX);
 	    adc_view_to_adc_grid(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view);
 
 	    return BRLCAD_OK;
@@ -409,8 +409,8 @@ ged_adc_core(struct ged *gedp,
 		    gedp->ged_gvp->gv_s->gv_adc.dv_x = user_pt[0];
 		}
 
-		gedp->ged_gvp->gv_s->gv_adc.pos_view[X] = gedp->ged_gvp->gv_s->gv_adc.dv_x * INV_GED;
-		gedp->ged_gvp->gv_s->gv_adc.pos_view[Y] = gedp->ged_gvp->gv_s->gv_adc.dv_y * INV_GED;
+		gedp->ged_gvp->gv_s->gv_adc.pos_view[X] = gedp->ged_gvp->gv_s->gv_adc.dv_x * INV_BV;
+		gedp->ged_gvp->gv_s->gv_adc.pos_view[Y] = gedp->ged_gvp->gv_s->gv_adc.dv_y * INV_BV;
 		adc_view_to_adc_grid(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view);
 		MAT4X3PNT(gedp->ged_gvp->gv_s->gv_adc.pos_model, gedp->ged_gvp->gv_view2model, gedp->ged_gvp->gv_s->gv_adc.pos_view);
 	    }
@@ -434,8 +434,8 @@ ged_adc_core(struct ged *gedp,
 		    gedp->ged_gvp->gv_s->gv_adc.dv_y = user_pt[0];
 		}
 
-		gedp->ged_gvp->gv_s->gv_adc.pos_view[X] = gedp->ged_gvp->gv_s->gv_adc.dv_x * INV_GED;
-		gedp->ged_gvp->gv_s->gv_adc.pos_view[Y] = gedp->ged_gvp->gv_s->gv_adc.dv_y * INV_GED;
+		gedp->ged_gvp->gv_s->gv_adc.pos_view[X] = gedp->ged_gvp->gv_s->gv_adc.dv_x * INV_BV;
+		gedp->ged_gvp->gv_s->gv_adc.pos_view[Y] = gedp->ged_gvp->gv_s->gv_adc.dv_y * INV_BV;
 		adc_view_to_adc_grid(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view);
 		MAT4X3PNT(gedp->ged_gvp->gv_s->gv_adc.pos_model, gedp->ged_gvp->gv_view2model, gedp->ged_gvp->gv_s->gv_adc.pos_view);
 	    }
@@ -639,10 +639,10 @@ void
 ged_calc_adc_pos(struct bview *gvp)
 {
     if (gvp->gv_s->gv_adc.anchor_pos == 1) {
-	adc_model_to_adc_view(&(gvp->gv_s->gv_adc), gvp->gv_model2view, GED_MAX);
+	adc_model_to_adc_view(&(gvp->gv_s->gv_adc), gvp->gv_model2view, BV_MAX);
 	adc_view_to_adc_grid(&(gvp->gv_s->gv_adc), gvp->gv_model2view);
     } else if (gvp->gv_s->gv_adc.anchor_pos == 2) {
-	adc_grid_to_adc_view(&(gvp->gv_s->gv_adc), gvp->gv_view2model, GED_MAX);
+	adc_grid_to_adc_view(&(gvp->gv_s->gv_adc), gvp->gv_view2model, BV_MAX);
 	MAT4X3PNT(gvp->gv_s->gv_adc.pos_model, gvp->gv_view2model, gvp->gv_s->gv_adc.pos_view);
     } else {
 	adc_view_to_adc_grid(&(gvp->gv_s->gv_adc), gvp->gv_model2view);
@@ -659,12 +659,12 @@ ged_calc_adc_a1(struct bview *gvp)
 	point_t view_pt;
 
 	MAT4X3PNT(view_pt, gvp->gv_model2view, gvp->gv_s->gv_adc.anchor_pt_a1);
-	dx = view_pt[X] * GED_MAX - gvp->gv_s->gv_adc.dv_x;
-	dy = view_pt[Y] * GED_MAX - gvp->gv_s->gv_adc.dv_y;
+	dx = view_pt[X] * BV_MAX - gvp->gv_s->gv_adc.dv_x;
+	dy = view_pt[Y] * BV_MAX - gvp->gv_s->gv_adc.dv_y;
 
 	if (!ZERO(dx) || !ZERO(dy)) {
 	    gvp->gv_s->gv_adc.a1 = RAD2DEG*atan2(dy, dx);
-	    gvp->gv_s->gv_adc.dv_a1 = (1.0 - (gvp->gv_s->gv_adc.a1 / 45.0)) * GED_MAX;
+	    gvp->gv_s->gv_adc.dv_a1 = (1.0 - (gvp->gv_s->gv_adc.a1 / 45.0)) * BV_MAX;
 	}
     }
 }
@@ -678,12 +678,12 @@ ged_calc_adc_a2(struct bview *gvp)
 	point_t view_pt;
 
 	MAT4X3PNT(view_pt, gvp->gv_model2view, gvp->gv_s->gv_adc.anchor_pt_a2);
-	dx = view_pt[X] * GED_MAX - gvp->gv_s->gv_adc.dv_x;
-	dy = view_pt[Y] * GED_MAX - gvp->gv_s->gv_adc.dv_y;
+	dx = view_pt[X] * BV_MAX - gvp->gv_s->gv_adc.dv_x;
+	dy = view_pt[Y] * BV_MAX - gvp->gv_s->gv_adc.dv_y;
 
 	if (!ZERO(dx) || !ZERO(dy)) {
 	    gvp->gv_s->gv_adc.a2 = RAD2DEG*atan2(dy, dx);
-	    gvp->gv_s->gv_adc.dv_a2 = (1.0 - (gvp->gv_s->gv_adc.a2 / 45.0)) * GED_MAX;
+	    gvp->gv_s->gv_adc.dv_a2 = (1.0 - (gvp->gv_s->gv_adc.a2 / 45.0)) * BV_MAX;
 	}
     }
 }
@@ -699,13 +699,13 @@ ged_calc_adc_dst(struct bview *gvp)
 
 	MAT4X3PNT(view_pt, gvp->gv_model2view, gvp->gv_s->gv_adc.anchor_pt_dst);
 
-	dx = view_pt[X] * GED_MAX - gvp->gv_s->gv_adc.dv_x;
-	dy = view_pt[Y] * GED_MAX - gvp->gv_s->gv_adc.dv_y;
+	dx = view_pt[X] * BV_MAX - gvp->gv_s->gv_adc.dv_x;
+	dy = view_pt[Y] * BV_MAX - gvp->gv_s->gv_adc.dv_y;
 	dist = sqrt(dx * dx + dy * dy);
-	gvp->gv_s->gv_adc.dst = dist * INV_GED;
-	gvp->gv_s->gv_adc.dv_dist = (dist / M_SQRT1_2) - GED_MAX;
+	gvp->gv_s->gv_adc.dst = dist * INV_BV;
+	gvp->gv_s->gv_adc.dv_dist = (dist / M_SQRT1_2) - BV_MAX;
     } else
-	gvp->gv_s->gv_adc.dst = (gvp->gv_s->gv_adc.dv_dist * INV_GED + 1.0) * M_SQRT1_2;
+	gvp->gv_s->gv_adc.dst = (gvp->gv_s->gv_adc.dv_dist * INV_BV + 1.0) * M_SQRT1_2;
 }
 
 #ifdef GED_PLUGIN

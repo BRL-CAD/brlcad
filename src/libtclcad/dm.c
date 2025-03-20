@@ -1946,10 +1946,10 @@ dmo_bounds_tcl(void *clientData, int argc, const char **argv)
 	 * of the zclipping plane in dm-ogl.c. dm-X.c uses
 	 * dm_clipmin and dm_clipmax.
 	 */
-	if (dmop->dmo_dmp->i->dm_clipmax[2] <= GED_MAX)
+	if (dmop->dmo_dmp->i->dm_clipmax[2] <= BV_MAX)
 	    dm_set_bound(dmop->dmo_dmp, 1.0);
 	else
-	    dm_set_bound(dmop->dmo_dmp, GED_MAX / dmop->dmo_dmp->i->dm_clipmax[2]);
+	    dm_set_bound(dmop->dmo_dmp, BV_MAX / dmop->dmo_dmp->i->dm_clipmax[2]);
 
 	return BRLCAD_OK;
     }

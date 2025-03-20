@@ -120,7 +120,7 @@ draw_e_axes(struct mged_state *s)
     memset(&gas, 0, sizeof(struct bv_axes));
     gas.label_flag = 1;
     VMOVE(gas.axes_pos, v_ap1);
-    gas.axes_size = axes_state->ax_edit_size1 * INV_GED;
+    gas.axes_size = axes_state->ax_edit_size1 * INV_BV;
     VMOVE(gas.axes_color, color_scheme->cs_edit_axes1);
     VMOVE(gas.label_color, color_scheme->cs_edit_axes_label1);
     gas.line_width = axes_state->ax_edit_linewidth1;
@@ -130,7 +130,7 @@ draw_e_axes(struct mged_state *s)
     memset(&gas, 0, sizeof(struct bv_axes));
     gas.label_flag = 1;
     VMOVE(gas.axes_pos, v_ap2);
-    gas.axes_size = axes_state->ax_edit_size2 * INV_GED;
+    gas.axes_size = axes_state->ax_edit_size2 * INV_BV;
     VMOVE(gas.axes_color, color_scheme->cs_edit_axes2);
     VMOVE(gas.label_color, color_scheme->cs_edit_axes_label2);
     gas.line_width = axes_state->ax_edit_linewidth2;
@@ -153,7 +153,7 @@ draw_m_axes(struct mged_state *s)
     memset(&gas, 0, sizeof(struct bv_axes));
     gas.label_flag = 1;
     VMOVE(gas.axes_pos, v_ap);
-    gas.axes_size = axes_state->ax_model_size * INV_GED;
+    gas.axes_size = axes_state->ax_model_size * INV_BV;
     VMOVE(gas.axes_color, color_scheme->cs_model_axes);
     VMOVE(gas.label_color, color_scheme->cs_model_axes_label);
     gas.line_width = axes_state->ax_model_linewidth;
@@ -169,14 +169,14 @@ draw_v_axes(struct mged_state *s)
     struct bv_axes gas;
 
     VSET(v_ap,
-	 axes_state->ax_view_pos[X] * INV_GED,
-	 axes_state->ax_view_pos[Y] * INV_GED / dm_get_aspect(DMP),
+	 axes_state->ax_view_pos[X] * INV_BV,
+	 axes_state->ax_view_pos[Y] * INV_BV / dm_get_aspect(DMP),
 	 0.0);
 
     memset(&gas, 0, sizeof(struct bv_axes));
     gas.label_flag = 1;
     VMOVE(gas.axes_pos, v_ap);
-    gas.axes_size = axes_state->ax_view_size * INV_GED;
+    gas.axes_size = axes_state->ax_view_size * INV_BV;
     VMOVE(gas.axes_color, color_scheme->cs_view_axes);
     VMOVE(gas.label_color, color_scheme->cs_view_axes_label);
     gas.line_width = axes_state->ax_view_linewidth;

@@ -271,7 +271,7 @@ sl_itol(struct scroll_item *mptr, double val)
 	val = 0.0;
     }
 
-    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*GED_MAX);
+    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*BV_MAX);
     Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
@@ -311,7 +311,7 @@ scroll_display(struct mged_state *s, int y_top)
 	    switch (mptr->scroll_val) {
 		case 0:
 		    if (second_menu) {
-			f = (double)adc_state->adc_dv_x * INV_GED;
+			f = (double)adc_state->adc_dv_x * INV_BV;
 
 			dm_set_fg(DMP,
 				       color_scheme->cs_slider_text2[0],
@@ -362,7 +362,7 @@ scroll_display(struct mged_state *s, int y_top)
 		    break;
 		case 1:
 		    if (second_menu) {
-			f = (double)adc_state->adc_dv_y * INV_GED;
+			f = (double)adc_state->adc_dv_y * INV_BV;
 
 			dm_set_fg(DMP,
 				       color_scheme->cs_slider_text2[0],
@@ -412,7 +412,7 @@ scroll_display(struct mged_state *s, int y_top)
 		    break;
 		case 2:
 		    if (second_menu) {
-			f = (double)adc_state->adc_dv_a1 * INV_GED;
+			f = (double)adc_state->adc_dv_a1 * INV_BV;
 
 			dm_set_fg(DMP,
 				       color_scheme->cs_slider_text2[0],
@@ -462,7 +462,7 @@ scroll_display(struct mged_state *s, int y_top)
 		    break;
 		case 3:
 		    if (second_menu) {
-			f = (double)adc_state->adc_dv_a2 * INV_GED;
+			f = (double)adc_state->adc_dv_a2 * INV_BV;
 
 			dm_set_fg(DMP,
 				       color_scheme->cs_slider_text2[0],
@@ -494,7 +494,7 @@ scroll_display(struct mged_state *s, int y_top)
 		    break;
 		case 4:
 		    if (second_menu) {
-			f = (double)adc_state->adc_dv_dist * INV_GED;
+			f = (double)adc_state->adc_dv_dist * INV_BV;
 
 			dm_set_fg(DMP,
 				       color_scheme->cs_slider_text2[0],
@@ -662,7 +662,7 @@ scroll_display(struct mged_state *s, int y_top)
 	    }
 
 	    if (f > 0)
-		xpos = (f + SL_TOL) * GED_MAX;
+		xpos = (f + SL_TOL) * BV_MAX;
 	    else if (f < 0)
 		xpos = (f - SL_TOL) * -MENUXLIM;
 	    else
@@ -675,7 +675,7 @@ scroll_display(struct mged_state *s, int y_top)
 			   color_scheme->cs_slider_line[1],
 			   color_scheme->cs_slider_line[2], 1, 1.0);
 	    dm_draw_line_2d(DMP,
-			    GED2PM1((int)GED_MAX), GED2PM1(y),
+			    GED2PM1((int)BV_MAX), GED2PM1(y),
 			    GED2PM1(MENUXLIM), GED2PM1(y));
 	}
     }
@@ -733,7 +733,7 @@ scroll_select(struct mged_state *s, int pen_x, int pen_y, int do_func)
 	     * menu text area on the left.
 	     */
 	    if (pen_x >= 0) {
-		val = pen_x * INV_GED;
+		val = pen_x * INV_BV;
 	    } else {
 		val = pen_x/(double)(-MENUXLIM);
 	    }

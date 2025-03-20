@@ -267,8 +267,8 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	case AMM_IDLE:
 	    if (scroll_active)
 		bu_vls_printf(&cmd, "M 1 %d %d\n",
-			      (int)(dm_Xx2Normal(DMP, mx) * GED_MAX),
-			      (int)(dm_Xy2Normal(DMP, my, 0) * GED_MAX));
+			      (int)(dm_Xx2Normal(DMP, mx) * BV_MAX),
+			      (int)(dm_Xy2Normal(DMP, my, 0) * BV_MAX));
 	    else if (rubber_band->rb_active) {
 		fastf_t x = dm_Xx2Normal(DMP, mx);
 		fastf_t y = dm_Xy2Normal(DMP, my, 1);
@@ -300,8 +300,8 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		/* do the regular thing */
 		/* Constant tracking (e.g. illuminate mode) bound to M mouse */
 		bu_vls_printf(&cmd, "M 0 %d %d\n",
-			      (int)(dm_Xx2Normal(DMP, mx) * GED_MAX),
-			      (int)(dm_Xy2Normal(DMP, my, 0) * GED_MAX));
+			      (int)(dm_Xx2Normal(DMP, mx) * BV_MAX),
+			      (int)(dm_Xy2Normal(DMP, my, 0) * BV_MAX));
 	    else /* not doing motion */
 		goto handled;
 
@@ -446,14 +446,14 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_ADC_ANG1:
-	    fx = dm_Xx2Normal(DMP, mx) * GED_MAX - adc_state->adc_dv_x;
-	    fy = dm_Xy2Normal(DMP, my, 1) * GED_MAX - adc_state->adc_dv_y;
+	    fx = dm_Xx2Normal(DMP, mx) * BV_MAX - adc_state->adc_dv_x;
+	    fy = dm_Xy2Normal(DMP, my, 1) * BV_MAX - adc_state->adc_dv_y;
 	    bu_vls_printf(&cmd, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
 
 	    break;
 	case AMM_ADC_ANG2:
-	    fx = dm_Xx2Normal(DMP, mx) * GED_MAX - adc_state->adc_dv_x;
-	    fy = dm_Xy2Normal(DMP, my, 1) * GED_MAX - adc_state->adc_dv_y;
+	    fx = dm_Xx2Normal(DMP, mx) * BV_MAX - adc_state->adc_dv_x;
+	    fy = dm_Xy2Normal(DMP, my, 1) * BV_MAX - adc_state->adc_dv_y;
 	    bu_vls_printf(&cmd, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
 
 	    break;
@@ -474,8 +474,8 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_ADC_DIST:
-	    fx = (dm_Xx2Normal(DMP, mx) * GED_MAX - adc_state->adc_dv_x) * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local * INV_GED;
-	    fy = (dm_Xy2Normal(DMP, my, 1) * GED_MAX - adc_state->adc_dv_y) * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local * INV_GED;
+	    fx = (dm_Xx2Normal(DMP, mx) * BV_MAX - adc_state->adc_dv_x) * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local * INV_BV;
+	    fy = (dm_Xy2Normal(DMP, my, 1) * BV_MAX - adc_state->adc_dv_y) * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local * INV_BV;
 	    td = sqrt(fx * fx + fy * fy);
 	    bu_vls_printf(&cmd, "adc dst %lf\n", td);
 
@@ -706,7 +706,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		f = -dy;
 
 	    bu_vls_printf(&cmd, "knob -i xadc %f\n",
-			  f / (fastf_t)width * GED_RANGE);
+			  f / (fastf_t)width * BV_RANGE);
 	    break;
 	case AMM_CON_YADC:
 	    if (abs(dx) >= abs(dy))
@@ -715,7 +715,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		f = -dy;
 
 	    bu_vls_printf(&cmd, "knob -i yadc %f\n",
-			  f / (fastf_t)height * GED_RANGE);
+			  f / (fastf_t)height * BV_RANGE);
 	    break;
 	case AMM_CON_ANG1:
 	    if (abs(dx) >= abs(dy))
@@ -742,7 +742,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		f = -dy;
 
 	    bu_vls_printf(&cmd, "knob -i distadc %f\n",
-			  f / (fastf_t)width * GED_RANGE);
+			  f / (fastf_t)width * BV_RANGE);
 	    break;
     }
 
@@ -796,7 +796,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 
 		setting = dm_limit(dm_knobs[dmep->first_axis]);
 		bu_vls_printf(&cmd, "knob ang1 %f\n",
-			      45.0 - 45.0*((double)setting) * INV_GED);
+			      45.0 - 45.0*((double)setting) * INV_BV);
 	    } else {
 		if (mged_variables->mv_rateknobs) {
 		    f = view_state->vs_rate_model_rotate[Z];
@@ -878,7 +878,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 
 		setting = dm_limit(dm_knobs[dmep->first_axis]);
 		bu_vls_printf(&cmd, "knob ang2 %f\n",
-			      45.0 - 45.0*((double)setting) * INV_GED);
+			      45.0 - 45.0*((double)setting) * INV_BV);
 	    } else {
 		if (mged_variables->mv_rateknobs) {
 		    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT)

@@ -40,7 +40,7 @@ extern "C" {
 #define YMIN            (-2048)
 #define YMAX            (2047)
 
-// from GED_MIN and GED_MAX
+// from BV_MIN and BV_MAX
 #define QTGL_ZMIN -2048
 #define QTGL_ZMAX 2047
 

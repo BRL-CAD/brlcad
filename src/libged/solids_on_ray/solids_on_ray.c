@@ -220,7 +220,7 @@ ged_solids_on_ray_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if ((int)GED_MIN > h || h > (int)GED_MAX || (int)GED_MIN > v || v > (int)GED_MAX) {
+    if ((int)BV_MIN > h || h > (int)BV_MAX || (int)BV_MIN > v || v > (int)BV_MAX) {
 	bu_vls_printf(gedp->ged_result_str, "Screen coordinates out of range\nMust be between +/-2048");
 	return BRLCAD_ERROR;
     }
@@ -262,8 +262,8 @@ ged_solids_on_ray_core(struct ged *gedp, int argc, const char *argv[])
 
     VMOVEN(unit_H, gedp->ged_gvp->gv_model2view, 3);
     VMOVEN(unit_V, gedp->ged_gvp->gv_model2view + 4, 3);
-    VJOIN1(ray_orig, ray_orig, h * gedp->ged_gvp->gv_scale * INV_GED, unit_H);
-    VJOIN1(ray_orig, ray_orig, v * gedp->ged_gvp->gv_scale * INV_GED, unit_V);
+    VJOIN1(ray_orig, ray_orig, h * gedp->ged_gvp->gv_scale * INV_BV, unit_H);
+    VJOIN1(ray_orig, ray_orig, v * gedp->ged_gvp->gv_scale * INV_BV, unit_V);
 
     /* allocate space for display top-levels */
     args = 2 + ged_who_argc(gedp);

@@ -66,6 +66,19 @@
 
 __BEGIN_DECLS
 
+/* Define view ranges.  The numbers -2048 and 2047 go all
+ * the way back to the original angle-distance cursor code
+ * that predates even BRL-CAD itself, but (at least right now)
+ * there doesn't seem to be any documentation of why those
+ * specific values were chosen. */
+#define BV_MAX 2047.0
+#define BV_MIN -2048.0
+#define BV_RANGE 4095.0
+/* Map +/-2048 BV space into -1.0..+1.0 :: x/2048*/
+#define INV_BV 0.00048828125
+#define INV_4096 0.000244140625
+
+
 #define BV_MINVIEWSIZE 0.0001
 #define BV_MINVIEWSCALE 0.00005
 

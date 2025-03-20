@@ -47,7 +47,7 @@ struct scroll_item {
 #define MGED_DISPLAY_VAR "mged_display"
 
 /* +-2048 to +-1 */
-#define GED2PM1(x) (((fastf_t)(x))*INV_GED)
+#define GED2PM1(x) (((fastf_t)(x))*INV_BV)
 
 #define LAST_SOLID(_sp)       DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
 

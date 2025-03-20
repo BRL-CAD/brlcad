@@ -1441,10 +1441,10 @@ to_bounds(struct ged *gedp,
      * use it for controlling the location of the zclipping plane in
      * dm-ogl.c. dm-X.c uses dm_clipmin and dm_clipmax.
      */
-    if (dm_get_clipmax((struct dm *)gdvp->dmp) && (*dm_get_clipmax((struct dm *)gdvp->dmp))[2] <= GED_MAX)
+    if (dm_get_clipmax((struct dm *)gdvp->dmp) && (*dm_get_clipmax((struct dm *)gdvp->dmp))[2] <= BV_MAX)
 	dm_set_bound((struct dm *)gdvp->dmp, 1.0);
     else
-	dm_set_bound((struct dm *)gdvp->dmp, GED_MAX/((*dm_get_clipmax((struct dm *)gdvp->dmp))[2]));
+	dm_set_bound((struct dm *)gdvp->dmp, BV_MAX/((*dm_get_clipmax((struct dm *)gdvp->dmp))[2]));
 
     (void)dm_make_current((struct dm *)gdvp->dmp);
     (void)dm_set_win_bounds((struct dm *)gdvp->dmp, bounds);

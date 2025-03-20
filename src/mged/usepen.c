@@ -59,7 +59,7 @@ illuminate(struct mged_state *s, int y) {
      * zones, and use the zone number as a sequential position among
      * solids which are drawn.
      */
-    count = ((fastf_t)y + GED_MAX) * s->mged_curr_dm->dm_ndrawn / GED_RANGE;
+    count = ((fastf_t)y + BV_MAX) * s->mged_curr_dm->dm_ndrawn / BV_RANGE;
 
     gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
@@ -399,8 +399,8 @@ f_mouse(
     ypos = atoi(argv[3]);
 
     /* Build floating point mouse vector, -1 to +1 */
-    mousevec[X] =  xpos * INV_GED;
-    mousevec[Y] =  ypos * INV_GED;
+    mousevec[X] =  xpos * INV_BV;
+    mousevec[Y] =  ypos * INV_BV;
     mousevec[Z] = 0;
 
     if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui && up) {
@@ -482,7 +482,7 @@ f_mouse(
 	    isave = ipathpos;
 	    if (bdata)
 		ipathpos = bdata->s_fullpath.fp_len-1 - (
-			(ypos+(int)GED_MAX) * (bdata->s_fullpath.fp_len) / (int)GED_RANGE);
+			(ypos+(int)BV_MAX) * (bdata->s_fullpath.fp_len) / (int)BV_RANGE);
 	    if (ipathpos != isave)
 		view_state->vs_flag = 1;
 	    return TCL_OK;

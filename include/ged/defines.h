@@ -100,18 +100,6 @@ struct ged_callback_state;
 #define GED_LOCAL2BASE(_gedp) ((_gedp)->dbip->dbi_local2base)
 #define GED_BASE2LOCAL(_gedp) ((_gedp)->dbip->dbi_base2local)
 
-/* Define view ranges.  The numbers -2048 and 2047 go all
- * the way back to the original angle-distance cursor code
- * that predates even BRL-CAD itself, but (at least right now)
- * there doesn't seem to be any documentation of why those
- * specific values were chosen. */
-#define GED_MAX 2047.0
-#define GED_MIN -2048.0
-#define GED_RANGE 4095.0
-/* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
-#define INV_GED 0.00048828125
-#define INV_4096 0.000244140625
-
 
 /* FIXME: leftovers from dg.h */
 #define RT_VDRW_PREFIX          "_VDRW"
