@@ -411,7 +411,6 @@ main(int argc, char *argv[])
     bu_log("RT_SOLID_EDIT_ROT(k) (mv_context == 0) SUCCESS: original h value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->h), V3ARGS(edit_tor->h));
 
 
-
     /****************************
        ECMD_TOR_R1 - XY
      ****************************/
@@ -421,12 +420,41 @@ main(int argc, char *argv[])
     VMOVE(edit_tor->v, orig_tor->v);
     VMOVE(edit_tor->h, orig_tor->h);
     MAT_IDN(s->acc_rot_sol);
+    s->acc_sc_sol = 1.0;
     s->e_inpara = 0;
+    s->es_scale = 0;
+    s->mv_context = 1;
 
-    // TODO - prepare mousevec.
-    // TODO - call xy method to prepare inputs
-    // rt_solid_edit_process
-    // compare to expected
+    // Prepare mousevec.  xpos and ypos coordinates should be in the range of
+    // BV_MIN <= val <= BV_MAX, which defines the outer limits of the pixel
+    // screen from which mouse inputs would come.
+    //
+    // In essense, xpos and ypos are intended to simulate what a GUI toolkit
+    // would provide us from a mouse cursor position.
+    int xpos = 50;
+    int ypos = 80;
+    vect_t mousevec;  /* float pt -1..+1 mouse pos vect */
+    /* map xpos and ypos to the -1 to +1 range*/
+    mousevec[X] =  xpos * INV_BV;
+    mousevec[Y] =  ypos * INV_BV;
+    mousevec[Z] = 0;
+
+    bu_vls_trunc(s->log_str, 0);
+    if ((*EDOBJ[dp->d_minor_type].ft_edit_xy)(s, mousevec) == BRLCAD_ERROR)
+	bu_exit(1, "ERROR: ECMD_TOR_R1 (xy) failed ft_edit_xy call: %s\n", bu_vls_cstr(s->log_str));
+
+
+    // set cmp vals to expected
+    VMOVE(cmp_tor->v, orig_tor->v);
+    VMOVE(cmp_tor->h, orig_tor->h);
+    cmp_tor->r_a = 20.19531250000000000;
+
+    rt_solid_edit_process(s);
+
+    if (tor_diff("ECMD_TOR_R1 (xy)", cmp_tor, edit_tor))
+	bu_exit(1, "ERROR: ECMD_TOR_R1(xy) failed scaling tor r1 param\n");
+
+    bu_log("ECMD_TOR_R1(xy) SUCCESS: original r_a value %g modified to %g\n", orig_tor->r_a, edit_tor->r_a);
 
 
     /****************************
@@ -437,14 +465,35 @@ main(int argc, char *argv[])
     // Reset
     VMOVE(edit_tor->v, orig_tor->v);
     VMOVE(edit_tor->h, orig_tor->h);
+    edit_tor->r_a = orig_tor->r_a;
     MAT_IDN(s->acc_rot_sol);
+    s->acc_sc_sol = 1.0;
     s->e_inpara = 0;
+    s->es_scale = 0;
 
-    // TODO - prepare mousevec.
-    // TODO - call xy method to prepare inputs
-    // rt_solid_edit_process
-    // compare to expected
+    // Prepare mousevec.
+    xpos = 100;
+    ypos = 200;
+    /* map xpos and ypos to the -1 to +1 range*/
+    mousevec[X] =  xpos * INV_BV;
+    mousevec[Y] =  ypos * INV_BV;
+    mousevec[Z] = 0;
 
+    bu_vls_trunc(s->log_str, 0);
+    if ((*EDOBJ[dp->d_minor_type].ft_edit_xy)(s, mousevec) == BRLCAD_ERROR)
+	bu_exit(1, "ERROR: RT_SOLID_EDIT_TRANS(xy) failed ft_edit_xy call: %s\n", bu_vls_cstr(s->log_str));
+
+    // set cmp vals to expected
+    VSET(cmp_tor->v, 7.28225503464339674,4.81374219599902631,22.93261631551052560);
+    VMOVE(cmp_tor->h, orig_tor->h);
+    cmp_tor->r_a = orig_tor->r_a;
+
+    rt_solid_edit_process(s);
+
+    if (tor_diff("RT_SOLID_EDIT_TRANS (xy)", cmp_tor, edit_tor))
+	bu_exit(1, "ERROR: RT_SOLID_EDIT_TRANS(xy) failed translating tor\n");
+
+    bu_log("RT_SOLID_EDIT_TRANS(xy) SUCCESS: original v value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->v), V3ARGS(edit_tor->v));
 
 
     rt_solid_edit_destroy(s);
