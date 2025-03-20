@@ -141,14 +141,14 @@ int main
 
 			    if (!((fabs(thick1 - thick2) < SMALL_FASTF) && (fabs(thick2 - thick3) < SMALL_FASTF) && (fabs(thick3 - thick4) < SMALL_FASTF))) {
 				std::string sectionName = std::to_string(section) + ": " + kData.sections[section].title;
-				std::cout << "Different thicknesses in section " << sectionName.c_str() << '\n';
+				std::cout << "Different thicknesses in section " << sectionName.c_str() << std::endl;
 			    }
 
 			    double averageThick = (thick1 + thick2 + thick3 + thick4) / 4.0;
 			    geometry.setThickness(averageThick * factor);
 			}
 			else
-			    std::cout << "Missing section to part" << partName.c_str() << '\n';
+			    std::cout << "Missing section to part" << partName.c_str() << std::endl;
 
 			for (std::set<int>::iterator itr = (it->second).elements.begin(); itr != (it->second).elements.end(); itr++) {
 			    if ((kData.elements[*itr].nodes.size() == 3)) {
@@ -335,7 +335,7 @@ int main
 				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
 			    }
 			    else
-				std::cout << "Un supported element in k-file " << argv[1] << "\n";
+				std::cout << "Un supported element in k-file " << argv[1] << std::endl;
 			}
 
 			regions.setAttributes(partName,(it->second).attributes);

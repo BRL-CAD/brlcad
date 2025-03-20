@@ -474,13 +474,13 @@ bool parse_k
 			    if (command.size() == 1)
 				state = KState::Include;
 			    else
-				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
+				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
 			}
 			else if (command[0] == "NODE") {
 			    if (command.size() == 1)
 				state = KState::Node;
 			    else
-				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
+				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
 
 			    if (tokens.size() == 1) {
 				nodeFormat = fileFormat;
@@ -496,10 +496,10 @@ bool parse_k
 				    nodeFormat = ReadFormat::I10;
 				}
 				else
-				    std::cout << "Unhandeled format" << tokens[1] << "in k-file" << fileName << "\n";
+				    std::cout << "Unhandeled format" << tokens[1] << "in k-file" << fileName << std::endl;
 			    }
 			    else
-				std::cout << "Unhandeled node format in k-file" << fileName << "\n";
+				std::cout << "Unhandeled node format in k-file" << fileName << std::endl;
 			}
 			else if (command[0] == "ELEMENT") {
 			    if ((command.size() > 1) && (command[1] == "BEAM")) {
@@ -533,7 +533,7 @@ bool parse_k
 					    else if (optionsContainer[i_o] == "ELBOW")
 						options.push_back(Options::Elbow);
 					    else
-						std::cout << "Unhandeled Element_Beam option" << optionsContainer[i_o] << "in k-file" << fileName << "\n";
+						std::cout << "Unhandeled Element_Beam option" << optionsContainer[i_o] << "in k-file" << fileName << std::endl;
 					}
 				    }
 				}
@@ -707,7 +707,7 @@ bool parse_k
 				optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 			    }
 			    else
-				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
+				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
 			}
 			else if (command[0] == "PART") {
 			    if ((command.size() == 1) || (command[1] == "INERTIA") || (command[1] == "AVERAGED")) {
@@ -719,7 +719,7 @@ bool parse_k
 				state = KState::Part_Adaptive_Failure;
 			    }
 			    else
-				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
+				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
 			}
 			else if (command[0] == "SECTION") {
 			    if (command[1] == "ALE1D"){
@@ -773,7 +773,7 @@ bool parse_k
 				    if (command[2] == "TITLE")
 					sectionLinesRead = 0;
 				    else
-					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
+					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
 				}
 				else
 				    sectionLinesRead = 1;
@@ -787,11 +787,11 @@ bool parse_k
 				    if (command[2] == "TITLE")
 					sectionLinesRead = 0;
 				    else
-					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
+					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
 				}
 			    }
 			    else
-				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << "\n";
+				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
 			}
 			else if (command[0] == "KEYWORD") {
 			    if (tokens.size() > 1) {
@@ -855,14 +855,14 @@ bool parse_k
 			}
 
 			if (tokens.size() < 4) {
-			    std::cout << "Too short NODE in k-file " << fileName << "\n";
+			    std::cout << "Too short NODE in k-file " << fileName << std::endl;
 			    break;
 			}
 
 			int id = stoi(tokens[0]);
 
 			if (data.nodes.find(id) != data.nodes.end()) {
-			    std::cout << "Duplicate NODE ID " << id << " in k-file " << fileName << "\n";
+			    std::cout << "Duplicate NODE ID " << id << " in k-file " << fileName << std::endl;
 			    break;
 			}
 
@@ -878,14 +878,14 @@ bool parse_k
 
 		    case KState::Element_Shell: {
 			if (tokens.size() < 6) {
-			    std::cout << "Too short ELEMENT_SHELL in k-file " << fileName << "\n";
+			    std::cout << "Too short ELEMENT_SHELL in k-file " << fileName << std::endl;
 			    break;
 			}
 
 			int eid = stoi(tokens[0]);
 
 			if (data.elements.find(eid) != data.elements.end()) {
-			    std::cout << "Duplicate ELEMENT ID " << eid << " in k-file " << fileName << "\n";
+			    std::cout << "Duplicate ELEMENT ID " << eid << " in k-file " << fileName << std::endl;
 			    break;
 			}
 
@@ -904,14 +904,14 @@ bool parse_k
 
 		    case KState::Element_Solid: {
 			if (tokens.size() < 10) {
-			    std::cout << "Too short ELEMENT_SOLID in k-file " << fileName << "\n";
+			    std::cout << "Too short ELEMENT_SOLID in k-file " << fileName << std::endl;
 			    break;
 			}
 
 			int eid = stoi(tokens[0]);
 
 			if (data.elements.find(eid) != data.elements.end()) {
-			    std::cout << "Duplicated ELEMENT ID" << eid << "in k-file " << fileName << "\n";
+			    std::cout << "Duplicated ELEMENT ID" << eid << "in k-file " << fileName << std::endl;
 			}
 
 			KElement element;
@@ -935,7 +935,7 @@ bool parse_k
 
 			    case 1: {
 				if (tokens.size() == 0) {
-				    std::cout << "Too short PART in k-file " << fileName << "\n";
+				    std::cout << "Too short PART in k-file " << fileName << std::endl;
 				    break;
 				}
 
@@ -950,7 +950,7 @@ bool parse_k
 			    }
 
 			    default:
-				std::cout << "Unexpected PART length in k-file " << fileName << "\n";
+				std::cout << "Unexpected PART length in k-file " << fileName << std::endl;
 			}
 
 			++partLinesRead;
@@ -969,7 +969,7 @@ bool parse_k
 
 			    case 1: {
 				if (tokens.size() < 4) {
-				    std::cout << "Too short SECTION_ALE1D in k-file " << fileName << "\n";
+				    std::cout << "Too short SECTION_ALE1D in k-file " << fileName << std::endl;
 				    break;
 				}
 				sectionId = stoi(tokens[0]);
@@ -979,12 +979,12 @@ bool parse_k
 
 			    case 2: {
 				if (sectionId < 0) {
-				    std::cout << "Bad SECTION in k-file " << fileName << "\n";
+				    std::cout << "Bad SECTION in k-file " << fileName << std::endl;
 				    break;
 				}
 
 				if (tokens.size() < 2) {
-				    std::cout << "Too short SECTION_ALE1D in k-file " << fileName << "\n";
+				    std::cout << "Too short SECTION_ALE1D in k-file " << fileName << std::endl;
 				    break;
 				}
 
@@ -1006,7 +1006,7 @@ bool parse_k
 
 			    case 1: {
 				if (tokens.size() < 4) {
-				    std::cout << "Too short SECTION_ALE2D in k-file " << fileName << "\n";
+				    std::cout << "Too short SECTION_ALE2D in k-file " << fileName << std::endl;
 				    break;
 				}
 				sectionId = stoi(tokens[0]);
@@ -1030,7 +1030,7 @@ bool parse_k
 
 			    case 1: {
 				if (tokens.size() < 8) {
-				    std::cout << "Too short SECTION_BEAM in k-file " << fileName << "\n";
+				    std::cout << "Too short SECTION_BEAM in k-file " << fileName << std::endl;
 				    break;
 				}
 
@@ -1046,7 +1046,7 @@ bool parse_k
 			    case 2: {
 				if ((sectionElForm == 1) || (sectionElForm == 11)) {
 				    if (tokens.size() < 6) {
-					std::cout << "Too short SECTION_BEAM card 2a in k-file " << fileName << "\n";
+					std::cout << "Too short SECTION_BEAM card 2a in k-file " << fileName << std::endl;
 					break;
 				    }
 
@@ -1072,7 +1072,7 @@ bool parse_k
 				}
 				else if ((sectionElForm == 4) || (sectionElForm == 5)) {
 				    if (tokens.size() < 4) {
-					std::cout << "Too short SECTION_BEAM card 2e in k-file " << fileName << "\n";
+					std::cout << "Too short SECTION_BEAM card 2e in k-file " << fileName << std::endl;
 					break;
 				    }
 
@@ -1086,7 +1086,7 @@ bool parse_k
 				    break;
 				else if ((sectionElForm == 7) || (sectionElForm == 8)) {
 				    if (tokens.size() < 2) {
-					std::cout << "Too short SECTION_BEAM card 2h in k-file " << fileName << "\n";
+					std::cout << "Too short SECTION_BEAM card 2h in k-file " << fileName << std::endl;
 					break;
 				    }
 
@@ -1095,7 +1095,7 @@ bool parse_k
 				}
 				else if (sectionElForm == 9) {
 				    if (tokens.size() < 4) {
-					std::cout << "Too short SECTION_BEAM card 2i in k-file " << fileName << "\n";
+					std::cout << "Too short SECTION_BEAM card 2i in k-file " << fileName << std::endl;
 					break;
 				    }
 
@@ -1130,7 +1130,7 @@ bool parse_k
 
 			    case 1: {
 				if (tokens.size() == 0) {
-				    std::cout << "Too short SECTION in k-file " << fileName << "\n";
+				    std::cout << "Too short SECTION in k-file " << fileName << std::endl;
 				    break;
 				}
 
@@ -1141,12 +1141,12 @@ bool parse_k
 
 			    case 2: {
 				if (sectionId < 0) {
-				    std::cout << "Bad SECTION in k-file " << fileName << "\n";
+				    std::cout << "Bad SECTION in k-file " << fileName << std::endl;
 				    break;
 				}
 
 				if (tokens.size() < 4) {
-				    std::cout << "Too short SECTION in k-file " << fileName << "\n";
+				    std::cout << "Too short SECTION in k-file " << fileName << std::endl;
 				    break;
 				}
 
@@ -1159,7 +1159,7 @@ bool parse_k
 			    }
 
 			    default:
-				std::cout << "Unexpected SECTION length in k-file " << fileName << "\n";
+				std::cout << "Unexpected SECTION length in k-file " << fileName << std::endl;
 			}
 
 			++sectionLinesRead;
@@ -1174,7 +1174,7 @@ bool parse_k
 
 			    case 1: {
 				if (tokens.size() == 0) {
-				    std::cout << "Too short SECTION in k-file " << fileName << "\n";
+				    std::cout << "Too short SECTION in k-file " << fileName << std::endl;
 				    break;
 				}
 
@@ -1184,7 +1184,7 @@ bool parse_k
 			    }
 
 			    default:
-				std::cout << "Unexpected SECTION length in k-file " << fileName << "\n";
+				std::cout << "Unexpected SECTION length in k-file " << fileName << std::endl;
 			}
 
 			++sectionLinesRead;
@@ -1193,7 +1193,7 @@ bool parse_k
 
 		    case KState::Part_Adaptive_Failure: {
 			if (tokens.size() < 2) {
-			    std::cout << "Too short PART_ADAPTIVE_FAILURE in k-file " << fileName << "\n";
+			    std::cout << "Too short PART_ADAPTIVE_FAILURE in k-file " << fileName << std::endl;
 			    break;
 			}
 
@@ -1202,7 +1202,7 @@ bool parse_k
 			if (tokens.size() == 2)
 			    data.parts[pid].attributes["PART_ADAPTIVE_FAILURE_STARTING_TIME"]=tokens[1];
 			else
-			    std::cout << "Attributes should come in pairs in k-file" << fileName << "\n";
+			    std::cout << "Attributes should come in pairs in k-file" << fileName << std::endl;
 
 			break;
 		    }
@@ -1214,13 +1214,13 @@ bool parse_k
 
 			if (options.size() == 0 || optionsCounter == 0) {
 			    if (tokens.size() < 10) {
-				std::cout << "Too short ELEMENT_BEAM in k-file" << fileName << "\n";
+				std::cout << "Too short ELEMENT_BEAM in k-file" << fileName << std::endl;
 				break;
 			    }
 			    eid = stoi(tokens[0]);
 
 			    if (data.elements.find(eid) != data.elements.end()) {
-				std::cout << "Duplicat Element ID" << eid << " in k-file" << fileName << "\n";
+				std::cout << "Duplicat Element ID" << eid << " in k-file" << fileName << std::endl;
 				break;
 			    }
 
@@ -1246,7 +1246,7 @@ bool parse_k
 			    switch (currentOption) {
 				case Options::Thickness: {
 				    if (tokens.size() < 5) {
-					std::cout << "Too short option THICKNESS in k-file " << fileName << "\n";
+					std::cout << "Too short option THICKNESS in k-file " << fileName << std::endl;
 					break;
 				    }
 
@@ -1275,7 +1275,7 @@ bool parse_k
 
 				case Options::Section: {
 				    if (tokens.size() < 7) {
-					std::cout << "Too short option Section in k-file " << fileName << "\n";
+					std::cout << "Too short option Section in k-file " << fileName << std::endl;
 					break;
 				    }
 				    double temp;
@@ -1345,7 +1345,7 @@ bool parse_k
 
 				case Options::Offset: {
 				    if (tokens.size() < 6) {
-					std::cout << "To short OFFSET option in k-file " << fileName << "\n";
+					std::cout << "To short OFFSET option in k-file " << fileName << std::endl;
 					break;
 				    }
 
@@ -1362,7 +1362,7 @@ bool parse_k
 
 				case Options::Orientation: {
 				    if (tokens.size() < 3) {
-					std::cout << "To short ORIENTATION option in k-file" << fileName << "\n";
+					std::cout << "To short ORIENTATION option in k-file" << fileName << std::endl;
 					break;
 				    }
 
@@ -1379,7 +1379,7 @@ bool parse_k
 
 				case Options::Warpage: {
 				    if (tokens.size() < 2) {
-					std::cout << "To short WARPAGE option in k-file" << fileName << "\n";
+					std::cout << "To short WARPAGE option in k-file" << fileName << std::endl;
 					break;
 				    }
 
@@ -1396,7 +1396,7 @@ bool parse_k
 
 				case Options::Elbow: {
 				    if (tokens.size() < 1) {
-					std::cout << "Empty ELBOW option in k-file" << fileName << "\n";
+					std::cout << "Empty ELBOW option in k-file" << fileName << std::endl;
 					break;
 				    }
 				    double temp = stod(tokens[0]);
@@ -1418,7 +1418,7 @@ bool parse_k
 
 		    case KState::Element_Beam_Pulley: {
 			if (tokens.size() < 8) {
-			    std::cout << "Too short ELEMENT_BEAM_PULLEY in k-file " << fileName << "\n";
+			    std::cout << "Too short ELEMENT_BEAM_PULLEY in k-file " << fileName << std::endl;
 			    break;
 			}
 
@@ -1435,7 +1435,7 @@ bool parse_k
 
 		    case KState::Element_Beam_Source: {
 			if (tokens.size() < 7) {
-			    std::cout << "Too short ELEMENT_BEAM_SOURCE in k-file" << fileName << "\n";
+			    std::cout << "Too short ELEMENT_BEAM_SOURCE in k-file" << fileName << std::endl;
 			    break;
 			}
 
@@ -1466,7 +1466,7 @@ bool parse_k
 
 			    case 1: {
 				if (tokens.size() < 7) {
-				    std::cout << "Too short ELEMENT_BEARING in k-file " << fileName << "\n";
+				    std::cout << "Too short ELEMENT_BEARING in k-file " << fileName << std::endl;
 				    break;
 				}
 
@@ -1488,7 +1488,7 @@ bool parse_k
 
 			    case 3: {
 				if (tokens.size() < 4) {
-				    std::cout << "Too short ELEMENT_BEARING in k-file " << fileName << "\n";
+				    std::cout << "Too short ELEMENT_BEARING in k-file " << fileName << std::endl;
 				    break;
 				}
 
@@ -1502,7 +1502,7 @@ bool parse_k
 
 			    case 4: {
 				if (tokens.size() < 4) {
-				    std::cout << "Too short ELEMENT_BEARING in k-file " << fileName << "\n";
+				    std::cout << "Too short ELEMENT_BEARING in k-file " << fileName << std::endl;
 				    break;
 				}
 

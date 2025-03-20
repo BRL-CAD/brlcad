@@ -133,13 +133,13 @@ void RegionList::create
 void RegionList::printNames(void) const
 {
     for (std::map<std::string, Region>::const_iterator it = m_list.begin(); it != m_list.end(); ++it)
-	std::cout << it->first << "\n";
+	std::cout << it->first << std::endl;
 }
 
 
 void RegionList::printStat(void) const
 {
-    std::cout << "Over all size: " << m_list.size() << "\n";
+    std::cout << "Over all size: " << m_list.size() << std::endl;
 }
 
 Bot& RegionList::getBot
