@@ -431,8 +431,8 @@ main(int argc, char *argv[])
     //
     // In essense, xpos and ypos are intended to simulate what a GUI toolkit
     // would provide us from a mouse cursor position.
-    int xpos = 50;
-    int ypos = 80;
+    int xpos = 1372;
+    int ypos = 1383;
     vect_t mousevec;  /* float pt -1..+1 mouse pos vect */
     /* map xpos and ypos to the -1 to +1 range*/
     mousevec[X] =  xpos * INV_BV;
@@ -447,7 +447,7 @@ main(int argc, char *argv[])
     // set cmp vals to expected
     VMOVE(cmp_tor->v, orig_tor->v);
     VMOVE(cmp_tor->h, orig_tor->h);
-    cmp_tor->r_a = 20.19531250000000000;
+    cmp_tor->r_a = 23.37646484375000000;
 
     rt_solid_edit_process(s);
 
@@ -471,9 +471,12 @@ main(int argc, char *argv[])
     s->e_inpara = 0;
     s->es_scale = 0;
 
+    // XY transform cares about curr_e_axes_pos
+    VMOVE(s->curr_e_axes_pos, orig_tor->v);
+
     // Prepare mousevec.
-    xpos = 100;
-    ypos = 200;
+    xpos = 1482;
+    ypos = 762;
     /* map xpos and ypos to the -1 to +1 range*/
     mousevec[X] =  xpos * INV_BV;
     mousevec[Y] =  ypos * INV_BV;
@@ -484,7 +487,7 @@ main(int argc, char *argv[])
 	bu_exit(1, "ERROR: RT_SOLID_EDIT_TRANS(xy) failed ft_edit_xy call: %s\n", bu_vls_cstr(s->log_str));
 
     // set cmp vals to expected
-    VSET(cmp_tor->v, 7.28225503464339674,4.81374219599902631,22.93261631551052560);
+    VSET(cmp_tor->v, -12.61323935991339340,24.90340037137704243,22.73653941175349047);
     VMOVE(cmp_tor->h, orig_tor->h);
     cmp_tor->r_a = orig_tor->r_a;
 
