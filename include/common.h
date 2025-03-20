@@ -472,6 +472,11 @@ typedef _TCHAR TCHAR;
 #  define __STDC_VERSION__ 0
 #endif
 
+
+/* workaround for system Eigen on Mac */
+#define alloca(x) malloc(x)
+
+
 /**
  * globally disable certain warnings.  do NOT add new warnings here
  * without discussion and research.  only warnings that cannot be
