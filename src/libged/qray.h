@@ -40,8 +40,6 @@
 #define DG_QRAY_FORMAT_O "fmt r \"\\n\" ; fmt p \"\"; fmt o \"%e %e %e %e\\n\" ov_x_in ov_y_in ov_z_in ov_los"
 #define DG_QRAY_FORMAT_NULL "fmt r \"\"; fmt h \"\"; fmt p \"\"; fmt m \"\"; fmt o \"\"; fmt f \"\"; fmt g \"\""
 
-#define DG_INV_GED 0.00048828125
-
 GED_EXPORT extern struct ged_qray_color def_qray_odd_color;
 GED_EXPORT extern struct ged_qray_color def_qray_even_color;
 GED_EXPORT extern struct ged_qray_color def_qray_void_color;

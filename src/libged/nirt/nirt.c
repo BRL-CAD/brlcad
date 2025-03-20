@@ -465,7 +465,7 @@ ged_vnirt_core(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int status;
-    fastf_t sf = 1.0 * DG_INV_GED;
+    fastf_t sf = 1.0 * INV_GED;
     vect_t view_ray_orig;
     vect_t center_model;
     double scan[3];
