@@ -152,9 +152,6 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 {
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
     int save_edflag = -1;
-    int mx, my;
-    int dx, dy;
-    int width, height;
     fastf_t f;
     fastf_t fx, fy;
     fastf_t td;
@@ -163,12 +160,12 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
     if (s->dbip == DBI_NULL)
 	return;
 
-    width = dm_get_width(DMP);
-    height = dm_get_height(DMP);
-    mx = xmotion->x;
-    my = xmotion->y;
-    dx = mx - dm_omx;
-    dy = my - dm_omy;
+    int width = dm_get_width(DMP);
+    int height = dm_get_height(DMP);
+    int mx = xmotion->x;
+    int my = xmotion->y;
+    int dx = mx - dm_omx;
+    int dy = my - dm_omy;
 
     switch (am_mode) {
 	case AMM_IDLE:
