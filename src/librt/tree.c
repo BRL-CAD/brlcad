@@ -222,12 +222,12 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     /* Assign bit vector pos. */
     rp->reg_bit = rtip->nregions++;
 
-    /* If caller wants to do additional processing, now's the time */
-    if (rtip->rti_gettrees_clbk)
-	(void)(*rtip->rti_gettrees_clbk)(0, NULL, rtip, tsp);
-
     /* leave critical section */
     bu_semaphore_release(RT_SEM_RESULTS);
+
+    /* If caller wants to do additional processing, now's the time */
+    if (rtip->rti_gettrees_clbk)
+	(*rtip->rti_gettrees_clbk)(rtip, tsp, rp);
 
     if (RT_G_DEBUG & RT_DEBUG_REGIONS) {
 	bu_log("Add Region %s instnum %ld\n",

@@ -49,38 +49,32 @@ struct inv_mat_data {
     struct bu_hash_tbl *tbl;
 };
 
-int
-inv_mat_clbk(int UNUSED(ac), const char**UNUSED(av), void *rtip_v, void *tsp_v)
+void
+inv_mat_clbk(struct rt_i *rtip, struct db_tree_state *tsp, struct region *rp)
 {
-    if (!rtip_v || !tsp_v)
-	return 0;
-
-    struct rt_i *rtip = (struct rt_i *)rtip_v;
-    RT_CK_RTI(rtip);
-    struct db_tree_state *tsp = (struct db_tree_state *)tsp_v;
-    RT_CK_DBI(tsp->ts_dbip);
-
-    // The region we want for this calculation was just inserted into
-    // rtip->HeadRegion by the parent rt_gettrees_and_attrs
-    struct region *rp = BU_LIST_PREV(region, &rtip->HeadRegion);
+    if (!rtip || !tsp || !rp)
+	return;
 
     struct inv_mat_data *d = (struct inv_mat_data *)rtip->rti_udata;
     if (!d)
-	return 0;
+	return;
     struct bu_hash_tbl *tbl = d->tbl;
     if (!d->attr_key || !tbl)
-	return 0;
+	return;
 
-    if (tbl && bu_avs_get(&tsp->ts_attrs, d->attr_key)) {
-        uint32_t key = rp->reg_bit;
+    if (!bu_avs_get(&tsp->ts_attrs, d->attr_key))
+	return;
 
-	matp_t inv_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "inv_mat");
-        bn_mat_inv(inv_mat, tsp->ts_mat);
+    uint32_t key = rp->reg_bit;
 
-        (void)bu_hash_set(tbl, (const uint8_t *)&key, sizeof(key), (void *)inv_mat);
-    }
+    matp_t inv_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "inv_mat");
+    bn_mat_inv(inv_mat, tsp->ts_mat);
 
-    return 0;
+    bu_semaphore_acquire(RT_SEM_RESULTS);
+
+    (void)bu_hash_set(tbl, (const uint8_t *)&key, sizeof(key), (void *)inv_mat);
+
+    bu_semaphore_release(RT_SEM_RESULTS);
 }
 
 void
