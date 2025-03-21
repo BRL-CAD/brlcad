@@ -1,7 +1,7 @@
-/*                       O V E R L A Y . C
+/*                         E D A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2025 United States Government as represented by
+ * Copyright (c) 1996-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,55 +17,60 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/overlay.c
+/** @file mged/edars.c
  *
  */
 
 #include "common.h"
 
 #include <math.h>
-#include <signal.h>
+#include <string.h>
 
 #include "vmath.h"
+#include "nmg.h"
 #include "raytrace.h"
+#include "rt/geom.h"
+#include "wdb.h"
 
 #include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-/* Usage:  overlay file.plot3 [name] */
-int
-cmd_overlay(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+
+/**
+ * find which vertex of an ARS is nearest *the ray from "pt" in the
+ * viewing direction (for vertex selection in MGED)
+ */
+void
+find_ars_nearest_pnt(
+    int *crv,
+    int *col,
+    struct rt_ars_internal *ars,
+    point_t pick_pt,
+    vect_t dir)
 {
-    struct cmdtab *ctp = (struct cmdtab *)clientData;
-    MGED_CK_CMD(ctp);
-    struct mged_state *s = ctp->s;
+    size_t i, j;
+    int closest_i=0, closest_j=0;
+    fastf_t min_dist_sq=MAX_FASTF;
 
-    int ret;
-    Tcl_DString ds;
+    RT_ARS_CK_MAGIC(ars);
 
-    if (s->gedp == GED_NULL)
-	return TCL_OK;
+    for (i=0; i<ars->ncurves; i++) {
+	for (j=0; j<ars->pts_per_curve; j++) {
+	    fastf_t dist_sq;
 
-    Tcl_DStringInit(&ds);
-
-    if (s->gedp->ged_gvp)
-	s->gedp->ged_gvp->dmp = (void *)s->mged_curr_dm->dm_dmp;
-    ret = ged_exec(s->gedp, argc, argv);
-    Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
-
-    if (ret & GED_HELP)
-	return TCL_OK;
-
-    if (ret != BRLCAD_OK)
-	return TCL_ERROR;
-
-    update_views = 1;
-    dm_set_dirty(DMP, 1);
-
-    return ret;
+	    dist_sq = bg_distsq_line3_pnt3(pick_pt, dir, &ars->curves[i][j*3]);
+	    if (dist_sq < min_dist_sq) {
+		min_dist_sq = dist_sq;
+		closest_i = i;
+		closest_j = j;
+	    }
+	}
+    }
+    *crv = closest_i;
+    *col = closest_j;
 }
+
 
 /*
  * Local Variables:

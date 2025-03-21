@@ -50,7 +50,7 @@ void
 mged_color_soltab(struct mged_state *s)
 {
     dl_color_soltab(s->gedp->ged_gdp->gd_headDisplay);
-    s->update_views = 1;		/* re-write control list with new colors */
+    update_views = 1;		/* re-write control list with new colors */
     dm_set_dirty(DMP, 1);
 }
 

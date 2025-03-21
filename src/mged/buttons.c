@@ -35,6 +35,7 @@
 /* external sp_hook function */
 extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *, void *);	/* defined in set.c */
 
+extern void set_e_axes_pos(struct mged_state *s, int both);
 extern int mged_zoom(struct mged_state *s, double val);
 extern void adc_set_scroll(struct mged_state *s);	/* defined in adc.c */
 
@@ -88,6 +89,14 @@ static int edsol;
 int edobj;		/* object editing */
 int movedir;	/* RARROW | UARROW | SARROW | ROTARROW */
 
+/*
+ * The "accumulation" solid rotation matrix and scale factor
+ */
+mat_t acc_rot_sol;
+fastf_t acc_sc_sol;
+fastf_t acc_sc_obj;     /* global object scale factor --- accumulations */
+fastf_t acc_sc[3];	/* local object scale factors --- accumulations */
+
 /* flag to toggle whether we perform continuous motion tracking
  * (e.g., for a tablet)
  */
@@ -139,6 +148,60 @@ static fastf_t sav_vscale;
 static int vsaved = 0;	/* set if view saved */
 
 extern void mged_color_soltab(struct mged_state *s);
+extern void sl_halt_scroll(struct mged_state *s, int, int, int);	/* in scroll.c */
+extern void sl_toggle_scroll(struct mged_state *s, int, int, int);
+
+void btn_head_menu(struct mged_state *s, int i, int menu, int item);
+void btn_item_hit(struct mged_state *s, int arg, int menu, int item);
+
+static struct menu_item first_menu[] = {
+    { "BUTTON MENU", btn_head_menu, 1 },		/* chg to 2nd menu */
+    { "", NULL, 0 }
+};
+struct menu_item second_menu[] = {
+    { "BUTTON MENU", btn_head_menu, 0 },	/* chg to 1st menu */
+    { "REJECT Edit", btn_item_hit, BE_REJECT },
+    { "ACCEPT Edit", btn_item_hit, BE_ACCEPT },
+    { "35,25", btn_item_hit, BV_35_25 },
+    { "Top", btn_item_hit, BV_TOP },
+    { "Right", btn_item_hit, BV_RIGHT },
+    { "Front", btn_item_hit, BV_FRONT },
+    { "45,45", btn_item_hit, BV_45_45 },
+    { "Restore View", btn_item_hit, BV_VRESTORE },
+    { "Save View", btn_item_hit, BV_VSAVE },
+    { "Ang/Dist Curs", btn_item_hit, BV_ADCURSOR },
+    { "Reset Viewsize", btn_item_hit, BV_RESET },
+    { "Zero Sliders", sl_halt_scroll, 0 },
+    { "Sliders", sl_toggle_scroll, 0 },
+    { "Rate/Abs", btn_item_hit, BV_RATE_TOGGLE },
+    { "Zoom In 2X", btn_item_hit, BV_ZOOM_IN },
+    { "Zoom Out 2X", btn_item_hit, BV_ZOOM_OUT },
+    { "Primitive Illum", btn_item_hit, BE_S_ILLUMINATE },
+    { "Matrix Illum", btn_item_hit, BE_O_ILLUMINATE },
+    { "", NULL, 0 }
+};
+struct menu_item sed_menu[] = {
+    { "*PRIMITIVE EDIT*", btn_head_menu, 2 },
+    { "Edit Menu", btn_item_hit, BE_S_EDIT },
+    { "Rotate", btn_item_hit, BE_S_ROTATE },
+    { "Translate", btn_item_hit, BE_S_TRANS },
+    { "Scale", btn_item_hit, BE_S_SCALE },
+    { "", NULL, 0 }
+};
+
+
+struct menu_item oed_menu[] = {
+    { "*MATRIX EDIT*", btn_head_menu, 2 },
+    { "Scale", btn_item_hit, BE_O_SCALE },
+    { "X Move", btn_item_hit, BE_O_X },
+    { "Y Move", btn_item_hit, BE_O_Y },
+    { "XY Move", btn_item_hit, BE_O_XY },
+    { "Rotate", btn_item_hit, BE_O_ROTATE },
+    { "Scale X", btn_item_hit, BE_O_XSCALE },
+    { "Scale Y", btn_item_hit, BE_O_YSCALE },
+    { "Scale Z", btn_item_hit, BE_O_ZSCALE },
+    { "", NULL, 0 }
+};
 
 
 void
@@ -194,9 +257,9 @@ f_press(ClientData clientData,
     for (i = 1; i < argc; i++) {
 	const char *str = argv[i];
 	struct buttons *bp;
-	struct rt_solid_edit_menu_item **m;
+	struct menu_item **m;
 	int menu, item;
-	struct rt_solid_edit_menu_item *mptr;
+	struct menu_item *mptr;
 
 	if (edsol && edobj) {
 	    bu_vls_printf(&vls, "WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj);
@@ -238,7 +301,7 @@ f_press(ClientData clientData,
 		/* It's up to the menu_func to set menu_state->ms_flag = 0
 		 * if no arrow is desired */
 		if (mptr->menu_func != NULL)
-		    (*(mptr->menu_func))(s->s_edit, mptr->menu_arg, menu, item, s);
+		    (*(mptr->menu_func))(s, mptr->menu_arg, menu, item);
 
 		goto next;
 	    }
@@ -523,9 +586,8 @@ ill_common(struct mged_state *s) {
     illump->s_iflag = UP;
     edobj = 0;		/* sanity */
     edsol = 0;		/* sanity */
-    movedir = 0;	/* No edit modes set */
-    if (s->s_edit)
-	MAT_IDN(s->s_edit->model_changes); /* No changes yet */
+    movedir = 0;		/* No edit modes set */
+    MAT_IDN(modelchanges);	/* No changes yet */
 
     return 1;		/* OK */
 }
@@ -545,10 +607,10 @@ be_o_illuminate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(ar
 	(void)chg_state(s, ST_VIEW, ST_O_PICK, "Matrix Illuminate");
     }
     /* reset accumulation local scale factors */
-    s->edit_state.acc_sc[0] = s->edit_state.acc_sc[1] = s->edit_state.acc_sc[2] = 1.0;
+    acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
 
     /* reset accumulation global scale factors */
-    s->edit_state.acc_sc_obj = 1.0;
+    acc_sc_obj = 1.0;
     return TCL_OK;
 }
 
@@ -582,14 +644,13 @@ be_o_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 
     edobj = BE_O_SCALE;
     movedir = SARROW;
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
-    int flag = 1;
-    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
+    set_e_axes_pos(s, 1);
 
-    s->s_edit->edit_absolute_scale = s->edit_state.acc_sc_obj - 1.0;
-    if (s->s_edit->edit_absolute_scale > 0.0)
-	s->s_edit->edit_absolute_scale /= 3.0;
+    s->edit_state.edit_absolute_scale = acc_sc_obj - 1.0;
+    if (s->edit_state.edit_absolute_scale > 0.0)
+	s->edit_state.edit_absolute_scale /= 3.0;
     return TCL_OK;
 }
 
@@ -606,14 +667,13 @@ be_o_xscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
 
     edobj = BE_O_XSCALE;
     movedir = SARROW;
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
-    int flag = 1;
-    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
+    set_e_axes_pos(s, 1);
 
-    s->s_edit->edit_absolute_scale = s->edit_state.acc_sc[0] - 1.0;
-    if (s->s_edit->edit_absolute_scale > 0.0)
-	s->s_edit->edit_absolute_scale /= 3.0;
+    s->edit_state.edit_absolute_scale = acc_sc[0] - 1.0;
+    if (s->edit_state.edit_absolute_scale > 0.0)
+	s->edit_state.edit_absolute_scale /= 3.0;
     return TCL_OK;
 }
 
@@ -630,14 +690,13 @@ be_o_yscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
 
     edobj = BE_O_YSCALE;
     movedir = SARROW;
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
-    int flag = 1;
-    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
+    set_e_axes_pos(s, 1);
 
-    s->s_edit->edit_absolute_scale = s->edit_state.acc_sc[1] - 1.0;
-    if (s->s_edit->edit_absolute_scale > 0.0)
-	s->s_edit->edit_absolute_scale /= 3.0;
+    s->edit_state.edit_absolute_scale = acc_sc[1] - 1.0;
+    if (s->edit_state.edit_absolute_scale > 0.0)
+	s->edit_state.edit_absolute_scale /= 3.0;
     return TCL_OK;
 }
 
@@ -654,14 +713,13 @@ be_o_zscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
 
     edobj = BE_O_ZSCALE;
     movedir = SARROW;
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
-    int flag = 1;
-    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
+    set_e_axes_pos(s, 1);
 
-    s->s_edit->edit_absolute_scale = s->edit_state.acc_sc[2] - 1.0;
-    if (s->s_edit->edit_absolute_scale > 0.0)
-	s->s_edit->edit_absolute_scale /= 3.0;
+    s->edit_state.edit_absolute_scale = acc_sc[2] - 1.0;
+    if (s->edit_state.edit_absolute_scale > 0.0)
+	s->edit_state.edit_absolute_scale /= 3.0;
     return TCL_OK;
 }
 
@@ -678,10 +736,9 @@ be_o_x(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char
 
     edobj = BE_O_X;
     movedir = RARROW;
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
-    int flag = 1;
-    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
@@ -698,10 +755,9 @@ be_o_y(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char
 
     edobj = BE_O_Y;
     movedir = UARROW;
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
-    int flag = 1;
-    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
@@ -718,10 +774,9 @@ be_o_xy(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), cha
 
     edobj = BE_O_XY;
     movedir = UARROW | RARROW;
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
-    int flag = 1;
-    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
@@ -738,10 +793,9 @@ be_o_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
 
     edobj = BE_O_ROTATE;
     movedir = ROTARROW;
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
-    int flag = 1;
-    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
@@ -753,7 +807,7 @@ be_accept(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    if (s->edit_state.global_editing_state == ST_S_EDIT) {
+    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	/* Accept a solid edit */
 	edsol = 0;
 
@@ -768,7 +822,7 @@ be_accept(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 	illump = NULL;
 	mged_color_soltab(s);
 	(void)chg_state(s, ST_S_EDIT, ST_VIEW, "Edit Accept");
-    }  else if (s->edit_state.global_editing_state == ST_O_EDIT) {
+    }  else if (GEOM_EDIT_STATE == ST_O_EDIT) {
 	/* Accept an object edit */
 	edobj = 0;
 	movedir = 0;	/* No edit modes set */
@@ -811,12 +865,12 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
 
     /* Reject edit */
 
-    switch (s->edit_state.global_editing_state) {
+    switch (GEOM_EDIT_STATE) {
 	default:
 	    state_err(s, "Edit Reject");
 	    return TCL_ERROR;
@@ -846,7 +900,7 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
     movedir = 0;
     edsol = 0;
     edobj = 0;
-    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_DEFAULT);
+    es_edflag = -1;
     illum_gdlp = GED_DISPLAY_LIST_NULL;
     illump = NULL;		/* None selected */
 
@@ -854,7 +908,7 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
     dl_set_iflag(s->gedp->ged_gdp->gd_headDisplay, DOWN);
 
     mged_color_soltab(s);
-    (void)chg_state(s, s->edit_state.global_editing_state, ST_VIEW, "Edit Reject");
+    (void)chg_state(s, GEOM_EDIT_STATE, ST_VIEW, "Edit Reject");
 
     for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
@@ -901,12 +955,11 @@ be_s_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     if (not_state(s, ST_S_EDIT, "Primitive Rotate"))
 	return TCL_ERROR;
 
-    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
+    es_edflag = SROT;
     edsol = BE_S_ROTATE;
     mmenu_set(s, MENU_L1, NULL);
 
-    int flag = 1;
-    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
@@ -923,12 +976,11 @@ be_s_trans(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 	return TCL_ERROR;
 
     edsol = BE_S_TRANS;
-    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
+    es_edflag = STRANS;
     movedir = UARROW | RARROW;
     mmenu_set(s, MENU_L1, NULL);
 
-    int flag = 1;
-    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
@@ -945,12 +997,11 @@ be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 	return TCL_ERROR;
 
     edsol = BE_S_SCALE;
-    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_SCALE);
+    es_edflag = SSCALE;
     mmenu_set(s, MENU_L1, NULL);
-    s->s_edit->acc_sc_sol = 1.0;
+    acc_sc_sol = 1.0;
 
-    int flag = 1;
-    set_e_axes_pos(0, NULL, (void *)s, (void *)&flag);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
@@ -962,8 +1013,8 @@ be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 int
 not_state(struct mged_state *s, int desired, char *str)
 {
-    if (s->edit_state.global_editing_state != desired) {
-	Tcl_AppendResult(s->interp, "Unable to do <", str, "> from ", state_str[s->edit_state.global_editing_state], " state.\n", (char *)NULL);
+    if (GEOM_EDIT_STATE != desired) {
+	Tcl_AppendResult(s->interp, "Unable to do <", str, "> from ", state_str[GEOM_EDIT_STATE], " state.\n", (char *)NULL);
 	Tcl_AppendResult(s->interp, "Expecting ", state_str[desired], " state.\n", (char *)NULL);
 	return -1;
     }
@@ -977,7 +1028,7 @@ not_state(struct mged_state *s, int desired, char *str)
  * continuous tablet tracking, object highlighting.
  */
 static void
-stateChange(struct mged_state *s, int UNUSED(oldstate), int newstate)
+stateChange(int UNUSED(oldstate), int newstate)
 {
     switch (newstate) {
 	case ST_VIEW:
@@ -1001,7 +1052,7 @@ stateChange(struct mged_state *s, int UNUSED(oldstate), int newstate)
 	    break;
     }
 
-    ++s->update_views;
+    ++update_views;
 }
 
 
@@ -1015,14 +1066,14 @@ chg_state(struct mged_state *s, int from, int to, char *str)
     struct mged_dm *save_dm_list;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (s->edit_state.global_editing_state != from) {
+    if (GEOM_EDIT_STATE != from) {
 	bu_log("Unable to do <%s> going from %s to %s state.\n", str, state_str[from], state_str[to]);
 	return 1;	/* BAD */
     }
 
-    s->edit_state.global_editing_state = to;
+    GEOM_EDIT_STATE = to;
 
-    stateChange(s, from, to);
+    stateChange(from, to);
 
     save_dm_list = s->mged_curr_dm;
     for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
@@ -1035,7 +1086,7 @@ chg_state(struct mged_state *s, int from, int to, char *str)
     set_curr_dm(s, save_dm_list);
 
     bu_vls_printf(&vls, "%s(state)", MGED_DISPLAY_VAR);
-    Tcl_SetVar(s->interp, bu_vls_addr(&vls), state_str[s->edit_state.global_editing_state], TCL_GLOBAL_ONLY);
+    Tcl_SetVar(s->interp, bu_vls_addr(&vls), state_str[GEOM_EDIT_STATE], TCL_GLOBAL_ONLY);
     bu_vls_free(&vls);
 
     return 0;		/* GOOD */
@@ -1045,10 +1096,78 @@ chg_state(struct mged_state *s, int from, int to, char *str)
 void
 state_err(struct mged_state *s, char *str)
 {
-    Tcl_AppendResult(s->interp, "Unable to do <", str, "> from ", state_str[s->edit_state.global_editing_state],
+    Tcl_AppendResult(s->interp, "Unable to do <", str, "> from ", state_str[GEOM_EDIT_STATE],
 		     " state.\n", (char *)NULL);
 }
 
+
+/*
+ * Called when a menu item is hit
+ */
+void
+btn_item_hit(struct mged_state *s, int arg, int menu, int UNUSED(item))
+{
+    button(s, arg);
+    if (menu == MENU_GEN &&
+	(arg != BE_O_ILLUMINATE && arg != BE_S_ILLUMINATE))
+	menu_state->ms_flag = 0;
+}
+
+
+/*
+ * Called to handle hits on menu heads.
+ * Also called from main() with arg 0 in init.
+ */
+void
+btn_head_menu(struct mged_state *s, int i, int UNUSED(menu), int UNUSED(item)) {
+    switch (i) {
+	case 0:
+	    mmenu_set(s, MENU_GEN, first_menu);
+	    break;
+	case 1:
+	    mmenu_set(s, MENU_GEN, second_menu);
+	    break;
+	case 2:
+	    /* nothing happens */
+	    break;
+	default:
+	    {
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+
+		bu_vls_printf(&tmp_vls, "btn_head_menu(%d): bad arg\n", i);
+		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+	    }
+
+	    break;
+    }
+}
+
+
+void
+chg_l2menu(struct mged_state *s, int i) {
+    switch (i) {
+	case ST_S_EDIT:
+	    mmenu_set_all(s, MENU_L2, sed_menu);
+	    break;
+	case ST_S_NO_EDIT:
+	    mmenu_set_all(s, MENU_L2, NULL);
+	    break;
+	case ST_O_EDIT:
+	    mmenu_set_all(s, MENU_L2, oed_menu);
+	    break;
+	default:
+	    {
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+
+		bu_vls_printf(&tmp_vls, "chg_l2menu(%d): bad arg\n", i);
+		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+	    }
+
+	    break;
+    }
+}
 
 
 /* TODO: below are functions not yet migrated to libged, still

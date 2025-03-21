@@ -51,12 +51,10 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-
-/* Ew. Globals. */
-
 /* Geometry display instances used by MGED */
 struct bu_ptbl active_dm_set = BU_PTBL_INIT_ZERO;  /* set of active display managers */
 struct mged_dm *mged_dm_init_state = NULL;
+
 
 extern struct _color_scheme default_color_scheme;
 extern void share_dlist(struct mged_dm *dlp2);	/* defined in share.c */
