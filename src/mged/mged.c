@@ -103,21 +103,27 @@ extern struct bu_vls *history_prev(const char *);
 extern struct bu_vls *history_cur(const char *);
 extern struct bu_vls *history_next(const char *);
 
+/* Ew. Global. */
 /* defined in dozoom.c */
 extern unsigned char geometry_default_color[];
 
+/* Ew. Global. */
 /* defined in set.c */
 extern struct _mged_variables default_mged_variables;
 
+/* Ew. Global. */
 /* defined in color_scheme.c */
 extern struct _color_scheme default_color_scheme;
 
+/* Ew. Global. */
 /* defined in grid.c */
 extern struct bv_grid_state default_grid_state;
 
+/* Ew. Global. */
 /* defined in axes.c */
 extern struct _axes_state default_axes_state;
 
+/* Ew. Global. */
 /* defined in rect.c */
 extern struct _rubber_band default_rubber_band;
 
@@ -126,6 +132,7 @@ extern struct _rubber_band default_rubber_band;
  * when we're done (which is needed so atexit() calls to bu_log() will
  * still work).
  */
+/* Ew. Global. */
 static int stdfd[2] = {1, 2};
 
 /* Container for passing I/O data through Tcl callbacks */
@@ -137,22 +144,21 @@ struct stdio_data {
 
 struct mged_state *MGED_STATE = NULL;
 
-/* called by numerous functions to indicate truthfully whether the
- * views need to be redrawn.
- */
-int update_views = 0;
-
 jmp_buf jmp_env;	/* For non-local gotos */
+/* Ew. Global. */
 double frametime;	/* time needed to draw last frame */
 
+/* Ew. Global. */
 struct rt_wdb rtg_headwdb;  /* head of database object list */
 
 void (*cur_sigint)(int);	/* Current SIGINT status */
 
+/* Ew. Global. */
 int cbreak_mode = 0;    /* >0 means in cbreak_mode */
 
 
 /* The old mged gui is temporarily the default. */
+/* Ew. Global. */
 int old_mged_gui=1;
 
 static int
@@ -307,7 +313,7 @@ new_edit_mats(struct mged_state *s)
 	    continue;
 
 	set_curr_dm(s, p);
-	bn_mat_mul(view_state->vs_model2objview, view_state->vs_gvp->gv_model2view, modelchanges);
+	bn_mat_mul(view_state->vs_model2objview, view_state->vs_gvp->gv_model2view, s->s_edit->model_changes);
 	bn_mat_inv(view_state->vs_objview2model, view_state->vs_model2objview);
 	view_state->vs_flag = 1;
     }
@@ -326,9 +332,11 @@ mged_view_callback(struct bview *gvp,
     if (!gvp)
 	return;
 
-    if (GEOM_EDIT_STATE != ST_VIEW) {
-	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, modelchanges);
-	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
+    if (s->edit_state.global_editing_state != ST_VIEW) {
+	if (s->s_edit) {
+	    bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, s->s_edit->model_changes);
+	    bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
+	}
     }
     vsp->vs_flag = 1;
     dm_set_dirty(s->mged_curr_dm->dm_dmp, 1);
@@ -977,7 +985,11 @@ int
 event_check(struct mged_state *s, int non_blocking)
 {
     struct mged_dm *save_dm_list;
-    int save_edflag;
+    int save_edflag = 0;
+    int save_rot = 0;
+    int save_tra = 0;
+    int save_sca = 0;
+    int save_pic = 0;
 
     /* Let cool Tk event handler do most of the work */
 
@@ -1016,10 +1028,14 @@ event_check(struct mged_state *s, int non_blocking)
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'm';
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
-	    save_edflag = es_edflag;
+	if (s->edit_state.global_editing_state == ST_S_EDIT) {
+	    save_edflag = s->s_edit->edit_flag;
+	    save_rot = s->s_edit->solid_edit_rotate;
+	    save_tra = s->s_edit->solid_edit_translate;
+	    save_sca = s->s_edit->solid_edit_scale;
+	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_ROTATE)
-		es_edflag = SROT;
+		rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1037,10 +1053,15 @@ event_check(struct mged_state *s, int non_blocking)
 
 	mged_variables->mv_coords = save_coords;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
-	    es_edflag = save_edflag;
-	else
+	if (s->edit_state.global_editing_state == ST_S_EDIT) {
+	    s->s_edit->edit_flag = save_edflag;
+	    s->s_edit->solid_edit_rotate = save_rot;
+	    s->s_edit->solid_edit_translate = save_tra;
+	    s->s_edit->solid_edit_scale = save_sca;
+	    s->s_edit->solid_edit_pick = save_pic;
+	} else {
 	    edobj = save_edflag;
+	}
     }
     if (s->edit_state.edit_rateflag_object_rotate) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -1050,10 +1071,14 @@ event_check(struct mged_state *s, int non_blocking)
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'o';
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
-	    save_edflag = es_edflag;
+	if (s->edit_state.global_editing_state == ST_S_EDIT) {
+	    save_edflag = s->s_edit->edit_flag;
+	    save_rot = s->s_edit->solid_edit_rotate;
+	    save_tra = s->s_edit->solid_edit_translate;
+	    save_sca = s->s_edit->solid_edit_scale;
+	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_ROTATE)
-		es_edflag = SROT;
+		rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1071,10 +1096,15 @@ event_check(struct mged_state *s, int non_blocking)
 
 	mged_variables->mv_coords = save_coords;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
-	    es_edflag = save_edflag;
-	else
+	if (s->edit_state.global_editing_state == ST_S_EDIT) {
+	    s->s_edit->edit_flag = save_edflag;
+	    s->s_edit->solid_edit_rotate = save_rot;
+	    s->s_edit->solid_edit_translate = save_tra;
+	    s->s_edit->solid_edit_scale = save_sca;
+	    s->s_edit->solid_edit_pick = save_pic;
+	} else {
 	    edobj = save_edflag;
+	}
     }
     if (s->edit_state.edit_rateflag_view_rotate) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -1084,10 +1114,14 @@ event_check(struct mged_state *s, int non_blocking)
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'v';
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
-	    save_edflag = es_edflag;
+	if (s->edit_state.global_editing_state == ST_S_EDIT) {
+	    save_edflag = s->s_edit->edit_flag;
+	    save_rot = s->s_edit->solid_edit_rotate;
+	    save_tra = s->s_edit->solid_edit_translate;
+	    save_sca = s->s_edit->solid_edit_scale;
+	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_ROTATE)
-		es_edflag = SROT;
+		rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1105,10 +1139,15 @@ event_check(struct mged_state *s, int non_blocking)
 
 	mged_variables->mv_coords = save_coords;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
-	    es_edflag = save_edflag;
-	else
+	if (s->edit_state.global_editing_state == ST_S_EDIT) {
+	    s->s_edit->edit_flag = save_edflag;
+	    s->s_edit->solid_edit_rotate = save_rot;
+	    s->s_edit->solid_edit_translate = save_tra;
+	    s->s_edit->solid_edit_scale = save_sca;
+	    s->s_edit->solid_edit_pick = save_pic;
+	} else {
 	    edobj = save_edflag;
+	}
     }
     if (s->edit_state.edit_rateflag_model_tran) {
 	char save_coords;
@@ -1118,10 +1157,14 @@ event_check(struct mged_state *s, int non_blocking)
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'm';
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
-	    save_edflag = es_edflag;
+	if (s->edit_state.global_editing_state == ST_S_EDIT) {
+	    save_edflag = s->s_edit->edit_flag;
+	    save_rot = s->s_edit->solid_edit_rotate;
+	    save_tra = s->s_edit->solid_edit_translate;
+	    save_sca = s->s_edit->solid_edit_scale;
+	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_TRAN)
-		es_edflag = STRANS;
+		rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1138,10 +1181,15 @@ event_check(struct mged_state *s, int non_blocking)
 
 	mged_variables->mv_coords = save_coords;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
-	    es_edflag = save_edflag;
-	else
+	if (s->edit_state.global_editing_state == ST_S_EDIT) {
+	    s->s_edit->edit_flag = save_edflag;
+	    s->s_edit->solid_edit_rotate = save_rot;
+	    s->s_edit->solid_edit_translate = save_tra;
+	    s->s_edit->solid_edit_scale = save_sca;
+	    s->s_edit->solid_edit_pick = save_pic;
+	} else {
 	    edobj = save_edflag;
+	}
     }
     if (s->edit_state.edit_rateflag_view_tran) {
 	char save_coords;
@@ -1151,10 +1199,14 @@ event_check(struct mged_state *s, int non_blocking)
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'v';
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
-	    save_edflag = es_edflag;
+	if (s->edit_state.global_editing_state == ST_S_EDIT) {
+	    save_edflag = s->s_edit->edit_flag;
+	    save_rot = s->s_edit->solid_edit_rotate;
+	    save_tra = s->s_edit->solid_edit_translate;
+	    save_sca = s->s_edit->solid_edit_scale;
+	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_TRAN)
-		es_edflag = STRANS;
+		rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1171,18 +1223,27 @@ event_check(struct mged_state *s, int non_blocking)
 
 	mged_variables->mv_coords = save_coords;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
-	    es_edflag = save_edflag;
-	else
+	if (s->edit_state.global_editing_state == ST_S_EDIT) {
+	    s->s_edit->edit_flag = save_edflag;
+	    s->s_edit->solid_edit_rotate = save_rot;
+	    s->s_edit->solid_edit_translate = save_tra;
+	    s->s_edit->solid_edit_scale = save_sca;
+	    s->s_edit->solid_edit_pick = save_pic;
+	} else {
 	    edobj = save_edflag;
+	}
     }
     if (s->edit_state.edit_rateflag_scale) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
-	    save_edflag = es_edflag;
+	if (s->edit_state.global_editing_state == ST_S_EDIT) {
+	    save_edflag = s->s_edit->edit_flag;
+	    save_rot = s->s_edit->solid_edit_rotate;
+	    save_tra = s->s_edit->solid_edit_translate;
+	    save_sca = s->s_edit->solid_edit_scale;
+	    save_pic = s->s_edit->solid_edit_pick;
 	    if (!SEDIT_SCALE)
-		es_edflag = SSCALE;
+		rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_SCALE);
 	} else {
 	    save_edflag = edobj;
 	    if (!OEDIT_SCALE)
@@ -1195,10 +1256,15 @@ event_check(struct mged_state *s, int non_blocking)
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
-	    es_edflag = save_edflag;
-	else
+	if (s->edit_state.global_editing_state == ST_S_EDIT) {
+	    s->s_edit->edit_flag = save_edflag;
+	    s->s_edit->solid_edit_rotate = save_rot;
+	    s->s_edit->solid_edit_translate = save_tra;
+	    s->s_edit->solid_edit_scale = save_sca;
+	    s->s_edit->solid_edit_pick = save_pic;
+	} else {
 	    edobj = save_edflag;
+	}
     }
 
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
@@ -1508,7 +1574,7 @@ refresh(struct mged_state *s)
 	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (!p->dm_view_state)
 	    continue;
-	if (update_views || p->dm_view_state->vs_flag)
+	if (s->update_views || p->dm_view_state->vs_flag)
 	    p->dm_dirty = 1;
     }
 
@@ -1523,7 +1589,7 @@ refresh(struct mged_state *s)
 	p->dm_view_state->vs_flag = 0;
     }
 
-    update_views = 0;
+    s->update_views = 0;
 
     save_dm_list = s->mged_curr_dm;
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
@@ -1633,7 +1699,7 @@ refresh(struct mged_state *s)
 			    draw_m_axes(s);
 
 			if (axes_state->ax_edit_draw &&
-				(GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT))
+				(s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT))
 			    draw_e_axes(s);
 
 			/* Display titles, etc., if desired */
@@ -1766,12 +1832,7 @@ mged_finish(struct mged_state *s, int exitcode)
 
     mged_global_variable_teardown(s);
 
-    s->magic = 0; // make sure anything trying to use this after free gets a magic failure
-    bu_vls_free(&s->input_str);
-    bu_vls_free(&s->input_str_prefix);
-    bu_vls_free(&s->scratchline);
-    bu_vls_free(&s-> mged_prompt);
-    BU_PUT(s, struct mged_state);
+    mged_state_destroy(s);
     MGED_STATE = NULL; // sanity
 
     /* 8.5 seems to have some bugs in their reference counting */
@@ -1820,19 +1881,8 @@ main(int argc, char *argv[])
     int result;
 #endif
 
-    BU_GET(MGED_STATE, struct mged_state);
+    MGED_STATE = mged_state_create();
     struct mged_state *s = MGED_STATE;
-    s->magic = MGED_STATE_MAGIC;
-    s->classic_mged = 1;
-    s->interactive = 0; /* >0 means interactive, intentionally starts
-                         * 0 to know when interactive, e.g., via -C
-                         * option
-			 */
-    bu_vls_init(&s->input_str);
-    bu_vls_init(&s->input_str_prefix);
-    bu_vls_init(&s->scratchline);
-    bu_vls_init(&s->mged_prompt);
-    s->dpy_string = NULL;
 
     /* Set up linked lists */
     s->vlfree = &rt_vlfree;
@@ -2072,13 +2122,8 @@ main(int argc, char *argv[])
     owner = 1;
     frametime = 1;
 
-    MAT_IDN(modelchanges);
-    MAT_IDN(acc_rot_sol);
-
-    GEOM_EDIT_STATE = ST_VIEW;
-    es_edflag = -1;
-    es_edclass = EDIT_CLASS_NULL;
-    inpara = newedge = 0;
+    s->edit_state.global_editing_state = ST_VIEW;
+    s->edit_state.e_edclass = EDIT_CLASS_NULL;
 
     /* These values match old GED.  Use 'tol' command to change them. */
     s->tol.tol.magic = BN_TOL_MAGIC;
@@ -2089,15 +2134,13 @@ main(int argc, char *argv[])
 
     rt_prep_timer();		/* Initialize timer */
 
-    es_edflag = -1;		/* no solid editing just now */
-
     /* prepare mged, adjust our path, get set up to use Tcl */
 
     mged_setup(s);
     new_mats(s);
 
     mmenu_init(s);
-    btn_head_menu(s, 0, 0, 0);
+    btn_head_menu(s->s_edit, 0, 0, 0, s);
     mged_link_vars(s->mged_curr_dm);
 
     bu_vls_printf(&s->input_str, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));
