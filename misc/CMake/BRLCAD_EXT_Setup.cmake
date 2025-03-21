@@ -73,8 +73,8 @@ function(brlcad_bext_init BEXT_SHA1)
     endif(NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
   endif(DEFINED BRLCAD_EXT_DIR)
 
-  # If we're doing the non-src-other build, we've got to have bext for at least a
-  # few custom components no matter how many system packages are installed.
+  # We've got to have bext for at least a few custom components no matter how
+  # many system packages are installed.
   if(NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
     message(
       WARNING
@@ -339,7 +339,7 @@ function(brlcad_ext_setup)
   find_program(GIT_EXEC git)
 
   set(BRLCAD_EXT_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/bext_build)
-  set(BRLCAD_EXT_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR})
+  set(BRLCAD_EXT_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/bext_output)
 
   # If we don't have the bext source directory, try to clone it.  If the user
   # specified a BRLCAD_EXT_SOURCE_DIR we won't delete it, but if we end up
@@ -460,7 +460,7 @@ function(brlcad_ext_setup)
   endif(BEXT_BLD_CLEANUP)
 
   # Persist key variables in the cache
-  set(BRLCAD_EXT_DIR ${BRLCAD_EXT_INSTALL_DIR}/bext_output CACHE PATH "Local bext install" FORCE)
+  set(BRLCAD_EXT_DIR ${BRLCAD_EXT_INSTALL_DIR} CACHE PATH "Local bext install" FORCE)
   set(BRLCAD_EXT_INSTALL_DIR ${BRLCAD_EXT_DIR}/install CACHE PATH "Local bext install" FORCE)
   set(BRLCAD_EXT_NOINSTALL_DIR ${BRLCAD_EXT_DIR}/noinstall CACHE PATH "Local bext install" FORCE)
 endfunction(brlcad_ext_setup)
