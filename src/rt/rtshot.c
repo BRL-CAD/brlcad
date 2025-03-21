@@ -134,6 +134,11 @@ save_attr_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, stru
     return curtree;
 }
 
+// TODO - rather than requiring a second tree walk, another possibility might
+// be to support registering a gettrees_clbk function in the rtip.  That way,
+// rather than having to duplicate the tree walk a second time (and hope it
+// behaves the same way after being built) we could instead allow custom
+// user-defined behavior more easily.  Need to experiment.
 static int
 attr_calc_inv(struct rt_i *rtip, struct attr_data *adata, int ac, const char **av)
 {
