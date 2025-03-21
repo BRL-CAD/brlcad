@@ -158,6 +158,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
     fastf_t f;
     fastf_t fx, fy;
     fastf_t td;
+    int edit_mode = ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) && mged_variables->mv_transform == 'e') ? 1 : 0;
 
     if (s->dbip == DBI_NULL)
 	return;
@@ -219,8 +220,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		save_coords = mged_variables->mv_coords;
 		mged_variables->mv_coords = 'v';
 
-		if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
-		    mged_variables->mv_transform == 'e') {
+		if (edit_mode) {
 
 		    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			save_edflag = es_edflag;
@@ -263,8 +263,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		fx = dx / (fastf_t)width * 2.0;
 		fy = -dy / (fastf_t)height / dm_get_aspect(DMP) * 2.0;
 
-		if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
-		    mged_variables->mv_transform == 'e') {
+		if (edit_mode) {
 
 		    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			save_edflag = es_edflag;
@@ -329,8 +328,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		goto reset_edflag;
 	    }
 	case AMM_SCALE:
-	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (edit_mode) {
 		if (GEOM_EDIT_STATE == ST_S_EDIT && !SEDIT_SCALE) {
 		    save_edflag = es_edflag;
 		    es_edflag = SSCALE;
@@ -387,8 +385,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_ROT_X:
-	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (edit_mode) {
 		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_ROTATE)
@@ -412,8 +409,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_ROT_Y:
-	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (edit_mode) {
 		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_ROTATE)
@@ -437,8 +433,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_ROT_Z:
-	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (edit_mode) {
 		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_ROTATE)
@@ -462,8 +457,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_TRAN_X:
-	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (edit_mode) {
 		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_TRAN)
@@ -486,8 +480,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_TRAN_Y:
-	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (edit_mode) {
 		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_TRAN)
@@ -510,8 +503,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_TRAN_Z:
-	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (edit_mode) {
 		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_TRAN)
@@ -534,8 +526,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_SCALE_X:
-	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (edit_mode) {
 		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_SCALE)
@@ -558,8 +549,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_SCALE_Y:
-	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (edit_mode) {
 		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_SCALE)
@@ -582,8 +572,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_SCALE_Z:
-	    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (edit_mode) {
 		if (GEOM_EDIT_STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_SCALE)
