@@ -33,14 +33,9 @@
 #include "./mged.h"
 #include "./mged_dm.h"
 
-
-extern point_t e_axes_pos;  /* from edsol.c */
-extern point_t curr_e_axes_pos;  /* from edsol.c */
-
 static void grid_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
 static void set_grid_draw(const struct bu_structparse *, const char *, void *, const char *, void *);
 static void set_grid_res(const struct bu_structparse *, const char *, void *, const char *, void *);
-
 
 struct bv_grid_state default_grid_state = {
     /* rc */		1,
@@ -304,22 +299,22 @@ snap_keypoint_to_grid(struct mged_state *s)
     if (s->dbip == DBI_NULL)
 	return;
 
-    if (GEOM_EDIT_STATE != ST_S_EDIT && GEOM_EDIT_STATE != ST_O_EDIT) {
+    if (s->edit_state.global_editing_state != ST_S_EDIT && s->edit_state.global_editing_state != ST_O_EDIT) {
 	bu_log("snap_keypoint_to_grid: must be in an edit state\n");
 	return;
     }
 
-    if (GEOM_EDIT_STATE == ST_S_EDIT) {
-	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+    if (s->edit_state.global_editing_state == ST_S_EDIT) {
+	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
     } else {
-	MAT4X3PNT(model_pt, modelchanges, e_axes_pos);
+	MAT4X3PNT(model_pt, s->s_edit->model_changes, s->s_edit->e_axes_pos);
 	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, model_pt);
     }
     snap_to_grid(s, &view_pt[X], &view_pt[Y]);
     MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
     VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 
-    if (GEOM_EDIT_STATE == ST_S_EDIT)
+    if (s->edit_state.global_editing_state == ST_S_EDIT)
 	bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
     else
 	bu_vls_printf(&cmd, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);

@@ -118,8 +118,9 @@ set_scroll(struct mged_state *s)
  * Reset all scroll bars to the zero position.
  */
 void
-sl_halt_scroll(struct mged_state *s, int UNUSED(a), int UNUSED(b), int UNUSED(c))
+sl_halt_scroll(struct rt_solid_edit *UNUSED(es), int UNUSED(a), int UNUSED(b), int UNUSED(c), void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     bu_vls_printf(&vls, "knob zero");
@@ -129,8 +130,9 @@ sl_halt_scroll(struct mged_state *s, int UNUSED(a), int UNUSED(b), int UNUSED(c)
 
 
 void
-sl_toggle_scroll(struct mged_state *s, int UNUSED(a), int UNUSED(b), int UNUSED(c))
+sl_toggle_scroll(struct rt_solid_edit *UNUSED(es), int UNUSED(a), int UNUSED(b), int UNUSED(c), void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
     mged_variables->mv_sliders = mged_variables->mv_sliders ? 0 : 1;
 
     {
@@ -325,14 +327,14 @@ scroll_display(struct mged_state *s, int y_top)
 				    if (mged_variables->mv_rateknobs)
 					f = s->edit_state.edit_rate_model_tran[X];
 				    else
-					f = s->edit_state.edit_absolute_model_tran[X];
+					f = s->s_edit->edit_absolute_model_tran[X];
 				    break;
 				case 'v':
 				default:
 				    if (mged_variables->mv_rateknobs)
 					f = s->edit_state.edit_rate_view_tran[X];
 				    else
-					f = s->edit_state.edit_absolute_view_tran[X];
+					f = s->s_edit->edit_absolute_view_tran[X];
 				    break;
 			    }
 
@@ -376,13 +378,13 @@ scroll_display(struct mged_state *s, int y_top)
 				    if (mged_variables->mv_rateknobs)
 					f = s->edit_state.edit_rate_model_tran[Y];
 				    else
-					f = s->edit_state.edit_absolute_model_tran[Y];
+					f = s->s_edit->edit_absolute_model_tran[Y];
 				    break;
 				case 'v':
 				    if (mged_variables->mv_rateknobs)
 					f = s->edit_state.edit_rate_view_tran[Y];
 				    else
-					f = s->edit_state.edit_absolute_view_tran[Y];
+					f = s->s_edit->edit_absolute_view_tran[Y];
 				    break;
 			    }
 
@@ -426,13 +428,13 @@ scroll_display(struct mged_state *s, int y_top)
 				    if (mged_variables->mv_rateknobs)
 					f = s->edit_state.edit_rate_model_tran[Z];
 				    else
-					f = s->edit_state.edit_absolute_model_tran[Z];
+					f = s->s_edit->edit_absolute_model_tran[Z];
 				    break;
 				case 'v':
 				    if (mged_variables->mv_rateknobs)
 					f = s->edit_state.edit_rate_view_tran[Z];
 				    else
-					f = s->edit_state.edit_absolute_view_tran[Z];
+					f = s->s_edit->edit_absolute_view_tran[Z];
 				    break;
 			    }
 
@@ -473,7 +475,7 @@ scroll_display(struct mged_state *s, int y_top)
 			    if (mged_variables->mv_rateknobs)
 				f = s->edit_state.edit_rate_scale;
 			    else
-				f = s->edit_state.edit_absolute_scale;
+				f = s->s_edit->edit_absolute_scale;
 
 			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text1[0],

@@ -14,17 +14,14 @@ set(
   chgmodel.c
   chgtree.c
   chgview.c
-  cmd.c
   clone.c
+  cmd.c
   color_scheme.c
   columns.c
   dm-generic.c
   dodraw.c
   doevent.c
   dozoom.c
-  edarb.c
-  edars.c
-  edpipe.c
   edsol.c
   f_db.c
   facedef.c
@@ -34,6 +31,7 @@ set(
   mater.c
   menu.c
   mged.c
+  mged_impl.cpp
   mover.c
   overlay.c
   plot.c
@@ -76,12 +74,15 @@ set(
 # but I'm not sure if that would be a problem for scripting with mged.exe on
 # Windows so leave it for now...
 if(BRLCAD_ENABLE_TCL)
-  set(MGED_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
+  set(MGED_INCLUDE_DIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio
+  )
   brlcad_addexec(mged "${MGED_SOURCES}" "${mged_libs}")
   if(TK_LIBRARY)
     target_compile_definitions(mged PRIVATE HAVE_TK=1)
   endif(TK_LIBRARY)
-  target_include_directories(mged BEFORE PRIVATE ${MGED_INCLUDE_DIRS})
+  target_include_directories(mged BEFORE PRIVATE ${MGED_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
   add_target_deps(mged Tkhtml Tktable itcl_pkgIndex itk_pkgIndex TclIndexBld dm_plugins)
 
   # MGED needs the tclIndex and pkgIndex files set up correctly
@@ -108,13 +109,15 @@ set(
   f_cmd.h
   menu.h
   mged.h
-  mged_dm.h
-  mged_wdb.h
-  sedit.h
   mged.ico
   mged.rc
+  mged_dm.h
+  mged_impl.h
+  mged_wdb.h
+  sedit.h
 )
 cmakefiles(${mged_ignore_files})
+
 
 # Local Variables:
 # tab-width: 8
@@ -122,3 +125,4 @@ cmakefiles(${mged_ignore_files})
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
+

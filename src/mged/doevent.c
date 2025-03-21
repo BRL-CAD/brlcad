@@ -54,7 +54,7 @@
 #include "./mged_dm.h"
 #include "./sedit.h"
 
-
+/* Ew. Global. */
 extern int doMotion;			/* defined in buttons.c */
 
 #ifdef HAVE_X11_TYPES
@@ -146,16 +146,42 @@ doEvent(ClientData UNUSED(clientData), void *UNUSED(eventPtr)) {
 #endif /* HAVE_X11_XLIB_H */
 
 
+struct saved_edflags {
+    int save_edflag;
+    int save_rot;
+    int save_tra;
+    int save_sca;
+    int save_pic;
+};
+
+static void
+save_flags(struct saved_edflags *sf, struct mged_state *s)
+{
+    sf->save_edflag = s->s_edit->edit_flag;
+    sf->save_rot = s->s_edit->solid_edit_rotate;
+    sf->save_tra = s->s_edit->solid_edit_translate;
+    sf->save_sca = s->s_edit->solid_edit_scale;
+    sf->save_pic = s->s_edit->solid_edit_pick;
+}
+
+
 #ifdef HAVE_X11_TYPES
 static void
 motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 {
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
-    int save_edflag = -1;
+    char save_coords = mged_variables->mv_coords;
+    struct saved_edflags edflags;
+    edflags.save_edflag = -1;
+    edflags.save_rot = 0;
+    edflags.save_tra = 0;
+    edflags.save_sca = 0;
+    edflags.save_pic = 0;
     fastf_t f;
     fastf_t fx, fy;
     fastf_t td;
-    int edit_mode = ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) && mged_variables->mv_transform == 'e') ? 1 : 0;
+    int edit_mode = ((s->edit_state.global_editing_state == ST_S_EDIT || s->edit_state.global_editing_state == ST_O_EDIT) && mged_variables->mv_transform == 'e') ? 1 : 0;
+
 
     if (s->dbip == DBI_NULL)
 	return;
@@ -212,19 +238,16 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    break;
 	case AMM_ROT:
 	    {
-		char save_coords;
-
-		save_coords = view_state->vs_gvp->gv_coord;
 		view_state->vs_gvp->gv_coord = 'v';
 
 		if (edit_mode) {
 
-		    if (GEOM_EDIT_STATE == ST_S_EDIT) {
-			save_edflag = es_edflag;
+		    if (s->edit_state.global_editing_state == ST_S_EDIT) {
+			save_flags(&edflags, s);
 			if (!SEDIT_ROTATE)
-			    es_edflag = SROT;
+			    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
 		    } else {
-			save_edflag = edobj;
+			edflags.save_edflag = edobj;
 			edobj = BE_O_ROTATE;
 		    }
 
@@ -252,9 +275,6 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    }
 	case AMM_TRAN:
 	    {
-		char save_coords;
-
-		save_coords = view_state->vs_gvp->gv_coord;
 		view_state->vs_gvp->gv_coord = 'v';
 
 		fx = dx / (fastf_t)width * 2.0;
@@ -262,12 +282,12 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 		if (edit_mode) {
 
-		    if (GEOM_EDIT_STATE == ST_S_EDIT) {
-			save_edflag = es_edflag;
+		    if (s->edit_state.global_editing_state == ST_S_EDIT) {
+			save_flags(&edflags, s);
 			if (!SEDIT_TRAN)
-			    es_edflag = STRANS;
+			    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
 		    } else {
-			save_edflag = edobj;
+			edflags.save_edflag = edobj;
 			edobj = BE_O_XY;
 		    }
 
@@ -292,7 +312,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 			VSUB2(diff, model_pt, vcenter);
 			VSCALE(diff, diff, s->dbip->dbi_base2local);
 			VADD2(model_pt, dm_work_pt, diff);
-			if (GEOM_EDIT_STATE == ST_S_EDIT)
+			if (s->edit_state.global_editing_state == ST_S_EDIT)
 			    bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 			else
 			    bu_vls_printf(&cmd, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
@@ -326,11 +346,11 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    }
 	case AMM_SCALE:
 	    if (edit_mode) {
-		if (GEOM_EDIT_STATE == ST_S_EDIT && !SEDIT_SCALE) {
-		    save_edflag = es_edflag;
-		    es_edflag = SSCALE;
-		} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_SCALE) {
-		    save_edflag = edobj;
+		if (s->edit_state.global_editing_state == ST_S_EDIT && !SEDIT_SCALE) {
+		    save_flags(&edflags, s);
+		    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_SCALE);
+		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_SCALE) {
+		    edflags.save_edflag = edobj;
 		    edobj = BE_O_SCALE;
 		}
 	    }
@@ -383,12 +403,12 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    break;
 	case AMM_CON_ROT_X:
 	    if (edit_mode) {
-		if (GEOM_EDIT_STATE == ST_S_EDIT) {
-		    save_edflag = es_edflag;
+		if (s->edit_state.global_editing_state == ST_S_EDIT) {
+		    save_flags(&edflags, s);
 		    if (!SEDIT_ROTATE)
-			es_edflag = SROT;
+			rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
 		} else {
-		    save_edflag = edobj;
+		    edflags.save_edflag = edobj;
 		    edobj = BE_O_ROTATE;
 		}
 	    }
@@ -407,12 +427,12 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    break;
 	case AMM_CON_ROT_Y:
 	    if (edit_mode) {
-		if (GEOM_EDIT_STATE == ST_S_EDIT) {
-		    save_edflag = es_edflag;
+		if (s->edit_state.global_editing_state == ST_S_EDIT) {
+		    save_flags(&edflags, s);
 		    if (!SEDIT_ROTATE)
-			es_edflag = SROT;
+			rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
 		} else {
-		    save_edflag = edobj;
+		    edflags.save_edflag = edobj;
 		    edobj = BE_O_ROTATE;
 		}
 	    }
@@ -431,12 +451,12 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    break;
 	case AMM_CON_ROT_Z:
 	    if (edit_mode) {
-		if (GEOM_EDIT_STATE == ST_S_EDIT) {
-		    save_edflag = es_edflag;
+		if (s->edit_state.global_editing_state == ST_S_EDIT) {
+		    save_flags(&edflags, s);
 		    if (!SEDIT_ROTATE)
-			es_edflag = SROT;
+			rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
 		} else {
-		    save_edflag = edobj;
+		    edflags.save_edflag = edobj;
 		    edobj = BE_O_ROTATE;
 		}
 	    }
@@ -455,12 +475,12 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    break;
 	case AMM_CON_TRAN_X:
 	    if (edit_mode) {
-		if (GEOM_EDIT_STATE == ST_S_EDIT) {
-		    save_edflag = es_edflag;
+		if (s->edit_state.global_editing_state == ST_S_EDIT) {
+		    save_flags(&edflags, s);
 		    if (!SEDIT_TRAN)
-			es_edflag = STRANS;
-		} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_TRAN) {
-		    save_edflag = edobj;
+			rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
+		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_TRAN) {
+		    edflags.save_edflag = edobj;
 		    edobj = BE_O_X;
 		}
 	    }
@@ -478,12 +498,12 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    break;
 	case AMM_CON_TRAN_Y:
 	    if (edit_mode) {
-		if (GEOM_EDIT_STATE == ST_S_EDIT) {
-		    save_edflag = es_edflag;
+		if (s->edit_state.global_editing_state == ST_S_EDIT) {
+		    save_flags(&edflags, s);
 		    if (!SEDIT_TRAN)
-			es_edflag = STRANS;
-		} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_TRAN) {
-		    save_edflag = edobj;
+			rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
+		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_TRAN) {
+		    edflags.save_edflag = edobj;
 		    edobj = BE_O_Y;
 		}
 	    }
@@ -501,12 +521,12 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    break;
 	case AMM_CON_TRAN_Z:
 	    if (edit_mode) {
-		if (GEOM_EDIT_STATE == ST_S_EDIT) {
-		    save_edflag = es_edflag;
+		if (s->edit_state.global_editing_state == ST_S_EDIT) {
+		    save_flags(&edflags, s);
 		    if (!SEDIT_TRAN)
-			es_edflag = STRANS;
-		} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_TRAN) {
-		    save_edflag = edobj;
+			rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
+		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_TRAN) {
+		    edflags.save_edflag = edobj;
 		    edobj = BE_O_XY;
 		}
 	    }
@@ -524,12 +544,12 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    break;
 	case AMM_CON_SCALE_X:
 	    if (edit_mode) {
-		if (GEOM_EDIT_STATE == ST_S_EDIT) {
-		    save_edflag = es_edflag;
+		if (s->edit_state.global_editing_state == ST_S_EDIT) {
+		    save_flags(&edflags, s);
 		    if (!SEDIT_SCALE)
-			es_edflag = SSCALE;
-		} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_SCALE) {
-		    save_edflag = edobj;
+			rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_SCALE);
+		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_SCALE) {
+		    edflags.save_edflag = edobj;
 		    edobj = BE_O_XSCALE;
 		}
 	    }
@@ -547,12 +567,12 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    break;
 	case AMM_CON_SCALE_Y:
 	    if (edit_mode) {
-		if (GEOM_EDIT_STATE == ST_S_EDIT) {
-		    save_edflag = es_edflag;
+		if (s->edit_state.global_editing_state == ST_S_EDIT) {
+		    save_flags(&edflags, s);
 		    if (!SEDIT_SCALE)
-			es_edflag = SSCALE;
-		} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_SCALE) {
-		    save_edflag = edobj;
+			rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_SCALE);
+		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_SCALE) {
+		    edflags.save_edflag = edobj;
 		    edobj = BE_O_YSCALE;
 		}
 	    }
@@ -570,12 +590,12 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    break;
 	case AMM_CON_SCALE_Z:
 	    if (edit_mode) {
-		if (GEOM_EDIT_STATE == ST_S_EDIT) {
-		    save_edflag = es_edflag;
+		if (s->edit_state.global_editing_state == ST_S_EDIT) {
+		    save_flags(&edflags, s);
 		    if (!SEDIT_SCALE)
-			es_edflag = SSCALE;
-		} else if (GEOM_EDIT_STATE == ST_O_EDIT && !OEDIT_SCALE) {
-		    save_edflag = edobj;
+			rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_SCALE);
+		} else if (s->edit_state.global_editing_state == ST_O_EDIT && !OEDIT_SCALE) {
+		    edflags.save_edflag = edobj;
 		    edobj = BE_O_ZSCALE;
 		}
 	    }
@@ -641,11 +661,15 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
     (void)Tcl_Eval(s->interp, bu_vls_addr(&cmd));
 
  reset_edflag:
-    if (save_edflag != -1) {
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
-	    es_edflag = save_edflag;
-	else if (GEOM_EDIT_STATE == ST_O_EDIT)
-	    edobj = save_edflag;
+    if (edflags.save_edflag != -1) {
+	if (s->edit_state.global_editing_state == ST_S_EDIT) {
+	    s->s_edit->edit_flag = edflags.save_edflag;
+	    s->s_edit->solid_edit_rotate = edflags.save_rot;
+	    s->s_edit->solid_edit_translate = edflags.save_tra;
+	    s->s_edit->solid_edit_scale = edflags.save_sca;
+	    s->s_edit->solid_edit_pick = edflags.save_pic;
+	} else if (s->edit_state.global_editing_state == ST_O_EDIT)
+	    edobj = edflags.save_edflag;
     }
 
  handled:
