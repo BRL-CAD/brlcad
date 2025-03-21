@@ -72,6 +72,8 @@ struct rt_i {
     struct bn_tol       rti_tol;        /**< @brief  Math tolerances for this model */
     struct bg_tess_tol  rti_ttol;       /**< @brief  Tessellation tolerance defaults */
     fastf_t             rti_max_beam_radius; /**< @brief  Max threat radius for FASTGEN cline solid */
+    bu_clbk_t           rti_gettrees_clbk;  /**< @brief  Optional user clbk function called during rt_gettrees_and_attrs, passed rtip and tsp */
+    void *              rti_udata;      /**< @brief  ptr for user data. */
     /* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ */
     point_t             mdl_min;        /**< @brief  min corner of model bounding RPP */
     point_t             mdl_max;        /**< @brief  max corner of model bounding RPP */
@@ -83,7 +85,6 @@ struct rt_i {
     int                 needprep;       /**< @brief  needs rt_prep */
     struct region **    Regions;        /**< @brief  ptrs to regions [reg_bit] */
     struct bu_list      HeadRegion;     /**< @brief  ptr of list of regions in model */
-    void *              Orca_hash_tbl;  /**< @brief  Hash table in matrices for ORCA */
     struct bu_ptbl      delete_regs;    /**< @brief  list of region pointers to delete after light_init() */
     /* Ray-tracing statistics */
     size_t              nregions;       /**< @brief  total # of regions participating */
@@ -180,13 +181,14 @@ RT_EXPORT extern int rt_gettrees(struct rt_i *rtip,
 				 const char **argv, int ncpus);
 
 /**
- * User-called function to add a set of tree hierarchies to the active
- * set. Includes getting the indicated list of attributes and a
- * bu_hash_tbl for use with the ORCA man regions. (stashed in the
- * rt_i structure).
+ * User-called function to add a set of tree hierarchies to the active set.
+ * Includes getting the indicated list of attributes and an optional
+ * user-supplied rti_gettrees_clbk callback function to collect additional
+ * information in rti_udata. (stashed in the rt_i structure).
  *
- * This function may run in parallel, but is not multiply re-entrant
- * itself, because db_walk_tree() isn't multiply re-entrant.
+ * This function may run in parallel, but is not multiply re-entrant itself,
+ * because db_walk_tree() isn't multiply re-entrant.  The callback (if defined)
+ * will be run inside the protection of the RT_SEM_RESULTS semaphore.
  *
  * Semaphores used for critical sections in parallel mode:
  * RT_SEM_TREE ====> protects rti_solidheads[] lists, d_uses(solids)

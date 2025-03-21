@@ -93,6 +93,10 @@ rt_new_rti(struct db_i *dbip)
 
     rt_uniresource.re_magic = RESOURCE_MAGIC;
 
+    /* Zero-initialize user data and clbk */
+    rtip->rti_gettrees_clbk = NULL;
+    rtip->rti_udata = NULL;
+
     /* list of invisible light regions to be deleted after light_init() */
     bu_ptbl_init(&rtip->delete_regs, 8, "rt_i delete regions list");
 
@@ -1232,12 +1236,6 @@ rt_clean(struct rt_i *rtip)
 	    *rpp = NULL;
 #endif
 	}
-    }
-
-    /* Clear the hash table, if we have one */
-    if (rtip->Orca_hash_tbl) {
-	bu_hash_destroy((struct bu_hash_tbl *)rtip->Orca_hash_tbl);
-	rtip->Orca_hash_tbl = NULL;
     }
 
     if (rt_uniresource.re_magic) {
