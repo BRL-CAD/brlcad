@@ -1234,6 +1234,12 @@ rt_clean(struct rt_i *rtip)
 	}
     }
 
+    /* Clear the hash table, if we have one */
+    if (rtip->Orca_hash_tbl) {
+	bu_hash_destroy((struct bu_hash_tbl *)rtip->Orca_hash_tbl);
+	rtip->Orca_hash_tbl = NULL;
+    }
+
     if (rt_uniresource.re_magic) {
 	rt_clean_resource(rtip, &rt_uniresource);/* Used for rt_optim_tree() */
     }
@@ -1265,7 +1271,7 @@ rt_clean(struct rt_i *rtip)
 	 * before this rtip is done with all its treewalking.
 	 *
 	 * This must be done for each 'clean' to keep
-	 * rt_find_or_create_identical_solid() working properly as d_uses goes
+	 * rt_find_identical_solid() working properly as d_uses goes
 	 * up.
 	 */
 	for (i=0; i < RT_DBNHASH; i++) {

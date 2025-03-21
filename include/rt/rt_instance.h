@@ -79,11 +79,11 @@ struct rt_i {
     point_t             rti_pmax;       /**< @brief  for plotting, max RPP */
     double              rti_radius;     /**< @brief  radius of model bounding sphere */
     struct db_i *       rti_dbip;       /**< @brief  prt to Database instance struct */
-    void *              rti_udata;      /**< @brief  ptr for user data */
     /* THESE ITEMS SHOULD BE CONSIDERED OPAQUE, AND SUBJECT TO CHANGE */
     int                 needprep;       /**< @brief  needs rt_prep */
     struct region **    Regions;        /**< @brief  ptrs to regions [reg_bit] */
     struct bu_list      HeadRegion;     /**< @brief  ptr of list of regions in model */
+    void *              Orca_hash_tbl;  /**< @brief  Hash table in matrices for ORCA */
     struct bu_ptbl      delete_regs;    /**< @brief  list of region pointers to delete after light_init() */
     /* Ray-tracing statistics */
     size_t              nregions;       /**< @brief  total # of regions participating */

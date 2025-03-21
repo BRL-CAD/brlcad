@@ -103,12 +103,6 @@ RT_EXPORT extern void rt_free_soltab(struct soltab *stp);
 /* Print a soltab */
 RT_EXPORT extern void rt_pr_soltab(const struct soltab *stp);
 
-/* See if solid "dp" as transformed by "mat" already exists in the soltab list.
- * If it does, return the matching stp, otherwise, return NULL.
- */
-RT_EXPORT extern struct soltab *
-rt_find_identical_solid(const matp_t mat, const struct directory *dp, const struct rt_i *rtip);
-
 __END_DECLS
 
 #endif /* RT_SOLTAB_H */
