@@ -50,8 +50,6 @@ void mged_center(struct mged_state *s, point_t center);
 static void abs_zoom(struct mged_state *s);
 void usejoy(struct mged_state *s, double xangle, double yangle, double zangle);
 
-int knob_rot(struct mged_state *s, vect_t rvec, char origin, int mf, int vf, int ef);
-int knob_tran(struct mged_state *s, vect_t tvec, int model_flag, int view_flag, int edit_flag);
 int mged_erot_xyz(struct mged_state *s, char origin, vect_t rvec);
 int mged_etran(struct mged_state *s, char coords, vect_t tvec);
 int mged_mtran(struct mged_state *s, const vect_t tvec);
@@ -1251,6 +1249,49 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 }
 
 
+static int
+knob_tran(struct mged_state *s,
+	vect_t tvec,
+	int model_flag,
+	int view_flag,
+	int edit_flag_tra)
+{
+    if (edit_flag_tra) {
+	mged_etran(s, mged_variables->mv_coords, tvec);
+    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+	mged_mtran(s, tvec);
+    } else if (mged_variables->mv_coords == 'o') {
+	mged_otran(s, tvec);
+    } else {
+	mged_vtran(s, tvec);
+    }
+
+    return TCL_OK;
+}
+
+
+static int
+knob_rot(struct mged_state *s,
+	vect_t rvec,
+	char origin,
+	int model_flag,
+	int view_flag,
+	int edit_flag_rot)
+{
+    if (edit_flag_rot) {
+	mged_erot_xyz(s, origin, rvec);
+    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+	mged_vrot_xyz(s, origin, 'm', rvec);
+    } else if (mged_variables->mv_coords == 'o') {
+	mged_vrot_xyz(s, origin, 'o', rvec);
+    } else {
+	mged_vrot_xyz(s, origin, 'v', rvec);
+    }
+
+    return TCL_OK;
+}
+
+
 /* Main processing of knob twists.  "knob id val id val ..." */
 int
 f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
@@ -1270,7 +1311,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     int incr_flag = 0;  /* interpret values as increments */
     int view_flag = 0;  /* manipulate view using view coords */
     int model_flag = 0; /* manipulate view using model coords */
-    int edit_flag = 0;  /* force edit interpretation */
+    int edit_flag_force = 0;  /* force edit interpretation */
 
     CHECK_DBI_NULL;
 
@@ -1293,7 +1334,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	while ((c = bu_getopt(argc, (char * const *)argv, "eimo:v")) != -1) {
 	    switch (c) {
 		case 'e':
-		    edit_flag = 1;
+		    edit_flag_force = 1;
 		    break;
 		case 'i':
 		    incr_flag = 1;
@@ -1316,10 +1357,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	argc -= bu_optind - 1;
     }
 
-    int edit_flag_rot = (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' && !view_flag && !model_flag) || edit_flag)) ? 1 : 0;
-    int edit_flag_tra = (EDIT_TRAN && ((mged_variables->mv_transform == 'e' && !view_flag && !model_flag) || edit_flag)) ? 1 : 0;
+    int edit_flag_rot = (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' && !view_flag && !model_flag) || edit_flag_force)) ? 1 : 0;
+    int edit_flag_tra = (EDIT_TRAN && ((mged_variables->mv_transform == 'e' && !view_flag && !model_flag) || edit_flag_force)) ? 1 : 0;
     // NOTE - edit_flag_sca doesn't care about model_flag...
-    int edit_flag_sca = (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) ? 1 : 0;
+    int edit_flag_sca = (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag_force)) ? 1 : 0;
 
     if (origin != 'v' && origin != 'm' && origin != 'e' && origin != 'k') {
 	origin = mged_variables->mv_rotate_about;
@@ -2323,61 +2364,17 @@ usage:
     }
 
     if (do_tran) {
-	(void)knob_tran(s, tvec, model_flag, view_flag, edit_flag);
+	(void)knob_tran(s, tvec, model_flag, view_flag, edit_flag_tra);
     }
 
     if (do_rot) {
-	(void)knob_rot(s, rvec, origin, model_flag, view_flag, edit_flag);
+	(void)knob_rot(s, rvec, origin, model_flag, view_flag, edit_flag_rot);
     }
 
     check_nonzero_rates(s);
     return TCL_OK;
 }
 
-
-int
-knob_tran(struct mged_state *s,
-	vect_t tvec,
-	int model_flag,
-	int view_flag,
-	int edit_flag)
-{
-    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
-		       !view_flag && !model_flag) || edit_flag)) {
-	mged_etran(s, mged_variables->mv_coords, tvec);
-    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
-	mged_mtran(s, tvec);
-    } else if (mged_variables->mv_coords == 'o') {
-	mged_otran(s, tvec);
-    } else {
-	mged_vtran(s, tvec);
-    }
-
-    return TCL_OK;
-}
-
-
-int
-knob_rot(struct mged_state *s,
-	vect_t rvec,
-	char origin,
-	int model_flag,
-	int view_flag,
-	int edit_flag)
-{
-    if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
-			 !view_flag && !model_flag) || edit_flag)) {
-	mged_erot_xyz(s, origin, rvec);
-    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
-	mged_vrot_xyz(s, origin, 'm', rvec);
-    } else if (mged_variables->mv_coords == 'o') {
-	mged_vrot_xyz(s, origin, 'o', rvec);
-    } else {
-	mged_vrot_xyz(s, origin, 'v', rvec);
-    }
-
-    return TCL_OK;
-}
 
 
 /* absolute_scale's value range is [-1.0, 1.0] */
