@@ -286,6 +286,42 @@ gsh_post_closedb_clbk(int UNUSED(argc), const char **UNUSED(argv), void *UNUSED(
     return BRLCAD_OK;
 }
 
+extern "C" int
+gsh_db_search_callback(int argc, const char *argv[], void *UNUSED(u1), void *u2)
+{
+    GshState *s = (GshState *)u2;
+    struct ged *gedp = s->gedp;
+
+    // Stash any pre-existing non-exec output so it isn't mixed in with the
+    // results of the exec itself.
+    struct bu_vls tmp_rstr = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&tmp_rstr, "%s", bu_vls_cstr(gedp->ged_result_str));
+
+    // Make sure the result string buffer is clear
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    // Do the actual command execution
+    int gret = ged_exec(gedp, argc, argv);
+
+    // Immediately report the output, if any - we're not waiting for the
+    // overall completion of the entire search command to provide user feedback
+    // on the exec results.  Make sure to add a \n character at the end if the
+    // command didn't provide it.
+    if (bu_vls_strlen(gedp->ged_result_str)) {
+	std::string rstr(bu_vls_cstr(gedp->ged_result_str));
+	if (rstr.length() && rstr.c_str()[rstr.length() - 1] != '\n')
+	    rstr.append("\n");
+        bu_log("%s", rstr.c_str());
+    }
+
+    /* Restore any non-exec output */
+    bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&tmp_rstr));
+    bu_vls_free(&tmp_rstr);
+
+    return BRLCAD_OK == gret;
+}
+
+
 /* Cross platform I/O subprocess listening is tricky.  Tcl and Qt both have
  * specific logic necessary for their environments.  Even the minimalist
  * command line environment has some basic requirements that must be met.
@@ -348,6 +384,8 @@ GshState::GshState()
     ged_clbk_set(gedp, "closedb", BU_CLBK_PRE, &gsh_pre_closedb_clbk, (void *)this);
     ged_clbk_set(gedp, "closedb", BU_CLBK_POST, &gsh_post_closedb_clbk, (void *)this);
 
+    // Register search exec callback
+    ged_clbk_set(gedp, "search", BU_CLBK_DURING, &gsh_db_search_callback, (void *)this);
 
     // Assign gsh specific I/O handlers to the gedp
     gedp->ged_create_io_handler = &gsh_create_io_handler;
@@ -389,7 +427,7 @@ GshState::eval(int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // We've got a valid GED command Before any BRL-CAD logic is executed;
+    // We've got a valid GED command. Before any BRL-CAD logic is executed,
     // stash the state of the view info so we can recognize changes.
     view_checkpoint();
 
