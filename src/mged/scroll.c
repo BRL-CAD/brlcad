@@ -319,7 +319,7 @@ scroll_display(struct mged_state *s, int y_top)
 				       color_scheme->cs_slider_text2[2], 1, 1.0);
 		    } else {
 			if (EDIT_TRAN && mged_variables->mv_transform == 'e') {
-			    switch (mged_variables->mv_coords) {
+			    switch (view_state->vs_gvp->gv_coord) {
 				case 'm':
 				case 'o':
 				    if (mged_variables->mv_rateknobs)
@@ -342,12 +342,12 @@ scroll_display(struct mged_state *s, int y_top)
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
 			} else {
 			    if (mged_variables->mv_rateknobs) {
-				if (mged_variables->mv_coords == 'm')
+				if (view_state->vs_gvp->gv_coord == 'm')
 				    f = view_state->vs_rate_model_tran[X];
 				else
 				    f = view_state->vs_rate_tran[X];
 			    } else {
-				if (mged_variables->mv_coords == 'm')
+				if (view_state->vs_gvp->gv_coord == 'm')
 				    f = view_state->vs_absolute_model_tran[X];
 				else
 				    f = view_state->vs_absolute_tran[X];
@@ -370,7 +370,7 @@ scroll_display(struct mged_state *s, int y_top)
 				       color_scheme->cs_slider_text2[2], 1, 1.0);
 		    } else {
 			if (EDIT_TRAN && mged_variables->mv_transform == 'e') {
-			    switch (mged_variables->mv_coords) {
+			    switch (view_state->vs_gvp->gv_coord) {
 				case 'm':
 				case 'o':
 				    if (mged_variables->mv_rateknobs)
@@ -392,12 +392,12 @@ scroll_display(struct mged_state *s, int y_top)
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
 			} else {
 			    if (mged_variables->mv_rateknobs) {
-				if (mged_variables->mv_coords == 'm')
+				if (view_state->vs_gvp->gv_coord == 'm')
 				    f = view_state->vs_rate_model_tran[Y];
 				else
 				    f = view_state->vs_rate_tran[Y];
 			    } else {
-				if (mged_variables->mv_coords == 'm')
+				if (view_state->vs_gvp->gv_coord == 'm')
 				    f = view_state->vs_absolute_model_tran[Y];
 				else
 				    f = view_state->vs_absolute_tran[Y];
@@ -420,7 +420,7 @@ scroll_display(struct mged_state *s, int y_top)
 				       color_scheme->cs_slider_text2[2], 1, 1.0);
 		    } else {
 			if (EDIT_TRAN && mged_variables->mv_transform == 'e') {
-			    switch (mged_variables->mv_coords) {
+			    switch (view_state->vs_gvp->gv_coord) {
 				case 'm':
 				case 'o':
 				    if (mged_variables->mv_rateknobs)
@@ -442,12 +442,12 @@ scroll_display(struct mged_state *s, int y_top)
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
 			} else {
 			    if (mged_variables->mv_rateknobs) {
-				if (mged_variables->mv_coords == 'm')
+				if (view_state->vs_gvp->gv_coord == 'm')
 				    f = view_state->vs_rate_model_tran[Z];
 				else
 				    f = view_state->vs_rate_tran[Z];
 			    } else {
-				if (mged_variables->mv_coords == 'm')
+				if (view_state->vs_gvp->gv_coord == 'm')
 				    f = view_state->vs_absolute_model_tran[Z];
 				else
 				    f = view_state->vs_absolute_tran[Z];
@@ -502,7 +502,7 @@ scroll_display(struct mged_state *s, int y_top)
 				       color_scheme->cs_slider_text2[2], 1, 1.0);
 		    } else {
 			if (EDIT_ROTATE && mged_variables->mv_transform == 'e') {
-			    switch (mged_variables->mv_coords) {
+			    switch (view_state->vs_gvp->gv_coord) {
 				case 'm':
 				    if (mged_variables->mv_rateknobs)
 					f = s->edit_state.edit_rate_model_rotate[X] / RATE_ROT_FACTOR;
@@ -530,12 +530,12 @@ scroll_display(struct mged_state *s, int y_top)
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
 			} else {
 			    if (mged_variables->mv_rateknobs) {
-				if (mged_variables->mv_coords == 'm')
+				if (view_state->vs_gvp->gv_coord == 'm')
 				    f = view_state->vs_rate_model_rotate[X] / RATE_ROT_FACTOR;
 				else
 				    f = view_state->vs_rate_rotate[X] / RATE_ROT_FACTOR;
 			    } else {
-				if (mged_variables->mv_coords == 'm')
+				if (view_state->vs_gvp->gv_coord == 'm')
 				    f = view_state->vs_absolute_model_rotate[X] / ABS_ROT_FACTOR;
 				else
 				    f = view_state->vs_absolute_rotate[X] / ABS_ROT_FACTOR;
@@ -554,7 +554,7 @@ scroll_display(struct mged_state *s, int y_top)
 					 (char *)NULL);
 		    else {
 			if (EDIT_ROTATE && mged_variables->mv_transform == 'e') {
-			    switch (mged_variables->mv_coords) {
+			    switch (view_state->vs_gvp->gv_coord) {
 				case 'm':
 				    if (mged_variables->mv_rateknobs)
 					f = s->edit_state.edit_rate_model_rotate[Y] / RATE_ROT_FACTOR;
@@ -582,12 +582,12 @@ scroll_display(struct mged_state *s, int y_top)
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
 			} else {
 			    if (mged_variables->mv_rateknobs) {
-				if (mged_variables->mv_coords == 'm')
+				if (view_state->vs_gvp->gv_coord == 'm')
 				    f = view_state->vs_rate_model_rotate[Y] / RATE_ROT_FACTOR;
 				else
 				    f = view_state->vs_rate_rotate[Y] / RATE_ROT_FACTOR;
 			    } else {
-				if (mged_variables->mv_coords == 'm')
+				if (view_state->vs_gvp->gv_coord == 'm')
 				    f = view_state->vs_absolute_model_rotate[Y] / ABS_ROT_FACTOR;
 				else
 				    f = view_state->vs_absolute_rotate[Y] / ABS_ROT_FACTOR;
@@ -606,7 +606,7 @@ scroll_display(struct mged_state *s, int y_top)
 					 (char *)NULL);
 		    else {
 			if (EDIT_ROTATE && mged_variables->mv_transform == 'e') {
-			    switch (mged_variables->mv_coords) {
+			    switch (view_state->vs_gvp->gv_coord) {
 				case 'm':
 				    if (mged_variables->mv_rateknobs)
 					f = s->edit_state.edit_rate_model_rotate[Z] / RATE_ROT_FACTOR;
@@ -634,12 +634,12 @@ scroll_display(struct mged_state *s, int y_top)
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
 			} else {
 			    if (mged_variables->mv_rateknobs) {
-				if (mged_variables->mv_coords == 'm')
+				if (view_state->vs_gvp->gv_coord == 'm')
 				    f = view_state->vs_rate_model_rotate[Z] / RATE_ROT_FACTOR;
 				else
 				    f = view_state->vs_rate_rotate[Z] / RATE_ROT_FACTOR;
 			    } else {
-				if (mged_variables->mv_coords == 'm')
+				if (view_state->vs_gvp->gv_coord == 'm')
 				    f = view_state->vs_absolute_model_rotate[Z] / ABS_ROT_FACTOR;
 				else
 				    f = view_state->vs_absolute_rotate[Z] / ABS_ROT_FACTOR;

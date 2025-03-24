@@ -1013,8 +1013,8 @@ event_check(struct mged_state *s, int non_blocking)
 	char save_coords;
 
 	set_curr_dm(s, s->edit_state.edit_rate_mr_dm);
-	save_coords = mged_variables->mv_coords;
-	mged_variables->mv_coords = 'm';
+	save_coords = view_state->vs_gvp->gv_coord;
+	view_state->vs_gvp->gv_coord = 'm';
 
 	if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	    save_edflag = es_edflag;
@@ -1035,7 +1035,7 @@ event_check(struct mged_state *s, int non_blocking)
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	mged_variables->mv_coords = save_coords;
+	view_state->vs_gvp->gv_coord = save_coords;
 
 	if (GEOM_EDIT_STATE == ST_S_EDIT)
 	    es_edflag = save_edflag;
@@ -1047,8 +1047,8 @@ event_check(struct mged_state *s, int non_blocking)
 	char save_coords;
 
 	set_curr_dm(s, s->edit_state.edit_rate_or_dm);
-	save_coords = mged_variables->mv_coords;
-	mged_variables->mv_coords = 'o';
+	save_coords = view_state->vs_gvp->gv_coord;
+	view_state->vs_gvp->gv_coord = 'o';
 
 	if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	    save_edflag = es_edflag;
@@ -1069,7 +1069,7 @@ event_check(struct mged_state *s, int non_blocking)
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	mged_variables->mv_coords = save_coords;
+	view_state->vs_gvp->gv_coord = save_coords;
 
 	if (GEOM_EDIT_STATE == ST_S_EDIT)
 	    es_edflag = save_edflag;
@@ -1081,8 +1081,8 @@ event_check(struct mged_state *s, int non_blocking)
 	char save_coords;
 
 	set_curr_dm(s, s->edit_state.edit_rate_vr_dm);
-	save_coords = mged_variables->mv_coords;
-	mged_variables->mv_coords = 'v';
+	save_coords = view_state->vs_gvp->gv_coord;
+	view_state->vs_gvp->gv_coord = 'v';
 
 	if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	    save_edflag = es_edflag;
@@ -1103,7 +1103,7 @@ event_check(struct mged_state *s, int non_blocking)
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	mged_variables->mv_coords = save_coords;
+	view_state->vs_gvp->gv_coord = save_coords;
 
 	if (GEOM_EDIT_STATE == ST_S_EDIT)
 	    es_edflag = save_edflag;
@@ -1115,8 +1115,8 @@ event_check(struct mged_state *s, int non_blocking)
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	set_curr_dm(s, s->edit_state.edit_rate_mt_dm);
-	save_coords = mged_variables->mv_coords;
-	mged_variables->mv_coords = 'm';
+	save_coords = view_state->vs_gvp->gv_coord;
+	view_state->vs_gvp->gv_coord = 'm';
 
 	if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	    save_edflag = es_edflag;
@@ -1136,7 +1136,7 @@ event_check(struct mged_state *s, int non_blocking)
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	mged_variables->mv_coords = save_coords;
+	view_state->vs_gvp->gv_coord = save_coords;
 
 	if (GEOM_EDIT_STATE == ST_S_EDIT)
 	    es_edflag = save_edflag;
@@ -1148,8 +1148,8 @@ event_check(struct mged_state *s, int non_blocking)
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	set_curr_dm(s, s->edit_state.edit_rate_vt_dm);
-	save_coords = mged_variables->mv_coords;
-	mged_variables->mv_coords = 'v';
+	save_coords = view_state->vs_gvp->gv_coord;
+	view_state->vs_gvp->gv_coord = 'v';
 
 	if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	    save_edflag = es_edflag;
@@ -1169,7 +1169,7 @@ event_check(struct mged_state *s, int non_blocking)
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	mged_variables->mv_coords = save_coords;
+	view_state->vs_gvp->gv_coord = save_coords;
 
 	if (GEOM_EDIT_STATE == ST_S_EDIT)
 	    es_edflag = save_edflag;

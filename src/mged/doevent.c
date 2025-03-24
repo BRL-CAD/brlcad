@@ -214,8 +214,8 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    {
 		char save_coords;
 
-		save_coords = mged_variables->mv_coords;
-		mged_variables->mv_coords = 'v';
+		save_coords = view_state->vs_gvp->gv_coord;
+		view_state->vs_gvp->gv_coord = 'v';
 
 		if (edit_mode) {
 
@@ -246,7 +246,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		}
 
 		(void)Tcl_Eval(s->interp, bu_vls_addr(&cmd));
-		mged_variables->mv_coords = save_coords;
+		view_state->vs_gvp->gv_coord = save_coords;
 
 		goto reset_edflag;
 	    }
@@ -254,8 +254,8 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    {
 		char save_coords;
 
-		save_coords = mged_variables->mv_coords;
-		mged_variables->mv_coords = 'v';
+		save_coords = view_state->vs_gvp->gv_coord;
+		view_state->vs_gvp->gv_coord = 'v';
 
 		fx = dx / (fastf_t)width * 2.0;
 		fy = -dy / (fastf_t)height / dm_get_aspect(DMP) * 2.0;
@@ -311,7 +311,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 			    snap_view_to_grid(s, dm_mouse_dx / (fastf_t)width * 2.0,
 					      -dm_mouse_dy / (fastf_t)height / dm_get_aspect(DMP) * 2.0);
 
-			    mged_variables->mv_coords = save_coords;
+			    view_state->vs_gvp->gv_coord = save_coords;
 			    goto handled;
 			} else
 			    bu_vls_printf(&cmd, "knob -i -v aX %lf aY %lf\n",
@@ -320,7 +320,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		}
 
 		(void)Tcl_Eval(s->interp, bu_vls_addr(&cmd));
-		mged_variables->mv_coords = save_coords;
+		view_state->vs_gvp->gv_coord = save_coords;
 
 		goto reset_edflag;
 	    }
