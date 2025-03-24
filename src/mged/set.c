@@ -571,6 +571,12 @@ set_coords(const struct bu_structparse *UNUSED(sdp),
     struct mged_state *s = (struct mged_state *)data;
     MGED_CK_STATE(s);
     view_state->vs_gvp->gv_coord = mged_variables->mv_coords;
+    // Update ALL active views to use the new value
+    struct bu_ptbl *views = bv_set_views(&s->gedp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	v->gv_coord = mged_variables->mv_coords;
+    }
 }
 
 
