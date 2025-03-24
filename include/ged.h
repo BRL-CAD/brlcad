@@ -50,6 +50,7 @@
 #include "raytrace.h"
 #include "analyze.h"
 #include "ged/defines.h"
+#include "ged/version.h"
 #include "ged/database.h"
 #include "ged/commands.h"
 #include "ged/objects.h"

@@ -143,6 +143,7 @@ set(
   tab_complete.cpp
   trace.c
   track.c
+  vers.c
   vutil.c
   view/data_lines.c
   wdb_importFg4Section.c

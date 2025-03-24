@@ -11,6 +11,7 @@ set(
   framebuffer.h
   objects.h
   rt.h
+  version.h
   view.h
 )
 brlcad_manage_files(ged_headers ${INCLUDE_DIR}/brlcad/ged REQUIRED libged)

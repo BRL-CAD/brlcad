@@ -35,6 +35,7 @@
 
 #include "linenoise.hpp"
 
+#include "brlcad_ident.h"
 #include "bu.h"
 #include "bv.h"
 
@@ -752,11 +753,14 @@ main(int argc, const char **argv)
 
     /* Options */
     int print_help = 0;
+    int report_versions = 0;
     int new_cmd_forms = 0;
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0],  "h",     "help",  "",  NULL, &print_help,        "print help and exit");
-    BU_OPT(d[1],  "",  "new-cmds",  "",  NULL, &new_cmd_forms,     "use new (qged style) commands");
-    BU_OPT_NULL(d[2]);
+    struct bu_opt_desc d[5];
+    BU_OPT(d[0], "h", "help",      "",  NULL, &print_help,        "print help and exit");
+    BU_OPT(d[1], "?", "",          "",  NULL, &print_help,        "");
+    BU_OPT(d[2], "v", "version",   "",  NULL, &report_versions,   "Report BRL-CAD and library versions, then exit");
+    BU_OPT(d[3], "",  "new-cmds",  "",  NULL, &new_cmd_forms,     "use new (qged style) commands");
+    BU_OPT_NULL(d[4]);
 
     /* Parse options, fail if anything goes wrong */
     struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
@@ -771,9 +775,27 @@ main(int argc, const char **argv)
     if (print_help) {
 	struct bu_vls msg = BU_VLS_INIT_ZERO;
 	const char *help = bu_opt_describe(d, NULL);
-	bu_vls_sprintf(&msg, "Usage: 'gsh [options] model.g'\n\nOptions:\n%s\n", help);
+	bu_vls_sprintf(&msg, "Usage: 'gsh [options] model.g' [args] \n\nOptions:\n%s\n", help);
 	bu_free((char *)help, "done with help string");
-	fputs(bu_vls_addr(&msg), stderr);
+	fputs(bu_vls_cstr(&msg), stderr);
+	bu_vls_free(&msg);
+	bu_exit(EXIT_SUCCESS, NULL);
+    }
+
+    /* If we're just reporting BRL-CAD and lib versions, do that */
+    if (report_versions) {
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&msg, "%s%s%s%s%s",
+		brlcad_ident("Geometry Shell (gsh)"),
+		bu_version(),
+		bn_version(),
+		rt_version(),
+		ged_version());
+#ifdef USE_DM
+	bu_vls_printf(&msg, "%s", dm_version());
+#endif
+	bu_vls_printf(&msg, "\n");
+	std::cout << bu_vls_cstr(&msg);
 	bu_vls_free(&msg);
 	bu_exit(EXIT_SUCCESS, NULL);
     }
@@ -874,7 +896,7 @@ main(int argc, const char **argv)
 	}
     }
 
-    return BRLCAD_OK;
+    return EXIT_SUCCESS;
 }
 
 // Local Variables:
