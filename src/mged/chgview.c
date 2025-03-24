@@ -56,6 +56,10 @@ int mged_otran(struct mged_state *s, const vect_t tvec);
 int mged_vtran(struct mged_state *s, const vect_t tvec);
 int mged_vrot_xyz(struct mged_state *s, char origin, char coords, vect_t rvec);
 
+#define EDIT_FLAG_ROT 2
+#define EDIT_FLAG_SCA 3
+#define EDIT_FLAG_TRA 4
+
 /* DEBUG -- force view center */
 /* Format: C x y z */
 int
@@ -1271,9 +1275,10 @@ knob_tran(struct mged_state *s,
 	vect_t tvec,
 	int model_flag,
 	int view_flag,
-	int edit_flag_tra)
+	int edit_flag,
+	int edit_flag_force)
 {
-    if (edit_flag_tra) {
+    if (edit_flag == EDIT_FLAG_TRA || edit_flag_force) {
 	mged_etran(s, view_state->vs_gvp->gv_coord, tvec);
     } else if (model_flag || (view_state->vs_gvp->gv_coord == 'm' && !view_flag)) {
 	mged_mtran(s, tvec);
@@ -1293,9 +1298,10 @@ knob_rot(struct mged_state *s,
 	char origin,
 	int model_flag,
 	int view_flag,
-	int edit_flag_rot)
+	int edit_flag,
+	int edit_flag_force)
 {
-    if (edit_flag_rot) {
+    if (edit_flag == EDIT_FLAG_ROT || edit_flag_force) {
 	mged_erot_xyz(s, origin, rvec);
     } else if (model_flag || (view_state->vs_gvp->gv_coord == 'm' && !view_flag)) {
 	mged_vrot_xyz(s, origin, 'm', rvec);
@@ -1374,10 +1380,12 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	argc -= bu_optind - 1;
     }
 
-    int edit_flag_rot = (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' && !view_flag && !model_flag) || edit_flag_force)) ? 1 : 0;
-    int edit_flag_tra = (EDIT_TRAN && ((mged_variables->mv_transform == 'e' && !view_flag && !model_flag) || edit_flag_force)) ? 1 : 0;
-    // NOTE - edit_flag_sca doesn't care about model_flag...
-    int edit_flag_sca = (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag_force)) ? 1 : 0;
+    // Pack more info into edit_flag
+    int edit_flag = 0;
+    edit_flag = (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' && !view_flag && !model_flag))) ? EDIT_FLAG_ROT : edit_flag;
+    edit_flag = (EDIT_TRAN && ((mged_variables->mv_transform == 'e' && !view_flag && !model_flag))) ? EDIT_FLAG_TRA : edit_flag;
+    // NOTE - SCALE doesn't care about model_flag...
+    edit_flag = (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag))) ? EDIT_FLAG_SCA : edit_flag;
 
     if (origin != 'v' && origin != 'm' && origin != 'e' && origin != 'k') {
 	origin = view_state->vs_gvp->gv_rotate_about;
@@ -1429,7 +1437,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		switch (cmd[0]) {
 		    case 'x':
 			if (incr_flag) {
-			    if (edit_flag_rot) {
+			    if (edit_flag == EDIT_FLAG_ROT || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[X] += f;
@@ -1462,7 +1470,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 			    }
 			} else {
-			    if (edit_flag_rot) {
+			    if (edit_flag == EDIT_FLAG_ROT || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[X] = f;
@@ -1499,7 +1507,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			break;
 		    case 'y':
 			if (incr_flag) {
-			    if (edit_flag_rot) {
+			    if (edit_flag == EDIT_FLAG_ROT || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[Y] += f;
@@ -1531,7 +1539,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				}
 			    }
 			} else {
-			    if (edit_flag_rot) {
+			    if (edit_flag == EDIT_FLAG_ROT || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[Y] = f;
@@ -1567,7 +1575,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			break;
 		    case 'z':
 			if (incr_flag) {
-			    if (edit_flag_rot) {
+			    if (edit_flag == EDIT_FLAG_ROT || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[Z] += f;
@@ -1599,7 +1607,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				}
 			    }
 			} else {
-			    if (edit_flag_rot) {
+			    if (edit_flag == EDIT_FLAG_ROT || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 					s->edit_state.edit_rate_model_rotate[Z] = f;
@@ -1635,7 +1643,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			break;
 		    case 'X':
 			if (incr_flag) {
-			    if (edit_flag_tra) {
+			    if (edit_flag == EDIT_FLAG_TRA || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 				    case 'o':
@@ -1658,7 +1666,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				}
 			    }
 			} else {
-			    if (edit_flag_tra) {
+			    if (edit_flag == EDIT_FLAG_TRA || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 				    case 'o':
@@ -1685,7 +1693,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			break;
 		    case 'Y':
 			if (incr_flag) {
-			    if (edit_flag_tra) {
+			    if (edit_flag == EDIT_FLAG_TRA || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 				    case 'o':
@@ -1708,7 +1716,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				}
 			    }
 			} else {
-			    if (edit_flag_tra) {
+			    if (edit_flag == EDIT_FLAG_TRA || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 				    case 'o':
@@ -1735,7 +1743,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			break;
 		    case 'Z':
 			if (incr_flag) {
-			    if (edit_flag_tra) {
+			    if (edit_flag == EDIT_FLAG_TRA || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 				    case 'o':
@@ -1758,7 +1766,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				}
 			    }
 			} else {
-			    if (edit_flag_tra) {
+			    if (edit_flag == EDIT_FLAG_TRA || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 				    case 'o':
@@ -1785,13 +1793,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			break;
 		    case 'S':
 			if (incr_flag) {
-			    if (edit_flag_sca) {
+			    if (edit_flag == EDIT_FLAG_SCA || edit_flag_force) {
 				s->edit_state.edit_rate_scale += f;
 			    } else {
 				view_state->vs_rate_scale += f;
 			    }
 			} else {
-			    if (edit_flag_sca) {
+			    if (edit_flag == EDIT_FLAG_SCA || edit_flag_force) {
 				s->edit_state.edit_rate_scale = f;
 			    } else {
 				view_state->vs_rate_scale = f;
@@ -1806,7 +1814,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		switch (cmd[1]) {
 		    case 'x':
 			if (incr_flag) {
-			    if (edit_flag_rot) {
+			    if (edit_flag == EDIT_FLAG_ROT || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 					s->edit_state.edit_absolute_model_rotate[X] += f;
@@ -1828,7 +1836,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 			    rvec[X] = f;
 			} else {
-			    if (edit_flag_rot) {
+			    if (edit_flag == EDIT_FLAG_ROT || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 					rvec[X] = f - s->edit_state.last_edit_absolute_model_rotate[X];
@@ -1855,7 +1863,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			}
 
 			/* wrap around */
-			if (edit_flag_rot) {
+			if (edit_flag == EDIT_FLAG_ROT || edit_flag_force) {
 			    fastf_t *arp;
 			    fastf_t *larp;
 
@@ -1910,7 +1918,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			break;
 		    case 'y':
 			if (incr_flag) {
-			    if (edit_flag_rot) {
+			    if (edit_flag == EDIT_FLAG_ROT || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 					s->edit_state.edit_absolute_model_rotate[Y] += f;
@@ -1932,7 +1940,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 			    rvec[Y] = f;
 			} else {
-			    if (edit_flag_rot) {
+			    if (edit_flag == EDIT_FLAG_ROT || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 					rvec[Y] = f - s->edit_state.last_edit_absolute_model_rotate[Y];
@@ -1959,7 +1967,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			}
 
 			/* wrap around */
-			if (edit_flag_rot) {
+			if (edit_flag == EDIT_FLAG_ROT || edit_flag_force) {
 			    fastf_t *arp;
 			    fastf_t *larp;
 
@@ -2014,7 +2022,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			break;
 		    case 'z':
 			if (incr_flag) {
-			    if (edit_flag_rot) {
+			    if (edit_flag == EDIT_FLAG_ROT || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 					s->edit_state.edit_absolute_model_rotate[Z] += f;
@@ -2036,7 +2044,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 			    rvec[Z] = f;
 			} else {
-			    if (edit_flag_rot) {
+			    if (edit_flag == EDIT_FLAG_ROT || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 					rvec[Z] = f - s->edit_state.last_edit_absolute_model_rotate[Z];
@@ -2063,7 +2071,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			}
 
 			/* wrap around */
-			if (edit_flag_rot) {
+			if (edit_flag == EDIT_FLAG_ROT || edit_flag_force) {
 			    fastf_t *arp;
 			    fastf_t *larp;
 
@@ -2120,7 +2128,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			sf = f * s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale;
 
 			if (incr_flag) {
-			    if (edit_flag_tra) {
+			    if (edit_flag == EDIT_FLAG_TRA || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 				    case 'o':
@@ -2142,7 +2150,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 			    tvec[X] = f;
 			} else {
-			    if (edit_flag_tra) {
+			    if (edit_flag == EDIT_FLAG_TRA || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 				    case 'o':
@@ -2174,7 +2182,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			sf = f * s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale;
 
 			if (incr_flag) {
-			    if (edit_flag_tra) {
+			    if (edit_flag == EDIT_FLAG_TRA || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 				    case 'o':
@@ -2196,7 +2204,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 			    tvec[Y] = f;
 			} else {
-			    if (edit_flag_tra) {
+			    if (edit_flag == EDIT_FLAG_TRA || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 				    case 'o':
@@ -2227,7 +2235,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			sf = f * s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale;
 
 			if (incr_flag) {
-			    if (edit_flag_tra) {
+			    if (edit_flag == EDIT_FLAG_TRA || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 				    case 'o':
@@ -2249,7 +2257,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 			    tvec[Z] = f;
 			} else {
-			    if (edit_flag_tra) {
+			    if (edit_flag == EDIT_FLAG_TRA || edit_flag_force) {
 				switch (view_state->vs_gvp->gv_coord) {
 				    case 'm':
 				    case 'o':
@@ -2278,7 +2286,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			break;
 		    case 'S':
 			if (incr_flag) {
-			    if (edit_flag_sca) {
+			    if (edit_flag == EDIT_FLAG_SCA || edit_flag_force) {
 				s->s_edit->edit_absolute_scale += f;
 
 				if (s->edit_state.global_editing_state == ST_S_EDIT) {
@@ -2291,7 +2299,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				abs_zoom(s);
 			    }
 			} else {
-			    if (edit_flag_sca) {
+			    if (edit_flag == EDIT_FLAG_SCA || edit_flag_force) {
 				s->s_edit->edit_absolute_scale = f;
 
 				if (s->edit_state.global_editing_state == ST_S_EDIT) {
@@ -2381,11 +2389,11 @@ usage:
     }
 
     if (do_tran) {
-	(void)knob_tran(s, tvec, model_flag, view_flag, edit_flag_tra);
+	(void)knob_tran(s, tvec, model_flag, view_flag, edit_flag, edit_flag_force);
     }
 
     if (do_rot) {
-	(void)knob_rot(s, rvec, origin, model_flag, view_flag, edit_flag_rot);
+	(void)knob_rot(s, rvec, origin, model_flag, view_flag, edit_flag, edit_flag_force);
     }
 
     check_nonzero_rates(s);
