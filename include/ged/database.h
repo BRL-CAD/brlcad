@@ -49,10 +49,10 @@ __BEGIN_DECLS
     }
 
 /**
- * Set/get the database title
+ * Checks that each directory in the supplied path actually has the subdirectories
+ * that are implied by the path.
  */
-GED_EXPORT extern int ged_title(struct ged *gedp, int argc, const char *argv[]);
-
+GED_EXPORT extern int ged_path_validate(struct ged *gedp, const struct db_full_path * const path);
 
 /**
  * Return a count of objects displayed
@@ -64,203 +64,12 @@ GED_EXPORT extern size_t ged_who_argc(struct ged *gedp);
  */
 GED_EXPORT extern int ged_who_argv(struct ged *gedp, char **start, const char **end);
 
-
-/**
- * Find all top level objects
- */
-GED_EXPORT extern int ged_tops(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Get dbip
- */
-GED_EXPORT extern int ged_dbip(struct ged *gedp, int argc, const char *argv[]);
-
-
-/**
- * Dump a full copy of the database into file.g
- */
-GED_EXPORT extern int ged_dump(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Find combinations that reference object
- */
-GED_EXPORT extern int ged_find(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Globs expression against the database
- */
-GED_EXPORT extern int ged_glob(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Import a database into the current database using an auto-incrementing or custom affix
- */
-GED_EXPORT extern int ged_concat(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Check for duplicate names in file
- */
-GED_EXPORT extern int ged_dup(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Text edit the color table
- */
-GED_EXPORT extern int ged_edcolor(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Edit file.
- */
-GED_EXPORT extern int ged_editit(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * List the objects in this database
- */
-GED_EXPORT extern int ged_ls(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * List all paths from name(s) to leaves
- */
-GED_EXPORT extern int ged_pathlist(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Lists all paths matching the input path
- */
-GED_EXPORT extern int ged_pathsum(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Show the matrix transformations along path
- */
-GED_EXPORT extern int ged_showmats(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Checks that each directory in the supplied path actually has the subdirectories
- * that are implied by the path.
- */
-GED_EXPORT extern int ged_path_validate(struct ged *gedp, const struct db_full_path * const path);
-
-/**
- * Returns a list of id to region name mappings for the entire database.
- */
-GED_EXPORT extern int ged_rmap(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Set/get tessellation and calculation tolerances
- */
-GED_EXPORT extern int ged_tol(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Set/get the database units
- */
-GED_EXPORT extern int ged_units(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Returns the database version.
- */
-GED_EXPORT extern int ged_version(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Write region ident codes to filename.
- */
-GED_EXPORT extern int ged_wcodes(struct ged *gedp, int argc, const char *argv[]);
-
-
 /* defined in copy.c */
 GED_EXPORT extern int ged_dbcopy(struct ged *from_gedp,
-				 struct ged *to_gedp,
-				 const char *from,
-				 const char *to,
-				 int fflag);
-/**
- * Globs expression against database objects
- */
-GED_EXPORT extern int ged_expand(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Set region ident codes.
- */
-GED_EXPORT extern int ged_item(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Open a database
- */
-GED_EXPORT extern int ged_reopen(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Read region ident codes from filename.
- */
-GED_EXPORT extern int ged_rcodes(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Change the default region ident codes: item air los mat
- */
-GED_EXPORT extern int ged_regdef(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Interface to search functionality (i.e. Unix find for geometry)
- */
-GED_EXPORT extern int ged_search(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Count/list primitives/regions/groups
- */
-GED_EXPORT extern int ged_summary(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Sync up the in-memory database with the on-disk database.
- */
-GED_EXPORT extern int ged_sync(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * The ged_tables() function serves idents, regions and solids.
- *
- * Make ascii summary of region idents.
- *
- */
-GED_EXPORT extern int ged_tables(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * The ged_which() function serves both whichair and whichid.
- *
- * Find the regions with the specified air codes.  Find the regions
- * with the specified region ids.
- */
-GED_EXPORT extern int ged_which(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Return all combinations with the specified shaders.
- */
-GED_EXPORT extern int ged_which_shader(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Make color entry.
- */
-GED_EXPORT extern int ged_color(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Print color table
- */
-GED_EXPORT extern int ged_prcolor(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Get/set the output handler script
- */
-GED_EXPORT extern int ged_set_output_script(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Check database objects for errors
- */
-GED_EXPORT extern int ged_lint(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Interface to environment variables
- */
-GED_EXPORT extern int ged_env(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * List and abort subprocesses
- */
-GED_EXPORT extern int ged_process(struct ged *gedp, int argc, const char *argv[]);
-
-
+                                struct ged *to_gedp,
+                                const char *from,
+                                const char *to,
+                                int fflag);
 
 __END_DECLS
 
