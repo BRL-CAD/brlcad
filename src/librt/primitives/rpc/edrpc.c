@@ -288,7 +288,7 @@ rt_solid_edit_rpc_edit_xy(
         struct rt_solid_edit *s,
         const vect_t mousevec
         )
-{  
+{
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     struct rt_db_internal *ip = &s->es_int;
     bu_clbk_t f = NULL;
@@ -305,6 +305,12 @@ rt_solid_edit_rpc_edit_xy(
             rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
             rt_update_edit_absolute_tran(s, pos_view);
             return 0;
+        case RT_SOLID_EDIT_ROT:
+            bu_vls_printf(s->log_str, "RT_SOLID_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
+            rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+            if (f)
+                (*f)(0, NULL, d, NULL);
+            return BRLCAD_ERROR;
         default:
             bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
             rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
