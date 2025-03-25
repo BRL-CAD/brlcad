@@ -609,8 +609,8 @@ main(int argc, const char **argv)
     BU_OPT(d[5],  "c", "",     "",       NULL,             &backout,        "shoot ray from current center");
     BU_OPT(d[6],  "e", "",     "script", &enqueue_script,  &init_scripts,   "run script before interacting");
     BU_OPT(d[7],  "f", "",     "format", &enqueue_format,  &sfd,            "load predefined format (see -L) or file");
-    BU_OPT(d[8], "E", "",     "",       &dequeue_scripts, &init_scripts,   "ignore any -e or -f options specified earlier on the command line");
-    BU_OPT(d[9], "L", "",     "",       NULL,             &show_formats,   "list output formatting options");
+    BU_OPT(d[8],  "E", "",     "",       &dequeue_scripts, &init_scripts,   "ignore any -e or -f options specified earlier on the command line");
+    BU_OPT(d[9],  "L", "",     "",       NULL,             &show_formats,   "list output formatting options");
     BU_OPT(d[10], "s", "",     "",       NULL,             &silent_mode,    "run in silent (non-verbose) mode");
     BU_OPT(d[11], "v", "",     "",       NULL,             &verbose_mode,   "run in verbose mode");
     BU_OPT(d[12], "H", "",     "n",      &bu_opt_int,      &header_mode,    "flag (n) for enable/disable informational header - (n=1 [on] by default, always off in silent mode)");
@@ -680,7 +680,7 @@ main(int argc, const char **argv)
 
     /* If we've been asked to print help or don't know what to do, print help
      * and exit */
-    if (print_help || argc < 2 || (silent_mode == SILENT_YES && verbose_mode)) {
+    if (print_help || (silent_mode == SILENT_YES && verbose_mode)) {
 	char *help = bu_opt_describe(d, &dopts);
 	ret = (print_help) ? EXIT_SUCCESS : EXIT_FAILURE;
         /* if nirt_debug exists, we assume we are being run from libged, so don't print
@@ -690,7 +690,7 @@ main(int argc, const char **argv)
             dopts.reject = "M"; // reject 'M' option when printing within libged
             bu_vls_sprintf(&msg, "Usage: nirt [options] [objects] [x y z]...\n\nOptions:\n%s\n", help);
         } else {
-            bu_vls_sprintf(&msg, "Usage: nirt [options] model.g objects...\n\nNote: by default NIRT is using a new implementation which may have behavior changes.  During migration, old behavior can be enabled by adding the option \"--old\" as the first option to the nirt program.\n\nOptions:\n%s\n", help);
+            bu_vls_sprintf(&msg, "Usage: nirt [options] model.g [objects]...\n\nOptions:\n%s\n", help);
         }
 	nirt_out(&io_data, bu_vls_addr(&msg));
 	if (help)

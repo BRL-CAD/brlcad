@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2024-XX-XX  Release X.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* removed requirement to launch nirt with objects listed - Cliff Yapp
 * improved k-g LS-DYNA keyword file geometry importer - Ali Haydar
 * added bot support for plate mode thickness get/set cmds - Cliff Yapp
 * fixed dbconcat treatment of a '/' prefix character - Cliff Yapp
