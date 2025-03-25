@@ -904,6 +904,12 @@ rt_solid_edit_tgc_edit_xy(
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
+        case RT_SOLID_EDIT_ROT:
+            bu_vls_printf(s->log_str, "RT_SOLID_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
+            rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+            if (f)
+                (*f)(0, NULL, d, NULL);
+            return BRLCAD_ERROR;
 	default:
 	    // Everything else should be a scale
 	    rt_solid_edit_generic_sscale_xy(s, mousevec);
