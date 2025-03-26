@@ -394,8 +394,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     /* Assign the rt command and length pointers to the ged user pointer
      * container */
     struct bu_ptbl ged_tmp_uptrs = BU_PTBL_INIT_ZERO;
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_uptrs); i++)
-	bu_ptbl_ins(&ged_tmp_uptrs, BU_PTBL_GET(&gedp->ged_uptrs, i));
+    bu_ptbl_cat(&ged_tmp_uptrs, &gedp->ged_uptrs);
     bu_ptbl_reset(&gedp->ged_uptrs);
     bu_ptbl_ins(&gedp->ged_uptrs, (long *)&gd_rt_cmd_len);
     bu_ptbl_ins(&gedp->ged_uptrs, (long *)&gd_rt_cmd);
@@ -456,8 +455,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 
     // Restore app ged_uptrs
     bu_ptbl_reset(&gedp->ged_uptrs);
-    for (size_t i = 0; i < BU_PTBL_LEN(&ged_tmp_uptrs); i++)
-	bu_ptbl_ins(&gedp->ged_uptrs, BU_PTBL_GET(&ged_tmp_uptrs, i));
+    bu_ptbl_cat(&gedp->ged_uptrs, &ged_tmp_uptrs);
 
     return BRLCAD_OK;
 }
