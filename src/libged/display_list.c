@@ -223,7 +223,7 @@ dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag)
 void
 dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 {
-    struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
+    struct bu_list *hdlp = gedp->i->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->dbip;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
@@ -362,7 +362,7 @@ eraseAllSubpathsFromSolidList(struct ged *gedp, struct display_list *gdlp,
 void
 _dl_eraseAllNamesFromDisplay(struct ged *gedp,  const char *name, const int skip_first)
 {
-    struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
+    struct bu_list *hdlp = gedp->i->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->dbip;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
@@ -421,7 +421,7 @@ _dl_eraseFirstSubpath(struct ged *gedp,
 		      struct db_full_path *subpath,
 		      const int skip_first)
 {
-    struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
+    struct bu_list *hdlp = gedp->i->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->dbip;
     struct bv_scene_obj *free_scene_obj = bv_set_fsos(&gedp->ged_views);
     struct bv_scene_obj *sp;
@@ -478,7 +478,7 @@ _dl_eraseAllPathsFromDisplay(struct ged *gedp, const char *path, const int skip_
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct db_full_path fullpath, subpath;
-    struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
+    struct bu_list *hdlp = gedp->i->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->dbip;
 
     if (db_string_to_path(&subpath, dbip, path) == 0) {
@@ -618,6 +618,9 @@ color_soltab(struct bv_scene_obj *sp)
 void
 dl_color_soltab(struct bu_list *hdlp)
 {
+    if (!hdlp)
+	return;
+
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct bv_scene_obj *sp;
@@ -660,7 +663,7 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
     if (!gedp || !gedp->ged_gvp)
 	return 0;
 
-    struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
+    struct bu_list *hdlp = gedp->i->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->dbip;
     struct directory *dp;
     struct bv_scene_obj *sp;
@@ -766,7 +769,7 @@ dl_set_iflag(struct bu_list *hdlp, int iflag)
 unsigned long long
 dl_name_hash(struct ged *gedp)
 {
-    if (!BU_LIST_NON_EMPTY(gedp->ged_gdp->gd_headDisplay))
+    if (!BU_LIST_NON_EMPTY(gedp->i->ged_gdp->gd_headDisplay))
 	return 0;
 
     struct bu_data_hash_state *state = bu_data_hash_create();
@@ -775,8 +778,8 @@ dl_name_hash(struct ged *gedp)
 
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, gedp->i->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, gedp->i->ged_gdp->gd_headDisplay)) {
 	struct bv_scene_obj *sp;
 	struct bv_scene_obj *nsp;
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);

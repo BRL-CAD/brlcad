@@ -211,7 +211,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_free(&vname);
 		    return BRLCAD_ERROR;
 		}
-		ret = rt_uplot_to_vlist(vbp, fp, size, gedp->ged_gdp->gd_uplotOutputMode);
+		ret = rt_uplot_to_vlist(vbp, fp, size, gedp->i->ged_gdp->gd_uplotOutputMode);
 		fclose(fp);
 		if (ret < 0) {
 		    bv_vlblock_free(vbp);
@@ -224,7 +224,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_argv_free(count, files);
 	} else {
 	    vbp = bv_vlblock_init(vlfree, 32);
-	    ret = rt_uplot_to_vlist(vbp, fp, size, gedp->ged_gdp->gd_uplotOutputMode);
+	    ret = rt_uplot_to_vlist(vbp, fp, size, gedp->i->ged_gdp->gd_uplotOutputMode);
 	    fclose(fp);
 	    if (ret < 0) {
 		bv_vlblock_free(vbp);

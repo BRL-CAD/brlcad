@@ -451,7 +451,7 @@ draw_forced_wireframe(
 
     /* draw the path with the given client data, but force wireframe mode */
     struct _ged_client_data dgcd = *dgcdp;
-    dgcd.gedp->ged_gdp->gd_shaded_mode = 0;
+    dgcd.gedp->i->ged_gdp->gd_shaded_mode = 0;
     dgcd.vs.s_dmode = _GED_WIREFRAME;
 
     av[0] = db_path_to_string(pathp);
@@ -1164,8 +1164,8 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		dgcdp.vs.s_dmode = _GED_WIREFRAME;
 		if (shaded_mode_override != _GED_SHADED_MODE_UNSET) {
 		    dgcdp.vs.s_dmode = shaded_mode_override;
-		} else if (gedp->ged_gdp->gd_shaded_mode) {
-		    dgcdp.vs.s_dmode = gedp->ged_gdp->gd_shaded_mode;
+		} else if (gedp->i->ged_gdp->gd_shaded_mode) {
+		    dgcdp.vs.s_dmode = gedp->i->ged_gdp->gd_shaded_mode;
 		}
 		break;
 	    case _GED_DRAW_NMG_POLY:
@@ -1208,7 +1208,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		for (i = 0; i < argc; ++i) {
 		    if (drawtrees_depth == 1)
-			dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
+			dgcdp.gdlp = dl_addToDisplay(gedp->i->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
 
 		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL)
 			continue;
@@ -1221,7 +1221,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			    continue;
 			}
 			/* if evaluated shading failed, fall back to "all" mode */
-			dgcdp.gedp->ged_gdp->gd_shaded_mode = 0;
+			dgcdp.gedp->i->ged_gdp->gd_shaded_mode = 0;
 			dgcdp.vs.s_dmode = _GED_SHADED_MODE_ALL;
 		    }
 
@@ -1267,7 +1267,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    bv_data.dmode = dgcdp.vs.s_dmode;
 		    bv_data.v = gedp->ged_gvp;
 
-		    dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
+		    dgcdp.gdlp = dl_addToDisplay(gedp->i->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
 		    bv_data.gdlp = dgcdp.gdlp;
 
 		    /* store draw path */
@@ -1338,7 +1338,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		for (i = 0; i < argc; ++i) {
 		    if (drawtrees_depth == 1)
-			dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
+			dgcdp.gdlp = dl_addToDisplay(gedp->i->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
 
 		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL)
 			continue;
@@ -1429,7 +1429,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    /* Done checking options. If our display is non-empty,
 	     * add -R to keep current view.
 	     */
-	    if (BU_LIST_NON_EMPTY(gedp->ged_gdp->gd_headDisplay)) {
+	    if (BU_LIST_NON_EMPTY(gedp->i->ged_gdp->gd_headDisplay)) {
 		bu_vls_strcat(&vls, " -R");
 	    }
 	    break;
@@ -1556,7 +1556,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	bu_vls_free(&vls);
 
 	empty_display = 1;
-	if (BU_LIST_NON_EMPTY(gedp->ged_gdp->gd_headDisplay)) {
+	if (BU_LIST_NON_EMPTY(gedp->i->ged_gdp->gd_headDisplay)) {
 	    empty_display = 0;
 	}
 
@@ -1660,7 +1660,7 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc == 1) {
 	/* redraw everything */
-	for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay))
+	for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay))
 	{
 	    ret = dl_redraw(gdlp, gedp, 0);
 	    if (ret < 0) {
@@ -1682,7 +1682,7 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    found_path = 0;
-	    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay))
+	    for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay))
 	    {
 		ret = db_string_to_path(&dl_path, gedp->dbip,
 			bu_vls_addr(&gdlp->dl_path));

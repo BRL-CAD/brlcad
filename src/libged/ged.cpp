@@ -125,14 +125,14 @@ ged_init(struct ged *gedp)
     BU_GET(gedp->ged_fbs, struct fbserv_obj);
     gedp->ged_fbs->fbs_listener.fbsl_fd = -1;
 
-    BU_GET(gedp->ged_gdp, struct ged_drawable);
-    BU_GET(gedp->ged_gdp->gd_headDisplay, struct bu_list);
-    BU_LIST_INIT(gedp->ged_gdp->gd_headDisplay);
-    BU_GET(gedp->ged_gdp->gd_headVDraw, struct bu_list);
-    BU_LIST_INIT(gedp->ged_gdp->gd_headVDraw);
+    BU_GET(gedp->i->ged_gdp, struct ged_drawable);
+    BU_GET(gedp->i->ged_gdp->gd_headDisplay, struct bu_list);
+    BU_LIST_INIT(gedp->i->ged_gdp->gd_headDisplay);
+    BU_GET(gedp->i->ged_gdp->gd_headVDraw, struct bu_list);
+    BU_LIST_INIT(gedp->i->ged_gdp->gd_headVDraw);
 
-    gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
-    qray_init(gedp->ged_gdp);
+    gedp->i->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
+    qray_init(gedp->i->ged_gdp);
 
     BU_GET(gedp->ged_log, struct bu_vls);
     bu_vls_init(gedp->ged_log);
@@ -207,7 +207,7 @@ ged_free(struct ged *gedp)
     bu_ptbl_free(&gedp->ged_free_views);
     bv_set_free(&gedp->ged_views);
 
-    if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
+    if (gedp->i->ged_gdp != GED_DRAWABLE_NULL) {
 
 	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->free_solids); i++) {
 	    // TODO - FREE_BV_SCENE_OBJ macro is stashing on the free_scene_obj list, not
@@ -222,12 +222,12 @@ ged_free(struct ged *gedp)
 	}
 	bu_ptbl_free(&gedp->free_solids);
 
-	if (gedp->ged_gdp->gd_headDisplay)
-	    BU_PUT(gedp->ged_gdp->gd_headDisplay, struct bu_vls);
-	if (gedp->ged_gdp->gd_headVDraw)
-	    BU_PUT(gedp->ged_gdp->gd_headVDraw, struct bu_vls);
-	qray_free(gedp->ged_gdp);
-	BU_PUT(gedp->ged_gdp, struct ged_drawable);
+	if (gedp->i->ged_gdp->gd_headDisplay)
+	    BU_PUT(gedp->i->ged_gdp->gd_headDisplay, struct bu_vls);
+	if (gedp->i->ged_gdp->gd_headVDraw)
+	    BU_PUT(gedp->i->ged_gdp->gd_headVDraw, struct bu_vls);
+	qray_free(gedp->i->ged_gdp);
+	BU_PUT(gedp->i->ged_gdp, struct ged_drawable);
     }
 
     if (gedp->ged_log) {

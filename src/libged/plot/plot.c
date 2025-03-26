@@ -282,7 +282,7 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
 	is_pipe = 0;
     }
 
-    dl_plot(gedp->ged_gdp->gd_headDisplay, fp, gedp->ged_gvp->gv_model2view, floating, gedp->ged_gvp->gv_center, gedp->ged_gvp->gv_scale, Three_D, Z_clip);
+    dl_plot(gedp->i->ged_gdp->gd_headDisplay, fp, gedp->ged_gvp->gv_model2view, floating, gedp->ged_gvp->gv_center, gedp->ged_gvp->gv_scale, Three_D, Z_clip);
 
     if (is_pipe)
 	(void)pclose(fp);

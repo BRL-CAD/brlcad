@@ -161,7 +161,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 	}
     } else {
 	struct display_list *gdlp;
-	for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay))
+	for (BU_LIST_FOR(gdlp, display_list, (struct bu_list *)ged_dl(gedp)))
 	    who_objs.push_back(std::string(bu_vls_cstr(&gdlp->dl_path)));
     }
 

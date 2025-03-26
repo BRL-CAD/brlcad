@@ -56,7 +56,7 @@ ged_shaded_mode_core(struct ged *gedp, int argc, const char *argv[])
 
     /* get shaded mode */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gdp->gd_shaded_mode);
+	bu_vls_printf(gedp->ged_result_str, "%d", gedp->i->ged_gdp->gd_shaded_mode);
 	return BRLCAD_OK;
     }
 
@@ -70,7 +70,7 @@ ged_shaded_mode_core(struct ged *gedp, int argc, const char *argv[])
 	if (shaded_mode < 0 || 2 < shaded_mode)
 	    goto bad;
 
-	gedp->ged_gdp->gd_shaded_mode = shaded_mode;
+	gedp->i->ged_gdp->gd_shaded_mode = shaded_mode;
 	return BRLCAD_OK;
     }
 

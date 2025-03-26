@@ -418,7 +418,7 @@ viewdata_dump(struct _ged_bot_dump_client_data *d, struct ged *gedp, FILE *fp)
 static void
 dl_botdump(struct _ged_bot_dump_client_data *d)
 {
-    struct bu_list *hdlp = d->gedp->ged_gdp->gd_headDisplay;
+    struct bu_list *hdlp = (struct bu_list *)ged_dl(d->gedp);
     struct db_i *dbip = d->gedp->dbip;
     int ret;
     mat_t mat;

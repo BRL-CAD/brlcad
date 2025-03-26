@@ -40,7 +40,7 @@ extern int ged_zap2_core(struct ged *gedp, int argc, const char *argv[]);
 static void
 dl_zap(struct ged *gedp)
 {
-    struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
+    struct bu_list *hdlp = gedp->i->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->dbip;
     struct bv_scene_obj *sp = NULL;
     struct display_list *gdlp = NULL;

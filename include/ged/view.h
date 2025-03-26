@@ -40,7 +40,7 @@ __BEGIN_DECLS
 
 /** Check if a drawable exists */
 #define GED_CHECK_DRAWABLE(_gedp, _flags) \
-    if (_gedp->ged_gdp == GED_DRAWABLE_NULL) { \
+    if (!ged_dl(_gedp)) { \
 	int ged_check_drawable_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_drawable_quiet) { \
 	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
@@ -240,6 +240,8 @@ GED_EXPORT struct rt_selection_set *ged_get_selection_set(struct ged *gedp,
  * off of direct usage of these containers completely, but for now the older
  * drawing path (which MGED and Archer use) needs them.
  */
+typedef void (*ged_drawable_notify_func_t)(int);
+
 GED_EXPORT struct display_list *
 ged_dl(struct ged *gedp);
 GED_EXPORT void

@@ -157,7 +157,7 @@ rtcheck_vector_handler(void *clientData, int type)
 				     rtcp->fp,
 				     value,
 				     rtcp->csize,
-				     gedp->ged_gdp->gd_uplotOutputMode);
+				     gedp->i->ged_gdp->gd_uplotOutputMode);
     }
 }
 
@@ -174,8 +174,8 @@ rtcheck_output_handler(void *clientData, int type)
     /* Get textual output from rtcheck */
     if ((count = bu_process_read_n(rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE, (char *)line)) <= 0) {
 	rtcp->read_failed = 1;
-	if (gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
-	    gedp->ged_gdp->gd_rtCmdNotify(0);
+	if (gedp->i->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    gedp->i->ged_gdp->gd_rtCmdNotify(0);
     }
 
 

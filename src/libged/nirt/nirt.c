@@ -198,12 +198,12 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 		  dir[X], dir[Y], dir[Z]);
 
     /* include nirt script string */
-    if (bu_vls_strlen(&gedp->ged_gdp->gd_qray_script)) {
+    if (bu_vls_strlen(&gedp->i->ged_gdp->gd_qray_script)) {
 	*vp++ = "-e";
-	*vp++ = bu_vls_addr(&gedp->ged_gdp->gd_qray_script);
+	*vp++ = bu_vls_addr(&gedp->i->ged_gdp->gd_qray_script);
     }
 
-    if (DG_QRAY_TEXT(gedp->ged_gdp)) {
+    if (DG_QRAY_TEXT(gedp->i->ged_gdp)) {
 	/* setup default print formatting
 	 * NOTE: user specified -f will come later in succession and trump this
 	 */
@@ -216,7 +216,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     *vp++ = "-e";
     *vp++ = bu_vls_addr(&p_vls);
 
-    if (DG_QRAY_GRAPHICS(gedp->ged_gdp)) {
+    if (DG_QRAY_GRAPHICS(gedp->i->ged_gdp)) {
 	/* wipe formatting */
 	*vp++ = "-e";
 	*vp++ = DG_QRAY_FORMAT_NULL;
@@ -261,7 +261,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
         gd_rt_cmd_len += ged_who_argv(gedp, vp, (const char **)&gd_rt_cmd[args]);
     }
 
-    if (gedp->ged_gdp->gd_qray_cmd_echo) {
+    if (gedp->i->ged_gdp->gd_qray_cmd_echo) {
 	/* Print out the command we are about to run */
 	vp = &gd_rt_cmd[0];
 
@@ -348,7 +348,7 @@ print:
 	}
     }
 
-    if (DG_QRAY_TEXT(gedp->ged_gdp)) {
+    if (DG_QRAY_TEXT(gedp->i->ged_gdp)) {
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
 	    if (bu_strncmp(line, "MGED-PARTITION-REPORT", 21) == 0)
 		break;
@@ -358,7 +358,7 @@ print:
 	}
     }
 
-    if (!skip_drawn && DG_QRAY_GRAPHICS(gedp->ged_gdp)) {
+    if (!skip_drawn && DG_QRAY_GRAPHICS(gedp->i->ged_gdp)) {
 	BU_LIST_INIT(&HeadQRayData.l);
 
 	/* handle partitions */
@@ -395,7 +395,7 @@ print:
 	    struct bview *view = gedp->ged_gvp;
 	    bv_vlblock_obj(vbp, view, "nirt");
 	} else {
-	    _ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
+	    _ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->i->ged_gdp->gd_qray_basename), 0);
 	}
 
 	bv_vlblock_free(vbp);
@@ -427,7 +427,7 @@ print:
 	vbp = bv_vlblock_init(vlfree, 32);
 	qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 1);
 	bu_list_free(&HeadQRayData.l);
-	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
+	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->i->ged_gdp->gd_qray_basename), 0);
 	bv_vlblock_free(vbp);
     }
 
@@ -451,7 +451,7 @@ print:
 	_ged_wait_status(gedp->ged_result_str, retcode);
     }
 
-    dl_set_wflag(gedp->ged_gdp->gd_headDisplay, DOWN);
+    dl_set_wflag(gedp->i->ged_gdp->gd_headDisplay, DOWN);
 
     bu_free(gd_rt_cmd, "free gd_rt_cmd");
     gd_rt_cmd = NULL;

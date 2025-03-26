@@ -61,7 +61,7 @@ main(int ac, char *av[]) {
     // the different colored vlists...)
     struct display_list *gdlp;
     struct bv_scene_obj *vdata = NULL;
-    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, display_list, (struct bu_list *)ged_dl(gedp))) {
 	if (!BU_STR_EQUAL(bu_vls_cstr(&gdlp->dl_path), "OVERLAPSffff00"))
 	    continue;
 	printf("found %s;\n", bu_vls_cstr(&gdlp->dl_path));

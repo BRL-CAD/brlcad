@@ -242,8 +242,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     bu_file_delete(tmpfil);
 
     /* if there are drawables, update their colors */
-    if (gedp->ged_gdp)
-	dl_color_soltab(gedp->ged_gdp->gd_headDisplay);
+    dl_color_soltab((struct bu_list *)ged_dl(gedp));
 
     return BRLCAD_OK;
 }

@@ -261,7 +261,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
     }
 
     topc = ged_who_argv(gedp, topv, (const char **)(topv+2000));
-    dl_set_iflag(gedp->ged_gdp->gd_headDisplay, DOWN);
+    dl_set_iflag(gedp->i->ged_gdp->gd_headDisplay, DOWN);
 
     (void)db_walk_tree(gedp->dbip, topc, (const char **)topv,
 		     1,			/* Number of cpus */

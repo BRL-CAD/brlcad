@@ -82,7 +82,7 @@ ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
 
     VSETALL(sqrt_small, SQRT_SMALL_FASTF);
 
-    is_empty = dl_bounding_sph(gedp->ged_gdp->gd_headDisplay, &min, &max, 1);
+    is_empty = dl_bounding_sph(gedp->i->ged_gdp->gd_headDisplay, &min, &max, 1);
 
     if (is_empty) {
 	/* Nothing is in view */

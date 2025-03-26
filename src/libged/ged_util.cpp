@@ -1076,10 +1076,10 @@ ged_who_argc(struct ged *gedp)
     struct display_list *gdlp = NULL;
     size_t visibleCount = 0;
 
-    if (!gedp || !gedp->ged_gdp || !gedp->ged_gdp->gd_headDisplay)
+    if (!gedp || !gedp->i->ged_gdp || !gedp->i->ged_gdp->gd_headDisplay)
 	return 0;
 
-    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay)) {
 	visibleCount++;
     }
 
@@ -1122,7 +1122,7 @@ ged_who_argv(struct ged *gedp, char **start, const char **end)
 
     struct display_list *gdlp;
 
-    if (!gedp || !gedp->ged_gdp || !gedp->ged_gdp->gd_headDisplay)
+    if (!gedp || !gedp->i->ged_gdp || !gedp->i->ged_gdp->gd_headDisplay)
 	return 0;
 
     if (UNLIKELY(!start || !end)) {
@@ -1130,7 +1130,7 @@ ged_who_argv(struct ged *gedp, char **start, const char **end)
 	return 0;
     }
 
-    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay)) {
 	if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
 	    continue;
 
@@ -1710,7 +1710,7 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	    if (local_db_objs)
 		(void)scene_bounding_sph(local_db_objs, &(extremum[0]), &(extremum[1]), 1);
 	} else {
-	    (void)dl_bounding_sph(gedp->ged_gdp->gd_headDisplay, &(extremum[0]), &(extremum[1]), 1);
+	    (void)dl_bounding_sph(gedp->i->ged_gdp->gd_headDisplay, &(extremum[0]), &(extremum[1]), 1);
 	}
 
 	VMOVEN(direction, gedp->ged_gvp->gv_rotation + 8, 3);
@@ -1787,8 +1787,8 @@ _ged_rt_output_handler2(void *clientData, int type)
 	else
 	    bu_log("Raytrace complete.\n");
 
-	if (gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
-	    gedp->ged_gdp->gd_rtCmdNotify(aborted);
+	if (gedp->i->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    gedp->i->ged_gdp->gd_rtCmdNotify(aborted);
 
 	if (rrtp->end_clbk)
 	    rrtp->end_clbk(0, NULL, &aborted, rrtp->end_clbk_data);
@@ -1882,8 +1882,8 @@ _ged_rt_output_handler(void *clientData, int mask)
 	else
 	    bu_log("Raytrace complete.\n");
 
-	if (gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
-	    gedp->ged_gdp->gd_rtCmdNotify(aborted);
+	if (gedp->i->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    gedp->i->ged_gdp->gd_rtCmdNotify(aborted);
 
 	if (rrtp->end_clbk)
 	    rrtp->end_clbk(0, NULL, &aborted, rrtp->end_clbk_data);
@@ -2002,7 +2002,7 @@ _ged_rt_write(struct ged *gedp,
 		}
 	    } else {
 		struct display_list *gdlp;
-		for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+		for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay)) {
 		    if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
 			continue;
 		    fprintf(fp, "draw %s;\n", bu_vls_addr(&gdlp->dl_path));
@@ -2018,11 +2018,11 @@ _ged_rt_write(struct ged *gedp,
 	fprintf(fp, "prep;\n");
     }
 
-    dl_bitwise_and_fullpath(gedp->ged_gdp->gd_headDisplay, ~RT_DIR_USED);
+    dl_bitwise_and_fullpath(gedp->i->ged_gdp->gd_headDisplay, ~RT_DIR_USED);
 
-    dl_write_animate(gedp->ged_gdp->gd_headDisplay, fp);
+    dl_write_animate(gedp->i->ged_gdp->gd_headDisplay, fp);
 
-    dl_bitwise_and_fullpath(gedp->ged_gdp->gd_headDisplay, ~RT_DIR_USED);
+    dl_bitwise_and_fullpath(gedp->i->ged_gdp->gd_headDisplay, ~RT_DIR_USED);
 
     fprintf(fp, "end;\n");
 }
@@ -2534,27 +2534,27 @@ _ged_characterize_pathspec(struct bu_vls *normalized, struct ged *gedp, const ch
 struct display_list *
 ged_dl(struct ged *gedp)
 {
-    if (!gedp || !gedp->ged_gdp)
+    if (!gedp || !gedp->i || !gedp->i->ged_gdp)
 	return NULL;
-    return (struct display_list *)gedp->ged_gdp->gd_headDisplay;
+    return (struct display_list *)gedp->i->ged_gdp->gd_headDisplay;
 }
 
 void
 ged_dl_notify_func_set(struct ged *gedp, ged_drawable_notify_func_t f)
 {
-    if (!gedp || !gedp->ged_gdp)
+    if (!gedp || !gedp->i || !gedp->i->ged_gdp)
 	return;
 
-    gedp->ged_gdp->gd_rtCmdNotify = f;
+    gedp->i->ged_gdp->gd_rtCmdNotify = f;
 }
 
 ged_drawable_notify_func_t
 ged_dl_notify_func_get(struct ged *gedp)
 {
-    if (!gedp || !gedp->ged_gdp)
+    if (!gedp || !gedp->i || !gedp->i->ged_gdp)
 	return NULL;
 
-    return gedp->ged_gdp->gd_rtCmdNotify;
+    return gedp->i->ged_gdp->gd_rtCmdNotify;
 }
 
 /*

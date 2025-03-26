@@ -116,19 +116,19 @@ qray_data_to_vlist(struct ged *gedp,
     for (BU_LIST_FOR(ndlp, qray_dataList, &headp->l)) {
 	if (do_overlaps)
 	    vhead = bv_vlblock_find(vbp,
-				    gedp->ged_gdp->gd_qray_overlap_color.r,
-				    gedp->ged_gdp->gd_qray_overlap_color.g,
-				    gedp->ged_gdp->gd_qray_overlap_color.b);
+				    gedp->i->ged_gdp->gd_qray_overlap_color.r,
+				    gedp->i->ged_gdp->gd_qray_overlap_color.g,
+				    gedp->i->ged_gdp->gd_qray_overlap_color.b);
 	else if (i % 2)
 	    vhead = bv_vlblock_find(vbp,
-				    gedp->ged_gdp->gd_qray_odd_color.r,
-				    gedp->ged_gdp->gd_qray_odd_color.g,
-				    gedp->ged_gdp->gd_qray_odd_color.b);
+				    gedp->i->ged_gdp->gd_qray_odd_color.r,
+				    gedp->i->ged_gdp->gd_qray_odd_color.g,
+				    gedp->i->ged_gdp->gd_qray_odd_color.b);
 	else
 	    vhead = bv_vlblock_find(vbp,
-				    gedp->ged_gdp->gd_qray_even_color.r,
-				    gedp->ged_gdp->gd_qray_even_color.g,
-				    gedp->ged_gdp->gd_qray_even_color.b);
+				    gedp->i->ged_gdp->gd_qray_even_color.r,
+				    gedp->i->ged_gdp->gd_qray_even_color.g,
+				    gedp->i->ged_gdp->gd_qray_even_color.b);
 
 	VSET(in_pt, ndlp->x_in, ndlp->y_in, ndlp->z_in);
 	VJOIN1(out_pt, in_pt, ndlp->los, dir);
@@ -139,9 +139,9 @@ qray_data_to_vlist(struct ged *gedp,
 
 	if (!do_overlaps && i > 1 && !VNEAR_EQUAL(last_out_pt, in_pt, SQRT_SMALL_FASTF)) {
 	    vhead = bv_vlblock_find(vbp,
-				    gedp->ged_gdp->gd_qray_void_color.r,
-				    gedp->ged_gdp->gd_qray_void_color.g,
-				    gedp->ged_gdp->gd_qray_void_color.b);
+				    gedp->i->ged_gdp->gd_qray_void_color.r,
+				    gedp->i->ged_gdp->gd_qray_void_color.g,
+				    gedp->i->ged_gdp->gd_qray_void_color.b);
 	    BV_ADD_VLIST(vlfree, vhead, last_out_pt, BV_VLIST_LINE_MOVE);
 	    BV_ADD_VLIST(vlfree, vhead, in_pt, BV_VLIST_LINE_DRAW);
 	}

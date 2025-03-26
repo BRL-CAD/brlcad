@@ -215,7 +215,7 @@ ged_solid_report_core(struct ged *gedp, int argc, const char *argv[])
     if (lvl > 3)
 	lvl = 3;
 
-    dl_print_schain(gedp->ged_gdp->gd_headDisplay, gedp->dbip, lvl, 0, gedp->ged_result_str);
+    dl_print_schain(gedp->i->ged_gdp->gd_headDisplay, gedp->dbip, lvl, 0, gedp->ged_result_str);
 
     return BRLCAD_OK;
 }

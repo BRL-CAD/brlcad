@@ -130,7 +130,7 @@ ged_how_core(struct ged *gedp, int argc, const char *argv[])
 	    goto good_label;
     }
 
-    good = dl_how(gedp->ged_gdp->gd_headDisplay, gedp->ged_result_str, dpp, both);
+    good = dl_how(gedp->i->ged_gdp->gd_headDisplay, gedp->ged_result_str, dpp, both);
 
     /* match NOT found */
     if (!good) bu_vls_printf(gedp->ged_result_str, "-1");

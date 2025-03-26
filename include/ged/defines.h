@@ -121,51 +121,6 @@ struct ged_subprocess {
     int stderr_active;
 };
 
-/* FIXME: should be private */
-struct ged_qray_color {
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
-};
-
-/* FIXME: should be private */
-struct ged_qray_fmt {
-    char type;
-    struct bu_vls fmt;
-};
-
-struct vd_curve {
-    struct bu_list      l;
-    char                vdc_name[RT_VDRW_MAXNAME+1];    /**< @brief name array */
-    long                vdc_rgb;        /**< @brief color */
-    struct bu_list      vdc_vhd;        /**< @brief head of list of vertices */
-};
-#define VD_CURVE_NULL   ((struct vd_curve *)NULL)
-
-typedef void (*ged_drawable_notify_func_t)(int);
-
-/* FIXME: should be private */
-struct ged_drawable {
-    struct bu_list		*gd_headDisplay;	/**< @brief  head of display list */
-    struct bu_list		*gd_headVDraw;		/**< @brief  head of vdraw list */
-    struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
-
-    ged_drawable_notify_func_t  gd_rtCmdNotify;	/**< @brief  function called when rt command completes */
-
-    int				gd_uplotOutputMode;	/**< @brief  output mode for unix plots */
-
-    /* qray state */
-    struct bu_vls		gd_qray_basename;	/**< @brief  basename of query ray vlist */
-    struct bu_vls		gd_qray_script;		/**< @brief  query ray script */
-    char			gd_qray_effects;	/**< @brief  t for text, g for graphics or b for both */
-    int				gd_qray_cmd_echo;	/**< @brief  0 - don't echo command, 1 - echo command */
-    struct ged_qray_fmt		*gd_qray_fmts;
-    struct ged_qray_color	gd_qray_odd_color;
-    struct ged_qray_color	gd_qray_even_color;
-    struct ged_qray_color	gd_qray_void_color;
-    struct ged_qray_color	gd_qray_overlap_color;
-    int				gd_shaded_mode;		/**< @brief  1 - draw bots shaded by default */
-};
 
 /* Experimental work on a high-performance in-memory representation of
  * database, view and selection states. We want this to be visible to C++ APIs
@@ -250,7 +205,6 @@ struct ged {
     struct bu_vls		*ged_result_str;
     struct ged_results          *ged_results;
 
-    struct ged_drawable		*ged_gdp;
     struct bu_ptbl              free_solids;
 
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */

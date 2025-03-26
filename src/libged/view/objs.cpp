@@ -564,7 +564,7 @@ _view_cmd_old_obj(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
+    struct bu_list *hdlp = gedp->i->ged_gdp->gd_headDisplay;
     struct display_list *gdlp = BU_LIST_NEXT(display_list, hdlp);
     struct directory **tmp_dpp = NULL;
     size_t i;

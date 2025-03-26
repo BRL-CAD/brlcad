@@ -27,6 +27,7 @@
 /** @} */
 
 #include "ged.h"
+#include "./ged_private.h"
 
 #ifndef LIBGED_QRAY_H
 #define LIBGED_QRAY_H
