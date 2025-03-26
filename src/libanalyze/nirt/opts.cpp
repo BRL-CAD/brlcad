@@ -222,6 +222,18 @@ nirt_opt_vals_reset(struct nirt_opt_vals *v)
     if (!v)
 	return;
 
+    struct nirt_opt_vals opt_defaults = NIRT_OPT_INIT;
+    v->current_center = opt_defaults.current_center;
+    v->file_cnt = opt_defaults.file_cnt;
+    v->header_mode = opt_defaults.header_mode;
+    v->overlap_claims = opt_defaults.overlap_claims;
+    v->print_help = opt_defaults.print_help;
+    v->read_matrix = opt_defaults.read_matrix;
+    v->show_formats = opt_defaults.show_formats;
+    v->silent_mode = opt_defaults.silent_mode;
+    v->use_air = opt_defaults.use_air;
+    v->verbose_mode = opt_defaults.verbose_mode;
+
     bu_vls_trunc(&v->nirt_debug, 0);
     bu_vls_trunc(&v->filename, 0);
     for (size_t i = 0; i < BU_PTBL_LEN(&v->init_scripts); i++) {
