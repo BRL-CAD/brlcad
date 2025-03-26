@@ -148,9 +148,6 @@ struct ged_drawable {
     struct bu_list		*gd_headVDraw;		/**< @brief  head of vdraw list */
     struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
 
-    char			**gd_rt_cmd;    /* DEPRECATED - will be removed, do not use */
-    int				gd_rt_cmd_len;  /* DEPRECATED - will be removed, do not use */
-
     void			(*gd_rtCmdNotify)(int aborted);	/**< @brief  function called when rt command completes */
 
     int				gd_uplotOutputMode;	/**< @brief  output mode for unix plots */
@@ -333,6 +330,11 @@ struct ged {
     // command paths.  Primarily relates to the next generation drawing setup with
     // view objects and the new BoT LoD logic.
     int new_cmd_forms;
+
+    // Container allowing calling apps to store pointers to their own data.
+    // Ged init and free routines will set up and free the table, but the
+    // contents are the apps responsibility.
+    struct bu_ptbl ged_uptrs;
 };
 
 // Create and destroy a ged container.  Handles all initialization - no

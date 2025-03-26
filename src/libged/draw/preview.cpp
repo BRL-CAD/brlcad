@@ -143,7 +143,9 @@ ged_cm_end(struct ged *gedp, vect_t *v, mat_t *m, const int UNUSED(argc), const 
 	const char *av[1] = {"zap"};
 	(void)ged_exec_zap(gedp, 1, av);
 
-	_ged_drawtrees(gedp, gedp->ged_gdp->gd_rt_cmd_len, (const char **)&gedp->ged_gdp->gd_rt_cmd[1], preview_mode, (struct _ged_client_data *)0);
+	int *gd_rt_cmd_len = (int *)BU_PTBL_GET(&gedp->ged_uptrs, 0);
+	char ***gd_rt_cmd = (char ***)BU_PTBL_GET(&gedp->ged_uptrs, 1);
+	_ged_drawtrees(gedp, *gd_rt_cmd_len, (const char **)&((*gd_rt_cmd)[1]), preview_mode, (struct _ged_client_data *)0);
     }
 
     ged_refresh_cb(gedp);
@@ -187,14 +189,17 @@ ged_cm_tree(struct ged *gedp, vect_t *UNUSED(v), mat_t *UNUSED(m), const int arg
 {
     int i = 1;
     char *cp = rt_cmd_storage;
+    int *gd_rt_cmd_len = (int *)BU_PTBL_GET(&gedp->ged_uptrs, 0);
+    char ***gd_rt_cmd = (char ***)BU_PTBL_GET(&gedp->ged_uptrs, 1);
 
     for (i = 1;  i < argc && i < MAXARGS; i++) {
 	bu_strlcpy(cp, argv[i], MAXARGS*9);
-	gedp->ged_gdp->gd_rt_cmd[i] = cp;
+	(*gd_rt_cmd)[i] = cp;
 	cp += strlen(cp) + 1;
     }
-    gedp->ged_gdp->gd_rt_cmd[i] = (char *)0;
-    gedp->ged_gdp->gd_rt_cmd_len = i-1;
+
+    (*gd_rt_cmd)[i] = (char *)0;
+    (*gd_rt_cmd_len) = i-1;
 
     preview_tree_walk_needed = 1;
 
@@ -295,6 +300,8 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_list *vlfree = &rt_vlfree;
     vect_t *ged_eye_model = &gedp->i->i->ged_eye_model;
     mat_t *ged_viewrot = &gedp->i->i->ged_viewrot;
+    char **gd_rt_cmd = NULL;
+    int gd_rt_cmd_len = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -367,14 +374,14 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     args = argc + 2 + ged_who_argc(gedp);
-    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    vp = &gd_rt_cmd[0];
     *vp++ = bu_strdup("tree");
 
-    /* Build list of top-level objects in view, in gedp->ged_gdp->gd_rt_cmd[] */
-    gedp->ged_gdp->gd_rt_cmd_len = ged_who_argv(gedp, vp, (const char **)&gedp->ged_gdp->gd_rt_cmd[args]);
+    /* Build list of top-level objects in view, in gd_rt_cmd[] */
+    gd_rt_cmd_len = ged_who_argv(gedp, vp, (const char **)&gd_rt_cmd[args]);
     /* Print out the command we are about to run */
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    vp = &gd_rt_cmd[0];
     while ((vp != NULL) && (*vp))
 	bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
 
@@ -384,6 +391,14 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_printf(gedp->ged_result_str, "eyepoint at (0, 0, 1) viewspace\n");
 
+    /* Assign the rt command and length pointers to the ged user pointer
+     * container */
+    struct bu_ptbl ged_tmp_uptrs = BU_PTBL_INIT_ZERO;
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_uptrs); i++)
+	bu_ptbl_ins(&ged_tmp_uptrs, BU_PTBL_GET(&gedp->ged_uptrs, i));
+    bu_ptbl_reset(&gedp->ged_uptrs);
+    bu_ptbl_ins(&gedp->ged_uptrs, (long *)&gd_rt_cmd_len);
+    bu_ptbl_ins(&gedp->ged_uptrs, (long *)&gd_rt_cmd);
 
     /*
      * Initialize the view to the current one provided by the ged
@@ -438,6 +453,11 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 	preview_vbp = (struct bv_vlblock *)NULL;
     }
     db_free_anim(gedp->dbip);	/* Forget any anim commands */
+
+    // Restore app ged_uptrs
+    bu_ptbl_reset(&gedp->ged_uptrs);
+    for (size_t i = 0; i < BU_PTBL_LEN(&ged_tmp_uptrs); i++)
+	bu_ptbl_ins(&gedp->ged_uptrs, BU_PTBL_GET(&ged_tmp_uptrs, i));
 
     return BRLCAD_OK;
 }

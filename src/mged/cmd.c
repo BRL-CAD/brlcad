@@ -377,14 +377,16 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
     size_t args;
+    int gd_rt_cmd_len = 0;
+    char **gd_rt_cmd = NULL;
 
     if (s->gedp == GED_NULL)
 	return TCL_OK;
 
     args = argc + 2 + ged_who_argc(s->gedp);
-    s->gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
-    vp = &s->gedp->ged_gdp->gd_rt_cmd[0];
+    vp = &gd_rt_cmd[0];
 
     /* Grab command name and any options */
     *vp++ = (char *)argv[0];
@@ -409,24 +411,22 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
     if (i < argc) {
 	while (i < argc)
 	    *vp++ = (char *)argv[i++];
-	s->gedp->ged_gdp->gd_rt_cmd_len = vp - s->gedp->ged_gdp->gd_rt_cmd;
+	gd_rt_cmd_len = vp - gd_rt_cmd;
 	*vp = 0;
-	vp = &s->gedp->ged_gdp->gd_rt_cmd[0];
+	vp = &gd_rt_cmd[0];
 	while (*vp)
 	    bu_vls_printf(s->gedp->ged_result_str, "%s ", *vp++);
 
 	bu_vls_printf(s->gedp->ged_result_str, "\n");
     } else {
-	s->gedp->ged_gdp->gd_rt_cmd_len = vp - s->gedp->ged_gdp->gd_rt_cmd;
-	s->gedp->ged_gdp->gd_rt_cmd_len += ged_who_argv(s->gedp, vp,
-						       (const char **)&s->gedp->ged_gdp->gd_rt_cmd[args]);
+	gd_rt_cmd_len = vp - gd_rt_cmd;
+	gd_rt_cmd_len += ged_who_argv(s->gedp, vp, (const char **)&gd_rt_cmd[args]);
     }
 
-    ret = (*ctp->ged_func)(s->gedp, s->gedp->ged_gdp->gd_rt_cmd_len, (const char **)s->gedp->ged_gdp->gd_rt_cmd);
+    ret = (*ctp->ged_func)(s->gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd);
     GED_OUTPUT;
 
-    bu_free(s->gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
-    s->gedp->ged_gdp->gd_rt_cmd = NULL;
+    bu_free(gd_rt_cmd, "free gd_rt_cmd");
 
     if (ret & GED_HELP)
 	return TCL_OK;

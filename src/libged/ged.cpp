@@ -166,6 +166,9 @@ ged_init(struct ged *gedp)
     memset(gedp->terminal, '\0', sizeof(gedp->terminal));
     BU_PTBL_INIT(&gedp->terminal_opts);
 
+    /* User data */
+    BU_PTBL_INIT(&gedp->ged_uptrs);
+
     /* ? */
     gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;
@@ -251,6 +254,7 @@ ged_free(struct ged *gedp)
 
     bu_ptbl_free(&gedp->editor_opts);
     bu_ptbl_free(&gedp->terminal_opts);
+    bu_ptbl_free(&gedp->ged_uptrs);
 
     /* Free internal containers */
     delete gedp->i->i;
