@@ -51,7 +51,7 @@ extern "C" {
 #include "bv/lod.h"
 #include "raytrace.h"
 #include "ged/defines.h"
-#include "ged/view/state.h"
+#include "ged/view.h"
 #include "./ged_private.h"
 
 // Subdirectory in BRL-CAD cache to Dbi state data

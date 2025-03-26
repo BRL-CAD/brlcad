@@ -54,11 +54,8 @@
 #include "ged/database.h"
 #include "ged/commands.h"
 #include "ged/objects.h"
-#include "ged/framebuffer.h"
 #include "ged/view.h"
-#include "ged/analyze.h"
 #include "ged/debug.h"
-#include "ged/rt.h"
 
 // At least for the moment these wrappers are not public API - include them
 // only for the BRL-CAD build itself.

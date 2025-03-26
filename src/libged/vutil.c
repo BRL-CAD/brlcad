@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "./ged_private.h"
-#include "ged/view/ged_view_tmp.h"
+#include "ged/view.h"
 
 int
 _ged_do_rot(struct ged *gedp,

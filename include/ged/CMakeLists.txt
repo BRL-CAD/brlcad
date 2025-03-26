@@ -1,16 +1,11 @@
-add_subdirectory(view)
-
 set(
   ged_headers
-  analyze.h
   commands.h
   database.h
   dbi.h
   debug.h
   defines.h
-  framebuffer.h
   objects.h
-  rt.h
   version.h
   view.h
 )

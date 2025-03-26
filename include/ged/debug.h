@@ -33,38 +33,6 @@
 
 __BEGIN_DECLS
 
-/**
- * Report/Control BRL-CAD library debugging settings
- */
-GED_EXPORT extern int ged_debug(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Set/get libbu's debug bit vector
- */
-GED_EXPORT extern int ged_debugbu(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Dump of the database's directory
- */
-GED_EXPORT extern int ged_debugdir(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Set/get librt's debug bit vector
- */
-GED_EXPORT extern int ged_debuglib(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Set/get librt's NMG debug bit vector
- */
-GED_EXPORT extern int ged_debugnmg(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Used to control logging.
- */
-GED_EXPORT extern int ged_log(struct ged *gedp, int argc, const char *argv[]);
-
-/* defined in trace.c */
-
 #define _GED_TRACE_MAX_LEVELS 12
 struct _ged_trace_data {
     struct ged *gtd_gedp;
@@ -76,13 +44,13 @@ struct _ged_trace_data {
     int gtd_flag;
 };
 
+/* defined in trace.c */
 
 GED_EXPORT extern void ged_trace(struct directory *dp,
 				 int pathpos,
 				 const mat_t old_xlate,
 				 struct _ged_trace_data *gtdp,
 				 int verbose);
-
 
 
 __END_DECLS

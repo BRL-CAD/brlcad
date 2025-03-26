@@ -39,7 +39,7 @@
 #include "nmg.h"
 #include "rt/view.h"
 
-#include "ged/view/state.h"
+#include "ged/view.h"
 #include "../ged_private.h"
 
 static int
