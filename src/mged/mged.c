@@ -2193,7 +2193,7 @@ main(int argc, char *argv[])
 
     if (s->dbip != DBI_NULL) {
 	setview(s, 0.0, 0.0, 0.0);
-	s->gedp->ged_gdp->gd_rtCmdNotify = mged_notify;
+	ged_dl_notify_func_set(s->gedp, mged_notify);
     }
 
     /* --- Now safe to process commands. --- */

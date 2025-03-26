@@ -504,7 +504,7 @@ mged_attach(struct mged_state *s, const char *wp_name, int argc, const char *arg
     share_dlist(s->mged_curr_dm);
 
     if (dm_get_displaylist(DMP) && mged_variables->mv_dlist && !dlist_state->dl_active) {
-	createDLists(s, s->gedp->ged_gdp->gd_headDisplay);
+	createDLists(s, (struct bu_list *)ged_dl(s->gedp));
 	dlist_state->dl_active = 1;
     }
 

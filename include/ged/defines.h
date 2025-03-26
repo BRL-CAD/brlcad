@@ -142,13 +142,15 @@ struct vd_curve {
 };
 #define VD_CURVE_NULL   ((struct vd_curve *)NULL)
 
+typedef void (*ged_drawable_notify_func_t)(int);
+
 /* FIXME: should be private */
 struct ged_drawable {
     struct bu_list		*gd_headDisplay;	/**< @brief  head of display list */
     struct bu_list		*gd_headVDraw;		/**< @brief  head of vdraw list */
     struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
 
-    void			(*gd_rtCmdNotify)(int aborted);	/**< @brief  function called when rt command completes */
+    ged_drawable_notify_func_t  gd_rtCmdNotify;	/**< @brief  function called when rt command completes */
 
     int				gd_uplotOutputMode;	/**< @brief  output mode for unix plots */
 

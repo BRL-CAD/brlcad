@@ -773,8 +773,8 @@ replot_editing_solid(struct mged_state *s)
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     illdp = LAST_SOLID(bdata);
 
-    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -5642,8 +5642,8 @@ oedit_apply(struct mged_state *s, int continue_editing)
     modelchanges[15] = 1000000000;	/* => small ratio */
 
     /* Now, recompute new chunks of displaylist */
-    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -5674,8 +5674,8 @@ oedit_accept(struct mged_state *s)
     if (s->dbip->dbi_read_only) {
 	oedit_reject(s);
 
-	gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+	while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -5933,8 +5933,8 @@ sedit_reject(struct mged_state *s)
 	    return;
 	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
-	gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+	while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {

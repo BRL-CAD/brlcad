@@ -61,8 +61,8 @@ illuminate(struct mged_state *s, int y) {
      */
     count = ((fastf_t)y + BV_MAX) * s->mged_curr_dm->dm_ndrawn / BV_RANGE;
 
-    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -141,8 +141,8 @@ f_aip(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	if (argc == 1 || *argv[1] == 'f') {
 	    if (BU_LIST_NEXT_IS_HEAD(sp, &gdlp->dl_head_scene_obj)) {
 		/* Advance the gdlp (i.e. display list) */
-		if (BU_LIST_NEXT_IS_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay))
-		    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+		if (BU_LIST_NEXT_IS_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp)))
+		    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
 		else
 		    gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
@@ -153,8 +153,8 @@ f_aip(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	} else if (*argv[1] == 'b') {
 	    if (BU_LIST_PREV_IS_HEAD(sp, &gdlp->dl_head_scene_obj)) {
 		/* Advance the gdlp (i.e. display list) */
-		if (BU_LIST_PREV_IS_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay))
-		    gdlp = BU_LIST_PREV(display_list, s->gedp->ged_gdp->gd_headDisplay);
+		if (BU_LIST_PREV_IS_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp)))
+		    gdlp = BU_LIST_PREV(display_list, (struct bu_list *)ged_dl(s->gedp));
 		else
 		    gdlp = BU_LIST_PLAST(display_list, gdlp);
 
@@ -297,8 +297,8 @@ f_matpick(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     }
  got:
     /* Include all solids with same tree top */
-    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {

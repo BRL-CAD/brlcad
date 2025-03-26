@@ -1271,8 +1271,7 @@ to_open_tcl(ClientData UNUSED(clientData),
     top->to_gedp->ged_create_vlist_display_list_callback = to_create_vlist_callback;
     top->to_gedp->ged_destroy_vlist_callback = to_destroy_vlist_callback;
 
-    BU_ASSERT(gedp->ged_gdp != NULL);
-    top->to_gedp->ged_gdp->gd_rtCmdNotify = to_rt_end_callback_internal;
+    ged_dl_notify_func_set(top->to_gedp, to_rt_end_callback_internal);
 
     // Initialize libtclcad GED data container
     struct tclcad_ged_data *tgd;

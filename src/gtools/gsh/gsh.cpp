@@ -187,7 +187,7 @@ DisplayHash::hash(struct ged *gedp, bool dbi_state_check, bool new_cmd_forms)
 	l = dl_name_hash(gedp);
     }
 
-    g = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
+    g = ged_dl_hash(ged_dl(gedp));
 
     return true;
 }
@@ -591,7 +591,7 @@ GshState::view_update()
 	    dm_loadmatrix(dmp, mat, 0);
 	    unsigned char geometry_default_color[] = { 255, 0, 0 };
 	    dm_draw_begin(dmp);
-	    dm_draw_head_dl(dmp, gedp->ged_gdp->gd_headDisplay,
+	    dm_draw_head_dl(dmp, (struct bu_list *)ged_dl(gedp),
 		    1.0, gedp->ged_gvp->gv_isize, -1, -1, -1, 1,
 		    0, 0, geometry_default_color, 1, 0);
 

@@ -224,9 +224,9 @@ edit_com(struct mged_state *s,
     CHECK_DBI_NULL;
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
 
-    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
+    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
@@ -409,9 +409,9 @@ edit_com(struct mged_state *s,
 
 	s->gedp->ged_gvp = view_state->vs_gvp;
 
-	gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
 
-	while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
+	while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
@@ -876,9 +876,9 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	goto bail_out;
     }
 
-    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
 
-    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
+    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -1025,9 +1025,9 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
 
-    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
+    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {

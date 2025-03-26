@@ -236,6 +236,18 @@ GED_EXPORT struct rt_selection_set *ged_get_selection_set(struct ged *gedp,
 
 
 
+/* Accessors for display list based drawing info.  Eventually we want to migrate
+ * off of direct usage of these containers completely, but for now the older
+ * drawing path (which MGED and Archer use) needs them.
+ */
+GED_EXPORT struct display_list *
+ged_dl(struct ged *gedp);
+GED_EXPORT void
+ged_dl_notify_func_set(struct ged *gedp, ged_drawable_notify_func_t f);
+GED_EXPORT ged_drawable_notify_func_t
+ged_dl_notify_func_get(struct ged *gedp);
+
+
 
 
 /* NMG specific visualizations that (currently) need libged routines.

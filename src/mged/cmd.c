@@ -1972,9 +1972,9 @@ cmd_blast(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, cons
 
 	s->gedp->ged_gvp = view_state->vs_gvp;
 
-	gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
 
-	while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
+	while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {

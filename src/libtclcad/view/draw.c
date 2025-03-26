@@ -128,7 +128,7 @@ go_draw_dlist(struct bview *gdvp)
     int line_style = -1;
     struct dm *dmp = (struct dm *)gdvp->dmp;
     struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
-    struct bu_list *hdlp = tvd->gedp->ged_gdp->gd_headDisplay;
+    struct bu_list *hdlp = (struct bu_list *)ged_dl(tvd->gedp);
 
     if (dm_get_transparency(dmp)) {
 	/* First, draw opaque stuff */
@@ -225,16 +225,16 @@ to_edit_redraw(struct ged *gedp,
     if (argc != 2)
 	return BRLCAD_ERROR;
 
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(gedp));
+    while (BU_LIST_NOT_HEAD(gdlp, ged_dl(gedp))) {
 	gdlp->dl_wflag = 0;
 	gdlp = BU_LIST_PNEXT(display_list, gdlp);
     }
 
     if (db_string_to_path(&subpath, gedp->dbip, argv[1]) == 0) {
 	for (i = 0; i < subpath.fp_len; ++i) {
-	    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-	    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(gedp));
+	    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(gedp))) {
 		register struct bv_scene_obj *curr_sp;
 
 		next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
@@ -284,7 +284,7 @@ to_edit_redraw(struct ged *gedp,
 			 * second to last list items play leap frog
 			 * with the end of list.
 			 */
-			last_gdlp = BU_LIST_PREV(display_list, gedp->ged_gdp->gd_headDisplay);
+			last_gdlp = BU_LIST_PREV(display_list, (struct bu_list *)ged_dl(gedp));
 			BU_LIST_DEQUEUE(&last_gdlp->l);
 			BU_LIST_INSERT(&next_gdlp->l, &last_gdlp->l);
 			last_gdlp->dl_wflag = 1;

@@ -2531,6 +2531,31 @@ _ged_characterize_pathspec(struct bu_vls *normalized, struct ged *gedp, const ch
 
 #endif
 
+struct display_list *
+ged_dl(struct ged *gedp)
+{
+    if (!gedp || !gedp->ged_gdp)
+	return NULL;
+    return (struct display_list *)gedp->ged_gdp->gd_headDisplay;
+}
+
+void
+ged_dl_notify_func_set(struct ged *gedp, ged_drawable_notify_func_t f)
+{
+    if (!gedp || !gedp->ged_gdp)
+	return;
+
+    gedp->ged_gdp->gd_rtCmdNotify = f;
+}
+
+ged_drawable_notify_func_t
+ged_dl_notify_func_get(struct ged *gedp)
+{
+    if (!gedp || !gedp->ged_gdp)
+	return NULL;
+
+    return gedp->ged_gdp->gd_rtCmdNotify;
+}
 
 /*
  * Local Variables:

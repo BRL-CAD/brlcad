@@ -150,8 +150,8 @@ find_solid_with_path(struct mged_state *s, struct db_full_path *pathp)
 
     RT_CK_FULL_PATH(pathp);
 
-    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -221,8 +221,8 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
