@@ -72,6 +72,158 @@ dl_set_wflag(struct bu_list *hdlp, int wflag)
     }
 }
 
+struct nirt_print_info {
+    struct bu_process *p;
+    FILE *fp_in;
+    FILE *fp_out;
+    FILE *fp_err;
+    int skip_drawn;
+    vect_t dir;
+};
+
+
+static int
+nirt_cmd_print(struct ged *gedp, struct nirt_print_info *np)
+{
+    int ret = BRLCAD_OK;
+    struct qray_dataList *ndlp = NULL;
+    struct qray_dataList HeadQRayData;
+    struct bu_list *vlfree = &rt_vlfree;
+    char line[RT_MAXLINE] = {0};
+    /* for bu_fgets space trimming */
+    struct bu_vls v = BU_VLS_INIT_ZERO;
+    double scan[4]; /* holds sscanf values */
+    struct bv_vlblock *vbp = NULL;
+
+    if (!gedp || !np)
+	return BRLCAD_ERROR;
+
+    /* ensure nirt has started and has something to read from - with 5 second timeout */
+    int64_t start = bu_gettime();
+
+    while (!bu_process_pending(fileno(np->fp_err)) && !bu_process_pending(fileno(np->fp_out))) {
+	if ((bu_gettime() - start) > BU_SEC2USEC(5))
+	    break;
+    }
+
+    /* check if nirt wrote anything to error on load */
+    if (bu_process_pending(fileno(np->fp_err))) {
+	while (bu_fgets(line, RT_MAXLINE, np->fp_err) != (char *)NULL) {
+	    bu_vls_strcpy(&v, line);
+	    bu_vls_trimspace(&v);
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
+	}
+    }
+
+    if (DG_QRAY_TEXT(gedp->i->ged_gdp)) {
+	while (bu_fgets(line, RT_MAXLINE, np->fp_out) != (char *)NULL) {
+	    if (bu_strncmp(line, "MGED-PARTITION-REPORT", 21) == 0)
+		break;
+	    bu_vls_strcpy(&v, line);
+	    bu_vls_trimspace(&v);
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
+	}
+    }
+
+    if (!np->skip_drawn && DG_QRAY_GRAPHICS(gedp->i->ged_gdp)) {
+	BU_LIST_INIT(&HeadQRayData.l);
+
+	/* handle partitions */
+	while (bu_fgets(line, RT_MAXLINE, np->fp_out) != (char *)NULL) {
+	    if (bu_strncmp(line, "MGED-OVERLAP-REPORT", 19) == 0)
+		break;
+	    bu_vls_strcpy(&v, line);
+	    bu_vls_trimspace(&v);
+
+	    if (line[0] == '\n' || line[0] == '\r') {
+		bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&v));
+		break;
+	    }
+
+	    BU_ALLOC(ndlp, struct qray_dataList);
+	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
+
+	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
+	    ndlp->x_in = scan[0];
+	    ndlp->y_in = scan[1];
+	    ndlp->z_in = scan[2];
+	    ndlp->los = scan[3];
+	    if (ret != 4) {
+		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four partition numbers.\n", bu_vls_addr(&v));
+		break;
+	    }
+	}
+
+	vbp = bv_vlblock_init(vlfree, 32);
+	qray_data_to_vlist(gedp, vbp, &HeadQRayData, np->dir, 0);
+	bu_list_free(&HeadQRayData.l);
+
+	if (gedp->new_cmd_forms) {
+	    struct bview *view = gedp->ged_gvp;
+	    bv_vlblock_obj(vbp, view, "nirt");
+	} else {
+	    _ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->i->ged_gdp->gd_qray_basename), 0);
+	}
+
+	bv_vlblock_free(vbp);
+
+	/* handle overlaps */
+	while (bu_fgets(line, RT_MAXLINE, np->fp_out) != (char *)NULL) {
+	    bu_vls_strcpy(&v, line);
+	    bu_vls_trimspace(&v);
+
+	    if (line[0] == '\n' || line[0] == '\r') {
+		bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&v));
+		break;
+	    }
+
+	    BU_ALLOC(ndlp, struct qray_dataList);
+	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
+
+	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
+	    ndlp->x_in = scan[0];
+	    ndlp->y_in = scan[1];
+	    ndlp->z_in = scan[2];
+	    ndlp->los = scan[3];
+	    if (ret != 4) {
+		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four overlap numbers.\n", bu_vls_addr(&v));
+		break;
+	    }
+	}
+
+	vbp = bv_vlblock_init(vlfree, 32);
+	qray_data_to_vlist(gedp, vbp, &HeadQRayData, np->dir, 1);
+	bu_list_free(&HeadQRayData.l);
+	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->i->ged_gdp->gd_qray_basename), 0);
+	bv_vlblock_free(vbp);
+    }
+
+    /* check if nirt wrote any errors from shots */
+    if (bu_process_pending(fileno(np->fp_err))) {
+	while (bu_fgets(line, RT_MAXLINE, np->fp_err) != (char *)NULL) {
+	    bu_vls_strcpy(&v, line);
+	    bu_vls_trimspace(&v);
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
+	}
+    }
+
+    bu_vls_free(&v);
+
+    bu_process_file_close(np->p, BU_PROCESS_STDOUT);
+    bu_process_file_close(np->p, BU_PROCESS_STDERR);
+
+    int retcode = bu_process_wait_n(&np->p, 0);
+
+    if (retcode != 0) {
+	_ged_wait_status(gedp->ged_result_str, retcode);
+    }
+
+    dl_set_wflag(gedp->i->ged_gdp->gd_headDisplay, DOWN);
+
+    return ret;
+}
+
+
 
 /**
  * Invoke nirt with the current view & stuff
@@ -82,38 +234,33 @@ dl_set_wflag(struct bu_list *hdlp, int wflag)
 int
 ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 {
+    // There are two possible sources of settings - the ones we deduce
+    // from view state, and the ones we get from the user.  User supplied
+    // always overrides deduced, so we first set up the state-based values
+    // to serve as defaults and then process the args to get any user
+    // overrides.
+    //
+    // Execution scripts are an exception to the above - user specified
+    // options there are additive to what we use, not instead of.
+    //struct nirt_opt_vals nv = NIRT_OPT_INIT;
+
+
     char **vp = NULL;
-    FILE *fp_in = NULL;
-    FILE *fp_out = NULL;
-    FILE *fp_err = NULL;
-    struct bu_process *p = NULL;
+    struct nirt_print_info np = {NULL, NULL, NULL, NULL, 0, VINIT_ZERO};
     char **av = NULL;
-    int ret;
-    int retcode;
     int use_input_orig = 0;
     vect_t center_model;
-    vect_t dir;
     vect_t cml;
     double scan[4]; /* holds sscanf values */
     int i;
     int j;
-    char line[RT_MAXLINE] = {0};
     struct bu_vls p_vls = BU_VLS_INIT_ZERO;
-    struct bv_vlblock *vbp = NULL;
-    struct qray_dataList *ndlp = NULL;
-    struct qray_dataList HeadQRayData;
     char **gd_rt_cmd = NULL;
     int gd_rt_cmd_len = 0;
-    int skip_drawn = 0;
-    int64_t start = 0;
-    struct bu_list *vlfree = &rt_vlfree;
 
     const char *nirt = NULL;
     char nirtcmd[MAXPATHLEN] = {0};
     size_t args;
-
-    /* for bu_fgets space trimming */
-    struct bu_vls v = BU_VLS_INIT_ZERO;
 
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
@@ -141,23 +288,23 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
             av[3] = "ged";
 	    av[4] = NULL;
 
-	    bu_process_create(&p, (const char **)av, BU_PROCESS_HIDE_WINDOW);
+	    bu_process_create(&np.p, (const char **)av, BU_PROCESS_HIDE_WINDOW);
             bu_free(av, "av");
 
             // open pipes
-            fp_in = bu_process_file_open(p, BU_PROCESS_STDIN);
+            np.fp_in = bu_process_file_open(np.p, BU_PROCESS_STDIN);
 
             /* use fp_out to read back the result */
-            fp_out = bu_process_file_open(p, BU_PROCESS_STDOUT);
+            np.fp_out = bu_process_file_open(np.p, BU_PROCESS_STDOUT);
 
             /* use fp_err to read any error messages */
-            fp_err = bu_process_file_open(p, BU_PROCESS_STDERR);
+            np.fp_err = bu_process_file_open(np.p, BU_PROCESS_STDERR);
 
             /* send quit command to nirt */
-            fprintf(fp_in, "q\n");
-            bu_process_file_close(p, BU_PROCESS_STDIN);
+            fprintf(np.fp_in, "q\n");
+            bu_process_file_close(np.p, BU_PROCESS_STDIN);
 
-            goto print;
+	    return nirt_cmd_print(gedp, &np);
         }
     }
 
@@ -189,13 +336,13 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     VSCALE(cml, center_model, gedp->dbip->dbi_base2local);
-    VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
-    VSCALE(dir, dir, -1.0);
+    VMOVEN(np.dir, gedp->ged_gvp->gv_rotation + 8, 3);
+    VSCALE(np.dir, np.dir, -1.0);
 
     bu_vls_printf(&p_vls, "xyz %lf %lf %lf;",
 		  cml[X], cml[Y], cml[Z]);
     bu_vls_printf(&p_vls, "dir %lf %lf %lf; s",
-		  dir[X], dir[Y], dir[Z]);
+		  np.dir[X], np.dir[Y], np.dir[Z]);
 
     /* include nirt script string */
     if (bu_vls_strlen(&gedp->i->ged_gdp->gd_qray_script)) {
@@ -252,11 +399,11 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     /* check if user requested objects other than what is drawn */
     if (argc > 1 && argv[argc-1][0] != '-') {	/* ignore obvious trailing flag */
 	if (db_lookup(gedp->dbip, argv[argc-1], 0) != RT_DIR_NULL)
-	    skip_drawn = 1;
+	    np.skip_drawn = 1;
     }
 
     gd_rt_cmd_len = vp - gd_rt_cmd;
-    if (!skip_drawn) {
+    if (!np.skip_drawn) {
         /* Note - ged_who_argv sets the last vp to (char *)0 */
         gd_rt_cmd_len += ged_who_argv(gedp, vp, (const char **)&gd_rt_cmd[args]);
     }
@@ -296,11 +443,11 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    bu_process_create(&p, (const char **)av, BU_PROCESS_HIDE_WINDOW);
+    bu_process_create(&np.p, (const char **)av, BU_PROCESS_HIDE_WINDOW);
     bu_free(av, "av");
 
 
-    if (bu_process_pid(p) == -1) {
+    if (bu_process_pid(np.p) == -1) {
 	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
 	for (int pi = 0; pi < gd_rt_cmd_len; pi++) {
 	    bu_vls_printf(gedp->ged_result_str, "%s ", gd_rt_cmd[pi]);
@@ -310,153 +457,34 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    fp_in = bu_process_file_open(p, BU_PROCESS_STDIN);
+    np.fp_in = bu_process_file_open(np.p, BU_PROCESS_STDIN);
 
-    /* send commands down the pipe */
+    /* send commands down the pipe.
+     * TODO - should we be reading after each command to prevent
+     * long outputs potentially blocking pipes? */
     for (i = 1; i < gd_rt_cmd_len - 2; i++) {
 	if (gd_rt_cmd[i] != NULL && BU_STR_EQUAL(gd_rt_cmd[i], "-e")) {
-	    fprintf(fp_in, "%s\n", gd_rt_cmd[++i]);
+	    fprintf(np.fp_in, "%s\n", gd_rt_cmd[++i]);
 	}
     }
 
+    /* done with gd_rt_cmd */
+    bu_free(gd_rt_cmd, "free gd_rt_cmd");
+
     /* use fp_out to read back the result */
-    fp_out = bu_process_file_open(p, BU_PROCESS_STDOUT);
+    np.fp_out = bu_process_file_open(np.p, BU_PROCESS_STDOUT);
 
     /* use fp_err to read any error messages */
-    fp_err = bu_process_file_open(p, BU_PROCESS_STDERR);
+    np.fp_err = bu_process_file_open(np.p, BU_PROCESS_STDERR);
 
     /* send quit command to nirt */
-    fprintf(fp_in, "q\n");
-    bu_process_file_close(p, BU_PROCESS_STDIN);
+    fprintf(np.fp_in, "q\n");
+    bu_process_file_close(np.p, BU_PROCESS_STDIN);
 
     bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
 
-print:
-    /* ensure nirt has started and has something to read from - with 5 second timeout */
-    start = bu_gettime();
-    while (!bu_process_pending(fileno(fp_err)) && !bu_process_pending(fileno(fp_out))) {
-	if ((bu_gettime() - start) > BU_SEC2USEC(5))
-	    break;
-    }
 
-    /* check if nirt wrote anything to error on load */
-    if (bu_process_pending(fileno(fp_err))) {
-	while (bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL) {
-	    bu_vls_strcpy(&v, line);
-	    bu_vls_trimspace(&v);
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
-	}
-    }
-
-    if (DG_QRAY_TEXT(gedp->i->ged_gdp)) {
-	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
-	    if (bu_strncmp(line, "MGED-PARTITION-REPORT", 21) == 0)
-		break;
-	    bu_vls_strcpy(&v, line);
-	    bu_vls_trimspace(&v);
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
-	}
-    }
-
-    if (!skip_drawn && DG_QRAY_GRAPHICS(gedp->i->ged_gdp)) {
-	BU_LIST_INIT(&HeadQRayData.l);
-
-	/* handle partitions */
-	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
-	    if (bu_strncmp(line, "MGED-OVERLAP-REPORT", 19) == 0)
-		break;
-	    bu_vls_strcpy(&v, line);
-	    bu_vls_trimspace(&v);
-
-	    if (line[0] == '\n' || line[0] == '\r') {
-		bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&v));
-		break;
-	    }
-
-	    BU_ALLOC(ndlp, struct qray_dataList);
-	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
-
-	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
-	    ndlp->x_in = scan[0];
-	    ndlp->y_in = scan[1];
-	    ndlp->z_in = scan[2];
-	    ndlp->los = scan[3];
-	    if (ret != 4) {
-		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four partition numbers.\n", bu_vls_addr(&v));
-		break;
-	    }
-	}
-
-	vbp = bv_vlblock_init(vlfree, 32);
-	qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 0);
-	bu_list_free(&HeadQRayData.l);
-
-	if (gedp->new_cmd_forms) {
-	    struct bview *view = gedp->ged_gvp;
-	    bv_vlblock_obj(vbp, view, "nirt");
-	} else {
-	    _ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->i->ged_gdp->gd_qray_basename), 0);
-	}
-
-	bv_vlblock_free(vbp);
-
-	/* handle overlaps */
-	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
-	    bu_vls_strcpy(&v, line);
-	    bu_vls_trimspace(&v);
-
-	    if (line[0] == '\n' || line[0] == '\r') {
-		bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&v));
-		break;
-	    }
-
-	    BU_ALLOC(ndlp, struct qray_dataList);
-	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
-
-	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
-	    ndlp->x_in = scan[0];
-	    ndlp->y_in = scan[1];
-	    ndlp->z_in = scan[2];
-	    ndlp->los = scan[3];
-	    if (ret != 4) {
-		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four overlap numbers.\n", bu_vls_addr(&v));
-		break;
-	    }
-	}
-
-	vbp = bv_vlblock_init(vlfree, 32);
-	qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 1);
-	bu_list_free(&HeadQRayData.l);
-	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->i->ged_gdp->gd_qray_basename), 0);
-	bv_vlblock_free(vbp);
-    }
-
-    /* check if nirt wrote any errors from shots */
-    if (bu_process_pending(fileno(fp_err))) {
-	while (bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL) {
-	    bu_vls_strcpy(&v, line);
-	    bu_vls_trimspace(&v);
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
-	}
-    }
-
-    bu_vls_free(&v);
-
-    bu_process_file_close(p, BU_PROCESS_STDOUT);
-    bu_process_file_close(p, BU_PROCESS_STDERR);
-
-    retcode = bu_process_wait_n(&p, 0);
-
-    if (retcode != 0) {
-	_ged_wait_status(gedp->ged_result_str, retcode);
-    }
-
-    dl_set_wflag(gedp->i->ged_gdp->gd_headDisplay, DOWN);
-
-    bu_free(gd_rt_cmd, "free gd_rt_cmd");
-    gd_rt_cmd = NULL;
-
-    return BRLCAD_OK;
+    return nirt_cmd_print(gedp, &np);
 }
 
 
