@@ -246,46 +246,32 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     // options there are additive to what we use, not instead of.
     //struct nirt_opt_vals nv = NIRT_OPT_INIT;
 
-
-    char **vp = NULL;
+    // Container holding info common to both setup and printing stages
     struct nirt_print_info np = {NULL, NULL, NULL, NULL, 0, VINIT_ZERO};
-    char **av = NULL;
-    int use_input_orig = 0;
-    vect_t center_model;
-    vect_t cml;
-    double scan[4]; /* holds sscanf values */
-    int i;
-    int j;
-    struct bu_vls p_vls = BU_VLS_INIT_ZERO;
-    char **gd_rt_cmd = NULL;
-    int gd_rt_cmd_len = 0;
-
-    const char *nirt = NULL;
-    char nirtcmd[MAXPATHLEN] = {0};
-    size_t args;
 
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    nirt = bu_dir(nirtcmd, MAXPATHLEN, BU_DIR_BIN, argv[0], NULL);
+    char nirtcmd[MAXPATHLEN] = {0};
+    const char *nirt = bu_dir(nirtcmd, MAXPATHLEN, BU_DIR_BIN, argv[0], NULL);
     if (!nirt) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: Unable to find 'nirt' plugin.\n");
 	return BRLCAD_ERROR;
     }
 
     /* look for options which solely print information to user */
-    for (i = 0; i < argc; i++) {
+    for (int i = 0; i < argc; i++) {
         if (BU_STR_EQUAL(argv[i], "-h") || 
             BU_STR_EQUAL(argv[i], "-?") ||
             BU_STR_EQUAL(argv[i], "--help") || 
             BU_STR_EQUAL(argv[i], "-L")) {
 
-            // load av with request
-            av = (char **)bu_calloc(5, sizeof(char *), "av");
-            av[0] = (char*)nirt;
-            av[1] = (char*)argv[i];
+	    // load av with request
+	    char **av = (char **)bu_calloc(5, sizeof(char *), "av");
+	    av[0] = (char*)nirt;
+	    av[1] = (char*)argv[i];
             av[2] = "-X";
             av[3] = "ged";
 	    av[4] = NULL;
@@ -312,14 +298,17 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 
-    args = argc + 20 + 2 + ged_who_argc(gedp);
-    gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    size_t args = argc + 20 + 2 + ged_who_argc(gedp);
+    char **gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
-    vp = &gd_rt_cmd[0];
+    char **vp = &gd_rt_cmd[0];
     *vp++ = &nirtcmd[0];
 
     /* swipe x, y, z off the end if present */
+    int use_input_orig = 0;
+    vect_t center_model;
     if (argc > 3) {
+	double scan[4]; /* holds sscanf values */
 	if (sscanf(argv[argc-3], "%lf", &scan[X]) == 1 &&
 	    sscanf(argv[argc-2], "%lf", &scan[Y]) == 1 &&
 	    sscanf(argv[argc-1], "%lf", &scan[Z]) == 1) {
@@ -337,10 +326,12 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	     -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
     }
 
+    vect_t cml;
     VSCALE(cml, center_model, gedp->dbip->dbi_base2local);
     VMOVEN(np.dir, gedp->ged_gvp->gv_rotation + 8, 3);
     VSCALE(np.dir, np.dir, -1.0);
 
+    struct bu_vls p_vls = BU_VLS_INIT_ZERO;
     bu_vls_printf(&p_vls, "xyz %lf %lf %lf;",
 		  cml[X], cml[Y], cml[Z]);
     bu_vls_printf(&p_vls, "dir %lf %lf %lf; s",
@@ -395,7 +386,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 
     *vp++ = gedp->dbip->dbi_filename;
     /* load user args */
-    for (i = 1; i < argc; i++)
+    for (int i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
 
     /* check if user requested objects other than what is drawn */
@@ -404,7 +395,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	    np.skip_drawn = 1;
     }
 
-    gd_rt_cmd_len = vp - gd_rt_cmd;
+    int gd_rt_cmd_len = gd_rt_cmd_len = vp - gd_rt_cmd;
     if (!np.skip_drawn) {
         /* Note - ged_who_argv sets the last vp to (char *)0 */
         gd_rt_cmd_len += ged_who_argv(gedp, vp, (const char **)&gd_rt_cmd[args]);
@@ -427,27 +418,28 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\nFiring from view center...\n");
     }
 
-    j = 1;
     /* increment gd_rt_cmd_len +1 for null termination
     * +2 to indicate we are running within libged with "-X ged"
     */
-    av = (char **)bu_calloc(gd_rt_cmd_len + 3, sizeof(char *), "av");
-    av[0] = gd_rt_cmd[0];
-    av[j++] = "-X";
-    av[j++] = "ged";
-    for (i = 1; i < gd_rt_cmd_len; i++) {
-	/* skip commands */
-	if (BU_STR_EQUAL(gd_rt_cmd[i], "-e")) {
-	    i++;	// skip script too
-	} else {
-	    av[j] = gd_rt_cmd[i];
-	    j++;
+    {
+	int j = 1;
+	char **av = (char **)bu_calloc(gd_rt_cmd_len + 3, sizeof(char *), "av");
+	av[0] = gd_rt_cmd[0];
+	av[j++] = "-X";
+	av[j++] = "ged";
+	for (int i = 1; i < gd_rt_cmd_len; i++) {
+	    /* skip commands */
+	    if (BU_STR_EQUAL(gd_rt_cmd[i], "-e")) {
+		i++;	// skip script too
+	    } else {
+		av[j] = gd_rt_cmd[i];
+		j++;
+	    }
 	}
+
+	bu_process_create(&np.p, (const char **)av, BU_PROCESS_HIDE_WINDOW);
+	bu_free(av, "av");
     }
-
-    bu_process_create(&np.p, (const char **)av, BU_PROCESS_HIDE_WINDOW);
-    bu_free(av, "av");
-
 
     if (bu_process_pid(np.p) == -1) {
 	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
@@ -464,7 +456,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     /* send commands down the pipe.
      * TODO - should we be reading after each command to prevent
      * long outputs potentially blocking pipes? */
-    for (i = 1; i < gd_rt_cmd_len - 2; i++) {
+    for (int i = 1; i < gd_rt_cmd_len - 2; i++) {
 	if (gd_rt_cmd[i] != NULL && BU_STR_EQUAL(gd_rt_cmd[i], "-e")) {
 	    fprintf(np.fp_in, "%s\n", gd_rt_cmd[++i]);
 	}
