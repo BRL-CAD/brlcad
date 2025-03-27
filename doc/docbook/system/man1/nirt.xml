@@ -79,22 +79,6 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-B</option><replaceable> rt_bot_minpieces</replaceable></term>
-      <listitem>
-	<para>
-	  Causes <command>nirt</command> to adjust the setting of
-	  <emphasis remap="I">rt_bot_minpieces</emphasis>
-	  to the indicated value. A value of zero here indicates that
-	  the "pieces" methodology should not be used. A value greater
-	  than zero indicates that all BOT primitives containing more than
-	  <emphasis remap="I">rt_bot_minpieces</emphasis> triangles should
-	  be broken down into a separate piece for each triangle. This can result
-	  in significant improvement in raytrace speed at the cost of more memory
-	  use.
-	</para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
       <term><option>-e</option><replaceable> script</replaceable></term>
       <listitem>
 	<para>
@@ -212,7 +196,16 @@
 	</para>
       </listitem>
     </varlistentry>
-  </variablelist>
+    <varlistentry>
+      <term><option>--xyz</option><replaceable> x y z</replaceable></term>
+      <listitem>
+	<para>
+	  Initializes the ray origination point to the specified value.  See the discussion of the
+	  <emphasis remap="I">xyz</emphasis> command below.
+	</para>
+      </listitem>
+    </varlistentry>
+	</variablelist>
 
   <para>
     <command>nirt</command> will check in two places for a <filename>.nirtrc</filename>
@@ -228,7 +221,8 @@
 
   <variablelist remap="TP">
     <varlistentry>
-      <term><emphasis remap="B" role="B">xyz [</emphasis><emphasis remap="I">x y z</emphasis><emphasis remap="B" role="B">]</emphasis></term>
+      <term><emphasis remap="B" role="B">center [</emphasis><emphasis remap="I">x y z</emphasis><emphasis remap="B" role="B">]</emphasis></term>
+      <term><emphasis remap="B" role="B">xyz    [</emphasis><emphasis remap="I">x y z</emphasis><emphasis remap="B" role="B">]</emphasis></term>
       <listitem>
 	<para>
 	  Sets the ray origination point to (<emphasis remap="I">x</emphasis>, <emphasis remap="I">y</emphasis>,
@@ -295,16 +289,6 @@
     <listitem>
       <para>
 	Fires a ray from the current origination point in the current direction.
-      </para>
-    </listitem>
-  </varlistentry>
-  <varlistentry>
-    <term><emphasis remap="B" role="B">bot_minpieces [</emphasis><emphasis remap="I">n</emphasis><emphasis remap="B" role="B">]</emphasis></term>
-    <listitem>
-      <para>
-	Sets "rt_bot_minpieces" to the new value <emphasis remap="I">n</emphasis>.
-	If <emphasis remap="I">n</emphasis> is not provided, the current value of "rt_bot_minpieces"
-	is displayed.  See the discussion of the <option>-B</option> option above for more details.
       </para>
     </listitem>
   </varlistentry>

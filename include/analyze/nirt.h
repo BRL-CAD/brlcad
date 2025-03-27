@@ -64,9 +64,10 @@ struct nirt_opt_vals {
     struct bu_ptbl init_scripts;
     struct bu_vls filename;
     struct bu_vls nirt_debug;
+    vect_t center_model;
 };
 
-#define NIRT_OPT_INIT {0, 0, 1, NIRT_OVLP_RESOLVE, 0, 0, 0, NIRT_SILENT_UNSET, 0, 0, BU_PTBL_INIT_ZERO, BU_PTBL_INIT_ZERO, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO}
+#define NIRT_OPT_INIT {0, 0, 1, NIRT_OVLP_RESOLVE, 0, 0, 0, NIRT_SILENT_UNSET, 0, 0, BU_PTBL_INIT_ZERO, BU_PTBL_INIT_ZERO, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, VINIT_ZERO}
 
 /**
  * Given a nirt_opt_vals container, set up and return a bu_opt_desc that can

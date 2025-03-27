@@ -193,25 +193,27 @@ nirt_opt_desc(struct nirt_opt_vals *v)
     if (!v)
 	return NULL;
 
-    struct bu_opt_desc *d = (struct bu_opt_desc *)bu_calloc(18, sizeof(struct bu_opt_desc), "opt array");
-    BU_OPT(d[0],  "?", "",     "",       NULL,             &v->print_help,     "print help and exit");
-    BU_OPT(d[1],  "h", "help", "",       NULL,             &v->print_help,     "print help and exit");
-    BU_OPT(d[2],  "A", "",     "n",      &enqueue_attrs,   &v->attrs,          "add attribute_name=n");
-    BU_OPT(d[3],  "M", "",     "",       NULL,             &v->read_matrix,    "read matrix, cmds on stdin");
-    BU_OPT(d[4],  "b", "",     "",       NULL,             NULL,               "back out of geometry before first shot (deprecated, default behavior)");
-    BU_OPT(d[5],  "c", "",     "",       NULL,             &v->current_center, "shoot ray from current center");
-    BU_OPT(d[6],  "e", "",     "script", &enqueue_script,  &v->init_scripts,   "run script before interacting");
-    BU_OPT(d[7],  "f", "",     "format", &enqueue_format,  v,                  "load predefined format (see -L) or file");
-    BU_OPT(d[8],  "E", "",     "",       &dequeue_scripts, &v->init_scripts,   "ignore any -e or -f options specified earlier on the command line");
-    BU_OPT(d[9],  "L", "",     "",       NULL,             &v->show_formats,   "list output formatting options");
-    BU_OPT(d[10], "s", "",     "",       NULL,             &v->silent_mode,    "run in silent (non-verbose) mode");
-    BU_OPT(d[11], "v", "",     "",       NULL,             &v->verbose_mode,   "run in verbose mode");
-    BU_OPT(d[12], "H", "",     "n",      &bu_opt_int,      &v->header_mode,    "flag (n) for enable/disable informational header - (n=1 [on] by default, always off in silent mode)");
-    BU_OPT(d[13], "u", "",     "n",      &bu_opt_int,      &v->use_air,        "set use_air=n (default 0)");
-    BU_OPT(d[14], "O", "",     "action", &decode_overlap,  &v->overlap_claims, "handle overlap claims via action");
-    BU_OPT(d[15], "x", "",     "v",      &bu_opt_int,      &rt_debug,          "set librt(3) diagnostic flag=v");
-    BU_OPT(d[16], "X", "",     "v",      &bu_opt_vls,      &v->nirt_debug,     "set nirt diagnostic flag=v");
-    BU_OPT_NULL(d[17]);
+    struct bu_opt_desc *d = (struct bu_opt_desc *)bu_calloc(20, sizeof(struct bu_opt_desc), "opt array");
+    BU_OPT(d[0],  "h", "help",  "",       NULL,             &v->print_help,     "print help and exit");
+    BU_OPT(d[1],  "?", "",      "",       NULL,             &v->print_help,     "print help and exit");
+    BU_OPT(d[2],  "A", "",      "n",      &enqueue_attrs,   &v->attrs,          "add attribute_name=n");
+    BU_OPT(d[3],  "M", "",      "",       NULL,             &v->read_matrix,    "read matrix, cmds on stdin");
+    BU_OPT(d[4],  "b", "",      "",       NULL,             NULL,               "back out of geometry before first shot (deprecated, default behavior)");
+    BU_OPT(d[5],  "c", "",      "",       NULL,             &v->current_center, "shoot ray from current center");
+    BU_OPT(d[6],  "e", "",      "script", &enqueue_script,  &v->init_scripts,   "run script before interacting");
+    BU_OPT(d[7],  "f", "",      "format", &enqueue_format,  v,                  "load predefined format (see -L) or file");
+    BU_OPT(d[8],  "E", "",      "",       &dequeue_scripts, &v->init_scripts,   "ignore any -e or -f options specified earlier on the command line");
+    BU_OPT(d[9],  "L", "",      "",       NULL,             &v->show_formats,   "list output formatting options");
+    BU_OPT(d[10], "s", "",      "",       NULL,             &v->silent_mode,    "run in silent (non-verbose) mode");
+    BU_OPT(d[11], "v", "",      "",       NULL,             &v->verbose_mode,   "run in verbose mode");
+    BU_OPT(d[12], "H", "",      "n",      &bu_opt_int,      &v->header_mode,    "flag (n) for enable/disable informational header - (n=1 [on] by default, always off in silent mode)");
+    BU_OPT(d[13], "u", "",      "n",      &bu_opt_int,      &v->use_air,        "set use_air=n (default 0)");
+    BU_OPT(d[14], "O", "",      "action", &decode_overlap,  &v->overlap_claims, "handle overlap claims via action");
+    BU_OPT(d[15], "x", "",      "v",      &bu_opt_int,      &rt_debug,          "set librt(3) diagnostic flag=v");
+    BU_OPT(d[16], "X", "",      "v",      &bu_opt_vls,      &v->nirt_debug,     "set nirt diagnostic flag=v");
+    BU_OPT(d[17], "", "center", "x,y,z",  &bu_opt_vect_t,   &v->center_model,   "specify xyz center point");
+    BU_OPT(d[18], "", "xyz",    "x,y,z",  &bu_opt_vect_t,   &v->center_model,   "specify xyz center point");
+    BU_OPT_NULL(d[19]);
 
     return d;
 }

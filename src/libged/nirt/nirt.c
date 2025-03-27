@@ -308,6 +308,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     int use_input_orig = 0;
     vect_t center_model;
     if (argc > 3) {
+	bu_log("WARNING: Specifying center with 'x y z' at the end of the nirt command is deprecated - use the --xyz option instead\n");
 	double scan[4]; /* holds sscanf values */
 	if (sscanf(argv[argc-3], "%lf", &scan[X]) == 1 &&
 	    sscanf(argv[argc-2], "%lf", &scan[Y]) == 1 &&
@@ -332,10 +333,8 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     VSCALE(np.dir, np.dir, -1.0);
 
     struct bu_vls p_vls = BU_VLS_INIT_ZERO;
-    bu_vls_printf(&p_vls, "xyz %lf %lf %lf;",
-		  cml[X], cml[Y], cml[Z]);
-    bu_vls_printf(&p_vls, "dir %lf %lf %lf; s",
-		  np.dir[X], np.dir[Y], np.dir[Z]);
+    bu_vls_printf(&p_vls, "xyz %lf %lf %lf;", V3ARGS(cml));
+    bu_vls_printf(&p_vls, "dir %lf %lf %lf; s", V3ARGS(np.dir));
 
     /* include nirt script string */
     if (bu_vls_strlen(&gedp->i->ged_gdp->gd_qray_script)) {

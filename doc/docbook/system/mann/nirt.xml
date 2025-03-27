@@ -69,22 +69,6 @@ for further description of some of the arguments.
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-B</option><replaceable> rt_bot_minpieces</replaceable></term>
-      <listitem>
-	<para>
-	  Causes <command>nirt</command> to adjust the setting of
-	  <emphasis>rt_bot_minpieces</emphasis>
-	  to the indicated value. A value of zero here indicates that
-	  the "pieces" methodology should not be used. A value greater
-	  than zero indicates that all BOT primitives containing more than
-	  <emphasis>rt_bot_minpieces</emphasis> triangles should
-	  be broken down into a separate piece for each triangle. This can result
-	  in significant improvement in raytrace speed at the cost of more memory
-	  use.
-	</para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
       <term><option>-c</option></term>
       <listitem>
 	<para>

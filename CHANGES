@@ -142,6 +142,7 @@ libged "how" command and its exposure in Tcl
 	or (more likely) retired as a command outright in favor of
 	a "view obj [name] info mode" subcommand.
 
+
 include/ged/commands.h
 	current ged_cmd_valid functionality will be replaced by
 	ged_cmd_exists and ged_cmd_same.
@@ -166,6 +167,11 @@ GED commands
 	editit (-e opt)
 	edmater (-E opt)
 	red (-E opt)
+
+	ability to specify xyz center with trailing arguments on
+	the nirt commad line (i.e. nirt obj1 obj2 ... x y z at
+	MGED command prompt) will be removed in favor of an --xyz
+	option instead (i.e. nirt -xyz x y z obj1 obj2 ...)
 
 7.40
 ----

@@ -41,6 +41,7 @@ extern "C" b_off_t ftello(FILE *);
 #endif
 #include <fstream>
 
+#include "vmath.h"
 #include "brlcad_ident.h"
 #include "bu/app.h"
 #include "bu/env.h"
@@ -504,7 +505,6 @@ main(int argc, const char **argv)
 	}
     }
     bu_vls_free(&optparse_msg);
-    bu_free(d, "nirt opt desc");
 
     BU_GET(io_data.outfile, struct bu_vls);
     BU_GET(io_data.errfile, struct bu_vls);
@@ -700,6 +700,14 @@ main(int argc, const char **argv)
 	(void)nirt_exec(ns, bu_vls_cstr(&ncmd));
     }
 
+    /* If we have a non-zero center point, set it */
+    if (!VNEAR_ZERO(optv.center_model, VUNITIZE_TOL)) {
+	vect_t cml;
+	VSCALE(cml, optv.center_model, dbip->dbi_base2local);
+	bu_vls_sprintf(&ncmd, "xyz %0.17f %0.17f %0.17f;", V3ARGS(cml));
+	(void)nirt_exec(ns, bu_vls_cstr(&ncmd));
+    }
+
     /* Draw the initial set of objects, if supplied */
     if (ac > 1) {
 	bu_vls_sprintf(&ncmd, "draw");
@@ -860,6 +868,7 @@ done:
     bu_vls_free(&ncmd);
     bu_vls_free(&iline);
     nirt_opt_vals_free(&optv);
+    bu_free(d, "nirt opt desc");
 
     if (io_data.using_pipe) {
 	pclose(io_data.out);

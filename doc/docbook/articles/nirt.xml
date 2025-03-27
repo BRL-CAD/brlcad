@@ -63,20 +63,29 @@
 
 	<literallayout class="monospaced">
 user@machine ~ $ nirt --h
-Usage: 'nirt [options] model.g objects...'
+Usage: nirt [options] model.g [objects]...
+
 Options:
- -b        back out of geometry before first shot
- -B n      set rt_bot_minpieces=n
- -e script run script before interacting
- -f sfile  run script sfile before interacting
- -L        list output formatting options
- -M        read matrix, cmds on stdin
- -O action handle overlap claims via action
- -s        run in silent (non-verbose) mode
- -u n      set use_air=n (default 0)
- -v        run in verbose mode
- -x v      set librt(3) diagnostic flag=v
- -X v      set nirt diagnostic flag=v
+ -h, -?, --help  print help and exit
+ -A n            add attribute_name=n
+ -M              read matrix, cmds on stdin
+ -b              back out of geometry before first shot (deprecated, default
+                 behavior)
+ -c              shoot ray from current center
+ -e script       run script before interacting
+ -f format       load predefined format (see -L) or file
+ -E              ignore any -e or -f options specified earlier on the command line
+ -L              list output formatting options
+ -s              run in silent (non-verbose) mode
+ -v              run in verbose mode
+ -H n            flag (n) for enable/disable informational header - (n=1 [on] by
+                 default, always off in silent mode)
+ -u n            set use_air=n (default 0)
+ -O action       handle overlap claims via action
+ -x v            set librt(3) diagnostic flag=v
+ -X v            set nirt diagnostic flag=v
+ --center x,y,z, --xyz x,y,z
+                 specify xyz center point
 
 	</literallayout>
       </para>
