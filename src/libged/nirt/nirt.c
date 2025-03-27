@@ -86,14 +86,11 @@ static int
 nirt_cmd_print(struct ged *gedp, struct nirt_print_info *np)
 {
     int ret = BRLCAD_OK;
-    struct qray_dataList *ndlp = NULL;
     struct qray_dataList HeadQRayData;
     struct bu_list *vlfree = &rt_vlfree;
     char line[RT_MAXLINE] = {0};
     /* for bu_fgets space trimming */
-    struct bu_vls v = BU_VLS_INIT_ZERO;
-    double scan[4]; /* holds sscanf values */
-    struct bv_vlblock *vbp = NULL;
+    struct bu_vls vbuf = BU_VLS_INIT_ZERO;
 
     if (!gedp || !np)
 	return BRLCAD_ERROR;
@@ -109,9 +106,9 @@ nirt_cmd_print(struct ged *gedp, struct nirt_print_info *np)
     /* check if nirt wrote anything to error on load */
     if (bu_process_pending(fileno(np->fp_err))) {
 	while (bu_fgets(line, RT_MAXLINE, np->fp_err) != (char *)NULL) {
-	    bu_vls_strcpy(&v, line);
-	    bu_vls_trimspace(&v);
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
+	    bu_vls_strcpy(&vbuf, line);
+	    bu_vls_trimspace(&vbuf);
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&vbuf));
 	}
     }
 
@@ -119,37 +116,40 @@ nirt_cmd_print(struct ged *gedp, struct nirt_print_info *np)
 	while (bu_fgets(line, RT_MAXLINE, np->fp_out) != (char *)NULL) {
 	    if (bu_strncmp(line, "MGED-PARTITION-REPORT", 21) == 0)
 		break;
-	    bu_vls_strcpy(&v, line);
-	    bu_vls_trimspace(&v);
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
+	    bu_vls_strcpy(&vbuf, line);
+	    bu_vls_trimspace(&vbuf);
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&vbuf));
 	}
     }
 
     if (!np->skip_drawn && DG_QRAY_GRAPHICS(gedp->i->ged_gdp)) {
+	struct bv_vlblock *vbp = NULL;
 	BU_LIST_INIT(&HeadQRayData.l);
 
 	/* handle partitions */
 	while (bu_fgets(line, RT_MAXLINE, np->fp_out) != (char *)NULL) {
 	    if (bu_strncmp(line, "MGED-OVERLAP-REPORT", 19) == 0)
 		break;
-	    bu_vls_strcpy(&v, line);
-	    bu_vls_trimspace(&v);
+	    bu_vls_strcpy(&vbuf, line);
+	    bu_vls_trimspace(&vbuf);
 
 	    if (line[0] == '\n' || line[0] == '\r') {
-		bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&v));
+		bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&vbuf));
 		break;
 	    }
 
+	    struct qray_dataList *ndlp = NULL;
 	    BU_ALLOC(ndlp, struct qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
-	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
+	    double scan[4]; /* holds sscanf values */
+	    ret = sscanf(bu_vls_cstr(&vbuf), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
 	    ndlp->x_in = scan[0];
 	    ndlp->y_in = scan[1];
 	    ndlp->z_in = scan[2];
 	    ndlp->los = scan[3];
 	    if (ret != 4) {
-		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four partition numbers.\n", bu_vls_addr(&v));
+		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four partition numbers.\n", bu_vls_cstr(&vbuf));
 		break;
 	    }
 	}
@@ -162,31 +162,33 @@ nirt_cmd_print(struct ged *gedp, struct nirt_print_info *np)
 	    struct bview *view = gedp->ged_gvp;
 	    bv_vlblock_obj(vbp, view, "nirt");
 	} else {
-	    _ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->i->ged_gdp->gd_qray_basename), 0);
+	    _ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_cstr(&gedp->i->ged_gdp->gd_qray_basename), 0);
 	}
 
 	bv_vlblock_free(vbp);
 
 	/* handle overlaps */
 	while (bu_fgets(line, RT_MAXLINE, np->fp_out) != (char *)NULL) {
-	    bu_vls_strcpy(&v, line);
-	    bu_vls_trimspace(&v);
+	    bu_vls_strcpy(&vbuf, line);
+	    bu_vls_trimspace(&vbuf);
 
 	    if (line[0] == '\n' || line[0] == '\r') {
-		bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&v));
+		bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&vbuf));
 		break;
 	    }
 
+	    struct qray_dataList *ndlp = NULL;
 	    BU_ALLOC(ndlp, struct qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
-	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
+	    double scan[4]; /* holds sscanf values */
+	    ret = sscanf(bu_vls_cstr(&vbuf), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
 	    ndlp->x_in = scan[0];
 	    ndlp->y_in = scan[1];
 	    ndlp->z_in = scan[2];
 	    ndlp->los = scan[3];
 	    if (ret != 4) {
-		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four overlap numbers.\n", bu_vls_addr(&v));
+		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four overlap numbers.\n", bu_vls_cstr(&vbuf));
 		break;
 	    }
 	}
@@ -194,20 +196,20 @@ nirt_cmd_print(struct ged *gedp, struct nirt_print_info *np)
 	vbp = bv_vlblock_init(vlfree, 32);
 	qray_data_to_vlist(gedp, vbp, &HeadQRayData, np->dir, 1);
 	bu_list_free(&HeadQRayData.l);
-	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->i->ged_gdp->gd_qray_basename), 0);
+	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_cstr(&gedp->i->ged_gdp->gd_qray_basename), 0);
 	bv_vlblock_free(vbp);
     }
 
     /* check if nirt wrote any errors from shots */
     if (bu_process_pending(fileno(np->fp_err))) {
 	while (bu_fgets(line, RT_MAXLINE, np->fp_err) != (char *)NULL) {
-	    bu_vls_strcpy(&v, line);
-	    bu_vls_trimspace(&v);
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
+	    bu_vls_strcpy(&vbuf, line);
+	    bu_vls_trimspace(&vbuf);
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&vbuf));
 	}
     }
 
-    bu_vls_free(&v);
+    bu_vls_free(&vbuf);
 
     bu_process_file_close(np->p, BU_PROCESS_STDOUT);
     bu_process_file_close(np->p, BU_PROCESS_STDERR);
