@@ -41,7 +41,6 @@ extern "C" b_off_t ftello(FILE *);
 #endif
 #include <fstream>
 
-#include "vmath.h"
 #include "brlcad_ident.h"
 #include "bu/app.h"
 #include "bu/env.h"
@@ -61,6 +60,17 @@ extern "C" {
 }
 #endif
 
+
+#define SILENT_UNSET    0
+#define SILENT_YES      1
+#define SILENT_NO       -1
+
+/** FLAG VALUES FOR overlap_claims */
+#define OVLP_RESOLVE            0
+#define OVLP_REBUILD_FASTGEN    1
+#define OVLP_REBUILD_ALL        2
+#define OVLP_RETAIN             3
+
 /* state for -M reading */
 #define RMAT_SAW_EYE    0x01
 #define RMAT_SAW_ORI    0x02
@@ -76,6 +86,13 @@ struct nirt_io_data {
     FILE *err;
     struct bu_vls *errfile;
     int using_pipe;
+};
+
+
+struct script_file_data {
+    std::vector<std::string> *init_scripts;
+    struct bu_vls *filename;
+    int file_cnt;
 };
 
 
@@ -166,6 +183,117 @@ list_formats(struct nirt_io_data *io_data, char ***names)
 
     return files;
 }
+
+
+static int
+dequeue_scripts(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
+{
+    std::vector<std::string> *init_scripts = (std::vector<std::string> *)set_var;
+    if (set_var) {
+	init_scripts->clear();
+    }
+    return 0;
+}
+
+
+static int
+enqueue_script(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    std::vector<std::string> *init_scripts = (std::vector<std::string> *)set_var;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt script enqueue");
+    if (set_var) {
+	init_scripts->push_back(argv[0]);
+    }
+    return 1;
+}
+
+
+static int
+enqueue_attrs(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    std::set<std::string> *attrs = (std::set<std::string> *)set_var;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt attr enqueue");
+    if (set_var) {
+	attrs->insert(argv[0]);
+    }
+    return 1;
+}
+
+
+static int
+enqueue_format(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    std::string s;
+    std::ifstream file;
+    struct script_file_data *sfd = (struct script_file_data *)set_var;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt script file");
+
+    file.open(argv[0]);
+    if (!file.is_open()) {
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+
+	bu_vls_printf(&str, "%s/%s.nrt", bu_dir(NULL, 0, BU_DIR_DATA, "nirt", NULL), argv[0]);
+	file.open(bu_vls_addr(&str));
+	bu_vls_free(&str);
+
+	if (!file.is_open()) {
+	    bu_vls_printf(msg, "ERROR: -f [%s] does not exist as a file or predefined format\n", argv[0]);
+
+	    return -1;
+	}
+
+	while (std::getline(file, s)) {
+	    if (sfd) {
+		sfd->init_scripts->push_back(s);
+	    }
+	}
+    } else {
+	while (std::getline(file, s)) {
+	    if (sfd) {
+		sfd->init_scripts->push_back(s);
+	    }
+	}
+    }
+
+    if (sfd) {
+	bu_vls_sprintf(sfd->filename, "%s", argv[0]);
+	sfd->file_cnt++;
+    }
+
+    return 1;
+}
+
+
+static int
+decode_overlap(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    int *oval = (int *)set_var;
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt overlap handle");
+
+    if (BU_STR_EQUAL(argv[0], "resolve") || BU_STR_EQUAL(argv[0], "0")) {
+	if (oval) {
+	    (*oval) = OVLP_RESOLVE;
+	}
+    } else if (BU_STR_EQUAL(argv[0], "rebuild_fastgen") || BU_STR_EQUAL(argv[0], "1")) {
+	if (oval) {
+	    (*oval) = OVLP_REBUILD_FASTGEN;
+	}
+    } else if (BU_STR_EQUAL(argv[0], "rebuild_all") || BU_STR_EQUAL(argv[0], "2")) {
+	if (oval) {
+	    (*oval) = OVLP_REBUILD_ALL;
+	}
+    } else if (BU_STR_EQUAL(argv[0], "retain") || BU_STR_EQUAL(argv[0], "3")) {
+	if (oval) {
+	    (*oval) = OVLP_RETAIN;
+	}
+    } else {
+	bu_log("Illegal overlap_claims specification: '%s'\n", argv[0]);
+	return -1;
+    }
+    return 1;
+}
+
 
 static int
 nirt_stdout_hook(struct nirt_state *ns, void *u_data)
@@ -426,40 +554,71 @@ nirt_app_exec(struct nirt_state *ns, struct bu_vls *iline, struct bu_vls *state_
 int
 main(int argc, const char **argv)
 {
-    char **names = NULL;
-    char *buf = NULL;
-    char *dot = NULL;
+    struct nirt_io_data io_data = IO_DATA_NULL;
+    std::vector<std::string> init_scripts;
+    struct bu_vls last_script_file = BU_VLS_INIT_ZERO;
+    struct script_file_data sfd = {&init_scripts, &last_script_file, 0};
+    std::string line;
+    linenoise::linenoiseState *l = NULL;
+    int ac = 0;
+    size_t i = 0;
+    struct bu_vls state_file = BU_VLS_INIT_ZERO;
+    std::set<std::string> attrs;
+    std::set<std::string>::iterator a_it;
+    struct bu_vls iline = BU_VLS_INIT_ZERO;
+    struct bu_vls nirt_debug = BU_VLS_INIT_ZERO;
+    int overlap_claims = OVLP_RESOLVE;
+    int backout = 0;
+    int bot_mintie = 0;
+    int header_mode = 1;
+    int show_formats = 0;
+    int minpieces = -1;
+    int print_help = 0;
+    int read_matrix = 0;
+    int silent_mode = SILENT_UNSET;
+    int use_air = 0;
+    int verbose_mode = 0;
+    int ret = 0;
+    int nret = 0;
+    struct db_i *dbip;
+    struct nirt_state *ns = NULL;
     const char *np = NULL;
     const char *units_str = NULL;
-    double scan[16] = MAT_INIT_ZERO;
-    int ac = 0;
-    int bot_mintie = 0;
-    int minpieces = -1;
-    int nret = 0;
-    int ret = 0;
-    int status = 0;
-    linenoise::linenoiseState *l = NULL;
-    mat_t m;
-    mat_t q;
+    char *dot = NULL;
     size_t fmtcnt = 0;
-    size_t i = 0;
-    size_t prec = std::numeric_limits<fastf_t>::max_digits10;
-    std::string line;
-    struct bu_vls iline = BU_VLS_INIT_ZERO;
+    char **names = NULL;
     struct bu_vls launch_cmd = BU_VLS_INIT_ZERO;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct bu_vls ncmd = BU_VLS_INIT_ZERO;
-    struct bu_vls nirt_debug = BU_VLS_INIT_ZERO;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
-    struct bu_vls state_file = BU_VLS_INIT_ZERO;
-    struct db_i *dbip;
-    struct nirt_io_data io_data = IO_DATA_NULL;
-    struct nirt_state *ns = NULL;
-
+    double scan[16] = MAT_INIT_ZERO;
+    size_t prec = std::numeric_limits<fastf_t>::max_digits10;
+    char *buf = NULL;
+    int status = 0;
+    mat_t m;
+    mat_t q;
     /* These bu_opt_desc_opts settings approximate the old struct nirt_state help formatting */
     struct bu_opt_desc_opts dopts = { BU_OPT_ASCII, 1, 15, 65, NULL, NULL, NULL, 1, NULL, NULL };
-    struct nirt_opt_vals optv = NIRT_OPT_INIT;
-    struct bu_opt_desc *d = nirt_opt_desc(&optv);
+    struct bu_opt_desc d[18] = {BU_OPT_DESC_NULL};
+
+    BU_OPT(d[0],  "?", "",     "",       NULL,             &print_help,     "print help and exit");
+    BU_OPT(d[1],  "h", "help", "",       NULL,             &print_help,     "print help and exit");
+    BU_OPT(d[2],  "A", "",     "n",      &enqueue_attrs,   &attrs,          "add attribute_name=n");
+    BU_OPT(d[3],  "M", "",     "",       NULL,             &read_matrix,    "read matrix, cmds on stdin");
+    BU_OPT(d[4],  "b", "",     "",       NULL,             NULL,            "back out of geometry before first shot (deprecated, default behavior)");
+    BU_OPT(d[5],  "c", "",     "",       NULL,             &backout,        "shoot ray from current center");
+    BU_OPT(d[6],  "e", "",     "script", &enqueue_script,  &init_scripts,   "run script before interacting");
+    BU_OPT(d[7],  "f", "",     "format", &enqueue_format,  &sfd,            "load predefined format (see -L) or file");
+    BU_OPT(d[8],  "E", "",     "",       &dequeue_scripts, &init_scripts,   "ignore any -e or -f options specified earlier on the command line");
+    BU_OPT(d[9],  "L", "",     "",       NULL,             &show_formats,   "list output formatting options");
+    BU_OPT(d[10], "s", "",     "",       NULL,             &silent_mode,    "run in silent (non-verbose) mode");
+    BU_OPT(d[11], "v", "",     "",       NULL,             &verbose_mode,   "run in verbose mode");
+    BU_OPT(d[12], "H", "",     "n",      &bu_opt_int,      &header_mode,    "flag (n) for enable/disable informational header - (n=1 [on] by default, always off in silent mode)");
+    BU_OPT(d[13], "u", "",     "n",      &bu_opt_int,      &use_air,        "set use_air=n (default 0)");
+    BU_OPT(d[14], "O", "",     "action", &decode_overlap,  &overlap_claims, "handle overlap claims via action");
+    BU_OPT(d[15], "x", "",     "v",      &bu_opt_int,      &rt_debug,      "set librt(3) diagnostic flag=v");
+    BU_OPT(d[16], "X", "",     "v",      &bu_opt_vls,      &nirt_debug,     "set nirt diagnostic flag=v");
+    BU_OPT_NULL(d[17]);
 
     if (argc == 0 || !argv)
 	return -1;
@@ -487,9 +646,7 @@ main(int argc, const char **argv)
 
     ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
     if (ac < 0) {
-	bu_free(d, "nirt opt desc");
-	nirt_opt_vals_free(&optv);
-	bu_exit(EXIT_FAILURE, "ERROR: option parsing failed\n%s", bu_vls_cstr(&optparse_msg));
+       	bu_exit(EXIT_FAILURE, "ERROR: option parsing failed\n%s", bu_vls_addr(&optparse_msg));
     } else if (ac > 0) {
 	size_t badopts = 0;
 	for (i=0; i<(size_t)ac; i++) {
@@ -498,11 +655,8 @@ main(int argc, const char **argv)
 		badopts++;
 	    }
 	}
-	if (badopts) {
-	    bu_free(d, "nirt opt desc");
-	    nirt_opt_vals_free(&optv);
+	if (badopts)
 	    bu_exit(EXIT_FAILURE, "Exiting.\n");
-	}
     }
     bu_vls_free(&optparse_msg);
 
@@ -516,7 +670,7 @@ main(int argc, const char **argv)
     bu_vls_sprintf(io_data.outfile, "stdout");
     bu_vls_sprintf(io_data.errfile, "stderr");
 
-    if (optv.show_formats) {
+    if (show_formats) {
 	/* Print available header formats and exit */
 	nirt_msg(&io_data, "Formats available:\n");
 	list_formats(&io_data, NULL);
@@ -526,46 +680,46 @@ main(int argc, const char **argv)
 
     /* If we've been asked to print help or don't know what to do, print help
      * and exit */
-    if (optv.print_help || (optv.silent_mode == NIRT_SILENT_YES && optv.verbose_mode)) {
+    if (print_help || (silent_mode == SILENT_YES && verbose_mode)) {
 	char *help = bu_opt_describe(d, &dopts);
-	ret = (optv.print_help) ? EXIT_SUCCESS : EXIT_FAILURE;
-	/* if nirt_debug exists, we assume we are being run from libged, so don't print
-	 * output not relevant in embedded context
-	 */
-	if (bu_vls_strlen(&nirt_debug) > 0) {
-	    dopts.reject = "M"; // reject 'M' option when printing within libged
-	    bu_vls_sprintf(&msg, "Usage: nirt [options] [objects] [x y z]...\n\nOptions:\n%s\n", help);
-	} else {
-	    bu_vls_sprintf(&msg, "Usage: nirt [options] model.g [objects]...\n\nOptions:\n%s\n", help);
-	}
-	nirt_out(&io_data, bu_vls_cstr(&msg));
+	ret = (print_help) ? EXIT_SUCCESS : EXIT_FAILURE;
+        /* if nirt_debug exists, we assume we are being run from libged, so don't print
+         * output not relevant in embedded context
+         */
+        if (bu_vls_strlen(&nirt_debug) > 0) {
+            dopts.reject = "M"; // reject 'M' option when printing within libged
+            bu_vls_sprintf(&msg, "Usage: nirt [options] [objects] [x y z]...\n\nOptions:\n%s\n", help);
+        } else {
+            bu_vls_sprintf(&msg, "Usage: nirt [options] model.g [objects]...\n\nOptions:\n%s\n", help);
+        }
+	nirt_out(&io_data, bu_vls_addr(&msg));
 	if (help)
 	    bu_free(help, "help str");
 	goto done;
     }
 
-    if (optv.verbose_mode)
-	optv.silent_mode = NIRT_SILENT_NO;
+    if (verbose_mode)
+	silent_mode = SILENT_NO;
 
     /* Check if we're on a terminal or not - it has implications for the modes */
-    if (optv.silent_mode == NIRT_SILENT_UNSET) {
-	optv.silent_mode = (bu_interactive()) ? NIRT_SILENT_NO : NIRT_SILENT_YES;
+    if (silent_mode == SILENT_UNSET) {
+	silent_mode = (bu_interactive()) ? SILENT_NO : SILENT_YES;
     }
 
-    if (optv.silent_mode != NIRT_SILENT_YES && optv.header_mode) {
+    if (silent_mode != SILENT_YES && header_mode) {
 	nirt_msg(&io_data, brlcad_ident("Natalie's Interactive Ray Tracer"));
     }
 
     /* let users know that other output styles are available */
-    if (optv.silent_mode != NIRT_SILENT_YES) {
+    if (silent_mode != SILENT_YES) {
 	nirt_msg(&io_data, "Output format:");
-	if (optv.file_cnt == 0) {
+	if (sfd.file_cnt == 0) {
 	    nirt_msg(&io_data, " default");
 	} else {
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
-	    bu_path_component(&fname, bu_vls_cstr(&optv.filename), BU_PATH_BASENAME_EXTLESS);
+	    bu_path_component(&fname, bu_vls_addr(sfd.filename), BU_PATH_BASENAME_EXTLESS);
 	    nirt_msg(&io_data, " ");
-	    nirt_msg(&io_data, bu_vls_cstr(&fname));
+	    nirt_msg(&io_data, bu_vls_addr(&fname));
 	    bu_vls_free(&fname);
 	}
 	nirt_msg(&io_data, " (specify -L option for descriptive listing)\n");
@@ -592,24 +746,24 @@ main(int argc, const char **argv)
     /* OK, from here on out we are actually going to be working with NIRT
      * itself.  Set up the initial environment */
 
-    if (optv.silent_mode != NIRT_SILENT_YES) {
+    if (silent_mode != SILENT_YES) {
 	bu_vls_sprintf(&msg, "Database file:  '%s'\n", argv[0]);
-	nirt_msg(&io_data, bu_vls_cstr(&msg));
+	nirt_msg(&io_data, bu_vls_addr(&msg));
     }
     if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
 	bu_vls_sprintf(&msg, "Unable to open db file %s\n", argv[0]);
-	nirt_err(&io_data, bu_vls_cstr(&msg));
+	nirt_err(&io_data, bu_vls_addr(&msg));
 	ret = EXIT_FAILURE;
 	goto done;
     }
     RT_CK_DBI(dbip);
 
-    if (optv.silent_mode != NIRT_SILENT_YES)
+    if (silent_mode != SILENT_YES)
 	nirt_msg(&io_data, "Building the directory...\n");
     if (db_dirbuild(dbip) < 0) {
 	db_close(dbip);
 	bu_vls_sprintf(&msg, "db_dirbuild failed: %s\n", argv[0]);
-	nirt_err(&io_data, bu_vls_cstr(&msg));
+	nirt_err(&io_data, bu_vls_addr(&msg));
 	ret = EXIT_FAILURE;
 	goto done;
     }
@@ -624,12 +778,12 @@ main(int argc, const char **argv)
 
     /* Store the execution command as a commented nirt output line */
     bu_vls_sprintf(&ns->nirt_cmd, "# %s", bu_vls_cstr(&launch_cmd));
-    bu_vls_sprintf(&ns->nirt_format_file, "%s", bu_vls_cstr(&optv.filename));
+    bu_vls_sprintf(&ns->nirt_format_file, "%s", bu_vls_cstr(sfd.filename));
 
     /* Set up hooks so we can capture I/O from nirt_exec */
     (void)nirt_udata(ns, (void *)&io_data);
     nirt_hook(ns, &nirt_stdout_hook, NIRT_OUT);
-    if (optv.silent_mode != NIRT_SILENT_YES) {
+    if (silent_mode != SILENT_YES) {
 	nirt_hook(ns, &nirt_msg_hook, NIRT_MSG);
     }
     nirt_hook(ns, &nirt_stderr_hook, NIRT_ERR);
@@ -637,75 +791,66 @@ main(int argc, const char **argv)
     /* If any of the options require state setup, run the appropriate commands
      * to put the struct nirt_state environment in the correct state. */
 
-    if (optv.silent_mode != NIRT_SILENT_UNSET) {
-	bu_vls_sprintf(&ncmd, "state silent_mode %d", optv.silent_mode);
-	(void)nirt_exec(ns, bu_vls_cstr(&ncmd));
+    if (silent_mode != SILENT_UNSET) {
+	bu_vls_sprintf(&ncmd, "state silent_mode %d", silent_mode);
+	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
     }
 
     if (bot_mintie) {
 	bu_vls_sprintf(&ncmd, "%d", minpieces);
-	bu_setenv("LIBRT_BOT_MINTIE", bu_vls_cstr(&ncmd), 1);
+	bu_setenv("LIBRT_BOT_MINTIE", bu_vls_addr(&ncmd), 1);
     }
 
     if (minpieces >= 0) {
 	bu_vls_sprintf(&ncmd, "bot_minpieces %d", minpieces);
-	(void)nirt_exec(ns, bu_vls_cstr(&ncmd));
+	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
     }
 
-    if (optv.current_center) {
+    if (backout) {
 	(void)nirt_exec(ns, "backout 0");
     }
 
-    if (optv.use_air) {
-	bu_vls_sprintf(&ncmd, "useair %d", optv.use_air);
-	(void)nirt_exec(ns, bu_vls_cstr(&ncmd));
+    if (use_air) {
+	bu_vls_sprintf(&ncmd, "useair %d", use_air);
+	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
     }
 
-    if (optv.overlap_claims) {
-	switch (optv.overlap_claims) {
-	    case NIRT_OVLP_RESOLVE:
+    if (overlap_claims) {
+	switch (overlap_claims) {
+	    case OVLP_RESOLVE:
 		(void)nirt_exec(ns, "overlap_claims resolve");
 		break;
-	    case NIRT_OVLP_REBUILD_FASTGEN:
+	    case OVLP_REBUILD_FASTGEN:
 		(void)nirt_exec(ns, "overlap_claims rebuild_fastgen");
 		break;
-	    case NIRT_OVLP_REBUILD_ALL:
+	    case OVLP_REBUILD_ALL:
 		(void)nirt_exec(ns, "overlap_claims rebuild_all");
 		break;
-	    case NIRT_OVLP_RETAIN:
+	    case OVLP_RETAIN:
 		(void)nirt_exec(ns, "overlap_claims retain");
 		break;
 	    default:
-		bu_exit(EXIT_FAILURE, "Unknown overlap_claims value: %d\n", optv.overlap_claims);
+		bu_exit(EXIT_FAILURE, "Unknown overlap_claims value: %d\n", overlap_claims);
 		break;
 	}
     }
 
-    if (bu_vls_strlen(&optv.nirt_debug) > 0) {
+    if (bu_vls_strlen(&nirt_debug) > 0) {
 	// when we're explicitly calling within libged, ignore
-	if (!BU_STR_EQUAL(bu_vls_cstr(&optv.nirt_debug), "ged")) {
-	    bu_vls_sprintf(&ncmd, "debug -V ANALYZE %s", bu_vls_cstr(&optv.nirt_debug));
-	    (void)nirt_exec(ns, bu_vls_cstr(&ncmd));
+        if (!BU_STR_EQUAL(bu_vls_cstr(&nirt_debug), "ged")) {
+	    bu_vls_sprintf(&ncmd, "debug -V ANALYZE %s", bu_vls_cstr(&nirt_debug));
+	    (void)nirt_exec(ns, bu_vls_addr(&ncmd));
 	}
     }
 
     /* Initialize the attribute list before we do the drawing, since
      * setting attrs with no objects drawn won't trigger a prep */
-    if (BU_PTBL_LEN(&optv.attrs) > 0) {
+    if (attrs.size() > 0) {
 	bu_vls_sprintf(&ncmd, "attr");
-	for (i = 0; i < BU_PTBL_LEN(&optv.attrs); i++) {
-	    struct bu_vls *a = (struct bu_vls *)BU_PTBL_GET(&optv.attrs, i);
-	    bu_vls_printf(&ncmd, " %s", bu_vls_cstr(a));
+	for (a_it = attrs.begin(); a_it != attrs.end(); a_it++) {
+	    bu_vls_printf(&ncmd, " %s", (*a_it).c_str());
 	}
-	(void)nirt_exec(ns, bu_vls_cstr(&ncmd));
-    }
-
-    /* If we have a non-zero center point, set it */
-    if (!VNEAR_ZERO(optv.center_model, VUNITIZE_TOL)) {
-	vect_t cml;
-	VSCALE(cml, optv.center_model, dbip->dbi_base2local);
-	bu_vls_sprintf(&ncmd, "xyz %0.17f %0.17f %0.17f;", V3ARGS(cml));
-	(void)nirt_exec(ns, bu_vls_cstr(&ncmd));
+	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
     }
 
     /* Draw the initial set of objects, if supplied */
@@ -714,26 +859,26 @@ main(int argc, const char **argv)
 	for (i = 1; i < (size_t)ac; i++) {
 	    bu_vls_printf(&ncmd, " %s", argv[i]);
 	}
-	(void)nirt_exec(ns, bu_vls_cstr(&ncmd));
+	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
     }
 
     /* We know enough now to initialize */
     if (nirt_init_dbip(ns, dbip) == -1) {
 	BU_PUT(ns, struct nirt_state);
 	bu_vls_sprintf(&msg, "nirt_init_dbip failed: %s\n", argv[0]);
-	nirt_err(&io_data, bu_vls_cstr(&msg));
+	nirt_err(&io_data, bu_vls_addr(&msg));
 	ret = EXIT_FAILURE;
 	goto done;
     }
     db_close(dbip); /* nirt will now manage its own copies of the dbip */
 
     /* Report Database info */
-    if (optv.silent_mode != NIRT_SILENT_YES) {
+    if (silent_mode != SILENT_YES) {
 	units_str = bu_units_string(dbip->dbi_local2base);
 	bu_vls_sprintf(&msg, "Database title: '%s'\n", dbip->dbi_title);
-	nirt_msg(&io_data, bu_vls_cstr(&msg));
+	nirt_msg(&io_data, bu_vls_addr(&msg));
 	bu_vls_sprintf(&msg, "Database units: '%s'\n", (units_str) ? units_str : "Unknown units");
-	nirt_msg(&io_data, bu_vls_cstr(&msg));
+	nirt_msg(&io_data, bu_vls_addr(&msg));
 	(void)nirt_exec(ns, "state model_bounds");
     }
 
@@ -741,30 +886,24 @@ main(int argc, const char **argv)
     bu_vls_sprintf(&state_file, "nirt_state");
 
     /* If we ended up with scripts to run before interacting, run them */
-    if (BU_PTBL_LEN(&optv.init_scripts) > 0) {
-	for (i = 0; i < BU_PTBL_LEN(&optv.init_scripts); i++) {
-	    struct bu_vls *a = (struct bu_vls *)BU_PTBL_GET(&optv.init_scripts, i);
-	    if (nirt_exec(ns, bu_vls_cstr(a)) == 1) {
+    if (init_scripts.size() > 0) {
+	for (i = 0; i < init_scripts.size(); i++) {
+	    if (nirt_exec(ns, init_scripts.at(i).c_str()) == 1) {
 		goto done;
 	    }
 	}
-	for (i = 0; i < BU_PTBL_LEN(&optv.init_scripts); i++) {
-	    struct bu_vls *a = (struct bu_vls *)BU_PTBL_GET(&optv.init_scripts, i);
-	    bu_vls_free(a);
-	    BU_PUT(a, struct bu_vls);
-	}
-	bu_ptbl_reset(&optv.init_scripts);
+	init_scripts.clear();
     }
 
     /* If we're supposed to read matrix input from stdin instead of interacting, do that */
-    if (optv.read_matrix) {
+    if (read_matrix) {
 	while ((buf = rt_read_cmd(stdin)) != (char *) 0) {
 	    if (bu_strncmp(buf, "eye_pt", 6) == 0) {
 		struct bu_vls eye_pt_cmd = BU_VLS_INIT_ZERO;
 
 		bu_vls_sprintf(&eye_pt_cmd, "xyz %s", buf + 6);
 
-		if (nirt_exec(ns, bu_vls_cstr(&eye_pt_cmd)) < 0) {
+		if (nirt_exec(ns, bu_vls_addr(&eye_pt_cmd)) < 0) {
 		    bu_vls_free(&eye_pt_cmd);
 		    nirt_err(&io_data, "nirt: read_mat(): Failed to read eye_pt\n");
 		    ret = EXIT_FAILURE;
@@ -786,11 +925,11 @@ main(int argc, const char **argv)
 		status |= RMAT_SAW_ORI;
 	    } else if (bu_strncmp(buf, "viewrot", 7) == 0) {
 		if (sscanf(buf + 7,
-			    "%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf",
-			    &scan[0], &scan[1], &scan[2], &scan[3],
-			    &scan[4], &scan[5], &scan[6], &scan[7],
-			    &scan[8], &scan[9], &scan[10], &scan[11],
-			    &scan[12], &scan[13], &scan[14], &scan[15]) != 16) {
+			   "%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf",
+			   &scan[0], &scan[1], &scan[2], &scan[3],
+			   &scan[4], &scan[5], &scan[6], &scan[7],
+			   &scan[8], &scan[9], &scan[10], &scan[11],
+			   &scan[12], &scan[13], &scan[14], &scan[15]) != 16) {
 		    bu_exit(1, "nirt: read_mat(): Failed to read viewrot\n");
 		}
 
@@ -812,7 +951,7 @@ main(int argc, const char **argv)
 
 	// Now, construct a dir command line from the m matrix
 	bu_vls_sprintf(&ncmd, "dir %.*f %.*f %.*f", (int)prec, -m[8], (int)prec, -m[9], (int)prec, -m[10]);
-	if (nirt_exec(ns, bu_vls_cstr(&ncmd)) < 0) {
+	if (nirt_exec(ns, bu_vls_addr(&ncmd)) < 0) {
 	    nirt_err(&io_data, "nirt: read_mat(): Failed to set the view direction\n");
 	    ret = EXIT_FAILURE;
 	    goto done;
@@ -829,7 +968,7 @@ main(int argc, const char **argv)
 
 
     /* Start the interactive loop */
-    np = (optv.silent_mode == NIRT_SILENT_YES) ? "": NIRT_PROMPT;
+    np = (silent_mode == SILENT_YES) ? "": NIRT_PROMPT;
     l = new linenoise::linenoiseState();
     l->SetPrompt(np);
     line.clear();
@@ -845,11 +984,11 @@ main(int argc, const char **argv)
 	if (!bu_vls_strlen(&iline))
 	    continue;
 
-	l->AddHistory(bu_vls_cstr(&iline));
+	l->AddHistory(bu_vls_addr(&iline));
 
 	/* The "clear" command only makes sense in interactive
 	 * mode */
-	if (BU_STR_EQUAL(bu_vls_cstr(&iline), "clear")) {
+	if (BU_STR_EQUAL(bu_vls_addr(&iline), "clear")) {
 	    l->ClearScreen();
 	    bu_vls_trunc(&iline, 0);
 	    continue;
@@ -867,8 +1006,6 @@ done:
     bu_vls_free(&msg);
     bu_vls_free(&ncmd);
     bu_vls_free(&iline);
-    nirt_opt_vals_free(&optv);
-    bu_free(d, "nirt opt desc");
 
     if (io_data.using_pipe) {
 	pclose(io_data.out);

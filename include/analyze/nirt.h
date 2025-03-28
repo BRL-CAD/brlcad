@@ -38,55 +38,6 @@
 
 __BEGIN_DECLS
 
-#define NIRT_SILENT_UNSET    0
-#define NIRT_SILENT_YES      1
-#define NIRT_SILENT_NO       -1
-
-/** Allowed VALUES FOR overlap_claims in nirt_opt_vals */
-#define NIRT_OVLP_RESOLVE            0
-#define NIRT_OVLP_REBUILD_FASTGEN    1
-#define NIRT_OVLP_REBUILD_ALL        2
-#define NIRT_OVLP_RETAIN             3
-
-/** Container to hold results of nirt option parsing */
-struct nirt_opt_vals {
-    int current_center;
-    int file_cnt;
-    int header_mode;
-    int overlap_claims;
-    int print_help;
-    int read_matrix;
-    int show_formats;
-    int silent_mode;
-    int use_air;
-    int verbose_mode;
-    struct bu_ptbl attrs;
-    struct bu_ptbl init_scripts;
-    struct bu_vls filename;
-    struct bu_vls nirt_debug;
-    vect_t center_model;
-};
-
-#define NIRT_OPT_INIT {0, 0, 1, NIRT_OVLP_RESOLVE, 0, 0, 0, NIRT_SILENT_UNSET, 0, 0, BU_PTBL_INIT_ZERO, BU_PTBL_INIT_ZERO, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, VINIT_ZERO}
-
-/**
- * Given a nirt_opt_vals container, set up and return a bu_opt_desc that can
- * parse options from an argv array.  Caller is responsible for freeing the
- * resulting bu_opt_desc array. */
-ANALYZE_EXPORT struct bu_opt_desc *nirt_opt_desc(struct nirt_opt_vals *o);
-
-/**
- * Reset a nirt_opt_vals structure to its initial state. Structure is still
- * usable after this operation. */
-ANALYZE_EXPORT void nirt_opt_vals_reset(struct nirt_opt_vals *o);
-
-/**
- * Free all contents of a nirt_opt_vals structure.  Structure is unusable
- * after this operation. */
-ANALYZE_EXPORT void nirt_opt_vals_free(struct nirt_opt_vals *o);
-
-
-
 /** Opaque container to hold NIRT's state */
 struct nirt_state_impl;
 struct nirt_state {
