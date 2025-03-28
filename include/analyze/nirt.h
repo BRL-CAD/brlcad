@@ -65,9 +65,16 @@ struct nirt_opt_vals {
     struct bu_vls filename;
     struct bu_vls nirt_debug;
     vect_t center_model;
+    /* File and colors to use when generating plotting output */
+    struct bu_vls plotfile;
+    struct bu_color color_odd;
+    struct bu_color color_even;
+    struct bu_color color_gap;
+    struct bu_color color_ovlp;
+
 };
 
-#define NIRT_OPT_INIT {0, 0, 1, NIRT_OVLP_RESOLVE, 0, 0, 0, NIRT_SILENT_UNSET, 0, 0, BU_PTBL_INIT_ZERO, BU_PTBL_INIT_ZERO, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, VINIT_ZERO}
+#define NIRT_OPT_INIT {0, 0, 1, NIRT_OVLP_RESOLVE, 0, 0, 0, NIRT_SILENT_UNSET, 0, 0, BU_PTBL_INIT_ZERO, BU_PTBL_INIT_ZERO, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, VINIT_ZERO, BU_VLS_INIT_ZERO, BU_COLOR_CYAN, BU_COLOR_YELLOW, BU_COLOR_PURPLE, BU_COLOR_WHITE}
 
 /**
  * Given a nirt_opt_vals container, set up and return a bu_opt_desc that can

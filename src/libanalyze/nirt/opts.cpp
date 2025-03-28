@@ -181,27 +181,32 @@ nirt_opt_desc(struct nirt_opt_vals *v)
     if (!v)
 	return NULL;
 
-    struct bu_opt_desc *d = (struct bu_opt_desc *)bu_calloc(20, sizeof(struct bu_opt_desc), "opt array");
-    BU_OPT(d[0],  "h", "help",  "",       NULL,             &v->print_help,     "print help and exit");
-    BU_OPT(d[1],  "?", "",      "",       NULL,             &v->print_help,     "print help and exit");
-    BU_OPT(d[2],  "A", "",      "n",      &enqueue_attrs,   &v->attrs,          "add attribute_name=n");
-    BU_OPT(d[3],  "M", "",      "",       NULL,             &v->read_matrix,    "read matrix, cmds on stdin");
-    BU_OPT(d[4],  "b", "",      "",       NULL,             NULL,               "back out of geometry before first shot (deprecated, default behavior)");
-    BU_OPT(d[5],  "c", "",      "",       NULL,             &v->current_center, "shoot ray from current center");
-    BU_OPT(d[6],  "e", "",      "script", &enqueue_script,  &v->init_scripts,   "run script before interacting");
-    BU_OPT(d[7],  "f", "",      "format", &enqueue_format,  v,                  "load predefined format (see -L) or file");
-    BU_OPT(d[8],  "E", "",      "",       &dequeue_scripts, &v->init_scripts,   "ignore any -e or -f options specified earlier on the command line");
-    BU_OPT(d[9],  "L", "",      "",       NULL,             &v->show_formats,   "list output formatting options");
-    BU_OPT(d[10], "s", "",      "",       NULL,             &v->silent_mode,    "run in silent (non-verbose) mode");
-    BU_OPT(d[11], "v", "",      "",       NULL,             &v->verbose_mode,   "run in verbose mode");
-    BU_OPT(d[12], "H", "",      "n",      &bu_opt_int,      &v->header_mode,    "flag (n) for enable/disable informational header - (n=1 [on] by default, always off in silent mode)");
-    BU_OPT(d[13], "u", "",      "n",      &bu_opt_int,      &v->use_air,        "set use_air=n (default 0)");
-    BU_OPT(d[14], "O", "",      "action", &decode_overlap,  &v->overlap_claims, "handle overlap claims via action");
-    BU_OPT(d[15], "x", "",      "v",      &bu_opt_int,      &rt_debug,          "set librt(3) diagnostic flag=v");
-    BU_OPT(d[16], "X", "",      "v",      &bu_opt_vls,      &v->nirt_debug,     "set nirt diagnostic flag=v");
-    BU_OPT(d[17], "", "center", "x,y,z",  &bu_opt_vect_t,   &v->center_model,   "specify xyz center point");
-    BU_OPT(d[18], "", "xyz",    "x,y,z",  &bu_opt_vect_t,   &v->center_model,   "specify xyz center point");
-    BU_OPT_NULL(d[19]);
+    struct bu_opt_desc *d = (struct bu_opt_desc *)bu_calloc(25, sizeof(struct bu_opt_desc), "opt array");
+    BU_OPT(d[0],  "h", "help",      "",         NULL,             &v->print_help,     "print help and exit");
+    BU_OPT(d[1],  "?", "",          "",         NULL,             &v->print_help,     "print help and exit");
+    BU_OPT(d[2],  "A", "",          "n",        &enqueue_attrs,   &v->attrs,          "add attribute_name=n");
+    BU_OPT(d[3],  "M", "",          "",         NULL,             &v->read_matrix,    "read matrix, cmds on stdin");
+    BU_OPT(d[4],  "b", "",          "",         NULL,             NULL,               "back out of geometry before first shot (deprecated, default behavior)");
+    BU_OPT(d[5],  "c", "",          "",         NULL,             &v->current_center, "shoot ray from current center");
+    BU_OPT(d[6],  "e", "",          "script",   &enqueue_script,  &v->init_scripts,   "run script before interacting");
+    BU_OPT(d[7],  "f", "",          "format",   &enqueue_format,  v,                  "load predefined format (see -L) or file");
+    BU_OPT(d[8],  "E", "",          "",         &dequeue_scripts, &v->init_scripts,   "ignore any -e or -f options specified earlier on the command line");
+    BU_OPT(d[9],  "L", "",          "",         NULL,             &v->show_formats,   "list output formatting options");
+    BU_OPT(d[10], "s", "",          "",         NULL,             &v->silent_mode,    "run in silent (non-verbose) mode");
+    BU_OPT(d[11], "v", "",          "",         NULL,             &v->verbose_mode,   "run in verbose mode");
+    BU_OPT(d[12], "H", "",          "n",        &bu_opt_int,      &v->header_mode,    "flag (n) for enable/disable informational header - (n=1 [on] by default, always off in silent mode)");
+    BU_OPT(d[13], "u", "",          "n",        &bu_opt_int,      &v->use_air,        "set use_air=n (default 0)");
+    BU_OPT(d[14], "O", "",          "action",   &decode_overlap,  &v->overlap_claims, "handle overlap claims via action");
+    BU_OPT(d[15], "x", "",          "v",        &bu_opt_int,      &rt_debug,          "set librt(3) diagnostic flag=v");
+    BU_OPT(d[16], "X", "",          "v",        &bu_opt_vls,      &v->nirt_debug,     "set nirt diagnostic flag=v");
+    BU_OPT(d[17], "", "center",     "x,y,z",    &bu_opt_vect_t,   &v->center_model,   "specify xyz center point");
+    BU_OPT(d[18], "", "xyz",        "x,y,z",    &bu_opt_vect_t,   &v->center_model,   "specify xyz center point");
+    BU_OPT(d[19], "", "plot",       "filename", &bu_opt_vls,      &v->plotfile,       "optional file for graphical plots of segment outputs");
+    BU_OPT(d[20], "", "color_odd",  "r/g/b",    &bu_opt_color,    &v->color_odd,      "Color to use when plotting odd segments (default rgb:0/255/255");
+    BU_OPT(d[21], "", "color_even", "r/g/b",    &bu_opt_color,    &v->color_even,     "Color to use when plotting even segments (default rgb:255/255/0");
+    BU_OPT(d[22], "", "color_gap",  "r/g/b",    &bu_opt_color,    &v->color_gap,      "Color to use when plotting gaps between segments (default rgb:255/0/255");
+    BU_OPT(d[23], "", "color_ovlp", "r/g/b",    &bu_opt_color,    &v->color_ovlp,     "Color to use when plotting overlap segments (default 255/255/255");
+    BU_OPT_NULL(d[24]);
 
     return d;
 }
@@ -224,13 +229,26 @@ nirt_opt_vals_reset(struct nirt_opt_vals *v)
     v->use_air = opt_defaults.use_air;
     v->verbose_mode = opt_defaults.verbose_mode;
 
+    // Reset colors
+    struct bu_color cyan = BU_COLOR_CYAN;
+    struct bu_color yellow = BU_COLOR_YELLOW;
+    struct bu_color purple = BU_COLOR_PURPLE;
+    struct bu_color white = BU_COLOR_WHITE;
+    BU_COLOR_CPY(v->color_odd, cyan);
+    BU_COLOR_CPY(v->color_even, yellow);
+    BU_COLOR_CPY(v->color_gap, purple);
+    BU_COLOR_CPY(v->color_ovlp, white);
+
     bu_vls_trunc(&v->nirt_debug, 0);
     bu_vls_trunc(&v->filename, 0);
+    bu_vls_trunc(&v->plotfile, 0);
+
     for (size_t i = 0; i < BU_PTBL_LEN(&v->init_scripts); i++) {
 	char *s = (char *)BU_PTBL_GET(&v->init_scripts, i);
 	bu_free(s, "script");
     }
     bu_ptbl_reset(&v->init_scripts);
+
     for (size_t i = 0; i < BU_PTBL_LEN(&v->attrs); i++) {
 	char *s = (char *)BU_PTBL_GET(&v->attrs, i);
 	bu_free(s, "script");
@@ -248,6 +266,7 @@ nirt_opt_vals_free(struct nirt_opt_vals *v)
 
     bu_vls_free(&v->nirt_debug);
     bu_vls_free(&v->filename);
+    bu_vls_free(&v->plotfile);
     bu_ptbl_free(&v->init_scripts);
     bu_ptbl_free(&v->attrs);
 }
