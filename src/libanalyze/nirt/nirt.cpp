@@ -1358,6 +1358,7 @@ struct nirt_cmd_desc {
 static const struct nirt_cmd_desc nirt_descs[] = {
     { "attr",           "select attributes",                             NULL },
     { "ae",             "set/query azimuth and elevation",               "azimuth elevation" },
+    { "center",         "set/query target coordinates",                  "X Y Z" },
     { "dir",            "set/query direction vector",                    "x-component y-component z-component" },
     { "diff",           "test a ray result against a supplied default",  "[-t tol] partition_info" },
     { "hv",             "set/query gridplane coordinates",               "horz vert [dist]" },
@@ -2306,6 +2307,7 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 const struct bu_cmdtab _libanalyze_nirt_cmds[] = {
     { "attr",           _nirt_cmd_attr},
     { "ae",             _nirt_cmd_az_el},
+    { "center",         _nirt_cmd_target_coor},
     { "diff",           _nirt_cmd_diff},
     { "dir",            _nirt_cmd_dir_vect},
     { "hv",             _nirt_cmd_grid_coor},
