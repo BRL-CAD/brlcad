@@ -143,12 +143,12 @@ nirt_cmd_print(struct ged *gedp, struct nirt_print_info *np)
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    double scan[4]; /* holds sscanf values */
-	    ret = sscanf(bu_vls_cstr(&vbuf), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
+	    int sret = sscanf(bu_vls_cstr(&vbuf), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
 	    ndlp->x_in = scan[0];
 	    ndlp->y_in = scan[1];
 	    ndlp->z_in = scan[2];
 	    ndlp->los = scan[3];
-	    if (ret != 4) {
+	    if (sret != 4) {
 		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four partition numbers.\n", bu_vls_cstr(&vbuf));
 		break;
 	    }
@@ -182,12 +182,12 @@ nirt_cmd_print(struct ged *gedp, struct nirt_print_info *np)
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    double scan[4]; /* holds sscanf values */
-	    ret = sscanf(bu_vls_cstr(&vbuf), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
+	    int sret = sscanf(bu_vls_cstr(&vbuf), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
 	    ndlp->x_in = scan[0];
 	    ndlp->y_in = scan[1];
 	    ndlp->z_in = scan[2];
 	    ndlp->los = scan[3];
-	    if (ret != 4) {
+	    if (sret != 4) {
 		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four overlap numbers.\n", bu_vls_cstr(&vbuf));
 		break;
 	    }
