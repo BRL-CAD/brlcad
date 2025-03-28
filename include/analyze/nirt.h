@@ -116,6 +116,11 @@ struct nirt_state {
     struct nirt_state_impl *i;
     struct bu_vls nirt_cmd;
     struct bu_vls nirt_format_file;
+    struct bu_vls plotfile;
+    struct bu_color color_odd;
+    struct bu_color color_even;
+    struct bu_color color_gap;
+    struct bu_color color_ovlp;
 };
 
 /**

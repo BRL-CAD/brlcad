@@ -234,10 +234,10 @@ nirt_opt_vals_reset(struct nirt_opt_vals *v)
     struct bu_color yellow = BU_COLOR_YELLOW;
     struct bu_color purple = BU_COLOR_PURPLE;
     struct bu_color white = BU_COLOR_WHITE;
-    BU_COLOR_CPY(v->color_odd, cyan);
-    BU_COLOR_CPY(v->color_even, yellow);
-    BU_COLOR_CPY(v->color_gap, purple);
-    BU_COLOR_CPY(v->color_ovlp, white);
+    BU_COLOR_CPY(&v->color_odd, &cyan);
+    BU_COLOR_CPY(&v->color_even, &yellow);
+    BU_COLOR_CPY(&v->color_gap, &purple);
+    BU_COLOR_CPY(&v->color_ovlp, &white);
 
     bu_vls_trunc(&v->nirt_debug, 0);
     bu_vls_trunc(&v->filename, 0);

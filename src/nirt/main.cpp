@@ -622,6 +622,13 @@ main(int argc, const char **argv)
 	goto done;
     }
 
+    // Sync relevant nirt options to the nirt state
+    bu_vls_sprintf(&ns->plotfile, "%s", bu_vls_cstr(&optv.plotfile));
+    BU_COLOR_CPY(&ns->color_odd, &optv.color_odd);
+    BU_COLOR_CPY(&ns->color_even, &optv.color_even);
+    BU_COLOR_CPY(&ns->color_gap, &optv.color_gap);
+    BU_COLOR_CPY(&ns->color_ovlp, &optv.color_ovlp);
+
     /* Store the execution command as a commented nirt output line */
     bu_vls_sprintf(&ns->nirt_cmd, "# %s", bu_vls_cstr(&launch_cmd));
     bu_vls_sprintf(&ns->nirt_format_file, "%s", bu_vls_cstr(&optv.filename));
