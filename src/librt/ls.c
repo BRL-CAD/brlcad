@@ -39,8 +39,9 @@ dp_eval_flags(struct directory *dp, const struct db_i *dbip, int flags)
 {
     int flag_eval = 0;
 
-    /* TODO - do we ever write these? */
-    if (dp->d_addr == RT_DIR_PHONY_ADDR) return 0;
+    /* Unless we're specifically asking for phony objs, it's game over
+     * when we have an RT_DIR_PHONY_ADDR object. */
+    if (dp->d_addr == RT_DIR_PHONY_ADDR && (!(flags & DB_LS_PHONY))) return 0;
 
     /* Unless we're explicitly listing hidden objects, it's game over if the
      * hidden flag is set */
@@ -56,6 +57,7 @@ dp_eval_flags(struct directory *dp, const struct db_i *dbip, int flags)
     if (flags & DB_LS_NON_GEOM) { flag_eval += (dp->d_flags & RT_DIR_NON_GEOM); }
     if (flags & DB_LS_TOPS)     { flag_eval += (dp->d_nref == 0); }
     if (flags & DB_LS_CYCLIC)   { flag_eval += (db_cyclic_paths(NULL, dbip, dp)); }
+    if (flags & DB_LS_PHONY)    { flag_eval += (dp->d_flags & RT_DIR_PHONY_ADDR); }
     return (flag_eval) ? 1 : 0;
 }
 

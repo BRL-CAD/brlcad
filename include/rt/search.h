@@ -161,8 +161,9 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
 #define DB_LS_NON_GEOM     0x10   /**< @brief filter for non-geometry objects */
 #define DB_LS_TOPS         0x20   /**< @brief filter for objects un-referenced by other objects */
 #define DB_LS_CYCLIC       0x40   /**< @brief filter for objects with a cyclic reference in subtrees */
+#define DB_LS_PHONY        0x80   /**< @brief enable and filter for objects such as the nirt display list entries */
 /* TODO - implement this flag
-   #define DB_LS_REGEX        0x80*/ /* interpret pattern using regex rules, instead of
+   #define DB_LS_REGEX        0x100*/ /* interpret pattern using regex rules, instead of
 					globbing rules (default) */
 
 /* cyclic.c */
