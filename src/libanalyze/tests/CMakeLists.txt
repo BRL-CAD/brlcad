@@ -10,8 +10,11 @@ brlcad_addexec(analyze_densities density.cpp "libanalyze;libbu" TEST)
 brlcad_add_test(NAME analyze_densities_null        COMMAND analyze_densities)
 brlcad_add_test(NAME analyze_densities_std        COMMAND analyze_densities std)
 
-cmakefiles(raydiff.g)
-cmakefiles(CMakeLists.txt)
+cmakefiles(
+  CMakeLists.txt
+  arbs.g
+  raydiff.g
+)
 
 # Local Variables:
 # tab-width: 8

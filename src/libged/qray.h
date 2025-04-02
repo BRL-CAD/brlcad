@@ -32,14 +32,13 @@
 #ifndef LIBGED_QRAY_H
 #define LIBGED_QRAY_H
 
+__BEGIN_DECLS
+
 #define DG_QRAY_TEXT(_dgop) ((_dgop)->gd_qray_effects == 't' || (_dgop)->gd_qray_effects == 'b')
 #define DG_QRAY_GRAPHICS(_dgop) ((_dgop)->gd_qray_effects == 'g' || (_dgop)->gd_qray_effects == 'b')
 
 #define DG_QRAY_BASENAME "query_ray"
 #define DG_QRAY_BOTH ((_dgop)->gd_qray_effects == 'b')
-#define DG_QRAY_FORMAT_P "fmt p \"%e %e %e %e\\n\" x_in y_in z_in los"
-#define DG_QRAY_FORMAT_O "fmt r \"\\n\" ; fmt p \"\"; fmt o \"%e %e %e %e\\n\" ov_x_in ov_y_in ov_z_in ov_los"
-#define DG_QRAY_FORMAT_NULL "fmt r \"\"; fmt h \"\"; fmt p \"\"; fmt m \"\"; fmt o \"\"; fmt f \"\"; fmt g \"\""
 
 GED_EXPORT extern struct ged_qray_color def_qray_odd_color;
 GED_EXPORT extern struct ged_qray_color def_qray_even_color;
@@ -48,7 +47,7 @@ GED_EXPORT extern struct ged_qray_color def_qray_overlap_color;
 
 struct qray_fmt_data {
     char type;
-    char *fmt;
+    const char *fmt;
 };
 
 GED_EXPORT extern struct qray_fmt_data def_qray_fmt_data[];
@@ -61,11 +60,13 @@ struct qray_dataList {
     fastf_t los;
 };
 
-
 /* defined in qray.c */
 GED_EXPORT extern void qray_init(struct ged_drawable *gdp);
 GED_EXPORT extern void qray_free(struct ged_drawable *gdp);
 GED_EXPORT extern void qray_data_to_vlist(struct ged *gdp, struct bv_vlblock *vbp, struct qray_dataList *headp, vect_t dir, int do_overlaps);
+
+
+__END_DECLS
 
 #endif
 

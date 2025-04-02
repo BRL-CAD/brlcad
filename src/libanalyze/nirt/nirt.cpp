@@ -1054,6 +1054,79 @@ _nirt_report(struct nirt_state *nss, char type, struct nirt_output_record *r)
  * Raytracing Callbacks *
  ************************/
 
+static void
+_nirt_find_ovlps(std::set<struct nirt_overlap *> &ovlps, struct nirt_state *nss, struct partition *pp)
+{
+    struct nirt_overlap *op;
+
+    for (op = nss->i->vals->ovlp_list.forw; op != &(nss->i->vals->ovlp_list); op = op->forw) {
+	if (((pp->pt_inhit->hit_dist <= op->in_dist)
+		    && (op->in_dist <= pp->pt_outhit->hit_dist)) ||
+		((pp->pt_inhit->hit_dist <= op->out_dist)
+		 && (op->in_dist <= pp->pt_outhit->hit_dist))) {
+	    ovlps.insert(op);
+	}
+    }
+}
+
+static bool
+_nirt_in_ovlp(struct nirt_overlap **op, std::set<struct nirt_overlap *> &ovlps, fastf_t curr_dist)
+{
+    fastf_t closest_dist = MAX_FASTF;
+    struct nirt_overlap *closest_ovlp = NULL;
+    fastf_t furthest_containing_dist = -MAX_FASTF;
+    struct nirt_overlap *containing_ovlp = NULL;
+    std::set<struct nirt_overlap *> to_erase;
+    std::set<struct nirt_overlap *>::iterator o_it;
+    for (o_it = ovlps.begin(); o_it != ovlps.end(); o_it++) {
+	struct nirt_overlap *o = *o_it;
+	// If the overlap is behind the current distance, skip
+	if (o->in_dist < curr_dist && o->out_dist < curr_dist)
+	    continue;
+	// If the overlap contains the current distance, record it
+	if ((o->in_dist < curr_dist || NEAR_EQUAL(o->in_dist, curr_dist, VUNITIZE_TOL)) &&
+		(o->out_dist > curr_dist || NEAR_EQUAL(o->out_dist, curr_dist, VUNITIZE_TOL))) {
+	    if (furthest_containing_dist < o->out_dist) {
+		furthest_containing_dist = o->out_dist;
+		if (containing_ovlp) {
+		    // Found another overlap with a further distance - we don't
+		    // want this one
+		    to_erase.insert(containing_ovlp);
+		}
+		containing_ovlp = o;
+	    } else {
+		// Contains the point, but there's another overlap with
+		// a further distance - we don't want this one
+		to_erase.insert(o);
+	    }
+	}
+	// If the overlap is beyond the current distance, see if it is
+	// the closest
+	if (o->in_dist > curr_dist) {
+	    if (closest_dist > o->out_dist) {
+		closest_dist = o->in_dist;
+		closest_ovlp = o;
+	    }
+	}
+    }
+
+    // If multiple overlaps contain the current distance, we need to erase
+    // all but the longest from the set so we don't further complicate
+    // plotting.
+    for (o_it = to_erase.begin(); o_it != to_erase.end(); ++o_it) {
+	ovlps.erase(*o_it);
+    }
+
+    if (containing_ovlp) {
+	*op = containing_ovlp;
+    } else {
+	*op = closest_ovlp;
+    }
+
+    return (containing_ovlp) ? true : false;
+}
+
+
 static struct nirt_overlap *
 _nirt_find_ovlp(struct nirt_state *nss, struct partition *pp)
 {
@@ -1159,9 +1232,13 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 		    _nirt_diff_add_seg(nss, &gseg);
 		}
 		/* vlist segment for gap */
-		vhead = bv_vlblock_find(nss->i->segs, nss->i->void_color->buc_rgb[RED], nss->i->void_color->buc_rgb[GRN], nss->i->void_color->buc_rgb[BLU]);
-		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->gap_in, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BV_VLIST_LINE_DRAW);
+		{
+		    int rgb[3] = {0, 0, 0};
+		    bu_color_to_rgb_ints(&nss->color_gap, &rgb[RED], &rgb[GRN], &rgb[BLU]);
+		    vhead = bv_vlblock_find(nss->i->segs, rgb[RED], rgb[GRN], rgb[BLU]);
+		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->gap_in, BV_VLIST_LINE_MOVE);
+		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BV_VLIST_LINE_DRAW);
+		}
 		nss->i->b_segs = true;
 		s->type = NIRT_PARTITION_SEG;
 	    }
@@ -1173,7 +1250,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	{
 	    char *tmp_regname = (char *)bu_calloc(s->path_name.size() + 1, sizeof(char), "tmp reg_name");
 	    bu_path_basename(part->pt_regionp->reg_name, tmp_regname);
-	    s->reg_name = std::string(tmp_regname);	
+	    s->reg_name = std::string(tmp_regname);
 	    bu_free(tmp_regname, "tmp reg_name");
 	}
 
@@ -1225,18 +1302,90 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	_nirt_report(nss, 'p', vals);
 
 	/* vlist segment for hit */
+	int seg_rgb[3] = {0, 0, 0};
 	if (ev_odd % 2) {
-	    vhead = bv_vlblock_find(nss->i->segs, nss->i->hit_odd_color->buc_rgb[RED], nss->i->hit_odd_color->buc_rgb[GRN], nss->i->hit_odd_color->buc_rgb[BLU]);
+	    bu_color_to_rgb_ints(&nss->color_odd, &seg_rgb[RED], &seg_rgb[GRN], &seg_rgb[BLU]);
 	} else {
-	    vhead = bv_vlblock_find(nss->i->segs, nss->i->hit_even_color->buc_rgb[RED], nss->i->hit_even_color->buc_rgb[GRN], nss->i->hit_even_color->buc_rgb[BLU]);
+	    bu_color_to_rgb_ints(&nss->color_even, &seg_rgb[RED], &seg_rgb[GRN], &seg_rgb[BLU]);
 	}
-	BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BV_VLIST_LINE_DRAW);
+	int ovlp_rgb[3] = {0, 0, 0};
+	bu_color_to_rgb_ints(&nss->color_ovlp, &ovlp_rgb[RED], &ovlp_rgb[GRN], &ovlp_rgb[BLU]);
+
+	/* Plotting gets a little tricky if there are overlaps involved - to ensure
+	 * proper drawing, we want to only draw the portions of the segment that
+	 * aren't part of an overlap as the segment rgb and draw the overlap parts
+	 * as the ovlp rgb. It is possible to have an overlap be a subset of a
+	 * segment, in which case we need to finish drawing the segment after we
+	 * have drawn the overlap.  We thus find all overlaps that overlay this
+	 * segment.  If we have them, we march down them until either we plot an
+	 * overlap that corresponds to the end of the segment or we draw the final
+	 * part of the segment. At least at the moment overlap seg reporting is
+	 * destructive, so do the plotting up front. */
+	std::set<struct nirt_overlap *> seg_ovlps;
+	_nirt_find_ovlps(seg_ovlps, nss, part);
+	if (!seg_ovlps.size()) {
+	    // Easy case - no ovlps, just draw the segment
+	    vhead = bv_vlblock_find(nss->i->segs, seg_rgb[RED], seg_rgb[GRN], seg_rgb[BLU]);
+	    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BV_VLIST_LINE_DRAW);
+	} else {
+	    // Have ovlps - need to be nuanced about what we draw and when
+	    fastf_t curr_dist = part->pt_inhit->hit_dist;
+	    point_t curr_pnt;
+	    VMOVE(curr_pnt, s->in);
+	    while (seg_ovlps.size()) {
+		struct nirt_overlap *op = NULL;
+		if (_nirt_in_ovlp(&op, seg_ovlps, curr_dist)) {
+		    // Current distance is in an overlap - draw the overlap.  If the ovlp
+		    // extends beyond the segment (is that possible?) Draw only until the
+		    // end of the segment - else, draw to the end of the overlap.
+		    if (op->out_dist > s->d_out) {
+			VMOVE(curr_pnt, s->out);
+			curr_dist = s->d_out;
+		    } else {
+			VMOVE(curr_pnt, op->out_point);
+			curr_dist = op->out_dist;
+		    }
+		    vhead = bv_vlblock_find(nss->i->segs, ovlp_rgb[RED], ovlp_rgb[GRN], ovlp_rgb[BLU]);
+		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, op->in_point, BV_VLIST_LINE_MOVE);
+		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, op->out_point, BV_VLIST_LINE_DRAW);
+		    seg_ovlps.erase(op);
+		    VMOVE(curr_pnt, op->out_point);
+		    curr_dist = op->out_dist;
+		    seg_ovlps.erase(op);
+		} else {
+		    // Current distance is not in an overlap.  If op ended up as non-NULL,
+		    // there is still an overlap ahead of the curr_dist in the segment.
+		    // If that is the case, we need to draw segment color from the current distance
+		    // to the start of the next overlap.  Otherwise, we need to complete the
+		    // segment.
+		    vhead = bv_vlblock_find(nss->i->segs, seg_rgb[RED], seg_rgb[GRN], seg_rgb[BLU]);
+		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, curr_pnt, BV_VLIST_LINE_MOVE);
+		    if (op) {
+			BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, op->in_point, BV_VLIST_LINE_DRAW);
+			VMOVE(curr_pnt, op->in_point);
+			curr_dist = op->in_dist;
+		    } else {
+			BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BV_VLIST_LINE_DRAW);
+		    }
+		}
+	    }
+	    if (curr_dist < part->pt_outhit->hit_dist) {
+		vhead = bv_vlblock_find(nss->i->segs, seg_rgb[RED], seg_rgb[GRN], seg_rgb[BLU]);
+		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, curr_pnt, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BV_VLIST_LINE_DRAW);
+	    }
+	}
 	nss->i->b_segs = true;
+
+	// Bump even/odd counter
+	ev_odd++;
 
 	/* done with hit portion - if diff, stash */
 	_nirt_diff_add_seg(nss, s);
 
+
+	// Report on (and delete) overlaps
 	while ((ovp = _nirt_find_ovlp(nss, part)) != NIRT_OVERLAP_NULL) {
 
 	    s->type = NIRT_OVERLAP_SEG;
@@ -1269,14 +1418,6 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 
 	    _nirt_report(nss, 'o', vals);
 
-	    /* vlist segment for overlap */
-	    if (nss->i->plot_overlaps) {
-		vhead = bv_vlblock_find(nss->i->segs, nss->i->overlap_color->buc_rgb[RED], nss->i->overlap_color->buc_rgb[GRN], nss->i->overlap_color->buc_rgb[BLU]);
-		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->ov_in, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->ov_out, BV_VLIST_LINE_DRAW);
-		nss->i->b_segs = true;
-	    }
-
 	    /* Diff */
 	    {
 		nirt_seg novlp = *s;
@@ -1287,7 +1428,6 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 
 	    _nirt_del_ovlp(ovp);
 	}
-
 
     }
 
@@ -1358,6 +1498,8 @@ struct nirt_cmd_desc {
 static const struct nirt_cmd_desc nirt_descs[] = {
     { "attr",           "select attributes",                             NULL },
     { "ae",             "set/query azimuth and elevation",               "azimuth elevation" },
+    { "center",         "set/query target coordinates",                  "X Y Z" },
+    { "color",          "set/query plot colors",                         "<odd|even|gap|ovlp> [r/g/b]" },
     { "dir",            "set/query direction vector",                    "x-component y-component z-component" },
     { "diff",           "test a ray result against a supplied default",  "[-t tol] partition_info" },
     { "hv",             "set/query gridplane coordinates",               "horz vert [dist]" },
@@ -1368,6 +1510,7 @@ static const struct nirt_cmd_desc nirt_descs[] = {
     { "units",          "set/query local units",                         "<mm|cm|m|in|ft>" },
     { "overlap_claims", "set/query overlap rebuilding/retention",        "<0|1|2|3>" },
     { "fmt",            "set/query output formats",                      "{rhpfmog} format item item ..." },
+    { "plotfile",       "designate an output file to hold plot data",    "file" },
     { "print",          "query an output item",                          "item" },
     { "debug",          "set/query nirt debug flags",                    "[-h] [-l [lib]] [-C [lib]] [-V [lib] [val]] [lib [flag]]" },
     { "q",              "quit",                                          NULL },
@@ -1705,6 +1848,51 @@ _nirt_cmd_backout(void *ns, int argc, const char *argv[])
     return -1;
 }
 
+
+extern "C" int
+_nirt_cmd_color_plot(void *ns, int argc, const char *argv[])
+{
+    struct nirt_state *nss = (struct nirt_state *)ns;
+    if (!ns) return -1;
+
+    argv++; argc--;
+
+    if (!argc || argc == 3 || argc > 4) {
+	nerr(nss, "Usage:  color %s\n", _nirt_get_desc_args("color"));
+	return -1;
+    }
+
+    struct bu_color *c = NULL;
+    if (BU_STR_EQUIV(argv[0], "odd"))
+	c = &nss->color_odd;
+    if (BU_STR_EQUIV(argv[0], "even"))
+	c = &nss->color_even;
+    if (BU_STR_EQUIV(argv[0], "gap") || BU_STR_EQUIV(argv[0], "void"))
+	c = &nss->color_gap;
+    if (BU_STR_EQUIV(argv[0], "ovlp") || BU_STR_EQUIV(argv[0], "overlap"))
+	c = &nss->color_ovlp;
+
+    argv++; argc--;
+
+    if (argc) {
+	// More args - reading a color in
+	int ret_c = bu_opt_color(NULL, argc, argv, c);
+	if (ret_c != 1 && ret_c != 3) {
+	    nerr(nss, "Usage:  color %s\n", _nirt_get_desc_args("color"));
+	    return -1;
+	}
+    }
+
+    // Return the current color
+    int rgb[3] = {0, 0, 0};
+    if (!bu_color_to_rgb_ints(c, &rgb[RED], &rgb[GRN], &rgb[BLU]))
+	return -1;
+    nout(nss, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
+
+    return 0;
+}
+
+
 extern "C" int
 _nirt_cmd_use_air(void *ns, int argc, const char *argv[])
 {
@@ -1989,6 +2177,28 @@ set_fmt:
 }
 
 extern "C" int
+_nirt_cmd_plotfile(void *ns, int argc, const char **argv)
+{
+    struct nirt_state *nss = (struct nirt_state *)ns;
+    if (!ns) return -1;
+
+    argc--; argv++;
+
+    if (argc > 1) {
+	nerr(nss, "Usage:  plotfile %s\n", _nirt_get_desc_args("plotfile"));
+	return 0;
+    }
+
+    if (argc)
+	bu_vls_sprintf(&nss->plotfile, "%s", argv[0]);
+
+
+    nout(nss, "%s\n", bu_vls_cstr(&nss->plotfile));
+
+    return 0;
+}
+
+extern "C" int
 _nirt_cmd_print_item(void *ns, int argc, const char **argv)
 {
     int i = 0;
@@ -2061,9 +2271,18 @@ _nirt_cmd_debug(void *ns, int argc, const char **argv)
 }
 
 extern "C" int
-_nirt_cmd_quit(void *ns, int UNUSED(argc), const char **UNUSED(argv))
+_nirt_cmd_quit(void *nsv, int UNUSED(argc), const char **UNUSED(argv))
 {
-    nmsg((struct nirt_state *)ns, "Quitting...\n");
+    struct nirt_state *ns = (struct nirt_state *)nsv;
+    if (bu_vls_strlen(&ns->plotfile)) {
+	FILE *fp = fopen(bu_vls_cstr(&ns->plotfile), "wb");
+	if (fp) {
+	    bv_plot_vlblock(fp, ns->i->segs);
+	    fclose(fp);
+	}
+    }
+
+    nmsg(ns, "Quitting...\n");
     return 1;
 }
 
@@ -2124,7 +2343,7 @@ _nirt_cmd_erase(void *ns, int argc, const char **argv)
 extern "C" int
 _nirt_cmd_state(void *ns, int argc, const char *argv[])
 {
-    unsigned char rgb[3];
+    int rgb[3] = {0, 0, 0};
     struct bu_vls optmsg = BU_VLS_INIT_ZERO;
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
@@ -2135,11 +2354,12 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
     argc--; argv++;
     if (BU_STR_EQUAL(argv[0], "oddcolor")) {
 	if (argc == 1) {
-	    if (bu_color_to_rgb_chars(nss->i->hit_odd_color, (unsigned char *)rgb)) return -1;
-	    nout(nss, "%c %c %c", rgb[0], rgb[1], rgb[2]);
+	    if (!bu_color_to_rgb_ints(&nss->color_odd, &rgb[RED], &rgb[GRN], &rgb[BLU]))
+		return -1;
+	    nout(nss, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
 	    return 0;
 	}
-	if (bu_opt_color(&optmsg, argc, argv, (void *)nss->i->hit_odd_color) == -1) {
+	if (bu_opt_color(&optmsg, argc, argv, (void *)&nss->color_odd) == -1) {
 	    nerr(nss, "Error: bu_opt color read failure reading parsing");
 	    for (int i = 0; i < argc; i++) {nerr(nss, " %s", argv[i]);}
 	    nerr(nss, ": %s\n", bu_vls_cstr(&optmsg));
@@ -2149,11 +2369,12 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
     }
     if (BU_STR_EQUAL(argv[0], "evencolor")) {
 	if (argc == 1) {
-	    if (bu_color_to_rgb_chars(nss->i->hit_even_color, (unsigned char *)rgb)) return -1;
-	    nout(nss, "%c %c %c", rgb[0], rgb[1], rgb[2]);
+	    if (!bu_color_to_rgb_ints(&nss->color_even, &rgb[RED], &rgb[GRN], &rgb[BLU]))
+		return -1;
+	    nout(nss, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
 	    return 0;
 	}
-	if (bu_opt_color(&optmsg, argc, argv, (void *)nss->i->hit_even_color) == -1) {
+	if (bu_opt_color(&optmsg, argc, argv, (void *)&nss->color_even) == -1) {
 	    nerr(nss, "Error: bu_opt color read failure reading parsing");
 	    for (int i = 0; i < argc; i++) {nerr(nss, " %s", argv[i]);}
 	    nerr(nss, ": %s\n", bu_vls_cstr(&optmsg));
@@ -2164,11 +2385,11 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
     }
     if (BU_STR_EQUAL(argv[0], "voidcolor")) {
 	if (argc == 1) {
-	    if (bu_color_to_rgb_chars(nss->i->void_color, (unsigned char *)rgb)) return -1;
-	    nout(nss, "%c %c %c", rgb[0], rgb[1], rgb[2]);
+	    if (!bu_color_to_rgb_ints(&nss->color_gap, &rgb[RED], &rgb[GRN], &rgb[BLU])) return -1;
+	    nout(nss, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
 	    return 0;
 	}
-	if (bu_opt_color(&optmsg, argc, argv, (void *)nss->i->void_color) == -1) {
+	if (bu_opt_color(&optmsg, argc, argv, (void *)&nss->color_gap) == -1) {
 	    nerr(nss, "Error: bu_opt color read failure reading parsing");
 	    for (int i = 0; i < argc; i++) {nerr(nss, " %s", argv[i]);}
 	    nerr(nss, ": %s\n", bu_vls_cstr(&optmsg));
@@ -2179,11 +2400,11 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
     }
     if (BU_STR_EQUAL(argv[0], "overlapcolor")) {
 	if (argc == 1) {
-	    if (bu_color_to_rgb_chars(nss->i->overlap_color, (unsigned char *)rgb)) return -1;
-	    nout(nss, "%c %c %c", rgb[0], rgb[1], rgb[2]);
+	    if (!bu_color_to_rgb_ints(&nss->color_ovlp, &rgb[RED], &rgb[GRN], &rgb[BLU])) return -1;
+	    nout(nss, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
 	    return 0;
 	}
-	if (bu_opt_color(&optmsg, argc, argv, (void *)nss->i->overlap_color) == -1) {
+	if (bu_opt_color(&optmsg, argc, argv, (void *)&nss->color_ovlp) == -1) {
 	    nerr(nss, "Error: bu_opt color read failure reading parsing");
 	    for (int i = 0; i < argc; i++) {nerr(nss, " %s", argv[i]);}
 	    nerr(nss, ": %s\n", bu_vls_cstr(&optmsg));
@@ -2304,26 +2525,28 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 }
 
 const struct bu_cmdtab _libanalyze_nirt_cmds[] = {
-    { "attr",           _nirt_cmd_attr},
+    { "?",              _nirt_cmd_show_menu},
     { "ae",             _nirt_cmd_az_el},
+    { "attr",           _nirt_cmd_attr},
+    { "backout",        _nirt_cmd_backout},
+    { "center",         _nirt_cmd_target_coor},
+    { "color",          _nirt_cmd_color_plot},
+    { "debug",          _nirt_cmd_debug},
     { "diff",           _nirt_cmd_diff},
     { "dir",            _nirt_cmd_dir_vect},
-    { "hv",             _nirt_cmd_grid_coor},
-    { "xyz",            _nirt_cmd_target_coor},
-    { "s",              _nirt_cmd_shoot},
-    { "backout",        _nirt_cmd_backout},
-    { "useair",         _nirt_cmd_use_air},
-    { "units",          _nirt_cmd_units},
-    { "overlap_claims", _nirt_cmd_do_overlap_claims},
-    { "fmt",            _nirt_cmd_format_output},
-    { "print",          _nirt_cmd_print_item},
-    { "debug",          _nirt_cmd_debug},
-    { "q",              _nirt_cmd_quit},
-    { "?",              _nirt_cmd_show_menu},
-    // New commands...
     { "draw",           _nirt_cmd_draw},
     { "erase",          _nirt_cmd_erase},
+    { "fmt",            _nirt_cmd_format_output},
+    { "hv",             _nirt_cmd_grid_coor},
+    { "overlap_claims", _nirt_cmd_do_overlap_claims},
+    { "plotfile",       _nirt_cmd_plotfile},
+    { "print",          _nirt_cmd_print_item},
+    { "q",              _nirt_cmd_quit},
+    { "s",              _nirt_cmd_shoot},
     { "state",          _nirt_cmd_state},
+    { "units",          _nirt_cmd_units},
+    { "useair",         _nirt_cmd_use_air},
+    { "xyz",            _nirt_cmd_target_coor},
     { (char *)NULL,     NULL}
 };
 
@@ -2546,32 +2769,33 @@ static const char *nirt_cmd_tbl_defs =
 extern "C" int
 nirt_init(struct nirt_state *ns)
 {
-    unsigned int rgb[3] = {0, 0, 0};
     struct nirt_state_impl *n = NULL;
 
     if (!ns) return -1;
 
-    ns->nirt_cmd = BU_VLS_INIT_ZERO;
-    ns->nirt_format_file = BU_VLS_INIT_ZERO;
+    bu_vls_init(&ns->nirt_cmd);
+    bu_vls_init(&ns->nirt_format_file);
+    bu_vls_init(&ns->plotfile);
 
     /* Get memory */
     n = new nirt_state_impl;
     ns->i = n;
     n->overlap_claims = NIRT_OVLP_RESOLVE;
-    BU_GET(n->hit_odd_color, struct bu_color);
-    BU_GET(n->hit_even_color, struct bu_color);
-    BU_GET(n->void_color, struct bu_color);
-    BU_GET(n->overlap_color, struct bu_color);
 
     /* Strictly speaking these initializations are more
      * than an "alloc" function needs to do, but we want
      * a nirt state to be "functional" even though it
      * is not set up with a database (it's true/proper
      * initialization.)*/
-    bu_color_from_rgb_chars(n->hit_odd_color, (unsigned char *)&rgb);
-    bu_color_from_rgb_chars(n->hit_even_color, (unsigned char *)&rgb);
-    bu_color_from_rgb_chars(n->void_color, (unsigned char *)&rgb);
-    bu_color_from_rgb_chars(n->overlap_color, (unsigned char *)&rgb);
+    struct bu_color cyan = BU_COLOR_CYAN;
+    struct bu_color yellow = BU_COLOR_YELLOW;
+    struct bu_color purple = BU_COLOR_PURPLE;
+    struct bu_color white = BU_COLOR_WHITE;
+    BU_COLOR_CPY(&ns->color_odd, &cyan);
+    BU_COLOR_CPY(&ns->color_even, &yellow);
+    BU_COLOR_CPY(&ns->color_gap, &purple);
+    BU_COLOR_CPY(&ns->color_ovlp, &white);
+
     n->print_header = 0;
     n->print_ident_flag = 0;
 
@@ -2770,10 +2994,6 @@ nirt_destroy(struct nirt_state *ns)
     BU_PUT(ns->i->msg, struct bu_vls);
     BU_PUT(ns->i->out, struct bu_vls);
     BU_PUT(ns->i->ap, struct application);
-    BU_PUT(ns->i->hit_odd_color, struct bu_color);
-    BU_PUT(ns->i->hit_even_color, struct bu_color);
-    BU_PUT(ns->i->void_color, struct bu_color);
-    BU_PUT(ns->i->overlap_color, struct bu_color);
     delete ns->i;
 }
 

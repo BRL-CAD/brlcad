@@ -14,6 +14,9 @@ changes made.  See document footer for additional details.
 --- 2024-XX-XX  Release X.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* cleaned up nirt -L format listing output - Cliff Yapp
+* fixed MGED nirt command's use of .mgedrc qray formats - Cliff Yapp
+* improved MGED nirt cmd handling for large object lists - Cliff Yapp
 * removed requirement to launch nirt with objects listed - Cliff Yapp
 * improved k-g LS-DYNA keyword file geometry importer - Ali Haydar
 * added bot support for plate mode thickness get/set cmds - Cliff Yapp

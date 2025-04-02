@@ -139,7 +139,7 @@ set(
   pnts_util.c
   points_eval.c
   polyclip.cpp
-  qray.c
+  qray.cpp
   tab_complete.cpp
   trace.c
   track.c

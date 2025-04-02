@@ -51,7 +51,6 @@ extern "C" b_off_t ftello(FILE *);
 #endif
 
 #include "bu/app.h"
-#include "bu/color.h"
 #include "bu/cmd.h"
 #include "bu/malloc.h"
 #include "bu/path.h"
@@ -313,10 +312,6 @@ class nirt_fmt_state {
 
 struct nirt_state_impl {
     /* Output options */
-    struct bu_color *hit_odd_color;
-    struct bu_color *hit_even_color;
-    struct bu_color *void_color;
-    struct bu_color *overlap_color;
     int print_header;
     int print_ident_flag;
 

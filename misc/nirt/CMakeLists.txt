@@ -3,11 +3,11 @@ set(
   csv.nrt
   csv-gap.nrt
   default.nrt
-  default-ged.nrt
   diff.nrt
   entryexit.nrt
   gap1.nrt
   gap2.nrt
+  ged.nrt
 )
 if(TARGET libged OR TARGET nirt)
   brlcad_adddata(nirt_format_files nirt)

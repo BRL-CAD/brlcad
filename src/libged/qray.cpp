@@ -1,4 +1,4 @@
-/*                          Q R A Y . C
+/*                        Q R A Y . C P P
  * BRL-CAD
  *
  * Copyright (c) 1998-2025 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file libged/qray.c
+/** @file libged/qray.cpp
  *
  * Routines to set and get "Query Ray" variables.
  *
@@ -27,10 +27,12 @@
 
 #include "common.h"
 
-#include <string.h>
-
+#include <string>
+#include <fstream>
+#include <vector>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "ged.h"
 
 #include "./qray.h"
@@ -40,25 +42,9 @@ struct ged_qray_color def_qray_even_color = { 255, 255, 0 };
 struct ged_qray_color def_qray_void_color = { 255, 0, 255 };
 struct ged_qray_color def_qray_overlap_color = { 255, 255, 255 };
 
-struct qray_fmt_data def_qray_fmt_data[] = {
-    {'r', "\"Origin (x y z) = (%.2f %.2f %.2f)  (h v d) = (%.2f %.2f %.2f)\\nDirection (x y z) = (%.4f %.4f %.4f)  (az el) = (%.2f %.2f)\\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e"},
-    {'h', "\"    Region Name               Entry (x y z) LOS  Obliq_in\\n\""},
-    {'p', "\"%-20s (%9.3f %9.3f %9.3f) %8.2f %8.3f\\n\" reg_name x_in y_in z_in los obliq_in"},
-    {'f', "\"\""},
-    {'m', "\"You missed the target\\n\""},
-    {'o', "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"},
-    {'g', "\"\""},
-    {(char)0, (char *)NULL}
-};
-
-
 void
 qray_init(struct ged_drawable *gdp)
 {
-    int i;
-    int n = 0;
-    struct qray_fmt_data *qfdp;
-
     bu_vls_init(&gdp->gd_qray_basename);
     bu_vls_strcpy(&gdp->gd_qray_basename, DG_QRAY_BASENAME);
     bu_vls_init(&gdp->gd_qray_script);
@@ -70,19 +56,36 @@ qray_init(struct ged_drawable *gdp)
     gdp->gd_qray_void_color = def_qray_void_color;
     gdp->gd_qray_overlap_color = def_qray_overlap_color;
 
-    /* count the number of default format types */
-    for (qfdp = def_qray_fmt_data; qfdp->fmt != (char *)NULL; ++qfdp)
-	++n;
+    /* Load the default GED formatting template */
+    struct bu_vls ged_fmt_file = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&ged_fmt_file, "%s/ged.nrt", bu_dir(NULL, 0, BU_DIR_DATA, "nirt", NULL));
+    std::vector<std::string> fmt_lines;
+    std::string s;
+    std::ifstream file;
+    file.open(bu_vls_cstr(&ged_fmt_file));
+    while (std::getline(file, s)) {
+	if (!s.length())
+	    continue;
+	if (s[0] == '#')
+	    continue;
+	fmt_lines.push_back(s);
+    }
+    file.close();
+    bu_vls_free(&ged_fmt_file);
 
-    gdp->gd_qray_fmts = (struct ged_qray_fmt *)bu_calloc(n+1, sizeof(struct ged_qray_fmt), "qray_fmts");
+    /* Allocate memory for the default format types */
+    gdp->gd_qray_fmts = (struct ged_qray_fmt *)bu_calloc(fmt_lines.size()+1, sizeof(struct ged_qray_fmt), "qray_fmts");
 
-    for (i = 0; i < n; ++i) {
-	gdp->gd_qray_fmts[i].type = def_qray_fmt_data[i].type;
+    for (size_t i = 0; i < fmt_lines.size(); ++i) {
+	std::string fmt_str = fmt_lines[i];
+	fmt_str.erase(0, 4); // Remove "fmt_"
+	gdp->gd_qray_fmts[i].type = fmt_str[0];
+	fmt_str.erase(0, 2); // remove "t "
 	bu_vls_init(&gdp->gd_qray_fmts[i].fmt);
-	bu_vls_strcpy(&gdp->gd_qray_fmts[i].fmt, def_qray_fmt_data[i].fmt);
+	bu_vls_sprintf(&gdp->gd_qray_fmts[i].fmt, "%s", fmt_str.c_str());
     }
 
-    gdp->gd_qray_fmts[i].type = (char)0;
+    gdp->gd_qray_fmts[fmt_lines.size()].type = (char)0;
 }
 
 
@@ -101,10 +104,10 @@ qray_free(struct ged_drawable *gdp)
 
 void
 qray_data_to_vlist(struct ged *gedp,
-		   struct bv_vlblock *vbp,
-		   struct qray_dataList *headp,
-		   vect_t dir,
-		   int do_overlaps)
+	struct bv_vlblock *vbp,
+	struct qray_dataList *headp,
+	vect_t dir,
+	int do_overlaps)
 {
     int i = 1;			/* start out odd */
     struct bu_list *vhead;
@@ -116,19 +119,19 @@ qray_data_to_vlist(struct ged *gedp,
     for (BU_LIST_FOR(ndlp, qray_dataList, &headp->l)) {
 	if (do_overlaps)
 	    vhead = bv_vlblock_find(vbp,
-				    gedp->i->ged_gdp->gd_qray_overlap_color.r,
-				    gedp->i->ged_gdp->gd_qray_overlap_color.g,
-				    gedp->i->ged_gdp->gd_qray_overlap_color.b);
+		    gedp->i->ged_gdp->gd_qray_overlap_color.r,
+		    gedp->i->ged_gdp->gd_qray_overlap_color.g,
+		    gedp->i->ged_gdp->gd_qray_overlap_color.b);
 	else if (i % 2)
 	    vhead = bv_vlblock_find(vbp,
-				    gedp->i->ged_gdp->gd_qray_odd_color.r,
-				    gedp->i->ged_gdp->gd_qray_odd_color.g,
-				    gedp->i->ged_gdp->gd_qray_odd_color.b);
+		    gedp->i->ged_gdp->gd_qray_odd_color.r,
+		    gedp->i->ged_gdp->gd_qray_odd_color.g,
+		    gedp->i->ged_gdp->gd_qray_odd_color.b);
 	else
 	    vhead = bv_vlblock_find(vbp,
-				    gedp->i->ged_gdp->gd_qray_even_color.r,
-				    gedp->i->ged_gdp->gd_qray_even_color.g,
-				    gedp->i->ged_gdp->gd_qray_even_color.b);
+		    gedp->i->ged_gdp->gd_qray_even_color.r,
+		    gedp->i->ged_gdp->gd_qray_even_color.g,
+		    gedp->i->ged_gdp->gd_qray_even_color.b);
 
 	VSET(in_pt, ndlp->x_in, ndlp->y_in, ndlp->z_in);
 	VJOIN1(out_pt, in_pt, ndlp->los, dir);
@@ -139,9 +142,9 @@ qray_data_to_vlist(struct ged *gedp,
 
 	if (!do_overlaps && i > 1 && !VNEAR_EQUAL(last_out_pt, in_pt, SQRT_SMALL_FASTF)) {
 	    vhead = bv_vlblock_find(vbp,
-				    gedp->i->ged_gdp->gd_qray_void_color.r,
-				    gedp->i->ged_gdp->gd_qray_void_color.g,
-				    gedp->i->ged_gdp->gd_qray_void_color.b);
+		    gedp->i->ged_gdp->gd_qray_void_color.r,
+		    gedp->i->ged_gdp->gd_qray_void_color.g,
+		    gedp->i->ged_gdp->gd_qray_void_color.b);
 	    BV_ADD_VLIST(vlfree, vhead, last_out_pt, BV_VLIST_LINE_MOVE);
 	    BV_ADD_VLIST(vlfree, vhead, in_pt, BV_VLIST_LINE_DRAW);
 	}
@@ -154,12 +157,12 @@ qray_data_to_vlist(struct ged *gedp,
 
 /** @} */
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s

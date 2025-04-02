@@ -34,6 +34,7 @@ set(
   mass.c
   moments.c
   nirt/nirt.cpp
+  nirt/opts.cpp
   nirt/diff.cpp
   obj_to_pnts.cpp
   overlaps.c

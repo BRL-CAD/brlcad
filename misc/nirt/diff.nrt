@@ -1,6 +1,6 @@
 # diff.nrt
-# Description: Output formatted for processing by the NIRT diff command.  The
-# numbers after each label (RAY, HIT, etc.) are for versioning purposes, to allow
+# Description: diff	  - Output formatted for processing by the NIRT diff command
+# The numbers after each label (RAY, HIT, etc.) are for versioning purposes, to allow
 # new variations on this format to be processed while allowing for backwards
 # compatibility.
 units mm

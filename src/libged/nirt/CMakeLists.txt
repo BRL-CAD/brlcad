@@ -6,12 +6,12 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-ged_plugin_library(ged-nirt nirt.c)
+ged_plugin_library(ged-nirt nirt.cpp)
 target_link_libraries(ged-nirt libged libbu)
 
 cmakefiles(
   CMakeLists.txt
-  nirt.c
+  nirt.cpp
 )
 
 # Local Variables:
