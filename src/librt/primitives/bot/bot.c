@@ -575,7 +575,7 @@ rt_bot_makesegs(hit_da *hits,
 
 
 void
-bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tris, size_t ntris, hit_da* hits)
+bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tris, size_t ntris, hit_da* hits, fastf_t toldist)
 {
     struct bvh_flat_node *stack_node[HLBVH_STACK_SIZE];
     unsigned char stack_child_index[HLBVH_STACK_SIZE];
@@ -646,6 +646,12 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 		if (abs_dn < BOT_MIN_DN)
 		    continue;
 
+		// Scale tolerance based on ray / triangle angle to reduce false negatives
+		// if ray is perpendicular:	 abs_dn == 1.0, reduce tolerance (1 / (1 + 1)) = .5
+		// if ray is parallel (grazing): abs_dn == 0, use full tolerance (1 / (1 + 0)) = 1
+		fastf_t tol_multiplier = (1.0 / (1.0 + abs_dn));
+		dn_plus_tol = abs_dn + (toldist * tol_multiplier);
+
 		// Check for exceeding along the sides
 		VSUB2(wxb, tri->A, rp->r_pt);
 		VCROSS(xp, wxb, rp->r_dir);
@@ -653,7 +659,7 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 		fastf_t gamma = VDOT(tri->AC, xp);
 		beta = (dn > 0.0) ?  -beta :  beta;
 		gamma = (dn < 0.0) ? -gamma : gamma;
-		if ( (beta < 0.0) || (gamma < 0.0) || (beta + gamma > abs_dn) )
+		if ( (beta < -toldist) || (gamma < -toldist) || (beta + gamma > dn_plus_tol) )
 		    continue;
 
 		fastf_t dist = VDOT(wxb, wn) / dn;
@@ -718,7 +724,15 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     hit_da *hits_da = &sps->hit_arrays_per_cpu[thread_ind];
     hits_da->count = 0;
 
-    bot_shot_hlbvh_flat(sps->root, rp, sps->tris, bot->bot_ntri, hits_da);
+    fastf_t toldist = 0.0;
+    if (bot->bot_orientation != RT_BOT_UNORIENTED && bot->bot_mode == RT_BOT_SOLID) {
+	// approximate ULP-derived tolerance, scaled by the object size
+	// NOTE: the x10 is largely arbitrary, but serves to adjust the tolerance to a
+	// practical value
+	toldist = (DBL_EPSILON * stp->st_aradius * 10);
+    }
+
+    bot_shot_hlbvh_flat(sps->root, rp, sps->tris, bot->bot_ntri, hits_da, toldist);
 
     if (hits_da->count == 0) {
 	return 0;
