@@ -659,7 +659,7 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 		fastf_t gamma = VDOT(tri->AC, xp);
 		beta = (dn > 0.0) ?  -beta :  beta;
 		gamma = (dn < 0.0) ? -gamma : gamma;
-		if ( (beta < -toldist) || (gamma < -toldist) || (beta + gamma > dn_plus_tol) )
+		if ( (beta + gamma > dn_plus_tol) || (beta < -toldist) || (gamma < -toldist) )
 		    continue;
 
 		fastf_t dist = VDOT(wxb, wn) / dn;
