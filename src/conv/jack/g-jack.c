@@ -457,6 +457,7 @@ main(int argc, char **argv)
     }
 
     the_model = nmg_mm();
+    RT_VLFREE_INIT();
     struct bu_list *vlfree = &rt_vlfree;
     BU_LIST_INIT(vlfree);	/* for vlist macros */
 

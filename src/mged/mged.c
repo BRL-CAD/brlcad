@@ -1835,6 +1835,7 @@ main(int argc, char *argv[])
     s->dpy_string = NULL;
 
     /* Set up linked lists */
+    RT_VLFREE_INIT();
     s->vlfree = &rt_vlfree;
     BU_LIST_INIT(&rtg_headwdb.l);
 

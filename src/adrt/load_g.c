@@ -294,6 +294,7 @@ load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct ad
     BU_ALLOC(*meshes, struct adrt_mesh_s);
     BU_LIST_INIT(&((*meshes)->l));
 
+    RT_VLFREE_INIT();
     gcvwriter.region_end_data.vlfree = &rt_vlfree;
     gcvwriter.meshes = meshes;
 

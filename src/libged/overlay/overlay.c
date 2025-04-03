@@ -77,6 +77,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     struct dm *dmp = NULL;
     struct fb *fbp = NULL;
     struct bu_vls vname = BU_VLS_INIT_ZERO;
+    RT_VLFREE_INIT();
     struct bu_list *vlfree = &rt_vlfree;
 
     static char usage[] = "Usage: overlay [options] file\n";

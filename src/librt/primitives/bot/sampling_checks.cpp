@@ -136,6 +136,7 @@ rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
     tinfo.bot = bot;
 
     // Set up the raytrace
+    RT_UNIRESOURCE_INIT();
     struct application ap;
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = rtip;     /* application uses this instance */

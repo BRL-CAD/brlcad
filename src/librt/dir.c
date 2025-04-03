@@ -50,6 +50,8 @@ rt_dirbuild(const char *filename, char *buf, int len)
     register struct rt_i *rtip;
     register struct db_i *dbip;		/* Database instance ptr */
 
+    RT_UNIRESOURCE_INIT();
+
     if ((dbip = db_open(filename, DB_OPEN_READONLY)) == DBI_NULL)
 	return RTI_NULL;		/* FAIL */
     RT_CK_DBI(dbip);
@@ -85,6 +87,8 @@ rt_dirbuild_inmem(const void *data, b_off_t data_size, char *buf, int len)
 {
     register struct rt_i *rtip;
     register struct db_i *dbip;		/* Database instance ptr */
+
+    RT_UNIRESOURCE_INIT();
 
     if ((dbip = db_open_inmem()) == DBI_NULL)
 	return RTI_NULL;		/* FAIL */

@@ -3378,6 +3378,7 @@ main(int argc, char **argv)
     int done;
     int stop, num;
     char name[NAMESIZE+1];
+    RT_VLFREE_INIT();
     struct bu_list *vlfree = &rt_vlfree;
 
     /* This size is dictated by the specific format output by the

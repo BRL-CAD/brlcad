@@ -270,6 +270,8 @@ db_open(const char *name, const char *mode)
 	bu_log("db_open(%s) dbip=%p version=%d\n", dbip->dbi_filename, (void *)dbip, dbip->dbi_version);
     }
 
+    RT_UNIRESOURCE_INIT();
+
     /* Initialize tolerances */
 
     BU_ALLOC(dbip->dbi_wdbp, struct rt_wdb);

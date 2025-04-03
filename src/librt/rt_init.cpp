@@ -23,6 +23,9 @@
  * care must be taken to not write to STDOUT or STDERR or app output
  * may be corrupted, signals can be raised, or worse.
  *
+ * TODO - reports so far indicate that librt_init isn't always triggered when
+ * we need it to be, so (alas) it cannot yet be considered a substitute for
+ * proper initialization calls in apps.
  */
 
 #include "common.h"
@@ -36,8 +39,8 @@
 static void
 librt_init(void)
 {
-    BU_LIST_INIT(&rt_vlfree);
-    rt_init_resource(&rt_uniresource, 0, NULL);
+    RT_VLFREE_INIT();
+    RT_UNIRESOURCE_INIT();
 
     // NOTE - rt_new_rti used to do this, checking if the rtg_vlfree list was
     // initialized.  Since we're doing that initialization in this routine,

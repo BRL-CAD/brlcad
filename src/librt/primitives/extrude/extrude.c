@@ -1398,6 +1398,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    RT_VLFREE_INIT();
     struct bu_list *vlfree = &rt_vlfree;
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
@@ -2086,6 +2087,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     struct bv_vlist *vlp;
 
     RT_CK_DB_INTERNAL(ip);
+    RT_VLFREE_INIT();
     struct bu_list *vlfree = &rt_vlfree;
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
@@ -2408,6 +2410,7 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	       sketch_name, rp->extr.ex_name);
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
     } else {
+	RT_UNIRESOURCE_INIT();
 	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 	    bu_log("rt_extrude_import4: ERROR: Cannot import sketch (%.16s) for extrusion (%.16s)\n",
 		   sketch_name, rp->extr.ex_name);
@@ -2595,6 +2598,7 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	       sketch_name);
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
     } else {
+	RT_UNIRESOURCE_INIT();
 	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 	    bu_log("rt_extrude_import4: ERROR: Cannot import sketch (%s) for extrusion\n",
 		   sketch_name);

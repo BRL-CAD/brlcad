@@ -77,6 +77,20 @@ rt_new_rti(struct db_i *dbip)
 
     RT_CK_DBI(dbip);
 
+    // If we get here without having done the librt_init, do the necessary steps
+    if (BU_LIST_FIRST(bu_list, &rt_vlfree) == 0) {
+	char *debug_flags;
+	debug_flags = getenv("LIBRT_DEBUG");
+	if (debug_flags) {
+	    if (rt_debug) {
+		bu_log("WARNING: discarding LIBRT_DEBUG value in favor of application-specified flags\n");
+	    } else {
+		rt_debug = strtol(debug_flags, NULL, 0x10);
+	    }
+	}
+	RT_VLFREE_INIT();
+    }
+
     BU_ALLOC(rtip, struct rt_i);
     rtip->rti_magic = RTI_MAGIC;
     for (i=0; i < RT_DBNHASH; i++) {

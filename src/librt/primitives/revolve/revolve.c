@@ -1533,6 +1533,7 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	       sketch_name);
 	rip->skt = (struct rt_sketch_internal *)NULL;
     } else {
+	RT_UNIRESOURCE_INIT();
 	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 	    bu_log("ERROR: Cannot import sketch (%s) for extrusion\n",
 		   sketch_name);

@@ -2089,6 +2089,8 @@ db_walk_tree(struct db_i *dbip,
     RT_CK_DBTS(init_state);
     RT_CHECK_DBI(dbip);
 
+    RT_UNIRESOURCE_INIT();
+
     if (init_state->ts_rtip == NULL || ncpu == 1) {
 	resp = &rt_uniresource;
     } else {

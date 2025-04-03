@@ -629,6 +629,7 @@ main(int argc, char **argv)
 	nmg_eue_dist = 2.0;
     }
 
+    RT_VLFREE_INIT();
     pm.vlfree = &rt_vlfree;
 
     /* Get command line arguments. */

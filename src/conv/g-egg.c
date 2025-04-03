@@ -195,6 +195,7 @@ main(int argc, char *argv[])
     struct egg_conv_data conv_data;
     struct gcv_region_end_data gcvwriter = {nmg_to_egg, NULL, NULL};
 
+    RT_VLFREE_INIT();
     gcvwriter.vlfree = &rt_vlfree;
     gcvwriter.client_data = (void *)&conv_data;
 

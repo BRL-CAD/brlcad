@@ -57,8 +57,20 @@ __BEGIN_DECLS
 /**
  * Global container for holding reusable vlist elements.  This is an
  * acceleration mechanism for things like GED drawing, which would otherwise
- * need to (re)allocate massive numbers of individual vlists. */
+ * need to (re)allocate massive numbers of individual vlists.
+ *
+ * See RT_VLFREE_INIT below to properly use this resource.
+ */
 RT_EXPORT extern struct bu_list rt_vlfree;
+
+/**
+ * LIBRT will attempt to initialize rt_vlfree at startup, but this is not
+ * reliable in all situations - application code should call RT_VLFREE_INIT
+ * to be sure the resource is prepared before executing code.
+ */
+#define RT_VLFREE_INIT(void) \
+    do { if (!BU_LIST_IS_INITIALIZED(&rt_vlfree)) BU_LIST_INIT(&rt_vlfree); } while (0)
+
 
 /**
  * Default librt-supplied resource structure for uniprocessor cases.  Because
@@ -68,11 +80,19 @@ RT_EXPORT extern struct bu_list rt_vlfree;
  * supply a resource to single-threaded functions without requiring the client
  * code to create and manage their own resource.
  *
- * Unlike user-declared struct resource instances, rt_uniresource does not need
- * to be initialized with rt_init_resource - that is handled by LIBRT.
+ * See RT_UNIRESOURCE_INIT below to properly use this resource.
  */
 struct resource;
 RT_EXPORT extern struct resource rt_uniresource;
+
+/**
+ * LIBRT will attempt to initialize rt_uniresource at startup, but this is not
+ * reliable in all situations - application code should use RT_UNIRESOURCE_INIT
+ * to be sure the resource is prepared before executing code.
+ */
+#define RT_UNIRESOURCE_INIT(void) \
+    do { if (rt_uniresource.re_magic != RESOURCE_MAGIC) rt_init_resource(&rt_uniresource, 0, NULL); } while (0)
+
 
 __END_DECLS
 

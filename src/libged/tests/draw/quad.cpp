@@ -409,6 +409,9 @@ main(int ac, char *av[]) {
 	return 2;
     }
 
+    /* Initialize rt_vlfree in case librt_init didn't get it */
+    RT_VLFREE_INIT();
+
     /* We want a local working dir cache */
     char lcache[MAXPATHLEN] = {0};
     bu_dir(lcache, MAXPATHLEN, BU_DIR_CURR, "ged_draw_test_quad_cache", NULL);

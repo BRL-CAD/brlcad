@@ -267,6 +267,7 @@ GFile::load_g(const char *filename, int argc, const char *argv[])
 
     /* make empty NMG model */
     the_model = nmg_mm();
+    RT_VLFREE_INIT();
     d.vlfree = &rt_vlfree;
 
     /*

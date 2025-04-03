@@ -185,6 +185,8 @@ db_diradd5(
 	return RT_DIR_NULL;
     }
 
+    RT_UNIRESOURCE_INIT();
+
     /* Duplicates the guts of db_diradd() */
     RT_GET_DIRECTORY(dp, &rt_uniresource);
     RT_CK_DIR(dp);
