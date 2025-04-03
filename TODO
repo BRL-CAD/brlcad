@@ -18,25 +18,30 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* verify arb6 editing in cheese wedge tutorial
-
 * Validate and merge hlbvh BoT raytracing improvements
-
-* rtarea is sometimes missing regions on summary reporting, at least on
-  Windows, possibly a threading issue setting up the results container.
 
 * complete preliminary concave arb8 support
 
-* Create EXPORT targets for BRL-CAD libraries to support newer
-  CMake find_package style.  If possible, try to also support
-  older style variables in FindBRLCAD.cmake
+* Review header changes and make sure to document things
+  like global removals in CHANGES
+
+* Update nirt(n) man page
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* verify arb6 editing in cheese wedge tutorial
+
+* rtarea is sometimes missing regions on summary reporting, at least on
+  Windows, possibly a threading issue setting up the results container.
+
 * Investigate whether we can use the newer version of the gct
   decimator (mmesh) to replace the version currently bundled
   in librt.
+
+* Create EXPORT targets for BRL-CAD libraries to support newer
+  CMake find_package style.  If possible, try to also support
+  older style variables in FindBRLCAD.cmake
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
