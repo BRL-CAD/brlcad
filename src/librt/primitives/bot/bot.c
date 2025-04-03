@@ -632,19 +632,33 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 	    for (size_t i = node->data.first_prim_offset; i < end; i++) {
 		triangle_s* tri = &tris[i];
 		vect_t wn, wxb, xp;
+		fastf_t dn_plus_tol;
+
+		// Calculate non-unitized face normal
 		VSCALE(wn, tri->face_norm, tri->face_norm_scalar);
+
+		// Ray direction dot wn (outward-pointing normal)
 		fastf_t dn = VDOT(wn, rp->r_dir);
+
+		// If ray lies directly along the face (dot product is zero),
+		// drop the face
 		fastf_t abs_dn = dn >= 0.0 ? dn : (-dn);
-		if (abs_dn < BOT_MIN_DN) continue;
+		if (abs_dn < BOT_MIN_DN)
+		    continue;
+
+		// Check for exceeding along the sides
 		VSUB2(wxb, tri->A, rp->r_pt);
 		VCROSS(xp, wxb, rp->r_dir);
 		fastf_t beta = VDOT(tri->AB, xp);
 		fastf_t gamma = VDOT(tri->AC, xp);
-		 beta = (dn > 0.0) ?  -beta :  beta;
+		beta = (dn > 0.0) ?  -beta :  beta;
 		gamma = (dn < 0.0) ? -gamma : gamma;
-		if ( (beta < 0.0) || (gamma < 0.0) || (beta + gamma > abs_dn) ) continue;
+		if ( (beta < 0.0) || (gamma < 0.0) || (beta + gamma > abs_dn) )
+		    continue;
+
 		fastf_t dist = VDOT(wxb, wn) / dn;
-		// fill out hitdata
+
+		// Fill out hitdata
 		struct hit cur_hit = {0};
 		cur_hit.hit_magic = RT_HIT_MAGIC;
 		cur_hit.hit_dist = dist;
