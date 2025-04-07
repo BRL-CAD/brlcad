@@ -329,10 +329,9 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 	    // of the diagonal length of the bounding box.
 	    point_t bbmin = VINIT_ZERO;
 	    point_t bbmax = VINIT_ZERO;
-	    if (bg_trimesh_aabb(&bbmin, &bbmax, bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices)) {
-		working_tol = 0.0;
-	    } else {
-		working_tol = DIST_PNT_PNT(bbmax, bbmin) * rel_tol;
+	    if (!bg_trimesh_aabb(&bbmin, &bbmax, bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices)) {
+		fastf_t rtol = DIST_PNT_PNT(bbmax, bbmin) * rel_tol;
+		working_tol = (NEAR_ZERO(abs_tol, VUNITIZE_TOL) || rtol < abs_tol) ? rtol : abs_tol;
 	    }
 	}
 
@@ -342,7 +341,8 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 	// to vertices in that bin with references to the vertex closest to the
 	// center point of the bin.  The mesh will then be processed to remove
 	// any faces that have become degenerate.
-	bot = collapse_faces(bot, working_tol);
+	if (!NEAR_ZERO(working_tol, VUNITIZE_TOL))
+	    bot = collapse_faces(bot, working_tol);
     }
 
 #if 0
