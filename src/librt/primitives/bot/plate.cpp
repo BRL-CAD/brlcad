@@ -59,6 +59,8 @@
 #include "rt/nmg_conv.h"
 #include "rt/primitives/bot.h"
 
+#define VERIFY_BOOLEANS 1
+
 // TODO - investigate geogram's isotropic remeshing to see if it can help us
 // deal with plate mode bots having lots of long, super-thin triangles (they
 // seem to be really messing with performance in newer Manifold releases...)
@@ -439,13 +441,6 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 	    }
 	    return -1;
 	}
-#if 0
-	if (c.Status() != manifold::Manifold::Error::NoError) {
-	    bu_log("Boolean op failure! (vert)\n");
-	    return -1;
-	}
-#endif
-
     }
     if (!quiet_mode)
 	bu_log("Processing %zd vertices... done.\n" , verts.size());
@@ -509,7 +504,8 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 	    }
 	    return -1;
 	}
-#if 0
+
+#if VERIFY_BOOLEANS
 	if (c.Status() != manifold::Manifold::Error::NoError) {
 	    bu_log("Boolean op failure! (edge)\n");
 	    return -1;
@@ -624,7 +620,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 	    }
 	    return -1;
 	}
-#if 0
+#if VERIFY_BOOLEANS
 	if (c.Status() != manifold::Manifold::Error::NoError) {
 	    bu_log("Boolean op failure! (face)\n");
 	    return -1;
@@ -642,12 +638,6 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
     }
     if (!quiet_mode)
 	bu_log("Processing %zd faces... done.\n" , bot->num_faces);
-#if 0
-    if (c.Status() != manifold::Manifold::Error::NoError) {
-	bu_log("Boolean op failure!\n");
-	return -1;
-    }
-#endif
 
     manifold::MeshGL64 rmesh;
     rmesh.tolerance = mtol;
@@ -670,6 +660,8 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
     for (size_t j = 0; j < rmesh.triVerts.size(); j++)
 	rbot->faces[j] = rmesh.triVerts[j];
     *obot = rbot;
+
+    bu_log("Output BoT has %ld vertices and %ld faces\n", rbot->num_vertices, rbot->num_faces);
 
     if (input_bot != bot) {
 	rt_bot_internal_free(bot);
