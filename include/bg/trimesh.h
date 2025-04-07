@@ -229,6 +229,8 @@ struct bg_trimesh_optimization_settings {
 #define BG_TRIMESH_OPTIMIZATION_SETTINGS_INIT {0, 0.0, 0.0, 0}
 
 /**
+ * TODO - unimplemented
+ *
  * @brief
  * Return trimesh information for a 3D mesh that contains just the date needed
  * to represent in the mesh.  Used to finalize intermediate processing meshes

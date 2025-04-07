@@ -22,6 +22,20 @@
  * Given a plate mode bot, represent its volumetric thickness with
  * individual CSG primitives, then tessellate and combine them to
  * make an evaluated representation of the plate mode volume.
+ *
+ * TODO - it appears that older versions of Manifold were more or less
+ * accidentally ignoring super-long-and-thin triangle faces, which avoided some
+ * severe performance penalty cases.  Need to implement an explicit
+ * "pre-boolean" filtering on our end for newer Manifold versions that lets us
+ * skip components in a similar fashion.  (bg_trimesh_decimate may suffice -
+ * at any rate, that's the first thing to try.)
+ *
+ * Also, older Manifold versions would ignore "error" empty manifolds and
+ * proceed with the boolean treating them as empty inputs, but newer versions
+ * propagate the error - this means we need to catch cases where our inputs
+ * wind up not giving us a manifold (feeding in degenerate edge segments, for
+ * example) and not use them in the boolean - if we do, we wind up wiping out
+ * some of our output geometry with the errors.
  */
 
 #include "common.h"
@@ -36,6 +50,7 @@
 #include "bu/time.h"
 #include "bn/tol.h"
 #include "bg/defines.h"
+#include "bg/trimesh.h"
 #include "rt/defines.h"
 #include "rt/db5.h"
 #include "rt/db_internal.h"
@@ -202,29 +217,130 @@ edge_cyl(point_t **verts, int **faces, int *vert_cnt, int *face_cnt, point_t p1,
     return 0;
 }
 
+static struct rt_bot_internal *
+collapse_faces(struct rt_bot_internal *bot, fastf_t working_tol)
+{
+    if (NEAR_ZERO(working_tol, VUNITIZE_TOL))
+	return bot;
+
+    // Do the initial decimation
+    int *ofaces = NULL;
+    int n_ofaces = 0;
+    struct bg_trimesh_decimation_settings s = BG_TRIMESH_DECIMATION_SETTINGS_INIT;
+    s.feature_size = working_tol;
+    int ret = bg_trimesh_decimate(&ofaces, &n_ofaces, bot->faces, (int)bot->num_faces, (point_t *)bot->vertices, (int)bot->num_vertices, &s);
+    if (bu_vls_strlen(&s.msgs)) {
+	bu_log("%s", bu_vls_cstr(&s.msgs));
+    }
+    bu_vls_free(&s.msgs);
+
+    // If didn't work, we're done
+    if (ret != BRLCAD_OK) {
+	bu_free(ofaces, "ofaces");
+	return bot;
+    }
+
+    // bg_trimesh_decimate will filter out degenerate faces, but we still need
+    // to trim out any unused points.
+    int *gcfaces = NULL;
+    point_t *opnts = NULL;
+    int n_opnts;
+    int n_gcfaces = bg_trimesh_3d_gc(&gcfaces, &opnts, &n_opnts, ofaces, n_ofaces, (point_t *)bot->vertices);
+
+    // If garbage collection didn't work, we're done
+    if (n_gcfaces != n_ofaces) {
+	bu_free(gcfaces, "gcfaces");
+	bu_free(opnts , "opnts");
+	bu_free(ofaces, "ofaces");
+	return bot;
+    }
+
+    // We have our new input bot
+    bu_log("New input BoT has %d vertices and %d faces, merge_tol = %f\n", n_opnts, n_gcfaces, s.feature_size);
+
+    // Indices may be updated after gc, so the old array is obsolete
+    bu_free(ofaces, "ofaces");
+
+    // New input bot
+    struct rt_bot_internal *input_bot;
+    BU_ALLOC(input_bot, struct rt_bot_internal);
+    input_bot->magic = RT_BOT_INTERNAL_MAGIC;
+    input_bot->mode = input_bot->mode;
+    // We're not mapping plate mode thickness info at the moment, so we
+    // can't persist a plate mode type
+    if (input_bot->mode == RT_BOT_PLATE || input_bot->mode == RT_BOT_PLATE_NOCOS)
+	input_bot->mode = RT_BOT_SURFACE;
+    input_bot->orientation = input_bot->orientation;
+    // We changed the faces, but we still need to set their thicknesses
+    input_bot->thickness = (fastf_t *)bu_calloc(n_ofaces, sizeof(fastf_t), "thickness array");
+    for (int i = 0; i < n_ofaces; i++)
+	input_bot->thickness[i] = bot->thickness[0];
+    input_bot->face_mode = NULL; // Face mode doesn't matter here - we can only extrude using one method
+    input_bot->num_faces = n_ofaces;
+    input_bot->num_vertices = n_opnts;
+    input_bot->faces = gcfaces;
+    input_bot->vertices = (fastf_t *)opnts;
+
+    return input_bot;
+}
+
 int
-rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, int round_outer_edges, int quiet_mode)
+rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input_bot, int round_outer_edges, int quiet_mode, fastf_t rel_tol, fastf_t abs_tol)
 {
     double mtol = std::numeric_limits<float>::min();
+    struct rt_bot_internal *bot = input_bot;
     if (!obot || !bot)
 	return 1;
 
     if (bot->mode != RT_BOT_PLATE)
 	return 1;
 
-    // Check for at least 1 non-zero thickness, or there's no volume to define
+    // Check for at least 1 non-zero thickness, or there's no volume to define.
+    // While we're at it see if we have variable thickness - if we do, we can't
+    // simplify the BoT up front.
     bool have_solid = false;
+    bool is_uniform = true;
     for (size_t i = 0; i < bot->num_faces; i++) {
-	if (bot->thickness[i] > VUNITIZE_TOL) {
+	if (bot->thickness[i] > VUNITIZE_TOL)
 	    have_solid = true;
-	    break;
-	}
+	if (!NEAR_EQUAL(bot->thickness[i], bot->thickness[0], VUNITIZE_TOL))
+	    is_uniform = false;
     }
 
     // If there's no volume, there's nothing to produce
     if (!have_solid) {
 	*obot = NULL;
 	return 0;
+    }
+
+    // If we have a non-zero rel_tol or abs_tol and uniform thickness,
+    // pre-process the mesh to try and filter out near degenerate inputs.
+    // Those can have serious boolean evaluation performance implications and
+    // contribute virtually nothing to the final shape (such features also
+    // seriously inflate triangle counts for essentially no gain.)
+    if (is_uniform && (!NEAR_ZERO(rel_tol, VUNITIZE_TOL) || !NEAR_ZERO(abs_tol, VUNITIZE_TOL))) {
+
+	fastf_t working_tol = abs_tol;
+	if (NEAR_ZERO(abs_tol, VUNITIZE_TOL)) {
+	    // If our absolute tolerance is near zero, then we need to
+	    // calculate our value using rel_tol - interpreted as a percentage
+	    // of the diagonal length of the bounding box.
+	    point_t bbmin = VINIT_ZERO;
+	    point_t bbmax = VINIT_ZERO;
+	    if (bg_trimesh_aabb(&bbmin, &bbmax, bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices)) {
+		working_tol = 0.0;
+	    } else {
+		working_tol = DIST_PNT_PNT(bbmax, bbmin) * rel_tol;
+	    }
+	}
+
+	// Once we have our working tolerance, that distance will be used to
+	// create "bins" and vertices will be grouped within them - then any
+	// bin with more than one vertex within it will replace all references
+	// to vertices in that bin with references to the vertex closest to the
+	// center point of the bin.  The mesh will then be processed to remove
+	// any faces that have become degenerate.
+	bot = collapse_faces(bot, working_tol);
     }
 
 #if 0
@@ -323,6 +439,13 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	    }
 	    return -1;
 	}
+#if 0
+	if (c.Status() != manifold::Manifold::Error::NoError) {
+	    bu_log("Boolean op failure! (vert)\n");
+	    return -1;
+	}
+#endif
+
     }
     if (!quiet_mode)
 	bu_log("Processing %zd vertices... done.\n" , verts.size());
@@ -371,6 +494,12 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	    bu_free(faces, "faces");
 
 	manifold::Manifold right(rcc_m);
+	// If we couldn't make the cylinder, skip
+	if (right.Status() != manifold::Manifold::Error::NoError) {
+	    bu_log("Warning - failed to generate manifold edge cyl - skipping!\n");
+	    continue;
+	}
+
 	try {
 	    c += right;
 	} catch (const std::exception &e) {
@@ -380,7 +509,12 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	    }
 	    return -1;
 	}
-
+#if 0
+	if (c.Status() != manifold::Manifold::Error::NoError) {
+	    bu_log("Boolean op failure! (edge)\n");
+	    return -1;
+	}
+#endif
 	ecnt++;
 	elapsed = bu_gettime() - start;
 	seconds = elapsed / 1000000.0;
@@ -475,6 +609,11 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	    arb_m.triVerts.insert(arb_m.triVerts.end(), faces[3*j+2]);
 	}
 	manifold::Manifold right(arb_m);
+	// If we couldn't make the arb, skip
+	if (right.Status() != manifold::Manifold::Error::NoError) {
+	    bu_log("Warning - failed to generate manifold face arb - skipping!\n");
+	    continue;
+	}
 
 	try {
 	    c += right;
@@ -485,7 +624,12 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	    }
 	    return -1;
 	}
-
+#if 0
+	if (c.Status() != manifold::Manifold::Error::NoError) {
+	    bu_log("Boolean op failure! (face)\n");
+	    return -1;
+	}
+#endif
 	fcnt++;
 	elapsed = bu_gettime() - start;
 	seconds = elapsed / 1000000.0;
@@ -498,10 +642,17 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     }
     if (!quiet_mode)
 	bu_log("Processing %zd faces... done.\n" , bot->num_faces);
+#if 0
+    if (c.Status() != manifold::Manifold::Error::NoError) {
+	bu_log("Boolean op failure!\n");
+	return -1;
+    }
+#endif
 
     manifold::MeshGL64 rmesh;
     rmesh.tolerance = mtol;
     rmesh = c.GetMeshGL64();
+
     struct rt_bot_internal *rbot;
     BU_GET(rbot, struct rt_bot_internal);
     rbot->magic = RT_BOT_INTERNAL_MAGIC;
@@ -519,6 +670,12 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     for (size_t j = 0; j < rmesh.triVerts.size(); j++)
 	rbot->faces[j] = rmesh.triVerts[j];
     *obot = rbot;
+
+    if (input_bot != bot) {
+	rt_bot_internal_free(bot);
+	bu_free(bot, "bot");
+    }
+
     return 0;
 }
 
