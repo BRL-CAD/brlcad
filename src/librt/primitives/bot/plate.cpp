@@ -227,6 +227,23 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	return 0;
     }
 
+#if 0
+    // Debugging code to capture an OBJ mesh of the input in a format
+    // Manifold can read for debugging
+    manifold::MeshGL64 imesh;
+    for (size_t i = 0; i < bot->num_vertices; i++) {
+	imesh.vertProperties.insert(imesh.vertProperties.end(), bot->vertices[3*i+0]);
+	imesh.vertProperties.insert(imesh.vertProperties.end(), bot->vertices[3*i+1]);
+	imesh.vertProperties.insert(imesh.vertProperties.end(), bot->vertices[3*i+2]);
+    }
+    for (size_t i = 0; i < bot->num_faces; i++) {
+	imesh.triVerts.insert(imesh.triVerts.end(), bot->faces[3*i]);
+	imesh.triVerts.insert(imesh.triVerts.end(), bot->faces[3*i+1]);
+	imesh.triVerts.insert(imesh.triVerts.end(), bot->faces[3*i+2]);
+    }
+    imesh.WriteOBJ("input_mesh.obj");
+#endif
+
     // OK, we have volume.  Now we need to build up the manifold definition
     // using unioned CSG elements
     manifold::Manifold c;
@@ -292,7 +309,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	point_t v;
 	double r = ((double)verts_thickness[*v_it]/(double)(verts_fcnt[*v_it]));
 	// Make a sph at the vertex point with a radius based on the thickness
-	VMOVE(v, &bot->vertices[3**v_it]);
+	VMOVE(v, &bot->vertices[3*(*v_it)]);
 
 	manifold::Manifold sph = manifold::Manifold::Sphere(r, 8);
 	manifold::Manifold right = sph.Translate(linalg::vec<fastf_t, 3>(v[0], v[1], v[2]));
