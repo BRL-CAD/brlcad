@@ -196,7 +196,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 
     if (!comb_tree) {
 	struct rt_bot_internal *obot;
-	int ret = rt_bot_plate_to_vol(&obot, bot, round_edges, quiet_mode, 0, 0);
+	int ret = rt_bot_plate_to_vol(&obot, bot, round_edges, quiet_mode, 0.1, 0);
 	if (ret != BRLCAD_OK) {
 	    if (!quiet_mode)
 		bu_vls_printf(gb->gedp->ged_result_str, "Volumetric conversion failed");
