@@ -196,10 +196,10 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     }
 
     if (!comb_tree) {
-	struct rt_bot_internal *obot;
+	struct rt_bot_internal *obot = NULL;
 	fastf_t bot_area = bg_trimesh_area(bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices);
-	int ret = rt_bot_plate_to_vol(&obot, bot, round_edges, quiet_mode, 0.1*bot_area);
-	if (ret != BRLCAD_OK) {
+	int ret = rt_bot_plate_to_vol(&obot, bot, round_edges, quiet_mode, 0.01*bot_area, 0.2);
+	if (ret != BRLCAD_OK || !obot) {
 	    if (!quiet_mode)
 		bu_vls_printf(gb->gedp->ged_result_str, "Volumetric conversion failed");
 	    return BRLCAD_ERROR;
