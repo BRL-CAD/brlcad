@@ -301,8 +301,14 @@ gsh_db_search_callback(int argc, const char *argv[], void *UNUSED(u1), void *u2)
     // Make sure the result string buffer is clear
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    // Make a copy of the argv array
+    char **av = bu_argv_dup(argc, argv);
+
     // Do the actual command execution
-    int gret = ged_exec(gedp, argc, argv);
+    int gret = ged_exec(gedp, argc, (const char **)av);
+
+    // Free argv array
+    bu_argv_free(argc, av);
 
     // Immediately report the output, if any - we're not waiting for the
     // overall completion of the entire search command to provide user feedback
