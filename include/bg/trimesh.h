@@ -141,6 +141,19 @@ BG_EXPORT extern struct bg_trimesh_halfedge * bg_trimesh_generate_edge_list(int 
 BG_EXPORT extern int
 bg_trimesh_aabb(point_t *min, point_t *max, const int *faces, size_t num_faces, const point_t *p, size_t num_pnts);
 
+/**
+ * @brief
+ * Calculate the surface area of a triangle mesh.
+ *
+ * @param[in] faces array of trimesh faces
+ * @param[in] num_faces size of faces array
+ * @param[in] p array that holds the points defining the trimesh
+ * @param[in] num_pnts size of pnts array
+ *
+ * @return -1 if error, else area of mesh in millimeters
+ */
+BG_EXPORT extern fastf_t
+bg_trimesh_area(const int *faces, size_t num_faces, const point_t *p, size_t num_pnts);
 
 
 /* Structure holding user-adjustable decimation settings */

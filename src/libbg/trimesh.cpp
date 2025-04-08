@@ -797,6 +797,25 @@ int bg_trimesh_hanging_nodes(int num_vertices, int num_faces, fastf_t *vertices,
     return hanging_nodes;
 }
 
+fastf_t
+bg_trimesh_area(const int *faces, size_t num_faces, const point_t *p, size_t num_pnts)
+{
+    if (!faces || !p)
+	return -1;
+    if (!num_faces || !num_pnts)
+	return 0.0;
+
+    fastf_t area = 0.0;
+    for (size_t i = 0; i < num_faces; i++) {
+        point_t pt[3];
+	for (size_t j = 0; j < 3; j++)
+	    VMOVE(pt[j], p[faces[i*3+j]]);
+
+        area += bg_area_of_triangle((const fastf_t *)&pt[0], (const fastf_t *)&pt[1], (const fastf_t *)&pt[2]);
+    }
+
+    return area;
+}
 
 int
 bg_trimesh_aabb(point_t *min, point_t *max, const int *faces, size_t num_faces, const point_t *p, size_t num_pnts)

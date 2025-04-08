@@ -353,7 +353,12 @@ brlcad_add_test(NAME bg_trimesh_sync  COMMAND bg_trimesh_sync)
 
 brlcad_addexec(bg_tri_area tri_area.c "libbg;libbn;libbu" TEST)
 
+
 #BRLCAD_ADD_TEST(NAME bg_tri_area  COMMAND bg_tri_area)
+
+brlcad_addexec(bg_trimesh_area trimesh_area.c "libbg;libbn;libbu" TEST)
+
+#BRLCAD_ADD_TEST(NAME bg_trimesh_area  COMMAND bg_trimesh_area)
 
 cmakefiles(
   bg_test.c.in
