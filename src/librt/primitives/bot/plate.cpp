@@ -287,7 +287,7 @@ collapse_faces(struct rt_bot_internal *bot, fastf_t working_tol)
 }
 
 int
-rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input_bot, int round_outer_edges, int quiet_mode, fastf_t rel_tol, fastf_t abs_tol)
+rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input_bot, int round_outer_edges, int quiet_mode, fastf_t max_area_delta)
 {
     double mtol = std::numeric_limits<float>::min();
     struct rt_bot_internal *bot = input_bot;
@@ -315,34 +315,41 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 	return 0;
     }
 
-    // If we have a non-zero rel_tol or abs_tol and uniform thickness,
+    // If we have a non-zero max_area_delta and uniform thickness,
     // pre-process the mesh to try and filter out near degenerate inputs.
     // Those can have serious boolean evaluation performance implications and
     // contribute virtually nothing to the final shape (such features also
     // seriously inflate triangle counts for essentially no gain.)
-    if (is_uniform && (!NEAR_ZERO(rel_tol, VUNITIZE_TOL) || !NEAR_ZERO(abs_tol, VUNITIZE_TOL))) {
+    if (is_uniform && !NEAR_ZERO(max_area_delta, VUNITIZE_TOL)) {
 
-	fastf_t working_tol = abs_tol;
-	if (NEAR_ZERO(abs_tol, VUNITIZE_TOL)) {
-	    // If our absolute tolerance is near zero, then we need to
-	    // calculate our value using rel_tol - interpreted as a percentage
-	    // of the diagonal length of the bounding box.
-	    point_t bbmin = VINIT_ZERO;
-	    point_t bbmax = VINIT_ZERO;
-	    if (!bg_trimesh_aabb(&bbmin, &bbmax, bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices)) {
-		fastf_t rtol = DIST_PNT_PNT(bbmax, bbmin) * rel_tol;
-		working_tol = (NEAR_ZERO(abs_tol, VUNITIZE_TOL) || rtol < abs_tol) ? rtol : abs_tol;
+	// Calculate our initial tolerance using one tenth of the length of the
+	// diagonal of the bounding box as a starting point, and reducing from
+	// there if the change in area is larger than the user specified max.
+	point_t bbmin = VINIT_ZERO;
+	point_t bbmax = VINIT_ZERO;
+	if (!bg_trimesh_aabb(&bbmin, &bbmax, bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices)) {
+
+	    fastf_t working_tol = DIST_PNT_PNT(bbmax, bbmin) * 0.1;
+
+	    // Create "bins" and group vertices into them. Any bin with more
+	    // than one vertex within it will replace all references to
+	    // vertices in that bin with references to the vertex closest to
+	    // the center point of the bin.  The mesh will then be processed to
+	    // remove any faces that have become degenerate.
+	    fastf_t orig_area = bg_trimesh_area(bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices);
+	    struct rt_bot_internal *nbot = collapse_faces(bot, working_tol);
+	    fastf_t narea = bg_trimesh_area(nbot->faces, nbot->num_faces, (const point_t *)nbot->vertices, nbot->num_vertices);
+	    bu_log("original area: %g, new area: %g: area delta: %g%%\n", orig_area, narea, 100*(orig_area - narea)/orig_area);
+	    while (!NEAR_EQUAL(orig_area, narea, max_area_delta)) {
+		rt_bot_internal_free(nbot);
+		bu_free(nbot, "nbot");
+		working_tol *= 0.5;
+		nbot = collapse_faces(bot, working_tol);
+		narea = bg_trimesh_area(nbot->faces, nbot->num_faces, (const point_t *)nbot->vertices, nbot->num_vertices);
+		bu_log("original area: %g, new area: %g: area delta: %g%%\n", orig_area, narea, 100*(orig_area - narea)/orig_area);
 	    }
+	    bot = nbot;
 	}
-
-	// Once we have our working tolerance, that distance will be used to
-	// create "bins" and vertices will be grouped within them - then any
-	// bin with more than one vertex within it will replace all references
-	// to vertices in that bin with references to the vertex closest to the
-	// center point of the bin.  The mesh will then be processed to remove
-	// any faces that have become degenerate.
-	if (!NEAR_ZERO(working_tol, VUNITIZE_TOL))
-	    bot = collapse_faces(bot, working_tol);
     }
 
 #if 0
