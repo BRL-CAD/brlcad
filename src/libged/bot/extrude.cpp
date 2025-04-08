@@ -49,6 +49,7 @@
 
 extern "C" {
 #include "vmath.h"
+#include "bg/trimesh.h"
 #include "brep.h"
 #include "rt/primitives/bot.h"
 #include "wdb.h"
@@ -196,7 +197,8 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 
     if (!comb_tree) {
 	struct rt_bot_internal *obot;
-	int ret = rt_bot_plate_to_vol(&obot, bot, round_edges, quiet_mode, 0.1, 0);
+	fastf_t bot_area = bg_trimesh_area(bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices);
+	int ret = rt_bot_plate_to_vol(&obot, bot, round_edges, quiet_mode, 0.1*bot_area);
 	if (ret != BRLCAD_OK) {
 	    if (!quiet_mode)
 		bu_vls_printf(gb->gedp->ged_result_str, "Volumetric conversion failed");
