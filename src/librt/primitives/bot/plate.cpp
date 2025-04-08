@@ -232,7 +232,7 @@ collapse_faces(struct rt_bot_internal *bot, fastf_t working_tol)
     s.feature_size = working_tol;
     int ret = bg_trimesh_decimate(&ofaces, &n_ofaces, bot->faces, (int)bot->num_faces, (point_t *)bot->vertices, (int)bot->num_vertices, &s);
     if (bu_vls_strlen(&s.msgs)) {
-	bu_log("%s", bu_vls_cstr(&s.msgs));
+	//bu_log("%s", bu_vls_cstr(&s.msgs));
     }
     bu_vls_free(&s.msgs);
 
@@ -258,7 +258,7 @@ collapse_faces(struct rt_bot_internal *bot, fastf_t working_tol)
     }
 
     // We have our new input bot
-    bu_log("New input BoT has %d vertices and %d faces, merge_tol = %f\n", n_opnts, n_gcfaces, s.feature_size);
+    //bu_log("New input BoT has %d vertices and %d faces, merge_tol = %f\n", n_opnts, n_gcfaces, s.feature_size);
 
     // Indices may be updated after gc, so the old array is obsolete
     bu_free(ofaces, "ofaces");
@@ -287,7 +287,7 @@ collapse_faces(struct rt_bot_internal *bot, fastf_t working_tol)
 }
 
 int
-rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input_bot, int round_outer_edges, int quiet_mode, fastf_t max_area_delta)
+rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input_bot, int round_outer_edges, int quiet_mode, fastf_t max_area_delta, fastf_t min_tri_threshold)
 {
     double mtol = std::numeric_limits<float>::min();
     struct rt_bot_internal *bot = input_bot;
@@ -323,50 +323,58 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
     if (is_uniform && !NEAR_ZERO(max_area_delta, VUNITIZE_TOL)) {
 
 	// Calculate our initial tolerance using one tenth of the length of the
-	// diagonal of the bounding box as a starting point, and reducing from
-	// there if the change in area is larger than the user specified max.
+	// diagonal of the bounding box as a starting point, and tighten vertex
+	// merging criteria from there if the change in area is larger than the
+	// user allowed maximum.
 	point_t bbmin = VINIT_ZERO;
 	point_t bbmax = VINIT_ZERO;
 	if (!bg_trimesh_aabb(&bbmin, &bbmax, bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices)) {
 
 	    fastf_t working_tol = DIST_PNT_PNT(bbmax, bbmin) * 0.1;
 
-	    // Create "bins" and group vertices into them. Any bin with more
-	    // than one vertex within it will replace all references to
-	    // vertices in that bin with references to the vertex closest to
-	    // the center point of the bin.  The mesh will then be processed to
-	    // remove any faces that have become degenerate.
 	    fastf_t orig_area = bg_trimesh_area(bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices);
-	    struct rt_bot_internal *nbot = collapse_faces(bot, working_tol);
-	    fastf_t narea = bg_trimesh_area(nbot->faces, nbot->num_faces, (const point_t *)nbot->vertices, nbot->num_vertices);
-	    bu_log("original area: %g, new area: %g: area delta: %g%%\n", orig_area, narea, 100*(orig_area - narea)/orig_area);
-	    while (!NEAR_EQUAL(orig_area, narea, max_area_delta)) {
-		rt_bot_internal_free(nbot);
-		bu_free(nbot, "nbot");
+	    fastf_t narea = 0;
+	    fastf_t pdelta = 1.0;
+
+	    while (pdelta > min_tri_threshold) {
+		struct rt_bot_internal *cbot = collapse_faces(bot, working_tol);
+		if (cbot == input_bot)
+		    break;
+
+		// We have a new candidate - check its area and the triangle delta
+		narea = bg_trimesh_area(cbot->faces, cbot->num_faces, (const point_t *)cbot->vertices, cbot->num_vertices);
+		pdelta = ((fastf_t)bot->num_faces - (fastf_t)cbot->num_faces)/(fastf_t)bot->num_faces;
+
+		bu_log("face cnt: %zd -> %zd:  Δ: -%g%%\n", bot->num_faces, cbot->num_faces, 100*pdelta);
+		bu_log("area: %g -> %g:  Δ: %g%%\n", orig_area, narea, 100*(orig_area - narea)/orig_area);
+
+
+		// If we satisfy the criteria, declare victory
+		if (pdelta > min_tri_threshold && NEAR_EQUAL(orig_area, narea, max_area_delta)) {
+		    bot = cbot;
+		    break;
+		}
+
+		// One way or the other, we're not using cbot - free it up
+		rt_bot_internal_free(cbot);
+		bu_free(cbot, "cbot");
+
+		// If we're not getting enough reduction in face cnt, give up
+		if (pdelta < .2)
+		   break;
+
+		// If we don't have a winner yet, but we haven't hit the
+		// stopping criteria, continue
 		working_tol *= 0.5;
-		nbot = collapse_faces(bot, working_tol);
-		narea = bg_trimesh_area(nbot->faces, nbot->num_faces, (const point_t *)nbot->vertices, nbot->num_vertices);
-		bu_log("original area: %g, new area: %g: area delta: %g%%\n", orig_area, narea, 100*(orig_area - narea)/orig_area);
 	    }
-	    bot = nbot;
 	}
     }
 
 #if 0
-    // Debugging code to capture an OBJ mesh of the input in a format
-    // Manifold can read for debugging
-    manifold::MeshGL64 imesh;
-    for (size_t i = 0; i < bot->num_vertices; i++) {
-	imesh.vertProperties.insert(imesh.vertProperties.end(), bot->vertices[3*i+0]);
-	imesh.vertProperties.insert(imesh.vertProperties.end(), bot->vertices[3*i+1]);
-	imesh.vertProperties.insert(imesh.vertProperties.end(), bot->vertices[3*i+2]);
+    if (bot == input_bot) {
+	*obot = NULL;
+	return 0;
     }
-    for (size_t i = 0; i < bot->num_faces; i++) {
-	imesh.triVerts.insert(imesh.triVerts.end(), bot->faces[3*i]);
-	imesh.triVerts.insert(imesh.triVerts.end(), bot->faces[3*i+1]);
-	imesh.triVerts.insert(imesh.triVerts.end(), bot->faces[3*i+2]);
-    }
-    imesh.WriteOBJ("input_mesh.obj");
 #endif
 
     // OK, we have volume.  Now we need to build up the manifold definition
