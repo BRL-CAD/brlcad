@@ -55,12 +55,12 @@ enum class KState {
     //Element_Mass_Matrix,
     //Element_Mass_Part,
     //Element_Plotel,
-    //Element_Seatbealt,
-    //Element_Seatbealt_Accelerometer,
-    //Element_Seatbealt_Pretensioner,
-    //Element_Seatbealt_Retractor,
-    //Element_Seatbealt_Sensor,
-    //Element_Seatbealt_Slipring,
+    //Element_Seatbelt,
+    //Element_Seatbelt_Accelerometer,
+    //Element_Seatbelt_Pretensioner,
+    //Element_Seatbelt_Retractor,
+    //Element_Seatbelt_Sensor,
+    //Element_Seatbelt_Slipring,
     Element_Shell,
     //Element_Shell_Nurbs_Patch,
     //Element_Shell_Source_Sink,
@@ -631,32 +631,32 @@ bool parse_k
 			    }
 			    else if ((command.size() > 1) && (command[1] == "SEATBELT")) {
 				if ((command.size() > 2) && (command[2] == "ACCELEROMETER")) {
-				    //state = KState::Element_Seatbealt_Accelerometer;
+				    //state = KState::Element_Seatbelt_Accelerometer;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "PRETENSIONER")) {
-				    //state = KState::Element_Seatbealt_Pretensioner;
+				    //state = KState::Element_Seatbelt_Pretensioner;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "RETRACTOR")) {
-				    //state = KState::Element_Seatbealt_Retractor;
+				    //state = KState::Element_Seatbelt_Retractor;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "SENSOR")) {
-				    //state = KState::Element_Seatbealt_Sensor;
+				    //state = KState::Element_Seatbelt_Sensor;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else if ((command.size() > 2) && (command[2] == "SLIPRING")) {
-				    //state = KState::Element_Seatbealt_Slipring;
+				    //state = KState::Element_Seatbelt_Slipring;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else {
-				    //state = KState::Element_Seatbealt;
+				    //state = KState::Element_Seatbelt;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 				}
