@@ -345,13 +345,14 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 		narea = bg_trimesh_area(cbot->faces, cbot->num_faces, (const point_t *)cbot->vertices, cbot->num_vertices);
 		pdelta = ((fastf_t)bot->num_faces - (fastf_t)cbot->num_faces)/(fastf_t)bot->num_faces;
 
-		bu_log("face cnt: %zd -> %zd:  Δ: -%g%%\n", bot->num_faces, cbot->num_faces, 100*pdelta);
-		bu_log("area: %g -> %g:  Δ: %g%%\n", orig_area, narea, 100*(orig_area - narea)/orig_area);
-
 
 		// If we satisfy the criteria, declare victory
 		if (pdelta > min_tri_threshold && NEAR_EQUAL(orig_area, narea, max_area_delta)) {
 		    bot = cbot;
+		    if (!quiet_mode) {
+			bu_log("face cnt: %zd -> %zd:  Δ: -%g%%\n", bot->num_faces, cbot->num_faces, 100*pdelta);
+			bu_log("area: %g -> %g:  Δ: %g%%\n", orig_area, narea, 100*(orig_area - narea)/orig_area);
+		    }
 		    break;
 		}
 
@@ -369,13 +370,6 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 	    }
 	}
     }
-
-#if 0
-    if (bot == input_bot) {
-	*obot = NULL;
-	return 0;
-    }
-#endif
 
     // OK, we have volume.  Now we need to build up the manifold definition
     // using unioned CSG elements
@@ -676,7 +670,8 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 	rbot->faces[j] = rmesh.triVerts[j];
     *obot = rbot;
 
-    bu_log("Output BoT has %ld vertices and %ld faces\n", rbot->num_vertices, rbot->num_faces);
+    if (!quiet_mode)
+	bu_log("Extrusion has %ld vertices and %ld faces\n", rbot->num_vertices, rbot->num_faces);
 
     if (input_bot != bot) {
 	rt_bot_internal_free(bot);

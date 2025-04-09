@@ -33,9 +33,6 @@
 
 #ifdef USE_MANIFOLD
 #include "manifold/manifold.h"
-#ifdef USE_ASSETIMPORT
-#include "manifold/meshIO.h"
-#endif
 #endif
 
 #include "bu/app.h"
@@ -1563,7 +1560,7 @@ bool_meshes(
     manifold::OpType b_op,
     double *a_coords, int a_ccnt, unsigned int *a_tris, int a_tricnt,
     double *b_coords, int b_ccnt, unsigned int *b_tris, int b_tricnt,
-    const char *lname, const char *rname)
+    const char *UNUSED(lname), const char *UNUSED(rname))
 {
     if (!o_coords || !o_ccnt || !o_tris || !o_tricnt)
 	return -1;
@@ -1593,10 +1590,11 @@ bool_meshes(
 #if 0
 #ifdef USE_ASSETIMPORT
     std::cerr << lname << " " << (int)b_op << " " << rname << "\n";
-    std::remove("left.glb");
-    std::remove("right.glb");
-    manifold::ExportMesh(std::string("left.glb"), a_manifold.GetMeshGL(), {});
-    manifold::ExportMesh(std::string("right.glb"), b_manifold.GetMeshGL(), {});
+    std::remove("left.obj"); std::remove("right.obj");
+    std::ofstream lofile, rofile;
+    lofile.open("left.obj"); rofile.open("right.obj");
+    a_manifold.WriteOBJ(lofile); b_manifold.WriteOBJ(rofile);
+    lofile.close(); rofile.close();
 #endif
 #endif
 
@@ -1609,13 +1607,17 @@ bool_meshes(
 	}
     } catch (...) {
 	bu_log("Manifold boolean library threw failure\n");
-#ifdef USE_ASSETIMPORT
+#if 0
 	const char *evar = getenv("GED_MANIFOLD_DEBUG");
 	// write out the failing inputs to files to aid in debugging
 	if (evar && strlen(evar)) {
 	    std::cerr << "Manifold op: " << (int)b_op << "\n";
-	    manifold::ExportMesh(std::string(lname)+std::string(".glb"), a_manifold.GetMeshGL(), {});
-	    manifold::ExportMesh(std::string(rname)+std::string(".glb"), b_manifold.GetMeshGL(), {});
+	    std::remove("left.obj"); std::remove("right.obj");
+	    std::ofstream lofile, rofile;
+	    lofile.open(std::string(lname)+std::string(".obj"));
+	    rofile.open(std::string(rname)+std::string(".obj"));
+	    a_manifold.WriteOBJ(lofile); b_manifold.WriteOBJ(rofile);
+	    lofile.close(); rofile.close();
 	    bu_exit(EXIT_FAILURE, "Exiting to avoid overwriting debug outputs from Manifold boolean failure.\n");
 	}
 #endif
