@@ -59,7 +59,7 @@
 #include "rt/nmg_conv.h"
 #include "rt/primitives/bot.h"
 
-#define VERIFY_BOOLEANS 1
+//#define VERIFY_BOOLEANS 1
 
 // TODO - investigate geogram's isotropic remeshing to see if it can help us
 // deal with plate mode bots having lots of long, super-thin triangles (they
@@ -348,11 +348,11 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 
 		// If we satisfy the criteria, declare victory
 		if (pdelta > min_tri_threshold && NEAR_EQUAL(orig_area, narea, max_area_delta)) {
-		    bot = cbot;
 		    if (!quiet_mode) {
 			bu_log("face cnt: %zd -> %zd:  Δ: -%g%%\n", bot->num_faces, cbot->num_faces, 100*pdelta);
 			bu_log("area: %g -> %g:  Δ: %g%%\n", orig_area, narea, 100*(orig_area - narea)/orig_area);
 		    }
+		    bot = cbot;
 		    break;
 		}
 
@@ -514,7 +514,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 	    return -1;
 	}
 
-#if VERIFY_BOOLEANS
+#ifdef VERIFY_BOOLEANS
 	if (c.Status() != manifold::Manifold::Error::NoError) {
 	    bu_log("Boolean op failure! (edge)\n");
 	    return -1;
@@ -572,6 +572,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 	/* 5 */ pts[12] = pnts[5][X]; pts[13] = pnts[5][Y]; pts[14] = pnts[5][Z];
 	/* 6 */ pts[15] = pnts[2][X]; pts[16] = pnts[2][Y]; pts[17] = pnts[2][Z];
 
+#if 0
 	// To minimize coplanarity with neighboring faces if the source BoT is
 	// planar, bump all points out very slightly from the arb center point.
 	point_t pcenter = VINIT_ZERO;
@@ -591,6 +592,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 	    VSCALE(bumpv, bumpv, 1 + VUNITIZE_TOL);
 	    VADD2(((point_t *)pts)[j], apnt, bumpv);
 	}
+#endif
 
 	int faces[24];
 	faces[ 0] = 0; faces[ 1] = 1; faces[ 2] = 4;  // 1 2 5
@@ -629,7 +631,7 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 	    }
 	    return -1;
 	}
-#if VERIFY_BOOLEANS
+#ifdef VERIFY_BOOLEANS
 	if (c.Status() != manifold::Manifold::Error::NoError) {
 	    bu_log("Boolean op failure! (face)\n");
 	    return -1;
