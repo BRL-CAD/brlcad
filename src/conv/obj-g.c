@@ -3193,7 +3193,6 @@ main(int argc, char **argv)
     struct tm *timep;
     char bot_orientation = RT_BOT_UNORIENTED;
     int fuse_vertices = 0;
-    RT_VLFREE_INIT();
     struct bu_list *vlfree = &rt_vlfree;
 
     bu_setprogname(argv[0]);

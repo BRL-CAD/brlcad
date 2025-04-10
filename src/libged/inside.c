@@ -907,7 +907,6 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
     plane_t planes[6];
     char *newname;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    RT_VLFREE_INIT();
     struct bu_list *vlfree = &rt_vlfree;
 
     /* initialize result */

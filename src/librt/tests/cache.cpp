@@ -585,8 +585,6 @@ main(int ac, char *av[])
 	}
     }
 
-    RT_UNIRESOURCE_INIT();
-
     switch (test_num) {
 	case 1:
 	    /* Serial prep API, 1 object */

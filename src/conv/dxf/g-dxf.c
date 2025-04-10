@@ -145,7 +145,6 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
     int tri_count=0;
     int color_num;
     int do_triangulate=0;
-    RT_VLFREE_INIT();
     struct bu_list *vlfree = &rt_vlfree;
 
     NMG_CK_REGION(r);

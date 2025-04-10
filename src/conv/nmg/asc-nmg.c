@@ -59,7 +59,6 @@ main(int argc, char **argv)
     char		*bfile = "nmg.g";
     FILE		*fpin;
     struct rt_wdb	*fpout;
-    RT_VLFREE_INIT();
     struct bu_list *vlfree = &rt_vlfree;
 
     if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {

@@ -118,7 +118,6 @@ main(int argc, char **argv)
     /* make empty NMG model */
     the_model = nmg_mm();
 
-    RT_VLFREE_INIT();
     struct bu_list *vlfree = &rt_vlfree;
 
     /* Get command line arguments. */

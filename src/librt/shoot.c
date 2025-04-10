@@ -678,7 +678,6 @@ rt_shootray(register struct application *ap)
 	ap->a_resource = &rt_uniresource;
 	if (RT_G_DEBUG)
 	    bu_log("rt_shootray:  defaulting a_resource to &rt_uniresource\n");
-	RT_UNIRESOURCE_INIT();
     }
     ss.ap = ap;
     rtip = ap->a_rt_i;
@@ -1341,7 +1340,6 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     if (ap->a_resource == RESOURCE_NULL) {
 	ap->a_resource = &rt_uniresource;
 	if (RT_G_DEBUG)bu_log("rt_cell_n_on_ray:  defaulting a_resource to &rt_uniresource\n");
-	RT_UNIRESOURCE_INIT();
     }
     ss.ap = ap;
     rtip = ap->a_rt_i;

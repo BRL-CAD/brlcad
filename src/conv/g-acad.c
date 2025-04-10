@@ -511,7 +511,6 @@ main(int argc, char **argv)
     tol.para = 1 - tol.perp;
 
     the_model = nmg_mm();
-    RT_VLFREE_INIT();
     struct bu_list *vlfree = &rt_vlfree;
 
     /* Get command line arguments. */

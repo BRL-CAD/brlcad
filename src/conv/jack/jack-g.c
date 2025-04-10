@@ -79,7 +79,6 @@ main(int argc, char **argv)
     struct rt_wdb	*fpout = NULL;
     size_t doti;
     int	c;
-    RT_VLFREE_INIT();
     struct bu_list *vlfree = &rt_vlfree;
 
     bu_setprogname(argv[0]);

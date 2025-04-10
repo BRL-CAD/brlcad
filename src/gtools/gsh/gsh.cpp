@@ -806,9 +806,6 @@ main(int argc, const char **argv)
 	bu_exit(EXIT_SUCCESS, NULL);
     }
 
-    /* Initialize vlfree, in case librt_init didn't end up getting called. */
-    RT_VLFREE_INIT();
-
     /* If anything went wrong during LIBGED initialization, let the user know */
     const char *ged_init_str = ged_init_msgs();
     if (strlen(ged_init_str)) {

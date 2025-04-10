@@ -527,7 +527,6 @@ obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
     tree_state.ts_m = &the_model;
 
     the_model = nmg_mm();
-    RT_VLFREE_INIT();
     state.vlfree = &rt_vlfree;
 
     /* Write out header */

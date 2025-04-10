@@ -371,7 +371,6 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
     int ret = 1;
 
     gcvwriter.write_region = nmg_to_assetimport;
-    RT_VLFREE_INIT();
     gcvwriter.vlfree = &rt_vlfree;
     gcvwriter.client_data = &state;
 

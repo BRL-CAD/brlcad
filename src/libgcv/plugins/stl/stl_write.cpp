@@ -417,7 +417,6 @@ stl_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
     /* make empty NMG model */
     state.the_model = nmg_mm();
-    RT_VLFREE_INIT();
     state.vlfree = &rt_vlfree;
 
     /* Walk indicated tree(s).  Each region will be output separately */

@@ -102,7 +102,6 @@ nmg_to_raw(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
     struct shell *s;
     struct vertex *v;
     char *region_name;
-    RT_VLFREE_INIT();
     struct bu_list *vlfree = (struct bu_list *)&rt_vlfree;
 
     NMG_CK_REGION(r);
@@ -227,7 +226,6 @@ main(int argc, char *argv[])
 
     bu_setlinebuf(stderr);
 
-    RT_VLFREE_INIT();
     gcvwriter.vlfree = &rt_vlfree;
 
     RT_DBTS_INIT(&tree_state);

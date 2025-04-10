@@ -223,7 +223,6 @@ main(int argc, char *argv[])
     tol.para = 1 - tol.perp;
 
     the_model = nmg_mm();
-    RT_VLFREE_INIT();
     struct bu_list *vlfree = &rt_vlfree;
 
     prog_name = argv[0];
@@ -798,7 +797,6 @@ void
 csg_leaf_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {
     struct rt_db_internal ip;
-    RT_VLFREE_INIT();
     struct bu_list *vlfree = &rt_vlfree;
 
     /* if this solid has already been output, don't do it again */

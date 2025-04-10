@@ -649,7 +649,6 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
     /* make empty NMG model */
     state.the_model = nmg_mm();
 
-    RT_VLFREE_INIT();
     state.vlfree = &rt_vlfree;
 
     if (!state.ply_write_options->separate) {

@@ -133,7 +133,6 @@ main(int argc, const char **argv)
 
     /* OK, from here on out we are actually going to be working with NIRT
      * itself.  Set up the initial environment */
-    RT_UNIRESOURCE_INIT();
 
     if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
 	bu_log("Unable to open db file %s\n", argv[0]);

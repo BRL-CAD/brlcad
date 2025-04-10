@@ -701,10 +701,6 @@ Rt_Init(Tcl_Interp *interp)
 {
     Tcl_PkgProvide(interp,  "Rt", brlcad_version());
 
-    /* If we haven't done librt_init yet, do the critical pieces */
-    RT_VLFREE_INIT();
-    RT_UNIRESOURCE_INIT();
-
     return TCL_OK;
 }
 

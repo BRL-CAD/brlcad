@@ -1112,7 +1112,6 @@ main(int argc, char **argv)
     struct wmember all_head;
     char *nastran_file = "Converted from NASTRAN file (stdin)";
 
-    RT_VLFREE_INIT();
     struct bu_list *vlfree = &rt_vlfree;
 
     bu_setprogname(argv[0]);

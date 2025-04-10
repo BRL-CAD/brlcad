@@ -75,9 +75,6 @@ main(int ac, char *av[]) {
 	return 2;
     }
 
-    /* Initialize rt_vlfree in case librt_init didn't get it */
-    RT_VLFREE_INIT();
-
     /* Open the temp file, then dbconcat argv[1] into it */
     bu_vls_sprintf(&fname, "%s/moss.g", av[1]);
     gedp = ged_open("db", bu_vls_cstr(&fname), 1);
