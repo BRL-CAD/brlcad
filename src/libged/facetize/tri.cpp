@@ -36,9 +36,6 @@
 #include <string.h>
 
 #include "manifold/manifold.h"
-#ifdef USE_ASSETIMPORT
-#include "manifold/meshIO.h"
-#endif
 
 #include "bu/app.h"
 #include "bu/path.h"
@@ -362,9 +359,8 @@ manifold_do_bool(
 		}
 	    } catch (...) {
 		facetize_log(s, 0, "Manifold boolean library threw failure\n");
-#if 0
-		const char *evar = getenv("GED_MANIFOLD_DEBUG");
 		// write out the failing inputs to files to aid in debugging
+		const char *evar = getenv("GED_MANIFOLD_DEBUG");
 		if (evar && strlen(evar)) {
 		    std::cerr << "Manifold op: " << (int)manifold_op << "\n";
 		    std::ofstream lofile, rofile;
@@ -374,19 +370,19 @@ manifold_do_bool(
 		    lofile.close(); rofile.close();
 		    bu_exit(EXIT_FAILURE, "Exiting to avoid overwriting debug outputs from Manifold boolean failure.");
 		}
-#endif
 		failed = 1;
 	    }
 
-#if 0
 	    // If we're debugging and need to capture glb for a "successful" case, these can be uncommented
-	    std::ofstream lofile, rofile, oofile;
-	    lofile.open(std::string(tl->tr_d.td_name)+std::string(".obj"));
-	    rofile.open(std::string(tr->tr_d.td_name)+std::string(".obj"));
-	    oofile.open(std::string("out-") + std::string(tl->tr_d.td_name)+std::to_string(op)+std::string(tr->tr_d.td_name)+std::string(".obj"));
-	    lm->WriteOBJ(lofile); rm->WriteOBJ(rofile); bool_out.WriteOBJ(oofile);
-	    lofile.close(); rofile.close(); oofile.close();
-#endif
+	    const char *evar = getenv("GED_MANIFOLD_DEBUG");
+	    if (evar && strlen(evar)) {
+		std::ofstream lofile, rofile, oofile;
+		lofile.open(std::string(tl->tr_d.td_name)+std::string(".obj"));
+		rofile.open(std::string(tr->tr_d.td_name)+std::string(".obj"));
+		oofile.open(std::string("out-") + std::string(tl->tr_d.td_name)+std::to_string(op)+std::string(tr->tr_d.td_name)+std::string(".obj"));
+		lm->WriteOBJ(lofile); rm->WriteOBJ(rofile); bool_out.WriteOBJ(oofile);
+		lofile.close(); rofile.close(); oofile.close();
+	    }
 
 	    if (!failed)
 		result = new manifold::Manifold(bool_out);

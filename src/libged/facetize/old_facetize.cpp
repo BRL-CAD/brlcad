@@ -25,15 +25,15 @@
 
 #include "common.h"
 
+#include <fstream>
+#include <iostream>
 #include <map>
 #include <set>
 #include <vector>
 
 #include <string.h>
 
-#ifdef USE_MANIFOLD
 #include "manifold/manifold.h"
-#endif
 
 #include "bu/app.h"
 #include "bu/env.h"
@@ -1560,8 +1560,9 @@ bool_meshes(
     manifold::OpType b_op,
     double *a_coords, int a_ccnt, unsigned int *a_tris, int a_tricnt,
     double *b_coords, int b_ccnt, unsigned int *b_tris, int b_tricnt,
-    const char *UNUSED(lname), const char *UNUSED(rname))
+    const char *lname, const char *rname)
 {
+    const char *evar = getenv("GED_MANIFOLD_DEBUG");
     if (!o_coords || !o_ccnt || !o_tris || !o_tricnt)
 	return -1;
 
@@ -1587,16 +1588,15 @@ bool_meshes(
 	return -1;
     }
 
-#if 0
-#ifdef USE_ASSETIMPORT
-    std::cerr << lname << " " << (int)b_op << " " << rname << "\n";
-    std::remove("left.obj"); std::remove("right.obj");
-    std::ofstream lofile, rofile;
-    lofile.open("left.obj"); rofile.open("right.obj");
-    a_manifold.WriteOBJ(lofile); b_manifold.WriteOBJ(rofile);
-    lofile.close(); rofile.close();
-#endif
-#endif
+
+    if (evar && strlen(evar)) {
+	std::cerr << lname << " " << (int)b_op << " " << rname << "\n";
+	std::remove("left.obj"); std::remove("right.obj");
+	std::ofstream lofile, rofile;
+	lofile.open("left.obj"); rofile.open("right.obj");
+	a_manifold.WriteOBJ(lofile); b_manifold.WriteOBJ(rofile);
+	lofile.close(); rofile.close();
+    }
 
     manifold::Manifold result;
     try {
@@ -1607,8 +1607,6 @@ bool_meshes(
 	}
     } catch (...) {
 	bu_log("Manifold boolean library threw failure\n");
-#if 0
-	const char *evar = getenv("GED_MANIFOLD_DEBUG");
 	// write out the failing inputs to files to aid in debugging
 	if (evar && strlen(evar)) {
 	    std::cerr << "Manifold op: " << (int)b_op << "\n";
@@ -1620,7 +1618,6 @@ bool_meshes(
 	    lofile.close(); rofile.close();
 	    bu_exit(EXIT_FAILURE, "Exiting to avoid overwriting debug outputs from Manifold boolean failure.\n");
 	}
-#endif
 	return -1;
     }
     manifold::MeshGL64 rmesh = result.GetMeshGL64();
@@ -2910,12 +2907,10 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct bu_l
 	ssize_t avail_mem = 0;
 	bu_ptbl_reset(ar2);
 
-#ifdef USE_MANIFOLD
 	if (!cmethod && (methods & FACETIZE_MANIFOLD)) {
 	    cmethod = FACETIZE_MANIFOLD;
 	    methods = methods & ~(FACETIZE_MANIFOLD);
 	}
-#endif
 
 	if (!cmethod && (methods & FACETIZE_NMGBOOL)) {
 	    cmethod = FACETIZE_NMGBOOL;
@@ -3346,12 +3341,7 @@ ged_facetize_old_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[17], "",  "max-pnts",      "#", &bu_opt_int,     &(opts->max_pnts),                "Maximum number of pnts to use when applying ray sampling methods.");
     BU_OPT(d[18], "B",  "",             "",  NULL,  &nonovlp_brep,              "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
     BU_OPT(d[19], "t",  "threshold",    "#",  &bu_opt_fastf_t, &(opts->nonovlp_threshold),  "EXPERIMENTAL: max ovlp threshold length.");
-#ifdef USE_MANIFOLD
-    BU_OPT(d[20],  "",  "MANIFOLD",           "",  NULL,  &(opts->manifold),          "Use the experimental MANIFOLD boolean evaluation");
-    BU_OPT_NULL(d[21]);
-#else
     BU_OPT_NULL(d[20]);
-#endif
 
     /* Poisson specific options */
     BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts->s_opts.depth),            "Maximum reconstruction depth (default 8)");
