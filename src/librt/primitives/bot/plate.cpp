@@ -59,12 +59,9 @@
 #include "rt/nmg_conv.h"
 #include "rt/primitives/bot.h"
 
-//#define VERIFY_BOOLEANS 1
-
-// TODO - investigate geogram's isotropic remeshing to see if it can help us
-// deal with plate mode bots having lots of long, super-thin triangles (they
-// seem to be really messing with performance in newer Manifold releases...)
-// https://github.com/BrunoLevy/geogram/wiki/Remeshing
+// TODO - newer Manifold has a way to generate cylinders, added for a regression
+// test related to this code - we may be able to replace edge_cyl with the Manifold
+// version and simplify our own code.
 
 static bool
 bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
@@ -514,12 +511,6 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 	    return -1;
 	}
 
-#ifdef VERIFY_BOOLEANS
-	if (c.Status() != manifold::Manifold::Error::NoError) {
-	    bu_log("Boolean op failure! (edge)\n");
-	    return -1;
-	}
-#endif
 	ecnt++;
 	elapsed = bu_gettime() - start;
 	seconds = elapsed / 1000000.0;
@@ -629,12 +620,6 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
 	    }
 	    return -1;
 	}
-#ifdef VERIFY_BOOLEANS
-	if (c.Status() != manifold::Manifold::Error::NoError) {
-	    bu_log("Boolean op failure! (face)\n");
-	    return -1;
-	}
-#endif
 	fcnt++;
 	elapsed = bu_gettime() - start;
 	seconds = elapsed / 1000000.0;
@@ -647,6 +632,14 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input
     }
     if (!quiet_mode)
 	bu_log("Processing %zd faces... done.\n" , bot->num_faces);
+
+    if (c.Status() != manifold::Manifold::Error::NoError) {
+	bu_log("Boolean op failure!\n");
+	// TODO - if debugging, re-run to generate specific failure
+	// inputs
+	return -1;
+    }
+
 
     manifold::MeshGL64 rmesh;
     rmesh.tolerance = mtol;
