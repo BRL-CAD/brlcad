@@ -77,6 +77,9 @@ bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip
     if (nbot->num_vertices < 3)
 	return BRLCAD_ERROR;
 
+    // TODO - investigate whether the preliminary decimation criteria we are
+    // trying for bot extrude make sense here too - the problem configurations
+    // we encountered in plate mode may also be present in manifold shapes...
     manifold::MeshGL64 bot_mesh;
     for (size_t j = 0; j < nbot->num_vertices*3 ; j++)
 	bot_mesh.vertProperties.insert(bot_mesh.vertProperties.end(), nbot->vertices[j]);
@@ -335,6 +338,11 @@ manifold_do_bool(
 
 	// Before we try a boolean, validate that our inputs satisfy Manifold's
 	// criteria.
+	//
+	//
+	// TODO - probably want to do a LOT less status checking - it can be VERY expensive
+	//
+	//
 	if (!lm || lm->Status() != manifold::Manifold::Error::NoError) {
 	    facetize_log(s, 0, "Error - left manifold invalid: %s\n", tl->tr_d.td_name);
 	    lm = NULL;
