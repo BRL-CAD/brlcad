@@ -27,9 +27,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * Update nirt(n) man page
 
-* Put back the initialization checks for rt_uniresource and
-  rt_vlfree - getting some reports that rt_init isn't working
-  as expected.
+* Adjust bext patching to use file copying for cases
+  where we are adding our own files wholesale
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
