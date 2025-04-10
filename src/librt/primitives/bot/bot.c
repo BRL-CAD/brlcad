@@ -392,6 +392,9 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct rt_bot_internal *bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
+    if (!bot_ip->num_faces || !bot_ip->num_vertices)
+	return -1;
+
     // Copy settings over to bot, because we won't have access to
     // bot_ip in the shot function
     struct bot_specific *bot;
