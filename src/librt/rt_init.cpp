@@ -33,6 +33,27 @@
 #include "rt/resource.h"
 #include "rt/rt_instance.h"
 
+/*****************************************************************************
+ * Global variables initialized by librt
+ *
+ * drossberg observed that initialization was not succeeding in some cases due
+ * to linker behavior.  The solution he found was to relocate those globals
+ * into the same object file so the linker doesn't get a chance to remove them.
+ *****************************************************************************/
+
+/* container holding reusable vlists */
+struct bu_list rt_vlfree = BU_LIST_INIT_ZERO;
+
+/* uniprocessor pre-prepared resource */
+struct resource rt_uniresource = RT_RESOURCE_INIT_ZERO;
+
+/* Debug flags */
+unsigned int rt_debug = 0;
+
+/*****************************************************************************
+ * librt initialization logic
+ *****************************************************************************/
+
 static void
 librt_init(void)
 {

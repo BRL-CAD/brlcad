@@ -37,6 +37,9 @@
  * rt_uniresource is a similar case in point - the convenience is very useful,
  * but there are situations where applications want/need to manage their own
  * resources for more demanding scenarios.
+ *
+ * NOTE for developers - for library initialization reasons, the globals
+ * documented here are located in the source file src/librt/rt_init.cpp
  */
 
 #ifndef RT_GLOBAL_H

@@ -36,16 +36,6 @@
 #include "rt/db4.h"
 #include "rt/debug.h"
 
-/* container holding reusable vlists */
-struct bu_list rt_vlfree = BU_LIST_INIT_ZERO;
-
-/* uniprocessor pre-prepared resource */
-struct resource rt_uniresource = RT_RESOURCE_INIT_ZERO;
-
-
-/* Debug flags */
-unsigned int rt_debug = 0;
-
 /* see table.c for primitive object function table definition */
 extern const struct rt_functab OBJ[];
 
