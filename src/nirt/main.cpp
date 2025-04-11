@@ -433,8 +433,6 @@ main(int argc, const char **argv)
     const char *units_str = NULL;
     double scan[16] = MAT_INIT_ZERO;
     int ac = 0;
-    int bot_mintie = 0;
-    int minpieces = -1;
     int nret = 0;
     int ret = 0;
     int status = 0;
@@ -646,16 +644,6 @@ main(int argc, const char **argv)
 
     if (optv.silent_mode != NIRT_SILENT_UNSET) {
 	bu_vls_sprintf(&ncmd, "state silent_mode %d", optv.silent_mode);
-	(void)nirt_exec(ns, bu_vls_cstr(&ncmd));
-    }
-
-    if (bot_mintie) {
-	bu_vls_sprintf(&ncmd, "%d", minpieces);
-	bu_setenv("LIBRT_BOT_MINTIE", bu_vls_cstr(&ncmd), 1);
-    }
-
-    if (minpieces >= 0) {
-	bu_vls_sprintf(&ncmd, "bot_minpieces %d", minpieces);
 	(void)nirt_exec(ns, bu_vls_cstr(&ncmd));
     }
 

@@ -103,8 +103,6 @@ sed "s/\.base\././g" $base.base.rt | sed "s/'$base'/'$i'/g" | sed "s/-o $base.rt
   ################
 echo -n "Perf: "
 export RT=rt
-export LIBRT_BOT_MINTIE=0
-unset LIBRT_BOT_MINTIE
 rm -f "$i.rt.log" "$i.rt.pix"
 p1=`sh $i.rt -B -o $i.rt.pix -s$SZ -H$HP 2>&1 | tee $i.rt.log | grep RTFM | awk '{print $9}'`
 rm -f "$i.rt.log" "$i.rt.pix"
@@ -129,7 +127,6 @@ printf -- "%-25s ($p1 $p2 $p3 $p4 $p5)\n" "${rps}"
 
 #   ################
 # echo -n "Tied: "
-# export LIBRT_BOT_MINTIE=1
 # rm -f "$i.rt.log" "$i.rt.pix"
 # p1=`sh $i.rt -B -o $i.rt.pix -s$SZ -H$HP 2>&1 | tee $i.rt.log | grep RTFM | awk '{print $9}'`
 # rm -f "$i.rt.log" "$i.rt.pix"
@@ -182,7 +179,6 @@ printf -- "%-25s ($t1 $t2 $t3 $t4 $t5)\n" "${rays}"
 # fi
 
 # rm -f $i.tie.rt.pix $i.tie.rt.log $i.rt.pix $i.rt.log
-# export LIBRT_BOT_MINTIE=0
 # sh $i.rt -B -o $i.rt.pix -s$SZ >$i.rt.log 2>&1
 # if test -f "$i.rt.pix" ; then
 #     echo -n "Diff: "
@@ -196,7 +192,6 @@ printf -- "%-25s ($t1 $t2 $t3 $t4 $t5)\n" "${rays}"
 # else
 #     printf -- "ERROR: $i.rt.pix failed to render\n"
 # fi
-# export LIBRT_BOT_MINTIE=1
 # sh $i.rt -B -o $i.tie.rt.pix -s$SZ >$i.tie.rt.log 2>&1
 # if test -f "$i.tie.rt.pix" ; then
 #     echo -n "TDif: "

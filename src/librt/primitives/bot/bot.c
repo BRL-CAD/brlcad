@@ -46,6 +46,7 @@
 
 #define BOT_MIN_DN 1.0e-9
 #define HLBVH_STACK_SIZE 256
+#define RT_DEFAULT_MAX_PRIMS_IN_NODE 8
 
 #define BOT_UNORIENTED_NORM(_ap, _hitp, _norm, _out) {		    \
 	if (!(_ap)->a_bot_reverse_normal_disabled) {		    \
@@ -423,10 +424,10 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bot->bot_facelist = NULL;
 
     // look for a requested bundle size
-    size_t rt_bot_mintie = RT_DEFAULT_MINTIE;
-    const char *bmintie = getenv("LIBRT_BOT_MINTIE");
+    size_t bot_max_prims_in_node = RT_DEFAULT_MAX_PRIMS_IN_NODE ;
+    const char *bmintie = getenv("LIBRT_BOT_MAX_PRIMS_IN_NODE");
     if (bmintie)
-	rt_bot_mintie = atoi(bmintie);
+	bot_max_prims_in_node = atoi(bmintie);
 
     // set up centroids and bounds for hlbvh call
     fastf_t *centroids = (fastf_t*)bu_malloc(bot_ip->num_faces * sizeof(fastf_t)*3, "bot centroids");
@@ -449,7 +450,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     // implicit return values
     long nodes_created = 0;
     long *ordered_faces = NULL;
-    struct bvh_build_node *build_root = hlbvh_create(rt_bot_mintie, pool, centroids, bounds, &nodes_created,
+    struct bvh_build_node *build_root = hlbvh_create(bot_max_prims_in_node, pool, centroids, bounds, &nodes_created,
 					       bot_ip->num_faces, &ordered_faces);
 
     bu_free(centroids, "bot centroids");
