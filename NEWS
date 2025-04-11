@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2024-XX-XX  Release X.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* updated MGED nirt man page to reference cmdline version - Cliff Yapp
 * fixed raytracing crash with empty BoT solid in tree - Cliff Yapp
 * cleaned up nirt -L format listing output - Cliff Yapp
 * fixed MGED nirt command's use of .mgedrc qray formats - Cliff Yapp
