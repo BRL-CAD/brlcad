@@ -77,9 +77,12 @@ bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip
     if (nbot->num_vertices < 3)
 	return BRLCAD_ERROR;
 
-    // TODO - investigate whether the preliminary decimation criteria we are
-    // trying for bot extrude make sense here too - the problem configurations
-    // we encountered in plate mode may also be present in manifold shapes...
+    // NOTE -  if long-thin-dense triangle fans end up causing super-long
+    // evaluation times here the same way we did in plate mode extrusion, we
+    // could try the preliminary decimation criteria we use there on volumetric
+    // inputs as well.  Waiting on that until we see a real-world need to
+    // justify it, since we would have to support the parameters bot extrude
+    // needs here as well.
     manifold::MeshGL64 bot_mesh;
     for (size_t j = 0; j < nbot->num_vertices*3 ; j++)
 	bot_mesh.vertProperties.insert(bot_mesh.vertProperties.end(), nbot->vertices[j]);
@@ -336,65 +339,41 @@ manifold_do_bool(
 
     if (!result) {
 
-	// Before we try a boolean, validate that our inputs satisfy Manifold's
-	// criteria.
-	//
-	//
-	// TODO - probably want to do a LOT less status checking - it can be VERY expensive
-	//
-	//
-	if (!lm || lm->Status() != manifold::Manifold::Error::NoError) {
-	    facetize_log(s, 0, "Error - left manifold invalid: %s\n", tl->tr_d.td_name);
-	    lm = NULL;
-	    failed = 1;
-	}
-	if (!rm || rm->Status() != manifold::Manifold::Error::NoError) {
-	    facetize_log(s, 0, "Error - right manifold invalid: %s\n", tr->tr_d.td_name);
-	    rm = NULL;
-	    failed = 1;
-	}
+	// We should have valid inputs - proceed
+	facetize_log(s, 1, "Trying boolean op:  %s, %s\n", tl->tr_d.td_name, tr->tr_d.td_name);
 
-	if (!failed) {
-	    // We should have valid inputs - proceed
-	    facetize_log(s, 1, "Trying boolean op:  %s, %s\n", tl->tr_d.td_name, tr->tr_d.td_name);
-
-	    manifold::Manifold bool_out;
-	    try {
-		bool_out = lm->Boolean(*rm, manifold_op);
-		if (bool_out.Status() != manifold::Manifold::Error::NoError) {
-		    facetize_log(s, 0, "Error - bool result invalid:\n\t%s\n\t%s\n", tl->tr_d.td_name, tr->tr_d.td_name);
-		    failed = 1;
-		}
-	    } catch (...) {
-		facetize_log(s, 0, "Manifold boolean library threw failure\n");
-		// write out the failing inputs to files to aid in debugging
-		const char *evar = getenv("GED_MANIFOLD_DEBUG");
-		if (evar && strlen(evar)) {
-		    std::cerr << "Manifold op: " << (int)manifold_op << "\n";
-		    std::ofstream lofile, rofile;
-		    lofile.open(std::string(tl->tr_d.td_name)+std::string(".obj"));
-		    rofile.open(std::string(tr->tr_d.td_name)+std::string(".obj"));
-		    lm->WriteOBJ(lofile); rm->WriteOBJ(rofile);
-		    lofile.close(); rofile.close();
-		    bu_exit(EXIT_FAILURE, "Exiting to avoid overwriting debug outputs from Manifold boolean failure.");
-		}
-		failed = 1;
-	    }
-
-	    // If we're debugging and need to capture glb for a "successful" case, these can be uncommented
+	manifold::Manifold bool_out;
+	try {
+	    bool_out = lm->Boolean(*rm, manifold_op);
+	} catch (...) {
+	    facetize_log(s, 0, "Manifold boolean library threw failure\n");
+	    // write out the failing inputs to files to aid in debugging
 	    const char *evar = getenv("GED_MANIFOLD_DEBUG");
 	    if (evar && strlen(evar)) {
-		std::ofstream lofile, rofile, oofile;
+		std::cerr << "Manifold op: " << (int)manifold_op << "\n";
+		std::ofstream lofile, rofile;
 		lofile.open(std::string(tl->tr_d.td_name)+std::string(".obj"));
 		rofile.open(std::string(tr->tr_d.td_name)+std::string(".obj"));
-		oofile.open(std::string("out-") + std::string(tl->tr_d.td_name)+std::to_string(op)+std::string(tr->tr_d.td_name)+std::string(".obj"));
-		lm->WriteOBJ(lofile); rm->WriteOBJ(rofile); bool_out.WriteOBJ(oofile);
-		lofile.close(); rofile.close(); oofile.close();
+		lm->WriteOBJ(lofile); rm->WriteOBJ(rofile);
+		lofile.close(); rofile.close();
+		bu_exit(EXIT_FAILURE, "Exiting to avoid overwriting debug outputs from Manifold boolean failure.");
 	    }
-
-	    if (!failed)
-		result = new manifold::Manifold(bool_out);
+	    failed = 1;
 	}
+
+	// If we're debugging and need to capture glb for "successful" cases can use GED_MANIFOLD_DEBUG env var.
+	const char *evar = getenv("GED_MANIFOLD_DEBUG");
+	if (evar && strlen(evar)) {
+	    std::ofstream lofile, rofile, oofile;
+	    lofile.open(std::string(tl->tr_d.td_name)+std::string(".obj"));
+	    rofile.open(std::string(tr->tr_d.td_name)+std::string(".obj"));
+	    oofile.open(std::string("out-") + std::string(tl->tr_d.td_name)+std::to_string(op)+std::string(tr->tr_d.td_name)+std::string(".obj"));
+	    lm->WriteOBJ(lofile); rm->WriteOBJ(rofile); bool_out.WriteOBJ(oofile);
+	    lofile.close(); rofile.close(); oofile.close();
+	}
+
+	if (!failed)
+	    result = new manifold::Manifold(bool_out);
     }
 
     // Memory cleanup
@@ -1081,6 +1060,11 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 
     if (ftree->tr_d.td_d) {
 	manifold::Manifold *om = (manifold::Manifold *)ftree->tr_d.td_d;
+	if (om->Status() != manifold::Manifold::Error::NoError) {
+	    // Urk - boolean failure of some sort!
+	    facetize_log(s, 0, "Boolean algorithm FAILED.\n");
+	    return BRLCAD_ERROR;
+	}
 	manifold::MeshGL64 rmesh = om->GetMeshGL64();
 	struct rt_bot_internal *bot;
 	BU_GET(bot, struct rt_bot_internal);
