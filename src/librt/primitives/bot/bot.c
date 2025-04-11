@@ -1862,6 +1862,79 @@ rt_bot_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 
+struct edge_tree {
+    int other_vertex;
+    int face;
+    int orientation;
+    struct edge_tree *next;
+};
+
+
+static void
+bot_edge_tree(struct rt_bot_internal *bot, struct edge_tree ***edges)
+{
+    size_t currFace;
+
+    RT_BOT_CK_MAGIC(bot);
+
+    /* allocate array with one index per vertex */
+    *edges = (struct edge_tree**)bu_calloc(bot->num_vertices, sizeof(struct edge_tree*), "edges structure");
+
+    for (currFace = 0; currFace < bot->num_faces; ++currFace) {
+	int currVert;
+
+	for (currVert = 0; currVert < 3; ++currVert) {
+	    int from, to;
+	    struct edge_tree *edge;
+	    int orientation = 1;
+	    int nextVert = currVert + 1;
+
+	    if (nextVert > 2)
+		nextVert = 0;
+
+	    /* get actual indices */
+	    from = bot->faces[currFace * 3 + currVert];
+	    to = bot->faces[currFace * 3 + nextVert];
+
+	    if ((from < 0) || ((size_t)from >= bot->num_vertices) ||
+		(to < 0) || ((size_t)to >= bot->num_vertices))
+		continue;
+
+	    if (from == to)
+		continue;
+
+	    /* make sure 'from' is the lower index */
+	    if (to < from) {
+		size_t tmp = from;
+		from = to;
+		to = tmp;
+		orientation = -1;
+	    }
+
+	    /* get the list for this index */
+	    edge = (*edges)[from];
+
+	    if (edge == (struct edge_tree*)NULL) {
+		BU_ALLOC(edge, struct edge_tree);
+		(*edges)[from] = edge;
+	    }
+	    else {
+		while (edge->next )
+		    edge = edge->next;
+
+		BU_ALLOC(edge->next, struct edge_tree);
+		edge = edge->next;
+	    }
+
+	    edge->other_vertex = to;
+	    edge->face = currFace;
+	    edge->orientation = orientation;
+	    edge->next = (struct edge_tree*)NULL;
+	}
+    }
+}
+
+
 /**
  * Returns -
  * -1 failure
@@ -1872,124 +1945,417 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 {
     struct rt_bot_internal *bot_ip;
     struct shell *s;
-    struct vertex **verts;
     size_t i;
     struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
-    if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
-#define RT_BOT_TESS_MAX_FACES 1024
-	size_t faces[RT_BOT_TESS_MAX_FACES];
-	plane_t planes[RT_BOT_TESS_MAX_FACES];
-	point_t center;
 
-	rt_bot_centroid(&center, ip);
-	bu_log("center pt = (%f %f %f)\n", V3ARGS(center));
-
-	/* get the faces that use each vertex */
-	for (i = 0; i < bot_ip->num_vertices; i++) {
-	    size_t faceCount = 0;
-	    size_t j;
-	    for (j = 0; j < bot_ip->num_faces; j++) {
-		size_t k;
-		for (k = 0; k < 3; k++) {
-		    if ((size_t)bot_ip->faces[j*3+k] == i) {
-			/* this face uses vertex i */
-			faces[faceCount] = j;
-			faceCount++;
-			break;
-		    }
-		}
-	    }
-	    bu_log("Vertex #%zu appears in %zu faces\n", i, faceCount);
-	    if (faceCount == 0) {
-		continue;
-	    }
-	    if (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS)
-		for (i = 0; i < faceCount; i++) {
-		    size_t k;
-		    fastf_t *plane;
-		    for (k = 0; k < 3; k++) {
-			size_t idx = faces[i] * 3 + k;
-			VMOVE(planes[i], &bot_ip->normals[bot_ip->face_normals[idx]*3]);
-			planes[i][3] = VDOT(planes[i], &bot_ip->vertices[bot_ip->faces[faces[i]*3]*3]);
-		    }
-		    plane = planes[i];
-		    bu_log("\tplane #%zu = (%f %f %f %f)\n", i, V4ARGS(plane));
-		}
-	}
-	return -1;
-    }
     *r = nmg_mrsv(m);     /* Make region, empty shell, vertex */
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
-    verts = (struct vertex **)bu_calloc(bot_ip->num_vertices, sizeof(struct vertex *), "rt_bot_tess: *verts[]");
+    if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
+	struct edge_tree **edges = NULL;
+	vect_t *face_normals = (vect_t *)bu_calloc(bot_ip->num_faces, sizeof(vect_t), "face_normals");
+	int *face_flags = (int *)bu_calloc(bot_ip->num_faces, sizeof(int), "face_flags");
+	vect_t *vertex_normals = (vect_t *)bu_calloc(bot_ip->num_vertices, sizeof(vect_t), "vertex_normals");
 
-    for (i = 0; i < bot_ip->num_faces; i++) {
-	struct faceuse *fu;
-	struct vertex **corners[3];
-	point_t pt[3];
+	/* compute face normals */
+	for (i = 0; i < bot_ip->num_faces; ++i) {
+	    vect_t a, b;
 
-	if (bot_ip->faces[i*3+2] < 0 || (size_t)bot_ip->faces[i*3+2] > bot_ip->num_vertices)
-	    continue; /* sanity */
+	    if ((bot_ip->faces[i*3] < 0) || ((size_t)bot_ip->faces[i*3] >= bot_ip->num_vertices) ||
+		(bot_ip->faces[i*3+1] < 0) || ((size_t)bot_ip->faces[i*3+1] >= bot_ip->num_vertices) ||
+		(bot_ip->faces[i*3+2] < 0) || ((size_t)bot_ip->faces[i*3+2] >= bot_ip->num_vertices))
+		continue; /* sanity */
 
-	if (bot_ip->orientation == RT_BOT_CW) {
-	    VMOVE(pt[2], &bot_ip->vertices[bot_ip->faces[i*3+0]*3]);
-	    VMOVE(pt[1], &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
-	    VMOVE(pt[0], &bot_ip->vertices[bot_ip->faces[i*3+2]*3]);
-	    corners[2] = &verts[bot_ip->faces[i*3+0]];
-	    corners[1] = &verts[bot_ip->faces[i*3+1]];
-	    corners[0] = &verts[bot_ip->faces[i*3+2]];
-	} else {
-	    VMOVE(pt[0], &bot_ip->vertices[bot_ip->faces[i*3+0]*3]);
-	    VMOVE(pt[1], &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
-	    VMOVE(pt[2], &bot_ip->vertices[bot_ip->faces[i*3+2]*3]);
-	    corners[0] = &verts[bot_ip->faces[i*3+0]];
-	    corners[1] = &verts[bot_ip->faces[i*3+1]];
-	    corners[2] = &verts[bot_ip->faces[i*3+2]];
+	    VSUB2(a, &bot_ip->vertices[bot_ip->faces[i*3+1]*3], &bot_ip->vertices[bot_ip->faces[i*3]*3]);
+	    VSUB2(b, &bot_ip->vertices[bot_ip->faces[i*3+2]*3], &bot_ip->vertices[bot_ip->faces[i*3]*3]);
+	    VCROSS(face_normals[i], a, b);
+	    VUNITIZE(face_normals[i]);
 	}
 
-	if (!bg_3pnts_distinct(pt[0], pt[1], pt[2], tol)
-	    || bg_3pnts_collinear(pt[0], pt[1], pt[2], tol))
-	    continue;
+	/* build edge structure */
+        bot_edge_tree(bot_ip, &edges);
 
-	if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
-	    bu_log("rt_bot_tess() nmg_cmface() failed for face #%zu\n", i);
-	    continue;
+	/* unify normal directions (if possible) */
+	for (i = 0; i < bot_ip->num_faces; ++i) {
+	    if (face_flags[i] == 1)
+		continue;
+	    else {
+		int something_hapened = 0;
+
+		face_flags[i] = 1;
+
+		do {
+		    size_t j;
+		    something_hapened = 0;
+
+		    for (j = i; j < bot_ip->num_faces; ++j) {
+			if (face_flags[j] == 0)
+			    continue;
+			else {
+			    int currVert;
+
+			    for (currVert = 0; currVert < 3; ++currVert) {
+				int from, to;
+				struct edge_tree *edge;
+				int referenceOrientation = 0;
+				int nextVert = currVert + 1;
+
+				if (nextVert > 2)
+				    nextVert = 0;
+
+				from = bot_ip->faces[j * 3 + currVert];
+				to = bot_ip->faces[j * 3 + nextVert];
+
+				if ((from < 0) || ((size_t)from >= bot_ip->num_vertices) ||
+				    (to < 0) || ((size_t)to >= bot_ip->num_vertices))
+				    continue;
+
+				if (from == to)
+				    continue;
+
+				if (to < from) {
+				    size_t tmp = from;
+				    from = to;
+				    to = tmp;
+				}
+
+				edge = edges[from];
+
+				BU_ASSERT(edge != (struct edge_tree*)NULL);
+
+				while (edge != (struct edge_tree*)NULL) {
+				    if (edge->face == (int)j) {
+					referenceOrientation = edge->orientation;
+					break;
+				    }
+
+				    edge = edge->next;
+				}
+
+				BU_ASSERT(referenceOrientation != 0);
+
+				edge = edges[from]; /* reset edge list */
+
+				while (edge != (struct edge_tree*)NULL) {
+				    if ((edge->other_vertex == to) && (edge->face != (int)j) && (face_flags[edge->face] == 0)) {
+					if (edge->orientation == referenceOrientation)
+					    VREVERSE(face_normals[edge->face], face_normals[edge->face]);
+
+					face_flags[edge->face] = 1;
+					something_hapened = 1;
+				    }
+
+				    edge = edge->next;
+				}
+			    }
+			}
+		    }
+		} while (something_hapened == 1);
+	    }
 	}
 
-	if (!(*corners[0])->vg_p)
-	    nmg_vertex_gv(*(corners[0]), pt[0]);
-	if (!(*corners[1])->vg_p)
-	    nmg_vertex_gv(*(corners[1]), pt[1]);
-	if (!(*corners[2])->vg_p)
-	    nmg_vertex_gv(*(corners[2]), pt[2]);
+	/* compute vertex normals */
+	for (i = 0; i < bot_ip->num_vertices; ++i) {
+	    double face_count = 0.;
+	    size_t j;
 
-	if (nmg_calc_face_g(fu, vlfree))
-	    nmg_kfu(fu);
-	else if (bot_ip->mode == RT_BOT_SURFACE) {
-	    struct vertex **tmp;
+	    for (j = 0; j < bot_ip->num_faces; ++j) {
+		size_t k;
 
-	    tmp = corners[0];
-	    corners[0] = corners[2];
-	    corners[2] = tmp;
-	    if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL)
-		bu_log("rt_bot_tess() nmg_cmface() failed for face #%zu\n", i);
-	    else
-		nmg_calc_face_g(fu, vlfree);
+		for (k = 0; k < 3; ++k) {
+		    if (bot_ip->faces[j*3+k] == (int)i) {
+			vect_t temp;
+			VSCALE(temp, face_normals[j], bot_ip->thickness[j]);
+			VADD2(vertex_normals[i], vertex_normals[i], temp);
+			face_count += 1.;
+		    }
+		}
+	    }
+
+	    if (face_count > 0.)
+		VSCALE(vertex_normals[i], vertex_normals[i], 1. / face_count);
 	}
-    }
 
-    bu_free(verts, "rt_bot_tess *verts[]");
+	/* add the triangles */
+	struct vertex **verts = (struct vertex **)bu_calloc(bot_ip->num_vertices * 2, sizeof(struct vertex *), "rt_bot_tess: *verts[]");
 
-    nmg_mark_edges_real(&s->l.magic, vlfree);
+	/* the usual triangles */
+	for (i = 0; i < bot_ip->num_faces; i++) {
+	    int j;
+	    int idx0 = bot_ip->faces[i * 3];
+	    int idx1 = bot_ip->faces[i * 3 + 1];
+	    int idx2 = bot_ip->faces[i * 3 + 2];
 
-    nmg_region_a(*r, tol);
+	    if ((idx0 < 0) || ((size_t)idx0 >= bot_ip->num_vertices) ||
+		(idx1 < 0) || ((size_t)idx1 >= bot_ip->num_vertices) ||
+		(idx2 < 0) || ((size_t)idx2 >= bot_ip->num_vertices))
+		continue;
 
-    if (bot_ip->mode == RT_BOT_SOLID && bot_ip->orientation == RT_BOT_UNORIENTED)
+	    if ((idx0 == idx1) || (idx1 == idx2) || (idx2 == idx0))
+		continue;
+
+	    for (j = 0; j < 2; ++j) {
+		struct faceuse *fu;
+		struct vertex **corners[3];
+		point_t pt[3];
+		vect_t temp;
+
+		VMOVE(pt[0], &bot_ip->vertices[idx0 * 3]);
+		VSCALE(temp, vertex_normals[idx0], (j == 0) ? 1 : -1);
+		VADD2(pt[0], pt[0], temp);
+
+		VMOVE(pt[1], &bot_ip->vertices[idx1 * 3]);
+		VSCALE(temp, vertex_normals[idx1], (j == 0) ? 1 : -1);
+		VADD2(pt[1], pt[1], temp);
+
+		VMOVE(pt[2], &bot_ip->vertices[idx2 * 3]);
+		VSCALE(temp, vertex_normals[idx2], (j == 0) ? 1 : -1);
+		VADD2(pt[2], pt[2], temp);
+
+		corners[0] = &verts[idx0 + j * bot_ip->num_vertices];
+		corners[1] = &verts[idx1 + j * bot_ip->num_vertices];
+		corners[2] = &verts[idx2 + j * bot_ip->num_vertices];
+
+		if (!bg_3pnts_distinct(pt[0], pt[1], pt[2], tol)
+		    || bg_3pnts_collinear(pt[0], pt[1], pt[2], tol))
+		    continue;
+
+		if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
+		    bu_log("rt_bot_tess() nmg_cmface() failed for face #%zu\n", i);
+		    continue;
+		}
+
+		if (!(*corners[0])->vg_p)
+		    nmg_vertex_gv(*(corners[0]), pt[0]);
+		if (!(*corners[1])->vg_p)
+		    nmg_vertex_gv(*(corners[1]), pt[1]);
+		if (!(*corners[2])->vg_p)
+		    nmg_vertex_gv(*(corners[2]), pt[2]);
+
+		if (nmg_calc_face_g(fu, vlfree))
+		    nmg_kfu(fu);
+	    }
+	}
+
+	/* the outer (single) edges */
+	for (i = 0; i < bot_ip->num_vertices; i++) {
+	    struct bot_edge *other_vertices = (struct bot_edge*)NULL;
+	    struct bot_edge *other_vertex;
+	    struct edge_tree *edge = edges[i];
+
+	    /* get edges with smaller vertex i */
+	    while (edge != (struct edge_tree*)NULL) {
+		other_vertex = other_vertices;
+
+		if (other_vertex == (struct bot_edge*)NULL) {
+		    BU_ALLOC(other_vertex, struct bot_edge);
+		    other_vertices = other_vertex;
+		    other_vertex->v = edge->other_vertex;
+		    other_vertex->use_count = 1;
+		}
+		else {
+		    /* look for existing entry */
+		    while ((other_vertex->next != (struct bot_edge*)NULL) && (other_vertex->v != edge->other_vertex))
+			other_vertex = other_vertex->next;
+
+		    if (other_vertex->v == edge->other_vertex)
+			/* found entry */
+			other_vertex->use_count += 1;
+		    else {
+			/* create new entry */
+			BU_ASSERT(other_vertex->next == (struct bot_edge*)NULL);
+
+			BU_ALLOC(other_vertex->next, struct bot_edge);
+			other_vertex = other_vertex->next;
+			other_vertex->v = edge->other_vertex;
+			other_vertex->use_count = 1;
+		    }
+		}
+
+		edge = edge->next;
+	    }
+
+	    /* look for lone edges */
+	    for (other_vertex = other_vertices; other_vertex != (struct bot_edge*)NULL; other_vertex = other_vertex->next) {
+		if (other_vertex->use_count == 1) {
+		    /* found lone edge ==> add 2 triangles */
+		    struct faceuse *fu;
+		    struct vertex **corners[3];
+		    point_t pt[3];
+		    vect_t temp;
+
+		    /* #1 */
+		    VMOVE(pt[0], &bot_ip->vertices[i]);
+		    VADD2(pt[0], pt[0], vertex_normals[i]);
+
+		    VMOVE(pt[1], &bot_ip->vertices[i]);
+		    VSCALE(temp, vertex_normals[i], -1);
+		    VADD2(pt[1], pt[1], temp);
+
+		    VMOVE(pt[2], &bot_ip->vertices[other_vertex->v]);
+		    VADD2(pt[2], pt[2], vertex_normals[other_vertex->v]);
+
+		    corners[0] = &verts[i];
+		    corners[1] = &verts[i + bot_ip->num_vertices];
+		    corners[2] = &verts[other_vertex->v];
+
+		    if (!bg_3pnts_distinct(pt[0], pt[1], pt[2], tol)
+			|| bg_3pnts_collinear(pt[0], pt[1], pt[2], tol))
+			continue;
+
+		    if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
+			bu_log("rt_bot_tess() nmg_cmface() failed for face #%zu\n", i);
+			continue;
+		    }
+
+		    if (!(*corners[0])->vg_p)
+			nmg_vertex_gv(*(corners[0]), pt[0]);
+		    if (!(*corners[1])->vg_p)
+			nmg_vertex_gv(*(corners[1]), pt[1]);
+		    if (!(*corners[2])->vg_p)
+			nmg_vertex_gv(*(corners[2]), pt[2]);
+
+		    if (nmg_calc_face_g(fu, vlfree))
+			nmg_kfu(fu);
+
+		    /* #2 */
+		    VMOVE(pt[0], &bot_ip->vertices[other_vertex->v]);
+		    VSCALE(temp, vertex_normals[other_vertex->v], -1);
+		    VADD2(pt[0], pt[0], temp);
+
+		    VMOVE(pt[1], &bot_ip->vertices[other_vertex->v]);
+		    VADD2(pt[1], pt[1], vertex_normals[other_vertex->v]);
+
+		    VMOVE(pt[2], &bot_ip->vertices[i]);
+		    VSCALE(temp, vertex_normals[i], -1);
+		    VADD2(pt[2], pt[2], temp);
+
+		    corners[0] = &verts[other_vertex->v + bot_ip->num_vertices];
+		    corners[1] = &verts[other_vertex->v];
+		    corners[2] = &verts[i + bot_ip->num_vertices];
+
+		    if (!bg_3pnts_distinct(pt[0], pt[1], pt[2], tol)
+			|| bg_3pnts_collinear(pt[0], pt[1], pt[2], tol))
+			continue;
+
+		    if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
+			bu_log("rt_bot_tess() nmg_cmface() failed for face #%zu\n", i);
+			continue;
+		    }
+
+		    if (!(*corners[0])->vg_p)
+			nmg_vertex_gv(*(corners[0]), pt[0]);
+		    if (!(*corners[1])->vg_p)
+			nmg_vertex_gv(*(corners[1]), pt[1]);
+		    if (!(*corners[2])->vg_p)
+			nmg_vertex_gv(*(corners[2]), pt[2]);
+
+		    if (nmg_calc_face_g(fu, vlfree))
+			nmg_kfu(fu);
+		}
+	    }
+
+	    while (other_vertices != (struct bot_edge*)NULL) {
+		other_vertex = other_vertices;
+		other_vertices = other_vertices->next;
+		bu_free(other_vertex, "struct bot_edge");
+	    }
+	}
+
+	bu_free(verts, "rt_bot_tess *verts[]");
+
+	nmg_mark_edges_real(&s->l.magic, vlfree);
+	nmg_region_a(*r, tol);
 	nmg_fix_normals(s, vlfree, tol);
+
+	/* free edge structure */
+	for (i = 0; i < bot_ip->num_vertices; i++) {
+	    struct edge_tree *edge = edges[i];
+
+	    while (edge != (struct edge_tree*)NULL) {
+		struct edge_tree *tmp = edge;
+		edge = edge->next;
+		bu_free(tmp, "struct edge_tree");
+	    }
+	}
+	bu_free(edges, "bot edge structure");
+	edges = NULL;
+
+	bu_free(face_normals, "face_normals");
+	bu_free(face_flags, "face_flags");
+	bu_free(vertex_normals, "vertex_normals");
+    }
+    else {
+	struct vertex **verts = (struct vertex **)bu_calloc(bot_ip->num_vertices, sizeof(struct vertex *), "rt_bot_tess: *verts[]");
+
+	for (i = 0; i < bot_ip->num_faces; i++) {
+	    struct faceuse *fu;
+	    struct vertex **corners[3];
+	    point_t pt[3];
+
+	    if (bot_ip->faces[i*3+2] < 0 || (size_t)bot_ip->faces[i*3+2] > bot_ip->num_vertices)
+		continue; /* sanity */
+
+	    if (bot_ip->orientation == RT_BOT_CW) {
+		VMOVE(pt[2], &bot_ip->vertices[bot_ip->faces[i*3+0]*3]);
+		VMOVE(pt[1], &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
+		VMOVE(pt[0], &bot_ip->vertices[bot_ip->faces[i*3+2]*3]);
+		corners[2] = &verts[bot_ip->faces[i*3+0]];
+		corners[1] = &verts[bot_ip->faces[i*3+1]];
+		corners[0] = &verts[bot_ip->faces[i*3+2]];
+	    } else {
+		VMOVE(pt[0], &bot_ip->vertices[bot_ip->faces[i*3+0]*3]);
+		VMOVE(pt[1], &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
+		VMOVE(pt[2], &bot_ip->vertices[bot_ip->faces[i*3+2]*3]);
+		corners[0] = &verts[bot_ip->faces[i*3+0]];
+		corners[1] = &verts[bot_ip->faces[i*3+1]];
+		corners[2] = &verts[bot_ip->faces[i*3+2]];
+	    }
+
+	    if (!bg_3pnts_distinct(pt[0], pt[1], pt[2], tol)
+		|| bg_3pnts_collinear(pt[0], pt[1], pt[2], tol))
+		continue;
+
+	    if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
+		bu_log("rt_bot_tess() nmg_cmface() failed for face #%zu\n", i);
+		continue;
+	    }
+
+	    if (!(*corners[0])->vg_p)
+		nmg_vertex_gv(*(corners[0]), pt[0]);
+	    if (!(*corners[1])->vg_p)
+		nmg_vertex_gv(*(corners[1]), pt[1]);
+	    if (!(*corners[2])->vg_p)
+		nmg_vertex_gv(*(corners[2]), pt[2]);
+
+	    if (nmg_calc_face_g(fu, vlfree))
+		nmg_kfu(fu);
+	    else if (bot_ip->mode == RT_BOT_SURFACE) {
+		struct vertex **tmp;
+
+		tmp = corners[0];
+		corners[0] = corners[2];
+		corners[2] = tmp;
+		if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL)
+		    bu_log("rt_bot_tess() nmg_cmface() failed for face #%zu\n", i);
+		else
+		    nmg_calc_face_g(fu, vlfree);
+	    }
+	}
+
+	bu_free(verts, "rt_bot_tess *verts[]");
+
+	nmg_mark_edges_real(&s->l.magic, vlfree);
+
+	nmg_region_a(*r, tol);
+
+	if (bot_ip->mode == RT_BOT_SOLID && bot_ip->orientation == RT_BOT_UNORIENTED)
+	    nmg_fix_normals(s, vlfree, tol);
+    }
 
     return 0;
 }
