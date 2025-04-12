@@ -228,67 +228,6 @@ BU_EXPORT extern int bu_fchmod(int fd, unsigned long pmode);
 
 
 /**@brief BRL-CAD specific path queries */
-
-/**
- * NOTE: this API is replaced by bu_dir()
- *
- * For example:
- * bu_brlcad_dir("doc", 1);
- * is now:
- * bu_dir(NULL, 0, BU_DIR_DOC, NULL);
- *
- * @brief
- * Report the relative paths being used to hold BRL-CAD applications,
- * libraries, and data.
- *
- * Recognized keys include:
- *
- * Key     | Looks Up
- * ------- | -------------------------------------------
- * bin     | Directory containing applications
- * lib     | Directory containing libraries
- * include | Directory containing headers
- * data    | Directory containing shared data
- * share   | Directory containing shared data
- * doc     | Directory containing documentation
- * man     | Directory containing Unix man pages
- *
- * @return
- * A STATIC buffer is returned.  It is the caller's responsibility to
- * call bu_strdup() or make other provisions to save the returned
- * string, before calling again.
- *
- */
-DEPRECATED BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly);
-
-/**
- * NOTE: this API is replaced by bu_dir()
- *
- * For example:
- * bu_brlcad_root("share/tclscripts/isst/isst.tcl", 1);
- * is now:
- * bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "isst", "isst.tcl", NULL);
- *
- * @brief
- * Locate where the BRL-CAD applications and libraries are installed.
- *
- * The BRL-CAD root is searched for in the following order of
- * precedence by testing for the rhs existence if provided or the
- * directory existence otherwise:
- *
- *   BRLCAD_ROOT environment variable if set
- *   run-time path identification
- *   BRLCAD_ROOT compile-time path
- *   current directory
- *
- * @return
- * A STATIC buffer is returned.  It is the caller's responsibility to
- * call bu_strdup() or make other provisions to save the returned
- * string, before calling again.
- */
-DEPRECATED BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
-
-
 typedef enum {
     BU_DIR_CURR=1,  /**< (unknown) current working directory */
     BU_DIR_INIT,    /**< (unknown) initial working directory */
@@ -307,7 +246,6 @@ typedef enum {
     BU_DIR_LIBEXT,  /**< (n/a) optional library extension */
     BU_DIR_END      /**< always the last entry, for iterators */
 } bu_dir_t;
-
 
 /**
  * Find a particular user, system, or runtime directory.

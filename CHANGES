@@ -142,7 +142,6 @@ libged "how" command and its exposure in Tcl
 	or (more likely) retired as a command outright in favor of
 	a "view obj [name] info mode" subcommand.
 
-
 include/ged/commands.h
 	current ged_cmd_valid functionality will be replaced by
 	ged_cmd_exists and ged_cmd_same.
@@ -159,7 +158,7 @@ MGED features
 GED commands
 	removing command-line-supplied edit string support from the
 	following libged commands.  New method will be to set the
-	desired editor and terminal options in struct ged, or if
+	desired editor and terminal options in struct ged, or (if
 	operating at the user level) to set the relevant environment
 	variables.
 	edcolor (-E opt)
@@ -199,10 +198,6 @@ MGED commands
 
 7.32
 ----
-include/bu/app.h
-        bu_brlcad_root: replaced by bu_dir
-        bu_brlcad_dir:  replaced by bu_dir
-
 include/bg/chull.h
         All functions returning point arrays instead of index arrays.
         Will be replaced by similarly named functions returning
@@ -456,6 +451,25 @@ include/raytrace.h
 ***                       OBSOLETED CHANGES                        ***
 **********************************************************************
                     (reverse chronological order)
+
+7.42.0
+------
+librt
+	global variables in RTG (except the vlfree list, renamed
+	to rt_vlfree) are removed - rtg_parallel and rtg_headwdb
+	[deprecated 7.26]
+
+	rt_initial_tree_state is replaced by the new initialization
+	macro RT_DBTS_INIT [deprecated 7.26]
+
+	rt_i struct's Orca_hash_tbl is replaced by rti_udata and
+	a generic rt_gettrees_clbk mechanism - see src/rt/rtshot.c
+	for a worked example reproducing previous behavior with
+	the new mechanism.
+
+include/bu/app.h
+        bu_brlcad_root: replaced by bu_dir [deprecated 7.32]
+        bu_brlcad_dir:  replaced by bu_dir [deprecated 7.32]
 
 7.38.0
 ------

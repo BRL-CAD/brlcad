@@ -373,94 +373,6 @@ tcl_bu_dir(void *clientData,
 }
 
 /**
- * A wrapper for bu_brlcad_dir.
- *
- * @param clientData	- associated data/state
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
- */
-static int
-tcl_bu_brlcad_dir(void *clientData,
-		   int argc,
-		   const char **argv)
-{
-    Tcl_Interp *interp = (Tcl_Interp *)clientData;
-    if (argc != 2) {
-	bu_log("Usage: bu_brlcad_dir dirkey\n");
-	return BRLCAD_ERROR;
-    }
-    if (BU_STR_EQUAL(argv[1], "bin")) {
-	Tcl_AppendResult(interp, bu_dir(NULL, 0, BU_DIR_BIN, NULL), NULL);
-	return BRLCAD_OK;
-    }
-    if (BU_STR_EQUAL(argv[1], "lib")) {
-	Tcl_AppendResult(interp, bu_dir(NULL, 0, BU_DIR_LIB, NULL), NULL);
-	return BRLCAD_OK;
-    }
-    if (BU_STR_EQUAL(argv[1], "include")) {
-	Tcl_AppendResult(interp, bu_dir(NULL, 0, BU_DIR_INCLUDE, NULL), NULL);
-	return BRLCAD_OK;
-    }
-    if (BU_STR_EQUAL(argv[1], "data")) {
-	Tcl_AppendResult(interp, bu_dir(NULL, 0, BU_DIR_DATA, NULL), NULL);
-	return BRLCAD_OK;
-    }
-    if (BU_STR_EQUAL(argv[1], "share")) {
-	Tcl_AppendResult(interp, bu_dir(NULL, 0, BU_DIR_DATA, NULL), NULL);
-	return BRLCAD_OK;
-    }
-    if (BU_STR_EQUAL(argv[1], "doc")) {
-	Tcl_AppendResult(interp, bu_dir(NULL, 0, BU_DIR_DOC, NULL), NULL);
-	return BRLCAD_OK;
-    }
-
-    if (BU_STR_EQUAL(argv[1], "man")) {
-	Tcl_AppendResult(interp, bu_dir(NULL, 0, BU_DIR_MAN, NULL), NULL);
-	return BRLCAD_OK;
-    }
-
-    return BRLCAD_ERROR;
-}
-
-/**
- * A wrapper for bu_brlcad_root.
- *
- * @param clientData	- associated data/state
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
- */
-static int
-tcl_bu_brlcad_root(void *clientData,
-		   int argc,
-		   const char **argv)
-{
-    Tcl_Interp *interp = (Tcl_Interp *)clientData;
-    if (argc != 2) {
-	bu_log("Usage: bu_brlcad_root subdir\n");
-	return BRLCAD_ERROR;
-    }
-    if (argv[1][0] == '/') {
-	Tcl_AppendResult(interp, argv[1], NULL);
-	return BRLCAD_OK;
-    }
-    const char *bdir = bu_dir(NULL, 0, BU_DIR_BIN, NULL);
-    struct bu_vls wpath = BU_VLS_INIT_ZERO;
-    if (!bu_path_component(&wpath, bdir, BU_PATH_DIRNAME)) {
-	bu_vls_free(&wpath);
-	return BRLCAD_ERROR;
-    }
-    const char *npath = bu_dir(NULL, 0, bu_vls_cstr(&wpath), argv[1], NULL);
-    Tcl_AppendResult(interp, npath, NULL);
-    bu_vls_free(&wpath);
-    return BRLCAD_OK;
-}
-
-
-/**
  * A wrapper for bu_units_conversion.
  *
  * @param clientData	- associated data/state
@@ -513,8 +425,6 @@ Bu_Init(Tcl_Interp *interp)
     static struct bu_cmdtab cmds[] = {
 	{"bu_units_conversion",		tcl_bu_units_conversion},
 	{"bu_dir",		        tcl_bu_dir},
-	{"bu_brlcad_dir",		tcl_bu_brlcad_dir},
-	{"bu_brlcad_root",		tcl_bu_brlcad_root},
 	{"bu_prmem",			tcl_bu_prmem},
 	{"bu_get_value_by_keyword",	tcl_bu_get_value_by_keyword},
 	{"bu_rgb_to_hsv",		tcl_bu_rgb_to_hsv},
