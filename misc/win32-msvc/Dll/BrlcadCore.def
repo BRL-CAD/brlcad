@@ -47,13 +47,11 @@ bu_jmpbuf
 bu_list_path
 bu_log
 bu_malloc
-bu_mem_barriercheck
 bu_optarg
 bu_opterr
 bu_optind
 bu_plong
 bu_printb
-bu_prmem
 bu_pid
 bu_ptbl_free
 bu_ptbl_init
@@ -76,7 +74,6 @@ bu_vls_addr
 bu_vls_extend
 bu_vls_free
 bu_vls_gets
-bu_vls_init_if_uninit
 bu_vls_init
 bu_vls_printf
 bu_vls_putc

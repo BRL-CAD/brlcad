@@ -134,26 +134,26 @@ removed at any time.
 include/raytrace librt
 	db_search_context removed in favor of new db_search params -
 	old db_search function signature can temporarily be obtained
-	under the name db_search_old
+	under the name db_search_old [deprecated 7.42]
 
 libged "how" command and its exposure in Tcl
 	Currently returning an internal GED numerical value - will
 	either be changed to report a human readable string instead
 	or (more likely) retired as a command outright in favor of
-	a "view obj [name] info mode" subcommand.
+	a "view obj [name] info mode" subcommand. [deprecated 7.42]
 
 include/ged/commands.h
 	current ged_cmd_valid functionality will be replaced by
-	ged_cmd_exists and ged_cmd_same.
+	ged_cmd_exists and ged_cmd_same. [deprecated 7.42]
 
 include/bg/plane.h
 	removing tri_specific structure - only used internally in
-	one place in BRL-CAD code as of v7.40.2.
+	one place in BRL-CAD code as of v7.40.2. [deprecated 7.42]
 
 MGED features
 	predictor frame for velocity-based navigation will be removed.
 	Early idea in 3D space navigation that doesn't seemed to have
-	panned out in practice.
+	panned out in practice. [deprecated 7.42]
 
 GED commands
 	removing command-line-supplied edit string support from the
@@ -166,11 +166,13 @@ GED commands
 	editit (-e opt)
 	edmater (-E opt)
 	red (-E opt)
+	[deprecated 7.42]
 
 	ability to specify xyz center with trailing arguments on
 	the nirt commad line (i.e. nirt obj1 obj2 ... x y z at
 	MGED command prompt) will be removed in favor of an --xyz
 	option instead (i.e. nirt -xyz x y z obj1 obj2 ...)
+	[deprecated 7.42]
 
 7.40
 ----
@@ -183,18 +185,21 @@ include/bu/process.h
 	bu_process_args: replaced by bu_process_args_n
 	bu_process_id: replaced by bu_pid
 	bu_terminate: replaced by bu_pid_terminate
+	[deprecated 7.40]
 
 MGED commands
 	p, r and g optional arguments to summary command -
-	info can be obtained via search
+	info can be obtained via search [deprecated 7.40]
 
 	dbip, get_dbip - exposure of low-level pointer information
         Shouldn't be using this at a user/scripting level
+	[deprecated 7.40]
 
 7.38
 ----
 MGED commands
 	E (a.k.a "big E") - replaced by "draw -m5"
+	[deprecated 7.38]
 
 7.32
 ----
@@ -204,7 +209,7 @@ include/bg/chull.h
         indexes into provided points array, to allow the caller
         to decide if new arrays are needed. [deprecated 7.32]
         bg_polyline_2d_chull, bg_2d_chull, bg_3d_coplanar_chull,
-        bg_3d_chull
+        bg_3d_chull [deprecated 7.32]
 
 include/bu/exit.h
         TODO: warrants discussion
@@ -214,6 +219,7 @@ include/bu/exit.h
         path from the calling application.  (Currently available as
         bu_backtrace_app and bu_crashreport_app, these would replace
         existing versions after deprecation is final.)
+	[deprecated 7.32]
 
 MGED gui
 	The following will be removed from MGED's menu bar (unused
@@ -222,12 +228,14 @@ MGED gui
 	that are seldom changed.)
 
 	Settings->Mouse Behavior->Pick Raytrace-Object(s)
+	[deprecated 7.32]
 
 MGED overlay command
 	Instead of an optional second argument being the view object
 	name, command will take (potentially) multiple plot files
 	as input to overlay.  Optional view object name will be
 	specified with the -N option.
+	[deprecated 7.32]
 
 7.30
 ----
@@ -248,13 +256,6 @@ include/bu/redblack.h
 
 7.28
 ----
-include/bu/malloc.h
-        bu_ck_malloc_ptr, bu_mem_barriercheck, bu_prmem
-	replaced by modern memory analyzers [deprecated 7.28]
-
-include/rt/mem.h
-	rt_memprint [deprecated 7.28]
-
 include/vmath.h
         VCOMB3, VCOMB3N, VJOIN4
         Removed as inconsistent and unused API [deprecated 7.28]
@@ -282,42 +283,14 @@ signal analysis tools
 include/bu/ptbl.h
 	BU_PTBL_BASEADDR, BU_PTBL_LASTADDR, BU_PTBL_END
 	Removed as private implementation detail [deprecated 7.26]
-include/bu/hash.h
-        bu_hash_tbl_find, bu_set_hash_value, bu_get_hash_value,
-	bu_get_hash_key, bu_hash_tbl_add, bu_hash_tbl_print,
-	bu_hash_tbl_free, bu_hash_tbl_first, bu_hash_tbl_next,
-	bu_hash_tbl_traverse, bu_hash_record.  public structs
-	bu_hash_entry and bu_hash_tbl will be made private.
-        Replaced with new API [deprecated 7.26]
-include/bu/cmd.h
-	remove struct bu_cmdhist and struct bu_cmdhist_obj [deprecated 7.26]
-	BU_CMDHIST_NULL, BU_CMDHIST_OBJ_NULL, bu_cmdhist_histor, bu_cmdhist_add,
-	bu_cmdhist_curr, bu_cmdhist_nest, bu_cmdhist_prev [deprecated 7.26]
-nirt
-	-T - use LIBRT_BOT_MINTIE environment variable instead [deprecated 7.26]
 all global variables
 	global variables are no longer considered published public API [deprecated 7.26]
 	bn_mat_identity -> MAT_INIT_IDN or MAT_IDN() or NULL
-include/bn.h
-	tp_setup, no longer needs to be public API [deprecated 7.26]
-include/raytrace.h
-	curve_to_tcl_list
-	db_full_path_appendresult tcl_obj_to_int_array
-	tcl_obj_to_fastf_array tcl_list_to_int_array
-	tcl_list_to_fastf_array *_tcl_*, removal of all tcl-specific
-	API functions [deprecated 7.26]
-include/rt/solid.h
-	shouldn't be public API - this level of detail belongs inside the display
-        manager [deprecated 7.26]
-include/ged/defines.h
-	remove struct ged_drawable -  shouldn't be public API [deprecated 7.26]
-	remove freesolid from struct ged - exposes struct solid [deprecated 7.26]
 include/ged/view.h
 	remove current forms of dl_erasePathFromDisplay and invent_solid - they
 	expose the struct solid type [deprecated 7.26]
 include/tclcad.h
-	tclcad_bn_mat_print tclcad_rt_parse_ray tclcad_rt_pr_cutter
-	tclcad_rt_pr_hit tclcad_rt_rt tclcad_rt_import_from_path, removal of all
+	tclcad_rt_rt tclcad_rt_import_from_path, removal of all
 	tcl-specific API functions [deprecated 7.26]
 librt, fast4-g
 	removal of CLINE entity support [deprecated 7.26]
@@ -341,8 +314,6 @@ include/raytrace.h librt
 ----
 include/raytrace.h librt
 	nmg_model_break_e_on_v -> nmg_break_e_on_v [deprecation 7.22]
-	RT_GET_TREE -> BU_GET [deprecation 7.22]
-	RT_FREE_TREE -> BU_PUT [deprecation 7.22]
 
 7.20
 ----
@@ -352,12 +323,8 @@ librt
 	bspline primitive [deprecated 7.20]
 	poly primitive [deprecated 7.20]
 	hf primitive [deprecated 7.20]
-include/bu.h
-	bu_vls_init_if_uninit() -> bu_vls_init() [deprecated 7.20]
 GNU Autotools configure compatibility script
 	./configure -> cmake . [deprecated 7.20]
-include/raytrace.h
-	rt_load_attrs() -> rt_gettrees_and_attrs() or db5_import_attributs() [deprecated 7.20]
 
 7.18
 ----
@@ -454,7 +421,23 @@ include/raytrace.h
 
 7.42.0
 ------
-librt
+include/bu.h
+	bu_brlcad_root: replaced by bu_dir [deprecated 7.32]
+	bu_brlcad_dir:  replaced by bu_dir [deprecated 7.32]
+
+	bu_ck_malloc_ptr, bu_mem_barriercheck, bu_prmem
+	replaced by modern memory analyzers [deprecated 7.28]
+
+	remove struct bu_cmdhist and struct bu_cmdhist_obj [deprecated 7.26]
+	BU_CMDHIST_NULL, BU_CMDHIST_OBJ_NULL, bu_cmdhist_histor, bu_cmdhist_add,
+	bu_cmdhist_curr, bu_cmdhist_nest, bu_cmdhist_prev [deprecated 7.26]
+
+	bu_vls_init_if_uninit() -> bu_vls_init() [deprecated 7.20]
+
+include/bn.h
+	tp_setup, no longer needs to be public API [deprecated 7.26]
+
+include/raytrace.h
 	global variables in RTG (except the vlfree list, renamed
 	to rt_vlfree) are removed - rtg_parallel and rtg_headwdb
 	[deprecated 7.26]
@@ -462,14 +445,27 @@ librt
 	rt_initial_tree_state is replaced by the new initialization
 	macro RT_DBTS_INIT [deprecated 7.26]
 
+	curve_to_tcl_list is now internal [deprecated 7.26]
+
 	rt_i struct's Orca_hash_tbl is replaced by rti_udata and
 	a generic rt_gettrees_clbk mechanism - see src/rt/rtshot.c
 	for a worked example reproducing previous behavior with
 	the new mechanism.
 
-include/bu/app.h
-        bu_brlcad_root: replaced by bu_dir [deprecated 7.32]
-        bu_brlcad_dir:  replaced by bu_dir [deprecated 7.32]
+	RT_GET_TREE -> BU_GET [deprecation 7.22]
+	RT_FREE_TREE -> BU_PUT [deprecation 7.22]
+
+	rt_load_attrs() -> rt_gettrees_and_attrs() or db5_import_attributs() [deprecated 7.20]
+
+
+include/ged/defines.h
+	remove struct ged_drawable -  shouldn't be public API [deprecated 7.26]
+
+include/tclcad.h
+	tclcad_bn_mat_print tclcad_rt_parse_ray tclcad_rt_pr_cutter
+	tclcad_rt_pr_hit [deprecated 7.26]
+nirt
+	-T - new BoT raytracing makes obsolete [deprecated 7.26]
 
 7.38.0
 ------
@@ -487,6 +483,23 @@ libtermio, libcursor
 ------
 nirt
 	Behavior available under the --old flag [deprecated 7.30]
+
+include/rt/solid.h
+	shouldn't be public API - this level of detail belongs inside the display
+        manager [deprecated 7.26]
+
+include/ged/defines.h
+	remove freesolid from struct ged - exposes struct solid [deprecated 7.26]
+
+7.30.4
+------
+include/bu/hash.h
+        bu_hash_tbl_find, bu_set_hash_value, bu_get_hash_value,
+	bu_get_hash_key, bu_hash_tbl_add, bu_hash_tbl_print,
+	bu_hash_tbl_free, bu_hash_tbl_first, bu_hash_tbl_next,
+	bu_hash_tbl_traverse, bu_hash_record.  public structs
+	bu_hash_entry and bu_hash_tbl will be made private.
+        Replaced with new API [deprecated 7.26]
 
 7.30.2
 ------
@@ -538,6 +551,9 @@ include/bu/hash.h
 	bu_hash_tbl_traverse, bu_hash_record.  public structs
 	bu_hash_entry and bu_hash_tbl will be made private.
         Replaced with new API [deprecated 7.26]
+
+include/rt/mem.h
+	rt_memprint [deprecated 7.28]
 
 7.30.0
 ------
@@ -656,6 +672,12 @@ librtserver and Java Native Interface (JNI) bindings
 	*-pl -> *-plot3 [deprecated 7.16]
 pl*
 	pl* -> plot3* [deprecated 7.16]
+
+include/raytrace.h
+	db_full_path_appendresult tcl_obj_to_int_array
+	tcl_obj_to_fastf_array tcl_list_to_int_array
+	tcl_list_to_fastf_array *_tcl_*, removal of all tcl-specific
+	API functions from librt to libtclcad
 
 7.24.0
 ------

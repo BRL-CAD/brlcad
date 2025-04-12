@@ -84,48 +84,6 @@ BU_EXPORT extern int bu_cmd(const struct bu_cmdtab *cmds, int argc, const char *
  * Returns BRLCAD_OK if cmdname defines a command in the cmds table, and BRLCAD_ERROR otherwise */
 BU_EXPORT extern int bu_cmd_valid(const struct bu_cmdtab *cmds, const char *cmdname);
 
-/** @brief Routines for maintaining a command history */
-
-/**
- * Prints out the command history.
- *
- * USAGE:
- * history [-delays] [-outfile filename]
- */
-DEPRECATED BU_EXPORT extern int bu_cmdhist_history(void *data, int argc, const char **argv);
-
-/**
- * Add a command to the history list.
- *
- * USAGE:
- * procname add cmd
- */
-DEPRECATED BU_EXPORT extern int bu_cmdhist_add(void *data, int argc, const char **argv);
-
-/**
- * Return the current command.
- *
- * USAGE:
- * procname curr
- */
-DEPRECATED BU_EXPORT extern int bu_cmdhist_curr(void *data, int argc, const char **argv);
-
-/**
- * Set the current command to the next command.
- *
- * USAGE:
- * procname next
- */
-DEPRECATED BU_EXPORT extern int bu_cmdhist_next(void *data, int argc, const char **argv);
-
-/**
- * Set the current command to the previous command.
- *
- * USAGE:
- * procname prev
- */
-DEPRECATED BU_EXPORT extern int bu_cmdhist_prev(void *data, int argc, const char **argv);
-
 __END_DECLS
 
 #endif  /* BU_CMD_H */

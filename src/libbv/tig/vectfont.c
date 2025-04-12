@@ -1080,7 +1080,7 @@ static int tp_ctable[] = {
     VFONT_LAST
 };
 
-void
+static void
 tp_setup(void)
 {
     register int *p;	/* pointer to stroke table */

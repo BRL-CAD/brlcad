@@ -59,31 +59,6 @@ lwrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 #define SMALLBUFSIZ 256
 
 /**
- * A wrapper for bu_prmem. Prints map of memory currently in use, to
- * stderr.
- *
- * \@param clientData    - UNUSED, present for signature matching
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
- */
-static int
-tcl_bu_prmem(void *UNUSED(clientData),
-	     int argc,
-	     const char **argv)
-{
-    if (argc != 2) {
-	bu_log("Usage: bu_prmem title\n");
-	return BRLCAD_ERROR;
-    }
-
-    bu_prmem(argv[1]);
-    return BRLCAD_OK;
-}
-
-
-/**
  * Given arguments of alternating keywords and values and a specific
  * keyword ("Iwant"), return the value associated with that keyword.
  *
@@ -425,7 +400,6 @@ Bu_Init(Tcl_Interp *interp)
     static struct bu_cmdtab cmds[] = {
 	{"bu_units_conversion",		tcl_bu_units_conversion},
 	{"bu_dir",		        tcl_bu_dir},
-	{"bu_prmem",			tcl_bu_prmem},
 	{"bu_get_value_by_keyword",	tcl_bu_get_value_by_keyword},
 	{"bu_rgb_to_hsv",		tcl_bu_rgb_to_hsv},
 	{"bu_hsv_to_rgb",		tcl_bu_hsv_to_rgb},

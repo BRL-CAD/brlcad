@@ -537,8 +537,6 @@ ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
 	view_end(&APP);
 	view_cleanup(rtip);
 	rt_clean(rtip);
-	if (optical_debug&OPTICAL_DEBUG_RTMEM_END)
-	    bu_prmem("After rt_clean");
     }
 
     /* Load the desired portion of the model */

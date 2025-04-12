@@ -1322,19 +1322,6 @@ bn_cmd_random(ClientData UNUSED(clientData),
     return TCL_OK;
 }
 
-
-void
-tclcad_bn_mat_print(Tcl_Interp *interp,
-		 const char *title,
-		 const mat_t m)
-{
-    char obuf[1024];	/* snprintf may be non-PARALLEL */
-
-    bn_mat_print_guts(title, m, obuf, 1024);
-    Tcl_AppendResult(interp, obuf, "\n", (char *)NULL);
-}
-
-
 void
 tclcad_bn_setup(Tcl_Interp *interp)
 {

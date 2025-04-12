@@ -465,8 +465,6 @@ int cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
 
     rt_clean(APP.a_rt_i);
 
-    if (OPTICAL_DEBUG&OPTICAL_DEBUG_RTMEM_END)
-	bu_prmem("After cm_clean");
     return 0;
 }
 
@@ -485,8 +483,7 @@ int cm_closedb(const int UNUSED(argc), const char **UNUSED(argv))
     bu_free((void *)APP.a_rt_i, "struct rt_i");
     APP.a_rt_i = RTI_NULL;
 
-    bu_prmem("After _closedb");
-    bu_exit(0, NULL);
+    bu_exit(0, "After _closedb");
 
     return 1;	/* for compiler */
 }

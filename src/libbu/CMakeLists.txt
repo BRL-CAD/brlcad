@@ -31,7 +31,6 @@ set(
   bitv.c
   bomb.c
   booleanize.c
-  brlcad_path.c
   bu_init.cpp
   cache.cpp
   cmd.c

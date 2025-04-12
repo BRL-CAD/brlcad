@@ -95,14 +95,6 @@ typedef struct bu_vls bu_vls_t;
 BU_EXPORT extern void bu_vls_init(struct bu_vls *vp);
 
 /**
- * DEPRECATED: use if (!vls) bu_vls_init(vls)
- *
- * If a VLS is uninitialized, initialize it.  If it is already
- * initialized, leave it alone, caller wants to append to it.
- */
-DEPRECATED BU_EXPORT extern void bu_vls_init_if_uninit(struct bu_vls *vp);
-
-/**
  * Allocate storage for a struct bu_vls, call bu_vls_init on it, and
  * return the result.  Allows for creation of dynamically allocated
  * VLS strings.

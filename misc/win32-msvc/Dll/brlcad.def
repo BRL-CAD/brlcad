@@ -16,7 +16,6 @@ bu_jmpbuf
 bu_log
 bu_log_add_hook
 bu_optarg
-bu_prmem
 bu_ptbl_free
 bu_ptbl_init
 bu_setjmp_valid

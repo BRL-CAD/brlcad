@@ -2237,7 +2237,7 @@ rt_copy_sketch(const struct rt_sketch_internal *sketch_ip)
 }
 
 
-int
+static int
 curve_to_tcl_list(struct bu_vls *vls, struct rt_curve *crv)
 {
     size_t i, j;
