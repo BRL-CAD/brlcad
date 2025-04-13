@@ -323,8 +323,6 @@ librt
 	bspline primitive [deprecated 7.20]
 	poly primitive [deprecated 7.20]
 	hf primitive [deprecated 7.20]
-GNU Autotools configure compatibility script
-	./configure -> cmake . [deprecated 7.20]
 
 7.18
 ----
@@ -466,6 +464,9 @@ include/tclcad.h
 	tclcad_rt_pr_hit [deprecated 7.26]
 nirt
 	-T - new BoT raytracing makes obsolete [deprecated 7.26]
+
+GNU Autotools configure compatibility script
+	./configure -> cmake . [deprecated 7.20]
 
 7.38.0
 ------

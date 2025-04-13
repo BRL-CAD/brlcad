@@ -41,10 +41,6 @@
 # nomenclature, or anything that the developer things should lead to a given
 # option being set.  The documentation is auto-formatted into a text document
 # describing all BRL-CAD options.
-#
-# We also generate the "translation lines" for converting between Autotools'
-# configure style option syntax and CMake's variables, and append that to
-# the generated configure.new file.
 
 # Handle aliases for BRL-CAD options
 function(OPTION_RESOLVE_ALIASES ropt opt opt_ALIASES style)

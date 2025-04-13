@@ -2399,7 +2399,6 @@ set(
   CMakeLists.txt
   ChangeLog
   TODO
-  configure
 )
 cmakefiles(${toplevel_ignore_files})
 
@@ -2440,20 +2439,6 @@ mark_as_advanced(CMAKE_C_COMPILER)
 mark_as_advanced(CMAKE_AR)
 
 # ----------------------------------------------------------------------------
-# If options have been defined that we are going to document, by now they've
-# been documented.  Make an updated copy of the "INSTALL" file and see whether
-# anything has changed.
-#
-# Although the CMake configure process should leave the src dir pristine, the
-# INSTALL and configure files present a problem in that they *do* need to be
-# updated in the source tree.  As a compromise, what will happen when versions
-# of these files are produced that are different from those found in the source
-# tree the configure process will fail, with a message indicating that the user
-# needs to move the newly generated version of the file(s) into the correct
-# locations in the source tree.
-
-set(CONFIG_FATAL_ERROR 0)
-
 # Because the build-time-delta needs a configure-file but comes at the
 # end of the CMake configure, the preparation of the final distclean
 # list must account for it.  Also, the distclean script itself must
