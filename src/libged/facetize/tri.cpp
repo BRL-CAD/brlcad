@@ -361,7 +361,7 @@ manifold_do_bool(
 	    failed = 1;
 	}
 
-	// If we're debugging and need to capture glb for "successful" cases can use GED_MANIFOLD_DEBUG env var.
+	// If we're debugging and need to capture OBJ meshes for "successful" cases can use GED_MANIFOLD_DEBUG env var.
 	const char *evar = getenv("GED_MANIFOLD_DEBUG");
 	if (evar && strlen(evar)) {
 	    std::ofstream lofile, rofile, oofile;
