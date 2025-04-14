@@ -455,6 +455,15 @@ include/raytrace.h
 
 	rt_load_attrs() -> rt_gettrees_and_attrs() or db5_import_attributs() [deprecated 7.20]
 
+	arb_edit.h contents were relocated to arb8.h
+
+libged headers
+	Removed libged command specific headers analyze.h, rt.h, framebuffer.h,
+	view/matrix.h, view/select.h and view/slate.h - the functions these defined
+	were all replaced by ged_exec calls.  Also removed similar command specific
+	functions from a number of other libged headers.  Functions were removed
+	earlier, so code wouldn't have linked successfully - this catches the headers
+	up with the migration to ged_exec.
 
 include/ged/defines.h
 	remove struct ged_drawable -  shouldn't be public API [deprecated 7.26]
@@ -462,6 +471,9 @@ include/ged/defines.h
 include/tclcad.h
 	tclcad_bn_mat_print tclcad_rt_parse_ray tclcad_rt_pr_cutter
 	tclcad_rt_pr_hit [deprecated 7.26]
+
+	tclcad_rt_setup is now a no-op - function declaration removed
+
 nirt
 	-T - new BoT raytracing makes obsolete [deprecated 7.26]
 
