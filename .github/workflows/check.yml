@@ -76,7 +76,7 @@ jobs:
           # We do the Write-VolumeCache calls in order to help ensure files are
           # "flushed" to disk before compilation is attempted
           # https://superuser.com/a/1553374/1286142
-          cd build_winninja; cmake .. -G Ninja -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" -DBRLCAD_EXT_DIR=${{ github.workspace }}/build_winninja/bext_output -DCMAKE_BUILD_TYPE=Release -DBRLCAD_ENABLE_QT=ON; Write-VolumeCache C; Write-VolumeCache D; cd ..
+          cd build_winninja; cmake .. -G Ninja -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" -DBRLCAD_EXT_DIR=${{ github.workspace }}/build_winninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_ENABLE_QT=ON; Write-VolumeCache C; Write-VolumeCache D; cd ..
 
       - name: Build
         shell: powershell
