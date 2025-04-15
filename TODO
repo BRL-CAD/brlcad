@@ -22,14 +22,11 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * complete preliminary concave arb8 support
 
-* Review header changes and make sure to document things
-  like global removals in CHANGES
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
 
 * Adjust bext patching to use file copying for cases
   where we are adding our own files wholesale
-
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
 
 * verify arb6 editing in cheese wedge tutorial
 
