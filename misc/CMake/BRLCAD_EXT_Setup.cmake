@@ -404,11 +404,16 @@ function(brlcad_ext_setup)
   # If we're doing a components build, add the component list to the CMake
   # arguments
   if(BRLCAD_COMPONENTS)
+    # To avoid problems involved with quoting semicolons on command lines, we
+    # support using ':' as a delimiter in addition to the standard CMake list
+    # entry delimiter ';'
+    string(REPLACE ":" ";" BRLCAD_COMPONENTS "${BRLCAD_COMPONENTS}")
+
     set(active_dirs ${BRLCAD_COMPONENTS})
     foreach(wc ${BRLCAD_COMPONENTS})
       deps_expand(${wc} active_dirs)
     endforeach(wc ${BRLCAD_COMPONENTS})
-    string(REPLACE ";" "\\;" active_dirs "${active_dirs}")
+    string(REPLACE ";" ":" active_dirs "${active_dirs}")
     list(APPEND CMAKE_CMD_ARGS -DBRLCAD_COMPONENTS=${active_dirs})
   endif(BRLCAD_COMPONENTS)
 
