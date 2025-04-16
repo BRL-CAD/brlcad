@@ -139,6 +139,7 @@ if(TARGET btclsh)
   )
   add_custom_target(TclIndexBld ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel)
   distclean(${CMAKE_CURRENT_BINARY_DIR}/tclindexbld.sentinel)
+  set_target_properties(perm_test PROPERTIES FOLDER "Compilation Utilities")
 
   foreach(ifile ${index_install_files})
     # Install logic for index file.

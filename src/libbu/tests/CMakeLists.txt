@@ -783,6 +783,7 @@ endif()
 
 if(BUILD_TESTING)
   add_executable(perm_test perm_test.cpp)
+  set_target_properties(perm_test PROPERTIES FOLDER "BRL-CAD Executables/Test Programs")
 endif(BUILD_TESTING)
 
 #

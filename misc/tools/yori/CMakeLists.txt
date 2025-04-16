@@ -22,6 +22,7 @@ if (MSVC)
     DEPENDS YEDIT_BLD
     )
   add_custom_target(yedit ALL DEPENDS ${CMAKE_BINARY_DIR}/${BIN_DIR}/yedit.exe)
+  set_target_properties(yedit PROPERTIES FOLDER "BRL-CAD Executables/Util")
 
   # Install the output of the custom command
   install(PROGRAMS ${CMAKE_BINARY_DIR}/${BIN_DIR}/yedit.exe DESTINATION ${BIN_DIR})
