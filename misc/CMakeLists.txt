@@ -69,7 +69,7 @@ if(TARGET mged)
     COMMAND ${CMAKE_CTEST_COMMAND} --test-dir ${BUGS_DIR}
     DEPENDS BUGS
   )
-  set_target_properties(brlcad_css PROPERTIES FOLDER "BRL-CAD Tests")
+  set_target_properties(bugs PROPERTIES FOLDER "BRL-CAD Tests")
 endif(TARGET mged)
 
 
