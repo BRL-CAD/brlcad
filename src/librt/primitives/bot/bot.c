@@ -712,6 +712,7 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
     int thread_ind = bu_parallel_id();
     hit_da *hits_da = &sps->hit_arrays_per_cpu[thread_ind]; // zero'd during prep
+    hits_da->count = 0; // New ray, new result count.
 
     fastf_t toldist = 0.0;
     if (bot->bot_orientation != RT_BOT_UNORIENTED && bot->bot_mode == RT_BOT_SOLID) {
