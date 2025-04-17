@@ -320,7 +320,7 @@ const struct hit zeroed_hit_s = {0};
 
 #define DA_INIT_CAPACITY 128
 
-// We include itemtype in DA_APPEND and DA_APPEND_MANY because
+// We include itemtype in DA_APPEND because
 // the options are:
 // 1. Get a -Wc++-compat warning
 // 2. Push a diagnostic that ignores that warning
@@ -328,9 +328,8 @@ const struct hit zeroed_hit_s = {0};
 // 4. Pass in the type of the dynamic array
 
 // Append one item to a dynamic array
-// It may be tempting to make this a specialization of
-// DA_APPEND_MANY, however this supports the use case
-// of appending a compile time value to a dynamic array
+// This supports the use case of appending a compile
+// time value to a dynamic array
 // Ex. DA_APPEND(da_ints, 42, int)
 #define DA_APPEND(da, item, itemtype)							\
     do {										\
@@ -343,25 +342,6 @@ const struct hit zeroed_hit_s = {0};
 	}										\
 											\
 	(da)->items[(da)->count++] = (item);						\
-    } while (0)
-
-// Append several items to a dynamic array
-#define DA_APPEND_MANY(da, new_items, new_items_count, itemtype)				\
-    do {											\
-	if ((da)->count + (new_items_count) > (da)->capacity) {					\
-	    if ((da)->capacity == 0) {								\
-		(da)->capacity = DA_INIT_CAPCITY;						\
-	    }											\
-	    while ((da)->count + (new_items_count) > (da)->capacity) {				\
-		(da)->capacity *= 2;								\
-	    }											\
-	    (da)->items = (itemtype*)bu_realloc((da)->items, 					\
-						(da)->capacity*sizeof(*(da)->items),		\
-						"DA realloc __FILE__: __LINE__" );		\
-	    BU_ASSERT((da)->items != NULL);							\
-	}											\
-	memcpy((da)->items + (da)->count, (new_items), (new_items_count)*sizeof(*(da)->items)); \
-	(da)->count += (new_items_count);							\
     } while (0)
 
 struct spatial_partition_s {
