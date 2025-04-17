@@ -313,10 +313,10 @@ rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 typedef struct _hit_da {
     size_t count;
     size_t capacity;
-    struct hit * items;
+    struct hit *items;
 } hit_da;
 
-const struct hit zeroed_hit_s = {0};
+const struct hit zeroed_hit_s = RT_HIT_INIT_ZERO;
 
 #define DA_INIT_CAPACITY 128
 
@@ -334,14 +334,20 @@ const struct hit zeroed_hit_s = {0};
 #define DA_APPEND(da, item, itemtype)							\
     do {										\
 	if ((da)->count >= (da)->capacity) {						\
-	    (da)->capacity = (da)->capacity == 0 ? DA_INIT_CAPACITY : (da)->capacity*2;	\
-	    (da)->items = (itemtype*)bu_realloc((da)->items, 				\
-						(da)->capacity*sizeof(*(da)->items),	\
-						"DA realloc __FILE__: __LINE__" );	\
+	    if ((da)->capacity == 0) {							\
+		(da)->items = (itemtype*)bu_calloc(DA_INIT_CAPACITY, sizeof(struct hit),\
+						   "DA calloc __FILE__: __LINE__" );	\
+		(da)->capacity = DA_INIT_CAPACITY;					\
+	    } else {                                                                    \
+		(da)->items = (itemtype*)bu_realloc((da)->items, 			\
+						    (da)->capacity*2*sizeof(struct hit),\
+						    "DA realloc __FILE__: __LINE__" );	\
+		(da)->capacity *= 2;							\
+	    }                                                                           \
 	    BU_ASSERT((da)->items != NULL);						\
 	}										\
 											\
-	(da)->items[(da)->count++] = (item);						\
+	(da)->items[(da)->count++] = (item); /* struct copy */				\
     } while (0)
 
 struct spatial_partition_s {
@@ -517,7 +523,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /* per-cpu mem allocated MAX_PSW to ensure contention-free */
     sps->hit_arrays_per_cpu = (hit_da *) bu_calloc(MAX_PSW, sizeof(hit_da), "thread-local bot hit arrays");
-    bot->tie = (void*) sps;
+    bot->tie = (void *)sps;
 
     // struct bvh_build_node and struct bvh_flat_node are puns for fastf_t[6] which are the bounds
     fastf_t *min = (fastf_t *)sps->root;
@@ -705,8 +711,7 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	return 0;
 
     int thread_ind = bu_parallel_id();
-    hit_da *hits_da = &sps->hit_arrays_per_cpu[thread_ind];
-    hits_da->count = 0;
+    hit_da *hits_da = &sps->hit_arrays_per_cpu[thread_ind]; // zero'd during prep
 
     fastf_t toldist = 0.0;
     if (bot->bot_orientation != RT_BOT_UNORIENTED && bot->bot_mode == RT_BOT_SOLID) {
