@@ -850,7 +850,7 @@ main(int argc, const char **argv)
 	int ret = gs.get()->eval(argc, argv);
 	std::string cmd_out(bu_vls_cstr(gs.get()->gedp->ged_result_str));
 	std::cout << cmd_out;
-	if (cmd_out[cmd_out.length()-1] != '\n')
+	if (cmd_out.length() && cmd_out[cmd_out.length()-1] != '\n')
 	    std::cout << "\n";
 	// Need to loop over subprocess listeners and print their
 	// output until they finish.
