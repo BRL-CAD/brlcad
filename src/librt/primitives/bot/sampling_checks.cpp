@@ -63,6 +63,8 @@ struct coplanar_info {
     std::set<int> problem_indices;
 };
 
+// Tie the tc_hit checking tolerance to the backout distance
+#define RT_BOT_CHECK_TOL SQRT_SMALL_FASTF
 
 static int
 _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
@@ -78,7 +80,7 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     // passed the initial first-hit check, something is up.  Unfortunately
     // the conditions that might trigger this aren't exclusively thin face
     // pairings, but since it is possible go ahead and flag it.
-    if (s->seg_in.hit_dist > 2*SQRT_SMALL_FASTF) {
+    if (s->seg_in.hit_dist > 2*RT_BOT_CHECK_TOL) {
 	tinfo->is_thin = 1;
 	tinfo->problem_indices.insert(tinfo->curr_tri);
 	return 0;
@@ -154,7 +156,7 @@ rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
 
 	// We want backout to get the ray origin off the triangle surface
 	VMOVE(backout, n);
-	VSCALE(backout, backout, SQRT_SMALL_FASTF);
+	VSCALE(backout, backout, RT_BOT_CHECK_TOL);
 	// Reverse the triangle normal for a ray direction
 	VREVERSE(rnorm, n);
 
