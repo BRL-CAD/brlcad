@@ -43,6 +43,7 @@ cmakefiles(
   CMakeLists.txt
   TODO
   PImgHash.h
+  pixcii.hpp
   icv_private.h
 )
 
