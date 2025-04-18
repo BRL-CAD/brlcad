@@ -37,21 +37,6 @@
 #include "bn/tol.h"
 #include "vmath.h"
 
-icv_image_t *icv_cpy(const icv_image_t *img)
-{
-    if (!img)
-	return NULL;
-
-    icv_image_t *i;
-    BU_ALLOC(i, icv_image_t);
-    /* Get most of the info via a struct copy */
-    *i = *img;
-    /* Need our own copy of the data */
-    i->data = (double *)bu_malloc(sizeof(img->data), "data");
-    memcpy(i->data, img->data, sizeof(img->data));
-    return i;
-}
-
 int icv_sanitize(icv_image_t* img)
 {
     double *data = NULL;

@@ -52,11 +52,6 @@ __BEGIN_DECLS
 ICV_EXPORT extern icv_image_t *icv_create(size_t width, size_t height, ICV_COLOR_SPACE color_space);
 
 /**
- * Duplicate an icv image.
- */
-ICV_EXPORT extern icv_image_t *icv_cpy(const icv_image_t *img);
-
-/**
  * This function zeroes all the data entries of an image
  * @param bif Image Structure
  */
