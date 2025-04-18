@@ -5,22 +5,23 @@ brlcad_find_package(UTAHRLE REQUIRED)
 set(
   LIBICV_SOURCES
   PImgHash.cpp
-  fileformat.c
-  rot.c
+  asciiart.cpp
+  bw.c
   color_space.c
   crop.c
-  filter.c
+  dpix.c
   encoding.c
+  fileformat.c
+  filter.c
   operations.c
   pdiff.cpp
-  stat.c
-  size.c
   pix.c
   png.c
   ppm.c
   rle.c
-  bw.c
-  dpix.c
+  rot.c
+  size.c
+  stat.c
 )
 
 # Note - libicv_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake

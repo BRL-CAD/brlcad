@@ -28,8 +28,10 @@
 #ifndef ICV_IO_H
 #define ICV_IO_H
 
-#include "common.h"
 #include <stddef.h> /* for size_t */
+
+#include "common.h"
+#include "vmath.h"
 #include "bu/mime.h"
 #include "icv/defines.h"
 
@@ -48,6 +50,11 @@ __BEGIN_DECLS
  * @return Image structure with allocated space and zeroed data array
  */
 ICV_EXPORT extern icv_image_t *icv_create(size_t width, size_t height, ICV_COLOR_SPACE color_space);
+
+/**
+ * Duplicate an icv image.
+ */
+ICV_EXPORT extern icv_image_t *icv_cpy(const icv_image_t *img);
 
 /**
  * This function zeroes all the data entries of an image
@@ -179,6 +186,33 @@ ICV_EXPORT unsigned char *icv_data2uchar(const icv_image_t *bif);
  */
 ICV_EXPORT double *icv_uchar2double(unsigned char *data, size_t size);
 
+
+/**
+ * Options that can be passed to icv_ascii_art to modify its output.
+ */
+struct icv_ascii_art_params {
+    int output_color;
+    int invert_color;
+    fastf_t brightness_multiplier;
+};
+#define ICV_ASCII_ART_PARAMS_DEFAULT {0, 0, 1.0}
+
+/**
+ * Converts the image to an ASCII art text string.  This function returns a
+ * char array - it is the caller's responsibility to free it.
+ *
+ * Note that this function does not attempt to correct for the aspect ratio
+ * problem (character printing in terminals often will result in the image
+ * being "stretched" in height.)  If the use case calls for that, the
+ * application should use icv_resize to adjust the image before calling
+ * icv_ascii_art. (See the ascii libicv test code for an example.)
+ *
+ * @param i ICV image data.
+ * @param p ASCII text generation parameters.
+ * @return char array.
+ *
+ */
+ICV_EXPORT extern char *icv_ascii_art(icv_image_t *i, struct icv_ascii_art_params *p);
 
 /** @} */
 

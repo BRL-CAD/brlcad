@@ -1,3 +1,4 @@
+brlcad_addexec(icv_ascii ascii.c "libicv;libbu" TEST)
 brlcad_addexec(icv_read_write read_write.c "libicv;libbu" TEST)
 brlcad_addexec(icv_rect rect.c "libicv;libbu" TEST)
 brlcad_addexec(icv_crop crop.c "libicv;libbu" TEST)
