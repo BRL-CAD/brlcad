@@ -107,7 +107,7 @@ scene_clear(struct ged *gedp)
     dm_refresh(gedp);
 }
 
-extern "C" void
+extern "C" int
 img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear_image, int soft_fail, int approximate_check, const char *clear_root, const char *img_root)
 {
     icv_image_t *ctrl, *timg;
@@ -133,7 +133,7 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 	    if (clear_scene)
 		scene_clear(gedp);
 	    bu_vls_free(&tname);
-	    return;
+	    return BRLCAD_ERROR;
 	}
 	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&tname));
     }
@@ -145,7 +145,7 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 		scene_clear(gedp);
 	    bu_vls_free(&tname);
 	    bu_vls_free(&cname);
-	    return;
+	    return BRLCAD_ERROR;
 	}
 	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&cname));
     }
@@ -201,7 +201,8 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 
 		if (clear_scene)
 		    scene_clear(gedp);
-		return;
+
+		return BRLCAD_ERROR;
 	    } else {
 		// Hard fail - generate a diff image for debugging work
 		struct bu_vls diff_name = BU_VLS_INIT_ZERO;
@@ -226,6 +227,8 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 
     if (clear_scene)
 	scene_clear(gedp);
+
+    return BRLCAD_OK;
 }
 
 // Local Variables:

@@ -57,7 +57,7 @@ dm_refresh(struct ged *gedp, int vnum)
     dm_draw_end(dmp);
 }
 
-void
+int
 img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, int soft_fail)
 {
     icv_image_t *ctrl, *timg;
@@ -87,7 +87,7 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, int soft_fail)
     if (ged_exec_screengrab(gedp, 4, s_av) & BRLCAD_ERROR) {
 	bu_log("Failed to grab screen for DM %s\n", bu_vls_cstr(dm_get_pathname(dmp)));
 	bu_vls_free(&tname);
-	return;
+	return BRLCAD_ERROR;
     }
 
     timg = icv_read(bu_vls_cstr(&tname), BU_MIME_IMAGE_PNG, 0, 0);
@@ -95,7 +95,7 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, int soft_fail)
 	if (soft_fail) {
 	    bu_log("Failed to read %s\n", bu_vls_cstr(&tname));
 	    bu_vls_free(&tname);
-	    return;
+	    return BRLCAD_ERROR;
 	}
 	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&tname));
     }
@@ -105,7 +105,7 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, int soft_fail)
 	    bu_log("Failed to read %s\n", bu_vls_cstr(&cname));
 	    bu_vls_free(&tname);
 	    bu_vls_free(&cname);
-	    return;
+	    return BRLCAD_ERROR;
 	}
 	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&cname));
     }
@@ -119,7 +119,7 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, int soft_fail)
 	    bu_log("%d wireframe diff failed.  %d matching, %d off by 1, %d off by many\n", id, matching_cnt, off_by_1_cnt, off_by_many_cnt);
 	    icv_destroy(ctrl);
 	    icv_destroy(timg);
-	    return;
+	    return BRLCAD_ERROR;
 	}
 	bu_exit(EXIT_FAILURE, "%d wireframe diff failed.  %d matching, %d off by 1, %d off by many\n", id, matching_cnt, off_by_1_cnt, off_by_many_cnt);
     }
@@ -130,6 +130,8 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, int soft_fail)
     // Image comparison done and successful
     bu_file_delete(bu_vls_cstr(&tname));
     bu_vls_free(&tname);
+
+    return BRLCAD_OK;
 }
 
 int
@@ -139,6 +141,7 @@ main(int ac, char *av[]) {
     int need_help = 0;
     int run_unstable_tests = 0;
     int soft_fail = 0;
+    int ret = BRLCAD_OK;
 
     bu_setprogname(av[0]);
 
@@ -266,10 +269,10 @@ main(int ac, char *av[]) {
     ged_exec_draw(gedp, 4, s_av);
 
     // Sanity
-    img_cmp(0, 1, gedp, av[1], soft_fail);
-    img_cmp(1, 1, gedp, av[1], soft_fail);
-    img_cmp(2, 1, gedp, av[1], soft_fail);
-    img_cmp(3, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(0, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(1, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(2, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(3, 1, gedp, av[1], soft_fail);
 
     // Resize dm to larger dimensions
     bu_log("Resize to 600x600...\n");
@@ -285,10 +288,10 @@ main(int ac, char *av[]) {
 	// stable without adjustment.
 	bv_update(views[i]);
     }
-    img_cmp(0, 2, gedp, av[1], soft_fail);
-    img_cmp(1, 2, gedp, av[1], soft_fail);
-    img_cmp(2, 2, gedp, av[1], soft_fail);
-    img_cmp(3, 2, gedp, av[1], soft_fail);
+    ret += img_cmp(0, 2, gedp, av[1], soft_fail);
+    ret += img_cmp(1, 2, gedp, av[1], soft_fail);
+    ret += img_cmp(2, 2, gedp, av[1], soft_fail);
+    ret += img_cmp(3, 2, gedp, av[1], soft_fail);
 
     // Shrink back to default dimensions
     bu_log("Shrink to 512x512...\n");
@@ -304,10 +307,10 @@ main(int ac, char *av[]) {
 	// stable without adjustment.
 	bv_update(views[i]);
     }
-    img_cmp(0, 1, gedp, av[1], soft_fail);
-    img_cmp(1, 1, gedp, av[1], soft_fail);
-    img_cmp(2, 1, gedp, av[1], soft_fail);
-    img_cmp(3, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(0, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(1, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(2, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(3, 1, gedp, av[1], soft_fail);
 
     // Cycle through a bunch of resizes
     bu_log("Cycle through multiple resizes...\n");
@@ -336,16 +339,14 @@ main(int ac, char *av[]) {
 	// stable without adjustment.
 	bv_update(views[i]);
     }
-    img_cmp(0, 1, gedp, av[1], soft_fail);
-    img_cmp(1, 1, gedp, av[1], soft_fail);
-    img_cmp(2, 1, gedp, av[1], soft_fail);
-    img_cmp(3, 1, gedp, av[1], soft_fail);
-
-
+    ret += img_cmp(0, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(1, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(2, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(3, 1, gedp, av[1], soft_fail);
 
     ged_close(gedp);
 
-    return 0;
+    return ret;
 }
 
 
