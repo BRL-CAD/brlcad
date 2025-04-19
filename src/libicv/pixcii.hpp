@@ -26,10 +26,11 @@
 
 #pragma once
 
+#include "common.h"
+
 #include <string>
 #include <vector>
 
-#include "common.h"
 #include "icv.h"
 
 namespace pixcii {
