@@ -182,6 +182,17 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    if (argc > 1 && std::string(argv[1]) == "batch") {
+        if (argc < 3) {
+            bu_vls_printf(gedp->ged_result_str, "Usage: nirt batch <filename>\n");
+            return BRLCAD_ERROR;
+        }
+        const char* filename = argv[2];
+        process_batch_file(filename, gedp->ged_gdp->nirt_state);
+        return BRLCAD_OK;
+    }
+
+
     // If we found something, print and return
     if (info_arg) {
 	// load av with request
