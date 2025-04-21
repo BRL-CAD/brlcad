@@ -423,6 +423,39 @@ nirt_app_exec(struct nirt_state *ns, struct bu_vls *iline, struct bu_vls *state_
 }
 
 
+// Function to handle batch processing
+void process_batch_file(const char* filename, struct nirt_state* ns) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open file " << filename << std::endl;
+        return;
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        std::istringstream iss(line);
+        double x, y, z, azimuth, elevation;
+        if (!(iss >> x >> y >> z >> azimuth >> elevation)) {
+            std::cerr << "Error: Invalid line format in " << filename << ": " << line << std::endl;
+            continue;
+        }
+
+        // Construct and execute `xyz` command
+        std::ostringstream xyz_cmd;
+        xyz_cmd << "xyz " << x << " " << y << " " << z;
+        nirt_exec(ns, xyz_cmd.str().c_str());
+
+        // Construct and execute `dir` command
+        std::ostringstream dir_cmd;
+        dir_cmd << "ae " << azimuth << " " << elevation;
+        nirt_exec(ns, dir_cmd.str().c_str());
+
+        // Shoot the ray
+        nirt_exec(ns, "s");
+    }
+    file.close();
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -876,7 +909,15 @@ done:
     nirt_destroy(ns);
     if (ns)
 	BU_PUT(ns, struct nirt_state);
-
+    // Look for batch flag
+    for (int i = 1; i < argc; ++i) {
+        if (std::string(argv[i]) == "--batch" && i + 1 < argc) {
+            const char* batch_file = argv[++i];
+            process_batch_file(batch_file, ns);
+            return 0;
+        }
+    }
+	    
     return ret;
 }
 
