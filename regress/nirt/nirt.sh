@@ -67,6 +67,17 @@ if test ! -f "$NIRT" ; then
     exit 1
 fi
 
+# Test batch processing
+log "*** Test Batch Processing ***"
+cat > batch_input.txt <<EOF
+0 0 0 45 45
+1 1 1 90 90
+EOF
+
+run $NIRT -v -H 0 --batch batch_input.txt nirt.g all_cubes.r
+
+rm -f batch_input.txt
+
 rm -f nirt.mged nirt.g
 cat > nirt.mged <<EOF
 opendb nirt.g y
