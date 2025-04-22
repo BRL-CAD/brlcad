@@ -346,12 +346,6 @@ bn_ulpf(float val)
     return -bits.f + val;
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
 
 /*
  * Local Variables:
