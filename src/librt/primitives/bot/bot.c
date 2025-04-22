@@ -711,7 +711,13 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	return 0;
 
     int thread_ind = bu_parallel_id();
-    hit_da *hits_da = &sps->hit_arrays_per_cpu[thread_ind]; // zero'd during prep
+
+    // Note that hit_arrays_per_cpu memory is allocated once during prep and
+    // reused to avoid a performance hit.  Accordingly (particularly when
+    // debugging) remember that only the hits_da data written out by *this* ray
+    // is valid - stale data from older rays may be present in memory beyond
+    // the maximum count index.
+    hit_da *hits_da = &sps->hit_arrays_per_cpu[thread_ind];
     hits_da->count = 0; // New ray, new result count.
 
     fastf_t toldist = 0.0;
