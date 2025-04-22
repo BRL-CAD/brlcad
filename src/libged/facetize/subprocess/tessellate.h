@@ -28,10 +28,6 @@
 
 #include "common.h"
 
-#ifdef __cplusplus
-#include "manifold/manifold.h"
-#endif
-
 #include "vmath.h"
 #include "bu/vls.h"
 #include "bn/tol.h"
