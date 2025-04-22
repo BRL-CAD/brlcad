@@ -184,6 +184,16 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 	    if (soft_fail) {
 		bu_log("%d %s diff failed.  %d matching, %d off by 1, %d off by many\n", id, img_root, matching_cnt, off_by_1_cnt, off_by_many_cnt);
 
+		// Dump an ascii rendering of the difference image to the log
+		icv_image_t *dbgimg = icv_diffimg(ctrl, timg);
+		if (dbgimg) {
+		    struct icv_ascii_art_params iparams = ICV_ASCII_ART_PARAMS_DEFAULT;
+		    iparams.output_color = 1;
+		    char *aart = icv_ascii_art(dbgimg, &iparams);
+		    bu_log("%s\n", aart);
+		    icv_destroy(dbgimg);
+		}
+
 		if (clear_image) {
 		    // We're in soft fail mode, so we're not keeping the image unless the user requested it
 		    // In hard fail, we leave the last image for inspection.
