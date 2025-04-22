@@ -58,6 +58,7 @@
 #include "bn/wavelet.h"
 #include "bn/sobol.h"
 #include "bn/str.h"
+#include "bn/ulp.h"
 #include "bn/tabdata.h"
 #include "bg/vert_tree.h"
 #include "bv/vectfont.h"
