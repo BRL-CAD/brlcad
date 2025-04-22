@@ -55,6 +55,7 @@
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
+#if defined(__clang__)
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 

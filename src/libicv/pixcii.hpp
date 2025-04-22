@@ -49,78 +49,110 @@ std::string generateAsciiText(const icv_image_t *i, const AsciiArtParams &params
 
 #ifdef PIXCII_IMPLEMENTATION
 
-// Information about a block of pixels
-struct BlockInfo
+// --- Constants ---
+namespace constants
 {
-    uint64_t sum_brightness = 0;
-    float sum_mag = 0.0f;
-    std::vector<uint64_t> sum_color = {0, 0, 0};
-    int pixel_count = 0;
+    // Standard luminance weights for RGB to Grayscale conversion (Rec. 601 standard)
+    // These weights are used when converting a color image to a single grayscale value per pixel.
+    const float GRAYSCALE_WEIGHT_R = 0.299f;
+    const float GRAYSCALE_WEIGHT_G = 0.587f;
+    const float GRAYSCALE_WEIGHT_B = 0.114f;
+}
+// --- End Constants ---
+
+// Information about a block of pixels
+struct PixelInfo
+{
+    uint64_t brightness = 0;                 // Grayscale brightness value of the pixel
+    std::vector<uint64_t> color = {0, 0, 0}; // RGB color values of the pixel
 };
 
-// Calculate block information for ASCII character selection
-inline BlockInfo calculateBlockInfo(const icv_image_t *img, int x, int y, const AsciiArtParams &params)
+// Calculate relevant information (brightness, color, edge_magnitude) for a single pixel
+// This function processes one pixel at the given (x, y) coordinates
+PixelInfo getPixelInfo(const icv_image_t *img, size_t x, size_t y, const AsciiArtParams &params)
 {
-    BlockInfo info;
+    PixelInfo info; // Create a struct to hold pixel information
 
-    // Initialize sum_color with 3 zeros
-    info.sum_color = {0, 0, 0};
+    // Initialize color vector with zeros
+    info.color = {0, 0, 0};
 
-    size_t ix = x;
-    size_t iy = y;
-
-    if (ix >= img->width || iy >= img->height) {
-        return info;
-    }
-
-    size_t pixel_index = (iy * img->width + ix) * img->channels;
-    if (pixel_index + 2 >= img->width * img->height * img->channels)
+    // --- Bounds Check ---
+    // Basic bounds check to ensure coordinates are within image dimensions
+    // Although calling code should ideally provide valid coordinates, this adds safety
+    if (x >= img->width || y >= img->height)
     {
-        return info;
+	// If out of bounds, return default (zero-initialized) info
+	return info;
     }
 
-    uint8_t r = lrint(img->data[pixel_index]*255.0);
-    uint8_t g = lrint(img->data[pixel_index+1]*255.0);
-    uint8_t b = lrint(img->data[pixel_index+2]*255.0);
+    // Calculate the starting index of the pixel's data in the image vector
+    int pixel_index = (y * img->width + x) * img->channels;
 
-    uint64_t gray = static_cast<uint64_t>(0.3f * r + 0.59f * g + 0.11f * b);
-    info.sum_brightness += gray;
+    // Get the color components based on the number of channels
+    // Safely access channels if they exist
+    uint8_t r = (img->channels >= 1) ? img->data[pixel_index]*255.0 : 0;
+    uint8_t g = (img->channels >= 2) ? img->data[pixel_index + 1]*255.0 : 0;
+    uint8_t b = (img->channels >= 3) ? img->data[pixel_index + 2]*255.0 : 0;
 
-    if (params.color)
+
+    // Calculate grayscale brightness using standard luminance weights
+    // These weights are defined as constants in image.cpp (conceptually)
+    uint64_t gray = static_cast<uint64_t>(
+	    constants::GRAYSCALE_WEIGHT_R * r +
+	    constants::GRAYSCALE_WEIGHT_G * g +
+	    constants::GRAYSCALE_WEIGHT_B * b
+	    );
+
+
+    // Use the calculated brightness value
+    info.brightness = gray;
+
+    // If color output is enabled and the image has enough channels (at least 3 for RGB)
+    if (params.color && img->channels >= 3)
     {
-        info.sum_color[0] += r;
-        info.sum_color[1] += g;
-        info.sum_color[2] += b;
+	// Store the pixel's color values directly
+	info.color[0] = r;
+	info.color[1] = g;
+	info.color[2] = b;
     }
 
-    info.pixel_count += 1;
-
+    // The struct now holds info for this specific pixel
     return info;
 }
 
-// Select an ASCII character based on block brightness
-inline char selectAsciiChar(const BlockInfo &block_info, const AsciiArtParams &params)
-{
-    if (block_info.pixel_count == 0)
-    {
-        return ' ';
-    }
 
-    uint64_t value;
+// Select an ASCII character based on block brightness
+inline char selectAsciiChar(const PixelInfo &pixel_info, const AsciiArtParams &params)
+{
+    uint64_t value; // Value used for character selection (brightness or edge magnitude)
 
     // Use brightness
-    uint64_t avg_brightness = block_info.sum_brightness / block_info.pixel_count;
-    float boosted_brightness = static_cast<float>(avg_brightness) * params.brightness_boost;
+    uint64_t brightness = pixel_info.brightness;
+    // Apply brightness boost and clamp between 0 and 255
+    float boosted_brightness = static_cast<float>(brightness) * params.brightness_boost;
     value = std::min(static_cast<uint64_t>(std::max(boosted_brightness, 0.0f)), static_cast<uint64_t>(255));
 
-    if (value == 0)
+    // Handle the case where the value is 0. Map to the first character unless inverted.
+    // The first character is typically space for brightness.
+    if (value == 0 && !params.invert_color)
     {
-        return ' ';
+	return params.ascii_chars.front(); // Return the first character (lowest brightness)
+    }
+    // Handle the case where the value is 0 and inverted. Map to the last character.
+    else if (value == 0 && params.invert_color)
+    {
+	return params.ascii_chars.back(); // Return the last character (highest brightness in inverted scale)
     }
 
+    // Map the value (0-255) to an index in the ASCII character set
+    // The index is proportional to the value relative to the 0-256 range
     size_t char_index = (value * params.ascii_chars.size()) / 256;
+
+    // Ensure the calculated index is within the bounds of the character set vector
     char_index = std::min(char_index, params.ascii_chars.size() - 1);
 
+    // Return the character at the selected index
+    // If invert_color is true, select from the end of the character set
     return params.ascii_chars[params.invert_color ? params.ascii_chars.size() - 1 - char_index : char_index];
 }
 
@@ -136,35 +168,44 @@ std::string generateAsciiText(const icv_image_t *i, const AsciiArtParams &params
 
     for (size_t y = img->height-1; y != 0; y--)
     {
-        for (size_t x = 0; x < img->width; x++)
-        {
-            BlockInfo block_info = calculateBlockInfo(img, x, y, params);
-            char ascii_char = selectAsciiChar(block_info, params);
+	for (size_t x = 0; x < img->width; x++)
+	{
+	    // Get the information for the current pixel
+	    // Pass the edge magnitudes pointer
+	    PixelInfo pixel_info = getPixelInfo(img, x, y, params);
 
-            if (use_color)
-            {
-                // Add ANSI color escape codes
-                uint8_t r = block_info.sum_color[0] / block_info.pixel_count;
-                uint8_t g = block_info.sum_color[1] / block_info.pixel_count;
-                uint8_t b = block_info.sum_color[2] / block_info.pixel_count;
+	    // Select the ASCII character corresponding to this pixel's info
+	    char ascii_char = selectAsciiChar(pixel_info, params);
 
-                // ANSI color escape code for RGB
-                ascii_text += "\033[38;2;" + std::to_string(r) + ";" + std::to_string(g) + ";" + std::to_string(b) + "m";
-                ascii_text += ascii_char;
-            }
-            else
-            {
-                ascii_text += ascii_char;
-            }
-        }
+	    if (use_color)
+	    {
+		// Add ANSI color escape codes
+		uint8_t r = pixel_info.color[0];
+		uint8_t g = pixel_info.color[1];
+		uint8_t b = pixel_info.color[2];
 
-        // Reset color at the end of each line
-        if (use_color)
-        {
-            ascii_text += "\033[0m";
-        }
+		// Append ANSI color escape code for 24-bit color (RGB)
+		// Format: \033[38;2;R;G;Bm
+		ascii_text += "\033[38;2;" + std::to_string(r) + ";" + std::to_string(g) + ";" + std::to_string(b) + "m";
+		// Append the selected ASCII character
+		ascii_text += ascii_char;
+	    }
+	    else
+	    {
+		// If color is not enabled, just append the ASCII character
+		ascii_text += ascii_char;
+	    }
+	}
 
-        ascii_text += '\n';
+	// --- Color Reset and Newline ---
+	// Reset color at the end of each line to prevent bleeding into the next line or prompt
+	if (use_color)
+	{
+	    ascii_text += "\033[0m"; // ANSI reset code
+	}
+
+	// Add a newline character at the end of each row to move to the next line of ASCII art
+	ascii_text += '\n';
     }
 
     return ascii_text;
