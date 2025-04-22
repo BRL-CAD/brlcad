@@ -33,6 +33,9 @@
 
 #include "common.h"
 
+/*interface header */
+#include "bn/ulp.h"
+
 #include <math.h>     /* for isnan(), isinf() */
 #include <limits.h>
 #include <float.h>

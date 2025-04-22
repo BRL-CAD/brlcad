@@ -77,7 +77,7 @@ BN_EXPORT extern double bn_ulp(double val);
 /**
  * @brief same as bn_ulp() but for single precision floating point.
  */
-BN_EXPORT extern double bn_ulpf(double val);
+BN_EXPORT extern float bn_ulpf(float val);
 
 
 __END_DECLS
