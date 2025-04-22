@@ -34,35 +34,24 @@
 
 __BEGIN_DECLS
 
-/** @brief Return the machine epsilon for double precision. */
+/** @name Machine epsilons @ { */
 BN_EXPORT extern double bn_dbl_epsilon(void);
-
-/** @brief Return the machine epsilon for single precision. */
 BN_EXPORT extern float bn_flt_epsilon(void);
+/** @} */
 
-/** @brief Return the smallest positive normalized double value. */
+/** @name Numeric range limits @ { */
 BN_EXPORT extern double bn_dbl_min(void);
-
-/** @brief Return the largest finite double value. */
 BN_EXPORT extern double bn_dbl_max(void);
-
-/** @brief Return the smallest positive normalized float value. */
 BN_EXPORT extern float bn_flt_min(void);
-
-/** @brief Return the largest finite float value. */
 BN_EXPORT extern float bn_flt_max(void);
+/** @} */
 
-/** @brief Return square root of smallest positive normalized float. */
+/** @name Square-rooted limits @ { */
 BN_EXPORT extern float bn_flt_min_sqrt(void);
-
-/** @brief Return square root of largest finite float. */
 BN_EXPORT extern float bn_flt_max_sqrt(void);
-
-/** @brief Return square root of smallest positive normalized double. */
 BN_EXPORT extern double bn_dbl_min_sqrt(void);
-
-/** @brief Return square root of largest finite double. */
 BN_EXPORT extern double bn_dbl_max_sqrt(void);
+/** @} */
 
 /**
  * @brief Calculate unit in the last place (ULP) for a given double.
