@@ -322,12 +322,11 @@ bn_ulp(double val)
 	return val;
 
     bits.d = val;
+    bits.u++; /* next "bigger" val */
     if (val >= 0.0) {
-	bits.u++; /* next above val */
 	return bits.d - val;
     }
-    bits.u--; /* next below val */
-    return bits.d - val;
+    return -bits.d + val;
 }
 
 
@@ -340,12 +339,11 @@ bn_ulpf(float val)
 	return val;
 
     bits.f = val;
+    bits.i++; /* next "bigger" val */
     if (val >= 0.0f) {
-	bits.i++; /* next above val */
 	return bits.f - val;
     }
-    bits.i--; /* next below val */
-    return bits.f - val;
+    return -bits.f + val;
 }
 
 
