@@ -41,6 +41,23 @@
 #include <float.h>
 #include <stdint.h>   /* for int32_t, uint64_t */
 
+/* In general, BRL-CAD code tries to respect the -Wfloat-equal warning about
+ * comparing floating-point with ‘==’ or ‘!=’ being unsafe.  In this specific
+ * instance however, because we are *deliberately* probing the limits of
+ * floating point behavior to characterize it, we need to disable that
+ * warning locally. */
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
+
 
 #if defined(__STDC_IEC_559__)
 #  define HAVE_IEEE754 1
@@ -346,6 +363,12 @@ bn_ulpf(float val)
     return -bits.f + val;
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 
 /*
  * Local Variables:
