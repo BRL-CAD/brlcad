@@ -33,9 +33,11 @@
 
 #include "common.h"
 
-#include <math.h>
+#include <math.h>     /* for isnan(), isinf() */
 #include <limits.h>
 #include <float.h>
+#include <stdint.h>   /* for int32_t, uint64_t */
+
 
 #if defined(__STDC_IEC_559__)
 #  define HAVE_IEEE754 1
@@ -228,19 +230,109 @@ bn_dbl_max_sqrt(void)
 
 
 double
+bn_nextafter_up(double val)
+{
+    if (isnan(val) || isinf(val))
+	return val;
+
+    /* unify both +0 and -0 into +0’s next subnormal */
+    if (val == 0.0) {
+        int64_t bits = 1; /* raw 0x0000…001 */
+        return *(double *)&bits;
+    }
+
+    int64_t bits = *(int64_t *)&val; /* bit‑cast into signed! */
+    bits++;                          /* always moves toward +∞ */
+    return *(double *)&bits;
+}
+
+
+double
+bn_nextafter_dn(double val)
+{
+    if (isnan(val) || isinf(val))
+	return val;
+
+    /* unify both +0 and -0 into -0’s next subnormal */
+    if (val == 0.0) {
+        /* raw, largest negative subnormal */
+        int64_t bits = (int64_t)0x8000000000000001ULL;
+        return *(double *)&bits;
+    }
+
+    int64_t bits = *(int64_t *)&val; /* signed‑int view */
+    bits--;                          /* always moves toward −∞ */
+    return *(double *)&bits;
+}
+
+
+float
+bn_nextafterf_up(float val)
+{
+    if (isnan(val) || isinf(val))
+	return val;
+
+    if (val == 0.0) {
+        int32_t bits = 1; /* raw 0x00000001 */
+        return *(float *)&bits;
+    }
+
+    int32_t bits = *(int32_t *)&val; /* bit‑cast into signed! */
+    bits++;                          /* always moves toward +∞ */
+    return *(float *)&bits;
+}
+
+
+float
+bn_nextafterf_dn(float val)
+{
+    if (isnan(val) || isinf(val))
+	return val;
+
+    /* unify both +0 and -0 into -0’s next subnormal */
+    if (val == 0.0) {
+        /* raw, largest negative subnormal */
+        int32_t bits = 0x80000001U;
+        return *(float *)&bits;
+    }
+
+    int32_t bits = *(int32_t *)&val; /* signed‑int view */
+    bits--;                          /* always moves toward −∞ */
+    return *(float *)&bits;
+}
+
+
+double
 bn_ulp(double val)
 {
-    long long up, dn;
+    uint64_t bits;
 
     if (isnan(val) || isinf(val))
 	return val;
 
-    if (val >=0) {
-	up = *(long long*)&val + 1;
-	return *(double *)&up - val;
+    if (val >= 0.0) {
+	bits = *(uint64_t*)&val + 1;
+	return *(double *)&bits - val;
     }
-    dn = *(long long*)&val - 1;
-    return *(double *)&dn - val;
+    bits = *(uint64_t*)&val - 1;
+    return *(double *)&bits - val;
+}
+
+
+float
+bn_ulpf(float val)
+{
+    int32_t bits;
+
+    if (isnan(val) || isinf(val))
+	return val;
+
+    if (val >= 0.0f) {
+	bits = *(int32_t*)&val + 1;
+	return *(float *)&bits - val;
+    }
+    bits = *(int32_t*)&val - 1;
+    return *(float *)&bits - val;
 }
 
 

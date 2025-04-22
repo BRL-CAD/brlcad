@@ -34,12 +34,12 @@
 
 __BEGIN_DECLS
 
-/** @name Machine epsilons @ { */
+/** @name Machine epsilons, smallest step after 1.0 @ { */
 BN_EXPORT extern double bn_dbl_epsilon(void);
 BN_EXPORT extern float bn_flt_epsilon(void);
 /** @} */
 
-/** @name Numeric range limits @ { */
+/** @name Numeric positive normalized range limits @ { */
 BN_EXPORT extern double bn_dbl_min(void);
 BN_EXPORT extern double bn_dbl_max(void);
 BN_EXPORT extern float bn_flt_min(void);
@@ -53,13 +53,32 @@ BN_EXPORT extern double bn_dbl_min_sqrt(void);
 BN_EXPORT extern double bn_dbl_max_sqrt(void);
 /** @} */
 
+/** @name Next possible value up/down from a given value @ { */
+BN_EXPORT extern double bn_nextafter_up(double val);
+BN_EXPORT extern double bn_nextafter_dn(double val);
+BN_EXPORT extern float  bn_nextafterf_up(float val);
+BN_EXPORT extern float  bn_nextafterf_dn(float val);
+/** @} */
+
+
 /**
- * @brief Calculate unit in the last place (ULP) for a given double.
+ * @brief Calculate unit in the last place (ULP) for a given value.
+ *
+ * If provided value is positive, it's the positive distance to the
+ * next double.  If provided value is negative, it's the negative
+ * distance to the next negative double.
  *
  * @param val the input double value.
- * @return distance to the next representable double precision value.
+ * @return distance to the next representable double precision value
  */
 BN_EXPORT extern double bn_ulp(double val);
+
+
+/**
+ * @brief same as bn_ulp() but for single precision floating point.
+ */
+BN_EXPORT extern double bn_ulpf(double val);
+
 
 __END_DECLS
 
