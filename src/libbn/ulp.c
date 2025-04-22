@@ -52,18 +52,28 @@ extern int isinf(double x);
 #endif
 
 
+/* tag‑type unions for bit‑punning */
+union dbl_bits {
+    double    d;
+    int64_t   i;
+    uint64_t  u;
+};
+union flt_bits {
+    float     f;
+    int32_t   i;
+    uint32_t  u;
+};
+
+
 double
 bn_dbl_epsilon(void)
 {
 #if defined(DBL_EPSILON)
     return DBL_EPSILON;
 #elif defined(HAVE_IEEE754)
-    union {
-	double d;
-	long long ll;
-    } val;
+    union dbl_bits val;
     val.d = 1.0;
-    val.ll += 1LL;
+    val.i += 1;
     return val.d - 1.0;
 #else
     /* static for computed epsilon so it's only calculated once. */
@@ -89,12 +99,9 @@ bn_flt_epsilon(void)
 #if defined(FLT_EPSILON)
     return FLT_EPSILON;
 #elif defined(HAVE_IEEE754)
-    union {
-	float f;
-	long long ll;
-    } val;
+    union flt_bits val;
     val.f = 1.0;
-    val.ll += 1LL;
+    val.d += 1;
     return val.f - 1.0;
 #else
     /* static for computed epsilon so it's only calculated once. */
@@ -120,13 +127,10 @@ bn_dbl_min(void)
 #if defined(DBL_MIN)
     return DBL_MIN;
 #else
-    union {
-	double d;
-	unsigned long long ull;
-    } minVal;
+    union dbl_bits minVal;
 
     /* set exponent to min non-subnormal value (i.e., 1) */
-    minVal.ull = 1ULL << 52; /* 52 zeros for the fraction*/
+    minVal.u = 1 << 52; /* 52 zeros for the fraction*/
 
     return minVal.d;
 #endif
@@ -139,12 +143,10 @@ bn_dbl_max(void)
 #if defined(DBL_MAX)
     return DBL_MAX;
 #elif defined(INFINITY)
-    union {
-	double d;
-	long long ll;
-    } val;
+    union dbl_bits val;
+
     val.d = INFINITY;
-    val.ll -= 1LL;
+    val.u -= 1;
     return val.d;
 #else
     static double max_val = 0.0;
@@ -173,13 +175,10 @@ bn_flt_min(void)
 #if defined(FLT_MIN)
     return FLT_MIN;
 #else
-    union {
-	float f;
-	long long ll;
-    } minVal;
+    union flt_bits minVal;
 
     // set exponent to min non-subnormal value (i.e., 1)
-    minVal.ll = 1LL << 23; // 23 zeros for the fraction
+    minVal.d = 1 << 23; // 23 zeros for the fraction
 
     return minVal.f;
 #endif
@@ -192,9 +191,10 @@ bn_flt_max(void)
 #if defined(FLT_MAX)
     return FLT_MAX;
 #elif defined(INFINITY)
-    static const float val = INFINITY;
-    long next = *(long*)&val - 1;
-    return *(float *)&next;
+    union flt_bits bits;
+    bits.f = INFINITY;
+    bits.i--;
+    return bits.f;
 #else
     return 1.0/bn_flt_min();
 #endif
@@ -204,14 +204,14 @@ bn_flt_max(void)
 float
 bn_flt_min_sqrt(void)
 {
-    return sqrt(bn_flt_min());
+    return (float)sqrt(bn_flt_min());
 }
 
 
 float
 bn_flt_max_sqrt(void)
 {
-    return sqrt(bn_flt_max());
+    return (float)sqrt(bn_flt_max());
 }
 
 
@@ -232,107 +232,117 @@ bn_dbl_max_sqrt(void)
 double
 bn_nextafter_up(double val)
 {
+    union dbl_bits bits;
+
     if (isnan(val) || isinf(val))
 	return val;
 
     /* unify both +0 and -0 into +0’s next subnormal */
     if (val == 0.0) {
-        int64_t bits = 1; /* raw 0x0000…001 */
-        return *(double *)&bits;
+        bits.u = 1ULL; /* raw 0x0000…001 */
+        return bits.d;
     }
 
-    int64_t bits = *(int64_t *)&val; /* bit‑cast into signed! */
-    bits++;                          /* always moves toward +∞ */
-    return *(double *)&bits;
+    bits.d = val;
+    bits.i++; /* always moves toward +∞ */
+    return bits.d;
 }
 
 
 double
 bn_nextafter_dn(double val)
 {
+    union dbl_bits bits;
+
     if (isnan(val) || isinf(val))
 	return val;
 
     /* unify both +0 and -0 into -0’s next subnormal */
     if (val == 0.0) {
         /* raw, largest negative subnormal */
-        int64_t bits = (int64_t)0x8000000000000001ULL;
-        return *(double *)&bits;
+        bits.i = (int64_t)0x8000000000000001ULL;
+        return bits.d;
     }
 
-    int64_t bits = *(int64_t *)&val; /* signed‑int view */
-    bits--;                          /* always moves toward −∞ */
-    return *(double *)&bits;
+    bits.d = val;
+    bits.i--; /* always moves toward −∞ */
+    return bits.d;
 }
 
 
 float
 bn_nextafterf_up(float val)
 {
+    union flt_bits bits;
+
     if (isnan(val) || isinf(val))
 	return val;
 
     if (val == 0.0) {
-        int32_t bits = 1; /* raw 0x00000001 */
-        return *(float *)&bits;
+        bits.u = 1U; /* raw 0x00000001 */
+        return bits.f;
     }
 
-    int32_t bits = *(int32_t *)&val; /* bit‑cast into signed! */
-    bits++;                          /* always moves toward +∞ */
-    return *(float *)&bits;
+    bits.f = val;
+    bits.i++; /* always moves toward +∞ */
+    return bits.f;
 }
 
 
 float
 bn_nextafterf_dn(float val)
 {
+    union flt_bits bits;
+
     if (isnan(val) || isinf(val))
 	return val;
 
     /* unify both +0 and -0 into -0’s next subnormal */
     if (val == 0.0) {
         /* raw, largest negative subnormal */
-        int32_t bits = 0x80000001U;
-        return *(float *)&bits;
+        bits.u = 0x80000001U;
+        return bits.f;
     }
 
-    int32_t bits = *(int32_t *)&val; /* signed‑int view */
-    bits--;                          /* always moves toward −∞ */
-    return *(float *)&bits;
+    bits.f = val;
+    bits.i--; /* always moves toward −∞ */
+    return bits.f;
 }
 
 
 double
 bn_ulp(double val)
 {
-    uint64_t bits;
+    union dbl_bits bits;
 
     if (isnan(val) || isinf(val))
 	return val;
 
+    bits.d = val;
     if (val >= 0.0) {
-	bits = *(uint64_t*)&val + 1;
-	return *(double *)&bits - val;
+	bits.u++; /* next above val */
+	return bits.d - val;
     }
-    bits = *(uint64_t*)&val - 1;
-    return *(double *)&bits - val;
+    bits.u--; /* next below val */
+    return bits.d - val;
 }
 
 
 float
 bn_ulpf(float val)
 {
-    int32_t bits;
+    union flt_bits bits;
 
     if (isnan(val) || isinf(val))
 	return val;
 
+    bits.f = val;
     if (val >= 0.0f) {
-	bits = *(int32_t*)&val + 1;
-	return *(float *)&bits - val;
+	bits.i++; /* next above val */
+	return bits.f - val;
     }
-    bits = *(int32_t*)&val - 1;
-    return *(float *)&bits - val;
+    bits.i--; /* next below val */
+    return bits.f - val;
 }
 
 
