@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include "manifold/manifold.h"
+
 #include "bu/ptbl.h"
 #include "rt/search.h"
 #include "../../ged_private.h"
