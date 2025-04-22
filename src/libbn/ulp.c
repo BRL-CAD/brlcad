@@ -41,23 +41,6 @@
 #include <float.h>
 #include <stdint.h>   /* for int32_t, uint64_t */
 
-/* In general, BRL-CAD code tries to respect the -Wfloat-equal warning about
- * comparing floating-point with ‘==’ or ‘!=’ being unsafe.  In this specific
- * instance however, because we are *deliberately* probing the limits of
- * floating point behavior to characterize it, we need to disable that
- * warning locally. */
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#endif
-
 
 #if defined(__STDC_IEC_559__)
 #  define HAVE_IEEE754 1
@@ -99,7 +82,7 @@ bn_dbl_epsilon(void)
     /* static for computed epsilon so it's only calculated once. */
     static double tol = 0.0;
 
-    if (tol == 0.0) {
+    if (!tol) {
 	/* volatile to avoid long registers and compiler optimizing away the loop */
 	volatile double temp_tol = 1.0;
 	while (1.0 + (temp_tol * 0.5) > 1.0) {
@@ -127,7 +110,7 @@ bn_flt_epsilon(void)
     /* static for computed epsilon so it's only calculated once. */
     static float tol = 0.0;
 
-    if (tol == 0.0) {
+    if (!tol) {
 	/* volatile to avoid long registers and compiler optimizing away the loop */
 	volatile float temp_tol = 1.0f;
 	while (1.0f + (temp_tol * 0.5f) > 1.0f) {
@@ -171,7 +154,7 @@ bn_dbl_max(void)
 #else
     static double max_val = 0.0;
 
-    if (max_val == 0.0) {
+    if (!max_val) {
 	double val = 1.0;
 	double prev_val;
 
@@ -258,7 +241,7 @@ bn_nextafter_up(double val)
 	return val;
 
     /* unify both +0 and -0 into +0’s next subnormal */
-    if (val == 0.0) {
+    if (!val) {
         bits.u = 1ULL; /* raw 0x0000…001 */
         return bits.d;
     }
@@ -278,7 +261,7 @@ bn_nextafter_dn(double val)
 	return val;
 
     /* unify both +0 and -0 into -0’s next subnormal */
-    if (val == 0.0) {
+    if (!val) {
         /* raw, largest negative subnormal */
         bits.i = (int64_t)0x8000000000000001ULL;
         return bits.d;
@@ -298,7 +281,7 @@ bn_nextafterf_up(float val)
     if (isnan(val) || isinf(val))
 	return val;
 
-    if (val == 0.0) {
+    if (!val) {
         bits.u = 1U; /* raw 0x00000001 */
         return bits.f;
     }
@@ -318,7 +301,7 @@ bn_nextafterf_dn(float val)
 	return val;
 
     /* unify both +0 and -0 into -0’s next subnormal */
-    if (val == 0.0) {
+    if (!val) {
         /* raw, largest negative subnormal */
         bits.u = 0x80000001U;
         return bits.f;
@@ -340,7 +323,7 @@ bn_ulp(double val)
 
     bits.d = val;
     bits.u++; /* next "bigger" val */
-    if (val >= 0.0) {
+    if (!val || val > 0.0) {
 	return bits.d - val;
     }
     return -bits.d + val;
@@ -357,7 +340,7 @@ bn_ulpf(float val)
 
     bits.f = val;
     bits.i++; /* next "bigger" val */
-    if (val >= 0.0f) {
+    if (!val || val > 0.0f) {
 	return bits.f - val;
     }
     return -bits.f + val;
