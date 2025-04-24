@@ -343,14 +343,14 @@ scroll_display(struct mged_state *s, int y_top)
 			} else {
 			    if (mged_variables->mv_rateknobs) {
 				if (view_state->vs_gvp->gv_coord == 'm')
-				    f = view_state->vs_rate_model_tran[X];
+				    f = view_state->vs_gvp->k.vs_rate_model_tran[X];
 				else
-				    f = view_state->vs_rate_tran[X];
+				    f = view_state->vs_gvp->k.vs_rate_tran[X];
 			    } else {
 				if (view_state->vs_gvp->gv_coord == 'm')
-				    f = view_state->vs_absolute_model_tran[X];
+				    f = view_state->vs_gvp->k.vs_absolute_model_tran[X];
 				else
-				    f = view_state->vs_absolute_tran[X];
+				    f = view_state->vs_gvp->k.vs_absolute_tran[X];
 			    }
 
 			    dm_set_fg(DMP,
@@ -393,14 +393,14 @@ scroll_display(struct mged_state *s, int y_top)
 			} else {
 			    if (mged_variables->mv_rateknobs) {
 				if (view_state->vs_gvp->gv_coord == 'm')
-				    f = view_state->vs_rate_model_tran[Y];
+				    f = view_state->vs_gvp->k.vs_rate_model_tran[Y];
 				else
-				    f = view_state->vs_rate_tran[Y];
+				    f = view_state->vs_gvp->k.vs_rate_tran[Y];
 			    } else {
 				if (view_state->vs_gvp->gv_coord == 'm')
-				    f = view_state->vs_absolute_model_tran[Y];
+				    f = view_state->vs_gvp->k.vs_absolute_model_tran[Y];
 				else
-				    f = view_state->vs_absolute_tran[Y];
+				    f = view_state->vs_gvp->k.vs_absolute_tran[Y];
 			    }
 
 			    dm_set_fg(DMP,
@@ -443,14 +443,14 @@ scroll_display(struct mged_state *s, int y_top)
 			} else {
 			    if (mged_variables->mv_rateknobs) {
 				if (view_state->vs_gvp->gv_coord == 'm')
-				    f = view_state->vs_rate_model_tran[Z];
+				    f = view_state->vs_gvp->k.vs_rate_model_tran[Z];
 				else
-				    f = view_state->vs_rate_tran[Z];
+				    f = view_state->vs_gvp->k.vs_rate_tran[Z];
 			    } else {
 				if (view_state->vs_gvp->gv_coord == 'm')
-				    f = view_state->vs_absolute_model_tran[Z];
+				    f = view_state->vs_gvp->k.vs_absolute_model_tran[Z];
 				else
-				    f = view_state->vs_absolute_tran[Z];
+				    f = view_state->vs_gvp->k.vs_absolute_tran[Z];
 			    }
 
 			    dm_set_fg(DMP,
@@ -480,11 +480,12 @@ scroll_display(struct mged_state *s, int y_top)
 					   color_scheme->cs_slider_text1[1],
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
 			} else {
-			    if (mged_variables->mv_rateknobs)
-				f = view_state->vs_rate_scale;
-			    else
-				f = view_state->vs_absolute_scale;
-
+			    if (view_state->vs_gvp) {
+				if (mged_variables->mv_rateknobs)
+				    f = view_state->vs_gvp->k.vs_rate_scale;
+				else
+				    f = view_state->vs_gvp->k.vs_absolute_scale;
+			    }
 			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text2[0],
 					   color_scheme->cs_slider_text2[1],
@@ -531,14 +532,14 @@ scroll_display(struct mged_state *s, int y_top)
 			} else {
 			    if (mged_variables->mv_rateknobs) {
 				if (view_state->vs_gvp->gv_coord == 'm')
-				    f = view_state->vs_rate_model_rotate[X] / RATE_ROT_FACTOR;
+				    f = view_state->vs_gvp->k.vs_rate_model_rotate[X] / RATE_ROT_FACTOR;
 				else
-				    f = view_state->vs_rate_rotate[X] / RATE_ROT_FACTOR;
+				    f = view_state->vs_gvp->k.vs_rate_rotate[X] / RATE_ROT_FACTOR;
 			    } else {
 				if (view_state->vs_gvp->gv_coord == 'm')
-				    f = view_state->vs_absolute_model_rotate[X] / ABS_ROT_FACTOR;
+				    f = view_state->vs_gvp->k.vs_absolute_model_rotate[X] / ABS_ROT_FACTOR;
 				else
-				    f = view_state->vs_absolute_rotate[X] / ABS_ROT_FACTOR;
+				    f = view_state->vs_gvp->k.vs_absolute_rotate[X] / ABS_ROT_FACTOR;
 			    }
 
 			    dm_set_fg(DMP,
@@ -583,14 +584,14 @@ scroll_display(struct mged_state *s, int y_top)
 			} else {
 			    if (mged_variables->mv_rateknobs) {
 				if (view_state->vs_gvp->gv_coord == 'm')
-				    f = view_state->vs_rate_model_rotate[Y] / RATE_ROT_FACTOR;
+				    f = view_state->vs_gvp->k.vs_rate_model_rotate[Y] / RATE_ROT_FACTOR;
 				else
-				    f = view_state->vs_rate_rotate[Y] / RATE_ROT_FACTOR;
+				    f = view_state->vs_gvp->k.vs_rate_rotate[Y] / RATE_ROT_FACTOR;
 			    } else {
 				if (view_state->vs_gvp->gv_coord == 'm')
-				    f = view_state->vs_absolute_model_rotate[Y] / ABS_ROT_FACTOR;
+				    f = view_state->vs_gvp->k.vs_absolute_model_rotate[Y] / ABS_ROT_FACTOR;
 				else
-				    f = view_state->vs_absolute_rotate[Y] / ABS_ROT_FACTOR;
+				    f = view_state->vs_gvp->k.vs_absolute_rotate[Y] / ABS_ROT_FACTOR;
 			    }
 
 			    dm_set_fg(DMP,
@@ -635,14 +636,14 @@ scroll_display(struct mged_state *s, int y_top)
 			} else {
 			    if (mged_variables->mv_rateknobs) {
 				if (view_state->vs_gvp->gv_coord == 'm')
-				    f = view_state->vs_rate_model_rotate[Z] / RATE_ROT_FACTOR;
+				    f = view_state->vs_gvp->k.vs_rate_model_rotate[Z] / RATE_ROT_FACTOR;
 				else
-				    f = view_state->vs_rate_rotate[Z] / RATE_ROT_FACTOR;
+				    f = view_state->vs_gvp->k.vs_rate_rotate[Z] / RATE_ROT_FACTOR;
 			    } else {
 				if (view_state->vs_gvp->gv_coord == 'm')
-				    f = view_state->vs_absolute_model_rotate[Z] / ABS_ROT_FACTOR;
+				    f = view_state->vs_gvp->k.vs_absolute_model_rotate[Z] / ABS_ROT_FACTOR;
 				else
-				    f = view_state->vs_absolute_rotate[Z] / ABS_ROT_FACTOR;
+				    f = view_state->vs_gvp->k.vs_absolute_rotate[Z] / ABS_ROT_FACTOR;
 			    }
 
 			    dm_set_fg(DMP,

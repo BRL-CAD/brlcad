@@ -557,7 +557,7 @@ mged_setup(struct mged_state *s)
 
     view_state->vs_gvp->gv_callback = mged_view_callback;
     view_state->vs_gvp->gv_clientData = (void *)view_state;
-    MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_gvp->gv_center);
+    MAT_DELTAS_GET_NEG(view_state->vs_gvp->k.vs_orig_pos, view_state->vs_gvp->gv_center);
 
     view_state->vs_gvp->vset = &s->gedp->ged_views;
 

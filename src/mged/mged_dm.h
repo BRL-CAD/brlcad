@@ -231,38 +231,6 @@ struct _view_state {
     struct view_ring	vs_headView;
     struct view_ring	*vs_current_view;
     struct view_ring	*vs_last_view;
-
-    /* Rate stuff */
-    int		vs_rateflag_model_tran;
-    vect_t	vs_rate_model_tran;
-
-    int		vs_rateflag_model_rotate;
-    vect_t	vs_rate_model_rotate;
-    char	vs_rate_model_origin;
-
-    int		vs_rateflag_tran;
-    vect_t	vs_rate_tran;
-
-    int		vs_rateflag_rotate;
-    vect_t	vs_rate_rotate;
-    char	vs_rate_origin;
-
-    int		vs_rateflag_scale;
-    fastf_t	vs_rate_scale;
-
-    /* Absolute stuff */
-    vect_t	vs_absolute_tran;
-    vect_t	vs_absolute_model_tran;
-    vect_t	vs_last_absolute_tran;
-    vect_t	vs_last_absolute_model_tran;
-    vect_t	vs_absolute_rotate;
-    vect_t	vs_absolute_model_rotate;
-    vect_t	vs_last_absolute_rotate;
-    vect_t	vs_last_absolute_model_rotate;
-    fastf_t	vs_absolute_scale;
-
-    /* Virtual trackball stuff */
-    point_t	vs_orig_pos;
 };
 
 

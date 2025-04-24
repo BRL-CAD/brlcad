@@ -329,9 +329,9 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
     Tcl_SetVar(s->interp, bu_vls_addr(&s->mged_curr_dm->dm_aet_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
-    sprintf(ang_x, "%.2f", view_state->vs_rate_rotate[X]);
-    sprintf(ang_y, "%.2f", view_state->vs_rate_rotate[Y]);
-    sprintf(ang_z, "%.2f", view_state->vs_rate_rotate[Z]);
+    sprintf(ang_x, "%.2f", view_state->vs_gvp->k.vs_rate_rotate[X]);
+    sprintf(ang_y, "%.2f", view_state->vs_gvp->k.vs_rate_rotate[Y]);
+    sprintf(ang_z, "%.2f", view_state->vs_gvp->k.vs_rate_rotate[Z]);
 
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "ang=(%s %s %s)", ang_x, ang_y, ang_z);
