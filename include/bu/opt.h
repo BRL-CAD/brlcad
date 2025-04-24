@@ -398,6 +398,11 @@ BU_EXPORT extern int bu_opt_long_hex(struct bu_vls *msg, size_t argc, const char
 BU_EXPORT extern int bu_opt_fastf_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
+ * Process 1 argument to set a char
+ */
+BU_EXPORT extern int bu_opt_char(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+
+/**
  * Process 1 argument to set a char pointer (uses the original argv
  * string, does not make a copy)
  */

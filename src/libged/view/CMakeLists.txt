@@ -20,6 +20,7 @@ set(
   faceplate/grid.c
   faceplate/interactive_rect.c
   gobjs.cpp
+  knob.c
   labels.c
   lines.c
   lod.cpp

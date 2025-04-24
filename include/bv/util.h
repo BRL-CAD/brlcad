@@ -67,6 +67,10 @@ BV_EXPORT extern void bv_update(struct bview *gvp);
 /* Update objects in the selection set (if any) and their children */
 BV_EXPORT extern int bv_update_selected(struct bview *gvp);
 
+/* Clear or reset the knob states.  1 resets rate knobs only, 2 resets
+ * absolute knobs only, and 0 resets everything */
+BV_EXPORT extern void bv_knobs_reset(struct bview *gvp, int category);
+
 /* Return 1 if the visible contents differ
  * Return 2 if visible content is the same but settings differ
  * Return 3 if content is the same but user data, dmp or callbacks differ

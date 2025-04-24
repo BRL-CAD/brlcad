@@ -184,42 +184,60 @@ _data_tclcad_init(struct bv_data_tclcad *d)
     d->gv_prim_labels.gos_text_color[2] = 0;
 }
 
-static void
-knob_init(struct bview_knob *k)
+void
+bv_knobs_reset(struct bview *v, int category)
 {
-    if (!k)
+
+    if (!v)
 	return;
 
-    k->vs_rateflag_model_tran = 0;
-    VSETALL(k->vs_rate_model_tran, 0.0);
+    struct bview_knob *k = &v->k;
 
-    k->vs_rateflag_model_rotate = 0;
-    VSETALL(k->vs_rate_model_rotate, 0.0);
-    k->vs_rate_model_origin = '\0';
+    /* Rate members */
+    if (!category || category == 1) {
 
-    k->vs_rateflag_tran = 0;
-    VSETALL(k->vs_rate_tran, 0.0);
+	k->vs_rateflag_model_tran = 0;
+	VSETALL(k->vs_rate_model_tran, 0.0);
 
-    k->vs_rateflag_rotate = 0;
-    VSETALL(k->vs_rate_rotate, 0.0);
-    k->vs_rate_origin = '\0';
+	k->vs_rateflag_model_rotate = 0;
+	VSETALL(k->vs_rate_model_rotate, 0.0);
 
-    k->vs_rateflag_scale = 0;
-    k->vs_rate_scale = 0.0;
+	k->vs_rateflag_tran = 0;
+	VSETALL(k->vs_rate_tran, 0.0);
 
-    /* Absolute data */
-    VSETALL(k->vs_absolute_tran, 0.0);
-    VSETALL(k->vs_absolute_model_tran, 0.0);
-    VSETALL(k->vs_last_absolute_tran, 0.0);
-    VSETALL(k->vs_last_absolute_model_tran, 0.0);
-    VSETALL(k->vs_absolute_rotate, 0.0);
-    VSETALL(k->vs_absolute_model_rotate, 0.0);
-    VSETALL(k->vs_last_absolute_rotate, 0.0);
-    VSETALL(k->vs_last_absolute_model_rotate, 0.0);
-    k->vs_absolute_scale = 0.0;
+	k->vs_rateflag_rotate = 0;
+	VSETALL(k->vs_rate_rotate, 0.0);
 
-    /* Virtual trackball position */
-    VSETALL(k->vs_orig_pos, 0.0);
+	k->vs_rateflag_scale = 0;
+	k->vs_rate_scale = 0.0;
+
+
+    }
+
+    /* Absolute members */
+    if (!category || category == 2) {
+
+	VSETALL(k->vs_absolute_tran, 0.0);
+	VSETALL(k->vs_last_absolute_tran, 0.0);
+
+	VSETALL(k->vs_absolute_model_tran, 0.0);
+	VSETALL(k->vs_last_absolute_model_tran, 0.0);
+
+	VSETALL(k->vs_absolute_rotate, 0.0);
+	VSETALL(k->vs_last_absolute_rotate, 0.0);
+
+	VSETALL(k->vs_absolute_model_rotate, 0.0);
+	VSETALL(k->vs_last_absolute_model_rotate, 0.0);
+
+	k->vs_absolute_scale = 0.0;
+
+	/* Virtual trackball position */
+	MAT_DELTAS_GET_NEG(v->k.vs_orig_pos, v->gv_center);
+
+	v->gv_i_scale = v->gv_scale;
+	v->gv_a_scale = 0.0;
+    }
+
 }
 
 void
@@ -347,7 +365,9 @@ bv_init(struct bview *gvp, struct bview_set *s)
     gvp->gv_local2base = 1.0;
 
     // Initialize knob vars
-    knob_init(&gvp->k);
+    bv_knobs_reset(gvp, 0);
+    gvp->k.vs_rate_origin = '\0';
+    gvp->k.vs_rate_model_origin = '\0';
 
     // Initialize tclcad specific data (primarily doing this so hashing calculations
     // can succeed)

@@ -619,6 +619,22 @@ _view_cmd_print(struct ged *gedp, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+int
+_view_cmd_knob(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] knob [vals]";
+    const char *purpose_string = "low level view rotate/translate/scale operations";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct bview *cv = gd->gedp->ged_gvp;
+    gd->gedp->ged_gvp = gd->cv;
+    int ret = ged_knob_core(gd->gedp, argc, argv);
+    gd->gedp->ged_gvp = cv;
+    return ret;
+}
 
 const struct bu_cmdtab _view_cmds[] = {
     { "ae",         _view_cmd_aet},
@@ -629,6 +645,7 @@ const struct bu_cmdtab _view_cmds[] = {
     { "gobjs",      _view_cmd_gobjs},
     { "height",     _view_cmd_height},
     { "independent",_view_cmd_independent},
+    { "knob",       _view_cmd_knob},
     { "list",       _view_cmd_list},
     { "lod",        _view_cmd_lod},
     { "obj",        _view_cmd_objs},
@@ -758,7 +775,7 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 	return ged_view_core(gedp, argc, argv);
 
 
-    static const char *usage = "ae|aet|auto|center|eye|lookat|print|quat|save|size|ypr [args]";
+    static const char *usage = "ae|aet|auto|center|eye|knob|lookat|print|quat|save|size|ypr [args]";
 
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -803,6 +820,10 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 
     if (BU_STR_EQUAL(argv[1], "faceplate")) {
 	return ged_faceplate_core(gedp, argc-1, argv+1);
+    }
+
+    if (BU_STR_EQUAL(argv[1], "knob")) {
+	return ged_knob_core(gedp, argc-1, argv+1);
     }
 
     if (BU_STR_EQUAL(argv[1], "lookat")) {

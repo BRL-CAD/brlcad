@@ -2669,19 +2669,8 @@ f_slewview(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 int
 mged_svbase(struct mged_state *s)
 {
-    MAT_DELTAS_GET_NEG(view_state->vs_gvp->k.vs_orig_pos, view_state->vs_gvp->gv_center);
-    view_state->vs_gvp->gv_i_scale = view_state->vs_gvp->gv_scale;
-
     /* reset absolute slider values */
-    VSETALL(view_state->vs_gvp->k.vs_absolute_rotate, 0.0);
-    VSETALL(view_state->vs_gvp->k.vs_last_absolute_rotate, 0.0);
-    VSETALL(view_state->vs_gvp->k.vs_absolute_model_rotate, 0.0);
-    VSETALL(view_state->vs_gvp->k.vs_last_absolute_model_rotate, 0.0);
-    VSETALL(view_state->vs_gvp->k.vs_absolute_tran, 0.0);
-    VSETALL(view_state->vs_gvp->k.vs_last_absolute_tran, 0.0);
-    VSETALL(view_state->vs_gvp->k.vs_absolute_model_tran, 0.0);
-    VSETALL(view_state->vs_gvp->k.vs_last_absolute_model_tran, 0.0);
-    view_state->vs_gvp->gv_a_scale = 0.0;
+    bv_knobs_reset(view_state->vs_gvp, 2);
 
     if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui) {
 	s->mged_curr_dm->dm_dirty = 1;
