@@ -184,6 +184,44 @@ _data_tclcad_init(struct bv_data_tclcad *d)
     d->gv_prim_labels.gos_text_color[2] = 0;
 }
 
+static void
+knob_init(struct bview_knob *k)
+{
+    if (!k)
+	return;
+
+    k->vs_rateflag_model_tran = 0;
+    VSETALL(k->vs_rate_model_tran, 0.0);
+
+    k->vs_rateflag_model_rotate = 0;
+    VSETALL(k->vs_rate_model_rotate, 0.0);
+    k->vs_rate_model_origin = '\0';
+
+    k->vs_rateflag_tran = 0;
+    VSETALL(k->vs_rate_tran, 0.0);
+
+    k->vs_rateflag_rotate = 0;
+    VSETALL(k->vs_rate_rotate, 0.0);
+    k->vs_rate_origin = '\0';
+
+    k->vs_rateflag_scale = 0;
+    k->vs_rate_scale = 0.0;
+
+    /* Absolute data */
+    VSETALL(k->vs_absolute_tran, 0.0);
+    VSETALL(k->vs_absolute_model_tran, 0.0);
+    VSETALL(k->vs_last_absolute_tran, 0.0);
+    VSETALL(k->vs_last_absolute_model_tran, 0.0);
+    VSETALL(k->vs_absolute_rotate, 0.0);
+    VSETALL(k->vs_absolute_model_rotate, 0.0);
+    VSETALL(k->vs_last_absolute_rotate, 0.0);
+    VSETALL(k->vs_last_absolute_model_rotate, 0.0);
+    k->vs_absolute_scale = 0.0;
+
+    /* Virtual trackball position */
+    VSETALL(k->vs_orig_pos, 0.0);
+}
+
 void
 bv_init(struct bview *gvp, struct bview_set *s)
 {
@@ -307,6 +345,9 @@ bv_init(struct bview *gvp, struct bview_set *s)
     // Initial scaling factors are 1
     gvp->gv_base2local = 1.0;
     gvp->gv_local2base = 1.0;
+
+    // Initialize knob vars
+    knob_init(&gvp->k);
 
     // Initialize tclcad specific data (primarily doing this so hashing calculations
     // can succeed)

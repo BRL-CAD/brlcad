@@ -496,6 +496,42 @@ struct bview_objs {
     struct bv_scene_obj *free_scene_obj;
 };
 
+// Data for managing manipulation of a view
+struct bview_knob {
+
+    /* Rate data */
+    int         vs_rateflag_model_tran;
+    vect_t      vs_rate_model_tran;
+
+    int         vs_rateflag_model_rotate;
+    vect_t      vs_rate_model_rotate;
+    char        vs_rate_model_origin;
+
+    int         vs_rateflag_tran;
+    vect_t      vs_rate_tran;
+
+    int         vs_rateflag_rotate;
+    vect_t      vs_rate_rotate;
+    char        vs_rate_origin;
+
+    int         vs_rateflag_scale;
+    fastf_t     vs_rate_scale;
+
+    /* Absolute data */
+    vect_t      vs_absolute_tran;
+    vect_t      vs_absolute_model_tran;
+    vect_t      vs_last_absolute_tran;
+    vect_t      vs_last_absolute_model_tran;
+    vect_t      vs_absolute_rotate;
+    vect_t      vs_absolute_model_rotate;
+    vect_t      vs_last_absolute_rotate;
+    vect_t      vs_last_absolute_model_rotate;
+    fastf_t     vs_absolute_scale;
+
+    /* Virtual trackball position */
+    point_t     vs_orig_pos;
+};
+
 struct bview_set;
 
 struct bview {
@@ -586,6 +622,9 @@ struct bview {
     point_t gv_vc_backout;
     vect_t gv_lookat;
     double radius;
+
+    /* Information for controlling view manipulation */
+    struct bview_knob k;
 
     // libtclcad data
     struct bv_data_tclcad gv_tcl;
