@@ -386,34 +386,42 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 	// Read in the numerical argument, advance the array
 	--argc;	++argv;
 
+
+	// Get the index we'll be working with
+	int ind = -1;
+	char c = (cmd[1] == '\0') ? cmd[0] : cmd[1];
+	switch (c) {
+	    case 'x':
+	    case 'X':
+		ind = X;
+		break;
+	    case 'y':
+	    case 'Y':
+		ind = Y;
+		break;
+	    case 'z':
+	    case 'Z':
+		ind = Z;
+		break;
+	}
+
+	// If we couldn't get a valid index, this isn't a valid command
+	if (ind < 0) {
+	    _ged_cmd_help(gedp, usage, d);
+	    return BRLCAD_ERROR;
+	}
+
+	// Handle the various rate and abs commands
 	if (cmd[1] == '\0') {
 
 	    if (cmd[0] == 'x' || cmd[0] == 'y' || cmd[0] == 'z') {
 
 		fastf_t *coord;
 
-		switch (cmd[0]) {
-		    case 'x':
-			if (model_flag) {
-			    coord = &v->k.vs_rate_model_rotate[X];
-			} else {
-			    coord = &v->k.vs_rate_rotate[X];
-			}
-			break;
-		    case 'y':
-			if (model_flag) {
-			    coord = &v->k.vs_rate_model_rotate[Y];
-			} else {
-			    coord = &v->k.vs_rate_rotate[Y];
-			}
-			break;
-		    case 'z':
-			if (model_flag) {
-			    coord = &v->k.vs_rate_model_rotate[Z];
-			} else {
-			    coord = &v->k.vs_rate_rotate[Z];
-			}
-			break;
+		if (model_flag) {
+		    coord = &v->k.vs_rate_model_rotate[ind];
+		} else {
+		    coord = &v->k.vs_rate_rotate[ind];
 		}
 
 		if (incr_flag) {
@@ -435,28 +443,10 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 
 		fastf_t *coord;
 
-		switch (cmd[0]) {
-		    case 'X':
-			if (model_flag) {
-			    coord = &v->k.vs_rate_model_tran[X];
-			} else {
-			    coord = &v->k.vs_rate_tran[X];
-			}
-			break;
-		    case 'Y':
-			if (model_flag) {
-			    coord = &v->k.vs_rate_model_tran[Y];
-			} else {
-			    coord = &v->k.vs_rate_tran[Y];
-			}
-			break;
-		    case 'Z':
-			if (model_flag) {
-			    coord = &v->k.vs_rate_model_tran[Z];
-			} else {
-			    coord = &v->k.vs_rate_tran[Z];
-			}
-			break;
+		if (model_flag) {
+		    coord = &v->k.vs_rate_model_tran[ind];
+		} else {
+		    coord = &v->k.vs_rate_tran[ind];
 		}
 
 		if (incr_flag) {
@@ -487,31 +477,11 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 
 	    if (cmd[1] == 'x' || cmd[1] == 'y' || cmd[1] == 'z') {
 
-		fastf_t *vamr_c, *var_c, *rvec_c, *vlamr_c, *vlar_c;
-
-		switch (cmd[1]) {
-		    case 'x':
-			vamr_c = &v->k.vs_absolute_model_rotate[X];
-			var_c = &v->k.vs_absolute_rotate[X];
-			rvec_c = &rvec[X];
-			vlamr_c = &v->k.vs_last_absolute_model_rotate[X];
-			vlar_c = &v->k.vs_last_absolute_rotate[X];
-			break;
-		    case 'y':
-			vamr_c = &v->k.vs_absolute_model_rotate[Y];
-			var_c = &v->k.vs_absolute_rotate[Y];
-			rvec_c = &rvec[Y];
-			vlamr_c = &v->k.vs_last_absolute_model_rotate[Y];
-			vlar_c = &v->k.vs_last_absolute_rotate[Y];
-			break;
-		    case 'z':
-			vamr_c = &v->k.vs_absolute_model_rotate[Z];
-			var_c = &v->k.vs_absolute_rotate[Z];
-			rvec_c = &rvec[Z];
-			vlamr_c = &v->k.vs_last_absolute_model_rotate[Z];
-			vlar_c = &v->k.vs_last_absolute_rotate[Z];
-			break;
-		}
+		fastf_t *vamr_c = &v->k.vs_absolute_model_rotate[ind];
+		fastf_t *var_c = &v->k.vs_absolute_rotate[ind];
+		fastf_t *rvec_c = &rvec[ind];
+		fastf_t *vlamr_c = &v->k.vs_last_absolute_model_rotate[ind];
+		fastf_t *vlar_c = &v->k.vs_last_absolute_rotate[ind];
 
 		if (incr_flag) {
 		    if (model_flag) {
@@ -542,28 +512,12 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 		    larp = v->k.vs_last_absolute_rotate;
 		}
 
-		fastf_t *arp_c, *larp_c;
-		switch (cmd[1]) {
-		    case 'x':
-			arp_c = &arp[X];
-			larp_c = &larp[X];
-			break;
-		    case 'y':
-			arp_c = &arp[Y];
-			larp_c = &larp[Y];
-			break;
-		    case 'z':
-			arp_c = &arp[Z];
-			larp_c = &larp[Z];
-			break;
+		if (arp[ind] < -180.0) {
+		    arp[ind] = arp[ind] + 360.0;
+		} else if (arp[ind] > 180.0) {
+		    arp[ind] = arp[ind] - 360.0;
 		}
-		if (*arp_c < -180.0) {
-		    *arp_c = *arp_c + 360.0;
-		} else if (*arp_c > 180.0) {
-		    *arp_c = *arp_c - 360.0;
-		}
-
-		*larp_c = *arp_c;
+		larp[ind] = arp[ind];
 
 		do_rot = 1;
 
@@ -572,32 +526,11 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 
 	    if (cmd[1] == 'X' || cmd[1] == 'Y' || cmd[1] == 'Z') {
 
-		fastf_t *vamt_c, *vat_c, *tvec_c, *vlamt_c, *vlat_c;
-
-		switch (cmd[1]) {
-		    case 'X':
-			vamt_c = &v->k.vs_absolute_model_tran[X];
-			vat_c = &v->k.vs_absolute_tran[X];
-			tvec_c = &tvec[X];
-			vlamt_c = &v->k.vs_last_absolute_model_tran[X];
-			vlat_c = &v->k.vs_last_absolute_tran[X];
-			break;
-		    case 'Y':
-			vamt_c = &v->k.vs_absolute_model_tran[Y];
-			vat_c = &v->k.vs_absolute_tran[Y];
-			tvec_c = &tvec[Y];
-			vlamt_c = &v->k.vs_last_absolute_model_tran[Y];
-			vlat_c = &v->k.vs_last_absolute_tran[Y];
-			break;
-		    case 'Z':
-			vamt_c = &v->k.vs_absolute_model_tran[Z];
-			vat_c = &v->k.vs_absolute_tran[Z];
-			tvec_c = &tvec[Z];
-			vlamt_c = &v->k.vs_last_absolute_model_tran[Z];
-			vlat_c = &v->k.vs_last_absolute_tran[Z];
-			break;
-		}
-
+		fastf_t *vamt_c = &v->k.vs_absolute_model_tran[ind];
+		fastf_t *vat_c = &v->k.vs_absolute_tran[ind];
+		fastf_t *tvec_c = &tvec[ind];
+		fastf_t *vlamt_c = &v->k.vs_last_absolute_model_tran[ind];
+		fastf_t *vlat_c = &v->k.vs_last_absolute_tran[ind];
 		fastf_t sf = f * v->gv_local2base / v->gv_scale;
 
 		if (incr_flag) {
@@ -631,11 +564,10 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 	    if (cmd[1] == 'S') {
 		if (incr_flag) {
 		    v->gv_a_scale += f;
-		    abs_zoom(v);
 		} else {
 		    v->gv_a_scale = f;
-		    abs_zoom(v);
 		}
+		abs_zoom(v);
 		continue;
 	    }
 
