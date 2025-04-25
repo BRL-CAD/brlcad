@@ -75,10 +75,10 @@ BV_EXPORT extern void bv_knobs_reset(struct bview *gvp, int category);
  * @brief
  * Process an individual libbv knob command.
  *
- * @param[out] *rvec     Pointer to rotation vector
- * @param[out] *do_rot   Pointer to flag indicating whether the command implies a rotation op is needed
- * @param[out] *tvec     Pointer to translation vector
- * @param[out] *do_tran  Pointer to flag indicating whether the command implies a translation op is needed
+ * @param[out] rvec     Pointer to rotation vector
+ * @param[out] do_rot   Pointer to flag indicating whether the command implies a rotation op is needed
+ * @param[out] tvec     Pointer to translation vector
+ * @param[out] do_tran  Pointer to flag indicating whether the command implies a translation op is needed
  *
  * @param[in] v          bview structure
  * @param[in] cmd        command string - valid entries are x, y, z, X, Y Z, ax, ay, ax, aX, aY, aZ, S, aS
@@ -101,7 +101,7 @@ BV_EXPORT extern int bv_knob_cmd_process(
  * Process a knob rotation vector.
  *
  * @param[in] v          bview structure
- * @param[in] *rvec      Pointer to rotation vector
+ * @param[in] rvec      Pointer to rotation vector
  * @param[in] origin     char indicating origin - may be 'e' (eye_pt), 'm' (model origin) or 'v' (view origin - default)
  * @param[in] model_flag Manipulate view using model coordinates rather than view coordinates
  */
@@ -116,7 +116,7 @@ bv_knob_rot(struct bview *v,
  * Process a knob translation vector.
  *
  * @param[in] v          bview structure
- * @param[in] *tvec      Pointer to translation vector
+ * @param[in] tvec      Pointer to translation vector
  * @param[in] model_flag Manipulate view using model coordinates rather than view coordinates
  */
 BV_EXPORT extern void
