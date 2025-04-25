@@ -789,11 +789,6 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (6 < argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
-    }
-
     if (BU_STR_EQUAL(argv[1], "aet") || BU_STR_EQUAL(argv[1], "ae")) {
 	return ged_aet_core(gedp, argc-1, argv+1);
     }
