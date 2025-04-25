@@ -380,8 +380,15 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	// Get our number - TODO - use bu_opt_fastf_t for this...
-	fastf_t f = atof(argv[1]);
+	// Get our number
+	struct bu_vls fmsg = BU_VLS_INIT_ZERO;
+	fastf_t f;
+	if (bu_opt_fastf_t(&fmsg, 1, (const char **)&argv[1], (void *)&f) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "Unable to parse numerical argument: '%s':%s\n", argv[1], bu_vls_cstr(&fmsg));
+	    bu_vls_free(&fmsg);
+	    return BRLCAD_ERROR;
+	}
+	bu_vls_free(&fmsg);
 
 	// Read in the numerical argument, advance the array
 	--argc;	++argv;
@@ -414,6 +421,7 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 	// Handle the various rate and abs commands
 	if (cmd[1] == '\0') {
 
+	    // Rotate cases
 	    if (cmd[0] == 'x' || cmd[0] == 'y' || cmd[0] == 'z') {
 
 		fastf_t *coord;
@@ -439,6 +447,7 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 		continue;
 	    }
 
+	    // Translate cases
 	    if (cmd[0] == 'X' || cmd[0] == 'Y' || cmd[0] == 'Z') {
 
 		fastf_t *coord;
@@ -458,6 +467,7 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 		continue;
 	    }
 
+	    // Scale case
 	    if (cmd[0] == 'S') {
 
 		if (incr_flag) {
@@ -473,15 +483,17 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
+	// Absolute cases
 	if (cmd[0] == 'a' && strlen(cmd) == 2) {
 
+	    // Rotate cases
 	    if (cmd[1] == 'x' || cmd[1] == 'y' || cmd[1] == 'z') {
 
 		fastf_t *vamr_c = &v->k.vs_absolute_model_rotate[ind];
 		fastf_t *var_c = &v->k.vs_absolute_rotate[ind];
-		fastf_t *rvec_c = &rvec[ind];
 		fastf_t *vlamr_c = &v->k.vs_last_absolute_model_rotate[ind];
 		fastf_t *vlar_c = &v->k.vs_last_absolute_rotate[ind];
+		fastf_t *rvec_c = &rvec[ind];
 
 		if (incr_flag) {
 		    if (model_flag) {
@@ -524,13 +536,14 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 		continue;
 	    }
 
+	    // Translate cases
 	    if (cmd[1] == 'X' || cmd[1] == 'Y' || cmd[1] == 'Z') {
 
 		fastf_t *vamt_c = &v->k.vs_absolute_model_tran[ind];
 		fastf_t *vat_c = &v->k.vs_absolute_tran[ind];
-		fastf_t *tvec_c = &tvec[ind];
 		fastf_t *vlamt_c = &v->k.vs_last_absolute_model_tran[ind];
 		fastf_t *vlat_c = &v->k.vs_last_absolute_tran[ind];
+		fastf_t *tvec_c = &tvec[ind];
 		fastf_t sf = f * v->gv_local2base / v->gv_scale;
 
 		if (incr_flag) {
@@ -561,6 +574,7 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 		continue;
 	    }
 
+	    // Scale case
 	    if (cmd[1] == 'S') {
 		if (incr_flag) {
 		    v->gv_a_scale += f;
