@@ -263,7 +263,7 @@ check_nonzero_rates(struct bview *v)
     }
 }
 
-void
+static void
 print_knob_vals(struct bu_vls *o, struct bview *v)
 {
     if (!o || !v)
@@ -290,6 +290,210 @@ print_knob_vals(struct bu_vls *o, struct bview *v)
     bu_vls_printf(o, " aZ = %f\n", v->k.vs_absolute_tran[Z]);
     bu_vls_printf(o, "absolute - scale:\n");
     bu_vls_printf(o, " aS = %f\n", v->gv_a_scale);
+}
+
+static int
+knob_process_view_cmd(
+	vect_t *rvec, int *do_rot, vect_t *tvec, int *do_tran,
+	struct bview *v, const char *cmd, fastf_t f,
+	char origin, int model_flag, int incr_flag)
+{
+    if (!v || !cmd || !rvec || !do_rot || !tvec || !do_tran)
+	return BRLCAD_ERROR;
+
+    // Get the index we'll be working with
+    int ind = -1;
+    char c = (cmd[1] == '\0') ? cmd[0] : cmd[1];
+    switch (c) {
+	case 'x':
+	case 'X':
+	    ind = X;
+	    break;
+	case 'y':
+	case 'Y':
+	    ind = Y;
+	    break;
+	case 'z':
+	case 'Z':
+	    ind = Z;
+	    break;
+    }
+
+    // If we couldn't get a valid index, this isn't a valid command
+    if (ind < 0)
+	return BRLCAD_ERROR;
+
+    // Handle the various rate and abs commands
+    if (cmd[1] == '\0') {
+
+	// Rotate cases
+	if (cmd[0] == 'x' || cmd[0] == 'y' || cmd[0] == 'z') {
+
+	    fastf_t *coord;
+
+	    if (model_flag) {
+		coord = &v->k.vs_rate_model_rotate[ind];
+	    } else {
+		coord = &v->k.vs_rate_rotate[ind];
+	    }
+
+	    if (incr_flag) {
+		*coord += f;
+	    } else {
+		*coord = f;
+	    }
+
+	    if (model_flag) {
+		v->k.vs_rate_model_origin = origin;
+	    } else {
+		v->k.vs_rate_origin = origin;
+	    }
+
+	    return BRLCAD_OK;
+	}
+
+	// Translate cases
+	if (cmd[0] == 'X' || cmd[0] == 'Y' || cmd[0] == 'Z') {
+
+	    fastf_t *coord;
+
+	    if (model_flag) {
+		coord = &v->k.vs_rate_model_tran[ind];
+	    } else {
+		coord = &v->k.vs_rate_tran[ind];
+	    }
+
+	    if (incr_flag) {
+		*coord += f;
+	    } else {
+		*coord = f;
+	    }
+
+	    return BRLCAD_OK;
+	}
+
+	// Scale case
+	if (cmd[0] == 'S') {
+
+	    if (incr_flag) {
+		v->k.vs_rate_scale += f;
+	    } else {
+		v->k.vs_rate_scale = f;
+	    }
+
+	    return BRLCAD_OK;
+	}
+
+	return BRLCAD_ERROR;
+    }
+
+    // Absolute cases
+    if (cmd[0] == 'a' && strlen(cmd) == 2) {
+
+	// Rotate cases
+	if (cmd[1] == 'x' || cmd[1] == 'y' || cmd[1] == 'z') {
+
+	    fastf_t *vamr_c = &v->k.vs_absolute_model_rotate[ind];
+	    fastf_t *var_c = &v->k.vs_absolute_rotate[ind];
+	    fastf_t *vlamr_c = &v->k.vs_last_absolute_model_rotate[ind];
+	    fastf_t *vlar_c = &v->k.vs_last_absolute_rotate[ind];
+	    fastf_t *rvec_c = &(*rvec)[ind];
+
+	    if (incr_flag) {
+		if (model_flag) {
+		    *vamr_c += f;
+		} else {
+		    *var_c += f;
+		}
+		*rvec_c = f;
+	    } else {
+		if (model_flag) {
+		    *rvec_c = f - *vlamr_c;
+		    *vamr_c = f;
+		} else {
+		    *rvec_c = f - *vlar_c;
+		    *var_c = f;
+		}
+	    }
+
+	    /* wrap around */
+	    fastf_t *arp;
+	    fastf_t *larp;
+
+	    if (model_flag) {
+		arp = v->k.vs_absolute_model_rotate;
+		larp = v->k.vs_last_absolute_model_rotate;
+	    } else {
+		arp = v->k.vs_absolute_rotate;
+		larp = v->k.vs_last_absolute_rotate;
+	    }
+
+	    if (arp[ind] < -180.0) {
+		arp[ind] = arp[ind] + 360.0;
+	    } else if (arp[ind] > 180.0) {
+		arp[ind] = arp[ind] - 360.0;
+	    }
+	    larp[ind] = arp[ind];
+
+	    *do_rot = 1;
+
+	    return BRLCAD_OK;
+	}
+
+	// Translate cases
+	if (cmd[1] == 'X' || cmd[1] == 'Y' || cmd[1] == 'Z') {
+
+	    fastf_t *vamt_c = &v->k.vs_absolute_model_tran[ind];
+	    fastf_t *vat_c = &v->k.vs_absolute_tran[ind];
+	    fastf_t *vlamt_c = &v->k.vs_last_absolute_model_tran[ind];
+	    fastf_t *vlat_c = &v->k.vs_last_absolute_tran[ind];
+	    fastf_t *tvec_c = &(*tvec)[ind];
+	    fastf_t sf = f * v->gv_local2base / v->gv_scale;
+
+	    if (incr_flag) {
+		if (model_flag) {
+		    *vamt_c += sf;
+		    *vlamt_c = *vamt_c;
+		} else {
+		    *vat_c += sf;
+		    *vlat_c = *vat_c;
+		}
+
+		*tvec_c = f;
+	    } else {
+		if (model_flag) {
+		    *tvec_c = f - *vlamt_c * v->gv_scale * v->gv_base2local;
+		    *vamt_c = sf;
+		    *vlamt_c = *vamt_c;
+		} else {
+		    *tvec_c = f - *vlat_c * v->gv_scale * v->gv_base2local;
+		    *vat_c = sf;
+		    *vlat_c = *vat_c;
+		}
+
+	    }
+
+	    *do_tran = 1;
+
+	    return BRLCAD_OK;
+	}
+
+	// Scale case
+	if (cmd[1] == 'S') {
+	    if (incr_flag) {
+		v->gv_a_scale += f;
+	    } else {
+		v->gv_a_scale = f;
+	    }
+	    abs_zoom(v);
+	    return BRLCAD_OK;
+	}
+
+	return BRLCAD_ERROR;
+    }
+
+    // Invalid command form
+    return BRLCAD_ERROR;
 }
 
 int
@@ -364,7 +568,7 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 	const char *cmd = *argv;
 
 	if (BU_STR_EQUAL(cmd, "zap") || BU_STR_EQUAL(cmd, "zero") ||
-		BU_STR_EQUAL(cmd, "clear") || BU_STR_EQUAL(cmd, "reset")) {
+		BU_STR_EQUAL(cmd, "clear") || BU_STR_EQUAL(cmd, "stop")) {
 	    // Per MGED, this command seems to reset the rate entries
 	    // but not the absolute entries.
 	    bv_knobs_reset(v, 1);
@@ -393,198 +597,13 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 	// Read in the numerical argument, advance the array
 	--argc;	++argv;
 
+	// Process the actual command
+	int kp_ret = knob_process_view_cmd(
+		&rvec, &do_rot, &tvec, &do_tran,
+		v, cmd, f,
+		origin, model_flag, incr_flag);
 
-	// Get the index we'll be working with
-	int ind = -1;
-	char c = (cmd[1] == '\0') ? cmd[0] : cmd[1];
-	switch (c) {
-	    case 'x':
-	    case 'X':
-		ind = X;
-		break;
-	    case 'y':
-	    case 'Y':
-		ind = Y;
-		break;
-	    case 'z':
-	    case 'Z':
-		ind = Z;
-		break;
-	}
-
-	// If we couldn't get a valid index, this isn't a valid command
-	if (ind < 0) {
-	    _ged_cmd_help(gedp, usage, d);
-	    return BRLCAD_ERROR;
-	}
-
-	// Handle the various rate and abs commands
-	if (cmd[1] == '\0') {
-
-	    // Rotate cases
-	    if (cmd[0] == 'x' || cmd[0] == 'y' || cmd[0] == 'z') {
-
-		fastf_t *coord;
-
-		if (model_flag) {
-		    coord = &v->k.vs_rate_model_rotate[ind];
-		} else {
-		    coord = &v->k.vs_rate_rotate[ind];
-		}
-
-		if (incr_flag) {
-		    *coord += f;
-		} else {
-		    *coord = f;
-		}
-
-		if (model_flag) {
-		    v->k.vs_rate_model_origin = origin;
-		} else {
-		    v->k.vs_rate_origin = origin;
-		}
-
-		continue;
-	    }
-
-	    // Translate cases
-	    if (cmd[0] == 'X' || cmd[0] == 'Y' || cmd[0] == 'Z') {
-
-		fastf_t *coord;
-
-		if (model_flag) {
-		    coord = &v->k.vs_rate_model_tran[ind];
-		} else {
-		    coord = &v->k.vs_rate_tran[ind];
-		}
-
-		if (incr_flag) {
-		    *coord += f;
-		} else {
-		    *coord = f;
-		}
-
-		continue;
-	    }
-
-	    // Scale case
-	    if (cmd[0] == 'S') {
-
-		if (incr_flag) {
-		    v->k.vs_rate_scale += f;
-		} else {
-		    v->k.vs_rate_scale = f;
-		}
-
-		continue;
-	    }
-
-	    _ged_cmd_help(gedp, usage, d);
-	    return BRLCAD_ERROR;
-	}
-
-	// Absolute cases
-	if (cmd[0] == 'a' && strlen(cmd) == 2) {
-
-	    // Rotate cases
-	    if (cmd[1] == 'x' || cmd[1] == 'y' || cmd[1] == 'z') {
-
-		fastf_t *vamr_c = &v->k.vs_absolute_model_rotate[ind];
-		fastf_t *var_c = &v->k.vs_absolute_rotate[ind];
-		fastf_t *vlamr_c = &v->k.vs_last_absolute_model_rotate[ind];
-		fastf_t *vlar_c = &v->k.vs_last_absolute_rotate[ind];
-		fastf_t *rvec_c = &rvec[ind];
-
-		if (incr_flag) {
-		    if (model_flag) {
-			*vamr_c += f;
-		    } else {
-			*var_c += f;
-		    }
-		    *rvec_c = f;
-		} else {
-		    if (model_flag) {
-			*rvec_c = f - *vlamr_c;
-			*vamr_c = f;
-		    } else {
-			*rvec_c = f - *vlar_c;
-			*var_c = f;
-		    }
-		}
-
-		/* wrap around */
-		fastf_t *arp;
-		fastf_t *larp;
-
-		if (model_flag) {
-		    arp = v->k.vs_absolute_model_rotate;
-		    larp = v->k.vs_last_absolute_model_rotate;
-		} else {
-		    arp = v->k.vs_absolute_rotate;
-		    larp = v->k.vs_last_absolute_rotate;
-		}
-
-		if (arp[ind] < -180.0) {
-		    arp[ind] = arp[ind] + 360.0;
-		} else if (arp[ind] > 180.0) {
-		    arp[ind] = arp[ind] - 360.0;
-		}
-		larp[ind] = arp[ind];
-
-		do_rot = 1;
-
-		continue;
-	    }
-
-	    // Translate cases
-	    if (cmd[1] == 'X' || cmd[1] == 'Y' || cmd[1] == 'Z') {
-
-		fastf_t *vamt_c = &v->k.vs_absolute_model_tran[ind];
-		fastf_t *vat_c = &v->k.vs_absolute_tran[ind];
-		fastf_t *vlamt_c = &v->k.vs_last_absolute_model_tran[ind];
-		fastf_t *vlat_c = &v->k.vs_last_absolute_tran[ind];
-		fastf_t *tvec_c = &tvec[ind];
-		fastf_t sf = f * v->gv_local2base / v->gv_scale;
-
-		if (incr_flag) {
-		    if (model_flag) {
-			*vamt_c += sf;
-			*vlamt_c = *vamt_c;
-		    } else {
-			*vat_c += sf;
-			*vlat_c = *vat_c;
-		    }
-
-		    *tvec_c = f;
-		} else {
-		    if (model_flag) {
-			*tvec_c = f - *vlamt_c * v->gv_scale * v->gv_base2local;
-			*vamt_c = sf;
-			*vlamt_c = *vamt_c;
-		    } else {
-			*tvec_c = f - *vlat_c * v->gv_scale * v->gv_base2local;
-			*vat_c = sf;
-			*vlat_c = *vat_c;
-		    }
-
-		}
-
-		do_tran = 1;
-
-		continue;
-	    }
-
-	    // Scale case
-	    if (cmd[1] == 'S') {
-		if (incr_flag) {
-		    v->gv_a_scale += f;
-		} else {
-		    v->gv_a_scale = f;
-		}
-		abs_zoom(v);
-		continue;
-	    }
-
+	if (kp_ret != BRLCAD_OK) {
 	    _ged_cmd_help(gedp, usage, d);
 	    return BRLCAD_ERROR;
 	}
