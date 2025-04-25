@@ -41,6 +41,13 @@
 #include <float.h>
 #include <stdint.h>   /* for int32_t, uint64_t */
 
+// Temporary Wfloat-equal disablement
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
 
 #if defined(__STDC_IEC_559__)
 #  define HAVE_IEEE754 1
@@ -346,6 +353,13 @@ bn_ulpf(float val)
     return -bits.f + val;
 }
 
+// Temporary Wfloat-equal disablement
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 
 /*
  * Local Variables:
