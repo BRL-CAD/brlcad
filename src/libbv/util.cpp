@@ -185,62 +185,6 @@ _data_tclcad_init(struct bv_data_tclcad *d)
 }
 
 void
-bv_knobs_reset(struct bview *v, int category)
-{
-
-    if (!v)
-	return;
-
-    struct bview_knob *k = &v->k;
-
-    /* Rate members */
-    if (!category || category == 1) {
-
-	k->vs_rateflag_model_tran = 0;
-	VSETALL(k->vs_rate_model_tran, 0.0);
-
-	k->vs_rateflag_model_rotate = 0;
-	VSETALL(k->vs_rate_model_rotate, 0.0);
-
-	k->vs_rateflag_tran = 0;
-	VSETALL(k->vs_rate_tran, 0.0);
-
-	k->vs_rateflag_rotate = 0;
-	VSETALL(k->vs_rate_rotate, 0.0);
-
-	k->vs_rateflag_scale = 0;
-	k->vs_rate_scale = 0.0;
-
-
-    }
-
-    /* Absolute members */
-    if (!category || category == 2) {
-
-	VSETALL(k->vs_absolute_tran, 0.0);
-	VSETALL(k->vs_last_absolute_tran, 0.0);
-
-	VSETALL(k->vs_absolute_model_tran, 0.0);
-	VSETALL(k->vs_last_absolute_model_tran, 0.0);
-
-	VSETALL(k->vs_absolute_rotate, 0.0);
-	VSETALL(k->vs_last_absolute_rotate, 0.0);
-
-	VSETALL(k->vs_absolute_model_rotate, 0.0);
-	VSETALL(k->vs_last_absolute_model_rotate, 0.0);
-
-	k->vs_absolute_scale = 0.0;
-
-	/* Virtual trackball position */
-	MAT_DELTAS_GET_NEG(v->k.vs_orig_pos, v->gv_center);
-
-	v->gv_i_scale = v->gv_scale;
-	v->gv_a_scale = 0.0;
-    }
-
-}
-
-void
 bv_init(struct bview *gvp, struct bview_set *s)
 {
     if (!gvp)

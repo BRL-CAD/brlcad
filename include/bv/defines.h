@@ -519,17 +519,22 @@ struct bview_knob {
 
     /* Absolute data */
     vect_t      vs_absolute_tran;
-    vect_t      vs_absolute_model_tran;
     vect_t      vs_last_absolute_tran;
+
+    vect_t      vs_absolute_model_tran;
     vect_t      vs_last_absolute_model_tran;
+
     vect_t      vs_absolute_rotate;
-    vect_t      vs_absolute_model_rotate;
     vect_t      vs_last_absolute_rotate;
+
+    vect_t      vs_absolute_model_rotate;
     vect_t      vs_last_absolute_model_rotate;
+
     fastf_t     vs_absolute_scale;
 
     /* Virtual trackball position */
     point_t     vs_orig_pos;
+
 };
 
 struct bview_set;
