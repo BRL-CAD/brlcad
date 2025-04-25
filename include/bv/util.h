@@ -71,7 +71,9 @@ BV_EXPORT extern int bv_update_selected(struct bview *gvp);
  * absolute knobs only, and 0 resets everything */
 BV_EXPORT extern void bv_knobs_reset(struct bview *gvp, int category);
 
-/* Process an individual knob command.
+/**
+ * @brief
+ * Process an individual libbv knob command.
  *
  * @param[out] *rvec     Pointer to rotation vector
  * @param[out] *do_rot   Pointer to flag indicating whether the command implies a rotation op is needed
@@ -94,6 +96,39 @@ BV_EXPORT extern int bv_knob_cmd_process(
         struct bview *v, const char *cmd, fastf_t f,
         char origin, int model_flag, int incr_flag
 	);
+
+/* @brief
+ * Process a knob rotation vector.
+ *
+ * @param[in] v          bview structure
+ * @param[in] *rvec      Pointer to rotation vector
+ * @param[in] origin     char indicating origin - may be 'e' (eye_pt), 'm' (model origin) or 'v' (view origin - default)
+ * @param[in] model_flag Manipulate view using model coordinates rather than view coordinates
+ */
+BV_EXPORT extern void
+bv_knob_rot(struct bview *v,
+	vect_t *rvec,
+	char origin,
+	int model_flag);
+
+
+/* @brief
+ * Process a knob translation vector.
+ *
+ * @param[in] v          bview structure
+ * @param[in] *tvec      Pointer to translation vector
+ * @param[in] model_flag Manipulate view using model coordinates rather than view coordinates
+ */
+BV_EXPORT extern void
+bv_knob_tran(struct bview *v,
+	vect_t *tvec,
+	int model_flag);
+
+
+/* Update the bview struct's knob rate flags based on the vector values. */
+BV_EXPORT extern void
+bv_update_rate_flags(struct bview *v);
+
 
 /* Return 1 if the visible contents differ
  * Return 2 if visible content is the same but settings differ

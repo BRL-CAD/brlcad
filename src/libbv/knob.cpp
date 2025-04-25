@@ -26,6 +26,7 @@
 #include "common.h"
 #include <string.h>
 #include "vmath.h"
+#include "bn/mat.h"
 #include "bv/defines.h"
 #include "bv/util.h"
 #include "./bv_private.h"
@@ -142,6 +143,185 @@ abs_zoom(struct bview *v)
     {
 	set_absolute_view_tran(v);
 	set_absolute_model_tran(v);
+    }
+}
+
+static void
+calc_mtran(struct bview *v, const vect_t *tvec)
+{
+    point_t delta;
+    point_t vc, nvc;
+
+    VSCALE(delta, *tvec, v->gv_local2base);
+    MAT_DELTAS_GET_NEG(vc, v->gv_center);
+    VSUB2(nvc, vc, delta);
+    MAT_DELTAS_VEC_NEG(v->gv_center, nvc);
+    bv_update(v);
+
+    /* calculate absolute_tran */
+    set_absolute_view_tran(v);
+}
+
+static void
+calc_vtran(struct bview *v, const vect_t *tvec)
+{
+    vect_t tt;
+    point_t delta;
+    point_t work;
+    point_t vc, nvc;
+
+    VSCALE(tt, *tvec, v->gv_local2base / v->gv_scale);
+    MAT4X3PNT(work, v->gv_view2model, tt);
+    MAT_DELTAS_GET_NEG(vc, v->gv_center);
+    VSUB2(delta, work, vc);
+    VSUB2(nvc, vc, delta);
+    MAT_DELTAS_VEC_NEG(v->gv_center, nvc);
+
+    bv_update(v);
+
+    /* calculate absolute_model_tran */
+    set_absolute_model_tran(v);
+}
+
+void
+bv_knob_tran(struct bview *v,
+	vect_t *tvec,
+	int model_flag)
+{
+    if (!v || !tvec)
+	return;
+    if (model_flag) {
+	calc_mtran(v, tvec);
+    } else if (v->gv_coord == 'o') {
+	vect_t work = VINIT_ZERO;
+	calc_mtran(v, &work);
+    } else {
+	calc_vtran(v, tvec);
+    }
+}
+
+static void
+vrot(struct bview *v, char origin, fastf_t *newrot)
+{
+    mat_t newinv;
+
+    bn_mat_inv(newinv, newrot);
+
+    if (origin != 'v') {
+        point_t rot_pt;
+        point_t new_origin;
+        mat_t viewchg, viewchginv;
+        point_t new_cent_view;
+        point_t new_cent_model;
+
+        if (origin == 'e') {
+            /* "VR driver" method: rotate around "eye" point (0, 0, 1) viewspace */
+            VSET(rot_pt, 0.0, 0.0, 1.0);                /* point to rotate around */
+        } else {
+            /* rotate around model center (0, 0, 0) */
+            VSET(new_origin, 0.0, 0.0, 0.0);
+            MAT4X3PNT(rot_pt, v->gv_model2view, new_origin);  /* point to rotate around */
+        }
+
+        bn_mat_xform_about_pnt(viewchg, newrot, rot_pt);
+        bn_mat_inv(viewchginv, viewchg);
+
+        /* Convert origin in new (viewchg) coords back to old view coords */
+        VSET(new_origin, 0.0, 0.0, 0.0);
+        MAT4X3PNT(new_cent_view, viewchginv, new_origin);
+        MAT4X3PNT(new_cent_model, v->gv_view2model, new_cent_view);
+        MAT_DELTAS_VEC_NEG(v->gv_center, new_cent_model);
+    }
+
+    /* Update the rotation component of the model2view matrix */
+    bn_mat_mul2(newrot, v->gv_rotation); /* pure rotation */
+    bv_update(v);
+
+    set_absolute_view_tran(v);
+    set_absolute_model_tran(v);
+}
+
+
+static void
+vrot_xyz(struct bview *v,
+              char origin,
+              int model2view,
+              vect_t *rvec)
+{
+    mat_t newrot;
+    mat_t temp1, temp2;
+
+    MAT_IDN(newrot);
+    bn_mat_angles(newrot, (*rvec)[X], (*rvec)[Y], (*rvec)[Z]);
+
+    if (model2view) {
+        /* transform model rotations into view rotations */
+        bn_mat_inv(temp1, v->gv_rotation);
+        bn_mat_mul(temp2, v->gv_rotation, newrot);
+        bn_mat_mul(newrot, temp2, temp1);
+    }
+
+    vrot(v, origin, newrot);
+}
+
+
+void
+bv_knob_rot(struct bview *v,
+	vect_t *rvec,
+	char origin,
+	int model_flag)
+{
+    if (!v || !rvec)
+	return;
+    int model2view = 0;
+    if (model_flag)
+	model2view = 1;
+    vrot_xyz(v, origin, model2view, rvec);
+}
+
+void
+bv_update_rate_flags(struct bview *v)
+{
+    if (!ZERO(v->k.vs_rate_model_rotate[X])
+	|| !ZERO(v->k.vs_rate_model_rotate[Y])
+	|| !ZERO(v->k.vs_rate_model_rotate[Z]))
+    {
+	v->k.vs_rateflag_model_rotate = 1;
+    } else {
+	v->k.vs_rateflag_model_rotate = 0;
+    }
+
+    if (!ZERO(v->k.vs_rate_model_tran[X])
+	|| !ZERO(v->k.vs_rate_model_tran[Y])
+	|| !ZERO(v->k.vs_rate_model_tran[Z]))
+    {
+	v->k.vs_rateflag_model_tran = 1;
+    } else {
+	v->k.vs_rateflag_model_tran = 0;
+    }
+
+    if (!ZERO(v->k.vs_rate_rotate[X])
+	|| !ZERO(v->k.vs_rate_rotate[Y])
+	|| !ZERO(v->k.vs_rate_rotate[Z]))
+    {
+	v->k.vs_rateflag_rotate = 1;
+    } else {
+	v->k.vs_rateflag_rotate = 0;
+    }
+
+    if (!ZERO(v->k.vs_rate_tran[X])
+	|| !ZERO(v->k.vs_rate_tran[Y])
+	|| !ZERO(v->k.vs_rate_tran[Z]))
+    {
+	v->k.vs_rateflag_tran = 1;
+    } else {
+	v->k.vs_rateflag_tran = 0;
+    }
+
+    if (!ZERO(v->k.vs_rate_scale)) {
+	v->k.vs_rateflag_scale = 1;
+    } else {
+	v->k.vs_rateflag_scale = 0;
     }
 }
 
