@@ -246,12 +246,13 @@ double
 bn_nextafter_up(double val)
 {
     union dbl_bits bits;
+    int type = fpclassify(val);
 
-    if (isnan(val) || isinf(val))
+    if (type == FP_NAN || type == FP_INFINITE)
 	return val;
 
     /* unify both +0 and -0 into +0’s next subnormal */
-    if (!val) {
+    if (type == FP_ZERO) {
         bits.u = 1ULL; /* raw 0x0000…001 */
         return bits.d;
     }
@@ -266,12 +267,13 @@ double
 bn_nextafter_dn(double val)
 {
     union dbl_bits bits;
+    int type = fpclassify(val);
 
-    if (isnan(val) || isinf(val))
+    if (type == FP_NAN || type == FP_INFINITE)
 	return val;
 
     /* unify both +0 and -0 into -0’s next subnormal */
-    if (!val) {
+    if (type == FP_ZERO) {
         /* raw, largest negative subnormal */
         bits.i = (int64_t)0x8000000000000001ULL;
         return bits.d;
@@ -287,11 +289,12 @@ float
 bn_nextafterf_up(float val)
 {
     union flt_bits bits;
+    int type = fpclassify(val);
 
-    if (isnan(val) || isinf(val))
+    if (type == FP_NAN || type == FP_INFINITE)
 	return val;
 
-    if (!val) {
+    if (type == FP_ZERO) {
         bits.u = 1U; /* raw 0x00000001 */
         return bits.f;
     }
@@ -306,12 +309,13 @@ float
 bn_nextafterf_dn(float val)
 {
     union flt_bits bits;
+    int type = fpclassify(val);
 
-    if (isnan(val) || isinf(val))
+    if (type == FP_NAN || type == FP_INFINITE)
 	return val;
 
     /* unify both +0 and -0 into -0’s next subnormal */
-    if (!val) {
+    if (type == FP_ZERO) {
         /* raw, largest negative subnormal */
         bits.u = 0x80000001U;
         return bits.f;
@@ -327,13 +331,14 @@ double
 bn_ulp(double val)
 {
     union dbl_bits bits;
+    int type = fpclassify(val);
 
-    if (isnan(val) || isinf(val))
+    if (type == FP_NAN || type == FP_INFINITE)
 	return val;
 
     bits.d = val;
     bits.u++; /* next "bigger" val */
-    if (!val || val > 0.0) {
+    if (type == FP_ZERO || val > 0.0) {
 	return bits.d - val;
     }
     return -bits.d + val;
@@ -344,13 +349,14 @@ float
 bn_ulpf(float val)
 {
     union flt_bits bits;
+    int type = fpclassify(val);
 
-    if (isnan(val) || isinf(val))
+    if (type == FP_NAN || type == FP_INFINITE)
 	return val;
 
     bits.f = val;
     bits.i++; /* next "bigger" val */
-    if (!val || val > 0.0f) {
+    if (type == FP_ZERO || val > 0.0f) {
 	return bits.f - val;
     }
     return -bits.f + val;
