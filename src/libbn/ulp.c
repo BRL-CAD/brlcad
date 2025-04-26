@@ -252,6 +252,9 @@ bn_dbl_max_sqrt(void)
 double
 bn_nextafter_up(double val)
 {
+#ifdef HAVE_NEXTAFTER
+    return nextafter(val, val+1.0);
+#else
     union dbl_bits bits;
     int type = fpclassify(val);
 
@@ -267,12 +270,16 @@ bn_nextafter_up(double val)
     bits.d = val;
     bits.i++; /* always moves toward +∞ */
     return bits.d;
+#endif
 }
 
 
 double
 bn_nextafter_dn(double val)
 {
+#ifdef HAVE_NEXTAFTER
+    return nextafter(val, val-1.0);
+#else
     union dbl_bits bits;
     int type = fpclassify(val);
 
@@ -289,12 +296,16 @@ bn_nextafter_dn(double val)
     bits.d = val;
     bits.i--; /* always moves toward −∞ */
     return bits.d;
+#endif
 }
 
 
 float
 bn_nextafterf_up(float val)
 {
+#ifdef HAVE_NEXTAFTERF
+    return nextafterf(val, val+1.0f);
+#else
     union flt_bits bits;
     int type = fpclassify(val);
 
@@ -309,12 +320,16 @@ bn_nextafterf_up(float val)
     bits.f = val;
     bits.i++; /* always moves toward +∞ */
     return bits.f;
+#endif
 }
 
 
 float
 bn_nextafterf_dn(float val)
 {
+#ifdef HAVE_NEXTAFTERF
+    return nextafterf(val, val-1.0f);
+#else
     union flt_bits bits;
     int type = fpclassify(val);
 
@@ -331,6 +346,7 @@ bn_nextafterf_dn(float val)
     bits.f = val;
     bits.i--; /* always moves toward −∞ */
     return bits.f;
+#endif
 }
 
 
