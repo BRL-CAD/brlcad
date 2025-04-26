@@ -85,14 +85,16 @@ bn_dbl_epsilon(void)
 #else
     /* static for computed epsilon so it's only calculated once. */
     static double tol = 0.0;
+    static int precomputed = 0;
 
-    if (!tol) {
+    if (!precomputed) {
 	/* volatile to avoid long registers and compiler optimizing away the loop */
 	volatile double temp_tol = 1.0;
 	while (1.0 + (temp_tol * 0.5) > 1.0) {
 	    temp_tol *= 0.5;
 	}
 	tol = temp_tol;
+	precomputed = 1;
     }
 
     return tol;
@@ -113,14 +115,16 @@ bn_flt_epsilon(void)
 #else
     /* static for computed epsilon so it's only calculated once. */
     static float tol = 0.0;
+    static int precomputed = 0;
 
-    if (!tol) {
+    if (!precomputed) {
 	/* volatile to avoid long registers and compiler optimizing away the loop */
 	volatile float temp_tol = 1.0f;
 	while (1.0f + (temp_tol * 0.5f) > 1.0f) {
 	    temp_tol *= 0.5f;
 	}
 	tol = temp_tol;
+	precomputed = 1;
     }
 
     return tol;
@@ -157,8 +161,9 @@ bn_dbl_max(void)
     return val.d;
 #else
     static double max_val = 0.0;
+    static int precomputed = 0;
 
-    if (!max_val) {
+    if (!precomputed) {
 	double val = 1.0;
 	double prev_val;
 
@@ -169,6 +174,7 @@ bn_dbl_max(void)
 	} while (!isinf(val) && val > prev_val);
 
 	max_val = prev_val;
+	precomputed = 1;
     }
 
     return max_val;
