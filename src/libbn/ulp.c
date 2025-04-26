@@ -53,8 +53,12 @@ extern int isnan(double x);
 extern int isinf(double x);
 #endif
 
-#if defined(HAVE_ISINF) && !defined(HAVE_DECL_ISINF) && !defined(isinf)
-extern int isinf(double x);
+#if defined(HAVE_NEXTAFTER) && !defined(HAVE_DECL_NEXTAFTER) && !defined(nextafter)
+extern double nextafter(double x, double y);
+#endif
+
+#if defined(HAVE_NEXTAFTERF) && !defined(HAVE_DECL_NEXTAFTERF) && !defined(nextafterf)
+extern float nextafterf(float x, float y);
 #endif
 
 #if defined(HAVE_FPCLASSIFY) && !defined(HAVE_DECL_FPCLASSIFY) && !defined(fpclassify)
