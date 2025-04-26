@@ -81,7 +81,7 @@ BV_EXPORT extern void bv_knobs_reset(struct bview *gvp, int category);
  * @param[out] do_tran  Pointer to flag indicating whether the command implies a translation op is needed
  *
  * @param[in] v          bview structure
- * @param[in] cmd        command string - valid entries are x, y, z, X, Y Z, ax, ay, ax, aX, aY, aZ, S, aS
+ * @param[in] cmd        command string - valid entries are x, y, z, X, Y Z, ax, ay, az, aX, aY, aZ, S, aS
  * @param[in] f          numerical parameter to cmd (i.e. aX 0.1 - required for all commands)
  * @param[in] origin     char indicating origin - may be 'e' (eye_pt), 'm' (model origin) or 'v' (view origin - default)
  * @param[in] model_flag Manipulate view using model coordinates rather than view coordinates
