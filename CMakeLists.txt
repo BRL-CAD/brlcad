@@ -1711,6 +1711,7 @@ brlcad_function_exists(drand48)
 brlcad_function_exists(fchmod)
 brlcad_function_exists(fdopen)
 brlcad_function_exists(fmemopen)
+brlcad_function_exists(fpclassify REQUIRED_LIBS ${M_LIBRARY})
 brlcad_function_exists(fseeko) # implies ftello
 brlcad_function_exists(fsync)
 brlcad_function_exists(funopen)
