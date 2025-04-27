@@ -812,7 +812,7 @@ cmd_ged_view_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
     /* Note - we don't call mged_svbase here because we don't always want the
      * knob settings reset after a ged view command.  If a view command wants
      * that part of mged_svbase to happen it is the responsibility of that
-     * command to call bv_knobs_reset(v, 2); */
+     * command to call bv_knobs_reset(v, BV_KNOBS_ABS); */
     if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui) {
 	s->mged_curr_dm->dm_dirty = 1;
 	dm_set_dirty(DMP, 1);

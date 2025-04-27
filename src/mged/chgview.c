@@ -2670,7 +2670,7 @@ int
 mged_svbase(struct mged_state *s)
 {
     /* reset absolute slider values */
-    bv_knobs_reset(view_state->vs_gvp, 2);
+    bv_knobs_reset(view_state->vs_gvp, BV_KNOBS_ABS);
 
     if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui) {
 	s->mged_curr_dm->dm_dirty = 1;

@@ -309,7 +309,7 @@ bv_init(struct bview *gvp, struct bview_set *s)
     gvp->gv_local2base = 1.0;
 
     // Initialize knob vars
-    bv_knobs_reset(gvp, 0);
+    bv_knobs_reset(gvp, BV_KNOBS_ALL);
     gvp->k.vs_rate_origin = '\0';
     gvp->k.vs_rate_model_origin = '\0';
 

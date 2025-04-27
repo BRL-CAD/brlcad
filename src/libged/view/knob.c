@@ -133,7 +133,7 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 		BU_STR_EQUAL(cmd, "clear") || BU_STR_EQUAL(cmd, "stop")) {
 	    // Per MGED, this command seems to reset the rate entries
 	    // but not the absolute entries.
-	    bv_knobs_reset(v, 1);
+	    bv_knobs_reset(v, BV_KNOBS_RATE);
 	    continue;
 	}
 	if (BU_STR_EQUAL(cmd, "calibrate")) {
@@ -160,7 +160,7 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 	--argc;	++argv;
 
 	// Process the actual command
-	int kp_ret = bv_knob_cmd_process(
+	int kp_ret = bv_knobs_cmd_process(
 		&rvec, &do_rot, &tvec, &do_tran,
 		v, cmd, f,
 		origin, model_flag, incr_flag);
@@ -172,11 +172,11 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (do_tran) {
-	bv_knob_tran(v, &tvec, model_flag);
+	bv_knobs_tran(v, &tvec, model_flag);
     }
 
     if (do_rot) {
-	bv_knob_rot(v, &rvec, origin, model_flag);
+	bv_knobs_rot(v, &rvec, origin, model_flag);
     }
 
     bv_update_rate_flags(v);

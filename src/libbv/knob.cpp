@@ -184,7 +184,7 @@ calc_vtran(struct bview *v, const vect_t *tvec)
 }
 
 void
-bv_knob_tran(struct bview *v,
+bv_knobs_tran(struct bview *v,
 	vect_t *tvec,
 	int model_flag)
 {
@@ -266,7 +266,7 @@ vrot_xyz(struct bview *v,
 
 
 void
-bv_knob_rot(struct bview *v,
+bv_knobs_rot(struct bview *v,
 	vect_t *rvec,
 	char origin,
 	int model_flag)
@@ -326,7 +326,7 @@ bv_update_rate_flags(struct bview *v)
 }
 
 int
-bv_knob_cmd_process(
+bv_knobs_cmd_process(
 	vect_t *rvec, int *do_rot, vect_t *tvec, int *do_tran,
 	struct bview *v, const char *cmd, fastf_t f,
 	char origin, int model_flag, int incr_flag)
