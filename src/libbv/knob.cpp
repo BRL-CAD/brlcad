@@ -350,6 +350,9 @@ bv_knobs_cmd_process(
 	case 'Z':
 	    ind = Z;
 	    break;
+	case 'S':
+	    ind = 0;
+	    break;
     }
 
     // If we couldn't get a valid index, this isn't a valid command
