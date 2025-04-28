@@ -498,6 +498,84 @@ main(int argc, char *argv[])
 
     bu_log("RT_SOLID_EDIT_TRANS(xy) SUCCESS: original v value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->v), V3ARGS(edit_tor->v));
 
+    /****************************
+       RT_SOLID_EDIT_ROT - XY
+     ****************************/
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, RT_SOLID_EDIT_ROT);
+
+    // Reset
+    VMOVE(edit_tor->v, orig_tor->v);
+    VMOVE(edit_tor->h, orig_tor->h);
+    edit_tor->r_a = orig_tor->r_a;
+    MAT_IDN(s->acc_rot_sol);
+    MAT_IDN(s->incr_change);
+    s->acc_sc_sol = 1.0;
+    s->e_inpara = 0;
+    s->es_scale = 0;
+    VSET(s->e_keypoint, 0, 0, 0);
+    s->mv_context = 1;
+
+    // Not sure if we need to set these, strictly speaking, but just to be sure...
+    s->vp->gv_coord = 'v';
+    s->vp->gv_rotate_about = 'k';
+
+
+    // The XY rotation logic in MGED is complex with a lot of options, and we
+    // can't simply call ft_edit_xy to duplicate it (at least not at the
+    // moment).  Instead, we reproduce the steps used in one of the possible
+    // paths, starting with a pseudo-mouse input of delta x and y values as
+    // would come from motion_event_handler in doevent.c:
+    int dx = 6;
+    int dy = -3;
+
+    // 1.  Apply a rate factor.  This is one of the steps that can be impacted
+    // by options in MGED - 0.25 is the value for the edit case of AMM_ROT when
+    // mv_rateknobs isn't set.
+    fastf_t fdx = dx * 0.25;
+    fastf_t fdy = dy * 0.25;
+
+    // 2.  Create a rate vector.  In MGED the setup of the arguments to the
+    // knob command in doevent.c flips x and y, so do that here too.
+    vect_t rvec = VINIT_ZERO;
+    rvec[X] = fdy;
+    rvec[Y] = fdx;
+
+    // 3.  MGED will execute the knob command. That takes us to f_knob, which
+    // in turn unpacks the options.  We don't need to do that here, and we're
+    // not using the MGED state that f_knob updates, so we proceed directly to
+    // the mged_edrot_xyz step of creating a new rotation matrix.
+    mat_t newrot, temp1, temp2;
+    MAT_IDN(newrot);
+    bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
+
+    // 4.  With the newrot matrix prepared, we proceed to mged_erot.  This is
+    // another case where MGED settings can impact processing.  Per the
+    // coords == 'v' case, incorporate the view's gv_rotation into newrot
+    bn_mat_inv(temp1, s->vp->gv_rotation);
+    bn_mat_mul(temp2, temp1, newrot);
+    bn_mat_mul(newrot, temp2, s->vp->gv_rotation);
+
+    // 5.  Set up the new rotation matrix in solid edit struct
+    MAT_COPY(s->incr_change, newrot);
+
+    // 6.  Incorporate acc_rot_sol (set to identity here, but as it is one of
+    // the steps in mged_erot reproduce it for completeness.)
+    bn_mat_mul2(s->incr_change, s->acc_rot_sol);
+
+    // That completes our pseudo ft_edit_xy setup - now ready to process.
+    rt_solid_edit_process(s);
+
+    // Set cmp vals to expected and do the diff
+    VSET(cmp_tor->v, 9.4893742121206248, 5.2374047435024558, 20.18715850770182);
+    VSET(cmp_tor->h, 0.55325065194604151, 0.59027005312777225, 0.58778821058423525);
+    cmp_tor->r_a = orig_tor->r_a;
+
+    if (tor_diff("RT_SOLID_EDIT_ROT (xy)", cmp_tor, edit_tor))
+	bu_exit(1, "ERROR: RT_SOLID_EDIT_ROT(xy) failed translating tor\n");
+
+    bu_log("RT_SOLID_EDIT_ROT(xy) SUCCESS: original v value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->v), V3ARGS(edit_tor->v));
+    bu_log("RT_SOLID_EDIT_ROT(xy) SUCCESS: original h value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->h), V3ARGS(edit_tor->h));
+
 
     rt_solid_edit_destroy(s);
 
