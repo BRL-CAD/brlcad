@@ -1311,6 +1311,16 @@ knob_rot(struct mged_state *s,
     return TCL_OK;
 }
 
+static void
+knob_sca(struct mged_state *s)
+{
+    if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	sedit_abs_scale(s);
+    } else {
+	oedit_abs_scale(s);
+    }
+}
+
 
 /* The MGED knob command will interpret any command that does not match
  * the current editing state as a view instruction - for example, "x 1"
@@ -1352,7 +1362,7 @@ knob_is_edit_cmd(struct mged_state *s, const char *cmd, int model_flag, int view
 int
 edit_knob_cmd_process(
 	struct mged_state *s,
-	vect_t *rvec, int *do_rot, vect_t *tvec, int *do_tran,
+	vect_t *rvec, int *do_rot, vect_t *tvec, int *do_tran, int *do_sca,
 	struct bview *v, const char *cmd, fastf_t f,
 	char origin, int incr_flag)
 {
@@ -1575,11 +1585,7 @@ edit_knob_cmd_process(
 		s->edit_state.edit_absolute_scale = f;
 	    }
 
-	    if (GEOM_EDIT_STATE == ST_S_EDIT) {
-		sedit_abs_scale(s);
-	    } else {
-		oedit_abs_scale(s);
-	    }
+	    *do_sca = 1;
 
 	    return BRLCAD_OK;
 	}
@@ -1604,6 +1610,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     char origin = '\0';
     int do_tran = 0;
     int do_rot = 0;
+    int do_sca = 0;
     int incr_flag = 0;  /* interpret values as increments */
     int view_flag = 0;  /* manipulate view using view coords */
     int model_flag = 0; /* manipulate view using model coords */
@@ -1765,9 +1772,22 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	} else {
 	    kp_ret = edit_knob_cmd_process(
 		    s,
-		    &rvec, &do_rot, &tvec, &do_tran,
+		    &rvec, &do_rot, &tvec, &do_tran, &do_sca,
 		    view_state->vs_gvp, cmd, f,
 		    origin, incr_flag);
+
+	    // Unlike do_rot and do_sca, prior MGED logic immediately processed
+	    // an editing operation for scale.  Not clear whether this was
+	    // simply due to the relative simplicity of that logic - both rot
+	    // and tra have more cases to handle. At least for now preserve that
+	    // behavior here, but it would be a cleaner if we treated scale the
+	    // same way as the other op categories and accumulated the commands
+	    // before doing a final apply.
+	    if (do_sca)
+		knob_sca(s);
+
+	    // Done - reset var
+	    do_sca = 0;
 
 	    if (kp_ret != BRLCAD_OK)
 		goto usage;
