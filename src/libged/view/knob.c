@@ -136,7 +136,7 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 		BU_STR_EQUAL(cmd, "clear") || BU_STR_EQUAL(cmd, "stop")) {
 	    // Per MGED, this command seems to reset the rate entries
 	    // but not the absolute entries.
-	    bv_knobs_reset(v, BV_KNOBS_RATE);
+	    bv_knobs_reset(&v->k, BV_KNOBS_RATE);
 	    continue;
 	}
 	if (BU_STR_EQUAL(cmd, "calibrate")) {

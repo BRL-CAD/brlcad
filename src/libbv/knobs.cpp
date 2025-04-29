@@ -1,4 +1,4 @@
-/*                      K N O B . C P P
+/*                      K N O B S . C P P
  * BRL-CAD
  *
  * Copyright (c) 2020-2025 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file knob.cpp
+/** @file knobs.cpp
  *
  * Utility functions for working with BRL-CAD view knob functionality
  *
@@ -32,13 +32,11 @@
 #include "./bv_private.h"
 
 void
-bv_knobs_reset(struct bview *v, int category)
+bv_knobs_reset(struct bview_knobs *k, int category)
 {
 
-    if (!v)
+    if (!k)
 	return;
-
-    struct bview_knob *k = &v->k;
 
     /* Rate members */
     if (!category || category == 1) {
@@ -60,7 +58,6 @@ bv_knobs_reset(struct bview *v, int category)
 
 	k->sca_flag = 0;
 	k->sca = 0.0;
-
 
     }
 
@@ -84,11 +81,6 @@ bv_knobs_reset(struct bview *v, int category)
 
 	k->sca_abs = 0.0;
 
-	/* Virtual trackball position */
-	MAT_DELTAS_GET_NEG(v->k.orig_pos, v->gv_center);
-
-	v->gv_i_scale = v->gv_scale;
-	v->gv_a_scale = 0.0;
     }
 
 }
@@ -97,7 +89,7 @@ static void
 set_absolute_view_tran(struct bview *v)
 {
     /* calculate absolute_tran */
-    MAT4X3PNT(v->k.tra_v_abs, v->gv_model2view, v->k.orig_pos);
+    MAT4X3PNT(v->k.tra_v_abs, v->gv_model2view, v->orig_pos);
     /* Stash the current tra_v_abs value in case tra_v_abs is
      * overwritten (say by Tcl in MGED) */
     VMOVE(v->k.tra_v_abs_last, v->k.tra_v_abs);
@@ -111,7 +103,7 @@ set_absolute_model_tran(struct bview *v)
 
     /* calculate absolute_model_tran */
     MAT_DELTAS_GET_NEG(new_pos, v->gv_center);
-    VSUB2(diff, v->k.orig_pos, new_pos);
+    VSUB2(diff, v->orig_pos, new_pos);
     VSCALE(v->k.tra_m_abs, diff, 1/v->gv_scale);
     /* Stash the current tra_m_abs value in case
      * tra_m_abs is overwritten (say by Tcl in MGED) */

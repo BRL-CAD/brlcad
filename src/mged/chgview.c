@@ -2069,7 +2069,13 @@ int
 mged_svbase(struct mged_state *s)
 {
     /* reset absolute slider values */
-    bv_knobs_reset(view_state->vs_gvp, BV_KNOBS_ABS);
+    bv_knobs_reset(&view_state->vs_gvp->k, BV_KNOBS_ABS);
+
+    /* Reset virtual trackball position */
+    MAT_DELTAS_GET_NEG(view_state->vs_gvp->orig_pos, view_state->vs_gvp->gv_center);
+    /* Reset view scale entries. */
+    view_state->vs_gvp->gv_i_scale = view_state->vs_gvp->gv_scale;
+    view_state->vs_gvp->gv_a_scale = 0.0;
 
     if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui) {
 	s->mged_curr_dm->dm_dirty = 1;

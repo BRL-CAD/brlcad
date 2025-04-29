@@ -6,7 +6,7 @@ set(
   diff.c
   font.c
   hash.c
-  knob.cpp
+  knobs.cpp
   lod.cpp
   polygon.c
   polygon_op.cpp

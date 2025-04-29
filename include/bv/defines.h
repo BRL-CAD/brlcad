@@ -503,7 +503,7 @@ struct bview_objs {
 // years, the mathematics of view manipulation used to support them still
 // underpins interactions driven with inputs from modern peripherals such as
 // the mouse.
-struct bview_knob {
+struct bview_knobs {
 
     /* Rate data */
     vect_t      rot_m;      // rotation - model coords
@@ -550,9 +550,6 @@ struct bview_knob {
 
     vect_t      tra_v_abs;       // translation - view coords
     vect_t      tra_v_abs_last;
-
-    /* Virtual trackball position */
-    point_t     orig_pos;
 
 };
 
@@ -647,8 +644,11 @@ struct bview {
     vect_t gv_lookat;
     double radius;
 
-    /* Information for controlling view manipulation */
-    struct bview_knob k;
+    /* Knob-based view manipulation data */
+    struct bview_knobs k;
+
+    /* Virtual trackball position */
+    point_t     orig_pos;
 
     // libtclcad data
     struct bv_data_tclcad gv_tcl;

@@ -77,7 +77,7 @@ BV_EXPORT extern int bv_update_selected(struct bview *gvp);
 #define BV_KNOBS_ALL 0
 #define BV_KNOBS_RATE 1
 #define BV_KNOBS_ABS 2
-BV_EXPORT extern void bv_knobs_reset(struct bview *gvp, int category);
+BV_EXPORT extern void bv_knobs_reset(struct bview_knobs *k, int category);
 
 /**
  * @brief
