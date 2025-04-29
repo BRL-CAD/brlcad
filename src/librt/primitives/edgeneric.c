@@ -261,9 +261,9 @@ rt_solid_edit_generic_sscale_xy(
     /* accumulate scale factor */
     s->acc_sc_sol *= s->es_scale;
 
-    s->edit_absolute_scale = s->acc_sc_sol - 1.0;
-    if (s->edit_absolute_scale > 0)
-	s->edit_absolute_scale /= 3.0;
+    s->k.sca_abs = s->acc_sc_sol - 1.0;
+    if (s->k.sca_abs > 0)
+	s->k.sca_abs /= 3.0;
 }
 
 /*

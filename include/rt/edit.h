@@ -64,14 +64,8 @@ struct rt_solid_edit {
     // Current editing operation
     int edit_flag;
 
-    // Translate values used in XY mouse vector manipulation
-    vect_t edit_absolute_model_tran;
-    vect_t last_edit_absolute_model_tran;
-    vect_t edit_absolute_view_tran;
-    vect_t last_edit_absolute_view_tran;
-
-    // Scale values used in XY mouse vector manipulation
-    fastf_t edit_absolute_scale;
+    // Knob based editing data
+    struct bview_knobs k;
 
     // MGED wants to know if we're in solid rotate, translate or scale mode.
     // (TODO - why?) Rather than keying off of primitive specific edit op
@@ -84,6 +78,9 @@ struct rt_solid_edit {
     fastf_t es_scale;           /* scale factor */
     mat_t incr_change;          /* change(s) from last cycle */
     mat_t model_changes;        /* full changes this edit */
+
+    fastf_t acc_sc[3];          /* accumulate local object scale factors */
+    fastf_t acc_sc_obj;         /* accumulate global object scale factor */
     fastf_t acc_sc_sol;         /* accumulate solid scale factor */
     mat_t acc_rot_sol;          /* accumulate solid rotations */
 

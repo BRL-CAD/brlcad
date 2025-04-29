@@ -92,17 +92,24 @@ rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol 
     VSETALL(s->e_keypoint, 0);
     VSETALL(s->e_mparam, 0);
     VSETALL(s->e_para, 0);
-    VSETALL(s->edit_absolute_model_tran, 0);
-    VSETALL(s->edit_absolute_view_tran, 0);
-    VSETALL(s->last_edit_absolute_model_tran, 0);
-    VSETALL(s->last_edit_absolute_view_tran, 0);
+
+    bv_knobs_reset(&s->k, 0);
+    s->k.origin_m = '\0';
+    s->k.origin_o = '\0';
+    s->k.origin_v = '\0';
+    s->k.rot_m_udata = NULL;
+    s->k.rot_o_udata = NULL;
+    s->k.rot_v_udata = NULL;
+    s->k.sca_udata = NULL;
+    s->k.tra_m_udata = NULL;
+    s->k.tra_v_udata = NULL;
+
     s->acc_sc_sol = 1.0;
     s->base2local = 1.0;
     s->e_inpara = 0;
     s->e_keyfixed = 0;
     s->e_keytag = NULL;
     s->e_mvalid = 0;
-    s->edit_absolute_scale = 0.0;
     s->edit_flag = 0;
     s->es_scale = 0.0;
     s->ipe_ptr = NULL;
@@ -367,12 +374,12 @@ rt_update_edit_absolute_tran(struct rt_solid_edit *s, vect_t view_pos)
 
     MAT4X3PNT(model_pos, s->vp->gv_view2model, view_pos);
     VSUB2(diff, model_pos, s->e_axes_pos);
-    VSCALE(s->edit_absolute_model_tran, diff, inv_Viewscale);
-    VMOVE(s->last_edit_absolute_model_tran, s->edit_absolute_model_tran);
+    VSCALE(s->k.tra_m_abs, diff, inv_Viewscale);
+    VMOVE(s->k.tra_m_abs_last, s->k.tra_m_abs);
 
     MAT4X3PNT(ea_view_pos, s->vp->gv_model2view, s->e_axes_pos);
-    VSUB2(s->edit_absolute_view_tran, view_pos, ea_view_pos);
-    VMOVE(s->last_edit_absolute_view_tran, s->edit_absolute_view_tran);
+    VSUB2(s->k.tra_v_abs, view_pos, ea_view_pos);
+    VMOVE(s->k.tra_v_abs_last, s->k.tra_v_abs);
 }
 
 
