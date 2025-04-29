@@ -1211,62 +1211,62 @@ event_check(struct mged_state *s, int non_blocking)
 	if (!view_state->vs_gvp)
 	   continue;
 
-	if (view_state->vs_gvp->k.vs_rateflag_model_rotate) {
+	if (view_state->vs_gvp->k.rot_m_flag) {
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
 	    bu_vls_printf(&vls, "knob -o %c -i -m ax %f ay %f az %f\n",
-			  view_state->vs_gvp->k.vs_rate_model_origin,
-			  view_state->vs_gvp->k.vs_rate_model_rotate[X],
-			  view_state->vs_gvp->k.vs_rate_model_rotate[Y],
-			  view_state->vs_gvp->k.vs_rate_model_rotate[Z]);
+			  view_state->vs_gvp->k.origin_m,
+			  view_state->vs_gvp->k.rot_m[X],
+			  view_state->vs_gvp->k.rot_m[Y],
+			  view_state->vs_gvp->k.rot_m[Z]);
 
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
-	if (view_state->vs_gvp->k.vs_rateflag_model_tran) {
+	if (view_state->vs_gvp->k.tra_m_flag) {
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
 	    bu_vls_printf(&vls, "knob -i -m aX %f aY %f aZ %f\n",
-			  view_state->vs_gvp->k.vs_rate_model_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-			  view_state->vs_gvp->k.vs_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-			  view_state->vs_gvp->k.vs_rate_model_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+			  view_state->vs_gvp->k.tra_m[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  view_state->vs_gvp->k.tra_m[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  view_state->vs_gvp->k.tra_m[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
-	if (view_state->vs_gvp->k.vs_rateflag_rotate) {
+	if (view_state->vs_gvp->k.rot_v_flag) {
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
 	    bu_vls_printf(&vls, "knob -o %c -i -v ax %f ay %f az %f\n",
-			  view_state->vs_gvp->k.vs_rate_origin,
-			  view_state->vs_gvp->k.vs_rate_rotate[X],
-			  view_state->vs_gvp->k.vs_rate_rotate[Y],
-			  view_state->vs_gvp->k.vs_rate_rotate[Z]);
+			  view_state->vs_gvp->k.origin_v,
+			  view_state->vs_gvp->k.rot_v[X],
+			  view_state->vs_gvp->k.rot_v[Y],
+			  view_state->vs_gvp->k.rot_v[Z]);
 
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
-	if (view_state->vs_gvp->k.vs_rateflag_tran) {
+	if (view_state->vs_gvp->k.tra_v_flag) {
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
 	    bu_vls_printf(&vls, "knob -i -v aX %f aY %f aZ %f",
-			  view_state->vs_gvp->k.vs_rate_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-			  view_state->vs_gvp->k.vs_rate_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-			  view_state->vs_gvp->k.vs_rate_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+			  view_state->vs_gvp->k.tra_v[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  view_state->vs_gvp->k.tra_v[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  view_state->vs_gvp->k.tra_v[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
-	if (view_state->vs_gvp->k.vs_rateflag_scale) {
+	if (view_state->vs_gvp->k.sca_flag) {
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
 	    bu_vls_printf(&vls, "zoom %f",
-			  1.0 / (1.0 - (view_state->vs_gvp->k.vs_rate_scale / 10.0)));
+			  1.0 / (1.0 - (view_state->vs_gvp->k.sca / 10.0)));
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}

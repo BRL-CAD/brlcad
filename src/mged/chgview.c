@@ -161,9 +161,9 @@ cmd_size(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	    view_state->vs_gvp->gv_a_scale /= 9.0;
 	}
 
-	if (!ZERO(view_state->vs_gvp->k.vs_absolute_tran[X])
-	    || !ZERO(view_state->vs_gvp->k.vs_absolute_tran[Y])
-	    || !ZERO(view_state->vs_gvp->k.vs_absolute_tran[Z]))
+	if (!ZERO(view_state->vs_gvp->k.tra_v_abs[X])
+	    || !ZERO(view_state->vs_gvp->k.tra_v_abs[Y])
+	    || !ZERO(view_state->vs_gvp->k.tra_v_abs[Z]))
 	{
 	    set_absolute_tran(s);
 	}
@@ -1080,46 +1080,46 @@ static void
 check_nonzero_rates(struct mged_state *s)
 {
     if (view_state->vs_gvp) {
-	if (!ZERO(view_state->vs_gvp->k.vs_rate_model_rotate[X])
-		|| !ZERO(view_state->vs_gvp->k.vs_rate_model_rotate[Y])
-		|| !ZERO(view_state->vs_gvp->k.vs_rate_model_rotate[Z]))
+	if (!ZERO(view_state->vs_gvp->k.rot_m[X])
+		|| !ZERO(view_state->vs_gvp->k.rot_m[Y])
+		|| !ZERO(view_state->vs_gvp->k.rot_m[Z]))
 	{
-	    view_state->vs_gvp->k.vs_rateflag_model_rotate = 1;
+	    view_state->vs_gvp->k.rot_m_flag = 1;
 	} else {
-	    view_state->vs_gvp->k.vs_rateflag_model_rotate = 0;
+	    view_state->vs_gvp->k.rot_m_flag = 0;
 	}
 
-	if (!ZERO(view_state->vs_gvp->k.vs_rate_model_tran[X])
-		|| !ZERO(view_state->vs_gvp->k.vs_rate_model_tran[Y])
-		|| !ZERO(view_state->vs_gvp->k.vs_rate_model_tran[Z]))
+	if (!ZERO(view_state->vs_gvp->k.tra_m[X])
+		|| !ZERO(view_state->vs_gvp->k.tra_m[Y])
+		|| !ZERO(view_state->vs_gvp->k.tra_m[Z]))
 	{
-	    view_state->vs_gvp->k.vs_rateflag_model_tran = 1;
+	    view_state->vs_gvp->k.tra_m_flag = 1;
 	} else {
-	    view_state->vs_gvp->k.vs_rateflag_model_tran = 0;
+	    view_state->vs_gvp->k.tra_m_flag = 0;
 	}
 
-	if (!ZERO(view_state->vs_gvp->k.vs_rate_rotate[X])
-		|| !ZERO(view_state->vs_gvp->k.vs_rate_rotate[Y])
-		|| !ZERO(view_state->vs_gvp->k.vs_rate_rotate[Z]))
+	if (!ZERO(view_state->vs_gvp->k.rot_v[X])
+		|| !ZERO(view_state->vs_gvp->k.rot_v[Y])
+		|| !ZERO(view_state->vs_gvp->k.rot_v[Z]))
 	{
-	    view_state->vs_gvp->k.vs_rateflag_rotate = 1;
+	    view_state->vs_gvp->k.rot_v_flag = 1;
 	} else {
-	    view_state->vs_gvp->k.vs_rateflag_rotate = 0;
+	    view_state->vs_gvp->k.rot_v_flag = 0;
 	}
 
-	if (!ZERO(view_state->vs_gvp->k.vs_rate_tran[X])
-		|| !ZERO(view_state->vs_gvp->k.vs_rate_tran[Y])
-		|| !ZERO(view_state->vs_gvp->k.vs_rate_tran[Z]))
+	if (!ZERO(view_state->vs_gvp->k.tra_v[X])
+		|| !ZERO(view_state->vs_gvp->k.tra_v[Y])
+		|| !ZERO(view_state->vs_gvp->k.tra_v[Z]))
 	{
-	    view_state->vs_gvp->k.vs_rateflag_tran = 1;
+	    view_state->vs_gvp->k.tra_v_flag = 1;
 	} else {
-	    view_state->vs_gvp->k.vs_rateflag_tran = 0;
+	    view_state->vs_gvp->k.tra_v_flag = 0;
 	}
 
-	if (!ZERO(view_state->vs_gvp->k.vs_rate_scale)) {
-	    view_state->vs_gvp->k.vs_rateflag_scale = 1;
+	if (!ZERO(view_state->vs_gvp->k.sca)) {
+	    view_state->vs_gvp->k.sca_flag = 1;
 	} else {
-	    view_state->vs_gvp->k.vs_rateflag_scale = 0;
+	    view_state->vs_gvp->k.sca_flag = 0;
 	}
     }
 
@@ -1199,16 +1199,16 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	    bu_vls_printf(&vls, "z = %f\n", s->edit_state.edit_rate_model_rotate[Z]);
 	} else {
 	    if (view_state->vs_gvp) {
-		bu_vls_printf(&vls, "x = %f\n", view_state->vs_gvp->k.vs_rate_rotate[X]);
-		bu_vls_printf(&vls, "y = %f\n", view_state->vs_gvp->k.vs_rate_rotate[Y]);
-		bu_vls_printf(&vls, "z = %f\n", view_state->vs_gvp->k.vs_rate_rotate[Z]);
+		bu_vls_printf(&vls, "x = %f\n", view_state->vs_gvp->k.rot_v[X]);
+		bu_vls_printf(&vls, "y = %f\n", view_state->vs_gvp->k.rot_v[Y]);
+		bu_vls_printf(&vls, "z = %f\n", view_state->vs_gvp->k.rot_v[Z]);
 	    }
 	}
 
 	if (es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "S = %f\n", s->edit_state.edit_rate_scale);
 	} else {
-	    bu_vls_printf(&vls, "S = %f\n", view_state->vs_gvp->k.vs_rate_scale);
+	    bu_vls_printf(&vls, "S = %f\n", view_state->vs_gvp->k.sca);
 	}
 
 	if (es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
@@ -1217,9 +1217,9 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	    bu_vls_printf(&vls, "Z = %f\n", s->edit_state.edit_rate_model_tran[Z]);
 	} else {
 	    if (view_state->vs_gvp) {
-		bu_vls_printf(&vls, "X = %f\n", view_state->vs_gvp->k.vs_rate_tran[X]);
-		bu_vls_printf(&vls, "Y = %f\n", view_state->vs_gvp->k.vs_rate_tran[Y]);
-		bu_vls_printf(&vls, "Z = %f\n", view_state->vs_gvp->k.vs_rate_tran[Z]);
+		bu_vls_printf(&vls, "X = %f\n", view_state->vs_gvp->k.tra_v[X]);
+		bu_vls_printf(&vls, "Y = %f\n", view_state->vs_gvp->k.tra_v[Y]);
+		bu_vls_printf(&vls, "Z = %f\n", view_state->vs_gvp->k.tra_v[Z]);
 	    }
 	}
     } else {
@@ -1229,9 +1229,9 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	    bu_vls_printf(&vls, "az = %f\n", s->edit_state.edit_absolute_model_rotate[Z]);
 	} else {
 	    if (view_state->vs_gvp) {
-		bu_vls_printf(&vls, "ax = %f\n", view_state->vs_gvp->k.vs_absolute_rotate[X]);
-		bu_vls_printf(&vls, "ay = %f\n", view_state->vs_gvp->k.vs_absolute_rotate[Y]);
-		bu_vls_printf(&vls, "az = %f\n", view_state->vs_gvp->k.vs_absolute_rotate[Z]);
+		bu_vls_printf(&vls, "ax = %f\n", view_state->vs_gvp->k.rot_v_abs[X]);
+		bu_vls_printf(&vls, "ay = %f\n", view_state->vs_gvp->k.rot_v_abs[Y]);
+		bu_vls_printf(&vls, "az = %f\n", view_state->vs_gvp->k.rot_v_abs[Z]);
 	    }
 	}
 
@@ -1247,9 +1247,9 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	    bu_vls_printf(&vls, "aZ = %f\n", s->edit_state.edit_absolute_model_tran[Z]);
 	} else {
 	    if (view_state->vs_gvp) {
-		bu_vls_printf(&vls, "aX = %f\n", view_state->vs_gvp->k.vs_absolute_tran[X]);
-		bu_vls_printf(&vls, "aY = %f\n", view_state->vs_gvp->k.vs_absolute_tran[Y]);
-		bu_vls_printf(&vls, "aZ = %f\n", view_state->vs_gvp->k.vs_absolute_tran[Z]);
+		bu_vls_printf(&vls, "aX = %f\n", view_state->vs_gvp->k.tra_v_abs[X]);
+		bu_vls_printf(&vls, "aY = %f\n", view_state->vs_gvp->k.tra_v_abs[Y]);
+		bu_vls_printf(&vls, "aZ = %f\n", view_state->vs_gvp->k.tra_v_abs[Z]);
 	    }
 	}
     }
@@ -1681,11 +1681,11 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 	if (BU_STR_EQUAL(cmd, "zap") || BU_STR_EQUAL(cmd, "zero")) {
 
-	    VSETALL(view_state->vs_gvp->k.vs_rate_model_rotate, 0.0);
-	    VSETALL(view_state->vs_gvp->k.vs_rate_model_tran, 0.0);
-	    VSETALL(view_state->vs_gvp->k.vs_rate_rotate, 0.0);
-	    VSETALL(view_state->vs_gvp->k.vs_rate_tran, 0.0);
-	    view_state->vs_gvp->k.vs_rate_scale = 0.0;
+	    VSETALL(view_state->vs_gvp->k.rot_m, 0.0);
+	    VSETALL(view_state->vs_gvp->k.tra_m, 0.0);
+	    VSETALL(view_state->vs_gvp->k.rot_v, 0.0);
+	    VSETALL(view_state->vs_gvp->k.tra_v, 0.0);
+	    view_state->vs_gvp->k.sca = 0.0;
 	    VSETALL(s->edit_state.edit_rate_model_rotate, 0.0);
 	    VSETALL(s->edit_state.edit_rate_object_rotate, 0.0);
 	    VSETALL(s->edit_state.edit_rate_view_rotate, 0.0);
@@ -1700,7 +1700,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    continue;
 	}
 	if (BU_STR_EQUAL(cmd, "calibrate")) {
-	    VSETALL(view_state->vs_gvp->k.vs_absolute_tran, 0.0);
+	    VSETALL(view_state->vs_gvp->k.tra_v_abs, 0.0);
 	    continue;
 	}
 
@@ -1877,9 +1877,9 @@ mged_zoom(struct mged_state *s, double val)
     }
 
     if (view_state->vs_gvp) {
-	if (!ZERO(view_state->vs_gvp->k.vs_absolute_tran[X])
-		|| !ZERO(view_state->vs_gvp->k.vs_absolute_tran[Y])
-		|| !ZERO(view_state->vs_gvp->k.vs_absolute_tran[Z]))
+	if (!ZERO(view_state->vs_gvp->k.tra_v_abs[X])
+		|| !ZERO(view_state->vs_gvp->k.tra_v_abs[Y])
+		|| !ZERO(view_state->vs_gvp->k.tra_v_abs[Z]))
 	{
 	    set_absolute_tran(s);
 	}
@@ -2006,9 +2006,9 @@ cmd_setview(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     }
 
     if (view_state->vs_gvp) {
-	if (!ZERO(view_state->vs_gvp->k.vs_absolute_tran[X])
-		|| !ZERO(view_state->vs_gvp->k.vs_absolute_tran[Y])
-		|| !ZERO(view_state->vs_gvp->k.vs_absolute_tran[Z]))
+	if (!ZERO(view_state->vs_gvp->k.tra_v_abs[X])
+		|| !ZERO(view_state->vs_gvp->k.tra_v_abs[Y])
+		|| !ZERO(view_state->vs_gvp->k.tra_v_abs[Z]))
 	{
 	    set_absolute_tran(s);
 	}
@@ -2181,9 +2181,9 @@ setview(struct mged_state *s,
     ged_exec_setview(s->gedp, 4, (const char **)av);
 
     if (view_state->vs_gvp) {
-	if (!ZERO(view_state->vs_gvp->k.vs_absolute_tran[X])
-		|| !ZERO(view_state->vs_gvp->k.vs_absolute_tran[Y])
-		|| !ZERO(view_state->vs_gvp->k.vs_absolute_tran[Z]))
+	if (!ZERO(view_state->vs_gvp->k.tra_v_abs[X])
+		|| !ZERO(view_state->vs_gvp->k.tra_v_abs[Y])
+		|| !ZERO(view_state->vs_gvp->k.tra_v_abs[Z]))
 	{
 	    set_absolute_tran(s);
 	}

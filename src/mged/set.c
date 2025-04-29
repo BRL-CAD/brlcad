@@ -357,9 +357,9 @@ void
 set_absolute_view_tran(struct mged_state *s)
 {
     /* calculate absolute_tran */
-    MAT4X3PNT(view_state->vs_gvp->k.vs_absolute_tran, view_state->vs_gvp->gv_model2view, view_state->vs_gvp->k.vs_orig_pos);
+    MAT4X3PNT(view_state->vs_gvp->k.tra_v_abs, view_state->vs_gvp->gv_model2view, view_state->vs_gvp->k.orig_pos);
     /* This is used in f_knob()  ---- needed in case absolute_tran is set from Tcl */
-    VMOVE(view_state->vs_gvp->k.vs_last_absolute_tran, view_state->vs_gvp->k.vs_absolute_tran);
+    VMOVE(view_state->vs_gvp->k.tra_v_abs_last, view_state->vs_gvp->k.tra_v_abs);
 }
 
 
@@ -371,10 +371,10 @@ set_absolute_model_tran(struct mged_state *s)
 
     /* calculate absolute_model_tran */
     MAT_DELTAS_GET_NEG(new_pos, view_state->vs_gvp->gv_center);
-    VSUB2(diff, view_state->vs_gvp->k.vs_orig_pos, new_pos);
-    VSCALE(view_state->vs_gvp->k.vs_absolute_model_tran, diff, 1/view_state->vs_gvp->gv_scale);
+    VSUB2(diff, view_state->vs_gvp->k.orig_pos, new_pos);
+    VSCALE(view_state->vs_gvp->k.tra_m_abs, diff, 1/view_state->vs_gvp->gv_scale);
     /* This is used in f_knob()  ---- needed in case absolute_model_tran is set from Tcl */
-    VMOVE(view_state->vs_gvp->k.vs_last_absolute_model_tran, view_state->vs_gvp->k.vs_absolute_model_tran);
+    VMOVE(view_state->vs_gvp->k.tra_m_abs_last, view_state->vs_gvp->k.tra_m_abs);
 }
 
 

@@ -36,24 +36,24 @@ print_knob_vals(struct bu_vls *o, struct bview *v)
 	return;
 
     bu_vls_printf(o, "rate - rotation:\n");
-    bu_vls_printf(o, " x = %f\n", v->k.vs_rate_rotate[X]);
-    bu_vls_printf(o, " y = %f\n", v->k.vs_rate_rotate[Y]);
-    bu_vls_printf(o, " z = %f\n", v->k.vs_rate_rotate[Z]);
+    bu_vls_printf(o, " x = %f\n", v->k.rot_v[X]);
+    bu_vls_printf(o, " y = %f\n", v->k.rot_v[Y]);
+    bu_vls_printf(o, " z = %f\n", v->k.rot_v[Z]);
     bu_vls_printf(o, "rate - translation (skew):\n");
-    bu_vls_printf(o, " X = %f\n", v->k.vs_rate_tran[X]);
-    bu_vls_printf(o, " Y = %f\n", v->k.vs_rate_tran[Y]);
-    bu_vls_printf(o, " Z = %f\n", v->k.vs_rate_tran[Z]);
+    bu_vls_printf(o, " X = %f\n", v->k.tra_v[X]);
+    bu_vls_printf(o, " Y = %f\n", v->k.tra_v[Y]);
+    bu_vls_printf(o, " Z = %f\n", v->k.tra_v[Z]);
     bu_vls_printf(o, "rate - scale:\n");
-    bu_vls_printf(o, " S = %f\n", v->k.vs_rate_scale);
+    bu_vls_printf(o, " S = %f\n", v->k.sca);
 
     bu_vls_printf(o, "absolute - rotation:\n");
-    bu_vls_printf(o, " ax = %f\n", v->k.vs_absolute_rotate[X]);
-    bu_vls_printf(o, " ay = %f\n", v->k.vs_absolute_rotate[Y]);
-    bu_vls_printf(o, " az = %f\n", v->k.vs_absolute_rotate[Z]);
+    bu_vls_printf(o, " ax = %f\n", v->k.rot_v_abs[X]);
+    bu_vls_printf(o, " ay = %f\n", v->k.rot_v_abs[Y]);
+    bu_vls_printf(o, " az = %f\n", v->k.rot_v_abs[Z]);
     bu_vls_printf(o, "absolute - translation (skew):\n");
-    bu_vls_printf(o, " aX = %f\n", v->k.vs_absolute_tran[X]);
-    bu_vls_printf(o, " aY = %f\n", v->k.vs_absolute_tran[Y]);
-    bu_vls_printf(o, " aZ = %f\n", v->k.vs_absolute_tran[Z]);
+    bu_vls_printf(o, " aX = %f\n", v->k.tra_v_abs[X]);
+    bu_vls_printf(o, " aY = %f\n", v->k.tra_v_abs[Y]);
+    bu_vls_printf(o, " aZ = %f\n", v->k.tra_v_abs[Z]);
     bu_vls_printf(o, "absolute - scale:\n");
     bu_vls_printf(o, " aS = %f\n", v->gv_a_scale);
 }
@@ -140,7 +140,7 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 	if (BU_STR_EQUAL(cmd, "calibrate")) {
-	    VSETALL(v->k.vs_absolute_tran, 0.0);
+	    VSETALL(v->k.tra_v_abs, 0.0);
 	    continue;
 	}
 

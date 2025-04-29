@@ -500,40 +500,40 @@ struct bview_objs {
 struct bview_knob {
 
     /* Rate data */
-    int         vs_rateflag_model_tran;
-    vect_t      vs_rate_model_tran;
+    vect_t      rot_v;      // rotation - view coords
+    int         rot_v_flag;
+    char        origin_v;
 
-    int         vs_rateflag_model_rotate;
-    vect_t      vs_rate_model_rotate;
-    char        vs_rate_model_origin;
+    vect_t      rot_m;      // rotation - model coords
+    int         rot_m_flag;
+    char        origin_m;
 
-    int         vs_rateflag_tran;
-    vect_t      vs_rate_tran;
+    fastf_t     sca;        // scale
+    int         sca_flag;
 
-    int         vs_rateflag_rotate;
-    vect_t      vs_rate_rotate;
-    char        vs_rate_origin;
+    vect_t      tra_m;      // translation - model coords
+    int         tra_m_flag;
 
-    int         vs_rateflag_scale;
-    fastf_t     vs_rate_scale;
+    vect_t      tra_v;      // translation - view coords
+    int         tra_v_flag;
 
     /* Absolute data */
-    vect_t      vs_absolute_tran;
-    vect_t      vs_last_absolute_tran;
+    vect_t      rot_m_abs;       // rotation - model coords
+    vect_t      rot_m_abs_last;
 
-    vect_t      vs_absolute_model_tran;
-    vect_t      vs_last_absolute_model_tran;
+    vect_t      rot_v_abs;       // rotation - view coords
+    vect_t      rot_v_abs_last;
 
-    vect_t      vs_absolute_rotate;
-    vect_t      vs_last_absolute_rotate;
+    fastf_t     sca_abs;
 
-    vect_t      vs_absolute_model_rotate;
-    vect_t      vs_last_absolute_model_rotate;
+    vect_t      tra_m_abs;       // translation - model coords
+    vect_t      tra_m_abs_last;
 
-    fastf_t     vs_absolute_scale;
+    vect_t      tra_v_abs;       // translation - view coords
+    vect_t      tra_v_abs_last;
 
     /* Virtual trackball position */
-    point_t     vs_orig_pos;
+    point_t     orig_pos;
 
 };
 

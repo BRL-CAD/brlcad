@@ -43,20 +43,20 @@ bv_knobs_reset(struct bview *v, int category)
     /* Rate members */
     if (!category || category == 1) {
 
-	k->vs_rateflag_model_tran = 0;
-	VSETALL(k->vs_rate_model_tran, 0.0);
+	k->tra_m_flag = 0;
+	VSETALL(k->tra_m, 0.0);
 
-	k->vs_rateflag_model_rotate = 0;
-	VSETALL(k->vs_rate_model_rotate, 0.0);
+	k->rot_m_flag = 0;
+	VSETALL(k->rot_m, 0.0);
 
-	k->vs_rateflag_tran = 0;
-	VSETALL(k->vs_rate_tran, 0.0);
+	k->tra_v_flag = 0;
+	VSETALL(k->tra_v, 0.0);
 
-	k->vs_rateflag_rotate = 0;
-	VSETALL(k->vs_rate_rotate, 0.0);
+	k->rot_v_flag = 0;
+	VSETALL(k->rot_v, 0.0);
 
-	k->vs_rateflag_scale = 0;
-	k->vs_rate_scale = 0.0;
+	k->sca_flag = 0;
+	k->sca = 0.0;
 
 
     }
@@ -64,22 +64,22 @@ bv_knobs_reset(struct bview *v, int category)
     /* Absolute members */
     if (!category || category == 2) {
 
-	VSETALL(k->vs_absolute_tran, 0.0);
-	VSETALL(k->vs_last_absolute_tran, 0.0);
+	VSETALL(k->tra_v_abs, 0.0);
+	VSETALL(k->tra_v_abs_last, 0.0);
 
-	VSETALL(k->vs_absolute_model_tran, 0.0);
-	VSETALL(k->vs_last_absolute_model_tran, 0.0);
+	VSETALL(k->tra_m_abs, 0.0);
+	VSETALL(k->tra_m_abs_last, 0.0);
 
-	VSETALL(k->vs_absolute_rotate, 0.0);
-	VSETALL(k->vs_last_absolute_rotate, 0.0);
+	VSETALL(k->rot_v_abs, 0.0);
+	VSETALL(k->rot_v_abs_last, 0.0);
 
-	VSETALL(k->vs_absolute_model_rotate, 0.0);
-	VSETALL(k->vs_last_absolute_model_rotate, 0.0);
+	VSETALL(k->rot_m_abs, 0.0);
+	VSETALL(k->rot_m_abs_last, 0.0);
 
-	k->vs_absolute_scale = 0.0;
+	k->sca_abs = 0.0;
 
 	/* Virtual trackball position */
-	MAT_DELTAS_GET_NEG(v->k.vs_orig_pos, v->gv_center);
+	MAT_DELTAS_GET_NEG(v->k.orig_pos, v->gv_center);
 
 	v->gv_i_scale = v->gv_scale;
 	v->gv_a_scale = 0.0;
@@ -91,10 +91,10 @@ static void
 set_absolute_view_tran(struct bview *v)
 {
     /* calculate absolute_tran */
-    MAT4X3PNT(v->k.vs_absolute_tran, v->gv_model2view, v->k.vs_orig_pos);
-    /* Stash the current vs_absolute_tran value in case vs_absolute_tran is
+    MAT4X3PNT(v->k.tra_v_abs, v->gv_model2view, v->k.orig_pos);
+    /* Stash the current tra_v_abs value in case tra_v_abs is
      * overwritten (say by Tcl in MGED) */
-    VMOVE(v->k.vs_last_absolute_tran, v->k.vs_absolute_tran);
+    VMOVE(v->k.tra_v_abs_last, v->k.tra_v_abs);
 }
 
 static void
@@ -105,11 +105,11 @@ set_absolute_model_tran(struct bview *v)
 
     /* calculate absolute_model_tran */
     MAT_DELTAS_GET_NEG(new_pos, v->gv_center);
-    VSUB2(diff, v->k.vs_orig_pos, new_pos);
-    VSCALE(v->k.vs_absolute_model_tran, diff, 1/v->gv_scale);
-    /* Stash the current vs_absolute_model_tran value in case
-     * vs_absolute_model_tran is overwritten (say by Tcl in MGED) */
-    VMOVE(v->k.vs_last_absolute_model_tran, v->k.vs_absolute_model_tran);
+    VSUB2(diff, v->k.orig_pos, new_pos);
+    VSCALE(v->k.tra_m_abs, diff, 1/v->gv_scale);
+    /* Stash the current tra_m_abs value in case
+     * tra_m_abs is overwritten (say by Tcl in MGED) */
+    VMOVE(v->k.tra_m_abs_last, v->k.tra_m_abs);
 }
 
 static void
@@ -137,9 +137,9 @@ abs_zoom(struct bview *v)
     v->gv_isize = 1.0 / v->gv_size;
     bv_update(v);
 
-    if (!ZERO(v->k.vs_absolute_tran[X])
-        || !ZERO(v->k.vs_absolute_tran[Y])
-        || !ZERO(v->k.vs_absolute_tran[Z]))
+    if (!ZERO(v->k.tra_v_abs[X])
+        || !ZERO(v->k.tra_v_abs[Y])
+        || !ZERO(v->k.tra_v_abs[Z]))
     {
 	set_absolute_view_tran(v);
 	set_absolute_model_tran(v);
@@ -282,46 +282,46 @@ bv_knobs_rot(struct bview *v,
 void
 bv_update_rate_flags(struct bview *v)
 {
-    if (!ZERO(v->k.vs_rate_model_rotate[X])
-	|| !ZERO(v->k.vs_rate_model_rotate[Y])
-	|| !ZERO(v->k.vs_rate_model_rotate[Z]))
+    if (!ZERO(v->k.rot_m[X])
+	|| !ZERO(v->k.rot_m[Y])
+	|| !ZERO(v->k.rot_m[Z]))
     {
-	v->k.vs_rateflag_model_rotate = 1;
+	v->k.rot_m_flag = 1;
     } else {
-	v->k.vs_rateflag_model_rotate = 0;
+	v->k.rot_m_flag = 0;
     }
 
-    if (!ZERO(v->k.vs_rate_model_tran[X])
-	|| !ZERO(v->k.vs_rate_model_tran[Y])
-	|| !ZERO(v->k.vs_rate_model_tran[Z]))
+    if (!ZERO(v->k.tra_m[X])
+	|| !ZERO(v->k.tra_m[Y])
+	|| !ZERO(v->k.tra_m[Z]))
     {
-	v->k.vs_rateflag_model_tran = 1;
+	v->k.tra_m_flag = 1;
     } else {
-	v->k.vs_rateflag_model_tran = 0;
+	v->k.tra_m_flag = 0;
     }
 
-    if (!ZERO(v->k.vs_rate_rotate[X])
-	|| !ZERO(v->k.vs_rate_rotate[Y])
-	|| !ZERO(v->k.vs_rate_rotate[Z]))
+    if (!ZERO(v->k.rot_v[X])
+	|| !ZERO(v->k.rot_v[Y])
+	|| !ZERO(v->k.rot_v[Z]))
     {
-	v->k.vs_rateflag_rotate = 1;
+	v->k.rot_v_flag = 1;
     } else {
-	v->k.vs_rateflag_rotate = 0;
+	v->k.rot_v_flag = 0;
     }
 
-    if (!ZERO(v->k.vs_rate_tran[X])
-	|| !ZERO(v->k.vs_rate_tran[Y])
-	|| !ZERO(v->k.vs_rate_tran[Z]))
+    if (!ZERO(v->k.tra_v[X])
+	|| !ZERO(v->k.tra_v[Y])
+	|| !ZERO(v->k.tra_v[Z]))
     {
-	v->k.vs_rateflag_tran = 1;
+	v->k.tra_v_flag = 1;
     } else {
-	v->k.vs_rateflag_tran = 0;
+	v->k.tra_v_flag = 0;
     }
 
-    if (!ZERO(v->k.vs_rate_scale)) {
-	v->k.vs_rateflag_scale = 1;
+    if (!ZERO(v->k.sca)) {
+	v->k.sca_flag = 1;
     } else {
-	v->k.vs_rateflag_scale = 0;
+	v->k.sca_flag = 0;
     }
 }
 
@@ -368,9 +368,9 @@ bv_knobs_cmd_process(
 	    fastf_t *coord;
 
 	    if (model_flag) {
-		coord = &v->k.vs_rate_model_rotate[ind];
+		coord = &v->k.rot_m[ind];
 	    } else {
-		coord = &v->k.vs_rate_rotate[ind];
+		coord = &v->k.rot_v[ind];
 	    }
 
 	    if (incr_flag) {
@@ -380,9 +380,9 @@ bv_knobs_cmd_process(
 	    }
 
 	    if (model_flag) {
-		v->k.vs_rate_model_origin = origin;
+		v->k.origin_m = origin;
 	    } else {
-		v->k.vs_rate_origin = origin;
+		v->k.origin_v = origin;
 	    }
 
 	    return BRLCAD_OK;
@@ -394,9 +394,9 @@ bv_knobs_cmd_process(
 	    fastf_t *coord;
 
 	    if (model_flag) {
-		coord = &v->k.vs_rate_model_tran[ind];
+		coord = &v->k.tra_m[ind];
 	    } else {
-		coord = &v->k.vs_rate_tran[ind];
+		coord = &v->k.tra_v[ind];
 	    }
 
 	    if (incr_flag) {
@@ -412,9 +412,9 @@ bv_knobs_cmd_process(
 	if (cmd[0] == 'S') {
 
 	    if (incr_flag) {
-		v->k.vs_rate_scale += f;
+		v->k.sca += f;
 	    } else {
-		v->k.vs_rate_scale = f;
+		v->k.sca = f;
 	    }
 
 	    return BRLCAD_OK;
@@ -429,10 +429,10 @@ bv_knobs_cmd_process(
 	// Rotate cases
 	if (cmd[1] == 'x' || cmd[1] == 'y' || cmd[1] == 'z') {
 
-	    fastf_t *vamr_c = &v->k.vs_absolute_model_rotate[ind];
-	    fastf_t *var_c = &v->k.vs_absolute_rotate[ind];
-	    fastf_t *vlamr_c = &v->k.vs_last_absolute_model_rotate[ind];
-	    fastf_t *vlar_c = &v->k.vs_last_absolute_rotate[ind];
+	    fastf_t *vamr_c = &v->k.rot_m_abs[ind];
+	    fastf_t *var_c = &v->k.rot_v_abs[ind];
+	    fastf_t *vlamr_c = &v->k.rot_m_abs_last[ind];
+	    fastf_t *vlar_c = &v->k.rot_v_abs_last[ind];
 	    fastf_t *rvec_c = &(*rvec)[ind];
 
 	    if (incr_flag) {
@@ -457,11 +457,11 @@ bv_knobs_cmd_process(
 	    fastf_t *larp;
 
 	    if (model_flag) {
-		arp = v->k.vs_absolute_model_rotate;
-		larp = v->k.vs_last_absolute_model_rotate;
+		arp = v->k.rot_m_abs;
+		larp = v->k.rot_m_abs_last;
 	    } else {
-		arp = v->k.vs_absolute_rotate;
-		larp = v->k.vs_last_absolute_rotate;
+		arp = v->k.rot_v_abs;
+		larp = v->k.rot_v_abs_last;
 	    }
 
 	    if (arp[ind] < -180.0) {
@@ -479,10 +479,10 @@ bv_knobs_cmd_process(
 	// Translate cases
 	if (cmd[1] == 'X' || cmd[1] == 'Y' || cmd[1] == 'Z') {
 
-	    fastf_t *vamt_c = &v->k.vs_absolute_model_tran[ind];
-	    fastf_t *vat_c = &v->k.vs_absolute_tran[ind];
-	    fastf_t *vlamt_c = &v->k.vs_last_absolute_model_tran[ind];
-	    fastf_t *vlat_c = &v->k.vs_last_absolute_tran[ind];
+	    fastf_t *vamt_c = &v->k.tra_m_abs[ind];
+	    fastf_t *vat_c = &v->k.tra_v_abs[ind];
+	    fastf_t *vlamt_c = &v->k.tra_m_abs_last[ind];
+	    fastf_t *vlat_c = &v->k.tra_v_abs_last[ind];
 	    fastf_t *tvec_c = &(*tvec)[ind];
 	    fastf_t sf = f * v->gv_local2base / v->gv_scale;
 

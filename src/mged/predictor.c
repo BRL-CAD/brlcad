@@ -177,9 +177,9 @@ predictor_frame(struct mged_state *s)
     if (!view_state->vs_gvp)
 	return;
 
-    if (view_state->vs_gvp->k.vs_rateflag_rotate == 0 &&
-	view_state->vs_gvp->k.vs_rateflag_tran == 0 &&
-	view_state->vs_gvp->k.vs_rateflag_scale == 0) {
+    if (view_state->vs_gvp->k.rot_v_flag == 0 &&
+	view_state->vs_gvp->k.tra_v_flag == 0 &&
+	view_state->vs_gvp->k.sca_flag == 0) {
 	predictor_kill(s);
 	return;
     }

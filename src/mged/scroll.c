@@ -551,14 +551,14 @@ view_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 	case 0:
 	    if (mged_variables->mv_rateknobs) {
 		if (view_state->vs_gvp->gv_coord == 'm')
-		    (*f) = view_state->vs_gvp->k.vs_rate_model_tran[X];
+		    (*f) = view_state->vs_gvp->k.tra_m[X];
 		else
-		    (*f) = view_state->vs_gvp->k.vs_rate_tran[X];
+		    (*f) = view_state->vs_gvp->k.tra_v[X];
 	    } else {
 		if (view_state->vs_gvp->gv_coord == 'm')
-		    (*f) = view_state->vs_gvp->k.vs_absolute_model_tran[X];
+		    (*f) = view_state->vs_gvp->k.tra_m_abs[X];
 		else
-		    (*f) = view_state->vs_gvp->k.vs_absolute_tran[X];
+		    (*f) = view_state->vs_gvp->k.tra_v_abs[X];
 	    }
 
 	    dm_set_fg(DMP,
@@ -569,14 +569,14 @@ view_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 	case 1:
 	    if (mged_variables->mv_rateknobs) {
 		if (view_state->vs_gvp->gv_coord == 'm')
-		    (*f) = view_state->vs_gvp->k.vs_rate_model_tran[Y];
+		    (*f) = view_state->vs_gvp->k.tra_m[Y];
 		else
-		    (*f) = view_state->vs_gvp->k.vs_rate_tran[Y];
+		    (*f) = view_state->vs_gvp->k.tra_v[Y];
 	    } else {
 		if (view_state->vs_gvp->gv_coord == 'm')
-		    (*f) = view_state->vs_gvp->k.vs_absolute_model_tran[Y];
+		    (*f) = view_state->vs_gvp->k.tra_m_abs[Y];
 		else
-		    (*f) = view_state->vs_gvp->k.vs_absolute_tran[Y];
+		    (*f) = view_state->vs_gvp->k.tra_v_abs[Y];
 	    }
 
 	    dm_set_fg(DMP,
@@ -587,14 +587,14 @@ view_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 	case 2:
 	    if (mged_variables->mv_rateknobs) {
 		if (view_state->vs_gvp->gv_coord == 'm')
-		    (*f) = view_state->vs_gvp->k.vs_rate_model_tran[Z];
+		    (*f) = view_state->vs_gvp->k.tra_m[Z];
 		else
-		    (*f) = view_state->vs_gvp->k.vs_rate_tran[Z];
+		    (*f) = view_state->vs_gvp->k.tra_v[Z];
 	    } else {
 		if (view_state->vs_gvp->gv_coord == 'm')
-		    (*f) = view_state->vs_gvp->k.vs_absolute_model_tran[Z];
+		    (*f) = view_state->vs_gvp->k.tra_m_abs[Z];
 		else
-		    (*f) = view_state->vs_gvp->k.vs_absolute_tran[Z];
+		    (*f) = view_state->vs_gvp->k.tra_v_abs[Z];
 	    }
 
 	    dm_set_fg(DMP,
@@ -605,9 +605,9 @@ view_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 	case 3:
 	    if (view_state->vs_gvp) {
 		if (mged_variables->mv_rateknobs)
-		    (*f) = view_state->vs_gvp->k.vs_rate_scale;
+		    (*f) = view_state->vs_gvp->k.sca;
 		else
-		    (*f) = view_state->vs_gvp->k.vs_absolute_scale;
+		    (*f) = view_state->vs_gvp->k.sca_abs;
 	    }
 	    dm_set_fg(DMP,
 		    color_scheme->cs_slider_text2[0],
@@ -617,14 +617,14 @@ view_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 	case 4:
 	    if (mged_variables->mv_rateknobs) {
 		if (view_state->vs_gvp->gv_coord == 'm')
-		    (*f) = view_state->vs_gvp->k.vs_rate_model_rotate[X] / RATE_ROT_FACTOR;
+		    (*f) = view_state->vs_gvp->k.rot_m[X] / RATE_ROT_FACTOR;
 		else
-		    (*f) = view_state->vs_gvp->k.vs_rate_rotate[X] / RATE_ROT_FACTOR;
+		    (*f) = view_state->vs_gvp->k.rot_v[X] / RATE_ROT_FACTOR;
 	    } else {
 		if (view_state->vs_gvp->gv_coord == 'm')
-		    (*f) = view_state->vs_gvp->k.vs_absolute_model_rotate[X] / ABS_ROT_FACTOR;
+		    (*f) = view_state->vs_gvp->k.rot_m_abs[X] / ABS_ROT_FACTOR;
 		else
-		    (*f) = view_state->vs_gvp->k.vs_absolute_rotate[X] / ABS_ROT_FACTOR;
+		    (*f) = view_state->vs_gvp->k.rot_v_abs[X] / ABS_ROT_FACTOR;
 	    }
 
 	    dm_set_fg(DMP,
