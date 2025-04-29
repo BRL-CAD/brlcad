@@ -147,9 +147,15 @@ struct menu_item {
 
 struct mged_edit_state {
 
+    // main global editing state (ugh)
+    int global_editing_state;
+
     struct bview_knobs k;
 
     fastf_t es_scale;  /* scale factor */
+    // TODO - can we eliminate these?
+    int e_edclass;		/* type of editing class for this solid */
+    int e_type;			/* COMGEOM solid type */
 
     // Container to hold the intermediate state
     // of the object being edited (I think?)
@@ -286,10 +292,6 @@ extern int edobj; /* object editing options */
 /* Flags for line type decisions */
 #define ROOT 0
 #define INNER 1
-
-/* FIXME: ugh, main global editing state */
-extern int ged_state;	  /* (defined in titles.c) */
-#define GEOM_EDIT_STATE ged_state
 
 /**
  * Editor States

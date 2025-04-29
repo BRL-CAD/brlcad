@@ -60,9 +60,7 @@ short int fixv;		/* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */
 /* data for solid editing */
 int sedraw;	/* apply solid editing changes */
 
-int es_type;		/* COMGEOM solid type */
 int es_edflag;		/* type of editing for this solid */
-int es_edclass;		/* type of editing class for this solid */
 fastf_t es_peqn[7][4];		/* ARBs defining plane equations */
 fastf_t es_m[3];		/* edge(line) slope */
 mat_t es_mat;			/* accumulated matrix of path */
@@ -132,7 +130,7 @@ set_e_axes_pos(struct mged_state *s, int both)
     dm_set_dirty(DMP, 1);
     switch (s->edit_state.es_int.idb_type) {
 	case ID_ARB8:
-	    if (GEOM_EDIT_STATE == ST_O_EDIT) {
+	    if (s->edit_state.global_editing_state == ST_O_EDIT) {
 		i = 0;
 	    } else {
 		switch (es_edflag) {
@@ -140,7 +138,7 @@ set_e_axes_pos(struct mged_state *s, int both)
 			i = 0;
 			break;
 		    case EARB:
-			switch (es_type) {
+			switch (s->edit_state.e_type) {
 			    case ARB5:
 				i = earb5[es_menu][0];
 				break;
@@ -159,7 +157,7 @@ set_e_axes_pos(struct mged_state *s, int both)
 			}
 			break;
 		    case PTARB:
-			switch (es_type) {
+			switch (s->edit_state.e_type) {
 			    case ARB4:
 				i = es_menu;	/* index for point 1, 2, 3 or 4 */
 				break;
@@ -176,7 +174,7 @@ set_e_axes_pos(struct mged_state *s, int both)
 			}
 			break;
 		    case ECMD_ARB_MOVE_FACE:
-			switch (es_type) {
+			switch (s->edit_state.e_type) {
 			    case ARB4:
 				i = local_arb_faces[0][es_menu * 4];
 				break;
@@ -266,7 +264,7 @@ set_e_axes_pos(struct mged_state *s, int both)
 	VMOVE(e_axes_pos, curr_e_axes_pos);
 
 	if (EDIT_ROTATE) {
-	    es_edclass = EDIT_CLASS_ROTATE;
+	    s->edit_state.e_edclass = EDIT_CLASS_ROTATE;
 	    VSETALL(s->edit_state.k.rot_m_abs, 0.0);
 	    VSETALL(s->edit_state.k.rot_o_abs, 0.0);
 	    VSETALL(s->edit_state.k.rot_v_abs, 0.0);
@@ -274,20 +272,20 @@ set_e_axes_pos(struct mged_state *s, int both)
 	    VSETALL(s->edit_state.k.rot_o_abs_last, 0.0);
 	    VSETALL(s->edit_state.k.rot_v_abs_last, 0.0);
 	} else if (EDIT_TRAN) {
-	    es_edclass = EDIT_CLASS_TRAN;
+	    s->edit_state.e_edclass = EDIT_CLASS_TRAN;
 	    VSETALL(s->edit_state.k.tra_m_abs, 0.0);
 	    VSETALL(s->edit_state.k.tra_v_abs, 0.0);
 	    VSETALL(s->edit_state.k.tra_m_abs_last, 0.0);
 	    VSETALL(s->edit_state.k.tra_v_abs_last, 0.0);
 	} else if (EDIT_SCALE) {
-	    es_edclass = EDIT_CLASS_SCALE;
+	    s->edit_state.e_edclass = EDIT_CLASS_SCALE;
 
 	    if (SEDIT_SCALE) {
 		s->edit_state.k.sca_abs = 0.0;
 		acc_sc_sol = 1.0;
 	    }
 	} else {
-	    es_edclass = EDIT_CLASS_NULL;
+	    s->edit_state.e_edclass = EDIT_CLASS_NULL;
 	}
 
 	MAT_IDN(acc_rot_sol);
@@ -601,7 +599,7 @@ f_get_solid_keypoint(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUS
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    if (GEOM_EDIT_STATE == ST_VIEW || GEOM_EDIT_STATE == ST_S_PICK || GEOM_EDIT_STATE == ST_O_PICK)
+    if (s->edit_state.global_editing_state == ST_VIEW || s->edit_state.global_editing_state == ST_S_PICK || s->edit_state.global_editing_state == ST_O_PICK)
 	return TCL_OK;
 
     get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
@@ -660,9 +658,9 @@ init_sedit(struct mged_state *s)
 	RT_ARB_CK_MAGIC(arb);
 
 	type = rt_arb_std_type(&s->edit_state.es_int, &s->tol.tol);
-	es_type = type;
+	s->edit_state.e_type = type;
 
-	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &s->tol.tol)) {
+	if (rt_arb_calc_planes(&error_msg, arb, s->edit_state.e_type, es_peqn, &s->tol.tol)) {
 	    Tcl_AppendResult(s->interp, bu_vls_addr(&error_msg),
 			     "\nCannot calculate plane equations for ARB8\n",
 			     (char *)NULL);
@@ -902,7 +900,7 @@ get_rotation_vertex(struct mged_state *s)
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
-    type = es_type - 4;
+    type = s->edit_state.e_type - 4;
 
     loc = es_menu*4;
     valid = 0;
@@ -2781,13 +2779,13 @@ sedit(struct mged_state *s)
 	    es_edflag = IDLE;
 	    switch (es_menu) {
 		case MENU_ARB_MV_EDGE:
-		    mmenu_set(s, MENU_L1, which_menu[es_type-4]);
+		    mmenu_set(s, MENU_L1, which_menu[s->edit_state.e_type-4]);
 		    break;
 		case MENU_ARB_MV_FACE:
-		    mmenu_set(s, MENU_L1, which_menu[es_type+1]);
+		    mmenu_set(s, MENU_L1, which_menu[s->edit_state.e_type+1]);
 		    break;
 		case MENU_ARB_ROT_FACE:
-		    mmenu_set(s, MENU_L1, which_menu[es_type+6]);
+		    mmenu_set(s, MENU_L1, which_menu[s->edit_state.e_type+6]);
 		    break;
 		default:
 		    Tcl_AppendResult(s->interp, "Bad menu item.\n", (char *)NULL);
@@ -2812,7 +2810,7 @@ sedit(struct mged_state *s)
 		es_peqn[es_menu][W]=VDOT(&es_peqn[es_menu][0], work);
 		/* find new vertices, put in record in vector notation */
 
-		(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &s->tol.tol);
+		(void)rt_arb_calc_points(arb, s->edit_state.e_type, (const plane_t *)es_peqn, &s->tol.tol);
 	    }
 	    break;
 	case ECMD_ARB_SETUP_ROTFACE:
@@ -2822,12 +2820,12 @@ sedit(struct mged_state *s)
 	    /* check if point 5 is in the face */
 	    pnt5 = 0;
 	    for (i=0; i<4; i++) {
-		if (rt_arb_vertices[es_type-4][es_menu*4+i]==5)
+		if (rt_arb_vertices[s->edit_state.e_type-4][es_menu*4+i]==5)
 		    pnt5=1;
 	    }
 
 	    /* special case for arb7 */
-	    if (es_type == ARB7  && pnt5) {
+	    if (s->edit_state.e_type == ARB7  && pnt5) {
 		Tcl_AppendResult(s->interp, "\nFixed vertex is point 5.\n", (char *)NULL);
 		fixv = 5;
 	    } else {
@@ -2934,7 +2932,7 @@ sedit(struct mged_state *s)
 		es_peqn[es_menu][W]=VDOT(eqp, tempvec);
 	    }
 
-	    (void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &s->tol.tol);
+	    (void)rt_arb_calc_points(arb, s->edit_state.e_type, (const plane_t *)es_peqn, &s->tol.tol);
 	    MAT_IDN(incr_change);
 
 	    /* no need to calc_planes again */
@@ -4792,7 +4790,7 @@ sedit(struct mged_state *s)
 	arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &s->tol.tol) < 0)
+	if (rt_arb_calc_planes(&error_msg, arb, s->edit_state.e_type, es_peqn, &s->tol.tol) < 0)
 	    Tcl_AppendResult(s->interp, bu_vls_addr(&error_msg), (char *)0);
 	bu_vls_free(&error_msg);
     }
@@ -5026,7 +5024,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 
 		RT_ARB_CK_MAGIC(arb);
 
-		(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &s->tol.tol);
+		(void)rt_arb_calc_points(arb, s->edit_state.e_type, (const plane_t *)es_peqn, &s->tol.tol);
 	    }
 
 	    break;
@@ -5522,7 +5520,7 @@ init_oedit_guts(struct mged_state *s)
 	arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	es_type = rt_arb_std_type(&s->edit_state.es_int, &s->tol.tol);
+	s->edit_state.e_type = rt_arb_std_type(&s->edit_state.es_int, &s->tol.tol);
     }
 
     /* Save aggregate path matrix */
@@ -5575,7 +5573,7 @@ init_oedit(struct mged_state *s)
     /* do real initialization work */
     init_oedit_guts(s);
 
-    es_edclass = EDIT_CLASS_NULL;
+    s->edit_state.e_edclass = EDIT_CLASS_NULL;
 
     /* begin edit callback */
     bu_vls_strcpy(&vls, "begin_edit_callback {}");
@@ -5735,7 +5733,7 @@ f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (GEOM_EDIT_STATE != ST_S_EDIT) {
+    if (s->edit_state.global_editing_state != ST_S_EDIT) {
 	Tcl_AppendResult(interp, "Eqn: must be in solid edit\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -5761,7 +5759,7 @@ f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     VMOVE(tempvec, arb->pt[fixv]);
     es_peqn[es_menu][W]=VDOT(es_peqn[es_menu], tempvec);
 
-    if (rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &s->tol.tol))
+    if (rt_arb_calc_points(arb, s->edit_state.e_type, (const plane_t *)es_peqn, &s->tol.tol))
 	return CMD_BAD;
 
     /* draw the new version of the solid */
@@ -5854,7 +5852,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	menu_state->ms_flag = 0;
 	movedir = 0;
 	es_edflag = -1;
-	es_edclass = EDIT_CLASS_NULL;
+	s->edit_state.e_edclass = EDIT_CLASS_NULL;
 
 	rt_db_free_internal(&s->edit_state.es_int);
     } else {
@@ -5952,7 +5950,7 @@ sedit_reject(struct mged_state *s)
     menu_state->ms_flag = 0;
     movedir = 0;
     es_edflag = -1;
-    es_edclass = EDIT_CLASS_NULL;
+    s->edit_state.e_edclass = EDIT_CLASS_NULL;
 
     rt_db_free_internal(&s->edit_state.es_int);
 }
@@ -6438,7 +6436,7 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	return TCL_ERROR;
     }
 
-    if ((GEOM_EDIT_STATE != ST_S_EDIT) && (GEOM_EDIT_STATE != ST_O_EDIT)) {
+    if ((s->edit_state.global_editing_state != ST_S_EDIT) && (s->edit_state.global_editing_state != ST_O_EDIT)) {
 	state_err(s, "keypoint assignment");
 	return TCL_ERROR;
     }
@@ -6493,7 +6491,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
     struct menu_item *mip = (struct menu_item *)NULL;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (GEOM_EDIT_STATE != ST_S_EDIT)
+    if (s->edit_state.global_editing_state != ST_S_EDIT)
 	return TCL_ERROR;
 
     switch (s->edit_state.es_int.idb_type) {
@@ -6505,7 +6503,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
 		bu_vls_printf(&vls, "{{ARB MENU} {}}");
 
 		/* build "move edge" menu */
-		mip = which_menu[es_type-4];
+		mip = which_menu[s->edit_state.e_type-4];
 		/* submenu title */
 		bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
 		for (++mip; mip->menu_func != NULL; ++mip)
@@ -6515,7 +6513,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
 		bu_vls_trunc(&vls2, 0);
 
 		/* build "move face" menu */
-		mip = which_menu[es_type+1];
+		mip = which_menu[s->edit_state.e_type+1];
 		/* submenu title */
 		bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
 		for (++mip; mip->menu_func != NULL; ++mip)
@@ -6525,7 +6523,7 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
 		bu_vls_trunc(&vls2, 0);
 
 		/* build "rotate face" menu */
-		mip = which_menu[es_type+6];
+		mip = which_menu[s->edit_state.e_type+6];
 		/* submenu title */
 		bu_vls_printf(&vls2, "{{%s} {}}", mip->menu_string);
 		for (++mip; mip->menu_func != NULL; ++mip)
@@ -6670,7 +6668,7 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	return TCL_ERROR;
     }
 
-    if (GEOM_EDIT_STATE != ST_S_EDIT || !illump) {
+    if (s->edit_state.global_editing_state != ST_S_EDIT || !illump) {
 	Tcl_AppendResult(interp, "get_sed: must be in solid edit state", (char *)0);
 	return TCL_ERROR;
     }
@@ -6763,7 +6761,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	return TCL_ERROR;
     }
 
-    if (GEOM_EDIT_STATE != ST_S_EDIT) {
+    if (s->edit_state.global_editing_state != ST_S_EDIT) {
 	Tcl_AppendResult(interp, "put_sed: must be in solid edit state", (char *)0);
 	return TCL_ERROR;
     }
@@ -6817,7 +6815,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &s->tol.tol) < 0)
+	if (rt_arb_calc_planes(&error_msg, arb, s->edit_state.e_type, es_peqn, &s->tol.tol) < 0)
 	    Tcl_AppendResult(interp, bu_vls_addr(&error_msg), (char *)0);
 	bu_vls_free(&error_msg);
     }
@@ -6840,7 +6838,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     struct mged_state *s = ctp->s;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (GEOM_EDIT_STATE != ST_S_EDIT || !illump)
+    if (s->edit_state.global_editing_state != ST_S_EDIT || !illump)
 	return TCL_ERROR;
 
     if (argc != 1) {
@@ -6954,7 +6952,7 @@ f_oedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (GEOM_EDIT_STATE != ST_O_EDIT)
+    if (s->edit_state.global_editing_state != ST_O_EDIT)
 	return TCL_ERROR;
 
     if (argc != 1) {

@@ -103,10 +103,10 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	return TCL_ERROR;
     }
 
-    if (es_type != ARB8 && es_type != ARB6 && es_type != ARB4) {
+    if (s->edit_state.e_type != ARB8 && s->edit_state.e_type != ARB6 && s->edit_state.e_type != ARB4) {
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&tmp_vls, "ARB%d: extrusion of faces not allowed\n", es_type);
+	bu_vls_printf(&tmp_vls, "ARB%d: extrusion of faces not allowed\n", s->edit_state.e_type);
 	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
 

@@ -318,7 +318,7 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	return TCL_ERROR;
     }
 
-    if (GEOM_EDIT_STATE == ST_S_EDIT) {
+    if (s->edit_state.global_editing_state == ST_S_EDIT) {
 	/* In solid edit mode,
 	 * perform the equivalent of "press sxy" and "p xyz"
 	 */
