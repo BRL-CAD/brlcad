@@ -43,17 +43,20 @@ bv_knobs_reset(struct bview *v, int category)
     /* Rate members */
     if (!category || category == 1) {
 
-	k->tra_m_flag = 0;
-	VSETALL(k->tra_m, 0.0);
-
 	k->rot_m_flag = 0;
 	VSETALL(k->rot_m, 0.0);
 
-	k->tra_v_flag = 0;
-	VSETALL(k->tra_v, 0.0);
+	k->rot_o_flag = 0;
+	VSETALL(k->rot_o, 0.0);
 
 	k->rot_v_flag = 0;
 	VSETALL(k->rot_v, 0.0);
+
+	k->tra_m_flag = 0;
+	VSETALL(k->tra_m, 0.0);
+
+	k->tra_v_flag = 0;
+	VSETALL(k->tra_v, 0.0);
 
 	k->sca_flag = 0;
 	k->sca = 0.0;
@@ -64,17 +67,20 @@ bv_knobs_reset(struct bview *v, int category)
     /* Absolute members */
     if (!category || category == 2) {
 
-	VSETALL(k->tra_v_abs, 0.0);
-	VSETALL(k->tra_v_abs_last, 0.0);
+	VSETALL(k->rot_m_abs, 0.0);
+	VSETALL(k->rot_m_abs_last, 0.0);
 
-	VSETALL(k->tra_m_abs, 0.0);
-	VSETALL(k->tra_m_abs_last, 0.0);
+	VSETALL(k->rot_o_abs, 0.0);
+	VSETALL(k->rot_o_abs_last, 0.0);
 
 	VSETALL(k->rot_v_abs, 0.0);
 	VSETALL(k->rot_v_abs_last, 0.0);
 
-	VSETALL(k->rot_m_abs, 0.0);
-	VSETALL(k->rot_m_abs_last, 0.0);
+	VSETALL(k->tra_m_abs, 0.0);
+	VSETALL(k->tra_m_abs_last, 0.0);
+
+	VSETALL(k->tra_v_abs, 0.0);
+	VSETALL(k->tra_v_abs_last, 0.0);
 
 	k->sca_abs = 0.0;
 

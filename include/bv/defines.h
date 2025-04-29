@@ -496,30 +496,49 @@ struct bview_objs {
     struct bv_scene_obj *free_scene_obj;
 };
 
-// Data for managing manipulation of a view
+// Data for managing "knob" manipulation of views.  One historical hardware
+// example of this "knob" concept of view manipulation would be Dial boxes such
+// as the Silicon Graphics SN-921, used with 3D workstations in the early days.
+// Although we've not heard of Dial boxes being used with BRL-CAD in many
+// years, the mathematics of view manipulation used to support them still
+// underpins interactions driven with inputs from modern peripherals such as
+// the mouse.
 struct bview_knob {
 
     /* Rate data */
-    vect_t      rot_v;      // rotation - view coords
-    int         rot_v_flag;
-    char        origin_v;
-
     vect_t      rot_m;      // rotation - model coords
     int         rot_m_flag;
     char        origin_m;
+    void	*rot_m_udata;
+
+    vect_t	rot_o;      // rotation - object coords
+    int		rot_o_flag;
+    char	origin_o;
+    void	*rot_o_udata;
+
+    vect_t      rot_v;      // rotation - view coords
+    int         rot_v_flag;
+    char        origin_v;
+    void	*rot_v_udata;
 
     fastf_t     sca;        // scale
     int         sca_flag;
+    void	*sca_udata;
 
     vect_t      tra_m;      // translation - model coords
     int         tra_m_flag;
+    void	*tra_m_udata;
 
     vect_t      tra_v;      // translation - view coords
     int         tra_v_flag;
+    void	*tra_v_udata;
 
     /* Absolute data */
     vect_t      rot_m_abs;       // rotation - model coords
     vect_t      rot_m_abs_last;
+
+    vect_t      rot_o_abs;       // rotation - object coords
+    vect_t      rot_o_abs_last;
 
     vect_t      rot_v_abs;       // rotation - view coords
     vect_t      rot_v_abs_last;

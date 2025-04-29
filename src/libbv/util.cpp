@@ -310,8 +310,15 @@ bv_init(struct bview *gvp, struct bview_set *s)
 
     // Initialize knob vars
     bv_knobs_reset(gvp, BV_KNOBS_ALL);
-    gvp->k.origin_v = '\0';
     gvp->k.origin_m = '\0';
+    gvp->k.origin_o = '\0';
+    gvp->k.origin_v = '\0';
+    gvp->k.rot_m_udata = NULL;
+    gvp->k.rot_o_udata = NULL;
+    gvp->k.rot_v_udata = NULL;
+    gvp->k.sca_udata = NULL;
+    gvp->k.tra_m_udata = NULL;
+    gvp->k.tra_v_udata = NULL;
 
     // Initialize tclcad specific data (primarily doing this so hashing calculations
     // can succeed)
