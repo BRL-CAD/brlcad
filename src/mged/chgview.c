@@ -1754,6 +1754,26 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	} else if (BU_STR_EQUAL(cmd, "ang2")) {
 	    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
 	    bu_vls_printf(&tcl_cmd, "adc ");
+
+	    if (incr_flag)
+		bu_vls_printf(&tcl_cmd, "-i ");
+	    bu_vls_printf(&tcl_cmd, "a2 %f", f);
+
+	    Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
+
+	    bu_vls_free(&tcl_cmd);
+	    continue;
+	} else if (BU_STR_EQUAL(cmd, "distadc")) {
+	    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&tcl_cmd, "adc ");
+
+	    if (incr_flag)
+		bu_vls_printf(&tcl_cmd, "-i ");
+	    bu_vls_printf(&tcl_cmd, "odst %d", i);
+
+	    Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
+
+	    bu_vls_free(&tcl_cmd);
 	    continue;
 	}
 
