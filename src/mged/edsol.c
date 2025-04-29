@@ -267,23 +267,23 @@ set_e_axes_pos(struct mged_state *s, int both)
 
 	if (EDIT_ROTATE) {
 	    es_edclass = EDIT_CLASS_ROTATE;
-	    VSETALL(s->edit_state.edit_absolute_model_rotate, 0.0);
-	    VSETALL(s->edit_state.edit_absolute_object_rotate, 0.0);
-	    VSETALL(s->edit_state.edit_absolute_view_rotate, 0.0);
-	    VSETALL(s->edit_state.last_edit_absolute_model_rotate, 0.0);
-	    VSETALL(s->edit_state.last_edit_absolute_object_rotate, 0.0);
-	    VSETALL(s->edit_state.last_edit_absolute_view_rotate, 0.0);
+	    VSETALL(s->edit_state.k.rot_m_abs, 0.0);
+	    VSETALL(s->edit_state.k.rot_o_abs, 0.0);
+	    VSETALL(s->edit_state.k.rot_v_abs, 0.0);
+	    VSETALL(s->edit_state.k.rot_m_abs_last, 0.0);
+	    VSETALL(s->edit_state.k.rot_o_abs_last, 0.0);
+	    VSETALL(s->edit_state.k.rot_v_abs_last, 0.0);
 	} else if (EDIT_TRAN) {
 	    es_edclass = EDIT_CLASS_TRAN;
-	    VSETALL(s->edit_state.edit_absolute_model_tran, 0.0);
-	    VSETALL(s->edit_state.edit_absolute_view_tran, 0.0);
-	    VSETALL(s->edit_state.last_edit_absolute_model_tran, 0.0);
-	    VSETALL(s->edit_state.last_edit_absolute_view_tran, 0.0);
+	    VSETALL(s->edit_state.k.tra_m_abs, 0.0);
+	    VSETALL(s->edit_state.k.tra_v_abs, 0.0);
+	    VSETALL(s->edit_state.k.tra_m_abs_last, 0.0);
+	    VSETALL(s->edit_state.k.tra_v_abs_last, 0.0);
 	} else if (EDIT_SCALE) {
 	    es_edclass = EDIT_CLASS_SCALE;
 
 	    if (SEDIT_SCALE) {
-		s->edit_state.edit_absolute_scale = 0.0;
+		s->edit_state.k.sca_abs = 0.0;
 		acc_sc_sol = 1.0;
 	    }
 	} else {
@@ -729,24 +729,24 @@ init_sedit_vars(struct mged_state *s)
     MAT_IDN(acc_rot_sol);
     MAT_IDN(incr_change);
 
-    VSETALL(s->edit_state.edit_absolute_model_rotate, 0.0);
-    VSETALL(s->edit_state.edit_absolute_object_rotate, 0.0);
-    VSETALL(s->edit_state.edit_absolute_view_rotate, 0.0);
-    VSETALL(s->edit_state.last_edit_absolute_model_rotate, 0.0);
-    VSETALL(s->edit_state.last_edit_absolute_object_rotate, 0.0);
-    VSETALL(s->edit_state.last_edit_absolute_view_rotate, 0.0);
-    VSETALL(s->edit_state.edit_absolute_model_tran, 0.0);
-    VSETALL(s->edit_state.edit_absolute_view_tran, 0.0);
-    VSETALL(s->edit_state.last_edit_absolute_model_tran, 0.0);
-    VSETALL(s->edit_state.last_edit_absolute_view_tran, 0.0);
-    s->edit_state.edit_absolute_scale = 0.0;
+    VSETALL(s->edit_state.k.rot_m_abs, 0.0);
+    VSETALL(s->edit_state.k.rot_o_abs, 0.0);
+    VSETALL(s->edit_state.k.rot_v_abs, 0.0);
+    VSETALL(s->edit_state.k.rot_m_abs_last, 0.0);
+    VSETALL(s->edit_state.k.rot_o_abs_last, 0.0);
+    VSETALL(s->edit_state.k.rot_v_abs_last, 0.0);
+    VSETALL(s->edit_state.k.tra_m_abs, 0.0);
+    VSETALL(s->edit_state.k.tra_v_abs, 0.0);
+    VSETALL(s->edit_state.k.tra_m_abs_last, 0.0);
+    VSETALL(s->edit_state.k.tra_v_abs_last, 0.0);
+    s->edit_state.k.sca_abs = 0.0;
     acc_sc_sol = 1.0;
 
-    VSETALL(s->edit_state.edit_rate_model_rotate, 0.0);
-    VSETALL(s->edit_state.edit_rate_object_rotate, 0.0);
-    VSETALL(s->edit_state.edit_rate_view_rotate, 0.0);
-    VSETALL(s->edit_state.edit_rate_model_tran, 0.0);
-    VSETALL(s->edit_state.edit_rate_view_tran, 0.0);
+    VSETALL(s->edit_state.k.rot_m, 0.0);
+    VSETALL(s->edit_state.k.rot_o, 0.0);
+    VSETALL(s->edit_state.k.rot_v, 0.0);
+    VSETALL(s->edit_state.k.tra_m, 0.0);
+    VSETALL(s->edit_state.k.tra_v, 0.0);
 
     set_e_axes_pos(s, 1);
 }
@@ -4828,12 +4828,12 @@ update_edit_absolute_tran(struct mged_state *s, vect_t view_pos)
 
     MAT4X3PNT(model_pos, view_state->vs_gvp->gv_view2model, view_pos);
     VSUB2(diff, model_pos, e_axes_pos);
-    VSCALE(s->edit_state.edit_absolute_model_tran, diff, inv_Viewscale);
-    VMOVE(s->edit_state.last_edit_absolute_model_tran, s->edit_state.edit_absolute_model_tran);
+    VSCALE(s->edit_state.k.tra_m_abs, diff, inv_Viewscale);
+    VMOVE(s->edit_state.k.tra_m_abs_last, s->edit_state.k.tra_m_abs);
 
     MAT4X3PNT(ea_view_pos, view_state->vs_gvp->gv_model2view, e_axes_pos);
-    VSUB2(s->edit_state.edit_absolute_view_tran, view_pos, ea_view_pos);
-    VMOVE(s->edit_state.last_edit_absolute_view_tran, s->edit_state.edit_absolute_view_tran);
+    VSUB2(s->edit_state.k.tra_v_abs, view_pos, ea_view_pos);
+    VMOVE(s->edit_state.k.tra_v_abs_last, s->edit_state.k.tra_v_abs);
 }
 
 
@@ -4885,9 +4885,9 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	    /* accumulate scale factor */
 	    acc_sc_sol *= s->edit_state.es_scale;
 
-	    s->edit_state.edit_absolute_scale = acc_sc_sol - 1.0;
-	    if (s->edit_state.edit_absolute_scale > 0)
-		s->edit_state.edit_absolute_scale /= 3.0;
+	    s->edit_state.k.sca_abs = acc_sc_sol - 1.0;
+	    if (s->edit_state.k.sca_abs > 0)
+		s->edit_state.k.sca_abs /= 3.0;
 
 	    sedit(s);
 
@@ -5240,15 +5240,15 @@ sedit_abs_scale(struct mged_state *s)
 
     old_acc_sc_sol = acc_sc_sol;
 
-    if (-SMALL_FASTF < s->edit_state.edit_absolute_scale && s->edit_state.edit_absolute_scale < SMALL_FASTF)
+    if (-SMALL_FASTF < s->edit_state.k.sca_abs && s->edit_state.k.sca_abs < SMALL_FASTF)
 	acc_sc_sol = 1.0;
-    else if (s->edit_state.edit_absolute_scale > 0.0)
-	acc_sc_sol = 1.0 + s->edit_state.edit_absolute_scale * 3.0;
+    else if (s->edit_state.k.sca_abs > 0.0)
+	acc_sc_sol = 1.0 + s->edit_state.k.sca_abs * 3.0;
     else {
-	if ((s->edit_state.edit_absolute_scale - MGED_SMALL_SCALE) < -1.0)
-	    s->edit_state.edit_absolute_scale = -1.0 + MGED_SMALL_SCALE;
+	if ((s->edit_state.k.sca_abs - MGED_SMALL_SCALE) < -1.0)
+	    s->edit_state.k.sca_abs = -1.0 + MGED_SMALL_SCALE;
 
-	acc_sc_sol = 1.0 + s->edit_state.edit_absolute_scale;
+	acc_sc_sol = 1.0 + s->edit_state.k.sca_abs;
     }
 
     s->edit_state.es_scale = acc_sc_sol / old_acc_sc_sol;
@@ -5284,9 +5284,9 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 		incr_change[15] = 1.0 / scale;
 
 		acc_sc_obj /= incr_change[15];
-		s->edit_state.edit_absolute_scale = acc_sc_obj - 1.0;
-		if (s->edit_state.edit_absolute_scale > 0.0)
-		    s->edit_state.edit_absolute_scale /= 3.0;
+		s->edit_state.k.sca_abs = acc_sc_obj - 1.0;
+		if (s->edit_state.k.sca_abs > 0.0)
+		    s->edit_state.k.sca_abs /= 3.0;
 		break;
 
 	    case BE_O_XSCALE:
@@ -5294,9 +5294,9 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 		incr_change[0] = scale;
 		/* accumulate the scale factor */
 		acc_sc[0] *= scale;
-		s->edit_state.edit_absolute_scale = acc_sc[0] - 1.0;
-		if (s->edit_state.edit_absolute_scale > 0.0)
-		    s->edit_state.edit_absolute_scale /= 3.0;
+		s->edit_state.k.sca_abs = acc_sc[0] - 1.0;
+		if (s->edit_state.k.sca_abs > 0.0)
+		    s->edit_state.k.sca_abs /= 3.0;
 		break;
 
 	    case BE_O_YSCALE:
@@ -5304,9 +5304,9 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 		incr_change[5] = scale;
 		/* accumulate the scale factor */
 		acc_sc[1] *= scale;
-		s->edit_state.edit_absolute_scale = acc_sc[1] - 1.0;
-		if (s->edit_state.edit_absolute_scale > 0.0)
-		    s->edit_state.edit_absolute_scale /= 3.0;
+		s->edit_state.k.sca_abs = acc_sc[1] - 1.0;
+		if (s->edit_state.k.sca_abs > 0.0)
+		    s->edit_state.k.sca_abs /= 3.0;
 		break;
 
 	    case BE_O_ZSCALE:
@@ -5314,9 +5314,9 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 		incr_change[10] = scale;
 		/* accumulate the scale factor */
 		acc_sc[2] *= scale;
-		s->edit_state.edit_absolute_scale = acc_sc[2] - 1.0;
-		if (s->edit_state.edit_absolute_scale > 0.0)
-		    s->edit_state.edit_absolute_scale /= 3.0;
+		s->edit_state.k.sca_abs = acc_sc[2] - 1.0;
+		if (s->edit_state.k.sca_abs > 0.0)
+		    s->edit_state.k.sca_abs /= 3.0;
 		break;
 	}
 
@@ -5369,15 +5369,15 @@ oedit_abs_scale(struct mged_state *s)
 
     MAT_IDN(incr_mat);
 
-    if (-SMALL_FASTF < s->edit_state.edit_absolute_scale && s->edit_state.edit_absolute_scale < SMALL_FASTF)
+    if (-SMALL_FASTF < s->edit_state.k.sca_abs && s->edit_state.k.sca_abs < SMALL_FASTF)
 	scale = 1;
-    else if (s->edit_state.edit_absolute_scale > 0.0)
-	scale = 1.0 + s->edit_state.edit_absolute_scale * 3.0;
+    else if (s->edit_state.k.sca_abs > 0.0)
+	scale = 1.0 + s->edit_state.k.sca_abs * 3.0;
     else {
-	if ((s->edit_state.edit_absolute_scale - MGED_SMALL_SCALE) < -1.0)
-	    s->edit_state.edit_absolute_scale = -1.0 + MGED_SMALL_SCALE;
+	if ((s->edit_state.k.sca_abs - MGED_SMALL_SCALE) < -1.0)
+	    s->edit_state.k.sca_abs = -1.0 + MGED_SMALL_SCALE;
 
-	scale = 1.0 + s->edit_state.edit_absolute_scale;
+	scale = 1.0 + s->edit_state.k.sca_abs;
     }
 
     /* switch depending on scaling option selected */
@@ -5541,26 +5541,26 @@ init_oedit_vars(struct mged_state *s)
 {
     set_e_axes_pos(s, 1);
 
-    VSETALL(s->edit_state.edit_absolute_model_rotate, 0.0);
-    VSETALL(s->edit_state.edit_absolute_object_rotate, 0.0);
-    VSETALL(s->edit_state.edit_absolute_view_rotate, 0.0);
-    VSETALL(s->edit_state.last_edit_absolute_model_rotate, 0.0);
-    VSETALL(s->edit_state.last_edit_absolute_object_rotate, 0.0);
-    VSETALL(s->edit_state.last_edit_absolute_view_rotate, 0.0);
-    VSETALL(s->edit_state.edit_absolute_model_tran, 0.0);
-    VSETALL(s->edit_state.edit_absolute_view_tran, 0.0);
-    VSETALL(s->edit_state.last_edit_absolute_model_tran, 0.0);
-    VSETALL(s->edit_state.last_edit_absolute_view_tran, 0.0);
-    s->edit_state.edit_absolute_scale = 0.0;
+    VSETALL(s->edit_state.k.rot_m_abs, 0.0);
+    VSETALL(s->edit_state.k.rot_o_abs, 0.0);
+    VSETALL(s->edit_state.k.rot_v_abs, 0.0);
+    VSETALL(s->edit_state.k.rot_m_abs_last, 0.0);
+    VSETALL(s->edit_state.k.rot_o_abs_last, 0.0);
+    VSETALL(s->edit_state.k.rot_v_abs_last, 0.0);
+    VSETALL(s->edit_state.k.tra_m_abs, 0.0);
+    VSETALL(s->edit_state.k.tra_v_abs, 0.0);
+    VSETALL(s->edit_state.k.tra_m_abs_last, 0.0);
+    VSETALL(s->edit_state.k.tra_v_abs_last, 0.0);
+    s->edit_state.k.sca_abs = 0.0;
     acc_sc_sol = 1.0;
     acc_sc_obj = 1.0;
     VSETALL(acc_sc, 1.0);
 
-    VSETALL(s->edit_state.edit_rate_model_rotate, 0.0);
-    VSETALL(s->edit_state.edit_rate_object_rotate, 0.0);
-    VSETALL(s->edit_state.edit_rate_view_rotate, 0.0);
-    VSETALL(s->edit_state.edit_rate_model_tran, 0.0);
-    VSETALL(s->edit_state.edit_rate_view_tran, 0.0);
+    VSETALL(s->edit_state.k.rot_m, 0.0);
+    VSETALL(s->edit_state.k.rot_o, 0.0);
+    VSETALL(s->edit_state.k.rot_v, 0.0);
+    VSETALL(s->edit_state.k.tra_m, 0.0);
+    VSETALL(s->edit_state.k.tra_v, 0.0);
 
     MAT_IDN(modelchanges);
     MAT_IDN(acc_rot_sol);
@@ -6081,14 +6081,14 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
 	fastf_t inv_Viewscale = 1/view_state->vs_gvp->gv_scale;
 
 	VSUB2(diff, es_para, e_axes_pos);
-	VSCALE(s->edit_state.edit_absolute_model_tran, diff, inv_Viewscale);
-	VMOVE(s->edit_state.last_edit_absolute_model_tran, s->edit_state.edit_absolute_model_tran);
+	VSCALE(s->edit_state.k.tra_m_abs, diff, inv_Viewscale);
+	VMOVE(s->edit_state.k.tra_m_abs_last, s->edit_state.k.tra_m_abs);
     } else if (SEDIT_ROTATE) {
-	VMOVE(s->edit_state.edit_absolute_model_rotate, es_para);
+	VMOVE(s->edit_state.k.rot_m_abs, es_para);
     } else if (SEDIT_SCALE) {
-	s->edit_state.edit_absolute_scale = acc_sc_sol - 1.0;
-	if (s->edit_state.edit_absolute_scale > 0)
-	    s->edit_state.edit_absolute_scale /= 3.0;
+	s->edit_state.k.sca_abs = acc_sc_sol - 1.0;
+	if (s->edit_state.k.sca_abs > 0)
+	    s->edit_state.k.sca_abs /= 3.0;
     }
     return TCL_OK;
 }
@@ -6884,23 +6884,23 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 
     /* Reset relevant variables */
     MAT_IDN(acc_rot_sol);
-    VSETALL(s->edit_state.edit_absolute_model_rotate, 0.0);
-    VSETALL(s->edit_state.edit_absolute_object_rotate, 0.0);
-    VSETALL(s->edit_state.edit_absolute_view_rotate, 0.0);
-    VSETALL(s->edit_state.last_edit_absolute_model_rotate, 0.0);
-    VSETALL(s->edit_state.last_edit_absolute_object_rotate, 0.0);
-    VSETALL(s->edit_state.last_edit_absolute_view_rotate, 0.0);
-    VSETALL(s->edit_state.edit_absolute_model_tran, 0.0);
-    VSETALL(s->edit_state.edit_absolute_view_tran, 0.0);
-    VSETALL(s->edit_state.last_edit_absolute_model_tran, 0.0);
-    VSETALL(s->edit_state.last_edit_absolute_view_tran, 0.0);
-    s->edit_state.edit_absolute_scale = 0.0;
+    VSETALL(s->edit_state.k.rot_m_abs, 0.0);
+    VSETALL(s->edit_state.k.rot_o_abs, 0.0);
+    VSETALL(s->edit_state.k.rot_v_abs, 0.0);
+    VSETALL(s->edit_state.k.rot_m_abs_last, 0.0);
+    VSETALL(s->edit_state.k.rot_o_abs_last, 0.0);
+    VSETALL(s->edit_state.k.rot_v_abs_last, 0.0);
+    VSETALL(s->edit_state.k.tra_m_abs, 0.0);
+    VSETALL(s->edit_state.k.tra_v_abs, 0.0);
+    VSETALL(s->edit_state.k.tra_m_abs_last, 0.0);
+    VSETALL(s->edit_state.k.tra_v_abs_last, 0.0);
+    s->edit_state.k.sca_abs = 0.0;
     acc_sc_sol = 1.0;
-    VSETALL(s->edit_state.edit_rate_model_rotate, 0.0);
-    VSETALL(s->edit_state.edit_rate_object_rotate, 0.0);
-    VSETALL(s->edit_state.edit_rate_view_rotate, 0.0);
-    VSETALL(s->edit_state.edit_rate_model_tran, 0.0);
-    VSETALL(s->edit_state.edit_rate_view_tran, 0.0);
+    VSETALL(s->edit_state.k.rot_m, 0.0);
+    VSETALL(s->edit_state.k.rot_o, 0.0);
+    VSETALL(s->edit_state.k.rot_v, 0.0);
+    VSETALL(s->edit_state.k.tra_m, 0.0);
+    VSETALL(s->edit_state.k.tra_v, 0.0);
 
     set_e_axes_pos(s, 1);
     update_views = 1;

@@ -146,51 +146,10 @@ struct menu_item {
 #include "./mged_dm.h" /* _view_state */
 
 struct mged_edit_state {
-    // Rotate
-    vect_t edit_absolute_model_rotate;
-    vect_t edit_absolute_object_rotate;
-    vect_t edit_absolute_view_rotate;
-    vect_t last_edit_absolute_model_rotate;
-    vect_t last_edit_absolute_object_rotate;
-    vect_t last_edit_absolute_view_rotate;
-    vect_t edit_rate_model_rotate;
-    vect_t edit_rate_object_rotate;
-    vect_t edit_rate_view_rotate;
-    int edit_rateflag_model_rotate;
-    int edit_rateflag_object_rotate;
-    int edit_rateflag_view_rotate;
 
-    // Translate
-    vect_t edit_absolute_model_tran;
-    vect_t edit_absolute_view_tran;
-    vect_t last_edit_absolute_model_tran;
-    vect_t last_edit_absolute_view_tran;
-    vect_t edit_rate_model_tran;
-    vect_t edit_rate_view_tran;
-    int edit_rateflag_model_tran;
-    int edit_rateflag_view_tran;
+    struct bview_knobs k;
 
-    // Scale
-    fastf_t es_scale;	/* scale factor */
-    fastf_t edit_absolute_scale;
-    fastf_t edit_rate_scale;
-    int edit_rateflag_scale;
-
-    // Origin
-    char edit_rate_model_origin;
-    char edit_rate_object_origin;
-    char edit_rate_view_origin;
-
-
-    // DM pointers - used by the editing code to stash current dm pointers for
-    // later restoration when editing.  Not 100% sure yet what the purpose is -
-    // seems to be allowing for the possibility of a change of mged_curr_dm
-    // mid-edit?
-    struct mged_dm *edit_rate_mr_dm;
-    struct mged_dm *edit_rate_or_dm;
-    struct mged_dm *edit_rate_vr_dm;
-    struct mged_dm *edit_rate_mt_dm;
-    struct mged_dm *edit_rate_vt_dm;
+    fastf_t es_scale;  /* scale factor */
 
     // Container to hold the intermediate state
     // of the object being edited (I think?)

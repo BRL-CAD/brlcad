@@ -295,9 +295,9 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		    ZERO(acc_sc_sol))
 		    acc_sc_sol = 1.0;
 		else if (GEOM_EDIT_STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-		    s->edit_state.edit_absolute_scale = acc_sc_obj - 1.0;
-		    if (s->edit_state.edit_absolute_scale > 0.0)
-			s->edit_state.edit_absolute_scale /= 3.0;
+		    s->edit_state.k.sca_abs = acc_sc_obj - 1.0;
+		    if (s->edit_state.k.sca_abs > 0.0)
+			s->edit_state.k.sca_abs /= 3.0;
 		}
 
 		am_mode = AMM_SCALE;
@@ -464,9 +464,9 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			    ZERO(acc_sc_sol))
 			    acc_sc_sol = 1.0;
 			else if (GEOM_EDIT_STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->edit_state.edit_absolute_scale = acc_sc[0] - 1.0;
-			    if (s->edit_state.edit_absolute_scale > 0.0)
-				s->edit_state.edit_absolute_scale /= 3.0;
+			    s->edit_state.k.sca_abs = acc_sc[0] - 1.0;
+			    if (s->edit_state.k.sca_abs > 0.0)
+				s->edit_state.k.sca_abs /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_X;
@@ -476,9 +476,9 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			    ZERO(acc_sc_sol))
 			    acc_sc_sol = 1.0;
 			else if (GEOM_EDIT_STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->edit_state.edit_absolute_scale = acc_sc[1] - 1.0;
-			    if (s->edit_state.edit_absolute_scale > 0.0)
-				s->edit_state.edit_absolute_scale /= 3.0;
+			    s->edit_state.k.sca_abs = acc_sc[1] - 1.0;
+			    if (s->edit_state.k.sca_abs > 0.0)
+				s->edit_state.k.sca_abs /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_Y;
@@ -488,9 +488,9 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			    ZERO(acc_sc_sol))
 			    acc_sc_sol = 1.0;
 			else if (GEOM_EDIT_STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->edit_state.edit_absolute_scale = acc_sc[2] - 1.0;
-			    if (s->edit_state.edit_absolute_scale > 0.0)
-				s->edit_state.edit_absolute_scale /= 3.0;
+			    s->edit_state.k.sca_abs = acc_sc[2] - 1.0;
+			    if (s->edit_state.k.sca_abs > 0.0)
+				s->edit_state.k.sca_abs /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_Z;
