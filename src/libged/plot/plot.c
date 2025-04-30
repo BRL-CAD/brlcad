@@ -43,7 +43,7 @@ extern FILE *popen(const char *command, const char *type);
 extern int pclose(FILE *stream);
 #endif
 
-int
+void
 dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t center, fastf_t scale, int Three_D, int Z_clip)
 {
     struct display_list *gdlp;
@@ -55,10 +55,6 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
     static vect_t fin;
     static vect_t start;
     int Dashing;                        /* linetype is dashed */
-
-    if (!hdlp || !fp || !model2view) {
-        return 1;       /* Error: Invalid arguments */
-    }
 
     if (floating) {
         pd_3space(fp,
@@ -94,7 +90,7 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
             gdlp = next_gdlp;
         }
 
-        return 0;
+        return;
     }
     /*
      * Integer output version, either 2-D or 3-D.
@@ -135,17 +131,11 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
                 Dashing = sp->s_soldash;
             }
             for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
-		if (!vp) {
-                    return 1;        /* Error: Invalid vertex list */
-                }
                 size_t i;
                 size_t nused = vp->nused;
                 int *cmd = vp->cmd;
                 point_t *pt = vp->pt;
                 for (i = 0; i < nused; i++, cmd++, pt++) {
-		    if (!cmd || !pt) {
-                        return 1;  // Error: Invalid command or point
-                    } 
                     switch (*cmd) {
                         case BV_VLIST_POLY_START:
                         case BV_VLIST_POLY_VERTNORM:
@@ -198,7 +188,6 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
 
         gdlp = next_gdlp;
     }
-    return 0;
 }
 
 
@@ -293,21 +282,14 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
 	is_pipe = 0;
     }
 
-    int plot_status = dl_plot(gedp->i->ged_gdp->gd_headDisplay, fp, gedp->ged_gvp->gv_model2view, floating, gedp->ged_gvp->gv_center, gedp->ged_gvp->gv_scale, Three_D, Z_clip);
-    if (plot_status != 0) {
-        if (is_pipe)
-	    (void)pclose(fp);
-        else
-	    (void)fclose(fp);
-	return BRLCAD_ERROR;      /* If dl_plot returns an error, return error*/
-    }
+    dl_plot(gedp->i->ged_gdp->gd_headDisplay, fp, gedp->ged_gvp->gv_model2view, floating, gedp->ged_gvp->gv_center, gedp->ged_gvp->gv_scale, Three_D, Z_clip);
 
     if (is_pipe)
-        (void)pclose(fp);
+	(void)pclose(fp);
     else
-        (void)fclose(fp);
+	(void)fclose(fp);
 
-    return BRLCAD_OK;     /* Success if no error from dl_plot */
+    return BRLCAD_OK;
 }
 
 
