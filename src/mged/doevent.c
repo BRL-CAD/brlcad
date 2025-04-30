@@ -54,7 +54,7 @@
 #include "./mged_dm.h"
 #include "./sedit.h"
 
-
+/* Ew. Global. */
 extern int doMotion;			/* defined in buttons.c */
 
 #ifdef HAVE_X11_TYPES

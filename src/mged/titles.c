@@ -51,6 +51,7 @@ char *state_str[] = {
 };
 
 
+/* Ew. Global. */
 extern mat_t perspective_mat;  /* defined in dozoom.c */
 
 /*

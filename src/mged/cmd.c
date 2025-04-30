@@ -62,6 +62,8 @@ extern void mged_finish(struct mged_state *s, int exitcode); /* in mged.c */
 extern void update_grids(struct mged_state *s, fastf_t sf);		/* in grid.c */
 extern void set_localunit_TclVar(struct mged_state *s);		/* in chgmodel.c */
 extern void init_qray(void);			/* in qray.c */
+
+/* Ew. Globals. */
 extern int mged_default_dlist;			/* in attach.c */
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
@@ -360,7 +362,7 @@ cmd_ged_erase_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 	return TCL_ERROR;
 
     solid_list_callback(s);
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     return TCL_OK;
@@ -434,7 +436,7 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
     if (ret)
 	return TCL_ERROR;
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     return TCL_OK;
@@ -1867,7 +1869,7 @@ cmd_units(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     set_localunit_TclVar(s);
     sf = s->dbip->dbi_base2local / sf;
     update_grids(s,sf);
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     return TCL_OK;

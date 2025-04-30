@@ -103,21 +103,27 @@ extern struct bu_vls *history_prev(const char *);
 extern struct bu_vls *history_cur(const char *);
 extern struct bu_vls *history_next(const char *);
 
+/* Ew. Global. */
 /* defined in dozoom.c */
 extern unsigned char geometry_default_color[];
 
+/* Ew. Global. */
 /* defined in set.c */
 extern struct _mged_variables default_mged_variables;
 
+/* Ew. Global. */
 /* defined in color_scheme.c */
 extern struct _color_scheme default_color_scheme;
 
+/* Ew. Global. */
 /* defined in grid.c */
 extern struct bv_grid_state default_grid_state;
 
+/* Ew. Global. */
 /* defined in axes.c */
 extern struct _axes_state default_axes_state;
 
+/* Ew. Global. */
 /* defined in rect.c */
 extern struct _rubber_band default_rubber_band;
 
@@ -126,6 +132,7 @@ extern struct _rubber_band default_rubber_band;
  * when we're done (which is needed so atexit() calls to bu_log() will
  * still work).
  */
+/* Ew. Global. */
 static int stdfd[2] = {1, 2};
 
 /* Container for passing I/O data through Tcl callbacks */
@@ -137,22 +144,21 @@ struct stdio_data {
 
 struct mged_state *MGED_STATE = NULL;
 
-/* called by numerous functions to indicate truthfully whether the
- * views need to be redrawn.
- */
-int update_views = 0;
-
 jmp_buf jmp_env;	/* For non-local gotos */
+/* Ew. Global. */
 double frametime;	/* time needed to draw last frame */
 
+/* Ew. Global. */
 struct rt_wdb rtg_headwdb;  /* head of database object list */
 
 void (*cur_sigint)(int);	/* Current SIGINT status */
 
+/* Ew. Global. */
 int cbreak_mode = 0;    /* >0 means in cbreak_mode */
 
 
 /* The old mged gui is temporarily the default. */
+/* Ew. Global. */
 int old_mged_gui=1;
 
 static int
@@ -1511,7 +1517,7 @@ refresh(struct mged_state *s)
 	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (!p->dm_view_state)
 	    continue;
-	if (update_views || p->dm_view_state->vs_flag)
+	if (s->update_views || p->dm_view_state->vs_flag)
 	    p->dm_dirty = 1;
     }
 
@@ -1526,7 +1532,7 @@ refresh(struct mged_state *s)
 	p->dm_view_state->vs_flag = 0;
     }
 
-    update_views = 0;
+    s->update_views = 0;
 
     save_dm_list = s->mged_curr_dm;
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
@@ -1827,6 +1833,7 @@ main(int argc, char *argv[])
     struct mged_state *s = MGED_STATE;
     s->magic = MGED_STATE_MAGIC;
     s->classic_mged = 1;
+    s->update_views = 0;
     s->interactive = 0; /* >0 means interactive, intentionally starts
                          * 0 to know when interactive, e.g., via -C
                          * option

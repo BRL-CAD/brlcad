@@ -382,7 +382,7 @@ edit_com(struct mged_state *s,
 	}
     }
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     if (flag_R_noresize) {
@@ -586,7 +586,7 @@ cmd_zap(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), con
 
     CHECK_DBI_NULL;
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
     s->gedp->ged_destroy_vlist_callback = freeDListsAll;
 
@@ -964,7 +964,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	}
     }
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     if (path_piece) {
@@ -1053,7 +1053,7 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     button(s, BE_S_ILLUMINATE);	/* To ST_S_PICK */
@@ -2622,7 +2622,7 @@ mged_erot(struct mged_state *s,
     int save_edflag;
     mat_t temp1, temp2;
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     switch (coords) {
@@ -3035,7 +3035,7 @@ mged_etran(struct mged_state *s,
 	bn_mat_mul2(xlatemat, modelchanges);
 
 	new_edit_mats(s);
-	update_views = 1;
+	s->update_views = 1;
 	dm_set_dirty(DMP, 1);
     }
 

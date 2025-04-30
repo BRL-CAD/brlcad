@@ -52,10 +52,10 @@ static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_st
 
 int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const point_t ref_pt  , const mat_t mat);
 
+/* Ew. Globals. */
 point_t e_axes_pos;
 point_t curr_e_axes_pos;
 short int fixv;		/* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */
-
 
 /* data for solid editing */
 int sedraw;	/* apply solid editing changes */
@@ -126,7 +126,7 @@ set_e_axes_pos(struct mged_state *s, int both)
     const short earb5[9][18] = earb5_edit_array;
     const int local_arb_faces[5][24] = rt_arb_faces;
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
     switch (s->edit_state.es_int.idb_type) {
 	case ID_ARB8:
@@ -2064,13 +2064,13 @@ sedit(struct mged_state *s)
 	return;
 
     sedraw = 0;
-    ++update_views;
+    ++s->update_views;
 
     switch (es_edflag) {
 
 	case IDLE:
 	    /* do nothing more */
-	    --update_views;
+	    --s->update_views;
 	    break;
 
 	case ECMD_DSP_SCALE_X:
@@ -4802,7 +4802,7 @@ sedit(struct mged_state *s)
     set_e_axes_pos(s, 0);
     replot_editing_solid(s);
 
-    if (update_views) {
+    if (s->update_views) {
 	dm_set_dirty(DMP, 1);
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -6901,7 +6901,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     VSETALL(s->edit_state.k.tra_v, 0.0);
 
     set_e_axes_pos(s, 1);
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     /* active edit callback */
@@ -6966,7 +6966,7 @@ f_oedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     init_oedit_guts(s);
 
     new_edit_mats(s);
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     /* active edit callback */
@@ -7005,7 +7005,7 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     get_solid_keypoint(s, &es_keypoint, &strp, &s->edit_state.es_int, es_mat);
     init_oedit_vars(s);
     new_edit_mats(s);
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     /* active edit callback */

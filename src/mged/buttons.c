@@ -644,7 +644,7 @@ be_o_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 
     edobj = BE_O_SCALE;
     movedir = SARROW;
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
 
@@ -667,7 +667,7 @@ be_o_xscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
 
     edobj = BE_O_XSCALE;
     movedir = SARROW;
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
 
@@ -690,7 +690,7 @@ be_o_yscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
 
     edobj = BE_O_YSCALE;
     movedir = SARROW;
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
 
@@ -713,7 +713,7 @@ be_o_zscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
 
     edobj = BE_O_ZSCALE;
     movedir = SARROW;
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
 
@@ -736,7 +736,7 @@ be_o_x(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char
 
     edobj = BE_O_X;
     movedir = RARROW;
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
     return TCL_OK;
@@ -755,7 +755,7 @@ be_o_y(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char
 
     edobj = BE_O_Y;
     movedir = UARROW;
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
     return TCL_OK;
@@ -774,7 +774,7 @@ be_o_xy(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), cha
 
     edobj = BE_O_XY;
     movedir = UARROW | RARROW;
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
     return TCL_OK;
@@ -793,7 +793,7 @@ be_o_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
 
     edobj = BE_O_ROTATE;
     movedir = ROTARROW;
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
     return TCL_OK;
@@ -865,7 +865,7 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     /* Reject edit */
@@ -1028,7 +1028,7 @@ not_state(struct mged_state *s, int desired, char *str)
  * continuous tablet tracking, object highlighting.
  */
 static void
-stateChange(int UNUSED(oldstate), int newstate)
+stateChange(struct mged_state *s, int UNUSED(oldstate), int newstate)
 {
     switch (newstate) {
 	case ST_VIEW:
@@ -1052,7 +1052,7 @@ stateChange(int UNUSED(oldstate), int newstate)
 	    break;
     }
 
-    ++update_views;
+    ++s->update_views;
 }
 
 
@@ -1073,7 +1073,7 @@ chg_state(struct mged_state *s, int from, int to, char *str)
 
     s->edit_state.global_editing_state = to;
 
-    stateChange(from, to);
+    stateChange(s, from, to);
 
     save_dm_list = s->mged_curr_dm;
     for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {

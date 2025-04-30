@@ -190,6 +190,10 @@ struct mged_state {
 
     /* Editing related */
     struct mged_edit_state edit_state;
+
+    /* called by numerous functions to indicate truthfully whether the
+     * views need to be redrawn. */
+    int update_views;
 };
 extern struct mged_state *MGED_STATE;
 
