@@ -217,11 +217,9 @@
 		     es_edflag == ECMD_METABALL_PT_PICK))
 
 
-extern fastf_t es_para[3];	/* keyboard input parameter changes */
 extern fastf_t es_peqn[7][4];	/* ARBs defining plane equations */
 extern int es_menu;		/* item/edit_mode selected from menu */
 extern int es_edflag;		/* type of editing for this solid */
-extern int es_keyfixed;		/* keypoint specified by user */
 
 // NMG editing vars
 extern struct edgeuse *es_eu;
@@ -232,13 +230,6 @@ extern struct shell *es_s;
 
 extern struct wdb_pipe_pnt *es_pipe_pnt;
 extern struct wdb_metaball_pnt *es_metaball_pnt;
-
-extern mat_t es_mat;		/* accumulated matrix of path */
-extern mat_t es_invmat;		/* inverse of es_mat KAA */
-
-extern point_t es_keypoint;	/* center of editing xforms */
-extern const char *es_keytag;		/* string identifying the keypoint */
-extern point_t curr_e_axes_pos;	/* center of editing xforms */
 
 extern void get_solid_keypoint(struct mged_state *s, point_t *pt,
 			       const char **strp,

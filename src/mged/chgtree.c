@@ -263,10 +263,10 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     illump = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);/* any valid solid would do */
     edobj = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
-    MAT_IDN(modelchanges);	/* No changes yet */
+    MAT_IDN(s->edit_state.model_changes);	/* No changes yet */
     (void)chg_state(s, ST_VIEW, ST_O_PICK, "internal change of state");
     /* reset accumulation local scale factors */
-    acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
+    s->edit_state.acc_sc[0] = s->edit_state.acc_sc[1] = s->edit_state.acc_sc[2] = 1.0;
     new_mats(s);
 
     /* Find the one solid, set s_iflag UP, point illump at it */

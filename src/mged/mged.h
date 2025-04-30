@@ -145,6 +145,34 @@ struct menu_item {
 
 #include "./mged_dm.h" /* _view_state */
 
+/**
+ * Definitions (TODO - update this...)
+ *
+ * Solids are defined in "model space".  The screen is in "view
+ * space".  The visible part of view space is -1.0 <= x, y, z <= +1.0
+ *
+ * The transformation from the origin of model space to the origin of
+ * view space (the "view center") is contained in the matrix
+ * "toViewcenter".  The viewing rotation is contained in the "Viewrot"
+ * matrix.  The viewscale factor (for [15] use) is kept in the float
+ * "Viewscale".
+ *
+ * model2view = Viewscale * Viewrot * toViewcenter;
+ *
+ * model2view is the matrix going from model space coordinates to the
+ * view coordinates, and view2model is the inverse.  It is recomputed
+ * by new_mats() only.
+ *
+ * CHANGE matrix.  Defines the change between the un-edited and the
+ * present state in the edited solid or combination.
+ *
+ * model2objview = modelchanges * model2view
+ *
+ * For object editing and solid edit, model2objview translates from
+ * model space to view space with all the modelchanges too.
+ */
+
+
 struct mged_edit_state {
 
     // main global editing state (ugh)
@@ -153,6 +181,31 @@ struct mged_edit_state {
     struct bview_knobs k;
 
     fastf_t es_scale;  /* scale factor */
+
+    mat_t incr_change;          /* change(s) from last cycle */
+    mat_t model_changes;        /* full changes this edit */
+
+    fastf_t acc_sc[3];          /* accumulate local object scale factors */
+    fastf_t acc_sc_obj;         /* accumulate global object scale factor */
+    fastf_t acc_sc_sol;         /* accumulate solid scale factor */
+    mat_t acc_rot_sol;          /* accumulate solid rotations */
+
+    int e_keyfixed;             /* keypoint specified by user? */
+    point_t e_keypoint;         /* center of editing xforms */
+    const char *e_keytag;       /* string identifying the keypoint */
+
+    int e_mvalid;               /* e_mparam valid.  e_inpara must = 0 */
+    vect_t e_mparam;            /* mouse input param.  Only when e_mvalid set */
+
+    int e_inpara;               /* parameter input from keyboard flag.  1 == e_para valid.  e_mvalid must = 0 */
+    vect_t e_para;              /* keyboard input parameter changes */
+
+    mat_t e_invmat;             /* inverse of e_mat KAA */
+    mat_t e_mat;                /* accumulated matrix of path */
+
+    point_t curr_e_axes_pos;    /* center of editing xforms */
+    point_t e_axes_pos;
+
     // TODO - can we eliminate these?
     int e_edclass;		/* type of editing class for this solid */
     int e_type;			/* COMGEOM solid type */
@@ -197,44 +250,6 @@ struct mged_state {
 };
 extern struct mged_state *MGED_STATE;
 
-
-/**
- * Definitions.
- *
- * Solids are defined in "model space".  The screen is in "view
- * space".  The visible part of view space is -1.0 <= x, y, z <= +1.0
- *
- * The transformation from the origin of model space to the origin of
- * view space (the "view center") is contained in the matrix
- * "toViewcenter".  The viewing rotation is contained in the "Viewrot"
- * matrix.  The viewscale factor (for [15] use) is kept in the float
- * "Viewscale".
- *
- * model2view = Viewscale * Viewrot * toViewcenter;
- *
- * model2view is the matrix going from model space coordinates to the
- * view coordinates, and view2model is the inverse.  It is recomputed
- * by new_mats() only.
- *
- * CHANGE matrix.  Defines the change between the un-edited and the
- * present state in the edited solid or combination.
- *
- * model2objview = modelchanges * model2view
- *
- * For object editing and solid edit, model2objview translates from
- * model space to view space with all the modelchanges too.
- *
- * These are allocated storage in dozoom.c
- */
-
-extern mat_t modelchanges;		/* full changes this edit */
-extern mat_t incr_change;		/* change(s) from last cycle */
-
-/* defined in buttons.c */
-extern fastf_t acc_sc_sol;	/* accumulate solid scale factor */
-extern fastf_t acc_sc_obj;	/* accumulate global object scale factor */
-extern fastf_t acc_sc[3];	/* accumulate local object scale factors */
-extern mat_t acc_rot_sol;	/* accumulate solid rotations */
 
 /* defined in mged.c */
 extern jmp_buf jmp_env;
@@ -479,7 +494,6 @@ void rect_image2view(struct mged_state *);
 void rb_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 /* edsol.c */
-extern int inpara;	/* parameter input from keyboard flag */
 void vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat);
 void transform_editing_solid(
     struct mged_state *s,

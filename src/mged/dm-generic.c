@@ -48,10 +48,6 @@
 #include "./mged_dm.h"
 #include "./menu.h"
 
-
-extern point_t e_axes_pos;
-extern point_t curr_e_axes_pos;
-
 int
 common_dm(struct mged_state *s, int argc, const char *argv[])
 {
@@ -205,7 +201,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    point_t model_pt;
 
 	    snap_to_grid(s, &fx, &fy);
-	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
@@ -217,7 +213,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    point_t model_pt;
 
 	    snap_to_grid(s, &fx, &fy);
-	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
@@ -292,10 +288,10 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		break;
 	    case 's':
 		if (s->edit_state.global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-		    ZERO(acc_sc_sol))
-		    acc_sc_sol = 1.0;
+		    ZERO(s->edit_state.acc_sc_sol))
+		    s->edit_state.acc_sc_sol = 1.0;
 		else if (s->edit_state.global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-		    s->edit_state.k.sca_abs = acc_sc_obj - 1.0;
+		    s->edit_state.k.sca_abs = s->edit_state.acc_sc_obj - 1.0;
 		    if (s->edit_state.k.sca_abs > 0.0)
 			s->edit_state.k.sca_abs /= 3.0;
 		}
@@ -461,10 +457,10 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		switch (*argv[2]) {
 		    case 'x':
 			if (s->edit_state.global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    ZERO(acc_sc_sol))
-			    acc_sc_sol = 1.0;
+			    ZERO(s->edit_state.acc_sc_sol))
+			    s->edit_state.acc_sc_sol = 1.0;
 			else if (s->edit_state.global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->edit_state.k.sca_abs = acc_sc[0] - 1.0;
+			    s->edit_state.k.sca_abs = s->edit_state.acc_sc[0] - 1.0;
 			    if (s->edit_state.k.sca_abs > 0.0)
 				s->edit_state.k.sca_abs /= 3.0;
 			}
@@ -473,10 +469,10 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			break;
 		    case 'y':
 			if (s->edit_state.global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    ZERO(acc_sc_sol))
-			    acc_sc_sol = 1.0;
+			    ZERO(s->edit_state.acc_sc_sol))
+			    s->edit_state.acc_sc_sol = 1.0;
 			else if (s->edit_state.global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->edit_state.k.sca_abs = acc_sc[1] - 1.0;
+			    s->edit_state.k.sca_abs = s->edit_state.acc_sc[1] - 1.0;
 			    if (s->edit_state.k.sca_abs > 0.0)
 				s->edit_state.k.sca_abs /= 3.0;
 			}
@@ -485,10 +481,10 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			break;
 		    case 'z':
 			if (s->edit_state.global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    ZERO(acc_sc_sol))
-			    acc_sc_sol = 1.0;
+			    ZERO(s->edit_state.acc_sc_sol))
+			    s->edit_state.acc_sc_sol = 1.0;
 			else if (s->edit_state.global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->edit_state.k.sca_abs = acc_sc[2] - 1.0;
+			    s->edit_state.k.sca_abs = s->edit_state.acc_sc[2] - 1.0;
 			    if (s->edit_state.k.sca_abs > 0.0)
 				s->edit_state.k.sca_abs /= 3.0;
 			}

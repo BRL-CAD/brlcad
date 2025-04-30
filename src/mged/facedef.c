@@ -119,8 +119,8 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	goto end;
     }
 
-    /* apply es_mat editing to parameters.  "new way" */
-    transform_editing_solid(s, &intern, es_mat, &s->edit_state.es_int, 0);
+    /* apply s->edit_state.e_mat editing to parameters.  "new way" */
+    transform_editing_solid(s, &intern, s->edit_state.e_mat, &s->edit_state.es_int, 0);
 
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
@@ -301,13 +301,13 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     }
     /* Now have 8 points, which is the internal form of an ARB8. */
 
-    /* Transform points back before es_mat changes */
+    /* Transform points back before s->edit_state.e_mat changes */
     /* This is the "new way" */
     arbo = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arbo);
 
     for (i=0; i<8; i++) {
-	MAT4X3PNT(arbo->pt[i], es_invmat, arb->pt[i]);
+	MAT4X3PNT(arbo->pt[i], s->edit_state.e_invmat, arb->pt[i]);
     }
     rt_db_free_internal(&intern);
 

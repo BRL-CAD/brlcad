@@ -313,7 +313,7 @@ new_edit_mats(struct mged_state *s)
 	    continue;
 
 	set_curr_dm(s, p);
-	bn_mat_mul(view_state->vs_model2objview, view_state->vs_gvp->gv_model2view, modelchanges);
+	bn_mat_mul(view_state->vs_model2objview, view_state->vs_gvp->gv_model2view, s->edit_state.model_changes);
 	bn_mat_inv(view_state->vs_objview2model, view_state->vs_model2objview);
 	view_state->vs_flag = 1;
     }
@@ -333,7 +333,7 @@ mged_view_callback(struct bview *gvp,
 	return;
 
     if (s->edit_state.global_editing_state != ST_VIEW) {
-	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, modelchanges);
+	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, s->edit_state.model_changes);
 	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
     }
     vsp->vs_flag = 1;
@@ -2082,13 +2082,13 @@ main(int argc, char *argv[])
     owner = 1;
     frametime = 1;
 
-    MAT_IDN(modelchanges);
-    MAT_IDN(acc_rot_sol);
+    MAT_IDN(s->edit_state.model_changes);
+    MAT_IDN(s->edit_state.acc_rot_sol);
 
     s->edit_state.global_editing_state = ST_VIEW;
     es_edflag = -1;
     s->edit_state.e_edclass = EDIT_CLASS_NULL;
-    inpara = newedge = 0;
+    s->edit_state.e_inpara = newedge = 0;
 
     /* These values match old GED.  Use 'tol' command to change them. */
     s->tol.tol.magic = BN_TOL_MAGIC;
