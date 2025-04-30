@@ -416,6 +416,242 @@ rt_solid_edit_set_edflag(struct rt_solid_edit *s, int edflag)
     }
 }
 
+/* Processing of editing knob twists. */
+int
+rt_edit_knob_cmd_process(
+	struct rt_solid_edit *s,
+	vect_t *rvec, int *do_rot, vect_t *tvec, int *do_tran, int *do_sca,
+	struct bview *v, const char *cmd, fastf_t f,
+	char origin, int incr_flag, void *u_data)
+{
+    char c = (cmd[1] == '\0') ? cmd[0] : cmd[1];
+
+    int ind = -1;
+    switch (c) {
+	case 'x':
+	case 'X':
+	    ind = X;
+	    break;
+	case 'y':
+	case 'Y':
+	    ind = Y;
+	    break;
+	case 'z':
+	case 'Z':
+	    ind = Z;
+	    break;
+	case 'S':
+	    ind = 0;
+	    break;
+    }
+
+    if (ind < 0)
+	return BRLCAD_ERROR;
+
+    if (cmd[1] == '\0') {
+
+	if (cmd[0] == 'x' || cmd[0] == 'y' || cmd[0] == 'z') {
+
+	    fastf_t *rot;
+	    char *orig;
+	    void **edm;
+
+	    switch (v->gv_coord) {
+		case 'm':
+		    rot = &s->k.rot_m[ind];
+		    orig = &s->k.origin_m;
+		    edm = &s->k.rot_m_udata;
+		    break;
+		case 'o':
+		    rot = &s->k.rot_o[ind];
+		    orig = &s->k.origin_o;
+		    edm = &s->k.rot_o_udata;
+		    break;
+		case 'v':
+		default:
+		    rot = &s->k.rot_v[ind];
+		    orig = &s->k.origin_v;
+		    edm = &s->k.rot_v_udata;
+		    break;
+	    }
+
+	    *orig = origin;
+	    *edm = u_data;
+
+	    if (incr_flag) {
+		*rot += f;
+	    } else {
+		*rot = f;
+	    }
+
+	    return BRLCAD_OK;
+	}
+
+	if (cmd[0] == 'X' || cmd[0] == 'Y' || cmd[0] == 'Z') {
+	    fastf_t *tra;
+	    void **edm;
+
+	    switch (v->gv_coord) {
+		case 'm':
+		case 'o':
+		    tra = &s->k.tra_m[ind];
+		    edm = &s->k.tra_m_udata;
+		    break;
+		case 'v':
+		default:
+		    tra = &s->k.tra_v[ind];
+		    edm = &s->k.tra_v_udata;
+		    break;
+	    }
+
+	    *edm = u_data;
+
+	    if (incr_flag) {
+		*tra += f;
+	    } else {
+		*tra = f;
+	    }
+
+	    return BRLCAD_OK;
+	}
+
+	if (cmd[0] == 'S') {
+
+	    if (incr_flag) {
+		s->k.sca += f;
+	    } else {
+		s->k.sca = f;
+	    }
+
+	    return BRLCAD_OK;
+	}
+
+    } /* switch cmd[0] */
+
+    if (cmd[0] == 'a' && strlen(cmd) == 2) {
+
+	if (cmd[1] == 'x' || cmd[1] == 'y' || cmd[1] == 'z') {
+
+	    fastf_t *rot_c = NULL;
+	    fastf_t *rot_lc = NULL;
+	    fastf_t *rvec_c;
+
+	    rvec_c = &(*rvec)[ind];
+
+	    switch (v->gv_coord) {
+		case 'm':
+		    rot_c = &s->k.rot_m_abs[ind];
+		    rot_lc = &s->k.rot_m_abs_last[ind];
+		    break;
+		case 'o':
+		    rot_c = &s->k.rot_o_abs[ind];
+		    rot_lc = &s->k.rot_o_abs_last[ind];
+		    break;
+		case 'v':
+		    rot_c = &s->k.rot_v_abs[ind];
+		    rot_lc = &s->k.rot_v_abs_last[ind];
+		    break;
+	    }
+	    if (!rot_c || !rot_lc)
+		return BRLCAD_ERROR;
+
+	    if (incr_flag) {
+		*rot_c += f;
+		*rvec_c = f;
+	    } else {
+		*rot_c = f;
+		*rvec_c = f - *rot_lc;
+	    }
+
+	    /* wrap around */
+	    fastf_t *arp;
+	    fastf_t *larp;
+
+	    switch (v->gv_coord) {
+		case 'm':
+		    arp = s->k.rot_m_abs;
+		    larp = s->k.rot_m_abs_last;
+		    break;
+		case 'o':
+		    arp = s->k.rot_o_abs;
+		    larp = s->k.rot_o_abs_last;
+		    break;
+		case 'v':
+		    arp = s->k.rot_v_abs;
+		    larp = s->k.rot_v_abs_last;
+		    break;
+		default:
+		    bu_log("unknown mv_coords\n");
+		    arp = larp = NULL;
+		    return BRLCAD_ERROR;
+	    }
+
+	    if (arp[ind] < -180.0) {
+		arp[ind] = arp[ind] + 360.0;
+	    } else if (arp[ind] > 180.0) {
+		arp[ind] = arp[ind] - 360.0;
+	    }
+
+	    larp[ind] = arp[ind];
+
+	    *do_rot = 1;
+
+	    return BRLCAD_OK;
+	}
+
+	if (cmd[1] == 'X' || cmd[1] == 'Y' || cmd[1] == 'Z') {
+	    fastf_t *eamt = NULL;
+	    fastf_t *leamt = NULL;
+	    fastf_t *tvec_c;
+	    fastf_t sf = f * v->gv_local2base / v->gv_scale;
+
+	    tvec_c = &(*tvec)[ind];
+
+	    switch (v->gv_coord) {
+		case 'm':
+		case 'o':
+		    eamt = &s->k.tra_m_abs[ind];
+		    leamt = &s->k.tra_m_abs_last[ind];
+		    break;
+		case 'v':
+		    eamt = &s->k.tra_v_abs[ind];
+		    leamt = &s->k.tra_v_abs_last[ind];
+		    break;
+	    }
+
+	    if (!eamt || !leamt)
+		return BRLCAD_ERROR;
+
+	    if (incr_flag) {
+		*eamt += sf;
+		*tvec_c = f;
+	    } else {
+		*eamt = sf;
+		*tvec_c = f - *leamt * v->gv_scale * v->gv_base2local;
+	    }
+	    *leamt = *eamt;
+
+	    *do_tran = 1;
+
+	    return BRLCAD_OK;
+	}
+
+	if (cmd[1] == 'S') {
+	    if (incr_flag) {
+		s->k.sca_abs += f;
+	    } else {
+		s->k.sca_abs = f;
+	    }
+
+	    *do_sca = 1;
+
+	    return BRLCAD_OK;
+	}
+    } /* switch (cmd[1]) */
+
+    return BRLCAD_ERROR;
+}
+
 
 /*
  * A great deal of magic takes place here, to accomplish solid editing.

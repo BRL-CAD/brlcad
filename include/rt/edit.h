@@ -166,6 +166,13 @@ rt_update_edit_absolute_tran(struct rt_solid_edit *s, vect_t view_pos);
 RT_EXPORT extern void
 rt_solid_edit_set_edflag(struct rt_solid_edit *s, int edflag);
 
+RT_EXPORT extern int
+rt_edit_knob_cmd_process(
+	struct rt_solid_edit *s,
+	vect_t *rvec, int *do_rot, vect_t *tvec, int *do_tran, int *do_sca,
+        struct bview *v, const char *cmd, fastf_t f,
+        char origin, int incr_flag, void *u_data
+	);
 
 /* Equivalent to sedit - run editing logic after input data is set in
  * rt_solid_edit container */
