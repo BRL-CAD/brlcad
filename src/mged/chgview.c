@@ -39,7 +39,6 @@
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-
 extern void mged_color_soltab(struct mged_state *s);
 
 void solid_list_callback(struct mged_state *s);
@@ -55,18 +54,6 @@ int mged_mtran(struct mged_state *s, const vect_t tvec);
 int mged_otran(struct mged_state *s, const vect_t tvec);
 int mged_vtran(struct mged_state *s, const vect_t tvec);
 int mged_vrot_xyz(struct mged_state *s, char origin, char coords, vect_t rvec);
-
-
-extern long nvectors;
-
-fastf_t ar_scale_factor = BV_MAX / ABS_ROT_FACTOR;
-fastf_t rr_scale_factor = BV_MAX / RATE_ROT_FACTOR;
-fastf_t adc_angle_scale_factor = BV_MAX / ADC_ANGLE_FACTOR;
-
-double mged_abs_tol;
-double mged_rel_tol = 0.01;		/* 1%, by default */
-double mged_nrm_tol;			/* normal ang tol, radians */
-
 
 /* DEBUG -- force view center */
 /* Format: C x y z */
