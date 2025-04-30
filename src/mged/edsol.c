@@ -713,24 +713,9 @@ init_sedit_vars(struct mged_state *s)
     MAT_IDN(s->edit_state.acc_rot_sol);
     MAT_IDN(s->edit_state.incr_change);
 
-    VSETALL(s->edit_state.k.rot_m_abs, 0.0);
-    VSETALL(s->edit_state.k.rot_o_abs, 0.0);
-    VSETALL(s->edit_state.k.rot_v_abs, 0.0);
-    VSETALL(s->edit_state.k.rot_m_abs_last, 0.0);
-    VSETALL(s->edit_state.k.rot_o_abs_last, 0.0);
-    VSETALL(s->edit_state.k.rot_v_abs_last, 0.0);
-    VSETALL(s->edit_state.k.tra_m_abs, 0.0);
-    VSETALL(s->edit_state.k.tra_v_abs, 0.0);
-    VSETALL(s->edit_state.k.tra_m_abs_last, 0.0);
-    VSETALL(s->edit_state.k.tra_v_abs_last, 0.0);
-    s->edit_state.k.sca_abs = 0.0;
-    s->edit_state.acc_sc_sol = 1.0;
+    bv_knobs_reset(&s->edit_state.k, BV_KNOBS_ALL);
 
-    VSETALL(s->edit_state.k.rot_m, 0.0);
-    VSETALL(s->edit_state.k.rot_o, 0.0);
-    VSETALL(s->edit_state.k.rot_v, 0.0);
-    VSETALL(s->edit_state.k.tra_m, 0.0);
-    VSETALL(s->edit_state.k.tra_v, 0.0);
+    s->edit_state.acc_sc_sol = 1.0;
 
     set_e_axes_pos(s, 1);
 }
