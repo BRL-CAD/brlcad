@@ -46,13 +46,13 @@ rt_solid_edit_extrude_set_edit_mode(struct rt_solid_edit *s, int mode)
 
     switch (mode) {
 	case ECMD_EXTR_ROT_H:
-	    s->solid_edit_rotate = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_ROT;
 	    break;
 	case ECMD_EXTR_SCALE_H:
-	    s->solid_edit_scale = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
 	    break;
 	case ECMD_EXTR_MOV_H:
-	    s->solid_edit_translate = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
 	    break;
 	default:
 	    break;

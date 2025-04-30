@@ -54,7 +54,7 @@ rt_solid_edit_vol_set_edit_mode(struct rt_solid_edit *s, int mode)
 	case ECMD_VOL_CSIZE:
 	case ECMD_VOL_THRESH_LO:
 	case ECMD_VOL_THRESH_HI:
-	    s->solid_edit_scale = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
 	    break;
     }
 
@@ -80,7 +80,7 @@ vol_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	case ECMD_VOL_CSIZE:
 	case ECMD_VOL_THRESH_LO:
 	case ECMD_VOL_THRESH_HI:
-	    s->solid_edit_scale = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
 	    break;
     }
 

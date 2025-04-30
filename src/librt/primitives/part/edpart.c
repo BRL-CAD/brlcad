@@ -47,7 +47,7 @@ rt_solid_edit_part_set_edit_mode(struct rt_solid_edit *s, int mode)
 	case ECMD_PART_H:
 	case ECMD_PART_v:
 	case ECMD_PART_h:
-	    s->solid_edit_scale = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
 	    break;
 	default:
 	    break;

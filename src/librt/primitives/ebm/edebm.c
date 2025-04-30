@@ -45,7 +45,7 @@ rt_solid_edit_ebm_set_edit_mode(struct rt_solid_edit *s, int mode)
     rt_solid_edit_set_edflag(s, mode);
 
     if (mode == ECMD_EBM_HEIGHT)
-	s->solid_edit_scale = 1;
+	s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
 
     rt_solid_edit_process(s);
 

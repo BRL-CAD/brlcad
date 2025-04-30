@@ -52,11 +52,11 @@ rt_solid_edit_hyp_set_edit_mode(struct rt_solid_edit *s, int mode)
 	case ECMD_HYP_SCALE_A:
 	case ECMD_HYP_SCALE_B:
 	case ECMD_HYP_C:
-	    s->solid_edit_scale = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
 	    break;
 	case ECMD_HYP_ROT_H:
 	case ECMD_HYP_ROT_A:
-	    s->solid_edit_rotate = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_ROT;
 	    break;
 	default:
 	    break;

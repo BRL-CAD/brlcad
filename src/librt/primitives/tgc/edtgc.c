@@ -67,13 +67,11 @@ rt_solid_edit_tgc_set_edit_mode(struct rt_solid_edit *s, int mode)
 	case ECMD_TGC_MV_HH:
 	case ECMD_TGC_MV_H_CD:
 	case ECMD_TGC_MV_H_V_AB:
-	    s->solid_edit_scale = 0;
-	    s->solid_edit_translate = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
 	    break;
 	case ECMD_TGC_ROT_AB:
 	case ECMD_TGC_ROT_H:
-	    s->solid_edit_scale = 0;
-	    s->solid_edit_rotate = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_ROT;
 	    break;
 
     };

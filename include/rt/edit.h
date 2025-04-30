@@ -43,6 +43,7 @@ __BEGIN_DECLS
 #define RT_SOLID_EDIT_TRANS      1
 #define RT_SOLID_EDIT_SCALE      2
 #define RT_SOLID_EDIT_ROT        3
+#define RT_SOLID_EDIT_PICK       4
 
 struct rt_solid_edit_map;
 
@@ -69,11 +70,13 @@ struct rt_solid_edit {
 
     // MGED wants to know if we're in solid rotate, translate or scale mode.
     // (TODO - why?) Rather than keying off of primitive specific edit op
-    // types, have the ops set flags:
-    int solid_edit_rotate;
-    int solid_edit_translate;
-    int solid_edit_scale;
-    int solid_edit_pick;
+    // types, have the ops set a flag.  Options are:
+    //
+    // RT_SOLID_EDIT_TRANS
+    // RT_SOLID_EDIT_SCALE
+    // RT_SOLID_EDIT_ROT
+    // RT_SOLID_EDIT_PICK
+    int solid_edit_mode;
 
     fastf_t es_scale;           /* scale factor */
     mat_t incr_change;          /* change(s) from last cycle */

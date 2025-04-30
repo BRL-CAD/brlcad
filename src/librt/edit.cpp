@@ -115,10 +115,7 @@ rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol 
     s->ipe_ptr = NULL;
     s->local2base = 1.0;
     s->mv_context = 0;
-    s->solid_edit_pick = 0;
-    s->solid_edit_rotate = 0;
-    s->solid_edit_scale = 0;
-    s->solid_edit_translate = 0;
+    s->solid_edit_mode = RT_SOLID_EDIT_DEFAULT;
     s->tol = tol;
     s->u_ptr = NULL;
     s->update_views = 0;
@@ -390,28 +387,16 @@ rt_solid_edit_set_edflag(struct rt_solid_edit *s, int edflag)
 	return;
 
     s->edit_flag = edflag;
-    s->solid_edit_pick = 0;
 
     switch (edflag) {
 	case RT_SOLID_EDIT_ROT:
-	    s->solid_edit_rotate = 1;
-	    s->solid_edit_translate = 0;
-	    s->solid_edit_scale = 0;
-	    break;
 	case RT_SOLID_EDIT_TRANS:
-	    s->solid_edit_rotate = 0;
-	    s->solid_edit_translate = 1;
-	    s->solid_edit_scale = 0;
-	    break;
 	case RT_SOLID_EDIT_SCALE:
-	    s->solid_edit_rotate = 0;
-	    s->solid_edit_translate = 0;
-	    s->solid_edit_scale = 1;
+	case RT_SOLID_EDIT_PICK:
+	    s->solid_edit_mode = edflag;
 	    break;
 	default:
-	    s->solid_edit_rotate = 0;
-	    s->solid_edit_translate = 0;
-	    s->solid_edit_scale = 0;
+	    s->solid_edit_mode = RT_SOLID_EDIT_DEFAULT;
 	    break;
     }
 }

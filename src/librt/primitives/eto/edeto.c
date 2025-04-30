@@ -48,10 +48,10 @@ rt_solid_edit_eto_set_edit_mode(struct rt_solid_edit *s, int mode)
 	case ECMD_ETO_R:
 	case ECMD_ETO_RD:
 	case ECMD_ETO_SCALE_C:
-	    s->solid_edit_scale = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
 	    break;
 	case ECMD_ETO_ROT_C:
-	    s->solid_edit_rotate = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_ROT;
 	default:
 	    break;
     };

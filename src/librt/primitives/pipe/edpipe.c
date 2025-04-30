@@ -97,7 +97,7 @@ rt_solid_edit_pipe_set_edit_mode(struct rt_solid_edit *s, int mode)
 
     switch (mode) {
 	case ECMD_PIPE_SELECT:
-	    s->solid_edit_pick = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_PICK;
 	    break;
 	case ECMD_PIPE_NEXT_PT:
 	    if (!p->es_pipe_pnt) {
@@ -137,7 +137,7 @@ rt_solid_edit_pipe_set_edit_mode(struct rt_solid_edit *s, int mode)
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
 	    }
-	    s->solid_edit_translate = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
 	    break;
 	case ECMD_PIPE_PT_OD:
 	case ECMD_PIPE_PT_ID:
@@ -147,18 +147,18 @@ rt_solid_edit_pipe_set_edit_mode(struct rt_solid_edit *s, int mode)
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
 		return;
 	    }
-	    s->solid_edit_scale = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
 	    break;
 	case ECMD_PIPE_SCALE_OD:
 	case ECMD_PIPE_SCALE_ID:
 	case ECMD_PIPE_SCALE_RADIUS:
-	    s->solid_edit_scale = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
 	    break;
 	case ECMD_PIPE_PT_ADD:
-	    s->solid_edit_translate = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
 	    break;
 	case ECMD_PIPE_PT_INS:
-	    s->solid_edit_translate = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
 	    break;
 	case ECMD_PIPE_PT_DEL:
 	    // TODO - should we really be calling this here?

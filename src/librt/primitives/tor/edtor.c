@@ -45,7 +45,7 @@ rt_solid_edit_tor_set_edit_mode(struct rt_solid_edit *s, int mode)
     switch (mode) {
 	case ECMD_TOR_R1:
 	case ECMD_TOR_R2:
-	    s->solid_edit_scale = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
 	    break;
 	default:
 	    break;

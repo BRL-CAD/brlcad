@@ -47,7 +47,7 @@ rt_solid_edit_epa_set_edit_mode(struct rt_solid_edit *s, int mode)
 	case ECMD_EPA_H:
 	case ECMD_EPA_R1:
 	case ECMD_EPA_R2:
-	    s->solid_edit_scale = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
 	    break;
 	default:
 	    break;

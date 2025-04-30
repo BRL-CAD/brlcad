@@ -102,11 +102,11 @@ rt_solid_edit_nmg_set_edit_mode(struct rt_solid_edit *s, int mode)
 	    bu_vls_printf(s->log_str, "nmg_ed: undefined menu event?\n");
 	    return;
 	case ECMD_NMG_EPICK:
-	    s->solid_edit_pick = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_PICK;
 	    break;
 	case ECMD_NMG_EMOVE:
 	case ECMD_NMG_ESPLIT:
-	    s->solid_edit_translate = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
 	    break;
 	case ECMD_NMG_EKILL:
 	    break;
@@ -205,7 +205,7 @@ rt_solid_edit_nmg_set_edit_mode(struct rt_solid_edit *s, int mode)
 		struct edgeuse *eu;
 		fastf_t area;
 		int wire_loop_count = 0;
-		s->solid_edit_translate = 1;
+		s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
 
 		m = (struct model *)s->es_int.idb_ptr;
 		NMG_CK_MODEL(m);

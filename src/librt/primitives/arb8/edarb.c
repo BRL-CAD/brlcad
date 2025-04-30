@@ -75,7 +75,7 @@ arb8_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     aint->edit_menu = arg;
     rt_solid_edit_set_edflag(s, EARB);
-    s->solid_edit_translate = 1;
+    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
     if (arg == 12) {
 	rt_solid_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	rt_solid_edit_process(s);
@@ -113,7 +113,7 @@ arb7_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     aint->edit_menu = arg;
     rt_solid_edit_set_edflag(s, EARB);
-    s->solid_edit_translate = 1;
+    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
     if (arg == 11) {
 	/* move point 5 */
 	rt_solid_edit_set_edflag(s, PTARB);
@@ -154,7 +154,7 @@ arb6_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     aint->edit_menu = arg;
     rt_solid_edit_set_edflag(s, EARB);
-    s->solid_edit_translate = 1;
+    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
     if (arg == 8) {
 	/* move point 5, location = 4 */
 	rt_solid_edit_set_edflag(s, PTARB);
@@ -198,7 +198,7 @@ arb5_edge(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     aint->edit_menu = arg;
     rt_solid_edit_set_edflag(s, EARB);
-    s->solid_edit_translate = 1;
+    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
     if (arg == 8) {
 	/* move point 5 at location 4 */
 	rt_solid_edit_set_edflag(s, PTARB);
@@ -237,7 +237,7 @@ arb4_point(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void 
     struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     aint->edit_menu = arg;
     rt_solid_edit_set_edflag(s, PTARB);
-    s->solid_edit_translate = 1;
+    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
     if (arg == 5) {
 	rt_solid_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	rt_solid_edit_process(s);
@@ -266,7 +266,7 @@ arb8_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), voi
     struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     aint->edit_menu = arg - 1;
     rt_solid_edit_set_edflag(s, ECMD_ARB_MOVE_FACE);
-    s->solid_edit_translate = 1;
+    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
     if (arg == 7) {
 	rt_solid_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	rt_solid_edit_process(s);
@@ -297,7 +297,7 @@ arb7_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), voi
     struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     aint->edit_menu = arg - 1;
     rt_solid_edit_set_edflag(s, ECMD_ARB_MOVE_FACE);
-    s->solid_edit_translate = 1;
+    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
     if (arg == 7) {
 	rt_solid_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	rt_solid_edit_process(s);
@@ -324,7 +324,7 @@ arb6_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), voi
     struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     aint->edit_menu = arg - 1;
     rt_solid_edit_set_edflag(s, ECMD_ARB_MOVE_FACE);
-    s->solid_edit_translate = 1;
+    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
     if (arg == 6) {
 	rt_solid_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	rt_solid_edit_process(s);
@@ -354,7 +354,7 @@ arb5_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), voi
     struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     aint->edit_menu = arg - 1;
     rt_solid_edit_set_edflag(s, ECMD_ARB_MOVE_FACE);
-    s->solid_edit_translate = 1;
+    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
     if (arg == 6) {
 	rt_solid_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	rt_solid_edit_process(s);
@@ -384,7 +384,7 @@ arb4_mv_face(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), voi
     struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     aint->edit_menu = arg - 1;
     rt_solid_edit_set_edflag(s, ECMD_ARB_MOVE_FACE);
-    s->solid_edit_translate = 1;
+    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
     if (arg == 5) {
 	rt_solid_edit_set_edflag(s, ECMD_ARB_MAIN_MENU);
 	rt_solid_edit_process(s);
@@ -996,7 +996,7 @@ ecmd_arb_setup_rotface(struct rt_solid_edit *s)
 
     a->fixv--;
     rt_solid_edit_set_edflag(s, ECMD_ARB_ROTATE_FACE);
-    s->solid_edit_rotate = 1;
+    s->solid_edit_mode = RT_SOLID_EDIT_ROT;
 
     /* draw arrow, etc. */
     int vs_flag = 1;

@@ -46,12 +46,12 @@ rt_solid_edit_cline_set_edit_mode(struct rt_solid_edit *s, int mode)
 
     switch (mode) {
 	case ECMD_CLINE_MOVE_H:
-	    s->solid_edit_translate = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
 	    break;
 	case ECMD_CLINE_SCALE_H:
 	case ECMD_CLINE_SCALE_R:
 	case ECMD_CLINE_SCALE_T:
-	    s->solid_edit_scale = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
 	    break;
 	default:
 	    break;

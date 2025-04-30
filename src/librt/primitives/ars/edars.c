@@ -125,10 +125,10 @@ rt_solid_edit_ars_set_edit_mode(struct rt_solid_edit *s, int mode)
 	case ECMD_ARS_MOVE_PT:
 	case ECMD_ARS_MOVE_CRV:
 	case ECMD_ARS_MOVE_COL:
-	    s->solid_edit_translate = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
 	    break;
 	case ECMD_ARS_PICK:
-	    s->solid_edit_pick = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_PICK;
 	    break;
 	default:
 	    break;
@@ -850,7 +850,7 @@ rt_solid_edit_ars_edit(struct rt_solid_edit *s)
 	case ECMD_ARS_PICK_MENU:
 	    /* put up point pick menu for ARS solid */
 	    rt_solid_edit_set_edflag(s, ECMD_ARS_PICK);
-	    s->solid_edit_pick = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_PICK;
 	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_MENU_SET, BU_CLBK_DURING);
 	    if (!f)
 		return 0;

@@ -92,10 +92,10 @@ rt_solid_edit_metaball_set_edit_mode(struct rt_solid_edit *s, int mode)
 	case ECMD_METABALL_SET_THRESHOLD:
 	case ECMD_METABALL_SET_METHOD:
 	case ECMD_METABALL_PT_SET_GOO:
-	    s->solid_edit_scale = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
 	    break;
 	case ECMD_METABALL_PT_PICK:
-	    s->solid_edit_pick = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_PICK;
 	    break;
 	case ECMD_METABALL_PT_NEXT:
 	    if (!m->es_metaball_pnt) {
@@ -133,7 +133,7 @@ rt_solid_edit_metaball_set_edit_mode(struct rt_solid_edit *s, int mode)
 	    }
 	    break;
 	case ECMD_METABALL_PT_FLDSTR:
-	    s->solid_edit_scale = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
 	    if (!m->es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
@@ -165,10 +165,10 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	case ECMD_METABALL_SET_THRESHOLD:
 	case ECMD_METABALL_SET_METHOD:
 	case ECMD_METABALL_PT_SET_GOO:
-	    s->solid_edit_scale = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
 	    break;
 	case ECMD_METABALL_PT_PICK:
-	    s->solid_edit_pick = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_PICK;
 	    break;
 	case ECMD_METABALL_PT_NEXT:
 	    if (!m->es_metaball_pnt) {
@@ -212,7 +212,7 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    rt_solid_edit_process(s);
 	    break;
 	case ECMD_METABALL_PT_FLDSTR:
-	    s->solid_edit_scale = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
 	    if (!m->es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
 		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);

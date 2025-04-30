@@ -82,13 +82,13 @@ rt_solid_edit_bspline_set_edit_mode(struct rt_solid_edit *s, int mode)
     if (mode < 0) {
 	/* Enter picking state */
 	rt_solid_edit_set_edflag(s, ECMD_SPLINE_VPICK);
-	s->solid_edit_pick = 1;
+	s->solid_edit_mode = RT_SOLID_EDIT_PICK;
 	return;
     }
 
     rt_solid_edit_set_edflag(s, mode);
     if (mode == ECMD_VTRANS)
-	s->solid_edit_translate = 1;
+	s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
 
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -108,13 +108,13 @@ spline_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *
     if (arg < 0) {
 	/* Enter picking state */
 	rt_solid_edit_set_edflag(s, ECMD_SPLINE_VPICK);
-	s->solid_edit_pick = 1;
+	s->solid_edit_mode = RT_SOLID_EDIT_PICK;
 	return;
     }
 
     rt_solid_edit_set_edflag(s, arg);
     if (arg == ECMD_VTRANS)
-	s->solid_edit_translate = 1;
+	s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
 
     rt_solid_edit_process(s);
 

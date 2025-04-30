@@ -92,12 +92,12 @@ rt_solid_edit_bot_set_edit_mode(struct rt_solid_edit *s, int mode)
 	case ECMD_BOT_MOVEV:
 	case ECMD_BOT_MOVEE:
 	case ECMD_BOT_MOVET:
-	    s->solid_edit_translate = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
 	    break;
 	case ECMD_BOT_PICKV:
 	case ECMD_BOT_PICKE:
 	case ECMD_BOT_PICKT:
-	    s->solid_edit_pick = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_PICK;
 	    break;
 	default:
 	    break;
@@ -120,12 +120,12 @@ bot_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNU
 	case ECMD_BOT_MOVEV:
 	case ECMD_BOT_MOVEE:
 	case ECMD_BOT_MOVET:
-	    s->solid_edit_translate = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
 	    break;
 	case ECMD_BOT_PICKV:
 	case ECMD_BOT_PICKE:
 	case ECMD_BOT_PICKT:
-	    s->solid_edit_pick = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_PICK;
 	    break;
 	default:
 	    break;

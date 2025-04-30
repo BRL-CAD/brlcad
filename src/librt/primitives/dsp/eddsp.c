@@ -50,7 +50,7 @@ rt_solid_edit_dsp_set_edit_mode(struct rt_solid_edit *s, int mode)
 	case ECMD_DSP_SCALE_X:
 	case ECMD_DSP_SCALE_Y:
 	case ECMD_DSP_SCALE_ALT:
-	    s->solid_edit_scale = 1;
+	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
 	    break;
 	default:
 	    break;
