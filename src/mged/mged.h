@@ -172,49 +172,6 @@ struct menu_item {
  * model space to view space with all the modelchanges too.
  */
 
-
-struct mged_edit_state {
-
-    // main global editing state (ugh)
-    int global_editing_state;
-
-    struct bview_knobs k;
-
-    fastf_t es_scale;  /* scale factor */
-
-    mat_t incr_change;          /* change(s) from last cycle */
-    mat_t model_changes;        /* full changes this edit */
-
-    fastf_t acc_sc[3];          /* accumulate local object scale factors */
-    fastf_t acc_sc_obj;         /* accumulate global object scale factor */
-    fastf_t acc_sc_sol;         /* accumulate solid scale factor */
-    mat_t acc_rot_sol;          /* accumulate solid rotations */
-
-    int e_keyfixed;             /* keypoint specified by user? */
-    point_t e_keypoint;         /* center of editing xforms */
-    const char *e_keytag;       /* string identifying the keypoint */
-
-    int e_mvalid;               /* e_mparam valid.  e_inpara must = 0 */
-    vect_t e_mparam;            /* mouse input param.  Only when e_mvalid set */
-
-    int e_inpara;               /* parameter input from keyboard flag.  1 == e_para valid.  e_mvalid must = 0 */
-    vect_t e_para;              /* keyboard input parameter changes */
-
-    mat_t e_invmat;             /* inverse of e_mat KAA */
-    mat_t e_mat;                /* accumulated matrix of path */
-
-    point_t curr_e_axes_pos;    /* center of editing xforms */
-    point_t e_axes_pos;
-
-    // TODO - can we eliminate these?
-    int e_edclass;		/* type of editing class for this solid */
-    int e_type;			/* COMGEOM solid type */
-
-    // Container to hold the intermediate state
-    // of the object being edited (I think?)
-    struct rt_db_internal es_int;
-};
-
 /* global application state */
 struct mged_state {
     uint32_t magic;
@@ -242,7 +199,11 @@ struct mged_state {
     struct bu_list *vlfree;
 
     /* Editing related */
-    struct mged_edit_state edit_state;
+    struct rt_solid_edit *s_edit;
+    int global_editing_state; // main global editing state (ugh)
+    // TODO - can we eliminate these?
+    int es_edclass;		/* type of editing class for this solid */
+    int es_type;		/* COMGEOM solid type */
 
     /* called by numerous functions to indicate truthfully whether the
      * views need to be redrawn. */

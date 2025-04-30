@@ -353,16 +353,16 @@ edit_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 		case 'm':
 		case 'o':
 		    if (mged_variables->mv_rateknobs)
-			(*f) = s->edit_state.k.tra_m[X];
+			(*f) = s->s_edit->k.tra_m[X];
 		    else
-			(*f) = s->edit_state.k.tra_m_abs[X];
+			(*f) = s->s_edit->k.tra_m_abs[X];
 		    break;
 		case 'v':
 		default:
 		    if (mged_variables->mv_rateknobs)
-			(*f) = s->edit_state.k.tra_v[X];
+			(*f) = s->s_edit->k.tra_v[X];
 		    else
-			(*f) = s->edit_state.k.tra_v_abs[X];
+			(*f) = s->s_edit->k.tra_v_abs[X];
 		    break;
 	    }
 
@@ -380,15 +380,15 @@ edit_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 		case 'm':
 		case 'o':
 		    if (mged_variables->mv_rateknobs)
-			(*f) = s->edit_state.k.tra_m[Y];
+			(*f) = s->s_edit->k.tra_m[Y];
 		    else
-			(*f) = s->edit_state.k.tra_m_abs[Y];
+			(*f) = s->s_edit->k.tra_m_abs[Y];
 		    break;
 		case 'v':
 		    if (mged_variables->mv_rateknobs)
-			(*f) = s->edit_state.k.tra_v[Y];
+			(*f) = s->s_edit->k.tra_v[Y];
 		    else
-			(*f) = s->edit_state.k.tra_v_abs[Y];
+			(*f) = s->s_edit->k.tra_v_abs[Y];
 		    break;
 	    }
 
@@ -406,15 +406,15 @@ edit_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 		case 'm':
 		case 'o':
 		    if (mged_variables->mv_rateknobs)
-			(*f) = s->edit_state.k.tra_m[Z];
+			(*f) = s->s_edit->k.tra_m[Z];
 		    else
-			(*f) = s->edit_state.k.tra_m_abs[Z];
+			(*f) = s->s_edit->k.tra_m_abs[Z];
 		    break;
 		case 'v':
 		    if (mged_variables->mv_rateknobs)
-			(*f) = s->edit_state.k.tra_v[Z];
+			(*f) = s->s_edit->k.tra_v[Z];
 		    else
-			(*f) = s->edit_state.k.tra_v_abs[Z];
+			(*f) = s->s_edit->k.tra_v_abs[Z];
 		    break;
 	    }
 
@@ -429,9 +429,9 @@ edit_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 		return 0;
 
 	    if (mged_variables->mv_rateknobs)
-		(*f) = s->edit_state.k.sca;
+		(*f) = s->s_edit->k.sca;
 	    else
-		(*f) = s->edit_state.k.sca_abs;
+		(*f) = s->s_edit->k.sca_abs;
 
 	    dm_set_fg(DMP,
 		    color_scheme->cs_slider_text1[0],
@@ -446,22 +446,22 @@ edit_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 	    switch (view_state->vs_gvp->gv_coord) {
 		case 'm':
 		    if (mged_variables->mv_rateknobs)
-			(*f) = s->edit_state.k.rot_m[X] / RATE_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_m[X] / RATE_ROT_FACTOR;
 		    else
-			(*f) = s->edit_state.k.rot_m_abs[X] / ABS_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_m_abs[X] / ABS_ROT_FACTOR;
 		    break;
 		case 'o':
 		    if (mged_variables->mv_rateknobs)
-			(*f) = s->edit_state.k.rot_o[X] / RATE_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_o[X] / RATE_ROT_FACTOR;
 		    else
-			(*f) = s->edit_state.k.rot_o_abs[X] / ABS_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_o_abs[X] / ABS_ROT_FACTOR;
 		    break;
 		case 'v':
 		default:
 		    if (mged_variables->mv_rateknobs)
-			(*f) = s->edit_state.k.rot_v[X] / RATE_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_v[X] / RATE_ROT_FACTOR;
 		    else
-			(*f) = s->edit_state.k.rot_v_abs[X] / ABS_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_v_abs[X] / ABS_ROT_FACTOR;
 		    break;
 	    }
 
@@ -478,22 +478,22 @@ edit_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 	    switch (view_state->vs_gvp->gv_coord) {
 		case 'm':
 		    if (mged_variables->mv_rateknobs)
-			(*f) = s->edit_state.k.rot_m[Y] / RATE_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_m[Y] / RATE_ROT_FACTOR;
 		    else
-			(*f) = s->edit_state.k.rot_m_abs[Y] / ABS_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_m_abs[Y] / ABS_ROT_FACTOR;
 		    break;
 		case 'o':
 		    if (mged_variables->mv_rateknobs)
-			(*f) = s->edit_state.k.rot_o[Y] / RATE_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_o[Y] / RATE_ROT_FACTOR;
 		    else
-			(*f) = s->edit_state.k.rot_o_abs[Y] / ABS_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_o_abs[Y] / ABS_ROT_FACTOR;
 		    break;
 		case 'v':
 		default:
 		    if (mged_variables->mv_rateknobs)
-			(*f) = s->edit_state.k.rot_v[Y] / RATE_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_v[Y] / RATE_ROT_FACTOR;
 		    else
-			(*f) = s->edit_state.k.rot_v_abs[Y] / ABS_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_v_abs[Y] / ABS_ROT_FACTOR;
 		    break;
 	    }
 
@@ -510,22 +510,22 @@ edit_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 	    switch (view_state->vs_gvp->gv_coord) {
 		case 'm':
 		    if (mged_variables->mv_rateknobs)
-			(*f) = s->edit_state.k.rot_m[Z] / RATE_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_m[Z] / RATE_ROT_FACTOR;
 		    else
-			(*f) = s->edit_state.k.rot_m_abs[Z] / ABS_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_m_abs[Z] / ABS_ROT_FACTOR;
 		    break;
 		case 'o':
 		    if (mged_variables->mv_rateknobs)
-			(*f) = s->edit_state.k.rot_o[Z] / RATE_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_o[Z] / RATE_ROT_FACTOR;
 		    else
-			(*f) = s->edit_state.k.rot_o_abs[Z] / ABS_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_o_abs[Z] / ABS_ROT_FACTOR;
 		    break;
 		case 'v':
 		default:
 		    if (mged_variables->mv_rateknobs)
-			(*f) = s->edit_state.k.rot_v[Z] / RATE_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_v[Z] / RATE_ROT_FACTOR;
 		    else
-			(*f) = s->edit_state.k.rot_v_abs[Z] / ABS_ROT_FACTOR;
+			(*f) = s->s_edit->k.rot_v_abs[Z] / ABS_ROT_FACTOR;
 		    break;
 	    }
 

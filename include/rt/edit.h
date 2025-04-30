@@ -54,7 +54,7 @@ struct rt_solid_edit {
     struct bu_vls *log_str;
 
     // Container to hold the intermediate state
-    // of the object being edited (I think?)
+    // of the object being edited
     struct rt_db_internal es_int;
 
     // Tolerance for calculations

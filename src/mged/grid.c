@@ -301,22 +301,22 @@ snap_keypoint_to_grid(struct mged_state *s)
     if (s->dbip == DBI_NULL)
 	return;
 
-    if (s->edit_state.global_editing_state != ST_S_EDIT && s->edit_state.global_editing_state != ST_O_EDIT) {
+    if (s->global_editing_state != ST_S_EDIT && s->global_editing_state != ST_O_EDIT) {
 	bu_log("snap_keypoint_to_grid: must be in an edit state\n");
 	return;
     }
 
-    if (s->edit_state.global_editing_state == ST_S_EDIT) {
-	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->edit_state.curr_e_axes_pos);
+    if (s->global_editing_state == ST_S_EDIT) {
+	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
     } else {
-	MAT4X3PNT(model_pt, s->edit_state.model_changes, s->edit_state.e_axes_pos);
+	MAT4X3PNT(model_pt, s->s_edit->model_changes, s->s_edit->e_axes_pos);
 	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, model_pt);
     }
     snap_to_grid(s, &view_pt[X], &view_pt[Y]);
     MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
     VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 
-    if (s->edit_state.global_editing_state == ST_S_EDIT)
+    if (s->global_editing_state == ST_S_EDIT)
 	bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
     else
 	bu_vls_printf(&cmd, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);

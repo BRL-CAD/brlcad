@@ -474,7 +474,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		fastf_t area;
 		int wire_loop_count = 0;
 
-		m = (struct model *)s->edit_state.es_int.idb_ptr;
+		m = (struct model *)s->s_edit->es_int.idb_ptr;
 		NMG_CK_MODEL(m);
 
 		/* look for wire loops */
