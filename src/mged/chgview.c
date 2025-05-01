@@ -48,8 +48,8 @@ int mged_zoom(struct mged_state *s, double val);
 void mged_center(struct mged_state *s, point_t center);
 void usejoy(struct mged_state *s, double xangle, double yangle, double zangle);
 
-int mged_erot_xyz(struct mged_state *s, char origin, vect_t rvec);
-int mged_etran(struct mged_state *s, char coords, vect_t tvec);
+int knob_edit_rot(struct mged_state *s, char origin, vect_t rvec);
+int knob_edit_tran(struct mged_state *s, char coords, vect_t tvec);
 int mged_mtran(struct mged_state *s, const vect_t tvec);
 int mged_otran(struct mged_state *s, const vect_t tvec);
 int mged_vtran(struct mged_state *s, const vect_t tvec);
@@ -1257,12 +1257,9 @@ static int
 knob_tran(struct mged_state *s,
 	vect_t tvec,
 	int model_flag,
-	int view_flag,
-	int edit_flag_tra)
+	int view_flag)
 {
-    if (edit_flag_tra) {
-	mged_etran(s, view_state->vs_gvp->gv_coord, tvec);
-    } else if (model_flag || (view_state->vs_gvp->gv_coord == 'm' && !view_flag)) {
+    if (model_flag || (view_state->vs_gvp->gv_coord == 'm' && !view_flag)) {
 	mged_mtran(s, tvec);
     } else if (view_state->vs_gvp->gv_coord == 'o') {
 	mged_otran(s, tvec);
@@ -1279,12 +1276,9 @@ knob_rot(struct mged_state *s,
 	vect_t rvec,
 	char origin,
 	int model_flag,
-	int view_flag,
-	int edit_flag_rot)
+	int view_flag)
 {
-    if (edit_flag_rot) {
-	mged_erot_xyz(s, origin, rvec);
-    } else if (model_flag || (view_state->vs_gvp->gv_coord == 'm' && !view_flag)) {
+    if (model_flag || (view_state->vs_gvp->gv_coord == 'm' && !view_flag)) {
 	mged_vrot_xyz(s, origin, 'm', rvec);
     } else if (view_state->vs_gvp->gv_coord == 'o') {
 	mged_vrot_xyz(s, origin, 'o', rvec);
@@ -1296,7 +1290,7 @@ knob_rot(struct mged_state *s,
 }
 
 static void
-knob_sca(struct mged_state *s)
+knob_edit_sca(struct mged_state *s)
 {
     if (s->global_editing_state == ST_S_EDIT) {
 	sedit_abs_scale(s);
@@ -1552,7 +1546,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    // same way as the other op categories and accumulated the commands
 	    // before doing a final apply.
 	    if (do_sca)
-		knob_sca(s);
+		knob_edit_sca(s);
 
 	    // Done - reset var
 	    do_sca = 0;
@@ -1564,12 +1558,20 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     if (do_tran) {
 	int edit_flag_tra = (EDIT_TRAN && ((mged_variables->mv_transform == 'e' && !view_flag && !model_flag) || edit_flag_force)) ? 1 : 0;
-	(void)knob_tran(s, tvec, model_flag, view_flag, edit_flag_tra);
+	if (edit_flag_tra) {
+	    knob_edit_tran(s, view_state->vs_gvp->gv_coord, tvec);
+	} else {
+	    (void)knob_tran(s, tvec, model_flag, view_flag);
+	}
     }
 
     if (do_rot) {
 	int edit_flag_rot = (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' && !view_flag && !model_flag) || edit_flag_force)) ? 1 : 0;
-	(void)knob_rot(s, rvec, origin, model_flag, view_flag, edit_flag_rot);
+	if (edit_flag_rot) {
+	    knob_edit_rot(s, origin, rvec);
+	} else {
+	    (void)knob_rot(s, rvec, origin, model_flag, view_flag);
+	}
     }
 
     check_nonzero_rates(s);
@@ -2449,7 +2451,7 @@ mged_erot(struct mged_state *s,
 
 
 int
-mged_erot_xyz(struct mged_state *s,
+knob_edit_rot(struct mged_state *s,
 	char rotate_about,
 	vect_t rvec)
 {
@@ -2734,7 +2736,7 @@ cmd_arot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 
 
 int
-mged_etran(struct mged_state *s,
+knob_edit_tran(struct mged_state *s,
 	char coords,
 	vect_t tvec)
 {
@@ -2875,7 +2877,7 @@ cmd_tra(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	return mged_etran(s, coord, tvec);
+	return knob_edit_tran(s, coord, tvec);
     } else {
 	int ret;
 
