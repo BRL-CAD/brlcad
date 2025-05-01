@@ -38,7 +38,7 @@
 #define EDIT_CLASS_ROTATE 2
 #define EDIT_CLASS_SCALE 3
 
-/* These ECMD_ values go in es_edflag.  Some names not changed yet */
+/* These ECMD_ values go in s->s_edit->edit_flag.  Some names not changed yet */
 #define IDLE		0	/* edarb.c */
 #define STRANS		1	/* buttons.c */
 #define SSCALE		2	/* buttons.c */	/* Scale whole solid by scalar */
@@ -147,30 +147,30 @@
 #define ECMD_HYP_ROT_A		92
 
 #define SEDIT_ROTATE (s->global_editing_state == ST_S_EDIT && \
-		      (es_edflag == SROT || \
-		       es_edflag == ECMD_TGC_ROT_H || \
-		       es_edflag ==  ECMD_TGC_ROT_AB || \
-		       es_edflag == ECMD_ARB_ROTATE_FACE || \
-		       es_edflag == ECMD_EXTR_ROT_H || \
-		       es_edflag == ECMD_ETO_ROT_C))
+		      (s->s_edit->edit_flag == SROT || \
+		       s->s_edit->edit_flag == ECMD_TGC_ROT_H || \
+		       s->s_edit->edit_flag ==  ECMD_TGC_ROT_AB || \
+		       s->s_edit->edit_flag == ECMD_ARB_ROTATE_FACE || \
+		       s->s_edit->edit_flag == ECMD_EXTR_ROT_H || \
+		       s->s_edit->edit_flag == ECMD_ETO_ROT_C))
 #define OEDIT_ROTATE (s->global_editing_state == ST_O_EDIT && \
 		      edobj == BE_O_ROTATE)
 #define EDIT_ROTATE (SEDIT_ROTATE || OEDIT_ROTATE)
 
 #define SEDIT_SCALE (s->global_editing_state == ST_S_EDIT && \
-		     (es_edflag == SSCALE || \
-		      es_edflag == PSCALE || \
-		      es_edflag == ECMD_VOL_THRESH_LO || \
-		      es_edflag == ECMD_VOL_THRESH_HI || \
-		      es_edflag == ECMD_VOL_CSIZE || \
-		      es_edflag == ECMD_DSP_SCALE_X || \
-		      es_edflag == ECMD_DSP_SCALE_Y || \
-		      es_edflag == ECMD_DSP_SCALE_ALT || \
-		      es_edflag == ECMD_EBM_HEIGHT || \
-		      es_edflag == ECMD_CLINE_SCALE_H || \
-		      es_edflag == ECMD_CLINE_SCALE_R || \
-		      es_edflag == ECMD_CLINE_SCALE_T || \
-		      es_edflag == ECMD_EXTR_SCALE_H))
+		     (s->s_edit->edit_flag == SSCALE || \
+		      s->s_edit->edit_flag == PSCALE || \
+		      s->s_edit->edit_flag == ECMD_VOL_THRESH_LO || \
+		      s->s_edit->edit_flag == ECMD_VOL_THRESH_HI || \
+		      s->s_edit->edit_flag == ECMD_VOL_CSIZE || \
+		      s->s_edit->edit_flag == ECMD_DSP_SCALE_X || \
+		      s->s_edit->edit_flag == ECMD_DSP_SCALE_Y || \
+		      s->s_edit->edit_flag == ECMD_DSP_SCALE_ALT || \
+		      s->s_edit->edit_flag == ECMD_EBM_HEIGHT || \
+		      s->s_edit->edit_flag == ECMD_CLINE_SCALE_H || \
+		      s->s_edit->edit_flag == ECMD_CLINE_SCALE_R || \
+		      s->s_edit->edit_flag == ECMD_CLINE_SCALE_T || \
+		      s->s_edit->edit_flag == ECMD_EXTR_SCALE_H))
 #define OEDIT_SCALE (s->global_editing_state == ST_O_EDIT && \
 		     (edobj == BE_O_XSCALE || \
 		      edobj == BE_O_YSCALE || \
@@ -179,28 +179,28 @@
 #define EDIT_SCALE (SEDIT_SCALE || OEDIT_SCALE)
 
 #define SEDIT_TRAN (s->global_editing_state == ST_S_EDIT && \
-		    (es_edflag == STRANS || \
-		     es_edflag == ECMD_TGC_MV_H || \
-		     es_edflag == ECMD_TGC_MV_HH || \
-		     es_edflag == EARB || \
-		     es_edflag == PTARB || \
-		     es_edflag == ECMD_ARB_MOVE_FACE || \
-		     es_edflag == ECMD_VTRANS || \
-		     es_edflag == ECMD_NMG_EMOVE || \
-		     es_edflag == ECMD_NMG_ESPLIT || \
-		     es_edflag == ECMD_NMG_LEXTRU || \
-		     es_edflag == ECMD_PIPE_PT_MOVE || \
-		     es_edflag == ECMD_PIPE_SPLIT || \
-		     es_edflag == ECMD_PIPE_PT_ADD || \
-		     es_edflag == ECMD_PIPE_PT_INS || \
-		     es_edflag == ECMD_ARS_MOVE_PT || \
-		     es_edflag == ECMD_ARS_MOVE_CRV || \
-		     es_edflag == ECMD_ARS_MOVE_COL || \
-		     es_edflag == ECMD_BOT_MOVEV || \
-		     es_edflag == ECMD_BOT_MOVEE || \
-		     es_edflag == ECMD_BOT_MOVET || \
-		     es_edflag == ECMD_CLINE_MOVE_H || \
-		     es_edflag == ECMD_EXTR_MOV_H))
+		    (s->s_edit->edit_flag == STRANS || \
+		     s->s_edit->edit_flag == ECMD_TGC_MV_H || \
+		     s->s_edit->edit_flag == ECMD_TGC_MV_HH || \
+		     s->s_edit->edit_flag == EARB || \
+		     s->s_edit->edit_flag == PTARB || \
+		     s->s_edit->edit_flag == ECMD_ARB_MOVE_FACE || \
+		     s->s_edit->edit_flag == ECMD_VTRANS || \
+		     s->s_edit->edit_flag == ECMD_NMG_EMOVE || \
+		     s->s_edit->edit_flag == ECMD_NMG_ESPLIT || \
+		     s->s_edit->edit_flag == ECMD_NMG_LEXTRU || \
+		     s->s_edit->edit_flag == ECMD_PIPE_PT_MOVE || \
+		     s->s_edit->edit_flag == ECMD_PIPE_SPLIT || \
+		     s->s_edit->edit_flag == ECMD_PIPE_PT_ADD || \
+		     s->s_edit->edit_flag == ECMD_PIPE_PT_INS || \
+		     s->s_edit->edit_flag == ECMD_ARS_MOVE_PT || \
+		     s->s_edit->edit_flag == ECMD_ARS_MOVE_CRV || \
+		     s->s_edit->edit_flag == ECMD_ARS_MOVE_COL || \
+		     s->s_edit->edit_flag == ECMD_BOT_MOVEV || \
+		     s->s_edit->edit_flag == ECMD_BOT_MOVEE || \
+		     s->s_edit->edit_flag == ECMD_BOT_MOVET || \
+		     s->s_edit->edit_flag == ECMD_CLINE_MOVE_H || \
+		     s->s_edit->edit_flag == ECMD_EXTR_MOV_H))
 #define OEDIT_TRAN (s->global_editing_state == ST_O_EDIT && \
 		    (edobj == BE_O_X || \
 		     edobj == BE_O_Y || \
@@ -208,18 +208,17 @@
 #define EDIT_TRAN (SEDIT_TRAN || OEDIT_TRAN)
 
 #define SEDIT_PICK (s->global_editing_state == ST_S_EDIT && \
-		    (es_edflag == ECMD_NMG_EPICK || \
-		     es_edflag == ECMD_PIPE_PICK || \
-		     es_edflag == ECMD_ARS_PICK || \
-		     es_edflag == ECMD_BOT_PICKV || \
-		     es_edflag == ECMD_BOT_PICKE || \
-		     es_edflag == ECMD_BOT_PICKT || \
-		     es_edflag == ECMD_METABALL_PT_PICK))
+		    (s->s_edit->edit_flag == ECMD_NMG_EPICK || \
+		     s->s_edit->edit_flag == ECMD_PIPE_PICK || \
+		     s->s_edit->edit_flag == ECMD_ARS_PICK || \
+		     s->s_edit->edit_flag == ECMD_BOT_PICKV || \
+		     s->s_edit->edit_flag == ECMD_BOT_PICKE || \
+		     s->s_edit->edit_flag == ECMD_BOT_PICKT || \
+		     s->s_edit->edit_flag == ECMD_METABALL_PT_PICK))
 
 
 extern fastf_t es_peqn[7][4];	/* ARBs defining plane equations */
 extern int es_menu;		/* item/edit_mode selected from menu */
-extern int es_edflag;		/* type of editing for this solid */
 
 // NMG editing vars
 extern struct edgeuse *es_eu;

@@ -2634,10 +2634,10 @@ mged_erot(struct mged_state *s,
 	save_rotate_about = mged_variables->mv_rotate_about;
 	mged_variables->mv_rotate_about = rotate_about;
 
-	save_edflag = es_edflag;
+	save_edflag = s->s_edit->edit_flag;
 
 	if (!SEDIT_ROTATE) {
-	    es_edflag = SROT;
+	    s->s_edit->edit_flag = SROT;
 	}
 
 	s->s_edit->e_inpara = 0;
@@ -2646,7 +2646,7 @@ mged_erot(struct mged_state *s,
 	sedit(s);
 
 	mged_variables->mv_rotate_about = save_rotate_about;
-	es_edflag = save_edflag;
+	s->s_edit->edit_flag = save_edflag;
     } else {
 	point_t point;
 	vect_t work;
@@ -3003,16 +3003,16 @@ mged_etran(struct mged_state *s,
 	s->s_edit->e_keyfixed = 0;
 	get_solid_keypoint(s, &s->s_edit->e_keypoint, &s->s_edit->e_keytag,
 			   &s->s_edit->es_int, s->s_edit->e_mat);
-	save_edflag = es_edflag;
+	save_edflag = s->s_edit->edit_flag;
 
 	if (!SEDIT_TRAN) {
-	    es_edflag = STRANS;
+	    s->s_edit->edit_flag = STRANS;
 	}
 
 	VADD2(s->s_edit->e_para, delta, s->s_edit->curr_e_axes_pos);
 	s->s_edit->e_inpara = 3;
 	sedit(s);
-	es_edflag = save_edflag;
+	s->s_edit->edit_flag = save_edflag;
     } else {
 	MAT_IDN(xlatemat);
 	MAT_DELTAS_VEC(xlatemat, delta);
@@ -3142,10 +3142,10 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
     if (s->global_editing_state == ST_S_EDIT) {
 	int save_edflag;
 
-	save_edflag = es_edflag;
+	save_edflag = s->s_edit->edit_flag;
 
 	if (!SEDIT_SCALE) {
-	    es_edflag = SSCALE;
+	    s->s_edit->edit_flag = SSCALE;
 	}
 
 	s->s_edit->es_scale = sfactor;
@@ -3154,7 +3154,7 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 
 	if (s->s_edit->acc_sc_sol < MGED_SMALL_SCALE) {
 	    s->s_edit->acc_sc_sol = old_scale;
-	    es_edflag = save_edflag;
+	    s->s_edit->edit_flag = save_edflag;
 	    return TCL_OK;
 	}
 
@@ -3166,7 +3166,7 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 
 	sedit(s);
 
-	es_edflag = save_edflag;
+	s->s_edit->edit_flag = save_edflag;
     } else {
 	point_t temp;
 	point_t pos_model;

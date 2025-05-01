@@ -64,7 +64,7 @@ editarb(struct mged_state *s, vect_t pos_model)
     newedge = 0;
 
     if (ret) {
-	es_edflag = IDLE;
+	s->s_edit->edit_flag = IDLE;
     }
 
     return ret;
@@ -213,7 +213,7 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (not_state(s, ST_S_EDIT, "Edgedir"))
 	return TCL_ERROR;
 
-    if (es_edflag != EARB) {
+    if (s->s_edit->edit_flag != EARB) {
 	Tcl_AppendResult(interp, "Not moving an ARB edge\n", (char *)NULL);
 	return TCL_ERROR;
     }

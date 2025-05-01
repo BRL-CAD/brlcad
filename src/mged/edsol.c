@@ -58,7 +58,6 @@ short int fixv;		/* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */
 /* data for solid editing */
 int sedraw;	/* apply solid editing changes */
 
-int es_edflag;		/* type of editing for this solid */
 fastf_t es_peqn[7][4];		/* ARBs defining plane equations */
 fastf_t es_m[3];		/* edge(line) slope */
 
@@ -84,21 +83,21 @@ struct wdb_metaball_pnt *es_metaball_pnt=(struct wdb_metaball_pnt *)NULL; /* Cur
 /* These values end up in es_menu, as do ARB vertex numbers */
 int es_menu;		/* item selected from menu */
 
-#define PARAM_1ARG (es_edflag == SSCALE || \
-		    es_edflag == PSCALE || \
-		    es_edflag == ECMD_BOT_THICK || \
-		    es_edflag == ECMD_VOL_THRESH_LO || \
-		    es_edflag == ECMD_VOL_THRESH_HI || \
-		    es_edflag == ECMD_DSP_SCALE_X || \
-		    es_edflag == ECMD_DSP_SCALE_Y || \
-		    es_edflag == ECMD_DSP_SCALE_ALT || \
-		    es_edflag == ECMD_EBM_HEIGHT || \
-		    es_edflag == ECMD_CLINE_SCALE_H || \
-		    es_edflag == ECMD_CLINE_SCALE_R || \
-		    es_edflag == ECMD_CLINE_SCALE_T || \
-		    es_edflag == ECMD_EXTR_SCALE_H)
-#define PARAM_2ARG (es_edflag == ECMD_DSP_FSIZE || \
-		    es_edflag == ECMD_EBM_FSIZE)
+#define PARAM_1ARG (s->s_edit->edit_flag == SSCALE || \
+		    s->s_edit->edit_flag == PSCALE || \
+		    s->s_edit->edit_flag == ECMD_BOT_THICK || \
+		    s->s_edit->edit_flag == ECMD_VOL_THRESH_LO || \
+		    s->s_edit->edit_flag == ECMD_VOL_THRESH_HI || \
+		    s->s_edit->edit_flag == ECMD_DSP_SCALE_X || \
+		    s->s_edit->edit_flag == ECMD_DSP_SCALE_Y || \
+		    s->s_edit->edit_flag == ECMD_DSP_SCALE_ALT || \
+		    s->s_edit->edit_flag == ECMD_EBM_HEIGHT || \
+		    s->s_edit->edit_flag == ECMD_CLINE_SCALE_H || \
+		    s->s_edit->edit_flag == ECMD_CLINE_SCALE_R || \
+		    s->s_edit->edit_flag == ECMD_CLINE_SCALE_T || \
+		    s->s_edit->edit_flag == ECMD_EXTR_SCALE_H)
+#define PARAM_2ARG (s->s_edit->edit_flag == ECMD_DSP_FSIZE || \
+		    s->s_edit->edit_flag == ECMD_EBM_FSIZE)
 
 /* if (!both) then set only s->s_edit->curr_e_axes_pos, otherwise
    set e_axes_pos and s->s_edit->curr_e_axes_pos */
@@ -123,7 +122,7 @@ set_e_axes_pos_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *id)
 	    if (s->global_editing_state == ST_O_EDIT) {
 		i = 0;
 	    } else {
-		switch (es_edflag) {
+		switch (s->s_edit->edit_flag) {
 		    case STRANS:
 			i = 0;
 			break;
@@ -198,8 +197,8 @@ set_e_axes_pos_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *id)
 	    break;
 	case ID_TGC:
 	case ID_REC:
-	    if (es_edflag == ECMD_TGC_MV_H ||
-		es_edflag == ECMD_TGC_MV_HH) {
+	    if (s->s_edit->edit_flag == ECMD_TGC_MV_H ||
+		s->s_edit->edit_flag == ECMD_TGC_MV_HH) {
 		struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)s->s_edit->es_int.idb_ptr;
 		point_t tgc_v;
 		vect_t tgc_h;
@@ -213,7 +212,7 @@ set_e_axes_pos_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *id)
 
 	    break;
 	case ID_EXTRUDE:
-	    if (es_edflag == ECMD_EXTR_MOV_H) {
+	    if (s->s_edit->edit_flag == ECMD_EXTR_MOV_H) {
 		struct rt_extrude_internal *extr = (struct rt_extrude_internal *)s->s_edit->es_int.idb_ptr;
 		point_t extr_v;
 		vect_t extr_h;
@@ -229,7 +228,7 @@ set_e_axes_pos_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *id)
 
 	    break;
 	case ID_CLINE:
-	    if (es_edflag == ECMD_CLINE_MOVE_H) {
+	    if (s->s_edit->edit_flag == ECMD_CLINE_MOVE_H) {
 		struct rt_cline_internal *cli =
 		    (struct rt_cline_internal *)s->s_edit->es_int.idb_ptr;
 		point_t cli_v;
@@ -702,7 +701,7 @@ init_sedit(struct mged_state *s)
     /* Finally, enter solid edit state */
     (void)chg_state(s, ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
     chg_l2menu(s, ST_S_EDIT);
-    es_edflag = IDLE;
+    s->s_edit->edit_flag = IDLE;
 
     button(s, BE_S_EDIT);	/* Drop into edit menu right away */
     init_sedit_vars(s);
@@ -868,7 +867,7 @@ sedit_menu(struct mged_state *s) {
 	    mmenu_set_all(s, MENU_L1, cline_menu);
 	    break;
     }
-    es_edflag = IDLE;	/* Drop out of previous edit mode */
+    s->s_edit->edit_flag = IDLE;	/* Drop out of previous edit mode */
     es_menu = 0;
 }
 
@@ -2048,7 +2047,7 @@ sedit(struct mged_state *s)
     sedraw = 0;
     ++s->update_views;
 
-    switch (es_edflag) {
+    switch (s->s_edit->edit_flag) {
 
 	case IDLE:
 	    /* do nothing more */
@@ -2751,14 +2750,14 @@ sedit(struct mged_state *s)
 	case ECMD_ARB_MAIN_MENU:
 	    /* put up control (main) menu for GENARB8s */
 	    menu_state->ms_flag = 0;
-	    es_edflag = IDLE;
+	    s->s_edit->edit_flag = IDLE;
 	    mmenu_set(s, MENU_L1, cntrl_menu);
 	    break;
 
 	case ECMD_ARB_SPECIFIC_MENU:
 	    /* put up specific arb edit menus */
 	    menu_state->ms_flag = 0;
-	    es_edflag = IDLE;
+	    s->s_edit->edit_flag = IDLE;
 	    switch (es_menu) {
 		case MENU_ARB_MV_EDGE:
 		    mmenu_set(s, MENU_L1, which_menu[s->es_type-4]);
@@ -2816,7 +2815,7 @@ sedit(struct mged_state *s)
 
 	    pr_prompt(s);
 	    fixv--;
-	    es_edflag = ECMD_ARB_ROTATE_FACE;
+	    s->s_edit->edit_flag = ECMD_ARB_ROTATE_FACE;
 	    view_state->vs_flag = 1;	/* draw arrow, etc. */
 	    set_e_axes_pos(s, 1);
 	    break;
@@ -3649,7 +3648,7 @@ sedit(struct mged_state *s)
 			/* Currently can only kill wire edges or edges in wire loops */
 			Tcl_AppendResult(s->interp, "Currently, we can only kill wire edges or edges in wire loops\n", (char *)NULL);
 			mged_print_result(s, TCL_ERROR);
-			es_edflag = IDLE;
+			s->s_edit->edit_flag = IDLE;
 			break;
 		    }
 
@@ -3744,7 +3743,7 @@ sedit(struct mged_state *s)
 		    /* Currently, can only split wire edges or edges in wire loops */
 		    if (*lu->up.magic_p != NMG_SHELL_MAGIC) {
 			Tcl_AppendResult(s->interp, "Currently, we can only split wire edges or edges in wire loops\n", (char *)NULL);
-			es_edflag = IDLE;
+			s->s_edit->edit_flag = IDLE;
 			mged_print_result(s, TCL_ERROR);
 			break;
 		    }
@@ -4025,13 +4024,13 @@ sedit(struct mged_state *s)
 	case ECMD_ARS_PICK_MENU:
 	    /* put up point pick menu for ARS solid */
 	    menu_state->ms_flag = 0;
-	    es_edflag = ECMD_ARS_PICK;
+	    s->s_edit->edit_flag = ECMD_ARS_PICK;
 	    mmenu_set(s, MENU_L1, ars_pick_menu);
 	    break;
 	case ECMD_ARS_EDIT_MENU:
 	    /* put up main ARS edit menu */
 	    menu_state->ms_flag = 0;
-	    es_edflag = IDLE;
+	    s->s_edit->edit_flag = IDLE;
 	    mmenu_set(s, MENU_L1, ars_menu);
 	    break;
 	case ECMD_ARS_PICK:
@@ -4758,7 +4757,7 @@ sedit(struct mged_state *s)
 	    {
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_printf(&tmp_vls, "sedit(s):  unknown edflag = %d.\n", es_edflag);
+		bu_vls_printf(&tmp_vls, "sedit(s):  unknown edflag = %d.\n", s->s_edit->edit_flag);
 		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		mged_print_result(s, TCL_ERROR);
 		bu_vls_free(&tmp_vls);
@@ -4839,10 +4838,10 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
     vect_t raw_mp = VINIT_ZERO;        	/* raw model position */
     mat_t mat;
 
-    if (es_edflag <= 0)
+    if (s->s_edit->edit_flag <= 0)
 	return;
 
-    switch (es_edflag) {
+    switch (s->s_edit->edit_flag) {
 	case SSCALE:
 	case PSCALE:
 	case ECMD_DSP_SCALE_X:
@@ -5215,7 +5214,7 @@ sedit_abs_scale(struct mged_state *s)
 {
     fastf_t old_acc_sc_sol;
 
-    if (es_edflag != SSCALE && es_edflag != PSCALE)
+    if (s->s_edit->edit_flag != SSCALE && s->s_edit->edit_flag != PSCALE)
 	return;
 
     old_acc_sc_sol = s->s_edit->acc_sc_sol;
@@ -5457,7 +5456,7 @@ init_oedit_guts(struct mged_state *s)
 
     /* for safety sake */
     es_menu = 0;
-    es_edflag = -1;
+    s->s_edit->edit_flag = -1;
     MAT_IDN(s->s_edit->e_mat);
 
     if (s->dbip == DBI_NULL || !illump) {
@@ -5725,7 +5724,7 @@ f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (es_edflag != ECMD_ARB_ROTATE_FACE) {
+    if (s->s_edit->edit_flag != ECMD_ARB_ROTATE_FACE) {
 	Tcl_AppendResult(interp, "Eqn: must be rotating a face\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -5833,7 +5832,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
     if (accept_flag) {
 	menu_state->ms_flag = 0;
 	movedir = 0;
-	es_edflag = -1;
+	s->s_edit->edit_flag = -1;
 	s->es_edclass = EDIT_CLASS_NULL;
 
 	rt_db_free_internal(&s->s_edit->es_int);
@@ -5931,7 +5930,7 @@ sedit_reject(struct mged_state *s)
 
     menu_state->ms_flag = 0;
     movedir = 0;
-    es_edflag = -1;
+    s->s_edit->edit_flag = -1;
     s->es_edclass = EDIT_CLASS_NULL;
 
     rt_db_free_internal(&s->s_edit->es_int);
@@ -5945,7 +5944,7 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
 
     CHECK_DBI_NULL;
 
-    if (es_edflag <= 0) {
+    if (s->s_edit->edit_flag <= 0) {
 	Tcl_AppendResult(interp,
 			 "A solid editor option not selected\n",
 			 (char *)NULL);
@@ -6005,7 +6004,7 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
     }
 
     /* check if need to convert input values to the base unit */
-    switch (es_edflag) {
+    switch (s->s_edit->edit_flag) {
 
 	case STRANS:
 	case ECMD_VTRANS:
