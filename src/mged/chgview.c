@@ -48,12 +48,182 @@ int mged_zoom(struct mged_state *s, double val);
 void mged_center(struct mged_state *s, point_t center);
 void usejoy(struct mged_state *s, double xangle, double yangle, double zangle);
 
-int knob_edit_rot(struct mged_state *s, char origin, vect_t rvec);
-int knob_edit_tran(struct mged_state *s, char coords, vect_t tvec);
 int mged_mtran(struct mged_state *s, const vect_t tvec);
 int mged_otran(struct mged_state *s, const vect_t tvec);
 int mged_vtran(struct mged_state *s, const vect_t tvec);
 int mged_vrot_xyz(struct mged_state *s, char origin, char coords, vect_t rvec);
+
+static int
+mged_erot(struct mged_state *s,
+	char coords,
+	  char rotate_about,
+	  mat_t newrot)
+{
+    mat_t temp1, temp2;
+
+    s->update_views = 1;
+    dm_set_dirty(DMP, 1);
+
+    switch (coords) {
+	case 'm':
+	    break;
+	case 'o':
+	    bn_mat_inv(temp1, s->s_edit->acc_rot_sol);
+
+	    /* transform into object rotations */
+	    bn_mat_mul(temp2, s->s_edit->acc_rot_sol, newrot);
+	    bn_mat_mul(newrot, temp2, temp1);
+	    break;
+	case 'v':
+	    bn_mat_inv(temp1, view_state->vs_gvp->gv_rotation);
+
+	    /* transform into model rotations */
+	    bn_mat_mul(temp2, temp1, newrot);
+	    bn_mat_mul(newrot, temp2, view_state->vs_gvp->gv_rotation);
+	    break;
+    }
+
+    if (s->global_editing_state == ST_S_EDIT) {
+	char save_rotate_about;
+
+	save_rotate_about = mged_variables->mv_rotate_about;
+	mged_variables->mv_rotate_about = rotate_about;
+
+	int save_edflag = s->s_edit->edit_flag;
+	int save_mode = s->s_edit->solid_edit_mode;
+
+	if (!SEDIT_ROTATE) {
+	    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
+	}
+
+	s->s_edit->e_inpara = 0;
+	MAT_COPY(s->s_edit->incr_change, newrot);
+	bn_mat_mul2(s->s_edit->incr_change, s->s_edit->acc_rot_sol);
+	sedit(s);
+
+	mged_variables->mv_rotate_about = save_rotate_about;
+	s->s_edit->edit_flag = save_edflag;
+	s->s_edit->solid_edit_mode = save_mode;
+    } else {
+	point_t point;
+	vect_t work;
+
+	bn_mat_mul2(newrot, s->s_edit->acc_rot_sol);
+
+	/* find point for rotation to take place wrt */
+	switch (rotate_about) {
+	    case 'v':       /* View Center */
+		VSET(work, 0.0, 0.0, 0.0);
+		MAT4X3PNT(point, view_state->vs_gvp->gv_view2model, work);
+		break;
+	    case 'e':       /* Eye */
+		VSET(work, 0.0, 0.0, 1.0);
+		MAT4X3PNT(point, view_state->vs_gvp->gv_view2model, work);
+		break;
+	    case 'm':       /* Model Center */
+		VSETALL(point, 0.0);
+		break;
+	    case 'k':
+	    default:
+		MAT4X3PNT(point, s->s_edit->model_changes, s->s_edit->e_keypoint);
+	}
+
+	/*
+	 * Apply newrot to the s->s_edit->model_changes matrix wrt "point"
+	 */
+	wrt_point(s->s_edit->model_changes, newrot, s->s_edit->model_changes, point);
+
+	new_edit_mats(s);
+    }
+
+    return TCL_OK;
+}
+
+
+static int
+knob_edit_rot(struct mged_state *s,
+	char rotate_about,
+	vect_t rvec)
+{
+    mat_t newrot;
+
+    MAT_IDN(newrot);
+    bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
+
+    return mged_erot(s, view_state->vs_gvp->gv_coord, rotate_about, newrot);
+}
+
+static int
+knob_edit_tran(struct mged_state *s,
+	char coords,
+	vect_t tvec)
+{
+    point_t p2;
+    point_t delta;
+    point_t vcenter;
+    point_t work;
+    mat_t xlatemat;
+
+    /* compute delta */
+    switch (coords) {
+	case 'm':
+	    VSCALE(delta, tvec, s->dbip->dbi_local2base);
+	    break;
+	case 'o':
+	    VSCALE(p2, tvec, s->dbip->dbi_local2base);
+	    MAT4X3PNT(delta, s->s_edit->acc_rot_sol, p2);
+	    break;
+	case 'v':
+	default:
+	    VSCALE(p2, tvec, s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale);
+	    MAT4X3PNT(work, view_state->vs_gvp->gv_view2model, p2);
+	    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
+	    VSUB2(delta, work, vcenter);
+
+	    break;
+    }
+
+    if (s->global_editing_state == ST_S_EDIT) {
+	s->s_edit->e_keyfixed = 0;
+	get_solid_keypoint(s, &s->s_edit->e_keypoint, &s->s_edit->e_keytag,
+			   &s->s_edit->es_int, s->s_edit->e_mat);
+	int save_edflag = s->s_edit->edit_flag;
+	int save_mode = s->s_edit->solid_edit_mode;
+
+	if (!SEDIT_TRAN) {
+	    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
+	}
+
+	VADD2(s->s_edit->e_para, delta, s->s_edit->curr_e_axes_pos);
+	s->s_edit->e_inpara = 3;
+	sedit(s);
+	s->s_edit->edit_flag = save_edflag;
+	s->s_edit->solid_edit_mode = save_mode;
+    } else {
+	MAT_IDN(xlatemat);
+	MAT_DELTAS_VEC(xlatemat, delta);
+	bn_mat_mul2(xlatemat, s->s_edit->model_changes);
+
+	new_edit_mats(s);
+	s->update_views = 1;
+	dm_set_dirty(DMP, 1);
+    }
+
+    return TCL_OK;
+}
+
+static void
+knob_edit_sca(struct mged_state *s)
+{
+    if (s->global_editing_state == ST_S_EDIT) {
+	sedit_abs_scale(s);
+    } else {
+	oedit_abs_scale(s);
+    }
+}
+
+
+
 
 /* DEBUG -- force view center */
 /* Format: C x y z */
@@ -1289,17 +1459,6 @@ knob_rot(struct mged_state *s,
     return TCL_OK;
 }
 
-static void
-knob_edit_sca(struct mged_state *s)
-{
-    if (s->global_editing_state == ST_S_EDIT) {
-	sedit_abs_scale(s);
-    } else {
-	oedit_abs_scale(s);
-    }
-}
-
-
 /* The MGED knob command will interpret any command that does not match
  * the current editing state as a view instruction - for example, "x 1"
  * will be interpreted to mean set the view rotation rate if the MGED
@@ -2362,108 +2521,6 @@ f_view_ring(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     return TCL_ERROR;
 }
 
-
-int
-mged_erot(struct mged_state *s,
-	char coords,
-	  char rotate_about,
-	  mat_t newrot)
-{
-    mat_t temp1, temp2;
-
-    s->update_views = 1;
-    dm_set_dirty(DMP, 1);
-
-    switch (coords) {
-	case 'm':
-	    break;
-	case 'o':
-	    bn_mat_inv(temp1, s->s_edit->acc_rot_sol);
-
-	    /* transform into object rotations */
-	    bn_mat_mul(temp2, s->s_edit->acc_rot_sol, newrot);
-	    bn_mat_mul(newrot, temp2, temp1);
-	    break;
-	case 'v':
-	    bn_mat_inv(temp1, view_state->vs_gvp->gv_rotation);
-
-	    /* transform into model rotations */
-	    bn_mat_mul(temp2, temp1, newrot);
-	    bn_mat_mul(newrot, temp2, view_state->vs_gvp->gv_rotation);
-	    break;
-    }
-
-    if (s->global_editing_state == ST_S_EDIT) {
-	char save_rotate_about;
-
-	save_rotate_about = mged_variables->mv_rotate_about;
-	mged_variables->mv_rotate_about = rotate_about;
-
-	int save_edflag = s->s_edit->edit_flag;
-	int save_mode = s->s_edit->solid_edit_mode;
-
-	if (!SEDIT_ROTATE) {
-	    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
-	}
-
-	s->s_edit->e_inpara = 0;
-	MAT_COPY(s->s_edit->incr_change, newrot);
-	bn_mat_mul2(s->s_edit->incr_change, s->s_edit->acc_rot_sol);
-	sedit(s);
-
-	mged_variables->mv_rotate_about = save_rotate_about;
-	s->s_edit->edit_flag = save_edflag;
-	s->s_edit->solid_edit_mode = save_mode;
-    } else {
-	point_t point;
-	vect_t work;
-
-	bn_mat_mul2(newrot, s->s_edit->acc_rot_sol);
-
-	/* find point for rotation to take place wrt */
-	switch (rotate_about) {
-	    case 'v':       /* View Center */
-		VSET(work, 0.0, 0.0, 0.0);
-		MAT4X3PNT(point, view_state->vs_gvp->gv_view2model, work);
-		break;
-	    case 'e':       /* Eye */
-		VSET(work, 0.0, 0.0, 1.0);
-		MAT4X3PNT(point, view_state->vs_gvp->gv_view2model, work);
-		break;
-	    case 'm':       /* Model Center */
-		VSETALL(point, 0.0);
-		break;
-	    case 'k':
-	    default:
-		MAT4X3PNT(point, s->s_edit->model_changes, s->s_edit->e_keypoint);
-	}
-
-	/*
-	 * Apply newrot to the s->s_edit->model_changes matrix wrt "point"
-	 */
-	wrt_point(s->s_edit->model_changes, newrot, s->s_edit->model_changes, point);
-
-	new_edit_mats(s);
-    }
-
-    return TCL_OK;
-}
-
-
-int
-knob_edit_rot(struct mged_state *s,
-	char rotate_about,
-	vect_t rvec)
-{
-    mat_t newrot;
-
-    MAT_IDN(newrot);
-    bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
-
-    return mged_erot(s, view_state->vs_gvp->gv_coord, rotate_about, newrot);
-}
-
-
 int
 cmd_mrot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
@@ -2732,66 +2789,6 @@ cmd_arot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 
 	return TCL_OK;
     }
-}
-
-
-int
-knob_edit_tran(struct mged_state *s,
-	char coords,
-	vect_t tvec)
-{
-    point_t p2;
-    point_t delta;
-    point_t vcenter;
-    point_t work;
-    mat_t xlatemat;
-
-    /* compute delta */
-    switch (coords) {
-	case 'm':
-	    VSCALE(delta, tvec, s->dbip->dbi_local2base);
-	    break;
-	case 'o':
-	    VSCALE(p2, tvec, s->dbip->dbi_local2base);
-	    MAT4X3PNT(delta, s->s_edit->acc_rot_sol, p2);
-	    break;
-	case 'v':
-	default:
-	    VSCALE(p2, tvec, s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale);
-	    MAT4X3PNT(work, view_state->vs_gvp->gv_view2model, p2);
-	    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
-	    VSUB2(delta, work, vcenter);
-
-	    break;
-    }
-
-    if (s->global_editing_state == ST_S_EDIT) {
-	s->s_edit->e_keyfixed = 0;
-	get_solid_keypoint(s, &s->s_edit->e_keypoint, &s->s_edit->e_keytag,
-			   &s->s_edit->es_int, s->s_edit->e_mat);
-	int save_edflag = s->s_edit->edit_flag;
-	int save_mode = s->s_edit->solid_edit_mode;
-
-	if (!SEDIT_TRAN) {
-	    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
-	}
-
-	VADD2(s->s_edit->e_para, delta, s->s_edit->curr_e_axes_pos);
-	s->s_edit->e_inpara = 3;
-	sedit(s);
-	s->s_edit->edit_flag = save_edflag;
-	s->s_edit->solid_edit_mode = save_mode;
-    } else {
-	MAT_IDN(xlatemat);
-	MAT_DELTAS_VEC(xlatemat, delta);
-	bn_mat_mul2(xlatemat, s->s_edit->model_changes);
-
-	new_edit_mats(s);
-	s->update_views = 1;
-	dm_set_dirty(DMP, 1);
-    }
-
-    return TCL_OK;
 }
 
 
