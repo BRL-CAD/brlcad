@@ -100,11 +100,15 @@ int es_menu;		/* item selected from menu */
 #define PARAM_2ARG (es_edflag == ECMD_DSP_FSIZE || \
 		    es_edflag == ECMD_EBM_FSIZE)
 
+/* if (!both) then set only s->s_edit->curr_e_axes_pos, otherwise
+   set e_axes_pos and s->s_edit->curr_e_axes_pos */
 void
-set_e_axes_pos(struct mged_state *s, int both)
-    /* if (!both) then set only s->s_edit->curr_e_axes_pos, otherwise
-       set e_axes_pos and s->s_edit->curr_e_axes_pos */
+set_e_axes_pos_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *id)
 {
+    struct mged_state *s = (struct mged_state *)d;
+    int *both_p = (int *)id;
+    int both = *both_p;
+
     int i;
     const short earb8[12][18] = earb8_edit_array;
     const short earb7[12][18] = earb7_edit_array;
@@ -281,6 +285,13 @@ set_e_axes_pos(struct mged_state *s, int both)
 	    m_dmp->dm_mged_variables->mv_transform = 'e';
 	}
     }
+}
+
+void
+set_e_axes_pos(struct mged_state *s, int both)
+{
+    int flag = both;
+    set_e_axes_pos_clbk(0, NULL, (void *)s, (void *)&flag);
 }
 
 /*
