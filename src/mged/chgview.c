@@ -2603,7 +2603,6 @@ mged_erot(struct mged_state *s,
 	  char rotate_about,
 	  mat_t newrot)
 {
-    int save_edflag;
     mat_t temp1, temp2;
 
     s->update_views = 1;
@@ -2634,10 +2633,11 @@ mged_erot(struct mged_state *s,
 	save_rotate_about = mged_variables->mv_rotate_about;
 	mged_variables->mv_rotate_about = rotate_about;
 
-	save_edflag = s->s_edit->edit_flag;
+	int save_edflag = s->s_edit->edit_flag;
+	int save_mode = s->s_edit->solid_edit_mode;
 
 	if (!SEDIT_ROTATE) {
-	    s->s_edit->edit_flag = SROT;
+	    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
 	}
 
 	s->s_edit->e_inpara = 0;
@@ -2647,6 +2647,7 @@ mged_erot(struct mged_state *s,
 
 	mged_variables->mv_rotate_about = save_rotate_about;
 	s->s_edit->edit_flag = save_edflag;
+	s->s_edit->solid_edit_mode = save_mode;
     } else {
 	point_t point;
 	vect_t work;
@@ -2974,7 +2975,6 @@ mged_etran(struct mged_state *s,
 	vect_t tvec)
 {
     point_t p2;
-    int save_edflag;
     point_t delta;
     point_t vcenter;
     point_t work;
@@ -3003,16 +3003,18 @@ mged_etran(struct mged_state *s,
 	s->s_edit->e_keyfixed = 0;
 	get_solid_keypoint(s, &s->s_edit->e_keypoint, &s->s_edit->e_keytag,
 			   &s->s_edit->es_int, s->s_edit->e_mat);
-	save_edflag = s->s_edit->edit_flag;
+	int save_edflag = s->s_edit->edit_flag;
+	int save_mode = s->s_edit->solid_edit_mode;
 
 	if (!SEDIT_TRAN) {
-	    s->s_edit->edit_flag = STRANS;
+	    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
 	}
 
 	VADD2(s->s_edit->e_para, delta, s->s_edit->curr_e_axes_pos);
 	s->s_edit->e_inpara = 3;
 	sedit(s);
 	s->s_edit->edit_flag = save_edflag;
+	s->s_edit->solid_edit_mode = save_mode;
     } else {
 	MAT_IDN(xlatemat);
 	MAT_DELTAS_VEC(xlatemat, delta);
@@ -3140,12 +3142,12 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
     }
 
     if (s->global_editing_state == ST_S_EDIT) {
-	int save_edflag;
 
-	save_edflag = s->s_edit->edit_flag;
+	int save_edflag = s->s_edit->edit_flag;
+	int save_mode = s->s_edit->solid_edit_mode;
 
 	if (!SEDIT_SCALE) {
-	    s->s_edit->edit_flag = SSCALE;
+	    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_SCALE);
 	}
 
 	s->s_edit->es_scale = sfactor;
@@ -3155,6 +3157,7 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	if (s->s_edit->acc_sc_sol < MGED_SMALL_SCALE) {
 	    s->s_edit->acc_sc_sol = old_scale;
 	    s->s_edit->edit_flag = save_edflag;
+	    s->s_edit->solid_edit_mode = save_mode;
 	    return TCL_OK;
 	}
 
@@ -3167,6 +3170,7 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	sedit(s);
 
 	s->s_edit->edit_flag = save_edflag;
+	s->s_edit->solid_edit_mode = save_mode;
     } else {
 	point_t temp;
 	point_t pos_model;

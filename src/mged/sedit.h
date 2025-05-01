@@ -39,11 +39,6 @@
 #define EDIT_CLASS_SCALE 3
 
 /* These ECMD_ values go in s->s_edit->edit_flag.  Some names not changed yet */
-#define IDLE		0	/* edarb.c */
-#define STRANS		1	/* buttons.c */
-#define SSCALE		2	/* buttons.c */	/* Scale whole solid by scalar */
-#define SROT		3	/* buttons.c */
-#define PSCALE		4	/* Scale one solid parameter by scalar */
 
 #define ECMD_TGC_MV_H	5
 #define ECMD_TGC_MV_HH	6
@@ -147,7 +142,7 @@
 #define ECMD_HYP_ROT_A		92
 
 #define SEDIT_ROTATE (s->global_editing_state == ST_S_EDIT && \
-		      (s->s_edit->edit_flag == SROT || \
+		      (s->s_edit->edit_flag == RT_SOLID_EDIT_ROT || \
 		       s->s_edit->edit_flag == ECMD_TGC_ROT_H || \
 		       s->s_edit->edit_flag ==  ECMD_TGC_ROT_AB || \
 		       s->s_edit->edit_flag == ECMD_ARB_ROTATE_FACE || \
@@ -158,8 +153,8 @@
 #define EDIT_ROTATE (SEDIT_ROTATE || OEDIT_ROTATE)
 
 #define SEDIT_SCALE (s->global_editing_state == ST_S_EDIT && \
-		     (s->s_edit->edit_flag == SSCALE || \
-		      s->s_edit->edit_flag == PSCALE || \
+		     (s->s_edit->edit_flag == RT_SOLID_EDIT_SCALE || \
+		      s->s_edit->edit_flag == RT_SOLID_EDIT_PSCALE || \
 		      s->s_edit->edit_flag == ECMD_VOL_THRESH_LO || \
 		      s->s_edit->edit_flag == ECMD_VOL_THRESH_HI || \
 		      s->s_edit->edit_flag == ECMD_VOL_CSIZE || \
@@ -179,7 +174,7 @@
 #define EDIT_SCALE (SEDIT_SCALE || OEDIT_SCALE)
 
 #define SEDIT_TRAN (s->global_editing_state == ST_S_EDIT && \
-		    (s->s_edit->edit_flag == STRANS || \
+		    (s->s_edit->edit_flag == RT_SOLID_EDIT_TRANS || \
 		     s->s_edit->edit_flag == ECMD_TGC_MV_H || \
 		     s->s_edit->edit_flag == ECMD_TGC_MV_HH || \
 		     s->s_edit->edit_flag == EARB || \

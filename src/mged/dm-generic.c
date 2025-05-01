@@ -262,14 +262,16 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		am_mode = AMM_TRAN;
 
 		if (grid_state->snap) {
-		    int save_edflag;
 
 		    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
 			mged_variables->mv_transform == 'e') {
+			int save_edflag = 0;
+			int save_mode = 0;
 			if (s->global_editing_state == ST_S_EDIT) {
 			    save_edflag = s->s_edit->edit_flag;
+			    save_mode = s->s_edit->solid_edit_mode;
 			    if (!SEDIT_TRAN)
-				s->s_edit->edit_flag = STRANS;
+				rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
 			} else {
 			    save_edflag = edobj;
 			    edobj = BE_O_XY;
@@ -277,10 +279,12 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
 			snap_keypoint_to_grid(s);
 
-			if (s->global_editing_state == ST_S_EDIT)
+			if (s->global_editing_state == ST_S_EDIT) {
 			    s->s_edit->edit_flag = save_edflag;
-			else
+			    s->s_edit->solid_edit_mode = save_mode;
+			} else {
 			    edobj = save_edflag;
+			}
 		    } else
 			snap_view_center_to_grid(s);
 		}

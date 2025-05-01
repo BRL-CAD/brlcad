@@ -260,7 +260,7 @@ static void
 tgc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = PSCALE;
+    s->s_edit->edit_flag = RT_SOLID_EDIT_PSCALE;
     if (arg == MENU_TGC_ROT_H)
 	s->s_edit->edit_flag = ECMD_TGC_ROT_H;
     if (arg == MENU_TGC_ROT_AB)
@@ -297,7 +297,7 @@ static void
 tor_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = PSCALE;
+    s->s_edit->edit_flag = RT_SOLID_EDIT_PSCALE;
 
     set_e_axes_pos(s, 1);
 }
@@ -317,7 +317,7 @@ eto_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
     if (arg == MENU_ETO_ROT_C)
 	s->s_edit->edit_flag = ECMD_ETO_ROT_C;
     else
-	s->s_edit->edit_flag = PSCALE;
+	s->s_edit->edit_flag = RT_SOLID_EDIT_PSCALE;
 
     set_e_axes_pos(s, 1);
 }
@@ -334,7 +334,7 @@ static void
 ell_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = PSCALE;
+    s->s_edit->edit_flag = RT_SOLID_EDIT_PSCALE;
 
     set_e_axes_pos(s, 1);
 }
@@ -870,7 +870,7 @@ static void
 part_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = PSCALE;
+    s->s_edit->edit_flag = RT_SOLID_EDIT_PSCALE;
 
     set_e_axes_pos(s, 1);
 }
@@ -886,7 +886,7 @@ static void
 rpc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = PSCALE;
+    s->s_edit->edit_flag = RT_SOLID_EDIT_PSCALE;
 
     set_e_axes_pos(s, 1);
 }
@@ -902,7 +902,7 @@ static void
 rhc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = PSCALE;
+    s->s_edit->edit_flag = RT_SOLID_EDIT_PSCALE;
 
     set_e_axes_pos(s, 1);
 }
@@ -919,7 +919,7 @@ static void
 epa_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = PSCALE;
+    s->s_edit->edit_flag = RT_SOLID_EDIT_PSCALE;
 
     set_e_axes_pos(s, 1);
 }
@@ -935,7 +935,7 @@ static void
 ehy_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = PSCALE;
+    s->s_edit->edit_flag = RT_SOLID_EDIT_PSCALE;
 
     set_e_axes_pos(s, 1);
 }
@@ -957,7 +957,7 @@ hyp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    s->s_edit->edit_flag = ECMD_HYP_ROT_H;
 	    break;
 	default:
-	    s->s_edit->edit_flag = PSCALE;
+	    s->s_edit->edit_flag = RT_SOLID_EDIT_PSCALE;
 	    break;
     }
     set_e_axes_pos(s, 1);
@@ -1000,7 +1000,7 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    es_pipe_pnt = next;
 	    rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
 	    es_menu = arg;
-	    s->s_edit->edit_flag = IDLE;
+	    s->s_edit->edit_flag = RT_SOLID_EDIT_IDLE;
 	    sedit(s);
 	    break;
 	case MENU_PIPE_PREV_PT:
@@ -1016,7 +1016,7 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    es_pipe_pnt = prev;
 	    rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
 	    es_menu = arg;
-	    s->s_edit->edit_flag = IDLE;
+	    s->s_edit->edit_flag = RT_SOLID_EDIT_IDLE;
 	    sedit(s);
 	    break;
 	case MENU_PIPE_SPLIT:
@@ -1025,7 +1025,7 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	case MENU_PIPE_MOV_PT:
 	    if (!es_pipe_pnt) {
 		Tcl_AppendResult(s->interp, "No Pipe Segment selected\n", (char *)NULL);
-		s->s_edit->edit_flag = IDLE;
+		s->s_edit->edit_flag = RT_SOLID_EDIT_IDLE;
 		return;
 	    }
 	    es_menu = arg;
@@ -1036,17 +1036,17 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	case MENU_PIPE_PT_RADIUS:
 	    if (!es_pipe_pnt) {
 		Tcl_AppendResult(s->interp, "No Pipe Segment selected\n", (char *)NULL);
-		s->s_edit->edit_flag = IDLE;
+		s->s_edit->edit_flag = RT_SOLID_EDIT_IDLE;
 		return;
 	    }
 	    es_menu = arg;
-	    s->s_edit->edit_flag = PSCALE;
+	    s->s_edit->edit_flag = RT_SOLID_EDIT_PSCALE;
 	    break;
 	case MENU_PIPE_SCALE_OD:
 	case MENU_PIPE_SCALE_ID:
 	case MENU_PIPE_SCALE_RADIUS:
 	    es_menu = arg;
-	    s->s_edit->edit_flag = PSCALE;
+	    s->s_edit->edit_flag = RT_SOLID_EDIT_PSCALE;
 	    break;
 	case MENU_PIPE_ADD_PT:
 	    es_menu = arg;
@@ -1213,7 +1213,7 @@ struct menu_item bot_menu[] = {
 static void
 superell_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b)) {
     es_menu = arg;
-    s->s_edit->edit_flag = PSCALE;
+    s->s_edit->edit_flag = RT_SOLID_EDIT_PSCALE;
     set_e_axes_pos(s, 1);
     return;
 }
@@ -1237,15 +1237,15 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
     switch (arg) {
 	case MENU_METABALL_SET_THRESHOLD:
 	    es_menu = arg;
-	    s->s_edit->edit_flag = PSCALE;
+	    s->s_edit->edit_flag = RT_SOLID_EDIT_PSCALE;
 	    break;
 	case MENU_METABALL_SET_METHOD:
 	    es_menu = arg;
-	    s->s_edit->edit_flag = PSCALE;
+	    s->s_edit->edit_flag = RT_SOLID_EDIT_PSCALE;
 	    break;
 	case MENU_METABALL_PT_SET_GOO:
 	    es_menu = arg;
-	    s->s_edit->edit_flag = PSCALE;
+	    s->s_edit->edit_flag = RT_SOLID_EDIT_PSCALE;
 	    break;
 	case MENU_METABALL_SELECT:
 	    es_menu = arg;
@@ -1264,7 +1264,7 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    es_metaball_pnt = next;
 	    rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
 	    es_menu = arg;
-	    s->s_edit->edit_flag = IDLE;
+	    s->s_edit->edit_flag = RT_SOLID_EDIT_IDLE;
 	    sedit(s);
 	    break;
 	case MENU_METABALL_PREV_PT:
@@ -1280,13 +1280,13 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    es_metaball_pnt = prev;
 	    rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
 	    es_menu = arg;
-	    s->s_edit->edit_flag = IDLE;
+	    s->s_edit->edit_flag = RT_SOLID_EDIT_IDLE;
 	    sedit(s);
 	    break;
 	case MENU_METABALL_MOV_PT:
 	    if (!es_metaball_pnt) {
 		Tcl_AppendResult(s->interp, "No Metaball Point selected\n", (char *)NULL);
-		s->s_edit->edit_flag = IDLE;
+		s->s_edit->edit_flag = RT_SOLID_EDIT_IDLE;
 		return;
 	    }
 	    es_menu = arg;
@@ -1296,11 +1296,11 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	case MENU_METABALL_PT_FLDSTR:
 	    if (!es_metaball_pnt) {
 		Tcl_AppendResult(s->interp, "No Metaball Point selected\n", (char *)NULL);
-		s->s_edit->edit_flag = IDLE;
+		s->s_edit->edit_flag = RT_SOLID_EDIT_IDLE;
 		return;
 	    }
 	    es_menu = arg;
-	    s->s_edit->edit_flag = PSCALE;
+	    s->s_edit->edit_flag = RT_SOLID_EDIT_PSCALE;
 	    break;
 	case MENU_METABALL_DEL_PT:
 	    es_menu = arg;

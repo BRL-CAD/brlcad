@@ -83,8 +83,8 @@ struct wdb_metaball_pnt *es_metaball_pnt=(struct wdb_metaball_pnt *)NULL; /* Cur
 /* These values end up in es_menu, as do ARB vertex numbers */
 int es_menu;		/* item selected from menu */
 
-#define PARAM_1ARG (s->s_edit->edit_flag == SSCALE || \
-		    s->s_edit->edit_flag == PSCALE || \
+#define PARAM_1ARG (s->s_edit->edit_flag == RT_SOLID_EDIT_SCALE || \
+		    s->s_edit->edit_flag == RT_SOLID_EDIT_PSCALE || \
 		    s->s_edit->edit_flag == ECMD_BOT_THICK || \
 		    s->s_edit->edit_flag == ECMD_VOL_THRESH_LO || \
 		    s->s_edit->edit_flag == ECMD_VOL_THRESH_HI || \
@@ -123,7 +123,7 @@ set_e_axes_pos_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *id)
 		i = 0;
 	    } else {
 		switch (s->s_edit->edit_flag) {
-		    case STRANS:
+		    case RT_SOLID_EDIT_TRANS:
 			i = 0;
 			break;
 		    case EARB:
@@ -701,7 +701,7 @@ init_sedit(struct mged_state *s)
     /* Finally, enter solid edit state */
     (void)chg_state(s, ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
     chg_l2menu(s, ST_S_EDIT);
-    s->s_edit->edit_flag = IDLE;
+    s->s_edit->edit_flag = RT_SOLID_EDIT_IDLE;
 
     button(s, BE_S_EDIT);	/* Drop into edit menu right away */
     init_sedit_vars(s);
@@ -867,7 +867,7 @@ sedit_menu(struct mged_state *s) {
 	    mmenu_set_all(s, MENU_L1, cline_menu);
 	    break;
     }
-    s->s_edit->edit_flag = IDLE;	/* Drop out of previous edit mode */
+    s->s_edit->edit_flag = RT_SOLID_EDIT_IDLE;	/* Drop out of previous edit mode */
     es_menu = 0;
 }
 
@@ -2049,7 +2049,7 @@ sedit(struct mged_state *s)
 
     switch (s->s_edit->edit_flag) {
 
-	case IDLE:
+	case RT_SOLID_EDIT_IDLE:
 	    /* do nothing more */
 	    --s->update_views;
 	    break;
@@ -2750,14 +2750,14 @@ sedit(struct mged_state *s)
 	case ECMD_ARB_MAIN_MENU:
 	    /* put up control (main) menu for GENARB8s */
 	    menu_state->ms_flag = 0;
-	    s->s_edit->edit_flag = IDLE;
+	    s->s_edit->edit_flag = RT_SOLID_EDIT_IDLE;
 	    mmenu_set(s, MENU_L1, cntrl_menu);
 	    break;
 
 	case ECMD_ARB_SPECIFIC_MENU:
 	    /* put up specific arb edit menus */
 	    menu_state->ms_flag = 0;
-	    s->s_edit->edit_flag = IDLE;
+	    s->s_edit->edit_flag = RT_SOLID_EDIT_IDLE;
 	    switch (es_menu) {
 		case MENU_ARB_MV_EDGE:
 		    mmenu_set(s, MENU_L1, which_menu[s->es_type-4]);
@@ -2922,7 +2922,7 @@ sedit(struct mged_state *s)
 	    s->s_edit->e_inpara = 0;
 	    return;
 
-	case SSCALE:
+	case RT_SOLID_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    {
 		mat_t scalemat;
@@ -2949,7 +2949,7 @@ sedit(struct mged_state *s)
 	    }
 	    break;
 
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	    /* translate solid */
 	    {
 		vect_t delta;
@@ -3187,7 +3187,7 @@ sedit(struct mged_state *s)
 	    }
 	    break;
 
-	case PSCALE:
+	case RT_SOLID_EDIT_PSCALE:
 	    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	    bot_verts[0] = -1;
 	    bot_verts[1] = -1;
@@ -3208,7 +3208,7 @@ sedit(struct mged_state *s)
 	    }
 	    break;
 
-	case SROT:
+	case RT_SOLID_EDIT_ROT:
 	    /* rot solid about vertex */
 	    {
 		es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
@@ -3648,7 +3648,7 @@ sedit(struct mged_state *s)
 			/* Currently can only kill wire edges or edges in wire loops */
 			Tcl_AppendResult(s->interp, "Currently, we can only kill wire edges or edges in wire loops\n", (char *)NULL);
 			mged_print_result(s, TCL_ERROR);
-			s->s_edit->edit_flag = IDLE;
+			s->s_edit->edit_flag = RT_SOLID_EDIT_IDLE;
 			break;
 		    }
 
@@ -3743,7 +3743,7 @@ sedit(struct mged_state *s)
 		    /* Currently, can only split wire edges or edges in wire loops */
 		    if (*lu->up.magic_p != NMG_SHELL_MAGIC) {
 			Tcl_AppendResult(s->interp, "Currently, we can only split wire edges or edges in wire loops\n", (char *)NULL);
-			s->s_edit->edit_flag = IDLE;
+			s->s_edit->edit_flag = RT_SOLID_EDIT_IDLE;
 			mged_print_result(s, TCL_ERROR);
 			break;
 		    }
@@ -4030,7 +4030,7 @@ sedit(struct mged_state *s)
 	case ECMD_ARS_EDIT_MENU:
 	    /* put up main ARS edit menu */
 	    menu_state->ms_flag = 0;
-	    s->s_edit->edit_flag = IDLE;
+	    s->s_edit->edit_flag = RT_SOLID_EDIT_IDLE;
 	    mmenu_set(s, MENU_L1, ars_menu);
 	    break;
 	case ECMD_ARS_PICK:
@@ -4842,8 +4842,8 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	return;
 
     switch (s->s_edit->edit_flag) {
-	case SSCALE:
-	case PSCALE:
+	case RT_SOLID_EDIT_SCALE:
+	case RT_SOLID_EDIT_PSCALE:
 	case ECMD_DSP_SCALE_X:
 	case ECMD_DSP_SCALE_Y:
 	case ECMD_DSP_SCALE_ALT:
@@ -4871,7 +4871,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	    sedit(s);
 
 	    return;
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	    /*
 	     * Use mouse to change solid's location.
 	     * Project solid's keypoint into view space,
@@ -5214,7 +5214,7 @@ sedit_abs_scale(struct mged_state *s)
 {
     fastf_t old_acc_sc_sol;
 
-    if (s->s_edit->edit_flag != SSCALE && s->s_edit->edit_flag != PSCALE)
+    if (s->s_edit->edit_flag != RT_SOLID_EDIT_SCALE && s->s_edit->edit_flag != RT_SOLID_EDIT_PSCALE)
 	return;
 
     old_acc_sc_sol = s->s_edit->acc_sc_sol;
@@ -5456,7 +5456,7 @@ init_oedit_guts(struct mged_state *s)
 
     /* for safety sake */
     es_menu = 0;
-    s->s_edit->edit_flag = -1;
+    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_DEFAULT);
     MAT_IDN(s->s_edit->e_mat);
 
     if (s->dbip == DBI_NULL || !illump) {
@@ -5832,7 +5832,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
     if (accept_flag) {
 	menu_state->ms_flag = 0;
 	movedir = 0;
-	s->s_edit->edit_flag = -1;
+	rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_DEFAULT);
 	s->es_edclass = EDIT_CLASS_NULL;
 
 	rt_db_free_internal(&s->s_edit->es_int);
@@ -5930,7 +5930,7 @@ sedit_reject(struct mged_state *s)
 
     menu_state->ms_flag = 0;
     movedir = 0;
-    s->s_edit->edit_flag = -1;
+    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_DEFAULT);
     s->es_edclass = EDIT_CLASS_NULL;
 
     rt_db_free_internal(&s->s_edit->es_int);
@@ -6006,9 +6006,9 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
     /* check if need to convert input values to the base unit */
     switch (s->s_edit->edit_flag) {
 
-	case STRANS:
+	case RT_SOLID_EDIT_TRANS:
 	case ECMD_VTRANS:
-	case PSCALE:
+	case RT_SOLID_EDIT_PSCALE:
 	case EARB:
 	case ECMD_ARB_MOVE_FACE:
 	case ECMD_TGC_MV_H:

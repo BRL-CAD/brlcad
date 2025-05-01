@@ -388,6 +388,13 @@ rt_solid_edit_set_edflag(struct rt_solid_edit *s, int edflag)
 
     s->edit_flag = edflag;
 
+    // In the case of the four generic (i.e. not primitive data specific) flag
+    // settings, we can also set the solid_edit_mode state.  For anything else,
+    // it is the responsibility of the primitive specific logic to decode
+    // edit_flag (and any other relevant info) into the proper solid_edit_mode.
+    // Applications like MGED may use solid_edit_mode to adjust interface
+    // behaviors, so it is important to have it properly set, but we can only
+    // do so much here.
     switch (edflag) {
 	case RT_SOLID_EDIT_ROT:
 	case RT_SOLID_EDIT_TRANS:

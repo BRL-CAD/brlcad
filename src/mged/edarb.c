@@ -64,7 +64,7 @@ editarb(struct mged_state *s, vect_t pos_model)
     newedge = 0;
 
     if (ret) {
-	s->s_edit->edit_flag = IDLE;
+	s->s_edit->edit_flag = RT_SOLID_EDIT_IDLE;
     }
 
     return ret;
