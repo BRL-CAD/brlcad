@@ -289,7 +289,7 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
     else
 	(void)fclose(fp);
 
-    return BRLCAD_ERROR;
+    return BRLCAD_OK;
 }
 
 
