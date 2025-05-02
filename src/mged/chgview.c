@@ -46,7 +46,6 @@ void knob_update_rate_vars(struct mged_state *s);
 int mged_vrot(struct mged_state *s, char origin, fastf_t *newrot);
 int mged_zoom(struct mged_state *s, double val);
 void mged_center(struct mged_state *s, point_t center);
-void usejoy(struct mged_state *s, double xangle, double yangle, double zangle);
 
 int mged_mtran(struct mged_state *s, const vect_t tvec);
 int mged_otran(struct mged_state *s, const vect_t tvec);
@@ -2031,34 +2030,6 @@ f_svbase(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     }
 
     return status;
-}
-
-
-/*
- * Apply the "joystick" delta rotation to the viewing direction,
- * where the delta is specified in terms of the *viewing* axes.
- * Rotation is performed about the view center, for now.
- * Angles are in radians.
- */
-void
-usejoy(struct mged_state *s, double xangle, double yangle, double zangle)
-{
-    mat_t newrot;		/* NEW rot matrix, from joystick */
-
-    /* NORMAL CASE.
-     * Apply delta viewing rotation for non-edited parts.
-     * The view rotates around the VIEW CENTER.
-     */
-    MAT_IDN(newrot);
-    bn_mat_angles_rad(newrot, xangle, yangle, zangle);
-
-    bn_mat_mul2(newrot, view_state->vs_gvp->gv_rotation);
-    {
-	mat_t newinv;
-	bn_mat_inv(newinv, newrot);
-	wrt_view(s, view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta);	/* Updates ModelDelta */
-    }
-    new_mats(s);
 }
 
 
