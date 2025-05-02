@@ -53,36 +53,23 @@ int mged_vtran(struct mged_state *s, const vect_t tvec);
 int mged_vrot_xyz(struct mged_state *s, char origin, char coords, vect_t rvec);
 
 static int
-mged_erot(struct mged_state *s,
+mged_knob_edit_rot(struct mged_state *s,
 	char coords,
-	  char rotate_about,
-	  mat_t newrot)
+	char rotate_about,
+	mat_t newrot)
 {
-    mat_t temp1, temp2;
-
     s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
-    switch (coords) {
-	case 'm':
-	    break;
-	case 'o':
-	    bn_mat_inv(temp1, s->s_edit->acc_rot_sol);
+    int solid_edit = (s->global_editing_state == ST_S_EDIT) ? 1 : 0;
+    struct bview *tmp_vp = s->s_edit->vp;
+    s->s_edit->vp = view_state->vs_gvp;
 
-	    /* transform into object rotations */
-	    bn_mat_mul(temp2, s->s_edit->acc_rot_sol, newrot);
-	    bn_mat_mul(newrot, temp2, temp1);
-	    break;
-	case 'v':
-	    bn_mat_inv(temp1, view_state->vs_gvp->gv_rotation);
+    rt_knob_edit_rot(s->s_edit, coords, rotate_about, solid_edit, newrot);
 
-	    /* transform into model rotations */
-	    bn_mat_mul(temp2, temp1, newrot);
-	    bn_mat_mul(newrot, temp2, view_state->vs_gvp->gv_rotation);
-	    break;
-    }
+    s->s_edit->vp = tmp_vp;
 
-    if (s->global_editing_state == ST_S_EDIT) {
+    if (solid_edit) {
 	char save_rotate_about;
 
 	save_rotate_about = mged_variables->mv_rotate_about;
@@ -96,60 +83,17 @@ mged_erot(struct mged_state *s,
 	}
 
 	s->s_edit->e_inpara = 0;
-	MAT_COPY(s->s_edit->incr_change, newrot);
-	bn_mat_mul2(s->s_edit->incr_change, s->s_edit->acc_rot_sol);
+
 	sedit(s);
 
 	mged_variables->mv_rotate_about = save_rotate_about;
 	s->s_edit->edit_flag = save_edflag;
 	s->s_edit->solid_edit_mode = save_mode;
     } else {
-	point_t point;
-	vect_t work;
-
-	bn_mat_mul2(newrot, s->s_edit->acc_rot_sol);
-
-	/* find point for rotation to take place wrt */
-	switch (rotate_about) {
-	    case 'v':       /* View Center */
-		VSET(work, 0.0, 0.0, 0.0);
-		MAT4X3PNT(point, view_state->vs_gvp->gv_view2model, work);
-		break;
-	    case 'e':       /* Eye */
-		VSET(work, 0.0, 0.0, 1.0);
-		MAT4X3PNT(point, view_state->vs_gvp->gv_view2model, work);
-		break;
-	    case 'm':       /* Model Center */
-		VSETALL(point, 0.0);
-		break;
-	    case 'k':
-	    default:
-		MAT4X3PNT(point, s->s_edit->model_changes, s->s_edit->e_keypoint);
-	}
-
-	/*
-	 * Apply newrot to the s->s_edit->model_changes matrix wrt "point"
-	 */
-	wrt_point(s->s_edit->model_changes, newrot, s->s_edit->model_changes, point);
-
 	new_edit_mats(s);
     }
 
     return TCL_OK;
-}
-
-
-static int
-knob_edit_rot(struct mged_state *s,
-	char rotate_about,
-	vect_t rvec)
-{
-    mat_t newrot;
-
-    MAT_IDN(newrot);
-    bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
-
-    return mged_erot(s, view_state->vs_gvp->gv_coord, rotate_about, newrot);
 }
 
 static int
@@ -185,7 +129,7 @@ knob_edit_tran(struct mged_state *s,
     if (s->global_editing_state == ST_S_EDIT) {
 	s->s_edit->e_keyfixed = 0;
 	get_solid_keypoint(s, &s->s_edit->e_keypoint, &s->s_edit->e_keytag,
-			   &s->s_edit->es_int, s->s_edit->e_mat);
+		&s->s_edit->es_int, s->s_edit->e_mat);
 	int save_edflag = s->s_edit->edit_flag;
 	int save_mode = s->s_edit->solid_edit_mode;
 
@@ -1726,7 +1670,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     if (do_rot) {
 	int edit_flag_rot = (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' && !view_flag && !model_flag) || edit_flag_force)) ? 1 : 0;
 	if (edit_flag_rot) {
-	    knob_edit_rot(s, origin, rvec);
+	    mat_t newrot;
+	    MAT_IDN(newrot);
+	    bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
+	    mged_knob_edit_rot(s, view_state->vs_gvp->gv_coord, origin, newrot);
 	} else {
 	    (void)knob_rot(s, rvec, origin, model_flag, view_flag);
 	}
@@ -2528,7 +2475,7 @@ cmd_mrot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	    return TCL_ERROR;
 	}
 
-	return mged_erot(s, view_state->vs_gvp->gv_coord, view_state->vs_gvp->gv_rotate_about, rmat);
+	return mged_knob_edit_rot(s, view_state->vs_gvp->gv_coord, view_state->vs_gvp->gv_rotate_about, rmat);
     } else {
 	int ret;
 
@@ -2696,7 +2643,7 @@ cmd_rot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	return mged_erot(s, coord, view_state->vs_gvp->gv_rotate_about, rmat);
+	return mged_knob_edit_rot(s, coord, view_state->vs_gvp->gv_rotate_about, rmat);
     } else {
 	int ret;
 
@@ -2742,7 +2689,7 @@ cmd_arot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	    return TCL_ERROR;
 	}
 
-	return mged_erot(s, view_state->vs_gvp->gv_coord, view_state->vs_gvp->gv_rotate_about, rmat);
+	return mged_knob_edit_rot(s, view_state->vs_gvp->gv_coord, view_state->vs_gvp->gv_rotate_about, rmat);
     } else {
 	int ret;
 

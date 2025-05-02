@@ -644,6 +644,72 @@ rt_edit_knob_cmd_process(
     return BRLCAD_ERROR;
 }
 
+void
+rt_knob_edit_rot(struct rt_solid_edit *s,
+	char coords,
+	char rotate_about,
+	int do_solid_edit,
+	mat_t newrot)
+{
+    mat_t temp1, temp2;
+
+    switch (coords) {
+	case 'm':
+	    break;
+	case 'o':
+	    bn_mat_inv(temp1, s->acc_rot_sol);
+
+	    /* transform into object rotations */
+	    bn_mat_mul(temp2, s->acc_rot_sol, newrot);
+	    bn_mat_mul(newrot, temp2, temp1);
+	    break;
+	case 'v':
+	    bn_mat_inv(temp1, s->vp->gv_rotation);
+
+	    /* transform into model rotations */
+	    bn_mat_mul(temp2, temp1, newrot);
+	    bn_mat_mul(newrot, temp2, s->vp->gv_rotation);
+	    break;
+    }
+
+    if (do_solid_edit) {
+
+	MAT_COPY(s->incr_change, newrot);
+	bn_mat_mul2(s->incr_change, s->acc_rot_sol);
+
+    } else {
+
+	point_t point;
+	vect_t work;
+
+	bn_mat_mul2(newrot, s->acc_rot_sol);
+
+	/* find point for rotation to take place wrt */
+	switch (rotate_about) {
+	    case 'v':       /* View Center */
+		VSET(work, 0.0, 0.0, 0.0);
+		MAT4X3PNT(point, s->vp->gv_view2model, work);
+		break;
+	    case 'e':       /* Eye */
+		VSET(work, 0.0, 0.0, 1.0);
+		MAT4X3PNT(point, s->vp->gv_view2model, work);
+		break;
+	    case 'm':       /* Model Center */
+		VSETALL(point, 0.0);
+		break;
+	    case 'k':
+	    default:
+		MAT4X3PNT(point, s->model_changes, s->e_keypoint);
+	}
+
+	/* Apply newrot to the s->model_changes matrix wrt "point" */
+	mat_t t, out;
+	bn_mat_xform_about_pnt(t, newrot, point);
+	bn_mat_mul(out, t, s->model_changes);
+	MAT_COPY(s->model_changes, out);
+
+    }
+}
 
 /*
  * A great deal of magic takes place here, to accomplish solid editing.

@@ -178,6 +178,14 @@ rt_edit_knob_cmd_process(
         char origin, int incr_flag, void *u_data
 	);
 
+RT_EXPORT extern void
+rt_knob_edit_rot(struct rt_solid_edit *s,
+        char coords,
+        char rotate_about,
+        int do_solid_edit,
+        mat_t newrot
+	);
+
 /* Equivalent to sedit - run editing logic after input data is set in
  * rt_solid_edit container */
 RT_EXPORT extern void
