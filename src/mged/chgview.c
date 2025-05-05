@@ -94,9 +94,10 @@ mged_knob_edit_rot(struct mged_state *s,
     return TCL_OK;
 }
 
-static int
-knob_edit_tran(struct mged_state *s,
+static void
+rt_knob_edit_tran(struct mged_state *mged_s, struct rt_solid_edit *s,
 	char coords,
+	int do_solid_edit,
 	vect_t tvec)
 {
     point_t p2;
@@ -105,34 +106,49 @@ knob_edit_tran(struct mged_state *s,
     point_t work;
     mat_t xlatemat;
 
-    s->s_edit->local2base = s->dbip->dbi_local2base;
-    s->s_edit->vp = view_state->vs_gvp;
-
     /* compute delta */
     switch (coords) {
 	case 'm':
-	    VSCALE(delta, tvec, s->s_edit->local2base);
+	    VSCALE(delta, tvec, s->local2base);
 	    break;
 	case 'o':
-	    VSCALE(p2, tvec, s->s_edit->local2base);
-	    MAT4X3PNT(delta, s->s_edit->acc_rot_sol, p2);
+	    VSCALE(p2, tvec, s->local2base);
+	    MAT4X3PNT(delta, s->acc_rot_sol, p2);
 	    break;
 	case 'v':
 	default:
-	    VSCALE(p2, tvec, s->s_edit->local2base / s->s_edit->vp->gv_scale);
-	    MAT4X3PNT(work, s->s_edit->vp->gv_view2model, p2);
-	    MAT_DELTAS_GET_NEG(vcenter, s->s_edit->vp->gv_center);
+	    VSCALE(p2, tvec, s->local2base / s->vp->gv_scale);
+	    MAT4X3PNT(work, s->vp->gv_view2model, p2);
+	    MAT_DELTAS_GET_NEG(vcenter, s->vp->gv_center);
 	    VSUB2(delta, work, vcenter);
-
 	    break;
     }
 
-    if (s->global_editing_state == ST_S_EDIT) {
-	s->s_edit->e_keyfixed = 0;
-	get_solid_keypoint(s, &s->s_edit->e_keypoint, &s->s_edit->e_keytag,
-		&s->s_edit->es_int, s->s_edit->e_mat);
-	VADD2(s->s_edit->e_para, delta, s->s_edit->curr_e_axes_pos);
+    if (do_solid_edit) {
+	s->e_keyfixed = 0;
+	get_solid_keypoint(mged_s, &s->e_keypoint, &s->e_keytag,
+		&s->es_int, s->e_mat);
+	VADD2(s->e_para, delta, s->curr_e_axes_pos);
+	s->e_inpara = 3;
+    } else {
+	MAT_IDN(xlatemat);
+	MAT_DELTAS_VEC(xlatemat, delta);
+	bn_mat_mul2(xlatemat, s->model_changes);
+    }
+}
 
+static int
+knob_edit_tran(struct mged_state *s,
+	char coords,
+	vect_t tvec)
+{
+    int solid_edit = (s->global_editing_state == ST_S_EDIT) ? 1 : 0;
+    s->s_edit->local2base = s->dbip->dbi_local2base;
+    s->s_edit->vp = view_state->vs_gvp;
+
+    rt_knob_edit_tran(s, s->s_edit, coords, solid_edit, tvec);
+
+    if (solid_edit) {
 	int save_edflag = s->s_edit->edit_flag;
 	int save_mode = s->s_edit->solid_edit_mode;
 
@@ -140,15 +156,10 @@ knob_edit_tran(struct mged_state *s,
 	    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
 	}
 
-	s->s_edit->e_inpara = 3;
 	sedit(s);
 	s->s_edit->edit_flag = save_edflag;
 	s->s_edit->solid_edit_mode = save_mode;
     } else {
-	MAT_IDN(xlatemat);
-	MAT_DELTAS_VEC(xlatemat, delta);
-	bn_mat_mul2(xlatemat, s->s_edit->model_changes);
-
 	new_edit_mats(s);
 	s->update_views = 1;
 	dm_set_dirty(DMP, 1);
