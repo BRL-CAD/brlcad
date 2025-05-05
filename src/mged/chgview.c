@@ -169,16 +169,122 @@ knob_edit_tran(struct mged_state *s,
 }
 
 static void
-knob_edit_sca(struct mged_state *s)
+rt_knob_edit_sca(struct rt_solid_edit *s, int do_solid)
 {
-    if (s->global_editing_state == ST_S_EDIT) {
-	sedit_abs_scale(s);
+    if (do_solid) {
+
+	fastf_t old_acc_sc_sol;
+
+	old_acc_sc_sol = s->acc_sc_sol;
+
+	if (-SMALL_FASTF < s->k.sca_abs && s->k.sca_abs < SMALL_FASTF)
+	    s->acc_sc_sol = 1.0;
+	else if (s->k.sca_abs > 0.0)
+	    s->acc_sc_sol = 1.0 + s->k.sca_abs * 3.0;
+	else {
+	    if ((s->k.sca_abs - MGED_SMALL_SCALE) < -1.0)
+		s->k.sca_abs = -1.0 + MGED_SMALL_SCALE;
+
+	    s->acc_sc_sol = 1.0 + s->k.sca_abs;
+	}
+
+	s->es_scale = s->acc_sc_sol / old_acc_sc_sol;
+
     } else {
-	oedit_abs_scale(s);
+
+	fastf_t scale;
+	vect_t temp;
+	vect_t pos_model;
+	mat_t incr_mat;
+
+	MAT_IDN(incr_mat);
+
+	if (-SMALL_FASTF < s->k.sca_abs && s->k.sca_abs < SMALL_FASTF)
+	    scale = 1;
+	else if (s->k.sca_abs > 0.0)
+	    scale = 1.0 + s->k.sca_abs * 3.0;
+	else {
+	    if ((s->k.sca_abs - MGED_SMALL_SCALE) < -1.0)
+		s->k.sca_abs = -1.0 + MGED_SMALL_SCALE;
+
+	    scale = 1.0 + s->k.sca_abs;
+	}
+
+	/* switch depending on scaling option selected */
+	switch (edobj) {
+
+	    case BE_O_SCALE:
+		/* global scaling */
+		incr_mat[15] = s->acc_sc_obj / scale;
+		s->acc_sc_obj = scale;
+		break;
+
+	    case BE_O_XSCALE:
+		/* local scaling ... X-axis */
+		incr_mat[0] = scale / s->acc_sc[0];
+		/* accumulate the scale factor */
+		s->acc_sc[0] = scale;
+		break;
+
+	    case BE_O_YSCALE:
+		/* local scaling ... Y-axis */
+		incr_mat[5] = scale / s->acc_sc[1];
+		/* accumulate the scale factor */
+		s->acc_sc[1] = scale;
+		break;
+
+	    case BE_O_ZSCALE:
+		/* local scaling ... Z-axis */
+		incr_mat[10] = scale / s->acc_sc[2];
+		/* accumulate the scale factor */
+		s->acc_sc[2] = scale;
+		break;
+	}
+
+	/* Have scaling take place with respect to keypoint,
+	 * NOT the view center.
+	 */
+	VMOVE(temp, s->e_keypoint);
+	MAT4X3PNT(pos_model, s->model_changes, temp);
+	wrt_point(s->model_changes, incr_mat, s->model_changes, pos_model);
+
+#if 0
+	// TODO - replace wrt_point with below
+	/* Have scaling take place with respect to keypoint,
+	 * NOT the view center. */
+	mat_t t, out;
+	vect_t pos_model;
+	VMOVE(t, s->e_keypoint);
+	MAT4X3PNT(pos_model, s->model_changes, t);
+	bn_mat_xform_about_pnt(t, incr_mat, pos_model);
+	bn_mat_mul(out, t, s->model_changes);
+	MAT_COPY(s->model_changes, out);
+#endif
+
     }
 }
 
+static void
+knob_edit_sca(struct mged_state *s)
+{
 
+    int do_solid_edit = (s->global_editing_state == ST_S_EDIT) ? 1 : 0;
+
+    rt_knob_edit_sca(s->s_edit, do_solid_edit);
+
+    if (do_solid_edit) {
+
+	if (s->s_edit->edit_flag != RT_SOLID_EDIT_SCALE && s->s_edit->edit_flag != RT_SOLID_EDIT_PSCALE)
+	    return;
+
+	sedit(s);
+
+    } else {
+
+	new_edit_mats(s);
+
+    }
+}
 
 
 /* DEBUG -- force view center */

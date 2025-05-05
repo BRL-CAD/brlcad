@@ -5208,33 +5208,6 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
     sedit(s);
 }
 
-
-void
-sedit_abs_scale(struct mged_state *s)
-{
-    fastf_t old_acc_sc_sol;
-
-    if (s->s_edit->edit_flag != RT_SOLID_EDIT_SCALE && s->s_edit->edit_flag != RT_SOLID_EDIT_PSCALE)
-	return;
-
-    old_acc_sc_sol = s->s_edit->acc_sc_sol;
-
-    if (-SMALL_FASTF < s->s_edit->k.sca_abs && s->s_edit->k.sca_abs < SMALL_FASTF)
-	s->s_edit->acc_sc_sol = 1.0;
-    else if (s->s_edit->k.sca_abs > 0.0)
-	s->s_edit->acc_sc_sol = 1.0 + s->s_edit->k.sca_abs * 3.0;
-    else {
-	if ((s->s_edit->k.sca_abs - MGED_SMALL_SCALE) < -1.0)
-	    s->s_edit->k.sca_abs = -1.0 + MGED_SMALL_SCALE;
-
-	s->s_edit->acc_sc_sol = 1.0 + s->s_edit->k.sca_abs;
-    }
-
-    s->s_edit->es_scale = s->s_edit->acc_sc_sol / old_acc_sc_sol;
-    sedit(s);
-}
-
-
 /*
  * Object Edit
  */
@@ -5335,69 +5308,6 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 	Tcl_AppendResult(s->interp, "No object edit mode selected;  mouse press ignored\n", (char *)NULL);
 	return;
     }
-}
-
-
-void
-oedit_abs_scale(struct mged_state *s)
-{
-    fastf_t scale;
-    vect_t temp;
-    vect_t pos_model;
-    mat_t incr_mat;
-
-    MAT_IDN(incr_mat);
-
-    if (-SMALL_FASTF < s->s_edit->k.sca_abs && s->s_edit->k.sca_abs < SMALL_FASTF)
-	scale = 1;
-    else if (s->s_edit->k.sca_abs > 0.0)
-	scale = 1.0 + s->s_edit->k.sca_abs * 3.0;
-    else {
-	if ((s->s_edit->k.sca_abs - MGED_SMALL_SCALE) < -1.0)
-	    s->s_edit->k.sca_abs = -1.0 + MGED_SMALL_SCALE;
-
-	scale = 1.0 + s->s_edit->k.sca_abs;
-    }
-
-    /* switch depending on scaling option selected */
-    switch (edobj) {
-
-	case BE_O_SCALE:
-	    /* global scaling */
-	    incr_mat[15] = s->s_edit->acc_sc_obj / scale;
-	    s->s_edit->acc_sc_obj = scale;
-	    break;
-
-	case BE_O_XSCALE:
-	    /* local scaling ... X-axis */
-	    incr_mat[0] = scale / s->s_edit->acc_sc[0];
-	    /* accumulate the scale factor */
-	    s->s_edit->acc_sc[0] = scale;
-	    break;
-
-	case BE_O_YSCALE:
-	    /* local scaling ... Y-axis */
-	    incr_mat[5] = scale / s->s_edit->acc_sc[1];
-	    /* accumulate the scale factor */
-	    s->s_edit->acc_sc[1] = scale;
-	    break;
-
-	case BE_O_ZSCALE:
-	    /* local scaling ... Z-axis */
-	    incr_mat[10] = scale / s->s_edit->acc_sc[2];
-	    /* accumulate the scale factor */
-	    s->s_edit->acc_sc[2] = scale;
-	    break;
-    }
-
-    /* Have scaling take place with respect to keypoint,
-     * NOT the view center.
-     */
-    VMOVE(temp, s->s_edit->e_keypoint);
-    MAT4X3PNT(pos_model, s->s_edit->model_changes, temp);
-    wrt_point(s->s_edit->model_changes, incr_mat, s->s_edit->model_changes, pos_model);
-
-    new_edit_mats(s);
 }
 
 
