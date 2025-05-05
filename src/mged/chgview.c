@@ -105,20 +105,23 @@ knob_edit_tran(struct mged_state *s,
     point_t work;
     mat_t xlatemat;
 
+    s->s_edit->local2base = s->dbip->dbi_local2base;
+    s->s_edit->vp = view_state->vs_gvp;
+
     /* compute delta */
     switch (coords) {
 	case 'm':
-	    VSCALE(delta, tvec, s->dbip->dbi_local2base);
+	    VSCALE(delta, tvec, s->s_edit->local2base);
 	    break;
 	case 'o':
-	    VSCALE(p2, tvec, s->dbip->dbi_local2base);
+	    VSCALE(p2, tvec, s->s_edit->local2base);
 	    MAT4X3PNT(delta, s->s_edit->acc_rot_sol, p2);
 	    break;
 	case 'v':
 	default:
-	    VSCALE(p2, tvec, s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale);
-	    MAT4X3PNT(work, view_state->vs_gvp->gv_view2model, p2);
-	    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
+	    VSCALE(p2, tvec, s->s_edit->local2base / s->s_edit->vp->gv_scale);
+	    MAT4X3PNT(work, s->s_edit->vp->gv_view2model, p2);
+	    MAT_DELTAS_GET_NEG(vcenter, s->s_edit->vp->gv_center);
 	    VSUB2(delta, work, vcenter);
 
 	    break;
