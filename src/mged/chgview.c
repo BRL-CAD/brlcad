@@ -82,8 +82,6 @@ mged_knob_edit_rot(struct mged_state *s,
 	    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
 	}
 
-	s->s_edit->e_inpara = 0;
-
 	sedit(s);
 
 	mged_variables->mv_rotate_about = save_rotate_about;
@@ -130,6 +128,8 @@ knob_edit_tran(struct mged_state *s,
 	s->s_edit->e_keyfixed = 0;
 	get_solid_keypoint(s, &s->s_edit->e_keypoint, &s->s_edit->e_keytag,
 		&s->s_edit->es_int, s->s_edit->e_mat);
+	VADD2(s->s_edit->e_para, delta, s->s_edit->curr_e_axes_pos);
+
 	int save_edflag = s->s_edit->edit_flag;
 	int save_mode = s->s_edit->solid_edit_mode;
 
@@ -137,7 +137,6 @@ knob_edit_tran(struct mged_state *s,
 	    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
 	}
 
-	VADD2(s->s_edit->e_para, delta, s->s_edit->curr_e_axes_pos);
 	s->s_edit->e_inpara = 3;
 	sedit(s);
 	s->s_edit->edit_flag = save_edflag;

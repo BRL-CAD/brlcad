@@ -676,6 +676,7 @@ rt_knob_edit_rot(struct rt_solid_edit *s,
 
 	MAT_COPY(s->incr_change, newrot);
 	bn_mat_mul2(s->incr_change, s->acc_rot_sol);
+	s->e_inpara = 0;
 
     } else {
 
