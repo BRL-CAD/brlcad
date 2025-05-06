@@ -3030,6 +3030,18 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 
 	/* Have scaling take place with respect to keypoint,
 	 * NOT the view center.
+	 *
+	 * The changes written to model_changes are what are ultimately used by moveHobj
+	 * or moveHinstance to change the on-disk geometry.  The job of updating what
+	 * is being shown in the MGED window for editing purposes is handled by the
+	 * new_edit_mats call, which updates view_state->vs_model2objview.  dozoom.c
+	 * uses that matrix to modify how solids involved in editing are displayed.
+	 *
+	 * Note that this means wireframes for editing solids in oed mode aren't going
+	 * to be redrawn to reflect their new parameters.  This is expected - it is quite
+	 * possible that the oed-distorted shape of a primitive will not be representable
+	 * using primitive parameters, so regeneration of new wireframes in response to
+	 * the new shape often isn't feasible.
 	 */
 	VMOVE(temp, s->s_edit->e_keypoint);
 	MAT4X3PNT(pos_model, s->s_edit->model_changes, temp);
