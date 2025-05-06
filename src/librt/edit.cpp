@@ -648,7 +648,7 @@ void
 rt_knob_edit_rot(struct rt_solid_edit *s,
 	char coords,
 	char rotate_about,
-	int do_solid_edit,
+	int matrix_edit,
 	mat_t newrot)
 {
     mat_t temp1, temp2;
@@ -672,7 +672,7 @@ rt_knob_edit_rot(struct rt_solid_edit *s,
 	    break;
     }
 
-    if (do_solid_edit) {
+    if (!matrix_edit) {
 
 	MAT_COPY(s->incr_change, newrot);
 	bn_mat_mul2(s->incr_change, s->acc_rot_sol);

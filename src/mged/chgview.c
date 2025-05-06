@@ -61,11 +61,11 @@ mged_knob_edit_rot(struct mged_state *s,
     s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
-    int solid_edit = (s->global_editing_state == ST_S_EDIT) ? 1 : 0;
+    int matrix_edit = (s->global_editing_state == ST_S_EDIT) ? 0 : 1;
     struct bview *tmp_vp = s->s_edit->vp;
     s->s_edit->vp = view_state->vs_gvp;
 
-    rt_knob_edit_rot(s->s_edit, coords, rotate_about, solid_edit, newrot);
+    rt_knob_edit_rot(s->s_edit, coords, rotate_about, matrix_edit, newrot);
 
     s->s_edit->vp = tmp_vp;
 

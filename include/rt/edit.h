@@ -182,7 +182,7 @@ RT_EXPORT extern void
 rt_knob_edit_rot(struct rt_solid_edit *s,
         char coords,
         char rotate_about,
-        int do_solid_edit,
+        int matrix_edit,
         mat_t newrot
 	);
 
