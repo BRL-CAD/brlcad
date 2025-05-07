@@ -69,7 +69,7 @@ mged_knob_edit_rot(struct mged_state *s,
 
     s->s_edit->vp = tmp_vp;
 
-    if (solid_edit) {
+    if (!matrix_edit) {
 	char save_rotate_about;
 
 	save_rotate_about = mged_variables->mv_rotate_about;
