@@ -45,6 +45,14 @@ __BEGIN_DECLS
 #define RT_SOLID_EDIT_ROT        3
 #define RT_SOLID_EDIT_PSCALE     4 // Scale one solid parameter by scalar
 #define RT_SOLID_EDIT_PICK       5
+// The following are unique to matrix editing (done via objedit in MGED).
+// Unlike other ops, they can ONLY be done reliably by updating a matrix rather
+// than by altering solid parameters - some primitives do not support directly
+// expressing the shapes that can be created with these opts (for example, a
+// tor scaled in the X direction.)
+#define RT_MATRIX_EDIT_SCALE_X   6
+#define RT_MATRIX_EDIT_SCALE_Y   7
+#define RT_MATRIX_EDIT_SCALE_Z   8
 
 struct rt_solid_edit_map;
 
@@ -82,6 +90,7 @@ struct rt_solid_edit {
     fastf_t es_scale;           /* scale factor */
     mat_t incr_change;          /* change(s) from last cycle */
     mat_t model_changes;        /* full changes this edit */
+    mat_t model2objview;        /* Matrix for applying model_changes to view objects in vp (used in obj_edit) */
 
     fastf_t acc_sc[3];          /* accumulate local object scale factors */
     fastf_t acc_sc_obj;         /* accumulate global object scale factor */
@@ -185,6 +194,17 @@ rt_knob_edit_rot(struct rt_solid_edit *s,
         int matrix_edit,
         mat_t newrot
 	);
+
+RT_EXPORT extern void
+rt_knob_edit_tran(struct rt_solid_edit *s,
+        char coords,
+        int matrix_edit,
+        vect_t tvec);
+
+RT_EXPORT extern void
+rt_knob_edit_sca(
+	struct rt_solid_edit *s,
+	int matrix_edit);
 
 /* Equivalent to sedit - run editing logic after input data is set in
  * rt_solid_edit container */

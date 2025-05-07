@@ -653,6 +653,8 @@ rt_knob_edit_rot(struct rt_solid_edit *s,
 {
     mat_t temp1, temp2;
 
+    s->update_views = 1;
+
     switch (coords) {
 	case 'm':
 	    break;
@@ -677,6 +679,24 @@ rt_knob_edit_rot(struct rt_solid_edit *s,
 	MAT_COPY(s->incr_change, newrot);
 	bn_mat_mul2(s->incr_change, s->acc_rot_sol);
 	s->e_inpara = 0;
+
+	// Stash state to temporarily put things in the
+	// solid edit rotate state (it may already have
+	// been there but we're not counting on it)
+	char save_rotate_about = s->vp->gv_rotate_about;
+	s->vp->gv_rotate_about = rotate_about;
+
+	int save_edflag = s->edit_flag;
+	int save_mode = s->solid_edit_mode;
+
+	rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_ROT);
+
+	rt_solid_edit_process(s);
+
+	// Restore previous state
+	s->vp->gv_rotate_about = save_rotate_about;
+	s->edit_flag = save_edflag;
+	s->solid_edit_mode = save_mode;
 
     } else {
 
@@ -709,7 +729,201 @@ rt_knob_edit_rot(struct rt_solid_edit *s,
 	bn_mat_mul(out, t, s->model_changes);
 	MAT_COPY(s->model_changes, out);
 
+	/* Update the model2objview matrix, which is sometimes used by
+	 * applications to display an intermediate editing state. */
+	bn_mat_mul(s->model2objview, s->vp->gv_model2view, s->model_changes);
+
     }
+}
+
+void
+rt_knob_edit_tran(struct rt_solid_edit *s,
+        char coords,
+        int matrix_edit,
+        vect_t tvec)
+{
+    point_t p2;
+    point_t delta;
+    point_t vcenter;
+    point_t work;
+
+    /* compute delta */
+    switch (coords) {
+	case 'm':
+	    VSCALE(delta, tvec, s->local2base);
+	    break;
+	case 'o':
+	    VSCALE(p2, tvec, s->local2base);
+	    MAT4X3PNT(delta, s->acc_rot_sol, p2);
+	    break;
+	case 'v':
+	default:
+	    VSCALE(p2, tvec, s->local2base / s->vp->gv_scale);
+	    MAT4X3PNT(work, s->vp->gv_view2model, p2);
+	    MAT_DELTAS_GET_NEG(vcenter, s->vp->gv_center);
+	    VSUB2(delta, work, vcenter);
+
+	    break;
+    }
+
+    if (!matrix_edit) {
+	s->e_keyfixed = 0;
+
+	// Get primitive keypoint
+	struct rt_db_internal *ip = &s->es_int;
+	fastf_t *mat = s->e_mat;
+	point_t *pt = &s->e_keypoint;
+	RT_CK_DB_INTERNAL(ip);
+	if (EDOBJ[ip->idb_type].ft_keypoint) {
+	    bu_vls_trunc(s->log_str, 0);
+	    s->e_keytag = (*EDOBJ[ip->idb_type].ft_keypoint)(pt, s->e_keytag, mat, s, s->tol);
+	    if (bu_vls_strlen(s->log_str)) {
+		bu_log("%s", bu_vls_cstr(s->log_str));
+		bu_vls_trunc(s->log_str, 0);
+	    }
+	} else {
+	    bu_log("rt_solid_edit_knobs_tra: unrecognized solid type (setting keypoint to origin)\n");
+	    VSETALL(*pt, 0.0);
+	    s->e_keytag = "(origin)";
+	}
+
+	int save_edflag = s->edit_flag;
+	int save_mode = s->solid_edit_mode;
+
+	rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_TRANS);
+
+	VADD2(s->e_para, delta, s->curr_e_axes_pos);
+	s->e_inpara = 3;
+	rt_solid_edit_process(s);
+	s->edit_flag = save_edflag;
+	s->solid_edit_mode = save_mode;
+    } else {
+	mat_t xlatemat;
+	MAT_IDN(xlatemat);
+	MAT_DELTAS_VEC(xlatemat, delta);
+	bn_mat_mul2(xlatemat, s->model_changes);
+
+	/* Update the model2objview matrix, which is sometimes used by
+	 * applications to display an intermediate editing state.
+	 *
+	 * Probably don't really need to calculate this here - if an app
+	 * has multiple views, it actually needs to calculate this separately
+	 * anyway for each view.  MGED calculated them for all views as a
+	 * finalization step in the wrapper logic.
+	 *
+	 * In the new drawing mode, this would get calculated and applied
+	 * to a scene object's vlist corresponding to the object or instance
+	 * being edited.
+	 *
+	 * Another approach would be to allow a callback... */
+	bn_mat_mul(s->model2objview, s->vp->gv_model2view, s->model_changes);
+    }
+}
+
+#define MGED_SMALL_SCALE 1.0e-10
+void
+rt_knob_edit_sca(struct rt_solid_edit *s, int matrix_edit)
+{
+   if (!matrix_edit) {
+
+        fastf_t old_acc_sc_sol;
+
+        old_acc_sc_sol = s->acc_sc_sol;
+
+        if (-SMALL_FASTF < s->k.sca_abs && s->k.sca_abs < SMALL_FASTF)
+            s->acc_sc_sol = 1.0;
+        else if (s->k.sca_abs > 0.0)
+            s->acc_sc_sol = 1.0 + s->k.sca_abs * 3.0;
+        else {
+            if ((s->k.sca_abs - MGED_SMALL_SCALE) < -1.0)
+                s->k.sca_abs = -1.0 + MGED_SMALL_SCALE;
+
+            s->acc_sc_sol = 1.0 + s->k.sca_abs;
+        }
+
+        s->es_scale = s->acc_sc_sol / old_acc_sc_sol;
+
+	int save_edflag = s->edit_flag;
+	int save_mode = s->solid_edit_mode;
+
+	rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_SCALE);
+
+	rt_solid_edit_process(s);
+
+	s->edit_flag = save_edflag;
+	s->solid_edit_mode = save_mode;
+
+   } else {
+       fastf_t scale;
+       mat_t incr_mat;
+       MAT_IDN(incr_mat);
+
+       // TODO - objedit_mouse SARROW case has different logic for handling mousevec
+       // inputs - looking like we may need a mousevec entry for the rt_solid_edit
+       // struct so we can have both processing methods here....
+
+       if (-SMALL_FASTF < s->k.sca_abs && s->k.sca_abs < SMALL_FASTF)
+	   scale = 1;
+       else if (s->k.sca_abs > 0.0)
+	   scale = 1.0 + s->k.sca_abs * 3.0;
+       else {
+	   if ((s->k.sca_abs - MGED_SMALL_SCALE) < -1.0)
+	       s->k.sca_abs = -1.0 + MGED_SMALL_SCALE;
+
+	   scale = 1.0 + s->k.sca_abs;
+       }
+
+       /* switch depending on scaling option selected */
+       switch (s->edit_flag) {
+
+	   case RT_SOLID_EDIT_SCALE:
+	       /* global scaling */
+	       incr_mat[15] = s->acc_sc_obj / scale;
+	       s->acc_sc_obj = scale;
+	       break;
+
+	   case RT_MATRIX_EDIT_SCALE_X:
+	       /* local scaling ... X-axis */
+	       incr_mat[0] = scale / s->acc_sc[0];
+	       /* accumulate the scale factor */
+	       s->acc_sc[0] = scale;
+	       break;
+
+	   case RT_MATRIX_EDIT_SCALE_Y:
+	       /* local scaling ... Y-axis */
+	       incr_mat[5] = scale / s->acc_sc[1];
+	       /* accumulate the scale factor */
+	       s->acc_sc[1] = scale;
+	       break;
+
+	   case RT_MATRIX_EDIT_SCALE_Z:
+	       /* local scaling ... Z-axis */
+	       incr_mat[10] = scale / s->acc_sc[2];
+	       /* accumulate the scale factor */
+	       s->acc_sc[2] = scale;
+	       break;
+
+	   default:
+	       bu_log("Incorrect edit flag for matrix scale:  %d\n", s->edit_flag);
+	       return;
+       }
+
+       /* Have scaling take place with respect to keypoint, NOT the view
+	* center.  model_changes is the matrix that will ultimately be used to
+	* alter the geometry on disk.  This should probably go into rt_solid_edit_process
+	* if it is generalized to handle both solid and instance editing. */
+       mat_t t, out;
+       vect_t pos_model;
+       VMOVE(t, s->e_keypoint);
+       MAT4X3PNT(pos_model, s->model_changes, t);
+       bn_mat_xform_about_pnt(t, incr_mat, pos_model);
+       bn_mat_mul(out, t, s->model_changes);
+       MAT_COPY(s->model_changes, out);
+
+       /* Update the model2objview matrix, which is sometimes used by
+	* applications to display an intermediate editing state. */
+       bn_mat_mul(s->model2objview, s->vp->gv_model2view, s->model_changes);
+   }
 }
 
 /*
