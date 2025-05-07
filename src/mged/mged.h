@@ -463,10 +463,12 @@ void transform_editing_solid(
     struct rt_db_internal *is,		/* input solid */
     int freedbi);
 void replot_editing_solid(struct mged_state *s);
+void sedit_abs_scale(struct mged_state *s);
 void sedit_accept(struct mged_state *s);
 void sedit_mouse(struct mged_state *s, const vect_t mousevec);
 void sedit_reject(struct mged_state *s);
 void sedit_vpick(struct mged_state *s, point_t v_pos);
+void oedit_abs_scale(struct mged_state *s);
 void oedit_accept(struct mged_state *s);
 void oedit_reject(struct mged_state *s);
 void objedit_mouse(struct mged_state *s, const vect_t mousevec);
