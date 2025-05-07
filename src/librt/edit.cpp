@@ -674,8 +674,9 @@ rt_knob_edit_rot(struct rt_solid_edit *s,
 
     if (!matrix_edit) {
 
-	MAT_COPY(s->incr_change, newrot);
-	bn_mat_mul2(s->incr_change, s->acc_rot_sol);
+	mat_t t;
+	bn_mat_mul(t, newrot, s->acc_rot_sol);
+	MAT_COPY(s->acc_rot_sol, t);
 	s->e_inpara = 0;
 
     } else {
