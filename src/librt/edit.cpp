@@ -86,6 +86,7 @@ rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol 
     MAT_IDN(s->e_invmat);
     MAT_IDN(s->e_mat);
     MAT_IDN(s->incr_change);
+    MAT_IDN(s->model2objview);
     MAT_IDN(s->model_changes);
     VSETALL(s->curr_e_axes_pos , 0);
     VSETALL(s->e_axes_pos , 0);
