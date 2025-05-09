@@ -1025,7 +1025,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = s->s_edit->edit_flag;
 	    if (!SEDIT_ROTATE)
-		rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
+		rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_ROT);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1045,7 +1045,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	if (s->global_editing_state == ST_S_EDIT) {
 	    s->s_edit->edit_flag = save_edflag;
-	    s->s_edit->solid_edit_mode = save_mode;
+	    s->s_edit->edit_mode = save_mode;
 	} else {
 	    edobj = save_edflag;
 	}
@@ -1060,9 +1060,9 @@ event_check(struct mged_state *s, int non_blocking)
 
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = s->s_edit->edit_flag;
-	    save_mode = s->s_edit->solid_edit_mode;
+	    save_mode = s->s_edit->edit_mode;
 	    if (!SEDIT_ROTATE)
-		rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
+		rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_ROT);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1082,7 +1082,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	if (s->global_editing_state == ST_S_EDIT) {
 	    s->s_edit->edit_flag = save_edflag;
-	    s->s_edit->solid_edit_mode = save_mode;
+	    s->s_edit->edit_mode = save_mode;
 	} else {
 	    edobj = save_edflag;
 	}
@@ -1097,9 +1097,9 @@ event_check(struct mged_state *s, int non_blocking)
 
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = s->s_edit->edit_flag;
-	    save_mode = s->s_edit->solid_edit_mode;
+	    save_mode = s->s_edit->edit_mode;
 	    if (!SEDIT_ROTATE)
-		rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_ROT);
+		rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_ROT);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1119,7 +1119,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	if (s->global_editing_state == ST_S_EDIT) {
 	    s->s_edit->edit_flag = save_edflag;
-	    s->s_edit->solid_edit_mode = save_mode;
+	    s->s_edit->edit_mode = save_mode;
 	} else {
 	    edobj = save_edflag;
 	}
@@ -1135,7 +1135,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = s->s_edit->edit_flag;
 	    if (!SEDIT_TRAN)
-		rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
+		rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_TRANS);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1154,7 +1154,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	if (s->global_editing_state == ST_S_EDIT) {
 	    s->s_edit->edit_flag = save_edflag;
-	    s->s_edit->solid_edit_mode = save_mode;
+	    s->s_edit->edit_mode = save_mode;
 	} else {
 	    edobj = save_edflag;
 	}
@@ -1169,9 +1169,9 @@ event_check(struct mged_state *s, int non_blocking)
 
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = s->s_edit->edit_flag;
-	    save_mode = s->s_edit->solid_edit_mode;
+	    save_mode = s->s_edit->edit_mode;
 	    if (!SEDIT_TRAN)
-		rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
+		rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_TRANS);
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1190,7 +1190,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	if (s->global_editing_state == ST_S_EDIT) {
 	    s->s_edit->edit_flag = save_edflag;
-	    s->s_edit->solid_edit_mode = save_mode;
+	    s->s_edit->edit_mode = save_mode;
 	} else {
 	    edobj = save_edflag;
 	}
@@ -1200,9 +1200,9 @@ event_check(struct mged_state *s, int non_blocking)
 
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = s->s_edit->edit_flag;
-	    save_mode = s->s_edit->solid_edit_mode;
+	    save_mode = s->s_edit->edit_mode;
 	    if (!SEDIT_SCALE)
-		rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_SCALE);
+		rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_SCALE);
 	} else {
 	    save_edflag = edobj;
 	    if (!OEDIT_SCALE)
@@ -1217,7 +1217,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	if (s->global_editing_state == ST_S_EDIT) {
 	    s->s_edit->edit_flag = save_edflag;
-	    s->s_edit->solid_edit_mode = save_mode;
+	    s->s_edit->edit_mode = save_mode;
 	} else {
 	    edobj = save_edflag;
 	}
@@ -1796,7 +1796,7 @@ mged_finish(struct mged_state *s, int exitcode)
     bu_vls_free(&s->input_str_prefix);
     bu_vls_free(&s->scratchline);
     bu_vls_free(&s-> mged_prompt);
-    rt_solid_edit_destroy(s->s_edit);
+    rt_edit_destroy(s->s_edit);
     s->s_edit = NULL; // sanity
     BU_PUT(s, struct mged_state);
     MGED_STATE = NULL; // sanity
@@ -1861,7 +1861,7 @@ main(int argc, char *argv[])
     bu_vls_init(&s->scratchline);
     bu_vls_init(&s->mged_prompt);
     s->dpy_string = NULL;
-    s->s_edit = rt_solid_edit_create(NULL, NULL, NULL, NULL);
+    s->s_edit = rt_edit_create(NULL, NULL, NULL, NULL);
 
     /* Set up linked lists */
     s->vlfree = &rt_vlfree;
@@ -2102,7 +2102,7 @@ main(int argc, char *argv[])
     frametime = 1;
 
     s->global_editing_state = ST_VIEW;
-    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_DEFAULT);
+    rt_edit_set_edflag(s->s_edit, RT_EDIT_DEFAULT);
     s->es_edclass = EDIT_CLASS_NULL;
     s->s_edit->e_inpara = newedge = 0;
 
@@ -2115,7 +2115,7 @@ main(int argc, char *argv[])
 
     rt_prep_timer();		/* Initialize timer */
 
-    rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_DEFAULT);		/* no solid editing just now */
+    rt_edit_set_edflag(s->s_edit, RT_EDIT_DEFAULT);		/* no solid editing just now */
 
     /* prepare mged, adjust our path, get set up to use Tcl */
 

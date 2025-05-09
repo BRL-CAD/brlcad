@@ -142,7 +142,7 @@
 #define ECMD_HYP_ROT_A		92
 
 #define SEDIT_ROTATE (s->global_editing_state == ST_S_EDIT && \
-		      (s->s_edit->edit_flag == RT_SOLID_EDIT_ROT || \
+		      (s->s_edit->edit_flag == RT_PARAMS_EDIT_ROT || \
 		       s->s_edit->edit_flag == ECMD_TGC_ROT_H || \
 		       s->s_edit->edit_flag ==  ECMD_TGC_ROT_AB || \
 		       s->s_edit->edit_flag == ECMD_ARB_ROTATE_FACE || \
@@ -153,8 +153,8 @@
 #define EDIT_ROTATE (SEDIT_ROTATE || OEDIT_ROTATE)
 
 #define SEDIT_SCALE (s->global_editing_state == ST_S_EDIT && \
-		     (s->s_edit->edit_flag == RT_SOLID_EDIT_SCALE || \
-		      s->s_edit->edit_flag == RT_SOLID_EDIT_PSCALE || \
+		     (s->s_edit->edit_flag == RT_PARAMS_EDIT_SCALE || \
+		      s->s_edit->edit_flag == RT_PARAMS_EDIT_PSCALE || \
 		      s->s_edit->edit_flag == ECMD_VOL_THRESH_LO || \
 		      s->s_edit->edit_flag == ECMD_VOL_THRESH_HI || \
 		      s->s_edit->edit_flag == ECMD_VOL_CSIZE || \
@@ -174,7 +174,7 @@
 #define EDIT_SCALE (SEDIT_SCALE || OEDIT_SCALE)
 
 #define SEDIT_TRAN (s->global_editing_state == ST_S_EDIT && \
-		    (s->s_edit->edit_flag == RT_SOLID_EDIT_TRANS || \
+		    (s->s_edit->edit_flag == RT_PARAMS_EDIT_TRANS || \
 		     s->s_edit->edit_flag == ECMD_TGC_MV_H || \
 		     s->s_edit->edit_flag == ECMD_TGC_MV_HH || \
 		     s->s_edit->edit_flag == EARB || \

@@ -40,33 +40,33 @@
 #define ECMD_CLINE_SCALE_T	29080	/* scale thickness */
 
 void
-rt_solid_edit_cline_set_edit_mode(struct rt_solid_edit *s, int mode)
+rt_edit_cline_set_edit_mode(struct rt_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, mode);
+    rt_edit_set_edflag(s, mode);
 
     switch (mode) {
 	case ECMD_CLINE_MOVE_H:
-	    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
+	    s->edit_mode = RT_PARAMS_EDIT_TRANS;
 	    break;
 	case ECMD_CLINE_SCALE_H:
 	case ECMD_CLINE_SCALE_R:
 	case ECMD_CLINE_SCALE_T:
-	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
+	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
 	    break;
 	default:
 	    break;
     };
 
-    rt_solid_edit_process(s);
+    rt_edit_process(s);
 }
 
 static void
-cline_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+cline_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    rt_solid_edit_cline_set_edit_mode(s, arg);
+    rt_edit_cline_set_edit_mode(s, arg);
 }
 
-struct rt_solid_edit_menu_item cline_menu[] = {
+struct rt_edit_menu_item cline_menu[] = {
     { "CLINE MENU",		NULL, 0 },
     { "Set H",		cline_ed, ECMD_CLINE_SCALE_H },
     { "Move End H",		cline_ed, ECMD_CLINE_MOVE_H },
@@ -75,15 +75,15 @@ struct rt_solid_edit_menu_item cline_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_solid_edit_menu_item *
-rt_solid_edit_cline_menu_item(const struct bn_tol *UNUSED(tol))
+struct rt_edit_menu_item *
+rt_edit_cline_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return cline_menu;
 }
 
 void
-rt_solid_edit_cline_e_axes_pos(
-	struct rt_solid_edit *s,
+rt_edit_cline_e_axes_pos(
+	struct rt_edit *s,
 	const struct rt_db_internal *ip,
        	const struct bn_tol *UNUSED(tol))
 {
@@ -106,7 +106,7 @@ rt_solid_edit_cline_e_axes_pos(
  * Scale height vector
  */
 int
-ecmd_cline_scale_h(struct rt_solid_edit *s)
+ecmd_cline_scale_h(struct rt_edit *s)
 {
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -146,7 +146,7 @@ ecmd_cline_scale_h(struct rt_solid_edit *s)
  * Scale radius
  */
 int
-ecmd_cline_scale_r(struct rt_solid_edit *s)
+ecmd_cline_scale_r(struct rt_edit *s)
 {
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -184,7 +184,7 @@ ecmd_cline_scale_r(struct rt_solid_edit *s)
  * Scale plate thickness
  */
 int
-ecmd_cline_scale_t(struct rt_solid_edit *s)
+ecmd_cline_scale_t(struct rt_edit *s)
 {
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -222,7 +222,7 @@ ecmd_cline_scale_t(struct rt_solid_edit *s)
  * Move end of height vector
  */
 int
-ecmd_cline_move_h(struct rt_solid_edit *s)
+ecmd_cline_move_h(struct rt_edit *s)
 {
     vect_t work;
     struct rt_cline_internal *cli =
@@ -253,7 +253,7 @@ ecmd_cline_move_h(struct rt_solid_edit *s)
     /* check for zero H vector */
     if (MAGNITUDE(cli->h) <= SQRT_SMALL_FASTF) {
 	bu_vls_printf(s->log_str, "Zero H vector not allowed, resetting to +Z\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	VSET(cli->h, 0.0, 0.0, 1.0);
@@ -264,7 +264,7 @@ ecmd_cline_move_h(struct rt_solid_edit *s)
 }
 
 void
-ecmd_cline_move_h_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
+ecmd_cline_move_h_mousevec(struct rt_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
     vect_t tr_temp = VINIT_ZERO;	/* temp translation vector */
@@ -284,19 +284,19 @@ ecmd_cline_move_h_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
 }
 
 int
-rt_solid_edit_cline_edit(struct rt_solid_edit *s)
+rt_edit_cline_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return rt_solid_edit_generic_sscale(s, &s->es_int);
-	case RT_SOLID_EDIT_TRANS:
+	    return rt_edit_generic_sscale(s, &s->es_int);
+	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
-	    rt_solid_edit_generic_strans(s, &s->es_int);
+	    rt_edit_generic_strans(s, &s->es_int);
 	    break;
-	case RT_SOLID_EDIT_ROT:
+	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
-	    rt_solid_edit_generic_srot(s, &s->es_int);
+	    rt_edit_generic_srot(s, &s->es_int);
 	    break;
 	case ECMD_CLINE_SCALE_H:
 	    return ecmd_cline_scale_h(s);
@@ -312,8 +312,8 @@ rt_solid_edit_cline_edit(struct rt_solid_edit *s)
 }
 
 int
-rt_solid_edit_cline_edit_xy(
-	struct rt_solid_edit *s,
+rt_edit_cline_edit_xy(
+	struct rt_edit *s,
 	const vect_t mousevec
 	)
 {
@@ -323,27 +323,27 @@ rt_solid_edit_cline_edit_xy(
     void *d = NULL;
 
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	case ECMD_CLINE_SCALE_H:
 	case ECMD_CLINE_SCALE_R:
 	case ECMD_CLINE_SCALE_T:
-	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    rt_edit_generic_sscale_xy(s, mousevec);
 	    return 0;
-	case RT_SOLID_EDIT_TRANS:
-	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
+	case RT_PARAMS_EDIT_TRANS:
+	    rt_edit_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_CLINE_MOVE_H:
 	    ecmd_cline_move_h_mousevec(s, mousevec);
 	    break;
-        case RT_SOLID_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_SOLID_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+        case RT_PARAMS_EDIT_ROT:
+            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
+            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
             if (f)
                 (*f)(0, NULL, d, NULL);
             return BRLCAD_ERROR;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;

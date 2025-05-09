@@ -37,11 +37,11 @@
 
 
 const char *
-rt_solid_edit_generic_keypoint(
+rt_edit_generic_keypoint(
 	point_t *pt,
 	const char *keystr,
 	const mat_t mat,
-	struct rt_solid_edit *s,
+	struct rt_edit *s,
 	const struct bn_tol *tol)
 {
     struct rt_db_internal *ip = &s->es_int;
@@ -53,8 +53,8 @@ rt_solid_edit_generic_keypoint(
 }
 
 int
-rt_solid_edit_generic_sscale(
-	struct rt_solid_edit *s,
+rt_edit_generic_sscale(
+	struct rt_edit *s,
 	struct rt_db_internal *ip
 	)
 {
@@ -85,8 +85,8 @@ rt_solid_edit_generic_sscale(
 }
 
 void
-rt_solid_edit_generic_strans(
-	struct rt_solid_edit *s,
+rt_edit_generic_strans(
+	struct rt_edit *s,
 	struct rt_db_internal *ip
 	)
 {
@@ -126,8 +126,8 @@ rt_solid_edit_generic_strans(
 }
 
 void
-rt_solid_edit_generic_srot(
-	struct rt_solid_edit *s,
+rt_edit_generic_srot(
+	struct rt_edit *s,
 	struct rt_db_internal *ip
 	)
 {
@@ -202,12 +202,12 @@ rt_solid_edit_generic_srot(
 }
 
 int
-rt_solid_edit_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_edit_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     if (!mstr || !ip)
 	return BRLCAD_ERROR;
 
-    struct rt_solid_edit_menu_item *mip = NULL;
+    struct rt_edit_menu_item *mip = NULL;
 
     if (EDOBJ[ip->idb_type].ft_menu_item)
 	mip = (*EDOBJ[ip->idb_type].ft_menu_item)(tol);
@@ -225,30 +225,30 @@ rt_solid_edit_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal 
 }
 
 int
-rt_solid_edit_generic_edit(
-	struct rt_solid_edit *s
+rt_edit_generic_edit(
+	struct rt_edit *s
 	)
 {
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    rt_solid_edit_generic_sscale(s, &s->es_int);
+	    rt_edit_generic_sscale(s, &s->es_int);
 	    break;
-	case RT_SOLID_EDIT_TRANS:
+	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
-	    rt_solid_edit_generic_strans(s, &s->es_int);
+	    rt_edit_generic_strans(s, &s->es_int);
 	    break;
-	case RT_SOLID_EDIT_ROT:
+	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
-	    rt_solid_edit_generic_srot(s, &s->es_int);
+	    rt_edit_generic_srot(s, &s->es_int);
 	    break;
     }
     return 0;
 }
 
 void
-rt_solid_edit_generic_sscale_xy(
-	struct rt_solid_edit *s,
+rt_edit_generic_sscale_xy(
+	struct rt_edit *s,
 	const vect_t mousevec
 	)
 {
@@ -274,8 +274,8 @@ rt_solid_edit_generic_sscale_xy(
  * Then move keypoint there.
  */
 void
-rt_solid_edit_generic_strans_xy(vect_t *pos_view,
-	struct rt_solid_edit *s,
+rt_edit_generic_strans_xy(vect_t *pos_view,
+	struct rt_edit *s,
 	const vect_t mousevec
 	)
 {
@@ -304,8 +304,8 @@ rt_solid_edit_generic_strans_xy(vect_t *pos_view,
 }
 
 int
-rt_solid_edit_generic_edit_xy(
-	struct rt_solid_edit *s,
+rt_edit_generic_edit_xy(
+	struct rt_edit *s,
 	const vect_t mousevec
 	)
 {
@@ -315,15 +315,15 @@ rt_solid_edit_generic_edit_xy(
     void *d = NULL;
 
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
-	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	case RT_PARAMS_EDIT_SCALE:
+	    rt_edit_generic_sscale_xy(s, mousevec);
 	    return 0;
-	case RT_SOLID_EDIT_TRANS:
-	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
+	case RT_PARAMS_EDIT_TRANS:
+	    rt_edit_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;

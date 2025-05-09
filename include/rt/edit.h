@@ -38,27 +38,44 @@
 
 __BEGIN_DECLS
 
-#define RT_SOLID_EDIT_DEFAULT   -1
-#define RT_SOLID_EDIT_IDLE       0
-#define RT_SOLID_EDIT_TRANS      1
-#define RT_SOLID_EDIT_SCALE      2 // Scale whole solid by scalar
-#define RT_SOLID_EDIT_ROT        3
-#define RT_SOLID_EDIT_PSCALE     4 // Scale one solid parameter by scalar
-#define RT_SOLID_EDIT_PICK       5
-// The following are unique to matrix editing (done via objedit in MGED).
-// Unlike other ops, they can ONLY be done reliably by updating a matrix rather
-// than by altering solid parameters - some primitives do not support directly
-// expressing the shapes that can be created with these opts (for example, a
-// tor scaled in the X direction.)
-#define RT_MATRIX_EDIT_SCALE_X   6
-#define RT_MATRIX_EDIT_SCALE_Y   7
-#define RT_MATRIX_EDIT_SCALE_Z   8
+// Settings used for both solid and matrix edits
+#define RT_EDIT_DEFAULT   -1
+#define RT_EDIT_IDLE       0
 
-struct rt_solid_edit_map;
 
-struct rt_solid_edit {
+// Solid editing (done via sed in MGED) is alters primitive parameters to
+// produce new shapes.  Not supported for combs.
+#define RT_PARAMS_EDIT_TRANS      1
+#define RT_PARAMS_EDIT_SCALE      2 // Scale whole solid by scalar
+#define RT_PARAMS_EDIT_ROT        3
+#define RT_PARAMS_EDIT_PSCALE     4 // Scale one solid parameter by scalar
+#define RT_PARAMS_EDIT_PICK       5
 
-    struct rt_solid_edit_map *m;
+
+// Matrix editing (done via oed in MGED) alters a matrix rather than solid
+// parameters in its intermediate stages (at the end when changes are written
+// to disk, and if a solid is being edited rather than a comb the matrix
+// changes are translated by the per-primitive routines to new solid parameters
+// at that time.)
+
+// Note that the underlying solids do not always support directly expressing
+// the shapes that can be created with these opts using comb instances (for
+// example, a tor scaled in the X direction) and the edit will be rejected in
+// those cases.  Just because a comb instance of a solid can be stretched, that
+// does not mean the solid itself can support that shape.
+#define RT_MATRIX_EDIT_ROT       6
+#define RT_MATRIX_EDIT_TRANS     7
+#define RT_MATRIX_EDIT_SCALE     8
+#define RT_MATRIX_EDIT_SCALE_X   9
+#define RT_MATRIX_EDIT_SCALE_Y  10
+#define RT_MATRIX_EDIT_SCALE_Z  11
+
+
+struct rt_edit_map;
+
+struct rt_edit {
+
+    struct rt_edit_map *m;
 
     // Optional logging of messages from editing code
     struct bu_vls *log_str;
@@ -67,25 +84,59 @@ struct rt_solid_edit {
     // of the object being edited
     struct rt_db_internal es_int;
 
+    // When we're editing a comb instance, we need to record which specific
+    // instance(s) we're working with.  db_find_named_leaf is what finds the
+    // named instance that the editing matrix will ultimately be applied to.
+    //
+    // Although normally we're either transforming the whole comb (i.e. the
+    // matrix gets applied to ALL instances in the comb tree) or operating on a
+    // single instance, there is nothing conceptually that would prevent the
+    // editing of multiple instances.
+    //
+    // In the interest of making the API flexible, we use a bu_ptbl to hold
+    // pointers to tr_l.tl_name strings in the es_int comb tree to identify all
+    // active instances in the comb that are actually being edited.  (An empty
+    // bu_ptbl means edit all of them.) For any object type other than combs
+    // this tbl is ignored.
+    //
+    // An edit operation on a comb will populate this with the active instance(s).
+    // which in turn means the edit structure will have enough information for
+    // application level drawing code to figure out which solids in the comb need
+    // to be visualized as part of the active editing geometry.
+    struct bu_ptbl comb_insts;
+
     // Tolerance for calculations
     const struct bn_tol *tol;
+
+    // Main view associated with the edit.  This may not be the only view in
+    // which the edit is *visible*, but this should hold the pointer to the
+    // view which will be used to drive any view dependent edit ops.
     struct bview *vp;
-
-    // Current editing operation
-    int edit_flag;
-
     // Knob based editing data
     struct bview_knobs k;
 
-    // MGED wants to know if we're in solid rotate, translate or scale mode.
-    // (TODO - why?) Rather than keying off of primitive specific edit op
-    // types, have the ops set a flag.  Options are:
+    // Current editing operation.  This holds the exact operation being
+    // performed (for example, ECMD_TGC_SCALE_A to scale a tgc primitive's
+    // A vector).  The RT_PARAM_* and RT_MATRIX_* values may also be set
+    // here, if the operations being performed are the more generic/general
+    // cases.
+    int edit_flag;
+
+    // MGED wants to know if we're in solid rotate, translate or scale mode,
+    // even if edit_flag is set to a more specific mode. (TODO - why?)
+    // Rather than keying off of primitive specific edit op types, have the ops
+    // set a flag.  Options are:
     //
-    // RT_SOLID_EDIT_TRANS
-    // RT_SOLID_EDIT_SCALE
-    // RT_SOLID_EDIT_ROT
-    // RT_SOLID_EDIT_PICK
-    int solid_edit_mode;
+    // RT_PARAMS_EDIT_TRANS
+    // RT_PARAMS_EDIT_SCALE
+    // RT_PARAMS_EDIT_ROT
+    // RT_PARAMS_EDIT_PICK
+    //
+    // (TODO - should we be setting this for matrix and pscale values as well?
+    // The above were originally driven by MGED code, which IIRC was using it
+    // for awareness of cases when primitive specific edits need specific
+    // interaction modes...)
+    int edit_mode;
 
     fastf_t es_scale;           /* scale factor */
     mat_t incr_change;          /* change(s) from last cycle */
@@ -171,13 +222,13 @@ struct rt_solid_edit {
     void *u_ptr;
 };
 
-/** Create and initialize an rt_solid_edit struct */
-RT_EXPORT extern struct rt_solid_edit *
-rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *, struct bview *v);
+/** Create and initialize an rt_edit struct */
+RT_EXPORT extern struct rt_edit *
+rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *, struct bview *v);
 
-/** Free a rt_solid_edit struct */
+/** Free a rt_edit struct */
 RT_EXPORT extern void
-rt_solid_edit_destroy(struct rt_solid_edit *s);
+rt_edit_destroy(struct rt_edit *s);
 
 /* Logic for working with editing callback maps.
  *
@@ -194,39 +245,39 @@ rt_solid_edit_destroy(struct rt_solid_edit *s);
 #define ECMD_MENU_SET             70
 #define ECMD_GET_FILENAME         80
 
-RT_EXPORT extern struct rt_solid_edit_map *
-rt_solid_edit_map_create(void);
+RT_EXPORT extern struct rt_edit_map *
+rt_edit_map_create(void);
 RT_EXPORT extern void
-rt_solid_edit_map_destroy(struct rt_solid_edit_map *);
+rt_edit_map_destroy(struct rt_edit_map *);
 RT_EXPORT extern int
-rt_solid_edit_map_clbk_set(struct rt_solid_edit_map *em, int ed_cmd, int mode, bu_clbk_t f, void *d);
+rt_edit_map_clbk_set(struct rt_edit_map *em, int ed_cmd, int mode, bu_clbk_t f, void *d);
 RT_EXPORT extern int
-rt_solid_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit_map *em, int ed_cmd, int mode);
+rt_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_edit_map *em, int ed_cmd, int mode);
 RT_EXPORT extern int
-rt_solid_edit_map_clear(struct rt_solid_edit_map *m);
+rt_edit_map_clear(struct rt_edit_map *m);
 RT_EXPORT extern int
-rt_solid_edit_map_copy(struct rt_solid_edit_map *om, struct rt_solid_edit_map *im);
+rt_edit_map_copy(struct rt_edit_map *om, struct rt_edit_map *im);
 
-/* Functions for manipulating rt_solid_edit data */
+/* Functions for manipulating rt_edit data */
 RT_EXPORT extern void
-rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, fastf_t *mat);
-
-RT_EXPORT extern void
-rt_update_edit_absolute_tran(struct rt_solid_edit *s, vect_t view_pos);
+rt_get_solid_keypoint(struct rt_edit *s, point_t *pt, const char **strp, fastf_t *mat);
 
 RT_EXPORT extern void
-rt_solid_edit_set_edflag(struct rt_solid_edit *s, int edflag);
+rt_update_edit_absolute_tran(struct rt_edit *s, vect_t view_pos);
+
+RT_EXPORT extern void
+rt_edit_set_edflag(struct rt_edit *s, int edflag);
 
 RT_EXPORT extern int
 rt_edit_knob_cmd_process(
-	struct rt_solid_edit *s,
+	struct rt_edit *s,
 	vect_t *rvec, int *do_rot, vect_t *tvec, int *do_tran, int *do_sca,
         struct bview *v, const char *cmd, fastf_t f,
         char origin, int incr_flag, void *u_data
 	);
 
 RT_EXPORT extern void
-rt_knob_edit_rot(struct rt_solid_edit *s,
+rt_knob_edit_rot(struct rt_edit *s,
         char coords,
         char rotate_about,
         int matrix_edit,
@@ -234,27 +285,27 @@ rt_knob_edit_rot(struct rt_solid_edit *s,
 	);
 
 RT_EXPORT extern void
-rt_knob_edit_tran(struct rt_solid_edit *s,
+rt_knob_edit_tran(struct rt_edit *s,
         char coords,
         int matrix_edit,
         vect_t tvec);
 
 RT_EXPORT extern void
 rt_knob_edit_sca(
-	struct rt_solid_edit *s,
+	struct rt_edit *s,
 	int matrix_edit);
 
 /* Equivalent to sedit - run editing logic after input data is set in
- * rt_solid_edit container */
+ * rt_edit container */
 RT_EXPORT extern void
-rt_solid_edit_process(struct rt_solid_edit *s);
+rt_edit_process(struct rt_edit *s);
 
 
 /* Edit menu items encode information about specific edit operations, as well
  * as info documenting them.  Edit functab methods use this data type. */
-struct rt_solid_edit_menu_item {
+struct rt_edit_menu_item {
     char *menu_string;
-    void (*menu_func)(struct rt_solid_edit *, int, int, int, void *);
+    void (*menu_func)(struct rt_edit *, int, int, int, void *);
     int menu_arg;
 };
 

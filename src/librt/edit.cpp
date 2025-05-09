@@ -50,37 +50,39 @@ class RT_Edit_Map_Internal {
         std::map<int, int> cmd_recursion_depth_cnt;
 };
 
-struct rt_solid_edit_map {
+struct rt_edit_map {
     RT_Edit_Map_Internal *i;
 };
 
-extern "C" struct rt_solid_edit_map *
-rt_solid_edit_map_create(void)
+extern "C" struct rt_edit_map *
+rt_edit_map_create(void)
 {
-    struct rt_solid_edit_map *o = NULL;
-    BU_GET(o, struct rt_solid_edit_map);
+    struct rt_edit_map *o = NULL;
+    BU_GET(o, struct rt_edit_map);
     o->i = new RT_Edit_Map_Internal;
     return o;
 }
 
 extern "C" void
-rt_solid_edit_map_destroy(struct rt_solid_edit_map *o)
+rt_edit_map_destroy(struct rt_edit_map *o)
 {
     if (!o)
 	return;
     delete o->i;
-    BU_PUT(o, struct rt_solid_edit_map);
+    BU_PUT(o, struct rt_edit_map);
 }
 
-struct rt_solid_edit *
-rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, struct bview *v)
+struct rt_edit *
+rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, struct bview *v)
 {
-    struct rt_solid_edit *s;
-    BU_GET(s, struct rt_solid_edit);
-    BU_GET(s->m, struct rt_solid_edit_map);
+    struct rt_edit *s;
+    BU_GET(s, struct rt_edit);
+    BU_GET(s->m, struct rt_edit_map);
     s->m->i = new RT_Edit_Map_Internal;
 
     RT_DB_INTERNAL_INIT(&s->es_int);
+
+    bu_ptbl_init(&s->comb_insts, 8, "comb inst tbl");
 
     MAT_IDN(s->acc_rot_sol);
     MAT_IDN(s->e_invmat);
@@ -115,7 +117,7 @@ rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol 
     s->ipe_ptr = NULL;
     s->local2base = 1.0;
     s->mv_context = 0;
-    s->solid_edit_mode = RT_SOLID_EDIT_DEFAULT;
+    s->edit_mode = RT_EDIT_DEFAULT;
     s->tol = tol;
     s->u_ptr = NULL;
     s->update_views = 0;
@@ -140,7 +142,7 @@ rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol 
     s->base2local = dbip->dbi_base2local;
 
     if (rt_db_get_internal(&s->es_int, DB_FULL_PATH_CUR_DIR(dfp), dbip, NULL, &rt_uniresource) < 0) {
-	rt_solid_edit_destroy(s);
+	rt_edit_destroy(s);
 	return NULL;                         /* FAIL */
     }
     RT_CK_DB_INTERNAL(&s->es_int);
@@ -163,7 +165,7 @@ rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol 
 }
 
 void
-rt_solid_edit_destroy(struct rt_solid_edit *s)
+rt_edit_destroy(struct rt_edit *s)
 {
     if (!s)
 	return;
@@ -173,18 +175,20 @@ rt_solid_edit_destroy(struct rt_solid_edit *s)
     if (s->ipe_ptr && EDOBJ[ip->idb_type].ft_prim_edit_destroy)
 	 (*EDOBJ[ip->idb_type].ft_prim_edit_destroy)(s->ipe_ptr);
 
+    bu_ptbl_free(&s->comb_insts);
+
     rt_db_free_internal(&s->es_int);
 
     bu_vls_free(s->log_str);
     BU_PUT(s->log_str, struct bu_vls);
 
     delete s->m->i;
-    BU_PUT(s->m, struct rt_solid_edit_map);
-    BU_PUT(s, struct rt_solid_edit);
+    BU_PUT(s->m, struct rt_edit_map);
+    BU_PUT(s, struct rt_edit);
 }
 
 int
-rt_solid_edit_map_clbk_set(struct rt_solid_edit_map *em, int ed_cmd, int mode, bu_clbk_t f, void *d)
+rt_edit_map_clbk_set(struct rt_edit_map *em, int ed_cmd, int mode, bu_clbk_t f, void *d)
 {
     if (!em)
 	return BRLCAD_OK;
@@ -223,7 +227,7 @@ rt_solid_edit_map_clbk_set(struct rt_solid_edit_map *em, int ed_cmd, int mode, b
 }
 
 int
-rt_solid_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit_map *em, int ed_cmd, int mode)
+rt_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_edit_map *em, int ed_cmd, int mode)
 {
     // Check for no-op case
     if (!f || !d || !em)
@@ -258,7 +262,7 @@ rt_solid_edit_map_clbk_get(bu_clbk_t *f, void **d, struct rt_solid_edit_map *em,
 }
 
 int
-rt_solid_edit_map_clear(struct rt_solid_edit_map *m)
+rt_edit_map_clear(struct rt_edit_map *m)
 {
     // Check for no-op case
     if (!m)
@@ -272,7 +276,7 @@ rt_solid_edit_map_clear(struct rt_solid_edit_map *m)
 }
 
 int
-rt_solid_edit_map_copy(struct rt_solid_edit_map *om, struct rt_solid_edit_map *im)
+rt_edit_map_copy(struct rt_edit_map *om, struct rt_edit_map *im)
 {
     // Check for no-op case
     if (!om || !im)
@@ -324,7 +328,7 @@ rt_solid_edit_map_copy(struct rt_solid_edit_map *om, struct rt_solid_edit_map *i
  * processed as well?
  */
 void
-rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, fastf_t *mat)
+rt_get_solid_keypoint(struct rt_edit *s, point_t *pt, const char **strp, fastf_t *mat)
 {
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -339,7 +343,7 @@ rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, f
 	bu_vls_trunc(s->log_str, 0);
 	*strp = (*EDOBJ[ip->idb_type].ft_keypoint)(pt, *strp, mat, s, s->tol);
 	if (bu_vls_strlen(s->log_str)) {
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    bu_vls_trunc(s->log_str, 0);
@@ -350,7 +354,7 @@ rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, f
     struct bu_vls ltmp = BU_VLS_INIT_ZERO;
     bu_vls_printf(&ltmp, "%s", bu_vls_cstr(s->log_str));
     bu_vls_sprintf(s->log_str, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n");
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
     bu_vls_sprintf(s->log_str, "%s", bu_vls_cstr(&ltmp));
@@ -362,7 +366,7 @@ rt_get_solid_keypoint(struct rt_solid_edit *s, point_t *pt, const char **strp, f
 
 
 void
-rt_update_edit_absolute_tran(struct rt_solid_edit *s, vect_t view_pos)
+rt_update_edit_absolute_tran(struct rt_edit *s, vect_t view_pos)
 {
     vect_t model_pos;
     vect_t ea_view_pos;
@@ -381,7 +385,7 @@ rt_update_edit_absolute_tran(struct rt_solid_edit *s, vect_t view_pos)
 
 
 void
-rt_solid_edit_set_edflag(struct rt_solid_edit *s, int edflag)
+rt_edit_set_edflag(struct rt_edit *s, int edflag)
 {
     if (!s)
 	return;
@@ -389,21 +393,21 @@ rt_solid_edit_set_edflag(struct rt_solid_edit *s, int edflag)
     s->edit_flag = edflag;
 
     // In the case of the four generic (i.e. not primitive data specific) flag
-    // settings, we can also set the solid_edit_mode state.  For anything else,
+    // settings, we can also set the edit_mode state.  For anything else,
     // it is the responsibility of the primitive specific logic to decode
-    // edit_flag (and any other relevant info) into the proper solid_edit_mode.
-    // Applications like MGED may use solid_edit_mode to adjust interface
+    // edit_flag (and any other relevant info) into the proper edit_mode.
+    // Applications like MGED may use edit_mode to adjust interface
     // behaviors, so it is important to have it properly set, but we can only
     // do so much here.
     switch (edflag) {
-	case RT_SOLID_EDIT_ROT:
-	case RT_SOLID_EDIT_TRANS:
-	case RT_SOLID_EDIT_SCALE:
-	case RT_SOLID_EDIT_PICK:
-	    s->solid_edit_mode = edflag;
+	case RT_PARAMS_EDIT_ROT:
+	case RT_PARAMS_EDIT_TRANS:
+	case RT_PARAMS_EDIT_SCALE:
+	case RT_PARAMS_EDIT_PICK:
+	    s->edit_mode = edflag;
 	    break;
 	default:
-	    s->solid_edit_mode = RT_SOLID_EDIT_DEFAULT;
+	    s->edit_mode = RT_EDIT_DEFAULT;
 	    break;
     }
 }
@@ -411,7 +415,7 @@ rt_solid_edit_set_edflag(struct rt_solid_edit *s, int edflag)
 /* Processing of editing knob twists. */
 int
 rt_edit_knob_cmd_process(
-	struct rt_solid_edit *s,
+	struct rt_edit *s,
 	vect_t *rvec, int *do_rot, vect_t *tvec, int *do_tran, int *do_sca,
 	struct bview *v, const char *cmd, fastf_t f,
 	char origin, int incr_flag, void *u_data)
@@ -645,7 +649,7 @@ rt_edit_knob_cmd_process(
 }
 
 void
-rt_knob_edit_rot(struct rt_solid_edit *s,
+rt_knob_edit_rot(struct rt_edit *s,
 	char coords,
 	char rotate_about,
 	int matrix_edit,
@@ -687,16 +691,16 @@ rt_knob_edit_rot(struct rt_solid_edit *s,
 	s->vp->gv_rotate_about = rotate_about;
 
 	int save_edflag = s->edit_flag;
-	int save_mode = s->solid_edit_mode;
+	int save_mode = s->edit_mode;
 
-	rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_ROT);
+	rt_edit_set_edflag(s, RT_PARAMS_EDIT_ROT);
 
-	rt_solid_edit_process(s);
+	rt_edit_process(s);
 
 	// Restore previous state
 	s->vp->gv_rotate_about = save_rotate_about;
 	s->edit_flag = save_edflag;
-	s->solid_edit_mode = save_mode;
+	s->edit_mode = save_mode;
 
     } else {
 
@@ -733,7 +737,7 @@ rt_knob_edit_rot(struct rt_solid_edit *s,
 }
 
 void
-rt_knob_edit_tran(struct rt_solid_edit *s,
+rt_knob_edit_tran(struct rt_edit *s,
         char coords,
         int matrix_edit,
         vect_t tvec)
@@ -778,21 +782,21 @@ rt_knob_edit_tran(struct rt_solid_edit *s,
 		bu_vls_trunc(s->log_str, 0);
 	    }
 	} else {
-	    bu_log("rt_solid_edit_knobs_tra: unrecognized solid type (setting keypoint to origin)\n");
+	    bu_log("rt_edit_knobs_tra: unrecognized solid type (setting keypoint to origin)\n");
 	    VSETALL(*pt, 0.0);
 	    s->e_keytag = "(origin)";
 	}
 
 	int save_edflag = s->edit_flag;
-	int save_mode = s->solid_edit_mode;
+	int save_mode = s->edit_mode;
 
-	rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_TRANS);
+	rt_edit_set_edflag(s, RT_PARAMS_EDIT_TRANS);
 
 	VADD2(s->e_para, delta, s->curr_e_axes_pos);
 	s->e_inpara = 3;
-	rt_solid_edit_process(s);
+	rt_edit_process(s);
 	s->edit_flag = save_edflag;
-	s->solid_edit_mode = save_mode;
+	s->edit_mode = save_mode;
     } else {
 	mat_t xlatemat;
 	MAT_IDN(xlatemat);
@@ -803,7 +807,7 @@ rt_knob_edit_tran(struct rt_solid_edit *s,
 
 #define MGED_SMALL_SCALE 1.0e-10
 void
-rt_knob_edit_sca(struct rt_solid_edit *s, int matrix_edit)
+rt_knob_edit_sca(struct rt_edit *s, int matrix_edit)
 {
    if (!matrix_edit) {
 
@@ -825,14 +829,14 @@ rt_knob_edit_sca(struct rt_solid_edit *s, int matrix_edit)
         s->es_scale = s->acc_sc_sol / old_acc_sc_sol;
 
 	int save_edflag = s->edit_flag;
-	int save_mode = s->solid_edit_mode;
+	int save_mode = s->edit_mode;
 
-	rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_SCALE);
+	rt_edit_set_edflag(s, RT_PARAMS_EDIT_SCALE);
 
-	rt_solid_edit_process(s);
+	rt_edit_process(s);
 
 	s->edit_flag = save_edflag;
-	s->solid_edit_mode = save_mode;
+	s->edit_mode = save_mode;
 
    } else {
        fastf_t scale;
@@ -840,7 +844,7 @@ rt_knob_edit_sca(struct rt_solid_edit *s, int matrix_edit)
        MAT_IDN(incr_mat);
 
        // TODO - objedit_mouse SARROW case has different logic for handling mousevec
-       // inputs - looking like we may need a mousevec entry for the rt_solid_edit
+       // inputs - looking like we may need a mousevec entry for the rt_edit
        // struct so we can have both processing methods here....
 
        if (-SMALL_FASTF < s->k.sca_abs && s->k.sca_abs < SMALL_FASTF)
@@ -857,7 +861,7 @@ rt_knob_edit_sca(struct rt_solid_edit *s, int matrix_edit)
        /* switch depending on scaling option selected */
        switch (s->edit_flag) {
 
-	   case RT_SOLID_EDIT_SCALE:
+	   case RT_PARAMS_EDIT_SCALE:
 	       /* global scaling */
 	       incr_mat[15] = s->acc_sc_obj / scale;
 	       s->acc_sc_obj = scale;
@@ -891,7 +895,7 @@ rt_knob_edit_sca(struct rt_solid_edit *s, int matrix_edit)
 
        /* Have scaling take place with respect to keypoint, NOT the view
 	* center.  model_changes is the matrix that will ultimately be used to
-	* alter the geometry on disk.  This should probably go into rt_solid_edit_process
+	* alter the geometry on disk.  This should probably go into rt_edit_process
 	* if it is generalized to handle both solid and instance editing. */
        mat_t t, out;
        vect_t pos_model;
@@ -907,7 +911,7 @@ rt_knob_edit_sca(struct rt_solid_edit *s, int matrix_edit)
  * A great deal of magic takes place here, to accomplish solid editing.
  *
  * Called from mged main loop after any event handlers:
- * if (sedraw > 0) rt_solid_edit_process(s);
+ * if (sedraw > 0) rt_edit_process(s);
  * to process any residual events that the event handlers were too
  * lazy to handle themselves.
  *
@@ -915,7 +919,7 @@ rt_knob_edit_sca(struct rt_solid_edit *s, int matrix_edit)
  * can operate on an equal footing to mouse events.
  */
 void
-rt_solid_edit_process(struct rt_solid_edit *s)
+rt_edit_process(struct rt_edit *s)
 {
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -928,7 +932,7 @@ rt_solid_edit_process(struct rt_solid_edit *s)
 	bu_vls_trunc(s->log_str, 0);
 	if ((*EDOBJ[ip->idb_type].ft_edit)(s)) {
 	    if (bu_vls_strlen(s->log_str)) {
-		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
+		rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
 		if (f)
 		    (*f)(0, NULL, d, NULL);
 		bu_vls_trunc(s->log_str, 0);
@@ -936,7 +940,7 @@ rt_solid_edit_process(struct rt_solid_edit *s)
 	    return;
 	}
 	if (bu_vls_strlen(s->log_str)) {
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    bu_vls_trunc(s->log_str, 0);
@@ -946,7 +950,7 @@ rt_solid_edit_process(struct rt_solid_edit *s)
 
     switch (s->edit_flag) {
 
-	case RT_SOLID_EDIT_IDLE:
+	case RT_EDIT_IDLE:
 	    /* do nothing more */
 	    --s->update_views;
 	    break;
@@ -956,13 +960,13 @@ rt_solid_edit_process(struct rt_solid_edit *s)
 		    break;
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		bu_vls_sprintf(&tmp_vls, "%s", bu_vls_cstr(s->log_str));
-		bu_vls_sprintf(s->log_str, "rt_solid_edit_process:  unknown edflag = %d.\n", s->edit_flag);
-		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
+		bu_vls_sprintf(s->log_str, "rt_edit_process:  unknown edflag = %d.\n", s->edit_flag);
+		rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
 		if (f)
 		    (*f)(0, NULL, d, NULL);
 		bu_vls_sprintf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
 		bu_vls_free(&tmp_vls);
-		rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+		rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 		if (f)
 		    (*f)(0, NULL, d, NULL);
 	    }
@@ -974,18 +978,18 @@ rt_solid_edit_process(struct rt_solid_edit *s)
 
     int flag = 0;
     f = NULL; d = NULL;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 
     f = NULL; d = NULL;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_REPLOT_EDITING_SOLID, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_REPLOT_EDITING_SOLID, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
 
     if (s->update_views) {
 	f = NULL; d = NULL;
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_UPDATE, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_UPDATE, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
     }

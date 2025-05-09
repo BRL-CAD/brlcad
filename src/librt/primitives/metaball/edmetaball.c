@@ -51,7 +51,7 @@ struct rt_metaball_edit {
 };
 
 void *
-rt_solid_edit_metaball_prim_edit_create(struct rt_solid_edit *UNUSED(s))
+rt_edit_metaball_prim_edit_create(struct rt_edit *UNUSED(s))
 {
     struct rt_metaball_edit *m;
     BU_GET(m, struct rt_metaball_edit);
@@ -62,7 +62,7 @@ rt_solid_edit_metaball_prim_edit_create(struct rt_solid_edit *UNUSED(s))
 }
 
 void
-rt_solid_edit_metaball_prim_edit_destroy(struct rt_metaball_edit *m)
+rt_edit_metaball_prim_edit_destroy(struct rt_metaball_edit *m)
 {
     if (!m)
 	return;
@@ -74,28 +74,28 @@ rt_solid_edit_metaball_prim_edit_destroy(struct rt_metaball_edit *m)
 }
 
 void
-rt_solid_edit_metaball_prim_edit_reset(struct rt_solid_edit *s)
+rt_edit_metaball_prim_edit_reset(struct rt_edit *s)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     m->es_metaball_pnt = NULL;
 }
 
 void
-rt_solid_edit_metaball_set_edit_mode(struct rt_solid_edit *s, int mode)
+rt_edit_metaball_set_edit_mode(struct rt_edit *s, int mode)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     struct wdb_metaball_pnt *next, *prev;
 
-    rt_solid_edit_set_edflag(s, mode);
+    rt_edit_set_edflag(s, mode);
 
     switch (mode) {
 	case ECMD_METABALL_SET_THRESHOLD:
 	case ECMD_METABALL_SET_METHOD:
 	case ECMD_METABALL_PT_SET_GOO:
-	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
+	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
 	    break;
 	case ECMD_METABALL_PT_PICK:
-	    s->solid_edit_mode = RT_SOLID_EDIT_PICK;
+	    s->edit_mode = RT_PARAMS_EDIT_PICK;
 	    break;
 	case ECMD_METABALL_PT_NEXT:
 	    if (!m->es_metaball_pnt) {
@@ -109,7 +109,7 @@ rt_solid_edit_metaball_set_edit_mode(struct rt_solid_edit *s, int mode)
 	    }
 	    m->es_metaball_pnt = next;
 	    rt_metaball_pnt_print(m->es_metaball_pnt, s->base2local);
-	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    rt_edit_set_edflag(s, RT_EDIT_IDLE);
 	    break;
 	case ECMD_METABALL_PT_PREV:
 	    if (!m->es_metaball_pnt) {
@@ -123,20 +123,20 @@ rt_solid_edit_metaball_set_edit_mode(struct rt_solid_edit *s, int mode)
 	    }
 	    m->es_metaball_pnt = prev;
 	    rt_metaball_pnt_print(m->es_metaball_pnt, s->base2local);
-	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    rt_edit_set_edflag(s, RT_EDIT_IDLE);
 	    break;
 	case ECMD_METABALL_PT_MOV:
 	    if (!m->es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
-		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+		rt_edit_set_edflag(s, RT_EDIT_IDLE);
 		return;
 	    }
 	    break;
 	case ECMD_METABALL_PT_FLDSTR:
-	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
+	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
 	    if (!m->es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
-		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+		rt_edit_set_edflag(s, RT_EDIT_IDLE);
 		return;
 	    }
 	    break;
@@ -148,27 +148,27 @@ rt_solid_edit_metaball_set_edit_mode(struct rt_solid_edit *s, int mode)
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
 
 static void
-metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+metaball_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     struct wdb_metaball_pnt *next, *prev;
 
-    rt_solid_edit_set_edflag(s, arg);
+    rt_edit_set_edflag(s, arg);
 
     switch (arg) {
 	case ECMD_METABALL_SET_THRESHOLD:
 	case ECMD_METABALL_SET_METHOD:
 	case ECMD_METABALL_PT_SET_GOO:
-	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
+	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
 	    break;
 	case ECMD_METABALL_PT_PICK:
-	    s->solid_edit_mode = RT_SOLID_EDIT_PICK;
+	    s->edit_mode = RT_PARAMS_EDIT_PICK;
 	    break;
 	case ECMD_METABALL_PT_NEXT:
 	    if (!m->es_metaball_pnt) {
@@ -182,9 +182,9 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    }
 	    m->es_metaball_pnt = next;
 	    rt_metaball_pnt_print(m->es_metaball_pnt, s->base2local);
-	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    rt_edit_set_edflag(s, RT_EDIT_IDLE);
 	    // TODO - should we really be calling this here?
-	    rt_solid_edit_process(s);
+	    rt_edit_process(s);
 	    break;
 	case ECMD_METABALL_PT_PREV:
 	    if (!m->es_metaball_pnt) {
@@ -198,30 +198,30 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
 	    }
 	    m->es_metaball_pnt = prev;
 	    rt_metaball_pnt_print(m->es_metaball_pnt, s->base2local);
-	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    rt_edit_set_edflag(s, RT_EDIT_IDLE);
 	    // TODO - should we really be calling this here?
-	    rt_solid_edit_process(s);
+	    rt_edit_process(s);
 	    break;
 	case ECMD_METABALL_PT_MOV:
 	    if (!m->es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
-		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+		rt_edit_set_edflag(s, RT_EDIT_IDLE);
 		return;
 	    }
 	    // TODO - should we really be calling this here?
-	    rt_solid_edit_process(s);
+	    rt_edit_process(s);
 	    break;
 	case ECMD_METABALL_PT_FLDSTR:
-	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
+	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
 	    if (!m->es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
-		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+		rt_edit_set_edflag(s, RT_EDIT_IDLE);
 		return;
 	    }
 	    break;
 	case ECMD_METABALL_PT_DEL:
 	    // TODO - should we really be calling this here?
-	    rt_solid_edit_process(s);
+	    rt_edit_process(s);
 	    break;
 	case ECMD_METABALL_PT_ADD:
 	    break;
@@ -230,12 +230,12 @@ metaball_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
 
-struct rt_solid_edit_menu_item metaball_menu[] = {
+struct rt_edit_menu_item metaball_menu[] = {
     { "METABALL MENU", NULL, 0 },
     { "Set Threshold", metaball_ed, ECMD_METABALL_SET_THRESHOLD },
     { "Set Render Method", metaball_ed, ECMD_METABALL_SET_METHOD },
@@ -250,21 +250,21 @@ struct rt_solid_edit_menu_item metaball_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_solid_edit_menu_item *
-rt_solid_edit_metaball_menu_item(const struct bn_tol *UNUSED(tol))
+struct rt_edit_menu_item *
+rt_edit_metaball_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return metaball_menu;
 }
 
 
 void
-rt_solid_edit_metaball_labels(
+rt_edit_metaball_labels(
 	int *UNUSED(num_lines),
 	point_t *UNUSED(lines),
 	struct rt_point_labels *pl,
 	int UNUSED(max_pl),
 	const mat_t xform,
-	struct rt_solid_edit *s,
+	struct rt_edit *s,
 	struct bn_tol *UNUSED(tol))
 {
     struct rt_db_internal *ip = &s->es_int;
@@ -294,11 +294,11 @@ rt_solid_edit_metaball_labels(
 }
 
 const char *
-rt_solid_edit_metaball_keypoint(
+rt_edit_metaball_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
 	const mat_t mat,
-	struct rt_solid_edit *s,
+	struct rt_edit *s,
 	const struct bn_tol *UNUSED(tol))
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
@@ -324,7 +324,7 @@ rt_solid_edit_metaball_keypoint(
 }
 
 int
-ecmd_metaball_set_threshold(struct rt_solid_edit *s)
+ecmd_metaball_set_threshold(struct rt_edit *s)
 {
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
@@ -341,7 +341,7 @@ ecmd_metaball_set_threshold(struct rt_solid_edit *s)
 }
 
 int
-ecmd_metaball_set_method(struct rt_solid_edit *s)
+ecmd_metaball_set_method(struct rt_edit *s)
 {
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
@@ -358,7 +358,7 @@ ecmd_metaball_set_method(struct rt_solid_edit *s)
 }
 
 int
-ecmd_metaball_pt_set_goo(struct rt_solid_edit *s)
+ecmd_metaball_pt_set_goo(struct rt_edit *s)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     if (s->e_para[0] < 0.0) {
@@ -377,7 +377,7 @@ ecmd_metaball_pt_set_goo(struct rt_solid_edit *s)
 }
 
 int
-ecmd_metaball_pt_fldstr(struct rt_solid_edit *s)
+ecmd_metaball_pt_fldstr(struct rt_edit *s)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     if (s->e_para[0] <= 0.0) {
@@ -397,7 +397,7 @@ ecmd_metaball_pt_fldstr(struct rt_solid_edit *s)
 }
 
 void
-ecmd_metaball_pt_pick(struct rt_solid_edit *s)
+ecmd_metaball_pt_pick(struct rt_edit *s)
 {
     struct rt_metaball_internal *metaball=
 	(struct rt_metaball_internal *)s->es_int.idb_ptr;
@@ -422,7 +422,7 @@ ecmd_metaball_pt_pick(struct rt_solid_edit *s)
 	VMOVE(new_pt, s->e_para);
     } else if (s->e_inpara) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for control point selection\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -448,7 +448,7 @@ ecmd_metaball_pt_pick(struct rt_solid_edit *s)
 
     if (!m->es_metaball_pnt) {
 	bu_vls_printf(s->log_str, "No METABALL control point selected\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
     } else {
@@ -457,7 +457,7 @@ ecmd_metaball_pt_pick(struct rt_solid_edit *s)
 }
 
 void
-ecmd_metaball_pt_mov(struct rt_solid_edit *s)
+ecmd_metaball_pt_mov(struct rt_edit *s)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     if (!m->es_metaball_pnt) {
@@ -472,7 +472,7 @@ ecmd_metaball_pt_mov(struct rt_solid_edit *s)
 }
 
 void
-ecmd_metaball_pt_del(struct rt_solid_edit *s)
+ecmd_metaball_pt_del(struct rt_edit *s)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     struct wdb_metaball_pnt *tmp = m->es_metaball_pnt, *p;
@@ -496,7 +496,7 @@ ecmd_metaball_pt_del(struct rt_solid_edit *s)
 }
 
 void
-ecmd_metaball_pt_add(struct rt_solid_edit *s)
+ecmd_metaball_pt_add(struct rt_edit *s)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     struct rt_metaball_internal *metaball= (struct rt_metaball_internal *)s->es_int.idb_ptr;
@@ -522,7 +522,7 @@ ecmd_metaball_pt_add(struct rt_solid_edit *s)
 }
 
 static int
-rt_solid_edit_metaball_pscale(struct rt_solid_edit *s)
+rt_edit_metaball_pscale(struct rt_edit *s)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -558,23 +558,23 @@ rt_solid_edit_metaball_pscale(struct rt_solid_edit *s)
 }
 
 int
-rt_solid_edit_metaball_edit(struct rt_solid_edit *s)
+rt_edit_metaball_edit(struct rt_edit *s)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    m->es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
-	    return rt_solid_edit_generic_sscale(s, &s->es_int);
-	case RT_SOLID_EDIT_TRANS:
+	    return rt_edit_generic_sscale(s, &s->es_int);
+	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
 	    m->es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
-	    rt_solid_edit_generic_strans(s, &s->es_int);
+	    rt_edit_generic_strans(s, &s->es_int);
 	    break;
-	case RT_SOLID_EDIT_ROT:
+	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
 	    m->es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
-	    rt_solid_edit_generic_srot(s, &s->es_int);
+	    rt_edit_generic_srot(s, &s->es_int);
 	    break;
 	case ECMD_METABALL_PT_PICK:
 	    ecmd_metaball_pt_pick(s);
@@ -589,15 +589,15 @@ rt_solid_edit_metaball_edit(struct rt_solid_edit *s)
 	    ecmd_metaball_pt_add(s);
 	    break;
 	default:
-	    return rt_solid_edit_metaball_pscale(s);
+	    return rt_edit_metaball_pscale(s);
     }
 
     return 0;
 }
 
 int
-rt_solid_edit_metaball_edit_xy(
-	struct rt_solid_edit *s,
+rt_edit_metaball_edit_xy(
+	struct rt_edit *s,
 	const vect_t mousevec
 	)
 {
@@ -608,7 +608,7 @@ rt_solid_edit_metaball_edit_xy(
     void *d = NULL;
 
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	case ECMD_METABALL_PT_NEXT:
 	case ECMD_METABALL_PT_PREV:
 	case ECMD_METABALL_PT_DEL:
@@ -617,10 +617,10 @@ rt_solid_edit_metaball_edit_xy(
 	case ECMD_METABALL_RMET:
 	case ECMD_METABALL_SET_METHOD:
 	case ECMD_METABALL_SET_THRESHOLD:
-	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    rt_edit_generic_sscale_xy(s, mousevec);
 	    return 0;
-	case RT_SOLID_EDIT_TRANS:
-	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
+	case RT_PARAMS_EDIT_TRANS:
+	    rt_edit_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_METABALL_PT_PICK:
 	case ECMD_METABALL_PT_MOV:
@@ -632,15 +632,15 @@ rt_solid_edit_metaball_edit_xy(
 	    MAT4X3PNT(s->e_mparam, s->e_invmat, temp);
 	    s->e_mvalid = 1;
 	    break;
-        case RT_SOLID_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_SOLID_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+        case RT_PARAMS_EDIT_ROT:
+            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
+            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
             if (f)
                 (*f)(0, NULL, d, NULL);
             return BRLCAD_ERROR;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;

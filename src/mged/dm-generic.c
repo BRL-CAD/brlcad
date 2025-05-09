@@ -269,9 +269,9 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			int save_mode = 0;
 			if (s->global_editing_state == ST_S_EDIT) {
 			    save_edflag = s->s_edit->edit_flag;
-			    save_mode = s->s_edit->solid_edit_mode;
+			    save_mode = s->s_edit->edit_mode;
 			    if (!SEDIT_TRAN)
-				rt_solid_edit_set_edflag(s->s_edit, RT_SOLID_EDIT_TRANS);
+				rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_TRANS);
 			} else {
 			    save_edflag = edobj;
 			    edobj = BE_O_XY;
@@ -281,7 +281,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
 			if (s->global_editing_state == ST_S_EDIT) {
 			    s->s_edit->edit_flag = save_edflag;
-			    s->s_edit->solid_edit_mode = save_mode;
+			    s->s_edit->edit_mode = save_mode;
 			} else {
 			    edobj = save_edflag;
 			}

@@ -33,58 +33,58 @@
 __BEGIN_DECLS
 
 const char *
-rt_solid_edit_generic_keypoint(
+rt_edit_generic_keypoint(
 	point_t *pt,
 	const char *keystr,
 	const mat_t mat,
-	struct rt_solid_edit *s,
+	struct rt_edit *s,
 	const struct bn_tol *tol
 	);
 
 /* scale the solid uniformly about its vertex point */
 int
-rt_solid_edit_generic_sscale(
-	struct rt_solid_edit *s,
+rt_edit_generic_sscale(
+	struct rt_edit *s,
 	struct rt_db_internal *ip
 	);
 
 /* translate solid */
 void
-rt_solid_edit_generic_strans(
-	struct rt_solid_edit *s,
+rt_edit_generic_strans(
+	struct rt_edit *s,
 	struct rt_db_internal *ip
 	);
 
 /* rot solid about vertex */
 void
-rt_solid_edit_generic_srot(
-	struct rt_solid_edit *s,
+rt_edit_generic_srot(
+	struct rt_edit *s,
 	struct rt_db_internal *ip
 	);
 
 void
-rt_solid_edit_generic_sscale_xy(
-	struct rt_solid_edit *s,
+rt_edit_generic_sscale_xy(
+	struct rt_edit *s,
 	const vect_t mousevec
 	);
 void
-rt_solid_edit_generic_strans_xy(vect_t *pos_view,
-	struct rt_solid_edit *s,
+rt_edit_generic_strans_xy(vect_t *pos_view,
+	struct rt_edit *s,
 	const vect_t mousevec
 	);
 
-int rt_solid_edit_generic_edit(
-	struct rt_solid_edit *s
+int rt_edit_generic_edit(
+	struct rt_edit *s
 	);
 
 int
-rt_solid_edit_generic_edit_xy(
-	struct rt_solid_edit *s,
+rt_edit_generic_edit_xy(
+	struct rt_edit *s,
 	const vect_t mousevec
 	);
 
 int
-rt_solid_edit_generic_menu_str(
+rt_edit_generic_menu_str(
 	struct bu_vls *mstr,
        	const struct rt_db_internal *ip,
        	const struct bn_tol *tol

@@ -57,7 +57,7 @@
 #define ECMD_PIPE_SCALE_RADIUS	15074
 
 void *
-rt_solid_edit_pipe_prim_edit_create(struct rt_solid_edit *UNUSED(s))
+rt_edit_pipe_prim_edit_create(struct rt_edit *UNUSED(s))
 {
     struct rt_pipe_edit *p;
     BU_GET(p, struct rt_pipe_edit);
@@ -68,7 +68,7 @@ rt_solid_edit_pipe_prim_edit_create(struct rt_solid_edit *UNUSED(s))
 }
 
 void
-rt_solid_edit_pipe_prim_edit_destroy(struct rt_pipe_edit *p)
+rt_edit_pipe_prim_edit_destroy(struct rt_pipe_edit *p)
 {
     if (!p)
 	return;
@@ -80,7 +80,7 @@ rt_solid_edit_pipe_prim_edit_destroy(struct rt_pipe_edit *p)
 }
 
 void
-rt_solid_edit_pipe_prim_edit_reset(struct rt_solid_edit *s)
+rt_edit_pipe_prim_edit_reset(struct rt_edit *s)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
     p->es_pipe_pnt = NULL;
@@ -88,16 +88,16 @@ rt_solid_edit_pipe_prim_edit_reset(struct rt_solid_edit *s)
 
 
 void
-rt_solid_edit_pipe_set_edit_mode(struct rt_solid_edit *s, int mode)
+rt_edit_pipe_set_edit_mode(struct rt_edit *s, int mode)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
     struct wdb_pipe_pnt *next;
     struct wdb_pipe_pnt *prev;
-    rt_solid_edit_set_edflag(s, mode);
+    rt_edit_set_edflag(s, mode);
 
     switch (mode) {
 	case ECMD_PIPE_SELECT:
-	    s->solid_edit_mode = RT_SOLID_EDIT_PICK;
+	    s->edit_mode = RT_PARAMS_EDIT_PICK;
 	    break;
 	case ECMD_PIPE_NEXT_PT:
 	    if (!p->es_pipe_pnt) {
@@ -111,9 +111,9 @@ rt_solid_edit_pipe_set_edit_mode(struct rt_solid_edit *s, int mode)
 	    }
 	    p->es_pipe_pnt = next;
 	    rt_pipe_pnt_print(p->es_pipe_pnt, s->base2local);
-	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    rt_edit_set_edflag(s, RT_EDIT_IDLE);
 	    // TODO - should we really be calling this here?
-	    rt_solid_edit_process(s);
+	    rt_edit_process(s);
 	    break;
 	case ECMD_PIPE_PREV_PT:
 	    if (!p->es_pipe_pnt) {
@@ -127,60 +127,60 @@ rt_solid_edit_pipe_set_edit_mode(struct rt_solid_edit *s, int mode)
 	    }
 	    p->es_pipe_pnt = prev;
 	    rt_pipe_pnt_print(p->es_pipe_pnt, s->base2local);
-	    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+	    rt_edit_set_edflag(s, RT_EDIT_IDLE);
 	    // TODO - should we really be calling this here?
-	    rt_solid_edit_process(s);
+	    rt_edit_process(s);
 	    break;
 	case ECMD_PIPE_PT_MOVE:
 	    if (!p->es_pipe_pnt) {
 		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
-		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+		rt_edit_set_edflag(s, RT_EDIT_IDLE);
 		return;
 	    }
-	    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
+	    s->edit_mode = RT_PARAMS_EDIT_TRANS;
 	    break;
 	case ECMD_PIPE_PT_OD:
 	case ECMD_PIPE_PT_ID:
 	case ECMD_PIPE_PT_RADIUS:
 	    if (!p->es_pipe_pnt) {
 		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
-		rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_IDLE);
+		rt_edit_set_edflag(s, RT_EDIT_IDLE);
 		return;
 	    }
-	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
+	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
 	    break;
 	case ECMD_PIPE_SCALE_OD:
 	case ECMD_PIPE_SCALE_ID:
 	case ECMD_PIPE_SCALE_RADIUS:
-	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
+	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
 	    break;
 	case ECMD_PIPE_PT_ADD:
-	    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
+	    s->edit_mode = RT_PARAMS_EDIT_TRANS;
 	    break;
 	case ECMD_PIPE_PT_INS:
-	    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
+	    s->edit_mode = RT_PARAMS_EDIT_TRANS;
 	    break;
 	case ECMD_PIPE_PT_DEL:
 	    // TODO - should we really be calling this here?
-	    rt_solid_edit_process(s);
+	    rt_edit_process(s);
 	    break;
     }
 
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
 
 static void
-pipe_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+pipe_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    rt_solid_edit_pipe_set_edit_mode(s, arg);
+    rt_edit_pipe_set_edit_mode(s, arg);
 }
 
-struct rt_solid_edit_menu_item pipe_menu[] = {
+struct rt_edit_menu_item pipe_menu[] = {
     { "PIPE MENU", NULL, 0 },
     { "Select Point", pipe_ed, ECMD_PIPE_SELECT },
     { "Next Point", pipe_ed, ECMD_PIPE_NEXT_PT },
@@ -198,8 +198,8 @@ struct rt_solid_edit_menu_item pipe_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_solid_edit_menu_item *
-rt_solid_edit_pipe_menu_item(const struct bn_tol *UNUSED(tol))
+struct rt_edit_menu_item *
+rt_edit_pipe_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return pipe_menu;
 }
@@ -213,7 +213,7 @@ pipe_split_pnt(struct bu_list *UNUSED(pipe_hd), struct wdb_pipe_pnt *UNUSED(ps),
 
 
 void
-pipe_scale_od(struct rt_solid_edit *s, struct rt_db_internal *db_int, fastf_t scale)
+pipe_scale_od(struct rt_edit *s, struct rt_db_internal *db_int, fastf_t scale)
 {
     struct wdb_pipe_pnt *ps;
     struct rt_pipe_internal *pipeip=(struct rt_pipe_internal *)db_int->idb_ptr;
@@ -244,7 +244,7 @@ pipe_scale_od(struct rt_solid_edit *s, struct rt_db_internal *db_int, fastf_t sc
 
 
 void
-pipe_scale_id(struct rt_solid_edit *s, struct rt_db_internal *db_int, fastf_t scale)
+pipe_scale_id(struct rt_edit *s, struct rt_db_internal *db_int, fastf_t scale)
 {
     struct wdb_pipe_pnt *ps;
     struct rt_pipe_internal *pipeip=(struct rt_pipe_internal *)db_int->idb_ptr;
@@ -278,7 +278,7 @@ pipe_scale_id(struct rt_solid_edit *s, struct rt_db_internal *db_int, fastf_t sc
 
 
 void
-pipe_seg_scale_od(struct rt_solid_edit *s, struct wdb_pipe_pnt *ps, fastf_t scale)
+pipe_seg_scale_od(struct rt_edit *s, struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t tmp_od;
 
@@ -308,7 +308,7 @@ pipe_seg_scale_od(struct rt_solid_edit *s, struct wdb_pipe_pnt *ps, fastf_t scal
 
 
 void
-pipe_seg_scale_id(struct rt_solid_edit *s, struct wdb_pipe_pnt *ps, fastf_t scale)
+pipe_seg_scale_id(struct rt_edit *s, struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t tmp_id;
 
@@ -336,7 +336,7 @@ pipe_seg_scale_id(struct rt_solid_edit *s, struct wdb_pipe_pnt *ps, fastf_t scal
 
 
 void
-pipe_seg_scale_radius(struct rt_solid_edit *s, struct wdb_pipe_pnt *ps, fastf_t scale)
+pipe_seg_scale_radius(struct rt_edit *s, struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t old_radius;
     struct wdb_pipe_pnt *head;
@@ -370,7 +370,7 @@ pipe_seg_scale_radius(struct rt_solid_edit *s, struct wdb_pipe_pnt *ps, fastf_t 
 
 
 void
-pipe_scale_radius(struct rt_solid_edit *s, struct rt_db_internal *db_int, fastf_t scale)
+pipe_scale_radius(struct rt_edit *s, struct rt_db_internal *db_int, fastf_t scale)
 {
     struct bu_list head;
     struct wdb_pipe_pnt *old_ps, *new_ps;
@@ -440,7 +440,7 @@ pipe_scale_radius(struct rt_solid_edit *s, struct rt_db_internal *db_int, fastf_
 
 
 struct wdb_pipe_pnt *
-find_pipe_pnt_nearest_pnt(struct rt_solid_edit *s, const struct bu_list *pipe_hd, const point_t pt)
+find_pipe_pnt_nearest_pnt(struct rt_edit *s, const struct bu_list *pipe_hd, const point_t pt)
 {
     struct wdb_pipe_pnt *ps;
     struct wdb_pipe_pnt *nearest=(struct wdb_pipe_pnt *)NULL;
@@ -570,7 +570,7 @@ pipe_ins_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const poi
 
 
 struct wdb_pipe_pnt *
-pipe_del_pnt(struct rt_solid_edit *s, struct wdb_pipe_pnt *ps)
+pipe_del_pnt(struct rt_edit *s, struct wdb_pipe_pnt *ps)
 {
     struct wdb_pipe_pnt *next;
     struct wdb_pipe_pnt *prev;
@@ -619,7 +619,7 @@ pipe_del_pnt(struct rt_solid_edit *s, struct wdb_pipe_pnt *ps)
 
 
 void
-pipe_move_pnt(struct rt_solid_edit *s, struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps, const point_t new_pt)
+pipe_move_pnt(struct rt_edit *s, struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps, const point_t new_pt)
 {
     point_t old_pt;
 
@@ -636,11 +636,11 @@ pipe_move_pnt(struct rt_solid_edit *s, struct rt_pipe_internal *pipeip, struct w
 }
 
 const char *
-rt_solid_edit_pipe_keypoint(
+rt_edit_pipe_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
 	const mat_t mat,
-	struct rt_solid_edit *s,
+	struct rt_edit *s,
 	const struct bn_tol *UNUSED(tol))
 {
     struct rt_db_internal *ip = &s->es_int;
@@ -662,13 +662,13 @@ rt_solid_edit_pipe_keypoint(
 }
 
 void
-rt_solid_edit_pipe_labels(
+rt_edit_pipe_labels(
 	int *UNUSED(num_lines),
 	point_t *UNUSED(lines),
 	struct rt_point_labels *pl,
 	int UNUSED(max_pl),
 	const mat_t xform,
-	struct rt_solid_edit *s,
+	struct rt_edit *s,
 	struct bn_tol *UNUSED(tol))
 {
     struct rt_db_internal *ip = &s->es_int;
@@ -698,7 +698,7 @@ rt_solid_edit_pipe_labels(
 
 /* scale OD of one pipe segment */
 int
-ecmd_pipe_pt_od(struct rt_solid_edit *s)
+ecmd_pipe_pt_od(struct rt_edit *s)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
 
@@ -727,7 +727,7 @@ ecmd_pipe_pt_od(struct rt_solid_edit *s)
 
 /* scale ID of one pipe segment */
 int
-ecmd_pipe_pt_id(struct rt_solid_edit *s)
+ecmd_pipe_pt_id(struct rt_edit *s)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
 
@@ -757,7 +757,7 @@ ecmd_pipe_pt_id(struct rt_solid_edit *s)
 
 /* scale bend radius at selected point */
 int
-ecmd_pipe_pt_radius(struct rt_solid_edit *s)
+ecmd_pipe_pt_radius(struct rt_edit *s)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
 
@@ -787,7 +787,7 @@ ecmd_pipe_pt_radius(struct rt_solid_edit *s)
 
 /* scale entire pipe OD */
 int
-ecmd_pipe_scale_od(struct rt_solid_edit *s)
+ecmd_pipe_scale_od(struct rt_edit *s)
 {
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
@@ -827,7 +827,7 @@ ecmd_pipe_scale_od(struct rt_solid_edit *s)
 
 /* scale entire pipe ID */
 int
-ecmd_pipe_scale_id(struct rt_solid_edit *s)
+ecmd_pipe_scale_id(struct rt_edit *s)
 {
     if (s->e_para[0] < 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR < 0\n");
@@ -865,7 +865,7 @@ ecmd_pipe_scale_id(struct rt_solid_edit *s)
 
 /* scale entire pipe bend radius */
 int
-ecmd_pipe_scale_radius(struct rt_solid_edit *s)
+ecmd_pipe_scale_radius(struct rt_edit *s)
 {
     if (s->e_para[0] <= 0.0) {
 	bu_vls_printf(s->log_str, "ERROR: SCALE FACTOR <= 0\n");
@@ -902,7 +902,7 @@ ecmd_pipe_scale_radius(struct rt_solid_edit *s)
     return 0;
 }
 
-void ecmd_pipe_pick(struct rt_solid_edit *s)
+void ecmd_pipe_pick(struct rt_edit *s)
 {
     struct rt_pipe_internal *pipeip =
 	(struct rt_pipe_internal *)s->es_int.idb_ptr;
@@ -929,7 +929,7 @@ void ecmd_pipe_pick(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for segment selection\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -939,14 +939,14 @@ void ecmd_pipe_pick(struct rt_solid_edit *s)
     p->es_pipe_pnt = find_pipe_pnt_nearest_pnt(s, &pipeip->pipe_segs_head, new_pt);
     if (!p->es_pipe_pnt) {
 	bu_vls_printf(s->log_str, "No PIPE segment selected\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
     } else
 	rt_pipe_pnt_print(p->es_pipe_pnt, s->base2local);
 }
 
-void ecmd_pipe_split(struct rt_solid_edit *s)
+void ecmd_pipe_split(struct rt_edit *s)
 {
     struct rt_pipe_internal *pipeip =
 	(struct rt_pipe_internal *)s->es_int.idb_ptr;
@@ -973,7 +973,7 @@ void ecmd_pipe_split(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for segment split\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -982,7 +982,7 @@ void ecmd_pipe_split(struct rt_solid_edit *s)
 
     if (!p->es_pipe_pnt) {
 	bu_vls_printf(s->log_str, "No pipe segment selected\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -991,7 +991,7 @@ void ecmd_pipe_split(struct rt_solid_edit *s)
     pipe_split_pnt(&pipeip->pipe_segs_head, p->es_pipe_pnt, new_pt);
 }
 
-void ecmd_pipe_pt_move(struct rt_solid_edit *s)
+void ecmd_pipe_pt_move(struct rt_edit *s)
 {
     struct rt_pipe_internal *pipeip =
 	(struct rt_pipe_internal *)s->es_int.idb_ptr;
@@ -1018,7 +1018,7 @@ void ecmd_pipe_pt_move(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for segment movement\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -1027,7 +1027,7 @@ void ecmd_pipe_pt_move(struct rt_solid_edit *s)
 
     if (!p->es_pipe_pnt) {
 	bu_vls_printf(s->log_str, "No pipe segment selected\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -1036,7 +1036,7 @@ void ecmd_pipe_pt_move(struct rt_solid_edit *s)
     pipe_move_pnt(s, pipeip, p->es_pipe_pnt, new_pt);
 }
 
-void ecmd_pipe_pt_add(struct rt_solid_edit *s)
+void ecmd_pipe_pt_add(struct rt_edit *s)
 {
     struct rt_pipe_internal *pipeip =
 	(struct rt_pipe_internal *)s->es_int.idb_ptr;
@@ -1063,7 +1063,7 @@ void ecmd_pipe_pt_add(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for 'append segment'\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -1073,7 +1073,7 @@ void ecmd_pipe_pt_add(struct rt_solid_edit *s)
     p->es_pipe_pnt = pipe_add_pnt(pipeip, p->es_pipe_pnt, new_pt);
 }
 
-void ecmd_pipe_pt_ins(struct rt_solid_edit *s)
+void ecmd_pipe_pt_ins(struct rt_edit *s)
 {
     struct rt_pipe_internal *pipeip =
 	(struct rt_pipe_internal *)s->es_int.idb_ptr;
@@ -1100,7 +1100,7 @@ void ecmd_pipe_pt_ins(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for 'prepend segment'\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -1110,14 +1110,14 @@ void ecmd_pipe_pt_ins(struct rt_solid_edit *s)
     pipe_ins_pnt(pipeip, p->es_pipe_pnt, new_pt);
 }
 
-void ecmd_pipe_pt_del(struct rt_solid_edit *s)
+void ecmd_pipe_pt_del(struct rt_edit *s)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
     bu_clbk_t f = NULL;
     void *d = NULL;
     if (!p->es_pipe_pnt) {
 	bu_vls_printf(s->log_str, "No pipe segment selected\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -1126,7 +1126,7 @@ void ecmd_pipe_pt_del(struct rt_solid_edit *s)
 }
 
 static int
-rt_solid_edit_pipe_pscale(struct rt_solid_edit *s)
+rt_edit_pipe_pscale(struct rt_edit *s)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -1160,23 +1160,23 @@ rt_solid_edit_pipe_pscale(struct rt_solid_edit *s)
 }
 
 int
-rt_solid_edit_pipe_edit(struct rt_solid_edit *s)
+rt_edit_pipe_edit(struct rt_edit *s)
 {
     struct rt_pipe_edit *p = (struct rt_pipe_edit *)s->ipe_ptr;
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    p->es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset p->es_pipe_pnt */
-	    return rt_solid_edit_generic_sscale(s, &s->es_int);
-	case RT_SOLID_EDIT_TRANS:
+	    return rt_edit_generic_sscale(s, &s->es_int);
+	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
 	    p->es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset p->es_pipe_pnt */
-	    rt_solid_edit_generic_strans(s, &s->es_int);
+	    rt_edit_generic_strans(s, &s->es_int);
 	    break;
-	case RT_SOLID_EDIT_ROT:
+	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
 	    p->es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset p->es_pipe_pnt */
-	    rt_solid_edit_generic_srot(s, &s->es_int);
+	    rt_edit_generic_srot(s, &s->es_int);
 	    break;
 	case ECMD_PIPE_SELECT:
 	    ecmd_pipe_pick(s);
@@ -1197,15 +1197,15 @@ rt_solid_edit_pipe_edit(struct rt_solid_edit *s)
 	    ecmd_pipe_pt_del(s);
 	    break;
     	default:
-	    return rt_solid_edit_pipe_pscale(s);
+	    return rt_edit_pipe_pscale(s);
     }
 
     return 0;
 }
 
 int
-rt_solid_edit_pipe_edit_xy(
-	struct rt_solid_edit *s,
+rt_edit_pipe_edit_xy(
+	struct rt_edit *s,
 	const vect_t mousevec
 	)
 {
@@ -1216,7 +1216,7 @@ rt_solid_edit_pipe_edit_xy(
     void *d = NULL;
 
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	case ECMD_PIPE_NEXT_PT:
 	case ECMD_PIPE_PREV_PT:
 	case ECMD_PIPE_PT_OD:
@@ -1226,10 +1226,10 @@ rt_solid_edit_pipe_edit_xy(
 	case ECMD_PIPE_PT_RADIUS:
 	case ECMD_PIPE_SCALE_RADIUS:
 	case ECMD_PIPE_PT_DEL:
-	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    rt_edit_generic_sscale_xy(s, mousevec);
 	    return 0;
-	case RT_SOLID_EDIT_TRANS:
-	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
+	case RT_PARAMS_EDIT_TRANS:
+	    rt_edit_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_PIPE_SELECT:
 	case ECMD_PIPE_SPLIT:
@@ -1243,15 +1243,15 @@ rt_solid_edit_pipe_edit_xy(
 	    MAT4X3PNT(s->e_mparam, s->e_invmat, temp);
 	    s->e_mvalid = 1;
 	    break;
-        case RT_SOLID_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_SOLID_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+        case RT_PARAMS_EDIT_ROT:
+            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
+            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
             if (f)
                 (*f)(0, NULL, d, NULL);
             return BRLCAD_ERROR;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;

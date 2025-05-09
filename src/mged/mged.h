@@ -199,7 +199,7 @@ struct mged_state {
     struct bu_list *vlfree;
 
     /* Editing related */
-    struct rt_solid_edit *s_edit;
+    struct rt_edit *s_edit;
     int global_editing_state; // main global editing state (ugh)
     // TODO - can we eliminate these?
     int es_edclass;		/* type of editing class for this solid */

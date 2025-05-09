@@ -616,8 +616,8 @@ RT_EXPORT extern int rt_arb_edit(struct bu_vls          *error_msg_ret,
 RT_EXPORT extern int rt_arb_find_e_nearest_pt2(int *edge, int *vert1, int *vert2, const struct rt_db_internal *ip, const point_t pt2, const mat_t mat, fastf_t ptol);
 
 
-RT_EXPORT extern int rt_arb_f_eqn(struct rt_solid_edit *s, int argc, const char **argv);
-RT_EXPORT extern int rt_arb_edgedir(struct rt_solid_edit *s, int argc, const char **argv);
+RT_EXPORT extern int rt_arb_f_eqn(struct rt_edit *s, int argc, const char **argv);
+RT_EXPORT extern int rt_arb_edgedir(struct rt_edit *s, int argc, const char **argv);
 
 
 

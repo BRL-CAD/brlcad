@@ -40,34 +40,34 @@
 #define ECMD_EXTR_SKT_NAME	27076	/* set sketch that the extrusion uses */
 
 void
-rt_solid_edit_extrude_set_edit_mode(struct rt_solid_edit *s, int mode)
+rt_edit_extrude_set_edit_mode(struct rt_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, mode);
+    rt_edit_set_edflag(s, mode);
 
     switch (mode) {
 	case ECMD_EXTR_ROT_H:
-	    s->solid_edit_mode = RT_SOLID_EDIT_ROT;
+	    s->edit_mode = RT_PARAMS_EDIT_ROT;
 	    break;
 	case ECMD_EXTR_SCALE_H:
-	    s->solid_edit_mode = RT_SOLID_EDIT_SCALE;
+	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
 	    break;
 	case ECMD_EXTR_MOV_H:
-	    s->solid_edit_mode = RT_SOLID_EDIT_TRANS;
+	    s->edit_mode = RT_PARAMS_EDIT_TRANS;
 	    break;
 	default:
 	    break;
     };
 
-    rt_solid_edit_process(s);
+    rt_edit_process(s);
 }
 
 static void
-extr_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+extr_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    rt_solid_edit_extrude_set_edit_mode(s, arg);
+    rt_edit_extrude_set_edit_mode(s, arg);
 }
 
-struct rt_solid_edit_menu_item extr_menu[] = {
+struct rt_edit_menu_item extr_menu[] = {
     { "EXTRUSION MENU",	NULL, 0 },
     { "Set H",		extr_ed, ECMD_EXTR_SCALE_H },
     { "Move End H",		extr_ed, ECMD_EXTR_MOV_H },
@@ -76,18 +76,18 @@ struct rt_solid_edit_menu_item extr_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_solid_edit_menu_item *
-rt_solid_edit_extrude_menu_item(const struct bn_tol *UNUSED(tol))
+struct rt_edit_menu_item *
+rt_edit_extrude_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return extr_menu;
 }
 
 const char *
-rt_solid_edit_extrude_keypoint(
+rt_edit_extrude_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
 	const mat_t mat,
-	struct rt_solid_edit *s,
+	struct rt_edit *s,
 	const struct bn_tol *tol)
 {
     struct rt_db_internal *ip = &s->es_int;
@@ -104,8 +104,8 @@ rt_solid_edit_extrude_keypoint(
 }
 
 void
-rt_solid_edit_extrude_e_axes_pos(
-	struct rt_solid_edit *s,
+rt_edit_extrude_e_axes_pos(
+	struct rt_edit *s,
 	const struct rt_db_internal *ip,
 	const struct bn_tol *UNUSED(tol))
 {
@@ -125,7 +125,7 @@ rt_solid_edit_extrude_e_axes_pos(
 }
 
 void
-ecmd_extr_skt_name(struct rt_solid_edit *s)
+ecmd_extr_skt_name(struct rt_edit *s)
 {
     struct rt_extrude_internal *extr = (struct rt_extrude_internal *)s->es_int.idb_ptr;
     struct rt_db_internal tmp_ip;
@@ -144,13 +144,13 @@ ecmd_extr_skt_name(struct rt_solid_edit *s)
 
     bu_clbk_t f = NULL;
     void *d = NULL;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EXTR_SKT_NAME, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_EXTR_SKT_NAME, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, s);
 }
 
 int
-ecmd_extr_mov_h(struct rt_solid_edit *s)
+ecmd_extr_mov_h(struct rt_edit *s)
 {
     vect_t work;
     struct rt_extrude_internal *extr =
@@ -183,7 +183,7 @@ ecmd_extr_mov_h(struct rt_solid_edit *s)
     /* check for zero H vector */
     if (MAGNITUDE(extr->h) <= SQRT_SMALL_FASTF) {
 	bu_vls_printf(s->log_str, "Zero H vector not allowed, resetting to +Z\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	VSET(extr->h, 0.0, 0.0, 1.0);
@@ -194,7 +194,7 @@ ecmd_extr_mov_h(struct rt_solid_edit *s)
 }
 
 int
-ecmd_extr_scale_h(struct rt_solid_edit *s)
+ecmd_extr_scale_h(struct rt_edit *s)
 {
     if (s->e_inpara != 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -233,7 +233,7 @@ ecmd_extr_scale_h(struct rt_solid_edit *s)
 
 /* rotate height vector */
 int
-ecmd_extr_rot_h(struct rt_solid_edit *s)
+ecmd_extr_rot_h(struct rt_edit *s)
 {
     struct rt_extrude_internal *extr =
 	(struct rt_extrude_internal *)s->es_int.idb_ptr;
@@ -297,7 +297,7 @@ ecmd_extr_rot_h(struct rt_solid_edit *s)
 
 /* Use mouse to change location of point V+H */
 void
-ecmd_extr_mov_h_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
+ecmd_extr_mov_h_mousevec(struct rt_edit *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
     vect_t tr_temp = VINIT_ZERO;	/* temp translation vector */
@@ -316,19 +316,19 @@ ecmd_extr_mov_h_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
 }
 
 int
-rt_solid_edit_extrude_edit(struct rt_solid_edit *s)
+rt_edit_extrude_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return rt_solid_edit_generic_sscale(s, &s->es_int);
-	case RT_SOLID_EDIT_TRANS:
+	    return rt_edit_generic_sscale(s, &s->es_int);
+	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
-	    rt_solid_edit_generic_strans(s, &s->es_int);
+	    rt_edit_generic_strans(s, &s->es_int);
 	    break;
-	case RT_SOLID_EDIT_ROT:
+	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
-	    rt_solid_edit_generic_srot(s, &s->es_int);
+	    rt_edit_generic_srot(s, &s->es_int);
 	    break;
 	case ECMD_EXTR_SKT_NAME:
 	    ecmd_extr_skt_name(s);
@@ -345,8 +345,8 @@ rt_solid_edit_extrude_edit(struct rt_solid_edit *s)
 }
 
 int
-rt_solid_edit_extrude_edit_xy(
-	struct rt_solid_edit *s,
+rt_edit_extrude_edit_xy(
+	struct rt_edit *s,
 	const vect_t mousevec
 	)
 {
@@ -356,27 +356,27 @@ rt_solid_edit_extrude_edit_xy(
     void *d = NULL;
 
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	case ECMD_EXTR_SCALE_H:
 	case ECMD_EXTR_ROT_H:
 	case ECMD_EXTR_SKT_NAME:
-	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    rt_edit_generic_sscale_xy(s, mousevec);
 	    return 0;
-	case RT_SOLID_EDIT_TRANS:
-	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
+	case RT_PARAMS_EDIT_TRANS:
+	    rt_edit_generic_strans_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_EXTR_MOV_H:
 	    ecmd_extr_mov_h_mousevec(s, mousevec);
 	    break;
-        case RT_SOLID_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_SOLID_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+        case RT_PARAMS_EDIT_ROT:
+            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
+            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
             if (f)
                 (*f)(0, NULL, d, NULL);
             return BRLCAD_ERROR;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
