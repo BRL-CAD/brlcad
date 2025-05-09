@@ -265,26 +265,18 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
 		    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
 			mged_variables->mv_transform == 'e') {
-			int save_edflag = 0;
-			int save_mode = 0;
+			struct saved_edflags sf = SAVED_EDFLAGS_INIT;
+			save_edflags(&sf, s);
 			if (s->global_editing_state == ST_S_EDIT) {
-			    save_edflag = s->s_edit->edit_flag;
-			    save_mode = s->s_edit->edit_mode;
 			    if (!SEDIT_TRAN)
 				rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_TRANS);
 			} else {
-			    save_edflag = edobj;
 			    edobj = BE_O_XY;
 			}
 
 			snap_keypoint_to_grid(s);
 
-			if (s->global_editing_state == ST_S_EDIT) {
-			    s->s_edit->edit_flag = save_edflag;
-			    s->s_edit->edit_mode = save_mode;
-			} else {
-			    edobj = save_edflag;
-			}
+			restore_edflags(s, &sf);
 		    } else
 			snap_view_center_to_grid(s);
 		}

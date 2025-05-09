@@ -145,22 +145,27 @@ doEvent(ClientData UNUSED(clientData), void *UNUSED(eventPtr)) {
 }
 #endif /* HAVE_X11_XLIB_H */
 
-
-#ifdef HAVE_X11_TYPES
-struct saved_edflags {
-    int edit_flag;
-    int edit_obj_flag;
-    int edit_mode;
-};
-
-static void
-save_flags(struct saved_edflags *sf, struct mged_state *s)
+void
+save_edflags(struct saved_edflags *sf, struct mged_state *s)
 {
     sf->edit_flag = s->s_edit->edit_flag;
     sf->edit_mode = s->s_edit->edit_mode;
     sf->edit_obj_flag = edobj;
 }
 
+void
+restore_edflags(struct mged_state *s, struct saved_edflags *sf)
+{
+    if (s->global_editing_state == ST_S_EDIT && sf->edit_flag != -1) {
+	s->s_edit->edit_flag = sf->edit_flag;
+	s->s_edit->edit_mode = sf->edit_mode;
+    }
+    if (s->global_editing_state == ST_O_EDIT && sf->edit_obj_flag != -1)
+	edobj = sf->edit_obj_flag;
+}
+
+
+#ifdef HAVE_X11_TYPES
 
 static void
 motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
@@ -171,7 +176,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
     fastf_t f;
     fastf_t fx, fy;
     fastf_t td;
-    int edit_mode = ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) && mged_variables->mv_transform == 'e') ? 1 : 0;
+    int em = ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) && mged_variables->mv_transform == 'e') ? 1 : 0;
 
     if (s->dbip == DBI_NULL)
 	return;
@@ -230,9 +235,9 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 	    {
 		view_state->vs_gvp->gv_coord = 'v';
 
-		if (edit_mode) {
+		if (em) {
 
-		    save_flags(&edflags, s);
+		    save_edflags(&edflags, s);
 
 		    if (s->global_editing_state == ST_S_EDIT) {
 			if (!SEDIT_ROTATE)
@@ -270,9 +275,9 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		fx = dx / (fastf_t)width * 2.0;
 		fy = -dy / (fastf_t)height / dm_get_aspect(DMP) * 2.0;
 
-		if (edit_mode) {
+		if (em) {
 
-		    save_flags(&edflags, s);
+		    save_edflags(&edflags, s);
 
 		    if (s->global_editing_state == ST_S_EDIT) {
 			if (!SEDIT_TRAN)
@@ -335,8 +340,8 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		goto reset_edflag;
 	    }
 	case AMM_SCALE:
-	    if (edit_mode) {
-		save_flags(&edflags, s);
+	    if (em) {
+		save_edflags(&edflags, s);
 		if (s->global_editing_state == ST_S_EDIT && !SEDIT_SCALE) {
 		    rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_SCALE);
 		} else if (s->global_editing_state == ST_O_EDIT && !OEDIT_SCALE) {
@@ -391,8 +396,8 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_ROT_X:
-	    if (edit_mode) {
-		save_flags(&edflags, s);
+	    if (em) {
+		save_edflags(&edflags, s);
 		if (s->global_editing_state == ST_S_EDIT) {
 		    if (!SEDIT_ROTATE)
 			rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_ROT);
@@ -414,8 +419,8 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_ROT_Y:
-	    if (edit_mode) {
-		save_flags(&edflags, s);
+	    if (em) {
+		save_edflags(&edflags, s);
 		if (s->global_editing_state == ST_S_EDIT) {
 		    if (!SEDIT_ROTATE)
 			rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_ROT);
@@ -437,8 +442,8 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_ROT_Z:
-	    if (edit_mode) {
-		save_flags(&edflags, s);
+	    if (em) {
+		save_edflags(&edflags, s);
 		if (s->global_editing_state == ST_S_EDIT) {
 		    if (!SEDIT_ROTATE)
 			rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_ROT);
@@ -460,8 +465,8 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_TRAN_X:
-	    if (edit_mode) {
-		save_flags(&edflags, s);
+	    if (em) {
+		save_edflags(&edflags, s);
 		if (s->global_editing_state == ST_S_EDIT) {
 		    if (!SEDIT_TRAN)
 			rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_TRANS);
@@ -482,8 +487,8 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_TRAN_Y:
-	    if (edit_mode) {
-		save_flags(&edflags, s);
+	    if (em) {
+		save_edflags(&edflags, s);
 		if (s->global_editing_state == ST_S_EDIT) {
 		    if (!SEDIT_TRAN)
 			rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_TRANS);
@@ -504,8 +509,8 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_TRAN_Z:
-	    if (edit_mode) {
-		save_flags(&edflags, s);
+	    if (em) {
+		save_edflags(&edflags, s);
 		if (s->global_editing_state == ST_S_EDIT) {
 		    if (!SEDIT_TRAN)
 			rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_TRANS);
@@ -526,8 +531,8 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_SCALE_X:
-	    if (edit_mode) {
-		save_flags(&edflags, s);
+	    if (em) {
+		save_edflags(&edflags, s);
 		if (s->global_editing_state == ST_S_EDIT) {
 		    if (!SEDIT_SCALE)
 			rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_SCALE);
@@ -548,8 +553,8 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_SCALE_Y:
-	    if (edit_mode) {
-		save_flags(&edflags, s);
+	    if (em) {
+		save_edflags(&edflags, s);
 		if (s->global_editing_state == ST_S_EDIT) {
 		    if (!SEDIT_SCALE)
 			rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_SCALE);
@@ -570,8 +575,8 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_SCALE_Z:
-	    if (edit_mode) {
-		save_flags(&edflags, s);
+	    if (em) {
+		save_edflags(&edflags, s);
 		if (s->global_editing_state == ST_S_EDIT) {
 		    if (!SEDIT_SCALE)
 			rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_SCALE);
@@ -641,12 +646,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
     (void)Tcl_Eval(s->interp, bu_vls_addr(&cmd));
 
  reset_edflag:
-    if (s->global_editing_state == ST_S_EDIT && edflags.edit_flag != -1) {
-	s->s_edit->edit_flag = edflags.edit_flag;
-	s->s_edit->edit_mode = edflags.edit_mode;
-    }
-    if (s->global_editing_state == ST_O_EDIT && edflags.edit_obj_flag != -1)
-	edobj = edflags.edit_obj_flag;
+    restore_edflags(s, &edflags);
 
  handled:
     bu_vls_free(&cmd);

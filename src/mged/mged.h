@@ -211,6 +211,17 @@ struct mged_state {
 };
 extern struct mged_state *MGED_STATE;
 
+/* container for saving and restoring edit flags */
+struct saved_edflags {
+    int edit_flag;
+    int edit_obj_flag;
+    int edit_mode;
+};
+#define SAVED_EDFLAGS_INIT {-1, -1, -1}
+// defined in doevent.c
+void save_edflags(struct saved_edflags *sf, struct mged_state *s);
+void restore_edflags(struct mged_state *s, struct saved_edflags *sf);
+
 
 /* defined in mged.c */
 extern jmp_buf jmp_env;

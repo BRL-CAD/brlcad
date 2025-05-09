@@ -136,6 +136,10 @@ struct rt_edit {
     // The above were originally driven by MGED code, which IIRC was using it
     // for awareness of cases when primitive specific edits need specific
     // interaction modes...)
+    //
+    // NOTE - this is only active in the new librt editing code - MGED uses
+    // primitive aware defines to do this instead (ew) so in the main branch
+    // it is not used except in the state save/restore functions.
     int edit_mode;
 
     fastf_t es_scale;           /* scale factor */
