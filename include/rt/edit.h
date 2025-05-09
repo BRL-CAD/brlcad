@@ -89,8 +89,46 @@ struct rt_solid_edit {
 
     fastf_t es_scale;           /* scale factor */
     mat_t incr_change;          /* change(s) from last cycle */
+
+    /* Matrix-based editing visualizations are a different beast from edits
+     * that change primitive parameters.  In the latter case, we must
+     * regenerate vlists based on new object parameters.  Applications
+     * supporting solid editing need to be able to support visualizing an
+     * entity whose source geometry visualization data is constantly changing.
+     *
+     * Combs, on the other hand, have a wireframe representation that consists
+     * of one or more individual primitive wireframes from OTHER solids -
+     * potentially *thousands* of them for large models.  Nor to matrix edits
+     * typically call for a wireframe regeneration - tra and rot operations
+     * definitely don't, and while scaled primitives might be more smoothly
+     * represented by refreshed wireframes not all matrix edits can be
+     * successfully translated to primitive param updates in all cases.  As
+     * a result, for matrix-based editing wireframes are treated as static
+     * data to be manipulated.
+     *
+     * Consequently, rather than generating copies of all those wireframes and
+     * modifying them all every time an incremental edit is made, a more
+     * efficient option is to re-use any existing wireframes the app already
+     * has loaded for the comb tree in question and distort the *view space* to
+     * reflect the editing operation while doing the draw.  Because the source
+     * wireframe data isn't changing, view distortion drawing is feasible.
+     *
+     * Combs are *only* editable via matrix manipulations, so rather than
+     * trying to manage the comb's editing visualization data in this struct
+     * the problem is "punted" to the application, which can decide for itself
+     * whether and how to reuse any existing wireframe information when drawing
+     * editing objects.
+     *
+     * To use model_changes to generate appropriate matrices for this purpose,
+     * the pattern looks like the following:
+     *
+     * mat_t model2objview;
+     * bn_mat_mul(model2objview, s->vp->gv_model2view, s->model_changes);
+     * ## A second bn_mat_mul might be needed if a perspective matrix is in use
+     * dm_loadmatrix(DMP, model2objview, which_eye);
+     * ## Do the drawing
+     */
     mat_t model_changes;        /* full changes this edit */
-    mat_t model2objview;        /* Matrix for applying model_changes to view objects in vp (used in obj_edit) */
 
     fastf_t acc_sc[3];          /* accumulate local object scale factors */
     fastf_t acc_sc_obj;         /* accumulate global object scale factor */

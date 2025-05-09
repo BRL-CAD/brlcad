@@ -86,7 +86,6 @@ rt_solid_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol 
     MAT_IDN(s->e_invmat);
     MAT_IDN(s->e_mat);
     MAT_IDN(s->incr_change);
-    MAT_IDN(s->model2objview);
     MAT_IDN(s->model_changes);
     VSETALL(s->curr_e_axes_pos , 0);
     VSETALL(s->e_axes_pos , 0);
@@ -730,10 +729,6 @@ rt_knob_edit_rot(struct rt_solid_edit *s,
 	bn_mat_mul(out, t, s->model_changes);
 	MAT_COPY(s->model_changes, out);
 
-	/* Update the model2objview matrix, which is sometimes used by
-	 * applications to display an intermediate editing state. */
-	bn_mat_mul(s->model2objview, s->vp->gv_model2view, s->model_changes);
-
     }
 }
 
@@ -803,21 +798,6 @@ rt_knob_edit_tran(struct rt_solid_edit *s,
 	MAT_IDN(xlatemat);
 	MAT_DELTAS_VEC(xlatemat, delta);
 	bn_mat_mul2(xlatemat, s->model_changes);
-
-	/* Update the model2objview matrix, which is sometimes used by
-	 * applications to display an intermediate editing state.
-	 *
-	 * Probably don't really need to calculate this here - if an app
-	 * has multiple views, it actually needs to calculate this separately
-	 * anyway for each view.  MGED calculated them for all views as a
-	 * finalization step in the wrapper logic.
-	 *
-	 * In the new drawing mode, this would get calculated and applied
-	 * to a scene object's vlist corresponding to the object or instance
-	 * being edited.
-	 *
-	 * Another approach would be to allow a callback... */
-	bn_mat_mul(s->model2objview, s->vp->gv_model2view, s->model_changes);
     }
 }
 
@@ -920,10 +900,6 @@ rt_knob_edit_sca(struct rt_solid_edit *s, int matrix_edit)
        bn_mat_xform_about_pnt(t, incr_mat, pos_model);
        bn_mat_mul(out, t, s->model_changes);
        MAT_COPY(s->model_changes, out);
-
-       /* Update the model2objview matrix, which is sometimes used by
-	* applications to display an intermediate editing state. */
-       bn_mat_mul(s->model2objview, s->vp->gv_model2view, s->model_changes);
    }
 }
 
