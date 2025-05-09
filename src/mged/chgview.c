@@ -53,103 +53,26 @@ int mged_vtran(struct mged_state *s, const vect_t tvec);
 int mged_vrot_xyz(struct mged_state *s, char origin, char coords, vect_t rvec);
 
 static int
-mged_erot(struct mged_state *s,
+mged_knob_edit_rot(struct mged_state *s,
 	char coords,
-	  char rotate_about,
-	  mat_t newrot)
+	char rotate_about,
+	mat_t newrot)
 {
-    mat_t temp1, temp2;
-
     s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
-    switch (coords) {
-	case 'm':
-	    break;
-	case 'o':
-	    bn_mat_inv(temp1, s->s_edit->acc_rot_sol);
+    int matrix_edit = (s->global_editing_state == ST_S_EDIT) ? 0 : 1;
+    struct bview *tmp_vp = s->s_edit->vp;
+    s->s_edit->vp = view_state->vs_gvp;
 
-	    /* transform into object rotations */
-	    bn_mat_mul(temp2, s->s_edit->acc_rot_sol, newrot);
-	    bn_mat_mul(newrot, temp2, temp1);
-	    break;
-	case 'v':
-	    bn_mat_inv(temp1, view_state->vs_gvp->gv_rotation);
+    rt_knob_edit_rot(s->s_edit, coords, rotate_about, matrix_edit, newrot);
 
-	    /* transform into model rotations */
-	    bn_mat_mul(temp2, temp1, newrot);
-	    bn_mat_mul(newrot, temp2, view_state->vs_gvp->gv_rotation);
-	    break;
-    }
+    s->s_edit->vp = tmp_vp;
 
-    if (s->global_editing_state == ST_S_EDIT) {
-	char save_rotate_about;
-
-	save_rotate_about = mged_variables->mv_rotate_about;
-	mged_variables->mv_rotate_about = rotate_about;
-
-	struct saved_edflags sf = SAVED_EDFLAGS_INIT;
-	save_edflags(&sf, s);
-
-	if (!SEDIT_ROTATE) {
-	    rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_ROT);
-	}
-
-	s->s_edit->e_inpara = 0;
-	MAT_COPY(s->s_edit->incr_change, newrot);
-	bn_mat_mul2(s->s_edit->incr_change, s->s_edit->acc_rot_sol);
-	sedit(s);
-
-	mged_variables->mv_rotate_about = save_rotate_about;
-
-	restore_edflags(s, &sf);
-    } else {
-	point_t point;
-	vect_t work;
-
-	bn_mat_mul2(newrot, s->s_edit->acc_rot_sol);
-
-	/* find point for rotation to take place wrt */
-	switch (rotate_about) {
-	    case 'v':       /* View Center */
-		VSET(work, 0.0, 0.0, 0.0);
-		MAT4X3PNT(point, view_state->vs_gvp->gv_view2model, work);
-		break;
-	    case 'e':       /* Eye */
-		VSET(work, 0.0, 0.0, 1.0);
-		MAT4X3PNT(point, view_state->vs_gvp->gv_view2model, work);
-		break;
-	    case 'm':       /* Model Center */
-		VSETALL(point, 0.0);
-		break;
-	    case 'k':
-	    default:
-		MAT4X3PNT(point, s->s_edit->model_changes, s->s_edit->e_keypoint);
-	}
-
-	/*
-	 * Apply newrot to the s->s_edit->model_changes matrix wrt "point"
-	 */
-	wrt_point(s->s_edit->model_changes, newrot, s->s_edit->model_changes, point);
-
+    if (matrix_edit)
 	new_edit_mats(s);
-    }
 
     return TCL_OK;
-}
-
-
-static int
-knob_edit_rot(struct mged_state *s,
-	char rotate_about,
-	vect_t rvec)
-{
-    mat_t newrot;
-
-    MAT_IDN(newrot);
-    bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
-
-    return mged_erot(s, view_state->vs_gvp->gv_coord, rotate_about, newrot);
 }
 
 static int
@@ -157,51 +80,13 @@ knob_edit_tran(struct mged_state *s,
 	char coords,
 	vect_t tvec)
 {
-    point_t p2;
-    point_t delta;
-    point_t vcenter;
-    point_t work;
-    mat_t xlatemat;
+    int matrix_edit = (s->global_editing_state == ST_S_EDIT) ? 0 : 1;
+    s->s_edit->local2base = s->dbip->dbi_local2base;
+    s->s_edit->vp = view_state->vs_gvp;
 
-    /* compute delta */
-    switch (coords) {
-	case 'm':
-	    VSCALE(delta, tvec, s->dbip->dbi_local2base);
-	    break;
-	case 'o':
-	    VSCALE(p2, tvec, s->dbip->dbi_local2base);
-	    MAT4X3PNT(delta, s->s_edit->acc_rot_sol, p2);
-	    break;
-	case 'v':
-	default:
-	    VSCALE(p2, tvec, s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale);
-	    MAT4X3PNT(work, view_state->vs_gvp->gv_view2model, p2);
-	    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
-	    VSUB2(delta, work, vcenter);
+    rt_knob_edit_tran(s->s_edit, coords, matrix_edit, tvec);
 
-	    break;
-    }
-
-    if (s->global_editing_state == ST_S_EDIT) {
-	s->s_edit->e_keyfixed = 0;
-	get_solid_keypoint(s, &s->s_edit->e_keypoint, &s->s_edit->e_keytag,
-			   &s->s_edit->es_int, s->s_edit->e_mat);
-	struct saved_edflags sf = SAVED_EDFLAGS_INIT;
-	save_edflags(&sf, s);
-
-	if (!SEDIT_TRAN) {
-	    rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_TRANS);
-	}
-
-	VADD2(s->s_edit->e_para, delta, s->s_edit->curr_e_axes_pos);
-	s->s_edit->e_inpara = 3;
-	sedit(s);
-	restore_edflags(s, &sf);
-    } else {
-	MAT_IDN(xlatemat);
-	MAT_DELTAS_VEC(xlatemat, delta);
-	bn_mat_mul2(xlatemat, s->s_edit->model_changes);
-
+    if (matrix_edit) {
 	new_edit_mats(s);
 	s->update_views = 1;
 	dm_set_dirty(DMP, 1);
@@ -213,14 +98,42 @@ knob_edit_tran(struct mged_state *s,
 static void
 knob_edit_sca(struct mged_state *s)
 {
-    if (s->global_editing_state == ST_S_EDIT) {
-	sedit_abs_scale(s);
-    } else {
-	oedit_abs_scale(s);
+
+    int matrix_edit = (s->global_editing_state == ST_S_EDIT) ? 0 : 1;
+
+    if (!matrix_edit && s->s_edit->edit_flag != RT_PARAMS_EDIT_SCALE && s->s_edit->edit_flag != RT_PARAMS_EDIT_PSCALE)
+	return;
+
+    int edit_flag_tmp = s->s_edit->edit_flag;
+
+    if (matrix_edit) {
+       switch (edobj) {
+           case BE_O_SCALE:
+               s->s_edit->edit_flag = RT_PARAMS_EDIT_SCALE;
+               break;
+           case BE_O_XSCALE:
+               s->s_edit->edit_flag = RT_MATRIX_EDIT_SCALE_X;
+               break;
+           case BE_O_YSCALE:
+               s->s_edit->edit_flag = RT_MATRIX_EDIT_SCALE_Y;
+               break;
+           case BE_O_ZSCALE:
+               s->s_edit->edit_flag = RT_MATRIX_EDIT_SCALE_Z;
+               break;
+           default:
+               bu_log("knob_edit_sca: unknown scale flag: %d\n", edobj);
+               return;
+       };
     }
+
+
+    rt_knob_edit_sca(s->s_edit, matrix_edit);
+
+    if (!matrix_edit)
+	new_edit_mats(s);
+
+    s->s_edit->edit_flag = edit_flag_tmp;
 }
-
-
 
 
 /* DEBUG -- force view center */
@@ -1112,7 +1025,17 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    (void)chg_state(s, ST_O_PICK, ST_O_PATH, "Keyboard illuminate");
 	} else {
 	    /* Check details, Init menu, set state=ST_S_EDIT */
-	    init_sedit(s);
+	    if (!s->s_edit) {
+		struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+		s->s_edit = rt_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
+		if (s->s_edit) {
+		    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
+		    s->s_edit->mv_context = mged_variables->mv_context;
+		    s->s_edit->vlfree = &rt_vlfree;
+		    mged_edit_clbk_sync(s->s_edit, s);
+		    init_sedit(s);
+		}
+	    }
 	}
     }
 
@@ -1222,6 +1145,18 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	Tcl_SetObjResult(interp, save_result);
 	Tcl_DecrRefCount(save_result);
 	return TCL_ERROR;
+    }
+
+    /* Set up solid edit state, if f_ill hasn't already done so. */
+    if (!s->s_edit) {
+	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+	s->s_edit = rt_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
+	if (s->s_edit) {
+	    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
+	    s->s_edit->mv_context = mged_variables->mv_context;
+	    s->s_edit->vlfree = &rt_vlfree;
+	    mged_edit_clbk_sync(s->s_edit, s);
+	}
     }
 
     return TCL_OK;
@@ -1725,7 +1660,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     if (do_rot) {
 	int edit_flag_rot = (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' && !view_flag && !model_flag) || edit_flag_force)) ? 1 : 0;
 	if (edit_flag_rot) {
-	    knob_edit_rot(s, origin, rvec);
+	    mat_t newrot;
+	    MAT_IDN(newrot);
+	    bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
+	    mged_knob_edit_rot(s, view_state->vs_gvp->gv_coord, origin, newrot);
 	} else {
 	    (void)knob_rot(s, rvec, origin, model_flag, view_flag);
 	}
@@ -2527,7 +2465,7 @@ cmd_mrot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	    return TCL_ERROR;
 	}
 
-	return mged_erot(s, view_state->vs_gvp->gv_coord, view_state->vs_gvp->gv_rotate_about, rmat);
+	return mged_knob_edit_rot(s, view_state->vs_gvp->gv_coord, view_state->vs_gvp->gv_rotate_about, rmat);
     } else {
 	int ret;
 
@@ -2695,7 +2633,7 @@ cmd_rot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	return mged_erot(s, coord, view_state->vs_gvp->gv_rotate_about, rmat);
+	return mged_knob_edit_rot(s, coord, view_state->vs_gvp->gv_rotate_about, rmat);
     } else {
 	int ret;
 
@@ -2741,7 +2679,7 @@ cmd_arot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	    return TCL_ERROR;
 	}
 
-	return mged_erot(s, view_state->vs_gvp->gv_coord, view_state->vs_gvp->gv_rotate_about, rmat);
+	return mged_knob_edit_rot(s, view_state->vs_gvp->gv_coord, view_state->vs_gvp->gv_rotate_about, rmat);
     } else {
 	int ret;
 
@@ -2899,7 +2837,10 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	    s->s_edit->k.sca_abs = s->s_edit->acc_sc_sol - 1.0;
 	}
 
-	sedit(s);
+	s->s_edit->update_views = s->update_views;
+	sedraw = 0;
+	rt_edit_process(s->s_edit);
+	s->update_views = s->s_edit->update_views;
 
 	restore_edflags(s, &sf);
     } else {
