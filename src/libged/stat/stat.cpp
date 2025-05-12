@@ -589,6 +589,10 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", ft_to_string(table));
 	    ft_destroy_table(table);
 	    bu_ptbl_free(&sobjs);
+	    bu_vls_free(&keys_str);
+	    bu_vls_free(&ofile);
+	    bu_vls_free(&search_filter);
+	    bu_vls_free(&sort_str);
 	    return BRLCAD_OK;
 	}
     }
@@ -597,9 +601,13 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 
     for (int i = 0; i < argc; i++) {
 
-	struct directory **paths;
+	struct directory **paths = NULL;
 	int path_cnt = db_ls(gedp->dbip, DB_LS_HIDDEN, argv[i], &paths);
 
+	if (!paths) {
+	    bu_log("WARNING:  path specifier %s does not match any geometry - skipping", argv[i]);
+	    continue;
+	}
 
 	for (int j = 0; j < path_cnt; j++) {
 	    struct directory *dp = paths[j];
@@ -642,6 +650,10 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     }
     ft_destroy_table(table);
     bu_ptbl_free(&sobjs);
+    bu_vls_free(&keys_str);
+    bu_vls_free(&ofile);
+    bu_vls_free(&search_filter);
+    bu_vls_free(&sort_str);
 
     return BRLCAD_OK;
 }
