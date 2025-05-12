@@ -476,10 +476,19 @@ d2.r
 	    <table><title>Standard Attributes</title>
 
 	      <tgroup cols="2">
-		<tbody>
-		  <row><entry>GIFTmater</entry><entry>inherit</entry></row>
-		  <row><entry>material_id</entry><entry>oshader</entry></row>
-		  <row><entry>region_id</entry><entry>rgb</entry></row>
+		<thead>
+		  <row>
+		    <entry>Attribute</entry>
+		    <entry>Value Type</entry>
+		  </row>
+		</thead>
+			<tbody>
+		  <row><entry>GIFTmater</entry><entry>#</entry></row>
+			<row><entry>inherit</entry><entry>0 or 1</entry></row>
+		  <row><entry>material_id</entry><entry>#</entry></row>
+		  <row><entry>oshader</entry><entry>shader string</entry></row>
+		  <row><entry>region_id</entry><entry>#</entry></row>
+			<row><entry>rgb</entry><entry>#/#/#</entry></row>
 		</tbody>
 	      </tgroup>
 	    </table>
