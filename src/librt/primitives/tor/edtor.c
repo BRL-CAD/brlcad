@@ -299,6 +299,14 @@ rt_edit_tor_edit_xy(
             if (f)
                 (*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
+	case RT_MATRIX_EDIT_SCALE_X:
+	case RT_MATRIX_EDIT_SCALE_Y:
+	case RT_MATRIX_EDIT_SCALE_Z:
+	    bu_vls_printf(s->log_str, "%s: non-uniform scaling is not supported by %s objects\n", EDOBJ[ip->idb_type].ft_label, EDOBJ[ip->idb_type].ft_label);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
+	    return BRLCAD_ERROR;
 	default:
 	    return edit_generic_xy(s, mousevec);
     }
