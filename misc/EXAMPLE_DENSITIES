@@ -1,14 +1,14 @@
 #******************************************************************************
 #
-#                           BRL-CAD NIST Density Table v 1.0
+#                   BRL-CAD Example Density Table v 1.1
 #
 #     *** IMPORTANT: This file may change over time and should not be
 #     *** relied upon for production analysis work.
 #
 
-#     Based on data present in various databases available at
-#     http://www.nist.gov - each subsection below cites the particular
-#     database from which information is drawn.
+#     Based on data present in various databases and reports available on
+#     various .gov websites - each subsection below cites the particular
+#     source from which information is drawn.
 #
 #     The numbering provided for each entry is somewhat arbitrary in
 #     that the number does not typically contain any information about
@@ -20,30 +20,32 @@
 #
 #******************************************************************************
 #
-# To use the file with rtweight, copy the file to your working directory:
-#   cp NIST_DENSITIES .density
+# To import this density information into a .g file, use the "mater -d"
+# command (note that this will clear previously defined densities):
 #
-# To use the file with gqa, import the file data as a binary object:
-#   mged file.g bo -i u c _DENSITIES NIST_DENSITIES
+# mater -d import share/data/EXAMPLE_DENSITIES
+#
+# To verify data is imported (note that reporting units may not be g/cm^3):
+#
+# mater -d get \*
 #
 #******************************************************************************
 
 
-#			  Densities of Elementally Pure Materials
+#                  Densities of Elementally Pure Materials
 #
-# Drawn from the FCOMP database file included with ESTAR, available
-# from this web address:
+# Drawn from the FCOMP database file included with ESTAR, available from this
+# web address:
 #
 # http://physics.nist.gov/PhysRefData/Star/Text/contents.html
 #
-# Numbering Conventions: All pure elements will have a prefix of "11".
-# The last three digits will be the atomic number of the element in
-# question.  The third digit will be the beginning of a counter - the
-# first value will always be one, and any subsequent entries for the
-# same element will be counted up.
+# Numbering Conventions: All pure elements will have a prefix of "11".  The
+# last three digits will be the atomic number of the element in question.  The
+# third digit will be the beginning of a counter - the first value will always
+# be one, and any subsequent entries for the same element will be counted up.
 #
-# Note: For BRL-CAD use, the first digit (1) has been dropped to allow
-# the resulting material code to fit in the MAXMTLS array (32768).
+# Note: For BRL-CAD use, the first digit (1) has been dropped to allow the
+# resulting material code to fit in the MAXMTLS array (32768).
 
 11001	0.000083748	Hydrogen
 11002	0.000166322	Helium
@@ -145,15 +147,15 @@
 11097	14.0000		Berkelium
 11098	10.0000		Californium
 
-#			     Densities of Real World Materials
+#	             Densities of Real World Materials
 #
-# Drawn from the FCOMP database file included with ESTAR, available
-# from this web address:
+# Drawn from the FCOMP database file included with ESTAR, available from this
+# web address:
 #
 # http://physics.nist.gov/PhysRefData/Star/Text/contents.html
 #
-# Numbering Conventions: All real world materials from FCOMP will have
-# a prefix of 12, followed by their ID number in the FCOMP database.
+# Numbering Conventions: All real world materials from FCOMP will have a prefix
+# of 12, followed by their ID number in the FCOMP database.
 
 12099	1.12700		A-150 Tissue-Equivalent Plastic
 12100	0.78990		Acetone
@@ -335,3 +337,243 @@
 12276	1.00000		Water, Liquid
 12277	0.000756182	Water Vapor
 12278	0.870000	Xylene
+
+#	                 TPSX Densities
+#
+# Drawn from the NASA TPSX Material Properties Database
+#
+# https://tpsx.arc.nasa.gov
+#
+# Numbering Conventions: All materials drawn from TPSX will have a prefix of
+# 13.
+
+13001	0.130	wood balsa (across grain)
+13002	0.460   wood cypress (across grain)
+13003	0.540   wood mahogany (across grain)
+13004	0.710   wood maple (across grain)
+13005	0.550   wood norway pine (across grain)
+13006	0.610   wood oak red black (across grain)
+13007	0.825	wood oak white live (across grain)
+13008	0.510   wood oregon pine (across grain)
+13009	0.550   wood pine (with grain)
+13010	0.410   wood spruce (across grain)
+13011	0.410   wood spruce (with grain)
+13012	0.640   wood teak (across grain)
+13013	0.540   wood virginia pine (across grain)
+13014	0.450   wood white fir (across grain)
+13015	0.530   wood white pine (across grain)
+13016	7.830   Stainless Steel (17-4 PH)
+13017	8.060   Stainless Steel-AISI 302
+13018	7.900   Stainless Steel-AISI 304
+13019	7.750   steel alloy and mild (4130 4340)
+13020	7.830   steel alloy cast
+13021	7.860   steel carbon type 1020 (0.2 - 0.6 c)
+13022	7.830   steel free cutting eutectoid
+13023	8.200   steel high speed (m1 m10 m-2 ti)
+13024	8.220   steel multimet (n-155) (low c)
+13025	8.220   steel multimet (n-155) (wrought)
+13026	7.750   steel stainless (cr 12-13 ni 0-3)
+13027	8.000   steel stainless (cr 16-26 ni 8-36)
+13028	7.750   steel stainless 17-4ph
+13029	7.600   steel stainless 17-7ph
+13030	7.800   steel stainless 19-9dl
+13031	7.700   steel stainless 201 and 202
+13032	7.920   steel stainless 304
+13033	7.920   steel stainless 321 and 347
+13034	7.750   steel stainless 430 430f and 431
+13035	7.600   steel stainless 446
+13036	7.800   steel stainless 501 and 502
+13037	7.610   steel stainless ca15 ca40 (cast)
+13038	7.530   steel stainless cb30 cc50 (cast)
+13039	7.750   steel stainless cf (cast)
+13040	7.730   steel stainless ck ch hi (cast)
+13041	8.040   steel stainless cn-7m (cast)
+13042	7.720   steel stainless ha (cast)
+13043	7.550   steel stainless hc hd (cast)
+13044	7.750   steel stainless hf (cast)
+13045	7.730   steel stainless hh hl hk (cast)
+13046	7.960   steel stainless ht (cast)
+13047	8.030   steel stainless hu (cast)
+13048	8.150   steel stainless hw (cast)
+13049	8.000   steel stainless series 300
+13050	7.750   steel stainless series 400
+13051	14.000	steel tool tungsten carbide ca2
+13052	14.000	steel tool tungsten carbide ca4
+13053	8.030   Steel Type 321
+13054	7.840   steel ultra high strength type 300-m
+
+#	                   USDA Wood Densities
+#
+# Drawn from the U.S. Department of Agriculture Forest Service Northern
+# Research Station Research Note NSR-38:
+#
+# Specific Gravity and Other Properties of Wood and Bark for 156 Tree Species
+# Found in North America
+#
+# https://www.nrs.fs.usda.gov/pubs/rn/rn_nrs38.pdf
+#
+# Density is derived from Table 1A, specifically the oven-dry wood weight
+# column.  Units have been converted from kg/m^3 in the original research note
+# to g/cm^3
+#
+# Numbering Conventions: All real world materials from NRS-38 will have a
+# prefix of 14.  The ordering is based on the row order used in the 1A table
+# from the report.
+
+14001	0.430	Pacific silver fir
+14002	0.350	Balsam fir
+14003	0.390	White fir
+14004	0.370	Grand fir
+14005	0.320	Subalpine fir
+14006	0.380	California red fir
+14007	0.390	Noble fir
+14008	0.430	Port-Orford-cedar
+14009	0.440	Alaska yellow-cedar
+14010	0.320	Atlantic white-cedar
+14011	0.510	Alligator juniper
+14012	0.720	Utah juniper
+14013	0.440	Southern redcedar
+14014	0.470	Eastern redcedar
+14015	0.530	Tamarack (native)
+14016	0.520	Western larch
+14017	0.370	Incense-cedar
+14018	0.350	Engelmann spruce
+14019	0.400	White spruce
+14020	0.460	Black spruce
+14021	0.400	Red spruce
+14022	0.360	Sitka spruce
+14023	0.420	Knobcone pine
+14024	0.430	Jack pine
+14025	0.570	Common or two- needle pinyon
+14026	0.480	Sand pine
+14027	0.410	Lodgepole pine
+14028	0.510	Shortleaf pine
+14029	0.590	Slash pine
+14030	0.420	Limber pine
+14031	0.440	Spruce pine
+14032	0.420	Jeffrey pine
+14033	0.360	Sugar pine
+14034	0.380	Western white pine
+14035	0.490	Bishop pine
+14036	0.590	Longleaf pine
+14037	0.400	Ponderosa pine
+14038	0.520	Table Mountain pine
+14039	0.529	Monterey pine
+14040	0.460	Red pine
+14041	0.520	Pitch pine
+14042	0.430	Gray or California foothill pine
+14043	0.560	Pond pine
+14044	0.350	Eastern white pine
+14045	0.510	Loblolly pine
+14046	0.480	Virginia pine
+14047	0.480	Douglas-fir
+14048	0.380	Redwood
+14049	0.380	Giant sequoia
+14050	0.460	Baldcypress
+14051	0.670	Pacific yew
+14052	0.310	Northern white-cedar
+14053	0.320	Western redcedar
+14054	0.400   Eastern hemlock
+14055	0.450	Western hemlock
+14056	0.450	Mountain hemlock
+14057	0.480	Bigleaf maple
+14058	0.460	Boxelder
+14059	0.570	Black maple
+14060	0.460	Striped maple
+14061	0.540	Red maple
+14062	0.470	Silver maple
+14063	0.630	Sugar maple
+14064	0.360	Yellow buckeye
+14065	0.530	Ailanthus
+14066	0.410	Red alder
+14067	0.790	Serviceberry spp.
+14068	0.650	Pacific madrone
+14069	0.620	Yellow birch
+14070	0.650	Sweet birch
+14071	0.560	River birch
+14072	0.550	Paper birch
+14073	0.510	Gray birch
+14074	0.700   American hornbeam, musclewood
+14075	0.620	Water hickory
+14076	0.660	Bitternut hickory
+14077	0.750	Pignut hickory
+14078	0.660	Pecan
+14079	0.690	Shellbark hickory
+14080	0.600   Nutmeg hickory
+14081	0.720	Shagbark hickory
+14082	0.720	Mockernut hickory
+14083	0.430	American chestnut
+14084	0.460	Giant chinkapin, golden chinkapin
+14085	0.410	Northern catalpa
+14086	0.530	Hackberry
+14087	0.730	Flowering dogwood
+14088	0.620	Pacific dogwood
+14089	0.740	Common persimmon
+14090	0.640	American beech
+14091	0.600   White ash
+14092	0.550	Oregon ash
+14093	0.490	Black ash
+14094	0.560	Green ash
+14095	0.520	Pumpkin ash
+14096	0.580	Blue ash
+14097	0.650	Honeylocust
+14098	0.600   Kentucky coffeetree
+14099	0.450	Silverbell spp.
+14100	0.570	American holly
+14101	0.380	Butternut
+14102	0.550	Black walnut
+14103	0.520	Sweetgum
+14104	0.420	Yellow-poplar
+14105	0.620	Tanoak
+14106	0.850	Osage-orange
+14107	0.480	Cucumbertree
+14108	0.500   Southern magnolia
+14109	0.460	Sweetbay
+14110	0.440	Mountain or Fraser magnolia
+14111	0.670	Apple spp.
+14112	0.500   Water tupelo
+14113	0.500   Blackgum
+14114	0.700   Eastern hophornbeam
+14115	0.550	Sourwood
+14116	0.490	American sycamore
+14117	0.340	Balsam poplar
+14118	0.400   Eastern cottonwood
+14119	0.390	Bigtooth aspen
+14120	0.380	Quaking aspen
+14121	0.350	Black cottonwood
+14122	0.450	Fremont cottonwood
+14123	0.820	Mesquite spp.
+14124	0.500   Blackcherry
+14125	0.680	White oak
+14126	0.720	Swamp white oak
+14127	0.740	Canyon live oak
+14128	0.670	Scarlet oak
+14129	0.590	Southern red oak
+14130	0.690	Cherrybark oak
+14131	0.630	Gambel oak
+14132	0.720	Oregon white oak
+14133	0.550	California black oak
+14134	0.630	Laurel oak
+14135	0.580	California white oak
+14136	0.630	Overcup oak
+14137	0.640	Bur oak
+14138	0.670	Swamp chestnut oak
+14139	0.630	Water oak
+14140	0.630	Pin oak
+14141	0.690	Willow oak
+14142	0.660	Chestnut oak
+14143	0.630	Northern red oak
+14144	0.670	Post oak
+14145	0.610	Black oak
+14146	0.880	Live oak
+14147	0.690	Black locust
+14148	0.390	Black willow
+14149	0.460	Sassafras
+14150	0.370	American basswood
+14151	0.660	Winged elm
+14152	0.500   American elm
+14153	0.640	Cedar elm
+14154	0.530	Slippery elm
+14155	0.630	Rock elm
+14156	0.550	California-laurel
+

@@ -29,7 +29,7 @@ if(NOT BRLCAD_COMPONENTS)
 endif(NOT BRLCAD_COMPONENTS)
 
 if(TARGET libanalyze)
-  set(density_DATAFILES GQA_SAMPLE_DENSITIES NIST_DENSITIES)
+  set(density_DATAFILES GQA_SAMPLE_DENSITIES EXAMPLE_DENSITIES)
   brlcad_adddata(density_DATAFILES data)
 endif(TARGET libanalyze)
 
