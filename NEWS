@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2024-XX-XX  Release X.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* clarified material_name not found warning in rtweight - Cliff Yapp
 * fixed stat command crash with invalid path specifiers - Cliff Yapp
 * improved search std attr table in man page - Cliff Yapp
 * updated MGED nirt man page to reference cmdline version - Cliff Yapp

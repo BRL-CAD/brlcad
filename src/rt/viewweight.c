@@ -261,63 +261,72 @@ densities_prep(struct rt_i * rtip, int minus_o)
 
 	// look for objects with material_name set and set the material_id
 	for (int i = 0; i < RT_DBNHASH; i++) {
-		struct directory *dp = rtip->rti_dbip->dbi_Head[i];
-		if (dp != NULL) {
-			if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
-				struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
+	    struct directory *dp = rtip->rti_dbip->dbi_Head[i];
+	    if (dp != NULL) {
+		if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
+		    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
 
-				if (db5_get_attributes(rtip->rti_dbip, &avs, dp) == 0) {
-					const char *material_name = bu_avs_get(&avs, "material_name");
+		    if (db5_get_attributes(rtip->rti_dbip, &avs, dp) == 0) {
+			const char *material_name = bu_avs_get(&avs, "material_name");
 
-					if (material_name != NULL && !BU_STR_EQUAL(material_name, "(null)") && !BU_STR_EQUAL(material_name, "del")) {
-						struct directory *material_dp = db_lookup(rtip->rti_dbip, material_name, LOOKUP_QUIET);
+			if (material_name != NULL && !BU_STR_EQUAL(material_name, "(null)") && !BU_STR_EQUAL(material_name, "del")) {
+			    struct directory *material_dp = db_lookup(rtip->rti_dbip, material_name, LOOKUP_QUIET);
 
-						if (material_dp != NULL) {
-							struct rt_db_internal material_intern;
-							struct rt_material_internal *material_ip;
-							if (rt_db_get_internal(&material_intern, material_dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
-								if (material_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
-									// the material_ip->name field is the name in the density table
-									// not just the material_name (they could be different)
-									material_ip = (struct rt_material_internal *)material_intern.idb_ptr;
-									char *density_table_name = bu_vls_strdup(&material_ip->name);
-									long int wids[1];
+			    if (material_dp != NULL) {
+				struct rt_db_internal material_intern;
+				struct rt_material_internal *material_ip;
+				if (rt_db_get_internal(&material_intern, material_dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
+				    if (material_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
+					// the material_ip->name field is the name in the density table
+					// not just the material_name (they could be different)
+					material_ip = (struct rt_material_internal *)material_intern.idb_ptr;
+					char *density_table_name = bu_vls_strdup(&material_ip->name);
+					long int wids[1];
 
-									// get the id from the density table
-									analyze_densities_id((long int *)wids, 1, density, density_table_name);
+					// get the id from the density table
+					analyze_densities_id((long int *)wids, 1, density, density_table_name);
 
-									// update the region->reg_mater field for the given region
-									struct region *regp = REGION_NULL;
-									for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
-										RT_CK_REGION(regp);
+					// update the region->reg_mater field for the given region
+					struct region *regp = REGION_NULL;
+					for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+					    RT_CK_REGION(regp);
 
-										// by default the regp->reg_name holds the path to the region
-										// we just want the name so we remove the path before the name
-										const char *reg_name = strrchr(regp->reg_name, '/') + 1;
+					    // by default the regp->reg_name holds the path to the region
+					    // we just want the name so we remove the path before the name
+					    const char *reg_name = strrchr(regp->reg_name, '/') + 1;
 
-										// if its the region we're looking for, set the reg_mater field
-										if (BU_STR_EQUAL(reg_name, dp->d_namep)) {
-											regp->reg_gmater = wids[0];
-										}
-									}
-								}
-							}
-						} else {
-							bu_log("WARNING: material_name %s is not in the database\n", material_name);
-						}
+					    // if its the region we're looking for, set the reg_mater field
+					    if (BU_STR_EQUAL(reg_name, dp->d_namep)) {
+						regp->reg_gmater = wids[0];
+					    }
 					}
-				} else {
-					bu_log("Error: failed to load attributes for %s\n", dp->d_namep);
-					goto densities_prep_rtweight_fail;
+				    }
 				}
+			    } else {
+				// At least at the current time, not having a top level material object matching
+				// a material_name doesn't warrant a warning if we also have a material_id.  Ideally
+				// we should probably be doing all the material setup - either name or id based - in
+				// the same place, but for now just quell the deceptive warning.
+				const char *material_id = bu_avs_get(&avs, "material_id");
+				if (!material_id) {
+				    bu_log("WARNING: material_name %s is set but the .g file does not have a corresponding material object.\n", material_name);
+				} else {
+				    bu_log("NOTE: material_name %s is set but no corresponding material object was found - using material_id %s instead.\n", material_name, material_id);
+				}
+			    }
 			}
+		    } else {
+			bu_log("Error: failed to load attributes for %s\n", dp->d_namep);
+			goto densities_prep_rtweight_fail;
+		    }
 		}
+	    }
 	}
 
 	bu_vls_free(&pbuff_msgs);
-    if (minus_o) {
-	fclose(outfp);
-    }
+	if (minus_o) {
+	    fclose(outfp);
+	}
 	return 0;
 
 densities_prep_rtweight_fail:
