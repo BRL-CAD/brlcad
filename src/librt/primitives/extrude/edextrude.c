@@ -321,14 +321,14 @@ rt_edit_extrude_edit(struct rt_edit *s)
     switch (s->edit_flag) {
 	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return rt_edit_generic_sscale(s, &s->es_int);
+	    return edit_sscale(s, &s->es_int);
 	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
-	    rt_edit_generic_strans(s, &s->es_int);
+	    edit_stra(s, &s->es_int);
 	    break;
 	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
-	    rt_edit_generic_srot(s, &s->es_int);
+	    edit_srot(s, &s->es_int);
 	    break;
 	case ECMD_EXTR_SKT_NAME:
 	    ecmd_extr_skt_name(s);
@@ -360,10 +360,10 @@ rt_edit_extrude_edit_xy(
 	case ECMD_EXTR_SCALE_H:
 	case ECMD_EXTR_ROT_H:
 	case ECMD_EXTR_SKT_NAME:
-	    rt_edit_generic_sscale_xy(s, mousevec);
+	    edit_sscale_xy(s, mousevec);
 	    return 0;
 	case RT_PARAMS_EDIT_TRANS:
-	    rt_edit_generic_strans_xy(&pos_view, s, mousevec);
+	    edit_stra_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_EXTR_MOV_H:
 	    ecmd_extr_mov_h_mousevec(s, mousevec);
@@ -382,7 +382,7 @@ rt_edit_extrude_edit_xy(
 	    return BRLCAD_ERROR;
     }
 
-    rt_update_edit_absolute_tran(s, pos_view);
+    edit_abs_tra(s, pos_view);
 
     return 0;
 }

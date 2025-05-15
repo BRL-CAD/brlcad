@@ -972,16 +972,16 @@ rt_edit_nmg_edit(struct rt_edit *s)
 	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    n->es_eu = (struct edgeuse *)NULL;	/* Reset n->es_eu */
-	    return rt_edit_generic_sscale(s, &s->es_int);
+	    return edit_sscale(s, &s->es_int);
 	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
 	    n->es_eu = (struct edgeuse *)NULL;	/* Reset n->es_eu */
-	    rt_edit_generic_strans(s, &s->es_int);
+	    edit_stra(s, &s->es_int);
 	    break;
 	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
 	    n->es_eu = (struct edgeuse *)NULL;	/* Reset n->es_eu */
-	    rt_edit_generic_srot(s, &s->es_int);
+	    edit_srot(s, &s->es_int);
 	    break;
 	case ECMD_NMG_EPICK:
 	    /* XXX Nothing to do here (yet), all done in mouse routine. */
@@ -1022,10 +1022,10 @@ rt_edit_nmg_edit_xy(
 	case ECMD_NMG_BACK:
 	case ECMD_NMG_RADIAL:
 	case ECMD_NMG_EKILL:
-	    rt_edit_generic_sscale_xy(s, mousevec);
+	    edit_sscale_xy(s, mousevec);
 	    return 0;
 	case RT_PARAMS_EDIT_TRANS:
-	    rt_edit_generic_strans_xy(&pos_view, s, mousevec);
+	    edit_stra_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_NMG_EPICK:
 	    /* XXX Should just leave desired location in s->e_mparam for rt_edit_nmg_edit */
@@ -1055,7 +1055,7 @@ rt_edit_nmg_edit_xy(
 	    return BRLCAD_ERROR;
     }
 
-    rt_update_edit_absolute_tran(s, pos_view);
+    edit_abs_tra(s, pos_view);
 
     return 0;
 }

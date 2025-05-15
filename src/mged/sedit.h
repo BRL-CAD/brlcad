@@ -30,6 +30,10 @@
 
 #include "mged.h"
 
+// This particular value is used only by MGED - the librt editing code
+// appears to be evolving to not require it.
+#define RT_PARAMS_EDIT_PSCALE     4 // Scale one solid parameter by scalar
+
 #define MGED_SMALL_SCALE 1.0e-10
 
 /* These EDIT_CLASS_ values go in s->es_edclass. */

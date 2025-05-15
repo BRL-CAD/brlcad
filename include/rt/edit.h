@@ -43,14 +43,27 @@ __BEGIN_DECLS
 #define RT_EDIT_IDLE       0
 
 
-// Solid editing (done via sed in MGED) is alters primitive parameters to
-// produce new shapes.  Not supported for combs.
+// Solid editing (done via sed in MGED) alters primitive parameters to produce
+// new shapes.  Parameters are updated immediately, allowing for new wireframe
+// generation from primitive plot commands.  Not supported for combs.
+//
+// Translate, rotate and scale can typically be applied to any geometry object,
+// without needing awareness of the details of the object's definition.  The
+// primitives themselves define more specific per-data editing flags.
 #define RT_PARAMS_EDIT_TRANS      1
 #define RT_PARAMS_EDIT_SCALE      2 // Scale whole solid by scalar
 #define RT_PARAMS_EDIT_ROT        3
-#define RT_PARAMS_EDIT_PSCALE     4 // Scale one solid parameter by scalar
-#define RT_PARAMS_EDIT_PICK       5
 
+// This isn't an edit operation as such in that it doesn't (and won't) change
+// the geometry itself - rather it is used in edit_mode to indicate a
+// particular selection state.
+//
+// Eventually it might very well end up being used for an edit flag - it is
+// quite reasonable to think that ft_edit_xy might take this flag and a mouse
+// argument to select the geometrically closest editing feature from the solid
+// and set the appropriate edit flag and/or per-prim data structure info - but
+// right now we don't have anything like that.
+#define RT_PARAMS_EDIT_PICK       5
 
 // Matrix editing (done via oed in MGED) alters a matrix rather than solid
 // parameters in its intermediate stages (at the end when changes are written
@@ -62,13 +75,19 @@ __BEGIN_DECLS
 // the shapes that can be created with these opts using comb instances (for
 // example, a tor scaled in the X direction) and the edit will be rejected in
 // those cases.  Just because a comb instance of a solid can be stretched, that
-// does not mean the solid itself can support that shape.
+// does not mean the solid itself can support that shape.  Consequently, it is
+// recommended that the _X, _Y and _Z scale operations be used sparingly if at
+// all - even if a comb instance's tree is able to support rendering such an
+// operation when made, a subsequent editing of that tree could result in an
+// inability to apply the matrix successfully to all leaf solids.
 #define RT_MATRIX_EDIT_ROT       6
 #define RT_MATRIX_EDIT_TRANS     7
-#define RT_MATRIX_EDIT_SCALE     8
-#define RT_MATRIX_EDIT_SCALE_X   9
-#define RT_MATRIX_EDIT_SCALE_Y  10
-#define RT_MATRIX_EDIT_SCALE_Z  11
+#define RT_MATRIX_EDIT_TRANS_X   8
+#define RT_MATRIX_EDIT_TRANS_Y   9
+#define RT_MATRIX_EDIT_SCALE    10
+#define RT_MATRIX_EDIT_SCALE_X  11
+#define RT_MATRIX_EDIT_SCALE_Y  12
+#define RT_MATRIX_EDIT_SCALE_Z  13
 
 
 struct rt_edit_map;
@@ -178,12 +197,15 @@ struct rt_edit {
      * the pattern looks like the following:
      *
      * mat_t model2objview;
-     * bn_mat_mul(model2objview, s->vp->gv_model2view, s->model_changes);
+     * struct bview *vp = <current view pointer>;
+     * bn_mat_mul(model2objview, vp->gv_model2view, s->model_changes);
      * ## A second bn_mat_mul might be needed if a perspective matrix is in use
      * dm_loadmatrix(DMP, model2objview, which_eye);
      * ## Do the drawing
      */
     mat_t model_changes;        /* full changes this edit */
+
+    mat_t model2objview;        /* Matrix for applying model_changes to view objects (used for matrix xy translation) */
 
     fastf_t acc_sc[3];          /* accumulate local object scale factors */
     fastf_t acc_sc_obj;         /* accumulate global object scale factor */
@@ -265,9 +287,6 @@ rt_edit_map_copy(struct rt_edit_map *om, struct rt_edit_map *im);
 /* Functions for manipulating rt_edit data */
 RT_EXPORT extern void
 rt_get_solid_keypoint(struct rt_edit *s, point_t *pt, const char **strp, fastf_t *mat);
-
-RT_EXPORT extern void
-rt_update_edit_absolute_tran(struct rt_edit *s, vect_t view_pos);
 
 RT_EXPORT extern void
 rt_edit_set_edflag(struct rt_edit *s, int edflag);

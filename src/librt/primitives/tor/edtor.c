@@ -256,22 +256,26 @@ rt_edit_tor_pscale(struct rt_edit *s)
 int
 rt_edit_tor_edit(struct rt_edit *s)
 {
+    if (!s)
+	return BRLCAD_ERROR;
+
+    struct rt_db_internal *ip = &s->es_int;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+
     switch (s->edit_flag) {
-	case RT_PARAMS_EDIT_SCALE:
-	    /* scale the solid uniformly about its vertex point */
-	    return rt_edit_generic_sscale(s, &s->es_int);
-	case RT_PARAMS_EDIT_TRANS:
-	    /* translate solid */
-	    rt_edit_generic_strans(s, &s->es_int);
-	    break;
-	case RT_PARAMS_EDIT_ROT:
-	    /* rot solid about vertex */
-	    rt_edit_generic_srot(s, &s->es_int);
-	    break;
-	default:
+	case ECMD_TOR_R1:
+	case ECMD_TOR_R2:
 	    return rt_edit_tor_pscale(s);
+	case RT_PARAMS_EDIT_PICK:
+	    bu_vls_printf(s->log_str, "%s: params edit pick undefined for tor\n", EDOBJ[ip->idb_type].ft_label);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
+	    return BRLCAD_ERROR;
+	default:
+	    return edit_generic(s);
     }
-    return 0;
 }
 
 int
@@ -280,33 +284,23 @@ rt_edit_tor_edit_xy(
         const vect_t mousevec
         )
 {
-    vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     struct rt_db_internal *ip = &s->es_int;
     bu_clbk_t f = NULL;
     void *d = NULL;
 
     switch (s->edit_flag) {
-        case RT_PARAMS_EDIT_SCALE:
         case ECMD_TOR_R1:
         case ECMD_TOR_R2:
-            rt_edit_generic_sscale_xy(s, mousevec);
-            return 0;
-        case RT_PARAMS_EDIT_TRANS:
-            rt_edit_generic_strans_xy(&pos_view, s, mousevec);
-	    rt_update_edit_absolute_tran(s, pos_view);
-	    return 0;
-        case RT_PARAMS_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
+            edit_sscale_xy(s, mousevec);
+	    return BRLCAD_OK;;
+	case RT_PARAMS_EDIT_PICK:
+            bu_vls_printf(s->log_str, "%s: XY params edit pick undefined for tor\n", EDOBJ[ip->idb_type].ft_label);
             rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
             if (f)
                 (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
+	    return BRLCAD_ERROR;
 	default:
-            bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
+	    return edit_generic_xy(s, mousevec);
     }
 }
 

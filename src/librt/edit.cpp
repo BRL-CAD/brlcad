@@ -88,6 +88,7 @@ rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, 
     MAT_IDN(s->e_invmat);
     MAT_IDN(s->e_mat);
     MAT_IDN(s->incr_change);
+    MAT_IDN(s->model2objview);
     MAT_IDN(s->model_changes);
     VSETALL(s->curr_e_axes_pos , 0);
     VSETALL(s->e_axes_pos , 0);
@@ -362,25 +363,6 @@ rt_get_solid_keypoint(struct rt_edit *s, point_t *pt, const char **strp, fastf_t
 
     VSETALL(*pt, 0.0);
     *strp = "(origin)";
-}
-
-
-void
-rt_update_edit_absolute_tran(struct rt_edit *s, vect_t view_pos)
-{
-    vect_t model_pos;
-    vect_t ea_view_pos;
-    vect_t diff;
-    fastf_t inv_Viewscale = 1/s->vp->gv_scale;
-
-    MAT4X3PNT(model_pos, s->vp->gv_view2model, view_pos);
-    VSUB2(diff, model_pos, s->e_axes_pos);
-    VSCALE(s->k.tra_m_abs, diff, inv_Viewscale);
-    VMOVE(s->k.tra_m_abs_last, s->k.tra_m_abs);
-
-    MAT4X3PNT(ea_view_pos, s->vp->gv_model2view, s->e_axes_pos);
-    VSUB2(s->k.tra_v_abs, view_pos, ea_view_pos);
-    VMOVE(s->k.tra_v_abs_last, s->k.tra_v_abs);
 }
 
 
@@ -733,6 +715,8 @@ rt_knob_edit_rot(struct rt_edit *s,
 	bn_mat_mul(out, t, s->model_changes);
 	MAT_COPY(s->model_changes, out);
 
+	/* Update the model2objview matrix */
+	bn_mat_mul(s->model2objview, s->vp->gv_model2view, s->model_changes);
     }
 }
 
@@ -802,6 +786,9 @@ rt_knob_edit_tran(struct rt_edit *s,
 	MAT_IDN(xlatemat);
 	MAT_DELTAS_VEC(xlatemat, delta);
 	bn_mat_mul2(xlatemat, s->model_changes);
+
+	/* Update the model2objview matrix */
+	bn_mat_mul(s->model2objview, s->vp->gv_model2view, s->model_changes);
     }
 }
 
@@ -895,8 +882,7 @@ rt_knob_edit_sca(struct rt_edit *s, int matrix_edit)
 
        /* Have scaling take place with respect to keypoint, NOT the view
 	* center.  model_changes is the matrix that will ultimately be used to
-	* alter the geometry on disk.  This should probably go into rt_edit_process
-	* if it is generalized to handle both solid and instance editing. */
+	* alter the geometry on disk. */
        mat_t t, out;
        vect_t pos_model;
        VMOVE(t, s->e_keypoint);
@@ -904,6 +890,9 @@ rt_knob_edit_sca(struct rt_edit *s, int matrix_edit)
        bn_mat_xform_about_pnt(t, incr_mat, pos_model);
        bn_mat_mul(out, t, s->model_changes);
        MAT_COPY(s->model_changes, out);
+
+       /* Update the model2objview matrix */
+       bn_mat_mul(s->model2objview, s->vp->gv_model2view, s->model_changes);
    }
 }
 
