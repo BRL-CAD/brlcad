@@ -44,6 +44,22 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Teach lint command to look for comb instance paths with
+  non-uniform scaling matrices that have tor primitives as
+  leaves - those will not raytrace as expected.  May be other
+  primitives that should be searched for as well.  Would be
+  ideal if we could also have the comb creation routines (group,
+  comb, r...) reject any operation that would result in such
+  a configuration being created and reporting the details of
+  why it wouldn't work.  Maybe allow a -f forcing flag to do
+  it anyway, since it *can* be done currently in MGED, but it
+  definitely seems like a practice to discourage - if TOR did
+  someday get support for handling such raytraces, any users
+  depending on it NOT doing that would be caught by surprise.
+  Seems more likely though that users would expect the TOR to
+  be stretched (as it is in comb editing wireframes) and be
+  let down when it ultimately doesn't work...
+
 * Per discussion with Sean - look into whether the draw command
   (probably the one in the qged draw stack) could be modified to do
   async population of drawing structures, starting from fastest
