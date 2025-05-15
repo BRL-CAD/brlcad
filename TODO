@@ -44,6 +44,20 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Per discussion with Sean - look into whether the draw command
+  (probably the one in the qged draw stack) could be modified to do
+  async population of drawing structures, starting from fastest
+  possible and refining to greater detail.  Goal would be to make
+  draw a non-blocking operation for the GUI, getting up whatever
+  info we can quickly.  Might also be able to take into account
+  metrics like FPS and memory usage to decide when we're approaching
+  the "too much info for available resources" threshold.
+
+* consider retiring the mater -d option in favor of a "mater density"
+  subcommand (which is really how it is being used anyway.)  Might
+  be worth considering whether shader related functionality should
+  go under a "mater shader" subcommand.
+
 * user request for a way to scan arbs in a .g looking for invalid
   definitions (non-convex, non-planar faces, etc.)
 
