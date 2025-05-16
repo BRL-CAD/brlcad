@@ -70,20 +70,40 @@ __BEGIN_DECLS
 // to disk, and if a solid is being edited rather than a comb the matrix
 // changes are translated by the per-primitive routines to new solid parameters
 // at that time.)
+#define RT_MATRIX_EDIT_ROT       6
 
+// Matrix translate operations are specified relative to the VIEW XY, NOT the
+// model space coordinate system.  I.e. the resulting translations are view
+// dependent.
+//
+// Not sure what the history is here - I suppose the thinking might be that
+// the view can be set to axis align to get constrained movement in model
+// coordinate space, and this allows for other constraints as well when the
+// view is adjusted, but it has a definite drawback if the user wants to
+// watch the movement of the solid along a model space X,Y or Z axis from
+// another view while editing.  Also has the drawback that it is inconsistent
+// with the matrix scale edit ops, which appear to be scaling relative to the
+// model coordinate system.
+//
+// TODO - Should additional edit operations be defined for constrained
+// translating on the model axis directions?
+#define RT_MATRIX_EDIT_TRANS_VIEW_XY  7
+#define RT_MATRIX_EDIT_TRANS_VIEW_X   8
+#define RT_MATRIX_EDIT_TRANS_VIEW_Y   9
+
+// Non-uniform scale operations scale relative to the MODEL coordinate system,
+// NOT the view plane.
+//
 // Note that the underlying solids do not always support directly expressing
 // the shapes that can be created with these opts using comb instances (for
-// example, a tor scaled in the X direction) and the edit will be rejected in
+// example, a TOR scaled in the X direction) and the edit will be rejected in
 // those cases.  Just because a comb instance of a solid can be stretched, that
 // does not mean the solid itself can support that shape.  Consequently, it is
-// recommended that the _X, _Y and _Z scale operations be used sparingly if at
-// all - even if a comb instance's tree is able to support rendering such an
-// operation when made, a subsequent editing of that tree could result in an
-// inability to apply the matrix successfully to all leaf solids.
-#define RT_MATRIX_EDIT_ROT       6
-#define RT_MATRIX_EDIT_TRANS     7
-#define RT_MATRIX_EDIT_TRANS_X   8
-#define RT_MATRIX_EDIT_TRANS_Y   9
+// recommended that the _X, _Y and _Z versions of the scale operations be used
+// sparingly if at all.  Even if a comb instance's tree is able to support
+// rendering such an operation at the time the original edit is made, a
+// subsequent editing of that tree could add new geometry and ultimately result
+// in an inability to apply the matrix successfully to all leaf solids.
 #define RT_MATRIX_EDIT_SCALE    10
 #define RT_MATRIX_EDIT_SCALE_X  11
 #define RT_MATRIX_EDIT_SCALE_Y  12

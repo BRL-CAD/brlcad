@@ -272,9 +272,9 @@ edit_generic(
 	case RT_MATRIX_EDIT_SCALE_Z:
 	    bu_log("RT_MATRIX_EDIT scaling not implemented\n");
 	    return BRLCAD_ERROR;
-	case RT_MATRIX_EDIT_TRANS:
-	case RT_MATRIX_EDIT_TRANS_X:
-	case RT_MATRIX_EDIT_TRANS_Y:
+	case RT_MATRIX_EDIT_TRANS_VIEW_XY:
+	case RT_MATRIX_EDIT_TRANS_VIEW_X:
+	case RT_MATRIX_EDIT_TRANS_VIEW_Y:
 	    bu_log("RT_MATRIX_EDIT translating not implemented\n");
 	    return BRLCAD_ERROR;
 	case RT_MATRIX_EDIT_ROT:
@@ -365,6 +365,9 @@ edit_mscale_xy(
     mat_t incr_mat;
     MAT_IDN(incr_mat);
 
+    // The Y mousevec value is always what determines the scale,
+    // regardless of whether we're doing a uniform, X, Y or Z
+    // scale operation.
     scale = 1.0 + (fastf_t)(mousevec[Y]>0 ? mousevec[Y] : -mousevec[Y]);
     if (mousevec[Y] <= 0)
 	scale = 1.0 / scale;
@@ -422,20 +425,10 @@ edit_mscale_xy(
     VMOVE(t, s->e_keypoint);
     MAT4X3PNT(pos_model, s->model_changes, t);
 
-    edit_mscale(s, pos_model, incr_mat);
-}
-
-void
-edit_mscale(
-	struct rt_edit *s,
-	const vect_t pos_model,
-	const mat_t incr_mat
-	)
-{
     /* Have scaling take place with respect to keypoint, NOT the view
      * center.  model_changes is the matrix that will ultimately be used to
      * alter the geometry on disk. */
-    mat_t t, out;
+    mat_t out;
     VMOVE(t, s->e_keypoint);
     bn_mat_xform_about_pnt(t, incr_mat, pos_model);
     bn_mat_mul(out, t, s->model_changes);
@@ -466,10 +459,10 @@ edit_tra_xy(vect_t *pos_view,
     MAT4X3PNT(*pos_view, s->model2objview, temp);
 
     switch (s->edit_flag) {
-	case RT_MATRIX_EDIT_TRANS_X:
+	case RT_MATRIX_EDIT_TRANS_VIEW_X:
 	    (*pos_view)[X] = mousevec[X];
 	    break;
-	case RT_MATRIX_EDIT_TRANS_Y:
+	case RT_MATRIX_EDIT_TRANS_VIEW_Y:
 	    (*pos_view)[Y] = mousevec[Y];
 	    break;
 	default:
@@ -536,9 +529,9 @@ edit_generic_xy(
 	case RT_MATRIX_EDIT_SCALE_Z:
 	    edit_mscale_xy(s, mousevec);
 	    return BRLCAD_OK;
-	case RT_MATRIX_EDIT_TRANS:
-	case RT_MATRIX_EDIT_TRANS_X:
-	case RT_MATRIX_EDIT_TRANS_Y:
+	case RT_MATRIX_EDIT_TRANS_VIEW_XY:
+	case RT_MATRIX_EDIT_TRANS_VIEW_X:
+	case RT_MATRIX_EDIT_TRANS_VIEW_Y:
 	    edit_tra_xy(&pos_view, s, mousevec);
 	    edit_abs_tra(s, pos_view);
 	    return BRLCAD_OK;
