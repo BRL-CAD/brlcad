@@ -374,18 +374,25 @@ rt_edit_set_edflag(struct rt_edit *s, int edflag)
 
     s->edit_flag = edflag;
 
-    // In the case of the four generic (i.e. not primitive data specific) flag
-    // settings, we can also set the edit_mode state.  For anything else,
-    // it is the responsibility of the primitive specific logic to decode
-    // edit_flag (and any other relevant info) into the proper edit_mode.
-    // Applications like MGED may use edit_mode to adjust interface
-    // behaviors, so it is important to have it properly set, but we can only
-    // do so much here.
+    // In the case of the generic (i.e. not primitive data specific) flag
+    // settings, we can also set the edit_mode state.  For anything else, it is
+    // the responsibility of the primitive specific logic to decode edit_flag
+    // (and any other relevant info) into the proper edit_mode.  Applications
+    // like MGED may use edit_mode to adjust interface behaviors, so it is
+    // important to have it properly set, but we can only do so much here.
     switch (edflag) {
 	case RT_PARAMS_EDIT_ROT:
 	case RT_PARAMS_EDIT_TRANS:
 	case RT_PARAMS_EDIT_SCALE:
 	case RT_PARAMS_EDIT_PICK:
+	case RT_MATRIX_EDIT_ROT:
+	case RT_MATRIX_EDIT_TRANS_VIEW_XY:
+	case RT_MATRIX_EDIT_TRANS_VIEW_X:
+	case RT_MATRIX_EDIT_TRANS_VIEW_Y:
+	case RT_MATRIX_EDIT_SCALE:
+	case RT_MATRIX_EDIT_SCALE_X:
+	case RT_MATRIX_EDIT_SCALE_Y:
+	case RT_MATRIX_EDIT_SCALE_Z:
 	    s->edit_mode = edflag;
 	    break;
 	default:
@@ -826,13 +833,12 @@ rt_knob_edit_sca(struct rt_edit *s, int matrix_edit)
 	s->edit_mode = save_mode;
 
    } else {
-       fastf_t scale;
-       mat_t incr_mat;
-       MAT_IDN(incr_mat);
 
-       // TODO - objedit_mouse SARROW case has different logic for handling mousevec
-       // inputs - looking like we may need a mousevec entry for the rt_edit
-       // struct so we can have both processing methods here....
+       // TODO - edit_mscale_xy has similar logic, but there are differences.
+       // Need to take apart in detail what the math in each is doing and see
+       // if consolidation is possible...
+
+       fastf_t scale;
 
        if (-SMALL_FASTF < s->k.sca_abs && s->k.sca_abs < SMALL_FASTF)
 	   scale = 1;
@@ -844,6 +850,9 @@ rt_knob_edit_sca(struct rt_edit *s, int matrix_edit)
 
 	   scale = 1.0 + s->k.sca_abs;
        }
+
+       mat_t incr_mat;
+       MAT_IDN(incr_mat);
 
        /* switch depending on scaling option selected */
        switch (s->edit_flag) {
