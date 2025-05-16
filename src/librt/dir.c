@@ -181,10 +181,6 @@ rt_db_put_internal(
 
     RT_CK_DB_INTERNAL(ip);
 
-    /* Note - deliberately not checking ip's dbip pointer against the supplied
-     * dbip - we may be writing out to a different database than we read from,
-     * and that's fine. */
-
     if (db_version(dbip) > 4)
 	return rt_db_put_internal5(dp, dbip, ip, resp,
 				   ip->idb_major_type);
