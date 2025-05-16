@@ -253,6 +253,15 @@ edit_generic(
     bu_clbk_t f = NULL;
     void *d = NULL;
 
+    // If matrix ops are specified via parameter edits rather than mouse
+    // motions (which is how this function would get called for those types of
+    // edit ops) we need to set up the parameters to be fed into the xy
+    // versions.  (When a param argument is fed in for one of the matrix edit
+    // ops, it amounts to a manual specification of what would otherwise be XY
+    // mouse inputs.)
+    vect_t mousevec = VINIT_ZERO;  /* float pt -1..+1 mouse pos vect */
+    vect_t pos_view = VINIT_ZERO;
+
     switch (s->edit_flag) {
 	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
@@ -270,13 +279,29 @@ edit_generic(
 	case RT_MATRIX_EDIT_SCALE_X:
 	case RT_MATRIX_EDIT_SCALE_Y:
 	case RT_MATRIX_EDIT_SCALE_Z:
-	    bu_log("RT_MATRIX_EDIT scaling not implemented\n");
-	    return BRLCAD_ERROR;
+	    // Scale only takes one parameter, and uses the Y mousevec position
+	    mousevec[Y] =  s->e_para[0] * INV_BV;
+	    edit_mscale_xy(s, mousevec);
+	    return BRLCAD_OK;
 	case RT_MATRIX_EDIT_TRANS_VIEW_XY:
+	    // XY translation takes two parameters
+	    mousevec[X] =  s->e_para[0] * INV_BV;
+	    mousevec[Y] =  s->e_para[1] * INV_BV;
+	    edit_tra_xy(&pos_view, s, mousevec);
+	    edit_abs_tra(s, pos_view);
+	    return BRLCAD_OK;
 	case RT_MATRIX_EDIT_TRANS_VIEW_X:
+	    // X-only translation takes one parameter
+	    mousevec[X] =  s->e_para[0] * INV_BV;
+	    edit_tra_xy(&pos_view, s, mousevec);
+	    edit_abs_tra(s, pos_view);
+	    return BRLCAD_OK;
 	case RT_MATRIX_EDIT_TRANS_VIEW_Y:
-	    bu_log("RT_MATRIX_EDIT translating not implemented\n");
-	    return BRLCAD_ERROR;
+	    // Y-only translation takes one parameter
+	    mousevec[Y] =  s->e_para[0] * INV_BV;
+	    edit_tra_xy(&pos_view, s, mousevec);
+	    edit_abs_tra(s, pos_view);
+	    return BRLCAD_OK;
 	case RT_MATRIX_EDIT_ROT:
 	    // TODO - I think this may need to define a knob call?  check with main MGED implementation
 	    bu_vls_printf(s->log_str, "XY rotation editing setup unimplemented\n");
