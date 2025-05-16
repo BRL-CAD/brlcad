@@ -333,8 +333,10 @@ mged_view_callback(struct bview *gvp,
 	return;
 
     if (s->global_editing_state != ST_VIEW) {
-	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, s->s_edit->model_changes);
-	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
+	if (s->s_edit) {
+	    bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, s->s_edit->model_changes);
+	    bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
+	}
     }
     vsp->vs_flag = 1;
     dm_set_dirty(s->mged_curr_dm->dm_dmp, 1);
@@ -1013,7 +1015,7 @@ event_check(struct mged_state *s, int non_blocking)
      * Handle rate-based processing *
      *********************************/
     save_dm_list = s->mged_curr_dm;
-    if (s->s_edit->k.rot_m_flag) {
+    if (s->s_edit && s->s_edit->k.rot_m_flag) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
@@ -1043,7 +1045,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	restore_edflags(s, &sf);
     }
-    if (s->s_edit->k.rot_o_flag) {
+    if (s->s_edit && s->s_edit->k.rot_o_flag) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
@@ -1073,7 +1075,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	restore_edflags(s, &sf);
     }
-    if (s->s_edit->k.rot_v_flag) {
+    if (s->s_edit && s->s_edit->k.rot_v_flag) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
@@ -1103,7 +1105,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	restore_edflags(s, &sf);
     }
-    if (s->s_edit->k.tra_m_flag) {
+    if (s->s_edit && s->s_edit->k.tra_m_flag) {
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -1132,7 +1134,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	restore_edflags(s, &sf);
     }
-    if (s->s_edit->k.tra_v_flag) {
+    if (s->s_edit && s->s_edit->k.tra_v_flag) {
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -1161,7 +1163,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	restore_edflags(s, &sf);
     }
-    if (s->s_edit->k.sca_flag) {
+    if (s->s_edit && s->s_edit->k.sca_flag) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	save_edflags(&sf, s);
@@ -1750,14 +1752,7 @@ mged_finish(struct mged_state *s, int exitcode)
 
     mged_global_variable_teardown(s);
 
-    s->magic = 0; // make sure anything trying to use this after free gets a magic failure
-    bu_vls_free(&s->input_str);
-    bu_vls_free(&s->input_str_prefix);
-    bu_vls_free(&s->scratchline);
-    bu_vls_free(&s-> mged_prompt);
-    rt_edit_destroy(s->s_edit);
-    s->s_edit = NULL; // sanity
-    BU_PUT(s, struct mged_state);
+    mged_state_destroy(s);
     MGED_STATE = NULL; // sanity
 
     /* 8.5 seems to have some bugs in their reference counting */
@@ -1806,21 +1801,8 @@ main(int argc, char *argv[])
     int result;
 #endif
 
-    BU_GET(MGED_STATE, struct mged_state);
+    MGED_STATE = mged_state_create();
     struct mged_state *s = MGED_STATE;
-    s->magic = MGED_STATE_MAGIC;
-    s->classic_mged = 1;
-    s->update_views = 0;
-    s->interactive = 0; /* >0 means interactive, intentionally starts
-                         * 0 to know when interactive, e.g., via -C
-                         * option
-			 */
-    bu_vls_init(&s->input_str);
-    bu_vls_init(&s->input_str_prefix);
-    bu_vls_init(&s->scratchline);
-    bu_vls_init(&s->mged_prompt);
-    s->dpy_string = NULL;
-    s->s_edit = rt_edit_create(NULL, NULL, NULL, NULL);
 
     /* Set up linked lists */
     s->vlfree = &rt_vlfree;
@@ -2061,9 +2043,7 @@ main(int argc, char *argv[])
     frametime = 1;
 
     s->global_editing_state = ST_VIEW;
-    rt_edit_set_edflag(s->s_edit, RT_EDIT_DEFAULT);
     s->es_edclass = EDIT_CLASS_NULL;
-    s->s_edit->e_inpara = newedge = 0;
 
     /* These values match old GED.  Use 'tol' command to change them. */
     s->tol.tol.magic = BN_TOL_MAGIC;
@@ -2082,7 +2062,7 @@ main(int argc, char *argv[])
     new_mats(s);
 
     mmenu_init(s);
-    btn_head_menu(s, 0, 0, 0);
+    btn_head_menu(s->s_edit, 0, 0, 0, s);
     mged_link_vars(s->mged_curr_dm);
 
     bu_vls_printf(&s->input_str, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));
