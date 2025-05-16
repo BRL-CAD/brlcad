@@ -922,9 +922,12 @@ rt_edit_process(struct rt_edit *s)
     bu_clbk_t f = NULL;
     void *d = NULL;
 
-    ++s->update_views;
+    // Unless we're idle, assume we will need to update the view
+    if (s->edit_flag != RT_EDIT_IDLE)
+	++s->update_views;
 
-    int had_method = 0;
+    // The real work is done by per-primitive callbacks into the EDOBJ function
+    // table
     const struct rt_db_internal *ip = &s->es_int;
     if (EDOBJ[ip->idb_type].ft_edit) {
 	bu_vls_trunc(s->log_str, 0);
@@ -943,48 +946,31 @@ rt_edit_process(struct rt_edit *s)
 		(*f)(0, NULL, d, NULL);
 	    bu_vls_trunc(s->log_str, 0);
 	}
-	had_method = 1;
-    }
-
-    switch (s->edit_flag) {
-
-	case RT_EDIT_IDLE:
-	    /* do nothing more */
-	    --s->update_views;
-	    break;
-	default:
-	    {
-		if (had_method)
-		    break;
-		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&tmp_vls, "%s", bu_vls_cstr(s->log_str));
-		bu_vls_sprintf(s->log_str, "rt_edit_process:  unknown edflag = %d.\n", s->edit_flag);
-		rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
-		if (f)
-		    (*f)(0, NULL, d, NULL);
-		bu_vls_sprintf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
-		bu_vls_free(&tmp_vls);
-		rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-		if (f)
-		    (*f)(0, NULL, d, NULL);
-	    }
+    } else {
+	bu_vls_sprintf(s->log_str, "rt_edit_process: no ft_edit method defined for objects of type %s", EDOBJ[ip->idb_type].ft_label);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
     }
 
     /* If the keypoint changed location, find about it here */
     if (!s->e_keyfixed)
 	rt_get_solid_keypoint(s, &s->e_keypoint, &s->e_keytag, s->e_mat);
 
+    // eaxes_pos callback
     int flag = 0;
     f = NULL; d = NULL;
     rt_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 
+    // replot callback
     f = NULL; d = NULL;
     rt_edit_map_clbk_get(&f, &d, s->m, ECMD_REPLOT_EDITING_SOLID, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
 
+    // view update callback
     if (s->update_views) {
 	f = NULL; d = NULL;
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_UPDATE, BU_CLBK_DURING);
@@ -992,6 +978,7 @@ rt_edit_process(struct rt_edit *s)
 	    (*f)(0, NULL, d, NULL);
     }
 
+    // Inputs processed, reset
     s->e_inpara = 0;
     s->e_mvalid = 0;
 }
