@@ -287,9 +287,9 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		    ZERO(s->s_edit->acc_sc_sol))
 		    s->s_edit->acc_sc_sol = 1.0;
 		else if (s->global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-		    s->s_edit->k.sca_abs = s->s_edit->acc_sc_obj - 1.0;
-		    if (s->s_edit->k.sca_abs > 0.0)
-			s->s_edit->k.sca_abs /= 3.0;
+		    s->s_edit->k.sca_abs= s->s_edit->acc_sc_obj - 1.0;
+		    if (s->s_edit->k.sca_abs> 0.0)
+			s->s_edit->k.sca_abs/= 3.0;
 		}
 
 		am_mode = AMM_SCALE;
