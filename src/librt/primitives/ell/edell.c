@@ -293,14 +293,14 @@ rt_edit_ell_edit(struct rt_edit *s)
     switch (s->edit_flag) {
 	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return edit_sscale(s, &s->es_int);
+	    return edit_sscale(s);
 	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
-	    edit_stra(s, &s->es_int);
+	    edit_stra(s);
 	    break;
 	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
-	    edit_srot(s, &s->es_int);
+	    edit_srot(s);
 	    break;
 	default:
 	    return rt_edit_ell_pscale(s);

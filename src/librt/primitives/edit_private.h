@@ -49,24 +49,15 @@ edit_keypoint(
 
 /* scale the solid uniformly about its vertex point */
 int
-edit_sscale(
-	struct rt_edit *s,
-	struct rt_db_internal *ip
-	);
+edit_sscale(struct rt_edit *s);
 
 /* translate solid */
 void
-edit_stra(
-	struct rt_edit *s,
-	struct rt_db_internal *ip
-	);
+edit_stra(struct rt_edit *s);
 
 /* rot solid about vertex */
 void
-edit_srot(
-	struct rt_edit *s,
-	struct rt_db_internal *ip
-	);
+edit_srot(struct rt_edit *s);
 
 void
 edit_sscale_xy(

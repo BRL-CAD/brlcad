@@ -70,12 +70,10 @@ edit_keypoint(
 }
 
 int
-edit_sscale(
-	struct rt_edit *s,
-	struct rt_db_internal *ip
-	)
+edit_sscale(struct rt_edit *s)
 {
     mat_t mat, mat1, scalemat;
+    struct rt_db_internal *ip = &s->es_int;
 
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -102,14 +100,12 @@ edit_sscale(
 }
 
 void
-edit_stra(
-	struct rt_edit *s,
-	struct rt_db_internal *ip
-	)
+edit_stra(struct rt_edit *s)
 {
     mat_t mat;
     static vect_t work;
     vect_t delta;
+    struct rt_db_internal *ip = &s->es_int;
 
     if (s->e_inpara) {
 	/* Need vector from current vertex/keypoint
@@ -143,14 +139,12 @@ edit_stra(
 }
 
 void
-edit_srot(
-	struct rt_edit *s,
-	struct rt_db_internal *ip
-	)
+edit_srot(struct rt_edit *s)
 {
     static vect_t work;
     point_t rot_point;
     mat_t mat, mat1, edit;
+    struct rt_db_internal *ip = &s->es_int;
 
     if (s->e_inpara) {
 	static mat_t invsolr;
@@ -265,15 +259,15 @@ edit_generic(
     switch (s->edit_flag) {
 	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    edit_sscale(s, &s->es_int);
+	    edit_sscale(s);
 	    return BRLCAD_OK;
 	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
-	    edit_stra(s, &s->es_int);
+	    edit_stra(s);
 	    return BRLCAD_OK;
 	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
-	    edit_srot(s, &s->es_int);
+	    edit_srot(s);
 	    return BRLCAD_OK;
 	case RT_MATRIX_EDIT_SCALE:
 	case RT_MATRIX_EDIT_SCALE_X:

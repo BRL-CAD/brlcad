@@ -972,16 +972,16 @@ rt_edit_nmg_edit(struct rt_edit *s)
 	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    n->es_eu = (struct edgeuse *)NULL;	/* Reset n->es_eu */
-	    return edit_sscale(s, &s->es_int);
+	    return edit_sscale(s);
 	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
 	    n->es_eu = (struct edgeuse *)NULL;	/* Reset n->es_eu */
-	    edit_stra(s, &s->es_int);
+	    edit_stra(s);
 	    break;
 	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
 	    n->es_eu = (struct edgeuse *)NULL;	/* Reset n->es_eu */
-	    edit_srot(s, &s->es_int);
+	    edit_srot(s);
 	    break;
 	case ECMD_NMG_EPICK:
 	    /* XXX Nothing to do here (yet), all done in mouse routine. */

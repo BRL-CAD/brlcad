@@ -565,16 +565,16 @@ rt_edit_metaball_edit(struct rt_edit *s)
 	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    m->es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
-	    return edit_sscale(s, &s->es_int);
+	    return edit_sscale(s);
 	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
 	    m->es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
-	    edit_stra(s, &s->es_int);
+	    edit_stra(s);
 	    break;
 	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
 	    m->es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
-	    edit_srot(s, &s->es_int);
+	    edit_srot(s);
 	    break;
 	case ECMD_METABALL_PT_PICK:
 	    ecmd_metaball_pt_pick(s);

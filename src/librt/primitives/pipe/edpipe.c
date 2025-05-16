@@ -1167,16 +1167,16 @@ rt_edit_pipe_edit(struct rt_edit *s)
 	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    p->es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset p->es_pipe_pnt */
-	    return edit_sscale(s, &s->es_int);
+	    return edit_sscale(s);
 	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
 	    p->es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset p->es_pipe_pnt */
-	    edit_stra(s, &s->es_int);
+	    edit_stra(s);
 	    break;
 	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
 	    p->es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset p->es_pipe_pnt */
-	    edit_srot(s, &s->es_int);
+	    edit_srot(s);
 	    break;
 	case ECMD_PIPE_SELECT:
 	    ecmd_pipe_pick(s);

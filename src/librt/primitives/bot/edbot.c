@@ -737,20 +737,20 @@ rt_edit_bot_edit(struct rt_edit *s)
 	    b->bot_verts[0] = -1;
 	    b->bot_verts[1] = -1;
 	    b->bot_verts[2] = -1;
-	    return edit_sscale(s, &s->es_int);
+	    return edit_sscale(s);
 	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
 	    b->bot_verts[0] = -1;
 	    b->bot_verts[1] = -1;
 	    b->bot_verts[2] = -1;
-	    edit_stra(s, &s->es_int);
+	    edit_stra(s);
 	    break;
 	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
 	    b->bot_verts[0] = -1;
 	    b->bot_verts[1] = -1;
 	    b->bot_verts[2] = -1;
-	    edit_srot(s, &s->es_int);
+	    edit_srot(s);
 	    break;
 	case ECMD_BOT_MODE:
 	    ecmd_bot_mode(s);
