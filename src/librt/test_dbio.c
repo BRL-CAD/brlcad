@@ -38,7 +38,11 @@
  *
  */
 
-#include "brlcad.h"
+#include "common.h"
+
+#include "bu.h"
+#include "raytrace.h"
+#include "wdb.h"
 
 
 void
@@ -76,7 +80,7 @@ main(int ac, char *av[])
 	t = bu_gettime();
 	for (size_t i = 0; i < iterations; i++) {
 	    wdbfp = wdb_fopen(gfile);
-	    db_close(wdbfp->dbip);
+	    wdb_close(wdbfp);
 	}
 	wdbfp = wdb_fopen(gfile);
 	print_elapsed("wdb_fopen", bu_gettime() - t);
