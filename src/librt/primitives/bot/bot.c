@@ -355,8 +355,6 @@ struct spatial_partition_s {
     triangle_s *tris;
     fastf_t *vertex_normals; /* for deallocation, access normals
 				through triangle_s */
-    hit_da *hit_arrays_per_cpu;
-    size_t num_cpus;
 };
 
 /**
@@ -519,10 +517,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     sps->root = flat_root;
     sps->tris = tris;
     sps->vertex_normals = tri_norms;
-    sps->num_cpus = bu_avail_cpus();	// NOTE: this does NOT respect user requested cpu count (ie if -P was used)
 
-    /* per-cpu mem allocated MAX_PSW to ensure contention-free */
-    sps->hit_arrays_per_cpu = (hit_da *) bu_calloc(MAX_PSW, sizeof(hit_da), "thread-local bot hit arrays");
     bot->tie = (void *)sps;
 
     // struct bvh_build_node and struct bvh_flat_node are puns for fastf_t[6] which are the bounds
@@ -682,6 +677,9 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 }
 
 
+_Thread_local hit_da hits_per_cpu = {0};
+
+
 /**
  * Intersect a ray with a bot.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
@@ -710,15 +708,7 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     if (UNLIKELY(!sps))
 	return 0;
 
-    int thread_ind = bu_parallel_id();
-
-    // Note that hit_arrays_per_cpu memory is allocated once during prep and
-    // reused to avoid a performance hit.  Accordingly (particularly when
-    // debugging) remember that only the hits_da data written out by *this* ray
-    // is valid - stale data from older rays may be present in memory beyond
-    // the maximum count index.
-    hit_da *hits_da = &sps->hit_arrays_per_cpu[thread_ind];
-    hits_da->count = 0; // New ray, new result count.
+    hits_per_cpu.count = 0; // New ray, new result count
 
     fastf_t toldist = 0.0;
     if (bot->bot_orientation != RT_BOT_UNORIENTED && bot->bot_mode == RT_BOT_SOLID) {
@@ -728,16 +718,16 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	toldist = (DBL_EPSILON * stp->st_aradius * 10);
     }
 
-    bot_shot_hlbvh_flat(sps->root, rp, sps->tris, bot->bot_ntri, hits_da, toldist);
+    bot_shot_hlbvh_flat(sps->root, rp, sps->tris, bot->bot_ntri, &hits_per_cpu, toldist);
 
-    if (hits_da->count == 0) {
+    if (hits_per_cpu.count == 0) {
 	return 0;
     }
     // sort the hits
-    //insertion sort
+    // insertion sort
     {
-	size_t nhits = hits_da->count;
-	struct hit *hits = hits_da->items;
+	size_t nhits = hits_per_cpu.count;
+	struct hit *hits = hits_per_cpu.items;
 	for (size_t i = 1; i < nhits; i++) {
 	    fastf_t i_dist = hits[i].hit_dist;
 	    struct hit swap = hits[i];
@@ -753,7 +743,7 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	}
     }
 
-    return rt_bot_makesegs(hits_da, stp, rp, ap, seghead, NULL);
+    return rt_bot_makesegs(&hits_per_cpu, stp, rp, ap, seghead, NULL);
 }
 
 
@@ -885,17 +875,12 @@ rt_bot_free(struct soltab *stp)
 	bu_free(sps->root, "bot bvh flat nodes");
 	bu_free(sps->tris, "bot triangles");
 	bu_free(sps->vertex_normals, "bot normals");
-	if (sps->hit_arrays_per_cpu) {
-	    for (size_t i = 0; i < MAX_PSW; i++) {
-		if (sps->hit_arrays_per_cpu[i].items) {
-		    bu_free(sps->hit_arrays_per_cpu[i].items, "bot thread-local hit arrays");
-		}
-	    }
-	    bu_free(sps->hit_arrays_per_cpu, "bot array of dynamic thread-local hit arrays");
-	}
 	BU_PUT(sps, struct spatial_partition_s);
 	bot->tie = NULL;
     }
+
+    if (hits_per_cpu.capacity)
+	bu_free(hits_per_cpu.items, "DA free");
 
     if (bot) {
 	BU_PUT(bot, struct bot_specific);
