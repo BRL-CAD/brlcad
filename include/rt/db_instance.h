@@ -101,6 +101,10 @@ typedef void (*dbi_update_nref_t)(struct db_i *, struct directory *, struct dire
  * accumulation and improves numerical stability when calculations are
  * made.
  *
+ * TODO - make a dbi_internal struct, and move all the LIBRT ONLY
+ * elements into it.  That will also give us a place to do fancier
+ * database state management using things like C++ containers without
+ * bothering the public API.
  */
 struct db_i {
     uint32_t dbi_magic;         /**< @brief magic number */
