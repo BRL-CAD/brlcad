@@ -879,8 +879,11 @@ rt_bot_free(struct soltab *stp)
 	bot->tie = NULL;
     }
 
-    if (hits_per_cpu.capacity)
+    if (hits_per_cpu.capacity) {
 	bu_free(hits_per_cpu.items, "DA free");
+	hits_per_cpu.capacity = 0;
+	hits_per_cpu.items = NULL;
+    }
 
     if (bot) {
 	BU_PUT(bot, struct bot_specific);
