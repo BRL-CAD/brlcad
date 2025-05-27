@@ -49,57 +49,6 @@ struct rt_db_internal; /* forward declaration */
 RT_EXPORT extern void db_sync(struct db_i *dbip);
 
 
-/**
- * for db_open(), open the specified file as read-only
- */
-#define DB_OPEN_READONLY "r"
-
-/**
- * for db_open(), open the specified file as read-write
- */
-#define DB_OPEN_READWRITE "rw"
-
-/**
- * Open the named database.
- *
- * The 'name' parameter specifies the file or filepath to a .g
- * geometry database file for reading and/or writing.
- *
- * The 'mode' parameter specifies whether to open read-only or in
- * read-write mode, specified via the DB_OPEN_READONLY and
- * DB_OPEN_READWRITE symbols respectively.
- *
- * As a convenience, the returned db_t structure's dbi_filepath field
- * is a C-style argv array of dirs to search when attempting to open
- * related files (such as data files for EBM solids or texture-maps).
- * The default values are "." and the directory containing the ".g"
- * file.  They may be overridden by setting the environment variable
- * BRLCAD_FILE_PATH.
- *
- * Returns:
- * DBI_NULL error
- * db_i * success
- */
-RT_EXPORT extern struct db_i *
-db_open(const char *name, const char *mode);
-
-
-/* create a new model database */
-/**
- * Create a new database containing just a header record, regardless
- * of whether the database previously existed or not, and open it for
- * reading and writing.
- *
- * This routine also calls db_dirbuild(), so the caller doesn't need
- * to.
- *
- * Returns:
- * DBI_NULL on error
- * db_i * on success
- */
-RT_EXPORT extern struct db_i *
-db_create(const char *name, int version);
-
 
 /* close a model database */
 /**
@@ -108,12 +57,6 @@ db_create(const char *name, int version);
  */
 RT_EXPORT extern void db_close_client(struct db_i *dbip,
 				      long *client);
-
-/**
- * Close a database, releasing dynamic memory Wait until last user is
- * done, though.
- */
-RT_EXPORT extern void db_close(struct db_i *dbip);
 
 /**
  * Check if a specified path is a .g database file, based on identification (or
@@ -719,22 +662,6 @@ RT_EXPORT extern int db_version_inmem(const struct db_i *dbip, const void *data,
  * member matrices.
  */
 RT_EXPORT extern int rt_db_flip_endian(struct db_i *dbip);
-
-
-/**
- * "open" an in-memory-only database instance.  this initializes a
- * dbip for use, creating an inmem dbi_wdbp as the means to add
- * geometry to the directory (use wdb_export_external()).
- */
-RT_EXPORT extern struct db_i * db_open_inmem(void);
-
-
-/**
- * creates an in-memory-only database.  this is very similar to
- * db_open_inmem() with the exception that the this routine adds a
- * default _GLOBAL object.
- */
-RT_EXPORT extern struct db_i * db_create_inmem(void);
 
 
 /**
