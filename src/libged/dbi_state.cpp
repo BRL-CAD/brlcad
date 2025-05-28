@@ -2374,7 +2374,7 @@ BViewState::scene_obj(
     s_map[phash][sp->s_os->s_dmode] = sp;
     s_keys[phash] = path_hashes;
 
-    // Final geometry generation is deferred
+    // Final geometry generation is deferred - see draw_scene
     objs.insert(sp);
 
     return sp;
