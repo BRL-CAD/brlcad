@@ -250,6 +250,7 @@ struct bv_scene_obj  {
     /* Display properties */
     char s_flag;		/**< @brief  UP = object visible, DOWN = obj invis */
     char s_iflag;	        /**< @brief  UP = illuminated, DOWN = regular */
+    int s_force_draw;           /**< @brief  1 = overrides s_flag and s_iflag - always draw (allows parents to force children to be visible) */
     unsigned char s_color[3];	/**< @brief  color to draw as */
     int s_soldash;		/**< @brief  solid/dashed line flag: 0 = solid, 1 = dashed*/
     int s_arrow;		/**< @brief  arrow flag for view object drawing routines */
@@ -278,6 +279,7 @@ struct bv_scene_obj  {
      * may be overridden locally */
     struct bv_obj_settings *s_os;
     struct bv_obj_settings s_local_os;
+    int s_inherit_settings;           /**< @brief  Use current obj settings when drawing children instead of their settings */
 
     /* Settings that may be less necessary... */
     struct bv_scene_obj_old_settings s_old;
