@@ -40,28 +40,6 @@
 #include <string>
 #include <vector>
 
-// Eigen headers will trigger the float-equal warning, so quell it for
-// the include only
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#endif
-#include <Eigen/SVD>
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
-
 extern "C" {
 #include "fort.h"
 }
@@ -70,6 +48,7 @@ extern "C" {
 #include "bu/color.h"
 #include "bu/opt.h"
 #include "bg/chull.h"
+#include "bg/pca.h"
 #include "bg/trimesh.h"
 #include "rt/geom.h"
 #include "wdb.h"
@@ -770,36 +749,14 @@ _bot_cmd_pca(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+    point_t *vp = (point_t *)bot->vertices;
 
     // Find the center point
     point_t center = VINIT_ZERO;
-    for (size_t i = 0; i < bot->num_vertices; i++) {
-	vect_t v;
-	VMOVE(v, &bot->vertices[i*3]);
-        VADD2(center, v, center);
-    }
-    VSCALE(center, center, 1.0/(fastf_t)bot->num_vertices);
-
-    // Find the rotation matrix
-    point_t *vp = (point_t *)bot->vertices;
-    Eigen::MatrixXd A(3, bot->num_vertices);
-    for (size_t i = 0; i < bot->num_vertices; i++) {
-	A(0,i) = vp[i][X] - center[X];
-	A(1,i) = vp[i][Y] - center[Y];
-	A(2,i) = vp[i][Z] - center[Z];
-    }
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeThinU);
-
     vect_t xaxis, yaxis, zaxis;
-    xaxis[X] = svd.matrixU()(0,0);
-    xaxis[Y] = svd.matrixU()(1,0);
-    xaxis[Z] = svd.matrixU()(2,0);
-    yaxis[X] = svd.matrixU()(0,1);
-    yaxis[Y] = svd.matrixU()(1,1);
-    yaxis[Z] = svd.matrixU()(2,1);
-    zaxis[X] = svd.matrixU()(0,2);
-    zaxis[Y] = svd.matrixU()(1,2);
-    zaxis[Z] = svd.matrixU()(2,2);
+
+    if (bg_pca(&center, &xaxis, &yaxis, &zaxis, bot->num_vertices, vp) != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     bu_log("X axis:  %g %g %g\n", V3ARGS(xaxis));
     bu_log("Y axis:  %g %g %g\n", V3ARGS(yaxis));

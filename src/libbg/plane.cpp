@@ -33,13 +33,12 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <Eigen/SVD>
-
 #include "bu/debug.h"
 #include "bu/log.h"
 #include "vmath.h"
 #include "bn/mat.h"
 #include "bn/tol.h"
+#include "bg/pca.h"
 #include "bg/plane.h"
 
 #define UNIT_SQ_TOL 1.0e-13
@@ -2566,8 +2565,7 @@ bg_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml)
     return 0;
 }
 
-// Use SVD algorithm from Soderkvist to fit a plane to vertex points
-// http://www.math.ltu.se/~jove/courses/mam208/svd.pdf
+// Use PCA fit a plane to vertex points
 extern "C" int
 bg_fit_plane(point_t *c, vect_t *n, size_t npnts, point_t *pnts)
 {
@@ -2575,33 +2573,16 @@ bg_fit_plane(point_t *c, vect_t *n, size_t npnts, point_t *pnts)
 	return -1;
     }
 
-    // 1.  Find the center point
-    point_t center = VINIT_ZERO;
-    for (size_t i = 0; i < npnts; i++) {
-	VADD2(center, pnts[i], center);
-    }
-    VSCALE(center, center, 1.0/(fastf_t)npnts);
+    point_t center;
+    vect_t xaxis, yaxis, zaxis;
 
-    // 2.  Transfer the points into Eigen data types
-    Eigen::MatrixXd A(3, npnts);
-    for (size_t i = 0; i < npnts; i++) {
-	A(0,i) = pnts[i][X] - center[X];
-	A(1,i) = pnts[i][Y] - center[Y];
-	A(2,i) = pnts[i][Z] - center[Z];
-    }
+    // Principle Component Analysis
+    if (bg_pca(&center, &xaxis, &yaxis, &zaxis, npnts, pnts) != BRLCAD_OK)
+	return -1;
 
-    // 3.  Perform SVD
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeThinU);
-
-    // 4.  Normal is in column 3 of U matrix
-    vect_t normal;
-    normal[X] = svd.matrixU()(0,2);
-    normal[Y] = svd.matrixU()(1,2);
-    normal[Z] = svd.matrixU()(2,2);
-
-    // 5.  Set the outputs
+    // Set the outputs
     VMOVE(*c, center);
-    VMOVE(*n, normal);
+    VMOVE(*n, zaxis);
 
     return 0;
 }

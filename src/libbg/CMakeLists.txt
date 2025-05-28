@@ -55,6 +55,7 @@ set(
   lseg_lseg.cpp
   lseg_pt.c
   obr.c
+  pca.cpp
   plane.cpp
   polygon.c
   polygon_op.cpp

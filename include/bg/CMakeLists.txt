@@ -6,6 +6,7 @@ set(
   defines.h
   lseg.h
   obr.h
+  pca.h
   plane.h
   polygon.h
   polygon_types.h
