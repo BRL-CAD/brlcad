@@ -1210,55 +1210,57 @@ check_nonzero_rates(struct mged_state *s)
 	}
     }
 
-    if (!ZERO(s->s_edit->k.tra_m[X])
-	|| !ZERO(s->s_edit->k.tra_m[Y])
-	|| !ZERO(s->s_edit->k.tra_m[Z]))
-    {
-	s->s_edit->k.tra_m_flag = 1;
-    } else {
-	s->s_edit->k.tra_m_flag = 0;
-    }
+    if (s->s_edit) {
+	if (!ZERO(s->s_edit->k.tra_m[X])
+		|| !ZERO(s->s_edit->k.tra_m[Y])
+		|| !ZERO(s->s_edit->k.tra_m[Z]))
+	{
+	    s->s_edit->k.tra_m_flag = 1;
+	} else {
+	    s->s_edit->k.tra_m_flag = 0;
+	}
 
-    if (!ZERO(s->s_edit->k.tra_v[X])
-	|| !ZERO(s->s_edit->k.tra_v[Y])
-	|| !ZERO(s->s_edit->k.tra_v[Z]))
-    {
-	s->s_edit->k.tra_v_flag = 1;
-    } else {
-	s->s_edit->k.tra_v_flag = 0;
-    }
+	if (!ZERO(s->s_edit->k.tra_v[X])
+		|| !ZERO(s->s_edit->k.tra_v[Y])
+		|| !ZERO(s->s_edit->k.tra_v[Z]))
+	{
+	    s->s_edit->k.tra_v_flag = 1;
+	} else {
+	    s->s_edit->k.tra_v_flag = 0;
+	}
 
-    if (!ZERO(s->s_edit->k.rot_m[X])
-	|| !ZERO(s->s_edit->k.rot_m[Y])
-	|| !ZERO(s->s_edit->k.rot_m[Z]))
-    {
-	s->s_edit->k.rot_m_flag = 1;
-    } else {
-	s->s_edit->k.rot_m_flag = 0;
-    }
+	if (!ZERO(s->s_edit->k.rot_m[X])
+		|| !ZERO(s->s_edit->k.rot_m[Y])
+		|| !ZERO(s->s_edit->k.rot_m[Z]))
+	{
+	    s->s_edit->k.rot_m_flag = 1;
+	} else {
+	    s->s_edit->k.rot_m_flag = 0;
+	}
 
-    if (!ZERO(s->s_edit->k.rot_o[X])
-	|| !ZERO(s->s_edit->k.rot_o[Y])
-	|| !ZERO(s->s_edit->k.rot_o[Z]))
-    {
-	s->s_edit->k.rot_o_flag = 1;
-    } else {
-	s->s_edit->k.rot_o_flag = 0;
-    }
+	if (!ZERO(s->s_edit->k.rot_o[X])
+		|| !ZERO(s->s_edit->k.rot_o[Y])
+		|| !ZERO(s->s_edit->k.rot_o[Z]))
+	{
+	    s->s_edit->k.rot_o_flag = 1;
+	} else {
+	    s->s_edit->k.rot_o_flag = 0;
+	}
 
-    if (!ZERO(s->s_edit->k.rot_v[X])
-	|| !ZERO(s->s_edit->k.rot_v[Y])
-	|| !ZERO(s->s_edit->k.rot_v[Z]))
-    {
-	s->s_edit->k.rot_v_flag = 1;
-    } else {
-	s->s_edit->k.rot_v_flag = 0;
-    }
+	if (!ZERO(s->s_edit->k.rot_v[X])
+		|| !ZERO(s->s_edit->k.rot_v[Y])
+		|| !ZERO(s->s_edit->k.rot_v[Z]))
+	{
+	    s->s_edit->k.rot_v_flag = 1;
+	} else {
+	    s->s_edit->k.rot_v_flag = 0;
+	}
 
-    if (s->s_edit->k.sca > SMALL_FASTF) {
-	s->s_edit->k.sca_flag = 1;
-    } else {
-	s->s_edit->k.sca_flag = 0;
+	if (s->s_edit->k.sca > SMALL_FASTF) {
+	    s->s_edit->k.sca_flag = 1;
+	} else {
+	    s->s_edit->k.sca_flag = 0;
+	}
     }
 
     view_state->vs_flag = 1;	/* values changed so update faceplate */
