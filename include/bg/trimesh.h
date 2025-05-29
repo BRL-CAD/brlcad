@@ -373,7 +373,7 @@ bg_trimesh_2d_plot3(const char *fname, const int *faces, size_t num_faces, const
  * @param[in]  num_f2 	number of faces in f2
  * @param[in]  p2	second points array
  * @param[in]  num_p2	number of points in p2
- * @param[in]  tol	distance in mm below which points are considered the same
+ * @param[in]  dist_tol	distance in mm below which points are considered the same
  *
  * @return 0 if same, otherwise return 1.
  */
