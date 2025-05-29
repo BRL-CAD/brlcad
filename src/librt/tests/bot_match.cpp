@@ -185,10 +185,18 @@ main(int argc, char *argv[])
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
-    bu_log("Matching check complete (%f sec) - %zd match groups found\n",seconds, bot_groups.size());
+
+    // Get a count of all objects that would up part of some group
+    std::unordered_map<struct directory *, std::unordered_set<struct directory *>>::iterator bg_it;
+    size_t gobjs = 0;
+    for (bg_it = bot_groups.begin(); bg_it != bot_groups.end(); ++bg_it) {
+	gobjs++;
+	gobjs += bg_it->second.size();
+    }
+
+    bu_log("Matching check complete (%f sec) - %zd match groups found, %zd of %zd BoTs are part of a group.\n",seconds, bot_groups.size(), gobjs, bot_cnt);
 
     // Print any groups found
-    std::unordered_map<struct directory *, std::unordered_set<struct directory *>>::iterator bg_it;
     for(bg_it = bot_groups.begin(); bg_it != bot_groups.end(); ++bg_it) {
 	if (!bg_it->second.size())
 	    continue;
