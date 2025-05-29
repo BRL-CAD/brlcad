@@ -94,43 +94,62 @@ main(int argc, char *argv[])
     struct bu_ptbl bot_objs = BU_PTBL_INIT_ZERO;
     const char *bot_search = "-type bot";
     (void)db_search(&bot_objs, DB_SEARCH_RETURN_UNIQ_DP, bot_search, 0, NULL, dbip, NULL, NULL, NULL);
-    for(size_t i = 0; i < BU_PTBL_LEN(&bot_objs); i++) {
+    size_t bot_cnt = BU_PTBL_LEN(&bot_objs);
+    for(size_t i = 0; i < bot_cnt; i++) {
         struct directory *dp = (struct directory *)BU_PTBL_GET(&bot_objs, i);
         bots.insert(dp);
     }
     db_search_free(&bot_objs);
 
+    // We can't afford to load everything into memory and leave it there, and most
+    // BoTs won't be matches trivially based on counts, so make a single up front pass
+    // to collect face and vert counts once.  This will let us avoid a lot of I/O
+    // during the comparisons.
+    std::unordered_map<struct directory *, size_t> bot_vert_cnts;
+    std::unordered_map<struct directory *, size_t> bot_face_cnts;
+    std::unordered_set<struct directory *>::iterator d_it;
+    for (d_it = bots.begin(); d_it != bots.end(); ++d_it) {
+	struct directory *dp = *d_it;
+	struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
+	rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource);
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)(intern.idb_ptr);
+	bot_vert_cnts[dp] = bot->num_vertices;
+	bot_face_cnts[dp] = bot->num_faces;
+	rt_db_free_internal(&intern);
+    }
+
     // If we have BoTs, we're going to be building up sets
     std::unordered_map<struct directory *, std::unordered_set<struct directory *>> bot_groups;
     std::unordered_set<struct directory *> clear_dps;
-    std::unordered_set<struct directory *>::iterator d_it;
+    size_t bots_processed = 0;
     while (!bots.empty()) {
 	// Pop the next BoT off the set
 	struct directory *wdp = *bots.begin();
-	//bu_log("Processing %s\n", wdp->d_namep);
-
 	bots.erase(bots.begin());
+	bots_processed++;
+	bu_log("Processing %s (%zd of %zd)\n", wdp->d_namep, bots_processed, bot_cnt);
+
 	// Make a pca version of the BoT
 	struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
 	rt_db_get_internal(&intern, wdp, dbip, NULL, &rt_uniresource);
 	struct rt_bot_internal *orig_bot = (struct rt_bot_internal *)(intern.idb_ptr);
 	struct rt_bot_internal *pca_orig_bot = pca_bot(orig_bot);
+	point_t *ovp = (point_t *)pca_orig_bot->vertices;
 
 	// For each of the remaining BoTs, see if its PCA version matches pca_g
 	for (d_it = bots.begin(); d_it != bots.end(); ++d_it) {
 	    struct directory *cdp = *d_it;
+
+	    // Can we trivially rule it out?
+	    if (bot_face_cnts[cdp] != orig_bot->num_faces || bot_vert_cnts[cdp] != orig_bot->num_vertices)
+		continue;
+
+	    // Passes the trivial checks - time for PCA and bg_trimesh_diff
 	    //bu_log("  checking %s\n", cdp->d_namep);
 	    struct rt_db_internal cintern = RT_DB_INTERNAL_INIT_ZERO;
 	    rt_db_get_internal(&cintern, cdp, dbip, NULL, &rt_uniresource);
 	    struct rt_bot_internal *cbot = (struct rt_bot_internal *)(cintern.idb_ptr);
-	    if (cbot->num_faces != orig_bot->num_faces || cbot->num_vertices != orig_bot->num_vertices) {
-		rt_db_free_internal(&cintern);
-		continue;
-	    }
-
-	    // Passes the trivial checks - time for PCA and bg_trimesh_diff
 	    struct rt_bot_internal *pca_cbot = pca_bot(cbot);
-	    point_t *ovp = (point_t *)pca_orig_bot->vertices;
 	    point_t *cvp = (point_t *)pca_cbot->vertices;
 
 	    int is_diff = bg_trimesh_diff(
@@ -149,6 +168,7 @@ main(int argc, char *argv[])
 	    if (!is_diff) {
 		bot_groups[wdp].insert(cdp);
 		clear_dps.insert(cdp);
+		bots_processed++;
 	    }
 	}
 
