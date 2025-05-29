@@ -78,6 +78,8 @@ brlcad_addexec(rt_bv_poly_sketch bv_poly_sketch.c "librt;libbv" TEST)
 brlcad_addexec(rt_arb8 arb8_tests.c "librt" TEST)
 #brlcad_add_test(NAME rt_arb8_tests COMMAND rt_arb8)
 
+brlcad_addexec(bot_match bot_match.cpp "librt;libbg" TEST)
+
 # Tests for primitive editing
 add_subdirectory(edit)
 

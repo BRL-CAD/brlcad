@@ -68,6 +68,7 @@ set(
   tri_ray.c
   tri_tri.c
   trimesh.cpp
+  trimesh_diff.cpp
   trimesh_isect.cpp
   trimesh_plot3.cpp
   trimesh_sync.cpp

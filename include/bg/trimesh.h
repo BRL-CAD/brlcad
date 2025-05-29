@@ -338,6 +338,53 @@ bg_trimesh_split(int ***ofs, int **ofc, int *f, int fcnt);
 BG_EXPORT extern int
 bg_trimesh_2d_plot3(const char *fname, const int *faces, size_t num_faces, const point2d_t *pnts, size_t num_pnts);
 
+/**
+ * @brief
+ * Compare two trimeshes to determine if they (within tolerance) define the
+ * same mesh.
+ *
+ * This is a fairly focused function whose purpose is to spot meshes that have
+ * potentially gone through numerical or topological reordering but still
+ * define the same volume (for example, meshes that have been rotated or
+ * translated and then returned to an origin with PCA.)  By design it does not
+ * analyze the differences to report on why two meshes differ - it simply
+ * returns a yes/no decision.  Different vertex or face counts are grounds
+ * for immediate declaration the meshes differ - no effort is made to look for
+ * duplicate vertices or degenerate faces.  Any such clean-ups must be performed
+ * before calling this function.
+ *
+ * The specification of a distance tolerance is used for vertex comparisons.
+ * Below the specified threshold, vertices that would otherwise be considered
+ * rejection criteria for being different will be considered the same.
+ * HOWEVER, that tolerance does NOT merge vertices - rather, when vertices are
+ * organized and sorted for comparison the candidate pairing vertices in the
+ * arrays are compared using the tolerance.
+ *
+ * Both vertex positions and face topology must be compatible - faces may use a
+ * different starting vertex (i.e. 0->1->2 and 1->2->0 are considered to be the
+ * same) but the ordering must be consistent (i.e. 0->2->1 would not be
+ * considered the same.)
+ *
+ * @param[in]  f1	face index array referencing points in p1
+ * @param[in]  num_f1 	number of faces in f1
+ * @param[in]  p1	first points array
+ * @param[in]  num_p1	number of points in p1
+ * @param[in]  f2	face index array referencing points in p2
+ * @param[in]  num_f2 	number of faces in f2
+ * @param[in]  p2	second points array
+ * @param[in]  num_p2	number of points in p2
+ * @param[in]  tol	distance in mm below which points are considered the same
+ *
+ * @return 0 if same, otherwise return 1.
+ */
+BG_EXPORT extern int
+bg_trimesh_diff(
+	const int *f1, size_t num_f1, const point_t *p1, size_t num_p1,
+	const int *f2, size_t num_f2, const point_t *p2, size_t num_p2,
+	fastf_t dist_tol
+	);
+
+
 __END_DECLS
 
 #endif  /* BG_TRIMESH_H */
