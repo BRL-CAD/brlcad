@@ -483,6 +483,43 @@ _ged_subcmd2_help(struct ged *gedp, struct bu_opt_desc *gopts, std::map<std::str
 
 __END_DECLS
 
+#ifdef __cplusplus
+#include <sstream>
+
+/* There are various individual pieces of data in the cache associated with
+ * each object key.  For lookup they use short suffix strings to distinguish
+ * them - we define those strings here to have consistent definitions for use
+ * in multiple functions.
+ *
+ * Changing any of these requires incrementing CACHE_CURRENT_FORMAT. */
+#define CACHE_OBJ_BOUNDS "bb"
+#define CACHE_REGION_ID "rid"
+#define CACHE_REGION_FLAG "rf"
+#define CACHE_INHERIT_FLAG "if"
+#define CACHE_COLOR "c"
+
+struct ged_draw_cache;
+
+struct ged_draw_cache *
+dbi_cache_open(const char *name);
+
+void
+dbi_cache_close(struct ged_draw_cache *c);
+
+size_t
+cache_get(struct ged_draw_cache *c, void **data, unsigned long long hash, const char *component);
+
+void
+cache_write(struct ged_draw_cache *c, unsigned long long hash, const char *component, std::stringstream &s);
+
+void
+cache_del(struct ged_draw_cache *c, unsigned long long hash, const char *component);
+
+void
+cache_done(struct ged_draw_cache *c);
+#endif
+
+
 #endif /* LIBGED_GED_PRIVATE_H */
 
 /** @} */

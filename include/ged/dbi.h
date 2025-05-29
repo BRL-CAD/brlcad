@@ -50,6 +50,54 @@
 #include <string>
 #include <vector>
 
+class GED_EXPORT CombInst {
+
+    public:
+
+	// TODO - constructor
+
+	void bbox(vect_t *min, vect_t *max);
+	std::string instance_name(); // Produces a name with the id incorporated if it is non-null - i.e. a unique instance name
+
+	std::string cname; // Name of parent comb
+	std::string iname; // Name of instanced object
+	int id = 0; // In cases where iname is not unique in the comb, increment this to provide uniqueness
+
+	size_t bool_op;
+	mat_t m;
+};
+
+
+
+class GED_EXPORT GObj {
+
+    public:
+	GObj(struct db_i *dbip, struct directory *dp, struct ged_draw_cache *dcache);
+	~GObj();
+
+	void bbox(vect_t *min, vect_t *max);
+
+	std::string name;
+	unsigned long long hash;
+
+	// Standard attributes that can impact drawing which are normally only
+	// accessible by loading in the attributes of the object.  We stash
+	// them here to have the information available without having to
+	// interrogate the on-disk data.
+	int c_inherit; // color inheritance flag
+	unsigned int rgb; // color RGB value  (r + (g << 8) + (b << 16))
+	int region_id; // region_id
+	int region_flag; // region
+
+	// If the object is a comb, these two containers are used to record the tree info.
+	// Otherwise they are not used
+	std::unordered_set<CombInst *> c;
+	// The vector preserves comb ordering for listing.
+	// Note: to match MGED's 'l' printing you need to use a reverse_iterator
+	std::vector<CombInst *> cl;
+};
+
+
 class GED_EXPORT DbiState;
 
 class GED_EXPORT BSelectState {
@@ -412,6 +460,7 @@ class GED_EXPORT DbiState {
 
 	void populate_maps(struct directory *dp, unsigned long long phash, int reset);
 	unsigned long long update_dp(struct directory *dp, int reset);
+	unsigned long long update_dp2(struct directory *dp, int reset);
 	unsigned int color_int(struct bu_color *);
 	int int_color(struct bu_color *c, unsigned int);
 	struct resource *res = NULL;
