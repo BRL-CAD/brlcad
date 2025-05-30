@@ -335,6 +335,9 @@ name_deescape(std::string &name)
 
 // This is a full (and more expensive) check to ensure
 // a path has no cycles anywhere in it.
+//
+// TODO - need to catch instance specifiers here to
+// robustly avoid (e.g.) /a/b@1/c/b@2
 static bool
 path_cyclic(std::vector<unsigned long long> &path)
 {
@@ -355,6 +358,9 @@ path_cyclic(std::vector<unsigned long long> &path)
 
 // This version of the cyclic check assumes the path entries other than the
 // last one are OK, and checks only against that last entry.
+//
+// TODO - need to catch instance specifiers here to
+// robustly avoid (e.g.) /a/b@1/c/b@2
 static bool
 path_addition_cyclic(std::vector<unsigned long long> &path)
 {
@@ -408,29 +414,39 @@ DbiState::digest_path(const char *path)
 	return std::vector<unsigned long long>();
 
     // parent/child relationship validate
-    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
-    std::unordered_map<unsigned long long, unsigned long long>::iterator i_it;
     unsigned long long phash = phe[0];
+    if (gobjs.find(phash) == gobjs.end()) {
+	bu_log("Invalid path element: %s\n", elements[0].c_str());
+	return std::vector<unsigned long long>();
+    }
+    GObj *g = gobjs[phash];
     for (size_t i = 1; i < phe.size(); i++) {
-	pc_it = p_c.find(phash);
-	// The parent comb structure is stored only under its original name's hash - if
-	// we have a numbered instance from a comb tree as a parent, we may be able to
-	// map it to the correct entry with i_map.  If not, we have an invalid path.
-	if (pc_it == p_c.end()) {
-	    i_it = i_map.find(phash);
-	    if (i_it == i_map.end())
-		return std::vector<unsigned long long>();
-	    phash = i_it->second;
-	    pc_it = p_c.find(phash);
-	    if (pc_it == p_c.end())
-		return std::vector<unsigned long long>();
-	}
-	unsigned long long chash = phe[i];
-	if (pc_it->second.find(chash) == pc_it->second.end()) {
-	    bu_log("Invalid element path: %s\n", elements[i].c_str());
+	// Multiple element paths have to involve combs.  g is the
+	// parent of this element, so check its CombInt set to see
+	// if it has this element.
+	phash = phe[i];
+	if (g->c.find(phash) == g->c.end()) {
+	    bu_log("Invalid path element: %s\n", elements[i].c_str());
 	    return std::vector<unsigned long long>();
 	}
-	phash = chash;
+
+	// If this is the leaf element, we don't need GObj to act as
+	// a new parent
+	if (i == phe.size() - 1)
+	    break;
+
+	// Path element valid, but more to go - now we need the GObj of the
+	// element's object component to continue the validation.  CombInst
+	// stores the info we need in ohash, even if the path specifier was for
+	// a non-unique instance rather than a straight-up object name.  That
+	// saves us the trouble of trying to parse the original name out of a
+	// unique instance specification string.
+	CombInst *c = g->c[phash];
+	if (gobjs.find(c->ohash) == gobjs.end()) {
+	    bu_log("No GObj found for path element %s\n", elements[i].c_str());
+	    return std::vector<unsigned long long>();
+	}
+	g = gobjs[c->ohash];
     }
 
     return phe;
