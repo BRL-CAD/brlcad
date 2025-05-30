@@ -92,7 +92,7 @@ class GED_EXPORT CombInst {
 class GED_EXPORT GObj {
 
     public:
-	GObj(DbiState *d_s, struct directory *dp_i, struct ged_draw_cache *dcache);
+	GObj(DbiState *d_s, struct directory *dp_i);
 	~GObj();
 
 	void bbox(vect_t *min, vect_t *max);
@@ -122,7 +122,12 @@ class GED_EXPORT GObj {
 	// librt directory pointer
 	struct directory *dp;
 
+
     private:
+
+	vect_t bb_min;
+	vect_t bb_max;
+	bool bb_valid;
 
 	void GenCombInstances();
 };
@@ -485,6 +490,8 @@ class GED_EXPORT DbiState {
 	// convenience methods that decode it to user-comprehensible info.
 	void print_dbi_state(struct bu_vls *o = NULL, bool report_view_states = false);
 
+	struct ged_draw_cache *dcache = NULL;
+	struct resource *res = NULL;
     private:
 	void gather_cyclic(
 		std::unordered_set<unsigned long long> &cyclic,
@@ -502,8 +509,6 @@ class GED_EXPORT DbiState {
 	unsigned long long update_dp2(struct directory *dp);
 	unsigned int color_int(struct bu_color *);
 	int int_color(struct bu_color *c, unsigned int);
-	struct resource *res = NULL;
-	struct ged_draw_cache *dcache = NULL;
 	struct bu_vls hash_string = BU_VLS_INIT_ZERO;
 	struct bu_vls path_string = BU_VLS_INIT_ZERO;
 };
