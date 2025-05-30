@@ -416,29 +416,36 @@ DbiState::digest_path(const char *path)
     if (path_cyclic(phe))
 	return std::vector<unsigned long long>();
 
-    // Validate root path element
-    unsigned long long phash = phe[0];
-    if (gobjs.find(phash) == gobjs.end()) {
-	bu_log("Invalid first path element (must be GObj): %s\n", elements[0].c_str());
+    // If we're not valid, it's no dice
+    if (!valid_hash_path(phe)) {
+	// If we don't have a valid hash path, try to tell the user more about
+	// *why* it is invalid.
+	unsigned long long phash = phe[0];
+	if (gobjs.find(phash) == gobjs.end()) {
+	    bu_log("Invalid first path element (must be GObj): %s\n", elements[0].c_str());
+	    return std::vector<unsigned long long>();
+	}
+	for (size_t i = 1; i < phe.size(); i++) {
+	    if (combinsts.find(phe[i]) == combinsts.end()) {
+		bu_log("CombInst not found for path element # %zd %s/%s\n", i, elements[i-1].c_str(), elements[i].c_str());
+		return std::vector<unsigned long long>();
+	    }
+
+	    CombInst *ci = combinsts[phe[i]];
+
+	    // Verify that ci's chash matches phash
+	    if (ci->chash != phash) {
+		bu_log("Invalid comb instance - chash mismatch %s/%s\n", elements[i-1].c_str(), elements[i].c_str());
+		return std::vector<unsigned long long>();
+	    }
+
+	    // The ohash of this comb instance now becomes
+	    // the parent for the next check
+	    phash = ci->ohash;
+	}
+
+	bu_log("Unknown digest_path validation failure\n");
 	return std::vector<unsigned long long>();
-    }
-    for (size_t i = 1; i < phe.size(); i++) {
-	if (combinsts.find(phe[i]) == combinsts.end()) {
-	    bu_log("CombInst not found for path element # %zd %s/%s\n", i, elements[i-1].c_str(), elements[i].c_str());
-	    return std::vector<unsigned long long>();
-	}
-
-	CombInst *ci = combinsts[phe[i]];
-
-	// Verify that ci's chash matches phash
-	if (ci->chash != phash) {
-	    bu_log("Invalid comb instance - chash mismatch %s/%s\n", elements[i-1].c_str(), elements[i].c_str());
-	    return std::vector<unsigned long long>();
-	}
-
-	// The ohash of this comb instance now becomes
-	// the parent for the next check
-	phash = ci->ohash;
     }
 
     return phe;
@@ -466,9 +473,16 @@ DbiState::valid_hash(unsigned long long phash)
 bool
 DbiState::valid_hash_path(std::vector<unsigned long long> &phashes)
 {
-    for (size_t i = 0; i < phashes.size(); i++) {
-	if (!valid_hash(phashes[i]))
+    unsigned long long phash = phashes[0];
+    if (gobjs.find(phash) == gobjs.end())
+	return false;
+    for (size_t i = 1; i < phashes.size(); i++) {
+	if (combinsts.find(phashes[i]) == combinsts.end())
 	    return false;
+	CombInst *ci = combinsts[phashes[i]];
+	if (ci->chash != phash)
+	    return false;
+	phash = ci->ohash;
     }
     return true;
 }
