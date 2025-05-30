@@ -127,6 +127,8 @@ set(
   columns.c
   dbi_state.cpp
   dbi2_state.cpp
+  dbi2_bview.cpp
+  dbi2_select.cpp
   dcache.cpp
   display_list.c
   draw.cpp
