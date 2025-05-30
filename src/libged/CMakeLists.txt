@@ -126,6 +126,7 @@ set(
   ${GED_CMD_SRC}
   columns.c
   dbi_state.cpp
+  dbi2_state.cpp
   dcache.cpp
   display_list.c
   draw.cpp
