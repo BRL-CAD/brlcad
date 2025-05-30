@@ -783,6 +783,10 @@ bool
 DbiState::path_color(struct bu_color *c, std::vector<unsigned long long> &elements)
 {
     const struct mater *mp;
+
+    // TODO - there is probably a pattern here of generating the array of
+    // GObj instances from the hash paths that warrants a DbiState method - this
+    // is probably not the only situation where we will want this...
     std::vector<GObj *> cgs;
     // The first element in the path is a GObj
     cgs.push_back(gobjs[elements[0]]);
