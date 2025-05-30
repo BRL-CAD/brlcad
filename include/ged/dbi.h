@@ -413,6 +413,8 @@ class GED_EXPORT DbiState {
 	std::unordered_map<unsigned long long, GObj *> gobjs;
 	std::unordered_map<unsigned long long, CombInst *> combinsts;
 
+	std::vector<GObj *> get_gobjs(std::vector<unsigned long long> &path);
+
 	// These maps are the ".g ground truth" of the comb structures - the set
 	// associated with each hash contains all the child hashes from the comb
 	// definition in the database for quick lookup, and the vector preserves

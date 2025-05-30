@@ -743,8 +743,8 @@ BViewState::walk_tree(
 
     mat_t lm;
     MAT_IDN(lm);
-    unsigned long long phash = path_hashes[path_hashes.size() - 1];
-    dbis->get_matrix(lm, phash, chash);
+    //unsigned long long phash = path_hashes[path_hashes.size() - 1];
+    //dbis->get_matrix(lm, phash, chash);
 
     gather_paths(objs, chash, curr_mode, v, vs, m, lm, path_hashes, views, ret);
 }
