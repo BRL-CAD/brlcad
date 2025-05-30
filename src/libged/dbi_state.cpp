@@ -800,6 +800,21 @@ DbiState::get_gobjs(std::vector<unsigned long long> &path)
     return cgs;
 }
 
+std::vector<CombInst *>
+DbiState::get_combinsts(std::vector<unsigned long long> &path)
+{
+    std::vector<CombInst *> cis;
+    // The first element in the path is a GObj Any remaining path are CombInst.
+    for (size_t i = 1; i < path.size(); i++) {
+	// TODO  - if we hit a CombInt without the associated GObj, should we
+	// error out?
+	if (combinsts.find(path[i]) == combinsts.end())
+	    continue;
+	cis.push_back(combinsts[path[i]]);
+    }
+    return cis;
+}
+
 bool
 DbiState::path_color(struct bu_color *c, std::vector<unsigned long long> &elements)
 {
@@ -944,25 +959,22 @@ DbiState::get_path_matrix(matp_t m, std::vector<unsigned long long> &elements)
 {
     bool have_mat = false;
     if (UNLIKELY(!m))
-	return have_mat;
+	return false;
 
     MAT_IDN(m);
     if (elements.size() < 2)
-	return have_mat;
+	return false;
 
-    unsigned long long phash = elements[0];
-    for (size_t i = 1; i < elements.size(); i++) {
-	unsigned long long chash = elements[i];
-	mat_t nm;
-	MAT_IDN(nm);
-	bool got_mat = get_matrix(nm, phash, chash);
-	if (got_mat) {
+    std::vector<CombInst *> cis = get_combinsts(elements);
+    for (size_t i = 1; i < cis.size(); i++) {
+	// TODO - should probably have a is_mat_idn flag in GObj so we don't
+	// always have to test it.
+	if (true) {
 	    mat_t cmat;
-	    bn_mat_mul(cmat, m, nm);
+	    bn_mat_mul(cmat, m, cis[i]->m);
 	    MAT_COPY(m, cmat);
 	    have_mat = true;
 	}
-	phash = chash;
     }
 
     return have_mat;
