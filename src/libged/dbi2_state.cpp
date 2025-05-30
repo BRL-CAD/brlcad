@@ -89,15 +89,27 @@ CombInst::CombInst(DbiState *dbis, const char *p_name, const char *o_name, unsig
 	bu_vls_free(&iname_c);
     }
 
+
+    // Calculate chash
+    chash = bu_data_hash(cname.c_str(), strlen(cname.c_str())*sizeof(char));
+
     // Calculate ohash
     ohash = bu_data_hash(oname.c_str(), strlen(oname.c_str())*sizeof(char));
 
-    // Have the necessary info - calculate Comb Instance hash
-    if (iname.length()) {
-	ihash = bu_data_hash(iname.c_str(), strlen(iname.c_str())*sizeof(char));
-    } else {
-	ihash = ohash;
-    }
+    // Have the necessary info - calculate Unique Comb Instance hash
+    unsigned long long comb_uniq_hash = ohash;
+    if (iname.length())
+	comb_uniq_hash = bu_data_hash(iname.c_str(), strlen(iname.c_str())*sizeof(char));
+
+    // Calculate the Instance Hash - ihash.  This incorporates awareness of
+    // both the parent comb name and the comb_uniq_hash to make a hash value
+    // that is unique both in the local comb context and the overall DbiState.
+    // As a result ihash can be used in paths to look up CombInst instances
+    // globally as well as GObj containers.
+    std::vector<unsigned long long> lvec;
+    lvec.push_back(chash);
+    lvec.push_back(comb_uniq_hash);
+    ihash = bu_data_hash(lvec.data(), lvec.size() * sizeof(unsigned long long));
 
     // Register with DbiState
     d->combinsts[ihash] = this;
