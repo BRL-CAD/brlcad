@@ -53,17 +53,14 @@
 class GED_EXPORT CombInst {
 
     public:
-
-	// TODO - constructor
-
 	void bbox(vect_t *min, vect_t *max);
-	std::string instance_name(); // Produces a name with the id incorporated if it is non-null - i.e. a unique instance name
 
 	std::string cname; // Name of parent comb
-	std::string iname; // Name of instanced object
+	std::string oname; // Name of instanced object
+	std::string iname; // Name of instanced object with suffix making it unique in the comb tree.  Empty if not needed.
 	int id = 0; // In cases where iname is not unique in the comb, increment this to provide uniqueness
 
-	size_t bool_op;
+	int bool_op;
 	mat_t m;
 };
 
@@ -72,7 +69,7 @@ class GED_EXPORT CombInst {
 class GED_EXPORT GObj {
 
     public:
-	GObj(struct db_i *dbip, struct directory *dp, struct ged_draw_cache *dcache);
+	GObj(struct db_i *dbip_i, struct directory *dp_i, struct ged_draw_cache *dcache);
 	~GObj();
 
 	void bbox(vect_t *min, vect_t *max);
@@ -94,7 +91,13 @@ class GED_EXPORT GObj {
 	std::unordered_set<CombInst *> c;
 	// The vector preserves comb ordering for listing.
 	// Note: to match MGED's 'l' printing you need to use a reverse_iterator
-	std::vector<CombInst *> cl;
+	std::vector<CombInst *> cv;
+
+	struct db_i *dbip;
+	struct directory *dp;
+    private:
+
+	void GenCombInstances();
 };
 
 
