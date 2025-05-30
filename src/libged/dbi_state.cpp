@@ -214,7 +214,7 @@ DbiState::DbiState(struct ged *ged_p)
     for (int i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    update_dp2(dp, 0);
+	    update_dp2(dp);
 	}
     }
 
@@ -766,16 +766,20 @@ DbiState::update_dp(struct directory *dp, int reset)
 }
 
 unsigned long long
-DbiState::update_dp2(struct directory *dp, int reset)
+DbiState::update_dp2(struct directory *dp)
 {
     if (dp->d_flags & DB_LS_HIDDEN)
 	return 0;
 
-    // TODO - look up to see if we already have a GObj for this dp 
-    if (reset)
-	bu_log("todo - reset\n");
+    unsigned long long dphash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+    if (gobjs.find(dphash) != gobjs.end()) {
+	// Existing GObj found, remove for regeneration
+	GObj *old_gobj = gobjs[dphash];
+	delete old_gobj;
+	gobjs.erase(dphash);
+    }
 
-    GObj *g = new GObj(dbip, dp, dcache);
+    GObj *g = new GObj(this, dp, dcache);
     gobjs[g->hash] = g;
 
     return g->hash;
