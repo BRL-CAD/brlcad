@@ -779,29 +779,33 @@ DbiState::update_dp2(struct directory *dp)
     return g->hash;
 }
 
+std::vector<GObj *>
+DbiState::get_gobjs(std::vector<unsigned long long> &path)
+{
+    std::vector<GObj *> cgs;
+    // The first element in the path is a GObj
+    cgs.push_back(gobjs[path[0]]);
+    // Any remaining path are CombInst.  We want the GObj associated
+    // with their oname
+    for (size_t i = 1; i < path.size(); i++) {
+	// TODO  - if we hit a CombInt without the associated GObj, should we
+	// error out?
+	if (combinsts.find(path[i]) == combinsts.end())
+	    continue;
+	if (gobjs.find(combinsts[path[i]]->ohash) == gobjs.end())
+	    continue;
+	cgs.push_back(gobjs[combinsts[path[i]]->ohash]);
+    }
+
+    return cgs;
+}
+
 bool
 DbiState::path_color(struct bu_color *c, std::vector<unsigned long long> &elements)
 {
     const struct mater *mp;
 
-    // TODO - there is probably a pattern here of generating the array of
-    // GObj instances from the hash paths that warrants a DbiState method - this
-    // is probably not the only situation where we will want this...
-    std::vector<GObj *> cgs;
-    // The first element in the path is a GObj
-    cgs.push_back(gobjs[elements[0]]);
-    // Any remaining elements are CombInst.  We want the GObj associated
-    // with their oname to pull the region_id
-    for (size_t i = 1; i < elements.size(); i++) {
-	// If we hit a CombInt without the associated GObj, skip
-	// TODO - should we default to red?  This indicates something
-	// is broken along the path...
-	if (combinsts.find(elements[i]) == combinsts.end())
-	    continue;
-	if (gobjs.find(combinsts[elements[i]]->ohash) == gobjs.end())
-	    continue;
-	cgs.push_back(gobjs[combinsts[elements[i]]->ohash]);
-    }
+    std::vector<GObj *> cgs = get_gobjs(elements);
 
     // This may not be how we'll always want to do this, but at least for the
     // moment (to duplicate observed MGED behavior) the first region_id seen
@@ -900,26 +904,15 @@ DbiState::bool_op(unsigned long long phash, unsigned long long chash)
 struct directory *
 DbiState::get_hdp(unsigned long long phash)
 {
-    if (!phash)
+    // For a comb instance hash, we could return either the parent comb or the
+    // directory pointer of oname - since there isn't an unambiguous return,
+    // just return NULL.  It is the caller's responsibility to select what they
+    // want if the CombInst struct is in play and submit the GObj hash.
+
+    if (gobjs.find(phash) == gobjs.end())
 	return NULL;
 
-    std::unordered_map<unsigned long long, struct directory *>::iterator d_it;
-    d_it = d_map.find(phash);
-    if (d_it != d_map.end()) {
-	return d_it->second;
-    }
-
-    std::unordered_map<unsigned long long, unsigned long long>::iterator i_it;
-    i_it = i_map.find(phash);
-
-    if (i_it != i_map.end()) {
-	d_it = d_map.find(i_it->second);
-	if (d_it != d_map.end()) {
-	    return d_it->second;
-	}
-    }
-
-    return NULL;
+    return gobjs[phash]->dp;
 }
 
 bool
