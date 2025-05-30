@@ -795,7 +795,7 @@ DbiState::update_dp2(struct directory *dp)
 	gobjs.erase(dphash);
     }
 
-    GObj *g = new GObj(this, dp, dcache);
+    GObj *g = new GObj(this, dp);
     gobjs[g->hash] = g;
 
     return g->hash;
@@ -987,6 +987,7 @@ DbiState::get_path_matrix(matp_t m, std::vector<unsigned long long> &elements)
     return have_mat;
 }
 
+// TODO - this should be pushed to the GObj and CombInst classes
 bool
 DbiState::get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned long long hash)
 {
