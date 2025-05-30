@@ -50,11 +50,15 @@
 #include <string>
 #include <vector>
 
+class GED_EXPORT DbiState;
+
 class GED_EXPORT CombInst {
 
     public:
-	CombInst(const char *p_name, const char *o_name, unsigned long long icnt, int i_op, matp_t i_mat);
+	CombInst(DbiState *dbis, const char *p_name, const char *o_name, unsigned long long icnt, int i_op, matp_t i_mat);
 
+	// Calculate Bounding Box of the instance (i.e. oname's bounding box
+	// positioned using the m matrix of this instance.)
 	void bbox(vect_t *min, vect_t *max);
 
 	std::string cname; // Name of parent comb
@@ -71,8 +75,16 @@ class GED_EXPORT CombInst {
 	// GObj c map that stores CombInst containers.
 	unsigned long long ihash;
 
+	// Boolean op of instance (Union, Subtraction or Intersection)
 	int bool_op;
+
+	// Instance matrix (default is MAT_IDN)
 	mat_t m;
+
+	// Parent database state info.  We store this so that a CombInst can (in principle)
+	// unpack anything it needs to - for example, to get the GObj of the parent it can
+	// calculate the hash of cname and do a lookup in the d->gobjs map.
+	DbiState *d;
 };
 
 
@@ -80,7 +92,7 @@ class GED_EXPORT CombInst {
 class GED_EXPORT GObj {
 
     public:
-	GObj(struct db_i *dbip_i, struct directory *dp_i, struct ged_draw_cache *dcache);
+	GObj(DbiState *d_s, struct directory *dp_i, struct ged_draw_cache *dcache);
 	~GObj();
 
 	void bbox(vect_t *min, vect_t *max);
@@ -104,15 +116,18 @@ class GED_EXPORT GObj {
 	// Note: to match MGED's 'l' printing you need to use a reverse_iterator
 	std::vector<CombInst *> cv;
 
-	struct db_i *dbip;
+	// Parent database state info
+	DbiState *d;
+
+	// librt directory pointer
 	struct directory *dp;
+
     private:
 
 	void GenCombInstances();
 };
 
 
-class GED_EXPORT DbiState;
 
 class GED_EXPORT BSelectState {
     public:
@@ -484,7 +499,7 @@ class GED_EXPORT DbiState {
 
 	void populate_maps(struct directory *dp, unsigned long long phash, int reset);
 	unsigned long long update_dp(struct directory *dp, int reset);
-	unsigned long long update_dp2(struct directory *dp, int reset);
+	unsigned long long update_dp2(struct directory *dp);
 	unsigned int color_int(struct bu_color *);
 	int int_color(struct bu_color *c, unsigned int);
 	struct resource *res = NULL;

@@ -56,8 +56,9 @@ extern "C" {
 #include "./ged_private.h"
 
 
-CombInst::CombInst(const char *p_name, const char *o_name, unsigned long long icnt, int i_op, matp_t i_mat)
+CombInst::CombInst(DbiState *dbis, const char *p_name, const char *o_name, unsigned long long icnt, int i_op, matp_t i_mat)
 {
+    d = dbis;
     cname = std::string(p_name);
     oname = std::string(o_name);
     iname = std::string("");
@@ -144,13 +145,13 @@ cache_get_uint(struct ged_draw_cache *dcache, unsigned int *oval, unsigned long 
     return ret;
 }
 
-GObj::GObj(struct db_i *dbip_i, struct directory *dp_i, struct ged_draw_cache *dcache)
+GObj::GObj(DbiState *dbis, struct directory *dp_i, struct ged_draw_cache *dcache)
 {
-    if (!dbip_i || !dp_i || !dcache)
+    if (!dbis || !dp_i || !dcache)
 	return;
 
-    // Store the database pointers locally with the GObj
-    dbip = dbip_i;
+    // Store the pointers locally with the GObj
+    d = dbis;
     dp = dp_i;
 
     // Calculate the hash of the d_namep to use as a key
@@ -180,7 +181,7 @@ GObj::GObj(struct db_i *dbip_i, struct directory *dp_i, struct ged_draw_cache *d
 
 	// Read the attributes from the database object
 	struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
-	db5_get_attributes(dbip, &c_avs, dp);
+	db5_get_attributes(d->dbip, &c_avs, dp);
 
 	// Region flag.
 	if (need_region_flag) {
@@ -269,7 +270,7 @@ static void
 populate_leaf(void *client_data, const char *name, matp_t c_m, int op)
 {
     struct gobj_walk_data *d = (struct gobj_walk_data *)client_data;
-    struct db_i *dbip = d->gobj->dbip;
+    struct db_i *dbip = d->gobj->d->dbip;
     RT_CHECK_DBI(dbip);
 
     std::unordered_map<unsigned long long, unsigned long long> &i_count = d->i_count;
@@ -277,7 +278,7 @@ populate_leaf(void *client_data, const char *name, matp_t c_m, int op)
     i_count[chash] += 1;
 
     // Make the CombInst
-    CombInst *c = new CombInst(d->gobj->dp->d_namep, name, i_count[chash], op, c_m);
+    CombInst *c = new CombInst(d->gobj->d, d->gobj->dp->d_namep, name, i_count[chash], op, c_m);
 
     // Add CombInst to the parent GObj containers
     d->gobj->c[c->ihash] = c;
@@ -333,18 +334,18 @@ GObj::GenCombInstances()
 	return;
 
     struct rt_db_internal in;
-    if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&in, dp, d->dbip, NULL, &rt_uniresource) < 0)
 	return;
     struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
     if (!comb->tree)
 	return;
 
-    struct gobj_walk_data d;
-    d.gobj = this;
-    populate_walk_tree(comb->tree, (void *)&d, OP_UNION, populate_leaf);
+    struct gobj_walk_data dw;
+    dw.gobj = this;
+    populate_walk_tree(comb->tree, (void *)&dw, OP_UNION, populate_leaf);
 
     rt_db_free_internal(&in);
-} 
+}
 
 void
 GObj::bbox(vect_t *min, vect_t *max)
