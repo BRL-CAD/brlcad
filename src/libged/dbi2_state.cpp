@@ -98,6 +98,15 @@ CombInst::CombInst(DbiState *dbis, const char *p_name, const char *o_name, unsig
     } else {
 	ihash = ohash;
     }
+
+    // Register with DbiState
+    d->combinsts[ihash] = this;
+}
+
+CombInst::~CombInst()
+{
+    if (d)
+	d->combinsts.erase(ihash);
 }
 
 db_op_t
@@ -291,6 +300,9 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i)
 	VSETALL(bb_max, -INFINITY);
 	bb_valid = false;
     }
+
+    // Register with DbiState
+    d->gobjs[hash] = this;
 }
 
 GObj::~GObj()
@@ -298,6 +310,10 @@ GObj::~GObj()
     // Delete comb instances (if any) associated with this object
     for (size_t i = 0; i < cv.size(); i++)
 	delete cv[i];
+
+    // De-register with the DbiState
+    if (d)
+	d->gobjs.erase(hash);
 }
 
 struct gobj_walk_data {
