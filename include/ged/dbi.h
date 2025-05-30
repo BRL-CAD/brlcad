@@ -56,6 +56,7 @@ class GED_EXPORT CombInst {
 
     public:
 	CombInst(DbiState *dbis, const char *p_name, const char *o_name, unsigned long long icnt, int i_op, matp_t i_mat);
+	~CombInst();
 
 	// Return the BRL-CAD op type of this instance
 	// (DB_OP_UNION, DB_OP_SUBTRACT, DB_OP_INTERSECT)
@@ -407,10 +408,7 @@ class GED_EXPORT DbiState {
 
 
 	std::unordered_map<unsigned long long, GObj *> gobjs;
-
-
-
-
+	std::unordered_map<unsigned long long, CombInst *> combinsts;
 
 
 
