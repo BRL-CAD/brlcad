@@ -145,9 +145,9 @@ cache_get_uint(struct ged_draw_cache *dcache, unsigned int *oval, unsigned long 
     return ret;
 }
 
-GObj::GObj(DbiState *dbis, struct directory *dp_i, struct ged_draw_cache *dcache)
+GObj::GObj(DbiState *dbis, struct directory *dp_i)
 {
-    if (!dbis || !dp_i || !dcache)
+    if (!dbis || !dp_i)
 	return;
 
     // Store the pointers locally with the GObj
@@ -164,16 +164,16 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i, struct ged_draw_cache *dcache
     // Check the dcache for needed values
 
     int attr_region_id = -1;
-    bool need_region_id = cache_get_int(dcache, &attr_region_id, hash, CACHE_REGION_ID);
+    bool need_region_id = cache_get_int(dbis->dcache, &attr_region_id, hash, CACHE_REGION_ID);
 
     int rflag = 0;
-    bool need_region_flag = cache_get_int(dcache, &rflag, hash, CACHE_REGION_FLAG);
+    bool need_region_flag = cache_get_int(dbis->dcache, &rflag, hash, CACHE_REGION_FLAG);
 
     int color_inherit = 0;
-    bool need_color_inherit = cache_get_int(dcache, &color_inherit, hash, CACHE_INHERIT_FLAG);
+    bool need_color_inherit = cache_get_int(dbis->dcache, &color_inherit, hash, CACHE_INHERIT_FLAG);
 
     unsigned int cval = INT_MAX;
-    bool need_cval = cache_get_uint(dcache, &cval, hash, CACHE_COLOR) ;
+    bool need_cval = cache_get_uint(dbis->dcache, &cval, hash, CACHE_COLOR) ;
 
     // If we have at least one case where we're going to need to crack the
     // attributes, do it now.
@@ -188,7 +188,7 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i, struct ged_draw_cache *dcache
 	    const char *region_flag_str = bu_avs_get(&c_avs, "region");
 	    if (region_flag_str && (BU_STR_EQUAL(region_flag_str, "R") || BU_STR_EQUAL(region_flag_str, "1")))
 		rflag = 1;
-	    cache_write_int(dcache, hash, &rflag, CACHE_REGION_FLAG);
+	    cache_write_int(dbis->dcache, hash, &rflag, CACHE_REGION_FLAG);
 	}
 
 	// Region id.  For drawing purposes this needs to be a number.
@@ -196,13 +196,13 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i, struct ged_draw_cache *dcache
 	    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
 	    if (region_id_val)
 		bu_opt_int(NULL, 1, &region_id_val, (void *)&attr_region_id);
-	    cache_write_int(dcache, hash, &attr_region_id, CACHE_REGION_ID);
+	    cache_write_int(dbis->dcache, hash, &attr_region_id, CACHE_REGION_ID);
 	}
 
 	// Inherit flag
 	if (need_color_inherit) {
 	    color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
-	    cache_write_int(dcache, hash, &color_inherit, CACHE_INHERIT_FLAG);
+	    cache_write_int(dbis->dcache, hash, &color_inherit, CACHE_INHERIT_FLAG);
 	}
 
 	// Color
@@ -225,7 +225,7 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i, struct ged_draw_cache *dcache
 	    // cval is an unsigned int, not an int
 	    std::stringstream s;
 	    s.write(reinterpret_cast<const char *>(&cval), sizeof(cval));
-	    cache_write(dcache, hash, CACHE_COLOR, s);
+	    cache_write(dbis->dcache, hash, CACHE_COLOR, s);
 	}
 
 	// Done with attributes
@@ -242,7 +242,7 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i, struct ged_draw_cache *dcache
     if (region_flag && attr_region_id == -1)
 	attr_region_id = 0;
 
-    // Reading done - assign values to class members
+    // Attributes reading done - assign values to class members
     if (attr_region_id != -1)
 	region_id = attr_region_id;
     if (color_inherit)
@@ -252,6 +252,36 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i, struct ged_draw_cache *dcache
     if (rflag != -2)
 	region_flag = rflag;
 
+
+    // The bounding box calculation is deferred if the info isn't present in
+    // the cache, since finding it is potentially expensive.
+    point_t bmin, bmax;
+    bool have_bbox = false;
+    const char *b = NULL;
+    size_t bsize = cache_get(dbis->dcache, (void **)&b, hash, CACHE_OBJ_BOUNDS);
+    if (bsize) {
+	if (bsize != (sizeof(bmin) + sizeof(bmax))) {
+	    bu_log("Incorrect data size found loading cached bounds data for %s!\n", dp->d_namep);
+	} else {
+	    memcpy(&bmin, b, sizeof(bmin));
+	    b += sizeof(bmin);
+	    memcpy(&bmax, b, sizeof(bmax));
+	    //bu_log("cached: bmin: %f %f %f bbmax: %f %f %f\n", V3ARGS(bmin), V3ARGS(bmax));
+	    have_bbox = true;
+	}
+    }
+    cache_done(dbis->dcache);
+
+    if (have_bbox) {
+	VMOVE(bb_min, bmin);
+	VMOVE(bb_max, bmax);
+	bb_valid = true;
+    } else {
+	// If we don't have the info, just set bb defaults to invalid values.
+	VSETALL(bb_min, INFINITY);
+	VSETALL(bb_max, -INFINITY);
+	bb_valid = false;
+    }
 }
 
 GObj::~GObj()
@@ -334,7 +364,7 @@ GObj::GenCombInstances()
 	return;
 
     struct rt_db_internal in;
-    if (rt_db_get_internal(&in, dp, d->dbip, NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&in, dp, d->dbip, NULL, d->res) < 0)
 	return;
     struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
     if (!comb->tree)
@@ -352,6 +382,70 @@ GObj::bbox(vect_t *min, vect_t *max)
 {
     if (!min || !max)
 	return;
+
+    if (c.size()) {
+	// It's a comb - iterate over all the comb instances and incorporate
+	// all their bounding boxes.  We don't trust pre-calculated comb bbox
+	// values since their child objects may have changed.
+    }
+
+    // Not a comb - if we're cached, just report that value.
+    if (bb_valid) {
+	VMOVE(*min, bb_min);
+	VMOVE(*max, bb_max);
+	return;
+    }
+
+    // There is a second cache we can ask about this - the LoD cache may also
+    // know what we need.
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && d->gedp->ged_lod) {
+	unsigned long long key = bv_mesh_lod_key_get(d->gedp->ged_lod, dp->d_namep);
+	if (key) {
+	    struct bv_mesh_lod *lod = bv_mesh_lod_create(d->gedp->ged_lod, key);
+	    if (lod) {
+		vect_t bmin, bmax;
+		VMOVE(bmin, lod->bmin);
+		VMOVE(bmax, lod->bmax);
+
+		// Update drawing cache with LoD cache values
+		std::stringstream s;
+		s.write(reinterpret_cast<const char *>(&bmin), sizeof(bmin));
+		s.write(reinterpret_cast<const char *>(&bmax), sizeof(bmax));
+		cache_write(d->dcache, hash, CACHE_OBJ_BOUNDS, s);
+
+		VMOVE(bb_min, bmin);
+		VMOVE(bb_max, bmax);
+		bb_valid = true;
+		return;
+	    }
+	}
+    }
+
+    // Not cached - need to ask librt.  This is the slow operation.
+    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    mat_t m;
+    MAT_IDN(m);
+    vect_t bmin, bmax;
+    int bret = rt_bound_instance(&bmin, &bmax, dp, d->dbip, &ttol, &tol, &m, d->res);
+    if (bret != -1) {
+
+	// Update drawing cache (TODO - probably should tell LoD cache as well?)
+	std::stringstream s;
+	s.write(reinterpret_cast<const char *>(&bmin), sizeof(bmin));
+	s.write(reinterpret_cast<const char *>(&bmax), sizeof(bmax));
+	cache_write(d->dcache, hash, CACHE_OBJ_BOUNDS, s);
+	
+	VMOVE(bb_min, bmin);
+	VMOVE(bb_max, bmax);
+	bb_valid = true;
+    }
+
+    // Local calculation complete - process min and max if we found a box
+    if (bb_valid) {
+	VMINMAX(*min, *max, bb_min);
+	VMINMAX(*min, *max, bb_max);
+    }
 }
 
 
