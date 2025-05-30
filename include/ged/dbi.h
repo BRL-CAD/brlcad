@@ -57,6 +57,10 @@ class GED_EXPORT CombInst {
     public:
 	CombInst(DbiState *dbis, const char *p_name, const char *o_name, unsigned long long icnt, int i_op, matp_t i_mat);
 
+	// Return the BRL-CAD op type of this instance
+	// (DB_OP_UNION, DB_OP_SUBTRACT, DB_OP_INTERSECT)
+	db_op_t bool_op();
+
 	// Calculate Bounding Box of the instance (i.e. oname's bounding box
 	// positioned using the m matrix of this instance.)
 	void bbox(vect_t *min, vect_t *max);
@@ -75,8 +79,9 @@ class GED_EXPORT CombInst {
 	// GObj c map that stores CombInst containers.
 	unsigned long long ihash;
 
-	// Boolean op of instance (Union, Subtraction or Intersection)
-	int bool_op;
+	// Boolean op of instance
+	// (OP_UNION, OP_SUBTRACT or OP_INTERSECT)
+	int boolean_op;
 
 	// Instance matrix (default is MAT_IDN)
 	mat_t m;
