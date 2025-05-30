@@ -458,21 +458,14 @@ DbiState::valid_hash(unsigned long long phash)
     if (!phash)
 	return false;
 
-    // First, see if the hash is an instance string
-    if (i_str.find(phash) != i_str.end())
+    // There are two possibilities for a hash to be valid - it can
+    // be either a GObj hash or a CombInst hash.  Most of the time
+    // it will be a comb instance, so try that first
+
+    if (combinsts.find(phash) != combinsts.end())
 	return true;
 
-    // If we have potentially obsolete names, check those
-    // before trying the dp (which may no longer be invalid)
-    if (old_names.size() && old_names.find(phash) != old_names.end())
-	return true;
-
-    // If not, try the directory pointer
-    if (d_map.find(phash) != d_map.end())
-	return true;
-
-    // Last option - invalid string
-    if (invalid_entry_map.find(phash) != invalid_entry_map.end())
+    if (gobjs.find(phash) != gobjs.end())
 	return true;
 
     return false;
@@ -494,28 +487,15 @@ DbiState::print_hash(struct bu_vls *opath, unsigned long long phash)
     if (!phash)
 	return false;
 
-    // First, see if the hash is an instance string
-    if (i_str.find(phash) != i_str.end()) {
-	bu_vls_printf(opath, "%s", i_str[phash].c_str());
+    if (combinsts.find(phash) != combinsts.end()) {
+	CombInst *c = combinsts[phash];
+	bu_vls_printf(opath, "%s", (c->iname.length()) ? c->iname.c_str() : c->oname.c_str());
 	return true;
     }
 
-    // If we have potentially obsolete names, check those
-    // before trying the dp (which may no longer be invalid)
-    if (old_names.size() && old_names.find(phash) != old_names.end()) {
-	bu_vls_printf(opath, "%s", old_names[phash].c_str());
-	return true;
-    }
-
-    // If not, try the directory pointer
-    if (d_map.find(phash) != d_map.end()) {
-	bu_vls_printf(opath, "%s", d_map[phash]->d_namep);
-	return true;
-    }
-
-    // Last option - invalid string
-    if (invalid_entry_map.find(phash) != invalid_entry_map.end()) {
-	bu_vls_printf(opath, "%s", invalid_entry_map[phash].c_str());
+    if (gobjs.find(phash) != gobjs.end()) {
+	GObj *g = gobjs[phash];
+	bu_vls_printf(opath, "%s", g->name.c_str());
 	return true;
     }
 
@@ -535,14 +515,9 @@ DbiState::print_path(struct bu_vls *opath, std::vector<unsigned long long> &path
 	if (pmax && i == pmax)
 	    break;
 	if (i > 0 && verbose) {
-	    std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, std::vector<fastf_t>>>::iterator m_it;
-	    m_it = matrices.find(path[i-1]);
-	    if (m_it != matrices.end()) {
-		std::unordered_map<unsigned long long, std::vector<fastf_t>>::iterator mv_it;
-		mv_it = m_it->second.find(path[i]);
-		if (mv_it == m_it->second.end()) {
+	    if (combinsts.find(path[i]) != combinsts.end()) {
+		if (!bn_mat_is_identity(combinsts[path[i]]->m))
 		    bu_vls_printf(opath, "[M]");
-		}
 	    }
 	}
 	if (!print_hash(opath, path[i]))
@@ -792,12 +767,9 @@ DbiState::update_dp2(struct directory *dp)
 	// Existing GObj found, remove for regeneration
 	GObj *old_gobj = gobjs[dphash];
 	delete old_gobj;
-	gobjs.erase(dphash);
     }
 
     GObj *g = new GObj(this, dp);
-    gobjs[g->hash] = g;
-
     return g->hash;
 }
 
