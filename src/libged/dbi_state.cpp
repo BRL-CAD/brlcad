@@ -336,8 +336,7 @@ name_deescape(std::string &name)
 // This is a full (and more expensive) check to ensure
 // a path has no cycles anywhere in it.
 //
-// TODO - need to catch instance specifiers here to
-// robustly avoid (e.g.) /a/b@1/c/b@2
+// TODO - this check is broken with new GObj/CombInst approach
 static bool
 path_cyclic(std::vector<unsigned long long> &path)
 {
@@ -359,8 +358,7 @@ path_cyclic(std::vector<unsigned long long> &path)
 // This version of the cyclic check assumes the path entries other than the
 // last one are OK, and checks only against that last entry.
 //
-// TODO - need to catch instance specifiers here to
-// robustly avoid (e.g.) /a/b@1/c/b@2
+// TODO - this check is broken with new GObj/CombInst approach
 static bool
 path_addition_cyclic(std::vector<unsigned long long> &path)
 {
@@ -400,53 +398,47 @@ DbiState::digest_path(const char *path)
     std::vector<std::string> elements;
     path_elements(elements, path);
 
-    // Convert the string elements into hash elements
+    // Convert the string elements into hash elements.
+    // The first element is handled as a gobj - beyond that,
+    // the hash is performed on the parent/child combo to get
+    // the CombInst hash
     std::vector<unsigned long long> phe;
-    struct bu_vls hname = BU_VLS_INIT_ZERO;
-    for (size_t i = 0; i < elements.size(); i++) {
-	bu_vls_sprintf(&hname, "%s", elements[i].c_str());
-	phe.push_back(bu_data_hash(bu_vls_cstr(&hname), bu_vls_strlen(&hname)*sizeof(char)));
+    phe.push_back(bu_data_hash(elements[0].c_str(), strlen(elements[0].c_str())*sizeof(char)));
+    for (size_t i = 1; i < elements.size(); i++) {
+	unsigned long long lhash = bu_data_hash(elements[i].c_str(), strlen(elements[0].c_str())*sizeof(char));
+	std::vector<unsigned long long> lvec;
+	lvec.push_back(phe[0]);
+	lvec.push_back(lhash);
+	phe.push_back(bu_data_hash(lvec.data(), lvec.size() * sizeof(unsigned long long)));
     }
-    bu_vls_free(&hname);
 
     // If we're cyclic, path is invalid
     if (path_cyclic(phe))
 	return std::vector<unsigned long long>();
 
-    // parent/child relationship validate
+    // Validate root path element
     unsigned long long phash = phe[0];
     if (gobjs.find(phash) == gobjs.end()) {
-	bu_log("Invalid path element: %s\n", elements[0].c_str());
+	bu_log("Invalid first path element (must be GObj): %s\n", elements[0].c_str());
 	return std::vector<unsigned long long>();
     }
-    GObj *g = gobjs[phash];
     for (size_t i = 1; i < phe.size(); i++) {
-	// Multiple element paths have to involve combs.  g is the
-	// parent of this element, so check its CombInt set to see
-	// if it has this element.
-	phash = phe[i];
-	if (g->c.find(phash) == g->c.end()) {
-	    bu_log("Invalid path element: %s\n", elements[i].c_str());
+	if (combinsts.find(phe[i]) == combinsts.end()) {
+	    bu_log("CombInst not found for path element # %zd %s/%s\n", i, elements[i-1].c_str(), elements[i].c_str());
 	    return std::vector<unsigned long long>();
 	}
 
-	// If this is the leaf element, we don't need GObj to act as
-	// a new parent
-	if (i == phe.size() - 1)
-	    break;
+	CombInst *ci = combinsts[phe[i]];
 
-	// Path element valid, but more to go - now we need the GObj of the
-	// element's object component to continue the validation.  CombInst
-	// stores the info we need in ohash, even if the path specifier was for
-	// a non-unique instance rather than a straight-up object name.  That
-	// saves us the trouble of trying to parse the original name out of a
-	// unique instance specification string.
-	CombInst *c = g->c[phash];
-	if (gobjs.find(c->ohash) == gobjs.end()) {
-	    bu_log("No GObj found for path element %s\n", elements[i].c_str());
+	// Verify that ci's chash matches phash
+	if (ci->chash != phash) {
+	    bu_log("Invalid comb instance - chash mismatch %s/%s\n", elements[i-1].c_str(), elements[i].c_str());
 	    return std::vector<unsigned long long>();
 	}
-	g = gobjs[c->ohash];
+
+	// The ohash of this comb instance now becomes
+	// the parent for the next check
+	phash = ci->ohash;
     }
 
     return phe;
@@ -776,28 +768,40 @@ DbiState::update_dp2(struct directory *dp)
 bool
 DbiState::path_color(struct bu_color *c, std::vector<unsigned long long> &elements)
 {
+    const struct mater *mp;
+    std::vector<GObj *> cgs;
+    // The first element in the path is a GObj
+    cgs.push_back(gobjs[elements[0]]);
+    // Any remaining elements are CombInst.  We want the GObj associated
+    // with their oname to pull the region_id
+    for (size_t i = 1; i < elements.size(); i++) {
+	// If we hit a CombInt without the associated GObj, skip
+	// TODO - should we default to red?  This indicates something
+	// is broken along the path...
+	if (combinsts.find(elements[i]) == combinsts.end())
+	    continue;
+	if (gobjs.find(combinsts[elements[i]]->ohash) == gobjs.end())
+	    continue;
+	cgs.push_back(gobjs[combinsts[elements[i]]->ohash]);
+    }
+
     // This may not be how we'll always want to do this, but at least for the
     // moment (to duplicate observed MGED behavior) the first region_id seen
     // along the path with an active color in rt_material_head trumps all other
     // color values set by any other means.
     if (rt_material_head() != MATER_NULL) {
-	std::unordered_map<unsigned long long, int>::iterator r_it;
-	int path_region_id;
-	for (size_t i = 0; i < elements.size(); i++) {
-	    r_it = region_id.find(elements[i]);
-	    if (r_it == region_id.end())
-		continue;
-	    path_region_id = r_it->second;
-	    const struct mater *mp;
-	    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
-		if (path_region_id > mp->mt_high || path_region_id < mp->mt_low)
-		    continue;
-		unsigned char mt[3];
-		mt[0] = mp->mt_r;
-		mt[1] = mp->mt_g;
-		mt[2] = mp->mt_b;
-		bu_color_from_rgb_chars(c, mt);
-		return true;
+	for (size_t i = 0; i < cgs.size(); i++) {
+	    if (cgs[i]->region_id >= 0) {
+		for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+		    if (cgs[i]->region_id > mp->mt_high || cgs[i]->region_id < mp->mt_low)
+			continue;
+		    unsigned char mt[3];
+		    mt[0] = mp->mt_r;
+		    mt[1] = mp->mt_g;
+		    mt[2] = mp->mt_b;
+		    bu_color_from_rgb_chars(c, mt);
+		    return true;
+		}
 	    }
 	}
     }
@@ -805,16 +809,12 @@ DbiState::path_color(struct bu_color *c, std::vector<unsigned long long> &elemen
     // Next, check for an inherited color.  If we have one (the behavior seen in MGED
     // appears to require a comb with both inherit and a color value set to override
     // lower colors) then we are done.
-    std::unordered_map<unsigned long long, int>::iterator ci_it;
-    std::unordered_map<unsigned long long, unsigned int>::iterator rgb_it;
-    for (size_t i = 0; i < elements.size(); i++) {
-	ci_it = c_inherit.find(elements[i]);
-	if (ci_it == c_inherit.end())
+    for (size_t i = 0; i < cgs.size(); i++) {
+	if (!cgs[i]->c_inherit)
 	    continue;
-	rgb_it = rgb.find(elements[i]);
-	if (rgb_it == rgb.end())
+	if (cgs[i]->rgb < 0)
 	    continue;
-	int_color(c, rgb_it->second);
+	int_color(c, cgs[i]->rgb);
 	return true;
     }
 
@@ -822,12 +822,10 @@ DbiState::path_color(struct bu_color *c, std::vector<unsigned long long> &elemen
     // lowest set color wins.  Note that a region flag doesn't automatically
     // override a lower color level - i.e. there is no implicit inherit flag
     // in a region being set on a comb.
-    std::vector<unsigned long long>::reverse_iterator v_it;
-    for (v_it = elements.rbegin(); v_it != elements.rend(); v_it++) {
-	rgb_it = rgb.find(*v_it);
-	if (rgb_it == rgb.end())
+    for (long long i = cgs.size()-1; i >= 0; i--) {
+	if (cgs[i]->rgb < 0)
 	    continue;
-	int_color(c, rgb_it->second);
+	int_color(c, cgs[i]->rgb);
 	return true;
     }
 
