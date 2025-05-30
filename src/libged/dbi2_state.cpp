@@ -63,7 +63,7 @@ CombInst::CombInst(DbiState *dbis, const char *p_name, const char *o_name, unsig
     oname = std::string(o_name);
     iname = std::string("");
     id = icnt;
-    bool_op = i_op;
+    boolean_op = i_op;
     if (i_mat) {
 	MAT_COPY(m, i_mat);
     } else {
@@ -100,6 +100,15 @@ CombInst::CombInst(DbiState *dbis, const char *p_name, const char *o_name, unsig
     }
 }
 
+db_op_t
+CombInst::bool_op()
+{
+    if (boolean_op == OP_SUBTRACT)
+	return DB_OP_SUBTRACT;
+    if (boolean_op == OP_INTERSECT)
+	return DB_OP_INTERSECT;
+    return DB_OP_UNION;
+}
 
 void
 CombInst::bbox(vect_t *min, vect_t *max)
