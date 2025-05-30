@@ -71,13 +71,17 @@ class GED_EXPORT CombInst {
 	std::string iname; // Name of instanced object with suffix making it unique in the comb tree.  Empty if not needed.
 	unsigned long long id = 0; // In cases where iname is not unique in the comb, increment this to provide uniqueness
 
+	// Hash of cname.  Useful for looking up GObj associated with the
+	// parent database obj.
+	unsigned long long chash;
+
 	// Hash of oname.  Useful for looking up GObj associated with the
 	// database obj named by the instance, if one is present.
 	unsigned long long ohash;
 
-	// Hash of the unique identifier for this instance - the iname string
-	// hash if iname is non-empty, else ohash.  Used as the key for the
-	// GObj c map that stores CombInst containers.
+	// Unique identifier hash for this instance.  Used as the key for the
+	// GObj c map that stores CombInst containers as well as the global
+	// CombInst identifier in DbiState.
 	unsigned long long ihash;
 
 	// Boolean op of instance
@@ -88,8 +92,8 @@ class GED_EXPORT CombInst {
 	mat_t m;
 
 	// Parent database state info.  We store this so that a CombInst can (in principle)
-	// unpack anything it needs to - for example, to get the GObj of the parent it can
-	// calculate the hash of cname and do a lookup in the d->gobjs map.
+	// unpack anything it needs to - for example, to get the GObj of the parent:
+	// GObj *parent_obj = d->gobjs[chash].
 	DbiState *d;
 };
 
@@ -104,16 +108,16 @@ class GED_EXPORT GObj {
 	void bbox(vect_t *min, vect_t *max);
 
 	std::string name;
-	unsigned long long hash;
+	unsigned long long hash = 0;
 
 	// Standard attributes that can impact drawing which are normally only
 	// accessible by loading in the attributes of the object.  We stash
 	// them here to have the information available without having to
 	// interrogate the on-disk data.
-	int c_inherit; // color inheritance flag
-	unsigned int rgb; // color RGB value  (r + (g << 8) + (b << 16))
-	int region_id; // region_id
-	int region_flag; // region
+	int c_inherit = 0; // color inheritance flag
+	long int rgb = -1; // color RGB value  (r + (g << 8) + (b << 16))
+	int region_id = -1; // region_id
+	int region_flag = 0; // region
 
 	// If the object is a comb, these two containers are used to record the tree info.
 	// Otherwise they are not used
@@ -123,17 +127,17 @@ class GED_EXPORT GObj {
 	std::vector<CombInst *> cv;
 
 	// Parent database state info
-	DbiState *d;
+	DbiState *d = NULL;
 
 	// librt directory pointer
-	struct directory *dp;
+	struct directory *dp = NULL;
 
 
     private:
 
 	vect_t bb_min;
 	vect_t bb_max;
-	bool bb_valid;
+	bool bb_valid = false;
 
 	void GenCombInstances();
 };
@@ -406,11 +410,8 @@ class GED_EXPORT DbiState {
 	std::vector<std::string> list_selection_sets();
 
 
-
 	std::unordered_map<unsigned long long, GObj *> gobjs;
 	std::unordered_map<unsigned long long, CombInst *> combinsts;
-
-
 
 	// These maps are the ".g ground truth" of the comb structures - the set
 	// associated with each hash contains all the child hashes from the comb
