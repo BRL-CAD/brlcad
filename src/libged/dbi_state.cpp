@@ -775,9 +775,10 @@ DbiState::update_dp2(struct directory *dp, int reset)
     if (reset)
 	bu_log("todo - reset\n");
 
-    GObj g(dbip, dp, dcache);
+    GObj *g = new GObj(dbip, dp, dcache);
+    gobjs[g->hash] = g;
 
-    return g.hash;
+    return g->hash;
 }
 
 bool
