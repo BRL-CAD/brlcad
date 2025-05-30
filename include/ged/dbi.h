@@ -53,12 +53,18 @@
 class GED_EXPORT CombInst {
 
     public:
+	CombInst(const char *p_name, const char *o_name, unsigned long long icnt, int i_op, matp_t i_mat);
+
 	void bbox(vect_t *min, vect_t *max);
+
+	// Hash of the unique identifier for this instance - either the oname hash or (if non-empty) the iname hash.
+	// Used as the key for the GObj c map
+	unsigned long long ihash;
 
 	std::string cname; // Name of parent comb
 	std::string oname; // Name of instanced object
 	std::string iname; // Name of instanced object with suffix making it unique in the comb tree.  Empty if not needed.
-	int id = 0; // In cases where iname is not unique in the comb, increment this to provide uniqueness
+	unsigned long long id = 0; // In cases where iname is not unique in the comb, increment this to provide uniqueness
 
 	int bool_op;
 	mat_t m;
@@ -88,7 +94,7 @@ class GED_EXPORT GObj {
 
 	// If the object is a comb, these two containers are used to record the tree info.
 	// Otherwise they are not used
-	std::unordered_set<CombInst *> c;
+	std::unordered_map<unsigned long long, CombInst *> c;
 	// The vector preserves comb ordering for listing.
 	// Note: to match MGED's 'l' printing you need to use a reverse_iterator
 	std::vector<CombInst *> cv;

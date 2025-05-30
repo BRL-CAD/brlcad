@@ -771,16 +771,13 @@ DbiState::update_dp2(struct directory *dp, int reset)
     if (dp->d_flags & DB_LS_HIDDEN)
 	return 0;
 
-    // Set up to go from hash back to name
-    unsigned long long hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-
     // TODO - look up to see if we already have a GObj for this dp 
     if (reset)
 	bu_log("todo - reset\n");
 
     GObj g(dbip, dp, dcache);
 
-    return hash;
+    return g.hash;
 }
 
 bool
