@@ -88,9 +88,15 @@ CombInst::CombInst(const char *p_name, const char *o_name, unsigned long long ic
 	bu_vls_free(&iname_c);
     }
 
+    // Calculate ohash
+    ohash = bu_data_hash(oname.c_str(), strlen(oname.c_str())*sizeof(char));
+
     // Have the necessary info - calculate Comb Instance hash
-    const char *ostr = (iname.length()) ? iname.c_str() : oname.c_str();
-    ihash = bu_data_hash(ostr, strlen(ostr)*sizeof(char));
+    if (iname.length()) {
+	ihash = bu_data_hash(iname.c_str(), strlen(iname.c_str())*sizeof(char));
+    } else {
+	ihash = ohash;
+    }
 }
 
 

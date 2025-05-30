@@ -57,14 +57,19 @@ class GED_EXPORT CombInst {
 
 	void bbox(vect_t *min, vect_t *max);
 
-	// Hash of the unique identifier for this instance - either the oname hash or (if non-empty) the iname hash.
-	// Used as the key for the GObj c map
-	unsigned long long ihash;
-
 	std::string cname; // Name of parent comb
 	std::string oname; // Name of instanced object
 	std::string iname; // Name of instanced object with suffix making it unique in the comb tree.  Empty if not needed.
 	unsigned long long id = 0; // In cases where iname is not unique in the comb, increment this to provide uniqueness
+
+	// Hash of oname.  Useful for looking up GObj associated with the
+	// database obj named by the instance, if one is present.
+	unsigned long long ohash;
+
+	// Hash of the unique identifier for this instance - the iname string
+	// hash if iname is non-empty, else ohash.  Used as the key for the
+	// GObj c map that stores CombInst containers.
+	unsigned long long ihash;
 
 	int bool_op;
 	mat_t m;
@@ -373,6 +378,16 @@ class GED_EXPORT DbiState {
 
 	void put_selected_state(const char *sname);
 	std::vector<std::string> list_selection_sets();
+
+
+
+	std::unordered_map<unsigned long long, GObj *> gobjs;
+
+
+
+
+
+
 
 	// These maps are the ".g ground truth" of the comb structures - the set
 	// associated with each hash contains all the child hashes from the comb
