@@ -55,6 +55,45 @@ extern "C" {
 #include "ged/view.h"
 #include "./ged_private.h"
 
+
+CombInst::CombInst(const char *p_name, const char *o_name, unsigned long long icnt, int i_op, matp_t i_mat)
+{
+    cname = std::string(p_name);
+    oname = std::string(o_name);
+    iname = std::string("");
+    id = icnt;
+    bool_op = i_op;
+    if (i_mat) {
+	MAT_COPY(m, i_mat);
+    } else {
+	MAT_IDN(m);
+    }
+
+    // The instance name is supposed to refer to another object in the
+    // database, but there isn't actually anything that guarantees a comb
+    // instance reference name is actually a database object - accordingly, we
+    // don't do any checking for that.  What we *do* need, however, is a name
+    // for the instance that is unique even within the local comb tree - and
+    // the object name itself is NOT guaranteed to be unique.  We thus use the
+    // counting of the instances maintained by the tree walk to construct
+    // unique instance reference strings for any name encountered multiple
+    // times.
+    if (icnt > 1) {
+	// If we've got multiple instances of the same object in the tree,
+	// hash the string labeling the instance and map it to the correct
+	// parent comb so we can associate it with the tree contents
+	struct bu_vls iname_c = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&iname_c, "%s@%llu", o_name, icnt - 1);
+	iname = std::string(bu_vls_cstr(&iname_c));
+	bu_vls_free(&iname_c);
+    }
+
+    // Have the necessary info - calculate Comb Instance hash
+    const char *ostr = (iname.length()) ? iname.c_str() : oname.c_str();
+    ihash = bu_data_hash(ostr, strlen(ostr)*sizeof(char));
+}
+
+
 void
 CombInst::bbox(vect_t *min, vect_t *max)
 {
@@ -208,9 +247,11 @@ GObj::GObj(struct db_i *dbip_i, struct directory *dp_i, struct ged_draw_cache *d
 
 }
 
-
 GObj::~GObj()
 {
+    // Delete comb instances (if any) associated with this object
+    for (size_t i = 0; i < cv.size(); i++)
+	delete cv[i];
 }
 
 struct gobj_walk_data {
@@ -230,39 +271,10 @@ populate_leaf(void *client_data, const char *name, matp_t c_m, int op)
     i_count[chash] += 1;
 
     // Make the CombInst
-    CombInst *c = new CombInst;
-    c->cname = std::string(d->gobj->dp->d_namep);
-    c->oname = std::string(name);
-    c->iname = std::string("");
-    c->id = i_count[chash];
-    c->bool_op = op;
-    if (c_m) {
-	MAT_COPY(c->m, c_m);
-    } else {
-	MAT_IDN(c->m);
-    }
-
-    // The instance name is supposed to refer to another object in the
-    // database, but there isn't actually anything that guarantees a comb
-    // instance reference name is actually a database object - accordingly, we
-    // don't do any checking for that.  What we *do* need, however, is a name
-    // for the instance that is unique even within the local comb tree - and
-    // the object name itself is NOT guaranteed to be unique.  We thus use the
-    // counting of the instances maintained by the tree walk to construct
-    // unique instance reference strings for any name encountered multiple
-    // times.
-    if (i_count[chash] > 1) {
-	// If we've got multiple instances of the same object in the tree,
-	// hash the string labeling the instance and map it to the correct
-	// parent comb so we can associate it with the tree contents
-	struct bu_vls iname_c = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&iname_c, "%s@%llu", name, i_count[chash] - 1);
-	c->iname = std::string(bu_vls_cstr(&iname_c));
-	bu_vls_free(&iname_c);
-    }
+    CombInst *c = new CombInst(d->gobj->dp->d_namep, name, i_count[chash], op, c_m);
 
     // Add CombInst to the parent GObj containers
-    d->gobj->c.insert(c);
+    d->gobj->c[c->ihash] = c;
     d->gobj->cv.push_back(c);
 }
 
