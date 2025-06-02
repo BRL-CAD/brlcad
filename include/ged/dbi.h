@@ -66,29 +66,32 @@ class GED_EXPORT CombInst {
 	// positioned using the m matrix of this instance.)
 	void bbox(vect_t *min, vect_t *max);
 
+	// Object name and instance name strings
 	std::string cname; // Name of parent comb
 	std::string oname; // Name of instanced object
-	std::string iname; // Name of instanced object with suffix making it unique in the comb tree.  Empty if not needed.
-	unsigned long long id = 0; // In cases where iname is not unique in the comb, increment this to provide uniqueness
+	std::string iname; // Name of instanced object with id-based suffix making it unique in the comb tree.  Empty if not needed.
+	unsigned long long id = 0; // In cases where iname is not unique in the comb, this is incremented to provide uniqueness
 
-	// Hash of cname.  Useful for looking up GObj associated with the
-	// parent database obj.
+	// Hash of parent comb name cname.  Useful for looking up GObj
+	// associated with the parent database comb.
 	unsigned long long chash;
 
-	// Hash of oname.  Useful for looking up GObj associated with the
-	// database obj named by the instance, if one is present.
+	// Hash of instance object name oname.  Useful for looking up GObj
+	// associated with the database obj named by the instance, if one is
+	// present. (A comb may name a non-existent object, so the instanced
+	// object string to valid database object mapping is NOT guaranteed.)
 	unsigned long long ohash;
 
-	// Unique identifier hash for this instance.  Used as the key for the
-	// GObj c map that stores CombInst containers as well as the global
-	// CombInst identifier in DbiState.
+	// Hash of Unique identifier string for this instance.  Used as the key
+	// for the GObj c map that stores CombInst containers as well as the
+	// global CombInst identifier in DbiState.
 	unsigned long long ihash;
 
 	// Boolean op of instance
 	// (OP_UNION, OP_SUBTRACT or OP_INTERSECT)
 	int boolean_op;
 
-	// Instance matrix (default is MAT_IDN)
+	// Instance matrix (default is MAT_ZERO)
 	mat_t m;
 	bool non_default_matrix = false;
 
