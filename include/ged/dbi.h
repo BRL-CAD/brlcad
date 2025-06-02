@@ -134,7 +134,6 @@ class GED_EXPORT GObj {
 	// librt directory pointer
 	struct directory *dp = NULL;
 
-
     private:
 
 	vect_t bb_min;
@@ -502,6 +501,9 @@ class GED_EXPORT DbiState {
 	struct ged_draw_cache *dcache = NULL;
 	struct resource *res = NULL;
     private:
+	bool path_cyclic(std::vector<unsigned long long> &path);
+	bool path_addition_cyclic(std::vector<unsigned long long> &path);
+
 	void gather_cyclic(
 		std::unordered_set<unsigned long long> &cyclic,
 		unsigned long long c_hash,
