@@ -335,21 +335,66 @@ name_deescape(std::string &name)
 
 // This is a full (and more expensive) check to ensure
 // a path has no cycles anywhere in it.
-//
-// TODO - this check is broken with new GObj/CombInst approach
-static bool
-path_cyclic(std::vector<unsigned long long> &path)
+bool
+DbiState::path_cyclic(std::vector<unsigned long long> &path)
 {
+    unsigned long long chash, phash;
+    std::unordered_map<unsigned long long, GObj *>::iterator r;
+    std::unordered_map<unsigned long long, CombInst *>::iterator c, p;
+
+    // A single GObj toplevel path can't be cyclic
     if (path.size() == 1)
 	return false;
+
+    // Make sure we have a valid root GObj
+    r =  gobjs.find(path[0]);
+    if (r == gobjs.end()) {
+	// If we have an invalid GObj hash, we can't properly test - return
+	// the worst-case assumption, which is true (path is cyclic)
+	return true;
+    }
+
+    // Start with the last entry in the path
     int i = path.size() - 1;
+
     while (i > 0) {
+
+	c =  combinsts.find(path[i]);
+	if (c == combinsts.end()) {
+	    // If we have an invalid Comb hash, we can't properly test - return
+	    // the worst-case assumption, which is true (path is cyclic)
+	    return true;
+	}
+
+	chash = c->second->ohash;
 	int j = i - 1;
+
 	while (j >= 0) {
-	    if (path[i] == path[j])
+
+	    if (j > 0) {
+
+		p = combinsts.find(path[j]);
+
+		if (p == combinsts.end()) {
+		    // If we have an invalid Comb hash, we can't properly test - return
+		    // the worst-case assumption, which is true (path is cyclic)
+		    return true;
+		}
+
+		phash = p->second->ohash;
+
+	    } else {
+
+		phash = r->second->hash;
+
+	    }
+
+	    if (chash == phash)
 		return true;
+
 	    j--;
 	}
+
 	i--;
     }
     return false;
@@ -357,34 +402,64 @@ path_cyclic(std::vector<unsigned long long> &path)
 
 // This version of the cyclic check assumes the path entries other than the
 // last one are OK, and checks only against that last entry.
-//
-// TODO - this check is broken with new GObj/CombInst approach
-static bool
-path_addition_cyclic(std::vector<unsigned long long> &path)
+bool
+DbiState::path_addition_cyclic(std::vector<unsigned long long> &path)
 {
+    unsigned long long chash, phash;
+    std::unordered_map<unsigned long long, GObj *>::iterator r;
+    std::unordered_map<unsigned long long, CombInst *>::iterator c, p;
+
+    // A single GObj toplevel path can't be cyclic
     if (path.size() == 1)
 	return false;
-    int new_entry = path.size() - 1;
-    int i = new_entry - 1;
-    while (i >= 0) {
-	if (path[new_entry] == path[i])
+
+    // Make sure we have a valid root GObj
+    r =  gobjs.find(path[0]);
+    if (r == gobjs.end()) {
+	// If we have an invalid GObj hash, we can't properly test - return
+	// the worst-case assumption, which is true (path is cyclic)
+	return true;
+    }
+
+    // Get the last entry in the path
+    c =  combinsts.find(path[path.size() - 1]);
+    if (c == combinsts.end()) {
+	// If we have an invalid Comb hash, we can't properly test - return
+	// the worst-case assumption, which is true (path is cyclic)
+	return true;
+    }
+
+    chash = c->second->ohash;
+
+    int j = path.size() - 2;
+
+    while (j >= 0) {
+
+	if (j > 0) {
+
+	    p = combinsts.find(path[j]);
+
+	    if (p == combinsts.end()) {
+		// If we have an invalid Comb hash, we can't properly test - return
+		// the worst-case assumption, which is true (path is cyclic)
+		return true;
+	    }
+
+	    phash = p->second->ohash;
+
+	} else {
+
+	    phash = r->second->hash;
+
+	}
+
+	if (chash == phash)
 	    return true;
-	i--;
+
+	j--;
     }
+
     return false;
-}
-
-
-static size_t
-path_elements(std::vector<std::string> &elements, const char *path)
-{
-    std::vector<std::string> substrs;
-    fp_path_split(substrs, path);
-    for (size_t i = 0; i < substrs.size(); i++) {
-	std::string cleared = name_deescape(substrs[i]);
-	elements.push_back(cleared);
-    }
-    return elements.size();
 }
 
 std::vector<unsigned long long>
@@ -395,8 +470,12 @@ DbiState::digest_path(const char *path)
 	return std::vector<unsigned long long>();
 
     // Digest the string into individual path elements
-    std::vector<std::string> elements;
-    path_elements(elements, path);
+    std::vector<std::string> elements, substrs;
+    fp_path_split(substrs, path);
+    for (size_t i = 0; i < substrs.size(); i++) {
+	std::string cleared = name_deescape(substrs[i]);
+	elements.push_back(cleared);
+    }
 
     // Convert the string elements into hash elements.
     // The first element is handled as a gobj - beyond that,
