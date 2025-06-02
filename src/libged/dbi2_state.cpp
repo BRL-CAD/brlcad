@@ -204,6 +204,22 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i)
 
     unsigned int cval = INT_MAX;
     bool need_cval = cache_get_uint(dbis->dcache, &cval, hash, CACHE_COLOR) ;
+    if (!need_cval) {
+	// Unpack the cache cval into a bu_color
+	int r, g, b;
+	r = cval & 0xFF;
+	g = (cval >> 8) & 0xFF;
+	b = (cval >> 16) & 0xFF;
+
+	unsigned char lrgb[3];
+	lrgb[0] = (unsigned char)r;
+	lrgb[1] = (unsigned char)g;
+	lrgb[2] = (unsigned char)b;
+
+	bu_color_from_rgb_chars(&color, lrgb);
+
+	color_set = true;
+    }
 
     // If we have at least one case where we're going to need to crack the
     // attributes, do it now.
@@ -240,22 +256,24 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i)
 	// (Note that the rt_material_head colors and a region_id may override
 	// this, as might a parent comb with color and the inherit flag both set.)
 	if (need_cval) {
-	    struct bu_color mc = BU_COLOR_INIT_ZERO;
 	    const char *color_val = bu_avs_get(&c_avs, "color");
 	    if (!color_val)
 		color_val = bu_avs_get(&c_avs, "rgb");
-	    if (color_val){
-		bu_opt_color(NULL, 1, &color_val, (void *)&mc);
-		int cr, cg, cb;
-		bu_color_to_rgb_ints(&mc, &cr, &cg, &cb);
-		cval = cr + (cg << 8) + (cb << 16);
-		bu_log("have color: %u\n", cval);
-	    }
+	    if (color_val) {
+		bu_opt_color(NULL, 1, &color_val, (void *)&color);
+		color_set = true;
 
-	    // cval is an unsigned int, not an int
-	    std::stringstream s;
-	    s.write(reinterpret_cast<const char *>(&cval), sizeof(cval));
-	    cache_write(dbis->dcache, hash, CACHE_COLOR, s);
+		// Serialize for cache
+		int r, g, b;
+		bu_color_to_rgb_ints(&color, &r, &g, &b);
+		unsigned int colors = r + (g << 8) + (b << 16);
+
+		// Writing an unsigned int, not an int, so we don't use the
+		// cache_write_int func here
+		std::stringstream s;
+		s.write(reinterpret_cast<const char *>(&colors), sizeof(colors));
+		cache_write(dbis->dcache, hash, CACHE_COLOR, s);
+	    }
 	}
 
 	// Done with attributes
@@ -272,13 +290,12 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i)
     if (region_flag && attr_region_id == -1)
 	attr_region_id = 0;
 
-    // Attributes reading done - assign values to class members
+    // Attributes reading done - assign values to class members.  Color
+    // is already handled, so we don't need to redo it here.
     if (attr_region_id != -1)
 	region_id = attr_region_id;
     if (color_inherit)
 	c_inherit = color_inherit;
-    if (cval != INT_MAX)
-	rgb = cval;
     if (rflag != -2)
 	region_flag = rflag;
 

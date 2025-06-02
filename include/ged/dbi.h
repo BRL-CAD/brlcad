@@ -115,9 +115,11 @@ class GED_EXPORT GObj {
 	// them here to have the information available without having to
 	// interrogate the on-disk data.
 	int c_inherit = 0; // color inheritance flag
-	long int rgb = -1; // color RGB value  (r + (g << 8) + (b << 16))
 	int region_id = -1; // region_id
 	int region_flag = 0; // region
+
+	struct bu_color color; // color
+	bool color_set = false;
 
 	// If the object is a comb, these two containers are used to record the tree info.
 	// Otherwise they are not used
@@ -514,8 +516,6 @@ class GED_EXPORT DbiState {
 	void populate_maps(struct directory *dp, unsigned long long phash, int reset);
 	unsigned long long update_dp(struct directory *dp, int reset);
 	unsigned long long update_dp2(struct directory *dp);
-	unsigned int color_int(struct bu_color *);
-	int int_color(struct bu_color *c, unsigned int);
 	struct bu_vls hash_string = BU_VLS_INIT_ZERO;
 	struct bu_vls path_string = BU_VLS_INIT_ZERO;
 };
