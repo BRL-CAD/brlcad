@@ -32,11 +32,6 @@
  *
  * Checks we need:
  *
- * Before and after volume calculations - shouldn't be major changes, particularly
- * if the surface area delta is small.  BoT volume calculations can be done on
- * non-manifold inputs, so we should have a chance at a reasonable before and after
- * comparison.
- *
  * BoT raytracing sanity check - if we're manifold but can't pass the lint BoT
  * raytracing checks (observed case in the wild) then we need to reject the repair.
  */
