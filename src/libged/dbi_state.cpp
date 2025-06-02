@@ -550,36 +550,6 @@ DbiState::hashstr(unsigned long long hash)
     return bu_vls_cstr(&hash_string);
 }
 
-unsigned int
-DbiState::color_int(struct bu_color *c)
-{
-    if (!c)
-	return 0;
-    int r, g, b;
-    bu_color_to_rgb_ints(c, &r, &g, &b);
-    unsigned int colors = r + (g << 8) + (b << 16);
-    return colors;
-}
-
-int
-DbiState::int_color(struct bu_color *c, unsigned int cval)
-{
-    if (!c)
-	return 0;
-
-    int r, g, b;
-    r = cval & 0xFF;
-    g = (cval >> 8) & 0xFF;
-    b = (cval >> 16) & 0xFF;
-
-    unsigned char lrgb[3];
-    lrgb[0] = (unsigned char)r;
-    lrgb[1] = (unsigned char)g;
-    lrgb[2] = (unsigned char)b;
-
-    return bu_color_from_rgb_chars(c, lrgb);
-}
-
 void
 DbiState::clear_cache(struct directory *dp)
 {
@@ -634,12 +604,12 @@ DbiState::update_dp(struct directory *dp, int reset)
     bool need_region_id_avs = true;
     bool need_region_flag_avs = true;
     bool need_color_inherit_avs = true;
-    bool need_cval_avs = true;
+    //bool need_cval_avs = true;
 
     int region_flag = 0;
     int attr_region_id = -1;
     int color_inherit = 0;
-    unsigned int cval = INT_MAX;
+    //unsigned int cval = INT_MAX;
 
     bsize = cache_get(dcache, (void **)&b, hash, CACHE_REGION_ID);
     if (bsize == sizeof(attr_region_id)) {
@@ -662,13 +632,14 @@ DbiState::update_dp(struct directory *dp, int reset)
     }
     cache_done(dcache);
 
+#if 0
     bsize = cache_get(dcache, (void **)&b, hash, CACHE_COLOR);
     if (bsize == sizeof(cval)) {
 	memcpy(&cval, b, sizeof(cval));
 	need_cval_avs = false;
     }
     cache_done(dcache);
-
+#endif
 
     if (need_region_flag_avs) {
 	if (!loaded_avs) {
@@ -714,6 +685,7 @@ DbiState::update_dp(struct directory *dp, int reset)
 	cache_write(dcache, hash, CACHE_INHERIT_FLAG, s);
     }
 
+#if 0
     if (need_cval_avs) {
 	if (!loaded_avs) {
 	    db5_get_attributes(dbip, &c_avs, dp);
@@ -737,6 +709,7 @@ DbiState::update_dp(struct directory *dp, int reset)
 	s.write(reinterpret_cast<const char *>(&cval), sizeof(cval));
 	cache_write(dcache, hash, CACHE_COLOR, s);
     }
+#endif
 
     // If a region flag is set but a region_id is not, there is an implicit
     // assumption that the region_id is to be regarded as 0.  Not sure this
@@ -751,8 +724,8 @@ DbiState::update_dp(struct directory *dp, int reset)
 	region_id[hash] = attr_region_id;
     if (color_inherit)
 	c_inherit[hash] = color_inherit;
-    if (cval != INT_MAX)
-	rgb[hash] = cval;
+    //if (cval != INT_MAX)
+	//rgb[hash] = cval;
 
     // Done with attributes
     if (loaded_avs) {
@@ -849,9 +822,9 @@ DbiState::path_color(struct bu_color *c, std::vector<unsigned long long> &elemen
     for (size_t i = 0; i < cgs.size(); i++) {
 	if (!cgs[i]->c_inherit)
 	    continue;
-	if (cgs[i]->rgb < 0)
+	if (!cgs[i]->color_set)
 	    continue;
-	int_color(c, cgs[i]->rgb);
+	BU_COLOR_CPY(c, &cgs[i]->color);
 	return true;
     }
 
@@ -860,9 +833,9 @@ DbiState::path_color(struct bu_color *c, std::vector<unsigned long long> &elemen
     // override a lower color level - i.e. there is no implicit inherit flag
     // in a region being set on a comb.
     for (long long i = cgs.size()-1; i >= 0; i--) {
-	if (cgs[i]->rgb < 0)
+	if (!cgs[i]->color_set)
 	    continue;
-	int_color(c, cgs[i]->rgb);
+	BU_COLOR_CPY(c, &cgs[i]->color);
 	return true;
     }
 
