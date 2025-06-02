@@ -1017,8 +1017,10 @@ DbiState::get_path_matrix(matp_t m, std::vector<unsigned long long> &elements)
     if (elements.size() < 2)
 	return false;
 
+    // The root GObj doesn't have a matrix, but any comb instances
+    // in the path might - check all of them
     std::vector<CombInst *> cis = get_combinsts(elements);
-    for (size_t i = 1; i < cis.size(); i++) {
+    for (size_t i = 0; i < cis.size(); i++) {
 	if (cis[i]->non_default_matrix) {
 	    mat_t cmat;
 	    bn_mat_mul(cmat, m, cis[i]->m);
