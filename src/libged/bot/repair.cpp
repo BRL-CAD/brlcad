@@ -24,6 +24,21 @@
  * If a BoT is not manifold according to the Manifold library attempt various
  * repair operations to try and produce a manifold output using the specified
  * bot as input.
+ *
+ * TODO - need to do some post repair checks to validate the repair - recent
+ * use cases have shown some gnarly failure modes where the result is manifold
+ * and not particularly different visually, but resulted in a massive volume
+ * change and odd raytracing result due to geometry sort of turning "inside out".
+ *
+ * Checks we need:
+ *
+ * Before and after volume calculations - shouldn't be major changes, particularly
+ * if the surface area delta is small.  BoT volume calculations can be done on
+ * non-manifold inputs, so we should have a chance at a reasonable before and after
+ * comparison.
+ *
+ * BoT raytracing sanity check - if we're manifold but can't pass the lint BoT
+ * raytracing checks (observed case in the wild) then we need to reject the repair.
  */
 
 #include "common.h"
