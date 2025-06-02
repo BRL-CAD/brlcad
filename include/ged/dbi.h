@@ -64,7 +64,7 @@ class GED_EXPORT CombInst {
 
 	// Calculate Bounding Box of the instance (i.e. oname's bounding box
 	// positioned using the m matrix of this instance.)
-	void bbox(vect_t *min, vect_t *max);
+	void bbox(point_t *min, point_t *max);
 
 	// Object name and instance name strings
 	std::string cname; // Name of parent comb
@@ -109,7 +109,7 @@ class GED_EXPORT GObj {
 	GObj(DbiState *d_s, struct directory *dp_i);
 	~GObj();
 
-	void bbox(vect_t *min, vect_t *max);
+	void bbox(point_t *min, point_t *max);
 
 	std::string name;
 	unsigned long long hash = 0;
@@ -140,6 +140,20 @@ class GED_EXPORT GObj {
 
     private:
 
+	// A Comb bounding box depends on the definition of everything
+	// below it in the tree, and consequently the validity of a stored
+	// local version cannot be trusted unless the calling application knows
+	// no potentially problematic editing operations have been made since
+	// the last bbox calculation.  However, if a comb is reused frequently
+	// avoiding the need to recalculated the local instance bbox is a
+	// potential optimization.  USE WITH CARE.
+	//
+	// Any edit operation needs to invalidate not only the immediate GObj
+	// and CombInst cname bboxes but also any Comb object bboxes that
+	// reference those bojects - and then also invalidate the boxes of GObj
+	// combs that reference THOSE combs and so on.  TODO - warrants a
+	// DbiState method whose job is invalidating cached bboxes after an
+	// edit.
 	vect_t bb_min;
 	vect_t bb_max;
 	bool bb_valid = false;
