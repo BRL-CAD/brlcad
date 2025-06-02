@@ -66,8 +66,11 @@ CombInst::CombInst(DbiState *dbis, const char *p_name, const char *o_name, unsig
     boolean_op = i_op;
     if (i_mat) {
 	MAT_COPY(m, i_mat);
+	non_default_matrix = true;
     } else {
-	MAT_IDN(m);
+	// Deliberately set an invalid matrix so we notice if logic doesn't
+	// check non_default_matix
+	MAT_ZERO(m);
     }
 
     // The instance name is supposed to refer to another object in the
