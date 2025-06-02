@@ -601,7 +601,7 @@ DbiState::print_path(struct bu_vls *opath, std::vector<unsigned long long> &path
 	    break;
 	if (i > 0 && verbose) {
 	    if (combinsts.find(path[i]) != combinsts.end()) {
-		if (!bn_mat_is_identity(combinsts[path[i]]->m))
+		if (combinsts[path[i]]->non_default_matrix)
 		    bu_vls_printf(opath, "[M]");
 	    }
 	}
@@ -1019,9 +1019,7 @@ DbiState::get_path_matrix(matp_t m, std::vector<unsigned long long> &elements)
 
     std::vector<CombInst *> cis = get_combinsts(elements);
     for (size_t i = 1; i < cis.size(); i++) {
-	// TODO - should probably have a is_mat_idn flag in GObj so we don't
-	// always have to test it.
-	if (true) {
+	if (cis[i]->non_default_matrix) {
 	    mat_t cmat;
 	    bn_mat_mul(cmat, m, cis[i]->m);
 	    MAT_COPY(m, cmat);

@@ -90,6 +90,7 @@ class GED_EXPORT CombInst {
 
 	// Instance matrix (default is MAT_IDN)
 	mat_t m;
+	bool non_default_matrix = false;
 
 	// Parent database state info.  We store this so that a CombInst can (in principle)
 	// unpack anything it needs to - for example, to get the GObj of the parent:
