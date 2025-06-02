@@ -135,10 +135,35 @@ CombInst::bool_op()
 }
 
 void
-CombInst::bbox(vect_t *min, vect_t *max)
+CombInst::bbox(point_t *min, point_t *max)
 {
     if (!min || !max)
 	return;
+
+    // If there is no GObj associated with the instance object name, this
+    // particular instance can make no contribution to a bounding box.
+    std::unordered_map<unsigned long long, GObj *>::iterator ocomb = d->gobjs.find(ohash);
+    if (ocomb == d->gobjs.end())
+	return;
+
+    // Get the obj matrix
+    point_t lbmin, lbmax;
+    VSETALL(lbmin, INFINITY);
+    VSETALL(lbmax, -INFINITY);
+    ocomb->second->bbox(&lbmin, &lbmax);
+
+    // If we have an instance matrix to apply, do so
+    if (!non_default_matrix) {
+	point_t tbmin, tbmax;
+	MAT4X3PNT(tbmin, m, lbmin);
+	VMOVE(lbmin, tbmin);
+	MAT4X3PNT(tbmax, m, lbmax);
+	VMOVE(lbmax, tbmax);
+    }
+
+    // Build the min/max bbox
+    VMINMAX(*min, *max, lbmin);
+    VMINMAX(*min, *max, lbmax);
 }
 
 static bool
@@ -435,21 +460,29 @@ GObj::GenCombInstances()
 }
 
 void
-GObj::bbox(vect_t *min, vect_t *max)
+GObj::bbox(point_t *min, point_t *max)
 {
     if (!min || !max)
 	return;
 
-    if (c.size()) {
+    if (cv.size()) {
 	// It's a comb - iterate over all the comb instances and incorporate
-	// all their bounding boxes.  We don't trust pre-calculated comb bbox
-	// values since their child objects may have changed.
+	// all their bounding boxes.
+	for (size_t i = 0; i < cv.size(); i++) {
+	    point_t lbmin, lbmax;
+	    VSETALL(lbmin, INFINITY);
+	    VSETALL(lbmax, -INFINITY);
+	    cv[i]->bbox(&lbmin, &lbmax);
+	    VMINMAX(*min, *max, lbmin);
+	    VMINMAX(*min, *max, lbmax);
+	}
+	return;	
     }
 
     // Not a comb - if we're cached, just report that value.
     if (bb_valid) {
-	VMOVE(*min, bb_min);
-	VMOVE(*max, bb_max);
+	VMINMAX(*min, *max, bb_min);
+	VMINMAX(*min, *max, bb_max);
 	return;
     }
 
@@ -473,6 +506,9 @@ GObj::bbox(vect_t *min, vect_t *max)
 		VMOVE(bb_min, bmin);
 		VMOVE(bb_max, bmax);
 		bb_valid = true;
+	
+		VMINMAX(*min, *max, bb_min);
+		VMINMAX(*min, *max, bb_max);
 		return;
 	    }
 	}
@@ -492,14 +528,12 @@ GObj::bbox(vect_t *min, vect_t *max)
 	s.write(reinterpret_cast<const char *>(&bmin), sizeof(bmin));
 	s.write(reinterpret_cast<const char *>(&bmax), sizeof(bmax));
 	cache_write(d->dcache, hash, CACHE_OBJ_BOUNDS, s);
-	
+
 	VMOVE(bb_min, bmin);
 	VMOVE(bb_max, bmax);
 	bb_valid = true;
-    }
 
-    // Local calculation complete - process min and max if we found a box
-    if (bb_valid) {
+	// Local calculation complete - process min and max if we found a box
 	VMINMAX(*min, *max, bb_min);
 	VMINMAX(*min, *max, bb_max);
     }
