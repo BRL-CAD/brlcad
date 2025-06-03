@@ -55,123 +55,6 @@ extern "C" {
 #include "ged/view.h"
 #include "./ged_private.h"
 
-// alphanum sort
-static bool alphanum_cmp(const std::string &a, const std::string &b)
-{
-    return alphanum_impl(a.c_str(), b.c_str(), NULL) < 0;
-}
-
-struct walk_data {
-    DbiState *dbis = NULL;
-    std::unordered_map<unsigned long long, unsigned long long> i_count;
-    mat_t *curr_mat = NULL;
-    unsigned long long phash = 0;
-};
-
-static void
-populate_leaf(void *client_data, const char *name, matp_t c_m, int op)
-{
-    struct walk_data *d = (struct walk_data *)client_data;
-    struct db_i *dbip = d->dbis->dbip;
-    RT_CHECK_DBI(dbip);
-
-    std::unordered_map<unsigned long long, unsigned long long> &i_count = d->i_count;
-    struct directory *dp = db_lookup(dbip, name, LOOKUP_QUIET);
-    unsigned long long chash = bu_data_hash(name, strlen(name)*sizeof(char));
-    i_count[chash] += 1;
-    if (i_count[chash] > 1) {
-	// If we've got multiple instances of the same object in the tree,
-	// hash the string labeling the instance and map it to the correct
-	// parent comb so we can associate it with the tree contents
-	struct bu_vls iname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&iname, "%s@%llu", name, i_count[chash] - 1);
-	unsigned long long ihash = bu_data_hash(bu_vls_cstr(&iname), bu_vls_strlen(&iname)*sizeof(char));
-	d->dbis->i_map[ihash] = chash;
-	d->dbis->i_str[ihash] = std::string(bu_vls_cstr(&iname));
-	d->dbis->p_c[d->phash].insert(ihash);
-	d->dbis->p_v[d->phash].push_back(ihash);
-	if (dp == RT_DIR_NULL) {
-	    // Invalid comb reference - goes into map
-	    d->dbis->invalid_entry_map[ihash] = std::string(bu_vls_cstr(&iname));
-	} else {
-	    // In case this was previously invalid, remove
-	    d->dbis->invalid_entry_map.erase(ihash);
-	}
-	bu_vls_free(&iname);
-
-	// For the next stages, if we have an ihash use it
-	chash = ihash;
-
-    } else {
-
-	d->dbis->p_v[d->phash].push_back(chash);
-	d->dbis->p_c[d->phash].insert(chash);
-	if (dp == RT_DIR_NULL) {
-	    // Invalid comb reference - goes into map
-	    d->dbis->invalid_entry_map[chash] = std::string(name);
-	} else {
-	    // In case this was previously invalid, remove
-	    d->dbis->invalid_entry_map.erase(chash);
-	}
-
-    }
-
-    // If we have a non-IDN matrix, store it
-    if (c_m) {
-	for (int i = 0; i < 16; i++)
-	    d->dbis->matrices[d->phash][chash].push_back(c_m[i]);
-    }
-
-    // If we have a non-UNION op, store it
-    d->dbis->i_bool[d->phash][chash] = op;
-}
-
-static void
-populate_walk_tree(union tree *tp, void *d, int subtract_skip, int p_op,
-	void (*leaf_func)(void *, const char *, matp_t, int)
-	)
-{
-    if (!tp)
-	return;
-
-    RT_CK_TREE(tp);
-
-    int op = p_op;
-    switch (tp->tr_op) {
-	case OP_SUBTRACT:
-	    op = OP_SUBTRACT;
-	    break;
-	case OP_INTERSECT:
-	    op = OP_INTERSECT;
-	    break;
-    };
-
-
-    switch (tp->tr_op) {
-	case OP_SUBTRACT:
-	    if (subtract_skip)
-		return;
-	    /* fall through */
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_XOR:
-	    populate_walk_tree(tp->tr_b.tb_right, d, subtract_skip, op, leaf_func);
-	    /* fall through */
-	case OP_NOT:
-	case OP_GUARD:
-	case OP_XNOP:
-	    populate_walk_tree(tp->tr_b.tb_left, d, subtract_skip, OP_UNION, leaf_func);
-	    break;
-	case OP_DB_LEAF:
-	    (*leaf_func)(d, tp->tr_l.tl_name, tp->tr_l.tl_mat, op);
-	    break;
-	default:
-	    bu_log("unrecognized operator %d\n", tp->tr_op);
-	    bu_bomb("draw walk\n");
-    }
-}
-
-
 DbiState::DbiState(struct ged *ged_p)
 {
     bu_vls_init(&path_string);
@@ -199,22 +82,7 @@ DbiState::DbiState(struct ged *ged_p)
     for (int i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    update_dp(dp, 0);
-	}
-    }
-
-    elapsed = bu_gettime() - start;
-    seconds = elapsed / 1000000.0;
-
-    bu_log("DbiState init: %f sec\n", seconds);
-
-
-    start = bu_gettime();
-
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    update_dp2(dp);
+	    update_dp(dp);
 	}
     }
 
@@ -240,39 +108,6 @@ DbiState::~DbiState()
 
     if (dcache)
 	dbi_cache_close(dcache);
-}
-
-
-void
-DbiState::populate_maps(struct directory *dp, unsigned long long phash, int reset)
-{
-    if (!(dp->d_flags & RT_DIR_COMB))
-	return;
-    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
-    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator pv_it;
-    pc_it = p_c.find(phash);
-    pv_it = p_v.find(phash);
-    if (pc_it == p_c.end() || pv_it != p_v.end() || reset) {
-	if (reset && pc_it != p_c.end()) {
-	    pc_it->second.clear();
-	}
-	if (reset && pv_it != p_v.end()) {
-	    pv_it->second.clear();
-	}
-	struct rt_db_internal in;
-	if (rt_db_get_internal(&in, dp, dbip, NULL, res) < 0)
-	    return;
-	struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
-	if (!comb->tree)
-	    return;
-
-	std::unordered_map<unsigned long long, unsigned long long> i_count;
-	struct walk_data d;
-	d.dbis = this;
-	d.phash = phash;
-	populate_walk_tree(comb->tree, (void *)&d, 0, OP_UNION, populate_leaf);
-	rt_db_free_internal(&in);
-    }
 }
 
 unsigned long long
@@ -650,172 +485,7 @@ DbiState::clear_cache(struct directory *dp)
 }
 
 unsigned long long
-DbiState::update_dp(struct directory *dp, int reset)
-{
-    if (dp->d_flags & DB_LS_HIDDEN)
-	return 0;
-
-    // Set up to go from hash back to name
-    unsigned long long hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-    d_map[hash] = dp;
-
-    // Clear any (possibly) state bbox.  bbox calculation
-    // can be expensive, so defer it until it's needed
-    bboxes.erase(hash);
-
-    // Encode hierarchy info if this is a comb
-    if (dp->d_flags & RT_DIR_COMB)
-	populate_maps(dp, hash, reset);
-
-    // Check for various drawing related attributes
-    // Ideally, if we have enough info, we'd like to avoid loading
-    // the avs.  See if we can get away with it using dcache
-    struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
-    bool loaded_avs = false;
-    region_id.erase(hash);
-    c_inherit.erase(hash);
-    rgb.erase(hash);
-
-    // First, check the dcache for all remaining needed values
-    const char *b = NULL;
-    size_t bsize = 0;
-
-    bool need_region_id_avs = true;
-    bool need_region_flag_avs = true;
-    bool need_color_inherit_avs = true;
-    //bool need_cval_avs = true;
-
-    int region_flag = 0;
-    int attr_region_id = -1;
-    int color_inherit = 0;
-    //unsigned int cval = INT_MAX;
-
-    bsize = cache_get(dcache, (void **)&b, hash, CACHE_REGION_ID);
-    if (bsize == sizeof(attr_region_id)) {
-	memcpy(&attr_region_id, b, sizeof(attr_region_id));
-	need_region_id_avs = false;
-    }
-    cache_done(dcache);
-
-    bsize = cache_get(dcache, (void **)&b, hash, CACHE_REGION_FLAG);
-    if (bsize == sizeof(region_flag)) {
-	memcpy(&region_flag, b, sizeof(region_flag));
-	need_region_flag_avs = false;
-    }
-    cache_done(dcache);
-
-    bsize = cache_get(dcache, (void **)&b, hash, CACHE_INHERIT_FLAG);
-    if (bsize == sizeof(color_inherit)) {
-	memcpy(&color_inherit, b, sizeof(color_inherit));
-	need_color_inherit_avs = false;
-    }
-    cache_done(dcache);
-
-#if 0
-    bsize = cache_get(dcache, (void **)&b, hash, CACHE_COLOR);
-    if (bsize == sizeof(cval)) {
-	memcpy(&cval, b, sizeof(cval));
-	need_cval_avs = false;
-    }
-    cache_done(dcache);
-#endif
-
-    if (need_region_flag_avs) {
-	if (!loaded_avs) {
-	    db5_get_attributes(dbip, &c_avs, dp);
-	    loaded_avs = true;
-	}
-	// Check for region flag.
-	const char *region_flag_str = bu_avs_get(&c_avs, "region");
-	if (region_flag_str && (BU_STR_EQUAL(region_flag_str, "R") || BU_STR_EQUAL(region_flag_str, "1"))) {
-	    region_flag = 1;
-	}
-
-	std::stringstream s;
-	s.write(reinterpret_cast<const char *>(&region_flag), sizeof(region_flag));
-	cache_write(dcache, hash, CACHE_REGION_FLAG, s);
-    }
-
-
-    if (need_region_id_avs) {
-	if (!loaded_avs) {
-	    db5_get_attributes(dbip, &c_avs, dp);
-	    loaded_avs = true;
-	}
-	// Check for region id.  For drawing purposes this needs to be a number.
-	const char *region_id_val = bu_avs_get(&c_avs, "region_id");
-	if (region_id_val)
-	    bu_opt_int(NULL, 1, &region_id_val, (void *)&attr_region_id);
-
-	std::stringstream s;
-	s.write(reinterpret_cast<const char *>(&attr_region_id), sizeof(attr_region_id));
-	cache_write(dcache, hash, CACHE_REGION_ID, s);
-    }
-
-    if (need_color_inherit_avs) {
-	if (!loaded_avs) {
-	    db5_get_attributes(dbip, &c_avs, dp);
-	    loaded_avs = true;
-	}
-	color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
-
-	std::stringstream s;
-	s.write(reinterpret_cast<const char *>(&color_inherit), sizeof(color_inherit));
-	cache_write(dcache, hash, CACHE_INHERIT_FLAG, s);
-    }
-
-#if 0
-    if (need_cval_avs) {
-	if (!loaded_avs) {
-	    db5_get_attributes(dbip, &c_avs, dp);
-	    loaded_avs = true;
-	}
-	// Color (note that the rt_material_head colors and a region_id may
-	// override this, as might a parent comb with color and the inherit
-	// flag both set.
-	rgb.erase(hash);
-	struct bu_color c = BU_COLOR_INIT_ZERO;
-	const char *color_val = bu_avs_get(&c_avs, "color");
-	if (!color_val)
-	    color_val = bu_avs_get(&c_avs, "rgb");
-	if (color_val){
-	    bu_opt_color(NULL, 1, &color_val, (void *)&c);
-	    cval = color_int(&c);
-	    bu_log("have color: %u\n", cval);
-	}
-
-	std::stringstream s;
-	s.write(reinterpret_cast<const char *>(&cval), sizeof(cval));
-	cache_write(dcache, hash, CACHE_COLOR, s);
-    }
-#endif
-
-    // If a region flag is set but a region_id is not, there is an implicit
-    // assumption that the region_id is to be regarded as 0.  Not sure this
-    // will always be true, but right now region table based coloring works
-    // that way in existing BRL-CAD code (see the example m35.g model's
-    // all.g/component/power.train/r75 for an instance of this)
-    if (region_flag && attr_region_id == -1)
-	attr_region_id = 0;
-
-
-    if (attr_region_id != -1)
-	region_id[hash] = attr_region_id;
-    if (color_inherit)
-	c_inherit[hash] = color_inherit;
-    //if (cval != INT_MAX)
-	//rgb[hash] = cval;
-
-    // Done with attributes
-    if (loaded_avs) {
-	bu_log("Had to load avs\n");
-	bu_avs_free(&c_avs);
-    }
-    return hash;
-}
-
-unsigned long long
-DbiState::update_dp2(struct directory *dp)
+DbiState::update_dp(struct directory *dp)
 {
     if (dp->d_flags & DB_LS_HIDDEN)
 	return 0;
@@ -1302,6 +972,12 @@ DbiState::put_selected_state(const char *sname)
     }
 }
 
+// alphanum sort
+static bool alphanum_cmp(const std::string &a, const std::string &b)
+{
+    return alphanum_impl(a.c_str(), b.c_str(), NULL) < 0;
+}
+
 std::vector<std::string>
 DbiState::list_selection_sets()
 {
@@ -1454,7 +1130,7 @@ DbiState::update()
     for(g_it = added.begin(); g_it != added.end(); g_it++) {
 	struct directory *dp = *g_it;
 	bu_log("added: %s\n", dp->d_namep);
-	unsigned long long hash = update_dp(dp, 0);
+	unsigned long long hash = update_dp(dp);
 
 	// If this name was previously the source of an invalid reference,
 	// it is no longer.
@@ -1466,7 +1142,7 @@ DbiState::update()
 	bu_log("changed: %s\n", dp->d_namep);
 	// Properties need to be updated - comb children, colors, matrices,
 	// bounding box for solids, etc.
-	update_dp(dp, 1);
+	update_dp(dp);
     }
 
     // Garbage collect i_map and i_str
