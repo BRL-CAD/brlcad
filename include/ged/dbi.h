@@ -162,6 +162,22 @@ class GED_EXPORT GObj {
 };
 
 
+// TODO - should we have a class for paths, rather than explicitly working with the
+// vectors of hashes?
+
+class GED_EXPORT DbiPath {
+    public:
+
+	bool color(struct bu_color *c);
+	bool is_subtraction();
+	bool matrix();
+	bool valid();
+	std::string print();
+	bool bbox(point_t bmin, point_t bmax);
+
+	std::vector<unsigned long long> elements;
+};
+
 
 class GED_EXPORT BSelectState {
     public:
@@ -277,7 +293,11 @@ class GED_EXPORT BViewState {
 	// A View State redraw can impact multiple views with a shared state - most of
 	// the elements will be the same, but adaptive plotting will be view specific even
 	// with otherwise common objects - we must update accordingly.
-	unsigned long long redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *> &views, int no_autoview);
+	unsigned long long redraw(
+		struct bv_obj_settings *vs,
+	       	std::unordered_set<struct bview *> &views,
+	       	int no_autoview,
+		std::unordered_set<unsigned long long> &changed_hashes);
 
 	// Allow callers to calculate the drawing hash of a path
 	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
@@ -398,13 +418,6 @@ class GED_EXPORT DbiState {
 	bool path_color(struct bu_color *c, std::vector<unsigned long long> &elements);
 
 	bool path_is_subtraction(std::vector<unsigned long long> &elements);
-	db_op_t bool_op(unsigned long long, unsigned long long);
-
-	bool get_matrix(matp_t m, unsigned long long p_key, unsigned long long i_key);
-	bool get_path_matrix(matp_t m, std::vector<unsigned long long> &elements);
-
-	bool get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned long long hash);
-	bool get_path_bbox(point_t *bbmin, point_t *bbmax, std::vector<unsigned long long> &elements);
 
 	bool valid_hash(unsigned long long phash);
 	bool valid_hash_path(std::vector<unsigned long long> &phashes);
@@ -429,69 +442,20 @@ class GED_EXPORT DbiState {
 	std::vector<std::string> list_selection_sets();
 
 
+	// These maps are the ".g ground truth" of the database objects
 	std::unordered_map<unsigned long long, GObj *> gobjs;
 	std::unordered_map<unsigned long long, CombInst *> combinsts;
 
 	std::vector<GObj *> get_gobjs(std::vector<unsigned long long> &path);
 	std::vector<CombInst *> get_combinsts(std::vector<unsigned long long> &path);
 
-	// These maps are the ".g ground truth" of the comb structures - the set
-	// associated with each hash contains all the child hashes from the comb
-	// definition in the database for quick lookup, and the vector preserves
-	// the comb ordering for listing.
-	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> p_c;
-	// Note: to match MGED's 'l' printing you need to use a reverse_iterator
-	std::unordered_map<unsigned long long, std::vector<unsigned long long>> p_v;
-
-	// Translate individual object hashes to their directory names.  This map must
-	// be updated any time a database object changes to remain valid.
+	// Translate individual object hashes to their directory names.
 	struct directory *get_hdp(unsigned long long);
-	std::unordered_map<unsigned long long, struct directory *> d_map;
-
-	// For invalid comb entry strings, we can't point to a directory pointer.  This
-	// map must also be updated after every db change - if a directory pointer hash
-	// maps to an entry in this map it needs to be removed, and newly invalid entries
-	// need to be added.
-	std::unordered_map<unsigned long long, std::string> invalid_entry_map;
-
-	// This is a map of non-uniquely named child instances (i.e. instances that must be
-	// numbered) to the .g database name associated with those instances.  Allows for
-	// one unique entry in p_c rather than requiring per-instance duplication
-	std::unordered_map<unsigned long long, unsigned long long> i_map;
-	std::unordered_map<unsigned long long, std::string> i_str;
-
-	// Matrices above comb instances are critical to geometry placement.  For non-identity
-	// matrices, we store them locally so they may be accessed without having to unpack
-	// the comb from disk.
-	std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, std::vector<fastf_t>>> matrices;
-
-	// Similar to matrices, store non-union bool ops for instances
-	std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, size_t>> i_bool;
-
-
-	// Bounding boxes for each solid.  To calculate the bbox for a comb, the
-	// children are walked combining the bboxes.  The idea is to be able to
-	// retrieve solid bboxes and calculate comb bboxes without having to touch
-	// the disk beyond the initial per-solid calculations, which may be done
-	// once per load and/or dimensional change.
-	std::unordered_map<unsigned long long, std::vector<fastf_t>> bboxes;
-
-
-	// We also have a number of standard attributes that can impact drawing,
-	// which are normally only accessible by loading in the attributes of
-	// the object.  We stash them in maps to have the information available
-	// without having to interrogate the disk
-	std::unordered_map<unsigned long long, int> c_inherit; // color inheritance flag
-	std::unordered_map<unsigned long long, unsigned int> rgb; // color RGB value  (r + (g << 8) + (b << 16))
-	std::unordered_map<unsigned long long, int> region_id; // region_id
-
 
 	// Data to be used by callbacks
 	std::unordered_set<struct directory *> added;
 	std::unordered_set<struct directory *> changed;
-	std::unordered_set<unsigned long long> changed_hashes;
 	std::unordered_set<unsigned long long> removed;
-	std::unordered_map<unsigned long long, std::string> old_names;
 
 	// The shared view is common to multiple views, so we always update it.
 	// For other associated views (if any), we track their drawn states
@@ -524,11 +488,6 @@ class GED_EXPORT DbiState {
 
 	void gather_cyclic(
 		std::unordered_set<unsigned long long> &cyclic,
-		unsigned long long c_hash,
-		std::vector<unsigned long long> &path_hashes
-		);
-	void print_leaves(
-		std::set<std::string> &leaves,
 		unsigned long long c_hash,
 		std::vector<unsigned long long> &path_hashes
 		);
