@@ -31,6 +31,8 @@
 #  include <openvdb/tools/MeshToVolume.h>
 #endif /* OPENVDB_ABI_VERSION_NUMBER */
 
+#include "manifold/manifold.h"
+
 #include "geogram/basic/process.h"
 #include <geogram/basic/command_line.h>
 #include <geogram/basic/command_line_args.h>
@@ -172,6 +174,26 @@ bot_remesh_vdb(struct ged *gedp, struct rt_bot_internal *UNUSED(bot), double UNU
 
 #endif /* OPENVDB_ABI_VERSION_NUMBER */
 
+static void
+geogram_to_manifold(manifold::Mesh *gmm, GEO::Mesh &gm)
+{
+    for(GEO::index_t v = 0; v < gm.vertices.nb(); v++) {
+	double gm_v[3];
+	const double *p = gm.vertices.point_ptr(v);
+	for (int i = 0; i < 3; i++) {
+	    gm_v[i] = p[i];
+	}
+	gmm->vertPos.push_back(glm::vec3(gm_v[0], gm_v[1], gm_v[2]));
+    }
+    for (GEO::index_t f = 0; f < gm.facets.nb(); f++) {
+	double tri_verts[3];
+	for (int i = 0; i < 3; i++) {
+	    tri_verts[i] = gm.facets.vertex(f, i);
+	}
+	// TODO - CW vs CCW orientation handling?
+	gmm->triVerts.push_back(glm::ivec3(tri_verts[0], tri_verts[1], tri_verts[2]));
+    }
+}
 
 static int
 bot_remesh_geogram(struct rt_bot_internal **obot, struct ged *gedp, struct rt_bot_internal *bot)
@@ -217,10 +239,12 @@ bot_remesh_geogram(struct rt_bot_internal **obot, struct ged *gedp, struct rt_bo
     GEO::CmdLine::import_arg_group("algo");
     GEO::CmdLine::import_arg_group("remesh");
 
+    // Target ten times the original vert count
     fastf_t nb_pts = bot->num_vertices * 10;
     std::string nbpts = std::to_string(nb_pts);
     GEO::CmdLine::set_arg("remesh:nb_pts", nbpts.c_str());
 
+    // Initialize the Geogram mesh
     GEO::Mesh gm;
     gm.vertices.assign_points((double *)bot->vertices, 3, bot->num_vertices);
     for (size_t i = 0; i < bot->num_faces; i++) {
@@ -232,29 +256,28 @@ bot_remesh_geogram(struct rt_bot_internal **obot, struct ged *gedp, struct rt_bo
 
     // After the initial raw load, do a repair pass to set up
     // Geogram's internal mesh data
-    double epsilon = 1e-6 * (0.01 * GEO::bbox_diagonal(gm));
-
+    double bbox_diag = GEO::bbox_diagonal(gm);
+    double epsilon = 1e-6 * (0.01 * bbox_diag);
     GEO::mesh_repair(gm, GEO::MeshRepairMode(GEO::MESH_REPAIR_DEFAULT), epsilon);
 
-    // Do some small connected component removal
-    double area = GEO::Geom::mesh_area(gm,3);
-    double min_comp_area = 0.03 * area;
-    if (min_comp_area > 0.0) {
-	double nb_f_removed = gm.facets.nb();
-	GEO::remove_small_connected_components(gm, min_comp_area);
-	nb_f_removed -= gm.facets.nb();
-	if(nb_f_removed > 0 || nb_f_removed < 0) {
-	    GEO::mesh_repair(gm, GEO::MESH_REPAIR_DEFAULT, epsilon);
-	}
-    }
-
+    // https://github.com/BrunoLevy/geogram/wiki/Remeshing
+    GEO::compute_normals(gm);
+    set_anisotropy(gm, 2*0.02);
     GEO::Mesh remesh;
     GEO::remesh_smooth(gm, remesh, nb_pts);
+
+    // See if we have a solid
+    manifold::Mesh gmm;
+    geogram_to_manifold(&gmm, gm);
+    manifold::Manifold gmanifold(gmm);
+    int bmode = RT_BOT_SURFACE;
+    if (gmanifold.Status() == manifold::Manifold::Error::NoError)
+	bmode = RT_BOT_SOLID;
 
     struct rt_bot_internal *nbot;
     BU_GET(nbot, struct rt_bot_internal);
     nbot->magic = RT_BOT_INTERNAL_MAGIC;
-    nbot->mode = RT_BOT_SURFACE; // TODO - check if it is solid.
+    nbot->mode = bmode;
     nbot->orientation = RT_BOT_CCW;
     nbot->thickness = NULL;
     nbot->face_mode = (struct bu_bitv *)NULL;
@@ -265,9 +288,9 @@ bot_remesh_geogram(struct rt_bot_internal **obot, struct ged *gedp, struct rt_bo
     nbot->faces = (int *)calloc(nbot->num_faces*3, sizeof(int));
 
     int j = 0;
-    for(GEO::index_t v = 0; v < gm.vertices.nb(); v++) {
+    for(GEO::index_t v = 0; v < remesh.vertices.nb(); v++) {
 	double gm_v[3];
-	const double *p = gm.vertices.point_ptr(v);
+	const double *p = remesh.vertices.point_ptr(v);
 	for (int i = 0; i < 3; i++)
 	    gm_v[i] = p[i];
 	nbot->vertices[3*j] = gm_v[0];
@@ -277,10 +300,10 @@ bot_remesh_geogram(struct rt_bot_internal **obot, struct ged *gedp, struct rt_bo
     }
 
     j = 0;
-    for (GEO::index_t f = 0; f < gm.facets.nb(); f++) {
+    for (GEO::index_t f = 0; f < remesh.facets.nb(); f++) {
 	double tri_verts[3];
 	for (int i = 0; i < 3; i++)
-	    tri_verts[i] = gm.facets.vertex(f, i);
+	    tri_verts[i] = remesh.facets.vertex(f, i);
 	// TODO - CW vs CCW orientation handling?
 	nbot->faces[3*j] = tri_verts[0];
 	nbot->faces[3*j+1] = tri_verts[1];
@@ -305,7 +328,7 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    const char *usage_string = "bot [options] remesh <objname> <output_bot>";
+    const char *usage_string = "bot [options] remesh <objname> <output_bot>\n";
     const char *purpose_string = "Store a remeshed version of the BoT in object <output_bot>";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -398,7 +421,6 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	// If we're repairing and we were able to fix it, write out the result
 	struct rt_db_internal intern;
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
