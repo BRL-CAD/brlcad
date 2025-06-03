@@ -477,11 +477,6 @@ DbiState::clear_cache(struct directory *dp)
     cache_del(dcache, hash, CACHE_REGION_FLAG);
     cache_del(dcache, hash, CACHE_INHERIT_FLAG);
     cache_del(dcache, hash, CACHE_COLOR);
-
-    bboxes.erase(hash);
-    region_id.erase(hash);
-    c_inherit.erase(hash);
-    rgb.erase(hash);
 }
 
 unsigned long long
@@ -600,42 +595,21 @@ DbiState::path_color(struct bu_color *c, std::vector<unsigned long long> &elemen
 bool
 DbiState::path_is_subtraction(std::vector<unsigned long long> &elements)
 {
+    // GObj only path is never a subtraction
     if (elements.size() < 2)
 	return false;
 
-    unsigned long long phash = elements[0];
+    // Path needs to be valid
+    if (!valid_hash_path(elements))
+	return false;
+
     for (size_t i = 1; i < elements.size(); i++) {
-	unsigned long long chash = elements[i];
-	std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, size_t>>::iterator i_it;
-	i_it = i_bool.find(phash);
-	if (i_it == i_bool.end())
-	    return false;
-	std::unordered_map<unsigned long long, size_t>::iterator ib_it;
-	ib_it = i_it->second.find(chash);
-	if (ib_it == i_it->second.end())
-	    return false;
-
-	if (ib_it->second == OP_SUBTRACT)
+	CombInst *c = combinsts[elements[i]]; 
+	if (c->boolean_op == OP_SUBTRACT)
 	    return true;
-
-	phash = chash;
     }
 
     return false;
-}
-
-db_op_t
-DbiState::bool_op(unsigned long long phash, unsigned long long chash)
-{
-    if (!phash)
-	return DB_OP_UNION;
-    size_t op = i_bool[phash][chash];
-    if (op == OP_SUBTRACT) {
-	return DB_OP_SUBTRACT;
-    }
-    if (op == OP_INTERSECT)
-	return DB_OP_INTERSECT;
-    return DB_OP_UNION;
 }
 
 struct directory *
@@ -652,30 +626,7 @@ DbiState::get_hdp(unsigned long long phash)
     return gobjs[phash]->dp;
 }
 
-bool
-DbiState::get_matrix(matp_t m, unsigned long long p_key, unsigned long long i_key)
-{
-    if (UNLIKELY(!m || p_key == 0 || i_key == 0))
-	return false;
-
-    std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, std::vector<fastf_t>>>::iterator m_it;
-    std::unordered_map<unsigned long long, std::vector<fastf_t>>::iterator mv_it;
-    m_it = matrices.find(p_key);
-    if (m_it == matrices.end())
-	return false;
-    mv_it = m_it->second.find(i_key);
-    if (mv_it == m_it->second.end())
-	return false;
-
-    // If we got this far, we have an index into the matrices vector.  Assign
-    // the result to m
-    std::vector<fastf_t> &mv = mv_it->second;
-    for (size_t i = 0; i < 16; i++)
-	m[i] = mv[i];
-
-    return true;
-}
-
+#if 0
 bool
 DbiState::get_path_matrix(matp_t m, std::vector<unsigned long long> &elements)
 {
@@ -700,163 +651,6 @@ DbiState::get_path_matrix(matp_t m, std::vector<unsigned long long> &elements)
     }
 
     return have_mat;
-}
-
-// TODO - this should be pushed to the GObj and CombInst classes
-bool
-DbiState::get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned long long hash)
-{
-
-    if (UNLIKELY(!bbmin || !bbmax || hash == 0))
-	return false;
-
-    bool ret = false;
-    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
-    std::unordered_set<unsigned long long>::iterator s_it;
-    unsigned long long key = hash;
-    // First, see if this is an instance we need to translate to its canonical
-    // .g database name
-    if (i_map.find(hash) != i_map.end())
-	key = i_map[hash];
-
-    // See if we have a direct bbox lookup available
-    std::unordered_map<unsigned long long, std::vector<fastf_t>>::iterator b_it;
-    b_it = bboxes.find(key);
-    if (b_it != bboxes.end()) {
-	point_t lbmin, lbmax;
-	lbmin[X] = b_it->second[0];
-	lbmin[Y] = b_it->second[1];
-	lbmin[Z] = b_it->second[2];
-	lbmax[X] = b_it->second[3];
-	lbmax[Y] = b_it->second[4];
-	lbmax[Z] = b_it->second[5];
-
-	if (curr_mat) {
-	    point_t tbmin, tbmax;
-	    MAT4X3PNT(tbmin, curr_mat, lbmin);
-	    VMOVE(lbmin, tbmin);
-	    MAT4X3PNT(tbmax, curr_mat, lbmax);
-	    VMOVE(lbmax, tbmax);
-	}
-
-	VMINMAX(*bbmin, *bbmax, lbmin);
-	VMINMAX(*bbmin, *bbmax, lbmax);
-	return true;
-    }
-
-    // We might have a comb.  If that's the case, we need to work
-    // through the hierarchy to get the bboxes of the children.
-    pc_it = p_c.find(key);
-    if (pc_it != p_c.end()) {
-	// Have comb children - incorporate each one
-	for (s_it = pc_it->second.begin(); s_it != pc_it->second.end(); s_it++) {
-	    unsigned long long child_hash = *s_it;
-	    // See if we have a matrix for this case - if so, we need to
-	    // incorporate it
-	    mat_t nm;
-	    MAT_IDN(nm);
-	    bool have_mat = get_matrix(nm, key, child_hash);
-	    if (have_mat) {
-		// Construct new "current" matrix
-		if (curr_mat) {
-		    // If we already have a non-IDN matrix from parent
-		    // path elements, we need to multiply the matrices
-		    // to accumulate the position changes
-		    mat_t om;
-		    MAT_COPY(om, curr_mat);
-		    bn_mat_mul(curr_mat, om, nm);
-		    if (get_bbox(bbmin, bbmax, curr_mat, child_hash))
-			ret = true;
-		    MAT_COPY(curr_mat, om);
-		} else {
-		    // If this is the first non-IDN matrix, we don't
-		    // need to combine it with parent matrices
-		    if (get_bbox(bbmin, bbmax, nm, child_hash))
-			ret = true;
-		}
-	    } else {
-		if (get_bbox(bbmin, bbmax, curr_mat, child_hash))
-		    ret = true;
-	    }
-	}
-    }
-
-    // When we have an object that is not a comb, look up its pre-calculated
-    // box and incorporate it into bmin/bmax.
-    point_t bmin, bmax;
-    bool have_bbox = false;
-
-    // First, check the dcache
-    const char *b = NULL;
-    size_t bsize = cache_get(dcache, (void **)&b, hash, CACHE_OBJ_BOUNDS);
-    if (bsize) {
-	if (bsize != (sizeof(bmin) + sizeof(bmax))) {
-	    bu_log("Incorrect data size found loading cached bounds data\n");
-	} else {
-	    memcpy(&bmin, b, sizeof(bmin));
-	    b += sizeof(bmin);
-	    memcpy(&bmax, b, sizeof(bmax));
-	    //bu_log("cached: bmin: %f %f %f bbmax: %f %f %f\n", V3ARGS(bmin), V3ARGS(bmax));
-	    have_bbox = true;
-	}
-    }
-    cache_done(dcache);
-
-
-    // This calculation can be expensive.  If we've already
-    // got it stashed as part of LoD processing, use that
-    // version.
-    struct directory *dp = get_hdp(hash);
-    if (!dp)
-	return false;
-    if (!have_bbox) {
-	if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && gedp->ged_lod) {
-	    key = bv_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
-	    if (key) {
-		struct bv_mesh_lod *lod = bv_mesh_lod_create(gedp->ged_lod, key);
-		if (lod) {
-		    VMOVE(bmin, lod->bmin);
-		    VMOVE(bmax, lod->bmax);
-		    have_bbox = true;
-
-		    std::stringstream s;
-		    s.write(reinterpret_cast<const char *>(&bmin), sizeof(bmin));
-		    s.write(reinterpret_cast<const char *>(&bmax), sizeof(bmax));
-		    cache_write(dcache, hash, CACHE_OBJ_BOUNDS, s);
-		}
-	    }
-	}
-    }
-
-    // No LoD - ask librt
-    if (!have_bbox) {
-	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
-	struct bn_tol tol = BN_TOL_INIT_TOL;
-	mat_t m;
-	MAT_IDN(m);
-	int bret = rt_bound_instance(&bmin, &bmax, dp, dbip, &ttol, &tol, &m, res);
-	if (bret != -1) {
-	    have_bbox = true;
-
-	    std::stringstream s;
-	    s.write(reinterpret_cast<const char *>(&bmin), sizeof(bmin));
-	    s.write(reinterpret_cast<const char *>(&bmax), sizeof(bmax));
-	    cache_write(dcache, hash, CACHE_OBJ_BOUNDS, s);
-	}
-    }
-
-    if (have_bbox) {
-	for (size_t j = 0; j < 3; j++)
-	    bboxes[hash].push_back(bmin[j]);
-	for (size_t j = 0; j < 3; j++)
-	    bboxes[hash].push_back(bmax[j]);
-
-	VMINMAX(*bbmin, *bbmax, bmin);
-	VMINMAX(*bbmin, *bbmax, bmax);
-	ret = true;
-    }
-
-    return ret;
 }
 
 bool
@@ -888,6 +682,7 @@ DbiState::get_path_bbox(point_t *bbmin, point_t *bbmax, std::vector<unsigned lon
 
     return get_bbox(bbmin, bbmax, NULL, elements[elements.size() - 1]);
 }
+#endif
 
 BViewState *
 DbiState::get_view_state(struct bview *v)
@@ -990,13 +785,15 @@ DbiState::list_selection_sets()
     return ret;
 }
 
+// TODO rework
 void
 DbiState::gather_cyclic(
-	std::unordered_set<unsigned long long> &cyclic,
-	unsigned long long c_hash,
-	std::vector<unsigned long long> &path_hashes
+	std::unordered_set<unsigned long long> &UNUSED(cyclic),
+	unsigned long long UNUSED(c_hash),
+	std::vector<unsigned long long> &UNUSED(path_hashes)
 	)
 {
+#if 0
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
     pc_it = p_c.find(c_hash);
 
@@ -1015,6 +812,7 @@ DbiState::gather_cyclic(
 
     /* Done with branch - restore path */
     path_hashes.pop_back();
+#endif
 }
 
 static int
@@ -1068,8 +866,6 @@ DbiState::update()
     unsigned long long ret = 0;
 
     if (!added.size() && !changed.size() && !removed.size()) {
-	changed_hashes.clear();
-	old_names.clear();
 	return ret;
     }
 
@@ -1084,82 +880,32 @@ DbiState::update()
 	need_update_nref = false;
     }
 
-    // dps -> hashes
-    changed_hashes.clear();
-    for(g_it = changed.begin(); g_it != changed.end(); g_it++) {
+    // For objects that are removed, delete the GObj and its associated data.
+    // Removal of an instance from a comb tree is handled as an object change,
+    // and thus is not handled here.
+    for (s_it = removed.begin(); s_it != removed.end(); s_it++) {
+	bu_log("removed: %llu\n", *s_it);
+	if (gobjs.find(*s_it) == gobjs.end())
+	    continue;
+	GObj *robj = gobjs[*s_it];
+	delete robj;
+	gobjs.erase(*s_it);
+    }
+
+    // We store the changed hashes so view updates can know which
+    // objects will need updating.  update_dp will rebuild the GObj
+    // and any child CombInsts.
+    std::unordered_set<unsigned long long> changed_hashes;
+    for (g_it = changed.begin(); g_it != changed.end(); g_it++) {
 	struct directory *dp = *g_it;
-	unsigned long long hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+	unsigned long long hash = update_dp(dp);
 	changed_hashes.insert(hash);
     }
 
-    // Update the primary data structures
-    for(s_it = removed.begin(); s_it != removed.end(); s_it++) {
-	bu_log("removed: %llu\n", *s_it);
-
-	// Combs with this key in their child set need to be updated to refer
-	// to it as an invalid entry.
-	std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator pv_it;
-	for (pv_it = p_v.begin(); pv_it != p_v.end(); pv_it++) {
-	    for (size_t i = 0; i < pv_it->second.size(); i++) {
-		if (i_map.find(pv_it->second[i]) != i_map.end()) {
-		    invalid_entry_map[i_map[pv_it->second[i]]] = i_str[i_map[pv_it->second[i]]];
-		} else {
-		    invalid_entry_map[pv_it->second[i]] = old_names[*s_it];
-		}
-	    }
-	}
-
-	d_map.erase(*s_it);
-	bboxes.erase(*s_it);
-	c_inherit.erase(*s_it);
-	rgb.erase(*s_it);
-	region_id.erase(*s_it);
-	matrices.erase(*s_it);
-	i_bool.erase(*s_it);
-
-	// We do not clear the instance maps (i_map and i_str) since those containers do not
-	// guarantee uniqueness to one child object.  To remove entries no longer
-	// used anywhere in the database, we have to confirm they are no longer needed on a global
-	// basis in a subsequent garbage-collect operation.
-
-	// Entries with this hash as their key are erased.
-	p_c.erase(*s_it);
-	p_v.erase(*s_it);
-    }
-
-    for(g_it = added.begin(); g_it != added.end(); g_it++) {
+    for (g_it = added.begin(); g_it != added.end(); g_it++) {
 	struct directory *dp = *g_it;
 	bu_log("added: %s\n", dp->d_namep);
-	unsigned long long hash = update_dp(dp);
-
-	// If this name was previously the source of an invalid reference,
-	// it is no longer.
-	invalid_entry_map.erase(hash);
-    }
-
-    for(g_it = changed.begin(); g_it != changed.end(); g_it++) {
-	struct directory *dp = *g_it;
-	bu_log("changed: %s\n", dp->d_namep);
-	// Properties need to be updated - comb children, colors, matrices,
-	// bounding box for solids, etc.
 	update_dp(dp);
-    }
-
-    // Garbage collect i_map and i_str
-    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator sk_it;
-    std::unordered_set<unsigned long long> used;
-    for (sk_it = p_v.begin(); sk_it != p_v.end(); sk_it++) {
-	used.insert(sk_it->second.begin(), sk_it->second.end());
-    }
-    std::vector<unsigned long long> unused;
-    std::unordered_map<unsigned long long, unsigned long long>::iterator im_it;
-    for (im_it = i_map.begin(); im_it != i_map.end(); im_it++) {
-	if (used.find(im_it->first) != used.end())
-	    unused.push_back(im_it->first);
-    }
-    for (size_t i = 0; i < unused.size(); i++) {
-	i_map.erase(unused[i]);
-	i_str.erase(unused[i]);
     }
 
     // For all associated view states, execute any necessary changes to
@@ -1175,119 +921,15 @@ DbiState::update()
     }
     std::unordered_map<BViewState *, std::unordered_set<struct bview *>>::iterator bv_it;
     for (bv_it = vmap.begin(); bv_it != vmap.end(); bv_it++) {
-	bv_it->first->redraw(NULL, bv_it->second, 1);
+	bv_it->first->redraw(NULL, bv_it->second, 1, changed_hashes);
     }
 
     // Updates done, clear items stored by callbacks
     added.clear();
     changed.clear();
-    changed_hashes.clear();
     removed.clear();
-    old_names.clear();
 
     return ret;
-}
-
-void
-DbiState::print_leaves(
-	std::set<std::string> &leaves,
-	unsigned long long c_hash,
-	std::vector<unsigned long long> &path_hashes
-	)
-{
-    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
-    path_hashes.push_back(c_hash);
-
-    bool leaf = path_addition_cyclic(path_hashes);
-
-    if (!leaf) {
-	/* Not cyclic - keep going */
-	pc_it = p_c.find(c_hash);
-	if (pc_it == p_c.end()) {
-	    leaf = true;
-	}
-    }
-
-    if (!leaf) {
-	std::unordered_set<unsigned long long>::iterator c_it;
-	for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
-	    print_leaves(leaves, *c_it, path_hashes);
-    }
-
-    // Print leaf
-    if (leaf) {
-	struct bu_vls p = BU_VLS_INIT_ZERO;
-	print_path(&p, path_hashes, 0, 1);
-	leaves.insert(std::string(bu_vls_cstr(&p)));
-	bu_vls_free(&p);
-    }
-
-    /* Done with branch - restore path */
-    path_hashes.pop_back();
-}
-
-void
-DbiState::print_dbi_state(struct bu_vls *outvls, bool report_view_states)
-{
-    struct bu_vls *o = outvls;
-    if (!o) {
-	BU_GET(o, struct bu_vls);
-	bu_vls_init(o);
-    }
-
-    std::vector<unsigned long long> top_objs = tops(true);
-    std::set<std::string> leaves;
-    // Report each path to its leaves (or to cyclic termination)
-    std::vector<unsigned long long> path_hashes;
-    for (size_t i = 0; i < top_objs.size(); i++) {
-	path_hashes.clear();
-	print_leaves(leaves, top_objs[i], path_hashes);
-    }
-
-    std::set<std::string>::iterator l_it;
-    for (l_it = leaves.begin(); l_it != leaves.end(); l_it++)
-	bu_vls_printf(o, "%s\n", l_it->c_str());
-
-    if (report_view_states) {
-	if (gedp->ged_gvp) {
-	    BViewState *vs = get_view_state(gedp->ged_gvp);
-	    bu_vls_printf(o, "\nDefault:\n");
-	    vs->print_view_state(o);
-	}
-	if (view_states.size()) {
-	    std::unordered_map<struct bview *, BViewState *>::iterator v_it;
-	    std::map<std::string, std::set<BViewState *>> oviews;
-	    for (v_it = view_states.begin(); v_it != view_states.end(); v_it++) {
-		if (v_it->first == gedp->ged_gvp)
-		    continue;
-		std::string vname(bu_vls_cstr(&v_it->first->gv_name));
-		oviews[vname].insert(v_it->second);
-	    }
-	    if (oviews.size()) {
-		bu_vls_printf(o, "\nViews:\n");
-		std::map<std::string, std::set<BViewState *>>::iterator o_it;
-		for (o_it = oviews.begin(); o_it != oviews.end(); o_it++) {
-		    std::set<BViewState *> &vset = o_it->second;
-		    if (vset.size() > 1) {
-			std::cout << "Warning:  " << vset.size() << " views with name " << o_it->first << "\n";
-		    }
-		    std::set<BViewState *>::iterator vs_it;
-		    for (vs_it = vset.begin(); vs_it != vset.end(); vs_it++) {
-			bu_vls_printf(o, "\n%s:\n", o_it->first.c_str());
-			(*vs_it)->print_view_state(o);
-		    }
-		}
-	    }
-	}
-    }
-
-    if (!outvls)
-	std::cout << bu_vls_cstr(o) << "\n";
-
-    if (o != outvls) {
-	bu_vls_free(o);
-	BU_PUT(o, struct bu_vls);
-    }
 }
 
 /** @} */
