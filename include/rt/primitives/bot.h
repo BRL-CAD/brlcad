@@ -169,13 +169,18 @@ RT_EXPORT extern int rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct r
 struct rt_bot_repair_info {
     fastf_t max_hole_area;
     fastf_t max_hole_area_percent;
+    int strict;
 };
 
 /* For now the default upper hole size limit will be 5 percent of the mesh
  * area, but calling codes should not rely on that value to remain consistent
  * between versions.
+ *
+ * By default, don't return a mesh that can't pass the lint solid raytracing
+ * tests.  This isn't always desirable - sometimes manifold is enough even if
+ * the mesh is not otherwise well behaved - so it is an user settable param.
  */
-#define RT_BOT_REPAIR_INFO_INIT {0.0, 5.0};
+#define RT_BOT_REPAIR_INFO_INIT {0.0, 5.0, 1};
 
 /* Function to attempt repairing a non-manifold BoT.  Returns 1 if ibot was
  * already manifold (obot will contain NULL), 0 if a manifold BoT was created

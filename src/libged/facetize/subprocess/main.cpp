@@ -165,6 +165,9 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	    if (!bot_is_manifold(bot)) {
 		// Nope - try repairing
 		struct rt_bot_repair_info settings = RT_BOT_REPAIR_INFO_INIT;
+		// We're aggressive preparing facetize inputs, since non-lint-passing
+		// "repairs" may still be enough to allow booleans to succeed.
+		settings.strict = 0;
 		bu_vls_sprintf(method_flag, "REPAIR");
 		ret = rt_bot_repair(obot, bot, &settings);
 	    } else {
