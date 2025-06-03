@@ -96,7 +96,7 @@ BViewState::leaf_check(
 {
     if (!c_hash)
 	return 0;
-
+#if 0
     bool is_removed = (dbis->removed.find(c_hash) != dbis->removed.end());
     if (is_removed)
 	return 3;
@@ -118,7 +118,7 @@ BViewState::leaf_check(
 		    return 3;
 	}
     }
-
+#endif
     return 0;
 }
 
@@ -132,6 +132,7 @@ BViewState::check_status(
 	bool leaf_expand
 	)
 {
+#if 0
     // If nothing was removed or changed, there's nothing to tell us anything
     // is invalid - just return
     if (dbis->removed.size() && !dbis->changed_hashes.size())
@@ -225,7 +226,7 @@ BViewState::check_status(
 	    (*changed_paths).insert(path_hash);
 	}
     }
-
+#endif
     return 0;
 }
 
@@ -1023,7 +1024,7 @@ BViewState::refresh(struct bview *v, int argc, const char **argv)
 }
 
 unsigned long long
-BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *> &views, int no_autoview)
+BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *> &views, int no_autoview, std::unordered_set<unsigned long long> &changed_hashes)
 {
     bv_log(1, "BViewState::redraw");
     // We (well, callers) need to be able to tell if the redraw pass actually
