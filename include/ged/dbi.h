@@ -533,9 +533,7 @@ class GED_EXPORT DbiState {
 		std::vector<unsigned long long> &path_hashes
 		);
 
-	void populate_maps(struct directory *dp, unsigned long long phash, int reset);
-	unsigned long long update_dp(struct directory *dp, int reset);
-	unsigned long long update_dp2(struct directory *dp);
+	unsigned long long update_dp(struct directory *dp);
 	struct bu_vls hash_string = BU_VLS_INIT_ZERO;
 	struct bu_vls path_string = BU_VLS_INIT_ZERO;
 };
