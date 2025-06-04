@@ -125,11 +125,11 @@ class GED_EXPORT GObj {
 	struct bu_color color; // color
 	bool color_set = false;
 
-	// If the object is a comb, these two containers are used to record the tree info.
-	// Otherwise they are not used
-	std::unordered_map<unsigned long long, CombInst *> c;
-	// The vector preserves comb ordering for listing.
-	// Note: to match MGED's 'l' printing you need to use a reverse_iterator
+	// If the object is a comb, this vector is used to record the tree
+	// info.  Otherwise it is not used. The vector preserves comb ordering
+	// for listing.
+	// Note: to match MGED's 'l' printing you need to use a
+	// reverse_iterator
 	std::vector<CombInst *> cv;
 
 	// Parent database state info
@@ -162,20 +162,61 @@ class GED_EXPORT GObj {
 };
 
 
-// TODO - should we have a class for paths, rather than explicitly working with the
-// vectors of hashes?
-
 class GED_EXPORT DbiPath {
     public:
+	DbiPath(DbiState *dbis, const char *path = NULL);
 
+	// Use BRL-CAD rules to determine the active color at the
+	// path leaf element
 	bool color(struct bu_color *c);
-	bool is_subtraction();
-	bool matrix();
-	bool valid();
-	std::string print();
-	bool bbox(point_t bmin, point_t bmax);
 
+	// Accumulate the matrices along the path
+	bool matrix(matp_t m);
+
+	// Determine if there is a subtraction operation along the path
+	bool is_subtraction();
+
+	// Determine if there is a intersection operation along the path
+	bool is_intersection();
+
+	// Report if the path is currently valid in the DbiState (NOTE: does
+	// not necessarily imply that DbiState matches .g database state - that
+	// is not the responsibility of DbiPath.)
+	bool valid();
+
+	// Report if the path is currently cyclic.  If full_check is true every
+	// element in the path is checked - by default, only the leaf element
+	// is verified against all of its parents.  (The latter is faster for
+	// deep paths, and frequently that check alone is enough.)
+	bool cyclic(bool full_check = false);
+
+	// Produce a string representing the path.  pmax may be set to the
+	// maximum number of path elements to include, and verbose is specified
+	// to annotate the presence of additional information
+	std::string str(size_t pmax = 0, int verbose = 0);
+
+	// Calculate the bounding box of the leaf element, positioned according
+	// to the instance matrices of any parent elements in the path.
+	bool bbox(point_t *bmin, point_t *bmax);
+
+	// Calculate a hash of the path elements
+	unsigned long long hash(size_t max_len = 0);
+
+	// Appends to path if addition won't make the path cyclic
+	unsigned long long add(unsigned long long element);
+
+	// Removes the last element from the path, and recalculates cyclic and
+	// valid properties.
+	void pop();
+
+	// TODO - if we add a (re)draw method, could we make elements private?
 	std::vector<unsigned long long> elements;
+    private:
+	int is_cyclic = 0;  // 0 = not cyclic, 1 = cyclic, 2 = unknown
+	bool is_valid = true;
+	DbiState *d = NULL;
+	void split_path(std::vector<std::string> &objs, const char *str);
+	std::string name_deescape(std::string &name);
 };
 
 
@@ -415,19 +456,14 @@ class GED_EXPORT DbiState {
 
 	std::vector<unsigned long long> tops(bool show_cyclic);
 
-	bool path_color(struct bu_color *c, std::vector<unsigned long long> &elements);
-
-	bool path_is_subtraction(std::vector<unsigned long long> &elements);
-
+	// Checks if the hash indexes either a GObj or a CombInst
+	// entity in DbiState
 	bool valid_hash(unsigned long long phash);
-	bool valid_hash_path(std::vector<unsigned long long> &phashes);
-	bool print_hash(struct bu_vls *opath, unsigned long long phash);
-	void print_path(struct bu_vls *opath, std::vector<unsigned long long> &path, size_t pmax = 0, int verbsose = 0);
 
-	const char *pathstr(std::vector<unsigned long long> &path, size_t pmax = 0);
-	const char *hashstr(unsigned long long);
+	// Returns either the gobj name or the parent/instance string for a
+	// comb instance.  If neither can be found returns "Unknown hash: #".
+	std::string hash_str(unsigned long long phash);
 
-	std::vector<unsigned long long> digest_path(const char *path);
 
 	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
 
@@ -440,7 +476,6 @@ class GED_EXPORT DbiState {
 
 	void put_selected_state(const char *sname);
 	std::vector<std::string> list_selection_sets();
-
 
 	// These maps are the ".g ground truth" of the database objects
 	std::unordered_map<unsigned long long, GObj *> gobjs;
