@@ -166,6 +166,12 @@ class GED_EXPORT DbiPath {
     public:
 	DbiPath(DbiState *dbis, const char *path = NULL);
 
+	// Check if this path matches path p, up to the shorter of the element
+	// size of the shorter of the two element lists or maxcnt (if maxcnt >
+	// 0)  Allows for comparison of two DbiPaths and spotting when one is
+	// a subset or superset of the other.
+	bool matches(DbiPath *p = NULL, size_t maxcnt = 0);
+
 	// Use BRL-CAD rules to determine the active color at the
 	// path leaf element
 	bool color(struct bu_color *c);
@@ -189,6 +195,11 @@ class GED_EXPORT DbiPath {
 	// is verified against all of its parents.  (The latter is faster for
 	// deep paths, and frequently that check alone is enough.)
 	bool cyclic(bool full_check = false);
+
+	// Report how deep the leaf element is in the hierarchy.  A top level
+	// single object path, for example would be depth 0, and a/b/c would be
+	// depth 2.
+	size_t depth();
 
 	// Produce a string representing the path.  pmax may be set to the
 	// maximum number of path elements to include, and verbose is specified
