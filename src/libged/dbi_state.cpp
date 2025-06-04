@@ -110,271 +110,14 @@ DbiState::~DbiState()
 	dbi_cache_close(dcache);
 }
 
-unsigned long long
-DbiState::path_hash(std::vector<unsigned long long> &path, size_t max_len)
-{
-    size_t mlen = (max_len) ? max_len : path.size();
-    return bu_data_hash(path.data(), mlen * sizeof(unsigned long long));
-}
-
-static void
-fp_path_split(std::vector<std::string> &objs, const char *str)
-{
-    std::string s(str);
-    while (s.length() && s.c_str()[0] == '/')
-	s.erase(0, 1);  //Remove leading slashes
-
-    std::string nstr;
-    bool escaped = false;
-    for (size_t i = 0; i < s.length(); i++) {
-	if (s[i] == '\\') {
-	    if (escaped) {
-		nstr.push_back(s[i]);
-		escaped = false;
-		continue;
-	    }
-	    escaped = true;
-	    continue;
-	}
-	if (s[i] == '/' && !escaped) {
-	    if (nstr.length())
-		objs.push_back(nstr);
-	    nstr.clear();
-	    continue;
-	}
-	nstr.push_back(s[i]);
-	escaped = false;
-    }
-    if (nstr.length())
-	objs.push_back(nstr);
-}
-
-static std::string
-name_deescape(std::string &name)
-{
-    std::string s(name);
-    std::string nstr;
-
-    for (size_t i = 0; i < s.length(); i++) {
-	if (s[i] == '\\') {
-	    if ((i+1) < s.length())
-		nstr.push_back(s[i+1]);
-	    i++;
-	} else {
-	    nstr.push_back(s[i]);
-	}
-    }
-
-    return nstr;
-}
-
-// This is a full (and more expensive) check to ensure
-// a path has no cycles anywhere in it.
-bool
-DbiState::path_cyclic(std::vector<unsigned long long> &path)
-{
-    unsigned long long chash, phash;
-    std::unordered_map<unsigned long long, GObj *>::iterator r;
-    std::unordered_map<unsigned long long, CombInst *>::iterator c, p;
-
-    // A single GObj toplevel path can't be cyclic
-    if (path.size() == 1)
-	return false;
-
-    // Make sure we have a valid root GObj
-    r =  gobjs.find(path[0]);
-    if (r == gobjs.end()) {
-	// If we have an invalid GObj hash, we can't properly test - return
-	// the worst-case assumption, which is true (path is cyclic)
-	return true;
-    }
-
-    // Start with the last entry in the path
-    int i = path.size() - 1;
-
-    while (i > 0) {
-
-	c =  combinsts.find(path[i]);
-	if (c == combinsts.end()) {
-	    // If we have an invalid Comb hash, we can't properly test - return
-	    // the worst-case assumption, which is true (path is cyclic)
-	    return true;
-	}
-
-	chash = c->second->ohash;
-	int j = i - 1;
-
-	while (j >= 0) {
-
-	    if (j > 0) {
-
-		p = combinsts.find(path[j]);
-
-		if (p == combinsts.end()) {
-		    // If we have an invalid Comb hash, we can't properly test - return
-		    // the worst-case assumption, which is true (path is cyclic)
-		    return true;
-		}
-
-		phash = p->second->ohash;
-
-	    } else {
-
-		phash = r->second->hash;
-
-	    }
-
-	    if (chash == phash)
-		return true;
-
-	    j--;
-	}
-
-	i--;
-    }
-    return false;
-}
-
-// This version of the cyclic check assumes the path entries other than the
-// last one are OK, and checks only against that last entry.
-bool
-DbiState::path_addition_cyclic(std::vector<unsigned long long> &path)
-{
-    unsigned long long chash, phash;
-    std::unordered_map<unsigned long long, GObj *>::iterator r;
-    std::unordered_map<unsigned long long, CombInst *>::iterator c, p;
-
-    // A single GObj toplevel path can't be cyclic
-    if (path.size() == 1)
-	return false;
-
-    // Make sure we have a valid root GObj
-    r =  gobjs.find(path[0]);
-    if (r == gobjs.end()) {
-	// If we have an invalid GObj hash, we can't properly test - return
-	// the worst-case assumption, which is true (path is cyclic)
-	return true;
-    }
-
-    // Get the last entry in the path
-    c =  combinsts.find(path[path.size() - 1]);
-    if (c == combinsts.end()) {
-	// If we have an invalid Comb hash, we can't properly test - return
-	// the worst-case assumption, which is true (path is cyclic)
-	return true;
-    }
-
-    chash = c->second->ohash;
-
-    int j = path.size() - 2;
-
-    while (j >= 0) {
-
-	if (j > 0) {
-
-	    p = combinsts.find(path[j]);
-
-	    if (p == combinsts.end()) {
-		// If we have an invalid Comb hash, we can't properly test - return
-		// the worst-case assumption, which is true (path is cyclic)
-		return true;
-	    }
-
-	    phash = p->second->ohash;
-
-	} else {
-
-	    phash = r->second->hash;
-
-	}
-
-	if (chash == phash)
-	    return true;
-
-	j--;
-    }
-
-    return false;
-}
-
-std::vector<unsigned long long>
-DbiState::digest_path(const char *path)
-{
-    // If no path, nothing to process
-    if (!path)
-	return std::vector<unsigned long long>();
-
-    // Digest the string into individual path elements
-    std::vector<std::string> elements, substrs;
-    fp_path_split(substrs, path);
-    for (size_t i = 0; i < substrs.size(); i++) {
-	std::string cleared = name_deescape(substrs[i]);
-	elements.push_back(cleared);
-    }
-
-    // Convert the string elements into hash elements.
-    // The first element is handled as a gobj - beyond that,
-    // the hash is performed on the parent/child combo to get
-    // the CombInst hash
-    std::vector<unsigned long long> phe;
-    phe.push_back(bu_data_hash(elements[0].c_str(), strlen(elements[0].c_str())*sizeof(char)));
-    for (size_t i = 1; i < elements.size(); i++) {
-	unsigned long long lhash = bu_data_hash(elements[i].c_str(), strlen(elements[0].c_str())*sizeof(char));
-	std::vector<unsigned long long> lvec;
-	lvec.push_back(phe[0]);
-	lvec.push_back(lhash);
-	phe.push_back(bu_data_hash(lvec.data(), lvec.size() * sizeof(unsigned long long)));
-    }
-
-    // If we're cyclic, path is invalid
-    if (path_cyclic(phe))
-	return std::vector<unsigned long long>();
-
-    // If we're not valid, it's no dice
-    if (!valid_hash_path(phe)) {
-	// If we don't have a valid hash path, try to tell the user more about
-	// *why* it is invalid.
-	unsigned long long phash = phe[0];
-	if (gobjs.find(phash) == gobjs.end()) {
-	    bu_log("Invalid first path element (must be GObj): %s\n", elements[0].c_str());
-	    return std::vector<unsigned long long>();
-	}
-	for (size_t i = 1; i < phe.size(); i++) {
-	    if (combinsts.find(phe[i]) == combinsts.end()) {
-		bu_log("CombInst not found for path element # %zd %s/%s\n", i, elements[i-1].c_str(), elements[i].c_str());
-		return std::vector<unsigned long long>();
-	    }
-
-	    CombInst *ci = combinsts[phe[i]];
-
-	    // Verify that ci's chash matches phash
-	    if (ci->chash != phash) {
-		bu_log("Invalid comb instance - chash mismatch %s/%s\n", elements[i-1].c_str(), elements[i].c_str());
-		return std::vector<unsigned long long>();
-	    }
-
-	    // The ohash of this comb instance now becomes
-	    // the parent for the next check
-	    phash = ci->ohash;
-	}
-
-	bu_log("Unknown digest_path validation failure\n");
-	return std::vector<unsigned long long>();
-    }
-
-    return phe;
-}
-
 bool
 DbiState::valid_hash(unsigned long long phash)
 {
+    // Zero is never valid
     if (!phash)
 	return false;
 
-    // There are two possibilities for a hash to be valid - it can
-    // be either a GObj hash or a CombInst hash.  Most of the time
-    // it will be a comb instance, so try that first
-
+    // Most of the time phash will be a comb instance, so try that first
     if (combinsts.find(phash) != combinsts.end())
 	return true;
 
@@ -384,84 +127,21 @@ DbiState::valid_hash(unsigned long long phash)
     return false;
 }
 
-bool
-DbiState::valid_hash_path(std::vector<unsigned long long> &phashes)
+std::string
+DbiState::hash_str(unsigned long long phash)
 {
-    unsigned long long phash = phashes[0];
-    if (gobjs.find(phash) == gobjs.end())
-	return false;
-    for (size_t i = 1; i < phashes.size(); i++) {
-	if (combinsts.find(phashes[i]) == combinsts.end())
-	    return false;
-	CombInst *ci = combinsts[phashes[i]];
-	if (ci->chash != phash)
-	    return false;
-	phash = ci->ohash;
-    }
-    return true;
-}
-
-bool
-DbiState::print_hash(struct bu_vls *opath, unsigned long long phash)
-{
-    if (!phash)
-	return false;
-
     if (combinsts.find(phash) != combinsts.end()) {
 	CombInst *c = combinsts[phash];
-	bu_vls_printf(opath, "%s", (c->iname.length()) ? c->iname.c_str() : c->oname.c_str());
-	return true;
+	std::string hash_str = c->cname + std::string("/") + (c->iname.length() ? c->iname : c->oname);
+	return hash_str;
     }
 
     if (gobjs.find(phash) != gobjs.end()) {
 	GObj *g = gobjs[phash];
-	bu_vls_printf(opath, "%s", g->name.c_str());
-	return true;
+	return g->name;
     }
 
-    bu_exit(EXIT_FAILURE, "DbiState::print_hash failure, dbi_state.cpp::%d - a hash not known to the database's DbiState was passed in.  This can happen when the dbip contents change and dbi_state->update() isn't called in the parent application after doing so.\n", __LINE__);
-    bu_vls_printf(opath, "\nERROR!!!\n");
-    return false;
-}
-
-void
-DbiState::print_path(struct bu_vls *opath, std::vector<unsigned long long> &path, size_t pmax, int verbose)
-{
-    if (!opath || !path.size())
-	return;
-
-    bu_vls_trunc(opath, 0);
-    for (size_t i = 0; i < path.size(); i++) {
-	if (pmax && i == pmax)
-	    break;
-	if (i > 0 && verbose) {
-	    if (combinsts.find(path[i]) != combinsts.end()) {
-		if (combinsts[path[i]]->non_default_matrix)
-		    bu_vls_printf(opath, "[M]");
-	    }
-	}
-	if (!print_hash(opath, path[i]))
-	    continue;
-	if (i < path.size() - 1 && (!pmax || i < pmax - 1))
-	    bu_vls_printf(opath, "/");
-    }
-}
-
-const char *
-DbiState::pathstr(std::vector<unsigned long long> &path, size_t pmax)
-{
-    bu_vls_trunc(&path_string, 0);
-    print_path(&path_string, path, pmax);
-    return bu_vls_cstr(&path_string);
-}
-
-
-const char *
-DbiState::hashstr(unsigned long long hash)
-{
-    bu_vls_trunc(&hash_string, 0);
-    print_hash(&hash_string, hash);
-    return bu_vls_cstr(&hash_string);
+    return std::string("Unknown hash: ") + std::to_string(phash);
 }
 
 void
@@ -505,8 +185,7 @@ DbiState::get_gobjs(std::vector<unsigned long long> &path)
     // Any remaining path are CombInst.  We want the GObj associated
     // with their oname
     for (size_t i = 1; i < path.size(); i++) {
-	// TODO  - if we hit a CombInt without the associated GObj, should we
-	// error out?
+	// TODO  - if we hit something invalid should we error out?
 	if (combinsts.find(path[i]) == combinsts.end())
 	    continue;
 	if (gobjs.find(combinsts[path[i]]->ohash) == gobjs.end())
@@ -523,8 +202,7 @@ DbiState::get_combinsts(std::vector<unsigned long long> &path)
     std::vector<CombInst *> cis;
     // The first element in the path is a GObj Any remaining path are CombInst.
     for (size_t i = 1; i < path.size(); i++) {
-	// TODO  - if we hit a CombInt without the associated GObj, should we
-	// error out?
+	// TODO  - if we hit something invalid should we error out?
 	if (combinsts.find(path[i]) == combinsts.end())
 	    continue;
 	cis.push_back(combinsts[path[i]]);
@@ -532,85 +210,7 @@ DbiState::get_combinsts(std::vector<unsigned long long> &path)
     return cis;
 }
 
-bool
-DbiState::path_color(struct bu_color *c, std::vector<unsigned long long> &elements)
-{
-    const struct mater *mp;
 
-    std::vector<GObj *> cgs = get_gobjs(elements);
-
-    // This may not be how we'll always want to do this, but at least for the
-    // moment (to duplicate observed MGED behavior) the first region_id seen
-    // along the path with an active color in rt_material_head trumps all other
-    // color values set by any other means.
-    if (rt_material_head() != MATER_NULL) {
-	for (size_t i = 0; i < cgs.size(); i++) {
-	    if (cgs[i]->region_id >= 0) {
-		for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
-		    if (cgs[i]->region_id > mp->mt_high || cgs[i]->region_id < mp->mt_low)
-			continue;
-		    unsigned char mt[3];
-		    mt[0] = mp->mt_r;
-		    mt[1] = mp->mt_g;
-		    mt[2] = mp->mt_b;
-		    bu_color_from_rgb_chars(c, mt);
-		    return true;
-		}
-	    }
-	}
-    }
-
-    // Next, check for an inherited color.  If we have one (the behavior seen in MGED
-    // appears to require a comb with both inherit and a color value set to override
-    // lower colors) then we are done.
-    for (size_t i = 0; i < cgs.size(); i++) {
-	if (!cgs[i]->c_inherit)
-	    continue;
-	if (!cgs[i]->color_set)
-	    continue;
-	BU_COLOR_CPY(c, &cgs[i]->color);
-	return true;
-    }
-
-    // If we don't have an inherited color, it works the other way around - the
-    // lowest set color wins.  Note that a region flag doesn't automatically
-    // override a lower color level - i.e. there is no implicit inherit flag
-    // in a region being set on a comb.
-    for (long long i = cgs.size()-1; i >= 0; i--) {
-	if (!cgs[i]->color_set)
-	    continue;
-	BU_COLOR_CPY(c, &cgs[i]->color);
-	return true;
-    }
-
-    // If we don't have anything else, default to red
-    unsigned char mt[3];
-    mt[0] = 255;
-    mt[1] = 0;
-    mt[2] = 0;
-    bu_color_from_rgb_chars(c, mt);
-    return false;
-}
-
-bool
-DbiState::path_is_subtraction(std::vector<unsigned long long> &elements)
-{
-    // GObj only path is never a subtraction
-    if (elements.size() < 2)
-	return false;
-
-    // Path needs to be valid
-    if (!valid_hash_path(elements))
-	return false;
-
-    for (size_t i = 1; i < elements.size(); i++) {
-	CombInst *c = combinsts[elements[i]]; 
-	if (c->boolean_op == OP_SUBTRACT)
-	    return true;
-    }
-
-    return false;
-}
 
 struct directory *
 DbiState::get_hdp(unsigned long long phash)
@@ -627,32 +227,6 @@ DbiState::get_hdp(unsigned long long phash)
 }
 
 #if 0
-bool
-DbiState::get_path_matrix(matp_t m, std::vector<unsigned long long> &elements)
-{
-    bool have_mat = false;
-    if (UNLIKELY(!m))
-	return false;
-
-    MAT_IDN(m);
-    if (elements.size() < 2)
-	return false;
-
-    // The root GObj doesn't have a matrix, but any comb instances
-    // in the path might - check all of them
-    std::vector<CombInst *> cis = get_combinsts(elements);
-    for (size_t i = 0; i < cis.size(); i++) {
-	if (cis[i]->non_default_matrix) {
-	    mat_t cmat;
-	    bn_mat_mul(cmat, m, cis[i]->m);
-	    MAT_COPY(m, cmat);
-	    have_mat = true;
-	}
-    }
-
-    return have_mat;
-}
-
 bool
 DbiState::get_path_bbox(point_t *bbmin, point_t *bbmax, std::vector<unsigned long long> &elements)
 {
