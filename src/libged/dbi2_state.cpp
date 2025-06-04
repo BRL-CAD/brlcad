@@ -495,15 +495,16 @@ DbiPath::add(unsigned long long new_element)
 }
 
 void
-DbiPath::pop()
+DbiPath::pop(bool no_check)
 {
     // Don't pop_back on an empty vector - undefined behavior
     if (elements.size())
 	elements.pop_back();
 
-    // If we have an empty path, we're done
-    if (!elements.size()) {
-	// Amounts to resetting to an empty container
+    // If we have an empty path, or the user has instructed us to skip
+    // validation, we're done
+    if (no_check || !elements.size()) {
+	// Reset
 	is_valid = true;
 	is_cyclic = 0;
 	return;
