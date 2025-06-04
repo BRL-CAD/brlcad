@@ -56,6 +56,530 @@ extern "C" {
 #include "./ged_private.h"
 
 
+DbiPath::DbiPath(DbiState *dbis, const char *path)
+{
+    d = dbis;
+
+    // If no path, or no way to decode it, we're done
+    if (!path || !d)
+	return;
+
+    // Digest the string into individual path elements
+    std::vector<std::string> substrs;
+    split_path(substrs, path);
+    unsigned long long chash = 0;
+    for (size_t i = 0; i < substrs.size(); i++) {
+	std::string cleared = name_deescape(substrs[i]);
+	unsigned long long ehash = bu_data_hash(cleared.c_str(), strlen(cleared.c_str())*sizeof(char));
+	unsigned long long ohash = 0;
+	// Validate against the DbiState - if we don't have a supporting
+	// GObj or CombInst, we don't have a valid path element
+	if (i == 0) {
+	    // .g object lookups are simple - it's just the hash of the name
+	    ohash = add(ehash);
+	    if (!ohash)
+		bu_log("Invalid first path element (must be GObj): %s\n", substrs[0].c_str());
+	} else {
+	    // Comb instance lookup hashes are made up of a combination of the
+	    // parent comb's name hash and the instance reference hash
+	    std::vector<unsigned long long> lvec;
+	    lvec.push_back(chash);
+	    lvec.push_back(ehash);
+	    ehash = bu_data_hash(lvec.data(), lvec.size() * sizeof(unsigned long long));
+	    ohash = add(ehash);
+	    if (!ohash)
+		bu_log("Invalid comb instance - %s/%s\n", substrs[i-1].c_str(), substrs[i].c_str());
+	}
+	if (!ohash) {
+	    bu_log("Failed to create valid DbiPath from string: %s\n", path);
+	    elements.clear();
+	    return;
+	}
+
+	// If we made a cyclic path, there's no point in processing further
+	if (UNLIKELY(is_cyclic)) {
+	    bu_log("Note path %s is cyclic\n", path);
+	    return;
+	}
+    }
+}
+
+bool
+DbiPath::color(struct bu_color *c)
+{
+    const struct mater *mp;
+
+    std::vector<GObj *> cgs = d->get_gobjs(elements);
+
+    // This may not be how we'll always want to do this, but at least for the
+    // moment (to duplicate observed MGED behavior) the first region_id seen
+    // along the path with an active color in rt_material_head trumps all other
+    // color values set by any other means.
+    if (rt_material_head() != MATER_NULL) {
+	for (size_t i = 0; i < cgs.size(); i++) {
+	    if (cgs[i]->region_id >= 0) {
+		for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+		    if (cgs[i]->region_id > mp->mt_high || cgs[i]->region_id < mp->mt_low)
+			continue;
+		    unsigned char mt[3];
+		    mt[0] = mp->mt_r;
+		    mt[1] = mp->mt_g;
+		    mt[2] = mp->mt_b;
+		    bu_color_from_rgb_chars(c, mt);
+		    return true;
+		}
+	    }
+	}
+    }
+
+    // Next, check for an inherited color.  If we have one (the behavior seen in MGED
+    // appears to require a comb with both inherit and a color value set to override
+    // lower colors) then we are done.
+    for (size_t i = 0; i < cgs.size(); i++) {
+	if (!cgs[i]->c_inherit)
+	    continue;
+	if (!cgs[i]->color_set)
+	    continue;
+	BU_COLOR_CPY(c, &cgs[i]->color);
+	return true;
+    }
+
+    // If we don't have an inherited color, it works the other way around - the
+    // lowest set color wins.  Note that a region flag doesn't automatically
+    // override a lower color level - i.e. there is no implicit inherit flag
+    // in a region being set on a comb.
+    for (long long i = cgs.size()-1; i >= 0; i--) {
+	if (!cgs[i]->color_set)
+	    continue;
+	BU_COLOR_CPY(c, &cgs[i]->color);
+	return true;
+    }
+
+    // If we don't have anything else, default to red
+    unsigned char mt[3];
+    mt[0] = 255;
+    mt[1] = 0;
+    mt[2] = 0;
+    bu_color_from_rgb_chars(c, mt);
+    return false;
+
+}
+
+bool
+DbiPath::matrix(matp_t m)
+{
+    if (UNLIKELY(!m))
+	return false;
+
+    bool have_mat = false;
+
+    MAT_IDN(m);
+    if (elements.size() < 2)
+	return false;
+
+    // The root GObj doesn't have a matrix, but any comb instances
+    // in the path might - check all of them
+    for (size_t i = 1; i < elements.size(); i++) {
+
+	std::unordered_map<unsigned long long, CombInst *>::iterator c;
+	c = d->combinsts.find(elements[i]);
+	if (c == d->combinsts.end()) {
+	    is_valid = false;
+	    return false;
+	}
+
+	if (c->second->non_default_matrix) {
+	    mat_t cmat;
+	    bn_mat_mul(cmat, m, c->second->m);
+	    MAT_COPY(m, cmat);
+	    have_mat = true;
+	}
+    }
+
+    return have_mat;
+}
+
+
+bool
+DbiPath::is_subtraction()
+{
+    // GObj only path is never a subtraction
+    if (elements.size() < 2)
+	return false;
+
+    for (size_t i = 1; i < elements.size(); i++) {
+
+	std::unordered_map<unsigned long long, CombInst *>::iterator c;
+	c = d->combinsts.find(elements[i]);
+	if (c == d->combinsts.end()) {
+	    is_valid = false;
+	    return false;
+	}
+
+	if (c->second->boolean_op == OP_SUBTRACT)
+	    return true;
+    }
+
+    return false;
+}
+
+bool
+DbiPath::is_intersection()
+{
+    // GObj only path is never an intersection
+    if (elements.size() < 2)
+	return false;
+
+    for (size_t i = 1; i < elements.size(); i++) {
+
+	std::unordered_map<unsigned long long, CombInst *>::iterator c;
+	c = d->combinsts.find(elements[i]);
+	if (c == d->combinsts.end()) {
+	    is_valid = false;
+	    return false;
+	}
+
+	if (c->second->boolean_op == OP_INTERSECT)
+	    return true;
+    }
+
+    return false;
+}
+
+bool
+DbiPath::valid()
+{
+    if (!d || !is_valid)
+	return false;
+
+    // Check if the path objs are valid
+    if (d->gobjs.find(elements[0]) == d->gobjs.end()) {
+	is_valid = false;
+	return false;
+    }
+    for (size_t i = 1; i < elements.size(); i++) {
+	if (d->combinsts.find(elements[i]) == d->combinsts.end()) {
+	    is_valid = false;
+	    return false;
+	}
+    }
+
+    return true;
+}
+
+bool
+DbiPath::cyclic(bool full_check)
+{
+    // We can't properly check an invalid path
+    if (!is_valid)
+	return false;
+
+    // A GObj only path cannot be cyclic
+    if (elements.size() < 2)
+	is_cyclic = 0;
+
+    // If we already know the answer, don't do the (expensive)
+    // recheck
+    if (is_cyclic < 2)
+	return (is_cyclic) ? true : false;
+
+    // Check path elements against parents to see if there are any self
+    // references.  If we're doing a full check do them all, otherwise
+    // just do the leaf.
+    size_t leaf_ind = elements.size() - 1;
+    while (leaf_ind > 0) {
+	CombInst *c = d->combinsts[leaf_ind];
+	unsigned long long chash = c->ohash;
+	unsigned long long phash = 0;
+	int j = leaf_ind - 1;
+	while (j >= 0) {
+	    if (j > 0) {
+		std::unordered_map<unsigned long long, CombInst *>::iterator cp;
+		cp = d->combinsts.find(elements[j]);
+		if (cp == d->combinsts.end()) {
+		    // Path turned invalid
+		    is_valid = false;
+		    return false;
+		}
+		phash = cp->second->ohash;
+	    } else {
+		std::unordered_map<unsigned long long, GObj *>::iterator p;
+		p = d->gobjs.find(elements[j]);
+		if (p == d->gobjs.end()) {
+		    // Path turned invalid
+		    is_valid = false;
+		    return false;
+		}
+		phash = p->second->hash;
+	    }
+	    if (chash == phash) {
+		// Found a cycle in the path
+		is_cyclic = true;
+		return true;
+	    }
+	    // All clear - check next element
+	    j--;
+	}
+
+	// If we're not doing a full check, by this point in the first pass
+	// we can call it not cyclic.
+	if (!full_check)
+	    return false;
+
+	// Keep going - decrement our leaf index
+	leaf_ind--;
+    }
+
+    // If we got this far, it is not cyclic
+    return false;
+}
+
+std::string
+DbiPath::str(size_t pmax, int verbose)
+{
+    if (!is_valid)
+	return std::string("Invalid path");
+
+    std::string pstr;
+    // We're always printing the first element
+    std::unordered_map<unsigned long long, GObj *>::iterator p;
+    p = d->gobjs.find(elements[0]);
+    if (p == d->gobjs.end()) {
+	is_valid = false;
+	pstr.append(std::string("Invalid path"));
+	return pstr;
+    }
+
+    GObj *g = d->gobjs[elements[0]];
+    pstr.append(g->name);
+
+    // Print any comb instances
+    size_t ecnt = (pmax) ? pmax : elements.size();
+    for (size_t i = 1; i < ecnt; i++) {
+
+	pstr.append(std::string("/"));
+
+	std::unordered_map<unsigned long long, CombInst *>::iterator c;
+	c = d->combinsts.find(elements[i]);
+	if (c == d->combinsts.end()) {
+	    is_valid = false;
+	    pstr.append(std::string("Invalid path"));
+	    return pstr;
+	}
+
+	if (verbose > 0 && c->second->non_default_matrix)
+	    pstr.append(std::string("M"));
+
+	// TODO - incorporate boolean op printing as well
+
+	pstr.append(c->second->iname.length() ? c->second->iname : c->second->oname);
+
+    }
+
+    return pstr;
+}
+
+bool
+DbiPath::bbox(point_t *bmin, point_t *bmax)
+{
+    if (!elements.size())
+	return false;
+
+    point_t lbmin, lbmax;
+    VSETALL(lbmin, INFINITY);
+    VSETALL(lbmax, -INFINITY);
+
+    // One element path, just return the GObj bbox
+    std::unordered_map<unsigned long long, GObj *>::iterator p;
+    if (elements.size() == 1) {
+	p = d->gobjs.find(elements[0]);
+	if (p == d->gobjs.end()) {
+	    is_valid = false;
+	    return false;
+	}
+	GObj *g = d->gobjs[elements[0]];
+	g->bbox(&lbmin, &lbmax);
+	VMINMAX(*bmin, *bmax, lbmin);
+	VMINMAX(*bmin, *bmax, lbmax);
+	return true;
+    }
+
+    // Get the leaf CombInst.
+    std::unordered_map<unsigned long long, CombInst *>::iterator c;
+    c = d->combinsts.find(elements[elements.size()-1]);
+    if (c == d->combinsts.end()) {
+	is_valid = false;
+	return false;
+    }
+    // Have CombInst leaf, get associated GObj bbox.  This is a geometry
+    // calculation, so if there is no associated GObj we can't proceed.
+    // However, it doesn't imply an invalid path, since a comb tree in a .g may
+    // reference a non existent object.
+    p = d->gobjs.find(c->second->ohash);
+    if (p == d->gobjs.end())
+	return false;
+    GObj *g = d->gobjs[elements[0]];
+    g->bbox(&lbmin, &lbmax);
+
+    // Build up the path matrix and apply it, if it is non IDN
+    mat_t m;
+    if (matrix(m)) {
+	point_t tbmin, tbmax;
+	MAT4X3PNT(tbmin, m, lbmin);
+	MAT4X3PNT(tbmax, m, lbmax);
+	VMOVE(lbmin, tbmin);
+	VMOVE(lbmax, tbmax);
+    }
+
+    // Set the results
+    VMINMAX(*bmin, *bmax, lbmin);
+    VMINMAX(*bmin, *bmax, lbmax);
+
+    return true;
+}
+
+unsigned long long
+DbiPath::hash(size_t max_len)
+{
+    size_t mlen = (max_len) ? max_len : elements.size();
+    return bu_data_hash(elements.data(), mlen * sizeof(unsigned long long));
+}
+
+
+// Validate a proposed new path element, and add if if valid.
+//
+// If a path is already cyclic, or invalid, we can't add anything else to it.
+// We DO need to be able to represent cyclic paths, since they can occur in a
+// .g database, but we don't allow them to grow beyond the cyclic addition.
+unsigned long long
+DbiPath::add(unsigned long long new_element)
+{
+    // If we're cyclic or invalid we can't add anything else
+    if (UNLIKELY(is_cyclic || !is_valid || !d))
+	return 0;
+
+    // Adding root element, which must be a GObj - make sure we have a valid
+    // GObj hash
+    if (!elements.size()) {
+	std::unordered_map<unsigned long long, GObj *>::iterator r;
+	r =  d->gobjs.find(new_element);
+	if (r == d->gobjs.end()) {
+	    // If we have an invalid GObj hash, we can't create a valid path
+	    return 0;
+	}
+	elements.push_back(new_element);
+	return new_element;
+    }
+
+    // Adding a new Comb element.  A Comb instance doesn't necessarily need to
+    // have its referenced instance solid in the database, but it DOES need to
+    // have a CombInst in DbiState or it is not a valid hash to use in a path.
+    // If we've been fed a non-CombInst hash, the add op fails.
+    std::unordered_map<unsigned long long, CombInst *>::iterator cp;
+    cp = d->combinsts.find(new_element);
+    if (cp == d->combinsts.end())
+	return 0;
+
+    // We have a CombInst, so we can add the element to the path
+    elements.push_back(new_element);
+
+    // Need to check if path is now cyclic.  Assuming previously defined path
+    // is NOT cyclic, per the is_cyclic check at the beginning of this method,
+    // so we only need to look at the last element and the default cyclic()
+    // test is sufficient.
+    is_cyclic = 2;
+    cyclic();
+
+    // Successfully added
+    return cp->second->ohash;
+}
+
+void
+DbiPath::pop()
+{
+    // Don't pop_back on an empty vector - undefined behavior
+    if (elements.size())
+	elements.pop_back();
+
+    // If we have an empty path, we're done
+    if (!elements.size()) {
+	// Amounts to resetting to an empty container
+	is_valid = true;
+	is_cyclic = 0;
+	return;
+    }
+
+    // See if we removed an invalid element
+    if (!is_valid) {
+	// Reset validity
+	is_valid = true;
+	// Re-run the check
+	is_valid = valid();
+    }
+
+    // If we're not empty, and we were previously cyclic,
+    // check again
+    if (is_cyclic) {
+	is_cyclic = 2;
+	cyclic();
+    }
+}
+
+
+// Private
+void
+DbiPath::split_path(std::vector<std::string> &objs, const char *str)
+{
+    std::string s(str);
+    while (s.length() && s.c_str()[0] == '/')
+	s.erase(0, 1);  //Remove leading slashes
+
+    std::string nstr;
+    bool escaped = false;
+    for (size_t i = 0; i < s.length(); i++) {
+	if (s[i] == '\\') {
+	    if (escaped) {
+		nstr.push_back(s[i]);
+		escaped = false;
+		continue;
+	    }
+	    escaped = true;
+	    continue;
+	}
+	if (s[i] == '/' && !escaped) {
+	    if (nstr.length())
+		objs.push_back(nstr);
+	    nstr.clear();
+	    continue;
+	}
+	nstr.push_back(s[i]);
+	escaped = false;
+    }
+    if (nstr.length())
+	objs.push_back(nstr);
+}
+
+// Private
+std::string
+DbiPath::name_deescape(std::string &name)
+{
+    std::string s(name);
+    std::string nstr;
+
+    for (size_t i = 0; i < s.length(); i++) {
+	if (s[i] == '\\') {
+	    if ((i+1) < s.length())
+		nstr.push_back(s[i+1]);
+	    i++;
+	} else {
+	    nstr.push_back(s[i]);
+	}
+    }
+
+    return nstr;
+}
+
+
 CombInst::CombInst(DbiState *dbis, const char *p_name, const char *o_name, unsigned long long icnt, int i_op, matp_t i_mat)
 {
     d = dbis;
@@ -392,8 +916,7 @@ populate_leaf(void *client_data, const char *name, matp_t c_m, int op)
     // Make the CombInst
     CombInst *c = new CombInst(d->gobj->d, d->gobj->dp->d_namep, name, i_count[chash], op, c_m);
 
-    // Add CombInst to the parent GObj containers
-    d->gobj->c[c->ihash] = c;
+    // Add CombInst to the parent GObj container
     d->gobj->cv.push_back(c);
 }
 
@@ -476,7 +999,7 @@ GObj::bbox(point_t *min, point_t *max)
 	    VMINMAX(*min, *max, lbmin);
 	    VMINMAX(*min, *max, lbmax);
 	}
-	return;	
+	return;
     }
 
     // Not a comb - if we're cached, just report that value.
@@ -506,7 +1029,7 @@ GObj::bbox(point_t *min, point_t *max)
 		VMOVE(bb_min, bmin);
 		VMOVE(bb_max, bmax);
 		bb_valid = true;
-	
+
 		VMINMAX(*min, *max, bb_min);
 		VMINMAX(*min, *max, bb_max);
 		return;
