@@ -205,9 +205,11 @@ class GED_EXPORT DbiPath {
 	// Appends to path if addition won't make the path cyclic
 	unsigned long long add(unsigned long long element);
 
-	// Removes the last element from the path, and recalculates cyclic and
-	// valid properties.
-	void pop();
+	// Removes the last element from the path.  By default recalculates cyclic and
+	// valid properties - if no_check is set, assumes validity and resets
+	// is_cyclic and is_valid without testing.  (The later is for performance
+	// sensitive cases where inputs are well controlled.)
+	void pop(bool no_check = false);
 
 	// TODO - if we add a (re)draw method, could we make elements private?
 	std::vector<unsigned long long> elements;
@@ -523,8 +525,7 @@ class GED_EXPORT DbiState {
 
 	void gather_cyclic(
 		std::unordered_set<unsigned long long> &cyclic,
-		unsigned long long c_hash,
-		std::vector<unsigned long long> &path_hashes
+		unsigned long long c_hash, DbiPath &p
 		);
 
 	unsigned long long update_dp(struct directory *dp);
