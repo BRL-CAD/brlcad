@@ -105,6 +105,31 @@ DbiPath::DbiPath(DbiState *dbis, const char *path)
 }
 
 bool
+DbiPath::matches(DbiPath *p, size_t maxcnt)
+{
+    if (UNLIKELY(!p))
+	return false;
+
+    // Find the smallest of maxcnt, elmeents.size() and p->elements.size().  That will
+    // tell us how many elements to check
+    size_t limit = (elements.size() > p->elements.size()) ? p->elements.size() : elements.size();
+    limit = (maxcnt && limit > maxcnt) ? maxcnt : limit;
+
+    // If we don't check anything, everything matches
+    if (!limit)
+	return true;
+
+    // The matching check is straightforward - if the hashes match, the paths match
+    for (size_t i = 0; i < limit; i++) {
+	if (elements[i] != p->elements[i])
+	    return false;
+    }
+
+    return true;
+}
+
+
+bool
 DbiPath::color(struct bu_color *c)
 {
     const struct mater *mp;
@@ -333,6 +358,15 @@ DbiPath::cyclic(bool full_check)
     // If we got this far, it is not cyclic
     return false;
 }
+
+size_t
+DbiPath::depth()
+{
+    if (UNLIKELY(!elements.size()))
+	return 0;
+    return elements.size() - 1;
+}
+
 
 std::string
 DbiPath::str(size_t pmax, int verbose)
