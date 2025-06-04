@@ -359,34 +359,28 @@ DbiState::list_selection_sets()
     return ret;
 }
 
-// TODO rework
+// TODO test
 void
 DbiState::gather_cyclic(
-	std::unordered_set<unsigned long long> &UNUSED(cyclic),
-	unsigned long long UNUSED(c_hash),
-	std::vector<unsigned long long> &UNUSED(path_hashes)
+	std::unordered_set<unsigned long long> &cyclic,
+	unsigned long long c_hash, DbiPath &p
 	)
 {
-#if 0
-    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
-    pc_it = p_c.find(c_hash);
-
-    path_hashes.push_back(c_hash);
-
-    if (!path_addition_cyclic(path_hashes)) {
+    GObj *g = gobjs[c_hash];
+    p.add(g->hash);
+    if (!p.cyclic()) {
 	/* Not cyclic - keep going */
-	if (pc_it != p_c.end()) {
-	    std::unordered_set<unsigned long long>::iterator c_it;
-	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
-		gather_cyclic(cyclic, *c_it, path_hashes);
+	for (size_t i = 0; i < g->cv.size(); i++) {
+	    CombInst *c = g->cv[i];
+	    gather_cyclic(cyclic, c->ohash, p);
 	}
     } else {
 	cyclic.insert(c_hash);
     }
 
-    /* Done with branch - restore path */
-    path_hashes.pop_back();
-#endif
+    /* Done with branch - restore path.  Disable validation since we are doing
+     * a controlled walk and know we're not cyclic after the pop. */
+    p.pop(true);
 }
 
 static int
@@ -421,10 +415,9 @@ DbiState::tops(bool show_cyclic)
     // the tree to find the answer and that results in a slow check for large
     // databases.
     std::unordered_set<unsigned long long> cyclic_paths;
-    std::vector<unsigned long long> path_hashes;
     for (size_t i = 0; i < ret.size(); i++) {
-	path_hashes.clear();
-	gather_cyclic(cyclic_paths, ret[i], path_hashes);
+	DbiPath p(this);
+	gather_cyclic(cyclic_paths, ret[i], p);
     }
     std::unordered_set<unsigned long long>::iterator c_it;
     for (c_it = cyclic_paths.begin(); c_it != cyclic_paths.end(); c_it++) {
