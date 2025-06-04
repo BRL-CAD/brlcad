@@ -361,6 +361,15 @@ class GED_EXPORT BViewState {
 	// convenience methods that decode it to user-comprehensible info.
 	void print_view_state(struct bu_vls *o = NULL);
 
+	// Given a set of paths, create a set of paths representing the
+	// expansion of the trees of those input paths to their leaves.
+	std::vector<DbiPath *> expand(std::vector<DbiPath *>);
+
+	// Given a set of paths, create a set of paths consisting of the
+	// shallowest path descriptions that fully capture the geometry present
+	// in the original set.
+	std::vector<DbiPath *> collapse(std::vector<DbiPath *>);
+
     private:
 	// Sets defining all drawn solid paths (including invalid paths).  The
 	// s_keys holds the ordered individual keys of each drawn solid path - it
