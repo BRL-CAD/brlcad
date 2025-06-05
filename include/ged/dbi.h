@@ -178,10 +178,8 @@ class GED_EXPORT GObj {
 class GED_EXPORT DbiPath {
     public:
 	DbiPath(DbiState *dbis, const char *path = NULL);
-
-	// Duplicate path p in the current class container.  Clears all
-	// prior DbiPath info in favor of p.
-	void copy(DbiPath &p);
+	~DbiPath();
+	DbiPath(const DbiPath &p);
 
 	// Return true if this path is a parent path of p
 	bool parent(DbiPath &p);
@@ -368,7 +366,7 @@ class GED_EXPORT BViewState {
 	// The actual drawing (and mode specifications) are done with redraw and a
 	// supplied bv_obj_settings structure.
 	void add_path(const char *path);
-	void add_hpath(std::vector<unsigned long long> &path_hashes);
+	void add_path(DbiPath *p);
 
 	// Erases paths from the view for the given mode.  If mode < 0, all
 	// matching paths are erased.  For modes that are un-evaluated, all
