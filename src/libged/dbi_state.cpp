@@ -478,16 +478,14 @@ DbiState::expand_path(std::vector<DbiPath *> *opaths, DbiPath &p)
     if (!g) {
 	// If we can't get a valid object, then the path
 	// ends here and we just copy p into out_paths
-	DbiPath *op = new DbiPath(this);
-	op->copy(p);
+	DbiPath *op = new DbiPath(p);
 	opaths->push_back(op);
 	return;
     }
 
     // If g is a solid, this is a leaf path and we're done
     if (!g->cv.size()) {
-	DbiPath *op = new DbiPath(this);
-	op->copy(p);
+	DbiPath *op = new DbiPath(p);
 	opaths->push_back(op);
 	return;
     }
@@ -509,8 +507,7 @@ DbiState::expand(std::vector<DbiPath *> paths)
 	if (!p->valid())
 	    continue;
 
-	DbiPath wp(this);
-	wp.copy(*p);
+	DbiPath wp(*p);
 	expand_path(&out_paths, wp);
     }
 
@@ -526,8 +523,7 @@ DbiState::collapse(std::vector<DbiPath *> paths)
     // Group paths of the same depth.  Depth == 0 paths are top level
     // and need no collapsing
     for (size_t i = 0; i < paths.size(); i++) {
-	DbiPath *op = new DbiPath(this);
-	op->copy(*paths[i]);
+	DbiPath *op = new DbiPath(*paths[i]);
 	size_t depth = paths[i]->depth();
 	if (!depth) {
 	    out_paths.push_back(op);
