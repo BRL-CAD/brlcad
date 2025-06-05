@@ -76,7 +76,7 @@ DbiPath::DbiPath(DbiState *dbis, const char *path)
 	// GObj or CombInst, we don't have a valid path element
 	if (i == 0) {
 	    // .g object lookups are simple - it's just the hash of the name
-	    ohash = add(ehash);
+	    ohash = push(ehash);
 	    if (!ohash)
 		bu_log("Invalid first path element (must be GObj): %s\n", substrs[0].c_str());
 	} else {
@@ -86,7 +86,7 @@ DbiPath::DbiPath(DbiState *dbis, const char *path)
 	    lvec.push_back(chash);
 	    lvec.push_back(ehash);
 	    ehash = bu_data_hash(lvec.data(), lvec.size() * sizeof(unsigned long long));
-	    ohash = add(ehash);
+	    ohash = push(ehash);
 	    if (!ohash)
 		bu_log("Invalid comb instance - %s/%s\n", substrs[i-1].c_str(), substrs[i].c_str());
 	}
