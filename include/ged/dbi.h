@@ -181,14 +181,17 @@ class GED_EXPORT DbiPath {
 	~DbiPath();
 	DbiPath(const DbiPath &p);
 
+	// Equality operator - return true if p is equal to this path
+	bool operator==(const DbiPath& p) const
+	{
+	    return (path_hash == p.path_hash);
+	}
+
 	// Return true if this path is a parent path of p
 	bool parent(DbiPath &p);
 
 	// Return true if this path is a child path of p
 	bool child(DbiPath &p);
-
-	// Return true if p is equal to this path
-	bool equal(DbiPath &p);
 
 	// Use BRL-CAD rules to determine the active color at the
 	// path leaf element
@@ -360,31 +363,36 @@ class GED_EXPORT BViewState {
     public:
 	BViewState(DbiState *);
 
-
-	// Adds path to the BViewState container, but doesn't trigger a re-draw - that
-	// should be done once all paths to be added in a given draw cycle are added.
-	// The actual drawing (and mode specifications) are done with redraw and a
+	// Adds path to the BViewState container drawn set, but doesn't trigger
+	// a re-draw - that should be done once all paths to be added in a
+	// given draw cycle are queued up.  The actual drawing (and mode
+	// specifications) are done with redraw and a
 	// supplied bv_obj_settings structure.
-	void add_path(const char *path);
-	void add_path(DbiPath *p);
+	void EnqueuePath(const char *path = NULL, int mode = 0);
+	void EnqueuePath(DbiPath *p = NULL, int mode = 0);
 
 	// Erases paths from the view for the given mode.  If mode < 0, all
 	// matching paths are erased.  For modes that are un-evaluated, all
 	// paths that are subsets of the specified path are removed.  For
 	// evaluated modes like 3 (bigE) that generate an evaluated visual
-	// specific to that path, only precise path matches are removed
-	void erase_path(int mode, int argc, const char **argv);
-	void erase_hpath(int mode, unsigned long long c_hash, std::vector<unsigned long long> &path_hashes, bool cache_collapse = true);
+	// specific to that path, only precise path matches are removed.
+	//
+	// Like EnqueuePath, this stages paths for subsequent processing
+	void DequeuePath(const char *p, int mode = -1, bool cache_collaspe = true);
+	void DequeuePath(DbiPath *p, int mode = -1, bool cache_collapse = true);
 
-	// Return a sorted vector of strings encoding the drawn paths in the
+	// Return a sorted vector of paths encoding the drawn paths in the
 	// view.  If mode == -1 list all paths, otherwise list those specific
-	// to the mode.  If list_collapsed is true, return the minimal path set
+	// to the mode.  If collapsed is true, return the minimal path set
 	// that captures what is drawn - otherwise, return the direct list of
 	// scene objects
-	std::vector<std::string> list_drawn_paths(int mode, bool list_collapsed);
+	std::vector<DbiPath *> DrawnPaths(int mode, bool collapsed);
 
-	// Get a count of the drawn paths
-	size_t count_drawn_paths(int mode, bool list_collapsed);
+	// Get a count of the drawn paths.  If collapsed is true the minimal
+	// path set capturing what is drawn is counted, otherwise all scene
+	// objects are counted.  mode == -1 means count all modes, otherwise
+	// count only the specified mode.
+	size_t DrawnnPathCount(bool collapsed = true, int mode = -1);
 
 	// Report if a path hash is drawn - 0 == not drawn, 1 == fully drawn, 2 == partially drawn
 	int is_hdrawn(int mode, unsigned long long phash);
