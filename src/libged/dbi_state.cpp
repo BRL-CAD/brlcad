@@ -420,7 +420,7 @@ DbiState::update()
 
     // For objects that are removed, delete the GObj and its associated data.
     // Removal of an instance from a comb tree is handled as an object change,
-    // and thus is not handled here.
+    // and thus is handled internally by the GObj destructor.
     for (g_it = removed.begin(); g_it != removed.end(); g_it++) {
 	std::unordered_map<struct directory *, GObj *>::iterator r_it;
 	r_it = dp2g.find(*g_it);
@@ -459,7 +459,7 @@ DbiState::update()
     }
     std::unordered_map<BViewState *, std::unordered_set<struct bview *>>::iterator bv_it;
     for (bv_it = vmap.begin(); bv_it != vmap.end(); bv_it++) {
-	bv_it->first->redraw(NULL, bv_it->second, 1, changed_hashes);
+	bv_it->first->Redraw(&bv_it->second, NULL, 1, &changed_hashes);
     }
 
     // Updates done, clear items stored by callbacks
