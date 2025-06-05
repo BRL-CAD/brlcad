@@ -181,6 +181,12 @@ class GED_EXPORT DbiPath {
 	~DbiPath();
 	DbiPath(const DbiPath &p);
 
+	// Initialization - allows us to re-use an existing container
+	void Init(const char *path = NULL);
+
+	// Prepares the container for reuse
+	void Reset();
+
 	// Equality operator - return true if p is equal to this path
 	bool operator==(const DbiPath& p) const
 	{
