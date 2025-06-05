@@ -501,7 +501,7 @@ DbiPath::hash(size_t max_len)
 // We DO need to be able to represent cyclic paths, since they can occur in a
 // .g database, but we don't allow them to grow beyond the cyclic addition.
 unsigned long long
-DbiPath::add(unsigned long long new_element)
+DbiPath::push(unsigned long long new_element)
 {
     // If we're cyclic or invalid we can't add anything else
     if (UNLIKELY(is_cyclic || !is_valid || !d))
