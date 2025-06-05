@@ -499,6 +499,162 @@ DbiState::update()
     return ret;
 }
 
+void
+DbiState::expand_path(std::vector<DbiPath *> *opaths, DbiPath &p)
+{
+    // Unpack the leaf GObj of p
+    GObj *g = NULL;
+    if (p.depth()) {
+	// Leaf is CombInst - get oname GObj
+	CombInst *c = combinsts[p.elements[p.elements.size() - 1]];
+	std::unordered_map<unsigned long long, GObj *>::iterator g_it = gobjs.find(c->ohash);
+	if (g_it == gobjs.end()) {
+	    // If CombInst oname isn't a valid object, then the path
+	    // ends here and we just copy p into out_paths
+	    DbiPath *op = new DbiPath(this);
+	    op->copy(p);
+	    opaths->push_back(op);
+	    return;
+	}
+	g = g_it->second;
+    } else {
+	// Top level path - just get GObj
+	g = gobjs[p.elements[0]];
+    }
+
+    // If g is a solid, this is a leaf path and we're done
+    if (!g->cv.size()) {
+	DbiPath *op = new DbiPath(this);
+	op->copy(p);
+	opaths->push_back(op);
+	return;
+    }
+
+    // If we have a comb, process the instances.
+    for (size_t i = 0; i < g->cv.size(); i++) {
+	p.add(g->cv[i]->ihash);
+	expand_path(opaths, p);
+	p.pop();
+    }
+}
+
+std::vector<DbiPath *>
+DbiState::expand(std::vector<DbiPath *> paths)
+{
+    std::vector<DbiPath *> out_paths;
+    for (size_t i = 0; i < paths.size(); i++) {
+	DbiPath *p = paths[i];
+	if (!p->valid())
+	    continue;
+
+	DbiPath wp(this);
+	wp.copy(*p);
+	expand_path(&out_paths, wp);
+    }
+
+    return out_paths;
+}
+
+std::vector<DbiPath *>
+DbiState::collapse(std::vector<DbiPath *> paths)
+{
+    std::vector<DbiPath *> out_paths;
+    std::map<size_t, std::vector<DbiPath *>> depth_groups;
+
+    // Group paths of the same depth.  Depth == 0 paths are top level
+    // and need no collapsing
+    for (size_t i = 0; i < paths.size(); i++) {
+	DbiPath *op = new DbiPath(this);
+	op->copy(*paths[i]);
+	size_t depth = paths[i]->depth();
+	if (!depth) {
+	    out_paths.push_back(op);
+	    continue;
+	}
+	depth_groups[i].push_back(op);
+    }
+
+    // Whittle down the depth groups until we find not-fully-listed parents -
+    // when we find that, the children constitute non-collapsible paths based
+    // on what's included in the input set
+    while (depth_groups.size()) {
+	size_t plen = depth_groups.rbegin()->first;
+	if (!plen)
+	    break;
+
+	// Give ourselves an easy handle for the current depth group
+	std::vector<DbiPath *> &dpaths = depth_groups.rbegin()->second;
+
+	// For a given depth, group the paths by parent path.  This results
+	// in path sub-groups which will define for us how "fully drawn"
+	// that particular parent comb instance is.
+	std::unordered_map<unsigned long long, std::vector<DbiPath *>> grouped_paths;
+	for (size_t i = 0; i < dpaths.size(); i++){
+	    unsigned long long ppathhash = dpaths[i]->hash(plen - 1);
+	    grouped_paths[ppathhash].push_back(dpaths[i]);
+	}
+
+	// For each parent/child grouping, compare it against the .g ground
+	// truth set.  If they match, fully drawn and we promote the path to
+	// the parent depth.  If not, the paths do not collapse further and are
+	// added to drawn paths.
+	std::unordered_map<unsigned long long, std::vector<DbiPath *>>::iterator pg_it;
+	for (pg_it = grouped_paths.begin(); pg_it != grouped_paths.end(); ++pg_it) {
+
+	    // Collect the set of active child hashes
+	    std::vector<DbiPath *> &cpaths = pg_it->second;
+	    std::unordered_set<unsigned long long> leaf_hashes;
+	    for (size_t i = 0; i < cpaths.size(); i++) {
+		DbiPath *lp = cpaths[i];
+		leaf_hashes.insert(lp->elements[lp->elements.size() - 1]);
+	    }
+
+	    // We need the full list of children from the CombInst.  Since the
+	    // grouped paths all have the same parent - just use the first path
+	    // to get the leaf CombInst, which will tell us where the GObj
+	    // containing the full list of child CombInsts can be found.
+	    DbiPath *p = cpaths[0];
+	    CombInst *c = combinsts[p->elements[p->elements.size() - 1]];
+	    GObj *pg = gobjs[c->chash];
+	    bool complete = true;
+	    for (size_t i = 0; i < pg->cv.size(); i++) {
+		if (leaf_hashes.find(pg->cv[i]->ihash) == leaf_hashes.end()) {
+		    complete = false;
+		    break;
+		}
+	    }
+
+	    if (complete) {
+		// If fully drawn, depth_groups[plen-1] gets the first path in
+		// cpaths with the leaf popped off.
+		DbiPath *cp = cpaths[0];
+		cp->pop();
+		depth_groups[plen - 1].push_back(cp);
+		// Remainder of paths can be freed
+		for (size_t i = 1; i < cpaths.size(); i++)
+		    delete cpaths[i];
+	    } else {
+		// No further collapsing - add to final.
+		for (size_t i = 0; i < cpaths.size(); i++)
+		    out_paths.push_back(cpaths[i]);
+	    }
+	}
+
+	// Done with this depth
+	depth_groups.erase(plen);
+    }
+
+    // If we collapsed all the way to top level objects, make sure to add them
+    if (depth_groups.find(0) != depth_groups.end()) {
+	std::vector<DbiPath *> &dpaths = depth_groups.rbegin()->second;
+	for (size_t i = 0; i < dpaths.size(); i++) {
+	    out_paths.push_back(dpaths[i]);
+	}
+    }
+
+    return out_paths;
+}
+
 /** @} */
 // Local Variables:
 // tab-width: 8
