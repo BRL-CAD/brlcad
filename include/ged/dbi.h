@@ -238,8 +238,8 @@ class GED_EXPORT DbiPath {
 	// Calculate a hash of the path elements
 	unsigned long long hash(size_t max_len = 0);
 
-	// Appends to path if addition won't make the path cyclic
-	unsigned long long add(unsigned long long element);
+	// Appends to end of path if path isn't already cyclic
+	unsigned long long push(unsigned long long element);
 
 	// Removes the last element from the path.  By default recalculates cyclic and
 	// valid properties - if no_check is set, assumes validity and resets
@@ -248,6 +248,9 @@ class GED_EXPORT DbiPath {
 	void pop(bool no_check = false);
 
 	// TODO - if we add a (re)draw method, could we make elements private?
+	// Maybe allow DbiState access as a C++ friend or some such?  Would be
+	// better to avoid explicitly exposing elements as much as possible,
+	// since we want add and pop
 	std::vector<unsigned long long> elements;
     private:
 	int is_cyclic = 0;  // 0 = not cyclic, 1 = cyclic, 2 = unknown
