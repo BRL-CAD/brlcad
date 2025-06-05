@@ -589,6 +589,33 @@ DbiPath::pop(bool no_check)
     }
 }
 
+CombInst *
+DbiPath::LeafCombInst()
+{
+    if (elements.size() < 2)
+	return NULL;
+
+    std::unordered_map<unsigned long long, CombInst *>::iterator c;
+    c = d->combinsts.find(elements[elements.size() - 1]);
+    if (c == d->combinsts.end())
+	return NULL;
+
+    return c->second;
+}
+
+GObj *
+DbiPath::RootGObj()
+{
+    if (elements.size())
+	return NULL;
+
+    std::unordered_map<unsigned long long, GObj *>::iterator p;
+    p = d->gobjs.find(elements[0]);
+    if (p == d->gobjs.end())
+	return NULL;
+
+    return p->second;
+}
 
 // Private
 void
