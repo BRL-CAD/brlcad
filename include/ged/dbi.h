@@ -242,13 +242,25 @@ class GED_EXPORT DbiPath {
 	// sensitive cases where inputs are well controlled.)
 	void pop(bool no_check = false);
 
-	// Get the Leaf CombInst (if present) on the path.  Returns NULL
-	// if path is empty or only contains a single GObj.
-	CombInst *LeafCombInst();
+	// Get the CombInst on the path at ind.  If ind is 0 (default), return
+	// the Leaf comb instance - by definition the root element of a path is
+	// always a GObj, so there can be no CombInst there.
+	//
+	// Returns NULL if path is empty or only contains a single GObj, or if ind
+	// is greater than the depth of the path.
+	CombInst *GetCombInst(size_t ind = 0);
 
 	// Get the Root GObj from the path.  Returns NULL
 	// if path is empty.
-	GObj *RootGObj();
+
+	// Get the GObj on the path at ind.  If ind is 0 (default), return
+	// the Root GObj, else return the GObj of the CombInst instance object
+	// at ind.
+	//
+	// If the path is empty, ind is greater than the depth of the path,
+	// or the CombInst oname does not map to a GObj instance the return
+	// is NULL.
+	GObj *GetGObj(size_t ind = 0);
 
 	// Optional scene object(s) associated with this path.
 	// Map key is the drawing mode (0 = wireframe, 1 = shaded, etc.)
