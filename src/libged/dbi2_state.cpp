@@ -120,29 +120,32 @@ DbiPath::copy(DbiPath &p)
 }
 
 bool
-DbiPath::matches(DbiPath *p, size_t maxcnt)
+DbiPath::parent(DbiPath &p)
 {
-    if (UNLIKELY(!p))
-	return false;
-
-    // Find the smallest of maxcnt, elmeents.size() and p->elements.size().  That will
-    // tell us how many elements to check
-    size_t limit = (elements.size() > p->elements.size()) ? p->elements.size() : elements.size();
-    limit = (maxcnt && limit > maxcnt) ? maxcnt : limit;
-
-    // If we don't check anything, everything matches
-    if (!limit)
+    // If we are listed in p's parent hashes, we are its parent
+    if (p.parent_path_hashes.find(path_hash) == p.parent_path_hashes.end())
 	return true;
 
-    // The matching check is straightforward - if the hashes match, the paths match
-    for (size_t i = 0; i < limit; i++) {
-	if (elements[i] != p->elements[i])
-	    return false;
-    }
-
-    return true;
+    return false;
 }
 
+bool
+DbiPath::child(DbiPath &p)
+{
+    // If p is our parent, we are its child
+    if (parent_path_hashes.find(p.path_hash) == parent_path_hashes.end())
+	return true;
+
+    return false;
+}
+
+
+bool
+DbiPath::equal(DbiPath &p)
+{
+    // If the path hashes match, the paths match
+    return (path_hash == p.path_hash);
+}
 
 bool
 DbiPath::color(struct bu_color *c)
@@ -490,6 +493,8 @@ DbiPath::bbox(point_t *bmin, point_t *bmax)
 unsigned long long
 DbiPath::hash(size_t max_len)
 {
+    if (UNLIKELY(!elements.size()))
+	return 0;
     size_t mlen = (max_len) ? max_len : elements.size();
     return bu_data_hash(elements.data(), mlen * sizeof(unsigned long long));
 }
@@ -517,6 +522,7 @@ DbiPath::push(unsigned long long new_element)
 	    return 0;
 	}
 	elements.push_back(new_element);
+	path_hash = hash();
 	return new_element;
     }
 
@@ -531,6 +537,10 @@ DbiPath::push(unsigned long long new_element)
 
     // We have a CombInst, so we can add the element to the path
     elements.push_back(new_element);
+
+    // Update current hash and parent hashes
+    parent_path_hashes.insert(path_hash);
+    path_hash = hash();
 
     // Need to check if path is now cyclic.  Assuming previously defined path
     // is NOT cyclic, per the is_cyclic check at the beginning of this method,
@@ -549,6 +559,10 @@ DbiPath::pop(bool no_check)
     // Don't pop_back on an empty vector - undefined behavior
     if (elements.size())
 	elements.pop_back();
+
+    // Update current hash and parent hashes
+    path_hash = hash();
+    parent_path_hashes.erase(path_hash);
 
     // If we have an empty path, or the user has instructed us to skip
     // validation, we're done

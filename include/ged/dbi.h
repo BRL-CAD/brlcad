@@ -175,14 +175,6 @@ class GED_EXPORT GObj {
 // where that GObj could define its own parent/child (without an inherit flag)
 // that injected a matrix positioning a PCA scene object for that specific GObj
 // without needing any other changes to the drawing pass.)
-//
-// A possible idea - calculate each path hash as elements are added and store
-// them in a set within the DbiPath class.  Then, when we want to know if a
-// path is a parent of this path, it would be a single lookup in the path
-// itself. pop() could also remove hashes when elements are removed. (IIRC
-// there are currently some view state hashes that store all the hashes for all
-// the paths, but maybe with DbiPath we can be more local about some of that?)
-// Would replace matches with parent/child/equal methods.
 class GED_EXPORT DbiPath {
     public:
 	DbiPath(DbiState *dbis, const char *path = NULL);
@@ -191,11 +183,14 @@ class GED_EXPORT DbiPath {
 	// prior DbiPath info in favor of p.
 	void copy(DbiPath &p);
 
-	// Check if this path matches path p, up to the shorter of the element
-	// size of the shorter of the two element lists or maxcnt (if maxcnt >
-	// 0)  Allows for comparison of two DbiPaths and spotting when one is
-	// a subset or superset of the other.
-	bool matches(DbiPath *p = NULL, size_t maxcnt = 0);
+	// Return true if this path is a parent path of p
+	bool parent(DbiPath &p);
+
+	// Return true if this path is a child path of p
+	bool child(DbiPath &p);
+
+	// Return true if p is equal to this path
+	bool equal(DbiPath &p);
 
 	// Use BRL-CAD rules to determine the active color at the
 	// path leaf element
