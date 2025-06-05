@@ -366,7 +366,7 @@ DbiState::gather_cyclic(
 	unsigned long long ihash, DbiPath &p
 	)
 {
-    p.add(ihash);
+    p.push(ihash);
     if (!p.cyclic()) {
 	/* Not cyclic - keep going */
 	CombInst *c = combinsts[ihash];
@@ -421,7 +421,7 @@ DbiState::tops(bool show_cyclic)
 	GObj *g = gobjs[ret[i]];
 	for (size_t j = 0; j < g->cv.size(); j++) {
 	    DbiPath p(this);
-	    p.add(g->hash);
+	    p.push(g->hash);
 	    gather_cyclic(cyclic_paths, g->cv[j]->ihash, p);
 	}
     }
@@ -538,7 +538,7 @@ DbiState::expand_path(std::vector<DbiPath *> *opaths, DbiPath &p)
 
     // If we have a comb, process the instances.
     for (size_t i = 0; i < g->cv.size(); i++) {
-	p.add(g->cv[i]->ihash);
+	p.push(g->cv[i]->ihash);
 	expand_path(opaths, p);
 	p.pop();
     }
