@@ -509,24 +509,14 @@ void
 DbiState::expand_path(std::vector<DbiPath *> *opaths, DbiPath &p)
 {
     // Unpack the leaf GObj of p
-    GObj *g = NULL;
-    if (p.depth()) {
-	// Leaf is CombInst - get oname GObj.  expand should already
-	// have validated the path, so LeafCombInst should work.
-	CombInst *c = p.LeafCombInst();
-	std::unordered_map<unsigned long long, GObj *>::iterator g_it = gobjs.find(c->ohash);
-	if (g_it == gobjs.end()) {
-	    // If CombInst oname isn't a valid object, then the path
-	    // ends here and we just copy p into out_paths
-	    DbiPath *op = new DbiPath(this);
-	    op->copy(p);
-	    opaths->push_back(op);
-	    return;
-	}
-	g = g_it->second;
-    } else {
-	// Top level path - just get GObj
-	g = p.RootGObj();
+    GObj *g = p.GetGObj(p.depth());
+    if (!g) {
+	// If we can't get a valid object, then the path
+	// ends here and we just copy p into out_paths
+	DbiPath *op = new DbiPath(this);
+	op->copy(p);
+	opaths->push_back(op);
+	return;
     }
 
     // If g is a solid, this is a leaf path and we're done
@@ -613,7 +603,10 @@ DbiState::collapse(std::vector<DbiPath *> paths)
 	    std::unordered_set<unsigned long long> leaf_hashes;
 	    for (size_t i = 0; i < cpaths.size(); i++) {
 		DbiPath *lp = cpaths[i];
-		leaf_hashes.insert(lp->LeafCombInst()->ihash);
+		CombInst *c = lp->GetCombInst();
+		if (UNLIKELY(!c))
+		    return std::vector<DbiPath *> ();
+		leaf_hashes.insert(lp->GetCombInst()->ihash);
 	    }
 
 	    // We need the full list of children from the CombInst.  Since the
@@ -621,8 +614,13 @@ DbiState::collapse(std::vector<DbiPath *> paths)
 	    // to get the leaf CombInst, which will tell us where the GObj
 	    // containing the full list of child CombInsts can be found.
 	    DbiPath *p = cpaths[0];
-	    CombInst *c = p->LeafCombInst();
+	    CombInst *c = p->GetCombInst();
+	    if (UNLIKELY(!c))
+		return std::vector<DbiPath *> ();
 	    GObj *pg = gobjs[c->chash];
+	    if (UNLIKELY(!pg))
+		return std::vector<DbiPath *> ();
+
 	    bool complete = true;
 	    for (size_t i = 0; i < pg->cv.size(); i++) {
 		if (leaf_hashes.find(pg->cv[i]->ihash) == leaf_hashes.end()) {
