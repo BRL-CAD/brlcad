@@ -518,8 +518,29 @@ class GED_EXPORT DbiState {
 	DbiState(struct ged *);
 	~DbiState();
 
+	// Database Instance associated with this container
+	struct ged *gedp = NULL;
+
+	// Update the DbiState to reflect current .g state
 	unsigned long long update();
 
+	/*******************************************************************
+         *                Database utility routines
+	 *******************************************************************/
+	// Checks if the hash indexes either a GObj or a CombInst
+	// entity in DbiState
+	bool valid_hash(unsigned long long phash);
+
+	// Returns either the gobj name or the parent/instance string for a
+	// comb instance.  If neither can be found returns "Unknown hash: #".
+	std::string hash_str(unsigned long long phash);
+
+	// Retrieval methods for GObjs and CombInsts.
+	GObj *GetGObj(struct directory *dp);
+	GObj *GetGObj(unsigned long long);
+	CombInst *GetCombInst(unsigned long long);
+
+	// Return a set of GObj hashes for top level objects
 	std::vector<unsigned long long> tops(bool show_cyclic);
 
 	// Given a set of paths, create a set of paths representing the
@@ -531,80 +552,74 @@ class GED_EXPORT DbiState {
 	// in the original set.
 	std::vector<DbiPath *> collapse(std::vector<DbiPath *>);
 
-
-	// Checks if the hash indexes either a GObj or a CombInst
-	// entity in DbiState
-	bool valid_hash(unsigned long long phash);
-
-	// Returns either the gobj name or the parent/instance string for a
-	// comb instance.  If neither can be found returns "Unknown hash: #".
-	std::string hash_str(unsigned long long phash);
-
-
-	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
-
-	void clear_cache(struct directory *dp);
-
-	BViewState *get_view_state(struct bview *);
-
-	std::vector<BSelectState *> get_selected_states(const char *sname);
-	BSelectState * find_selected_state(const char *sname);
-
-	void put_selected_state(const char *sname);
-	std::vector<std::string> list_selection_sets();
-
-	// These maps are the ".g ground truth" of the database objects
-	std::unordered_map<unsigned long long, GObj *> gobjs;
-	std::unordered_map<unsigned long long, CombInst *> combinsts;
-
-	std::vector<GObj *> get_gobjs(std::vector<unsigned long long> &path);
-	std::vector<CombInst *> get_combinsts(std::vector<unsigned long long> &path);
-
-	// Translate individual object hashes to their directory names.
-	struct directory *get_hdp(unsigned long long);
-
-	// Data to be used by callbacks
-	std::unordered_set<struct directory *> added;
-	std::unordered_set<struct directory *> changed;
-	std::unordered_set<unsigned long long> removed;
-
+	/*******************************************************************
+         *                      View States
+	 *******************************************************************/
 	// The shared view is common to multiple views, so we always update it.
 	// For other associated views (if any), we track their drawn states
 	// separately, but they too need to update in response to database
 	// changes (as well as draw/erase commands).
-	BViewState *shared_vs = NULL;
-	std::unordered_map<struct bview *, BViewState *> view_states;
+	//
+	// If v is NULL, return the shared view.
+	BViewState *GetBViewState(struct bview *v);
 
+	/*******************************************************************
+         *                    Selection States
+	 *******************************************************************/
 	// We have a "default" selection state that is always available,
 	// and applications may define other named selection states.
-	BSelectState *default_selected;
-	std::unordered_map<std::string, BSelectState *> selected_sets;
+	//
+	// If sname is NULL, return the default selection state.  RemoveSelection
+	// being passed NULL will not delete d_selection, but will reset it to
+	// the default state.
+	BSelectState * GetSelectionSet(const char *sname = NULL);
+	BSelectState * AddSelectionSet(const char *sname = NULL);
+	void RemoveSelectionSet(const char *sname);
+	std::vector<std::string> ListSelectionSets();
 
-	// Database Instance associated with this container
-	struct ged *gedp = NULL;
-	struct db_i *dbip = NULL;
+    public:
+	// Allow the implementation containers to access the core DbiState maps
+	friend class GObj;
+	friend class CombInst;
+	friend class DbiPath;
 
+    private:
+	// These maps are the ".g ground truth" of the database objects
+	std::unordered_map<struct directory *, GObj *> dp2g;
+	std::unordered_map<unsigned long long, GObj *> gobjs;
+	std::unordered_map<unsigned long long, CombInst *> combinsts;
+
+	// Private methods and resources relating to database objects
+	std::vector<GObj *> get_gobjs(std::vector<unsigned long long> &path);
+	std::vector<CombInst *> get_combinsts(std::vector<unsigned long long> &path);
 	bool need_update_nref = true;
+	void clear_cache(struct directory *dp);
+	struct resource *res = NULL;
+	struct ged_draw_cache *dcache = NULL;
+	void expand_path(std::vector<DbiPath *> *opaths, DbiPath &p);
+	void gather_cyclic(
+		std::unordered_set<unsigned long long> &cyclic,
+		unsigned long long c_hash, DbiPath &p
+		);
+	unsigned long long update_dp(struct directory *dp);
 
 	// Debugging methods for printing out current states - the use of hashes
 	// means direct inspection of most data isn't informative, so we provide
 	// convenience methods that decode it to user-comprehensible info.
 	void print_dbi_state(struct bu_vls *o = NULL, bool report_view_states = false);
 
-	struct ged_draw_cache *dcache = NULL;
-	struct resource *res = NULL;
-    private:
+	// Data related to Views
+	BViewState *shared_vs = NULL;
+	std::unordered_map<struct bview *, BViewState *> view_states;
 
-	void expand_path(std::vector<DbiPath *> *opaths, DbiPath &p);
+	// Data related to Selections
+	BSelectState *d_selection;
+	std::unordered_map<std::string, BSelectState *> selected_sets;
 
-	void gather_cyclic(
-		std::unordered_set<unsigned long long> &cyclic,
-		unsigned long long c_hash, DbiPath &p
-		);
-
-	unsigned long long update_dp(struct directory *dp);
-	struct bu_vls hash_string = BU_VLS_INIT_ZERO;
-	struct bu_vls path_string = BU_VLS_INIT_ZERO;
+	// Data to be used by callbacks
+	std::unordered_set<struct directory *> added;
+	std::unordered_set<struct directory *> changed;
+	std::unordered_set<struct directory *> removed;
 };
 
 
