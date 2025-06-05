@@ -148,14 +148,6 @@ DbiPath::child(DbiPath &p)
     return false;
 }
 
-
-bool
-DbiPath::equal(DbiPath &p)
-{
-    // If the path hashes match, the paths match
-    return (path_hash == p.path_hash);
-}
-
 bool
 DbiPath::color(struct bu_color *c)
 {
