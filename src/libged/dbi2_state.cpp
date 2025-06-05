@@ -104,19 +104,28 @@ DbiPath::DbiPath(DbiState *dbis, const char *path)
     }
 }
 
-void
-DbiPath::copy(DbiPath &p)
+DbiPath::DbiPath(const DbiPath &p)
 {
     is_cyclic = p.is_cyclic;
     is_valid = p.is_valid;
     elements.clear();
     d = p.d;
-    std::unordered_set<unsigned long long>::iterator p_it;
     parent_path_hashes.clear();
+    std::unordered_set<unsigned long long>::const_iterator p_it;
     for (p_it = p.parent_path_hashes.begin(); p_it != p.parent_path_hashes.end(); ++p_it) {
 	parent_path_hashes.insert(*p_it);
     }
     path_hash = p.path_hash;
+}
+
+DbiPath::~DbiPath()
+{
+    is_cyclic = 0;
+    is_valid = 1;
+    elements.clear();
+    d = NULL;
+    parent_path_hashes.clear();
+    path_hash = 0;
 }
 
 bool
