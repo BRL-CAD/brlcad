@@ -400,48 +400,76 @@ class GED_EXPORT BViewState {
 	// count only the specified mode.
 	size_t DrawnnPathCount(bool collapsed = true, int mode = -1);
 
-	// Report if a path hash is drawn - 0 == not drawn, 1 == fully drawn, 2 == partially drawn
-	int is_hdrawn(int mode, unsigned long long phash);
+	// Report if a DbiPath is drawn:
+	//
+	// 0 == not drawn, 1 == fully drawn, 2 == partially drawn
+	//
+	// If mode == -1, the return will reflect the collective state
+	// of all modes - i.e. if part of a comb is drawn as wireframe,
+	// and part as solid, and in combination all paths are visualized,
+	// IsDrawn will report fully drawn
+	int IsDrawn(unsigned long long hash = 0, int mode = -1);
 
-	// Clear all drawn objects (TODO - should allow mode specification here)
-	void clear();
+	// Clear all drawn objects
+	void Clear(int mode = -1);
 
-	// A View State refresh regenerates already drawn objects.
-	unsigned long long refresh(struct bview *v, int argc, const char **argv);
+	// A refresh regenerates already drawn objects.  If paths is NULL,
+	// force a regeneration of all active path geometry.  (Generally you'll
+	// want to use redraw rather than refresh for performance reasons.)
+	void Refresh(std::vector<unsigned long long> *paths = NULL);
 
-	// A View State redraw can impact multiple views with a shared state - most of
-	// the elements will be the same, but adaptive plotting will be view specific even
-	// with otherwise common objects - we must update accordingly.
-	unsigned long long redraw(
-		struct bv_obj_settings *vs,
-	       	std::unordered_set<struct bview *> &views,
-	       	int no_autoview,
-		std::unordered_set<unsigned long long> &changed_hashes);
-
-	// Allow callers to calculate the drawing hash of a path
-	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
+	// A Rredraw can impact multiple views with a shared state - most of
+	// the elements will be the same, but adaptive plotting will be view
+	// specific even with otherwise common objects - we must update
+	// accordingly.
+	//
+	// TODO - with the new setup, changed_hashes just get generated inside
+	// Redraw itself - need to investigate.  Need the set of DbiPath
+	// hashes corresponding to all paths and all parents of paths involved
+	// with any sort of change.
+	unsigned long long Redraw(
+	       	std::unordered_set<struct bview *> *views = NULL,
+		struct bv_obj_settings *vs = NULL,
+	       	int no_autoview = 1,
+		std::unordered_set<unsigned long long> *changed_hashes = NULL);
 
 	// Debugging methods for printing out current states - the use of hashes
 	// means direct inspection of most data isn't informative, so we provide
 	// convenience methods that decode it to user-comprehensible info.
-	void print_view_state(struct bu_vls *o = NULL);
+	std::string print_view_state();
 
     private:
-	// Sets defining all drawn solid paths (including invalid paths).  The
-	// s_keys holds the ordered individual keys of each drawn solid path - it
-	// is the latter that allows for the collapse operation to populate
-	// drawn_paths.  s_map uses the same key as s_keys to map instances to
-	// actual scene objects.  Because objects may be represented by more than
-	// one type of scene object (shaded, wireframe, evaluated, etc.) the mapping of
-	// key to scene object is not unique - we must also take scene object type
-	// into account.
-	std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>> s_map;
-	std::unordered_map<unsigned long long, std::vector<unsigned long long>> s_keys;
+	// Sets holding all drawn paths.
+	//
+	// spaths holds the paths specified by the callers.  If parent or child
+	// paths are added to spaths via enqueue or dequeue ops, existing paths
+	// will be consolidated or split to reflect the changed state.  With
+	// the exception of split paths due to a partial erasure, spaths
+	// contents will be determined by user calls. Generally spaths will be
+	// the basis used for things like the who command.  A consolidate()
+	// method can be run to collapse explicitly specified tree entries into
+	// higher level paths in spaths if the app wants to do so, but it will
+	// not happen by default.
+	//
+	// spaths stores paths for all drawing modes - details of what modes
+	// are active for a specific path are stored in the expanded paths.
+	std::unordered_map<unsigned long long, DbiPath *> spaths;
+
+	// Set of all leaf node drawn paths.  As with spaths, this set covers
+	// all modes.  For unevaluated drawing modes like wireframe this will
+	// hold the set of leaf nodes to solids, but for more exotic modes like
+	// bigE evaluated wireframe drawing higher level paths are also considered
+	// "leaf" nodes.  Those require special handling when it comes to
+	// collapsing this set for specific drawing modes.
+	std::unordered_map<unsigned long long, DbiPath *> sexpanded;
+
 
 	// Called when the parent Db context is getting ready to update the data
 	// structures - we may need to redraw, so we save any necessary information
 	// ahead of the changes.  Although this is a public function of the BViewState,
 	// it is practically speaking an implementation detail
+	//
+	// TODO - do we need this with GObj/CombInst setup?
 	void cache_collapsed();
 
 	DbiState *dbis;
@@ -509,12 +537,12 @@ class GED_EXPORT BViewState {
 	// operation from the set of drawn solid paths.  This allows calling codes to
 	// spot check any path to see if it is active, without having to interrogate
 	// other data structures or walk down the tree.
-	std::unordered_map<int, std::unordered_set<unsigned long long>> drawn_paths;
-	std::unordered_set<unsigned long long> all_drawn_paths;
+	std::unordered_map<int, std::unordered_set<unsigned long long>> fully_drawn_paths_by_mode;
+	std::unordered_set<unsigned long long> all_fully_drawn_paths;
 
 	// Set of partially drawn paths, constructed during the collapse operation.
 	// This holds the paths that should return 2 for is_hdrawn
-	std::unordered_map<int, std::unordered_set<unsigned long long>> partially_drawn_paths;
+	std::unordered_map<int, std::unordered_set<unsigned long long>> partially_drawn_paths_by_mode;
 	std::unordered_set<unsigned long long> all_partially_drawn_paths;
 
 	friend class BSelectState;
