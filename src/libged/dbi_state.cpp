@@ -511,8 +511,9 @@ DbiState::expand_path(std::vector<DbiPath *> *opaths, DbiPath &p)
     // Unpack the leaf GObj of p
     GObj *g = NULL;
     if (p.depth()) {
-	// Leaf is CombInst - get oname GObj
-	CombInst *c = combinsts[p.elements[p.elements.size() - 1]];
+	// Leaf is CombInst - get oname GObj.  expand should already
+	// have validated the path, so LeafCombInst should work.
+	CombInst *c = p.LeafCombInst();
 	std::unordered_map<unsigned long long, GObj *>::iterator g_it = gobjs.find(c->ohash);
 	if (g_it == gobjs.end()) {
 	    // If CombInst oname isn't a valid object, then the path
@@ -525,7 +526,7 @@ DbiState::expand_path(std::vector<DbiPath *> *opaths, DbiPath &p)
 	g = g_it->second;
     } else {
 	// Top level path - just get GObj
-	g = gobjs[p.elements[0]];
+	g = p.RootGObj();
     }
 
     // If g is a solid, this is a leaf path and we're done
@@ -612,7 +613,7 @@ DbiState::collapse(std::vector<DbiPath *> paths)
 	    std::unordered_set<unsigned long long> leaf_hashes;
 	    for (size_t i = 0; i < cpaths.size(); i++) {
 		DbiPath *lp = cpaths[i];
-		leaf_hashes.insert(lp->elements[lp->elements.size() - 1]);
+		leaf_hashes.insert(lp->LeafCombInst()->ihash);
 	    }
 
 	    // We need the full list of children from the CombInst.  Since the
@@ -620,7 +621,7 @@ DbiState::collapse(std::vector<DbiPath *> paths)
 	    // to get the leaf CombInst, which will tell us where the GObj
 	    // containing the full list of child CombInsts can be found.
 	    DbiPath *p = cpaths[0];
-	    CombInst *c = combinsts[p->elements[p->elements.size() - 1]];
+	    CombInst *c = p->LeafCombInst();
 	    GObj *pg = gobjs[c->chash];
 	    bool complete = true;
 	    for (size_t i = 0; i < pg->cv.size(); i++) {
