@@ -866,11 +866,12 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i)
 
     // If we have at least one case where we're going to need to crack the
     // attributes, do it now.
+    struct db_i *dbip = d->gedp->dbip;
     if (need_region_id || need_region_flag || need_color_inherit || need_cval) {
 
 	// Read the attributes from the database object
 	struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
-	db5_get_attributes(d->dbip, &c_avs, dp);
+	db5_get_attributes(dbip, &c_avs, dp);
 
 	// Region flag.
 	if (need_region_flag) {
@@ -975,6 +976,7 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i)
 
     // Register with DbiState
     d->gobjs[hash] = this;
+    d->dp2g[dp] = this;
 }
 
 GObj::~GObj()
@@ -984,8 +986,10 @@ GObj::~GObj()
 	delete cv[i];
 
     // De-register with the DbiState
-    if (d)
+    if (d) {
+	d->dp2g.erase(dp);
 	d->gobjs.erase(hash);
+    }
 }
 
 struct gobj_walk_data {
@@ -997,7 +1001,7 @@ static void
 populate_leaf(void *client_data, const char *name, matp_t c_m, int op)
 {
     struct gobj_walk_data *d = (struct gobj_walk_data *)client_data;
-    struct db_i *dbip = d->gobj->d->dbip;
+    struct db_i *dbip = d->gobj->d->gedp->dbip;
     RT_CHECK_DBI(dbip);
 
     std::unordered_map<unsigned long long, unsigned long long> &i_count = d->i_count;
@@ -1060,7 +1064,7 @@ GObj::GenCombInstances()
 	return;
 
     struct rt_db_internal in;
-    if (rt_db_get_internal(&in, dp, d->dbip, NULL, d->res) < 0)
+    if (rt_db_get_internal(&in, dp, d->gedp->dbip, NULL, d->res) < 0)
 	return;
     struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
     if (!comb->tree)
@@ -1080,6 +1084,10 @@ GObj::bbox(point_t *min, point_t *max)
 	return;
 
     if (cv.size()) {
+	// TODO - support cached comb bounding boxes - will have to be done
+	// carefully to handle invalidating properly when there are edits to
+	// instances or objects in comb trees.
+
 	// It's a comb - iterate over all the comb instances and incorporate
 	// all their bounding boxes.
 	for (size_t i = 0; i < cv.size(); i++) {
@@ -1134,9 +1142,8 @@ GObj::bbox(point_t *min, point_t *max)
     mat_t m;
     MAT_IDN(m);
     vect_t bmin, bmax;
-    int bret = rt_bound_instance(&bmin, &bmax, dp, d->dbip, &ttol, &tol, &m, d->res);
+    int bret = rt_bound_instance(&bmin, &bmax, dp, d->gedp->dbip, &ttol, &tol, &m, d->res);
     if (bret != -1) {
-
 	// Update drawing cache (TODO - probably should tell LoD cache as well?)
 	std::stringstream s;
 	s.write(reinterpret_cast<const char *>(&bmin), sizeof(bmin));
