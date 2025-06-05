@@ -104,6 +104,21 @@ DbiPath::DbiPath(DbiState *dbis, const char *path)
     }
 }
 
+void
+DbiPath::copy(DbiPath &p)
+{
+    is_cyclic = p.is_cyclic;
+    is_valid = p.is_valid;
+    elements.clear();
+    d = p.d;
+    std::unordered_set<unsigned long long>::iterator p_it;
+    parent_path_hashes.clear();
+    for (p_it = p.parent_path_hashes.begin(); p_it != p.parent_path_hashes.end(); ++p_it) {
+	parent_path_hashes.insert(*p_it);
+    }
+    path_hash = p.path_hash;
+}
+
 bool
 DbiPath::matches(DbiPath *p, size_t maxcnt)
 {
