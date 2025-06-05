@@ -242,24 +242,37 @@ class GED_EXPORT DbiPath {
 	// sensitive cases where inputs are well controlled.)
 	void pop(bool no_check = false);
 
+	// Get the Leaf CombInst (if present) on the path.  Returns NULL
+	// if path is empty or only contains a single GObj.
+	CombInst *LeafCombInst();
+
+	// Get the Root GObj from the path.  Returns NULL
+	// if path is empty.
+	GObj *RootGObj();
+
 	// Optional scene object(s) associated with this path.
 	// Map key is the drawing mode (0 = wireframe, 1 = shaded, etc.)
 	std::map<size_t, struct bv_scene_obj *> scene_objs;
 
-	// TODO - if we add a (re)draw method, could we make elements private?
-	// Maybe allow DbiState access as a C++ friend or some such?  Would be
-	// better to avoid explicitly exposing elements as much as possible,
-	// since we want add and pop
-	std::vector<unsigned long long> elements;
     private:
+	// Primary vector storing path information.
+	//
+	// First entry is always a GObj hash, and any subsequent entries
+	// are always CombInst hashes.
+	std::vector<unsigned long long> elements;
+
+	// Path state information
 	int is_cyclic = 0;  // 0 = not cyclic, 1 = cyclic, 2 = unknown
 	bool is_valid = true;
-	DbiState *d = NULL;
-	void split_path(std::vector<std::string> &objs, const char *str);
-	std::string name_deescape(std::string &name);
-
 	std::unordered_set<unsigned long long> parent_path_hashes;
 	unsigned long long path_hash;
+
+	// Database state with which this path is associated
+	DbiState *d = NULL;
+
+	// Utility routines for processing string path specifiers
+	void split_path(std::vector<std::string> &objs, const char *str);
+	std::string name_deescape(std::string &name);
 };
 
 
