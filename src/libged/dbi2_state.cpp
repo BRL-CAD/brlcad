@@ -223,17 +223,13 @@ DbiPath::matrix(matp_t m)
     // The root GObj doesn't have a matrix, but any comb instances
     // in the path might - check all of them
     for (size_t i = 1; i < elements.size(); i++) {
-
-	std::unordered_map<unsigned long long, CombInst *>::iterator c;
-	c = d->combinsts.find(elements[i]);
-	if (c == d->combinsts.end()) {
-	    is_valid = false;
+	CombInst *c = GetCombInst(i);
+	if (UNLIKELY(!c))
 	    return false;
-	}
 
-	if (c->second->non_default_matrix) {
+	if (c->non_default_matrix) {
 	    mat_t cmat;
-	    bn_mat_mul(cmat, m, c->second->m);
+	    bn_mat_mul(cmat, m, c->m);
 	    MAT_COPY(m, cmat);
 	    have_mat = true;
 	}
@@ -251,15 +247,11 @@ DbiPath::is_subtraction()
 	return false;
 
     for (size_t i = 1; i < elements.size(); i++) {
-
-	std::unordered_map<unsigned long long, CombInst *>::iterator c;
-	c = d->combinsts.find(elements[i]);
-	if (c == d->combinsts.end()) {
-	    is_valid = false;
+	CombInst *c = GetCombInst(i);
+	if (UNLIKELY(!c))
 	    return false;
-	}
 
-	if (c->second->boolean_op == OP_SUBTRACT)
+	if (c->boolean_op == OP_SUBTRACT)
 	    return true;
     }
 
@@ -274,15 +266,11 @@ DbiPath::is_intersection()
 	return false;
 
     for (size_t i = 1; i < elements.size(); i++) {
-
-	std::unordered_map<unsigned long long, CombInst *>::iterator c;
-	c = d->combinsts.find(elements[i]);
-	if (c == d->combinsts.end()) {
-	    is_valid = false;
+	CombInst *c = GetCombInst(i);
+	if (UNLIKELY(!c))
 	    return false;
-	}
 
-	if (c->second->boolean_op == OP_INTERSECT)
+	if (c->boolean_op == OP_INTERSECT)
 	    return true;
     }
 
@@ -337,23 +325,15 @@ DbiPath::cyclic(bool full_check)
 	int j = leaf_ind - 1;
 	while (j >= 0) {
 	    if (j > 0) {
-		std::unordered_map<unsigned long long, CombInst *>::iterator cp;
-		cp = d->combinsts.find(elements[j]);
-		if (cp == d->combinsts.end()) {
-		    // Path turned invalid
-		    is_valid = false;
+		CombInst *cp = GetCombInst(j);
+		if (UNLIKELY(!cp))
 		    return false;
-		}
-		phash = cp->second->ohash;
+		phash = cp->ohash;
 	    } else {
-		std::unordered_map<unsigned long long, GObj *>::iterator p;
-		p = d->gobjs.find(elements[j]);
-		if (p == d->gobjs.end()) {
-		    // Path turned invalid
-		    is_valid = false;
+		GObj *gp = GetGObj();
+		if (UNLIKELY(!gp))
 		    return false;
-		}
-		phash = p->second->hash;
+		phash = gp->hash;
 	    }
 	    if (chash == phash) {
 		// Found a cycle in the path
@@ -394,15 +374,12 @@ DbiPath::str(size_t pmax, int verbose)
 
     std::string pstr;
     // We're always printing the first element
-    std::unordered_map<unsigned long long, GObj *>::iterator p;
-    p = d->gobjs.find(elements[0]);
-    if (p == d->gobjs.end()) {
-	is_valid = false;
+    GObj *g = GetGObj();
+    if (UNLIKELY(!g)) {
 	pstr.append(std::string("Invalid path"));
 	return pstr;
     }
 
-    GObj *g = d->gobjs[elements[0]];
     pstr.append(g->name);
 
     // Print any comb instances
@@ -411,20 +388,18 @@ DbiPath::str(size_t pmax, int verbose)
 
 	pstr.append(std::string("/"));
 
-	std::unordered_map<unsigned long long, CombInst *>::iterator c;
-	c = d->combinsts.find(elements[i]);
-	if (c == d->combinsts.end()) {
-	    is_valid = false;
+	CombInst *cp = GetCombInst(i);
+	if (UNLIKELY(!cp)) {
 	    pstr.append(std::string("Invalid path"));
 	    return pstr;
 	}
 
-	if (verbose > 0 && c->second->non_default_matrix)
+	if (verbose > 0 && cp->non_default_matrix)
 	    pstr.append(std::string("M"));
 
 	// TODO - incorporate boolean op printing as well
 
-	pstr.append(c->second->iname.length() ? c->second->iname : c->second->oname);
+	pstr.append(cp->iname.length() ? cp->iname : cp->oname);
 
     }
 
@@ -456,21 +431,13 @@ DbiPath::bbox(point_t *bmin, point_t *bmax)
 	return true;
     }
 
-    // Get the leaf CombInst.
-    std::unordered_map<unsigned long long, CombInst *>::iterator c;
-    c = d->combinsts.find(elements[elements.size()-1]);
-    if (c == d->combinsts.end()) {
-	is_valid = false;
-	return false;
-    }
-    // Have CombInst leaf, get associated GObj bbox.  This is a geometry
+    // Get the CombInst leaf's assocated GObj bbox.  This is a geometry
     // calculation, so if there is no associated GObj we can't proceed.
     // However, it doesn't imply an invalid path, since a comb tree in a .g may
     // reference a non existent object.
-    p = d->gobjs.find(c->second->ohash);
-    if (p == d->gobjs.end())
+    GObj *g = GetGObj(depth());
+    if (!g)
 	return false;
-    GObj *g = d->gobjs[elements[0]];
     g->bbox(&lbmin, &lbmax);
 
     // Build up the path matrix and apply it, if it is non IDN
@@ -590,28 +557,61 @@ DbiPath::pop(bool no_check)
 }
 
 CombInst *
-DbiPath::LeafCombInst()
+DbiPath::GetCombInst(size_t ind)
 {
-    if (elements.size() < 2)
+    if (UNLIKELY(!is_valid || elements.size() < 2))
 	return NULL;
 
-    std::unordered_map<unsigned long long, CombInst *>::iterator c;
-    c = d->combinsts.find(elements[elements.size() - 1]);
-    if (c == d->combinsts.end())
+    if (UNLIKELY(ind > elements.size() - 1))
 	return NULL;
+
+    // For CombInst, 0 ind implies returning the Leaf
+    int search_ind = (!ind) ? elements.size() - 1 : ind;
+
+    std::unordered_map<unsigned long long, CombInst *>::iterator c;
+    c = d->combinsts.find(elements[search_ind]);
+    if (c == d->combinsts.end()) {
+	// Path appears invalid
+	is_valid = false;
+	return NULL;
+    }
 
     return c->second;
 }
 
 GObj *
-DbiPath::RootGObj()
+DbiPath::GetGObj(size_t ind)
 {
-    if (elements.size())
+    if (UNLIKELY(!is_valid || !elements.size()))
+	return NULL;
+
+    if (UNLIKELY(ind > elements.size() - 1))
 	return NULL;
 
     std::unordered_map<unsigned long long, GObj *>::iterator p;
-    p = d->gobjs.find(elements[0]);
-    if (p == d->gobjs.end())
+
+    // If we are after the root, that's a straight lookup
+    if (!ind) {
+	p = d->gobjs.find(elements[0]);
+	if (UNLIKELY(p == d->gobjs.end())) {
+	    // Path appears invalid
+	    is_valid = false;
+	    return NULL;
+	}
+	return p->second;
+    }
+
+    // Anything else, we need the CombInst to give us
+    // our Instance Object GObj hash
+    CombInst *c = GetCombInst(ind);
+    if (UNLIKELY(!c))
+	return NULL;
+
+    // Unlike the other cases, ohash is not necessarily
+    // guaranteed to map to a GObj - so a failure here
+    // does NOT imply an invalid path.
+    p = d->gobjs.find(c->ohash);
+    if (UNLIKELY(p == d->gobjs.end()))
 	return NULL;
 
     return p->second;
