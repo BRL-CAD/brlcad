@@ -58,8 +58,20 @@ extern "C" {
 
 DbiPath::DbiPath(DbiState *dbis, const char *path)
 {
+
+    // If no path, or no way to decode it, we're done
+    if (!path || !d)
+	return;
+
     d = dbis;
 
+    // Digest the string into individual path elements
+    Init(path);
+}
+
+void
+DbiPath::Init(const char *path)
+{
     // If no path, or no way to decode it, we're done
     if (!path || !d)
 	return;
@@ -118,14 +130,20 @@ DbiPath::DbiPath(const DbiPath &p)
     path_hash = p.path_hash;
 }
 
-DbiPath::~DbiPath()
+void
+DbiPath::Reset()
 {
     is_cyclic = 0;
     is_valid = 1;
     elements.clear();
-    d = NULL;
     parent_path_hashes.clear();
     path_hash = 0;
+}
+
+DbiPath::~DbiPath()
+{
+    Reset();
+    d = NULL;
 }
 
 bool
