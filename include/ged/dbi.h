@@ -250,12 +250,10 @@ class GED_EXPORT DbiPath {
 	// is greater than the depth of the path.
 	CombInst *GetCombInst(size_t ind = 0);
 
-	// Get the Root GObj from the path.  Returns NULL
-	// if path is empty.
-
-	// Get the GObj on the path at ind.  If ind is 0 (default), return
-	// the Root GObj, else return the GObj of the CombInst instance object
-	// at ind.
+	// Get the GObj on the path at ind.  If ind is 0 (default), return the
+	// Root GObj (the first element in the path), else return the GObj of
+	// the CombInst instance object at ind. (I.e. if the comb instance path
+	// is A/B, GetGObj will return the GObj instance associated with B.)
 	//
 	// If the path is empty, ind is greater than the depth of the path,
 	// or the CombInst oname does not map to a GObj instance the return
