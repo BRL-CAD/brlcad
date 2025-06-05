@@ -363,19 +363,20 @@ DbiState::list_selection_sets()
 void
 DbiState::gather_cyclic(
 	std::unordered_set<unsigned long long> &cyclic,
-	unsigned long long c_hash, DbiPath &p
+	unsigned long long ihash, DbiPath &p
 	)
 {
-    GObj *g = gobjs[c_hash];
-    p.add(g->hash);
+    p.add(ihash);
     if (!p.cyclic()) {
 	/* Not cyclic - keep going */
+	CombInst *c = combinsts[ihash];
+	GObj *g = gobjs[c->ohash];
 	for (size_t i = 0; i < g->cv.size(); i++) {
-	    CombInst *c = g->cv[i];
-	    gather_cyclic(cyclic, c->ohash, p);
+	    gather_cyclic(cyclic, g->cv[i]->ihash, p);
 	}
     } else {
-	cyclic.insert(c_hash);
+	CombInst *c = combinsts[ihash];
+	cyclic.insert(c->ohash);
     }
 
     /* Done with branch - restore path.  Disable validation since we are doing
@@ -410,14 +411,19 @@ DbiState::tops(bool show_cyclic)
     if (!show_cyclic)
 	return ret;
 
-    // If we also want cyclic paths, use DbiState to try and speed things up.
+    // If we also want to report combs with cyclic paths, as top level objects
+    // use DbiState to try and speed things up.
     // db_ls has that capability, but it has to unpack all the combs walking
     // the tree to find the answer and that results in a slow check for large
     // databases.
     std::unordered_set<unsigned long long> cyclic_paths;
     for (size_t i = 0; i < ret.size(); i++) {
-	DbiPath p(this);
-	gather_cyclic(cyclic_paths, ret[i], p);
+	GObj *g = gobjs[ret[i]];
+	for (size_t j = 0; j < g->cv.size(); j++) {
+	    DbiPath p(this);
+	    p.add(g->hash);
+	    gather_cyclic(cyclic_paths, g->cv[j]->ihash, p);
+	}
     }
     std::unordered_set<unsigned long long>::iterator c_it;
     for (c_it = cyclic_paths.begin(); c_it != cyclic_paths.end(); c_it++) {
