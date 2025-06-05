@@ -57,22 +57,17 @@ extern "C" {
 
 DbiState::DbiState(struct ged *ged_p)
 {
-    bu_vls_init(&path_string);
-    bu_vls_init(&hash_string);
     BU_GET(res, struct resource);
     rt_init_resource(res, 0, NULL);
     shared_vs = new BViewState(this);
-    default_selected = new BSelectState(this);
-    selected_sets[std::string("default")] = default_selected;
+    d_selection = new BSelectState(this);
+    selected_sets[std::string("default")] = d_selection;
     gedp = ged_p;
-    if (!gedp)
-	return;
-    dbip = gedp->dbip;
-    if (!dbip)
+    if (!gedp || !gedp->dbip)
 	return;
 
     // Set up cache
-    dcache = dbi_cache_open(dbip->dbi_filename);
+    dcache = dbi_cache_open(gedp->dbip->dbi_filename);
 
     int64_t start, elapsed;
     fastf_t seconds;
@@ -81,7 +76,7 @@ DbiState::DbiState(struct ged *ged_p)
 
     for (int i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    update_dp(dp);
 	}
     }
@@ -96,8 +91,6 @@ DbiState::DbiState(struct ged *ged_p)
 
 DbiState::~DbiState()
 {
-    bu_vls_free(&path_string);
-    bu_vls_free(&hash_string);
     std::unordered_map<std::string, BSelectState *>::iterator ss_it;
     for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++) {
 	delete ss_it->second;
@@ -142,6 +135,48 @@ DbiState::hash_str(unsigned long long phash)
     }
 
     return std::string("Unknown hash: ") + std::to_string(phash);
+}
+
+GObj *
+DbiState::GetGObj(struct directory *dp)
+{
+    if (UNLIKELY(!dp))
+	return NULL;
+
+    std::unordered_map<struct directory *, GObj *>::iterator dp_it;
+    dp_it = dp2g.find(dp);
+    if (dp_it == dp2g.end())
+	return NULL;
+
+    return dp_it->second;
+}
+
+GObj *
+DbiState::GetGObj(unsigned long long hash)
+{
+    if (UNLIKELY(!hash))
+	return NULL;
+
+    std::unordered_map<unsigned long long, GObj *>::iterator dp_it;
+    dp_it = gobjs.find(hash);
+    if (dp_it == gobjs.end())
+	return NULL;
+
+    return dp_it->second;
+}
+
+CombInst *
+DbiState::GetCombInst(unsigned long long hash)
+{
+    if (UNLIKELY(!hash))
+	return NULL;
+
+    std::unordered_map<unsigned long long, CombInst *>::iterator c_it;
+    c_it = combinsts.find(hash);
+    if (c_it == combinsts.end())
+	return NULL;
+
+    return c_it->second;
 }
 
 void
@@ -210,56 +245,8 @@ DbiState::get_combinsts(std::vector<unsigned long long> &path)
     return cis;
 }
 
-
-
-struct directory *
-DbiState::get_hdp(unsigned long long phash)
-{
-    // For a comb instance hash, we could return either the parent comb or the
-    // directory pointer of oname - since there isn't an unambiguous return,
-    // just return NULL.  It is the caller's responsibility to select what they
-    // want if the CombInst struct is in play and submit the GObj hash.
-
-    if (gobjs.find(phash) == gobjs.end())
-	return NULL;
-
-    return gobjs[phash]->dp;
-}
-
-#if 0
-bool
-DbiState::get_path_bbox(point_t *bbmin, point_t *bbmax, std::vector<unsigned long long> &elements)
-{
-    if (UNLIKELY(!bbmin || !bbmax || !elements.size()))
-	return false;
-
-    // Everything but the last element should be a comb - we only need to
-    // assemble a matrix from the path (if there are any non-identity matrices)
-    // and call get_bbox on the last element.
-    bool have_mat = false;
-    mat_t start_mat;
-    MAT_IDN(start_mat);
-    for (size_t i = 0; i < elements.size() - 1; i++) {
-	mat_t nm;
-	MAT_IDN(nm);
-	bool got_mat = get_matrix(nm, elements[i], elements[i+1]);
-	if (got_mat) {
-	    mat_t cmat;
-	    bn_mat_mul(cmat, start_mat, nm);
-	    MAT_COPY(start_mat, cmat);
-	    have_mat = true;
-	}
-    }
-    if (have_mat) {
-	return get_bbox(bbmin, bbmax, start_mat, elements[elements.size() - 1]);
-    }
-
-    return get_bbox(bbmin, bbmax, NULL, elements[elements.size() - 1]);
-}
-#endif
-
 BViewState *
-DbiState::get_view_state(struct bview *v)
+DbiState::GetBViewState(struct bview *v)
 {
     if (!v->independent)
 	return shared_vs;
@@ -271,63 +258,41 @@ DbiState::get_view_state(struct bview *v)
     return nv;
 }
 
-std::vector<BSelectState *>
-DbiState::get_selected_states(const char *sname)
-{
-    std::vector<BSelectState *> ret;
-    std::unordered_map<std::string, BSelectState *>::iterator ss_it;
-
-    if (!sname || BU_STR_EQUIV(sname, "default")) {
-	ret.push_back(default_selected);
-	return ret;
-    }
-
-    std::string sn(sname);
-    if (sn.find('*') != std::string::npos) {
-	for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++) {
-	    if (bu_path_match(sname, ss_it->first.c_str(), 0)) {
-		ret.push_back(ss_it->second);
-	    }
-	}
-	return ret;
-    }
-
-    for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++) {
-	if (BU_STR_EQUIV(sname, ss_it->first.c_str())) {
-	    ret.push_back(ss_it->second);
-	}
-    }
-    if (ret.size())
-	return ret;
-
-    BSelectState *ns = new BSelectState(this);
-    selected_sets[sn] = ns;
-    ret.push_back(ns);
-    return ret;
-}
-
 BSelectState *
-DbiState::find_selected_state(const char *sname)
+DbiState::GetSelectionSet(const char *sname)
 {
-    if (!sname || BU_STR_EQUIV(sname, "default")) {
-	return default_selected;
-    }
+    if (!sname || BU_STR_EQUIV(sname, "default"))
+	return d_selection;
 
     std::unordered_map<std::string, BSelectState *>::iterator ss_it;
-    for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++) {
-	if (BU_STR_EQUIV(sname, ss_it->first.c_str())) {
+    for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++)
+	if (BU_STR_EQUIV(sname, ss_it->first.c_str()))
 	    return ss_it->second;
-	}
-    }
 
     return NULL;
 }
 
+BSelectState *
+DbiState::AddSelectionSet(const char *sname)
+{
+    if (!sname || BU_STR_EQUIV(sname, "default"))
+	return d_selection;
+
+    std::unordered_map<std::string, BSelectState *>::iterator ss_it;
+    for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++)
+	if (BU_STR_EQUIV(sname, ss_it->first.c_str()))
+	    return ss_it->second;
+
+    BSelectState *s = new BSelectState(this);
+    selected_sets[sname] = s;
+    return s;
+}
+
 void
-DbiState::put_selected_state(const char *sname)
+DbiState::RemoveSelectionSet(const char *sname)
 {
     if (!sname || BU_STR_EQUIV(sname, "default")) {
-	default_selected->clear();
+	d_selection->clear();
 	return;
     }
 
@@ -348,7 +313,7 @@ static bool alphanum_cmp(const std::string &a, const std::string &b)
 }
 
 std::vector<std::string>
-DbiState::list_selection_sets()
+DbiState::ListSelectionSets()
 {
     std::vector<std::string> ret;
     std::unordered_map<std::string, BSelectState *>::iterator ss_it;
@@ -358,6 +323,7 @@ DbiState::list_selection_sets()
     std::sort(ret.begin(), ret.end(), &alphanum_cmp);
     return ret;
 }
+
 
 // TODO test
 void
@@ -445,24 +411,23 @@ DbiState::update()
     // If we got this far, SOMETHING changed
     ret |= GED_DBISTATE_DB_CHANGE;
 
-    std::unordered_set<unsigned long long>::iterator s_it;
     std::unordered_set<struct directory *>::iterator g_it;
 
     if (need_update_nref) {
-	db_update_nref(dbip, res);
+	db_update_nref(gedp->dbip, res);
 	need_update_nref = false;
     }
 
     // For objects that are removed, delete the GObj and its associated data.
     // Removal of an instance from a comb tree is handled as an object change,
     // and thus is not handled here.
-    for (s_it = removed.begin(); s_it != removed.end(); s_it++) {
-	bu_log("removed: %llu\n", *s_it);
-	if (gobjs.find(*s_it) == gobjs.end())
+    for (g_it = removed.begin(); g_it != removed.end(); g_it++) {
+	std::unordered_map<struct directory *, GObj *>::iterator r_it;
+	r_it = dp2g.find(*g_it);
+	if (r_it == dp2g.end())
 	    continue;
-	GObj *robj = gobjs[*s_it];
+	GObj *robj = r_it->second;
 	delete robj;
-	gobjs.erase(*s_it);
     }
 
     // We store the changed hashes so view updates can know which
@@ -487,7 +452,7 @@ DbiState::update()
     struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
     for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
 	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-	BViewState *bvs = gedp->dbi_state->get_view_state(v);
+	BViewState *bvs = gedp->dbi_state->GetBViewState(v);
 	if (!bvs)
 	    continue;
 	vmap[bvs].insert(v);
