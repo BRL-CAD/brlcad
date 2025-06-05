@@ -161,10 +161,35 @@ class GED_EXPORT GObj {
 	void GenCombInstances();
 };
 
-
+// TODO - every DbiPath potentially has a bv_scene_obj associated with it,
+// which would in turn reference a child obj to get its actual geometry - the
+// role of the bv_scene_obj in the path would be to set the matrix, color and
+// boolean line drawing style dictated by the path - it would set the
+// s_inherit_settings flag in its own object, just pulling the geometry from
+// the child.
+//
+// The child obj of the DbiPath scene obj would be either an evaluated
+// visualization scene obj (bigE, for example) or (in the cases where the leaf
+// oname object is a solid) the GObj scene obj.  (The potentially interesting
+// case of de-duping xpushed meshes could then be handled at the GObj level,
+// where that GObj could define its own parent/child (without an inherit flag)
+// that injected a matrix positioning a PCA scene object for that specific GObj
+// without needing any other changes to the drawing pass.)
+//
+// A possible idea - calculate each path hash as elements are added and store
+// them in a set within the DbiPath class.  Then, when we want to know if a
+// path is a parent of this path, it would be a single lookup in the path
+// itself. pop() could also remove hashes when elements are removed. (IIRC
+// there are currently some view state hashes that store all the hashes for all
+// the paths, but maybe with DbiPath we can be more local about some of that?)
+// Would replace matches with parent/child/equal methods.
 class GED_EXPORT DbiPath {
     public:
 	DbiPath(DbiState *dbis, const char *path = NULL);
+
+	// Duplicate path p in the current class container.  Clears all
+	// prior DbiPath info in favor of p.
+	void copy(DbiPath &p);
 
 	// Check if this path matches path p, up to the shorter of the element
 	// size of the shorter of the two element lists or maxcnt (if maxcnt >
@@ -230,6 +255,9 @@ class GED_EXPORT DbiPath {
 	DbiState *d = NULL;
 	void split_path(std::vector<std::string> &objs, const char *str);
 	std::string name_deescape(std::string &name);
+
+	std::unordered_set<unsigned long long> parent_path_hashes;
+	unsigned long long path_hash;
 };
 
 
@@ -304,7 +332,7 @@ class GED_EXPORT BSelectState {
 	void clear_paths(std::vector<unsigned long long> &path_hashes, unsigned long long c_hash);
 };
 
-
+// TODO - may want a reusable memory pool of DbiPath instances to save on mallocing
 class GED_EXPORT BViewState {
     public:
 	BViewState(DbiState *);
@@ -360,15 +388,6 @@ class GED_EXPORT BViewState {
 	// means direct inspection of most data isn't informative, so we provide
 	// convenience methods that decode it to user-comprehensible info.
 	void print_view_state(struct bu_vls *o = NULL);
-
-	// Given a set of paths, create a set of paths representing the
-	// expansion of the trees of those input paths to their leaves.
-	std::vector<DbiPath *> expand(std::vector<DbiPath *>);
-
-	// Given a set of paths, create a set of paths consisting of the
-	// shallowest path descriptions that fully capture the geometry present
-	// in the original set.
-	std::vector<DbiPath *> collapse(std::vector<DbiPath *>);
 
     private:
 	// Sets defining all drawn solid paths (including invalid paths).  The
@@ -478,6 +497,16 @@ class GED_EXPORT DbiState {
 
 	std::vector<unsigned long long> tops(bool show_cyclic);
 
+	// Given a set of paths, create a set of paths representing the
+	// expansion of the trees of those input paths to their leaves.
+	std::vector<DbiPath *> expand(std::vector<DbiPath *>);
+
+	// Given a set of paths, create a set of paths consisting of the
+	// shallowest path descriptions that fully capture the geometry present
+	// in the original set.
+	std::vector<DbiPath *> collapse(std::vector<DbiPath *>);
+
+
 	// Checks if the hash indexes either a GObj or a CombInst
 	// entity in DbiState
 	bool valid_hash(unsigned long long phash);
@@ -540,8 +569,8 @@ class GED_EXPORT DbiState {
 	struct ged_draw_cache *dcache = NULL;
 	struct resource *res = NULL;
     private:
-	bool path_cyclic(std::vector<unsigned long long> &path);
-	bool path_addition_cyclic(std::vector<unsigned long long> &path);
+
+	void expand_path(std::vector<DbiPath *> *opaths, DbiPath &p);
 
 	void gather_cyclic(
 		std::unordered_set<unsigned long long> &cyclic,
