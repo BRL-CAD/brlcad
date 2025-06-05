@@ -247,6 +247,10 @@ class GED_EXPORT DbiPath {
 	// sensitive cases where inputs are well controlled.)
 	void pop(bool no_check = false);
 
+	// Optional scene object(s) associated with this path.
+	// Map key is the drawing mode (0 = wireframe, 1 = shaded, etc.)
+	std::map<size_t, struct bv_scene_obj *> scene_objs;
+
 	// TODO - if we add a (re)draw method, could we make elements private?
 	// Maybe allow DbiState access as a C++ friend or some such?  Would be
 	// better to avoid explicitly exposing elements as much as possible,
