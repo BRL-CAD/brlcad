@@ -123,11 +123,29 @@ DbiPath::DbiPath(const DbiPath &p)
     elements = p.elements;
     d = p.d;
     parent_path_hashes.clear();
-    std::unordered_set<unsigned long long>::const_iterator p_it;
-    for (p_it = p.parent_path_hashes.begin(); p_it != p.parent_path_hashes.end(); ++p_it) {
-	parent_path_hashes.insert(*p_it);
-    }
+    std::unordered_set<unsigned long long>::const_iterator h_it;
+    for (h_it = p.parent_path_hashes.begin(); h_it != p.parent_path_hashes.end(); ++h_it)
+	parent_path_hashes.insert(*h_it);
+    for (h_it = p.component_hashes.begin(); h_it != p.component_hashes.end(); ++h_it)
+	component_hashes.insert(*h_it);
     path_hash = p.path_hash;
+}
+
+DbiPath& DbiPath::operator=(const DbiPath &p) {
+    is_cyclic = p.is_cyclic;
+    is_valid = p.is_valid;
+    elements.clear();
+    elements = p.elements;
+    d = p.d;
+    parent_path_hashes.clear();
+    std::unordered_set<unsigned long long>::const_iterator h_it;
+    for (h_it = p.parent_path_hashes.begin(); h_it != p.parent_path_hashes.end(); ++h_it)
+	parent_path_hashes.insert(*h_it);
+    for (h_it = p.component_hashes.begin(); h_it != p.component_hashes.end(); ++h_it)
+	component_hashes.insert(*h_it);
+    path_hash = p.path_hash;
+
+    return *this;
 }
 
 void
@@ -139,8 +157,11 @@ DbiPath::Reset()
     parent_path_hashes.clear();
 
     // If we were registered in the dbi_path container, clear the
-    // entry - we're no longer that path
-    d->dbi_paths.erase(path_hash);
+    // entry - we're now an empty path.
+    std::unordered_map<unsigned long long, DbiPath *>::iterator p_it;
+    p_it = d->dbi_paths.find(path_hash);
+    if (p_it != d->dbi_paths.end() && p_it->second == this)
+	d->dbi_paths.erase(path_hash);
 
     path_hash = 0;
 }
