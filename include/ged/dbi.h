@@ -138,6 +138,10 @@ class GED_EXPORT GObj {
 	// librt directory pointer
 	struct directory *dp = NULL;
 
+	// Optional scene object(s) associated with this object.
+	// Map key is the drawing mode (0 = wireframe, 1 = shaded, etc.)
+	std::map<size_t, struct bv_scene_obj *> scene_objs;
+
     private:
 
 	// A Comb bounding box depends on the definition of everything
@@ -297,32 +301,30 @@ class GED_EXPORT BSelectState {
     public:
 	BSelectState(DbiState *);
 
-	bool select_path(const char *path, bool update);
-	bool select_hpath(std::vector<unsigned long long> &hpath);
+	bool Select(const char *path = NULL, bool update = false);
+	bool Select(unsigned long long phash = 0, bool update = false);
 
-	bool deselect_path(const char *path, bool update);
-	bool deselect_hpath(std::vector<unsigned long long> &hpath);
+	bool DeSelect(const char *path = NULL, bool update = false);
+	bool DeSelect(unsigned long long phash = 0, bool update = false);
 
-	void clear();
+	void Clear();
 
-	bool is_selected(unsigned long long);
-	bool is_active(unsigned long long);
-	bool is_active_parent(unsigned long long);
-	bool is_parent_obj(unsigned long long);
-	bool is_immediate_parent_obj(unsigned long long);
-	bool is_grand_parent_obj(unsigned long long);
+	bool IsSelected(unsigned long long);
+	bool IsActive(unsigned long long);
+	bool IsActiveParent(unsigned long long);
+	bool IsParentObj(unsigned long long hash = 0, int level = 0); // 0 = any, 1 = Immediate, 2 = Grandparent
 
 	std::vector<std::string> list_selected_paths();
 
-	void expand();
-	void collapse();
+	void ExpandPaths();
+	void CollapsePaths();
 
-	void refresh();
+	void Refresh();
 	bool draw_sync();
 
 	unsigned long long state_hash();
 
-	std::unordered_map<unsigned long long, std::vector<unsigned long long>> selected;
+	std::unordered_map<unsigned long long> selected;
 	std::unordered_set<unsigned long long> active_paths; // Solid paths to illuminate
 	std::unordered_set<unsigned long long> active_parents; // Paths above selection
 	// To support highlighting closed paths that have selected primitives
@@ -519,8 +521,8 @@ class GED_EXPORT BViewState {
 
 	int leaf_check(unsigned long long chash, std::vector<unsigned long long> &path_hashes);
 
-	// Paths supplied by commands to be incorporated into the drawn state by redraw method
-	std::vector<std::vector<unsigned long long>> staged;
+	// Hashes of paths supplied by commands to be incorporated into the drawn state by redraw method
+	std::unordered_set<unsigned long long> staged;
 
 	// The collapsed drawn paths from the previous db state, organized
 	// by drawn mode
