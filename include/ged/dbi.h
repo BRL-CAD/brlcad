@@ -45,6 +45,7 @@
 #ifdef __cplusplus
 #include <set>
 #include <map>
+#include <queue>
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
@@ -240,6 +241,9 @@ class GED_EXPORT DbiPath {
 	{
 	    return (path_hash == p.path_hash);
 	}
+
+	// Assignment operator
+	DbiPath& operator=(const DbiPath& p);
 
 	// Return true if this path is a parent path of p
 	bool parent(DbiPath &p);
@@ -668,17 +672,25 @@ class GED_EXPORT DbiState {
 	GObj *GetGObj(unsigned long long);
 	CombInst *GetCombInst(unsigned long long);
 
-	// Return a set of GObj hashes for top level objects
-	std::vector<unsigned long long> tops(bool show_cyclic);
+	// Get a DbiPath instance.  Will either reuse an existing DbiPath
+	// or (if necessary) create a new one.
+	DbiPath *GetDbiPath();
+
+	// Clear a DbiPath and store it for later reuse.
+	void PutDbiPath(DbiPath *p);
+
+	// Return a set of GObj hashes for top level objects.  By default
+	// objects with cyclic paths are not returned - to add them to the
+	// set, set show_cyclic to true
+	std::vector<unsigned long long> tops(bool show_cyclic = false);
 
 	// Given a set of paths, create a set of paths representing the
 	// expansion of the trees of those input paths to their leaves.
 	//
 	// The expanded paths in the return vector will be created and
-	// registered in dbi_paths if they didn't already exist, to
-	// ensure that (at the time of return) ExpandPaths results
-	// all correspond to a DbiPath pointer.
-	//
+	// registered in dbi_paths if they didn't already exist, to ensure that
+	// (at least at the time of return) ExpandPaths results all correspond
+	// to a DbiPath pointer.
 	std::vector<unsigned long long> ExpandPaths(std::vector<unsigned long long> &paths);
 
 	// Given a set of paths, create a set of paths consisting of the
@@ -686,19 +698,19 @@ class GED_EXPORT DbiState {
 	// in the original set.
 	//
 	// The collasped paths in the return vector will be created and
-	// registered in dbi_paths if they didn't already exist, to
-	// ensure that (at the time of return) CollapsePaths results
-	// all correspond to a DbiPath pointer.
+	// registered in dbi_paths if they didn't already exist, to ensure that
+	// (at the time of return) CollapsePaths results all correspond to a
+	// DbiPath pointer.
 	std::vector<unsigned long long> CollapsePaths(std::vector<unsigned long long> &paths);
 
 	// There is a selection case where we want the set of ALL hashes
 	// (intermediate and leaf) in a set, without caring whether the DbiPath
 	// exists (it's intended for a lookup by drawing code, so whether
-	// DbiPath exists doesn't matter to the selection code.)  Provide
-	// this method so we can build up such a set - unlike ExpandPaths it
-	// will record all intermediate hashes on the way to leaves and will
-	// not create any DbiPath instances.  The output set s is not cleared,
-	// so calling PathsBelow on multiple paths in succession will gradually
+	// DbiPath exists doesn't matter to the selection code.)  Provide this
+	// method so we can build up such a set - unlike ExpandPaths it will
+	// record all intermediate hashes on the way to leaves and will not
+	// create any DbiPath instances.  The output set s is not cleared, so
+	// calling PathsBelow on multiple paths in succession will gradually
 	// build up a multi-path set.
 	void PathsBelow(std::unordered_set<unsigned long long> *s, unsigned long long phash);
 
@@ -745,8 +757,9 @@ class GED_EXPORT DbiState {
 	// a hash in dbi_paths will have no effect on dbi_paths.
 	std::unordered_map<unsigned long long, DbiPath *> dbi_paths;
 
-	// TODO - if we're going to use a memory pool to hold and reuse all
-	// DbiPath allocations, it would be here
+	// Container holding all pre-allocated DbiPath instances available
+	// for reuse.
+	std::queue<DbiPath *> dbiq;
 
     public:
 	// Allow the implementation containers to access the core DbiState maps
