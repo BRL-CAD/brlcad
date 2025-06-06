@@ -347,7 +347,7 @@ DbiState::gather_cyclic(
 
     /* Done with branch - restore path.  Disable validation since we are doing
      * a controlled walk and know we're not cyclic after the pop. */
-    p.pop(true);
+    p.pop(false);
 }
 
 static int
@@ -471,22 +471,30 @@ DbiState::update()
 }
 
 void
-DbiState::expand_path(std::vector<DbiPath *> *opaths, DbiPath &p)
+DbiState::expand_path(std::vector<unsigned long long> *opaths, DbiPath &p)
 {
     // Unpack the leaf GObj of p
     GObj *g = p.GetGObj(p.depth());
     if (!g) {
 	// If we can't get a valid object, then the path
 	// ends here and we just copy p into out_paths
-	DbiPath *op = new DbiPath(p);
-	opaths->push_back(op);
+	opaths->push_back(p.hash());
+	// If DbiPath isn't already in dbi_paths, copy p and add it
+	if (dbi_paths.find(p.hash()) == dbi_paths.end()) {
+	    DbiPath *op = new DbiPath(p);
+	    dbi_paths[op->hash()] = op;
+	}
 	return;
     }
 
     // If g is a solid, this is a leaf path and we're done
     if (!g->cv.size()) {
-	DbiPath *op = new DbiPath(p);
-	opaths->push_back(op);
+	opaths->push_back(p.hash());
+	// If DbiPath isn't already in dbi_paths, copy p and add it
+	if (dbi_paths.find(p.hash()) == dbi_paths.end()) {
+	    DbiPath *op = new DbiPath(p);
+	    dbi_paths[op->hash()] = op;
+	}
 	return;
     }
 
@@ -494,19 +502,30 @@ DbiState::expand_path(std::vector<DbiPath *> *opaths, DbiPath &p)
     for (size_t i = 0; i < g->cv.size(); i++) {
 	p.push(g->cv[i]->ihash);
 	expand_path(opaths, p);
-	p.pop();
+	p.pop(false);
     }
 }
 
-std::vector<DbiPath *>
-DbiState::expand(std::vector<DbiPath *> paths)
+std::vector<unsigned long long>
+DbiState::ExpandPaths(std::vector<unsigned long long> &paths)
 {
-    std::vector<DbiPath *> out_paths;
+    std::vector<unsigned long long> out_paths;
+    std::unordered_map<unsigned long long, DbiPath *>::iterator p_it;
     for (size_t i = 0; i < paths.size(); i++) {
-	DbiPath *p = paths[i];
+	p_it = dbi_paths.find(paths[i]);
+	// If the hash doesn't correspond to a current path,
+	// we can't expand it
+	if (p_it == dbi_paths.end())
+	    continue;
+
+	// If a path isn't valid (i.e. one or more of its components
+	// are no longer in gobjs or combinsts) we can't expand it.
+	DbiPath *p = p_it->second;
 	if (!p->valid())
 	    continue;
 
+	// We need to push and pop a path while we walk - create a
+	// working path copy for that purpose
 	DbiPath wp(*p);
 	expand_path(&out_paths, wp);
     }
@@ -514,22 +533,39 @@ DbiState::expand(std::vector<DbiPath *> paths)
     return out_paths;
 }
 
-std::vector<DbiPath *>
-DbiState::collapse(std::vector<DbiPath *> paths)
+std::vector<unsigned long long>
+DbiState::CollapsePaths(std::vector<unsigned long long> &paths)
 {
-    std::vector<DbiPath *> out_paths;
-    std::map<size_t, std::vector<DbiPath *>> depth_groups;
+    std::vector<unsigned long long> out_paths;
+    std::unordered_set<DbiPath *> cleanup;
+    std::unordered_set<DbiPath *>::iterator c_it;
 
-    // Group paths of the same depth.  Depth == 0 paths are top level
-    // and need no collapsing
+    // Group paths of the same depth.
+    std::map<size_t, std::vector<DbiPath *>> depth_groups;
     for (size_t i = 0; i < paths.size(); i++) {
-	DbiPath *op = new DbiPath(*paths[i]);
-	size_t depth = paths[i]->depth();
+	std::unordered_map<unsigned long long, DbiPath *>::iterator p_it;
+	p_it = dbi_paths.find(paths[i]);
+	// If the hash doesn't correspond to a current path,
+	// we can't expand it
+	if (p_it == dbi_paths.end())
+	    continue;
+
+	// We have a DbiPath - we're in business
+	DbiPath *op = p_it->second;
+
+	// Depth == 0 paths are top level and need no collapsing
+	size_t depth = op->depth();
 	if (!depth) {
-	    out_paths.push_back(op);
+	    out_paths.push_back(op->hash());
 	    continue;
 	}
-	depth_groups[i].push_back(op);
+
+	// Because some of the paths will be modded during collapse,
+	// we need temporary copies rather than working with the
+	// ones from dbi_paths.
+	DbiPath *np = new DbiPath(*op);
+	depth_groups[i].push_back(np);
+	cleanup.insert(np);
     }
 
     // Whittle down the depth groups until we find not-fully-listed parents -
@@ -565,8 +601,13 @@ DbiState::collapse(std::vector<DbiPath *> paths)
 	    for (size_t i = 0; i < cpaths.size(); i++) {
 		DbiPath *lp = cpaths[i];
 		CombInst *c = lp->GetCombInst();
-		if (UNLIKELY(!c))
-		    return std::vector<DbiPath *> ();
+		if (UNLIKELY(!c)) {
+		    for (c_it = cleanup.begin(); c_it != cleanup.end(); ++c_it) {
+			DbiPath *p = *c_it;
+			delete p;
+		    }
+		    return std::vector<unsigned long long> ();
+		}
 		leaf_hashes.insert(lp->GetCombInst()->ihash);
 	    }
 
@@ -576,11 +617,21 @@ DbiState::collapse(std::vector<DbiPath *> paths)
 	    // containing the full list of child CombInsts can be found.
 	    DbiPath *p = cpaths[0];
 	    CombInst *c = p->GetCombInst();
-	    if (UNLIKELY(!c))
-		return std::vector<DbiPath *> ();
+	    if (UNLIKELY(!c)) {
+		for (c_it = cleanup.begin(); c_it != cleanup.end(); ++c_it) {
+		    DbiPath *dp = *c_it;
+		    delete dp;
+		}
+		return std::vector<unsigned long long> ();
+	    }
 	    GObj *pg = gobjs[c->chash];
-	    if (UNLIKELY(!pg))
-		return std::vector<DbiPath *> ();
+	    if (UNLIKELY(!pg)) {
+		for (c_it = cleanup.begin(); c_it != cleanup.end(); ++c_it) {
+		    DbiPath *dp = *c_it;
+		    delete dp;
+		}
+		return std::vector<unsigned long long> ();
+	    }
 
 	    bool complete = true;
 	    for (size_t i = 0; i < pg->cv.size(); i++) {
@@ -594,15 +645,19 @@ DbiState::collapse(std::vector<DbiPath *> paths)
 		// If fully drawn, depth_groups[plen-1] gets the first path in
 		// cpaths with the leaf popped off.
 		DbiPath *cp = cpaths[0];
-		cp->pop();
+		cp->pop(false);
 		depth_groups[plen - 1].push_back(cp);
-		// Remainder of paths can be freed
-		for (size_t i = 1; i < cpaths.size(); i++)
-		    delete cpaths[i];
 	    } else {
 		// No further collapsing - add to final.
-		for (size_t i = 0; i < cpaths.size(); i++)
-		    out_paths.push_back(cpaths[i]);
+		for (size_t i = 0; i < cpaths.size(); i++) {
+		    out_paths.push_back(cpaths[i]->hash());
+		    // Save the DbiPath instances in dbi_paths if they don't
+		    // already exist there.
+		    if (dbi_paths.find(cpaths[i]->hash()) == dbi_paths.end()) {
+			dbi_paths[cpaths[i]->hash()] = cpaths[i];
+			cleanup.erase(cpaths[i]);
+		    }
+		}
 	    }
 	}
 
@@ -614,10 +669,23 @@ DbiState::collapse(std::vector<DbiPath *> paths)
     if (depth_groups.find(0) != depth_groups.end()) {
 	std::vector<DbiPath *> &dpaths = depth_groups.rbegin()->second;
 	for (size_t i = 0; i < dpaths.size(); i++) {
-	    out_paths.push_back(dpaths[i]);
+	    out_paths.push_back(dpaths[i]->hash());
+	    // Save the DbiPath instances in dbi_paths if they don't already
+	    // exist there.
+	    if (dbi_paths.find(dpaths[i]->hash()) == dbi_paths.end()) {
+		dbi_paths[dpaths[i]->hash()] = dpaths[i];
+		cleanup.erase(dpaths[i]);
+	    }
 	}
     }
 
+    // Clean up any temporary paths that didn't end up getting saved
+    for (c_it = cleanup.begin(); c_it != cleanup.end(); ++c_it) {
+	DbiPath *p = *c_it;
+	delete p;
+    }
+
+    // Return hashes
     return out_paths;
 }
 
