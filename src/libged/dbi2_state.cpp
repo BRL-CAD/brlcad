@@ -58,9 +58,8 @@ extern "C" {
 
 DbiPath::DbiPath(DbiState *dbis, const char *path)
 {
-
     // If no path, or no way to decode it, we're done
-    if (!path || !d)
+    if (!path || !dbis)
 	return;
 
     d = dbis;
@@ -121,6 +120,7 @@ DbiPath::DbiPath(const DbiPath &p)
     is_cyclic = p.is_cyclic;
     is_valid = p.is_valid;
     elements.clear();
+    elements = p.elements;
     d = p.d;
     parent_path_hashes.clear();
     std::unordered_set<unsigned long long>::const_iterator p_it;
@@ -137,11 +137,24 @@ DbiPath::Reset()
     is_valid = 1;
     elements.clear();
     parent_path_hashes.clear();
+
+    // If we were registered in the dbi_path container, clear the
+    // entry - we're no longer that path
+    d->dbi_paths.erase(path_hash);
+
     path_hash = 0;
 }
 
 DbiPath::~DbiPath()
 {
+    // If we were registered in the dbi_path container, clear the entry -
+    // we're no longer that path.  It's up to the caller if they want us to
+    // be registered as this new path.
+    std::unordered_map<unsigned long long, DbiPath *>::iterator p_it;
+    p_it = d->dbi_paths.find(path_hash);
+    if (p_it != d->dbi_paths.end() && p_it->second == this)
+	d->dbi_paths.erase(path_hash);
+
     Reset();
     d = NULL;
 }
@@ -482,6 +495,12 @@ DbiPath::hash(size_t max_len)
 {
     if (UNLIKELY(!elements.size()))
 	return 0;
+
+    // If we want the full path hash, that is maintained and we don't have
+    // to recalculate it
+    if (LIKELY(!max_len))
+	return path_hash;
+
     size_t mlen = (max_len) ? max_len : elements.size();
     return bu_data_hash(elements.data(), mlen * sizeof(unsigned long long));
 }
@@ -510,7 +529,18 @@ DbiPath::push(unsigned long long new_element)
 	}
 	component_hashes.insert(new_element);
 	elements.push_back(new_element);
-	path_hash = hash();
+
+	// If we were registered in the dbi_path container, clear the entry -
+	// we're no longer that path.  It's up to the caller if they want us to
+	// be registered as this new path.
+	std::unordered_map<unsigned long long, DbiPath *>::iterator p_it;
+	p_it = d->dbi_paths.find(path_hash);
+	if (p_it != d->dbi_paths.end() && p_it->second == this)
+	    d->dbi_paths.erase(path_hash);
+
+	// Update the path hash
+	path_hash = bu_data_hash(elements.data(), elements.size() * sizeof(unsigned long long));
+
 	return new_element;
     }
 
@@ -532,9 +562,17 @@ DbiPath::push(unsigned long long new_element)
     // just take care of ohash.
     component_hashes.insert(cp->second->ohash);
 
+    // If we were registered in the dbi_path container, clear the entry -
+    // we're no longer that path.  It's up to the caller if they want us to
+    // be registered as this new path.
+    std::unordered_map<unsigned long long, DbiPath *>::iterator p_it;
+    p_it = d->dbi_paths.find(path_hash);
+    if (p_it != d->dbi_paths.end() && p_it->second == this)
+	d->dbi_paths.erase(path_hash);
+
     // Update current hash and parent hashes
     parent_path_hashes.insert(path_hash);
-    path_hash = hash();
+    path_hash = bu_data_hash(elements.data(), elements.size() * sizeof(unsigned long long));
 
     // Need to check if path is now cyclic.  Assuming previously defined path
     // is NOT cyclic, per the is_cyclic check at the beginning of this method,
@@ -548,7 +586,7 @@ DbiPath::push(unsigned long long new_element)
 }
 
 void
-DbiPath::pop(bool no_check)
+DbiPath::pop(bool check)
 {
     // Don't pop_back on an empty vector - undefined behavior
     if (!elements.empty()) {
@@ -593,13 +631,21 @@ DbiPath::pop(bool no_check)
 	}
     }
 
+    // If we were registered in the dbi_path container, clear the entry - we're
+    // no longer that path.  It's up to the caller if they want us to be
+    // registered as this new path.
+    std::unordered_map<unsigned long long, DbiPath *>::iterator p_it;
+    p_it = d->dbi_paths.find(path_hash);
+    if (p_it != d->dbi_paths.end() && p_it->second == this)
+	d->dbi_paths.erase(path_hash);
+
     // Update current hash and parent hashes
-    path_hash = hash();
+    path_hash = bu_data_hash(elements.data(), elements.size() * sizeof(unsigned long long));
     parent_path_hashes.erase(path_hash);
 
     // If we have an empty path, or the user has instructed us to skip
     // validation, we're done
-    if (no_check || !elements.size()) {
+    if (!check || !elements.size()) {
 	// Reset
 	is_valid = true;
 	is_cyclic = 0;
