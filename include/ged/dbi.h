@@ -52,6 +52,44 @@
 
 class GED_EXPORT DbiState;
 
+// In-memory representation of a Comb Tree instance from a .g database
+//
+// The intent of this structure is to capture and represent each unique
+// instance of an object inside of one comb.  So, for example, if we have a
+// comb A with the following tree:
+//
+// A
+// |- B
+// |- C
+// |- [M1] C
+// |- [M2] C
+// |- [M1] C
+//
+// the correct setup of the instances from the tree of A would be:
+//
+// A/B
+// A/C@0
+// A/C@1
+// A/C@2
+// A/C@3
+// A/C@4
+//
+// Note in particular that even though there are two instances of C in
+// A with the exact same matrix, they are present in the tree definition
+// as distinct entities and are therefore separate comb instances.
+//
+// These are not full fledged geometry database objects (GObj objects) since
+// the information they store is different, but (like GObj objects) they
+// are intended to reflect the on-disk .g geometry state and should be
+// updated, created and destroyed to reflect changes in the .g file.
+//
+// Individual CombInst containers will be primarily associated with a GObj
+// class, but will also be registered in a top level DbiState container so
+// their hashes can be quickly decoded when acting as as members of paths.
+//
+// No CombInst should survive if its parent GObj is deleted or edited in
+// a way to invalidate a particular CombInst, since that would mean the
+// in-memory data is no longer correctly reflecting the geometry state.
 class GED_EXPORT CombInst {
 
     public:
@@ -101,8 +139,11 @@ class GED_EXPORT CombInst {
 	DbiState *d;
 };
 
-
-
+// In-memory representation of a BRL-CAD Geometry database object.
+//
+// Combs and Solids are represented by GObj classes.  Combs will define an
+// array of CombInst classes to represent their tree, and the lifetime of
+// the CombInst classes is dependent on the state of the GObj.
 class GED_EXPORT GObj {
 
     public:
@@ -140,6 +181,8 @@ class GED_EXPORT GObj {
 
 	// Optional scene object(s) associated with this object.
 	// Map key is the drawing mode (0 = wireframe, 1 = shaded, etc.)
+	// Generally speaking these will be referenced by scene_objs
+	// in DbiPath entities.
 	std::map<size_t, struct bv_scene_obj *> scene_objs;
 
     private:
@@ -162,6 +205,7 @@ class GED_EXPORT GObj {
 	vect_t bb_max;
 	bool bb_valid = false;
 
+	// Initialize the cv array of CombInst types based on the comb tree
 	void GenCombInstances();
 };
 
@@ -347,19 +391,32 @@ class GED_EXPORT BSelectState {
 
 	unsigned long long state_hash();
 
+	// Explicitly selected paths.  Note that this is NOT an expanded or collapsed
+	// set, since (particularly for editing ops) the app may need to know the precise
+	// active paths.  On the other hand, we may want the set of expanded hashes to
+	// use for checking when drawing.  We may also want not just the set of leaf expansions
+	// but ALL intermediate hashes, since evaluated mode drawing will not go to leaf
+	// solids but should still be illuminated if active in a selection.
 	std::unordered_set<unsigned long long> selected;
-	std::unordered_set<unsigned long long> active_paths; // Solid paths to illuminate
-	std::unordered_set<unsigned long long> active_parents; // Paths above selection
+
+	// Solid paths to illuminate
+	// TODO - may not need this if we can just ask each drawn leaf path if
+	// any of its parents are selected?  With a huge number of individually
+	// selected paths that would be a problem, since each one would have to
+	// be checked, but we might able to mitigate that with a
+	// selected_collapsed set
+	std::unordered_set<unsigned long long> active_paths; // Solid paths to illuminate 
+
 	// To support highlighting closed paths that have selected primitives
 	// below them, we need more information.  This is different than
 	// highlighting only the paths related to the specific selected full
 	// path - in this situation, the application wants to know about all
 	// paths that are above the leaf *object* that is selected, in whatever
 	// portion of the database.  Immediate parents are combs whose
-	// immediate child is the selected leaf; grand parents are higher level
+	// immediate child is the selected leaf; ancestors are higher level
 	// combs above immediate parents
 	std::unordered_set<unsigned long long> immediate_parents;
-	std::unordered_set<unsigned long long> grand_parents;
+	std::unordered_set<unsigned long long> ancestors;
 
 	void characterize();
 
@@ -621,6 +678,7 @@ class GED_EXPORT DbiState {
 	// registered in dbi_paths if they didn't already exist, to
 	// ensure that (at the time of return) ExpandPaths results
 	// all correspond to a DbiPath pointer.
+	//
 	std::vector<unsigned long long> ExpandPaths(std::vector<unsigned long long> &paths);
 
 	// Given a set of paths, create a set of paths consisting of the
@@ -632,6 +690,17 @@ class GED_EXPORT DbiState {
 	// ensure that (at the time of return) CollapsePaths results
 	// all correspond to a DbiPath pointer.
 	std::vector<unsigned long long> CollapsePaths(std::vector<unsigned long long> &paths);
+
+	// There is a selection case where we want the set of ALL hashes
+	// (intermediate and leaf) in a set, without caring whether the DbiPath
+	// exists (it's intended for a lookup by drawing code, so whether
+	// DbiPath exists doesn't matter to the selection code.)  Provide
+	// this method so we can build up such a set - unlike ExpandPaths it
+	// will record all intermediate hashes on the way to leaves and will
+	// not create any DbiPath instances.  The output set s is not cleared,
+	// so calling PathsBelow on multiple paths in succession will gradually
+	// build up a multi-path set.
+	void PathsBelow(std::unordered_set<unsigned long long> *s, unsigned long long phash);
 
 	/*******************************************************************
          *                      View States
@@ -698,6 +767,7 @@ class GED_EXPORT DbiState {
 	void clear_cache(struct directory *dp);
 	struct resource *res = NULL;
 	struct ged_draw_cache *dcache = NULL;
+	void collect_paths(std::unordered_set<unsigned long long> *opaths, DbiPath &p);
 	void expand_path(std::vector<unsigned long long> *opaths, DbiPath &p);
 	void gather_cyclic(
 		std::unordered_set<unsigned long long> &cyclic,

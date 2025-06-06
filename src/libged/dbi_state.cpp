@@ -475,20 +475,9 @@ DbiState::expand_path(std::vector<unsigned long long> *opaths, DbiPath &p)
 {
     // Unpack the leaf GObj of p
     GObj *g = p.GetGObj(p.depth());
-    if (!g) {
-	// If we can't get a valid object, then the path
-	// ends here and we just copy p into out_paths
-	opaths->push_back(p.hash());
-	// If DbiPath isn't already in dbi_paths, copy p and add it
-	if (dbi_paths.find(p.hash()) == dbi_paths.end()) {
-	    DbiPath *op = new DbiPath(p);
-	    dbi_paths[op->hash()] = op;
-	}
-	return;
-    }
-
-    // If g is a solid, this is a leaf path and we're done
-    if (!g->cv.size()) {
+    // If we can't keep walking, then the path ends here and we just copy p
+    // into out_paths
+    if (!g || !g->cv.size()) {
 	opaths->push_back(p.hash());
 	// If DbiPath isn't already in dbi_paths, copy p and add it
 	if (dbi_paths.find(p.hash()) == dbi_paths.end()) {
@@ -532,6 +521,54 @@ DbiState::ExpandPaths(std::vector<unsigned long long> &paths)
 
     return out_paths;
 }
+
+
+
+void
+DbiState::collect_paths(std::unordered_set<unsigned long long> *s, DbiPath &p)
+{
+    // Save current path hash
+    s->insert(p.hash());
+
+    // Unpack the leaf GObj of p.  If we can't, or if there's nothing there,
+    // we're done.
+    GObj *g = p.GetGObj(p.depth());
+    if (!g || !g->cv.size())
+	return;
+
+    // If we have a comb, process the instances.
+    for (size_t i = 0; i < g->cv.size(); i++) {
+	p.push(g->cv[i]->ihash);
+	collect_paths(s, p);
+	p.pop(false);
+    }
+}
+
+void
+DbiState::PathsBelow(std::unordered_set<unsigned long long> *s, unsigned long long phash)
+{
+    if (UNLIKELY(!s))
+	return;
+
+    std::unordered_map<unsigned long long, DbiPath *>::iterator p_it;
+    p_it = dbi_paths.find(phash);
+    // If the hash doesn't correspond to a current path,
+    // we can't expand it
+    if (p_it == dbi_paths.end())
+	return;
+
+    // If a path isn't valid (i.e. one or more of its components
+    // are no longer in gobjs or combinsts) we can't expand it.
+    DbiPath *p = p_it->second;
+    if (!p->valid())
+	return;
+
+    // We need to push and pop a path while we walk - create a
+    // working path copy for that purpose
+    DbiPath wp(*p);
+    collect_paths(s, wp);
+}
+
 
 std::vector<unsigned long long>
 DbiState::CollapsePaths(std::vector<unsigned long long> &paths)
