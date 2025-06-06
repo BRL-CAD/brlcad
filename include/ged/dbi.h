@@ -181,7 +181,7 @@ class GED_EXPORT GObj {
 // without needing any other changes to the drawing pass.)
 class GED_EXPORT DbiPath {
     public:
-	DbiPath(DbiState *dbis, const char *path = NULL);
+	DbiPath(DbiState *dbis = NULL, const char *path = NULL);
 	~DbiPath();
 	DbiPath(const DbiPath &p);
 
@@ -248,13 +248,29 @@ class GED_EXPORT DbiPath {
 	unsigned long long hash(size_t max_len = 0);
 
 	// Appends to end of path if path isn't already cyclic
+	//
+	// If this path was registered with dbi_paths (that does not happen by
+	// default but user code can do it) then this operation will
+	// de-register it since the hash key of the path no longer matches the
+	// original hash used to register it.  It is not automatically
+	// re-registered as the new path, since that may not reflect user
+	// intent - if re-registration is desired that is up to the caller.
 	unsigned long long push(unsigned long long element);
 
-	// Removes the last element from the path.  By default recalculates cyclic and
-	// valid properties - if no_check is set, assumes validity and resets
-	// is_cyclic and is_valid without testing.  (The later is for performance
-	// sensitive cases where inputs are well controlled.)
-	void pop(bool no_check = false);
+	// Removes the last element from the path.  By default recalculates
+	// cyclic and valid properties.
+	//
+	// If check is false, assumes validity and resets is_cyclic and
+	// is_valid without testing.  (The later is for performance sensitive
+	// cases where inputs are well controlled.)
+	//
+	// If this path was registered with dbi_paths (that does not happen by
+	// default but user code can do it) then this operation will
+	// de-register it since the hash key of the path no longer matches the
+	// original hash used to register it.  It is not automatically
+	// re-registered as the new path, since that may not reflect user
+	// intent - if re-registration is desired that is up to the caller.
+	void pop(bool check = true);
 
 	// Get the CombInst on the path at ind.  If ind is 0 (default), return
 	// the Leaf comb instance - by definition the root element of a path is
@@ -305,12 +321,15 @@ class GED_EXPORT BSelectState {
     public:
 	BSelectState(DbiState *);
 
+	// Add a path to the selection set
 	bool Select(const char *path = NULL, bool update = false);
 	bool Select(unsigned long long phash = 0, bool update = false);
 
+	// Remove a path from the selection set
 	bool DeSelect(const char *path = NULL, bool update = false);
 	bool DeSelect(unsigned long long phash = 0, bool update = false);
 
+	// Clear all paths from the selection set
 	void Clear();
 
 	bool IsSelected(unsigned long long);
@@ -382,6 +401,7 @@ class GED_EXPORT BViewState {
 	// supplied bv_obj_settings structure.
 	void EnqueuePath(const char *path = NULL, int mode = 0);
 	void EnqueuePath(DbiPath *p = NULL, int mode = 0);
+	void EnqueuePath(unsigned long long phash = 0, int mode = 0);
 
 	// Erases paths from the view for the given mode.  If mode < 0, all
 	// matching paths are erased.  For modes that are un-evaluated, all
@@ -392,13 +412,14 @@ class GED_EXPORT BViewState {
 	// Like EnqueuePath, this stages paths for subsequent processing
 	void DequeuePath(const char *p, int mode = -1, bool cache_collaspe = true);
 	void DequeuePath(DbiPath *p, int mode = -1, bool cache_collapse = true);
+	void DequeuePath(unsigned long long phash = 0, int mode = -1, bool cache_collapse = true);
 
 	// Return a sorted vector of paths encoding the drawn paths in the
 	// view.  If mode == -1 list all paths, otherwise list those specific
 	// to the mode.  If collapsed is true, return the minimal path set
 	// that captures what is drawn - otherwise, return the direct list of
 	// scene objects
-	std::vector<DbiPath *> DrawnPaths(int mode, bool collapsed);
+	std::vector<unsigned long long> DrawnPaths(int mode, bool collapsed);
 
 	// Get a count of the drawn paths.  If collapsed is true the minimal
 	// path set capturing what is drawn is counted, otherwise all scene
@@ -414,6 +435,7 @@ class GED_EXPORT BViewState {
 	// of all modes - i.e. if part of a comb is drawn as wireframe,
 	// and part as solid, and in combination all paths are visualized,
 	// IsDrawn will report fully drawn
+	int IsDrawn(DbiPath *p = NULL, int mode = -1);
 	int IsDrawn(unsigned long long hash = 0, int mode = -1);
 
 	// Clear all drawn objects
@@ -459,7 +481,7 @@ class GED_EXPORT BViewState {
 	//
 	// spaths stores paths for all drawing modes - details of what modes
 	// are active for a specific path are stored in the expanded paths.
-	std::unordered_map<unsigned long long, DbiPath *> spaths;
+	std::unordered_set<unsigned long long> s_paths;
 
 	// Set of all leaf node drawn paths.  As with spaths, this set covers
 	// all modes.  For unevaluated drawing modes like wireframe this will
@@ -467,7 +489,27 @@ class GED_EXPORT BViewState {
 	// bigE evaluated wireframe drawing higher level paths are also considered
 	// "leaf" nodes.  Those require special handling when it comes to
 	// collapsing this set for specific drawing modes.
-	std::unordered_map<unsigned long long, DbiPath *> sexpanded;
+	std::unordered_set<unsigned long long> s_expanded;
+
+	// Sorted lists of fully drawn paths organized by mode.  Suitable
+	// for generating ordered lists of path strings
+	std::unordered_map<int, std::vector<unsigned long long>> mode_collapsed;
+
+	// Sorted and de-duped list of fully drawn paths independent of mode.
+	// Suitable for generating ordered lists of path strings
+	std::vector<std::vector<unsigned long long>> all_collapsed;
+
+	// Set of hashes of all drawn paths and subpaths, constructed during the collapse
+	// operation from the set of drawn solid paths.  This allows calling codes to
+	// spot check any path to see if it is active, without having to interrogate
+	// other data structures or walk down the tree.
+	std::unordered_map<int, std::unordered_set<unsigned long long>> fully_drawn_paths_by_mode;
+	std::unordered_set<unsigned long long> all_fully_drawn_paths;
+
+	// Set of partially drawn paths, constructed during the collapse operation.
+	// This holds the paths that should return 2 for is_hdrawn
+	std::unordered_map<int, std::unordered_set<unsigned long long>> partially_drawn_paths_by_mode;
+	std::unordered_set<unsigned long long> all_partially_drawn_paths;
 
 
 	// Called when the parent Db context is getting ready to update the data
@@ -525,9 +567,6 @@ class GED_EXPORT BViewState {
 
 	int leaf_check(unsigned long long chash, std::vector<unsigned long long> &path_hashes);
 
-	// Hashes of paths supplied by commands to be incorporated into the drawn state by redraw method
-	std::unordered_set<unsigned long long> staged;
-
 	// The collapsed drawn paths from the previous db state, organized
 	// by drawn mode
 	void depth_group_collapse(
@@ -536,20 +575,6 @@ class GED_EXPORT BViewState {
 		std::unordered_set<unsigned long long> &p_d_paths,
 	       	std::map<size_t, std::unordered_set<unsigned long long>> &depth_groups
 		);
-	std::unordered_map<int, std::vector<std::vector<unsigned long long>>> mode_collapsed;
-	std::vector<std::vector<unsigned long long>> all_collapsed;
-
-	// Set of hashes of all drawn paths and subpaths, constructed during the collapse
-	// operation from the set of drawn solid paths.  This allows calling codes to
-	// spot check any path to see if it is active, without having to interrogate
-	// other data structures or walk down the tree.
-	std::unordered_map<int, std::unordered_set<unsigned long long>> fully_drawn_paths_by_mode;
-	std::unordered_set<unsigned long long> all_fully_drawn_paths;
-
-	// Set of partially drawn paths, constructed during the collapse operation.
-	// This holds the paths that should return 2 for is_hdrawn
-	std::unordered_map<int, std::unordered_set<unsigned long long>> partially_drawn_paths_by_mode;
-	std::unordered_set<unsigned long long> all_partially_drawn_paths;
 
 	friend class BSelectState;
 };
@@ -591,12 +616,22 @@ class GED_EXPORT DbiState {
 
 	// Given a set of paths, create a set of paths representing the
 	// expansion of the trees of those input paths to their leaves.
-	std::vector<DbiPath *> expand(std::vector<DbiPath *>);
+	//
+	// The expanded paths in the return vector will be created and
+	// registered in dbi_paths if they didn't already exist, to
+	// ensure that (at the time of return) ExpandPaths results
+	// all correspond to a DbiPath pointer.
+	std::vector<unsigned long long> ExpandPaths(std::vector<unsigned long long> &paths);
 
 	// Given a set of paths, create a set of paths consisting of the
 	// shallowest path descriptions that fully capture the geometry present
 	// in the original set.
-	std::vector<DbiPath *> collapse(std::vector<DbiPath *>);
+	//
+	// The collasped paths in the return vector will be created and
+	// registered in dbi_paths if they didn't already exist, to
+	// ensure that (at the time of return) CollapsePaths results
+	// all correspond to a DbiPath pointer.
+	std::vector<unsigned long long> CollapsePaths(std::vector<unsigned long long> &paths);
 
 	/*******************************************************************
          *                      View States
@@ -623,6 +658,27 @@ class GED_EXPORT DbiState {
 	void RemoveSelectionSet(const char *sname);
 	std::vector<std::string> ListSelectionSets();
 
+	/*******************************************************************
+         *                     Database Paths
+	 *******************************************************************/
+	// Decode hashes into DbiPath instances, when we have them.  (If a path
+	// hash doesn't have an entry here, the hash is not usable in most
+	// DbiState and related logic.)  There is no requirement that a path
+	// have exactly one DbiPath instance, but dbi_paths can hold only one
+	// so if application code creates more the management of those other
+	// instances is their responsibility.
+	//
+	// If a DbiPath is registered here (it does not happen by default,
+	// but user code can do it) altering or deleting the DbiPath instance
+	// will automatically de-register that DbiPath from dbi_paths.
+	//
+	// Path alterations to an unregistered DbiPath that happens to match
+	// a hash in dbi_paths will have no effect on dbi_paths.
+	std::unordered_map<unsigned long long, DbiPath *> dbi_paths;
+
+	// TODO - if we're going to use a memory pool to hold and reuse all
+	// DbiPath allocations, it would be here
+
     public:
 	// Allow the implementation containers to access the core DbiState maps
 	friend class GObj;
@@ -642,7 +698,7 @@ class GED_EXPORT DbiState {
 	void clear_cache(struct directory *dp);
 	struct resource *res = NULL;
 	struct ged_draw_cache *dcache = NULL;
-	void expand_path(std::vector<DbiPath *> *opaths, DbiPath &p);
+	void expand_path(std::vector<unsigned long long> *opaths, DbiPath &p);
 	void gather_cyclic(
 		std::unordered_set<unsigned long long> &cyclic,
 		unsigned long long c_hash, DbiPath &p
