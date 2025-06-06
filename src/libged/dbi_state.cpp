@@ -292,7 +292,7 @@ void
 DbiState::RemoveSelectionSet(const char *sname)
 {
     if (!sname || BU_STR_EQUIV(sname, "default")) {
-	d_selection->clear();
+	d_selection->Clear();
 	return;
     }
 
