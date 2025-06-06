@@ -39,17 +39,18 @@
 
 static void AddArb
 (
-    int         n1,
-    int         n2,
-    int         n3,
-    int         n4,
-    int         n5,
-    int         n6,
-    int         n7,
-    int         n8,
-    KData&      kData,
-    std::string arbNumber,
-    Geometry&   geometry
+    int          n1,
+    int          n2,
+    int          n3,
+    int          n4,
+    int          n5,
+    int          n6,
+    int          n7,
+    int          n8,
+    KData&       kData,
+    std::string  arbNumber,
+    Geometry&    geometry,
+	const double factor
 ) {
     point_t point1;
     point_t point2;
@@ -59,8 +60,6 @@ static void AddArb
     point_t point6;
     point_t point7;
     point_t point8;
-
-    const double factor = 10.0;
 
     point1[X] = kData.nodes[n1].x * factor;
     point1[Y] = kData.nodes[n1].y * factor;
@@ -98,6 +97,77 @@ static void AddArb
 }
 
 
+static void AddSeatBelt
+(
+	int          n1,
+	int          n2,
+	int          n3,
+	int          n4,
+	float		 area,
+	KData&       kData,
+	Geometry&    geometry,
+	std::string  arbNumber,
+	const double factor
+) {
+
+	point_t center1;
+	point_t center2;
+	point_t point1;
+	point_t point2;
+	point_t point3;
+	point_t point4;
+	point_t point5;
+	point_t point6;
+	point_t point7;
+	point_t point8;
+
+	float   beltWidth = 47;
+	float	beltThickness = area / beltWidth;
+
+	center1[X] = kData.nodes[n1].x * factor;
+	center1[Y] = kData.nodes[n1].y * factor;
+	center1[Z] = kData.nodes[n1].z * factor;
+
+	center2[X] = kData.nodes[n2].x * factor;
+	center2[Y] = kData.nodes[n2].y * factor;
+	center2[Z] = kData.nodes[n2].z * factor;
+
+	point1[X] = center1[X] - beltThickness * 0.5;
+	point1[Y] = center1[Y] - 10;
+	point1[Z] = center1[Z] - beltWidth * 0.5;
+
+	point2[X] = center1[X] + beltThickness * 0.5;
+	point2[Y] = center1[Y] - 10;
+	point2[Z] = center1[Z] - beltWidth * 0.5;
+
+	point3[X] = center1[X] + beltThickness * 0.5;
+	point3[Y] = center1[Y] + 10;
+	point3[Z] = center1[Z] + beltWidth * 0.5;
+
+	point4[X] = center1[X] - beltThickness * 0.5;
+	point4[Y] = center1[Y] + 10;
+	point4[Z] = center1[Z] + beltWidth * 0.5;
+
+	point5[X] = center2[X] - beltThickness * 0.5;
+	point5[Y] = center2[Y] - 10;
+	point5[Z] = center2[Z] - beltWidth * 0.5;
+
+	point6[X] = center2[X] + beltThickness * 0.5;
+	point6[Y] = center2[Y] - 10;
+	point6[Z] = center2[Z] - beltWidth * 0.5;
+
+	point7[X] = center2[X] + beltThickness * 0.5;
+	point7[Y] = center2[Y] + 10;
+	point7[Z] = center2[Z] + beltWidth * 0.5;
+
+	point8[X] = center2[X] - beltThickness * 0.5;
+	point8[Y] = center2[Y] + 10;
+	point8[Z] = center2[Z] + beltWidth * 0.5;
+
+	geometry.addArb(arbNumber.c_str(), point1, point2, point3, point4, point5, point6, point7, point8);
+
+}
+
 int main
 (
     int   argc,
@@ -131,58 +201,74 @@ int main
 			std::string partName = std::to_string(it->first) + "_" + (it->second).title;
 
 			Geometry& geometry = regions.addRegion(partName);
-			int    section = (it->second).section;
+			int    sectionid = (it->second).section;
 
-			if (section > 0) {
-			    double thick1 = kData.sections[section].thickness1;
-			    double thick2 = kData.sections[section].thickness1;
-			    double thick3 = kData.sections[section].thickness1;
-			    double thick4 = kData.sections[section].thickness1;
+			std::cout << sectionid << std::endl;
 
-			    if (!((fabs(thick1 - thick2) < SMALL_FASTF) && (fabs(thick2 - thick3) < SMALL_FASTF) && (fabs(thick3 - thick4) < SMALL_FASTF))) {
-				std::string sectionName = std::to_string(section) + ": " + kData.sections[section].title;
-				std::cout << "Different thicknesses in section " << sectionName.c_str() << std::endl;
-			    }
+			KSectionSeatBelt ksectionSeatBelt = { "",-1.0,-1.0 };
+			KSectionBeam     ksectionBeam     = { "",-1,"",-1.0,-1.0,-1.0,-1.0,{-1.0,-1.0},-1.0 };
+			KSection         ksection         = { "",-1.0,-1.0,-1.0,-1.0 };
 
-			    double averageThick = (thick1 + thick2 + thick3 + thick4) / 4.0;
-			    geometry.setThickness(averageThick * factor);
+			if (kData.sections[sectionid].thickness1 > 0) {
+				ksection = kData.sections[sectionid];
+				double thick1 = ksection.thickness1;
+				double thick2 = ksection.thickness1;
+				double thick3 = ksection.thickness1;
+				double thick4 = ksection.thickness1;
+
+				if (!((fabs(thick1 - thick2) < SMALL_FASTF) && (fabs(thick2 - thick3) < SMALL_FASTF) && (fabs(thick3 - thick4) < SMALL_FASTF))) {
+					std::string sectionName = std::to_string(sectionid) + ": " + kData.sections[sectionid].title;
+					std::cout << "Different thicknesses in section " << sectionName.c_str() << '\n';
+				}
+
+				double averageThick = (thick1 + thick2 + thick3 + thick4) / 4.0;
+				geometry.setThickness(averageThick * factor);
 			}
-			else
-			    std::cout << "Missing section to part" << partName.c_str() << std::endl;
 
+			if (kData.sectionsBeam[sectionid].TS1 > 0) {
+				ksectionBeam = kData.sectionsBeam[sectionid];
+			}
+
+			if (kData.sectionsSeatBelt[sectionid].area > 0) {
+				ksectionSeatBelt = kData.sectionsSeatBelt[sectionid];
+			}
+			
 			for (std::set<int>::iterator itr = (it->second).elements.begin(); itr != (it->second).elements.end(); itr++) {
-			    if ((kData.elements[*itr].nodes.size() == 3)) {
+
+				KElementSeatBelt= kData.elementSeatBelt[*itr];
+
+				if ((kData.elements[*itr].nodes.size() == 3) && (ksectionBeam.TS1>0)) {
 				int n1 = kData.elements[*itr].nodes[0];
 				int n2 = kData.elements[*itr].nodes[1];
 				int n3 = kData.elements[*itr].nodes[2];
 
-				if (section > 0) {
-				    KSectionBeam beamSection = kData.sectionsBeam[section];
+				if (sectionid > 0) {
+				    //KSectionBeam ksectionBeam = kData.sectionsBeam[sectionid];
 
-				    if (beamSection.CST == 0) {
+				    if (ksectionBeam.CST == 0) {
 				    }
-				    else if (beamSection.CST == 1 && beamSection.sectionType == "") {
+				    else if (ksectionBeam.CST == 1 && ksectionBeam.sectionType == "") {
 					pipePoint point1;
 					pipePoint point2;
 
 					point1.coords[X] = kData.nodes[n1].x * factor;
 					point1.coords[Y] = kData.nodes[n1].y * factor;
 					point1.coords[Z] = kData.nodes[n1].z * factor;
-					point1.outerDiameter = beamSection.TS1;
-					point1.innerDiameter = beamSection.TT1;
+					point1.outerDiameter = ksectionBeam.TS1;
+					point1.innerDiameter = ksectionBeam.TT1;
 
 					point2.coords[X] = kData.nodes[n2].x * factor;
 					point2.coords[Y] = kData.nodes[n2].y * factor;
 					point2.coords[Z] = kData.nodes[n2].z * factor;
-					point2.outerDiameter = beamSection.TS2;
-					point2.innerDiameter = beamSection.TT2;
+					point2.outerDiameter = ksectionBeam.TS2;
+					point2.innerDiameter = ksectionBeam.TT2;
 
 					geometry.addPipePnt(point1);
 					geometry.addPipePnt(point2);
 				    }
-				    else if (beamSection.CST == 2) {
+				    else if (ksectionBeam.CST == 2) {
 				    }
-				    else if ((beamSection.sectionType != "") && (beamSection.sectionType != "SECTION_08") && (beamSection.sectionType != "SECTION_09")) {
+				    else if ((ksectionBeam.sectionType != "") && (ksectionBeam.sectionType != "SECTION_08") && (ksectionBeam.sectionType != "SECTION_09")) {
 					point_t point1;
 					point_t point2;
 					point_t point3;
@@ -201,49 +287,49 @@ int main
 
 					std::string beamNumber= std::to_string(*itr);
 
-					geometry.addBeamResultant(beamNumber, beamSection.sectionType, point1, point2, point3, beamSection.D);
+					geometry.addBeamResultant(beamNumber, ksectionBeam.sectionType, point1, point2, point3, ksectionBeam.D);
 				    }
-				    else if (beamSection.sectionType == "SECTION_08") {
+				    else if (ksectionBeam.sectionType == "SECTION_08") {
 					pipePoint point1;
 					pipePoint point2;
 
 					point1.coords[X] = kData.nodes[n1].x * factor;
 					point1.coords[Y] = kData.nodes[n1].y * factor;
 					point1.coords[Z] = kData.nodes[n1].z * factor;
-					point1.outerDiameter = beamSection.D[0];
+					point1.outerDiameter = ksectionBeam.D[0];
 					point1.innerDiameter = 0.0;
 
 					point2.coords[X] = kData.nodes[n2].x * factor;
 					point2.coords[Y] = kData.nodes[n2].y * factor;
 					point2.coords[Z] = kData.nodes[n2].z * factor;
-					point2.outerDiameter = beamSection.D[0];
+					point2.outerDiameter = ksectionBeam.D[0];
 					point2.innerDiameter = 0.0;
 
 					geometry.addPipePnt(point1);
 					geometry.addPipePnt(point2);
 				    }
-				    else if (beamSection.sectionType == "SECTION_09") {
+				    else if (ksectionBeam.sectionType == "SECTION_09") {
 					pipePoint point1;
 					pipePoint point2;
 
 					point1.coords[X] = kData.nodes[n1].x * factor;
 					point1.coords[Y] = kData.nodes[n1].y * factor;
 					point1.coords[Z] = kData.nodes[n1].z * factor;
-					point1.outerDiameter = beamSection.D[0];
-					point1.innerDiameter = beamSection.D[1];
+					point1.outerDiameter = ksectionBeam.D[0];
+					point1.innerDiameter = ksectionBeam.D[1];
 
 					point2.coords[X] = kData.nodes[n2].x * factor;
 					point2.coords[Y] = kData.nodes[n2].y * factor;
 					point2.coords[Z] = kData.nodes[n2].z * factor;
-					point2.outerDiameter = beamSection.D[0];
-					point2.innerDiameter = beamSection.D[1];
+					point2.outerDiameter = ksectionBeam.D[0];
+					point2.innerDiameter = ksectionBeam.D[1];
 
 					geometry.addPipePnt(point1);
 					geometry.addPipePnt(point2);
 				    }
 				}
 			    }
-			    else if (kData.elements[*itr].nodes.size() == 4) {
+			    else if (kData.elements[*itr].nodes.size() == 4 && ksection.thickness1 > 0) {
 				point_t point1;
 				point_t point2;
 				point_t point3;
@@ -289,7 +375,7 @@ int main
 
 				std::string arbNumber = std::to_string(*itr);
 
-				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
+				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry, factor);
 			    }
 			    else if (kData.elements[*itr].nodes.size() == 7) {
 				int         n1        = kData.elements[*itr].nodes[0];
@@ -303,7 +389,7 @@ int main
 
 				std::string arbNumber = std::to_string(*itr);
 
-				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
+				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry, factor);
 			    }
 			    else if (kData.elements[*itr].nodes.size() == 6) {
 				int         n1        = kData.elements[*itr].nodes[0];
@@ -317,7 +403,7 @@ int main
 
 				std::string arbNumber = std::to_string(*itr);
 
-				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
+				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry, factor);
 
 			    }
 			    else if (kData.elements[*itr].nodes.size() == 5) {
@@ -332,10 +418,33 @@ int main
 
 				std::string arbNumber = std::to_string(*itr);
 
-				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
+				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry, factor);
 			    }
+				
 			    else
-				std::cout << "Un supported element in k-file " << argv[1] << std::endl;
+				std::cout << "Un supported element in k-file " << argv[1] << "\n";
+			  
+			}
+
+			for (std::map<int, KElementSeatBelt>::iterator itrr = kData.elementSeatBelt.begin(); itrr != kData.elementSeatBelt.end(); itrr++) {
+
+					std::string arbNumber =std::to_string(itrr->first);
+					int xx = itrr->first;
+					KElementSeatBelt ddd = itrr->second;
+
+					if (kData.elementSeatBelt[itrr->first].nodes.size() == 2) {
+						int         n1 = kData.elementSeatBelt[itrr->first].nodes[0];
+						int         n2 = kData.elementSeatBelt[itrr->first].nodes[1];
+						AddSeatBelt(n1, n2, 0, 0, ksectionSeatBelt.area, kData, geometry, arbNumber, factor);
+					}
+					else {
+						int         n1 = kData.elementSeatBelt[itrr->first].nodes[0];
+						int         n2 = kData.elementSeatBelt[itrr->first].nodes[1];
+						int         n3 = kData.elementSeatBelt[itrr->first].nodes[2];
+						int         n4 = kData.elementSeatBelt[itrr->first].nodes[3];
+
+						AddSeatBelt(n1, n2, n3, n4, ksectionSeatBelt.area, kData, geometry, arbNumber, factor);
+					}
 			}
 
 			regions.setAttributes(partName,(it->second).attributes);
