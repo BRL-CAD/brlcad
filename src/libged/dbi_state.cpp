@@ -179,6 +179,27 @@ DbiState::GetCombInst(unsigned long long hash)
     return c_it->second;
 }
 
+DbiPath *
+DbiState::GetDbiPath()
+{
+    if (dbiq.empty())
+	return new DbiPath(this);
+
+    DbiPath *cp = dbiq.front();
+    dbiq.pop();
+    return cp;
+}
+
+void
+DbiState::PutDbiPath(DbiPath *p)
+{
+    if (UNLIKELY(!p))
+	return;
+
+    p->Reset();
+    dbiq.push(p);
+}
+
 void
 DbiState::clear_cache(struct directory *dp)
 {
@@ -377,12 +398,17 @@ DbiState::tops(bool show_cyclic)
     if (!show_cyclic)
 	return ret;
 
-    // If we also want to report combs with cyclic paths, as top level objects
+    // If we also want to report combs with cyclic paths as top level objects
     // use DbiState to try and speed things up.
+    //
     // db_ls has that capability, but it has to unpack all the combs walking
     // the tree to find the answer and that results in a slow check for large
     // databases.
     std::unordered_set<unsigned long long> cyclic_paths;
+
+    // Out of the gate, the only non-solids we can be sure aren't cyclic
+    // are the top level returns.  Using them as seeds, walk the hierarchies
+    // looking for any cycles.
     for (size_t i = 0; i < ret.size(); i++) {
 	GObj *g = gobjs[ret[i]];
 	for (size_t j = 0; j < g->cv.size(); j++) {
@@ -481,7 +507,8 @@ DbiState::expand_path(std::vector<unsigned long long> *opaths, DbiPath &p)
 	opaths->push_back(p.hash());
 	// If DbiPath isn't already in dbi_paths, copy p and add it
 	if (dbi_paths.find(p.hash()) == dbi_paths.end()) {
-	    DbiPath *op = new DbiPath(p);
+	    DbiPath *op = GetDbiPath();
+	    *op = p;
 	    dbi_paths[op->hash()] = op;
 	}
 	return;
@@ -600,7 +627,8 @@ DbiState::CollapsePaths(std::vector<unsigned long long> &paths)
 	// Because some of the paths will be modded during collapse,
 	// we need temporary copies rather than working with the
 	// ones from dbi_paths.
-	DbiPath *np = new DbiPath(*op);
+	DbiPath *np = GetDbiPath();
+	*np = *op;
 	depth_groups[i].push_back(np);
 	cleanup.insert(np);
     }
