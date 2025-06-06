@@ -203,6 +203,9 @@ class GED_EXPORT DbiPath {
 	// Return true if this path is a child path of p
 	bool child(DbiPath &p);
 
+	// Return true this path references the object represented by hash
+	bool uses(unsigned long long hash);
+
 	// Use BRL-CAD rules to determine the active color at the
 	// path leaf element
 	bool color(struct bu_color *c);
@@ -285,6 +288,7 @@ class GED_EXPORT DbiPath {
 	// Path state information
 	int is_cyclic = 0;  // 0 = not cyclic, 1 = cyclic, 2 = unknown
 	bool is_valid = true;
+	std::unordered_set<unsigned long long> component_hashes;
 	std::unordered_set<unsigned long long> parent_path_hashes;
 	unsigned long long path_hash;
 
@@ -324,7 +328,7 @@ class GED_EXPORT BSelectState {
 
 	unsigned long long state_hash();
 
-	std::unordered_map<unsigned long long> selected;
+	std::unordered_set<unsigned long long> selected;
 	std::unordered_set<unsigned long long> active_paths; // Solid paths to illuminate
 	std::unordered_set<unsigned long long> active_parents; // Paths above selection
 	// To support highlighting closed paths that have selected primitives
