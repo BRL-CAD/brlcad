@@ -150,20 +150,21 @@ bool
 DbiPath::parent(DbiPath &p)
 {
     // If we are listed in p's parent hashes, we are its parent
-    if (p.parent_path_hashes.find(path_hash) == p.parent_path_hashes.end())
-	return true;
-
-    return false;
+    return (p.parent_path_hashes.find(path_hash) == p.parent_path_hashes.end());
 }
 
 bool
 DbiPath::child(DbiPath &p)
 {
     // If p is our parent, we are its child
-    if (parent_path_hashes.find(p.path_hash) == parent_path_hashes.end())
-	return true;
+    return (parent_path_hashes.find(p.path_hash) == parent_path_hashes.end());
+}
 
-    return false;
+bool
+DbiPath::uses(unsigned long long hash)
+{
+    // If the component is in our hash set, we're referencing tit
+    return (component_hashes.find(hash) != component_hashes.end());
 }
 
 bool
@@ -507,6 +508,7 @@ DbiPath::push(unsigned long long new_element)
 	    // If we have an invalid GObj hash, we can't create a valid path
 	    return 0;
 	}
+	component_hashes.insert(new_element);
 	elements.push_back(new_element);
 	path_hash = hash();
 	return new_element;
@@ -523,6 +525,12 @@ DbiPath::push(unsigned long long new_element)
 
     // We have a CombInst, so we can add the element to the path
     elements.push_back(new_element);
+
+    // A comb instance involves both a parent comb and a reference
+    // to a (potentially non-existent) child object.  The parent
+    // element in the path should already have added chash, so we
+    // just take care of ohash.
+    component_hashes.insert(cp->second->ohash);
 
     // Update current hash and parent hashes
     parent_path_hashes.insert(path_hash);
@@ -543,8 +551,47 @@ void
 DbiPath::pop(bool no_check)
 {
     // Don't pop_back on an empty vector - undefined behavior
-    if (elements.size())
+    if (!elements.empty()) {
+
+	// We track what we are using, so a path can immediately answer the
+	// question of whether it uses a particular object.
+	bool need_rebuild = false;
+	if (elements.size() > 1) {
+	    std::unordered_map<unsigned long long, CombInst *>::iterator cp;
+	    cp = d->combinsts.find(elements.back());
+	    if (UNLIKELY(cp == d->combinsts.end())) {
+		// Leaf CombInst was invalid, so we don't know which
+		// component hash we need to remove - rebuild it
+		need_rebuild = true;
+	    } else {
+		component_hashes.erase(cp->second->ohash);
+	    }
+	} else {
+	    // We're popping the root object - just clear everything
+	    component_hashes.clear();
+	}
+
+	// We've updated our tracking - actually remove the leaf
 	elements.pop_back();
+
+	// If we couldn't find out what we needed, rebuild our tracking
+	// information so we only have valid hashes.
+	if (UNLIKELY(need_rebuild)) {
+	    component_hashes.clear();
+	    // Get the root GObj
+	    std::unordered_map<unsigned long long, GObj *>::iterator r;
+	    r =  d->gobjs.find(elements[0]);
+	    if (r != d->gobjs.end())
+		component_hashes.insert(r->second->hash);
+	    // Get the child CombInst ohashes, if any
+	    for (size_t i = 1; i < elements.size(); i++) {
+		std::unordered_map<unsigned long long, CombInst *>::iterator cp;
+		cp = d->combinsts.find(elements[i]);
+		if (cp != d->combinsts.end())
+		    component_hashes.insert(cp->second->ohash);
+	    }
+	}
+    }
 
     // Update current hash and parent hashes
     path_hash = hash();
