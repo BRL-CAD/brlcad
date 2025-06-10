@@ -197,6 +197,11 @@ class GED_EXPORT GObj {
 	// librt directory pointer
 	struct directory *dp = NULL;
 
+	// Instructs the GObj to (re)populate its scene_obj in the specified
+	// mode.  If reload == false (the default) it will accept a pre-existing
+	// scene object - most of the time these will be load-once-view-many.
+	bool LoadSceneObj(struct bview *v = NULL, int mode = 0, bool reload = false);
+
 	// Optional scene object(s) associated with this object.
 	// Map key is the drawing mode (0 = wireframe, 1 = shaded, etc.)
 	// Generally speaking these will be referenced by scene_objs
