@@ -497,7 +497,7 @@ DbiState::update()
 }
 
 void
-DbiState::expand_path(std::vector<unsigned long long> *opaths, DbiPath &p)
+DbiState::expand_path(std::vector<unsigned long long> *opaths, DbiPath &p, bool create_paths)
 {
     // Unpack the leaf GObj of p
     GObj *g = p.GetGObj(p.depth());
@@ -506,7 +506,7 @@ DbiState::expand_path(std::vector<unsigned long long> *opaths, DbiPath &p)
     if (!g || !g->cv.size()) {
 	opaths->push_back(p.hash());
 	// If DbiPath isn't already in dbi_paths, copy p and add it
-	if (dbi_paths.find(p.hash()) == dbi_paths.end()) {
+	if (create_paths && dbi_paths.find(p.hash()) == dbi_paths.end()) {
 	    DbiPath *op = GetDbiPath();
 	    *op = p;
 	    dbi_paths[op->hash()] = op;
@@ -517,13 +517,13 @@ DbiState::expand_path(std::vector<unsigned long long> *opaths, DbiPath &p)
     // If we have a comb, process the instances.
     for (size_t i = 0; i < g->cv.size(); i++) {
 	p.push(g->cv[i]->ihash);
-	expand_path(opaths, p);
+	expand_path(opaths, p, create_paths);
 	p.pop(false);
     }
 }
 
 std::vector<unsigned long long>
-DbiState::ExpandPaths(std::vector<unsigned long long> &paths)
+DbiState::ExpandPaths(std::vector<unsigned long long> &paths, bool create_paths)
 {
     std::vector<unsigned long long> out_paths;
     std::unordered_map<unsigned long long, DbiPath *>::iterator p_it;
@@ -543,7 +543,7 @@ DbiState::ExpandPaths(std::vector<unsigned long long> &paths)
 	// We need to push and pop a path while we walk - create a
 	// working path copy for that purpose
 	DbiPath wp(*p);
-	expand_path(&out_paths, wp);
+	expand_path(&out_paths, wp, create_paths);
     }
 
     return out_paths;
@@ -552,10 +552,17 @@ DbiState::ExpandPaths(std::vector<unsigned long long> &paths)
 
 
 void
-DbiState::collect_paths(std::unordered_set<unsigned long long> *s, DbiPath &p)
+DbiState::collect_paths(std::unordered_set<unsigned long long> *s, DbiPath &p, bool create_paths)
 {
     // Save current path hash
     s->insert(p.hash());
+
+    // If DbiPath isn't already in dbi_paths, copy p and add it
+    if (create_paths && dbi_paths.find(p.hash()) == dbi_paths.end()) {
+	DbiPath *op = GetDbiPath();
+	*op = p;
+	dbi_paths[op->hash()] = op;
+    }
 
     // Unpack the leaf GObj of p.  If we can't, or if there's nothing there,
     // we're done.
@@ -566,13 +573,13 @@ DbiState::collect_paths(std::unordered_set<unsigned long long> *s, DbiPath &p)
     // If we have a comb, process the instances.
     for (size_t i = 0; i < g->cv.size(); i++) {
 	p.push(g->cv[i]->ihash);
-	collect_paths(s, p);
+	collect_paths(s, p, create_paths);
 	p.pop(false);
     }
 }
 
 void
-DbiState::PathsBelow(std::unordered_set<unsigned long long> *s, unsigned long long phash)
+DbiState::PathsBelow(std::unordered_set<unsigned long long> *s, unsigned long long phash, bool create_paths)
 {
     if (UNLIKELY(!s))
 	return;
@@ -593,12 +600,12 @@ DbiState::PathsBelow(std::unordered_set<unsigned long long> *s, unsigned long lo
     // We need to push and pop a path while we walk - create a
     // working path copy for that purpose
     DbiPath wp(*p);
-    collect_paths(s, wp);
+    collect_paths(s, wp, create_paths);
 }
 
 
 std::vector<unsigned long long>
-DbiState::CollapsePaths(std::vector<unsigned long long> &paths)
+DbiState::CollapsePaths(std::vector<unsigned long long> &paths, bool create_paths)
 {
     std::vector<unsigned long long> out_paths;
     std::unordered_set<DbiPath *> cleanup;
@@ -627,7 +634,7 @@ DbiState::CollapsePaths(std::vector<unsigned long long> &paths)
 	// Because some of the paths will be modded during collapse,
 	// we need temporary copies rather than working with the
 	// ones from dbi_paths.
-	DbiPath *np = GetDbiPath();
+	DbiPath *np = new DbiPath();
 	*np = *op;
 	depth_groups[i].push_back(np);
 	cleanup.insert(np);
@@ -718,7 +725,7 @@ DbiState::CollapsePaths(std::vector<unsigned long long> &paths)
 		    out_paths.push_back(cpaths[i]->hash());
 		    // Save the DbiPath instances in dbi_paths if they don't
 		    // already exist there.
-		    if (dbi_paths.find(cpaths[i]->hash()) == dbi_paths.end()) {
+		    if (create_paths && dbi_paths.find(cpaths[i]->hash()) == dbi_paths.end()) {
 			dbi_paths[cpaths[i]->hash()] = cpaths[i];
 			cleanup.erase(cpaths[i]);
 		    }
@@ -737,7 +744,7 @@ DbiState::CollapsePaths(std::vector<unsigned long long> &paths)
 	    out_paths.push_back(dpaths[i]->hash());
 	    // Save the DbiPath instances in dbi_paths if they don't already
 	    // exist there.
-	    if (dbi_paths.find(dpaths[i]->hash()) == dbi_paths.end()) {
+	    if (create_paths && dbi_paths.find(dpaths[i]->hash()) == dbi_paths.end()) {
 		dbi_paths[dpaths[i]->hash()] = dpaths[i];
 		cleanup.erase(dpaths[i]);
 	    }
