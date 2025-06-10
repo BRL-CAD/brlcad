@@ -61,862 +61,279 @@ static bool alphanum_cmp(const std::string &a, const std::string &b)
     return alphanum_impl(a.c_str(), b.c_str(), NULL) < 0;
 }
 
-// This version of the cyclic check assumes the path entries other than the
-// last one are OK, and checks only against that last entry.
-//
-// TODO - need to catch instance specifiers here to
-// robustly avoid (e.g.) /a/b@1/c/b@2
-static bool
-path_addition_cyclic(std::vector<unsigned long long> &path)
-{
-    if (path.size() == 1)
-	return false;
-    int new_entry = path.size() - 1;
-    int i = new_entry - 1;
-    while (i >= 0) {
-	if (path[new_entry] == path[i])
-	    return true;
-	i--;
-    }
-    return false;
-}
-
 
 BViewState::BViewState(DbiState *s)
 {
     dbis = s;
 }
 
-// 0 = valid, 3 = need re-eval
-int
-BViewState::leaf_check(
-	unsigned long long c_hash,
-	std::vector<unsigned long long> &path_hashes
-	)
+void
+BViewState::AddPath(const char *path, int mode)
 {
-    if (!c_hash)
-	return 0;
-#if 0
-    bool is_removed = (dbis->removed.find(c_hash) != dbis->removed.end());
-    if (is_removed)
-	return 3;
+    if (UNLIKELY(!path))
+	return;
 
-    bool is_changed = (dbis->changed_hashes.find(c_hash) != dbis->changed_hashes.end());
-    if (is_changed)
-	return 3;
+    // String to DbiPath.
+    DbiPath p(dbis, path);
+    if (!p.valid())
+	return;
 
-    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
-    pc_it = dbis->p_c.find(c_hash);
-    path_hashes.push_back(c_hash);
-
-    if (!path_addition_cyclic(path_hashes)) {
-	/* Not cyclic - keep going */
-	if (pc_it != dbis->p_c.end()) {
-	    std::unordered_set<unsigned long long>::iterator c_it;
-	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
-		if (leaf_check(*c_it, path_hashes))
-		    return 3;
-	}
-    }
-#endif
-    return 0;
+    AddPath(&p, mode);
 }
 
-// 0 = valid, 1 = invalid, 2 = invalid, remain "drawn", 3 == need re-eval
-int
-BViewState::check_status(
-	std::unordered_set<unsigned long long> *invalid_paths,
-	std::unordered_set<unsigned long long> *changed_paths,
-	unsigned long long path_hash,
-       	std::vector<unsigned long long> &cpath,
-	bool leaf_expand
-	)
+void
+BViewState::AddPath(DbiPath *p, int mode)
 {
-#if 0
-    // If nothing was removed or changed, there's nothing to tell us anything
-    // is invalid - just return
-    if (dbis->removed.size() && !dbis->changed_hashes.size())
-	return 0;
+    if (UNLIKELY(!p))
+	return;
 
-    bool parent_changed = false;
-    for (size_t j = 0; j < cpath.size(); j++) {
-	unsigned long long phash = (j > 0) ? cpath[j-1] : 0;
-	unsigned long long hash = cpath[j];
-	if (phash && parent_changed) {
-	    // Need to see if this is still a parent of the new comb. This step
-	    // is why the draw update has to come AFTER the above primitive
-	    // update passes, so the comb can give us the correct, current
-	    // answer.
-	    bool is_parent = false;
-	    if (dbis->p_c.find(phash) != dbis->p_c.end() && dbis->p_c[phash].find(hash) != dbis->p_c[phash].end())
-		is_parent = true;
-	    // If not we're done, whether or not the parent dp was
-	    // removed from the database.
-	    if (!is_parent) {
-		if (invalid_paths)
-		    (*invalid_paths).insert(path_hash);
-		if (changed_paths)
-		    (*changed_paths).erase(path_hash);
-		return 1;
-	    }
-	    // If it's still in the comb tree, proceed with the evaluation.
-	}
+    // Any explicitly added path needs a registered DbiPath.  If we don't
+    // already have one, create it (we can't assume p is suitable for
+    // registering, so we make our own.)
+    std::unordered_map<unsigned long long, DbiPath *>::iterator dp_it;
+    dp_it = dbis->dbi_paths.find(p->hash());
+    DbiPath *np = NULL;
+    if (dp_it == dbis->dbi_paths.end()) {
+	np = dbis->GetDbiPath();
+	*np = *p;
+	dbis->dbi_paths[p->hash()] = np;
+    } else {
+	np = dp_it->second;
+    }
 
-	bool is_removed = (dbis->removed.find(hash) != dbis->removed.end());
-	bool is_changed = (dbis->changed_hashes.find(hash) != dbis->changed_hashes.end());
-	if (is_removed) {
-	    if (is_removed && !j) {
-		// Top level removed - everything else is gone
-		if (invalid_paths)
-		    (*invalid_paths).insert(path_hash);
-		if (changed_paths)
-		    (*changed_paths).erase(path_hash);
-		return 1;
-	    }
+    AddPath(np->hash(), mode);
+}
 
-	    if (is_removed && j != cpath.size()-1) {
-		// If removed is first and not a leaf, erase - if we got here
-		// the parent comb either wasn't changed at all or this
-		// particular instance is still there; either way the state
-		// here is not preservable, since the path is trying to refer
-		// to a tree path which no longer exists in the hierarchy.
-		if (invalid_paths)
-		    (*invalid_paths).insert(path_hash);
-		if (changed_paths)
-		    (*changed_paths).erase(path_hash);
-		return 1;
-	    }
-	    if (is_removed && j == cpath.size()-1) {
-		// If removed is a leaf and the comb instance is intact,
-		// leave "drawn" as invalid path.
-		if (changed_paths)
-		    (*changed_paths).insert(path_hash);
-		return 2;
+void
+BViewState::AddPath(unsigned long long hash, int mode)
+{
+    if (UNLIKELY(!hash))
+	return;
+
+    // First, check if hash is a child of any currently drawn path in the
+    // specified mode.  If so, it is a redundant specifier and we don't need to
+    // proceed further.
+    std::unordered_set<unsigned long long>::iterator s_it;
+    s_it = fully_drawn_paths[mode].find(hash);
+    if (s_it != fully_drawn_paths[mode].end())
+	return;
+
+    // To add a path, we need a DbiPath container registered.
+    // Otherwise, the hash is just some random number.
+    std::unordered_map<unsigned long long, DbiPath *>::iterator dp_it;
+    dp_it = dbis->dbi_paths.find(hash);
+    if (dp_it == dbis->dbi_paths.end())
+	return;
+    DbiPath *p = dp_it->second;
+
+    // Next, we need to see if this is a parent path for any of the paths
+    // already in drawn_paths.  If so, it will be replacing them.  There is no
+    // point in clearing them from the fully drawn paths set, since anything
+    // already in that set will remain fully drawn.
+    std::vector<unsigned long long> to_clear;
+    for (s_it = drawn_paths[mode].begin(); s_it != drawn_paths[mode].end(); ++s_it) {
+	DbiPath *cp = dbis->dbi_paths[*s_it];
+	if (p->parent(*cp)) {
+	    to_clear.push_back(*s_it);
+	    // Any parents of this path DO need to come out of the
+	    // partially_drawn_paths sets, since the overriding parent path may
+	    // be much higher in the hierarchy.
+	    for (s_it = cp->parent_path_hashes.begin(); s_it != cp->parent_path_hashes.end(); ++s_it) {
+		partially_drawn_paths[-1].erase(*s_it);
+		partially_drawn_paths[mode].erase(*s_it);
 	    }
 	}
-	if (is_changed) {
-	    bu_log("changed\n");
-	    if (j == cpath.size()-1) {
-		// Changed, but a leaf - stays drawn
-		if (changed_paths)
-		    (*changed_paths).insert(path_hash);
-		return 0;
-	    }
-	    // Not a leaf - check child
-	    parent_changed = true;
-	    if (changed_paths)
-		(*changed_paths).insert(path_hash);
+    }
+
+    // Done iterating, clear anything subsumed from drawn_paths.
+    for (size_t i = 0; i < to_clear.size(); i++) {
+	drawn_paths[mode].erase(to_clear[i]);
+    }
+
+    // For adding, -1 isn't a valid specifier - assume wireframe
+    int amode = (mode < 0) ? 0 : mode;
+
+    // From here on out, hash is now a fully drawn path.
+    partially_drawn_paths[-1].erase(hash);
+    partially_drawn_paths[amode].erase(hash);
+    fully_drawn_paths[-1].insert(hash);
+    fully_drawn_paths[amode].insert(hash);
+
+    // All child paths are also considered fully drawn.  Even an evaluated mode
+    // drawing is considered to be drawing the subtree (just not necessarily as
+    // individual scene objects) so we update the lists for both all and the
+    // individual mode in all cases.
+    dbis->AddPathsBelow(&(fully_drawn_paths[-1]), hash);
+    dbis->AddPathsBelow(&(fully_drawn_paths[amode]), hash);
+
+    // The parents (if any) are now partially drawn paths, since the
+    // fully_drawn_paths check at the beginning of AddPath determined this path
+    // wasn't a child of an already drawn path.
+    for (s_it = p->parent_path_hashes.begin(); s_it != p->parent_path_hashes.end(); ++s_it) {
+	partially_drawn_paths[-1].insert(*s_it);
+	partially_drawn_paths[amode].insert(*s_it);
+    }
+
+    // That takes care of staging the paths.  We do not process any scene
+    // objects at this time.  Doing so requires a full ExpandPaths to populate
+    // the leaf DbiPath instances and it is always possible there are more
+    // add/remove paths operations to come before a graphical scene update is
+    // needed.  (Some cases of RemovePaths are actually a case in point.)  We
+    // don't want to do unnecessary work, so we defer those updates.
+}
+
+void
+BViewState::RemovePath(const char *path, int mode)
+{
+    if (UNLIKELY(!path))
+	return;
+
+    // String to DbiPath.
+    DbiPath p(dbis, path);
+    if (!p.valid())
+	return;
+
+    RemovePath(&p, mode);
+}
+
+void
+BViewState::RemovePath(DbiPath *p, int mode)
+{
+    if (UNLIKELY(!p))
+	return;
+
+    // Any explicitly removed path needs a registered DbiPath.  If we don't
+    // already have one, create it (we can't assume p is suitable for
+    // registering, so we make our own.)
+    std::unordered_map<unsigned long long, DbiPath *>::iterator dp_it;
+    dp_it = dbis->dbi_paths.find(p->hash());
+    DbiPath *np = NULL;
+    if (dp_it == dbis->dbi_paths.end()) {
+	np = dbis->GetDbiPath();
+	*np = *p;
+	dbis->dbi_paths[p->hash()] = np;
+    } else {
+	np = dp_it->second;
+    }
+
+    RemovePath(np->hash(), mode);
+}
+
+void
+BViewState::RemovePath(unsigned long long hash, int mode)
+{
+    if (UNLIKELY(!hash))
+	return;
+
+    // For this to work correctly, we will need a DbiPath container
+    // registered for hash
+    std::unordered_map<unsigned long long, DbiPath *>::iterator dp_it;
+    dp_it = dbis->dbi_paths.find(hash);
+    if (dp_it == dbis->dbi_paths.end())
+	return;
+    DbiPath *p = dp_it->second;
+
+    // The removal case is somewhat trickier than the add case, in that
+    // both parent and child relationships with existing drawn_paths have
+    // work to do.  If hash is a parent of an existing s_path it needs
+    // to be removed - and there may be multiple such.  If hash is a child
+    // of an existing path, then it must be split and the surviving un-erased
+    // children added back into the drawn set.
+    //
+    // The default behavior for an erase command is to erase the supplied path
+    // for ALL active modes, so unless we've been instructed to focus on a
+    // single mode we have to do this for every mode separately.  Each mode may
+    // have completely disjoint active elements (perhaps not a common use case
+    // but by no means impossible) so each must be handled on its own.
+    std::unordered_map<size_t, std::unordered_set<unsigned long long>>::iterator ss_it;
+    for (ss_it = drawn_paths.begin(); ss_it != drawn_paths.end(); ++ss_it) {
+	if (mode != (int)(ss_it->first) && mode != -1)
 	    continue;
-	}
-
-	// If we got here, reset the parent changed flag
-	parent_changed = false;
-    }
-
-    // If we got through the whole path and leaf check is enabled, check if the
-    // leaf of the path is a comb.  If it is, the presumption is that this path
-    // is part of the active set because it is an evaluated solid, and we will
-    // have to check its tree to see if anything below it changed.
-    if (leaf_expand) {
-	std::vector<unsigned long long> pitems = cpath;
-	unsigned long long lhash = pitems[pitems.size() - 1];
-	pitems.pop_back();
-	int ret = leaf_check(lhash, pitems);
-	if (ret == 3 && changed_paths) {
-	    (*changed_paths).insert(path_hash);
-	}
-    }
-#endif
-    return 0;
-}
-
-void
-BViewState::add_path(const char *path)
-{
-    if (!path)
-	return;
-
-    std::vector<unsigned long long> path_hashes = dbis->digest_path(path);
-    add_hpath(path_hashes);
-}
-
-void
-BViewState::add_hpath(std::vector<unsigned long long> &path_hashes)
-{
-    if (!path_hashes.size())
-	return;
-    staged.push_back(path_hashes);
-}
-
-void
-BViewState::erase_path(int mode, int argc, const char **argv)
-{
-    if (!argc || !argv)
-	return;
-
-    std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator sm_it;
-    for (int i = 0; i < argc; i++) {
-	std::vector<unsigned long long> path_hashes = dbis->digest_path(argv[i]);
-	if (!path_hashes.size())
-	    continue;
-	unsigned long long c_hash = path_hashes[path_hashes.size() - 1];
-	path_hashes.pop_back();
-	erase_hpath(mode, c_hash, path_hashes, false);
-    }
-
-    // Update info AFTER all paths are fully drawn
-    cache_collapsed();
-}
-
-void
-BViewState::erase_hpath(int mode, unsigned long long c_hash, std::vector<unsigned long long> &path_hashes, bool cache_collapse)
-{
-    std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator sm_it;
-    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
-    std::unordered_map<int, std::unordered_set<unsigned long long>>::iterator m_it;
-    pc_it = dbis->p_c.find(c_hash);
-
-    path_hashes.push_back(c_hash);
-
-    /* Cyclic - wasn't anything to draw */
-    if (path_addition_cyclic(path_hashes))
-	return;
-
-    /* For some modes it's possible for combs to have evaluated objects, so
-     * check regardless of whether c_hash is a solid */
-    if (mode == 3 || mode == 5 || pc_it == dbis->p_c.end()) {
-	unsigned long long phash = dbis->path_hash(path_hashes, 0);
-	sm_it = s_map.find(phash);
-	if (sm_it != s_map.end()) {
-	    std::unordered_map<int, struct bv_scene_obj *>::iterator s_it;
-	    if (mode < 0) {
-		for (s_it = sm_it->second.begin(); s_it != sm_it->second.end(); s_it++)
-		    bv_obj_put(s_it->second);
-		for (m_it = drawn_paths.begin(); m_it != drawn_paths.end(); m_it++)
-		    m_it->second.erase(phash);
-		s_map.erase(phash);
-	    } else {
-		s_it = sm_it->second.find(mode);
-		if (s_it != sm_it->second.end()) {
-		    bv_obj_put(s_it->second);
-		    sm_it->second.erase(s_it);
-		    drawn_paths[mode].erase(phash);
-		    s_map[phash].erase(mode);
-		}
-	    }
-
-	    // In case phash is now gone from s_map check again
-	    sm_it = s_map.find(phash);
-
-	    // IFF we have removed all of the drawn elements for this path,
-	    // clear it from the active sets
-	    if (sm_it == s_map.end() || !sm_it->second.size()) {
-		s_keys.erase(phash);
-		all_drawn_paths.erase(phash);
-	    }
-	}
-    }
-
-    /* If we do have a comb, keep going */
-    if (pc_it != dbis->p_c.end()) {
-	std::unordered_set<unsigned long long>::iterator c_it;
-	for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
-	    erase_hpath(mode, *c_it, path_hashes, false);
-    }
-
-    /* Done with branch - restore path */
-    path_hashes.pop_back();
-
-    // Update info on drawn paths
-    if (cache_collapse)
-	cache_collapsed();
-}
-
-unsigned long long
-BViewState::path_hash(std::vector<unsigned long long> &path, size_t max_len)
-{
-    return dbis->path_hash(path, max_len);
-}
-
-void
-BViewState::depth_group_collapse(
-	std::vector<std::vector<unsigned long long>> &collapsed,
-	std::unordered_set<unsigned long long> &d_paths,
-	std::unordered_set<unsigned long long> &p_d_paths,
-	std::map<size_t, std::unordered_set<unsigned long long>> &depth_groups
-	)
-{
-    // Whittle down the mode depth groups until we find not-fully-drawn
-    // parents - when we find that, the children constitute non-collapsible
-    // paths based on what's drawn in this mode
-    while (depth_groups.size()) {
-	size_t plen = depth_groups.rbegin()->first;
-	if (plen == 1)
-	    break;
-	std::unordered_set<unsigned long long> &pckeys = depth_groups.rbegin()->second;
-
-	// For a given depth, group the paths by parent path.  This results
-	// in path sub-groups which will define for us how "fully drawn"
-	// that particular parent comb instance is.
-	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> grouped_pckeys;
-	std::unordered_map<unsigned long long, unsigned long long> pcomb;
 	std::unordered_set<unsigned long long>::iterator s_it;
-	for (s_it = pckeys.begin(); s_it != pckeys.end(); s_it++) {
-	    std::vector<unsigned long long> &pc_path = s_keys[*s_it];
-	    unsigned long long ppathhash = dbis->path_hash(pc_path, plen - 1);
-	    grouped_pckeys[ppathhash].insert(*s_it);
-	    pcomb[ppathhash] = pc_path[plen-2];
+	std::vector<unsigned long long> to_clear;  // hash is parent path
+	std::vector<unsigned long long> to_split;  // hash is child path
+	for (s_it = ss_it->second.begin(); s_it != ss_it->second.end(); ++s_it) {
+	    DbiPath *cp = dbis->dbi_paths[*s_it];
+	    if (*cp == *p || p->parent(*cp))
+		to_clear.push_back(*s_it);
+	    if (p->child(*cp))
+		to_split.push_back(*s_it);
 	}
 
-	// For each parent/child grouping, compare it against the .g ground
-	// truth set.  If they match, fully drawn and we promote the path to
-	// the parent depth.  If not, the paths do not collapse further and are
-	// added to drawn paths.
-	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pg_it;
-	for (pg_it = grouped_pckeys.begin(); pg_it != grouped_pckeys.end(); pg_it++) {
+	// Scrub fully cleared paths
+	for (size_t i = 0; i < to_clear.size(); i++) {
+	    DbiPath *cp = dbis->dbi_paths[to_clear[i]];
+	    ss_it->second.erase(to_clear[i]);
 
-	    unsigned long long cpkey = *pg_it->second.begin();
-	    std::vector<unsigned long long> check_path = s_keys[cpkey];
-	    check_path.pop_back();
+	    // Get this path out of the support containers
+	    fully_drawn_paths[ss_it->first].erase(to_clear[i]);
+	    dbis->RemovePathsBelow(&(fully_drawn_paths[ss_it->first]), to_clear[i]);
 
-	    // As above, use the full path from the s_keys, but this time
-	    // we're collecting the children.  This is the set we need to compare
-	    // against the .g ground truth to determine fully or partially drawn.
-	    std::unordered_set<unsigned long long> g_children;
-	    std::unordered_set<unsigned long long> &g_pckeys = pg_it->second;
-	    for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
-		std::vector<unsigned long long> &pc_path = s_keys[*s_it];
-		g_children.insert(pc_path[plen-1]);
-	    }
-
-	    // Do the check against the .g comb children info - the "ground truth"
-	    // that defines what must be present for a fully drawn comb
-	    bool is_fully_drawn = true;
-	    std::unordered_set<unsigned long long> &ground_truth = dbis->p_c[pcomb[pg_it->first]];
-	    for (s_it = ground_truth.begin(); s_it != ground_truth.end(); s_it++) {
-	    }
-	    for (s_it = ground_truth.begin(); s_it != ground_truth.end(); s_it++) {
-		if (g_children.find(*s_it) == g_children.end()) {
-		    is_fully_drawn = false;
-		    break;
-		}
-	    }
-
-	    // All the sub-paths in this grouping are fully drawn, whether
-	    // or not they define a fully drawn parent, so stash their
-	    // hashes
-	    for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
-		std::vector<unsigned long long> &path_hashes = s_keys[*s_it];
-		unsigned long long thash = dbis->path_hash(path_hashes, plen);
-		d_paths.insert(thash);
-	    }
-
-	    if (is_fully_drawn) {
-		// If fully drawn, depth_groups[plen-1] gets the first path in
-		// g_pckeys.  The path is longer than that depth, but contains
-		// all the necessary information and using that approach avoids
-		// the need to duplicate paths.
-		depth_groups[plen - 1].insert(*g_pckeys.begin());
-	    } else {
-		// No further collapsing - add to final.  We must make trimmed
-		// versions of the paths in case this depth holds promoted
-		// paths from deeper levels, since we are duplicating the full
-		// path contents.
-		for (s_it = g_pckeys.begin(); s_it != g_pckeys.end(); s_it++) {
-		    std::vector<unsigned long long> trimmed = s_keys[*s_it];
-		    trimmed.resize(plen);
-		    collapsed.push_back(trimmed);
-
-		    // Because we're not collapsing further, any paths above this
-		    // path can be considered partially drawn.
-		    while (trimmed.size() - 1) {
-			trimmed.pop_back();
-			unsigned long long thash = dbis->path_hash(trimmed, 0);
-			p_d_paths.insert(thash);
-		    }
-		}
-	    }
+	    // Any parents of the erased path need to come out of the
+	    // partially_drawn_paths sets as well, since the source path for
+	    // them is being *fully* erased.
+	    for (s_it = cp->parent_path_hashes.begin(); s_it != cp->parent_path_hashes.end(); ++s_it)
+		partially_drawn_paths[ss_it->first].erase(*s_it);
 	}
 
-	// Done with this depth
-	depth_groups.erase(plen);
-    }
+	// Splitting is the hard case.  We will remove our current path but add all
+	// of the subpaths that don't match the one we were told to remove.  To
+	// handle this, we expand the existing parent path to its leaves, remove
+	// any that have hash as a parent, collapse the remainder, and add them.
+	//
+	// There is no point in removing anything from partially_drawn_paths, since
+	// everything that was partially drawn before the split will still be partially
+	// drawn - MORE things will be partially drawn (and different things fully drawn)
+	// but that will be handled by the AddPath calls.
+	for (size_t i = 0; i < to_split.size(); i++) {
+	    DbiPath *cp = dbis->dbi_paths[to_clear[i]];
 
-    // If we collapsed all the way to top level objects, make sure to add them
-    // if they are still valid entries.  If a toplevel entry is invalid, there
-    // is no parent comb to refer to it as an "invalid" object and it can no
-    // longer be drawn.
-    if (depth_groups.find(1) != depth_groups.end()) {
-	std::unordered_set<unsigned long long> &pckeys = depth_groups[1];
-	std::unordered_set<unsigned long long>::iterator s_it;
-	for (s_it = pckeys.begin(); s_it != pckeys.end(); s_it++) {
-	    std::vector<unsigned long long> trimmed = s_keys[*s_it];
-	    trimmed.resize(1);
-	    collapsed.push_back(trimmed);
-	    unsigned long long thash = dbis->path_hash(trimmed, 0);
-	    d_paths.insert(thash);
+	    // The split path is no longer fully drawn
+	    ss_it->second.erase(to_split[i]);
+	    fully_drawn_paths[ss_it->first].erase(to_split[i]);
+	    dbis->RemovePathsBelow(&(fully_drawn_paths[ss_it->first]), to_split[i]);
+
+	    // Find the remaining children
+	    std::vector<unsigned long long> seed;
+	    seed.push_back(to_clear[i]);
+	    std::vector<unsigned long long> exp_paths = dbis->ExpandPaths(seed);
+	    std::vector<unsigned long long> to_collapse;
+	    for (size_t j = 0; j < exp_paths.size(); j++) {
+		// We needed ExpandPaths to create DbiPaths so we could do this check
+		DbiPath *ep = dbis->dbi_paths[exp_paths[j]];
+		if (!cp->parent(*ep))
+		    to_collapse.push_back(exp_paths[j]);
+	    }
+	    // We also needed CollapsePaths to create DbiPaths, since we will be calling
+	    // AddPath on the results.
+	    std::vector<unsigned long long> collapsed_paths = dbis->CollapsePaths(to_collapse);
+	    for (size_t j = 0; j < collapsed_paths.size(); j++)
+		AddPath(collapsed_paths[j], ss_it->first);
 	}
     }
-}
 
-void
-BViewState::cache_collapsed()
-{
-    // Group drawn paths by drawing mode type
-    std::unordered_map<int, std::unordered_set<unsigned long long>> mode_map;
-    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator sk_it;
-    for (sk_it = s_keys.begin(); sk_it != s_keys.end(); sk_it++) {
-	std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator s_it;
-	s_it = s_map.find(sk_it->first);
-	if (s_it == s_map.end())
+    // Need to fully rebuild fully_drawn_paths and partially_drawn_paths, since
+    // we don't know if a removal of a single mode from a path was enough to
+    // completely remove it from all drawing.  Just iterate over the modes and
+    // insert everything, no need to rewalk the trees.
+
+    std::unordered_map<int, std::unordered_set<unsigned long long>>::iterator iss_it;
+    fully_drawn_paths[-1].clear();
+    for (iss_it = fully_drawn_paths.begin(); iss_it != fully_drawn_paths.end(); ++iss_it) {
+	if (iss_it->first == -1)
 	    continue;
-	std::unordered_map<int, struct bv_scene_obj *>::iterator sm_it;
-	for (sm_it = s_it->second.begin(); sm_it != s_it->second.end(); sm_it++)
-	    mode_map[sm_it->first].insert(sk_it->first);
+	std::unordered_set<unsigned long long>::iterator s_it;
+	for (s_it = iss_it->second.begin(); s_it != iss_it->second.end(); ++s_it)
+	    fully_drawn_paths[-1].insert(*s_it);
     }
-
-    // Collapse each drawing mode until the leaf is a changed dp or not fully
-    // drawn.  We must do this before the comb p_c relationships are updated in
-    // the context, since we want the answers for this collapse to be from the
-    // prior state, not the current state.
-
-    // Reset containers
-    mode_collapsed.clear();
-    drawn_paths.clear();
-    partially_drawn_paths.clear();
-
-    // Each mode is initially processed separately, so we maintain
-    // awareness of the drawing state in various modes
-    std::unordered_map<int, std::unordered_set<unsigned long long>>::iterator mm_it;
-    for (mm_it = mode_map.begin(); mm_it != mode_map.end(); mm_it++) {
-
-	std::map<size_t, std::unordered_set<unsigned long long>> depth_groups;
-	std::unordered_set<unsigned long long> &mode_keys = mm_it->second;;
-	std::unordered_set<unsigned long long>::iterator ms_it;
-
-	// Group paths of the same depth.  Depth == 1 paths are already
-	// top level objects and need no further processing.
-	for (ms_it = mode_keys.begin(); ms_it != mode_keys.end(); ms_it++) {
-	    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
-	    k_it = s_keys.find(*ms_it);
-	    if (k_it->second.size() == 1) {
-		mode_collapsed[mm_it->first].push_back(k_it->second);
-	        unsigned long long dhash = dbis->path_hash(k_it->second, 0);
-		drawn_paths[mm_it->first].insert(dhash);
-	    } else {
-		depth_groups[k_it->second.size()].insert(k_it->first);
-	    }
-	}
-
-	depth_group_collapse(mode_collapsed[mm_it->first], drawn_paths[mm_it->first], partially_drawn_paths[mm_it->first], depth_groups);
+    partially_drawn_paths[-1].clear();
+    for (iss_it = partially_drawn_paths.begin(); iss_it != partially_drawn_paths.end(); ++iss_it) {
+    	if (iss_it->first == -1)
+	    continue;
+	std::unordered_set<unsigned long long>::iterator s_it;
+	for (s_it = iss_it->second.begin(); s_it != iss_it->second.end(); ++s_it)
+	    partially_drawn_paths[-1].insert(*s_it);
     }
-
-
-    // Having processed all the modes, we now do the same thing without regards to
-    // drawing mode, to provide "who" with a mode-agnostic list of drawn paths.
-    all_collapsed.clear();
-    std::map<size_t, std::unordered_set<unsigned long long>> all_depth_groups;
-    for (mm_it = mode_map.begin(); mm_it != mode_map.end(); mm_it++) {
-	// Group paths of the same depth.  Depth == 1 paths are already
-	// top level objects and need no further processing.
-	std::unordered_set<unsigned long long> &mode_keys = mm_it->second;;
-	std::unordered_set<unsigned long long>::iterator ms_it;
-	for (ms_it = mode_keys.begin(); ms_it != mode_keys.end(); ms_it++) {
-	    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
-	    k_it = s_keys.find(*ms_it);
-	    if (k_it->second.size() == 1) {
-		all_collapsed.push_back(k_it->second);
-	        unsigned long long dhash = dbis->path_hash(k_it->second, 0);
-		all_drawn_paths.insert(dhash);
-	    } else {
-		// Populate mode-agnostic container
-		all_depth_groups[k_it->second.size()].insert(k_it->first);
-	    }
-	}
-    }
-
-    all_drawn_paths.clear();
-    all_partially_drawn_paths.clear();
-    depth_group_collapse(all_collapsed, all_drawn_paths, all_partially_drawn_paths, all_depth_groups);
-}
-
-struct bv_scene_obj *
-BViewState::scene_obj(
-	std::unordered_set<struct bv_scene_obj *> &objs,
-	int curr_mode,
-	struct bv_obj_settings *vs,
-	matp_t m,
-       	std::vector<unsigned long long> &path_hashes,
-	std::unordered_set<struct bview *> &views,
-	struct bview *v
-	)
-{
-    // Solid - scene object time
-    unsigned long long phash = dbis->path_hash(path_hashes, 0);
-    std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator sm_it;
-    sm_it = s_map.find(phash);
-    struct bv_scene_obj *sp = NULL;
-    if (sm_it != s_map.end()) {
-
-	// If we have user supplied settings, we need to do some checking
-	if (vs && !vs->mixed_modes) {
-	    // If we're not allowed to mix modes, we need to erase any modes
-	    // that don't match the current mode
-	    std::vector<unsigned long long> phashes = path_hashes;
-	    if (phashes.size()) {
-		unsigned long long c_hash = phashes[phashes.size() - 1];
-		phashes.pop_back();
-		std::unordered_set<int> erase_modes;
-		std::unordered_map<int, struct bv_scene_obj *>::iterator s_it;
-		for (s_it = sm_it->second.begin(); s_it != sm_it->second.end(); s_it++) {
-		    if (s_it->first == curr_mode)
-			continue;
-		    erase_modes.insert(s_it->first);
-		}
-		std::unordered_set<int>::iterator e_it;
-		for (e_it = erase_modes.begin(); e_it != erase_modes.end(); e_it++) {
-		    erase_hpath(*e_it, c_hash, phashes, false);
-		}
-	    }
-	}
-
-	if (s_map[phash].find(curr_mode) != s_map[phash].end()) {
-	    // Already have scene object - check it against vs
-	    // settings to see if we need to update
-	    sp = s_map[phash][curr_mode];
-	    if (vs && vs->s_dmode == curr_mode) {
-		if (sp->s_soldash && vs->draw_non_subtract_only) {
-		    if (sp->s_flag != DOWN)
-			sp->s_flag = DOWN;
-		} else {
-		    if (sp->s_flag != UP)
-			sp->s_flag = UP;
-		}
-		if (bv_obj_settings_sync(sp->s_os, vs))
-		    objs.insert(sp);
-	    }
-
-	    // Most view setting changes won't alter geometry, and adaptive
-	    // drawing updating is handled via callbacks.  However, adaptive
-	    // plotting enablement/disablement changes which type of objects
-	    // we need.  Make sure we're synced.
-	    std::unordered_set<struct bview *>::iterator v_it;
-	    if (sp->csg_obj) {
-		for (v_it = views.begin(); v_it != views.end(); v_it++) {
-		    int have_adaptive = bv_obj_have_vo(sp, *v_it);
-		    if ((*v_it)->gv_s->adaptive_plot_csg && !have_adaptive) {
-			bv_obj_stale(sp);
-			sp->curve_scale = -1; // Make sure a rework is triggered
-			objs.insert(sp);
-		    }
-		    if (!(*v_it)->gv_s->adaptive_plot_csg && have_adaptive && bv_clear_view_obj(sp, *v_it)) {
-			bv_obj_stale(sp);
-			objs.insert(sp);
-		    }
-		}
-	    }
-	    if (sp->mesh_obj) {
-		for (v_it = views.begin(); v_it != views.end(); v_it++) {
-		    int have_adaptive = bv_obj_have_vo(sp, *v_it);
-		    if ((*v_it)->gv_s->adaptive_plot_mesh && !have_adaptive) {
-			bv_obj_stale(sp);
-			objs.insert(sp);
-		    }
-		    if (!(*v_it)->gv_s->adaptive_plot_mesh && have_adaptive && bv_clear_view_obj(sp, *v_it)) {
-			bv_obj_stale(sp);
-			objs.insert(sp);
-		    }
-		}
-	    }
-
-	    return NULL;
-	}
-    }
-
-    // No pre-existing object - make a new one
-    sp = bv_obj_get(v, BV_DB_OBJS);
-
-    // Find the leaf directory pointer
-    struct directory *dp = dbis->get_hdp(path_hashes[path_hashes.size()-1]);
-    if (!dp) {
-	bu_log("dbi_state.cpp:%d - dp lookup failed!\n", __LINE__);
-	return NULL;
-    }
-
-    // Prepare draw data
-    struct rt_wdb *wdbp = wdb_dbopen(dbis->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    struct draw_update_data_t *ud;
-    BU_GET(ud, struct draw_update_data_t);
-    ud->dbip = dbis->gedp->dbip;
-    ud->tol = &wdbp->wdb_tol;
-    ud->ttol = &wdbp->wdb_ttol;
-    ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view... local_res is temporary, don't use it here
-    ud->mesh_c = dbis->gedp->ged_lod;
-    sp->dp = dp;
-    sp->s_i_data = (void *)ud;
-
-    // Get color from path, unless we're overridden
-    struct bu_color c;
-    dbis->path_color(&c, path_hashes);
-    bu_color_to_rgb_chars(&c, sp->s_color);
-    if (vs && vs->color_override) {
-	// TODO - shouldn't be using s_color for the override...
-	sp->s_color[0] = vs->color[0];
-	sp->s_color[1] = vs->color[1];
-	sp->s_color[2] = vs->color[2];
-    }
-
-    // Set drawing mode
-    sp->s_os->s_dmode = curr_mode;
-
-    // Tell scene object what the current matrix is
-    if (m) {
-	MAT_COPY(sp->s_mat, m);
-    } else {
-	dbis->get_path_matrix(sp->s_mat, path_hashes);
-    }
-
-    // Assign the bounding box (needed for pre-adaptive-plot
-    // autoview)
-    dbis->get_path_bbox(&sp->bmin, &sp->bmax, path_hashes);
-
-    // Adaptive also needs s_size and s_center to be set
-    sp->s_center[X] = (sp->bmin[X] + sp->bmax[X]) * 0.5;
-    sp->s_center[Y] = (sp->bmin[Y] + sp->bmax[Y]) * 0.5;
-    sp->s_center[Z] = (sp->bmin[Z] + sp->bmax[Z]) * 0.5;
-    sp->s_size = sp->bmax[X] - sp->bmin[X];
-    V_MAX(sp->s_size, sp->bmax[Y] - sp->bmin[Y]);
-    V_MAX(sp->s_size, sp->bmax[Z] - sp->bmin[Z]);
-    sp->have_bbox = 1;
-
-    // If we're drawing a subtraction and we're not overridden, set the
-    // appropriate flag for dashed line drawing
-    if (vs && !vs->draw_solid_lines_only) {
-	bool is_subtract = dbis->path_is_subtraction(path_hashes);
-	sp->s_soldash = (is_subtract) ? 1 : 0;
-    }
-
-    // Set line width, if the user specified a non-default value
-    if (vs && vs->s_line_width)
-	sp->s_os->s_line_width = vs->s_line_width;
-
-    // Set transparency
-    if (vs)
-	sp->s_os->transparency = vs->transparency;
-
-    dbis->print_path(&sp->s_name, path_hashes);
-    s_map[phash][sp->s_os->s_dmode] = sp;
-    s_keys[phash] = path_hashes;
-
-    // Final geometry generation is deferred - see draw_scene
-    objs.insert(sp);
-
-    return sp;
-}
-
-
-void
-BViewState::walk_tree(
-	std::unordered_set<struct bv_scene_obj *> &objs,
-	unsigned long long chash,
-	int curr_mode,
-	struct bview *v,
-	struct bv_obj_settings *vs,
-	matp_t m,
-       	std::vector<unsigned long long> &path_hashes,
-	std::unordered_set<struct bview *> &views,
-	unsigned long long *ret
-	)
-{
-    size_t op = OP_UNION;
-    std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, size_t>>::iterator b_it;
-    b_it = dbis->i_bool.find(path_hashes[path_hashes.size() - 1]);
-    if (b_it != dbis->i_bool.end()) {
-	std::unordered_map<unsigned long long, size_t>::iterator bb_it;
-	bb_it = b_it->second.find(chash);
-	if (bb_it != b_it->second.end()) {
-	    op = bb_it->second;
-	}
-    }
-
-    if (op == OP_SUBTRACT && vs && vs->draw_solid_lines_only)
-	return;
-
-    mat_t lm;
-    MAT_IDN(lm);
-    //unsigned long long phash = path_hashes[path_hashes.size() - 1];
-    //dbis->get_matrix(lm, phash, chash);
-
-    gather_paths(objs, chash, curr_mode, v, vs, m, lm, path_hashes, views, ret);
-}
-
-// Note - by the time we are using gather_paths, any existing objects
-// already defined are assumed to be updated/valid - only create
-// missing objects.
-void
-BViewState::gather_paths(
-	std::unordered_set<struct bv_scene_obj *> &objs,
-	unsigned long long c_hash,
-	int curr_mode,
-	struct bview *v,
-	struct bv_obj_settings *vs,
-	matp_t m,
-       	matp_t lm,
-	std::vector<unsigned long long> &path_hashes,
-	std::unordered_set<struct bview *> &views,
-	unsigned long long *ret
-	)
-{
-    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
-    pc_it = dbis->p_c.find(c_hash);
-
-    struct directory *dp = dbis->get_hdp(c_hash);
-    path_hashes.push_back(c_hash);
-
-    mat_t om, nm;
-    /* Update current matrix state to reflect the new branch of
-     * the tree. Either we have a local matrix, or we have an
-     * implicit IDN matrix. */
-    MAT_COPY(om, m);
-    if (lm) {
-	MAT_COPY(nm, lm);
-    } else {
-	MAT_IDN(nm);
-    }
-    bn_mat_mul(m, om, nm);
-
-    if (pc_it != dbis->p_c.end()) {
-	// Two things may prevent further processing of a comb - a hidden dp, or
-	// a cyclic path.
-	if (dp && !(dp->d_flags & RT_DIR_HIDDEN) && pc_it->second.size() && !path_addition_cyclic(path_hashes)) {
-	    /* Keep going */
-	    std::unordered_set<unsigned long long>::iterator c_it;
-	    for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++) {
-		walk_tree(objs, *c_it, curr_mode, v, vs, m, path_hashes, views, ret);
-	    }
-	} else {
-	    // Comb without children - (empty) scene object time
-	    scene_obj(objs, curr_mode, vs, m, path_hashes, views, v);
-	}
-    } else {
-	// Solid - scene object time
-	struct bv_scene_obj *nobj = scene_obj(objs, curr_mode, vs, m, path_hashes, views, v);
-	if (nobj && ret)
-	    (*ret) |= GED_DBISTATE_VIEW_CHANGE;
-    }
-    /* Done with branch - restore path, put back the old matrix state,
-     * and restore previous color settings */
-    path_hashes.pop_back();
-    MAT_COPY(m, om);
-}
-
-void
-BViewState::clear()
-{
-    s_map.clear();
-    s_keys.clear();
-    staged.clear();
-    drawn_paths.clear();
-    all_drawn_paths.clear();
-    partially_drawn_paths.clear();
-    mode_collapsed.clear();
-    all_collapsed.clear();
-}
-
-std::vector<std::string>
-BViewState::list_drawn_paths(int mode, bool list_collapsed)
-{
-    std::unordered_map<int, std::vector<std::vector<unsigned long long>>>::iterator m_it;
-    std::vector<std::string> ret;
-    if (mode == -1 && list_collapsed) {
-	struct bu_vls vpath = BU_VLS_INIT_ZERO;
-	for (size_t i = 0; i < all_collapsed.size(); i++) {
-	    dbis->print_path(&vpath, all_collapsed[i]);
-	    ret.push_back(std::string(bu_vls_cstr(&vpath)));
-	}
-    }
-    if (mode != -1 && list_collapsed) {
-	m_it = mode_collapsed.find(mode);
-	if (m_it == mode_collapsed.end())
-	    return ret;
-    	struct bu_vls vpath = BU_VLS_INIT_ZERO;
-	for (size_t i = 0; i < m_it->second.size(); i++) {
-	    dbis->print_path(&vpath, m_it->second[i]);
-	    ret.push_back(std::string(bu_vls_cstr(&vpath)));
-	}
-    }
-    if (mode == -1 && !list_collapsed) {
-	struct bu_vls vpath = BU_VLS_INIT_ZERO;
-	std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
-	for (k_it = s_keys.begin(); k_it != s_keys.end(); k_it++) {
-	    dbis->print_path(&vpath, k_it->second);
-	    ret.push_back(std::string(bu_vls_cstr(&vpath)));
-	}
-    }
-    if (mode != -1 && !list_collapsed) {
-	struct bu_vls vpath = BU_VLS_INIT_ZERO;
-	std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator sm_it;
-	for (sm_it = s_map.begin(); sm_it != s_map.end(); sm_it++) {
-	    if (sm_it->second.find(mode) == sm_it->second.end())
-		continue;
-	    dbis->print_path(&vpath, s_keys[sm_it->first]);
-	    ret.push_back(std::string(bu_vls_cstr(&vpath)));
-	}
-    }
-
-    std::sort(ret.begin(), ret.end(), &alphanum_cmp);
-
-    return ret;
-}
-
-size_t
-BViewState::count_drawn_paths(int mode, bool list_collapsed)
-{
-    std::unordered_map<int, std::vector<std::vector<unsigned long long>>>::iterator m_it;
-    std::vector<std::string> ret;
-    if (mode == -1 && list_collapsed)
-	return all_collapsed.size();
-
-    if (mode != -1 && list_collapsed) {
-	m_it = mode_collapsed.find(mode);
-	if (m_it == mode_collapsed.end())
-	    return m_it->second.size();
-	return 0;
-    }
-
-    if (mode == -1 && !list_collapsed)
-	return s_keys.size();
-
-    if (mode != -1 && !list_collapsed) {
-	std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator sm_it;
-	sm_it = s_map.find(mode);
-	if (sm_it != s_map.end())
-	    return sm_it->second.size();
-	return 0;
-    }
-
-    return 0;
-}
-
-int
-BViewState::is_hdrawn(int mode, unsigned long long phash)
-{
-    if (mode == -1) {
-	if (all_drawn_paths.find(phash) != all_drawn_paths.end())
-	    return 1;
-	if (all_partially_drawn_paths.find(phash) != all_partially_drawn_paths.end())
-	    return 2;
-	return 0;
-    }
-
-    if (drawn_paths.find(mode) == drawn_paths.end())
-	return 0;
-
-    if (drawn_paths[mode].find(phash) != drawn_paths[mode].end())
-	return 1;
-    if (partially_drawn_paths[mode].find(phash) != partially_drawn_paths[mode].end())
-	return 2;
-    return 0;
 }
 
 unsigned long long

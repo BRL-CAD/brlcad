@@ -190,6 +190,7 @@ DbiState::GetDbiPath()
     return cp;
 }
 
+
 void
 DbiState::PutDbiPath(DbiPath *p)
 {
@@ -579,7 +580,7 @@ DbiState::collect_paths(std::unordered_set<unsigned long long> *s, DbiPath &p, b
 }
 
 void
-DbiState::PathsBelow(std::unordered_set<unsigned long long> *s, unsigned long long phash, bool create_paths)
+DbiState::AddPathsBelow(std::unordered_set<unsigned long long> *s, unsigned long long phash, bool create_paths)
 {
     if (UNLIKELY(!s))
 	return;
@@ -603,6 +604,51 @@ DbiState::PathsBelow(std::unordered_set<unsigned long long> *s, unsigned long lo
     collect_paths(s, wp, create_paths);
 }
 
+
+void
+DbiState::clear_paths(std::unordered_set<unsigned long long> *s, DbiPath &p)
+{
+    // Save current path hash
+    s->erase(p.hash());
+
+    // Unpack the leaf GObj of p.  If we can't, or if there's nothing there,
+    // we're done.
+    GObj *g = p.GetGObj(p.depth());
+    if (!g || !g->cv.size())
+	return;
+
+    // If we have a comb, process the instances.
+    for (size_t i = 0; i < g->cv.size(); i++) {
+	p.push(g->cv[i]->ihash);
+	clear_paths(s, p);
+	p.pop(false);
+    }
+}
+
+void
+DbiState::RemovePathsBelow(std::unordered_set<unsigned long long> *s, unsigned long long phash)
+{
+    if (UNLIKELY(!s))
+	return;
+
+    std::unordered_map<unsigned long long, DbiPath *>::iterator p_it;
+    p_it = dbi_paths.find(phash);
+    // If the hash doesn't correspond to a current path,
+    // we can't expand it
+    if (p_it == dbi_paths.end())
+	return;
+
+    // If a path isn't valid (i.e. one or more of its components
+    // are no longer in gobjs or combinsts) we can't expand it.
+    DbiPath *p = p_it->second;
+    if (!p->valid())
+	return;
+
+    // We need to push and pop a path while we walk - create a
+    // working path copy for that purpose
+    DbiPath wp(*p);
+    clear_paths(s, wp);
+}
 
 std::vector<unsigned long long>
 DbiState::CollapsePaths(std::vector<unsigned long long> &paths, bool create_paths)
