@@ -1338,6 +1338,30 @@ GObj::bbox(point_t *min, point_t *max)
     }
 }
 
+bool
+GObj::LoadSceneObj(struct bview *v, int mode, bool reload)
+{
+    // Don't do a view object without a view
+    if (!v)
+	return false;
+
+    int amode = (mode < 0) ? 0 : mode;
+
+    std::map<size_t, struct bv_scene_obj *>::iterator o_it = scene_objs.find(amode);
+    struct bv_scene_obj *o = NULL;
+    if (scene_objs.find(amode) != scene_objs.end())
+	o = o_it->second;
+
+    // TODO = do this the right way
+    if (!o)
+	BU_GET(o, struct bv_scene_obj);
+
+    if (reload)
+	bu_log("clear geometry from o and reload (preferably don't delete scene obj, since that will mess up DbiPath scene obj child pointers...");
+
+    return true;
+}
+
 
 /** @} */
 // Local Variables:
