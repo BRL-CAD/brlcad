@@ -380,6 +380,8 @@ class GED_EXPORT DbiPath {
 	// Map key is the drawing mode (0 = wireframe, 1 = shaded, etc.)
 	std::map<size_t, struct bv_scene_obj *> scene_objs;
 
+	// Allow BViewState access to the parent_path_hashes set
+	friend class BViewState;
     private:
 	// Primary vector storing path information.
 	//
@@ -495,12 +497,13 @@ class GED_EXPORT BViewState {
 
 	// Adds path to the BViewState container drawn set, but doesn't trigger
 	// a re-draw - that should be done once all paths to be added in a
-	// given draw cycle are queued up.  The actual drawing (and mode
-	// specifications) are done with redraw and a
-	// supplied bv_obj_settings structure.
-	void EnqueuePath(const char *path = NULL, int mode = 0);
-	void EnqueuePath(DbiPath *p = NULL, int mode = 0);
-	void EnqueuePath(unsigned long long phash = 0, int mode = 0);
+	// given draw cycle are queued up.  The actual drawing (and setting
+	// specifications) are done with Redraw and a supplied bv_obj_settings
+	// structure.  By default path is assigned a wireframe drawing mode,
+	// but other modes may be specified.
+	void AddPath(const char *path = NULL, int mode = 0);
+	void AddPath(DbiPath *p = NULL, int mode = 0);
+	void AddPath(unsigned long long phash = 0, int mode = 0);
 
 	// Erases paths from the view for the given mode.  If mode < 0, all
 	// matching paths are erased.  For modes that are un-evaluated, all
@@ -508,10 +511,11 @@ class GED_EXPORT BViewState {
 	// evaluated modes like 3 (bigE) that generate an evaluated visual
 	// specific to that path, only precise path matches are removed.
 	//
-	// Like EnqueuePath, this stages paths for subsequent processing
-	void DequeuePath(const char *p, int mode = -1, bool cache_collaspe = true);
-	void DequeuePath(DbiPath *p, int mode = -1, bool cache_collapse = true);
-	void DequeuePath(unsigned long long phash = 0, int mode = -1, bool cache_collapse = true);
+	// Like AddPath, this stages paths for subsequent processing but does
+	// not actually trigger a redraw.
+	void RemovePath(const char *p, int mode = -1);
+	void RemovePath(DbiPath *p, int mode = -1);
+	void RemovePath(unsigned long long phash = 0, int mode = -1);
 
 	// Return a sorted vector of paths encoding the drawn paths in the
 	// view.  If mode == -1 list all paths, otherwise list those specific
@@ -524,7 +528,7 @@ class GED_EXPORT BViewState {
 	// path set capturing what is drawn is counted, otherwise all scene
 	// objects are counted.  mode == -1 means count all modes, otherwise
 	// count only the specified mode.
-	size_t DrawnnPathCount(bool collapsed = true, int mode = -1);
+	size_t DrawnPathCount(bool collapsed = true, int mode = -1);
 
 	// Report if a DbiPath is drawn:
 	//
@@ -565,24 +569,25 @@ class GED_EXPORT BViewState {
 	// convenience methods that decode it to user-comprehensible info.
 	std::string print_view_state();
 
+	friend class BSelectState;
     private:
 	// Sets holding all drawn paths.
 	//
-	// spaths holds the paths specified by the callers.  If parent or child
-	// paths are added to spaths via enqueue or dequeue ops, existing paths
-	// will be consolidated or split to reflect the changed state.  With
-	// the exception of split paths due to a partial erasure, spaths
-	// contents will be determined by user calls. Generally spaths will be
+	// drawn_paths holds the paths specified by the callers.  If parent or
+	// child paths are added to drawn_paths via add or remove ops, existing
+	// paths will be consolidated or split to reflect the changed state.
+	// With the exception of split paths due to a partial erasure, drawn_paths
+	// contents will be determined by user calls. Generally drawn_paths will be
 	// the basis used for things like the who command.  A consolidate()
 	// method can be run to collapse explicitly specified tree entries into
-	// higher level paths in spaths if the app wants to do so, but it will
+	// higher level paths in drawn_paths if the app wants to do so, but it will
 	// not happen by default.
 	//
-	// spaths stores paths for all drawing modes - details of what modes
+	// drawn_paths stores paths for all drawing modes - details of what modes
 	// are active for a specific path are stored in the expanded paths.
-	std::unordered_set<unsigned long long> s_paths;
+	std::unordered_map<size_t, std::unordered_set<unsigned long long>> drawn_paths;
 
-	// Set of all leaf node drawn paths.  As with spaths, this set covers
+	// Set of all leaf node drawn paths.  As with drawn_paths, this set covers
 	// all modes.  For unevaluated drawing modes like wireframe this will
 	// hold the set of leaf nodes to solids, but for more exotic modes like
 	// bigE evaluated wireframe drawing higher level paths are also considered
@@ -598,84 +603,19 @@ class GED_EXPORT BViewState {
 	// Suitable for generating ordered lists of path strings
 	std::vector<std::vector<unsigned long long>> all_collapsed;
 
-	// Set of hashes of all drawn paths and subpaths, constructed during the collapse
-	// operation from the set of drawn solid paths.  This allows calling codes to
+	// Set of hashes of all drawn paths and subpaths.  This allows calling codes to
 	// spot check any path to see if it is active, without having to interrogate
-	// other data structures or walk down the tree.
-	std::unordered_map<int, std::unordered_set<unsigned long long>> fully_drawn_paths_by_mode;
-	std::unordered_set<unsigned long long> all_fully_drawn_paths;
+	// other data structures or walk down the tree.  A key of -1 for the map
+	// selects the set of paths drawn in AT LEAST one mode.
+	std::unordered_map<int, std::unordered_set<unsigned long long>> fully_drawn_paths;
 
 	// Set of partially drawn paths, constructed during the collapse operation.
-	// This holds the paths that should return 2 for is_hdrawn
-	std::unordered_map<int, std::unordered_set<unsigned long long>> partially_drawn_paths_by_mode;
-	std::unordered_set<unsigned long long> all_partially_drawn_paths;
-
-
-	// Called when the parent Db context is getting ready to update the data
-	// structures - we may need to redraw, so we save any necessary information
-	// ahead of the changes.  Although this is a public function of the BViewState,
-	// it is practically speaking an implementation detail
-	//
-	// TODO - do we need this with GObj/CombInst setup?
-	void cache_collapsed();
+	// This holds the paths that should return 2 for IsDrawn.  A key of -1 for the map
+	// selects the set of paths drawn in AT LEAST one mode.
+	std::unordered_map<int, std::unordered_set<unsigned long long>> partially_drawn_paths;
 
 	DbiState *dbis;
 
-	int check_status(
-		std::unordered_set<unsigned long long> *invalid_objects,
-		std::unordered_set<unsigned long long> *changed_paths,
-		unsigned long long path_hash,
-		std::vector<unsigned long long> &cpath,
-		bool leaf_expand
-		);
-
-	void walk_tree(
-		std::unordered_set<struct bv_scene_obj *> &objs,
-		unsigned long long chash,
-		int curr_mode,
-		struct bview *v,
-		struct bv_obj_settings *vs,
-		matp_t m,
-		std::vector<unsigned long long> &path_hashes,
-		std::unordered_set<struct bview *> &views,
-		unsigned long long *ret
-		);
-
-	void gather_paths(
-		std::unordered_set<struct bv_scene_obj *> &objs,
-		unsigned long long c_hash,
-		int curr_mode,
-		struct bview *v,
-		struct bv_obj_settings *vs,
-		matp_t m,
-		matp_t lm,
-		std::vector<unsigned long long> &path_hashes,
-		std::unordered_set<struct bview *> &views,
-		unsigned long long *ret
-		);
-
-	struct bv_scene_obj * scene_obj(
-		std::unordered_set<struct bv_scene_obj *> &objs,
-		int curr_mode,
-		struct bv_obj_settings *vs,
-		matp_t m,
-		std::vector<unsigned long long> &path_hashes,
-		std::unordered_set<struct bview *> &views,
-		struct bview *v
-		);
-
-	int leaf_check(unsigned long long chash, std::vector<unsigned long long> &path_hashes);
-
-	// The collapsed drawn paths from the previous db state, organized
-	// by drawn mode
-	void depth_group_collapse(
-		std::vector<std::vector<unsigned long long>> &collapsed,
-		std::unordered_set<unsigned long long> &d_paths,
-		std::unordered_set<unsigned long long> &p_d_paths,
-	       	std::map<size_t, std::unordered_set<unsigned long long>> &depth_groups
-		);
-
-	friend class BSelectState;
 };
 
 #define GED_DBISTATE_DB_CHANGE   0x01
@@ -753,7 +693,10 @@ class GED_EXPORT DbiState {
 	// that purpose a DbiPath does not need to be guaranteed present, so
 	// there isn't any need to pay the overhead.  We do allow the caller
 	// to request they be created and registered as an option.
-	void PathsBelow(std::unordered_set<unsigned long long> *s, unsigned long long phash, bool create_paths = false);
+	void AddPathsBelow(std::unordered_set<unsigned long long> *s, unsigned long long phash, bool create_paths = false);
+	// Like AddPathsBelow, except it removes the hashes from the set rather
+	// than adding them and has no option to create paths.
+	void RemovePathsBelow(std::unordered_set<unsigned long long> *s, unsigned long long phash);
 
 	/*******************************************************************
          *                      View States
@@ -822,6 +765,7 @@ class GED_EXPORT DbiState {
 	struct resource *res = NULL;
 	struct ged_draw_cache *dcache = NULL;
 	void collect_paths(std::unordered_set<unsigned long long> *opaths, DbiPath &p, bool create_paths);
+	void clear_paths(std::unordered_set<unsigned long long> *opaths, DbiPath &p);
 	void expand_path(std::vector<unsigned long long> *opaths, DbiPath &p, bool create_paths);
 	void gather_cyclic(
 		std::unordered_set<unsigned long long> &cyclic,
