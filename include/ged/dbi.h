@@ -51,6 +51,7 @@
 #include <string>
 #include <vector>
 
+class GED_EXPORT DbiPath;
 class GED_EXPORT DbiState;
 
 // In-memory representation of a Comb Tree instance from a .g database
@@ -138,6 +139,22 @@ class GED_EXPORT CombInst {
 	// unpack anything it needs to - for example, to get the GObj of the parent:
 	// GObj *parent_obj = d->gobjs[chash].
 	DbiState *d;
+
+	// Related DbiPath instances
+	//
+	// Any path listed in this set references this CombInst.  If this
+	// CombInst is deleted, all paths in this set are invalid and should be
+	// returned to the dbi_paths queue.
+	//
+	// One of the reasons for using path hashes rather than pointers to
+	// reference DbiPath instances is to allow flexibility when it comes to
+	// these sorts of operations - if a DbiPath is removed and then
+	// recreated by a subsequent action before (say) the selection state is
+	// validated, there is no need to update its contents since the new
+	// registered DbiPath for a recreated path is just as good as the old
+	// version - it will use the same hash, even though it's DbiPath memory
+	// pointer is different.
+	std::unordered_set<unsigned long long> rpaths;
 };
 
 // In-memory representation of a BRL-CAD Geometry database object.
@@ -186,6 +203,8 @@ class GED_EXPORT GObj {
 	// in DbiPath entities.
 	std::map<size_t, struct bv_scene_obj *> scene_objs;
 
+	// Allow DbiPaths access to the rpaths container
+	friend class DbiPath;
     private:
 
 	// A Comb bounding box depends on the definition of everything
@@ -208,6 +227,22 @@ class GED_EXPORT GObj {
 
 	// Initialize the cv array of CombInst types based on the comb tree
 	void GenCombInstances();
+
+	// Related DbiPath instances
+	//
+	// Any path listed in this set uses this GObj either as a root or a
+	// parent in a CombInst - if this GObj is deleted, all paths in this
+	// set are invalid and should be returned to the dbi_paths queue.
+	//
+	// One of the reasons for using path hashes rather than pointers to
+	// reference DbiPath instances is to allow flexibility when it comes to
+	// these sorts of operations - if a DbiPath is removed and then
+	// recreated by a subsequent action before (say) the selection state is
+	// validated, there is no need to update its contents since the new
+	// registered DbiPath for a recreated path is just as good as the old
+	// version - it will use the same hash, even though it's DbiPath memory
+	// pointer is different.
+	std::unordered_set<unsigned long long> rpaths;
 };
 
 // TODO - every DbiPath potentially has a bv_scene_obj associated with it,
@@ -300,9 +335,12 @@ class GED_EXPORT DbiPath {
 	// If this path was registered with dbi_paths (that does not happen by
 	// default but user code can do it) then this operation will
 	// de-register it since the hash key of the path no longer matches the
-	// original hash used to register it.  It is not automatically
-	// re-registered as the new path, since that may not reflect user
-	// intent - if re-registration is desired that is up to the caller.
+	// original hash used to register it.  The path is not automatically
+	// re-registered as the new path it represents, since that may not
+	// reflect user intent (if the code is in the process of pushing
+	// multiple paths to form a longer path, for example.)  If
+	// re-registration is desired once temporary operations are complete
+	// that is up to the caller.
 	unsigned long long push(unsigned long long element);
 
 	// Removes the last element from the path.  By default recalculates
@@ -687,32 +725,35 @@ class GED_EXPORT DbiState {
 	// Given a set of paths, create a set of paths representing the
 	// expansion of the trees of those input paths to their leaves.
 	//
-	// The expanded paths in the return vector will be created and
+	// By default the expanded paths in the return vector will be created and
 	// registered in dbi_paths if they didn't already exist, to ensure that
 	// (at least at the time of return) ExpandPaths results all correspond
 	// to a DbiPath pointer.
-	std::vector<unsigned long long> ExpandPaths(std::vector<unsigned long long> &paths);
+	std::vector<unsigned long long> ExpandPaths(std::vector<unsigned long long> &paths, bool create_paths = true);
 
 	// Given a set of paths, create a set of paths consisting of the
 	// shallowest path descriptions that fully capture the geometry present
 	// in the original set.
 	//
-	// The collasped paths in the return vector will be created and
+	// By default the collapsed paths in the return vector will be created and
 	// registered in dbi_paths if they didn't already exist, to ensure that
 	// (at the time of return) CollapsePaths results all correspond to a
 	// DbiPath pointer.
-	std::vector<unsigned long long> CollapsePaths(std::vector<unsigned long long> &paths);
+	std::vector<unsigned long long> CollapsePaths(std::vector<unsigned long long> &paths, bool create_paths = true);
 
-	// There is a selection case where we want the set of ALL hashes
-	// (intermediate and leaf) in a set, without caring whether the DbiPath
-	// exists (it's intended for a lookup by drawing code, so whether
-	// DbiPath exists doesn't matter to the selection code.)  Provide this
-	// method so we can build up such a set - unlike ExpandPaths it will
-	// record all intermediate hashes on the way to leaves and will not
-	// create any DbiPath instances.  The output set s is not cleared, so
+	// Build up a set of hashes of ALL paths below the specified path, not
+	// just the leaf paths.  The targeted output set is not cleared, so
 	// calling PathsBelow on multiple paths in succession will gradually
-	// build up a multi-path set.
-	void PathsBelow(std::unordered_set<unsigned long long> *s, unsigned long long phash);
+	// build up a multi-path set.  Unlike ExpandPaths and CollapsePaths
+	// PathsBelow does NOT (by default) ensure a DbiPath exists for every
+	// path added to the output set.
+	//
+	// The primary use case for this method is to allow drawing code to
+	// determine if its path is part of an active selection set - for
+	// that purpose a DbiPath does not need to be guaranteed present, so
+	// there isn't any need to pay the overhead.  We do allow the caller
+	// to request they be created and registered as an option.
+	void PathsBelow(std::unordered_set<unsigned long long> *s, unsigned long long phash, bool create_paths = false);
 
 	/*******************************************************************
          *                      View States
@@ -780,8 +821,8 @@ class GED_EXPORT DbiState {
 	void clear_cache(struct directory *dp);
 	struct resource *res = NULL;
 	struct ged_draw_cache *dcache = NULL;
-	void collect_paths(std::unordered_set<unsigned long long> *opaths, DbiPath &p);
-	void expand_path(std::vector<unsigned long long> *opaths, DbiPath &p);
+	void collect_paths(std::unordered_set<unsigned long long> *opaths, DbiPath &p, bool create_paths);
+	void expand_path(std::vector<unsigned long long> *opaths, DbiPath &p, bool create_paths);
 	void gather_cyclic(
 		std::unordered_set<unsigned long long> &cyclic,
 		unsigned long long c_hash, DbiPath &p
