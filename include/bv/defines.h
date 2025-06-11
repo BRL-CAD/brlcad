@@ -424,7 +424,6 @@ struct bv_mesh_lod {
  * setting set is maintained between different views, this container allows
  * us to just point to the common set from all views using it. */
 struct bview_settings {
-    struct bv_obj_settings obj_s;
     int            gv_snap_lines;
     double 	   gv_snap_tol_factor;
     struct bu_ptbl gv_snap_objs;

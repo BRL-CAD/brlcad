@@ -541,8 +541,6 @@ bv_mat_aet(struct bview *v)
 void
 bv_settings_init(struct bview_settings *s)
 {
-    s->obj_s = BV_OBJ_SETTINGS_INIT;
-
     s->gv_cleared = 1;
 
     s->gv_adc.draw = 0;
