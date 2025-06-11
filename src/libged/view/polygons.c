@@ -95,10 +95,7 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
 	}
     }
 
-    int flags = BV_VIEW_OBJS;
-    if (gd->local_obj)
-	flags |= BV_LOCAL_OBJS;
-    s = bv_create_polygon(gd->cv, flags, type, &sp);
+    s = bv_create_polygon(NULL, NULL, gd->cv, type, &sp);
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return BRLCAD_ERROR;
@@ -513,6 +510,7 @@ _poly_cmd_overlap(void *bs, int argc, const char **argv)
     // Look up the polygon to check for overlaps
     struct bview *v = gd->cv;
     struct bv_scene_obj *s2 = NULL;
+#if 0
     struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
     if (view_objs) {
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
@@ -535,6 +533,7 @@ _poly_cmd_overlap(void *bs, int argc, const char **argv)
 	    }
 	}
     }
+#endif
     if (!s2) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", argv[0]);
 	return BRLCAD_ERROR;
@@ -605,10 +604,7 @@ _poly_cmd_import(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    int flags = BV_VIEW_OBJS;
-    if (gd->local_obj)
-	flags |= BV_LOCAL_OBJS;
-    s = db_sketch_to_scene_obj(gd->vobj, gedp->dbip, dp, gd->cv, flags);
+    s = db_sketch_to_scene_obj(gd->vobj, gedp->dbip, dp, gd->cv);
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return BRLCAD_ERROR;
@@ -819,8 +815,9 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
     }
 
     // Look up the polygon to check for overlaps
-    struct bview *v = gd->cv;
     struct bv_scene_obj *s2 = NULL;
+#if 0
+    struct bview *v = gd->cv;
     struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
     if (view_objs) {
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
@@ -843,6 +840,7 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
 	    }
 	}
     }
+#endif
     if (!s2) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", argv[0]);
 	return BRLCAD_ERROR;

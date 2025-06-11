@@ -332,7 +332,7 @@ QgView::clear_event_filter(QObject *o)
 }
 
 void
-QgView::set_draw_custom(void (*draw_custom)(struct bview *, void *), void *draw_udata)
+QgView::set_draw_custom(void (*draw_custom)(struct bview *, struct bu_ptbl *, void *), void *draw_udata)
 {
 
 #ifdef BRLCAD_OPENGL

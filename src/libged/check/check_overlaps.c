@@ -342,8 +342,8 @@ int check_overlaps(struct ged *gedp, struct current_state *state,
 
     if (options->overlaps_overlay_flag) {
 	if (gedp->new_cmd_forms) {
-	    struct bview *view = gedp->ged_gvp;
-	    bv_vlblock_obj(check_plot.vbp, view, "check::overlaps");
+	    struct bv_scene_obj *vobj = bv_vlblock_obj(check_plot.vbp, NULL);
+	    bu_vls_sprintf(&vobj->s_name, "check::overlaps");
 	} else {
 	    _ged_cvt_vlblock_to_solids(gedp, check_plot.vbp, "OVERLAPS", 0);
 	}

@@ -40,8 +40,6 @@ bv_set_init(struct bview_set *s)
 {
     BU_GET(s->i, struct bview_set_internal);
     BU_PTBL_INIT(&s->i->views);
-    bu_ptbl_init(&s->i->shared_db_objs, 8, "db_objs init");
-    bu_ptbl_init(&s->i->shared_view_objs, 8, "view_objs init");
     BU_LIST_INIT(&s->i->vlfree);
     /* init the solid list */
     BU_GET(s->i->free_scene_obj, struct bv_scene_obj);
@@ -53,8 +51,6 @@ bv_set_free(struct bview_set *s)
 {
     if (s->i) {
 	bu_ptbl_free(&s->i->views);
-	bu_ptbl_free(&s->i->shared_db_objs);
-	bu_ptbl_free(&s->i->shared_view_objs);
 
 	// TODO - replace free_scene_obj with bu_ptbl
 	struct bv_scene_obj *sp, *nsp;

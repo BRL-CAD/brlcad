@@ -207,7 +207,7 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
 	const char *e_argv[2] = {"draw", NULL};
 	e_argv[1] = object;
 	(void)ged_exec_draw(gedp, 2, e_argv);
-	bv_update(gedp->ged_gvp);
+	bv_update(gedp->ged_gvp, NULL);
     }
 
     return BRLCAD_OK;

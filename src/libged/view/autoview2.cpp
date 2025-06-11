@@ -106,7 +106,7 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // libbv has the nuts and bolts
-    bv_autoview(v, factor, all_view_objs);
+    bv_autoview(v, NULL, factor);
 
     return BRLCAD_OK;
 }

@@ -43,7 +43,7 @@
 
 #include "../ged_private.h"
 #include "./ged_view.h"
-
+#if 0
 static void
 gobjs_scene_free(struct bv_scene_obj *s)
 {
@@ -55,10 +55,12 @@ gobjs_scene_free(struct bv_scene_obj *s)
 	BU_PUT(sfp, struct db_full_path);
     }
 }
+#endif
 
 int
-_gobjs_cmd_create(void *bs, int argc, const char **argv)
+_gobjs_cmd_create(void *UNUSED(bs), int UNUSED(argc), const char **UNUSED(argv))
 {
+#if 0
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -160,7 +162,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
 
     // TODO - in principle, we should be sharing a lot of logic with the edit command -
     // the only difference is we won't be unpacking and writing the rt_db_internal.
-
+#endif
     return BRLCAD_OK;
 }
 
@@ -230,7 +232,7 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
 	    break;
 	}
     }
-
+#if 0
     int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
     int ac = bu_opt_parse(NULL, acnt, argv, d);
 
@@ -260,7 +262,7 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
 	// View object doesn't already exist.  subcommands will either need to create it
 	// or handle the error case
     }
-
+#endif
     return _ged_subcmd_exec(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_gobjs_cmds,
 			    "view gobjs", "[options] subcommand [args]", gd, argc, argv, help, cmd_pos);
 }

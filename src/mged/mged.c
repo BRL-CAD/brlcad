@@ -348,7 +348,7 @@ mged_view_callback(struct bview *gvp,
 void
 new_mats(struct mged_state *s)
 {
-    bv_update(view_state->vs_gvp);
+    bv_update(view_state->vs_gvp, NULL);
 }
 
 

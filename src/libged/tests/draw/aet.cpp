@@ -53,7 +53,7 @@ dm_refresh(struct ged *gedp, int vnum)
     dm_get_bg(&dm_bg1, &dm_bg2, dmp);
     dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
     dm_set_dirty(dmp, 0);
-    dm_draw_objs(v, NULL, NULL);
+    dm_draw_objs(v, NULL, NULL, NULL);
     dm_draw_end(dmp);
 }
 
@@ -242,19 +242,19 @@ main(int ac, char *av[]) {
      * multiples of 90 degrees and using non-zero twist components. */
     VSET(views[0]->gv_aet, 0, 0, 90);
     bv_mat_aet(views[0]);
-    bv_update(views[0]);
+    bv_update(views[0], NULL);
 
     VSET(views[1]->gv_aet, 90, 90, 180);
     bv_mat_aet(views[1]);
-    bv_update(views[1]);
+    bv_update(views[1], NULL);
 
     VSET(views[2]->gv_aet, -90, 270, -90);
     bv_mat_aet(views[2]);
-    bv_update(views[2]);
+    bv_update(views[2], NULL);
 
     VSET(views[3]->gv_aet, 270, -180, 90);
     bv_mat_aet(views[3]);
-    bv_update(views[3]);
+    bv_update(views[3], NULL);
 
 
     /************************************************************************/
@@ -286,7 +286,7 @@ main(int ac, char *av[]) {
 	dm_configure_win(dmp, 0);
 	// NOTE:  deliberately not resetting aet here - we want to see if it is
 	// stable without adjustment.
-	bv_update(views[i]);
+	bv_update(views[i], NULL);
     }
     ret += img_cmp(0, 2, gedp, av[1], soft_fail);
     ret += img_cmp(1, 2, gedp, av[1], soft_fail);
@@ -305,7 +305,7 @@ main(int ac, char *av[]) {
 	dm_configure_win(dmp, 0);
 	// NOTE:  deliberately not resetting aet here - we want to see if it is
 	// stable without adjustment.
-	bv_update(views[i]);
+	bv_update(views[i], NULL);
     }
     ret += img_cmp(0, 1, gedp, av[1], soft_fail);
     ret += img_cmp(1, 1, gedp, av[1], soft_fail);
@@ -324,7 +324,7 @@ main(int ac, char *av[]) {
 	    dm_configure_win(dmp, 0);
 	    // NOTE:  deliberately not resetting aet here - we want to see if it is
 	    // stable without adjustment.
-	    bv_update(views[j]);
+	    bv_update(views[j], NULL);
 	}
     }
     len = 512;
@@ -337,7 +337,7 @@ main(int ac, char *av[]) {
 	dm_configure_win(dmp, 0);
 	// NOTE:  deliberately not resetting aet here - we want to see if it is
 	// stable without adjustment.
-	bv_update(views[i]);
+	bv_update(views[i], NULL);
     }
     ret += img_cmp(0, 1, gedp, av[1], soft_fail);
     ret += img_cmp(1, 1, gedp, av[1], soft_fail);

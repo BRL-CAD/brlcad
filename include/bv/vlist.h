@@ -319,7 +319,7 @@ BV_EXPORT extern void bv_vlblock_to_objs(struct bu_ptbl *out,
 
 
 BV_EXPORT extern struct bv_scene_obj *
-bv_vlblock_obj(struct bv_vlblock *vbp, struct bview *v, const char *name);
+bv_vlblock_obj(struct bv_vlblock *vbp, struct bv_scene_obj *o);
 
 /**
  * Output a vlist as an extended 3-D floating point UNIX-Plot file.

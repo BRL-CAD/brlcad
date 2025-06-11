@@ -2213,8 +2213,8 @@ BViewState::scene_obj(
 	struct bv_obj_settings *vs,
 	matp_t m,
        	std::vector<unsigned long long> &path_hashes,
-	std::unordered_set<struct bview *> &views,
-	struct bview *v
+	std::unordered_set<struct bview *> &UNUSED(views),
+	struct bview *UNUSED(v)
 	)
 {
     // Solid - scene object time
@@ -2266,6 +2266,7 @@ BViewState::scene_obj(
 	    // drawing updating is handled via callbacks.  However, adaptive
 	    // plotting enablement/disablement changes which type of objects
 	    // we need.  Make sure we're synced.
+#if 0
 	    std::unordered_set<struct bview *>::iterator v_it;
 	    if (sp->csg_obj) {
 		for (v_it = views.begin(); v_it != views.end(); v_it++) {
@@ -2294,13 +2295,13 @@ BViewState::scene_obj(
 		    }
 		}
 	    }
-
+#endif
 	    return NULL;
 	}
     }
 
     // No pre-existing object - make a new one
-    sp = bv_obj_get(v, BV_DB_OBJS);
+    sp = bv_obj_get(NULL, &rt_vlfree);
 
     // Find the leaf directory pointer
     struct directory *dp = dbis->get_hdp(path_hashes[path_hashes.size()-1]);
@@ -2659,7 +2660,7 @@ BViewState::refresh(struct bview *v, int argc, const char **argv)
 	    }
 	    if (!s)
 		continue;
-	    struct bv_scene_obj *nso = bv_obj_get(v, BV_DB_OBJS);
+	    struct bv_scene_obj *nso = bv_obj_get(s->free_scene_obj, s->vlfree);
 	    bv_obj_sync(nso, s);
 	    nso->s_i_data = s->s_i_data;
 	    s->s_i_data = NULL;
@@ -2799,7 +2800,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 		    bv_obj_reset(s);
 		    s->s_v = v;
 		} else {
-		    s = bv_obj_get(v, BV_DB_OBJS);
+		    s = bv_obj_get(NULL, &rt_vlfree);
 		    // print path name, set view - otherwise empty
 		    dbis->print_path(&s->s_name, cp);
 		    s->s_v = v;
@@ -2854,7 +2855,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	}
 	for (sz_it = draw_invalid_collapsed.begin(); sz_it != draw_invalid_collapsed.end(); sz_it++) {
 	    std::vector<unsigned long long> cpath = ms_it->second[*sz_it];
-	    struct bv_scene_obj *s = bv_obj_get(v, BV_DB_OBJS);
+	    struct bv_scene_obj *s = bv_obj_get(NULL, &rt_vlfree);
 	    // print path name, set view - otherwise empty
 	    dbis->print_path(&s->s_name, cpath);
 	    s->s_v = v;
@@ -2897,7 +2898,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     // routines have a rough idea of the correct dimensions to use
     if (!no_autoview) {
 	for (v_it = views.begin(); v_it != views.end(); v_it++) {
-	    bv_autoview(*v_it, BV_AUTOVIEW_SCALE_DEFAULT, 0);
+	    bv_autoview(*v_it, NULL, BV_AUTOVIEW_SCALE_DEFAULT);
 	}
     }
 
@@ -2936,7 +2937,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     // unless suppressed
     if (!no_autoview) {
 	for (v_it = views.begin(); v_it != views.end(); v_it++) {
-	    bv_autoview(*v_it, BV_AUTOVIEW_SCALE_DEFAULT, 0);
+	    bv_autoview(*v_it, NULL, BV_AUTOVIEW_SCALE_DEFAULT);
 	}
     }
 

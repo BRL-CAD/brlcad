@@ -95,7 +95,8 @@ bv_fill_polygon(struct bv_scene_obj *s)
 	return;
 
     // Got fill, create lines
-    fobj = bv_obj_get_child(s);
+    fobj = bv_obj_get(s->free_scene_obj, s->vlfree);
+    bv_obj_add_child(s, fobj);
     bu_vls_printf(&fobj->s_name, ":fill");
     fobj->s_os->s_line_width = 1;
     fobj->s_soldash = 0;
@@ -149,7 +150,8 @@ bv_polygon_vlist(struct bv_scene_obj *s)
 	}
 
 	if (p->polygon.hole[i]) {
-	    struct bv_scene_obj *s_c = bv_obj_get_child(s);
+	    struct bv_scene_obj *s_c = bv_obj_get(s->free_scene_obj, s->vlfree);
+	    bv_obj_add_child(s, s_c);
 	    s_c->s_soldash = 1;
 	    s_c->s_color[0] = s->s_color[0];
 	    s_c->s_color[1] = s->s_color[1];
@@ -174,9 +176,9 @@ bv_polygon_vlist(struct bv_scene_obj *s)
 }
 
 struct bv_scene_obj *
-bv_create_polygon_obj(struct bview *v, int flags, struct bv_polygon *p)
+bv_create_polygon_obj(struct bv_scene_obj *free_scene_obj, struct bu_list *vlfree, struct bview *v, struct bv_polygon *p)
 {
-    struct bv_scene_obj *s = bv_obj_get(v, flags);
+    struct bv_scene_obj *s = bv_obj_get(free_scene_obj, vlfree);
     s->s_type_flags |= BV_POLYGONS;
     s->s_type_flags |= BV_VIEWONLY;
 
@@ -200,7 +202,7 @@ bv_create_polygon_obj(struct bview *v, int flags, struct bv_polygon *p)
 }
 
 struct bv_scene_obj *
-bv_create_polygon(struct bview *v, int flags, int type, point_t *fp)
+bv_create_polygon(struct bv_scene_obj *free_scene_objs, struct bu_list *vlfree, struct bview *v, int type, point_t *fp)
 {
     struct bv_polygon *p;
     BU_GET(p, struct bv_polygon);
@@ -250,7 +252,7 @@ bv_create_polygon(struct bview *v, int flags, int type, point_t *fp)
 	p->polygon.contour[0].open = 1;
 
     // Have polygon, now make scene object
-    struct bv_scene_obj *s = bv_create_polygon_obj(v, flags, p);
+    struct bv_scene_obj *s = bv_create_polygon_obj(free_scene_objs, vlfree, v, p);
     if (!s)
 	BU_PUT(p, struct bv_polygon);
     return s;
@@ -820,7 +822,7 @@ bv_update_polygon(struct bv_scene_obj *s, struct bview *v, int utype)
 }
 
 struct bv_scene_obj *
-bv_dup_view_polygon(const char *nname, struct bv_scene_obj *s)
+bv_dup_view_polygon(const char *nname, struct bview *v, struct bv_scene_obj *s)
 {
     if (!nname || !s)
 	return NULL;
@@ -831,7 +833,7 @@ bv_dup_view_polygon(const char *nname, struct bv_scene_obj *s)
     BU_GET(p, struct bv_polygon);
     bv_polygon_cpy(p, ip);
 
-    struct bv_scene_obj *np = bv_create_polygon_obj(s->s_v, s->s_type_flags, p);
+    struct bv_scene_obj *np = bv_create_polygon_obj(s->free_scene_obj, s->vlfree, v, p);
 
     // Have geometry, now copy visual settings
     VMOVE(np->s_color, s->s_color);

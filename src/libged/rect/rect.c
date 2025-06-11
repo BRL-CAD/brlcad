@@ -265,7 +265,7 @@ rect_zoom(struct ged *gedp)
     /* set the new model center */
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_model_center);
     gedp->ged_gvp->gv_scale *= sf;
-    bv_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp, NULL);
 
     return BRLCAD_OK;
 }

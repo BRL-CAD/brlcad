@@ -113,7 +113,7 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 
 	    bv_screen_pt(&v->gv_point, v->gv_mouse_x, v->gv_mouse_y, v);
 
-	    wp = bv_create_polygon(v, BV_VIEW_OBJS, ptype, &v->gv_point);
+	    wp = bv_create_polygon(NULL, NULL, v, ptype, &v->gv_point);
 	    wp->s_v = v;
 
 	    struct bv_polygon *ip = (struct bv_polygon *)wp->s_i_data;
@@ -337,6 +337,7 @@ QPolySelectFilter::eventFilter(QObject *, QEvent *e)
 
     // Handle Left Click
     if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
+#if 0
 	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
 	if (view_objs) {
 	    wp = bv_select_polygon(view_objs, &v->gv_point);
@@ -347,7 +348,7 @@ QPolySelectFilter::eventFilter(QObject *, QEvent *e)
 	    close_general_poly = (vp->polygon.contour) ? vp->polygon.contour[0].open : 1;
 	    // TODO - either set or sync other C++ class setting copies (color, fill, etc.)
 	}
-
+#endif
 	return true;
     }
 

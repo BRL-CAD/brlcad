@@ -165,7 +165,7 @@ void QgSW::paintEvent(QPaintEvent *e)
     matp_t mat = v->gv_model2view;
     dm_loadmatrix(dmp, mat, 0);
     dm_draw_begin(dmp);
-    dm_draw_objs(v, draw_custom, draw_udata);
+    dm_draw_objs(v, NULL, draw_custom, draw_udata);
     dm_draw_end(dmp);
 
     // Set up a QImage with the rendered output..
@@ -405,7 +405,7 @@ void QgSW::aet(double a, double e, double t)
     bn_mat_zrot(tmat, s_twist, c_twist);
     bn_mat_mul2(tmat, v->gv_rotation);
 
-    bv_update(v);
+    bv_update(v, NULL);
 }
 
 void

@@ -688,7 +688,7 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
     }
 
     /* Obtain a fresh solid structure, and fill it in */
-    sp = bv_obj_get(gedp->ged_gvp, BV_DB_OBJS);
+    sp = bv_obj_get(NULL, &rt_vlfree);
     struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
     if (!bdata) {
 	BU_GET(bdata, struct ged_bv_data);
@@ -709,7 +709,7 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
 	solid_append_vlist(sp, (struct bv_vlist *)vhead);
 	BU_LIST_INIT(vhead);
     }
-    bv_scene_obj_bound(sp, gedp->ged_gvp);
+    bv_scene_obj_bound(sp);
 
     /* set path information -- this is a top level node */
     db_add_node_to_full_path(&bdata->s_fullpath, dp);

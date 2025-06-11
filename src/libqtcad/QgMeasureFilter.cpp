@@ -146,7 +146,7 @@ QgMeasureFilter::eventFilter(QObject *, QEvent *e)
 
 	    if (s)
 		bv_obj_put(s);
-	    s = bv_obj_get(v, BV_VIEW_OBJS);
+	    s = bv_obj_get(NULL, NULL);
 
 	    mode = 1;
 	    VMOVE(p1, mpnt);
@@ -334,7 +334,7 @@ QMeasure3DFilter::get_point()
     // Under most circumstances that should substantially cut down the
     // interrogation time for large models.
     struct bu_ptbl sset = BU_PTBL_INIT_ZERO;
-    int scnt = bv_view_objs_select(&sset, v, v->gv_mouse_x, v->gv_mouse_y);
+    int scnt = bv_view_objs_select(&sset, v, NULL, v->gv_mouse_x, v->gv_mouse_y);
 
     // If we didn't see anything, we have a no-op
     if (!scnt) {

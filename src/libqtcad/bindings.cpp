@@ -59,52 +59,52 @@ int CADkeyPressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QK
 	case '2':
 	    bn_decode_vect(v->gv_aet, "35 -25 0");
 	    bv_mat_aet(v);
-	    bv_update(v);
+	    bv_update(v, NULL);
 	    return 1;
 	case '3':
 	    bn_decode_vect(v->gv_aet, "35 25 0");
 	    bv_mat_aet(v);
-	    bv_update(v);
+	    bv_update(v, NULL);
 	    return 1;
 	case '4':
 	    bn_decode_vect(v->gv_aet, "45 45 0");
 	    bv_mat_aet(v);
-	    bv_update(v);
+	    bv_update(v, NULL);
 	    return 1;
 	case '5':
 	    bn_decode_vect(v->gv_aet, "145 25 0");
 	    bv_mat_aet(v);
-	    bv_update(v);
+	    bv_update(v, NULL);
 	    return 1;
 	case '6':
 	    bn_decode_vect(v->gv_aet, "215 25 0");
 	    bv_mat_aet(v);
-	    bv_update(v);
+	    bv_update(v, NULL);
 	    return 1;
 	case '7':
 	    bn_decode_vect(v->gv_aet, "325 25 0");
 	    bv_mat_aet(v);
-	    bv_update(v);
+	    bv_update(v, NULL);
 	    return 1;
 	case 'F':
 	    bn_decode_vect(v->gv_aet, "0 0 0");
 	    bv_mat_aet(v);
-	    bv_update(v);
+	    bv_update(v, NULL);
 	    return 1;
 	case 'T':
 	    bn_decode_vect(v->gv_aet, "270 90 0");
 	    bv_mat_aet(v);
-	    bv_update(v);
+	    bv_update(v, NULL);
 	    return 1;
 	case 'B':
 	    bn_decode_vect(v->gv_aet, "270 -90 0");
 	    bv_mat_aet(v);
-	    bv_update(v);
+	    bv_update(v, NULL);
 	    return 1;
 	case 'L':
 	    bn_decode_vect(v->gv_aet, "90 0 0");
 	    bv_mat_aet(v);
-	    bv_update(v);
+	    bv_update(v, NULL);
 	    return 1;
 	case 'R':
 	    if (k->modifiers().testFlag(Qt::ShiftModifier) == true) {
@@ -113,7 +113,7 @@ int CADkeyPressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QK
 		bn_decode_vect(v->gv_aet, "270 0 0");
 	    }
 	    bv_mat_aet(v);
-	    bv_update(v);
+	    bv_update(v, NULL);
 	    return 1;
 	default:
 	    break;

@@ -5772,7 +5772,7 @@ to_snap_view(struct ged *gedp,
     int snapped = 0;
     if (gedp->ged_gvp->gv_s->gv_snap_lines) {
 	gedp->ged_gvp->gv_s->gv_snap_flags = BV_SNAP_TCL;
-	snapped = bv_snap_lines_2d(gedp->ged_gvp, &fvx, &fvy);
+	snapped = bv_snap_lines_2d(gedp->ged_gvp, NULL, &fvx, &fvy);
     }
     if (!snapped && gedp->ged_gvp->gv_s->gv_grid.snap) {
 	bv_snap_grid_2d(gedp->ged_gvp, &fvx, &fvy);
@@ -6250,7 +6250,7 @@ to_vslew(struct ged *gedp,
 	}
 
 	if (gedp->ged_gvp->gv_s->gv_snap_lines) {
-	    bv_view_center_linesnap(gedp->ged_gvp);
+	    bv_view_center_linesnap(gedp->ged_gvp, NULL);
 	}
 
 	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;

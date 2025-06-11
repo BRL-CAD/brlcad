@@ -169,7 +169,7 @@ _ged_cm_end(struct ged *gedp, vect_t *v, mat_t *m, const int argc, const char **
      */
     MAT_COPY(gedp->ged_gvp->gv_rotation, (*m));
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, (*v));
-    bv_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp, NULL);
 
     struct bu_vls eye = BU_VLS_INIT_ZERO;
     bu_vls_printf(&eye, "%lf %lf %lf", V3ARGS((*v)));

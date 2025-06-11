@@ -118,6 +118,7 @@ _view_cmd_faceplate(void *bs, int argc, const char **argv)
     return ret;
 }
 
+#if 0
 /* When a view is "independent", it displays only those objects when have been
  * added to its individual scene storage - the shared objects common to all
  * views will not be drawn.  When shifting a view from shared to independent
@@ -202,6 +203,7 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
     bu_vls_printf(gedp->ged_result_str, "invalid value supplied: %s (need 0 or 1)\n", argv[1]);
     return BRLCAD_ERROR;
 }
+#endif
 
 int
 _view_cmd_list(void *bs, int argc, const char **argv)
@@ -382,8 +384,9 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
     }
 
     if (calc_mode != -1) {
-	struct bview *v = gd->cv;
 	if (bu_vls_strlen(&calc_target)) {
+#if 0
+	struct bview *v = gd->cv;
 	    // User has specified a view object to use - try to find it
 	    struct bv_scene_obj *wobj = bv_find_obj(v, bu_vls_cstr(&calc_target));
 	    if (wobj) {
@@ -395,9 +398,11 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
 		bu_vls_free(&calc_target);
 		return BRLCAD_ERROR;
 	    }
+#endif
 	} else {
 	    // No specific view object to use - check all drawn
 	    // view objects.
+#if 0
 	    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
 	    struct bu_ptbl *local_view_objs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
 	    struct bu_ptbl *db_objs = bv_view_objs(v, BV_DB_OBJS);
@@ -512,6 +517,7 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
 	    if (have_vz) {
 		bu_vls_sprintf(gedp->ged_result_str, "%0.15f", vZ);
 	    }
+#endif
 	}
 	return BRLCAD_OK;
     }
@@ -644,7 +650,7 @@ const struct bu_cmdtab _view_cmds[] = {
     { "faceplate",  _view_cmd_faceplate},
     { "gobjs",      _view_cmd_gobjs},
     { "height",     _view_cmd_height},
-    { "independent",_view_cmd_independent},
+    //{ "independent",_view_cmd_independent},
     { "knob",       _view_cmd_knob},
     { "list",       _view_cmd_list},
     { "lod",        _view_cmd_lod},

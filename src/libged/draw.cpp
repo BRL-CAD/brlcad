@@ -103,7 +103,7 @@ draw_free_data(struct bv_scene_obj *s)
     s->s_i_data = NULL;
 }
 
-
+#if 0
 static int
 csg_wireframe_update(struct bv_scene_obj *vo, struct bview *v, int flag)
 {
@@ -168,14 +168,17 @@ csg_wireframe_update(struct bv_scene_obj *vo, struct bview *v, int flag)
     if (ret < 0)
 	return 0;
 
+#if 0
     if (ip->idb_meth->ft_adaptive_plot) {
 	ip->idb_meth->ft_adaptive_plot(&vo->s_vlist, ip, d->tol, v, vo->s_size);
 	vo->s_type_flags |= BV_CSG_LOD;
 	bv_obj_stale(vo);
     }
+#endif
 
     return 1;
 }
+#endif
 
 struct ged_full_detail_clbk_data {
     struct db_i *dbip;
@@ -184,6 +187,7 @@ struct ged_full_detail_clbk_data {
     struct rt_db_internal *intern;
 };
 
+#if 0
 /* Set up the data for drawing */
 static int
 bot_mesh_info_clbk(struct bv_mesh_lod *lod, void *cb_data)
@@ -214,7 +218,9 @@ bot_mesh_info_clbk(struct bv_mesh_lod *lod, void *cb_data)
 
     return 0;
 }
+#endif
 
+#if 0
 /* Free up the drawing data, but not (yet) done with ged_full_detail_clbk_data */
 static int
 bot_mesh_info_clear_clbk(struct bv_mesh_lod *lod, void *cb_data)
@@ -234,7 +240,8 @@ bot_mesh_info_clear_clbk(struct bv_mesh_lod *lod, void *cb_data)
 
     return 0;
 }
-
+#endif
+#if 0
 /* Done - free up everything */
 static int
 bot_mesh_info_free_clbk(struct bv_mesh_lod *lod, void *cb_data)
@@ -244,13 +251,14 @@ bot_mesh_info_free_clbk(struct bv_mesh_lod *lod, void *cb_data)
     BU_PUT(cd, struct ged_full_detail_clbk_data);
     return 0;
 }
+#endif
 
 static void
 bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 {
     if (!s || !v)
 	return;
-
+#if 0
     s->csg_obj = 0;
     s->mesh_obj = 1;
 
@@ -380,7 +388,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 
     bv_mesh_lod_view(vo, v, 0);
     bv_obj_stale(vo);
-
+#endif
     return;
 }
 
@@ -389,6 +397,7 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 {
     if (!s || !v)
 	return;
+#if 0
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     if (!d || !d->mesh_c)
 	return;
@@ -531,7 +540,7 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 
     bv_mesh_lod_view(vo, vo->s_v, 0);
     bv_obj_stale(vo);
-
+#endif
     return;
 }
 
@@ -558,6 +567,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
     }
 
     // If we're adaptive, call the primitive's adaptive plotting, if any.
+#if 0
     if (ip->idb_meth->ft_adaptive_plot) {
 	struct bv_scene_obj *vo = bv_obj_for_view(s, v);
 	if (!vo) {
@@ -586,6 +596,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	csg_wireframe_update(vo, v, 1);
 	return;
     }
+#endif
 
     // If we've got this far, we have no adaptive plotting capability for this
     // object.  Do the normal plot rather than show nothing.
@@ -639,7 +650,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
      * the individual solid wireframes */
     if (s->s_os->s_dmode == 3) {
 	draw_m3(s);
-	bv_scene_obj_bound(s, v);
+	bv_scene_obj_bound(s);
 	s->current = 1;
 	return;
     }
@@ -647,7 +658,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
     /* Mode 5 draws a point cloud in lieu of wireframes */
     if (s->s_os->s_dmode == 5) {
 	draw_points(s);
-	bv_scene_obj_bound(s, v);
+	bv_scene_obj_bound(s);
 	s->current = 1;
 	return;
     }
@@ -776,7 +787,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 geom_done:
 
     // Update s_size and s_center
-    bv_scene_obj_bound(s, v);
+    bv_scene_obj_bound(s);
 
     // Store current view info, in case of adaptive plotting
     s->adaptive_wireframe = s->s_v->gv_s->adaptive_plot_csg;
@@ -1005,7 +1016,8 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// will end up getting handled by the object update callbacks, and the
 	// job here will just be to set up the key data for later use...
 
-	struct bv_scene_obj *s = bv_obj_get_child(dd->g);
+	struct bv_scene_obj *s = bv_obj_get(dd->g->free_scene_obj, dd->g->vlfree);
+	bv_obj_add_child(dd->g, s);
 	db_path_to_vls(&s->s_name, path);
 	BU_GET(s->s_path, struct db_full_path);
 	db_full_path_init((struct db_full_path *)s->s_path);

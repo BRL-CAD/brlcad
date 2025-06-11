@@ -133,7 +133,7 @@ abs_zoom(struct bview *v)
 
     v->gv_size = 2.0 * v->gv_scale;
     v->gv_isize = 1.0 / v->gv_size;
-    bv_update(v);
+    bv_update(v, NULL);
 
     if (!ZERO(v->k.tra_v_abs[X])
         || !ZERO(v->k.tra_v_abs[Y])
@@ -154,7 +154,7 @@ calc_mtran(struct bview *v, const vect_t *tvec)
     MAT_DELTAS_GET_NEG(vc, v->gv_center);
     VSUB2(nvc, vc, delta);
     MAT_DELTAS_VEC_NEG(v->gv_center, nvc);
-    bv_update(v);
+    bv_update(v, NULL);
 
     /* calculate absolute_tran */
     set_absolute_view_tran(v);
@@ -175,7 +175,7 @@ calc_vtran(struct bview *v, const vect_t *tvec)
     VSUB2(nvc, vc, delta);
     MAT_DELTAS_VEC_NEG(v->gv_center, nvc);
 
-    bv_update(v);
+    bv_update(v, NULL);
 
     /* calculate absolute_model_tran */
     set_absolute_model_tran(v);
@@ -233,7 +233,7 @@ vrot(struct bview *v, char origin, fastf_t *newrot)
 
     /* Update the rotation component of the model2view matrix */
     bn_mat_mul2(newrot, v->gv_rotation); /* pure rotation */
-    bv_update(v);
+    bv_update(v, NULL);
 
     set_absolute_view_tran(v);
     set_absolute_model_tran(v);

@@ -272,9 +272,10 @@ QgQuadView::changeToQuadFrame()
     // but if we don't do it here we'll start out with blank windows until something notifies
     // the draw logic it needs to do updates.
     for (int i = UPPER_RIGHT_QUADRANT + 1; i < LOWER_RIGHT_QUADRANT + 1; i++) {
-	bv_autoview(views[i]->view(), BV_AUTOVIEW_SCALE_DEFAULT, 0);
-	bv_view_bounds(views[i]->view());
+	bv_autoview(views[i]->view(), NULL, BV_AUTOVIEW_SCALE_DEFAULT);
+	bv_view_bounds(views[i]->view(), NULL);
     }
+#if 0
     struct bu_ptbl *db_objs = bv_view_objs(views[UPPER_RIGHT_QUADRANT]->view(), BV_DB_OBJS);
     if (db_objs) {
 	for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
@@ -293,6 +294,7 @@ QgQuadView::changeToQuadFrame()
 	    }
 	}
     }
+#endif
 
     for (int i = UPPER_RIGHT_QUADRANT + 1; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	views[i]->view()->gv_width = views[UPPER_RIGHT_QUADRANT]->view()->gv_width;

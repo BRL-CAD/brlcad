@@ -312,26 +312,6 @@ bv_hash(struct bview *v)
     _bv_data_polygon_state_hash(state, &v->gv_tcl.gv_sdata_polygons);
     _bv_other_state_hash(state, &v->gv_tcl.gv_prim_labels);
 
-    struct bu_ptbl *tbls[4];
-    tbls[0] = bv_view_objs(v, BV_DB_OBJS);
-    tbls[1] = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-    tbls[2] = bv_view_objs(v, BV_VIEW_OBJS);
-    tbls[3] = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
-    for (int t = 0; t < 4; t++) {
-	if (!tbls[t])
-	    continue;
-	for (size_t i = 0; i < BU_PTBL_LEN(tbls[t]); i++) {
-	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(tbls[t], i);
-	    if (BU_PTBL_IS_INITIALIZED(&g->children)) {
-		for (size_t j = 0; j < BU_PTBL_LEN(&g->children); j++) {
-		    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, j);
-		    bv_scene_obj_hash(state, s_c);
-		}
-	    }
-	    bv_scene_obj_hash(state, g);
-	}
-    }
-
     unsigned long long hash_val = bu_data_hash_val(state);
     bu_data_hash_destroy(state);
 

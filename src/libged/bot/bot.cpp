@@ -662,11 +662,11 @@ _bot_cmd_sync(void *bs, int argc, const char **argv)
 static void
 _bot_vlblock_plot(struct ged *gedp, struct bv_vlblock *vbp, const char *sname)
 {
-    struct bview *view = gedp->ged_gvp;
     if (gedp->new_cmd_forms) {
 	struct bu_vls nroot = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&nroot, "bot::%s", sname);
-	bv_vlblock_obj(vbp, view, bu_vls_cstr(&nroot));
+	struct bv_scene_obj *vobj = bv_vlblock_obj(vbp, NULL);
+	bu_vls_sprintf(&vobj->s_name, "%s",bu_vls_cstr(&nroot));
 	bu_vls_free(&nroot);
     } else {
 	_ged_cvt_vlblock_to_solids(gedp, vbp, sname, 0);

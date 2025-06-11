@@ -178,7 +178,7 @@ QEll::update_obj_wireframe()
 
     // Make the object, if we've not already done so
     if (!p)
-	p = bv_obj_get(v, BV_VIEW_OBJS);
+	p = bv_obj_get(NULL, NULL);
 
     // Clear any old wireframes, labels, etc.
     bv_obj_reset(p);
@@ -216,7 +216,8 @@ QEll::update_obj_wireframe()
 	lcnt = intern.idb_meth->ft_labels(pl, 8, idn_mat, &intern, tol);
 
     for (int i = 0; i < lcnt; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(p);
+	struct bv_scene_obj *s = bv_obj_get(NULL, NULL);
+	bv_obj_add_child(p, s);
 	struct bv_label *la;
 	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
@@ -253,7 +254,7 @@ QEll::update_viewobj_name(const QString &)
 
     // Make the view object, if we've not already done so
     if (!p)
-	p = bv_obj_get(v, BV_VIEW_OBJS);
+	p = bv_obj_get(NULL, NULL);
 
     // Make sure the view object names match whatever the dialog says
     // is the current (proposed) name for the written object

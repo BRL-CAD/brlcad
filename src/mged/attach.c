@@ -718,11 +718,13 @@ dm_var_init(struct mged_state *s, struct mged_dm *target_dm)
 
     *view_state->vs_gvp = *target_dm->dm_view_state->vs_gvp;	/* struct copy */
 
+#if 0
     BU_GET(view_state->vs_gvp->gv_objs.db_objs, struct bu_ptbl);
     bu_ptbl_init(view_state->vs_gvp->gv_objs.db_objs, 8, "view_objs init");
 
     BU_GET(view_state->vs_gvp->gv_objs.view_objs, struct bu_ptbl);
     bu_ptbl_init(view_state->vs_gvp->gv_objs.view_objs, 8, "view_objs init");
+#endif
 
     view_state->vs_gvp->vset = &s->gedp->ged_views;
     view_state->vs_gvp->independent = 0;

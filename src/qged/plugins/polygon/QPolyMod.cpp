@@ -192,6 +192,7 @@ QPolyMod::mod_names_reset()
     mod_names->blockSignals(true);
     mod_names->clear();
     if (gedp) {
+#if 0
 	struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
 	if (view_objs) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
@@ -201,6 +202,7 @@ QPolyMod::mod_names_reset()
 		}
 	    }
 	}
+#endif
     }
     if (p) {
 	int cind = mod_names->findText(bu_vls_cstr(&p->s_name));
@@ -298,6 +300,7 @@ QPolyMod::toplevel_config(bool)
     // when we're switching modes at this level, we always start with a
     // blank slate for points.
     if (gedp) {
+#if 0
 	struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
 	if (view_objs) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
@@ -315,6 +318,7 @@ QPolyMod::toplevel_config(bool)
 		}
 	    }
 	}
+#endif
     }
 
     // Make sure the Combo box list is current.
@@ -366,7 +370,7 @@ QPolyMod::clear_pnt_selection(bool checked)
 }
 
 void
-QPolyMod::select(const QString &poly)
+QPolyMod::select(const QString &UNUSED(poly))
 {
     QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
@@ -376,6 +380,7 @@ QPolyMod::select(const QString &poly)
 	return;
 
     p = NULL;
+#if 0
     struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
     if (view_objs) {
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
@@ -404,6 +409,7 @@ QPolyMod::select(const QString &poly)
 	    }
 	}
     }
+#endif
 }
 
 void
@@ -472,6 +478,7 @@ QPolyMod::toggle_closed_poly(bool checked)
 	return;
 
     if (do_bool && ip->type == BV_POLYGON_GENERAL && close_general_poly->isChecked()) {
+#if 0
 	struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
 	if (view_objs) {
 	    bg_clip_t op = bg_Union;
@@ -513,6 +520,7 @@ QPolyMod::toggle_closed_poly(bool checked)
 	    }
 	    do_bool = false;
 	}
+#endif
     }
 
     if (p) {
@@ -543,6 +551,7 @@ QPolyMod::apply_bool_op()
 	return;
     }
 
+#if 0
     bg_clip_t op = bg_Union;
     if (csg_modes->currentText() == "Union") {
 	op = bg_Union;
@@ -553,7 +562,9 @@ QPolyMod::apply_bool_op()
     if (csg_modes->currentText() == "Intersection") {
 	op = bg_Intersection;
     }
+#endif
 
+#if 0
     struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
     if (view_objs) {
 	std::vector<struct bv_scene_obj *> cleanup;
@@ -576,6 +587,7 @@ QPolyMod::apply_bool_op()
 	    bv_obj_put(cleanup[i]);
 	}
     }
+#endif
 
     emit view_updated(QG_VIEW_REFRESH);
 }
@@ -601,7 +613,7 @@ QPolyMod::align_to_poly()
     gedp->ged_gvp->gv_aet[2] = 0;
     bv_mat_aet(gedp->ged_gvp);
 
-    bv_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp, NULL);
 
     emit view_updated(QG_VIEW_REFRESH);
 }
@@ -849,6 +861,7 @@ QPolyMod::toggle_line_snapping(bool s)
     if (!s) {
 	v->gv_s->gv_snap_lines = 0;
     } else {
+#if 0
 	// Turn snapping on if we have other polygons to snap to
 	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
 	if (!view_objs)
@@ -865,6 +878,7 @@ QPolyMod::toggle_line_snapping(bool s)
 	} else {
 	    v->gv_s->gv_snap_lines = 0;
 	}
+#endif
     }
 
     emit settings_changed(QG_VIEW_DRAWN);

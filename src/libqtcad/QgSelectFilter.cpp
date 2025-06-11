@@ -132,7 +132,7 @@ QgSelectPntFilter::eventFilter(QObject *, QEvent *e)
     // scene.  This is faster than the raytrace-based test in some situations,
     // but trades off that speed by only producing an approximate answer based
     // on bounding boxes.
-    int scnt = bv_view_objs_select(&selected_set, v, v->gv_mouse_x, v->gv_mouse_y);
+    int scnt = bv_view_objs_select(&selected_set, v, NULL, v->gv_mouse_x, v->gv_mouse_y);
 
     // If the caller wants everything, or we got less than 2 objs, we're done
     if (scnt < 2 || !first_only)
@@ -200,7 +200,7 @@ QgSelectBoxFilter::eventFilter(QObject *, QEvent *e)
 	// Mouse release - time to use the rectangle to assemble the selected set
 	int ipx = (int)px;
 	int ipy = (int)py;
-	bv_view_objs_rect_select(&selected_set, v, ipx, ipy, v->gv_mouse_x, v->gv_mouse_y);
+	bv_view_objs_rect_select(&selected_set, v, NULL, ipx, ipy, v->gv_mouse_x, v->gv_mouse_y);
 
 #if 0
 	// If we want only the closest object (or more precisely, in this mode,
@@ -294,7 +294,7 @@ QgSelectRayFilter::eventFilter(QObject *, QEvent *e)
 
     // Pre-filter what we're going to be shooting using the bounding box tests.
     // If we have no intersections, there's no point in doing the raytrace.
-    int scnt = bv_view_objs_select(&selected_set, v, v->gv_mouse_x, v->gv_mouse_y);
+    int scnt = bv_view_objs_select(&selected_set, v, NULL, v->gv_mouse_x, v->gv_mouse_y);
     if (!scnt)
 	return true;
 
@@ -367,18 +367,22 @@ QgSelectRayFilter::eventFilter(QObject *, QEvent *e)
 	bu_vls_sprintf(&dpath, "%s",  rc.closest.c_str());
 	if (bu_vls_cstr(&dpath)[0] == '/')
 	    bu_vls_nibble(&dpath, 1);
+#if 0
 	struct bv_scene_obj *so = bv_find_obj(v, bu_vls_cstr(&dpath));
 	if (so)
 	    bu_ptbl_ins(&selected_set, (long *)so);
+#endif
     } else {
 	std::unordered_set<std::string>::iterator a_it;
 	for (a_it = rc.active.begin(); a_it != rc.active.end(); a_it++) {
 	    bu_vls_sprintf(&dpath, "%s",  a_it->c_str());
 	    if (bu_vls_cstr(&dpath)[0] == '/')
 		bu_vls_nibble(&dpath, 1);
+#if 0
 	    struct bv_scene_obj *so = bv_find_obj(v, bu_vls_cstr(&dpath));
 	    if (so)
 		bu_ptbl_ins(&selected_set, (long *)so);
+#endif
 	}
     }
     bu_vls_free(&dpath);

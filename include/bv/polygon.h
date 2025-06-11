@@ -73,10 +73,10 @@ struct bv_polygon {
 };
 
 // Given a polygon, create a scene object
-BV_EXPORT extern struct bv_scene_obj *bv_create_polygon_obj(struct bview *v, int flags, struct bv_polygon *p);
+BV_EXPORT extern struct bv_scene_obj *bv_create_polygon_obj(struct bv_scene_obj *free_scene_objs, struct bu_list *vlfree, struct bview *v, struct bv_polygon *p);
 
 // Creates a scene object with a default polygon
-BV_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bview *v, int flags, int type, point_t *fp);
+BV_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bv_scene_obj *free_scene_objs, struct bu_list *vlfree, struct bview *v, int type, point_t *fp);
 
 // Various update modes have similar logic - we pass in the flags to the update
 // routine to enable/disable specific portions of the overall flow.
@@ -95,7 +95,7 @@ BV_EXPORT extern void bv_polygon_vlist(struct bv_scene_obj *s);
 BV_EXPORT extern struct bv_scene_obj *bv_select_polygon(struct bu_ptbl *objs, point_t *cp);
 
 BV_EXPORT extern int bv_move_polygon(struct bv_scene_obj *s, point_t *cp, point_t *pp);
-BV_EXPORT extern struct bv_scene_obj *bv_dup_view_polygon(const char *nname, struct bv_scene_obj *s);
+BV_EXPORT extern struct bv_scene_obj *bv_dup_view_polygon(const char *nname, struct bview *v, struct bv_scene_obj *s);
 
 // Copy a bv polygon.  Note that this also performs a
 // view sync - if the user is copying the polygon into

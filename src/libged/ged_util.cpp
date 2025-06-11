@@ -246,6 +246,7 @@ _ged_subcmd2_help(struct ged *gedp, struct bu_opt_desc *gopts, std::map<std::str
     return BRLCAD_OK;
 }
 
+#if 0
 /* NOTE - caller must initialize vmin and vmax to INFINITY and -INFINITY
  * respectively (we don't do it here so callers may run this routine
  * repeatedly over different tables to accumulate bounds. */
@@ -292,7 +293,7 @@ scene_bounding_sph(struct bu_ptbl *so, vect_t *vmin, vect_t *vmax, int pflag)
 
     return is_empty;
 }
-
+#endif
 
 int
 _ged_results_init(struct ged_results *results)
@@ -1703,12 +1704,14 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	if (gedp->new_cmd_forms) {
 	    VSETALL(extremum[0],  INFINITY);
 	    VSETALL(extremum[1], -INFINITY);
+#if 0
 	    struct bu_ptbl *db_objs = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS);
 	    if (db_objs)
 		(void)scene_bounding_sph(db_objs, &(extremum[0]), &(extremum[1]), 1);
 	    struct bu_ptbl *local_db_objs = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS | BV_LOCAL_OBJS);
 	    if (local_db_objs)
 		(void)scene_bounding_sph(local_db_objs, &(extremum[0]), &(extremum[1]), 1);
+#endif
 	} else {
 	    (void)dl_bounding_sph(gedp->i->ged_gdp->gd_headDisplay, &(extremum[0]), &(extremum[1]), 1);
 	}

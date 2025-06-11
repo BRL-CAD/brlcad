@@ -2723,8 +2723,8 @@ aborted:
 
 	if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
 	    if (gedp->new_cmd_forms) {
-		struct bview *view = gedp->ged_gvp;
-		bv_vlblock_obj(ged_gqa_plot.vbp, view, "gqa::overlaps");
+		struct bv_scene_obj *vobj = bv_vlblock_obj(ged_gqa_plot.vbp, NULL);
+		bu_vls_sprintf(&vobj->s_name, "gqa::overlaps");
 	    } else {
 		_ged_cvt_vlblock_to_solids(gedp, ged_gqa_plot.vbp, "OVERLAPS", 0);
 	    }

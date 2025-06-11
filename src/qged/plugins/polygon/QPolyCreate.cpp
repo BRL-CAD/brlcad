@@ -235,7 +235,7 @@ QPolyCreate::do_vpoly_copy()
 	return;
     }
     char *sname = bu_strdup(vpoly_name->text().toLocal8Bit().data());
-    struct bv_scene_obj *src_obj = bv_find_obj(gedp->ged_gvp, sname);
+    struct bv_scene_obj *src_obj = NULL;//bv_find_obj(gedp->ged_gvp, sname);
     bu_free(sname, "name cpy");
     if (!src_obj) {
 	bu_vls_free(&vname);
@@ -243,7 +243,7 @@ QPolyCreate::do_vpoly_copy()
     }
 
     // Names are valid, src_obj is ready - do the copy
-    p = bv_dup_view_polygon(bu_vls_cstr(&vname), src_obj);
+    p = bv_dup_view_polygon(bu_vls_cstr(&vname), gedp->ged_gvp, src_obj);
     bu_vls_free(&vname);
     if (!p)
 	return;
@@ -293,7 +293,7 @@ QPolyCreate::do_import_sketch()
     }
 
     // Names are valid, dp is ready - try the sketch import
-    p = db_sketch_to_scene_obj(bu_vls_cstr(&vname), gedp->dbip, dp, gedp->ged_gvp, BV_VIEW_OBJS);
+    p = db_sketch_to_scene_obj(bu_vls_cstr(&vname), gedp->dbip, dp, gedp->ged_gvp);
     bu_vls_free(&vname);
     if (!p)
 	return;
@@ -390,6 +390,7 @@ QPolyCreate::toggle_line_snapping(bool s)
     if (!s) {
 	v->gv_s->gv_snap_lines = 0;
     } else {
+#if 0
 	// Turn snapping on if we have other polygons to snap to
 	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
 	if (!view_objs)
@@ -406,6 +407,7 @@ QPolyCreate::toggle_line_snapping(bool s)
 	} else {
 	    v->gv_s->gv_snap_lines = 0;
 	}
+#endif
     }
 
     emit settings_changed(QG_VIEW_DRAWN);
@@ -495,6 +497,7 @@ QPolyCreate::toplevel_config(bool)
     // This function is called when a top level mode change was initiated
     // by a selection button.  Clear any selected points being displayed.
     if (gedp) {
+#if 0
 	struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
 	if (!view_objs)
 	    return;
@@ -511,6 +514,7 @@ QPolyCreate::toplevel_config(bool)
 		}
 	    }
 	}
+#endif
     }
 
     if (draw_change && gedp)
@@ -604,6 +608,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
     // For this particular application, we want to apply booleans to
     // all polygons
     bu_ptbl_reset(&pcf->bool_objs);
+#if 0
     struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
     if (view_objs) {
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
@@ -613,6 +618,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	    }
 	}
     }
+#endif
 
     bool ret = cf->eventFilter(NULL, e);
 

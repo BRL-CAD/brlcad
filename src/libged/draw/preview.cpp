@@ -115,7 +115,7 @@ ged_cm_end(struct ged *gedp, vect_t *v, mat_t *m, const int UNUSED(argc), const 
     /* First step:  put eye at view center (view 0, 0, 0) */
     MAT_COPY(gedp->ged_gvp->gv_rotation, (*m));
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, (*v));
-    bv_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp, NULL);
 
     /*
      * Compute camera orientation notch to right (+X) and up (+Y)
@@ -136,7 +136,7 @@ ged_cm_end(struct ged *gedp, vect_t *v, mat_t *m, const int UNUSED(argc), const 
     VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
     MAT4X3PNT(new_cent, gedp->ged_gvp->gv_view2model, xlate);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_cent);
-    bv_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp, NULL);
 
     /* If new treewalk is needed, get new objects into view. */
     if (preview_tree_walk_needed) {
@@ -440,8 +440,8 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 
     if (draw_eye_path) {
 	if (gedp->new_cmd_forms) {
-	    struct bview *view = gedp->ged_gvp;
-	    bv_vlblock_obj(preview_vbp, view, "preview::eye_path");
+	    struct bv_scene_obj *vobj = bv_vlblock_obj(preview_vbp, NULL);
+	    bu_vls_sprintf(&vobj->s_name, "preview::eye_path");
 	} else {
 	    _ged_cvt_vlblock_to_solids(gedp, preview_vbp, "EYE_PATH", 0);
 	}

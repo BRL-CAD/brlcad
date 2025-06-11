@@ -156,7 +156,7 @@ void QgGL::paintGL()
     // implementation) we need to do the draw routine every time in paintGL, or
     // we end up with unrendered frames.
     dm_set_dirty(dmp, 0);
-    dm_draw_objs(v, draw_custom, draw_udata);
+    dm_draw_objs(v, NULL, draw_custom, draw_udata);
     dm_draw_end(dmp);
 }
 
@@ -402,7 +402,7 @@ void QgGL::aet(double a, double e, double t)
     bn_mat_zrot(tmat, s_twist, c_twist);
     bn_mat_mul2(tmat, v->gv_rotation);
 
-    bv_update(v);
+    bv_update(v, NULL);
 }
 
 void

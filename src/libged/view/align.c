@@ -132,7 +132,7 @@ ged_align_core(struct ged *gedp, int argc, const char *argv[])
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_view2model, new_eye);
 
     // done. update the view
-    bv_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp, NULL);
 
     return BRLCAD_OK;
 }

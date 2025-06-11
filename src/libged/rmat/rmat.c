@@ -54,7 +54,7 @@ ged_rmat_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 
 	MAT_COPY(gedp->ged_gvp->gv_rotation, rotation);
-	bv_update(gedp->ged_gvp);
+	bv_update(gedp->ged_gvp, NULL);
 
 	return BRLCAD_OK;
     }

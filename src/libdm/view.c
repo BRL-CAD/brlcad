@@ -606,24 +606,12 @@ draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v, int forc
 
     // Primary object drawing.  See if we have an active view-specific object - if so,
     // use that, otherwise use the original object
-    if (s->s_type_flags & BV_DB_OBJS) {
-	struct bv_scene_obj *vo = bv_obj_for_view(s, v);
-	if (!vo) {
-	    vo = s;
-	    bv_log(1, "draw_scene_obj - no view obj, drawing %s", bu_vls_cstr(&s->s_name));
-	} else {
-	    bv_log(1, "draw_scene_obj - drawing view obj %s[%s]", bu_vls_cstr(&vo->s_name), bu_vls_cstr(&v->gv_name));
-	}
+    // If this is a database object, it may have a view dependent
+    // update to do.
+    if (s->s_update_callback)
+	(*s->s_update_callback)(s, v, 0);
 
-	// If this is a database object, it may have a view dependent
-	// update to do.
-	if (vo->s_update_callback)
-	    (*vo->s_update_callback)(vo, v, 0);
-
-	dm_draw_obj(dmp, vo);
-    } else {
-	dm_draw_obj(dmp, s);
-    }
+    dm_draw_obj(dmp, s);
 
     if (!(s->s_type_flags & BV_MESH_LOD)) {
 	dm_add_arrows(dmp, s);
@@ -639,7 +627,7 @@ draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v, int forc
 }
 
 void
-dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd)
+dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct bu_ptbl *objs, struct dm_view_data *vd)
 {
     bv_log(3, "libdm:dm_draw_viewobjs");
     struct dm *dmp = (struct dm *)v->dmp;
@@ -678,35 +666,11 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd)
     }
 #endif
 
-    // Draw geometry view objects
-    struct bu_ptbl *db_objs = bv_view_objs(v, BV_DB_OBJS);
-    if (db_objs) {
-	for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
-	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
+    // Draw objects
+    if (objs) {
+	for (size_t i = 0; i < BU_PTBL_LEN(objs); i++) {
+	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(objs, i);
 	    draw_scene_obj(dmp, g, v, g->s_force_draw, (g->s_inherit_settings) ? g->s_os : NULL);
-	}
-    }
-    struct bu_ptbl *local_db_objs = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-    if (local_db_objs) {
-	for (size_t i = 0; i < BU_PTBL_LEN(local_db_objs); i++) {
-	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(local_db_objs, i);
-	    draw_scene_obj(dmp, g, v, g->s_force_draw, (g->s_inherit_settings) ? g->s_os : NULL);
-	}
-    }
-
-    // Draw view-only objects
-    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
-    if (view_objs) {
-	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    draw_scene_obj(dmp, s, v, s->s_force_draw, (s->s_inherit_settings) ? s->s_os : NULL);
-	}
-    }
-    struct bu_ptbl *local_view_objs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
-    if (view_objs) {
-	for (size_t i = 0; i < BU_PTBL_LEN(local_view_objs); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(local_view_objs, i);
-	    draw_scene_obj(dmp, s, v, s->s_force_draw, (s->s_inherit_settings) ? s->s_os : NULL);
 	}
     }
 
@@ -750,11 +714,11 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd)
 // doesn't guarantee raw OpenGL drawing is supported, but the dmp should
 // provide enough information for the calling app to know if that is possible.)
 void
-dm_draw_objs(struct bview *v, void (*dm_draw_custom)(struct bview *, void *), void *u_data)
+dm_draw_objs(struct bview *v, struct bu_ptbl *objs, void (*dm_draw_custom)(struct bview *, struct bu_ptbl *, void *), void *u_data)
 {
     bv_log(3, "libdm:dm_draw_objs");
     if (dm_draw_custom) {
-	(*dm_draw_custom)(v, u_data);
+	(*dm_draw_custom)(v, objs, u_data);
 	return;
     }
 
@@ -798,38 +762,12 @@ dm_draw_objs(struct bview *v, void (*dm_draw_custom)(struct bview *, void *), vo
     }
 
 
-    // Draw geometry view objects
-    // TODO - draw opaque, then transparent
-    struct bu_ptbl *sobjs = bv_view_objs(v, BV_DB_OBJS);
-    if (!v->independent && sobjs) {
-	for (size_t i = 0; i < BU_PTBL_LEN(sobjs); i++) {
-	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(sobjs, i);
+    // Draw geometry objects
+    if (objs) {
+	for (size_t i = 0; i < BU_PTBL_LEN(objs); i++) {
+	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(objs, i);
 	    //bu_log("dm_draw_objs %s\n", bu_vls_cstr(&g->s_name));
 	    draw_scene_obj(dmp, g, v, g->s_force_draw, (g->s_inherit_settings) ? g->s_os : NULL);
-	}
-    }
-    struct bu_ptbl *iobjs = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-    if (iobjs && (iobjs != sobjs || v->independent)) {
-	for (size_t i = 0; i < BU_PTBL_LEN(iobjs); i++) {
-	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(iobjs, i);
-	    //bu_log("dm_draw_objs(i) %s\n", bu_vls_cstr(&g->s_name));
-	    draw_scene_obj(dmp, g, v, g->s_force_draw, (g->s_inherit_settings) ? g->s_os : NULL);
-	}
-    }
-
-    // Draw view-only objects
-    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
-    if (view_objs && !v->independent) {
-	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    draw_scene_obj(dmp, s, v, s->s_force_draw, (s->s_inherit_settings) ? s->s_os : NULL);
-	}
-    }
-    struct bu_ptbl *vo = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
-    if (vo && (vo != view_objs || v->independent)) {
-	for (size_t i = 0; i < BU_PTBL_LEN(vo); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(vo, i);
-	    draw_scene_obj(dmp, s, v, s->s_force_draw, (s->s_inherit_settings) ? s->s_os : NULL);
 	}
     }
 

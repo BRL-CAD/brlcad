@@ -77,7 +77,7 @@ class QTCAD_EXPORT QgView : public QWidget
 	void aet(double a, double e, double t);
 
 	QObject *curr_event_filter = NULL;
-	void set_draw_custom(void (*draw_custom)(struct bview *, void *), void *draw_udata);
+	void set_draw_custom(void (*draw_custom)(struct bview *, struct bu_ptbl *, void *), void *draw_udata);
 
 	// Wrappers around Qt's facility for adding eventFilter objects to
 	// widgets.  This is how custom key binding modes are enabled and

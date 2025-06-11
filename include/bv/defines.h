@@ -286,7 +286,7 @@ struct bv_scene_obj  {
     struct bu_ptbl children;
 
     /* Parent object of this object */
-    struct bv_scene_ob *parent;
+    struct bv_scene_obj *parent;
 
     /* Object level pointers to parent containers.  These are stored so
      * that the object itself knows everything needed for data manipulation
@@ -297,9 +297,6 @@ struct bv_scene_obj  {
 
     /* Container for reusing bv_scene_obj allocations */
     struct bv_scene_obj *free_scene_obj;
-
-    /* View container containing this object */
-    struct bu_ptbl *otbl;
 
     /* For more specialized routines not using vlists, we may need
      * additional drawing data associated with a scene object */
@@ -472,32 +469,6 @@ struct bview_settings {
     struct bu_ptbl                      *gv_selected;
 };
 
-/* A view needs to know what objects are active within it, but this is a
- * function not just of adding and removing objects via commands like
- * "draw" and "erase" but also what settings are active.  Shared objects
- * are common to multiple views, but if adaptive plotting is enabled the
- * scene objects cannot also be common - the representations of the objects
- * may be different in each view, even though the object list is shared.
- */
-struct bview_objs {
-
-    // Container for db object groups unique to this view (typical use case is
-    // adaptive plotting, where geometry wireframes may differ from view to
-    // view and thus need unique vlists.)
-    struct bu_ptbl  *db_objs;
-    // Container for storing bv_scene_obj elements unique to this view.
-    struct bu_ptbl  *view_objs;
-
-    // Available bv_vlist entities to recycle before allocating new for local
-    // view objects. This is used only if the app doesn't supply a vlfree -
-    // normally the app should do so, so memory from one view can be reused for
-    // other views.
-    struct bu_list  gv_vlfree;
-
-    /* Container for reusing bv_scene_obj allocations */
-    struct bv_scene_obj *free_scene_obj;
-};
-
 // Data for managing "knob" manipulation of views.  One historical hardware
 // example of this "knob" concept of view manipulation would be Dial boxes such
 // as the Silicon Graphics SN-921, used with 3D workstations in the early days.
@@ -623,12 +594,6 @@ struct bview {
      * across multiple views */
     struct bview_set *vset;
 
-    /* Scene objects active in a view.  Managing these is a relatively complex
-     * topic and depends on whether a view is shared, independent or adaptive.
-     * Shared objects are common across views to make more efficient use of
-     * system memory. */
-    struct bview_objs gv_objs;
-
     /* We sometimes need to define the volume in space that is "active" for the
      * view.  For an orthogonal camera this is the oriented bounding box
      * extruded to contain active scene objects visible in the view  The app
@@ -638,7 +603,7 @@ struct bview {
     vect_t obb_extent1;
     vect_t obb_extent2;
     vect_t obb_extent3;
-    void (*gv_bounds_update)(struct bview *);
+    void (*gv_bounds_update)(struct bview *, struct bu_ptbl *);
 
     /* "Backed out" point, lookat direction, scene radius. Used for geometric
      * view based interrogation. */

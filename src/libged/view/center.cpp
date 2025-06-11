@@ -147,7 +147,7 @@ ged_center_core(struct ged *gedp, int argc, const char *argv[])
     if (gedp->dbip)
 	VSCALE(center, center, gedp->dbip->dbi_local2base);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, center);
-    bv_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp, NULL);
 
     return BRLCAD_OK;
 }

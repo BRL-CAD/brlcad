@@ -399,8 +399,8 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     gd->local_obj = not_shared;
 
     // If we're not wanting help and we have no subcommand, list defined view objects
-    struct bview *v = gd->cv;
     if (!ac && cmd_pos < 0 && !help) {
+#if 0
 	if (list_db) {
 	    struct bu_ptbl *db_objs = bv_view_objs(v, BV_DB_OBJS);
 	    if (db_objs) {
@@ -448,6 +448,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 		}
 	    }
 	}
+#endif
 	return BRLCAD_OK;
     }
 
@@ -466,6 +467,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 
     // View-only objects take priority, unless we're explicitly excluding them by only specifying -G
     if (list_view) {
+#if 0
 	if (!gd->local_obj) {
 	    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
 	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
@@ -486,9 +488,11 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 		}
 	    }
 	}
+#endif
     }
 
     if (!gd->s) {
+#if 0
 	if (!gd->local_obj) {
 	    struct bu_ptbl *db_objs = bv_view_objs(v, BV_DB_OBJS);
 	    for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
@@ -529,6 +533,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 		}
 	    }
 	}
+#endif
     }
 
     return _ged_subcmd_exec(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_obj_cmds,

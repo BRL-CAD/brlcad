@@ -163,7 +163,7 @@ QPolySettings::uniq_obj_name(struct bu_vls *oname, struct bview *v)
     // See if the supplied name will collide.  If it will, then reject.  If we want
     // an output name, fail with a message box
     struct bu_vls ovname = BU_VLS_INIT_ZERO;
-    bv_uniq_obj_name(&ovname, vname, v);
+    //bv_uniq_obj_name(&ovname, vname, v);
     if (!BU_STR_EQUAL(bu_vls_cstr(&ovname), vname)) {
 	if (!oname)
 	    return false;

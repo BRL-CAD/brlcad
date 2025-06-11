@@ -583,21 +583,17 @@ bv_vlblock_to_objs(struct bu_ptbl *out, const char *name_root, struct bv_vlblock
 }
 
 struct bv_scene_obj *
-bv_vlblock_obj(struct bv_vlblock *vbp, struct bview *v, const char *name)
+bv_vlblock_obj(struct bv_vlblock *vbp, struct bv_scene_obj *s)
 {
-    if (!vbp || !v)
+    if (!vbp || !s)
 	return NULL;
 
-    struct bv_scene_obj *s = bv_find_obj(v, name);
-    if (s) {
-	bv_obj_reset(s);
-    } else {
-	s = bv_obj_get(v, BV_VIEW_OBJS);
-    }
+    bv_obj_reset(s);
 
     for (size_t i = 0; i < vbp->nused; i++) {
 	if (!BU_LIST_IS_EMPTY(&(vbp->head[i]))) {
-	    struct bv_scene_obj *sc = bv_obj_get_child(s);
+	    struct bv_scene_obj *sc = bv_obj_get(s->free_scene_obj, s->vlfree);
+	    bv_obj_add_child(s, sc);
 	    struct bv_vlist *bvl = (struct bv_vlist *)&vbp->head[i];
 	    long int rgb = vbp->rgb[i];
 	    sc->s_vlen = bv_vlist_cmd_cnt(bvl);
@@ -606,7 +602,7 @@ bv_vlblock_obj(struct bv_vlblock *vbp, struct bview *v, const char *name)
 	    sc->s_color[0] = (rgb>>16);
 	    sc->s_color[1] = (rgb>>8);
 	    sc->s_color[2] = (rgb) & 0xFF;
-	    bu_vls_sprintf(&sc->s_name, "%s_%d_%d_%d", name, V3ARGS(sc->s_color));
+	    bu_vls_sprintf(&sc->s_name, "%s_%d_%d_%d", bu_vls_cstr(&s->s_name), V3ARGS(sc->s_color));
 	}
     }
 

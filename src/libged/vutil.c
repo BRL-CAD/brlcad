@@ -89,7 +89,7 @@ _ged_do_rot(struct ged *gedp,
 
     /* pure rotation */
     bn_mat_mul2(rmat, gedp->ged_gvp->gv_rotation);
-    bv_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp, NULL);
 
     return BRLCAD_OK;
 }
@@ -102,7 +102,7 @@ _ged_do_slew(struct ged *gedp, vect_t svec)
 
     MAT4X3PNT(model_center, gedp->ged_gvp->gv_view2model, svec);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_center);
-    bv_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp, NULL);
 
     return BRLCAD_OK;
 }
@@ -137,7 +137,7 @@ _ged_do_tra(struct ged *gedp,
 
     VSUB2(nvc, vc, delta);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, nvc);
-    bv_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp, NULL);
 
     return BRLCAD_OK;
 }

@@ -72,7 +72,7 @@ class QTCAD_EXPORT QgSW : public QWidget
 	struct fb *ifp = NULL;
 	struct bu_ptbl *dm_set = NULL;
 
-	void (*draw_custom)(struct bview *, void *) = NULL;
+	void (*draw_custom)(struct bview *, struct bu_ptbl *, void *) = NULL;
 	void *draw_udata = NULL;
 
 	void enableDefaultKeyBindings();

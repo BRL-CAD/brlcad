@@ -235,8 +235,8 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (gedp->new_cmd_forms) {
-	    struct bview *v = gedp->ged_gvp;
-	    bv_vlblock_obj(vbp, v, bu_vls_cstr(&nroot));
+	    struct bv_scene_obj *nobj = bv_vlblock_obj(vbp, NULL);
+	    bu_vls_sprintf(&nobj->s_name, "%s", bu_vls_cstr(&nroot));
 	} else {
 	    _ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_cstr(&vname), 0);
 	}

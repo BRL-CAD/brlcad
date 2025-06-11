@@ -31,15 +31,13 @@
 
 struct bview_set_internal {
     struct bu_ptbl views;
-    struct bu_ptbl shared_db_objs;
-    struct bu_ptbl shared_view_objs;
 
     struct bv_scene_obj  *free_scene_obj;
     struct bu_list vlfree;
 };
 
 struct bv_scene_obj_internal {
-    std::unordered_map<struct bview *, struct bv_scene_obj *> vobjs;
+    int info;
 };
 
 // Local Variables:
