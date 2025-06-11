@@ -23,19 +23,8 @@
  * specifically intended to allow the easy definition of common display list
  * types between otherwise independent libraries (libdm and libged, for
  * example).
- *
- *
- * NEXT STEPS:  get a selection set for the view organized, add commands that
- * allow the view2 command to create(view) and select (view or solid) objects,
- * and figure out how to allow per-object xy handling callbacks.  (The latter
- * will probably in the end be how we implement primitive editing as well...)
- *
- * Test case will be the polygon circle - create and resize.  May want to
- * switch the container being used from a raw array to a bu_ptbl...  eventually
- * would probably be better to have polygons be first class view scene
- * objects...
- *
  */
+
 #ifndef BV_DEFINES_H
 #define BV_DEFINES_H
 
@@ -66,10 +55,9 @@
 
 __BEGIN_DECLS
 
-/* Define view ranges.  The numbers -2048 and 2047 go all
- * the way back to the original angle-distance cursor code
- * that predates even BRL-CAD itself, but (at least right now)
- * there doesn't seem to be any documentation of why those
+/* Define view ranges.  The numbers -2048 and 2047 go all the way back to the
+ * original angle-distance cursor code that predates even BRL-CAD itself, but
+ * (at least right now) there doesn't seem to be any documentation of why those
  * specific values were chosen. */
 #define BV_MAX 2047.0
 #define BV_MIN -2048.0
@@ -110,10 +98,10 @@ struct bv_label {
 };
 
 
-/* Note - this container holds information both for data axes and for
- * the more elaborate visuals associated with the Archer style model axes.
- * The latter is a superset of the former, so there should be no need for
- * a separate data type. */
+/* Note - this container holds information both for data axes and for the more
+ * elaborate visuals associated with the Archer style model axes.  The latter
+ * is a superset of the former, so there should be no need for a separate data
+ * type. */
 struct bv_axes {
     int       draw;
     point_t   axes_pos;             /* in model coordinates */
@@ -137,14 +125,15 @@ struct bv_axes {
     int       tick_major_color[3];
 };
 
-// Many settings have defaults at the view level, and may be overridden for
+// Many settings have application level defaults that can be overridden for
 // individual scene objects.
 //
 // TODO - once this settles down, it will probably warrant a bu_structparse
 // for value setting
 struct bv_obj_settings {
 
-    int s_dmode;         	/**< @brief  draw mode: 0 - wireframe
+    int s_dmode;         	/**< @brief  draw modes (TODO - are these accurate?):
+				 *            0 - wireframe
 				 *	      1 - shaded bots and polysolids only (booleans NOT evaluated)
 				 *	      2 - shaded (booleans NOT evaluated)
 				 *	      3 - shaded (booleans evaluated)
@@ -175,13 +164,16 @@ struct bv_obj_settings {
  * rtcheck overlap visual:             BV_DBOBJ_BASED & BV_VIEWONLY
  * polygon/line/label:                 BV_VIEWONLY
  *
+ * TODO - the distinction between view and db objs at this level probably needs
+ * to go away - the application (or at least higher level libraries like
+ * libged) should be the one managing the semantic meanings of objects.
+ *
  * The distinction between objects (lines, labels, etc.) defined as
- * bv_scene_obj VIEW ONLY objects and the faceplate elements is objects
- * defined as bv_scene_obj objects DO exist in the 3D scene, and will move
- * as 3D elements when the view is manipulated (although label text is drawn
- * parallel to the view plane.)  Faceplate elements exist ONLY in the HUD and
- * are not managed as bv_scene_obj objects - they will not move with view
- * manipulation.
+ * bv_scene_obj VIEW ONLY objects and the faceplate elements is objects defined
+ * as bv_scene_obj objects DO exist in the 3D scene, and will move as 3D
+ * elements when the view is manipulated (although label text is drawn parallel
+ * to the view plane.)  Faceplate elements exist ONLY in the HUD and are not
+ * managed as bv_scene_obj objects - they will not move with view manipulation.
  */
 #define BV_DBOBJ_BASED    0x01
 #define BV_VIEWONLY       0x02
@@ -266,7 +258,13 @@ struct bv_scene_obj  {
      * NOTE: We store the following NOT for controlling the drawing, but so we
      * can determine if the vlist is current with respect to the parent view
      * settings.  These values SHOULD NOT be directly manipulated by any user
-     * facing commands (such as view obj). */
+     * facing commands (such as view obj).
+     *
+     * TODO - should the above be true?  Managing the loading of appropriate
+     * geometry for individual objects based on the local settings might make
+     * sense.  If we use these, perhaps the bview level settings can be removed
+     * altogether and the view won't need to care about anything except what is
+     * in the scene obj at draw time....  Maybe add these to bv_obj_settings?*/
     int     adaptive_wireframe;
     int     csg_obj;
     int     mesh_obj;
@@ -370,6 +368,9 @@ struct bv_scene_obj  {
  * typically will reference the root of a CSG tree and have solids below it.
  * We define them to have different types only to help keep straight in the
  * code what is a conceptually a group and what is an individual scene object.
+ *
+ * TODO - once the latest drawing code update matures, the path management
+ * done there should make the idea of a bv_scene_group moot.
  */
 #define bv_scene_group bv_scene_obj
 
