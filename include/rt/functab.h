@@ -298,6 +298,24 @@ struct rt_functab {
      * ARB8 perturbations will return an ARBN primitive. */
     int (*ft_perturb)(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t factor);
 #define RTFUNCTAB_FUNC_PERTURB_CAST(_func) ((int (*)(struct rt_db_internal **, const struct rt_db_internal *, int, fastf_t))((void (*)(void))_func))
+
+    /* Populate a scene object with the appropriate visualization data.  Unlike
+     * ft_plot, this routine handles multiple drawing modes (e.g. shaded) and
+     * adaptive plotting based on a view. If NULL parameters are passed for
+     * tolerance, defaults will be used.  If no view info is available, adaptive
+     * settings are ignored and the standard visuals will be generated.
+     *
+     * TODO - for combs, we either need the evaluated tree output or an agglomeration
+     * of all the leaf wireframes.  Normally the latter won't be what apps want,
+     * since it wouldn't reuse solid leaf wireframes, but from an API perspective
+     * it's what this function would return... */
+    int (*ft_scene_obj)(struct bv_scene_obj * /*s*/,
+		   struct rt_db_internal * /*ip*/,
+		   const struct bg_tess_tol * /*ttol*/,
+		   const struct bn_tol * /*tol*/,
+		   const struct bview * /*v*/);
+#define RTFUNCTAB_FUNC_SCENE_OBJ_CAST(_func) ((int (*)(struct bv_scene_obj *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *, const struct bview *))((void (*)(void))_func))
+
 };
 
 /**

@@ -265,6 +265,8 @@ set(
   primitives/rpc/rpc.c
   primitives/rpc/rpc_brep.cpp
   primitives/rpc/rpc_mirror.c
+  primitives/sample.c
+  primitives/sample_pnts.cpp
   primitives/script/script.c
   primitives/sketch/polygons.c
   primitives/sketch/sketch.c

@@ -499,7 +499,7 @@ comb_decimate(struct ged *gedp, struct directory *dp)
 	bbox_diag = DIST_PNT_PNT(obj_min, obj_max);
 
 	/* Get avg thickness from raytracer */
-	if (analyze_obj_to_pnts(NULL, &avg_thickness, dbip, bot_dp->d_namep, &btol, ANALYZE_OBJ_TO_PNTS_RAND, 100000, 5, 0)) {
+	if (rt_gen_obj_pnts(NULL, &avg_thickness, dbip, bot_dp->d_namep, &btol, RT_GEN_OBJ_PNTS_RAND, 100000, 5, 0)) {
 	    fs = 0.0005*bbox_diag;
 	} else {
 	    fs = 0.01*avg_thickness;

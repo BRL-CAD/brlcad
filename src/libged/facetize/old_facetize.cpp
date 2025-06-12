@@ -857,14 +857,14 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 	pnts->magic = RT_PNTS_INTERNAL_MAGIC;
 	pnts->scale = 0.0;
 	pnts->type = RT_PNT_TYPE_NRM;
-	flags = ANALYZE_OBJ_TO_PNTS_RAND;
+	flags = RT_GEN_OBJ_PNTS_RAND;
 	free_pnts = 1;
 
 	if (opts->verbosity) {
 	    bu_log("SPSR: generating %d points from %s\n", max_pnts, objname);
 	}
 
-	if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->dbip, objname, &btol, flags, max_pnts, opts->max_time, opts->verbosity)) {
+	if (rt_gen_obj_pnts(pnts, &avg_thickness, gedp->dbip, objname, &btol, flags, max_pnts, opts->max_time, opts->verbosity)) {
 	    r->failure_mode = FACETIZE_FAILURE_PNTGEN;
 	    ret = FACETIZE_FAILURE;
 	    goto ged_facetize_spsr_memfree;
@@ -970,7 +970,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 	tbot->faces = (int *)bu_malloc(sizeof(int) * tbot->num_faces * 3, "faces array");
 	memcpy(tbot->faces, bot->faces, sizeof(int) * tbot->num_faces *3);
 
-	flags = ANALYZE_OBJ_TO_PNTS_RAND;
+	flags = RT_GEN_OBJ_PNTS_RAND;
 	bu_vls_sprintf(&tmpname, "%s.tmp", newname);
 	if (db_lookup(gedp->dbip, bu_vls_addr(&tmpname), LOOKUP_QUIET) != RT_DIR_NULL) {
 	    bu_vls_printf(&tmpname, "-0");
@@ -983,7 +983,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 	    goto ged_facetize_spsr_memfree;
 	}
 
-	if (analyze_obj_to_pnts(NULL, &navg_thickness, gedp->dbip, bu_vls_addr(&tmpname), &btol, flags, max_pnts, opts->max_time, opts->verbosity)) {
+	if (rt_gen_obj_pnts(NULL, &navg_thickness, gedp->dbip, bu_vls_addr(&tmpname), &btol, flags, max_pnts, opts->max_time, opts->verbosity)) {
 	    bu_log("SPSR: could not raytrace temporary BoT %s\n", bu_vls_addr(&tmpname));
 	    ret = FACETIZE_FAILURE;
 	}
@@ -1169,15 +1169,15 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     zlen = fabs(rpp_max[Z] - rpp_min[Z]);
 
     /* Pick our mode(s) */
-    flags |= ANALYZE_OBJ_TO_PNTS_RAND;
-    flags |= ANALYZE_OBJ_TO_PNTS_SOBOL;
+    flags |= RT_GEN_OBJ_PNTS_RAND;
+    flags |= RT_GEN_OBJ_PNTS_SOBOL;
 
     if (opts->max_pnts) {
 	max_pnts = opts->max_pnts;
     }
 
     /* Shoot - we need both the avg thickness of the hit partitions and seed points */
-    if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->dbip, objname, &btol, flags, max_pnts, opts->max_time, opts->verbosity) || pnts->count <= 0) {
+    if (rt_gen_obj_pnts(pnts, &avg_thickness, gedp->dbip, objname, &btol, flags, max_pnts, opts->max_time, opts->verbosity) || pnts->count <= 0) {
 	r->failure_mode = FACETIZE_FAILURE_PNTGEN;
 	ret = FACETIZE_FAILURE;
 	goto ged_facetize_continuation_memfree;
