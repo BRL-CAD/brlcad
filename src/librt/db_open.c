@@ -40,9 +40,10 @@
 #endif
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/parallel.h"
 #include "bu/path.h"
-#include "bu/app.h"
+#include "bu/time.h"
 #include "vmath.h"
 #include "rt/db4.h"
 #include "raytrace.h"
@@ -652,11 +653,15 @@ db_i_internal_destroy(struct db_i_internal *i)
 {
     if (!i)
 	return;
+
+    if (i->mesh_c)
+	bv_mesh_lod_context_destroy(i->mesh_c);
+
     BU_PUT(i, struct db_i_internal);
 }
 
 int
-db_cache_init(struct db_i *dbip, int mode)
+db_cache_init(struct db_i *dbip, int mode, int verbose)
 {
     if (!dbip || !dbip->i)
 	return BRLCAD_ERROR;
@@ -674,7 +679,8 @@ db_cache_init(struct db_i *dbip, int mode)
     if (mode < 0)
 	return BRLCAD_OK;
 
-    // TODO - populate drawing and LoD data
+    // Populate drawing and LoD data
+    db_mesh_lod_init(dbip, verbose);
 
     // If default prep was requested, we're done
     if (!mode)

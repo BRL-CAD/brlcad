@@ -73,6 +73,8 @@ struct db_i_internal {
 
     /* BoT level of detail cached data for drawing */
     struct bv_mesh_lod_context *mesh_c;
+    int mesh_c_completed;
+    int mesh_c_target;
 
     // TODO - really need to get the rt prep cache container
     // in here and add a pointer slot to it for rt_db_internal

@@ -36,16 +36,10 @@
 __BEGIN_DECLS
 
 
-/**
- * For performant drawing, we sometimes cache data generated from primitives.
- * The details of how that data is handled are typically primitive specific,
- * but we do need a way to pass it through methods.  The opaque container
- * rt_cached_draw_data serves that purpose.
- */
-struct rt_cached_draw_data_internal;
-struct rt_cached_draw_data {
-    struct rt_cached_draw_data_internal *i;
-};
+/* Routines for managing the mesh LoD cache */
+RT_EXPORT extern void db_mesh_lod_init(struct db_i *dbip, int verbose);
+RT_EXPORT extern void db_mesh_lod_clear(struct db_i *dbip);
+RT_EXPORT extern int db_mesh_lod_update(struct db_i *dbip, struct directory *dp);
 
 /**
  * NOTE: Normally, librt doesn't have a concept of a "display" of the geometry.

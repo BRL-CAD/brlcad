@@ -103,6 +103,7 @@ set(
   bool_tess.c
   bundle.c
   cache.c
+  cache_lod.c
   cache_lz4.c
   cmd.c
   cyclic.c

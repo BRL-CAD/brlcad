@@ -249,7 +249,7 @@ RT_EXPORT extern void db_close(struct db_i *dbip);
  * Return codes:  BRLCAD_OK upon successful completion, BRLCAD_ERROR if
  * one or more caches failed to set up properly.
  */
-RT_EXPORT extern int db_cache_init(struct db_i *dbip, int mode);
+RT_EXPORT extern int db_cache_init(struct db_i *dbip, int mode, int verbose);
 
 __END_DECLS
 

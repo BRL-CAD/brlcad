@@ -298,7 +298,7 @@ rt_shaded_plot(struct bv_scene_obj *s, struct rt_db_internal *ip, const struct b
  * plotting
  */
 int
-rt_generic_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *v, struct rt_cached_draw_data *UNUSED(c))
+rt_generic_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *v)
 {
     int ret = BRLCAD_ERROR;
 
