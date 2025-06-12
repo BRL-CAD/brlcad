@@ -37,7 +37,7 @@
 void
 db_mesh_lod_init(struct db_i *dbip, int verbose) {
 
-    if (!dbip || !dbip->i)
+    if (!dbip || !dbip->i || dbip->i->mesh_c)
 	return;
 
     int64_t start, elapsed, overall_start;
@@ -108,7 +108,7 @@ db_mesh_lod_init(struct db_i *dbip, int verbose) {
 void
 db_mesh_lod_clear(struct db_i *dbip)
 {
-    if (!dbip || !dbip->i)
+    if (!dbip || !dbip->i || dbip->i->mesh_c)
 	return;
 
     bv_mesh_lod_clear_cache(dbip->i->mesh_c, 0);
@@ -117,7 +117,7 @@ db_mesh_lod_clear(struct db_i *dbip)
 int
 db_mesh_lod_update(struct db_i *dbip, struct directory *dp)
 {
-    if (!dbip || !dbip->i)
+    if (!dbip || !dbip->i || dbip->i->mesh_c)
 	return BRLCAD_ERROR;
 
     // No-op if this isn't a BoT
