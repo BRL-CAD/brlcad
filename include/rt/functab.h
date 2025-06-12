@@ -43,6 +43,7 @@
 #include "rt/application.h"
 #include "rt/db_internal.h"
 #include "rt/db_instance.h"
+#include "rt/directory.h"
 #include "rt/edit.h"
 #include "rt/hit.h"
 #include "rt/misc.h"
@@ -305,16 +306,25 @@ struct rt_functab {
      * tolerance, defaults will be used.  If no view info is available, adaptive
      * settings are ignored and the standard visuals will be generated.
      *
+     * Unlike most functab methods, we deliberately use a directory pointer and
+     * the database instance pointer as inputs rather than the rt_db_internal.
+     * This is for performance reasons - some primitives cache drawing data
+     * in a way that lets them draw more quickly than they could trying to process
+     * the full rt_db_internal primitive data, and in those cases we want to avoid
+     * the memory overhead of populating an rt_db_internal unless it is actually
+     * needed.
+     *
      * TODO - for combs, we either need the evaluated tree output or an agglomeration
      * of all the leaf wireframes.  Normally the latter won't be what apps want,
      * since it wouldn't reuse solid leaf wireframes, but from an API perspective
      * it's what this function would return... */
     int (*ft_scene_obj)(struct bv_scene_obj * /*s*/,
-		   struct rt_db_internal * /*ip*/,
+		   struct directory * /*dp*/,
+		   struct db_i * /*dbip*/,
 		   const struct bg_tess_tol * /*ttol*/,
 		   const struct bn_tol * /*tol*/,
 		   const struct bview * /*v*/);
-#define RTFUNCTAB_FUNC_SCENE_OBJ_CAST(_func) ((int (*)(struct bv_scene_obj *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *, const struct bview *))((void (*)(void))_func))
+#define RTFUNCTAB_FUNC_SCENE_OBJ_CAST(_func) ((int (*)(struct bv_scene_obj *, struct directory *, struct db_i *, const struct bg_tess_tol *, const struct bn_tol *, const struct bview *))((void (*)(void))_func))
 
 };
 

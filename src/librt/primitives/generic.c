@@ -298,14 +298,21 @@ rt_shaded_plot(struct bv_scene_obj *s, struct rt_db_internal *ip, const struct b
  * plotting
  */
 int
-rt_generic_scene_obj(struct bv_scene_obj *s, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *v)
+rt_generic_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *v, struct rt_cached_draw_data *UNUSED(c))
 {
     int ret = BRLCAD_ERROR;
 
-    if (!s || !ip)
+    if (!s || !dp || !dbip)
 	return BRLCAD_ERROR;
 
-    RT_CK_DB_INTERNAL(ip);
+    // In the generic case we don't have cached data, so we need to proceed straight
+    // to the rt_db_internal.  In some cases (like BoTs) we DON'T want to do this in
+    // all cases, since cracking the internal on large BoTs can be be relatively slow,
+    // but in most cases it's what we need to do.
+    struct rt_db_internal intern;
+    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+	return BRLCAD_ERROR;
+    RT_CK_DB_INTERNAL(&intern);
 
     // Clear out existing vlists - if we're calling this, we definitely don't want
     // any old data to linger.
@@ -330,10 +337,10 @@ rt_generic_scene_obj(struct bv_scene_obj *s, struct rt_db_internal *ip, const st
 	    // Shaded mode and hidden line mode need shaded eval (although they
 	    // do NOT attempt boolean evaluation.)  Fall back to wireframe mode
 	    // in case of tessellation failure.
-	    ret = rt_shaded_plot(s, ip, ttol, tol);
+	    ret = rt_shaded_plot(s, &intern, ttol, tol);
             if (ret != BRLCAD_OK) {
                 s->s_os->s_dmode = 0;
-		ret = rt_wireframe_plot(s, ip, ttol, tol, v);
+		ret = rt_wireframe_plot(s, &intern, ttol, tol, v);
 	    }
             break;
         case 3:
@@ -341,21 +348,24 @@ rt_generic_scene_obj(struct bv_scene_obj *s, struct rt_db_internal *ip, const st
 	    // boolean trees to evaluate.  For all other cases (which is what
 	    // rt_generic_scene_obj handles) just return the standard
 	    // wireframe.
-            ret = rt_wireframe_plot(s, ip, ttol, tol, v);
+            ret = rt_wireframe_plot(s, &intern, ttol, tol, v);
             break;
         case 5:
             // Draw triangles at points sampled by raytracing (this is an
 	    // evaluated drawing mode.)
-	    ret = rt_sample_pnts(s, ip);
+	    ret = rt_sample_pnts(s, &intern);
             break;
         default:
             // Default to wireframe
             s->s_os->s_dmode = 0;
-            ret = rt_wireframe_plot(s, ip, ttol, tol, v);
+            ret = rt_wireframe_plot(s, &intern, ttol, tol, v);
             break;
     }
 
     s->current = 1;
+
+    // Done with internal contents
+    rt_db_free_internal(&intern);
 
     return BRLCAD_OK;
 }
