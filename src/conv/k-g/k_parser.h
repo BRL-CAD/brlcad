@@ -81,6 +81,13 @@ struct KElementBearing {
 };
 
 
+struct KElementSeatBelt {
+    std::vector<int> nodes;
+    int              retractorId;
+    float            initialSlackLength;
+};
+
+
 struct KPart {
     std::string                        title;
     std::set<int>                      elements;
@@ -108,6 +115,14 @@ struct KSectionBeam {
     double              TT2;
     std::vector<double> D;
     double              CrossSectionalArea;//The definition on *ELEMENT_BEAM_THICKNESS overrides the value defined here.
+};
+
+
+
+struct KSectionSeatBelt {
+    std::string title;
+    float       area;
+    float       thickness;
 };
 
 
