@@ -163,6 +163,9 @@ rt_sample_pnts(struct bv_scene_obj *s, struct rt_db_internal *ip)
     if (ip->idb_type != ID_COMBINATION)
 	db_close(dbip);
 
+    // Update the bounding box
+    bv_scene_obj_bound(s, NULL);
+
     return BRLCAD_OK;
 }
 

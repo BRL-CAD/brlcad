@@ -165,6 +165,7 @@ set(
   primitives/bot/bot_edge.c
   primitives/bot/bot_mirror.c
   primitives/bot/bot_oriented_bbox.cpp
+  primitives/bot/bot_plot.cpp
   primitives/bot/btg.c
   primitives/bot/btgf.c
   primitives/bot/decimate.c
