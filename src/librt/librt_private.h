@@ -82,7 +82,7 @@ struct db_i_internal {
     // of cached prep even if they're using an inmem db...
 };
 
-struct db_i_internal * db_i_internal_create();
+struct db_i_internal * db_i_internal_create(void);
 void db_i_internal_destroy(struct db_i_internal *i);
 
 

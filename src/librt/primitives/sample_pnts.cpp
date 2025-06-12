@@ -487,7 +487,7 @@ rt_gen_obj_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, struct d
     /* Regardless of whether or not we're shooting the grid, it is our
      * guide for how many rays to fire */
     if (do_grid) {
-	fastf_t *rays;
+	fastf_t *rays = NULL;
 	grid_pnts = (struct bu_ptbl **)bu_calloc(ncpus+1, sizeof(struct bu_ptbl *), "local state");
 	for (i = 0; i < ncpus+1; i++) {
 	    /* per-cpu hit point storage */
