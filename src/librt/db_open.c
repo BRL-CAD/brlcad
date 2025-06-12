@@ -48,6 +48,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+#include "./librt_private.h"
 
 #ifndef SEEK_SET
 #  define SEEK_SET 0
@@ -145,6 +146,8 @@ db_open(const char *name, const char *mode)
 	    return DBI_NULL;
 	}
 
+	dbip->i = db_i_internal_create();
+
 	dbip->dbi_use_comb_instance_ids = 0;
 	const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
 	if (BU_STR_EQUAL(need_comb_inst, "1")) {
@@ -165,6 +168,8 @@ db_open(const char *name, const char *mode)
 	    bu_free((char *)dbip, "struct db_i");
 	    return DBI_NULL;
 	}
+
+	dbip->i = db_i_internal_create();
 
 	dbip->dbi_use_comb_instance_ids = 0;
 	const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
@@ -221,6 +226,7 @@ db_open(const char *name, const char *mode)
 
 	    bu_free((void *)argv[0], "db_open: argv[0]");
 	    bu_free((void *)argv, "db_open: argv");
+	    db_i_internal_destroy(dbip->i);
 	    bu_free((char *)dbip, "struct db_i");
 
 	    return DBI_NULL;
@@ -504,6 +510,7 @@ db_close(register struct db_i *dbip)
     }
 
     dbip->dbi_magic = (uint32_t)0x10101010;
+    db_i_internal_destroy(dbip->i);
     bu_free((char *)dbip, "struct db_i");
 }
 
@@ -630,6 +637,53 @@ db_sync(struct db_i *dbip)
     bu_semaphore_release(BU_SEM_SYSCALL);
 }
 
+struct db_i_internal *
+db_i_internal_create()
+{
+    struct db_i_internal *i;
+    BU_GET(i, struct db_i_internal);
+    i->dbi_magic = DBI_MAGIC;
+
+    return i;
+}
+
+void
+db_i_internal_destroy(struct db_i_internal *i)
+{
+    if (!i)
+	return;
+    BU_PUT(i, struct db_i_internal);
+}
+
+int
+db_cache_init(struct db_i *dbip, int mode)
+{
+    if (!dbip || !dbip->i)
+	return BRLCAD_ERROR;
+
+    // In-mem databases don't have on-disk caches
+    if (!!dbip->i)
+	return BRLCAD_OK;
+
+    // Do basic initialization no matter the mode
+    if (strlen(dbip->dbi_filename)) {
+	dbip->i->mesh_c = bv_mesh_lod_context_create(dbip->dbi_filename);
+    }
+
+    // If minimalist setup was requested, stop here.
+    if (mode < 0)
+	return BRLCAD_OK;
+
+    // TODO - populate drawing and LoD data
+
+    // If default prep was requested, we're done
+    if (!mode)
+	return BRLCAD_OK;
+
+    // TODO - prepare BRep prep caches
+
+    return BRLCAD_OK;
+}
 
 /** @} */
 /*
