@@ -136,9 +136,8 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
     /* New database open, need to initialize reference counts */
     db_update_nref(gedp->dbip, &rt_uniresource);
 
-    // LoD context creation (DbiState initialization can use info
-    // stored here, so do this first)
-    gedp->ged_lod = bv_mesh_lod_context_create(argv[0]);
+    // Set up caches
+    db_cache_init(dbip, 0, 0);
 
     // If enabled, set up the DbiState container for fast structure access
     if (gedp->new_cmd_forms)
