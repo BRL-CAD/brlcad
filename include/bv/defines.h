@@ -217,8 +217,14 @@ struct bv_scene_obj  {
     /* Knowledge of how to create/update s_vlist and the other 3D geometry data, as well as
      * manage any custom data specific to this object */
     void *s_i_data;  /**< @brief custom view data (bv_line_seg, bv_label, bv_polyon, etc) */
-    int (*s_update_callback)(struct bv_scene_obj *, struct bview *, int);  /**< @brief custom update/generator for s_vlist */
     void (*s_free_callback)(struct bv_scene_obj *);  /**< @brief free any info stored in s_i_data, s_path and draw_data */
+
+    // TODO - maybe this can be replaced with a "reset" flag which will be used by ft_scene_obj
+    // to determine whether to force a rebuild of the vlist info...  If the responsibility for
+    // ensuring current data shifts to the app rather than libdm, the scene obj shouldn't have
+    // to encode knowledge of how to update itself...
+    int reset;
+    int (*s_update_callback)(struct bv_scene_obj *, struct bview *, int);  /**< @brief custom update/generator for s_vlist */
 
     /* 3D vector list geometry data */
     struct bu_list s_vlist;	/**< @brief  Pointer to unclipped vector list */
