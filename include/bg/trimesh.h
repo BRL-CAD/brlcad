@@ -384,6 +384,14 @@ bg_trimesh_diff(
 	fastf_t dist_tol
 	);
 
+BG_EXPORT extern unsigned long long
+bg_trimesh_hash(
+	const int *f, size_t num_f, const point_t *p, size_t num_p,
+	fastf_t dist_tol
+	);
+
+
+
 
 __END_DECLS
 

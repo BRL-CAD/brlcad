@@ -33,6 +33,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "bu/hash.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bg/trimesh.h"
@@ -167,6 +168,101 @@ bg_trimesh_diff(
 
     // Verts matched, all triangles found - not different
     return 0;
+}
+
+static fastf_t
+dbl_trunc(fastf_t d, int maxdec)
+{
+    double m = std::pow(10, maxdec);
+    return std::trunc(d * m) / m;
+}
+
+extern "C" unsigned long long
+bg_trimesh_hash(
+	const int *f, size_t num_f, const point_t *p, size_t num_p,
+	fastf_t dist_tol
+	)
+{
+    if (!f || !p || !num_p)
+	return 0;
+
+    // OK, we have something to hash
+    struct bu_data_hash_state *s = bu_data_hash_create();
+
+    // Sort the vertices so we can get a stable hash value.
+    std::vector<tm_diff_vert> pv;
+    for (size_t i = 0; i < num_p; i++) {
+	tm_diff_vert dv;
+	dv.x = p[i][X];
+	dv.y = p[i][Y];
+	dv.z = p[i][Z];
+	dv.orig_ind = i;
+	pv.push_back(dv);
+    }
+    std::sort(pv.begin(), pv.end(), vcmp);
+
+    // Truncate the vertices using dist_tol.
+    int maxdec = std::fabs(std::log10(dist_tol));
+    for (size_t i = 0; i < pv.size(); i++) {
+	pv[i].x = dbl_trunc(pv[i].x, maxdec);
+	pv[i].y = dbl_trunc(pv[i].y, maxdec);
+	pv[i].z = dbl_trunc(pv[i].z, maxdec);
+    }
+
+    // Hash the vertices
+    for (size_t i = 0; i < pv.size(); i++) {
+	bu_data_hash_update(s, &pv[i].x, sizeof(fastf_t));
+	bu_data_hash_update(s, &pv[i].y, sizeof(fastf_t));
+	bu_data_hash_update(s, &pv[i].z, sizeof(fastf_t));
+
+    }
+
+    // If we have no faces, vertices are all we have to go on.
+    // Finalize the hash and return.
+    if (!num_f) {
+	unsigned long long ret = bu_data_hash_val(s);
+	bu_data_hash_destroy(s);
+	return ret;
+    }
+
+    // Next up is topology.  faces reference original points arrays, which may
+    // not line up - make a map from the old arrays to the new (which do line
+    // up) and use that to set up triangles
+    std::unordered_map<size_t, size_t> ind_map;
+    for (size_t i = 0; i < pv.size(); i++)
+	ind_map[i] = pv[i].orig_ind;
+
+    for (size_t i = 0; i < num_f; i++) {
+	// A triangle has three vertices, but the same triangle
+	// may be stored with different starting indices. Store
+	// the first two indices again for simplicity.
+	size_t tri[5];
+	tri[0] = ind_map[f[3*i+0]];
+	tri[1] = ind_map[f[3*i+1]];
+	tri[2] = ind_map[f[3*i+2]];
+	tri[3] = tri[0];
+	tri[4] = tri[1];
+
+	// For stability, find the lowest numerical index and use
+	// that as our starting point for the hash.
+	size_t offset = 0;
+	size_t tri_lowest = tri[0];
+	for (int j = 1; j < 3; j++) {
+	    if (tri[j] < tri_lowest) {
+		offset = j;
+		break;
+	    }
+	}
+
+	// Hash the three indices
+	for (size_t j = offset; j < offset+3; j++) {
+	    bu_data_hash_update(s, &tri[j], sizeof(size_t));
+	}
+    }
+
+    unsigned long long ret = bu_data_hash_val(s);
+    bu_data_hash_destroy(s);
+    return ret;
 }
 
 // Local Variables:

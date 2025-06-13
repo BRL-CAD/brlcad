@@ -66,40 +66,90 @@ pca_bot(struct rt_bot_internal *bot)
     return moved_bot;
 }
 
-int
-main(int argc, char *argv[])
+struct hash_results {
+    std::unordered_map<struct directory *, unsigned long long> dp_hash;
+    std::unordered_map<unsigned long long, struct directory *> hash_dp;
+    std::unordered_map<unsigned long long, std::unordered_set<struct directory *>> bot_groups_hashed;
+};
+
+// Test hash method
+void
+test_hash(struct hash_results *h, struct db_i *dbip, struct bu_ptbl *bots)
 {
-    int64_t start, elapsed;
-    fastf_t seconds;
+    if (!h || !dbip || !bots)
+	return;
 
-    bu_setprogname(argv[0]);
+    int64_t start = bu_gettime();
 
-    if (argc != 2) {
-	bu_exit(1, "Usage: %s file.g", argv[0]);
+    // Iterate over all BoTs
+    size_t bot_cnt = BU_PTBL_LEN(bots);
+    for(size_t i = 0; i < bot_cnt; i++) {
+        struct directory *wdp = (struct directory *)BU_PTBL_GET(bots, i);
+
+	bu_log("Processing %s (%zd of %zd)\n", wdp->d_namep, i, bot_cnt);
+
+	// Make a PCA version of the BoT
+	struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
+	rt_db_get_internal(&intern, wdp, dbip, NULL, &rt_uniresource);
+	struct rt_bot_internal *orig_bot = (struct rt_bot_internal *)(intern.idb_ptr);
+	struct rt_bot_internal *pca_nbot = pca_bot(orig_bot);
+
+	// Hash the PCA version
+	point_t *ovp = (point_t *)pca_nbot->vertices;
+	unsigned long long ohash = bg_trimesh_hash(
+		pca_nbot->faces, pca_nbot->num_faces, ovp, pca_nbot->num_vertices,
+		VUNITIZE_TOL
+		);
+
+	// Done with PCA bot
+	rt_bot_internal_free(pca_nbot);
+	rt_db_free_internal(&intern);
+
+	// Record the results
+	h->dp_hash[wdp] = ohash;
+	h->hash_dp[ohash] = wdp;
+	h->bot_groups_hashed[ohash].insert(wdp);
     }
 
-    struct db_i *dbip = db_open(argv[1], DB_OPEN_READONLY);
-    if (dbip == DBI_NULL)
-	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
+    std::unordered_map<unsigned long long, std::unordered_set<struct directory *>>::iterator b_it;
+    size_t gcnt = 0;
+    size_t gobjs = 0;
+    for (b_it = h->bot_groups_hashed.begin(); b_it != h->bot_groups_hashed.end(); ++b_it) {
+	// Anything by itself in a set didn't form any groups
+	if (b_it->second.size() == 1)
+	    continue;
 
-    if (db_dirbuild(dbip) < 0)
-	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
+	// OK, found a non-trivial group
+	gcnt++;
+	gobjs += b_it->second.size();
+    }
 
-    db_update_nref(dbip, &rt_uniresource);
+    int64_t elapsed = bu_gettime() - start;
+    fastf_t seconds = elapsed / 1000000.0;
 
-    start = bu_gettime();
+    bu_log("Hashing complete (%f sec) - %zd match groups found, %zd of %zd BoTs are part of a group.\n", seconds, gcnt, gobjs, BU_PTBL_LEN(bots));
+}
 
-    // Find all BoT objects in the .g database
+struct diff_results {
+    std::unordered_map<struct directory *, std::unordered_set<struct directory *>> bot_groups;
+};
+
+// Test diff method
+void
+test_diff(struct diff_results *d, struct db_i *dbip, struct bu_ptbl *bots_tbl)
+{
+    if (!d)
+	return;
+
+    int64_t start = bu_gettime();
+
+    // Build a set of BoTs
     std::unordered_set<struct directory *> bots;
-    struct bu_ptbl bot_objs = BU_PTBL_INIT_ZERO;
-    const char *bot_search = "-type bot";
-    (void)db_search(&bot_objs, DB_SEARCH_RETURN_UNIQ_DP, bot_search, 0, NULL, dbip, NULL, NULL, NULL);
-    size_t bot_cnt = BU_PTBL_LEN(&bot_objs);
+    size_t bot_cnt = BU_PTBL_LEN(bots_tbl);
     for(size_t i = 0; i < bot_cnt; i++) {
-        struct directory *dp = (struct directory *)BU_PTBL_GET(&bot_objs, i);
+        struct directory *dp = (struct directory *)BU_PTBL_GET(bots_tbl, i);
         bots.insert(dp);
     }
-    db_search_free(&bot_objs);
 
     // We can't afford to load everything into memory and leave it there, and most
     // BoTs won't be matches trivially based on counts, so make a single up front pass
@@ -118,8 +168,7 @@ main(int argc, char *argv[])
 	rt_db_free_internal(&intern);
     }
 
-    // If we have BoTs, we're going to be building up sets
-    std::unordered_map<struct directory *, std::unordered_set<struct directory *>> bot_groups;
+    // Work through the set of BoTs looking for matches
     std::unordered_set<struct directory *> clear_dps;
     size_t bots_processed = 0;
     while (!bots.empty()) {
@@ -127,6 +176,7 @@ main(int argc, char *argv[])
 	struct directory *wdp = *bots.begin();
 	bots.erase(bots.begin());
 	bots_processed++;
+
 	bu_log("Processing %s (%zd of %zd)\n", wdp->d_namep, bots_processed, bot_cnt);
 
 	// Make a pca version of the BoT
@@ -138,6 +188,7 @@ main(int argc, char *argv[])
 
 	// For each of the remaining BoTs, see if its PCA version matches pca_g
 	for (d_it = bots.begin(); d_it != bots.end(); ++d_it) {
+
 	    struct directory *cdp = *d_it;
 
 	    // Can we trivially rule it out?
@@ -145,7 +196,6 @@ main(int argc, char *argv[])
 		continue;
 
 	    // Passes the trivial checks - time for PCA and bg_trimesh_diff
-	    //bu_log("  checking %s\n", cdp->d_namep);
 	    struct rt_db_internal cintern = RT_DB_INTERNAL_INIT_ZERO;
 	    rt_db_get_internal(&cintern, cdp, dbip, NULL, &rt_uniresource);
 	    struct rt_bot_internal *cbot = (struct rt_bot_internal *)(cintern.idb_ptr);
@@ -158,7 +208,7 @@ main(int argc, char *argv[])
 		    VUNITIZE_TOL
 		    );
 
-	    // Free up the internal memory for cdp
+	    // We have our diff answer - free up the internal memory for cdp
 	    if (cbot != pca_cbot)
 		rt_bot_internal_free(pca_cbot);
 	    rt_db_free_internal(&cintern);
@@ -166,7 +216,7 @@ main(int argc, char *argv[])
 	    // If there is no difference per bg_trimesh_diff, we found a PCA
 	    // match - record it
 	    if (!is_diff) {
-		bot_groups[wdp].insert(cdp);
+		d->bot_groups[wdp].insert(cdp);
 		clear_dps.insert(cdp);
 		bots_processed++;
 	    }
@@ -183,19 +233,51 @@ main(int argc, char *argv[])
 	clear_dps.clear();
     }
 
-    elapsed = bu_gettime() - start;
-    seconds = elapsed / 1000000.0;
+    int64_t elapsed = bu_gettime() - start;
+    fastf_t seconds = elapsed / 1000000.0;
 
     // Get a count of all objects that would up part of some group
     std::unordered_map<struct directory *, std::unordered_set<struct directory *>>::iterator bg_it;
     size_t gobjs = 0;
-    for (bg_it = bot_groups.begin(); bg_it != bot_groups.end(); ++bg_it) {
-	gobjs++;
-	gobjs += bg_it->second.size();
+    for (bg_it = d->bot_groups.begin(); bg_it != d->bot_groups.end(); ++bg_it) {
+	gobjs++;  // Account for the key dp
+	gobjs += bg_it->second.size(); // Add the matches
     }
 
-    bu_log("Matching check complete (%f sec) - %zd match groups found, %zd of %zd BoTs are part of a group.\n",seconds, bot_groups.size(), gobjs, bot_cnt);
+    bu_log("Diff matching check complete (%f sec) - %zd match groups found, %zd of %zd BoTs are part of a group.\n",seconds, d->bot_groups.size(), gobjs, bot_cnt);
+}
 
+
+int
+main(int argc, char *argv[])
+{
+    bu_setprogname(argv[0]);
+
+    if (argc != 2) {
+	bu_exit(1, "Usage: %s file.g", argv[0]);
+    }
+
+    struct db_i *dbip = db_open(argv[1], DB_OPEN_READONLY);
+    if (dbip == DBI_NULL)
+	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
+
+    if (db_dirbuild(dbip) < 0)
+	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
+
+    db_update_nref(dbip, &rt_uniresource);
+
+    // Find all BoT objects in the .g database
+    struct bu_ptbl bot_objs = BU_PTBL_INIT_ZERO;
+    const char *bot_search = "-type bot";
+    (void)db_search(&bot_objs, DB_SEARCH_RETURN_UNIQ_DP, bot_search, 0, NULL, dbip, NULL, NULL, NULL);
+
+    struct hash_results h;
+    test_hash(&h, dbip, &bot_objs);
+
+    struct diff_results d;
+    test_diff(&d, dbip, &bot_objs);
+
+#if 0
     // Print any groups found
     for(bg_it = bot_groups.begin(); bg_it != bot_groups.end(); ++bg_it) {
 	if (!bg_it->second.size())
@@ -205,7 +287,9 @@ main(int argc, char *argv[])
 	    bu_log("\t%s\n", (*d_it)->d_namep);
 	}
     }
+#endif
 
+    db_search_free(&bot_objs);
     return 0;
 }
 
