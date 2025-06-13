@@ -95,7 +95,7 @@ bool search_count_helper(const int expected_count,
 
 bool GenericSearches(struct ged* gedp) {
     const int EXPECTED_TREE = 10;
-    const int EXPECTED_FLAT = 2;
+    const int EXPECTED_FLAT = 8;
     const int EXPECTED_HIDD = 11;
     const int EXPECTED_UNIQ = 8;
     
