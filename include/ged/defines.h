@@ -182,10 +182,6 @@ struct ged {
      * than GED. */
     struct bu_ptbl              ged_free_views;
 
-    /* Drawing data associated with this .g file */
-    struct bv_mesh_lod_context  *ged_lod;
-
-
     void                        *u_data; /**< @brief User data associated with this ged instance */
 
     /** for catching log messages */
