@@ -126,8 +126,10 @@ db_mesh_lod_update(struct db_i *dbip, const char *name)
 
     // If we have existing data, clear it.
     unsigned long long key = bv_mesh_lod_key_get(dbip->i->mesh_c, name);
-    if (key)
+    if (key) {
 	bv_mesh_lod_clear_cache(dbip->i->mesh_c, key);
+	bv_mesh_lod_key_put(dbip->i->mesh_c, name, 0);
+    }
 
     // If this isn't an active BoT, we're done.
     struct directory *dp = db_lookup(dbip, name, LOOKUP_QUIET);
@@ -174,6 +176,21 @@ db_mesh_lod_update(struct db_i *dbip, const char *name)
     bv_mesh_lod_destroy(lod);
 
     return BRLCAD_OK;
+}
+
+struct bv_mesh_lod *
+db_mesh_lod_get(struct db_i *dbip, const char *name)
+{
+    if (!dbip || !name)
+	return NULL;
+
+    struct bv_mesh_lod *lod = NULL;
+
+    unsigned long long key = bv_mesh_lod_key_get(dbip->i->mesh_c, name);
+    if (key)
+	lod = bv_mesh_lod_create(dbip->i->mesh_c, key);
+
+    return lod;
 }
 
 /*
