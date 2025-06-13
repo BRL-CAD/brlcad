@@ -639,7 +639,7 @@ db_sync(struct db_i *dbip)
 }
 
 struct db_i_internal *
-db_i_internal_create()
+db_i_internal_create(void)
 {
     struct db_i_internal *i;
     BU_GET(i, struct db_i_internal);
