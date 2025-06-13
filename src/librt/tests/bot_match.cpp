@@ -74,19 +74,22 @@ struct hash_results {
 
 // Test hash method
 void
-test_hash(struct hash_results *h, struct db_i *dbip, struct bu_ptbl *bots)
+test_hash(struct hash_results *h, struct db_i *dbip, std::vector<struct directory *> &bots)
 {
-    if (!h || !dbip || !bots)
+    if (!h || !dbip)
 	return;
 
     int64_t start = bu_gettime();
+    int64_t msgtime = bu_gettime();
 
     // Iterate over all BoTs
-    size_t bot_cnt = BU_PTBL_LEN(bots);
-    for(size_t i = 0; i < bot_cnt; i++) {
-        struct directory *wdp = (struct directory *)BU_PTBL_GET(bots, i);
+    for(size_t i = 0; i < bots.size(); i++) {
+        struct directory *wdp = bots[i];
 
-	bu_log("Processing %s (%zd of %zd)\n", wdp->d_namep, i, bot_cnt);
+	if (bu_gettime() - msgtime > 5000000.0) {
+	    bu_log("Processing %s (%zd of %zd)\n", wdp->d_namep, i, bots.size());
+	    msgtime = bu_gettime();
+	}
 
 	// Make a PCA version of the BoT
 	struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
@@ -127,7 +130,7 @@ test_hash(struct hash_results *h, struct db_i *dbip, struct bu_ptbl *bots)
     int64_t elapsed = bu_gettime() - start;
     fastf_t seconds = elapsed / 1000000.0;
 
-    bu_log("Hashing complete (%f sec) - %zd match groups found, %zd of %zd BoTs are part of a group.\n", seconds, gcnt, gobjs, BU_PTBL_LEN(bots));
+    bu_log("Hashing complete (%f sec) - %zd match groups found, %zd of %zd BoTs are part of a group.\n", seconds, gcnt, gobjs, bots.size());
 }
 
 struct diff_results {
@@ -136,19 +139,17 @@ struct diff_results {
 
 // Test diff method
 void
-test_diff(struct diff_results *d, struct db_i *dbip, struct bu_ptbl *bots_tbl)
+test_diff(struct diff_results *d, struct db_i *dbip, std::vector<struct directory *> &vbots)
 {
-    if (!d)
+    if (!d || !dbip)
 	return;
 
     int64_t start = bu_gettime();
 
     // Build a set of BoTs
     std::unordered_set<struct directory *> bots;
-    size_t bot_cnt = BU_PTBL_LEN(bots_tbl);
-    for(size_t i = 0; i < bot_cnt; i++) {
-        struct directory *dp = (struct directory *)BU_PTBL_GET(bots_tbl, i);
-        bots.insert(dp);
+    for(size_t i = 0; i < vbots.size(); i++) {
+        bots.insert(vbots[i]);
     }
 
     // We can't afford to load everything into memory and leave it there, and most
@@ -171,13 +172,17 @@ test_diff(struct diff_results *d, struct db_i *dbip, struct bu_ptbl *bots_tbl)
     // Work through the set of BoTs looking for matches
     std::unordered_set<struct directory *> clear_dps;
     size_t bots_processed = 0;
+    int64_t msgtime = bu_gettime();
     while (!bots.empty()) {
 	// Pop the next BoT off the set
 	struct directory *wdp = *bots.begin();
 	bots.erase(bots.begin());
 	bots_processed++;
 
-	bu_log("Processing %s (%zd of %zd)\n", wdp->d_namep, bots_processed, bot_cnt);
+	if (bu_gettime() - msgtime > 5000000.0) {
+	    bu_log("Processing %s (%zd of %zd)\n", wdp->d_namep, bots_processed, vbots.size());
+	    msgtime = bu_gettime();
+	}
 
 	// Make a pca version of the BoT
 	struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
@@ -244,7 +249,7 @@ test_diff(struct diff_results *d, struct db_i *dbip, struct bu_ptbl *bots_tbl)
 	gobjs += bg_it->second.size(); // Add the matches
     }
 
-    bu_log("Diff matching check complete (%f sec) - %zd match groups found, %zd of %zd BoTs are part of a group.\n",seconds, d->bot_groups.size(), gobjs, bot_cnt);
+    bu_log("Diff matching check complete (%f sec) - %zd match groups found, %zd of %zd BoTs are part of a group.\n",seconds, d->bot_groups.size(), gobjs, vbots.size());
 }
 
 
@@ -257,6 +262,8 @@ main(int argc, char *argv[])
 	bu_exit(1, "Usage: %s file.g", argv[0]);
     }
 
+    int64_t start = bu_gettime();
+
     struct db_i *dbip = db_open(argv[1], DB_OPEN_READONLY);
     if (dbip == DBI_NULL)
 	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
@@ -266,16 +273,46 @@ main(int argc, char *argv[])
 
     db_update_nref(dbip, &rt_uniresource);
 
+    int64_t elapsed = bu_gettime() - start;
+    fastf_t seconds = elapsed / 1000000.0;
+
+    bu_log("Setup time: %g seconds\n", seconds);
+
     // Find all BoT objects in the .g database
+    std::vector<struct directory *> bots;
+    start = bu_gettime();
+#if 0
+    // NOTE - several seconds slower than just directly
+    // iterating over the hashes on a large model...
     struct bu_ptbl bot_objs = BU_PTBL_INIT_ZERO;
     const char *bot_search = "-type bot";
-    (void)db_search(&bot_objs, DB_SEARCH_RETURN_UNIQ_DP, bot_search, 0, NULL, dbip, NULL, NULL, NULL);
+    (void)db_search(&bot_objs, DB_SEARCH_RETURN_UNIQ_DP|DB_SEARCH_FLAT, bot_search, 0, NULL, dbip, NULL, NULL, NULL);
+    for (size_t i = 0; i < BU_PTBL_LEN(&bot_objs); i++)
+	bots.push_back((struct directory *)BU_PTBL_GET(&bot_objs, i));
+    db_search_free(&bot_objs);
+#else
+    for (int i = 0; i < RT_DBNHASH; i++) {
+	struct directory *dp;
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
+		continue;
+	    if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
+		continue;
+	    bots.push_back(dp);
+	}
+    }
+#endif
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+
+    bu_log("Initial BoT search time: %g seconds\n", seconds);
+
 
     struct hash_results h;
-    test_hash(&h, dbip, &bot_objs);
+    test_hash(&h, dbip, bots);
 
     struct diff_results d;
-    test_diff(&d, dbip, &bot_objs);
+    test_diff(&d, dbip, bots);
 
 #if 0
     // Print any groups found
@@ -289,7 +326,6 @@ main(int argc, char *argv[])
     }
 #endif
 
-    db_search_free(&bot_objs);
     return 0;
 }
 
