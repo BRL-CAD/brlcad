@@ -545,7 +545,7 @@ bv_view_objs_rect_select(struct bu_ptbl *sset, struct bview *v, int x1, int y1, 
 }
 
 static int
-_obj_visible(struct bv_scene_obj *s, struct bview *v)
+_obj_visible(struct bv_scene_obj *s, const struct bview *v)
 {
     if (bg_sat_aabb_obb(s->bmin, s->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3)) {
 	bv_log(3, "obj_visible[%s] - passed bg_sat_abb_obb: %f %f %f -> %f %f %f", bu_vls_cstr(&v->gv_name), V3ARGS(s->bmin), V3ARGS(s->bmax));
@@ -2021,9 +2021,8 @@ bv_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
     return sp->curr_level;
 }
 
-
 extern "C" int
-bv_mesh_lod_view(struct bv_scene_obj *s, struct bview *v, int reset)
+bv_mesh_lod_calc_level(struct bv_scene_obj *s, const struct bview *v)
 {
     if (!s || !v)
 	return -1;
@@ -2033,18 +2032,38 @@ bv_mesh_lod_view(struct bv_scene_obj *s, struct bview *v, int reset)
 
     struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)l->i;
     POPState *sp = i->s;
-    int ret = sp->curr_level;
     int vscale = (int)((double)sp->get_level(v->gv_size) * v->gv_s->lod_scale);
     vscale = (vscale < 0) ? 0 : vscale;
     vscale = (vscale >= POP_MAXLEVEL) ? POP_MAXLEVEL-1 : vscale;
 
+    return vscale;
+}
+
+extern "C" int
+bv_mesh_lod_view(struct bv_scene_obj *s, const struct bview *v, int reset)
+{
+    if (!s || !v)
+	return -1;
+    struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
+    if (!l)
+	return -1;
+
+    // Unpack the pop state
+    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)l->i;
+    POPState *sp = i->s;
+
+    // If the object is not visible in the scene, nothing to do - we're
+    // not changing data for a non-visible object.
+    if (!_obj_visible(s, v))
+	return sp->curr_level;
+
+    int vscale = bv_mesh_lod_calc_level(s, v);
+
+    int ret = bv_mesh_lod_level(s, vscale, reset);
+
     bv_log(2, "bv_mesh_lod_view %s[%s][%d]", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name), vscale);
 
-    // If the object is not visible in the scene, don't change the data
     //bu_log("min: %f %f %f max: %f %f %f\n", V3ARGS(s->bmin), V3ARGS(s->bmax));
-    if (_obj_visible(s, v))
-	ret = bv_mesh_lod_level(s, vscale, reset);
-
     return ret;
 }
 
