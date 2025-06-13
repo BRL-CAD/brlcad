@@ -144,7 +144,6 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     dd.v = v;
     dd.tol = &wdbp->wdb_tol;
     dd.ttol = &wdbp->wdb_ttol;
-    dd.mesh_c = gedp->ged_lod;
     dd.color_inherit = 0;
     dd.bound_only = 0;
     dd.s_size = &s_size;

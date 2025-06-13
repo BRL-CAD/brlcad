@@ -70,9 +70,6 @@ ged_close(struct ged *gedp)
 	gedp->dbip = NULL;
     }
 
-    if (gedp->ged_lod)
-	bv_mesh_lod_context_destroy(gedp->ged_lod);
-
     /* Terminate any ged subprocesses */
     if (gedp != GED_NULL) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
@@ -383,7 +380,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 
     db_update_nref(gedp->dbip, &rt_uniresource);
 
-    gedp->ged_lod = bv_mesh_lod_context_create(filename);
+    db_cache_init(gedp->dbip, 0, 0);
 
     return gedp;
 }

@@ -1288,30 +1288,25 @@ GObj::bbox(point_t *min, point_t *max)
 
     // There is a second cache we can ask about this - the LoD cache may also
     // know what we need.
-    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && d->gedp->ged_lod) {
-	unsigned long long key = bv_mesh_lod_key_get(d->gedp->ged_lod, dp->d_namep);
-	if (key) {
-	    struct bv_mesh_lod *lod = bv_mesh_lod_create(d->gedp->ged_lod, key);
-	    if (lod) {
-		vect_t bmin, bmax;
-		VMOVE(bmin, lod->bmin);
-		VMOVE(bmax, lod->bmax);
+    struct bv_mesh_lod *lod = db_mesh_lod_get(d->gedp->dbip, dp->d_namep);
+    if (lod) {
+	vect_t bmin, bmax;
+	VMOVE(bmin, lod->bmin);
+	VMOVE(bmax, lod->bmax);
 
-		// Update drawing cache with LoD cache values
-		std::stringstream s;
-		s.write(reinterpret_cast<const char *>(&bmin), sizeof(bmin));
-		s.write(reinterpret_cast<const char *>(&bmax), sizeof(bmax));
-		cache_write(d->dcache, hash, CACHE_OBJ_BOUNDS, s);
+	// Update drawing cache with LoD cache values
+	std::stringstream s;
+	s.write(reinterpret_cast<const char *>(&bmin), sizeof(bmin));
+	s.write(reinterpret_cast<const char *>(&bmax), sizeof(bmax));
+	cache_write(d->dcache, hash, CACHE_OBJ_BOUNDS, s);
 
-		VMOVE(bb_min, bmin);
-		VMOVE(bb_max, bmax);
-		bb_valid = true;
+	VMOVE(bb_min, bmin);
+	VMOVE(bb_max, bmax);
+	bb_valid = true;
 
-		VMINMAX(*min, *max, bb_min);
-		VMINMAX(*min, *max, bb_max);
-		return;
-	    }
-	}
+	VMINMAX(*min, *max, bb_min);
+	VMINMAX(*min, *max, bb_max);
+	return;
     }
 
     // Not cached - need to ask librt.  This is the slow operation.
