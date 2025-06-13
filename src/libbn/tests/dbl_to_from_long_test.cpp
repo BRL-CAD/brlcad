@@ -41,10 +41,26 @@
 #endif
 
 double
-dtrunc(double d, int maxdec)
+dclamp(double d, int maxdec, double tol)
 {
-    double m = std::pow(10, maxdec);
-    return std::trunc(d * m) / m;
+    // Always return positive zero if we're
+    // too close to zero
+    if (std::fabs(d) < tol)
+        return 0.0;
+    double m = std::pow(10, maxdec + 1);
+    double r = std::round(m * d);
+    return std::trunc(r) / m;
+}
+
+void
+clamp_test(double n1, double n2, double tol)
+{
+    long toll = fabs(std::log10(tol))+1;
+    std::cout << "tol digits(" << tol << "): " << toll << "\n";
+    double n1c = dclamp(n1, toll, tol);
+    std::cout << "n1 -> n1c: " << n1 << " -> " << n1c << "\n";
+    double n2c = dclamp(n2, toll, tol);
+    std::cout << "n2 -> n2c: " << n2 << " -> " << n2c << "\n";
 }
 
 int main(int ac, const char **av)
@@ -68,13 +84,19 @@ int main(int ac, const char **av)
     std::cout << "Conversion of long back to double: " << std::setprecision(15) << dbl_restore << "\n";
 
 
-    // While we're at it, test truncating the input number to "clip off"
+    // While we're at it, test clamping the input number to "clip off"
     // digits below the magnitude of the specified tolerance.
     double tol = 0.005;
     long toll = fabs(std::log10(tol))+1;
     std::cout << "tol digits(" << tol << "): " << toll << "\n";
-    double toltrunc = dtrunc(test_num, toll);
-    std::cout << "toltrunc: " << toltrunc << "\n";
+    double tolclamp = dclamp(test_num, toll, tol);
+    std::cout << "tolclamp: " << tolclamp << "\n";
+
+    tol = 0.0000005;
+    clamp_test(-82.803999999998268, -82.804000000000087, tol);
+    clamp_test(-0.000000000008, 0.000000000008, tol);
+    tol = 1.0e-7;
+    clamp_test(-0.33209317002297212, -0.33209316441639203, tol);
 
     return 0;
 }

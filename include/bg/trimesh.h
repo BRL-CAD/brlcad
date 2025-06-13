@@ -384,6 +384,43 @@ bg_trimesh_diff(
 	fastf_t dist_tol
 	);
 
+/**
+ * @brief
+ * Generate a hash from the mesh data, using the tolerance parameter to
+ * clamp the numerical values.  Both vertex positions and face topology
+ * are considered, in a style similar to bg_trimesh_diff.
+ *
+ * The clamping needed to generate a hash value will increase the chances of
+ * two similar meshes having the same hash, but the nature of numerical
+ * clamping results in some very close but not exact values clamping in
+ * opposite directions.  Without global awareness of all vertex points at play
+ * in a database it is not possible to establish a binning that will work for
+ * all meshes in the same way (and there are no guarantees it is possible even
+ * with that knowledge, strictly speaking.)  For a proper distance-based
+ * comparison of two meshes, bg_trimesh_diff should be used rather than
+ * comparing hash values.  However, if mesh hash values DO match then the
+ * associated meshes should be quite close to being the same geometry per the
+ * specified tolerance - and in practice there are situations where we can get
+ * enough matching hashes to be useful - trial runs of PCA oriented BoT object
+ * grouping on a large database were able to identify matching hashes for
+ * about 80% of the cases were bg_trimesh_diff was able to geometrically
+ * identify fuzzy matches.
+ *
+ * Applications for this hash include looking up data associated with meshes
+ * via hash keys - if a large majority of duplicate meshes can be spotted in a
+ * .g database and indexed this way, it makes it possible to reduce the amount
+ * of duplicate data being stored.  It is also possible to associated meshes
+ * with their hashes and then use a bg_trimesh_diff result to further map those
+ * hashes to unique data copies.
+ *
+ * @param[in]  f	face index array referencing points in p
+ * @param[in]  num_f 	number of faces in f
+ * @param[in]  p	points array
+ * @param[in]  num_p	number of points in p
+ * @param[in]  dist_tol	tolerance used when clamping points
+ *
+ * @return the bu_data_hash value of the mesh.
+ */
 BG_EXPORT extern unsigned long long
 bg_trimesh_hash(
 	const int *f, size_t num_f, const point_t *p, size_t num_p,

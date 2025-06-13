@@ -170,13 +170,16 @@ test_diff(struct diff_results *d, struct db_i *dbip, std::vector<struct director
     }
 
     // Work through the set of BoTs looking for matches
+    unsigned long long ohash = 0;
+    unsigned long long chash = 0;
     std::unordered_set<struct directory *> clear_dps;
     size_t bots_processed = 0;
     int64_t msgtime = bu_gettime();
     while (!bots.empty()) {
 	// Pop the next BoT off the set
 	struct directory *wdp = *bots.begin();
-	unsigned long long ohash = h->dp_hash[wdp];
+	if (h)
+	    ohash = h->dp_hash[wdp];
 	bots.erase(bots.begin());
 	bots_processed++;
 
@@ -196,12 +199,13 @@ test_diff(struct diff_results *d, struct db_i *dbip, std::vector<struct director
 	for (d_it = bots.begin(); d_it != bots.end(); ++d_it) {
 
 	    struct directory *cdp = *d_it;
-	    unsigned long long chash = h->dp_hash[cdp];
+	    if (h)
+		chash = h->dp_hash[cdp];
 
 	    // Can we trivially rule it out?
 	    if (bot_face_cnts[cdp] != orig_bot->num_faces || bot_vert_cnts[cdp] != orig_bot->num_vertices) {
 		// Did the hashes think these matched?
-		if (ohash == chash)
+		if (h && ohash == chash)
 		    bu_log("WARNING!  BoTs %s and %s are different, but their hashes match! (%llu)\n", wdp->d_namep, cdp->d_namep, chash);
 		continue;
 	    }
@@ -231,12 +235,12 @@ test_diff(struct diff_results *d, struct db_i *dbip, std::vector<struct director
 		clear_dps.insert(cdp);
 		bots_processed++;
 		// Difference found - did the hashes think these didn't match?
-		if (ohash != chash)
+		if (h && ohash != chash)
 		    bu_log("WARNING!  BoTs %s and %s are the same, but their hashes differ! (%llu and %llu)\n", wdp->d_namep, cdp->d_namep, ohash, chash);
 
 	    } else {
 		// Difference found - did the hashes think these matched?
-		if (ohash == chash)
+		if (h && ohash == chash)
 		    bu_log("WARNING!  BoTs %s and %s are different, but their hashes match! (%llu)\n", wdp->d_namep, cdp->d_namep, chash);
 	    }
 	}
@@ -321,12 +325,16 @@ main(int argc, char *argv[])
 
     bu_log("Initial BoT search time: %g seconds\n", seconds);
 
-
+    // Note that the hash test may be slower than the diff test in some cases
+    // due to the diff test being able to skip processing once it identifies a
+    // difference.  The hash calculation must always process the whole of the
+    // mesh data to arrive at its value.
     struct hash_results h;
     test_hash(&h, dbip, bots);
 
     struct diff_results d;
-    test_diff(&d, dbip, bots, &h);
+    //test_diff(&d, dbip, bots, &h);
+    test_diff(&d, dbip, bots, NULL);
 
 #if 0
     // Print any groups found
