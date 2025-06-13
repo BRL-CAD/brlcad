@@ -51,13 +51,8 @@ ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, 
     ctx->clear_cache(dp);
 
     // Need to invalidate any LoD caches associated with this dp
-    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && ctx->gedp) {
-	unsigned long long key = bv_mesh_lod_key_get(ctx->gedp->ged_lod, dp->d_namep);
-	if (key) {
-	    bv_mesh_lod_clear_cache(ctx->gedp->ged_lod, key);
-	    bv_mesh_lod_key_put(ctx->gedp->ged_lod, dp->d_namep, 0);
-	}
-    }
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && ctx->gedp)
+	db_mesh_lod_update(ctx->gedp->dbip, dp->d_namep);
 
     switch(mode) {
 	case 0:
