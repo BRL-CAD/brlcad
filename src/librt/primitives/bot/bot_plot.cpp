@@ -33,7 +33,10 @@ extern "C" {
 #include "bg/tri_ray.h"
 #include "vmath.h"
 
+#include "bv/lod.h"
 #include "rt/defines.h"
+#include "rt/db_internal.h"
+#include "rt/functab.h"
 #include "rt/global.h"
 #include "rt/db_internal.h"
 #include "rt/primitives/bot.h"
@@ -354,7 +357,178 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     return 0;
 }
 
+static int
+bot_wireframe_plot(struct bv_scene_obj *s, struct db_i *dbip, struct directory *dp, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *v)
+{
+    // If we meet the conditions for an adaptive wireframe, do the LoD wireframe
+    if (v && s->adaptive_wireframe) {
 
+	struct bv_mesh_lod *lod = (struct bv_mesh_lod *)s->draw_data;
+	if (!lod) {
+	    db_mesh_lod_update(dbip, dp->d_namep);
+            lod = db_mesh_lod_get(dbip, dp->d_namep);
+	    if (!lod)
+		return BRLCAD_ERROR;
+
+	    // Assign the LoD information to the object's draw_data, and let
+	    // the LoD know which object it is associated with.
+	    s->draw_data = (void *)lod;
+	    lod->s = s;
+	}
+
+	// The object bounds are based on the LoD's calculations.  Because the LoD
+	// cache stores only one cached data set per object, but full path
+	// instances in the scene can be placed with matrices, we must apply the
+	// s_mat transformation to the "baseline" LoD bbox info to get the correct
+	// box for the instance.
+	MAT4X3PNT(s->bmin, s->s_mat, lod->bmin);
+	MAT4X3PNT(s->bmax, s->s_mat, lod->bmax);
+	VMOVE(s->bmin, s->bmin);
+	VMOVE(s->bmax, s->bmax);
+
+	// TODO - can this go away and be replaced by simply moving on to the full
+	// plot if the LoD data pull returns an error code?
+#if 0
+	// Record the necessary information for full detail information recovery.  We
+	// don't duplicate the full mesh detail in the on-disk LoD storage, since we
+	// already have that info in the .g itself, but we need to know how to get at
+	// it when needed.  The free callback will clean up, but we need to initialize
+	// the callback data here.
+	struct ged_full_detail_clbk_data *cbd;
+	BU_GET(cbd, ged_full_detail_clbk_data);
+	cbd->dbip = dbip;
+	cbd->dp = dp;
+	cbd->res = &rt_uniresource;
+	cbd->intern = NULL;
+	bv_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
+	bv_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
+	bv_mesh_lod_detail_free_clbk(lod, &bot_mesh_info_free_clbk);
+#endif
+
+	// TODO - the need for this should go away - ideally, if the view changes
+	// the app will know and call ft_scene_obj to update the object  (that is
+	// a major reason v is passed in as a param
+#if 0
+	// LoD will need to re-check its level settings whenever the view changes
+	s->s_update_callback = &bv_mesh_lod_view;
+	s->s_free_callback = &bv_mesh_lod_free;
+#endif
+
+	// Initialize the LoD data to the current view
+	int level = bv_mesh_lod_view(s, v, 0);
+	if (level < 0) {
+	    bu_log("Error loading info for initial LoD view\n");
+	} else {
+
+	    // Mark the object as a Mesh LoD so the drawing routine knows to handle it differently
+	    s->s_type_flags |= BV_MESH_LOD;
+
+	    return BRLCAD_OK;
+	}
+    }
+
+    // No dice on LoD - time to crack the internal
+    struct rt_db_internal intern;
+    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+	return BRLCAD_ERROR;
+    RT_CK_DB_INTERNAL(&intern);
+
+    // Call ft_plot
+    int ret = rt_bot_plot(&s->s_vlist, &intern, ttol, tol, s->s_v);
+
+    rt_db_free_internal(&intern);
+
+    return ret;
+}
+
+#if 0
+static int
+rt_shaded_plot(struct bv_scene_obj *s, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+{
+    if (!ip->idb_meth || !ip->idb_meth->ft_tessellate) {
+        bu_log("ERROR: tessellation support not available\n");
+        return BRLCAD_ERROR;
+    }
+
+    struct model *m = nmg_mm();
+    struct nmgregion *r = (struct nmgregion *)NULL;
+    if (ip->idb_meth->ft_tessellate(&r, m, ip, ttol, tol) < 0) {
+        bu_log("ERROR: tessellation failure\n");
+        return BRLCAD_ERROR;
+    }
+
+    NMG_CK_REGION(r);
+    nmg_r_to_vlist(&s->s_vlist, r, NMG_VLIST_STYLE_POLYGON, s->vlfree);
+    nmg_km(m);
+
+    return BRLCAD_OK;
+}
+#endif
+
+/**
+ * Used for solid types that don't have any special modes beyond basic and adaptive
+ * plotting
+ */
+int
+rt_generic_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *v)
+{
+    int ret = BRLCAD_ERROR;
+
+    if (!s || !dp || !dbip)
+	return BRLCAD_ERROR;
+
+    // Clear out existing vlists - if we're calling this, we definitely don't want
+    // any old data to linger.
+    BV_FREE_VLIST(s->vlfree, &s->s_vlist);
+
+#if 0
+    // NOTE - above call stages the vlist memory for reuse.  If we need
+    // to ACTUALLY free it (to back down memory usage if our drawing
+    // doesn't require it) this block can be used instead to actually free
+    // the memory.
+    struct bu_list *p;
+    while (BU_LIST_WHILE(p, bu_list, &s->s_vlist)) {
+	BU_LIST_DEQUEUE(p);
+	struct bv_vlist *pv = (struct bv_vlist *)p;
+	BU_FREE(pv, struct bv_vlist);
+    }
+#endif
+
+    switch (s->s_os->s_dmode) {
+        case 2:
+        case 4:
+	    // Shaded mode and hidden line mode need shaded eval (although they
+	    // do NOT attempt boolean evaluation.)  Fall back to wireframe mode
+	    // in case of tessellation failure.
+	    //ret = rt_shaded_plot(s, &intern, ttol, tol);
+            if (ret != BRLCAD_OK) {
+                s->s_os->s_dmode = 0;
+		ret = bot_wireframe_plot(s, dbip, dp, ttol, tol, v);
+	    }
+            break;
+        case 3:
+	    // Evaluated wireframes are only meaningful for combs, which have
+	    // boolean trees to evaluate.  For all other cases (which is what
+	    // rt_generic_scene_obj handles) just return the standard
+	    // wireframe.
+	    ret = bot_wireframe_plot(s, dbip, dp, ttol, tol, v);
+            break;
+        case 5:
+            // Draw triangles at points sampled by raytracing (this is an
+	    // evaluated drawing mode.)
+	    //ret = rt_sample_pnts(s, &intern);
+            break;
+        default:
+            // Default to wireframe
+            s->s_os->s_dmode = 0;
+	    ret = bot_wireframe_plot(s, dbip, dp, ttol, tol, v);
+            break;
+    }
+
+    s->current = 1;
+
+    return BRLCAD_OK;
+}
 
 /** @} */
 
