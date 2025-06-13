@@ -178,6 +178,20 @@ bv_mesh_lod_destroy(struct bv_mesh_lod *l);
 BV_EXPORT void
 bv_mesh_lod_memshrink(struct bv_scene_obj *s);
 
+
+/**
+ * Given a scene object with mesh LoD data stored in s->draw_data and a bview,
+ * calculate the appropriate level of detail for that view.
+ *
+ * This function simply returns the level without changing any data, which
+ * allows applications to decide if any further action is warranted.
+ *
+ * Returns the level appropriate for the view.  If v == NULL, return current
+ * level of l.  If there is an error or l == NULL, return -1; */
+BV_EXPORT int
+bv_mesh_lod_calc_level(struct bv_scene_obj *s, const struct bview *v);
+
+
 /**
  * Given a scene object with mesh LoD data stored in s->draw_data and a bview,
  * load the appropriate level of detail for displaying the mesh in that view.
@@ -187,7 +201,8 @@ bv_mesh_lod_memshrink(struct bv_scene_obj *s);
  * Returns the level selected.  If v == NULL, return current level of l.  If
  * there is an error or l == NULL, return -1; */
 BV_EXPORT int
-bv_mesh_lod_view(struct bv_scene_obj *s, struct bview *v, int reset);
+bv_mesh_lod_view(struct bv_scene_obj *s, const struct bview *v, int reset);
+
 
 /**
  * Given a scene object with mesh LoD data stored in s->draw_data and a detail
