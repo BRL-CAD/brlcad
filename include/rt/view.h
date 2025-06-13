@@ -39,7 +39,7 @@ __BEGIN_DECLS
 /* Routines for managing the mesh LoD cache */
 RT_EXPORT extern void db_mesh_lod_init(struct db_i *dbip, int verbose);
 RT_EXPORT extern void db_mesh_lod_clear(struct db_i *dbip);
-RT_EXPORT extern int db_mesh_lod_update(struct db_i *dbip, struct directory *dp);
+RT_EXPORT extern int db_mesh_lod_update(struct db_i *dbip, const char *name);
 
 /**
  * NOTE: Normally, librt doesn't have a concept of a "display" of the geometry.

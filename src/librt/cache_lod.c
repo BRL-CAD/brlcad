@@ -74,7 +74,7 @@ db_mesh_lod_init(struct db_i *dbip, int verbose) {
 		bu_log("Processing(%d):  %s\n", dbip->i->mesh_c_completed+1, dp->d_namep);
 
 	    // Process object
-	    db_mesh_lod_update(dbip, dp);
+	    db_mesh_lod_update(dbip, dp->d_namep);
 
 	    // Increment completed count
 	    dbip->i->mesh_c_completed++;
@@ -115,15 +115,26 @@ db_mesh_lod_clear(struct db_i *dbip)
 }
 
 int
-db_mesh_lod_update(struct db_i *dbip, struct directory *dp)
+db_mesh_lod_update(struct db_i *dbip, const char *name)
 {
     if (!dbip || !dbip->i || dbip->i->mesh_c)
 	return BRLCAD_ERROR;
 
-    // No-op if this isn't a BoT
-    if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
+    // No-op
+    if (!name)
 	return BRLCAD_OK;
 
+    // If we have existing data, clear it.
+    unsigned long long key = bv_mesh_lod_key_get(dbip->i->mesh_c, name);
+    if (key)
+	bv_mesh_lod_clear_cache(dbip->i->mesh_c, key);
+
+    // If this isn't an active BoT, we're done.
+    struct directory *dp = db_lookup(dbip, name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL || dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
+	return BRLCAD_OK;
+
+    // Unpack the data for LoD generation
     struct rt_db_internal dbintern;
     RT_DB_INTERNAL_INIT(&dbintern);
     struct rt_db_internal *ip = &dbintern;
@@ -138,13 +149,7 @@ db_mesh_lod_update(struct db_i *dbip, struct directory *dp)
     struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
-    // If we have existing data, clear it - we're assuming whatever is there is
-    // invalid if we're calling this function.
-    unsigned long long key = bv_mesh_lod_key_get(dbip->i->mesh_c, dp->d_namep);
-    if (key)
-	bv_mesh_lod_clear_cache(dbip->i->mesh_c, key);
-
-    // Cache new data
+    // Generate and write new data
     key = bv_mesh_lod_cache(dbip->i->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
     if (!key) {
 	bu_log("Error processing %s - unable to generate LoD data\n", dp->d_namep);
@@ -152,9 +157,13 @@ db_mesh_lod_update(struct db_i *dbip, struct directory *dp)
 	return BRLCAD_ERROR;
     }
     bv_mesh_lod_key_put(dbip->i->mesh_c, dp->d_namep, key);
+
+    // Done with BoT
     rt_db_free_internal(&dbintern);
 
     // Make sure we can retrieve the cached data
+    // TODO - may not really be necessary to verify this here once we're
+    // working - including during early stages for testing.
     struct bv_mesh_lod *lod = bv_mesh_lod_create(dbip->i->mesh_c, key);
     if (!lod) {
 	bu_log("Error processing %s - unable to retrieve LoD data\n", dp->d_namep);
