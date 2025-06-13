@@ -32,13 +32,20 @@
 #ifdef BUILD_BRLCAD
 #include "common.h"
 #endif
-#include <limits>
+#include <cmath>
 #include <iomanip>
 #include <iostream>
-#include <math.h>
+#include <limits>
 #ifdef BUILD_BRLCAD
 #include "bu/app.h"
 #endif
+
+double
+dtrunc(double d, int maxdec)
+{
+    double m = std::pow(10, maxdec);
+    return std::trunc(d * m) / m;
+}
 
 int main(int ac, const char **av)
 {
@@ -59,6 +66,16 @@ int main(int ac, const char **av)
     std::cout << "Long conversion of test num: " << long_store << "\n";
     double dbl_restore = static_cast<double>(long_store / scale);
     std::cout << "Conversion of long back to double: " << std::setprecision(15) << dbl_restore << "\n";
+
+
+    // While we're at it, test truncating the input number to "clip off"
+    // digits below the magnitude of the specified tolerance.
+    double tol = 0.005;
+    long toll = fabs(std::log10(tol))+1;
+    std::cout << "tol digits(" << tol << "): " << toll << "\n";
+    double toltrunc = dtrunc(test_num, toll);
+    std::cout << "toltrunc: " << toltrunc << "\n";
+
     return 0;
 }
 
