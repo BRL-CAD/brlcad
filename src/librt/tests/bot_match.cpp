@@ -139,7 +139,7 @@ struct diff_results {
 
 // Test diff method
 void
-test_diff(struct diff_results *d, struct db_i *dbip, std::vector<struct directory *> &vbots)
+test_diff(struct diff_results *d, struct db_i *dbip, std::vector<struct directory *> &vbots, struct hash_results *h)
 {
     if (!d || !dbip)
 	return;
@@ -176,6 +176,7 @@ test_diff(struct diff_results *d, struct db_i *dbip, std::vector<struct director
     while (!bots.empty()) {
 	// Pop the next BoT off the set
 	struct directory *wdp = *bots.begin();
+	unsigned long long ohash = h->dp_hash[wdp];
 	bots.erase(bots.begin());
 	bots_processed++;
 
@@ -195,10 +196,15 @@ test_diff(struct diff_results *d, struct db_i *dbip, std::vector<struct director
 	for (d_it = bots.begin(); d_it != bots.end(); ++d_it) {
 
 	    struct directory *cdp = *d_it;
+	    unsigned long long chash = h->dp_hash[cdp];
 
 	    // Can we trivially rule it out?
-	    if (bot_face_cnts[cdp] != orig_bot->num_faces || bot_vert_cnts[cdp] != orig_bot->num_vertices)
+	    if (bot_face_cnts[cdp] != orig_bot->num_faces || bot_vert_cnts[cdp] != orig_bot->num_vertices) {
+		// Did the hashes think these matched?
+		if (ohash == chash)
+		    bu_log("WARNING!  BoTs %s and %s are different, but their hashes match! (%llu)\n", wdp->d_namep, cdp->d_namep, chash);
 		continue;
+	    }
 
 	    // Passes the trivial checks - time for PCA and bg_trimesh_diff
 	    struct rt_db_internal cintern = RT_DB_INTERNAL_INIT_ZERO;
@@ -224,6 +230,14 @@ test_diff(struct diff_results *d, struct db_i *dbip, std::vector<struct director
 		d->bot_groups[wdp].insert(cdp);
 		clear_dps.insert(cdp);
 		bots_processed++;
+		// Difference found - did the hashes think these didn't match?
+		if (ohash != chash)
+		    bu_log("WARNING!  BoTs %s and %s are the same, but their hashes differ! (%llu and %llu)\n", wdp->d_namep, cdp->d_namep, ohash, chash);
+
+	    } else {
+		// Difference found - did the hashes think these matched?
+		if (ohash == chash)
+		    bu_log("WARNING!  BoTs %s and %s are different, but their hashes match! (%llu)\n", wdp->d_namep, cdp->d_namep, chash);
 	    }
 	}
 
@@ -312,7 +326,7 @@ main(int argc, char *argv[])
     test_hash(&h, dbip, bots);
 
     struct diff_results d;
-    test_diff(&d, dbip, bots);
+    test_diff(&d, dbip, bots, &h);
 
 #if 0
     // Print any groups found
