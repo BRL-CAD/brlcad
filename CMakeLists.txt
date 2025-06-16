@@ -65,7 +65,7 @@
 # *               Stage 0 of 9 - Project Info               *
 # ***********************************************************
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.22)
 
 #---------------------------------------------------------------------
 # BRL-CAD's version is centrally stored in include/conf/.  See HACKING
