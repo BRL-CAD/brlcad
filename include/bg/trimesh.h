@@ -413,6 +413,12 @@ bg_trimesh_diff(
  * with their hashes and then use a bg_trimesh_diff result to further map those
  * hashes to unique data copies.
  *
+ * TODO - look into whether some form of similarity hash might do better for
+ * our purposes here:
+ * https://github.com/seomoz/simhash-cpp
+ * https://github.com/FALCONN-LIB/FALCONN
+ * https://github.com/trendmicro/tlsh
+ *
  * @param[in]  f	face index array referencing points in p
  * @param[in]  num_f 	number of faces in f
  * @param[in]  p	points array
