@@ -353,6 +353,74 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     return 0;
 }
 
+struct bot_full_detail_clbk_data {
+    struct db_i *dbip;
+    struct directory *dp;
+    struct resource *res;
+    struct rt_db_internal *intern;
+};
+
+/* Set up the data for drawing */
+static int
+bot_mesh_info_clbk(struct bv_mesh_lod *lod, void *cb_data)
+{
+    if (!lod || !cb_data)
+	return -1;
+
+    struct bot_full_detail_clbk_data *cd = (struct bot_full_detail_clbk_data *)cb_data;
+    struct db_i *dbip = cd->dbip;
+    struct directory *dp = cd->dp;
+
+    BU_GET(cd->intern, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(cd->intern);
+    struct rt_db_internal *ip = cd->intern;
+    int ret = rt_db_get_internal(ip, dp, dbip, NULL, cd->res);
+    if (ret < 0) {
+	BU_PUT(cd->intern, struct rt_db_internal);
+	return -1;
+    }
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    lod->faces = bot->faces;
+    lod->fcnt = bot->num_faces;
+    lod->pcnt = bot->num_vertices;
+    lod->points = (const point_t *)bot->vertices;
+    lod->points_orig = (const point_t *)bot->vertices;
+
+    return 0;
+}
+
+/* Free up the drawing data, but not (yet) done with bot_full_detail_clbk_data */
+static int
+bot_mesh_info_clear_clbk(struct bv_mesh_lod *lod, void *cb_data)
+{
+    struct bot_full_detail_clbk_data *cd = (struct bot_full_detail_clbk_data *)cb_data;
+    if (cd->intern) {
+	rt_db_free_internal(cd->intern);
+	BU_PUT(cd->intern, struct rt_db_internal);
+    }
+    cd->intern = NULL;
+
+    lod->faces = NULL;
+    lod->fcnt = 0;
+    lod->pcnt = 0;
+    lod->points = NULL;
+    lod->points_orig = NULL;
+
+    return 0;
+}
+
+/* Done - free up everything */
+static int
+bot_mesh_info_free_clbk(struct bv_mesh_lod *lod, void *cb_data)
+{
+    bot_mesh_info_clear_clbk(lod, cb_data);
+    struct bot_full_detail_clbk_data *cd = (struct bot_full_detail_clbk_data *)cb_data;
+    BU_PUT(cd, struct bot_full_detail_clbk_data);
+    return 0;
+}
+
 /**
  * Used for solid types that don't have any special modes beyond basic and adaptive
  * plotting
@@ -421,16 +489,13 @@ rt_bot_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip
 	VMOVE(s->bmin, s->bmin);
 	VMOVE(s->bmax, s->bmax);
 
-	// TODO - can this go away and be replaced by simply moving on to the full
-	// plot if the LoD data pull returns an error code?
-#if 0
 	// Record the necessary information for full detail information recovery.  We
 	// don't duplicate the full mesh detail in the on-disk LoD storage, since we
 	// already have that info in the .g itself, but we need to know how to get at
 	// it when needed.  The free callback will clean up, but we need to initialize
 	// the callback data here.
-	struct ged_full_detail_clbk_data *cbd;
-	BU_GET(cbd, ged_full_detail_clbk_data);
+	struct bot_full_detail_clbk_data *cbd;
+	BU_GET(cbd, bot_full_detail_clbk_data);
 	cbd->dbip = dbip;
 	cbd->dp = dp;
 	cbd->res = &rt_uniresource;
@@ -438,16 +503,18 @@ rt_bot_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip
 	bv_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
 	bv_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
 	bv_mesh_lod_detail_free_clbk(lod, &bot_mesh_info_free_clbk);
-#endif
 
 	// TODO - the need for this should go away - ideally, if the view changes
 	// the app will know and call ft_scene_obj to update the object  (that is
 	// a major reason v is passed in as a param
 #if 0
-	// LoD will need to re-check its level settings whenever the view changes
 	s->s_update_callback = &bv_mesh_lod_view;
-	s->s_free_callback = &bv_mesh_lod_free;
 #endif
+
+	// When we are done with the object, it needs to know how to get rid of
+	// the memory from LoD.  TODO - should we be doing this here instead of
+	// using s_free_callback?
+	s->s_free_callback = &bv_mesh_lod_free;
 
 	// Initialize the LoD data to the current view
 	int level = bv_mesh_lod_view(s, v, 0);
@@ -462,7 +529,7 @@ rt_bot_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip
 	}
     }
 
-    // No dice on LoD - time to crack the internal
+    // No dice on LoD - time to crack the internal and do it the hard way
     struct rt_db_internal intern;
     if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
 	return BRLCAD_ERROR;
