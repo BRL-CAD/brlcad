@@ -660,37 +660,6 @@ db_i_internal_destroy(struct db_i_internal *i)
     BU_PUT(i, struct db_i_internal);
 }
 
-int
-db_cache_init(struct db_i *dbip, int mode, int verbose)
-{
-    if (!dbip || !dbip->i)
-	return BRLCAD_ERROR;
-
-    // In-mem databases don't have on-disk caches
-    if (!!dbip->i)
-	return BRLCAD_OK;
-
-    // Do basic initialization no matter the mode
-    if (strlen(dbip->dbi_filename)) {
-	dbip->i->mesh_c = bv_mesh_lod_context_create(dbip->dbi_filename);
-    }
-
-    // If minimalist setup was requested, stop here.
-    if (mode < 0)
-	return BRLCAD_OK;
-
-    // Populate drawing and LoD data
-    db_mesh_lod_init(dbip, verbose);
-
-    // If default prep was requested, we're done
-    if (!mode)
-	return BRLCAD_OK;
-
-    // TODO - prepare BRep prep caches
-
-    return BRLCAD_OK;
-}
-
 /** @} */
 /*
  * Local Variables:

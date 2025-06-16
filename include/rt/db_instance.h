@@ -227,30 +227,6 @@ RT_EXPORT extern struct db_i * db_create_inmem(void);
 RT_EXPORT extern void db_close(struct db_i *dbip);
 
 
-/**
- * Caches are not necessary for librt's normal operation, and they write data
- * out to disk in hidden directories.  Because of the relatively intrusive
- * nature of data caching, it is not enabled by default as part of a db_open.
- * If calling code wants to utilize caches, they should call this routine.
- *
- * An initial cache build can be slow, so it is recommended that this routine
- * be called from a separate thread and run in the background.  Some caching
- * operations are also potentially memory intensive, so to avoid severe system
- * resource overloading the app should only call db_cache_init once.
- *
- * This API makes no guarantees as to what specific data setup is and is not
- * performed - however, to allow at least some control over how much work is
- * undertaken an integer setting is offered with the following options:
- *
- * -1  minimalist, only prepares empty caches on disk.
- * 0   default behavior.  Partial population of some caches.
- * 1   full initialization of all caches (drawing, raytracing, etc.)
- *
- * Return codes:  BRLCAD_OK upon successful completion, BRLCAD_ERROR if
- * one or more caches failed to set up properly.
- */
-RT_EXPORT extern int db_cache_init(struct db_i *dbip, int mode, int verbose);
-
 __END_DECLS
 
 #endif /* RT_DB_INSTANCE_H */

@@ -65,7 +65,7 @@ db_mesh_lod_init(struct db_i *dbip, int verbose) {
 		continue;
 
 	    // If we already have a match, assume it is valid.  Resetting
-	    // invalid data in the cache is outside the scope of db_cache_init.
+	    // invalid data in the cache is outside the scope of cache init.
 	    unsigned long long key = bv_mesh_lod_key_get(dbip->i->mesh_c, dp->d_namep);
 	    if (key)
 		continue;
