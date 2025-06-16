@@ -36,11 +36,39 @@
 __BEGIN_DECLS
 
 
-/* Routines for managing the mesh LoD cache */
+/* Routines for managing the mesh LoD cache.  As many of the details as
+ * possible of the cache should be private, but we do at least need ways to set
+ * up, clear, update and load information. */
+
+/**
+ * Initialize the LoD cache, doing any necessary setup on disk.  If
+ * being run for the first time this can be quite slow, so it is
+ * recommended to run it in a background thread.
+ */
 RT_EXPORT extern void db_mesh_lod_init(struct db_i *dbip, int verbose);
+
+/**
+ * Clear the contents of the cache associated with this dbip
+ */
 RT_EXPORT extern void db_mesh_lod_clear(struct db_i *dbip);
+
+/**
+ * Update the cache contents to reflect the current state of the object
+ * in dbip.  If there is no object present in dbip with that name, then
+ * remove any cached data associated with that name from the cache.
+ *
+ * If no cache is present, or the attempt encounters a problem, return
+ * BRLCAD_ERROR - else returns BRLCAD_OK;
+ */
 RT_EXPORT extern int db_mesh_lod_update(struct db_i *dbip, const char *name);
+
+/**
+ * Retrieve the bv_mesh_lod data from the dbip's cache associated with
+ * the named object.  If no such data is present, returns NULL.
+ */
 RT_EXPORT extern struct bv_mesh_lod *db_mesh_lod_get(struct db_i *dbip, const char *name);
+
+
 
 /**
  * NOTE: Normally, librt doesn't have a concept of a "display" of the geometry.

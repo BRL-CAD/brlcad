@@ -1,4 +1,4 @@
-/*                       D B _ O P E N . C
+/*                     D B _ O P E N . C P P
  * BRL-CAD
  *
  * Copyright (c) 1988-2025 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file librt/db_open.c
+/** @file librt/db_open.cpp
  *
  * Routines for opening, creating, and replicating BRL-CAD geometry
  * database files.  BRL-CAD geometry database files are managed in a
@@ -30,6 +30,9 @@
  */
 
 #include "common.h"
+
+#include <chrono>
+#include <thread>
 
 #include <string.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -69,8 +72,8 @@ db_open(const char *name, const char *mode)
     extern int RT_SEM_TREE1;
     extern int RT_SEM_TREE2;
     extern int RT_SEM_TREE3;
-    register struct db_i *dbip = DBI_NULL;
-    register int i;
+    struct db_i *dbip = DBI_NULL;
+    int i;
     char **argv;
 
     if (!sem_uses)
@@ -367,10 +370,10 @@ db_close_client(struct db_i *dbip, long int *client)
 
 
 void
-db_close(register struct db_i *dbip)
+db_close(struct db_i *dbip)
 {
-    register int i;
-    register struct directory *dp, *nextdp;
+    int i;
+    struct directory *dp, *nextdp;
     static int sem_uses = 0;
     if (!sem_uses)
 	sem_uses = bu_semaphore_register("LIBRT_SEM_USES");
@@ -552,8 +555,8 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
 /* output */
 /* input */
 {
-    register int i;
-    register struct directory *dp;
+    int i;
+    struct directory *dp;
     struct bu_external ext;
 
     RT_CK_DBI(dbip);
@@ -645,6 +648,10 @@ db_i_internal_create(void)
     BU_GET(i, struct db_i_internal);
     i->dbi_magic = DBI_MAGIC;
 
+    i->mesh_c = NULL;
+    i->shutdown_requested = false;
+    i->init_complete = true;  // The LoD init function sets this to false when it starts
+
     return i;
 }
 
@@ -654,6 +661,17 @@ db_i_internal_destroy(struct db_i_internal *i)
     if (!i)
 	return;
 
+    // Because we init the LoD cache in a separate thread, first check to see
+    // if an update is still ongoing before destroying anything.  We need to
+    // wait for the update to hit a stopping point before we can delete the
+    // context safely.
+    if (!i->init_complete) {
+	i->shutdown_requested = true;
+	while (!i->init_complete) {
+	    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+	}
+    }
+
     if (i->mesh_c)
 	bv_mesh_lod_context_destroy(i->mesh_c);
 
@@ -661,12 +679,13 @@ db_i_internal_destroy(struct db_i_internal *i)
 }
 
 /** @} */
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s

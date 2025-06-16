@@ -33,6 +33,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+#  include <atomic>
+#endif
+
 #include "vmath.h"
 #include "bv.h"
 #include "rt/db4.h"
@@ -73,13 +77,15 @@ struct db_i_internal {
 
     /* BoT level of detail cached data for drawing */
     struct bv_mesh_lod_context *mesh_c;
-    int mesh_c_completed;
-    int mesh_c_target;
+#ifdef __cplusplus
+    std::atomic_bool shutdown_requested;
+    std::atomic_bool init_complete;
+#endif
 
-    // TODO - really need to get the rt prep cache container
-    // in here and add a pointer slot to it for rt_db_internal
-    // so the librt point generation routines can take advantage
-    // of cached prep even if they're using an inmem db...
+    // TODO - really need to get the rt prep cache container in here.  Also
+    // should add a pointer slot to rt_db_internal to hold cached data pointers
+    // so the librt point generation routines can take advantage of cached prep
+    // from a parent dbip even if they're using an inmem db locally...
 };
 
 struct db_i_internal * db_i_internal_create(void);
