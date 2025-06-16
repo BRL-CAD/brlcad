@@ -387,6 +387,9 @@ class GED_EXPORT DbiPath {
 
 	// Allow BViewState access to the parent_path_hashes set
 	friend class BViewState;
+	// Allow BSelectState access to the parent_path_hashes set
+	friend class BSelectState;
+
     private:
 	// Primary vector storing path information.
 	//
@@ -399,7 +402,8 @@ class GED_EXPORT DbiPath {
 	bool is_valid = true;
 	std::unordered_set<unsigned long long> component_hashes;
 	std::unordered_set<unsigned long long> parent_path_hashes;
-	unsigned long long path_hash;
+	unsigned long long path_hash = 0;
+	unsigned long long parent_hash = 0;
 
 	// Database state with which this path is associated
 	DbiState *d = NULL;
@@ -426,44 +430,40 @@ class GED_EXPORT BSelectState {
 	void Clear();
 
 	bool IsSelected(unsigned long long);
-	bool IsActive(unsigned long long);
+	bool IsActivated(unsigned long long);
 	bool IsActiveParent(unsigned long long);
-	bool IsParentObj(unsigned long long hash = 0, int level = 0); // 0 = any, 1 = Immediate, 2 = Grandparent
+	bool IsActiveAncestor(unsigned long long);
 
 	std::vector<std::string> list_selected_paths();
 
-	void ExpandPaths();
-	void CollapsePaths();
-
-	void Refresh();
 	bool draw_sync();
 
 	unsigned long long state_hash();
 
-	// Explicitly selected paths.  Note that this is NOT an expanded or collapsed
-	// set, since (particularly for editing ops) the app may need to know the precise
-	// active paths.  On the other hand, we may want the set of expanded hashes to
-	// use for checking when drawing.  We may also want not just the set of leaf expansions
-	// but ALL intermediate hashes, since evaluated mode drawing will not go to leaf
-	// solids but should still be illuminated if active in a selection.
+	// Explicitly selected paths.  Note that this is NOT an expanded or
+	// collapsed set, since (particularly for editing ops) the app needs to
+	// know the precise active paths.
+	//
+	// Selection of multiple levels of a single path is explicitly
+	// prevented by Select, since that invites extremely unintuitive
+	// editing behaviors.  If a legitimate use case turns up we can
+	// reconsider this limitation, but for now it is expressly prohibited
+	// and enforced.
 	std::unordered_set<unsigned long long> selected;
 
-	// Solid paths to illuminate
-	// TODO - may not need this if we can just ask each drawn leaf path if
-	// any of its parents are selected?  With a huge number of individually
-	// selected paths that would be a problem, since each one would have to
-	// be checked, but we might able to mitigate that with a
-	// selected_collapsed set
-	std::unordered_set<unsigned long long> active_paths; // Solid paths to illuminate 
+	// Children of selected paths.  We need to know about these because
+	// they are paths drawing codes may need to illuminate - the selected
+	// set is necessary for proper highlighting not sufficient.)
+	std::unordered_set<unsigned long long> children;
 
 	// To support highlighting closed paths that have selected primitives
-	// below them, we need more information.  This is different than
-	// highlighting only the paths related to the specific selected full
-	// path - in this situation, the application wants to know about all
-	// paths that are above the leaf *object* that is selected, in whatever
-	// portion of the database.  Immediate parents are combs whose
-	// immediate child is the selected leaf; ancestors are higher level
-	// combs above immediate parents
+	// below them in a tree hierarchy, we need more information.  This is
+	// different than highlighting only the paths related to the specific
+	// selected full path - in this situation, the application wants to
+	// know about all paths that are above the leaf *object* that is
+	// selected, in whatever portion of the database.  Immediate parents
+	// are combs whose immediate child is the selected leaf; ancestors are
+	// higher level combs above immediate parents
 	std::unordered_set<unsigned long long> immediate_parents;
 	std::unordered_set<unsigned long long> ancestors;
 
@@ -495,7 +495,6 @@ class GED_EXPORT BSelectState {
 	void clear_paths(std::vector<unsigned long long> &path_hashes, unsigned long long c_hash);
 };
 
-// TODO - may want a reusable memory pool of DbiPath instances to save on mallocing
 class GED_EXPORT BViewState {
     public:
 	BViewState(DbiState *);
@@ -656,8 +655,13 @@ class GED_EXPORT DbiState {
 	CombInst *GetCombInst(unsigned long long);
 
 	// Get a DbiPath instance.  Will either reuse an existing DbiPath
-	// or (if necessary) create a new one.
+	// or (if necessary) create a new one.  For arguments with a path
+	// or hash, will return the registered version if one is already
+	// present or create a registered version if one is not.  If a
+	// supplied hash or path are invalid NULL is returned.
 	DbiPath *GetDbiPath();
+	DbiPath *GetDbiPath(const char *path);
+	DbiPath *GetDbiPath(unsigned long long hash);
 
 	// Clear a DbiPath and store it for later reuse.
 	void PutDbiPath(DbiPath *p);

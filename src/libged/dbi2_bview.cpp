@@ -55,12 +55,13 @@ extern "C" {
 #include "ged/view.h"
 #include "./ged_private.h"
 
+#if 0
 // alphanum sort
 static bool alphanum_cmp(const std::string &a, const std::string &b)
 {
     return alphanum_impl(a.c_str(), b.c_str(), NULL) < 0;
 }
-
+#endif
 
 BViewState::BViewState(DbiState *s)
 {
@@ -336,6 +337,7 @@ BViewState::RemovePath(unsigned long long hash, int mode)
     }
 }
 
+#if 0
 unsigned long long
 BViewState::refresh(struct bview *v, int argc, const char **argv)
 {
@@ -439,7 +441,9 @@ BViewState::refresh(struct bview *v, int argc, const char **argv)
 
     return ret;
 }
+#endif
 
+#if 0
 unsigned long long
 BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *> &views, int no_autoview, std::unordered_set<unsigned long long> &changed_hashes)
 {
@@ -697,7 +701,9 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 
     return ret;
 }
+#endif
 
+#if 0
 void
 BViewState::print_view_state(struct bu_vls *outvls)
 {
@@ -722,6 +728,7 @@ BViewState::print_view_state(struct bu_vls *outvls)
 	BU_PUT(o, struct bu_vls);
     }
 }
+#endif
 
 // Added dps present their own challenge, in terms of whether or not to
 // automatically draw them.  (I think this decision comes after the existing
