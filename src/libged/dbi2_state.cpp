@@ -129,6 +129,7 @@ DbiPath::DbiPath(const DbiPath &p)
     for (h_it = p.component_hashes.begin(); h_it != p.component_hashes.end(); ++h_it)
 	component_hashes.insert(*h_it);
     path_hash = p.path_hash;
+    parent_hash = p.parent_hash;
 }
 
 DbiPath& DbiPath::operator=(const DbiPath &p) {
@@ -144,6 +145,7 @@ DbiPath& DbiPath::operator=(const DbiPath &p) {
     for (h_it = p.component_hashes.begin(); h_it != p.component_hashes.end(); ++h_it)
 	component_hashes.insert(*h_it);
     path_hash = p.path_hash;
+    parent_hash = p.parent_hash;
 
     return *this;
 }
@@ -164,6 +166,7 @@ DbiPath::Reset()
 	d->dbi_paths.erase(path_hash);
 
     path_hash = 0;
+    parent_hash = 0;
 }
 
 DbiPath::~DbiPath()
@@ -581,18 +584,20 @@ DbiPath::push(unsigned long long new_element)
     // just take care of ohash.
     component_hashes.insert(cp->second->ohash);
 
+
+    // Current path hash is now the immediate parent hash
+    parent_hash = path_hash;
+    parent_path_hashes.insert(parent_hash);
+
     // If we were registered in the dbi_path container, clear the entry -
     // we're no longer that path.  It's up to the caller if they want us to
     // be registered as this new path.
-    unsigned long long old_hash = path_hash;
     std::unordered_map<unsigned long long, DbiPath *>::iterator p_it;
-    p_it = d->dbi_paths.find(old_hash);
+    p_it = d->dbi_paths.find(parent_hash);
     if (p_it != d->dbi_paths.end() && p_it->second == this)
-	d->dbi_paths.erase(old_hash);
+	d->dbi_paths.erase(parent_hash);
 
-    // Update current hash and parent hashes.  The old hash is now
-    // a parent hash
-    parent_path_hashes.insert(old_hash);
+    // Calculate the new current hash.
     path_hash = bu_data_hash(elements.data(), elements.size() * sizeof(unsigned long long));
 
     // The GObj and CombInst both need to know to invalidate this path if

@@ -191,6 +191,40 @@ DbiState::GetDbiPath()
 }
 
 
+DbiPath *
+DbiState::GetDbiPath(const char *path)
+{
+    if (!path)
+	return NULL;
+
+    DbiPath tmpp(this, path);
+    if (!tmpp.valid())
+	return NULL;
+
+    unsigned long long thash = tmpp.hash();
+    DbiPath *np = GetDbiPath(thash);
+    if (!np) {
+	np = new DbiPath(tmpp);
+	dbi_paths[thash] = np;
+    }
+
+    return np;
+}
+
+DbiPath *
+DbiState::GetDbiPath(unsigned long long hash)
+{
+    if (UNLIKELY(!hash))
+	return NULL;
+
+    std::unordered_map<unsigned long long, DbiPath *>::iterator p_it;
+    p_it = dbi_paths.find(hash);
+    if (p_it != dbi_paths.end())
+	return p_it->second;
+
+    return NULL;
+}
+
 void
 DbiState::PutDbiPath(DbiPath *p)
 {
