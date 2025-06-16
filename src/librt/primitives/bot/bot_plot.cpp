@@ -40,6 +40,7 @@ extern "C" {
 #include "rt/global.h"
 #include "rt/db_internal.h"
 #include "rt/primitives/bot.h"
+#include "rt/shoot.h"
 }
 
 static vdsNode *
@@ -247,11 +248,6 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     BOT_BBOX_ARB_FACE(pt, 1, 5, 6, 2);      \
 }
 
-// TODO - while this routine makes the vlists per the standard librt API, BoTs
-// are a case where we probably should be passing the data directly to the
-// drawing routines as face and vert arrays for the hot drawing paths WITHOUT
-// making the vlist copies... this duplication results in massive additional
-// memory usage for large BoTs.
 extern "C" int
 rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *info)
 {
@@ -357,16 +353,55 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     return 0;
 }
 
-static int
-bot_wireframe_plot(struct bv_scene_obj *s, struct db_i *dbip, struct directory *dp, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *v)
+/**
+ * Used for solid types that don't have any special modes beyond basic and adaptive
+ * plotting
+ */
+int
+rt_bot_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *v)
 {
+    int ret = BRLCAD_ERROR;
+
+    if (!s || !dp || !dbip)
+	return BRLCAD_ERROR;
+
+    // Clear out existing vlists - if we're calling this, we definitely don't want
+    // any old data to linger.
+    BV_FREE_VLIST(s->vlfree, &s->s_vlist);
+
+#if 0
+    // NOTE - above call stages the vlist memory for reuse.  If we need
+    // to ACTUALLY free it (to back down memory usage if our drawing
+    // doesn't require it) this block can be used instead to actually free
+    // the memory.
+    struct bu_list *p;
+    while (BU_LIST_WHILE(p, bu_list, &s->s_vlist)) {
+	BU_LIST_DEQUEUE(p);
+	struct bv_vlist *pv = (struct bv_vlist *)p;
+	BU_FREE(pv, struct bv_vlist);
+    }
+#endif
+
+    if (s->s_os->s_dmode == 5) {
+	// Draw triangles at points sampled by raytracing (this is an
+	// evaluated drawing mode.)
+	struct rt_db_internal intern;
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+	    return BRLCAD_ERROR;
+	RT_CK_DB_INTERNAL(&intern);
+	ret = rt_sample_pnts(s, &intern);
+	rt_db_free_internal(&intern);
+	s->current = 1;
+	return ret;
+    }
+
     // If we meet the conditions for an adaptive wireframe, do the LoD wireframe
     if (v && s->adaptive_wireframe) {
 
 	struct bv_mesh_lod *lod = (struct bv_mesh_lod *)s->draw_data;
 	if (!lod) {
 	    db_mesh_lod_update(dbip, dp->d_namep);
-            lod = db_mesh_lod_get(dbip, dp->d_namep);
+	    lod = db_mesh_lod_get(dbip, dp->d_namep);
 	    if (!lod)
 		return BRLCAD_ERROR;
 
@@ -433,98 +468,20 @@ bot_wireframe_plot(struct bv_scene_obj *s, struct db_i *dbip, struct directory *
 	return BRLCAD_ERROR;
     RT_CK_DB_INTERNAL(&intern);
 
-    // Call ft_plot
-    int ret = rt_bot_plot(&s->s_vlist, &intern, ttol, tol, s->s_v);
+    // If we're shaded we need the poly routine, else just do the usual wireframe
+
+    // TODO - while these routines make the vlists per the standard librt API,
+    // BoTs are a case where we probably should be passing the data directly to
+    // the drawing routines as face and vert arrays for the hot drawing paths
+    // WITHOUT making the vlist copies... this duplication results in massive
+    // additional memory usage for large BoTs.
+    if (s->s_os->s_dmode == 2 || s->s_os->s_dmode == 4) {
+	ret = rt_bot_plot_poly(&s->s_vlist, &intern, ttol, tol);
+    } else {
+	ret = rt_bot_plot(&s->s_vlist, &intern, ttol, tol, s->s_v);
+    }
 
     rt_db_free_internal(&intern);
-
-    return ret;
-}
-
-#if 0
-static int
-rt_shaded_plot(struct bv_scene_obj *s, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
-{
-    if (!ip->idb_meth || !ip->idb_meth->ft_tessellate) {
-        bu_log("ERROR: tessellation support not available\n");
-        return BRLCAD_ERROR;
-    }
-
-    struct model *m = nmg_mm();
-    struct nmgregion *r = (struct nmgregion *)NULL;
-    if (ip->idb_meth->ft_tessellate(&r, m, ip, ttol, tol) < 0) {
-        bu_log("ERROR: tessellation failure\n");
-        return BRLCAD_ERROR;
-    }
-
-    NMG_CK_REGION(r);
-    nmg_r_to_vlist(&s->s_vlist, r, NMG_VLIST_STYLE_POLYGON, s->vlfree);
-    nmg_km(m);
-
-    return BRLCAD_OK;
-}
-#endif
-
-/**
- * Used for solid types that don't have any special modes beyond basic and adaptive
- * plotting
- */
-int
-rt_generic_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *v)
-{
-    int ret = BRLCAD_ERROR;
-
-    if (!s || !dp || !dbip)
-	return BRLCAD_ERROR;
-
-    // Clear out existing vlists - if we're calling this, we definitely don't want
-    // any old data to linger.
-    BV_FREE_VLIST(s->vlfree, &s->s_vlist);
-
-#if 0
-    // NOTE - above call stages the vlist memory for reuse.  If we need
-    // to ACTUALLY free it (to back down memory usage if our drawing
-    // doesn't require it) this block can be used instead to actually free
-    // the memory.
-    struct bu_list *p;
-    while (BU_LIST_WHILE(p, bu_list, &s->s_vlist)) {
-	BU_LIST_DEQUEUE(p);
-	struct bv_vlist *pv = (struct bv_vlist *)p;
-	BU_FREE(pv, struct bv_vlist);
-    }
-#endif
-
-    switch (s->s_os->s_dmode) {
-        case 2:
-        case 4:
-	    // Shaded mode and hidden line mode need shaded eval (although they
-	    // do NOT attempt boolean evaluation.)  Fall back to wireframe mode
-	    // in case of tessellation failure.
-	    //ret = rt_shaded_plot(s, &intern, ttol, tol);
-            if (ret != BRLCAD_OK) {
-                s->s_os->s_dmode = 0;
-		ret = bot_wireframe_plot(s, dbip, dp, ttol, tol, v);
-	    }
-            break;
-        case 3:
-	    // Evaluated wireframes are only meaningful for combs, which have
-	    // boolean trees to evaluate.  For all other cases (which is what
-	    // rt_generic_scene_obj handles) just return the standard
-	    // wireframe.
-	    ret = bot_wireframe_plot(s, dbip, dp, ttol, tol, v);
-            break;
-        case 5:
-            // Draw triangles at points sampled by raytracing (this is an
-	    // evaluated drawing mode.)
-	    //ret = rt_sample_pnts(s, &intern);
-            break;
-        default:
-            // Default to wireframe
-            s->s_os->s_dmode = 0;
-	    ret = bot_wireframe_plot(s, dbip, dp, ttol, tol, v);
-            break;
-    }
-
     s->current = 1;
 
     return BRLCAD_OK;
