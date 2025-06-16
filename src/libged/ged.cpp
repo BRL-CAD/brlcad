@@ -375,7 +375,13 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 
     db_update_nref(gedp->dbip, &rt_uniresource);
 
-    db_cache_init(gedp->dbip, 0, 0);
+    // LoD cache updating may take a while, so we don't want
+    // to block on it.
+    const char *do_lod_init = getenv("LIBGED_LOD_INIT");
+    if (BU_STR_EQUAL(do_lod_init, "1")) {
+	std::thread lod_thread(db_mesh_lod_init, gedp->dbip, 0);
+	lod_thread.detach();
+    }
 
     return gedp;
 }

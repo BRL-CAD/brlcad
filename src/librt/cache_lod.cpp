@@ -1,4 +1,4 @@
-/*                     C A C H E _ L O D . C
+/*                   C A C H E _ L O D . C P P
  * BRL-CAD
  *
  * Copyright (c) 2016-2025 United States Government as represented by
@@ -17,12 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cache.c
+/** @file cache_lod.cpp
  *
  * Caching of LoD drawing data
  */
 
 #include "common.h"
+
+#include <string.h>
 
 /* implementation headers */
 #include "bu/app.h"
@@ -37,26 +39,44 @@
 void
 db_mesh_lod_init(struct db_i *dbip, int verbose) {
 
-    if (!dbip || !dbip->i || dbip->i->mesh_c)
+    if (!dbip || !dbip->i)
 	return;
 
-    int64_t start, elapsed, overall_start;
-    fastf_t seconds;
-    dbip->i->mesh_c_completed = 0;
-    dbip->i->mesh_c_target = 0;
+    if (dbip->dbi_wdbp_inmem || !strlen(dbip->dbi_filename)) {
+	if (verbose)
+	    bu_log("Temporary databases do not support on-disk caches.");
+	return;
+    }
+
+    dbip->i->init_complete = false;
+
+    if (!dbip->i->mesh_c)
+	dbip->i->mesh_c = bv_mesh_lod_context_create(dbip->dbi_filename);
+
+    if (!dbip->i->mesh_c) {
+	if (verbose)
+	    bu_log("Error: LoD cache setup failed for %s", dbip->dbi_filename);
+	dbip->i->init_complete = true;
+	return;
+    }
+
+    int mesh_c_target = 0;
     struct directory *dp;
     for (int i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
 		continue;
 	    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT)
-		dbip->i->mesh_c_target++;
+		mesh_c_target++;
 	}
     }
 
     // Total target count is known, proceed
-    start = bu_gettime();
-    overall_start = start;
+    int64_t start = bu_gettime();
+    int64_t overall_start = start;
+    int64_t elapsed;
+    fastf_t seconds;
+    int mesh_c_completed = 0;
     for (int i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
@@ -70,39 +90,55 @@ db_mesh_lod_init(struct db_i *dbip, int verbose) {
 	    if (key)
 		continue;
 
-	    if (verbose > 1)
-		bu_log("Processing(%d):  %s\n", dbip->i->mesh_c_completed+1, dp->d_namep);
+	    // We're about to do something that might take a while.  If the
+	    // parent thread has decided to close the dbip, we should stop now.
+	    if (dbip->i->shutdown_requested) {
+		dbip->i->init_complete = true;
+		return;
+	    }
 
 	    // Process object
+	    if (verbose > 1) {
+		bu_log("Processing(%d):  %s\n", mesh_c_completed+1, dp->d_namep);
+		start = bu_gettime();
+	    }
 	    db_mesh_lod_update(dbip, dp->d_namep);
 
 	    // Increment completed count
-	    dbip->i->mesh_c_completed++;
+	    mesh_c_completed++;
 
-	    elapsed = bu_gettime() - start;
-	    seconds = elapsed / 1000000.0;
-
-	    if (verbose > 1)
-		bu_log("Completed. (%g seconds)", seconds);
-
-	    if (seconds > 5.0) {
-		if (verbose) {
-		    elapsed = bu_gettime() - overall_start;
+	    // If the user has requested it, let them know what is happening
+	    if (verbose) {
+		if (verbose > 1) {
+		    elapsed = bu_gettime() - start;
 		    seconds = elapsed / 1000000.0;
-		    bu_log("LoD cache processing (%g seconds): completed %d of %d BoTs\n", seconds, dbip->i->mesh_c_completed, dbip->i->mesh_c_target);
+		    bu_log("Completed. (%g seconds)", seconds);
 		}
-		start = bu_gettime();
+
+		if (seconds > 5.0) {
+		    if (verbose) {
+			elapsed = bu_gettime() - overall_start;
+			seconds = elapsed / 1000000.0;
+			bu_log("LoD cache processing (%g seconds): completed %d of %d BoTs\n", seconds, mesh_c_completed, mesh_c_target);
+		    }
+		    start = bu_gettime();
+		}
 	    }
 	}
     }
 
-    elapsed = bu_gettime() - overall_start;
-    int rseconds = elapsed / 1000000;
-    int rminutes = rseconds / 60;
-    int rhours = rminutes / 60;
-    rminutes = rminutes % 60;
-    rseconds = rseconds % 60;
-    bu_log("Mesh LoD caching complete (Elapsed time: %02d:%02d:%02d)\n", rhours, rminutes, rseconds);
+    if (verbose) {
+	elapsed = bu_gettime() - overall_start;
+	int rseconds = elapsed / 1000000;
+	int rminutes = rseconds / 60;
+	int rhours = rminutes / 60;
+	rminutes = rminutes % 60;
+	rseconds = rseconds % 60;
+	bu_log("Mesh LoD caching complete (Elapsed time: %02d:%02d:%02d)\n", rhours, rminutes, rseconds);
+    }
+
+    // All done.
+    dbip->i->init_complete = true;
 }
 
 void
@@ -132,6 +168,11 @@ db_mesh_lod_update(struct db_i *dbip, const char *name)
     }
 
     // If this isn't an active BoT, we're done.
+    //
+    // (TODO - eventually, per-object cache updating probably should go in a
+    // functab entry - in principle BReps should be doing this, and there's
+    // nothing preventing caching facetized representations of other solids if
+    // that makes sense.
     struct directory *dp = db_lookup(dbip, name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL || dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
 	return BRLCAD_OK;
@@ -193,12 +234,13 @@ db_mesh_lod_get(struct db_i *dbip, const char *name)
     return lod;
 }
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s
