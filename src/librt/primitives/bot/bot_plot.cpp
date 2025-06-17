@@ -463,7 +463,11 @@ rt_bot_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip
 	return ret;
     }
 
-    // If we meet the conditions for an adaptive wireframe, do the LoD wireframe
+    // If we meet the conditions for an adaptive plot, load the LoD data.
+    //
+    // TODO - there is a full-detail mode for this, so what we probably ought to
+    // do is always use the LoD and just max the level if the app disables the
+    // LoD setting...
     if (v && s->adaptive_wireframe) {
 
 	struct bv_mesh_lod *lod = (struct bv_mesh_lod *)s->draw_data;
@@ -477,6 +481,34 @@ rt_bot_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip
 	    // the LoD know which object it is associated with.
 	    s->draw_data = (void *)lod;
 	    lod->s = s;
+
+	    // Record the necessary information for full detail information recovery.  We
+	    // don't duplicate the full mesh detail in the on-disk LoD storage, since we
+	    // already have that info in the .g itself, but we need to know how to get at
+	    // it when needed.  The free callback will clean up, but we need to initialize
+	    // the callback data here.
+	    struct bot_full_detail_clbk_data *cbd;
+	    BU_GET(cbd, bot_full_detail_clbk_data);
+	    cbd->dbip = dbip;
+	    cbd->dp = dp;
+	    cbd->res = &rt_uniresource;
+	    cbd->intern = NULL;
+	    bv_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
+	    bv_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
+	    bv_mesh_lod_detail_free_clbk(lod, &bot_mesh_info_free_clbk);
+
+	    // TODO - the need for this should go away - ideally, if the view changes
+	    // the app will know and call ft_scene_obj to update the object  (that is
+	    // a major reason v is passed in as a param
+#if 0
+	    s->s_update_callback = &bv_mesh_lod_view;
+#endif
+
+	    // When we are done with the object, it needs to know how to get rid of
+	    // the memory from LoD.  TODO - should we be doing this here instead of
+	    // using s_free_callback?
+	    s->s_free_callback = &bv_mesh_lod_free;
+
 	}
 
 	// The object bounds are based on the LoD's calculations.  Because the LoD
@@ -489,39 +521,11 @@ rt_bot_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip
 	VMOVE(s->bmin, s->bmin);
 	VMOVE(s->bmax, s->bmax);
 
-	// Record the necessary information for full detail information recovery.  We
-	// don't duplicate the full mesh detail in the on-disk LoD storage, since we
-	// already have that info in the .g itself, but we need to know how to get at
-	// it when needed.  The free callback will clean up, but we need to initialize
-	// the callback data here.
-	struct bot_full_detail_clbk_data *cbd;
-	BU_GET(cbd, bot_full_detail_clbk_data);
-	cbd->dbip = dbip;
-	cbd->dp = dp;
-	cbd->res = &rt_uniresource;
-	cbd->intern = NULL;
-	bv_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
-	bv_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
-	bv_mesh_lod_detail_free_clbk(lod, &bot_mesh_info_free_clbk);
-
-	// TODO - the need for this should go away - ideally, if the view changes
-	// the app will know and call ft_scene_obj to update the object  (that is
-	// a major reason v is passed in as a param
-#if 0
-	s->s_update_callback = &bv_mesh_lod_view;
-#endif
-
-	// When we are done with the object, it needs to know how to get rid of
-	// the memory from LoD.  TODO - should we be doing this here instead of
-	// using s_free_callback?
-	s->s_free_callback = &bv_mesh_lod_free;
-
-	// Initialize the LoD data to the current view
+	// Set the LoD data to the appropriate level for the current view
 	int level = bv_mesh_lod_view(s, v, 0);
 	if (level < 0) {
 	    bu_log("Error loading info for initial LoD view\n");
 	} else {
-
 	    // Mark the object as a Mesh LoD so the drawing routine knows to handle it differently
 	    s->s_type_flags |= BV_MESH_LOD;
 
