@@ -139,22 +139,6 @@ class GED_EXPORT CombInst {
 	// unpack anything it needs to - for example, to get the GObj of the parent:
 	// GObj *parent_obj = d->gobjs[chash].
 	DbiState *d;
-
-	// Related DbiPath instances
-	//
-	// Any path listed in this set references this CombInst.  If this
-	// CombInst is deleted, all paths in this set are invalid and should be
-	// returned to the dbi_paths queue.
-	//
-	// One of the reasons for using path hashes rather than pointers to
-	// reference DbiPath instances is to allow flexibility when it comes to
-	// these sorts of operations - if a DbiPath is removed and then
-	// recreated by a subsequent action before (say) the selection state is
-	// validated, there is no need to update its contents since the new
-	// registered DbiPath for a recreated path is just as good as the old
-	// version - it will use the same hash, even though it's DbiPath memory
-	// pointer is different.
-	std::unordered_set<unsigned long long> rpaths;
 };
 
 // In-memory representation of a BRL-CAD Geometry database object.
@@ -208,8 +192,6 @@ class GED_EXPORT GObj {
 	// in DbiPath entities.
 	std::map<size_t, struct bv_scene_obj *> scene_objs;
 
-	// Allow DbiPaths access to the rpaths container
-	friend class DbiPath;
     private:
 
 	// A Comb bounding box depends on the definition of everything
@@ -232,22 +214,6 @@ class GED_EXPORT GObj {
 
 	// Initialize the cv array of CombInst types based on the comb tree
 	void GenCombInstances();
-
-	// Related DbiPath instances
-	//
-	// Any path listed in this set uses this GObj either as a root or a
-	// parent in a CombInst - if this GObj is deleted, all paths in this
-	// set are invalid and should be returned to the dbi_paths queue.
-	//
-	// One of the reasons for using path hashes rather than pointers to
-	// reference DbiPath instances is to allow flexibility when it comes to
-	// these sorts of operations - if a DbiPath is removed and then
-	// recreated by a subsequent action before (say) the selection state is
-	// validated, there is no need to update its contents since the new
-	// registered DbiPath for a recreated path is just as good as the old
-	// version - it will use the same hash, even though it's DbiPath memory
-	// pointer is different.
-	std::unordered_set<unsigned long long> rpaths;
 };
 
 // TODO - every DbiPath potentially has a bv_scene_obj associated with it,
@@ -506,15 +472,25 @@ class GED_EXPORT BViewState {
 	BViewState(DbiState *db = NULL, struct bview *ev = NULL);
 	~BViewState();
 
+	// Since one of the common view paradigms is "quad view" where
+	// the geometric scene objects are all drawn or erased in tandem,
+	// allow a view state to specify a "linked" view state where it
+	// will source path data.  AddObj scene objects will still be
+	// unique to a view if added here and not in DbiState, but
+	// we want to not duplicate work managing a draw/erase list
+	// unless we actually have independent views that must do that
+	// work.
+	BViewState *l = NULL;
+
 	// Adds path to the BViewState container drawn set, but doesn't trigger
 	// a re-draw - that should be done once all paths to be added in a
 	// given draw cycle are queued up.  The actual drawing (and setting
 	// specifications) are done with Redraw and a supplied bv_obj_settings
 	// structure.  By default path is assigned a wireframe drawing mode,
 	// but other modes may be specified.
-	void AddPath(const char *path = NULL, int mode = 0);
-	void AddPath(DbiPath *p = NULL, int mode = 0);
-	void AddPath(unsigned long long phash = 0, int mode = 0);
+	void AddPath(const char *path = NULL, struct bv_obj_settings *vs = NULL);
+	void AddPath(DbiPath *p = NULL, struct bv_obj_settings *vs = NULL);
+	void AddPath(unsigned long long phash = 0, struct bv_obj_settings *vs = NULL);
 
 	// Erases paths from the view for the given mode.  If mode < 0, all
 	// matching paths are erased.  For modes that are un-evaluated, all
@@ -688,6 +664,15 @@ class GED_EXPORT DbiState {
 
 	// Clear a DbiPath and store it for later reuse.
 	void PutDbiPath(DbiPath *p);
+
+	// Once add and remove operations are complete for all views in a
+	// particular processing cycle, the DbiPath containers need to be
+	// finalized for drawing purposes.  This process is referred to as
+	// "baking" the DbiPaths.  It includes things like setting color and
+	// matrix information on the DbiPath's associated scene object.  Once
+	// paths are baked (assuming no database state changes, which require a
+	// Sync() call) the DbiPaths are ready to Render().
+	void BakePaths();
 
 	// Return a set of GObj hashes for top level objects.  By default
 	// objects with cyclic paths are not returned - to add them to the

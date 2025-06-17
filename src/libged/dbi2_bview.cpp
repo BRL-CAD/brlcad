@@ -551,9 +551,101 @@ BViewState::Render()
 
 }
 
+// In a Redraw, we are assuming that the DbiState's GObj and CombInst objects
+// are all valid - if the database has changed, a Sync() should be performed
+// on the DbiState before calling this method.
+//
+// GObj scene objects will have been updated by update_dp, and the DbiPath
+// instances should be current after a BakePaths() call - what we are doing
+// here is updating the view specific state containers needed to support
+// things like hierarchy highlighting.
+//
+// If a DbiPath is straight up invalid, it is simply removed from the drawn
+// sets.
+//
+// TODO - for cases where everything except the view itself is the same,
+// should allow a BViewState to "link" itself to another view that
+// maintains these containers...  No reason to do all this multiple
+// times if the only thing that will differ is the bview...
 void
 BViewState::Redraw(struct bv_obj_settings *UNUSED(vs), bool UNUSED(autoview))
 {
+    // If we have a linked view, it is there responsibility of the app
+    // to call Redraw on that view rather than this one.
+    //
+    // TODO - need to similarly guard other methods and have them return
+    // data from l-> versions of things...
+    if (l)
+	return;
+
+    // Clear fully drawn and partially drawn path sets - they are derived from
+    // drawn_paths and may have changed.
+    std::unordered_map<int, std::unordered_set<unsigned long long>>::iterator i_it;
+    for (i_it = fully_drawn_paths.begin(); i_it != fully_drawn_paths.end(); ++i_it)
+	i_it->second.clear();
+    for (i_it = partially_drawn_paths.begin(); i_it != partially_drawn_paths.end(); ++i_it)
+	i_it->second.clear();
+
+    std::unordered_map<size_t, std::unordered_set<unsigned long long>>::iterator d_it;
+    for (d_it = drawn_paths.begin(); d_it != drawn_paths.end(); ++d_it) {
+
+	// Anything in the drawn_paths list that is invalid is gone.
+	std::unordered_set<unsigned long long>::iterator s_it;
+	std::vector<unsigned long long> to_erase;
+	for (s_it = d_it->second.begin(); s_it != d_it->second.end(); ++s_it) {
+	    if (dbi_paths.find(*s_it) == dbi_paths.end()) {
+		to_erase.push-back(*s_it);
+	}
+	for (size_t i = 0; i < to_erase.size(); i++)
+	    d_it->second->erase(to_erase.size());
+
+	// Update fully and partially drawn from new drawn_paths state
+	for (s_it = d_it->second.begin(); s_it != d_it->second.end(); ++s_it) {
+	    DbiPath *p = dbis->GetDbiPath(*s_it);
+	    if (!p)
+		continue;
+
+	    // All child paths are also considered fully drawn.  Even an evaluated mode
+	    // drawing is considered to be drawing the subtree (just not necessarily as
+	    // individual scene objects) so we update the lists for both all and the
+	    // individual mode in all cases.
+	    dbis->AddPathsBelow(&(fully_drawn_paths[-1]), *s_it);
+	    dbis->AddPathsBelow(&(fully_drawn_paths[d_it->first]), *s_it);
+
+	    // The parents (if any) are now partially drawn paths, since the
+	    // fully_drawn_paths check at the beginning of AddPath determined this path
+	    // wasn't a child of an already drawn path.
+	    std::unordered_set<unsigned long long>::iterator sp_it;
+	    for (sp_it = p->parent_path_hashes.begin(); sp_it != p->parent_path_hashes.end(); ++sp_it) {
+		partially_drawn_paths[-1].insert(*sp_it);
+		partially_drawn_paths[d_it->first].insert(*sp_it);
+	    }
+	}
+
+	// Anything still valid needs to be re-expanded.  First, clear the old
+	// s_expanded hashes for this mode
+	s_expanded[d_it->first].clear();
+
+	// If we're mode 3 or 5 (the evaluated modes) we don't need the leaves expanding to leaves
+	if (d_it->first == 3 || d_it->first == 5)
+	    continue;
+
+	// Collect all the active drawn paths from this mode
+	std::vector<unsigned long long> to_expand;
+	to_expand.reserve(d_it->second.size());
+	for (s_it = d_it->second.begin(); s_it != d_it->second.end(); ++s_it)
+	    to_expand.push-back(*s_it);
+
+	// Generate the new s_expanded hashes (which may be unchanged, but
+	// there's no way to know without doing the work.)  BakePaths should
+	// already have established prepared DbiPaths for this - what we are
+	// doing here is preparing the set of DbiPaths Render will actually
+	// iterate over to draw this specific view.
+	std::vector<unsigned long long> leaves = dbis->ExpandPaths(to_expand, false);
+	for (size_t i = 0; i < leaves.size(); i++)
+	    s_expanded[d_it->first].insert(leaves[i]);
+    }
+
 }
 
 #if 0
