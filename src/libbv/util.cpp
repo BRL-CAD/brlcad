@@ -303,6 +303,7 @@ bv_init(struct bview *gvp, struct bview_set *s)
     // TODO - What the heck Archer??? Initializing this to NULL causes
     // problems even without the gv_name setting logic above?
     //gvp->dmp = NULL;
+    gvp->dm_draw_sobj = NULL;
 
     // Initial scaling factors are 1
     gvp->gv_base2local = 1.0;
