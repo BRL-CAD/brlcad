@@ -614,12 +614,6 @@ DbiPath::push(unsigned long long new_element)
     // Calculate the new current hash.
     path_hash = bu_data_hash(elements.data(), elements.size() * sizeof(unsigned long long));
 
-    // The GObj and CombInst both need to know to invalidate this path if
-    // either is deleted, should the path wind up registered in dbi_paths.
-    // Register with object rpaths containers
-    cp->second->rpaths.insert(path_hash);
-    pp->second->rpaths.insert(path_hash);
-
     // Need to check if path is now cyclic.  Assuming previously defined path
     // is NOT cyclic, per the is_cyclic check at the beginning of this method,
     // so we only need to look at the last element and the default cyclic()
@@ -686,16 +680,6 @@ DbiPath::pop(bool check)
     p_it = d->dbi_paths.find(old_hash);
     if (p_it != d->dbi_paths.end() && p_it->second == this)
 	d->dbi_paths.erase(old_hash);
-
-    // If we're not cyclic, the former parent GObj needs to know it no longer
-    // has to worry about this path.  (We have popped the former leaf by this
-    // point, so the current leaf is the GObj in question
-    if (!is_cyclic && !elements.empty()) {
-	std::unordered_map<unsigned long long, GObj *>::iterator pp;
-	pp = d->gobjs.find(elements.back());
-	if (pp != d->gobjs.end())
-	    pp->second->rpaths.erase(old_hash);
-    }
 
     // Update current hash and parent hashes
     path_hash = bu_data_hash(elements.data(), elements.size() * sizeof(unsigned long long));
@@ -907,19 +891,6 @@ CombInst::~CombInst()
 {
     if (d) {
 	d->combinsts.erase(ihash);
-
-	// De-register and queue any registered paths flagged in rpaths
-	// Since this CombInst is gone, they are no longer valid paths in
-	// the database.
-	std::unordered_set<unsigned long long>::iterator r_it;
-	for (r_it = rpaths.begin(); r_it != rpaths.end(); ++r_it) {
-	    std::unordered_map<unsigned long long, DbiPath *>::iterator p_it;
-	    p_it = d->dbi_paths.find(*r_it);
-	    if (p_it != d->dbi_paths.end()) {
-		d->dbi_paths.erase(*r_it);
-		d->PutDbiPath(p_it->second);
-	    }
-	}
     }
 }
 
@@ -1173,19 +1144,6 @@ GObj::~GObj()
     if (d) {
 	d->dp2g.erase(dp);
 	d->gobjs.erase(hash);
-
-	// De-register and queue any registered paths flagged in rpaths
-	// Since this GObj is gone, they are no longer valid paths in
-	// the database.
-	std::unordered_set<unsigned long long>::iterator r_it;
-	for (r_it = rpaths.begin(); r_it != rpaths.end(); ++r_it) {
-	    std::unordered_map<unsigned long long, DbiPath *>::iterator p_it;
-	    p_it = d->dbi_paths.find(*r_it);
-	    if (p_it != d->dbi_paths.end()) {
-		d->dbi_paths.erase(*r_it);
-		d->PutDbiPath(p_it->second);
-	    }
-	}
     }
 }
 

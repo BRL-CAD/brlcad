@@ -236,6 +236,51 @@ DbiState::PutDbiPath(DbiPath *p)
 }
 
 void
+DbiState::BakePaths(struct bv_obj_settings *UNUSED(vs), bool UNUSED(autoview))
+{
+    // Make sure we have DbiPaths for every leaf of every valid drawn path in
+    // any currently active view - those are the paths we will need for
+    // property setting
+    std::unordered_map<struct bview *, BViewState *>::iterator v_it;
+    std::unordered_set<unsigned long long>::iterator s_it;
+    std::unordered_set<unsigned long long> uniq_paths;
+    std::unordered_set<BViewState *> processed_vstates;
+    for (v_it = view_states.begin(); v_it != view_states.end(); v_it++) {
+	BViewState *vs = v_it->second;
+	if (processed_states.find(vs) != processed_states.end())
+	    continue;
+	processed_states.insert(vs);
+	std::unordered_map<size_t, std::unordered_set<unsigned long long>>::iterator d_it;
+	for (d_it = vs->drawn_paths.begin(); d_it != vs->drawn_paths.end(); ++d_it) {
+	    for (s_it = d_it->second.begin(); s_it != d_it->second.end(); ++s_it) {
+		if (dbi_paths.find(*s_it) != dbi_paths.end())
+		    uniq_paths.insert(*s_it);
+	    }
+	}
+    }
+    std::vector<unsigned long long> to_expand;
+    to_expand.reserve(uniq_paths.size());
+    for (s_it = uniq_paths.begin(); s_it != uniq_paths.end(); ++s_it)
+	to_expand.push-back(*s_it);
+    dbis->ExpandPaths(to_expand, false);
+    uniq_paths.clear();
+    to_expand.clear();
+
+    // We now have expanded DbiPaths, but their color and matrix info is not
+    // yet set on their scene objects (unless color was overridden by a
+    // bv_obj_settings value at the time of addition.)
+    std::unordered_map<unsigned long long, DbiPath *>::iterator p_it;
+    for (p_it = dbi_paths.begin(); p_it != dbi_paths.end(); ++p_it) {
+	// TODO 
+    }
+
+    // For each leaf, if it is in a mode that needs a GObj wireframe
+    // or shaded object, assign the GObj scene obj as a child to the
+    // DbiPath leaf scene object.  This will allow dm_draw_sobj to
+    // correctly draw the instance of the object.
+}
+
+void
 DbiState::clear_cache(struct directory *dp)
 {
     if (!dp || !dcache)
@@ -497,11 +542,7 @@ void
 DbiState::Sync()
 {
     if (!added.size() && !changed.size() && !removed.size()) {
-
-
-
-	// We've got to redo everything if we don't know what might have
-	// happened.
+	// We've got to redo everything if we don't know what happened.
 	dp2g.clear();
 
 	// The GObj deletes will also delete the CombInst instances
@@ -555,6 +596,26 @@ DbiState::Sync()
 	update_dp(dp);
     }
 
+    // Now that GObj and CombInst modifications are complete, we need to audit
+    // any DbiPaths registered with dbi_paths.  We deliberately don't do so
+    // until all changes are in, since a path that was invalid after a remove
+    // op might be valid again if the added or changed deltas recreated the
+    // removed components.
+    std::unordered_map<unsigned long long, DbiPath *>::iterator dbip_it;
+    std::vector<unsigned long long> invalid_dbipaths;
+    for (dbip_it = dbi_paths.begin(); dbip_it != dbi_paths.end(); ++dbip_it) {
+	DbiPath *p = dbip_it->second;
+	if (!p->valid()) {
+	    invalid_dbipaths.push_back(dbip_it->first);
+	    PutDbiPath(p);
+	}
+    }
+    for (size_t i = 0; i < invalid_dbipaths.size(); i++) {
+	dbi_paths.erase(invalid_dbipaths[i]);
+    }
+
+    // DbiPath states may be out of date, so we need to re-bake them
+    BakePaths();
 
     // For all associated view states, execute any necessary changes to the
     // drawn object lists and scene objects
