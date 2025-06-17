@@ -285,6 +285,12 @@ class GED_EXPORT DbiPath {
 	// Assignment operator
 	DbiPath& operator=(const DbiPath& p);
 
+	// Draw the objects associated with this path in the specified view.
+	//
+	// Anything in scene_objs gets drawn, so the parent logic should only
+	// add scene objects for the modes it wants drawn for this path.
+	void Draw(struct bview *v);
+
 	// Return true if this path is a parent path of p
 	bool parent(DbiPath &p);
 
@@ -497,7 +503,8 @@ class GED_EXPORT BSelectState {
 
 class GED_EXPORT BViewState {
     public:
-	BViewState(DbiState *);
+	BViewState(DbiState *db = NULL, struct bview *ev = NULL);
+	~BViewState();
 
 	// Adds path to the BViewState container drawn set, but doesn't trigger
 	// a re-draw - that should be done once all paths to be added in a
@@ -521,18 +528,28 @@ class GED_EXPORT BViewState {
 	void RemovePath(DbiPath *p, int mode = -1);
 	void RemovePath(unsigned long long phash = 0, int mode = -1);
 
-	// Return a sorted vector of paths encoding the drawn paths in the
-	// view.  If mode == -1 list all paths, otherwise list those specific
-	// to the mode.  If collapsed is true, return the minimal path set
-	// that captures what is drawn - otherwise, return the direct list of
-	// scene objects
-	std::vector<unsigned long long> DrawnPaths(int mode, bool collapsed);
+	// An application may add and remove arbitrary scene objects to a
+	// scene, not just geometry specified DbiPaths.  These objects may be
+	// either part of the common 3D scene shown by all views, or specific
+	// to this particular view.  A scene object cannot be added if there
+	// is already an object with the name s->name present in the scene.
+	// Correspondingly, RemoveObj wil return failure if it cannot find
+	// the object to remove.  AddObj and RemoveObj will not operate on
+	// DbiPath based scene objects, which are handled separately.
+	bool AddObj(struct bv_scene_obj *s);
+	bool RemoveObj(struct bv_scene_obj *s);
+	bool RemoveObj(const char *objname);
 
-	// Get a count of the drawn paths.  If collapsed is true the minimal
-	// path set capturing what is drawn is counted, otherwise all scene
+	// Return a sorted vector of path strings corresponding to the drawn
+	// paths in the view.  If mode == -1 list all paths, otherwise list
+	// those specific to the mode.
+	std::vector<std::string> DrawnPaths(int mode = -1);
+
+	// Get a count of the drawn paths.  If explicitly is true the count
+	// reflects the explicitly drawn paths, otherwise all leaf scene
 	// objects are counted.  mode == -1 means count all modes, otherwise
 	// count only the specified mode.
-	size_t DrawnPathCount(bool collapsed = true, int mode = -1);
+	size_t DrawnPathCount(bool explicitly = true, int mode = -1);
 
 	// Report if a DbiPath is drawn:
 	//
@@ -548,20 +565,14 @@ class GED_EXPORT BViewState {
 	// Clear all drawn objects
 	void Clear(int mode = -1);
 
-	// A refresh regenerates already drawn objects.  If paths is NULL,
-	// force a regeneration of all active path geometry.  (Generally you'll
-	// want to use redraw rather than refresh for performance reasons.)
-	void Refresh(std::vector<unsigned long long> *paths = NULL);
+	// A render does not update drawn object geometry - it just triggers a
+	// redraw of the scene.  If geometry has changed in the database you
+	// will want to trigger a Redraw to make sure the scene objects are
+	// current before calling Render.
+	void Render();
 
-	// A Rredraw can impact multiple views with a shared state - most of
-	// the elements will be the same, but adaptive plotting will be view
-	// specific even with otherwise common objects - we must update
-	// accordingly.
-	//
-	// TODO - with the new setup, changed_hashes just get generated inside
-	// Redraw itself - need to investigate.  Need the set of DbiPath
-	// hashes corresponding to all paths and all parents of paths involved
-	// with any sort of change.
+	// A redraw revalidates (and if necessary rebuilds) drawn paths and
+	// updates any scene objects that need updating.
 	unsigned long long Redraw(
 	       	std::unordered_set<struct bview *> *views = NULL,
 		struct bv_obj_settings *vs = NULL,
@@ -597,7 +608,7 @@ class GED_EXPORT BViewState {
 	// bigE evaluated wireframe drawing higher level paths are also considered
 	// "leaf" nodes.  Those require special handling when it comes to
 	// collapsing this set for specific drawing modes.
-	std::unordered_set<unsigned long long> s_expanded;
+	std::unordered_map<size_t, std::unordered_set<unsigned long long>> s_expanded;
 
 	// Sorted lists of fully drawn paths organized by mode.  Suitable
 	// for generating ordered lists of path strings
@@ -618,7 +629,12 @@ class GED_EXPORT BViewState {
 	// selects the set of paths drawn in AT LEAST one mode.
 	std::unordered_map<int, std::unordered_set<unsigned long long>> partially_drawn_paths;
 
+	// Set of user provided scene objects specific to this view
+	std::unordered_set<struct bv_scene_obj *> scene_objs;
+
 	DbiState *dbis;
+	struct bview *v;
+	bool local_v;
 
 };
 
@@ -718,6 +734,15 @@ class GED_EXPORT DbiState {
 	// If v is NULL, return the shared view.
 	BViewState *GetBViewState(struct bview *v);
 
+	// Methods for adding and removing user-provided scene objects to
+	// the main 3D scene
+	bool AddObj(struct bv_scene_obj *s);
+	bool RemoveObj(struct bv_scene_obj *s);
+	bool RemoveObj(const char *oname);
+
+	// Clear all drawn objects from all active views
+	void Clear(int mode = -1);
+
 	/*******************************************************************
          *                    Selection States
 	 *******************************************************************/
@@ -733,18 +758,30 @@ class GED_EXPORT DbiState {
 	std::vector<std::string> ListSelectionSets();
 
 	/*******************************************************************
-         *                     Database Paths
+         *                       Scene Data
 	 *******************************************************************/
-	// Decode hashes into DbiPath instances, when we have them.  (If a path
-	// hash doesn't have an entry here, the hash is not usable in most
-	// DbiState and related logic.)  There is no requirement that a path
-	// have exactly one DbiPath instance, but dbi_paths can hold only one
-	// so if application code creates more the management of those other
-	// instances is their responsibility.
+	// The combination of the dbi_paths and scene_objs sets constitute
+	// the primary 3D "scene" description for a GED application.  The
+	// former handle scene objects specific to each geometry instance
+	// being shown, and the latter handle arbitrary additional elements
+	// added to the scene (common examples would be rtcheck overlap
+	// lines and nirt raytracing lines, but any valid scene object
+	// will be rendered so applications may wish to add their own
+	// data as well.)
+
+	// The dbi_paths set is the primary means of decode hashes into DbiPath
+	// instances.  (If a path hash doesn't have an entry here, the hash is
+	// not usable in the majority of DbiState and related logic - hashs
+	// without DbiPaths are only useful for jobs like checking whether
+	// something is selected.)  There is no requirement that a path have
+	// exactly one DbiPath instance, but dbi_paths can hold only one per
+	// hash so if application code creates additional copies the management
+	// of those other instances is their responsibility.
 	//
-	// If a DbiPath is registered here (it does not happen by default,
-	// but user code can do it) altering or deleting the DbiPath instance
-	// will automatically de-register that DbiPath from dbi_paths.
+	// If a DbiPath is registered here (it does not happen by *default* on
+	// any DbiPath creation or change, but various code paths will do it)
+	// altering or deleting the DbiPath instance will automatically
+	// de-register that DbiPath from dbi_paths.
 	//
 	// Path alterations to an unregistered DbiPath that happens to match
 	// a hash in dbi_paths will have no effect on dbi_paths.
@@ -753,6 +790,9 @@ class GED_EXPORT DbiState {
 	// Container holding all pre-allocated DbiPath instances available
 	// for reuse.
 	std::queue<DbiPath *> dbiq;
+
+	// Additional scene objects common to all views
+	std::unordered_set<struct bv_scene_obj *> scene_objs;
 
     public:
 	// Allow the implementation containers to access the core DbiState maps

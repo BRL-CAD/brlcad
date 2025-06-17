@@ -183,6 +183,20 @@ DbiPath::~DbiPath()
     d = NULL;
 }
 
+void
+DbiPath::Draw(struct bview *v)
+{
+    if (UNLIKELY(!v || !v->dmp || !v->dm_draw_sobj))
+	return;
+
+    // TODO - need to figure out whether to sync DbiPath color/matrix/etc. info
+    // here, or in a preliminary step to avoid extra work...
+
+    std::map<size_t, struct bv_scene_obj *>::iterator s_it;
+    for (s_it = scene_objs.begin(); s_it != scene_objs.end(); ++s_it)
+	(*v->dm_draw_sobj)(v->dmp, s_it->second);
+}
+
 bool
 DbiPath::parent(DbiPath &p)
 {
