@@ -442,7 +442,7 @@ class GED_EXPORT BSelectState {
 
 	std::vector<std::string> list_selected_paths();
 
-	bool draw_sync();
+	void Sync();
 
 	unsigned long long state_hash();
 
@@ -566,18 +566,28 @@ class GED_EXPORT BViewState {
 	void Clear(int mode = -1);
 
 	// A render does not update drawn object geometry - it just triggers a
-	// redraw of the scene.  If geometry has changed in the database you
-	// will want to trigger a Redraw to make sure the scene objects are
-	// current before calling Render.
+	// redraw of the scene.  If there is any chance the database has
+	// changed, a dbis->Sync() should be called (which will trigger a
+	// Redraw) to make sure the scene objects are current before
+	// Render is called again.
 	void Render();
 
-	// A redraw revalidates (and if necessary rebuilds) drawn paths and
-	// updates any scene objects that need updating.
-	unsigned long long Redraw(
-	       	std::unordered_set<struct bview *> *views = NULL,
+	// A redraw validates, updates (and - if necessary - rebuilds) drawn
+	// DbiPaths and their corresponding scene objects.  If a draw command
+	// has added new paths to the scene, this is the command that will make
+	// sure the associated scene object geometry is correct.
+	//
+	// If autoview is true, Redraw will assume the view is being populated
+	// for the first time and will attempt to initialize it based on the
+	// currently available geometry.
+	//
+	// Note that a Redraw will not automatically trigger Render calls
+	// for the views - whether to Render immediately or wait for further
+	// processing is up to the calling code.
+	void Redraw(
 		struct bv_obj_settings *vs = NULL,
-	       	int no_autoview = 1,
-		std::unordered_set<unsigned long long> *changed_hashes = NULL);
+		bool autoview = true
+		);
 
 	// Debugging methods for printing out current states - the use of hashes
 	// means direct inspection of most data isn't informative, so we provide
@@ -651,9 +661,6 @@ class GED_EXPORT DbiState {
 	// Database Instance associated with this container
 	struct ged *gedp = NULL;
 
-	// Update the DbiState to reflect current .g state
-	unsigned long long update();
-
 	/*******************************************************************
          *                Database utility routines
 	 *******************************************************************/
@@ -722,6 +729,22 @@ class GED_EXPORT DbiState {
 	// Like AddPathsBelow, except it removes the hashes from the set rather
 	// than adding them and has no option to create paths.
 	void RemovePathsBelow(std::unordered_set<unsigned long long> *s, unsigned long long phash);
+
+	// A Sync updates the internal DbiState.  A Sync should be performed
+	// after any database changes.  The update process can be made more
+	// efficient by user-supplied information in the added, changed and
+	// removed callback sets - if none of those are pre-populated, the only
+	// option is to do a full rebuild of the DbiState from the .g file.
+	//
+	// A Sync will also call Redraw on any views in the DbiState, since
+	// there is a good chance that database changes have invalidated some
+	// aspect of the drawn views.
+	void Sync();
+
+	// Data from librt callbacks
+	std::unordered_set<struct directory *> added;
+	std::unordered_set<struct directory *> changed;
+	std::unordered_set<struct directory *> removed;
 
 	/*******************************************************************
          *                      View States
@@ -809,7 +832,6 @@ class GED_EXPORT DbiState {
 	// Private methods and resources relating to database objects
 	std::vector<GObj *> get_gobjs(std::vector<unsigned long long> &path);
 	std::vector<CombInst *> get_combinsts(std::vector<unsigned long long> &path);
-	bool need_update_nref = true;
 	void clear_cache(struct directory *dp);
 	struct resource *res = NULL;
 	struct ged_draw_cache *dcache = NULL;
@@ -832,13 +854,8 @@ class GED_EXPORT DbiState {
 	std::unordered_map<struct bview *, BViewState *> view_states;
 
 	// Data related to Selections
-	BSelectState *d_selection;
+	BSelectState *d_selection = NULL;
 	std::unordered_map<std::string, BSelectState *> selected_sets;
-
-	// Data to be used by callbacks
-	std::unordered_set<struct directory *> added;
-	std::unordered_set<struct directory *> changed;
-	std::unordered_set<struct directory *> removed;
 };
 
 
