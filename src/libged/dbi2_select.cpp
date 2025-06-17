@@ -245,10 +245,9 @@ BSelectState::characterize()
 
 
 
-bool
-BSelectState::draw_sync()
+void
+BSelectState::Sync()
 {
-    bool changed = false;
 #if 0
     std::unordered_set<BViewState *> vstates;
 
@@ -275,7 +274,6 @@ BSelectState::draw_sync()
 	}
     }
 #endif
-    return changed;
 }
 
 unsigned long long

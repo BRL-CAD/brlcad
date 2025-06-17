@@ -551,6 +551,11 @@ BViewState::Render()
 
 }
 
+void
+BViewState::Redraw(struct bv_obj_settings *UNUSED(vs), bool UNUSED(autoview))
+{
+}
+
 #if 0
 unsigned long long
 BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *> &views, int no_autoview, std::unordered_set<unsigned long long> &changed_hashes)
