@@ -493,28 +493,46 @@ DbiState::tops(bool show_cyclic)
     return ret;
 }
 
-unsigned long long
-DbiState::update()
+void
+DbiState::Sync()
 {
-    unsigned long long ret = 0;
-
     if (!added.size() && !changed.size() && !removed.size()) {
-	return ret;
-    }
 
-    // If we got this far, SOMETHING changed
-    ret |= GED_DBISTATE_DB_CHANGE;
 
-    std::unordered_set<struct directory *>::iterator g_it;
 
-    if (need_update_nref) {
+	// We've got to redo everything if we don't know what might have
+	// happened.
+	dp2g.clear();
+
+	// The GObj deletes will also delete the CombInst instances
+	combinsts.clear();
+
+	// Clear all GObj instances
+	std::unordered_map<unsigned long long, GObj *>::iterator go_it;
+	for (go_it = gobjs.begin(); go_it != gobjs.end(); ++go_it) {
+	    GObj *go = go_it->second;
+	    delete go;
+	}
+
+	// (Re)create all GObj instances
 	db_update_nref(gedp->dbip, res);
-	need_update_nref = false;
+	for (int i = 0; i < RT_DBNHASH; i++) {
+	    struct directory *dp;
+	    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		update_dp(dp);
+	    }
+	}
+	return;
     }
+
+    // Make sure our references are current
+    db_update_nref(gedp->dbip, res);
 
     // For objects that are removed, delete the GObj and its associated data.
-    // Removal of an instance from a comb tree is handled as an object change,
-    // and thus is handled internally by the GObj destructor.
+    // Removal of any instances from a comb tree object is treated as part of
+    // the object removal, and thus is handled internally by the GObj
+    // destructor - we don't need to do it here.
+    std::unordered_set<struct directory *>::iterator g_it;
     for (g_it = removed.begin(); g_it != removed.end(); g_it++) {
 	std::unordered_map<struct directory *, GObj *>::iterator r_it;
 	r_it = dp2g.find(*g_it);
@@ -524,44 +542,50 @@ DbiState::update()
 	delete robj;
     }
 
-    // We store the changed hashes so view updates can know which
-    // objects will need updating.  update_dp will rebuild the GObj
-    // and any child CombInsts.
-    std::unordered_set<unsigned long long> changed_hashes;
-    for (g_it = changed.begin(); g_it != changed.end(); g_it++) {
-	struct directory *dp = *g_it;
-	unsigned long long hash = update_dp(dp);
-	changed_hashes.insert(hash);
-    }
-
+    // For changed and added objects, call update_dp
     for (g_it = added.begin(); g_it != added.end(); g_it++) {
 	struct directory *dp = *g_it;
 	bu_log("added: %s\n", dp->d_namep);
 	update_dp(dp);
     }
 
-    // For all associated view states, execute any necessary changes to
-    // view objects and lists
-    std::unordered_map<BViewState *, std::unordered_set<struct bview *>> vmap;
-    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-	BViewState *bvs = gedp->dbi_state->GetBViewState(v);
-	if (!bvs)
+    for (g_it = changed.begin(); g_it != changed.end(); g_it++) {
+	struct directory *dp = *g_it;
+	bu_log("changed : %s\n", dp->d_namep);
+	update_dp(dp);
+    }
+
+
+    // For all associated view states, execute any necessary changes to the
+    // drawn object lists and scene objects
+    std::unordered_map<struct bview *, BViewState *>::iterator v_it;
+    if (shared_vs)
+	shared_vs->Redraw();
+    for (v_it = view_states.begin(); v_it != view_states.end(); ++v_it) {
+	if (v_it->second == shared_vs)
 	    continue;
-	vmap[bvs].insert(v);
+	v_it->second->Redraw();
     }
-    std::unordered_map<BViewState *, std::unordered_set<struct bview *>>::iterator bv_it;
-    for (bv_it = vmap.begin(); bv_it != vmap.end(); bv_it++) {
-	bv_it->first->Redraw(&bv_it->second, NULL, 1, &changed_hashes);
+
+    // Sync all selection states
+    if (d_selection)
+	d_selection->Sync();
+    std::unordered_map<std::string, BSelectState *>::iterator st_it;
+    for (st_it = selected_sets.begin(); st_it != selected_sets.end(); ++st_it) {
+	if (st_it->second == d_selection)
+	    continue;
+	st_it->second->Sync();
     }
+
+    // Make sure the renders are current
+    for (v_it = view_states.begin(); v_it != view_states.end(); ++v_it)
+	v_it->second->Render();
+
 
     // Updates done, clear items stored by callbacks
     added.clear();
     changed.clear();
     removed.clear();
-
-    return ret;
 }
 
 void
