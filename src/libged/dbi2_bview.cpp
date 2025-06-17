@@ -55,22 +55,38 @@ extern "C" {
 #include "ged/view.h"
 #include "./ged_private.h"
 
-#if 0
 // alphanum sort
 static bool alphanum_cmp(const std::string &a, const std::string &b)
 {
     return alphanum_impl(a.c_str(), b.c_str(), NULL) < 0;
 }
-#endif
 
-BViewState::BViewState(DbiState *s)
+BViewState::BViewState(DbiState *s, struct bview *ev)
 {
     dbis = s;
+    v = ev;
+    if (!v) {
+	BU_GET(v, struct bview);
+	bv_init(v, NULL);
+	local_v = true;
+    } else {
+	local_v = false;
+    }
+}
+
+BViewState::~BViewState()
+{
+    if (local_v)
+	BU_PUT(v, struct bview);
 }
 
 void
 BViewState::AddPath(const char *path, int mode)
 {
+    // Sanity
+    if (UNLIKELY(!dbis))
+	return;
+
     if (UNLIKELY(!path))
 	return;
 
@@ -85,6 +101,10 @@ BViewState::AddPath(const char *path, int mode)
 void
 BViewState::AddPath(DbiPath *p, int mode)
 {
+    // Sanity
+    if (UNLIKELY(!dbis))
+	return;
+
     if (UNLIKELY(!p))
 	return;
 
@@ -108,6 +128,10 @@ BViewState::AddPath(DbiPath *p, int mode)
 void
 BViewState::AddPath(unsigned long long hash, int mode)
 {
+    // Sanity
+    if (UNLIKELY(!dbis))
+	return;
+
     if (UNLIKELY(!hash))
 	return;
 
@@ -186,6 +210,10 @@ BViewState::AddPath(unsigned long long hash, int mode)
 void
 BViewState::RemovePath(const char *path, int mode)
 {
+    // Sanity
+    if (UNLIKELY(!dbis))
+	return;
+
     if (UNLIKELY(!path))
 	return;
 
@@ -200,29 +228,23 @@ BViewState::RemovePath(const char *path, int mode)
 void
 BViewState::RemovePath(DbiPath *p, int mode)
 {
+    // Sanity
+    if (UNLIKELY(!dbis))
+	return;
+
     if (UNLIKELY(!p))
 	return;
 
-    // Any explicitly removed path needs a registered DbiPath.  If we don't
-    // already have one, create it (we can't assume p is suitable for
-    // registering, so we make our own.)
-    std::unordered_map<unsigned long long, DbiPath *>::iterator dp_it;
-    dp_it = dbis->dbi_paths.find(p->hash());
-    DbiPath *np = NULL;
-    if (dp_it == dbis->dbi_paths.end()) {
-	np = dbis->GetDbiPath();
-	*np = *p;
-	dbis->dbi_paths[p->hash()] = np;
-    } else {
-	np = dp_it->second;
-    }
-
-    RemovePath(np->hash(), mode);
+    RemovePath(p->hash(), mode);
 }
 
 void
 BViewState::RemovePath(unsigned long long hash, int mode)
 {
+    // Sanity
+    if (UNLIKELY(!dbis))
+	return;
+
     if (UNLIKELY(!hash))
 	return;
 
@@ -337,111 +359,197 @@ BViewState::RemovePath(unsigned long long hash, int mode)
     }
 }
 
-#if 0
-unsigned long long
-BViewState::refresh(struct bview *v, int argc, const char **argv)
+std::vector<std::string>
+BViewState::DrawnPaths(int mode)
 {
-    if (!v)
-	return 0;
+    // Sanity
+    if (UNLIKELY(!dbis))
+	return std::vector<std::string>();
 
-    bv_log(1, "BViewState::refresh");
-    // We (well, callers) need to be able to tell if the redraw pass actually
-    // changed anything.
-    unsigned long long ret = 0;
+    std::vector<std::string> ret;
 
-    // Make sure the view knows how to update the oriented bounding box
-    v->gv_bounds_update = &bv_view_bounds;
-
-    // If we have specific paths specified, the leaves of those paths
-    // denote which paths need refreshing.  We need to process them
-    // and turn them to hashes, so we can check the s_keys hash vectors
-    // for the presence of "hashes of interest".
-    //
-    // Note - this is too aggressive, in that it will result in refreshing
-    // of objects that have the leaf in their paths but don't match the
-    // parent full path.  However, checking the full parent path is more
-    // complicated without an n^2 order performance problem, so for the
-    // moment we punt and use the more aggressive redraw solution.
-    std::unordered_set<unsigned long long> active_hashes;
-    for (int i = 0; i < argc; i++) {
-	std::vector<unsigned long long> phashes = dbis->digest_path(argv[i]);
-	active_hashes.insert(phashes[phashes.size() - 1]);
-    }
-
-    // Objects may be "drawn" in different ways - wireframes, shaded,
-    // evaluated.  How they must be redrawn is mode dependent.
-    std::unordered_map<int, std::unordered_set<unsigned long long>> mode_map;
-    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator sk_it;
-    for (sk_it = s_keys.begin(); sk_it != s_keys.end(); sk_it++) {
-	std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator s_it;
-	s_it = s_map.find(sk_it->first);
-	if (s_it == s_map.end())
-	    continue;
-
-	// If we have specified objects, we only refresh if the path
-	// involves a hash of interest
-	if (active_hashes.size()) {
-	    int active = 0;
-	    for (size_t i = 0; i < sk_it->second.size(); i++) {
-		if (active_hashes.find(sk_it->second[i]) != active_hashes.end()) {
-		    active = 1;
-		    break;
-		}
-	    }
-	    if (!active)
+    std::unordered_map<size_t, std::unordered_set<unsigned long long>>::iterator d_it;
+    std::unordered_set<unsigned long long>::iterator s_it;
+    if (mode == -1) {
+	std::set<unsigned long long> uniq_paths;
+	for (d_it = drawn_paths.begin(); d_it != drawn_paths.end(); ++d_it) {
+	    for (s_it = d_it->second.begin(); s_it != d_it->second.end(); ++s_it)
+		uniq_paths.insert(*s_it);
+	}
+	std::set<unsigned long long>::iterator ss_it;
+	for (ss_it = uniq_paths.begin(); ss_it != uniq_paths.end(); ++ss_it) {
+	    DbiPath *p = dbis->GetDbiPath(*s_it);
+	    if (!p)
 		continue;
+	    ret.push_back(p->str());
 	}
 
-	std::unordered_map<int, struct bv_scene_obj *>::iterator sm_it;
-	for (sm_it = s_it->second.begin(); sm_it != s_it->second.end(); sm_it++) {
-	    mode_map[sm_it->first].insert(sk_it->first);
-	}
-    }
+	std::sort(ret.begin(), ret.end(), &alphanum_cmp);
+    } else {
+	d_it = drawn_paths.find(mode);
+	if (d_it == drawn_paths.end())
+	    return std::vector<std::string>();
 
-    // Redo drawing based on current db info - color, matrix, and geometry
-    std::unordered_map<int, std::unordered_set<unsigned long long>>::iterator mm_it;
-    for (mm_it = mode_map.begin(); mm_it != mode_map.end(); mm_it++) {
-	std::unordered_set<unsigned long long> &mkeys = mm_it->second;
-	std::unordered_set<unsigned long long>::iterator k_it;
-	for (k_it = mkeys.begin(); k_it != mkeys.end(); k_it++) {
-	    std::vector<unsigned long long> &cp = s_keys[*k_it];
-	    struct bv_scene_obj *s = NULL;
-	    if (s_map.find(*k_it) != s_map.end()) {
-		if (s_map[*k_it].find(mm_it->first) != s_map[*k_it].end())
-		    s = s_map[*k_it][mm_it->first];
-	    }
-	    if (!s)
+	for (s_it = d_it->second.begin(); s_it != d_it->second.end(); ++s_it) {
+	    DbiPath *p = dbis->GetDbiPath(*s_it);
+	    if (!p)
 		continue;
-	    struct bv_scene_obj *nso = bv_obj_get(v, BV_DB_OBJS);
-	    bv_obj_sync(nso, s);
-	    nso->s_i_data = s->s_i_data;
-	    s->s_i_data = NULL;
-	    s_map[*k_it].erase(mm_it->first);
-	    ret = GED_DBISTATE_VIEW_CHANGE;
-
-	    // print path name, set view - otherwise empty
-	    dbis->print_path(&nso->s_name, cp);
-	    nso->s_v = v;
-	    nso->dp = s->dp;
-	    s_map[*k_it][mm_it->first] = nso;
-
-	    //bv_log(3, "refresh %s[%s]", bu_vls_cstr(&(nso->s_name)), bu_vls_cstr(&(v->gv_name)));
-	    bu_log("refresh %s[%s]\n", bu_vls_cstr(&(nso->s_name)), bu_vls_cstr(&(v->gv_name)));
-	    draw_scene(nso, v);
-	    bv_obj_put(s);
+	    ret.push_back(p->str());
 	}
-    }
 
-    // Do selection sync
-    BSelectState *ss = dbis->find_selected_state(NULL);
-    if (ss) {
-	ss->draw_sync();
-	ret = GED_DBISTATE_VIEW_CHANGE;
+	std::sort(ret.begin(), ret.end(), &alphanum_cmp);
     }
 
     return ret;
 }
-#endif
+
+size_t
+BViewState::DrawnPathCount(bool explicitly, int mode)
+{
+    // Sanity
+    if (UNLIKELY(!dbis))
+	return 0;
+
+    size_t ocnt = 0;
+    std::unordered_map<size_t, std::unordered_set<unsigned long long>>::iterator d_it;
+    std::unordered_set<unsigned long long>::iterator s_it;
+    if (mode == -1) {
+	if (explicitly) {
+	    // Just count the specified drawn paths
+	    std::set<unsigned long long> uniq_paths;
+	    for (d_it = drawn_paths.begin(); d_it != drawn_paths.end(); ++d_it) {
+		for (s_it = d_it->second.begin(); s_it != d_it->second.end(); ++s_it)
+		    uniq_paths.insert(*s_it);
+	    }
+	    ocnt = uniq_paths.size();
+	} else {
+	    // Count ALL leaves - the count returned in this mode is all active
+	    // scene objects derived from the geometry info in the dbip.
+	    for (d_it = s_expanded.begin(); d_it != s_expanded.end(); ++d_it)
+		ocnt += s_expanded.size();
+	}
+    } else {
+	if (explicitly) {
+	    d_it = drawn_paths.find(mode);
+	    if (d_it == drawn_paths.end())
+		return 0;
+	} else {
+	    // Count ALL leaves - the count returned in this mode is all active
+	    // scene objects derived from the geometry info in the dbip.
+	    d_it = s_expanded.find(mode);
+	    if (d_it == drawn_paths.end())
+		return 0;
+	}
+	ocnt = d_it->second.size();
+    }
+    return ocnt;
+}
+
+int
+BViewState::IsDrawn(DbiPath *p, int mode)
+{
+    // Sanity
+    if (UNLIKELY(!dbis))
+	return 0;
+    if (UNLIKELY(!p))
+	return 0;
+    return IsDrawn(p->hash(), mode);
+}
+
+int
+BViewState::IsDrawn(unsigned long long hash, int mode)
+{
+    // Sanity
+    if (UNLIKELY(!dbis))
+	return 0;
+    std::unordered_map<int, std::unordered_set<unsigned long long>>::iterator m_it;
+    if (mode == -1) {
+	for (m_it = fully_drawn_paths.begin(); m_it != fully_drawn_paths.end(); ++m_it) {
+	    if (m_it->second.find(hash) != m_it->second.end())
+		return 1;
+	}
+	for (m_it = partially_drawn_paths.begin(); m_it != partially_drawn_paths.end(); ++m_it) {
+	    if (m_it->second.find(hash) != m_it->second.end())
+		return 2;
+	}
+    } else {
+	m_it = fully_drawn_paths.find(mode);
+	if (m_it != fully_drawn_paths.end()) {
+	    if (m_it->second.find(hash) != m_it->second.end())
+		return 1;
+	}
+	m_it = partially_drawn_paths.find(mode);
+	if (m_it != partially_drawn_paths.end()) {
+	    if (m_it->second.find(hash) != m_it->second.end())
+		return 2;
+	}
+    }
+
+    return 0;
+}
+
+void
+BViewState::Clear(int mode)
+{
+    // TODO - Clear drawn paths.  Probably need to garbage collect DbiPaths when doing this.
+    if (mode == -1) {
+    } else {
+    }
+}
+
+// This will move much of the dm_draw_objs and draw_scene_obj logic from libdm
+// to this method and the DbiPath Draw method.  That should be a good thing,
+// since the libraries and applications may ultimately want or need more
+// control over how the drawing is done, but it will mean a bit of a rethink on
+// how to trigger the libdm low-level operations from here.  Ideally, the libdm
+// role will reduce to more or less the dm_draw_obj call - e.g.,
+// (*v->dm_draw_sobj)(v->dmp, s) after s has been prepared with DbiPath->Draw().
+//
+// However, for that to work without a libdm type coupling, we will need to add
+// a callback-specific signature function to libdm (dm_draw_sobj instead of
+// dm_draw_obj) that has a function signature of int (*)(void *, struct
+// bv_scene_obj *) and a function pointer slot to bview (the v->dm_draw_sobj
+// above) so we can register an object rendering method with a bview the same
+// way we register a dmp pointer.  If we keep the convention of one BViewState
+// per dm, then between dmp and v->dm_draw_sobj the view will know what it needs
+// to deal with scene objects.
+void
+BViewState::Render()
+{
+    // If we don't have an assigned display manager, nothing to do.
+    if (UNLIKELY(!v->dmp || !v->dm_draw_sobj))
+	return;
+
+    // First, draw database geometry path-based scene objects active in this view
+    if (LIKELY(dbis != NULL)) {
+	std::unordered_map<size_t, std::unordered_set<unsigned long long>>::iterator e_it;
+	for (e_it = s_expanded.begin(); e_it != s_expanded.end(); ++e_it) {
+	    std::unordered_set<unsigned long long>::iterator s_it;
+	    for (s_it = e_it->second.begin(); s_it != e_it->second.end(); ++s_it) {
+		DbiPath *p = dbis->GetDbiPath(*s_it);
+		if (!p)
+		    continue;
+		// Check if this leaf is part of an edit - if so, we defer drawing
+
+		// Check if this leaf is part of a selection - if so, we need to override
+		// its color
+
+		// Standard leaf - have the dm do its standard operation on the object
+		p->Draw(v);
+	    }
+	}
+
+	// Next draw user-provided scene objects common to all views
+	std::unordered_set<struct bv_scene_obj *>::iterator so_it;
+	for (so_it = dbis->scene_objs.begin(); so_it != dbis->scene_objs.end(); ++so_it) {
+	}
+    }
+
+    // Then draw user-provided scene objects specific to this view
+
+    // Lastly, draw any faceplate elements active in the view.
+
+}
 
 #if 0
 unsigned long long

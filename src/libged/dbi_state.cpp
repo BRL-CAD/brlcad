@@ -314,6 +314,39 @@ DbiState::GetBViewState(struct bview *v)
     return nv;
 }
 
+bool
+DbiState::AddObj(struct bv_scene_obj *s)
+{
+    if (!s)
+	return false;
+    return false;
+}
+
+bool
+DbiState::RemoveObj(struct bv_scene_obj *s)
+{
+    if (!s)
+	return false;
+    return false;
+}
+
+bool
+DbiState::RemoveObj(const char *oname)
+{
+    if (!oname)
+	return false;
+    return false;
+}
+
+void
+DbiState::Clear(int mode)
+{
+    if (mode == -1) {
+    } else {
+    }
+}
+
+
 BSelectState *
 DbiState::GetSelectionSet(const char *sname)
 {

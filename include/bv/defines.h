@@ -563,6 +563,8 @@ struct bview_knobs {
 
 struct bview_set;
 
+typedef void(*dm_clbk_t)(void *, struct bv_scene_obj *);
+
 struct bview {
     uint32_t	  magic;             /**< @brief magic number */
     struct bu_vls gv_name;
@@ -666,6 +668,7 @@ struct bview {
     void           *gv_clientData;   /**< @brief  passed to gv_callback */
     struct bu_ptbl *callbacks;
     void           *dmp;             /* Display manager pointer, if one is associated with this view */
+    dm_clbk_t	   *dm_draw_sobj;    /* Function pointer to a method to draw a scene object in the dmp display manager. */
     void           *u_data;          /* Caller data associated with this view */
 };
 
