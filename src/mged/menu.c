@@ -33,7 +33,7 @@
 #include "./menu.h"
 
 #include "ged.h"
-#include "ged/view/ged_view_tmp.h"
+#include "ged/view.h"
 
 static void
 cline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
