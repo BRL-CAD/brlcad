@@ -80,25 +80,22 @@ char ctemp[7];
  */
 int
 editit(struct mged_state *s, const char *command, const char *tempfile) {
-    int argc = 5;
+    int argc = 3;
     const char *av[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
-    struct bu_vls editstring = BU_VLS_INIT_ZERO;
 
     CHECK_DBI_NULL;
 
-    if (!get_editor_string(s, &editstring))
+    if (!get_editor(s))
 	return TCL_ERROR;
 
     av[0] = command;
-    av[1] = "-e";
-    av[2] = bu_vls_addr(&editstring);
-    av[3] = "-f";
-    av[4] = tempfile;
-    av[5] = NULL;
+    av[1] = "-f";
+    av[2] = tempfile;
+    av[3] = NULL;
 
     ged_exec(s->gedp, argc, (const char **)av);
 
-    bu_vls_free(&editstring);
+    clear_editor(s);
     return TCL_OK;
 }
 
@@ -114,29 +111,14 @@ f_edcolor(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, cons
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    const char **av;
-    int i;
-    struct bu_vls editstring = BU_VLS_INIT_ZERO;
-
     CHECK_DBI_NULL;
 
-    if (!get_editor_string(s, &editstring))
+    if (!get_editor(s))
 	return TCL_ERROR;
 
-    av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edcolor: av");
-    av[0] = argv[0];
-    av[1] = "-E";
-    av[2] = bu_vls_addr(&editstring);
-    argc += 2;
-    for (i = 3; i < argc; ++i) {
-	av[i] = argv[i-2];
-    }
-    av[argc] = NULL;
+    ged_exec(s->gedp, argc, argv);
 
-    ged_exec(s->gedp, argc, (const char **)av);
-
-    bu_vls_free(&editstring);
-    bu_free((void *)av, "f_edcolor: av");
+    clear_editor(s);
     return TCL_OK;
 }
 
@@ -151,10 +133,6 @@ f_edcodes(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    const char **av;
-    struct bu_vls editstring = BU_VLS_INIT_ZERO;
-    int i;
-
     CHECK_DBI_NULL;
 
     if (argc < 2) {
@@ -162,23 +140,12 @@ f_edcodes(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    if (!get_editor_string(s, &editstring))
+    if (!get_editor(s))
 	return TCL_ERROR;
 
-    av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edcodes: av");
-    av[0] = argv[0];
-    av[1] = "-E";
-    av[2] = bu_vls_addr(&editstring);
-    argc += 2;
-    for (i = 3; i < argc; ++i) {
-	av[i] = argv[i-2];
-    }
-    av[argc] = NULL;
+    ged_exec(s->gedp, argc, argv);
 
-    ged_exec(s->gedp, argc, (const char **)av);
-
-    bu_vls_free(&editstring);
-    bu_free((void *)av, "f_edcodes: av");
+    clear_editor(s);
     return TCL_OK;
 }
 
@@ -194,10 +161,6 @@ f_edmater(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    const char **av;
-    struct bu_vls editstring = BU_VLS_INIT_ZERO;
-    int i;
-
     CHECK_DBI_NULL;
 
     if (argc < 2) {
@@ -205,23 +168,12 @@ f_edmater(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    if (!get_editor_string(s, &editstring))
+    if (!get_editor(s))
 	return TCL_ERROR;
 
-    av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edmater: av");
-    av[0] = (const char *)argv[0];
-    av[1] = "-E";
-    av[2] = bu_vls_addr(&editstring);
-    argc += 2;
-    for (i = 3; i < argc; ++i) {
-	av[i] = (const char *)argv[i-2];
-    }
-    av[argc] = NULL;
+    ged_exec(s->gedp, argc, argv);
 
-    ged_exec(s->gedp, argc + 1, (const char **)av);
-
-    bu_vls_free(&editstring);
-    bu_free((void *)av, "f_edmater: av");
+    clear_editor(s);
     return TCL_OK;
 }
 
@@ -237,9 +189,6 @@ f_red(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    const char **av;
-    struct bu_vls editstring = BU_VLS_INIT_ZERO;
-
     CHECK_DBI_NULL;
 
     if (argc != 2) {
@@ -247,16 +196,9 @@ f_red(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv
 	return TCL_ERROR;
     }
 
-    get_editor_string(s, &editstring);
+    get_editor(s);
 
-    av = (const char **)bu_calloc(4, sizeof(char *), "f_red: av");
-
-    av[0] = argv[0];
-    av[1] = "-E";
-    av[2] = bu_vls_addr(&editstring);
-    av[3] = argv[1];
-
-    if ( ged_exec(s->gedp, 4, (const char **)av) & BRLCAD_ERROR ) {
+    if (ged_exec(s->gedp, argc, argv) & BRLCAD_ERROR) {
 	mged_pr_output(interpreter);
 	Tcl_AppendResult(interpreter, "Error: ", bu_vls_addr(s->gedp->ged_result_str), (char *)NULL);
     } else {
@@ -264,8 +206,7 @@ f_red(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv
 	Tcl_AppendResult(interpreter, bu_vls_addr(s->gedp->ged_result_str), (char *)NULL);
     }
 
-    bu_vls_free(&editstring);
-    bu_free((void *)av, "f_red: av");
+    clear_editor(s);
     return TCL_OK;
 }
 
