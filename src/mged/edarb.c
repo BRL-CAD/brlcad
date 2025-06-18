@@ -30,7 +30,7 @@
 
 #include "vmath.h"
 #include "rt/geom.h"
-#include "rt/arb_edit.h"
+#include "rt/primitives/arb8.h"
 #include "ged.h"
 #include "rt/db4.h"
 

@@ -35,7 +35,7 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-#include "rt/arb_edit.h"
+#include "rt/primitives/arb8.h"
 #include "wdb.h"
 #include "rt/db4.h"
 #include "ged/view.h"
