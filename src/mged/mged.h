@@ -1,7 +1,7 @@
 /*                           M G E D . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -145,32 +145,57 @@ struct menu_item {
 
 #include "./mged_dm.h" /* _view_state */
 
-/**
- * Definitions (TODO - update this...)
- *
- * Solids are defined in "model space".  The screen is in "view
- * space".  The visible part of view space is -1.0 <= x, y, z <= +1.0
- *
- * The transformation from the origin of model space to the origin of
- * view space (the "view center") is contained in the matrix
- * "toViewcenter".  The viewing rotation is contained in the "Viewrot"
- * matrix.  The viewscale factor (for [15] use) is kept in the float
- * "Viewscale".
- *
- * model2view = Viewscale * Viewrot * toViewcenter;
- *
- * model2view is the matrix going from model space coordinates to the
- * view coordinates, and view2model is the inverse.  It is recomputed
- * by new_mats() only.
- *
- * CHANGE matrix.  Defines the change between the un-edited and the
- * present state in the edited solid or combination.
- *
- * model2objview = modelchanges * model2view
- *
- * For object editing and solid edit, model2objview translates from
- * model space to view space with all the modelchanges too.
- */
+struct mged_edit_state {
+    // Rotate
+    vect_t edit_absolute_model_rotate;
+    vect_t edit_absolute_object_rotate;
+    vect_t edit_absolute_view_rotate;
+    vect_t last_edit_absolute_model_rotate;
+    vect_t last_edit_absolute_object_rotate;
+    vect_t last_edit_absolute_view_rotate;
+    vect_t edit_rate_model_rotate;
+    vect_t edit_rate_object_rotate;
+    vect_t edit_rate_view_rotate;
+    int edit_rateflag_model_rotate;
+    int edit_rateflag_object_rotate;
+    int edit_rateflag_view_rotate;
+
+    // Translate
+    vect_t edit_absolute_model_tran;
+    vect_t edit_absolute_view_tran;
+    vect_t last_edit_absolute_model_tran;
+    vect_t last_edit_absolute_view_tran;
+    vect_t edit_rate_model_tran;
+    vect_t edit_rate_view_tran;
+    int edit_rateflag_model_tran;
+    int edit_rateflag_view_tran;
+
+    // Scale
+    fastf_t es_scale;	/* scale factor */
+    fastf_t edit_absolute_scale;
+    fastf_t edit_rate_scale;
+    int edit_rateflag_scale;
+
+    // Origin
+    char edit_rate_model_origin;
+    char edit_rate_object_origin;
+    char edit_rate_view_origin;
+
+
+    // DM pointers - used by the editing code to stash current dm pointers for
+    // later restoration when editing.  Not 100% sure yet what the purpose is -
+    // seems to be allowing for the possibility of a change of mged_curr_dm
+    // mid-edit?
+    struct mged_dm *edit_rate_mr_dm;
+    struct mged_dm *edit_rate_or_dm;
+    struct mged_dm *edit_rate_vr_dm;
+    struct mged_dm *edit_rate_mt_dm;
+    struct mged_dm *edit_rate_vt_dm;
+
+    // Container to hold the intermediate state
+    // of the object being edited (I think?)
+    struct rt_db_internal es_int;
+};
 
 /* global application state */
 struct mged_state {
@@ -199,29 +224,48 @@ struct mged_state {
     struct bu_list *vlfree;
 
     /* Editing related */
-    struct rt_edit *s_edit;
-    int global_editing_state; // main global editing state (ugh)
-    // TODO - can we eliminate these?
-    int es_edclass;		/* type of editing class for this solid */
-    int es_type;		/* COMGEOM solid type */
-
-    /* called by numerous functions to indicate truthfully whether the
-     * views need to be redrawn. */
-    int update_views;
+    struct mged_edit_state edit_state;
 };
 extern struct mged_state *MGED_STATE;
 
-/* container for saving and restoring edit flags */
-struct saved_edflags {
-    int edit_flag;
-    int edit_obj_flag;
-    int edit_mode;
-};
-#define SAVED_EDFLAGS_INIT {-1, -1, -1}
-// defined in doevent.c
-void save_edflags(struct saved_edflags *sf, struct mged_state *s);
-void restore_edflags(struct mged_state *s, struct saved_edflags *sf);
 
+/**
+ * Definitions.
+ *
+ * Solids are defined in "model space".  The screen is in "view
+ * space".  The visible part of view space is -1.0 <= x, y, z <= +1.0
+ *
+ * The transformation from the origin of model space to the origin of
+ * view space (the "view center") is contained in the matrix
+ * "toViewcenter".  The viewing rotation is contained in the "Viewrot"
+ * matrix.  The viewscale factor (for [15] use) is kept in the float
+ * "Viewscale".
+ *
+ * model2view = Viewscale * Viewrot * toViewcenter;
+ *
+ * model2view is the matrix going from model space coordinates to the
+ * view coordinates, and view2model is the inverse.  It is recomputed
+ * by new_mats() only.
+ *
+ * CHANGE matrix.  Defines the change between the un-edited and the
+ * present state in the edited solid or combination.
+ *
+ * model2objview = modelchanges * model2view
+ *
+ * For object editing and solid edit, model2objview translates from
+ * model space to view space with all the modelchanges too.
+ *
+ * These are allocated storage in dozoom.c
+ */
+
+extern mat_t modelchanges;		/* full changes this edit */
+extern mat_t incr_change;		/* change(s) from last cycle */
+
+/* defined in buttons.c */
+extern fastf_t acc_sc_sol;	/* accumulate solid scale factor */
+extern fastf_t acc_sc_obj;	/* accumulate global object scale factor */
+extern fastf_t acc_sc[3];	/* accumulate local object scale factors */
+extern mat_t acc_rot_sol;	/* accumulate solid rotations */
 
 /* defined in mged.c */
 extern jmp_buf jmp_env;
@@ -283,6 +327,10 @@ extern int edobj; /* object editing options */
 /* Flags for line type decisions */
 #define ROOT 0
 #define INNER 1
+
+/* FIXME: ugh, main global editing state */
+extern int ged_state;	  /* (defined in titles.c) */
+#define GEOM_EDIT_STATE ged_state
 
 /**
  * Editor States
@@ -451,6 +499,9 @@ extern void predictor_init(struct mged_state *s);
 void wrt_view(struct mged_state *s, mat_t out, const mat_t change, const mat_t in);
 void wrt_point(mat_t out, const mat_t change, const mat_t in, const point_t point);
 
+/* tedit.c */
+int get_editor_string(struct mged_state *s, struct bu_vls *editstring);
+
 /* titles.c */
 void create_text_overlay(struct mged_state *s, struct bu_vls *vp);
 void dotitles(struct mged_state *s, struct bu_vls *overlay_vls);
@@ -466,6 +517,7 @@ void rect_image2view(struct mged_state *);
 void rb_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 /* edsol.c */
+extern int inpara;	/* parameter input from keyboard flag */
 void vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat);
 void transform_editing_solid(
     struct mged_state *s,
@@ -522,6 +574,9 @@ extern void mged_vls_struct_parse_old(struct mged_state *s, struct bu_vls *vls, 
 
 /* mater.c */
 void mged_color_soltab(struct mged_state *s);
+
+/* utility1.c */
+int editit(struct mged_state *s, const char *command, const char *tempfile);
 
 int Wdb_Init(Tcl_Interp *interp);
 int wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);

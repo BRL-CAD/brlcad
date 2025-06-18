@@ -1,7 +1,7 @@
 /*                         S H A R E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2025 United States Government as represented by
+ * Copyright (c) 1998-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,7 +69,6 @@
     } while (0)
 
 
-/* Ew. Globals. */
 extern struct bu_structparse axes_vparse[];
 extern struct bu_structparse color_scheme_vparse[];
 extern struct bu_structparse grid_vparse[];
@@ -196,7 +195,7 @@ f_share(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
 			    save_dlp = s->mged_curr_dm;
 
 			    set_curr_dm(s, dlp1);
-			    createDLists(s, (struct bu_list *)ged_dl(s->gedp));
+			    createDLists(s, s->gedp->ged_gdp->gd_headDisplay);
 
 			    /* restore */
 			    set_curr_dm(s, save_dlp);

@@ -1,7 +1,7 @@
 /*                        U S E P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,10 +59,10 @@ illuminate(struct mged_state *s, int y) {
      * zones, and use the zone number as a sequential position among
      * solids which are drawn.
      */
-    count = ((fastf_t)y + BV_MAX) * s->mged_curr_dm->dm_ndrawn / BV_RANGE;
+    count = ((fastf_t)y + GED_MAX) * s->mged_curr_dm->dm_ndrawn / GED_RANGE;
 
-    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
-    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
+    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -82,7 +82,7 @@ illuminate(struct mged_state *s, int y) {
 	gdlp = next_gdlp;
     }
 
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
 }
 
@@ -112,14 +112,14 @@ f_aip(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     if (!(s->mged_curr_dm->dm_ndrawn)) {
 	return TCL_OK;
-    } else if (s->global_editing_state != ST_S_PICK && s->global_editing_state != ST_O_PICK  && s->global_editing_state != ST_O_PATH) {
+    } else if (GEOM_EDIT_STATE != ST_S_PICK && GEOM_EDIT_STATE != ST_O_PICK  && GEOM_EDIT_STATE != ST_O_PATH) {
 	return TCL_OK;
     }
 
     if (illump != NULL && illump->s_u_data != NULL)
 	bdata = (struct ged_bv_data *)illump->s_u_data;
 
-    if (s->global_editing_state == ST_O_PATH && bdata) {
+    if (GEOM_EDIT_STATE == ST_O_PATH && bdata) {
 	if (argc == 1 || *argv[1] == 'f') {
 	    ++ipathpos;
 	    if ((size_t)ipathpos >= bdata->s_fullpath.fp_len)
@@ -141,8 +141,8 @@ f_aip(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	if (argc == 1 || *argv[1] == 'f') {
 	    if (BU_LIST_NEXT_IS_HEAD(sp, &gdlp->dl_head_scene_obj)) {
 		/* Advance the gdlp (i.e. display list) */
-		if (BU_LIST_NEXT_IS_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp)))
-		    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+		if (BU_LIST_NEXT_IS_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay))
+		    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
 		else
 		    gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
@@ -153,8 +153,8 @@ f_aip(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	} else if (*argv[1] == 'b') {
 	    if (BU_LIST_PREV_IS_HEAD(sp, &gdlp->dl_head_scene_obj)) {
 		/* Advance the gdlp (i.e. display list) */
-		if (BU_LIST_PREV_IS_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp)))
-		    gdlp = BU_LIST_PREV(display_list, (struct bu_list *)ged_dl(s->gedp));
+		if (BU_LIST_PREV_IS_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay))
+		    gdlp = BU_LIST_PREV(display_list, s->gedp->ged_gdp->gd_headDisplay);
 		else
 		    gdlp = BU_LIST_PLAST(display_list, gdlp);
 
@@ -171,7 +171,7 @@ f_aip(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	illum_gdlp = gdlp;
     }
 
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
     return TCL_OK;
 }
@@ -297,8 +297,8 @@ f_matpick(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     }
  got:
     /* Include all solids with same tree top */
-    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
-    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
+    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -328,7 +328,7 @@ f_matpick(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	init_oedit(s);
     }
 
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
     return TCL_OK;
 }
@@ -399,8 +399,8 @@ f_mouse(
     ypos = atoi(argv[3]);
 
     /* Build floating point mouse vector, -1 to +1 */
-    mousevec[X] =  xpos * INV_BV;
-    mousevec[Y] =  ypos * INV_BV;
+    mousevec[X] =  xpos * INV_GED;
+    mousevec[Y] =  ypos * INV_GED;
     mousevec[Z] = 0;
 
     if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui && up) {
@@ -459,7 +459,7 @@ f_mouse(
      * the host being informed when the mouse changes position.
      * However, for now, illuminate mode makes this impossible.
      */
-    if (up == 0) switch (s->global_editing_state) {
+    if (up == 0) switch (GEOM_EDIT_STATE) {
 
 	case ST_VIEW:
 	case ST_S_EDIT:
@@ -482,12 +482,12 @@ f_mouse(
 	    isave = ipathpos;
 	    if (bdata)
 		ipathpos = bdata->s_fullpath.fp_len-1 - (
-			(ypos+(int)BV_MAX) * (bdata->s_fullpath.fp_len) / (int)BV_RANGE);
+			(ypos+(int)GED_MAX) * (bdata->s_fullpath.fp_len) / (int)GED_RANGE);
 	    if (ipathpos != isave)
 		view_state->vs_flag = 1;
 	    return TCL_OK;
 
-    } else switch (s->global_editing_state) {
+    } else switch (GEOM_EDIT_STATE) {
 
 	case ST_VIEW:
 	    /*

@@ -1,7 +1,7 @@
 /*                     P R E D I C T O R . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2025 United States Government as represented by
+ * Copyright (c) 1992-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -174,12 +174,9 @@ predictor_frame(struct mged_state *s)
     vect_t right, up;
     vect_t norm;
 
-    if (!view_state->vs_gvp)
-	return;
-
-    if (view_state->vs_gvp->k.rot_v_flag == 0 &&
-	view_state->vs_gvp->k.tra_v_flag == 0 &&
-	view_state->vs_gvp->k.sca_flag == 0) {
+    if (view_state->vs_rateflag_rotate == 0 &&
+	view_state->vs_rateflag_tran == 0 &&
+	view_state->vs_rateflag_scale == 0) {
 	predictor_kill(s);
 	return;
     }

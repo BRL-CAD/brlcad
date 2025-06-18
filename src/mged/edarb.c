@@ -1,7 +1,7 @@
 /*                         E D A R B . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 
 #include "vmath.h"
 #include "rt/geom.h"
-#include "rt/primitives/arb8.h"
+#include "rt/arb_edit.h"
 #include "ged.h"
 #include "rt/db4.h"
 
@@ -55,7 +55,7 @@ editarb(struct mged_state *s, vect_t pos_model)
 {
     int ret = 0;
     struct rt_arb_internal *arb;
-    arb = (struct rt_arb_internal *)s->s_edit->es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 
     ret = arb_edit(arb, es_peqn, es_menu, newedge, pos_model, &s->tol.tol);
 
@@ -64,7 +64,7 @@ editarb(struct mged_state *s, vect_t pos_model)
     newedge = 0;
 
     if (ret) {
-	s->s_edit->edit_flag = RT_EDIT_IDLE;
+	es_edflag = IDLE;
     }
 
     return ret;
@@ -98,15 +98,15 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (not_state(s, ST_S_EDIT, "Extrude"))
 	return TCL_ERROR;
 
-    if (s->s_edit->es_int.idb_type != ID_ARB8) {
+    if (s->edit_state.es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Extrude: solid type must be ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if (s->es_type != ARB8 && s->es_type != ARB6 && s->es_type != ARB4) {
+    if (es_type != ARB8 && es_type != ARB6 && es_type != ARB4) {
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&tmp_vls, "ARB%d: extrusion of faces not allowed\n", s->es_type);
+	bu_vls_printf(&tmp_vls, "ARB%d: extrusion of faces not allowed\n", es_type);
 	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
 
@@ -117,11 +117,11 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 
     /* get distance to project face */
     dist = atof(argv[2]);
-    /* apply s->s_edit->e_mat[15] to get to real model space */
+    /* apply es_mat[15] to get to real model space */
     /* convert from the local unit (as input) to the base unit */
-    dist = dist * s->s_edit->e_mat[15] * s->dbip->dbi_local2base;
+    dist = dist * es_mat[15] * s->dbip->dbi_local2base;
 
-    arb = (struct rt_arb_internal *)s->s_edit->es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
     if (arb_extrude(arb, face, dist, &s->tol.tol, es_peqn)) {
@@ -131,7 +131,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 
     /* draw the updated solid */
     replot_editing_solid(s);
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
 
     return TCL_OK;
@@ -163,12 +163,12 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (not_state(s, ST_S_EDIT, "Mirface"))
 	return TCL_ERROR;
 
-    if (s->s_edit->es_int.idb_type != ID_ARB8) {
+    if (s->edit_state.es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Mirface: solid type must be ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    arb = (struct rt_arb_internal *)s->s_edit->es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
     face = atoi(argv[1]);
@@ -213,12 +213,12 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (not_state(s, ST_S_EDIT, "Edgedir"))
 	return TCL_ERROR;
 
-    if (s->s_edit->edit_flag != EARB) {
+    if (es_edflag != EARB) {
 	Tcl_AppendResult(interp, "Not moving an ARB edge\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if (s->s_edit->es_int.idb_type != ID_ARB8) {
+    if (s->edit_state.es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Edgedir: solid type must be an ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -295,12 +295,12 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (not_state(s, ST_S_EDIT, "Permute"))
 	return TCL_ERROR;
 
-    if (s->s_edit->es_int.idb_type != ID_ARB8) {
+    if (s->edit_state.es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Permute: solid type must be an ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    arb = (struct rt_arb_internal *)s->s_edit->es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
     if (arb_permute(arb, argv[1], &s->tol.tol)) {

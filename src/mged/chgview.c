@@ -1,7 +1,7 @@
 /*                       C H G V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,6 +39,7 @@
 #include "./mged_dm.h"
 #include "./cmd.h"
 
+
 extern void mged_color_soltab(struct mged_state *s);
 
 void solid_list_callback(struct mged_state *s);
@@ -46,181 +47,31 @@ void knob_update_rate_vars(struct mged_state *s);
 int mged_vrot(struct mged_state *s, char origin, fastf_t *newrot);
 int mged_zoom(struct mged_state *s, double val);
 void mged_center(struct mged_state *s, point_t center);
+static void abs_zoom(struct mged_state *s);
+void usejoy(struct mged_state *s, double xangle, double yangle, double zangle);
 
+int knob_rot(struct mged_state *s, vect_t rvec, char origin, int mf, int vf, int ef);
+int knob_tran(struct mged_state *s, vect_t tvec, int model_flag, int view_flag, int edit_flag);
+int mged_erot_xyz(struct mged_state *s, char origin, vect_t rvec);
+int mged_etran(struct mged_state *s, char coords, vect_t tvec);
 int mged_mtran(struct mged_state *s, const vect_t tvec);
 int mged_otran(struct mged_state *s, const vect_t tvec);
 int mged_vtran(struct mged_state *s, const vect_t tvec);
 int mged_vrot_xyz(struct mged_state *s, char origin, char coords, vect_t rvec);
 
-static int
-mged_erot(struct mged_state *s,
-	char coords,
-	  char rotate_about,
-	  mat_t newrot)
-{
-    mat_t temp1, temp2;
 
-    s->update_views = 1;
-    dm_set_dirty(DMP, 1);
+extern vect_t curr_e_axes_pos;
+extern long nvectors;
 
-    switch (coords) {
-	case 'm':
-	    break;
-	case 'o':
-	    bn_mat_inv(temp1, s->s_edit->acc_rot_sol);
+extern vect_t e_axes_pos;
 
-	    /* transform into object rotations */
-	    bn_mat_mul(temp2, s->s_edit->acc_rot_sol, newrot);
-	    bn_mat_mul(newrot, temp2, temp1);
-	    break;
-	case 'v':
-	    bn_mat_inv(temp1, view_state->vs_gvp->gv_rotation);
+fastf_t ar_scale_factor = GED_MAX / ABS_ROT_FACTOR;
+fastf_t rr_scale_factor = GED_MAX / RATE_ROT_FACTOR;
+fastf_t adc_angle_scale_factor = GED_MAX / ADC_ANGLE_FACTOR;
 
-	    /* transform into model rotations */
-	    bn_mat_mul(temp2, temp1, newrot);
-	    bn_mat_mul(newrot, temp2, view_state->vs_gvp->gv_rotation);
-	    break;
-    }
-
-    if (s->global_editing_state == ST_S_EDIT) {
-	char save_rotate_about;
-
-	save_rotate_about = mged_variables->mv_rotate_about;
-	mged_variables->mv_rotate_about = rotate_about;
-
-	struct saved_edflags sf = SAVED_EDFLAGS_INIT;
-	save_edflags(&sf, s);
-
-	if (!SEDIT_ROTATE) {
-	    rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_ROT);
-	}
-
-	s->s_edit->e_inpara = 0;
-	MAT_COPY(s->s_edit->incr_change, newrot);
-	bn_mat_mul2(s->s_edit->incr_change, s->s_edit->acc_rot_sol);
-	sedit(s);
-
-	mged_variables->mv_rotate_about = save_rotate_about;
-
-	restore_edflags(s, &sf);
-    } else {
-	point_t point;
-	vect_t work;
-
-	bn_mat_mul2(newrot, s->s_edit->acc_rot_sol);
-
-	/* find point for rotation to take place wrt */
-	switch (rotate_about) {
-	    case 'v':       /* View Center */
-		VSET(work, 0.0, 0.0, 0.0);
-		MAT4X3PNT(point, view_state->vs_gvp->gv_view2model, work);
-		break;
-	    case 'e':       /* Eye */
-		VSET(work, 0.0, 0.0, 1.0);
-		MAT4X3PNT(point, view_state->vs_gvp->gv_view2model, work);
-		break;
-	    case 'm':       /* Model Center */
-		VSETALL(point, 0.0);
-		break;
-	    case 'k':
-	    default:
-		MAT4X3PNT(point, s->s_edit->model_changes, s->s_edit->e_keypoint);
-	}
-
-	/*
-	 * Apply newrot to the s->s_edit->model_changes matrix wrt "point"
-	 */
-	wrt_point(s->s_edit->model_changes, newrot, s->s_edit->model_changes, point);
-
-	new_edit_mats(s);
-    }
-
-    return TCL_OK;
-}
-
-
-static int
-knob_edit_rot(struct mged_state *s,
-	char rotate_about,
-	vect_t rvec)
-{
-    mat_t newrot;
-
-    MAT_IDN(newrot);
-    bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
-
-    return mged_erot(s, view_state->vs_gvp->gv_coord, rotate_about, newrot);
-}
-
-static int
-knob_edit_tran(struct mged_state *s,
-	char coords,
-	vect_t tvec)
-{
-    point_t p2;
-    point_t delta;
-    point_t vcenter;
-    point_t work;
-    mat_t xlatemat;
-
-    /* compute delta */
-    switch (coords) {
-	case 'm':
-	    VSCALE(delta, tvec, s->dbip->dbi_local2base);
-	    break;
-	case 'o':
-	    VSCALE(p2, tvec, s->dbip->dbi_local2base);
-	    MAT4X3PNT(delta, s->s_edit->acc_rot_sol, p2);
-	    break;
-	case 'v':
-	default:
-	    VSCALE(p2, tvec, s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale);
-	    MAT4X3PNT(work, view_state->vs_gvp->gv_view2model, p2);
-	    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
-	    VSUB2(delta, work, vcenter);
-
-	    break;
-    }
-
-    if (s->global_editing_state == ST_S_EDIT) {
-	s->s_edit->e_keyfixed = 0;
-	get_solid_keypoint(s, &s->s_edit->e_keypoint, &s->s_edit->e_keytag,
-			   &s->s_edit->es_int, s->s_edit->e_mat);
-	struct saved_edflags sf = SAVED_EDFLAGS_INIT;
-	save_edflags(&sf, s);
-
-	if (!SEDIT_TRAN) {
-	    rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_TRANS);
-	}
-
-	VADD2(s->s_edit->e_para, delta, s->s_edit->curr_e_axes_pos);
-	s->s_edit->e_inpara = 3;
-	sedit(s);
-	restore_edflags(s, &sf);
-    } else {
-	MAT_IDN(xlatemat);
-	MAT_DELTAS_VEC(xlatemat, delta);
-	bn_mat_mul2(xlatemat, s->s_edit->model_changes);
-
-	new_edit_mats(s);
-	s->update_views = 1;
-	dm_set_dirty(DMP, 1);
-    }
-
-    return TCL_OK;
-}
-
-static void
-knob_edit_sca(struct mged_state *s)
-{
-    if (s->global_editing_state == ST_S_EDIT) {
-	sedit_abs_scale(s);
-    } else {
-	oedit_abs_scale(s);
-    }
-}
-
-
+double mged_abs_tol;
+double mged_rel_tol = 0.01;		/* 1%, by default */
+double mged_nrm_tol;			/* normal ang tol, radians */
 
 
 /* DEBUG -- force view center */
@@ -313,9 +164,9 @@ cmd_size(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	    view_state->vs_gvp->gv_a_scale /= 9.0;
 	}
 
-	if (!ZERO(view_state->vs_gvp->k.tra_v_abs[X])
-	    || !ZERO(view_state->vs_gvp->k.tra_v_abs[Y])
-	    || !ZERO(view_state->vs_gvp->k.tra_v_abs[Z]))
+	if (!ZERO(view_state->vs_absolute_tran[X])
+	    || !ZERO(view_state->vs_absolute_tran[Y])
+	    || !ZERO(view_state->vs_absolute_tran[Z]))
 	{
 	    set_absolute_tran(s);
 	}
@@ -375,9 +226,9 @@ edit_com(struct mged_state *s,
     CHECK_DBI_NULL;
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
 
-    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
+    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
@@ -534,7 +385,7 @@ edit_com(struct mged_state *s,
 	}
     }
 
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
 
     if (flag_R_noresize) {
@@ -560,9 +411,9 @@ edit_com(struct mged_state *s,
 
 	s->gedp->ged_gvp = view_state->vs_gvp;
 
-	gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+	gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
 
-	while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
+	while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
@@ -738,18 +589,18 @@ cmd_zap(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), con
 
     CHECK_DBI_NULL;
 
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
     s->gedp->ged_destroy_vlist_callback = freeDListsAll;
 
     /* FIRST, reject any editing in progress */
-    if (s->global_editing_state != ST_VIEW) {
+    if (GEOM_EDIT_STATE != ST_VIEW) {
 	button(s, BE_REJECT);
     }
 
     ged_exec_zap(s->gedp, 1, (const char **)av);
 
-    (void)chg_state(s, s->global_editing_state, s->global_editing_state, "zap");
+    (void)chg_state(s, GEOM_EDIT_STATE, GEOM_EDIT_STATE, "zap");
     solid_list_callback(s);
 
     s->gedp->ged_destroy_vlist_callback = tmp_callback;
@@ -757,17 +608,6 @@ cmd_zap(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), con
     return TCL_OK;
 }
 
-
-static void
-mged_bn_mat_print(Tcl_Interp *interp,
-		 const char *title,
-		 const mat_t m)
-{
-    char obuf[1024];	/* snprintf may be non-PARALLEL */
-
-    bn_mat_print_guts(title, m, obuf, 1024);
-    Tcl_AppendResult(interp, obuf, "\n", (char *)NULL);
-}
 
 int
 f_status(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
@@ -788,28 +628,28 @@ f_status(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     }
 
     if (argc == 1) {
-	bu_vls_printf(&vls, "s->global_editing_state=%s, ", state_str[s->global_editing_state]);
+	bu_vls_printf(&vls, "GEOM_EDIT_STATE=%s, ", state_str[GEOM_EDIT_STATE]);
 	bu_vls_printf(&vls, "Viewscale=%f (%f mm)\n",
 		      view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local, view_state->vs_gvp->gv_scale);
 	bu_vls_printf(&vls, "s->dbip->dbi_base2local=%f\n", s->dbip->dbi_base2local);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	mged_bn_mat_print(interp, "toViewcenter", view_state->vs_gvp->gv_center);
-	mged_bn_mat_print(interp, "Viewrot", view_state->vs_gvp->gv_rotation);
-	mged_bn_mat_print(interp, "model2view", view_state->vs_gvp->gv_model2view);
-	mged_bn_mat_print(interp, "view2model", view_state->vs_gvp->gv_view2model);
+	tclcad_bn_mat_print(interp, "toViewcenter", view_state->vs_gvp->gv_center);
+	tclcad_bn_mat_print(interp, "Viewrot", view_state->vs_gvp->gv_rotation);
+	tclcad_bn_mat_print(interp, "model2view", view_state->vs_gvp->gv_model2view);
+	tclcad_bn_mat_print(interp, "view2model", view_state->vs_gvp->gv_view2model);
 
-	if (s->global_editing_state != ST_VIEW) {
-	    mged_bn_mat_print(interp, "model2objview", view_state->vs_model2objview);
-	    mged_bn_mat_print(interp, "objview2model", view_state->vs_objview2model);
+	if (GEOM_EDIT_STATE != ST_VIEW) {
+	    tclcad_bn_mat_print(interp, "model2objview", view_state->vs_model2objview);
+	    tclcad_bn_mat_print(interp, "objview2model", view_state->vs_objview2model);
 	}
 
 	return TCL_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "state")) {
-	Tcl_AppendResult(interp, state_str[s->global_editing_state], (char *)NULL);
+	Tcl_AppendResult(interp, state_str[GEOM_EDIT_STATE], (char *)NULL);
 	return TCL_OK;
     }
 
@@ -835,32 +675,32 @@ f_status(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     }
 
     if (BU_STR_EQUAL(argv[1], "toViewcenter")) {
-	mged_bn_mat_print(interp, "toViewcenter", view_state->vs_gvp->gv_center);
+	tclcad_bn_mat_print(interp, "toViewcenter", view_state->vs_gvp->gv_center);
 	return TCL_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "Viewrot")) {
-	mged_bn_mat_print(interp, "Viewrot", view_state->vs_gvp->gv_rotation);
+	tclcad_bn_mat_print(interp, "Viewrot", view_state->vs_gvp->gv_rotation);
 	return TCL_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "model2view")) {
-	mged_bn_mat_print(interp, "model2view", view_state->vs_gvp->gv_model2view);
+	tclcad_bn_mat_print(interp, "model2view", view_state->vs_gvp->gv_model2view);
 	return TCL_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "view2model")) {
-	mged_bn_mat_print(interp, "view2model", view_state->vs_gvp->gv_view2model);
+	tclcad_bn_mat_print(interp, "view2model", view_state->vs_gvp->gv_view2model);
 	return TCL_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "model2objview")) {
-	mged_bn_mat_print(interp, "model2objview", view_state->vs_model2objview);
+	tclcad_bn_mat_print(interp, "model2objview", view_state->vs_model2objview);
 	return TCL_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "objview2model")) {
-	mged_bn_mat_print(interp, "objview2model", view_state->vs_objview2model);
+	tclcad_bn_mat_print(interp, "objview2model", view_state->vs_objview2model);
 	return TCL_OK;
     }
 
@@ -1004,7 +844,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (s->global_editing_state != ST_S_PICK && s->global_editing_state != ST_O_PICK) {
+    if (GEOM_EDIT_STATE != ST_S_PICK && GEOM_EDIT_STATE != ST_O_PICK) {
 	state_err(s, "keyboard illuminate pick");
 	goto bail_out;
     }
@@ -1038,9 +878,9 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	goto bail_out;
     }
 
-    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
 
-    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
+    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -1107,7 +947,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     illump->s_iflag = UP;
 
     if (!illum_only) {
-	if (s->global_editing_state == ST_O_PICK) {
+	if (GEOM_EDIT_STATE == ST_O_PICK) {
 	    ipathpos = 0;
 	    (void)chg_state(s, ST_O_PICK, ST_O_PATH, "Keyboard illuminate");
 	} else {
@@ -1116,7 +956,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	}
     }
 
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
 
     if (path_piece) {
@@ -1134,7 +974,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 bail_out:
 
-    if (s->global_editing_state != ST_VIEW) {
+    if (GEOM_EDIT_STATE != ST_VIEW) {
 	bu_vls_printf(&vls, "%s", Tcl_GetStringResult(interp));
 	button(s, BE_REJECT);
 	Tcl_ResetResult(interp);
@@ -1187,9 +1027,9 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
 
-    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
+    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
@@ -1205,7 +1045,7 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
 
     button(s, BE_S_ILLUMINATE);	/* To ST_S_PICK */
@@ -1231,99 +1071,97 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 static void
 check_nonzero_rates(struct mged_state *s)
 {
-    if (view_state->vs_gvp) {
-	if (!ZERO(view_state->vs_gvp->k.rot_m[X])
-		|| !ZERO(view_state->vs_gvp->k.rot_m[Y])
-		|| !ZERO(view_state->vs_gvp->k.rot_m[Z]))
-	{
-	    view_state->vs_gvp->k.rot_m_flag = 1;
-	} else {
-	    view_state->vs_gvp->k.rot_m_flag = 0;
-	}
-
-	if (!ZERO(view_state->vs_gvp->k.tra_m[X])
-		|| !ZERO(view_state->vs_gvp->k.tra_m[Y])
-		|| !ZERO(view_state->vs_gvp->k.tra_m[Z]))
-	{
-	    view_state->vs_gvp->k.tra_m_flag = 1;
-	} else {
-	    view_state->vs_gvp->k.tra_m_flag = 0;
-	}
-
-	if (!ZERO(view_state->vs_gvp->k.rot_v[X])
-		|| !ZERO(view_state->vs_gvp->k.rot_v[Y])
-		|| !ZERO(view_state->vs_gvp->k.rot_v[Z]))
-	{
-	    view_state->vs_gvp->k.rot_v_flag = 1;
-	} else {
-	    view_state->vs_gvp->k.rot_v_flag = 0;
-	}
-
-	if (!ZERO(view_state->vs_gvp->k.tra_v[X])
-		|| !ZERO(view_state->vs_gvp->k.tra_v[Y])
-		|| !ZERO(view_state->vs_gvp->k.tra_v[Z]))
-	{
-	    view_state->vs_gvp->k.tra_v_flag = 1;
-	} else {
-	    view_state->vs_gvp->k.tra_v_flag = 0;
-	}
-
-	if (!ZERO(view_state->vs_gvp->k.sca)) {
-	    view_state->vs_gvp->k.sca_flag = 1;
-	} else {
-	    view_state->vs_gvp->k.sca_flag = 0;
-	}
-    }
-
-    if (!ZERO(s->s_edit->k.tra_m[X])
-	|| !ZERO(s->s_edit->k.tra_m[Y])
-	|| !ZERO(s->s_edit->k.tra_m[Z]))
+    if (!ZERO(view_state->vs_rate_model_rotate[X])
+	|| !ZERO(view_state->vs_rate_model_rotate[Y])
+	|| !ZERO(view_state->vs_rate_model_rotate[Z]))
     {
-	s->s_edit->k.tra_m_flag = 1;
+	view_state->vs_rateflag_model_rotate = 1;
     } else {
-	s->s_edit->k.tra_m_flag = 0;
+	view_state->vs_rateflag_model_rotate = 0;
     }
 
-    if (!ZERO(s->s_edit->k.tra_v[X])
-	|| !ZERO(s->s_edit->k.tra_v[Y])
-	|| !ZERO(s->s_edit->k.tra_v[Z]))
+    if (!ZERO(view_state->vs_rate_model_tran[X])
+	|| !ZERO(view_state->vs_rate_model_tran[Y])
+	|| !ZERO(view_state->vs_rate_model_tran[Z]))
     {
-	s->s_edit->k.tra_v_flag = 1;
+	view_state->vs_rateflag_model_tran = 1;
     } else {
-	s->s_edit->k.tra_v_flag = 0;
+	view_state->vs_rateflag_model_tran = 0;
     }
 
-    if (!ZERO(s->s_edit->k.rot_m[X])
-	|| !ZERO(s->s_edit->k.rot_m[Y])
-	|| !ZERO(s->s_edit->k.rot_m[Z]))
+    if (!ZERO(view_state->vs_rate_rotate[X])
+	|| !ZERO(view_state->vs_rate_rotate[Y])
+	|| !ZERO(view_state->vs_rate_rotate[Z]))
     {
-	s->s_edit->k.rot_m_flag = 1;
+	view_state->vs_rateflag_rotate = 1;
     } else {
-	s->s_edit->k.rot_m_flag = 0;
+	view_state->vs_rateflag_rotate = 0;
     }
 
-    if (!ZERO(s->s_edit->k.rot_o[X])
-	|| !ZERO(s->s_edit->k.rot_o[Y])
-	|| !ZERO(s->s_edit->k.rot_o[Z]))
+    if (!ZERO(view_state->vs_rate_tran[X])
+	|| !ZERO(view_state->vs_rate_tran[Y])
+	|| !ZERO(view_state->vs_rate_tran[Z]))
     {
-	s->s_edit->k.rot_o_flag = 1;
+	view_state->vs_rateflag_tran = 1;
     } else {
-	s->s_edit->k.rot_o_flag = 0;
+	view_state->vs_rateflag_tran = 0;
     }
 
-    if (!ZERO(s->s_edit->k.rot_v[X])
-	|| !ZERO(s->s_edit->k.rot_v[Y])
-	|| !ZERO(s->s_edit->k.rot_v[Z]))
+    if (!ZERO(view_state->vs_rate_scale)) {
+	view_state->vs_rateflag_scale = 1;
+    } else {
+	view_state->vs_rateflag_scale = 0;
+    }
+
+    if (!ZERO(s->edit_state.edit_rate_model_tran[X])
+	|| !ZERO(s->edit_state.edit_rate_model_tran[Y])
+	|| !ZERO(s->edit_state.edit_rate_model_tran[Z]))
     {
-	s->s_edit->k.rot_v_flag = 1;
+	s->edit_state.edit_rateflag_model_tran = 1;
     } else {
-	s->s_edit->k.rot_v_flag = 0;
+	s->edit_state.edit_rateflag_model_tran = 0;
     }
 
-    if (s->s_edit->k.sca > SMALL_FASTF) {
-	s->s_edit->k.sca_flag = 1;
+    if (!ZERO(s->edit_state.edit_rate_view_tran[X])
+	|| !ZERO(s->edit_state.edit_rate_view_tran[Y])
+	|| !ZERO(s->edit_state.edit_rate_view_tran[Z]))
+    {
+	s->edit_state.edit_rateflag_view_tran = 1;
     } else {
-	s->s_edit->k.sca_flag = 0;
+	s->edit_state.edit_rateflag_view_tran = 0;
+    }
+
+    if (!ZERO(s->edit_state.edit_rate_model_rotate[X])
+	|| !ZERO(s->edit_state.edit_rate_model_rotate[Y])
+	|| !ZERO(s->edit_state.edit_rate_model_rotate[Z]))
+    {
+	s->edit_state.edit_rateflag_model_rotate = 1;
+    } else {
+	s->edit_state.edit_rateflag_model_rotate = 0;
+    }
+
+    if (!ZERO(s->edit_state.edit_rate_object_rotate[X])
+	|| !ZERO(s->edit_state.edit_rate_object_rotate[Y])
+	|| !ZERO(s->edit_state.edit_rate_object_rotate[Z]))
+    {
+	s->edit_state.edit_rateflag_object_rotate = 1;
+    } else {
+	s->edit_state.edit_rateflag_object_rotate = 0;
+    }
+
+    if (!ZERO(s->edit_state.edit_rate_view_rotate[X])
+	|| !ZERO(s->edit_state.edit_rate_view_rotate[Y])
+	|| !ZERO(s->edit_state.edit_rate_view_rotate[Z]))
+    {
+	s->edit_state.edit_rateflag_view_rotate = 1;
+    } else {
+	s->edit_state.edit_rateflag_view_rotate = 0;
+    }
+
+    if (s->edit_state.edit_rate_scale > SMALL_FASTF) {
+	s->edit_state.edit_rateflag_scale = 1;
+    } else {
+	s->edit_state.edit_rateflag_scale = 0;
     }
 
     view_state->vs_flag = 1;	/* values changed so update faceplate */
@@ -1345,64 +1183,56 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (mged_variables->mv_rateknobs) {
-	if (s->es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "x = %f\n", s->s_edit->k.rot_m[X]);
-	    bu_vls_printf(&vls, "y = %f\n", s->s_edit->k.rot_m[Y]);
-	    bu_vls_printf(&vls, "z = %f\n", s->s_edit->k.rot_m[Z]);
+	if (es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
+	    bu_vls_printf(&vls, "x = %f\n", s->edit_state.edit_rate_model_rotate[X]);
+	    bu_vls_printf(&vls, "y = %f\n", s->edit_state.edit_rate_model_rotate[Y]);
+	    bu_vls_printf(&vls, "z = %f\n", s->edit_state.edit_rate_model_rotate[Z]);
 	} else {
-	    if (view_state->vs_gvp) {
-		bu_vls_printf(&vls, "x = %f\n", view_state->vs_gvp->k.rot_v[X]);
-		bu_vls_printf(&vls, "y = %f\n", view_state->vs_gvp->k.rot_v[Y]);
-		bu_vls_printf(&vls, "z = %f\n", view_state->vs_gvp->k.rot_v[Z]);
-	    }
+	    bu_vls_printf(&vls, "x = %f\n", view_state->vs_rate_rotate[X]);
+	    bu_vls_printf(&vls, "y = %f\n", view_state->vs_rate_rotate[Y]);
+	    bu_vls_printf(&vls, "z = %f\n", view_state->vs_rate_rotate[Z]);
 	}
 
-	if (s->es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "S = %f\n", s->s_edit->k.sca);
+	if (es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
+	    bu_vls_printf(&vls, "S = %f\n", s->edit_state.edit_rate_scale);
 	} else {
-	    bu_vls_printf(&vls, "S = %f\n", view_state->vs_gvp->k.sca);
+	    bu_vls_printf(&vls, "S = %f\n", view_state->vs_rate_scale);
 	}
 
-	if (s->es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "X = %f\n", s->s_edit->k.tra_m[X]);
-	    bu_vls_printf(&vls, "Y = %f\n", s->s_edit->k.tra_m[Y]);
-	    bu_vls_printf(&vls, "Z = %f\n", s->s_edit->k.tra_m[Z]);
+	if (es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
+	    bu_vls_printf(&vls, "X = %f\n", s->edit_state.edit_rate_model_tran[X]);
+	    bu_vls_printf(&vls, "Y = %f\n", s->edit_state.edit_rate_model_tran[Y]);
+	    bu_vls_printf(&vls, "Z = %f\n", s->edit_state.edit_rate_model_tran[Z]);
 	} else {
-	    if (view_state->vs_gvp) {
-		bu_vls_printf(&vls, "X = %f\n", view_state->vs_gvp->k.tra_v[X]);
-		bu_vls_printf(&vls, "Y = %f\n", view_state->vs_gvp->k.tra_v[Y]);
-		bu_vls_printf(&vls, "Z = %f\n", view_state->vs_gvp->k.tra_v[Z]);
-	    }
+	    bu_vls_printf(&vls, "X = %f\n", view_state->vs_rate_tran[X]);
+	    bu_vls_printf(&vls, "Y = %f\n", view_state->vs_rate_tran[Y]);
+	    bu_vls_printf(&vls, "Z = %f\n", view_state->vs_rate_tran[Z]);
 	}
     } else {
-	if (s->es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "ax = %f\n", s->s_edit->k.rot_m_abs[X]);
-	    bu_vls_printf(&vls, "ay = %f\n", s->s_edit->k.rot_m_abs[Y]);
-	    bu_vls_printf(&vls, "az = %f\n", s->s_edit->k.rot_m_abs[Z]);
+	if (es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
+	    bu_vls_printf(&vls, "ax = %f\n", s->edit_state.edit_absolute_model_rotate[X]);
+	    bu_vls_printf(&vls, "ay = %f\n", s->edit_state.edit_absolute_model_rotate[Y]);
+	    bu_vls_printf(&vls, "az = %f\n", s->edit_state.edit_absolute_model_rotate[Z]);
 	} else {
-	    if (view_state->vs_gvp) {
-		bu_vls_printf(&vls, "ax = %f\n", view_state->vs_gvp->k.rot_v_abs[X]);
-		bu_vls_printf(&vls, "ay = %f\n", view_state->vs_gvp->k.rot_v_abs[Y]);
-		bu_vls_printf(&vls, "az = %f\n", view_state->vs_gvp->k.rot_v_abs[Z]);
-	    }
+	    bu_vls_printf(&vls, "ax = %f\n", view_state->vs_absolute_rotate[X]);
+	    bu_vls_printf(&vls, "ay = %f\n", view_state->vs_absolute_rotate[Y]);
+	    bu_vls_printf(&vls, "az = %f\n", view_state->vs_absolute_rotate[Z]);
 	}
 
-	if (s->es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "aS = %f\n", s->s_edit->k.sca_abs);
+	if (es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
+	    bu_vls_printf(&vls, "aS = %f\n", s->edit_state.edit_absolute_scale);
 	} else {
 	    bu_vls_printf(&vls, "aS = %f\n", view_state->vs_gvp->gv_a_scale);
 	}
 
-	if (s->es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "aX = %f\n", s->s_edit->k.tra_m_abs[X]);
-	    bu_vls_printf(&vls, "aY = %f\n", s->s_edit->k.tra_m_abs[Y]);
-	    bu_vls_printf(&vls, "aZ = %f\n", s->s_edit->k.tra_m_abs[Z]);
+	if (es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
+	    bu_vls_printf(&vls, "aX = %f\n", s->edit_state.edit_absolute_model_tran[X]);
+	    bu_vls_printf(&vls, "aY = %f\n", s->edit_state.edit_absolute_model_tran[Y]);
+	    bu_vls_printf(&vls, "aZ = %f\n", s->edit_state.edit_absolute_model_tran[Z]);
 	} else {
-	    if (view_state->vs_gvp) {
-		bu_vls_printf(&vls, "aX = %f\n", view_state->vs_gvp->k.tra_v_abs[X]);
-		bu_vls_printf(&vls, "aY = %f\n", view_state->vs_gvp->k.tra_v_abs[Y]);
-		bu_vls_printf(&vls, "aZ = %f\n", view_state->vs_gvp->k.tra_v_abs[Z]);
-	    }
+	    bu_vls_printf(&vls, "aX = %f\n", view_state->vs_absolute_tran[X]);
+	    bu_vls_printf(&vls, "aY = %f\n", view_state->vs_absolute_tran[Y]);
+	    bu_vls_printf(&vls, "aZ = %f\n", view_state->vs_absolute_tran[Z]);
 	}
     }
 
@@ -1421,79 +1251,6 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 }
 
 
-static int
-knob_tran(struct mged_state *s,
-	vect_t tvec,
-	int model_flag,
-	int view_flag)
-{
-    if (model_flag || (view_state->vs_gvp->gv_coord == 'm' && !view_flag)) {
-	mged_mtran(s, tvec);
-    } else if (view_state->vs_gvp->gv_coord == 'o') {
-	mged_otran(s, tvec);
-    } else {
-	mged_vtran(s, tvec);
-    }
-
-    return TCL_OK;
-}
-
-
-static int
-knob_rot(struct mged_state *s,
-	vect_t rvec,
-	char origin,
-	int model_flag,
-	int view_flag)
-{
-    if (model_flag || (view_state->vs_gvp->gv_coord == 'm' && !view_flag)) {
-	mged_vrot_xyz(s, origin, 'm', rvec);
-    } else if (view_state->vs_gvp->gv_coord == 'o') {
-	mged_vrot_xyz(s, origin, 'o', rvec);
-    } else {
-	mged_vrot_xyz(s, origin, 'v', rvec);
-    }
-
-    return TCL_OK;
-}
-
-/* The MGED knob command will interpret any command that does not match
- * the current editing state as a view instruction - for example, "x 1"
- * will be interpreted to mean set the view rotation rate if the MGED
- * editing state is not set to rotational editing.  In order to make the
- * logic for this a bit less messy overall, we define a function that takes
- * a command and determines whether in the current environment it is or
- * is not an editing command.  This allows us to select either view or
- * edit processing without having to nest conditionals throughout the case
- * logic.
- */
-static int
-knob_is_edit_cmd(struct mged_state *s, const char *cmd, int model_flag, int view_flag, int edit_flag_force)
-{
-    int edit_flag_rot = (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' && !view_flag && !model_flag) || edit_flag_force)) ? 1 : 0;
-    int edit_flag_tra = (EDIT_TRAN && ((mged_variables->mv_transform == 'e' && !view_flag && !model_flag) || edit_flag_force)) ? 1 : 0;
-    // NOTE - edit_flag_sca doesn't care about model_flag...
-    int edit_flag_sca = (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag_force)) ? 1 : 0;
-
-    char c = (cmd[1] == '\0') ? cmd[0] : cmd[1];
-
-    switch (c) {
-	case 'x':
-	case 'y':
-	case 'z':
-	    return (edit_flag_rot) ? 1 : 0;
-	case 'X':
-	case 'Y':
-	case 'Z':
-	    return (edit_flag_tra) ? 1 : 0;
-	case 'S':
-	    return (edit_flag_sca) ? 1 : 0;
-    }
-
-    return 0;
-}
-
-
 /* Main processing of knob twists.  "knob id val id val ..." */
 int
 f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
@@ -1501,19 +1258,19 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
-    int i, is_edit_cmd, kp_ret;
+    int i;
     fastf_t f;
+    fastf_t sf;
     vect_t tvec;
     vect_t rvec;
     const char *cmd;
     char origin = '\0';
     int do_tran = 0;
     int do_rot = 0;
-    int do_sca = 0;
     int incr_flag = 0;  /* interpret values as increments */
     int view_flag = 0;  /* manipulate view using view coords */
     int model_flag = 0; /* manipulate view using model coords */
-    int edit_flag_force = 0;  /* force edit interpretation */
+    int edit_flag = 0;  /* force edit interpretation */
 
     CHECK_DBI_NULL;
 
@@ -1536,7 +1293,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	while ((c = bu_getopt(argc, (char * const *)argv, "eimo:v")) != -1) {
 	    switch (c) {
 		case 'e':
-		    edit_flag_force = 1;
+		    edit_flag = 1;
 		    break;
 		case 'i':
 		    incr_flag = 1;
@@ -1568,10 +1325,6 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return mged_print_knobvals(s, interp);
     }
 
-    /* Make sure we have a current view */
-    if (!view_state->vs_gvp)
-	return TCL_ERROR;
-
     VSETALL(tvec, 0.0);
     VSETALL(rvec, 0.0);
 
@@ -1580,171 +1333,1110 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 	if (BU_STR_EQUAL(cmd, "zap") || BU_STR_EQUAL(cmd, "zero")) {
 
-	    VSETALL(view_state->vs_gvp->k.rot_m, 0.0);
-	    VSETALL(view_state->vs_gvp->k.tra_m, 0.0);
-	    VSETALL(view_state->vs_gvp->k.rot_v, 0.0);
-	    VSETALL(view_state->vs_gvp->k.tra_v, 0.0);
-	    view_state->vs_gvp->k.sca = 0.0;
-	    VSETALL(s->s_edit->k.rot_m, 0.0);
-	    VSETALL(s->s_edit->k.rot_o, 0.0);
-	    VSETALL(s->s_edit->k.rot_v, 0.0);
-	    VSETALL(s->s_edit->k.tra_m, 0.0);
-	    VSETALL(s->s_edit->k.tra_v, 0.0);
-	    s->s_edit->k.sca = 0.0;
+	    VSETALL(view_state->vs_rate_model_rotate, 0.0);
+	    VSETALL(view_state->vs_rate_model_tran, 0.0);
+	    VSETALL(view_state->vs_rate_rotate, 0.0);
+	    VSETALL(view_state->vs_rate_tran, 0.0);
+	    view_state->vs_rate_scale = 0.0;
+	    VSETALL(s->edit_state.edit_rate_model_rotate, 0.0);
+	    VSETALL(s->edit_state.edit_rate_object_rotate, 0.0);
+	    VSETALL(s->edit_state.edit_rate_view_rotate, 0.0);
+	    VSETALL(s->edit_state.edit_rate_model_tran, 0.0);
+	    VSETALL(s->edit_state.edit_rate_view_tran, 0.0);
+	    s->edit_state.edit_rate_scale = 0.0;
 	    knob_update_rate_vars(s);
 
 	    Tcl_Eval(interp, "adc reset");
 
 	    (void)mged_svbase(s);
-	    continue;
-	}
-	if (BU_STR_EQUAL(cmd, "calibrate")) {
-	    VSETALL(view_state->vs_gvp->k.tra_v_abs, 0.0);
-	    continue;
-	}
-
-	if (argc - 1) {
-	    i = atoi(argv[1]);
-	    f = atof(argv[1]);
+	} else if (BU_STR_EQUAL(cmd, "calibrate")) {
+	    VSETALL(view_state->vs_absolute_tran, 0.0);
 	} else {
-	    goto usage;
-	}
-
-	--argc;
-	++argv;
-
-	// Handle the ADC cases first - they're independent of edit mode
-	if (BU_STR_EQUAL(cmd, "xadc")) {
-	    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&tcl_cmd, "adc ");
-
-	    if (incr_flag)
-		bu_vls_printf(&tcl_cmd, "-i ");
-	    bu_vls_printf(&tcl_cmd, "x %d", i);
-
-	    Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
-
-	    bu_vls_free(&tcl_cmd);
-	    continue;
-	} else if (BU_STR_EQUAL(cmd, "yadc")) {
-	    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&tcl_cmd, "adc ");
-
-	    if (incr_flag)
-		bu_vls_printf(&tcl_cmd, "-i ");
-	    bu_vls_printf(&tcl_cmd, "y %d", i);
-
-	    Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
-
-	    bu_vls_free(&tcl_cmd);
-	    continue;
-	} else if (BU_STR_EQUAL(cmd, "ang1")) {
-	    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&tcl_cmd, "adc ");
-
-	    if (incr_flag)
-		bu_vls_printf(&tcl_cmd, "-i ");
-	    bu_vls_printf(&tcl_cmd, "a1 %f", f);
-
-	    Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
-
-	    bu_vls_free(&tcl_cmd);
-	    continue;
-	} else if (BU_STR_EQUAL(cmd, "ang2")) {
-	    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&tcl_cmd, "adc ");
-
-	    if (incr_flag)
-		bu_vls_printf(&tcl_cmd, "-i ");
-	    bu_vls_printf(&tcl_cmd, "a2 %f", f);
-
-	    Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
-
-	    bu_vls_free(&tcl_cmd);
-	    continue;
-	} else if (BU_STR_EQUAL(cmd, "distadc")) {
-	    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&tcl_cmd, "adc ");
-
-	    if (incr_flag)
-		bu_vls_printf(&tcl_cmd, "-i ");
-	    bu_vls_printf(&tcl_cmd, "odst %d", i);
-
-	    Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
-
-	    bu_vls_free(&tcl_cmd);
-	    continue;
-	}
-
-	// Should be into the xyzXYZ style of commands now - figure out if we've
-	// got an editing command.
-	is_edit_cmd = knob_is_edit_cmd(s, cmd, model_flag, view_flag, edit_flag_force);
-
-	if (!is_edit_cmd) {
-	    kp_ret = bv_knobs_cmd_process(
-		    &rvec, &do_rot, &tvec, &do_tran,
-		    view_state->vs_gvp, cmd, f,
-		    origin, model_flag, incr_flag);
-
-	    if (kp_ret != BRLCAD_OK)
+	    if (argc - 1) {
+		i = atoi(argv[1]);
+		f = atof(argv[1]);
+	    } else {
 		goto usage;
-	} else {
-	    kp_ret = rt_edit_knob_cmd_process(
-		    s->s_edit,
-		    &rvec, &do_rot, &tvec, &do_tran, &do_sca,
-		    view_state->vs_gvp, cmd, f,
-		    origin, incr_flag, (void *)s->mged_curr_dm);
+	    }
 
-	    // Unlike do_rot and do_sca, prior MGED logic immediately processed
-	    // an editing operation for scale.  Not clear whether this was
-	    // simply due to the relative simplicity of that logic - both rot
-	    // and tra have more cases to handle. At least for now preserve that
-	    // behavior here, but it would be a cleaner if we treated scale the
-	    // same way as the other op categories and accumulated the commands
-	    // before doing a final apply.
-	    if (do_sca)
-		knob_edit_sca(s);
+	    --argc;
+	    ++argv;
 
-	    // Done - reset var
-	    do_sca = 0;
+	    if (cmd[1] == '\0') {
+		switch (cmd[0]) {
+		    case 'x':
+			if (incr_flag) {
+			    if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
+						 !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+					s->edit_state.edit_rate_model_rotate[X] += f;
+					s->edit_state.edit_rate_model_origin = origin;
+					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
 
-	    if (kp_ret != BRLCAD_OK)
-		goto usage;
+					break;
+				    case 'o':
+					s->edit_state.edit_rate_object_rotate[X] += f;
+					s->edit_state.edit_rate_object_origin = origin;
+					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
+
+					break;
+				    case 'v':
+				    default:
+					s->edit_state.edit_rate_view_rotate[X] += f;
+					s->edit_state.edit_rate_view_origin = origin;
+					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
+
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    view_state->vs_rate_model_rotate[X] += f;
+				    view_state->vs_rate_model_origin = origin;
+				} else {
+				    view_state->vs_rate_rotate[X] += f;
+				    view_state->vs_rate_origin = origin;
+				}
+
+			    }
+			} else {
+			    if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
+						 !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+					s->edit_state.edit_rate_model_rotate[X] = f;
+					s->edit_state.edit_rate_model_origin = origin;
+					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
+
+					break;
+				    case 'o':
+					s->edit_state.edit_rate_object_rotate[X] = f;
+					s->edit_state.edit_rate_object_origin = origin;
+					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
+
+					break;
+				    case 'v':
+				    default:
+					s->edit_state.edit_rate_view_rotate[X] = f;
+					s->edit_state.edit_rate_view_origin = origin;
+					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
+
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    view_state->vs_rate_model_rotate[X] = f;
+				    view_state->vs_rate_model_origin = origin;
+				} else {
+				    view_state->vs_rate_rotate[X] = f;
+				    view_state->vs_rate_origin = origin;
+				}
+
+			    }
+			}
+
+			break;
+		    case 'y':
+			if (incr_flag) {
+			    if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
+						 !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+					s->edit_state.edit_rate_model_rotate[Y] += f;
+					s->edit_state.edit_rate_model_origin = origin;
+					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
+
+					break;
+				    case 'o':
+					s->edit_state.edit_rate_object_rotate[Y] += f;
+					s->edit_state.edit_rate_object_origin = origin;
+					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
+
+					break;
+				    case 'v':
+				    default:
+					s->edit_state.edit_rate_view_rotate[Y] += f;
+					s->edit_state.edit_rate_view_origin = origin;
+					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
+
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    view_state->vs_rate_model_rotate[Y] += f;
+				    view_state->vs_rate_model_origin = origin;
+				} else {
+				    view_state->vs_rate_rotate[Y] += f;
+				    view_state->vs_rate_origin = origin;
+				}
+			    }
+			} else {
+			    if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
+						 !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+					s->edit_state.edit_rate_model_rotate[Y] = f;
+					s->edit_state.edit_rate_model_origin = origin;
+					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
+
+					break;
+				    case 'o':
+					s->edit_state.edit_rate_object_rotate[Y] = f;
+					s->edit_state.edit_rate_object_origin = origin;
+					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
+
+					break;
+				    case 'v':
+				    default:
+					s->edit_state.edit_rate_view_rotate[Y] = f;
+					s->edit_state.edit_rate_view_origin = origin;
+					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
+
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    view_state->vs_rate_model_rotate[Y] = f;
+				    view_state->vs_rate_model_origin = origin;
+				} else {
+				    view_state->vs_rate_rotate[Y] = f;
+				    view_state->vs_rate_origin = origin;
+				}
+			    }
+			}
+
+			break;
+		    case 'z':
+			if (incr_flag) {
+			    if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
+						 !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+					s->edit_state.edit_rate_model_rotate[Z] += f;
+					s->edit_state.edit_rate_model_origin = origin;
+					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
+
+					break;
+				    case 'o':
+					s->edit_state.edit_rate_object_rotate[Z] += f;
+					s->edit_state.edit_rate_object_origin = origin;
+					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
+
+					break;
+				    case 'v':
+				    default:
+					s->edit_state.edit_rate_view_rotate[Z] += f;
+					s->edit_state.edit_rate_view_origin = origin;
+					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
+
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    view_state->vs_rate_model_rotate[Z] += f;
+				    view_state->vs_rate_model_origin = origin;
+				} else {
+				    view_state->vs_rate_rotate[Z] += f;
+				    view_state->vs_rate_origin = origin;
+				}
+			    }
+			} else {
+			    if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
+						 !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+					s->edit_state.edit_rate_model_rotate[Z] = f;
+					s->edit_state.edit_rate_model_origin = origin;
+					s->edit_state.edit_rate_mr_dm = s->mged_curr_dm;
+
+					break;
+				    case 'o':
+					s->edit_state.edit_rate_object_rotate[Z] = f;
+					s->edit_state.edit_rate_object_origin = origin;
+					s->edit_state.edit_rate_or_dm = s->mged_curr_dm;
+
+					break;
+				    case 'v':
+				    default:
+					s->edit_state.edit_rate_view_rotate[Z] = f;
+					s->edit_state.edit_rate_view_origin = origin;
+					s->edit_state.edit_rate_vr_dm = s->mged_curr_dm;
+
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    view_state->vs_rate_model_rotate[Z] = f;
+				    view_state->vs_rate_model_origin = origin;
+				} else {
+				    view_state->vs_rate_rotate[Z] = f;
+				    view_state->vs_rate_origin = origin;
+				}
+			    }
+			}
+
+			break;
+		    case 'X':
+			if (incr_flag) {
+			    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
+					       !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+				    case 'o':
+					s->edit_state.edit_rate_model_tran[X] += f;
+					s->edit_state.edit_rate_mt_dm = s->mged_curr_dm;
+
+					break;
+				    case 'v':
+				    default:
+					s->edit_state.edit_rate_view_tran[X] += f;
+					s->edit_state.edit_rate_vt_dm = s->mged_curr_dm;
+
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    view_state->vs_rate_model_tran[X] += f;
+				} else {
+				    view_state->vs_rate_tran[X] += f;
+				}
+			    }
+			} else {
+			    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
+					       !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+				    case 'o':
+					s->edit_state.edit_rate_model_tran[X] = f;
+					s->edit_state.edit_rate_mt_dm = s->mged_curr_dm;
+
+					break;
+				    case 'v':
+				    default:
+					s->edit_state.edit_rate_view_tran[X] = f;
+					s->edit_state.edit_rate_vt_dm = s->mged_curr_dm;
+
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    view_state->vs_rate_model_tran[X] = f;
+				} else {
+				    view_state->vs_rate_tran[X] = f;
+				}
+			    }
+			}
+
+			break;
+		    case 'Y':
+			if (incr_flag) {
+			    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
+					       !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+				    case 'o':
+					s->edit_state.edit_rate_model_tran[Y] += f;
+					s->edit_state.edit_rate_mt_dm = s->mged_curr_dm;
+
+					break;
+				    case 'v':
+				    default:
+					s->edit_state.edit_rate_view_tran[Y] += f;
+					s->edit_state.edit_rate_vt_dm = s->mged_curr_dm;
+
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    view_state->vs_rate_model_tran[Y] += f;
+				} else {
+				    view_state->vs_rate_tran[Y] += f;
+				}
+			    }
+			} else {
+			    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
+					       !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+				    case 'o':
+					s->edit_state.edit_rate_model_tran[Y] = f;
+					s->edit_state.edit_rate_mt_dm = s->mged_curr_dm;
+
+					break;
+				    case 'v':
+				    default:
+					s->edit_state.edit_rate_view_tran[Y] = f;
+					s->edit_state.edit_rate_vt_dm = s->mged_curr_dm;
+
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    view_state->vs_rate_model_tran[Y] = f;
+				} else {
+				    view_state->vs_rate_tran[Y] = f;
+				}
+			    }
+			}
+
+			break;
+		    case 'Z':
+			if (incr_flag) {
+			    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
+					       !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+				    case 'o':
+					s->edit_state.edit_rate_model_tran[Z] += f;
+					s->edit_state.edit_rate_mt_dm = s->mged_curr_dm;
+
+					break;
+				    case 'v':
+				    default:
+					s->edit_state.edit_rate_view_tran[Z] += f;
+					s->edit_state.edit_rate_vt_dm = s->mged_curr_dm;
+
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    view_state->vs_rate_model_tran[Z] += f;
+				} else {
+				    view_state->vs_rate_tran[Z] += f;
+				}
+			    }
+			} else {
+			    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
+					       !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+				    case 'o':
+					s->edit_state.edit_rate_model_tran[Z] = f;
+					s->edit_state.edit_rate_mt_dm = s->mged_curr_dm;
+
+					break;
+				    case 'v':
+				    default:
+					s->edit_state.edit_rate_view_tran[Z] = f;
+					s->edit_state.edit_rate_vt_dm = s->mged_curr_dm;
+
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    view_state->vs_rate_model_tran[Z] = f;
+				} else {
+				    view_state->vs_rate_tran[Z] = f;
+				}
+			    }
+			}
+
+			break;
+		    case 'S':
+			if (incr_flag) {
+			    if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
+				s->edit_state.edit_rate_scale += f;
+			    } else {
+				view_state->vs_rate_scale += f;
+			    }
+			} else {
+			    if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
+				s->edit_state.edit_rate_scale = f;
+			    } else {
+				view_state->vs_rate_scale = f;
+			    }
+			}
+
+			break;
+		    default:
+			goto usage;
+		} /* switch cmd[0] */
+	    } else if (cmd[0] == 'a' && cmd[1] != '\0' && cmd[2] == '\0') {
+		switch (cmd[1]) {
+		    case 'x':
+			if (incr_flag) {
+			    if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
+						 !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+					s->edit_state.edit_absolute_model_rotate[X] += f;
+					break;
+				    case 'o':
+					s->edit_state.edit_absolute_object_rotate[X] += f;
+					break;
+				    case 'v':
+					s->edit_state.edit_absolute_view_rotate[X] += f;
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    view_state->vs_absolute_model_rotate[X] += f;
+				} else {
+				    view_state->vs_absolute_rotate[X] += f;
+				}
+			    }
+
+			    rvec[X] = f;
+			} else {
+			    if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
+						 !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+					rvec[X] = f - s->edit_state.last_edit_absolute_model_rotate[X];
+					s->edit_state.edit_absolute_model_rotate[X] = f;
+					break;
+				    case 'o':
+					rvec[X] = f - s->edit_state.last_edit_absolute_object_rotate[X];
+					s->edit_state.edit_absolute_object_rotate[X] = f;
+					break;
+				    case 'v':
+					rvec[X] = f - s->edit_state.last_edit_absolute_view_rotate[X];
+					s->edit_state.edit_absolute_view_rotate[X] = f;
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    rvec[X] = f - view_state->vs_last_absolute_model_rotate[X];
+				    view_state->vs_absolute_model_rotate[X] = f;
+				} else {
+				    rvec[X] = f - view_state->vs_last_absolute_rotate[X];
+				    view_state->vs_absolute_rotate[X] = f;
+				}
+			    }
+			}
+
+			/* wrap around */
+			if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
+					     !view_flag && !model_flag) || edit_flag)) {
+			    fastf_t *arp;
+			    fastf_t *larp;
+
+			    switch (mged_variables->mv_coords) {
+				case 'm':
+				    arp = s->edit_state.edit_absolute_model_rotate;
+				    larp = s->edit_state.last_edit_absolute_model_rotate;
+				    break;
+				case 'o':
+				    arp = s->edit_state.edit_absolute_object_rotate;
+				    larp = s->edit_state.last_edit_absolute_object_rotate;
+				    break;
+				case 'v':
+				    arp = s->edit_state.edit_absolute_view_rotate;
+				    larp = s->edit_state.last_edit_absolute_view_rotate;
+				    break;
+				default:
+				    bu_log("unknown mv_coords\n");
+				    arp = larp = NULL;
+				    return TCL_ERROR;
+			    }
+
+			    if (arp[X] < -180.0) {
+				arp[X] = arp[X] + 360.0;
+			    } else if (arp[X] > 180.0) {
+				arp[X] = arp[X] - 360.0;
+			    }
+
+			    larp[X] = arp[X];
+			} else {
+			    fastf_t *arp;
+			    fastf_t *larp;
+
+			    if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				arp = view_state->vs_absolute_model_rotate;
+				larp = view_state->vs_last_absolute_model_rotate;
+			    } else {
+				arp = view_state->vs_absolute_rotate;
+				larp = view_state->vs_last_absolute_rotate;
+			    }
+
+			    if (arp[X] < -180.0) {
+				arp[X] = arp[X] + 360.0;
+			    } else if (arp[X] > 180.0) {
+				arp[X] = arp[X] - 360.0;
+			    }
+
+			    larp[X] = arp[X];
+			}
+
+			do_rot = 1;
+			break;
+		    case 'y':
+			if (incr_flag) {
+			    if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
+						 !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+					s->edit_state.edit_absolute_model_rotate[Y] += f;
+					break;
+				    case 'o':
+					s->edit_state.edit_absolute_object_rotate[Y] += f;
+					break;
+				    case 'v':
+					s->edit_state.edit_absolute_view_rotate[Y] += f;
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    view_state->vs_absolute_model_rotate[Y] += f;
+				} else {
+				    view_state->vs_absolute_rotate[Y] += f;
+				}
+			    }
+
+			    rvec[Y] = f;
+			} else {
+			    if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
+						 !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+					rvec[Y] = f - s->edit_state.last_edit_absolute_model_rotate[Y];
+					s->edit_state.edit_absolute_model_rotate[Y] = f;
+					break;
+				    case 'o':
+					rvec[Y] = f - s->edit_state.last_edit_absolute_object_rotate[Y];
+					s->edit_state.edit_absolute_object_rotate[Y] = f;
+					break;
+				    case 'v':
+					rvec[Y] = f - s->edit_state.last_edit_absolute_view_rotate[Y];
+					s->edit_state.edit_absolute_view_rotate[Y] = f;
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    rvec[Y] = f - view_state->vs_last_absolute_model_rotate[Y];
+				    view_state->vs_absolute_model_rotate[Y] = f;
+				} else {
+				    rvec[Y] = f - view_state->vs_last_absolute_rotate[Y];
+				    view_state->vs_absolute_rotate[Y] = f;
+				}
+			    }
+			}
+
+			/* wrap around */
+			if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
+					     !view_flag && !model_flag) || edit_flag)) {
+			    fastf_t *arp;
+			    fastf_t *larp;
+
+			    switch (mged_variables->mv_coords) {
+				case 'm':
+				    arp = s->edit_state.edit_absolute_model_rotate;
+				    larp = s->edit_state.last_edit_absolute_model_rotate;
+				    break;
+				case 'o':
+				    arp = s->edit_state.edit_absolute_object_rotate;
+				    larp = s->edit_state.last_edit_absolute_object_rotate;
+				    break;
+				case 'v':
+				    arp = s->edit_state.edit_absolute_view_rotate;
+				    larp = s->edit_state.last_edit_absolute_view_rotate;
+				    break;
+				default:
+				    bu_log("unknown mv_transform\n");
+				    arp = larp = NULL;
+				    return TCL_ERROR;
+			    }
+
+			    if (arp[Y] < -180.0) {
+				arp[Y] = arp[Y] + 360.0;
+			    } else if (arp[X] > 180.0) {
+				arp[Y] = arp[Y] - 360.0;
+			    }
+
+			    larp[Y] = arp[Y];
+			} else {
+			    fastf_t *arp;
+			    fastf_t *larp;
+
+			    if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				arp = view_state->vs_absolute_model_rotate;
+				larp = view_state->vs_last_absolute_model_rotate;
+			    } else {
+				arp = view_state->vs_absolute_rotate;
+				larp = view_state->vs_last_absolute_rotate;
+			    }
+
+			    if (arp[Y] < -180.0) {
+				arp[Y] = arp[Y] + 360.0;
+			    } else if (arp[Y] > 180.0) {
+				arp[Y] = arp[Y] - 360.0;
+			    }
+
+			    larp[Y] = arp[Y];
+			}
+
+			do_rot = 1;
+			break;
+		    case 'z':
+			if (incr_flag) {
+			    if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
+						 !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+					s->edit_state.edit_absolute_model_rotate[Z] += f;
+					break;
+				    case 'o':
+					s->edit_state.edit_absolute_object_rotate[Z] += f;
+					break;
+				    case 'v':
+					s->edit_state.edit_absolute_view_rotate[Z] += f;
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    view_state->vs_absolute_model_rotate[Z] += f;
+				} else {
+				    view_state->vs_absolute_rotate[Z] += f;
+				}
+			    }
+
+			    rvec[Z] = f;
+			} else {
+			    if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
+						 !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+					rvec[Z] = f - s->edit_state.last_edit_absolute_model_rotate[Z];
+					s->edit_state.edit_absolute_model_rotate[Z] = f;
+					break;
+				    case 'o':
+					rvec[Z] = f - s->edit_state.last_edit_absolute_object_rotate[Z];
+					s->edit_state.edit_absolute_object_rotate[Z] = f;
+					break;
+				    case 'v':
+					rvec[Z] = f - s->edit_state.last_edit_absolute_view_rotate[Z];
+					s->edit_state.edit_absolute_view_rotate[Z] = f;
+					break;
+				}
+			    } else {
+				if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				    rvec[Z] = f - view_state->vs_last_absolute_model_rotate[Z];
+				    view_state->vs_absolute_model_rotate[Z] = f;
+				} else {
+				    rvec[Z] = f - view_state->vs_last_absolute_rotate[Z];
+				    view_state->vs_absolute_rotate[Z] = f;
+				}
+			    }
+			}
+
+			/* wrap around */
+			if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
+					     !view_flag && !model_flag) || edit_flag)) {
+			    fastf_t *arp;
+			    fastf_t *larp;
+
+			    switch (mged_variables->mv_coords) {
+				case 'm':
+				    arp = s->edit_state.edit_absolute_model_rotate;
+				    larp = s->edit_state.last_edit_absolute_model_rotate;
+				    break;
+				case 'o':
+				    arp = s->edit_state.edit_absolute_object_rotate;
+				    larp = s->edit_state.last_edit_absolute_object_rotate;
+				    break;
+				case 'v':
+				    arp = s->edit_state.edit_absolute_view_rotate;
+				    larp = s->edit_state.last_edit_absolute_view_rotate;
+				    break;
+				default:
+				    bu_log("unknown mv_coords\n");
+				    arp = larp = NULL;
+				    return TCL_ERROR;
+			    }
+
+			    if (arp[Z] < -180.0) {
+				arp[Z] = arp[Z] + 360.0;
+			    } else if (arp[Z] > 180.0) {
+				arp[Z] = arp[Z] - 360.0;
+			    }
+
+			    larp[Z] = arp[Z];
+			} else {
+			    fastf_t *arp;
+			    fastf_t *larp;
+
+			    if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				arp = view_state->vs_absolute_model_rotate;
+				larp = view_state->vs_last_absolute_model_rotate;
+			    } else {
+				arp = view_state->vs_absolute_rotate;
+				larp = view_state->vs_last_absolute_rotate;
+			    }
+
+			    if (arp[Z] < -180.0) {
+				arp[Z] = arp[Z] + 360.0;
+			    } else if (arp[Z] > 180.0) {
+				arp[Z] = arp[Z] - 360.0;
+			    }
+
+			    larp[Z] = arp[Z];
+			}
+
+			do_rot = 1;
+			break;
+		    case 'X':
+			sf = f * s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale;
+
+			if (incr_flag) {
+			    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
+					       !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+				    case 'o':
+					s->edit_state.edit_absolute_model_tran[X] += sf;
+					s->edit_state.last_edit_absolute_model_tran[X] = s->edit_state.edit_absolute_model_tran[X];
+					break;
+				    case 'v':
+					s->edit_state.edit_absolute_view_tran[X] += sf;
+					s->edit_state.last_edit_absolute_view_tran[X] = s->edit_state.edit_absolute_view_tran[X];
+					break;
+				}
+			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				view_state->vs_absolute_model_tran[X] += sf;
+				view_state->vs_last_absolute_model_tran[X] = view_state->vs_absolute_model_tran[X];
+			    } else {
+				view_state->vs_absolute_tran[X] += sf;
+				view_state->vs_last_absolute_tran[X] = view_state->vs_absolute_tran[X];
+			    }
+
+			    tvec[X] = f;
+			} else {
+			    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
+					       !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+				    case 'o':
+					tvec[X] = f - s->edit_state.last_edit_absolute_model_tran[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->edit_state.edit_absolute_model_tran[X] = sf;
+					s->edit_state.last_edit_absolute_model_tran[X] = s->edit_state.edit_absolute_model_tran[X];
+					break;
+				    case 'v':
+					tvec[X] = f - s->edit_state.last_edit_absolute_view_tran[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->edit_state.edit_absolute_view_tran[X] = sf;
+					s->edit_state.last_edit_absolute_view_tran[X] = s->edit_state.edit_absolute_view_tran[X];
+					break;
+				}
+			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				tvec[X] = f - view_state->vs_last_absolute_model_tran[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+				view_state->vs_absolute_model_tran[X] = sf;
+				view_state->vs_last_absolute_model_tran[X] = view_state->vs_absolute_model_tran[X];
+			    } else {
+				tvec[X] = f - view_state->vs_last_absolute_tran[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+				view_state->vs_absolute_tran[X] = sf;
+				view_state->vs_last_absolute_tran[X] = view_state->vs_absolute_tran[X];
+			    }
+
+			}
+
+			do_tran = 1;
+			break;
+		    case 'Y':
+			sf = f * s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale;
+
+			if (incr_flag) {
+			    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
+					       !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+				    case 'o':
+					s->edit_state.edit_absolute_model_tran[Y] += sf;
+					s->edit_state.last_edit_absolute_model_tran[Y] = s->edit_state.edit_absolute_model_tran[Y];
+					break;
+				    case 'v':
+					s->edit_state.edit_absolute_view_tran[Y] += sf;
+					s->edit_state.last_edit_absolute_view_tran[Y] = s->edit_state.edit_absolute_view_tran[Y];
+					break;
+				}
+			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				view_state->vs_absolute_model_tran[Y] += sf;
+				view_state->vs_last_absolute_model_tran[Y] = view_state->vs_absolute_model_tran[Y];
+			    } else {
+				view_state->vs_absolute_tran[Y] += sf;
+				view_state->vs_last_absolute_tran[Y] = view_state->vs_absolute_tran[Y];
+			    }
+
+			    tvec[Y] = f;
+			} else {
+			    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
+					       !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+				    case 'o':
+					tvec[Y] = f - s->edit_state.last_edit_absolute_model_tran[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->edit_state.edit_absolute_model_tran[Y] = sf;
+					s->edit_state.last_edit_absolute_model_tran[Y] = s->edit_state.edit_absolute_model_tran[Y];
+					break;
+				    case 'v':
+					tvec[Y] = f - s->edit_state.last_edit_absolute_view_tran[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->edit_state.edit_absolute_view_tran[Y] = sf;
+					s->edit_state.last_edit_absolute_view_tran[Y] = s->edit_state.edit_absolute_view_tran[Y];
+					break;
+				}
+			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				tvec[Y] = f - view_state->vs_last_absolute_model_tran[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+				view_state->vs_absolute_model_tran[Y] = sf;
+				view_state->vs_last_absolute_model_tran[Y] = view_state->vs_absolute_model_tran[Y];
+			    } else {
+				tvec[Y] = f - view_state->vs_last_absolute_tran[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+				view_state->vs_absolute_tran[Y] = sf;
+				view_state->vs_last_absolute_tran[Y] = view_state->vs_absolute_tran[Y];
+			    }
+			}
+
+			do_tran = 1;
+			break;
+		    case 'Z':
+			sf = f * s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale;
+
+			if (incr_flag) {
+			    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
+					       !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+				    case 'o':
+					s->edit_state.edit_absolute_model_tran[Z] += sf;
+					s->edit_state.last_edit_absolute_model_tran[Z] = s->edit_state.edit_absolute_model_tran[Z];
+					break;
+				    case 'v':
+					s->edit_state.edit_absolute_view_tran[Z] += sf;
+					s->edit_state.last_edit_absolute_view_tran[Z] = s->edit_state.edit_absolute_view_tran[Z];
+					break;
+				}
+			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				view_state->vs_absolute_model_tran[Z] += sf;
+				view_state->vs_last_absolute_model_tran[Z] = view_state->vs_absolute_model_tran[Z];
+			    } else {
+				view_state->vs_absolute_tran[Z] += sf;
+				view_state->vs_last_absolute_tran[Z] = view_state->vs_absolute_tran[Z];
+			    }
+
+			    tvec[Z] = f;
+			} else {
+			    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
+					       !view_flag && !model_flag) || edit_flag)) {
+				switch (mged_variables->mv_coords) {
+				    case 'm':
+				    case 'o':
+					tvec[Z] = f - s->edit_state.last_edit_absolute_model_tran[Z] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->edit_state.edit_absolute_model_tran[Z] = sf;
+					s->edit_state.last_edit_absolute_model_tran[Z] = s->edit_state.edit_absolute_model_tran[Z];
+					break;
+				    case 'v':
+					tvec[Z] = f - s->edit_state.last_edit_absolute_view_tran[Z] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->edit_state.edit_absolute_view_tran[Z] = sf;
+					s->edit_state.last_edit_absolute_view_tran[Z] = s->edit_state.edit_absolute_view_tran[Z];
+					break;
+				}
+			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+				tvec[Z] = f - view_state->vs_last_absolute_model_tran[Z] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+				view_state->vs_absolute_model_tran[Z] = sf;
+				view_state->vs_last_absolute_model_tran[Z] = view_state->vs_absolute_model_tran[Z];
+			    } else {
+				tvec[Z] = f - view_state->vs_last_absolute_tran[Z] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+				view_state->vs_absolute_tran[Z] = sf;
+				view_state->vs_last_absolute_tran[Z] = view_state->vs_absolute_tran[Z];
+			    }
+			}
+
+			do_tran = 1;
+			break;
+		    case 'S':
+			if (incr_flag) {
+			    if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
+				s->edit_state.edit_absolute_scale += f;
+
+				if (GEOM_EDIT_STATE == ST_S_EDIT) {
+				    sedit_abs_scale(s);
+				} else {
+				    oedit_abs_scale(s);
+				}
+			    } else {
+				view_state->vs_gvp->gv_a_scale += f;
+				abs_zoom(s);
+			    }
+			} else {
+			    if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
+				s->edit_state.edit_absolute_scale = f;
+
+				if (GEOM_EDIT_STATE == ST_S_EDIT) {
+				    sedit_abs_scale(s);
+				} else {
+				    oedit_abs_scale(s);
+				}
+			    } else {
+				view_state->vs_gvp->gv_a_scale = f;
+				abs_zoom(s);
+			    }
+			}
+
+			break;
+		    default:
+			goto usage;
+		} /* switch (cmd[1]) */
+	    } else if (BU_STR_EQUAL(cmd, "xadc")) {
+		struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+		bu_vls_printf(&tcl_cmd, "adc ");
+
+		if (incr_flag)
+		    bu_vls_printf(&tcl_cmd, "-i ");
+		bu_vls_printf(&tcl_cmd, "x %d", i);
+
+		Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
+
+		bu_vls_free(&tcl_cmd);
+	    } else if (BU_STR_EQUAL(cmd, "yadc")) {
+		struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+		bu_vls_printf(&tcl_cmd, "adc ");
+
+		if (incr_flag)
+		    bu_vls_printf(&tcl_cmd, "-i ");
+		bu_vls_printf(&tcl_cmd, "y %d", i);
+
+		Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
+
+		bu_vls_free(&tcl_cmd);
+	    } else if (BU_STR_EQUAL(cmd, "ang1")) {
+		struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+		bu_vls_printf(&tcl_cmd, "adc ");
+
+		if (incr_flag)
+		    bu_vls_printf(&tcl_cmd, "-i ");
+		bu_vls_printf(&tcl_cmd, "a1 %f", f);
+
+		Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
+
+		bu_vls_free(&tcl_cmd);
+	    } else if (BU_STR_EQUAL(cmd, "ang2")) {
+		struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+		bu_vls_printf(&tcl_cmd, "adc ");
+
+		if (incr_flag)
+		    bu_vls_printf(&tcl_cmd, "-i ");
+		bu_vls_printf(&tcl_cmd, "a2 %f", f);
+
+		Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
+
+		bu_vls_free(&tcl_cmd);
+	    } else if (BU_STR_EQUAL(cmd, "distadc")) {
+		struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+		bu_vls_printf(&tcl_cmd, "adc ");
+
+		if (incr_flag)
+		    bu_vls_printf(&tcl_cmd, "-i ");
+		bu_vls_printf(&tcl_cmd, "odst %d", i);
+
+		Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
+
+		bu_vls_free(&tcl_cmd);
+	    } else {
+usage:
+		Tcl_AppendResult(interp,
+				 "knob: x, y, z for rotation in degrees\n",
+				 "knob: S for scale; X, Y, Z for slew (rates, range -1..+1)\n",
+				 "knob: ax, ay, az for absolute rotation in degrees; aS for absolute scale.\n",
+				 "knob: aX, aY, aZ for absolute slew.  calibrate to set current slew to 0\n",
+				 "knob: xadc, yadc, distadc (values, range -2048..+2047)\n",
+				 "knob: ang1, ang2 for adc angles in degrees\n",
+				 "knob: zero (cancel motion)\n", (char *)NULL);
+
+		return TCL_ERROR;
+	    }
 	}
     }
 
     if (do_tran) {
-	int edit_flag_tra = (EDIT_TRAN && ((mged_variables->mv_transform == 'e' && !view_flag && !model_flag) || edit_flag_force)) ? 1 : 0;
-	if (edit_flag_tra) {
-	    knob_edit_tran(s, view_state->vs_gvp->gv_coord, tvec);
-	} else {
-	    (void)knob_tran(s, tvec, model_flag, view_flag);
-	}
+	(void)knob_tran(s, tvec, model_flag, view_flag, edit_flag);
     }
 
     if (do_rot) {
-	int edit_flag_rot = (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' && !view_flag && !model_flag) || edit_flag_force)) ? 1 : 0;
-	if (edit_flag_rot) {
-	    knob_edit_rot(s, origin, rvec);
-	} else {
-	    (void)knob_rot(s, rvec, origin, model_flag, view_flag);
-	}
+	(void)knob_rot(s, rvec, origin, model_flag, view_flag, edit_flag);
     }
 
     check_nonzero_rates(s);
     return TCL_OK;
+}
 
-usage:
-    Tcl_AppendResult(interp,
-	    "knob: x, y, z for rotation in degrees\n",
-	    "knob: S for scale; X, Y, Z for slew (rates, range -1..+1)\n",
-	    "knob: ax, ay, az for absolute rotation in degrees; aS for absolute scale.\n",
-	    "knob: aX, aY, aZ for absolute slew.  calibrate to set current slew to 0\n",
-	    "knob: xadc, yadc, distadc (values, range -2048..+2047)\n",
-	    "knob: ang1, ang2 for adc angles in degrees\n",
-	    "knob: zero (cancel motion)\n", (char *)NULL);
 
-    return TCL_ERROR;
+int
+knob_tran(struct mged_state *s,
+	vect_t tvec,
+	int model_flag,
+	int view_flag,
+	int edit_flag)
+{
+    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
+		       !view_flag && !model_flag) || edit_flag)) {
+	mged_etran(s, mged_variables->mv_coords, tvec);
+    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+	mged_mtran(s, tvec);
+    } else if (mged_variables->mv_coords == 'o') {
+	mged_otran(s, tvec);
+    } else {
+	mged_vtran(s, tvec);
+    }
+
+    return TCL_OK;
+}
+
+
+int
+knob_rot(struct mged_state *s,
+	vect_t rvec,
+	char origin,
+	int model_flag,
+	int view_flag,
+	int edit_flag)
+{
+    if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
+			 !view_flag && !model_flag) || edit_flag)) {
+	mged_erot_xyz(s, origin, rvec);
+    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
+	mged_vrot_xyz(s, origin, 'm', rvec);
+    } else if (mged_variables->mv_coords == 'o') {
+	mged_vrot_xyz(s, origin, 'o', rvec);
+    } else {
+	mged_vrot_xyz(s, origin, 'v', rvec);
+    }
+
+    return TCL_OK;
+}
+
+
+/* absolute_scale's value range is [-1.0, 1.0] */
+static void
+abs_zoom(struct mged_state *s)
+{
+    char *av[3];
+
+    /* Use initial Viewscale */
+    if (-SMALL_FASTF < view_state->vs_gvp->gv_a_scale && view_state->vs_gvp->gv_a_scale < SMALL_FASTF) {
+	view_state->vs_gvp->gv_scale = view_state->vs_gvp->gv_i_scale;
+    } else {
+	/* if positive */
+	if (view_state->vs_gvp->gv_a_scale > 0) {
+	    /* scale i_Viewscale by values in [0.0, 1.0] range */
+	    view_state->vs_gvp->gv_scale = view_state->vs_gvp->gv_i_scale * (1.0 - view_state->vs_gvp->gv_a_scale);
+	} else/* negative */
+	    /* scale i_Viewscale by values in [1.0, 10.0] range */
+	{
+	    view_state->vs_gvp->gv_scale = view_state->vs_gvp->gv_i_scale * (1.0 + (view_state->vs_gvp->gv_a_scale * -9.0));
+	}
+    }
+
+    if (view_state->vs_gvp->gv_scale < BV_MINVIEWSIZE) {
+	view_state->vs_gvp->gv_scale = BV_MINVIEWSIZE;
+    }
+
+    av[0] = "zoom";
+    av[1] = "1.0";
+    ged_exec_zoom(s->gedp, 2, (const char **)av);
+
+    if (!ZERO(view_state->vs_absolute_tran[X])
+	|| !ZERO(view_state->vs_absolute_tran[Y])
+	|| !ZERO(view_state->vs_absolute_tran[Z]))
+    {
+	set_absolute_tran(s);
+    }
 }
 
 
@@ -1783,13 +2475,11 @@ mged_zoom(struct mged_state *s, double val)
 	view_state->vs_gvp->gv_a_scale /= 9.0;
     }
 
-    if (view_state->vs_gvp) {
-	if (!ZERO(view_state->vs_gvp->k.tra_v_abs[X])
-		|| !ZERO(view_state->vs_gvp->k.tra_v_abs[Y])
-		|| !ZERO(view_state->vs_gvp->k.tra_v_abs[Z]))
-	{
-	    set_absolute_tran(s);
-	}
+    if (!ZERO(view_state->vs_absolute_tran[X])
+	|| !ZERO(view_state->vs_absolute_tran[Y])
+	|| !ZERO(view_state->vs_absolute_tran[Z]))
+    {
+	set_absolute_tran(s);
     }
 
     ret = TCL_OK;
@@ -1912,13 +2602,11 @@ cmd_setview(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 	return TCL_ERROR;
     }
 
-    if (view_state->vs_gvp) {
-	if (!ZERO(view_state->vs_gvp->k.tra_v_abs[X])
-		|| !ZERO(view_state->vs_gvp->k.tra_v_abs[Y])
-		|| !ZERO(view_state->vs_gvp->k.tra_v_abs[Z]))
-	{
-	    set_absolute_tran(s);
-	}
+    if (!ZERO(view_state->vs_absolute_tran[X])
+	|| !ZERO(view_state->vs_absolute_tran[Y])
+	|| !ZERO(view_state->vs_absolute_tran[Z]))
+    {
+	set_absolute_tran(s);
     }
 
     view_state->vs_flag = 1;
@@ -1975,13 +2663,18 @@ f_slewview(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 int
 mged_svbase(struct mged_state *s)
 {
-    /* reset absolute slider values */
-    bv_knobs_reset(&view_state->vs_gvp->k, BV_KNOBS_ABS);
-
-    /* Reset virtual trackball position */
-    MAT_DELTAS_GET_NEG(view_state->vs_gvp->orig_pos, view_state->vs_gvp->gv_center);
-    /* Reset view scale entries. */
+    MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_gvp->gv_center);
     view_state->vs_gvp->gv_i_scale = view_state->vs_gvp->gv_scale;
+
+    /* reset absolute slider values */
+    VSETALL(view_state->vs_absolute_rotate, 0.0);
+    VSETALL(view_state->vs_last_absolute_rotate, 0.0);
+    VSETALL(view_state->vs_absolute_model_rotate, 0.0);
+    VSETALL(view_state->vs_last_absolute_model_rotate, 0.0);
+    VSETALL(view_state->vs_absolute_tran, 0.0);
+    VSETALL(view_state->vs_last_absolute_tran, 0.0);
+    VSETALL(view_state->vs_absolute_model_tran, 0.0);
+    VSETALL(view_state->vs_last_absolute_model_tran, 0.0);
     view_state->vs_gvp->gv_a_scale = 0.0;
 
     if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui) {
@@ -2033,6 +2726,34 @@ f_svbase(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 
 
 /*
+ * Apply the "joystick" delta rotation to the viewing direction,
+ * where the delta is specified in terms of the *viewing* axes.
+ * Rotation is performed about the view center, for now.
+ * Angles are in radians.
+ */
+void
+usejoy(struct mged_state *s, double xangle, double yangle, double zangle)
+{
+    mat_t newrot;		/* NEW rot matrix, from joystick */
+
+    /* NORMAL CASE.
+     * Apply delta viewing rotation for non-edited parts.
+     * The view rotates around the VIEW CENTER.
+     */
+    MAT_IDN(newrot);
+    bn_mat_angles_rad(newrot, xangle, yangle, zangle);
+
+    bn_mat_mul2(newrot, view_state->vs_gvp->gv_rotation);
+    {
+	mat_t newinv;
+	bn_mat_inv(newinv, newrot);
+	wrt_view(s, view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta);	/* Updates ModelDelta */
+    }
+    new_mats(s);
+}
+
+
+/*
  * Set the view.  Angles are DOUBLES, in degrees.
  *
  * Given that viewvec = scale . rotate . (xlate to view center) . modelvec,
@@ -2065,13 +2786,11 @@ setview(struct mged_state *s,
     av[4] = (char *)0;
     ged_exec_setview(s->gedp, 4, (const char **)av);
 
-    if (view_state->vs_gvp) {
-	if (!ZERO(view_state->vs_gvp->k.tra_v_abs[X])
-		|| !ZERO(view_state->vs_gvp->k.tra_v_abs[Y])
-		|| !ZERO(view_state->vs_gvp->k.tra_v_abs[Z]))
-	{
-	    set_absolute_tran(s);
-	}
+    if (!ZERO(view_state->vs_absolute_tran[X])
+	|| !ZERO(view_state->vs_absolute_tran[Y])
+	|| !ZERO(view_state->vs_absolute_tran[Z]))
+    {
+	set_absolute_tran(s);
     }
 
     view_state->vs_flag = 1;
@@ -2491,6 +3210,107 @@ f_view_ring(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     return TCL_ERROR;
 }
 
+
+int
+mged_erot(struct mged_state *s,
+	char coords,
+	  char rotate_about,
+	  mat_t newrot)
+{
+    int save_edflag;
+    mat_t temp1, temp2;
+
+    update_views = 1;
+    dm_set_dirty(DMP, 1);
+
+    switch (coords) {
+	case 'm':
+	    break;
+	case 'o':
+	    bn_mat_inv(temp1, acc_rot_sol);
+
+	    /* transform into object rotations */
+	    bn_mat_mul(temp2, acc_rot_sol, newrot);
+	    bn_mat_mul(newrot, temp2, temp1);
+	    break;
+	case 'v':
+	    bn_mat_inv(temp1, view_state->vs_gvp->gv_rotation);
+
+	    /* transform into model rotations */
+	    bn_mat_mul(temp2, temp1, newrot);
+	    bn_mat_mul(newrot, temp2, view_state->vs_gvp->gv_rotation);
+	    break;
+    }
+
+    if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	char save_rotate_about;
+
+	save_rotate_about = mged_variables->mv_rotate_about;
+	mged_variables->mv_rotate_about = rotate_about;
+
+	save_edflag = es_edflag;
+
+	if (!SEDIT_ROTATE) {
+	    es_edflag = SROT;
+	}
+
+	inpara = 0;
+	MAT_COPY(incr_change, newrot);
+	bn_mat_mul2(incr_change, acc_rot_sol);
+	sedit(s);
+
+	mged_variables->mv_rotate_about = save_rotate_about;
+	es_edflag = save_edflag;
+    } else {
+	point_t point;
+	vect_t work;
+
+	bn_mat_mul2(newrot, acc_rot_sol);
+
+	/* find point for rotation to take place wrt */
+	switch (rotate_about) {
+	    case 'v':       /* View Center */
+		VSET(work, 0.0, 0.0, 0.0);
+		MAT4X3PNT(point, view_state->vs_gvp->gv_view2model, work);
+		break;
+	    case 'e':       /* Eye */
+		VSET(work, 0.0, 0.0, 1.0);
+		MAT4X3PNT(point, view_state->vs_gvp->gv_view2model, work);
+		break;
+	    case 'm':       /* Model Center */
+		VSETALL(point, 0.0);
+		break;
+	    case 'k':
+	    default:
+		MAT4X3PNT(point, modelchanges, es_keypoint);
+	}
+
+	/*
+	 * Apply newrot to the modelchanges matrix wrt "point"
+	 */
+	wrt_point(modelchanges, newrot, modelchanges, point);
+
+	new_edit_mats(s);
+    }
+
+    return TCL_OK;
+}
+
+
+int
+mged_erot_xyz(struct mged_state *s,
+	char rotate_about,
+	vect_t rvec)
+{
+    mat_t newrot;
+
+    MAT_IDN(newrot);
+    bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
+
+    return mged_erot(s, mged_variables->mv_coords, rotate_about, newrot);
+}
+
+
 int
 cmd_mrot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
@@ -2503,7 +3323,7 @@ cmd_mrot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	return TCL_OK;
     }
 
-    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
+    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 	mged_variables->mv_transform == 'e') {
 	char coord; /* dummy argument for ged_rot_args */
 	mat_t rmat;
@@ -2565,13 +3385,13 @@ mged_vrot(struct mged_state *s, char origin, fastf_t *newrot)
 	if (origin == 'e') {
 	    /* "VR driver" method: rotate around "eye" point (0, 0, 1) viewspace */
 	    VSET(rot_pt, 0.0, 0.0, 1.0);		/* point to rotate around */
-	} else if (origin == 'k' && s->global_editing_state == ST_S_EDIT) {
+	} else if (origin == 'k' && GEOM_EDIT_STATE == ST_S_EDIT) {
 	    /* rotate around keypoint */
-	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
-	} else if (origin == 'k' && s->global_editing_state == ST_O_EDIT) {
+	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	} else if (origin == 'k' && GEOM_EDIT_STATE == ST_O_EDIT) {
 	    point_t kpWmc;
 
-	    MAT4X3PNT(kpWmc, s->s_edit->model_changes, s->s_edit->e_keypoint);
+	    MAT4X3PNT(kpWmc, modelchanges, es_keypoint);
 	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, kpWmc);
 	} else {
 	    /* rotate around model center (0, 0, 0) */
@@ -2624,10 +3444,10 @@ mged_vrot_xyz(struct mged_state *s,
 	bn_mat_inv(temp1, view_state->vs_gvp->gv_rotation);
 	bn_mat_mul(temp2, view_state->vs_gvp->gv_rotation, newrot);
 	bn_mat_mul(newrot, temp2, temp1);
-    } else if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) && coords == 'o') {
+    } else if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) && coords == 'o') {
 	/* first, transform object rotations into model rotations */
-	bn_mat_inv(temp1, s->s_edit->acc_rot_sol);
-	bn_mat_mul(temp2, s->s_edit->acc_rot_sol, newrot);
+	bn_mat_inv(temp1, acc_rot_sol);
+	bn_mat_mul(temp2, acc_rot_sol, newrot);
 	bn_mat_mul(newrot, temp2, temp1);
 
 	/* now transform model rotations into view rotations */
@@ -2682,7 +3502,7 @@ cmd_rot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
+    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 	mged_variables->mv_transform == 'e') {
 	char coord;
 	mat_t rmat;
@@ -2729,7 +3549,7 @@ cmd_arot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	return TCL_OK;
     }
 
-    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
+    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 	mged_variables->mv_transform == 'e') {
 	mat_t rmat;
 
@@ -2763,13 +3583,72 @@ cmd_arot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 
 
 int
+mged_etran(struct mged_state *s,
+	char coords,
+	vect_t tvec)
+{
+    point_t p2;
+    int save_edflag;
+    point_t delta;
+    point_t vcenter;
+    point_t work;
+    mat_t xlatemat;
+
+    /* compute delta */
+    switch (coords) {
+	case 'm':
+	    VSCALE(delta, tvec, s->dbip->dbi_local2base);
+	    break;
+	case 'o':
+	    VSCALE(p2, tvec, s->dbip->dbi_local2base);
+	    MAT4X3PNT(delta, acc_rot_sol, p2);
+	    break;
+	case 'v':
+	default:
+	    VSCALE(p2, tvec, s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale);
+	    MAT4X3PNT(work, view_state->vs_gvp->gv_view2model, p2);
+	    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
+	    VSUB2(delta, work, vcenter);
+
+	    break;
+    }
+
+    if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	es_keyfixed = 0;
+	get_solid_keypoint(s, &es_keypoint, &es_keytag,
+			   &s->edit_state.es_int, es_mat);
+	save_edflag = es_edflag;
+
+	if (!SEDIT_TRAN) {
+	    es_edflag = STRANS;
+	}
+
+	VADD2(es_para, delta, curr_e_axes_pos);
+	inpara = 3;
+	sedit(s);
+	es_edflag = save_edflag;
+    } else {
+	MAT_IDN(xlatemat);
+	MAT_DELTAS_VEC(xlatemat, delta);
+	bn_mat_mul2(xlatemat, modelchanges);
+
+	new_edit_mats(s);
+	update_views = 1;
+	dm_set_dirty(DMP, 1);
+    }
+
+    return TCL_OK;
+}
+
+
+int
 mged_otran(struct mged_state *s, const vect_t tvec)
 {
     vect_t work = VINIT_ZERO;
 
-    if (s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) {
-	/* apply s->s_edit->acc_rot_sol to tvec */
-	MAT4X3PNT(work, s->s_edit->acc_rot_sol, tvec);
+    if (GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) {
+	/* apply acc_rot_sol to tvec */
+	MAT4X3PNT(work, acc_rot_sol, tvec);
     }
 
     return mged_mtran(s, work);
@@ -2831,7 +3710,7 @@ cmd_tra(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
+    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 	mged_variables->mv_transform == 'e') {
 	char coord;
 	vect_t tvec;
@@ -2844,7 +3723,7 @@ cmd_tra(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	return knob_edit_tran(s, coord, tvec);
+	return mged_etran(s, coord, tvec);
     } else {
 	int ret;
 
@@ -2874,34 +3753,34 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	return TCL_OK;
     }
 
-    if (s->global_editing_state == ST_S_EDIT) {
+    if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	int save_edflag;
 
-	struct saved_edflags sf = SAVED_EDFLAGS_INIT;
-	save_edflags(&sf, s);
+	save_edflag = es_edflag;
 
 	if (!SEDIT_SCALE) {
-	    rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_SCALE);
+	    es_edflag = SSCALE;
 	}
 
-	s->s_edit->es_scale = sfactor;
-	old_scale = s->s_edit->acc_sc_sol;
-	s->s_edit->acc_sc_sol *= sfactor;
+	s->edit_state.es_scale = sfactor;
+	old_scale = acc_sc_sol;
+	acc_sc_sol *= sfactor;
 
-	if (s->s_edit->acc_sc_sol < MGED_SMALL_SCALE) {
-	    s->s_edit->acc_sc_sol = old_scale;
-	    restore_edflags(s, &sf);
+	if (acc_sc_sol < MGED_SMALL_SCALE) {
+	    acc_sc_sol = old_scale;
+	    es_edflag = save_edflag;
 	    return TCL_OK;
 	}
 
-	if (s->s_edit->acc_sc_sol >= 1.0) {
-	    s->s_edit->k.sca_abs = (s->s_edit->acc_sc_sol - 1.0) / 3.0;
+	if (acc_sc_sol >= 1.0) {
+	    s->edit_state.edit_absolute_scale = (acc_sc_sol - 1.0) / 3.0;
 	} else {
-	    s->s_edit->k.sca_abs = s->s_edit->acc_sc_sol - 1.0;
+	    s->edit_state.edit_absolute_scale = acc_sc_sol - 1.0;
 	}
 
 	sedit(s);
 
-	restore_edflags(s, &sf);
+	es_edflag = save_edflag;
     } else {
 	point_t temp;
 	point_t pos_model;
@@ -2914,33 +3793,33 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	switch (edobj) {
 	    case BE_O_XSCALE:			    /* local scaling ... X-axis */
 		smat[0] = sfactor;
-		old_scale = s->s_edit->acc_sc[X];
-		s->s_edit->acc_sc[X] *= sfactor;
+		old_scale = acc_sc[X];
+		acc_sc[X] *= sfactor;
 
-		if (s->s_edit->acc_sc[X] < MGED_SMALL_SCALE) {
-		    s->s_edit->acc_sc[X] = old_scale;
+		if (acc_sc[X] < MGED_SMALL_SCALE) {
+		    acc_sc[X] = old_scale;
 		    return TCL_OK;
 		}
 
 		break;
 	    case BE_O_YSCALE:			    /* local scaling ... Y-axis */
 		smat[5] = sfactor;
-		old_scale = s->s_edit->acc_sc[Y];
-		s->s_edit->acc_sc[Y] *= sfactor;
+		old_scale = acc_sc[Y];
+		acc_sc[Y] *= sfactor;
 
-		if (s->s_edit->acc_sc[Y] < MGED_SMALL_SCALE) {
-		    s->s_edit->acc_sc[Y] = old_scale;
+		if (acc_sc[Y] < MGED_SMALL_SCALE) {
+		    acc_sc[Y] = old_scale;
 		    return TCL_OK;
 		}
 
 		break;
 	    case BE_O_ZSCALE:			    /* local scaling ... Z-axis */
 		smat[10] = sfactor;
-		old_scale = s->s_edit->acc_sc[Z];
-		s->s_edit->acc_sc[Z] *= sfactor;
+		old_scale = acc_sc[Z];
+		acc_sc[Z] *= sfactor;
 
-		if (s->s_edit->acc_sc[Z] < MGED_SMALL_SCALE) {
-		    s->s_edit->acc_sc[Z] = old_scale;
+		if (acc_sc[Z] < MGED_SMALL_SCALE) {
+		    acc_sc[Z] = old_scale;
 		    return TCL_OK;
 		}
 
@@ -2948,11 +3827,11 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	    case BE_O_SCALE:			     /* global scaling */
 	    default:
 		smat[15] = inv_sfactor;
-		old_scale = s->s_edit->acc_sc_sol;
-		s->s_edit->acc_sc_sol *= inv_sfactor;
+		old_scale = acc_sc_sol;
+		acc_sc_sol *= inv_sfactor;
 
-		if (s->s_edit->acc_sc_sol < MGED_SMALL_SCALE) {
-		    s->s_edit->acc_sc_sol = old_scale;
+		if (acc_sc_sol < MGED_SMALL_SCALE) {
+		    acc_sc_sol = old_scale;
 		    return TCL_OK;
 		}
 
@@ -2961,22 +3840,10 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 
 	/* Have scaling take place with respect to keypoint,
 	 * NOT the view center.
-	 *
-	 * The changes written to model_changes are what are ultimately used by moveHobj
-	 * or moveHinstance to change the on-disk geometry.  The job of updating what
-	 * is being shown in the MGED window for editing purposes is handled by the
-	 * new_edit_mats call, which updates view_state->vs_model2objview.  dozoom.c
-	 * uses that matrix to modify how solids involved in editing are displayed.
-	 *
-	 * Note that this means wireframes for editing solids in oed mode aren't going
-	 * to be redrawn to reflect their new parameters.  This is expected - it is quite
-	 * possible that the oed-distorted shape of a primitive will not be representable
-	 * using primitive parameters, so regeneration of new wireframes in response to
-	 * the new shape often isn't feasible.
 	 */
-	VMOVE(temp, s->s_edit->e_keypoint);
-	MAT4X3PNT(pos_model, s->s_edit->model_changes, temp);
-	wrt_point(s->s_edit->model_changes, smat, s->s_edit->model_changes, pos_model);
+	VMOVE(temp, es_keypoint);
+	MAT4X3PNT(pos_model, modelchanges, temp);
+	wrt_point(modelchanges, smat, modelchanges, pos_model);
 
 	new_edit_mats(s);
     }
@@ -3025,7 +3892,7 @@ cmd_sca(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) && mged_variables->mv_transform == 'e') {
+    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) && mged_variables->mv_transform == 'e') {
 	fastf_t sf1 = 0.0; /* combined xyz scale or x scale */
 	fastf_t sf2 = 0.0; /* y scale */
 	fastf_t sf3 = 0.0; /* z scale */
@@ -3059,7 +3926,7 @@ cmd_sca(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		return TCL_OK;
 	    }
 
-	    if (s->global_editing_state == ST_O_EDIT) {
+	    if (GEOM_EDIT_STATE == ST_O_EDIT) {
 		save_edobj = edobj;
 		edobj = BE_O_XSCALE;
 

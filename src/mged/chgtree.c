@@ -1,7 +1,7 @@
 /*                       C H G T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -125,7 +125,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	(void)cmd_draw(clientData, interp, 2, av);
     }
 
-    if (s->global_editing_state == ST_VIEW) {
+    if (GEOM_EDIT_STATE == ST_VIEW) {
 	struct bu_vls sed_cmd = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&sed_cmd, "sed %s", argv[2]);
 
@@ -150,8 +150,8 @@ find_solid_with_path(struct mged_state *s, struct db_full_path *pathp)
 
     RT_CK_FULL_PATH(pathp);
 
-    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
-    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
+    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -221,8 +221,8 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
-    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
+    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
@@ -263,10 +263,10 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     illump = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);/* any valid solid would do */
     edobj = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
-    MAT_IDN(s->s_edit->model_changes);	/* No changes yet */
+    MAT_IDN(modelchanges);	/* No changes yet */
     (void)chg_state(s, ST_VIEW, ST_O_PICK, "internal change of state");
     /* reset accumulation local scale factors */
-    s->s_edit->acc_sc[0] = s->s_edit->acc_sc[1] = s->s_edit->acc_sc[2] = 1.0;
+    acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
     new_mats(s);
 
     /* Find the one solid, set s_iflag UP, point illump at it */

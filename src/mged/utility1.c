@@ -1,7 +1,7 @@
 /*                      U T I L I T Y 1 . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2025 United States Government as represented by
+ * Copyright (c) 1990-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -74,6 +74,37 @@ char ctemp[7];
 
 /*
  *
+ * No-frills edit - opens an editor on the supplied
+ * file name.
+ *
+ */
+int
+editit(struct mged_state *s, const char *command, const char *tempfile) {
+    int argc = 5;
+    const char *av[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+    struct bu_vls editstring = BU_VLS_INIT_ZERO;
+
+    CHECK_DBI_NULL;
+
+    if (!get_editor_string(s, &editstring))
+	return TCL_ERROR;
+
+    av[0] = command;
+    av[1] = "-e";
+    av[2] = bu_vls_addr(&editstring);
+    av[3] = "-f";
+    av[4] = tempfile;
+    av[5] = NULL;
+
+    ged_exec(s->gedp, argc, (const char **)av);
+
+    bu_vls_free(&editstring);
+    return TCL_OK;
+}
+
+
+/*
+ *
  * control routine for editing color
  */
 int
@@ -83,14 +114,29 @@ f_edcolor(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, cons
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
+    const char **av;
+    int i;
+    struct bu_vls editstring = BU_VLS_INIT_ZERO;
+
     CHECK_DBI_NULL;
 
-    if (!ged_set_editor(s->gedp, s->classic_mged))
+    if (!get_editor_string(s, &editstring))
 	return TCL_ERROR;
 
-    ged_exec(s->gedp, argc, argv);
+    av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edcolor: av");
+    av[0] = argv[0];
+    av[1] = "-E";
+    av[2] = bu_vls_addr(&editstring);
+    argc += 2;
+    for (i = 3; i < argc; ++i) {
+	av[i] = argv[i-2];
+    }
+    av[argc] = NULL;
 
-    ged_clear_editor(s->gedp);
+    ged_exec(s->gedp, argc, (const char **)av);
+
+    bu_vls_free(&editstring);
+    bu_free((void *)av, "f_edcolor: av");
     return TCL_OK;
 }
 
@@ -105,6 +151,10 @@ f_edcodes(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
+    const char **av;
+    struct bu_vls editstring = BU_VLS_INIT_ZERO;
+    int i;
+
     CHECK_DBI_NULL;
 
     if (argc < 2) {
@@ -112,12 +162,23 @@ f_edcodes(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    if (!ged_set_editor(s->gedp, s->classic_mged))
+    if (!get_editor_string(s, &editstring))
 	return TCL_ERROR;
 
-    ged_exec(s->gedp, argc, argv);
+    av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edcodes: av");
+    av[0] = argv[0];
+    av[1] = "-E";
+    av[2] = bu_vls_addr(&editstring);
+    argc += 2;
+    for (i = 3; i < argc; ++i) {
+	av[i] = argv[i-2];
+    }
+    av[argc] = NULL;
 
-    ged_clear_editor(s->gedp);
+    ged_exec(s->gedp, argc, (const char **)av);
+
+    bu_vls_free(&editstring);
+    bu_free((void *)av, "f_edcodes: av");
     return TCL_OK;
 }
 
@@ -133,6 +194,10 @@ f_edmater(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
+    const char **av;
+    struct bu_vls editstring = BU_VLS_INIT_ZERO;
+    int i;
+
     CHECK_DBI_NULL;
 
     if (argc < 2) {
@@ -140,12 +205,23 @@ f_edmater(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    if (!ged_set_editor(s->gedp, s->classic_mged))
+    if (!get_editor_string(s, &editstring))
 	return TCL_ERROR;
 
-    ged_exec(s->gedp, argc, argv);
+    av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edmater: av");
+    av[0] = (const char *)argv[0];
+    av[1] = "-E";
+    av[2] = bu_vls_addr(&editstring);
+    argc += 2;
+    for (i = 3; i < argc; ++i) {
+	av[i] = (const char *)argv[i-2];
+    }
+    av[argc] = NULL;
 
-    ged_clear_editor(s->gedp);
+    ged_exec(s->gedp, argc + 1, (const char **)av);
+
+    bu_vls_free(&editstring);
+    bu_free((void *)av, "f_edmater: av");
     return TCL_OK;
 }
 
@@ -161,6 +237,9 @@ f_red(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
+    const char **av;
+    struct bu_vls editstring = BU_VLS_INIT_ZERO;
+
     CHECK_DBI_NULL;
 
     if (argc != 2) {
@@ -168,9 +247,16 @@ f_red(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv
 	return TCL_ERROR;
     }
 
-    ged_set_editor(s->gedp, s->classic_mged);
+    get_editor_string(s, &editstring);
 
-    if (ged_exec(s->gedp, argc, argv) & BRLCAD_ERROR) {
+    av = (const char **)bu_calloc(4, sizeof(char *), "f_red: av");
+
+    av[0] = argv[0];
+    av[1] = "-E";
+    av[2] = bu_vls_addr(&editstring);
+    av[3] = argv[1];
+
+    if ( ged_exec(s->gedp, 4, (const char **)av) & BRLCAD_ERROR ) {
 	mged_pr_output(interpreter);
 	Tcl_AppendResult(interpreter, "Error: ", bu_vls_addr(s->gedp->ged_result_str), (char *)NULL);
     } else {
@@ -178,7 +264,8 @@ f_red(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv
 	Tcl_AppendResult(interpreter, bu_vls_addr(s->gedp->ged_result_str), (char *)NULL);
     }
 
-    ged_clear_editor(s->gedp);
+    bu_vls_free(&editstring);
+    bu_free((void *)av, "f_red: av");
     return TCL_OK;
 }
 

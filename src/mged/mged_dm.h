@@ -1,7 +1,7 @@
 /*			M G E D _ D M . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ struct scroll_item {
 #define MGED_DISPLAY_VAR "mged_display"
 
 /* +-2048 to +-1 */
-#define GED2PM1(x) (((fastf_t)(x))*INV_BV)
+#define GED2PM1(x) (((fastf_t)(x))*INV_GED)
 
 #define LAST_SOLID(_sp)       DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
 
@@ -224,6 +224,7 @@ struct _view_state {
     int		vs_flag;
 
     struct bview *vs_gvp;
+    fastf_t	vs_i_Viewscale;
     mat_t	vs_model2objview;
     mat_t	vs_objview2model;
     mat_t	vs_ModelDelta;		/* changes to Viewrot this frame */
@@ -231,6 +232,38 @@ struct _view_state {
     struct view_ring	vs_headView;
     struct view_ring	*vs_current_view;
     struct view_ring	*vs_last_view;
+
+    /* Rate stuff */
+    int		vs_rateflag_model_tran;
+    vect_t	vs_rate_model_tran;
+
+    int		vs_rateflag_model_rotate;
+    vect_t	vs_rate_model_rotate;
+    char	vs_rate_model_origin;
+
+    int		vs_rateflag_tran;
+    vect_t	vs_rate_tran;
+
+    int		vs_rateflag_rotate;
+    vect_t	vs_rate_rotate;
+    char	vs_rate_origin;
+
+    int		vs_rateflag_scale;
+    fastf_t	vs_rate_scale;
+
+    /* Absolute stuff */
+    vect_t	vs_absolute_tran;
+    vect_t	vs_absolute_model_tran;
+    vect_t	vs_last_absolute_tran;
+    vect_t	vs_last_absolute_model_tran;
+    vect_t	vs_absolute_rotate;
+    vect_t	vs_absolute_model_rotate;
+    vect_t	vs_last_absolute_rotate;
+    vect_t	vs_last_absolute_model_rotate;
+    fastf_t	vs_absolute_scale;
+
+    /* Virtual trackball stuff */
+    point_t	vs_orig_pos;
 };
 
 
@@ -521,6 +554,7 @@ extern void set_curr_dm(struct mged_state *s, struct mged_dm *nl);
 
 extern double frametime;		/* defined in mged.c */
 extern int dm_pipe[];			/* defined in mged.c */
+extern int update_views;		/* defined in mged.c */
 extern struct bu_ptbl active_dm_set;	/* defined in attach.c */
 extern struct mged_dm *mged_dm_init_state;
 

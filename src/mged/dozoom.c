@@ -1,7 +1,7 @@
 /*                        D O Z O O M . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,8 @@
 #include "./mged_dm.h"
 
 mat_t perspective_mat;
+mat_t incr_change;
+mat_t modelchanges;
 mat_t identity;
 
 
@@ -135,7 +137,7 @@ dozoom(struct mged_state *s, int which_eye)
     if (dm_get_transparency(DMP)) {
 	/* First, draw opaque stuff */
 
-	ndrawn = dm_draw_head_dl(DMP, (struct bu_list *)ged_dl(s->gedp), 1.0, inv_viewsize,
+	ndrawn = dm_draw_head_dl(DMP, s->gedp->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 1, mged_variables->mv_dlist);
 
@@ -149,7 +151,7 @@ dozoom(struct mged_state *s, int which_eye)
 
 	/* Second, draw transparent stuff */
 
-	ndrawn = dm_draw_head_dl(DMP, (struct bu_list *)ged_dl(s->gedp), 0.0, inv_viewsize,
+	ndrawn = dm_draw_head_dl(DMP, s->gedp->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 0, mged_variables->mv_dlist);
 
@@ -158,7 +160,7 @@ dozoom(struct mged_state *s, int which_eye)
 
     } else {
 
-	ndrawn = dm_draw_head_dl(DMP, (struct bu_list *)ged_dl(s->gedp), 1.0, inv_viewsize,
+	ndrawn = dm_draw_head_dl(DMP, s->gedp->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 1, mged_variables->mv_dlist);
 
@@ -183,7 +185,7 @@ dozoom(struct mged_state *s, int which_eye)
      * Draw all solids involved in editing.
      * They may be getting transformed away from the other solids.
      */
-    if (s->global_editing_state == ST_VIEW)
+    if (GEOM_EDIT_STATE == ST_VIEW)
 	return;
 
     if (view_state->vs_gvp->gv_perspective <= 0) {
@@ -193,14 +195,14 @@ dozoom(struct mged_state *s, int which_eye)
 	mat = newmat;
     }
     dm_loadmatrix(DMP, mat, which_eye);
-    inv_viewsize /= s->s_edit->model_changes[15];
+    inv_viewsize /= modelchanges[15];
     dm_set_fg(DMP,
 		   color_scheme->cs_geo_hl[0],
 		   color_scheme->cs_geo_hl[1],
 		   color_scheme->cs_geo_hl[2], 1, 1.0);
 
 
-    ndrawn = dm_draw_head_dl(DMP, (struct bu_list *)ged_dl(s->gedp), 1.0, inv_viewsize,
+    ndrawn = dm_draw_head_dl(DMP, s->gedp->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
 	    r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 1,
 	    geometry_default_color, 0, mged_variables->mv_dlist);
 

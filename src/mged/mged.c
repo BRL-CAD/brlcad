@@ -1,7 +1,7 @@
 /*                           M G E D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2025 United States Government as represented by
+ * Copyright (c) 1993-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -103,27 +103,21 @@ extern struct bu_vls *history_prev(const char *);
 extern struct bu_vls *history_cur(const char *);
 extern struct bu_vls *history_next(const char *);
 
-/* Ew. Global. */
 /* defined in dozoom.c */
 extern unsigned char geometry_default_color[];
 
-/* Ew. Global. */
 /* defined in set.c */
 extern struct _mged_variables default_mged_variables;
 
-/* Ew. Global. */
 /* defined in color_scheme.c */
 extern struct _color_scheme default_color_scheme;
 
-/* Ew. Global. */
 /* defined in grid.c */
 extern struct bv_grid_state default_grid_state;
 
-/* Ew. Global. */
 /* defined in axes.c */
 extern struct _axes_state default_axes_state;
 
-/* Ew. Global. */
 /* defined in rect.c */
 extern struct _rubber_band default_rubber_band;
 
@@ -132,7 +126,6 @@ extern struct _rubber_band default_rubber_band;
  * when we're done (which is needed so atexit() calls to bu_log() will
  * still work).
  */
-/* Ew. Global. */
 static int stdfd[2] = {1, 2};
 
 /* Container for passing I/O data through Tcl callbacks */
@@ -144,21 +137,22 @@ struct stdio_data {
 
 struct mged_state *MGED_STATE = NULL;
 
+/* called by numerous functions to indicate truthfully whether the
+ * views need to be redrawn.
+ */
+int update_views = 0;
+
 jmp_buf jmp_env;	/* For non-local gotos */
-/* Ew. Global. */
 double frametime;	/* time needed to draw last frame */
 
-/* Ew. Global. */
 struct rt_wdb rtg_headwdb;  /* head of database object list */
 
 void (*cur_sigint)(int);	/* Current SIGINT status */
 
-/* Ew. Global. */
 int cbreak_mode = 0;    /* >0 means in cbreak_mode */
 
 
 /* The old mged gui is temporarily the default. */
-/* Ew. Global. */
 int old_mged_gui=1;
 
 static int
@@ -313,7 +307,7 @@ new_edit_mats(struct mged_state *s)
 	    continue;
 
 	set_curr_dm(s, p);
-	bn_mat_mul(view_state->vs_model2objview, view_state->vs_gvp->gv_model2view, s->s_edit->model_changes);
+	bn_mat_mul(view_state->vs_model2objview, view_state->vs_gvp->gv_model2view, modelchanges);
 	bn_mat_inv(view_state->vs_objview2model, view_state->vs_model2objview);
 	view_state->vs_flag = 1;
     }
@@ -332,8 +326,8 @@ mged_view_callback(struct bview *gvp,
     if (!gvp)
 	return;
 
-    if (s->global_editing_state != ST_VIEW) {
-	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, s->s_edit->model_changes);
+    if (GEOM_EDIT_STATE != ST_VIEW) {
+	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, modelchanges);
 	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
     }
     vsp->vs_flag = 1;
@@ -983,9 +977,10 @@ int
 event_check(struct mged_state *s, int non_blocking)
 {
     struct mged_dm *save_dm_list;
-    struct saved_edflags sf = SAVED_EDFLAGS_INIT;
+    int save_edflag;
 
     /* Let cool Tk event handler do most of the work */
+
     if (non_blocking) {
 
 	/* When in non_blocking-mode, we want to deal with as many
@@ -1013,173 +1008,197 @@ event_check(struct mged_state *s, int non_blocking)
      * Handle rate-based processing *
      *********************************/
     save_dm_list = s->mged_curr_dm;
-    if (s->s_edit->k.rot_m_flag) {
+    if (s->edit_state.edit_rateflag_model_rotate) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	set_curr_dm(s, s->s_edit->k.rot_m_udata);
-	save_coords = view_state->vs_gvp->gv_coord;
-	view_state->vs_gvp->gv_coord = 'm';
+	set_curr_dm(s, s->edit_state.edit_rate_mr_dm);
+	save_coords = mged_variables->mv_coords;
+	mged_variables->mv_coords = 'm';
 
-	save_edflags(&sf, s);
-	if (s->global_editing_state == ST_S_EDIT) {
+	if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	    save_edflag = es_edflag;
 	    if (!SEDIT_ROTATE)
-		rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_ROT);
+		es_edflag = SROT;
 	} else {
+	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
 	}
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		      s->s_edit->k.origin_m,
-		      s->s_edit->k.rot_m[X],
-		      s->s_edit->k.rot_m[Y],
-		      s->s_edit->k.rot_m[Z]);
+		      s->edit_state.edit_rate_model_origin,
+		      s->edit_state.edit_rate_model_rotate[X],
+		      s->edit_state.edit_rate_model_rotate[Y],
+		      s->edit_state.edit_rate_model_rotate[Z]);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	view_state->vs_gvp->gv_coord = save_coords;
+	mged_variables->mv_coords = save_coords;
 
-	restore_edflags(s, &sf);
+	if (GEOM_EDIT_STATE == ST_S_EDIT)
+	    es_edflag = save_edflag;
+	else
+	    edobj = save_edflag;
     }
-    if (s->s_edit->k.rot_o_flag) {
+    if (s->edit_state.edit_rateflag_object_rotate) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	set_curr_dm(s, s->s_edit->k.rot_o_udata);
-	save_coords = view_state->vs_gvp->gv_coord;
-	view_state->vs_gvp->gv_coord = 'o';
+	set_curr_dm(s, s->edit_state.edit_rate_or_dm);
+	save_coords = mged_variables->mv_coords;
+	mged_variables->mv_coords = 'o';
 
-	save_edflags(&sf, s);
-	if (s->global_editing_state == ST_S_EDIT) {
+	if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	    save_edflag = es_edflag;
 	    if (!SEDIT_ROTATE)
-		rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_ROT);
+		es_edflag = SROT;
 	} else {
+	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
 	}
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		      s->s_edit->k.origin_o,
-		      s->s_edit->k.rot_o[X],
-		      s->s_edit->k.rot_o[Y],
-		      s->s_edit->k.rot_o[Z]);
+		      s->edit_state.edit_rate_object_origin,
+		      s->edit_state.edit_rate_object_rotate[X],
+		      s->edit_state.edit_rate_object_rotate[Y],
+		      s->edit_state.edit_rate_object_rotate[Z]);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	view_state->vs_gvp->gv_coord = save_coords;
+	mged_variables->mv_coords = save_coords;
 
-	restore_edflags(s, &sf);
+	if (GEOM_EDIT_STATE == ST_S_EDIT)
+	    es_edflag = save_edflag;
+	else
+	    edobj = save_edflag;
     }
-    if (s->s_edit->k.rot_v_flag) {
+    if (s->edit_state.edit_rateflag_view_rotate) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	set_curr_dm(s, s->s_edit->k.rot_v_udata);
-	save_coords = view_state->vs_gvp->gv_coord;
-	view_state->vs_gvp->gv_coord = 'v';
+	set_curr_dm(s, s->edit_state.edit_rate_vr_dm);
+	save_coords = mged_variables->mv_coords;
+	mged_variables->mv_coords = 'v';
 
-	save_edflags(&sf, s);
-	if (s->global_editing_state == ST_S_EDIT) {
+	if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	    save_edflag = es_edflag;
 	    if (!SEDIT_ROTATE)
-		rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_ROT);
+		es_edflag = SROT;
 	} else {
+	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
 	}
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		      s->s_edit->k.origin_v,
-		      s->s_edit->k.rot_v[X],
-		      s->s_edit->k.rot_v[Y],
-		      s->s_edit->k.rot_v[Z]);
+		      s->edit_state.edit_rate_view_origin,
+		      s->edit_state.edit_rate_view_rotate[X],
+		      s->edit_state.edit_rate_view_rotate[Y],
+		      s->edit_state.edit_rate_view_rotate[Z]);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	view_state->vs_gvp->gv_coord = save_coords;
+	mged_variables->mv_coords = save_coords;
 
-	restore_edflags(s, &sf);
+	if (GEOM_EDIT_STATE == ST_S_EDIT)
+	    es_edflag = save_edflag;
+	else
+	    edobj = save_edflag;
     }
-    if (s->s_edit->k.tra_m_flag) {
+    if (s->edit_state.edit_rateflag_model_tran) {
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	set_curr_dm(s, s->s_edit->k.tra_m_udata);
-	save_coords = view_state->vs_gvp->gv_coord;
-	view_state->vs_gvp->gv_coord = 'm';
+	set_curr_dm(s, s->edit_state.edit_rate_mt_dm);
+	save_coords = mged_variables->mv_coords;
+	mged_variables->mv_coords = 'm';
 
-	save_edflags(&sf, s);
-	if (s->global_editing_state == ST_S_EDIT) {
+	if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	    save_edflag = es_edflag;
 	    if (!SEDIT_TRAN)
-		rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_TRANS);
+		es_edflag = STRANS;
 	} else {
+	    save_edflag = edobj;
 	    edobj = BE_O_XY;
 	}
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		      s->s_edit->k.tra_m[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      s->s_edit->k.tra_m[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      s->s_edit->k.tra_m[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+		      s->edit_state.edit_rate_model_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      s->edit_state.edit_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      s->edit_state.edit_rate_model_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	view_state->vs_gvp->gv_coord = save_coords;
+	mged_variables->mv_coords = save_coords;
 
-	restore_edflags(s, &sf);
+	if (GEOM_EDIT_STATE == ST_S_EDIT)
+	    es_edflag = save_edflag;
+	else
+	    edobj = save_edflag;
     }
-    if (s->s_edit->k.tra_v_flag) {
+    if (s->edit_state.edit_rateflag_view_tran) {
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	set_curr_dm(s, s->s_edit->k.tra_v_udata);
-	save_coords = view_state->vs_gvp->gv_coord;
-	view_state->vs_gvp->gv_coord = 'v';
+	set_curr_dm(s, s->edit_state.edit_rate_vt_dm);
+	save_coords = mged_variables->mv_coords;
+	mged_variables->mv_coords = 'v';
 
-	save_edflags(&sf, s);
-	if (s->global_editing_state == ST_S_EDIT) {
+	if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	    save_edflag = es_edflag;
 	    if (!SEDIT_TRAN)
-		rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_TRANS);
+		es_edflag = STRANS;
 	} else {
+	    save_edflag = edobj;
 	    edobj = BE_O_XY;
 	}
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		      s->s_edit->k.tra_v[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      s->s_edit->k.tra_v[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      s->s_edit->k.tra_v[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+		      s->edit_state.edit_rate_view_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      s->edit_state.edit_rate_view_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      s->edit_state.edit_rate_view_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	view_state->vs_gvp->gv_coord = save_coords;
+	mged_variables->mv_coords = save_coords;
 
-	restore_edflags(s, &sf);
+	if (GEOM_EDIT_STATE == ST_S_EDIT)
+	    es_edflag = save_edflag;
+	else
+	    edobj = save_edflag;
     }
-    if (s->s_edit->k.sca_flag) {
+    if (s->edit_state.edit_rateflag_scale) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	save_edflags(&sf, s);
-	if (s->global_editing_state == ST_S_EDIT) {
+	if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	    save_edflag = es_edflag;
 	    if (!SEDIT_SCALE)
-		rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_SCALE);
+		es_edflag = SSCALE;
 	} else {
+	    save_edflag = edobj;
 	    if (!OEDIT_SCALE)
 		edobj = BE_O_SCALE;
 	}
 
 	non_blocking++;
-	bu_vls_printf(&vls, "knob -i -e aS %f\n", s->s_edit->k.sca * 0.01);
+	bu_vls_printf(&vls, "knob -i -e aS %f\n", s->edit_state.edit_rate_scale * 0.01);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	restore_edflags(s, &sf);
+	if (GEOM_EDIT_STATE == ST_S_EDIT)
+	    es_edflag = save_edflag;
+	else
+	    edobj = save_edflag;
     }
 
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
@@ -1189,65 +1208,62 @@ event_check(struct mged_state *s, int non_blocking)
 
 	set_curr_dm(s, p);
 
-	if (!view_state->vs_gvp)
-	   continue;
-
-	if (view_state->vs_gvp->k.rot_m_flag) {
+	if (view_state->vs_rateflag_model_rotate) {
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
 	    bu_vls_printf(&vls, "knob -o %c -i -m ax %f ay %f az %f\n",
-			  view_state->vs_gvp->k.origin_m,
-			  view_state->vs_gvp->k.rot_m[X],
-			  view_state->vs_gvp->k.rot_m[Y],
-			  view_state->vs_gvp->k.rot_m[Z]);
+			  view_state->vs_rate_model_origin,
+			  view_state->vs_rate_model_rotate[X],
+			  view_state->vs_rate_model_rotate[Y],
+			  view_state->vs_rate_model_rotate[Z]);
 
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
-	if (view_state->vs_gvp->k.tra_m_flag) {
+	if (view_state->vs_rateflag_model_tran) {
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
 	    bu_vls_printf(&vls, "knob -i -m aX %f aY %f aZ %f\n",
-			  view_state->vs_gvp->k.tra_m[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-			  view_state->vs_gvp->k.tra_m[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-			  view_state->vs_gvp->k.tra_m[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+			  view_state->vs_rate_model_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  view_state->vs_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  view_state->vs_rate_model_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
-	if (view_state->vs_gvp->k.rot_v_flag) {
+	if (view_state->vs_rateflag_rotate) {
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
 	    bu_vls_printf(&vls, "knob -o %c -i -v ax %f ay %f az %f\n",
-			  view_state->vs_gvp->k.origin_v,
-			  view_state->vs_gvp->k.rot_v[X],
-			  view_state->vs_gvp->k.rot_v[Y],
-			  view_state->vs_gvp->k.rot_v[Z]);
+			  view_state->vs_rate_origin,
+			  view_state->vs_rate_rotate[X],
+			  view_state->vs_rate_rotate[Y],
+			  view_state->vs_rate_rotate[Z]);
 
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
-	if (view_state->vs_gvp->k.tra_v_flag) {
+	if (view_state->vs_rateflag_tran) {
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
 	    bu_vls_printf(&vls, "knob -i -v aX %f aY %f aZ %f",
-			  view_state->vs_gvp->k.tra_v[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-			  view_state->vs_gvp->k.tra_v[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-			  view_state->vs_gvp->k.tra_v[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+			  view_state->vs_rate_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  view_state->vs_rate_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  view_state->vs_rate_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
-	if (view_state->vs_gvp->k.sca_flag) {
+	if (view_state->vs_rateflag_scale) {
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
 	    bu_vls_printf(&vls, "zoom %f",
-			  1.0 / (1.0 - (view_state->vs_gvp->k.sca / 10.0)));
+			  1.0 / (1.0 - (view_state->vs_rate_scale / 10.0)));
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
@@ -1492,7 +1508,7 @@ refresh(struct mged_state *s)
 	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (!p->dm_view_state)
 	    continue;
-	if (s->update_views || p->dm_view_state->vs_flag)
+	if (update_views || p->dm_view_state->vs_flag)
 	    p->dm_dirty = 1;
     }
 
@@ -1507,7 +1523,7 @@ refresh(struct mged_state *s)
 	p->dm_view_state->vs_flag = 0;
     }
 
-    s->update_views = 0;
+    update_views = 0;
 
     save_dm_list = s->mged_curr_dm;
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
@@ -1617,7 +1633,7 @@ refresh(struct mged_state *s)
 			    draw_m_axes(s);
 
 			if (axes_state->ax_edit_draw &&
-				(s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT))
+				(GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT))
 			    draw_e_axes(s);
 
 			/* Display titles, etc., if desired */
@@ -1755,8 +1771,6 @@ mged_finish(struct mged_state *s, int exitcode)
     bu_vls_free(&s->input_str_prefix);
     bu_vls_free(&s->scratchline);
     bu_vls_free(&s-> mged_prompt);
-    rt_edit_destroy(s->s_edit);
-    s->s_edit = NULL; // sanity
     BU_PUT(s, struct mged_state);
     MGED_STATE = NULL; // sanity
 
@@ -1810,7 +1824,6 @@ main(int argc, char *argv[])
     struct mged_state *s = MGED_STATE;
     s->magic = MGED_STATE_MAGIC;
     s->classic_mged = 1;
-    s->update_views = 0;
     s->interactive = 0; /* >0 means interactive, intentionally starts
                          * 0 to know when interactive, e.g., via -C
                          * option
@@ -1820,7 +1833,6 @@ main(int argc, char *argv[])
     bu_vls_init(&s->scratchline);
     bu_vls_init(&s->mged_prompt);
     s->dpy_string = NULL;
-    s->s_edit = rt_edit_create(NULL, NULL, NULL, NULL);
 
     /* Set up linked lists */
     s->vlfree = &rt_vlfree;
@@ -2060,10 +2072,13 @@ main(int argc, char *argv[])
     owner = 1;
     frametime = 1;
 
-    s->global_editing_state = ST_VIEW;
-    rt_edit_set_edflag(s->s_edit, RT_EDIT_DEFAULT);
-    s->es_edclass = EDIT_CLASS_NULL;
-    s->s_edit->e_inpara = newedge = 0;
+    MAT_IDN(modelchanges);
+    MAT_IDN(acc_rot_sol);
+
+    GEOM_EDIT_STATE = ST_VIEW;
+    es_edflag = -1;
+    es_edclass = EDIT_CLASS_NULL;
+    inpara = newedge = 0;
 
     /* These values match old GED.  Use 'tol' command to change them. */
     s->tol.tol.magic = BN_TOL_MAGIC;
@@ -2074,7 +2089,7 @@ main(int argc, char *argv[])
 
     rt_prep_timer();		/* Initialize timer */
 
-    rt_edit_set_edflag(s->s_edit, RT_EDIT_DEFAULT);		/* no solid editing just now */
+    es_edflag = -1;		/* no solid editing just now */
 
     /* prepare mged, adjust our path, get set up to use Tcl */
 
@@ -2178,7 +2193,7 @@ main(int argc, char *argv[])
 
     if (s->dbip != DBI_NULL) {
 	setview(s, 0.0, 0.0, 0.0);
-	ged_dl_notify_func_set(s->gedp, mged_notify);
+	s->gedp->ged_gdp->gd_rtCmdNotify = mged_notify;
     }
 
     /* --- Now safe to process commands. --- */

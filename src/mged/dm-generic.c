@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2025 United States Government as represented by
+ * Copyright (c) 2004-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,6 +47,10 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 #include "./menu.h"
+
+
+extern point_t e_axes_pos;
+extern point_t curr_e_axes_pos;
 
 int
 common_dm(struct mged_state *s, int argc, const char *argv[])
@@ -112,8 +116,8 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
 	fx = dm_Xx2Normal(DMP, atoi(argv[1]));
 	fy = dm_Xy2Normal(DMP, atoi(argv[2]), 0);
-	x = fx * BV_MAX;
-	y = fy * BV_MAX;
+	x = fx * GED_MAX;
+	y = fy * GED_MAX;
 
 	if (mged_variables->mv_faceplate &&
 	    mged_variables->mv_orig_gui) {
@@ -132,7 +136,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
 	mged_variables->mv_orig_gui = 0;
 	fy = dm_Xy2Normal(DMP, atoi(argv[2]), 1);
-	y = fy * BV_MAX;
+	y = fy * GED_MAX;
 
     end:
 	if (mged_variables->mv_mouse_behavior == 'q' && !stolen) {
@@ -150,10 +154,10 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 	    if (dm_get_zclip(DMP))
-		bu_vls_printf(&vls, "nirt -c %lf %lf %lf",
+		bu_vls_printf(&vls, "qray_nirt %lf %lf %lf",
 			      model_pt[X], model_pt[Y], model_pt[Z]);
 	    else
-		bu_vls_printf(&vls, "nirt %lf %lf %lf",
+		bu_vls_printf(&vls, "qray_nirt -b %lf %lf %lf",
 			      model_pt[X], model_pt[Y], model_pt[Z]);
 	} else if ((mged_variables->mv_mouse_behavior == 'p' ||
 		    mged_variables->mv_mouse_behavior == 'r' ||
@@ -201,7 +205,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    point_t model_pt;
 
 	    snap_to_grid(s, &fx, &fy);
-	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
+	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
@@ -213,15 +217,15 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    point_t model_pt;
 
 	    snap_to_grid(s, &fx, &fy);
-	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
+	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 	    bu_vls_printf(&vls, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 	} else if (grid_state->snap && !stolen &&
-		   s->global_editing_state != ST_S_PICK && s->global_editing_state != ST_O_PICK &&
-		   s->global_editing_state != ST_O_PATH && !SEDIT_PICK && !EDIT_SCALE) {
+		   GEOM_EDIT_STATE != ST_S_PICK && GEOM_EDIT_STATE != ST_O_PICK &&
+		   GEOM_EDIT_STATE != ST_O_PATH && !SEDIT_PICK && !EDIT_SCALE) {
 	    point_t view_pt;
 	    point_t model_pt;
 	    point_t vcenter;
@@ -262,34 +266,38 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		am_mode = AMM_TRAN;
 
 		if (grid_state->snap) {
+		    int save_edflag;
 
-		    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
+		    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 			mged_variables->mv_transform == 'e') {
-			struct saved_edflags sf = SAVED_EDFLAGS_INIT;
-			save_edflags(&sf, s);
-			if (s->global_editing_state == ST_S_EDIT) {
+			if (GEOM_EDIT_STATE == ST_S_EDIT) {
+			    save_edflag = es_edflag;
 			    if (!SEDIT_TRAN)
-				rt_edit_set_edflag(s->s_edit, RT_PARAMS_EDIT_TRANS);
+				es_edflag = STRANS;
 			} else {
+			    save_edflag = edobj;
 			    edobj = BE_O_XY;
 			}
 
 			snap_keypoint_to_grid(s);
 
-			restore_edflags(s, &sf);
+			if (GEOM_EDIT_STATE == ST_S_EDIT)
+			    es_edflag = save_edflag;
+			else
+			    edobj = save_edflag;
 		    } else
 			snap_view_center_to_grid(s);
 		}
 
 		break;
 	    case 's':
-		if (s->global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-		    ZERO(s->s_edit->acc_sc_sol))
-		    s->s_edit->acc_sc_sol = 1.0;
-		else if (s->global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-		    s->s_edit->k.sca_abs = s->s_edit->acc_sc_obj - 1.0;
-		    if (s->s_edit->k.sca_abs > 0.0)
-			s->s_edit->k.sca_abs /= 3.0;
+		if (GEOM_EDIT_STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
+		    ZERO(acc_sc_sol))
+		    acc_sc_sol = 1.0;
+		else if (GEOM_EDIT_STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
+		    s->edit_state.edit_absolute_scale = acc_sc_obj - 1.0;
+		    if (s->edit_state.edit_absolute_scale > 0.0)
+			s->edit_state.edit_absolute_scale /= 3.0;
 		}
 
 		am_mode = AMM_SCALE;
@@ -318,8 +326,8 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
 	switch (*argv[1]) {
 	    case '1':
-		fx = dm_Xx2Normal(DMP, dm_omx) * BV_MAX - adc_state->adc_dv_x;
-		fy = dm_Xy2Normal(DMP, dm_omy, 1) * BV_MAX - adc_state->adc_dv_y;
+		fx = dm_Xx2Normal(DMP, dm_omx) * GED_MAX - adc_state->adc_dv_x;
+		fy = dm_Xy2Normal(DMP, dm_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
 		bu_vls_printf(&vls, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(s->interp, bu_vls_addr(&vls));
@@ -328,8 +336,8 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		am_mode = AMM_ADC_ANG1;
 		break;
 	    case '2':
-		fx = dm_Xx2Normal(DMP, dm_omx) * BV_MAX - adc_state->adc_dv_x;
-		fy = dm_Xy2Normal(DMP, dm_omy, 1) * BV_MAX - adc_state->adc_dv_y;
+		fx = dm_Xx2Normal(DMP, dm_omx) * GED_MAX - adc_state->adc_dv_x;
+		fy = dm_Xy2Normal(DMP, dm_omy, 1) * GED_MAX - adc_state->adc_dv_y;
 
 		bu_vls_printf(&vls, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
 		Tcl_Eval(s->interp, bu_vls_addr(&vls));
@@ -359,10 +367,10 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 
 		break;
 	    case 'd':
-		fx = (dm_Xx2Normal(DMP, dm_omx) * BV_MAX -
-		      adc_state->adc_dv_x) * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local * INV_BV;
-		fy = (dm_Xy2Normal(DMP, dm_omy, 1) * BV_MAX -
-		      adc_state->adc_dv_y) * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local * INV_BV;
+		fx = (dm_Xx2Normal(DMP, dm_omx) * GED_MAX -
+		      adc_state->adc_dv_x) * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local * INV_GED;
+		fy = (dm_Xy2Normal(DMP, dm_omy, 1) * GED_MAX -
+		      adc_state->adc_dv_y) * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local * INV_GED;
 
 		td = sqrt(fx * fx + fy * fy);
 
@@ -452,37 +460,37 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    case 's':
 		switch (*argv[2]) {
 		    case 'x':
-			if (s->global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    ZERO(s->s_edit->acc_sc_sol))
-			    s->s_edit->acc_sc_sol = 1.0;
-			else if (s->global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->s_edit->k.sca_abs = s->s_edit->acc_sc[0] - 1.0;
-			    if (s->s_edit->k.sca_abs > 0.0)
-				s->s_edit->k.sca_abs /= 3.0;
+			if (GEOM_EDIT_STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
+			    ZERO(acc_sc_sol))
+			    acc_sc_sol = 1.0;
+			else if (GEOM_EDIT_STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
+			    s->edit_state.edit_absolute_scale = acc_sc[0] - 1.0;
+			    if (s->edit_state.edit_absolute_scale > 0.0)
+				s->edit_state.edit_absolute_scale /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_X;
 			break;
 		    case 'y':
-			if (s->global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    ZERO(s->s_edit->acc_sc_sol))
-			    s->s_edit->acc_sc_sol = 1.0;
-			else if (s->global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->s_edit->k.sca_abs = s->s_edit->acc_sc[1] - 1.0;
-			    if (s->s_edit->k.sca_abs > 0.0)
-				s->s_edit->k.sca_abs /= 3.0;
+			if (GEOM_EDIT_STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
+			    ZERO(acc_sc_sol))
+			    acc_sc_sol = 1.0;
+			else if (GEOM_EDIT_STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
+			    s->edit_state.edit_absolute_scale = acc_sc[1] - 1.0;
+			    if (s->edit_state.edit_absolute_scale > 0.0)
+				s->edit_state.edit_absolute_scale /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_Y;
 			break;
 		    case 'z':
-			if (s->global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    ZERO(s->s_edit->acc_sc_sol))
-			    s->s_edit->acc_sc_sol = 1.0;
-			else if (s->global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->s_edit->k.sca_abs = s->s_edit->acc_sc[2] - 1.0;
-			    if (s->s_edit->k.sca_abs > 0.0)
-				s->s_edit->k.sca_abs /= 3.0;
+			if (GEOM_EDIT_STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
+			    ZERO(acc_sc_sol))
+			    acc_sc_sol = 1.0;
+			else if (GEOM_EDIT_STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
+			    s->edit_state.edit_absolute_scale = acc_sc[2] - 1.0;
+			    if (s->edit_state.edit_absolute_scale > 0.0)
+				s->edit_state.edit_absolute_scale /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_Z;

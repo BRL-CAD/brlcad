@@ -1,7 +1,7 @@
 /*                          R T I F . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2025 United States Government as represented by
+ * Copyright (c) 1988-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -214,8 +214,8 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		break;
 	    }
 
-	    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
-	    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
+	    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
+	    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
 		next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 		for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {

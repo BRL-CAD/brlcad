@@ -1,7 +1,7 @@
 /*                        A T T A C H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,8 +51,6 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-/* Ew. Globals. */
-
 /* Geometry display instances used by MGED */
 struct bu_ptbl active_dm_set = BU_PTBL_INIT_ZERO;  /* set of active display managers */
 struct mged_dm *mged_dm_init_state = NULL;
@@ -62,7 +60,7 @@ extern struct _color_scheme default_color_scheme;
 extern void share_dlist(struct mged_dm *dlp2);	/* defined in share.c */
 int mged_default_dlist = 0;   /* This variable is available via Tcl for controlling use of display lists */
 
-static fastf_t windowbounds[6] = { (int)BV_MIN, (int)BV_MAX, (int)BV_MIN, (int)BV_MAX, (int)BV_MIN, (int)BV_MAX };
+static fastf_t windowbounds[6] = { (int)GED_MIN, (int)GED_MAX, (int)GED_MIN, (int)GED_MAX, (int)GED_MIN, (int)GED_MAX };
 
 /* If we changed the active dm, need to update GEDP as well.. */
 void set_curr_dm(struct mged_state *s, struct mged_dm *nc)
@@ -506,7 +504,7 @@ mged_attach(struct mged_state *s, const char *wp_name, int argc, const char *arg
     share_dlist(s->mged_curr_dm);
 
     if (dm_get_displaylist(DMP) && mged_variables->mv_dlist && !dlist_state->dl_active) {
-	createDLists(s, (struct bu_list *)ged_dl(s->gedp));
+	createDLists(s, s->gedp->ged_gdp->gd_headDisplay);
 	dlist_state->dl_active = 1;
     }
 

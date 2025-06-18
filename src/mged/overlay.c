@@ -1,7 +1,7 @@
 /*                       O V E R L A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2025 United States Government as represented by
+ * Copyright (c) 1988-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ cmd_overlay(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     if (ret != BRLCAD_OK)
 	return TCL_ERROR;
 
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
 
     return ret;

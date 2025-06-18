@@ -1,7 +1,7 @@
 /*                         S E T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2025 United States Government as represented by
+ * Copyright (c) 1985-2024 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,7 +54,6 @@ extern int mged_post_opendb_clbk(int ac, const char **av, void *gedp, void *ctx)
 extern int mged_pre_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
 extern int mged_post_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
 
-/* Ew. Global. */
 extern Tk_Window tkwin; /* in cmd.c */
 
 extern void init_qray(void);
@@ -526,13 +525,13 @@ mged_setup(struct mged_state *s)
     s->gedp->ged_create_io_handler = &tclcad_create_io_handler;
     s->gedp->ged_delete_io_handler = &tclcad_delete_io_handler;
 
-    ged_clbk_set(s->gedp, "opendb", BU_CLBK_PRE, &mged_pre_opendb_clbk, (void *)&mged_global_db_ctx);
-    ged_clbk_set(s->gedp, "opendb", BU_CLBK_POST, &mged_post_opendb_clbk, (void *)&mged_global_db_ctx);
-    ged_clbk_set(s->gedp, "closedb", BU_CLBK_PRE, &mged_pre_closedb_clbk, (void *)&mged_global_db_ctx);
-    ged_clbk_set(s->gedp, "closedb", BU_CLBK_POST, &mged_post_closedb_clbk, (void *)&mged_global_db_ctx);
+    ged_clbk_set(s->gedp, "opendb", GED_CLBK_PRE, &mged_pre_opendb_clbk, (void *)&mged_global_db_ctx);
+    ged_clbk_set(s->gedp, "opendb", GED_CLBK_POST, &mged_post_opendb_clbk, (void *)&mged_global_db_ctx);
+    ged_clbk_set(s->gedp, "closedb", GED_CLBK_PRE, &mged_pre_closedb_clbk, (void *)&mged_global_db_ctx);
+    ged_clbk_set(s->gedp, "closedb", GED_CLBK_POST, &mged_post_closedb_clbk, (void *)&mged_global_db_ctx);
 
     // Register during-execution callback function for search command
-    ged_clbk_set(s->gedp, "search", BU_CLBK_DURING, &mged_db_search_callback, (void *)s);
+    ged_clbk_set(s->gedp, "search", GED_CLBK_DURING, &mged_db_search_callback, (void *)s->interp);
 
     struct tclcad_io_data *t_iod = tclcad_create_io_data();
     t_iod->io_mode = TCL_READABLE;
@@ -558,7 +557,7 @@ mged_setup(struct mged_state *s)
 
     view_state->vs_gvp->gv_callback = mged_view_callback;
     view_state->vs_gvp->gv_clientData = (void *)view_state;
-    MAT_DELTAS_GET_NEG(view_state->vs_gvp->orig_pos, view_state->vs_gvp->gv_center);
+    MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_gvp->gv_center);
 
     view_state->vs_gvp->vset = &s->gedp->ged_views;
 
@@ -575,7 +574,7 @@ mged_setup(struct mged_state *s)
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);
-    Tcl_SetVar(s->interp, bu_vls_addr(&str), state_str[s->global_editing_state], TCL_GLOBAL_ONLY);
+    Tcl_SetVar(s->interp, bu_vls_addr(&str), state_str[GEOM_EDIT_STATE], TCL_GLOBAL_ONLY);
 
     /* Set defaults for view status variables */
     bu_vls_trunc(&str, 0);
