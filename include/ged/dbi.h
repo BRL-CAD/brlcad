@@ -216,6 +216,52 @@ class GED_EXPORT GObj {
 	void GenCombInstances();
 };
 
+// Ther are a variety of settings which can potentially be overridden by
+// command line arguments when drawing.  Provide a container to hold such
+// arguments, as well as flags (where appropriate) to indicate that a
+// non-default value has been set - in other words, the value should override
+// one calculated from path data.
+class GED_EXPORT DbiPath_Settings {
+    public:
+
+	DbiPath_Settings();
+	DbiPath_Settings(struct bv_obj_settings *s_obj);
+	~DbiPath_Settings();
+
+	// Assignment operator
+	DbiPath_Settings& operator=(const DbiPath_Settings& ps);
+
+	// Restore DbiPath_Settings to default values
+	void Reset();
+
+	// Read and Write values from/to bv_obj_settings.
+	void Read(struct bv_obj_settings *s_obj);
+	void Write(struct bv_obj_settings *s_obj);
+
+	// 0 = transparent, 1 = opaque
+	fastf_t transparency = 1.0;
+
+	// Drawing color (overrides values from database info)
+	struct bu_color color = BU_COLOR_INIT_ZERO;
+	// Flag to indicate color holds an override color
+	bool override_color = false;
+
+	// Drawing line width for wireframes
+	int line_width = 1;
+
+	// arrow tip length
+	fastf_t arrow_tip_length = 0.0;
+
+	//  arrow tip width
+	fastf_t arrow_tip_width = 0.0;
+
+	// do not use dashed lines for subtraction solids
+	int draw_solid_lines_only = 0;
+
+	/// do not visualize subtraction solids
+	int draw_non_subtract_only = 0;
+};
+
 // TODO - every DbiPath potentially has a bv_scene_obj associated with it,
 // which would in turn reference a child obj to get its actual geometry - the
 // role of the bv_scene_obj in the path would be to set the matrix, color and
@@ -251,6 +297,17 @@ class GED_EXPORT DbiPath {
 	// Assignment operator
 	DbiPath& operator=(const DbiPath& p);
 
+	// Methods for handling bv_scene_obj data
+	// Mode being negative one for Read means read the settings from the
+	// lowest drawing mode present.  For Write, it means override the
+	// settings for all modes present in the DbiPath
+	void Read(struct bv_obj_settings *s_obj = NULL, int mode = -1);
+	void Write(struct bv_obj_settings *s_obj = NULL, int mode = -1);
+
+	// Set up the bv_scene_obj to get it ready for drawing.  Finalized the
+	// color, matrix, child object (if needed), etc.
+	void BakeSceneObj();
+
 	// Draw the objects associated with this path in the specified view.
 	//
 	// Anything in scene_objs gets drawn, so the parent logic should only
@@ -268,7 +325,7 @@ class GED_EXPORT DbiPath {
 
 	// Use BRL-CAD rules to determine the active color at the
 	// path leaf element
-	bool color(struct bu_color *c);
+	bool color(struct bu_color *c, int mode = -1);
 
 	// Accumulate the matrices along the path
 	bool matrix(matp_t m);
@@ -368,6 +425,12 @@ class GED_EXPORT DbiPath {
 	// First entry is always a GObj hash, and any subsequent entries
 	// are always CombInst hashes.
 	std::vector<unsigned long long> elements;
+
+	// Drawing settings.  In principle, a command might specify
+	// different settings for different modes (a color override
+	// on a wireframe, for example) so we have to be prepared to
+	// track that.
+	std::map<size_t, DbiPath_Settings> draw_settings;
 
 	// Path state information
 	int is_cyclic = 0;  // 0 = not cyclic, 1 = cyclic, 2 = unknown
@@ -488,9 +551,13 @@ class GED_EXPORT BViewState {
 	// specifications) are done with Redraw and a supplied bv_obj_settings
 	// structure.  By default path is assigned a wireframe drawing mode,
 	// but other modes may be specified.
-	void AddPath(const char *path = NULL, struct bv_obj_settings *vs = NULL);
-	void AddPath(DbiPath *p = NULL, struct bv_obj_settings *vs = NULL);
-	void AddPath(unsigned long long phash = 0, struct bv_obj_settings *vs = NULL);
+	//
+	// Our mode argument is deliberately unsigned here, because we do not
+	// want to allow adding all modes at once (the logical interpretation
+	// of a -1 argument for mode.
+	void AddPath(const char *path = NULL, unsigned int mode = 0, struct bv_obj_settings *vs = NULL);
+	void AddPath(DbiPath *p = NULL, unsigned int mode = 0, struct bv_obj_settings *vs = NULL);
+	void AddPath(unsigned long long phash = 0, unsigned int mode = 0, struct bv_obj_settings *vs = NULL);
 
 	// Erases paths from the view for the given mode.  If mode < 0, all
 	// matching paths are erased.  For modes that are un-evaluated, all
@@ -571,6 +638,7 @@ class GED_EXPORT BViewState {
 	std::string print_view_state();
 
 	friend class BSelectState;
+	friend class DbiState;
     private:
 	// Sets holding all drawn paths.
 	//

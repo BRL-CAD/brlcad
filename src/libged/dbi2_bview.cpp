@@ -81,7 +81,7 @@ BViewState::~BViewState()
 }
 
 void
-BViewState::AddPath(const char *path, int mode)
+BViewState::AddPath(const char *path, unsigned int mode, struct bv_obj_settings *s_obj)
 {
     // Sanity
     if (UNLIKELY(!dbis))
@@ -95,11 +95,11 @@ BViewState::AddPath(const char *path, int mode)
     if (!p.valid())
 	return;
 
-    AddPath(&p, mode);
+    AddPath(&p, mode, s_obj);
 }
 
 void
-BViewState::AddPath(DbiPath *p, int mode)
+BViewState::AddPath(DbiPath *p, unsigned int mode, struct bv_obj_settings *s_obj)
 {
     // Sanity
     if (UNLIKELY(!dbis))
@@ -122,12 +122,14 @@ BViewState::AddPath(DbiPath *p, int mode)
 	np = dp_it->second;
     }
 
-    AddPath(np->hash(), mode);
+    AddPath(np->hash(), mode, s_obj);
 }
 
 void
-BViewState::AddPath(unsigned long long hash, int mode)
+BViewState::AddPath(unsigned long long hash, unsigned int mode, struct bv_obj_settings *s_obj)
 {
+    std::unordered_map<unsigned long long, DbiPath *>::iterator dp_it;
+
     // Sanity
     if (UNLIKELY(!dbis))
 	return;
@@ -139,17 +141,30 @@ BViewState::AddPath(unsigned long long hash, int mode)
     // specified mode.  If so, it is a redundant specifier and we don't need to
     // proceed further.
     std::unordered_set<unsigned long long>::iterator s_it;
-    s_it = fully_drawn_paths[mode].find(hash);
-    if (s_it != fully_drawn_paths[mode].end())
+    int mkey = (int)mode;
+    s_it = fully_drawn_paths[mkey].find(hash);
+    if (s_it != fully_drawn_paths[mkey].end()) {
+	// If we have specified settings, apply them
+	if (s_obj) {
+	    dp_it = dbis->dbi_paths.find(hash);
+	    if (UNLIKELY(dp_it == dbis->dbi_paths.end()))
+		return;
+	    DbiPath *p = dp_it->second;
+	    p->Read(s_obj, mkey);
+	}
 	return;
+    }
 
     // To add a path, we need a DbiPath container registered.
     // Otherwise, the hash is just some random number.
-    std::unordered_map<unsigned long long, DbiPath *>::iterator dp_it;
     dp_it = dbis->dbi_paths.find(hash);
     if (dp_it == dbis->dbi_paths.end())
 	return;
     DbiPath *p = dp_it->second;
+
+    // If we have specified settings, assign them
+    if (s_obj)
+	p->Read(s_obj, mode);
 
     // Next, we need to see if this is a parent path for any of the paths
     // already in drawn_paths.  If so, it will be replacing them.  There is no
@@ -175,28 +190,25 @@ BViewState::AddPath(unsigned long long hash, int mode)
 	drawn_paths[mode].erase(to_clear[i]);
     }
 
-    // For adding, -1 isn't a valid specifier - assume wireframe
-    int amode = (mode < 0) ? 0 : mode;
-
     // From here on out, hash is now a fully drawn path.
     partially_drawn_paths[-1].erase(hash);
-    partially_drawn_paths[amode].erase(hash);
+    partially_drawn_paths[mkey].erase(hash);
     fully_drawn_paths[-1].insert(hash);
-    fully_drawn_paths[amode].insert(hash);
+    fully_drawn_paths[mkey].insert(hash);
 
     // All child paths are also considered fully drawn.  Even an evaluated mode
     // drawing is considered to be drawing the subtree (just not necessarily as
     // individual scene objects) so we update the lists for both all and the
     // individual mode in all cases.
     dbis->AddPathsBelow(&(fully_drawn_paths[-1]), hash);
-    dbis->AddPathsBelow(&(fully_drawn_paths[amode]), hash);
+    dbis->AddPathsBelow(&(fully_drawn_paths[mkey]), hash);
 
     // The parents (if any) are now partially drawn paths, since the
     // fully_drawn_paths check at the beginning of AddPath determined this path
     // wasn't a child of an already drawn path.
     for (s_it = p->parent_path_hashes.begin(); s_it != p->parent_path_hashes.end(); ++s_it) {
 	partially_drawn_paths[-1].insert(*s_it);
-	partially_drawn_paths[amode].insert(*s_it);
+	partially_drawn_paths[mkey].insert(*s_it);
     }
 
     // That takes care of staging the paths.  We do not process any scene
@@ -593,59 +605,59 @@ BViewState::Redraw(struct bv_obj_settings *UNUSED(vs), bool UNUSED(autoview))
 	std::unordered_set<unsigned long long>::iterator s_it;
 	std::vector<unsigned long long> to_erase;
 	for (s_it = d_it->second.begin(); s_it != d_it->second.end(); ++s_it) {
-	    if (dbi_paths.find(*s_it) == dbi_paths.end()) {
-		to_erase.push-back(*s_it);
-	}
-	for (size_t i = 0; i < to_erase.size(); i++)
-	    d_it->second->erase(to_erase.size());
+	    if (dbis->dbi_paths.find(*s_it) == dbis->dbi_paths.end()) {
+		to_erase.push_back(*s_it);
+	    }
+	    for (size_t i = 0; i < to_erase.size(); i++)
+		d_it->second.erase(to_erase.size());
 
-	// Update fully and partially drawn from new drawn_paths state
-	for (s_it = d_it->second.begin(); s_it != d_it->second.end(); ++s_it) {
-	    DbiPath *p = dbis->GetDbiPath(*s_it);
-	    if (!p)
+	    // Update fully and partially drawn from new drawn_paths state
+	    for (s_it = d_it->second.begin(); s_it != d_it->second.end(); ++s_it) {
+		DbiPath *p = dbis->GetDbiPath(*s_it);
+		if (!p)
+		    continue;
+
+		// All child paths are also considered fully drawn.  Even an evaluated mode
+		// drawing is considered to be drawing the subtree (just not necessarily as
+		// individual scene objects) so we update the lists for both all and the
+		// individual mode in all cases.
+		dbis->AddPathsBelow(&(fully_drawn_paths[-1]), *s_it);
+		dbis->AddPathsBelow(&(fully_drawn_paths[d_it->first]), *s_it);
+
+		// The parents (if any) are now partially drawn paths, since the
+		// fully_drawn_paths check at the beginning of AddPath determined this path
+		// wasn't a child of an already drawn path.
+		std::unordered_set<unsigned long long>::iterator sp_it;
+		for (sp_it = p->parent_path_hashes.begin(); sp_it != p->parent_path_hashes.end(); ++sp_it) {
+		    partially_drawn_paths[-1].insert(*sp_it);
+		    partially_drawn_paths[d_it->first].insert(*sp_it);
+		}
+	    }
+
+	    // Anything still valid needs to be re-expanded.  First, clear the old
+	    // s_expanded hashes for this mode
+	    s_expanded[d_it->first].clear();
+
+	    // If we're mode 3 or 5 (the evaluated modes) we don't need the leaves expanding to leaves
+	    if (d_it->first == 3 || d_it->first == 5)
 		continue;
 
-	    // All child paths are also considered fully drawn.  Even an evaluated mode
-	    // drawing is considered to be drawing the subtree (just not necessarily as
-	    // individual scene objects) so we update the lists for both all and the
-	    // individual mode in all cases.
-	    dbis->AddPathsBelow(&(fully_drawn_paths[-1]), *s_it);
-	    dbis->AddPathsBelow(&(fully_drawn_paths[d_it->first]), *s_it);
+	    // Collect all the active drawn paths from this mode
+	    std::vector<unsigned long long> to_expand;
+	    to_expand.reserve(d_it->second.size());
+	    for (s_it = d_it->second.begin(); s_it != d_it->second.end(); ++s_it)
+		to_expand.push_back(*s_it);
 
-	    // The parents (if any) are now partially drawn paths, since the
-	    // fully_drawn_paths check at the beginning of AddPath determined this path
-	    // wasn't a child of an already drawn path.
-	    std::unordered_set<unsigned long long>::iterator sp_it;
-	    for (sp_it = p->parent_path_hashes.begin(); sp_it != p->parent_path_hashes.end(); ++sp_it) {
-		partially_drawn_paths[-1].insert(*sp_it);
-		partially_drawn_paths[d_it->first].insert(*sp_it);
-	    }
+	    // Generate the new s_expanded hashes (which may be unchanged, but
+	    // there's no way to know without doing the work.)  BakePaths should
+	    // already have established prepared DbiPaths for this - what we are
+	    // doing here is preparing the set of DbiPaths Render will actually
+	    // iterate over to draw this specific view.
+	    std::vector<unsigned long long> leaves = dbis->ExpandPaths(to_expand, false);
+	    for (size_t i = 0; i < leaves.size(); i++)
+		s_expanded[d_it->first].insert(leaves[i]);
 	}
-
-	// Anything still valid needs to be re-expanded.  First, clear the old
-	// s_expanded hashes for this mode
-	s_expanded[d_it->first].clear();
-
-	// If we're mode 3 or 5 (the evaluated modes) we don't need the leaves expanding to leaves
-	if (d_it->first == 3 || d_it->first == 5)
-	    continue;
-
-	// Collect all the active drawn paths from this mode
-	std::vector<unsigned long long> to_expand;
-	to_expand.reserve(d_it->second.size());
-	for (s_it = d_it->second.begin(); s_it != d_it->second.end(); ++s_it)
-	    to_expand.push-back(*s_it);
-
-	// Generate the new s_expanded hashes (which may be unchanged, but
-	// there's no way to know without doing the work.)  BakePaths should
-	// already have established prepared DbiPaths for this - what we are
-	// doing here is preparing the set of DbiPaths Render will actually
-	// iterate over to draw this specific view.
-	std::vector<unsigned long long> leaves = dbis->ExpandPaths(to_expand, false);
-	for (size_t i = 0; i < leaves.size(); i++)
-	    s_expanded[d_it->first].insert(leaves[i]);
     }
-
 }
 
 #if 0
