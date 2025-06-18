@@ -55,6 +55,82 @@ extern "C" {
 #include "ged/view.h"
 #include "./ged_private.h"
 
+DbiPath_Settings::DbiPath_Settings()
+{
+}
+
+DbiPath_Settings::DbiPath_Settings(struct bv_obj_settings *s_obj)
+{
+    Read(s_obj);
+}
+
+DbiPath_Settings::~DbiPath_Settings()
+{
+}
+
+DbiPath_Settings& DbiPath_Settings::operator=(const DbiPath_Settings &ps) {
+    transparency = ps.transparency;
+    BU_COLOR_CPY(&color, &ps.color);
+    override_color = ps.override_color;
+    line_width = ps.line_width;
+    arrow_tip_length = ps.arrow_tip_length;
+    arrow_tip_width = ps.arrow_tip_width;
+    draw_solid_lines_only = ps.draw_solid_lines_only;
+    draw_non_subtract_only = ps.draw_non_subtract_only;
+    return *this;
+}
+
+void
+DbiPath_Settings::Reset()
+{
+    transparency = 1.0;
+    BU_COLOR_INIT(&color);
+    override_color = false;
+    line_width = 1;
+    arrow_tip_length = 0.0;
+    arrow_tip_width = 0.0;
+    draw_solid_lines_only = 0;
+    draw_non_subtract_only = 0;
+}
+
+void
+DbiPath_Settings::Read(struct bv_obj_settings *s_obj)
+{
+    if (!s_obj) {
+	Reset();
+	return;
+    }
+
+    transparency = s_obj->transparency;
+    if (s_obj->color_override) {
+	bu_color_from_rgb_chars(&color, s_obj->color);
+	override_color = true;
+    }
+
+    line_width = s_obj->s_line_width;
+    arrow_tip_length = s_obj->s_arrow_tip_length;
+    arrow_tip_width= s_obj->s_arrow_tip_width;
+    draw_solid_lines_only = s_obj->draw_solid_lines_only;
+    draw_non_subtract_only = s_obj->draw_non_subtract_only;
+}
+
+
+void
+DbiPath_Settings::Write(struct bv_obj_settings *s_obj)
+{
+    if (!s_obj)
+	return;
+
+    s_obj->transparency = transparency;
+    s_obj->color_override = override_color;
+    bu_color_to_rgb_chars(&color, s_obj->color);
+    s_obj->s_line_width = line_width;
+    s_obj->s_arrow_tip_length = arrow_tip_length;
+    s_obj->s_arrow_tip_width = arrow_tip_width;
+    s_obj->draw_solid_lines_only = draw_solid_lines_only;
+    s_obj->draw_non_subtract_only = draw_non_subtract_only;
+}
+
 
 DbiPath::DbiPath(DbiState *dbis, const char *path)
 {
@@ -130,6 +206,16 @@ DbiPath::DbiPath(const DbiPath &p)
 	component_hashes.insert(*h_it);
     path_hash = p.path_hash;
     parent_hash = p.parent_hash;
+
+    // Copy drawing settings for all modes
+    std::map<size_t, DbiPath_Settings>::const_iterator ds_it;
+    for (ds_it = p.draw_settings.begin(); ds_it != p.draw_settings.end(); ++ds_it)
+	draw_settings[ds_it->first] = ds_it->second;
+
+    // NOTE - at least for the moment, we are deliberately not
+    // copying scene objects - we shouldn't really need duplicates
+    // of paths with scene objects, so most uses cases of this
+    // logic are to set up a path for further processing
 }
 
 DbiPath& DbiPath::operator=(const DbiPath &p) {
@@ -146,6 +232,16 @@ DbiPath& DbiPath::operator=(const DbiPath &p) {
 	component_hashes.insert(*h_it);
     path_hash = p.path_hash;
     parent_hash = p.parent_hash;
+
+    // Copy drawing settings for all modes
+    std::map<size_t, DbiPath_Settings>::const_iterator ds_it;
+    for (ds_it = p.draw_settings.begin(); ds_it != p.draw_settings.end(); ++ds_it)
+	draw_settings[ds_it->first] = ds_it->second;
+
+    // NOTE - at least for the moment, we are deliberately not
+    // copying scene objects - we shouldn't really need duplicates
+    // of paths with scene objects, so most uses cases of this
+    // logic are to set up a path for further processing
 
     return *this;
 }
@@ -167,6 +263,7 @@ DbiPath::Reset()
 
     path_hash = 0;
     parent_hash = 0;
+    draw_settings.clear();
 }
 
 DbiPath::~DbiPath()
@@ -181,6 +278,36 @@ DbiPath::~DbiPath()
 
     Reset();
     d = NULL;
+}
+
+void
+DbiPath::Read(struct bv_obj_settings *s_obj, int mode)
+{
+    std::map<size_t, DbiPath_Settings>::iterator ds_it;
+    if (mode == -1) {
+	for (ds_it = draw_settings.begin(); ds_it != draw_settings.end(); ++ds_it)
+	    ds_it->second.Read(s_obj);
+    } else {
+	draw_settings[mode].Read(s_obj);
+    }
+}
+
+
+void
+DbiPath::Write(struct bv_obj_settings *s_obj, int mode)
+{
+    if (!s_obj)
+	return;
+
+    std::map<size_t, DbiPath_Settings>::iterator ds_it;
+    ds_it = (mode == -1) ? draw_settings.begin() : draw_settings.find(mode);
+    if (ds_it == draw_settings.end()) {
+	DbiPath_Settings ps;
+	ps.Reset();
+	ps.Write(s_obj);
+    } else {
+	ds_it->second.Write(s_obj);
+    }
 }
 
 void
@@ -219,10 +346,20 @@ DbiPath::uses(unsigned long long hash)
 }
 
 bool
-DbiPath::color(struct bu_color *c)
+DbiPath::color(struct bu_color *c, int mode)
 {
     const struct mater *mp;
 
+    // If we have an override in the settings, that trumps
+    // everything else
+    std::map<size_t, DbiPath_Settings>::iterator ds_it;
+    ds_it = (mode == -1) ? draw_settings.begin() : draw_settings.find(mode);
+    if (ds_it != draw_settings.end() && ds_it->second.override_color) {
+	BU_COLOR_CPY(c, &ds_it->second.color);
+	return true;
+    }
+
+    // Not overridden - need to look at objects
     std::vector<GObj *> cgs = d->get_gobjs(elements);
 
     // This may not be how we'll always want to do this, but at least for the
