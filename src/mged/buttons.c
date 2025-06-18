@@ -564,8 +564,8 @@ ill_common(struct mged_state *s) {
     int is_empty = 1;
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, s->gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, s->gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
@@ -816,7 +816,7 @@ be_accept(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
 	mmenu_set_all(s, MENU_L1, NULL);
 	mmenu_set_all(s, MENU_L2, NULL);
 
-	dl_set_iflag(s->gedp->ged_gdp->gd_headDisplay, DOWN);
+	dl_set_iflag((struct bu_list *)ged_dl(s->gedp), DOWN);
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = NULL;
@@ -905,7 +905,7 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
     illump = NULL;		/* None selected */
 
     /* Clear illumination flags */
-    dl_set_iflag(s->gedp->ged_gdp->gd_headDisplay, DOWN);
+    dl_set_iflag((struct bu_list *)ged_dl(s->gedp), DOWN);
 
     mged_color_soltab(s);
     (void)chg_state(s, GEOM_EDIT_STATE, ST_VIEW, "Edit Reject");

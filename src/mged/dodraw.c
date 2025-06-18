@@ -154,7 +154,7 @@ drawH_part2(struct mged_state *s, int dashflag, struct bu_list *vhead, const str
 	bu_semaphore_acquire(RT_SEM_MODEL);
 
 	/* Grab the last display list */
-	gdlp = BU_LIST_PREV(display_list, s->gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_PREV(display_list, (struct bu_list *)ged_dl(s->gedp));
 	BU_LIST_APPEND(gdlp->dl_head_scene_obj.back, &sp->l);
 
 	bu_semaphore_release(RT_SEM_MODEL);
