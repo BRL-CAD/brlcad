@@ -65,9 +65,9 @@ extern long nvectors;
 
 extern vect_t e_axes_pos;
 
-fastf_t ar_scale_factor = GED_MAX / ABS_ROT_FACTOR;
-fastf_t rr_scale_factor = GED_MAX / RATE_ROT_FACTOR;
-fastf_t adc_angle_scale_factor = GED_MAX / ADC_ANGLE_FACTOR;
+fastf_t ar_scale_factor = BV_MAX / ABS_ROT_FACTOR;
+fastf_t rr_scale_factor = BV_MAX / RATE_ROT_FACTOR;
+fastf_t adc_angle_scale_factor = BV_MAX / ADC_ANGLE_FACTOR;
 
 double mged_abs_tol;
 double mged_rel_tol = 0.01;		/* 1%, by default */
