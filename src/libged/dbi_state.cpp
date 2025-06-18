@@ -236,7 +236,7 @@ DbiState::PutDbiPath(DbiPath *p)
 }
 
 void
-DbiState::BakePaths(struct bv_obj_settings *UNUSED(vs), bool UNUSED(autoview))
+DbiState::BakePaths()
 {
     // Make sure we have DbiPaths for every leaf of every valid drawn path in
     // any currently active view - those are the paths we will need for
@@ -247,9 +247,9 @@ DbiState::BakePaths(struct bv_obj_settings *UNUSED(vs), bool UNUSED(autoview))
     std::unordered_set<BViewState *> processed_vstates;
     for (v_it = view_states.begin(); v_it != view_states.end(); v_it++) {
 	BViewState *vs = v_it->second;
-	if (processed_states.find(vs) != processed_states.end())
+	if (processed_vstates.find(vs) != processed_vstates.end())
 	    continue;
-	processed_states.insert(vs);
+	processed_vstates.insert(vs);
 	std::unordered_map<size_t, std::unordered_set<unsigned long long>>::iterator d_it;
 	for (d_it = vs->drawn_paths.begin(); d_it != vs->drawn_paths.end(); ++d_it) {
 	    for (s_it = d_it->second.begin(); s_it != d_it->second.end(); ++s_it) {
@@ -261,23 +261,19 @@ DbiState::BakePaths(struct bv_obj_settings *UNUSED(vs), bool UNUSED(autoview))
     std::vector<unsigned long long> to_expand;
     to_expand.reserve(uniq_paths.size());
     for (s_it = uniq_paths.begin(); s_it != uniq_paths.end(); ++s_it)
-	to_expand.push-back(*s_it);
-    dbis->ExpandPaths(to_expand, false);
+	to_expand.push_back(*s_it);
+    ExpandPaths(to_expand, true);
     uniq_paths.clear();
     to_expand.clear();
 
     // We now have expanded DbiPaths, but their color and matrix info is not
-    // yet set on their scene objects (unless color was overridden by a
-    // bv_obj_settings value at the time of addition.)
+    // yet set on their scene objects.  We also need to make sure any needed
+    // child GObj objects have been added.
     std::unordered_map<unsigned long long, DbiPath *>::iterator p_it;
     for (p_it = dbi_paths.begin(); p_it != dbi_paths.end(); ++p_it) {
-	// TODO 
+	DbiPath *p = p_it->second;
+	p->BakeSceneObj();
     }
-
-    // For each leaf, if it is in a mode that needs a GObj wireframe
-    // or shaded object, assign the GObj scene obj as a child to the
-    // DbiPath leaf scene object.  This will allow dm_draw_sobj to
-    // correctly draw the instance of the object.
 }
 
 void

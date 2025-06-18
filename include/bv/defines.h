@@ -132,12 +132,13 @@ struct bv_axes {
 // for value setting
 struct bv_obj_settings {
 
-    int s_dmode;         	/**< @brief  draw modes (TODO - are these accurate?):
+    int s_dmode;         	/**< @brief  draw modes:
 				 *            0 - wireframe
 				 *	      1 - shaded bots and polysolids only (booleans NOT evaluated)
 				 *	      2 - shaded (booleans NOT evaluated)
-				 *	      3 - shaded (booleans evaluated)
+				 *	      3 - wireframe (evaluated)
 				 *	      4 - hidden line
+				 *	      5 - point sampled triangles (evaluated)
 				 */
     int mixed_modes;            /**< @brief  when drawing, don't remove an objects view objects for other modes */
     fastf_t transparency;	/**< @brief  holds a transparency value in the range [0.0, 1.0] - 1 is opaque */
