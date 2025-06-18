@@ -19,14 +19,14 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file lod.h */
-/** @addtogroup bv_lod */
-/** @{ */
-
-/**
- *  @brief Functions for generating view dependent level-of-detail data,
+/** @addtogroup bv_lod
+ *
+ *  @brief
+ *  Functions for generating view dependent level-of-detail data,
  *  particularly for meshes.
  */
+/** @{ */
+/* @file lod.h */
 
 #ifndef BV_LOD_H
 #define BV_LOD_H

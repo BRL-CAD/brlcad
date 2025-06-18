@@ -19,6 +19,8 @@
  */
 /** @addtogroup bv_snap
  *
+ * @brief Logic for snapping sample points to view elements and grids.
+ *
  */
 /** @{ */
 /** @file bv/snap.h */

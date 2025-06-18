@@ -19,13 +19,12 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file polygon.h */
-/** @addtogroup bv_polygon */
-/** @{ */
-
-/**
+/** @addtogroup bv_polygon
+ *
  *  @brief Functions for working with polygons
  */
+/* @file polygon.h */
+/** @{ */
 
 #ifndef BV_POLYGON_H
 #define BV_POLYGON_H
