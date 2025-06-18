@@ -381,16 +381,16 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     void * opendb_clbk_data[2] = {NULL};
     bu_clbk_t closedb_clbk[2] = {NULL};
     void * closedb_clbk_data[2] = {NULL};
-    ged_clbk_get(&opendb_clbk[0], &opendb_clbk_data[0], s->gedp, "opendb", GED_CLBK_PRE);
-    ged_clbk_get(&opendb_clbk[1], &opendb_clbk_data[1], s->gedp, "opendb", GED_CLBK_POST);
-    ged_clbk_get(&closedb_clbk[0], &closedb_clbk_data[0], s->gedp, "closedb", GED_CLBK_PRE);
-    ged_clbk_get(&closedb_clbk[1], &closedb_clbk_data[1], s->gedp, "closedb", GED_CLBK_POST);
+    ged_clbk_get(&opendb_clbk[0], &opendb_clbk_data[0], s->gedp, "opendb", BU_CLBK_PRE);
+    ged_clbk_get(&opendb_clbk[1], &opendb_clbk_data[1], s->gedp, "opendb", BU_CLBK_POST);
+    ged_clbk_get(&closedb_clbk[0], &closedb_clbk_data[0], s->gedp, "closedb", BU_CLBK_PRE);
+    ged_clbk_get(&closedb_clbk[1], &closedb_clbk_data[1], s->gedp, "closedb", BU_CLBK_POST);
 
     // Assign the local values
-    ged_clbk_set(s->gedp, "opendb", GED_CLBK_PRE, NULL, NULL);
-    ged_clbk_set(s->gedp, "opendb", GED_CLBK_POST, &mged_post_opendb_clbk, (void *)&ctx);
-    ged_clbk_set(s->gedp, "closedb", GED_CLBK_PRE, &mged_pre_closedb_clbk, (void *)&ctx);
-    ged_clbk_set(s->gedp, "closedb", GED_CLBK_POST, &mged_post_closedb_clbk, (void *)&ctx);
+    ged_clbk_set(s->gedp, "opendb", BU_CLBK_PRE, NULL, NULL);
+    ged_clbk_set(s->gedp, "opendb", BU_CLBK_POST, &mged_post_opendb_clbk, (void *)&ctx);
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_PRE, &mged_pre_closedb_clbk, (void *)&ctx);
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_POST, &mged_post_closedb_clbk, (void *)&ctx);
 
     const char **av = (const char **)bu_calloc(argc+2, sizeof(const char *), "av");
     int ind = 0;
@@ -409,10 +409,10 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     ctx.ged_ret = ged_exec_opendb(s->gedp, argc+ind, (const char **)av);
 
     // Done - restore standard values
-    ged_clbk_set(s->gedp, "opendb", GED_CLBK_PRE, opendb_clbk[0], opendb_clbk_data[0]);
-    ged_clbk_set(s->gedp, "opendb", GED_CLBK_POST, opendb_clbk[1], opendb_clbk_data[1]);
-    ged_clbk_set(s->gedp, "closedb", GED_CLBK_PRE, closedb_clbk[0], closedb_clbk_data[0]);
-    ged_clbk_set(s->gedp, "closedb", GED_CLBK_POST, closedb_clbk[1], closedb_clbk_data[1]);
+    ged_clbk_set(s->gedp, "opendb", BU_CLBK_PRE, opendb_clbk[0], opendb_clbk_data[0]);
+    ged_clbk_set(s->gedp, "opendb", BU_CLBK_POST, opendb_clbk[1], opendb_clbk_data[1]);
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_PRE, closedb_clbk[0], closedb_clbk_data[0]);
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_POST, closedb_clbk[1], closedb_clbk_data[1]);
 
     if (ctx.ged_ret == GED_HELP) {
 	Tcl_Eval(interpreter, "help opendb");
@@ -455,17 +455,17 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 
     bu_clbk_t closedb_clbk[2] = {NULL};
     void * closedb_clbk_data[2] = {NULL};
-    ged_clbk_get(&closedb_clbk[0], &closedb_clbk_data[0], s->gedp, "closedb", GED_CLBK_PRE);
-    ged_clbk_get(&closedb_clbk[1], &closedb_clbk_data[1], s->gedp, "closedb", GED_CLBK_POST);
+    ged_clbk_get(&closedb_clbk[0], &closedb_clbk_data[0], s->gedp, "closedb", BU_CLBK_PRE);
+    ged_clbk_get(&closedb_clbk[1], &closedb_clbk_data[1], s->gedp, "closedb", BU_CLBK_POST);
 
-    ged_clbk_set(s->gedp, "closedb", GED_CLBK_PRE, closedb_clbk[0], (void *)&ctx);
-    ged_clbk_set(s->gedp, "closedb", GED_CLBK_POST, closedb_clbk[1], (void *)&ctx);
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_PRE, closedb_clbk[0], (void *)&ctx);
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_POST, closedb_clbk[1], (void *)&ctx);
 
     const char *av[1] = {"closedb"};
     ged_exec_closedb(s->gedp, 1, (const char **)av);
 
-    ged_clbk_set(s->gedp, "closedb", GED_CLBK_PRE, closedb_clbk[0], closedb_clbk_data[0]);
-    ged_clbk_set(s->gedp, "closedb", GED_CLBK_POST, closedb_clbk[1], closedb_clbk_data[1]);
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_PRE, closedb_clbk[0], closedb_clbk_data[0]);
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_POST, closedb_clbk[1], closedb_clbk_data[1]);
 
     return ctx.ret;
 }
