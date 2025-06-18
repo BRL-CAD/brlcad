@@ -1939,7 +1939,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 			    if (arp[Y] < -180.0) {
 				arp[Y] = arp[Y] + 360.0;
-			    } else if (arp[X] > 180.0) {
+			    } else if (arp[Y] > 180.0) {
 				arp[Y] = arp[Y] - 360.0;
 			    }
 
