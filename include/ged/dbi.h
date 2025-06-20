@@ -570,6 +570,9 @@ class GED_EXPORT BViewState {
 	// work.
 	BViewState *l = NULL;
 
+	// Return the name of this view
+	std::string Name();
+
 	// Adds path to the BViewState container drawn set, but doesn't trigger
 	// a re-draw - that should be done once all paths to be added in a
 	// given draw cycle are queued up.  The actual drawing (and setting
@@ -827,13 +830,27 @@ class GED_EXPORT DbiState {
 	/*******************************************************************
          *                      View States
 	 *******************************************************************/
-	// The shared view is common to multiple views, so we always update it.
-	// For other associated views (if any), we track their drawn states
-	// separately, but they too need to update in response to database
-	// changes (as well as draw/erase commands).
+	// If v is NULL, a new bview will be created associated with and managed
+	// by the BViewState.  If v != NULL, and a name collision is found,
+	// return NULL.
 	//
-	// If v is NULL, return the shared view.
-	BViewState *GetBViewState(struct bview *v);
+	// If a linked_view is specified, the DbiPath set of the linked view
+	// will be drawn in the new BViewState.  Additional view-only paths and
+	// objects may be specified, but the linked view's set will always be
+	// incorporated.  This is used to simplify management of modes like
+	// quad view, where all the scene objects are to be present in all
+	// views.  Note that if views are linked, LoD calculations will be
+	// made based on the highest level needed by any view referencing
+	// the path in question. 
+	BViewState *AddBViewState(BViewState *linked_view = NULL, struct bview *v = NULL);
+
+	// If v is NULL, return the default view.  If v != NULL, and a BViewState
+	// is not already associated with it, create one.
+	BViewState *FindBViewState(struct bview *v = NULL);
+
+	// Look up a view by name.  Does not create a view if one is not found -
+	// just returns NULL.
+	BViewState *FindBViewState(std::string &vname);
 
 	// Methods for adding and removing user-provided scene objects to
 	// the main 3D scene
@@ -900,6 +917,7 @@ class GED_EXPORT DbiState {
 	friend class GObj;
 	friend class CombInst;
 	friend class DbiPath;
+	friend class BViewState;
 
     private:
 	// These maps are the ".g ground truth" of the database objects
@@ -928,7 +946,7 @@ class GED_EXPORT DbiState {
 	void print_dbi_state(struct bu_vls *o = NULL, bool report_view_states = false);
 
 	// Data related to Views
-	BViewState *shared_vs = NULL;
+	BViewState *default_view;
 	std::unordered_map<struct bview *, BViewState *> view_states;
 
 	// Data related to Selections
