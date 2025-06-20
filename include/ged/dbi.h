@@ -341,7 +341,6 @@ class GED_EXPORT DbiPath {
 	//
 	// All scene objects associated with this path need to be baked before
 	// this call is made to be sure their properties are current.
-	void Draw(struct bview *v);
 	void Draw(BViewState *vs);
 
 	// Return true if this path is a parent path of p
