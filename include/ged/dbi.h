@@ -332,7 +332,7 @@ class GED_EXPORT DbiPath {
 	// If we are baking a path specific to an individual view, pass that
 	// view in to allow the baking to account for the independent status
 	// of the path object.
-	void BakeSceneObjs(struct bview *v = NULL);
+	void BakeSceneObjs(BViewState *vs = NULL);
 
 	// Draw the objects associated with this path in the specified view.
 	//
