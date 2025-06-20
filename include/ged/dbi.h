@@ -560,15 +560,39 @@ class GED_EXPORT BViewState {
 	BViewState(DbiState *db = NULL, struct bview *ev = NULL);
 	~BViewState();
 
-	// Since one of the common view paradigms is "quad view" where
-	// the geometric scene objects are all drawn or erased in tandem,
-	// allow a view state to specify a "linked" view state where it
-	// will source path data.  AddObj scene objects will still be
-	// unique to a view if added here and not in DbiState, but
-	// we want to not duplicate work managing a draw/erase list
-	// unless we actually have independent views that must do that
-	// work.
-	BViewState *l = NULL;
+	// Allow a view state to specify a "linked" view state where it will
+	// source data in addition to its own.
+	//
+	// Paths and Objects added to this view after linking will not be
+	// visible in the ls target view - the link is one way.
+	//
+	// The goal is to avoid duplicate work managing multiple draw/erase
+	// lists unless we actually have independent views that must do that
+	// work, but allow for the possibility of completely independent view
+	// contents.
+	//
+	// Conceptually each BViewState can be thought of as maintaining a
+	// notion of a scene definition, in addition to the bview camera info.
+	// By default each is separate, but when linked the client view will
+	// leverage the target linked view's info rather than having to repeat
+	// work for itself (typically additional views will link to the default
+	// view in most usage scenarios, such as quad view.)
+	//
+	// By default Link and Unlink will establish links for DbiPath
+	// objects - to establish a link for view_objs supply the additional
+	// "true" parameter.  So to completely link the current view to the
+	// default view, both for DbiPaths and view-only scene objects, the
+	// calls would look like:
+	//
+	// v->Link(dbis->default_view);        // DbiPaths
+	// v->Link(dbis->default_view, true);  // View objects
+	//
+	// Similarly, to fully decouple the views:
+	//
+	// v->UnLink(dbis->default_view);        // DbiPaths
+	// v->UnLink(dbis->default_view, true);  // View objects
+	bool Link(BViewState *ls = NULL, bool view_objs = false);
+	bool UnLink(BViewState *ls = NULL, bool view_objs = false);
 
 	// Return the name of this view
 	std::string Name();
@@ -715,6 +739,12 @@ class GED_EXPORT BViewState {
 	std::unordered_set<struct bv_scene_obj *> scene_objs;
 
 	DbiState *dbis;
+
+	// Linked state (if any) from which to draw DbiPaths
+	BViewState *l_dbipath = NULL;
+	// Linked state (if any) from which to draw View Objects
+	BViewState *l_viewobj = NULL;
+
 	struct bview *v;
 	bool local_v;
 
@@ -831,21 +861,13 @@ class GED_EXPORT DbiState {
          *                      View States
 	 *******************************************************************/
 	// If v is NULL, a new bview will be created associated with and managed
-	// by the BViewState.  If v != NULL, and a name collision is found,
-	// return NULL.
-	//
-	// If a linked_view is specified, the DbiPath set of the linked view
-	// will be drawn in the new BViewState.  Additional view-only paths and
-	// objects may be specified, but the linked view's set will always be
-	// incorporated.  This is used to simplify management of modes like
-	// quad view, where all the scene objects are to be present in all
-	// views.  Note that if views are linked, LoD calculations will be
-	// made based on the highest level needed by any view referencing
-	// the path in question. 
-	BViewState *AddBViewState(BViewState *linked_view = NULL, struct bview *v = NULL);
+	// by the BViewState.  If v != NULL, and no pre-existing state is found,
+	// return a new state - otherwise return the found pre-existing state.
+	BViewState *AddBViewState(struct bview *v = NULL);
 
-	// If v is NULL, return the default view.  If v != NULL, and a BViewState
-	// is not already associated with it, create one.
+	// If v == NULL, return the default_view state.  Otherwise, either
+	// return the BViewState associated with v or NULL (if no such state
+	// exists.)
 	BViewState *FindBViewState(struct bview *v = NULL);
 
 	// Look up a view by name.  Does not create a view if one is not found -
@@ -908,9 +930,6 @@ class GED_EXPORT DbiState {
 	// Container holding all pre-allocated DbiPath instances available
 	// for reuse.
 	std::queue<DbiPath *> dbiq;
-
-	// Additional scene objects common to all views
-	std::unordered_set<struct bv_scene_obj *> scene_objs;
 
     public:
 	// Allow the implementation containers to access the core DbiState maps
