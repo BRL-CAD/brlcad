@@ -184,13 +184,22 @@ class GED_EXPORT GObj {
 	// Instructs the GObj to (re)populate its scene_obj in the specified
 	// mode.  If reload == false (the default) it will accept a pre-existing
 	// scene object - most of the time these will be load-once-view-many.
-	bool LoadSceneObj(struct bview *v = NULL, int mode = 0, bool reload = false);
+	// By default the GObj stores the scene locally, but the caller may
+	// specify at targeted object to use instead.
+	bool LoadSceneObj(struct bv_scene_obj *o_obj = NULL, struct bview *v = NULL, int mode = 0, bool reload = false);
 
 	// Optional scene object(s) associated with this object.
 	// Map key is the drawing mode (0 = wireframe, 1 = shaded, etc.)
 	// Generally speaking these will be referenced by scene_objs
 	// in DbiPath entities.
 	std::map<size_t, struct bv_scene_obj *> scene_objs;
+
+	// Record the view used to generate the geometry associated with this
+	// path.  Often won't matter, but for LoD sensitive data this is
+	// important.  LoadSceneObj should set lod_used to true if the lod_v
+	// was involved with geometry setup.
+	struct bview *lod_v = NULL;
+	bool lod_used = false;
 
     private:
 
@@ -258,8 +267,16 @@ class GED_EXPORT DbiPath_Settings {
 	// do not use dashed lines for subtraction solids
 	int draw_solid_lines_only = 0;
 
-	/// do not visualize subtraction solids
+	// do not visualize subtraction solids
 	int draw_non_subtract_only = 0;
+
+	// View to use to generate LoD geometry for this path.  The
+	// responsibility for setting this lies either at the DbiState level
+	// (for shared paths) or at the BViewState level (for paths unique to a
+	// view.)  In the latter case, if the GObj lod_v doesn't match the
+	// DbiPath_Settings lod_v, the view specific object will need its own
+	// geometry.
+	struct bview *lod_v = NULL;
 };
 
 // TODO - every DbiPath potentially has a bv_scene_obj associated with it,
@@ -304,14 +321,22 @@ class GED_EXPORT DbiPath {
 	void Read(struct bv_obj_settings *s_obj = NULL, int mode = -1);
 	void Write(struct bv_obj_settings *s_obj = NULL, int mode = -1);
 
-	// Set up the bv_scene_obj to get it ready for drawing.  Finalized the
-	// color, matrix, child object (if needed), etc.
-	void BakeSceneObj();
+	// Set up the bv_scene_obj (or objects, if multiple modes are to be
+	// drawn for this path) to get ready for drawing.  Finalize the color,
+	// matrix, child object (if needed), etc.
+	//
+	// If we are baking a path specific to an individual view, pass that
+	// view in to allow the baking to account for the independent status
+	// of the path object.
+	void BakeSceneObjs(struct bview *v = NULL);
 
 	// Draw the objects associated with this path in the specified view.
 	//
 	// Anything in scene_objs gets drawn, so the parent logic should only
 	// add scene objects for the modes it wants drawn for this path.
+	//
+	// All scene objects associated with this path need to be baked before
+	// this call is made to be sure their properties are current.
 	void Draw(struct bview *v);
 
 	// Return true if this path is a parent path of p

@@ -311,6 +311,94 @@ DbiPath::Write(struct bv_obj_settings *s_obj, int mode)
 }
 
 void
+DbiPath::BakeSceneObjs(struct bview *v)
+{
+    std::map<size_t, struct bv_scene_obj *>::iterator s_it;
+    std::map<size_t, DbiPath_Settings>::iterator ds_it;
+    for (s_it = scene_objs.begin(); s_it != scene_objs.end(); ++s_it) {
+	// If we have setting overrides for this mode, get them.
+	ds_it = draw_settings.find(s_it->first);
+	DbiPath_Settings *s = (ds_it == draw_settings.end()) ? NULL : &ds_it->second;
+
+	// Get the scene object itself.
+	struct bv_scene_obj *o = s_it->second;
+	o->s_os = &o->s_local_os;
+
+	// We're overriding child obj settings (if any) with our
+	// path settings
+	o->s_override_child_settings = 1;
+
+	// Get the geometry to use for this object - may be either pre-existing
+	// leaf GObj data as child objects (most common case) or an evaluation
+	// step (for modes showing evaluated results for a particular path).
+	if (LIKELY(s_it->first != 3 && s_it->first != 5)) {
+	    // Look up the leaf GObj, if we're in one of the modes where we
+	    // need it, and set up o accordingly.
+	    GObj *g = GetGObj(elements.size() - 1);
+	    if (!g) {
+		// It's possible we won't have a GObj - a Comb Tree might have
+		// a name drawn that doesn't correspond to in-database
+		// geometry.  That's fine - the scene object just has no
+		// geometry and no children.
+		bu_ptbl_reset(&o->children);
+	    } else {
+		// Make sure the GObj scene object is set up
+		g->LoadSceneObj(NULL, s->lod_v, s_it->first);
+
+		// If we are view specific rather than using shared geometry,
+		// and this was an LoD case where the geometry actually DID do
+		// an LoD build, we're going to have to do our own geometry
+		// loading specific to this view.  (If the geometry was NOT
+		// view sensitive, than we can go ahead and re-use the geometry
+		// even though the object is specific to this view.)
+		if (v && g->lod_v != v && g->lod_used) {
+		    g->LoadSceneObj(o, v, s_it->first, true);
+		}
+
+		// Add the object to the child table
+		std::map<size_t, struct bv_scene_obj *>::iterator so_it = g->scene_objs.find(s_it->first);
+		bu_ptbl_ins(&o->children, (long *)(so_it->second));
+	    }
+	} else {
+	    // We've got an evaluated mode object - we need geometry
+	    // specific to this path.
+	}
+
+	// Apply settings from DbiPath_Settings to object
+	if (s)
+	    s->Write(&o->s_local_os);
+
+	// Determine the color
+	if (!s || !s->override_color) {
+	    struct bu_color c = BU_COLOR_RED;
+	    if (!color(&c, (int)s_it->first)) {
+		// If we don't have a mode specific color,
+		// pull from any other modes
+		color(&c, -1);
+	    }
+	    // We're either default or set to the path color - either way, time
+	    // to write it to the scene obj
+	    bu_color_to_rgb_chars(&c, o->s_color);
+	}
+
+	// Determine the matrix
+	matrix(o->s_mat);
+
+	// Calculate the bounding box (TODO - should we bound the evaluated geometry
+	// for those modes?)
+	bbox(&o->bmin, &o->bmax);
+
+	// Determine if this is a case where our default should be dashed line
+	// drawing (subtraction or intersection).  This only matters in wireframe,
+	// since none of the other modes (at least, for now) do anything different
+	if (!s_it->first) {
+	    if (is_subtraction() || is_intersection())
+		o->s_soldash = 1;
+	}
+    }
+}
+
+void
 DbiPath::Draw(struct bview *v)
 {
     if (UNLIKELY(!v || !v->dmp || !v->dm_draw_sobj))
@@ -1448,7 +1536,7 @@ GObj::bbox(point_t *min, point_t *max)
 }
 
 bool
-GObj::LoadSceneObj(struct bview *v, int mode, bool reload)
+GObj::LoadSceneObj(struct bv_scene_obj *o_obj, struct bview *v, int mode, bool reload)
 {
     // Don't do a view object without a view
     if (!v)
@@ -1456,17 +1544,20 @@ GObj::LoadSceneObj(struct bview *v, int mode, bool reload)
 
     int amode = (mode < 0) ? 0 : mode;
 
-    std::map<size_t, struct bv_scene_obj *>::iterator o_it = scene_objs.find(amode);
-    struct bv_scene_obj *o = NULL;
-    if (scene_objs.find(amode) != scene_objs.end())
-	o = o_it->second;
-
+    struct bv_scene_obj *o = o_obj;
+    o = (scene_objs.find(amode) != scene_objs.end()) ? scene_objs[amode] : o;
     // TODO = do this the right way
     if (!o)
 	BU_GET(o, struct bv_scene_obj);
 
     if (reload)
 	bu_log("clear geometry from o and reload (preferably don't delete scene obj, since that will mess up DbiPath scene obj child pointers...");
+
+    // TODO - check overall LoD enable/disable and set adaptive_wireframe accordingly in o
+
+    // ft_scene_obj should set adaptive_wireframe to 0 if it didn't actually
+    // produce an adaptive wireframe, regardless of the initial setting going
+    // in...
 
     return true;
 }

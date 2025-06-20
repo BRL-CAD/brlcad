@@ -284,7 +284,7 @@ struct bv_scene_obj  {
      * may be overridden locally */
     struct bv_obj_settings *s_os;
     struct bv_obj_settings s_local_os;
-    int s_inherit_settings;           /**< @brief  Use current obj settings when drawing children instead of their settings */
+    int s_override_child_settings;           /**< @brief  Use current obj settings when drawing children instead of their settings */
 
     /* Settings that may be less necessary... */
     struct bv_scene_obj_old_settings s_old;

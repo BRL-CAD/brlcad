@@ -683,14 +683,14 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd)
     if (db_objs) {
 	for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
 	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
-	    draw_scene_obj(dmp, g, v, g->s_force_draw, (g->s_inherit_settings) ? g->s_os : NULL);
+	    draw_scene_obj(dmp, g, v, g->s_force_draw, (g->s_override_child_settings) ? g->s_os : NULL);
 	}
     }
     struct bu_ptbl *local_db_objs = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
     if (local_db_objs) {
 	for (size_t i = 0; i < BU_PTBL_LEN(local_db_objs); i++) {
 	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(local_db_objs, i);
-	    draw_scene_obj(dmp, g, v, g->s_force_draw, (g->s_inherit_settings) ? g->s_os : NULL);
+	    draw_scene_obj(dmp, g, v, g->s_force_draw, (g->s_override_child_settings) ? g->s_os : NULL);
 	}
     }
 
@@ -699,14 +699,14 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd)
     if (view_objs) {
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    draw_scene_obj(dmp, s, v, s->s_force_draw, (s->s_inherit_settings) ? s->s_os : NULL);
+	    draw_scene_obj(dmp, s, v, s->s_force_draw, (s->s_override_child_settings) ? s->s_os : NULL);
 	}
     }
     struct bu_ptbl *local_view_objs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
     if (view_objs) {
 	for (size_t i = 0; i < BU_PTBL_LEN(local_view_objs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(local_view_objs, i);
-	    draw_scene_obj(dmp, s, v, s->s_force_draw, (s->s_inherit_settings) ? s->s_os : NULL);
+	    draw_scene_obj(dmp, s, v, s->s_force_draw, (s->s_override_child_settings) ? s->s_os : NULL);
 	}
     }
 
@@ -805,7 +805,7 @@ dm_draw_objs(struct bview *v, void (*dm_draw_custom)(struct bview *, void *), vo
 	for (size_t i = 0; i < BU_PTBL_LEN(sobjs); i++) {
 	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(sobjs, i);
 	    //bu_log("dm_draw_objs %s\n", bu_vls_cstr(&g->s_name));
-	    draw_scene_obj(dmp, g, v, g->s_force_draw, (g->s_inherit_settings) ? g->s_os : NULL);
+	    draw_scene_obj(dmp, g, v, g->s_force_draw, (g->s_override_child_settings) ? g->s_os : NULL);
 	}
     }
     struct bu_ptbl *iobjs = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
@@ -813,7 +813,7 @@ dm_draw_objs(struct bview *v, void (*dm_draw_custom)(struct bview *, void *), vo
 	for (size_t i = 0; i < BU_PTBL_LEN(iobjs); i++) {
 	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(iobjs, i);
 	    //bu_log("dm_draw_objs(i) %s\n", bu_vls_cstr(&g->s_name));
-	    draw_scene_obj(dmp, g, v, g->s_force_draw, (g->s_inherit_settings) ? g->s_os : NULL);
+	    draw_scene_obj(dmp, g, v, g->s_force_draw, (g->s_override_child_settings) ? g->s_os : NULL);
 	}
     }
 
@@ -822,14 +822,14 @@ dm_draw_objs(struct bview *v, void (*dm_draw_custom)(struct bview *, void *), vo
     if (view_objs && !v->independent) {
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    draw_scene_obj(dmp, s, v, s->s_force_draw, (s->s_inherit_settings) ? s->s_os : NULL);
+	    draw_scene_obj(dmp, s, v, s->s_force_draw, (s->s_override_child_settings) ? s->s_os : NULL);
 	}
     }
     struct bu_ptbl *vo = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
     if (vo && (vo != view_objs || v->independent)) {
 	for (size_t i = 0; i < BU_PTBL_LEN(vo); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(vo, i);
-	    draw_scene_obj(dmp, s, v, s->s_force_draw, (s->s_inherit_settings) ? s->s_os : NULL);
+	    draw_scene_obj(dmp, s, v, s->s_force_draw, (s->s_override_child_settings) ? s->s_os : NULL);
 	}
     }
 
