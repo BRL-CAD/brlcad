@@ -686,11 +686,6 @@ BViewState::Render()
 //
 // If a DbiPath is straight up invalid, it is simply removed from the drawn
 // sets.
-//
-// TODO - for cases where everything except the view itself is the same,
-// should allow a BViewState to "link" itself to another view that
-// maintains these containers...  No reason to do all this multiple
-// times if the only thing that will differ is the bview...
 void
 BViewState::Redraw(struct bv_obj_settings *UNUSED(vs), bool UNUSED(autoview))
 {
