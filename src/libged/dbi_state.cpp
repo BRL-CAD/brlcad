@@ -272,7 +272,7 @@ DbiState::BakePaths()
     std::unordered_map<unsigned long long, DbiPath *>::iterator p_it;
     for (p_it = dbi_paths.begin(); p_it != dbi_paths.end(); ++p_it) {
 	DbiPath *p = p_it->second;
-	p->BakeSceneObj();
+	p->BakeSceneObjs();
     }
 }
 

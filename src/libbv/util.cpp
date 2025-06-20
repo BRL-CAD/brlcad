@@ -1260,7 +1260,7 @@ bv_obj_reset(struct bv_scene_obj *s)
     struct bv_obj_settings defaults = BV_OBJ_SETTINGS_INIT;
     bv_obj_settings_sync(&s->s_local_os, &defaults);
     s->s_os = &s->s_local_os;
-    s->s_inherit_settings = 0;
+    s->s_override_child_settings = 0;
 
     MAT_IDN(s->s_mat);
     VSET(s->s_color, 255, 0, 0);
