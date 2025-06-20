@@ -1067,7 +1067,7 @@ ged_who_argc(struct ged *gedp)
     if (gedp->new_cmd_forms) {
 	if (!gedp || !gedp->ged_gvp || !gedp->dbi_state)
 	    return 0;
-	BViewState *bvs = gedp->dbi_state->GetBViewState(gedp->ged_gvp);
+	BViewState *bvs = gedp->dbi_state->FindBViewState(gedp->ged_gvp);
 	if (bvs)
 	    return bvs->DrawnPathCount();
 	return 0;
@@ -1104,7 +1104,7 @@ ged_who_argv(struct ged *gedp, char **start, const char **end)
     if (gedp->new_cmd_forms) {
 	if (!gedp->ged_gvp || !gedp->dbi_state)
 	    return 0;
-	BViewState *bvs = gedp->dbi_state->GetBViewState(gedp->ged_gvp);
+	BViewState *bvs = gedp->dbi_state->FindBViewState(gedp->ged_gvp);
 	if (bvs) {
 	    std::vector<std::string> drawn_paths = bvs->DrawnPaths();
 	    for (size_t i = 0; i < drawn_paths.size(); i++) {
@@ -1993,7 +1993,7 @@ _ged_rt_write(struct ged *gedp,
     if (argc >= 0) {
 	if (!argc) {
 	    if (gedp->new_cmd_forms) {
-		BViewState *bvs = gedp->dbi_state->GetBViewState(gedp->ged_gvp);
+		BViewState *bvs = gedp->dbi_state->FindBViewState(gedp->ged_gvp);
 		if (bvs) {
 		    std::vector<std::string> drawn_paths = bvs->DrawnPaths();
 		    for (size_t i = 0; i < drawn_paths.size(); i++) {

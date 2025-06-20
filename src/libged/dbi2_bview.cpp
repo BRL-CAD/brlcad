@@ -74,8 +74,6 @@ BViewState::BViewState(DbiState *s, struct bview *ev)
 	bool have_name = true;
 	int vcnt = 1;
 	std::string vname = std::string("V") + std::to_string(vcnt);
-	if (s->shared_vs && vname == std::string(bu_vls_cstr(&s->shared_vs->v->gv_name)))
-	    have_name = false;
 	std::unordered_map<struct bview *, BViewState *>::iterator v_it;
 	for (v_it = s->view_states.begin(); v_it != s->view_states.end(); ++v_it) {
 	    if (vname == std::string(bu_vls_cstr(&v_it->first->gv_name)))
@@ -84,8 +82,7 @@ BViewState::BViewState(DbiState *s, struct bview *ev)
 	while (!have_name) {
 	    vcnt++;
 	    vname = std::string("V") + std::to_string(vcnt);
-	    if (s->shared_vs && vname == std::string(bu_vls_cstr(&s->shared_vs->v->gv_name)))
-		have_name = false;
+	    have_name = true;
 	    for (v_it = s->view_states.begin(); v_it != s->view_states.end(); ++v_it) {
 		if (vname == std::string(bu_vls_cstr(&v_it->first->gv_name)))
 		    have_name = false;
@@ -101,10 +98,14 @@ BViewState::BViewState(DbiState *s, struct bview *ev)
     } else {
 	local_v = false;
     }
+
+    dbis->view_states[v] = this;
 }
 
 BViewState::~BViewState()
 {
+    if (dbis)
+	dbis->view_states.erase(v);
     if (local_v)
 	BU_PUT(v, struct bview);
 }
@@ -115,6 +116,53 @@ BViewState::Name()
     if (!v)
 	return std::string("(NULL)");
     return std::string(bu_vls_cstr(&v->gv_name));
+}
+
+bool
+BViewState::Link(BViewState *ls, bool view_objs)
+{
+    // No linking the default view to anything else
+    if (UNLIKELY(this == dbis->default_view))
+	return false;
+
+    if (!ls)
+	return false;
+
+    if (!view_objs) {
+	l_dbipath = ls;
+    } else {
+	l_viewobj = ls;
+    }
+
+    return true;
+}
+
+bool
+BViewState::UnLink(BViewState *ls, bool view_objs)
+{
+    // No unlinking the default view from itself
+    if (UNLIKELY(this == dbis->default_view))
+	return false;
+
+    if (!ls) {
+	if (!view_objs) {
+	    l_dbipath = NULL;
+	} else {
+	    l_viewobj = NULL;
+	}
+    } else {
+	if (!view_objs) {
+	    if (l_dbipath != ls)
+		return false;
+	    l_dbipath = NULL;
+	} else {
+	    if (l_viewobj != ls)
+		return false;
+	    l_viewobj = NULL;
+	}
+    }
+
+    return true;
 }
 
 void
@@ -572,8 +620,28 @@ BViewState::Render()
     // First, draw database geometry path-based scene objects active in this view
     if (LIKELY(dbis != NULL)) {
 	std::unordered_map<size_t, std::unordered_set<unsigned long long>>::iterator e_it;
+	std::unordered_set<unsigned long long>::iterator s_it;
+
+	// Get linked paths, if any
+	if (l_dbipath && l_dbipath != this) {
+	    for (e_it = l_dbipath->s_expanded.begin(); e_it != l_dbipath->s_expanded.end(); ++e_it) {
+		for (s_it = e_it->second.begin(); s_it != e_it->second.end(); ++s_it) {
+		    DbiPath *p = dbis->GetDbiPath(*s_it);
+		    if (!p)
+			continue;
+		    // Check if this leaf is part of an edit - if so, we defer drawing
+
+		    // Check if this leaf is part of a selection - if so, we need to override
+		    // its color
+
+		    // Standard leaf - have the dm do its standard operation on the object
+		    p->Draw(v);
+		}
+	    }
+	}
+
+	// Get local-only paths
 	for (e_it = s_expanded.begin(); e_it != s_expanded.end(); ++e_it) {
-	    std::unordered_set<unsigned long long>::iterator s_it;
 	    for (s_it = e_it->second.begin(); s_it != e_it->second.end(); ++s_it) {
 		DbiPath *p = dbis->GetDbiPath(*s_it);
 		if (!p)
@@ -587,14 +655,21 @@ BViewState::Render()
 		p->Draw(v);
 	    }
 	}
-
-	// Next draw user-provided scene objects common to all views
-	std::unordered_set<struct bv_scene_obj *>::iterator so_it;
-	for (so_it = dbis->scene_objs.begin(); so_it != dbis->scene_objs.end(); ++so_it) {
-	}
     }
 
-    // Then draw user-provided scene objects specific to this view
+    // Then draw user-provided scene objects
+    //
+    // First, those from the linked view (if any)
+    std::unordered_set<struct bv_scene_obj *>::iterator o_it;
+    if (l_viewobj && l_viewobj != this) {
+	for (o_it = l_viewobj->scene_objs.begin(); o_it != l_viewobj->scene_objs.end(); ++o_it)
+	    (*v->dm_draw_sobj)(v->dmp, *o_it);
+    }
+
+    // Next, those specific to this view
+    for (o_it = scene_objs.begin(); o_it != scene_objs.end(); ++o_it)
+	(*v->dm_draw_sobj)(v->dmp, *o_it);
+
 
     // Lastly, draw any faceplate elements active in the view.
 
@@ -620,12 +695,8 @@ void
 BViewState::Redraw(struct bv_obj_settings *UNUSED(vs), bool UNUSED(autoview))
 {
     // If we have a linked view, it is there responsibility of the app
-    // to call Redraw on that view rather than this one.
-    //
-    // TODO - need to similarly guard other methods and have them return
-    // data from l-> versions of things...
-    if (l)
-	return;
+    // to call Redraw on that view rather than this one.  We will process
+    // only the info unique to this view.
 
     // Clear fully drawn and partially drawn path sets - they are derived from
     // drawn_paths and may have changed.
