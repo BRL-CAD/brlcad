@@ -64,8 +64,22 @@ DbiState::DbiState(struct ged *ged_p)
     // for modes like quad view, so it is generally the "target" view others will
     // link to and shouldn't be linked to another view.
     default_view = new BViewState(this, ged_p->ged_gvp);
-    default_view->l = default_view;
+    view_states[ged_p->ged_gvp] = default_view;
+    // "Link" the default view to itself - this lets us detect that this view
+    // is neither an independent view (l == NULL) nor a candidate for linking.
+    default_view->l_dbipath = default_view;
+    default_view->l_viewobj = default_view;
 
+    // Set up view states for any other pre-existing views as well
+    struct bu_ptbl *vset = bv_set_views(&ged_p->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(vset); i++) {
+	struct bview *vsv = (struct bview *)BU_PTBL_GET(vset, i);
+	if (view_states.find(vsv) != view_states.end())
+	    continue;
+        view_states[vsv] = new BViewState(this, vsv);
+    }
+
+    // Set up the default selection state
     d_selection = new BSelectState(this);
     selected_sets[std::string("default")] = d_selection;
     gedp = ged_p;
@@ -98,10 +112,15 @@ DbiState::DbiState(struct ged *ged_p)
 DbiState::~DbiState()
 {
     std::unordered_map<std::string, BSelectState *>::iterator ss_it;
-    for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++) {
+    for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ++ss_it)
 	delete ss_it->second;
-    }
-    delete shared_vs;
+
+    std::unordered_map<struct bview *, BViewState *>::iterator v_it;
+    for (v_it = view_states.begin(); v_it != view_states.end(); ++v_it)
+	delete v_it->second;
+
+    // TODO - clean up GObjs, DbiPaths, the DbiPath queue...
+
     rt_clean_resource_basic(NULL, res);
     BU_PUT(res, struct resource);
 
@@ -349,24 +368,36 @@ DbiState::get_combinsts(std::vector<unsigned long long> &path)
 }
 
 BViewState *
-DbiState::GetBViewState(struct bview *v)
+DbiState::AddBViewState(struct bview *v)
 {
-    if (!v || shared_vs->v == v)
-	return shared_vs;
-    if (view_states.find(v) != view_states.end())
-	return view_states[v];
-
-    BViewState *nv = new BViewState(this);
-    view_states[v] = nv;
+    BViewState *nv;
+    if (v) {
+	nv = FindBViewState(v);
+	if (nv)
+	    return nv;
+    }
+    nv = new BViewState(this, v);
     return nv;
 }
 
+BViewState *
+DbiState::FindBViewState(struct bview *v)
+{
+    if (UNLIKELY(!v))
+	return NULL;
+
+    std::unordered_map<struct bview *, BViewState *>::iterator v_it = view_states.find(v);
+    if (v_it != view_states.end())
+	return v_it->second;
+
+    return NULL;
+}
 
 BViewState *
 DbiState::FindBViewState(std::string &vname)
 {
-    if (std::string(bu_vls_cstr(&shared_vs->v->gv_name)) == vname)
-	return shared_vs;
+    if (UNLIKELY(!vname.length()))
+	return NULL;
 
     std::unordered_map<struct bview *, BViewState *>::iterator v_it;
     for (v_it = view_states.begin(); v_it != view_states.end(); ++v_it) {
@@ -638,13 +669,8 @@ DbiState::Sync()
     // For all associated view states, execute any necessary changes to the
     // drawn object lists and scene objects
     std::unordered_map<struct bview *, BViewState *>::iterator v_it;
-    if (shared_vs)
-	shared_vs->Redraw();
-    for (v_it = view_states.begin(); v_it != view_states.end(); ++v_it) {
-	if (v_it->second == shared_vs)
-	    continue;
+    for (v_it = view_states.begin(); v_it != view_states.end(); ++v_it)
 	v_it->second->Redraw();
-    }
 
     // Sync all selection states
     if (d_selection)
@@ -659,7 +685,6 @@ DbiState::Sync()
     // Make sure the renders are current
     for (v_it = view_states.begin(); v_it != view_states.end(); ++v_it)
 	v_it->second->Render();
-
 
     // Updates done, clear items stored by callbacks
     added.clear();
