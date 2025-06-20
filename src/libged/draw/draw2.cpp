@@ -75,63 +75,11 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* Draw may operate on a specific user specified view.  If it does so,
-     * we want the default settings to reflect those set in that particular
-     * view.  In order to set up the correct default views, we need to know
-     * if a specific view has in fact been specified.  We do a preliminary
-     * option check to figure this out */
-    struct bview *cv = gedp->ged_gvp;
-    struct bu_vls cvls = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc vd[2];
-    BU_OPT(vd[0],  "V", "view",    "name",      &bu_opt_vls, &cvls,   "specify view to draw on");
-    BU_OPT_NULL(vd[1]);
-    int opt_ret = bu_opt_parse(NULL, argc, argv, vd);
-    argc = opt_ret;
-    if (argc < 0) {
-	bu_vls_free(&cvls);
-	return BRLCAD_ERROR;
-    }
-
-    if (bu_vls_strlen(&cvls)) {
-	cv = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
-	if (!cv) {
-	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
-	    bu_vls_free(&cvls);
-	    return BRLCAD_ERROR;
-	}
-
-	if (!cv->independent) {
-	    bu_vls_printf(gedp->ged_result_str, "Specified view %s is not an independent view, and as such does not support specifying db objects for display in only this view.  To change the view's status, he command 'view independent %s 1' may be applied.\n", bu_vls_cstr(&cvls), bu_vls_cstr(&cvls));
-	    bu_vls_free(&cvls);
-	    return BRLCAD_ERROR;
-	}
-    }
-
-    // If we don't have a specified view, and the default view isn't a shared view, see if
-    // we can find a shared view in the view set.
-    if (!bu_vls_strlen(&cvls) && (!cv || cv->independent)) {
-	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-	    struct bview *bv = (struct bview *)BU_PTBL_GET(views, i);
-	    if (!bv->independent) {
-		cv = bv;
-		break;
-	    }
-	}
-    }
-
-    bu_vls_free(&cvls);
-
-    // We need a current view, either from gedp or from the options
-    if (!cv) {
-	bu_vls_printf(gedp->ged_result_str, "No view specified and no shared views found");
-	return BRLCAD_ERROR;
-    }
-
     /* User settings may override various options - set up to collect them.
      * Option defaults may be overridden for the purposes of the current draw
      * command by command line options. */
     struct bv_obj_settings vs = BV_OBJ_SETTINGS_INIT;
+    struct bu_vls cvls = BU_VLS_INIT_ZERO;
 
     int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
     struct bu_opt_desc d[18];
@@ -152,6 +100,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[14], "C", "color",         "r/g/b", &draw_opt_color, &vs,                "Override object colors");
     BU_OPT(d[15],  "", "line-width",   "#",          &bu_opt_int, &vs.s_line_width,   "Override default line width");
     BU_OPT(d[16], "R", "no-autoview",   "",                 NULL, &no_autoview,       "Do not calculate automatic view, even if initial scene is empty.");
+    BU_OPT(d[17], "V", "view",    "name",            &bu_opt_vls, &cvls,              "Specify specific view to add paths to (instantiates objects only in that view)");
     BU_OPT_NULL(d[17]);
 
     /* If no args, must be wanting help */
@@ -162,7 +111,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Process command line args into vs with bu_opt */
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
-    opt_ret = bu_opt_parse(&omsg, argc, argv, d);
+    int opt_ret = bu_opt_parse(&omsg, argc, argv, d);
     if (opt_ret < 0) {
 	bu_vls_printf(gedp->ged_result_str, "option parsing error: %s\n", bu_vls_cstr(&omsg));
 	bu_vls_free(&omsg);
@@ -173,6 +122,18 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
 	return BRLCAD_OK;
+    }
+
+    // If we have a specified view, make sure it matches one we know about
+    BViewState *svs = NULL;
+    if (bu_vls_strlen(&cvls)) {
+	std::string vname(bu_vls_cstr(&cvls));
+	svs = gedp->dbi_state->FindBViewState(vname);
+	if (!svs) {
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
+	    bu_vls_free(&cvls);
+	    return BRLCAD_ERROR;
+	}
     }
 
     // Whatever is left after argument processing are the potential draw paths
