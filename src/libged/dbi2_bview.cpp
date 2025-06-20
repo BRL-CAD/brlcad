@@ -69,6 +69,35 @@ BViewState::BViewState(DbiState *s, struct bview *ev)
 	BU_GET(v, struct bview);
 	bv_init(v, NULL);
 	local_v = true;
+
+	// Generate a view name that doesn't clash with any other added view
+	bool have_name = true;
+	int vcnt = 1;
+	std::string vname = std::string("V") + std::to_string(vcnt);
+	if (s->shared_vs && vname == std::string(bu_vls_cstr(&s->shared_vs->v->gv_name)))
+	    have_name = false;
+	std::unordered_map<struct bview *, BViewState *>::iterator v_it;
+	for (v_it = s->view_states.begin(); v_it != s->view_states.end(); ++v_it) {
+	    if (vname == std::string(bu_vls_cstr(&v_it->first->gv_name)))
+		have_name = false;
+	}
+	while (!have_name) {
+	    vcnt++;
+	    vname = std::string("V") + std::to_string(vcnt);
+	    if (s->shared_vs && vname == std::string(bu_vls_cstr(&s->shared_vs->v->gv_name)))
+		have_name = false;
+	    for (v_it = s->view_states.begin(); v_it != s->view_states.end(); ++v_it) {
+		if (vname == std::string(bu_vls_cstr(&v_it->first->gv_name)))
+		    have_name = false;
+	    }
+	    if (vcnt == INT_MAX) {
+		bu_log("Error generating view name\n");
+		bu_vls_sprintf(&v->gv_name, "(NULL)");
+		return;
+	    }
+	}
+	bu_vls_sprintf(&v->gv_name, "%s", vname.c_str());
+
     } else {
 	local_v = false;
     }
@@ -78,6 +107,14 @@ BViewState::~BViewState()
 {
     if (local_v)
 	BU_PUT(v, struct bview);
+}
+
+std::string
+BViewState::Name()
+{
+    if (!v)
+	return std::string("(NULL)");
+    return std::string(bu_vls_cstr(&v->gv_name));
 }
 
 void

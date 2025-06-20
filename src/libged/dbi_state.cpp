@@ -59,7 +59,13 @@ DbiState::DbiState(struct ged *ged_p)
 {
     BU_GET(res, struct resource);
     rt_init_resource(res, 0, NULL);
-    shared_vs = new BViewState(this);
+
+    // The default view is handled a bit specially - it is the "anchor" used
+    // for modes like quad view, so it is generally the "target" view others will
+    // link to and shouldn't be linked to another view.
+    default_view = new BViewState(this, ged_p->ged_gvp);
+    default_view->l = default_view;
+
     d_selection = new BSelectState(this);
     selected_sets[std::string("default")] = d_selection;
     gedp = ged_p;
@@ -345,7 +351,7 @@ DbiState::get_combinsts(std::vector<unsigned long long> &path)
 BViewState *
 DbiState::GetBViewState(struct bview *v)
 {
-    if (!v->independent)
+    if (!v || shared_vs->v == v)
 	return shared_vs;
     if (view_states.find(v) != view_states.end())
 	return view_states[v];
@@ -353,6 +359,22 @@ DbiState::GetBViewState(struct bview *v)
     BViewState *nv = new BViewState(this);
     view_states[v] = nv;
     return nv;
+}
+
+
+BViewState *
+DbiState::FindBViewState(std::string &vname)
+{
+    if (std::string(bu_vls_cstr(&shared_vs->v->gv_name)) == vname)
+	return shared_vs;
+
+    std::unordered_map<struct bview *, BViewState *>::iterator v_it;
+    for (v_it = view_states.begin(); v_it != view_states.end(); ++v_it) {
+	if (std::string(bu_vls_cstr(&v_it->first->gv_name)) == vname)
+	    return v_it->second;
+    }
+
+    return NULL;
 }
 
 bool
