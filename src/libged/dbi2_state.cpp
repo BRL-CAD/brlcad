@@ -311,13 +311,13 @@ DbiPath::Write(struct bv_obj_settings *s_obj, int mode)
 }
 
 void
-DbiPath::BakeSceneObjs(struct bview *v)
+DbiPath::BakeSceneObjs(BViewState *vs)
 {
     std::map<size_t, DbiPath_Settings>::iterator ds_it;
 
-    // Check if we're doing the default version
-    BViewState *wvs = d->FindBViewState(v);
-    if (!wvs)
+    // Either the specified view or the default view
+    BViewState *wvs = (vs) ? vs : d->FindBViewState(NULL);
+    if (UNLIKELY(!wvs))
 	return;
 
     std::map<size_t, struct bv_scene_obj *>::iterator s_it;
@@ -401,6 +401,7 @@ DbiPath::BakeSceneObjs(struct bview *v)
 	}
     }
 }
+
 
 void
 DbiPath::Draw(struct bview *v)
