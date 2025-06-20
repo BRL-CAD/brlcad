@@ -402,23 +402,6 @@ DbiPath::BakeSceneObjs(BViewState *vs)
     }
 }
 
-
-void
-DbiPath::Draw(struct bview *v)
-{
-    BViewState *wvs = d->FindBViewState(v);
-    if (UNLIKELY(!wvs))
-	return;
-
-    if (UNLIKELY(!v || !v->dmp || !v->dm_draw_sobj))
-	return;
-
-    std::map<size_t, struct bv_scene_obj *>::iterator s_it;
-    for (s_it = scene_objs[wvs].begin(); s_it != scene_objs[wvs].end(); ++s_it)
-	(*v->dm_draw_sobj)(v->dmp, s_it->second);
-}
-
-
 void
 DbiPath::Draw(BViewState *vs)
 {

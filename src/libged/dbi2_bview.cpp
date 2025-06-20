@@ -635,7 +635,7 @@ BViewState::Render()
 		    // its color
 
 		    // Standard leaf - have the dm do its standard operation on the object
-		    p->Draw(v);
+		    p->Draw(this);
 		}
 	    }
 	}
@@ -652,7 +652,7 @@ BViewState::Render()
 		// its color
 
 		// Standard leaf - have the dm do its standard operation on the object
-		p->Draw(v);
+		p->Draw(this);
 	    }
 	}
     }
