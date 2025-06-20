@@ -53,6 +53,7 @@
 
 class GED_EXPORT DbiPath;
 class GED_EXPORT DbiState;
+class GED_EXPORT BViewState;
 
 // In-memory representation of a Comb Tree instance from a .g database
 //
@@ -186,13 +187,16 @@ class GED_EXPORT GObj {
 	// scene object - most of the time these will be load-once-view-many.
 	// By default the GObj stores the scene locally, but the caller may
 	// specify at targeted object to use instead.
-	bool LoadSceneObj(struct bv_scene_obj *o_obj = NULL, struct bview *v = NULL, int mode = 0, bool reload = false);
+	bool LoadSceneObj(struct bv_scene_obj *o_obj = NULL, BViewState *wvs = NULL, int mode = 0, bool reload = false);
 
 	// Optional scene object(s) associated with this object.
 	// Map key is the drawing mode (0 = wireframe, 1 = shaded, etc.)
 	// Generally speaking these will be referenced by scene_objs
 	// in DbiPath entities.
-	std::map<size_t, struct bv_scene_obj *> scene_objs;
+	//
+	// Most commonly, only the default_view will have any objects in
+	// its map - but we need to allow for other possibilities.
+	std::unordered_map<BViewState *, std::map<size_t, struct bv_scene_obj *>> scene_objs;
 
 	// Record the view used to generate the geometry associated with this
 	// path.  Often won't matter, but for LoD sensitive data this is
@@ -338,6 +342,7 @@ class GED_EXPORT DbiPath {
 	// All scene objects associated with this path need to be baked before
 	// this call is made to be sure their properties are current.
 	void Draw(struct bview *v);
+	void Draw(BViewState *vs);
 
 	// Return true if this path is a parent path of p
 	bool parent(DbiPath &p);
@@ -437,7 +442,7 @@ class GED_EXPORT DbiPath {
 
 	// Optional scene object(s) associated with this path.
 	// Map key is the drawing mode (0 = wireframe, 1 = shaded, etc.)
-	std::map<size_t, struct bv_scene_obj *> scene_objs;
+	std::unordered_map<BViewState *, std::map<size_t, struct bv_scene_obj *>> scene_objs;
 
 	// Allow BViewState access to the parent_path_hashes set
 	friend class BViewState;
@@ -690,7 +695,10 @@ class GED_EXPORT BViewState {
 	std::string print_view_state();
 
 	friend class BSelectState;
+	friend class DbiPath;
 	friend class DbiState;
+	friend class GObj;
+
     private:
 	// Sets holding all drawn paths.
 	//
