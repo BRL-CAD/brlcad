@@ -121,6 +121,7 @@ ged_init(struct ged *gedp)
     // Establish an initial view
     BU_ALLOC(gedp->ged_gvp, struct bview);
     bv_init(gedp->ged_gvp, &gedp->ged_views);
+    bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
     bv_set_add_view(&gedp->ged_views, gedp->ged_gvp);
     bu_ptbl_ins(&gedp->ged_free_views, (long *)gedp->ged_gvp);
 
