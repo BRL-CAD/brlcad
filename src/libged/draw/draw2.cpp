@@ -163,66 +163,21 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	vs.s_dmode = drawing_modes[0];
     }
 
-    // Before we start doing anything with the object set, record if things are
+    // Before we start doing anything with the object set, record if any views are
     // starting out empty.
-    int blank_slate = 0;
-    struct bu_ptbl *dobjs = bv_view_objs(cv, BV_DB_OBJS);
-    struct bu_ptbl *local_dobjs = bv_view_objs(cv, BV_DB_OBJS);
-    struct bu_ptbl *vobjs = bv_view_objs(cv, BV_VIEW_OBJS);
-    struct bu_ptbl *vlobjs = bv_view_objs(cv, BV_VIEW_OBJS | BV_LOCAL_OBJS);
-    if ((!dobjs || !BU_PTBL_LEN(dobjs)) && (!local_dobjs || !BU_PTBL_LEN(local_dobjs)) &&
-	    (!vobjs || !BU_PTBL_LEN(vobjs)) && (!vlobjs || !BU_PTBL_LEN(vlobjs))) {
-	blank_slate = 1;
-    }
+    gedp->dbi_state->FlagEmpty();
 
-    // Drawing can get complicated when we have multiple active views with
-    // different settings. The simplest case is when the current or specified
-    // view is an independent view - we just update it and return.
-    if (cv->independent) {
-	BViewState *bvs = gedp->dbi_state->get_view_state(cv);
-	for (size_t i = 0; i < (size_t)argc; ++i)
-	    bvs->add_path(argv[i]);
-	std::unordered_set<struct bview *> vset;
-	vset.insert(cv);
-	bvs->redraw(&vs, vset, !(blank_slate && !no_autoview));
-	return BRLCAD_OK;
-    }
+    // If we have a specified view, add JUST to that view.  Otherwise, we're after
+    // the default view.
+    BViewState *wv = (svs) ? svs : gedp->dbi_state->FindBViewState(NULL);
+    for (int i = 0; i < argc; i++)
+	wv->AddPath(argv[i], vs.s_dmode, &vs);
 
-    // If we have multiple views, we have to handle each view.  Most of the
-    // time the work will be done in the first pass (when objects do not have
-    // view specific geometry to generate) but this is not true when adaptive
-    // plotting is enabled.
-    std::unordered_map<BViewState *, std::unordered_set<struct bview *>> vmap;
-    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-	if (v->independent)
-	    continue;
-	BViewState *bvs = gedp->dbi_state->get_view_state(cv);
-	if (!bvs)
-	    continue;
-	vmap[bvs].insert(v);
-    }
-    std::unordered_map<BViewState *, std::unordered_set<struct bview *>>::iterator bv_it;
-    for (bv_it = vmap.begin(); bv_it != vmap.end(); bv_it++) {
-	for (size_t i = 0; i < (size_t)argc; ++i)
-	    bv_it->first->add_path(argv[i]);
-	bv_it->first->redraw(&vs, bv_it->second, !(blank_slate && !no_autoview));
-    }
+    // Path added - one or more views now need to be updated.  Unless we've been
+    // told not to, trigger autoview on any previously empty views.
+    gedp->dbi_state->Redraw(wv, !no_autoview);
+    gedp->dbi_state->Render(wv);
 
-    return BRLCAD_OK;
-}
-
-static int
-_ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char **argv)
-{
-    if (!gedp || !gedp->dbi_state || !v)
-	return BRLCAD_ERROR;
-    std::unordered_set<struct bview *> vset;
-    BViewState *bvs = gedp->dbi_state->get_view_state(v);
-    if (!bvs)
-	return BRLCAD_ERROR;
-    bvs->refresh(v, argc, argv);
     return BRLCAD_OK;
 }
 
@@ -238,46 +193,33 @@ ged_redraw2_core(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* redraw may operate on a specific user specified view, or on
+    /* Redraw may operate on a specific user specified view, or on
      * all views (default) */
-    struct bview *cv = NULL;
     struct bu_vls cvls = BU_VLS_INIT_ZERO;
     struct bu_opt_desc vd[2];
     BU_OPT(vd[0],  "V", "view",    "name",      &bu_opt_vls, &cvls,   "specify view to draw on");
     BU_OPT_NULL(vd[1]);
     int opt_ret = bu_opt_parse(NULL, argc, argv, vd);
     argc = opt_ret;
+
+    BViewState *svs = NULL;
     if (bu_vls_strlen(&cvls)) {
-	cv = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
-	if (!cv) {
+    	std::string vname(bu_vls_cstr(&cvls));
+	svs = gedp->dbi_state->FindBViewState(vname);
+	if (!svs) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
 	    return BRLCAD_ERROR;
 	}
+
     }
     bu_vls_free(&cvls);
 
-    int ret = BRLCAD_OK;
-    if (cv) {
-	return _ged_redraw_view(gedp, cv, argc, argv);
-    } else {
-	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-	if (!BU_PTBL_LEN(views)) {
-	    bu_vls_printf(gedp->ged_result_str, "No views defined\n");
-	    return BRLCAD_OK;
-	}
-	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-	    struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-	    if (!v) {
-		bu_log("WARNING, draw2.cpp:%d - null view stored in ged_views index %zu, skipping\n", __LINE__, i);
-		continue;
-	    }
-	    int nret = _ged_redraw_view(gedp, v, argc, argv);
-	    if (nret != BRLCAD_OK)
-		ret = nret;
-	}
-    }
-    return ret;
+    BViewState *wv = (svs) ? svs : gedp->dbi_state->FindBViewState(NULL);
+    gedp->dbi_state->Redraw(wv);
+    gedp->dbi_state->Render(wv);
+
+    return BRLCAD_OK;
 }
 
 // Local Variables:

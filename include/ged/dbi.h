@@ -229,7 +229,7 @@ class GED_EXPORT GObj {
 	void GenCombInstances();
 };
 
-// Ther are a variety of settings which can potentially be overridden by
+// There are a variety of settings which can potentially be overridden by
 // command line arguments when drawing.  Provide a container to hold such
 // arguments, as well as flags (where appropriate) to indicate that a
 // non-default value has been set - in other words, the value should override
@@ -343,6 +343,10 @@ class GED_EXPORT DbiPath {
 	// this call is made to be sure their properties are current.
 	void Draw(BViewState *vs);
 
+	// Get the leaf directory pointer of the path.  Returns NULL if there
+	// is no such directory pointer.
+	struct directory *LeafDp();
+
 	// Return true if this path is a parent path of p
 	bool parent(DbiPath &p);
 
@@ -379,7 +383,7 @@ class GED_EXPORT DbiPath {
 	// Report how deep the leaf element is in the hierarchy.  A top level
 	// single object path, for example would be depth 0, and a/b/c would be
 	// depth 2.
-	size_t depth();
+	size_t Depth();
 
 	// Produce a string representing the path.  pmax may be set to the
 	// maximum number of path elements to include, and verbose is specified
@@ -564,6 +568,11 @@ class GED_EXPORT BViewState {
 	BViewState(DbiState *db = NULL, struct bview *ev = NULL);
 	~BViewState();
 
+	// Report if there are any active objects (DbiPath or vanilla scene
+	// objects) active in the view.  This will include any paths or
+	// objects active due to views connected to this one by Link().
+	bool Empty();
+
 	// Allow a view state to specify a "linked" view state where it will
 	// source data in addition to its own.
 	//
@@ -595,6 +604,28 @@ class GED_EXPORT BViewState {
 	//
 	// v->UnLink(dbis->default_view);        // DbiPaths
 	// v->UnLink(dbis->default_view, true);  // View objects
+	//
+	// Note that objects being incorporated into this view via Link from
+	// another view will be drawn using the original view's settings to
+	// determine LoD geometries, NOT the current view.
+	//
+	// If the Link target is the default view, the default view's logic
+	// will try to take into account all active views and pick the highest
+	// level of detail needed for any individual view.  This may mean some
+	// views will draw some objects at a higher LoD than strictly needed
+	// for that individual view, but avoids data duplication overall.
+	//
+	// If the Link target is a view other than the default view, the LoD
+	// will be based on whatever the other view is using and NOT be
+	// adjusted for the current view.  In that situation, the rendering in
+	// this view may be coarser than the LoD settings call for.
+	//
+	// If the application needs to always have LoD governed by the current
+	// view regardless of other view states, it should avoid linking views
+	// and populate the paths independently for each view.  This will mean
+	// data duplication and consume more memory, but is the only way to
+	// ensure the scene objects in multiple views are displayed at the LoD
+	// dictated by the local view settings.
 	bool Link(BViewState *ls = NULL, bool view_objs = false);
 	bool UnLink(BViewState *ls = NULL, bool view_objs = false);
 
@@ -623,9 +654,9 @@ class GED_EXPORT BViewState {
 	//
 	// Like AddPath, this stages paths for subsequent processing but does
 	// not actually trigger a redraw.
-	void RemovePath(const char *p, int mode = -1);
-	void RemovePath(DbiPath *p, int mode = -1);
-	void RemovePath(unsigned long long phash = 0, int mode = -1);
+	void RemovePath(const char *p, int mode = -1, bool rebuild = true);
+	void RemovePath(DbiPath *p, int mode = -1, bool rebuild = true);
+	void RemovePath(unsigned long long phash = 0, int mode = -1, bool rebuild = true);
 
 	// An application may add and remove arbitrary scene objects to a
 	// scene, not just geometry specified DbiPaths.  These objects may be
@@ -661,8 +692,10 @@ class GED_EXPORT BViewState {
 	int IsDrawn(DbiPath *p = NULL, int mode = -1);
 	int IsDrawn(unsigned long long hash = 0, int mode = -1);
 
-	// Clear all drawn objects
-	void Clear(int mode = -1);
+	// Erase specified objects from the scene.  By default these are
+	// path specifiers, but if process_scene_objs = true non-geometry view
+	// objects will be checked instead.
+	void Erase(int mode = -1, bool process_scene_objs = false, int argc = 0, const char **av = NULL);
 
 	// A render does not update drawn object geometry - it just triggers a
 	// redraw of the scene.  If there is any chance the database has
@@ -671,22 +704,28 @@ class GED_EXPORT BViewState {
 	// Render is called again.
 	void Render();
 
-	// A redraw validates, updates (and - if necessary - rebuilds) drawn
-	// DbiPaths and their corresponding scene objects.  If a draw command
-	// has added new paths to the scene, this is the command that will make
-	// sure the associated scene object geometry is correct.
+	// A redraw validates, updates (and - if necessary - rebuilds)
+	// drawn DbiPaths and their corresponding scene objects.  If a draw
+	// command has added new paths to the scene, this is the command
+	// that will make sure the associated scene object geometry is
+	// correct.
 	//
-	// If autoview is true, Redraw will assume the view is being populated
-	// for the first time and will attempt to initialize it based on the
-	// currently available geometry.
+	// If autoview is true, and the internal empty flag has been set
+	// previously by Empty(), Redraw() will assume the view is being
+	// populated for the first time and will attempt to initialize it
+	// based on the currently available geometry.
 	//
 	// Note that a Redraw will not automatically trigger Render calls
-	// for the views - whether to Render immediately or wait for further
-	// processing is up to the calling code.
-	void Redraw(
-		struct bv_obj_settings *vs = NULL,
-		bool autoview = true
-		);
+	// for the views - whether to Render immediately or wait for
+	// further processing is up to the calling code.
+	void Redraw(bool autoview = true);
+
+
+	// TODO - add update callback function that parent code can use
+	// to take action after a ReDraw, Add*, Remove*, etc.  Generally
+	// that will probably constitute calling Render(), since after any
+	// modding action the Render may be out of date.
+	// bu_clbk_t update_clbk;
 
 	// Debugging methods for printing out current states - the use of hashes
 	// means direct inspection of most data isn't informative, so we provide
@@ -754,6 +793,9 @@ class GED_EXPORT BViewState {
 
 	struct bview *v;
 	bool local_v;
+
+	// We start with an empty view
+	bool view_empty = true;
 
 };
 
@@ -881,14 +923,40 @@ class GED_EXPORT DbiState {
 	// just returns NULL.
 	BViewState *FindBViewState(std::string &vname);
 
-	// Methods for adding and removing user-provided scene objects to
-	// the main 3D scene
-	bool AddObj(struct bv_scene_obj *s);
-	bool RemoveObj(struct bv_scene_obj *s);
-	bool RemoveObj(const char *oname);
+	// Clear specified drawn objects from v
+	//
+	// If v == NULL, clear all active views
+	//
+	// If !process_scene_objs, clear DbiPath entities.  Otherwise clear scene_objs
+	//
+	// If no list is specified, clear everything in the active category
+	// (DbiPath or scene_objs)
+	void Erase(BViewState *v = NULL, int mode = -1, bool process_scene_objs = false, int argc = 0, const char **av = NULL);
 
-	// Clear all drawn objects from all active views
-	void Clear(int mode = -1);
+	// Record in all active views whether the view is empty.  This is used
+	// at the beginning of a draw cycle to allow the views to know whether
+	// or not they need to trigger an autoview alignment.  By default they
+	// will if they need to, although the caller may disable this when they
+	// call Redraw().
+	void FlagEmpty();
+
+	// Call Redraw() for v and all views linked to v.  Generally used after
+	// a command line command.  By default (i.e. no specific view argument)
+	// will trigger a Redraw on the default view and all views linked to
+	// the default view.
+	//
+	// This method is defined in DbiState because actions in one view may
+	// frequently have implications for other views linked to that view -
+	// and a database state change can also impact multiple views.  This
+	// method is intended to save client codes the trouble of bookkeeping
+	// when it comes to making sure the various views get updated.
+	void Redraw(BViewState *v = NULL, bool autoview = true);
+
+	// Call Render() for v and all views linked to v.  Generally used after
+	// a command line command.  By default (i.e. no specific view argument)
+	// will trigger a Render on the default view and all views linked to
+	// the default view.
+	void Render(BViewState *v = NULL);
 
 	/*******************************************************************
          *                    Selection States

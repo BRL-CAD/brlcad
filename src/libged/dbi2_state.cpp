@@ -413,6 +413,15 @@ DbiPath::Draw(BViewState *vs)
 	(*vs->v->dm_draw_sobj)(vs->v->dmp, s_it->second);
 }
 
+struct directory *
+DbiPath::LeafDp()
+{
+    GObj *g = GetGObj(elements.size() - 1);
+    if (!g)
+	return NULL;
+    return g->dp;
+}
+
 bool
 DbiPath::parent(DbiPath &p)
 {
@@ -655,7 +664,7 @@ DbiPath::cyclic(bool full_check)
 }
 
 size_t
-DbiPath::depth()
+DbiPath::Depth()
 {
     if (UNLIKELY(!elements.size()))
 	return 0;
@@ -732,7 +741,7 @@ DbiPath::bbox(point_t *bmin, point_t *bmax)
     // calculation, so if there is no associated GObj we can't proceed.
     // However, it doesn't imply an invalid path, since a comb tree in a .g may
     // reference a non existent object.
-    GObj *g = GetGObj(depth());
+    GObj *g = GetGObj(Depth());
     if (!g)
 	return false;
     g->bbox(&lbmin, &lbmax);
