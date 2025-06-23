@@ -343,9 +343,10 @@ class GED_EXPORT DbiPath {
 	// this call is made to be sure their properties are current.
 	void Draw(BViewState *vs);
 
-	// Get the leaf directory pointer of the path.  Returns NULL if there
-	// is no such directory pointer.
-	struct directory *LeafDp();
+	// Get the leaf directory pointer of indexed element of the path.
+	// Default (-1) returns the leaf dp.  Returns NULL if there is no such
+	// directory pointer.
+	struct directory *GetDp(long ind = -1);
 
 	// Return true if this path is a parent path of p
 	bool parent(DbiPath &p);

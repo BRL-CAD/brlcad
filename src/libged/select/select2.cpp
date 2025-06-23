@@ -147,7 +147,7 @@ _select_cmd_list(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
 
     if (!argc) {
-	std::vector<std::string> ssets = gedp->dbi_state->list_selection_sets();
+	std::vector<std::string> ssets = gedp->dbi_state->ListSelectionSets();
 	for (size_t i = 0; i < ssets.size(); i++) {
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", ssets[i].c_str());
 	}
@@ -155,7 +155,7 @@ _select_cmd_list(void *bs, int argc, const char **argv)
     }
 
     const char *sname = argv[0];
-    std::vector<BSelectState *> ss = gedp->dbi_state->get_selected_states(sname);
+    std::vector<BSelectState *> ss = gedp->dbi_state->GetSelectionSet(sname);
     if (!ss.size()) {
 	bu_vls_printf(gedp->ged_result_str, ": %s does not match any selection sets\n", sname);
 	return BRLCAD_ERROR;
