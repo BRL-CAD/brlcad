@@ -128,12 +128,18 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     BViewState *svs = NULL;
     if (bu_vls_strlen(&cvls)) {
 	std::string vname(bu_vls_cstr(&cvls));
-	svs = gedp->dbi_state->FindBViewState(vname);
-	if (!svs) {
+	std::vector<BViewState *> svsv = gedp->dbi_state->FindBViewState(vname.c_str());
+	if (!svsv.size()) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
 	    return BRLCAD_ERROR;
 	}
+	if (svsv.size() > 1) {
+	    bu_vls_printf(gedp->ged_result_str, "TODO - More than one view matches %s, need to support that...\n", bu_vls_cstr(&cvls));
+	    bu_vls_free(&cvls);
+	    return BRLCAD_ERROR;
+	}
+	svs = svsv[0];
     }
 
     // Whatever is left after argument processing are the potential draw paths
@@ -169,7 +175,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 
     // If we have a specified view, add JUST to that view.  Otherwise, we're after
     // the default view.
-    BViewState *wv = (svs) ? svs : gedp->dbi_state->FindBViewState(NULL);
+    BViewState *wv = (svs) ? svs : gedp->dbi_state->GetBViewState(NULL);
     for (int i = 0; i < argc; i++)
 	wv->AddPath(argv[i], vs.s_dmode, &vs);
 
@@ -205,17 +211,22 @@ ged_redraw2_core(struct ged *gedp, int argc, const char *argv[])
     BViewState *svs = NULL;
     if (bu_vls_strlen(&cvls)) {
     	std::string vname(bu_vls_cstr(&cvls));
-	svs = gedp->dbi_state->FindBViewState(vname);
-	if (!svs) {
+	std::vector<BViewState *> svsv = gedp->dbi_state->FindBViewState(vname.c_str());
+	if (!svsv.size()) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
 	    return BRLCAD_ERROR;
 	}
-
+	if (svsv.size() > 1) {
+	    bu_vls_printf(gedp->ged_result_str, "TODO - More than one view matches %s, need to support that...\n", bu_vls_cstr(&cvls));
+	    bu_vls_free(&cvls);
+	    return BRLCAD_ERROR;
+	}
+	svs = svsv[0];
     }
     bu_vls_free(&cvls);
 
-    BViewState *wv = (svs) ? svs : gedp->dbi_state->FindBViewState(NULL);
+    BViewState *wv = (svs) ? svs : gedp->dbi_state->GetBViewState(NULL);
     gedp->dbi_state->Redraw(wv);
     gedp->dbi_state->Render(wv);
 

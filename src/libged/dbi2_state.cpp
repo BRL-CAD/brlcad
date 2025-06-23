@@ -316,7 +316,7 @@ DbiPath::BakeSceneObjs(BViewState *vs)
     std::map<size_t, DbiPath_Settings>::iterator ds_it;
 
     // Either the specified view or the default view
-    BViewState *wvs = (vs) ? vs : d->FindBViewState(NULL);
+    BViewState *wvs = (vs) ? vs : d->GetBViewState(NULL);
     if (UNLIKELY(!wvs))
 	return;
 

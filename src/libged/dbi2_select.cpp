@@ -206,7 +206,7 @@ BSelectState::Clear()
 }
 
 std::vector<std::string>
-BSelectState::list_selected_paths()
+BSelectState::FindSelectedPaths(const char *pattern)
 {
     std::vector<std::string> ret;
     std::unordered_set<unsigned long long>::iterator s_it;
@@ -214,7 +214,9 @@ BSelectState::list_selected_paths()
 	DbiPath *p = dbis->GetDbiPath(*s_it);
 	if (!p)
 	    continue;
-	ret.push_back(p->str());
+	std::string pstr = p->str();
+	if (!pattern || !strlen(pattern) || !bu_path_match(pattern, pstr.c_str(), 0))
+	    ret.push_back(p->str());
     }
     std::sort(ret.begin(), ret.end(), &alphanum_cmp);
     return ret;

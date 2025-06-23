@@ -372,7 +372,7 @@ DbiState::AddBViewState(struct bview *v)
 {
     BViewState *nv;
     if (v) {
-	nv = FindBViewState(v);
+	nv = GetBViewState(v);
 	if (nv)
 	    return nv;
     }
@@ -381,7 +381,7 @@ DbiState::AddBViewState(struct bview *v)
 }
 
 BViewState *
-DbiState::FindBViewState(struct bview *v)
+DbiState::GetBViewState(struct bview *v)
 {
     if (UNLIKELY(!v))
 	return NULL;
@@ -393,19 +393,16 @@ DbiState::FindBViewState(struct bview *v)
     return NULL;
 }
 
-BViewState *
-DbiState::FindBViewState(std::string &vname)
+std::vector<BViewState *>
+DbiState::FindBViewState(const char *pattern)
 {
-    if (UNLIKELY(!vname.length()))
-	return NULL;
-
+    std::vector<BViewState *> vs;
     std::unordered_map<struct bview *, BViewState *>::iterator v_it;
     for (v_it = view_states.begin(); v_it != view_states.end(); ++v_it) {
-	if (std::string(bu_vls_cstr(&v_it->first->gv_name)) == vname)
-	    return v_it->second;
+	if (!pattern || !strlen(pattern) || !bu_path_match(pattern, bu_vls_cstr(&(v_it->first->gv_name)), 0))
+	    vs.push_back(v_it->second);
     }
-
-    return NULL;
+    return vs;
 }
 
 void
@@ -531,22 +528,45 @@ DbiState::AddSelectionSet(const char *sname)
     return s;
 }
 
+
 void
-DbiState::RemoveSelectionSet(const char *sname)
+DbiState::RemoveSelectionSet(BSelectState *s)
 {
-    if (!sname || BU_STR_EQUIV(sname, "default")) {
-	d_selection->Clear();
-	return;
-    }
+    if (!s)
+	return;	
 
     std::unordered_map<std::string, BSelectState *>::iterator ss_it;
     for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++) {
-	if (BU_STR_EQUIV(sname, ss_it->first.c_str())) {
+	if (s == ss_it->second) {
 	    delete ss_it->second;
 	    selected_sets.erase(ss_it);
 	    return;
 	}
     }
+}
+
+
+void
+DbiState::RemoveSelectionSets(const char *pattern)
+{
+    if (BU_STR_EQUIV(pattern, "default")) {
+	d_selection->Clear();
+	return;
+    }
+
+    std::vector<std::string> to_erase;
+    std::unordered_map<std::string, BSelectState *>::iterator ss_it;
+    for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++) {
+	if (!pattern || !strlen(pattern) || !bu_path_match(pattern, ss_it->first.c_str(), 0)) {
+	    ss_it->second->Clear();
+	    if (!BU_STR_EQUIV(ss_it->first.c_str(), "default")) {
+		delete ss_it->second;
+		to_erase.push_back(ss_it->first);
+	    }
+	}
+    }
+    for (size_t i = 0; i < to_erase.size(); i++)
+	selected_sets.erase(to_erase[i]);
 }
 
 // alphanum sort
@@ -556,12 +576,13 @@ static bool alphanum_cmp(const std::string &a, const std::string &b)
 }
 
 std::vector<std::string>
-DbiState::ListSelectionSets()
+DbiState::FindSelectionSets(const char *pattern)
 {
     std::vector<std::string> ret;
     std::unordered_map<std::string, BSelectState *>::iterator ss_it;
     for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++) {
-	ret.push_back(ss_it->first);
+	if (!pattern || !strlen(pattern) || !bu_path_match(pattern, ss_it->first.c_str(), 0))
+	    ret.push_back(ss_it->first);
     }
     std::sort(ret.begin(), ret.end(), &alphanum_cmp);
     return ret;
