@@ -2072,6 +2072,11 @@ main(int argc, char *argv[])
     s->tol.tol.perp = 1e-6;
     s->tol.tol.para = 1 - s->tol.tol.perp;
 
+    /* NOTE - at the moment, primitives such as rpc/rhc need this set to plot
+     * properly after editing - otherwise post-edit wireframe restoration
+     * looks coarse.  Probably needs more investigation. */
+    s->tol.rel_tol = 0.01;             /* 1%, by default */
+
     rt_prep_timer();		/* Initialize timer */
 
     rt_edit_set_edflag(s->s_edit, RT_EDIT_DEFAULT);		/* no solid editing just now */
