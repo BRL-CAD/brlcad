@@ -414,9 +414,10 @@ DbiPath::Draw(BViewState *vs)
 }
 
 struct directory *
-DbiPath::LeafDp()
+DbiPath::GetDp(long ind)
 {
-    GObj *g = GetGObj(elements.size() - 1);
+    size_t eind = (ind < 0 || (size_t)ind > elements.size() - 1) ? elements.size() - 1 : (size_t)ind;
+    GObj *g = GetGObj(eind);
     if (!g)
 	return NULL;
     return g->dp;
