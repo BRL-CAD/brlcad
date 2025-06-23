@@ -155,7 +155,7 @@ _select_cmd_list(void *bs, int argc, const char **argv)
     }
 
     const char *sname = argv[0];
-    std::vector<BSelectState *> ss = gedp->dbi_state->GetSelectionSet(sname);
+    std::vector<BSelectState *> ss = gedp->dbi_state->FindSelectionSet(sname);
     if (!ss.size()) {
 	bu_vls_printf(gedp->ged_result_str, ": %s does not match any selection sets\n", sname);
 	return BRLCAD_ERROR;
