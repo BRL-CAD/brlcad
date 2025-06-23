@@ -45,7 +45,7 @@
 # reasonably possible, proper ordering and separation of tests should
 # be added to the labeled sections below as follows:
 #
-#   Stage 0 - project information 
+#   Stage 0 - project information
 #   Stage 1 - define top level options
 #   Stage 2 - check programs
 #   Stage 3 - check compiler characteristics
@@ -210,7 +210,7 @@ set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 # Prepare to manage and build BRL-CAD's external dependencies.
 # Specifies a specific commit hash to use in the 'bext' repository.
 include(BRLCAD_ExternalDeps)
-brlcad_bext_init(3211ee1861eb87231dcb790d0eeb4cfa2e120aa7)
+brlcad_bext_init(fa1149406792dce4c47d7603ed8d2cab1f177a25)
 
 #---------------------------------------------------------------------
 # Define various utilities.
