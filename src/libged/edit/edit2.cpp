@@ -494,7 +494,7 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
     // to all geometry, but the majority of editing operations are specific to
     // each individual geometric primitive type.  We first decode the specifier,
     // to determine what operations we're able to support.
-    einfo.dp = gs.LeafDp();
+    einfo.dp = gs.GetDp();
     if (gs.Depth() == 0 && !einfo.dp) {
 	bu_vls_printf(gedp->ged_result_str, ": geometry specifier lookup failed for %s\n", argv[0]);
 	return BRLCAD_ERROR;

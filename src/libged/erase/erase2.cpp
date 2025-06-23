@@ -72,16 +72,18 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     int opt_ret = bu_opt_parse(NULL, argc, argv, vd);
     argc = opt_ret;
 
-    BViewState *vs = NULL;
-
+    std::vector<BViewState *> vsv;
     if (bu_vls_strlen(&cvls)) {
 	std::string vname(bu_vls_cstr(&cvls));
-	vs = gedp->dbi_state->FindBViewState(vname);
-	if (!vs) {
-	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
+	vsv = gedp->dbi_state->FindBViewState(vname.c_str());
+	if (!vsv.size()) {
+	    bu_vls_printf(gedp->ged_result_str, "Specified view(s) %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
 	    return BRLCAD_ERROR;
 	}
+    } else {
+	BViewState *dv = gedp->dbi_state->GetBViewState(NULL);
+	vsv.push_back(dv);
     }
     bu_vls_free(&cvls);
 
@@ -91,7 +93,8 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    gedp->dbi_state->Erase(vs, mode, scene_objs, argc, argv);
+    for (size_t i = 0; i < vsv.size(); i++)
+	gedp->dbi_state->Erase(vsv[i], mode, scene_objs, argc, argv);
 
     return BRLCAD_OK;
 }

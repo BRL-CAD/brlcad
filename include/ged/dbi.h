@@ -503,7 +503,17 @@ class GED_EXPORT BSelectState {
 	bool IsActiveParent(unsigned long long);
 	bool IsActiveAncestor(unsigned long long);
 
-	std::vector<std::string> list_selected_paths();
+	// If pattern == NULL, return a sorted vector of all selected paths.
+	// Otherwise, return paths glob matching the pattern.
+	//
+	// Will not return paths below a matching path - the highest level path
+	// that is fully selected and matches the pattern is always what is
+	// returned.  If the caller wants leaves they must expand the returned
+	// names into the expanded path sets themselves.
+	//
+	// Primary purpose of this function is to support code wanting to
+	// display the set of selected paths.
+	std::vector<std::string> FindSelectedPaths(const char *pattern = NULL);
 
 	void Sync();
 
@@ -535,6 +545,14 @@ class GED_EXPORT BSelectState {
 	// higher level combs above immediate parents
 	std::unordered_set<unsigned long long> immediate_parents;
 	std::unordered_set<unsigned long long> ancestors;
+
+	// View objects may also be selected
+	bool SelectObj(const char *name = NULL);
+	bool SelectObj(struct bv_scene_obj *s = NULL);
+	bool DeSelectObj(const char *name = NULL);
+	bool DeSelectObj(struct bv_scene_obj *s = NULL);
+	std::unordered_set<struct bv_scene_obj *> selected_viewobjs;
+	std::vector<std::string> FindSelectedObjs(const char *pattern = NULL);
 
 	void characterize();
 
@@ -918,11 +936,11 @@ class GED_EXPORT DbiState {
 	// If v == NULL, return the default_view state.  Otherwise, either
 	// return the BViewState associated with v or NULL (if no such state
 	// exists.)
-	BViewState *FindBViewState(struct bview *v = NULL);
+	BViewState *GetBViewState(struct bview *v = NULL);
 
-	// Look up a view by name.  Does not create a view if one is not found -
-	// just returns NULL.
-	BViewState *FindBViewState(std::string &vname);
+	// Look up a view by matching a pattern.  Does not create a view if one
+	// is not found - just returns empty vector.
+	std::vector<BViewState *> FindBViewState(const char *pattern = NULL);
 
 	// Clear specified drawn objects from v
 	//
@@ -969,9 +987,10 @@ class GED_EXPORT DbiState {
 	// being passed NULL will not delete d_selection, but will reset it to
 	// the default state.
 	BSelectState * GetSelectionSet(const char *sname = NULL);
+	void RemoveSelectionSet(BSelectState *s = NULL);
 	BSelectState * AddSelectionSet(const char *sname = NULL);
-	void RemoveSelectionSet(const char *sname);
-	std::vector<std::string> ListSelectionSets();
+	void RemoveSelectionSets(const char *pattern = NULL);
+	std::vector<std::string> FindSelectionSets(const char *pattern = NULL);
 
 	/*******************************************************************
          *                       Scene Data
