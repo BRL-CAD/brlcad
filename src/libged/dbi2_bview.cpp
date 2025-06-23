@@ -110,6 +110,29 @@ BViewState::~BViewState()
 	BU_PUT(v, struct bview);
 }
 
+bool
+BViewState::Empty()
+{
+    view_empty = true;
+
+    if (drawn_paths.size())
+	view_empty = false;
+
+    if (scene_objs.size())
+	view_empty = false;
+
+    if (l_dbipath)
+	if (l_dbipath->drawn_paths.size())
+	    view_empty = false;
+
+    if (l_viewobj)
+	if (l_viewobj->scene_objs.size())
+	    view_empty = false;
+
+    return view_empty;
+}
+
+
 std::string
 BViewState::Name()
 {
@@ -305,7 +328,7 @@ BViewState::AddPath(unsigned long long hash, unsigned int mode, struct bv_obj_se
 }
 
 void
-BViewState::RemovePath(const char *path, int mode)
+BViewState::RemovePath(const char *path, int mode, bool rebuild)
 {
     // Sanity
     if (UNLIKELY(!dbis))
@@ -319,11 +342,11 @@ BViewState::RemovePath(const char *path, int mode)
     if (!p.valid())
 	return;
 
-    RemovePath(&p, mode);
+    RemovePath(&p, mode, rebuild);
 }
 
 void
-BViewState::RemovePath(DbiPath *p, int mode)
+BViewState::RemovePath(DbiPath *p, int mode, bool rebuild)
 {
     // Sanity
     if (UNLIKELY(!dbis))
@@ -332,11 +355,11 @@ BViewState::RemovePath(DbiPath *p, int mode)
     if (UNLIKELY(!p))
 	return;
 
-    RemovePath(p->hash(), mode);
+    RemovePath(p->hash(), mode, rebuild);
 }
 
 void
-BViewState::RemovePath(unsigned long long hash, int mode)
+BViewState::RemovePath(unsigned long long hash, int mode, bool rebuild)
 {
     // Sanity
     if (UNLIKELY(!dbis))
@@ -436,23 +459,24 @@ BViewState::RemovePath(unsigned long long hash, int mode)
     // we don't know if a removal of a single mode from a path was enough to
     // completely remove it from all drawing.  Just iterate over the modes and
     // insert everything, no need to rewalk the trees.
-
-    std::unordered_map<int, std::unordered_set<unsigned long long>>::iterator iss_it;
-    fully_drawn_paths[-1].clear();
-    for (iss_it = fully_drawn_paths.begin(); iss_it != fully_drawn_paths.end(); ++iss_it) {
-	if (iss_it->first == -1)
-	    continue;
-	std::unordered_set<unsigned long long>::iterator s_it;
-	for (s_it = iss_it->second.begin(); s_it != iss_it->second.end(); ++s_it)
-	    fully_drawn_paths[-1].insert(*s_it);
-    }
-    partially_drawn_paths[-1].clear();
-    for (iss_it = partially_drawn_paths.begin(); iss_it != partially_drawn_paths.end(); ++iss_it) {
-    	if (iss_it->first == -1)
-	    continue;
-	std::unordered_set<unsigned long long>::iterator s_it;
-	for (s_it = iss_it->second.begin(); s_it != iss_it->second.end(); ++s_it)
-	    partially_drawn_paths[-1].insert(*s_it);
+    if (rebuild) {
+	std::unordered_map<int, std::unordered_set<unsigned long long>>::iterator iss_it;
+	fully_drawn_paths[-1].clear();
+	for (iss_it = fully_drawn_paths.begin(); iss_it != fully_drawn_paths.end(); ++iss_it) {
+	    if (iss_it->first == -1)
+		continue;
+	    std::unordered_set<unsigned long long>::iterator s_it;
+	    for (s_it = iss_it->second.begin(); s_it != iss_it->second.end(); ++s_it)
+		fully_drawn_paths[-1].insert(*s_it);
+	}
+	partially_drawn_paths[-1].clear();
+	for (iss_it = partially_drawn_paths.begin(); iss_it != partially_drawn_paths.end(); ++iss_it) {
+	    if (iss_it->first == -1)
+		continue;
+	    std::unordered_set<unsigned long long>::iterator s_it;
+	    for (s_it = iss_it->second.begin(); s_it != iss_it->second.end(); ++s_it)
+		partially_drawn_paths[-1].insert(*s_it);
+	}
     }
 }
 
@@ -585,14 +609,25 @@ BViewState::IsDrawn(unsigned long long hash, int mode)
     return 0;
 }
 
+// TODO - Clear drawn paths.  Probably need to garbage collect DbiPaths when doing this.
 void
-BViewState::Clear(int mode)
+BViewState::Erase(int mode, bool process_scene_objs, int argc, const char **av)
 {
-    // TODO - Clear drawn paths.  Probably need to garbage collect DbiPaths when doing this.
-    if (mode == -1) {
-    } else {
-    }
+   if (process_scene_objs) {
+       // TODO - check for scene objs matching av array and take them out
+       return;
+   }
+
+   // If we got here, we're after DbiPath entities.  Process everything but the
+   // last path without doing the full rebuild.
+   for (int pcnt = 0; pcnt < argc - 1; pcnt++)
+       RemovePath(av[pcnt], mode, false);
+
+   // When we do the last one, trigger the rebuild of fully_drawn_paths and
+   // partially_drawn_paths.
+   RemovePath(av[argc - 1], mode, true);
 }
+
 
 // This will move much of the dm_draw_objs and draw_scene_obj logic from libdm
 // to this method and the DbiPath Draw method.  That should be a good thing,
@@ -687,7 +722,7 @@ BViewState::Render()
 // If a DbiPath is straight up invalid, it is simply removed from the drawn
 // sets.
 void
-BViewState::Redraw(struct bv_obj_settings *UNUSED(vs), bool UNUSED(autoview))
+BViewState::Redraw(bool UNUSED(autoview))
 {
     // If we have a linked view, it is there responsibility of the app
     // to call Redraw on that view rather than this one.  We will process

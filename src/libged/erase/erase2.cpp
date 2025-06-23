@@ -49,7 +49,6 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[object(s)]";
     const char *cmdName = argv[0];
-    struct bview *v = gedp->ged_gvp;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -58,41 +57,33 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* Erase may operate on a specific user specified view.  If it does so,
-     * we want the default settings to reflect those set in that particular
-     * view.  In order to set up the correct default views, we need to know
-     * if a specific view has in fact been specified.  We do a preliminary
-     * option check to figure this out */
+    /* skip past cmd */
+    argc--; argv++;
+
+    /* Erase may operate on a specific user specified view. */
     struct bu_vls cvls = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc vd[3];
+    struct bu_opt_desc vd[5];
     int mode = -1;
-    BU_OPT(vd[0],  "V", "view",    "name",      &bu_opt_vls, &cvls,   "specify view to draw on");
-    BU_OPT(vd[1],  "m", "mode",    "#",         &bu_opt_int, &mode,   "erase objects drawn in the specified drawing mode");
+    int scene_objs = 0;
+    BU_OPT(vd[0],  "V", "view",       "name",      &bu_opt_vls, &cvls,       "Specify view to draw on.  Note that if a view is linked, objects originating from the linked view will not be cleared.");
+    BU_OPT(vd[1],  "m", "mode",       "#",         &bu_opt_int, &mode,       "Erase only one specific drawing mode for specified objects.");
+    BU_OPT(vd[2],  "S", "scene-objs", "",          NULL,        &scene_objs, "Specifiers are for view scene objects rather than database paths.");
     BU_OPT_NULL(vd[2]);
     int opt_ret = bu_opt_parse(NULL, argc, argv, vd);
     argc = opt_ret;
-    if (bu_vls_strlen(&cvls)) {
-	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
-	if (!v) {
-	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
-	    bu_vls_free(&cvls);
-	    return BRLCAD_ERROR;
-	}
 
-	if (!v->independent) {
-	    bu_vls_printf(gedp->ged_result_str, "Specified view %s is not an independent view, and as such does not support specifying db objects for display in only this view.  To change the view's status, the command 'view independent %s 1' may be applied.\n", bu_vls_cstr(&cvls), bu_vls_cstr(&cvls));
+    BViewState *vs = NULL;
+
+    if (bu_vls_strlen(&cvls)) {
+	std::string vname(bu_vls_cstr(&cvls));
+	vs = gedp->dbi_state->FindBViewState(vname);
+	if (!vs) {
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
 	    return BRLCAD_ERROR;
 	}
     }
     bu_vls_free(&cvls);
-
-
-    /* Check that we have a view */
-    if (!v) {
-	bu_vls_printf(gedp->ged_result_str, "No view specified and no current view defined in GED, nothing to erase from");
-	return BRLCAD_ERROR;
-    }
 
     /* must be wanting help */
     if (argc == 1) {
@@ -100,14 +91,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    /* skip past cmd */
-    argc--; argv++;
-
-    if (!gedp->dbi_state)
-	return BRLCAD_OK;
-
-    BViewState *bvs = gedp->dbi_state->get_view_state(v);
-    bvs->erase_path(mode, argc, argv);
+    gedp->dbi_state->Erase(vs, mode, scene_objs, argc, argv);
 
     return BRLCAD_OK;
 }

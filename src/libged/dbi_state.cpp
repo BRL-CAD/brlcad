@@ -408,38 +408,98 @@ DbiState::FindBViewState(std::string &vname)
     return NULL;
 }
 
-bool
-DbiState::AddObj(struct bv_scene_obj *s)
-{
-    if (!s)
-	return false;
-    return false;
-}
-
-bool
-DbiState::RemoveObj(struct bv_scene_obj *s)
-{
-    if (!s)
-	return false;
-    return false;
-}
-
-bool
-DbiState::RemoveObj(const char *oname)
-{
-    if (!oname)
-	return false;
-    return false;
-}
-
 void
-DbiState::Clear(int mode)
+DbiState::Erase(BViewState *v, int mode, bool scene_objs, int argc, const char **av)
 {
-    if (mode == -1) {
-    } else {
+    BViewState *wv = (v) ? v : default_view;
+
+    std::vector<BViewState *> aviews;
+    std::unordered_map<struct bview *, BViewState *>::iterator v_it;
+    for (v_it = view_states.begin(); v_it != view_states.end(); ++v_it) {
+	if (v_it->second == wv) {
+	    aviews.push_back(v_it->second);
+	    continue;
+	}
+
+	// If we're looking for linked views, which one we're checking depends
+	// on scene_objs.
+	BViewState *ls = (scene_objs) ? v_it->second->l_viewobj : v_it->second->l_dbipath;
+	if (ls == wv)
+	    aviews.push_back(v_it->second);
+    }
+
+    for (size_t i = 0; i < aviews.size(); i++) {
+	aviews[i]->Erase(mode, scene_objs, argc, av);
     }
 }
 
+void
+DbiState::FlagEmpty()
+{
+    std::unordered_map<struct bview *, BViewState *>::iterator v_it;
+    for (v_it = view_states.begin(); v_it != view_states.end(); ++v_it)
+	v_it->second->Empty();
+}
+
+void
+DbiState::Redraw(BViewState *v, bool autoview)
+{
+    BViewState *wv = (v) ? v : default_view;
+
+    std::vector<BViewState *> aviews;
+    std::unordered_map<struct bview *, BViewState *>::iterator v_it;
+    for (v_it = view_states.begin(); v_it != view_states.end(); ++v_it) {
+	if (v_it->second == wv) {
+	    aviews.push_back(v_it->second);
+	    continue;
+	}
+	if (v_it->second->l_viewobj == wv) {
+	    aviews.push_back(v_it->second);
+	    continue;
+	}
+	if (v_it->second->l_dbipath == wv) {
+	    aviews.push_back(v_it->second);
+	    continue;
+	}
+    }
+
+    for (size_t i = 0; i < aviews.size(); i++) {
+	aviews[i]->Redraw(autoview);
+    }
+
+}
+
+
+void
+DbiState::Render(BViewState *v)
+{
+    BViewState *wv = (v) ? v : default_view;
+
+    std::vector<BViewState *> aviews;
+    std::unordered_map<struct bview *, BViewState *>::iterator v_it;
+    for (v_it = view_states.begin(); v_it != view_states.end(); ++v_it) {
+	if (v_it->second == wv) {
+	    aviews.push_back(v_it->second);
+	    continue;
+	}
+	if (v_it->second == wv) {
+	    aviews.push_back(v_it->second);
+	    continue;
+	}
+	if (v_it->second->l_viewobj == wv) {
+	    aviews.push_back(v_it->second);
+	    continue;
+	}
+	if (v_it->second->l_dbipath == wv) {
+	    aviews.push_back(v_it->second);
+	    continue;
+	}
+    }
+
+    for (size_t i = 0; i < aviews.size(); i++) {
+	aviews[i]->Render();
+    }
+}
 
 BSelectState *
 DbiState::GetSelectionSet(const char *sname)
@@ -696,7 +756,7 @@ void
 DbiState::expand_path(std::vector<unsigned long long> *opaths, DbiPath &p, bool create_paths)
 {
     // Unpack the leaf GObj of p
-    GObj *g = p.GetGObj(p.depth());
+    GObj *g = p.GetGObj(p.Depth());
     // If we can't keep walking, then the path ends here and we just copy p
     // into out_paths
     if (!g || !g->cv.size()) {
@@ -762,7 +822,7 @@ DbiState::collect_paths(std::unordered_set<unsigned long long> *s, DbiPath &p, b
 
     // Unpack the leaf GObj of p.  If we can't, or if there's nothing there,
     // we're done.
-    GObj *g = p.GetGObj(p.depth());
+    GObj *g = p.GetGObj(p.Depth());
     if (!g || !g->cv.size())
 	return;
 
@@ -808,7 +868,7 @@ DbiState::clear_paths(std::unordered_set<unsigned long long> *s, DbiPath &p)
 
     // Unpack the leaf GObj of p.  If we can't, or if there's nothing there,
     // we're done.
-    GObj *g = p.GetGObj(p.depth());
+    GObj *g = p.GetGObj(p.Depth());
     if (!g || !g->cv.size())
 	return;
 
@@ -866,7 +926,7 @@ DbiState::CollapsePaths(std::vector<unsigned long long> &paths, bool create_path
 	DbiPath *op = p_it->second;
 
 	// Depth == 0 paths are top level and need no collapsing
-	size_t depth = op->depth();
+	size_t depth = op->Depth();
 	if (!depth) {
 	    out_paths.push_back(op->hash());
 	    continue;

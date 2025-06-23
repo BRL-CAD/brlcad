@@ -154,6 +154,16 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
      * database.  Save the who list. (TODO - do we need to save views?  Or
      * will drawing without resize work?) */
     if (gedp->new_cmd_forms) {
+	// TODO - this is an interesting case.  We are fully closing and opening
+	// the database, so in principle we should be flushing everything and
+	// rebuilding it, but we know that shouldn't be necessary because this
+	// is the garbage collect case - only things like struct directory pointers
+	// and other lower level constructs need to be refreshed.
+	//
+	// Is it worth a "rebuild" function and methods where we swap the
+	// lower level bits out from under the DbiState without deleting the
+	// parent containers?  Might be handy, since that would save rebuilding
+	// all the higher level Qt/whatever bits built on DbiState as well...
 	BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
 	std::vector<std::string> wpaths = bvs->list_drawn_paths(-1, false);
 	for (size_t i = 0; i < wpaths.size(); i++) {
@@ -321,11 +331,14 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // Restore drawn object set
-    av[0] = "draw";
-    av[1] = "-R";
-    for (size_t i = 0; i < who_objs.size(); i++) {
-	av[2] = who_objs[i].c_str();
-	ged_exec_draw(gedp, 3, (const char **)av);
+    if (gedp->new_cmd_forms) {
+    } else {
+	av[0] = "draw";
+	av[1] = "-R";
+	for (size_t i = 0; i < who_objs.size(); i++) {
+	    av[2] = who_objs[i].c_str();
+	    ged_exec_draw(gedp, 3, (const char **)av);
+	}
     }
 
     // We should be done now - check the sizes.  These warnings are not fatal
