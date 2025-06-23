@@ -71,7 +71,7 @@ mat_t es_invmat;		/* inverse of es_mat KAA */
 int bot_verts[3];		/* vertices for the BOT solid */
 
 point_t es_keypoint;		/* center of editing xforms */
-const char *es_keytag;		/* string identifying the keypoint */
+char *es_keytag;		/* string identifying the keypoint */
 int es_keyfixed;		/* keypoint specified by user? */
 
 vect_t es_para;	/* keyboard input param. Only when inpara set.  */
@@ -312,10 +312,9 @@ set_e_axes_pos(struct mged_state *s, int both)
  * processed as well?
  */
 void
-get_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat)
+get_solid_keypoint(struct mged_state *s, fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t *mat)
 {
-    static const char *vert_str = "V";
-    const char *cp = *strp;
+    char *cp = *strp;
     point_t mpt = VINIT_ZERO;
     static char buf[BUFSIZ];
 
@@ -323,7 +322,45 @@ get_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct 
     memset(buf, 0, BUFSIZ);
 
     switch (ip->idb_type) {
-	
+	case ID_CLINE:
+	    {
+		struct rt_cline_internal *cli =
+		    (struct rt_cline_internal *)ip->idb_ptr;
+
+		RT_CLINE_CK_MAGIC(cli);
+
+		if (BU_STR_EQUAL(cp, "V")) {
+		    VMOVE(mpt, cli->v);
+		    *strp = "V";
+		} else if (BU_STR_EQUAL(cp, "H")) {
+		    VADD2(mpt, cli->v, cli->h);
+		    *strp = "H";
+		} else {
+		    VMOVE(mpt, cli->v);
+		    *strp = "V";
+		}
+		break;
+	    }
+	case ID_PARTICLE:
+	    {
+		struct rt_part_internal *part =
+		    (struct rt_part_internal *)ip->idb_ptr;
+
+		RT_PART_CK_MAGIC(part);
+
+		if (BU_STR_EQUAL(cp, "V")) {
+		    VMOVE(mpt, part->part_V);
+		    *strp = "V";
+		} else if (BU_STR_EQUAL(cp, "H")) {
+		    VADD2(mpt, part->part_V, part->part_H);
+		    *strp = "H";
+		} else {
+		    /* default */
+		    VMOVE(mpt, part->part_V);
+		    *strp = "V";
+		}
+		break;
+	    }
 	case ID_PIPE:
 	    {
 		struct rt_pipe_internal *pipeip =
@@ -339,8 +376,7 @@ get_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct 
 		    VMOVE(mpt, es_pipe_pnt->pp_coord);
 		}
 		*strp = "V";
-		MAT4X3PNT(*pt, mat, mpt);
-		return;
+		break;
 	    }
 	case ID_METABALL:
 	    {
@@ -356,29 +392,267 @@ get_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct 
 		    snprintf(buf, BUFSIZ, "V %f", es_metaball_pnt->fldstr);
 		}
 		*strp = buf;
-		MAT4X3PNT(*pt, mat, mpt);
-		return;
+		break;
+	    }
+	case ID_ARBN:
+	    {
+		struct rt_arbn_internal *arbn =
+		    (struct rt_arbn_internal *)ip->idb_ptr;
+		size_t i, j, k;
+		int good_vert = 0;
+
+		RT_ARBN_CK_MAGIC(arbn);
+		for (i=0; i<arbn->neqn; i++) {
+		    for (j=i+1; j<arbn->neqn; j++) {
+			for (k=j+1; k<arbn->neqn; k++) {
+			    if (!bg_make_pnt_3planes(mpt, arbn->eqn[i], arbn->eqn[j], arbn->eqn[k])) {
+				size_t l;
+
+				good_vert = 1;
+				for (l=0; l<arbn->neqn; l++) {
+				    if (l == i || l == j || l == k)
+					continue;
+
+				    if (DIST_PNT_PLANE(mpt, arbn->eqn[l]) > s->tol.tol.dist) {
+					good_vert = 0;
+					break;
+				    }
+				}
+
+				if (good_vert)
+				    break;
+			    }
+			}
+			if (good_vert)
+			    break;
+		    }
+		    if (good_vert)
+			break;
+		}
+
+		*strp = "V";
+		break;
+	    }
+	case ID_EBM:
+	    {
+		struct rt_ebm_internal *ebm =
+		    (struct rt_ebm_internal *)ip->idb_ptr;
+		point_t pnt;
+
+		RT_EBM_CK_MAGIC(ebm);
+
+		VSETALL(pnt, 0.0);
+		MAT4X3PNT(mpt, ebm->mat, pnt);
+		*strp = "V";
+		break;
 	    }
 	case ID_BOT:
 	    {
-		*strp = OBJ[ip->idb_type].ft_keypoint(pt, cp, mat, ip, &s->tol.tol);
-		// If we're editing, use that position instead
+		struct rt_bot_internal *bot =
+		    (struct rt_bot_internal *)ip->idb_ptr;
+
 		if (bot_verts[0] > -1) {
-		    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
-		    RT_BOT_CK_MAGIC(bot);
 		    VMOVE(mpt, &bot->vertices[bot_verts[0]*3]);
-		    MAT4X3PNT(*pt, mat, mpt);
+		} else {
+		    VMOVE(mpt, bot->vertices);
 		}
-		return;
+
+		break;
+	    }
+	case ID_DSP:
+	    {
+		struct rt_dsp_internal *dsp =
+		    (struct rt_dsp_internal *)ip->idb_ptr;
+		point_t pnt;
+
+		RT_DSP_CK_MAGIC(dsp);
+
+		VSETALL(pnt, 0.0);
+		MAT4X3PNT(mpt, dsp->dsp_stom, pnt);
+		*strp = "V";
+		break;
+	    }
+	case ID_HF:
+	    {
+		struct rt_hf_internal *hf =
+		    (struct rt_hf_internal *)ip->idb_ptr;
+
+		RT_HF_CK_MAGIC(hf);
+
+		VMOVE(mpt, hf->v);
+		*strp = "V";
+		break;
+	    }
+	case ID_VOL:
+	    {
+		struct rt_vol_internal *vol =
+		    (struct rt_vol_internal *)ip->idb_ptr;
+		point_t pnt;
+
+		RT_VOL_CK_MAGIC(vol);
+
+		VSETALL(pnt, 0.0);
+		MAT4X3PNT(mpt, vol->mat, pnt);
+		*strp = "V";
+		break;
+	    }
+	case ID_HALF:
+	    {
+		struct rt_half_internal *haf =
+		    (struct rt_half_internal *)ip->idb_ptr;
+		RT_HALF_CK_MAGIC(haf);
+
+		VSCALE(mpt, haf->eqn, haf->eqn[H]);
+		*strp = "V";
+		break;
 	    }
 	case ID_ARB8:
-	    if (*cp == 'V') {
-		*strp = OBJ[ip->idb_type].ft_keypoint(pt, cp, mat, ip, &s->tol.tol);
-	    } else {
-		static const char *vstr = "V1";
-		*strp = OBJ[ip->idb_type].ft_keypoint(pt, vstr, mat, ip, &s->tol.tol);
+	    {
+		struct rt_arb_internal *arb =
+		    (struct rt_arb_internal *)ip->idb_ptr;
+		RT_ARB_CK_MAGIC(arb);
+
+		if (*cp == 'V') {
+		    int vertex_number;
+		    char *ptr;
+
+		    ptr = cp + 1;
+		    vertex_number = (*ptr) - '0';
+		    if (vertex_number < 1 || vertex_number > 8)
+			vertex_number = 1;
+		    VMOVE(mpt, arb->pt[vertex_number-1]);
+		    sprintf(buf, "V%d", vertex_number);
+		    *strp = buf;
+		    break;
+		}
+
+		/* Default */
+		VMOVE(mpt, arb->pt[0]);
+		*strp = "V1";
+
+		break;
 	    }
-	    return;
+	case ID_ELL:
+	case ID_SPH:
+	    {
+		struct rt_ell_internal *ell =
+		    (struct rt_ell_internal *)ip->idb_ptr;
+		RT_ELL_CK_MAGIC(ell);
+
+		if (BU_STR_EQUAL(cp, "V")) {
+		    VMOVE(mpt, ell->v);
+		    *strp = "V";
+		    break;
+		}
+		if (BU_STR_EQUAL(cp, "A")) {
+		    VADD2(mpt, ell->v, ell->a);
+		    *strp = "A";
+		    break;
+		}
+		if (BU_STR_EQUAL(cp, "B")) {
+		    VADD2(mpt, ell->v, ell->b);
+		    *strp = "B";
+		    break;
+		}
+		if (BU_STR_EQUAL(cp, "C")) {
+		    VADD2(mpt, ell->v, ell->c);
+		    *strp = "C";
+		    break;
+		}
+		/* Default */
+		VMOVE(mpt, ell->v);
+		*strp = "V";
+		break;
+	    }
+	case ID_SUPERELL:
+	    {
+		struct rt_superell_internal *superell =
+		    (struct rt_superell_internal *)ip->idb_ptr;
+		RT_SUPERELL_CK_MAGIC(superell);
+
+		if (BU_STR_EQUAL(cp, "V")) {
+		    VMOVE(mpt, superell->v);
+		    *strp = "V";
+		    break;
+		}
+		if (BU_STR_EQUAL(cp, "A")) {
+		    VADD2(mpt, superell->v, superell->a);
+		    *strp = "A";
+		    break;
+		}
+		if (BU_STR_EQUAL(cp, "B")) {
+		    VADD2(mpt, superell->v, superell->b);
+		    *strp = "B";
+		    break;
+		}
+		if (BU_STR_EQUAL(cp, "C")) {
+		    VADD2(mpt, superell->v, superell->c);
+		    *strp = "C";
+		    break;
+		}
+		/* Default */
+		VMOVE(mpt, superell->v);
+		*strp = "V";
+		break;
+	    }
+	case ID_TOR:
+	    {
+		struct rt_tor_internal *tor =
+		    (struct rt_tor_internal *)ip->idb_ptr;
+		RT_TOR_CK_MAGIC(tor);
+
+		if (BU_STR_EQUAL(cp, "V")) {
+		    VMOVE(mpt, tor->v);
+		    *strp = "V";
+		    break;
+		}
+		/* Default */
+		VMOVE(mpt, tor->v);
+		*strp = "V";
+		break;
+	    }
+	case ID_TGC:
+	case ID_REC:
+	    {
+		struct rt_tgc_internal *tgc =
+		    (struct rt_tgc_internal *)ip->idb_ptr;
+		RT_TGC_CK_MAGIC(tgc);
+
+		if (BU_STR_EQUAL(cp, "V")) {
+		    VMOVE(mpt, tgc->v);
+		    *strp = "V";
+		    break;
+		}
+		if (BU_STR_EQUAL(cp, "H")) {
+		    VMOVE(mpt, tgc->h);
+		    *strp = "H";
+		    break;
+		}
+		if (BU_STR_EQUAL(cp, "A")) {
+		    VMOVE(mpt, tgc->a);
+		    *strp = "A";
+		    break;
+		}
+		if (BU_STR_EQUAL(cp, "B")) {
+		    VMOVE(mpt, tgc->b);
+		    *strp = "B";
+		    break;
+		}
+		if (BU_STR_EQUAL(cp, "C")) {
+		    VMOVE(mpt, tgc->c);
+		    *strp = "C";
+		    break;
+		}
+		if (BU_STR_EQUAL(cp, "D")) {
+		    VMOVE(mpt, tgc->d);
+		    *strp = "D";
+		    break;
+		}
+		/* Default */
+		VMOVE(mpt, tgc->v);
+		*strp = "V";
+		break;
+	    }
 	case ID_BSPLINE:
 	    {
 		struct rt_nurb_internal *sip =
@@ -394,17 +668,16 @@ get_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct 
 		sprintf(buf, "Surf %d, index %d,%d",
 			spl_surfno, spl_ui, spl_vi);
 		*strp = buf;
-		MAT4X3PNT(*pt, mat, mpt);
-		return;
+		break;
 	    }
 	case ID_GRIP:
 	    {
-		*strp = OBJ[ip->idb_type].ft_keypoint(pt, cp, mat, ip, &s->tol.tol);
-		if (!*strp) {
-		    static const char *c_str = "C";
-		    *strp = OBJ[ip->idb_type].ft_keypoint(pt, c_str, mat, ip, &s->tol.tol);
-		}
-		return;
+		struct rt_grip_internal *gip =
+		    (struct rt_grip_internal *)ip->idb_ptr;
+		RT_GRIP_CK_MAGIC(gip);
+		VMOVE(mpt, gip->center);
+		*strp = "C";
+		break;
 	    }
 	case ID_ARS:
 	    {
@@ -418,21 +691,125 @@ get_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct 
 		    VMOVE(mpt, &ars->curves[es_ars_crv][es_ars_col*3]);
 		}
 
-		MAT4X3PNT(*pt, mat, mpt);
 		*strp = "V";
-		return;
+		break;
+	    }
+	case ID_RPC:
+	    {
+		struct rt_rpc_internal *rpc =
+		    (struct rt_rpc_internal *)ip->idb_ptr;
+		RT_RPC_CK_MAGIC(rpc);
+
+		VMOVE(mpt, rpc->rpc_V);
+		*strp = "V";
+		break;
+	    }
+	case ID_RHC:
+	    {
+		struct rt_rhc_internal *rhc =
+		    (struct rt_rhc_internal *)ip->idb_ptr;
+		RT_RHC_CK_MAGIC(rhc);
+
+		VMOVE(mpt, rhc->rhc_V);
+		*strp = "V";
+		break;
+	    }
+	case ID_EPA:
+	    {
+		struct rt_epa_internal *epa =
+		    (struct rt_epa_internal *)ip->idb_ptr;
+		RT_EPA_CK_MAGIC(epa);
+
+		VMOVE(mpt, epa->epa_V);
+		*strp = "V";
+		break;
+	    }
+	case ID_EHY:
+	    {
+		struct rt_ehy_internal *ehy =
+		    (struct rt_ehy_internal *)ip->idb_ptr;
+		RT_EHY_CK_MAGIC(ehy);
+
+		VMOVE(mpt, ehy->ehy_V);
+		*strp = "V";
+		break;
+	    }
+	case ID_HYP:
+	    {
+		struct rt_hyp_internal *hyp =
+		    (struct rt_hyp_internal *)ip->idb_ptr;
+		RT_HYP_CK_MAGIC(hyp);
+
+		VMOVE(mpt, hyp->hyp_Vi);
+		*strp = "V";
+		break;
+	    }
+	case ID_ETO:
+	    {
+		struct rt_eto_internal *eto =
+		    (struct rt_eto_internal *)ip->idb_ptr;
+		RT_ETO_CK_MAGIC(eto);
+
+		VMOVE(mpt, eto->eto_V);
+		*strp = "V";
+		break;
+	    }
+	case ID_POLY:
+	    {
+		struct rt_pg_face_internal *_poly;
+		struct rt_pg_internal *pg =
+		    (struct rt_pg_internal *)ip->idb_ptr;
+		RT_PG_CK_MAGIC(pg);
+
+		_poly = pg->poly;
+		VMOVE(mpt, _poly->verts);
+		*strp = "V";
+		break;
+	    }
+	case ID_SKETCH:
+	    {
+		struct rt_sketch_internal *skt =
+		    (struct rt_sketch_internal *)ip->idb_ptr;
+		RT_SKETCH_CK_MAGIC(skt);
+
+		VMOVE(mpt, skt->V);
+		*strp = "V";
+		break;
+	    }
+	case ID_ANNOT:
+	    {
+		struct rt_annot_internal *ann =
+		    (struct rt_annot_internal *)ip->idb_ptr;
+		RT_ANNOT_CK_MAGIC(ann);
+
+		VMOVE(mpt, ann->V);
+		*strp = "V";
+		break;
 	    }
 	case ID_EXTRUDE:
 	    {
-		struct rt_extrude_internal *extr = (struct rt_extrude_internal *)ip->idb_ptr;
+		struct rt_extrude_internal *extr =
+		    (struct rt_extrude_internal *)ip->idb_ptr;
 		RT_EXTRUDE_CK_MAGIC(extr);
+
 		if (extr->skt && extr->skt->verts) {
-		    static const char *vstr = "V1";
-		    *strp = OBJ[ip->idb_type].ft_keypoint(pt, vstr, mat, ip, &s->tol.tol);
+		    VJOIN2(mpt, extr->V, extr->skt->verts[0][0], extr->u_vec, extr->skt->verts[0][1], extr->v_vec);
+		    *strp = "V1";
 		} else {
-		    *strp = OBJ[ip->idb_type].ft_keypoint(pt, NULL, mat, ip, &s->tol.tol);
+		    VMOVE(mpt, extr->V);
+		    *strp = "V";
 		}
-		return;
+		break;
+	    }
+	case ID_DATUM:
+	    {
+		struct rt_datum_internal *datum = (struct rt_datum_internal *)ip->idb_ptr;
+		RT_DATUM_CK_MAGIC(datum);
+
+		/* Default */
+		VMOVE(mpt, datum->pnt);
+		*strp = "V";
+		break;
 	    }
 	case ID_NMG:
 	    {
@@ -551,36 +928,7 @@ get_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct 
 		    *strp = "V";
 		    break;
 		}
-		break;
 	    }
-	case ID_CLINE:
-	case ID_PARTICLE:
-	case ID_ARBN:
-	case ID_EBM:
-	case ID_DSP:
-	case ID_HF:
-	case ID_VOL:
-	case ID_HALF:
-	case ID_ELL:
-	case ID_SPH:
-	case ID_SUPERELL:
-	case ID_TOR:
-	case ID_TGC:
-	case ID_REC:
-	case ID_RPC:
-	case ID_RHC:
-	case ID_EPA:
-	case ID_EHY:
-	case ID_HYP:
-	case ID_ETO:
-	case ID_POLY:
-	case ID_SKETCH:
-	case ID_ANNOT:
-	case ID_DATUM:
-	    *strp = OBJ[ip->idb_type].ft_keypoint(pt, cp, mat, ip, &s->tol.tol);
-	    if (!*strp)
-		*strp = OBJ[ip->idb_type].ft_keypoint(pt, vert_str, mat, ip, &s->tol.tol);
-	    return;
 	    /* fall through */
 	default:
 	    Tcl_AppendResult(s->interp, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n", (char *)NULL);
@@ -588,9 +936,7 @@ get_solid_keypoint(struct mged_state *s, point_t *pt, const char **strp, struct 
 	    *strp = "(origin)";
 	    break;
     }
-
-    // Most of the time this is handled, but if it hasn't been yet do the mat calculation
-    MAT4X3PNT(*pt, mat, mpt);
+    MAT4X3PNT(pt, mat, mpt);
 }
 
 
@@ -604,7 +950,7 @@ f_get_solid_keypoint(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUS
     if (GEOM_EDIT_STATE == ST_VIEW || GEOM_EDIT_STATE == ST_S_PICK || GEOM_EDIT_STATE == ST_O_PICK)
 	return TCL_OK;
 
-    get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+    get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
     return TCL_OK;
 }
 
@@ -691,7 +1037,7 @@ init_sedit(struct mged_state *s)
 
     /* Establish initial keypoint */
     es_keytag = "";
-    get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+    get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
 
     es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
@@ -4799,7 +5145,7 @@ sedit(struct mged_state *s)
 
     /* If the keypoint changed location, find about it here */
     if (!es_keyfixed)
-	get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+	get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
 
     set_e_axes_pos(s, 0);
     replot_editing_solid(s);
@@ -5473,7 +5819,7 @@ static void
 init_oedit_guts(struct mged_state *s)
 {
     int id;
-    const char *strp="";
+    char *strp="";
 
     /* for safety sake */
     es_menu = 0;
@@ -5531,7 +5877,7 @@ init_oedit_guts(struct mged_state *s)
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
 
-    get_solid_keypoint(s, &es_keypoint, &strp, &s->edit_state.es_int, es_mat);
+    get_solid_keypoint(s, es_keypoint, &strp, &s->edit_state.es_int, es_mat);
     init_oedit_vars(s);
 }
 
@@ -6133,13 +6479,14 @@ f_param(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 void
 label_edited_solid(
     struct mged_state *s,
-    int *num_lines, // NOTE - used only for BOTs
-    point_t *lines, // NOTE - used only for BOTs
+    int *num_lines,
+    point_t *lines,
     struct rt_point_labels pl[],
-    int max_pl,
+    int UNUSED(max_pl),
     const mat_t xform,
     struct rt_db_internal *ip)
 {
+    int i;
     point_t work;
     point_t pos_view;
     int npl = 0;
@@ -6157,15 +6504,384 @@ label_edited_solid(
 	VMOVE(pl[npl].pt, _pt); \
 	bu_strlcpy(pl[npl++].str, _str, sizeof(pl[0].str)); }
 
+	case ID_ARB8:
+	    {
+		struct rt_arb_internal *arb=
+		    (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
+		RT_ARB_CK_MAGIC(arb);
+		switch (es_type)
+		{
+		    case ARB8:
+			for (i=0; i<8; i++) {
+			    MAT4X3PNT(pos_view, xform, arb->pt[i]);
+			    POINT_LABEL(pos_view, i+'1');
+			}
+			break;
+		    case ARB7:
+			for (i=0; i<7; i++) {
+			    MAT4X3PNT(pos_view, xform, arb->pt[i]);
+			    POINT_LABEL(pos_view, i+'1');
+			}
+			break;
+		    case ARB6:
+			for (i=0; i<5; i++) {
+			    MAT4X3PNT(pos_view, xform, arb->pt[i]);
+			    POINT_LABEL(pos_view, i+'1');
+			}
+			MAT4X3PNT(pos_view, xform, arb->pt[6]);
+			POINT_LABEL(pos_view, '6');
+			break;
+		    case ARB5:
+			for (i=0; i<5; i++) {
+			    MAT4X3PNT(pos_view, xform, arb->pt[i]);
+			    POINT_LABEL(pos_view, i+'1');
+			}
+			break;
+		    case ARB4:
+			for (i=0; i<3; i++) {
+			    MAT4X3PNT(pos_view, xform, arb->pt[i]);
+			    POINT_LABEL(pos_view, i+'1');
+			}
+			MAT4X3PNT(pos_view, xform, arb->pt[4]);
+			POINT_LABEL(pos_view, '4');
+			break;
+		}
+	    }
+	    break;
+	case ID_TGC:
+	    {
+		struct rt_tgc_internal *tgc =
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
+		RT_TGC_CK_MAGIC(tgc);
+		MAT4X3PNT(pos_view, xform, tgc->v);
+		POINT_LABEL(pos_view, 'V');
+
+		VADD2(work, tgc->v, tgc->a);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'A');
+
+		VADD2(work, tgc->v, tgc->b);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'B');
+
+		VADD3(work, tgc->v, tgc->h, tgc->c);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'C');
+
+		VADD3(work, tgc->v, tgc->h, tgc->d);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'D');
+	    }
+	    break;
+
+	case ID_ELL:
+	    {
+		struct rt_ell_internal *ell =
+		    (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
+		RT_ELL_CK_MAGIC(ell);
+
+		MAT4X3PNT(pos_view, xform, ell->v);
+		POINT_LABEL(pos_view, 'V');
+
+		VADD2(work, ell->v, ell->a);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'A');
+
+		VADD2(work, ell->v, ell->b);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'B');
+
+		VADD2(work, ell->v, ell->c);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'C');
+	    }
+	    break;
+
+	case ID_SUPERELL:
+	    {
+		struct rt_superell_internal *superell =
+		    (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
+		RT_SUPERELL_CK_MAGIC(superell);
+
+		MAT4X3PNT(pos_view, xform, superell->v);
+		POINT_LABEL(pos_view, 'V');
+
+		VADD2(work, superell->v, superell->a);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'A');
+
+		VADD2(work, superell->v, superell->b);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'B');
+
+		VADD2(work, superell->v, superell->c);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'C');
+	    }
+	    break;
+
+	case ID_TOR:
+	    {
+		struct rt_tor_internal *tor =
+		    (struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
+		fastf_t r3, r4;
+		vect_t adir;
+		RT_TOR_CK_MAGIC(tor);
+
+		bn_vec_ortho(adir, tor->h);
+
+		MAT4X3PNT(pos_view, xform, tor->v);
+		POINT_LABEL(pos_view, 'V');
+
+		r3 = tor->r_a - tor->r_h;
+		VJOIN1(work, tor->v, r3, adir);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'I');
+
+		r4 = tor->r_a + tor->r_h;
+		VJOIN1(work, tor->v, r4, adir);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'O');
+
+		VJOIN1(work, tor->v, tor->r_a, adir);
+		VADD2(work, work, tor->h);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'H');
+	    }
+	    break;
+
+	case ID_RPC:
+	    {
+		struct rt_rpc_internal *rpc =
+		    (struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
+		vect_t Ru;
+
+		RT_RPC_CK_MAGIC(rpc);
+		MAT4X3PNT(pos_view, xform, rpc->rpc_V);
+		POINT_LABEL(pos_view, 'V');
+
+		VADD2(work, rpc->rpc_V, rpc->rpc_B);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'B');
+
+		VADD2(work, rpc->rpc_V, rpc->rpc_H);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'H');
+
+		VCROSS(Ru, rpc->rpc_B, rpc->rpc_H);
+		VUNITIZE(Ru);
+		VSCALE(Ru, Ru, rpc->rpc_r);
+		VADD2(work, rpc->rpc_V, Ru);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'r');
+	    }
+	    break;
+
+	case ID_PARTICLE:
+	    {
+		struct rt_part_internal *part =
+		    (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
+		vect_t Ru, ortho;
+
+		RT_PART_CK_MAGIC(part);
+		MAT4X3PNT(pos_view, xform, part->part_V);
+		POINT_LABEL(pos_view, 'V');
+
+		VADD2(work, part->part_V, part->part_H);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'H');
+
+		VMOVE(Ru, part->part_H);
+		VUNITIZE(Ru);
+		bn_vec_ortho(ortho, Ru);
+		VSCALE(work, ortho, part->part_vrad);
+		VADD2(work, part->part_V, work);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'v');
+
+		VSCALE(work, ortho, part->part_hrad);
+		VADD3(work, part->part_V, part->part_H, work);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'h');
+	    }
+	    break;
+
+	case ID_RHC:
+	    {
+		struct rt_rhc_internal *rhc =
+		    (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
+		vect_t Ru;
+
+		RT_RHC_CK_MAGIC(rhc);
+		MAT4X3PNT(pos_view, xform, rhc->rhc_V);
+		POINT_LABEL(pos_view, 'V');
+
+		VADD2(work, rhc->rhc_V, rhc->rhc_B);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'B');
+
+		VADD2(work, rhc->rhc_V, rhc->rhc_H);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'H');
+
+		VCROSS(Ru, rhc->rhc_B, rhc->rhc_H);
+		VUNITIZE(Ru);
+		VSCALE(Ru, Ru, rhc->rhc_r);
+		VADD2(work, rhc->rhc_V, Ru);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'r');
+
+		VMOVE(work, rhc->rhc_B);
+		VUNITIZE(work);
+		VSCALE(work, work,
+		       MAGNITUDE(rhc->rhc_B) + rhc->rhc_c);
+		VADD2(work, work, rhc->rhc_V);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'c');
+	    }
+	    break;
+
+	case ID_EPA:
+	    {
+		struct rt_epa_internal *epa =
+		    (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
+		vect_t A, B;
+
+		RT_EPA_CK_MAGIC(epa);
+		MAT4X3PNT(pos_view, xform, epa->epa_V);
+		POINT_LABEL(pos_view, 'V');
+
+		VADD2(work, epa->epa_V, epa->epa_H);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'H');
+
+		VSCALE(A, epa->epa_Au, epa->epa_r1);
+		VADD2(work, epa->epa_V, A);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'A');
+
+		VCROSS(B, epa->epa_Au, epa->epa_H);
+		VUNITIZE(B);
+		VSCALE(B, B, epa->epa_r2);
+		VADD2(work, epa->epa_V, B);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'B');
+	    }
+	    break;
+
+	case ID_EHY:
+	    {
+		struct rt_ehy_internal *ehy =
+		    (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
+		vect_t A, B;
+
+		RT_EHY_CK_MAGIC(ehy);
+		MAT4X3PNT(pos_view, xform, ehy->ehy_V);
+		POINT_LABEL(pos_view, 'V');
+
+		VADD2(work, ehy->ehy_V, ehy->ehy_H);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'H');
+
+		VSCALE(A, ehy->ehy_Au, ehy->ehy_r1);
+		VADD2(work, ehy->ehy_V, A);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'A');
+
+		VCROSS(B, ehy->ehy_Au, ehy->ehy_H);
+		VUNITIZE(B);
+		VSCALE(B, B, ehy->ehy_r2);
+		VADD2(work, ehy->ehy_V, B);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'B');
+
+		VMOVE(work, ehy->ehy_H);
+		VUNITIZE(work);
+		VSCALE(work, work,
+		       MAGNITUDE(ehy->ehy_H) + ehy->ehy_c);
+		VADD2(work, ehy->ehy_V, work);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'c');
+	    }
+	    break;
+
+	case ID_HYP:
+	    {
+		struct rt_hyp_internal *hyp =
+		    (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
+		vect_t vB;
+
+		RT_HYP_CK_MAGIC(hyp);
+
+		MAT4X3PNT(pos_view, xform, hyp->hyp_Vi);
+		POINT_LABEL(pos_view, 'V');
+
+		VADD2(work, hyp->hyp_Vi, hyp->hyp_Hi);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'H');
+
+		VADD2(work, hyp->hyp_Vi, hyp->hyp_A);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'A');
+
+		VCROSS(vB, hyp->hyp_A, hyp->hyp_Hi);
+		VUNITIZE(vB);
+		VSCALE(vB, vB, hyp->hyp_b);
+		VADD2(work, hyp->hyp_Vi, vB);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'B');
+	    }
+	    break;
+
+	case ID_ETO:
+	    {
+		struct rt_eto_internal *eto =
+		    (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
+		fastf_t ch, cv, dh, dv, cmag, phi;
+		vect_t Au, Nu;
+
+		RT_ETO_CK_MAGIC(eto);
+
+		MAT4X3PNT(pos_view, xform, eto->eto_V);
+		POINT_LABEL(pos_view, 'V');
+
+		VMOVE(Nu, eto->eto_N);
+		VUNITIZE(Nu);
+		bn_vec_ortho(Au, Nu);
+		VUNITIZE(Au);
+
+		cmag = MAGNITUDE(eto->eto_C);
+		/* get horizontal and vertical components of C and Rd */
+		cv = VDOT(eto->eto_C, Nu);
+		ch = sqrt(cmag*cmag - cv*cv);
+		/* angle between C and Nu */
+		phi = acos(cv / cmag);
+		dv = -eto->eto_rd * sin(phi);
+		dh = eto->eto_rd * cos(phi);
+
+		VJOIN2(work, eto->eto_V, eto->eto_r+ch, Au, cv, Nu);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'C');
+
+		VJOIN2(work, eto->eto_V, eto->eto_r+dh, Au, dv, Nu);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'D');
+
+		VJOIN1(work, eto->eto_V, eto->eto_r, Au);
+		MAT4X3PNT(pos_view, xform, work);
+		POINT_LABEL(pos_view, 'r');
+	    }
+	    break;
+
 	case ID_ARS:
 	    {
 		struct rt_ars_internal *ars=
 		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_ARS_CK_MAGIC(ars);
-		npl = OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
 
-		// Conditional additional labeling
+		MAT4X3PNT(pos_view, xform, ars->curves[0]);
+
 		if (es_ars_crv >= 0 && es_ars_col >= 0) {
 		    point_t ars_pt;
 
@@ -6174,17 +6890,17 @@ label_edited_solid(
 		    POINT_LABEL_STR(ars_pt, "pt");
 		}
 	    }
+	    POINT_LABEL(pos_view, 'V');
 	    break;
 
 	case ID_BSPLINE:
 	    {
 		struct rt_nurb_internal *sip =
 		    (struct rt_nurb_internal *) s->edit_state.es_int.idb_ptr;
-		RT_NURB_CK_MAGIC(sip);
-
-		// Conditional labeling
 		struct face_g_snurb *surf;
 		fastf_t *fp;
+
+		RT_NURB_CK_MAGIC(sip);
 		surf = sip->srfs[spl_surfno];
 		NMG_CK_SNURB(surf);
 		fp = &RT_NURB_GET_CONTROL_POINT(surf, spl_ui, spl_vi);
@@ -6203,7 +6919,6 @@ label_edited_solid(
 		fp = &RT_NURB_GET_CONTROL_POINT(surf, surf->s_size[0]-1, surf->s_size[1]-1);
 		MAT4X3PNT(pos_view, xform, fp);
 		POINT_LABEL_STR(pos_view, " u,v");
-
 	    }
 	    break;
 	case ID_NMG:
@@ -6215,7 +6930,6 @@ label_edited_solid(
 		NMG_CK_MODEL(m);
 #endif
 
-		// Conditional labeling
 		if (es_eu) {
 		    point_t cent;
 		    NMG_CK_EDGEUSE(es_eu);
@@ -6237,13 +6951,28 @@ label_edited_solid(
 		RT_PIPE_CK_MAGIC(pipeip);
 #endif
 
-		// Conditional labeling
 		if (es_pipe_pnt) {
 		    BU_CKMAG(es_pipe_pnt, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
 		    MAT4X3PNT(pos_view, xform, es_pipe_pnt->pp_coord);
 		    POINT_LABEL_STR(pos_view, "pt");
 		}
+	    }
+	    break;
+	case ID_CLINE:
+	    {
+		struct rt_cline_internal *cli =
+		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
+		point_t work1;
+
+		RT_CLINE_CK_MAGIC(cli);
+
+		MAT4X3PNT(pos_view, xform, cli->v);
+		POINT_LABEL(pos_view, 'V');
+
+		VADD2(work1, cli->v, cli->h);
+		MAT4X3PNT(pos_view, xform, work1);
+		POINT_LABEL(pos_view, 'H');
 	    }
 	    break;
 	case ID_BOT:
@@ -6253,7 +6982,6 @@ label_edited_solid(
 
 		RT_BOT_CK_MAGIC(bot);
 
-		// Conditional labeling
 		if (bot_verts[2] > -1 &&
 		    bot_verts[1] > -1 &&
 		    bot_verts[0] > -1)
@@ -6312,12 +7040,6 @@ label_edited_solid(
 	    }
 
 	    break;
-
-	default:
-	    if (OBJ[ip->idb_type].ft_labels)
-		npl = OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, &s->edit_state.es_int, &s->tol.tol);
-	    break;
-
     }
 
     pl[npl].str[0] = '\0';	/* Mark ending */
@@ -6339,7 +7061,7 @@ sedit_vpick(struct mged_state *s, point_t v_pos)
 	spl_surfno = surfno;
 	spl_ui = u;
 	spl_vi = v;
-	get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+	get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
     }
     chg_state(s, ST_S_VPICK, ST_S_EDIT, "Vertex Pick Complete");
     view_state->vs_flag = 1;
@@ -6468,7 +7190,7 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	    if (BU_STR_EQUAL(argv[1], "reset")) {
 		es_keytag = "";
 		es_keyfixed = 0;
-		get_solid_keypoint(s, &es_keypoint, &es_keytag,
+		get_solid_keypoint(s, es_keypoint, &es_keytag,
 				   &s->edit_state.es_int, es_mat);
 		break;
 	    }
@@ -6823,7 +7545,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     }
 
     if (!es_keyfixed)
-	get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+	get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
 
     set_e_axes_pos(s, 0);
     replot_editing_solid(s);
@@ -6880,7 +7602,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 
     /* Establish initial keypoint */
     es_keytag = "";
-    get_solid_keypoint(s, &es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
+    get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
 
     /* Reset relevant variables */
     MAT_IDN(acc_rot_sol);
@@ -6988,7 +7710,7 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     struct mged_state *s = ctp->s;
 
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-    const char *strp = "";
+    char *strp="";
 
     CHECK_DBI_NULL;
     oedit_apply(s, UP); /* apply changes, but continue editing */
@@ -7004,7 +7726,7 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
 
-    get_solid_keypoint(s, &es_keypoint, &strp, &s->edit_state.es_int, es_mat);
+    get_solid_keypoint(s, es_keypoint, &strp, &s->edit_state.es_int, es_mat);
     init_oedit_vars(s);
     new_edit_mats(s);
     update_views = 1;
