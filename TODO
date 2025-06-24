@@ -446,6 +446,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   first drawn in MGED - should properly "overlay" them so the user
   doesn't have to first erase the solid from the scene visual.
 
+* add bot plot and bot pick subcommands to mirror brep subcommands
+  and let us inspect individual aspects of a BoT's structure.
+
 * rtwizard's reopening of the database is causing db_dircheck
   "Duplicate of..." errors when opening read-only .g files.
 
