@@ -1026,6 +1026,12 @@ class GED_EXPORT DbiState {
 	// for reuse.
 	std::queue<DbiPath *> dbiq;
 
+	// One of the ".g ground truth" maps to the database objects.  This
+	// one (unlike gobjs and combinsts) is public so it can be updated
+	// by garbage_collect without necessitating blowing away the entire
+	// DbiState and rebuilding everything.
+	std::unordered_map<struct directory *, GObj *> dp2g;
+
     public:
 	// Allow the implementation containers to access the core DbiState maps
 	friend class GObj;
@@ -1035,7 +1041,6 @@ class GED_EXPORT DbiState {
 
     private:
 	// These maps are the ".g ground truth" of the database objects
-	std::unordered_map<struct directory *, GObj *> dp2g;
 	std::unordered_map<unsigned long long, GObj *> gobjs;
 	std::unordered_map<unsigned long long, CombInst *> combinsts;
 
