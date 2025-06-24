@@ -94,7 +94,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (size_t i = 0; i < vsv.size(); i++)
-	gedp->dbi_state->Erase(vsv[i], mode, scene_objs, argc, argv);
+	vsv[i]->Erase(mode, scene_objs, argc, argv);
 
     return BRLCAD_OK;
 }
