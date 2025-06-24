@@ -95,7 +95,7 @@ bv_fill_polygon(struct bv_scene_obj *s)
 	return;
 
     // Got fill, create lines
-    fobj = bv_obj_get_child(s);
+    fobj = bv_obj_create_child(s);
     bu_vls_printf(&fobj->s_name, ":fill");
     fobj->s_os->s_line_width = 1;
     fobj->s_soldash = 0;
@@ -149,7 +149,7 @@ bv_polygon_vlist(struct bv_scene_obj *s)
 	}
 
 	if (p->polygon.hole[i]) {
-	    struct bv_scene_obj *s_c = bv_obj_get_child(s);
+	    struct bv_scene_obj *s_c = bv_obj_create_child(s);
 	    s_c->s_soldash = 1;
 	    s_c->s_color[0] = s->s_color[0];
 	    s_c->s_color[1] = s->s_color[1];
@@ -176,7 +176,8 @@ bv_polygon_vlist(struct bv_scene_obj *s)
 struct bv_scene_obj *
 bv_create_polygon_obj(struct bview *v, int flags, struct bv_polygon *p)
 {
-    struct bv_scene_obj *s = bv_obj_get(v, flags);
+    struct bv_scene_obj *s = bv_obj_create(flags);
+    s->s_v = v;
     s->s_type_flags |= BV_POLYGONS;
     s->s_type_flags |= BV_VIEWONLY;
 

@@ -582,35 +582,28 @@ bv_vlblock_to_objs(struct bu_ptbl *out, const char *name_root, struct bv_vlblock
     }
 }
 
-struct bv_scene_obj *
-bv_vlblock_obj(struct bv_vlblock *vbp, struct bview *v, const char *name)
+int
+bv_vlblock_obj(struct bv_scene_obj *s, struct bv_vlblock *vbp)
 {
-    if (!vbp || !v)
-	return NULL;
-
-    struct bv_scene_obj *s = bv_find_obj(v, name);
-    if (s) {
-	bv_obj_reset(s);
-    } else {
-	s = bv_obj_get(v, BV_VIEW_OBJS);
-    }
+    if (!s|| !vbp)
+	return BRLCAD_ERROR;
 
     for (size_t i = 0; i < vbp->nused; i++) {
-	if (!BU_LIST_IS_EMPTY(&(vbp->head[i]))) {
-	    struct bv_scene_obj *sc = bv_obj_get_child(s);
-	    struct bv_vlist *bvl = (struct bv_vlist *)&vbp->head[i];
-	    long int rgb = vbp->rgb[i];
-	    sc->s_vlen = bv_vlist_cmd_cnt(bvl);
-	    BU_LIST_APPEND_LIST(&(sc->s_vlist), &(bvl->l));
-	    BU_LIST_INIT(&(bvl->l));
-	    sc->s_color[0] = (rgb>>16);
-	    sc->s_color[1] = (rgb>>8);
-	    sc->s_color[2] = (rgb) & 0xFF;
-	    bu_vls_sprintf(&sc->s_name, "%s_%d_%d_%d", name, V3ARGS(sc->s_color));
-	}
+	if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
+	    continue;
+	struct bv_scene_obj *sc = bv_obj_create_child(s);
+	struct bv_vlist *bvl = (struct bv_vlist *)&vbp->head[i];
+	long int rgb = vbp->rgb[i];
+	sc->s_vlen = bv_vlist_cmd_cnt(bvl);
+	BU_LIST_APPEND_LIST(&(sc->s_vlist), &(bvl->l));
+	BU_LIST_INIT(&(bvl->l));
+	sc->s_color[0] = (rgb>>16);
+	sc->s_color[1] = (rgb>>8);
+	sc->s_color[2] = (rgb) & 0xFF;
+	bu_vls_sprintf(&sc->s_name, "%s_%d_%d_%d", bu_vls_cstr(&s->s_name), V3ARGS(sc->s_color));
     }
 
-    return s;
+    return BRLCAD_OK;
 }
 
 void

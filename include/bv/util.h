@@ -27,14 +27,15 @@
 #define BV_UTIL_H
 
 #include "common.h"
+#include "bu/ptbl.h"
 #include "bn/tol.h"
-#include "dm/defines.h"
 #include "bv/defines.h"
+#include "dm/defines.h"
 
 __BEGIN_DECLS
 
 /* Set default values for a bv. */
-BV_EXPORT extern void bv_init(struct bview *v, struct bview_set *s);
+BV_EXPORT extern void bv_init(struct bview *v);
 BV_EXPORT extern void bv_free(struct bview *v);
 
 /**
@@ -51,7 +52,7 @@ BV_EXPORT extern void bv_settings_init(struct bview_settings *s);
 /**
  * Automatically set up the view to make the scene objects visible
  */
-BV_EXPORT extern void bv_autoview(struct bview *v, fastf_t scale, int all_view_objs);
+BV_EXPORT extern void bv_autoview(struct bview *v, struct bu_ptbl *so, fastf_t scale, int all_view_objs);
 
 /* Copy the size and camera info (deliberately not a full copy of all view state) */
 BV_EXPORT extern void bv_sync(struct bview *dest, struct bview *src);
@@ -155,10 +156,6 @@ BV_EXPORT extern unsigned long long bv_hash(struct bview *v);
 /* Return a hash of the contents of a display list.  Returns 0 on failure. */
 BV_EXPORT extern unsigned long long bv_dl_hash(struct display_list *dl);
 
-/* Returns number of objects defined in any object container
- * known to this view (0 if completely cleared). */
-BV_EXPORT extern size_t bv_clear(struct bview *v, int flags);
-
 /* Note that some of these are mutually exclusive as far as producing any
  * changes - a simultaneous constraint in X and Y, for example, results in a
  * no-op. */
@@ -198,7 +195,7 @@ BV_EXPORT extern int bv_screen_pt(point_t *p, fastf_t x, fastf_t y, struct bview
 
 /* Compute the min, max, and center points of the scene object.
  * Return 1 if a bound was computed, else 0 */
-BV_EXPORT extern int bv_scene_obj_bound(struct bv_scene_obj *s, struct bview *v);
+BV_EXPORT extern int bv_scene_obj_bound(struct bv_scene_obj *s);
 
 /* Find the nearest (mode == 0) or farthest (mode == 1) data_vZ value from
  * the vlist points in s in the context of view v */
@@ -220,30 +217,22 @@ BV_EXPORT extern void bv_obj_sync(struct bv_scene_obj *dest, struct bv_scene_obj
  * if it is "fast enough"... */
 BV_EXPORT void bv_obj_stale(struct bv_scene_obj *s);
 
-/* Given a view, create an object of the specified type.  Like bv_obj_get, except it
- * leaves the addition of objects to the client.  Lower level. */
+/* Given a view, create an object of the specified type. */
 BV_EXPORT struct bv_scene_obj *
-bv_obj_create(struct bview *v, int type);
-
-/* Given a view, create an object of the specified type and add it to the
- * appropriate container.  Issues such as memory management as a function of
- * view settings are handled internally, so client codes don't need to manage
- * it. */
-BV_EXPORT struct bv_scene_obj *
-bv_obj_get(struct bview *v, int type);
+bv_obj_create(int type);
 
 /* Given an object, create an object that is a child of that object.  Issues
  * such as memory management as a function of view settings are handled
  * internally, so client codes don't need to manage it. */
 BV_EXPORT struct bv_scene_obj *
-bv_obj_get_child(struct bv_scene_obj *s);
+bv_obj_create_child(struct bv_scene_obj *s);
 
-/* Clear the contents of an object (including releasing its children), but keep
- * it active in the view.  Generally used when redrawing an object */
+/* Clear the contents of an object (including releasing its children).
+ * Generally used when redrawing an object */
 BV_EXPORT void
 bv_obj_reset(struct bv_scene_obj *s);
 
-/* Release an object to the internal pools. */
+/* Release an object. */
 BV_EXPORT void
 bv_obj_put(struct bv_scene_obj *o);
 
@@ -252,53 +241,12 @@ bv_obj_put(struct bv_scene_obj *o);
 BV_EXPORT struct bv_scene_obj *
 bv_find_child(struct bv_scene_obj *s, const char *vname);
 
-/* Given a view and a name vname, glob match names and uuids to attempt to
- * locate a scene object in v that matches vname.
- *
- * NOTE - currently this is searching the top level objects, but does not walk
- * down into their children.  May want to support that in the future... */
-BV_EXPORT struct bv_scene_obj *
-bv_find_obj(struct bview *v, const char *vname);
-
-/* Given a seed name, generate a name that does not collide with any existing
- * object names in the top level.  If the seed name does not collide, it is
- * returned as the result - otherwise, a name based on the seed name will be
- * generated.
- */
-BV_EXPORT void
-bv_uniq_obj_name(struct bu_vls *oname, const char *seed, struct bview *v);
-
-/* For the specified object/view pairing, return the appropriate scene object
- * to use with that view.  Usually this will return s, but if a Level of Detail
- * scheme or some other view-aware rendering of the object is active, that object
- * will be returned instead. */
-BV_EXPORT struct bv_scene_obj *
-bv_obj_for_view(struct bv_scene_obj *s, struct bview *v);
-
-/* Get a view-specific object vobj for view v on object s.  */
-BV_EXPORT struct bv_scene_obj *
-bv_obj_get_vo(struct bv_scene_obj *s, struct bview *v);
-
-/* Check for the presence of view-specific objects */
-BV_EXPORT int
-bv_obj_have_vo(struct bv_scene_obj *s, struct bview *v);
-
-/* Clear view-specific objects */
-BV_EXPORT int
-bv_clear_view_obj(struct bv_scene_obj *s, struct bview *v);
 
 /* Set the illumination state on the object and its children to ill_state.
  * Returns 0 if no states were changed, and 1 if one or more states were
  * updated. */
 BV_EXPORT int
 bv_illum_obj(struct bv_scene_obj *s, char ill_state);
-
-/* For the given view, return a pointer to the bu_ptbl holding active scene
- * objects with the specified type.  Note that view-specific db objects are not
- * part of these sets - they should be retrieved from the scene objects in this
- * set with bv_obj_for_view. */
-BV_EXPORT struct bu_ptbl *
-bv_view_objs(struct bview *v, int type);
 
 /* Given a view, construct the view plane */
 BV_EXPORT int

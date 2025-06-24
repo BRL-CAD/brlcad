@@ -92,7 +92,6 @@ extern "C" {
 #include "bv/plot3.h"
 #include "bv/lod.h"
 #include "bv/util.h"
-#include "bv/view_sets.h"
 
 // Number of levels of detail to define
 #define POP_MAXLEVEL 16
@@ -130,10 +129,10 @@ extern "C" {
 typedef int (*full_detail_clbk_t)(struct bv_mesh_lod *, void *);
 
 static void
-obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s, struct bview *v)
+obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s)
 {
     vect_t minus, plus;
-    if (bv_scene_obj_bound(s, v)) {
+    if (bv_scene_obj_bound(s)) {
 	*have_objs = 1;
 	minus[X] = s->s_center[X] - s->s_size;
 	minus[Y] = s->s_center[Y] - s->s_size;
@@ -146,7 +145,7 @@ obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s, struct 
     }
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
 	struct bv_scene_obj *sc = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
-	obj_bb(have_objs, min, max, sc, v);
+	obj_bb(have_objs, min, max, sc);
     }
 }
 
@@ -235,9 +234,9 @@ view_obb(struct bview *v,
 }
 
 static void
-_scene_radius(point_t *sbbc, fastf_t *radius, struct bview *v)
+_scene_radius(point_t *sbbc, fastf_t *radius, struct bu_ptbl *so)
 {
-    if (!sbbc || !radius || !v)
+    if (!sbbc || !radius || !so)
 	return;
     VSET(*sbbc, 0, 0, 0);
     *radius = 1.0;
@@ -245,19 +244,9 @@ _scene_radius(point_t *sbbc, fastf_t *radius, struct bview *v)
     VSETALL(min,  INFINITY);
     VSETALL(max, -INFINITY);
     int have_objs = 0;
-    struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
-    if (!so)
-	return;
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_obj *g = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
-	obj_bb(&have_objs, &min, &max, g, v);
-    }
-    struct bu_ptbl *sol = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-    if (sol) {
-	for (size_t i = 0; i < BU_PTBL_LEN(sol); i++) {
-	    struct bv_scene_obj *g = (struct bv_scene_obj *)BU_PTBL_GET(sol, i);
-	    obj_bb(&have_objs, &min, &max, g, v);
-	}
+	obj_bb(&have_objs, &min, &max, g);
     }
     if (have_objs) {
 	VADD2SCALE(*sbbc, max, min, 0.5);
@@ -267,15 +256,15 @@ _scene_radius(point_t *sbbc, fastf_t *radius, struct bview *v)
 }
 
 void
-bv_view_bounds(struct bview *v)
+bv_view_bounds(struct bview *v, struct bu_ptbl *so)
 {
-    if (!v || !v->gv_width || !v->gv_height)
+    if (!v || !v->gv_width || !v->gv_height || !so)
 	return;
 
     // Get the radius of the scene.
     point_t sbbc = VINIT_ZERO;
     fastf_t radius = 1.0;
-    _scene_radius(&sbbc, &radius, v);
+    _scene_radius(&sbbc, &radius, so);
 
     // Using the pixel width and height of the current "window", construct some
     // view space dimensions related to that window
@@ -348,16 +337,16 @@ _find_active_objs(std::set<struct bv_scene_obj *> &active, struct bv_scene_obj *
 	    _find_active_objs(active, sc, v, obb_c, obb_e1, obb_e2, obb_e3);
 	}
     } else {
-	bv_scene_obj_bound(s, v);
+	bv_scene_obj_bound(s);
 	if (bg_sat_aabb_obb(s->bmin, s->bmax, obb_c, obb_e1, obb_e2, obb_e3))
 	    active.insert(s);
     }
 }
 
 int
-bv_view_objs_select(struct bu_ptbl *sset, struct bview *v, int x, int y)
+bv_view_objs_select(struct bu_ptbl *sset, struct bview *v, struct bu_ptbl *so, int x, int y)
 {
-    if (!v || !sset || !v->gv_width || !v->gv_height)
+    if (!v || !sset || !v->gv_width || !v->gv_height || !so)
 	return 0;
 
     bu_ptbl_reset(sset);
@@ -369,7 +358,7 @@ bv_view_objs_select(struct bu_ptbl *sset, struct bview *v, int x, int y)
     // Get the radius of the scene.
     point_t sbbc = VINIT_ZERO;
     fastf_t radius = 1.0;
-    _scene_radius(&sbbc, &radius, v);
+    _scene_radius(&sbbc, &radius, so);
 
     // Using the pixel width and height of the current "window", construct some
     // view space dimensions related to that window
@@ -422,19 +411,9 @@ bv_view_objs_select(struct bu_ptbl *sset, struct bview *v, int x, int y)
     // Having constructed the box, test the scene objects against it.  Any that intersect,
     // add them to the set
     std::set<struct bv_scene_obj *> active;
-    struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
-    if (so) {
-	for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
-	    _find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
-	}
-    }
-    struct bu_ptbl *sol = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-    if (sol) {
-	for (size_t i = 0; i < BU_PTBL_LEN(sol); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sol, i);
-	    _find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
-	}
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
+	_find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
     }
     if (active.size()) {
 	std::set<struct bv_scene_obj *>::iterator a_it;
@@ -447,9 +426,9 @@ bv_view_objs_select(struct bu_ptbl *sset, struct bview *v, int x, int y)
 }
 
 int
-bv_view_objs_rect_select(struct bu_ptbl *sset, struct bview *v, int x1, int y1, int x2, int y2)
+bv_view_objs_rect_select(struct bu_ptbl *sset, struct bview *v, struct bu_ptbl *so, int x1, int y1, int x2, int y2)
 {
-    if (!v || !sset || !v->gv_width || !v->gv_height)
+    if (!v || !sset || !v->gv_width || !v->gv_height || !so)
 	return 0;
 
     bu_ptbl_reset(sset);
@@ -463,7 +442,7 @@ bv_view_objs_rect_select(struct bu_ptbl *sset, struct bview *v, int x1, int y1, 
     // Get the radius of the scene.
     point_t sbbc = VINIT_ZERO;
     fastf_t radius = 1.0;
-    _scene_radius(&sbbc, &radius, v);
+    _scene_radius(&sbbc, &radius, so);
 
     // Using the pixel width and height of the current "window", construct some
     // view space dimensions related to that window
@@ -520,19 +499,9 @@ bv_view_objs_rect_select(struct bu_ptbl *sset, struct bview *v, int x1, int y1, 
     // Having constructed the box, test the scene objects against it.  Any that intersect,
     // add them to the set
     std::set<struct bv_scene_obj *> active;
-    struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
-    if (so) {
-	for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
-	    _find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
-	}
-    }
-    struct bu_ptbl *sol = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-    if (sol) {
-	for (size_t i = 0; i < BU_PTBL_LEN(sol); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sol, i);
-	    _find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
-	}
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
+	_find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
     }
     if (active.size()) {
 	std::set<struct bv_scene_obj *>::iterator a_it;
@@ -1400,37 +1369,18 @@ POPState::get_level(fastf_t vlen)
 
     // If all views are orthogonal we just need the diagonal of the bbox, but
     // if we have any active perspective matrices that may change the answer.
-    // We need to provide as much detail as is required by the most demanding
-    // view.  In principle we might also be able to back the LoD down further
-    // for very distant objects, but a quick test with that resulted in too much
-    // loss of detail so for now just look at the "need more" case.
-    struct bu_ptbl *vsets = (lod && lod->s) ? bv_set_views(lod->s->s_v->vset) : NULL;
-    if (!vsets) {
-	struct bview *v = (lod && lod->s) ? lod->s->s_v : NULL;
-	if (v && SMALL_FASTF < v->gv_perspective) {
-	    fastf_t cdist = 0;
-	    point_t pbmin, pbmax;
-	    MAT4X3PNT(pbmin, v->gv_pmat, bmin);
-	    MAT4X3PNT(pbmax, v->gv_pmat, bmax);
-	    bdiag = DIST_PNT_PNT(pbmin, pbmax);
-	    if (cdist > bdiag)
-		bdiag = cdist;
-	}
-    } else {
-	for (size_t i = 0; i < BU_PTBL_LEN(vsets); i++) {
-	    fastf_t cdist = 0;
-	    struct bview *cv = (struct bview *)BU_PTBL_GET(vsets, i);
-	    if (!_obj_visible(lod->s, cv))
-		continue;
-	    if (SMALL_FASTF < cv->gv_perspective) {
-		point_t pbmin, pbmax;
-		MAT4X3PNT(pbmin, cv->gv_pmat, bmin);
-		MAT4X3PNT(pbmax, cv->gv_pmat, bmax);
-		cdist = DIST_PNT_PNT(pbmin, pbmax);
-		if (cdist > bdiag)
-		    bdiag = cdist;
-	    }
-	}
+    // In principle we might also be able to back the LoD down further for very
+    // distant objects, but a quick test with that resulted in too much loss of
+    // detail so for now just look at the "need more" case.
+    struct bview *v = (lod && lod->s) ? lod->s->s_v : NULL;
+    if (v && SMALL_FASTF < v->gv_perspective) {
+	fastf_t cdist = 0;
+	point_t pbmin, pbmax;
+	MAT4X3PNT(pbmin, v->gv_pmat, bmin);
+	MAT4X3PNT(pbmax, v->gv_pmat, bmax);
+	bdiag = DIST_PNT_PNT(pbmin, pbmax);
+	if (cdist > bdiag)
+	    bdiag = cdist;
     }
 
     for (int lev = 0; lev < POP_MAXLEVEL; lev++) {
