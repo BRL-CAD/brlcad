@@ -27,6 +27,8 @@
 /** @ingroup libbg */
 /**  @defgroup bg_obr Oriented Bounding Rectangles/Rectangular Cuboids*/
 /** @ingroup libbg */
+/**  @defgroup bg_pca Principle Component Analysis (PCA) */
+/** @ingroup libbg */
 /**  @defgroup bg_polygon Polygons */
 /** @ingroup libbg */
 /**  @defgroup bg_aabb Axis Aligned Bounding Boxes */
