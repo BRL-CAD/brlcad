@@ -587,6 +587,11 @@ class GED_EXPORT BViewState {
 	BViewState(DbiState *db = NULL, struct bview *ev = NULL);
 	~BViewState();
 
+	// Generate a hash representing the current state of the BViewState
+	// class and its struct bview.  This is useful for applications
+	// that may wish to know whether they need to call Redraw()
+	unsigned long long Hash();
+
 	// Report if there are any active objects (DbiPath or vanilla scene
 	// objects) active in the view.  This will include any paths or
 	// objects active due to views connected to this one by Link().

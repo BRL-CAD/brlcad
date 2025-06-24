@@ -207,6 +207,10 @@ struct bv_scene_obj  {
     void *dp;       		/**< @brief app obj data */
     mat_t s_mat;		/**< @brief mat to use for internal lookup and mesh LoD drawing */
 
+    /* Timestamp of when the bv_scene_obj was last altered.  Should be
+     * set by user codes if they are the ones doing the altering. */
+    int64_t timestamp;
+
     /* Associated bv.  Note that scene objects are not assigned uniquely to
      * one view.  This value may be changed by the application in a multi-view
      * scenario as an object is edited from multiple different views, to supply
@@ -562,8 +566,6 @@ struct bview_knobs {
 
 };
 
-struct bview_set;
-
 typedef void(*dm_clbk_t)(void *, struct bv_scene_obj *);
 
 struct bview {
@@ -622,22 +624,6 @@ struct bview {
     struct bview_settings *gv_s;     /**< @brief shared settings supplied by user */
     struct bview_settings gv_ls;     /**< @brief locally maintained settings specific to view (used if gv_s is null) */
 
-    /* If a view is marked as independent, its local containers are used even
-     * if pointers to shared tables are set. This allows for fully independent
-     * views with the same GED instance, at the cost of increased memory usage
-     * if multiple views draw the same objects. */
-    int independent;
-
-    /* Set containing this view.  Also holds pointers to resources shared
-     * across multiple views */
-    struct bview_set *vset;
-
-    /* Scene objects active in a view.  Managing these is a relatively complex
-     * topic and depends on whether a view is shared, independent or adaptive.
-     * Shared objects are common across views to make more efficient use of
-     * system memory. */
-    struct bview_objs gv_objs;
-
     /* We sometimes need to define the volume in space that is "active" for the
      * view.  For an orthogonal camera this is the oriented bounding box
      * extruded to contain active scene objects visible in the view  The app
@@ -671,15 +657,6 @@ struct bview {
     void           *dmp;             /* Display manager pointer, if one is associated with this view */
     dm_clbk_t	   *dm_draw_sobj;    /* Function pointer to a method to draw a scene object in the dmp display manager. */
     void           *u_data;          /* Caller data associated with this view */
-};
-
-// Because bview instances frequently share objects in applications, they are
-// not always fully independent - we define a container and some basic
-// operations to manage this.
-struct bview_set_internal;
-struct bview_set {
-    struct bview_set_internal   *i;
-    struct bview_settings       settings;
 };
 
 __END_DECLS

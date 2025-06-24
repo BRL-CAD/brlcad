@@ -572,6 +572,7 @@ dm_draw_labels(struct dm *dmp, struct bv_data_label_state *gdlsp, matp_t m2vmat)
     }
 }
 
+#if 0
 static void
 draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v, int force_draw, struct bv_obj_settings *obj_settings)
 {
@@ -737,7 +738,9 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd)
     (void)dm_hud_end(dmp);
 
 }
+#endif
 
+#if 0
 // To allow completely custom modes like the sketch editor to be defined by
 // applications in terms of libdm, we allow an optional callback that can be
 // passed in to this function.  If non-NULL, that function will be called in
@@ -846,6 +849,7 @@ dm_draw_objs(struct bview *v, void (*dm_draw_custom)(struct bview *, void *), vo
     /* Restore non-HUD settings. */
     (void)dm_hud_end(dmp);
 }
+#endif
 
 /*
  * Local Variables:

@@ -31,13 +31,13 @@
 #include "bu/path.h"
 #include "bu/ptbl.h"
 #include "bu/str.h"
+#include "bu/time.h"
 #include "bu/vls.h"
 #include "bn/mat.h"
 #include "bg/plane.h"
 #include "bv/defines.h"
 #include "bv/snap.h"
 #include "bv/util.h"
-#include "bv/view_sets.h"
 #include "bv/vlist.h"
 #include "./bv_private.h"
 
@@ -185,13 +185,12 @@ _data_tclcad_init(struct bv_data_tclcad *d)
 }
 
 void
-bv_init(struct bview *gvp, struct bview_set *s)
+bv_init(struct bview *gvp)
 {
     if (!gvp)
 	return;
 
     gvp->magic = BV_MAGIC;
-    gvp->vset = s;
 
     if (!BU_VLS_IS_INITIALIZED(&gvp->gv_name)) {
 	bu_vls_init(&gvp->gv_name);
@@ -230,9 +229,6 @@ bv_init(struct bview *gvp, struct bview_set *s)
 	bu_log("Warning - unable to generate view name unique to view set\n");
     }
 #endif
-
-    // If we're part of a set, we're not independent
-    gvp->independent = (gvp->vset) ? 0 : 1;
 
     gvp->gv_scale = 500.0;
     gvp->gv_i_scale = gvp->gv_scale;
@@ -276,23 +272,6 @@ bv_init(struct bview *gvp, struct bview_set *s)
     gvp->gv_tcl.gv_prim_labels.gos_draw = 0;
     gvp->gv_tcl.gv_prim_labels.gos_font_size = DM_DEFAULT_FONT_SIZE;
     VSET(gvp->gv_tcl.gv_prim_labels.gos_text_color, 255, 255, 0);
-
-
-    // gv_objs.db_objs is local to this view and thus is controlled
-    // by the bv init and free routines.
-    BU_GET(gvp->gv_objs.db_objs, struct bu_ptbl);
-    bu_ptbl_init(gvp->gv_objs.db_objs, 8, "view_objs init");
-
-    // gv_objs.view_objs is local to this view and thus is controlled
-    // by the bv init and free routines.
-    BU_GET(gvp->gv_objs.view_objs, struct bu_ptbl);
-    bu_ptbl_init(gvp->gv_objs.view_objs, 8, "view_objs init");
-
-    // Until the app tells us differently, we need to use our local
-    // containers
-    BU_GET(gvp->gv_objs.free_scene_obj, struct bv_scene_obj);
-    BU_LIST_INIT(&gvp->gv_objs.free_scene_obj->l);
-    BU_LIST_INIT(&gvp->gv_objs.gv_vlfree);
 
     // Out of the gate we don't have callbacks
     gvp->callbacks = NULL;
@@ -338,26 +317,7 @@ bv_free(struct bview *gvp)
 	return;
 
     bu_vls_free(&gvp->gv_name);
-    bu_ptbl_free(gvp->gv_objs.db_objs);
-    BU_PUT(gvp->gv_objs.db_objs, struct bu_ptbl);
-    bu_ptbl_free(gvp->gv_objs.view_objs);
-    BU_PUT(gvp->gv_objs.view_objs, struct bu_ptbl);
 
-    // TODO - clean up local vlfree list contents
-    struct bv_scene_obj *sp, *nsp;
-    sp = BU_LIST_NEXT(bv_scene_obj, &gvp->gv_objs.free_scene_obj->l);
-    while (BU_LIST_NOT_HEAD(sp, &gvp->gv_objs.free_scene_obj->l)) {
-	nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
-	BU_LIST_DEQUEUE(&((sp)->l));
-	if (sp->s_free_callback)
-	    (*sp->s_free_callback)(sp);
-	if (sp->s_dlist_free_callback)
-	    (*sp->s_dlist_free_callback)(sp);
-	bu_ptbl_free(&sp->children);
-	BU_PUT(sp, struct bv_scene_obj);
-	sp = nsp;
-    }
-    BU_PUT(gvp->gv_objs.free_scene_obj, struct bv_scene_obj);
     if (gvp->gv_s)
 	bu_ptbl_free(&gvp->gv_s->gv_snap_objs);
     if (gvp->gv_s != &gvp->gv_ls)
@@ -382,7 +342,7 @@ _bound_objs(int *is_empty, int *have_geom_objs, vect_t min, vect_t max, struct b
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(so, i);
 	_bound_objs(is_empty, have_geom_objs, min, max, &g->children, v);
-	if (g->have_bbox || bv_scene_obj_bound(g, v)) {
+	if (g->have_bbox || bv_scene_obj_bound(g)) {
 	    (*is_empty) = 0;
 	    (*have_geom_objs) = 1;
 	    minus[X] = g->s_center[X] - g->s_size;
@@ -428,7 +388,7 @@ _bound_objs_view(int *is_empty, vect_t min, vect_t max, struct bu_ptbl *so, stru
 		!(s->s_type_flags & BV_LABELS))
 		continue;
 	}
-	if (bv_scene_obj_bound(s, v)) {
+	if (bv_scene_obj_bound(s)) {
 	    (*is_empty) = 0;
 	    minus[X] = s->s_center[X] - s->s_size;
 	    minus[Y] = s->s_center[Y] - s->s_size;
@@ -444,7 +404,7 @@ _bound_objs_view(int *is_empty, vect_t min, vect_t max, struct bu_ptbl *so, stru
 
 
 void
-bv_autoview(struct bview *v, double factor, int all_view_objs)
+bv_autoview(struct bview *v, struct bu_ptbl *so, double factor)
 {
     vect_t min, max;
     vect_t center = VINIT_ZERO;
@@ -464,30 +424,8 @@ bv_autoview(struct bview *v, double factor, int all_view_objs)
     VSETALL(min,  INFINITY);
     VSETALL(max, -INFINITY);
 
-    struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
     if (so)
 	_bound_objs(&is_empty, &have_geom_objs, min, max, so, v);
-    struct bu_ptbl *sol = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-    if (sol)
-	_bound_objs(&is_empty, &have_geom_objs, min, max, sol, v);
-
-    // When it comes to view-only objects, normally we will only include those
-    // that are db object based, polygons or labels, unless the flag to
-    // consider all objects is set.   However, there is an exception - if there
-    // are NO such objects in the scene (have_geom_objs == 0) and we do have
-    // view objs (for example, when overlaying a plot file on an empty view)
-    // then basing autoview on the view-only objs is more intuitive than just
-    // using the default view settings.
-    so = bv_view_objs(v, BV_VIEW_OBJS);
-    if (so) {
-	_find_view_geom(&have_geom_objs, so);
-	_bound_objs_view(&is_empty,min, max, so, v, have_geom_objs, all_view_objs);
-    }
-    sol = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
-    if (sol) {
-	_find_view_geom(&have_geom_objs, sol);
-	_bound_objs_view(&is_empty,min, max, sol, v, have_geom_objs, all_view_objs);
-    }
 
     if (is_empty) {
 	/* Nothing is in view */
@@ -917,7 +855,7 @@ bv_adjust(struct bview *v, int dx, int dy, point_t keypoint, int UNUSED(mode), u
     return 0;
 }
 
-
+// TODO - snapping needs to be a post-processing step
 int
 bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y)
 {
@@ -938,16 +876,18 @@ bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t 
 	(*fy) = ty;
     }
 
+#if 0
     // If snapping is enabled, apply it
     int snapped = 0;
     if (v->gv_s) {
 	if (v->gv_s->gv_snap_lines) {
-	    snapped = bv_snap_lines_2d(v, fx, fy);
+	    snapped = bv_snap_lines_2d(v, sobjs, fx, fy);
 	}
 	if (!snapped && v->gv_s->gv_grid.snap) {
 	    bv_snap_grid_2d(v, fx, fy);
 	}
     }
+#endif
 
     return 0;
 }
@@ -988,67 +928,6 @@ bv_view_plane(plane_t *p, struct bview *v)
     return bg_plane_pt_nrml(p, cpt, vnrml);
 }
 
-size_t
-bv_clear(struct bview *v, int flags)
-{
-    if (!flags || flags & BV_DB_OBJS) {
-	struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS | (flags & ~BV_VIEW_OBJS));
-	if (sg) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-		struct bv_scene_obj *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		bv_obj_put(cg);
-	    }
-	    bu_ptbl_reset(sg);
-	}
-    }
-    if (!flags || flags & BV_VIEW_OBJS) {
-	struct bu_ptbl *sv = bv_view_objs(v, BV_VIEW_OBJS | (flags & ~BV_DB_OBJS));
-	if (sv) {
-	    for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
-		bv_obj_put(s);
-	    }
-	    bu_ptbl_reset(sv);
-	}
-    }
-
-    if (!flags || flags & BV_LOCAL_OBJS || v->independent) {
-	if (!flags || flags & BV_DB_OBJS) {
-	    struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS | (flags & ~BV_VIEW_OBJS) | BV_LOCAL_OBJS);
-	    if (sg) {
-		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		    bv_obj_put(cg);
-		}
-		bu_ptbl_reset(sg);
-	    }
-	}
-	if (!flags || flags & BV_VIEW_OBJS) {
-	    struct bu_ptbl *sv = bv_view_objs(v, BV_VIEW_OBJS | (flags & ~BV_DB_OBJS) | BV_LOCAL_OBJS);
-	    if (sv) {
-		for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
-		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
-		    bv_obj_put(s);
-		}
-		bu_ptbl_reset(sv);
-	    }
-	}
-    }
-
-    struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
-    struct bu_ptbl *sgl = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-
-    struct bu_ptbl *sv = bv_view_objs(v, BV_VIEW_OBJS);
-    struct bu_ptbl *svl = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
-
-    size_t ocnt = 0;
-    ocnt += (sg) ? BU_PTBL_LEN(sg) : 0;
-    ocnt += (sgl && sgl != sg) ? BU_PTBL_LEN(sgl) : 0;
-    ocnt += (sv) ? BU_PTBL_LEN(sv) : 0;
-    ocnt += (svl && svl != sv) ? BU_PTBL_LEN(svl) : 0;
-    return ocnt;
-}
-
 void
 bv_obj_stale(struct bv_scene_obj *s)
 {
@@ -1068,65 +947,24 @@ bv_obj_stale(struct bv_scene_obj *s)
     }
 }
 
+
+// If a higher level of the code wants to use bu_list to reuse
+// scene objects, it will look like this:
+//
+// Get:
+// s = BU_LIST_NEXT(bv_scene_obj, &free_scene_obj->l);
+// BU_LIST_DEQUEUE(&((s)->l));
+// s->free_scene_obj = free_scene_obj;
+// s->vlfree = vlfree;
+//
+// Put:
+// FREE_BV_SCENE_OBJ(s, &s->free_scene_obj->l);
 struct bv_scene_obj *
-bv_obj_create(struct bview *v, int type)
+bv_obj_create(int type)
 {
-    if (!v)
-	return NULL;
-
-    bv_log(1, "bv_obj_create (%s)", bu_vls_cstr(&v->gv_name));
-
     struct bv_scene_obj *s = NULL;
-
-    // What we get and from where is based on the requested obj type and the
-    // view type.  If the caller is not asking for a local object, we will try
-    // to get a shared object.  If the view has no associated set then the only
-    // available storage is the local storage, and that will be used instead.
-    // If a local object is requested, then the local storage is used
-    // regardless of whether or not a shared repository is available.
-    struct bv_scene_obj *free_scene_obj = NULL;
-    struct bu_list *vlfree = NULL;
-    if (type & BV_LOCAL_OBJS || type & BV_CHILD_OBJS || v->independent || !v->vset)  {
-	free_scene_obj = v->gv_objs.free_scene_obj;
-	vlfree = &v->gv_objs.gv_vlfree;
-    } else {
-	free_scene_obj = v->vset->i->free_scene_obj;
-	vlfree = &v->vset->i->vlfree;
-    }
-    if (!free_scene_obj)
-	return NULL;
-
-    // The table has an additional complication - we don't want child objects
-    // to be stored in it, because they are part of the scene only by virtue
-    // of their parent object
-    struct bu_ptbl *otbl = NULL;
-    if (type & BV_LOCAL_OBJS || type & BV_CHILD_OBJS || v->independent || !v->vset)  {
-	if (!(type & BV_CHILD_OBJS)) {
-	    if (type & BV_DB_OBJS) {
-		otbl = v->gv_objs.db_objs;
-	    } else {
-		otbl = v->gv_objs.view_objs;
-	    }
-	}
-    } else {
-	if (type & BV_DB_OBJS) {
-	    otbl = &v->vset->i->shared_db_objs;
-	} else {
-	    otbl = &v->vset->i->shared_view_objs;
-	}
-    }
-    if (!free_scene_obj)
-	return NULL;
-
-
-    // We know where we're going to get the object from - get it
-    if (BU_LIST_IS_EMPTY(&free_scene_obj->l)) {
-	BU_ALLOC(s, struct bv_scene_obj);
-	s->i = new bv_scene_obj_internal;
-    } else {
-	s = BU_LIST_NEXT(bv_scene_obj, &free_scene_obj->l);
-	BU_LIST_DEQUEUE(&((s)->l));
-    }
+    BU_ALLOC(s, struct bv_scene_obj);
+    s->i = new bv_scene_obj_internal;
 
     // Zero out callback pointers
     s->s_type_flags = 0;
@@ -1136,49 +974,19 @@ bv_obj_create(struct bview *v, int type)
     // Use reset to do most of the initialization
     bv_obj_reset(s);
 
-    // Set view
-    s->s_v = v;
-
     // Set the type flag(s) on the object itself
     s->s_type_flags = type;
 
-    // Set this object's containers
-    s->free_scene_obj = free_scene_obj;
-    s->vlfree = vlfree;
-    s->otbl = otbl;
-
     return s;
 }
 
 struct bv_scene_obj *
-bv_obj_get(struct bview *v, int type)
-{
-    if (!v)
-	return NULL;
-
-    bv_log(1, "bv_obj_get %d(%s)", type, bu_vls_cstr(&v->gv_name));
-
-   int ltype = type;
-   if (v->independent)
-       ltype |= BV_LOCAL_OBJS;
-
-    struct bv_scene_obj *s = bv_obj_create(v, ltype);
-    if (!s)
-	return NULL;
-
-    if (s->otbl)
-	bu_ptbl_ins(s->otbl, (long *)s);
-
-    return s;
-}
-
-struct bv_scene_obj *
-bv_obj_get_child(struct bv_scene_obj *sp)
+bv_obj_create_child(struct bv_scene_obj *sp)
 {
     if (!sp)
 	return NULL;
 
-    bv_log(1, "bv_obj_get_child %s(%s)", bu_vls_cstr(&sp->s_name), bu_vls_cstr(&sp->s_v->gv_name));
+    bv_log(1, "bv_obj_create_child %s(%s)", bu_vls_cstr(&sp->s_name), bu_vls_cstr(&sp->s_v->gv_name));
 
     struct bv_scene_obj *s = NULL;
 
@@ -1225,9 +1033,6 @@ bv_obj_reset(struct bv_scene_obj *s)
     }
     bu_ptbl_reset(&s->children);
 
-    if (s->i)
-	s->i->vobjs.clear();
-
     // If we have a callback for the internal data, use it
     if (s->s_free_callback)
 	(*s->s_free_callback)(s);
@@ -1247,9 +1052,20 @@ bv_obj_reset(struct bv_scene_obj *s)
 	BU_PUT(la, struct bv_label);
     }
 
-    // free vlist
+    // Free vlist data.  If we have an associated vlfree list for
+    // reuse use that, otherwise free it for real.
     if (BU_LIST_IS_INITIALIZED(&s->s_vlist)) {
-	BV_FREE_VLIST(s->vlfree, &s->s_vlist);
+	if (s->vlfree) {
+	    BV_FREE_VLIST(s->vlfree, &s->s_vlist);
+	} else {
+	    struct bu_list *p;
+	    while (BU_LIST_WHILE(p, bu_list, &s->s_vlist)) {
+		BU_LIST_DEQUEUE(p);
+		struct bv_vlist *pv = (struct bv_vlist *)p;
+		BU_FREE(pv, struct bv_vlist);
+	    }
+
+	}
     }
     BU_LIST_INIT(&(s->s_vlist));
 
@@ -1289,6 +1105,9 @@ bv_obj_reset(struct bv_scene_obj *s)
     s->s_update_callback = NULL;
     s->s_v = NULL;
     s->view_scale = 0;
+
+    // Set timestamp
+    s->timestamp = bu_gettime();
 }
 
 #define FREE_BV_SCENE_OBJ(p, fp) { \
@@ -1304,228 +1123,13 @@ bv_obj_put(struct bv_scene_obj *s)
     }
 
     // If this object was selected for snapping, it is no longer a valid candidate
+    // TODO - manage this at a higher level
     if (s->s_v)
 	bu_ptbl_rm(&s->s_v->gv_s->gv_snap_objs, (long *)s);
 
     bv_obj_reset(s);
-
-    // Clear names
-    bu_vls_trunc(&s->s_name, 0);
-    s->s_path = NULL;
-
-    if (s->otbl)
-	bu_ptbl_rm(s->otbl, (long *)s);
-
-    s->otbl = NULL;
-
-    struct bv_scene_obj *fs = s->free_scene_obj;
-    s->free_scene_obj = NULL;
-    if (fs)
-	FREE_BV_SCENE_OBJ(s, &fs->l);
-}
-
-struct bv_scene_obj *
-bv_find_obj(struct bview *v, const char *name)
-{
-    if (!v || !name)
-	return NULL;
-
-    // First look for matches in shared sets, if any are defined
-    if (!v->independent && v->vset) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->i->shared_db_objs); i++) {
-	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&v->vset->i->shared_db_objs, i);
-	    if (!bu_path_match(name, bu_vls_cstr(&s_c->s_name), 0))
-		return s_c;
-	}
-	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->i->shared_view_objs); i++) {
-	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&v->vset->i->shared_view_objs, i);
-	    if (!bu_path_match(name, bu_vls_cstr(&s_c->s_name), 0))
-		return s_c;
-	}
-    }
-
-    // Next look locally
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.db_objs); i++) {
-	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.db_objs, i);
-	if (!bu_path_match(name, bu_vls_cstr(&s_c->s_name), 0))
-	    return s_c;
-    }
-
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
-	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
-	if (!bu_path_match(name, bu_vls_cstr(&s_c->s_name), 0))
-	    return s_c;
-    }
-
-    return NULL;
-}
-
-static bool
-_uniq_name(const char *name, struct bview *v)
-{
-    if (v->vset) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->i->shared_db_objs); i++) {
-	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&v->vset->i->shared_db_objs, i);
-	    if (BU_STR_EQUAL(name, bu_vls_cstr(&s_c->s_name)))
-		return false;
-	}
-	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->i->shared_view_objs); i++) {
-	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&v->vset->i->shared_view_objs, i);
-	    if (BU_STR_EQUAL(name, bu_vls_cstr(&s_c->s_name)))
-		return false;
-	}
-    }
-
-    // Next look locally
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.db_objs); i++) {
-	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.db_objs, i);
-	if (BU_STR_EQUAL(name, bu_vls_cstr(&s_c->s_name)))
-	    return false;
-    }
-
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
-	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
-	if (BU_STR_EQUAL(name, bu_vls_cstr(&s_c->s_name)))
-	    return false;
-    }
-
-    return true;
-}
-
-void
-bv_uniq_obj_name(struct bu_vls *oname, const char *seed, struct bview *v)
-{
-    if (!oname || !v)
-	return;
-
-    struct bu_vls vseed = BU_VLS_INIT_ZERO;
-    if (seed) {
-	bu_vls_sprintf(&vseed, "%s", seed);
-    } else {
-	bu_vls_sprintf(&vseed, "%s:obj_0", bu_vls_cstr(&v->gv_name));
-    }
-
-
-    const char *npattern = "([-_:]*[0-9]+[-_:]*)[^0-9]*$";
-    long int loop_guard = 0;
-    bool is_uniq = _uniq_name(bu_vls_cstr(&vseed), v);
-    while (!is_uniq && loop_guard < LONG_MAX) {
-	(void)bu_vls_incr(&vseed, npattern, NULL, NULL, NULL);
-	is_uniq = _uniq_name(bu_vls_cstr(&vseed), v);
-	loop_guard++;
-    }
-
-    bu_vls_sprintf(oname, "%s", bu_vls_cstr(&vseed));
-    bu_vls_free(&vseed);
-}
-
-struct bv_scene_obj *
-bv_obj_for_view(struct bv_scene_obj *s, struct bview *v)
-{
-    if (!v || !s || !s->i)
-	return NULL;
-
-    std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
-    vo_it = s->i->vobjs.find(v);
-    if (vo_it == s->i->vobjs.end()) {
-	bv_log(1, "bv_obj_for_view %s(%s) - NONE", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name));
-	return NULL;
-    }
-    bv_log(1, "bv_obj_for_view %s[%s]", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name));
-    return vo_it->second;
-}
-
-struct bv_scene_obj *
-bv_obj_get_vo(struct bv_scene_obj *s, struct bview *v)
-{
-    if (!v || !s || !s->i)
-	return NULL;
-
-    std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
-    vo_it = s->i->vobjs.find(v);
-    if (vo_it != s->i->vobjs.end())
-	return vo_it->second;
-
-
-    struct bv_scene_obj *vo = NULL;
-
-    // View local object - use the view obj pool
-    struct bv_scene_obj *free_scene_obj = v->vset->i->free_scene_obj;
-    if (BU_LIST_IS_EMPTY(&free_scene_obj->l)) {
-	BU_ALLOC((vo), struct bv_scene_obj);
-	vo->i = new bv_scene_obj_internal;
-    } else {
-	vo = BU_LIST_NEXT(bv_scene_obj, &s->free_scene_obj->l);
-	if (!vo) {
-	    BU_ALLOC((vo), struct bv_scene_obj);
-	    vo->i = new bv_scene_obj_internal;
-	} else {
-	    BU_LIST_DEQUEUE(&((vo)->l));
-	}
-    }
-
-    // Use reset to do most of the initialization
-    bv_obj_reset(vo);
-
-    // Most of the view properties (color, size, etc.) are inherited from
-    // the parent
-    bv_obj_sync(vo, s);
-
-    // View local object - the local vlist pool
-    vo->vlfree = &v->gv_objs.gv_vlfree;
-
-    bu_vls_sprintf(&vo->s_name, "%s", bu_vls_cstr(&s->s_name));
-
-    vo->s_v = v;
-    vo->dp = s->dp;
-
-
-    s->i->vobjs[v] = vo;
-    vo->s_os = s->s_os;
-    bv_log(1, "bv_obj_get_vo %s[%s]", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name));
-
-    return vo;
-}
-
-int
-bv_obj_have_vo(struct bv_scene_obj *s, struct bview *v)
-{
-    if (!s || !s->i || !v)
-	return 0;
-
-    std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
-    vo_it = s->i->vobjs.find(v);
-    bv_log(1, "bv_have_view_obj %s[%s]: %d", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name), (vo_it != s->i->vobjs.end()) ? 1 : 0);
-    return (vo_it != s->i->vobjs.end()) ? 1 : 0;
-}
-
-int
-bv_clear_view_obj(struct bv_scene_obj *s, struct bview *v)
-{
-    if (!s || !s->i)
-	return 0;
-
-    bv_log(1, "bv_clear_view_obj %s(%s)", bu_vls_cstr(&s->s_name), (v) ? bu_vls_cstr(&v->gv_name) : "NULL");
-
-    if (!v) {
-	std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
-	for (vo_it = s->i->vobjs.begin(); vo_it != s->i->vobjs.end(); vo_it++) {
-	    struct bv_scene_obj *vobj = vo_it->second;
-	    bv_obj_put(vobj);
-	}
-	s->i->vobjs.clear();
-    }
-
-    std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
-    vo_it = s->i->vobjs.find(v);
-    if (vo_it == s->i->vobjs.end())
-	return 0;
-
-    struct bv_scene_obj *vobj = vo_it->second;
-    bv_obj_put(vobj);
-    s->i->vobjs.erase(v);
-
-    return 1;
+    bu_vls_free(&s->s_name);
+    BU_FREE(s, struct bv_scene_obj);
 }
 
 struct bv_scene_obj *
@@ -1543,17 +1147,12 @@ bv_find_child(struct bv_scene_obj *s, const char *vname)
 }
 
 int
-bv_scene_obj_bound(struct bv_scene_obj *sp, struct bview *v)
+bv_scene_obj_bound(struct bv_scene_obj *s)
 {
     int cmd;
-    VSET(sp->bmin, INFINITY, INFINITY, INFINITY);
-    VSET(sp->bmax, -INFINITY, -INFINITY, -INFINITY);
+    VSET(s->bmin, INFINITY, INFINITY, INFINITY);
+    VSET(s->bmax, -INFINITY, -INFINITY, -INFINITY);
     int calc = 0;
-    // If we have a view object, use that, otherwise it's
-    // the top level object
-    struct bv_scene_obj *s = bv_obj_for_view(sp, v);
-    if (!s)
-	s = sp;
     if (s->s_type_flags & BV_MESH_LOD) {
 	struct bv_mesh_lod *i = (struct bv_mesh_lod *)s->draw_data;
 	if (i) {
@@ -1619,12 +1218,6 @@ bv_scene_obj_bound(struct bv_scene_obj *sp, struct bview *v)
 	V_MAX(s->s_size, s->bmax[Y] - s->bmin[Y]);
 	V_MAX(s->s_size, s->bmax[Z] - s->bmin[Z]);
 
-	// sp may not be the same as s - propagate up
-	VMOVE(sp->s_center, s->s_center);
-	VMOVE(sp->bmin, s->bmin);
-	VMOVE(sp->bmax, s->bmax);
-	sp->s_size = s->s_size;
-
 	return 1;
     }
 
@@ -1671,32 +1264,6 @@ bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode)
     }
     return vZ;
 }
-
-
-struct bu_ptbl *
-bv_view_objs(struct bview *v, int type)
-{
-    if (type & BV_DB_OBJS) {
-	if (type & BV_LOCAL_OBJS) {
-	    return v->gv_objs.db_objs;
-	} else {
-	    if (v->vset)
-		return &v->vset->i->shared_db_objs;
-	}
-    }
-
-    if (type & BV_VIEW_OBJS) {
-	if (type & BV_LOCAL_OBJS) {
-	    return v->gv_objs.view_objs;
-	} else {
-	    if (v->vset)
-		return &v->vset->i->shared_view_objs;
-	}
-    }
-
-    return NULL;
-}
-
 
 void
 bv_obj_sync(struct bv_scene_obj *dest, struct bv_scene_obj *src)
