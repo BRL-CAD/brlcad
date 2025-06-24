@@ -406,31 +406,6 @@ DbiState::FindBViewState(const char *pattern)
 }
 
 void
-DbiState::Erase(BViewState *v, int mode, bool scene_objs, int argc, const char **av)
-{
-    BViewState *wv = (v) ? v : default_view;
-
-    std::vector<BViewState *> aviews;
-    std::unordered_map<struct bview *, BViewState *>::iterator v_it;
-    for (v_it = view_states.begin(); v_it != view_states.end(); ++v_it) {
-	if (v_it->second == wv) {
-	    aviews.push_back(v_it->second);
-	    continue;
-	}
-
-	// If we're looking for linked views, which one we're checking depends
-	// on scene_objs.
-	BViewState *ls = (scene_objs) ? v_it->second->l_viewobj : v_it->second->l_dbipath;
-	if (ls == wv)
-	    aviews.push_back(v_it->second);
-    }
-
-    for (size_t i = 0; i < aviews.size(); i++) {
-	aviews[i]->Erase(mode, scene_objs, argc, av);
-    }
-}
-
-void
 DbiState::FlagEmpty()
 {
     std::unordered_map<struct bview *, BViewState *>::iterator v_it;

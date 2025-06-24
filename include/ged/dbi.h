@@ -942,16 +942,6 @@ class GED_EXPORT DbiState {
 	// is not found - just returns empty vector.
 	std::vector<BViewState *> FindBViewState(const char *pattern = NULL);
 
-	// Clear specified drawn objects from v
-	//
-	// If v == NULL, clear all active views
-	//
-	// If !process_scene_objs, clear DbiPath entities.  Otherwise clear scene_objs
-	//
-	// If no list is specified, clear everything in the active category
-	// (DbiPath or scene_objs)
-	void Erase(BViewState *v = NULL, int mode = -1, bool process_scene_objs = false, int argc = 0, const char **av = NULL);
-
 	// Record in all active views whether the view is empty.  This is used
 	// at the beginning of a draw cycle to allow the views to know whether
 	// or not they need to trigger an autoview alignment.  By default they
