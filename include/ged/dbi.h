@@ -506,10 +506,10 @@ class GED_EXPORT BSelectState {
 	// If pattern == NULL, return a sorted vector of all selected paths.
 	// Otherwise, return paths glob matching the pattern.
 	//
-	// Will not return paths below a matching path - the highest level path
-	// that is fully selected and matches the pattern is always what is
-	// returned.  If the caller wants leaves they must expand the returned
-	// names into the expanded path sets themselves.
+	// Does not look for matches in paths below the active set - i.e.
+	// if a path a/b is selected and the pattern is a/b/c, it will not
+	// report a match even though the a/b/c path is below a/b and is
+	// an active subpath of the selection.
 	//
 	// Primary purpose of this function is to support code wanting to
 	// display the set of selected paths.
