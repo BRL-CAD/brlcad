@@ -13,7 +13,6 @@ set(
   util.h
   vectfont.h
   vlist.h
-  view_sets.h
 )
 brlcad_manage_files(bv_headers ${INCLUDE_DIR}/brlcad/bv REQUIRED libbv)
 

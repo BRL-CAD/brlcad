@@ -158,7 +158,7 @@ class DisplayHash {
 };
 
 bool
-DisplayHash::hash(struct ged *gedp, bool dbi_state_check, bool new_cmd_forms)
+DisplayHash::hash(struct ged *gedp, bool new_cmd_forms)
 {
     d = 0; v = 0; l = 0; g = 0;
     struct bview *bv = gedp->ged_gvp;
@@ -502,7 +502,7 @@ void
 GshState::view_checkpoint()
 {
 #ifdef USE_DM
-    prev_hash.hash(gedp, false, new_cmd_forms);
+    prev_hash.hash(gedp, new_cmd_forms);
 #endif
 }
 

@@ -69,10 +69,10 @@ DM_EXPORT extern void dm_draw_faceplate(struct bview *v);
  * sort on a bv scene object... */
 #include "rt/wdb.h"
 
-DM_EXPORT extern void dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *d);
+//DM_EXPORT extern void dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *d);
 
 /* Stripped down form of dm_draw_viewobjs that does just what's needed for the new setup */
-DM_EXPORT extern void dm_draw_objs(struct bview *v, void (*dm_draw_custom)(struct bview *, void *), void *u_data);
+//DM_EXPORT extern void dm_draw_objs(struct bview *v, void (*dm_draw_custom)(struct bview *, void *), void *u_data);
 #endif /* DM_NO_RT */
 
 __END_DECLS

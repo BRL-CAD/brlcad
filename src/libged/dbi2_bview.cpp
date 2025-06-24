@@ -110,6 +110,12 @@ BViewState::~BViewState()
 	BU_PUT(v, struct bview);
 }
 
+unsigned long long
+BViewState::Hash()
+{
+    return 0;
+}
+
 bool
 BViewState::Empty()
 {
