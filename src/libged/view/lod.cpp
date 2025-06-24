@@ -182,7 +182,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    if (!gedp || !gedp->dbip)
 		return BRLCAD_ERROR;
 
-	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	    //struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
 	    // Clear any old cache in memory
 	    db_mesh_lod_clear(gedp->dbip);
@@ -206,8 +206,6 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 		for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		    if (dp->d_addr == RT_DIR_PHONY_ADDR)
 			continue;
-
-		    unsigned long long key = 0;
 
 		    // No need to open up the internal unless it's a BoT or a BRep
 		    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT || dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP) {
@@ -276,8 +274,8 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 			bu_free(faces, "faces");
 			bu_free(normals, "normals");
 			bu_free(pnts, "pnts");
-#endif
 		    }
+#endif
 		}
 	    }
 
@@ -306,7 +304,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 			// checking both BoTs and BREPs
 			if ((dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT) ||
 			    (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP)) {
-			    struct bv_mesh_lod *l = db_mesh_lod_get(gedp->dbip, dp->d-namep);
+			    struct bv_mesh_lod *l = db_mesh_lod_get(gedp->dbip, dp->d_namep);
 			    if (!l) {
 				return BRLCAD_ERROR;
 			    }

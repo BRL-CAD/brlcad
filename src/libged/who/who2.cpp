@@ -80,8 +80,10 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    BViewState *bvs = gedp->dbi_state->get_view_state(v);
-    std::vector<std::string> paths = bvs->list_drawn_paths(mode, (bool)!expand);
+    BViewState *bvs = gedp->dbi_state->GetBViewState(v);
+    if (!bvs)
+	return BRLCAD_ERROR;
+    std::vector<std::string> paths = bvs->DrawnPaths(mode);
     for (size_t i = 0; i < paths.size(); i++) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", paths[i].c_str());
     }
