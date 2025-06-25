@@ -71,7 +71,7 @@ DbiState::DbiState(struct ged *ged_p)
     default_view->l_viewobj = default_view;
 
     // Set up view states for any other pre-existing views as well
-    struct bu_ptbl *vset = bv_set_views(&ged_p->ged_views);
+    struct bu_ptbl *vset = &ged_p->ged_views;
     for (size_t i = 0; i < BU_PTBL_LEN(vset); i++) {
 	struct bview *vsv = (struct bview *)BU_PTBL_GET(vset, i);
 	if (view_states.find(vsv) != view_states.end())
