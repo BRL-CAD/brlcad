@@ -31,6 +31,7 @@
 #include "bu/list.h"
 #include "bu/log.h"
 #include "bu/str.h"
+#include "bv/objs.h"
 #define PLOT3_IMPLEMENTATION
 #include "bv/plot3.h"
 #include "bv/vlist.h"
@@ -591,7 +592,7 @@ bv_vlblock_obj(struct bv_scene_obj *s, struct bv_vlblock *vbp)
     for (size_t i = 0; i < vbp->nused; i++) {
 	if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
 	    continue;
-	struct bv_scene_obj *sc = bv_obj_create_child(s);
+	struct bv_scene_obj *sc = bv_obj_get_child(s);
 	struct bv_vlist *bvl = (struct bv_vlist *)&vbp->head[i];
 	long int rgb = vbp->rgb[i];
 	sc->s_vlen = bv_vlist_cmd_cnt(bvl);

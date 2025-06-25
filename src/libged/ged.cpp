@@ -122,9 +122,8 @@ ged_init(struct ged *gedp)
     bu_ptbl_ins(&gedp->ged_views, (long *)gedp->ged_gvp);
     bu_ptbl_ins(&gedp->ged_free_views, (long *)gedp->ged_gvp);
 
-    // Scene objects list
-    BU_GET(gedp->free_scene_objs, struct bv_scene_obj);
-    BU_LIST_INIT(&gedp->free_scene_objs->l);
+    // Scene objects pool
+    gedp->free_scene_objs = bv_obj_pool_create();
 
     /* Create a non-opened fbserv */
     BU_GET(gedp->ged_fbs, struct fbserv_obj);
@@ -210,15 +209,8 @@ ged_free(struct ged *gedp)
     bu_ptbl_free(&gedp->ged_views);
 
     /* Free scene objects */
-    struct bv_scene_obj *sp = BU_LIST_NEXT(bv_scene_obj, &gedp->free_scene_objs->l);
-    while (BU_LIST_NOT_HEAD(sp, &gedp->free_scene_objs->l)) {
-	struct bv_scene_obj *nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
-	BU_LIST_DEQUEUE(&((sp)->l));
-	sp->free_scene_obj = NULL;
-	bv_obj_put(sp);
-	sp = nsp;
-    }
-    BU_PUT(gedp->free_scene_objs, struct bv_scene_obj);
+    bv_obj_pool_destroy(gedp->free_scene_objs);
+    gedp->free_scene_objs = NULL;
 
     /* Free libged owned views */
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_free_views); i++) {

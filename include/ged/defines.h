@@ -183,7 +183,7 @@ struct ged {
     struct bu_ptbl              ged_free_views;
 
     /* Set of free scene objects */
-    struct bv_scene_obj *free_scene_objs;
+    struct bv_obj_pool *free_scene_objs;
 
     void                        *u_data; /**< @brief User data associated with this ged instance */
 
