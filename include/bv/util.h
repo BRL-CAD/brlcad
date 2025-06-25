@@ -217,9 +217,10 @@ BV_EXPORT extern void bv_obj_sync(struct bv_scene_obj *dest, struct bv_scene_obj
  * if it is "fast enough"... */
 BV_EXPORT void bv_obj_stale(struct bv_scene_obj *s);
 
-/* Given a view, create an object of the specified type. */
+/* Given a view, create an object of the specified type.  If free_objs is non-NULL,
+ * pull from there first before mallocing a new struct. */
 BV_EXPORT struct bv_scene_obj *
-bv_obj_create(int type);
+bv_obj_create(int type, struct bv_scene_obj *free_objs);
 
 /* Given an object, create an object that is a child of that object.  Issues
  * such as memory management as a function of view settings are handled

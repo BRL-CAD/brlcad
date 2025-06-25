@@ -67,8 +67,9 @@ BViewState::BViewState(DbiState *s, struct bview *ev)
     v = ev;
     if (!v) {
 	BU_GET(v, struct bview);
-	bv_init(v, NULL);
+	bv_init(v);
 	local_v = true;
+	bu_ptbl_ins(&s->gedp->ged_free_views, (long *)v);
 
 	// Generate a view name that doesn't clash with any other added view
 	bool have_name = true;
@@ -99,6 +100,9 @@ BViewState::BViewState(DbiState *s, struct bview *ev)
 	local_v = false;
     }
 
+    // Local or not, v is a ged view
+    bu_ptbl_ins_unique(&s->gedp->ged_views, (long *)v);
+
     dbis->view_states[v] = this;
 }
 
@@ -108,6 +112,8 @@ BViewState::~BViewState()
 	dbis->view_states.erase(v);
     if (local_v)
 	BU_PUT(v, struct bview);
+
+    bu_ptbl_free(&eobjs);
 }
 
 unsigned long long
@@ -138,6 +144,36 @@ BViewState::Empty()
     return view_empty;
 }
 
+const struct bu_ptbl *
+BViewState::SceneObjs(bool dbipaths, bool view_only)
+{
+    // NOTE - paths must be baked for this to provide the output
+    // expected by callers...
+    bu_ptbl_reset(&eobjs);
+    if (dbipaths) {
+	std::unordered_map<size_t, std::unordered_set<unsigned long long>>::iterator e_it;
+	for (e_it = s_expanded.begin(); e_it != s_expanded.end(); ++e_it) {
+	    std::unordered_set<unsigned long long>::iterator h_it;
+	    for (h_it = e_it->second.begin(); h_it != e_it->second.end(); ++h_it) {
+		DbiPath *p = dbis->GetDbiPath(*h_it);
+		struct bv_scene_obj *sobj = p->SceneObj(e_it->first, this);
+		if (!sobj)
+		    continue;
+		bu_ptbl_ins(&eobjs, (long *)sobj);
+	    }
+	}
+    }
+
+    if (view_only) {
+	std::unordered_set<struct bv_scene_obj *>::iterator so_it;
+	for (so_it = scene_objs.begin(); so_it != scene_objs.end(); ++so_it) {
+	    struct bv_scene_obj *sobj = *so_it;
+	    bu_ptbl_ins(&eobjs, (long *)sobj);
+	}
+    }
+
+    return (const struct bu_ptbl *)&eobjs;
+}
 
 std::string
 BViewState::Name()
