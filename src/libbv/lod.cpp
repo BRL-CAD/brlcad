@@ -89,6 +89,7 @@ extern "C" {
 #include "bg/plane.h"
 #include "bg/sat.h"
 #include "bg/trimesh.h"
+#include "bv/objs.h"
 #include "bv/plot3.h"
 #include "bv/lod.h"
 #include "bv/util.h"
@@ -132,7 +133,7 @@ static void
 obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s)
 {
     vect_t minus, plus;
-    if (bv_scene_obj_bound(s)) {
+    if (bv_obj_bound(s)) {
 	*have_objs = 1;
 	minus[X] = s->s_center[X] - s->s_size;
 	minus[Y] = s->s_center[Y] - s->s_size;
@@ -337,7 +338,7 @@ _find_active_objs(std::set<struct bv_scene_obj *> &active, struct bv_scene_obj *
 	    _find_active_objs(active, sc, v, obb_c, obb_e1, obb_e2, obb_e3);
 	}
     } else {
-	bv_scene_obj_bound(s);
+	bv_obj_bound(s);
 	if (bg_sat_aabb_obb(s->bmin, s->bmax, obb_c, obb_e1, obb_e2, obb_e3))
 	    active.insert(s);
     }

@@ -5,6 +5,7 @@ set(
   events.h
   faceplate.h
   lod.h
+  objs.h
   plot3.h
   polygon.h
   snap.h

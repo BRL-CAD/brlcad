@@ -8,6 +8,7 @@ set(
   hash.c
   knobs.cpp
   lod.cpp
+  objs.cpp
   polygon.c
   polygon_op.cpp
   polygon_fill.cpp

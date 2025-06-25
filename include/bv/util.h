@@ -57,11 +57,6 @@ BV_EXPORT extern void bv_autoview(struct bview *v, struct bu_ptbl *so, fastf_t s
 /* Copy the size and camera info (deliberately not a full copy of all view state) */
 BV_EXPORT extern void bv_sync(struct bview *dest, struct bview *src);
 
-/* Copy settings (potentially) common to the view and scene objects.
- * Return 0 if no changes were made to dest.  If dest did have one
- * or more settings updated from src, return 1. */
-BV_EXPORT extern int bv_obj_settings_sync(struct bv_obj_settings *dest, struct bv_obj_settings *src);
-
 /* Sync values within the bv, perform callbacks if any are defined */
 BV_EXPORT extern void bv_update(struct bview *gvp);
 
@@ -191,63 +186,9 @@ BV_EXPORT extern int bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy
  */
 BV_EXPORT extern int bv_screen_pt(point_t *p, fastf_t x, fastf_t y, struct bview *v);
 
-
-
-/* Compute the min, max, and center points of the scene object.
- * Return 1 if a bound was computed, else 0 */
-BV_EXPORT extern int bv_scene_obj_bound(struct bv_scene_obj *s);
-
 /* Find the nearest (mode == 0) or farthest (mode == 1) data_vZ value from
  * the vlist points in s in the context of view v */
 BV_EXPORT extern fastf_t bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode);
-
-/* Copy object attributes (but not geometry) from src to dest */
-BV_EXPORT extern void bv_obj_sync(struct bv_scene_obj *dest, struct bv_scene_obj *src);
-
-/* Mark object and any child objects as stale for the drawing routines */
-/* There are a few options for this situation - this one, which requires the client code
- * to explicitly notify the drawing routines they need to do work, an internal options
- * hash stored in the bv_scene_obj itself which is checked at render time, and setter
- * wrapper functions that do the bookkeeping for the caller (in lieu of directly setting
- * values in the bv_scene_obj struct.)  The first one isn't ideal because the visual will
- * be wrong if the caller doesn't supply the notification, the second has unknown
- * performance implications, and the third would be a major rework of how the bv_scene_obj
- * data is accessed (effectively, making the internal storage of bv_scene_obj fully hidden
- * a.l.a the libdm rework.)  Not sure what the best option is yet... leaning towards #2
- * if it is "fast enough"... */
-BV_EXPORT void bv_obj_stale(struct bv_scene_obj *s);
-
-/* Given a view, create an object of the specified type.  If free_objs is non-NULL,
- * pull from there first before mallocing a new struct. */
-BV_EXPORT struct bv_scene_obj *
-bv_obj_create(int type, struct bv_scene_obj *free_objs);
-
-/* Given an object, create an object that is a child of that object.  Issues
- * such as memory management as a function of view settings are handled
- * internally, so client codes don't need to manage it. */
-BV_EXPORT struct bv_scene_obj *
-bv_obj_create_child(struct bv_scene_obj *s);
-
-/* Clear the contents of an object (including releasing its children).
- * Generally used when redrawing an object */
-BV_EXPORT void
-bv_obj_reset(struct bv_scene_obj *s);
-
-/* Release an object. */
-BV_EXPORT void
-bv_obj_put(struct bv_scene_obj *o);
-
-/* Given a scene object and a name vname, glob match child names and uuids to
- * attempt to locate a child of s that matches vname */
-BV_EXPORT struct bv_scene_obj *
-bv_find_child(struct bv_scene_obj *s, const char *vname);
-
-
-/* Set the illumination state on the object and its children to ill_state.
- * Returns 0 if no states were changed, and 1 if one or more states were
- * updated. */
-BV_EXPORT int
-bv_illum_obj(struct bv_scene_obj *s, char ill_state);
 
 /* Given a view, construct the view plane */
 BV_EXPORT int
