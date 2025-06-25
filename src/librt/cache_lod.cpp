@@ -74,8 +74,8 @@ db_mesh_lod_init(struct db_i *dbip, int verbose) {
     // Total target count is known, proceed
     int64_t start = bu_gettime();
     int64_t overall_start = start;
-    int64_t elapsed;
-    fastf_t seconds;
+    int64_t elapsed = 0;
+    fastf_t seconds = 0.0;
     int mesh_c_completed = 0;
     for (int i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
@@ -116,11 +116,9 @@ db_mesh_lod_init(struct db_i *dbip, int verbose) {
 		}
 
 		if (seconds > 5.0) {
-		    if (verbose) {
-			elapsed = bu_gettime() - overall_start;
-			seconds = elapsed / 1000000.0;
-			bu_log("LoD cache processing (%g seconds): completed %d of %d BoTs\n", seconds, mesh_c_completed, mesh_c_target);
-		    }
+		    elapsed = bu_gettime() - overall_start;
+		    seconds = elapsed / 1000000.0;
+		    bu_log("LoD cache processing (%g seconds): completed %d of %d BoTs\n", seconds, mesh_c_completed, mesh_c_target);
 		    start = bu_gettime();
 		}
 	    }
