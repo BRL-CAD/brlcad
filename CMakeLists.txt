@@ -206,11 +206,9 @@ include(BRLCAD_Environment_Setup)
 # an incorrect include directory for Eigen
 set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 
-#---------------------------------------------------------------------
-# Prepare to manage and build BRL-CAD's external dependencies.
-# Specifies a specific commit hash to use in the 'bext' repository.
+#--------------------------------------------------------------------- Prepare to manage and build BRL-CAD's external dependencies. Specifies a specific commit hash to use in the 'bext' repository.
 include(BRLCAD_ExternalDeps)
-brlcad_bext_init(fa1149406792dce4c47d7603ed8d2cab1f177a25)
+brlcad_bext_init(8d97de2af831df95c17d24c3b03a5b48ad0cead6)
 
 #---------------------------------------------------------------------
 # Define various utilities.
