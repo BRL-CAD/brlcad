@@ -960,11 +960,18 @@ bv_obj_stale(struct bv_scene_obj *s)
 // Put:
 // FREE_BV_SCENE_OBJ(s, &s->free_scene_obj->l);
 struct bv_scene_obj *
-bv_obj_create(int type)
+bv_obj_create(int type, struct bv_scene_obj *free_objs)
 {
     struct bv_scene_obj *s = NULL;
-    BU_ALLOC(s, struct bv_scene_obj);
-    s->i = new bv_scene_obj_internal;
+
+    if (free_objs) {
+	s = BU_LIST_NEXT(bv_scene_obj, &free_objs->l);
+	BU_LIST_DEQUEUE(&((s)->l));
+	s->free_scene_obj = free_objs;
+    } else {
+	BU_ALLOC(s, struct bv_scene_obj);
+	s->i = new bv_scene_obj_internal;
+    }
 
     // Zero out callback pointers
     s->s_type_flags = 0;
@@ -1128,8 +1135,13 @@ bv_obj_put(struct bv_scene_obj *s)
 	bu_ptbl_rm(&s->s_v->gv_s->gv_snap_objs, (long *)s);
 
     bv_obj_reset(s);
-    bu_vls_free(&s->s_name);
-    BU_FREE(s, struct bv_scene_obj);
+
+    if (s->free_scene_obj) {
+	FREE_BV_SCENE_OBJ(s, &s->free_scene_obj->l);
+    } else {
+	bu_vls_free(&s->s_name);
+	BU_FREE(s, struct bv_scene_obj);
+    }
 }
 
 struct bv_scene_obj *

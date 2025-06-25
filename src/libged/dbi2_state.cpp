@@ -402,6 +402,42 @@ DbiPath::BakeSceneObjs(BViewState *vs)
     }
 }
 
+struct bv_scene_obj *
+DbiPath::SceneObj(int mode, BViewState *vs)
+{
+    BViewState *wvs = (!vs) ? d->default_view : vs;
+    int wmode = (mode < 0) ? 0 : mode;
+
+    std::unordered_map<BViewState *, std::map<size_t, struct bv_scene_obj *>>::iterator vs_it;
+    // Check both wvs and a linked dbipath view (if we have one and didn't find
+    // anything in wvs proper)
+    if (!Depth()) {
+	// Non-instanced solid.
+	GObj *g = GetGObj();
+	vs_it = g->scene_objs.find(wvs);
+	if (vs_it == g->scene_objs.end() && wvs->l_dbipath) {
+	    vs_it = g->scene_objs.find(wvs->l_dbipath);
+	    if (vs_it == g->scene_objs.end())
+		return NULL;
+	}
+    } else {
+	// Want the scene_obj for the leaf of the path
+	vs_it = scene_objs.find(wvs);
+	if (vs_it == scene_objs.end() && wvs->l_dbipath) {
+	    vs_it = scene_objs.find(wvs->l_dbipath);
+	    if (vs_it == scene_objs.end())
+		return NULL;
+	}
+    }
+
+    std::map<size_t, struct bv_scene_obj *>::iterator m_it;
+    m_it = vs_it->second.find(wmode);
+    if (m_it == vs_it->second.end())
+	return NULL;
+
+    return m_it->second;
+}
+
 void
 DbiPath::Draw(BViewState *vs)
 {

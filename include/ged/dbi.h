@@ -40,6 +40,7 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bu/ptbl.h"
 #include "bu/vls.h"
 
 #ifdef __cplusplus
@@ -334,6 +335,9 @@ class GED_EXPORT DbiPath {
 	// of the path object.
 	void BakeSceneObjs(BViewState *vs = NULL);
 
+	// Return the current scene object (or NULL if there isn't one)
+	struct bv_scene_obj *SceneObj(int mode = -1, BViewState *vs = NULL);
+
 	// Draw the objects associated with this path in the specified view.
 	//
 	// Anything in scene_objs gets drawn, so the parent logic should only
@@ -597,6 +601,16 @@ class GED_EXPORT BViewState {
 	// objects active due to views connected to this one by Link().
 	bool Empty();
 
+	// Provide a C-style array of all bv_scene_obj entities active
+	// as either DbiPath leaves or explicit view objects.  Optional
+	// values may be used to disable DbiPath or view-only objs - default
+	// is to return everything.
+	//
+	// Linked view's objects will also be included.
+	//
+	// bu_ptbl is internally managed by BViewState.
+	const struct bu_ptbl * SceneObjs(bool dbipaths = true, bool view_only = true);
+
 	// Allow a view state to specify a "linked" view state where it will
 	// source data in addition to its own.
 	//
@@ -821,6 +835,9 @@ class GED_EXPORT BViewState {
 	// We start with an empty view
 	bool view_empty = true;
 
+	// Container to hold scene objects when
+	// exposing via SceneObj
+	struct bu_ptbl eobjs = BU_PTBL_INIT_ZERO;
 };
 
 #define GED_DBISTATE_DB_CHANGE   0x01
