@@ -72,10 +72,10 @@ struct bv_polygon {
 };
 
 // Given a polygon, create a scene object
-BV_EXPORT extern struct bv_scene_obj *bv_create_polygon_obj(struct bview *v, int flags, struct bv_polygon *p);
+BV_EXPORT extern struct bv_scene_obj *bv_create_polygon_obj(struct bview *v, struct bv_polygon *p);
 
 // Creates a scene object with a default polygon
-BV_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bview *v, int flags, int type, point_t *fp);
+BV_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bview *v, int type, point_t *fp);
 
 // Various update modes have similar logic - we pass in the flags to the update
 // routine to enable/disable specific portions of the overall flow.

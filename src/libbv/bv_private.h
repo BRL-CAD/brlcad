@@ -25,22 +25,21 @@
 
 #include "common.h"
 #include "bu/list.h"
+#include "bu/malloc.h"
 #include "bu/ptbl.h"
 #include "bv/defines.h"
-#include <unordered_map>
+#include "bv/objs.h"
 
-struct bview_set_internal {
-    struct bu_ptbl views;
-    struct bu_ptbl shared_db_objs;
-    struct bu_ptbl shared_view_objs;
-
-    struct bv_scene_obj  *free_scene_obj;
+struct bv_obj_pool_internal {
+    struct bv_scene_obj head;
     struct bu_list vlfree;
 };
 
-struct bv_scene_obj_internal {
-    std::unordered_map<struct bview *, struct bv_scene_obj *> vobjs;
-};
+BV_EXPORT extern struct bv_scene_obj *
+bv_obj_pool_get(struct bv_obj_pool *p);
+
+BV_EXPORT extern void
+bv_obj_pool_put(struct bv_obj_pool *p, struct bv_scene_obj *s);
 
 // Local Variables:
 // tab-width: 8

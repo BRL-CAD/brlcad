@@ -43,6 +43,7 @@
 #include "./bv/defines.h"
 #include "./bv/adc.h"
 #include "./bv/lod.h"
+#include "./bv/objs.h"
 #include "./bv/polygon.h"
 #include "./bv/snap.h"
 #include "./bv/util.h"

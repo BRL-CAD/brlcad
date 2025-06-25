@@ -52,7 +52,7 @@ RT_EXPORT extern void rt_copy_curve(struct rt_curve *crv_out,
 RT_EXPORT extern struct rt_sketch_internal *rt_copy_sketch(const struct rt_sketch_internal *sketch_ip);
 
 RT_EXPORT extern struct bv_scene_obj *
-db_sketch_to_scene_obj(const char *sname, struct db_i *dbip, struct directory *dp, struct bview *sv, int flags);
+db_sketch_to_scene_obj(const char *sname, struct db_i *dbip, struct directory *dp, struct bview *sv);
 
 RT_EXPORT extern struct directory *
 db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj *s);

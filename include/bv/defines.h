@@ -192,13 +192,8 @@ struct bview;
 #define BV_LOCAL_OBJS 0x04
 #define BV_CHILD_OBJS 0x08
 
-struct bv_scene_obj_internal;
-
 struct bv_scene_obj  {
     struct bu_list l;
-
-    /* Internal implementation storage */
-    struct bv_scene_obj_internal *i;
 
     /* View object name and type id */
     unsigned long long s_type_flags;
@@ -307,7 +302,7 @@ struct bv_scene_obj  {
     struct bu_list *vlfree;
 
     /* Container for reusing bv_scene_obj allocations */
-    struct bv_scene_obj *free_scene_obj;
+    struct bv_obj_pool *obj_pool;
 
     /* View container containing this object */
     struct bu_ptbl *otbl;
