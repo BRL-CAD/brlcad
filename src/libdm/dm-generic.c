@@ -646,17 +646,33 @@ dm_draw_obj(struct dm *dmp, struct bv_scene_obj *s)
 	o->s_os = tmp_s_os;
     }
 
-    // If we have a HUD type object, set up the matrices
+    // Coloring
+    if (s->s_iflag == UP) {
+	dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
+    } else {
+	if (s->s_os->color_override) {
+	    dm_set_fg(dmp, s->s_os->color[0], s->s_os->color[1], s->s_os->color[2], 0, s->s_os->transparency);
+	} else {
+	    dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os->transparency);
+	}
+    }
+
+    // Line attributes
+    dm_set_line_attr(dmp, s->s_os->s_line_width, s->s_soldash);
+
+    // Primary object drawing.
+    ret = dmp->i->dm_draw_obj(dmp, s);
+
+    // There are a few cases that have additional special drawing work we need
+    // to carry out.
+    if (!(s->s_type_flags & BV_MESH_LOD))
+        dm_add_arrows(dmp, s);
+
+    if (s->s_type_flags & BV_AXES)
+        dm_draw_scene_axes(dmp, s);
+
     if (s->s_type_flags & BV_LABELS)
-	(void)dm_hud_begin(dmp);
-
-    // Primary object drawing
-    int ret = dmp->i->dm_draw_obj(dmp, s);
-
-    // If we have a HUD type object, restore the matrices
-    if (s->s_type_flags & BV_LABELS)
-	(void)dm_hud_end(dmp);
-
+        dm_draw_label(dmp, s);
 
     // Handle any children (TODO - see if we need pre-and-post primary
     // drawing options for children...)
