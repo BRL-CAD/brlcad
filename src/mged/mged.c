@@ -127,6 +127,7 @@ extern struct _axes_state default_axes_state;
 /* defined in rect.c */
 extern struct _rubber_band default_rubber_band;
 
+#ifndef USE_TCL_CHAN
 /* these two file descriptors are where we store fileno(stdout) and
  * fileno(stderr) during graphical startup so that we may restore them
  * when we're done (which is needed so atexit() calls to bu_log() will
@@ -134,6 +135,7 @@ extern struct _rubber_band default_rubber_band;
  */
 /* Ew. Global. */
 static int stdfd[2] = {1, 2};
+#endif
 
 /* Container for passing I/O data through Tcl callbacks */
 struct stdio_data {
@@ -1721,6 +1723,7 @@ mged_finish(struct mged_state *s, int exitcode)
     /* no longer send bu_log() output to Tcl */
     bu_log_delete_hook(gui_output, (void *)s);
 
+#ifndef USE_TCL_CHAN
     /* restore stdout/stderr just in case anyone tries to write before
      * we finally exit (e.g., an atexit() callback).
      */
@@ -1730,6 +1733,7 @@ mged_finish(struct mged_state *s, int exitcode)
     ret = dup2(stdfd[1], fileno(stderr));
     if (ret == -1)
 	perror("dup2");
+#endif
 
     /* Be certain to close the database cleanly before exiting */
     Tcl_Preserve((ClientData)s->interp);
@@ -2358,6 +2362,7 @@ main(int argc, char *argv[])
 	int sout = fileno(stdout);
 	int serr = fileno(stderr);
 
+#ifndef USE_TCL_CHAN
 	/* stash stdout */
 	stdfd[0] = dup(sout);
 	if (stdfd[0] == -1)
@@ -2367,6 +2372,7 @@ main(int argc, char *argv[])
 	stdfd[1] = dup(serr);
 	if (stdfd[1] == -1)
 	    perror("dup");
+#endif
 
 	bu_vls_printf(&vls, "output_hook output_callback");
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));

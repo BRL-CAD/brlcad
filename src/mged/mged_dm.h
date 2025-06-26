@@ -33,6 +33,8 @@
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
 
+#include "mged.h"
+
 struct scroll_item {
     char *scroll_string;
     void (*scroll_func)(struct scroll_item *, double);
@@ -98,15 +100,6 @@ struct trail {
 #else
 #	define MAX_CLIENTS 32
 #endif
-
-
-
-// We have to use different I/O mechanisms based on which
-// platform we're on.  Make a define to key off of.
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#define USE_TCL_CHAN
-#endif
-
 
 struct client {
     int			c_fd;
