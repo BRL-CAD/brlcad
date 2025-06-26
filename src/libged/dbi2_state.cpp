@@ -328,14 +328,14 @@ DbiPath::BakeSceneObjs(BViewState *vs)
 	DbiPath_Settings *s = (ds_it == draw_settings.end()) ? NULL : &ds_it->second;
 
 	// Get the instance scene object itself.  Note that in a shared context
-	// this won't hold the geometry itself, but will reference a child
-	// object with the geometry.
+	// this won't hold the geometry itself, but will reference another
+	// object with the actual geometry.
 	struct bv_scene_obj *o = s_it->second;
 	o->s_os = &o->s_local_os;
 
-	// We're overriding child obj settings (if any) with our
-	// path settings
-	o->s_override_child_settings = 1;
+	// We're overriding subsequent obj settings (if any) with our path
+	// settings
+	o->s_override_obj_ref_settings = 1;
 
 	// Get the geometry to use for this object.  Look up the leaf GObj -
 	// regardless of the mode we are in, we need LoadSceneObj for geometry.
@@ -344,15 +344,15 @@ DbiPath::BakeSceneObjs(BViewState *vs)
 	// It's possible we won't have a GObj - a Comb Tree might have
 	// a name drawn that doesn't correspond to in-database
 	// geometry.  That's fine - the scene object just has no
-	// geometry and no children.
+	// geometry.
 	if (!g) {
 	    bv_obj_reset(o);
 	    continue;
 	}
 
-	// If we're in a situation where we aren't going to be using a child
-	// object, wo is set to the instance object itself.  Otherwise it is
-	// NULL and we let LoadSceneObj handle matters.
+	// If we're in a situation where we aren't going to be using an object
+	// reference object, wo is set to the instance object itself.
+	// Otherwise it is NULL and we let LoadSceneObj handle matters.
 	struct bv_scene_obj *wo = NULL;
 	if (s_it->first == 3 && s_it->first == 5)
 	    wo = o;
@@ -360,12 +360,12 @@ DbiPath::BakeSceneObjs(BViewState *vs)
 	// Ask the GObj to get the actual geometry.
 	g->LoadSceneObj(wo, wvs, s_it->first);
 
-	// Add the object to the child table, if we didn't end up
-	// putting the geometry directly on o
+	// Add the object to the obj_refs table, if we didn't end up putting
+	// the geometry directly on o
 	if (!wo) {
 	    struct bv_scene_obj *gsobj = g->scene_objs[wvs][s_it->first];
 	    if (gsobj)
-		bu_ptbl_ins(&o->children, (long *)gsobj);
+		bu_ptbl_ins(&o->obj_refs, (long *)gsobj);
 	}
 
 	// Apply settings from DbiPath_Settings to object

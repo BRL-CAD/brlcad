@@ -247,6 +247,14 @@ bv_obj_reset(struct bv_scene_obj *s)
     }
     bu_ptbl_reset(&s->children);
 
+
+    // References are not cleaned up themselves, but we do clear
+    // the table
+    if (!BU_PTBL_IS_INITIALIZED(&s->obj_refs)) {
+	BU_PTBL_INIT(&s->obj_refs);
+    }
+    bu_ptbl_reset(&s->obj_refs);
+
     // If we have a callback for the internal data, use it
     if (s->s_free_callback)
 	(*s->s_free_callback)(s);
@@ -290,7 +298,7 @@ bv_obj_reset(struct bv_scene_obj *s)
     struct bv_obj_settings defaults = BV_OBJ_SETTINGS_INIT;
     bv_obj_settings_sync(&s->s_local_os, &defaults);
     s->s_os = &s->s_local_os;
-    s->s_override_child_settings = 0;
+    s->s_override_obj_ref_settings = 0;
 
     MAT_IDN(s->s_mat);
     VSET(s->s_color, 255, 0, 0);

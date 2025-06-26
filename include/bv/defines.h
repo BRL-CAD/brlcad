@@ -283,7 +283,7 @@ struct bv_scene_obj  {
      * may be overridden locally */
     struct bv_obj_settings *s_os;
     struct bv_obj_settings s_local_os;
-    int s_override_child_settings;           /**< @brief  Use current obj settings when drawing children instead of their settings */
+    int s_override_obj_ref_settings;           /**< @brief  Use current obj settings when drawing obj_refs instead of their settings */
 
     /* Settings that may be less necessary... */
     struct bv_scene_obj_old_settings s_old;
@@ -573,7 +573,8 @@ struct bview_knobs {
 
 };
 
-typedef void(*dm_clbk_t)(void *, struct bv_scene_obj *);
+typedef int (*dm_obj_clbk_t)(void *, struct bv_scene_obj *);
+typedef int (*dm_view_clbk_t)(void *, struct bview *);
 
 struct bview {
     uint32_t	  magic;             /**< @brief magic number */
@@ -662,7 +663,8 @@ struct bview {
     void           *gv_clientData;   /**< @brief  passed to gv_callback */
     struct bu_ptbl *callbacks;
     void           *dmp;             /* Display manager pointer, if one is associated with this view */
-    dm_clbk_t	   *dm_draw_sobj;    /* Function pointer to a method to draw a scene object in the dmp display manager. */
+    dm_obj_clbk_t	   *dm_draw_sobj;    /* Function pointer to a method to draw a scene object in the dmp display manager. */
+    dm_view_clbk_t	   *dm_draw_view;    /* Function pointer to a method to draw view only graphics such as faceplate. */
     void           *u_data;          /* Caller data associated with this view */
 };
 
