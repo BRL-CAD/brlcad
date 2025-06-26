@@ -288,7 +288,19 @@ struct bv_scene_obj  {
     /* Settings that may be less necessary... */
     struct bv_scene_obj_old_settings s_old;
 
-    /* Child objects of this object */
+
+    /* Objects to draw when drawing this object.  Like
+     * children in that they are drawn using this
+     * object's settings, but unlike them in that their
+     * memory management is not handled by this object.
+     * Used for things like "instance objects" to reference
+     * another object's geometry for drawing purposes. */
+    struct bu_ptbl obj_refs;
+
+    /* Child objects of this object.  Used for things like
+     * textual labels on geometric primitives, these will
+     * be deleted when this object is deleted (unlike object
+     * references above.) */
     struct bu_ptbl children;
 
     /* Parent object of this object */
