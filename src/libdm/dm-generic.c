@@ -37,6 +37,9 @@
 #include "./include/private.h"
 #include "./null/dm-Null.h"
 
+extern void dm_add_arrows(struct dm *dmp, struct bv_scene_obj *s);
+extern void dm_draw_label(struct dm *dmp, struct bv_scene_obj *s);
+
 void *
 dm_interp(struct dm *dmp)
 {
@@ -661,7 +664,7 @@ dm_draw_obj(struct dm *dmp, struct bv_scene_obj *s)
     dm_set_line_attr(dmp, s->s_os->s_line_width, s->s_soldash);
 
     // Primary object drawing.
-    ret = dmp->i->dm_draw_obj(dmp, s);
+    int ret = dmp->i->dm_draw_obj(dmp, s);
 
     // There are a few cases that have additional special drawing work we need
     // to carry out.
