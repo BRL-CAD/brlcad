@@ -629,16 +629,91 @@ dm_draw_vlist_hidden_line(struct dm *dmp, struct bv_vlist *vp)
 
 
 int
-dm_draw_obj(struct dm *dmp, struct bv_scene_obj *s){
-    if (UNLIKELY(!dmp)) return -1;
-    return dmp->i->dm_draw_obj(dmp, s);
+dm_draw_obj(struct dm *dmp, struct bv_scene_obj *s)
+{
+    if (UNLIKELY(!dmp || !s)) return -1;
+
+    // If an object is turned off, we're not drawing it
+    if (s->s_flag == DOWN && !s->s_force_draw)
+	return 0;
+
+    // First, handle any object references
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->obj_refs); i++) {
+	struct bv_scene_obj *o = (struct bv_scene_obj *)BU_PTBL_GET(&s->obj_refs, i);
+	struct bv_obj_settings *tmp_s_os = o->s_os;
+	o->s_os = (s->s_override_obj_ref_settings) ? s->s_os : o->s_os;
+	dm_draw_obj(dmp, o);
+	o->s_os = tmp_s_os;
+    }
+
+    // If we have a HUD type object, set up the matrices
+    if (s->s_type_flags & BV_LABELS)
+	(void)dm_hud_begin(dmp);
+
+    // Primary object drawing
+    int ret = dmp->i->dm_draw_obj(dmp, s);
+
+    // If we have a HUD type object, restore the matrices
+    if (s->s_type_flags & BV_LABELS)
+	(void)dm_hud_end(dmp);
+
+
+    // Handle any children (TODO - see if we need pre-and-post primary
+    // drawing options for children...)
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_obj *o = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	dm_draw_obj(dmp, o);
+    }
+
+    return ret;
 }
 
 int
-dm_draw_sobj(void *vdmp, struct bv_scene_obj *s){
+dm_draw_sobj(void *vdmp, struct bv_scene_obj *s)
+{
     struct dm *dmp = (struct dm *)vdmp;
     return dm_draw_obj(dmp, s);
 }
+
+
+int
+dm_draw_view(void *vdmp, struct bview *v)
+{
+    if (UNLIKELY(!vdmp || !v)) return -1;
+    struct dm *dmp = (struct dm *)vdmp;
+
+    /* Set up matrices for HUD drawing, rather than 3D scene drawing. */
+    (void)dm_hud_begin(dmp);
+
+    dm_draw_faceplate(v);
+
+    if (v->gv_tcl.gv_data_labels.gdls_draw)
+	dm_draw_labels(dmp, &v->gv_tcl.gv_data_labels, v->gv_model2view);
+
+    if (v->gv_tcl.gv_sdata_labels.gdls_draw)
+	dm_draw_labels(dmp, &v->gv_tcl.gv_sdata_labels, v->gv_model2view);
+
+#if 0
+    /* Draw labels - TODO - this needs to be handled as child
+     * scene objects */
+    if (wdbp && vd && v->gv_tcl.gv_prim_labels.gos_draw) {
+	for (int i = 0; i < vd->prim_label_list_size; ++i) {
+	    dm_draw_prim_labels(dmp,
+		    wdbp,
+		    bu_vls_cstr(&vd->prim_label_list[i]),
+		    v->gv_model2view,
+		    v->gv_tcl.gv_prim_labels.gos_text_color,
+		    NULL, NULL);
+	}
+    }
+#endif
+
+    /* Restore non-HUD settings. */
+    (void)dm_hud_end(dmp);
+
+    return 0;
+}
+
 
 int
 dm_draw_begin(struct dm *dmp)
