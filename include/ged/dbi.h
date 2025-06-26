@@ -281,6 +281,13 @@ class GED_EXPORT DbiPath_Settings {
 	// view.)  In the latter case, if the GObj lod_v doesn't match the
 	// DbiPath_Settings lod_v, the view specific object will need its own
 	// geometry.
+	//
+	// TODO - we'll have to see about the complexity, but another option
+	// would be to use a linked view's version of an LoD object if the level
+	// matches the calculated value for the current view, and have the view
+	// make its own local version if the levels don't match (or, if a local
+	// LoD obj does exit, re-validate that a shared obj doesn't match and
+	// remove the local version in favor of the shared if the view has changed.
 	struct bview *lod_v = NULL;
 };
 
