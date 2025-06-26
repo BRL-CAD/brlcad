@@ -85,7 +85,7 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
     if (!dgcdp || !dgcdp->v)
 	return;
 
-    struct bv_scene_obj *sp = bv_obj_get(dgcdp->v, BV_DB_OBJS);
+    struct bv_scene_obj *sp = bv_obj_get(dgcdp->gedp->free_scene_objs);
     if (!sp)
 	return;
 
@@ -108,7 +108,7 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
     sp->s_vlen += bv_vlist_cmd_cnt(bvv);
     BU_LIST_APPEND_LIST(&(sp->s_vlist), &(bvv->l));
 
-    bv_scene_obj_bound(sp, dgcdp->v);
+    bv_obj_bound(sp);
 
     db_dup_full_path(&bdata->s_fullpath, pathp);
 
@@ -269,7 +269,7 @@ append_solid_to_display_list(
     }
 
     /* create solid */
-    struct bv_scene_obj *sp = bv_obj_get(bv_data->v, BV_DB_OBJS);
+    struct bv_scene_obj *sp = bv_obj_get(bv_data->gedp->free_scene_objs);
     struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
     if (!bdata) {
 	BU_GET(bdata, struct ged_bv_data);
@@ -332,8 +332,8 @@ append_solid_to_display_list(
 	struct bv_vlist *bvv = (struct bv_vlist *)&vhead;
 	sp->s_vlen += bv_vlist_cmd_cnt(bvv);
 	BU_LIST_APPEND_LIST(&(sp->s_vlist), &(bvv->l));
-	
-	bv_scene_obj_bound(sp, bv_data->v);
+
+	bv_obj_bound(sp);
 
         while (BU_LIST_WHILE(vp, bv_vlist, &(sp->s_vlist))) {
             BU_LIST_DEQUEUE(&vp->l);
@@ -1265,6 +1265,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    bv_data.wireframe_color[2]= dgcdp.vs.color[2];
 		    bv_data.transparency= dgcdp.vs.transparency;
 		    bv_data.dmode = dgcdp.vs.s_dmode;
+		    bv_data.gedp = gedp;
 		    bv_data.v = gedp->ged_gvp;
 
 		    dgcdp.gdlp = dl_addToDisplay(gedp->i->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);

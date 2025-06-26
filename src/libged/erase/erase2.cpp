@@ -33,7 +33,6 @@
 
 #include "bu/opt.h"
 #include "bu/sort.h"
-#include "bv/view_sets.h"
 #include "ged/database.h"
 #include "ged/view.h"
 

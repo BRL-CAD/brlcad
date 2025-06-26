@@ -338,7 +338,7 @@ bv_free(struct bview *gvp)
 }
 
 static void
-_bound_objs(int *is_empty, int *have_geom_objs, vect_t min, vect_t max, struct bu_ptbl *so, struct bview *v)
+_bound_objs(int *is_empty, int *have_geom_objs, vect_t min, vect_t max, const struct bu_ptbl *so, struct bview *v)
 {
     vect_t minus, plus;
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
@@ -360,7 +360,7 @@ _bound_objs(int *is_empty, int *have_geom_objs, vect_t min, vect_t max, struct b
 }
 
 void
-bv_autoview(struct bview *v, struct bu_ptbl *so, double factor)
+bv_autoview(struct bview *v, const struct bu_ptbl *so, double factor)
 {
     vect_t min, max;
     vect_t center = VINIT_ZERO;
