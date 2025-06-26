@@ -295,7 +295,7 @@ main(int ac, char *av[]) {
     s_av[3] = "all.bot";
     s_av[4] = NULL;
     ged_exec_facetize(gedp, 4, s_av);
-    gedp->dbi_state->update();
+    gedp->dbi_state->Sync();
 
 
     s_av[0] = "view";
