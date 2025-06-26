@@ -687,11 +687,14 @@ BViewState::Erase(int mode, bool process_scene_objs, int argc, const char **av)
 // way we register a dmp pointer.  If we keep the convention of one BViewState
 // per dm, then between dmp and v->dm_draw_sobj the view will know what it needs
 // to deal with scene objects.
+//
+// Also need to be able to trigger faceplate drawing, which is not composed of
+// scene objects, so we have a second callback to register for that.
 void
 BViewState::Render()
 {
     // If we don't have an assigned display manager, nothing to do.
-    if (UNLIKELY(!v->dmp || !v->dm_draw_sobj))
+    if (UNLIKELY(!v->dmp || !v->dm_draw_sobj || !v->dm_draw_view))
 	return;
 
     // First, draw database geometry path-based scene objects active in this view
@@ -749,7 +752,7 @@ BViewState::Render()
 
 
     // Lastly, draw any faceplate elements active in the view.
-
+    (*v->dm_draw_view)(v->dmp, v);
 }
 
 // In a Redraw, we are assuming that the DbiState's GObj and CombInst objects
