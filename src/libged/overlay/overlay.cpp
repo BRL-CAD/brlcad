@@ -1,4 +1,4 @@
-/*                         O V E R L A Y . C
+/*                      O V E R L A Y . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2025 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/overlay.c
+/** @file libged/overlay.cpp
  *
  * The overlay command.
  *
@@ -235,8 +235,12 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (gedp->new_cmd_forms) {
-	    struct bview *v = gedp->ged_gvp;
-	    bv_vlblock_obj(vbp, v, bu_vls_cstr(&nroot));
+	    BViewState *bvs = gedp->dbi_state->GetBViewState();
+	    bvs->RemoveObjs(bu_vls_cstr(&nroot));
+	    struct bv_scene_obj *s = bv_obj_get(gedp->free_scene_objs);
+	    bv_vlblock_obj(s, vbp);
+	    bu_vls_sprintf(&s->s_name, "%s", bu_vls_cstr(&nroot));
+	    bvs->AddObj(s);
 	} else {
 	    _ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_cstr(&vname), 0);
 	}
@@ -344,12 +348,12 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 }
 #endif /* GED_PLUGIN */
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s

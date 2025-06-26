@@ -6,12 +6,11 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-ged_plugin_library(ged-joint joint.c)
+ged_plugin_library(ged-joint joint.cpp)
 target_link_libraries(ged-joint libged libbu)
 
 cmakefiles(
   CMakeLists.txt
-  joint.c
 )
 
 # Local Variables:
