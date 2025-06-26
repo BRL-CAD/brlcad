@@ -52,7 +52,7 @@ BV_EXPORT extern void bv_settings_init(struct bview_settings *s);
 /**
  * Automatically set up the view to make the scene objects visible
  */
-BV_EXPORT extern void bv_autoview(struct bview *v, struct bu_ptbl *so, fastf_t scale, int all_view_objs);
+BV_EXPORT extern void bv_autoview(struct bview *v, const struct bu_ptbl *so, fastf_t scale);
 
 /* Copy the size and camera info (deliberately not a full copy of all view state) */
 BV_EXPORT extern void bv_sync(struct bview *dest, struct bview *src);

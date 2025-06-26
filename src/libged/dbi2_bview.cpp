@@ -144,6 +144,13 @@ BViewState::Empty()
     return view_empty;
 }
 
+void
+BViewState::Autoview(fastf_t factor, bool dbipaths, bool view_only)
+{
+    const struct bu_ptbl *sobjs = SceneObjs(dbipaths, view_only);
+    bv_autoview(v, sobjs, factor);
+}
+
 const struct bu_ptbl *
 BViewState::SceneObjs(bool dbipaths, bool view_only)
 {
@@ -520,6 +527,61 @@ BViewState::RemovePath(unsigned long long hash, int mode, bool rebuild)
 		partially_drawn_paths[-1].insert(*s_it);
 	}
     }
+}
+
+bool
+BViewState::AddObj(struct bv_scene_obj *s)
+{
+    if (UNLIKELY(!s))
+	return false;
+    scene_objs.insert(s);
+    return true;
+}
+
+bool
+BViewState::RemoveObjs(const char *pattern, bool free_objs)
+{
+    if (UNLIKELY(!pattern))
+	return false;
+
+    std::vector<struct bv_scene_obj *> rmobjs;
+    std::unordered_set<struct bv_scene_obj *>::iterator o_it;
+    for (o_it = scene_objs.begin(); o_it != scene_objs.end(); ++o_it) {
+	if (!bu_path_match(pattern, bu_vls_cstr(&((*o_it)->s_name)), 0))
+	    rmobjs.push_back(*o_it);
+    }
+    for (size_t i = 0; i < rmobjs.size(); i++)
+	RemoveObj(rmobjs[i], free_objs);
+
+    return true;
+}
+
+bool
+BViewState::RemoveObj(struct bv_scene_obj *s, bool free_obj)
+{
+    if (UNLIKELY(!s))
+	return false;
+    scene_objs.erase(s);
+    if (free_obj)
+	bv_obj_put(s);
+    return true;
+}
+
+std::vector<struct bv_scene_obj *>
+BViewState::FindSceneObjs(const char *pattern)
+{
+    std::vector<struct bv_scene_obj *> objs;
+    std::unordered_set<struct bv_scene_obj *>::iterator o_it;
+    for (o_it = scene_objs.begin(); o_it != scene_objs.end(); ++o_it) {
+	if (!pattern) {
+	    objs.push_back(*o_it);
+	} else {
+	    if (!bu_path_match(pattern, bu_vls_cstr(&((*o_it)->s_name)), 0))
+		objs.push_back(*o_it);
+	}
+    }
+
+    return objs;
 }
 
 std::vector<std::string>

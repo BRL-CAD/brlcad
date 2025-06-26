@@ -40,6 +40,7 @@ struct ged_solid_data {
     int wireframe_color[3];
     fastf_t transparency;
     int dmode;
+    struct ged *gedp;
     struct bview *v;
 };
 

@@ -608,6 +608,10 @@ class GED_EXPORT BViewState {
 	// objects active due to views connected to this one by Link().
 	bool Empty();
 
+	// Trigger an autoview on the bview using currently defined
+	// objects.
+	void Autoview(fastf_t factor = 0.0, bool dbipaths = true, bool view_only = true);
+
 	// Provide a C-style array of all bv_scene_obj entities active
 	// as either DbiPath leaves or explicit view objects.  Optional
 	// values may be used to disable DbiPath or view-only objs - default
@@ -712,8 +716,9 @@ class GED_EXPORT BViewState {
 	// the object to remove.  AddObj and RemoveObj will not operate on
 	// DbiPath based scene objects, which are handled separately.
 	bool AddObj(struct bv_scene_obj *s);
-	bool RemoveObj(struct bv_scene_obj *s);
-	bool RemoveObj(const char *objname);
+	bool RemoveObj(struct bv_scene_obj *s, bool free_obj = true);
+	bool RemoveObjs(const char *pattern, bool free_objs = true);
+	std::vector<struct bv_scene_obj *> FindSceneObjs(const char *pattern = NULL);
 
 	// Return a sorted vector of path strings corresponding to the drawn
 	// paths in the view.  If mode == -1 list all paths, otherwise list

@@ -349,7 +349,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     if (visualize) {
 	if (gedp->new_cmd_forms) {
 	    BViewState *bvs = gedp->dbi_state->GetBViewState();
-	    bvs->RemoveObj("lint_visual");
+	    bvs->RemoveObjs("lint_visual");
 	    struct bv_scene_obj *s = bv_obj_get(gedp->free_scene_objs);
 	    bu_vls_sprintf(&s->s_name, "lint_visual");
 	    bv_vlblock_obj(s, ldata.vbp);

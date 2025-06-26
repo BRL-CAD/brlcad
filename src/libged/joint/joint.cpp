@@ -1,4 +1,4 @@
-/*                      J O I N T . C
+/*                      J O I N T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2025 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/joint.c
+/** @file libged/joint.cpp
  *
  * Process all animation edit commands.
  *
@@ -296,8 +296,15 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (gedp->new_cmd_forms) {
-	struct bview *view = gedp->ged_gvp;
-	bv_vlblock_obj(vbp, view, "joint");
+	struct bu_vls nroot = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&nroot, "joint");
+	BViewState *bvs = gedp->dbi_state->GetBViewState();
+	bvs->RemoveObjs(bu_vls_cstr(&nroot));
+	struct bv_scene_obj *s = bv_obj_get(gedp->free_scene_objs);
+	bv_vlblock_obj(s, vbp);
+	bu_vls_sprintf(&s->s_name, "%s", bu_vls_cstr(&nroot));
+	bvs->AddObj(s);
+	bu_vls_free(&nroot);
     } else {
 	_ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
     }
@@ -805,7 +812,7 @@ static const char *lex_name;
 static double mm2base, base2mm;
 
 static void
-parse_error(struct ged *gedp, struct bu_vls *vlsp, char *error)
+parse_error(struct ged *gedp, struct bu_vls *vlsp, const char *error)
 {
     char *text;
     size_t i;
@@ -884,7 +891,7 @@ get_token(struct ged *gedp, union bu_lex_token *token, FILE *fip, struct bu_vls 
 static int
 gobble_token(struct ged *gedp, int type_wanted, int value_wanted, FILE *fip, struct bu_vls *str)
 {
-    static char *types[] = {
+    static const char *types[] = {
 	"any",
 	"integer",
 	"double",
@@ -1138,7 +1145,7 @@ parse_ARC(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
 {
     union bu_lex_token token;
     int max;
-    char *error;
+    const char *error;
 
     if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_ARC: open.\n");
@@ -3598,12 +3605,12 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 }
 #endif /* GED_PLUGIN */
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s
