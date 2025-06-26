@@ -77,6 +77,11 @@
 /* Needed to define struct bv_scene_obj */
 #include "bv/defines.h"
 
+// We have to use different I/O mechanisms based on which
+// platform we're on.  Make a define to key off of.
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  define USE_TCL_CHAN
+#endif
 
 #define MGED_DB_NAME "db"
 #define MGED_INMEM_NAME ".inmem"
