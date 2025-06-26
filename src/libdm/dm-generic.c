@@ -687,27 +687,6 @@ dm_draw_view(void *vdmp, struct bview *v)
 
     dm_draw_faceplate(v);
 
-    if (v->gv_tcl.gv_data_labels.gdls_draw)
-	dm_draw_labels(dmp, &v->gv_tcl.gv_data_labels, v->gv_model2view);
-
-    if (v->gv_tcl.gv_sdata_labels.gdls_draw)
-	dm_draw_labels(dmp, &v->gv_tcl.gv_sdata_labels, v->gv_model2view);
-
-#if 0
-    /* Draw labels - TODO - this needs to be handled as child
-     * scene objects */
-    if (wdbp && vd && v->gv_tcl.gv_prim_labels.gos_draw) {
-	for (int i = 0; i < vd->prim_label_list_size; ++i) {
-	    dm_draw_prim_labels(dmp,
-		    wdbp,
-		    bu_vls_cstr(&vd->prim_label_list[i]),
-		    v->gv_model2view,
-		    v->gv_tcl.gv_prim_labels.gos_text_color,
-		    NULL, NULL);
-	}
-    }
-#endif
-
     /* Restore non-HUD settings. */
     (void)dm_hud_end(dmp);
 
