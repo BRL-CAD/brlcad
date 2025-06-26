@@ -265,15 +265,6 @@ bv_obj_reset(struct bv_scene_obj *s)
 	(*s->s_dlist_free_callback)(s);
     s->s_dlist_free_callback = NULL;
 
-    // If we have a label, do the label freeing steps
-    // TODO - this should be using the free callback rather
-    // than special casing...
-    if (s->s_type_flags & BV_LABELS) {
-	struct bv_label *la = (struct bv_label *)s->s_i_data;
-	bu_vls_free(&la->label);
-	BU_PUT(la, struct bv_label);
-    }
-
     // Free vlist data.  If we have an associated vlfree list for
     // reuse use that, otherwise free it for real.
     if (BU_LIST_IS_INITIALIZED(&s->s_vlist)) {
