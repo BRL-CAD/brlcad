@@ -26,13 +26,13 @@ set(
   lod.cpp
   lookat.c
   objs.cpp
-  polygons.c
+  polygons.cpp
   quat.c
   qvrot.c
   saveview.c
   size.c
-  snap.c
-  view.c
+  snap.cpp
+  view.cpp
   viewdir.c
   ypr.c
 )

@@ -147,16 +147,38 @@ BViewState::Empty()
 void
 BViewState::Autoview(fastf_t factor, bool dbipaths, bool view_only)
 {
-    const struct bu_ptbl *sobjs = SceneObjs(dbipaths, view_only);
+    const struct bu_ptbl *sobjs = FindSceneObjsPtbl(NULL, dbipaths, view_only);
     bv_autoview(v, sobjs, factor);
 }
 
 const struct bu_ptbl *
-BViewState::SceneObjs(bool dbipaths, bool view_only)
+BViewState::FindSceneObjsPtbl(const char *pattern, bool dbipaths, bool view_only)
 {
     // NOTE - paths must be baked for this to provide the output
     // expected by callers...
     bu_ptbl_reset(&eobjs);
+    std::vector<struct bv_scene_obj *> objs = FindSceneObjs(pattern, dbipaths, view_only);
+    for (size_t i = 0; i < objs.size(); i++)
+	bu_ptbl_ins(&eobjs, (long *)objs[i]);
+
+    return (const struct bu_ptbl *)&eobjs;
+}
+
+
+std::vector<struct bv_scene_obj *>
+BViewState::FindSceneObjs(const char *pattern, bool dbipaths, bool view_only)
+{
+    std::vector<struct bv_scene_obj *> objs;
+    std::unordered_set<struct bv_scene_obj *>::iterator o_it;
+    for (o_it = scene_objs.begin(); o_it != scene_objs.end(); ++o_it) {
+	if (!pattern) {
+	    objs.push_back(*o_it);
+	} else {
+	    if (!bu_path_match(pattern, bu_vls_cstr(&((*o_it)->s_name)), 0))
+		objs.push_back(*o_it);
+	}
+    }
+
     if (dbipaths) {
 	std::unordered_map<size_t, std::unordered_set<unsigned long long>>::iterator e_it;
 	for (e_it = s_expanded.begin(); e_it != s_expanded.end(); ++e_it) {
@@ -166,7 +188,12 @@ BViewState::SceneObjs(bool dbipaths, bool view_only)
 		struct bv_scene_obj *sobj = p->SceneObj(e_it->first, this);
 		if (!sobj)
 		    continue;
-		bu_ptbl_ins(&eobjs, (long *)sobj);
+		if (!pattern) {
+		    objs.push_back(sobj);
+		} else {
+		    if (!bu_path_match(pattern, bu_vls_cstr(&(sobj->s_name)), 0))
+			objs.push_back(sobj);
+		}
 	    }
 	}
     }
@@ -175,12 +202,18 @@ BViewState::SceneObjs(bool dbipaths, bool view_only)
 	std::unordered_set<struct bv_scene_obj *>::iterator so_it;
 	for (so_it = scene_objs.begin(); so_it != scene_objs.end(); ++so_it) {
 	    struct bv_scene_obj *sobj = *so_it;
-	    bu_ptbl_ins(&eobjs, (long *)sobj);
+	    if (!pattern) {
+		objs.push_back(sobj);
+	    } else {
+		if (!bu_path_match(pattern, bu_vls_cstr(&(sobj->s_name)), 0))
+		    objs.push_back(sobj);
+	    }
 	}
     }
 
-    return (const struct bu_ptbl *)&eobjs;
+    return objs;
 }
+
 
 std::string
 BViewState::Name()
@@ -567,22 +600,6 @@ BViewState::RemoveObj(struct bv_scene_obj *s, bool free_obj)
     return true;
 }
 
-std::vector<struct bv_scene_obj *>
-BViewState::FindSceneObjs(const char *pattern)
-{
-    std::vector<struct bv_scene_obj *> objs;
-    std::unordered_set<struct bv_scene_obj *>::iterator o_it;
-    for (o_it = scene_objs.begin(); o_it != scene_objs.end(); ++o_it) {
-	if (!pattern) {
-	    objs.push_back(*o_it);
-	} else {
-	    if (!bu_path_match(pattern, bu_vls_cstr(&((*o_it)->s_name)), 0))
-		objs.push_back(*o_it);
-	}
-    }
-
-    return objs;
-}
 
 std::vector<std::string>
 BViewState::DrawnPaths(int mode)

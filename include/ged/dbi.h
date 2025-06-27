@@ -620,7 +620,9 @@ class GED_EXPORT BViewState {
 	// Linked view's objects will also be included.
 	//
 	// bu_ptbl is internally managed by BViewState.
-	const struct bu_ptbl * SceneObjs(bool dbipaths = true, bool view_only = true);
+	const struct bu_ptbl * FindSceneObjsPtbl(const char *pattern = NULL, bool dbipaths = true, bool view_only = true);
+	// As above, but return a std::vector
+	std::vector<struct bv_scene_obj *> FindSceneObjs(const char *pattern = NULL, bool dbipaths = true, bool view_only = true);
 
 	// Allow a view state to specify a "linked" view state where it will
 	// source data in addition to its own.
@@ -718,7 +720,6 @@ class GED_EXPORT BViewState {
 	bool AddObj(struct bv_scene_obj *s);
 	bool RemoveObj(struct bv_scene_obj *s, bool free_obj = true);
 	bool RemoveObjs(const char *pattern, bool free_objs = true);
-	std::vector<struct bv_scene_obj *> FindSceneObjs(const char *pattern = NULL);
 
 	// Return a sorted vector of path strings corresponding to the drawn
 	// paths in the view.  If mode == -1 list all paths, otherwise list
