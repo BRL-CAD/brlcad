@@ -280,13 +280,8 @@ draw_edges(struct ged *gedp, struct rt_bot_internal *bot, int num_edges, int edg
 
     if (gedp->new_cmd_forms) {
 	struct bu_vls nroot = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&nroot, "bot_check::%s", draw_name);
-	BViewState *bvs = gedp->dbi_state->GetBViewState();
-	bvs->RemoveObjs(bu_vls_cstr(&nroot));
-	struct bv_scene_obj *s = bv_obj_get(gedp->free_scene_objs);
-	bv_vlblock_obj(s, vbp);
-	bu_vls_sprintf(&s->s_name, "%s", bu_vls_cstr(&nroot));
-	bvs->AddObj(s);
+	bu_vls_sprintf(&nroot, "ged::bot_check::%s", draw_name);
+	ged_vlblock_scene_obj(gedp, gedp->ged_gvp, bu_vls_cstr(&nroot), vbp);
 	bu_vls_free(&nroot);
     } else {
 	_ged_cvt_vlblock_to_solids(gedp, vbp, draw_name, 0);
