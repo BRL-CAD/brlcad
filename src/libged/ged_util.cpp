@@ -1703,8 +1703,7 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	if (gedp->new_cmd_forms) {
 	    VSETALL(extremum[0],  INFINITY);
 	    VSETALL(extremum[1], -INFINITY);
-	    BViewState *gvs = gedp->dbi_state->GetBViewState(NULL);
-	    const struct bu_ptbl *db_objs = gvs->FindSceneObjsPtbl();
+	    const struct bu_ptbl *db_objs = ged_find_scene_objs(gedp, NULL, NULL, 1, 1);
 	    (void)scene_bounding_sph(db_objs, &(extremum[0]), &(extremum[1]), 1);
 	} else {
 	    (void)dl_bounding_sph(gedp->i->ged_gdp->gd_headDisplay, &(extremum[0]), &(extremum[1]), 1);

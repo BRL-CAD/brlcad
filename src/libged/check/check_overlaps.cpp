@@ -356,15 +356,7 @@ int check_overlaps(struct ged *gedp, struct current_state *state,
 
     if (options->overlaps_overlay_flag) {
 	if (gedp->new_cmd_forms) {
-	    struct bu_vls nroot = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&nroot, "check::overlaps");
-	    BViewState *bvs = gedp->dbi_state->GetBViewState();
-	    bvs->RemoveObjs(bu_vls_cstr(&nroot));
-	    struct bv_scene_obj *s = bv_obj_get(gedp->free_scene_objs);
-	    bv_vlblock_obj(s, check_plot.vbp);
-	    bu_vls_sprintf(&s->s_name, "%s", bu_vls_cstr(&nroot));
-	    bvs->AddObj(s);
-	    bu_vls_free(&nroot);
+	    ged_vlblock_scene_obj(gedp, gedp->ged_gvp, "ged::check::overlaps", check_plot.vbp);
 	} else {
 	    _ged_cvt_vlblock_to_solids(gedp, check_plot.vbp, "OVERLAPS", 0);
 	}

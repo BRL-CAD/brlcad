@@ -1059,6 +1059,47 @@ DbiState::CollapsePaths(std::vector<unsigned long long> &paths, bool create_path
     return out_paths;
 }
 
+
+// C exposure of certain DbiState/BViewState information and capabilities
+
+
+const struct bu_ptbl *
+ged_find_scene_objs(struct ged *gedp, struct bview *v, const char *pattern, int dbipaths, int view_only)
+{
+    if (!gedp)
+	return NULL;
+
+    BViewState *bvs = gedp->dbi_state->GetBViewState(v);
+    if (!bvs)
+	return NULL;
+
+    return bvs->FindSceneObjsPtbl(pattern, dbipaths, view_only);
+}
+
+struct bv_scene_obj *
+ged_vlblock_scene_obj(struct ged *gedp, struct bview *v, const char *name, struct bv_vlblock *vbp)
+{
+    if (!gedp || !name || !vbp)
+	return NULL;
+
+    BViewState *bvs = gedp->dbi_state->GetBViewState(v);
+    if (!bvs)
+	return NULL;
+
+    bvs->RemoveObjs(name);
+
+    struct bv_scene_obj *s = bv_obj_get(gedp->free_scene_objs);
+    if (!s)
+	return NULL;
+
+    bv_vlblock_obj(s, vbp);
+    bu_vls_sprintf(&s->s_name, "%s", name);
+
+    bvs->AddObj(s);
+
+    return s;
+}
+
 /** @} */
 // Local Variables:
 // tab-width: 8

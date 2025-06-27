@@ -310,14 +310,6 @@ BV_EXPORT void bv_vlist_rpp(struct bu_list *vlists, struct bu_list *hd, const po
 BV_EXPORT extern void bv_plot_vlblock(FILE *fp,
 				      const struct bv_vlblock *vbp);
 
-BV_EXPORT extern void bv_vlblock_to_objs(struct bu_ptbl *out,
-                                     const char *name_root,
-				     struct bv_vlblock *vbp,
-				     struct bview *v,
-				     struct bv_scene_obj *f,
-				     struct bu_list *vlfree);
-
-
 BV_EXPORT extern int
 bv_vlblock_obj(struct bv_scene_obj *s, struct bv_vlblock *vbp);
 

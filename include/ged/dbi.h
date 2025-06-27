@@ -858,7 +858,7 @@ class GED_EXPORT BViewState {
 	bool view_empty = true;
 
 	// Container to hold scene objects when
-	// exposing via SceneObj
+	// exposing via FindSceneObjsPtbl
 	struct bu_ptbl eobjs = BU_PTBL_INIT_ZERO;
 
 	// State hashes used for Dirty comparison
@@ -1133,6 +1133,17 @@ typedef struct _bselect_state {
 } BSelectState;
 
 #endif
+
+/* DbiState is basically a C++ API, but there are a few cases where we
+ * may want to interface with some of its capabilities in C.  Define
+ * some functions for that purpose. */
+
+GED_EXPORT extern const struct bu_ptbl *
+ged_find_scene_objs(struct ged *gedp, struct bview *v, const char *pattern, int dbipaths, int view_only);
+
+GED_EXPORT struct bv_scene_obj *
+ged_vlblock_scene_obj(struct ged *gedp, struct bview *v, const char *name, struct bv_vlblock *vbp);
+
 
 #endif /* GED_DBI_H */
 
