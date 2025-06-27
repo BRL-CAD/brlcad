@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* recursive bu_parallel() failure, tbd whether cpp11 or pthread impl,
+  likely because IDs are exceeding MAX_PSW, causing mayhem and chaos.
+
 * Archer was observed to mangle the structure of a comb tree when assigning
   a color from the dialog panel.  MGED is able to assign the color fine,
   so there appears to be something specific to Archer's comb tree handling
