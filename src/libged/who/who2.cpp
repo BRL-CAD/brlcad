@@ -63,22 +63,25 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&cvls);
 	return BRLCAD_ERROR;
     }
-    struct bview *v = gedp->ged_gvp;
+    struct bview *v = NULL;
     if (bu_vls_strlen(&cvls)) {
-	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
+	struct bu_ptbl *views = &gedp->ged_views;
+	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	    struct bview *cv = (struct bview *)BU_PTBL_GET(views, i);
+	    if (BU_STR_EQUAL(bu_vls_cstr(&cvls), bu_vls_cstr(&cv->gv_name))) {
+		v = cv;
+		break;
+	    }
+	}
 	if (!v) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
 	    return BRLCAD_ERROR;
 	}
+    } else {
+	v = gedp->ged_gvp;
     }
     bu_vls_free(&cvls);
-
-    /* Check that we have a view */
-    if (!v) {
-	bu_vls_printf(gedp->ged_result_str, "No view specified and no current view defined in GED, nothing to generate a list of paths from");
-	return BRLCAD_ERROR;
-    }
 
     BViewState *bvs = gedp->dbi_state->GetBViewState(v);
     if (!bvs)
