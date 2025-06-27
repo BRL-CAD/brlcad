@@ -188,7 +188,7 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 	BViewState *vs = gedp->dbi_state->GetBViewState(gedp->ged_gvp);
 	if (!vs)
 	    return BRLCAD_ERROR;
-	const struct bu_ptbl *sobjs = vs->FindSceneObjsPtbl();
+	const struct bu_ptbl *sobjs = ged_find_scene_objs(gedp, gedp->ged_gvp, NULL, 1, 1);
 	if (bv_snap_lines_3d(&out_pt, gedp->ged_gvp, sobjs, &view_pt) == BRLCAD_OK) {
 	    MAT4X3PNT(vp, gedp->ged_gvp->gv_model2view, out_pt);
 	    V2SET(view_pt_2d, vp[0], vp[1]);

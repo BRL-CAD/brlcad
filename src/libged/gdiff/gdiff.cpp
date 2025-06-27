@@ -415,15 +415,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (gedp->new_cmd_forms) {
-	    struct bu_vls nroot = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&nroot, "gdiff");
-	    BViewState *bvs = gedp->dbi_state->GetBViewState();
-	    bvs->RemoveObjs(bu_vls_cstr(&nroot));
-	    struct bv_scene_obj *s = bv_obj_get(gedp->free_scene_objs);
-	    bv_vlblock_obj(s, vbp);
-	    bu_vls_sprintf(&s->s_name, "%s", bu_vls_cstr(&nroot));
-	    bvs->AddObj(s);
-	    bu_vls_free(&nroot);
+	    ged_vlblock_scene_obj(gedp, gedp->ged_gvp, "ged::gdiff", vbp);
 	} else {
 	    _ged_cvt_vlblock_to_solids(gedp, vbp, "diff_visual", 0);
 	}
