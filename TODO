@@ -18,9 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* Validate and merge hlbvh BoT raytracing improvements
-
 * complete preliminary concave arb8 support
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
@@ -40,6 +39,7 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * Create EXPORT targets for BRL-CAD libraries to support newer
   CMake find_package style.  If possible, try to also support
   older style variables in FindBRLCAD.cmake
+
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
