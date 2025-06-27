@@ -57,6 +57,10 @@ extern "C" {
 
 DbiState::DbiState(struct ged *ged_p)
 {
+    int64_t start, elapsed;
+    fastf_t seconds;
+    start = bu_gettime();
+
     BU_GET(res, struct resource);
     rt_init_resource(res, 0, NULL);
 
@@ -89,17 +93,8 @@ DbiState::DbiState(struct ged *ged_p)
     // Set up cache
     dcache = dbi_cache_open(gedp->dbip->dbi_filename);
 
-    int64_t start, elapsed;
-    fastf_t seconds;
-
-    start = bu_gettime();
-
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
-	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    update_dp(dp);
-	}
-    }
+    // Do the initial population
+    Sync(true);
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
@@ -644,9 +639,15 @@ DbiState::tops(bool show_cyclic)
 }
 
 void
-DbiState::Sync()
+DbiState::Sync(bool force)
 {
     if (!added.size() && !changed.size() && !removed.size()) {
+
+	// We don't know anything about any changes - unless we're
+	// being forced to do a full sync, assume we're good.
+	if (!force)
+	    return;
+
 	// We've got to redo everything if we don't know what happened.
 	dp2g.clear();
 
