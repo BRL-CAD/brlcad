@@ -285,6 +285,7 @@ bv_init(struct bview *gvp)
     //gvp->dmp = NULL;
     gvp->dm_draw_sobj = NULL;
     gvp->dm_draw_view = NULL;
+    gvp->dm_hash = NULL;
 
     // Initial scaling factors are 1
     gvp->gv_base2local = 1.0;

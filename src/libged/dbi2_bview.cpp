@@ -116,10 +116,56 @@ BViewState::~BViewState()
     bu_ptbl_free(&eobjs);
 }
 
-unsigned long long
+void
 BViewState::Hash()
 {
-    return 0;
+    view_hash = bv_hash(v);
+    dmp_hash = 0;
+    if (v->dm_hash)
+	dmp_hash = (*v->dm_hash)(v->dmp);
+
+    // Calculate the hash of the the timestamps of the scene objects, whether
+    // they are from the dbi paths or view-only objects.  If anything was
+    // changed, added or removed it should be reflected in the timestamp hash,
+    // provided the object altering code updated it appropriately.
+    struct bu_data_hash_state *oc = bu_data_hash_create();
+    std::unordered_map<size_t, std::unordered_set<unsigned long long>>::iterator e_it;
+    for (e_it = s_expanded.begin(); e_it != s_expanded.end(); ++e_it) {
+	std::unordered_set<unsigned long long>::iterator p_it;
+	for (p_it = e_it->second.begin(); p_it != e_it->second.end(); ++p_it) {
+	    DbiPath *p = dbis->GetDbiPath(*p_it);
+	    if (!p)
+		continue;
+	    struct bv_scene_obj *so = p->SceneObj(e_it->first, this);
+	    if (!so)
+		continue;
+	    bu_data_hash_update(oc, &so->timestamp, sizeof(unsigned long long));
+	}
+    }
+    std::unordered_set<struct bv_scene_obj *>::iterator u_it;
+    for (u_it = scene_objs.begin(); u_it != scene_objs.end(); ++u_it)
+	bu_data_hash_update(oc, &(*u_it)->timestamp, sizeof(int64_t));
+
+    if (l_viewobj) {
+	for (u_it = l_viewobj->scene_objs.begin(); u_it != l_viewobj->scene_objs.end(); ++u_it)
+	    bu_data_hash_update(oc, &(*u_it)->timestamp, sizeof(int64_t));
+    }
+    objs_hash = bu_data_hash_val(oc);
+    bu_data_hash_destroy(oc);
+}
+
+bool
+BViewState::Dirty()
+{
+    // If anything has changed according to the hashes, we need a new Render()
+    if (view_hash != old_view_hash)
+       	return true;
+    if (dmp_hash != old_dmp_hash)
+       	return true;
+    if (objs_hash != old_objs_hash)
+	return true;
+
+    return false;
 }
 
 bool
@@ -832,6 +878,11 @@ BViewState::Render()
 
     // Lastly, draw any faceplate elements active in the view.
     (*v->dm_draw_view)(v->dmp, v);
+
+    // We're current now, so update the hash views
+    old_view_hash = view_hash;
+    old_dmp_hash = dmp_hash;
+    old_objs_hash = objs_hash;
 }
 
 // In a Redraw, we are assuming that the DbiState's GObj and CombInst objects
@@ -920,6 +971,9 @@ BViewState::Redraw(bool UNUSED(autoview))
 		s_expanded[d_it->first].insert(leaves[i]);
 	}
     }
+
+    // Having done the redraw work, recalculate the hashes
+    Hash();
 }
 
 #if 0

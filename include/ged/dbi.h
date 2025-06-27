@@ -598,10 +598,19 @@ class GED_EXPORT BViewState {
 	BViewState(DbiState *db = NULL, struct bview *ev = NULL);
 	~BViewState();
 
-	// Generate a hash representing the current state of the BViewState
-	// class and its struct bview.  This is useful for applications
-	// that may wish to know whether they need to call Redraw()
-	unsigned long long Hash();
+	// Calculate internal hashes of the current state of the view, display
+	// manager and scene object data.  This will sometimes be called by
+	// libged routines, but should also be called by application codes
+	// when they make view changes to the bview or change dmp settings.
+	//
+	// (Since those are separate C data structures and can be changed
+	// in ways other than BViewState member functions, we cannot always
+	// know locally when a hash re-calc is in order.)
+	void Hash();
+
+	// Determine based on hashes whether the view data has changed since
+	// the last Render() call.
+	bool Dirty();
 
 	// Report if there are any active objects (DbiPath or vanilla scene
 	// objects) active in the view.  This will include any paths or
@@ -851,6 +860,14 @@ class GED_EXPORT BViewState {
 	// Container to hold scene objects when
 	// exposing via SceneObj
 	struct bu_ptbl eobjs = BU_PTBL_INIT_ZERO;
+
+	// State hashes used for Dirty comparison
+	unsigned long long view_hash = 0;
+	unsigned long long dmp_hash = 0;
+	unsigned long long objs_hash = 0;
+	unsigned long long old_view_hash = 0;
+	unsigned long long old_dmp_hash = 0;
+	unsigned long long old_objs_hash = 0;
 };
 
 #define GED_DBISTATE_DB_CHANGE   0x01
@@ -949,11 +966,14 @@ class GED_EXPORT DbiState {
 	// efficient by user-supplied information in the added, changed and
 	// removed callback sets - if none of those are pre-populated, the only
 	// option is to do a full rebuild of the DbiState from the .g file.
+	// By default of all of the callback sets are empty Sync will assume
+	// there is no work to do - to make it do the full repopulation
+	// force can be set to true.
 	//
-	// A Sync will also call Redraw on any views in the DbiState, since
-	// there is a good chance that database changes have invalidated some
-	// aspect of the drawn views.
-	void Sync();
+	// A fully executed Sync will also call Redraw on any views in the
+	// DbiState, since there is a good chance that database changes have
+	// invalidated some aspect of the drawn views.
+	void Sync(bool force = false);
 
 	// Data from librt callbacks
 	std::unordered_set<struct directory *> added;
