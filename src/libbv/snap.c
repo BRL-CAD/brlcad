@@ -255,7 +255,7 @@ line_tol_sq(struct bview *v, int lwidth)
 }
 
 int
-bv_snap_lines_3d(point_t *out_pt, struct bview *v, struct bu_ptbl *sobjs, point_t *p)
+bv_snap_lines_3d(point_t *out_pt, struct bview *v, const struct bu_ptbl *sobjs, point_t *p)
 {
     int ret = 0;
     struct bview_settings *gv_s = (v->gv_s) ? v->gv_s : &v->gv_ls;
@@ -317,7 +317,7 @@ bv_snap_lines_3d(point_t *out_pt, struct bview *v, struct bu_ptbl *sobjs, point_
 }
 
 int
-bv_snap_lines_2d(struct bview *v, struct bu_ptbl *sobjs, fastf_t *vx, fastf_t *vy)
+bv_snap_lines_2d(struct bview *v, const struct bu_ptbl *sobjs, fastf_t *vx, fastf_t *vy)
 {
     if (!v || !vx || !vy) return 0;
 
@@ -339,7 +339,7 @@ bv_snap_lines_2d(struct bview *v, struct bu_ptbl *sobjs, fastf_t *vx, fastf_t *v
 }
 
 void
-bv_view_center_linesnap(struct bview *v, struct bu_ptbl *sobjs)
+bv_view_center_linesnap(struct bview *v, const struct bu_ptbl *sobjs)
 {
     point_t view_pt;
     point_t model_pt;
