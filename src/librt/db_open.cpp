@@ -44,6 +44,7 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/cache.h"
 #include "bu/parallel.h"
 #include "bu/path.h"
 #include "bu/time.h"
@@ -648,7 +649,7 @@ db_i_internal_create(void)
     BU_GET(i, struct db_i_internal);
     i->dbi_magic = DBI_MAGIC;
 
-    i->mesh_c = NULL;
+    i->c = NULL;
     i->shutdown_requested = false;
     i->init_complete = true;  // The LoD init function sets this to false when it starts
 
@@ -672,8 +673,8 @@ db_i_internal_destroy(struct db_i_internal *i)
 	}
     }
 
-    if (i->mesh_c)
-	bv_mesh_lod_context_destroy(i->mesh_c);
+    if (i->c)
+	bu_cache_close(i->c);
 
     BU_PUT(i, struct db_i_internal);
 }
