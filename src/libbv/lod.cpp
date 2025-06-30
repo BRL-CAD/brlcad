@@ -71,14 +71,11 @@
 #include <sstream>
 #include <string>
 
-extern "C" {
-#include "lmdb.h"
-}
-
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/bitv.h"
+#include "bu/cache.h"
 #include "bu/color.h"
 #include "bu/hash.h"
 #include "bu/malloc.h"
@@ -110,7 +107,7 @@ extern "C" {
 
 // Define what format of the cache is current - if it doesn't match, we need
 // to wipe and redo.
-#define CACHE_CURRENT_FORMAT 1
+#define CACHE_CURRENT_FORMAT 2
 
 /* There are various individual pieces of data in the cache associated with
  * each object key.  For lookup they use short suffix strings to distinguish
@@ -591,11 +588,6 @@ bv_mesh_lod_context_create(const char *name)
     // Hash the input filename to generate a key for uniqueness
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&fname, "%s", bu_path_normalize(name));
-    // TODO - xxhash needs a minimum input size per Coverity - figure out what it is...
-    // (may have fixed this - need to check...)
-    if (bu_vls_strlen(&fname) < 10) {
-	bu_vls_printf(&fname, "GGGGGGGGGGGGG");
-    }
     unsigned long long hash = bu_data_hash(bu_vls_cstr(&fname), bu_vls_strlen(&fname)*sizeof(char));
     bu_path_component(&fname, bu_path_normalize(name), BU_PATH_BASENAME_EXTLESS);
     bu_vls_printf(&fname, "_%llu", hash);
@@ -724,11 +716,6 @@ bv_mesh_lod_key_get(struct bv_mesh_lod_context *c, const char *name)
     // to get the lookup key
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&keystr, "%s", name);
-    // TODO - xxhash needs a minimum input size per Coverity - figure out what it is...
-    // (may have fixed this - need to check...)
-    if (bu_vls_strlen(&keystr) < 10) {
-	bu_vls_printf(&keystr, "GGGGGGGGGGGGG");
-    }
     unsigned long long hash = bu_data_hash(bu_vls_cstr(&keystr), bu_vls_strlen(&keystr)*sizeof(char));
     bu_vls_sprintf(&keystr, "%llu", hash);
 
@@ -760,11 +747,6 @@ bv_mesh_lod_key_put(struct bv_mesh_lod_context *c, const char *name, unsigned lo
     // to get something appropriate for a lookup key
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&keystr, "%s", name);
-    // TODO - xxhash needs a minimum input size per Coverity - figure out what it is...
-    // (may have fixed this - need to check...)
-    if (bu_vls_strlen(&keystr) < 10) {
-	bu_vls_printf(&keystr, "GGGGGGGGGGGGG");
-    }
     unsigned long long hash = bu_data_hash(bu_vls_cstr(&keystr), bu_vls_strlen(&keystr)*sizeof(char));
     bu_vls_sprintf(&keystr, "%llu", hash);
 
