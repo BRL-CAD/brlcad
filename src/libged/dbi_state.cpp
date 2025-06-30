@@ -61,8 +61,16 @@ DbiState::DbiState(struct ged *ged_p)
     fastf_t seconds;
     start = bu_gettime();
 
+    // Create and initialize our local resource.  We'll generally
+    // use this in the libged C++ code instead of rt_uniresource.
     BU_GET(res, struct resource);
     rt_init_resource(res, 0, NULL);
+
+    // Set DbiState know what gedp we're working with, and check if it is valid
+    // - if not, there's no point in continuing.
+    gedp = ged_p;
+    if (!gedp)
+	return;
 
     // The default view is handled a bit specially - it is the "anchor" used
     // for modes like quad view, so it is generally the "target" view others will
@@ -86,15 +94,14 @@ DbiState::DbiState(struct ged *ged_p)
     // Set up the default selection state
     d_selection = new BSelectState(this);
     selected_sets[std::string("default")] = d_selection;
-    gedp = ged_p;
-    if (!gedp || !gedp->dbip)
-	return;
 
-    // Set up cache
-    dcache = dbi_cache_open(gedp->dbip->dbi_filename);
+    if (gedp->dbip) {
+	// Set up cache
+	dcache = dbi_cache_open(gedp->dbip->dbi_filename);
 
-    // Do the initial population
-    Sync(true);
+	// Do the initial population
+	Sync(true);
+    }
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
@@ -106,13 +113,19 @@ DbiState::DbiState(struct ged *ged_p)
 
 DbiState::~DbiState()
 {
+    std::vector<BSelectState *> to_delete_s;
     std::unordered_map<std::string, BSelectState *>::iterator ss_it;
     for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ++ss_it)
-	delete ss_it->second;
+	to_delete_s.push_back(ss_it->second);
+    for (size_t i = 0; i < to_delete_s.size(); i++)
+	delete to_delete_s[i];
 
     std::unordered_map<struct bview *, BViewState *>::iterator v_it;
+    std::vector<BViewState *> to_delete_v;
     for (v_it = view_states.begin(); v_it != view_states.end(); ++v_it)
-	delete v_it->second;
+	to_delete_v.push_back(v_it->second);
+    for (size_t i = 0; i < to_delete_v.size(); i++)
+	delete to_delete_v[i];
 
     // TODO - clean up GObjs, DbiPaths, the DbiPath queue...
 
@@ -120,7 +133,7 @@ DbiState::~DbiState()
     BU_PUT(res, struct resource);
 
     if (dcache)
-	dbi_cache_close(dcache);
+	bu_cache_close(dcache);
 }
 
 bool
@@ -662,11 +675,13 @@ DbiState::Sync(bool force)
 	}
 
 	// (Re)create all GObj instances
-	db_update_nref(gedp->dbip, res);
-	for (int i = 0; i < RT_DBNHASH; i++) {
-	    struct directory *dp;
-	    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		update_dp(dp);
+	if (gedp->dbip) {
+	    db_update_nref(gedp->dbip, res);
+	    for (int i = 0; i < RT_DBNHASH; i++) {
+		struct directory *dp;
+		for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		    update_dp(dp);
+		}
 	    }
 	}
 	return;

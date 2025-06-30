@@ -145,8 +145,11 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // If enabled, set up the DbiState container for fast structure access
-    if (gedp->new_cmd_forms)
+    if (gedp->new_cmd_forms) {
+	if (gedp->dbi_state)
+	    delete gedp->dbi_state;
 	gedp->dbi_state = new DbiState(gedp);
+    }
 
     // Set the view units, if we have a view
     if (gedp->ged_gvp) {

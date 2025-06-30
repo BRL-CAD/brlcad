@@ -79,20 +79,23 @@ bu_cache_open(const char *cache_db, int create)
 	std::vector<std::string> dirs;
 	struct bu_vls cdbd = BU_VLS_INIT_ZERO;
 	struct bu_vls ctmp = BU_VLS_INIT_ZERO;
+	bu_path_component(&ctmp, cache_db, BU_PATH_BASENAME);
 	bu_path_component(&cdbd, cache_db, BU_PATH_DIRNAME);
-	while (bu_vls_strlen(&cdbd)) {
+	while (bu_vls_strlen(&ctmp) && !BU_STR_EQUAL(bu_vls_cstr(&ctmp), ".") &&
+	       (!(bu_vls_strlen(&ctmp) == 1 && bu_vls_cstr(&ctmp)[0] == BU_DIR_SEPARATOR))) {
+	    dirs.push_back(std::string(bu_vls_cstr(&ctmp)));
 	    bu_path_component(&ctmp, bu_vls_cstr(&cdbd), BU_PATH_BASENAME);
-	    dirs.push_back(std::string(bu_vls_cstr(&cdbd)));
-	    bu_vls_sprintf(&ctmp, "%s", bu_vls_cstr(&cdbd));
-	    bu_path_component(&cdbd, bu_vls_cstr(&ctmp), BU_PATH_DIRNAME);
+	    bu_path_component(&cdbd, bu_vls_cstr(&cdbd), BU_PATH_DIRNAME);
 	}
 	bu_dir(cdb, MAXPATHLEN, BU_DIR_CACHE, NULL);
 	bu_vls_sprintf(&ctmp, "%s", cdb);
 	for (long long i = dirs.size() - 1; i >= 0; i--) {
-	    bu_vls_printf(&ctmp, "/%s", dirs[i].c_str());
+	    bu_vls_printf(&ctmp, "%c%s", BU_DIR_SEPARATOR, dirs[i].c_str());
 	    if (!bu_file_exists(bu_vls_cstr(&ctmp), NULL))
 		bu_mkdir((char *)bu_vls_cstr(&ctmp));
 	}
+	bu_vls_free(&ctmp);
+	bu_vls_free(&cdbd);
 
 	bu_dir(cdb, MAXPATHLEN, BU_DIR_CACHE, cache_db, NULL);
     }
@@ -192,9 +195,9 @@ bu_cache_get(void **data, const char *key, struct bu_cache *c)
 }
 
 void
-bu_cache_get_done(const char *key, struct bu_cache *c)
+bu_cache_get_done(struct bu_cache *c)
 {
-    if (!key || !c)
+    if (!c)
 	return;
 
     mdb_txn_commit(c->i->txn);
@@ -202,7 +205,7 @@ bu_cache_get_done(const char *key, struct bu_cache *c)
 }
 
 size_t
-bu_cache_write(void *data, size_t dsize, char *key, struct bu_cache *c)
+bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
 {
     if (!data || !key || !c)
 	return 0;
