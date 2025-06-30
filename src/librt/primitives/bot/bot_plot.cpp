@@ -362,7 +362,7 @@ struct bot_full_detail_clbk_data {
 
 /* Set up the data for drawing */
 static int
-bot_mesh_info_clbk(struct bv_mesh_lod *lod, void *cb_data)
+bot_mesh_info_clbk(struct bv_lod_mesh *lod, void *cb_data)
 {
     if (!lod || !cb_data)
 	return -1;
@@ -393,7 +393,7 @@ bot_mesh_info_clbk(struct bv_mesh_lod *lod, void *cb_data)
 
 /* Free up the drawing data, but not (yet) done with bot_full_detail_clbk_data */
 static int
-bot_mesh_info_clear_clbk(struct bv_mesh_lod *lod, void *cb_data)
+bot_mesh_info_clear_clbk(struct bv_lod_mesh *lod, void *cb_data)
 {
     struct bot_full_detail_clbk_data *cd = (struct bot_full_detail_clbk_data *)cb_data;
     if (cd->intern) {
@@ -413,7 +413,7 @@ bot_mesh_info_clear_clbk(struct bv_mesh_lod *lod, void *cb_data)
 
 /* Done - free up everything */
 static int
-bot_mesh_info_free_clbk(struct bv_mesh_lod *lod, void *cb_data)
+bot_mesh_info_free_clbk(struct bv_lod_mesh *lod, void *cb_data)
 {
     bot_mesh_info_clear_clbk(lod, cb_data);
     struct bot_full_detail_clbk_data *cd = (struct bot_full_detail_clbk_data *)cb_data;
@@ -470,10 +470,10 @@ rt_bot_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip
     // LoD setting...
     if (v && s->adaptive_wireframe) {
 
-	struct bv_mesh_lod *lod = (struct bv_mesh_lod *)s->draw_data;
+	struct bv_lod_mesh *lod = (struct bv_lod_mesh *)s->draw_data;
 	if (!lod) {
-	    db_mesh_lod_update(dbip, dp->d_namep);
-	    lod = db_mesh_lod_get(dbip, dp->d_namep);
+	    db_lod_mesh_update(dbip, dp->d_namep);
+	    lod = db_lod_mesh_get(dbip, dp->d_namep);
 	    if (!lod)
 		return BRLCAD_ERROR;
 
@@ -493,21 +493,21 @@ rt_bot_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip
 	    cbd->dp = dp;
 	    cbd->res = &rt_uniresource;
 	    cbd->intern = NULL;
-	    bv_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
-	    bv_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
-	    bv_mesh_lod_detail_free_clbk(lod, &bot_mesh_info_free_clbk);
+	    bv_lod_mesh_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
+	    bv_lod_mesh_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
+	    bv_lod_mesh_detail_free_clbk(lod, &bot_mesh_info_free_clbk);
 
 	    // TODO - the need for this should go away - ideally, if the view changes
 	    // the app will know and call ft_scene_obj to update the object  (that is
 	    // a major reason v is passed in as a param
 #if 0
-	    s->s_update_callback = &bv_mesh_lod_view;
+	    s->s_update_callback = &bv_lod_mesh_view;
 #endif
 
 	    // When we are done with the object, it needs to know how to get rid of
 	    // the memory from LoD.  TODO - should we be doing this here instead of
 	    // using s_free_callback?
-	    s->s_free_callback = &bv_mesh_lod_free;
+	    s->s_free_callback = &bv_lod_free;
 
 	}
 
@@ -522,7 +522,7 @@ rt_bot_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip
 	VMOVE(s->bmax, s->bmax);
 
 	// Set the LoD data to the appropriate level for the current view
-	int level = bv_mesh_lod_view(s, v, 0);
+	int level = bv_lod_view(s, v, 0);
 	if (level < 0) {
 	    bu_log("Error loading info for initial LoD view\n");
 	} else {
