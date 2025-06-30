@@ -708,7 +708,7 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-
+extern "C" {
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 
@@ -799,7 +799,7 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
     return &pinfo;
 }
 #endif /* GED_PLUGIN */
-
+}
 
 // Local Variables:
 // tab-width: 8

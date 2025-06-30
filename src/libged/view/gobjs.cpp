@@ -154,7 +154,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     dd.g = g;
 
     // Create a wireframe from the current state of the specified object
-    draw_gather_paths(fp, &mat, (void *)&dd);
+    //draw_gather_paths(fp, &mat, (void *)&dd);
 
     // TODO - set the object callbacks
 
