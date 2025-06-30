@@ -489,6 +489,9 @@ void
 GshState::view_update(struct bview *v)
 {
 #ifdef USE_DM
+    if (!gedp || !gedp->dbi_state)
+	return;
+
     BViewState *vs = gedp->dbi_state->GetBViewState(v);
     if (!vs)
 	return;

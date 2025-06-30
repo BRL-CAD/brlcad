@@ -428,7 +428,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
+extern "C" {
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 struct ged_cmd_impl gdiff_cmd_impl = {
@@ -447,7 +447,7 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
     return &pinfo;
 }
 #endif /* GED_PLUGIN */
-
+}
 
 // Local Variables:
 // tab-width: 8

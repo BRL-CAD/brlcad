@@ -115,8 +115,6 @@ bv_obj_pool_destroy(struct bv_obj_pool *p)
 	bv_obj_put(sp);
 	sp = nsp;
     }
-    BU_PUT(p->i, struct bv_obj_pool_internal);
-    BU_PUT(p, struct bv_obj_pool);
 
     /* Free vlists */
     struct bu_list *vp;
@@ -125,6 +123,10 @@ bv_obj_pool_destroy(struct bv_obj_pool *p)
 	struct bv_vlist *pv = (struct bv_vlist *)vp;
 	BU_FREE(pv, struct bv_vlist);
     }
+
+    /* Final cleanup */
+    BU_PUT(p->i, struct bv_obj_pool_internal);
+    BU_PUT(p, struct bv_obj_pool);
 }
 
 struct bv_scene_obj *
