@@ -18,9 +18,24 @@
      @brief Data types for faceplate objects.
  */
 /** @ingroup libbv */
+/**  @defgroup bv_lod Level of Detail*/
+/**  @addtogroup bv_lod
+     @brief Routines for generating and loading Level-of-Detail triangle mesh data.
+ */
+/** @ingroup libbv */
+/**  @defgroup bv_polygon Polygons*/
+/**  @addtogroup bv_lod
+     @brief Routines for generating and working with polygons in a view context.
+ */
+/** @ingroup libbv */
 /**  @defgroup bv_plot Plotting */
 /**  @addtogroup bv_plot
      @brief The basic UNIX-plot routines.
+ */
+/** @ingroup libbv */
+/**  @defgroup bv_snap Snapping */
+/**  @addtogroup bv_snap
+     @brief Snap sample points to view grinds and/or elements.
  */
 /** @ingroup libbv */
 /**  @defgroup bv_vfont Vector Fonts*/

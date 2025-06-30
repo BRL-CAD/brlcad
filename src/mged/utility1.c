@@ -74,6 +74,34 @@ char ctemp[7];
 
 /*
  *
+ * No-frills edit - opens an editor on the supplied
+ * file name.
+ *
+ */
+int
+editit(struct mged_state *s, const char *command, const char *tempfile) {
+    int argc = 3;
+    const char *av[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+
+    CHECK_DBI_NULL;
+
+    if (!get_editor(s))
+	return TCL_ERROR;
+
+    av[0] = command;
+    av[1] = "-f";
+    av[2] = tempfile;
+    av[3] = NULL;
+
+    ged_exec(s->gedp, argc, (const char **)av);
+
+    clear_editor(s);
+    return TCL_OK;
+}
+
+
+/*
+ *
  * control routine for editing color
  */
 int
@@ -85,12 +113,12 @@ f_edcolor(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc, cons
 
     CHECK_DBI_NULL;
 
-    if (!ged_set_editor(s->gedp, s->classic_mged))
+    if (!get_editor(s))
 	return TCL_ERROR;
 
     ged_exec(s->gedp, argc, argv);
 
-    ged_clear_editor(s->gedp);
+    clear_editor(s);
     return TCL_OK;
 }
 
@@ -112,12 +140,12 @@ f_edcodes(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    if (!ged_set_editor(s->gedp, s->classic_mged))
+    if (!get_editor(s))
 	return TCL_ERROR;
 
     ged_exec(s->gedp, argc, argv);
 
-    ged_clear_editor(s->gedp);
+    clear_editor(s);
     return TCL_OK;
 }
 
@@ -140,12 +168,12 @@ f_edmater(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    if (!ged_set_editor(s->gedp, s->classic_mged))
+    if (!get_editor(s))
 	return TCL_ERROR;
 
     ged_exec(s->gedp, argc, argv);
 
-    ged_clear_editor(s->gedp);
+    clear_editor(s);
     return TCL_OK;
 }
 
@@ -168,7 +196,7 @@ f_red(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv
 	return TCL_ERROR;
     }
 
-    ged_set_editor(s->gedp, s->classic_mged);
+    get_editor(s);
 
     if (ged_exec(s->gedp, argc, argv) & BRLCAD_ERROR) {
 	mged_pr_output(interpreter);
@@ -178,7 +206,7 @@ f_red(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv
 	Tcl_AppendResult(interpreter, bu_vls_addr(s->gedp->ged_result_str), (char *)NULL);
     }
 
-    ged_clear_editor(s->gedp);
+    clear_editor(s);
     return TCL_OK;
 }
 

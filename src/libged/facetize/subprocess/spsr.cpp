@@ -148,7 +148,7 @@ spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inter
 	tbot->faces = (int *)bu_malloc(sizeof(int) * tbot->num_faces * 3, "faces array");
 	memcpy(tbot->faces, bot->faces, sizeof(int) * tbot->num_faces *3);
 
-	flags = ANALYZE_OBJ_TO_PNTS_RAND;
+	flags = RT_GEN_OBJ_PNTS_RAND;
 	bu_vls_sprintf(&tmpname, "spsr_bot.tmp");
 	if (db_lookup(dbip, bu_vls_addr(&tmpname), LOOKUP_QUIET) != RT_DIR_NULL) {
 	    bu_vls_printf(&tmpname, "-0");
@@ -161,7 +161,7 @@ spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_inter
 	    goto ged_facetize_spsr_memfree;
 	}
 
-	if (analyze_obj_to_pnts(NULL, &navg_thickness, dbip, bu_vls_cstr(&tmpname), &btol, flags, s->spsr_options.max_pnts, s->spsr_options.max_time, 1)) {
+	if (rt_gen_obj_pnts(NULL, &navg_thickness, dbip, bu_vls_cstr(&tmpname), &btol, flags, s->spsr_options.max_pnts, s->spsr_options.max_time, 1)) {
 	    bu_log("SPSR: could not raytrace temporary BoT %s\n", bu_vls_cstr(&tmpname));
 	    ret = BRLCAD_ERROR;
 	}

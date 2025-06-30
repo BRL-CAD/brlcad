@@ -103,6 +103,7 @@ set(
   bool_tess.c
   bundle.c
   cache.c
+  cache_lod.c
   cache_lz4.c
   cmd.c
   cyclic.c
@@ -165,6 +166,7 @@ set(
   primitives/bot/bot_edge.c
   primitives/bot/bot_mirror.c
   primitives/bot/bot_oriented_bbox.cpp
+  primitives/bot/bot_plot.cpp
   primitives/bot/btg.c
   primitives/bot/btgf.c
   primitives/bot/decimate.c
@@ -265,6 +267,8 @@ set(
   primitives/rpc/rpc.c
   primitives/rpc/rpc_brep.cpp
   primitives/rpc/rpc_mirror.c
+  primitives/sample.c
+  primitives/sample_pnts.cpp
   primitives/script/script.c
   primitives/sketch/polygons.c
   primitives/sketch/sketch.c

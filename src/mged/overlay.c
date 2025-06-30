@@ -61,7 +61,7 @@ cmd_overlay(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     if (ret != BRLCAD_OK)
 	return TCL_ERROR;
 
-    s->update_views = 1;
+    update_views = 1;
     dm_set_dirty(DMP, 1);
 
     return ret;

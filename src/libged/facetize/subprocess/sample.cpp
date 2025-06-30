@@ -93,8 +93,8 @@ _tess_pnts_sample(const char *oname, struct db_i *dbip, tess_opts *s)
 
     /* Pick our mode(s) */
     int flags = 0;
-    flags |= ANALYZE_OBJ_TO_PNTS_RAND;
-    //flags |= ANALYZE_OBJ_TO_PNTS_SOBOL;
+    flags |= RT_GEN_OBJ_PNTS_RAND;
+    //flags |= RT_GEN_OBJ_PNTS_SOBOL;
 
     struct rt_pnts_internal *pnts = NULL;
     BU_GET(pnts, struct rt_pnts_internal);
@@ -106,7 +106,7 @@ _tess_pnts_sample(const char *oname, struct db_i *dbip, tess_opts *s)
 
     /* Shoot - we need both the avg thickness of the hit partitions and seed points */
     struct bn_tol btol = BN_TOL_INIT_TOL;
-    if (analyze_obj_to_pnts(pnts, &s->pnt_options.avg_thickness, dbip, oname, &btol, flags, s->pnt_options.max_pnts, s->pnt_options.max_sample_time, 1) || pnts->count <= 0) {
+    if (rt_gen_obj_pnts(pnts, &s->pnt_options.avg_thickness, dbip, oname, &btol, flags, s->pnt_options.max_pnts, s->pnt_options.max_sample_time, 1) || pnts->count <= 0) {
 	struct pnt_normal *rpnt = (struct pnt_normal *)pnts->point;
 	if (rpnt) {
 	    struct pnt_normal *entry;

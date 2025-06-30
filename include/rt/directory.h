@@ -55,6 +55,9 @@ __BEGIN_DECLS
  * db_rename(), so that it can be requeued on the correct linked list,
  * based on new hash.  This should be followed by rt_db_put_internal()
  * on the object to modify the on-disk name.
+ *
+ * Note that d_minor_type and the corresponding idb_minor_type of an
+ * rt_db_internal associated with a given directory structure should match.
  */
 struct directory {
     uint32_t d_magic;   /**< @brief Magic number */

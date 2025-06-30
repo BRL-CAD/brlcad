@@ -48,7 +48,9 @@
 #include "common.h"
 #include "vmath.h"
 #include "rt/defines.h"
+#include "rt/db_instance.h"
 #include "rt/application.h"
+#include "rt/geom.h"
 #include "rt/xray.h"
 
 __BEGIN_DECLS
@@ -169,6 +171,28 @@ RT_EXPORT extern void rt_vstub(struct soltab *stp[],
 			       struct seg segp[],
 			       int n,
 			       struct application *ap);
+
+
+// Flags for rt_gen_obj_pnts
+#define RT_GEN_OBJ_PNTS_SURF  0x1 /**< @brief save only the first and last hit point on a ray */
+#define RT_GEN_OBJ_PNTS_GRID  0x2 /**< @brief sample using an XYZ grid based on the bounding box (default if no method flags are specified) */
+#define RT_GEN_OBJ_PNTS_RAND  0x4 /**< @brief sample using Marsaglia sampling on the bounding sphere with pseudo random numbers */
+#define RT_GEN_OBJ_PNTS_SOBOL 0x8 /**< @brief sample using Marsaglia sampling on the bounding sphere with Sobol' low-discrepancy-sequence generation */
+/**
+ * Generate points from a .g object using raytracing.  Various sampling options
+ * are controlled via setting flags.
+ *
+ * Returns: 0 = success, -1 error */
+RT_EXPORT extern int
+rt_gen_obj_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, struct db_i *dbip,
+       const char *obj, struct bn_tol *tol, int flags, int max_pnts, int max_time, int verbosity);
+
+
+// NOTE:  For now this is exposed for testing in libged, but eventually
+// it should be hidden behind the functab methods - NOT to be considered
+// as public API.
+RT_EXPORT extern int
+rt_sample_pnts(struct bv_scene_obj *s, struct rt_db_internal *ip);
 
 #ifdef USE_OPENCL
 struct cl_hit {

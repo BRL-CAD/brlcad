@@ -159,5 +159,25 @@
 [diff]
 	guitool = meld
 
+#****************************************************************************#
+# Work with local github mirror (assuming location of mirror on local
+# filesystem is /home/user/BRL-CAD) - see sh/mirror_repos.sh script for
+# more details.
+#
+# Contents of .githubbrlcad should be:
+#
+# [protocol "file"]
+#        allow = always
+#
+# [url "/home/user/BRL-CAD/"]
+#         insteadOf = https://github.com/BRL-CAD
+#
+#*********************************
+#[includeIf "hasconfig:remote.*.url:https://github.com/BRL-CAD/**"]
+#        path = .githubbrlcad
+#[includeIf "gitdir:/home/user/BRL-CAD/"]
+#        path = .githubbrlcad
+
+
 # -*- mode: gitconfig; -*-
 # vim: set filetype=gitconfig:

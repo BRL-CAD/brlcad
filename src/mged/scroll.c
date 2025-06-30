@@ -283,361 +283,6 @@ sl_itol(struct scroll_item *mptr, double val)
  *									*
  ************************************************************************/
 
-void
-second_menu_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
-{
-    switch (mptr->scroll_val) {
-	case 0:
-	    (*f) = (double)adc_state->adc_dv_x * INV_BV;
-
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_text2[0],
-		    color_scheme->cs_slider_text2[1],
-		    color_scheme->cs_slider_text2[2], 1, 1.0);
-	    break;
-	case 1:
-	    (*f) = (double)adc_state->adc_dv_y * INV_BV;
-
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_text2[0],
-		    color_scheme->cs_slider_text2[1],
-		    color_scheme->cs_slider_text2[2], 1, 1.0);
-	    break;
-	case 2:
-	    (*f) = (double)adc_state->adc_dv_a1 * INV_BV;
-
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_text2[0],
-		    color_scheme->cs_slider_text2[1],
-		    color_scheme->cs_slider_text2[2], 1, 1.0);
-	    break;
-	case 3:
-	    (*f) = (double)adc_state->adc_dv_a2 * INV_BV;
-
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_text2[0],
-		    color_scheme->cs_slider_text2[1],
-		    color_scheme->cs_slider_text2[2], 1, 1.0);
-	    break;
-	case 4:
-	    (*f) = (double)adc_state->adc_dv_dist * INV_BV;
-
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_text2[0],
-		    color_scheme->cs_slider_text2[1],
-		    color_scheme->cs_slider_text2[2], 1, 1.0);
-	    break;
-	case 5:
-	    Tcl_AppendResult(s->interp, "scroll_display: 2nd scroll menu is hosed\n",
-		    (char *)NULL);
-	    break;
-	case 6:
-	    Tcl_AppendResult(s->interp, "scroll_display: 2nd scroll menu is hosed\n",
-		    (char *)NULL);
-	    break;
-	default:
-	    Tcl_AppendResult(s->interp, "scroll_display: 2nd scroll menu is hosed\n",
-		    (char *)NULL);
-    }
-}
-
-int
-edit_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
-{
-    switch (mptr->scroll_val) {
-	case 0:
-	    if (!(EDIT_TRAN && mged_variables->mv_transform == 'e'))
-		return 0;
-
-	    switch (view_state->vs_gvp->gv_coord) {
-		case 'm':
-		case 'o':
-		    if (mged_variables->mv_rateknobs)
-			(*f) = s->s_edit->k.tra_m[X];
-		    else
-			(*f) = s->s_edit->k.tra_m_abs[X];
-		    break;
-		case 'v':
-		default:
-		    if (mged_variables->mv_rateknobs)
-			(*f) = s->s_edit->k.tra_v[X];
-		    else
-			(*f) = s->s_edit->k.tra_v_abs[X];
-		    break;
-	    }
-
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_text1[0],
-		    color_scheme->cs_slider_text1[1],
-		    color_scheme->cs_slider_text1[2], 1, 1.0);
-	    break;
-
-	case 1:
-	    if (!(EDIT_TRAN && mged_variables->mv_transform == 'e'))
-		return 0;
-
-	    switch (view_state->vs_gvp->gv_coord) {
-		case 'm':
-		case 'o':
-		    if (mged_variables->mv_rateknobs)
-			(*f) = s->s_edit->k.tra_m[Y];
-		    else
-			(*f) = s->s_edit->k.tra_m_abs[Y];
-		    break;
-		case 'v':
-		    if (mged_variables->mv_rateknobs)
-			(*f) = s->s_edit->k.tra_v[Y];
-		    else
-			(*f) = s->s_edit->k.tra_v_abs[Y];
-		    break;
-	    }
-
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_text1[0],
-		    color_scheme->cs_slider_text1[1],
-		    color_scheme->cs_slider_text1[2], 1, 1.0);
-	    break;
-
-	case 2:
-	    if (!(EDIT_TRAN && mged_variables->mv_transform == 'e'))
-		return 0;
-
-	    switch (view_state->vs_gvp->gv_coord) {
-		case 'm':
-		case 'o':
-		    if (mged_variables->mv_rateknobs)
-			(*f) = s->s_edit->k.tra_m[Z];
-		    else
-			(*f) = s->s_edit->k.tra_m_abs[Z];
-		    break;
-		case 'v':
-		    if (mged_variables->mv_rateknobs)
-			(*f) = s->s_edit->k.tra_v[Z];
-		    else
-			(*f) = s->s_edit->k.tra_v_abs[Z];
-		    break;
-	    }
-
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_text1[0],
-		    color_scheme->cs_slider_text1[1],
-		    color_scheme->cs_slider_text1[2], 1, 1.0);
-	    break;
-
-	case 3:
-	    if (!(EDIT_SCALE && mged_variables->mv_transform == 'e'))
-		return 0;
-
-	    if (mged_variables->mv_rateknobs)
-		(*f) = s->s_edit->k.sca;
-	    else
-		(*f) = s->s_edit->k.sca_abs;
-
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_text1[0],
-		    color_scheme->cs_slider_text1[1],
-		    color_scheme->cs_slider_text1[2], 1, 1.0);
-	    break;
-
-	case 4:
-	    if (!(EDIT_ROTATE && mged_variables->mv_transform == 'e'))
-		return 0;
-
-	    switch (view_state->vs_gvp->gv_coord) {
-		case 'm':
-		    if (mged_variables->mv_rateknobs)
-			(*f) = s->s_edit->k.rot_m[X] / RATE_ROT_FACTOR;
-		    else
-			(*f) = s->s_edit->k.rot_m_abs[X] / ABS_ROT_FACTOR;
-		    break;
-		case 'o':
-		    if (mged_variables->mv_rateknobs)
-			(*f) = s->s_edit->k.rot_o[X] / RATE_ROT_FACTOR;
-		    else
-			(*f) = s->s_edit->k.rot_o_abs[X] / ABS_ROT_FACTOR;
-		    break;
-		case 'v':
-		default:
-		    if (mged_variables->mv_rateknobs)
-			(*f) = s->s_edit->k.rot_v[X] / RATE_ROT_FACTOR;
-		    else
-			(*f) = s->s_edit->k.rot_v_abs[X] / ABS_ROT_FACTOR;
-		    break;
-	    }
-
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_text1[0],
-		    color_scheme->cs_slider_text1[1],
-		    color_scheme->cs_slider_text1[2], 1, 1.0);
-	    break;
-
-	case 5:
-	    if (!(EDIT_ROTATE && mged_variables->mv_transform == 'e'))
-		return 0;
-
-	    switch (view_state->vs_gvp->gv_coord) {
-		case 'm':
-		    if (mged_variables->mv_rateknobs)
-			(*f) = s->s_edit->k.rot_m[Y] / RATE_ROT_FACTOR;
-		    else
-			(*f) = s->s_edit->k.rot_m_abs[Y] / ABS_ROT_FACTOR;
-		    break;
-		case 'o':
-		    if (mged_variables->mv_rateknobs)
-			(*f) = s->s_edit->k.rot_o[Y] / RATE_ROT_FACTOR;
-		    else
-			(*f) = s->s_edit->k.rot_o_abs[Y] / ABS_ROT_FACTOR;
-		    break;
-		case 'v':
-		default:
-		    if (mged_variables->mv_rateknobs)
-			(*f) = s->s_edit->k.rot_v[Y] / RATE_ROT_FACTOR;
-		    else
-			(*f) = s->s_edit->k.rot_v_abs[Y] / ABS_ROT_FACTOR;
-		    break;
-	    }
-
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_text1[0],
-		    color_scheme->cs_slider_text1[1],
-		    color_scheme->cs_slider_text1[2], 1, 1.0);
-	    break;
-
-	case 6:
-	    if (!(EDIT_ROTATE && mged_variables->mv_transform == 'e'))
-		return 0;
-
-	    switch (view_state->vs_gvp->gv_coord) {
-		case 'm':
-		    if (mged_variables->mv_rateknobs)
-			(*f) = s->s_edit->k.rot_m[Z] / RATE_ROT_FACTOR;
-		    else
-			(*f) = s->s_edit->k.rot_m_abs[Z] / ABS_ROT_FACTOR;
-		    break;
-		case 'o':
-		    if (mged_variables->mv_rateknobs)
-			(*f) = s->s_edit->k.rot_o[Z] / RATE_ROT_FACTOR;
-		    else
-			(*f) = s->s_edit->k.rot_o_abs[Z] / ABS_ROT_FACTOR;
-		    break;
-		case 'v':
-		default:
-		    if (mged_variables->mv_rateknobs)
-			(*f) = s->s_edit->k.rot_v[Z] / RATE_ROT_FACTOR;
-		    else
-			(*f) = s->s_edit->k.rot_v_abs[Z] / ABS_ROT_FACTOR;
-		    break;
-	    }
-
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_text1[0],
-		    color_scheme->cs_slider_text1[1],
-		    color_scheme->cs_slider_text1[2], 1, 1.0);
-	    break;
-
-	default:
-	    Tcl_AppendResult(s->interp, "scroll_display: first scroll menu is hosed\n", (char *)NULL);
-	    return 0;
-    }
-
-    // Success
-    return 1;
-}
-
-void
-view_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
-{
-    switch (mptr->scroll_val) {
-	case 0:
-	    if (mged_variables->mv_rateknobs) {
-		if (view_state->vs_gvp->gv_coord == 'm')
-		    (*f) = view_state->vs_gvp->k.tra_m[X];
-		else
-		    (*f) = view_state->vs_gvp->k.tra_v[X];
-	    } else {
-		if (view_state->vs_gvp->gv_coord == 'm')
-		    (*f) = view_state->vs_gvp->k.tra_m_abs[X];
-		else
-		    (*f) = view_state->vs_gvp->k.tra_v_abs[X];
-	    }
-
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_text2[0],
-		    color_scheme->cs_slider_text2[1],
-		    color_scheme->cs_slider_text2[2], 1, 1.0);
-	    break;
-	case 1:
-	    if (mged_variables->mv_rateknobs) {
-		if (view_state->vs_gvp->gv_coord == 'm')
-		    (*f) = view_state->vs_gvp->k.tra_m[Y];
-		else
-		    (*f) = view_state->vs_gvp->k.tra_v[Y];
-	    } else {
-		if (view_state->vs_gvp->gv_coord == 'm')
-		    (*f) = view_state->vs_gvp->k.tra_m_abs[Y];
-		else
-		    (*f) = view_state->vs_gvp->k.tra_v_abs[Y];
-	    }
-
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_text2[0],
-		    color_scheme->cs_slider_text2[1],
-		    color_scheme->cs_slider_text2[2], 1, 1.0);
-	    break;
-	case 2:
-	    if (mged_variables->mv_rateknobs) {
-		if (view_state->vs_gvp->gv_coord == 'm')
-		    (*f) = view_state->vs_gvp->k.tra_m[Z];
-		else
-		    (*f) = view_state->vs_gvp->k.tra_v[Z];
-	    } else {
-		if (view_state->vs_gvp->gv_coord == 'm')
-		    (*f) = view_state->vs_gvp->k.tra_m_abs[Z];
-		else
-		    (*f) = view_state->vs_gvp->k.tra_v_abs[Z];
-	    }
-
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_text2[0],
-		    color_scheme->cs_slider_text2[1],
-		    color_scheme->cs_slider_text2[2], 1, 1.0);
-	    break;
-	case 3:
-	    if (view_state->vs_gvp) {
-		if (mged_variables->mv_rateknobs)
-		    (*f) = view_state->vs_gvp->k.sca;
-		else
-		    (*f) = view_state->vs_gvp->k.sca_abs;
-	    }
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_text2[0],
-		    color_scheme->cs_slider_text2[1],
-		    color_scheme->cs_slider_text2[2], 1, 1.0);
-	    break;
-	case 4:
-	    if (mged_variables->mv_rateknobs) {
-		if (view_state->vs_gvp->gv_coord == 'm')
-		    (*f) = view_state->vs_gvp->k.rot_m[X] / RATE_ROT_FACTOR;
-		else
-		    (*f) = view_state->vs_gvp->k.rot_v[X] / RATE_ROT_FACTOR;
-	    } else {
-		if (view_state->vs_gvp->gv_coord == 'm')
-		    (*f) = view_state->vs_gvp->k.rot_m_abs[X] / ABS_ROT_FACTOR;
-		else
-		    (*f) = view_state->vs_gvp->k.rot_v_abs[X] / ABS_ROT_FACTOR;
-	    }
-
-	    dm_set_fg(DMP,
-		    color_scheme->cs_slider_text2[0],
-		    color_scheme->cs_slider_text2[1],
-		    color_scheme->cs_slider_text2[2], 1, 1.0);
-	    break;
-	default:
-	    Tcl_AppendResult(s->interp, "scroll_display: first scroll menu is hosed\n",
-		    (char *)NULL);
-    }
-}
-
 /*
  * The parameter is the Y pixel address of the starting
  * screen Y to be used, and the return value is the last screen Y
@@ -656,14 +301,6 @@ scroll_display(struct mged_state *s, int y_top)
     scroll_top = y_top;
     y = y_top;
 
-    // If we are in an editing state, there are some combinations of scroll_val
-    // and editing flags that will trigger different logic.  Check if any of
-    // the potentially relevant edit states are currently active.
-    int edit_flag = 0;
-    edit_flag += (EDIT_ROTATE && mged_variables->mv_transform == 'e') ? 1 : 0;
-    edit_flag += (EDIT_TRAN && mged_variables->mv_transform == 'e') ? 1 : 0;
-    edit_flag += (EDIT_SCALE && mged_variables->mv_transform == 'e') ? 1 : 0;
-
     dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
 
     for (m = &scroll_array[0]; *m != NULL; m++) {
@@ -671,18 +308,357 @@ scroll_display(struct mged_state *s, int y_top)
 	for (mptr = *m; mptr->scroll_string[0] != '\0'; mptr++) {
 	    y += SCROLL_DY;		/* y is now bottom line pos */
 
-	    int did_op = 0;
-	    if (second_menu) {
-		// Second menu has highest priority
-		second_menu_scroll_display(&f, mptr, s);
-		did_op = 1;
-	    } else if (edit_flag) {
-		// Potentially active edit state - check for a match
-		did_op += edit_scroll_display(&f, mptr, s);
-	    }
-	    if (!did_op) {
-		// Not second menu or edit case - do the baseline logic
-		view_scroll_display(&f, mptr, s);
+	    switch (mptr->scroll_val) {
+		case 0:
+		    if (second_menu) {
+			f = (double)adc_state->adc_dv_x * INV_BV;
+
+			dm_set_fg(DMP,
+				       color_scheme->cs_slider_text2[0],
+				       color_scheme->cs_slider_text2[1],
+				       color_scheme->cs_slider_text2[2], 1, 1.0);
+		    } else {
+			if (EDIT_TRAN && mged_variables->mv_transform == 'e') {
+			    switch (mged_variables->mv_coords) {
+				case 'm':
+				case 'o':
+				    if (mged_variables->mv_rateknobs)
+					f = s->edit_state.edit_rate_model_tran[X];
+				    else
+					f = s->edit_state.edit_absolute_model_tran[X];
+				    break;
+				case 'v':
+				default:
+				    if (mged_variables->mv_rateknobs)
+					f = s->edit_state.edit_rate_view_tran[X];
+				    else
+					f = s->edit_state.edit_absolute_view_tran[X];
+				    break;
+			    }
+
+			    dm_set_fg(DMP,
+					   color_scheme->cs_slider_text1[0],
+					   color_scheme->cs_slider_text1[1],
+					   color_scheme->cs_slider_text1[2], 1, 1.0);
+			} else {
+			    if (mged_variables->mv_rateknobs) {
+				if (mged_variables->mv_coords == 'm')
+				    f = view_state->vs_rate_model_tran[X];
+				else
+				    f = view_state->vs_rate_tran[X];
+			    } else {
+				if (mged_variables->mv_coords == 'm')
+				    f = view_state->vs_absolute_model_tran[X];
+				else
+				    f = view_state->vs_absolute_tran[X];
+			    }
+
+			    dm_set_fg(DMP,
+					   color_scheme->cs_slider_text2[0],
+					   color_scheme->cs_slider_text2[1],
+					   color_scheme->cs_slider_text2[2], 1, 1.0);
+			}
+		    }
+		    break;
+		case 1:
+		    if (second_menu) {
+			f = (double)adc_state->adc_dv_y * INV_BV;
+
+			dm_set_fg(DMP,
+				       color_scheme->cs_slider_text2[0],
+				       color_scheme->cs_slider_text2[1],
+				       color_scheme->cs_slider_text2[2], 1, 1.0);
+		    } else {
+			if (EDIT_TRAN && mged_variables->mv_transform == 'e') {
+			    switch (mged_variables->mv_coords) {
+				case 'm':
+				case 'o':
+				    if (mged_variables->mv_rateknobs)
+					f = s->edit_state.edit_rate_model_tran[Y];
+				    else
+					f = s->edit_state.edit_absolute_model_tran[Y];
+				    break;
+				case 'v':
+				    if (mged_variables->mv_rateknobs)
+					f = s->edit_state.edit_rate_view_tran[Y];
+				    else
+					f = s->edit_state.edit_absolute_view_tran[Y];
+				    break;
+			    }
+
+			    dm_set_fg(DMP,
+					   color_scheme->cs_slider_text1[0],
+					   color_scheme->cs_slider_text1[1],
+					   color_scheme->cs_slider_text1[2], 1, 1.0);
+			} else {
+			    if (mged_variables->mv_rateknobs) {
+				if (mged_variables->mv_coords == 'm')
+				    f = view_state->vs_rate_model_tran[Y];
+				else
+				    f = view_state->vs_rate_tran[Y];
+			    } else {
+				if (mged_variables->mv_coords == 'm')
+				    f = view_state->vs_absolute_model_tran[Y];
+				else
+				    f = view_state->vs_absolute_tran[Y];
+			    }
+
+			    dm_set_fg(DMP,
+					   color_scheme->cs_slider_text2[0],
+					   color_scheme->cs_slider_text2[1],
+					   color_scheme->cs_slider_text2[2], 1, 1.0);
+			}
+		    }
+		    break;
+		case 2:
+		    if (second_menu) {
+			f = (double)adc_state->adc_dv_a1 * INV_BV;
+
+			dm_set_fg(DMP,
+				       color_scheme->cs_slider_text2[0],
+				       color_scheme->cs_slider_text2[1],
+				       color_scheme->cs_slider_text2[2], 1, 1.0);
+		    } else {
+			if (EDIT_TRAN && mged_variables->mv_transform == 'e') {
+			    switch (mged_variables->mv_coords) {
+				case 'm':
+				case 'o':
+				    if (mged_variables->mv_rateknobs)
+					f = s->edit_state.edit_rate_model_tran[Z];
+				    else
+					f = s->edit_state.edit_absolute_model_tran[Z];
+				    break;
+				case 'v':
+				    if (mged_variables->mv_rateknobs)
+					f = s->edit_state.edit_rate_view_tran[Z];
+				    else
+					f = s->edit_state.edit_absolute_view_tran[Z];
+				    break;
+			    }
+
+			    dm_set_fg(DMP,
+					   color_scheme->cs_slider_text1[0],
+					   color_scheme->cs_slider_text1[1],
+					   color_scheme->cs_slider_text1[2], 1, 1.0);
+			} else {
+			    if (mged_variables->mv_rateknobs) {
+				if (mged_variables->mv_coords == 'm')
+				    f = view_state->vs_rate_model_tran[Z];
+				else
+				    f = view_state->vs_rate_tran[Z];
+			    } else {
+				if (mged_variables->mv_coords == 'm')
+				    f = view_state->vs_absolute_model_tran[Z];
+				else
+				    f = view_state->vs_absolute_tran[Z];
+			    }
+
+			    dm_set_fg(DMP,
+					   color_scheme->cs_slider_text2[0],
+					   color_scheme->cs_slider_text2[1],
+					   color_scheme->cs_slider_text2[2], 1, 1.0);
+			}
+		    }
+		    break;
+		case 3:
+		    if (second_menu) {
+			f = (double)adc_state->adc_dv_a2 * INV_BV;
+
+			dm_set_fg(DMP,
+				       color_scheme->cs_slider_text2[0],
+				       color_scheme->cs_slider_text2[1],
+				       color_scheme->cs_slider_text2[2], 1, 1.0);
+		    } else {
+			if (EDIT_SCALE && mged_variables->mv_transform == 'e') {
+			    if (mged_variables->mv_rateknobs)
+				f = s->edit_state.edit_rate_scale;
+			    else
+				f = s->edit_state.edit_absolute_scale;
+
+			    dm_set_fg(DMP,
+					   color_scheme->cs_slider_text1[0],
+					   color_scheme->cs_slider_text1[1],
+					   color_scheme->cs_slider_text1[2], 1, 1.0);
+			} else {
+			    if (mged_variables->mv_rateknobs)
+				f = view_state->vs_rate_scale;
+			    else
+				f = view_state->vs_absolute_scale;
+
+			    dm_set_fg(DMP,
+					   color_scheme->cs_slider_text2[0],
+					   color_scheme->cs_slider_text2[1],
+					   color_scheme->cs_slider_text2[2], 1, 1.0);
+			}
+		    }
+		    break;
+		case 4:
+		    if (second_menu) {
+			f = (double)adc_state->adc_dv_dist * INV_BV;
+
+			dm_set_fg(DMP,
+				       color_scheme->cs_slider_text2[0],
+				       color_scheme->cs_slider_text2[1],
+				       color_scheme->cs_slider_text2[2], 1, 1.0);
+		    } else {
+			if (EDIT_ROTATE && mged_variables->mv_transform == 'e') {
+			    switch (mged_variables->mv_coords) {
+				case 'm':
+				    if (mged_variables->mv_rateknobs)
+					f = s->edit_state.edit_rate_model_rotate[X] / RATE_ROT_FACTOR;
+				    else
+					f = s->edit_state.edit_absolute_model_rotate[X] / ABS_ROT_FACTOR;
+				    break;
+				case 'o':
+				    if (mged_variables->mv_rateknobs)
+					f = s->edit_state.edit_rate_object_rotate[X] / RATE_ROT_FACTOR;
+				    else
+					f = s->edit_state.edit_absolute_object_rotate[X] / ABS_ROT_FACTOR;
+				    break;
+				case 'v':
+				default:
+				    if (mged_variables->mv_rateknobs)
+					f = s->edit_state.edit_rate_view_rotate[X] / RATE_ROT_FACTOR;
+				    else
+					f = s->edit_state.edit_absolute_view_rotate[X] / ABS_ROT_FACTOR;
+				    break;
+			    }
+
+			    dm_set_fg(DMP,
+					   color_scheme->cs_slider_text1[0],
+					   color_scheme->cs_slider_text1[1],
+					   color_scheme->cs_slider_text1[2], 1, 1.0);
+			} else {
+			    if (mged_variables->mv_rateknobs) {
+				if (mged_variables->mv_coords == 'm')
+				    f = view_state->vs_rate_model_rotate[X] / RATE_ROT_FACTOR;
+				else
+				    f = view_state->vs_rate_rotate[X] / RATE_ROT_FACTOR;
+			    } else {
+				if (mged_variables->mv_coords == 'm')
+				    f = view_state->vs_absolute_model_rotate[X] / ABS_ROT_FACTOR;
+				else
+				    f = view_state->vs_absolute_rotate[X] / ABS_ROT_FACTOR;
+			    }
+
+			    dm_set_fg(DMP,
+					   color_scheme->cs_slider_text2[0],
+					   color_scheme->cs_slider_text2[1],
+					   color_scheme->cs_slider_text2[2], 1, 1.0);
+			}
+		    }
+		    break;
+		case 5:
+		    if (second_menu)
+			Tcl_AppendResult(s->interp, "scroll_display: 2nd scroll menu is hosed\n",
+					 (char *)NULL);
+		    else {
+			if (EDIT_ROTATE && mged_variables->mv_transform == 'e') {
+			    switch (mged_variables->mv_coords) {
+				case 'm':
+				    if (mged_variables->mv_rateknobs)
+					f = s->edit_state.edit_rate_model_rotate[Y] / RATE_ROT_FACTOR;
+				    else
+					f = s->edit_state.edit_absolute_model_rotate[Y] / ABS_ROT_FACTOR;
+				    break;
+				case 'o':
+				    if (mged_variables->mv_rateknobs)
+					f = s->edit_state.edit_rate_object_rotate[Y] / RATE_ROT_FACTOR;
+				    else
+					f = s->edit_state.edit_absolute_object_rotate[Y] / ABS_ROT_FACTOR;
+				    break;
+				case 'v':
+				default:
+				    if (mged_variables->mv_rateknobs)
+					f = s->edit_state.edit_rate_view_rotate[Y] / RATE_ROT_FACTOR;
+				    else
+					f = s->edit_state.edit_absolute_view_rotate[Y] / ABS_ROT_FACTOR;
+				    break;
+			    }
+
+			    dm_set_fg(DMP,
+					   color_scheme->cs_slider_text1[0],
+					   color_scheme->cs_slider_text1[1],
+					   color_scheme->cs_slider_text1[2], 1, 1.0);
+			} else {
+			    if (mged_variables->mv_rateknobs) {
+				if (mged_variables->mv_coords == 'm')
+				    f = view_state->vs_rate_model_rotate[Y] / RATE_ROT_FACTOR;
+				else
+				    f = view_state->vs_rate_rotate[Y] / RATE_ROT_FACTOR;
+			    } else {
+				if (mged_variables->mv_coords == 'm')
+				    f = view_state->vs_absolute_model_rotate[Y] / ABS_ROT_FACTOR;
+				else
+				    f = view_state->vs_absolute_rotate[Y] / ABS_ROT_FACTOR;
+			    }
+
+			    dm_set_fg(DMP,
+					   color_scheme->cs_slider_text2[0],
+					   color_scheme->cs_slider_text2[1],
+					   color_scheme->cs_slider_text2[2], 1, 1.0);
+			}
+		    }
+		    break;
+		case 6:
+		    if (second_menu)
+			Tcl_AppendResult(s->interp, "scroll_display: 2nd scroll menu is hosed\n",
+					 (char *)NULL);
+		    else {
+			if (EDIT_ROTATE && mged_variables->mv_transform == 'e') {
+			    switch (mged_variables->mv_coords) {
+				case 'm':
+				    if (mged_variables->mv_rateknobs)
+					f = s->edit_state.edit_rate_model_rotate[Z] / RATE_ROT_FACTOR;
+				    else
+					f = s->edit_state.edit_absolute_model_rotate[Z] / ABS_ROT_FACTOR;
+				    break;
+				case 'o':
+				    if (mged_variables->mv_rateknobs)
+					f = s->edit_state.edit_rate_object_rotate[Z] / RATE_ROT_FACTOR;
+				    else
+					f = s->edit_state.edit_absolute_object_rotate[Z] / ABS_ROT_FACTOR;
+				    break;
+				case 'v':
+				default:
+				    if (mged_variables->mv_rateknobs)
+					f = s->edit_state.edit_rate_view_rotate[Z] / RATE_ROT_FACTOR;
+				    else
+					f = s->edit_state.edit_absolute_view_rotate[Z] / ABS_ROT_FACTOR;
+				    break;
+			    }
+
+			    dm_set_fg(DMP,
+					   color_scheme->cs_slider_text1[0],
+					   color_scheme->cs_slider_text1[1],
+					   color_scheme->cs_slider_text1[2], 1, 1.0);
+			} else {
+			    if (mged_variables->mv_rateknobs) {
+				if (mged_variables->mv_coords == 'm')
+				    f = view_state->vs_rate_model_rotate[Z] / RATE_ROT_FACTOR;
+				else
+				    f = view_state->vs_rate_rotate[Z] / RATE_ROT_FACTOR;
+			    } else {
+				if (mged_variables->mv_coords == 'm')
+				    f = view_state->vs_absolute_model_rotate[Z] / ABS_ROT_FACTOR;
+				else
+				    f = view_state->vs_absolute_rotate[Z] / ABS_ROT_FACTOR;
+			    }
+
+			    dm_set_fg(DMP,
+					   color_scheme->cs_slider_text2[0],
+					   color_scheme->cs_slider_text2[1],
+					   color_scheme->cs_slider_text2[2], 1, 1.0);
+			}
+		    }
+		    break;
+		default:
+		    if (second_menu)
+			Tcl_AppendResult(s->interp, "scroll_display: 2nd scroll menu is hosed\n",
+					 (char *)NULL);
+		    else
+			Tcl_AppendResult(s->interp, "scroll_display: first scroll menu is hosed\n",
+					 (char *)NULL);
 	    }
 
 	    if (f > 0)

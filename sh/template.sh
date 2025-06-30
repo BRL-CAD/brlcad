@@ -63,7 +63,7 @@ USAGE="Usage: $0 LICENSE FILE [ProjectName] [CopyrightHolder]"
 # validate input #
 ##################
 if [ "x$LICE" = "x" ] ; then
-    echo "ERROR: must give a license type (BSD, BDL, LGPL)"
+    echo "ERROR: must give a license type (BSD, BDL, LGPL, PD)"
     echo "$USAGE"
     exit 1
 fi
@@ -71,15 +71,18 @@ case $LICE in
     bsd|BSD)
 	LICE=BSD
 	;;
-    bdl|BDL)
+    bdl|BDL|doc|docs|documentation)
 	LICE=BDL
 	;;
-    lgpl|LGPL)
+    lgpl|LGPL|lesser|library)
 	LICE=LGPL
+	;;
+    pd|PD|pdl|PDL|public|publicdomain)
+	LICE=PD
 	;;
     *)
 	echo "ERROR: Unknown or unsupported license type: $LICE"
-	echo "License should be one of BSD, BDL, LGPL"
+	echo "License should be one of BSD, BDL, LGPL, PD"
 	echo "$USAGE"
 	exit 1
 	;;

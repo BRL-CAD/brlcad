@@ -103,6 +103,8 @@
 /** @ingroup rt_geom */
 /**  @defgroup rt_metaball Metaball */
 /** @ingroup rt_geom */
+/**  @defgroup rt_nmg N-Manifold Geometry */
+/** @ingroup rt_geom */
 /**  @defgroup rt_nurb Non-Uniform Rational B-Spline */
 /** @ingroup rt_geom */
 /**  @defgroup rt_part Particle */

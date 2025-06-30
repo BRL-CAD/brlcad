@@ -45,7 +45,7 @@
 # reasonably possible, proper ordering and separation of tests should
 # be added to the labeled sections below as follows:
 #
-#   Stage 0 - project information 
+#   Stage 0 - project information
 #   Stage 1 - define top level options
 #   Stage 2 - check programs
 #   Stage 3 - check compiler characteristics
@@ -65,7 +65,7 @@
 # *               Stage 0 of 9 - Project Info               *
 # ***********************************************************
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.22)
 
 #---------------------------------------------------------------------
 # BRL-CAD's version is centrally stored in include/conf/.  See HACKING
@@ -206,11 +206,9 @@ include(BRLCAD_Environment_Setup)
 # an incorrect include directory for Eigen
 set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 
-#---------------------------------------------------------------------
-# Prepare to manage and build BRL-CAD's external dependencies.
-# Specifies a specific commit hash to use in the 'bext' repository.
+#--------------------------------------------------------------------- Prepare to manage and build BRL-CAD's external dependencies. Specifies a specific commit hash to use in the 'bext' repository.
 include(BRLCAD_ExternalDeps)
-brlcad_bext_init(5f8ed1189c193081736520d1c6aef7a0858d2f62)
+brlcad_bext_init(06d1ac96f9902f6c931f099b93599e8efcbb06e7)
 
 #---------------------------------------------------------------------
 # Define various utilities.

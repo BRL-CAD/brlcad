@@ -38,7 +38,7 @@
 static void
 cline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
-    s->s_edit->edit_flag = arg;
+    es_edflag = arg;
     sedit(s);
 }
 
@@ -55,7 +55,7 @@ struct menu_item cline_menu[] = {
 static void
 extr_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
-    s->s_edit->edit_flag = arg;
+    es_edflag = arg;
     sedit(s);
 }
 struct menu_item extr_menu[] = {
@@ -71,7 +71,7 @@ struct menu_item extr_menu[] = {
 static void
 ars_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
-    s->s_edit->edit_flag = arg;
+    es_edflag = arg;
     sedit(s);
 }
 struct menu_item ars_pick_menu[] = {
@@ -102,9 +102,9 @@ static void
 arb8_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = EARB;
+    es_edflag = EARB;
     if (arg == 12) {
-	s->s_edit->edit_flag = ECMD_ARB_MAIN_MENU;
+	es_edflag = ECMD_ARB_MAIN_MENU;
 	sedit(s);
     }
 
@@ -133,14 +133,14 @@ static void
 arb7_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = EARB;
+    es_edflag = EARB;
     if (arg == 11) {
 	/* move point 5 */
-	s->s_edit->edit_flag = PTARB;
+	es_edflag = PTARB;
 	es_menu = 4;	/* location of point */
     }
     if (arg == 12) {
-	s->s_edit->edit_flag = ECMD_ARB_MAIN_MENU;
+	es_edflag = ECMD_ARB_MAIN_MENU;
 	sedit(s);
     }
 
@@ -168,19 +168,19 @@ static void
 arb6_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = EARB;
+    es_edflag = EARB;
     if (arg == 8) {
 	/* move point 5, location = 4 */
-	s->s_edit->edit_flag = PTARB;
+	es_edflag = PTARB;
 	es_menu = 4;
     }
     if (arg == 9) {
 	/* move point 6, location = 6 */
-	s->s_edit->edit_flag = PTARB;
+	es_edflag = PTARB;
 	es_menu = 6;
     }
     if (arg == 10) {
-	s->s_edit->edit_flag = ECMD_ARB_MAIN_MENU;
+	es_edflag = ECMD_ARB_MAIN_MENU;
 	sedit(s);
     }
 
@@ -206,14 +206,14 @@ static void
 arb5_edge(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = EARB;
+    es_edflag = EARB;
     if (arg == 8) {
 	/* move point 5 at location 4 */
-	s->s_edit->edit_flag = PTARB;
+	es_edflag = PTARB;
 	es_menu = 4;
     }
     if (arg == 9) {
-	s->s_edit->edit_flag = ECMD_ARB_MAIN_MENU;
+	es_edflag = ECMD_ARB_MAIN_MENU;
 	sedit(s);
     }
 
@@ -238,9 +238,9 @@ static void
 arb4_point(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = PTARB;
+    es_edflag = PTARB;
     if (arg == 5) {
-	s->s_edit->edit_flag = ECMD_ARB_MAIN_MENU;
+	es_edflag = ECMD_ARB_MAIN_MENU;
 	sedit(s);
     }
 
@@ -260,15 +260,15 @@ static void
 tgc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = RT_PARAMS_EDIT_PSCALE;
+    es_edflag = PSCALE;
     if (arg == MENU_TGC_ROT_H)
-	s->s_edit->edit_flag = ECMD_TGC_ROT_H;
+	es_edflag = ECMD_TGC_ROT_H;
     if (arg == MENU_TGC_ROT_AB)
-	s->s_edit->edit_flag = ECMD_TGC_ROT_AB;
+	es_edflag = ECMD_TGC_ROT_AB;
     if (arg == MENU_TGC_MV_H)
-	s->s_edit->edit_flag = ECMD_TGC_MV_H;
+	es_edflag = ECMD_TGC_MV_H;
     if (arg == MENU_TGC_MV_HH)
-	s->s_edit->edit_flag = ECMD_TGC_MV_HH;
+	es_edflag = ECMD_TGC_MV_HH;
 
     set_e_axes_pos(s, 1);
 }
@@ -297,7 +297,7 @@ static void
 tor_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = RT_PARAMS_EDIT_PSCALE;
+    es_edflag = PSCALE;
 
     set_e_axes_pos(s, 1);
 }
@@ -315,9 +315,9 @@ eto_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
     if (arg == MENU_ETO_ROT_C)
-	s->s_edit->edit_flag = ECMD_ETO_ROT_C;
+	es_edflag = ECMD_ETO_ROT_C;
     else
-	s->s_edit->edit_flag = RT_PARAMS_EDIT_PSCALE;
+	es_edflag = PSCALE;
 
     set_e_axes_pos(s, 1);
 }
@@ -334,7 +334,7 @@ static void
 ell_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = RT_PARAMS_EDIT_PSCALE;
+    es_edflag = PSCALE;
 
     set_e_axes_pos(s, 1);
 }
@@ -351,14 +351,14 @@ struct menu_item ell_menu[] = {
 static void
 spline_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
-    /* XXX Why wasn't this done by setting s->s_edit->edit_flag = ECMD_SPLINE_VPICK? */
+    /* XXX Why wasn't this done by setting es_edflag = ECMD_SPLINE_VPICK? */
     if (arg < 0) {
 	/* Enter picking state */
 	chg_state(s, ST_S_EDIT, ST_S_VPICK, "Vertex Pick");
 	return;
     }
-    /* For example, this will set s->s_edit->edit_flag = ECMD_VTRANS */
-    s->s_edit->edit_flag = arg;
+    /* For example, this will set es_edflag = ECMD_VTRANS */
+    es_edflag = arg;
     sedit(s);
 
     set_e_axes_pos(s, 1);
@@ -400,7 +400,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 
 	    if (*es_eu->up.magic_p == NMG_LOOPUSE_MAGIC)
 		nmg_veu(&es_eu->up.lu_p->down_hd, es_eu->up.magic_p);
-	    /* no change of state or s->s_edit->edit_flag */
+	    /* no change of state or es_edflag */
 	    view_state->vs_flag = 1;
 	    return;
 	case ECMD_NMG_FORW:
@@ -474,7 +474,7 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 		fastf_t area;
 		int wire_loop_count = 0;
 
-		m = (struct model *)s->s_edit->es_int.idb_ptr;
+		m = (struct model *)s->edit_state.es_int.idb_ptr;
 		NMG_CK_MODEL(m);
 
 		/* look for wire loops */
@@ -614,8 +614,8 @@ nmg_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    }
 	    break;
     }
-    /* For example, this will set s->s_edit->edit_flag = ECMD_NMG_EPICK */
-    s->s_edit->edit_flag = arg;
+    /* For example, this will set es_edflag = ECMD_NMG_EPICK */
+    es_edflag = arg;
     sedit(s);
 }
 struct menu_item nmg_menu[] = {
@@ -636,9 +636,9 @@ static void
 arb8_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    s->s_edit->edit_flag = ECMD_ARB_MOVE_FACE;
+    es_edflag = ECMD_ARB_MOVE_FACE;
     if (arg == 7) {
-	s->s_edit->edit_flag = ECMD_ARB_MAIN_MENU;
+	es_edflag = ECMD_ARB_MAIN_MENU;
 	sedit(s);
     }
 
@@ -660,9 +660,9 @@ static void
 arb7_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    s->s_edit->edit_flag = ECMD_ARB_MOVE_FACE;
+    es_edflag = ECMD_ARB_MOVE_FACE;
     if (arg == 7) {
-	s->s_edit->edit_flag = ECMD_ARB_MAIN_MENU;
+	es_edflag = ECMD_ARB_MAIN_MENU;
 	sedit(s);
     }
 
@@ -680,9 +680,9 @@ static void
 arb6_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    s->s_edit->edit_flag = ECMD_ARB_MOVE_FACE;
+    es_edflag = ECMD_ARB_MOVE_FACE;
     if (arg == 6) {
-	s->s_edit->edit_flag = ECMD_ARB_MAIN_MENU;
+	es_edflag = ECMD_ARB_MAIN_MENU;
 	sedit(s);
     }
 
@@ -703,9 +703,9 @@ static void
 arb5_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    s->s_edit->edit_flag = ECMD_ARB_MOVE_FACE;
+    es_edflag = ECMD_ARB_MOVE_FACE;
     if (arg == 6) {
-	s->s_edit->edit_flag = ECMD_ARB_MAIN_MENU;
+	es_edflag = ECMD_ARB_MAIN_MENU;
 	sedit(s);
     }
 
@@ -726,9 +726,9 @@ static void
 arb4_mv_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    s->s_edit->edit_flag = ECMD_ARB_MOVE_FACE;
+    es_edflag = ECMD_ARB_MOVE_FACE;
     if (arg == 5) {
-	s->s_edit->edit_flag = ECMD_ARB_MAIN_MENU;
+	es_edflag = ECMD_ARB_MAIN_MENU;
 	sedit(s);
     }
 
@@ -748,9 +748,9 @@ static void
 arb8_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    s->s_edit->edit_flag = ECMD_ARB_SETUP_ROTFACE;
+    es_edflag = ECMD_ARB_SETUP_ROTFACE;
     if (arg == 7)
-	s->s_edit->edit_flag = ECMD_ARB_MAIN_MENU;
+	es_edflag = ECMD_ARB_MAIN_MENU;
 
     sedit(s);
 }
@@ -770,9 +770,9 @@ static void
 arb7_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    s->s_edit->edit_flag = ECMD_ARB_SETUP_ROTFACE;
+    es_edflag = ECMD_ARB_SETUP_ROTFACE;
     if (arg == 7)
-	s->s_edit->edit_flag = ECMD_ARB_MAIN_MENU;
+	es_edflag = ECMD_ARB_MAIN_MENU;
 
     sedit(s);
 }
@@ -792,9 +792,9 @@ static void
 arb6_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    s->s_edit->edit_flag = ECMD_ARB_SETUP_ROTFACE;
+    es_edflag = ECMD_ARB_SETUP_ROTFACE;
     if (arg == 6)
-	s->s_edit->edit_flag = ECMD_ARB_MAIN_MENU;
+	es_edflag = ECMD_ARB_MAIN_MENU;
 
     sedit(s);
 }
@@ -813,9 +813,9 @@ static void
 arb5_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    s->s_edit->edit_flag = ECMD_ARB_SETUP_ROTFACE;
+    es_edflag = ECMD_ARB_SETUP_ROTFACE;
     if (arg == 6)
-	s->s_edit->edit_flag = ECMD_ARB_MAIN_MENU;
+	es_edflag = ECMD_ARB_MAIN_MENU;
 
     sedit(s);
 }
@@ -835,9 +835,9 @@ static void
 arb4_rot_face(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg - 1;
-    s->s_edit->edit_flag = ECMD_ARB_SETUP_ROTFACE;
+    es_edflag = ECMD_ARB_SETUP_ROTFACE;
     if (arg == 5)
-	s->s_edit->edit_flag = ECMD_ARB_MAIN_MENU;
+	es_edflag = ECMD_ARB_MAIN_MENU;
 
     sedit(s);
 }
@@ -855,7 +855,7 @@ static void
 arb_control(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = ECMD_ARB_SPECIFIC_MENU;
+    es_edflag = ECMD_ARB_SPECIFIC_MENU;
     sedit(s);
 }
 struct menu_item cntrl_menu[] = {
@@ -870,7 +870,7 @@ static void
 part_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = RT_PARAMS_EDIT_PSCALE;
+    es_edflag = PSCALE;
 
     set_e_axes_pos(s, 1);
 }
@@ -886,7 +886,7 @@ static void
 rpc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = RT_PARAMS_EDIT_PSCALE;
+    es_edflag = PSCALE;
 
     set_e_axes_pos(s, 1);
 }
@@ -902,7 +902,7 @@ static void
 rhc_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = RT_PARAMS_EDIT_PSCALE;
+    es_edflag = PSCALE;
 
     set_e_axes_pos(s, 1);
 }
@@ -919,7 +919,7 @@ static void
 epa_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = RT_PARAMS_EDIT_PSCALE;
+    es_edflag = PSCALE;
 
     set_e_axes_pos(s, 1);
 }
@@ -935,7 +935,7 @@ static void
 ehy_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = RT_PARAMS_EDIT_PSCALE;
+    es_edflag = PSCALE;
 
     set_e_axes_pos(s, 1);
 }
@@ -954,10 +954,10 @@ hyp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
     es_menu = arg;
     switch (arg) {
 	case MENU_HYP_ROT_H:
-	    s->s_edit->edit_flag = ECMD_HYP_ROT_H;
+	    es_edflag = ECMD_HYP_ROT_H;
 	    break;
 	default:
-	    s->s_edit->edit_flag = RT_PARAMS_EDIT_PSCALE;
+	    es_edflag = PSCALE;
 	    break;
     }
     set_e_axes_pos(s, 1);
@@ -985,7 +985,7 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
     switch (arg) {
 	case MENU_PIPE_SELECT:
 	    es_menu = arg;
-	    s->s_edit->edit_flag = ECMD_PIPE_PICK;
+	    es_edflag = ECMD_PIPE_PICK;
 	    break;
 	case MENU_PIPE_NEXT_PT:
 	    if (!es_pipe_pnt) {
@@ -1000,7 +1000,7 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    es_pipe_pnt = next;
 	    rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
 	    es_menu = arg;
-	    s->s_edit->edit_flag = RT_EDIT_IDLE;
+	    es_edflag = IDLE;
 	    sedit(s);
 	    break;
 	case MENU_PIPE_PREV_PT:
@@ -1016,7 +1016,7 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    es_pipe_pnt = prev;
 	    rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
 	    es_menu = arg;
-	    s->s_edit->edit_flag = RT_EDIT_IDLE;
+	    es_edflag = IDLE;
 	    sedit(s);
 	    break;
 	case MENU_PIPE_SPLIT:
@@ -1025,40 +1025,40 @@ pipe_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	case MENU_PIPE_MOV_PT:
 	    if (!es_pipe_pnt) {
 		Tcl_AppendResult(s->interp, "No Pipe Segment selected\n", (char *)NULL);
-		s->s_edit->edit_flag = RT_EDIT_IDLE;
+		es_edflag = IDLE;
 		return;
 	    }
 	    es_menu = arg;
-	    s->s_edit->edit_flag = ECMD_PIPE_PT_MOVE;
+	    es_edflag = ECMD_PIPE_PT_MOVE;
 	    break;
 	case MENU_PIPE_PT_OD:
 	case MENU_PIPE_PT_ID:
 	case MENU_PIPE_PT_RADIUS:
 	    if (!es_pipe_pnt) {
 		Tcl_AppendResult(s->interp, "No Pipe Segment selected\n", (char *)NULL);
-		s->s_edit->edit_flag = RT_EDIT_IDLE;
+		es_edflag = IDLE;
 		return;
 	    }
 	    es_menu = arg;
-	    s->s_edit->edit_flag = RT_PARAMS_EDIT_PSCALE;
+	    es_edflag = PSCALE;
 	    break;
 	case MENU_PIPE_SCALE_OD:
 	case MENU_PIPE_SCALE_ID:
 	case MENU_PIPE_SCALE_RADIUS:
 	    es_menu = arg;
-	    s->s_edit->edit_flag = RT_PARAMS_EDIT_PSCALE;
+	    es_edflag = PSCALE;
 	    break;
 	case MENU_PIPE_ADD_PT:
 	    es_menu = arg;
-	    s->s_edit->edit_flag = ECMD_PIPE_PT_ADD;
+	    es_edflag = ECMD_PIPE_PT_ADD;
 	    break;
 	case MENU_PIPE_INS_PT:
 	    es_menu = arg;
-	    s->s_edit->edit_flag = ECMD_PIPE_PT_INS;
+	    es_edflag = ECMD_PIPE_PT_INS;
 	    break;
 	case MENU_PIPE_DEL_PT:
 	    es_menu = arg;
-	    s->s_edit->edit_flag = ECMD_PIPE_PT_DEL;
+	    es_edflag = ECMD_PIPE_PT_DEL;
 	    sedit(s);
 	    break;
     }
@@ -1092,19 +1092,19 @@ vol_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 
     switch (arg) {
 	case MENU_VOL_FNAME:
-	    s->s_edit->edit_flag = ECMD_VOL_FNAME;
+	    es_edflag = ECMD_VOL_FNAME;
 	    break;
 	case MENU_VOL_FSIZE:
-	    s->s_edit->edit_flag = ECMD_VOL_FSIZE;
+	    es_edflag = ECMD_VOL_FSIZE;
 	    break;
 	case MENU_VOL_CSIZE:
-	    s->s_edit->edit_flag = ECMD_VOL_CSIZE;
+	    es_edflag = ECMD_VOL_CSIZE;
 	    break;
 	case MENU_VOL_THRESH_LO:
-	    s->s_edit->edit_flag = ECMD_VOL_THRESH_LO;
+	    es_edflag = ECMD_VOL_THRESH_LO;
 	    break;
 	case MENU_VOL_THRESH_HI:
-	    s->s_edit->edit_flag = ECMD_VOL_THRESH_HI;
+	    es_edflag = ECMD_VOL_THRESH_HI;
 	    break;
     }
 
@@ -1129,13 +1129,13 @@ ebm_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 
     switch (arg) {
 	case MENU_EBM_FNAME:
-	    s->s_edit->edit_flag = ECMD_EBM_FNAME;
+	    es_edflag = ECMD_EBM_FNAME;
 	    break;
 	case MENU_EBM_FSIZE:
-	    s->s_edit->edit_flag = ECMD_EBM_FSIZE;
+	    es_edflag = ECMD_EBM_FSIZE;
 	    break;
 	case MENU_EBM_HEIGHT:
-	    s->s_edit->edit_flag = ECMD_EBM_HEIGHT;
+	    es_edflag = ECMD_EBM_HEIGHT;
 	    break;
     }
 
@@ -1157,19 +1157,19 @@ dsp_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 
     switch (arg) {
 	case MENU_DSP_FNAME:
-	    s->s_edit->edit_flag = ECMD_DSP_FNAME;
+	    es_edflag = ECMD_DSP_FNAME;
 	    break;
 	case MENU_DSP_FSIZE:
-	    s->s_edit->edit_flag = ECMD_DSP_FSIZE;
+	    es_edflag = ECMD_DSP_FSIZE;
 	    break;
 	case MENU_DSP_SCALE_X:
-	    s->s_edit->edit_flag = ECMD_DSP_SCALE_X;
+	    es_edflag = ECMD_DSP_SCALE_X;
 	    break;
 	case MENU_DSP_SCALE_Y:
-	    s->s_edit->edit_flag = ECMD_DSP_SCALE_Y;
+	    es_edflag = ECMD_DSP_SCALE_Y;
 	    break;
 	case MENU_DSP_SCALE_ALT:
-	    s->s_edit->edit_flag = ECMD_DSP_SCALE_ALT;
+	    es_edflag = ECMD_DSP_SCALE_ALT;
 	    break;
     }
     sedit(s);
@@ -1188,7 +1188,7 @@ static void
 bot_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 {
     es_menu = arg;
-    s->s_edit->edit_flag = arg;
+    es_edflag = arg;
 
     sedit(s);
     set_e_axes_pos(s, 1);
@@ -1213,7 +1213,7 @@ struct menu_item bot_menu[] = {
 static void
 superell_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b)) {
     es_menu = arg;
-    s->s_edit->edit_flag = RT_PARAMS_EDIT_PSCALE;
+    es_edflag = PSCALE;
     set_e_axes_pos(s, 1);
     return;
 }
@@ -1237,19 +1237,19 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
     switch (arg) {
 	case MENU_METABALL_SET_THRESHOLD:
 	    es_menu = arg;
-	    s->s_edit->edit_flag = RT_PARAMS_EDIT_PSCALE;
+	    es_edflag = PSCALE;
 	    break;
 	case MENU_METABALL_SET_METHOD:
 	    es_menu = arg;
-	    s->s_edit->edit_flag = RT_PARAMS_EDIT_PSCALE;
+	    es_edflag = PSCALE;
 	    break;
 	case MENU_METABALL_PT_SET_GOO:
 	    es_menu = arg;
-	    s->s_edit->edit_flag = RT_PARAMS_EDIT_PSCALE;
+	    es_edflag = PSCALE;
 	    break;
 	case MENU_METABALL_SELECT:
 	    es_menu = arg;
-	    s->s_edit->edit_flag = ECMD_METABALL_PT_PICK;
+	    es_edflag = ECMD_METABALL_PT_PICK;
 	    break;
 	case MENU_METABALL_NEXT_PT:
 	    if (!es_metaball_pnt) {
@@ -1264,7 +1264,7 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    es_metaball_pnt = next;
 	    rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
 	    es_menu = arg;
-	    s->s_edit->edit_flag = RT_EDIT_IDLE;
+	    es_edflag = IDLE;
 	    sedit(s);
 	    break;
 	case MENU_METABALL_PREV_PT:
@@ -1280,36 +1280,36 @@ metaball_ed(struct mged_state *s, int arg, int UNUSED(a), int UNUSED(b))
 	    es_metaball_pnt = prev;
 	    rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
 	    es_menu = arg;
-	    s->s_edit->edit_flag = RT_EDIT_IDLE;
+	    es_edflag = IDLE;
 	    sedit(s);
 	    break;
 	case MENU_METABALL_MOV_PT:
 	    if (!es_metaball_pnt) {
 		Tcl_AppendResult(s->interp, "No Metaball Point selected\n", (char *)NULL);
-		s->s_edit->edit_flag = RT_EDIT_IDLE;
+		es_edflag = IDLE;
 		return;
 	    }
 	    es_menu = arg;
-	    s->s_edit->edit_flag = ECMD_METABALL_PT_MOV;
+	    es_edflag = ECMD_METABALL_PT_MOV;
 	    sedit(s);
 	    break;
 	case MENU_METABALL_PT_FLDSTR:
 	    if (!es_metaball_pnt) {
 		Tcl_AppendResult(s->interp, "No Metaball Point selected\n", (char *)NULL);
-		s->s_edit->edit_flag = RT_EDIT_IDLE;
+		es_edflag = IDLE;
 		return;
 	    }
 	    es_menu = arg;
-	    s->s_edit->edit_flag = RT_PARAMS_EDIT_PSCALE;
+	    es_edflag = PSCALE;
 	    break;
 	case MENU_METABALL_DEL_PT:
 	    es_menu = arg;
-	    s->s_edit->edit_flag = ECMD_METABALL_PT_DEL;
+	    es_edflag = ECMD_METABALL_PT_DEL;
 	    sedit(s);
 	    break;
 	case MENU_METABALL_ADD_PT:
 	    es_menu = arg;
-	    s->s_edit->edit_flag = ECMD_METABALL_PT_ADD;
+	    es_edflag = ECMD_METABALL_PT_ADD;
 	    break;
     }
     set_e_axes_pos(s, 1);

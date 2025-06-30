@@ -131,6 +131,11 @@ removed at any time.
 
 7.42
 ----
+libanalyze
+	analyze_obj_to_pnts and related defines in analyze/pnts.h
+	deprecated in favor of librt's rt_gen_obj_pnts and related
+	defines in rt/shoot.h [deprecated 7.42]
+
 include/raytrace librt
 	db_search_context removed in favor of new db_search params -
 	old db_search function signature can temporarily be obtained

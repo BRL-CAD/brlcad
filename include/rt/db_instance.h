@@ -101,11 +101,12 @@ typedef void (*dbi_update_nref_t)(struct db_i *, struct directory *, struct dire
  * accumulation and improves numerical stability when calculations are
  * made.
  *
- * TODO - make a dbi_internal struct, and move all the LIBRT ONLY
+ * TODO - make a db_i_internal struct, and move all the LIBRT ONLY
  * elements into it.  That will also give us a place to do fancier
  * database state management using things like C++ containers without
  * bothering the public API.
  */
+struct db_i_internal;
 struct db_i {
     uint32_t dbi_magic;         /**< @brief magic number */
 
@@ -138,6 +139,8 @@ struct db_i {
     struct bu_ptbl dbi_changed_clbks;     /**< @brief PRIVATE: dbi_changed_t callbacks registered with dbi */
     struct bu_ptbl dbi_update_nref_clbks; /**< @brief PRIVATE: dbi_update_nref_t callbacks registered with dbi */
     int dbi_use_comb_instance_ids;            /**< @brief PRIVATE: flag to enable/disable comb instance tracking in full paths */
+
+    struct db_i_internal *i;
 };
 #define DBI_NULL ((struct db_i *)0)
 #define RT_CHECK_DBI(_p) BU_CKMAG(_p, DBI_MAGIC, "struct db_i")
