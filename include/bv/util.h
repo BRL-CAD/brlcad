@@ -176,7 +176,7 @@ BV_EXPORT extern int bv_adjust(struct bview *v, int dx, int dy, point_t keypoint
 
 /* Return -1 if width and/or height are unset (and hence a meaningful
  * calculation is impossible), else 0. */
-BV_EXPORT extern int bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y);
+BV_EXPORT extern int bv_screen_to_view(const struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y);
 
 /* Return -1 if width and/or height are unset (and hence a meaningful
  * calculation is impossible), else 0.

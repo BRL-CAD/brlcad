@@ -767,7 +767,7 @@ bv_adjust(struct bview *v, int dx, int dy, point_t keypoint, int UNUSED(mode), u
 
 // TODO - snapping needs to be a post-processing step
 int
-bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y)
+bv_screen_to_view(const struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y)
 {
     if (!v)
 	return -1;
