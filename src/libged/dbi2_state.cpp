@@ -1209,21 +1209,22 @@ CombInst::bbox(point_t *min, point_t *max)
 }
 
 static bool
-cache_get_int(struct ged_draw_cache *dcache, int *oval, unsigned long long hash, const char *key)
+cache_get_int(struct bu_cache *dcache, int *oval, unsigned long long hash, const char *key)
 {
-    bool ret = true;
+    bool ret = false;
     const char *b = NULL;
     size_t bsize = cache_get(dcache, (void **)&b, hash, key);
     if (bsize == sizeof(*oval)) {
+	// Found something - assign it to oval
 	memcpy(oval, b, sizeof(*oval));
-	ret = false;
+	ret = true;
     }
-    cache_done(dcache);
+    bu_cache_get_done(dcache);
     return ret;
 }
 
 static void
-cache_write_int(struct ged_draw_cache *dcache, unsigned long long hash, int *ovar, const char *key)
+cache_write_int(struct bu_cache *dcache, unsigned long long hash, int *ovar, const char *key)
 {
     std::stringstream s;
     s.write(reinterpret_cast<const char *>(ovar), sizeof(*ovar));
@@ -1232,16 +1233,17 @@ cache_write_int(struct ged_draw_cache *dcache, unsigned long long hash, int *ova
 
 
 static bool
-cache_get_uint(struct ged_draw_cache *dcache, unsigned int *oval, unsigned long long hash, const char *key)
+cache_get_uint(struct bu_cache *dcache, unsigned int *oval, unsigned long long hash, const char *key)
 {
-    bool ret = true;
+    bool ret = false;
     const char *b = NULL;
     size_t bsize = cache_get(dcache, (void **)&b, hash, key);
     if (bsize == sizeof(*oval)) {
+	// Found something - assign it to oval
 	memcpy(oval, b, sizeof(*oval));
-	ret = false;
+	ret = true;
     }
-    cache_done(dcache);
+    bu_cache_get_done(dcache);
     return ret;
 }
 
@@ -1264,17 +1266,17 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i)
     // Check the dcache for needed values
 
     int attr_region_id = -1;
-    bool need_region_id = cache_get_int(dbis->dcache, &attr_region_id, hash, CACHE_REGION_ID);
+    bool found_region_id = cache_get_int(dbis->dcache, &attr_region_id, hash, CACHE_REGION_ID);
 
     int rflag = 0;
-    bool need_region_flag = cache_get_int(dbis->dcache, &rflag, hash, CACHE_REGION_FLAG);
+    bool found_region_flag = cache_get_int(dbis->dcache, &rflag, hash, CACHE_REGION_FLAG);
 
     int color_inherit = 0;
-    bool need_color_inherit = cache_get_int(dbis->dcache, &color_inherit, hash, CACHE_INHERIT_FLAG);
+    bool found_color_inherit = cache_get_int(dbis->dcache, &color_inherit, hash, CACHE_INHERIT_FLAG);
 
-    unsigned int cval = INT_MAX;
-    bool need_cval = cache_get_uint(dbis->dcache, &cval, hash, CACHE_COLOR) ;
-    if (!need_cval) {
+    unsigned int cval = UINT_MAX;
+    bool found_cval = cache_get_uint(dbis->dcache, &cval, hash, CACHE_COLOR) ;
+    if (found_cval && cval != UINT_MAX) {
 	// Unpack the cache cval into a bu_color
 	int r, g, b;
 	r = cval & 0xFF;
@@ -1294,14 +1296,14 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i)
     // If we have at least one case where we're going to need to crack the
     // attributes, do it now.
     struct db_i *dbip = d->gedp->dbip;
-    if (need_region_id || need_region_flag || need_color_inherit || need_cval) {
+    if (!found_region_id || !found_region_flag || !found_color_inherit || !found_cval) {
 
 	// Read the attributes from the database object
 	struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
 	db5_get_attributes(dbip, &c_avs, dp);
 
 	// Region flag.
-	if (need_region_flag) {
+	if (!found_region_flag) {
 	    const char *region_flag_str = bu_avs_get(&c_avs, "region");
 	    if (region_flag_str && (BU_STR_EQUAL(region_flag_str, "R") || BU_STR_EQUAL(region_flag_str, "1")))
 		rflag = 1;
@@ -1309,7 +1311,7 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i)
 	}
 
 	// Region id.  For drawing purposes this needs to be a number.
-	if (need_region_id) {
+	if (!found_region_id) {
 	    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
 	    if (region_id_val)
 		bu_opt_int(NULL, 1, &region_id_val, (void *)&attr_region_id);
@@ -1317,7 +1319,7 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i)
 	}
 
 	// Inherit flag
-	if (need_color_inherit) {
+	if (!found_color_inherit) {
 	    color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
 	    cache_write_int(dbis->dcache, hash, &color_inherit, CACHE_INHERIT_FLAG);
 	}
@@ -1326,7 +1328,7 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i)
 	//
 	// (Note that the rt_material_head colors and a region_id may override
 	// this, as might a parent comb with color and the inherit flag both set.)
-	if (need_cval) {
+	if (!found_cval) {
 	    const char *color_val = bu_avs_get(&c_avs, "color");
 	    if (!color_val)
 		color_val = bu_avs_get(&c_avs, "rgb");
@@ -1344,11 +1346,19 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i)
 		std::stringstream s;
 		s.write(reinterpret_cast<const char *>(&colors), sizeof(colors));
 		cache_write(dbis->dcache, hash, CACHE_COLOR, s);
+	    } else {
+		// We need something in the cache, or subsequent reads
+		// will assume they need to crack the database to check
+		// for a color
+		unsigned int colors = UINT_MAX;
+		std::stringstream s;
+		s.write(reinterpret_cast<const char *>(&colors), sizeof(colors));
+		cache_write(dbis->dcache, hash, CACHE_COLOR, s);
 	    }
 	}
 
 	// Done with attributes
-	bu_log("Had to load avs\n");
+	bu_log("%s: had to load avs\n", dp->d_namep);
 	bu_avs_free(&c_avs);
 
     }
@@ -1388,7 +1398,7 @@ GObj::GObj(DbiState *dbis, struct directory *dp_i)
 	    have_bbox = true;
 	}
     }
-    cache_done(dbis->dcache);
+    bu_cache_get_done(dbis->dcache);
 
     if (have_bbox) {
 	VMOVE(bb_min, bmin);

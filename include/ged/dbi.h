@@ -40,6 +40,7 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bu/cache.h"
 #include "bu/ptbl.h"
 #include "bu/vls.h"
 
@@ -873,8 +874,6 @@ class GED_EXPORT BViewState {
 #define GED_DBISTATE_DB_CHANGE   0x01
 #define GED_DBISTATE_VIEW_CHANGE 0x02
 
-struct ged_draw_cache;
-
 class GED_EXPORT DbiState {
     public:
 	DbiState(struct ged *);
@@ -1094,7 +1093,7 @@ class GED_EXPORT DbiState {
 	std::vector<CombInst *> get_combinsts(std::vector<unsigned long long> &path);
 	void clear_cache(struct directory *dp);
 	struct resource *res = NULL;
-	struct ged_draw_cache *dcache = NULL;
+	struct bu_cache *dcache = NULL;
 	void collect_paths(std::unordered_set<unsigned long long> *opaths, DbiPath &p, bool create_paths);
 	void clear_paths(std::unordered_set<unsigned long long> *opaths, DbiPath &p);
 	void expand_path(std::vector<unsigned long long> *opaths, DbiPath &p, bool create_paths);
