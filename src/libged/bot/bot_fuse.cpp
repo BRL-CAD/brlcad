@@ -150,7 +150,7 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
 }
 
 
-int
+extern "C" int
 ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 {
     struct directory *old_dp, *new_dp;
