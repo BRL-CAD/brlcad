@@ -168,7 +168,7 @@ bu_cache_erase(const char *cache_db)
 size_t
 bu_cache_get(void **data, const char *key, struct bu_cache *c)
 {
-    if (!data || !c || !key)
+    if (!c || !key)
 	return 0;
 
     int mkeysize = mdb_env_get_maxkeysize(c->i->env);
@@ -186,10 +186,12 @@ bu_cache_get(void **data, const char *key, struct bu_cache *c)
     mdb_key.mv_data = (void *)key;
     int rc = mdb_get(c->i->txn, c->i->dbi, &mdb_key, &mdb_data[0]);
     if (rc) {
-	(*data) = NULL;
+	if (data)
+	    (*data) = NULL;
 	return 0;
     }
-    (*data) = mdb_data[0].mv_data;
+    if (data)
+	(*data) = mdb_data[0].mv_data;
 
     return mdb_data[0].mv_size;
 }

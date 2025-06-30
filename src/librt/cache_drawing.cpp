@@ -1,4 +1,4 @@
-/*                   C A C H E _ L O D . C P P
+/*                   C A C H E _ D R A W I N G . C P P
  * BRL-CAD
  *
  * Copyright (c) 2016-2025 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cache_lod.cpp
+/** @file cache_drawing.cpp
  *
- * Caching of LoD drawing data
+ * Caching of drawing data
  */
 
 #include "common.h"
@@ -28,16 +28,34 @@
 
 /* implementation headers */
 #include "bu/app.h"
+#include "bu/cache.h"
 #include "bu/file.h"
 #include "bu/path.h"
 #include "bu/process.h"
 #include "bu/time.h"
+#include "bv/lod.h"
 #include "rt/db_instance.h"
 
 #include "./librt_private.h"
 
+int
+db_cache_init(struct db_i *dbip)
+{
+    if (!dbip || !dbip->i)
+	return 0;
+
+    // Check if we've already done init
+    if (dbip->i->c)
+	return 1;
+
+    dbip->i->c = bu_cache_open(dbip->dbi_filename, 1);
+
+    return 1;
+}
+
 void
-db_mesh_lod_init(struct db_i *dbip, int verbose) {
+db_lod_mesh_init(struct db_i *dbip, int verbose)
+{
 
     if (!dbip || !dbip->i)
 	return;
@@ -50,12 +68,10 @@ db_mesh_lod_init(struct db_i *dbip, int verbose) {
 
     dbip->i->init_complete = false;
 
-    if (!dbip->i->mesh_c)
-	dbip->i->mesh_c = bv_mesh_lod_context_create(dbip->dbi_filename);
-
-    if (!dbip->i->mesh_c) {
+    // Make sure we're inited
+    if (!db_cache_init(dbip)) {
 	if (verbose)
-	    bu_log("Error: LoD cache setup failed for %s", dbip->dbi_filename);
+	    bu_log("Error: Cache setup failed for %s", dbip->dbi_filename);
 	dbip->i->init_complete = true;
 	return;
     }
@@ -77,6 +93,7 @@ db_mesh_lod_init(struct db_i *dbip, int verbose) {
     int64_t elapsed = 0;
     fastf_t seconds = 0.0;
     int mesh_c_completed = 0;
+    struct bu_vls keystr = BU_VLS_INIT_ZERO;
     for (int i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
@@ -84,15 +101,20 @@ db_mesh_lod_init(struct db_i *dbip, int verbose) {
 	    if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
 		continue;
 
+	    if (UNLIKELY(!dp->d_namep || !strlen(dp->d_namep)))
+		continue;
+
 	    // If we already have a match, assume it is valid.  Resetting
 	    // invalid data in the cache is outside the scope of cache init.
-	    unsigned long long key = bv_mesh_lod_key_get(dbip->i->mesh_c, dp->d_namep);
-	    if (key)
+	    unsigned long long user_key = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+	    bu_vls_sprintf(&keystr, "%llu", user_key);
+	    if (bu_cache_get(NULL, bu_vls_cstr(&keystr), dbip->i->c))
 		continue;
 
 	    // We're about to do something that might take a while.  If the
 	    // parent thread has decided to close the dbip, we should stop now.
 	    if (dbip->i->shutdown_requested) {
+		bu_vls_free(&keystr);
 		dbip->i->init_complete = true;
 		return;
 	    }
@@ -102,7 +124,7 @@ db_mesh_lod_init(struct db_i *dbip, int verbose) {
 		bu_log("Processing(%d):  %s\n", mesh_c_completed+1, dp->d_namep);
 		start = bu_gettime();
 	    }
-	    db_mesh_lod_update(dbip, dp->d_namep);
+	    db_lod_mesh_update(dbip, dp->d_namep);
 
 	    // Increment completed count
 	    mesh_c_completed++;
@@ -124,6 +146,7 @@ db_mesh_lod_init(struct db_i *dbip, int verbose) {
 	    }
 	}
     }
+    bu_vls_free(&keystr);
 
     if (verbose) {
 	elapsed = bu_gettime() - overall_start;
@@ -139,19 +162,10 @@ db_mesh_lod_init(struct db_i *dbip, int verbose) {
     dbip->i->init_complete = true;
 }
 
-void
-db_mesh_lod_clear(struct db_i *dbip)
-{
-    if (!dbip || !dbip->i || dbip->i->mesh_c)
-	return;
-
-    bv_mesh_lod_clear_cache(dbip->i->mesh_c, 0);
-}
-
 int
-db_mesh_lod_update(struct db_i *dbip, const char *name)
+db_lod_mesh_update(struct db_i *dbip, const char *name)
 {
-    if (!dbip || !dbip->i || dbip->i->mesh_c)
+    if (!dbip || !dbip->i || dbip->i->c)
 	return BRLCAD_ERROR;
 
     // No-op
@@ -159,11 +173,7 @@ db_mesh_lod_update(struct db_i *dbip, const char *name)
 	return BRLCAD_OK;
 
     // If we have existing data, clear it.
-    unsigned long long key = bv_mesh_lod_key_get(dbip->i->mesh_c, name);
-    if (key) {
-	bv_mesh_lod_clear_cache(dbip->i->mesh_c, key);
-	bv_mesh_lod_key_put(dbip->i->mesh_c, name, 0);
-    }
+    bu_cache_clear(name, dbip->i->c);
 
     // If this isn't an active BoT, we're done.
     //
@@ -191,13 +201,12 @@ db_mesh_lod_update(struct db_i *dbip, const char *name)
     RT_BOT_CK_MAGIC(bot);
 
     // Generate and write new data
-    key = bv_mesh_lod_cache(dbip->i->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
-    if (!key) {
+    int cret = bv_lod_mesh_cache(dbip->i->c, name, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0.66);
+    if (!cret) {
 	bu_log("Error processing %s - unable to generate LoD data\n", dp->d_namep);
 	rt_db_free_internal(&dbintern);
 	return BRLCAD_ERROR;
     }
-    bv_mesh_lod_key_put(dbip->i->mesh_c, dp->d_namep, key);
 
     // Done with BoT
     rt_db_free_internal(&dbintern);
@@ -205,31 +214,25 @@ db_mesh_lod_update(struct db_i *dbip, const char *name)
     // Make sure we can retrieve the cached data
     // TODO - may not really be necessary to verify this here once we're
     // working - including during early stages for testing.
-    struct bv_mesh_lod *lod = bv_mesh_lod_create(dbip->i->mesh_c, key);
+    struct bv_lod_mesh *lod = bv_lod_mesh_create(dbip->i->c, name);
     if (!lod) {
 	bu_log("Error processing %s - unable to retrieve LoD data\n", dp->d_namep);
 	rt_db_free_internal(&dbintern);
 	return BRLCAD_ERROR;
     }
 
-    bv_mesh_lod_destroy(lod);
+    bv_lod_mesh_destroy(lod);
 
     return BRLCAD_OK;
 }
 
-struct bv_mesh_lod *
-db_mesh_lod_get(struct db_i *dbip, const char *name)
+struct bv_lod_mesh *
+db_lod_mesh_get(struct db_i *dbip, const char *name)
 {
-    if (!dbip || !name)
+    if (!dbip || !dbip->i || !dbip->i->c || !name)
 	return NULL;
 
-    struct bv_mesh_lod *lod = NULL;
-
-    unsigned long long key = bv_mesh_lod_key_get(dbip->i->mesh_c, name);
-    if (key)
-	lod = bv_mesh_lod_create(dbip->i->mesh_c, key);
-
-    return lod;
+    return bv_lod_mesh_create(dbip->i->c, name);
 }
 
 

@@ -75,8 +75,9 @@ __BEGIN_DECLS
 struct db_i_internal {
     uint32_t dbi_magic;
 
-    /* BoT level of detail cached data for drawing */
-    struct bv_mesh_lod_context *mesh_c;
+    /* Cached data */
+    struct bu_cache *c;
+
 #ifdef __cplusplus
     std::atomic_bool shutdown_requested;
     std::atomic_bool init_complete;

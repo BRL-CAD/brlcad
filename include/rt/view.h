@@ -45,12 +45,7 @@ __BEGIN_DECLS
  * being run for the first time this can be quite slow, so it is
  * recommended to run it in a background thread.
  */
-RT_EXPORT extern void db_mesh_lod_init(struct db_i *dbip, int verbose);
-
-/**
- * Clear the contents of the cache associated with this dbip
- */
-RT_EXPORT extern void db_mesh_lod_clear(struct db_i *dbip);
+RT_EXPORT extern void db_lod_mesh_init(struct db_i *dbip, int verbose);
 
 /**
  * Update the cache contents to reflect the current state of the object
@@ -60,13 +55,13 @@ RT_EXPORT extern void db_mesh_lod_clear(struct db_i *dbip);
  * If no cache is present, or the attempt encounters a problem, return
  * BRLCAD_ERROR - else returns BRLCAD_OK;
  */
-RT_EXPORT extern int db_mesh_lod_update(struct db_i *dbip, const char *name);
+RT_EXPORT extern int db_lod_mesh_update(struct db_i *dbip, const char *name);
 
 /**
- * Retrieve the bv_mesh_lod data from the dbip's cache associated with
+ * Retrieve the bv_lod_mesh data from the dbip's cache associated with
  * the named object.  If no such data is present, returns NULL.
  */
-RT_EXPORT extern struct bv_mesh_lod *db_mesh_lod_get(struct db_i *dbip, const char *name);
+RT_EXPORT extern struct bv_lod_mesh *db_lod_mesh_get(struct db_i *dbip, const char *name);
 
 
 
