@@ -232,7 +232,7 @@ bg_sat_tri_obb(
  */
 int
 bg_sat_aabb_obb(
-	point_t aabb_min, point_t aabb_max,
+	const point_t aabb_min, const point_t aabb_max,
 	const point_t obb_center, const vect_t obb_extent1, const vect_t obb_extent2, const vect_t obb_extent3
 	)
 {

@@ -392,45 +392,6 @@ struct bv_scene_obj  {
  */
 #define bv_scene_group bv_scene_obj
 
-
-/* The primary "working" data for mesh Level-of-Detail (LoD) drawing is stored
- * in a bv_mesh_lod container.
- *
- * Most LoD information is deliberately hidden in the internal, but the key
- * data needed for drawing routines and view setup are exposed. Although this
- * data structure is primarily managed in libbg, the public data in this struct
- * is needed at many levels of the software stack, including libbv. */
-struct bv_mesh_lod {
-
-    // The set of triangle faces to be used when drawing
-    int fcnt;
-    const int *faces;
-
-    // The vertices used by the faces array
-    int pcnt;
-    const point_t *points;      // If using snapped points, that's this array.  Else, points == points_orig.
-    int porig_cnt;
-    const point_t *points_orig;
-
-    // Optional: per-face-vertex normals (one normal per triangle vertex - NOT
-    // one normal per vertex.  I.e., a given point from points_orig may have
-    // multiple normals associated with it in different faces.)
-    const vect_t *normals;
-
-    // Bounding box of the original full-detail data
-    point_t bmin;
-    point_t bmax;
-
-    // The scene object using this LoD structure
-    struct bv_scene_obj *s;
-
-    // Pointer to the higher level LoD context associated with this LoD data
-    void *c;
-
-    // Pointer to internal LoD implementation information specific to this object
-    void *i;
-};
-
 /* Flags to identify categories of objects to snap */
 #define BV_SNAP_SHARED 0x1
 #define BV_SNAP_LOCAL  0x2

@@ -24,6 +24,9 @@
  */
 
 #include "common.h"
+
+#include <set>
+
 #include <string.h>
 #include "vmath.h"
 #include "bu/log.h"
@@ -35,7 +38,9 @@
 #include "bu/vls.h"
 #include "bn/mat.h"
 #include "bg/plane.h"
+#include "bg/sat.h"
 #include "bv/defines.h"
+#include "bv/lod.h"
 #include "bv/objs.h"
 #include "bv/snap.h"
 #include "bv/util.h"
@@ -356,7 +361,7 @@ bv_obj_bound(struct bv_scene_obj *s)
     VSET(s->bmax, -INFINITY, -INFINITY, -INFINITY);
     int calc = 0;
     if (s->s_type_flags & BV_MESH_LOD) {
-	struct bv_mesh_lod *i = (struct bv_mesh_lod *)s->draw_data;
+	struct bv_lod_mesh *i = (struct bv_lod_mesh *)s->draw_data;
 	if (i) {
 	    point_t obmin, obmax;
 	    VMOVE(obmin, i->bmin);
@@ -409,6 +414,445 @@ bv_illum_obj(struct bv_scene_obj *s, char ill_state)
 
     return changed;
 }
+
+// Debugging function to see constructed arb
+#define ARB_MAX_STRLEN 400
+const char *
+obb_arb(vect_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3)
+{
+    static char str[ARB_MAX_STRLEN+1];
+
+    // For debugging purposes, construct an arb
+    point_t arb[8];
+    // 1 - c - e1 - e2 - e3
+    VSUB2(arb[0], obb_center, obb_extent1);
+    VSUB2(arb[0], arb[0], obb_extent2);
+    VSUB2(arb[0], arb[0], obb_extent3);
+    // 2 - c - e1 - e2 + e3
+    VSUB2(arb[1], obb_center, obb_extent1);
+    VSUB2(arb[1], arb[1], obb_extent2);
+    VADD2(arb[1], arb[1], obb_extent3);
+    // 3 - c - e1 + e2 + e3
+    VSUB2(arb[2], obb_center, obb_extent1);
+    VADD2(arb[2], arb[2], obb_extent2);
+    VADD2(arb[2], arb[2], obb_extent3);
+    // 4 - c - e1 + e2 - e3
+    VSUB2(arb[3], obb_center, obb_extent1);
+    VADD2(arb[3], arb[3], obb_extent2);
+    VSUB2(arb[3], arb[3], obb_extent3);
+    // 1 - c + e1 - e2 - e3
+    VADD2(arb[4], obb_center, obb_extent1);
+    VSUB2(arb[4], arb[4], obb_extent2);
+    VSUB2(arb[4], arb[4], obb_extent3);
+    // 2 - c + e1 - e2 + e3
+    VADD2(arb[5], obb_center, obb_extent1);
+    VSUB2(arb[5], arb[5], obb_extent2);
+    VADD2(arb[5], arb[5], obb_extent3);
+    // 3 - c + e1 + e2 + e3
+    VADD2(arb[6], obb_center, obb_extent1);
+    VADD2(arb[6], arb[6], obb_extent2);
+    VADD2(arb[6], arb[6], obb_extent3);
+    // 4 - c + e1 + e2 - e3
+    VADD2(arb[7], obb_center, obb_extent1);
+    VADD2(arb[7], arb[7], obb_extent2);
+    VSUB2(arb[7], arb[7], obb_extent3);
+
+#if 0
+    bu_log("center: %f %f %f\n", V3ARGS(obb_center));
+    bu_log("e1: %f %f %f\n", V3ARGS(obb_extent1));
+    bu_log("e2: %f %f %f\n", V3ARGS(obb_extent2));
+    bu_log("e3: %f %f %f\n", V3ARGS(obb_extent3));
+#endif
+
+    snprintf(str, ARB_MAX_STRLEN, "in obb.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
+	    V3ARGS(arb[0]), V3ARGS(arb[1]), V3ARGS(arb[2]), V3ARGS(arb[3]), V3ARGS(arb[4]), V3ARGS(arb[5]), V3ARGS(arb  [6]), V3ARGS(arb[7]));
+    return str;
+}
+
+
+
+static void
+obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s)
+{
+    vect_t minus, plus;
+    if (bv_obj_bound(s)) {
+	*have_objs = 1;
+	minus[X] = s->s_center[X] - s->s_size;
+	minus[Y] = s->s_center[Y] - s->s_size;
+	minus[Z] = s->s_center[Z] - s->s_size;
+	VMIN(*min, minus);
+	plus[X] = s->s_center[X] + s->s_size;
+	plus[Y] = s->s_center[Y] + s->s_size;
+	plus[Z] = s->s_center[Z] + s->s_size;
+	VMAX(*max, plus);
+    }
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_obj *sc = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	obj_bb(have_objs, min, max, sc);
+    }
+}
+
+static void
+view_obb(struct bview *v,
+	point_t sbbc, fastf_t radius,
+	vect_t dir,
+	point_t ec, point_t ep1, point_t ep2)
+{
+
+    // Box center is the closest point to the view center on the plane defined
+    // by the scene's center and the view dir
+    plane_t p;
+    bg_plane_pt_nrml(&p, sbbc, dir);
+    fastf_t pu, pv;
+    point_t lec;
+    VMOVE(lec, ec);
+    bg_plane_closest_pt(&pu, &pv, &p, &lec);
+    bg_plane_pt_at(&v->obb_center, &p, pu, pv);
+
+    // The first extent is just the scene radius in the lookat direction
+    VSCALE(dir, dir, radius);
+    VMOVE(v->obb_extent1, dir);
+
+    // The other two extents we find by subtracting the view center from the edge points
+    VSUB2(v->obb_extent2, ep1, ec);
+    VSUB2(v->obb_extent3, ep2, ec);
+
+    bv_log(3, "view_obb inputs[%s]: sbbc(%f %f %f) radius(%f) dir(%f %f %f)", bu_vls_cstr(&v->gv_name), V3ARGS(sbbc), radius, V3ARGS(dir));
+    bv_log(3, "view_obb[%s]: %f %f %f -> [%f %f %f] [%f %f %f] [%f %f %f]", bu_vls_cstr(&v->gv_name), V3ARGS(v->obb_center), V3ARGS(v->obb_extent1), V3ARGS(v->obb_extent2), V3ARGS(v->obb_extent3));
+    bv_log(3, "%s", obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3));
+}
+
+static void
+_scene_radius(point_t *sbbc, fastf_t *radius, const struct bu_ptbl *so)
+{
+    if (!sbbc || !radius || !so)
+	return;
+    VSET(*sbbc, 0, 0, 0);
+    *radius = 1.0;
+    vect_t min, max, work;
+    VSETALL(min,  INFINITY);
+    VSETALL(max, -INFINITY);
+    int have_objs = 0;
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bv_scene_obj *g = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
+	obj_bb(&have_objs, &min, &max, g);
+    }
+    if (have_objs) {
+	VADD2SCALE(*sbbc, max, min, 0.5);
+	VSUB2SCALE(work, max, min, 0.5);
+	(*radius) = MAGNITUDE(work);
+    }
+}
+
+void
+bv_view_bounds(struct bview *v, const struct bu_ptbl *so)
+{
+    if (!v || !v->gv_width || !v->gv_height || !so)
+	return;
+
+    // Get the radius of the scene.
+    point_t sbbc = VINIT_ZERO;
+    fastf_t radius = 1.0;
+    _scene_radius(&sbbc, &radius, so);
+
+    // Using the pixel width and height of the current "window", construct some
+    // view space dimensions related to that window
+    int w = v->gv_width;
+    int h = v->gv_height;
+    int x = (int)(w * 0.5);
+    int y = (int)(h * 0.5);
+    //bu_log("w,h,x,y: %d %d %d %d\n", w,h, x, y);
+    fastf_t x1 = 0.0, y1 = 0.0, x2 = 0.0, y2 = 0.0, xc = 0.0, yc = 0.0;
+    bv_screen_to_view(v, &x1, &y1, x, h);
+    bv_screen_to_view(v, &x2, &y2, w, y);
+    bv_screen_to_view(v, &xc, &yc, x, y);
+
+    // Also stash the window's view space bbox
+    fastf_t w0, w1, w2, w3;
+    bv_screen_to_view(v, &w0, &w1, 0, 0);
+    bv_screen_to_view(v, &w2, &w3, w, h);
+    v->gv_wmin[0] = (w0 < w2) ? w0 : w2;
+    v->gv_wmin[1] = (w1 < w3) ? w1 : w3;
+    v->gv_wmax[0] = (w0 > w2) ? w0 : w2;
+    v->gv_wmax[1] = (w1 > w3) ? w1 : w3;
+    //bu_log("vbbmin: %f %f\n", v->gv_wmin[0], v->gv_wmin[1]);
+    //bu_log("vbbmax: %f %f\n", v->gv_wmax[0], v->gv_wmax[1]);
+
+    // Get the model space points for the mid points of the top and right edges
+    // of the view.  If we don't have a width or height, we will use the
+    // existing min and max since we don't have a "screen" to base the box on
+    //bu_log("x1,y1: %f %f\n", x1, y1);
+    //bu_log("x2,y2: %f %f\n", x2, y2);
+    //bu_log("xc,yc: %f %f\n", xc, yc);
+    point_t vp1, vp2, vc, ep1, ep2, ec;
+    VSET(vp1, x1, y1, 0);
+    VSET(vp2, x2, y2, 0);
+    VSET(vc, xc, yc, 0);
+    MAT4X3PNT(ep1, v->gv_view2model, vp1);
+    MAT4X3PNT(ep2, v->gv_view2model, vp2);
+    MAT4X3PNT(ec, v->gv_view2model, vc);
+    //bu_log("view center: %f %f %f\n", V3ARGS(ec));
+    //bu_log("edge point 1: %f %f %f\n", V3ARGS(ep1));
+    //bu_log("edge point 2: %f %f %f\n", V3ARGS(ep2));
+
+    // Need the direction vector - i.e., where the camera is looking.  Got this
+    // trick from the libged nirt code...
+    vect_t dir;
+    VMOVEN(dir, v->gv_rotation + 8, 3);
+    VUNITIZE(dir);
+    VSCALE(dir, dir, -1.0);
+
+    // If perspective mode is not enabled, update the oriented bounding box.
+    if (!(SMALL_FASTF < v->gv_perspective)) {
+	view_obb(v, sbbc, radius, dir, ec, ep1, ep2);
+    }
+
+
+    // While we have the info, construct the "backed out" point that will let
+    // us construct the "backed out" view plane, and save that point and the
+    // lookat direction to the view
+    VMOVE(v->gv_lookat, dir);
+    VSCALE(dir, dir, -radius);
+    VADD2(v->gv_vc_backout, sbbc, dir);
+    v->radius = radius;
+}
+
+static void
+_find_active_objs(std::set<struct bv_scene_obj *> &active, struct bv_scene_obj *s, struct bview *v, point_t obb_c, point_t obb_e1, point_t obb_e2, point_t obb_e3)
+{
+    if (BU_PTBL_LEN(&s->children)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	    struct bv_scene_obj *sc = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	    _find_active_objs(active, sc, v, obb_c, obb_e1, obb_e2, obb_e3);
+	}
+    } else {
+	bv_obj_bound(s);
+	if (bg_sat_aabb_obb(s->bmin, s->bmax, obb_c, obb_e1, obb_e2, obb_e3))
+	    active.insert(s);
+    }
+}
+
+int
+bv_view_objs_select(struct bu_ptbl *sset, struct bview *v, struct bu_ptbl *so, int x, int y)
+{
+    if (!v || !sset || !v->gv_width || !v->gv_height || !so)
+	return 0;
+
+    bu_ptbl_reset(sset);
+
+    if (x < 0 || y < 0 || x > v->gv_width || y > v->gv_height)
+	return 0;
+
+
+    // Get the radius of the scene.
+    point_t sbbc = VINIT_ZERO;
+    fastf_t radius = 1.0;
+    _scene_radius(&sbbc, &radius, so);
+
+    // Using the pixel width and height of the current "window", construct some
+    // view space dimensions related to that window
+    fastf_t x1 = 0.0, y1 = 0.0, x2 = 0.0, y2 = 0.0, xc = 0.0, yc = 0.0;
+    bv_screen_to_view(v, &x1, &y1, x, y+1);
+    bv_screen_to_view(v, &x2, &y2, x+1, y);
+    bv_screen_to_view(v, &xc, &yc, x, y);
+
+    // Get the model space points for the mid points of the top and right edges
+    // of the "pixel + 1" box.
+    //bu_log("x1,y1: %f %f\n", x1, y1);
+    //bu_log("x2,y2: %f %f\n", x2, y2);
+    //bu_log("xc,yc: %f %f\n", xc, yc);
+    point_t vp1, vp2, vc, ep1, ep2, ec;
+    VSET(vp1, x1, y1, 0);
+    VSET(vp2, x2, y2, 0);
+    VSET(vc, xc, yc, 0);
+    MAT4X3PNT(ep1, v->gv_view2model, vp1);
+    MAT4X3PNT(ep2, v->gv_view2model, vp2);
+    MAT4X3PNT(ec, v->gv_view2model, vc);
+
+    // Need the direction vector - i.e., where the camera is looking.  Got this
+    // trick from the libged nirt code...
+    vect_t dir;
+    VMOVEN(dir, v->gv_rotation + 8, 3);
+    VUNITIZE(dir);
+    VSCALE(dir, dir, -1.0);
+
+
+    // Construct the box values needed for the SAT test
+    point_t obb_c, obb_e1, obb_e2, obb_e3;
+
+    // Box center is the closest point to the view center on the plane defined
+    // by the scene's center and the view dir
+    plane_t p;
+    bg_plane_pt_nrml(&p, sbbc, dir);
+    fastf_t pu, pv;
+    bg_plane_closest_pt(&pu, &pv, &p, &ec);
+    bg_plane_pt_at(&obb_c, &p, pu, pv);
+
+
+    // The first extent is just the scene radius in the lookat direction
+    VSCALE(dir, dir, radius);
+    VMOVE(obb_e1, dir);
+
+    // The other two extents we find by subtracting the view center from the edge points
+    VSUB2(obb_e2, ep1, ec);
+    VSUB2(obb_e3, ep2, ec);
+
+    // Having constructed the box, test the scene objects against it.  Any that intersect,
+    // add them to the set
+    std::set<struct bv_scene_obj *> active;
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
+	_find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
+    }
+    if (active.size()) {
+	std::set<struct bv_scene_obj *>::iterator a_it;
+	for (a_it = active.begin(); a_it != active.end(); a_it++) {
+	    bu_ptbl_ins(sset, (long *)*a_it);
+	}
+    }
+
+    return active.size();
+}
+
+int
+bv_view_objs_rect_select(struct bu_ptbl *sset, struct bview *v, struct bu_ptbl *so, int x1, int y1, int x2, int y2)
+{
+    if (!v || !sset || !v->gv_width || !v->gv_height || !so)
+	return 0;
+
+    bu_ptbl_reset(sset);
+
+    if (x1 < 0 || y1 < 0 || x1 > v->gv_width || y1 > v->gv_height)
+	return 0;
+
+    if (x2 < 0 || y2 < 0 || x2 > v->gv_width || y2 > v->gv_height)
+	return 0;
+
+    // Get the radius of the scene.
+    point_t sbbc = VINIT_ZERO;
+    fastf_t radius = 1.0;
+    _scene_radius(&sbbc, &radius, so);
+
+    // Using the pixel width and height of the current "window", construct some
+    // view space dimensions related to that window
+    fastf_t fx1 = 0.0, fy1 = 0.0, fx2 = 0.0, fy2 = 0.0, fxc = 0.0, fyc = 0.0;
+    bv_screen_to_view(v, &fx1, &fy1, (int)(0.5*(x1+x2)), y2);
+    bv_screen_to_view(v, &fx2, &fy2, x2, (int)(0.5*(y1+y2)));
+    bv_screen_to_view(v, &fxc, &fyc, (int)(0.5*(x1+x2)), (int)(0.5*(y1+y2)));
+
+    // Get the model space points for the mid points of the top and right edges
+    // of the box.
+    point_t vp1, vp2, vc, ep1, ep2, ec;
+    VSET(vp1, fx1, fy1, 0);
+    VSET(vp2, fx2, fy2, 0);
+    VSET(vc, fxc, fyc, 0);
+    MAT4X3PNT(ep1, v->gv_view2model, vp1);
+    MAT4X3PNT(ep2, v->gv_view2model, vp2);
+    MAT4X3PNT(ec, v->gv_view2model, vc);
+    //bu_log("in sph1.s sph %f %f %f 1\n", V3ARGS(ep1));
+    //bu_log("in sph2.s sph %f %f %f 2\n", V3ARGS(ep2));
+    //bu_log("in sphc.s sph %f %f %f 3\n", V3ARGS(ec));
+
+    // Need the direction vector - i.e., where the camera is looking.  Got this
+    // trick from the libged nirt code...
+    vect_t dir;
+    VMOVEN(dir, v->gv_rotation + 8, 3);
+    VUNITIZE(dir);
+    VSCALE(dir, dir, -1.0);
+
+
+    // Construct the box values needed for the SAT test
+    point_t obb_c, obb_e1, obb_e2, obb_e3;
+
+    // Box center is the closest point to the view center on the plane defined
+    // by the scene's center and the view dir
+    plane_t p;
+    bg_plane_pt_nrml(&p, sbbc, dir);
+    fastf_t pu, pv;
+    bg_plane_closest_pt(&pu, &pv, &p, &ec);
+    bg_plane_pt_at(&obb_c, &p, pu, pv);
+
+
+    // The first extent is just the scene radius in the lookat direction
+    VSCALE(dir, dir, radius);
+    VMOVE(obb_e1, dir);
+
+    // The other two extents we find by subtracting the view center from the edge points
+    VSUB2(obb_e2, ep1, ec);
+    VSUB2(obb_e3, ep2, ec);
+
+#if 0
+    bu_log("%s", obb_arb(obb_c, obb_e1, obb_e2, obb_e3));
+#endif
+
+    // Having constructed the box, test the scene objects against it.  Any that intersect,
+    // add them to the set
+    std::set<struct bv_scene_obj *> active;
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
+	_find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
+    }
+    if (active.size()) {
+	std::set<struct bv_scene_obj *>::iterator a_it;
+	for (a_it = active.begin(); a_it != active.end(); a_it++) {
+	    bu_ptbl_ins(sset, (long *)*a_it);
+	}
+    }
+
+    return active.size();
+}
+
+int
+bv_view_obj_vis(const struct bview *v, const struct bv_scene_obj *s)
+{
+    if (bg_sat_aabb_obb(s->bmin, s->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3)) {
+	bv_log(3, "obj_visible[%s] - passed bg_sat_abb_obb: %f %f %f -> %f %f %f", bu_vls_cstr(&v->gv_name), V3ARGS(s->bmin), V3ARGS(s->bmax));
+	bv_log(3, "                          view abb : %f %f %f -> [%f %f %f] [%f %f %f] [%f %f %f]", V3ARGS(v->obb_center), V3ARGS(v->obb_extent1), V3ARGS(v->obb_extent2), V3ARGS(v->obb_extent3));
+	//bv_log(3, "%s", obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3));
+
+	return 1;
+    } else {
+	bv_log(3, "obj_visible[%s] - FAILED bg_sat_abb_obb: %f %f %f -> %f %f %f", bu_vls_cstr(&v->gv_name),V3ARGS(s->bmin), V3ARGS(s->bmax));
+	bv_log(3, "                          view abb : %f %f %f -> [%f %f %f] [%f %f %f] [%f %f %f]", V3ARGS(v->obb_center), V3ARGS(v->obb_extent1), V3ARGS(v->obb_extent2), V3ARGS(v->obb_extent3));
+	//bv_log(3, "%s", obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3));
+    }
+
+    if (SMALL_FASTF < v->gv_perspective) {
+	// For perspective mode, project the vertices of the distorted bounding
+	// box into the view plane, bound them, and see if the box overlaps with
+	// the view screen's box.
+	point_t arb[8];
+	VSET(arb[0], s->bmin[0], s->bmin[1], s->bmin[2]);
+	VSET(arb[1], s->bmin[0], s->bmin[1], s->bmax[2]);
+	VSET(arb[2], s->bmin[0], s->bmax[1], s->bmin[2]);
+	VSET(arb[3], s->bmin[0], s->bmax[1], s->bmax[2]);
+	VSET(arb[4], s->bmax[0], s->bmin[1], s->bmin[2]);
+	VSET(arb[5], s->bmax[0], s->bmin[1], s->bmax[2]);
+	VSET(arb[6], s->bmax[0], s->bmax[1], s->bmin[2]);
+	VSET(arb[7], s->bmax[0], s->bmax[1], s->bmax[2]);
+	point2d_t omin = {INFINITY, INFINITY};
+	point2d_t omax = {-INFINITY, -INFINITY};
+	for (int i = 0; i < 8; i++) {
+	    point_t pp, ppnt;
+	    point2d_t pxy;
+	    MAT4X3PNT(pp, v->gv_pmat, arb[i]);
+	    MAT4X3PNT(ppnt, v->gv_model2view, pp);
+	    V2SET(pxy, ppnt[0], ppnt[1]);
+	    V2MINMAX(omin, omax, pxy);
+	}
+	// IFF the omin/omax box and the corresponding view box overlap, this
+	// object may be visible in the current view and needs to be updated
+	for (int i = 0; i < 2; i++) {
+	    if (omax[i] < v->gv_wmin[i] || omin[i] > v->gv_wmax[i])
+		return 0;
+	}
+	return 1;
+    }
+
+    return 0;
+}
+
+
 
 // Local Variables:
 // tab-width: 8

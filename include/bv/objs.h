@@ -97,6 +97,34 @@ bv_obj_bound(struct bv_scene_obj *s);
 BV_EXPORT int
 bv_obj_illum(struct bv_scene_obj *s, char ill_state);
 
+/* Given a view, and a set of scene objects, construct either an oriented
+ * bounding box or a view frustum extruded to contain scene objects visible in
+ * the view.  Conceptually, think of it as a framebuffer pane pushed through
+ * the scene in the direction the camera is looking.  If the view width and
+ * height are not set or there is some other problem, no volume is computed.
+ * This function is intended primarily to be set as an updating callback for
+ * the bview structure. */
+BV_EXPORT extern void
+bv_view_bounds(struct bview *v, const struct bu_ptbl *so);
+
+/* Given a view and an object, return whether or or not that object is
+ * visible in the view - 1 is visible, 0 is not visible. */
+BV_EXPORT extern int
+bv_view_obj_vis(const struct bview *v, const struct bv_scene_obj *s);
+
+/* Given a screen x,y coordinate, construct the set of all scene objects whose
+ * AABB intersect with the OBB created by the projection of that pixel through
+ * the scene. sset holds the struct bv_scene_obj pointers of the selected
+ * objects.  */
+BV_EXPORT int
+bv_view_objs_select(struct bu_ptbl *sset, const struct bview *v, const struct bu_ptbl *so, int x, int y);
+
+/* Given a screen x1,y1,x2,y2 rectangle, construct and return the set of all scene
+ * objects whose AABB intersect with the OBB created by the projection of that
+ * rectangle through the scene. */
+BV_EXPORT int
+bv_view_objs_rect_select(struct bu_ptbl *sset, const struct bview *v, const struct bu_ptbl *so, int x1, int y1, int x2, int y2);
+
 
 __END_DECLS
 
