@@ -74,12 +74,12 @@ BU_EXPORT size_t bu_cache_get(void **data, const char *key, struct bu_cache *c);
  * Data retrieved using bu_cache_get is temporary - once the user is done
  * either reading it or copying it, libbu needs to be told that the usage of
  * the returned data is complete. */
-BU_EXPORT void bu_cache_get_done(const char *key, struct bu_cache *c);
+BU_EXPORT void bu_cache_get_done(struct bu_cache *c);
 
 /**
  * Assign data to the cache using the specified key
  */
-BU_EXPORT size_t bu_cache_write(void **data, const char *key, struct bu_cache *c);
+BU_EXPORT size_t bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c);
 
 /**
  * Clear data associated with the specified key from the cache
