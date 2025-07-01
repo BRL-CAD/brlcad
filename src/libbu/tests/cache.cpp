@@ -39,6 +39,10 @@ basic_test()
     const char *cfile = "50M_cache";
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
 
+    bu_log("\n*******************************************************************************\n");
+    bu_log("********** Basic test - timed basic operations with INT and DBL types *********\n");
+    bu_log("*******************************************************************************\n");
+
     start = bu_gettime();
     struct bu_cache *c = bu_cache_open(cfile, 1, 5e7);
     elapsed = bu_gettime() - start;
@@ -126,11 +130,16 @@ basic_test()
 
     // Test removal of data
     int rr_s = 2000;
-    int rr_e = 4000;
+    int rr_e = 18000;
+    start = bu_gettime();
     for (int i = rr_s; i < rr_e; i++) {
 	bu_vls_sprintf(&keystr, "dbl:%d", i);
 	bu_cache_clear(bu_vls_cstr(&keystr), c);
     }
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+    bu_log("Removal of dbl: keys in %d-%d range completed in %g seconds.\n", rr_s, rr_e, seconds);
+
 
     // Test reading post remove - we should be able to get every value that wasn't
     // removed, and shouldn't be able to get anything that WAS removed
@@ -141,7 +150,7 @@ basic_test()
 	void *rdata = NULL;
 	size_t rsize = bu_cache_get(&rdata, bu_vls_cstr(&keystr), c);
 	if (rsize != sizeof(double)) {
-	    if (i >= 2000 && i < rr_e)
+	    if (i >= rr_s && i < rr_e)
 		continue;
 	    bu_vls_free(&keystr);
 	    bu_exit(1, "Failed to read non-removed value dbl:%d\n", i);
@@ -163,15 +172,16 @@ basic_test()
     // and need to validate/clear out stale entries.
     char **keys = NULL;
     int kcnt = bu_cache_keys(&keys, c);
-    int kcnt_expected = 198000;
+    int kcnt_expected = 2*item_cnt - rr_e + rr_s;
     if (kcnt != kcnt_expected)
 	bu_exit(1, "Failed to extract all keys: expected %d, got %d\n", kcnt_expected, kcnt);
 
     char **keys2 = NULL;
     int kcnt2 = bu_cache_keys(&keys2, c);
-    int kcnt_expected2 = 198000;
+    int kcnt_expected2 = kcnt_expected;
     if (kcnt2 != kcnt_expected2)
 	bu_exit(1, "Failed to extract all keys2: expected %d, got %d\n", kcnt_expected2, kcnt2);
+    bu_argv_free(kcnt2, keys2);
 
     // Make sure the keys can read their values
     for (int i = 0; i < kcnt; i++) {
@@ -212,6 +222,10 @@ limit_test()
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
     struct bu_cache *c = bu_cache_open(cfile, 1, fsize);
 
+    bu_log("\n*******************************************************************************\n");
+    bu_log("************ Limit test - try to put too much data into a small cache *********\n");
+    bu_log("*******************************************************************************\n");
+
     // Write some integers to help fill things up
     item_cnt = 100000;
     for (int i = 0; i < item_cnt; i++) {
@@ -227,7 +241,7 @@ limit_test()
     // Write doubles - this is where we expect to hit failure
     double dblseed = M_PI;
     int failed = -1;
-    int expected_failed = 9695;
+    int expected_failed = 4557;
     for (int i = 0; i < item_cnt; i++) {
 	bu_vls_sprintf(&keystr, "dbl:%d", i);
 	double dval = i*dblseed;
@@ -268,6 +282,7 @@ limit_test()
     bu_cache_get_done(c);
     bu_log("All successfully written values read\n");
 
+    // Close the cache to make sure we're synced to disk before the next checks
     bu_cache_close(c);
 
     // Before we remove anything, see if the file size jibes with the limit
