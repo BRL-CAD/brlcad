@@ -55,8 +55,10 @@ struct bu_cache_impl {
 };
 
 struct bu_cache *
-bu_cache_open(const char *cache_db, int create)
+bu_cache_open(const char *cache_db, int create, size_t max_cache_size)
 {
+    size_t msize;
+
     if (!cache_db)
 	return NULL;
 
@@ -121,7 +123,8 @@ bu_cache_open(const char *cache_db, int create)
 	goto bu_context_fail;
     if (mdb_env_set_maxreaders(c->i->env, mreaders))
 	goto bu_context_close_fail;
-    if (mdb_env_set_mapsize(c->i->env, CACHE_MAX_DB_SIZE))
+    msize = (max_cache_size) ? max_cache_size : CACHE_MAX_DB_SIZE;
+    if (mdb_env_set_mapsize(c->i->env, msize))
 	goto bu_context_close_fail;
 
     // Need to call mdb_env_sync() at appropriate points.
