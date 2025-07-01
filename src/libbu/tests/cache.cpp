@@ -232,6 +232,11 @@ basic_test()
     // we are synced
     bu_cache_close(c);
 
+    // Reopen the cache and repeat the key test
+    bu_log("Reopen and repeat key read...\n");
+    c = bu_cache_open(cfile, 0, 0);
+    print_keys(c, kcnt_expected);
+
     if (!bu_file_exists(cache_file, NULL))
 	bu_exit(1, "Cache file %s not found\n", cache_file);
 
