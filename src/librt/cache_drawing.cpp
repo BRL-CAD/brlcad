@@ -108,7 +108,9 @@ db_lod_mesh_init(struct db_i *dbip, int verbose)
 	    // invalid data in the cache is outside the scope of cache init.
 	    unsigned long long user_key = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
 	    bu_vls_sprintf(&keystr, "%llu", user_key);
-	    if (bu_cache_get(NULL, bu_vls_cstr(&keystr), dbip->i->c))
+	    int in_cache = bu_cache_get(NULL, bu_vls_cstr(&keystr), dbip->i->c);
+	    bu_cache_get_done(dbip->i->c);
+	    if (in_cache)
 		continue;
 
 	    // We're about to do something that might take a while.  If the
@@ -165,7 +167,7 @@ db_lod_mesh_init(struct db_i *dbip, int verbose)
 int
 db_lod_mesh_update(struct db_i *dbip, const char *name)
 {
-    if (!dbip || !dbip->i || dbip->i->c)
+    if (!dbip || !dbip->i || !dbip->i->c)
 	return BRLCAD_ERROR;
 
     // No-op
