@@ -29,17 +29,63 @@
 #include "bv/lod.h"
 #include "raytrace.h"
 
+static void
+do_lod(struct db_i *dbip, struct directory *dp)
+{
+    int64_t start, elapsed;
+    fastf_t seconds;
+
+    start = bu_gettime();
+
+    int key = db_lod_mesh_update(dbip, dp->d_namep);
+    if (key != BRLCAD_OK) {
+	bu_log("ERROR: %s - db_lod_mesh_update failed\n", dp->d_namep);
+	db_lod_mesh_update(dbip, dp->d_namep);
+	return;
+    }
+
+    struct bv_lod_mesh *mlod = db_lod_mesh_get(dbip, dp->d_namep);
+    if (!mlod) {
+	bu_log("ERROR: %s - db_lod_mesh_get failed\n", dp->d_namep);
+	return;
+    }
+
+    struct bv_scene_obj *s = bv_obj_get(NULL);
+    s->draw_data = (void *)mlod;
+
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+    bu_log("%s: initialization time: %f seconds\n", dp->d_namep, seconds);
+
+    // We have our LoD container - now exercise it
+    start = bu_gettime();
+
+    for (int i = 0; i < 16; i++) {
+	int64_t lstart = bu_gettime();
+	bv_lod_level(s, i, 0);
+	int64_t lelapsed = bu_gettime() - lstart;
+	seconds = lelapsed / 1000000.0;
+	//bu_log("%s: level %d time: %f seconds\n", dp->d_namep, i, seconds);
+    }
+
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+    //bu_log("%s: total LoD level setting time: %f sec\n", dp->d_namep, seconds);
+
+    bv_lod_mesh_destroy(mlod);
+    bv_obj_put(s);
+}
+
 int
 main(int argc, char *argv[])
 {
     int64_t start, elapsed;
     fastf_t seconds;
     struct db_i *dbip;
-    struct directory *dp;
 
     bu_setprogname(argv[0]);
 
-    if (argc != 3) {
+    if (argc < 2) {
 	bu_exit(1, "Usage: %s file.g [object]", argv[0]);
     }
 
@@ -66,43 +112,29 @@ main(int argc, char *argv[])
     // Initialize cache
     db_cache_init(dbip);
 
-    dp = db_lookup(dbip, argv[2], LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL) {
-	bu_exit(1, "ERROR: Unable to look up object %s\n", argv[2]);
-    }
+    if (argc < 3) {
+	for (int i = 0; i < RT_DBNHASH; i++) {
+	    struct directory *dp;
+	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		if (dp->d_addr == RT_DIR_PHONY_ADDR)
+		    continue;
+		if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
+		    continue;
+		do_lod(dbip, dp);
+	    }
+	}
+    } else {
 
-    int key = db_lod_mesh_update(dbip, dp->d_namep);
-    if (key != BRLCAD_OK)
-	bu_exit(1, "ERROR: %s - db_lod_mesh_update failed\n", dp->d_namep);
-
-    struct bv_lod_mesh *mlod = db_lod_mesh_get(dbip, dp->d_namep);
-    if (!mlod)
-	bu_exit(1, "ERROR: %s - db_lod_mesh_get failed\n", dp->d_namep);
-
-    struct bv_scene_obj *s = bv_obj_get(NULL);
-    s->draw_data = (void *)mlod;
-
-    elapsed = bu_gettime() - start;
-    seconds = elapsed / 1000000.0;
-    bu_log("Initialization time: %f seconds\n", seconds);
-
-    // We have our LoD container - now exercise it
-    start = bu_gettime();
-
-    for (int i = 0; i < 16; i++) {
-	int64_t lstart = bu_gettime();
-	bv_lod_level(s, i, 0);
-	int64_t lelapsed = bu_gettime() - lstart;
-	seconds = lelapsed / 1000000.0;
-	bu_log("Level %d time: %f seconds\n", i, seconds);
+	struct directory *dp = db_lookup(dbip, argv[2], LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL) {
+	    bu_exit(1, "ERROR: Unable to look up object %s\n", argv[2]);
+	}
+	do_lod(dbip, dp);
     }
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
-    bu_log("Overall LoD level setting time: %f sec\n", seconds);
-
-    bv_lod_mesh_destroy(mlod);
-    bv_obj_put(s);
+    bu_log("Total LoD time: %f seconds\n", seconds);
 
     db_close(dbip);
     bu_dirclear(cache_dir);
