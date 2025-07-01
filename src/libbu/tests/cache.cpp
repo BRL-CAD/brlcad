@@ -159,6 +159,35 @@ basic_test()
     seconds = elapsed / 1000000.0;
     bu_log("DBL post-remove read test completed - read %d DBLs in %g seconds.\n", rcnt, seconds);
 
+    // Test key retrieval - this is useful if we don't know what's in a cache
+    // and need to validate/clear out stale entries.
+    char **keys = NULL;
+    int kcnt = bu_cache_keys(&keys, c);
+    int kcnt_expected = 198000;
+    if (kcnt != kcnt_expected)
+	bu_exit(1, "Failed to extract all keys: expected %d, got %d\n", kcnt_expected, kcnt);
+
+    char **keys2 = NULL;
+    int kcnt2 = bu_cache_keys(&keys2, c);
+    int kcnt_expected2 = 198000;
+    if (kcnt2 != kcnt_expected2)
+	bu_exit(1, "Failed to extract all keys2: expected %d, got %d\n", kcnt_expected2, kcnt2);
+
+    // Make sure the keys can read their values
+    for (int i = 0; i < kcnt; i++) {
+	bu_vls_sprintf(&keystr, "%s", keys[i]);
+	void *rdata = NULL;
+	size_t rsize = bu_cache_get(&rdata, bu_vls_cstr(&keystr), c);
+	if (rsize != sizeof(double) && rsize != sizeof(int)) {
+	    bu_log("Failed to read %s value\n", bu_vls_cstr(&keystr));
+	}
+    }
+    bu_cache_get_done(c);
+    bu_log("Successfully used bu_cache_keys for lookups\n");
+
+    // Done with keys array
+    bu_argv_free(kcnt, keys);
+
     bu_cache_close(c);
 
     char cache_file[MAXPATHLEN] = {0};

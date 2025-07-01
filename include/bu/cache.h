@@ -86,6 +86,11 @@ BU_EXPORT size_t bu_cache_write(void *data, size_t dsize, const char *key, struc
  */
 BU_EXPORT void bu_cache_clear(const char *key, struct bu_cache *c);
 
+/**
+ * Get an array of keys present in the cache
+ */
+BU_EXPORT int bu_cache_keys(char ***keysv, struct bu_cache *c);
+
 
 __END_DECLS
 
