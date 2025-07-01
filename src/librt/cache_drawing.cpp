@@ -48,7 +48,15 @@ db_cache_init(struct db_i *dbip)
     if (dbip->i->c)
 	return 1;
 
-    dbip->i->c = bu_cache_open(dbip->dbi_filename, 1);
+    // We want the cache to be able to hold all the info we
+    // might want to generate about the database for drawing
+    // purposes, so set the max file size of the cache to 2x
+    // that of the database.
+    int fsize = bu_file_size(dbip->dbi_filename);
+    if (fsize < 0)
+	fsize = 0;
+
+    dbip->i->c = bu_cache_open(dbip->dbi_filename, 1, 2*fsize);
 
     return 1;
 }
