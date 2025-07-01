@@ -195,7 +195,7 @@ bu_cache_get(void **data, const char *key, struct bu_cache *c)
 	mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &c->i->txn);
 	mdb_dbi_open(c->i->txn, NULL, 0, &c->i->dbi);
     }
-    mdb_key.mv_size = strlen(key)*sizeof(char);
+    mdb_key.mv_size = (strlen(key)+1)*sizeof(char);
     mdb_key.mv_data = (void *)key;
     int rc = mdb_get(c->i->txn, c->i->dbi, &mdb_key, &mdb_data[0]);
     if (rc) {
@@ -237,7 +237,7 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
     // and the value is the serialized LoD data
     mdb_txn_begin(c->i->env, NULL, 0, &c->i->write_txn);
     mdb_dbi_open(c->i->write_txn, NULL, 0, &c->i->write_dbi);
-    mdb_key.mv_size = strlen(key)*sizeof(char);
+    mdb_key.mv_size = (strlen(key)+1)*sizeof(char);
     mdb_key.mv_data = (void *)key;
     mdb_data[0].mv_size = dsize;
     mdb_data[0].mv_data = data;
@@ -245,6 +245,7 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
     mdb_data[1].mv_data = NULL;
     int rc = mdb_put(c->i->write_txn, c->i->write_dbi, &mdb_key, mdb_data, 0);
     mdb_txn_commit(c->i->write_txn);
+    mdb_env_sync(c->i->env, 0);
     c->i->write_txn = NULL;
     // If we were unsuccessful, return 0;
     if (rc)
@@ -288,10 +289,11 @@ bu_cache_clear(const char *key, struct bu_cache *c)
 
     mdb_txn_begin(c->i->env, NULL, 0, &c->i->write_txn);
     mdb_dbi_open(c->i->write_txn, NULL, 0, &c->i->write_dbi);
-    mdb_key.mv_size = strlen(key)*sizeof(char);
+    mdb_key.mv_size = (strlen(key)+1)*sizeof(char);
     mdb_key.mv_data = (void *)key;
     mdb_del(c->i->write_txn, c->i->write_dbi, &mdb_key, NULL);
     mdb_txn_commit(c->i->write_txn);
+    mdb_env_sync(c->i->env, 0);
 }
 
 int
@@ -321,11 +323,11 @@ bu_cache_keys(char ***keysv, struct bu_cache *c)
 	return 0;
     }
 
-    bu_vls_strncpy(&keystr, (const char *)mdb_key.mv_data, mdb_key.mv_size);
+    bu_vls_strncpy(&keystr, (const char *)mdb_key.mv_data, mdb_key.mv_size-1);
     keys.insert(std::string(bu_vls_cstr(&keystr)));
 
     while (!mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT)) {
-	bu_vls_strncpy(&keystr, (const char *)mdb_key.mv_data, mdb_key.mv_size);
+	bu_vls_strncpy(&keystr, (const char *)mdb_key.mv_data, mdb_key.mv_size-1);
 	keys.insert(std::string(bu_vls_cstr(&keystr)));
     }
     mdb_cursor_close(cursor);
