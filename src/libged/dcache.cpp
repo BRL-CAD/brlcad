@@ -100,7 +100,7 @@ dbi_cache_open(const char *name)
     }
 
     // Open the cache, creating it if it doesn't already exist
-    c = bu_cache_open(crelpath, 1);
+    c = bu_cache_open(crelpath, 1, 0);
 
     if (!c)
 	return NULL;

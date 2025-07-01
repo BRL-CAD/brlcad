@@ -49,7 +49,7 @@ struct bu_cache {
  *
  * returns the bu_cache structure on success, NULL on failure.
  */
-BU_EXPORT extern struct bu_cache *bu_cache_open(const char *cache_db, int create);
+BU_EXPORT extern struct bu_cache *bu_cache_open(const char *cache_db, int create, size_t max_cache_size);
 
 /**
  * Closes the bu_cache and frees all associated memory.
