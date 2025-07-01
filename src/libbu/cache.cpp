@@ -28,6 +28,7 @@
 #include "common.h"
 
 #include <cstring>
+#include <set>
 #include <string>
 #include <thread>
 #include <vector>
@@ -191,7 +192,7 @@ bu_cache_get(void **data, const char *key, struct bu_cache *c)
     MDB_val mdb_data[2];
 
     if (!c->i->txn) {
-	mdb_txn_begin(c->i->env, NULL, 0, &c->i->txn);
+	mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &c->i->txn);
 	mdb_dbi_open(c->i->txn, NULL, 0, &c->i->dbi);
     }
     mdb_key.mv_size = strlen(key)*sizeof(char);
@@ -214,7 +215,7 @@ bu_cache_get_done(struct bu_cache *c)
     if (!c)
 	return;
 
-    mdb_txn_commit(c->i->txn);
+    mdb_txn_abort(c->i->txn);
     c->i->txn = NULL;
 }
 
@@ -250,24 +251,27 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
 	return 0;
 
     // Make sure we can can read back what we wrote
-    mdb_txn_begin(c->i->env, NULL, 0, &c->i->write_txn);
+    mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &c->i->write_txn);
     mdb_dbi_open(c->i->write_txn, NULL, 0, &c->i->write_dbi);
     rc = mdb_get(c->i->write_txn, c->i->write_dbi, &mdb_key, &mdb_data[0]);
     if (rc) {
-	mdb_txn_commit(c->i->write_txn);
+	mdb_txn_abort(c->i->write_txn);
+	c->i->txn = NULL;
 	return 0;
     }
     if (mdb_data[0].mv_size != dsize) {
-	mdb_txn_commit(c->i->write_txn);
+	mdb_txn_abort(c->i->write_txn);
+	c->i->txn = NULL;
 	return 0;
     }
     if (memcmp(mdb_data[0].mv_data, data, mdb_data[0].mv_size)) {
-	mdb_txn_commit(c->i->write_txn);
+	mdb_txn_abort(c->i->write_txn);
+	c->i->txn = NULL;
 	return 0;
     }
 
     size_t ret = mdb_data[0].mv_size;
-    mdb_txn_commit(c->i->write_txn);
+    mdb_txn_abort(c->i->write_txn);
     c->i->write_txn = NULL;
 
     return ret;
@@ -289,6 +293,58 @@ bu_cache_clear(const char *key, struct bu_cache *c)
     mdb_del(c->i->write_txn, c->i->write_dbi, &mdb_key, NULL);
     mdb_txn_commit(c->i->write_txn);
 }
+
+int
+bu_cache_keys(char ***keysv, struct bu_cache *c)
+{
+    if (!c || !keysv)
+	return 0;
+
+    struct bu_vls keystr = BU_VLS_INIT_ZERO;
+    std::set<std::string> keys;
+    MDB_val mdb_key, mdb_data;
+    MDB_cursor *cursor;
+
+    mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &c->i->txn);
+    mdb_dbi_open(c->i->txn, NULL, 0, &c->i->dbi);
+    int rc = mdb_cursor_open(c->i->txn, c->i->dbi, &cursor);
+    if (rc) {
+	mdb_txn_abort(c->i->txn);
+	c->i->txn = NULL;
+	return 0;
+    }
+    rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_FIRST);
+    if (rc) {
+	mdb_cursor_close(cursor);
+	mdb_txn_abort(c->i->txn);
+	c->i->txn = NULL;
+	return 0;
+    }
+
+    bu_vls_strncpy(&keystr, (const char *)mdb_key.mv_data, mdb_key.mv_size);
+    keys.insert(std::string(bu_vls_cstr(&keystr)));
+
+    while (!mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT)) {
+	bu_vls_strncpy(&keystr, (const char *)mdb_key.mv_data, mdb_key.mv_size);
+	keys.insert(std::string(bu_vls_cstr(&keystr)));
+    }
+    mdb_cursor_close(cursor);
+    mdb_txn_abort(c->i->txn);
+    c->i->txn = NULL;
+
+    char **kv = (char **)bu_calloc(keys.size(), sizeof(const char *), "keys array");
+    std::set<std::string>::iterator s_it;
+    int kvi = 0;
+    for (s_it = keys.begin(); s_it != keys.end(); ++s_it) {
+	char *s = bu_strdup((*s_it).c_str());
+	kv[kvi] = s;
+	kvi++;
+    }
+    *keysv = kv;
+
+    return kvi;
+}
+
 
 // Local Variables:
 // tab-width: 8
