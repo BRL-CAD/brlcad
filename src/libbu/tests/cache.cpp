@@ -55,6 +55,18 @@ print_keys(struct bu_cache *c, int kcnt_expected)
 	if (rsize != sizeof(double) && rsize != sizeof(int)) {
 	    bu_log("Failed to read %s value\n", keys[i]);
 	}
+	if (rsize == sizeof(int)) {
+	    // Get the number from the key
+	    struct bu_vls kstr = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&kstr, "%s", keys[i]);
+	    bu_vls_nibble(&kstr, 4);
+	    int v = std::atoi(bu_vls_cstr(&kstr));
+	    int rval;
+	    memcpy(&rval, rdata, sizeof(rval));
+	    if (v != rval)
+		bu_log("Failed to read correct %s value - got %d\n", keys[i], rval);
+	    bu_vls_free(&kstr);
+	}
     }
     bu_cache_get_done(c);
 
