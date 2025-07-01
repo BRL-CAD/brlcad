@@ -22,6 +22,7 @@
 
 #include "vmath.h"
 #include "bu/app.h"
+#include "bu/env.h"
 #include "bu/time.h"
 #include "bu/units.h"
 #include "bg.h"
@@ -44,6 +45,13 @@ main(int argc, char *argv[])
 
     start = bu_gettime();
 
+    // Set up to use a local cache
+    char cache_dir[MAXPATHLEN] = {0};
+    bu_dir(cache_dir, MAXPATHLEN, BU_DIR_CURR, "librt_lod_cache", NULL);
+    bu_setenv("BU_DIR_CACHE", cache_dir, 1);
+    bu_dirclear(cache_dir);
+    bu_mkdir(cache_dir);
+
     dbip = db_open(argv[1], DB_OPEN_READWRITE);
     if (dbip == DBI_NULL) {
 	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
@@ -55,57 +63,49 @@ main(int argc, char *argv[])
 
     db_update_nref(dbip, &rt_uniresource);
 
+    // Initialize cache
+    db_cache_init(dbip);
+
     dp = db_lookup(dbip, argv[2], LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_exit(1, "ERROR: Unable to look up object %s\n", argv[2]);
     }
 
-    // Unpack bot
-    struct rt_db_internal intern;
-    mat_t s_mat;
-    MAT_IDN(s_mat);
-    if (rt_db_get_internal(&intern, dp, dbip, s_mat, &rt_uniresource) < 0)
-	bu_exit(1, "ERROR: %s internal get failed\n", argv[2]);
+    int key = db_lod_mesh_update(dbip, dp->d_namep);
+    if (key != BRLCAD_OK)
+	bu_exit(1, "ERROR: %s - db_lod_mesh_update failed\n", dp->d_namep);
 
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)intern.idb_ptr;
-    RT_BOT_CK_MAGIC(bot);
-
-    if (!bot->num_faces)
-	bu_exit(1, "ERROR: %s - no faces found\n", argv[2]);
-
-    struct bv_mesh_lod_context *c = bv_mesh_lod_context_create(argv[1]);
-
-    unsigned long long key = bv_mesh_lod_cache(c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
-    if (!key)
-	bu_exit(1, "ERROR: %s - lod creation failed\n", argv[2]);
-
-    struct bv_mesh_lod *mlod = bv_mesh_lod_create(c, key);
+    struct bv_lod_mesh *mlod = db_lod_mesh_get(dbip, dp->d_namep);
     if (!mlod)
-	bu_exit(1, "ERROR: %s - lod creation failed\n", argv[2]);
+	bu_exit(1, "ERROR: %s - db_lod_mesh_get failed\n", dp->d_namep);
 
-    struct bv_scene_obj *s;
-    BU_GET(s, struct bv_scene_obj);
+    struct bv_scene_obj *s = bv_obj_get(NULL);
     s->draw_data = (void *)mlod;
-
-    // TODO Set up initial view
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     bu_log("Initialization time: %f seconds\n", seconds);
 
+    // We have our LoD container - now exercise it
     start = bu_gettime();
 
     for (int i = 0; i < 16; i++) {
-	bv_mesh_lod_level(s, i, 0);
+	int64_t lstart = bu_gettime();
+	bv_lod_level(s, i, 0);
+	int64_t lelapsed = bu_gettime() - lstart;
+	seconds = lelapsed / 1000000.0;
+	bu_log("Level %d time: %f seconds\n", i, seconds);
     }
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
-    bu_log("lod level setting: %f sec\n", seconds);
+    bu_log("Overall LoD level setting time: %f sec\n", seconds);
 
-    BU_PUT(s, struct bv_scene_obj);
-    bv_mesh_lod_destroy(mlod);
-    bv_mesh_lod_context_destroy(c);
+    bv_lod_mesh_destroy(mlod);
+    bv_obj_put(s);
+
+    db_close(dbip);
+    bu_dirclear(cache_dir);
 
     return 0;
 }

@@ -185,7 +185,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    //struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
 	    // Clear any old cache in memory
-	    db_mesh_lod_clear(gedp->dbip);
+	    //db_lod_mesh_clear(gedp->dbip);
 
 	    int done = 0;
 	    int total = 0;
@@ -211,7 +211,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 		    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT || dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP) {
 			done++;
 			bu_log("Caching BoT %s (%d of %d)\n", dp->d_namep, done, total);
-			db_mesh_lod_update(gedp->dbip, dp->d_namep);
+			db_lod_mesh_update(gedp->dbip, dp->d_namep);
 		    }
 
 		    // TODO - this logic needs to move lower down (LoD on BReps was also causing Windows
@@ -265,10 +265,10 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 
 			// Because we won't have the internal data to use for a full detail scenario, we set the ratio
 			// to 1 rather than .66 for breps...
-			key = bv_mesh_lod_cache(gedp->ged_lod, (const point_t *)pnts, pnt_cnt, normals, faces, face_cnt, key, 1);
+			key = bv_lod_mesh_cache(gedp->ged_lod, (const point_t *)pnts, pnt_cnt, normals, faces, face_cnt, key, 1);
 
 			if (key)
-			    bv_mesh_lod_key_put(gedp->ged_lod, dp->d_namep, key);
+			    bv_lod_mesh_key_put(gedp->ged_lod, dp->d_namep, key);
 
 			rt_db_free_internal(&dbintern);
 			bu_free(faces, "faces");
@@ -293,7 +293,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	}
 	if (argc == 2) {
 	    if (BU_STR_EQUAL(argv[1], "clear")) {
-		db_mesh_lod_clear(gedp->dbip);
+		//db_lod_mesh_clear(gedp->dbip);
 		return BRLCAD_OK;
 	    } else if (BU_STR_EQUAL(argv[1], "exists")) {
 		for (int i = 0; i < RT_DBNHASH; i++) {
@@ -304,11 +304,11 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 			// checking both BoTs and BREPs
 			if ((dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT) ||
 			    (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP)) {
-			    struct bv_mesh_lod *l = db_mesh_lod_get(gedp->dbip, dp->d_namep);
+			    struct bv_lod_mesh *l = db_lod_mesh_get(gedp->dbip, dp->d_namep);
 			    if (!l) {
 				return BRLCAD_ERROR;
 			    }
-			    bv_mesh_lod_destroy(l);
+			    bv_lod_mesh_destroy(l);
 			}
 		    }
 		}
@@ -317,7 +317,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	}
 	if (argc == 3) {
 	    if (BU_STR_EQUAL(argv[1], "clear") && BU_STR_EQUAL(argv[2], "all_files")) {
-		bv_mesh_lod_clear_cache(NULL, 0);
+		//bu_lod_mesh_clear_cache(NULL, 0);
 		return BRLCAD_OK;
 	    }
 	}
