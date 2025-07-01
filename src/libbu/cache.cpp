@@ -21,6 +21,8 @@
  *
  * Routines for creating and manipulating a key/value cache database.
  *
+ * TODO - unit test that verifies read/write is successful and pushes
+ * the limits of database size to see what the failure mode looks like.
  */
 
 #include "common.h"
@@ -123,7 +125,11 @@ bu_cache_open(const char *cache_db, int create, size_t max_cache_size)
 	goto bu_context_fail;
     if (mdb_env_set_maxreaders(c->i->env, mreaders))
 	goto bu_context_close_fail;
-    msize = (max_cache_size) ? max_cache_size : CACHE_MAX_DB_SIZE;
+
+    // mapsize is supposed to be a multiple of the OS page size - assuming
+    // 4096 bytes for now, but maybe should add some code to actually
+    // get the active page size...
+    msize = (max_cache_size) ? (max_cache_size / 4096) * 4096 : CACHE_MAX_DB_SIZE;
     if (mdb_env_set_mapsize(c->i->env, msize))
 	goto bu_context_close_fail;
 
@@ -149,6 +155,9 @@ bu_cache_close(struct bu_cache *c)
 {
     if (!c)
 	return;
+
+    // Do a sync to make sure everything is on disk
+    mdb_env_sync(c->i->env, 1);
 
     mdb_env_close(c->i->env);
     bu_vls_free(c->i->fname);
@@ -233,9 +242,35 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
     mdb_data[0].mv_data = data;
     mdb_data[1].mv_size = 0;
     mdb_data[1].mv_data = NULL;
-    mdb_put(c->i->write_txn, c->i->write_dbi, &mdb_key, mdb_data, 0);
+    int rc = mdb_put(c->i->write_txn, c->i->write_dbi, &mdb_key, mdb_data, 0);
     mdb_txn_commit(c->i->write_txn);
-    return dsize;
+    c->i->write_txn = NULL;
+    // If we were unsuccessful, return 0;
+    if (rc)
+	return 0;
+
+    // Make sure we can can read back what we wrote
+    mdb_txn_begin(c->i->env, NULL, 0, &c->i->write_txn);
+    mdb_dbi_open(c->i->write_txn, NULL, 0, &c->i->write_dbi);
+    rc = mdb_get(c->i->write_txn, c->i->write_dbi, &mdb_key, &mdb_data[0]);
+    if (rc) {
+	mdb_txn_commit(c->i->write_txn);
+	return 0;
+    }
+    if (mdb_data[0].mv_size != dsize) {
+	mdb_txn_commit(c->i->write_txn);
+	return 0;
+    }
+    if (memcmp(mdb_data[0].mv_data, data, mdb_data[0].mv_size)) {
+	mdb_txn_commit(c->i->write_txn);
+	return 0;
+    }
+
+    size_t ret = mdb_data[0].mv_size;
+    mdb_txn_commit(c->i->write_txn);
+    c->i->write_txn = NULL;
+
+    return ret;
 }
 
 void
