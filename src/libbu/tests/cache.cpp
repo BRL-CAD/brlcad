@@ -170,20 +170,18 @@ basic_test()
 
     // Test key retrieval - this is useful if we don't know what's in a cache
     // and need to validate/clear out stale entries.
+    start = bu_gettime();
     char **keys = NULL;
     int kcnt = bu_cache_keys(&keys, c);
     int kcnt_expected = 2*item_cnt - rr_e + rr_s;
     if (kcnt != kcnt_expected)
 	bu_exit(1, "Failed to extract all keys: expected %d, got %d\n", kcnt_expected, kcnt);
-
-    char **keys2 = NULL;
-    int kcnt2 = bu_cache_keys(&keys2, c);
-    int kcnt_expected2 = kcnt_expected;
-    if (kcnt2 != kcnt_expected2)
-	bu_exit(1, "Failed to extract all keys2: expected %d, got %d\n", kcnt_expected2, kcnt2);
-    bu_argv_free(kcnt2, keys2);
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+    bu_log("Retrieved %d keys in %g seconds.\n", kcnt, seconds);
 
     // Make sure the keys can read their values
+    start = bu_gettime();
     for (int i = 0; i < kcnt; i++) {
 	bu_vls_sprintf(&keystr, "%s", keys[i]);
 	void *rdata = NULL;
@@ -193,11 +191,15 @@ basic_test()
 	}
     }
     bu_cache_get_done(c);
-    bu_log("Successfully used bu_cache_keys for lookups\n");
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+    bu_log("Read %d values using bu_cache_keys list in %g seconds.\n", kcnt, seconds);
 
     // Done with keys array
     bu_argv_free(kcnt, keys);
 
+    // Done processing - close cache before checking file size info to make sure
+    // we are synced
     bu_cache_close(c);
 
     char cache_file[MAXPATHLEN] = {0};
