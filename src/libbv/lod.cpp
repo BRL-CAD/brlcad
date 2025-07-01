@@ -1214,8 +1214,9 @@ bv_lod_mesh_cache(struct bu_cache *c, const char *name, const point_t *v, size_t
 	return 0;
 
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&keystr, "%llu", user_key);
+    bu_vls_sprintf(&keystr, "%llu:%s", user_key, CACHE_POP_KEY);
     bu_cache_write(&p.hash, sizeof(unsigned long long), bu_vls_cstr(&keystr), c);
+    bu_vls_free(&keystr);
 
     return 1;
 }
