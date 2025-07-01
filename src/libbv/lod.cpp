@@ -249,7 +249,7 @@ class POPState {
 	// external data)
 	void cache();
 	bool cache_tri();
-	bool cache_write(const char *component, std::stringstream &s);
+	bool cache_write(const char *component, char *vstr, size_t len);
 	size_t cache_get(void **data, const char *component);
 	void cache_done();
 	MDB_val mdb_key, mdb_data[2];
@@ -402,16 +402,12 @@ POPState::POPState(struct bu_cache *ctx, const point_t *v, size_t vcnt, const ve
     // to just drawing the full mesh
     max_face_ratio = pop_facecnt_threshold_ratio;
 
-    // Hash the data to generate a key, if the user didn't supply us with one
-    if (!user_key) {
-	struct bu_data_hash_state *s = bu_data_hash_create();
-	bu_data_hash_update(s, v, vcnt*sizeof(point_t));
-	bu_data_hash_update(s, faces, 3*fcnt*sizeof(int));
-	hash = bu_data_hash_val(s);
-	bu_data_hash_destroy(s);
-    } else {
-	hash = user_key;
-    }
+    // Hash the data to generate a POP key
+    struct bu_data_hash_state *s = bu_data_hash_create();
+    bu_data_hash_update(s, v, vcnt*sizeof(point_t));
+    bu_data_hash_update(s, faces, 3*fcnt*sizeof(int));
+    hash = bu_data_hash_val(s);
+    bu_data_hash_destroy(s);
 
     // Make sure there's no cache before performing the full initializing from
     // the original data.  In this mode the POPState creation is used to
@@ -428,6 +424,18 @@ POPState::POPState(struct bu_cache *ctx, const point_t *v, size_t vcnt, const ve
 
     // Cache isn't already populated - go to work.
     cache_done();
+
+
+    // Stash the user_key to hash mapping
+    {
+	struct bu_vls ukeystr = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&ukeystr, "%llu:%s", user_key, CACHE_POP_KEY);
+	unsigned long long htmp = hash;
+	size_t written = bu_cache_write((char *)&htmp, sizeof(unsigned long long), bu_vls_cstr(&ukeystr), c);
+	bu_vls_free(&ukeystr);
+	if (!written)
+	    return;
+    }
 
     curr_level = POP_MAXLEVEL - 1;
 
@@ -473,7 +481,7 @@ POPState::POPState(struct bu_cache *ctx, const point_t *v, size_t vcnt, const ve
     cache();
 
     if (!is_valid)
-	return;
+	bu_log("cache failed\n");
 
 #if 0
     for (size_t i = 0; i < POP_MAXLEVEL; i++) {
@@ -486,12 +494,12 @@ POPState::POPState(struct bu_cache *ctx, const point_t *v, size_t vcnt, const ve
 #endif
 }
 
-POPState::POPState(struct bu_cache *ctx, unsigned long long key)
+POPState::POPState(struct bu_cache *ctx, unsigned long long user_key)
 {
     // Store the context
     c = ctx;
 
-    if (!key)
+    if (!user_key)
 	return;
 
     // Initialize so set_level will read in the first level of triangles
@@ -502,7 +510,20 @@ POPState::POPState(struct bu_cache *ctx, unsigned long long key)
 	PRECOMPUTED_MASKS.push_back(pow(2, (POP_MAXLEVEL - i - 1)));
     }
 
-    hash = key;
+    // Translate a user name key to the content hash
+    {
+	// Construct lookup key
+	struct bu_vls ukey = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&ukey, "%llu:%s", user_key, CACHE_POP_KEY);
+	void *kmem;
+	size_t bsize = bu_cache_get(&kmem, bu_vls_cstr(&ukey), c);
+	if (bsize != sizeof(unsigned long long)) {
+	    cache_done();
+	    return;
+	}
+	memcpy(&hash, kmem, sizeof(unsigned long long));
+	cache_done();
+    }
 
     // Find the maximum POP level
     {
@@ -835,15 +856,14 @@ POPState::set_level(int level)
 // This will also allow easier removal of larger subcomponents if we need to
 // back off on saved LoD.
 bool
-POPState::cache_write(const char *component, std::stringstream &s)
+POPState::cache_write(const char *component, char *vstr, size_t len)
 {
     // Prepare inputs for writing
     bu_vls_sprintf(&keystr, "%llu:%s", hash, component);
-    bu_vls_sprintf(&valstr, "%s", s.str().c_str());
 
     // Write out key/value to LMDB database, where the key is the hash
     // and the value is the serialized LoD data
-    size_t written = bu_cache_write(bu_vls_addr(&valstr), bu_vls_strlen(&valstr)*sizeof(char), bu_vls_cstr(&keystr), c);
+    size_t written = bu_cache_write(vstr, len, bu_vls_cstr(&keystr), c);
 
     return (written) ? true : false;
 }
@@ -877,55 +897,51 @@ POPState::cache_tri()
     // Write out the threshold level - above this level,
     // we need to switch to full-detail drawing
     {
-	std::stringstream s;
-	s.write(reinterpret_cast<const char *>(&max_pop_threshold_level), sizeof(max_pop_threshold_level));
-	if (!cache_write(CACHE_POP_MAX_LEVEL, s))
+	int tmp_maxlevel = max_pop_threshold_level;
+	if (!cache_write(CACHE_POP_MAX_LEVEL, (char *)&tmp_maxlevel, sizeof(int))) {
+	    bu_log("CACHE_POP_MAX_LEVEL failed\n");
 	    return false;
+	}
     }
 
     // Write out the switch level
     {
-	std::stringstream s;
-	s.write(reinterpret_cast<const char *>(&max_face_ratio), sizeof(max_face_ratio));
-	if (!cache_write(CACHE_POP_SWITCH_LEVEL, s))
+	fastf_t tmp_max_face_ratio = max_face_ratio;
+	if (!cache_write(CACHE_POP_SWITCH_LEVEL, (char *)&tmp_max_face_ratio, sizeof(fastf_t))) {
+	    bu_log("CACHE_POP_SWITCH_LEVEL failed\n");
 	    return false;
+	}
     }
 
     // Write out the vertex counts for all active levels
     {
-	std::stringstream s;
+	size_t ldata[POP_MAXLEVEL+1] = {0};
 	for (size_t i = 0; i <= POP_MAXLEVEL; i++) {
-	    size_t icnt = 0;
-	    if (level_tri_verts.find(i) == level_tri_verts.end()) {
-		s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
+	    if (level_tri_verts.find(i) == level_tri_verts.end())
 		continue;
-	    }
-	    if ((int)i > max_pop_threshold_level || !level_tri_verts[i].size()) {
-		s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
+	    if ((int)i > max_pop_threshold_level || !level_tri_verts[i].size())
 		continue;
-	    }
-	    icnt = level_tri_verts[i].size();
-	    s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
+	    ldata[i] = level_tri_verts[i].size();
 	}
-	if (!cache_write(CACHE_VERTEX_COUNT, s))
+	if (!cache_write(CACHE_VERTEX_COUNT, (char *)ldata, sizeof(ldata))) {
+	    bu_log("CACHE_VERTEX_COUNT failed\n");
 	    return false;
+	}
     }
 
     // Write out the triangle counts for all active levels
     {
-	std::stringstream s;
+	size_t ldata[POP_MAXLEVEL+1] = {0};
 	for (size_t i = 0; i <= POP_MAXLEVEL; i++) {
-	    size_t tcnt = 0;
-	    if ((int)i > max_pop_threshold_level || !level_tris[i].size()) {
-		s.write(reinterpret_cast<const char *>(&tcnt), sizeof(tcnt));
+	    if ((int)i > max_pop_threshold_level || !level_tris[i].size())
 		continue;
-	    }
 	    // Store the size of the level tri vector
-	    tcnt = level_tris[i].size();
-	    s.write(reinterpret_cast<const char *>(&tcnt), sizeof(tcnt));
+	    ldata[i] = level_tris[i].size();
 	}
-	if (!cache_write(CACHE_TRI_COUNT, s))
+	if (!cache_write(CACHE_TRI_COUNT, (char *)ldata, sizeof(level_tricnt))) {
+	    bu_log("CACHE_TRI_COUNT failed\n");
 	    return false;
+	}
     }
 
     struct bu_vls kbuf = BU_VLS_INIT_ZERO;
@@ -933,42 +949,47 @@ POPState::cache_tri()
     // Write out the vertices in LoD order for each level
     {
 	for (int i = 0; i <= max_pop_threshold_level; i++) {
-	    std::stringstream s;
 	    if (level_tri_verts.find(i) == level_tri_verts.end())
 		continue;
 	    if (!level_tri_verts[i].size())
 		continue;
 	    // Write out the vertex points
+	    std::vector<fastf_t> vpnts;
 	    std::unordered_set<size_t>::iterator s_it;
 	    for (s_it = level_tri_verts[i].begin(); s_it != level_tri_verts[i].end(); s_it++) {
 		point_t v;
 		VMOVE(v, verts_array[*s_it]);
-		s.write(reinterpret_cast<const char *>(&v[0]), sizeof(point_t));
+		for (int j = 0; j < 3; j++)
+		    vpnts.push_back(v[j]);
 	    }
 	    bu_vls_sprintf(&kbuf, "%s%d", CACHE_VERT_LEVEL, i);
-	    if (!cache_write(bu_vls_cstr(&kbuf), s))
+	    if (!cache_write(bu_vls_cstr(&kbuf), (char *)vpnts.data(), vpnts.size()*sizeof(fastf_t))) {
+		bu_vls_free(&kbuf);
+		bu_log("CACHE_VERT_LEVEL failed\n");
 		return false;
+	    }
 	}
     }
 
     // Write out the triangles in LoD order for each level
     {
 	for (int i = 0; i <= max_pop_threshold_level; i++) {
-	    std::stringstream s;
 	    if (!level_tris[i].size())
 		continue;
 	    // Write out the mapped triangle indices
+	    std::vector<int> tinds;
 	    std::vector<size_t>::iterator s_it;
-	    for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
-		int vt[3];
-		vt[0] = (int)tri_ind_map[faces_array[3*(*s_it)+0]];
-		vt[1] = (int)tri_ind_map[faces_array[3*(*s_it)+1]];
-		vt[2] = (int)tri_ind_map[faces_array[3*(*s_it)+2]];
-		s.write(reinterpret_cast<const char *>(&vt[0]), sizeof(vt));
+	    for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); ++s_it) {
+		tinds.push_back((int)tri_ind_map[faces_array[3*(*s_it)+0]]);
+		tinds.push_back((int)tri_ind_map[faces_array[3*(*s_it)+1]]);
+		tinds.push_back((int)tri_ind_map[faces_array[3*(*s_it)+2]]);
 	    }
 	    bu_vls_sprintf(&kbuf, "%s%d", CACHE_TRI_LEVEL, i);
-	    if (!cache_write(bu_vls_cstr(&kbuf), s))
+	    if (!cache_write(bu_vls_cstr(&kbuf), (char *)tinds.data(), tinds.size()*sizeof(int))) {
+		bu_vls_free(&kbuf);
+		bu_log("CACHE_TRI_LEVEL failed\n");
 		return false;
+	    }
 	}
     }
 
@@ -976,32 +997,38 @@ POPState::cache_tri()
     {
 	if (vnorms_array) {
 	    for (int i = 0; i <= max_pop_threshold_level; i++) {
-		std::stringstream s;
 		if (!level_tris[i].size())
 		    continue;
 		// Write out the normals associated with the triangle indices
+		std::vector<fastf_t> vnorms;
 		std::vector<size_t>::iterator s_it;
 		for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
 		    vect_t v;
 		    int tind;
 		    tind = 3*(*s_it)+0;
 		    VMOVE(v, vnorms_array[tind]);
-		    s.write(reinterpret_cast<const char *>(&v[0]), sizeof(vect_t));
+		    for (int j = 0; j < 3; j++)
+			vnorms.push_back(v[j]);
 		    tind = 3*(*s_it)+1;
 		    VMOVE(v, vnorms_array[tind]);
-		    s.write(reinterpret_cast<const char *>(&v[0]), sizeof(vect_t));
+		    for (int j = 0; j < 3; j++)
+			vnorms.push_back(v[j]);
 		    tind = 3*(*s_it)+2;
 		    VMOVE(v, vnorms_array[tind]);
-		    s.write(reinterpret_cast<const char *>(&v[0]), sizeof(vect_t));
+		    for (int j = 0; j < 3; j++)
+			vnorms.push_back(v[j]);
 		}
 		bu_vls_sprintf(&kbuf, "%s%d", CACHE_VERTNORM_LEVEL, i);
-		if (!cache_write(bu_vls_cstr(&kbuf), s))
+		if (!cache_write(bu_vls_cstr(&kbuf), (char *)vnorms.data(), vnorms.size()*sizeof(fastf_t))) {
+		    bu_vls_free(&kbuf);
+		    bu_log("CACHE_VERTNORM_LEVEL failed\n");
 		    return false;
+		}
 	    }
 	}
     }
 
-
+    bu_vls_free(&kbuf);
     return true;
 }
 
@@ -1016,20 +1043,24 @@ POPState::cache()
 
     // Stash the original mesh bbox and the min and max bounds, which will be used in decoding
     {
-	std::stringstream s;
-	s.write(reinterpret_cast<const char *>(&bbmin), sizeof(bbmin));
-	s.write(reinterpret_cast<const char *>(&bbmax), sizeof(bbmax));
-	s.write(reinterpret_cast<const char *>(&minx), sizeof(minx));
-	s.write(reinterpret_cast<const char *>(&miny), sizeof(miny));
-	s.write(reinterpret_cast<const char *>(&minz), sizeof(minz));
-	s.write(reinterpret_cast<const char *>(&maxx), sizeof(maxx));
-	s.write(reinterpret_cast<const char *>(&maxy), sizeof(maxy));
-	s.write(reinterpret_cast<const char *>(&maxz), sizeof(maxz));
-	is_valid = cache_write(CACHE_OBJ_BOUNDS, s);
+	void *bb = malloc(sizeof(point_t) * 2 + sizeof(float) * 6);
+	VMOVE(((point_t *)bb)[0], bbmin);
+	VMOVE(((point_t *)bb)[1], bbmax);
+	float *fb = (float *)((char *)bb + 2*sizeof(point_t));
+	fb[0] = minx;
+	fb[1] = miny;
+	fb[2] = minz;
+	fb[3] = maxx;
+	fb[4] = maxy;
+	fb[5] = maxz;
+	is_valid = cache_write(CACHE_OBJ_BOUNDS, (char *)bb,  sizeof(point_t) * 2 + sizeof(float) * 6);
+	bu_free(bb, "bb array");
     }
 
-    if (!is_valid)
+    if (!is_valid) {
+	bu_log("bbox cache failed\n");
 	return;
+    }
 
     // Serialize triangle-specific data
     is_valid = cache_tri();
@@ -1198,22 +1229,7 @@ bv_lod_mesh_create(struct bu_cache *c, const char *name)
     // Name -> user_key
     unsigned long long user_key = bu_data_hash(name, strlen(name)*sizeof(char));
 
-    // user_key -> key
-    struct bu_vls keystr = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&keystr, "%llu:%s", user_key, CACHE_POP_KEY);
-    void *cdata = NULL;
-    if (bu_cache_get(&cdata, bu_vls_cstr(&keystr), c) != sizeof(unsigned long long)) {
-	// Nothing found - no cached data available
-	bu_vls_free(&keystr);
-	return NULL;
-    }
-    bu_vls_free(&keystr);
-    // Found something - assign it to key
-    unsigned long long key = 0;
-    memcpy(&key, cdata, sizeof(key));
-    bu_cache_get_done(c);
-
-    POPState *p = new POPState(c, key);
+    POPState *p = new POPState(c, user_key);
     if (!p)
 	return NULL;
 
@@ -1485,7 +1501,7 @@ bv_lod_mesh_detail_free_clbk(
 }
 
 void
-bv_lod_mesh_free(struct bv_scene_obj *s)
+bv_lod_free(struct bv_scene_obj *s)
 {
     if (!s || !s->draw_data)
 	return;
