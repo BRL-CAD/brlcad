@@ -27,17 +27,60 @@
 #include <string.h>
 #include "bu.h"
 
+void
+print_keys(struct bu_cache *c, int kcnt_expected)
+{
+    // Test key retrieval - this is useful if we don't know what's in a cache
+    // and need to validate/clear out stale entries.
+    int64_t start, elapsed;
+    fastf_t seconds;
+
+    start = bu_gettime();
+    char **keys = NULL;
+    int kcnt = bu_cache_keys(&keys, c);
+    if (kcnt != kcnt_expected)
+	bu_exit(1, "Failed to extract all keys: expected %d, got %d\n", kcnt_expected, kcnt);
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+    bu_log("Retrieved %d keys in %g seconds.\n", kcnt, seconds);
+    //for (int i = 0; i < kcnt; i++)
+	//bu_log("%s\n", keys[i]);
+
+
+    // Make sure the keys can read their values
+    start = bu_gettime();
+    for (int i = 0; i < kcnt; i++) {
+	void *rdata = NULL;
+	size_t rsize = bu_cache_get(&rdata, keys[i], c);
+	if (rsize != sizeof(double) && rsize != sizeof(int)) {
+	    bu_log("Failed to read %s value\n", keys[i]);
+	}
+    }
+    bu_cache_get_done(c);
+
+
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+    bu_log("Read %d values using bu_cache_keys list in %g seconds.\n", kcnt, seconds);
+
+    // Done with keys array
+    bu_argv_free(kcnt, keys);
+}
+
 
 static void
 basic_test()
 {
-
     int64_t start, elapsed;
     fastf_t seconds;
 
-    int item_cnt;
+    int kcnt_expected = 0;
+    int item_cnt = 100000;
     const char *cfile = "50M_cache";
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
+
+    char cache_file[MAXPATHLEN] = {0};
+    bu_dir(cache_file, MAXPATHLEN, BU_DIR_CACHE, cfile, NULL);
 
     bu_log("\n*******************************************************************************\n");
     bu_log("********** Basic test - timed basic operations with INT and DBL types *********\n");
@@ -50,7 +93,6 @@ basic_test()
     bu_log("Cache opening and setup completed in %g seconds.\n", seconds);
 
     // Test writing INT
-    item_cnt = 100000;
     start = bu_gettime();
     for (int i = 0; i < item_cnt; i++) {
 	bu_vls_sprintf(&keystr, "int:%d", i);
@@ -87,10 +129,11 @@ basic_test()
     seconds = elapsed / 1000000.0;
     bu_log("INT read test completed - read %d INTs in %g seconds.\n", item_cnt, seconds);
 
+    kcnt_expected = item_cnt;
+    print_keys(c, kcnt_expected);
 
-    // Test writing DBL
+   // Test writing DBL
     double dblseed = M_PI;
-    item_cnt = 100000;
     start = bu_gettime();
     for (int i = 0; i < item_cnt; i++) {
 	bu_vls_sprintf(&keystr, "dbl:%d", i);
@@ -127,10 +170,12 @@ basic_test()
     seconds = elapsed / 1000000.0;
     bu_log("DBL read test completed - read %d DBLs in %g seconds.\n", item_cnt, seconds);
 
+    kcnt_expected = 2*item_cnt;
+    print_keys(c, kcnt_expected);
 
     // Test removal of data
-    int rr_s = 2000;
-    int rr_e = 18000;
+    int rr_s = 2*item_cnt/10;
+    int rr_e = 5*item_cnt/10;
     start = bu_gettime();
     for (int i = rr_s; i < rr_e; i++) {
 	bu_vls_sprintf(&keystr, "dbl:%d", i);
@@ -168,42 +213,13 @@ basic_test()
     seconds = elapsed / 1000000.0;
     bu_log("DBL post-remove read test completed - read %d DBLs in %g seconds.\n", rcnt, seconds);
 
-    // Test key retrieval - this is useful if we don't know what's in a cache
-    // and need to validate/clear out stale entries.
-    start = bu_gettime();
-    char **keys = NULL;
-    int kcnt = bu_cache_keys(&keys, c);
-    int kcnt_expected = 2*item_cnt - rr_e + rr_s;
-    if (kcnt != kcnt_expected)
-	bu_exit(1, "Failed to extract all keys: expected %d, got %d\n", kcnt_expected, kcnt);
-    elapsed = bu_gettime() - start;
-    seconds = elapsed / 1000000.0;
-    bu_log("Retrieved %d keys in %g seconds.\n", kcnt, seconds);
-
-    // Make sure the keys can read their values
-    start = bu_gettime();
-    for (int i = 0; i < kcnt; i++) {
-	bu_vls_sprintf(&keystr, "%s", keys[i]);
-	void *rdata = NULL;
-	size_t rsize = bu_cache_get(&rdata, bu_vls_cstr(&keystr), c);
-	if (rsize != sizeof(double) && rsize != sizeof(int)) {
-	    bu_log("Failed to read %s value\n", bu_vls_cstr(&keystr));
-	}
-    }
-    bu_cache_get_done(c);
-    elapsed = bu_gettime() - start;
-    seconds = elapsed / 1000000.0;
-    bu_log("Read %d values using bu_cache_keys list in %g seconds.\n", kcnt, seconds);
-
-    // Done with keys array
-    bu_argv_free(kcnt, keys);
+    kcnt_expected = 2*item_cnt - rr_e + rr_s;
+    print_keys(c, kcnt_expected);
 
     // Done processing - close cache before checking file size info to make sure
     // we are synced
     bu_cache_close(c);
 
-    char cache_file[MAXPATHLEN] = {0};
-    bu_dir(cache_file, MAXPATHLEN, BU_DIR_CACHE, cfile, NULL);
     if (!bu_file_exists(cache_file, NULL))
 	bu_exit(1, "Cache file %s not found\n", cache_file);
 
