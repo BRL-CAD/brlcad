@@ -124,6 +124,41 @@ basic_test()
     bu_log("DBL read test completed - read %d DBLs in %g seconds.\n", item_cnt, seconds);
 
 
+    // Test removal of data
+    int rr_s = 2000;
+    int rr_e = 4000;
+    for (int i = rr_s; i < rr_e; i++) {
+	bu_vls_sprintf(&keystr, "dbl:%d", i);
+	bu_cache_clear(bu_vls_cstr(&keystr), c);
+    }
+
+    // Test reading post remove - we should be able to get every value that wasn't
+    // removed, and shouldn't be able to get anything that WAS removed
+    start = bu_gettime();
+    int rcnt = 0;
+    for (int i = 0; i < item_cnt; i++) {
+	bu_vls_sprintf(&keystr, "dbl:%d", i);
+	void *rdata = NULL;
+	size_t rsize = bu_cache_get(&rdata, bu_vls_cstr(&keystr), c);
+	if (rsize != sizeof(double)) {
+	    if (i >= 2000 && i < rr_e)
+		continue;
+	    bu_vls_free(&keystr);
+	    bu_exit(1, "Failed to read non-removed value dbl:%d\n", i);
+	}
+	rcnt++;
+	double rval = 0;
+	memcpy(&rval, rdata, sizeof(double));
+	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF)) {
+	    bu_vls_free(&keystr);
+	    bu_exit(1, "Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
+	}
+    }
+    bu_cache_get_done(c);
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+    bu_log("DBL post-remove read test completed - read %d DBLs in %g seconds.\n", rcnt, seconds);
+
     bu_cache_close(c);
 
     char cache_file[MAXPATHLEN] = {0};
