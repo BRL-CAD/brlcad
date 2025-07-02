@@ -18,6 +18,24 @@
  * information.
  */
 
+/** @file bot_oriented_bbox.cpp
+ *
+ * TODO - move the guts of this to libbg:
+ *
+ * Function to sort out the active from the inactive points via the faces, which would
+ * either do the math internally for the special case or call bg_obb
+ * int bg_trimesh obb(point_t *c, vect_t *v1, vect_t *v2, vect_t *v3,
+ *            const int *faces, size_t num_faces, const point_t *p, size_t num_pnts);
+ *
+ * Find the obb for the point set (assume all of them are active)
+ * int bg_obb(point_t *c, vect_t *v1, vect_t *v2, vect_t *v3,
+ *            point_t *pnts, size_t pntcnt);
+ *
+ * While we're at it, we should also make:
+ *
+ * int bg_aabb(point_t *bmin, point_t *bmax, point_t *pnts, size_t pntcnt);
+ */
+
 #include "common.h"
 
 #include "Mathematics/ContOrientedBox3.h"
