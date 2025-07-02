@@ -1547,7 +1547,7 @@ GObj::bbox(point_t *min, point_t *max)
 
     // There is a second cache we can ask about this - the LoD cache may also
     // know what we need.
-    struct bv_lod_mesh *lod = db_lod_mesh_get(d->gedp->dbip, dp->d_namep);
+    struct bv_lod_mesh *lod = db_cache_mesh_get(d->gedp->dbip, dp->d_namep);
     if (lod) {
 	vect_t bmin, bmax;
 	VMOVE(bmin, lod->bmin);

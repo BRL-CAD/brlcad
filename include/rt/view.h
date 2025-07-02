@@ -31,9 +31,21 @@
 #include "bu/ptbl.h"
 #include "bn/tol.h"
 #include "bv/defines.h"
+#include "bv/lod.h"  // for libbv CACHE_* defines
 #include "rt/defines.h"
 
 __BEGIN_DECLS
+
+// Key strings to use in combination with a name hash to look up data.
+// Changes to any of these requires incrementing DB_CACHE_CURRENT_FORMAT.
+#define CACHE_REGION_ID "rid"
+#define CACHE_REGION_FLAG "rf"
+#define CACHE_INHERIT_FLAG "if"
+#define CACHE_COLOR "c"
+
+// If BV_CACHE_CURRENT_FORMAT is incremented, this
+// should be as well.
+#define DB_CACHE_CURRENT_FORMAT 3
 
 /**
  * Initialize drawing data such as color and region flag for all objects

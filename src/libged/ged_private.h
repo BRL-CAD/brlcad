@@ -486,18 +486,6 @@ __END_DECLS
 #ifdef __cplusplus
 #include <sstream>
 
-/* There are various individual pieces of data in the cache associated with
- * each object key.  For lookup they use short suffix strings to distinguish
- * them - we define those strings here to have consistent definitions for use
- * in multiple functions.
- *
- * Changing any of these requires incrementing CACHE_CURRENT_FORMAT. */
-#define CACHE_OBJ_BOUNDS "bb"
-#define CACHE_REGION_ID "rid"
-#define CACHE_REGION_FLAG "rf"
-#define CACHE_INHERIT_FLAG "if"
-#define CACHE_COLOR "c"
-
 struct bu_cache *
 dbi_cache_open(const char *name);
 
