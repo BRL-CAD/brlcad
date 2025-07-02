@@ -40,6 +40,18 @@ __BEGIN_DECLS
 
 #define LOD_MESH_MAGIC 0x4C4F44D /**< LODM */
 
+/* Bounding box data is common to multiple types of objects, so (unlike most
+ * LoD data) we define a public definition that can be shared in higher level
+ * libraries.*/
+#define CACHE_OBJ_BOUNDS "bb"
+
+/* An inversion matrix is another candidate for commonality - if cache data is
+ * calculated at the origin for reuse by objects that are the same except for
+ * positioning, the need will be common to any sort stored - not just meshes.
+ * */
+#define CACHE_INV_MAT "im"
+
+
 /* The primary "working" data for mesh Level-of-Detail (LoD) drawing is stored
  * in a bv_mesh_lod container.
  *

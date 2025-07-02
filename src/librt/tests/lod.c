@@ -37,16 +37,16 @@ do_lod(struct db_i *dbip, struct directory *dp)
 
     start = bu_gettime();
 
-    int key = db_lod_mesh_update(dbip, dp->d_namep);
+    int key = db_cache_mesh_update(dbip, dp->d_namep);
     if (key != BRLCAD_OK) {
-	bu_log("ERROR: %s - db_lod_mesh_update failed\n", dp->d_namep);
-	db_lod_mesh_update(dbip, dp->d_namep);
+	bu_log("ERROR: %s - db_cache_mesh_update failed\n", dp->d_namep);
+	db_cache_mesh_update(dbip, dp->d_namep);
 	return;
     }
 
-    struct bv_lod_mesh *mlod = db_lod_mesh_get(dbip, dp->d_namep);
+    struct bv_lod_mesh *mlod = db_cache_mesh_get(dbip, dp->d_namep);
     if (!mlod) {
-	bu_log("ERROR: %s - db_lod_mesh_get failed\n", dp->d_namep);
+	bu_log("ERROR: %s - db_cache_mesh_get failed\n", dp->d_namep);
 	return;
     }
 
