@@ -51,6 +51,8 @@ __BEGIN_DECLS
  * */
 #define CACHE_INV_MAT "im"
 
+/* Other libraries may care if libbv's format changes */
+#define BV_CACHE_CURRENT_FORMAT 3
 
 /* The primary "working" data for mesh Level-of-Detail (LoD) drawing is stored
  * in a bv_mesh_lod container.

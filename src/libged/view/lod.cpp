@@ -211,7 +211,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 		    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT || dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP) {
 			done++;
 			bu_log("Caching BoT %s (%d of %d)\n", dp->d_namep, done, total);
-			db_lod_mesh_update(gedp->dbip, dp->d_namep);
+			db_cache_mesh_update(gedp->dbip, dp->d_namep);
 		    }
 
 		    // TODO - this logic needs to move lower down (LoD on BReps was also causing Windows
@@ -304,7 +304,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 			// checking both BoTs and BREPs
 			if ((dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT) ||
 			    (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BREP)) {
-			    struct bv_lod_mesh *l = db_lod_mesh_get(gedp->dbip, dp->d_namep);
+			    struct bv_lod_mesh *l = db_cache_mesh_get(gedp->dbip, dp->d_namep);
 			    if (!l) {
 				return BRLCAD_ERROR;
 			    }
