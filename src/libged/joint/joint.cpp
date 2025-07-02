@@ -3376,7 +3376,7 @@ joint_hold(struct ged *gedp, int argc, const char **argv)
 
 
 static int
-joint_list(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
+joint_list(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct joint *jp;
 
@@ -3545,36 +3545,21 @@ ged_joint_core(struct ged *gedp, int argc, const char **argv)
 
 
 struct funtab joint_tab[] = {
-    {"joint ", "", "Joint command table",
-     0, 0, 0, FALSE},
-    {"?", "[commands]", "summary of available joint commands",
-     joint_help_commands, 0, FUNTAB_UNLIMITED, FALSE},
-    {"accept", "[joints]", "accept a series of moves",
-     joint_accept, 1, FUNTAB_UNLIMITED, FALSE},
-    {"debug", "[hex code]", "Show/set debugging bit vector for joints",
-     joint_debug, 1, 2, FALSE},
-    {"help", "[commands]", "give usage message for given joint commands",
-     joint_help, 0, FUNTAB_UNLIMITED, FALSE},
-    {"holds", "[names]", "list constraints",
-     joint_hold, 1, FUNTAB_UNLIMITED, FALSE},
-    {"list", "[names]", "list joints.",
-     joint_list, 1, FUNTAB_UNLIMITED, FALSE},
-    {"load", "file_name", "load a joint/constraint file",
-     joint_load, 2, FUNTAB_UNLIMITED, FALSE},
-    {"mesh", "", "Build the grip mesh",
-     joint_mesh, 0, 1, FALSE},
-    {"move", "joint_name p1 [p2...p6]", "Manual adjust a joint",
-     joint_move, 3, 8, FALSE},
-    {"reject", "[joint_names]", "reject joint motions",
-     joint_reject, 1, FUNTAB_UNLIMITED, FALSE},
-    {"save",	"file_name", "Save joints and constraints to disk",
-     joint_save, 2, 2, FALSE},
-    {"solve", "constraint", "Solve a or all constraints",
-     joint_solve, 1, FUNTAB_UNLIMITED, FALSE},
-    {"unload", "", "Unload any joint/constraints that have been loaded",
-     joint_unload, 1, 1, FALSE},
-    {NULL, NULL, NULL,
-     NULL, 0, 0, FALSE}
+    {"joint ", "", "Joint command table", 0, 0, 0, FALSE},
+    {"?", "[commands]", "summary of available joint commands", joint_help_commands, 0, FUNTAB_UNLIMITED, FALSE},
+    {"accept", "[joints]", "accept a series of moves", joint_accept, 1, FUNTAB_UNLIMITED, FALSE},
+    {"debug", "[hex code]", "Show/set debugging bit vector for joints", joint_debug, 1, 2, FALSE},
+    {"help", "[commands]", "give usage message for given joint commands", joint_help, 0, FUNTAB_UNLIMITED, FALSE},
+    {"holds", "[names]", "list constraints", joint_hold, 1, FUNTAB_UNLIMITED, FALSE},
+    {"list", "[names]", "list joints.", joint_list, 1, FUNTAB_UNLIMITED, FALSE},
+    {"load", "file_name", "load a joint/constraint file", joint_load, 2, FUNTAB_UNLIMITED, FALSE},
+    {"mesh", "", "Build the grip mesh", joint_mesh, 0, 1, FALSE},
+    {"move", "joint_name p1 [p2...p6]", "Manual adjust a joint", joint_move, 3, 8, FALSE},
+    {"reject", "[joint_names]", "reject joint motions", joint_reject, 1, FUNTAB_UNLIMITED, FALSE},
+    {"save",	"file_name", "Save joints and constraints to disk", joint_save, 2, 2, FALSE},
+    {"solve", "constraint", "Solve a or all constraints", joint_solve, 1, FUNTAB_UNLIMITED, FALSE},
+    {"unload", "", "Unload any joint/constraints that have been loaded", joint_unload, 1, 1, FALSE},
+    {NULL, NULL, NULL, NULL, 0, 0, FALSE}
 };
 
 extern "C" {
