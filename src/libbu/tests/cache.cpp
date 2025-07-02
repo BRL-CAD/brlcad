@@ -27,8 +27,10 @@
 #include <string.h>
 #include "bu.h"
 
+#define PRINT_LIMIT 10
+
 void
-print_keys(struct bu_cache *c, int kcnt_expected)
+print_keys(struct bu_cache *c, int kcnt_expected, int item_cnt)
 {
     // Test key retrieval - this is useful if we don't know what's in a cache
     // and need to validate/clear out stale entries.
@@ -43,9 +45,6 @@ print_keys(struct bu_cache *c, int kcnt_expected)
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     bu_log("Retrieved %d keys in %g seconds.\n", kcnt, seconds);
-    //for (int i = 0; i < kcnt; i++)
-	//bu_log("%s\n", keys[i]);
-
 
     // Make sure the keys can read their values
     start = bu_gettime();
@@ -66,6 +65,18 @@ print_keys(struct bu_cache *c, int kcnt_expected)
 	    if (v != rval)
 		bu_log("Failed to read correct %s value - got %d\n", keys[i], rval);
 	    bu_vls_free(&kstr);
+
+	    // If we don't have too many items, go ahead and print the key/val
+	    if (item_cnt <= PRINT_LIMIT)
+		bu_log("%s -> %d\n", keys[i], rval);
+	}
+
+	if (rsize == sizeof(double)) {
+	    if (item_cnt <= PRINT_LIMIT) {
+		double rval;
+		memcpy(&rval, rdata, sizeof(rval));
+		bu_log("%s -> %g\n", keys[i], rval);
+	    }
 	}
     }
     bu_cache_get_done(c);
@@ -81,14 +92,13 @@ print_keys(struct bu_cache *c, int kcnt_expected)
 
 
 static void
-basic_test()
+basic_test(int item_cnt)
 {
     int64_t start, elapsed;
     fastf_t seconds;
 
     int kcnt_expected = 0;
-    int item_cnt = 100000;
-    const char *cfile = "50M_cache";
+    const char *cfile = "std_cache";
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
 
     char cache_file[MAXPATHLEN] = {0};
@@ -99,7 +109,7 @@ basic_test()
     bu_log("*******************************************************************************\n");
 
     start = bu_gettime();
-    struct bu_cache *c = bu_cache_open(cfile, 1, 5e7);
+    struct bu_cache *c = bu_cache_open(cfile, 1, 0);
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     bu_log("Cache opening and setup completed in %g seconds.\n", seconds);
@@ -142,7 +152,7 @@ basic_test()
     bu_log("INT read test completed - read %d INTs in %g seconds.\n", item_cnt, seconds);
 
     kcnt_expected = item_cnt;
-    print_keys(c, kcnt_expected);
+    print_keys(c, kcnt_expected, item_cnt);
 
    // Test writing DBL
     double dblseed = M_PI;
@@ -150,6 +160,9 @@ basic_test()
     for (int i = 0; i < item_cnt; i++) {
 	bu_vls_sprintf(&keystr, "dbl:%d", i);
 	double dval = i*dblseed;
+	if (item_cnt <= PRINT_LIMIT) {
+	    bu_log("Assigning %g to key %s\n", dval, bu_vls_cstr(&keystr));
+	}
 	size_t written = bu_cache_write((char *)&dval, sizeof(double), bu_vls_cstr(&keystr), c);
 	if (written != sizeof(double)) {
 	    bu_vls_free(&keystr);
@@ -183,7 +196,7 @@ basic_test()
     bu_log("DBL read test completed - read %d DBLs in %g seconds.\n", item_cnt, seconds);
 
     kcnt_expected = 2*item_cnt;
-    print_keys(c, kcnt_expected);
+    print_keys(c, kcnt_expected, item_cnt);
 
     // Test removal of data
     int rr_s = 2*item_cnt/10;
@@ -226,7 +239,7 @@ basic_test()
     bu_log("DBL post-remove read test completed - read %d DBLs in %g seconds.\n", rcnt, seconds);
 
     kcnt_expected = 2*item_cnt - rr_e + rr_s;
-    print_keys(c, kcnt_expected);
+    print_keys(c, kcnt_expected, item_cnt);
 
     // Done processing - close cache before checking file size info to make sure
     // we are synced
@@ -235,7 +248,7 @@ basic_test()
     // Reopen the cache and repeat the key test
     bu_log("Reopen and repeat key read...\n");
     c = bu_cache_open(cfile, 0, 0);
-    print_keys(c, kcnt_expected);
+    print_keys(c, kcnt_expected, item_cnt);
 
     if (!bu_file_exists(cache_file, NULL))
 	bu_exit(1, "Cache file %s not found\n", cache_file);
@@ -340,8 +353,12 @@ limit_test()
 }
 
 int
-main(int UNUSED(argc), const char **argv)
+main(int argc, const char **argv)
 {
+    // Number of each type to write in the basic test - can be overridden by
+    // explicit specification on command line.
+    int item_cnt = 100000;
+
     bu_setprogname(argv[0]);
 
     // Set up to use a local cache
@@ -351,8 +368,16 @@ main(int UNUSED(argc), const char **argv)
     bu_dirclear(cache_dir);
     bu_mkdir(cache_dir);
 
+    if (argc > 1) {
+	const char *av[2] = {NULL};
+	av[0] = argv[1];
+	int iret = bu_opt_int(NULL, 1, av, &item_cnt);
+	if (iret != 1)
+	    bu_exit(-1, "Invalid item count specifier\n");
+    }
+
     // Basic test writing INT and DBL values
-    basic_test();
+    basic_test(item_cnt);
 
     // Test behavior when data exceeds max cache database size
     limit_test();
