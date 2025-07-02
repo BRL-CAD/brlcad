@@ -238,7 +238,7 @@ static struct db_tree_state mesh_initial_tree_state = {
 
 
 static int
-joint_mesh(struct ged *gedp, int argc, const char *argv[])
+joint_mesh(struct ged *gedp, int argc, const char **argv)
 {
     const char *name;
     struct bv_vlblock*vbp;
@@ -317,7 +317,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
 static int
 joint_debug(struct ged *gedp,
 	    int argc,
-	    const char *argv[])
+	    const char **argv)
 {
     if (argc >= 2) {
 	sscanf(argv[1], "%x", &J_DEBUG);
@@ -336,7 +336,7 @@ joint_debug(struct ged *gedp,
  * Common code for help commands
  */
 static int
-helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
+helpcomm(struct ged *gedp, int argc, const char **argv, struct funtab *functions)
 {
     struct funtab *ftp;
     int i, bad;
@@ -367,7 +367,7 @@ helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *function
  * the indicated commands.
  */
 static int
-joint_usage(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
+joint_usage(struct ged *gedp, int argc, const char **argv, struct funtab *functions)
 {
     struct funtab *ftp;
 
@@ -383,7 +383,7 @@ joint_usage(struct ged *gedp, int argc, const char *argv[], struct funtab *funct
 
 
 static int
-joint_command_tab(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
+joint_command_tab(struct ged *gedp, int argc, const char **argv, struct funtab *functions)
 {
     struct funtab *ftp;
 
@@ -401,7 +401,7 @@ joint_command_tab(struct ged *gedp, int argc, const char *argv[], struct funtab 
 
 
 static int
-joint_help_commands(struct ged *gedp, int argc, const char *argv[])
+joint_help_commands(struct ged *gedp, int argc, const char **argv)
 {
     int status;
 
@@ -415,7 +415,7 @@ joint_help_commands(struct ged *gedp, int argc, const char *argv[])
 
 
 static int
-joint_help(struct ged *gedp, int argc, const char *argv[])
+joint_help(struct ged *gedp, int argc, const char **argv)
 {
     int status;
 
@@ -652,7 +652,7 @@ hold_clear_flags(struct hold *hp)
 
 
 static int
-joint_unload(struct ged *gedp, int argc, const char *argv[])
+joint_unload(struct ged *gedp, int argc, const char **argv)
 {
     struct joint *jp;
     struct hold *hp;
@@ -2292,7 +2292,7 @@ joint_adjust(struct ged *gedp, struct joint *jp)
 
 
 static int
-joint_load(struct ged *gedp, int argc, const char *argv[])
+joint_load(struct ged *gedp, int argc, const char **argv)
 {
     static struct bu_list path_head;
 
@@ -2429,7 +2429,7 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
 
 
 static int
-joint_save(struct ged *gedp, int argc, const char *argv[])
+joint_save(struct ged *gedp, int argc, const char **argv)
 {
     struct joint *jp;
     int i;
@@ -2514,7 +2514,7 @@ joint_save(struct ged *gedp, int argc, const char *argv[])
 
 
 static int
-joint_accept(struct ged *gedp, int argc, const char *argv[])
+joint_accept(struct ged *gedp, int argc, const char **argv)
 {
     struct joint *jp;
     int i;
@@ -2553,7 +2553,7 @@ joint_accept(struct ged *gedp, int argc, const char *argv[])
 
 
 static int
-joint_reject(struct ged *gedp, int argc, const char *argv[])
+joint_reject(struct ged *gedp, int argc, const char **argv)
 {
     struct joint *jp;
     int i;
@@ -3174,7 +3174,7 @@ Middle:
 
 
 static int
-joint_solve(struct ged *gedp, int argc, const char *argv[])
+joint_solve(struct ged *gedp, int argc, const char **argv)
 {
     struct hold *hp;
     int loops, count;
@@ -3353,7 +3353,7 @@ joint_solve(struct ged *gedp, int argc, const char *argv[])
 
 
 static int
-joint_hold(struct ged *gedp, int argc, const char *argv[])
+joint_hold(struct ged *gedp, int argc, const char **argv)
 {
     struct hold *hp;
     ++argv;
@@ -3390,7 +3390,7 @@ joint_list(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 
 
 static int
-joint_move(struct ged *gedp, int argc, const char *argv[])
+joint_move(struct ged *gedp, int argc, const char **argv)
 {
     struct joint *jp;
     int i;
@@ -3480,7 +3480,7 @@ joint_move(struct ged *gedp, int argc, const char *argv[])
 static int
 joint_cmd(struct ged *gedp,
 	  int argc,
-	  const char *argv[],
+	  const char **argv,
 	  struct funtab functions[])
 {
     struct funtab *ftp;
@@ -3521,7 +3521,7 @@ joint_cmd(struct ged *gedp,
 
 
 int
-ged_joint_core(struct ged *gedp, int argc, const char *argv[])
+ged_joint_core(struct ged *gedp, int argc, const char **argv)
 {
     int status;
 
