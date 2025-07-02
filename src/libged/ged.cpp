@@ -391,7 +391,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     // to block on it.
     const char *do_lod_init = getenv("LIBGED_LOD_INIT");
     if (BU_STR_EQUAL(do_lod_init, "1")) {
-	std::thread lod_thread(db_lod_mesh_init, gedp->dbip, 0);
+	std::thread lod_thread(db_cache_mesh_init, gedp->dbip, 0);
 	lod_thread.detach();
     }
 

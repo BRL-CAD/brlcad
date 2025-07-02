@@ -106,18 +106,13 @@ extern "C" {
 // file, so go with a 4Gb per file limit.
 #define CACHE_MAX_DB_SIZE 4294967296
 
-// Define what format of the cache is current - if it doesn't match, we need
-// to wipe and redo.
-#define CACHE_CURRENT_FORMAT 2
-
 /* There are various individual pieces of data in the cache associated with
  * each object key.  For lookup they use short suffix strings to distinguish
  * them - we define those strings here to have consistent definitions for use
  * in multiple functions.
  *
  *
- * Changing any of these (or CACHE_OBJ_BOUNDS or CACHE_INV_MAT) requires
- * incrementing CACHE_CURRENT_FORMAT. */
+ * Changing any of these requires incrementing BV_CACHE_CURRENT_FORMAT. */
 #define CACHE_POP_MAX_LEVEL "th"
 #define CACHE_POP_SWITCH_LEVEL "sw"
 #define CACHE_VERTEX_COUNT "vc"
@@ -125,6 +120,7 @@ extern "C" {
 #define CACHE_VERT_LEVEL "v"
 #define CACHE_VERTNORM_LEVEL "vn"
 #define CACHE_TRI_LEVEL "t"
+#define CACHE_OBJ_LBOUNDS "lbb"
 
 typedef int (*full_detail_clbk_t)(struct bv_lod_mesh *, void *);
 
@@ -441,6 +437,8 @@ POPState::POPState(struct bu_cache *ctx, const point_t *v, size_t vcnt, const ve
     faces_array = faces;
 
     // Calculate the full mesh bounding box for later use
+    // TODO - see if this has already been stashed in the cache for us
+    // As six points under CACHE_OBJ_BOUNDS
     bg_trimesh_aabb(&bbmin, &bbmax, faces_array, faces_cnt, verts_array, vert_cnt);
 
     // Find our min and max values, initialize levels
@@ -576,7 +574,7 @@ POPState::POPState(struct bu_cache *ctx, unsigned long long user_key)
     {
 	float minmax[6];
 	const char *b = NULL;
-	size_t bsize = cache_get((void **)&b, CACHE_OBJ_BOUNDS);
+	size_t bsize = cache_get((void **)&b, CACHE_OBJ_LBOUNDS);
 	if (bsize != (sizeof(bbmin) + sizeof(bbmax) + sizeof(minmax))) {
 	    bu_log("Incorrect data size found loading cached bounds data\n");
 	    cache_done();
@@ -1042,7 +1040,7 @@ POPState::cache()
 	fb[3] = maxx;
 	fb[4] = maxy;
 	fb[5] = maxz;
-	is_valid = cache_write(CACHE_OBJ_BOUNDS, (char *)bb,  sizeof(point_t) * 2 + sizeof(float) * 6);
+	is_valid = cache_write(CACHE_OBJ_LBOUNDS, (char *)bb,  sizeof(point_t) * 2 + sizeof(float) * 6);
 	bu_free(bb, "bb array");
     }
 
@@ -1417,7 +1415,7 @@ bv_lod_clear(struct bu_cache *c, const char *name)
     bu_vls_sprintf(&keystr, "%llu:%s", key, CACHE_TRI_COUNT);
     bu_cache_clear(bu_vls_cstr(&keystr), c);
 
-    bu_vls_sprintf(&keystr, "%llu:%s", key, CACHE_OBJ_BOUNDS);
+    bu_vls_sprintf(&keystr, "%llu:%s", key, CACHE_OBJ_LBOUNDS);
     bu_cache_clear(bu_vls_cstr(&keystr), c);
 
     bu_vls_sprintf(&keystr, "%llu:%s", key, CACHE_VERT_LEVEL);
