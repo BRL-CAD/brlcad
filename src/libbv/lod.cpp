@@ -115,27 +115,16 @@ extern "C" {
  * them - we define those strings here to have consistent definitions for use
  * in multiple functions.
  *
-*
- * Changing any of these requires incrementing CACHE_CURRENT_FORMAT. */
+ *
+ * Changing any of these (or CACHE_OBJ_BOUNDS or CACHE_INV_MAT) requires
+ * incrementing CACHE_CURRENT_FORMAT. */
 #define CACHE_POP_MAX_LEVEL "th"
 #define CACHE_POP_SWITCH_LEVEL "sw"
 #define CACHE_VERTEX_COUNT "vc"
 #define CACHE_TRI_COUNT "tc"
-#define CACHE_OBJ_BOUNDS "bb"
 #define CACHE_VERT_LEVEL "v"
 #define CACHE_VERTNORM_LEVEL "vn"
 #define CACHE_TRI_LEVEL "t"
-
-// TODO - if we use PCA to de-dup mesh data, we will need to store an inverse
-// matrix so we can restore the data to the expected place for an object.
-#define CACHE_INV_MAT "im"
-
-/* The same cache that holds these values also holds a mapping from a hash of
- * database string names to a geometry data hash key.  The latter (the geometry
- * data hash key) is what these data are keyed with.  The database string must
- * first be translated to that key before any of these lookups will succeed,
- * and pkey is the key that must be found to enable that translation. */
-#define CACHE_POP_KEY "pkey"
 
 typedef int (*full_detail_clbk_t)(struct bv_lod_mesh *, void *);
 
@@ -429,7 +418,7 @@ POPState::POPState(struct bu_cache *ctx, const point_t *v, size_t vcnt, const ve
     // Stash the user_key to hash mapping
     {
 	struct bu_vls ukeystr = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&ukeystr, "%llu:%s", user_key, CACHE_POP_KEY);
+	bu_vls_sprintf(&ukeystr, "%llu", user_key);
 	unsigned long long htmp = hash;
 	size_t written = bu_cache_write((char *)&htmp, sizeof(unsigned long long), bu_vls_cstr(&ukeystr), c);
 	bu_vls_free(&ukeystr);
@@ -514,7 +503,7 @@ POPState::POPState(struct bu_cache *ctx, unsigned long long user_key)
     {
 	// Construct lookup key
 	struct bu_vls ukey = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&ukey, "%llu:%s", user_key, CACHE_POP_KEY);
+	bu_vls_sprintf(&ukey, "%llu", user_key);
 	void *kmem;
 	size_t bsize = bu_cache_get(&kmem, bu_vls_cstr(&ukey), c);
 	if (bsize != sizeof(unsigned long long)) {
@@ -1214,7 +1203,7 @@ bv_lod_mesh_cache(struct bu_cache *c, const char *name, const point_t *v, size_t
 	return 0;
 
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&keystr, "%llu:%s", user_key, CACHE_POP_KEY);
+    bu_vls_sprintf(&keystr, "%llu", user_key);
     bu_cache_write(&p.hash, sizeof(unsigned long long), bu_vls_cstr(&keystr), c);
     bu_vls_free(&keystr);
 
@@ -1441,7 +1430,7 @@ bv_lod_clear(struct bu_cache *c, const char *name)
     bu_cache_clear(bu_vls_cstr(&keystr), c);
 
     // Translate database object name key to data key
-    bu_vls_sprintf(&keystr, "%llu:%s", key, CACHE_POP_KEY);
+    bu_vls_sprintf(&keystr, "%llu", key);
     void *cdata = NULL;
     if (bu_cache_get(&cdata, bu_vls_cstr(&keystr), c) != sizeof(unsigned long long)) {
 	bu_vls_free(&keystr);

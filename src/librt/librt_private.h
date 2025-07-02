@@ -80,7 +80,8 @@ struct db_i_internal {
 
 #ifdef __cplusplus
     std::atomic_bool shutdown_requested;
-    std::atomic_bool init_complete;
+    std::atomic_bool mesh_init_complete;
+    std::atomic_bool draw_init_complete;
 #endif
 
     // TODO - really need to get the rt prep cache container in here.  Also

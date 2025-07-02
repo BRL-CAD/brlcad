@@ -35,17 +35,14 @@
 
 __BEGIN_DECLS
 
-
-/* Routines for managing the mesh LoD cache.  As many of the details as
- * possible of the cache should be private, but we do at least need ways to set
- * up, clear, update and load information. */
-
 /**
- * Initialize the LoD cache, doing any necessary setup on disk.  If
- * being run for the first time this can be quite slow, so it is
- * recommended to run it in a background thread.
+ * Initialize drawing data such as color and region flag for all objects
+ * in the cache.
+ *
+ * TODO - meshes are currently separate - make a queue for LoD work
+ * on the big ones and just handle everything else here to simplify the API
  */
-RT_EXPORT extern void db_lod_mesh_init(struct db_i *dbip, int verbose);
+RT_EXPORT extern void db_cache_draw_init(struct db_i *dbip, int verbose);
 
 /**
  * Update the cache contents to reflect the current state of the object
@@ -55,13 +52,35 @@ RT_EXPORT extern void db_lod_mesh_init(struct db_i *dbip, int verbose);
  * If no cache is present, or the attempt encounters a problem, return
  * BRLCAD_ERROR - else returns BRLCAD_OK;
  */
-RT_EXPORT extern int db_lod_mesh_update(struct db_i *dbip, const char *name);
+RT_EXPORT extern int db_cache_draw_update(struct db_i *dbip, const char *name);
+
+
+/* Routines for managing the Drawing cache.  As many of the details as
+ * possible of the cache should be private, but we do at least need ways to set
+ * up, clear, update and load information. */
+
+/**
+ * Initialize the LoD cache, doing any necessary setup on disk.  If
+ * being run for the first time this can be quite slow, so it is
+ * recommended to run it in a background thread.
+ */
+RT_EXPORT extern void db_cache_mesh_init(struct db_i *dbip, int verbose);
+
+/**
+ * Update the cache contents to reflect the current state of the object
+ * in dbip.  If there is no object present in dbip with that name, then
+ * remove any cached data associated with that name from the cache.
+ *
+ * If no cache is present, or the attempt encounters a problem, return
+ * BRLCAD_ERROR - else returns BRLCAD_OK;
+ */
+RT_EXPORT extern int db_cache_mesh_update(struct db_i *dbip, const char *name);
 
 /**
  * Retrieve the bv_lod_mesh data from the dbip's cache associated with
  * the named object.  If no such data is present, returns NULL.
  */
-RT_EXPORT extern struct bv_lod_mesh *db_lod_mesh_get(struct db_i *dbip, const char *name);
+RT_EXPORT extern struct bv_lod_mesh *db_cache_mesh_get(struct db_i *dbip, const char *name);
 
 
 
