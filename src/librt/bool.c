@@ -154,12 +154,11 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
     register fastf_t tol_dist;
 
     RT_CK_PT_HD(PartHdp);
-
-    tol_dist = rtip->rti_tol.dist;
-
     RT_CK_RTI(ap->a_rt_i);
     RT_CK_RESOURCE(res);
     RT_CK_RTI(rtip);
+
+    tol_dist = rtip->rti_tol.dist;
 
     if (RT_G_DEBUG&RT_DEBUG_PARTITION) {
 	bu_log("In rt_boolweave, tol_dist = %g\n", tol_dist);
