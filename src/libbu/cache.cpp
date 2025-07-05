@@ -45,9 +45,6 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 
-// Maximum database size.
-#define CACHE_MAX_DB_SIZE 4294967296
-
 struct bu_cache_impl {
     MDB_env *env;
     MDB_txn *txn; // TODO - do we need to support more than one of these for parallel reading...
@@ -130,7 +127,7 @@ bu_cache_open(const char *cache_db, int create, size_t max_cache_size)
     // mapsize is supposed to be a multiple of the OS page size - assuming
     // 4096 bytes for now, but maybe should add some code to actually
     // get the active page size...
-    msize = (max_cache_size) ? (max_cache_size / 4096) * 4096 : CACHE_MAX_DB_SIZE;
+    msize = (max_cache_size) ? (max_cache_size / 4096) * 4096 : BU_CACHE_DEFAULT_DB_SIZE;
     if (mdb_env_set_mapsize(c->i->env, msize))
 	goto bu_context_close_fail;
 
