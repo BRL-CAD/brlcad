@@ -36,12 +36,15 @@
 
 __BEGIN_DECLS
 
-// Key strings to use in combination with a name hash to look up data.
 // Changes to any of these requires incrementing DB_CACHE_CURRENT_FORMAT.
+
+// Key strings to use in combination with a name hash to look up data.
 #define CACHE_REGION_ID "rid"
 #define CACHE_REGION_FLAG "rf"
 #define CACHE_INHERIT_FLAG "if"
 #define CACHE_COLOR "c"
+// Internal functional key strings
+#define CACHE_GEOM_KEY "gk"
 
 // If BV_CACHE_CURRENT_FORMAT is incremented, this
 // should be as well.

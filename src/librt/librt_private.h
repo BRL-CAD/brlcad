@@ -35,6 +35,8 @@
 
 #ifdef __cplusplus
 #  include <atomic>
+#  include <unordered_map>
+#  include <unordered_set>
 #endif
 
 #include "vmath.h"
@@ -82,6 +84,8 @@ struct db_i_internal {
     std::atomic_bool shutdown_requested;
     std::atomic_bool mesh_init_complete;
     std::atomic_bool draw_init_complete;
+
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> cache_geom_uses;
 #endif
 
     // TODO - really need to get the rt prep cache container in here.  Also
