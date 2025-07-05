@@ -32,6 +32,14 @@
 
 __BEGIN_DECLS
 
+
+// Default maximum cache database size.
+//
+// Generally user code will want to use this, unless they want
+// something larger - a cache that gets filled up too quickly
+// generally will typically cause problems for users.
+#define BU_CACHE_DEFAULT_DB_SIZE 4294967296
+
 struct bu_cache_impl;
 
 struct bu_cache {
