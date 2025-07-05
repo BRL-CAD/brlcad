@@ -139,11 +139,11 @@ bv_lod_clear(struct bu_cache *c, const char *name);
  * application wishes to visualize levels explicitly.)
  */
 BV_EXPORT struct bv_lod_mesh *
-bv_lod_mesh_create(struct bu_cache *c, const char *name);
+bv_lod_mesh_get(struct bu_cache *c, const char *name);
 
 /* Clean up the lod container. */
 BV_EXPORT void
-bv_lod_mesh_destroy(struct bv_lod_mesh *l);
+bv_lod_mesh_put(struct bv_lod_mesh *l);
 
 /**
  * Given a scene object with LoD data stored in s->draw_data, reduce memory
