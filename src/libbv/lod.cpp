@@ -1209,7 +1209,7 @@ bv_lod_mesh_cache(struct bu_cache *c, const char *name, const point_t *v, size_t
 }
 
 extern "C" struct bv_lod_mesh *
-bv_lod_mesh_create(struct bu_cache *c, const char *name)
+bv_lod_mesh_get(struct bu_cache *c, const char *name)
 {
     if (!c || !name)
 	return NULL;
@@ -1246,7 +1246,7 @@ bv_lod_mesh_create(struct bu_cache *c, const char *name)
 }
 
 extern "C" void
-bv_lod_mesh_destroy(struct bv_lod_mesh *lod)
+bv_lod_mesh_put(struct bv_lod_mesh *lod)
 {
     if (!lod)
 	return;

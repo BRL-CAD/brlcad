@@ -61,6 +61,59 @@ db_cache_init(struct db_i *dbip)
     return 1;
 }
 
+/* For all named objects, we NEED the following properties cached to do drawing
+ * quickly:
+ *
+ * region_id
+ * region_flag
+ * color_inherit
+ * color_value
+ *
+ * The majority of objects in a .g will not have an explicit color set on them
+ * directly, but without a cache entry we have no way to tell whether we need
+ * to get it so all objects will be assigned a default entry in the cache if
+ * they are unset.
+ *
+ * For this function, we are just checking the cache to see if we have what we
+ * need - cracking the AVS, if we must do so, will come later.  The first entry
+ * we find that is not present means we need to crack the AVS, so at that point
+ * we just bail - we'll go ahead and update everything if any entry is missing.
+ */
+bool
+cache_check(struct bu_cache *c, unsigned long long hash)
+{
+    // Key length is limited, so we don't need to malloc
+    // and free a full bu_vls for this.
+    static char ckey[MAXPATHLEN];
+
+    snprintf(ckey, "%llu:%s", hash, CACHE_REGION_ID, MAXPATHLEN);
+    if (!bu_cache_get(NULL, ckey, c)) {
+	bu_cache_get_done(c);
+	return false;
+    }
+
+    snprintf(ckey, "%llu:%s", hash, CACHE_REGION_FLAG, MAXPATHLEN);
+    if (!bu_cache_get(NULL, ckey, c)) {
+	bu_cache_get_done(c);
+	return false;
+    }
+
+    snprintf(ckey, "%llu:%s", hash, CACHE_INHERIT_FLAG, MAXPATHLEN);
+    if (!bu_cache_get(NULL, ckey, c)) {
+	bu_cache_get_done(c);
+	return false;
+    }
+
+    snprintf(ckey, "%llu:%s", hash, CACHE_COLOR, MAXPATHLEN);
+    if (!bu_cache_get(NULL, ckey, c)) {
+	bu_cache_get_done(c);
+	return false;
+    }
+
+    bu_cache_get_done();
+    return true;
+}
+
 void
 db_cache_draw_init(struct db_i *dbip, int verbose)
 {
@@ -107,8 +160,6 @@ db_cache_draw_init(struct db_i *dbip, int verbose)
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
 		continue;
-	    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT)
-		continue;
 
 	    if (UNLIKELY(!dp->d_namep || !strlen(dp->d_namep)))
 		continue;
@@ -116,11 +167,9 @@ db_cache_draw_init(struct db_i *dbip, int verbose)
 	    // If we already have a match, assume it is valid.  Resetting
 	    // invalid data in the cache is outside the scope of cache init.
 	    unsigned long long user_key = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	    bu_vls_sprintf(&keystr, "%llu", user_key);
-	    int in_cache = bu_cache_get(NULL, bu_vls_cstr(&keystr), dbip->i->c);
-	    bu_cache_get_done(dbip->i->c);
-	    if (in_cache)
+	    if (cache_check(dbip->i->c, user_key))
 		continue;
+
 
 	    // If the parent thread has decided to close the dbip, we can
 	    // stop now.
@@ -343,7 +392,7 @@ db_cache_mesh_update(struct db_i *dbip, const char *name)
     // Make sure we can retrieve the cached data
     // TODO - may not really be necessary to verify this here once we're
     // working - including during early stages for testing.
-    struct bv_lod_mesh *lod = bv_lod_mesh_create(dbip->i->c, name);
+    struct bv_lod_mesh *lod = bv_lod_mesh_get(dbip->i->c, name);
     if (!lod) {
 	bu_log("Error processing %s - unable to retrieve LoD data\n", dp->d_namep);
 	rt_db_free_internal(&dbintern);
@@ -356,17 +405,19 @@ db_cache_mesh_update(struct db_i *dbip, const char *name)
 }
 
 struct bv_lod_mesh *
-db_cache_mesh_get(struct db_i *dbip, const char *name)
+db_cache_lod_mesh_get(struct db_i *dbip, const char *name)
 {
     if (!dbip || !dbip->i || !dbip->i->c || !name)
 	return NULL;
 
-    return bv_lod_mesh_create(dbip->i->c, name);
+    return bv_lod_mesh_get(dbip->i->c, name);
 }
 
 int
-db_cache_draw_update(struct db_i *dbip, const char *name)
+db_cache_draw_update(struct db_i *dbip, const char *name, bool attr_only)
 {
+    static char ckey[MAXPATHLEN];
+
     if (!dbip || !dbip->i || !dbip->i->c)
 	return BRLCAD_ERROR;
 
@@ -378,28 +429,77 @@ db_cache_draw_update(struct db_i *dbip, const char *name)
     // TODO - do this right...
     bu_cache_clear(name, dbip->i->c);
 
-    // BoTs are handled elsewhere
+    // BoTs have extra work to do for LoD...
     struct directory *dp = db_lookup(dbip, name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL || dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT)
-	return BRLCAD_OK;
-
-    // Unpack the data
-    struct rt_db_internal dbintern;
-    RT_DB_INTERNAL_INIT(&dbintern);
-    struct rt_db_internal *ip = &dbintern;
-    int ret = rt_db_get_internal(ip, dp, dbip, NULL, &rt_uniresource);
-    if (ret < 0)
-	return BRLCAD_ERROR;
-    if (ip->idb_minor_type != dp->d_minor_type) {
-	bu_log("Error processing %s - mismatch between d_minor_type (%c) and idb_minor_type (%c)\n", dp->d_namep, dp->d_minor_type, ip->idb_minor_type);
-	rt_db_free_internal(&dbintern);
-	return BRLCAD_ERROR;
-    }
+	bu_log("TODO - LoD init\n");
 
     // TODO - port dcache.cpp and dbi2_state.cpp setup here.  Probably will
     // go ahead and do the bounding box calc too, which is the primary
     // candidate that could motivate doing the draw init in a separate thread
     // like the mesh LoD init.
+    unsigned long long hash = bu_data_hash(name, strlen(name)*sizeof(char));
+
+    // Read the attributes from the database object
+    struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
+    db5_get_attributes(dbip, &c_avs, dp);
+
+    // Region flag.
+    int rflag = 0;
+    const char *region_flag_str = bu_avs_get(&c_avs, "region");
+    if (region_flag_str && (BU_STR_EQUAL(region_flag_str, "R") || BU_STR_EQUAL(region_flag_str, "1")))
+	rflag = 1;
+    snprintf(ckey, "%llu:%s", hash, CACHE_REGION_FLAG, MAXPATHLEN);
+    if (!bu_cache_write(&rflag, sizeof(int), ckey, c)) {
+	bu_log("%s: region_flag cache write failure\n", name);
+	return BRLCAD_ERROR;
+    }
+
+    // Region id.  For drawing purposes this needs to be a number.
+    int region_id = -1;
+    const char *region_id_str = bu_avs_get(&c_avs, "region_id");
+    if (region_id_str)
+	bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id);
+    snprintf(ckey, "%llu:%s", hash, CACHE_REGION_ID, MAXPATHLEN);
+    if (!bu_cache_write(&region_id, sizeof(int), ckey, c) {
+	bu_log("%s: region_id cache write failure\n", name);
+	return BRLCAD_ERROR;
+    }
+
+    // Inherit flag
+    int color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
+    snprintf(ckey, "%llu:%s", hash, CACHE_INHERIT_FLAG, MAXPATHLEN);
+    if (!bu_cache_write(&color_inherit, sizeof(int), ckey, c)) {
+	bu_log("%s: color_inherit cache write failure\n", name);
+	return BRLCAD_ERROR;
+    }
+
+
+    // Color
+    unsigned int colors = UINT_MAX; // Using UINT_MAX to indicate unset
+    const char *color_str = bu_avs_get(&c_avs, "color");
+    if (!color_str)
+	color_str = bu_avs_get(&c_avs, "rgb");
+    if (color_str) {
+	struct bu_color c;
+	bu_opt_color(NULL, 1, &color_val, (void *)&color);
+	// Serialize for cache
+	int r, g, b;
+	bu_color_to_rgb_ints(&color, &r, &g, &b);
+	colors = r + (g << 8) + (b << 16);
+    }
+    snprintf(ckey, "%llu:%s", hash, CACHE_COLOR, MAXPATHLEN);
+    if (!bu_cache_write(&color, sizeof(unsigned int), ckey, c)) {
+	bu_log("%s: color cache write failure\n", name);
+	return BRLCAD_ERROR;
+    }
+
+    // If we're only updating the cached attributes (i.e. the
+    // calling code knows the geometry wasn't changed) we can
+    // stop now.
+    if (attr_only)
+	return BRLCAD_OK;
+
 
     // TODO - small BoTs may be fast enough to do here, LoD and all - another
     // possibility that may simplify the API would be to have the master init
@@ -413,6 +513,23 @@ db_cache_draw_update(struct db_i *dbip, const char *name)
     // May be worth adding object timestamp attributes to the mix as well,
     // since that would be the easiest way to trigger a cache rebuild on
     // database load...
+
+
+
+    // Bounding Box (and other LoD data) must come from the geometry.
+    // Unpack the internal.
+    struct rt_db_internal dbintern;
+    RT_DB_INTERNAL_INIT(&dbintern);
+    struct rt_db_internal *ip = &dbintern;
+    int ret = rt_db_get_internal(ip, dp, dbip, NULL, &rt_uniresource);
+    if (ret < 0)
+	return BRLCAD_ERROR;
+    if (ip->idb_minor_type != dp->d_minor_type) {
+	bu_log("Error processing %s - mismatch between d_minor_type (%c) and idb_minor_type (%c)\n", dp->d_namep, dp->d_minor_type, ip->idb_minor_type);
+	rt_db_free_internal(&dbintern);
+	return BRLCAD_ERROR;
+    }
+
 
     // Done with internal
     rt_db_free_internal(&dbintern);
