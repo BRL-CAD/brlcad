@@ -249,6 +249,7 @@ basic_test(int item_cnt)
     bu_log("Reopen and repeat key read...\n");
     c = bu_cache_open(cfile, 0, 0);
     print_keys(c, kcnt_expected, item_cnt);
+    bu_cache_close(c);
 
     if (!bu_file_exists(cache_file, NULL))
 	bu_exit(1, "Cache file %s not found\n", cache_file);
@@ -333,7 +334,7 @@ limit_test()
     // Close the cache to make sure we're synced to disk before the next checks
     bu_cache_close(c);
 
-    // Before we remove anything, see if the file size jibes with the limit
+    // Before proceeding, see if the file size jibes with the limit
     char cache_file[MAXPATHLEN] = {0};
     bu_dir(cache_file, MAXPATHLEN, BU_DIR_CACHE, cfile, "data.mdb", NULL);
     if (!bu_file_exists(cache_file, NULL))
@@ -341,6 +342,46 @@ limit_test()
     int dfsize = bu_file_size(cache_file);
     unsigned long fdelta = std::abs((long)((long)dfsize - (long)fsize));
     bu_log("Cache data file %s:\nApproximate expected size (bytes): %d\nObserved size(bytes):%lu\nDelta (bytes):%lu\n", cache_file, dfsize, fsize, fdelta);
+
+
+    // Reopen the cache with a larger size and confirm we can add the
+    // remainder of the values.
+    fsize = 5e7/pgsize;
+    fsize = fsize * pgsize;
+    c = bu_cache_open(cfile, 1, fsize);
+    bu_log("Reopened with larger max size\n");
+
+    // Write remaining doubles - this time there shouldn't be a failure
+    for (int i = expected_failed; i < item_cnt; i++) {
+	bu_vls_sprintf(&keystr, "dbl:%d", i);
+	double dval = i*dblseed;
+	size_t written = bu_cache_write((char *)&dval, sizeof(double), bu_vls_cstr(&keystr), c);
+	if (written != sizeof(double))
+	    bu_exit(1, "Failed to assign %s value %g\n", bu_vls_cstr(&keystr), dval);
+    }
+    bu_log("Remaining DBL values added\n");
+
+    // Test reading all DBLs, both those added with the old max size and those
+    // just added.
+    for (int i = 0; i < item_cnt; i++) {
+	bu_vls_sprintf(&keystr, "dbl:%d", i);
+	void *rdata = NULL;
+	size_t rsize = bu_cache_get(&rdata, bu_vls_cstr(&keystr), c);
+	if (rsize != sizeof(double)) {
+	    bu_vls_free(&keystr);
+	    bu_exit(1, "Failed to read dbl:%d - expected to read %zd bytes but read %zd\n", i, sizeof(double), rsize);
+	}
+	double rval = 0;
+	memcpy(&rval, rdata, sizeof(double));
+	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF)) {
+	    bu_vls_free(&keystr);
+	    bu_exit(1, "Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
+	}
+    }
+    bu_cache_get_done(c);
+    bu_log("All DBL values (old and newly added) successfully read\n");
+    bu_cache_close(c);
+
 
     bu_dir(cache_file, MAXPATHLEN, BU_DIR_CACHE, cfile, NULL);
     if (!bu_file_exists(cache_file, NULL))
