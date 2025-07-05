@@ -55,6 +55,10 @@ struct bu_cache {
  * If the create flag is non-zero, bu_cache_open will create the specified
  * cache_db if it does not already exist.
  *
+ * A zero argument to max_cache_size will result in BU_CACHE_DEFAULT_DB_SIZE
+ * being used.  The size limit is a limit for the current session, not a
+ * perminent upper limit on how large a given cache can grow.
+ *
  * returns the bu_cache structure on success, NULL on failure.
  */
 BU_EXPORT extern struct bu_cache *bu_cache_open(const char *cache_db, int create, size_t max_cache_size);
