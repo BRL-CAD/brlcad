@@ -21,6 +21,18 @@
  *
  * Routines for managing and accessing a key/value data store.
  *
+ * NOTE:  Data backend storage is NOT guaranteed by this API from one BRL-CAD
+ * version to the next. Older versions of libbu caches may use different
+ * internal storage than newer ones.  Should a backend need to change, we will
+ * strive to maintain support for reading in the previous backend when the new
+ * one is released to allow for data migration.  However, cache data is
+ * ultimately intended to be ephemeral and subject to regeneration - if the
+ * maintenance burden of backwards compatibilty becomes too high the decision
+ * will be made to drop support for reading older caches.
+ *
+ * For data that is canonical and not able to be regenerated from other sources
+ * (such as geometry or user settings) bu_cache is not an appropriate storage
+ * mechanism.
  */
 
 #ifndef BU_CACHE_H
