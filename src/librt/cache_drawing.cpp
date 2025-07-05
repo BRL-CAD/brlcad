@@ -62,6 +62,12 @@ db_cache_init(struct db_i *dbip)
 
     dbip->i->c = bu_cache_open(dbip->dbi_filename, 1, fsize);
 
+    // Populate cache_geom_uses
+    //
+    // Note that this is a cache-only operation - the dbip isn't involved
+    // except as storage.  That way, garbage collect will be able to clear out
+    // old, unused geometry info as well.
+
     return 1;
 }
 
@@ -541,6 +547,70 @@ db_cache_draw_update(struct db_i *dbip, const char *name, bool attr_only)
     // TODO - Make sure we can retrieve the cached data
 
     return BRLCAD_OK;
+}
+
+bool
+db_cache_clear_entries(struct dbip *dbip, unsigned long long hash)
+{
+    struct bu_cache *c = dbip->i->c;
+
+    // Key length is limited, so we don't need to malloc
+    // and free a full bu_vls for this.
+    static char ckey[MAXPATHLEN];
+
+    // Clear attr entries
+    snprintf(ckey, "%llu:%s", hash, CACHE_REGION_ID, MAXPATHLEN);
+    bu_cache_clear(name, dbip->i->c);
+    snprintf(ckey, "%llu:%s", hash, CACHE_REGION_FLAG, MAXPATHLEN);
+    bu_cache_clear(name, dbip->i->c);
+    snprintf(ckey, "%llu:%s", hash, CACHE_INHERIT_FLAG, MAXPATHLEN);
+    bu_cache_clear(name, dbip->i->c);
+    snprintf(ckey, "%llu:%s", hash, CACHE_COLOR, MAXPATHLEN);
+    bu_cache_clear(name, dbip->i->c);
+
+
+    // TODO - clear per-name geometry info:
+    // bounding box, oriented bounding box
+
+    // Look up the geometry key for this name
+    snprintf(ckey, "%llu:%s", hash, CACHE_GEOM_KEY, MAXPATHLEN);
+    void *vdata;
+    if (!bu_cache_get(vdata, ckey, c)) {
+	// If we don't have a geometry key, we're done
+	return true;
+    }
+    unsigned long long ghash;
+    memcpy(&ghash, vdata, sizeof(unsigned long long));
+    if (!ghash) {
+	// If we don't have a valid geometry key, we're done
+	return true;
+    }
+
+    // hash is being removed, so remove it from the ghash active set
+    dbip->i->cache_geom_uses[ghash].erase[hash];
+
+    // If ghash still has active users, we're done
+    if (dbip->cache_geom_uses[ghash].size()) 
+	return true;
+
+    // No more users of ghash - clear the data associated with ghash as well.
+
+    // TODO - clear bbox, BoT LoD data - NOTE: bounding box must also be stored under
+    // ghash for LoD reuse.
+
+}
+
+void
+db_cache_gc(struct db_i *dbip)
+{
+    // TODO - get all cache keys, and use something like a region flag
+    // filter to collect the set of all name hashes
+
+    // Hash all active dp names in the dbip, and remove those hashes from
+    // the name set collected previously
+
+    // Anything remaining is garbage, and gets db_cache_clear_entries
+    // called on it.
 }
 
 // Local Variables:
