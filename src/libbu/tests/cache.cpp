@@ -99,7 +99,7 @@ basic_test(int item_cnt)
 
     int kcnt_expected = 0;
     const char *cfile = "std_cache";
-    struct bu_vls keystr = BU_VLS_INIT_ZERO;
+    char keystr[BU_CACHE_KEY_MAXLEN];
 
     char cache_file[MAXPATHLEN] = {0};
     bu_dir(cache_file, MAXPATHLEN, BU_DIR_CACHE, cfile, NULL);
@@ -117,13 +117,11 @@ basic_test(int item_cnt)
     // Test writing INT
     start = bu_gettime();
     for (int i = 0; i < item_cnt; i++) {
-	bu_vls_sprintf(&keystr, "int:%d", i);
+	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "int:%d", i);
 	int ival = i;
-	size_t written = bu_cache_write((char *)&ival, sizeof(int), bu_vls_cstr(&keystr), c);
-	if (written != sizeof(int)) {
-	    bu_vls_free(&keystr);
+	size_t written = bu_cache_write((char *)&ival, sizeof(int), keystr, c);
+	if (written != sizeof(int))
 	    bu_exit(1, "Failed to write int %d\n", i);
-	}
     }
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
@@ -132,19 +130,15 @@ basic_test(int item_cnt)
     // Test reading INT
     start = bu_gettime();
     for (int i = 0; i < item_cnt; i++) {
-	bu_vls_sprintf(&keystr, "int:%d", i);
+	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "int:%d", i);
 	void *rdata = NULL;
-	size_t rsize = bu_cache_get(&rdata, bu_vls_cstr(&keystr), c);
-	if (rsize != sizeof(int)) {
-	    bu_vls_free(&keystr);
+	size_t rsize = bu_cache_get(&rdata, keystr, c);
+	if (rsize != sizeof(int))
 	    bu_exit(1, "Failed to read int:%d - expected to read %zd bytes but read %zd\n", i, sizeof(int), rsize);
-	}
 	int rval = 0;
 	memcpy(&rval, rdata, sizeof(rval));
-	if (rval != i) {
-	    bu_vls_free(&keystr);
+	if (rval != i)
 	    bu_exit(1, "Failed read from int:%d key was %d, expected %d\n", i, rval, i);
-	}
     }
     bu_cache_get_done(c);
     elapsed = bu_gettime() - start;
@@ -158,16 +152,13 @@ basic_test(int item_cnt)
     double dblseed = M_PI;
     start = bu_gettime();
     for (int i = 0; i < item_cnt; i++) {
-	bu_vls_sprintf(&keystr, "dbl:%d", i);
+	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "dbl:%d", i);
 	double dval = i*dblseed;
-	if (item_cnt <= PRINT_LIMIT) {
-	    bu_log("Assigning %g to key %s\n", dval, bu_vls_cstr(&keystr));
-	}
-	size_t written = bu_cache_write((char *)&dval, sizeof(double), bu_vls_cstr(&keystr), c);
-	if (written != sizeof(double)) {
-	    bu_vls_free(&keystr);
+	if (item_cnt <= PRINT_LIMIT)
+	    bu_log("Assigning %g to key %s\n", dval, keystr);
+	size_t written = bu_cache_write((char *)&dval, sizeof(double), keystr, c);
+	if (written != sizeof(double))
 	    bu_exit(1, "Failed to write double %d:%g\n", i, dval);
-	}
     }
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
@@ -176,19 +167,15 @@ basic_test(int item_cnt)
     // Test reading DBL
     start = bu_gettime();
     for (int i = 0; i < item_cnt; i++) {
-	bu_vls_sprintf(&keystr, "dbl:%d", i);
+	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "dbl:%d", i);
 	void *rdata = NULL;
-	size_t rsize = bu_cache_get(&rdata, bu_vls_cstr(&keystr), c);
-	if (rsize != sizeof(double)) {
-	    bu_vls_free(&keystr);
+	size_t rsize = bu_cache_get(&rdata, keystr, c);
+	if (rsize != sizeof(double))
 	    bu_exit(1, "Failed to read dbl:%d - expected to read %zd bytes but read %zd\n", i, sizeof(double), rsize);
-	}
 	double rval = 0;
 	memcpy(&rval, rdata, sizeof(double));
-	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF)) {
-	    bu_vls_free(&keystr);
+	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF))
 	    bu_exit(1, "Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
-	}
     }
     bu_cache_get_done(c);
     elapsed = bu_gettime() - start;
@@ -203,8 +190,8 @@ basic_test(int item_cnt)
     int rr_e = 5*item_cnt/10;
     start = bu_gettime();
     for (int i = rr_s; i < rr_e; i++) {
-	bu_vls_sprintf(&keystr, "dbl:%d", i);
-	bu_cache_clear(bu_vls_cstr(&keystr), c);
+	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "dbl:%d", i);
+	bu_cache_clear(keystr, c);
     }
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
@@ -216,22 +203,19 @@ basic_test(int item_cnt)
     start = bu_gettime();
     int rcnt = 0;
     for (int i = 0; i < item_cnt; i++) {
-	bu_vls_sprintf(&keystr, "dbl:%d", i);
+	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "dbl:%d", i);
 	void *rdata = NULL;
-	size_t rsize = bu_cache_get(&rdata, bu_vls_cstr(&keystr), c);
+	size_t rsize = bu_cache_get(&rdata, keystr, c);
 	if (rsize != sizeof(double)) {
 	    if (i >= rr_s && i < rr_e)
 		continue;
-	    bu_vls_free(&keystr);
 	    bu_exit(1, "Failed to read non-removed value dbl:%d\n", i);
 	}
 	rcnt++;
 	double rval = 0;
 	memcpy(&rval, rdata, sizeof(double));
-	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF)) {
-	    bu_vls_free(&keystr);
+	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF))
 	    bu_exit(1, "Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
-	}
     }
     bu_cache_get_done(c);
     elapsed = bu_gettime() - start;
@@ -268,6 +252,8 @@ limit_test()
     unsigned long fsize = 5e6/pgsize;
     fsize = fsize * pgsize;
     const char *cfile = "5M_cache";
+    // Don't need a VLS for this really, but using it just to show how it
+    // works.  See the basic test for a more typical key generation pattern.
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
     struct bu_cache *c = bu_cache_open(cfile, 1, fsize);
 

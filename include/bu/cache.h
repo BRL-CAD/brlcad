@@ -47,10 +47,14 @@ __BEGIN_DECLS
 
 // Default maximum cache database size.
 //
-// Generally user code will want to use this, unless they want
-// something larger - a cache that gets filled up too quickly
-// generally will typically cause problems for users.
+// Generally user code will want to use this, unless they want something larger
+// - a cache that gets filled up will typically cause problems for users.
 #define BU_CACHE_DEFAULT_DB_SIZE 4294967296
+
+// Due to the backend implementation, cache key strings have a maximum limit.
+// Set this to that max - we want to use it for string buffer allocations and
+// snprintf.
+#define BU_CACHE_KEY_MAXLEN 511
 
 struct bu_cache_impl;
 
