@@ -368,10 +368,19 @@ db_cache_mesh_update(struct db_i *dbip, const char *name)
 
     // If this isn't an active BoT, we're done.
     //
-    // (TODO - eventually, per-object cache updating probably should go in a
+    // TODO - eventually, per-object cache updating probably should go in a
     // functab entry - in principle BReps should be doing this, and there's
     // nothing preventing caching facetized representations of other solids if
     // that makes sense.
+    //
+    // Doing facetization ops behind the scenes to create cached meshes for
+    // solids and combs would be ideal but very tricky - facetize uses
+    // multiprocess logic in libged to produce meshes while being robust to
+    // failure modes like infinite looping.  A more practical middle ground
+    // migth be to have the cache support reading in evaluated BoT versions
+    // with LoD info if they exist, but skipp creating them - a libged level
+    // process could then managing the creation of the meshes for combs and
+    // writing the associated LoD data to the cache.
     struct directory *dp = db_lookup(dbip, name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL || dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
 	return BRLCAD_OK;
