@@ -29,12 +29,15 @@
 /* implementation headers */
 #include "bu/app.h"
 #include "bu/cache.h"
+#include "bu/color.h"
 #include "bu/file.h"
+#include "bu/opt.h"
 #include "bu/path.h"
 #include "bu/process.h"
 #include "bu/time.h"
 #include "bv/lod.h"
 #include "rt/db_instance.h"
+#include "rt/db_internal.h"
 
 #include "./librt_private.h"
 
@@ -94,33 +97,33 @@ cache_check(struct bu_cache *c, unsigned long long hash)
 {
     // Key length is limited, so we don't need to malloc
     // and free a full bu_vls for this.
-    static char ckey[MAXPATHLEN];
+    static char ckey[BU_CACHE_KEY_MAXLEN];
 
-    snprintf(ckey, "%llu:%s", hash, CACHE_REGION_ID, MAXPATHLEN);
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_ID);
     if (!bu_cache_get(NULL, ckey, c)) {
 	bu_cache_get_done(c);
 	return false;
     }
 
-    snprintf(ckey, "%llu:%s", hash, CACHE_REGION_FLAG, MAXPATHLEN);
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_FLAG);
     if (!bu_cache_get(NULL, ckey, c)) {
 	bu_cache_get_done(c);
 	return false;
     }
 
-    snprintf(ckey, "%llu:%s", hash, CACHE_INHERIT_FLAG, MAXPATHLEN);
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_INHERIT_FLAG);
     if (!bu_cache_get(NULL, ckey, c)) {
 	bu_cache_get_done(c);
 	return false;
     }
 
-    snprintf(ckey, "%llu:%s", hash, CACHE_COLOR, MAXPATHLEN);
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_COLOR);
     if (!bu_cache_get(NULL, ckey, c)) {
 	bu_cache_get_done(c);
 	return false;
     }
 
-    bu_cache_get_done();
+    bu_cache_get_done(c);
     return true;
 }
 
@@ -409,7 +412,7 @@ db_cache_mesh_update(struct db_i *dbip, const char *name)
 	return BRLCAD_ERROR;
     }
 
-    bv_lod_mesh_destroy(lod);
+    bv_lod_mesh_put(lod);
 
     return BRLCAD_OK;
 }
@@ -426,10 +429,12 @@ db_cache_lod_mesh_get(struct db_i *dbip, const char *name)
 int
 db_cache_draw_update(struct db_i *dbip, const char *name, bool attr_only)
 {
-    static char ckey[MAXPATHLEN];
+    static char ckey[BU_CACHE_KEY_MAXLEN];
 
     if (!dbip || !dbip->i || !dbip->i->c)
 	return BRLCAD_ERROR;
+
+    struct bu_cache *c = dbip->i->c;
 
     // No-op
     if (!name)
@@ -437,7 +442,7 @@ db_cache_draw_update(struct db_i *dbip, const char *name, bool attr_only)
 
     // If we have existing data, clear it.
     // TODO - do this right...
-    bu_cache_clear(name, dbip->i->c);
+    bu_cache_clear(name, c);
 
     // BoTs have extra work to do for LoD...
     struct directory *dp = db_lookup(dbip, name, LOOKUP_QUIET);
@@ -459,7 +464,7 @@ db_cache_draw_update(struct db_i *dbip, const char *name, bool attr_only)
     const char *region_flag_str = bu_avs_get(&c_avs, "region");
     if (region_flag_str && (BU_STR_EQUAL(region_flag_str, "R") || BU_STR_EQUAL(region_flag_str, "1")))
 	rflag = 1;
-    snprintf(ckey, "%llu:%s", hash, CACHE_REGION_FLAG, MAXPATHLEN);
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_FLAG);
     if (!bu_cache_write(&rflag, sizeof(int), ckey, c)) {
 	bu_log("%s: region_flag cache write failure\n", name);
 	return BRLCAD_ERROR;
@@ -469,16 +474,16 @@ db_cache_draw_update(struct db_i *dbip, const char *name, bool attr_only)
     int region_id = -1;
     const char *region_id_str = bu_avs_get(&c_avs, "region_id");
     if (region_id_str)
-	bu_opt_int(NULL, 1, &region_id_val, (void *)&region_id);
-    snprintf(ckey, "%llu:%s", hash, CACHE_REGION_ID, MAXPATHLEN);
-    if (!bu_cache_write(&region_id, sizeof(int), ckey, c) {
+	bu_opt_int(NULL, 1, &region_id_str, (void *)&region_id);
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_ID);
+    if (!bu_cache_write(&region_id, sizeof(int), ckey, c)) {
 	bu_log("%s: region_id cache write failure\n", name);
 	return BRLCAD_ERROR;
     }
 
     // Inherit flag
     int color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
-    snprintf(ckey, "%llu:%s", hash, CACHE_INHERIT_FLAG, MAXPATHLEN);
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_INHERIT_FLAG);
     if (!bu_cache_write(&color_inherit, sizeof(int), ckey, c)) {
 	bu_log("%s: color_inherit cache write failure\n", name);
 	return BRLCAD_ERROR;
@@ -491,15 +496,15 @@ db_cache_draw_update(struct db_i *dbip, const char *name, bool attr_only)
     if (!color_str)
 	color_str = bu_avs_get(&c_avs, "rgb");
     if (color_str) {
-	struct bu_color c;
-	bu_opt_color(NULL, 1, &color_val, (void *)&color);
+	struct bu_color color;
+	bu_opt_color(NULL, 1, &color_str, (void *)&color);
 	// Serialize for cache
 	int r, g, b;
 	bu_color_to_rgb_ints(&color, &r, &g, &b);
 	colors = r + (g << 8) + (b << 16);
     }
-    snprintf(ckey, "%llu:%s", hash, CACHE_COLOR, MAXPATHLEN);
-    if (!bu_cache_write(&color, sizeof(unsigned int), ckey, c)) {
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_COLOR);
+    if (!bu_cache_write(&colors, sizeof(unsigned int), ckey, c)) {
 	bu_log("%s: color cache write failure\n", name);
 	return BRLCAD_ERROR;
     }
@@ -550,7 +555,7 @@ db_cache_draw_update(struct db_i *dbip, const char *name, bool attr_only)
 }
 
 bool
-db_cache_clear_entries(struct dbip *dbip, unsigned long long hash)
+db_cache_clear_entries(struct db_i *dbip, unsigned long long hash)
 {
     struct bu_cache *c = dbip->i->c;
 
@@ -559,23 +564,23 @@ db_cache_clear_entries(struct dbip *dbip, unsigned long long hash)
     static char ckey[MAXPATHLEN];
 
     // Clear attr entries
-    snprintf(ckey, "%llu:%s", hash, CACHE_REGION_ID, MAXPATHLEN);
-    bu_cache_clear(name, dbip->i->c);
-    snprintf(ckey, "%llu:%s", hash, CACHE_REGION_FLAG, MAXPATHLEN);
-    bu_cache_clear(name, dbip->i->c);
-    snprintf(ckey, "%llu:%s", hash, CACHE_INHERIT_FLAG, MAXPATHLEN);
-    bu_cache_clear(name, dbip->i->c);
-    snprintf(ckey, "%llu:%s", hash, CACHE_COLOR, MAXPATHLEN);
-    bu_cache_clear(name, dbip->i->c);
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_ID);
+    bu_cache_clear(ckey, c);
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_FLAG);
+    bu_cache_clear(ckey, c);
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_INHERIT_FLAG);
+    bu_cache_clear(ckey, c);
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_COLOR);
+    bu_cache_clear(ckey, c);
 
 
     // TODO - clear per-name geometry info:
     // bounding box, oriented bounding box
 
     // Look up the geometry key for this name
-    snprintf(ckey, "%llu:%s", hash, CACHE_GEOM_KEY, MAXPATHLEN);
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_GEOM_KEY);
     void *vdata;
-    if (!bu_cache_get(vdata, ckey, c)) {
+    if (!bu_cache_get(&vdata, ckey, c)) {
 	// If we don't have a geometry key, we're done
 	return true;
     }
@@ -587,10 +592,10 @@ db_cache_clear_entries(struct dbip *dbip, unsigned long long hash)
     }
 
     // hash is being removed, so remove it from the ghash active set
-    dbip->i->cache_geom_uses[ghash].erase[hash];
+    dbip->i->cache_geom_uses[ghash].erase(hash);
 
     // If ghash still has active users, we're done
-    if (dbip->cache_geom_uses[ghash].size()) 
+    if (dbip->i->cache_geom_uses[ghash].size()) 
 	return true;
 
     // No more users of ghash - clear the data associated with ghash as well.
