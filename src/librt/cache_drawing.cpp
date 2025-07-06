@@ -197,7 +197,7 @@ db_cache_draw_init(struct db_i *dbip, int verbose)
 		bu_log("Processing(%d):  %s\n", completed+1, dp->d_namep);
 		start = bu_gettime();
 	    }
-	    db_cache_draw_update(dbip, dp->d_namep);
+	    db_cache_draw_update(dbip, dp->d_namep, 0);
 
 	    // Increment completed count
 	    completed++;
@@ -427,7 +427,7 @@ db_cache_lod_mesh_get(struct db_i *dbip, const char *name)
 }
 
 int
-db_cache_draw_update(struct db_i *dbip, const char *name, bool attr_only)
+db_cache_draw_update(struct db_i *dbip, const char *name, int attr_only)
 {
     static char ckey[BU_CACHE_KEY_MAXLEN];
 

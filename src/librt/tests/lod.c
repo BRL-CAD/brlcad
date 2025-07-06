@@ -44,9 +44,9 @@ do_lod(struct db_i *dbip, struct directory *dp)
 	return;
     }
 
-    struct bv_lod_mesh *mlod = db_cache_mesh_get(dbip, dp->d_namep);
+    struct bv_lod_mesh *mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
     if (!mlod) {
-	bu_log("ERROR: %s - db_cache_mesh_get failed\n", dp->d_namep);
+	bu_log("ERROR: %s - db_cache_lod_mesh_get failed\n", dp->d_namep);
 	return;
     }
 
@@ -72,7 +72,7 @@ do_lod(struct db_i *dbip, struct directory *dp)
     seconds = elapsed / 1000000.0;
     //bu_log("%s: total LoD level setting time: %f sec\n", dp->d_namep, seconds);
 
-    bv_lod_mesh_destroy(mlod);
+    bv_lod_mesh_put(mlod);
     bv_obj_put(s);
 }
 
