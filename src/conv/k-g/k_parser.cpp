@@ -672,7 +672,7 @@ bool parse_k
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 4, command.end());
 				}
 				else {
-				    //state = KState::Element_Shell;
+				    state = KState::Element_Shell;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 				}
