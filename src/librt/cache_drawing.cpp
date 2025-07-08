@@ -59,7 +59,7 @@ db_cache_init(struct db_i *dbip)
     // want to run into a cache limit in normal use, but we
     // also don't want to eat the whole drive if there is
     // some sort of error.
-    int fsize = 2*bu_file_size(dbip->dbi_filename);
+    long long fsize = 2*bu_file_size(dbip->dbi_filename);
     if (fsize < BU_CACHE_DEFAULT_DB_SIZE)
 	fsize = 0;
 
@@ -563,7 +563,7 @@ db_cache_draw_update(struct db_i *dbip, const char *name, int attr_only)
     return BRLCAD_OK;
 }
 
-bool
+void
 db_cache_clear_entries(struct db_i *dbip, unsigned long long hash)
 {
     struct bu_cache *c = dbip->i->c;
@@ -591,13 +591,13 @@ db_cache_clear_entries(struct db_i *dbip, unsigned long long hash)
     void *vdata;
     if (!bu_cache_get(&vdata, ckey, c)) {
 	// If we don't have a geometry key, we're done
-	return true;
+	return;
     }
     unsigned long long ghash;
     memcpy(&ghash, vdata, sizeof(unsigned long long));
     if (!ghash) {
 	// If we don't have a valid geometry key, we're done
-	return true;
+	return;
     }
 
     // hash is being removed, so remove it from the ghash active set
@@ -605,7 +605,7 @@ db_cache_clear_entries(struct db_i *dbip, unsigned long long hash)
 
     // If ghash still has active users, we're done
     if (dbip->i->cache_geom_uses[ghash].size()) 
-	return true;
+	return;
 
     // No more users of ghash - clear the data associated with ghash as well.
 
@@ -617,6 +617,9 @@ db_cache_clear_entries(struct db_i *dbip, unsigned long long hash)
 void
 db_cache_gc(struct db_i *dbip)
 {
+    if (!dbip)
+	return;
+
     // TODO - get all cache keys, and use something like a region flag
     // filter to collect the set of all name hashes
 
