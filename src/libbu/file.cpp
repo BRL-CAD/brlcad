@@ -108,13 +108,12 @@ bu_file_exists(const char *path, int *fd)
     return 0;
 }
 
-int
+long long
 bu_file_size(const char *path)
 {
-    int fbytes = 0;
-    if (!bu_file_exists(path, NULL)) {
+    long long fbytes = 0;
+    if (!bu_file_exists(path, NULL))
 	return -1;
-    }
 
 #ifdef HAVE_SYS_STAT_H
     {
