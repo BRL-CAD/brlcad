@@ -81,6 +81,13 @@ struct KElementBearing {
 };
 
 
+struct KElementSeatBelt {
+    std::vector<int> nodes;
+    int              retractorId;
+    float            initialSlackLength;
+};
+
+
 struct KPart {
     std::string                        title;
     std::set<int>                      elements;
@@ -111,15 +118,24 @@ struct KSectionBeam {
 };
 
 
+struct KSectionSeatBelt {
+    std::string title;
+    float       area;
+    float       thickness;
+};
+
+
 struct KData {
     std::map<int, KNode>              nodes;
     std::map<int, KElement>           elements;
     std::map<int, KElementPulley>     elementsPulley;
     std::map<int, KElementBeamSource> elementsBeamSource;
     std::map<int, KElementBearing>    elementBearing;
+    std::map<int, KElementSeatBelt>   elementSeatBelt;
     std::map<int, KPart>              parts;
     std::map<int, KSection>           sections;
     std::map<int, KSectionBeam>       sectionsBeam;
+    std::map<int, KSectionSeatBelt>   sectionsSeatBelt;
 };
 
 

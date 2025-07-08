@@ -55,7 +55,7 @@ enum class KState {
     //Element_Mass_Matrix,
     //Element_Mass_Part,
     //Element_Plotel,
-    //Element_Seatbelt,
+    Element_Seatbelt,
     //Element_Seatbelt_Accelerometer,
     //Element_Seatbelt_Pretensioner,
     //Element_Seatbelt_Retractor,
@@ -80,7 +80,7 @@ enum class KState {
     //Section_Fpd,
     //Section_Point_Source,
     //Section_Point_source_Mixture,
-    //Section_Seatbelt,
+    Section_Seatbelt,
     Section_Shell,
     Section_Solid,
     //Section_Solid_Peri,
@@ -656,9 +656,8 @@ bool parse_k
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else {
-				    //state = KState::Element_Seatbelt;
-
-				    optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
+				    state = KState::Element_Seatbelt;
+					//Element_Seatbelt has no options
 				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "SHELL")) {
@@ -673,7 +672,7 @@ bool parse_k
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 4, command.end());
 				}
 				else {
-				    //state = KState::Element_Shell;
+				    state = KState::Element_Shell;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 				}
@@ -794,6 +793,18 @@ bool parse_k
 					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
 				}
 			    }
+				else if (command[1] == "SEATBELT") {
+				state = KState::Section_Seatbelt;
+				sectionTitle = "";
+				sectionId = -1;
+
+				if (command.size() == 3) {
+					if (command[2] == "TITLE")
+						sectionLinesRead = 0;
+					else
+						std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
+				}
+				}
 			    else
 				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
 			}
@@ -1125,6 +1136,34 @@ bool parse_k
 			++sectionLinesRead;
 			break;
 		    }
+
+			case KState::Section_Seatbelt: {
+				switch (sectionLinesRead) {
+				case 0: {
+					sectionTitle = line;
+				}
+				case 1: {
+					if (tokens.size() < 3) {
+						std::cout << "Too short SECTION_SeatBelt in k-file " << fileName << std::endl;
+						break;
+					}
+
+					sectionId = stoi(tokens[0]);
+
+					if (sectionId < 0) {
+						std::cout << "Bad SECTION in k-file " << fileName << std::endl;
+						break;
+					}
+
+					data.sectionsSeatBelt[sectionId].title     = sectionTitle;
+					data.sectionsSeatBelt[sectionId].area      = stof(tokens[1]);
+					data.sectionsSeatBelt[sectionId].thickness = stof(tokens[2]);
+					break;
+				}
+				}
+				++sectionLinesRead;
+				break;
+			}
 
 		    case KState::Section_Shell: {
 			switch (sectionLinesRead) {
@@ -1527,6 +1566,35 @@ bool parse_k
 			++elementLinesRead;
 			break;
 		    }
+
+			case KState::Element_Seatbelt: {
+				KElementSeatBelt seatBelt;
+				int eid = 1;
+				int pid = 1;
+
+				if (tokens.size() < 6) {
+					std::cout << "Too short ELEMENT_SEAT_BELT in k-file" << fileName << std::endl;
+					break;
+				}
+
+				eid = stoi(tokens[0]);
+				pid = stoi(tokens[1]);
+
+				seatBelt.nodes.push_back(stoi(tokens[2]));
+				seatBelt.nodes.push_back(stoi(tokens[3]));
+
+				seatBelt.retractorId = stoi(tokens[4]);
+				seatBelt.initialSlackLength = stof(tokens[5]);
+
+				if (tokens.size() > 6) {
+					seatBelt.nodes.push_back(stoi(tokens[6]));
+					seatBelt.nodes.push_back(stoi(tokens[7]));
+				}
+
+				data.elementSeatBelt[eid] = seatBelt;
+				data.parts[pid].elements.insert(eid);
+				break;
+			}
 		}
 	    }
 

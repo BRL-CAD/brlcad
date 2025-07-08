@@ -98,6 +98,75 @@ static void AddArb
 }
 
 
+static void AddSeatBelt
+(
+	int          n1,
+	int          n2,
+	float		 area,
+	KData& kData,
+	Geometry& geometry,
+	std::string  arbNumber,
+	const double factor
+) {
+
+	point_t center1;
+	point_t center2;
+	point_t point1;
+	point_t point2;
+	point_t point3;
+	point_t point4;
+	point_t point5;
+	point_t point6;
+	point_t point7;
+	point_t point8;
+
+	float   beltWidth = 47;
+	float	beltThickness = area / beltWidth;
+
+	center1[X] = kData.nodes[n1].x * factor;
+	center1[Y] = kData.nodes[n1].y * factor;
+	center1[Z] = kData.nodes[n1].z * factor;
+
+	center2[X] = kData.nodes[n2].x * factor;
+	center2[Y] = kData.nodes[n2].y * factor;
+	center2[Z] = kData.nodes[n2].z * factor;
+
+	point1[X] = center1[X] - beltThickness * 0.5;
+	point1[Y] = center1[Y] - 10;
+	point1[Z] = center1[Z] - beltWidth * 0.5;
+
+	point2[X] = center1[X] + beltThickness * 0.5;
+	point2[Y] = center1[Y] - 10;
+	point2[Z] = center1[Z] - beltWidth * 0.5;
+
+	point3[X] = center1[X] + beltThickness * 0.5;
+	point3[Y] = center1[Y] + 10;
+	point3[Z] = center1[Z] + beltWidth * 0.5;
+
+	point4[X] = center1[X] - beltThickness * 0.5;
+	point4[Y] = center1[Y] + 10;
+	point4[Z] = center1[Z] + beltWidth * 0.5;
+
+	point5[X] = center2[X] - beltThickness * 0.5;
+	point5[Y] = center2[Y] - 10;
+	point5[Z] = center2[Z] - beltWidth * 0.5;
+
+	point6[X] = center2[X] + beltThickness * 0.5;
+	point6[Y] = center2[Y] - 10;
+	point6[Z] = center2[Z] - beltWidth * 0.5;
+
+	point7[X] = center2[X] + beltThickness * 0.5;
+	point7[Y] = center2[Y] + 10;
+	point7[Z] = center2[Z] + beltWidth * 0.5;
+
+	point8[X] = center2[X] - beltThickness * 0.5;
+	point8[Y] = center2[Y] + 10;
+	point8[Z] = center2[Z] + beltWidth * 0.5;
+
+	geometry.addArb(arbNumber.c_str(), point1, point2, point3, point4, point5, point6, point7, point8);
+}
+
+
 int main
 (
     int   argc,
@@ -334,6 +403,57 @@ int main
 
 				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
 			    }
+				else if (kData.elementSeatBelt[*itr].nodes.size() != 0) {
+					std::string arbNumber = std::to_string(*itr);
+					KSectionSeatBelt ksectionSeatBelt = kData.sectionsSeatBelt[section];
+
+					if (kData.elementSeatBelt[*itr].nodes.size() > 2) {
+						if (kData.elementSeatBelt[*itr].nodes[2] > 0) {
+							point_t point1;
+							point_t point2;
+							point_t point3;
+							point_t point4;
+
+							int         n1 = kData.elementSeatBelt[*itr].nodes[0];
+							int         n2 = kData.elementSeatBelt[*itr].nodes[1];
+							int         n3 = kData.elementSeatBelt[*itr].nodes[2];
+							int         n4 = kData.elementSeatBelt[*itr].nodes[3];
+
+							point1[X] = kData.nodes[n1].x * factor;
+							point1[Y] = kData.nodes[n1].y * factor;
+							point1[Z] = kData.nodes[n1].z * factor;
+
+							point2[X] = kData.nodes[n2].x * factor;
+							point2[Y] = kData.nodes[n2].y * factor;
+							point2[Z] = kData.nodes[n2].z * factor;
+
+							point3[X] = kData.nodes[n3].x * factor;
+							point3[Y] = kData.nodes[n3].y * factor;
+							point3[Z] = kData.nodes[n3].z * factor;
+
+							point4[X] = kData.nodes[n4].x * factor;
+							point4[Y] = kData.nodes[n4].y * factor;
+							point4[Z] = kData.nodes[n4].z * factor;
+
+							geometry.addTriangle(point1, point2, point3);
+							geometry.addTriangle(point1, point3, point4);
+						}
+						else
+						{
+							int         n1 = kData.elementSeatBelt[*itr].nodes[0];
+							int         n2 = kData.elementSeatBelt[*itr].nodes[1];
+
+							AddSeatBelt(n1, n2, ksectionSeatBelt.area, kData, geometry, arbNumber, factor);
+						}
+					}
+					else
+					{
+						int         n1 = kData.elementSeatBelt[*itr].nodes[0];
+						int         n2 = kData.elementSeatBelt[*itr].nodes[1];
+
+						AddSeatBelt(n1, n2, ksectionSeatBelt.area, kData, geometry, arbNumber, factor);
+					}
+				}
 			    else
 				std::cout << "Un supported element in k-file " << argv[1] << std::endl;
 			}
