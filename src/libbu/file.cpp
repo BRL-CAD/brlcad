@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include <chrono>
 #include <filesystem>
 #include <system_error>
 
@@ -156,6 +157,21 @@ bu_file_size(const char *path)
     return fbytes;
 }
 
+#if 0
+// Needs C++20 implemented and well supported, or figuring
+// out platform specific bits
+// https://stackoverflow.com/q/61030383
+int64_t
+bu_file_timestamp(const char *path)
+{
+   std::filesystem::path p(path);
+   std::filesystem::file_time_type ftime = std::filesystem::last_write_time(p);
+   std::chrono::system_clock sys_tp = std::chrono::clock_cast<std::chrono::system_clock>(ftime);
+   auto d_epoch = sys_tp.time_since_epoch();
+   int64_t dms = std::chrono::duration_cast<std::chrono::microseconds>(d_epoch).count();
+   return dms;
+}
+#endif
 
 #ifdef HAVE_GETFULLPATHNAME
 static int
