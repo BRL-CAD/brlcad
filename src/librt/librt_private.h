@@ -35,6 +35,10 @@
 
 #ifdef __cplusplus
 #  include <atomic>
+#  include <chrono>
+#  include <mutex>
+#  include <queue>
+#  include <thread>
 #  include <unordered_map>
 #  include <unordered_set>
 #endif
@@ -69,6 +73,23 @@
 
 __BEGIN_DECLS
 
+#ifdef __cplusplus
+class ProcessDrawData {
+    public:
+        std::atomic<bool> init_done = false;
+        std::atomic<bool> shutdown = false;
+
+        std::queue<struct rt_db_internal *> q_aabb;
+        std::mutex m_aabb;
+        std::queue<struct rt_db_internal *> q_obb;
+        std::mutex m_obb;
+        std::queue<struct rt_db_internal *> q_lod;
+        std::mutex m_lod;
+
+        struct db_i *dbip;
+};
+#endif
+
 // TODO - eventually, all the "LIBRT ONLY" elements in db_i should move here.
 // The librt prep caching container should also go here.
 //
@@ -84,6 +105,8 @@ struct db_i_internal {
     std::atomic_bool shutdown_requested;
     std::atomic_bool mesh_init_complete;
     std::atomic_bool draw_init_complete;
+
+    std::shared_ptr<ProcessDrawData> p;
 
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> cache_geom_uses;
 #endif

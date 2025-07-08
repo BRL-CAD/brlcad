@@ -24,6 +24,12 @@
 
 #include "common.h"
 
+#include <atomic>
+#include <chrono>
+#include <mutex>
+#include <queue>
+#include <thread>
+
 #include <string.h>
 
 /* implementation headers */
@@ -74,18 +80,19 @@ db_cache_init(struct db_i *dbip)
     return 1;
 }
 
-/* For all named objects, we NEED the following properties cached to do drawing
- * quickly:
+/* For all named objects, we NEED the following properties (at a minimum) to be
+ * cached to do drawing:
  *
  * region_id
  * region_flag
  * color_inherit
  * color_value
+ * aabb (axis aligned bounding box)
  *
  * The majority of objects in a .g will not have an explicit color set on them
  * directly, but without a cache entry we have no way to tell whether we need
- * to get it so all objects will be assigned a default entry in the cache if
- * they are unset.
+ * to read it from the attributes.  Accordingly, all objects will be assigned a
+ * default entry in the cache if they are unset in the .g database.
  *
  * For this function, we are just checking the cache to see if we have what we
  * need - cracking the AVS, if we must do so, will come later.  The first entry
@@ -123,10 +130,124 @@ cache_check(struct bu_cache *c, unsigned long long hash)
 	return false;
     }
 
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_AABB);
+    if (!bu_cache_get(NULL, ckey, c)) {
+	bu_cache_get_done(c);
+	return false;
+    }
+
     bu_cache_get_done(c);
     return true;
 }
 
+
+// aabb, obb and especially LoD can take longer for very large database
+// objects.  We also want each individual op to complete as quickly as possible
+// - the sooner we have at least an aabb, the sooner we can draw SOMETHING on
+// the screen.
+//
+// Current idea is to have three queues in three threads, with the aabb getting
+// dps from the draw_init routine, cracking them, and doing the aabb before
+// handing off the internal data to obb.  obb will in turn do its calculation
+// before handing off to the LoD routine.
+//
+// LoD, which is potentially the slowest of the ops, will do its thing and then
+// free the internal.
+//
+// That way, we only have to crack the internal once, the aabb and obb won't
+// have to wait on the LoD, and it can all happen automatically without
+// freezing the GUI.
+
+void
+aabb_calc(std::shared_ptr<ProcessDrawData> p)
+{
+    struct rt_db_internal *i = NULL;
+    while (!p.get()->q_aabb.empty() || !p.get()->init_done) {
+	if (p.get()->q_aabb.empty()) {
+	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	    continue;
+	}
+	p.get()->m_aabb.lock();
+	i = p.get()->q_aabb.front();
+	p.get()->q_aabb.pop();
+	p.get()->m_aabb.unlock();
+
+	if (p.get()->shutdown) {
+	    rt_db_free_internal(i);
+	    BU_PUT(i, struct rt_db_internal);
+	    continue;
+	}
+
+	// TODO - do aabb calc
+
+	// Queue up for OBB calc
+	p.get()->m_obb.lock();
+	p.get()->q_obb.push(i);
+	p.get()->m_obb.unlock();
+    }
+}
+
+void
+obb_calc(std::shared_ptr<ProcessDrawData> p)
+{
+    struct rt_db_internal *i = NULL;
+    while (!p.get()->q_obb.empty() || !p.get()->init_done) {
+	if (p.get()->q_obb.empty()) {
+	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	    continue;
+	}
+	p.get()->m_obb.lock();
+	i = p.get()->q_obb.front();
+	p.get()->q_obb.pop();
+	p.get()->m_obb.unlock();
+
+	if (p.get()->shutdown) {
+	    rt_db_free_internal(i);
+	    BU_PUT(i, struct rt_db_internal);
+	    continue;
+	}
+
+	// TODO - do obb calc
+
+	// Queue up for LoD calc
+	p.get()->m_lod.lock();
+	p.get()->q_lod.push(i);
+	p.get()->m_lod.unlock();
+    }
+}
+
+void
+lod_calc(std::shared_ptr<ProcessDrawData> p)
+{
+    struct rt_db_internal *i = NULL;
+    while (!p.get()->q_lod.empty() || !p.get()->init_done) {
+	if (p.get()->q_lod.empty()) {
+	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	    continue;
+	}
+	p.get()->m_lod.lock();
+	i = p.get()->q_lod.front();
+	p.get()->q_lod.pop();
+	p.get()->m_lod.unlock();
+
+	if (p.get()->shutdown || i->idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+	    rt_db_free_internal(i);
+	    BU_PUT(i, struct rt_db_internal);
+	    continue;
+	}
+
+	// TODO - do LoD setup
+
+	// free internal
+	rt_db_free_internal(i);
+	BU_PUT(i, struct rt_db_internal);
+    }
+}
+
+
+
+// The intent is to run this function in a non-blocking thread, so we don't
+// hold up the main application.
 void
 db_cache_draw_init(struct db_i *dbip, int verbose)
 {
@@ -139,6 +260,12 @@ db_cache_draw_init(struct db_i *dbip, int verbose)
 	return;
     }
 
+    //int64_t start = bu_gettime();
+
+    // TODO - do this in the initial setup
+    dbip->i->p = std::make_shared<ProcessDrawData>();
+    dbip->i->p.get()->dbip = dbip;
+
     dbip->i->draw_init_complete = false;
 
     // Make sure we're inited
@@ -149,18 +276,22 @@ db_cache_draw_init(struct db_i *dbip, int verbose)
 	return;
     }
 
-    // BoTs are handled by a separate routine, since they are (relatively
-    // speaking) much slower.
+    // Find out how many objects we need to process, so we can give
+    // some kind of progress report.
     int target_cnt = 0;
     struct directory *dp;
     for (int i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
 		continue;
-	    if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
-		target_cnt++;
+	    target_cnt++;
 	}
     }
+
+    // Set up processing threads.
+    std::thread t_aabb(aabb_calc, dbip->i->p);
+    std::thread t_obb(obb_calc, dbip->i->p);
+    std::thread t_lod(lod_calc, dbip->i->p);
 
     // Total target count is known, proceed
     int64_t start = bu_gettime();
@@ -177,17 +308,36 @@ db_cache_draw_init(struct db_i *dbip, int verbose)
 	    if (UNLIKELY(!dp->d_namep || !strlen(dp->d_namep)))
 		continue;
 
-	    // If we already have a match, assume it is valid.  Resetting
-	    // invalid data in the cache is outside the scope of cache init.
+#if 0
+	    if (UNLIKELY(start < bu_file_timestamp(dbip->dbi_filename))) {
+		// File changed before initial cache generation completed -
+		// abort and start over
+		bu_cache_close(dbip->i->c);
+		bu_cache_erase(dbip->dbi_filename);
+		return db_cache_draw_init(dbip, verbose);
+	    }
+#endif
+
+	    // If we already have a populated cache, assume it is valid.
+	    // Validating and resetting preexisting data in the cache against the
+	    // .g is outside the scope of the init routine.
 	    unsigned long long user_key = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
 	    if (cache_check(dbip->i->c, user_key))
 		continue;
-
 
 	    // If the parent thread has decided to close the dbip, we can
 	    // stop now.
 	    if (dbip->i->shutdown_requested) {
 		bu_vls_free(&keystr);
+
+		// Tell the geom threads we're shutting down
+		dbip->i->p.get()->shutdown = true;
+
+		// Wait for the aabb, obb, lod threads to finish up
+		t_aabb.join();
+		t_obb.join();
+		t_lod.join();
+
 		dbip->i->draw_init_complete = true;
 		return;
 	    }
@@ -233,6 +383,12 @@ db_cache_draw_init(struct db_i *dbip, int verbose)
 
     // All done.
     dbip->i->draw_init_complete = true;
+
+    // Wait for the aabb, obb, lod threads to finish up
+    dbip->i->p.get()->init_done = true;
+    t_aabb.join();
+    t_obb.join();
+    t_lod.join();
 }
 
 void
@@ -525,38 +681,26 @@ db_cache_draw_update(struct db_i *dbip, const char *name, int attr_only)
 	return BRLCAD_OK;
 
 
-    // TODO - small BoTs may be fast enough to do here, LoD and all - another
-    // possibility that may simplify the API would be to have the master init
-    // function filter based on object size and queue up the big ones for
-    // LoD generation after an initial pass to get the bounding boxes (the
-    // fastest thing we can do to get SOMETHING we can draw - the drawing
-    // routines could have a priority of LoD data, followed by slist, and
-    // the bbox as a last resort (may be worth seeing if the oriented bounding
-    // box calc would be fast enough to toss into the mix.
-    //
-    // May be worth adding object timestamp attributes to the mix as well,
-    // since that would be the easiest way to trigger a cache rebuild on
-    // database load...
-
-
-
     // Bounding Box (and other LoD data) must come from the geometry.
     // Unpack the internal.
-    struct rt_db_internal dbintern;
-    RT_DB_INTERNAL_INIT(&dbintern);
-    struct rt_db_internal *ip = &dbintern;
+    struct rt_db_internal *ip;
+    BU_GET(ip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(ip);
     int ret = rt_db_get_internal(ip, dp, dbip, NULL, &rt_uniresource);
     if (ret < 0)
 	return BRLCAD_ERROR;
     if (ip->idb_minor_type != dp->d_minor_type) {
 	bu_log("Error processing %s - mismatch between d_minor_type (%c) and idb_minor_type (%c)\n", dp->d_namep, dp->d_minor_type, ip->idb_minor_type);
-	rt_db_free_internal(&dbintern);
+	rt_db_free_internal(ip);
+	BU_PUT(ip, struct rt_db_internal);
 	return BRLCAD_ERROR;
     }
 
-
-    // Done with internal
-    rt_db_free_internal(&dbintern);
+    // Kick off the geometry processing
+    ip->idb_uptr = dp->d_namep;
+    dbip->i->p.get()->m_aabb.lock();
+    dbip->i->p.get()->q_aabb.push(ip);
+    dbip->i->p.get()->m_aabb.unlock();
 
     // TODO - Make sure we can retrieve the cached data
 
