@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include <inttypes.h>
 #include <string.h>
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
@@ -204,6 +205,25 @@ main(int ac, char *av[])
 	}
 	bu_free(rpath, "free realpath");
     }
+
+    // Check file timestamp behavior
+    bu_vls_sprintf(&fname, "%s/bu_file_timestamp", tdir);
+    fp = fopen(bu_vls_cstr(&fname), "wb");
+    int64_t sys_time = bu_gettime();
+    int64_t timestamp_1 = bu_file_timestamp(bu_vls_cstr(&fname));
+    if (!fp) {
+	bu_exit(1, "%s [FAIL] Unable to create test file %s\n", av[0], bu_vls_cstr(&fname));
+    } else {
+	fclose(fp);
+    }
+    int64_t timestamp_2 = bu_file_timestamp(bu_vls_cstr(&fname));
+    bu_log("sys_time: %" PRId64 "\n", sys_time);
+    bu_log("timestamp1: %" PRId64 " (Δ from sys_time:%" PRId64 ") \n", timestamp_1, sys_time - timestamp_1);
+    bu_log("timestamp2: %" PRId64 " (Δ from sys_time:%" PRId64 ") \n", timestamp_2, sys_time - timestamp_2);
+    bu_log("timestamp Δ: %" PRId64 "\n", timestamp_2 - timestamp_1);
+    if (sys_time - timestamp_1 > 10000 || timestamp_2 - timestamp_1)
+	bu_exit(1, "%s [FAIL] Unexpected timestamp value on %s\n", av[0], bu_vls_cstr(&fname));
+    (void)bu_file_delete(bu_vls_cstr(&fname));
 
     /* Clean up, delete all our files and dir */
     cleanup(tdir, file_cnt);
