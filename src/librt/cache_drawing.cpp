@@ -260,7 +260,7 @@ db_cache_draw_init(struct db_i *dbip, int verbose)
 	return;
     }
 
-    //int64_t start = bu_gettime();
+    int64_t start = bu_gettime();
 
     // TODO - do this in the initial setup
     dbip->i->p = std::make_shared<ProcessDrawData>();
@@ -276,110 +276,116 @@ db_cache_draw_init(struct db_i *dbip, int verbose)
 	return;
     }
 
-    // Find out how many objects we need to process, so we can give
-    // some kind of progress report.
-    int target_cnt = 0;
+    // Collect the set of directory pointers we need to process.
+    std::unordered_set<struct directory *> &to_init = dbip->i->to_init;
     struct directory *dp;
     for (int i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
 		continue;
-	    target_cnt++;
+	    if (UNLIKELY(!dp->d_namep || !strlen(dp->d_namep)))
+		continue;
+	    to_init.insert(dp);
 	}
     }
+    size_t target_cnt = to_init.size();
 
     // Set up processing threads.
     std::thread t_aabb(aabb_calc, dbip->i->p);
     std::thread t_obb(obb_calc, dbip->i->p);
     std::thread t_lod(lod_calc, dbip->i->p);
 
-    // Total target count is known, proceed
-    int64_t start = bu_gettime();
     int64_t overall_start = start;
     int64_t elapsed = 0;
     fastf_t seconds = 0.0;
     int completed = 0;
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
-		continue;
 
-	    if (UNLIKELY(!dp->d_namep || !strlen(dp->d_namep)))
-		continue;
+    bu_semaphore_acquire(BU_SEM_CACHE);
+    dp = (to_init.size() > 0) ? *to_init.begin() : NULL;
+    if (dp)
+	to_init.erase(dp);
+    bu_semaphore_release(BU_SEM_CACHE);
 
-
-	    // Make sure we can acquire this semaphore.  If the main program
-	    // is in the process of removing a cache entry, we don't want to
-	    // proceed with a new init.
+    while (dp) {
+	if (UNLIKELY(start < bu_file_timestamp(dbip->dbi_filename) && !to_init.size())) {
+	    // File changed before initial cache generation completed - but librt
+	    // I/O routines didn't populate to_init - external edit?
+	    // Abort and start over - we know nothing about what happened...
 	    bu_semaphore_acquire(BU_SEM_CACHE);
+	    to_init.clear();
+	    bu_cache_close(dbip->i->c);
+	    bu_cache_erase(dbip->dbi_filename);
+	    bu_semaphore_release(BU_SEM_CACHE);
+	    return db_cache_draw_init(dbip, verbose);
+	}
 
-#if 0
-	    if (UNLIKELY(start < bu_file_timestamp(dbip->dbi_filename))) {
-		// File changed before initial cache generation completed -
-		// abort and start over
-		bu_cache_close(dbip->i->c);
-		bu_cache_erase(dbip->dbi_filename);
-		return db_cache_draw_init(dbip, verbose);
-	    }
-#endif
+	// Commence processing.
+	bu_semaphore_acquire(BU_SEM_CACHE);
 
-	    // If we already have a populated cache, assume it is valid.
-	    // Validating and resetting preexisting data in the cache against the
-	    // .g is outside the scope of the init routine.
-	    unsigned long long user_key = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	    if (cache_check(dbip->i->c, user_key)) {
-		bu_semaphore_release(BU_SEM_CACHE);
-		continue;
-	    }
+	// If we already have a populated cache, assume it is valid.
+	// Validating and resetting preexisting data in the cache against the
+	// .g is outside the scope of the init routine.
+	unsigned long long user_key = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+	if (cache_check(dbip->i->c, user_key)) {
+	    bu_semaphore_release(BU_SEM_CACHE);
+	    continue;
+	}
 
-	    // If the parent thread has decided to close the dbip, we can
-	    // stop now.
-	    if (dbip->i->shutdown_requested) {
-		bu_vls_free(&keystr);
+	// If the parent thread has decided to close the dbip, we can
+	// stop now.
+	if (dbip->i->shutdown_requested) {
+	    bu_vls_free(&keystr);
 
-		// Tell the geom threads we're shutting down
-		dbip->i->p.get()->shutdown = true;
+	    // Tell the geom threads we're shutting down
+	    dbip->i->p.get()->shutdown = true;
 
-		// Wait for the aabb, obb, lod threads to finish up
-		t_aabb.join();
-		t_obb.join();
-		t_lod.join();
+	    // Wait for the aabb, obb, lod threads to finish up
+	    t_aabb.join();
+	    t_obb.join();
+	    t_lod.join();
 
-		dbip->i->draw_init_complete = true;
-		bu_semaphore_release(BU_SEM_CACHE);
-		return;
-	    }
+	    dbip->i->draw_init_complete = true;
+	    bu_semaphore_release(BU_SEM_CACHE);
+	    return;
+	}
 
-	    // Process object
+	// Process object
+	if (verbose > 1) {
+	    bu_log("Processing(%d):  %s\n", completed+1, dp->d_namep);
+	    start = bu_gettime();
+	}
+	db_cache_draw_update(dbip, dp->d_namep, 0);
+
+	bu_semaphore_release(BU_SEM_CACHE);
+
+	// Increment completed count
+	completed++;
+
+	// If the user has requested it, let them know what is happening
+	if (verbose) {
 	    if (verbose > 1) {
-		bu_log("Processing(%d):  %s\n", completed+1, dp->d_namep);
+		elapsed = bu_gettime() - start;
+		seconds = elapsed / 1000000.0;
+		bu_log("Completed. (%g seconds)", seconds);
+	    }
+
+	    if (seconds > 5.0) {
+		elapsed = bu_gettime() - overall_start;
+		seconds = elapsed / 1000000.0;
+		bu_log("Drawing cache processing (%g seconds): completed %d of %zd BoTs\n", seconds, completed, target_cnt);
 		start = bu_gettime();
 	    }
-	    db_cache_draw_update(dbip, dp->d_namep, 0);
-
-	    bu_semaphore_release(BU_SEM_CACHE);
-
-	    // Increment completed count
-	    completed++;
-
-	    // If the user has requested it, let them know what is happening
-	    if (verbose) {
-		if (verbose > 1) {
-		    elapsed = bu_gettime() - start;
-		    seconds = elapsed / 1000000.0;
-		    bu_log("Completed. (%g seconds)", seconds);
-		}
-
-		if (seconds > 5.0) {
-		    elapsed = bu_gettime() - overall_start;
-		    seconds = elapsed / 1000000.0;
-		    bu_log("Drawing cache processing (%g seconds): completed %d of %d BoTs\n", seconds, completed, target_cnt);
-		    start = bu_gettime();
-		}
-	    }
 	}
+
+	bu_semaphore_acquire(BU_SEM_CACHE);
+	dp = (to_init.size() > 0) ? *to_init.begin() : NULL;
+	if (dp)
+	    to_init.erase(dp);
+	bu_semaphore_release(BU_SEM_CACHE);
+
     }
+
     bu_vls_free(&keystr);
 
     if (verbose) {
@@ -441,7 +447,7 @@ db_cache_mesh_init(struct db_i *dbip, int verbose)
     int64_t overall_start = start;
     int64_t elapsed = 0;
     fastf_t seconds = 0.0;
-    int completed = 0;
+    size_t completed = 0;
     struct bu_vls keystr = BU_VLS_INIT_ZERO;
     for (int i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
@@ -472,7 +478,7 @@ db_cache_mesh_init(struct db_i *dbip, int verbose)
 
 	    // Process object
 	    if (verbose > 1) {
-		bu_log("Processing(%d):  %s\n", completed+1, dp->d_namep);
+		bu_log("Processing(%zd):  %s\n", completed+1, dp->d_namep);
 		start = bu_gettime();
 	    }
 	    db_cache_mesh_update(dbip, dp->d_namep);
@@ -495,7 +501,7 @@ db_cache_mesh_init(struct db_i *dbip, int verbose)
 		if (seconds > 5.0) {
 		    elapsed = bu_gettime() - overall_start;
 		    seconds = elapsed / 1000000.0;
-		    bu_log("LoD cache processing (%g seconds): completed %d of %d BoTs\n", seconds, completed, target);
+		    bu_log("LoD cache processing (%g seconds): completed %zd of %d BoTs\n", seconds, completed, target);
 		    start = bu_gettime();
 		}
 	    }
