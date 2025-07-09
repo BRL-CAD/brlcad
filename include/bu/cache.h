@@ -62,6 +62,7 @@ __BEGIN_DECLS
 BU_EXPORT extern int BU_SEM_CACHE;
 
 struct bu_cache_impl;
+struct bu_cache_txn;
 
 struct bu_cache {
     struct bu_cache_impl *i;
@@ -99,15 +100,21 @@ BU_EXPORT void bu_cache_erase(const char *cache_db);
  * Retrieve data (read-only) from the cache using the specified key.  User
  * should call bu_cache_get_done once their use of data is complete.
  *
- * Returns the size of the retrieved data.
+ * Returns the size of the retrieved data. If t is non-NULL and empty, a
+ * transaction token is returned that can be reused in subsequent calls.
+ * If it is non-NULL and non-empty, bu_cache_get treats *t as the current
+ * transaction.  To finalize a transaction after multiple get calls, use
+ * bu_cache_get_done.
+ *
+ * If t is NULL, the data returned in data must be freed by the caller.
  */
-BU_EXPORT size_t bu_cache_get(void **data, const char *key, struct bu_cache *c);
+BU_EXPORT size_t bu_cache_get(void **data, const char *key, struct bu_cache *c, struct bu_cache_txn **t);
 
 /**
- * Data retrieved using bu_cache_get is temporary - once the user is done
- * either reading it or copying it, libbu needs to be told that the usage of
- * the returned data is complete. */
-BU_EXPORT void bu_cache_get_done(struct bu_cache *c);
+ * Data retrieved using bu_cache_get is temporary if we are using transaction
+ * tokens - once the user is done either reading it or copying it, libbu needs
+ * to be told that the usage of the returned data is complete. */
+BU_EXPORT void bu_cache_get_done(struct bu_cache_txn *t);
 
 /**
  * Assign data to the cache using the specified key
