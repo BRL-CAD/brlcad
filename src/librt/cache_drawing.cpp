@@ -81,7 +81,6 @@ int64_t cache_timestamp(const char *ckey, struct bu_cache *c)
     return ctimestmp;
 }
 
-
 int
 cache_update_attrs(struct bu_cache *c, const char *name, unsigned long long hash, struct bu_attribute_value_set *c_avs, int64_t stime)
 {
@@ -336,9 +335,10 @@ db_cache_init(struct db_i *dbip, int verbose)
 	return BRLCAD_OK;
 
     dbip->i->c = NULL;
-    if (dbip->dbi_wdbp_inmem || !strlen(dbip->dbi_filename)) {
+    if (!dbip->dbi_filename || !strlen(dbip->dbi_filename)) {
+	dbip->i->init_complete = true;
 	if (verbose)
-	    bu_log("Temporary databases do not support on-disk caches.");
+	    bu_log("inmem databases do not support on-disk caches.");
 	return BRLCAD_OK;
     }
 
@@ -352,8 +352,10 @@ db_cache_init(struct db_i *dbip, int verbose)
     if (fsize < BU_CACHE_DEFAULT_DB_SIZE)
 	fsize = 0;
     dbip->i->c = bu_cache_open(dbip->dbi_filename, 1, fsize);
-    if (!dbip->i->c)
+    if (!dbip->i->c) {
+	dbip->i->init_complete = true;
 	return BRLCAD_ERROR;
+    }
     struct bu_cache *c = dbip->i->c;
     int64_t init_start = bu_gettime();
 
@@ -362,10 +364,12 @@ db_cache_init(struct db_i *dbip, int verbose)
     dbip->i->p_completed = 0;
 
     // Collect the set of directory pointers we need to process.
-    std::unordered_set<struct directory *> &to_init = dbip->i->to_init;
+    std::unordered_set<struct directory *> &to_init = *dbip->i->to_init;
     struct directory *dp;
     for (int i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
+		continue;
 	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
 		continue;
 	    if (UNLIKELY(!dp->d_namep || !strlen(dp->d_namep)))
@@ -435,6 +439,7 @@ db_cache_init(struct db_i *dbip, int verbose)
 	    t_obb.join();
 	    t_lod.join();
 
+	    dbip->i->init_complete = true;
 	    return BRLCAD_OK;
 	}
 
@@ -568,7 +573,6 @@ db_cache_init(struct db_i *dbip, int verbose)
     // old, unused geometry info as well.
 
     dbip->i->init_complete = true;
-
     return BRLCAD_OK;
 }
 
@@ -689,8 +693,10 @@ db_cache_clear_entries(struct db_i *dbip, unsigned long long hash)
     void *vdata;
     if (!bu_cache_get(&vdata, ckey, c)) {
 	// If we don't have a geometry key, we're done
+	bu_cache_get_done(c);
 	return;
     }
+    bu_cache_get_done(c);
     unsigned long long ghash;
     memcpy(&ghash, vdata, sizeof(unsigned long long));
     if (!ghash) {

@@ -108,7 +108,7 @@ struct db_i_internal {
     std::shared_ptr<ProcessDrawData> p;
     std::atomic<size_t> p_completed;
 
-    std::unordered_set<struct directory *> to_init;
+    std::unordered_set<struct directory *> *to_init;
 
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> cache_geom_uses;
 #endif

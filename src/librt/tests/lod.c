@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
-    bu_log("Total LoD time: %f seconds\n", seconds);
+    bu_log("Total cache initialization time: %f seconds\n", seconds);
 
     db_close(dbip);
     bu_dirclear(cache_dir);
