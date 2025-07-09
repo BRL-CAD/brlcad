@@ -227,15 +227,6 @@ RT_EXPORT extern struct db_i * db_create_inmem(void);
 RT_EXPORT extern void db_close(struct db_i *dbip);
 
 
-/**
- * Open and initialize the internal cache associated with the dbip.  This may
- * not be instantaneous from a user perspective, the cache is stored on-disk,
- * and caching is not strictly necessary for dbip operations (it is intended to
- * enhance performance).  Accordingly, the initialization step is deliberately
- * separate from db_open. */
-RT_EXPORT extern int db_cache_init(struct db_i *dbip);
-
-
 __END_DECLS
 
 #endif /* RT_DB_INSTANCE_H */
