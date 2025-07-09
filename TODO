@@ -44,6 +44,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* fix recursive bu_parallel() to not have a hard-coded limit on the
+  number of threads or to more aggressively abort when more that
+  supported are dispatched.  currently supporting 64x64 threads and
+  still with some potential for race conditions on the book-keeping.
+
 * Teach lint command to look for comb instance paths with
   non-uniform scaling matrices that have tor primitives as
   leaves - those will not raytrace as expected.  May be other

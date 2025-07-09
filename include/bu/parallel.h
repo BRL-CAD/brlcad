@@ -42,7 +42,7 @@ __BEGIN_DECLS
  * processors/threads that may be spawned. The actual number of
  * available processors is found at runtime by calling bu_avail_cpus()
  */
-#define MAX_PSW 1024
+#define MAX_PSW 4096 /* FIXME: just enough for 64 x 64 threads */
 
 /**
  * @brief
