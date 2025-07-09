@@ -91,7 +91,6 @@ cache_update_attrs(struct bu_cache *c, const char *name, unsigned long long hash
     if (!c || !c_avs || !hash)
 	return BRLCAD_ERROR;
 
-    int64_t ctime = cache_timestamp(tkey, c);
     if (stime)
 	snprintf(tkey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_TIMESTAMP);
 
@@ -104,7 +103,7 @@ cache_update_attrs(struct bu_cache *c, const char *name, unsigned long long hash
 
     // Before writing cache, check for updated timestamp - if we have a non-zero stime and the cache
     // time is newer, we're aborting
-    if (stime && ctime > stime)
+    if (stime && cache_timestamp(tkey, c) > stime)
 	return BRLCAD_ERROR;
 
     if (!bu_cache_write(&rflag, sizeof(int), ckey, c)) {
@@ -121,7 +120,7 @@ cache_update_attrs(struct bu_cache *c, const char *name, unsigned long long hash
 
     // Before writing cache, check for updated timestamp - if we have a non-zero stime and the cache
     // time is newer, we're aborting
-    if (stime && ctime > stime)
+    if (stime && cache_timestamp(tkey, c) > stime)
 	return BRLCAD_ERROR;
 
     if (!bu_cache_write(&region_id, sizeof(int), ckey, c)) {
@@ -135,7 +134,7 @@ cache_update_attrs(struct bu_cache *c, const char *name, unsigned long long hash
 
     // Before writing cache, check for updated timestamp - if we have a non-zero stime and the cache
     // time is newer, we're aborting
-    if (stime && ctime > stime)
+    if (stime && cache_timestamp(tkey, c) > stime)
 	return BRLCAD_ERROR;
 
     if (!bu_cache_write(&color_inherit, sizeof(int), ckey, c)) {
@@ -160,7 +159,7 @@ cache_update_attrs(struct bu_cache *c, const char *name, unsigned long long hash
 
     // Before writing cache, check for updated timestamp - if we have a non-zero stime and the cache
     // time is newer, we're aborting
-    if (stime && ctime > stime)
+    if (stime && cache_timestamp(tkey, c) > stime)
 	return BRLCAD_ERROR;
 
     if (!bu_cache_write(&colors, sizeof(unsigned int), ckey, c)) {
