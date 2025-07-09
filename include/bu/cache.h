@@ -56,6 +56,11 @@ __BEGIN_DECLS
 // snprintf.
 #define BU_CACHE_KEY_MAXLEN 511
 
+// If we need to be certain cache operations are complete before proceeding,
+// or nobody else will start a cache operation until we're done, use this
+// semaphore.
+BU_EXPORT extern int BU_SEM_CACHE;
+
 struct bu_cache_impl;
 
 struct bu_cache {
