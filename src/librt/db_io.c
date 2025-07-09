@@ -33,6 +33,7 @@
 #endif
 #include "bio.h"
 
+#include "bu/cache.h"
 #include "bu/parallel.h"
 #include "bu/interrupt.h"
 #include "vmath.h"
@@ -317,6 +318,7 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 	    }
 	}
 
+	bu_semaphore_acquire(BU_SEM_CACHE);
 	ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
 	if (ngran != dp->d_len) {
 	    if (dp->d_addr != RT_DIR_PHONY_ADDR) {
@@ -335,6 +337,7 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 	}
 
 	db_wrap_v4_external(ep, dp->d_namep);
+	bu_semaphore_release(BU_SEM_CACHE);
     } else
 	bu_bomb("db_put_external(): unknown database version\n");
 

@@ -308,6 +308,12 @@ db_cache_draw_init(struct db_i *dbip, int verbose)
 	    if (UNLIKELY(!dp->d_namep || !strlen(dp->d_namep)))
 		continue;
 
+
+	    // Make sure we can acquire this semaphore.  If the main program
+	    // is in the process of removing a cache entry, we don't want to
+	    // proceed with a new init.
+	    bu_semaphore_acquire(BU_SEM_CACHE);
+
 #if 0
 	    if (UNLIKELY(start < bu_file_timestamp(dbip->dbi_filename))) {
 		// File changed before initial cache generation completed -
@@ -322,8 +328,10 @@ db_cache_draw_init(struct db_i *dbip, int verbose)
 	    // Validating and resetting preexisting data in the cache against the
 	    // .g is outside the scope of the init routine.
 	    unsigned long long user_key = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	    if (cache_check(dbip->i->c, user_key))
+	    if (cache_check(dbip->i->c, user_key)) {
+		bu_semaphore_release(BU_SEM_CACHE);
 		continue;
+	    }
 
 	    // If the parent thread has decided to close the dbip, we can
 	    // stop now.
@@ -339,6 +347,7 @@ db_cache_draw_init(struct db_i *dbip, int verbose)
 		t_lod.join();
 
 		dbip->i->draw_init_complete = true;
+		bu_semaphore_release(BU_SEM_CACHE);
 		return;
 	    }
 
@@ -348,6 +357,8 @@ db_cache_draw_init(struct db_i *dbip, int verbose)
 		start = bu_gettime();
 	    }
 	    db_cache_draw_update(dbip, dp->d_namep, 0);
+
+	    bu_semaphore_release(BU_SEM_CACHE);
 
 	    // Increment completed count
 	    completed++;
