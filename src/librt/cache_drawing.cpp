@@ -585,6 +585,8 @@ db_cache_lod_mesh_get(struct db_i *dbip, const char *name)
 int
 db_cache_update(struct db_i *dbip, const char *name, int attr_only)
 {
+    static char ckey[BU_CACHE_KEY_MAXLEN];
+
     if (!dbip || !dbip->i || !dbip->i->c)
 	return BRLCAD_ERROR;
 
@@ -608,6 +610,16 @@ db_cache_update(struct db_i *dbip, const char *name, int attr_only)
     // candidate that could motivate doing the draw init in a separate thread
     // like the mesh LoD init.
     unsigned long long hash = bu_data_hash(name, strlen(name)*sizeof(char));
+
+    // First order of business is to write the timestamp.  Unlike
+    // db_cache_init, if we call this routine the presumption is we have the
+    // most current info.
+    int64_t dp_start = bu_gettime();
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_TIMESTAMP);
+    if (!bu_cache_write(&dp_start, sizeof(int64_t), ckey, c)) {
+	bu_log("%s: timestamp cache write failure\n", dp->d_namep);
+	return BRLCAD_ERROR;
+    }
 
     // Read the attributes from the database object
     struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
