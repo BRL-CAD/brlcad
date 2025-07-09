@@ -103,10 +103,10 @@ struct db_i_internal {
 
 #ifdef __cplusplus
     std::atomic_bool shutdown_requested;
-    std::atomic_bool mesh_init_complete;
-    std::atomic_bool draw_init_complete;
+    std::atomic_bool init_complete;
 
     std::shared_ptr<ProcessDrawData> p;
+    std::atomic<size_t> p_completed;
 
     std::unordered_set<struct directory *> to_init;
 

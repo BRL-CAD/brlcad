@@ -651,8 +651,7 @@ db_i_internal_create(void)
 
     i->c = NULL;
     i->shutdown_requested = false;
-    i->draw_init_complete = true;  // The init function sets this to false when it starts
-    i->mesh_init_complete = true;  // The init function sets this to false when it starts
+    i->init_complete = false;
 
     return i;
 }
@@ -663,22 +662,10 @@ db_i_internal_destroy(struct db_i_internal *i)
     if (!i)
 	return;
 
-    // Because we init the LoD cache in a separate thread, first check to see
-    // if an update is still ongoing before destroying anything.  We need to
-    // wait for the update to hit a stopping point before we can delete the
-    // context safely.
-    if (!i->mesh_init_complete) {
+    // See if our init thread(s) are done
+    if (!i->init_complete) {
 	i->shutdown_requested = true;
-	while (!i->mesh_init_complete) {
-	    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-	}
-    }
-
-    // Not sure yet if we'll need to have draw in a separate thread, but why
-    // not check...
-    if (!i->draw_init_complete) {
-	i->shutdown_requested = true;
-	while (!i->draw_init_complete) {
+	while (!i->init_complete) {
 	    std::this_thread::sleep_for(std::chrono::milliseconds(50));
 	}
     }
