@@ -167,7 +167,7 @@ bu_file_timestamp(const char *path)
 
 #ifdef HAVE_WINDOWS_H
 
-    HANDLE h = CreateFile(rp1, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    HANDLE h = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     FILETIME ft_lastwrite;
     int fret = GetFileTime(h, NULL, NULL, &ft_lastwrite);
     CloseHandle(h);
