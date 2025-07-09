@@ -37,10 +37,10 @@ do_lod(struct db_i *dbip, struct directory *dp)
 
     start = bu_gettime();
 
-    int key = db_cache_mesh_update(dbip, dp->d_namep);
+    int key = db_cache_update(dbip, dp->d_namep, 0);
     if (key != BRLCAD_OK) {
 	bu_log("ERROR: %s - db_cache_mesh_update failed\n", dp->d_namep);
-	db_cache_mesh_update(dbip, dp->d_namep);
+	db_cache_update(dbip, dp->d_namep, 0);
 	return;
     }
 
@@ -110,7 +110,7 @@ main(int argc, char *argv[])
     db_update_nref(dbip, &rt_uniresource);
 
     // Initialize cache
-    db_cache_init(dbip);
+    db_cache_init(dbip, 1);
 
     if (argc < 3) {
 	for (int i = 0; i < RT_DBNHASH; i++) {

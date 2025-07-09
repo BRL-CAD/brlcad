@@ -472,7 +472,7 @@ rt_bot_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip
 
 	struct bv_lod_mesh *lod = (struct bv_lod_mesh *)s->draw_data;
 	if (!lod) {
-	    db_cache_mesh_update(dbip, dp->d_namep);
+	    db_cache_update(dbip, dp->d_namep, 0);
 	    lod = db_cache_lod_mesh_get(dbip, dp->d_namep);
 	    if (!lod)
 		return BRLCAD_ERROR;
