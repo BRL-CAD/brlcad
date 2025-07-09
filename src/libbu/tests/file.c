@@ -206,26 +206,48 @@ main(int ac, char *av[])
 	bu_free(rpath, "free realpath");
     }
 
-    // Check file timestamp behavior
+
+
+    /* Check file timestamp behavior. */
+
+    // File ops are not instantaneous, so there will be some delta between a
+    // file timestamp and a bu_gettime call, but it should be very small if the
+    // time units are working correctly.  "Very small" depends on system load,
+    // OS type, and many other factors - this value is intended to represent a
+    // reasonable maximum.
+    int64_t max_expected_timestamp_delta = 10000;
+
+    // Create a new file to timestamp - we want the file's timestamp as close
+    // to "now" as we can get it for a minimal time delta.
     bu_vls_sprintf(&fname, "%s/bu_file_timestamp", tdir);
     fp = fopen(bu_vls_cstr(&fname), "wb");
-    int64_t sys_time = bu_gettime();
-    int64_t timestamp_1 = bu_file_timestamp(bu_vls_cstr(&fname));
     if (!fp) {
 	bu_exit(1, "%s [FAIL] Unable to create test file %s\n", av[0], bu_vls_cstr(&fname));
     } else {
 	fclose(fp);
     }
-    int64_t timestamp_2 = bu_file_timestamp(bu_vls_cstr(&fname));
+
+    // Call bu_gettime IMMEDIATELY after file creation is complete.  On Windows,
+    // we can't get a timestamp until after fclose, so this is the earliest we
+    // can make the call successfully.
+    int64_t sys_time = bu_gettime();
+
+    // Read our new file's timestamp.
+    int64_t timestamp = bu_file_timestamp(bu_vls_cstr(&fname));
+
+    // Print and check deltas
+    int64_t tdelta = sys_time - timestamp;
     bu_log("sys_time: %" PRId64 "\n", sys_time);
-    bu_log("timestamp1: %" PRId64 " (Δ from sys_time:%" PRId64 ") \n", timestamp_1, sys_time - timestamp_1);
-    bu_log("timestamp2: %" PRId64 " (Δ from sys_time:%" PRId64 ") \n", timestamp_2, sys_time - timestamp_2);
-    bu_log("timestamp Δ: %" PRId64 "\n", timestamp_2 - timestamp_1);
-    if (sys_time - timestamp_1 > 10000 || timestamp_2 - timestamp_1)
-	bu_exit(1, "%s [FAIL] Unexpected timestamp value on %s\n", av[0], bu_vls_cstr(&fname));
+    bu_log("timestamp: %" PRId64 " (Δ from sys_time:%" PRId64 ") \n", timestamp, tdelta);
+    if (tdelta < 0 || tdelta > max_expected_timestamp_delta )
+	bu_exit(1, "%s [FAIL] Unexpected delta between bu_gettime() value and timestamp value on %s\n", av[0], bu_vls_cstr(&fname));
+
+    // Clean up timestamp file
     (void)bu_file_delete(bu_vls_cstr(&fname));
 
-    /* Clean up, delete all our files and dir */
+
+
+    /* Clean up all other files, delete dir */
     cleanup(tdir, file_cnt);
 
     bu_vls_free(&fname);
