@@ -403,57 +403,55 @@ int main
 
 				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
 			    }
-				else if (kData.elementSeatBelt[*itr].nodes.size() != 0) {
-					std::string arbNumber = std::to_string(*itr);
-					KSectionSeatBelt ksectionSeatBelt = kData.sectionsSeatBelt[section];
+			    else if (kData.elementSeatBelt[*itr].nodes.size() != 0) {
+				std::string arbNumber = std::to_string(*itr);
+				KSectionSeatBelt ksectionSeatBelt = kData.sectionsSeatBelt[section];
 
-					if (kData.elementSeatBelt[*itr].nodes.size() > 2) {
-						if (kData.elementSeatBelt[*itr].nodes[2] > 0) {
-							point_t point1;
-							point_t point2;
-							point_t point3;
-							point_t point4;
+				if (kData.elementSeatBelt[*itr].nodes.size() > 2) {
+				    if (kData.elementSeatBelt[*itr].nodes[2] > 0) {
+					point_t point1;
+					point_t point2;
+					point_t point3;
+					point_t point4;
 
-							int         n1 = kData.elementSeatBelt[*itr].nodes[0];
-							int         n2 = kData.elementSeatBelt[*itr].nodes[1];
-							int         n3 = kData.elementSeatBelt[*itr].nodes[2];
-							int         n4 = kData.elementSeatBelt[*itr].nodes[3];
+					int         n1 = kData.elementSeatBelt[*itr].nodes[0];
+					int         n2 = kData.elementSeatBelt[*itr].nodes[1];
+					int         n3 = kData.elementSeatBelt[*itr].nodes[2];
+					int         n4 = kData.elementSeatBelt[*itr].nodes[3];
 
-							point1[X] = kData.nodes[n1].x * factor;
-							point1[Y] = kData.nodes[n1].y * factor;
-							point1[Z] = kData.nodes[n1].z * factor;
+					point1[X] = kData.nodes[n1].x * factor;
+					point1[Y] = kData.nodes[n1].y * factor;
+					point1[Z] = kData.nodes[n1].z * factor;
 
-							point2[X] = kData.nodes[n2].x * factor;
-							point2[Y] = kData.nodes[n2].y * factor;
-							point2[Z] = kData.nodes[n2].z * factor;
+					point2[X] = kData.nodes[n2].x * factor;
+					point2[Y] = kData.nodes[n2].y * factor;
+					point2[Z] = kData.nodes[n2].z * factor;
 
-							point3[X] = kData.nodes[n3].x * factor;
-							point3[Y] = kData.nodes[n3].y * factor;
-							point3[Z] = kData.nodes[n3].z * factor;
+					point3[X] = kData.nodes[n3].x * factor;
+					point3[Y] = kData.nodes[n3].y * factor;
+					point3[Z] = kData.nodes[n3].z * factor;
 
-							point4[X] = kData.nodes[n4].x * factor;
-							point4[Y] = kData.nodes[n4].y * factor;
-							point4[Z] = kData.nodes[n4].z * factor;
+					point4[X] = kData.nodes[n4].x * factor;
+					point4[Y] = kData.nodes[n4].y * factor;
+					point4[Z] = kData.nodes[n4].z * factor;
 
-							geometry.addTriangle(point1, point2, point3);
-							geometry.addTriangle(point1, point3, point4);
-						}
-						else
-						{
-							int         n1 = kData.elementSeatBelt[*itr].nodes[0];
-							int         n2 = kData.elementSeatBelt[*itr].nodes[1];
+					geometry.addTriangle(point1, point2, point3);
+					geometry.addTriangle(point1, point3, point4);
+				    }
+				    else {
+					int         n1 = kData.elementSeatBelt[*itr].nodes[0];
+					int         n2 = kData.elementSeatBelt[*itr].nodes[1];
 
-							AddSeatBelt(n1, n2, ksectionSeatBelt.area, kData, geometry, arbNumber, factor);
-						}
-					}
-					else
-					{
-						int         n1 = kData.elementSeatBelt[*itr].nodes[0];
-						int         n2 = kData.elementSeatBelt[*itr].nodes[1];
-
-						AddSeatBelt(n1, n2, ksectionSeatBelt.area, kData, geometry, arbNumber, factor);
-					}
+					AddSeatBelt(n1, n2, ksectionSeatBelt.area, kData, geometry, arbNumber, factor);
+				    }
 				}
+				else {
+				    int         n1 = kData.elementSeatBelt[*itr].nodes[0];
+				    int         n2 = kData.elementSeatBelt[*itr].nodes[1];
+
+				    AddSeatBelt(n1, n2, ksectionSeatBelt.area, kData, geometry, arbNumber, factor);
+				}
+			    }
 			    else
 				std::cout << "Un supported element in k-file " << argv[1] << std::endl;
 			}
