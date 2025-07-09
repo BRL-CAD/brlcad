@@ -648,6 +648,7 @@ db_i_internal_create(void)
     struct db_i_internal *i;
     BU_GET(i, struct db_i_internal);
     i->dbi_magic = DBI_MAGIC;
+    i->to_init = new std::unordered_set<struct directory *>;
 
     i->c = NULL;
     i->shutdown_requested = false;
@@ -669,6 +670,9 @@ db_i_internal_destroy(struct db_i_internal *i)
 	    std::this_thread::sleep_for(std::chrono::milliseconds(50));
 	}
     }
+
+    if (i->to_init)
+	delete i->to_init;
 
     if (i->c)
 	bu_cache_close(i->c);

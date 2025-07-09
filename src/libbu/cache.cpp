@@ -47,7 +47,6 @@
 
 struct bu_cache_impl {
     MDB_env *env;
-    MDB_txn *txn; // TODO - do we need to support more than one of these for parallel reading...
     MDB_dbi dbi;
     MDB_txn *write_txn;  // Blocking, only need one
     MDB_dbi write_dbi;
@@ -176,7 +175,7 @@ bu_cache_erase(const char *cache_db)
 }
 
 size_t
-bu_cache_get(void **data, const char *key, struct bu_cache *c)
+bu_cache_get(void **data, const char *key, struct bu_cache *c, struct bu_cache_txn **t)
 {
     if (!c || !key)
 	return 0;
@@ -188,32 +187,50 @@ bu_cache_get(void **data, const char *key, struct bu_cache *c)
     MDB_val mdb_key;
     MDB_val mdb_data[2];
 
-    if (!c->i->txn) {
-	mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &c->i->txn);
-	mdb_dbi_open(c->i->txn, NULL, 0, &c->i->dbi);
+    MDB_txn *txn = (t && *t) ? (MDB_txn *)*t : NULL;
+    if (!txn) {
+	mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &txn);
+	mdb_dbi_open(txn, NULL, 0, &c->i->dbi);
+	if (t)
+	    *t = (struct bu_cache_txn *)txn;
     }
     mdb_key.mv_size = (strlen(key)+1)*sizeof(char);
     mdb_key.mv_data = (void *)key;
-    int rc = mdb_get(c->i->txn, c->i->dbi, &mdb_key, &mdb_data[0]);
+    int rc = mdb_get(txn, c->i->dbi, &mdb_key, &mdb_data[0]);
     if (rc) {
 	if (data)
 	    (*data) = NULL;
+	if (!t)
+	    mdb_txn_abort(txn);
 	return 0;
     }
-    if (data)
-	(*data) = mdb_data[0].mv_data;
+    if (!t) {
+	// We're not persisting the transaction token - copy the data
+	// before we finish up
+	size_t mdatasize = mdb_data[0].mv_size;
+	void *dcpy = bu_malloc(mdatasize, "data copy");
+	memcpy(dcpy, mdb_data[0].mv_data, mdatasize);
+	(*data) = dcpy;
 
-    return mdb_data[0].mv_size;
+	// Finalize and return
+	mdb_txn_abort(txn);
+	return mdatasize;
+    } else {
+	// We're persisting the transaction, so we avoid making a persistent
+	// copy of the data
+	if (data)
+	    (*data) = mdb_data[0].mv_data;
+	return mdb_data[0].mv_size;
+    }
 }
 
 void
-bu_cache_get_done(struct bu_cache *c)
+bu_cache_get_done(struct bu_cache_txn *t)
 {
-    if (!c)
+    if (!t)
 	return;
 
-    mdb_txn_abort(c->i->txn);
-    c->i->txn = NULL;
+    mdb_txn_abort((MDB_txn *)t);
 }
 
 size_t
@@ -254,17 +271,17 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
     rc = mdb_get(c->i->write_txn, c->i->write_dbi, &mdb_key, &mdb_data[0]);
     if (rc) {
 	mdb_txn_abort(c->i->write_txn);
-	c->i->txn = NULL;
+	c->i->write_txn = NULL;
 	return 0;
     }
     if (mdb_data[0].mv_size != dsize) {
 	mdb_txn_abort(c->i->write_txn);
-	c->i->txn = NULL;
+	c->i->write_txn = NULL;
 	return 0;
     }
     if (memcmp(mdb_data[0].mv_data, data, mdb_data[0].mv_size)) {
 	mdb_txn_abort(c->i->write_txn);
-	c->i->txn = NULL;
+	c->i->write_txn = NULL;
 	return 0;
     }
 
@@ -304,19 +321,18 @@ bu_cache_keys(char ***keysv, struct bu_cache *c)
     MDB_val mdb_key, mdb_data;
     MDB_cursor *cursor;
 
-    mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &c->i->txn);
-    mdb_dbi_open(c->i->txn, NULL, 0, &c->i->dbi);
-    int rc = mdb_cursor_open(c->i->txn, c->i->dbi, &cursor);
+    MDB_txn *txn;
+    mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &txn);
+    mdb_dbi_open(txn, NULL, 0, &c->i->dbi);
+    int rc = mdb_cursor_open(txn, c->i->dbi, &cursor);
     if (rc) {
-	mdb_txn_abort(c->i->txn);
-	c->i->txn = NULL;
+	mdb_txn_abort(txn);
 	return 0;
     }
     rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_FIRST);
     if (rc) {
 	mdb_cursor_close(cursor);
-	mdb_txn_abort(c->i->txn);
-	c->i->txn = NULL;
+	mdb_txn_abort(txn);
 	return 0;
     }
 
@@ -328,8 +344,7 @@ bu_cache_keys(char ***keysv, struct bu_cache *c)
 	keys.insert(std::string(bu_vls_cstr(&keystr)));
     }
     mdb_cursor_close(cursor);
-    mdb_txn_abort(c->i->txn);
-    c->i->txn = NULL;
+    mdb_txn_abort(txn);
 
     char **kv = (char **)bu_calloc(keys.size(), sizeof(const char *), "keys array");
     std::set<std::string>::iterator s_it;
