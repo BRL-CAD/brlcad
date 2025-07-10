@@ -138,8 +138,11 @@ bg_trimesh_obb(point_t *c, vect_t *v1, vect_t *v2, vect_t *v3,
     // Success - convert GTE values to vmath types
     VSET(*c, gte_bb.center[0], gte_bb.center[1], gte_bb.center[2]);
     VSET(*v1, gte_bb.axis[0][0], gte_bb.axis[0][1], gte_bb.axis[0][2]);
+    VSCALE(*v1, *v1, gte_bb.extent[0]);
     VSET(*v2, gte_bb.axis[1][0], gte_bb.axis[1][1], gte_bb.axis[1][2]);
+    VSCALE(*v2, *v2, gte_bb.extent[1]);
     VSET(*v3, gte_bb.axis[2][0], gte_bb.axis[2][1], gte_bb.axis[2][2]);
+    VSCALE(*v3, *v3, gte_bb.extent[2]);
 
     return BRLCAD_OK;
 }
