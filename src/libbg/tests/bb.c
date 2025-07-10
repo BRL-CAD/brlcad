@@ -26,6 +26,59 @@
 #include "bg.h"
 
 int
+obb_diff(
+	point_t ac, vect_t av1, vect_t av2, vect_t av3,
+	point_t bc, vect_t bv1, vect_t bv2, vect_t bv3
+	)
+{
+    point_t diff;
+    VSUB2(diff, ac, bc);
+
+    if (!VNEAR_EQUAL(ac, bc, VUNITIZE_TOL)) {
+	bu_log("Note: obb (%g %g %g) and obb verts obb (%g %g %g) center point differs: %0.15f %0.15f %0.15f\n", V3ARGS(ac), V3ARGS(bc), V3ARGS(diff));
+	return 1;
+    }
+
+    VSUB2(diff, av1, bv1);
+    if (!VNEAR_EQUAL(av1, bv1, VUNITIZE_TOL)) {
+	bu_log("Note: obb (%g %g %g) and obb verts obb (%g %g %g) v1 differs: %0.15f %0.15f %0.15f\n", V3ARGS(av1), V3ARGS(bv1), V3ARGS(diff));
+	return 1;
+    }
+
+    VSUB2(diff, av2, bv2);
+    if (!VNEAR_EQUAL(av2, bv2, VUNITIZE_TOL)) {
+	bu_log("Note: obb (%g %g %g) and obb verts obb (%g %g %g) v2 differs: %0.15f %0.15f %0.15f\n", V3ARGS(av2), V3ARGS(bv2), V3ARGS(diff));
+	return 1;
+    }
+
+    VSUB2(diff, av3, bv3);
+    if (!VNEAR_EQUAL(av3, bv3, VUNITIZE_TOL)) {
+	bu_log("Note: obb (%g %g %g) and obb verts obb (%g %g %g) v3 differs: %0.15f %0.15f %0.15f\n", V3ARGS(av3), V3ARGS(bv3), V3ARGS(diff));
+	return 1;
+    }
+
+    return 0;
+}
+
+int
+arb_diff(point_t *p1, point_t *p2)
+{
+    for (int i = 0; i < 8; i++) {
+	int have_match = 0;
+	for (int j = 0; j < 8; j++) {
+	    if (VNEAR_EQUAL(p1[i], p2[j], VUNITIZE_TOL))
+		have_match = 1;
+	}
+	if (!have_match) {
+	    bu_log("Note: p1[%d] (%g %g %g) has no matching point in p2, arbs differ\n", i, V3ARGS(p1[i]));
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+int
 main(int UNUSED(argc), const char *argv[])
 {
     bu_setprogname(argv[0]);
@@ -90,6 +143,28 @@ main(int UNUSED(argc), const char *argv[])
 		bu_exit(-1, "Error calculating obb pnts\n");
 	    bu_log("trimesh_obb_verts: %g %g %g: %g %g %g, %g %g %g, %g %g %g\n", V3ARGS(tbverts[0]), V3ARGS(tbverts[1]), V3ARGS(tbverts[2]), V3ARGS(tbverts[3]));
 	    bu_log("                   %g %g %g: %g %g %g, %g %g %g, %g %g %g\n", V3ARGS(tbverts[4]), V3ARGS(tbverts[5]), V3ARGS(tbverts[6]), V3ARGS(tbverts[7]));
+
+	    point_t btobbc;
+	    vect_t btv1, btv2, btv3;
+	    if (bg_pnts_obb(&btobbc, &btv1, &btv2, &btv3, (const point_t *)tbverts, 8) != BRLCAD_OK)
+		bu_exit(-1, "Error calculating trimesh obb verts obb\n");
+	    bu_log("trimesh_obb_pnts_obb: %g %g %g: %g %g %g, %g %g %g, %g %g %g\n", V3ARGS(tobbc), V3ARGS(tv1), V3ARGS(tv2), V3ARGS(tv3));
+
+	    if (obb_diff(tobbc, tv1, tv2, tv3, btobbc, btv1, btv2, btv3)) {
+		bu_log("NOTE:  obb info differs between obb calculated from the original mesh and that calculated from the bounding box verts.\nNeed to generate verts from the obb calculated from the bounding box verts and verify that all points in the first obb vert set are present in the second (ordering may differ).\n");
+		point_t *tbpntverts = (point_t *)bu_calloc(8, sizeof(point_t), "p out");
+		if (bg_obb_pnts(tbpntverts, (const point_t *)&btobbc, (const vect_t *)&btv1, (const vect_t *)&btv2, (const vect_t *)&btv3) != BRLCAD_OK)
+		    bu_exit(-1, "Error calculating obb pnts\n");
+		bu_log("trimesh_obb_verts: %g %g %g: %g %g %g, %g %g %g, %g %g %g\n", V3ARGS(tbpntverts[0]), V3ARGS(tbpntverts[1]), V3ARGS(tbpntverts[2]), V3ARGS(tbpntverts[3]));
+		bu_log("                   %g %g %g: %g %g %g, %g %g %g, %g %g %g\n", V3ARGS(tbpntverts[4]), V3ARGS(tbpntverts[5]), V3ARGS(tbpntverts[6]), V3ARGS(tbpntverts[7]));
+
+		if (arb_diff(tbverts, tbpntverts)) {
+		    bu_log("Arb points differ.  The implication of this is the original mesh obb can't be faithfully recreated from the center point and extents, which is a problem!\n");
+		} else {
+		    bu_log("All original arb points found.  Should verify whether either arb is twisted, but at least all points are present.\n");
+		}
+	    }
+
 	}
     }
 

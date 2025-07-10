@@ -41,6 +41,7 @@
 #include "bu/path.h"
 #include "bu/process.h"
 #include "bu/time.h"
+#include "bg/pnts.h"
 #include "bv/lod.h"
 #include "rt/db_instance.h"
 #include "rt/db_internal.h"
@@ -248,6 +249,13 @@ aabb_calc(std::shared_ptr<ProcessDrawData> p)
 	}
 
 	// TODO - do aabb calc
+	if (i->idb_meth->ft_bbox) {
+	    const struct bn_tol btol = BN_TOL_INIT_TOL;
+	    point_t bmin, bmax;
+	    if (!(i->idb_meth->ft_bbox(i, &bmin, &bmax, &btol) < 0)) {
+		bu_log("TODO - write to cache\n");
+	    }
+	}
 
 	// Queue up for OBB calc
 	p.get()->m_obb.lock();
@@ -282,6 +290,19 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
 	}
 
 	// TODO - do obb calc
+	if (i->idb_meth->ft_oriented_bbox) {
+	    double btol = BN_TOL_DIST;
+	    struct rt_arb_internal arb;
+	    arb.magic = RT_ARB_INTERNAL_MAGIC;
+	    if (!(i->idb_meth->ft_oriented_bbox(&arb, i, btol) < 0)) {
+		point_t c = VINIT_ZERO;
+		vect_t v1 = VINIT_ZERO;
+		vect_t v2 = VINIT_ZERO;
+		vect_t v3 = VINIT_ZERO;
+		bg_pnts_obb(&c, &v1, &v2, &v3, (const point_t *)arb.pt, 8);
+		bu_log("TODO - write to cache\n");
+	    }
+	}
 
 	// Queue up for LoD calc
 	p.get()->m_lod.lock();
