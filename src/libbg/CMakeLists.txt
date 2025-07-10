@@ -61,6 +61,7 @@ set(
   polygon_op.cpp
   polygon_triangulate.cpp
   polygon_point_in.c
+  pnts.cpp
   sat.c
   spsr.c
   ${SPSR_srcs}
@@ -70,6 +71,7 @@ set(
   trimesh.cpp
   trimesh_diff.cpp
   trimesh_isect.cpp
+  trimesh_bb.cpp
   trimesh_plot3.cpp
   trimesh_sync.cpp
   trimesh_split.cpp
@@ -112,7 +114,6 @@ set(
   delaunator.hpp
   detria.hpp
   earcut.hpp
-  pointgen.c
   spsr/LICENSE
 )
 
