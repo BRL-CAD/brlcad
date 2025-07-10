@@ -114,7 +114,7 @@ BU_EXPORT size_t bu_cache_get(void **data, const char *key, struct bu_cache *c, 
  * Data retrieved using bu_cache_get is temporary if we are using transaction
  * tokens - once the user is done either reading it or copying it, libbu needs
  * to be told that the usage of the returned data is complete. */
-BU_EXPORT void bu_cache_get_done(struct bu_cache_txn *t);
+BU_EXPORT void bu_cache_get_done(struct bu_cache_txn **t);
 
 /**
  * Assign data to the cache using the specified key
