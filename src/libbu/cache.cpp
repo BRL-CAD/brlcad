@@ -48,7 +48,6 @@
 struct bu_cache_impl {
     MDB_env *env;
     MDB_dbi dbi;
-    MDB_txn *write_txn;  // Blocking, only need one
     MDB_dbi write_dbi;
     struct bu_vls *fname;
 };
@@ -249,45 +248,41 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
 
     // Write out key/value to LMDB database, where the key is the hash
     // and the value is the serialized LoD data
-    mdb_txn_begin(c->i->env, NULL, 0, &c->i->write_txn);
-    mdb_dbi_open(c->i->write_txn, NULL, 0, &c->i->write_dbi);
+    MDB_txn *txn;
+    mdb_txn_begin(c->i->env, NULL, 0, &txn);
+    mdb_dbi_open(txn, NULL, 0, &c->i->write_dbi);
     mdb_key.mv_size = (strlen(key)+1)*sizeof(char);
     mdb_key.mv_data = (void *)key;
     mdb_data[0].mv_size = dsize;
     mdb_data[0].mv_data = data;
     mdb_data[1].mv_size = 0;
     mdb_data[1].mv_data = NULL;
-    int rc = mdb_put(c->i->write_txn, c->i->write_dbi, &mdb_key, mdb_data, 0);
-    mdb_txn_commit(c->i->write_txn);
+    int rc = mdb_put(txn, c->i->write_dbi, &mdb_key, mdb_data, 0);
+    mdb_txn_commit(txn);
     mdb_env_sync(c->i->env, 0);
-    c->i->write_txn = NULL;
     // If we were unsuccessful, return 0;
     if (rc)
 	return 0;
 
     // Make sure we can can read back what we wrote
-    mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &c->i->write_txn);
-    mdb_dbi_open(c->i->write_txn, NULL, 0, &c->i->write_dbi);
-    rc = mdb_get(c->i->write_txn, c->i->write_dbi, &mdb_key, &mdb_data[0]);
+    mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &txn);
+    mdb_dbi_open(txn, NULL, 0, &c->i->write_dbi);
+    rc = mdb_get(txn, c->i->write_dbi, &mdb_key, &mdb_data[0]);
     if (rc) {
-	mdb_txn_abort(c->i->write_txn);
-	c->i->write_txn = NULL;
+	mdb_txn_abort(txn);
 	return 0;
     }
     if (mdb_data[0].mv_size != dsize) {
-	mdb_txn_abort(c->i->write_txn);
-	c->i->write_txn = NULL;
+	mdb_txn_abort(txn);
 	return 0;
     }
     if (memcmp(mdb_data[0].mv_data, data, mdb_data[0].mv_size)) {
-	mdb_txn_abort(c->i->write_txn);
-	c->i->write_txn = NULL;
+	mdb_txn_abort(txn);
 	return 0;
     }
 
     size_t ret = mdb_data[0].mv_size;
-    mdb_txn_abort(c->i->write_txn);
-    c->i->write_txn = NULL;
+    mdb_txn_abort(txn);
 
     return ret;
 }
@@ -301,12 +296,13 @@ bu_cache_clear(const char *key, struct bu_cache *c)
     // Construct lookup key
     MDB_val mdb_key;
 
-    mdb_txn_begin(c->i->env, NULL, 0, &c->i->write_txn);
-    mdb_dbi_open(c->i->write_txn, NULL, 0, &c->i->write_dbi);
+    MDB_txn *txn;
+    mdb_txn_begin(c->i->env, NULL, 0, &txn);
+    mdb_dbi_open(txn, NULL, 0, &c->i->write_dbi);
     mdb_key.mv_size = (strlen(key)+1)*sizeof(char);
     mdb_key.mv_data = (void *)key;
-    mdb_del(c->i->write_txn, c->i->write_dbi, &mdb_key, NULL);
-    mdb_txn_commit(c->i->write_txn);
+    mdb_del(txn, c->i->write_dbi, &mdb_key, NULL);
+    mdb_txn_commit(txn);
     mdb_env_sync(c->i->env, 0);
 }
 
