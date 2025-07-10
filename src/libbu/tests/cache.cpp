@@ -85,7 +85,7 @@ print_keys(struct bu_cache *c, int kcnt_expected, int item_cnt)
 	    }
 	}
     }
-    bu_cache_get_done(txn);
+    bu_cache_get_done(&txn);
 
 
     elapsed = bu_gettime() - start;
@@ -147,7 +147,7 @@ basic_test(int item_cnt)
 	if (rval != i)
 	    bu_exit(1, "Failed read from int:%d key was %d, expected %d\n", i, rval, i);
     }
-    bu_cache_get_done(txn);
+    bu_cache_get_done(&txn);
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     bu_log("INT read test completed - read %d INTs in %g seconds.\n", item_cnt, seconds);
@@ -173,7 +173,6 @@ basic_test(int item_cnt)
 
     // Test reading DBL
     start = bu_gettime();
-    txn = NULL;
     for (int i = 0; i < item_cnt; i++) {
 	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "dbl:%d", i);
 	void *rdata = NULL;
@@ -185,7 +184,7 @@ basic_test(int item_cnt)
 	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF))
 	    bu_exit(1, "Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
     }
-    bu_cache_get_done(txn);
+    bu_cache_get_done(&txn);
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     bu_log("DBL read test completed - read %d DBLs in %g seconds.\n", item_cnt, seconds);
@@ -209,7 +208,6 @@ basic_test(int item_cnt)
     // Test reading post remove - we should be able to get every value that wasn't
     // removed, and shouldn't be able to get anything that WAS removed
     start = bu_gettime();
-    txn = NULL;
     int rcnt = 0;
     for (int i = 0; i < item_cnt; i++) {
 	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "dbl:%d", i);
@@ -226,7 +224,7 @@ basic_test(int item_cnt)
 	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF))
 	    bu_exit(1, "Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
     }
-    bu_cache_get_done(txn);
+    bu_cache_get_done(&txn);
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     bu_log("DBL post-remove read test completed - read %d DBLs in %g seconds.\n", rcnt, seconds);
@@ -324,7 +322,7 @@ limit_test()
 	    bu_exit(1, "Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
 	}
     }
-    bu_cache_get_done(txn);
+    bu_cache_get_done(&txn);
     bu_log("All successfully written values read\n");
 
     // Close the cache to make sure we're synced to disk before the next checks
@@ -359,7 +357,6 @@ limit_test()
 
     // Test reading all DBLs, both those added with the old max size and those
     // just added.
-    txn = NULL;
     for (int i = 0; i < item_cnt; i++) {
 	bu_vls_sprintf(&keystr, "dbl:%d", i);
 	void *rdata = NULL;
@@ -375,7 +372,7 @@ limit_test()
 	    bu_exit(1, "Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
 	}
     }
-    bu_cache_get_done(txn);
+    bu_cache_get_done(&txn);
     bu_log("All DBL values (old and newly added) successfully read\n");
     bu_cache_close(c);
 
@@ -414,7 +411,7 @@ val_incr(struct bu_cache *c, int item_cnt)
 	int rval = 0;
 	if (rsize == sizeof(int))
 	    memcpy(&rval, rdata, sizeof(rval));
-	bu_cache_get_done(txn);
+	bu_cache_get_done(&txn);
 
 	int ival = rval + 1;
 	size_t written = bu_cache_write((char *)&ival, sizeof(int), keystr, c);
@@ -459,7 +456,7 @@ val_read(struct bu_cache *c, int item_cnt, std::map<int, int> &ctrl)
 	if (rsize != sizeof(int))
 	    bu_exit(1, "Failed to read int:%d - expected to read %zd bytes but read %zd\n", i, sizeof(int), rsize);
 	memcpy(&rval, rdata, sizeof(rval));
-	bu_cache_get_done(txn);
+	bu_cache_get_done(&txn);
 
 	if (ctrl[i] != rval)
 	    bu_exit(1, "%d - failed to read correct int value - expected to read %zd bytes but read %zd\n", i, sizeof(int), rsize);
@@ -533,7 +530,7 @@ threading_test()
 	std::cout << m_it->first << "->" << m_it->second << "\n";
     }
 
-    bu_cache_get_done(txn);
+    bu_cache_get_done(&txn);
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     bu_log("Single threaded read test completed - read %d INTs in %g seconds.\n", item_cnt, seconds);
