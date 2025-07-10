@@ -68,8 +68,8 @@ brlcad_add_test(NAME rt_cache_serial_multiple_different_objects COMMAND rt_cache
 brlcad_add_test(NAME rt_cache_parallel_multiple_different_objects  COMMAND rt_cache 6 10)
 brlcad_add_test(NAME rt_cache_parallel_multiple_different_objects_hierarchy_1  COMMAND rt_cache 7 10)
 
-# lod testing
-brlcad_addexec(rt_lod lod.c "librt;libbg" TEST)
+# Test caching of drawing info (properties, bboxes, LoD)
+brlcad_addexec(rt_cache_drawing cache_drawing.cpp "librt;libbg" TEST)
 
 # bv_polygon <-> sketch testing
 brlcad_addexec(rt_bv_poly_sketch bv_poly_sketch.c "librt;libbv" TEST)
