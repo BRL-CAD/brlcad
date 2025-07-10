@@ -35,6 +35,10 @@ brlcad_addexec(bg_obr obr.c "libbg;libbn;libbu" TEST)
 
 #BRLCAD_ADD_TEST(NAME bg_obr_simple			COMMAND bg_obr) # Default points
 
+
+#  ************ bouding box tests *************
+brlcad_addexec(bg_bb bb.c "libbg;libbn;libbu" TEST)
+
 #
 #  ************ plane.c tests *************
 

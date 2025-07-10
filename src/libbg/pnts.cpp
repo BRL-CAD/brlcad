@@ -103,8 +103,100 @@ bg_pnts_obb(point_t *c, vect_t *v1, vect_t *v2, vect_t *v3,
     // Success - convert GTE values to vmath types
     VSET(*c, gte_bb.center[0], gte_bb.center[1], gte_bb.center[2]);
     VSET(*v1, gte_bb.axis[0][0], gte_bb.axis[0][1], gte_bb.axis[0][2]);
+    VSCALE(*v1, *v1, gte_bb.extent[0]);
     VSET(*v2, gte_bb.axis[1][0], gte_bb.axis[1][1], gte_bb.axis[1][2]);
+    VSCALE(*v2, *v2, gte_bb.extent[1]);
     VSET(*v3, gte_bb.axis[2][0], gte_bb.axis[2][1], gte_bb.axis[2][2]);
+    VSCALE(*v3, *v3, gte_bb.extent[2]);
+
+#if 0
+    // while we have the info, validate that bg_obb_pnts is doing the right
+    // reassembly of the GTE class for the explicit points calculation
+    point_t pt[8];
+    std::array<gte::Vector3<fastf_t>, 8> calculated_bb;
+    gte_bb.GetVertices(calculated_bb);
+
+    // V0: 0,0,0
+    VSET(pt[0], calculated_bb[0][0], calculated_bb[0][1],  calculated_bb[0][2]);
+    // V1: 0,1,0
+    VSET(pt[1], calculated_bb[1][0], calculated_bb[1][1],  calculated_bb[1][2]);
+    // V2: 0,1,1
+    VSET(pt[2], calculated_bb[3][0], calculated_bb[3][1],  calculated_bb[3][2]);
+    // V3: 0,0,1
+    VSET(pt[3], calculated_bb[2][0], calculated_bb[2][1],  calculated_bb[2][2]);
+    // V4: 1,0,0
+    VSET(pt[4], calculated_bb[4][0], calculated_bb[4][1],  calculated_bb[4][2]);
+    // V5: 1,1,0
+    VSET(pt[5], calculated_bb[5][0], calculated_bb[5][1],  calculated_bb[5][2]);
+    // V6: 1,1,1
+    VSET(pt[6], calculated_bb[7][0], calculated_bb[7][1],  calculated_bb[7][2]);
+    // V7: 1,0,1
+    VSET(pt[7], calculated_bb[6][0], calculated_bb[6][1],  calculated_bb[6][2]);
+
+
+    point_t *pverts = (point_t *)bu_calloc(8, sizeof(point_t), "p");
+    bg_obb_pnts(pverts, (const point_t *)c, (const vect_t *)v1, (const vect_t *)v2, (const vect_t *)v3);
+
+    // Make sure bg_obb_pnts matches what GTE gives us
+    for (size_t i = 0; i < 8; i++) {
+	if (!VNEAR_EQUAL(pt[i], pverts[i], VUNITIZE_TOL)) {
+	    bu_log("%g %g %g -> %g %g %g\n", V3ARGS(pt[i]), V3ARGS(pverts[i]));
+	    bu_exit(-1, "WRONG!\n");
+	}
+    }
+#endif
+
+    return BRLCAD_OK;
+}
+
+int
+bg_obb_pnts(point_t *verts, const point_t *c, const vect_t *v1, const vect_t *v2, const vect_t *v3)
+{
+    if (!c || !v1 || !v2 || !v3 || !verts)
+	return BRLCAD_ERROR;
+
+    vect_t evects[3];
+    VMOVE(evects[0], *v1);
+    VMOVE(evects[1], *v2);
+    VMOVE(evects[2], *v3);
+
+    fastf_t emags[3];
+    for (size_t i = 0; i < 3; i++)
+	emags[i] = MAGNITUDE(evects[i]);
+
+    for (size_t i = 0; i < 3; i++)
+	VUNITIZE(evects[i]);
+
+    gte::OrientedBox3<fastf_t> gte_bb;
+    gte_bb.center[0] = (*c)[X];
+    gte_bb.center[1] = (*c)[Y];
+    gte_bb.center[2] = (*c)[Z];
+    for (size_t i = 0; i < 3; i++) {
+	gte_bb.extent[i] = emags[i];
+	for (size_t j = 0; j < 3; j++)
+	    gte_bb.axis[i][j] = evects[i][j];
+    }
+
+    // success: convert gte calculated -> verts
+    std::array<gte::Vector3<fastf_t>, 8> calculated_bb;
+    gte_bb.GetVertices(calculated_bb);
+
+    // V0: 0,0,0
+    VSET(verts[0], calculated_bb[0][0], calculated_bb[0][1],  calculated_bb[0][2]);
+    // V1: 0,1,0
+    VSET(verts[1], calculated_bb[1][0], calculated_bb[1][1],  calculated_bb[1][2]);
+    // V2: 0,1,1
+    VSET(verts[2], calculated_bb[3][0], calculated_bb[3][1],  calculated_bb[3][2]);
+    // V3: 0,0,1
+    VSET(verts[3], calculated_bb[2][0], calculated_bb[2][1],  calculated_bb[2][2]);
+    // V4: 1,0,0
+    VSET(verts[4], calculated_bb[4][0], calculated_bb[4][1],  calculated_bb[4][2]);
+    // V5: 1,1,0
+    VSET(verts[5], calculated_bb[5][0], calculated_bb[5][1],  calculated_bb[5][2]);
+    // V6: 1,1,1
+    VSET(verts[6], calculated_bb[7][0], calculated_bb[7][1],  calculated_bb[7][2]);
+    // V7: 1,0,1
+    VSET(verts[7], calculated_bb[6][0], calculated_bb[6][1],  calculated_bb[6][2]);
 
     return BRLCAD_OK;
 }
