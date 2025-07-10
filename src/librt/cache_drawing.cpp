@@ -75,9 +75,11 @@ int64_t cache_timestamp(const char *ckey, struct bu_cache *c)
 {
     void *vdata;
     int64_t ctimestmp = 0;
-    if (bu_cache_get(&vdata, ckey, c))
+    struct bu_cache_txn *txn = NULL;
+    if (bu_cache_get(&vdata, ckey, c, &txn))
 	memcpy(&ctimestmp, vdata, sizeof(int64_t));
-    bu_cache_get_done(c);
+    bu_cache_get_done(txn);
+    txn = NULL;
     return ctimestmp;
 }
 
@@ -691,14 +693,16 @@ db_cache_clear_entries(struct db_i *dbip, unsigned long long hash)
     // Look up the geometry key for this name
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_GEOM_KEY);
     void *vdata;
-    if (!bu_cache_get(&vdata, ckey, c)) {
+    struct bu_cache_txn *txn = NULL;
+    if (!bu_cache_get(&vdata, ckey, c, &txn)) {
 	// If we don't have a geometry key, we're done
-	bu_cache_get_done(c);
+	bu_cache_get_done(txn);
 	return;
     }
-    bu_cache_get_done(c);
     unsigned long long ghash;
     memcpy(&ghash, vdata, sizeof(unsigned long long));
+    bu_cache_get_done(txn);
+    txn = NULL;
     if (!ghash) {
 	// If we don't have a valid geometry key, we're done
 	return;

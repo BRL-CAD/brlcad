@@ -262,6 +262,7 @@ class POPState {
 	struct bu_vls keystr = BU_VLS_INIT_ZERO;
 	struct bu_vls valstr = BU_VLS_INIT_ZERO;
 	struct bu_cache *c;
+	struct bu_cache_txn *txn = NULL;
 };
 
 void
@@ -503,7 +504,7 @@ POPState::POPState(struct bu_cache *ctx, unsigned long long user_key)
 	struct bu_vls ukey = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&ukey, "%llu", user_key);
 	void *kmem;
-	size_t bsize = bu_cache_get(&kmem, bu_vls_cstr(&ukey), c);
+	size_t bsize = bu_cache_get(&kmem, bu_vls_cstr(&ukey), c, &txn);
 	if (bsize != sizeof(unsigned long long)) {
 	    cache_done();
 	    return;
@@ -869,13 +870,14 @@ POPState::cache_get(void **data, const char *component)
     (*data) = NULL;
 
     // Do the lookup
-    return bu_cache_get(data, bu_vls_cstr(&keystr), c);
+    return bu_cache_get(data, bu_vls_cstr(&keystr), c, &txn);
 }
 
 void
 POPState::cache_done()
 {
-    bu_cache_get_done(c);
+    bu_cache_get_done(txn);
+    txn = NULL;
 }
 
 bool
@@ -1430,14 +1432,17 @@ bv_lod_clear(struct bu_cache *c, const char *name)
     // Translate database object name key to data key
     bu_vls_sprintf(&keystr, "%llu", key);
     void *cdata = NULL;
-    if (bu_cache_get(&cdata, bu_vls_cstr(&keystr), c) != sizeof(unsigned long long)) {
+    struct bu_cache_txn *txn = NULL;
+    if (bu_cache_get(&cdata, bu_vls_cstr(&keystr), c, &txn) != sizeof(unsigned long long)) {
 	bu_vls_free(&keystr);
+	bu_cache_get_done(txn);
 	return;
     }
     // Found something - assign it to lhash
     unsigned long long lhash = 0;
     memcpy(&lhash, cdata, sizeof(lhash));
-    bu_cache_get_done(c);
+    bu_cache_get_done(txn);
+    txn = NULL;
 
     // Make lhash into a key and clear the actual LoD data
     bu_vls_sprintf(&keystr, "%llu", lhash);
