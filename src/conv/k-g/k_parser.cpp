@@ -1141,6 +1141,7 @@ bool parse_k
 			switch (sectionLinesRead) {
 			    case 0: {
 				sectionTitle = line;
+				break;
 			    }
 
 			    case 1: {
