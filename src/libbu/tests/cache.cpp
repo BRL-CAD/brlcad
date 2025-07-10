@@ -20,8 +20,13 @@
 
 #include "common.h"
 
+#include <chrono>
+#include <iostream>
 #include <map>
+#include <random>
 #include <string>
+#include <thread>
+#include <vector>
 
 #include <limits.h>
 #include <string.h>
@@ -92,7 +97,7 @@ print_keys(struct bu_cache *c, int kcnt_expected, int item_cnt)
 }
 
 
-static void
+void
 basic_test(int item_cnt)
 {
     int64_t start, elapsed;
@@ -248,7 +253,7 @@ basic_test(int item_cnt)
 	bu_exit(1, "Cache file %s not erased\n", cache_file);
 }
 
-static void
+void
 limit_test()
 {
     int item_cnt;
@@ -385,6 +390,185 @@ limit_test()
 	bu_exit(1, "Cache file %s not erased\n", cache_file);
 }
 
+void
+val_incr(struct bu_cache *c, int item_cnt)
+{
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_real_distribution<> rdist(0.0, 0.1);
+
+    char keystr[BU_CACHE_KEY_MAXLEN];
+    for (int i = 0; i < item_cnt; i++) {
+
+	double wt = rdist(mt);
+	std::chrono::duration<double> wtime(wt);
+	std::this_thread::sleep_for(wtime);
+
+	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "int:%d", i);
+
+	// If another thread or threads have already incremented
+	// read that value.
+	void *rdata = NULL;
+	struct bu_cache_txn *txn = NULL;
+	size_t rsize = bu_cache_get(&rdata, keystr, c, &txn);
+	int rval = 0;
+	if (rsize == sizeof(int))
+	    memcpy(&rval, rdata, sizeof(rval));
+	bu_cache_get_done(txn);
+
+	int ival = rval + 1;
+	size_t written = bu_cache_write((char *)&ival, sizeof(int), keystr, c);
+	if (written != sizeof(int))
+	    bu_exit(1, "Failed to write int %d\n", i);
+
+	//std::cout << "thread " << std::this_thread::get_id() << " :" << i << "->" << ival << "\n";
+    }
+
+    std::cout << "thread " << std::this_thread::get_id() << " complete\n";
+}
+
+void
+val_read(struct bu_cache *c, int item_cnt, std::map<int, int> &ctrl)
+{
+    // Once we do read do it as fast as possible, but stagger the start of
+    // reading a little to give all the reader threads time to get setup and
+    // ready.  Mix up the kickoff times a little to add some entropy to the
+    // process.
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_real_distribution<> rdist(0.0, 0.1);
+
+    // We don't want to have threads finishing before others are launched, so
+    // baseline the wait time to at least half a second.
+    double wt = 0.5 + rdist(mt);
+    std::chrono::duration<double> wtime(wt);
+    std::this_thread::sleep_for(wtime);
+
+    // Wait over - commence reading
+    char keystr[BU_CACHE_KEY_MAXLEN];
+    for (int i = 0; i < item_cnt; i++) {
+
+	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "int:%d", i);
+
+	// If another thread or threads have already incremented
+	// read that value.
+	void *rdata = NULL;
+	struct bu_cache_txn *txn = NULL;
+	size_t rsize = bu_cache_get(&rdata, keystr, c, &txn);
+	int rval = 0;
+	if (rsize != sizeof(int))
+	    bu_exit(1, "Failed to read int:%d - expected to read %zd bytes but read %zd\n", i, sizeof(int), rsize);
+	memcpy(&rval, rdata, sizeof(rval));
+	bu_cache_get_done(txn);
+
+	if (ctrl[i] != rval)
+	    bu_exit(1, "%d - failed to read correct int value - expected to read %zd bytes but read %zd\n", i, sizeof(int), rsize);
+
+	//std::cout << "thread " << std::this_thread::get_id() << " :" << i << "->" << rval << "\n";
+    }
+
+    std::cout << "thread " << std::this_thread::get_id() << " complete\n";
+}
+
+
+static void
+threading_test()
+{
+    int64_t start, elapsed;
+    fastf_t seconds;
+
+    const char *cfile = "thread_cache";
+
+    char cache_file[MAXPATHLEN] = {0};
+    bu_dir(cache_file, MAXPATHLEN, BU_DIR_CACHE, cfile, NULL);
+
+    bu_log("\n********************************************************************************\n");
+    bu_log("*** Threading test - writing to and reading from cache with multiple threads ***\n");
+    bu_log("********************************************************************************\n");
+
+    struct bu_cache *c = bu_cache_open(cfile, 1, 0);
+
+    // Thread count to use
+    int tcnt = 20;
+
+    // Number of items to write per thread.  We need to keep this reasonably
+    // small to keep the test short.
+    int item_cnt = 30;
+
+    // Test writing from multiple threads
+    std::vector<std::thread> wthreads;
+    start = bu_gettime();
+
+    // Kick off all the threads
+    for (int i = 0; i < tcnt; ++i)
+	wthreads.emplace_back(val_incr, c, item_cnt);
+
+    // Wait for all the threads to finish
+    for (std::thread& t : wthreads)
+        t.join();
+
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+    bu_log("Multi-threaded write test completed - wrote %d INTs from %d threads in %g seconds.\n", item_cnt, tcnt, seconds);
+
+
+    // Read the values from a single thread as a control
+    start = bu_gettime();
+    std::map<int, int> ivals;
+    struct bu_cache_txn *txn = NULL;
+    char keystr[BU_CACHE_KEY_MAXLEN];
+    for (int i = 0; i < item_cnt; i++) {
+	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "int:%d", i);
+	void *rdata = NULL;
+	size_t rsize = bu_cache_get(&rdata, keystr, c, &txn);
+	if (rsize != sizeof(int))
+	    bu_exit(1, "Failed to read int:%d - expected to read %zd bytes but read %zd\n", i, sizeof(int), rsize);
+	int rval = 0;
+	memcpy(&rval, rdata, sizeof(rval));
+	ivals[i] = rval;
+    }
+    std::cout << "Values read from single thread:\n";
+    std::map<int, int>::iterator m_it;
+    for (m_it = ivals.begin(); m_it != ivals.end(); ++m_it) {
+	std::cout << m_it->first << "->" << m_it->second << "\n";
+    }
+
+    bu_cache_get_done(txn);
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+    bu_log("Single threaded read test completed - read %d INTs in %g seconds.\n", item_cnt, seconds);
+
+
+    // Test reading from multiple threads
+    std::vector<std::thread> rthreads;
+    start = bu_gettime();
+
+    // Kick off all the threads
+    for (int i = 0; i < tcnt; ++i)
+	rthreads.emplace_back(val_read, c, item_cnt, std::ref(ivals));
+
+    // Wait for all the threads to finish
+    for (std::thread& t : rthreads)
+        t.join();
+
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+    bu_log("Multi-threaded read test completed - %g seconds (NOTE: most of this is random wait time).\n", seconds);
+
+    bu_cache_close(c);
+
+    if (!bu_file_exists(cache_file, NULL))
+	bu_exit(1, "Cache file %s not found\n", cache_file);
+
+    bu_cache_erase(cfile);
+
+    if (bu_file_exists(cache_file, NULL))
+	bu_exit(1, "Cache file %s not erased\n", cache_file);
+}
+
+
+
+
 int
 main(int argc, const char **argv)
 {
@@ -414,6 +598,9 @@ main(int argc, const char **argv)
 
     // Test behavior when data exceeds max cache database size
     limit_test();
+
+    // Test behavior when multiple threads are active
+    threading_test();
 
     // Final cleanup
     bu_dirclear(cache_dir);
