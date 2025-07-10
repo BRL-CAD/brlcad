@@ -1,4 +1,4 @@
-/*                           L O D . C
+/*                 C A C H E _ D R A W I N G . C P P
  * BRL-CAD
  *
  * Copyright (c) 2013-2025 United States Government as represented by
@@ -29,13 +29,20 @@
 #include "bv/lod.h"
 #include "raytrace.h"
 
+//#define LOD_TIMING
+//#define LOD_TIMING_PER_LEVEL
+
 static void
 do_lod(struct db_i *dbip, struct directory *dp)
 {
+#ifdef LOD_TIMING
     int64_t start, elapsed;
     fastf_t seconds;
-
     start = bu_gettime();
+#endif
+#ifdef LOD_TIMING_PER_LEVEL
+    int64_t lstart, lelapsed;
+#endif
 
     int key = db_cache_update(dbip, dp->d_namep, 0);
     if (key != BRLCAD_OK) {
@@ -53,24 +60,34 @@ do_lod(struct db_i *dbip, struct directory *dp)
     struct bv_scene_obj *s = bv_obj_get(NULL);
     s->draw_data = (void *)mlod;
 
+#ifdef LOD_TIMING
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     bu_log("%s: initialization time: %f seconds\n", dp->d_namep, seconds);
+#endif
 
     // We have our LoD container - now exercise it
+#ifdef LOD_TIMING
     start = bu_gettime();
+#endif
 
     for (int i = 0; i < 16; i++) {
-	int64_t lstart = bu_gettime();
+#ifdef LOD_TIMING_PER_LEVEL
+	lstart = bu_gettime();
+#endif
 	bv_lod_level(s, i, 0);
-	int64_t lelapsed = bu_gettime() - lstart;
+#ifdef LOD_TIMING_PER_LEVEL
+	lelapsed = bu_gettime() - lstart;
 	seconds = lelapsed / 1000000.0;
-	//bu_log("%s: level %d time: %f seconds\n", dp->d_namep, i, seconds);
+	bu_log("%s: level %d time: %f seconds\n", dp->d_namep, i, seconds);
+#endif
     }
 
-    elapsed = bu_gettime() - start;
-    seconds = elapsed / 1000000.0;
+#ifdef LOD_TIMING
+    //elapsed = bu_gettime() - start;
+    //seconds = elapsed / 1000000.0;
     //bu_log("%s: total LoD level setting time: %f sec\n", dp->d_namep, seconds);
+#endif
 
     bv_lod_mesh_put(mlod);
     bv_obj_put(s);
@@ -112,6 +129,15 @@ main(int argc, char *argv[])
     // Initialize cache
     db_cache_init(dbip, 1);
 
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+    bu_log("Total cache initialization time: %f seconds\n", seconds);
+
+    // TODO - validate properties in the cache
+
+    // Exercise the LoD structs in the cache (TODO - validate data somehow...)
+    start = bu_gettime();
+
     if (argc < 3) {
 	for (int i = 0; i < RT_DBNHASH; i++) {
 	    struct directory *dp;
@@ -134,7 +160,7 @@ main(int argc, char *argv[])
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
-    bu_log("Total cache initialization time: %f seconds\n", seconds);
+    bu_log("LoD validation time: %f seconds\n", seconds);
 
     db_close(dbip);
     bu_dirclear(cache_dir);
@@ -142,12 +168,12 @@ main(int argc, char *argv[])
     return 0;
 }
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s
