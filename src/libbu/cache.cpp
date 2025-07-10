@@ -250,12 +250,15 @@ bu_cache_get(void **data, const char *key, struct bu_cache *c, struct bu_cache_t
 }
 
 void
-bu_cache_get_done(struct bu_cache_txn *t)
+bu_cache_get_done(struct bu_cache_txn **t)
 {
     if (!t)
 	return;
 
-    mdb_txn_abort((MDB_txn *)t);
+    if (*t)
+	mdb_txn_abort((MDB_txn *)(*t));
+
+    *t = NULL;
 }
 
 size_t

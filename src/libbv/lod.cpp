@@ -876,8 +876,7 @@ POPState::cache_get(void **data, const char *component)
 void
 POPState::cache_done()
 {
-    bu_cache_get_done(txn);
-    txn = NULL;
+    bu_cache_get_done(&txn);
 }
 
 bool
@@ -1435,14 +1434,13 @@ bv_lod_clear(struct bu_cache *c, const char *name)
     struct bu_cache_txn *txn = NULL;
     if (bu_cache_get(&cdata, bu_vls_cstr(&keystr), c, &txn) != sizeof(unsigned long long)) {
 	bu_vls_free(&keystr);
-	bu_cache_get_done(txn);
+	bu_cache_get_done(&txn);
 	return;
     }
     // Found something - assign it to lhash
     unsigned long long lhash = 0;
     memcpy(&lhash, cdata, sizeof(lhash));
-    bu_cache_get_done(txn);
-    txn = NULL;
+    bu_cache_get_done(&txn);
 
     // Make lhash into a key and clear the actual LoD data
     bu_vls_sprintf(&keystr, "%llu", lhash);
