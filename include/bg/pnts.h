@@ -67,6 +67,35 @@ bg_pnts_aabb(point_t *min, point_t *max, const point_t *p, size_t num_pnts);
 BG_EXPORT extern int
 bg_pnts_obb(point_t *c, vect_t *v1, vect_t *v2, vect_t *v3, const point_t *p, size_t num_pnts);
 
+
+/**
+ * @brief
+ * Calculate explicit vertices for an oriented box.
+ *
+ * Note verts (supplied by caller) must have sufficient storage to hold 8 vertex points
+ *
+ * Returns BRLCAD_OK if successful, else BRLCAD_ERROR.
+ *
+ * @param[out] verts array of 8 XYZ coordinates defining the bbox
+ * @param[in] c XYZ coordinate defining the bbox center
+ * @param[out] v1 first extent vector of the bbox
+ * @param[out] v2 second extent vector of the bbox
+ * @param[out] v3 third extent vector of the bbox
+ *
+ * Output vertices are organized according to the librt arb8 convention:
+ * verts[0]: 0,0,0
+ * verts[1]: 0,1,0
+ * verts[2]: 0,1,1
+ * verts[3]: 0,0,1
+ * verts[4]: 1,0,0
+ * verts[5]: 1,1,0
+ * verts[6]: 1,1,1
+ * verts[7]: 1,0,1
+ */
+BG_EXPORT extern int
+bg_obb_pnts(point_t *verts, const point_t *c, const vect_t *v1, const vect_t *v2, const vect_t *v3);
+
+
 __END_DECLS
 
 #endif  /* BG_PNTS_H */
