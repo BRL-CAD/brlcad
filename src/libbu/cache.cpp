@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include <chrono>
 #include <cstring>
 #include <set>
 #include <string>
@@ -173,6 +174,35 @@ bu_cache_erase(const char *cache_db)
     bu_dirclear(cdb);
 }
 
+static
+MDB_txn *
+cache_get_read_txn(struct bu_cache *c, struct bu_cache_txn **t)
+{
+    if (UNLIKELY(!c))
+	return NULL;
+
+    MDB_txn *txn = (t && *t) ? (MDB_txn *)*t : NULL;
+    if (txn)
+	return txn;
+
+    int txn_ret = mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &txn);
+    if (txn_ret == MDB_MAP_RESIZED) {
+	mdb_env_set_mapsize(c->i->env, 0);
+	txn_ret = mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &txn);
+    }
+
+    while (mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &txn) == MDB_READERS_FULL) {
+	std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	txn_ret = mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &txn);
+    }
+
+    if (t)
+	*t = (struct bu_cache_txn *)txn;
+
+    mdb_dbi_open(txn, NULL, 0, &c->i->dbi);
+    return txn;
+}
+
 size_t
 bu_cache_get(void **data, const char *key, struct bu_cache *c, struct bu_cache_txn **t)
 {
@@ -186,13 +216,9 @@ bu_cache_get(void **data, const char *key, struct bu_cache *c, struct bu_cache_t
     MDB_val mdb_key;
     MDB_val mdb_data[2];
 
-    MDB_txn *txn = (t && *t) ? (MDB_txn *)*t : NULL;
-    if (!txn) {
-	mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &txn);
-	mdb_dbi_open(txn, NULL, 0, &c->i->dbi);
-	if (t)
-	    *t = (struct bu_cache_txn *)txn;
-    }
+    MDB_txn *txn = cache_get_read_txn(c, t);
+    if (!txn)
+	return 0;
     mdb_key.mv_size = (strlen(key)+1)*sizeof(char);
     mdb_key.mv_data = (void *)key;
     int rc = mdb_get(txn, c->i->dbi, &mdb_key, &mdb_data[0]);
@@ -259,14 +285,16 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
     mdb_data[1].mv_data = NULL;
     int rc = mdb_put(txn, c->i->write_dbi, &mdb_key, mdb_data, 0);
     mdb_txn_commit(txn);
+    txn = NULL;
     mdb_env_sync(c->i->env, 0);
     // If we were unsuccessful, return 0;
     if (rc)
 	return 0;
 
     // Make sure we can can read back what we wrote
-    mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &txn);
-    mdb_dbi_open(txn, NULL, 0, &c->i->write_dbi);
+    txn = cache_get_read_txn(c, NULL);
+    if (!txn)
+	return 0;
     rc = mdb_get(txn, c->i->write_dbi, &mdb_key, &mdb_data[0]);
     if (rc) {
 	mdb_txn_abort(txn);
@@ -317,9 +345,7 @@ bu_cache_keys(char ***keysv, struct bu_cache *c)
     MDB_val mdb_key, mdb_data;
     MDB_cursor *cursor;
 
-    MDB_txn *txn;
-    mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &txn);
-    mdb_dbi_open(txn, NULL, 0, &c->i->dbi);
+    MDB_txn *txn = cache_get_read_txn(c, NULL);
     int rc = mdb_cursor_open(txn, c->i->dbi, &cursor);
     if (rc) {
 	mdb_txn_abort(txn);
