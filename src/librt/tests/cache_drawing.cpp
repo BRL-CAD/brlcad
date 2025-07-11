@@ -22,16 +22,21 @@
 
 #include "vmath.h"
 #include "bu/app.h"
+#include "bu/cache.h"
+#include "bu/color.h"
 #include "bu/env.h"
+#include "bu/opt.h"
 #include "bu/time.h"
 #include "bu/units.h"
 #include "bg.h"
 #include "bv/lod.h"
 #include "raytrace.h"
+#include "../librt_private.h" // so we can inspect cache
 
 //#define LOD_TIMING
 //#define LOD_TIMING_PER_LEVEL
 
+// Exercise the LoD structs in the cache (TODO - validate data somehow...)
 static void
 do_lod(struct db_i *dbip, struct directory *dp)
 {
@@ -44,16 +49,25 @@ do_lod(struct db_i *dbip, struct directory *dp)
     int64_t lstart, lelapsed;
 #endif
 
-    int key = db_cache_update(dbip, dp->d_namep, 0);
-    if (key != BRLCAD_OK) {
-	bu_log("ERROR: %s - db_cache_mesh_update failed\n", dp->d_namep);
-	db_cache_update(dbip, dp->d_namep, 0);
+    // For the moment at least, only BoTs have cached LoD data
+    if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
 	return;
-    }
 
     struct bv_lod_mesh *mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
     if (!mlod) {
-	bu_log("ERROR: %s - db_cache_lod_mesh_get failed\n", dp->d_namep);
+	bu_log("Generating LoD for %s\n", dp->d_namep);
+	int key = db_cache_update(dbip, dp->d_namep, 0);
+	if (key != BRLCAD_OK) {
+	    bu_log("ERROR: %s - db_cache_mesh_update failed\n", dp->d_namep);
+	    db_cache_update(dbip, dp->d_namep, 0);
+	    return;
+	}
+    } else {
+	//bu_log("Found LoD: %s\n", dp->d_namep);
+    }
+    mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
+    if (!mlod) {
+	bu_log("ERROR: %s - no mesh LoD available\n", dp->d_namep);
 	return;
     }
 
@@ -93,7 +107,168 @@ do_lod(struct db_i *dbip, struct directory *dp)
     bv_obj_put(s);
 }
 
-int
+
+// For this step, we read the data from both the dp and the cache and compare it
+// (for attributes).  In the case of geometry data, we either recalculate it and
+// compare it (bboxes) or exercise it (LoD).
+static bool
+validate_dp(struct db_i *dbip, struct directory *dp)
+{
+    bool valid = true;
+    struct bu_cache_txn *txn = NULL;
+    void *cdata = NULL;
+    static char ckey[BU_CACHE_KEY_MAXLEN];
+
+    struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
+    if (db5_get_attributes(dbip, &c_avs, dp) < 0) {
+	bu_log("ERROR - unable to get attributes: %s\n", dp->d_namep);
+	return false;
+    }
+
+    unsigned long long user_hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+
+    // Region flag
+    const char *region_flag_str = bu_avs_get(&c_avs, "region");
+    int db_rflag = (region_flag_str && (BU_STR_EQUAL(region_flag_str, "R") || BU_STR_EQUAL(region_flag_str, "1"))) ? 1 : 0;
+    int cache_rflag = 0;
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_REGION_FLAG);
+    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn))
+	memcpy(&cache_rflag, cdata, sizeof(int));
+    if (db_rflag != cache_rflag) {
+	bu_log("Cache(%d) vs. db(%d) region flags mismatch for %s\n", cache_rflag, db_rflag, dp->d_namep);
+	valid = false;
+    }
+
+    // Region id.
+    int db_region_id = -1;
+    const char *region_id_str = bu_avs_get(&c_avs, "region_id");
+    if (region_id_str)
+	bu_opt_int(NULL, 1, &region_id_str, (void *)&db_region_id);
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_REGION_ID);
+    int cache_region_id = -1;
+    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn))
+	memcpy(&cache_region_id, cdata, sizeof(int));
+    if (db_region_id != cache_region_id) {
+	bu_log("Cache(%d) vs. db(%d) region_id mismatch for %s\n", cache_region_id, db_region_id, dp->d_namep);
+	valid = false;
+    }
+
+    // Inherit flag
+    int db_color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_INHERIT_FLAG);
+    int cache_color_inherit = 0;
+    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn))
+	memcpy(&cache_color_inherit, cdata, sizeof(int));
+    if (db_color_inherit != cache_color_inherit) {
+	bu_log("Cache(%d) vs. db(%d) color_inherit flag mismatch for %s\n", cache_color_inherit, db_color_inherit, dp->d_namep);
+	valid = false;
+    }
+
+    // Color
+    unsigned int db_colors = UINT_MAX; // Using UINT_MAX to indicate unset
+    const char *color_str = bu_avs_get(&c_avs, "color");
+    if (!color_str)
+	color_str = bu_avs_get(&c_avs, "rgb");
+    if (color_str) {
+	struct bu_color color;
+	bu_opt_color(NULL, 1, &color_str, (void *)&color);
+	// Serialize for cache
+	int r, g, b;
+	bu_color_to_rgb_ints(&color, &r, &g, &b);
+	db_colors = r + (g << 8) + (b << 16);
+    }
+    unsigned int cache_colors = UINT_MAX; // Using UINT_MAX to indicate unset
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_COLOR);
+    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn))
+	memcpy(&cache_colors, cdata, sizeof(int));
+    if (db_colors!= cache_colors) {
+	bu_log("Cache(%d) vs. db(%d) color_inherit flag mismatch for %s\n", cache_colors, db_colors, dp->d_namep);
+	valid = false;
+    }
+    bu_cache_get_done(&txn);
+    bu_avs_free(&c_avs);
+
+    // For bounding boxes we need the internal to validate
+    const struct bn_tol btol = BN_TOL_INIT_TOL;
+    double bdtol = BN_TOL_DIST;
+    struct rt_db_internal *ip;
+    BU_GET(ip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(ip);
+    int ret = rt_db_get_internal(ip, dp, dbip, NULL, &rt_uniresource);
+    if (ret < 0) {
+	BU_PUT(ip, struct rt_db_internal);
+	return false;
+    }
+
+    // Check Axis-Aligned Bounding Box, if primitive supports it
+    if (ip->idb_meth->ft_bbox) {
+	point_t db_aabb[2] = {VINIT_ZERO};
+	if (ip->idb_meth->ft_bbox(ip, &db_aabb[0], &db_aabb[1], &btol) < 0) {
+	    valid = false;
+	} else {
+	    point_t cache_aabb[2] = {VINIT_ZERO};
+	    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_AABB);
+	    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn))
+		memcpy(&cache_aabb, cdata, 2*sizeof(point_t));
+	    if (!VNEAR_EQUAL(db_aabb[0], cache_aabb[0], VUNITIZE_TOL) || !VNEAR_EQUAL(db_aabb[1], cache_aabb[1], VUNITIZE_TOL)) {
+		bu_log("Cache aabb vs. db aabb mismatch for %s\n", dp->d_namep);
+		bu_log("   db_aabb: (%0.15f %0.15f %0.15f) -> (%0.15f %0.15f %0.15f)\n", V3ARGS(db_aabb[0]), V3ARGS(db_aabb[1]));
+		bu_log("cache_aabb: (%0.15f %0.15f %0.15f) -> (%0.15f %0.15f %0.15f)\n", V3ARGS(cache_aabb[0]), V3ARGS(cache_aabb[1]));
+		valid = false;
+	    }
+	}
+    }
+
+    // Check Oriented Bounding Box, if primitive supports it
+    if (ip->idb_meth->ft_oriented_bbox) {
+	struct rt_arb_internal arb;
+	arb.magic = RT_ARB_INTERNAL_MAGIC;
+	if (ip->idb_meth->ft_oriented_bbox(&arb, ip, bdtol) < 0) {
+	    valid = false;
+	} else {
+	    point_t db_obb[4] = {VINIT_ZERO};
+	    bg_pnts_obb(&db_obb[0], &db_obb[1], &db_obb[2], &db_obb[3], (const point_t *)arb.pt, 8);
+
+	    point_t cache_obb[4] = {VINIT_ZERO};
+	    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_OBB);
+	    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn))
+		memcpy(&cache_obb, cdata, 4*sizeof(point_t));
+	    bool obbvalid = true;
+	    for (int j = 0; j < 4; j++) {
+		if (!VNEAR_EQUAL(db_obb[j], cache_obb[j], VUNITIZE_TOL)) {
+		    if (j > 0) {
+			// Check for flipped vector, which is equivalent for an OBB
+			vect_t vflip;
+			VMOVE(vflip, cache_obb[j]);
+			VSCALE(vflip, vflip, -1);
+			if (!VNEAR_EQUAL(db_obb[j], vflip, VUNITIZE_TOL))
+			    obbvalid = false;
+		    } else {
+			obbvalid = false;
+		    }
+		}
+	    }
+	    if (!obbvalid) {
+		bu_log("Cache obb vs. db obb mismatch for %s\n", dp->d_namep);
+		bu_log("   db_obb: (%0.15f %0.15f %0.15f) -> (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f)\n", V3ARGS(db_obb[0]), V3ARGS(db_obb[1]), V3ARGS(db_obb[2]), V3ARGS(db_obb[3]));
+		bu_log("cache_obb: (%0.15f %0.15f %0.15f) -> (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f)\n", V3ARGS(cache_obb[0]), V3ARGS(cache_obb[1]), V3ARGS(cache_obb[2]), V3ARGS(cache_obb[3]));
+		valid = false;
+	    }
+	}
+    }
+
+    bu_cache_get_done(&txn);
+    rt_db_free_internal(ip);
+    BU_PUT(ip, struct rt_db_internal);
+
+    // Level of Detail
+    do_lod(dbip, dp);
+
+    return valid;
+}
+
+
+    int
 main(int argc, char *argv[])
 {
     int64_t start, elapsed;
@@ -133,11 +308,15 @@ main(int argc, char *argv[])
     seconds = elapsed / 1000000.0;
     bu_log("Total cache initialization time: %f seconds\n", seconds);
 
-    // TODO - validate properties in the cache
-
-    // Exercise the LoD structs in the cache (TODO - validate data somehow...)
+    // Validate properties in the cache
     start = bu_gettime();
-
+#if 0
+    char **keys;
+    int kcnt = bu_cache_keys(&keys, dbip->i->c);
+    for (int i = 0; i < kcnt; i++) {
+	bu_log("%s\n", keys[i]);
+    }
+#endif
     if (argc < 3) {
 	for (int i = 0; i < RT_DBNHASH; i++) {
 	    struct directory *dp;
@@ -146,21 +325,20 @@ main(int argc, char *argv[])
 		    continue;
 		if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
 		    continue;
-		do_lod(dbip, dp);
+		validate_dp(dbip, dp);
 	    }
 	}
     } else {
-
 	struct directory *dp = db_lookup(dbip, argv[2], LOOKUP_QUIET);
 	if (dp == RT_DIR_NULL) {
 	    bu_exit(1, "ERROR: Unable to look up object %s\n", argv[2]);
 	}
-	do_lod(dbip, dp);
+	validate_dp(dbip, dp);
     }
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
-    bu_log("LoD validation time: %f seconds\n", seconds);
+    bu_log("Validation time: %f seconds\n", seconds);
 
     db_close(dbip);
     bu_dirclear(cache_dir);
