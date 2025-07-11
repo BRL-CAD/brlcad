@@ -40,6 +40,7 @@
 #include "bu/app.h"
 #include "bu/cache.h"
 #include "bu/file.h"
+#include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/path.h"
@@ -277,8 +278,13 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
 
     // Write out key/value to LMDB database, where the key is the hash
     // and the value is the serialized LoD data
-    MDB_txn *txn;
-    mdb_txn_begin(c->i->env, NULL, 0, &txn);
+    MDB_txn *txn = NULL;
+    int tret = mdb_txn_begin(c->i->env, NULL, 0, &txn);
+    while (tret) {
+	bu_log("bu_cache_write: couldn't begin txn: %d\n", tret);
+	std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	tret = mdb_txn_begin(c->i->env, NULL, 0, &txn);
+    }
     mdb_dbi_open(txn, NULL, 0, &c->i->write_dbi);
     mdb_key.mv_size = (strlen(key)+1)*sizeof(char);
     mdb_key.mv_data = (void *)key;

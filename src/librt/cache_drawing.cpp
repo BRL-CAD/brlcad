@@ -107,10 +107,13 @@ cache_update_attrs(struct bu_cache *c, const char *name, unsigned long long hash
     if (stime && cache_timestamp(tkey, c) > stime)
 	return BRLCAD_ERROR;
 
+    bu_semaphore_acquire(BU_SEM_CACHE);
     if (!bu_cache_write(&rflag, sizeof(int), ckey, c)) {
+	bu_semaphore_release(BU_SEM_CACHE);
 	bu_log("%s: region_flag cache write failure\n", name);
 	return BRLCAD_ERROR;
     }
+    bu_semaphore_release(BU_SEM_CACHE);
 
     // Region id.  For drawing purposes this needs to be a number.
     int region_id = -1;
@@ -124,10 +127,13 @@ cache_update_attrs(struct bu_cache *c, const char *name, unsigned long long hash
     if (stime && cache_timestamp(tkey, c) > stime)
 	return BRLCAD_ERROR;
 
+    bu_semaphore_acquire(BU_SEM_CACHE);
     if (!bu_cache_write(&region_id, sizeof(int), ckey, c)) {
+	bu_semaphore_release(BU_SEM_CACHE);
 	bu_log("%s: region_id cache write failure\n", name);
 	return BRLCAD_ERROR;
     }
+    bu_semaphore_release(BU_SEM_CACHE);
 
     // Inherit flag
     int color_inherit = (BU_STR_EQUAL(bu_avs_get(c_avs, "inherit"), "1")) ? 1 : 0;
@@ -138,10 +144,13 @@ cache_update_attrs(struct bu_cache *c, const char *name, unsigned long long hash
     if (stime && cache_timestamp(tkey, c) > stime)
 	return BRLCAD_ERROR;
 
+    bu_semaphore_acquire(BU_SEM_CACHE);
     if (!bu_cache_write(&color_inherit, sizeof(int), ckey, c)) {
+	bu_semaphore_release(BU_SEM_CACHE);
 	bu_log("%s: color_inherit cache write failure\n", name);
 	return BRLCAD_ERROR;
     }
+    bu_semaphore_release(BU_SEM_CACHE);
 
     // Color
     unsigned int colors = UINT_MAX; // Using UINT_MAX to indicate unset
@@ -163,10 +172,13 @@ cache_update_attrs(struct bu_cache *c, const char *name, unsigned long long hash
     if (stime && cache_timestamp(tkey, c) > stime)
 	return BRLCAD_ERROR;
 
+    bu_semaphore_acquire(BU_SEM_CACHE);
     if (!bu_cache_write(&colors, sizeof(unsigned int), ckey, c)) {
+	bu_semaphore_release(BU_SEM_CACHE);
 	bu_log("%s: color cache write failure\n", name);
 	return BRLCAD_ERROR;
     }
+    bu_semaphore_release(BU_SEM_CACHE);
 
     return BRLCAD_OK;
 }
@@ -188,8 +200,8 @@ cache_mesh_update(struct bu_cache *c, struct rt_db_internal *ip, const char *nam
     bu_semaphore_acquire(BU_SEM_CACHE);
     int cret = bv_lod_mesh_cache(c, name, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0.66);
     if (!cret) {
-	bu_log("Error processing %s - unable to generate LoD data\n", name);
 	bu_semaphore_release(BU_SEM_CACHE);
+	bu_log("Error processing %s - unable to generate LoD data\n", name);
 	return BRLCAD_ERROR;
     }
     bu_semaphore_release(BU_SEM_CACHE);
@@ -230,9 +242,19 @@ aabb_calc(std::shared_ptr<ProcessDrawData> p)
     struct rt_db_internal *i = NULL;
     char ckey[BU_CACHE_KEY_MAXLEN];
     char tkey[BU_CACHE_KEY_MAXLEN];
-    while (!p.get()->q_aabb.empty() || !p.get()->init_done) {
-	if (p.get()->q_aabb.empty()) {
+
+    // Check what's in the pipeline
+    p.get()->m_aabb.lock();
+    bool aabb_empty = p.get()->q_aabb.empty();
+    p.get()->m_aabb.unlock();
+
+    while (!aabb_empty || !p.get()->init_done) {
+	if (aabb_empty) {
 	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	    // Check what's in the pipeline
+	    p.get()->m_aabb.lock();
+	    aabb_empty = p.get()->q_aabb.empty();
+	    p.get()->m_aabb.unlock();
 	    continue;
 	}
 	p.get()->m_aabb.lock();
@@ -245,9 +267,19 @@ aabb_calc(std::shared_ptr<ProcessDrawData> p)
 	int64_t ctime = cache_timestamp(tkey, p.get()->dbip->i->c);
 
 	if (ctime > gd->stime || p.get()->shutdown) {
+	    if (ctime > gd->stime)
+		bu_log("Newer timestamp found, aborting aabb init\n");
+	    if (p.get()->shutdown)
+		bu_log("Shutting down, aborting aabb init\n");
 	    delete gd;
 	    rt_db_free_internal(i);
 	    BU_PUT(i, struct rt_db_internal);
+
+	    // Check what's in the pipeline
+	    p.get()->m_aabb.lock();
+	    aabb_empty = p.get()->q_aabb.empty();
+	    p.get()->m_aabb.unlock();
+
 	    continue;
 	}
 
@@ -257,9 +289,13 @@ aabb_calc(std::shared_ptr<ProcessDrawData> p)
 	    point_t bb[2];
 	    if (!(i->idb_meth->ft_bbox(i, &bb[0], &bb[1], &btol) < 0)) {
 		snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", gd->user_hash, CACHE_AABB);
+		bu_semaphore_acquire(BU_SEM_CACHE);
 		if (!bu_cache_write(&bb, 2*sizeof(point_t), ckey, p.get()->dbip->i->c)) {
 		    bu_log("%s: aabb cache write failure\n", gd->name);
 		}
+		bu_semaphore_release(BU_SEM_CACHE);
+	    } else {
+		bu_log("%s: aabb calc failure\n", gd->name);
 	    }
 	}
 
@@ -267,6 +303,11 @@ aabb_calc(std::shared_ptr<ProcessDrawData> p)
 	p.get()->m_obb.lock();
 	p.get()->q_obb.push(i);
 	p.get()->m_obb.unlock();
+
+	// Check what's in the pipeline
+	p.get()->m_aabb.lock();
+	aabb_empty = p.get()->q_aabb.empty();
+	p.get()->m_aabb.unlock();
     }
 }
 
@@ -276,9 +317,27 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
     struct rt_db_internal *i = NULL;
     char ckey[BU_CACHE_KEY_MAXLEN];
     char tkey[BU_CACHE_KEY_MAXLEN];
-    while (!p.get()->q_obb.empty() || !p.get()->init_done) {
-	if (p.get()->q_obb.empty()) {
+
+    // Check what's in the pipeline
+    p.get()->m_aabb.lock();
+    bool aabb_empty = p.get()->q_aabb.empty();
+    p.get()->m_aabb.unlock();
+    p.get()->m_obb.lock();
+    bool obb_empty = p.get()->q_obb.empty();
+    p.get()->m_obb.unlock();
+
+    while (!aabb_empty || !obb_empty || !p.get()->init_done) {
+	if (obb_empty) {
 	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+	    // Check what's in the pipeline
+	    p.get()->m_aabb.lock();
+	    aabb_empty = p.get()->q_aabb.empty();
+	    p.get()->m_aabb.unlock();
+	    p.get()->m_obb.lock();
+	    obb_empty = p.get()->q_obb.empty();
+	    p.get()->m_obb.unlock();
+
 	    continue;
 	}
 	p.get()->m_obb.lock();
@@ -291,9 +350,20 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
 	int64_t ctime = cache_timestamp(tkey, p.get()->dbip->i->c);
 
 	if (ctime > gd->stime || p.get()->shutdown) {
+	    if (ctime > gd->stime)
+		bu_log("Newer timestamp found, aborting obb init\n");
+	    if (p.get()->shutdown)
+		bu_log("Shutting down, aborting obb init\n");
 	    delete gd;
 	    rt_db_free_internal(i);
 	    BU_PUT(i, struct rt_db_internal);
+
+	    // Check what's in the pipeline.  Since we're shutting down,
+	    // only the local queue is of concern.
+	    p.get()->m_obb.lock();
+	    obb_empty = p.get()->q_obb.empty();
+	    p.get()->m_obb.unlock();
+
 	    continue;
 	}
 
@@ -305,10 +375,25 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
 	    if (!(i->idb_meth->ft_oriented_bbox(&arb, i, btol) < 0)) {
 		vect_t obb[4] = {VINIT_ZERO};
 		bg_pnts_obb(&obb[0], &obb[1], &obb[2], &obb[3], (const point_t *)arb.pt, 8);
-		snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", gd->user_hash, CACHE_OBB);
-		if (!bu_cache_write(&obb, 4*sizeof(vect_t), ckey, p.get()->dbip->i->c)) {
-		    bu_log("%s: obb cache write failure\n", gd->name);
+		bool cfailure = false;
+		for (int k = 0; k < 4; k++) {
+		    if (VNEAR_ZERO(obb[k], VUNITIZE_TOL)) {
+			bu_log("%s: obb calculation failure\n", gd->name);
+			cfailure = true;
+		    }
 		}
+		if (!cfailure){
+		    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", gd->user_hash, CACHE_OBB);
+		    bu_semaphore_acquire(BU_SEM_CACHE);
+		    if (!bu_cache_write(&obb, 4*sizeof(vect_t), ckey, p.get()->dbip->i->c)) {
+			bu_log("%s: obb cache write failure\n", gd->name);
+		    }
+		    bu_semaphore_release(BU_SEM_CACHE);
+		} else {
+		    bg_pnts_obb(&obb[0], &obb[1], &obb[2], &obb[3], (const point_t *)arb.pt, 8);
+		}
+	    } else {
+		bu_log("%s: obb calc failure\n", gd->name);
 	    }
 	}
 
@@ -316,6 +401,14 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
 	p.get()->m_lod.lock();
 	p.get()->q_lod.push(i);
 	p.get()->m_lod.unlock();
+
+	// Check what's in the pipeline
+	p.get()->m_aabb.lock();
+	aabb_empty = p.get()->q_aabb.empty();
+	p.get()->m_aabb.unlock();
+	p.get()->m_obb.lock();
+	obb_empty = p.get()->q_obb.empty();
+	p.get()->m_obb.unlock();
     }
 }
 
@@ -324,9 +417,33 @@ lod_calc(std::shared_ptr<ProcessDrawData> p)
 {
     struct rt_db_internal *i = NULL;
     char tkey[BU_CACHE_KEY_MAXLEN];
-    while (!p.get()->q_lod.empty() || !p.get()->init_done) {
-	if (p.get()->q_lod.empty()) {
+
+    // Check what's in the pipeline
+    p.get()->m_aabb.lock();
+    bool aabb_empty = p.get()->q_aabb.empty();
+    p.get()->m_aabb.unlock();
+    p.get()->m_obb.lock();
+    bool obb_empty = p.get()->q_obb.empty();
+    p.get()->m_obb.unlock();
+    p.get()->m_lod.lock();
+    bool lod_empty = p.get()->q_lod.empty();
+    p.get()->m_lod.unlock();
+
+    while (!aabb_empty || !obb_empty || !lod_empty || !p.get()->init_done) {
+	if (lod_empty) {
 	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+	    // Check what's in the pipeline
+	    p.get()->m_aabb.lock();
+	    aabb_empty = p.get()->q_aabb.empty();
+	    p.get()->m_aabb.unlock();
+	    p.get()->m_obb.lock();
+	    obb_empty = p.get()->q_obb.empty();
+	    p.get()->m_obb.unlock();
+	    p.get()->m_lod.lock();
+	    lod_empty = p.get()->q_lod.empty();
+	    p.get()->m_lod.unlock();
+
 	    continue;
 	}
 	p.get()->m_lod.lock();
@@ -339,12 +456,23 @@ lod_calc(std::shared_ptr<ProcessDrawData> p)
 	int64_t ctime = cache_timestamp(tkey, p.get()->dbip->i->c);
 
 	if (ctime > gd->stime || p.get()->shutdown) {
+	    if (ctime > gd->stime)
+		bu_log("Newer timestamp found, aborting LoD init\n");
+	    if (p.get()->shutdown)
+		bu_log("Shutting down, aborting Lod init\n");
 	    delete gd;
 	    rt_db_free_internal(i);
 	    BU_PUT(i, struct rt_db_internal);
 	    // We didn't actually complete the processing of i, so don't increment
 	    if (!p.get()->shutdown)
 		p.get()->dbip->i->p_completed++;
+
+	    // Check what's in the pipeline.  Since we're shutting down,
+	    // only the local queue is of concern.
+	    p.get()->m_lod.lock();
+	    lod_empty = p.get()->q_lod.empty();
+	    p.get()->m_lod.unlock();
+
 	    continue;
 	}
 
@@ -356,6 +484,18 @@ lod_calc(std::shared_ptr<ProcessDrawData> p)
 	rt_db_free_internal(i);
 	BU_PUT(i, struct rt_db_internal);
 	p.get()->dbip->i->p_completed++;
+
+	// Check what's in the pipeline
+	p.get()->m_aabb.lock();
+	aabb_empty = p.get()->q_aabb.empty();
+	p.get()->m_aabb.unlock();
+	p.get()->m_obb.lock();
+	obb_empty = p.get()->q_obb.empty();
+	p.get()->m_obb.unlock();
+	p.get()->m_lod.lock();
+	lod_empty = p.get()->q_lod.empty();
+	p.get()->m_lod.unlock();
+
     }
 }
 
@@ -477,7 +617,6 @@ db_cache_init(struct db_i *dbip, int verbose)
 	}
 
 	// Commence processing.
-	bu_semaphore_acquire(BU_SEM_CACHE);
 	int64_t dp_start = bu_gettime();
 
 	if (verbose > 1) {
@@ -493,16 +632,19 @@ db_cache_init(struct db_i *dbip, int verbose)
 
 	// Read the attributes from the database object
 	struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
+	bu_semaphore_acquire(BU_SEM_CACHE);
 	if (db5_get_attributes(dbip, &c_avs, dp) < 0) {
 	    bu_semaphore_release(BU_SEM_CACHE);
 	    delete gd;
 	    continue;
 	}
+	bu_semaphore_release(BU_SEM_CACHE);
 
 	// Read the geometry from the database object
 	struct rt_db_internal *ip;
 	BU_GET(ip, struct rt_db_internal);
 	RT_DB_INTERNAL_INIT(ip);
+	bu_semaphore_acquire(BU_SEM_CACHE);
 	int ret = rt_db_get_internal(ip, dp, dbip, NULL, &rt_uniresource);
 	if (ret < 0) {
 	    bu_semaphore_release(BU_SEM_CACHE);
@@ -510,9 +652,9 @@ db_cache_init(struct db_i *dbip, int verbose)
 	    delete gd;
 	    continue;
 	}
+	bu_semaphore_release(BU_SEM_CACHE);
 	if (ip->idb_minor_type != dp->d_minor_type) {
 	    bu_log("Error processing %s - mismatch between d_minor_type (%c) and idb_minor_type (%c)\n", dp->d_namep, dp->d_minor_type, ip->idb_minor_type);
-	    bu_semaphore_release(BU_SEM_CACHE);
 	    rt_db_free_internal(ip);
 	    BU_PUT(ip, struct rt_db_internal);
 	    continue;
@@ -528,7 +670,6 @@ db_cache_init(struct db_i *dbip, int verbose)
 	    dp = (to_init.size() > 0) ? *to_init.begin() : NULL;
 	    if (dp)
 		to_init.erase(dp);
-	    bu_semaphore_release(BU_SEM_CACHE);
 	    bu_avs_free(&c_avs);
 	    rt_db_free_internal(ip);
 	    BU_PUT(ip, struct rt_db_internal);
@@ -537,8 +678,10 @@ db_cache_init(struct db_i *dbip, int verbose)
 	}
 
 	// First order of business is to write the timestamp
+	bu_semaphore_acquire(BU_SEM_CACHE);
 	if (!bu_cache_write(&dp_start, sizeof(int64_t), ckey, c)) {
 	    bu_log("%s: timestamp cache write failure\n", dp->d_namep);
+	    bu_cache_write(&dp_start, sizeof(int64_t), ckey, c);
 	    bu_semaphore_release(BU_SEM_CACHE);
 	    bu_avs_free(&c_avs);
 	    rt_db_free_internal(ip);
@@ -546,6 +689,7 @@ db_cache_init(struct db_i *dbip, int verbose)
 	    delete gd;
 	    continue;
 	}
+	bu_semaphore_release(BU_SEM_CACHE);
 
 	// Get the properties we need from attributes
 	if (cache_update_attrs(c, gd->name, user_key, &c_avs, gd->stime) != BRLCAD_OK) {
@@ -564,6 +708,10 @@ db_cache_init(struct db_i *dbip, int verbose)
 	dbip->i->p.get()->q_aabb.push(ip);
 	dbip->i->p.get()->m_aabb.unlock();
 
+	bu_semaphore_acquire(BU_SEM_CACHE);
+	dp = (to_init.size() > 0) ? *to_init.begin() : NULL;
+	if (dp)
+	    to_init.erase(dp);
 	bu_semaphore_release(BU_SEM_CACHE);
 
 	// If the user has requested it, let them know what is happening
@@ -574,11 +722,6 @@ db_cache_init(struct db_i *dbip, int verbose)
 	    bu_log("Drawing cache processing (%g seconds): completed %zd of %zd BoTs\n", seconds, completed, target_cnt);
 	}
 
-	bu_semaphore_acquire(BU_SEM_CACHE);
-	dp = (to_init.size() > 0) ? *to_init.begin() : NULL;
-	if (dp)
-	    to_init.erase(dp);
-	bu_semaphore_release(BU_SEM_CACHE);
     }
 
     bu_vls_free(&keystr);
@@ -624,8 +767,10 @@ db_cache_update(struct db_i *dbip, const char *name, int attr_only)
 {
     static char ckey[BU_CACHE_KEY_MAXLEN];
 
-    if (!dbip || !dbip->i || !dbip->i->c)
+    if (!dbip || !dbip->i || !dbip->i->c) {
+	bu_log("db_cache_update: invalid dbip input\n");
 	return BRLCAD_ERROR;
+    }
 
     struct bu_cache *c = dbip->i->c;
 
@@ -635,17 +780,16 @@ db_cache_update(struct db_i *dbip, const char *name, int attr_only)
 
     // If we have existing data, clear it.
     // TODO - do this right...
-    bu_cache_clear(name, c);
+    //bu_cache_clear(name, c);
 
     // Do the lookup
-    struct directory *dp = db_lookup(dbip, name, LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL)
+    struct directory *dp = db_lookup(dbip, name, LOOKUP_NOISY);
+    if (dp == RT_DIR_NULL) {
+	bu_log("db_cache_update: db_lookup failed for %s\n", name);
 	return BRLCAD_ERROR;
+    }
 
-    // TODO - port dcache.cpp and dbi2_state.cpp setup here.  Probably will
-    // go ahead and do the bounding box calc too, which is the primary
-    // candidate that could motivate doing the draw init in a separate thread
-    // like the mesh LoD init.
+    // Get the name hash
     unsigned long long hash = bu_data_hash(name, strlen(name)*sizeof(char));
 
     // First order of business is to write the timestamp.  Unlike
@@ -653,17 +797,23 @@ db_cache_update(struct db_i *dbip, const char *name, int attr_only)
     // most current info.
     int64_t dp_start = bu_gettime();
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_TIMESTAMP);
+    bu_semaphore_acquire(BU_SEM_CACHE);
     if (!bu_cache_write(&dp_start, sizeof(int64_t), ckey, c)) {
+	bu_semaphore_release(BU_SEM_CACHE);
 	bu_log("%s: timestamp cache write failure\n", dp->d_namep);
 	return BRLCAD_ERROR;
     }
+    bu_semaphore_release(BU_SEM_CACHE);
 
     // Read the attributes from the database object
     struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
-    if (db5_get_attributes(dbip, &c_avs, dp) < 0)
+    if (db5_get_attributes(dbip, &c_avs, dp) < 0) {
+	bu_log("%s: avs lookup failure\n", dp->d_namep);
 	return BRLCAD_ERROR;
+    }
     if (cache_update_attrs(dbip->i->c, name, hash, &c_avs, 0) != BRLCAD_OK) {
 	bu_avs_free(&c_avs);
+	bu_log("%s: cache_update_attrs failure\n", dp->d_namep);
 	return BRLCAD_ERROR;
     }
     bu_avs_free(&c_avs);
@@ -679,8 +829,10 @@ db_cache_update(struct db_i *dbip, const char *name, int attr_only)
     BU_GET(ip, struct rt_db_internal);
     RT_DB_INTERNAL_INIT(ip);
     int ret = rt_db_get_internal(ip, dp, dbip, NULL, &rt_uniresource);
-    if (ret < 0)
+    if (ret < 0) {
+	bu_log("db_cache_update: rt_get_internal failed for %s\n", name);
 	return BRLCAD_ERROR;
+    }
     if (ip->idb_minor_type != dp->d_minor_type) {
 	bu_log("Error processing %s - mismatch between d_minor_type (%c) and idb_minor_type (%c)\n", dp->d_namep, dp->d_minor_type, ip->idb_minor_type);
 	rt_db_free_internal(ip);
@@ -688,7 +840,48 @@ db_cache_update(struct db_i *dbip, const char *name, int attr_only)
 	return BRLCAD_ERROR;
     }
 
-    cache_mesh_update(dbip->i->c, ip, dp->d_namep);
+    // Do aabb calc
+    if (ip->idb_meth->ft_bbox) {
+	const struct bn_tol btol = BN_TOL_INIT_TOL;
+	point_t bb[2];
+	if (!(ip->idb_meth->ft_bbox(ip, &bb[0], &bb[1], &btol) < 0)) {
+	    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_AABB);
+	    bu_semaphore_acquire(BU_SEM_CACHE);
+	    if (!bu_cache_write(&bb, 2*sizeof(point_t), ckey, c)) {
+		bu_log("%s: aabb cache write failure\n", name);
+	    }
+	    bu_semaphore_release(BU_SEM_CACHE);
+	}
+    }
+
+    // Do obb calc
+    if (ip->idb_meth->ft_oriented_bbox) {
+	double btol = BN_TOL_DIST;
+	struct rt_arb_internal arb;
+	arb.magic = RT_ARB_INTERNAL_MAGIC;
+	if (!(ip->idb_meth->ft_oriented_bbox(&arb, ip, btol) < 0)) {
+	    vect_t obb[4] = {VINIT_ZERO};
+	    bg_pnts_obb(&obb[0], &obb[1], &obb[2], &obb[3], (const point_t *)arb.pt, 8);
+	    bool cfailure = false;
+	    for (int k = 0; k < 4; k++) {
+		if (VNEAR_ZERO(obb[k], VUNITIZE_TOL)) {
+		    bu_log("%s: obb calculation failure\n", name);
+		    cfailure = true;
+		}
+	    }
+	    if (!cfailure){
+		snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_OBB);
+		bu_semaphore_acquire(BU_SEM_CACHE);
+		if (!bu_cache_write(&obb, 4*sizeof(vect_t), ckey, c)) {
+		    bu_log("%s: obb cache write failure\n", name);
+		}
+		bu_semaphore_release(BU_SEM_CACHE);
+	    }
+	}
+    }
+
+    if (cache_mesh_update(dbip->i->c, ip, dp->d_namep) != BRLCAD_OK)
+	bu_log("%s: cache_mesh_update failure\n", dp->d_namep);
 
     rt_db_free_internal(ip);
     BU_PUT(ip, struct rt_db_internal);
