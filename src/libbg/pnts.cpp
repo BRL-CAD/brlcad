@@ -103,11 +103,14 @@ bg_pnts_obb(point_t *c, vect_t *v1, vect_t *v2, vect_t *v3,
     // Success - convert GTE values to vmath types
     VSET(*c, gte_bb.center[0], gte_bb.center[1], gte_bb.center[2]);
     VSET(*v1, gte_bb.axis[0][0], gte_bb.axis[0][1], gte_bb.axis[0][2]);
-    VSCALE(*v1, *v1, gte_bb.extent[0]);
+    if (!NEAR_ZERO(gte_bb.extent[0], VUNITIZE_TOL))
+	VSCALE(*v1, *v1, gte_bb.extent[0]);
     VSET(*v2, gte_bb.axis[1][0], gte_bb.axis[1][1], gte_bb.axis[1][2]);
-    VSCALE(*v2, *v2, gte_bb.extent[1]);
+    if (!NEAR_ZERO(gte_bb.extent[1], VUNITIZE_TOL))
+	VSCALE(*v2, *v2, gte_bb.extent[1]);
     VSET(*v3, gte_bb.axis[2][0], gte_bb.axis[2][1], gte_bb.axis[2][2]);
-    VSCALE(*v3, *v3, gte_bb.extent[2]);
+    if (!NEAR_ZERO(gte_bb.extent[2], VUNITIZE_TOL))
+	VSCALE(*v3, *v3, gte_bb.extent[2]);
 
 #if 0
     // while we have the info, validate that bg_obb_pnts is doing the right
