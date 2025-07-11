@@ -74,6 +74,13 @@
 __BEGIN_DECLS
 
 #ifdef __cplusplus
+
+// TODO - I think I need to be using std::condition_variable
+// and a few other things here to do this correctly - raw
+// mutexes probably aren't going to cut it.
+//
+// https://en.cppreference.com/w/cpp/thread/condition_variable.html
+
 class ProcessDrawData {
     public:
         std::atomic<bool> init_done = false;
