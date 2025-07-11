@@ -80,7 +80,9 @@ __BEGIN_DECLS
 // mutexes probably aren't going to cut it.
 //
 // https://en.cppreference.com/w/cpp/thread/condition_variable.html
-
+//
+// Even better might be to see if https://github.com/cameron314/concurrentqueue
+// would be a good fit for this.
 class ProcessDrawData {
     public:
         std::atomic<bool> init_done = false;
