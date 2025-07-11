@@ -182,6 +182,7 @@ cache_mesh_update(struct bu_cache *c, struct rt_db_internal *ip, const char *nam
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
+    //bu_log("Caching LoD for %s\n", name);
 
     // Generate and write new data
     bu_semaphore_acquire(BU_SEM_CACHE);
@@ -227,6 +228,8 @@ void
 aabb_calc(std::shared_ptr<ProcessDrawData> p)
 {
     struct rt_db_internal *i = NULL;
+    char ckey[BU_CACHE_KEY_MAXLEN];
+    char tkey[BU_CACHE_KEY_MAXLEN];
     while (!p.get()->q_aabb.empty() || !p.get()->init_done) {
 	if (p.get()->q_aabb.empty()) {
 	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -238,22 +241,25 @@ aabb_calc(std::shared_ptr<ProcessDrawData> p)
 	p.get()->m_aabb.unlock();
 
 	GeomData *gd = (GeomData *)i->idb_uptr;
-	char tkey[BU_CACHE_KEY_MAXLEN];
 	snprintf(tkey, BU_CACHE_KEY_MAXLEN, "%llu:%s", gd->user_hash, CACHE_TIMESTAMP);
 	int64_t ctime = cache_timestamp(tkey, p.get()->dbip->i->c);
 
 	if (ctime > gd->stime || p.get()->shutdown) {
+	    delete gd;
 	    rt_db_free_internal(i);
 	    BU_PUT(i, struct rt_db_internal);
 	    continue;
 	}
 
-	// TODO - do aabb calc
+	// Do aabb calc
 	if (i->idb_meth->ft_bbox) {
 	    const struct bn_tol btol = BN_TOL_INIT_TOL;
-	    point_t bmin, bmax;
-	    if (!(i->idb_meth->ft_bbox(i, &bmin, &bmax, &btol) < 0)) {
-		bu_log("TODO - write to cache\n");
+	    point_t bb[2];
+	    if (!(i->idb_meth->ft_bbox(i, &bb[0], &bb[1], &btol) < 0)) {
+		snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", gd->user_hash, CACHE_AABB);
+		if (!bu_cache_write(&bb, 2*sizeof(point_t), ckey, p.get()->dbip->i->c)) {
+		    bu_log("%s: aabb cache write failure\n", gd->name);
+		}
 	    }
 	}
 
@@ -268,6 +274,8 @@ void
 obb_calc(std::shared_ptr<ProcessDrawData> p)
 {
     struct rt_db_internal *i = NULL;
+    char ckey[BU_CACHE_KEY_MAXLEN];
+    char tkey[BU_CACHE_KEY_MAXLEN];
     while (!p.get()->q_obb.empty() || !p.get()->init_done) {
 	if (p.get()->q_obb.empty()) {
 	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -279,28 +287,28 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
 	p.get()->m_obb.unlock();
 
 	GeomData *gd = (GeomData *)i->idb_uptr;
-	char tkey[BU_CACHE_KEY_MAXLEN];
 	snprintf(tkey, BU_CACHE_KEY_MAXLEN, "%llu:%s", gd->user_hash, CACHE_TIMESTAMP);
 	int64_t ctime = cache_timestamp(tkey, p.get()->dbip->i->c);
 
 	if (ctime > gd->stime || p.get()->shutdown) {
+	    delete gd;
 	    rt_db_free_internal(i);
 	    BU_PUT(i, struct rt_db_internal);
 	    continue;
 	}
 
-	// TODO - do obb calc
+	// Do obb calc
 	if (i->idb_meth->ft_oriented_bbox) {
 	    double btol = BN_TOL_DIST;
 	    struct rt_arb_internal arb;
 	    arb.magic = RT_ARB_INTERNAL_MAGIC;
 	    if (!(i->idb_meth->ft_oriented_bbox(&arb, i, btol) < 0)) {
-		point_t c = VINIT_ZERO;
-		vect_t v1 = VINIT_ZERO;
-		vect_t v2 = VINIT_ZERO;
-		vect_t v3 = VINIT_ZERO;
-		bg_pnts_obb(&c, &v1, &v2, &v3, (const point_t *)arb.pt, 8);
-		bu_log("TODO - write to cache\n");
+		vect_t obb[4] = {VINIT_ZERO};
+		bg_pnts_obb(&obb[0], &obb[1], &obb[2], &obb[3], (const point_t *)arb.pt, 8);
+		snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", gd->user_hash, CACHE_OBB);
+		if (!bu_cache_write(&obb, 4*sizeof(vect_t), ckey, p.get()->dbip->i->c)) {
+		    bu_log("%s: obb cache write failure\n", gd->name);
+		}
 	    }
 	}
 
@@ -315,6 +323,7 @@ void
 lod_calc(std::shared_ptr<ProcessDrawData> p)
 {
     struct rt_db_internal *i = NULL;
+    char tkey[BU_CACHE_KEY_MAXLEN];
     while (!p.get()->q_lod.empty() || !p.get()->init_done) {
 	if (p.get()->q_lod.empty()) {
 	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -326,13 +335,14 @@ lod_calc(std::shared_ptr<ProcessDrawData> p)
 	p.get()->m_lod.unlock();
 
 	GeomData *gd = (GeomData *)i->idb_uptr;
-	char tkey[BU_CACHE_KEY_MAXLEN];
 	snprintf(tkey, BU_CACHE_KEY_MAXLEN, "%llu:%s", gd->user_hash, CACHE_TIMESTAMP);
 	int64_t ctime = cache_timestamp(tkey, p.get()->dbip->i->c);
 
-	if (ctime > gd->stime || p.get()->shutdown || i->idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+	if (ctime > gd->stime || p.get()->shutdown) {
+	    delete gd;
 	    rt_db_free_internal(i);
 	    BU_PUT(i, struct rt_db_internal);
+	    // We didn't actually complete the processing of i, so don't increment
 	    if (!p.get()->shutdown)
 		p.get()->dbip->i->p_completed++;
 	    continue;
@@ -341,7 +351,8 @@ lod_calc(std::shared_ptr<ProcessDrawData> p)
 	// Do LoD setup
 	cache_mesh_update(gd->c, i, gd->name);
 
-	// free internal
+	// This is the last step - free internal
+	delete gd;
 	rt_db_free_internal(i);
 	BU_PUT(i, struct rt_db_internal);
 	p.get()->dbip->i->p_completed++;
@@ -712,8 +723,8 @@ db_cache_clear_entries(struct db_i *dbip, unsigned long long hash)
 
     // Look up the geometry key for this name
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_GEOM_KEY);
-    void *vdata;
     struct bu_cache_txn *txn = NULL;
+    void *vdata = NULL;
     if (!bu_cache_get(&vdata, ckey, c, &txn)) {
 	// If we don't have a geometry key, we're done
 	bu_cache_get_done(&txn);
