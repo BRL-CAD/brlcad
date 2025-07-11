@@ -536,6 +536,13 @@ main(int argc, char *argv[])
 
 #if 1
     // This time running db_cache_init in a separate thread
+    //
+    // TODO - maybe this would actually be a good model for all cache updates,
+    // not just init?  Have db_update_cache just toss the name of the target
+    // solid for the update into the queue, and have the processing threads
+    // do their thing.  They'll be idle until an update is needed, so they
+    // should be harmless enough, and then we don't need two different mechanisms
+    // for init and subsequent updates.
     std::thread t_cache(db_cache_init, dbip, 1);
     t_cache.detach();
 
