@@ -34,25 +34,33 @@ obb_diff(
     point_t diff;
     VSUB2(diff, ac, bc);
 
+    vect_t bv[3];
+    VMOVE(bv[0], bv1);
+    VMOVE(bv[1], bv2);
+    VMOVE(bv[2], bv3);
+    VSCALE(bv[0], bv[0], -1);
+    VSCALE(bv[1], bv[1], -1);
+    VSCALE(bv[2], bv[2], -1);
+
     if (!VNEAR_EQUAL(ac, bc, VUNITIZE_TOL)) {
 	bu_log("Note: obb (%g %g %g) and obb verts obb (%g %g %g) center point differs: %0.15f %0.15f %0.15f\n", V3ARGS(ac), V3ARGS(bc), V3ARGS(diff));
 	return 1;
     }
 
     VSUB2(diff, av1, bv1);
-    if (!VNEAR_EQUAL(av1, bv1, VUNITIZE_TOL)) {
+    if (!VNEAR_EQUAL(av1, bv1, VUNITIZE_TOL) && !VNEAR_EQUAL(av1, bv[0], VUNITIZE_TOL)) {
 	bu_log("Note: obb (%g %g %g) and obb verts obb (%g %g %g) v1 differs: %0.15f %0.15f %0.15f\n", V3ARGS(av1), V3ARGS(bv1), V3ARGS(diff));
 	return 1;
     }
 
     VSUB2(diff, av2, bv2);
-    if (!VNEAR_EQUAL(av2, bv2, VUNITIZE_TOL)) {
+    if (!VNEAR_EQUAL(av2, bv2, VUNITIZE_TOL) && !VNEAR_EQUAL(av2, bv[1], VUNITIZE_TOL)) {
 	bu_log("Note: obb (%g %g %g) and obb verts obb (%g %g %g) v2 differs: %0.15f %0.15f %0.15f\n", V3ARGS(av2), V3ARGS(bv2), V3ARGS(diff));
 	return 1;
     }
 
     VSUB2(diff, av3, bv3);
-    if (!VNEAR_EQUAL(av3, bv3, VUNITIZE_TOL)) {
+    if (!VNEAR_EQUAL(av3, bv3, VUNITIZE_TOL) && !VNEAR_EQUAL(av3, bv[2], VUNITIZE_TOL)) {
 	bu_log("Note: obb (%g %g %g) and obb verts obb (%g %g %g) v3 differs: %0.15f %0.15f %0.15f\n", V3ARGS(av3), V3ARGS(bv3), V3ARGS(diff));
 	return 1;
     }
