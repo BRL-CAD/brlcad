@@ -280,7 +280,6 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
     }
 
     bu_semaphore_acquire(BU_SEM_CACHE);
-
     // TODO clear old cache values
 
     if (db_dircheck(dbip, &local, 0, &headp) < 0) {
@@ -307,6 +306,8 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
     dp->d_nref = 0;
     dp->d_uses = 0;
 
+    bu_semaphore_release(BU_SEM_CACHE);
+
     /* v4 geometry databases do not use d_major/minor_type */
     if (db_version(dbip) > 4) {
 	dp->d_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -318,8 +319,6 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
 	dp->d_major_type = 0;
 	dp->d_minor_type = 0;
     }
-
-    bu_semaphore_release(BU_SEM_CACHE);
 
     bu_vls_free(&local);
 

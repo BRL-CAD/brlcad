@@ -37,8 +37,8 @@
 //#define LOD_TIMING_PER_LEVEL
 
 // Exercise the LoD structs in the cache (TODO - validate data somehow...)
-static void
-do_lod(struct db_i *dbip, struct directory *dp)
+static bool
+do_lod(struct db_i *dbip, struct directory *dp, bool do_init)
 {
 #ifdef LOD_TIMING
     int64_t start, elapsed;
@@ -51,24 +51,24 @@ do_lod(struct db_i *dbip, struct directory *dp)
 
     // For the moment at least, only BoTs have cached LoD data
     if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
-	return;
+	return true;
 
     struct bv_lod_mesh *mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
-    if (!mlod) {
+    if (!mlod && do_init) {
 	bu_log("Generating LoD for %s\n", dp->d_namep);
 	int key = db_cache_update(dbip, dp->d_namep, 0);
 	if (key != BRLCAD_OK) {
-	    bu_log("ERROR: %s - db_cache_mesh_update failed\n", dp->d_namep);
+	    bu_log("ERROR: %s - db_cache_update failed\n", dp->d_namep);
 	    db_cache_update(dbip, dp->d_namep, 0);
-	    return;
+	    return false;
 	}
+	mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
     } else {
 	//bu_log("Found LoD: %s\n", dp->d_namep);
     }
-    mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
     if (!mlod) {
 	bu_log("ERROR: %s - no mesh LoD available\n", dp->d_namep);
-	return;
+	return false;
     }
 
     struct bv_scene_obj *s = bv_obj_get(NULL);
@@ -105,6 +105,7 @@ do_lod(struct db_i *dbip, struct directory *dp)
 
     bv_lod_mesh_put(mlod);
     bv_obj_put(s);
+    return true;
 }
 
 
@@ -180,7 +181,7 @@ validate_dp(struct db_i *dbip, struct directory *dp)
     unsigned int cache_colors = UINT_MAX; // Using UINT_MAX to indicate unset
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_COLOR);
     if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn))
-	memcpy(&cache_colors, cdata, sizeof(int));
+	memcpy(&cache_colors, cdata, sizeof(unsigned int));
     if (db_colors!= cache_colors) {
 	bu_log("Cache(%d) vs. db(%d) color_inherit flag mismatch for %s\n", cache_colors, db_colors, dp->d_namep);
 	valid = false;
@@ -208,13 +209,20 @@ validate_dp(struct db_i *dbip, struct directory *dp)
 	} else {
 	    point_t cache_aabb[2] = {VINIT_ZERO};
 	    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_AABB);
-	    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn))
+	    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn)) {
 		memcpy(&cache_aabb, cdata, 2*sizeof(point_t));
-	    if (!VNEAR_EQUAL(db_aabb[0], cache_aabb[0], VUNITIZE_TOL) || !VNEAR_EQUAL(db_aabb[1], cache_aabb[1], VUNITIZE_TOL)) {
-		bu_log("Cache aabb vs. db aabb mismatch for %s\n", dp->d_namep);
-		bu_log("   db_aabb: (%0.15f %0.15f %0.15f) -> (%0.15f %0.15f %0.15f)\n", V3ARGS(db_aabb[0]), V3ARGS(db_aabb[1]));
-		bu_log("cache_aabb: (%0.15f %0.15f %0.15f) -> (%0.15f %0.15f %0.15f)\n", V3ARGS(cache_aabb[0]), V3ARGS(cache_aabb[1]));
-		valid = false;
+		if (!VNEAR_EQUAL(db_aabb[0], cache_aabb[0], VUNITIZE_TOL) || !VNEAR_EQUAL(db_aabb[1], cache_aabb[1], VUNITIZE_TOL)) {
+		    bu_log("Cache aabb vs. db aabb mismatch for %s\n", dp->d_namep);
+		    bu_log("   db_aabb: (%0.15f %0.15f %0.15f) -> (%0.15f %0.15f %0.15f)\n", V3ARGS(db_aabb[0]), V3ARGS(db_aabb[1]));
+		    bu_log("cache_aabb: (%0.15f %0.15f %0.15f) -> (%0.15f %0.15f %0.15f)\n", V3ARGS(cache_aabb[0]), V3ARGS(cache_aabb[1]));
+		    valid = false;
+		}
+	    } else {
+		bu_log("aabb cache get failed\n");
+		bu_cache_get_done(&txn);
+		rt_db_free_internal(ip);
+		BU_PUT(ip, struct rt_db_internal);
+		bu_exit(-1, "empty lookup\n");
 	    }
 	}
     }
@@ -231,8 +239,15 @@ validate_dp(struct db_i *dbip, struct directory *dp)
 
 	    point_t cache_obb[4] = {VINIT_ZERO};
 	    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_OBB);
-	    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn))
+	    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn)) {
 		memcpy(&cache_obb, cdata, 4*sizeof(point_t));
+	    } else {
+		bu_log("obb cache get failed\n");
+		bu_cache_get_done(&txn);
+		rt_db_free_internal(ip);
+		BU_PUT(ip, struct rt_db_internal);
+		bu_exit(-1, "empty lookup\n");
+	    }
 	    bool obbvalid = true;
 	    for (int j = 0; j < 4; j++) {
 		if (!VNEAR_EQUAL(db_obb[j], cache_obb[j], VUNITIZE_TOL)) {
@@ -262,17 +277,182 @@ validate_dp(struct db_i *dbip, struct directory *dp)
     BU_PUT(ip, struct rt_db_internal);
 
     // Level of Detail
-    do_lod(dbip, dp);
+    if (!do_lod(dbip, dp, false))
+	valid = false;
 
     return valid;
 }
 
+// For this step, we read the data from the cache and trigger an update if we
+// don't find it.
+bool
+work_dp(struct db_i *dbip, struct directory *dp)
+{
+    void *cdata = NULL;
+    static char ckey[BU_CACHE_KEY_MAXLEN];
 
-    int
+    struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
+    if (db5_get_attributes(dbip, &c_avs, dp) < 0) {
+	bu_log("ERROR - unable to get attributes: %s\n", dp->d_namep);
+	return false;
+    }
+
+    unsigned long long user_hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+
+    // Region flag
+    int rflag = 0;
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_REGION_FLAG);
+    if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
+	memcpy(&rflag, cdata, sizeof(int));
+	bu_free(cdata, "cdata");
+	cdata = NULL;
+    } else {
+	int key = db_cache_update(dbip, dp->d_namep, 0);
+	if (key != BRLCAD_OK) {
+	    bu_log("ERROR: %s:region_flag - db_cache_update failed\n", dp->d_namep);
+	    return false;
+	}
+	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
+	    memcpy(&rflag, cdata, sizeof(int));
+	    bu_free(cdata, "cdata");
+	    cdata = NULL;
+	} else {
+	    bu_log("ERROR: %s:region_flag - lookup failed\n", dp->d_namep);
+	    return false;
+	}
+    }
+
+    // Region id
+    int region_id = -1;
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_REGION_ID);
+    if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
+	memcpy(&region_id, cdata, sizeof(int));
+	bu_free(cdata, "cdata");
+	cdata = NULL;
+    } else {
+	int key = db_cache_update(dbip, dp->d_namep, 0);
+	if (key != BRLCAD_OK) {
+	    bu_log("ERROR: %s:region_id - db_cache_update failed\n", dp->d_namep);
+	    return false;
+	}
+	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
+	    memcpy(&region_id, cdata, sizeof(int));
+	    bu_free(cdata, "cdata");
+	    cdata = NULL;
+	} else {
+	    bu_log("ERROR: %s:region_id - lookup failed\n", dp->d_namep);
+	    return false;
+	}
+    }
+
+    // Inherit flag
+    int color_inherit = -1;
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_INHERIT_FLAG);
+    if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
+	memcpy(&color_inherit, cdata, sizeof(int));
+	bu_free(cdata, "cdata");
+	cdata = NULL;
+    } else {
+	int key = db_cache_update(dbip, dp->d_namep, 0);
+	if (key != BRLCAD_OK) {
+	    bu_log("ERROR: %s:color_inherit - db_cache_update failed\n", dp->d_namep);
+	    return false;
+	}
+	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
+	    memcpy(&color_inherit, cdata, sizeof(int));
+	    bu_free(cdata, "cdata");
+	    cdata = NULL;
+	} else {
+	    bu_log("ERROR: %s:color_inherit - lookup failed\n", dp->d_namep);
+	    return false;
+	}
+    }
+
+    // Color
+    unsigned int colors = UINT_MAX; // Using UINT_MAX to indicate unset
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_COLOR);
+    if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
+	memcpy(&colors, cdata, sizeof(unsigned int));
+	bu_free(cdata, "cdata");
+	cdata = NULL;
+    } else {
+	int key = db_cache_update(dbip, dp->d_namep, 0);
+	if (key != BRLCAD_OK) {
+	    bu_log("ERROR: %s:colors - db_cache_update failed\n", dp->d_namep);
+	    return false;
+	}
+	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
+	    memcpy(&colors, cdata, sizeof(unsigned int));
+	    bu_free(cdata, "cdata");
+	    cdata = NULL;
+	} else {
+	    bu_log("ERROR: %s:colors - lookup failed\n", dp->d_namep);
+	    return false;
+	}
+    }
+
+    // Axis-Aligned Bounding Box, if primitive supports it
+    point_t aabb[2] = {VINIT_ZERO};
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_AABB);
+    if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
+	memcpy(&aabb, cdata, 2*sizeof(point_t));
+	bu_free(cdata, "cdata");
+	cdata = NULL;
+    } else {
+	int key = db_cache_update(dbip, dp->d_namep, 0);
+	if (key != BRLCAD_OK) {
+	    bu_log("ERROR: %s:aabb - db_cache_update failed\n", dp->d_namep);
+	    return false;
+	}
+	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
+	    memcpy(&aabb, cdata, 2*sizeof(point_t));
+	    bu_free(cdata, "cdata");
+	    cdata = NULL;
+	} else {
+	    bu_log("ERROR: %s:aabb - lookup failed\n", dp->d_namep);
+	    return false;
+	}
+    }
+
+
+    // Check Oriented Bounding Box, if primitive supports it
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
+	point_t obb[4] = {VINIT_ZERO};
+	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_OBB);
+	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
+	    memcpy(&obb, cdata, 4*sizeof(point_t));
+	    bu_free(cdata, "cdata");
+	    cdata = NULL;
+	} else {
+	    int key = db_cache_update(dbip, dp->d_namep, 0);
+	    if (key != BRLCAD_OK) {
+		bu_log("ERROR: %s:obb - db_cache_update failed\n", dp->d_namep);
+		return false;
+	    }
+	    if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
+		memcpy(&obb, cdata, 4*sizeof(point_t));
+		bu_free(cdata, "cdata");
+		cdata = NULL;
+	    } else {
+		bu_log("ERROR: %s:obb - lookup failed\n", dp->d_namep);
+		return false;
+	    }
+	}
+    }
+
+    // Level of Detail
+    if (!do_lod(dbip, dp, true))
+	return false;
+
+    return true;
+}
+
+
+int
 main(int argc, char *argv[])
 {
     int64_t start, elapsed;
-    fastf_t seconds;
+    fastf_t seconds, init_time;
     struct db_i *dbip;
 
     bu_setprogname(argv[0]);
@@ -338,7 +518,57 @@ main(int argc, char *argv[])
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
-    bu_log("Validation time: %f seconds\n", seconds);
+    init_time = seconds;
+    bu_log("Validation time: %f seconds\n", init_time);
+
+    db_close(dbip);
+    bu_dirclear(cache_dir);
+
+
+    // Reset and repeat
+    bu_mkdir(cache_dir);
+    dbip = db_open(argv[1], DB_OPEN_READWRITE);
+    if (dbip == DBI_NULL)
+	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
+    if (db_dirbuild(dbip) < 0)
+	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
+    db_update_nref(dbip, &rt_uniresource);
+
+#if 1
+    // This time running db_cache_init in a separate thread
+    std::thread t_cache(db_cache_init, dbip, 1);
+    t_cache.detach();
+
+    // Slight pause to be sure init has started, and then launch work.
+    // Anything that the init hasn't gotten to yet should be triggered for an
+    // update, which will test what happens when user action and cache init are
+    // both in play.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+#else
+    db_cache_init(dbip, 1);
+#endif
+
+    bu_log("Done waiting, start working\n");
+
+    if (argc < 3) {
+	for (int i = 0; i < RT_DBNHASH; i++) {
+	    struct directory *dp;
+	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		if (dp->d_addr == RT_DIR_PHONY_ADDR)
+		    continue;
+		if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
+		    continue;
+		bu_log("Processing %s\n", dp->d_namep);
+		work_dp(dbip, dp);
+	    }
+	}
+    } else {
+	struct directory *dp = db_lookup(dbip, argv[2], LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL) {
+	    bu_exit(1, "ERROR: Unable to look up object %s\n", argv[2]);
+	}
+	work_dp(dbip, dp);
+    }
 
     db_close(dbip);
     bu_dirclear(cache_dir);
