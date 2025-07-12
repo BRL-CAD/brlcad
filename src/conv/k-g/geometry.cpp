@@ -38,6 +38,7 @@ void Geometry::setBaseName
     m_bot.setName(m_name.c_str());
     m_arbs.setName(m_name.c_str());
     m_pipe.setName(m_name.c_str());
+    m_sphere.setName(m_name.c_str());
 }
 
 
@@ -117,6 +118,11 @@ void Geometry::addBeamResultant
     m_BeamsResultant.push_back(temp);
 }
 
+void Geometry::addSphere(const char* sphereName, const point_t& center, const float& radius)
+{
+    m_sphere.addSphere(sphereName, center, radius);
+}
+
 
 const char* Geometry::getBaseName(void) const
 {
@@ -149,6 +155,7 @@ std::vector<std::string> Geometry::write
     std::vector<std::string> ret      = m_bot.write(wdbp);
     std::vector<std::string> arbNames = m_arbs.write(wdbp);
     std::vector<std::string> pipeName = m_pipe.write(wdbp);
+    std::vector<std::string> sphNames = m_sphere.write(wdbp);
 
     for (size_t i = 0; i < m_BeamsResultant.size(); ++i) {
 	ret.push_back(m_BeamsResultant[i].skt.write(wdbp));
@@ -157,6 +164,7 @@ std::vector<std::string> Geometry::write
 
     ret.insert(ret.end(), arbNames.begin(), arbNames.end());
     ret.insert(ret.end(), pipeName.begin(), pipeName.end());
+    ret.insert(ret.end(), sphNames.begin(), sphNames.end());
 
     return ret;
 }
