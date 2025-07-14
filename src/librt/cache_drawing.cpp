@@ -48,28 +48,59 @@
 
 #include "./librt_private.h"
 
-class GeomData {
-    public:
-	GeomData(struct bu_cache *dc, int64_t t, const char *n);
-	~GeomData();
-
-	int64_t stime;
-	struct bu_cache *c;
-	char *name;
-	unsigned long long user_hash = 0;
-};
-
-GeomData::GeomData(struct bu_cache *dc, int64_t t, const char *n)
+CacheItem::CacheItem()
 {
-    c = dc;
-    stime = t;
-    name = bu_strdup(n);
+    erase_op = false;
+    data_len = 0;
+    data = NULL;
 }
 
-
-GeomData::~GeomData()
+CacheItem::CacheItem(const char *dkey, void *dval, size_t dlen)
 {
-    bu_free(name, "name");
+    snprintf(key, BU_CACHE_KEY_MAXLEN, "%s", dkey);
+    erase_op = (!dval || !dlen) ? true : false;
+    data_len = dlen;
+    if (dval && data_len) {
+	data = bu_malloc(data_len, "cache data");
+	memcpy(data, dval, data_len);
+    } else {
+	data = NULL;
+    }
+}
+
+CacheItem::CacheItem(const CacheItem &o)
+{
+    erase_op = o.erase_op;
+    data_len = o.data_len;
+    snprintf(key, BU_CACHE_KEY_MAXLEN, "%s", o.key);
+    if (o.data) {
+	data = bu_malloc(o.data_len, "cache data");
+	memcpy(data, o.data, o.data_len);
+    }
+}
+
+CacheItem& CacheItem::operator=(const CacheItem& o)
+{
+    if (this == &o)
+        return *this;
+
+    bu_free(data, "free prev data");
+    data = NULL;
+
+    erase_op = o.erase_op;
+    data_len = o.data_len;
+    snprintf(key, BU_CACHE_KEY_MAXLEN, "%s", o.key);
+    if (o.data) {
+	data = bu_malloc(o.data_len, "cache data");
+	memcpy(data, o.data, o.data_len);
+    }
+    return *this;
+}
+
+CacheItem::~CacheItem()
+{
+    bu_free(data, "free data");
+    data = NULL;
 }
 
 int64_t cache_timestamp(const char *ckey, struct bu_cache *c)
@@ -81,142 +112,6 @@ int64_t cache_timestamp(const char *ckey, struct bu_cache *c)
 	memcpy(&ctimestmp, vdata, sizeof(int64_t));
     bu_cache_get_done(&txn);
     return ctimestmp;
-}
-
-int
-cache_update_attrs(struct bu_cache *c, const char *name, unsigned long long hash, struct bu_attribute_value_set *c_avs, int64_t stime)
-{
-    static char ckey[BU_CACHE_KEY_MAXLEN];
-    static char tkey[BU_CACHE_KEY_MAXLEN];
-
-    if (!c || !c_avs || !hash)
-	return BRLCAD_ERROR;
-
-    if (stime)
-	snprintf(tkey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_TIMESTAMP);
-
-    // Region flag.
-    int rflag = 0;
-    const char *region_flag_str = bu_avs_get(c_avs, "region");
-    if (region_flag_str && (BU_STR_EQUAL(region_flag_str, "R") || BU_STR_EQUAL(region_flag_str, "1")))
-	rflag = 1;
-    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_FLAG);
-
-    // Before writing cache, check for updated timestamp - if we have a non-zero stime and the cache
-    // time is newer, we're aborting
-    if (stime && cache_timestamp(tkey, c) > stime)
-	return BRLCAD_ERROR;
-
-    bu_semaphore_acquire(BU_SEM_CACHE);
-    if (!bu_cache_write(&rflag, sizeof(int), ckey, c)) {
-	bu_semaphore_release(BU_SEM_CACHE);
-	bu_log("%s: region_flag cache write failure\n", name);
-	return BRLCAD_ERROR;
-    }
-    bu_semaphore_release(BU_SEM_CACHE);
-
-    // Region id.  For drawing purposes this needs to be a number.
-    int region_id = -1;
-    const char *region_id_str = bu_avs_get(c_avs, "region_id");
-    if (region_id_str)
-	bu_opt_int(NULL, 1, &region_id_str, (void *)&region_id);
-    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_ID);
-
-    // Before writing cache, check for updated timestamp - if we have a non-zero stime and the cache
-    // time is newer, we're aborting
-    if (stime && cache_timestamp(tkey, c) > stime)
-	return BRLCAD_ERROR;
-
-    bu_semaphore_acquire(BU_SEM_CACHE);
-    if (!bu_cache_write(&region_id, sizeof(int), ckey, c)) {
-	bu_semaphore_release(BU_SEM_CACHE);
-	bu_log("%s: region_id cache write failure\n", name);
-	return BRLCAD_ERROR;
-    }
-    bu_semaphore_release(BU_SEM_CACHE);
-
-    // Inherit flag
-    int color_inherit = (BU_STR_EQUAL(bu_avs_get(c_avs, "inherit"), "1")) ? 1 : 0;
-    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_INHERIT_FLAG);
-
-    // Before writing cache, check for updated timestamp - if we have a non-zero stime and the cache
-    // time is newer, we're aborting
-    if (stime && cache_timestamp(tkey, c) > stime)
-	return BRLCAD_ERROR;
-
-    bu_semaphore_acquire(BU_SEM_CACHE);
-    if (!bu_cache_write(&color_inherit, sizeof(int), ckey, c)) {
-	bu_semaphore_release(BU_SEM_CACHE);
-	bu_log("%s: color_inherit cache write failure\n", name);
-	return BRLCAD_ERROR;
-    }
-    bu_semaphore_release(BU_SEM_CACHE);
-
-    // Color
-    unsigned int colors = UINT_MAX; // Using UINT_MAX to indicate unset
-    const char *color_str = bu_avs_get(c_avs, "color");
-    if (!color_str)
-	color_str = bu_avs_get(c_avs, "rgb");
-    if (color_str) {
-	struct bu_color color;
-	bu_opt_color(NULL, 1, &color_str, (void *)&color);
-	// Serialize for cache
-	int r, g, b;
-	bu_color_to_rgb_ints(&color, &r, &g, &b);
-	colors = r + (g << 8) + (b << 16);
-    }
-    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_COLOR);
-
-    // Before writing cache, check for updated timestamp - if we have a non-zero stime and the cache
-    // time is newer, we're aborting
-    if (stime && cache_timestamp(tkey, c) > stime)
-	return BRLCAD_ERROR;
-
-    bu_semaphore_acquire(BU_SEM_CACHE);
-    if (!bu_cache_write(&colors, sizeof(unsigned int), ckey, c)) {
-	bu_semaphore_release(BU_SEM_CACHE);
-	bu_log("%s: color cache write failure\n", name);
-	return BRLCAD_ERROR;
-    }
-    bu_semaphore_release(BU_SEM_CACHE);
-
-    return BRLCAD_OK;
-}
-
-int
-cache_mesh_update(struct bu_cache *c, struct rt_db_internal *ip, const char *name)
-{
-    if (!c || !ip || !name)
-	return BRLCAD_ERROR;
-
-    if (ip->idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
-	return BRLCAD_OK;
-
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
-    RT_BOT_CK_MAGIC(bot);
-    //bu_log("Caching LoD for %s\n", name);
-
-    // Generate and write new data
-    bu_semaphore_acquire(BU_SEM_CACHE);
-    int cret = bv_lod_mesh_cache(c, name, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0.66);
-    if (!cret) {
-	bu_semaphore_release(BU_SEM_CACHE);
-	bu_log("Error processing %s - unable to generate LoD data\n", name);
-	return BRLCAD_ERROR;
-    }
-    bu_semaphore_release(BU_SEM_CACHE);
-
-    // Make sure we can retrieve the cached data
-    // TODO - may not really be necessary to verify this here once we're
-    // working - including during early stages for testing.
-    struct bv_lod_mesh *lod = bv_lod_mesh_get(c, name);
-    if (!lod) {
-	bu_log("Error processing %s - unable to retrieve LoD data\n", name);
-	return BRLCAD_ERROR;
-    }
-    bv_lod_mesh_put(lod);
-
-    return BRLCAD_OK;
 }
 
 // aabb, obb and especially LoD can take longer for very large database
@@ -237,279 +132,332 @@ cache_mesh_update(struct bu_cache *c, struct rt_db_internal *ip, const char *nam
 // freezing the GUI.
 
 void
+attr_calc(std::shared_ptr<ProcessDrawData> p)
+{
+    char ckey[BU_CACHE_KEY_MAXLEN];
+
+    // Until we close this database, monitor for inputs to process.
+    while (!p.get()->shutdown) {
+	if (!p.get()->q_attr.size_approx()) {
+	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	    continue;
+	}
+
+	std::string name;
+	if (!p.get()->q_attr.try_dequeue(name))
+	    continue;
+
+	// Got a name - look up the attributes and internal
+	struct directory *dp = db_lookup(p.get()->dbip, name.c_str(), LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL)
+	    continue;
+	struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
+	if (db5_get_attributes(p.get()->dbip, &c_avs, dp) < 0)
+	    continue;
+	struct rt_db_internal *ip;
+	BU_GET(ip, struct rt_db_internal);
+	RT_DB_INTERNAL_INIT(ip);
+	int ret = rt_db_get_internal(ip, dp, p.get()->dbip, NULL, &rt_uniresource);
+	if (ret < 0) {
+	    BU_PUT(ip, struct rt_db_internal);
+	    bu_avs_free(&c_avs);
+	    continue;
+	}
+	ip->idb_uptr = bu_strdup(name.c_str());
+
+	// We will not be directly writing to the cache from this thread - instead
+	// we will queue up CacheItem entries to be written from the q_write thread.
+	unsigned long long hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+
+
+	// Region flag.
+	int rflag = 0;
+	const char *region_flag_str = bu_avs_get(&c_avs, "region");
+	if (region_flag_str && (BU_STR_EQUAL(region_flag_str, "R") || BU_STR_EQUAL(region_flag_str, "1")))
+	    rflag = 1;
+	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_FLAG);
+	CacheItem ritem(ckey, &rflag, sizeof(int));
+	p.get()->q_write.enqueue(ritem);
+	bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
+
+	// Region id.  For drawing purposes this needs to be a number.
+	int region_id = -1;
+	const char *region_id_str = bu_avs_get(&c_avs, "region_id");
+	if (region_id_str)
+	    bu_opt_int(NULL, 1, &region_id_str, (void *)&region_id);
+	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_ID);
+	CacheItem reg_item(ckey, &region_id, sizeof(int));
+	p.get()->q_write.enqueue(reg_item);
+	bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
+
+	// Inherit flag
+	int color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
+	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_INHERIT_FLAG);
+	CacheItem inherit_item(ckey, &color_inherit, sizeof(int));
+	p.get()->q_write.enqueue(inherit_item);
+	bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
+
+	// Color
+	unsigned int colors = UINT_MAX; // Using UINT_MAX to indicate unset
+	const char *color_str = bu_avs_get(&c_avs, "color");
+	if (!color_str)
+	    color_str = bu_avs_get(&c_avs, "rgb");
+	if (color_str) {
+	    struct bu_color color;
+	    bu_opt_color(NULL, 1, &color_str, (void *)&color);
+	    // Serialize for cache
+	    int r, g, b;
+	    bu_color_to_rgb_ints(&color, &r, &g, &b);
+	    colors = r + (g << 8) + (b << 16);
+	}
+	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_COLOR);
+	CacheItem colors_item(ckey, &colors, sizeof(unsigned int));
+	p.get()->q_write.enqueue(colors_item);
+	bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
+
+	// Done with attribute data
+	bu_avs_free(&c_avs);
+
+	// Hand ip off to the aabb queue
+	p.get()->q_aabb.enqueue(ip);
+    }
+
+    p.get()->thread_cnt--;
+}
+
+void
 aabb_calc(std::shared_ptr<ProcessDrawData> p)
 {
-    struct rt_db_internal *i = NULL;
     char ckey[BU_CACHE_KEY_MAXLEN];
-    char tkey[BU_CACHE_KEY_MAXLEN];
 
-    // Check what's in the pipeline
-    p.get()->m_aabb.lock();
-    bool aabb_empty = p.get()->q_aabb.empty();
-    p.get()->m_aabb.unlock();
-
-    while (!aabb_empty || !p.get()->init_done) {
-	if (aabb_empty) {
+    // Until we close this database, monitor for inputs to process.
+    while (!p.get()->shutdown) {
+	if (!p.get()->q_aabb.size_approx()) {
 	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	    // Check what's in the pipeline
-	    p.get()->m_aabb.lock();
-	    aabb_empty = p.get()->q_aabb.empty();
-	    p.get()->m_aabb.unlock();
 	    continue;
 	}
-	p.get()->m_aabb.lock();
-	i = p.get()->q_aabb.front();
-	p.get()->q_aabb.pop();
-	p.get()->m_aabb.unlock();
 
-	GeomData *gd = (GeomData *)i->idb_uptr;
-	snprintf(tkey, BU_CACHE_KEY_MAXLEN, "%llu:%s", gd->user_hash, CACHE_TIMESTAMP);
-	int64_t ctime = cache_timestamp(tkey, p.get()->dbip->i->c);
-
-	if (ctime > gd->stime || p.get()->shutdown) {
-	    if (ctime > gd->stime)
-		bu_log("Newer timestamp found, aborting aabb init\n");
-	    if (p.get()->shutdown)
-		bu_log("Shutting down, aborting aabb init\n");
-	    delete gd;
-	    rt_db_free_internal(i);
-	    BU_PUT(i, struct rt_db_internal);
-
-	    // Check what's in the pipeline
-	    p.get()->m_aabb.lock();
-	    aabb_empty = p.get()->q_aabb.empty();
-	    p.get()->m_aabb.unlock();
-
+	struct rt_db_internal *ip = NULL;
+	if (!p.get()->q_aabb.try_dequeue(ip))
 	    continue;
-	}
+
+	const char *name = (const char *)ip->idb_uptr;
+	unsigned long long hash = bu_data_hash(name, strlen(name)*sizeof(char));
+	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_AABB);
 
 	// Do aabb calc
-	if (i->idb_meth->ft_bbox) {
+	if (ip->idb_meth->ft_bbox) {
 	    const struct bn_tol btol = BN_TOL_INIT_TOL;
 	    point_t bb[2];
-	    if (!(i->idb_meth->ft_bbox(i, &bb[0], &bb[1], &btol) < 0)) {
-		snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", gd->user_hash, CACHE_AABB);
-		bu_semaphore_acquire(BU_SEM_CACHE);
-		if (!bu_cache_write(&bb, 2*sizeof(point_t), ckey, p.get()->dbip->i->c)) {
-		    bu_log("%s: aabb cache write failure\n", gd->name);
-		}
-		bu_semaphore_release(BU_SEM_CACHE);
+	    if (!(ip->idb_meth->ft_bbox(ip, &bb[0], &bb[1], &btol) < 0)) {
+		CacheItem aabb_item(ckey, &bb, 2*sizeof(point_t));
+		p.get()->q_write.enqueue(aabb_item);
+		bu_log("enqueue: %s\n", ckey);
 	    } else {
-		bu_log("%s: aabb calc failure\n", gd->name);
+		// If we couldn't get a bbox, clear out any old entry
+		CacheItem aabb_item(ckey, NULL, 0);
+		p.get()->q_write.enqueue(aabb_item);
+		bu_log("enqueue: %s\n", ckey);
+		bu_log("%s: aabb calc failure\n", name);
 	    }
+	} else {
+	    // If a named item changed type, we may need to clear
+	    // out an old bbox entry
+	    CacheItem aabb_item(ckey, NULL, 0);
+	    p.get()->q_write.enqueue(aabb_item);
+	    bu_log("enqueue: %s\n", ckey);
 	}
 
-	// Queue up for OBB calc
-	p.get()->m_obb.lock();
-	p.get()->q_obb.push(i);
-	p.get()->m_obb.unlock();
-
-	// Check what's in the pipeline
-	p.get()->m_aabb.lock();
-	aabb_empty = p.get()->q_aabb.empty();
-	p.get()->m_aabb.unlock();
+	// Hand ip off to the obb queue
+	p.get()->q_obb.enqueue(ip);
     }
+
+    p.get()->thread_cnt--;
 }
 
 void
 obb_calc(std::shared_ptr<ProcessDrawData> p)
 {
-    struct rt_db_internal *i = NULL;
     char ckey[BU_CACHE_KEY_MAXLEN];
-    char tkey[BU_CACHE_KEY_MAXLEN];
 
-    // Check what's in the pipeline
-    p.get()->m_aabb.lock();
-    bool aabb_empty = p.get()->q_aabb.empty();
-    p.get()->m_aabb.unlock();
-    p.get()->m_obb.lock();
-    bool obb_empty = p.get()->q_obb.empty();
-    p.get()->m_obb.unlock();
-
-    while (!aabb_empty || !obb_empty || !p.get()->init_done) {
-	if (obb_empty) {
+    // Until we close this database, monitor for inputs to process.
+    while (!p.get()->shutdown) {
+	if (!p.get()->q_obb.size_approx()) {
 	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-	    // Check what's in the pipeline
-	    p.get()->m_aabb.lock();
-	    aabb_empty = p.get()->q_aabb.empty();
-	    p.get()->m_aabb.unlock();
-	    p.get()->m_obb.lock();
-	    obb_empty = p.get()->q_obb.empty();
-	    p.get()->m_obb.unlock();
-
 	    continue;
 	}
-	p.get()->m_obb.lock();
-	i = p.get()->q_obb.front();
-	p.get()->q_obb.pop();
-	p.get()->m_obb.unlock();
 
-	GeomData *gd = (GeomData *)i->idb_uptr;
-	snprintf(tkey, BU_CACHE_KEY_MAXLEN, "%llu:%s", gd->user_hash, CACHE_TIMESTAMP);
-	int64_t ctime = cache_timestamp(tkey, p.get()->dbip->i->c);
-
-	if (ctime > gd->stime || p.get()->shutdown) {
-	    if (ctime > gd->stime)
-		bu_log("Newer timestamp found, aborting obb init\n");
-	    if (p.get()->shutdown)
-		bu_log("Shutting down, aborting obb init\n");
-	    delete gd;
-	    rt_db_free_internal(i);
-	    BU_PUT(i, struct rt_db_internal);
-
-	    // Check what's in the pipeline.  Since we're shutting down,
-	    // only the local queue is of concern.
-	    p.get()->m_obb.lock();
-	    obb_empty = p.get()->q_obb.empty();
-	    p.get()->m_obb.unlock();
-
+	struct rt_db_internal *ip = NULL;
+	if (!p.get()->q_obb.try_dequeue(ip))
 	    continue;
-	}
+
+	const char *name = (const char *)ip->idb_uptr;
+	unsigned long long hash = bu_data_hash(name, strlen(name)*sizeof(char));
+	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_OBB);
 
 	// Do obb calc
-	if (i->idb_meth->ft_oriented_bbox) {
+	if (ip->idb_meth->ft_oriented_bbox) {
 	    double btol = BN_TOL_DIST;
 	    struct rt_arb_internal arb;
 	    arb.magic = RT_ARB_INTERNAL_MAGIC;
-	    if (!(i->idb_meth->ft_oriented_bbox(&arb, i, btol) < 0)) {
+	    if (!(ip->idb_meth->ft_oriented_bbox(&arb, ip, btol) < 0)) {
 		vect_t obb[4] = {VINIT_ZERO};
 		bg_pnts_obb(&obb[0], &obb[1], &obb[2], &obb[3], (const point_t *)arb.pt, 8);
 		bool cfailure = false;
 		for (int k = 0; k < 4; k++) {
 		    if (VNEAR_ZERO(obb[k], VUNITIZE_TOL)) {
-			bu_log("%s: obb calculation failure\n", gd->name);
+			bu_log("%s: obb calculation failure\n", name);
 			cfailure = true;
 		    }
 		}
 		if (!cfailure){
-		    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", gd->user_hash, CACHE_OBB);
-		    bu_semaphore_acquire(BU_SEM_CACHE);
-		    if (!bu_cache_write(&obb, 4*sizeof(vect_t), ckey, p.get()->dbip->i->c)) {
-			bu_log("%s: obb cache write failure\n", gd->name);
-		    }
-		    bu_semaphore_release(BU_SEM_CACHE);
+		    CacheItem obb_item(ckey, &obb, 4*sizeof(vect_t));
+		    p.get()->q_write.enqueue(obb_item);
+		    bu_log("enqueue: %s\n", ckey);
 		} else {
-		    bg_pnts_obb(&obb[0], &obb[1], &obb[2], &obb[3], (const point_t *)arb.pt, 8);
+		    // If calculation failed, clear out any old data
+		    CacheItem obb_item(ckey, NULL, 0);
+		    p.get()->q_write.enqueue(obb_item);
+		    bu_log("enqueue: %s\n", ckey);
+
+		    bu_log("%s: obb calc failure\n", name);
+		    //bg_pnts_obb(&obb[0], &obb[1], &obb[2], &obb[3], (const point_t *)arb.pt, 8);
 		}
 	    } else {
-		bu_log("%s: obb calc failure\n", gd->name);
+		// If calculation failed, clear out any old data
+		CacheItem obb_item(ckey, NULL, 0);
+		p.get()->q_write.enqueue(obb_item);
+		bu_log("enqueue: %s\n", ckey);
+
+		bu_log("%s: obb calc failure\n", name);
 	    }
+	} else {
+	    // If a named item changed type, we may need to clear out an old
+	    // oriented bbox entry
+	    CacheItem obb_item(ckey, NULL, 0);
+	    p.get()->q_write.enqueue(obb_item);
+	    bu_log("enqueue: %s\n", ckey);
 	}
 
-	// Queue up for LoD calc
-	p.get()->m_lod.lock();
-	p.get()->q_lod.push(i);
-	p.get()->m_lod.unlock();
-
-	// Check what's in the pipeline
-	p.get()->m_aabb.lock();
-	aabb_empty = p.get()->q_aabb.empty();
-	p.get()->m_aabb.unlock();
-	p.get()->m_obb.lock();
-	obb_empty = p.get()->q_obb.empty();
-	p.get()->m_obb.unlock();
+	// Hand ip off to the LoD queue
+	p.get()->q_lod.enqueue(ip);
     }
+
+    p.get()->thread_cnt--;
 }
 
 void
 lod_calc(std::shared_ptr<ProcessDrawData> p)
 {
-    struct rt_db_internal *i = NULL;
-    char tkey[BU_CACHE_KEY_MAXLEN];
-
-    // Check what's in the pipeline
-    p.get()->m_aabb.lock();
-    bool aabb_empty = p.get()->q_aabb.empty();
-    p.get()->m_aabb.unlock();
-    p.get()->m_obb.lock();
-    bool obb_empty = p.get()->q_obb.empty();
-    p.get()->m_obb.unlock();
-    p.get()->m_lod.lock();
-    bool lod_empty = p.get()->q_lod.empty();
-    p.get()->m_lod.unlock();
-
-    while (!aabb_empty || !obb_empty || !lod_empty || !p.get()->init_done) {
-	if (lod_empty) {
+    // Until we close this database, monitor for inputs to process.
+    while (!p.get()->shutdown) {
+	if (!p.get()->q_lod.size_approx()) {
 	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-	    // Check what's in the pipeline
-	    p.get()->m_aabb.lock();
-	    aabb_empty = p.get()->q_aabb.empty();
-	    p.get()->m_aabb.unlock();
-	    p.get()->m_obb.lock();
-	    obb_empty = p.get()->q_obb.empty();
-	    p.get()->m_obb.unlock();
-	    p.get()->m_lod.lock();
-	    lod_empty = p.get()->q_lod.empty();
-	    p.get()->m_lod.unlock();
-
-	    continue;
-	}
-	p.get()->m_lod.lock();
-	i = p.get()->q_lod.front();
-	p.get()->q_lod.pop();
-	p.get()->m_lod.unlock();
-
-	GeomData *gd = (GeomData *)i->idb_uptr;
-	snprintf(tkey, BU_CACHE_KEY_MAXLEN, "%llu:%s", gd->user_hash, CACHE_TIMESTAMP);
-	int64_t ctime = cache_timestamp(tkey, p.get()->dbip->i->c);
-
-	if (ctime > gd->stime || p.get()->shutdown) {
-	    if (ctime > gd->stime)
-		bu_log("Newer timestamp found, aborting LoD init\n");
-	    if (p.get()->shutdown)
-		bu_log("Shutting down, aborting Lod init\n");
-	    delete gd;
-	    rt_db_free_internal(i);
-	    BU_PUT(i, struct rt_db_internal);
-	    // We didn't actually complete the processing of i, so don't increment
-	    if (!p.get()->shutdown)
-		p.get()->dbip->i->p_completed++;
-
-	    // Check what's in the pipeline.  Since we're shutting down,
-	    // only the local queue is of concern.
-	    p.get()->m_lod.lock();
-	    lod_empty = p.get()->q_lod.empty();
-	    p.get()->m_lod.unlock();
-
 	    continue;
 	}
 
-	// Do LoD setup
-	cache_mesh_update(gd->c, i, gd->name);
+	struct rt_db_internal *ip = NULL;
+	if (!p.get()->q_lod.try_dequeue(ip))
+	    continue;
 
-	// This is the last step - free internal
-	delete gd;
-	rt_db_free_internal(i);
-	BU_PUT(i, struct rt_db_internal);
-	p.get()->dbip->i->p_completed++;
+	const char *name = (const char *)ip->idb_uptr;
 
-	// Check what's in the pipeline
-	p.get()->m_aabb.lock();
-	aabb_empty = p.get()->q_aabb.empty();
-	p.get()->m_aabb.unlock();
-	p.get()->m_obb.lock();
-	obb_empty = p.get()->q_obb.empty();
-	p.get()->m_obb.unlock();
-	p.get()->m_lod.lock();
-	lod_empty = p.get()->q_lod.empty();
-	p.get()->m_lod.unlock();
+	// Do LoD core ops
+	struct bu_ptbl cache_items = BU_PTBL_INIT_ZERO;
+	if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
+	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+	    RT_BOT_CK_MAGIC(bot);
+	    int cret = bv_lod_mesh_gen(&cache_items, name,
+		    (const point_t *)bot->vertices, bot->num_vertices, NULL,
+		    bot->faces, bot->num_faces, 0.66);
+	    if (!cret) {
+		// If LoD failed, clear out old entries
+		bv_lod_clear_gen(&cache_items, name, p.get()->dbip->i->c);
+	    }
+	} else {
+	    // We may need to clean up old LoD if an object's type changed
+	    bv_lod_clear_gen(&cache_items, name, p.get()->dbip->i->c);
+	}
 
+	// Do the actual cache ops
+	for (size_t i = 0; i < BU_PTBL_LEN(&cache_items); i++) {
+	    struct bu_cache_item *itm = (struct bu_cache_item *)BU_PTBL_GET(&cache_items, i);
+	    CacheItem lod_item(itm->key, itm->data, itm->data_len);
+	    bu_log("enqueue: %s\n", itm->key);
+	    bu_free(itm->data, "bu_cache_item data");
+	    bu_free(itm, "bu_cache_item");
+	    p.get()->q_write.enqueue(lod_item);
+	}
+
+	// LoD calc is the last use of rt_db_internal - free
+	bu_free(ip->idb_uptr, "name uptr");
+	rt_db_free_internal(ip);
+	BU_PUT(ip, struct rt_db_internal);
     }
+
+    p.get()->thread_cnt--;
 }
 
+void
+q_write(std::shared_ptr<ProcessDrawData> p)
+{
+    // Until we close this database, monitor for cache items to write.
+    while (!p.get()->shutdown) {
+	if (!p.get()->q_write.size_approx()) {
+	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	    continue;
+	}
+
+	CacheItem item;
+	if (!p.get()->q_write.try_dequeue(item))
+	    continue;
+
+	// If this is an erase op, do the erasing
+	if (item.erase_op) {
+	    bu_cache_clear(item.key, p.get()->dbip->i->c);
+	    continue;
+	}
+
+	// TODO - see if we need to make copies of item data in order
+	// to safely pass to bu_cache_write...
+	bu_log("Writing: %s\n", item.key);
+
+	// Try a few times in case the first write doesn't succeed
+	int tcnt = 0;
+	while (tcnt < 10 && !bu_cache_write(item.data, item.data_len, item.key, p.get()->dbip->i->c)) {
+	    bu_log("%s: cache write failure\n", item.key);
+	    tcnt++;
+	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	}
+	if (tcnt == 10)
+	    bu_log("ERROR:  %s: completely failed to write\n", item.key);
+    }
+
+    p.get()->thread_cnt--;
+}
+
+#if 0
+// TODO - see if we can do this from various threads via env vars
+// If the user has requested it, let them know what is happening
+if (verbose && seconds > 5.0) {
+    elapsed = bu_gettime() - overall_start;
+    seconds = elapsed / 1000000.0;
+    bu_log("Drawing cache processing (%g seconds): completed %zd of %zd BoTs\n", seconds, completed, target_cnt);
+}
+#endif
+
+// db_cache_update calls must be made from the same
+// thread as this function
 int
-db_cache_init(struct db_i *dbip, int verbose)
+db_cache_start(struct db_i *dbip, int verbose)
 {
     static char ckey[BU_CACHE_KEY_MAXLEN];
 
     if (!dbip || !dbip->i)
-	return BRLCAD_OK;
+	return BRLCAD_ERROR;
 
     dbip->i->c = NULL;
     if (!dbip->dbi_filename || !strlen(dbip->dbi_filename)) {
-	dbip->i->init_complete = true;
 	if (verbose)
 	    bu_log("inmem databases do not support on-disk caches.");
 	return BRLCAD_OK;
@@ -526,18 +474,30 @@ db_cache_init(struct db_i *dbip, int verbose)
 	fsize = 0;
     dbip->i->c = bu_cache_open(dbip->dbi_filename, 1, fsize);
     if (!dbip->i->c) {
-	dbip->i->init_complete = true;
 	return BRLCAD_ERROR;
     }
-    struct bu_cache *c = dbip->i->c;
-    int64_t init_start = bu_gettime();
 
     dbip->i->p = std::make_shared<ProcessDrawData>();
     dbip->i->p.get()->dbip = dbip;
-    dbip->i->p_completed = 0;
 
-    // Collect the set of directory pointers we need to process.
-    std::unordered_set<struct directory *> &to_init = *dbip->i->to_init;
+
+    // Set up processing threads.  These will run until the
+    // database is closed
+    std::thread t_attr(attr_calc, dbip->i->p);
+    std::thread t_aabb(aabb_calc, dbip->i->p);
+    std::thread t_obb(obb_calc, dbip->i->p);
+    std::thread t_lod(lod_calc, dbip->i->p);
+    std::thread t_write(q_write, dbip->i->p);
+    dbip->i->p.get()->thread_cnt = 5;
+
+    // These threads will run until the database is closed.
+    t_attr.detach();
+    t_aabb.detach();
+    t_obb.detach();
+    t_lod.detach();
+    t_write.detach();
+
+    // Enqueue the initial set of directory pointers we need to process.
     struct directory *dp;
     for (int i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
@@ -547,208 +507,59 @@ db_cache_init(struct db_i *dbip, int verbose)
 		continue;
 	    if (UNLIKELY(!dp->d_namep || !strlen(dp->d_namep)))
 		continue;
-	    to_init.insert(dp);
+
+	    // TODO - look up timestamp in cache - if present, no further
+	    // processing to do.
+	    unsigned long long hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+	    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_TIMESTAMP);
+	    if (bu_cache_get(NULL, ckey, dbip->i->c, NULL))
+		continue;
+
+	    // No pre-existing entry.  First order of business is to write the timestamp.
+	    int64_t dp_start = bu_gettime();
+	    CacheItem ts_item(ckey, &dp_start, sizeof(int64_t));
+	    dbip->i->p.get()->q_write.enqueue(ts_item);
+
+	    // Queue up for attr processing.
+	    dbip->i->p.get()->q_attr.enqueue(std::string(dp->d_namep));
 	}
     }
-    size_t target_cnt = to_init.size();
 
-    // Set up processing threads.
-    std::thread t_aabb(aabb_calc, dbip->i->p);
-    std::thread t_obb(obb_calc, dbip->i->p);
-    std::thread t_lod(lod_calc, dbip->i->p);
-
-    int64_t overall_start = bu_gettime();
-    int64_t elapsed = 0;
-    fastf_t seconds = 0.0;
-    struct bu_vls keystr = BU_VLS_INIT_ZERO;
-
-    /* Because we're supposed to be doing init in a thread, there is always a
-     * chance another thread is working on the same database object.  To avoid
-     * trouble, we check for a timestamp associated with the dp at all stages
-     * where we plan to write data to the cache.  If at any point the timestamp
-     * in the cache is newer than our start timestamp for the dp, we immediately
-     * abandon processing that dp and leave it up to whatever other thread is
-     * working with the dp. */
-    bu_semaphore_acquire(BU_SEM_CACHE);
-    dp = (to_init.size() > 0) ? *to_init.begin() : NULL;
-    bool valid_dp = false;
-    while (dp && !valid_dp) {
-	int64_t dp_start = bu_gettime();
-	unsigned long long hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_TIMESTAMP);
-	if (cache_timestamp(ckey, c) > dp_start)
-	    dp = NULL;
-	if (dp) {
-	    valid_dp = true;
-	    to_init.erase(dp);
-	} else {
-	    dp = (to_init.size() > 0) ? *to_init.begin() : NULL;
-	}
+    // TODO - need to monitor timestamp state to kick off a new init if
+    // someone other than us touches the.g file
+#if 0
+    if (UNLIKELY(init_start < bu_file_timestamp(dbip->dbi_filename))) {
+	// File changed before initial cache generation completed - but librt
+	// I/O routines didn't populate to_init - external edit?
+	// Abort and start over - we know nothing about what happened...
+	bu_semaphore_acquire(BU_SEM_CACHE);
+	to_init.clear();
+	bu_cache_close(dbip->i->c);
+	bu_semaphore_release(BU_SEM_CACHE);
+	return db_cache_init(dbip, verbose);
     }
-    bu_semaphore_release(BU_SEM_CACHE);
+#endif
 
-    while (dp) {
-	if (UNLIKELY(init_start < bu_file_timestamp(dbip->dbi_filename))) {
-	    // File changed before initial cache generation completed - but librt
-	    // I/O routines didn't populate to_init - external edit?
-	    // Abort and start over - we know nothing about what happened...
-	    bu_semaphore_acquire(BU_SEM_CACHE);
-	    to_init.clear();
-	    bu_cache_close(dbip->i->c);
-	    bu_semaphore_release(BU_SEM_CACHE);
-	    return db_cache_init(dbip, verbose);
-	}
-
-	// If the parent thread has decided to close the dbip, we can
-	// stop now.
-	if (dbip->i->shutdown_requested) {
-	    bu_vls_free(&keystr);
-
-	    // Tell the geom threads we're shutting down
-	    dbip->i->p.get()->shutdown = true;
-
-	    // Wait for the aabb, obb, lod threads to finish up
-	    t_aabb.join();
-	    t_obb.join();
-	    t_lod.join();
-
-	    dbip->i->init_complete = true;
-	    return BRLCAD_OK;
-	}
-
-	// Commence processing.
-	int64_t dp_start = bu_gettime();
-
-	if (verbose > 1) {
-	    bu_log("Processing(%zd):  %s\n", dbip->i->p_completed+1, dp->d_namep);
-	}
-
-	// Immediately pull the necessary data from the dp/disk into memory
-	// (This makes us independent to any librt changes to the struct
-	// directory data.)
-
-	// Set up data container
-	GeomData *gd = new GeomData(c, dp_start, dp->d_namep);
-
-	// Read the attributes from the database object
-	struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
-	bu_semaphore_acquire(BU_SEM_CACHE);
-	if (db5_get_attributes(dbip, &c_avs, dp) < 0) {
-	    bu_semaphore_release(BU_SEM_CACHE);
-	    delete gd;
-	    continue;
-	}
-	bu_semaphore_release(BU_SEM_CACHE);
-
-	// Read the geometry from the database object
-	struct rt_db_internal *ip;
-	BU_GET(ip, struct rt_db_internal);
-	RT_DB_INTERNAL_INIT(ip);
-	bu_semaphore_acquire(BU_SEM_CACHE);
-	int ret = rt_db_get_internal(ip, dp, dbip, NULL, &rt_uniresource);
-	if (ret < 0) {
-	    bu_semaphore_release(BU_SEM_CACHE);
-	    BU_PUT(ip, struct rt_db_internal);
-	    delete gd;
-	    continue;
-	}
-	bu_semaphore_release(BU_SEM_CACHE);
-	if (ip->idb_minor_type != dp->d_minor_type) {
-	    bu_log("Error processing %s - mismatch between d_minor_type (%c) and idb_minor_type (%c)\n", dp->d_namep, dp->d_minor_type, ip->idb_minor_type);
-	    rt_db_free_internal(ip);
-	    BU_PUT(ip, struct rt_db_internal);
-	    continue;
-	}
-
-	unsigned long long user_key = bu_data_hash(gd->name, strlen(gd->name)*sizeof(char));
-	gd->user_hash = user_key;
-	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_key, CACHE_TIMESTAMP);
-	if (cache_timestamp(ckey, c)) {
-	    // If we already have a populated cache, assume it is valid.
-	    // Validating and resetting preexisting data in the cache against the
-	    // .g is outside the scope of the init routine.
-	    dp = (to_init.size() > 0) ? *to_init.begin() : NULL;
-	    if (dp)
-		to_init.erase(dp);
-	    bu_avs_free(&c_avs);
-	    rt_db_free_internal(ip);
-	    BU_PUT(ip, struct rt_db_internal);
-	    delete gd;
-	    continue;
-	}
-
-	// First order of business is to write the timestamp
-	bu_semaphore_acquire(BU_SEM_CACHE);
-	if (!bu_cache_write(&dp_start, sizeof(int64_t), ckey, c)) {
-	    bu_log("%s: timestamp cache write failure\n", dp->d_namep);
-	    bu_cache_write(&dp_start, sizeof(int64_t), ckey, c);
-	    bu_semaphore_release(BU_SEM_CACHE);
-	    bu_avs_free(&c_avs);
-	    rt_db_free_internal(ip);
-	    BU_PUT(ip, struct rt_db_internal);
-	    delete gd;
-	    continue;
-	}
-	bu_semaphore_release(BU_SEM_CACHE);
-
-	// Get the properties we need from attributes
-	if (cache_update_attrs(c, gd->name, user_key, &c_avs, gd->stime) != BRLCAD_OK) {
-	    bu_semaphore_release(BU_SEM_CACHE);
-	    bu_avs_free(&c_avs);
-	    rt_db_free_internal(ip);
-	    BU_PUT(ip, struct rt_db_internal);
-	    delete gd;
-	    continue;
-	}
-	bu_avs_free(&c_avs);
-
-	// Kick off the geometry processing
-	ip->idb_uptr = gd;
-	dbip->i->p.get()->m_aabb.lock();
-	dbip->i->p.get()->q_aabb.push(ip);
-	dbip->i->p.get()->m_aabb.unlock();
-
-	bu_semaphore_acquire(BU_SEM_CACHE);
-	dp = (to_init.size() > 0) ? *to_init.begin() : NULL;
-	if (dp)
-	    to_init.erase(dp);
-	bu_semaphore_release(BU_SEM_CACHE);
-
-	// If the user has requested it, let them know what is happening
-	if (verbose && seconds > 5.0) {
-	    elapsed = bu_gettime() - overall_start;
-	    seconds = elapsed / 1000000.0;
-	    size_t completed = dbip->i->p_completed;
-	    bu_log("Drawing cache processing (%g seconds): completed %zd of %zd BoTs\n", seconds, completed, target_cnt);
-	}
-
-    }
-
-    bu_vls_free(&keystr);
-
-    // Wait for the aabb, obb, lod threads to finish up
-    dbip->i->p.get()->init_done = true;
-    t_aabb.join();
-    t_obb.join();
-    t_lod.join();
-
-    if (verbose) {
+#if 0
+    // If the user has requested it, let them know what is happening
+    if (verbose && seconds > 5.0) {
 	elapsed = bu_gettime() - overall_start;
-	int rseconds = elapsed / 1000000;
-	int rminutes = rseconds / 60;
-	int rhours = rminutes / 60;
-	rminutes = rminutes % 60;
-	rseconds = rseconds % 60;
-	bu_log("Draw caching complete (Elapsed time: %02d:%02d:%02d)\n", rhours, rminutes, rseconds);
+	seconds = elapsed / 1000000.0;
+	bu_log("Drawing cache processing (%g seconds): completed %zd of %zd BoTs\n", seconds, completed, target_cnt);
     }
+#endif
 
     // TODO - Populate cache_geom_uses
     //
     // Note that this is a cache-only operation - the dbip isn't involved
     // except as storage.  That way, garbage collect will be able to clear out
     // old, unused geometry info as well.
+    //
+    // Might need to have this done by the garbage collect op itself, and have
+    // that op wait until the cache queue system reports clear.  Should also
+    // lock cache ops when we're mid gc so nobody can queue up until the gc
+    // is done.
 
-    dbip->i->init_complete = true;
     return BRLCAD_OK;
 }
 
@@ -761,26 +572,27 @@ db_cache_lod_mesh_get(struct db_i *dbip, const char *name)
     return bv_lod_mesh_get(dbip->i->c, name);
 }
 
-
+// Must be called from the same thread as db_cache_start
 int
-db_cache_update(struct db_i *dbip, const char *name, int attr_only)
+db_cache_update(struct db_i *dbip, const char *name)
 {
     static char ckey[BU_CACHE_KEY_MAXLEN];
 
-    if (!dbip || !dbip->i || !dbip->i->c) {
-	bu_log("db_cache_update: invalid dbip input\n");
-	return BRLCAD_ERROR;
-    }
-
-    struct bu_cache *c = dbip->i->c;
-
-    // No-op
+    // no name == no-op
     if (!name)
 	return BRLCAD_OK;
 
-    // If we have existing data, clear it.
-    // TODO - do this right...
-    //bu_cache_clear(name, c);
+    if (!dbip || !dbip->i)
+	return BRLCAD_ERROR;
+
+    // db_cache_update is a no-op for inmmem databases
+    if (!dbip->dbi_filename || !strlen(dbip->dbi_filename))
+	return BRLCAD_OK;
+
+    if (!dbip->i->c) {
+	bu_log("db_cache_update: no dbip cache defined\n");
+	return BRLCAD_ERROR;
+    }
 
     // Do the lookup
     struct directory *dp = db_lookup(dbip, name, LOOKUP_NOISY);
@@ -788,103 +600,24 @@ db_cache_update(struct db_i *dbip, const char *name, int attr_only)
 	bu_log("db_cache_update: db_lookup failed for %s\n", name);
 	return BRLCAD_ERROR;
     }
-
-    // Get the name hash
-    unsigned long long hash = bu_data_hash(name, strlen(name)*sizeof(char));
-
-    // First order of business is to write the timestamp.  Unlike
-    // db_cache_init, if we call this routine the presumption is we have the
-    // most current info.
-    int64_t dp_start = bu_gettime();
-    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_TIMESTAMP);
-    bu_semaphore_acquire(BU_SEM_CACHE);
-    if (!bu_cache_write(&dp_start, sizeof(int64_t), ckey, c)) {
-	bu_semaphore_release(BU_SEM_CACHE);
-	bu_log("%s: timestamp cache write failure\n", dp->d_namep);
-	return BRLCAD_ERROR;
-    }
-    bu_semaphore_release(BU_SEM_CACHE);
-
-    // Read the attributes from the database object
-    struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
-    if (db5_get_attributes(dbip, &c_avs, dp) < 0) {
-	bu_log("%s: avs lookup failure\n", dp->d_namep);
-	return BRLCAD_ERROR;
-    }
-    if (cache_update_attrs(dbip->i->c, name, hash, &c_avs, 0) != BRLCAD_OK) {
-	bu_avs_free(&c_avs);
-	bu_log("%s: cache_update_attrs failure\n", dp->d_namep);
-	return BRLCAD_ERROR;
-    }
-    bu_avs_free(&c_avs);
-
-    // If we're only updating the cached attributes (i.e. the
-    // calling code knows the geometry wasn't changed) we can
-    // stop now.
-    if (attr_only)
+    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
+	return BRLCAD_OK;
+    if (dp->d_addr == RT_DIR_PHONY_ADDR)
 	return BRLCAD_OK;
 
-    // Remaining steps require geometry info
-    struct rt_db_internal *ip;
-    BU_GET(ip, struct rt_db_internal);
-    RT_DB_INTERNAL_INIT(ip);
-    int ret = rt_db_get_internal(ip, dp, dbip, NULL, &rt_uniresource);
-    if (ret < 0) {
-	bu_log("db_cache_update: rt_get_internal failed for %s\n", name);
-	return BRLCAD_ERROR;
-    }
-    if (ip->idb_minor_type != dp->d_minor_type) {
-	bu_log("Error processing %s - mismatch between d_minor_type (%c) and idb_minor_type (%c)\n", dp->d_namep, dp->d_minor_type, ip->idb_minor_type);
-	rt_db_free_internal(ip);
-	BU_PUT(ip, struct rt_db_internal);
-	return BRLCAD_ERROR;
-    }
+    // Update timestamp in cache.  As long as db_cache_update is only
+    // called from the same thread as db_cache_start, the timestamp
+    // should always end up being the latest version (which is what
+    // we want.
+    unsigned long long hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_TIMESTAMP);
+    int64_t dp_start = bu_gettime();
+    CacheItem ts_item(ckey, &dp_start, sizeof(int64_t));
+    dbip->i->p.get()->q_write.enqueue(ts_item);
 
-    // Do aabb calc
-    if (ip->idb_meth->ft_bbox) {
-	const struct bn_tol btol = BN_TOL_INIT_TOL;
-	point_t bb[2];
-	if (!(ip->idb_meth->ft_bbox(ip, &bb[0], &bb[1], &btol) < 0)) {
-	    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_AABB);
-	    bu_semaphore_acquire(BU_SEM_CACHE);
-	    if (!bu_cache_write(&bb, 2*sizeof(point_t), ckey, c)) {
-		bu_log("%s: aabb cache write failure\n", name);
-	    }
-	    bu_semaphore_release(BU_SEM_CACHE);
-	}
-    }
 
-    // Do obb calc
-    if (ip->idb_meth->ft_oriented_bbox) {
-	double btol = BN_TOL_DIST;
-	struct rt_arb_internal arb;
-	arb.magic = RT_ARB_INTERNAL_MAGIC;
-	if (!(ip->idb_meth->ft_oriented_bbox(&arb, ip, btol) < 0)) {
-	    vect_t obb[4] = {VINIT_ZERO};
-	    bg_pnts_obb(&obb[0], &obb[1], &obb[2], &obb[3], (const point_t *)arb.pt, 8);
-	    bool cfailure = false;
-	    for (int k = 0; k < 4; k++) {
-		if (VNEAR_ZERO(obb[k], VUNITIZE_TOL)) {
-		    bu_log("%s: obb calculation failure\n", name);
-		    cfailure = true;
-		}
-	    }
-	    if (!cfailure){
-		snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_OBB);
-		bu_semaphore_acquire(BU_SEM_CACHE);
-		if (!bu_cache_write(&obb, 4*sizeof(vect_t), ckey, c)) {
-		    bu_log("%s: obb cache write failure\n", name);
-		}
-		bu_semaphore_release(BU_SEM_CACHE);
-	    }
-	}
-    }
-
-    if (cache_mesh_update(dbip->i->c, ip, dp->d_namep) != BRLCAD_OK)
-	bu_log("%s: cache_mesh_update failure\n", dp->d_namep);
-
-    rt_db_free_internal(ip);
-    BU_PUT(ip, struct rt_db_internal);
+    // Enqueue to process
+    dbip->i->p.get()->q_attr.enqueue(std::string(dp->d_namep));
 
     // TODO - Make sure we can retrieve the cached data
 
@@ -935,7 +668,7 @@ db_cache_clear_entries(struct db_i *dbip, unsigned long long hash)
     dbip->i->cache_geom_uses[ghash].erase(hash);
 
     // If ghash still has active users, we're done
-    if (dbip->i->cache_geom_uses[ghash].size()) 
+    if (dbip->i->cache_geom_uses[ghash].size())
 	return;
 
     // No more users of ghash - clear the data associated with ghash as well.
@@ -945,21 +678,41 @@ db_cache_clear_entries(struct db_i *dbip, unsigned long long hash)
 
 }
 
-void
-db_cache_gc(struct db_i *dbip)
+// Return 1 if there is processing going on, else 0
+int
+db_cache_processing(struct db_i *dbip)
 {
     if (!dbip)
-	return;
+	return 0;
 
-    // TODO - get all cache keys, and use something like a region flag
-    // filter to collect the set of all name hashes
+    // Check queues
+    if (dbip->i->p.get()->q_attr.size_approx())
+	return 1;
 
-    // Hash all active dp names in the dbip, and remove those hashes from
-    // the name set collected previously
+    if (dbip->i->p.get()->q_aabb.size_approx())
+	return 1;
 
-    // Anything remaining is garbage, and gets db_cache_clear_entries
-    // called on it.
+    if (dbip->i->p.get()->q_obb.size_approx())
+	return 1;
+
+    if (dbip->i->p.get()->q_lod.size_approx())
+	return 1;
+
+    if (dbip->i->p.get()->q_write.size_approx())
+	return 1;
+
+    return 0;
 }
+
+
+// TODO - for garbage collect, get all cache keys, and use something like a
+// region flag filter to collect the set of all name hashes
+
+// Hash all active dp names in the dbip, and remove those hashes from
+// the name set collected previously
+
+// Anything remaining is garbage, and gets db_cache_clear_entries
+// called on it.
 
 // Local Variables:
 // tab-width: 8

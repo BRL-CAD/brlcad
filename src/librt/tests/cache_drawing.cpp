@@ -20,6 +20,10 @@
 
 #include "common.h"
 
+#include <set>
+#include <thread>
+#include <vector>
+
 #include "vmath.h"
 #include "bu/app.h"
 #include "bu/cache.h"
@@ -55,13 +59,12 @@ do_lod(struct db_i *dbip, struct directory *dp, bool do_init)
 
     struct bv_lod_mesh *mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
     if (!mlod && do_init) {
-	bu_log("Generating LoD for %s\n", dp->d_namep);
-	int key = db_cache_update(dbip, dp->d_namep, 0);
-	if (key != BRLCAD_OK) {
-	    bu_log("ERROR: %s - db_cache_update failed\n", dp->d_namep);
-	    db_cache_update(dbip, dp->d_namep, 0);
-	    return false;
-	}
+
+	bu_log("(Re)generating LoD for %s\n", dp->d_namep);
+	db_cache_update(dbip, dp->d_namep);
+	while (db_cache_processing(dbip))
+	    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
 	mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
     } else {
 	//bu_log("Found LoD: %s\n", dp->d_namep);
@@ -284,7 +287,8 @@ validate_dp(struct db_i *dbip, struct directory *dp)
 }
 
 // For this step, we read the data from the cache and trigger an update if we
-// don't find it.
+// don't find it.  Idea is to roughly simulate what would happen if someone
+// started editing a database while the initial cache build was still ongoing.
 bool
 work_dp(struct db_i *dbip, struct directory *dp)
 {
@@ -307,17 +311,16 @@ work_dp(struct db_i *dbip, struct directory *dp)
 	bu_free(cdata, "cdata");
 	cdata = NULL;
     } else {
-	int key = db_cache_update(dbip, dp->d_namep, 0);
-	if (key != BRLCAD_OK) {
-	    bu_log("ERROR: %s:region_flag - db_cache_update failed\n", dp->d_namep);
-	    return false;
-	}
+	db_cache_update(dbip, dp->d_namep);
+	// Sleep this thread until the cache says it is done, and then try again
+	while (db_cache_processing(dbip))
+	    std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
 	    memcpy(&rflag, cdata, sizeof(int));
 	    bu_free(cdata, "cdata");
 	    cdata = NULL;
 	} else {
-	    bu_log("ERROR: %s:region_flag - lookup failed\n", dp->d_namep);
+	    bu_log("Region flag read failed for %s\n", dp->d_namep);
 	    return false;
 	}
     }
@@ -330,17 +333,16 @@ work_dp(struct db_i *dbip, struct directory *dp)
 	bu_free(cdata, "cdata");
 	cdata = NULL;
     } else {
-	int key = db_cache_update(dbip, dp->d_namep, 0);
-	if (key != BRLCAD_OK) {
-	    bu_log("ERROR: %s:region_id - db_cache_update failed\n", dp->d_namep);
-	    return false;
-	}
+	db_cache_update(dbip, dp->d_namep);
+	// Sleep this thread until the cache says it is done, and then try again
+	while (db_cache_processing(dbip))
+	    std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
 	    memcpy(&region_id, cdata, sizeof(int));
 	    bu_free(cdata, "cdata");
 	    cdata = NULL;
 	} else {
-	    bu_log("ERROR: %s:region_id - lookup failed\n", dp->d_namep);
+	    bu_log("Region id read failed for %s\n", dp->d_namep);
 	    return false;
 	}
     }
@@ -353,17 +355,16 @@ work_dp(struct db_i *dbip, struct directory *dp)
 	bu_free(cdata, "cdata");
 	cdata = NULL;
     } else {
-	int key = db_cache_update(dbip, dp->d_namep, 0);
-	if (key != BRLCAD_OK) {
-	    bu_log("ERROR: %s:color_inherit - db_cache_update failed\n", dp->d_namep);
-	    return false;
-	}
+	db_cache_update(dbip, dp->d_namep);
+	// Sleep this thread until the cache says it is done, and then try again
+	while (db_cache_processing(dbip))
+	    std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
 	    memcpy(&color_inherit, cdata, sizeof(int));
 	    bu_free(cdata, "cdata");
 	    cdata = NULL;
 	} else {
-	    bu_log("ERROR: %s:color_inherit - lookup failed\n", dp->d_namep);
+	    bu_log("Color inherit read failed for %s\n", dp->d_namep);
 	    return false;
 	}
     }
@@ -376,17 +377,16 @@ work_dp(struct db_i *dbip, struct directory *dp)
 	bu_free(cdata, "cdata");
 	cdata = NULL;
     } else {
-	int key = db_cache_update(dbip, dp->d_namep, 0);
-	if (key != BRLCAD_OK) {
-	    bu_log("ERROR: %s:colors - db_cache_update failed\n", dp->d_namep);
-	    return false;
-	}
+	db_cache_update(dbip, dp->d_namep);
+	// Sleep this thread until the cache says it is done, and then try again
+	while (db_cache_processing(dbip))
+	    std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
 	    memcpy(&colors, cdata, sizeof(unsigned int));
 	    bu_free(cdata, "cdata");
 	    cdata = NULL;
 	} else {
-	    bu_log("ERROR: %s:colors - lookup failed\n", dp->d_namep);
+	    bu_log("Colors read failed for %s\n", dp->d_namep);
 	    return false;
 	}
     }
@@ -399,17 +399,16 @@ work_dp(struct db_i *dbip, struct directory *dp)
 	bu_free(cdata, "cdata");
 	cdata = NULL;
     } else {
-	int key = db_cache_update(dbip, dp->d_namep, 0);
-	if (key != BRLCAD_OK) {
-	    bu_log("ERROR: %s:aabb - db_cache_update failed\n", dp->d_namep);
-	    return false;
-	}
+	db_cache_update(dbip, dp->d_namep);
+	// Sleep this thread until the cache says it is done, and then try again
+	while (db_cache_processing(dbip))
+	    std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
 	    memcpy(&aabb, cdata, 2*sizeof(point_t));
 	    bu_free(cdata, "cdata");
 	    cdata = NULL;
 	} else {
-	    bu_log("ERROR: %s:aabb - lookup failed\n", dp->d_namep);
+	    bu_log("AABB read failed for %s\n", dp->d_namep);
 	    return false;
 	}
     }
@@ -424,17 +423,16 @@ work_dp(struct db_i *dbip, struct directory *dp)
 	    bu_free(cdata, "cdata");
 	    cdata = NULL;
 	} else {
-	    int key = db_cache_update(dbip, dp->d_namep, 0);
-	    if (key != BRLCAD_OK) {
-		bu_log("ERROR: %s:obb - db_cache_update failed\n", dp->d_namep);
-		return false;
-	    }
+	    db_cache_update(dbip, dp->d_namep);
+	    // Sleep this thread until the cache says it is done, and then try again
+	    while (db_cache_processing(dbip))
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	    if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
 		memcpy(&obb, cdata, 4*sizeof(point_t));
 		bu_free(cdata, "cdata");
 		cdata = NULL;
 	    } else {
-		bu_log("ERROR: %s:obb - lookup failed\n", dp->d_namep);
+		bu_log("OBB read failed for %s\n", dp->d_namep);
 		return false;
 	    }
 	}
@@ -482,7 +480,14 @@ main(int argc, char *argv[])
     db_update_nref(dbip, &rt_uniresource);
 
     // Initialize cache
-    db_cache_init(dbip, 1);
+    db_cache_start(dbip, 1);
+
+    // Wait until librt claims there is no more processing going on
+    bu_log("Waiting for cache initialization...\n");
+    while (db_cache_processing(dbip)) {
+	std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
+    bu_log("Waiting for cache initialization... done.\n");
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
@@ -534,30 +539,12 @@ main(int argc, char *argv[])
 	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
     db_update_nref(dbip, &rt_uniresource);
 
-#if 1
-    // This time running db_cache_init in a separate thread
-    //
-    // TODO - maybe this would actually be a good model for all cache updates,
-    // not just init?  Have db_update_cache just toss the name of the target
-    // solid for the update into the queue, and have the processing threads
-    // do their thing.  They'll be idle until an update is needed, so they
-    // should be harmless enough, and then we don't need two different mechanisms
-    // for init and subsequent updates.
-    std::thread t_cache(db_cache_init, dbip, 1);
-    t_cache.detach();
+    db_cache_start(dbip, 1);
 
-    // Slight pause to be sure init has started, and then launch work.
-    // Anything that the init hasn't gotten to yet should be triggered for an
-    // update, which will test what happens when user action and cache init are
-    // both in play.
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-#else
-    db_cache_init(dbip, 1);
-#endif
-
-    bu_log("Done waiting, start working\n");
+    bu_log("Not waiting for cache init - starting work immediately\n");
 
     if (argc < 3) {
+	std::set<struct directory *> dpq;
 	for (int i = 0; i < RT_DBNHASH; i++) {
 	    struct directory *dp;
 	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
@@ -565,9 +552,23 @@ main(int argc, char *argv[])
 		    continue;
 		if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
 		    continue;
-		bu_log("Processing %s\n", dp->d_namep);
-		work_dp(dbip, dp);
+		dpq.insert(dp);
 	    }
+	}
+
+	std::vector<std::thread> wthreads;
+	while (!dpq.empty()) {
+	    if (wthreads.size() < 6) {
+		struct directory *dp = *dpq.begin();
+		dpq.erase(dp);
+		bu_log("Processing %s\n", dp->d_namep);
+		wthreads.emplace_back(work_dp, dbip, dp);
+	    }
+	    for (std::thread& t : wthreads) {
+		if (t.joinable())
+		    t.join();
+	    }
+	    wthreads.clear();
 	}
     } else {
 	struct directory *dp = db_lookup(dbip, argv[2], LOOKUP_QUIET);
