@@ -68,6 +68,14 @@ struct bu_cache {
     struct bu_cache_impl *i;
 };
 
+/* Provide a struct data type that functions can use to return everything
+ * needed to execute a deferred bu_cache_write operation. */
+struct bu_cache_item {
+    char key[BU_CACHE_KEY_MAXLEN];
+    void *data;
+    size_t data_len;
+};
+
 /**
  * Opens the specified cache database from the BRL-CAD BU_DIR_CACHE folder.
  * The cache_db string may contain a hierarchical path, but note that all

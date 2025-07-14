@@ -648,11 +648,8 @@ db_i_internal_create(void)
     struct db_i_internal *i;
     BU_GET(i, struct db_i_internal);
     i->dbi_magic = DBI_MAGIC;
-    i->to_init = new std::unordered_set<struct directory *>;
 
     i->c = NULL;
-    i->shutdown_requested = false;
-    i->init_complete = false;
 
     return i;
 }
@@ -663,16 +660,11 @@ db_i_internal_destroy(struct db_i_internal *i)
     if (!i)
 	return;
 
-    // See if our init thread(s) are done
-    if (!i->init_complete) {
-	i->shutdown_requested = true;
-	while (!i->init_complete) {
-	    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-	}
-    }
-
-    if (i->to_init)
-	delete i->to_init;
+    // Instruct the background cache threads to shut down
+    i->p.get()->shutdown = true;
+    // Wait until they are all done
+    while (i->p.get()->thread_cnt)
+	std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     if (i->c)
 	bu_cache_close(i->c);

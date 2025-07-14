@@ -140,7 +140,7 @@ class POPState {
     public:
 
 	// Create cached data (doesn't create a usable container)
-	POPState(struct bu_cache *ctx, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, fastf_t pop_face_cnt_threshold_ratio);
+	POPState(struct bu_ptbl *cache_items, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, fastf_t pop_face_cnt_threshold_ratio);
 
 	// Load cached data (DOES create a usable container)
 	POPState(struct bu_cache *ctx, unsigned long long key);
@@ -233,8 +233,8 @@ class POPState {
 	// Write data out to cache (only used during initialization from
 	// external data)
 	void cache();
-	bool cache_tri();
-	bool cache_write(const char *component, char *vstr, size_t len);
+	void cache_tri();
+	void cache_item(const char *component, void *data, size_t len);
 	size_t cache_get(void **data, const char *component);
 	void cache_done();
 	MDB_val mdb_key, mdb_data[2];
@@ -259,10 +259,10 @@ class POPState {
 	int *faces_array = NULL;
 
 	// Cache
-	struct bu_vls keystr = BU_VLS_INIT_ZERO;
-	struct bu_vls valstr = BU_VLS_INIT_ZERO;
+	char keystr[BU_CACHE_KEY_MAXLEN];
 	struct bu_cache *c;
 	struct bu_cache_txn *txn = NULL;
+	struct bu_ptbl *cache_items;
 };
 
 void
@@ -379,10 +379,10 @@ POPState::tri_process()
     //bu_log("Max LoD POP level: %zd\n", max_pop_threshold_level);
 }
 
-POPState::POPState(struct bu_cache *ctx, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, fastf_t pop_facecnt_threshold_ratio)
+POPState::POPState(struct bu_ptbl *ci, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, fastf_t pop_facecnt_threshold_ratio)
 {
-    // Store the context
-    c = ctx;
+    // Store the output ptbl
+    cache_items = ci;
 
     // Caller set parameter telling us when to switch from POP data
     // to just drawing the full mesh
@@ -394,41 +394,20 @@ POPState::POPState(struct bu_cache *ctx, const point_t *v, size_t vcnt, const ve
     bu_data_hash_update(s, faces, 3*fcnt*sizeof(int));
     hash = bu_data_hash_val(s);
     bu_data_hash_destroy(s);
-
-    // Make sure there's no cache before performing the full initializing from
-    // the original data.  In this mode the POPState creation is used to
-    // initialize the cache, not to create a workable data state from that
-    // data.  The hash is set, which is all we really need - loading data from
-    // the cache is handled elsewhere.
-    void *cdata = NULL;
-    size_t csize = cache_get(&cdata, CACHE_POP_MAX_LEVEL);
-    if (csize && cdata) {
-	cache_done();
-	is_valid = true;
-	return;
-    }
-
-    // Cache isn't already populated - go to work.
-    cache_done();
-
-
+    
     // Stash the user_key to hash mapping
-    {
-	struct bu_vls ukeystr = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&ukeystr, "%llu", user_key);
-	unsigned long long htmp = hash;
-	size_t written = bu_cache_write((char *)&htmp, sizeof(unsigned long long), bu_vls_cstr(&ukeystr), c);
-	bu_vls_free(&ukeystr);
-	if (!written)
-	    return;
-    }
+    struct bu_cache_item *itm;
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu", user_key);
+    itm->data = bu_malloc(sizeof(unsigned long long), "key");
+    memcpy(itm->data, &hash, sizeof(unsigned long long));
+    bu_ptbl_ins(cache_items, (long *)itm);
 
     curr_level = POP_MAXLEVEL - 1;
 
     // Precompute precision masks for each level
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
+    for (int i = 0; i < POP_MAXLEVEL; i++)
 	PRECOMPUTED_MASKS.push_back(pow(2, (POP_MAXLEVEL - i - 1)));
-    }
 
     // Store source data info
     vert_cnt = vcnt;
@@ -466,6 +445,7 @@ POPState::POPState(struct bu_cache *ctx, const point_t *v, size_t vcnt, const ve
 
     // We're now ready to write out the data
     is_valid = true;
+
     cache();
 
     if (!is_valid)
@@ -609,8 +589,6 @@ POPState::~POPState()
 	(*full_detail_free_clbk)(lod, detail_clbk_data);
 	detail_clbk_data = NULL;
     }
-    bu_vls_free(&keystr);
-    bu_vls_free(&valstr);
 }
 
 void
@@ -843,17 +821,15 @@ POPState::set_level(int level)
 //
 // This will also allow easier removal of larger subcomponents if we need to
 // back off on saved LoD.
-bool
-POPState::cache_write(const char *component, char *vstr, size_t len)
+void
+POPState::cache_item(const char *component, void *data, size_t len)
 {
-    // Prepare inputs for writing
-    bu_vls_sprintf(&keystr, "%llu:%s", hash, component);
-
-    // Write out key/value to LMDB database, where the key is the hash
-    // and the value is the serialized LoD data
-    size_t written = bu_cache_write(vstr, len, bu_vls_cstr(&keystr), c);
-
-    return (written) ? true : false;
+    struct bu_cache_item *itm;
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, component);
+    itm->data = bu_malloc(len, "data");
+    memcpy(itm->data, data, sizeof(unsigned long long));
+    bu_ptbl_ins(cache_items, (long *)itm);
 }
 
 // This pulls the data, but doesn't close the transaction because the
@@ -864,13 +840,13 @@ size_t
 POPState::cache_get(void **data, const char *component)
 {
     // Construct lookup key
-    bu_vls_sprintf(&keystr, "%llu:%s", hash, component);
+    snprintf(keystr, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, component);
 
     // Initialize
     (*data) = NULL;
 
     // Do the lookup
-    return bu_cache_get(data, bu_vls_cstr(&keystr), c, &txn);
+    return bu_cache_get(data, keystr, c, &txn);
 }
 
 void
@@ -879,145 +855,105 @@ POPState::cache_done()
     bu_cache_get_done(&txn);
 }
 
-bool
+void
 POPState::cache_tri()
 {
-    // Write out the threshold level - above this level,
+    // Threshold level - above this level,
     // we need to switch to full-detail drawing
-    {
-	int tmp_maxlevel = max_pop_threshold_level;
-	if (!cache_write(CACHE_POP_MAX_LEVEL, (char *)&tmp_maxlevel, sizeof(int))) {
-	    bu_log("CACHE_POP_MAX_LEVEL failed\n");
-	    return false;
-	}
-    }
+    int tmp_maxlevel = max_pop_threshold_level;
+    cache_item(CACHE_POP_MAX_LEVEL, &tmp_maxlevel, sizeof(int));
 
-    // Write out the switch level
-    {
-	fastf_t tmp_max_face_ratio = max_face_ratio;
-	if (!cache_write(CACHE_POP_SWITCH_LEVEL, (char *)&tmp_max_face_ratio, sizeof(fastf_t))) {
-	    bu_log("CACHE_POP_SWITCH_LEVEL failed\n");
-	    return false;
-	}
-    }
+    // Switch level
+    fastf_t tmp_max_face_ratio = max_face_ratio;
+    cache_item(CACHE_POP_SWITCH_LEVEL, &tmp_max_face_ratio, sizeof(fastf_t));
 
-    // Write out the vertex counts for all active levels
-    {
-	size_t ldata[POP_MAXLEVEL+1] = {0};
-	for (size_t i = 0; i <= POP_MAXLEVEL; i++) {
-	    if (level_tri_verts.find(i) == level_tri_verts.end())
-		continue;
-	    if ((int)i > max_pop_threshold_level || !level_tri_verts[i].size())
-		continue;
-	    ldata[i] = level_tri_verts[i].size();
-	}
-	if (!cache_write(CACHE_VERTEX_COUNT, (char *)ldata, sizeof(ldata))) {
-	    bu_log("CACHE_VERTEX_COUNT failed\n");
-	    return false;
-	}
+    // Vertex counts for all active levels
+    size_t vldata[POP_MAXLEVEL+1] = {0};
+    for (size_t i = 0; i <= POP_MAXLEVEL; i++) {
+	if (level_tri_verts.find(i) == level_tri_verts.end())
+	    continue;
+	if ((int)i > max_pop_threshold_level || !level_tri_verts[i].size())
+	    continue;
+	vldata[i] = level_tri_verts[i].size();
     }
+    cache_item(CACHE_VERTEX_COUNT, &vldata, sizeof(vldata));
 
     // Write out the triangle counts for all active levels
-    {
-	size_t ldata[POP_MAXLEVEL+1] = {0};
-	for (size_t i = 0; i <= POP_MAXLEVEL; i++) {
-	    if ((int)i > max_pop_threshold_level || !level_tris[i].size())
-		continue;
-	    // Store the size of the level tri vector
-	    ldata[i] = level_tris[i].size();
-	}
-	if (!cache_write(CACHE_TRI_COUNT, (char *)ldata, sizeof(level_tricnt))) {
-	    bu_log("CACHE_TRI_COUNT failed\n");
-	    return false;
-	}
+    size_t tldata[POP_MAXLEVEL+1] = {0};
+    for (size_t i = 0; i <= POP_MAXLEVEL; i++) {
+	if ((int)i > max_pop_threshold_level || !level_tris[i].size())
+	    continue;
+	// Store the size of the level tri vector
+	tldata[i] = level_tris[i].size();
     }
-
-    struct bu_vls kbuf = BU_VLS_INIT_ZERO;
+    cache_item(CACHE_TRI_COUNT, &tldata, sizeof(level_tricnt));
 
     // Write out the vertices in LoD order for each level
-    {
-	for (int i = 0; i <= max_pop_threshold_level; i++) {
-	    if (level_tri_verts.find(i) == level_tri_verts.end())
-		continue;
-	    if (!level_tri_verts[i].size())
-		continue;
-	    // Write out the vertex points
-	    std::vector<fastf_t> vpnts;
-	    std::unordered_set<size_t>::iterator s_it;
-	    for (s_it = level_tri_verts[i].begin(); s_it != level_tri_verts[i].end(); s_it++) {
-		point_t v;
-		VMOVE(v, verts_array[*s_it]);
-		for (int j = 0; j < 3; j++)
-		    vpnts.push_back(v[j]);
-	    }
-	    bu_vls_sprintf(&kbuf, "%s%d", CACHE_VERT_LEVEL, i);
-	    if (!cache_write(bu_vls_cstr(&kbuf), (char *)vpnts.data(), vpnts.size()*sizeof(fastf_t))) {
-		bu_vls_free(&kbuf);
-		bu_log("CACHE_VERT_LEVEL failed\n");
-		return false;
-	    }
+    struct bu_vls kbuf = BU_VLS_INIT_ZERO;
+    for (int i = 0; i <= max_pop_threshold_level; i++) {
+	if (level_tri_verts.find(i) == level_tri_verts.end())
+	    continue;
+	if (!level_tri_verts[i].size())
+	    continue;
+	// Write out the vertex points
+	std::vector<fastf_t> vpnts;
+	std::unordered_set<size_t>::iterator s_it;
+	for (s_it = level_tri_verts[i].begin(); s_it != level_tri_verts[i].end(); s_it++) {
+	    point_t v;
+	    VMOVE(v, verts_array[*s_it]);
+	    for (int j = 0; j < 3; j++)
+		vpnts.push_back(v[j]);
 	}
+	bu_vls_sprintf(&kbuf, "%s%d", CACHE_VERT_LEVEL, i);
+	cache_item(bu_vls_cstr(&kbuf), vpnts.data(), vpnts.size()*sizeof(fastf_t));
     }
 
     // Write out the triangles in LoD order for each level
-    {
-	for (int i = 0; i <= max_pop_threshold_level; i++) {
-	    if (!level_tris[i].size())
-		continue;
-	    // Write out the mapped triangle indices
-	    std::vector<int> tinds;
-	    std::vector<size_t>::iterator s_it;
-	    for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); ++s_it) {
-		tinds.push_back((int)tri_ind_map[faces_array[3*(*s_it)+0]]);
-		tinds.push_back((int)tri_ind_map[faces_array[3*(*s_it)+1]]);
-		tinds.push_back((int)tri_ind_map[faces_array[3*(*s_it)+2]]);
-	    }
-	    bu_vls_sprintf(&kbuf, "%s%d", CACHE_TRI_LEVEL, i);
-	    if (!cache_write(bu_vls_cstr(&kbuf), (char *)tinds.data(), tinds.size()*sizeof(int))) {
-		bu_vls_free(&kbuf);
-		bu_log("CACHE_TRI_LEVEL failed\n");
-		return false;
-	    }
+    for (int i = 0; i <= max_pop_threshold_level; i++) {
+	if (!level_tris[i].size())
+	    continue;
+	// Write out the mapped triangle indices
+	std::vector<int> tinds;
+	std::vector<size_t>::iterator s_it;
+	for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); ++s_it) {
+	    tinds.push_back((int)tri_ind_map[faces_array[3*(*s_it)+0]]);
+	    tinds.push_back((int)tri_ind_map[faces_array[3*(*s_it)+1]]);
+	    tinds.push_back((int)tri_ind_map[faces_array[3*(*s_it)+2]]);
 	}
+	bu_vls_sprintf(&kbuf, "%s%d", CACHE_TRI_LEVEL, i);
+	cache_item(bu_vls_cstr(&kbuf), tinds.data(), tinds.size()*sizeof(int));
     }
 
     // Write out the vertex normals in LoD order for each level, if we have them
-    {
-	if (vnorms_array) {
-	    for (int i = 0; i <= max_pop_threshold_level; i++) {
-		if (!level_tris[i].size())
-		    continue;
-		// Write out the normals associated with the triangle indices
-		std::vector<fastf_t> vnorms;
-		std::vector<size_t>::iterator s_it;
-		for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
-		    vect_t v;
-		    int tind;
-		    tind = 3*(*s_it)+0;
-		    VMOVE(v, vnorms_array[tind]);
-		    for (int j = 0; j < 3; j++)
-			vnorms.push_back(v[j]);
-		    tind = 3*(*s_it)+1;
-		    VMOVE(v, vnorms_array[tind]);
-		    for (int j = 0; j < 3; j++)
-			vnorms.push_back(v[j]);
-		    tind = 3*(*s_it)+2;
-		    VMOVE(v, vnorms_array[tind]);
-		    for (int j = 0; j < 3; j++)
-			vnorms.push_back(v[j]);
-		}
-		bu_vls_sprintf(&kbuf, "%s%d", CACHE_VERTNORM_LEVEL, i);
-		if (!cache_write(bu_vls_cstr(&kbuf), (char *)vnorms.data(), vnorms.size()*sizeof(fastf_t))) {
-		    bu_vls_free(&kbuf);
-		    bu_log("CACHE_VERTNORM_LEVEL failed\n");
-		    return false;
-		}
+    if (vnorms_array) {
+	for (int i = 0; i <= max_pop_threshold_level; i++) {
+	    if (!level_tris[i].size())
+		continue;
+	    // Write out the normals associated with the triangle indices
+	    std::vector<fastf_t> vnorms;
+	    std::vector<size_t>::iterator s_it;
+	    for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
+		vect_t v;
+		int tind;
+		tind = 3*(*s_it)+0;
+		VMOVE(v, vnorms_array[tind]);
+		for (int j = 0; j < 3; j++)
+		    vnorms.push_back(v[j]);
+		tind = 3*(*s_it)+1;
+		VMOVE(v, vnorms_array[tind]);
+		for (int j = 0; j < 3; j++)
+		    vnorms.push_back(v[j]);
+		tind = 3*(*s_it)+2;
+		VMOVE(v, vnorms_array[tind]);
+		for (int j = 0; j < 3; j++)
+		    vnorms.push_back(v[j]);
 	    }
+	    bu_vls_sprintf(&kbuf, "%s%d", CACHE_VERTNORM_LEVEL, i);
+	    cache_item(bu_vls_cstr(&kbuf), vnorms.data(), vnorms.size()*sizeof(fastf_t));
 	}
     }
 
     bu_vls_free(&kbuf);
-    return true;
 }
 
 // Write out the generated LoD data to the BRL-CAD cache
@@ -1030,28 +966,24 @@ POPState::cache()
     }
 
     // Stash the original mesh bbox and the min and max bounds, which will be used in decoding
-    {
-	void *bb = malloc(sizeof(point_t) * 2 + sizeof(float) * 6);
-	VMOVE(((point_t *)bb)[0], bbmin);
-	VMOVE(((point_t *)bb)[1], bbmax);
-	float *fb = (float *)((char *)bb + 2*sizeof(point_t));
-	fb[0] = minx;
-	fb[1] = miny;
-	fb[2] = minz;
-	fb[3] = maxx;
-	fb[4] = maxy;
-	fb[5] = maxz;
-	is_valid = cache_write(CACHE_OBJ_LBOUNDS, (char *)bb,  sizeof(point_t) * 2 + sizeof(float) * 6);
-	bu_free(bb, "bb array");
-    }
-
-    if (!is_valid) {
-	bu_log("bbox cache failed\n");
-	return;
-    }
+    void *bb = malloc(sizeof(point_t) * 2 + sizeof(float) * 6);
+    VMOVE(((point_t *)bb)[0], bbmin);
+    VMOVE(((point_t *)bb)[1], bbmax);
+    float *fb = (float *)((char *)bb + 2*sizeof(point_t));
+    fb[0] = minx;
+    fb[1] = miny;
+    fb[2] = minz;
+    fb[3] = maxx;
+    fb[4] = maxy;
+    fb[5] = maxz;
+    cache_item(CACHE_OBJ_LBOUNDS, (char *)bb,  sizeof(point_t) * 2 + sizeof(float) * 6);
+    bu_free(bb, "bb array");
 
     // Serialize triangle-specific data
-    is_valid = cache_tri();
+    cache_tri();
+
+    // Produced the bu_cache_item set
+    is_valid = true;
 }
 
 // Transfer coordinate into level precision
@@ -1189,22 +1121,17 @@ POPState::plot(const char *root)
 
 
 extern "C" int
-bv_lod_mesh_cache(struct bu_cache *c, const char *name, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, double fratio)
+bv_lod_mesh_gen(struct bu_ptbl *cache_items, const char *name, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, double fratio)
 {
 
-    if (!c || !name || !v || !vcnt || !faces || !fcnt)
+    if (!cache_items || !name || !v || !vcnt || !faces || !fcnt)
 	return 0;
 
     unsigned long long user_key = bu_data_hash(name, strlen(name)*sizeof(char));
 
-    POPState p(c, v, vcnt, vn, faces, fcnt, user_key, fratio);
-    if (!p.is_valid)
+    POPState p(cache_items, v, vcnt, vn, faces, fcnt, user_key, fratio);
+    if (!BU_PTBL_LEN(cache_items))
 	return 0;
-
-    struct bu_vls keystr = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&keystr, "%llu", user_key);
-    bu_cache_write(&p.hash, sizeof(unsigned long long), bu_vls_cstr(&keystr), c);
-    bu_vls_free(&keystr);
 
     return 1;
 }
@@ -1396,44 +1323,56 @@ bv_lod_memshrink(struct bv_scene_obj *s)
 }
 
 extern "C" void
-bv_lod_clear(struct bu_cache *c, const char *name)
+bv_lod_clear_gen(struct bu_ptbl *tbl, const char *name, struct bu_cache *c)
 {
-    if (!c || !name)
+    if (!tbl || !name)
 	return;
 
     unsigned long long key = bu_data_hash(name, strlen(name)*sizeof(char));
 
-    struct bu_vls keystr = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&keystr, "%llu:%s", key, CACHE_POP_MAX_LEVEL);
-    bu_cache_clear(bu_vls_cstr(&keystr), c);
+    struct bu_cache_item *itm;
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", key, CACHE_POP_MAX_LEVEL);
+    bu_ptbl_ins(tbl, (long *)itm);
 
-    bu_vls_sprintf(&keystr, "%llu:%s", key, CACHE_POP_SWITCH_LEVEL);
-    bu_cache_clear(bu_vls_cstr(&keystr), c);
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", key, CACHE_POP_SWITCH_LEVEL);
+    bu_ptbl_ins(tbl, (long *)itm);
 
-    bu_vls_sprintf(&keystr, "%llu:%s", key, CACHE_VERTEX_COUNT);
-    bu_cache_clear(bu_vls_cstr(&keystr), c);
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", key, CACHE_VERTEX_COUNT);
+    bu_ptbl_ins(tbl, (long *)itm);
 
-    bu_vls_sprintf(&keystr, "%llu:%s", key, CACHE_TRI_COUNT);
-    bu_cache_clear(bu_vls_cstr(&keystr), c);
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", key, CACHE_TRI_COUNT);
+    bu_ptbl_ins(tbl, (long *)itm);
 
-    bu_vls_sprintf(&keystr, "%llu:%s", key, CACHE_OBJ_LBOUNDS);
-    bu_cache_clear(bu_vls_cstr(&keystr), c);
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", key, CACHE_OBJ_LBOUNDS);
+    bu_ptbl_ins(tbl, (long *)itm);
 
-    bu_vls_sprintf(&keystr, "%llu:%s", key, CACHE_VERT_LEVEL);
-    bu_cache_clear(bu_vls_cstr(&keystr), c);
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", key, CACHE_VERT_LEVEL);
+    bu_ptbl_ins(tbl, (long *)itm);
 
-    bu_vls_sprintf(&keystr, "%llu:%s", key, CACHE_VERTNORM_LEVEL);
-    bu_cache_clear(bu_vls_cstr(&keystr), c);
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", key, CACHE_VERTNORM_LEVEL);
+    bu_ptbl_ins(tbl, (long *)itm);
 
-    bu_vls_sprintf(&keystr, "%llu:%s", key, CACHE_TRI_LEVEL);
-    bu_cache_clear(bu_vls_cstr(&keystr), c);
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", key, CACHE_TRI_LEVEL);
+    bu_ptbl_ins(tbl, (long *)itm);
+
+    // If we weren't given a cache we've done all we can
+    if (!c)
+	return;
 
     // Translate database object name key to data key
-    bu_vls_sprintf(&keystr, "%llu", key);
+    static char ckey[BU_CACHE_KEY_MAXLEN];
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu", key);
     void *cdata = NULL;
     struct bu_cache_txn *txn = NULL;
-    if (bu_cache_get(&cdata, bu_vls_cstr(&keystr), c, &txn) != sizeof(unsigned long long)) {
-	bu_vls_free(&keystr);
+    if (bu_cache_get(&cdata, ckey, c, &txn) != sizeof(unsigned long long)) {
 	bu_cache_get_done(&txn);
 	return;
     }
@@ -1442,9 +1381,10 @@ bv_lod_clear(struct bu_cache *c, const char *name)
     memcpy(&lhash, cdata, sizeof(lhash));
     bu_cache_get_done(&txn);
 
-    // Make lhash into a key and clear the actual LoD data
-    bu_vls_sprintf(&keystr, "%llu", lhash);
-    bu_cache_clear(bu_vls_cstr(&keystr), c);
+    // Make lhash into a key and make the item for the actual LoD data
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu", lhash);
+    bu_ptbl_ins(tbl, (long *)itm);
 }
 
 extern "C" void

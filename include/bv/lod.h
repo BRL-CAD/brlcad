@@ -40,17 +40,6 @@ __BEGIN_DECLS
 
 #define LOD_MESH_MAGIC 0x4C4F44D /**< LODM */
 
-/* Bounding box data is common to multiple types of objects, so (unlike most
- * LoD data) we define a public definition that can be shared in higher level
- * libraries.*/
-#define CACHE_OBJ_BOUNDS "bb"
-
-/* An inversion matrix is another candidate for commonality - if cache data is
- * calculated at the origin for reuse by objects that are the same except for
- * positioning, the need will be common to any sort stored - not just meshes.
- * */
-#define CACHE_INV_MAT "im"
-
 /* Other libraries may care if libbv's format changes */
 #define BV_CACHE_CURRENT_FORMAT 3
 
@@ -88,11 +77,11 @@ struct bv_lod_mesh {
     point_t bmin;
     point_t bmax;
 
+    // libbu cache data is being retrieved from
+    struct bu_cache *c;
+
     // The scene object using this LoD structure
     struct bv_scene_obj *s;
-
-    // Pointer to the cache associated with this LoD data
-    struct bu_cache *c;
 
     // Pointer to internal LoD implementation information specific to this object
     void *i;
@@ -101,23 +90,31 @@ struct bv_lod_mesh {
 /**
  * Given a set of points and faces, calculate a lookup key and determine if the
  * cache has the LoD data for this particular mesh.  If it does not, do the
- * initial calculations to generate the cached LoD data needed for subsequent
- * lookups.
+ * initial calculations to generate the LoD data needed for subsequent
+ * lookups and return a set of struct bu_cache_item containers.  Caller should
+ * write these to the cache of their choice.
+ *
+ * Name is passed in to allow the internal logic to generate the cache keys
+ * needed.  While these are technically visible in the bu_cache_item containers
+ * and used in bu_cache_write calls, they are NOT intended to be user modifiable
+ * and constitute internal implementation details of the LoD data system.
  *
  * This is potentially an expensive operation, particularly if the LoD data set
  * must be generated for the mesh.
  *
- * Note: to clear pre-existing cached data first, use bv_lod_clear(c, name);
+ * Note: to clear pre-existing cached data first, use bv_lod_clear_gen(tbl, name, c) to generate bu_cache_items and then call bu_cache_clear on the active cache using the item keys;
  *
- * @return 0 if no data cached, 1 if data successfully cached. */
+ * @return 0 if no data create, 1 if data items were created. */
 BV_EXPORT int
-bv_lod_mesh_cache(struct bu_cache *c, const char *name, const point_t *v, size_t vcnt, const vect_t *vn, int *f, size_t fcnt, fastf_t fratio);
+bv_lod_mesh_gen(struct bu_ptbl *cache_items, const char *name, const point_t *v, size_t vcnt, const vect_t *vn, int *f, size_t fcnt, fastf_t fratio);
 
 /**
- * Remove LoD cache data associated with name.
+ * Generate a set of LoD cache data items associated with name
+ * to be cleared.  (The cache is needed because keys are sometimes
+ * used to look up other associated keys.)
  */
 BV_EXPORT void
-bv_lod_clear(struct bu_cache *c, const char *name);
+bv_lod_clear_gen(struct bu_ptbl *cache_items, const char *name, struct bu_cache *c);
 
 /**
  * Set up the bv_lod_mesh container using cached mesh LoD information associated
