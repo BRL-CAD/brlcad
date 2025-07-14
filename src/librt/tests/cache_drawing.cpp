@@ -392,24 +392,26 @@ work_dp(struct db_i *dbip, struct directory *dp)
     }
 
     // Axis-Aligned Bounding Box, if primitive supports it
-    point_t aabb[2] = {VINIT_ZERO};
-    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_AABB);
-    if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
-	memcpy(&aabb, cdata, 2*sizeof(point_t));
-	bu_free(cdata, "cdata");
-	cdata = NULL;
-    } else {
-	db_cache_update(dbip, dp->d_namep);
-	// Sleep this thread until the cache says it is done, and then try again
-	while (db_cache_processing(dbip))
-	    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION) {
+	point_t aabb[2] = {VINIT_ZERO};
+	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_AABB);
 	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
 	    memcpy(&aabb, cdata, 2*sizeof(point_t));
 	    bu_free(cdata, "cdata");
 	    cdata = NULL;
 	} else {
-	    bu_log("AABB read failed for %s\n", dp->d_namep);
-	    return false;
+	    db_cache_update(dbip, dp->d_namep);
+	    // Sleep this thread until the cache says it is done, and then try again
+	    while (db_cache_processing(dbip))
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	    if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
+		memcpy(&aabb, cdata, 2*sizeof(point_t));
+		bu_free(cdata, "cdata");
+		cdata = NULL;
+	    } else {
+		bu_log("AABB read failed for %s\n", dp->d_namep);
+		return false;
+	    }
 	}
     }
 
@@ -550,8 +552,9 @@ main(int argc, char *argv[])
 	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		if (dp->d_addr == RT_DIR_PHONY_ADDR)
 		    continue;
-		if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
+		if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
 		    continue;
+		bu_log("Adding %s\n", dp->d_namep);
 		dpq.insert(dp);
 	    }
 	}
