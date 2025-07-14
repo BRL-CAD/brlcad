@@ -51,22 +51,33 @@ __BEGIN_DECLS
 #define DB_CACHE_CURRENT_FORMAT 3
 
 /**
- * Open and initialize the internal cache associated with the dbip.  This may
- * not be instantaneous from a user perspective, the cache is stored on-disk,
- * and caching is not strictly necessary for dbip operations (it is intended to
- * enhance performance).  Accordingly, the initialization step is deliberately
- * separate from db_open and should be run in a separate thread. */
-RT_EXPORT extern int db_cache_init(struct db_i *dbip, int verbose);
+ * Set up cache processing.  Will kick off initialization of db_i
+ * data if it is not already found.  Launches and detaches working
+ * threads to handle processing in the background, since cache setup
+ * may be a lengthy process. */
+RT_EXPORT extern int db_cache_start(struct db_i *dbip, int verbose);
 
 /**
- * Update the cache contents to reflect the current state of the object
- * in dbip.  If there is no object present in dbip with that name, then
- * remove any cached data associated with that name from the cache.
+ * Report if the cache backend is actively processing inputs.
+ * Allows applications to wait for the dust to settle before
+ * attempting certain operations. */
+RT_EXPORT extern int db_cache_processing(struct db_i *dbip);
+
+/**
+ * Queue up the named object to regenerate its cache info to reflect the
+ * current state of the object in dbip.  If there is no object present in dbip
+ * with that name, removes any cached data associated with that name from
+ * the cache.
  *
  * If no cache is present, or the attempt encounters a problem, return
  * BRLCAD_ERROR - else returns BRLCAD_OK;
+ *
+ * Note that this queues up the object, but its processing may be delayed
+ * if there is a lot of ongoing caching work - if db_cache_processing
+ * is active the cache contents returned for the named object may be
+ * out of date.
  */
-RT_EXPORT extern int db_cache_update(struct db_i *dbip, const char *name, int attr_only);
+RT_EXPORT extern int db_cache_update(struct db_i *dbip, const char *name);
 
 
 /* Routines for managing the Drawing cache.  As many of the details as

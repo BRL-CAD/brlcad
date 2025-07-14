@@ -536,6 +536,7 @@ cmakefiles(
   vds/README
   vds/COPYING
   vds/vds.h
+  concurrentqueue.h
 )
 
 # Local Variables:
