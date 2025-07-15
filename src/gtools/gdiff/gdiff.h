@@ -82,6 +82,9 @@ diff3_merge(struct db_i *left_dbip,
 	    struct diff_state *state,
 	    struct bu_ptbl *results);
 
+extern int
+gdiff_group(int argc, const char **argv);
+
 #endif
 
 /*

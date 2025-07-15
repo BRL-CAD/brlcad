@@ -1,4 +1,4 @@
-/*                     G D I F F . C
+/*                         M A I N . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2025 United States Government as represented by
@@ -18,9 +18,15 @@
  * information.
  */
 
-#include "./gdiff.h"
+#include "common.h"
+
+#include "ssdeep.hpp"
+
+extern "C" {
 #include "bu/app.h"
 #include "bu/opt.h"
+#include "./gdiff.h"
+}
 
 /*******************************************************************/
 /* Primary function for basic diff operation on two .g files */
@@ -257,6 +263,25 @@ gdiff_usage(const char *cmd, struct bu_opt_desc *d) {
     bu_vls_free(&str);
 }
 
+static int
+gdiff_grp_th(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    long *th = (long *)set_var;
+
+    if (!argc) {
+	if (th) (*th) = 70;
+	return 0;
+    }
+
+    int ret = bu_opt_long(msg, argc, argv, set_var);
+    // Sanity
+    if ((*th) > 100)
+	(*th) = 100;
+    if ((*th) < 100)
+	(*th) = 0;
+    return ret;
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -268,6 +293,7 @@ main(int argc, const char **argv)
     struct db_i *ancestor_dbip = DBI_NULL;
     const char *diff_prog_name = argv[0];
     struct bu_vls msg = BU_VLS_INIT_ZERO;
+    long group_threshold = -1;
 
     bu_setprogname(argv[0]);
 
@@ -277,7 +303,7 @@ main(int argc, const char **argv)
     BU_GET(state, struct diff_state);
     diff_state_init(state);
 
-    struct bu_opt_desc d[13];
+    struct bu_opt_desc d[14];
     BU_OPT(d[0],  "h", "help",       "",        NULL,              &print_help,              "Print help and exit");
     BU_OPT(d[1],  "?", "",           "",        NULL,              &print_help,              "");
     BU_OPT(d[2],  "a", "added",      "",        NULL,              &state->return_added,     "Report added objects");
@@ -289,7 +315,8 @@ main(int argc, const char **argv)
     BU_OPT(d[8],  "t", "tolerance",  "#",       &bu_opt_fastf_t,   &state->diff_tol->dist,   "numerical distance tolerance for same/different decisions (RT_LEN_TOL is default)");
     BU_OPT(d[9],  "v", "verbosity",  "",        &bu_opt_incr_long, &state->verbosity,        "increase output verbosity (multiple specifications of -v increase verbosity more)");
     BU_OPT(d[10], "q", "quiet",      "",        &bu_opt_incr_long, &state->quiet,            "decrease output verbosity (multiple specifications of -q decrease verbosity more)");
-    BU_OPT_NULL(d[11]);
+    BU_OPT(d[11], "G", "groups",     "<#>",     &gdiff_grp_th,     &group_threshold,         "group files into similar bins per a similarity hashing threshold (0-100, default 70)");
+    BU_OPT_NULL(d[12]);
 
     int ret_ac = bu_opt_parse(&msg, argc, argv, d);
     if (ret_ac < 0) {
@@ -307,6 +334,16 @@ main(int argc, const char **argv)
         bu_vls_free(state->merge_file);
 	BU_PUT(state, struct diff_state);
         return BRLCAD_OK;
+    }
+
+    // If we have a non-negative group_threshold, we're doing a different
+    // comparison.
+    if (group_threshold >= 0) {
+	bu_vls_free(&msg);
+	bu_vls_free(state->search_filter);
+	bu_vls_free(state->merge_file);
+	BU_PUT(state, struct diff_state);
+	return gdiff_group(argc, argv);
     }
 
     if (bu_vls_strlen(state->search_filter)) {
@@ -474,12 +511,11 @@ main(int argc, const char **argv)
 }
 
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s

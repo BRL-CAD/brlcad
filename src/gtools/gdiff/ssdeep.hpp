@@ -123,7 +123,7 @@ class FuzzyHash {
 	std::string compute(const std::vector<uint8_t>& data) {
 	    if (data.empty()) return "";
 
-	    int blocksize = pick_blocksize(static_cast<int>(data.size()));
+	    unsigned int blocksize = pick_blocksize(data.size());
 	    std::string sig1 = produce_signature(data, blocksize);
 	    std::string sig2 = produce_signature(data, blocksize * 2);
 
@@ -190,8 +190,8 @@ class FuzzyHash {
 
     private:
 	// Pick blocksize to keep signatures within SPAMSUM_LENGTH
-	static int pick_blocksize(int input_length) {
-	    int blocksize = MIN_BLOCKSIZE;
+	static size_t pick_blocksize(size_t input_length) {
+	    size_t blocksize = MIN_BLOCKSIZE;
 	    while (blocksize * SPAMSUM_LENGTH < input_length) {
 		blocksize *= 2;
 	    }
@@ -199,7 +199,7 @@ class FuzzyHash {
 	}
 
 	// Produce a base64 signature for a given blocksize
-	std::string produce_signature(const std::vector<uint8_t>& data, int blocksize) {
+	std::string produce_signature(const std::vector<uint8_t>& data, size_t blocksize) {
 	    std::string result;
 	    Roll roll;
 	    uint32_t h = 0;
