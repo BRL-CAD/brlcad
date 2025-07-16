@@ -144,7 +144,7 @@ gdiff_group(int argc, const char **argv, long threshold)
 	for (g_it = groups.begin(); g_it != groups.end(); ++g_it) {
 	    std::string c = g_it->first;
 	    int score = ssdeep::FuzzyHash::CompareHashes(h, c);
-	    if (h == c || (score > threshold && score > hcompare)) {
+	    if (score > threshold && score > hcompare) {
 		gkey = c;
 		hcompare = score;
 	    }
