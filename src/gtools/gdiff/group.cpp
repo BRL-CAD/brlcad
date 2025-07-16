@@ -113,7 +113,7 @@ gdiff_group(int argc, const char **argv, long threshold)
 
     // Hash each file
     std::unordered_map<std::string, std::string> path2hash;
-    std::unordered_map<std::string, std::string> hash2path;
+    std::unordered_map<std::string, std::set<std::string>> hash2path;
     std::set<std::string>::iterator s_it;
     ssdeep::FuzzyHash hasher;
     for (s_it = files.begin(); s_it != files.end(); ++s_it) {
@@ -126,13 +126,13 @@ gdiff_group(int argc, const char **argv, long threshold)
 	std::cout << "hashing " << fpath << "\n";
 	std::string dhash = hasher.compute(fdata);
 	path2hash[fpath] = dhash;
-	hash2path[dhash] = fpath;
+	hash2path[dhash].insert(fpath);
     }
 
     // Compare hashes and find similarity groupings
     std::unordered_map<std::string, std::unordered_set<std::string>> groups;
     std::unordered_map<std::string, std::unordered_set<std::string>>::iterator g_it;
-    std::unordered_map<std::string, std::string>::iterator h_it;
+    std::unordered_map<std::string, std::set<std::string>>::iterator h_it;
     for (h_it = hash2path.begin(); h_it != hash2path.end(); ++h_it) {
 	std::string h = h_it->first;
 	//std::cout << h << "\n";
@@ -141,7 +141,7 @@ gdiff_group(int argc, const char **argv, long threshold)
 	for (g_it = groups.begin(); g_it != groups.end(); ++g_it) {
 	    std::string c = g_it->first;
 	    int score = hasher.compare(h, c);
-	    if (score > threshold && score > hcompare) {
+	    if (h == c || (score > threshold && score > hcompare)) {
 		gkey = c;
 		hcompare = score;
 	    }
@@ -161,19 +161,23 @@ gdiff_group(int argc, const char **argv, long threshold)
 	// Don't print out trivial groups
 	bool trivial = true;
 	for (us_it = g_it->second.begin(); us_it != g_it->second.end(); ++us_it) {
-	    if (g_it->first != *us_it) {
+	    if (g_it->first != *us_it || hash2path[g_it->first].size() > 1) {
 		trivial = false;
 		break;
 	    }
 	}
 	if (trivial)
 	    continue;
-	std::cout << hash2path[g_it->first] << ":\n";
+	std::string ganchor = *hash2path[g_it->first].begin();
+	std::cout << ganchor << ":\n";
 	for (us_it = g_it->second.begin(); us_it != g_it->second.end(); ++us_it) {
-	    if (g_it->first == *us_it)
-		continue;
-	    int score = hasher.compare(g_it->first, *us_it);
-	    std::cout << "\t" << hash2path[*us_it] << "(" << score << ")" << "\n";
+	    std::set<std::string>::iterator hp_it;
+	    for (hp_it = hash2path[*us_it].begin(); hp_it != hash2path[*us_it].end(); ++hp_it) {
+		if (*hp_it == ganchor)
+		    continue;
+		int score = hasher.compare(g_it->first, *us_it);
+		std::cout << "\t" << *hp_it << "(" << score << ")" << "\n";
+	    }
 	}
 	std::cout << "\n";
     }
