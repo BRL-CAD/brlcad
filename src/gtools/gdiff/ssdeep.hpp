@@ -1,4 +1,4 @@
-// Original source code was https://github.com/kolos450/SsdeepNET
+// Original C# source code located at https://github.com/kolos450/SsdeepNET
 //
 // The MIT License (MIT)
 //
@@ -23,7 +23,7 @@
 // IN THE SOFTWARE.
 //
 // This C++ translation was generated and adjusted to do multipass reading for
-// handle streaming large files using Github Copilot GPT-4.1
+// streaming large files using Github Copilot GPT-4.1
 // July 2025 Clifford Yapp (starseeker)
 //
 // (SsdeepNET license and BRL-CAD formatting applied manually.)
