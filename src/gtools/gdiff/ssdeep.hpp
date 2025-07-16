@@ -74,7 +74,7 @@ namespace ssdeep {
 
 // --- Constants ---
 constexpr size_t ROLLING_WINDOW = 7;
-constexpr int MIN_BLOCKSIZE = 3;
+constexpr size_t MIN_BLOCKSIZE = 3;
 constexpr size_t SPAMSUM_LENGTH = 64;
 constexpr char b64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -82,12 +82,10 @@ constexpr char b64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123
 class Roll {
     public:
 	Roll() { reset(); }
-
 	void reset() {
 	    a = b = c = n = 0;
 	    std::fill(std::begin(window), std::end(window), 0);
 	}
-
 	void update(uint8_t x) {
 	    a = (a - window[n % ROLLING_WINDOW] + x);
 	    b = (b - a + ROLLING_WINDOW * x);
@@ -95,29 +93,98 @@ class Roll {
 	    window[n % ROLLING_WINDOW] = x;
 	    n++;
 	}
-
-	uint32_t sum() const {
-	    return a + b + c;
-	}
-
+	uint32_t sum() const { return a + b + c; }
     private:
 	uint32_t a, b, c, n;
 	uint32_t window[ROLLING_WINDOW];
 };
 
 // --- FuzzyHash Algorithm class ---
-//
-// Suitable for very large files, but you must provide a filename (or an open
-// std::istream& at position 0).
 class FuzzyHash {
     public:
+	FuzzyHash()
+	    : blocksize_(MIN_BLOCKSIZE), h1_(0), h2_(0), total_len_(0), done_(false), allow_block_upgrade_(true)
+	{
+	    sig1_.reserve(SPAMSUM_LENGTH + 2);
+	    sig2_.reserve(SPAMSUM_LENGTH + 2);
+	    roll_.reset();
+	    block_buffer_.reserve(ROLLING_WINDOW * 32);
+	}
+
+	void init() {
+	    blocksize_ = MIN_BLOCKSIZE;
+	    h1_ = h2_ = 0;
+	    total_len_ = 0;
+	    done_ = false;
+	    sig1_.clear();
+	    sig2_.clear();
+	    block_buffer_.clear();
+	    allow_block_upgrade_ = true;
+	    roll_.reset();
+	}
+
+	// Incremental update with a chunk of data (byte array)
+	void update(const uint8_t* data, size_t len) {
+	    if (done_) throw std::logic_error("Cannot update after finalize(). Call init() to reuse.");
+	    size_t i = 0;
+	    while (i < len) {
+		block_buffer_.push_back(data[i]);
+		roll_.update(data[i]);
+		h1_ = (h1_ * 31 + data[i]) & 0xFFFFFFFF;
+		h2_ = (h2_ * 31 + data[i]) & 0xFFFFFFFF;
+
+		if (roll_.sum() % static_cast<uint32_t>(blocksize_) == static_cast<uint32_t>(blocksize_ - 1)) {
+		    sig1_ += b64[h1_ % 64];
+		    h1_ = 0;
+		}
+		if (roll_.sum() % (static_cast<uint32_t>(blocksize_) * 2) == static_cast<uint32_t>(blocksize_ * 2 - 1)) {
+		    sig2_ += b64[h2_ % 64];
+		    h2_ = 0;
+		}
+		++i; ++total_len_;
+
+		// If signature too long and allowed, upgrade blocksize and recompute
+		if (allow_block_upgrade_ && sig1_.size() >= SPAMSUM_LENGTH) {
+		    blocksize_ *= 2;
+		    sig1_.clear();
+		    sig2_.clear();
+		    h1_ = h2_ = 0;
+		    roll_.reset();
+		    reprocess_buffer();
+		    allow_block_upgrade_ = false;
+		}
+	    }
+	}
+
+	// Incremental update with a std::vector<uint8_t>
+	void update(const std::vector<uint8_t>& data) {
+	    update(data.data(), data.size());
+	}
+
+	// Incremental update with a std::string (interpreted as bytes)
+	void update(const std::string& data) {
+	    update(reinterpret_cast<const uint8_t*>(data.data()), data.size());
+	}
+
+	// Incremental update from a stream (e.g. file, stdin)
+	void update(std::istream& in) {
+	    const size_t bufsize = 4096;
+	    uint8_t buf[bufsize];
+	    while (in) {
+		in.read(reinterpret_cast<char*>(buf), static_cast<std::streamsize>(bufsize));
+		std::streamsize n = in.gcount();
+		if (n > 0) {
+		    update(buf, static_cast<size_t>(n));
+		}
+	    }
+	}
+
+	// One-shot: hash an entire file (never loads whole file into memory)
 	static std::string compute_from_file(const std::string& filename) {
-	    // 1. First pass: determine file size
 	    std::ifstream fin(filename, std::ios::binary | std::ios::ate);
 	    if (!fin) throw std::runtime_error("Cannot open file: " + filename);
 	    std::streamoff file_size = fin.tellg();
-	    if (file_size < 0)
-		throw std::runtime_error("Could not determine file size.");
+	    if (file_size < 0) throw std::runtime_error("Could not determine file size.");
 	    fin.clear();
 	    fin.seekg(0, std::ios::beg);
 	    size_t size = static_cast<size_t>(file_size);
@@ -132,19 +199,40 @@ class FuzzyHash {
 	    return out.str();
 	}
 
-	// If you already know the file size, you can avoid the first pass.
-	static std::string compute_from_stream(std::istream& in, size_t filesize) {
-	    size_t blocksize = pick_blocksize(filesize);
-	    std::string sig1 = stream_signature(in, blocksize);
-	    in.clear();
-	    in.seekg(0, std::ios::beg);
-	    std::string sig2 = stream_signature(in, blocksize * 2);
+	// One-shot: hash a vector of data
+	static std::string compute_from_bytes(const std::vector<uint8_t>& data) {
+	    return compute_from_bytes(data.data(), data.size());
+	}
+
+	// One-shot: hash a byte array
+	static std::string compute_from_bytes(const uint8_t* data, size_t len) {
+	    size_t size = len;
+	    size_t blocksize = pick_blocksize(size);
+	    std::string sig1 = buffer_signature(data, len, blocksize);
+	    std::string sig2 = buffer_signature(data, len, blocksize * 2);
+
 	    std::ostringstream out;
 	    out << blocksize << ":" << sig1 << ":" << sig2;
 	    return out.str();
 	}
 
-	// Compare two fuzzy hashes
+	// One-shot: hash a string (as bytes)
+	static std::string compute_from_string(const std::string& data) {
+	    return compute_from_bytes(reinterpret_cast<const uint8_t*>(data.data()), data.size());
+	}
+
+	// Finalize and get the fuzzy hash
+	std::string finalize() {
+	    if (done_) throw std::logic_error("Already finalized. Call init() to reuse.");
+	    done_ = true;
+	    std::ostringstream out;
+	    out << blocksize_ << ":" << sig1_;
+	    if (sig1_.size() < SPAMSUM_LENGTH && h1_ != 0) out << b64[h1_ % 64];
+	    out << ":" << sig2_;
+	    if (sig2_.size() < SPAMSUM_LENGTH && h2_ != 0) out << b64[h2_ % 64];
+	    return out.str();
+	}
+
 	static int CompareHashes(const std::string& x, const std::string& y) {
 	    if (x.empty() || y.empty()) throw std::invalid_argument("Input is null or empty.");
 	    auto get_colon = [](const std::string& s, size_t from) { return s.find(':', from); };
@@ -153,12 +241,11 @@ class FuzzyHash {
 	    size_t colon2Pos = y.find(':');
 	    if (colon1Pos == std::string::npos || colon2Pos == std::string::npos)
 		throw std::invalid_argument("Badly formed input.");
-	    int blockSize1 = std::stoi(x.substr(0, colon1Pos));
-	    int blockSize2 = std::stoi(y.substr(0, colon2Pos));
-	    if (blockSize1 < 0 || blockSize2 < 0)
+	    size_t blockSize1 = static_cast<size_t>(std::stoull(x.substr(0, colon1Pos)));
+	    size_t blockSize2 = static_cast<size_t>(std::stoull(y.substr(0, colon2Pos)));
+	    if (blockSize1 == 0 || blockSize2 == 0)
 		throw std::invalid_argument("Badly formed input.");
-	    if (blockSize1 != blockSize2 && blockSize1 != blockSize2 * 2 && blockSize2 != blockSize1 * 2)
-		return 0;
+	    if (blockSize1 != blockSize2 && blockSize1 != blockSize2 * 2 && blockSize2 != blockSize1 * 2) return 0;
 	    size_t colon12Pos = get_colon(x, colon1Pos + 1), colon22Pos = get_colon(y, colon2Pos + 1);
 	    if (colon12Pos == std::string::npos || colon22Pos == std::string::npos)
 		throw std::invalid_argument("Badly formed input.");
@@ -177,8 +264,7 @@ class FuzzyHash {
 	    s1_2 = EliminateSequences(s1_2);
 	    s2_2 = EliminateSequences(s2_2);
 
-	    if (blockSize1 == blockSize2 && s1_1.size() == s2_1.size() && s1_1 == s2_1)
-		return 100;
+	    if (blockSize1 == blockSize2 && s1_1.size() == s2_1.size() && s1_1 == s2_1) return 100;
 
 	    if (blockSize1 == blockSize2) {
 		return std::max(
@@ -192,16 +278,38 @@ class FuzzyHash {
 	}
 
     private:
+	void reprocess_buffer() {
+	    h1_ = h2_ = 0;
+	    sig1_.clear();
+	    sig2_.clear();
+	    roll_.reset();
+	    for (size_t i = 0; i < block_buffer_.size(); ++i) {
+		roll_.update(block_buffer_[i]);
+		h1_ = (h1_ * 31 + block_buffer_[i]) & 0xFFFFFFFF;
+		h2_ = (h2_ * 31 + block_buffer_[i]) & 0xFFFFFFFF;
+
+		if (roll_.sum() % static_cast<uint32_t>(blocksize_) == static_cast<uint32_t>(blocksize_ - 1)) {
+		    sig1_ += b64[h1_ % 64];
+		    h1_ = 0;
+		}
+		if (roll_.sum() % (static_cast<uint32_t>(blocksize_) * 2) == static_cast<uint32_t>(blocksize_ * 2 - 1)) {
+		    sig2_ += b64[h2_ % 64];
+		    h2_ = 0;
+		}
+	    }
+	}
+
 	// Pick blocksize to keep signatures within SPAMSUM_LENGTH
 	static size_t pick_blocksize(size_t input_length) {
 	    size_t blocksize = MIN_BLOCKSIZE;
-	    while (blocksize * SPAMSUM_LENGTH < input_length)
+	    while (blocksize * SPAMSUM_LENGTH < input_length) {
 		blocksize *= 2;
+	    }
 	    return blocksize;
 	}
 
 	// Produce a base64 signature for a given blocksize
-	static std::string stream_signature(std::istream& in, int blocksize) {
+	static std::string stream_signature(std::istream& in, size_t blocksize) {
 	    std::string result;
 	    Roll roll;
 	    uint32_t h = 0;
@@ -227,14 +335,32 @@ class FuzzyHash {
 	    return result;
 	}
 
+	static std::string buffer_signature(const uint8_t* data, size_t len, size_t blocksize) {
+	    std::string result;
+	    Roll roll;
+	    uint32_t h = 0;
+	    for (size_t i = 0; i < len; ++i) {
+		roll.update(data[i]);
+		h = (h * 31 + data[i]) & 0xFFFFFFFF;
+		if (roll.sum() % static_cast<uint32_t>(blocksize) == static_cast<uint32_t>(blocksize - 1)) {
+		    result += b64[h % 64];
+		    if (result.size() >= SPAMSUM_LENGTH)
+			break;
+		    h = 0;
+		}
+	    }
+	    if (result.size() < SPAMSUM_LENGTH && h != 0)
+		result += b64[h % 64];
+	    return result;
+	}
+
 	// FuzzyHash comparison helpers
-	static std::string EliminateSequences(const std::string& str, int maxLen = 3) {
-	    if (str.empty())
-		return str;
+	static std::string EliminateSequences(const std::string& str, size_t maxLen = 3) {
+	    if (str.empty()) return str;
 	    std::string result;
 	    result.reserve(str.size());
 	    char last_char = str[0];
-	    int count = 1;
+	    size_t count = 1;
 	    result.push_back(last_char);
 
 	    for (size_t i = 1; i < str.size(); ++i) {
@@ -250,20 +376,19 @@ class FuzzyHash {
 	    return (result.size() == str.size()) ? str : result;
 	}
 
-	static size_t EditDistance(const std::string& s1, const std::string& s2) {
+	static int EditDistance(const std::string& s1, const std::string& s2) {
 	    constexpr size_t MaxLength = 64;
-	    constexpr size_t InsertCost = 1, RemoveCost = 1, ReplaceCost = 2;
-	    size_t t0[MaxLength + 1] = {0}, t1[MaxLength + 1] = {0};
+	    constexpr int InsertCost = 1, RemoveCost = 1, ReplaceCost = 2;
+	    int t0[MaxLength + 1] = {0}, t1[MaxLength + 1] = {0};
 	    size_t len1 = s1.size(), len2 = s2.size();
 
-	    for (size_t i = 0; i <= len2; ++i)
-		t0[i] = i;
+	    for (size_t i = 0; i <= len2; ++i) t0[i] = static_cast<int>(i);
 	    for (size_t i = 0; i < len1; ++i) {
-		t1[0] = i + 1;
+		t1[0] = static_cast<int>(i) + 1;
 		for (size_t j = 0; j < len2; ++j) {
-		    size_t cost_a = t0[j + 1] + InsertCost;
-		    size_t cost_d = t1[j] + RemoveCost;
-		    size_t cost_r = t0[j] + (s1[i] == s2[j] ? 0 : ReplaceCost);
+		    int cost_a = t0[j + 1] + InsertCost;
+		    int cost_d = t1[j] + RemoveCost;
+		    int cost_r = t0[j] + (s1[i] == s2[j] ? 0 : ReplaceCost);
 		    t1[j + 1] = std::min({cost_a, cost_d, cost_r});
 		}
 		std::swap(t0, t1);
@@ -282,49 +407,51 @@ class FuzzyHash {
 	    for (size_t i = 0; i < s2.size(); ++i) {
 		state.update(static_cast<uint8_t>(s2[i]));
 		uint32_t h = state.sum();
-		if (i + 1 < ROLLING_WINDOW)
-		    continue;
+		if (i + 1 < ROLLING_WINDOW) continue;
 		for (size_t j = ROLLING_WINDOW - 1; j < hashes.size(); ++j) {
 		    if (hashes[j] != 0 && hashes[j] == h) {
 			size_t s2StartPos = i + 1 - ROLLING_WINDOW;
 			size_t s1StartPos = j + 1 - ROLLING_WINDOW;
-			if (s2StartPos + ROLLING_WINDOW > s2.size() || s1StartPos + ROLLING_WINDOW > s1.size())
-			    continue;
+			if (s2StartPos + ROLLING_WINDOW > s2.size() || s1StartPos + ROLLING_WINDOW > s1.size()) continue;
 			bool matched = true;
 			for (size_t pos = 0; pos < ROLLING_WINDOW; ++pos) {
 			    if (s1[s1StartPos + pos] != s2[s2StartPos + pos]) {
-				matched = false;
-				break;
+				matched = false; break;
 			    }
 			}
-			if (matched)
-			    return true;
+			if (matched) return true;
 		    }
 		}
 	    }
 	    return false;
 	}
 
-	static size_t ScoreStrings(const std::string& s1, const std::string& s2, int blockSize) {
+	static int ScoreStrings(const std::string& s1, const std::string& s2, size_t blockSize) {
 	    size_t len1 = s1.size(), len2 = s2.size();
-	    if (len1 > SPAMSUM_LENGTH || len2 > SPAMSUM_LENGTH)
-		return 0;
-	    if (!HasCommonSubstring(s1, s2))
-		return 0;
-	    size_t score = EditDistance(s1, s2);
-	    score = (score * SPAMSUM_LENGTH) / (len1 + len2);
+	    if (len1 > SPAMSUM_LENGTH || len2 > SPAMSUM_LENGTH) return 0;
+	    if (!HasCommonSubstring(s1, s2)) return 0;
+	    int score = EditDistance(s1, s2);
+	    score = (score * static_cast<int>(SPAMSUM_LENGTH)) / static_cast<int>(len1 + len2);
 	    score = (100 * score) / 64;
-	    if (score >= 100)
-		return 0;
+	    if (score >= 100) return 0;
 	    score = 100 - score;
-	    size_t matchSize = blockSize / MIN_BLOCKSIZE * std::min(len1, len2);
-	    if (score > matchSize)
-		score = matchSize;
+	    int matchSize = static_cast<int>(blockSize / MIN_BLOCKSIZE * std::min(len1, len2));
+	    if (score > matchSize) score = matchSize;
 	    return score;
 	}
+
+	// State
+	size_t blocksize_;
+	uint32_t h1_, h2_;
+	size_t total_len_;
+	bool done_;
+	bool allow_block_upgrade_;
+	std::string sig1_, sig2_;
+	std::vector<uint8_t> block_buffer_;
+	Roll roll_;
 };
 
-} // namespace ssdeep
+}
 
 // Local Variables:
 // tab-width: 8
