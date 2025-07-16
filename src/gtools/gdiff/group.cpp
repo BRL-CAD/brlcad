@@ -78,10 +78,55 @@ GlobMatch(std::set<std::string> *files, const std::string& gpattern, const char 
     for (const auto& entry : std::filesystem::recursive_directory_iterator(rstr)) {
 	if (!entry.is_regular_file())
 	    continue;
-	if (std::regex_match(entry.path().string(), fregex))
+	if (std::regex_match(entry.path().string(), fregex)) {
+	    std::cout << "matched " <<  entry.path().string() << "\n";
 	    files->insert(entry.path().string());
+	}
     }
 }
+
+std::string hash_file(const std::string &path)
+{
+    // open db
+    struct db_i *dbip = db_open(path.c_str(), DB_OPEN_READONLY);
+    if (!dbip)
+	return std::string();
+    if (db_dirbuild(dbip) < 0) {
+	db_close(dbip);
+	return std::string();
+    }
+    db_update_nref(dbip, &rt_uniresource);
+
+    //  build an ordered set of directory object names
+    std::string onames;
+    struct directory *dp;
+    FOR_ALL_DIRECTORY_START(dp, dbip) {
+	if (dp->d_addr == RT_DIR_PHONY_ADDR)
+	    continue;
+	if (UNLIKELY(!dp->d_namep || !strlen(dp->d_namep)))
+	    continue;
+	onames.append(std::string(dp->d_namep));
+    } FOR_ALL_DIRECTORY_END;
+
+    std::cout << "onames: " << onames << "\n";
+    std::string hstr = ssdeep::FuzzyHash::compute_from_string(onames);
+    std::cout << path << ": " <<  hstr << "\n";
+
+    return hstr;
+
+    //
+    // TODO - build up a hash based on the ordered set of dp names - we can
+    // do some basic similarity checking based on names alone, unless we
+    // are deliberately ignoring them to look for geometry similarities.
+    //
+    // TODO - iterate over set to crack and get attributes and serialized geometry data
+    //
+    // Use FuzzyHash update() method to incorporate the object data
+    // into the fuzzy hash.  If this proves to be too large, another
+    // option might be to incorporate the hash of the data instead of
+    // the data itself...
+}
+
 
 int
 gdiff_group(int argc, const char **argv, long threshold)
@@ -104,6 +149,7 @@ gdiff_group(int argc, const char **argv, long threshold)
 
 	// 2.  If we've been given a fully qualified path, just store that
 	if (bu_file_exists(argv[i], NULL) && !bu_file_directory(argv[i])) {
+	    std::cout << "adding " << argv[i] << "\n";
 	    files.insert(std::string(argv[i]));
 	    continue;
 	}
@@ -117,16 +163,8 @@ gdiff_group(int argc, const char **argv, long threshold)
     std::unordered_map<std::string, std::set<std::string>> hash2path;
     std::set<std::string>::iterator s_it;
     for (s_it = files.begin(); s_it != files.end(); ++s_it) {
-	std::string dhash;
-	try {
-	    dhash = ssdeep::FuzzyHash::compute_from_file(*s_it);
-	} catch (const std::exception& ex) {
-	    std::cerr << "Error hashing " << *s_it << ": " << ex.what() << "\n";
-	    continue;
-	} catch (...) {
-	    std::cerr << *s_it << ": Unknown error occurred." << std::endl;
-	    continue;
-	}
+	std::cout << "hashing " << *s_it << "\n";
+	std::string dhash = hash_file(*s_it);
 	std::string fpath(*s_it);
 	path2hash[fpath] = dhash;
 	hash2path[dhash].insert(fpath);
