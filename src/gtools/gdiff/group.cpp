@@ -156,10 +156,32 @@ gdiff_group(int argc, const char **argv, long threshold)
 	}
     }
 
+    // See if we have something to report
+    bool do_report = false;
+    std::unordered_set<std::string>::iterator us_it;
+    for (g_it = groups.begin(); g_it != groups.end(); ++g_it) {
+	// Don't print out trivial groups
+	bool trivial = true;
+	for (us_it = g_it->second.begin(); us_it != g_it->second.end(); ++us_it) {
+	    if (g_it->first != *us_it || hash2path[g_it->first].size() > 1) {
+		trivial = false;
+		break;
+	    }
+	}
+	if (!trivial) {
+	    do_report = true;
+	    break;
+	}
+    }
+
+    if (!do_report) {
+	std::cout << "\n\nNo groupings identified - files are dissimilar.\n\n";
+	return BRLCAD_OK;
+    }
+
     std::cout << "\n\nGrouping Summary:\n\n";
 
     // Report
-    std::unordered_set<std::string>::iterator us_it;
     for (g_it = groups.begin(); g_it != groups.end(); ++g_it) {
 	// Don't print out trivial groups
 	bool trivial = true;
