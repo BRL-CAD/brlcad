@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <regex>
@@ -115,16 +116,18 @@ gdiff_group(int argc, const char **argv, long threshold)
     std::unordered_map<std::string, std::string> path2hash;
     std::unordered_map<std::string, std::set<std::string>> hash2path;
     std::set<std::string>::iterator s_it;
-    ssdeep::FuzzyHash hasher;
     for (s_it = files.begin(); s_it != files.end(); ++s_it) {
-	std::ifstream file(*s_it, std::ios::binary);
-	if (!file.is_open())
+	std::string dhash;
+	try {
+	    dhash = ssdeep::FuzzyHash::compute_from_file(*s_it);
+	} catch (const std::exception& ex) {
+	    std::cerr << "Error hashing " << *s_it << ": " << ex.what() << "\n";
 	    continue;
-	std::vector<uint8_t> fdata = std::vector<uint8_t>((std::istreambuf_iterator<char>(file)), {});
-	file.close();
+	} catch (...) {
+	    std::cerr << *s_it << ": Unknown error occurred." << std::endl;
+	    continue;
+	}
 	std::string fpath(*s_it);
-	std::cout << "hashing " << fpath << "\n";
-	std::string dhash = hasher.compute(fdata);
 	path2hash[fpath] = dhash;
 	hash2path[dhash].insert(fpath);
     }
@@ -140,7 +143,7 @@ gdiff_group(int argc, const char **argv, long threshold)
 	std::string gkey;
 	for (g_it = groups.begin(); g_it != groups.end(); ++g_it) {
 	    std::string c = g_it->first;
-	    int score = hasher.compare(h, c);
+	    int score = ssdeep::FuzzyHash::CompareHashes(h, c);
 	    if (h == c || (score > threshold && score > hcompare)) {
 		gkey = c;
 		hcompare = score;
@@ -175,7 +178,7 @@ gdiff_group(int argc, const char **argv, long threshold)
 	    for (hp_it = hash2path[*us_it].begin(); hp_it != hash2path[*us_it].end(); ++hp_it) {
 		if (*hp_it == ganchor)
 		    continue;
-		int score = hasher.compare(g_it->first, *us_it);
+		int score = ssdeep::FuzzyHash::CompareHashes(g_it->first, *us_it);
 		std::cout << "\t" << *hp_it << "(" << score << ")" << "\n";
 	    }
 	}
