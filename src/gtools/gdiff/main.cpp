@@ -274,6 +274,13 @@ gdiff_grp_th(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
     }
 
     int ret = bu_opt_long(msg, argc, argv, set_var);
+
+    // It's fine if -G doesn't have a number -just use the default
+    if (ret == -1) {
+	if (th) (*th) = 70;
+	return 0;
+    }
+
     // Sanity
     if ((*th) > 100)
 	(*th) = 100;
@@ -343,7 +350,7 @@ main(int argc, const char **argv)
 	bu_vls_free(state->search_filter);
 	bu_vls_free(state->merge_file);
 	BU_PUT(state, struct diff_state);
-	return gdiff_group(argc, argv);
+	return gdiff_group(ret_ac, argv, group_threshold);
     }
 
     if (bu_vls_strlen(state->search_filter)) {

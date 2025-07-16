@@ -83,7 +83,7 @@ diff3_merge(struct db_i *left_dbip,
 	    struct bu_ptbl *results);
 
 extern int
-gdiff_group(int argc, const char **argv);
+gdiff_group(int argc, const char **argv, long threshold);
 
 #endif
 
