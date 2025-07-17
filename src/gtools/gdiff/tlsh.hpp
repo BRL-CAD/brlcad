@@ -94,7 +94,6 @@ inline uint8_t fast_b_mapping(uint8_t ms, uint8_t i, uint8_t j, uint8_t k) {
     return v_table[v_table[v_table[ms ^ i] ^ j] ^ k];
 }
 
-// Corrected mod_diff to accept std::size_t R, and all calls use RANGE_LVALUE without narrowing cast
 inline int mod_diff(uint8_t x, uint8_t y, std::size_t R) {
     int d = static_cast<int>(x) - static_cast<int>(y);
     if (d < 0) d += static_cast<int>(R);
@@ -125,6 +124,18 @@ inline void to_hex(const uint8_t* psrc, std::size_t len, char* pdest) {
 	pdest[2*i+1] = hex[psrc[i] & 0xF];
     }
     pdest[2*len] = '\0';
+}
+
+// New helper: produce a std::string hex representation
+inline std::string to_hex_str(const uint8_t* psrc, std::size_t len) {
+    static const char* hex = "0123456789ABCDEF";
+    std::string out;
+    out.reserve(len * 2);
+    for (std::size_t i = 0; i < len; ++i) {
+	out.push_back(hex[(psrc[i] >> 4) & 0xF]);
+	out.push_back(hex[psrc[i] & 0xF]);
+    }
+    return out;
 }
 
 inline void from_hex(const char* psrc, std::size_t len, uint8_t* pdest) {
@@ -269,8 +280,8 @@ class TlshImpl {
 	    return 0;
 	}
 
+	// Updated: safer std::string output, no stack buffer
 	std::string hash(int showvers = 1) const {
-	    char buf[TLSH_STRING_LEN_REQ + 1] = {0};
 	    lsh_bin_struct tmp;
 	    tmp.checksum[0] = swap_byte(this->lsh_bin.checksum[0]);
 	    tmp.Lvalue = swap_byte(this->lsh_bin.Lvalue);
@@ -278,14 +289,13 @@ class TlshImpl {
 	    for (std::size_t i = 0; i < CODE_SIZE; ++i) {
 		tmp.tmp_code[i] = this->lsh_bin.tmp_code[CODE_SIZE - 1 - i];
 	    }
+	    std::string out;
 	    if (showvers) {
-		buf[0] = 'T';
-		buf[1] = '1';
-		to_hex(reinterpret_cast<const uint8_t*>(&tmp), sizeof(tmp), &buf[2]);
-	    } else {
-		to_hex(reinterpret_cast<const uint8_t*>(&tmp), sizeof(tmp), buf);
+		out = "T1";
 	    }
-	    return std::string(buf);
+	    // Hex encode
+	    out += to_hex_str(reinterpret_cast<const uint8_t*>(&tmp), sizeof(tmp));
+	    return out;
 	}
 
 	int compare(const TlshImpl& other) const {
