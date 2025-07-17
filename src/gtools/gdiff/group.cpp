@@ -35,57 +35,11 @@
 extern "C" {
 #include "bu/app.h"
 #include "bu/file.h"
+#include "bu/path.h"
 #include "./gdiff.h"
 }
 
-std::string
-globToRegex(const std::string& globPattern) {
-    std::string regexPattern;
-    for (char c : globPattern) {
-	switch (c) {
-	    case '*':
-		regexPattern += ".*";
-		break;
-	    case '?':
-		regexPattern += ".";
-		break;
-	    case '.': // Escape literal dots
-	    case '+':
-	    case '(':
-	    case ')':
-	    case '[':
-	    case ']':
-	    case '{':
-	    case '}':
-	    case '^':
-	    case '$':
-	    case '\\':
-	    case '|':
-		regexPattern += '\\'; // Escape special regex characters
-		regexPattern += c;
-		break;
-	    default:
-		regexPattern += c;
-		break;
-	}
-    }
-    return regexPattern;
-}
-
-void
-GlobMatch(std::set<std::string> *files, const std::string& gpattern, const char *root) {
-    std::string sregex = std::string(".*") + globToRegex(gpattern);
-    std::regex fregex(sregex);
-    std::string rstr(root);
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(rstr)) {
-	if (!entry.is_regular_file())
-	    continue;
-	if (std::regex_match(entry.path().string(), fregex)) {
-	    //std::cout << "matched " <<  entry.path().string() << "\n";
-	    files->insert(entry.path().string());
-	}
-    }
-}
+#define TLSH_DEFAULT_THRESHOLD 30
 
 std::string hash_file(const std::string &path)
 {
@@ -138,33 +92,54 @@ std::string hash_file(const std::string &path)
 
 
 int
-gdiff_group(int argc, const char **argv, long threshold)
+gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 {
     // If we have no patterns, there's nothing to group
     if (!argc || !argv)
 	return BRLCAD_OK;
 
-    // Build a set of file paths from the argv patterns
+    struct gdiff_group_opts gopts = GDIFF_GROUP_OPTS_DEFAULT;
+    if (g_opts) {
+	gopts.filename_threshold = g_opts->filename_threshold;
+	gopts.geomname_threshold = g_opts->geomname_threshold;
+	gopts.geometry_threshold = g_opts->geometry_threshold;
+	bu_vls_sprintf(&gopts.fpattern, "%s", bu_vls_cstr(&g_opts->fpattern));
+    }
+
+    // Establish sane defaults
+    if (gopts.filename_threshold == -1 && gopts.geomname_threshold == -1 &&
+	    gopts.geometry_threshold == -1) {
+	// If no criteria are enabled, at least turn on the geometry
+	// object name check.
+	gopts.geomname_threshold = TLSH_DEFAULT_THRESHOLD;
+    }
+    if (!bu_vls_strlen(&gopts.fpattern))
+	bu_vls_sprintf(&gopts.fpattern, "*.g");
+
+    // Build a set of file paths from the argv
     std::set<std::string> files;
     char cwd[MAXPATHLEN] = {0};
     bu_dir(cwd, MAXPATHLEN, BU_DIR_CURR, NULL);
     for (int i = 0; i < argc; i++) {
-	// 1.  If we've been given a directory, skip - we need either
-	// a fully qualified file or a pattern
+	// 1.  If we've been given a directory, do a recursive hunt for a
+	// pattern match.
 	if (bu_file_directory(argv[i]))  {
-	    bu_log("WARNING - %s is a directory, need either a file or a pattern - skipping\n", argv[i]);
-	    continue;
+	    std::string rstr(argv[i]);
+	    for (const auto& entry : std::filesystem::recursive_directory_iterator(rstr)) {
+		if (!entry.is_regular_file())
+		    continue;
+		if (!bu_path_match(bu_vls_cstr(&gopts.fpattern), entry.path().string().c_str(), 0))
+		    //std::cout << "matched " <<  entry.path().string() << "\n";
+		    files.insert(entry.path().string());
+	    }
 	}
+	continue;
 
 	// 2.  If we've been given a fully qualified path, just store that
-	if (bu_file_exists(argv[i], NULL) && !bu_file_directory(argv[i])) {
+	if (bu_file_exists(argv[i], NULL)) {
 	    //std::cout << "adding " << argv[i] << "\n";
 	    files.insert(std::string(argv[i]));
-	    continue;
 	}
-
-	// 3.  Try a pattern match
-	GlobMatch(&files, std::string(argv[i]), cwd);
     }
 
     // Hash each file
@@ -197,7 +172,7 @@ gdiff_group(int argc, const char **argv, long threshold)
 	    h2.fromTlshStr(g_it->first.c_str());
 	    int score = h1.diff(h2);
 	    //std::cout << *hash2path[h].begin() << "->"  << *hash2path[g_it->first].begin() << ": " << score << "\n";
-	    if (score < threshold && score < lscore) {
+	    if (score < gopts.geomname_threshold && score < lscore) {
 		std::string c = g_it->first;
 		gkey = c;
 		grouped = true;
