@@ -81,7 +81,7 @@ GlobMatch(std::set<std::string> *files, const std::string& gpattern, const char 
 	if (!entry.is_regular_file())
 	    continue;
 	if (std::regex_match(entry.path().string(), fregex)) {
-	    std::cout << "matched " <<  entry.path().string() << "\n";
+	    //std::cout << "matched " <<  entry.path().string() << "\n";
 	    files->insert(entry.path().string());
 	}
     }
@@ -100,23 +100,23 @@ std::string hash_file(const std::string &path)
     db_update_nref(dbip, &rt_uniresource);
 
     //  build an ordered set of directory object names
-    std::string onames;
+    std::set<std::string> onames;
     struct directory *dp;
     FOR_ALL_DIRECTORY_START(dp, dbip) {
 	if (dp->d_addr == RT_DIR_PHONY_ADDR)
 	    continue;
 	if (UNLIKELY(!dp->d_namep || !strlen(dp->d_namep)))
 	    continue;
-	onames.append(std::string(dp->d_namep));
+	onames.insert(std::string(dp->d_namep));
     } FOR_ALL_DIRECTORY_END;
 
     tlsh::Tlsh hasher;
-    hasher.update((const unsigned char *)onames.c_str(), onames.length());
+    std::set<std::string>::iterator o_it;
+    for (o_it = onames.begin(); o_it != onames.end(); ++o_it)
+	hasher.update((const unsigned char *)o_it->c_str(), o_it->length());
     hasher.final();
-
-    std::cout << "onames: " << onames << "\n";
     std::string hstr = hasher.getHash();
-    std::cout << path << ": " <<  hstr << "\n";
+    //std::cout << path << ": " <<  hstr << "\n";
 
     db_close(dbip);
     return hstr;
@@ -156,7 +156,7 @@ gdiff_group(int argc, const char **argv, long threshold)
 
 	// 2.  If we've been given a fully qualified path, just store that
 	if (bu_file_exists(argv[i], NULL) && !bu_file_directory(argv[i])) {
-	    std::cout << "adding " << argv[i] << "\n";
+	    //std::cout << "adding " << argv[i] << "\n";
 	    files.insert(std::string(argv[i]));
 	    continue;
 	}
@@ -170,7 +170,7 @@ gdiff_group(int argc, const char **argv, long threshold)
     std::unordered_map<std::string, std::set<std::string>> hash2path;
     std::set<std::string>::iterator s_it;
     for (s_it = files.begin(); s_it != files.end(); ++s_it) {
-	std::cout << "hashing " << *s_it << "\n";
+	//std::cout << "hashing " << *s_it << "\n";
 	std::string dhash = hash_file(*s_it);
 	std::string fpath(*s_it);
 	path2hash[fpath] = dhash;
@@ -186,7 +186,7 @@ gdiff_group(int argc, const char **argv, long threshold)
 	tlsh::Tlsh h1;
 	h1.fromTlshStr(h_it->first.c_str());
 
-	//std::cout << h << "\n";
+	//std::cout << "Processing " << h << "\n";
 	bool grouped = false;
 	std::string gkey;
 	int lscore = INT_MAX;
