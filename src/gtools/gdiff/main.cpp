@@ -269,7 +269,7 @@ gdiff_grp_th(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
     long *th = (long *)set_var;
 
     if (!argc) {
-	if (th) (*th) = 70;
+	if (th) (*th) = 30;
 	return 0;
     }
 
@@ -277,15 +277,13 @@ gdiff_grp_th(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 
     // It's fine if -G doesn't have a number -just use the default
     if (ret == -1) {
-	if (th) (*th) = 70;
+	if (th) (*th) = 30;
 	return 0;
     }
 
     // Sanity
-    if ((*th) > 100)
-	(*th) = 100;
-    if ((*th) < 1)
-	(*th) = 1;
+    if ((*th) < 0)
+	(*th) = 0;
     return ret;
 }
 
@@ -322,7 +320,7 @@ main(int argc, const char **argv)
     BU_OPT(d[8],  "t", "tolerance",  "#",       &bu_opt_fastf_t,   &state->diff_tol->dist,   "numerical distance tolerance for same/different decisions (RT_LEN_TOL is default)");
     BU_OPT(d[9],  "v", "verbosity",  "",        &bu_opt_incr_long, &state->verbosity,        "increase output verbosity (multiple specifications of -v increase verbosity more)");
     BU_OPT(d[10], "q", "quiet",      "",        &bu_opt_incr_long, &state->quiet,            "decrease output verbosity (multiple specifications of -q decrease verbosity more)");
-    BU_OPT(d[11], "G", "groups",     "<#>",     &gdiff_grp_th,     &group_threshold,         "group files into similar bins per a similarity threshold (1-100, default 70).  (Lower number means allow less similar files to group.)");
+    BU_OPT(d[11], "G", "groups",     "<#>",     &gdiff_grp_th,     &group_threshold,         "group files into similar bins per a similarity threshold (default 30).  (Higher number means allow less similar files to group.)");
     BU_OPT_NULL(d[12]);
 
     int ret_ac = bu_opt_parse(&msg, argc, argv, d);
