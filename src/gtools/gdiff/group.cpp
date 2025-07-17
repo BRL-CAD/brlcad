@@ -29,6 +29,7 @@
 #include <unordered_set>
 #include <vector>
 #include "ssdeep.hpp"
+#include "tlsh.hpp"
 
 extern "C" {
 #include "bu/app.h"
@@ -108,10 +109,15 @@ std::string hash_file(const std::string &path)
 	onames.append(std::string(dp->d_namep));
     } FOR_ALL_DIRECTORY_END;
 
+    tlsh::Tlsh hasher;
+    hasher.update((const unsigned char *)onames.c_str(), onames.length());
+    hasher.final();
+
     std::cout << "onames: " << onames << "\n";
-    std::string hstr = ssdeep::FuzzyHash::compute_from_string(onames);
+    std::string hstr = hasher.getHash();
     std::cout << path << ": " <<  hstr << "\n";
 
+    db_close(dbip);
     return hstr;
 
     //
@@ -176,24 +182,31 @@ gdiff_group(int argc, const char **argv, long threshold)
     std::unordered_map<std::string, std::set<std::string>>::iterator h_it;
     for (h_it = hash2path.begin(); h_it != hash2path.end(); ++h_it) {
 	std::string h = h_it->first;
+	tlsh::Tlsh h1;
+	h1.fromTlshStr(h_it->first.c_str());
+
 	//std::cout << h << "\n";
-	int hcompare = 0;
+	bool grouped = false;
 	std::string gkey;
+	int lscore = INT_MAX;
 	for (g_it = groups.begin(); g_it != groups.end(); ++g_it) {
-	    std::string c = g_it->first;
-	    int score = ssdeep::FuzzyHash::CompareHashes(h, c);
-	    if (score > threshold && score > hcompare) {
+	    tlsh::Tlsh h2;
+	    h2.fromTlshStr(g_it->first.c_str());
+	    int score = h1.diff(h2);
+	    //std::cout << *hash2path[h].begin() << "->"  << *hash2path[g_it->first].begin() << ": " << score << "\n";
+	    if (score < threshold && score < lscore) {
+		std::string c = g_it->first;
 		gkey = c;
-		hcompare = score;
+		grouped = true;
+		lscore = score;
 	    }
 	}
-	if (hcompare) {
+	if (grouped) {
 	    groups[gkey].insert(h);
 	} else {
 	    groups[h].insert(h);
 	}
     }
-
     // See if we have something to report
     bool do_report = false;
     std::unordered_set<std::string>::iterator us_it;
@@ -232,19 +245,22 @@ gdiff_group(int argc, const char **argv, long threshold)
 	if (trivial)
 	    continue;
 	std::string ganchor = *hash2path[g_it->first].begin();
+	tlsh::Tlsh h1;
+	h1.fromTlshStr(g_it->first.c_str());
 	std::cout << ganchor << ":\n";
 	for (us_it = g_it->second.begin(); us_it != g_it->second.end(); ++us_it) {
+	    tlsh::Tlsh h2;
+	    h2.fromTlshStr(us_it->c_str());
 	    std::set<std::string>::iterator hp_it;
 	    for (hp_it = hash2path[*us_it].begin(); hp_it != hash2path[*us_it].end(); ++hp_it) {
 		if (*hp_it == ganchor)
 		    continue;
-		int score = ssdeep::FuzzyHash::CompareHashes(g_it->first, *us_it);
+		int score = h1.diff(h2);
 		std::cout << "\t" << *hp_it << "(" << score << ")" << "\n";
 	    }
 	}
 	std::cout << "\n";
     }
-
     return BRLCAD_OK;
 }
 
