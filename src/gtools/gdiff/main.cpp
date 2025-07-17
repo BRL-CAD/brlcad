@@ -263,30 +263,6 @@ gdiff_usage(const char *cmd, struct bu_opt_desc *d) {
     bu_vls_free(&str);
 }
 
-static int
-gdiff_grp_th(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
-{
-    long *th = (long *)set_var;
-
-    if (!argc) {
-	if (th) (*th) = 30;
-	return 0;
-    }
-
-    int ret = bu_opt_long(msg, argc, argv, set_var);
-
-    // It's fine if -G doesn't have a number -just use the default
-    if (ret == -1) {
-	if (th) (*th) = 30;
-	return 0;
-    }
-
-    // Sanity
-    if ((*th) < 0)
-	(*th) = 0;
-    return ret;
-}
-
 int
 main(int argc, const char **argv)
 {
@@ -298,7 +274,8 @@ main(int argc, const char **argv)
     struct db_i *ancestor_dbip = DBI_NULL;
     const char *diff_prog_name = argv[0];
     struct bu_vls msg = BU_VLS_INIT_ZERO;
-    long group_threshold = -1;
+    struct gdiff_group_opts gopts = GDIFF_GROUP_OPTS_DEFAULT;
+    int grouping_mode = 0;
 
     bu_setprogname(argv[0]);
 
@@ -308,7 +285,7 @@ main(int argc, const char **argv)
     BU_GET(state, struct diff_state);
     diff_state_init(state);
 
-    struct bu_opt_desc d[14];
+    struct bu_opt_desc d[17];
     BU_OPT(d[0],  "h", "help",       "",        NULL,              &print_help,              "Print help and exit");
     BU_OPT(d[1],  "?", "",           "",        NULL,              &print_help,              "");
     BU_OPT(d[2],  "a", "added",      "",        NULL,              &state->return_added,     "Report added objects");
@@ -320,8 +297,15 @@ main(int argc, const char **argv)
     BU_OPT(d[8],  "t", "tolerance",  "#",       &bu_opt_fastf_t,   &state->diff_tol->dist,   "numerical distance tolerance for same/different decisions (RT_LEN_TOL is default)");
     BU_OPT(d[9],  "v", "verbosity",  "",        &bu_opt_incr_long, &state->verbosity,        "increase output verbosity (multiple specifications of -v increase verbosity more)");
     BU_OPT(d[10], "q", "quiet",      "",        &bu_opt_incr_long, &state->quiet,            "decrease output verbosity (multiple specifications of -q decrease verbosity more)");
-    BU_OPT(d[11], "G", "groups",     "<#>",     &gdiff_grp_th,     &group_threshold,         "group files into similar bins per a similarity threshold (default 30).  (Higher number means allow less similar files to group.)");
-    BU_OPT_NULL(d[12]);
+
+    // Options for "grouping" mode
+    BU_OPT(d[11], "G", "group",                "",  NULL,         &grouping_mode,             "group files into similar bins.  (Multiple grouping options, may be controlled by specifying other options.)");
+    BU_OPT(d[12], "",  "filename-threshold",   "#", &bu_opt_long, &gopts.filename_threshold,  "Bin based on similar file names (only looks at filename - parent paths aren't considered.)");
+    BU_OPT(d[13], "",  "geomname-threshold",   "#", &bu_opt_long, &gopts.geomname_threshold,  "Bin based on similar object names within the .g file (larger numbers mean looser grouping criteria - default value is 30)");
+    BU_OPT(d[14], "",  "geometry-threshold",   "#", &bu_opt_long, &gopts.geometry_threshold,  "Bin based on similar geometry within the .g file (larger numbers mean looser grouping criteria - default value is ?)");
+    BU_OPT(d[15], "P",  "file-pattern",  "pattern", &bu_opt_vls,  &gopts.fpattern,  "Pattern to match for files in root-dir.  If no root-dir is specified, use current working dir.");
+
+    BU_OPT_NULL(d[16]);
 
     int ret_ac = bu_opt_parse(&msg, argc, argv, d);
     if (ret_ac < 0) {
@@ -343,12 +327,12 @@ main(int argc, const char **argv)
 
     // If we have a non-negative group_threshold, we're doing a different
     // comparison.
-    if (group_threshold >= 0) {
+    if (grouping_mode) {
 	bu_vls_free(&msg);
 	bu_vls_free(state->search_filter);
 	bu_vls_free(state->merge_file);
 	BU_PUT(state, struct diff_state);
-	return gdiff_group(ret_ac, argv, group_threshold);
+	return gdiff_group(ret_ac, argv, &gopts);
     }
 
     if (bu_vls_strlen(state->search_filter)) {
