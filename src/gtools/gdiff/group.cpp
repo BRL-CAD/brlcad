@@ -30,6 +30,7 @@
 #include <vector>
 #include "ssdeep.hpp"
 #include "tlsh.hpp"
+#include "levenshtein_ull.hpp"
 
 extern "C" {
 #include "bu/app.h"
