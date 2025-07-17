@@ -112,11 +112,13 @@ std::string hash_file(const std::string &path)
 
     tlsh::Tlsh hasher;
     std::set<std::string>::iterator o_it;
+    std::string data;
     for (o_it = onames.begin(); o_it != onames.end(); ++o_it)
-	hasher.update((const unsigned char *)o_it->c_str(), o_it->length());
+	data.append(*o_it);
+    hasher.update((const unsigned char *)data.c_str(), data.length());
     hasher.final();
     std::string hstr = hasher.getHash();
-    //std::cout << path << ": " <<  hstr << "\n";
+    std::cout << path << ": " <<  hstr << "\n";
 
     db_close(dbip);
     return hstr;
