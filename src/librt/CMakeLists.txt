@@ -57,14 +57,14 @@ set(
 set(RT_ECMD_SCANNER ${CMAKE_BINARY_DIR}/CMakeTmp/rt_ecmd_scanner${CMAKE_EXECUTABLE_SUFFIX})
 set(RT_ECMD_SCANNER_SRC "${CMAKE_CURRENT_SOURCE_DIR}/primitives/rt_ecmd_scanner.cpp")
 try_compile(
-  ged_hdr_scanner
+  rt_ecmd_scanner
   "${CMAKE_BINARY_DIR}/CMakeTmp"
   SOURCES "${RT_ECMD_SCANNER_SRC}"
   OUTPUT_VARIABLE RT_SCANNER_BLD_OUT
   COPY_FILE "${RT_ECMD_SCANNER}"
 )
 if (NOT EXISTS ${RT_ECMD_SCANNER})
-  message(FATAL_ERROR "Unable to build ged command scanner: ${RT_SCANNER_BLD_OUT}")
+  message(FATAL_ERROR "Unable to build edit command scanner: ${RT_SCANNER_BLD_OUT}")
 endif()
 distclean(${RT_ECMD_SCANNER})
 
