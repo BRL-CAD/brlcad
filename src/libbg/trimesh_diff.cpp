@@ -254,6 +254,12 @@ bg_trimesh_diff(
 }
 
 
+// TODO - could we add both the up and the down roundings to the hash for
+// better stability?  That way, very similar values on either side of the
+// rounding cutoff will also get the same two values and as long as we always
+// do min-max ordering they will get the same values in the same order.  The
+// hash value is arbitrary, so adding extra data to it shouldn't be a
+// problem...
 extern "C" unsigned long long
 bg_trimesh_hash(
 	const int *f, size_t num_f, const point_t *p, size_t num_p,
