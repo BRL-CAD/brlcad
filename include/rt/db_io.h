@@ -408,6 +408,21 @@ RT_EXPORT extern int db_write(struct db_i *dbip,
 			      b_off_t offset);
 
 /**
+ * Reads 'count' bytes at file offset 'offset' into buffer at 'addr'.
+ * A wrapper for the UNIX read() sys-call that takes into account
+ * syscall semaphores, stdio-only machines, and in-memory buffering.
+ *
+ * Returns -
+ * 0 OK
+ * -1 FAILURE
+ */
+RT_EXPORT extern int
+db_read(const struct db_i *dbip,
+       	void *addr,
+       	size_t count,
+       	b_off_t offset);
+
+/**
  * Add name from dp->d_namep to external representation of solid, and
  * write it into a file.
  *
