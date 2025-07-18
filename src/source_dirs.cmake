@@ -34,26 +34,31 @@ macro(set_deps dirname deps_list)
 endmacro(set_deps)
 
 # Libraries
-
-set_deps(libanalyze "librt;libbn;libbu")
-set_deps(libbg      "libbn;libbu")
-set_deps(libbn      "libbu")
-set_deps(libbrep    "libbv;libbu")
+# Note that the ordering is important here - we are building
+# up the ordered_dirs list in addition to defining per
+# library lists, and the former needs the order below to
+# match the dependency order in the build process rather than
+# be alphabetical.
 set_deps(libbu      "")
+set_deps(libbn      "libbu")
+set_deps(libbg      "libbn;libbu")
 set_deps(libbv      "libbg;libbn;libbu")
-set_deps(libdm      "librt;libicv;libbv;libbn;libbu;libpkg")
-set_deps(libfft     "")
-set_deps(libgcv     "libwdb;libbn;libbu")
-set_deps(libged     "libicv;libanalyze;libwdb;liboptical;libdm;libbv;libbu")
-set_deps(libicv     "libbn;libbu")
 set_deps(libnmg     "libbv;libbn;libbu")
-set_deps(liboptical "librt;libbn;libbu")
-set_deps(libpc      "")
-set_deps(libpkg     "")
-set_deps(libqtcad   "libged;libdm;libbv;libbn;libbu")
+set_deps(libbrep    "libbv;libbu")
 set_deps(librt      "libbrep;libnmg;libbv;libbn;libbu")
-set_deps(libtclcad  "libged;libdm;libbv;libbn;libbu")
 set_deps(libwdb     "librt;libbn;libbu")
+set_deps(libpkg     "")
+set_deps(libgcv     "libwdb;libbn;libbu")
+set_deps(libanalyze "librt;libbn;libbu")
+set_deps(liboptical "librt;libbn;libbu")
+set_deps(libicv     "libbn;libbu")
+set_deps(libdm      "librt;libicv;libbv;libbn;libpkg;libbu")
+set_deps(libged     "libicv;libanalyze;libwdb;liboptical;libdm;libbv;libbu")
+set_deps(libfft     "")
+set_deps(libpc      "")
+set_deps(libqtcad   "libged;libdm;libbv;libbn;libbu")
+set_deps(libtclcad  "libged;libdm;libbv;libbn;libbu")
+
 
 # Applications
 

@@ -1,4 +1,4 @@
-if(BRLCAD_ENABLE_QT)
+if(BRLCAD_ENABLE_QT AND TARGET libbu)
   find_package_qt(REQUIRED)
 
   # Include directories needed by libpkg users
@@ -19,7 +19,7 @@ if(BRLCAD_ENABLE_QT)
     brlcad_addexec(qt_test_server "server.cpp;${pkg_moc_srcs}" "libbu;libpkg;Qt5::Core;Qt5::Network;Qt5::Widgets" TEST)
   endif(Qt6Widgets_FOUND)
   brlcad_addexec(qt_test_client client.cpp "libbu;libpkg" NO_INSTALL)
-endif(BRLCAD_ENABLE_QT)
+endif()
 
 cmakefiles(
   ncp.h
