@@ -34,11 +34,15 @@ macro(set_deps dirname deps_list)
 endmacro(set_deps)
 
 # Libraries
-# Note that the ordering is important here - we are building
-# up the ordered_dirs list in addition to defining per
-# library lists, and the former needs the order below to
-# match the dependency order in the build process rather than
-# be alphabetical.
+# Note that the ordering is important here - we are building up the
+# ordered_dirs list in addition to defining per library lists, and
+# the former needs the order below to match the dependency order in
+# the build process rather than be alphabetical.
+#
+# See logic in src/CMakeLists.txt and the part of the toplevel
+# CMakeLists.txt calling brlcad_bext_process.  The deps_expand
+# function that uses the ${dirname}_deps lists is found in
+# misc/CMake/BRLCAD_Util.cmake
 set_deps(libbu      "")
 set_deps(libbn      "libbu")
 set_deps(libbg      "libbn;libbu")
