@@ -1,46 +1,6 @@
 find_package_eigen(REQUIRED)
 find_package_gte(REQUIRED)
-
-set(
-  SPSR_srcs
-  spsr/Allocator.h
-  spsr/Array.h
-  spsr/Array.inl
-  spsr/BinaryNode.h
-  spsr/BSplineData.h
-  spsr/BSplineData.inl
-  spsr/cvertex.h
-  spsr/Factor.cpp
-  spsr/Factor.h
-  spsr/FunctionData.h
-  spsr/FunctionData.inl
-  spsr/Geometry.cpp
-  spsr/Geometry.h
-  spsr/Geometry.inl
-  spsr/MarchingCubes.cpp
-  spsr/MarchingCubes.h
-  spsr/MAT.h
-  spsr/MAT.inl
-  spsr/MultiGridOctreeData.h
-  spsr/MultiGridOctreeData.inl
-  spsr/MultiGridOctreeData.IsoSurface.inl
-  spsr/MultiGridOctreeData.SortedTreeNodes.inl
-  spsr/Octree.h
-  spsr/Octree.inl
-  spsr/PlyVertexMini.h
-  spsr/PointStream.h
-  spsr/PointStream.inl
-  spsr/Polynomial.h
-  spsr/Polynomial.inl
-  spsr/PPolynomial.h
-  spsr/PPolynomial.inl
-  spsr/SparseMatrix.h
-  spsr/SparseMatrix.inl
-  spsr/SPSR.cpp
-  spsr/SPSR.h
-  spsr/Vector.h
-  spsr/Vector.inl
-)
+find_package_spsr(REQUIRED)
 
 set(
   LIBBG_SOURCES
@@ -62,8 +22,7 @@ set(
   polygon_triangulate.cpp
   polygon_point_in.c
   sat.c
-  spsr.c
-  ${SPSR_srcs}
+  spsr.cpp
   tri_pt.c
   tri_ray.c
   tri_tri.c
@@ -80,7 +39,12 @@ set(
 # Note - libbg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(BG_LIBS ${libbg_deps})
 
-set(BG_INCLUDE_DIRS ${SPSR_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIR} ${GTE_INCLUDE_DIR})
+set(BG_INCLUDE_DIRS
+  ${LMDB_INCLUDE_DIR}
+  ${EIGEN3_INCLUDE_DIR}
+  ${GTE_INCLUDE_DIR}
+  ${SPSR_INCLUDE_DIR}
+  )
 
 brlcad_addlib(libbg "${LIBBG_SOURCES}" "${BG_LIBS}" "" "${BG_INCLUDE_DIRS}")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
@@ -113,8 +77,7 @@ set(
   detria.hpp
   earcut.hpp
   pointgen.c
-  spsr/LICENSE
-)
+  )
 
 cmakefiles(${bg_ignore})
 cmakefiles(CMakeLists.txt)

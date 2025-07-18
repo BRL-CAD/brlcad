@@ -57,6 +57,7 @@ set(
   FindRE2C.cmake
   FindREGEX.cmake
   FindSCL.cmake
+  FindSPSR.cmake
   FindSTL.cmake
   FindShellDeps.cmake
   FindSTEPCODE.cmake
