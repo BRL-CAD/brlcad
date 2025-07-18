@@ -22,6 +22,9 @@
  * Interface to Adaptive Multigrid Solvers Version 16.10.
  * (AMS originally was the Screened Poisson Surface Reconstruction code.)
  *
+ * TODO - update to 18.70 API - apparently there have been significant changes
+ * upstream.
+ *
  * TODO - it may be worth porting the Open3D ball pivot code to vmath.h
  * types and using straight nanoflann to provide another alternative to
  * the SPSR methodology:
