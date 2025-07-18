@@ -963,7 +963,6 @@ bg_trimesh_3d_gc(int **ofaces, point_t **opnts, int *n_opnts,
     return num_faces;
 }
 
-
 // Local Variables:
 // tab-width: 8
 // mode: C++
