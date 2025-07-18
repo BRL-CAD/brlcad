@@ -151,9 +151,14 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
     (*faces) = (int *)bu_calloc(*num_faces*3, sizeof(int), "faces array");
     (*points) = (point_t *)bu_calloc(*num_pnts, sizeof(point_t), "points array");
     for (int i = 0; i < *num_faces; i++) {
-	(*faces)[3*i*0] = polygons[i][0];
-	(*faces)[3*i*1] = polygons[i][1];
-	(*faces)[3*i*2] = polygons[i][2];
+	if (polygons[i].size() != 3) {
+	    bu_log("Warning: polygon %d is not a triangle (has %zu vertices)\n", i, polygons[i].size());
+	    // TODO - triangulate
+	    continue;
+	}
+	(*faces)[3*i+0] = polygons[i][0];
+	(*faces)[3*i+1] = polygons[i][1];
+	(*faces)[3*i+2] = polygons[i][2];
     }
     for (int i = 0; i < *num_pnts; i++) {
 	(*points)[i][X] = vCoordinates[3*i+0];
