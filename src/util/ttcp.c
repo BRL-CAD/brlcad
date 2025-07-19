@@ -539,6 +539,18 @@ main(int argc, char **argv)
             if (udp) (void)Nwrite(fd, buf, 4); /* rcvr end */
         } else {
             while ((cnt=Nread(fd, buf, buflen)) > 0) {
+                /* --- UDP control packet fix: skip 4-byte all-zero packets --- */
+                if (udp && cnt == 4) {
+                    int all_zero = 1;
+                    for (int i = 0; i < 4; i++) {
+                        if (buf[i] != 0) {
+                            all_zero = 0;
+                            break;
+                        }
+                    }
+                    if (all_zero)
+                        continue; /* skip control packet */
+                }
                 if (cnt <= 4) {
                     if (going)
                         break;	/* "EOF" */
@@ -561,21 +573,34 @@ main(int argc, char **argv)
                 && Nwrite(fd, buf, cnt) == cnt)
                 nbytes += cnt;
         } else {
-            while ((cnt=Nread(fd, buf, buflen)) > 0 &&
+            while ((cnt=Nread(fd, buf, buflen)) > 0) {
+                /* --- UDP control packet fix: skip 4-byte all-zero packets --- */
+                if (udp && cnt == 4) {
+                    int all_zero = 1;
+                    for (int i = 0; i < 4; i++) {
+                        if (buf[i] != 0) {
+                            all_zero = 0;
+                            break;
+                        }
+                    }
+                    if (all_zero)
+                        continue; /* skip UDP end marker */
+                }
 #if defined(USE_WINSOCK)
-                   _write(1, buf, cnt) == cnt
+                if (_write(1, buf, cnt) != cnt) break;
 #elif defined(HAVE_UNISTD_H)
-                   write(1, buf, cnt) == cnt
+                if (write(1, buf, cnt) != cnt) break;
 #else
-                   fwrite(buf, 1, cnt, stdout) == (size_t)cnt
+                if (fwrite(buf, 1, cnt, stdout) != (size_t)cnt) break;
 #endif
-            )
                 nbytes += cnt;
+            }
         }
     }
     if (errno) err("IO");
     (void)read_timer(stats, sizeof(stats));
     if (udp&&trans) {
+        memset(buf, 0, 4); /* Make sure the first 4 bytes are zero */
         (void)Nwrite(fd, buf, 4); /* rcvr end */
         (void)Nwrite(fd, buf, 4); /* rcvr end */
         (void)Nwrite(fd, buf, 4); /* rcvr end */
