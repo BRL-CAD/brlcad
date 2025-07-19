@@ -1,8 +1,8 @@
 /*
-Header-only Ball Pivoting Algorithm implementation using nanoflann (2.x) and libigl-predicates.
+Header-only Ball Pivoting Algorithm implementation using nanoflann (2.x) and robust predicates.
 
 - KD-tree: nanoflann (https://github.com/jlblancoc/nanoflann)
-- Robust predicates: libigl-predicates (https://github.com/libigl/libigl-predicates)
+- Robust predicates: robust_orient3d.hpp (adapted from https://github.com/wlenthe/GeometricPredicates)
 - MIT License
 
 Features:
@@ -27,13 +27,7 @@ Usage:
 #include <iostream>
 #include <sstream>
 #include <nanoflann.hpp>
-#include <igl/predicates/orient3d.h>
-
-// Compatibility clamp for pre-C++17
-template <typename T>
-inline const T& clamp(const T& v, const T& lo, const T& hi) {
-    return (v < lo) ? lo : (hi < v) ? hi : v;
-}
+#include "robust_orient3d.hpp"  // <--- USE THIS PREDICATE
 
 namespace ball_pivoting {
 
@@ -256,8 +250,9 @@ private:
                                 const Eigen::Vector3d& n0, const Eigen::Vector3d& n1, const Eigen::Vector3d& n2) {
         Eigen::Vector3d normal = FaceNormal(v0,v1,v2);
         if (normal.dot(n0) < 0) normal *= -1;
+        // Use robust_orient3d for robust plane orientation
         Eigen::Vector3d test_pt = v0 + n0;
-        int orient = igl::predicates::orient3d(v0, v1, v2, test_pt);
+        int orient = robust_orient3d(v0, v1, v2, test_pt);
         return orient > 0;
     }
 
@@ -498,7 +493,7 @@ private:
         for (auto nbidx : indices) {
             BallPivotingVertexPtr candidate = vertices[nbidx];
             if (candidate==src || candidate==tgt || candidate==opp) continue;
-            int coplanar = igl::predicates::orient3d(src->point, tgt->point, opp->point, candidate->point);
+            int coplanar = robust_orient3d(src->point, tgt->point, opp->point, candidate->point);
             if (coplanar == 0) continue;
             Eigen::Vector3d new_center;
             if (!ComputeBallCenter(src->idx, tgt->idx, candidate->idx, radius, new_center)) continue;
@@ -526,6 +521,12 @@ private:
                   << src->idx << "," << tgt->idx << ") with opp " << opp->idx << "\n";
         }
         return min_candidate;
+    }
+
+    // Clamp implementation (for pre-C++17)
+    template <typename T>
+    static inline const T& clamp(const T& v, const T& lo, const T& hi) {
+        return (v < lo) ? lo : (hi < v) ? hi : v;
     }
 };
 
