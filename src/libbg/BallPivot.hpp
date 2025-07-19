@@ -1,18 +1,50 @@
 /*
-Header-only Ball Pivoting Algorithm implementation using nanoflann (2.x) and robust predicates.
-
-- KD-tree: nanoflann (https://github.com/jlblancoc/nanoflann)
-- Robust predicates: robust_orient3d.hpp (adapted from https://github.com/wlenthe/GeometricPredicates)
-- MIT License
-
-Features:
-- Optional debugging telemetry: set BallPivoting::set_debug(true) to enable verbose diagnostics.
-
-Usage:
-  - Your PointCloud must provide:
-      - points: std::vector<std::array<fastf_t, 3>>
-      - normals: std::vector<std::array<fastf_t, 3>>
-*/
+ * BallPivot.hpp
+ *
+ * Ball Pivoting Algorithm for surface reconstruction from point clouds.
+ *
+ * Origin:
+ *   - Derived and adapted from: https://github.com/isl-org/Open3D
+ *     (Ball Pivoting Algorithm implementation in Open3D)
+ *   - Adapted by Clifford Yapp, BRL-CAD.
+ *   - Header-only, C++17+, lightweight, simplified for integration with BRL-CAD and similar C/C++ codebases.
+ *   - Uses nanoflann (https://github.com/jlblancoc/nanoflann) for KD-tree search.
+ *   - Uses robust predicates from https://github.com/wlenthe/GeometricPredicates (MIT)
+ *
+ * License:
+ *   Portions of this file are derived from Open3D under the MIT License.
+ *   Open3D: www.open3d.org
+ *   Copyright (c) 2018-2023 www.open3d.org
+ *
+ *   Permission is hereby granted, free of charge, to any person obtaining a copy
+ *   of this software and associated documentation files (the "Software"), to deal
+ *   in the Software without restriction, including without limitation the rights
+ *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *   copies of the Software, and to permit persons to whom the Software is
+ *   furnished to do so, subject to the following conditions:
+ *
+ *   The above copyright notice and this permission notice shall be included in
+ *   all copies or substantial portions of the Software.
+ *
+ *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *   THE SOFTWARE.
+ *
+ *   SPDX-License-Identifier: MIT
+ *
+ *   Additional modifications and original code: MIT License
+ *   (c) 2024 Clifford Yapp, BRL-CAD
+ *
+ *   See included nanoflann and robust_orient3d.hpp for their respective licenses.
+ *
+ * Features:
+ *   - Optional debugging telemetry: set BallPivoting::set_debug(true) to enable verbose diagnostics.
+ *   - Header-only, minimal dependency.
+ */
 
 #pragma once
 #include <vector>
@@ -134,10 +166,8 @@ inline BallPivotingVertexPtr BallPivotingEdge::GetOppositeVertex() {
     return nullptr;
 }
 
-// Output mesh structure
+// Output mesh structure (no vertices array needed for static input)
 struct Mesh {
-    std::vector<std::array<fastf_t, 3>> vertices;
-    std::vector<std::array<fastf_t, 3>> normals;
     std::vector<std::array<int, 3>> triangles;
     std::vector<std::array<fastf_t, 3>> triangle_normals;
 };
@@ -147,8 +177,6 @@ public:
     BallPivoting(const std::vector<std::array<fastf_t, 3>>& pts, const std::vector<std::array<fastf_t, 3>>& nrm)
         : pc_adaptor{pts}, kdtree(3, pc_adaptor, nanoflann::KDTreeSingleIndexAdaptorParams(10)), points(pts), normals(nrm) {
         kdtree.buildIndex();
-        mesh.vertices = pts;
-        mesh.normals = nrm;
         for (size_t i = 0; i < pts.size(); ++i)
             vertices.emplace_back(new BallPivotingVertex((int)i, pts[i], nrm[i]));
     }
@@ -559,6 +587,56 @@ private:
 };
 
 } // namespace ball_pivoting
+
+// -----------------
+// C++ Adapter block
+// -----------------
+#ifdef __cplusplus
+extern "C" {
+
+// Adapter: Runs Ball Pivoting algorithm and produces mesh
+// - face_vec: receives triplet indices for triangles (size = 3 * nfaces)
+// Returns: number of faces (nfaces)
+inline int ball_pivoting(
+    std::vector<int> &face_vec,
+    const point_t *input_points_3d,
+    const vect_t *input_normals_3d,
+    int num_input_pnts,
+    double radius
+) {
+    using fastf = fastf_t;
+    std::vector<std::array<fastf, 3>> points(num_input_pnts);
+    std::vector<std::array<fastf, 3>> normals(num_input_pnts);
+
+    for (int i = 0; i < num_input_pnts; ++i) {
+        points[i][0] = input_points_3d[i][0];
+        points[i][1] = input_points_3d[i][1];
+        points[i][2] = input_points_3d[i][2];
+        normals[i][0] = input_normals_3d[i][0];
+        normals[i][1] = input_normals_3d[i][1];
+        normals[i][2] = input_normals_3d[i][2];
+    }
+
+    ball_pivoting::BallPivoting bp(points, normals);
+    auto mesh = bp.Run({radius});
+
+    if (mesh.triangles.empty())
+        return 0;
+
+    face_vec.clear();
+
+    // Faces (triangle indices)
+    for (const auto &t : mesh.triangles) {
+        face_vec.push_back(t[0]);
+        face_vec.push_back(t[1]);
+        face_vec.push_back(t[2]);
+    }
+
+    return static_cast<int>(mesh.triangles.size());
+}
+
+} // extern "C"
+#endif
 
 /*
 Debugging/Telemetry usage:
