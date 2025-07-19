@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-# Cross-platform: robustly handles Windows (WIN32) and UNIX platforms.
+# Cross-platform: robustly handles Windows and UNIX platforms.
 
 # ---- Define macros before any use ----
 macro(ttcp_status MSG)
@@ -60,7 +60,7 @@ macro(ttcp_fatal MSG)
 endmacro()
 
 # ---- Config ----
-set(WIN32 "@WIN32@")
+set(USE_BAT "@WIN32@")  # Use Windows .bat scripts, cmd and PowerShell
 set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
 set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
 set(LOGFILE "@LOG_FILE@")
@@ -72,7 +72,7 @@ set(TTCP_PORT_COUNT 6)
 set(TTCP_PORTS "")
 
 function(check_port_free port result_var)
-  if(WIN32)
+  if(USE_BAT)
     # Use PowerShell to check if port is listening. Returns TRUE if not in use.
     execute_process(
       COMMAND powershell -Command "(Get-NetTCPConnection -State Listen -LocalPort ${port}) -eq \$null"
@@ -236,7 +236,7 @@ file(WRITE "${LOGFILE}" "Starting ttcp regression suite\n")
 ttcp_status("Initialized and cleaned up old files.")
 
 # ---- Kill any lingering ttcp processes on our test ports ----
-if(WIN32)
+if(USE_BAT)
   execute_process(
     COMMAND cmd /c "${KILL_SCRIPT_BAT}"
     WORKING_DIRECTORY "${CBDIR}"
@@ -275,7 +275,7 @@ endif()
 ttcp_status("Found ttcp executable at: ${TTCP_EXEC}")
 
 # Platform-specific helpers
-if(WIN32)
+if(USE_BAT)
   macro(native_path in_var out_var)
     file(TO_NATIVE_PATH "${in_var}" _native_path_tmp)
     set(${out_var} "${_native_path_tmp}")
@@ -331,7 +331,7 @@ set(RECEIVER_CMD "")
 ttcp_make_and_launch_receiver("tcp" "${TTCP_PORT}" "" "${RECEIVER_OUT}" "${RECEIVER_ERR}" RECEIVER_CMD)
 ttcp_status("Receiver command: ${RECEIVER_CMD}")
 
-if(WIN32)
+if(USE_BAT)
   set(SENDER_CMD "type \"${DATA_IN}\" | \"${TTCP_EXEC}\" -t -p${TTCP_PORT} 127.0.0.1")
 else()
   set(SENDER_CMD "\"${TTCP_EXEC}\" -t -p${TTCP_PORT} 127.0.0.1 < \"${DATA_IN}\"")
@@ -340,7 +340,7 @@ ttcp_status("Transmitter command: ${SENDER_CMD}")
 
 ttcp_sleep(3)
 ttcp_status("Launching transmitter for TCP test ...")
-if(WIN32)
+if(USE_BAT)
   execute_process(
     COMMAND cmd /c "${SENDER_CMD}"
     WORKING_DIRECTORY "${CBDIR}"
@@ -381,7 +381,7 @@ set(RECEIVER_CMD_UDP "")
 ttcp_make_and_launch_receiver("udp" "${TTCP_PORT_UDP}" "-u" "${DATA_OUT_UDP}" "${RECEIVER_ERR_UDP}" RECEIVER_CMD_UDP)
 ttcp_status("Receiver command: ${RECEIVER_CMD_UDP}")
 
-if(WIN32)
+if(USE_BAT)
   native_path("${TTCP_EXEC}" _ttcp_exec_win)
   native_path("${DATA_IN}" _data_in_win)
   set(SENDER_CMD_UDP "type \"${_data_in_win}\" | \"${_ttcp_exec_win}\" -t -p${TTCP_PORT_UDP} -u 127.0.0.1")
@@ -392,7 +392,7 @@ ttcp_status("Transmitter command: ${SENDER_CMD_UDP}")
 
 ttcp_sleep(7)
 ttcp_status("Launching transmitter for UDP test ...")
-if(WIN32)
+if(USE_BAT)
   file(WRITE "${CBDIR}/ttcp_udp_sender.bat"
 "@echo off
 ${SENDER_CMD_UDP}
@@ -436,7 +436,7 @@ set(RECEIVER_CMD_L "")
 ttcp_make_and_launch_receiver("l" "${TTCP_PORT_L}" "-l${BUF_SIZE}" "${DATA_OUT_L}" "${RECEIVER_ERR_L}" RECEIVER_CMD_L)
 ttcp_status("Receiver command: ${RECEIVER_CMD_L}")
 
-if(WIN32)
+if(USE_BAT)
   set(SENDER_CMD_L "type \"${DATA_IN}\" | \"${TTCP_EXEC}\" -t -l${BUF_SIZE} -p${TTCP_PORT_L} 127.0.0.1")
 else()
   set(SENDER_CMD_L "\"${TTCP_EXEC}\" -t -l${BUF_SIZE} -p${TTCP_PORT_L} 127.0.0.1 < \"${DATA_IN}\"")
@@ -445,7 +445,7 @@ ttcp_status("Transmitter command: ${SENDER_CMD_L}")
 
 ttcp_sleep(3)
 ttcp_status("Launching transmitter for buffer size test ...")
-if(WIN32)
+if(USE_BAT)
   execute_process(
     COMMAND cmd /c "${SENDER_CMD_L}"
     WORKING_DIRECTORY "${CBDIR}"
@@ -481,7 +481,7 @@ set(RECEIVER_CMD_SRC "")
 ttcp_make_and_launch_receiver("src" "${TTCP_PORT_SRC}" "" "${DATA_OUT_SRC}" "${RECEIVER_ERR_SRC}" RECEIVER_CMD_SRC)
 ttcp_status("Receiver command: ${RECEIVER_CMD_SRC}")
 
-if(WIN32)
+if(USE_BAT)
   set(SENDER_CMD_SRC "\"${TTCP_EXEC}\" -s -t -n16 -l1024 -p${TTCP_PORT_SRC} 127.0.0.1")
 else()
   set(SENDER_CMD_SRC "\"${TTCP_EXEC}\" -s -t -n16 -l1024 -p${TTCP_PORT_SRC} 127.0.0.1")
@@ -490,7 +490,7 @@ ttcp_status("Transmitter command: ${SENDER_CMD_SRC}")
 
 ttcp_sleep(3)
 ttcp_status("Launching transmitter for source mode test ...")
-if(WIN32)
+if(USE_BAT)
   execute_process(
     COMMAND cmd /c "${SENDER_CMD_SRC}"
     WORKING_DIRECTORY "${CBDIR}"
@@ -528,14 +528,14 @@ foreach(_idx RANGE 1 64)
   file(APPEND "${DATA_IN_SINK}" "${_randblock}")
 endforeach()
 set(RECEIVER_CMD_SINK "")
-if(WIN32)
+if(USE_BAT)
   ttcp_make_and_launch_receiver("sink" "${TTCP_PORT_SINK}" "-s" "NUL" "${RECEIVER_ERR_SINK}" RECEIVER_CMD_SINK)
 else()
   ttcp_make_and_launch_receiver("sink" "${TTCP_PORT_SINK}" "-s" "/dev/null" "${RECEIVER_ERR_SINK}" RECEIVER_CMD_SINK)
 endif()
 ttcp_status("Receiver command: ${RECEIVER_CMD_SINK}")
 
-if(WIN32)
+if(USE_BAT)
   set(SENDER_CMD_SINK "type \"${DATA_IN_SINK}\" | \"${TTCP_EXEC}\" -t -p${TTCP_PORT_SINK} 127.0.0.1")
 else()
   set(SENDER_CMD_SINK "\"${TTCP_EXEC}\" -t -p${TTCP_PORT_SINK} 127.0.0.1 < \"${DATA_IN_SINK}\"")
@@ -544,7 +544,7 @@ ttcp_status("Transmitter command: ${SENDER_CMD_SINK}")
 
 ttcp_sleep(3)
 ttcp_status("Launching transmitter for sink mode test ...")
-if(WIN32)
+if(USE_BAT)
   execute_process(
     COMMAND cmd /c "${SENDER_CMD_SINK}"
     WORKING_DIRECTORY "${CBDIR}"
@@ -579,7 +579,7 @@ set(RECEIVER_CMD_B "")
 ttcp_make_and_launch_receiver("B" "${TTCP_PORT_B}" "-B" "${DATA_OUT_B}" "${RECEIVER_ERR_B}" RECEIVER_CMD_B)
 ttcp_status("Receiver command: ${RECEIVER_CMD_B}")
 
-if(WIN32)
+if(USE_BAT)
   set(SENDER_CMD_B "type \"${DATA_IN}\" | \"${TTCP_EXEC}\" -t -p${TTCP_PORT_B} 127.0.0.1")
 else()
   set(SENDER_CMD_B "\"${TTCP_EXEC}\" -t -p${TTCP_PORT_B} 127.0.0.1 < \"${DATA_IN}\"")
@@ -588,7 +588,7 @@ ttcp_status("Transmitter command: ${SENDER_CMD_B}")
 
 ttcp_sleep(3)
 ttcp_status("Launching transmitter for -B block mode test ...")
-if(WIN32)
+if(USE_BAT)
   execute_process(
     COMMAND cmd /c "${SENDER_CMD_B}"
     WORKING_DIRECTORY "${CBDIR}"
