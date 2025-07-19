@@ -191,7 +191,8 @@ BG_EXPORT int bg_3d_spsr(int **faces, int *num_faces, point_t **vertices, int *n
  */
 #define BG_3D_BALLPIVOT_DEFAULT_RADIUS -1
 BG_EXPORT int bg_3d_ballpivot(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
-			 const point_t *input_points_3d, int num_input_pnts, double radius);
+			 const point_t *input_points_3d, const vect_t *input_normals_3d,
+			 int num_input_pnts, double radius);
 
 
 __END_DECLS

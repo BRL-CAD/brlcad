@@ -173,16 +173,16 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
 }
 
 int bg_3d_ballpivot(
-	int **faces, int *num_faces,
-	point_t **vertices, int *num_vertices,
-	const point_t *input_points_3d, int num_input_pnts, double radius)
+	int **faces, int *num_faces, point_t **vertices, int *num_vertices,
+	const point_t *input_points_3d, const vect_t *input_normals_3d,
+       	int num_input_pnts, double radius)
 {
-    if (!faces || !num_faces || !vertices || !num_vertices || !input_points_3d || num_input_pnts < 3)
+    if (!faces || !num_faces || !vertices || !num_vertices || !input_points_3d || !input_normals_3d || num_input_pnts < 3)
 	return -1;
 
     // Run the Ball Pivoting Algorithm (radius selection is handled inside)
     std::vector<int> face_vec;
-    int nfaces = ball_pivoting(input_points_3d, num_input_pnts, radius, face_vec);
+    int nfaces = ball_pivoting(face_vec, input_points_3d, input_normals_3d, num_input_pnts, radius);
 
     if (nfaces == 0) {
 	*faces = NULL;
