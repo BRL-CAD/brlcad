@@ -104,6 +104,9 @@ add_subdirectory(shaders)
 # rtweight command tests
 add_subdirectory(weight)
 
+# ttcp tests
+add_subdirectory(ttcp)
+
 if(SH_EXEC)
   brlcad_add_test(NAME regress-usage COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/usage.sh" ${CMAKE_SOURCE_DIR})
   brlcad_regression_test(regress-usage "rt" STAND_ALONE TEST_DEFINED)

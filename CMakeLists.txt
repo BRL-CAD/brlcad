@@ -1463,6 +1463,7 @@ brlcad_header_sys_wait()
 # so we need to check for it
 brlcad_include_file(dirent.h HAVE_DIRENT_H)
 
+brlcad_include_file(arpa/inet.h HAVE_ARPA_INET_H)
 brlcad_include_file(conio.h HAVE_CONIO_H)
 brlcad_include_file(direct.h HAVE_DIRECT_H)
 brlcad_include_file(dlfcn.h HAVE_DLFCN_H)

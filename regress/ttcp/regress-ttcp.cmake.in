@@ -1,0 +1,641 @@
+#           R E G R E S S - T T C P . C M A K E . I N
+# BRL-CAD
+#
+# Copyright (c) 2025 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
+# Cross-platform: robustly handles Windows (WIN32) and UNIX platforms.
+
+# ---- Define macros before any use ----
+macro(ttcp_status MSG)
+  file(APPEND "${LOGFILE}" "${MSG}\n")
+  message(STATUS "${MSG}")
+endmacro()
+
+macro(ttcp_cleanup)
+  foreach(fname ${ARGN})
+    if(EXISTS "${fname}")
+      file(REMOVE "${fname}")
+    endif()
+  endforeach()
+endmacro()
+
+macro(ttcp_fatal MSG)
+  if(CONTINUE_ON_FAILURE)
+    math(EXPR _TTCP_FAIL_COUNT "${_TTCP_FAIL_COUNT} + 1")
+    set(_TTCP_FAIL_MESSAGES "${_TTCP_FAIL_MESSAGES}${MSG}\n")
+    ttcp_status("FAIL: ${MSG}")
+  else()
+    message(FATAL_ERROR "${MSG}")
+  endif()
+endmacro()
+
+# ---- Config ----
+set(WIN32 "@WIN32@")
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
+set(LOGFILE "@LOG_FILE@")
+set(KILL_SCRIPT_SH "${CBDIR}/kill-ttcp-ports.sh")
+set(KILL_SCRIPT_BAT "${CBDIR}/kill-ttcp-ports.bat")
+
+# ---- Random+Check: Generate unique ports for this run ----
+set(TTCP_PORT_COUNT 6)
+set(TTCP_PORTS "")
+
+function(check_port_free port result_var)
+  if(WIN32)
+    # Use PowerShell to check if port is listening. Returns TRUE if not in use.
+    execute_process(
+      COMMAND powershell -Command "(Get-NetTCPConnection -State Listen -LocalPort ${port}) -eq \$null"
+      RESULT_VARIABLE _res
+      OUTPUT_VARIABLE _out
+      ERROR_QUIET
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if(_out STREQUAL "True")
+      set(${result_var} TRUE PARENT_SCOPE)
+    else()
+      set(${result_var} FALSE PARENT_SCOPE)
+    endif()
+  else()
+    execute_process(
+      COMMAND sh -c "netstat -an | grep -w ${port} | grep -E 'LISTEN|UDP' || echo FREE"
+      OUTPUT_VARIABLE _out
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET
+    )
+    if(_out MATCHES "FREE")
+      set(${result_var} TRUE PARENT_SCOPE)
+    else()
+      set(${result_var} FALSE PARENT_SCOPE)
+    endif()
+  endif()
+endfunction()
+
+function(find_random_port varname)
+  set(found FALSE)
+  set(_tries 0)
+  while(NOT found AND _tries LESS 100)
+    string(RANDOM LENGTH 5 ALPHABET 0123456789 _randstr)
+    math(EXPR PORT "20000 + (${_randstr} % 40000)")
+    check_port_free(${PORT} free)
+    if(free)
+      set(found TRUE)
+      set(${varname} ${PORT} PARENT_SCOPE)
+    endif()
+    math(EXPR _tries "${_tries} + 1")
+  endwhile()
+  if(NOT found)
+    message(FATAL_ERROR "Could not find a free TCP port after 100 tries.")
+  endif()
+endfunction()
+
+# Generate unique ports for this run and store in TTCP_PORTS
+set(_ports_list "")
+foreach(_i RANGE 1 ${TTCP_PORT_COUNT})
+  set(_unique FALSE)
+  while(NOT _unique)
+    find_random_port(PORT)
+    list(FIND _ports_list ${PORT} _idx)
+    if(_idx EQUAL -1)
+      set(_unique TRUE)
+      list(APPEND _ports_list ${PORT})
+    endif()
+  endwhile()
+endforeach()
+set(TTCP_PORTS ${_ports_list})
+
+# Assign port variables for test names
+list(GET TTCP_PORTS 0 TTCP_PORT)
+list(GET TTCP_PORTS 1 TTCP_PORT_UDP)
+list(GET TTCP_PORTS 2 TTCP_PORT_L)
+list(GET TTCP_PORTS 3 TTCP_PORT_SRC)
+list(GET TTCP_PORTS 4 TTCP_PORT_SINK)
+list(GET TTCP_PORTS 5 TTCP_PORT_B)
+
+# ---- Add kill scripts to cleanup and initialization (do this first!) ----
+ttcp_cleanup(
+  "${KILL_SCRIPT_SH}"
+  "${KILL_SCRIPT_BAT}"
+  "${CBDIR}/ttcp_test_in.bin"
+  "${CBDIR}/ttcp_test_out.bin"
+  "${CBDIR}/ttcp_test_udp_out.bin"
+  "${CBDIR}/ttcp_test_l_out.bin"
+  "${CBDIR}/ttcp_test_src_out.bin"
+  "${CBDIR}/ttcp_test_sink_in.bin"
+  "${CBDIR}/ttcp_test_B_out.bin"
+  "${CBDIR}/ttcp_receiver.sh"
+  "${CBDIR}/ttcp_receiver.bat"
+  "${CBDIR}/ttcp_receiver.err"
+  "${CBDIR}/ttcp_receiver_udp.sh"
+  "${CBDIR}/ttcp_receiver_udp.bat"
+  "${CBDIR}/ttcp_receiver_udp.err"
+  "${CBDIR}/ttcp_receiver_l.sh"
+  "${CBDIR}/ttcp_receiver_l.bat"
+  "${CBDIR}/ttcp_receiver_l.err"
+  "${CBDIR}/ttcp_receiver_src.sh"
+  "${CBDIR}/ttcp_receiver_src.bat"
+  "${CBDIR}/ttcp_receiver_src.err"
+  "${CBDIR}/ttcp_receiver_sink.sh"
+  "${CBDIR}/ttcp_receiver_sink.bat"
+  "${CBDIR}/ttcp_receiver_sink.err"
+  "${CBDIR}/ttcp_receiver_B.sh"
+  "${CBDIR}/ttcp_receiver_B.bat"
+  "${CBDIR}/ttcp_receiver_B.err"
+  "${CBDIR}/ttcp_transmitter.err"
+  "${CBDIR}/ttcp_transmitter_udp.err"
+  "${CBDIR}/ttcp_transmitter_l.err"
+  "${CBDIR}/ttcp_transmitter_src.err"
+  "${CBDIR}/ttcp_transmitter_sink.err"
+  "${CBDIR}/ttcp_transmitter_B.err"
+  "${CBDIR}/ttcp_udp_sender.bat"
+  "${LOGFILE}"
+)
+
+# ---- Now write the kill scripts ----
+file(WRITE "${KILL_SCRIPT_SH}" "#!/bin/sh
+# kill-ttcp-ports.sh
+# Kills any ttcp processes using the test ports used in regress-ttcp.cmake.in
+
+PORTS=\"${TTCP_PORTS}\"
+
+for PORT in \$PORTS; do
+    pids=\$(ps aux | grep '[t]tcp' | grep -- \"-p\$PORT\" | awk '{print \$2}')
+    if [ -n \"\$pids\" ]; then
+        echo \"Killing ttcp process(es) on port \$PORT: \$pids\"
+        kill \$pids
+    fi
+done
+
+sleep 1
+
+for PORT in \$PORTS; do
+    left=\$(ps aux | grep '[t]tcp' | grep -- \"-p\$PORT\")
+    if [ -n \"\$left\" ]; then
+        echo \"Warning: ttcp process(es) still running on port \$PORT:\"
+        echo \"\$left\"
+    fi
+done
+")
+
+file(WRITE "${KILL_SCRIPT_BAT}" "@echo off
+REM kill-ttcp-ports.bat
+REM Kills any ttcp.exe processes that are using the test ports used in regress-ttcp.cmake.in
+
+REM Note: Windows batch cannot filter by port in process args directly, so this kills all ttcp.exe
+REM For more precise killing, use Sysinternals' tcpview or PowerShell with Get-NetTCPConnection
+
+tasklist /FI \"IMAGENAME eq ttcp.exe\" | find /I \"ttcp.exe\" >nul
+if errorlevel 1 (
+    echo No ttcp.exe processes found.
+) else (
+    echo Killing all ttcp.exe processes...
+    taskkill /IM ttcp.exe /F
+)
+REM Wait a moment for cleanup
+timeout /T 1 /NOBREAK >nul
+REM Optionally list remaining
+tasklist /FI \"IMAGENAME eq ttcp.exe\"
+")
+
+# ---- Option to continue on failure ----
+option(CONTINUE_ON_FAILURE "Continue running all tests even if one fails" OFF)
+set(_TTCP_FAIL_COUNT 0)
+set(_TTCP_FAIL_MESSAGES "")
+
+file(WRITE "${LOGFILE}" "Starting ttcp regression suite\n")
+ttcp_status("Initialized and cleaned up old files.")
+
+# ---- Kill any lingering ttcp processes on our test ports ----
+if(WIN32)
+  execute_process(
+    COMMAND cmd /c "${KILL_SCRIPT_BAT}"
+    WORKING_DIRECTORY "${CBDIR}"
+    RESULT_VARIABLE kill_result
+  )
+else()
+  execute_process(
+    COMMAND /bin/sh "${KILL_SCRIPT_SH}"
+    WORKING_DIRECTORY "${CBDIR}"
+    RESULT_VARIABLE kill_result
+  )
+endif()
+ttcp_status("Ran kill-ttcp-ports script to clean up any lingering ttcp test processes.")
+
+# ---- Prepare initial data file ----
+set(DATA_IN "${CBDIR}/ttcp_test_in.bin")
+set(DATA_OUT "${CBDIR}/ttcp_test_out.bin")
+ttcp_cleanup("${DATA_IN}" "${DATA_OUT}")
+
+ttcp_status("Generating random input file (${DATA_IN}) ...")
+set(_block_size 1024)
+set(_block_count 64)
+file(WRITE "${DATA_IN}" "")
+foreach(_idx RANGE 1 ${_block_count})
+  string(RANDOM LENGTH ${_block_size} ALPHABET 0123456789abcdef _randblock)
+  file(APPEND "${DATA_IN}" "${_randblock}")
+endforeach()
+ttcp_status("Random input file generated.")
+
+# Find ttcp executable
+string(REPLACE "\\" "" TTCP_EXEC "${EXEC}")
+if(NOT EXISTS "${TTCP_EXEC}")
+  file(APPEND "${LOGFILE}" "ttcp not found at location \"${TTCP_EXEC}\" - aborting\n")
+  message(FATAL_ERROR "Unable to find ttcp, aborting.\nSee ${LOGFILE} for more details.")
+endif()
+ttcp_status("Found ttcp executable at: ${TTCP_EXEC}")
+
+# Platform-specific helpers
+if(WIN32)
+  macro(native_path in_var out_var)
+    file(TO_NATIVE_PATH "${in_var}" _native_path_tmp)
+    set(${out_var} "${_native_path_tmp}")
+  endmacro()
+  macro(ttcp_make_and_launch_receiver name port opts outfile errfile out_cmd_var)
+    native_path("${TTCP_EXEC}" _ttcp_exec_win)
+    native_path("${outfile}" _outfile_win)
+    native_path("${errfile}" _errfile_win)
+    set(_bat "${CBDIR}/ttcp_receiver_${name}.bat")
+    set(_receiver_cmd "\"${_ttcp_exec_win}\" ${opts} -r -p${port} > \"${_outfile_win}\" 2> \"${_errfile_win}\"")
+    set(${out_cmd_var} "${_receiver_cmd}")
+    file(WRITE "${_bat}"
+"@echo off
+${_receiver_cmd}
+")
+    execute_process(
+      COMMAND cmd /c start /b ttcp_receiver_${name} "${_bat}"
+      WORKING_DIRECTORY "${CBDIR}"
+    )
+  endmacro()
+  macro(ttcp_sleep dur)
+    execute_process(COMMAND "${CMAKE_COMMAND}" -E sleep ${dur})
+  endmacro()
+else()
+  macro(ttcp_make_and_launch_receiver name port opts outfile errfile out_cmd_var)
+    set(_sh "${CBDIR}/ttcp_receiver_${name}.sh")
+    set(_receiver_cmd "\"${TTCP_EXEC}\" ${opts} -r -p${port} > \"${outfile}\" 2> \"${errfile}\"")
+    set(${out_cmd_var} "${_receiver_cmd}")
+    file(WRITE "${_sh}"
+"#!/bin/sh
+exec ${_receiver_cmd}
+")
+    execute_process(COMMAND chmod +x "${_sh}")
+    execute_process(
+      COMMAND /bin/sh -c "\"${_sh}\" &"
+      WORKING_DIRECTORY "${CBDIR}"
+    )
+  endmacro()
+  macro(ttcp_sleep dur)
+    execute_process(COMMAND "${CMAKE_COMMAND}" -E sleep ${dur})
+  endmacro()
+endif()
+
+macro(ttcp_wait_for_receiver)
+  execute_process(COMMAND "${CMAKE_COMMAND}" -E sleep 2)
+endmacro()
+
+# ---- 1. TCP Default Test (baseline) ----
+ttcp_status("==== TCP default test (baseline) ====")
+set(RECEIVER_OUT "${DATA_OUT}")
+set(RECEIVER_ERR "${CBDIR}/ttcp_receiver.err")
+set(RECEIVER_CMD "")
+ttcp_make_and_launch_receiver("tcp" "${TTCP_PORT}" "" "${RECEIVER_OUT}" "${RECEIVER_ERR}" RECEIVER_CMD)
+ttcp_status("Receiver command: ${RECEIVER_CMD}")
+
+if(WIN32)
+  set(SENDER_CMD "type \"${DATA_IN}\" | \"${TTCP_EXEC}\" -t -p${TTCP_PORT} 127.0.0.1")
+else()
+  set(SENDER_CMD "\"${TTCP_EXEC}\" -t -p${TTCP_PORT} 127.0.0.1 < \"${DATA_IN}\"")
+endif()
+ttcp_status("Transmitter command: ${SENDER_CMD}")
+
+ttcp_sleep(3)
+ttcp_status("Launching transmitter for TCP test ...")
+if(WIN32)
+  execute_process(
+    COMMAND cmd /c "${SENDER_CMD}"
+    WORKING_DIRECTORY "${CBDIR}"
+    RESULT_VARIABLE transmit_result
+    ERROR_FILE "${CBDIR}/ttcp_transmitter.err"
+  )
+else()
+  execute_process(
+    COMMAND /bin/sh -c "${SENDER_CMD}"
+    WORKING_DIRECTORY "${CBDIR}"
+    RESULT_VARIABLE transmit_result
+    ERROR_FILE "${CBDIR}/ttcp_transmitter.err"
+  )
+endif()
+ttcp_wait_for_receiver()
+ttcp_status("Comparing output for TCP test ...")
+if(NOT EXISTS "${RECEIVER_OUT}")
+  ttcp_fatal("ttcp TCP test failed: receiver did not produce output.")
+endif()
+file(SIZE "${DATA_IN}" DATA_IN_SIZE)
+file(SIZE "${RECEIVER_OUT}" DATA_OUT_SIZE)
+if(NOT DATA_IN_SIZE EQUAL DATA_OUT_SIZE)
+  ttcp_fatal("ttcp TCP test failed: input and output sizes differ.")
+endif()
+file(READ "${DATA_IN}" DATA_IN_CONTENT HEX)
+file(READ "${RECEIVER_OUT}" DATA_OUT_CONTENT HEX)
+if(NOT DATA_IN_CONTENT STREQUAL DATA_OUT_CONTENT)
+  ttcp_fatal("ttcp TCP test failed: input and output differ.")
+endif()
+ttcp_status("TCP test passed.")
+ttcp_cleanup("${RECEIVER_OUT}" "${RECEIVER_ERR}" "${CBDIR}/ttcp_transmitter.err")
+
+# ---- 2. UDP mode test ----
+ttcp_status("==== UDP mode test ====")
+set(DATA_OUT_UDP "${CBDIR}/ttcp_test_udp_out.bin")
+set(RECEIVER_ERR_UDP "${CBDIR}/ttcp_receiver_udp.err")
+set(RECEIVER_CMD_UDP "")
+ttcp_make_and_launch_receiver("udp" "${TTCP_PORT_UDP}" "-u" "${DATA_OUT_UDP}" "${RECEIVER_ERR_UDP}" RECEIVER_CMD_UDP)
+ttcp_status("Receiver command: ${RECEIVER_CMD_UDP}")
+
+if(WIN32)
+  native_path("${TTCP_EXEC}" _ttcp_exec_win)
+  native_path("${DATA_IN}" _data_in_win)
+  set(SENDER_CMD_UDP "type \"${_data_in_win}\" | \"${_ttcp_exec_win}\" -t -p${TTCP_PORT_UDP} -u 127.0.0.1")
+else()
+  set(SENDER_CMD_UDP "\"${TTCP_EXEC}\" -t -p${TTCP_PORT_UDP} -u localhost < \"${DATA_IN}\"")
+endif()
+ttcp_status("Transmitter command: ${SENDER_CMD_UDP}")
+
+ttcp_sleep(7)
+ttcp_status("Launching transmitter for UDP test ...")
+if(WIN32)
+  file(WRITE "${CBDIR}/ttcp_udp_sender.bat"
+"@echo off
+${SENDER_CMD_UDP}
+")
+  execute_process(
+    COMMAND cmd /c ttcp_udp_sender.bat
+    WORKING_DIRECTORY "${CBDIR}"
+    RESULT_VARIABLE transmit_result_udp
+    ERROR_FILE "${CBDIR}/ttcp_transmitter_udp.err"
+  )
+else()
+  execute_process(
+    COMMAND /bin/sh -c "${SENDER_CMD_UDP}"
+    WORKING_DIRECTORY "${CBDIR}"
+    RESULT_VARIABLE transmit_result_udp
+    ERROR_FILE "${CBDIR}/ttcp_transmitter_udp.err"
+  )
+endif()
+ttcp_wait_for_receiver()
+ttcp_status("Checking output for UDP test ...")
+if(NOT EXISTS "${DATA_OUT_UDP}")
+  ttcp_fatal("UDP test failed: No output file produced.")
+endif()
+file(SIZE "${DATA_OUT_UDP}" DATA_OUT_SIZE_UDP)
+if(DATA_OUT_SIZE_UDP EQUAL 0)
+  ttcp_fatal("UDP test failed: Output file is empty (all data lost).")
+endif()
+file(SIZE "${DATA_IN}" DATA_IN_SIZE_UDP)
+if(NOT DATA_IN_SIZE_UDP EQUAL DATA_OUT_SIZE_UDP)
+  ttcp_status("WARNING: UDP test: Input size ${DATA_IN_SIZE_UDP}, output size ${DATA_OUT_SIZE_UDP} (UDP is lossy; size mismatch expected).")
+endif()
+ttcp_status("UDP test completed.")
+ttcp_cleanup("${DATA_OUT_UDP}" "${RECEIVER_ERR_UDP}" "${CBDIR}/ttcp_transmitter_udp.err" "${CBDIR}/ttcp_udp_sender.bat")
+
+# ---- 3. Buffer size test ----
+ttcp_status("==== Buffer size test ====")
+set(BUF_SIZE "512")
+set(DATA_OUT_L "${CBDIR}/ttcp_test_l_out.bin")
+set(RECEIVER_ERR_L "${CBDIR}/ttcp_receiver_l.err")
+set(RECEIVER_CMD_L "")
+ttcp_make_and_launch_receiver("l" "${TTCP_PORT_L}" "-l${BUF_SIZE}" "${DATA_OUT_L}" "${RECEIVER_ERR_L}" RECEIVER_CMD_L)
+ttcp_status("Receiver command: ${RECEIVER_CMD_L}")
+
+if(WIN32)
+  set(SENDER_CMD_L "type \"${DATA_IN}\" | \"${TTCP_EXEC}\" -t -l${BUF_SIZE} -p${TTCP_PORT_L} 127.0.0.1")
+else()
+  set(SENDER_CMD_L "\"${TTCP_EXEC}\" -t -l${BUF_SIZE} -p${TTCP_PORT_L} 127.0.0.1 < \"${DATA_IN}\"")
+endif()
+ttcp_status("Transmitter command: ${SENDER_CMD_L}")
+
+ttcp_sleep(3)
+ttcp_status("Launching transmitter for buffer size test ...")
+if(WIN32)
+  execute_process(
+    COMMAND cmd /c "${SENDER_CMD_L}"
+    WORKING_DIRECTORY "${CBDIR}"
+    RESULT_VARIABLE transmit_result_l
+    ERROR_FILE "${CBDIR}/ttcp_transmitter_l.err"
+  )
+else()
+  execute_process(
+    COMMAND /bin/sh -c "${SENDER_CMD_L}"
+    WORKING_DIRECTORY "${CBDIR}"
+    RESULT_VARIABLE transmit_result_l
+    ERROR_FILE "${CBDIR}/ttcp_transmitter_l.err"
+  )
+endif()
+ttcp_wait_for_receiver()
+ttcp_status("Comparing output for buffer size test ...")
+if(NOT EXISTS "${DATA_OUT_L}")
+  ttcp_fatal("Buffer size test failed: No output file produced.")
+endif()
+file(SIZE "${DATA_IN}" DATA_IN_SIZE_L)
+file(SIZE "${DATA_OUT_L}" DATA_OUT_SIZE_L)
+if(NOT DATA_IN_SIZE_L EQUAL DATA_OUT_SIZE_L)
+  ttcp_fatal("Buffer size test failed: Input and output file sizes differ.")
+endif()
+ttcp_status("Buffer size test passed.")
+ttcp_cleanup("${DATA_OUT_L}" "${RECEIVER_ERR_L}" "${CBDIR}/ttcp_transmitter_l.err")
+
+# ---- 4. Source mode test ----
+ttcp_status("==== Source mode test ====")
+set(DATA_OUT_SRC "${CBDIR}/ttcp_test_src_out.bin")
+set(RECEIVER_ERR_SRC "${CBDIR}/ttcp_receiver_src.err")
+set(RECEIVER_CMD_SRC "")
+ttcp_make_and_launch_receiver("src" "${TTCP_PORT_SRC}" "" "${DATA_OUT_SRC}" "${RECEIVER_ERR_SRC}" RECEIVER_CMD_SRC)
+ttcp_status("Receiver command: ${RECEIVER_CMD_SRC}")
+
+if(WIN32)
+  set(SENDER_CMD_SRC "\"${TTCP_EXEC}\" -s -t -n16 -l1024 -p${TTCP_PORT_SRC} 127.0.0.1")
+else()
+  set(SENDER_CMD_SRC "\"${TTCP_EXEC}\" -s -t -n16 -l1024 -p${TTCP_PORT_SRC} 127.0.0.1")
+endif()
+ttcp_status("Transmitter command: ${SENDER_CMD_SRC}")
+
+ttcp_sleep(3)
+ttcp_status("Launching transmitter for source mode test ...")
+if(WIN32)
+  execute_process(
+    COMMAND cmd /c "${SENDER_CMD_SRC}"
+    WORKING_DIRECTORY "${CBDIR}"
+    RESULT_VARIABLE transmit_result_src
+    ERROR_FILE "${CBDIR}/ttcp_transmitter_src.err"
+  )
+else()
+  execute_process(
+    COMMAND /bin/sh -c "${SENDER_CMD_SRC}"
+    WORKING_DIRECTORY "${CBDIR}"
+    RESULT_VARIABLE transmit_result_src
+    ERROR_FILE "${CBDIR}/ttcp_transmitter_src.err"
+  )
+endif()
+ttcp_wait_for_receiver()
+ttcp_status("Comparing output for source mode test ...")
+if(NOT EXISTS "${DATA_OUT_SRC}")
+  ttcp_fatal("Source mode test failed: No output file produced.")
+endif()
+file(SIZE "${DATA_OUT_SRC}" DATA_OUT_SIZE_SRC)
+if(NOT DATA_OUT_SIZE_SRC EQUAL 16384)
+  ttcp_fatal("Source mode test failed: Output file size not as expected (should be 16*1024=16384).")
+endif()
+ttcp_status("Source mode test passed.")
+ttcp_cleanup("${DATA_OUT_SRC}" "${RECEIVER_ERR_SRC}" "${CBDIR}/ttcp_transmitter_src.err")
+
+# ---- 5. Sink mode test ----
+ttcp_status("==== Sink mode test ====")
+set(DATA_IN_SINK "${CBDIR}/ttcp_test_sink_in.bin")
+set(RECEIVER_ERR_SINK "${CBDIR}/ttcp_receiver_sink.err")
+ttcp_status("Generating random input for sink mode test ...")
+file(WRITE "${DATA_IN_SINK}" "")
+foreach(_idx RANGE 1 64)
+  string(RANDOM LENGTH 1024 ALPHABET 0123456789abcdef _randblock)
+  file(APPEND "${DATA_IN_SINK}" "${_randblock}")
+endforeach()
+set(RECEIVER_CMD_SINK "")
+if(WIN32)
+  ttcp_make_and_launch_receiver("sink" "${TTCP_PORT_SINK}" "-s" "NUL" "${RECEIVER_ERR_SINK}" RECEIVER_CMD_SINK)
+else()
+  ttcp_make_and_launch_receiver("sink" "${TTCP_PORT_SINK}" "-s" "/dev/null" "${RECEIVER_ERR_SINK}" RECEIVER_CMD_SINK)
+endif()
+ttcp_status("Receiver command: ${RECEIVER_CMD_SINK}")
+
+if(WIN32)
+  set(SENDER_CMD_SINK "type \"${DATA_IN_SINK}\" | \"${TTCP_EXEC}\" -t -p${TTCP_PORT_SINK} 127.0.0.1")
+else()
+  set(SENDER_CMD_SINK "\"${TTCP_EXEC}\" -t -p${TTCP_PORT_SINK} 127.0.0.1 < \"${DATA_IN_SINK}\"")
+endif()
+ttcp_status("Transmitter command: ${SENDER_CMD_SINK}")
+
+ttcp_sleep(3)
+ttcp_status("Launching transmitter for sink mode test ...")
+if(WIN32)
+  execute_process(
+    COMMAND cmd /c "${SENDER_CMD_SINK}"
+    WORKING_DIRECTORY "${CBDIR}"
+    RESULT_VARIABLE transmit_result_sink
+    ERROR_FILE "${CBDIR}/ttcp_transmitter_sink.err"
+  )
+else()
+  execute_process(
+    COMMAND /bin/sh -c "${SENDER_CMD_SINK}"
+    WORKING_DIRECTORY "${CBDIR}"
+    RESULT_VARIABLE transmit_result_sink
+    ERROR_FILE "${CBDIR}/ttcp_transmitter_sink.err"
+  )
+endif()
+ttcp_wait_for_receiver()
+ttcp_status("Checking for errors in sink mode test ...")
+if(EXISTS "${RECEIVER_ERR_SINK}")
+  file(READ "${RECEIVER_ERR_SINK}" SINK_ERRS)
+  string(FIND "${SINK_ERRS}" "error" SINK_ERR_FOUND)
+  if(NOT SINK_ERR_FOUND EQUAL -1)
+    ttcp_fatal("Sink mode test failed: Error during receive.")
+  endif()
+endif()
+ttcp_status("Sink mode test passed.")
+ttcp_cleanup("${RECEIVER_ERR_SINK}" "${CBDIR}/ttcp_transmitter_sink.err" "${DATA_IN_SINK}")
+
+# ---- 6. -B block output (TAR compatibility) test ----
+ttcp_status("==== -B block output (TAR) test ====")
+set(DATA_OUT_B "${CBDIR}/ttcp_test_B_out.bin")
+set(RECEIVER_ERR_B "${CBDIR}/ttcp_receiver_B.err")
+set(RECEIVER_CMD_B "")
+ttcp_make_and_launch_receiver("B" "${TTCP_PORT_B}" "-B" "${DATA_OUT_B}" "${RECEIVER_ERR_B}" RECEIVER_CMD_B)
+ttcp_status("Receiver command: ${RECEIVER_CMD_B}")
+
+if(WIN32)
+  set(SENDER_CMD_B "type \"${DATA_IN}\" | \"${TTCP_EXEC}\" -t -p${TTCP_PORT_B} 127.0.0.1")
+else()
+  set(SENDER_CMD_B "\"${TTCP_EXEC}\" -t -p${TTCP_PORT_B} 127.0.0.1 < \"${DATA_IN}\"")
+endif()
+ttcp_status("Transmitter command: ${SENDER_CMD_B}")
+
+ttcp_sleep(3)
+ttcp_status("Launching transmitter for -B block mode test ...")
+if(WIN32)
+  execute_process(
+    COMMAND cmd /c "${SENDER_CMD_B}"
+    WORKING_DIRECTORY "${CBDIR}"
+    RESULT_VARIABLE transmit_result_B
+    ERROR_FILE "${CBDIR}/ttcp_transmitter_B.err"
+  )
+else()
+  execute_process(
+    COMMAND /bin/sh -c "${SENDER_CMD_B}"
+    WORKING_DIRECTORY "${CBDIR}"
+    RESULT_VARIABLE transmit_result_B
+    ERROR_FILE "${CBDIR}/ttcp_transmitter_B.err"
+  )
+endif()
+ttcp_wait_for_receiver()
+ttcp_status("Comparing output for -B block mode test ...")
+if(NOT EXISTS "${DATA_OUT_B}")
+  ttcp_fatal("-B block mode test failed: No output file produced.")
+endif()
+file(SIZE "${DATA_IN}" DATA_IN_SIZE_B)
+file(SIZE "${DATA_OUT_B}" DATA_OUT_SIZE_B)
+if(NOT DATA_IN_SIZE_B EQUAL DATA_OUT_SIZE_B)
+  ttcp_fatal("-B block mode test failed: Input and output file sizes differ.")
+endif()
+ttcp_status("-B block mode test passed.")
+ttcp_cleanup("${DATA_OUT_B}" "${RECEIVER_ERR_B}" "${CBDIR}/ttcp_transmitter_B.err")
+
+# ---- Final: Clean up test input files & kill scripts ----
+ttcp_status("Cleaning up test input files ...")
+ttcp_cleanup("${DATA_IN}" "${KILL_SCRIPT_SH}" "${KILL_SCRIPT_BAT}")
+
+# ---- Final evaluation ----
+if(CONTINUE_ON_FAILURE)
+  if(_TTCP_FAIL_COUNT GREATER 0)
+    ttcp_status("FAIL: Some tests failed:")
+    ttcp_status("${_TTCP_FAIL_MESSAGES}")
+    message(FATAL_ERROR "FAIL: ${_TTCP_FAIL_COUNT} tests failed. See above for details.")
+  else()
+    ttcp_status("PASS: All ttcp regression tests passed (CONTINUE_ON_FAILURE=ON).")
+  endif()
+else()
+  ttcp_status("PASS: All ttcp regression tests passed.")
+endif()
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8 cino=N-s

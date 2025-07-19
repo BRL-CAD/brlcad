@@ -1,7 +1,7 @@
 /*                          T T C P . C
  * BRL-CAD
  *
- * Published in 2004-2020 by the United States Government.
+ * Published in 2004-2025 by the United States Government.
  * This work is in the public domain.
  *
  */
@@ -25,74 +25,75 @@
  */
 #include "brlcad_config.h"
 
-#ifndef _POSIX_C_SOURCE
-#  define _POSIX_C_SOURCE 1
-#endif
-#ifndef _DEFAULT_SOURCE
-#  define _DEFAULT_SOURCE 1
-#endif
-#ifndef _XOPEN_SOURCE
-#  define  _XOPEN_SOURCE 1
-#endif
-#ifndef _BSD_SOURCE
-#  define  _BSD_SOURCE 1
-#endif
-#define BSD43
-#define SYSV
-/* #define BSD42 */
-/* #define BSD41a */
-
-#ifndef _WIN32
-#  include <unistd.h>
-#endif
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include <sys/types.h>
-#ifndef _WIN32
-#  include <sys/socket.h>
+#include <time.h>
+#include <limits.h>
+
+#ifdef HAVE_WINSOCK2_H
+#  define USE_WINSOCK
+#  include <winsock2.h>
+#  include <ws2tcpip.h>
 #endif
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#ifndef _WIN32
-#  include <sys/time.h>		/* struct timeval */
-#  include <netdb.h>
-#else
+#ifdef HAVE_WINDOWS_H
 #  include <windows.h>
 #endif
+#ifdef HAVE_SYS_SOCKET_H
+#  include <sys/socket.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+#  include <arpa/inet.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#  include <netinet/in.h>
+#endif
+#ifdef HAVE_NETDB_H
+#  include <netdb.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_RESOURCE_H
+#  include <sys/resource.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
 
-#if defined(SYSV) || defined(__HAIKU__)
-#  include <sys/times.h>
-#  include <sys/param.h>
+#if !defined(HAVE_SOCKLEN_T)
+#  ifdef USE_WINSOCK
+typedef int socklen_t;
+#  else
+typedef unsigned int socklen_t;
+#  endif
+#endif
+
+#ifdef USE_WINSOCK
+typedef SOCKET socket_t;
+#  define close_socket closesocket
+#  define READSOCKET(s, b, l) recv((s), (b), (l), 0)
+#  define WRITESOCKET(s, b, l) send((s), (b), (l), 0)
+#  define ERRNO WSAGetLastError()
 #else
-
-/* this ugly hack overcomes a c89 + -pedantic-errors bug in glibc <2.9
- * where it raises a warning for a trailing comma when including the
- * sys/resource.h system header.
- *
- * need a better solution that preserves pedantic c89 compilation,
- * ideally without resorting to a sys/resource.h compilation feature
- * test (which will vary with build flags).
- */
-#if !defined(__USE_GNU) && defined(__GLIBC__) && (__GLIBC__ == 2) && (__GLIBC_MINOR__ < 9)
-#  define __USE_GNU 1
-#  define DEFINED_USE_GNU 1
-#endif
-#include <sys/resource.h>
-#ifdef DEFINED_USE_GNU
-#  undef __USE_GNU
-#  undef DEFINED_USE_GNU
+typedef int socket_t;
+#  define close_socket close
+#  define READSOCKET(s, b, l) read((s), (b), (l))
+#  define WRITESOCKET(s, b, l) write((s), (b), (l))
+#  define ERRNO errno
 #endif
 
+#ifdef USE_WINSOCK
+#  define perror_sock(msg) \
+    fprintf(stderr, "ttcp%s: %s: WSAError=%d\n", trans?"-t":"-r", (msg), WSAGetLastError())
+#else
+#  define perror_sock(msg) perror(msg)
 #endif
-
-#if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
-extern struct hostent *gethostbyname(const char *);
-#endif
-
 
 struct sockaddr_in sinme;
 struct sockaddr_in sinhim;
@@ -112,7 +113,6 @@ int sinkmode;			/* 0=normal I/O, !0=sink/source mode */
 
 struct hostent *addr;
 
-/* Usage broken into two strings to avoid the 509 C90 'minimum' */
 char Usage[] = "\
 Usage: ttcp -t [-options] host <in\n\
 	-l##	length of bufs written to network (default 1024)\n\
@@ -144,36 +144,31 @@ double cput, realt;		/* user, real time (seconds) */
  * grouping as it is written with.  Written by Robert S. Miles, BRL.
  */
 int
-mread(int fd, char *bufp, unsigned n)
+mread(socket_t fd, char *bufp, unsigned n)
 {
     unsigned count = 0;
     int nread;
-
-    do {
-	nread = read(fd, bufp, n-count);
-	if (nread < 0) {
-	    perror("ttcp_mread");
-	    return -1;
-	}
-	if (nread == 0)
-	    return (int)count;
-	count += (unsigned)nread;
-	bufp += nread;
-    } while (count < n);
-
+    while (count < n) {
+        nread = READSOCKET(fd, bufp, n-count);
+        if (nread < 0) {
+            perror_sock("ttcp_mread");
+            return -1;
+        }
+        if (nread == 0)
+            return (int)count;
+        count += (unsigned)nread;
+        bufp += nread;
+    }
     return (int)count;
 }
-
 
 static void
 err(const char *s)
 {
     fprintf(stderr, "ttcp%s: ", trans?"-t":"-r");
-    perror(s);
-    fprintf(stderr, "errno=%d\n", errno);
+    perror_sock(s);
     exit(1);
 }
-
 
 void
 mes(const char *s)
@@ -181,506 +176,437 @@ mes(const char *s)
     fprintf(stderr, "ttcp%s: %s\n", trans?"-t":"-r", s);
 }
 
-
 void
 pattern(char *cp, int cnt)
 {
     char c;
     c = 0;
     while (cnt-- > 0) {
-	while (!isprint((c&0x7F))) c++;
-	*cp++ = (c++&0x7F);
+        while (!isprint((c&0x7F))) c++;
+        *cp++ = (c++&0x7F);
     }
 }
 
-
 /******* timing *********/
 
-#if defined(SYSV) || defined(__HAIKU__)
-/* was long instead of time_t */
-extern time_t time(time_t *);
-static time_t time0;
-static struct tms tms0;
-#else
-static struct timeval time0;	/* Time at which timing started */
-static struct rusage ru0;	/* Resource utilization at the start */
-
-static void prusage(struct rusage *r0, struct rusage *r1, struct timeval *e, struct timeval *b, char *outp);
-static void tvadd(struct timeval *tsum, struct timeval *t0, struct timeval *t1);
-static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0);
-static void psecs(long int l, char *cp);
-#endif
+#if defined(HAVE_WINSOCK2_H) && !defined(HAVE_GETTIMEOFDAY)
+static LARGE_INTEGER timer_freq, timer_start, timer_end;
+static double win_timer0 = 0.0;
+static double win_cput = 0.0;
 
 void
 prep_timer(void)
 {
-#if defined(SYSV) || defined(__HAIKU__)
-    (void)time(&time0);
-    (void)times(&tms0);
-#else
-    gettimeofday(&time0, (struct timezone *)0);
-    getrusage(RUSAGE_SELF, &ru0);
-#endif
+    QueryPerformanceFrequency(&timer_freq);
+    QueryPerformanceCounter(&timer_start);
+    win_timer0 = (double)timer_start.QuadPart / timer_freq.QuadPart;
 }
-
 
 double
 read_timer(char *str, int len)
 {
-#if defined(SYSV) || defined(__HAIKU__)
-    time_t now;
-    struct tms tmsnow;
-    char line[132] = {0};
-
-    (void)time(&now);
-    realt = now-time0;
-    (void)times(&tmsnow);
-    cput = tmsnow.tms_utime - tms0.tms_utime;
-    if (cput < 0.00001) cput = 0.01;
-    if (realt < 0.00001) realt = cput;
-    sprintf(line, "%g CPU secs in %g elapsed secs (%g%%)",
-	    cput, realt,
-	    cput/realt*100);
-    strncpy(str, line, len);
+    double end;
+    QueryPerformanceCounter(&timer_end);
+    end = (double)timer_end.QuadPart / timer_freq.QuadPart;
+    realt = end - win_timer0;
+    cput = realt; /* No per-thread/user time on Windows w/o more work */
+    sprintf(str, "%g CPU secs in %g elapsed secs (Windows)", cput, realt);
+    if ((int)strlen(str) >= len) str[len-1] = '\0';
     return cput;
-#else
-    /* BSD */
+}
+#elif defined(HAVE_GETTIMEOFDAY) && defined(HAVE_GETRUSAGE)
+static struct timeval time0;
+static struct rusage ru0;
+
+void
+prep_timer(void)
+{
+    gettimeofday(&time0, (struct timezone *)0);
+    getrusage(RUSAGE_SELF, &ru0);
+}
+
+static void
+tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
+{
+    tdiff->tv_sec = t1->tv_sec - t0->tv_sec;
+    tdiff->tv_usec = t1->tv_usec - t0->tv_usec;
+    if (tdiff->tv_usec < 0)
+        tdiff->tv_sec--, tdiff->tv_usec += 1000000;
+}
+
+static void
+prusage(struct rusage *r0, struct rusage *r1, struct timeval *e, struct timeval *b, char *outp)
+{
+    struct timeval tdiff;
+    time_t t;
+    int ms;
+    t = (r1->ru_utime.tv_sec-r0->ru_utime.tv_sec)*100+
+        (r1->ru_utime.tv_usec-r0->ru_utime.tv_usec)/10000+
+        (r1->ru_stime.tv_sec-r0->ru_stime.tv_sec)*100+
+        (r1->ru_stime.tv_usec-r0->ru_stime.tv_usec)/10000;
+    ms = (e->tv_sec-b->tv_sec)*100 + (e->tv_usec-b->tv_usec)/10000;
+    sprintf(outp, "%ld.%01ld user+sys, %d ms real",
+            (long int)tdiff.tv_sec, (long int)tdiff.tv_usec/100000L, ms*10);
+}
+
+double
+read_timer(char *str, int len)
+{
     struct timeval timedol;
     struct rusage ru1;
     struct timeval td;
-    struct timeval tend, tstart;
-    char line[132] = {0};
-
     getrusage(RUSAGE_SELF, &ru1);
     gettimeofday(&timedol, (struct timezone *)0);
-    prusage(&ru0, &ru1, &timedol, &time0, line);
-    strncpy(str, line, len);
+    prusage(&ru0, &ru1, &timedol, &time0, str);
 
     /* Get real time */
     tvsub(&td, &timedol, &time0);
     realt = td.tv_sec + ((double)td.tv_usec) / 1000000;
 
     /* Get CPU time (user+sys) */
-    tvadd(&tend, &ru1.ru_utime, &ru1.ru_stime);
-    tvadd(&tstart, &ru0.ru_utime, &ru0.ru_stime);
-    tvsub(&td, &tend, &tstart);
+    tvsub(&td, &ru1.ru_utime, &ru0.ru_utime);
     cput = td.tv_sec + ((double)td.tv_usec) / 1000000;
     if (cput < 0.00001) cput = 0.00001;
+    if ((int)strlen(str) >= len) str[len-1] = '\0';
     return cput;
-#endif
+}
+#else
+static clock_t time0;
+
+void
+prep_timer(void)
+{
+    time0 = clock();
 }
 
-
-#if !defined(SYSV) && !defined(__HAIKU__)
-static void
-prusage(struct rusage *r0,
-	struct rusage *r1,
-	struct timeval *e,
-	struct timeval *b,
-	char *outp)
+double
+read_timer(char *str, int len)
 {
-    struct timeval tdiff;
-    time_t t;
-    const char *cp;
-    int i;
-    int ms;
-
-    t = (r1->ru_utime.tv_sec-r0->ru_utime.tv_sec)*100+
-	(r1->ru_utime.tv_usec-r0->ru_utime.tv_usec)/10000+
-	(r1->ru_stime.tv_sec-r0->ru_stime.tv_sec)*100+
-	(r1->ru_stime.tv_usec-r0->ru_stime.tv_usec)/10000;
-    ms = (e->tv_sec-b->tv_sec)*100 + (e->tv_usec-b->tv_usec)/10000;
-
-#define END(x) {while (*x) x++;}
-    cp = "%Uuser %Ssys %Ereal %P %Xi+%Dd %Mmaxrss %F+%Rpf %Ccsw";
-    for (; *cp; cp++) {
-	if (*cp != '%')
-	    *outp++ = *cp;
-	else if (cp[1]) switch (*++cp) {
-
-		case 'U':
-		    tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
-		    sprintf(outp, "%ld.%01ld", (long int)tdiff.tv_sec,
-			    (long int)tdiff.tv_usec/100000L);
-		    END(outp);
-		    break;
-
-		case 'S':
-		    tvsub(&tdiff, &r1->ru_stime, &r0->ru_stime);
-		    sprintf(outp, "%ld.%01ld", (long int)tdiff.tv_sec, (long int)tdiff.tv_usec/100000L);
-		    END(outp);
-		    break;
-
-		case 'E':
-		    psecs(ms / 100, outp);
-		    END(outp);
-		    break;
-
-		case 'P':
-		    sprintf(outp, "%d%%", (int) (t*100 / ((ms ? ms : 1))));
-		    END(outp);
-		    break;
-
-		case 'W':
-		    i = r1->ru_nswap - r0->ru_nswap;
-		    sprintf(outp, "%d", i);
-		    END(outp);
-		    break;
-
-		case 'X':
-		    sprintf(outp, "%ld", t == 0 ? 0 : (long int)((r1->ru_ixrss-r0->ru_ixrss)/t));
-		    END(outp);
-		    break;
-
-		case 'D':
-		    sprintf(outp, "%ld", t == 0 ? 0 :
-			   (long int)((r1->ru_idrss+r1->ru_isrss-(r0->ru_idrss+r0->ru_isrss))/t));
-		    END(outp);
-		    break;
-
-		case 'K':
-		    sprintf(outp, "%ld", t == 0 ? 0 : (long int)(
-			    ((r1->ru_ixrss+r1->ru_isrss+r1->ru_idrss) -
-			     (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t));
-		    END(outp);
-		    break;
-
-		case 'M':
-		    sprintf(outp, "%ld", r1->ru_maxrss/2);
-		    END(outp);
-		    break;
-
-		case 'F':
-		    sprintf(outp, "%ld", r1->ru_majflt-r0->ru_majflt);
-		    END(outp);
-		    break;
-
-		case 'R':
-		    sprintf(outp, "%ld", r1->ru_minflt-r0->ru_minflt);
-		    END(outp);
-		    break;
-
-		case 'I':
-		    sprintf(outp, "%ld", r1->ru_inblock-r0->ru_inblock);
-		    END(outp);
-		    break;
-
-		case 'O':
-		    sprintf(outp, "%ld", r1->ru_oublock-r0->ru_oublock);
-		    END(outp);
-		    break;
-		case 'C':
-		    sprintf(outp, "%ld+%ld", r1->ru_nvcsw-r0->ru_nvcsw,
-			    r1->ru_nivcsw-r0->ru_nivcsw);
-		    END(outp);
-		    break;
-	    }
-    }
-    *outp = '\0';
-}
-
-
-static void
-tvadd(struct timeval *tsum, struct timeval *t0, struct timeval *t1)
-{
-
-    tsum->tv_sec = t0->tv_sec + t1->tv_sec;
-    tsum->tv_usec = t0->tv_usec + t1->tv_usec;
-    if (tsum->tv_usec > 1000000)
-	tsum->tv_sec++, tsum->tv_usec -= 1000000;
-}
-
-
-static void
-tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
-{
-
-    tdiff->tv_sec = t1->tv_sec - t0->tv_sec;
-    tdiff->tv_usec = t1->tv_usec - t0->tv_usec;
-    if (tdiff->tv_usec < 0)
-	tdiff->tv_sec--, tdiff->tv_usec += 1000000;
-}
-
-
-static void
-psecs(long l, char *cp)
-{
-    int i;
-
-    i = l / 3600;
-    if (i) {
-	sprintf(cp, "%d:", i);
-	END(cp);
-	i = l % 3600;
-	sprintf(cp, "%d%d", (i/60) / 10, (i/60) % 10);
-	END(cp);
-    } else {
-	i = l;
-	sprintf(cp, "%d", i / 60);
-	END(cp);
-    }
-    i %= 60;
-    *cp++ = ':';
-    sprintf(cp, "%d%d", i / 10, i % 10);
+    clock_t now;
+    now = clock();
+    realt = (double)(now - time0) / CLOCKS_PER_SEC;
+    cput = realt;
+    sprintf(str, "%g CPU secs in %g elapsed secs (clock)", cput, realt);
+    if ((int)strlen(str) >= len) str[len-1] = '\0';
+    return cput;
 }
 #endif
 
 int
-Nread(int fd, char *buf, int count)
+Nread(socket_t fd, char *buf, int count)
 {
     struct sockaddr_in from;
-    socklen_t len = (socklen_t)sizeof(from);
+    socklen_t len;
     int cnt;
-
+    len = (socklen_t)sizeof(from);
     if (udp) {
-	cnt = recvfrom(fd, (void *)buf, (size_t)count, 0, (struct sockaddr *)&from, &len);
+#ifdef USE_WINSOCK
+        cnt = recvfrom(fd, buf, count, 0, (struct sockaddr *)&from, &len);
+#else
+        cnt = recvfrom(fd, (void *)buf, (size_t)count, 0, (struct sockaddr *)&from, &len);
+#endif
     } else {
-	if (b_flag)
-	    cnt = mread(fd, buf, count);	/* fill buf */
-	else
-	    cnt = read(fd, buf, count);
+        if (b_flag)
+            cnt = mread(fd, buf, count);	/* fill buf */
+        else
+            cnt = READSOCKET(fd, buf, count);
     }
     return cnt;
 }
 
-
 int
 delay(int us)
 {
-    struct timeval tv;
-
-    tv.tv_sec = 0;
-    tv.tv_usec = us;
-    (void)select(1, (fd_set *)0, (fd_set *)0, (fd_set *)0, &tv);
+#if defined(HAVE_WINSOCK2_H) && defined(HAVE_WINDOWS_H)
+    Sleep(us / 1000);
+#elif defined(HAVE_SELECT)
+    {
+        struct timeval tv;
+        tv.tv_sec = 0;
+        tv.tv_usec = us;
+        (void)select(1, (fd_set *)0, (fd_set *)0, (fd_set *)0, &tv);
+    }
+#else
+    {
+        clock_t start = clock();
+        while (((clock() - start) * 1000000 / CLOCKS_PER_SEC) < us) {}
+    }
+#endif
     return 1;
 }
 
-
 int
-Nwrite(int fd, char *buf, int count)
+Nwrite(socket_t fd, char *buf, int count)
 {
     int cnt;
     errno = 0;
     if (udp) {
     again:
-	cnt = sendto(fd, (const void *)buf, (size_t) count, 0,
-		     (const struct sockaddr *)&sinhim,
-		     sizeof(sinhim));
-	if (cnt<0 && errno == ENOBUFS) {
-	    delay(18000);
-	    errno = 0;
-	    goto again;
-	}
+#ifdef USE_WINSOCK
+        cnt = sendto(fd, buf, count, 0, (const struct sockaddr *)&sinhim, sizeof(sinhim));
+        if (cnt<0 && ERRNO == WSAENOBUFS) {
+#else
+        cnt = sendto(fd, (const void *)buf, (size_t) count, 0,
+            (const struct sockaddr *)&sinhim,
+            sizeof(sinhim));
+        if (cnt<0 && ERRNO == ENOBUFS) {
+#endif
+            delay(18000);
+            errno = 0;
+            goto again;
+        }
     } else {
-	cnt = write(fd, buf, count);
+        cnt = WRITESOCKET(fd, buf, count);
     }
     return cnt;
 }
 
-
 int
 main(int argc, char **argv)
 {
-    int fd;			/* fd of network socket */
-
+    socket_t fd;			/* fd of network socket */
     char *buf;			/* ptr to dynamic buffer */
     int buflen = 1024;		/* length of buffer */
     int nbuf = 1024;		/* number of buffers to send in sinkmode */
-
     unsigned long addr_tmp;
+    int cnt;
+#ifdef USE_WINSOCK
+    WSADATA wsaData;
+#endif
+
+#ifdef USE_WINSOCK
+    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
+        fprintf(stderr, "WSAStartup failed\n");
+        exit(1);
+    }
+#endif
 
     if (argc < 2) goto usage;
 
     argv++; argc--;
     while (argc>0 && argv[0][0] == '-') {
-	switch (argv[0][1]) {
+        switch (argv[0][1]) {
 
-	    case 'B':
-		b_flag = 1;
-		break;
-	    case 't':
-		trans = 1;
-		break;
-	    case 'r':
-		trans = 0;
-		break;
-	    case 'd':
-		options |= SO_DEBUG;
-		break;
-	    case 'n':
-		nbuf = atoi(&argv[0][2]);
-		if (nbuf < 0) {
-		    printf("Negative buffer count.\n");
-		    return -1;
-		}
-		if (nbuf >= INT_MAX) {
-		    printf("Too many buffers specified.\n");
-		    return -1;
-		}
-		break;
-	    case 'l':
-		buflen = atoi(&argv[0][2]);
-		if (buflen <= 0) {
-		    printf("Invalid buffer length.\n");
-		    return -1;
-		}
-		if (buflen >= INT_MAX) {
-		    printf("Buffer length too large.\n");
-		    return -1;
-		}
-		break;
-	    case 's':
-		sinkmode = 1;	/* source or sink, really */
-		break;
-	    case 'p':
-		port = atoi(&argv[0][2]);
-		if (port < 0) {
-		    port = 0;
-		}
-		if (port > 65535) {
-		    port = 65535;
-		}
-		break;
-	    case 'u':
-		udp = 1;
-		break;
-	    default:
-		goto usage;
-	}
-	argv++; argc--;
+        case 'B':
+            b_flag = 1;
+            break;
+        case 't':
+            trans = 1;
+            break;
+        case 'r':
+            trans = 0;
+            break;
+        case 'd':
+#ifdef SO_DEBUG
+            options |= SO_DEBUG;
+#endif
+            break;
+        case 'n':
+            nbuf = atoi(&argv[0][2]);
+            if (nbuf < 0) {
+                printf("Negative buffer count.\n");
+                return -1;
+            }
+            if (nbuf >= INT_MAX) {
+                printf("Too many buffers specified.\n");
+                return -1;
+            }
+            break;
+        case 'l':
+            buflen = atoi(&argv[0][2]);
+            if (buflen <= 0) {
+                printf("Invalid buffer length.\n");
+                return -1;
+            }
+            if (buflen >= INT_MAX) {
+                printf("Buffer length too large.\n");
+                return -1;
+            }
+            break;
+        case 's':
+            sinkmode = 1;	/* source or sink, really */
+            break;
+        case 'p':
+            port = atoi(&argv[0][2]);
+            if (port < 0) {
+                port = 0;
+            }
+            if (port > 65535) {
+                port = 65535;
+            }
+            break;
+        case 'u':
+            udp = 1;
+            break;
+        default:
+            goto usage;
+        }
+        argv++; argc--;
     }
     if (trans) {
-	/* xmitr */
-	if (argc != 1) goto usage;
-	memset((char *)&sinhim, 0, sizeof(sinhim));
-	host = argv[0];
-	if (atoi(host) > 0) {
-	    /* Numeric */
-	    sinhim.sin_family = AF_INET;
-	    sinhim.sin_addr.s_addr = inet_addr(host);
-	} else {
-	    if ((addr=(struct hostent *)gethostbyname(host)) == NULL)
-		err("bad hostname");
-	    sinhim.sin_family = addr->h_addrtype;
-	    memcpy((char*)&addr_tmp, addr->h_addr_list[0], addr->h_length);
-	    sinhim.sin_addr.s_addr = addr_tmp;
-	}
-	sinhim.sin_port = htons(port);
-	sinme.sin_port = 0;		/* free choice */
+        /* xmitr */
+        if (argc != 1) goto usage;
+        memset((char *)&sinhim, 0, sizeof(sinhim));
+        host = argv[0];
+        if (atoi(host) > 0) {
+            /* Numeric */
+            sinhim.sin_family = AF_INET;
+            sinhim.sin_addr.s_addr = inet_addr(host);
+        } else {
+#if defined(HAVE_GETADDRINFO)
+            {
+                struct addrinfo hints, *res;
+                int result;
+                memset(&hints, 0, sizeof(hints));
+                hints.ai_family = AF_INET;
+                hints.ai_socktype = udp ? SOCK_DGRAM : SOCK_STREAM;
+                result = getaddrinfo(host, NULL, &hints, &res);
+                if (result != 0 || res == NULL)
+                    err("bad hostname");
+                sinhim = *(struct sockaddr_in *)res->ai_addr;
+                freeaddrinfo(res);
+            }
+#elif defined(HAVE_GETHOSTBYNAME)
+            addr = (struct hostent *)gethostbyname(host);
+            if (addr == NULL)
+                err("bad hostname");
+            sinhim.sin_family = addr->h_addrtype;
+            memcpy((char*)&addr_tmp, addr->h_addr_list[0], addr->h_length);
+            sinhim.sin_addr.s_addr = addr_tmp;
+#else
+            fprintf(stderr, "No hostname resolution available\n");
+            exit(1);
+#endif
+        }
+        sinhim.sin_port = htons(port);
+        sinme.sin_port = 0;		/* free choice */
     } else {
-	/* rcvr */
-	sinme.sin_port =  htons(port);
+        /* rcvr */
+        sinme.sin_port =  htons(port);
     }
 
-    if ((buf = (char *)malloc(buflen)) == (char *)NULL)
-	err("malloc");
+    buf = (char *)malloc(buflen);
+    if (buf == NULL)
+        err("malloc");
     fprintf(stderr, "ttcp%s: nbuf=%d, buflen=%d, port=%d\n",
-	    trans?"-t":"-r",
-	    nbuf, buflen, port);
+        trans?"-t":"-r",
+        nbuf, buflen, port);
 
-    if ((fd = socket(AF_INET, udp?SOCK_DGRAM:SOCK_STREAM, 0)) < 0)
-	err("socket");
+    fd = socket(AF_INET, udp?SOCK_DGRAM:SOCK_STREAM, 0);
+    if (fd < 0)
+        err("socket");
     mes("socket");
 
     if (bind(fd, (const struct sockaddr *)&sinme, sizeof(sinme)) < 0)
-	err("bind");
+        err("bind");
 
     if (!udp) {
-	if (trans) {
-	    /* We are the client if transmitting */
-	    if (options) {
-#ifdef BSD42
-		if (setsockopt(fd, SOL_SOCKET, options, 0, 0) < 0)
-#else /* BSD43 */
-		    if (setsockopt(fd, SOL_SOCKET, options, &one, sizeof(one)) < 0)
-#endif
-			err("setsockopt");
-	    }
-	    if (connect(fd, (const struct sockaddr *)&sinhim, sizeof(sinhim)) < 0)
-		err("connect");
-	    mes("connect");
-	} else {
-	    /* otherwise, we are the server and
-	     * should listen for the connections
-	     */
-	    listen(fd, 0);   /* allow a queue of 0 */
-	    if (options) {
-#ifdef BSD42
-		if (setsockopt(fd, SOL_SOCKET, options, 0, 0) < 0)
-#else /* BSD43 */
-		    if (setsockopt(fd, SOL_SOCKET, options, &one, sizeof(one)) < 0)
-#endif
-			err("setsockopt");
-	    }
-	    fromlen = (socklen_t)sizeof(frominet);
-	    domain = AF_INET;
-	    if ((fd=accept(fd, (struct sockaddr *)&frominet, &fromlen)) < 0)
-		err("accept");
-	    mes("accept");
-	}
+        if (trans) {
+            /* We are the client if transmitting */
+            if (options) {
+                if (setsockopt(fd, SOL_SOCKET, options, (char*)&one, sizeof(one)) < 0)
+                    err("setsockopt");
+            }
+            if (connect(fd, (const struct sockaddr *)&sinhim, sizeof(sinhim)) < 0)
+                err("connect");
+            mes("connect");
+        } else {
+            /* otherwise, we are the server and
+             * should listen for the connections
+             */
+            listen(fd, 0);   /* allow a queue of 0 */
+            if (options) {
+                if (setsockopt(fd, SOL_SOCKET, options, (char*)&one, sizeof(one)) < 0)
+                    err("setsockopt");
+            }
+            fromlen = (socklen_t)sizeof(frominet);
+            domain = AF_INET;
+            fd = accept(fd, (struct sockaddr *)&frominet, &fromlen);
+            if (fd < 0)
+                err("accept");
+            mes("accept");
+        }
     }
     prep_timer();
     errno = 0;
     if (sinkmode) {
-	int cnt;
-	if (trans) {
-	    pattern(buf, buflen);
-	    if (udp) (void)Nwrite(fd, buf, 4); /* rcvr start */
-	    while (nbuf-- && Nwrite(fd, buf, buflen) == buflen)
-		nbytes += buflen;
-	    if (udp) (void)Nwrite(fd, buf, 4); /* rcvr end */
-	} else {
-	    while ((cnt=Nread(fd, buf, buflen)) > 0) {
-		static int going = 0;
-		if (cnt <= 4) {
-		    if (going)
-			break;	/* "EOF" */
-		    going = 1;
-		    prep_timer();
-		} else
-		    nbytes += cnt;
-	    }
-	}
+        int going = 0;
+        if (trans) {
+            pattern(buf, buflen);
+            if (udp) (void)Nwrite(fd, buf, 4); /* rcvr start */
+            while (nbuf-- && Nwrite(fd, buf, buflen) == buflen)
+                nbytes += buflen;
+            if (udp) (void)Nwrite(fd, buf, 4); /* rcvr end */
+        } else {
+            while ((cnt=Nread(fd, buf, buflen)) > 0) {
+                if (cnt <= 4) {
+                    if (going)
+                        break;	/* "EOF" */
+                    going = 1;
+                    prep_timer();
+                } else
+                    nbytes += cnt;
+            }
+        }
     } else {
-	int cnt;
-	if (trans) {
-	    while ((cnt=read(0, buf, buflen)) > 0 &&
-		   Nwrite(fd, buf, cnt) == cnt)
-		nbytes += cnt;
-	} else {
-	    while ((cnt=Nread(fd, buf, buflen)) > 0 &&
-		   write(1, buf, cnt) == cnt)
-		nbytes += cnt;
-	}
+        if (trans) {
+            while (
+#if defined(USE_WINSOCK)
+                (cnt = _read(0, buf, buflen)) > 0
+#elif defined(HAVE_UNISTD_H)
+                (cnt = read(0, buf, buflen)) > 0
+#else
+                (cnt = fread(buf, 1, buflen, stdin)) > 0
+#endif
+                && Nwrite(fd, buf, cnt) == cnt)
+                nbytes += cnt;
+        } else {
+            while ((cnt=Nread(fd, buf, buflen)) > 0 &&
+#if defined(USE_WINSOCK)
+                   _write(1, buf, cnt) == cnt
+#elif defined(HAVE_UNISTD_H)
+                   write(1, buf, cnt) == cnt
+#else
+                   fwrite(buf, 1, cnt, stdout) == (size_t)cnt
+#endif
+            )
+                nbytes += cnt;
+        }
     }
     if (errno) err("IO");
     (void)read_timer(stats, sizeof(stats));
     if (udp&&trans) {
-	(void)Nwrite(fd, buf, 4); /* rcvr end */
-	(void)Nwrite(fd, buf, 4); /* rcvr end */
-	(void)Nwrite(fd, buf, 4); /* rcvr end */
-	(void)Nwrite(fd, buf, 4); /* rcvr end */
+        (void)Nwrite(fd, buf, 4); /* rcvr end */
+        (void)Nwrite(fd, buf, 4); /* rcvr end */
+        (void)Nwrite(fd, buf, 4); /* rcvr end */
+        (void)Nwrite(fd, buf, 4); /* rcvr end */
     }
     free(buf);
     fprintf(stderr, "ttcp%s: %s\n", trans?"-t":"-r", stats);
     if (cput <= 0.0) cput = 0.001;
     if (realt <= 0.0) realt = 0.001;
     fprintf(stderr, "ttcp%s: %ld bytes processed\n",
-	    trans?"-t":"-r", nbytes);
+        trans?"-t":"-r", nbytes);
     fprintf(stderr, "ttcp%s: %9g CPU sec  = %9g KB/cpu sec,  %9g Kbits/cpu sec\n",
-	    trans?"-t":"-r",
-	    cput,
-	    ((double)nbytes)/cput/1024,
-	    ((double)nbytes)*8/cput/1024);
+        trans?"-t":"-r",
+        cput,
+        ((double)nbytes)/cput/1024,
+        ((double)nbytes)*8/cput/1024);
     fprintf(stderr, "ttcp%s: %9g real sec = %9g KB/real sec, %9g Kbits/sec\n",
-	    trans?"-t":"-r",
-	    realt,
-	    ((double)nbytes)/realt/1024,
-	    ((double)nbytes)*8/realt/1024);
+        trans?"-t":"-r",
+        realt,
+        ((double)nbytes)/realt/1024,
+        ((double)nbytes)*8/realt/1024);
+#ifdef USE_WINSOCK
+    WSACleanup();
+#endif
     return 0;
 
 usage:
     fprintf(stderr, "%s%s", Usage, Usage2);
+#ifdef USE_WINSOCK
+    WSACleanup();
+#endif
     return 1;
 }
 
