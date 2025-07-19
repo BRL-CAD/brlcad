@@ -35,6 +35,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bg/spsr.h"
+#include "bg/trimesh.h"
 #include "SPSR/Reconstructors.h"
 #include "BallPivot.hpp"
 
@@ -182,7 +183,7 @@ int bg_3d_ballpivot(
 
     // Run the Ball Pivoting Algorithm (radius selection is handled inside)
     std::vector<int> face_vec;
-    int nfaces = ball_pivoting(face_vec, input_points_3d, input_normals_3d, num_input_pnts, radius);
+    int nfaces = ball_pivoting_run(face_vec, input_points_3d, input_normals_3d, num_input_pnts, radius);
 
     if (nfaces == 0) {
 	*faces = NULL;

@@ -185,7 +185,7 @@ BG_EXPORT int bg_3d_spsr(int **faces, int *num_faces, point_t **vertices, int *n
  * @param[out]  num_vertices the number of vertices in the surface.
  * @param       input_points_3d The input points
  * @param       num_input_pnts the number of points in the input set
- * @param       radius the ball radius to be used.  If radius < 0 or NEAR_ZERO, a default radius is calculated based on a fraction of the bounding sphere of the input points.
+ * @param       radius the ball radius to be used.  If radius < 0 or NEAR_ZERO, a default radius is calculated based on the point density.
  * @return 0 if successful, else error
  *
  */

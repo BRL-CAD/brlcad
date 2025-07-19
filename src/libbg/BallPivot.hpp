@@ -58,7 +58,7 @@
 #include <iostream>
 #include <sstream>
 #include <array>
-#include <nanoflann.hpp>
+#include "nanoflann.hpp"
 #include "robust_orient3d.hpp"
 extern "C" {
 #include "vmath.h"
@@ -277,8 +277,10 @@ private:
         }
     }
 
-    static bool RobustCompatible(const std::array<fastf_t, 3>& v0, const std::array<fastf_t, 3>& v1, const std::array<fastf_t, 3>& v2,
-                                const std::array<fastf_t, 3>& n0, const std::array<fastf_t, 3>& n1, const std::array<fastf_t, 3>& n2) {
+    static bool RobustCompatible(const std::array<fastf_t, 3>& v0,
+                                const std::array<fastf_t, 3>& v1,
+                                const std::array<fastf_t, 3>& v2,
+                                const std::array<fastf_t, 3>& n0) {
         fastf_t normal[3];
         FaceNormal(v0, v1, v2, normal);
         if (VDOT(normal, n0.data()) < 0) VREVERSE(normal, normal);
@@ -423,7 +425,7 @@ private:
                 if (debug_enabled()) log() << "[ExpandTriangulation] No candidate found for edge (" << e->source->idx << "," << e->target->idx << ")\n";
             }
             if (!candidate || candidate->type == BallPivotingVertex::Inner
-                || !RobustCompatible(candidate->point, e->source->point, e->target->point, candidate->normal, e->source->normal, e->target->normal)) {
+                || !RobustCompatible(candidate->point, e->source->point, e->target->point, candidate->normal)) {
                 e->type = BallPivotingEdge::Border;
                 border_edges.push_back(e);
                 continue;
@@ -499,7 +501,7 @@ private:
 
     bool TryTriangleSeed(BallPivotingVertexPtr v0, BallPivotingVertexPtr v1, BallPivotingVertexPtr v2,
                          const std::vector<int>& nb_indices, double radius, std::array<fastf_t, 3>& center) {
-        if (!RobustCompatible(v0->point, v1->point, v2->point, v0->normal, v1->normal, v2->normal)) {
+        if (!RobustCompatible(v0->point, v1->point, v2->point, v0->normal)) {
             if (debug_enabled()) log() << "[TryTriangleSeed] Triangle (" << v0->idx << "," << v1->idx << "," << v2->idx << ") orientation not compatible\n";
             return false;
         }
@@ -588,16 +590,12 @@ private:
 
 } // namespace ball_pivoting
 
-// -----------------
-// C++ Adapter block
-// -----------------
 #ifdef __cplusplus
 extern "C" {
+#endif
 
-// Adapter: Runs Ball Pivoting algorithm and produces mesh
-// - face_vec: receives triplet indices for triangles (size = 3 * nfaces)
-// Returns: number of faces (nfaces)
-inline int ball_pivoting(
+// C linkage C adapter, outside namespace
+int ball_pivoting_run(
     std::vector<int> &face_vec,
     const point_t *input_points_3d,
     const vect_t *input_normals_3d,
@@ -615,6 +613,13 @@ inline int ball_pivoting(
         normals[i][0] = input_normals_3d[i][0];
         normals[i][1] = input_normals_3d[i][1];
         normals[i][2] = input_normals_3d[i][2];
+    }
+
+    // If the user supplied radius is negative or "near zero", estimate it.
+    if (radius < 0.0 || NEAR_EQUAL(radius, 0.0, VUNITIZE_TOL)) {
+        double avg_spacing = ball_pivoting::BallPivoting::estimate_average_spacing(points);
+        // Use a typical "safety" scaling factor
+        radius = 1.5 * avg_spacing;
     }
 
     ball_pivoting::BallPivoting bp(points, normals);
@@ -635,7 +640,8 @@ inline int ball_pivoting(
     return static_cast<int>(mesh.triangles.size());
 }
 
-} // extern "C"
+#ifdef __cplusplus
+}
 #endif
 
 /*
