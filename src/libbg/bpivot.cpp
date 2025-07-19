@@ -1,37 +1,38 @@
-// Example: Ball Pivoting Surface Reconstruction on PLY Point Cloud
+// Example: Ball Pivoting Surface Reconstruction on Stanford Bunny Point Cloud
 // Usage: ./bpivot bunny.ply out.obj
 //
 // Dependencies:
-//   - Eigen
 //   - nanoflann
-//   - libigl-predicates
-//   - ball_pivoting.hpp (from previous response)
+//   - brlcad vmath.h
+//   - robust_orient3d.hpp (must support vect_t/std::array<fastf_t,3>)
+//   - BallPivot.hpp (see previous response)
 //   - TinyPLY (header-only, https://github.com/ddiakopoulos/tinyply)
-//   - Simple OBJ writer (provided inline)
 //
 // Compile example (assuming all headers in include/):
-//   g++ -std=c++17 -Iinclude -o example_bunny_ball_pivoting example_bunny_ball_pivoting.cpp
+//   g++ -std=c++17 -Iinclude -o bpivot bpivot.cpp
 
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <Eigen/Dense>
-#include "ball_pivoting.hpp"
+#include <array>
+extern "C" {
+#include "vmath.h"
+}
+#include "BallPivot.hpp"
 
-// --- Minimal TinyPLY loader ---
-#define TINYPLY_IMPLEMENTATION
+// --- Minimal TinyPLY loader (header-only) ---
 #include "tinyply.h"
 using namespace tinyply;
 
-// --- Minimal OBJ Writer ---
+// --- Minimal OBJ Writer for vmath/array ---
 void write_obj(const std::string &filename,
-               const std::vector<Eigen::Vector3d> &vertices,
-               const std::vector<Eigen::Vector3i> &triangles)
+               const std::vector<std::array<fastf_t, 3>> &vertices,
+               const std::vector<std::array<int, 3>> &triangles)
 {
     std::ofstream ofs(filename);
     if (!ofs) throw std::runtime_error("Failed to open OBJ for writing");
     for (const auto &v : vertices)
-        ofs << "v " << v.x() << " " << v.y() << " " << v.z() << "\n";
+        ofs << "v " << v[0] << " " << v[1] << " " << v[2] << "\n";
     for (const auto &t : triangles)
         ofs << "f " << (t[0] + 1) << " " << (t[1] + 1) << " " << (t[2] + 1) << "\n";
     ofs.close();
@@ -39,8 +40,8 @@ void write_obj(const std::string &filename,
 
 // --- Load Stanford Bunny PLY (vertices, normals if present) ---
 void load_ply(const std::string &filename,
-              std::vector<Eigen::Vector3d> &points,
-              std::vector<Eigen::Vector3d> &normals)
+              std::vector<std::array<fastf_t, 3>> &points,
+              std::vector<std::array<fastf_t, 3>> &normals)
 {
     std::ifstream ss(filename, std::ios::binary);
     if (!ss) throw std::runtime_error("Cannot open PLY file");
@@ -58,23 +59,30 @@ void load_ply(const std::string &filename,
     const size_t nverts = verts->count;
     points.resize(nverts);
     const float *pv = reinterpret_cast<const float *>(verts->buffer.get());
-    for (size_t i = 0; i < nverts; ++i)
-        points[i] = Eigen::Vector3d(pv[3*i], pv[3*i+1], pv[3*i+2]);
+    for (size_t i = 0; i < nverts; ++i) {
+        points[i][0] = static_cast<fastf_t>(pv[3*i]);
+        points[i][1] = static_cast<fastf_t>(pv[3*i+1]);
+        points[i][2] = static_cast<fastf_t>(pv[3*i+2]);
+    }
 
     // Read normals (if present), otherwise estimate dummy normals
     normals.resize(nverts);
     if (norms && norms->count == nverts)
     {
         const float *pn = reinterpret_cast<const float *>(norms->buffer.get());
-        for (size_t i = 0; i < nverts; ++i)
-            normals[i] = Eigen::Vector3d(pn[3*i], pn[3*i+1], pn[3*i+2]);
+        for (size_t i = 0; i < nverts; ++i) {
+            normals[i][0] = static_cast<fastf_t>(pn[3*i]);
+            normals[i][1] = static_cast<fastf_t>(pn[3*i+1]);
+            normals[i][2] = static_cast<fastf_t>(pn[3*i+2]);
+        }
     }
     else
     {
         // Dummy normals (all up)
         std::cerr << "Warning: PLY file contains no normals. Using dummy normals.\n";
-        for (size_t i = 0; i < nverts; ++i)
-            normals[i] = Eigen::Vector3d(0, 1, 0);
+        for (size_t i = 0; i < nverts; ++i) {
+            normals[i][0] = 0; normals[i][1] = 1; normals[i][2] = 0;
+        }
     }
 }
 
@@ -87,13 +95,13 @@ int main(int argc, char **argv)
     }
     std::string in_ply = argv[1], out_obj = argv[2];
 
-    std::vector<Eigen::Vector3d> points, normals;
+    std::vector<std::array<fastf_t, 3>> points, normals;
     std::cout << "Loading PLY: " << in_ply << "\n";
     load_ply(in_ply, points, normals);
 
     std::cout << "Estimating average spacing...\n";
     double avg_spacing = ball_pivoting::BallPivoting::estimate_average_spacing(points);
-    double radius = avg_spacing * 2.0; // tweak as needed
+    double radius = avg_spacing * 3.1; // tweak as needed
     std::cout << "Average spacing: " << avg_spacing << ", using radius: " << radius << "\n";
 
     std::cout << "Running ball pivoting...\n";

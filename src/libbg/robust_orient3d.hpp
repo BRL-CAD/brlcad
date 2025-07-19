@@ -34,11 +34,8 @@
  *
  * ---------------------------------------------------------------------------
  *
- * Eigen wrapper function:
- *   int robust_orient3d(const Eigen::Vector3d &a,
- *                       const Eigen::Vector3d &b,
- *                       const Eigen::Vector3d &c,
- *                       const Eigen::Vector3d &d);
+ * C array / BRL-CAD vmath wrapper function:
+ *   int robust_orient3d(const vect_t a, const vect_t b, const vect_t c, const vect_t d);
  *
  * Returns: +1 if d is above the plane (a,b,c), -1 if below, 0 if coplanar.
  */
@@ -46,7 +43,12 @@
 #pragma once
 #include <cmath>
 #include <array>
-#include <Eigen/Dense>
+#include <cstddef>
+
+// --- vmath.h compatibility ---
+extern "C" {
+#include "vmath.h"
+}
 
 namespace robust_predicate_internal {
 
@@ -120,18 +122,14 @@ T orient3d(const T* pa, const T* pb, const T* pc, const T* pd) {
 
 } // namespace robust_predicate_internal
 
-// ---- Eigen-friendly wrapper ----
-
-inline int robust_orient3d(const Eigen::Vector3d &a,
-                           const Eigen::Vector3d &b,
-                           const Eigen::Vector3d &c,
-                           const Eigen::Vector3d &d)
+// ---- BRL-CAD vmath/vect_t compatible wrapper ----
+inline int robust_orient3d(const vect_t a, const vect_t b, const vect_t c, const vect_t d)
 {
-    double pa[3] = { a[0], a[1], a[2] };
-    double pb[3] = { b[0], b[1], b[2] };
-    double pc[3] = { c[0], c[1], c[2] };
-    double pd[3] = { d[0], d[1], d[2] };
-    double val = robust_predicate_internal::orient3d<double>(pa, pb, pc, pd);
+#ifdef FASTF_IS_FLOAT
+    float val = robust_predicate_internal::orient3d<float>(a, b, c, d);
+#else
+    double val = robust_predicate_internal::orient3d<double>(a, b, c, d);
+#endif
     if (val > 0) return +1;
     if (val < 0) return -1;
     return 0;
@@ -141,10 +139,14 @@ inline int robust_orient3d(const Eigen::Vector3d &a,
 Example usage:
 
 #include "robust_orient3d.hpp"
+#include "vmath.h"
 
-Eigen::Vector3d a, b, c, d;
+vect_t a = {1,2,3}, b = {2,4,6}, c = {2,2,2}, d = {2,2,3};
 int o = robust_orient3d(a, b, c, d);
-if(o > 0) { /* d is above plane (a,b,c) *-/ }
-else if(o < 0) { /* d is below plane (a,b,c) *-/ }
-else { /* d is coplanar with (a,b,c) *-/ }
+if(o > 0) { // d is above plane (a,b,c)
+}
+else if(o < 0) { // d is below plane (a,b,c)
+}
+else { // d is coplanar with (a,b,c)
+}
 */
