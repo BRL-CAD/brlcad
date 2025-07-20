@@ -254,7 +254,7 @@ cache_get_read_txn(struct bu_cache *c, struct bu_cache_txn **t)
 size_t
 bu_cache_get(void **data, const char *key, struct bu_cache *c, struct bu_cache_txn **t)
 {
-    if (!c || !key)
+    if (!c || !key || !strlen(key))
 	return 0;
 
     int mkeysize = (mdb_env_get_maxkeysize(c->i->env) < BU_CACHE_KEY_MAXLEN) ? mdb_env_get_maxkeysize(c->i->env) : BU_CACHE_KEY_MAXLEN;
@@ -290,9 +290,11 @@ bu_cache_get(void **data, const char *key, struct bu_cache *c, struct bu_cache_t
 	// We're not persisting the transaction token - copy the data
 	// before we finish up
 	size_t mdatasize = mdb_data[0].mv_size;
-	void *dcpy = bu_malloc(mdatasize, "data copy");
-	memcpy(dcpy, mdb_data[0].mv_data, mdatasize);
-	(*data) = dcpy;
+	if (mdatasize) {
+	    void *dcpy = bu_malloc(mdatasize, "data copy");
+	    memcpy(dcpy, mdb_data[0].mv_data, mdatasize);
+	    (*data) = dcpy;
+	}
 
 	// Finalize and return
 	mdb_txn_abort(txn);
@@ -321,7 +323,7 @@ bu_cache_get_done(struct bu_cache_txn **t)
 size_t
 bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
 {
-    if (!data || !key || !c)
+    if (!data || !key || !c || !strlen(key))
 	return 0;
 
     int rc = 0;
