@@ -47,6 +47,22 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 
+static size_t
+os_page_size()
+{
+#if defined(HAVE_WINDOWS_H)
+    SYSTEM_INFO si;
+    GetSystemInfo(&si);
+    return (size_t)si.dwPageSize;
+#elif defined(HAVE_SYSCONF_AVPHYS)
+    long sz = sysconf(_SC_PAGESIZE);
+    if (sz <= 0) sz = 4096; // fallback
+    return (size_t)sz;
+#else
+    return 4096; // fallback
+#endif
+}
+
 struct bu_cache_impl {
     MDB_env *env;
     MDB_dbi dbi;
@@ -56,6 +72,7 @@ struct bu_cache_impl {
 struct bu_cache *
 bu_cache_open(const char *cache_db, int create, size_t max_cache_size)
 {
+    size_t page_size;
     size_t msize;
 
     if (!cache_db)
@@ -123,10 +140,9 @@ bu_cache_open(const char *cache_db, int create, size_t max_cache_size)
     if (mdb_env_set_maxreaders(c->i->env, mreaders))
 	goto bu_context_close_fail;
 
-    // mapsize is supposed to be a multiple of the OS page size - assuming
-    // 4096 bytes for now, but maybe should add some code to actually
-    // get the active page size...
-    msize = (max_cache_size) ? (max_cache_size / 4096) * 4096 : BU_CACHE_DEFAULT_DB_SIZE;
+    // mapsize is supposed to be a multiple of the OS page size
+    page_size = os_page_size();
+    msize = (max_cache_size) ? (max_cache_size / page_size) * page_size : BU_CACHE_DEFAULT_DB_SIZE;
     if (mdb_env_set_mapsize(c->i->env, msize))
 	goto bu_context_close_fail;
 
