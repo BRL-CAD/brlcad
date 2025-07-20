@@ -111,8 +111,8 @@ BU_EXPORT void bu_cache_erase(const char *cache_db);
  * Returns the size of the retrieved data. If t is non-NULL and empty, a
  * transaction token is returned that can be reused in subsequent calls.
  * If it is non-NULL and non-empty, bu_cache_get treats *t as the current
- * transaction.  To finalize a transaction after multiple get calls, use
- * bu_cache_get_done.
+ * transaction.  Note that when reusing a txn, the caller MUST call
+ * bu_cache_get_done to finalize a transaction.
  *
  * If t is NULL, the data returned in data must be freed by the caller.
  */
