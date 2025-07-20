@@ -324,6 +324,7 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
     if (!data || !key || !c)
 	return 0;
 
+    int rc = 0;
     int mkeysize = mdb_env_get_maxkeysize(c->i->env);
     if (mkeysize <= 0 || strlen(key) > (size_t)mkeysize)
 	return 0;
@@ -347,8 +348,9 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
     mdb_data[0].mv_data = data;
     mdb_data[1].mv_size = 0;
     mdb_data[1].mv_data = NULL;
-    int rc = mdb_put(txn, c->i->dbi, &mdb_key, mdb_data, 0);
-    rc += mdb_txn_commit(txn);
+    // Use logical OR to collect errors
+    rc |= mdb_put(txn, c->i->dbi, &mdb_key, mdb_data, 0);
+    rc |= mdb_txn_commit(txn);
     txn = NULL;
     mdb_env_sync(c->i->env, 0);
     // If we were unsuccessful, return 0;
