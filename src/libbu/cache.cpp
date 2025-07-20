@@ -145,7 +145,9 @@ bu_cache_open(const char *cache_db, int create, size_t max_cache_size)
 	mdb_txn_abort(txn);
 	goto bu_context_close_fail;
     }
-    mdb_txn_commit(txn);
+    if (mdb_txn_commit(txn)) {
+	goto bu_context_close_fail;
+    }
 
     // Success - return the context
     return c;
@@ -321,7 +323,7 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
     mdb_data[1].mv_size = 0;
     mdb_data[1].mv_data = NULL;
     int rc = mdb_put(txn, c->i->dbi, &mdb_key, mdb_data, 0);
-    mdb_txn_commit(txn);
+    rc += mdb_txn_commit(txn);
     txn = NULL;
     mdb_env_sync(c->i->env, 0);
     // If we were unsuccessful, return 0;
@@ -366,7 +368,9 @@ bu_cache_clear(const char *key, struct bu_cache *c)
     mdb_key.mv_size = (strlen(key)+1)*sizeof(char);
     mdb_key.mv_data = (void *)key;
     mdb_del(txn, c->i->dbi, &mdb_key, NULL);
-    mdb_txn_commit(txn);
+    int rc = mdb_txn_commit(txn);
+    if (rc && rc != MDB_NOTFOUND)
+	bu_log("Clear operation for %s failed\n", key);
     mdb_env_sync(c->i->env, 0);
 }
 
