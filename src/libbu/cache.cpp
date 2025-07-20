@@ -50,7 +50,6 @@
 struct bu_cache_impl {
     MDB_env *env;
     MDB_dbi dbi;
-    MDB_dbi write_dbi;
     struct bu_vls *fname;
 };
 
@@ -135,6 +134,19 @@ bu_cache_open(const char *cache_db, int create, size_t max_cache_size)
     if (mdb_env_open(c->i->env, cdb, MDB_NOSYNC, 0664))
 	goto bu_context_close_fail;
 
+    // Do the initial dbi setup.  Opening with a write transaction
+    // so we can create a non-existent database and get the proper
+    // setup for writes (which is supported by the libbu API calls.)
+    MDB_txn *txn;
+    if (mdb_txn_begin(c->i->env, NULL, 0, &txn) != 0) // begin write txn
+	goto bu_context_close_fail;
+    if (mdb_dbi_open(txn, NULL, 0, &c->i->dbi) != 0) // open unnamed db
+    {
+	mdb_txn_abort(txn);
+	goto bu_context_close_fail;
+    }
+    mdb_txn_commit(txn);
+
     // Success - return the context
     return c;
 
@@ -157,7 +169,6 @@ bu_cache_close(struct bu_cache *c)
     // Do a sync to make sure everything is on disk
     mdb_env_sync(c->i->env, 1);
 
-    mdb_dbi_close(c->i->env, c->i->write_dbi);
     mdb_dbi_close(c->i->env, c->i->dbi);
     mdb_env_close(c->i->env);
     bu_vls_free(c->i->fname);
@@ -219,7 +230,6 @@ cache_get_read_txn(struct bu_cache *c, struct bu_cache_txn **t)
     if (t)
 	*t = (struct bu_cache_txn *)txn;
 
-    mdb_dbi_open(txn, NULL, 0, &c->i->dbi);
     return txn;
 }
 
@@ -304,14 +314,13 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	tret = mdb_txn_begin(c->i->env, NULL, 0, &txn);
     }
-    mdb_dbi_open(txn, NULL, 0, &c->i->write_dbi);
     mdb_key.mv_size = (strlen(key)+1)*sizeof(char);
     mdb_key.mv_data = (void *)key;
     mdb_data[0].mv_size = dsize;
     mdb_data[0].mv_data = data;
     mdb_data[1].mv_size = 0;
     mdb_data[1].mv_data = NULL;
-    int rc = mdb_put(txn, c->i->write_dbi, &mdb_key, mdb_data, 0);
+    int rc = mdb_put(txn, c->i->dbi, &mdb_key, mdb_data, 0);
     mdb_txn_commit(txn);
     txn = NULL;
     mdb_env_sync(c->i->env, 0);
@@ -323,7 +332,7 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
     txn = cache_get_read_txn(c, NULL);
     if (!txn)
 	return 0;
-    rc = mdb_get(txn, c->i->write_dbi, &mdb_key, &mdb_data[0]);
+    rc = mdb_get(txn, c->i->dbi, &mdb_key, &mdb_data[0]);
     if (rc) {
 	mdb_txn_abort(txn);
 	return 0;
@@ -354,10 +363,9 @@ bu_cache_clear(const char *key, struct bu_cache *c)
 
     MDB_txn *txn;
     mdb_txn_begin(c->i->env, NULL, 0, &txn);
-    mdb_dbi_open(txn, NULL, 0, &c->i->write_dbi);
     mdb_key.mv_size = (strlen(key)+1)*sizeof(char);
     mdb_key.mv_data = (void *)key;
-    mdb_del(txn, c->i->write_dbi, &mdb_key, NULL);
+    mdb_del(txn, c->i->dbi, &mdb_key, NULL);
     mdb_txn_commit(txn);
     mdb_env_sync(c->i->env, 0);
 }
