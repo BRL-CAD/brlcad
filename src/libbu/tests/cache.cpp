@@ -36,6 +36,8 @@
 
 #define PRINT_LIMIT 10
 
+//---------------------- Section: Key Printing Utility ----------------------
+
 void
 print_keys(struct bu_cache *c, int kcnt_expected, int item_cnt)
 {
@@ -89,7 +91,6 @@ print_keys(struct bu_cache *c, int kcnt_expected, int item_cnt)
     }
     bu_cache_get_done(&txn);
 
-
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     bu_log("Read %d values using bu_cache_keys list in %g seconds.\n", kcnt, seconds);
@@ -98,10 +99,12 @@ print_keys(struct bu_cache *c, int kcnt_expected, int item_cnt)
     bu_argv_free(kcnt, keys);
 }
 
+//------------------------ Section: Basic/Common Tests ----------------------
 
-void
+int
 basic_test(int item_cnt)
 {
+    int ret = 0;
     int64_t start, elapsed;
     fastf_t seconds;
 
@@ -128,8 +131,10 @@ basic_test(int item_cnt)
 	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "int:%d", i);
 	int ival = i;
 	size_t written = bu_cache_write((char *)&ival, sizeof(int), keystr, c);
-	if (written != sizeof(int))
-	    bu_exit(1, "Failed to write int %d\n", i);
+	if (written != sizeof(int)) {
+	    bu_log("Failed to write int %d\n", i);
+	    ret = 1;
+	}
     }
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
@@ -142,12 +147,16 @@ basic_test(int item_cnt)
 	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "int:%d", i);
 	void *rdata = NULL;
 	size_t rsize = bu_cache_get(&rdata, keystr, c, &txn);
-	if (rsize != sizeof(int))
-	    bu_exit(1, "Failed to read int:%d - expected to read %zd bytes but read %zd\n", i, sizeof(int), rsize);
+	if (rsize != sizeof(int)) {
+	    bu_log("Failed to read int:%d - expected to read %zd bytes but read %zd\n", i, sizeof(int), rsize);
+	    ret = 1;
+	}
 	int rval = 0;
 	memcpy(&rval, rdata, sizeof(rval));
-	if (rval != i)
-	    bu_exit(1, "Failed read from int:%d key was %d, expected %d\n", i, rval, i);
+	if (rval != i) {
+	    bu_log("Failed read from int:%d key was %d, expected %d\n", i, rval, i);
+	    ret = 1;
+	}
     }
     bu_cache_get_done(&txn);
     elapsed = bu_gettime() - start;
@@ -157,7 +166,7 @@ basic_test(int item_cnt)
     kcnt_expected = item_cnt;
     print_keys(c, kcnt_expected, item_cnt);
 
-   // Test writing DBL
+    // Test writing DBL
     double dblseed = M_PI;
     start = bu_gettime();
     for (int i = 0; i < item_cnt; i++) {
@@ -166,8 +175,10 @@ basic_test(int item_cnt)
 	if (item_cnt <= PRINT_LIMIT)
 	    bu_log("Assigning %g to key %s\n", dval, keystr);
 	size_t written = bu_cache_write((char *)&dval, sizeof(double), keystr, c);
-	if (written != sizeof(double))
-	    bu_exit(1, "Failed to write double %d:%g\n", i, dval);
+	if (written != sizeof(double)) {
+	    bu_log("Failed to write double %d:%g\n", i, dval);
+	    ret = 1;
+	}
     }
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
@@ -179,12 +190,16 @@ basic_test(int item_cnt)
 	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "dbl:%d", i);
 	void *rdata = NULL;
 	size_t rsize = bu_cache_get(&rdata, keystr, c, &txn);
-	if (rsize != sizeof(double))
-	    bu_exit(1, "Failed to read dbl:%d - expected to read %zd bytes but read %zd\n", i, sizeof(double), rsize);
+	if (rsize != sizeof(double)) {
+	    bu_log("Failed to read dbl:%d - expected to read %zd bytes but read %zd\n", i, sizeof(double), rsize);
+	    ret = 1;
+	}
 	double rval = 0;
 	memcpy(&rval, rdata, sizeof(double));
-	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF))
-	    bu_exit(1, "Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
+	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF)) {
+	    bu_log("Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
+	    ret = 1;
+	}
     }
     bu_cache_get_done(&txn);
     elapsed = bu_gettime() - start;
@@ -206,7 +221,6 @@ basic_test(int item_cnt)
     seconds = elapsed / 1000000.0;
     bu_log("Removal of dbl: keys in %d-%d range completed in %g seconds.\n", rr_s, rr_e, seconds);
 
-
     // Test reading post remove - we should be able to get every value that wasn't
     // removed, and shouldn't be able to get anything that WAS removed
     start = bu_gettime();
@@ -218,13 +232,16 @@ basic_test(int item_cnt)
 	if (rsize != sizeof(double)) {
 	    if (i >= rr_s && i < rr_e)
 		continue;
-	    bu_exit(1, "Failed to read non-removed value dbl:%d\n", i);
+	    bu_log("Failed to read non-removed value dbl:%d\n", i);
+	    ret = 1;
 	}
 	rcnt++;
 	double rval = 0;
 	memcpy(&rval, rdata, sizeof(double));
-	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF))
-	    bu_exit(1, "Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
+	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF)) {
+	    bu_log("Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
+	    ret = 1;
+	}
     }
     bu_cache_get_done(&txn);
     elapsed = bu_gettime() - start;
@@ -244,18 +261,28 @@ basic_test(int item_cnt)
     print_keys(c, kcnt_expected, item_cnt);
     bu_cache_close(c);
 
-    if (!bu_file_exists(cache_file, NULL))
-	bu_exit(1, "Cache file %s not found\n", cache_file);
+    if (!bu_file_exists(cache_file, NULL)) {
+	bu_log("Cache file %s not found\n", cache_file);
+	ret = 1;
+    }
 
     bu_cache_erase(cfile);
 
-    if (bu_file_exists(cache_file, NULL))
-	bu_exit(1, "Cache file %s not erased\n", cache_file);
+    if (bu_file_exists(cache_file, NULL)) {
+	bu_log("Cache file %s not erased\n", cache_file);
+	ret = 1;
+    }
+
+    bu_log("Basic functionality test %s\n", ret ? "[FAIL]" : "[PASS]");
+    return ret;
 }
 
-void
+//------------------------ Section: Limit/Out-of-space Tests ----------------
+
+int
 limit_test()
 {
+    int ret = 0;
     int item_cnt;
     unsigned long pgsize = 4096;
     unsigned long fsize = 5e6/pgsize;
@@ -278,7 +305,8 @@ limit_test()
 	size_t written = bu_cache_write((char *)&ival, sizeof(int), bu_vls_cstr(&keystr), c);
 	if (written != sizeof(int)) {
 	    bu_vls_free(&keystr);
-	    bu_exit(1, "FAIL: Unexpected - failed to write int %d\n", i);
+	    bu_log("FAIL: Unexpected - failed to write int %d\n", i);
+	    ret = 1;
 	}
     }
 
@@ -298,10 +326,10 @@ limit_test()
 	}
     }
 
-    if (failed == -1)
-	bu_exit(1, "FAIL: Expected failure not observed\n");
-
-    if (failed != expected_failed) {
+    if (failed == -1) {
+	bu_log("FAIL: Expected failure not observed\n");
+	ret = 1;
+    } else if (failed != expected_failed) {
 	bu_log("Warning - expected fail at %d, but observed failure was at %d\n", expected_failed, failed);
     } else {
 	bu_log("Expected failure at %d observed\n", expected_failed);
@@ -315,13 +343,15 @@ limit_test()
 	size_t rsize = bu_cache_get(&rdata, bu_vls_cstr(&keystr), c, &txn);
 	if (rsize != sizeof(double)) {
 	    bu_vls_free(&keystr);
-	    bu_exit(1, "Failed to read dbl:%d - expected to read %zd bytes but read %zd\n", i, sizeof(double), rsize);
+	    bu_log("Failed to read dbl:%d - expected to read %zd bytes but read %zd\n", i, sizeof(double), rsize);
+	    ret = 1;
 	}
 	double rval = 0;
 	memcpy(&rval, rdata, sizeof(double));
 	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF)) {
 	    bu_vls_free(&keystr);
-	    bu_exit(1, "Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
+	    bu_log("Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
+	    ret = 1;
 	}
     }
     bu_cache_get_done(&txn);
@@ -333,12 +363,13 @@ limit_test()
     // Before proceeding, see if the file size jibes with the limit
     char cache_file[MAXPATHLEN] = {0};
     bu_dir(cache_file, MAXPATHLEN, BU_DIR_CACHE, cfile, "data.mdb", NULL);
-    if (!bu_file_exists(cache_file, NULL))
-	bu_exit(1, "Cache data file %s not found\n", cache_file);
+    if (!bu_file_exists(cache_file, NULL)) {
+	bu_log("Cache data file %s not found\n", cache_file);
+	ret = 1;
+    }
     int dfsize = bu_file_size(cache_file);
     unsigned long fdelta = std::abs((long)((long)dfsize - (long)fsize));
     bu_log("Cache data file %s:\nApproximate expected size (bytes): %d\nObserved size(bytes):%lu\nDelta (bytes):%lu\n", cache_file, dfsize, fsize, fdelta);
-
 
     // Reopen the cache with a larger size and confirm we can add the
     // remainder of the values.
@@ -352,8 +383,10 @@ limit_test()
 	bu_vls_sprintf(&keystr, "dbl:%d", i);
 	double dval = i*dblseed;
 	size_t written = bu_cache_write((char *)&dval, sizeof(double), bu_vls_cstr(&keystr), c);
-	if (written != sizeof(double))
-	    bu_exit(1, "Failed to assign %s value %g\n", bu_vls_cstr(&keystr), dval);
+	if (written != sizeof(double)) {
+	    bu_log("Failed to assign %s value %g\n", bu_vls_cstr(&keystr), dval);
+	    ret = 1;
+	}
     }
     bu_log("Remaining DBL values added\n");
 
@@ -365,29 +398,39 @@ limit_test()
 	size_t rsize = bu_cache_get(&rdata, bu_vls_cstr(&keystr), c, &txn);
 	if (rsize != sizeof(double)) {
 	    bu_vls_free(&keystr);
-	    bu_exit(1, "Failed to read dbl:%d - expected to read %zd bytes but read %zd\n", i, sizeof(double), rsize);
+	    bu_log("Failed to read dbl:%d - expected to read %zd bytes but read %zd\n", i, sizeof(double), rsize);
+	    ret = 1;
 	}
 	double rval = 0;
 	memcpy(&rval, rdata, sizeof(double));
 	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF)) {
 	    bu_vls_free(&keystr);
-	    bu_exit(1, "Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
+	    bu_log("Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
+	    ret = 1;
 	}
     }
     bu_cache_get_done(&txn);
     bu_log("All DBL values (old and newly added) successfully read\n");
     bu_cache_close(c);
 
-
     bu_dir(cache_file, MAXPATHLEN, BU_DIR_CACHE, cfile, NULL);
-    if (!bu_file_exists(cache_file, NULL))
-	bu_exit(1, "Cache file %s not found\n", cache_file);
+    if (!bu_file_exists(cache_file, NULL)) {
+	bu_log("Cache file %s not found\n", cache_file);
+	ret = 1;
+    }
 
     bu_cache_erase(cfile);
 
-    if (bu_file_exists(cache_file, NULL))
-	bu_exit(1, "Cache file %s not erased\n", cache_file);
+    if (bu_file_exists(cache_file, NULL)) {
+	bu_log("Cache file %s not erased\n", cache_file);
+	ret = 1;
+    }
+
+    bu_log("Limit/size test %s\n", ret ? "[FAIL]" : "[PASS]");
+    return ret;
 }
+
+//------------------------ Section: Threading/Concurrency Tests -------------
 
 void
 val_incr(struct bu_cache *c, int item_cnt)
@@ -461,7 +504,7 @@ val_read(struct bu_cache *c, int item_cnt, std::map<int, int> &ctrl)
 	bu_cache_get_done(&txn);
 
 	if (ctrl[i] != rval)
-	    bu_exit(1, "%d - failed to read correct int value - expected to read %zd bytes but read %zd\n", i, sizeof(int), rsize);
+	    bu_exit(1, "%d - failed to read correct int value - expected to read %zd bytes but read %zd\n", i, sizeof(  int), rsize);
 
 	//std::cout << "thread " << std::this_thread::get_id() << " :" << i << "->" << rval << "\n";
     }
@@ -469,15 +512,14 @@ val_read(struct bu_cache *c, int item_cnt, std::map<int, int> &ctrl)
     std::cout << "thread " << std::this_thread::get_id() << " complete\n";
 }
 
-
-static void
+int
 threading_test()
 {
+    int ret = 0;
     int64_t start, elapsed;
     fastf_t seconds;
 
     const char *cfile = "thread_cache";
-
     char cache_file[MAXPATHLEN] = {0};
     bu_dir(cache_file, MAXPATHLEN, BU_DIR_CACHE, cfile, NULL);
 
@@ -510,7 +552,6 @@ threading_test()
     seconds = elapsed / 1000000.0;
     bu_log("Multi-threaded write test completed - wrote %d INTs from %d threads in %g seconds.\n", item_cnt, tcnt, seconds);
 
-
     // Read the values from a single thread as a control
     start = bu_gettime();
     std::map<int, int> ivals;
@@ -520,8 +561,10 @@ threading_test()
 	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "int:%d", i);
 	void *rdata = NULL;
 	size_t rsize = bu_cache_get(&rdata, keystr, c, &txn);
-	if (rsize != sizeof(int))
-	    bu_exit(1, "Failed to read int:%d - expected to read %zd bytes but read %zd\n", i, sizeof(int), rsize);
+	if (rsize != sizeof(int)) {
+	    bu_log("Failed to read int:%d - expected to read %zd bytes but read %zd\n", i, sizeof(int), rsize);
+	    ret = 1;
+	}
 	int rval = 0;
 	memcpy(&rval, rdata, sizeof(rval));
 	ivals[i] = rval;
@@ -535,7 +578,6 @@ threading_test()
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     bu_log("Single threaded read test completed - read %d INTs in %g seconds.\n", item_cnt, seconds);
-
 
     // Test reading from multiple threads
     std::vector<std::thread> rthreads;
@@ -555,18 +597,26 @@ threading_test()
 
     bu_cache_close(c);
 
-    if (!bu_file_exists(cache_file, NULL))
-	bu_exit(1, "Cache file %s not found\n", cache_file);
+    if (!bu_file_exists(cache_file, NULL)) {
+	bu_log("Cache file %s not found\n", cache_file);
+	ret = 1;
+    }
 
     bu_cache_erase(cfile);
 
-    if (bu_file_exists(cache_file, NULL))
-	bu_exit(1, "Cache file %s not erased\n", cache_file);
+    if (bu_file_exists(cache_file, NULL)) {
+	bu_log("Cache file %s not erased\n", cache_file);
+	ret = 1;
+    }
+
+    bu_log("Threading/concurrency test %s\n", ret ? "[FAIL]" : "[PASS]");
+    return ret;
 }
 
-// STRESS TESTS
+//------------------------ Section: Stress Tests ----------------------------
 
-void stress_long_key_test(struct bu_cache *c) {
+int stress_long_key_test(struct bu_cache *c) {
+    int ret = 0;
     char longkey[BU_CACHE_KEY_MAXLEN + 2];
     char val[] = "testval";
 
@@ -574,71 +624,95 @@ void stress_long_key_test(struct bu_cache *c) {
     memset(longkey, 'A', BU_CACHE_KEY_MAXLEN - 1);
     longkey[BU_CACHE_KEY_MAXLEN - 1] = '\0';
     size_t written = bu_cache_write(val, sizeof(val), longkey, c);
-    if (written != sizeof(val))
-        bu_exit(1, "Failed to write max-length key\n");
+    if (written != sizeof(val)) {
+	bu_log("Failed to write max-length key\n");
+	ret = 1;
+    }
 
     // 2. Key just below max
     memset(longkey, 'B', BU_CACHE_KEY_MAXLEN - 2);
     longkey[BU_CACHE_KEY_MAXLEN - 2] = '\0';
     written = bu_cache_write(val, sizeof(val), longkey, c);
-    if (written != sizeof(val))
-        bu_exit(1, "Failed to write (max-1)-length key\n");
+    if (written != sizeof(val)) {
+	bu_log("Failed to write (max-1)-length key\n");
+	ret = 1;
+    }
 
     // 3. Key just above max (should fail)
     memset(longkey, 'C', BU_CACHE_KEY_MAXLEN);
     longkey[BU_CACHE_KEY_MAXLEN] = '\0';
     written = bu_cache_write(val, sizeof(val), longkey, c);
-    if (written != 0)
-        bu_exit(1, "Should have failed to write (max+1)-length key, but did not\n");
+    if (written != 0) {
+	bu_log("Should have failed to write (max+1)-length key, but did not\n");
+	ret = 1;
+    }
 
-    bu_log("Long key test (BU_CACHE_KEY_MAXLEN) passed.\n");
+    bu_log("Long key test (BU_CACHE_KEY_MAXLEN) %s\n", ret ? "[FAIL]" : "[PASS]");
+    return ret;
 }
 
-void stress_large_value_test(struct bu_cache *c) {
+int stress_large_value_test(struct bu_cache *c) {
+    int ret = 0;
     size_t bigsize = 1024 * 1024; // 1MB
     std::vector<char> bigval(bigsize, '@');
     const char *key = "bigvalue";
     size_t written = bu_cache_write(bigval.data(), bigsize, key, c);
-    if (written != bigsize)
-        bu_exit(1, "Failed to write large value\n");
+    if (written != bigsize) {
+	bu_log("Failed to write large value\n");
+	ret = 1;
+    }
 
     void *rdata = nullptr;
     size_t rsize = bu_cache_get(&rdata, key, c, NULL);
-    if (rsize != bigsize)
-        bu_exit(1, "Failed to read back large value\n");
+    if (rsize != bigsize) {
+	bu_log("Failed to read back large value\n");
+	ret = 1;
+    }
     bu_free(rdata, "free big value");
-    bu_log("Large value test passed.\n");
+    bu_log("Large value test %s\n", ret ? "[FAIL]" : "[PASS]");
+    return ret;
 }
 
-void stress_unicode_key_value_test(struct bu_cache *c) {
+int stress_unicode_key_value_test(struct bu_cache *c) {
+    int ret = 0;
     // Use Japanese UTF-8 string literals for key and value
     const char *key = u8"鍵"; // "key" in Japanese
     const char *val = u8"値"; // "value" in Japanese
     size_t written = bu_cache_write((void *)val, strlen(val) + 1, key, c);
-    if (written != strlen(val) + 1)
-        bu_exit(1, "Failed to write unicode key/value\n");
+    if (written != strlen(val) + 1) {
+	bu_log("Failed to write unicode key/value\n");
+	ret = 1;
+    }
     void *rdata = nullptr;
     size_t rsize = bu_cache_get(&rdata, key, c, NULL);
-    if (rsize != strlen(val) + 1)
-        bu_exit(1, "Failed to read back unicode value\n");
-    bu_log("Unicode key/value test passed.\n");
+    if (rsize != strlen(val) + 1) {
+	bu_log("Failed to read back unicode value\n");
+	ret = 1;
+    }
+    bu_log("Unicode key/value test %s\n", ret ? "[FAIL]" : "[PASS]");
     bu_free(rdata, "free unicode value");
+    return ret;
 }
 
-void mass_small_values_test(struct bu_cache *c) {
+int mass_small_values_test(struct bu_cache *c) {
+    int ret = 0;
     const int N = 10000;
     char key[32];
     int val = 12345;
     for (int i = 0; i < N; ++i) {
         snprintf(key, sizeof(key), "k%d", i);
         size_t written = bu_cache_write(&val, sizeof(val), key, c);
-        if (written != sizeof(val))
-            bu_exit(1, "Failed to write small value %d\n", i);
+        if (written != sizeof(val)) {
+            bu_log("Failed to write small value %d\n", i);
+            ret = 1;
+        }
     }
-    bu_log("Mass small value test passed.\n");
+    bu_log("Mass small value test %s\n", ret ? "[FAIL]" : "[PASS]");
+    return ret;
 }
 
-void mass_large_values_test(struct bu_cache *c) {
+int mass_large_values_test(struct bu_cache *c) {
+    int ret = 0;
     const int N = 100;
     size_t bigsize = 256 * 1024; // 256 KB
     std::vector<char> bigval(bigsize, '#');
@@ -646,23 +720,199 @@ void mass_large_values_test(struct bu_cache *c) {
     for (int i = 0; i < N; ++i) {
         snprintf(key, sizeof(key), "bigk%d", i);
         size_t written = bu_cache_write(bigval.data(), bigsize, key, c);
-        if (written != bigsize)
-            bu_exit(1, "Failed to write large value %d\n", i);
+        if (written != bigsize) {
+            bu_log("Failed to write large value %d\n", i);
+            ret = 1;
+        }
     }
-    bu_log("Mass large value test passed.\n");
+    bu_log("Mass large value test %s\n", ret ? "[FAIL]" : "[PASS]");
+    return ret;
 }
 
-void stress_tests()
+int stress_tests()
 {
+    int ret = 0;
     struct bu_cache *c = bu_cache_open("stress_cache", 1, 0);
-    stress_long_key_test(c);
-    stress_large_value_test(c);
-    stress_unicode_key_value_test(c);
-    mass_small_values_test(c);
-    mass_large_values_test(c);
+    ret |= stress_long_key_test(c);
+    ret |= stress_large_value_test(c);
+    ret |= stress_unicode_key_value_test(c);
+    ret |= mass_small_values_test(c);
+    ret |= mass_large_values_test(c);
     bu_cache_close(c);
     bu_cache_erase("stress_cache");
+    bu_log("Overall stress tests %s\n", ret ? "[FAIL]" : "[PASS]");
+    return ret;
 }
+
+//------------------------ Section: Boundary/Error Handling Tests -----------
+
+int boundary_and_error_tests()
+{
+    int ret = 0;
+    bu_log("\n================ Boundary & Error Handling Tests ================\n");
+    struct bu_cache *c = bu_cache_open("boundary_cache", 1, 0);
+
+    // ---- Empty string key ----
+    const char *empty_key = "";
+    int val = 42;
+    size_t written = bu_cache_write(&val, sizeof(val), empty_key, c);
+    if (written != 0) {
+        bu_log("Should not have written with empty string key\n");
+        ret = 1;
+    }
+
+    void *rdata = NULL;
+    size_t rsize = bu_cache_get(&rdata, empty_key, c, NULL);
+    if (rsize != 0) {
+        bu_log("Should not have read value for empty string key\n");
+        ret = 1;
+    }
+
+    // ---- Key with whitespace ----
+    const char *ws_key = "   key with spaces   ";
+    written = bu_cache_write(&val, sizeof(val), ws_key, c);
+    if (written != sizeof(val)) {
+        bu_log("Failed to write key with whitespace\n");
+        ret = 1;
+    }
+    rdata = NULL;
+    rsize = bu_cache_get(&rdata, ws_key, c, NULL);
+    if (rsize != sizeof(val)) {
+        bu_log("Failed to read key with whitespace\n");
+        ret = 1;
+    }
+    bu_free(rdata, "free ws read");
+
+    // ---- Very large value ----
+    size_t lval_size = 2 * 1024 * 1024; // 2MB
+    std::vector<char> lval(lval_size, '!');
+    const char *lkey = "large_val";
+    written = bu_cache_write(lval.data(), lval_size, lkey, c);
+    if (written != lval_size) {
+        bu_log("Failed to write very large value\n");
+        ret = 1;
+    }
+    rdata = NULL;
+    rsize = bu_cache_get(&rdata, lkey, c, NULL);
+    if (rsize != lval_size) {
+        bu_log("Failed to read very large value\n");
+        ret = 1;
+    }
+    bu_free(rdata, "free large val");
+
+    // ---- Very small value (1 byte) ----
+    char sval = 'x';
+    const char *skey = "singlebyte";
+    written = bu_cache_write(&sval, 1, skey, c);
+    if (written != 1) {
+        bu_log("Failed to write single byte value\n");
+        ret = 1;
+    }
+    rdata = NULL;
+    rsize = bu_cache_get(&rdata, skey, c, NULL);
+    if (rsize != 1 || ((char*)rdata)[0] != 'x') {
+        bu_log("Failed to read single byte value\n");
+        ret = 1;
+    }
+    bu_free(rdata, "free small val");
+
+    // ---- Zero size value ----
+    const char *zkey = "zero_size";
+    written = bu_cache_write(&val, 0, zkey, c);
+    if (written != 0) {
+        bu_log("Should not have written zero-size value\n");
+        ret = 1;
+    }
+    rdata = NULL;
+    rsize = bu_cache_get(&rdata, zkey, c, NULL);
+    if (rsize != 0) {
+        bu_log("Should not have read zero-size value\n");
+        ret = 1;
+    }
+
+    // ---- NULL key ----
+    written = bu_cache_write(&val, sizeof(val), NULL, c);
+    if (written != 0) {
+        bu_log("Should not have written with NULL key\n");
+        ret = 1;
+    }
+    rdata = NULL;
+    rsize = bu_cache_get(&rdata, NULL, c, NULL);
+    if (rsize != 0) {
+        bu_log("Should not have read with NULL key\n");
+        ret = 1;
+    }
+
+    // ---- NULL data ----
+    written = bu_cache_write(NULL, sizeof(val), "null_data", c);
+    if (written != 0) {
+        bu_log("Should not have written NULL data\n");
+        ret = 1;
+    }
+    rdata = NULL;
+    rsize = bu_cache_get(NULL, "null_data", c, NULL);
+    if (rsize != 0) {
+        bu_log("Should not have read value for NULL data key\n");
+        ret = 1;
+    }
+
+    // ---- NULL cache handle ----
+    written = bu_cache_write(&val, sizeof(val), "badcache", NULL);
+    if (written != 0) {
+        bu_log("Should not have written with NULL cache\n");
+        ret = 1;
+    }
+    rsize = bu_cache_get(&rdata, "badcache", NULL, NULL);
+    if (rsize != 0) {
+        bu_log("Should not have read with NULL cache\n");
+        ret = 1;
+    }
+
+    // ---- Key with only whitespace ----
+    const char *only_ws = "    ";
+    written = bu_cache_write(&val, sizeof(val), only_ws, c);
+    if (written != sizeof(val)) {
+        bu_log("Failed to write key with only whitespace\n");
+        ret = 1;
+    }
+    rdata = NULL;
+    rsize = bu_cache_get(&rdata, only_ws, c, NULL);
+    if (rsize != sizeof(val)) {
+        bu_log("Failed to read key with only whitespace\n");
+        ret = 1;
+    }
+    bu_free(rdata, "free ws-only val");
+
+    bu_cache_close(c);
+    bu_cache_erase("boundary_cache");
+    bu_log("Boundary & error handling tests %s\n", ret ? "[FAIL]" : "[PASS]");
+    return ret;
+}
+
+//------------------------ Section: Test Summary Printing -------------------
+
+void print_test_summary(int ret_basic, int ret_limit, int ret_threading, int ret_stress, int ret_boundary)
+{
+    bu_log("\n========================\n");
+    bu_log("   Test Summary Report  \n");
+    bu_log("========================\n");
+
+    auto show = [](int ok) { return ok ? "[FAIL]" : "[PASS]"; };
+    bu_log("Basic Functionality:      %s\n", show(ret_basic));
+    bu_log("Limit/Size Test:          %s\n", show(ret_limit));
+    bu_log("Threading/Concurrency:    %s\n", show(ret_threading));
+    bu_log("Stress Tests:             %s\n", show(ret_stress));
+    bu_log("Boundary/Error Handling:  %s\n", show(ret_boundary));
+    bu_log("========================\n");
+    int overall = ret_basic | ret_limit | ret_threading | ret_stress | ret_boundary;
+    if (!overall)
+        bu_log("ALL TESTS PASSED\n");
+    else
+        bu_log("SOME TESTS FAILED\n");
+    bu_log("========================\n");
+}
+
+//------------------------ Section: Main Entry ------------------------------
 
 int
 main(int argc, const char **argv)
@@ -688,22 +938,18 @@ main(int argc, const char **argv)
 	    bu_exit(-1, "Invalid item count specifier\n");
     }
 
-    // Basic test writing INT and DBL values
-    basic_test(item_cnt);
+    int ret = 0;
+    int ret_basic = basic_test(item_cnt);           ret |= ret_basic;
+    int ret_limit = limit_test();                   ret |= ret_limit;
+    int ret_threading = threading_test();           ret |= ret_threading;
+    int ret_stress = stress_tests();                ret |= ret_stress;
+    int ret_boundary = boundary_and_error_tests();  ret |= ret_boundary;
 
-    // Test behavior when data exceeds max cache database size
-    limit_test();
-
-    // Test behavior when multiple threads are active
-    threading_test();
-
-    // Add stress tests
-    stress_tests();
-
-    // Final cleanup
     bu_dirclear(cache_dir);
 
-    return 0;
+    print_test_summary(ret_basic, ret_limit, ret_threading, ret_stress, ret_boundary);
+
+    return (ret ? 1 : 0);
 }
 
 
