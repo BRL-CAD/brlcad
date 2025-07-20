@@ -157,6 +157,8 @@ bu_cache_close(struct bu_cache *c)
     // Do a sync to make sure everything is on disk
     mdb_env_sync(c->i->env, 1);
 
+    mdb_dbi_close(c->i->env, c->i->write_dbi);
+    mdb_dbi_close(c->i->env, c->i->dbi);
     mdb_env_close(c->i->env);
     bu_vls_free(c->i->fname);
     BU_PUT(c->i->fname, struct bu_vls);
@@ -192,9 +194,26 @@ cache_get_read_txn(struct bu_cache *c, struct bu_cache_txn **t)
 	txn_ret = mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &txn);
     }
 
-    while (mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &txn) == MDB_READERS_FULL) {
+    // Start timeout clock
+    auto start = std::chrono::steady_clock::now();
+    const auto timeout = std::chrono::seconds(5);
+
+    while (txn_ret == MDB_READERS_FULL) {
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	txn_ret = mdb_txn_begin(c->i->env, NULL, MDB_RDONLY, &txn);
+
+	// Check if timeout exceeded
+	auto now = std::chrono::steady_clock::now();
+	if (now - start > timeout) {
+	    // Timed out
+	    bu_log("Error - txn acquisition timed out!\n");
+	    return NULL;
+	}
+    }
+
+    if (txn_ret != 0) {
+	bu_log("Error - txn acquisition failed!: %d\n", txn_ret);
+	return NULL;
     }
 
     if (t)
