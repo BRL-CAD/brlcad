@@ -329,7 +329,7 @@ delay(int us)
 #else
     {
         clock_t start = clock();
-        while (((clock() - start) * 1000000 / CLOCKS_PER_SEC) < us) {}
+        while (((double)(clock() - start) * 1000000.0 / (double)CLOCKS_PER_SEC) < (double)us) {}
     }
 #endif
     return 1;
