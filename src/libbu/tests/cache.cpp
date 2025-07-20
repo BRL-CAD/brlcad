@@ -27,6 +27,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <climits>
+#include <cstring>
 
 #include <limits.h>
 #include <string.h>
@@ -525,9 +527,8 @@ threading_test()
 	ivals[i] = rval;
     }
     std::cout << "Values read from single thread:\n";
-    std::map<int, int>::iterator m_it;
-    for (m_it = ivals.begin(); m_it != ivals.end(); ++m_it) {
-	std::cout << m_it->first << "->" << m_it->second << "\n";
+    for (auto &m_it : ivals) {
+	std::cout << m_it.first << "->" << m_it.second << "\n";
     }
 
     bu_cache_get_done(&txn);
@@ -563,8 +564,105 @@ threading_test()
 	bu_exit(1, "Cache file %s not erased\n", cache_file);
 }
 
+// STRESS TESTS
 
+void stress_long_key_test(struct bu_cache *c) {
+    char longkey[BU_CACHE_KEY_MAXLEN + 2];
+    char val[] = "testval";
 
+    // 1. Key at max supported length (including null terminator)
+    memset(longkey, 'A', BU_CACHE_KEY_MAXLEN - 1);
+    longkey[BU_CACHE_KEY_MAXLEN - 1] = '\0';
+    size_t written = bu_cache_write(val, sizeof(val), longkey, c);
+    if (written != sizeof(val))
+        bu_exit(1, "Failed to write max-length key\n");
+
+    // 2. Key just below max
+    memset(longkey, 'B', BU_CACHE_KEY_MAXLEN - 2);
+    longkey[BU_CACHE_KEY_MAXLEN - 2] = '\0';
+    written = bu_cache_write(val, sizeof(val), longkey, c);
+    if (written != sizeof(val))
+        bu_exit(1, "Failed to write (max-1)-length key\n");
+
+    // 3. Key just above max (should fail)
+    memset(longkey, 'C', BU_CACHE_KEY_MAXLEN);
+    longkey[BU_CACHE_KEY_MAXLEN] = '\0';
+    written = bu_cache_write(val, sizeof(val), longkey, c);
+    if (written != 0)
+        bu_exit(1, "Should have failed to write (max+1)-length key, but did not\n");
+
+    bu_log("Long key test (BU_CACHE_KEY_MAXLEN) passed.\n");
+}
+
+void stress_large_value_test(struct bu_cache *c) {
+    size_t bigsize = 1024 * 1024; // 1MB
+    std::vector<char> bigval(bigsize, '@');
+    const char *key = "bigvalue";
+    size_t written = bu_cache_write(bigval.data(), bigsize, key, c);
+    if (written != bigsize)
+        bu_exit(1, "Failed to write large value\n");
+
+    void *rdata = nullptr;
+    size_t rsize = bu_cache_get(&rdata, key, c, NULL);
+    if (rsize != bigsize)
+        bu_exit(1, "Failed to read back large value\n");
+    bu_free(rdata, "free big value");
+    bu_log("Large value test passed.\n");
+}
+
+void stress_unicode_key_value_test(struct bu_cache *c) {
+    // Use Japanese UTF-8 string literals for key and value
+    const char *key = u8"鍵"; // "key" in Japanese
+    const char *val = u8"値"; // "value" in Japanese
+    size_t written = bu_cache_write((void *)val, strlen(val) + 1, key, c);
+    if (written != strlen(val) + 1)
+        bu_exit(1, "Failed to write unicode key/value\n");
+    void *rdata = nullptr;
+    size_t rsize = bu_cache_get(&rdata, key, c, NULL);
+    if (rsize != strlen(val) + 1)
+        bu_exit(1, "Failed to read back unicode value\n");
+    bu_log("Unicode key/value test passed.\n");
+    bu_free(rdata, "free unicode value");
+}
+
+void mass_small_values_test(struct bu_cache *c) {
+    const int N = 10000;
+    char key[32];
+    int val = 12345;
+    for (int i = 0; i < N; ++i) {
+        snprintf(key, sizeof(key), "k%d", i);
+        size_t written = bu_cache_write(&val, sizeof(val), key, c);
+        if (written != sizeof(val))
+            bu_exit(1, "Failed to write small value %d\n", i);
+    }
+    bu_log("Mass small value test passed.\n");
+}
+
+void mass_large_values_test(struct bu_cache *c) {
+    const int N = 100;
+    size_t bigsize = 256 * 1024; // 256 KB
+    std::vector<char> bigval(bigsize, '#');
+    char key[32];
+    for (int i = 0; i < N; ++i) {
+        snprintf(key, sizeof(key), "bigk%d", i);
+        size_t written = bu_cache_write(bigval.data(), bigsize, key, c);
+        if (written != bigsize)
+            bu_exit(1, "Failed to write large value %d\n", i);
+    }
+    bu_log("Mass large value test passed.\n");
+}
+
+void stress_tests()
+{
+    struct bu_cache *c = bu_cache_open("stress_cache", 1, 0);
+    stress_long_key_test(c);
+    stress_large_value_test(c);
+    stress_unicode_key_value_test(c);
+    mass_small_values_test(c);
+    mass_large_values_test(c);
+    bu_cache_close(c);
+    bu_cache_erase("stress_cache");
+}
 
 int
 main(int argc, const char **argv)
@@ -598,6 +696,9 @@ main(int argc, const char **argv)
 
     // Test behavior when multiple threads are active
     threading_test();
+
+    // Add stress tests
+    stress_tests();
 
     // Final cleanup
     bu_dirclear(cache_dir);
