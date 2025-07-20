@@ -126,7 +126,7 @@ brlcad_addexec(png-bw png-bw.c "libbn;libbu;${PNG_LIBRARIES}" FOLDER Util)
 brlcad_addexec(png-pix png-pix.c "libbn;libbu;${PNG_LIBRARIES}" FOLDER Util)
 brlcad_addexec(sun-pix sun-pix.c libbu FOLDER Util)
 brlcad_addexec(terrain terrain.c "libbn;libbu;${M_LIBRARY}" FOLDER Util)
-brlcad_addexec(ttcp ttcp.c "${SOCKET_LIBRARY};${NSL_LIBRARY};${NETWORK_LIBRARY}" FOLDER Util)
+brlcad_addexec(ttcp ttcp.c "${SOCKET_LIBRARY};${NSL_LIBRARY};${NETWORK_LIBRARY};${WINSOCK_LIB}" FOLDER Util)
 brlcad_addexec(wavelet wavelet.c "libdm;libbn;libbu" FOLDER Util)
 add_target_deps(wavelet dm_plugins)
 
