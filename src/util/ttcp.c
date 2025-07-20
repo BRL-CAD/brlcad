@@ -372,9 +372,10 @@ main(int argc, char **argv)
     int cnt;
 #ifdef USE_WINSOCK
     WSADATA wsaData;
-#endif
 
-#ifdef USE_WINSOCK
+    _setmode(_fileno(stdin), _O_BINARY);
+    _setmode(_fileno(stdout), _O_BINARY);
+
     if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
         fprintf(stderr, "WSAStartup failed\n");
         exit(1);
