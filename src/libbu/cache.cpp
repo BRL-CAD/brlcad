@@ -241,9 +241,18 @@ bu_cache_get(void **data, const char *key, struct bu_cache *c, struct bu_cache_t
     if (!c || !key)
 	return 0;
 
-    int mkeysize = mdb_env_get_maxkeysize(c->i->env);
-    if (mkeysize <= 0 || strlen(key) > (size_t)mkeysize)
+    int mkeysize = (mdb_env_get_maxkeysize(c->i->env) < BU_CACHE_KEY_MAXLEN) ? mdb_env_get_maxkeysize(c->i->env) : BU_CACHE_KEY_MAXLEN;
+    if (mkeysize <= 0)
 	return 0;
+    if (strlen(key) > (size_t)mkeysize) {
+	if (mdb_env_get_maxkeysize(c->i->env) >= BU_CACHE_KEY_MAXLEN) {
+	    bu_log("bu_cache_get called with a key string larger than the supported length (%d):\n%s\n", BU_CACHE_KEY_MAXLEN, key);
+	    return 0;
+	} else {
+	    bu_log("ERROR: LMDB backend compiled with max key length (%d) smaller than that supported by libbu API (%d). key should be valid per libbu API but backend support is inadequate (needs to be fixed):\n%s\n", mdb_env_get_maxkeysize(c->i->env), BU_CACHE_KEY_MAXLEN, key);
+	    return 0;
+	}
+    }
 
     MDB_val mdb_key;
     MDB_val mdb_data[2];

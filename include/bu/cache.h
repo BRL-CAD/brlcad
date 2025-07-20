@@ -53,7 +53,13 @@ __BEGIN_DECLS
 
 // Due to the backend implementation, cache key strings have a maximum limit.
 // Set this to that max - we want to use it for string buffer allocations and
-// snprintf.
+// snprintf.  NOTE: BRL-CAD compiled LMDB instances (which are what will
+// pretty much always be used) will match this default, but if a system LMDB
+// with a smaller max length is forced in it could be a problem.
+//
+// Also, BRL-CAD's API requires that keys be null terminated strings with no
+// embedded nulls.  (Among other reasons, printing out a list of all keys
+// would get gnarly if we allowed something like that to be a valid key.)
 #define BU_CACHE_KEY_MAXLEN 511
 
 // If we need to be certain cache operations are complete before proceeding,
@@ -135,7 +141,8 @@ BU_EXPORT size_t bu_cache_write(void *data, size_t dsize, const char *key, struc
 BU_EXPORT void bu_cache_clear(const char *key, struct bu_cache *c);
 
 /**
- * Get an array of keys present in the cache
+ * Get an array of keys present in the cache.  Caller is responsible
+ * for freeing the keysv output (recommend using bu_argv_free).
  */
 BU_EXPORT int bu_cache_keys(char ***keysv, struct bu_cache *c);
 
