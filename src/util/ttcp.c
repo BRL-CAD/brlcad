@@ -480,8 +480,10 @@ main(int argc, char **argv)
         }
         sinhim.sin_port = htons(port);
         sinme.sin_port = 0;		/* free choice */
+        sinme.sin_family = AF_INET; /* Ensure family is set for sender */
     } else {
         /* rcvr */
+        sinme.sin_family = AF_INET; /* Ensure family is set for receiver */
         sinme.sin_port =  htons(port);
     }
 
