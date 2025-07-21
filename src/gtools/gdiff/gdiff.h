@@ -85,8 +85,9 @@ diff3_merge(struct db_i *left_dbip,
 // Various options for grouping mode
 struct gdiff_group_opts {
     long filename_threshold; // editing distance below which we group based on filename
-    long geomname_threshold; // tlsh threshold below which we group based on object names
-    long geometry_threshold; // tlsh threshold below which we group based on how different geometry contents are (object level)
+    int use_names;           // Incorporate .g object names into similarity testing
+    int use_geometry;        // Incorporate .g object geometry into similarity testing
+    long threshold;          // tlsh threshold below which we group .g files
     struct bu_vls fpattern;  // Pattern match to use for a recursive file search
     struct bu_vls ofile;     // Optional output file
     int thread_cnt;          // Number of threads to use for database hashing (defaults to 1)
@@ -98,7 +99,7 @@ struct gdiff_group_opts {
     // degree by increasing geometry_threshold.)
     int geom_fast;
 };
-#define GDIFF_GROUP_OPTS_DEFAULT {-1, -1, -1, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, 1, 0}
+#define GDIFF_GROUP_OPTS_DEFAULT {-1, 0, 0, -1, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, 1, 0}
 
 extern int
 gdiff_group(int argc, const char **argv, struct gdiff_group_opts *o);
