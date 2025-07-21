@@ -183,8 +183,8 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[5] = "-a";  av[6] = "45";
             av[7] = "-e";  av[8] = "45";
             av[9] = "-C";  av[10] = "255/255/255";
-            av[11] = "-A"; av[12] = "1.5";
-            av[13] = "-c"; av[14] = "set ambSamples=64 ambSlow=1";
+            av[11] = "-A"; av[12] = "1.1";
+            av[13] = "-c"; av[14] = "set ambSamples=64";
             av[15] = "-o"; av[16] = outputname.c_str();
             av[17] = pathToInput.c_str();
             av[18] = component.c_str();
