@@ -90,8 +90,15 @@ struct gdiff_group_opts {
     struct bu_vls fpattern;  // Pattern match to use for a recursive file search
     struct bu_vls ofile;     // Optional output file
     int thread_cnt;          // Number of threads to use for database hashing (defaults to 1)
+    // When checking .g geometry, by default we use a slower but better check to spot similar
+    // geometry. If this is too slow, there is another option that increases sensitivity to
+    // small geometry changes but speeds up processing.  In fast mode objects having ANY
+    // difference (anything from added/removed to tiny modifications) are treated as maximally different.
+    // .g file will look less similar by this metric, but the user can compensate for that to a
+    // degree by increasing geometry_threshold.)
+    int geom_fast;
 };
-#define GDIFF_GROUP_OPTS_DEFAULT {-1, -1, -1, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, 1}
+#define GDIFF_GROUP_OPTS_DEFAULT {-1, -1, -1, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, 1, 0}
 
 extern int
 gdiff_group(int argc, const char **argv, struct gdiff_group_opts *o);
