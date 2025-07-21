@@ -253,10 +253,14 @@ gdiff_usage(const char *cmd, struct bu_opt_desc *d) {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     char *option_help = bu_opt_describe(d, NULL);
     bu_vls_sprintf(&str, "Usage: %s [options] left.g [ancestor.g] right.g\n", cmd);
+    bu_vls_printf(&str,  "Usage: %s -G [options] [pattern1 pattern2 ...]\n", cmd);
     if (option_help) {
         bu_vls_printf(&str, "Options:\n%s\n", option_help);
         bu_free(option_help, "help str");
     }
+    bu_vls_printf(&str, "\nWhen in grouping (-G) mode, by default both object names and\n");
+    bu_vls_printf(&str, "object geometry are used unless an option is explicitly specified\n");
+    bu_vls_printf(&str, "to enable one of them - in that case, only what is specified is used.\n");
     bu_log("%s", bu_vls_cstr(&str));
     bu_vls_free(&str);
 }
@@ -283,7 +287,7 @@ main(int argc, const char **argv)
     BU_GET(state, struct diff_state);
     diff_state_init(state);
 
-    struct bu_opt_desc d[17];
+    struct bu_opt_desc d[19];
     BU_OPT(d[0],  "h", "help",       "",        NULL,              &print_help,              "Print help and exit");
     BU_OPT(d[1],  "?", "",           "",        NULL,              &print_help,              "");
     BU_OPT(d[2],  "a", "added",      "",        NULL,              &state->return_added,     "Report added objects");
@@ -298,12 +302,13 @@ main(int argc, const char **argv)
 
     // Options for "grouping" mode
     BU_OPT(d[11], "G", "group",                "",  NULL,         &grouping_mode,             "group files into similar bins.  (Multiple grouping options, may be controlled by specifying other options.)");
-    BU_OPT(d[12], "",  "filename-threshold",   "#", &bu_opt_long, &gopts.filename_threshold,  "Bin based on similar file names (only looks at filename - parent paths aren't considered.)");
-    BU_OPT(d[13], "",  "geomname-threshold",   "#", &bu_opt_long, &gopts.geomname_threshold,  "Bin based on similar object names within the .g file (larger numbers mean looser grouping criteria - default value is 30)");
-    BU_OPT(d[14], "",  "geometry-threshold",   "#", &bu_opt_long, &gopts.geometry_threshold,  "Bin based on similar geometry within the .g file (larger numbers mean looser grouping criteria - default value is ?)");
-    BU_OPT(d[15], "P",  "file-pattern",  "pattern", &bu_opt_vls,  &gopts.fpattern,  "Pattern to match for files in root-dir.  If no root-dir is specified, use current working dir.");
-
-    BU_OPT_NULL(d[16]);
+    BU_OPT(d[12], "",  "filename-threshold",   "#", &bu_opt_long, &gopts.filename_threshold,  "Use filenames with an edit distance <=# to establish top level groupings ");
+    BU_OPT(d[13], "",  "threshold",            "#", &bu_opt_long, &gopts.threshold,           "Grouping tolerance (larger numbers mean looser grouping criteria - default value is 30)");
+    BU_OPT(d[14], "",  "use-objnames",         "",  NULL,         &gopts.use_names,           "Incorporate object names into similarity checking");
+    BU_OPT(d[15], "",  "use-geometry",         "",  NULL,         &gopts.use_geometry,        "Incorporate object geometry into similarity checking");
+    BU_OPT(d[16], "",  "fast-geometry",        "",  NULL,         &gopts.geom_fast,           "Use a faster but much more sensitive geometry difference test - will decrease similarity results (how much depends on the files, but it is typically substantial).");
+    BU_OPT(d[17], "P", "file-pattern",  "pattern", &bu_opt_vls,   &gopts.fpattern,            "Pattern to match for files in root-dir.  If no root-dir is specified, use current working dir.  Default pattern is '*.g'");
+    BU_OPT_NULL(d[18]);
 
     int ret_ac = bu_opt_parse(&msg, argc, argv, d);
     if (ret_ac < 0) {
