@@ -116,6 +116,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[0] = cmd.c_str();
             av[6] = "0";
             av[8] = "0";
+	    av[10] = "set bs=1 draw_axes=1";
             av[12] = outputname.c_str();
             av[15] = NULL;
             break;
@@ -146,6 +147,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[0] = cmd.c_str();
             av[6] = "270";
             av[8] = "0";
+	    av[10] = "set bs=1 draw_axes=1";
             av[12] = outputname.c_str();
             av[15] = NULL;
             break;
@@ -156,6 +158,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[0] = cmd.c_str();
             av[6] = "0";
             av[8] = "90";
+	    av[10] = "set bs=1 draw_axes=1";
             av[12] = outputname.c_str();
             av[15] = NULL;
             break;
