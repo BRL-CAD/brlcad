@@ -20,8 +20,6 @@
 
 #include "common.h"
 
-#include "ssdeep.hpp"
-
 extern "C" {
 #include "bu/app.h"
 #include "bu/opt.h"
