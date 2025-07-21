@@ -18,6 +18,55 @@
  * information.
  */
 
+/*
+ * ---------------------------------------------------------------------------
+ * Clustering Algorithms Overview
+ *
+ * 1. BK-tree (Burkhard-Keller tree) Clustering
+ * --------------------------------------------
+ * BK-tree clustering is a method for organizing objects that can be compared
+ * using a distance metric (such as string edit distance). It enables efficient
+ * grouping of items by similarity, particularly when the "distance" between
+ * items is small.
+ *
+ * In this code, BK-tree clustering is used only for filename grouping:
+ *  - Database files whose base filenames are similar (by edit distance) are
+ *    clustered together. For example, "model_v1.g" and "model_v2.g" would be
+ *    grouped, even if they differ by a few characters.
+ *  - This is valuable for identifying versioned or typo-related clusters,
+ *    and for reducing redundant comparisons.
+ *  - BK-tree allows efficient queries for all items within a given distance
+ *    threshold, which is beneficial for large sets of filenames.
+ *
+ * 2. Transitive Closure Clustering for Hash Groups
+ * -----------------------------------------------
+ * For hash-based grouping (using TLSH for object name and geometry hashes),
+ * the code uses a transitive closure algorithm instead of BK-tree clustering.
+ * The process is:
+ *   - Compute pairwise hash differences between all files.
+ *   - Connect files whose hash difference is less than a given threshold.
+ *   - Clusters are defined as sets of files connected (directly or indirectly)
+ *     through such pairwise relationships.
+ *
+ * Why transitive closure for hashes instead of BK-tree?
+ *   - BK-tree excels for metrics like string edit distance, but hash distances
+ *     may not behave like typical string metrics. The TLSH hash difference may
+ *     not satisfy properties (e.g., triangle inequality) that BK-tree relies on.
+ *   - With transitive closure, clusters can form even if some file pairs are
+ *     "far apart," as long as there is a chain of close-enough links.
+ *   - This more accurately reflects the real world: two files may be similar
+ *     through intermediary revisions, but not directly.
+ *   - Transitive closure ensures that all files mutually reachable by hash
+ *     similarity are grouped together, avoiding the fragmentation that
+ *     could occur with BK-tree's stricter partitioning.
+ *
+ * In summary: BK-tree is used for filename clustering due to its efficiency
+ * with edit distance, whereas transitive closure is used for hash clustering
+ * to capture connected regions of similarity, even when direct pairwise
+ * similarity is absent.
+ * ---------------------------------------------------------------------------
+ */
+
 #include "common.h"
 
 #include <exception>
@@ -35,6 +84,7 @@
 #include <thread>
 #include <mutex>
 #include <functional>
+#include <tuple>
 #include "tlsh.hpp"
 #include "levenshtein_ull.hpp"
 
@@ -92,7 +142,19 @@ std::vector<std::string> sort_by_mtime(const std::vector<std::string>& files) {
     return sorted;
 }
 
-// BK-tree node and clustering
+/*
+ * BK-tree node and clustering
+ *
+ * BK-tree is a data structure that efficiently clusters items (such as strings)
+ * based on a distance metric (like edit distance or Levenshtein distance).
+ * Each node represents a value, and children are organized by their distance
+ * from the parent. This allows efficient queries for all items within a given
+ * threshold of similarity.
+ *
+ * In this file, BK-tree is used to cluster filenames by their base name edit
+ * distance. This makes it possible to group files that are likely versions or
+ * variants of the same thing, even if they don't match exactly.
+ */
 struct BKTreeNode {
     std::string value;
     std::vector<std::string> files;
@@ -103,6 +165,11 @@ struct BKTreeNode {
     }
 };
 
+/*
+ * BKTree class provides insertion and clustering logic for BK-tree.
+ * It is used to group similar filenames (by edit distance) before
+ * any further grouping or scoring is performed.
+ */
 class BKTree {
     public:
 	BKTree(std::function<size_t(const std::string&, const std::string&)> dist)
@@ -132,6 +199,11 @@ class BKTree {
 	    }
 	}
 
+	/*
+	 * clusters(threshold): Returns clusters of files whose base names
+	 * are within the specified edit distance threshold.
+	 * Each file is included in exactly one cluster.
+	 */
 	std::vector<std::vector<std::string>> clusters(size_t threshold) const {
 	    std::vector<std::vector<std::string>> result;
 	    std::unordered_set<const BKTreeNode*> node_seen;
@@ -175,6 +247,31 @@ class BKTree {
 	}
 };
 
+/*
+ * Transitive Closure Hash Clustering
+ *
+ * For hash-based grouping, we use a transitive closure algorithm:
+ * - Each file is a node.
+ * - An edge is formed between any two files whose hash difference is less than
+ *   the specified threshold.
+ * - Clusters are defined as connected components in this graph, found by
+ *   traversing all reachable nodes.
+ *
+ * Why use transitive closure for hashes instead of BK-tree?
+ * - Hash differences (e.g., TLSH) may not behave like edit distances and may
+ *   not satisfy triangle inequality, making BK-tree clustering less suitable.
+ * - Transitive closure allows clusters to form through chains of similarity,
+ *   reflecting cases where files are linked by intermediate revisions but not
+ *   directly similar.
+ * - This captures broader regions of similarity and avoids fragmentation that
+ *   could occur with BK-tree, which only clusters strictly within threshold of
+ *   the reference value.
+ *
+ * In practice, this means all files mutually reachable by a chain of "close"
+ * hash relationships are grouped together, providing more robust clusters for
+ * geometry and object name hashes.
+ */
+
 // ------------------------------------
 // Hashing routines, split for parallelism
 struct DBWithPath {
@@ -217,7 +314,7 @@ std::string geometry_hash_db(struct db_i *dbip) {
     if (!dbip)
 	return std::string();
     db_update_nref(dbip, &rt_uniresource);
-    std::map<std::string, struct directory *> objs;
+
     struct directory *dp;
     unsigned int max_bufsize = 0;
     FOR_ALL_DIRECTORY_START(dp, dbip) {
@@ -225,30 +322,39 @@ std::string geometry_hash_db(struct db_i *dbip) {
 	    continue;
 	if (UNLIKELY(!dp->d_namep || !strlen(dp->d_namep)))
 	    continue;
-	objs[std::string(dp->d_namep)] = dp;
 	if (dp->d_len > max_bufsize)
 	    max_bufsize = dp->d_len;
     } FOR_ALL_DIRECTORY_END;
+
     struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
     BU_EXTERNAL_INIT(&ext);
     ext.ext_buf = (uint8_t *)bu_realloc(ext.ext_buf, max_bufsize, "resize ext_buf");
+
     std::vector<unsigned long long> ghashes;
-    for (auto& o_it : objs) {
-	ext.ext_nbytes = o_it.second->d_len;
-	if (db_read(dbip, (char *)ext.ext_buf, ext.ext_nbytes, o_it.second->d_addr) < 0) {
-	    memset(ext.ext_buf, 0, o_it.second->d_len);
+    FOR_ALL_DIRECTORY_START(dp, dbip) {
+	if (dp->d_addr == RT_DIR_PHONY_ADDR)
+	    continue;
+	if (UNLIKELY(!dp->d_namep || !strlen(dp->d_namep)))
+	    continue;
+	ext.ext_nbytes = dp->d_len;
+	if (db_read(dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr) < 0) {
+	    memset(ext.ext_buf, 0, dp->d_len);
 	    ext.ext_nbytes = 0;
 	    continue;
 	}
 	unsigned long long hash = bu_data_hash(ext.ext_buf, ext.ext_nbytes);
 	ghashes.push_back(hash);
-    }
-    if (ext.ext_buf)
-	bu_free(ext.ext_buf, "final free of ext_buf");
+    } FOR_ALL_DIRECTORY_END;
+
+    std::sort(ghashes.begin(), ghashes.end());
+
     tlsh::Tlsh hasher;
     hasher.update((const unsigned char *)ghashes.data(), ghashes.size() * sizeof(unsigned long long));
     hasher.final();
     std::string hstr = hasher.getHash();
+
+    if (ext.ext_buf)
+	bu_free(ext.ext_buf, "final free of ext_buf");
     return hstr;
 }
 
@@ -287,6 +393,11 @@ struct FileHashInfo {
     std::string hash;
 };
 
+/*
+ * cluster_by_hash: Given a vector of FileHashInfo and a TLSH threshold,
+ * construct clusters using transitive closure: any files reachable via
+ * a chain of pairwise TLSH-difference-below-threshold edges are grouped.
+ */
 std::vector<std::vector<FileHashInfo>> cluster_by_hash(const std::vector<FileHashInfo>& files, int threshold) {
     size_t N = files.size();
     std::vector<std::vector<size_t>> adj(N);
@@ -325,237 +436,235 @@ std::vector<std::vector<FileHashInfo>> cluster_by_hash(const std::vector<FileHas
     return result;
 }
 
-std::map<std::string, std::vector<std::pair<std::string, int>>> bins_from_clusters(const std::vector<std::vector<FileHashInfo>>& clusters) {
-    std::map<std::string, std::vector<std::pair<std::string, int>>> bins;
+// For each cluster, use the newest file as the key, calculate the center, and report both TLSH differences
+std::map<std::string, std::vector<std::tuple<std::string, int, int, std::filesystem::file_time_type>>> bins_from_clusters_newest_and_center(
+	const std::vector<std::vector<FileHashInfo>>& clusters)
+{
+    std::map<std::string, std::vector<std::tuple<std::string, int, int, std::filesystem::file_time_type>>> bins;
     for (const auto& cluster : clusters) {
 	if (cluster.empty()) continue;
-	auto keyit = std::max_element(cluster.begin(), cluster.end(),
+	int N = cluster.size();
+	// Find the newest file by mtime
+	auto newest_it = std::max_element(cluster.begin(), cluster.end(),
 		[](const FileHashInfo& a, const FileHashInfo& b) { return a.mtime < b.mtime; });
-	std::string key = keyit->path;
-	tlsh::Tlsh hkey; hkey.fromTlshStr(keyit->hash.c_str());
-	std::vector<std::pair<std::string, int>> entries;
-	entries.push_back({key, 0});
-	for (const auto& f : cluster) {
-	    if (f.path == key) continue;
-	    tlsh::Tlsh hcur; hcur.fromTlshStr(f.hash.c_str());
-	    int diff = hkey.diff(hcur);
-	    entries.push_back({f.path, diff});
-	}
-	// Sort leaf entries (not key) by mtime newest first
-	std::vector<std::pair<std::string, int>> sorted_leaves;
-	std::vector<FileInfo> leaf_infos;
-	for (const auto& e : entries) {
-	    if (e.first == key) continue;
-	    leaf_infos.push_back({e.first, get_file_mtime(e.first)});
-	}
-	std::sort(leaf_infos.begin(), leaf_infos.end(),
-		[](const FileInfo& a, const FileInfo& b) { return a.mtime > b.mtime; });
-	for (const auto& lfi : leaf_infos) {
-	    for (const auto& e : entries) {
-		if (e.first == lfi.path) {
-		    sorted_leaves.push_back(e);
-		    break;
-		}
+	const auto& newest = *newest_it;
+
+	// Calculate total diffs for each file to find center
+	std::vector<int> total_diffs(N, 0);
+	for (int i = 0; i < N; ++i) {
+	    tlsh::Tlsh hi; hi.fromTlshStr(cluster[i].hash.c_str());
+	    for (int j = 0; j < N; ++j) {
+		if (i == j) continue;
+		tlsh::Tlsh hj; hj.fromTlshStr(cluster[j].hash.c_str());
+		total_diffs[i] += hi.diff(hj);
 	    }
 	}
-	std::vector<std::pair<std::string, int>> bin_entries;
-	bin_entries.push_back({key, 0});
-	bin_entries.insert(bin_entries.end(), sorted_leaves.begin(), sorted_leaves.end());
-	bins[key] = bin_entries;
+	int center_idx = std::min_element(total_diffs.begin(), total_diffs.end()) - total_diffs.begin();
+	const auto& center = cluster[center_idx];
+
+	tlsh::Tlsh hnewest; hnewest.fromTlshStr(newest.hash.c_str());
+	tlsh::Tlsh hcenter; hcenter.fromTlshStr(center.hash.c_str());
+
+	// For each file, report both TLSH diff to newest and to center
+	std::vector<std::tuple<std::string, int, int, std::filesystem::file_time_type>> entries;
+	for (const auto& f : cluster) {
+	    tlsh::Tlsh hcur; hcur.fromTlshStr(f.hash.c_str());
+	    int diff_newest = hnewest.diff(hcur);
+	    int diff_center = hcenter.diff(hcur);
+	    entries.push_back({f.path, diff_newest, diff_center, f.mtime});
+	}
+	// Sort by mtime, newest first
+	std::sort(entries.begin(), entries.end(),
+		[](const auto& a, const auto& b){ return std::get<3>(a) > std::get<3>(b); });
+
+	bins[newest.path] = entries;
     }
     return bins;
 }
 
-std::map<std::string, std::vector<std::pair<std::string, int>>> group_by_hash_map_with_scores(const std::vector<std::string>& files, const std::unordered_map<std::string, std::string>& path2hash, int threshold) {
+std::map<std::string, std::vector<std::tuple<std::string, int, int, std::filesystem::file_time_type>>> group_by_hash_map_newest_and_center(
+	const std::vector<std::string>& files,
+	const std::unordered_map<std::string, std::string>& path2hash,
+	int threshold)
+{
     std::vector<FileHashInfo> infos;
     for (const auto& path : files) {
 	if (!path2hash.count(path) || path2hash.at(path).empty()) continue;
 	infos.push_back({path, get_file_mtime(path), path2hash.at(path)});
     }
     auto clusters = cluster_by_hash(infos, threshold);
-    return bins_from_clusters(clusters);
-}
-
-int find_similarity_score(const std::vector<std::pair<std::string, int>>& entries, const std::string& key) {
-    for (const auto& [entry, score] : entries) {
-	if (entry == key) return score;
-    }
-    return 0;
+    return bins_from_clusters_newest_and_center(clusters);
 }
 
 // ------------------------------------
-// Reporting
-void report_single_level(const std::map<std::string, std::vector<std::pair<std::string, int>>>& groups, std::ostream& out) {
-    for (const auto& [category, entries] : groups) {
-	out << category << " (" << get_file_timestamp(category) << "):\n";
-	for (const auto& [entry, score] : entries) {
-	    if (entry == category) continue;
-	    out << "\t" << entry << " [score: " << score << "]"
-		<< " (" << get_file_timestamp(entry) << ")\n";
+// Reporting (key: newest file, scores are [Δnewest_score, Δx̄center_score], aligned output)
+/*
+ * Output lines:
+ * - For each group key (the newest file), prints the path, its Δx̄ score (distance from center), and its date, all aligned.
+ * - For each leaf entry, prints path, [Δ(newest), Δx̄(center)] scores, and date, all aligned.
+ * - Ensures score/date columns start at the same position for both key and leaves, always with at least one space after the longest path.
+ * - When filename threshold is active, indent entries within filename group for clarity.
+ */
+void report_single_level_newest_and_center(
+	const std::map<std::string, std::vector<std::tuple<std::string, int, int, std::filesystem::file_time_type>>>& groups,
+	std::ostream& out,
+	bool indent_group = false // Set to true when printing within filename grouping
+	)
+{
+    for (const auto& [newest, entries] : groups) {
+	// Find longest file path for output alignment (includes all entries)
+	size_t longest_path = newest.size();
+	for (const auto& entry_tuple : entries) {
+	    longest_path = std::max(longest_path, std::get<0>(entry_tuple).size());
 	}
-    }
-}
+	size_t score_col = longest_path + 2; // At least one space after path
 
-void report_two_level(const std::map<std::string, std::map<std::string, std::vector<std::pair<std::string, int>>>>& groups,
-	const std::unordered_map<std::string, std::string>& hash2path,
-	std::ostream& out) {
-    for (const auto& [cat1, cat2map] : groups) {
-	out << cat1 << " (" << get_file_timestamp(cat1) << "):\n";
-	for (const auto& [cat2, entries] : cat2map) {
-	    std::string cat2_label = hash2path.count(cat2) ? hash2path.at(cat2) : cat2;
-	    int score = find_similarity_score(entries, cat2_label);
-	    out << "\t" << cat2_label << " [score: " << score << "]"
-		<< " (" << get_file_timestamp(cat2_label) << "):\n";
-	    for (const auto& [entry, e_score] : entries) {
-		if (entry == cat2_label) continue;
-		out << "\t\t" << entry << " [score: " << e_score << "]"
-		    << " (" << get_file_timestamp(entry) << ")\n";
+	// Find this bin's Δx̄ score for the newest file
+	int dc_newest = 0;
+	for (const auto& entry_tuple : entries) {
+	    if (std::get<0>(entry_tuple) == newest) {
+		dc_newest = std::get<2>(entry_tuple);
+		break;
 	    }
 	}
-    }
-}
+	// Use a unique variable for the parent key's score string
+	std::ostringstream parent_score_ss;
+	parent_score_ss << "[Δx̄" << std::right << std::setw(4) << dc_newest << "]";
 
-void report_three_level(const std::map<std::string, std::map<std::string, std::map<std::string, std::vector<std::pair<std::string, int>>>>>& groups,
-	const std::unordered_map<std::string, std::string>& namehash2path,
-	const std::unordered_map<std::string, std::string>& geohash2path,
-	std::ostream& out) {
-    for (const auto& [cat1, cat2map] : groups) {
-	out << cat1 << " (" << get_file_timestamp(cat1) << "):\n";
-	for (const auto& [cat2, cat3map] : cat2map) {
-	    std::string cat2_label = namehash2path.count(cat2) ? namehash2path.at(cat2) : cat2;
-	    out << "\t" << cat2_label << " (" << get_file_timestamp(cat2_label) << "):\n";
-	    for (const auto& [cat3, entries] : cat3map) {
-		std::string cat3_label = geohash2path.count(cat3) ? geohash2path.at(cat3) : cat3;
-		int score = find_similarity_score(entries, cat3_label);
-		out << "\t\t" << cat3_label << " [score: " << score << "]"
-		    << " (" << get_file_timestamp(cat3_label) << "):\n";
-		for (const auto& [entry, e_score] : entries) {
-		    if (entry == cat3_label) continue;
-		    out << "\t\t\t" << entry << " [score: " << e_score << "]"
-			<< " (" << get_file_timestamp(entry) << ")\n";
-		}
-	    }
+	// Indent group if requested (for filename threshold mode)
+	std::string group_indent = indent_group ? "  " : "";
+
+	out << group_indent << std::left << std::setw(score_col) << newest
+	    << parent_score_ss.str() << " " << get_file_timestamp(newest) << "\n";
+
+	// Print leaf entries
+	for (const auto& entry_tuple : entries) {
+	    const std::string& entry = std::get<0>(entry_tuple);
+	    int dn = std::get<1>(entry_tuple);
+	    int dc = std::get<2>(entry_tuple);
+	    if (entry == newest) continue; // Already printed above
+	    std::ostringstream score_ss;
+	    score_ss << "[Δ" << std::right << std::setw(4) << dn
+		<< ", Δx̄" << std::right << std::setw(4) << dc << "]";
+	    out << group_indent << "  " << std::left << std::setw(score_col-2) << entry
+		<< score_ss.str() << " " << get_file_timestamp(entry) << "\n";
 	}
     }
 }
 
 // ------------------------------------
-// Hierarchical grouping, reporting
-void do_hierarchical_grouping(
+// Hierarchical grouping, reporting (for hash-based levels, ordering by date, reporting both scores)
+void do_hierarchical_grouping_newest_and_center(
 	const std::unordered_map<std::string, std::vector<std::string>> &file_grps,
 	int geomname_threshold,
 	int geometry_threshold,
 	const std::unordered_map<std::string, std::string> &path2namehash,
 	const std::unordered_map<std::string, std::string> &path2geohash,
-	const std::unordered_map<std::string, std::string> &namehash2path,
-	const std::unordered_map<std::string, std::string> &geohash2path,
 	std::ostream& out)
 {
-    // Determine which thresholds are active
     bool filename_active = (file_grps.size() > 1);
     bool geomname_active = (geomname_threshold >= 0);
     bool geometry_active = (geometry_threshold >= 0);
 
     // --- Depth 1: Only filename OR only geomname OR only geometry ---
     if (filename_active && !geomname_active && !geometry_active) {
-	// Filename binning only
-	std::map<std::string, std::vector<std::pair<std::string, int>>> report_map;
+	std::map<std::string, std::vector<std::string>> report_map;
 	for (const auto& fg : file_grps) {
 	    std::vector<std::string> sorted = sort_by_mtime(fg.second);
 	    if (!sorted.empty()) {
-		std::string key = sorted.front();
-		std::vector<std::pair<std::string, int>> entries;
-		entries.push_back({key, 0});
-		for (size_t i = 1; i < sorted.size(); ++i)
-		    entries.push_back({sorted[i], 0});
-		report_map[key] = entries;
+		report_map[sorted.front()] = sorted;
 	    }
 	}
-	report_single_level(report_map, out);
+	for (const auto& [key, entries] : report_map) {
+	    out << key << " (" << get_file_timestamp(key) << "):\n";
+	    for (const auto& entry : entries) {
+		if (entry == key) continue;
+		out << "  " << entry << " (" << get_file_timestamp(entry) << ")\n";
+	    }
+	}
 	return;
     }
     if (!filename_active && geomname_active && !geometry_active) {
-	// Geomname binning only
 	std::vector<std::string> all_files;
 	for (const auto& fg : file_grps) {
 	    all_files.insert(all_files.end(), fg.second.begin(), fg.second.end());
 	}
-	auto name_bins = group_by_hash_map_with_scores(all_files, path2namehash, geomname_threshold);
-	report_single_level(name_bins, out);
+	auto name_bins = group_by_hash_map_newest_and_center(all_files, path2namehash, geomname_threshold);
+	report_single_level_newest_and_center(name_bins, out);
 	return;
     }
     if (!filename_active && !geomname_active && geometry_active) {
-	// Geometry binning only
 	std::vector<std::string> all_files;
 	for (const auto& fg : file_grps) {
 	    all_files.insert(all_files.end(), fg.second.begin(), fg.second.end());
 	}
-	auto geo_bins = group_by_hash_map_with_scores(all_files, path2geohash, geometry_threshold);
-	report_single_level(geo_bins, out);
+	auto geo_bins = group_by_hash_map_newest_and_center(all_files, path2geohash, geometry_threshold);
+	report_single_level_newest_and_center(geo_bins, out);
 	return;
     }
 
     // Depth 2
     if (filename_active && geomname_active && !geometry_active) {
-	// Filename binning, then geomname binning inside each filename bin
-	std::map<std::string, std::map<std::string, std::vector<std::pair<std::string, int>>>> report_map;
 	for (const auto& fg : file_grps) {
 	    std::vector<std::string> sorted = sort_by_mtime(fg.second);
-	    auto name_bins = group_by_hash_map_with_scores(sorted, path2namehash, geomname_threshold);
-	    if (!sorted.empty())
-		report_map[sorted.front()] = name_bins;
+	    auto name_bins = group_by_hash_map_newest_and_center(sorted, path2namehash, geomname_threshold);
+	    if (!sorted.empty()) {
+		out << sorted.front() << " (" << get_file_timestamp(sorted.front()) << "):\n";
+		report_single_level_newest_and_center(name_bins, out, true); // << INDENT HERE
+	    }
 	}
-	report_two_level(report_map, namehash2path, out);
 	return;
     }
     if (filename_active && !geomname_active && geometry_active) {
-	// Filename binning, then geometry binning inside each filename bin
-	std::map<std::string, std::map<std::string, std::vector<std::pair<std::string, int>>>> report_map;
 	for (const auto& fg : file_grps) {
 	    std::vector<std::string> sorted = sort_by_mtime(fg.second);
-	    auto geo_bins = group_by_hash_map_with_scores(sorted, path2geohash, geometry_threshold);
-	    if (!sorted.empty())
-		report_map[sorted.front()] = geo_bins;
+	    auto geo_bins = group_by_hash_map_newest_and_center(sorted, path2geohash, geometry_threshold);
+	    if (!sorted.empty()) {
+		out << sorted.front() << " (" << get_file_timestamp(sorted.front()) << "):\n";
+		report_single_level_newest_and_center(geo_bins, out, true); // << INDENT HERE
+	    }
 	}
-	report_two_level(report_map, geohash2path, out);
 	return;
     }
     if (!filename_active && geomname_active && geometry_active) {
-	// Geomname binning, then geometry binning inside each geomname bin
 	std::vector<std::string> all_files;
 	for (const auto& fg : file_grps) {
 	    all_files.insert(all_files.end(), fg.second.begin(), fg.second.end());
 	}
-	auto name_bins = group_by_hash_map_with_scores(all_files, path2namehash, geomname_threshold);
-	std::map<std::string, std::map<std::string, std::vector<std::pair<std::string, int>>>> report_map;
-	for (const auto& [key, entries] : name_bins) {
+	auto name_bins = group_by_hash_map_newest_and_center(all_files, path2namehash, geomname_threshold);
+	report_single_level_newest_and_center(name_bins, out);
+	for (const auto& [newest, entries] : name_bins) {
+	    out << std::left << std::setw(newest.size() + 1) << newest
+		<< get_file_timestamp(newest) << "\n";
 	    std::vector<std::string> geom_files;
-	    for (const auto& pair : entries) geom_files.push_back(pair.first);
-	    auto geo_bins = group_by_hash_map_with_scores(geom_files, path2geohash, geometry_threshold);
-	    report_map[key] = geo_bins;
+	    for (const auto& entry_tuple : entries) {
+		geom_files.push_back(std::get<0>(entry_tuple));
+	    }
+	    auto geo_bins = group_by_hash_map_newest_and_center(geom_files, path2geohash, geometry_threshold);
+	    report_single_level_newest_and_center(geo_bins, out, true); // << INDENT HERE
 	}
-	report_two_level(report_map, geohash2path, out);
 	return;
     }
 
     // --- Depth 3: filename+geomname+geometry ---
     if (filename_active && geomname_active && geometry_active) {
-	std::map<std::string, std::map<std::string, std::map<std::string, std::vector<std::pair<std::string, int>>>>>
-	    report_map;
 	for (const auto& fg : file_grps) {
 	    std::vector<std::string> sorted = sort_by_mtime(fg.second);
-	    auto name_bins = group_by_hash_map_with_scores(sorted, path2namehash, geomname_threshold);
-	    std::map<std::string, std::map<std::string, std::vector<std::pair<std::string, int>>>> level2_map;
-	    for (const auto& [key2, nb_entries] : name_bins) {
-		std::vector<std::string> geom_files;
-		for (const auto& pair : nb_entries) geom_files.push_back(pair.first);
-		auto geo_bins = group_by_hash_map_with_scores(geom_files, path2geohash, geometry_threshold);
-		level2_map[key2] = geo_bins;
+	    auto name_bins = group_by_hash_map_newest_and_center(sorted, path2namehash, geomname_threshold);
+	    if (!sorted.empty()) {
+		out << sorted.front() << " (" << get_file_timestamp(sorted.front()) << "):\n";
+		for (const auto& [newest, entries] : name_bins) {
+		    out << "  " << std::left << std::setw(newest.size() + 1) << newest
+			<< get_file_timestamp(newest) << "\n";
+		    std::vector<std::string> geom_files;
+		    for (const auto& entry_tuple : entries) {
+			geom_files.push_back(std::get<0>(entry_tuple));
+		    }
+		    auto geo_bins = group_by_hash_map_newest_and_center(geom_files, path2geohash, geometry_threshold);
+		    report_single_level_newest_and_center(geo_bins, out, true); // << INDENT HERE
+		}
 	    }
-	    if (!sorted.empty())
-		report_map[sorted.front()] = level2_map;
 	}
-	report_three_level(report_map, namehash2path, geohash2path, out);
 	return;
     }
 }
@@ -584,23 +693,26 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
     std::vector<FileInfo> file_infos;
     char cwd[MAXPATHLEN] = {0};
     bu_dir(cwd, MAXPATHLEN, BU_DIR_CURR, NULL);
-    for (int i = 0; i < argc; i++) {
-	if (bu_file_directory(argv[i]))  {
-	    std::string rstr(argv[i]);
-	    for (const auto& entry : std::filesystem::recursive_directory_iterator(rstr)) {
-		if (!entry.is_regular_file())
-		    continue;
-		if (!bu_path_match(bu_vls_cstr(&gopts.fpattern), entry.path().string().c_str(), 0))
-		    file_infos.push_back({entry.path().string(), get_file_mtime(entry.path().string())});
-	    }
-	    continue;
-	}
-	if (bu_file_exists(argv[i], NULL)) {
-	    file_infos.push_back({std::string(argv[i]), get_file_mtime(argv[i])});
-	}
-    }
+
     // If we got something via argv arguments, go with it.  If we have nothing, however,
     // iterate over the cwd with fpattern
+    if (argc && argv) {
+	for (int i = 0; i < argc; i++) {
+	    if (bu_file_directory(argv[i]))  {
+		std::string rstr(argv[i]);
+		for (const auto& entry : std::filesystem::recursive_directory_iterator(rstr)) {
+		    if (!entry.is_regular_file())
+			continue;
+		    if (!bu_path_match(bu_vls_cstr(&gopts.fpattern), entry.path().string().c_str(), 0))
+			file_infos.push_back({entry.path().string(), get_file_mtime(entry.path().string())});
+		}
+		continue;
+	    }
+	    if (bu_file_exists(argv[i], NULL)) {
+		file_infos.push_back({std::string(argv[i]), get_file_mtime(argv[i])});
+	    }
+	}
+    }
     if (!file_infos.size()) {
 	std::string rstr(cwd);
 	for (const auto& entry : std::filesystem::recursive_directory_iterator(rstr)) {
@@ -645,8 +757,6 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
     // Precompute hashes for all files and build reverse maps
     std::unordered_map<std::string, std::string> path2namehash;
     std::unordered_map<std::string, std::string> path2geohash;
-    std::unordered_map<std::string, std::string> namehash2path;
-    std::unordered_map<std::string, std::string> geohash2path;
 
     // TODO - right now, the material_head global in librt means doing this
     // hashing in parallel is a mess.  We'll default to serial hashing, but
@@ -670,11 +780,9 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 	// --- PHASE 2: Parallel hashing ---
 	if (gopts.geomname_threshold >= 0) {
 	    path2namehash = parallel_hash_db(dbs, objnames_hash_db, parallel_threads);
-	    for (const auto& kv : path2namehash) namehash2path[kv.second] = kv.first;
 	}
 	if (gopts.geometry_threshold >= 0) {
 	    path2geohash = parallel_hash_db(dbs, geometry_hash_db, parallel_threads);
-	    for (const auto& kv : path2geohash) geohash2path[kv.second] = kv.first;
 	}
 
 	// --- PHASE 3: Sequential teardown ---
@@ -691,7 +799,6 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 		if (dbip && db_dirbuild(dbip) == 0) {
 		    std::string hash = objnames_hash_db(dbip);
 		    path2namehash[path] = hash;
-		    namehash2path[hash] = path;
 		}
 		if (dbip) db_close(dbip);
 	    }
@@ -702,7 +809,6 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 		if (dbip && db_dirbuild(dbip) == 0) {
 		    std::string hash = geometry_hash_db(dbip);
 		    path2geohash[path] = hash;
-		    geohash2path[hash] = path;
 		}
 		if (dbip) db_close(dbip);
 	    }
@@ -716,13 +822,12 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 	if (fout) out = &fout;
     }
 
-    do_hierarchical_grouping(file_grps,
+    // Use binning/reporting logic: key is newest file, report both Δnewest_score and Δx̄center_score
+    do_hierarchical_grouping_newest_and_center(file_grps,
 	    gopts.geomname_threshold,
 	    gopts.geometry_threshold,
 	    path2namehash,
 	    path2geohash,
-	    namehash2path,
-	    geohash2path,
 	    *out);
 
     if (fout.is_open()) fout.close();
