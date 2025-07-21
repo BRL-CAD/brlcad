@@ -1,7 +1,12 @@
 set(LIBPKG_SOURCES pkg.c vers.c)
 
 # Note - libpkg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-brlcad_addlib(libpkg "${LIBPKG_SOURCES}" "${libpkg_deps}" "" "")
+set(PKG_LIBS
+  ${libpkg_deps}
+  ${WINSOCK_LIB}
+  )
+
+brlcad_addlib(libpkg "${LIBPKG_SOURCES}" "${PKG_LIBS}" "" "")
 set_target_properties(libpkg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 brlcad_adddata(tpkg.c sample_applications)
