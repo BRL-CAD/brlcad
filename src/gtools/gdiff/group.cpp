@@ -25,9 +25,14 @@
 #include <fstream>
 #include <regex>
 #include <set>
-#include <map>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <map>
+#include <iostream>
+#include <chrono>
+#include <iomanip>
+#include <algorithm>
 #include "tlsh.hpp"
 #include "levenshtein_ull.hpp"
 
@@ -42,7 +47,93 @@ extern "C" {
 
 #define TLSH_DEFAULT_THRESHOLD 30
 
-std::string
+struct FileInfo {
+    std::string path;
+    std::filesystem::file_time_type mtime;
+};
+
+std::filesystem::file_time_type get_file_mtime(const std::string& path) {
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    auto ftime = fs::last_write_time(path, ec);
+    if (ec) return fs::file_time_type::min();
+    return ftime;
+}
+
+// Returns YYYY-MM-DD string for a file path
+std::string get_file_timestamp(const std::string& path) {
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    auto ftime = fs::last_write_time(path, ec);
+    if (ec) return "(timestamp unavailable)";
+    using namespace std::chrono;
+    auto sctp = system_clock::now() + duration_cast<system_clock::duration>(ftime - fs::file_time_type::clock::now());
+    std::time_t cftime = system_clock::to_time_t(sctp);
+    char buf[16];
+    if (std::strftime(buf, sizeof(buf), "%Y-%m-%d", std::localtime(&cftime))) {
+	return std::string(buf);
+    }
+    return "(timestamp unavailable)";
+}
+
+// Helper: sort vector of paths by mtime, newest first
+std::vector<std::string> sort_by_mtime(const std::vector<std::string>& files) {
+    std::vector<FileInfo> finfos;
+    for (const auto& path : files) {
+	finfos.push_back({path, get_file_mtime(path)});
+    }
+    std::sort(finfos.begin(), finfos.end(),
+	    [](const FileInfo& a, const FileInfo& b) { return a.mtime > b.mtime; });
+    std::vector<std::string> sorted;
+    for (const auto& fi : finfos) sorted.push_back(fi.path);
+    return sorted;
+}
+
+// Filename binning: single-linkage clustering by base filename edit distance
+std::vector<std::vector<std::string>> cluster_by_filename(
+	const std::vector<std::string>& files,
+	int threshold)
+{
+    size_t N = files.size();
+    std::vector<std::vector<size_t>> adj(N);
+    auto basename = [](const std::string& path) {
+	namespace fs = std::filesystem;
+	return fs::path(path).filename().string();
+    };
+    for (size_t i = 0; i < N; ++i) {
+	for (size_t j = i+1; j < N; ++j) {
+	    size_t edist = bu_editdist(basename(files[i]).c_str(), basename(files[j]).c_str());
+	    if (edist < (size_t)threshold) {
+		adj[i].push_back(j);
+		adj[j].push_back(i);
+	    }
+	}
+    }
+    std::vector<std::vector<std::string>> result;
+    std::vector<bool> visited(N, false);
+    for (size_t i = 0; i < N; ++i) {
+	if (visited[i]) continue;
+	std::vector<size_t> cluster;
+	std::vector<size_t> stack{ i };
+	visited[i] = true;
+	while (!stack.empty()) {
+	    size_t cur = stack.back(); stack.pop_back();
+	    cluster.push_back(cur);
+	    for (size_t nb : adj[cur]) {
+		if (!visited[nb]) {
+		    visited[nb] = true;
+		    stack.push_back(nb);
+		}
+	    }
+	}
+	std::vector<std::string> c;
+	for (size_t idx : cluster) c.push_back(files[idx]);
+	result.push_back(c);
+    }
+    return result;
+}
+
+    std::string
 objnames_hash(const std::string &path)
 {
     // Per the TLSH algorithm, we need a minimum length and varied data to ensure
@@ -83,13 +174,12 @@ objnames_hash(const std::string &path)
     hasher.update((const unsigned char *)data.c_str(), data.length());
     hasher.final();
     std::string hstr = hasher.getHash();
-    std::cout << path << ": " <<  hstr << "\n";
 
     db_close(dbip);
     return hstr;
 }
 
-std::string
+    std::string
 geometry_hash(const std::string &path)
 {
     // open db
@@ -141,118 +231,302 @@ geometry_hash(const std::string &path)
     }
 
     if (ext.ext_buf)
-       	bu_free(ext.ext_buf, "final free of ext_buf");
+	bu_free(ext.ext_buf, "final free of ext_buf");
 
     tlsh::Tlsh hasher;
     hasher.update((const unsigned char *)ghashes.data(), ghashes.size() * sizeof(unsigned long long));
     hasher.final();
     std::string hstr = hasher.getHash();
-    std::cout << path << ": " <<  hstr << "\n";
 
     db_close(dbip);
     return hstr;
 }
 
-bool
-build_group(
-	std::map<std::string, std::unordered_set<std::string>> *groups,
-	std::map<std::string, std::set<std::string>> &hash2path,
-	int threshold
-	)
+// Agglomerative binning: group files by hash similarity, symmetric (single-linkage)
+struct FileHashInfo {
+    std::string path;
+    std::filesystem::file_time_type mtime;
+    std::string hash;
+};
+
+std::vector<std::vector<FileHashInfo>> cluster_by_hash(
+	const std::vector<FileHashInfo>& files,
+	int threshold)
 {
-    std::map<std::string, std::unordered_set<std::string>>::iterator g_it;
-    std::map<std::string, std::set<std::string>>::iterator h_it;
-    for (h_it = hash2path.begin(); h_it != hash2path.end(); ++h_it) {
-	std::string h = h_it->first;
-	tlsh::Tlsh h1;
-	h1.fromTlshStr(h_it->first.c_str());
-
-	//std::cout << "Processing " << h << "\n";
-	bool grouped = false;
-	std::string gkey;
-	int lscore = INT_MAX;
-	for (g_it = groups->begin(); g_it != groups->end(); ++g_it) {
-	    tlsh::Tlsh h2;
-	    h2.fromTlshStr(g_it->first.c_str());
-	    int score = h1.diff(h2);
-	    //std::cout << *hash2path[h].begin() << "->"  << *hash2path[g_it->first].begin() << ": " << score << "\n";
-	    if (score < threshold && score < lscore) {
-		std::string c = g_it->first;
-		gkey = c;
-		grouped = true;
-		lscore = score;
-	    }
-	}
-	if (grouped) {
-	    (*groups)[gkey].insert(h);
-	} else {
-	    (*groups)[h].insert(h);
-	}
-    }
-
-    return true;
-}
-
-void
-do_report(
-	const std::string &fname,
-	std::map<std::string, std::unordered_set<std::string>> &groups,
-	std::map<std::string, std::set<std::string>> &hash2paths
-	)
-{
-    if (fname.length())
-	std::cout << "Groupings within the " << fname << " subgroup\n";
-
-    std::map<std::string, std::unordered_set<std::string>>::iterator g_it;
-    for (g_it = groups.begin(); g_it != groups.end(); ++g_it) {
-	std::string ganchor = *hash2paths[g_it->first].begin();
-	tlsh::Tlsh h1;
-	h1.fromTlshStr(g_it->first.c_str());
-	if (g_it->second.size() == 1) {
-	    std::cout << ganchor << "\n";
-	    continue;
-	}
-	std::cout << ganchor << ":\n";
-	std::unordered_set<std::string>::iterator us_it;
-	for (us_it = g_it->second.begin(); us_it != g_it->second.end(); ++us_it) {
-	    tlsh::Tlsh h2;
-	    h2.fromTlshStr(us_it->c_str());
-	    std::set<std::string>::iterator hp_it;
-	    for (hp_it = hash2paths[*us_it].begin(); hp_it != hash2paths[*us_it].end(); ++hp_it) {
-		if (*hp_it == ganchor)
-		    continue;
-		int score = h1.diff(h2);
-		std::cout << "\t" << *hp_it << "(" << score << ")" << "\n";
+    size_t N = files.size();
+    std::vector<std::vector<size_t>> adj(N);
+    for (size_t i = 0; i < N; ++i) {
+	tlsh::Tlsh hi; hi.fromTlshStr(files[i].hash.c_str());
+	for (size_t j = i+1; j < N; ++j) {
+	    tlsh::Tlsh hj; hj.fromTlshStr(files[j].hash.c_str());
+	    int diff = hi.diff(hj);
+	    if (diff < threshold) {
+		adj[i].push_back(j);
+		adj[j].push_back(i);
 	    }
 	}
     }
+    std::vector<std::vector<FileHashInfo>> result;
+    std::vector<bool> visited(N, false);
+    for (size_t i = 0; i < N; ++i) {
+	if (visited[i]) continue;
+	std::vector<size_t> cluster;
+	std::vector<size_t> stack{ i };
+	visited[i] = true;
+	while (!stack.empty()) {
+	    size_t cur = stack.back(); stack.pop_back();
+	    cluster.push_back(cur);
+	    for (size_t nb : adj[cur]) {
+		if (!visited[nb]) {
+		    visited[nb] = true;
+		    stack.push_back(nb);
+		}
+	    }
+	}
+	std::vector<FileHashInfo> c;
+	for (size_t idx : cluster) c.push_back(files[idx]);
+	result.push_back(c);
+    }
+    return result;
 }
 
-void
-do_grouping(
-	const std::string &fname,
-	struct gdiff_group_opts *g_opts,
-	std::map<std::string, std::set<std::string>> *names,
-	std::map<std::string, std::set<std::string>> *geom
-	)
+// Given clusters, select newest as key, score others vs key
+std::map<std::string, std::vector<std::pair<std::string, int>>> bins_from_clusters(
+	const std::vector<std::vector<FileHashInfo>>& clusters)
 {
-    if (names && g_opts->geomname_threshold >= 0) {
-	std::map<std::string, std::unordered_set<std::string>> name_groups;
-	if (build_group(&name_groups, *names, g_opts->geomname_threshold))
-	    do_report(fname, name_groups, *names);
+    std::map<std::string, std::vector<std::pair<std::string, int>>> bins;
+    for (const auto& cluster : clusters) {
+	if (cluster.empty()) continue;
+	auto keyit = std::max_element(cluster.begin(), cluster.end(),
+		[](const FileHashInfo& a, const FileHashInfo& b) { return a.mtime < b.mtime; });
+	std::string key = keyit->path;
+	tlsh::Tlsh hkey; hkey.fromTlshStr(keyit->hash.c_str());
+	std::vector<std::pair<std::string, int>> entries;
+	entries.push_back({key, 0});
+	for (const auto& f : cluster) {
+	    if (f.path == key) continue;
+	    tlsh::Tlsh hcur; hcur.fromTlshStr(f.hash.c_str());
+	    int diff = hkey.diff(hcur);
+	    entries.push_back({f.path, diff});
+	}
+	// Sort leaf entries (not key) by mtime newest first
+	std::vector<std::pair<std::string, int>> sorted_leaves;
+	std::vector<FileInfo> leaf_infos;
+	for (const auto& e : entries) {
+	    if (e.first == key) continue;
+	    leaf_infos.push_back({e.first, get_file_mtime(e.first)});
+	}
+	std::sort(leaf_infos.begin(), leaf_infos.end(),
+		[](const FileInfo& a, const FileInfo& b) { return a.mtime > b.mtime; });
+	for (const auto& lfi : leaf_infos) {
+	    for (const auto& e : entries) {
+		if (e.first == lfi.path) {
+		    sorted_leaves.push_back(e);
+		    break;
+		}
+	    }
+	}
+	std::vector<std::pair<std::string, int>> bin_entries;
+	bin_entries.push_back({key, 0});
+	bin_entries.insert(bin_entries.end(), sorted_leaves.begin(), sorted_leaves.end());
+	bins[key] = bin_entries;
     }
+    return bins;
+}
 
-    if (geom && g_opts->geometry_threshold >= 0) {
-	std::map<std::string, std::unordered_set<std::string>> geom_groups;
-	if (build_group(&geom_groups, *geom, g_opts->geometry_threshold))
-	    do_report(fname, geom_groups, *names);
+std::map<std::string, std::vector<std::pair<std::string, int>>> group_by_hash_map_with_scores(
+	const std::vector<std::string>& files,
+	const std::unordered_map<std::string, std::string>& path2hash,
+	int threshold)
+{
+    std::vector<FileHashInfo> infos;
+    for (const auto& path : files) {
+	infos.push_back({path, get_file_mtime(path), path2hash.at(path)});
+    }
+    auto clusters = cluster_by_hash(infos, threshold);
+    return bins_from_clusters(clusters);
+}
+
+int find_similarity_score(const std::vector<std::pair<std::string, int>>& entries, const std::string& key) {
+    for (const auto& [entry, score] : entries) {
+	if (entry == key) return score;
+    }
+    return 0;
+}
+
+void report_single_level(const std::map<std::string, std::vector<std::pair<std::string, int>>>& groups) {
+    for (const auto& [category, entries] : groups) {
+	std::cout << category << " (" << get_file_timestamp(category) << "):\n";
+	for (const auto& [entry, score] : entries) {
+	    if (entry == category) continue;
+	    std::cout << "\t" << entry << " [score: " << score << "]"
+		<< " (" << get_file_timestamp(entry) << ")\n";
+	}
     }
 }
 
-int
+void report_two_level(const std::map<std::string, std::map<std::string, std::vector<std::pair<std::string, int>>>>& groups,
+	const std::unordered_map<std::string, std::string>& hash2path) {
+    for (const auto& [cat1, cat2map] : groups) {
+	std::cout << cat1 << " (" << get_file_timestamp(cat1) << "):\n";
+	for (const auto& [cat2, entries] : cat2map) {
+	    std::string cat2_label = hash2path.count(cat2) ? hash2path.at(cat2) : cat2;
+	    int score = find_similarity_score(entries, cat2_label);
+	    std::cout << "\t" << cat2_label << " [score: " << score << "]"
+		<< " (" << get_file_timestamp(cat2_label) << "):\n";
+	    for (const auto& [entry, e_score] : entries) {
+		if (entry == cat2_label) continue;
+		std::cout << "\t\t" << entry << " [score: " << e_score << "]"
+		    << " (" << get_file_timestamp(entry) << ")\n";
+	    }
+	}
+    }
+}
+
+void report_three_level(const std::map<std::string, std::map<std::string, std::map<std::string, std::vector<std::pair<std::string, int>>>>>& groups,
+	const std::unordered_map<std::string, std::string>& namehash2path,
+	const std::unordered_map<std::string, std::string>& geohash2path) {
+    for (const auto& [cat1, cat2map] : groups) {
+	std::cout << cat1 << " (" << get_file_timestamp(cat1) << "):\n";
+	for (const auto& [cat2, cat3map] : cat2map) {
+	    std::string cat2_label = namehash2path.count(cat2) ? namehash2path.at(cat2) : cat2;
+	    std::cout << "\t" << cat2_label << " (" << get_file_timestamp(cat2_label) << "):\n";
+	    for (const auto& [cat3, entries] : cat3map) {
+		std::string cat3_label = geohash2path.count(cat3) ? geohash2path.at(cat3) : cat3;
+		int score = find_similarity_score(entries, cat3_label);
+		std::cout << "\t\t" << cat3_label << " [score: " << score << "]"
+		    << " (" << get_file_timestamp(cat3_label) << "):\n";
+		for (const auto& [entry, e_score] : entries) {
+		    if (entry == cat3_label) continue;
+		    std::cout << "\t\t\t" << entry << " [score: " << e_score << "]"
+			<< " (" << get_file_timestamp(entry) << ")\n";
+		}
+	    }
+	}
+    }
+}
+
+void do_hierarchical_grouping(
+	const std::unordered_map<std::string, std::vector<std::string>> &file_grps,
+	int geomname_threshold,
+	int geometry_threshold,
+	const std::unordered_map<std::string, std::string> &path2namehash,
+	const std::unordered_map<std::string, std::string> &path2geohash,
+	const std::unordered_map<std::string, std::string> &namehash2path,
+	const std::unordered_map<std::string, std::string> &geohash2path)
+{
+    // Determine which thresholds are active
+    bool filename_active = (file_grps.size() > 1);
+    bool geomname_active = (geomname_threshold >= 0);
+    bool geometry_active = (geometry_threshold >= 0);
+
+    // --- Depth 1: Only filename OR only geomname OR only geometry ---
+    if (filename_active && !geomname_active && !geometry_active) {
+	// Filename binning only
+	std::map<std::string, std::vector<std::pair<std::string, int>>> report_map;
+	for (const auto& fg : file_grps) {
+	    std::vector<std::string> sorted = sort_by_mtime(fg.second);
+	    if (!sorted.empty()) {
+		std::string key = sorted.front();
+		std::vector<std::pair<std::string, int>> entries;
+		entries.push_back({key, 0});
+		for (size_t i = 1; i < sorted.size(); ++i)
+		    entries.push_back({sorted[i], 0});
+		report_map[key] = entries;
+	    }
+	}
+	report_single_level(report_map);
+	return;
+    }
+    if (!filename_active && geomname_active && !geometry_active) {
+	// Geomname binning only
+	std::vector<std::string> all_files;
+	for (const auto& fg : file_grps) {
+	    all_files.insert(all_files.end(), fg.second.begin(), fg.second.end());
+	}
+	auto name_bins = group_by_hash_map_with_scores(all_files, path2namehash, geomname_threshold);
+	report_single_level(name_bins);
+	return;
+    }
+    if (!filename_active && !geomname_active && geometry_active) {
+	// Geometry binning only
+	std::vector<std::string> all_files;
+	for (const auto& fg : file_grps) {
+	    all_files.insert(all_files.end(), fg.second.begin(), fg.second.end());
+	}
+	auto geo_bins = group_by_hash_map_with_scores(all_files, path2geohash, geometry_threshold);
+	report_single_level(geo_bins);
+	return;
+    }
+
+    // --- Depth 2: filename+geomname OR filename+geometry OR geomname+geometry ---
+    if (filename_active && geomname_active && !geometry_active) {
+	// Filename binning, then geomname binning inside each filename bin
+	std::map<std::string, std::map<std::string, std::vector<std::pair<std::string, int>>>> report_map;
+	for (const auto& fg : file_grps) {
+	    std::vector<std::string> sorted = sort_by_mtime(fg.second);
+	    auto name_bins = group_by_hash_map_with_scores(sorted, path2namehash, geomname_threshold);
+	    if (!sorted.empty())
+		report_map[sorted.front()] = name_bins;
+	}
+	report_two_level(report_map, namehash2path);
+	return;
+    }
+    if (filename_active && !geomname_active && geometry_active) {
+	// Filename binning, then geometry binning inside each filename bin
+	std::map<std::string, std::map<std::string, std::vector<std::pair<std::string, int>>>> report_map;
+	for (const auto& fg : file_grps) {
+	    std::vector<std::string> sorted = sort_by_mtime(fg.second);
+	    auto geo_bins = group_by_hash_map_with_scores(sorted, path2geohash, geometry_threshold);
+	    if (!sorted.empty())
+		report_map[sorted.front()] = geo_bins;
+	}
+	report_two_level(report_map, geohash2path);
+	return;
+    }
+    if (!filename_active && geomname_active && geometry_active) {
+	// Geomname binning, then geometry binning inside each geomname bin
+	std::vector<std::string> all_files;
+	for (const auto& fg : file_grps) {
+	    all_files.insert(all_files.end(), fg.second.begin(), fg.second.end());
+	}
+	auto name_bins = group_by_hash_map_with_scores(all_files, path2namehash, geomname_threshold);
+	std::map<std::string, std::map<std::string, std::vector<std::pair<std::string, int>>>> report_map;
+	for (const auto& [key, entries] : name_bins) {
+	    std::vector<std::string> geom_files;
+	    for (const auto& pair : entries) geom_files.push_back(pair.first);
+	    auto geo_bins = group_by_hash_map_with_scores(geom_files, path2geohash, geometry_threshold);
+	    report_map[key] = geo_bins;
+	}
+	report_two_level(report_map, geohash2path);
+	return;
+    }
+
+    // --- Depth 3: filename+geomname+geometry ---
+    if (filename_active && geomname_active && geometry_active) {
+	std::map<std::string, std::map<std::string, std::map<std::string, std::vector<std::pair<std::string, int>>>>>
+	    report_map;
+	for (const auto& fg : file_grps) {
+	    std::vector<std::string> sorted = sort_by_mtime(fg.second);
+	    auto name_bins = group_by_hash_map_with_scores(sorted, path2namehash, geomname_threshold);
+	    std::map<std::string, std::map<std::string, std::vector<std::pair<std::string, int>>>> level2_map;
+	    for (const auto& [key2, nb_entries] : name_bins) {
+		std::vector<std::string> geom_files;
+		for (const auto& pair : nb_entries) geom_files.push_back(pair.first);
+		auto geo_bins = group_by_hash_map_with_scores(geom_files, path2geohash, geometry_threshold);
+		level2_map[key2] = geo_bins;
+	    }
+	    if (!sorted.empty())
+		report_map[sorted.front()] = level2_map;
+	}
+	report_three_level(report_map, namehash2path, geohash2path);
+	return;
+    }
+}
+
+    int
 gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 {
-    // If we have no patterns, there's nothing to group
     if (!argc || !argv)
 	return BRLCAD_OK;
 
@@ -264,124 +538,81 @@ gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 	bu_vls_sprintf(&gopts.fpattern, "%s", bu_vls_cstr(&g_opts->fpattern));
     }
 
-    // Establish sane defaults
     if (gopts.filename_threshold == -1 && gopts.geomname_threshold == -1 &&
 	    gopts.geometry_threshold == -1) {
-	// If no criteria are enabled, at least turn on the geometry
-	// object name check.
 	gopts.geomname_threshold = TLSH_DEFAULT_THRESHOLD;
     }
     if (!bu_vls_strlen(&gopts.fpattern))
 	bu_vls_sprintf(&gopts.fpattern, "*.g");
 
-    // Build a set of file paths from the argv
-    // 1.  Process the command line arguments into a set to guarantee we only
-    // include each path once, since the user may supply arbitrary arguments as
-    // inputs.
-    std::set<std::string> files_set;
+    // Build a vector of file paths, sorted by mtime
+    std::vector<FileInfo> file_infos;
     char cwd[MAXPATHLEN] = {0};
     bu_dir(cwd, MAXPATHLEN, BU_DIR_CURR, NULL);
     for (int i = 0; i < argc; i++) {
-	// 1.  If we've been given a directory, do a recursive hunt for a
-	// pattern match.
 	if (bu_file_directory(argv[i]))  {
 	    std::string rstr(argv[i]);
 	    for (const auto& entry : std::filesystem::recursive_directory_iterator(rstr)) {
 		if (!entry.is_regular_file())
 		    continue;
 		if (!bu_path_match(bu_vls_cstr(&gopts.fpattern), entry.path().string().c_str(), 0))
-		    //std::cout << "matched " <<  entry.path().string() << "\n";
-		    files_set.insert(entry.path().string());
+		    file_infos.push_back({entry.path().string(), get_file_mtime(entry.path().string())});
 	    }
 	    continue;
 	}
-
-	// 2.  If we've been given a fully qualified path, just store that
 	if (bu_file_exists(argv[i], NULL)) {
-	    //std::cout << "adding " << argv[i] << "\n";
-	    files_set.insert(std::string(argv[i]));
+	    file_infos.push_back({std::string(argv[i]), get_file_mtime(argv[i])});
 	}
     }
+    std::sort(file_infos.begin(), file_infos.end(),
+	    [](const FileInfo& a, const FileInfo& b) { return a.mtime > b.mtime; });
 
-    // 2. Convert to vector for sorting by modification time (newest first)
-    std::vector<std::string> files(files_set.begin(), files_set.end());
-    std::sort(files.begin(), files.end(),
-        [](const std::string& a, const std::string& b) {
-            namespace fs = std::filesystem;
-            std::error_code ec_a, ec_b;
-            auto time_a = fs::last_write_time(fs::path(a), ec_a);
-            auto time_b = fs::last_write_time(fs::path(b), ec_b);
-            // If either stat fails, treat as oldest
-            if (ec_a) return false;
-            if (ec_b) return true;
-            return time_a > time_b; // newest first
-        }
-    );
+    std::vector<std::string> files;
+    for (const auto& fi : file_infos) files.push_back(fi.path);
 
-    // If we have been instructed to, group files by filename
-    std::map<std::string, std::set<std::string>> file_grps;
-    std::map<std::string, std::set<std::string>>::iterator fg_it;
-    std::vector<std::string>::iterator s_it;
-    // NOTE - we make this unique binning for now and only put it in the
-    // closest match, but maybe we want to do more?  If an incoming name is
-    // close to more than one key where those keys were individually distinct,
-    // we may want it in both bins for testing purposes...
+    // Filename binning using base filename edit distance, or single group if not active
+    std::unordered_map<std::string, std::vector<std::string>> file_grps;
     if (gopts.filename_threshold >= 0) {
-	for (s_it = files.begin(); s_it != files.end(); ++s_it) {
-	    const char *s = s_it->c_str();
-	    bool assigned = false;
-	    size_t ledit = LONG_MAX;
-	    std::string key;
-	    for (fg_it = file_grps.begin(); fg_it != file_grps.end(); ++fg_it) {
-		const char *k = fg_it->first.c_str();
-		size_t edist = bu_editdist(s, k);
-		if (edist < (size_t)gopts.filename_threshold && edist < ledit) {
-		    key = fg_it->first;
-		    assigned = true;
-		    ledit = edist;
-		}
-	    }
-	    if (!assigned) {
-		file_grps[key].insert(*s_it);
-	    } else {
-		file_grps[*s_it].insert(*s_it);
-	    }
+	auto clusters = cluster_by_filename(files, gopts.filename_threshold);
+	for (const auto& cluster : clusters) {
+	    std::vector<std::string> sorted = sort_by_mtime(cluster);
+	    if (!sorted.empty())
+		file_grps[sorted.front()] = cluster;
 	}
     } else {
-	// No filename grouping - just add everything with an empty string key;
-	file_grps[std::string("")] = std::set<std::string>(files.begin(), files.end());
+	std::vector<std::string> sorted = sort_by_mtime(files);
+	if (!sorted.empty())
+	    file_grps[sorted.front()] = files;
     }
 
-    // Hash each file
-    std::map<std::string, std::string> path2namehash;
-    std::map<std::string, std::string> path2geohash;
-    std::map<std::string, std::set<std::string>> namehash2path;
-    std::map<std::string, std::set<std::string>> geohash2path;
-    for (s_it = files.begin(); s_it != files.end(); ++s_it) {
-	//std::cout << "hashing " << *s_it << "\n";
+    // Precompute hashes for all files and build reverse maps
+    std::unordered_map<std::string, std::string> path2namehash;
+    std::unordered_map<std::string, std::string> path2geohash;
+    std::unordered_map<std::string, std::string> namehash2path;
+    std::unordered_map<std::string, std::string> geohash2path;
+    for (const auto& fpath : files) {
 	if (gopts.geomname_threshold >= 0) {
-	    std::string dhash = objnames_hash(*s_it);
-	    std::string fpath(*s_it);
+	    std::string dhash = objnames_hash(fpath);
 	    path2namehash[fpath] = dhash;
-	    namehash2path[dhash].insert(fpath);
+	    namehash2path[dhash] = fpath;
 	}
 	if (gopts.geometry_threshold >= 0) {
-	    std::string dhash = geometry_hash(*s_it);
-	    std::string fpath(*s_it);
+	    std::string dhash = geometry_hash(fpath);
 	    path2geohash[fpath] = dhash;
-	    geohash2path[dhash].insert(fpath);
+	    geohash2path[dhash] = fpath;
 	}
-
     }
 
-    // Compare hashes and find similarity groupings
-    for (fg_it = file_grps.begin(); fg_it != file_grps.end(); ++fg_it) {
-	do_grouping(fg_it->first, &gopts, &namehash2path, &geohash2path);
-    }
+    do_hierarchical_grouping(file_grps,
+	    gopts.geomname_threshold,
+	    gopts.geometry_threshold,
+	    path2namehash,
+	    path2geohash,
+	    namehash2path,
+	    geohash2path);
 
     return BRLCAD_OK;
 }
-
 
 // Local Variables:
 // tab-width: 8
