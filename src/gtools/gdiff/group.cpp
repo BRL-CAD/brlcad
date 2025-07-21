@@ -22,7 +22,6 @@
 
 #include <exception>
 #include <filesystem>
-#include <functional>
 #include <fstream>
 #include <set>
 #include <unordered_map>
@@ -35,6 +34,7 @@
 #include <algorithm>
 #include <thread>
 #include <mutex>
+#include <functional>
 #include "tlsh.hpp"
 #include "levenshtein_ull.hpp"
 
@@ -43,11 +43,54 @@ extern "C" {
 #include "bu/hash.h"
 #include "bu/file.h"
 #include "bu/path.h"
-#include "rt/db_io.h"
+#include "rt/db_io.h" // for db_read
 #include "./gdiff.h"
 }
 
 #define TLSH_DEFAULT_THRESHOLD 30
+
+struct FileInfo {
+    std::string path;
+    std::filesystem::file_time_type mtime;
+};
+
+std::filesystem::file_time_type get_file_mtime(const std::string& path) {
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    auto ftime = fs::last_write_time(path, ec);
+    if (ec) return fs::file_time_type::min();
+    return ftime;
+}
+
+// Returns YYYY-MM-DD string for a file path
+std::string get_file_timestamp(const std::string& path) {
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    auto ftime = fs::last_write_time(path, ec);
+    if (ec) return "(timestamp unavailable)";
+    using namespace std::chrono;
+    auto sctp = std::chrono::system_clock::now() +
+	std::chrono::duration_cast<std::chrono::system_clock::duration>(ftime - fs::file_time_type::clock::now());
+    std::time_t cftime = std::chrono::system_clock::to_time_t(sctp);
+    char buf[16];
+    if (std::strftime(buf, sizeof(buf), "%Y-%m-%d", std::localtime(&cftime))) {
+	return std::string(buf);
+    }
+    return "(timestamp unavailable)";
+}
+
+// Helper: sort vector of paths by mtime, newest first
+std::vector<std::string> sort_by_mtime(const std::vector<std::string>& files) {
+    std::vector<FileInfo> finfos;
+    for (const auto& path : files) {
+	finfos.push_back({path, get_file_mtime(path)});
+    }
+    std::sort(finfos.begin(), finfos.end(),
+	    [](const FileInfo& a, const FileInfo& b) { return a.mtime > b.mtime; });
+    std::vector<std::string> sorted;
+    for (const auto& fi : finfos) sorted.push_back(fi.path);
+    return sorted;
+}
 
 // BK-tree node and clustering
 struct BKTreeNode {
@@ -132,84 +175,16 @@ class BKTree {
 	}
 };
 
-struct FileInfo {
+// ------------------------------------
+// Hashing routines, split for parallelism
+struct DBWithPath {
     std::string path;
-    std::filesystem::file_time_type mtime;
+    struct db_i *dbip;
 };
 
-std::filesystem::file_time_type get_file_mtime(const std::string& path) {
-    namespace fs = std::filesystem;
-    std::error_code ec;
-    auto ftime = fs::last_write_time(path, ec);
-    if (ec) return fs::file_time_type::min();
-    return ftime;
-}
-
-std::string get_file_timestamp(const std::string& path) {
-    namespace fs = std::filesystem;
-    std::error_code ec;
-    auto ftime = fs::last_write_time(path, ec);
-    if (ec) return "(timestamp unavailable)";
-    using namespace std::chrono;
-    auto sctp = std::chrono::system_clock::now() +
-	std::chrono::duration_cast<std::chrono::system_clock::duration>(ftime - fs::file_time_type::clock::now());
-    std::time_t cftime = std::chrono::system_clock::to_time_t(sctp);
-    char buf[16];
-    if (std::strftime(buf, sizeof(buf), "%Y-%m-%d", std::localtime(&cftime))) {
-	return std::string(buf);
-    }
-    return "(timestamp unavailable)";
-}
-
-std::vector<std::string> sort_by_mtime(const std::vector<std::string>& files) {
-    std::vector<FileInfo> finfos;
-    for (const auto& path : files) {
-	finfos.push_back({path, get_file_mtime(path)});
-    }
-    std::sort(finfos.begin(), finfos.end(),
-	    [](const FileInfo& a, const FileInfo& b) { return a.mtime > b.mtime; });
-    std::vector<std::string> sorted;
-    for (const auto& fi : finfos) sorted.push_back(fi.path);
-    return sorted;
-}
-
-// ------------------------------------
-// Parallel hash calculation (default nthreads=1 for safety)
-template<typename HashFunc>
-std::unordered_map<std::string, std::string> parallel_hash(const std::vector<std::string>& paths, HashFunc func, size_t nthreads=1) {
-    std::unordered_map<std::string, std::string> result;
-    std::mutex res_mutex;
-    size_t total = paths.size();
-    std::vector<std::thread> threads;
-    std::atomic<size_t> idx{0};
-    auto worker = [&]() {
-	while (true) {
-	    size_t i = idx.fetch_add(1);
-	    if (i >= total) break;
-	    std::string hash = func(paths[i]);
-	    if (!hash.empty()) {
-		std::lock_guard<std::mutex> lock(res_mutex);
-		result[paths[i]] = hash;
-	    }
-	}
-    };
-    for (size_t t = 0; t < nthreads; ++t) {
-	threads.emplace_back(worker);
-    }
-    for (auto& th : threads) th.join();
-    return result;
-}
-
-// ------------------------------------
-// Geometry and object name hash functions
-std::string objnames_hash(const std::string &path) {
-    struct db_i *dbip = db_open(path.c_str(), DB_OPEN_READONLY);
+std::string objnames_hash_db(struct db_i *dbip) {
     if (!dbip)
 	return std::string();
-    if (db_dirbuild(dbip) < 0) {
-	db_close(dbip);
-	return std::string();
-    }
     db_update_nref(dbip, &rt_uniresource);
     std::set<std::string> onames;
     struct directory *dp;
@@ -221,23 +196,26 @@ std::string objnames_hash(const std::string &path) {
 	onames.insert(std::string(dp->d_namep));
     } FOR_ALL_DIRECTORY_END;
     tlsh::Tlsh hasher;
-    std::string data;
+
+    // Per the TLSH algorithm, we need a minimum length and varied data to ensure
+    // a non-zero hash.  If we get a short set of names we might just end up
+    // generating a zero instead of something more useful for comparison, so try
+    // seeding the data with a bit of string entropy.  Since this will be consistent
+    // for all inputs the intent is that any differences in the output hashes will
+    // reflect differences in the actual user data (even if the has doesn't exactly
+    // correspond to the algorithmic TLSH hash for that binary input.)
+    static const std::string tls_seed = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=";
+    std::string data = tls_seed;
     for (const auto& o : onames) data.append(o);
     hasher.update((const unsigned char *)data.c_str(), data.length());
     hasher.final();
     std::string hstr = hasher.getHash();
-    db_close(dbip);
     return hstr;
 }
 
-std::string geometry_hash(const std::string &path) {
-    struct db_i *dbip = db_open(path.c_str(), DB_OPEN_READONLY);
+std::string geometry_hash_db(struct db_i *dbip) {
     if (!dbip)
 	return std::string();
-    if (db_dirbuild(dbip) < 0) {
-	db_close(dbip);
-	return std::string();
-    }
     db_update_nref(dbip, &rt_uniresource);
     std::map<std::string, struct directory *> objs;
     struct directory *dp;
@@ -271,8 +249,34 @@ std::string geometry_hash(const std::string &path) {
     hasher.update((const unsigned char *)ghashes.data(), ghashes.size() * sizeof(unsigned long long));
     hasher.final();
     std::string hstr = hasher.getHash();
-    db_close(dbip);
     return hstr;
+}
+
+// ------------------------------------
+// Parallel hash calculation (true parallelism)
+template<typename HashFunc>
+std::unordered_map<std::string, std::string> parallel_hash_db(const std::vector<DBWithPath>& dbs, HashFunc func, size_t nthreads=4) {
+    std::unordered_map<std::string, std::string> result;
+    std::mutex res_mutex;
+    size_t total = dbs.size();
+    std::vector<std::thread> threads;
+    std::atomic<size_t> idx{0};
+    auto worker = [&]() {
+	while (true) {
+	    size_t i = idx.fetch_add(1);
+	    if (i >= total) break;
+	    std::string hash = func(dbs[i].dbip);
+	    if (!hash.empty()) {
+		std::lock_guard<std::mutex> lock(res_mutex);
+		result[dbs[i].path] = hash;
+	    }
+	}
+    };
+    for (size_t t = 0; t < nthreads; ++t) {
+	threads.emplace_back(worker);
+    }
+    for (auto& th : threads) th.join();
+    return result;
 }
 
 // ------------------------------------
@@ -380,7 +384,7 @@ int find_similarity_score(const std::vector<std::pair<std::string, int>>& entrie
 }
 
 // ------------------------------------
-// Reporting (optional file output)
+// Reporting
 void report_single_level(const std::map<std::string, std::vector<std::pair<std::string, int>>>& groups, std::ostream& out) {
     for (const auto& [category, entries] : groups) {
 	out << category << " (" << get_file_timestamp(category) << "):\n";
@@ -447,12 +451,14 @@ void do_hierarchical_grouping(
 	const std::unordered_map<std::string, std::string> &geohash2path,
 	std::ostream& out)
 {
+    // Determine which thresholds are active
     bool filename_active = (file_grps.size() > 1);
     bool geomname_active = (geomname_threshold >= 0);
     bool geometry_active = (geometry_threshold >= 0);
 
-    // Depth 1
+    // --- Depth 1: Only filename OR only geomname OR only geometry ---
     if (filename_active && !geomname_active && !geometry_active) {
+	// Filename binning only
 	std::map<std::string, std::vector<std::pair<std::string, int>>> report_map;
 	for (const auto& fg : file_grps) {
 	    std::vector<std::string> sorted = sort_by_mtime(fg.second);
@@ -469,6 +475,7 @@ void do_hierarchical_grouping(
 	return;
     }
     if (!filename_active && geomname_active && !geometry_active) {
+	// Geomname binning only
 	std::vector<std::string> all_files;
 	for (const auto& fg : file_grps) {
 	    all_files.insert(all_files.end(), fg.second.begin(), fg.second.end());
@@ -478,6 +485,7 @@ void do_hierarchical_grouping(
 	return;
     }
     if (!filename_active && !geomname_active && geometry_active) {
+	// Geometry binning only
 	std::vector<std::string> all_files;
 	for (const auto& fg : file_grps) {
 	    all_files.insert(all_files.end(), fg.second.begin(), fg.second.end());
@@ -489,6 +497,7 @@ void do_hierarchical_grouping(
 
     // Depth 2
     if (filename_active && geomname_active && !geometry_active) {
+	// Filename binning, then geomname binning inside each filename bin
 	std::map<std::string, std::map<std::string, std::vector<std::pair<std::string, int>>>> report_map;
 	for (const auto& fg : file_grps) {
 	    std::vector<std::string> sorted = sort_by_mtime(fg.second);
@@ -500,6 +509,7 @@ void do_hierarchical_grouping(
 	return;
     }
     if (filename_active && !geomname_active && geometry_active) {
+	// Filename binning, then geometry binning inside each filename bin
 	std::map<std::string, std::map<std::string, std::vector<std::pair<std::string, int>>>> report_map;
 	for (const auto& fg : file_grps) {
 	    std::vector<std::string> sorted = sort_by_mtime(fg.second);
@@ -511,6 +521,7 @@ void do_hierarchical_grouping(
 	return;
     }
     if (!filename_active && geomname_active && geometry_active) {
+	// Geomname binning, then geometry binning inside each geomname bin
 	std::vector<std::string> all_files;
 	for (const auto& fg : file_grps) {
 	    all_files.insert(all_files.end(), fg.second.begin(), fg.second.end());
@@ -527,7 +538,7 @@ void do_hierarchical_grouping(
 	return;
     }
 
-    // Depth 3
+    // --- Depth 3: filename+geomname+geometry ---
     if (filename_active && geomname_active && geometry_active) {
 	std::map<std::string, std::map<std::string, std::map<std::string, std::vector<std::pair<std::string, int>>>>>
 	    report_map;
@@ -572,6 +583,7 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
     if (!bu_vls_strlen(&gopts.fpattern))
 	bu_vls_sprintf(&gopts.fpattern, "*.g");
 
+    // Build a vector of file paths, sorted by mtime
     std::vector<FileInfo> file_infos;
     char cwd[MAXPATHLEN] = {0};
     bu_dir(cwd, MAXPATHLEN, BU_DIR_CURR, NULL);
@@ -596,6 +608,7 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
     std::vector<std::string> files;
     for (const auto& fi : file_infos) files.push_back(fi.path);
 
+    // Filename binning using base filename edit distance, or single group if not active
     std::unordered_map<std::string, std::vector<std::string>> file_grps;
     if (gopts.filename_threshold >= 0) {
 	auto basename = [](const std::string& path) {
@@ -620,18 +633,38 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 	    file_grps[sorted.front()] = files;
     }
 
+    // Precompute hashes for all files and build reverse maps
     std::unordered_map<std::string, std::string> path2namehash;
     std::unordered_map<std::string, std::string> path2geohash;
     std::unordered_map<std::string, std::string> namehash2path;
     std::unordered_map<std::string, std::string> geohash2path;
 
+    // --- PHASE 1: Sequential setup ---
+    std::vector<DBWithPath> dbs;
+    std::mutex db_mutex;
+    for (const auto& path : files) {
+	std::lock_guard<std::mutex> lock(db_mutex);
+	struct db_i* dbip = db_open(path.c_str(), DB_OPEN_READONLY);
+	if (dbip && db_dirbuild(dbip) == 0) {
+	    dbs.push_back({path, dbip});
+	}
+    }
+
+    // --- PHASE 2: Parallel hashing ---
     if (gopts.geomname_threshold >= 0) {
-	path2namehash = parallel_hash(files, objnames_hash, 1);
+	path2namehash = parallel_hash_db(dbs, objnames_hash_db, 4);
 	for (const auto& kv : path2namehash) namehash2path[kv.second] = kv.first;
     }
     if (gopts.geometry_threshold >= 0) {
-	path2geohash = parallel_hash(files, geometry_hash, 1);
+	path2geohash = parallel_hash_db(dbs, geometry_hash_db, 4);
 	for (const auto& kv : path2geohash) geohash2path[kv.second] = kv.first;
+    }
+
+    // --- PHASE 3: Sequential teardown ---
+    for (auto& db : dbs) {
+	std::lock_guard<std::mutex> lock(db_mutex);
+	db_close(db.dbip);
+	db.dbip = nullptr;
     }
 
     std::ostream* out = &std::cout;
