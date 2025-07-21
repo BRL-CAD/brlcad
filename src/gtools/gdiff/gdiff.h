@@ -88,8 +88,9 @@ struct gdiff_group_opts {
     long geomname_threshold; // tlsh threshold below which we group based on object names
     long geometry_threshold; // tlsh threshold below which we group based on how different geometry contents are (object level)
     struct bu_vls fpattern;  // Pattern match to use for a recursive file search
+    struct bu_vls ofile;     // Optional output file
 };
-#define GDIFF_GROUP_OPTS_DEFAULT {-1, -1, -1, BU_VLS_INIT_ZERO}
+#define GDIFF_GROUP_OPTS_DEFAULT {-1, -1, -1, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO}
 
 extern int
 gdiff_group(int argc, const char **argv, struct gdiff_group_opts *o);
