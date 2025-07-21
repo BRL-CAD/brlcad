@@ -108,6 +108,36 @@ extern "C" {
 #define TLSH_DEFAULT_THRESHOLD 30
 
 // ============================================================================
+// TIME CONVERSION AND PATH DISPLAY HELPERS
+// ============================================================================
+
+/* 
+ * Helper: convert std::filesystem::file_time_type to std::time_t portably.
+ * This is needed because file_time_type may use an implementation-defined clock.
+ */
+inline std::time_t fs_time_to_time_t(std::filesystem::file_time_type ft) {
+    using namespace std::chrono;
+    auto sctp = time_point_cast<system_clock::duration>(
+	    ft - std::filesystem::file_time_type::clock::now()
+	    + system_clock::now()
+	    );
+    return system_clock::to_time_t(sctp);
+}
+
+/*
+ * Helper: Get a display path string, relative if requested, otherwise canonical/absolute.
+ */
+static std::string get_display_path(const std::string& canon, bool show_relative) {
+    if (show_relative) {
+	std::error_code ec;
+	auto rel = std::filesystem::relative(canon, std::filesystem::current_path(), ec);
+	if (!ec)
+	    return rel.string();
+    }
+    return canon;
+}
+
+// ============================================================================
 // FILE AND PATH UTILITIES
 // ============================================================================
 
@@ -125,6 +155,22 @@ std::filesystem::file_time_type file_mtime(const std::string& path) {
     auto ftime = fs::last_write_time(path, ec);
     if (ec) return fs::file_time_type::min();
     return ftime;
+}
+
+/*
+ * Get POSIX mtime and file size for cache validation.
+ */
+static std::pair<std::time_t, uintmax_t> stat_file_for_cache(const std::string& path) {
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    fs::path p(path);
+    std::time_t mtime = 0;
+    uintmax_t size = 0;
+    if (fs::exists(p, ec)) {
+	mtime = fs_time_to_time_t(fs::last_write_time(p, ec));
+	size = fs::file_size(p, ec);
+    }
+    return {mtime, size};
 }
 
 /*
@@ -159,6 +205,69 @@ std::vector<std::string> sort_files_by_mtime(const std::vector<std::string>& fil
     std::vector<std::string> sorted;
     for (const auto& fi : finfos) sorted.push_back(fi.path);
     return sorted;
+}
+
+// ============================================================================
+// HASH CACHE (READ/WRITE, MTIME/SIZE)
+// ============================================================================
+
+/*
+ * Read a hash file (CSV: canonical_path,mtime,size,hash) into a map.
+ * Only returns hashes for files that match current mtime and size.
+ * Returns: path -> hash
+ */
+static std::unordered_map<std::string, std::string> read_hash_file_with_meta(
+	const std::string &filename,
+	const std::unordered_map<std::string, std::pair<std::time_t, uintmax_t>> &file_stats)
+{
+    std::unordered_map<std::string, std::string> cache;
+    std::ifstream infile(filename);
+    if (!infile) return cache;
+    std::string line;
+    while (std::getline(infile, line)) {
+	if (line.empty()) continue;
+	std::istringstream iss(line);
+	std::string path, mtime_str, size_str, hash;
+	if (std::getline(iss, path, ',') &&
+		std::getline(iss, mtime_str, ',') &&
+		std::getline(iss, size_str, ',') &&
+		std::getline(iss, hash)) {
+	    // Remove whitespace
+	    path.erase(0, path.find_first_not_of(" \t\r\n"));
+	    path.erase(path.find_last_not_of(" \t\r\n") + 1);
+	    hash.erase(0, hash.find_first_not_of(" \t\r\n"));
+	    hash.erase(hash.find_last_not_of(" \t\r\n") + 1);
+	    mtime_str.erase(0, mtime_str.find_first_not_of(" \t\r\n"));
+	    mtime_str.erase(mtime_str.find_last_not_of(" \t\r\n") + 1);
+	    size_str.erase(0, size_str.find_first_not_of(" \t\r\n"));
+	    size_str.erase(size_str.find_last_not_of(" \t\r\n") + 1);
+	    if (path.empty() || hash.empty() || mtime_str.empty() || size_str.empty()) continue;
+	    std::time_t mtime = static_cast<std::time_t>(std::stoll(mtime_str));
+	    uintmax_t fsize = static_cast<uintmax_t>(std::stoull(size_str));
+	    auto it = file_stats.find(path);
+	    if (it != file_stats.end() && it->second.first == mtime && it->second.second == fsize) {
+		cache[path] = hash;
+	    }
+	}
+    }
+    return cache;
+}
+
+/*
+ * Write a hash cache file. Format: canonical_path,mtime,size,hash\n
+ */
+static void write_hash_file_with_meta(
+	const std::string &filename,
+	const std::unordered_map<std::string, std::tuple<std::time_t, uintmax_t, std::string>> &cache)
+{
+    std::ofstream outfile(filename, std::ios::trunc);
+    if (!outfile) return;
+    for (const auto &kv : cache) {
+	outfile << kv.first << ","
+	    << std::get<0>(kv.second) << ","
+	    << std::get<1>(kv.second) << ","
+	    << std::get<2>(kv.second) << "\n";
+    }
 }
 
 // ============================================================================
@@ -526,13 +635,15 @@ std::map<std::string, std::vector<std::tuple<std::string, int, int, std::filesys
 void print_cluster_report(
 	const std::map<std::string, std::vector<std::tuple<std::string, int, int, std::filesystem::file_time_type>>>& groups,
 	std::ostream& out,
-	bool indent_group = false
+	bool indent_group = false,
+	bool show_relative = false
 	)
 {
     for (const auto& [newest, entries] : groups) {
-	size_t longest_path = newest.size();
+	auto disp_newest = get_display_path(newest, show_relative);
+	size_t longest_path = disp_newest.size();
 	for (const auto& entry_tuple : entries) {
-	    longest_path = std::max(longest_path, std::get<0>(entry_tuple).size());
+	    longest_path = std::max(longest_path, get_display_path(std::get<0>(entry_tuple), show_relative).size());
 	}
 	size_t score_col = longest_path + 2;
 
@@ -548,19 +659,20 @@ void print_cluster_report(
 
 	std::string group_indent = indent_group ? "  " : "";
 
-	out << group_indent << std::left << std::setw(score_col) << newest
-	    << parent_score_ss.str() << " " << file_timestamp(newest) << "\n";
+	out << group_indent << std::left << std::setw(score_col) << disp_newest
+	    << parent_score_ss.str() << " " << file_timestamp(disp_newest) << "\n";
 
 	for (const auto& entry_tuple : entries) {
 	    const std::string& entry = std::get<0>(entry_tuple);
+	    auto disp_entry = get_display_path(entry, show_relative);
 	    int dn = std::get<1>(entry_tuple);
 	    int dc = std::get<2>(entry_tuple);
 	    if (entry == newest) continue;
 	    std::ostringstream score_ss;
 	    score_ss << "[Δ" << std::right << std::setw(4) << dn
 		<< ", Δx̄" << std::right << std::setw(4) << dc << "]";
-	    out << group_indent << "  " << std::left << std::setw(score_col-2) << entry
-		<< score_ss.str() << " " << file_timestamp(entry) << "\n";
+	    out << group_indent << "  " << std::left << std::setw(score_col-2) << disp_entry
+		<< score_ss.str() << " " << file_timestamp(disp_entry) << "\n";
 	}
     }
 }
@@ -568,12 +680,13 @@ void print_cluster_report(
 /*
  * print_filename_bin_header - Prints a report header for a filename bin.
  */
-void print_filename_bin_header(const std::string& seed_path, int threshold, std::ostream& out)
+void print_filename_bin_header(const std::string& seed_path, int threshold, std::ostream& out, bool show_relative = false)
 {
+    auto disp_seed = get_display_path(seed_path, show_relative);
     out << "====================================================================\n";
     out << "Filename Bin Report\n";
-    out << "Seed (center file):   " << seed_path << "\n";
-    out << "Date of Seed:         " << file_timestamp(seed_path) << "\n";
+    out << "Seed (center file):   " << disp_seed << "\n";
+    out << "Date of Seed:         " << file_timestamp(disp_seed) << "\n";
     out << "Max Damarau-Levenshtein edit distance of binned paths from seed:  " << threshold << "\n";
     out << "====================================================================\n";
 }
@@ -587,7 +700,8 @@ void group_and_report(
 	const std::unordered_map<std::string, std::vector<std::string>> &file_grps,
 	int threshold,
 	const std::unordered_map<std::string, std::string> &path2hash,
-	std::ostream& out)
+	std::ostream& out,
+	bool show_relative = false)
 {
     bool filename_active = (file_grps.size() > 1);
 
@@ -596,8 +710,9 @@ void group_and_report(
 	    std::vector<std::string> sorted = sort_files_by_mtime(fg.second);
 	    auto hash_bins = hash_bins_for_files(sorted, path2hash, threshold);
 	    if (!sorted.empty()) {
-		out << sorted.front() << " (" << file_timestamp(sorted.front()) << "):\n";
-		print_cluster_report(hash_bins, out, true);
+		auto disp = get_display_path(sorted.front(), show_relative);
+		out << disp << " (" << file_timestamp(disp) << "):\n";
+		print_cluster_report(hash_bins, out, true, show_relative);
 	    }
 	}
     } else {
@@ -606,18 +721,18 @@ void group_and_report(
 	    all_files.insert(all_files.end(), fg.second.begin(), fg.second.end());
 	}
 	auto hash_bins = hash_bins_for_files(all_files, path2hash, threshold);
-	print_cluster_report(hash_bins, out);
+	print_cluster_report(hash_bins, out, false, show_relative);
     }
 }
 
 // ============================================================================
-// MAIN ENTRYPOINT: gdiff_group
+// MAIN ENTRYPOINT: gdiff_group (WITH HASH CACHE, MTIME/SIZE, CANONICAL PATHS)
 // ============================================================================
 
 /*
  * gdiff_group - Main function for grouped similarity reporting.
  * - Handles file discovery, grouping, hashing, clustering, and reporting.
- * - If neither use_names nor use_geometry are enabled, enables both by default.
+ * - Now supports hash cache (with mtime/size) and canonical paths.
  */
 int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 {
@@ -628,8 +743,11 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 	gopts.use_names = g_opts->use_names;
 	gopts.use_geometry = g_opts->use_geometry;
 	gopts.geom_fast = g_opts->geom_fast;
+	gopts.thread_cnt = g_opts->thread_cnt;
 	bu_vls_sprintf(&gopts.fpattern, "%s", bu_vls_cstr(&g_opts->fpattern));
 	bu_vls_sprintf(&gopts.ofile, "%s", bu_vls_cstr(&g_opts->ofile));
+	bu_vls_sprintf(&gopts.hash_infile, "%s", bu_vls_cstr(&g_opts->hash_infile));
+	bu_vls_sprintf(&gopts.hash_outfile, "%s", bu_vls_cstr(&g_opts->hash_outfile));
     }
 
     if (!gopts.use_names && !gopts.use_geometry) {
@@ -641,35 +759,65 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
     if (!bu_vls_strlen(&gopts.fpattern))
 	bu_vls_sprintf(&gopts.fpattern, "*.g");
 
-    // File discovery
+    // Path display mode logic (auto/relative/absolute)
+    bool all_argv_relative = true;
+    for (int i = 0; i < argc; ++i) {
+	if (std::filesystem::path(argv[i]).is_absolute()) {
+	    all_argv_relative = false;
+	    break;
+	}
+    }
+    bool show_relative = false;
+    if (gopts.path_display_mode == GDIFF_PATH_DISPLAY_RELATIVE) show_relative = true;
+    else if (gopts.path_display_mode == GDIFF_PATH_DISPLAY_ABSOLUTE) show_relative = false;
+    else show_relative = all_argv_relative;
+
+    // File discovery (canonicalize all paths for internal use)
     std::vector<FileInfo> file_infos;
+    std::unordered_map<std::string, std::string> canon2orig;
+    std::unordered_map<std::string, std::pair<std::time_t, uintmax_t>> file_stats;
     char cwd[MAXPATHLEN] = {0};
     bu_dir(cwd, MAXPATHLEN, BU_DIR_CURR, NULL);
 
     if (argc && argv) {
 	for (int i = 0; i < argc; i++) {
+	    std::string user_arg = argv[i];
 	    if (bu_file_directory(argv[i]))  {
-		std::string rstr(argv[i]);
+		std::string rstr(user_arg);
 		for (const auto& entry : std::filesystem::recursive_directory_iterator(rstr)) {
 		    if (!entry.is_regular_file())
 			continue;
 		    if (!bu_path_match(bu_vls_cstr(&gopts.fpattern), entry.path().string().c_str(), 0))
-			file_infos.push_back({entry.path().string(), file_mtime(entry.path().string())});
+			continue;
+		    std::string canon = std::filesystem::weakly_canonical(entry.path()).string();
+		    auto [mtime, fsize] = stat_file_for_cache(canon);
+		    file_infos.push_back({canon, file_mtime(canon)});
+		    canon2orig[canon] = entry.path().string();
+		    file_stats[canon] = {mtime, fsize};
 		}
 		continue;
 	    }
 	    if (bu_file_exists(argv[i], NULL)) {
-		file_infos.push_back({std::string(argv[i]), file_mtime(argv[i])});
+		std::string canon = std::filesystem::weakly_canonical(user_arg).string();
+		auto [mtime, fsize] = stat_file_for_cache(canon);
+		file_infos.push_back({canon, file_mtime(canon)});
+		canon2orig[canon] = user_arg;
+		file_stats[canon] = {mtime, fsize};
 	    }
 	}
     }
-    if (!file_infos.size()) {
+    if (file_infos.empty()) {
 	std::string rstr(cwd);
 	for (const auto& entry : std::filesystem::recursive_directory_iterator(rstr)) {
 	    if (!entry.is_regular_file())
 		continue;
 	    if (!bu_path_match(bu_vls_cstr(&gopts.fpattern), entry.path().string().c_str(), 0))
-		file_infos.push_back({entry.path().string(), file_mtime(entry.path().string())});
+		continue;
+	    std::string canon = std::filesystem::weakly_canonical(entry.path()).string();
+	    auto [mtime, fsize] = stat_file_for_cache(canon);
+	    file_infos.push_back({canon, file_mtime(canon)});
+	    canon2orig[canon] = entry.path().string();
+	    file_stats[canon] = {mtime, fsize};
 	}
     }
 
@@ -705,39 +853,86 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 	    file_grps[sorted.front()] = files;
     }
 
-    // Hash computation
-    std::unordered_map<std::string, std::string> path2hash;
+    // ==== HASH CACHE SUPPORT ====
+    // 1. Read hash cache if available
+    std::unordered_map<std::string, std::string> hash_cache;
+    std::unordered_map<std::string, std::tuple<std::time_t, uintmax_t, std::string>> full_cache;
+    if (bu_vls_strlen(&gopts.hash_infile)) {
+	hash_cache = read_hash_file_with_meta(bu_vls_cstr(&gopts.hash_infile), file_stats);
+    }
+
+    // 2. Compute which files need to be hashed
+    std::vector<std::string> files_to_hash;
+    for (const auto &f : files) {
+	if (!hash_cache.count(f) || hash_cache[f].empty())
+	    files_to_hash.push_back(f);
+    }
+
+    // 3. Hash computation (only for files that need hashing)
+    std::unordered_map<std::string, std::string> newly_computed_hashes;
     size_t parallel_threads = gopts.thread_cnt;
     if (!parallel_threads)
 	parallel_threads = bu_avail_cpus();
 
-    if (parallel_threads > 1) {
-	std::vector<DBFile> dbs;
-	std::mutex db_mutex;
-	for (const auto& path : files) {
-	    std::lock_guard<std::mutex> lock(db_mutex);
-	    struct db_i* dbip = db_open(path.c_str(), DB_OPEN_READONLY);
-	    if (dbip && db_dirbuild(dbip) == 0) {
-		dbs.push_back({path, dbip});
+    if (!files_to_hash.empty()) {
+	if (parallel_threads > 1) {
+	    std::vector<DBFile> dbs;
+	    std::mutex db_mutex;
+	    for (const auto& path : files_to_hash) {
+		std::lock_guard<std::mutex> lock(db_mutex);
+		struct db_i* dbip = db_open(path.c_str(), DB_OPEN_READONLY);
+		if (dbip && db_dirbuild(dbip) == 0) {
+		    dbs.push_back({path, dbip});
+		}
 	    }
-	}
-	path2hash = hash_files_parallel(dbs, gopts, parallel_threads);
-	for (auto& db : dbs) {
-	    std::lock_guard<std::mutex> lock(db_mutex);
-	    db_close(db.dbip);
-	    db.dbip = nullptr;
-	}
-    } else {
-	for (const auto& path : files) {
-	    struct db_i* dbip = db_open(path.c_str(), DB_OPEN_READONLY);
-	    if (dbip && db_dirbuild(dbip) == 0) {
-		std::string hash = content_hash(dbip, gopts.use_names, gopts.use_geometry, gopts.geom_fast);
-		path2hash[path] = hash;
+	    newly_computed_hashes = hash_files_parallel(dbs, gopts, parallel_threads);
+	    for (auto& db : dbs) {
+		std::lock_guard<std::mutex> lock(db_mutex);
+		db_close(db.dbip);
+		db.dbip = nullptr;
 	    }
-	    if (dbip) db_close(dbip);
+	} else {
+	    for (const auto& path : files_to_hash) {
+		struct db_i* dbip = db_open(path.c_str(), DB_OPEN_READONLY);
+		if (dbip && db_dirbuild(dbip) == 0) {
+		    std::string hash = content_hash(dbip, gopts.use_names, gopts.use_geometry, gopts.geom_fast);
+		    newly_computed_hashes[path] = hash;
+		}
+		if (dbip) db_close(dbip);
+	    }
 	}
     }
 
+    // 4. Merge hash_cache and newly_computed_hashes, and record meta for all
+    for (const auto &f : files) {
+	std::string hash;
+	if (newly_computed_hashes.count(f)) {
+	    hash = newly_computed_hashes[f];
+	} else if (hash_cache.count(f)) {
+	    hash = hash_cache[f];
+	}
+	if (!hash.empty() && file_stats.count(f)) {
+	    full_cache[f] = std::make_tuple(
+		    file_stats[f].first,
+		    file_stats[f].second,
+		    hash
+		    );
+	}
+    }
+
+    // 5. Write hash cache if requested
+    if (bu_vls_strlen(&gopts.hash_outfile)) {
+	write_hash_file_with_meta(bu_vls_cstr(&gopts.hash_outfile), full_cache);
+    }
+
+    // 6. Prepare path2hash for processing (only for current files)
+    std::unordered_map<std::string, std::string> path2hash;
+    for (const auto& f : files) {
+	if (full_cache.count(f))
+	    path2hash[f] = std::get<2>(full_cache[f]);
+    }
+
+    // Output file support
     std::ostream* out = &std::cout;
     std::ofstream fout;
     if (bu_vls_strlen(&gopts.ofile)) {
@@ -747,14 +942,15 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 
     if (filename_threshold >= 0) {
 	for (const auto& [key, bin_files] : file_grps) {
-	    print_filename_bin_header(key, filename_threshold, *out);
+	    print_filename_bin_header(key, filename_threshold, *out, show_relative);
 	    std::unordered_map<std::string, std::vector<std::string>> single_bin;
 	    single_bin[key] = bin_files;
 	    group_and_report(
 		    single_bin,
 		    gopts.threshold,
 		    path2hash,
-		    *out
+		    *out,
+		    show_relative
 		    );
 	    *out << "\n";
 	}
@@ -763,7 +959,8 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 		file_grps,
 		gopts.threshold,
 		path2hash,
-		*out
+		*out,
+		show_relative
 		);
     }
 
