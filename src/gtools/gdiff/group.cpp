@@ -25,7 +25,7 @@
 #include <fstream>
 #include <regex>
 #include <set>
-#include <unordered_map>
+#include <map>
 #include <unordered_set>
 #include <vector>
 #include "tlsh.hpp"
@@ -45,6 +45,15 @@ extern "C" {
 std::string
 objnames_hash(const std::string &path)
 {
+    // Per the TLSH algorithm, we need a minimum length and varied data to ensure
+    // a non-zero hash.  If we get a short set of names we might just end up
+    // generating a zero instead of something more useful for comparison, so try
+    // seeding the data with a bit of string entropy.  Since this will be consistent
+    // for all inputs the intent is that any differences in the output hashes will
+    // reflect differences in the actual user data (even if the has doesn't exactly
+    // correspond to the algorithmic TLSH hash for that binary input.)
+    static const std::string tls_seed = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=";
+
     // open db
     struct db_i *dbip = db_open(path.c_str(), DB_OPEN_READONLY);
     if (!dbip)
@@ -68,7 +77,7 @@ objnames_hash(const std::string &path)
 
     tlsh::Tlsh hasher;
     std::set<std::string>::iterator o_it;
-    std::string data;
+    std::string data = tls_seed;
     for (o_it = onames.begin(); o_it != onames.end(); ++o_it)
 	data.append(*o_it);
     hasher.update((const unsigned char *)data.c_str(), data.length());
@@ -146,13 +155,13 @@ geometry_hash(const std::string &path)
 
 bool
 build_group(
-	std::unordered_map<std::string, std::unordered_set<std::string>> *groups,
-	std::unordered_map<std::string, std::set<std::string>> &hash2path,
+	std::map<std::string, std::unordered_set<std::string>> *groups,
+	std::map<std::string, std::set<std::string>> &hash2path,
 	int threshold
 	)
 {
-    std::unordered_map<std::string, std::unordered_set<std::string>>::iterator g_it;
-    std::unordered_map<std::string, std::set<std::string>>::iterator h_it;
+    std::map<std::string, std::unordered_set<std::string>>::iterator g_it;
+    std::map<std::string, std::set<std::string>>::iterator h_it;
     for (h_it = hash2path.begin(); h_it != hash2path.end(); ++h_it) {
 	std::string h = h_it->first;
 	tlsh::Tlsh h1;
@@ -180,54 +189,31 @@ build_group(
 	    (*groups)[h].insert(h);
 	}
     }
-    // See if we have something to report
-    bool do_report = false;
-    std::unordered_set<std::string>::iterator us_it;
-    for (g_it = groups->begin(); g_it != groups->end(); ++g_it) {
-	// Don't print out trivial groups
-	bool trivial = true;
-	for (us_it = g_it->second.begin(); us_it != g_it->second.end(); ++us_it) {
-	    if (g_it->first != *us_it || hash2path[g_it->first].size() > 1) {
-		trivial = false;
-		break;
-	    }
-	}
-	if (!trivial) {
-	    do_report = true;
-	    break;
-	}
-    }
 
-    return do_report;
+    return true;
 }
 
 void
 do_report(
 	const std::string &fname,
-	std::unordered_map<std::string, std::unordered_set<std::string>> &groups,
-	std::unordered_map<std::string, std::set<std::string>> &hash2paths
+	std::map<std::string, std::unordered_set<std::string>> &groups,
+	std::map<std::string, std::set<std::string>> &hash2paths
 	)
 {
     if (fname.length())
 	std::cout << "Groupings within the " << fname << " subgroup\n";
 
-    std::unordered_map<std::string, std::unordered_set<std::string>>::iterator g_it;
+    std::map<std::string, std::unordered_set<std::string>>::iterator g_it;
     for (g_it = groups.begin(); g_it != groups.end(); ++g_it) {
-	// Don't print out trivial groups
-	bool trivial = true;
-	std::unordered_set<std::string>::iterator us_it;
-	for (us_it = g_it->second.begin(); us_it != g_it->second.end(); ++us_it) {
-	    if (g_it->first != *us_it || hash2paths[g_it->first].size() > 1) {
-		trivial = false;
-		break;
-	    }
-	}
-	if (trivial)
-	    continue;
 	std::string ganchor = *hash2paths[g_it->first].begin();
 	tlsh::Tlsh h1;
 	h1.fromTlshStr(g_it->first.c_str());
+	if (g_it->second.size() == 1) {
+	    std::cout << ganchor << "\n";
+	    continue;
+	}
 	std::cout << ganchor << ":\n";
+	std::unordered_set<std::string>::iterator us_it;
 	for (us_it = g_it->second.begin(); us_it != g_it->second.end(); ++us_it) {
 	    tlsh::Tlsh h2;
 	    h2.fromTlshStr(us_it->c_str());
@@ -239,7 +225,6 @@ do_report(
 		std::cout << "\t" << *hp_it << "(" << score << ")" << "\n";
 	    }
 	}
-	std::cout << "\n";
     }
 }
 
@@ -247,18 +232,18 @@ void
 do_grouping(
 	const std::string &fname,
 	struct gdiff_group_opts *g_opts,
-	std::unordered_map<std::string, std::set<std::string>> *names,
-	std::unordered_map<std::string, std::set<std::string>> *geom
+	std::map<std::string, std::set<std::string>> *names,
+	std::map<std::string, std::set<std::string>> *geom
 	)
 {
     if (names && g_opts->geomname_threshold >= 0) {
-	std::unordered_map<std::string, std::unordered_set<std::string>> name_groups;
+	std::map<std::string, std::unordered_set<std::string>> name_groups;
 	if (build_group(&name_groups, *names, g_opts->geomname_threshold))
 	    do_report(fname, name_groups, *names);
     }
 
     if (geom && g_opts->geometry_threshold >= 0) {
-	std::unordered_map<std::string, std::unordered_set<std::string>> geom_groups;
+	std::map<std::string, std::unordered_set<std::string>> geom_groups;
 	if (build_group(&geom_groups, *geom, g_opts->geometry_threshold))
 	    do_report(fname, geom_groups, *names);
     }
@@ -290,7 +275,10 @@ gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 	bu_vls_sprintf(&gopts.fpattern, "*.g");
 
     // Build a set of file paths from the argv
-    std::set<std::string> files;
+    // 1.  Process the command line arguments into a set to guarantee we only
+    // include each path once, since the user may supply arbitrary arguments as
+    // inputs.
+    std::set<std::string> files_set;
     char cwd[MAXPATHLEN] = {0};
     bu_dir(cwd, MAXPATHLEN, BU_DIR_CURR, NULL);
     for (int i = 0; i < argc; i++) {
@@ -303,22 +291,37 @@ gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 		    continue;
 		if (!bu_path_match(bu_vls_cstr(&gopts.fpattern), entry.path().string().c_str(), 0))
 		    //std::cout << "matched " <<  entry.path().string() << "\n";
-		    files.insert(entry.path().string());
+		    files_set.insert(entry.path().string());
 	    }
+	    continue;
 	}
-	continue;
 
 	// 2.  If we've been given a fully qualified path, just store that
 	if (bu_file_exists(argv[i], NULL)) {
 	    //std::cout << "adding " << argv[i] << "\n";
-	    files.insert(std::string(argv[i]));
+	    files_set.insert(std::string(argv[i]));
 	}
     }
 
+    // 2. Convert to vector for sorting by modification time (newest first)
+    std::vector<std::string> files(files_set.begin(), files_set.end());
+    std::sort(files.begin(), files.end(),
+        [](const std::string& a, const std::string& b) {
+            namespace fs = std::filesystem;
+            std::error_code ec_a, ec_b;
+            auto time_a = fs::last_write_time(fs::path(a), ec_a);
+            auto time_b = fs::last_write_time(fs::path(b), ec_b);
+            // If either stat fails, treat as oldest
+            if (ec_a) return false;
+            if (ec_b) return true;
+            return time_a > time_b; // newest first
+        }
+    );
+
     // If we have been instructed to, group files by filename
-    std::unordered_map<std::string, std::set<std::string>> file_grps;
-    std::unordered_map<std::string, std::set<std::string>>::iterator fg_it;
-    std::set<std::string>::iterator s_it;
+    std::map<std::string, std::set<std::string>> file_grps;
+    std::map<std::string, std::set<std::string>>::iterator fg_it;
+    std::vector<std::string>::iterator s_it;
     // NOTE - we make this unique binning for now and only put it in the
     // closest match, but maybe we want to do more?  If an incoming name is
     // close to more than one key where those keys were individually distinct,
@@ -346,15 +349,14 @@ gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 	}
     } else {
 	// No filename grouping - just add everything with an empty string key;
-	file_grps[std::string("")] = files;
+	file_grps[std::string("")] = std::set<std::string>(files.begin(), files.end());
     }
 
-
     // Hash each file
-    std::unordered_map<std::string, std::string> path2namehash;
-    std::unordered_map<std::string, std::string> path2geohash;
-    std::unordered_map<std::string, std::set<std::string>> namehash2path;
-    std::unordered_map<std::string, std::set<std::string>> geohash2path;
+    std::map<std::string, std::string> path2namehash;
+    std::map<std::string, std::string> path2geohash;
+    std::map<std::string, std::set<std::string>> namehash2path;
+    std::map<std::string, std::set<std::string>> geohash2path;
     for (s_it = files.begin(); s_it != files.end(); ++s_it) {
 	//std::cout << "hashing " << *s_it << "\n";
 	if (gopts.geomname_threshold >= 0) {
