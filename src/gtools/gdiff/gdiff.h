@@ -98,8 +98,13 @@ struct gdiff_group_opts {
     // .g file will look less similar by this metric, but the user can compensate for that to a
     // degree by increasing geometry_threshold.)
     int geom_fast;
+    struct bu_vls hash_infile;   // Optional: read precomputed hashes from this file
+    struct bu_vls hash_outfile;  // Optional: write computed hashes to this file
+    int path_display_mode;       // 0:auto, 1:relative, 2:absolute
 };
-#define GDIFF_GROUP_OPTS_DEFAULT {-1, 0, 0, -1, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, 1, 0}
+#define GDIFF_PATH_DISPLAY_RELATIVE 1
+#define GDIFF_PATH_DISPLAY_ABSOLUTE 2
+#define GDIFF_GROUP_OPTS_DEFAULT {-1, 0, 0, -1, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, 1, 0, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, 0}
 
 extern int
 gdiff_group(int argc, const char **argv, struct gdiff_group_opts *o);
