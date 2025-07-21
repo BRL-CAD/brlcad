@@ -639,32 +639,65 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
     std::unordered_map<std::string, std::string> namehash2path;
     std::unordered_map<std::string, std::string> geohash2path;
 
-    // --- PHASE 1: Sequential setup ---
-    std::vector<DBWithPath> dbs;
-    std::mutex db_mutex;
-    for (const auto& path : files) {
-	std::lock_guard<std::mutex> lock(db_mutex);
-	struct db_i* dbip = db_open(path.c_str(), DB_OPEN_READONLY);
-	if (dbip && db_dirbuild(dbip) == 0) {
-	    dbs.push_back({path, dbip});
+    // TODO - right now, the material_head global in librt means doing this
+    // hashing in parallel is a mess.  We'll default to serial hashing, but
+    // this logic is in place for when we can fix that and get a speedup.
+    size_t parallel_threads = gopts.thread_cnt;
+    if (!parallel_threads)
+	parallel_threads = bu_avail_cpus();
+
+    if (parallel_threads > 1) {
+	// --- PHASE 1: Sequential setup ---
+	std::vector<DBWithPath> dbs;
+	std::mutex db_mutex;
+	for (const auto& path : files) {
+	    std::lock_guard<std::mutex> lock(db_mutex);
+	    struct db_i* dbip = db_open(path.c_str(), DB_OPEN_READONLY);
+	    if (dbip && db_dirbuild(dbip) == 0) {
+		dbs.push_back({path, dbip});
+	    }
 	}
-    }
 
-    // --- PHASE 2: Parallel hashing ---
-    if (gopts.geomname_threshold >= 0) {
-	path2namehash = parallel_hash_db(dbs, objnames_hash_db, 4);
-	for (const auto& kv : path2namehash) namehash2path[kv.second] = kv.first;
-    }
-    if (gopts.geometry_threshold >= 0) {
-	path2geohash = parallel_hash_db(dbs, geometry_hash_db, 4);
-	for (const auto& kv : path2geohash) geohash2path[kv.second] = kv.first;
-    }
+	// --- PHASE 2: Parallel hashing ---
+	if (gopts.geomname_threshold >= 0) {
+	    path2namehash = parallel_hash_db(dbs, objnames_hash_db, parallel_threads);
+	    for (const auto& kv : path2namehash) namehash2path[kv.second] = kv.first;
+	}
+	if (gopts.geometry_threshold >= 0) {
+	    path2geohash = parallel_hash_db(dbs, geometry_hash_db, parallel_threads);
+	    for (const auto& kv : path2geohash) geohash2path[kv.second] = kv.first;
+	}
 
-    // --- PHASE 3: Sequential teardown ---
-    for (auto& db : dbs) {
-	std::lock_guard<std::mutex> lock(db_mutex);
-	db_close(db.dbip);
-	db.dbip = nullptr;
+	// --- PHASE 3: Sequential teardown ---
+	for (auto& db : dbs) {
+	    std::lock_guard<std::mutex> lock(db_mutex);
+	    db_close(db.dbip);
+	    db.dbip = nullptr;
+	}
+    } else {
+	// --- SERIAL: Open, hash, close one at a time ---
+	if (gopts.geomname_threshold >= 0) {
+	    for (const auto& path : files) {
+		struct db_i* dbip = db_open(path.c_str(), DB_OPEN_READONLY);
+		if (dbip && db_dirbuild(dbip) == 0) {
+		    std::string hash = objnames_hash_db(dbip);
+		    path2namehash[path] = hash;
+		    namehash2path[hash] = path;
+		}
+		if (dbip) db_close(dbip);
+	    }
+	}
+	if (gopts.geometry_threshold >= 0) {
+	    for (const auto& path : files) {
+		struct db_i* dbip = db_open(path.c_str(), DB_OPEN_READONLY);
+		if (dbip && db_dirbuild(dbip) == 0) {
+		    std::string hash = geometry_hash_db(dbip);
+		    path2geohash[path] = hash;
+		    geohash2path[hash] = path;
+		}
+		if (dbip) db_close(dbip);
+	    }
+	}
     }
 
     std::ostream* out = &std::cout;

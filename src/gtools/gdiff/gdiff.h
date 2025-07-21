@@ -89,8 +89,9 @@ struct gdiff_group_opts {
     long geometry_threshold; // tlsh threshold below which we group based on how different geometry contents are (object level)
     struct bu_vls fpattern;  // Pattern match to use for a recursive file search
     struct bu_vls ofile;     // Optional output file
+    int thread_cnt;          // Number of threads to use for database hashing (defaults to 1)
 };
-#define GDIFF_GROUP_OPTS_DEFAULT {-1, -1, -1, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO}
+#define GDIFF_GROUP_OPTS_DEFAULT {-1, -1, -1, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, 1}
 
 extern int
 gdiff_group(int argc, const char **argv, struct gdiff_group_opts *o);
