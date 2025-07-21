@@ -564,9 +564,6 @@ void do_hierarchical_grouping(
 // Main grouping function, entrypoint
 int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 {
-    if (!argc || !argv)
-	return BRLCAD_OK;
-
     struct gdiff_group_opts gopts = GDIFF_GROUP_OPTS_DEFAULT;
     if (g_opts) {
 	gopts.filename_threshold = g_opts->filename_threshold;
@@ -602,6 +599,18 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 	    file_infos.push_back({std::string(argv[i]), get_file_mtime(argv[i])});
 	}
     }
+    // If we got something via argv arguments, go with it.  If we have nothing, however,
+    // iterate over the cwd with fpattern
+    if (!file_infos.size()) {
+	std::string rstr(cwd);
+	for (const auto& entry : std::filesystem::recursive_directory_iterator(rstr)) {
+	    if (!entry.is_regular_file())
+		continue;
+	    if (!bu_path_match(bu_vls_cstr(&gopts.fpattern), entry.path().string().c_str(), 0))
+		file_infos.push_back({entry.path().string(), get_file_mtime(entry.path().string())});
+	}
+    }
+
     std::sort(file_infos.begin(), file_infos.end(),
 	    [](const FileInfo& a, const FileInfo& b) { return a.mtime > b.mtime; });
 
