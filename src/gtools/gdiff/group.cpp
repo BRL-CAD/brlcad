@@ -106,9 +106,10 @@ extern "C" {
 }
 
 #define TLSH_DEFAULT_THRESHOLD 30
+#define GDIFF_CACHE_FORMAT 1
 
 // ============================================================================
-// TIME CONVERSION AND PATH DISPLAY HELPERS
+// TIME, PATH, FILE UTILITIES
 // ============================================================================
 
 /* 
@@ -208,31 +209,79 @@ std::vector<std::string> sort_files_by_mtime(const std::vector<std::string>& fil
 }
 
 // ============================================================================
-// HASH CACHE (READ/WRITE, MTIME/SIZE)
+// CACHE SYSTEM SUPPORTING MULTIPLE CONFIGURATIONS + VERSION HEADER
 // ============================================================================
 
-/*
- * Read a hash file (CSV: canonical_path,mtime,size,hash) into a map.
- * Only returns hashes for files that match current mtime and size.
- * Returns: path -> hash
- */
-static std::unordered_map<std::string, std::string> read_hash_file_with_meta(
-	const std::string &filename,
-	const std::unordered_map<std::string, std::pair<std::time_t, uintmax_t>> &file_stats)
+struct HashCacheKey {
+    std::string path;
+    std::time_t mtime;
+    uintmax_t size;
+    int use_names;
+    int use_geometry;
+    int geom_fast;
+
+    bool operator==(const HashCacheKey& other) const {
+	return path == other.path &&
+	    mtime == other.mtime &&
+	    size == other.size &&
+	    use_names == other.use_names &&
+	    use_geometry == other.use_geometry &&
+	    geom_fast == other.geom_fast;
+    }
+};
+
+namespace std {
+template<>
+    struct hash<HashCacheKey> {
+	std::size_t operator()(const HashCacheKey& k) const {
+	    std::size_t h1 = std::hash<std::string>()(k.path);
+	    std::size_t h2 = std::hash<std::time_t>()(k.mtime);
+	    std::size_t h3 = std::hash<uintmax_t>()(k.size);
+	    std::size_t h4 = std::hash<int>()(k.use_names);
+	    std::size_t h5 = std::hash<int>()(k.use_geometry);
+	    std::size_t h6 = std::hash<int>()(k.geom_fast);
+	    return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3) ^ (h5 << 4) ^ (h6 << 5);
+	}
+    };
+}
+
+    static std::unordered_map<HashCacheKey, std::string>
+read_full_hash_cache(const std::string &filename)
 {
-    std::unordered_map<std::string, std::string> cache;
+    std::unordered_map<HashCacheKey, std::string> cache;
     std::ifstream infile(filename);
     if (!infile) return cache;
     std::string line;
+    bool version_ok = false;
+    bool header_seen = false;
     while (std::getline(infile, line)) {
 	if (line.empty()) continue;
+	if (line.rfind("# gdiff-cache-version=", 0) == 0) {
+	    int version = std::stoi(line.substr(22));
+	    if (version == GDIFF_CACHE_FORMAT) {
+		version_ok = true;
+	    } else {
+		std::cerr << "Warning: cache file format version " << version
+		    << " does not match expected version " << GDIFF_CACHE_FORMAT << ". Skipping cache.\n";
+		return std::unordered_map<HashCacheKey, std::string>();
+	    }
+	    continue;
+	}
+	if (line[0] == '#') continue;
+	header_seen = true;
+	if (!version_ok) {
+	    std::cerr << "Warning: cache file missing or has wrong version header. Skipping cache.\n";
+	    return std::unordered_map<HashCacheKey, std::string>();
+	}
 	std::istringstream iss(line);
-	std::string path, mtime_str, size_str, hash;
+	std::string path, mtime_str, size_str, use_names_str, use_geometry_str, geom_fast_str, hash;
 	if (std::getline(iss, path, ',') &&
 		std::getline(iss, mtime_str, ',') &&
 		std::getline(iss, size_str, ',') &&
+		std::getline(iss, use_names_str, ',') &&
+		std::getline(iss, use_geometry_str, ',') &&
+		std::getline(iss, geom_fast_str, ',') &&
 		std::getline(iss, hash)) {
-	    // Remove whitespace
 	    path.erase(0, path.find_first_not_of(" \t\r\n"));
 	    path.erase(path.find_last_not_of(" \t\r\n") + 1);
 	    hash.erase(0, hash.find_first_not_of(" \t\r\n"));
@@ -241,32 +290,50 @@ static std::unordered_map<std::string, std::string> read_hash_file_with_meta(
 	    mtime_str.erase(mtime_str.find_last_not_of(" \t\r\n") + 1);
 	    size_str.erase(0, size_str.find_first_not_of(" \t\r\n"));
 	    size_str.erase(size_str.find_last_not_of(" \t\r\n") + 1);
-	    if (path.empty() || hash.empty() || mtime_str.empty() || size_str.empty()) continue;
+	    use_names_str.erase(0, use_names_str.find_first_not_of(" \t\r\n"));
+	    use_names_str.erase(use_names_str.find_last_not_of(" \t\r\n") + 1);
+	    use_geometry_str.erase(0, use_geometry_str.find_first_not_of(" \t\r\n"));
+	    use_geometry_str.erase(use_geometry_str.find_last_not_of(" \t\r\n") + 1);
+	    geom_fast_str.erase(0, geom_fast_str.find_first_not_of(" \t\r\n"));
+	    geom_fast_str.erase(geom_fast_str.find_last_not_of(" \t\r\n") + 1);
+	    if (path.empty() || hash.empty() || mtime_str.empty() || size_str.empty()
+		    || use_names_str.empty() || use_geometry_str.empty() || geom_fast_str.empty()) continue;
 	    std::time_t mtime = static_cast<std::time_t>(std::stoll(mtime_str));
 	    uintmax_t fsize = static_cast<uintmax_t>(std::stoull(size_str));
-	    auto it = file_stats.find(path);
-	    if (it != file_stats.end() && it->second.first == mtime && it->second.second == fsize) {
-		cache[path] = hash;
-	    }
+	    int use_names = std::stoi(use_names_str);
+	    int use_geometry = std::stoi(use_geometry_str);
+	    int geom_fast = std::stoi(geom_fast_str);
+	    std::error_code ec;
+	    if (!std::filesystem::exists(path, ec)) continue;
+	    auto stat = stat_file_for_cache(path);
+	    if (stat.first != mtime || stat.second != fsize) continue;
+	    HashCacheKey key { path, mtime, fsize, use_names, use_geometry, geom_fast };
+	    cache[key] = hash;
 	}
+    }
+    if (!version_ok && header_seen) {
+	std::cerr << "Warning: cache file missing version header. Skipping cache.\n";
+	return std::unordered_map<HashCacheKey, std::string>();
     }
     return cache;
 }
 
-/*
- * Write a hash cache file. Format: canonical_path,mtime,size,hash\n
- */
-static void write_hash_file_with_meta(
+static void write_full_hash_cache(
 	const std::string &filename,
-	const std::unordered_map<std::string, std::tuple<std::time_t, uintmax_t, std::string>> &cache)
+	const std::unordered_map<HashCacheKey, std::string> &cache)
 {
     std::ofstream outfile(filename, std::ios::trunc);
     if (!outfile) return;
+    outfile << "# gdiff-cache-version=" << GDIFF_CACHE_FORMAT << "\n";
+    outfile << "# path,mtime,size,use_names,use_geometry,geom_fast,hash\n";
     for (const auto &kv : cache) {
-	outfile << kv.first << ","
-	    << std::get<0>(kv.second) << ","
-	    << std::get<1>(kv.second) << ","
-	    << std::get<2>(kv.second) << "\n";
+	outfile << kv.first.path << ","
+	    << kv.first.mtime << ","
+	    << kv.first.size << ","
+	    << kv.first.use_names << ","
+	    << kv.first.use_geometry << ","
+	    << kv.first.geom_fast << ","
+	    << kv.second << "\n";
     }
 }
 
@@ -366,7 +433,7 @@ class BKTree {
 };
 
 // ============================================================================
-// CONTENT CLUSTERING (TLSH + TRANSITIVE CLOSURE)
+// TLSH content hash, parallel hashing, clustering, reporting
 // ============================================================================
 
 struct DBFile {
@@ -518,7 +585,7 @@ std::unordered_map<std::string, std::string> hash_files_parallel(
 }
 
 // ============================================================================
-// CLUSTERING, BINNING, AND REPORTING
+// Clustering, binning, reporting
 // ============================================================================
 
 struct HashInfo {
@@ -726,14 +793,9 @@ void group_and_report(
 }
 
 // ============================================================================
-// MAIN ENTRYPOINT: gdiff_group (WITH HASH CACHE, MTIME/SIZE, CANONICAL PATHS)
+// MAIN ENTRYPOINT: gdiff_group (cache, version)
 // ============================================================================
 
-/*
- * gdiff_group - Main function for grouped similarity reporting.
- * - Handles file discovery, grouping, hashing, clustering, and reporting.
- * - Now supports hash cache (with mtime/size) and canonical paths.
- */
 int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 {
     struct gdiff_group_opts gopts = GDIFF_GROUP_OPTS_DEFAULT;
@@ -787,7 +849,7 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 		for (const auto& entry : std::filesystem::recursive_directory_iterator(rstr)) {
 		    if (!entry.is_regular_file())
 			continue;
-		    if (!bu_path_match(bu_vls_cstr(&gopts.fpattern), entry.path().string().c_str(), 0))
+		    if (bu_path_match(bu_vls_cstr(&gopts.fpattern), entry.path().string().c_str(), 0))
 			continue;
 		    std::string canon = std::filesystem::weakly_canonical(entry.path()).string();
 		    auto [mtime, fsize] = stat_file_for_cache(canon);
@@ -853,19 +915,25 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 	    file_grps[sorted.front()] = files;
     }
 
-    // ==== HASH CACHE SUPPORT ====
-    // 1. Read hash cache if available
-    std::unordered_map<std::string, std::string> hash_cache;
-    std::unordered_map<std::string, std::tuple<std::time_t, uintmax_t, std::string>> full_cache;
+    // ==== CACHE SYSTEM SUPPORTING MULTIPLE CONFIGURATIONS + VERSION HEADER ====
+    // 1. Read full cache (all configs, all valid files)
+    std::unordered_map<HashCacheKey, std::string> full_hash_cache;
     if (bu_vls_strlen(&gopts.hash_infile)) {
-	hash_cache = read_hash_file_with_meta(bu_vls_cstr(&gopts.hash_infile), file_stats);
+	full_hash_cache = read_full_hash_cache(bu_vls_cstr(&gopts.hash_infile));
     }
 
-    // 2. Compute which files need to be hashed
+    // 2. For this run, look up hashes for current config only
+    std::unordered_map<std::string, std::string> path2hash;
     std::vector<std::string> files_to_hash;
     for (const auto &f : files) {
-	if (!hash_cache.count(f) || hash_cache[f].empty())
+	auto stat = file_stats[f];
+	HashCacheKey k { f, stat.first, stat.second, gopts.use_names, gopts.use_geometry, gopts.geom_fast };
+	auto it = full_hash_cache.find(k);
+	if (it != full_hash_cache.end() && !it->second.empty()) {
+	    path2hash[f] = it->second;
+	} else {
 	    files_to_hash.push_back(f);
+	}
     }
 
     // 3. Hash computation (only for files that need hashing)
@@ -903,33 +971,19 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 	}
     }
 
-    // 4. Merge hash_cache and newly_computed_hashes, and record meta for all
+    // 4. Merge new hashes for current config into full cache, and update path2hash
     for (const auto &f : files) {
-	std::string hash;
+	auto stat = file_stats[f];
+	HashCacheKey k { f, stat.first, stat.second, gopts.use_names, gopts.use_geometry, gopts.geom_fast };
 	if (newly_computed_hashes.count(f)) {
-	    hash = newly_computed_hashes[f];
-	} else if (hash_cache.count(f)) {
-	    hash = hash_cache[f];
-	}
-	if (!hash.empty() && file_stats.count(f)) {
-	    full_cache[f] = std::make_tuple(
-		    file_stats[f].first,
-		    file_stats[f].second,
-		    hash
-		    );
+	    full_hash_cache[k] = newly_computed_hashes[f];
+	    path2hash[f] = newly_computed_hashes[f];
 	}
     }
 
-    // 5. Write hash cache if requested
+    // 5. Write full cache (all valid configs/files, in canonical form)
     if (bu_vls_strlen(&gopts.hash_outfile)) {
-	write_hash_file_with_meta(bu_vls_cstr(&gopts.hash_outfile), full_cache);
-    }
-
-    // 6. Prepare path2hash for processing (only for current files)
-    std::unordered_map<std::string, std::string> path2hash;
-    for (const auto& f : files) {
-	if (full_cache.count(f))
-	    path2hash[f] = std::get<2>(full_cache[f]);
+	write_full_hash_cache(bu_vls_cstr(&gopts.hash_outfile), full_hash_cache);
     }
 
     // Output file support
