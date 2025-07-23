@@ -55,7 +55,7 @@ endif(NOT BRLCAD_COMPONENTS)
 if(TARGET mged)
   # add_subdirectory(bugs)
   include(ExternalProject)
-  set(BUGS_DIR ${CMAKE_CURRENT_BINARY_DIR}/bugs)
+  set(BUGS_DIR ${CMAKE_CURRENT_BINARY_DIR}/bugs_out)
 
   ExternalProject_Add(BrlcadBugs
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bugs
@@ -72,7 +72,7 @@ if(TARGET mged)
   set_target_properties(bugs PROPERTIES FOLDER "BRL-CAD Tests")
 
   distclean("${CMAKE_CURRENT_BINARY_DIR}/BrlcadBugs-prefix")
-  distclean("${CMAKE_CURRENT_BINARY_DIR}/bugs")
+  distclean("${BUGS_DIR}")
 endif(TARGET mged)
 
 
