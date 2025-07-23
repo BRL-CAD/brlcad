@@ -33,6 +33,7 @@
 #include "pipe.h"
 #include "sketch.h"
 #include "extrude.h"
+#include "sphere.h"
 
 
 struct BeamResultant {
@@ -66,6 +67,9 @@ public:
 					      const point_t& node2,
 					      const point_t& node3,
 					      const std::vector<double> D);
+    void                     addSphere(const char* sphereName,
+				       const point_t& center,
+				       const float& radius);
 
     const char*              getBaseName(void) const;
     Bot&                     getBot(void);
@@ -78,6 +82,7 @@ private:
     Bot                        m_bot;
     Arbs                       m_arbs;
     Pipe                       m_pipe;
+    Sphere                     m_sphere;
     std::vector<BeamResultant> m_BeamsResultant;
 };
 
