@@ -120,6 +120,35 @@ parseMass(std::string res)
     return ret;
 }
 
+static std::string GqaGridSize(std::map<std::string, std::string> map, std::string lUnit) {
+    // create a reasonable but fast grid size based on our bounding box
+    double dimX = 1.0;
+    double dimY = 1.0;
+    double dimZ = 1.0;
+
+    if (map.find("dimX") != map.end())
+        dimX = std::stod(map["dimX"]);
+    if (map.find("dimY") != map.end())
+        dimY = std::stod(map["dimY"]);
+    if (map.find("dimZ") != map.end())
+        dimZ = std::stod(map["dimZ"]);
+
+
+    double shortest = std::min({dimX, dimY, dimZ});
+    // clamp
+    if (shortest < 1.0)
+        shortest = 1.0;
+
+    // find the smallest magnitude in relation to our smallest size
+    // i.e. if we have smallest side 234 -> we want 10 for the grid size
+    double magnitude = std::pow(10.0, std::floor(std::log10(shortest)) - 1);
+    int grid_step = static_cast<int>(magnitude);    // drop the decimal
+
+    std::string grid = std::to_string(grid_step) + lUnit + "," + std::to_string(grid_step) + lUnit;
+
+    return grid;
+}
+
 
 void
 getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, bool &UNUSED(hasDensities), double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit)
@@ -135,6 +164,7 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     //Get Volume and Mass (using gqa)
     const std::string no_density_msg = "Could not find any density information";
     std::string gqa = getCmdPath(opt->getExeDir(), "gqa");
+    std::string grid = GqaGridSize(map, lUnit);
     std::string units = lUnit + ",cu " + lUnit + "," + mUnit;
     struct bu_process* p;
     int read_cnt = 0;
@@ -145,7 +175,7 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     const char* gqa_av[10] = { gqa.c_str(),
                                 "-Avm",
                                 "-q",
-                                "-g", "2",
+                                "-g", grid.c_str(),
                                 "-u", units.c_str(),
                                 in_file.c_str(),
                                 top_comp.c_str(),
