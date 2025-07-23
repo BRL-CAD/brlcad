@@ -70,6 +70,9 @@ if(TARGET mged)
     DEPENDS BUGS
   )
   set_target_properties(bugs PROPERTIES FOLDER "BRL-CAD Tests")
+
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/BrlcadBugs-prefix")
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/bugs")
 endif(TARGET mged)
 
 

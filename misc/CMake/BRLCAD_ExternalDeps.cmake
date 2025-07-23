@@ -529,7 +529,9 @@ function(brlcad_bext_process)
     brlcad_ext_setup()
   endif()
 
-  # If we have a bext_output in the build directory, we need to clear it
+  # If we have a bext directories in the build directory, we need to clear them for distcheck
+  distclean("${CMAKE_BINARY_DIR}/bext")
+  distclean("${CMAKE_BINARY_DIR}/bext_build")
   distclean("${CMAKE_BINARY_DIR}/bext_output")
 
   # See if we have plief available for rpath manipulation.  If it is
