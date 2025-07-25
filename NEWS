@@ -54,6 +54,7 @@ as the home directory on a particular machine users can type
 * added (autoview, lookat, saveview) to 'view' - Chris McGregor
 * fixed mged 'process' command on read-only databases - Sean Morrison
 * fixed -exec behavior with 'flat' search in mged - Chris McGregor
+* improved logging behavior from multiple threads - Kenneth Davis
 
 
 ----------------------------------------------------------------------
