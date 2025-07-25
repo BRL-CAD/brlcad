@@ -49,6 +49,7 @@ as the home directory on a particular machine users can type
 * fixed make_pnts GED command - Cliff Yapp
 * fixed Archer Center View button - Cliff Yapp
 * added bb '-m' option for outputting midpoint - Chris McGregor
+* fixed sed crash when editing a brep object in MGED - Cliff Yapp
 * fixed primitive & matrix edit GUIs in MGED ("x -1") - Sean Morrison
 * added (align, dir and print) subcommands to 'view' - Chris McGregor
 * added (autoview, lookat, saveview) to 'view' - Chris McGregor
