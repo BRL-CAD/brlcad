@@ -53,6 +53,7 @@ as the home directory on a particular machine users can type
 * added (align, dir and print) subcommands to 'view' - Chris McGregor
 * added (autoview, lookat, saveview) to 'view' - Chris McGregor
 * fixed mged 'process' command on read-only databases - Sean Morrison
+* various manpage and help text updates - Josh Baker
 * fixed -exec behavior with 'flat' search in mged - Chris McGregor
 * improved logging behavior from multiple threads - Kenneth Davis
 
