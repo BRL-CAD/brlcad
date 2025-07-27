@@ -688,31 +688,75 @@ rt_arb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 }
 
 
+/**
+ * Half‑space test: does point P lie on inner side of quad f?
+ */
 static bool
-arb_is_concave(const struct arb_specific *arbp, const struct bn_tol *tol)
+point_inside_face(const point_t v[8], const int f[4], const point_t P, const point_t centroid, fastf_t eps)
 {
-    /* iterate over all plane equation face pairings */
-    for (int i = 0; i < arbp->arb_nmfaces; i++) {
-	for (int j = i + 1; j < arbp->arb_nmfaces; j++) {
-	    /* check whether any vertices are in front of a given face */
-	    for (int k = 0; k < arbp->arb_nmfaces; k++) {
-		if (k != i && k != j) {
-		    /* positive means point is in front of the face */
-		    fastf_t dist = DIST_PNT_PLANE(arbp->arb_face[k].A, arbp->arb_face[i].peqn);
-		    // bu_log("dist = %lf\n", dist);
-		    if (dist > tol->dist) {
-			// bu_log("DIST > %.16lf = %.16lf\n", tol->dist, dist);
+    point_t a, b, n, c, d;
 
-			/* concave */
-			return true;
-		    }
-		}
-	    }
-	}
+    VSUB2(a, v[f[1]], v[f[0]]);        /* a = v1 - v0 */
+    VSUB2(b, v[f[2]], v[f[0]]);        /* b = v2 - v0 */
+    VCROSS(n, a, b);                   /* face normal  n = a × b */
+
+    VSUB2(c, centroid, v[f[0]]);       /* c = centroid − v0         */
+    if (VDOT(n, c) > 0.0) {            /* make sure n faces OUTward */
+        VREVERSE(n, n);
     }
 
-    /* convex */
-    return false;
+    VSUB2(d, P, v[f[0]]);              /* d = P − v0                */
+    return VDOT(n, d) <= eps;          /* inside (or on) the plane? */
+}
+
+
+/**
+ * An ARB8 solid is convex iff the line‑segment joining every pair of
+ * vertices lies on or inside the solid.
+ *
+ * To determine this, we 1) get outward facing normals for all 6 faces
+ * (outward from the centroid), 2) compute segment midpoint for all 28
+ * vertex pairings, and 3) half-space test midpoint against all 6
+ * outward facing planes.  If it lies outside any, it's concave.
+ */
+static bool
+arb_is_concave(const struct rt_arb_internal *aip, const struct bn_tol *tol)
+{
+    register const point_t *v = aip->pt;
+
+    static const int F[6][4] = {       /* BRL‑CAD face order */
+	{0,1,2,3}, {4,5,6,7},
+	{0,1,5,4}, {1,2,6,5},
+	{2,3,7,6}, {3,0,4,7}
+    };
+
+    /* to ensure outward facing regardless of vertex ordering */
+    point_t centroid = {0.0, 0.0, 0.0};
+    for (size_t i = 0; i < 8; ++i) {
+	VADD2(centroid, centroid, v[i]);
+    }
+    VSCALE(centroid, centroid, 1.0 / 8.0);
+
+    /* every vertex‑pair midpoint must stay inside */
+    for (size_t i = 0; i < 8; ++i) {
+	for (size_t j = i + 1; j < 8; ++j) {
+
+	    /* using midpoint as it'll be furthest from plane */
+	    point_t mid;
+	    VADD2SCALE(mid, v[i], v[j], 0.5); /* (vi + vj)/2 */
+
+	    bool inside = true;
+	    for (size_t f = 0; f < 6; ++f) {
+		if (!point_inside_face(v, F[f], mid, centroid, tol->dist)) {
+		    inside = false;
+		    break;
+		}
+	    }
+	    if (!inside)
+		return true; /* concave */
+	}
+    }
+    return false; /* all mid‑points inside => convex */
 }
 
 
@@ -815,7 +859,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
     }
 
 
-    if (arb_is_concave(arbp, &rtip->rti_tol)) {
+    if (arb_is_concave(aip, &rtip->rti_tol)) {
 #if 0
 	bu_log("ARB IS CONCAVE\n");
 	struct rt_bot_internal *botp = arb_to_bot(aip, arbp);
