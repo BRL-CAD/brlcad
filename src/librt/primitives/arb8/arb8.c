@@ -846,7 +846,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
     pa.pa_doopt = uv_wanted;
     pa.pa_tol_sq = rtip->rti_tol.dist_sq;
 
-    if (rt_arb_mk_planes(&pa, aip, stp->st_dp->d_namep) < 0) {
+    if (rt_arb_mk_planes(&pa, aip, "(prep)") < 0) {
 	return -2;		/* Error */
     }
 
@@ -885,7 +885,6 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 	    arbp->arb_opt = (struct oface *)0;
 	}
     }
-
 
     if (arb_is_concave(aip, &rtip->rti_tol) || !arb_is_planar(aip, &rtip->rti_tol)) {
 #if 0
