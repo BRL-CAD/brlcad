@@ -760,6 +760,34 @@ arb_is_concave(const struct rt_arb_internal *aip, const struct bn_tol *tol)
 }
 
 
+/**
+ * Are all ARB8 faces planar?
+ */
+static bool
+arb_is_planar(const struct rt_arb_internal *aip, const struct bn_tol *tol)
+{
+    register const point_t *v = aip->pt;
+
+    point_t pts[4] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+    static const int F[6][4] = {
+        {0,1,2,3}, {4,5,6,7},
+        {0,1,5,4}, {1,2,6,5},
+        {2,3,7,6}, {3,0,4,7}
+    };
+
+    for (size_t f = 0; f < 6; ++f) {
+      VMOVE(pts[0], v[F[f][0]]);
+      VMOVE(pts[1], v[F[f][1]]);
+      VMOVE(pts[2], v[F[f][2]]);
+      VMOVE(pts[3], v[F[f][3]]);
+      if (!bg_coplanar_pts(pts, 4, tol)) {
+        return false;
+      }
+    }
+    return true; /* all coplanar */
+}
+
+
 #if 0
 /**
  * Note: This current implementation assumes the ARB definition is
@@ -859,7 +887,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
     }
 
 
-    if (arb_is_concave(aip, &rtip->rti_tol)) {
+    if (arb_is_concave(aip, &rtip->rti_tol) || !arb_is_planar(aip, &rtip->rti_tol)) {
 #if 0
 	bu_log("ARB IS CONCAVE\n");
 	struct rt_bot_internal *botp = arb_to_bot(aip, arbp);
