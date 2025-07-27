@@ -941,6 +941,7 @@ view_end(struct application* UNUSED(ap))
         return;
     }
 
+    // TODO: axis color should be configurable, e.g., draw_axes=red or draw_axes=10/23/255
     const RGBpixel pixel = { 31, 73, 133 };
 
     // model center in pixel coordinates
