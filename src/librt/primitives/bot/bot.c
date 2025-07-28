@@ -378,6 +378,15 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (!bot_ip->num_faces || !bot_ip->num_vertices)
 	return -1;
 
+    struct bn_tol defaults = BN_TOL_INIT_TOL;
+    struct bn_tol *tolp;
+    if (rtip) {
+	tolp = &rtip->rti_tol;
+    } else {
+	rt_tol_default(&defaults);
+	tolp = &defaults;
+    }
+
     // Copy settings over to bot, because we won't have access to
     // bot_ip in the shot function
     struct bot_specific *bot;
@@ -475,10 +484,10 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	VSUB2(work, v1, v2);
 	fastf_t m3 = MAGSQ(work);
 	fastf_t m4 = MAGSQ(wn);
-	if (m1 < rtip->rti_tol.dist_sq ||
-	    m2 < rtip->rti_tol.dist_sq ||
-	    m3 < rtip->rti_tol.dist_sq ||
-	    m4 < rtip->rti_tol.dist_sq)
+	if (m1 < tolp->dist_sq ||
+	    m2 < tolp->dist_sq ||
+	    m3 < tolp->dist_sq ||
+	    m4 < tolp->dist_sq)
 	{
 	    if (RT_G_DEBUG & RT_DEBUG_SHOOT) {
 		bu_log("%s: degenerate facet #%zu\n", stp->st_name, bot_ip_index);
@@ -526,7 +535,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VMOVE(stp->st_max, max);
 
     /* zero thickness will get missed by the raytracer */
-    BBOX_NONDEGEN(stp->st_min, stp->st_max, rtip->rti_tol.dist);
+    BBOX_NONDEGEN(stp->st_min, stp->st_max, tolp->dist);
 
     VADD2SCALE(stp->st_center, min, max, 0.5);
     point_t dist_vec;
