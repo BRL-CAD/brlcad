@@ -490,7 +490,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	    m4 < tolp->dist_sq)
 	{
 	    if (RT_G_DEBUG & RT_DEBUG_SHOOT) {
-		bu_log("%s: degenerate facet #%zu\n", stp->st_name, bot_ip_index);
+		bu_log("%s: degenerate facet #%zu\n", stp->st_dp?stp->st_name:"_unnamed_", bot_ip_index);
 		bu_log("\t(%g %g %g) (%g %g %g) (%g %g %g)\n", V3ARGS(v0), V3ARGS(v1), V3ARGS(v2));
 	    }
 	}
@@ -510,7 +510,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		VMOVE(&tris[i].norms[1*3], &bot_ip->normals[idx[1]*3]);
 		VMOVE(&tris[i].norms[2*3], &bot_ip->normals[idx[2]*3]);
 	    } else if (RT_G_DEBUG & RT_DEBUG_SHOOT) {
-		bu_log("%s: facet #%zu tried to have normals, but gave incorrect indexes\n", stp->st_name, bot_ip_index);
+		bu_log("%s: facet #%zu tried to have normals, but gave incorrect indexes\n", stp->st_dp?stp->st_name:"_unnamed_", bot_ip_index);
 		bu_log("\t%zu %zu %zu a max number of %zu\n", V3ARGS(idx), bot_ip->num_normals);
 	    }
 	}
