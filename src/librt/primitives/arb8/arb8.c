@@ -723,12 +723,15 @@ static bool
 arb_is_concave(const struct rt_arb_internal *aip, const struct bn_tol *tol)
 {
     register const point_t *v = aip->pt;
-
+    static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
     static const int F[6][4] = {       /* BRL‑CAD face order */
 	{0,1,2,3}, {4,5,6,7},
 	{0,1,5,4}, {1,2,6,5},
 	{2,3,7,6}, {3,0,4,7}
     };
+
+    if (!tol)
+	tol = &default_tol;
 
     /* to ensure outward facing regardless of vertex ordering */
     point_t centroid = {0.0, 0.0, 0.0};
@@ -769,11 +772,15 @@ arb_is_planar(const struct rt_arb_internal *aip, const struct bn_tol *tol)
     register const point_t *v = aip->pt;
 
     point_t pts[4] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+    static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
     static const int F[6][4] = {
         {0,1,2,3}, {4,5,6,7},
         {0,1,5,4}, {1,2,6,5},
         {2,3,7,6}, {3,0,4,7}
     };
+
+    if (!tol)
+	tol = &default_tol;
 
     for (size_t f = 0; f < 6; ++f) {
       VMOVE(pts[0], v[F[f][0]]);
@@ -847,7 +854,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
     if (rtip) {
 	pa.pa_tol_sq = rtip->rti_tol.dist_sq;
     } else {
-	struct bn_tol defaults;
+	struct bn_tol defaults = BN_TOL_INIT_TOL;
 	rt_tol_default(&defaults);
 	pa.pa_tol_sq = defaults.dist_sq;
     }
@@ -892,7 +899,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 	}
     }
 
-    if (arb_is_concave(aip, &rtip->rti_tol) || !arb_is_planar(aip, &rtip->rti_tol)) {
+    if (arb_is_concave(aip, NULL) || !arb_is_planar(aip, NULL)) {
 #if 0
 	bu_log("ARB IS CONCAVE\n");
 	struct rt_bot_internal *botp = arb_to_bot(aip, arbp);
