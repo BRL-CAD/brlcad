@@ -24,13 +24,16 @@
  * Intersect a ray with an Arbitrary Polyhedron with as many as 8
  * vertices.
  *
- * An ARB is a convex volume bounded by 4 (pyramid), 5 (wedge), or 6
- * (box) planes.  This analysis depends on the properties of objects
- * with convex hulls.  Let the ray in question be defined such that
- * any point X on the ray may be expressed as X = P + k D.  Intersect
- * the ray with each of the planes bounding the ARB as discussed
- * above, and record the values of the parametric distance k along the
- * ray.
+ * An ARB is a volume bounded by 4 (pyramid), 5 (wedge), or 6 (box)
+ * planes.  Traditionally, this analysis depended on the properties of
+ * objects with convex hulls, but support was extended to include
+ * concave definitions as well (as a special case).  For convex, the
+ * following applies:
+ *
+ * Let the ray in question be defined such that any point X on the ray
+ * may be expressed as X = P + k D.  Intersect the ray with each of
+ * the planes bounding the ARB as discussed above, and record the
+ * values of the parametric distance k along the ray.
  *
  * With outward pointing normal vectors, note that the ray enters the
  * half-space defined by a plane when D cdot N < 0, is parallel to the
@@ -91,6 +94,7 @@ struct arb_specific {
     int arb_nmfaces;		/* number of faces */
     struct oface *arb_opt;	/* pointer to optional info */
     struct aface arb_face[6];	/* May really be up to [6] faces */
+    struct rt_bot_internal *arb_bot; /* only used when concave */
 };
 
 
@@ -205,6 +209,7 @@ const short local_arb4_edge_vertex_mapping[6][2] = {
 struct clt_arb_specific {
     cl_double arb_peqns[4*6];
     cl_int arb_nmfaces;
+    /* FIXME: need support for convex! */
 };
 
 size_t
@@ -795,7 +800,6 @@ arb_is_planar(const struct rt_arb_internal *aip, const struct bn_tol *tol)
 }
 
 
-#if 0
 /**
  * Note: This current implementation assumes the ARB definition is
  * still planar with one place per face.  Next step might be to expand
@@ -830,7 +834,6 @@ arb_to_bot(const struct rt_arb_internal *aip, const struct arb_specific *asp)
 
     return bot;
 }
-#endif
 
 
 /**
@@ -880,6 +883,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 	arbp->arb_nmfaces = pa.pa_faces;
 	memcpy((char *)arbp->arb_face, (char *)pa.pa_face,
 	       pa.pa_faces * sizeof(struct aface));
+	arbp->arb_bot = NULL;
 
 	if (uv_wanted) {
 	    register struct oface *ofp;
@@ -895,19 +899,9 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 		   pa.pa_faces * sizeof(struct oface));
 	    arbp->arb_opt = ofp;
 	} else {
-	    arbp->arb_opt = (struct oface *)0;
+	    arbp->arb_opt = NULL;
 	}
     }
-
-    if (arb_is_concave(aip, NULL) || !arb_is_planar(aip, NULL)) {
-#if 0
-	bu_log("ARB IS CONCAVE\n");
-	struct rt_bot_internal *botp = arb_to_bot(aip, arbp);
-	if (!botp)
-	    bu_log("oops\n");
-#endif
-    }
-
 
     /*
      * Compute bounding sphere which contains the bounding RPP.
@@ -931,6 +925,28 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 	stp->st_aradius = f;
 	stp->st_bradius = MAGNITUDE(work);
     }
+
+    if (arb_is_concave(aip, NULL)) {
+	bu_log("ARB(%s) IS CONCAVE\n", stp->st_dp?stp->st_name:"_unnamed_");
+	struct rt_bot_internal *botp = arb_to_bot(aip, arbp);
+	arbp->arb_bot = botp;
+
+	struct soltab st = {0};
+	st.l.magic = RT_SOLTAB_MAGIC;
+	st.l2.magic = RT_SOLTAB2_MAGIC;
+	st.st_uses = 1;
+	st.st_id = ID_BOT;
+
+	struct rt_db_internal internal;
+	internal.idb_magic = RT_DB_INTERNAL_MAGIC;
+	internal.idb_major_type = ID_BOT;
+	internal.idb_ptr = arbp->arb_bot;
+	return rt_obj_prep(&st, &internal, rtip);
+    }
+    if (!arb_is_planar(aip, NULL)) {
+	bu_log("ARB(%s) IS NON-PLANAR\n", stp->st_dp?stp->st_name:"_unnamed_");
+    }
+
     return 0;		/* OK */
 }
 
@@ -1006,6 +1022,21 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     fastf_t in, out;	/* ray in/out distances */
     register struct aface *afp;
     register int j;
+
+    if (UNLIKELY(arbp->arb_bot != NULL)) {
+	/* CONCAVE CASE */
+	struct soltab st = {0};
+	st.l.magic = RT_SOLTAB_MAGIC;
+	st.l2.magic = RT_SOLTAB2_MAGIC;
+	st.st_uses = 1;
+	st.st_id = ID_BOT;
+
+	struct rt_db_internal internal;
+	internal.idb_magic = RT_DB_INTERNAL_MAGIC;
+	internal.idb_major_type = ID_BOT;
+	internal.idb_ptr = arbp->arb_bot;
+	return rt_obj_shot(&st, rp, ap, seghead);
+    }
 
     in = -INFINITY;
     out = INFINITY;
@@ -1302,7 +1333,9 @@ rt_arb_free(register struct soltab *stp)
 	(struct arb_specific *)stp->st_specific;
 
     if (arbp->arb_opt)
-	bu_free((char *)arbp->arb_opt, "arb_opt");
+	bu_free((void *)arbp->arb_opt, "arb_opt");
+    if (arbp->arb_bot)
+	bu_free((void *)arbp->arb_bot, "arb_bot");
     bu_free((char *)arbp, "arb_specific");
 }
 
@@ -1317,8 +1350,7 @@ rt_arb_free(register struct soltab *stp)
  * Plot an ARB by tracing out four "U" shaped contours This draws each
  * edge only once.
  *
- * XXX No checking for degenerate faces is done, but probably should
- * be.
+ * TODO: does not currently optimize for arb7/6/5/4, but should.
  */
 int
 rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
@@ -1332,6 +1364,7 @@ rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
+    /* FIXME: blindly adds to vlist even when edge is collapsed */
     pts = aip->pt;
     ARB_FACE(vlfree, vhead, pts, 0, 1, 2, 3);
     ARB_FACE(vlfree, vhead, pts, 4, 0, 3, 7);
@@ -1613,6 +1646,7 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 			    INTCLAMP(aip->pt[i][Z] * mm2local));
 		    bu_vls_strcat(str, buf);
 		}
+		/* skips pt[5] */
 		sprintf(buf, "\t6 (%g, %g, %g)\n",
 			INTCLAMP(aip->pt[6][X] * mm2local),
 			INTCLAMP(aip->pt[6][Y] * mm2local),
@@ -1636,6 +1670,7 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 			    INTCLAMP(aip->pt[i][Z] * mm2local));
 		    bu_vls_strcat(str, buf);
 		}
+		/* skips pt[3] */
 		sprintf(buf, "\t4 (%g, %g, %g)\n",
 			INTCLAMP(aip->pt[4][X] * mm2local),
 			INTCLAMP(aip->pt[4][Y] * mm2local),
