@@ -1059,8 +1059,12 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     }
     /* Validate */
     if (iplane == -1 || oplane == -1) {
-	bu_log("rt_arb_shoot(%s): 1 hit => MISS\n",
-	       stp->st_name?stp->st_name:"_unnamed_arb8_");
+	const char *name = NULL;
+	if (stp->st_dp && stp->st_name)
+	    name = stp->st_name;
+	else
+	    name = "_unnamed_";
+	bu_log("rt_arb_shoot(%s): 1 hit => MISS\n", name);
 	return 0;	/* MISS */
     }
     if (in >= out || out >= INFINITY)
