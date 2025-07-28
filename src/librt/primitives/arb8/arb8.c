@@ -1066,7 +1066,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     if (in >= out || out >= INFINITY)
 	return 0;	/* MISS */
 
-    {
+    if (seghead) {
 	register struct seg *segp;
 
 	RT_GET_SEG(segp, ap->a_resource);
