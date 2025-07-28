@@ -844,7 +844,13 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
     RT_ARB_CK_MAGIC(aip);
 
     pa.pa_doopt = uv_wanted;
-    pa.pa_tol_sq = rtip->rti_tol.dist_sq;
+    if (rtip) {
+	pa.pa_tol_sq = rtip->rti_tol.dist_sq;
+    } else {
+	struct bn_tol defaults;
+	rt_tol_default(&defaults);
+	pa.pa_tol_sq = defaults.dist_sq;
+    }
 
     if (rt_arb_mk_planes(&pa, aip, "(prep)") < 0) {
 	return -2;		/* Error */
