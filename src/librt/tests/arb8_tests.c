@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #include "bu/log.h"
 #include "vmath.h"
@@ -321,15 +322,40 @@ main(int ac, char *av[])
             const ray_input_t *ray = &rays[j];
             printf("  Testing Ray: %s\n", ray->label);
 
-            struct application ap = {0};
+            struct application ap;
+	    RT_APPLICATION_INIT(&ap);
             VSET(ap.a_ray.r_pt, ray->origin[X], ray->origin[Y], ray->origin[Z]);
             VSET(ap.a_ray.r_dir, ray->direction[X], ray->direction[Y], ray->direction[Z]);
+	    ap.a_ray.magic = RT_RAY_MAGIC;
+	    ap.a_resource = &rt_uniresource;
 
             // TODO - call rt_arb_shot() here, set hit/miss result
-	    struct soltab stp;
-	    struct xray rp;
 	    struct seg seghead;
-	    (void)(*OBJ[ID_ARB8].ft_shot)(&stp, &rp, &ap, &seghead);
+	    BU_LIST_INIT(&(seghead.l));
+	    struct xray *rayp = &ap.a_ray;
+
+	    struct soltab st = {0};
+	    st.l.magic = RT_SOLTAB_MAGIC;
+	    st.l2.magic = RT_SOLTAB2_MAGIC;
+	    st.st_uses = 1;
+	    st.st_id = ID_ARB8;
+
+	    struct rt_db_internal db;
+	    db.idb_magic = RT_DB_INTERNAL_MAGIC;
+	    db.idb_major_type = ID_ARB8;
+
+	    struct rt_arb_internal arbint;
+	    memcpy(arbint.pt, arb->vertices, sizeof(point_t)*8);
+	    arbint.magic = RT_ARB_INTERNAL_MAGIC;
+	    db.idb_ptr = &arbint;
+
+	    int prep = rt_obj_prep(&st, &db, NULL);
+	    int result = rt_obj_shot(&st, rayp, &ap, &seghead);
+
+	    if (!prep)
+		bu_log("prep failed\n");
+	    if (!result)
+		bu_log("shot failed\n");
 
             int hit = 0; // Placeholder
 
