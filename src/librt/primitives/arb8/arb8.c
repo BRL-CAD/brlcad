@@ -817,20 +817,58 @@ arb_to_bot(const struct rt_arb_internal *aip, const struct arb_specific *asp)
     BU_ALLOC(bot, struct rt_bot_internal);
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->mode = RT_BOT_SOLID;
-    bot->num_vertices = 8;
-    bot->num_faces = asp->arb_nmfaces;
+    bot->orientation = RT_BOT_CCW;
+    bot->bot_flags = 0;
 
+    static const int face_v[6][4] = {
+	{0,1,2,3},{4,5,6,7},{0,1,5,4},
+	{1,2,6,5},{2,3,7,6},{3,0,4,7}
+    };
+    bot->num_faces = asp->arb_nmfaces * 2;
+    bot->faces = (int *)bu_calloc(bot->num_faces*3, sizeof(int), "bot->faces");
+
+    bot->num_vertices = 8;
     bot->vertices = (fastf_t *)bu_calloc(bot->num_vertices*3, sizeof(fastf_t), "bot->vertices");
     for (i=0; i < bot->num_vertices; i++) {
-	bot->vertices[i*3+X] = aip->pt[i][X];
-	bot->vertices[i*3+Y] = aip->pt[i][Y];
-	bot->vertices[i*3+Z] = aip->pt[i][Z];
+	VMOVE(&bot->vertices[3*i], aip->pt[i]);
     }
 
-    bot->faces = (int *)bu_calloc(bot->num_faces * 3, sizeof(int), "bot->faces");
-    for (i=0; i < bot->num_faces*3; i++) {
-	bot->faces[i] = i; //faces[i];
+    size_t f = 0; /* track the face we're adding */
+    for (int q = 0; q < asp->arb_nmfaces; q++) {
+	const struct aface *afp = &(asp->arb_face[q]);
+
+	/* centroid test so all faces wind outward */
+	int a = face_v[q][0];
+	int b = face_v[q][1];
+	int c = face_v[q][2];
+	int d = face_v[q][3];
+	/* indices for our two face triangles */
+	int tri1[3] = {a,b,d};
+	int tri2[3] = {b,c,d};
+
+	vect_t ab, ac, n;
+	VSUB2(ab, aip->pt[b], aip->pt[a]);
+	VSUB2(ac, aip->pt[c], aip->pt[a]);
+	VCROSS(n, ab, ac);
+	if (VDOT(n, afp->peqn) < 0.0) {
+	    /* wrong winding – swap */
+	    tri1[1] = c; tri1[2] = b;
+	    tri2[1] = d; tri2[2] = c;
+	}
+	memcpy(&bot->faces[3*f++], tri1, sizeof(tri1));
+	memcpy(&bot->faces[3*f++], tri2, sizeof(tri2));
     }
+
+    bot->thickness = NULL;
+    bot->face_mode = NULL;
+    bot->normals = NULL;
+    bot->num_normals = 0;
+    bot->face_normals = NULL;
+    bot->num_face_normals = 0;
+    bot->uvs = NULL;
+    bot->num_uvs = 0;
+    bot->face_uvs = NULL;
+    bot->num_face_uvs = 0;
 
     return bot;
 }
@@ -1334,8 +1372,11 @@ rt_arb_free(register struct soltab *stp)
 
     if (arbp->arb_opt)
 	bu_free((void *)arbp->arb_opt, "arb_opt");
-    if (arbp->arb_bot)
+    if (arbp->arb_bot) {
+	bu_free((void *)arbp->arb_bot->vertices, "bot->vertices");
+	bu_free((void *)arbp->arb_bot->faces, "bot->faces");
 	bu_free((void *)arbp->arb_bot, "arb_bot");
+    }
     bu_free((char *)arbp, "arb_specific");
 }
 
