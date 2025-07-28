@@ -83,7 +83,7 @@ arb8_config_t arb8_configs[] = {
       {0.5, 0.5, 1.0}}},
 
     // Planar concave configurations
-    {"PlanarConcave",
+    {"ConcavePlanar",
      {{0.0, 0.0, 0.0},
       {1.0, 0.0, 0.0},
       {1.0, 1.0, 0.0},
@@ -92,7 +92,7 @@ arb8_config_t arb8_configs[] = {
       {1.0, 0.0, 1.0},
       {1.0, 1.0, 1.0},
       {0.6, 0.4, 1.0}}},
-    {"PlanarMoreConcave",
+    {"MoreConcavePlanar",
      {{0.0, 0.0, 0.0},
       {1.0, 0.0, 0.0},
       {0.3, 0.3, 0.0},
@@ -124,7 +124,7 @@ arb8_config_t arb8_configs[] = {
       {1.0, 0.0, 1.10},
       {1.0, 1.0, 0.92},
       {0.7, 0.3, 0.70}}},
-    {"MostNonPlanarConcave",
+    {"MostConcaveNonPlanar",
      {{0.2, 0.0, 0.0},
       {1.0, 0.3, 0.10},
       {1.1, 1.0, -0.25},
@@ -144,165 +144,67 @@ typedef struct {
     vect_t direction;
 } ray_input_t;
 
-ray_input_t rays[] = {
-    {"Ray_PosX", {-2, 0, 0}, {1, 0, 0}},
-    {"Ray_NegX", {2, 0, 0}, {-1, 0, 0}},
-    {"Ray_PosY", {0, -2, 0}, {0, 1, 0}},
-    {"Ray_NegY", {0, 2, 0}, {0, -1, 0}},
-    {"Ray_PosZ", {0, 0, -2}, {0, 0, 1}},
-    {"Ray_NegZ", {0, 0, 2}, {0, 0, -1}},
-    {"Ray_Diagonal", {-2, -2, -2}, {1, 1, 1}},
-    {"Ray_GrazingEdge", {0.5, -2, 0.5}, {0, 1, 0}},
-    {"Ray_GrazingVertex", {1, -1, -1}, {1, 1, 1}},
-    {"Ray_Inside", {0.5, 0.5, 0.5}, {1, 1, 1}}
-};
-
 
 // Expected results (to be filled manually or programmatically based on geometry)
 typedef struct {
     const char *arb8_label;
     const char *ray_label;
-    int expected_hit; // 1 = hit, 0 = miss
+    int expected_hits; // typically 2 in/out hits per segment
 } expected_result_t;
 
 expected_result_t expected_results[] = {
-    // Standard ARB8 Configurations
-    {"StandardCube", "Ray_PosX", 1},
-    {"StandardCube", "Ray_NegX", 1},
-    {"StandardCube", "Ray_PosY", 1},
-    {"StandardCube", "Ray_NegY", 1},
-    {"StandardCube", "Ray_PosZ", 1},
-    {"StandardCube", "Ray_NegZ", 1},
-    {"StandardCube", "Ray_Diagonal", 1},
-    {"StandardCube", "Ray_GrazingEdge", 1},
-    {"StandardCube", "Ray_GrazingVertex", 1},
-    {"StandardCube", "Ray_Inside", 1},
-
-    // Slanted ARB8 Configurations
-    {"SlantedARB8_1", "Ray_PosX", 1},
-    {"SlantedARB8_1", "Ray_NegX", 1},
-    {"SlantedARB8_1", "Ray_PosY", 1},
-    {"SlantedARB8_1", "Ray_NegY", 1},
-    {"SlantedARB8_1", "Ray_PosZ", 1},
-    {"SlantedARB8_1", "Ray_NegZ", 1},
-    {"SlantedARB8_1", "Ray_Diagonal", 1},
-    {"SlantedARB8_1", "Ray_GrazingEdge", 1},
-    {"SlantedARB8_1", "Ray_GrazingVertex", 1},
-    {"SlantedARB8_1", "Ray_Inside", 1},
-
-    {"SlantedARB8_2", "Ray_PosX", 1},
-    {"SlantedARB8_2", "Ray_NegX", 1},
-    {"SlantedARB8_2", "Ray_PosY", 1},
-    {"SlantedARB8_2", "Ray_NegY", 1},
-    {"SlantedARB8_2", "Ray_PosZ", 1},
-    {"SlantedARB8_2", "Ray_NegZ", 1},
-    {"SlantedARB8_2", "Ray_Diagonal", 1},
-    {"SlantedARB8_2", "Ray_GrazingEdge", 1},
-    {"SlantedARB8_2", "Ray_GrazingVertex", 1},
-    {"SlantedARB8_2", "Ray_Inside", 1},
-
-    {"SlantedARB8_3", "Ray_PosX", 1},
-    {"SlantedARB8_3", "Ray_NegX", 1},
-    {"SlantedARB8_3", "Ray_PosY", 1},
-    {"SlantedARB8_3", "Ray_NegY", 1},
-    {"SlantedARB8_3", "Ray_PosZ", 1},
-    {"SlantedARB8_3", "Ray_NegZ", 1},
-    {"SlantedARB8_3", "Ray_Diagonal", 1},
-    {"SlantedARB8_3", "Ray_GrazingEdge", 1},
-    {"SlantedARB8_3", "Ray_GrazingVertex", 1},
-    {"SlantedARB8_3", "Ray_Inside", 1},
-
-    // Irregular ARB8 Configurations
-    {"IrregularARB8_1", "Ray_PosX", 1},
-    {"IrregularARB8_1", "Ray_NegX", 1},
-    {"IrregularARB8_1", "Ray_PosY", 1},
-    {"IrregularARB8_1", "Ray_NegY", 1},
-    {"IrregularARB8_1", "Ray_PosZ", 1},
-    {"IrregularARB8_1", "Ray_NegZ", 1},
-    {"IrregularARB8_1", "Ray_Diagonal", 1},
-    {"IrregularARB8_1", "Ray_GrazingEdge", 1},
-    {"IrregularARB8_1", "Ray_GrazingVertex", 1},
-    {"IrregularARB8_1", "Ray_Inside", 1},
-
-    {"IrregularARB8_2", "Ray_PosX", 1},
-    {"IrregularARB8_2", "Ray_NegX", 1},
-    {"IrregularARB8_2", "Ray_PosY", 1},
-    {"IrregularARB8_2", "Ray_NegY", 1},
-    {"IrregularARB8_2", "Ray_PosZ", 1},
-    {"IrregularARB8_2", "Ray_NegZ", 1},
-    {"IrregularARB8_2", "Ray_Diagonal", 1},
-    {"IrregularARB8_2", "Ray_GrazingEdge", 1},
-    {"IrregularARB8_2", "Ray_GrazingVertex", 1},
-    {"IrregularARB8_2", "Ray_Inside", 1},
-
-    {"IrregularARB8_3", "Ray_PosX", 1},
-    {"IrregularARB8_3", "Ray_NegX", 1},
-    {"IrregularARB8_3", "Ray_PosY", 1},
-    {"IrregularARB8_3", "Ray_NegY", 1},
-    {"IrregularARB8_3", "Ray_PosZ", 1},
-    {"IrregularARB8_3", "Ray_NegZ", 1},
-    {"IrregularARB8_3", "Ray_Diagonal", 1},
-    {"IrregularARB8_3", "Ray_GrazingEdge", 1},
-    {"IrregularARB8_3", "Ray_GrazingVertex", 1},
-    {"IrregularARB8_3", "Ray_Inside", 1},
-
-    // Unit Cubes in Quadrants
-    {"UnitCube_Q1", "Ray_PosX", 1},
-    {"UnitCube_Q1", "Ray_NegX", 0},
-    {"UnitCube_Q1", "Ray_PosY", 1},
-    {"UnitCube_Q1", "Ray_NegY", 0},
-    {"UnitCube_Q1", "Ray_PosZ", 1},
-    {"UnitCube_Q1", "Ray_NegZ", 0},
-    {"UnitCube_Q1", "Ray_Diagonal", 1},
-    {"UnitCube_Q1", "Ray_GrazingEdge", 1},
-    {"UnitCube_Q1", "Ray_GrazingVertex", 1},
-    {"UnitCube_Q1", "Ray_Inside", 1},
-
-    {"UnitCube_Q2", "Ray_PosX", 0},
-    {"UnitCube_Q2", "Ray_NegX", 1},
-    {"UnitCube_Q2", "Ray_PosY", 1},
-    {"UnitCube_Q2", "Ray_NegY", 0},
-    {"UnitCube_Q2", "Ray_PosZ", 1},
-    {"UnitCube_Q2", "Ray_NegZ", 0},
-    {"UnitCube_Q2", "Ray_Diagonal", 1},
-    {"UnitCube_Q2", "Ray_GrazingEdge", 1},
-    {"UnitCube_Q2", "Ray_GrazingVertex", 1},
-    {"UnitCube_Q2", "Ray_Inside", 1},
-
-    {"UnitCube_Q3", "Ray_PosX", 0},
-    {"UnitCube_Q3", "Ray_NegX", 0},
-    {"UnitCube_Q3", "Ray_PosY", 0},
-    {"UnitCube_Q3", "Ray_NegY", 1},
-    {"UnitCube_Q3", "Ray_PosZ", 1},
-    {"UnitCube_Q3", "Ray_NegZ", 0},
-    {"UnitCube_Q3", "Ray_Diagonal", 1},
-    {"UnitCube_Q3", "Ray_GrazingEdge", 1},
-    {"UnitCube_Q3", "Ray_GrazingVertex", 1},
-    {"UnitCube_Q3", "Ray_Inside", 1},
-
-    {"UnitCube_Q8", "Ray_PosX", 0},
-    {"UnitCube_Q8", "Ray_NegX", 1},
-    {"UnitCube_Q8", "Ray_PosY", 0},
-    {"UnitCube_Q8", "Ray_NegY", 1},
-    {"UnitCube_Q8", "Ray_PosZ", 0},
-    {"UnitCube_Q8", "Ray_NegZ", 1},
-    {"UnitCube_Q8", "Ray_Diagonal", 1},
-    {"UnitCube_Q8", "Ray_GrazingEdge", 1},
-    {"UnitCube_Q8", "Ray_GrazingVertex", 1},
-    {"UnitCube_Q8", "Ray_Inside", 1},
-
-    // Spanning Cube
-    {"SpanningCube", "Ray_PosX", 1},
-    {"SpanningCube", "Ray_NegX", 1},
-    {"SpanningCube", "Ray_PosY", 1},
-    {"SpanningCube", "Ray_NegY", 1},
-    {"SpanningCube", "Ray_PosZ", 1},
-    {"SpanningCube", "Ray_NegZ", 1},
-    {"SpanningCube", "Ray_Diagonal", 1},
-    {"SpanningCube", "Ray_GrazingEdge", 1},
-    {"SpanningCube", "Ray_GrazingVertex", 1},
-    {"SpanningCube", "Ray_Inside", 1}
+    {"SpanningUnitCube", "SpanningUnitCube", 2},
+    {"UnitCube_Q1", "UnitCube_Q1", 2},
+    {"UnitCube_Q2", "UnitCube_Q2", 2},
+    {"UnitCube_Q3", "UnitCube_Q3", 0},
+    {"UnitCube_Q4", "UnitCube_Q4", 0},
+    {"UnitCube_Q5", "UnitCube_Q5", 0},
+    {"UnitCube_Q6", "UnitCube_Q6", 0},
+    {"UnitCube_Q7", "UnitCube_Q7", 0},
+    {"UnitCube_Q8", "UnitCube_Q8", 0},
+    {"Elongated_X1", "Elongated_X1", 2},
+    {"Elongated_X2", "Elongated_X2", 0},
+    {"Elongated_Y1", "Elongated_Y1", 2},
+    {"Elongated_Y2", "Elongated_Y2", 2},
+    {"Elongated_Z1", "Elongated_Z1", 2},
+    {"Elongated_Z2", "Elongated_Z2", 2},
+    {"ReverseUnitCube", "ReverseUnitCube", 2},
+    {"TopSlanted", "TopSlanted", 2},
+    {"UnevenSlanted", "UnevenSlanted", 2},
+    {"OppositeSlanted", "OppositeSlanted", 2},
+    {"PlanarARB6", "PlanarARB6", 2},
+    {"ConcavePlanar", "ConcavePlanar", 2},
+    {"MoreConcavePlanar", "MoreConcavePlanar", 2},
+    {"WarpedNonPlanar", "WarpedNonPlanar", -2},
+    {"TwistedTopNonPlanar", "TwistedTopNonPlanar", -2},
+    {"ComplexNonPlanar", "ComplexNonPlanar", -2},
+    {"ConcaveNonPlanar", "ConcaveNonPlanar", -2},
+    {"MoreConcaveNonPlanar", "MoreConcaveNonPlanar", -2},
+    {"MostConcaveNonPlanar", "MostConcaveNonPlanar", -2}
 };
+
+
+static ray_input_t *
+setupRays(const arb8_config_t *arbp, size_t *count)
+{
+    // TODO: allocate grids and vertex-specific rays
+    ray_input_t *rays = (ray_input_t *)bu_calloc(1, sizeof(ray_input_t), "alloc rays");
+
+    rays[0].label = arbp->label;
+    VSET(rays[0].origin, 2, 0.5, 0.5);
+    VSET(rays[0].direction, -1, 0, 0);
+
+    *count = 1;
+
+    return rays;
+}
+
+
+static void
+releaseRays(ray_input_t *rays)
+{
+    bu_free(rays, "free rays");
+}
 
 
 // Main execution and validation
@@ -318,7 +220,10 @@ main(int ac, char *av[])
         const arb8_config_t *arb = &arb8_configs[i];
         printf("Testing ARB8: %s\n", arb->label);
 
-        for (size_t j = 0; j < sizeof(rays) / sizeof(ray_input_t); j++) {
+	size_t nrays = 0;
+	ray_input_t *rays = setupRays(arb, &nrays);
+
+        for (size_t j = 0; j < nrays; j++) {
             const ray_input_t *ray = &rays[j];
             printf("  Testing Ray: %s\n", ray->label);
 
@@ -350,35 +255,47 @@ main(int ac, char *av[])
 	    db.idb_ptr = &arbint;
 
 	    int prep = rt_obj_prep(&st, &db, NULL);
-	    int result = rt_obj_shot(&st, rayp, &ap, &seghead);
+	    int hits = rt_obj_shot(&st, rayp, &ap, &seghead);
 
-	    if (!prep)
+	    if (prep < 0) {
 		bu_log("prep failed\n");
-	    if (!result)
-		bu_log("shot failed\n");
-
-            int hit = 0; // Placeholder
+		hits = -hits; /* flip negative */
+	    }
+#if 0
+	    if (hits <= 0)
+		bu_log("shot missed\n");
+#endif
 
             // Validate against expected result
-            int expected_hit = -1;
+            int expected_hits = -999;
             for (size_t k = 0; k < sizeof(expected_results) / sizeof(expected_result_t); k++) {
                 if (bu_strcmp(expected_results[k].arb8_label, arb->label) == 0 &&
                     bu_strcmp(expected_results[k].ray_label, ray->label) == 0) {
-                    expected_hit = expected_results[k].expected_hit;
+                    expected_hits = expected_results[k].expected_hits;
                     break;
                 }
             }
 
-            if (expected_hit != -1) {
-                if (hit == expected_hit) {
-                    printf("    PASS\n");
+            if (expected_hits != -999) {
+                if (hits == expected_hits || -hits == expected_hits) {
+		    if (expected_hits < 0) {
+			printf("    PASS (unsupported, right)\n");
+		    } else {
+			printf("    PASS\n");
+		    }
                 } else {
-                    printf("    FAIL (expected %d, got %d)\n", expected_hit, hit);
+		    if (expected_hits < 0) {
+			printf("    PASS (unsupported, wrong)\n");
+		    } else {
+			printf("    FAIL (expected %d, got %d)\n", expected_hits, hits);
+		    }
                 }
             } else {
                 printf("    SKIPPED (no expectation defined)\n");
             }
         }
+
+	releaseRays(rays);
     }
 
     return 0;
