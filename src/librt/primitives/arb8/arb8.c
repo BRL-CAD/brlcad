@@ -670,6 +670,36 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
 }
 
 
+void
+rt_arb_print(register const struct soltab *stp)
+{
+    register struct arb_specific *arbp =
+	(struct arb_specific *)stp->st_specific;
+    register struct aface *afp;
+    register int i;
+
+    if (arbp == (struct arb_specific *)0) {
+	bu_log("arb(%s):  no faces\n", stp->st_name);
+	return;
+    }
+    bu_log("%d faces:\n", arbp->arb_nmfaces);
+    for (i = 0; i < arbp->arb_nmfaces; i++) {
+	afp = &(arbp->arb_face[i]);
+	VPRINT("A", afp->A);
+	HPRINT("Peqn", afp->peqn);
+	if (arbp->arb_opt) {
+	    register struct oface *op;
+	    op = &(arbp->arb_opt[i]);
+	    VPRINT("UVorig", op->arb_UVorig);
+	    VPRINT("U", op->arb_U);
+	    VPRINT("V", op->arb_V);
+	    bu_log("Ulen = %g, Vlen = %g\n",
+		   op->arb_Ulen, op->arb_Vlen);
+	}
+    }
+}
+
+
 /**
  * Find the bounding RPP of an arb
  */
@@ -826,7 +856,7 @@ arb_to_bot(const struct rt_arb_internal *aip, const struct arb_specific *asp)
     BU_ALLOC(bot, struct rt_bot_internal);
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->mode = RT_BOT_SOLID;
-    bot->orientation = RT_BOT_CCW;
+    bot->orientation = RT_BOT_UNORIENTED;
     bot->bot_flags = 0;
 
     static const int face_v[6][4] = {
@@ -964,6 +994,8 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
     if (arb_is_concave(aip, NULL)) {
 	bu_log("ARB(%s) IS CONCAVE\n", stp->st_dp?stp->st_name:"_unnamed_");
 
+	rt_arb_print(stp);
+
 	/* get a bot for this arb, then pretend */
 	struct rt_bot_internal *botp = arb_to_bot(aip, arbp);
 
@@ -1026,36 +1058,6 @@ rt_arb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_ARB_CK_MAGIC(aip);
 
     return rt_arb_setup(stp, aip, rtip, 0);
-}
-
-
-void
-rt_arb_print(register const struct soltab *stp)
-{
-    register struct arb_specific *arbp =
-	(struct arb_specific *)stp->st_specific;
-    register struct aface *afp;
-    register int i;
-
-    if (arbp == (struct arb_specific *)0) {
-	bu_log("arb(%s):  no faces\n", stp->st_name);
-	return;
-    }
-    bu_log("%d faces:\n", arbp->arb_nmfaces);
-    for (i = 0; i < arbp->arb_nmfaces; i++) {
-	afp = &(arbp->arb_face[i]);
-	VPRINT("A", afp->A);
-	HPRINT("Peqn", afp->peqn);
-	if (arbp->arb_opt) {
-	    register struct oface *op;
-	    op = &(arbp->arb_opt[i]);
-	    VPRINT("UVorig", op->arb_UVorig);
-	    VPRINT("U", op->arb_U);
-	    VPRINT("V", op->arb_V);
-	    bu_log("Ulen = %g, Vlen = %g\n",
-		   op->arb_Ulen, op->arb_Vlen);
-	}
-    }
 }
 
 
