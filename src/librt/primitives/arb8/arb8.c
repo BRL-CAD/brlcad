@@ -94,7 +94,6 @@ struct arb_specific {
     int arb_nmfaces;		/* number of faces */
     struct oface *arb_opt;	/* pointer to optional info */
     struct aface arb_face[6];	/* May really be up to [6] faces */
-    struct rt_bot_internal *arb_bot; /* only used when concave */
 };
 
 
@@ -945,7 +944,6 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 	arbp->arb_nmfaces = pa.pa_faces;
 	memcpy((char *)arbp->arb_face, (char *)pa.pa_face,
 	       pa.pa_faces * sizeof(struct aface));
-	arbp->arb_bot = NULL;
 
 	if (uv_wanted) {
 	    register struct oface *ofp;
@@ -963,6 +961,27 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 	} else {
 	    arbp->arb_opt = NULL;
 	}
+    }
+
+    if (arb_is_concave(aip, NULL)) {
+	bu_log("ARB(%s) IS CONCAVE\n", stp->st_dp?stp->st_name:"_unnamed_");
+
+	/* get a bot for this arb, then pretend */
+	struct rt_bot_internal *botp = arb_to_bot(aip, arbp);
+
+	stp->st_id = ID_BOT;
+	stp->st_meth = &OBJ[ID_BOT];
+	stp->st_specific = NULL; /* reset for BoT prep */
+
+	struct rt_db_internal internal;
+	internal.idb_magic = RT_DB_INTERNAL_MAGIC;
+	internal.idb_major_type = ID_BOT;
+	internal.idb_ptr = botp;
+
+	return rt_obj_prep(stp, &internal, rtip);
+    }
+    if (!arb_is_planar(aip, NULL)) {
+	bu_log("ARB(%s) IS NON-PLANAR\n", stp->st_dp?stp->st_name:"_unnamed_");
     }
 
     /*
@@ -986,50 +1005,6 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 	if (work[Z] > f) f = work[Z];
 	stp->st_aradius = f;
 	stp->st_bradius = MAGNITUDE(work);
-    }
-
-    if (arb_is_concave(aip, NULL)) {
-	bu_log("ARB(%s) IS CONCAVE\n", stp->st_dp?stp->st_name:"_unnamed_");
-
-	/* get a bot for this arb, prep & stash for shot() */
-	struct rt_bot_internal *botp = arb_to_bot(aip, arbp);
-	/* arbp->arb_bot = botp; */
-
-	/* struct soltab st = {0}; */
-	/* st.l.magic = RT_SOLTAB_MAGIC; */
-	/* st.l2.magic = RT_SOLTAB2_MAGIC; */
-	/* st.st_uses = 1; */
-	/* st.st_id = ID_BOT; */
-
-	/* let's pretend */
-	stp->st_id = ID_BOT;
-	stp->st_meth = &OBJ[ID_BOT];
-	stp->st_specific = NULL; /* reset for BoT prep */
-
-#if 0
-	struct soltab *bot_stp = RT_SOLTAB_NULL;
-	BU_ALLOC(bot_stp, struct soltab);
-	bot_stp->l.magic = RT_SOLTAB_MAGIC;
-	bot_stp->l2.magic = RT_SOLTAB2_MAGIC;
-	bot_stp->st_rtip = rtip;
-	bot_stp->st_dp = NULL;
-	bot_stp->st_matp = NULL;
-	bot_stp->st_meth = &OBJ[ID_BOT];
-	bot_stp->st_uses = 1;
-	bot_stp->st_id = ID_BOT;
-	bot_stp->st_regions = stp->st_regions; // struct copy steal
-	BU_PTBL_INIT(&stp->st_regions); // stolen
-#endif
-
-	struct rt_db_internal internal;
-	internal.idb_magic = RT_DB_INTERNAL_MAGIC;
-	internal.idb_major_type = ID_BOT;
-	internal.idb_ptr = botp;
-
-	return rt_obj_prep(stp, &internal, rtip);
-    }
-    if (!arb_is_planar(aip, NULL)) {
-	bu_log("ARB(%s) IS NON-PLANAR\n", stp->st_dp?stp->st_name:"_unnamed_");
     }
 
     return 0;		/* OK */
@@ -1107,22 +1082,6 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     fastf_t in, out;	/* ray in/out distances */
     register struct aface *afp;
     register int j;
-
-    if (UNLIKELY(arbp->arb_bot != NULL)) {
-	bu_log("HANDLING CONCAVE CASE\n");
-	/* CONCAVE CASE */
-	/* struct soltab st = {0}; */
-	/* st.l.magic = RT_SOLTAB_MAGIC; */
-	/* st.l2.magic = RT_SOLTAB2_MAGIC; */
-	/* st.st_uses = 1; */
-	/* st.st_id = ID_BOT; */
-
-	stp->st_id = ID_BOT;
-	stp->st_meth = &OBJ[ID_BOT];
-
-	int ret = rt_obj_shot(stp, rp, ap, seghead);
-	return ret;
-    }
 
     in = -INFINITY;
     out = INFINITY;
@@ -1420,13 +1379,6 @@ rt_arb_free(register struct soltab *stp)
 
     if (arbp->arb_opt)
 	bu_free((void *)arbp->arb_opt, "arb_opt");
-    if (arbp->arb_bot) {
-	if (arbp->arb_bot->face_mode)
-	    bu_free((void *)arbp->arb_bot->face_mode, "bot->face_mode");
-	bu_free((void *)arbp->arb_bot->vertices, "bot->vertices");
-	bu_free((void *)arbp->arb_bot->faces, "bot->faces");
-	bu_free((void *)arbp->arb_bot, "arb_bot");
-    }
     bu_free((char *)arbp, "arb_specific");
 }
 
