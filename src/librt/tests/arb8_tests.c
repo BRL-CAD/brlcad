@@ -30,6 +30,7 @@
 
 #include "bu/log.h"
 #include "vmath.h"
+#include "wdb.h"
 #include "raytrace.h"
 
 
@@ -211,11 +212,37 @@ releaseRays(ray_input_t *rays)
 int
 main(int ac, char *av[])
 {
-    if (ac > 1) {
-	bu_log("Usage: %s\n", av[0]);
+    if (ac != 1 && ac != 3) {
+	bu_log("Usage: %s [-g file.g]\n", av[0]);
 	return 1;
     }
 
+    /* write out arb8's to a .g file */
+    if (ac == 3) {
+	if (bu_file_exists(av[2], NULL)) {
+	    bu_log("ERROR: Output file [%s] already exists.\n", av[2]);
+	    bu_exit(1, "\tRemove file and retry.\n");
+	}
+
+	struct rt_wdb *wdbp = wdb_fopen(av[2]);
+	if (!wdbp) {
+	    bu_log("ERROR: Cannot open [%s] as writable database.\n", av[2]);
+	    bu_exit(2, "\tUnable to proceed.\n");
+	}
+
+	for (size_t i = 0; i < sizeof(arb8_configs) / sizeof(arb8_config_t); i++) {
+	    fastf_t pts[24];
+
+	    for (size_t j = 0; j < 8; j++) {
+		VMOVE(&pts[j*3], arb8_configs[i].vertices[j]);
+	    }
+	    mk_arb8(wdbp, arb8_configs[i].label, pts);
+	}
+
+	wdb_close(wdbp);
+    }
+
+    /* test them by shooting rays */
     for (size_t i = 0; i < sizeof(arb8_configs) / sizeof(arb8_config_t); i++) {
         const arb8_config_t *arb = &arb8_configs[i];
         printf("Testing ARB8: %s\n", arb->label);
