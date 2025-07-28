@@ -812,10 +812,8 @@ tri_matches_face(const point_t p, const point_t q, const point_t r, const vect_t
 
 
 /**
- * Note: This current implementation assumes the ARB definition is
- * still planar with one place per face.  Next step might be to expand
- * support for splitting faces (still maintaining planar faces) in
- * order to support twisted definitions and non-planar vertices.
+ * Note: Current implementation to BOT assumes ARBs are planar.
+ * Possible to expand support for non-planar via BREP or subdivision..
  */
 static struct rt_bot_internal *
 arb_to_bot(const struct rt_arb_internal *aip, const struct arb_specific *asp)
