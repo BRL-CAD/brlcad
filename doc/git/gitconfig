@@ -134,6 +134,9 @@
 	# history originated on that branch.  SVN, however, DID know which branch its commits
 	# originated on, and that information is encoded in the commit notes.  Accordingly, we
 	# can use that key to inspect the historical commit history of SVN branches.
+	#
+	# TODO - investigate use of --first-parent option for git log to see if it can help
+	# visualize topic-branch history in similar scenarios...
         logb = "!f() { \
                 if [ x$1 != x ] ; then \
                    CURRBRANCH=$1; \
