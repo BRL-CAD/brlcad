@@ -402,7 +402,25 @@ void
 q_write(std::shared_ptr<ProcessDrawData> p)
 {
     // Until we close this database, monitor for cache items to write.
+    struct bu_cache_txn *t = NULL;
+    int64_t start, elapsed;
+    start = bu_gettime();
     while (!p.get()->shutdown) {
+
+	elapsed = bu_gettime() - start;
+	if (t && elapsed > 100000) {
+	    // We've had time to process some queue entries as writes - time
+	    // to commit.  We don't do this every time because it is slow,
+	    // but we don't want to get too far behind either.
+	    // TODO - need to be able to single apps somehow (callback?) when
+	    // this happens so they know anything they've read from the
+	    // cache now needs to be re-verified
+	    if (bu_cache_write_commit(p.get()->dbip->i->c, &t)) {
+		bu_log("ERROR: cache commit failure\n");
+	    }
+	    start = bu_gettime();
+	}
+
 	if (!p.get()->q_write.size_approx()) {
 	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	    continue;
@@ -414,23 +432,19 @@ q_write(std::shared_ptr<ProcessDrawData> p)
 
 	// If this is an erase op, do the erasing
 	if (item.erase_op) {
-	    bu_cache_clear(item.key, p.get()->dbip->i->c);
+	    bu_log("Clearing : %s\n", item.key);
+	    bu_cache_clear(item.key, p.get()->dbip->i->c, &t);
 	    continue;
 	}
 
 	// TODO - see if we need to make copies of item data in order
 	// to safely pass to bu_cache_write...
 	bu_log("Writing: %s\n", item.key);
-
-	// Try a few times in case the first write doesn't succeed
-	int tcnt = 0;
-	while (tcnt < 10 && !bu_cache_write(item.data, item.data_len, item.key, p.get()->dbip->i->c)) {
-	    bu_log("%s: cache write failure\n", item.key);
-	    tcnt++;
-	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	if (!bu_cache_write(item.data, item.data_len, item.key, p.get()->dbip->i->c, &t)) {
+	    bu_log("ERROR:  %s cache write failure\n", item.key);
+	    continue;
 	}
-	if (tcnt == 10)
-	    bu_log("ERROR:  %s: completely failed to write\n", item.key);
+
     }
 
     p.get()->thread_cnt--;
@@ -635,13 +649,13 @@ db_cache_clear_entries(struct db_i *dbip, unsigned long long hash)
 
     // Clear attr entries
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_ID);
-    bu_cache_clear(ckey, c);
+    bu_cache_clear(ckey, c, NULL);
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_FLAG);
-    bu_cache_clear(ckey, c);
+    bu_cache_clear(ckey, c, NULL);
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_INHERIT_FLAG);
-    bu_cache_clear(ckey, c);
+    bu_cache_clear(ckey, c, NULL);
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_COLOR);
-    bu_cache_clear(ckey, c);
+    bu_cache_clear(ckey, c, NULL);
 
 
     // TODO - clear per-name geometry info:
