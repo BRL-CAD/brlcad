@@ -215,7 +215,7 @@ basic_test(int item_cnt)
     start = bu_gettime();
     for (int i = rr_s; i < rr_e; i++) {
 	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "dbl:%d", i);
-	bu_cache_clear(keystr, c);
+	bu_cache_clear(keystr, c, NULL);
     }
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
