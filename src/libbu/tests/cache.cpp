@@ -253,13 +253,19 @@ basic_test(int item_cnt)
 
     // Done processing - close cache before checking file size info to make sure
     // we are synced
-    bu_cache_close(c);
+    if (bu_cache_close(c) != BRLCAD_OK) {
+	bu_log("Failed to close cache!\n");
+	ret = 1;
+    }
 
     // Reopen the cache and repeat the key test
     bu_log("Reopen and repeat key read...\n");
     c = bu_cache_open(cfile, 0, 0);
     print_keys(c, kcnt_expected, item_cnt);
-    bu_cache_close(c);
+    if (bu_cache_close(c) != BRLCAD_OK) {
+	bu_log("Failed to close cache!\n");
+	ret = 1;
+    }
 
     if (!bu_file_exists(cache_file, NULL)) {
 	bu_log("Cache file %s not found\n", cache_file);
@@ -358,7 +364,10 @@ limit_test()
     bu_log("All successfully written values read\n");
 
     // Close the cache to make sure we're synced to disk before the next checks
-    bu_cache_close(c);
+    if (bu_cache_close(c) != BRLCAD_OK) {
+	bu_log("Failed to close cache!\n");
+	ret = 1;
+    }
 
     // Before proceeding, see if the file size jibes with the limit
     char cache_file[MAXPATHLEN] = {0};
@@ -411,7 +420,10 @@ limit_test()
     }
     bu_cache_get_done(&txn);
     bu_log("All DBL values (old and newly added) successfully read\n");
-    bu_cache_close(c);
+    if (bu_cache_close(c) != BRLCAD_OK) {
+	bu_log("Failed to close cache!\n");
+	ret = 1;
+    }
 
     bu_dir(cache_file, MAXPATHLEN, BU_DIR_CACHE, cfile, NULL);
     if (!bu_file_exists(cache_file, NULL)) {
@@ -432,41 +444,28 @@ limit_test()
 
 //------------------------ Section: Threading/Concurrency Tests -------------
 
-void
+int
 val_incr(struct bu_cache *c, int item_cnt)
 {
-    std::random_device rd;
-    std::mt19937 mt(rd());
-    std::uniform_real_distribution<> rdist(0.0, 0.1);
+    int ret = 0;
 
+    struct bu_cache_txn *t;
     char keystr[BU_CACHE_KEY_MAXLEN];
     for (int i = 0; i < item_cnt; i++) {
-
-	double wt = rdist(mt);
-	std::chrono::duration<double> wtime(wt);
-	std::this_thread::sleep_for(wtime);
-
+	int ival = i;
 	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "int:%d", i);
-
-	// If another thread or threads have already incremented
-	// read that value.
-	void *rdata = NULL;
-	struct bu_cache_txn *txn = NULL;
-	size_t rsize = bu_cache_get(&rdata, keystr, c, &txn);
-	int rval = 0;
-	if (rsize == sizeof(int))
-	    memcpy(&rval, rdata, sizeof(rval));
-	bu_cache_get_done(&txn);
-
-	int ival = rval + 1;
-	size_t written = bu_cache_write((char *)&ival, sizeof(int), keystr, c, NULL);
-	if (written != sizeof(int))
-	    bu_exit(1, "Failed to write int %d\n", i);
-
-	//std::cout << "thread " << std::this_thread::get_id() << " :" << i << "->" << ival << "\n";
+	size_t written = bu_cache_write((char *)&ival, sizeof(int), keystr, c, &t);
+	if (written != sizeof(int)) {
+	    bu_log("Failed to write int %d\n", i);
+	    ret = 1;
+	}
     }
 
-    std::cout << "thread " << std::this_thread::get_id() << " complete\n";
+    if (bu_cache_write_commit(c, &t) != 0) {
+	bu_log("val_incr: batch write failed\n");
+	ret = 1;
+    }
+    return ret;
 }
 
 void
@@ -504,7 +503,7 @@ val_read(struct bu_cache *c, int item_cnt, std::map<int, int> &ctrl)
 	bu_cache_get_done(&txn);
 
 	if (ctrl[i] != rval)
-	    bu_exit(1, "%d - failed to read correct int value - expected to read %zd bytes but read %zd\n", i, sizeof(  int), rsize);
+	    bu_exit(1, "%d - failed to read correct int value - expected to read %d but read %d\n", i, ctrl[i], rval);
 
 	//std::cout << "thread " << std::this_thread::get_id() << " :" << i << "->" << rval << "\n";
     }
@@ -524,33 +523,22 @@ threading_test()
     bu_dir(cache_file, MAXPATHLEN, BU_DIR_CACHE, cfile, NULL);
 
     bu_log("\n********************************************************************************\n");
-    bu_log("*** Threading test - writing to and reading from cache with multiple threads ***\n");
+    bu_log("*** Threading test - reading from cache with multiple threads ***\n");
     bu_log("********************************************************************************\n");
 
     struct bu_cache *c = bu_cache_open(cfile, 1, 0);
 
-    // Thread count to use
-    int tcnt = 20;
-
-    // Number of items to write per thread.  We need to keep this reasonably
-    // small to keep the test short.
-    int item_cnt = 30;
-
-    // Test writing from multiple threads
-    std::vector<std::thread> wthreads;
     start = bu_gettime();
 
-    // Kick off all the threads
-    for (int i = 0; i < tcnt; ++i)
-	wthreads.emplace_back(val_incr, c, item_cnt);
+    int tcnt = 20;
+    int item_cnt = 300;
 
-    // Wait for all the threads to finish
-    for (std::thread& t : wthreads)
-        t.join();
-
-    elapsed = bu_gettime() - start;
-    seconds = elapsed / 1000000.0;
-    bu_log("Multi-threaded write test completed - wrote %d INTs from %d threads in %g seconds.\n", item_cnt, tcnt, seconds);
+    if (val_incr(c, item_cnt)) {
+	bu_log("Threading/concurrency test [FAIL]\n");
+	bu_cache_close(c);
+	bu_cache_erase(cfile);
+	return 1;
+    }
 
     // Read the values from a single thread as a control
     start = bu_gettime();
@@ -569,15 +557,6 @@ threading_test()
 	memcpy(&rval, rdata, sizeof(rval));
 	ivals[i] = rval;
     }
-    std::cout << "Values read from single thread:\n";
-    for (auto &m_it : ivals) {
-	std::cout << m_it.first << "->" << m_it.second << "\n";
-    }
-
-    bu_cache_get_done(&txn);
-    elapsed = bu_gettime() - start;
-    seconds = elapsed / 1000000.0;
-    bu_log("Single threaded read test completed - read %d INTs in %g seconds.\n", item_cnt, seconds);
 
     // Test reading from multiple threads
     std::vector<std::thread> rthreads;
@@ -595,7 +574,10 @@ threading_test()
     seconds = elapsed / 1000000.0;
     bu_log("Multi-threaded read test completed - %g seconds (NOTE: most of this is random wait time).\n", seconds);
 
-    bu_cache_close(c);
+    if (bu_cache_close(c) != BRLCAD_OK) {
+	bu_log("Failed to close cache!\n");
+	ret = 1;
+    }
 
     if (!bu_file_exists(cache_file, NULL)) {
 	bu_log("Cache file %s not found\n", cache_file);
@@ -738,7 +720,10 @@ int stress_tests()
     ret |= stress_unicode_key_value_test(c);
     ret |= mass_small_values_test(c);
     ret |= mass_large_values_test(c);
-    bu_cache_close(c);
+    if (bu_cache_close(c) != BRLCAD_OK) {
+	bu_log("Failed to close cache!\n");
+	ret = 1;
+    }
     bu_cache_erase("stress_cache");
     bu_log("Overall stress tests %s\n", ret ? "[FAIL]" : "[PASS]");
     return ret;
@@ -883,15 +868,141 @@ int boundary_and_error_tests()
     }
     bu_free(rdata, "free ws-only val");
 
-    bu_cache_close(c);
+    if (bu_cache_close(c) != BRLCAD_OK) {
+        bu_log("Failed to close cache!\n");
+        ret = 1;
+    }
     bu_cache_erase("boundary_cache");
     bu_log("Boundary & error handling tests %s\n", ret ? "[FAIL]" : "[PASS]");
     return ret;
 }
 
+/* Validate multiple writes in single commit behavior (should be MUCH faster) */
+int
+txn_reuse_performance_test(int item_cnt)
+{
+    int ret = 0;
+    const char *cfile = "txn_perf_cache";
+    char keystr[BU_CACHE_KEY_MAXLEN];
+
+    bu_log("\n===============================================================================\n");
+    bu_log("Write Transaction Reuse Performance Test\n");
+    bu_log("===============================================================================\n");
+
+    // ======= Non-reuse: One write txn per call =======
+    bu_dirclear(NULL); // Clear cache dir if needed
+    struct bu_cache *c = bu_cache_open(cfile, 1, 0);
+
+    int64_t start = bu_gettime();
+    for (int i = 0; i < item_cnt; i++) {
+        snprintf(keystr, BU_CACHE_KEY_MAXLEN, "nrtxn:%d", i);
+        int ival = i;
+        size_t written = bu_cache_write((void *)&ival, sizeof(int), keystr, c, NULL);
+        if (written != sizeof(int)) {
+            bu_log("One-shot write failed for key %s\n", keystr);
+            ret = 1;
+        }
+    }
+    int64_t elapsed = bu_gettime() - start;
+    fastf_t single_seconds = elapsed / 1000000.0;
+    bu_log("Non-reuse: Wrote %d INT entries in %g seconds.\n", item_cnt, single_seconds);
+
+
+    // === Validation pass: read back all keys and verify contents ===
+    int bad_reads = 0;
+    struct bu_cache_txn *rtxn = NULL;
+    for (int i = 0; i < item_cnt; i++) {
+        snprintf(keystr, BU_CACHE_KEY_MAXLEN, "nrtxn:%d", i);
+        void *rdata = NULL;
+        size_t rsize = bu_cache_get(&rdata, keystr, c, &rtxn);
+        if (rsize != sizeof(int)) {
+            bu_log("One-shot validation: failed to read key %s (size %zd)\n", keystr, rsize);
+            ret = 1;
+            bad_reads++;
+            continue;
+        }
+        int rval = 0;
+        memcpy(&rval, rdata, sizeof(rval));
+        if (rval != i) {
+            bu_log("One-shot validation: bad value for key %s: got %d expected %d\n", keystr, rval, i);
+            ret = 1;
+            bad_reads++;
+        }
+    }
+    bu_cache_get_done(&rtxn);
+    bu_log("One-shot write validation: %d bad reads out of %d\n", bad_reads, item_cnt);
+
+    if (bu_cache_close(c) != BRLCAD_OK) {
+	bu_log("Failed to close cache!\n");
+        ret = 1;
+    }
+    bu_cache_erase(cfile);
+
+    // ======= Reuse: Single write txn for all writes =======
+    c = bu_cache_open(cfile, 1, 0);
+
+    start = bu_gettime();
+    struct bu_cache_txn *txn = NULL;
+    for (int i = 0; i < item_cnt; i++) {
+	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "reuse:%d", i);
+	int ival = i;
+	size_t written = bu_cache_write((void *)&ival, sizeof(int), keystr, c, &txn);
+	if (written != sizeof(int)) {
+	    bu_log("Batched write failed for key %s\n", keystr);
+	    ret = 1;
+	}
+    }
+    if (bu_cache_write_commit(c, &txn) != 0) {
+	bu_log("Failed to commit batched write transaction\n");
+	ret = 1;
+    }
+
+    elapsed = bu_gettime() - start;
+    fastf_t multi_seconds = elapsed / 1000000.0;
+    bu_log("Reuse: Wrote %d INT entries in %g seconds.\n", item_cnt, multi_seconds);
+
+    // === Validation pass: read back all keys and verify contents ===
+    bad_reads = 0;
+    rtxn = NULL;
+    for (int i = 0; i < item_cnt; i++) {
+        snprintf(keystr, BU_CACHE_KEY_MAXLEN, "reuse:%d", i);
+        void *rdata = NULL;
+        size_t rsize = bu_cache_get(&rdata, keystr, c, &rtxn);
+        if (rsize != sizeof(int)) {
+            bu_log("Reuse validation: failed to read key %s (size %zd)\n", keystr, rsize);
+            ret = 1;
+            bad_reads++;
+            continue;
+        }
+        int rval = 0;
+        memcpy(&rval, rdata, sizeof(rval));
+        if (rval != i) {
+            bu_log("Reuse validation: bad value for key %s: got %d expected %d\n", keystr, rval, i);
+            ret = 1;
+            bad_reads++;
+        }
+    }
+    bu_cache_get_done(&rtxn);
+    bu_log("Reuse write validation: %d bad reads out of %d\n", bad_reads, item_cnt);
+
+    if (bu_cache_close(c) != BRLCAD_OK) {
+	bu_log("Failed to close cache!\n");
+        ret = 1;
+    }
+    bu_cache_erase(cfile);
+
+    if (single_seconds < multi_seconds) {
+	bu_log("Per-data write was faster than batched write - that indicates something is wrong!.\n");
+	ret = 1;
+    }
+
+    bu_log("Transaction reuse performance test %s\n", ret ? "[FAIL]" : "[PASS]");
+    return ret;
+}
+
 //------------------------ Section: Test Summary Printing -------------------
 
-void print_test_summary(int ret_basic, int ret_limit, int ret_threading, int ret_stress, int ret_boundary)
+void print_test_summary(int ret_basic, int ret_limit, int ret_threading, int ret_stress, int ret_boundary, int ret_multiwrite)
 {
     bu_log("\n========================\n");
     bu_log("   Test Summary Report  \n");
@@ -903,8 +1014,9 @@ void print_test_summary(int ret_basic, int ret_limit, int ret_threading, int ret
     bu_log("Threading/Concurrency:    %s\n", show(ret_threading));
     bu_log("Stress Tests:             %s\n", show(ret_stress));
     bu_log("Boundary/Error Handling:  %s\n", show(ret_boundary));
+    bu_log("Write Transaction Reuse Performance Test:  %s\n", show(ret_multiwrite));
     bu_log("========================\n");
-    int overall = ret_basic | ret_limit | ret_threading | ret_stress | ret_boundary;
+    int overall = ret_basic | ret_limit | ret_threading | ret_stress | ret_boundary |ret_multiwrite;
     if (!overall)
         bu_log("ALL TESTS PASSED\n");
     else
@@ -944,10 +1056,11 @@ main(int argc, const char **argv)
     int ret_threading = threading_test();           ret |= ret_threading;
     int ret_stress = stress_tests();                ret |= ret_stress;
     int ret_boundary = boundary_and_error_tests();  ret |= ret_boundary;
+    int ret_multiwrite = txn_reuse_performance_test(item_cnt);  ret |= ret_multiwrite;
 
     bu_dirclear(cache_dir);
 
-    print_test_summary(ret_basic, ret_limit, ret_threading, ret_stress, ret_boundary);
+    print_test_summary(ret_basic, ret_limit, ret_threading, ret_stress, ret_boundary, ret_multiwrite);
 
     return (ret ? 1 : 0);
 }

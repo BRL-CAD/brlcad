@@ -29,6 +29,7 @@
 
 #include <chrono>
 #include <cstring>
+#include <mutex>
 #include <set>
 #include <string>
 #include <thread>
@@ -67,6 +68,13 @@ struct bu_cache_impl {
     MDB_env *env;
     MDB_dbi dbi;
     struct bu_vls *fname;
+    int write_txn_active; // 0 = no active write txn, 1 = active
+    std::mutex write_txn_mutex;
+};
+
+struct bu_cache_txn {
+    MDB_txn *txn;
+    struct bu_cache *cache;
 };
 
 struct bu_cache *
@@ -124,6 +132,7 @@ bu_cache_open(const char *cache_db, int create, size_t max_cache_size)
     BU_GET(c->i->fname, struct bu_vls);
     bu_vls_init(c->i->fname);
     bu_vls_sprintf(c->i->fname, "%s", cdb);
+    c->i->write_txn_active = 0;
 
     // Base maximum readers on an estimate of how many threads
     // we might want to fire off
@@ -178,11 +187,19 @@ bu_context_fail:
     return NULL;
 }
 
-void
+int
 bu_cache_close(struct bu_cache *c)
 {
     if (!c)
-	return;
+	return BRLCAD_OK;
+
+    {
+	std::lock_guard<std::mutex> guard(c->i->write_txn_mutex); // lock
+	if (c->i->write_txn_active) {
+	    bu_log("Error - attempted to close cache with a write transaction active - commit or abort write before close\n");
+	    return BRLCAD_ERROR;
+	}
+    }
 
     // Do a sync to make sure everything is on disk
     mdb_env_sync(c->i->env, 1);
@@ -193,6 +210,8 @@ bu_cache_close(struct bu_cache *c)
     BU_PUT(c->i->fname, struct bu_vls);
     BU_PUT(c->i, struct bu_cache_impl);
     BU_PUT(c, struct bu_cache);
+
+    return BRLCAD_OK;
 }
 
 void
@@ -213,7 +232,7 @@ cache_get_read_txn(struct bu_cache *c, struct bu_cache_txn **t)
     if (UNLIKELY(!c))
 	return NULL;
 
-    MDB_txn *txn = (t && *t) ? (MDB_txn *)*t : NULL;
+    MDB_txn *txn = (t && *t) ? (*t)->txn : NULL;
     if (txn)
 	return txn;
 
@@ -245,8 +264,13 @@ cache_get_read_txn(struct bu_cache *c, struct bu_cache_txn **t)
 	return NULL;
     }
 
-    if (t)
-	*t = (struct bu_cache_txn *)txn;
+    if (t) {
+	struct bu_cache_txn *ctxn;
+	BU_GET(ctxn, struct bu_cache_txn);
+	ctxn->txn = txn;
+	ctxn->cache = c;
+	*t = ctxn;
+    }
 
     return txn;
 }
@@ -311,12 +335,13 @@ bu_cache_get(void **data, const char *key, struct bu_cache *c, struct bu_cache_t
 void
 bu_cache_get_done(struct bu_cache_txn **t)
 {
-    if (!t)
+    if (!t || !*t)
 	return;
 
-    if (*t)
-	mdb_txn_abort((MDB_txn *)(*t));
-
+    struct bu_cache_txn *ctxn = *t;
+    mdb_txn_abort(ctxn->txn);
+    ctxn->cache = NULL;
+    BU_PUT(ctxn, struct bu_cache_txn);
     *t = NULL;
 }
 
@@ -327,7 +352,18 @@ cache_get_write_txn(struct bu_cache *c, struct bu_cache_txn **t)
     if (UNLIKELY(!c))
 	return NULL;
 
-    MDB_txn *txn = (t && *t) ? (MDB_txn *)*t : NULL;
+    // We can't have multiple write txns per cache - lock to prevent
+    // multiple threads trying this at the same time
+    std::lock_guard<std::mutex> guard(c->i->write_txn_mutex);
+
+    // If we already have a write txn and we're trying to start another
+    // one, that's a no-no
+    if ((!t || !*t) && c->i->write_txn_active) {
+        bu_log("Error: Attempt to start a second write transaction on the same cache.\n");
+        return NULL;
+    }
+
+    MDB_txn *txn = (t && *t) ? (*t)->txn : NULL;
     if (txn)
 	return txn;
 
@@ -345,8 +381,16 @@ cache_get_write_txn(struct bu_cache *c, struct bu_cache_txn **t)
 	return NULL;
     }
 
-    if (t)
-	*t = (struct bu_cache_txn *)txn;
+    // We have an active write txn - let the cache know
+    c->i->write_txn_active = 1;
+
+    if (t) {
+	struct bu_cache_txn *ctxn;
+	BU_GET(ctxn, struct bu_cache_txn);
+	ctxn->txn = txn;
+	ctxn->cache = c;
+	*t = ctxn;
+    }
 
     return txn;
 }
@@ -396,6 +440,10 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c, st
     rc |= mdb_txn_commit(txn);
     txn = NULL;
     mdb_env_sync(c->i->env, 0);
+
+    // No longer have an active write txn - let the cache know
+    c->i->write_txn_active = 0;
+
     // If we were unsuccessful, return 0;
     if (rc)
 	return 0;
@@ -428,29 +476,41 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c, st
 int
 bu_cache_write_commit(struct bu_cache *c, struct bu_cache_txn **t)
 {
-    if (!c || !t)
+    if (!c || !t || !(*t) || !(*t)->txn)
 	return BRLCAD_ERROR;
 
-    int rc = mdb_txn_commit((MDB_txn *)(*t));
+    struct bu_cache_txn *ctxn = *t;
+    int rc = 0;
+    {
+	std::lock_guard<std::mutex> guard(c->i->write_txn_mutex); // lock
+	rc = mdb_txn_commit(ctxn->txn);
+	// No longer have an active write txn - let the cache know
+	ctxn->cache->i->write_txn_active = 0;
+    }
     mdb_env_sync(c->i->env, 0);
-
-    if (rc)
-	return BRLCAD_ERROR;
-
+    ctxn->cache = NULL;
+    BU_PUT(ctxn, struct bu_cache_txn);
     *t = NULL;
 
-    return BRLCAD_OK;
+    return (rc) ? BRLCAD_ERROR : BRLCAD_OK;
 }
 
 void
 bu_cache_write_abort(struct bu_cache_txn **t)
 {
-    if (!t)
+    if (!t || !(*t) || !(*t)->txn)
 	return;
 
-    if (*t)
-	mdb_txn_abort((MDB_txn *)(*t));
+    struct bu_cache_txn *ctxn = *t;
+    {
+	std::lock_guard<std::mutex> guard(ctxn->cache->i->write_txn_mutex); // lock
+	mdb_txn_abort(ctxn->txn);
+	// No longer have an active write txn - let the cache know
+	ctxn->cache->i->write_txn_active = 0;
+    }
 
+    ctxn->cache = NULL;
+    BU_PUT(ctxn, struct bu_cache_txn);
     *t = NULL;
 }
 
