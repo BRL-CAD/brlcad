@@ -447,6 +447,13 @@ q_write(std::shared_ptr<ProcessDrawData> p)
 
     }
 
+    if (p.get()->shutdown) {
+	// Finish up anything we've still got in play
+	if (bu_cache_write_commit(p.get()->dbip->i->c, &t)) {
+	    bu_log("ERROR: cache commit failure\n");
+	}
+    }
+
     p.get()->thread_cnt--;
 }
 

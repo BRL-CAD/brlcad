@@ -666,8 +666,11 @@ db_i_internal_destroy(struct db_i_internal *i)
     while (i->p.get()->thread_cnt)
 	std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-    if (i->c)
-	bu_cache_close(i->c);
+    if (i->c) {
+	while (bu_cache_close(i->c) != BRLCAD_OK) {
+	    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+	}
+    }
 
     BU_PUT(i, struct db_i_internal);
 }

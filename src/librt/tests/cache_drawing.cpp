@@ -67,7 +67,7 @@ do_lod(struct db_i *dbip, struct directory *dp, bool do_init)
 
 	mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
     } else {
-	//bu_log("Found LoD: %s\n", dp->d_namep);
+	bu_log("Found LoD: %s\n", dp->d_namep);
     }
     if (!mlod) {
 	bu_log("ERROR: %s - no mesh LoD available\n", dp->d_namep);
@@ -545,34 +545,29 @@ main(int argc, char *argv[])
 
     bu_log("Not waiting for cache init - starting work immediately\n");
 
+
     if (argc < 3) {
-	std::set<struct directory *> dpq;
+	int fed = 0;
 	for (int i = 0; i < RT_DBNHASH; i++) {
-	    struct directory *dp;
+	    struct directory* dp;
 	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		if (dp->d_addr == RT_DIR_PHONY_ADDR)
 		    continue;
 		if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
 		    continue;
-		bu_log("Adding %s\n", dp->d_namep);
-		dpq.insert(dp);
+		if (!dp->d_namep || !strlen(dp->d_namep))
+		    continue;
+		bu_log("enqueue: %s\n", dp->d_namep);
+		dbip->i->p.get()->q_attr.enqueue(std::string(dp->d_namep));
+		fed++;
 	    }
+	}
+	bu_log("Bulk enqueued %d objects to q_attr for pipeline processing\n", fed);
+	while (db_cache_processing(dbip)) {
+	    std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	}
 
-	std::vector<std::thread> wthreads;
-	while (!dpq.empty()) {
-	    if (wthreads.size() < 6) {
-		struct directory *dp = *dpq.begin();
-		dpq.erase(dp);
-		bu_log("Processing %s\n", dp->d_namep);
-		wthreads.emplace_back(work_dp, dbip, dp);
-	    }
-	    for (std::thread& t : wthreads) {
-		if (t.joinable())
-		    t.join();
-	    }
-	    wthreads.clear();
-	}
+	 bu_log("Pipeline finished processing all objects\n");
     } else {
 	struct directory *dp = db_lookup(dbip, argv[2], LOOKUP_QUIET);
 	if (dp == RT_DIR_NULL) {
