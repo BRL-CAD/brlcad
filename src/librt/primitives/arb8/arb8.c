@@ -821,7 +821,7 @@ arb_is_planar(const struct rt_arb_internal *aip, const struct bn_tol *tol)
       VMOVE(pts[1], v[F[f][1]]);
       VMOVE(pts[2], v[F[f][2]]);
       VMOVE(pts[3], v[F[f][3]]);
-      if (!bg_coplanar_pts(pts, 4, tol)) {
+      if (!bg_coplanar_pts((const point_t *)pts, 4, tol)) {
         return false;
       }
     }
