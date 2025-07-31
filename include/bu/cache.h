@@ -100,9 +100,13 @@ struct bu_cache_item {
 BU_EXPORT extern struct bu_cache *bu_cache_open(const char *cache_db, int create, size_t max_cache_size);
 
 /**
- * Closes the bu_cache and frees all associated memory.
+ * Closes the bu_cache and frees all associated memory.  Will NOT close
+ * if bu_cache_write still has an active txn - in that case, calling
+ * code needs to call bu_cache_write_commit or bu_cache_write_abort before
+ * bu_cache_close will succeed.  returns BRLCAD_ERROR if close was not
+ * successful, else BRLCAD_OK.
  */
-BU_EXPORT extern void bu_cache_close(struct bu_cache *c);
+BU_EXPORT extern int bu_cache_close(struct bu_cache *c);
 
 /**
  * Erase the specified cache from disk.  Any open instances of the
@@ -131,16 +135,28 @@ BU_EXPORT size_t bu_cache_get(void **data, const char *key, struct bu_cache *c, 
 BU_EXPORT void bu_cache_get_done(struct bu_cache_txn **t);
 
 /**
- * Assign data to the cache using the specified key.  If t is NULL, the write
- * is handled immediately as a complete operation.  If t is non-NULL, the
- * txn is not finalized and the calling code can queue up more write operations
- * for eventual commit.  The latter is more performant when lots of rapid
- * writes are needed, but requires explicit management of when to finalize
- * the operation for the database.
+ * Assign data to the cache using the specified key.
  *
- * If a calling code does wish to reuse t for additional writes, only ONE t
- * should be active at any given time - do not start multiple bu_cache_write
- * operations using multiple bu_cache_txns.
+ * If t is NULL, the write is handled immediately as a complete operation, and
+ * bu_cache_write immediately validates that the written data can be
+ * successfully read.
+ *
+ * If t is non-NULL, the txn is not finalized and the calling code can queue up
+ * more write operations for eventual commit.  This mode is MUCH more
+ * performant when lots of rapid writes are needed, but no per-write read-back
+ * validation is performed (since the write is not yet finalized.) This mode
+ * requires explicit management of when to finalize the operation for the
+ * database, and if the user wants to validate that reads successfully return
+ * the expected data they will need to do it themselves, but the speedup
+ * will almost always be worth it for any non-trivial data input.  If an individual
+ * write DOES report failure (return size 0) in this mode, parent code should
+ * not try to continue writing - they should call bu_cache_write_abort
+ * immediately and handle the failure case, since the commit operation will
+ * also ultimately fail.
+ *
+ * A cache may only have one active write txn at a time - this is enforced
+ * internally in the implementation, and a bu_cache_write will fail if it
+ * attempts to create a new write when one is already active.
  */
 BU_EXPORT size_t bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c, struct bu_cache_txn **t);
 
