@@ -1352,6 +1352,12 @@ Release steps are as follows:
     # NON-AUTO: Verify all interface changes are in CHANGES.
     # NON-AUTO: Verify usage/options are documented in doc/.
 
+    A useful trick for this step is to use gitk to display all
+    commits made since the last time the RELEASE branch was
+    updated:
+
+    gitk --no-merges origin/RELEASE..main
+
 #####################################################################
 # 06: Update the version numbers.
 
