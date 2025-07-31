@@ -176,9 +176,14 @@ BU_EXPORT int bu_cache_write_commit(struct bu_cache *c, struct bu_cache_txn **t)
 BU_EXPORT void bu_cache_write_abort(struct bu_cache_txn **t);
 
 /**
- * Clear data associated with the specified key from the cache
+ * Clear data associated with the specified key from the cache.  Because this is a
+ * write operation as far as the database is concerned, it is treated the same way
+ * bu_cache_write operations are as far as txn behavior is concerned.  If you have
+ * a batch bu_cache_write in progress and want to do a clear, the write txn should
+ * be provided to bu_cache_clear as well, and like other writes it will not be
+ * finalized until commit is called.
  */
-BU_EXPORT void bu_cache_clear(const char *key, struct bu_cache *c);
+BU_EXPORT void bu_cache_clear(const char *key, struct bu_cache *c, struct bu_cache_txn **t);
 
 /**
  * Get an array of keys present in the cache.  Caller is responsible

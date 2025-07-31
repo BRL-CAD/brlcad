@@ -515,19 +515,27 @@ bu_cache_write_abort(struct bu_cache_txn **t)
 }
 
 void
-bu_cache_clear(const char *key, struct bu_cache *c)
+bu_cache_clear(const char *key, struct bu_cache *c, struct bu_cache_txn **t)
 {
     if (!key || !c)
 	return;
 
     // Construct lookup key
-    MDB_val mdb_key;
 
-    MDB_txn *txn;
-    mdb_txn_begin(c->i->env, NULL, 0, &txn);
+    MDB_txn *txn = cache_get_write_txn(c, t);
+    if (!txn)
+	return;
+
+    MDB_val mdb_key;
     mdb_key.mv_size = (strlen(key)+1)*sizeof(char);
     mdb_key.mv_data = (void *)key;
     mdb_del(txn, c->i->dbi, &mdb_key, NULL);
+
+    if (t) {
+	// We're doing multiple writes, so at this point we're done
+	return;
+    }
+
     int rc = mdb_txn_commit(txn);
     if (rc && rc != MDB_NOTFOUND)
 	bu_log("Clear operation for %s failed\n", key);
