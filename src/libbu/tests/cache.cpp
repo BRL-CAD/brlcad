@@ -130,7 +130,7 @@ basic_test(int item_cnt)
     for (int i = 0; i < item_cnt; i++) {
 	snprintf(keystr, BU_CACHE_KEY_MAXLEN, "int:%d", i);
 	int ival = i;
-	size_t written = bu_cache_write((char *)&ival, sizeof(int), keystr, c);
+	size_t written = bu_cache_write((char *)&ival, sizeof(int), keystr, c, NULL);
 	if (written != sizeof(int)) {
 	    bu_log("Failed to write int %d\n", i);
 	    ret = 1;
@@ -174,7 +174,7 @@ basic_test(int item_cnt)
 	double dval = i*dblseed;
 	if (item_cnt <= PRINT_LIMIT)
 	    bu_log("Assigning %g to key %s\n", dval, keystr);
-	size_t written = bu_cache_write((char *)&dval, sizeof(double), keystr, c);
+	size_t written = bu_cache_write((char *)&dval, sizeof(double), keystr, c, NULL);
 	if (written != sizeof(double)) {
 	    bu_log("Failed to write double %d:%g\n", i, dval);
 	    ret = 1;
@@ -302,7 +302,7 @@ limit_test()
     for (int i = 0; i < item_cnt; i++) {
 	bu_vls_sprintf(&keystr, "int:%d", i);
 	int ival = i;
-	size_t written = bu_cache_write((char *)&ival, sizeof(int), bu_vls_cstr(&keystr), c);
+	size_t written = bu_cache_write((char *)&ival, sizeof(int), bu_vls_cstr(&keystr), c, NULL);
 	if (written != sizeof(int)) {
 	    bu_vls_free(&keystr);
 	    bu_log("FAIL: Unexpected - failed to write int %d\n", i);
@@ -317,7 +317,7 @@ limit_test()
     for (int i = 0; i < item_cnt; i++) {
 	bu_vls_sprintf(&keystr, "dbl:%d", i);
 	double dval = i*dblseed;
-	size_t written = bu_cache_write((char *)&dval, sizeof(double), bu_vls_cstr(&keystr), c);
+	size_t written = bu_cache_write((char *)&dval, sizeof(double), bu_vls_cstr(&keystr), c, NULL);
 	if (written != sizeof(double)) {
 	    bu_log("Failed to assign %s value %g\n", bu_vls_cstr(&keystr), dval);
 	    bu_vls_free(&keystr);
@@ -382,7 +382,7 @@ limit_test()
     for (int i = expected_failed; i < item_cnt; i++) {
 	bu_vls_sprintf(&keystr, "dbl:%d", i);
 	double dval = i*dblseed;
-	size_t written = bu_cache_write((char *)&dval, sizeof(double), bu_vls_cstr(&keystr), c);
+	size_t written = bu_cache_write((char *)&dval, sizeof(double), bu_vls_cstr(&keystr), c, NULL);
 	if (written != sizeof(double)) {
 	    bu_log("Failed to assign %s value %g\n", bu_vls_cstr(&keystr), dval);
 	    ret = 1;
@@ -459,7 +459,7 @@ val_incr(struct bu_cache *c, int item_cnt)
 	bu_cache_get_done(&txn);
 
 	int ival = rval + 1;
-	size_t written = bu_cache_write((char *)&ival, sizeof(int), keystr, c);
+	size_t written = bu_cache_write((char *)&ival, sizeof(int), keystr, c, NULL);
 	if (written != sizeof(int))
 	    bu_exit(1, "Failed to write int %d\n", i);
 
@@ -623,7 +623,7 @@ int stress_long_key_test(struct bu_cache *c) {
     // 1. Key at max supported length (including null terminator)
     memset(longkey, 'A', BU_CACHE_KEY_MAXLEN - 1);
     longkey[BU_CACHE_KEY_MAXLEN - 1] = '\0';
-    size_t written = bu_cache_write(val, sizeof(val), longkey, c);
+    size_t written = bu_cache_write(val, sizeof(val), longkey, c, NULL);
     if (written != sizeof(val)) {
 	bu_log("Failed to write max-length key\n");
 	ret = 1;
@@ -632,7 +632,7 @@ int stress_long_key_test(struct bu_cache *c) {
     // 2. Key just below max
     memset(longkey, 'B', BU_CACHE_KEY_MAXLEN - 2);
     longkey[BU_CACHE_KEY_MAXLEN - 2] = '\0';
-    written = bu_cache_write(val, sizeof(val), longkey, c);
+    written = bu_cache_write(val, sizeof(val), longkey, c, NULL);
     if (written != sizeof(val)) {
 	bu_log("Failed to write (max-1)-length key\n");
 	ret = 1;
@@ -641,7 +641,7 @@ int stress_long_key_test(struct bu_cache *c) {
     // 3. Key just above max (should fail)
     memset(longkey, 'C', BU_CACHE_KEY_MAXLEN);
     longkey[BU_CACHE_KEY_MAXLEN] = '\0';
-    written = bu_cache_write(val, sizeof(val), longkey, c);
+    written = bu_cache_write(val, sizeof(val), longkey, c, NULL);
     if (written != 0) {
 	bu_log("Should have failed to write (max+1)-length key, but did not\n");
 	ret = 1;
@@ -656,7 +656,7 @@ int stress_large_value_test(struct bu_cache *c) {
     size_t bigsize = 1024 * 1024; // 1MB
     std::vector<char> bigval(bigsize, '@');
     const char *key = "bigvalue";
-    size_t written = bu_cache_write(bigval.data(), bigsize, key, c);
+    size_t written = bu_cache_write(bigval.data(), bigsize, key, c, NULL);
     if (written != bigsize) {
 	bu_log("Failed to write large value\n");
 	ret = 1;
@@ -678,7 +678,7 @@ int stress_unicode_key_value_test(struct bu_cache *c) {
     // Use Japanese UTF-8 string literals for key and value
     const char *key = u8"鍵"; // "key" in Japanese
     const char *val = u8"値"; // "value" in Japanese
-    size_t written = bu_cache_write((void *)val, strlen(val) + 1, key, c);
+    size_t written = bu_cache_write((void *)val, strlen(val) + 1, key, c, NULL);
     if (written != strlen(val) + 1) {
 	bu_log("Failed to write unicode key/value\n");
 	ret = 1;
@@ -701,7 +701,7 @@ int mass_small_values_test(struct bu_cache *c) {
     int val = 12345;
     for (int i = 0; i < N; ++i) {
         snprintf(key, sizeof(key), "k%d", i);
-        size_t written = bu_cache_write(&val, sizeof(val), key, c);
+        size_t written = bu_cache_write(&val, sizeof(val), key, c, NULL);
         if (written != sizeof(val)) {
             bu_log("Failed to write small value %d\n", i);
             ret = 1;
@@ -719,7 +719,7 @@ int mass_large_values_test(struct bu_cache *c) {
     char key[32];
     for (int i = 0; i < N; ++i) {
         snprintf(key, sizeof(key), "bigk%d", i);
-        size_t written = bu_cache_write(bigval.data(), bigsize, key, c);
+        size_t written = bu_cache_write(bigval.data(), bigsize, key, c, NULL);
         if (written != bigsize) {
             bu_log("Failed to write large value %d\n", i);
             ret = 1;
@@ -755,7 +755,7 @@ int boundary_and_error_tests()
     // ---- Empty string key ----
     const char *empty_key = "";
     int val = 42;
-    size_t written = bu_cache_write(&val, sizeof(val), empty_key, c);
+    size_t written = bu_cache_write(&val, sizeof(val), empty_key, c, NULL);
     if (written != 0) {
         bu_log("Should not have written with empty string key\n");
         ret = 1;
@@ -770,7 +770,7 @@ int boundary_and_error_tests()
 
     // ---- Key with whitespace ----
     const char *ws_key = "   key with spaces   ";
-    written = bu_cache_write(&val, sizeof(val), ws_key, c);
+    written = bu_cache_write(&val, sizeof(val), ws_key, c, NULL);
     if (written != sizeof(val)) {
         bu_log("Failed to write key with whitespace\n");
         ret = 1;
@@ -787,7 +787,7 @@ int boundary_and_error_tests()
     size_t lval_size = 2 * 1024 * 1024; // 2MB
     std::vector<char> lval(lval_size, '!');
     const char *lkey = "large_val";
-    written = bu_cache_write(lval.data(), lval_size, lkey, c);
+    written = bu_cache_write(lval.data(), lval_size, lkey, c, NULL);
     if (written != lval_size) {
         bu_log("Failed to write very large value\n");
         ret = 1;
@@ -803,7 +803,7 @@ int boundary_and_error_tests()
     // ---- Very small value (1 byte) ----
     char sval = 'x';
     const char *skey = "singlebyte";
-    written = bu_cache_write(&sval, 1, skey, c);
+    written = bu_cache_write(&sval, 1, skey, c, NULL);
     if (written != 1) {
         bu_log("Failed to write single byte value\n");
         ret = 1;
@@ -818,7 +818,7 @@ int boundary_and_error_tests()
 
     // ---- Zero size value ----
     const char *zkey = "zero_size";
-    written = bu_cache_write(&val, 0, zkey, c);
+    written = bu_cache_write(&val, 0, zkey, c, NULL);
     if (written != 0) {
         bu_log("Should not have written zero-size value\n");
         ret = 1;
@@ -831,7 +831,7 @@ int boundary_and_error_tests()
     }
 
     // ---- NULL key ----
-    written = bu_cache_write(&val, sizeof(val), NULL, c);
+    written = bu_cache_write(&val, sizeof(val), NULL, c, NULL);
     if (written != 0) {
         bu_log("Should not have written with NULL key\n");
         ret = 1;
@@ -844,7 +844,7 @@ int boundary_and_error_tests()
     }
 
     // ---- NULL data ----
-    written = bu_cache_write(NULL, sizeof(val), "null_data", c);
+    written = bu_cache_write(NULL, sizeof(val), "null_data", c, NULL);
     if (written != 0) {
         bu_log("Should not have written NULL data\n");
         ret = 1;
@@ -857,7 +857,7 @@ int boundary_and_error_tests()
     }
 
     // ---- NULL cache handle ----
-    written = bu_cache_write(&val, sizeof(val), "badcache", NULL);
+    written = bu_cache_write(&val, sizeof(val), "badcache", NULL, NULL);
     if (written != 0) {
         bu_log("Should not have written with NULL cache\n");
         ret = 1;
@@ -870,7 +870,7 @@ int boundary_and_error_tests()
 
     // ---- Key with only whitespace ----
     const char *only_ws = "    ";
-    written = bu_cache_write(&val, sizeof(val), only_ws, c);
+    written = bu_cache_write(&val, sizeof(val), only_ws, c, NULL);
     if (written != sizeof(val)) {
         bu_log("Failed to write key with only whitespace\n");
         ret = 1;

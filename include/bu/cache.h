@@ -131,9 +131,33 @@ BU_EXPORT size_t bu_cache_get(void **data, const char *key, struct bu_cache *c, 
 BU_EXPORT void bu_cache_get_done(struct bu_cache_txn **t);
 
 /**
- * Assign data to the cache using the specified key
+ * Assign data to the cache using the specified key.  If t is NULL, the write
+ * is handled immediately as a complete operation.  If t is non-NULL, the
+ * txn is not finalized and the calling code can queue up more write operations
+ * for eventual commit.  The latter is more performant when lots of rapid
+ * writes are needed, but requires explicit management of when to finalize
+ * the operation for the database.
+ *
+ * If a calling code does wish to reuse t for additional writes, only ONE t
+ * should be active at any given time - do not start multiple bu_cache_write
+ * operations using multiple bu_cache_txns.
  */
-BU_EXPORT size_t bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c);
+BU_EXPORT size_t bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c, struct bu_cache_txn **t);
+
+/**
+ * Like bu_cache_get_done for data retrieval, a series of write operations may
+ * be either committed or (if the parent code has changed its mind) aborted.
+ * t is the bu_cache_txn returned by bu_cache write's t parameter.
+ *
+ * returns BRLCAD_OK on success and BRLCAD_ERROR on error.
+ */
+BU_EXPORT int bu_cache_write_commit(struct bu_cache *c, struct bu_cache_txn **t);
+
+/**
+ * If the calling code decides not to commit a series of bu_cache_write calls staged
+ * with a non-NULL t param to a bu_cache_write, call bu_cache_write_abort to clear
+ * the decks. */
+BU_EXPORT void bu_cache_write_abort(struct bu_cache_txn **t);
 
 /**
  * Clear data associated with the specified key from the cache
