@@ -320,8 +320,39 @@ bu_cache_get_done(struct bu_cache_txn **t)
     *t = NULL;
 }
 
+static
+MDB_txn *
+cache_get_write_txn(struct bu_cache *c, struct bu_cache_txn **t)
+{
+    if (UNLIKELY(!c))
+	return NULL;
+
+    MDB_txn *txn = (t && *t) ? (MDB_txn *)*t : NULL;
+    if (txn)
+	return txn;
+
+    int txn_ret = mdb_txn_begin(c->i->env, NULL, 0, &txn);
+    if (txn_ret) {
+	bu_log("bu_cache_write: couldn't begin txn: %d\n", txn_ret);
+	if (txn_ret == MDB_MAP_RESIZED)
+	    mdb_env_set_mapsize(c->i->env, 0);
+	std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	txn_ret = mdb_txn_begin(c->i->env, NULL, 0, &txn);
+    }
+
+    if (txn_ret != 0) {
+	bu_log("Error - txn acquisition failed!: %d\n", txn_ret);
+	return NULL;
+    }
+
+    if (t)
+	*t = (struct bu_cache_txn *)txn;
+
+    return txn;
+}
+
 size_t
-bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
+bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c, struct bu_cache_txn **t)
 {
     if (!data || !key || !c || !strlen(key))
 	return 0;
@@ -337,13 +368,10 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
 
     // Write out key/value to LMDB database, where the key is the hash
     // and the value is the serialized LoD data
-    MDB_txn *txn = NULL;
-    int tret = mdb_txn_begin(c->i->env, NULL, 0, &txn);
-    while (tret) {
-	bu_log("bu_cache_write: couldn't begin txn: %d\n", tret);
-	std::this_thread::sleep_for(std::chrono::milliseconds(200));
-	tret = mdb_txn_begin(c->i->env, NULL, 0, &txn);
-    }
+    MDB_txn *txn = cache_get_write_txn(c, t);
+    if (!txn)
+	return 0;
+
     mdb_key.mv_size = (strlen(key)+1)*sizeof(char);
     mdb_key.mv_data = (void *)key;
     mdb_data[0].mv_size = dsize;
@@ -352,6 +380,19 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
     mdb_data[1].mv_data = NULL;
     // Use logical OR to collect errors
     rc |= mdb_put(txn, c->i->dbi, &mdb_key, mdb_data, 0);
+
+    if (t) {
+	// We're doing multiple writes, so at this point we're done one way or
+	// the other.  If we were unsuccessful, return 0;
+	if (rc)
+	    return 0;
+
+	// Put succeeded - return dsize
+	return dsize;
+    }
+
+
+    // Not doing multiple writes - proceed
     rc |= mdb_txn_commit(txn);
     txn = NULL;
     mdb_env_sync(c->i->env, 0);
@@ -359,7 +400,8 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
     if (rc)
 	return 0;
 
-    // Make sure we can can read back what we wrote
+    // Since we're only writing out this one value, we can also make sure we can
+    // read back what we wrote to validate that we succeeded.
     txn = cache_get_read_txn(c, NULL);
     if (!txn)
 	return 0;
@@ -381,6 +423,35 @@ bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c)
     mdb_txn_abort(txn);
 
     return ret;
+}
+
+int
+bu_cache_write_commit(struct bu_cache *c, struct bu_cache_txn **t)
+{
+    if (!c || !t)
+	return BRLCAD_ERROR;
+
+    int rc = mdb_txn_commit((MDB_txn *)(*t));
+    mdb_env_sync(c->i->env, 0);
+
+    if (rc)
+	return BRLCAD_ERROR;
+
+    *t = NULL;
+
+    return BRLCAD_OK;
+}
+
+void
+bu_cache_write_abort(struct bu_cache_txn **t)
+{
+    if (!t)
+	return;
+
+    if (*t)
+	mdb_txn_abort((MDB_txn *)(*t));
+
+    *t = NULL;
 }
 
 void
