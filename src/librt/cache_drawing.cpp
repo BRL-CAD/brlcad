@@ -178,7 +178,7 @@ attr_calc(std::shared_ptr<ProcessDrawData> p)
 	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_FLAG);
 	CacheItem ritem(ckey, &rflag, sizeof(int));
 	p.get()->q_write.enqueue(ritem);
-	bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
+	//bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
 
 	// Region id.  For drawing purposes this needs to be a number.
 	int region_id = -1;
@@ -188,14 +188,14 @@ attr_calc(std::shared_ptr<ProcessDrawData> p)
 	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_ID);
 	CacheItem reg_item(ckey, &region_id, sizeof(int));
 	p.get()->q_write.enqueue(reg_item);
-	bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
+	//bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
 
 	// Inherit flag
 	int color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
 	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_INHERIT_FLAG);
 	CacheItem inherit_item(ckey, &color_inherit, sizeof(int));
 	p.get()->q_write.enqueue(inherit_item);
-	bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
+	//bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
 
 	// Color
 	unsigned int colors = UINT_MAX; // Using UINT_MAX to indicate unset
@@ -213,7 +213,7 @@ attr_calc(std::shared_ptr<ProcessDrawData> p)
 	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_COLOR);
 	CacheItem colors_item(ckey, &colors, sizeof(unsigned int));
 	p.get()->q_write.enqueue(colors_item);
-	bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
+	//bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
 
 	// Done with attribute data
 	bu_avs_free(&c_avs);
@@ -252,12 +252,12 @@ aabb_calc(std::shared_ptr<ProcessDrawData> p)
 	    if (!(ip->idb_meth->ft_bbox(ip, &bb[0], &bb[1], &btol) < 0)) {
 		CacheItem aabb_item(ckey, &bb, 2*sizeof(point_t));
 		p.get()->q_write.enqueue(aabb_item);
-		bu_log("enqueue: %s\n", ckey);
+		//bu_log("enqueue: %s\n", ckey);
 	    } else {
 		// If we couldn't get a bbox, clear out any old entry
 		CacheItem aabb_item(ckey, NULL, 0);
 		p.get()->q_write.enqueue(aabb_item);
-		bu_log("enqueue: %s\n", ckey);
+		//bu_log("enqueue: %s\n", ckey);
 		bu_log("%s: aabb calc failure\n", name);
 	    }
 	} else {
@@ -265,7 +265,7 @@ aabb_calc(std::shared_ptr<ProcessDrawData> p)
 	    // out an old bbox entry
 	    CacheItem aabb_item(ckey, NULL, 0);
 	    p.get()->q_write.enqueue(aabb_item);
-	    bu_log("enqueue: %s\n", ckey);
+	    //bu_log("enqueue: %s\n", ckey);
 	}
 
 	// Hand ip off to the obb queue
@@ -313,12 +313,12 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
 		if (!cfailure){
 		    CacheItem obb_item(ckey, &obb, 4*sizeof(vect_t));
 		    p.get()->q_write.enqueue(obb_item);
-		    bu_log("enqueue: %s\n", ckey);
+		    //bu_log("enqueue: %s\n", ckey);
 		} else {
 		    // If calculation failed, clear out any old data
 		    CacheItem obb_item(ckey, NULL, 0);
 		    p.get()->q_write.enqueue(obb_item);
-		    bu_log("enqueue: %s\n", ckey);
+		    //bu_log("enqueue: %s\n", ckey);
 
 		    bu_log("%s: obb calc failure\n", name);
 		    //bg_pnts_obb(&obb[0], &obb[1], &obb[2], &obb[3], (const point_t *)arb.pt, 8);
@@ -327,7 +327,7 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
 		// If calculation failed, clear out any old data
 		CacheItem obb_item(ckey, NULL, 0);
 		p.get()->q_write.enqueue(obb_item);
-		bu_log("enqueue: %s\n", ckey);
+		//bu_log("enqueue: %s\n", ckey);
 
 		bu_log("%s: obb calc failure\n", name);
 	    }
@@ -336,7 +336,7 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
 	    // oriented bbox entry
 	    CacheItem obb_item(ckey, NULL, 0);
 	    p.get()->q_write.enqueue(obb_item);
-	    bu_log("enqueue: %s\n", ckey);
+	    //bu_log("enqueue: %s\n", ckey);
 	}
 
 	// Hand ip off to the LoD queue
@@ -383,7 +383,7 @@ lod_calc(std::shared_ptr<ProcessDrawData> p)
 	for (size_t i = 0; i < BU_PTBL_LEN(&cache_items); i++) {
 	    struct bu_cache_item *itm = (struct bu_cache_item *)BU_PTBL_GET(&cache_items, i);
 	    CacheItem lod_item(itm->key, itm->data, itm->data_len);
-	    bu_log("enqueue: %s\n", itm->key);
+	    //bu_log("enqueue: %s\n", itm->key);
 	    bu_free(itm->data, "bu_cache_item data");
 	    bu_free(itm, "bu_cache_item");
 	    p.get()->q_write.enqueue(lod_item);
@@ -416,7 +416,7 @@ q_write(std::shared_ptr<ProcessDrawData> p)
 	    // this happens so they know anything they've read from the
 	    // cache now needs to be re-verified
 	    if (bu_cache_write_commit(p.get()->dbip->i->c, &t)) {
-		bu_log("ERROR: cache commit failure\n");
+		bu_log("ERROR: pre-shutdown cache commit failure\n");
 	    }
 	    start = bu_gettime();
 	}
@@ -432,14 +432,14 @@ q_write(std::shared_ptr<ProcessDrawData> p)
 
 	// If this is an erase op, do the erasing
 	if (item.erase_op) {
-	    bu_log("Clearing : %s\n", item.key);
+	    //bu_log("Clearing : %s\n", item.key);
 	    bu_cache_clear(item.key, p.get()->dbip->i->c, &t);
 	    continue;
 	}
 
 	// TODO - see if we need to make copies of item data in order
 	// to safely pass to bu_cache_write...
-	bu_log("Writing: %s\n", item.key);
+	//bu_log("Writing: %s\n", item.key);
 	if (!bu_cache_write(item.data, item.data_len, item.key, p.get()->dbip->i->c, &t)) {
 	    bu_log("ERROR:  %s cache write failure\n", item.key);
 	    continue;
@@ -447,10 +447,10 @@ q_write(std::shared_ptr<ProcessDrawData> p)
 
     }
 
-    if (p.get()->shutdown) {
+    if (p.get()->shutdown && t) {
 	// Finish up anything we've still got in play
 	if (bu_cache_write_commit(p.get()->dbip->i->c, &t)) {
-	    bu_log("ERROR: cache commit failure\n");
+	    bu_log("ERROR: post-shutdown cache commit failure\n");
 	}
     }
 
@@ -529,8 +529,7 @@ db_cache_start(struct db_i *dbip, int verbose)
 	    if (UNLIKELY(!dp->d_namep || !strlen(dp->d_namep)))
 		continue;
 
-	    // TODO - look up timestamp in cache - if present, no further
-	    // processing to do.
+	    // Look up timestamp in cache - if present, no further processing
 	    unsigned long long hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
 	    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_TIMESTAMP);
 	    if (bu_cache_get(NULL, ckey, dbip->i->c, NULL))

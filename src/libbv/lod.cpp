@@ -394,12 +394,13 @@ POPState::POPState(struct bu_ptbl *ci, const point_t *v, size_t vcnt, const vect
     bu_data_hash_update(s, faces, 3*fcnt*sizeof(int));
     hash = bu_data_hash_val(s);
     bu_data_hash_destroy(s);
-    
+
     // Stash the user_key to hash mapping
     struct bu_cache_item *itm;
     BU_GET(itm, struct bu_cache_item);
     snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu", user_key);
     itm->data = bu_malloc(sizeof(unsigned long long), "key");
+    itm->data_len = sizeof(unsigned long long);
     memcpy(itm->data, &hash, sizeof(unsigned long long));
     bu_ptbl_ins(cache_items, (long *)itm);
 
@@ -828,7 +829,8 @@ POPState::cache_item(const char *component, void *data, size_t len)
     BU_GET(itm, struct bu_cache_item);
     snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, component);
     itm->data = bu_malloc(len, "data");
-    memcpy(itm->data, data, sizeof(unsigned long long));
+    itm->data_len = len;
+    memcpy(itm->data, data, len);
     bu_ptbl_ins(cache_items, (long *)itm);
 }
 
