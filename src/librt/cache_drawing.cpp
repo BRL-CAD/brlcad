@@ -48,6 +48,16 @@
 
 #include "./librt_private.h"
 
+// Using Resource Acquisition Is Initialization (RAII) pattern
+// for thread decrementing so we get counter decrementing even
+// if something goes haywire and a thread crashes.
+class ThreadCnt {
+public:
+    std::atomic<int>& counter;
+    ThreadCnt(std::atomic<int>& cnt) : counter(cnt) {}
+    ~ThreadCnt() {--counter;}
+};
+
 CacheItem::CacheItem()
 {
     erase_op = false;
@@ -134,6 +144,9 @@ int64_t cache_timestamp(const char *ckey, struct bu_cache *c)
 void
 attr_calc(std::shared_ptr<ProcessDrawData> p)
 {
+    // Decrement the thread cnt when this thread is done
+    ThreadCnt decrementer(p.get()->thread_cnt);
+
     char ckey[BU_CACHE_KEY_MAXLEN];
 
     // Until we close this database, monitor for inputs to process.
@@ -221,13 +234,14 @@ attr_calc(std::shared_ptr<ProcessDrawData> p)
 	// Hand ip off to the aabb queue
 	p.get()->q_aabb.enqueue(ip);
     }
-
-    p.get()->thread_cnt--;
 }
 
 void
 aabb_calc(std::shared_ptr<ProcessDrawData> p)
 {
+    // Decrement the thread cnt when this thread is done
+    ThreadCnt decrementer(p.get()->thread_cnt);
+
     char ckey[BU_CACHE_KEY_MAXLEN];
 
     // Until we close this database, monitor for inputs to process.
@@ -271,13 +285,14 @@ aabb_calc(std::shared_ptr<ProcessDrawData> p)
 	// Hand ip off to the obb queue
 	p.get()->q_obb.enqueue(ip);
     }
-
-    p.get()->thread_cnt--;
 }
 
 void
 obb_calc(std::shared_ptr<ProcessDrawData> p)
 {
+    // Decrement the thread cnt when this thread is done
+    ThreadCnt decrementer(p.get()->thread_cnt);
+
     char ckey[BU_CACHE_KEY_MAXLEN];
 
     // Until we close this database, monitor for inputs to process.
@@ -342,13 +357,14 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
 	// Hand ip off to the LoD queue
 	p.get()->q_lod.enqueue(ip);
     }
-
-    p.get()->thread_cnt--;
 }
 
 void
 lod_calc(std::shared_ptr<ProcessDrawData> p)
 {
+    // Decrement the thread cnt when this thread is done
+    ThreadCnt decrementer(p.get()->thread_cnt);
+
     // Until we close this database, monitor for inputs to process.
     while (!p.get()->shutdown) {
 	if (!p.get()->q_lod.size_approx()) {
@@ -394,13 +410,14 @@ lod_calc(std::shared_ptr<ProcessDrawData> p)
 	rt_db_free_internal(ip);
 	BU_PUT(ip, struct rt_db_internal);
     }
-
-    p.get()->thread_cnt--;
 }
 
 void
 q_write(std::shared_ptr<ProcessDrawData> p)
 {
+    // Decrement the thread cnt when this thread is done
+    ThreadCnt decrementer(p.get()->thread_cnt);
+
     // Until we close this database, monitor for cache items to write.
     struct bu_cache_txn *t = NULL;
     int64_t start, elapsed;
@@ -461,8 +478,6 @@ q_write(std::shared_ptr<ProcessDrawData> p)
 	    bu_log("ERROR: post-shutdown cache commit failure\n");
 	}
     }
-
-    p.get()->thread_cnt--;
 }
 
 #if 0
