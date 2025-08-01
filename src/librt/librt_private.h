@@ -127,15 +127,14 @@ class ProcessDrawData {
 	// A1:lod.  The worst that might happen is a caller getting a
 	// cache value that is out of date if the most current version
 	// of the database object is still in the "to process" queue.
-	//
-	// TODO - should have a way for user apps to query whether
-	// the caching system is in a "settled" state or not (i.e.,
-	// all the queues should report empty.)
 	moodycamel::ConcurrentQueue<std::string> q_attr;
 	moodycamel::ConcurrentQueue<struct rt_db_internal *> q_aabb;
 	moodycamel::ConcurrentQueue<struct rt_db_internal *> q_obb;
 	moodycamel::ConcurrentQueue<struct rt_db_internal *> q_lod;
 	moodycamel::ConcurrentQueue<CacheItem> q_write;
+
+	// Counter tracking if there is work in the pipeline.
+	std::atomic<int> wcnt = 0;
 
         struct db_i *dbip;
 };
