@@ -77,20 +77,28 @@ __BEGIN_DECLS
 
 #ifdef __cplusplus
 
-class CacheItem {
+class CacheElement {
     public:
-	CacheItem();
-	CacheItem(const char *dkey, void *dval, size_t dlen);
-	~CacheItem();
-	CacheItem(const CacheItem &o);
+	CacheElement();
+	CacheElement(const char *dkey, void *dval, size_t dlen);
+	~CacheElement();
+	CacheElement(const CacheElement &o);
 
-	CacheItem& operator=(const CacheItem& o);
+	CacheElement& operator=(const CacheElement& o);
 
 	char key[BU_CACHE_KEY_MAXLEN];
 	void *data = NULL;
 	size_t data_len = 0;
 
 	bool erase_op = false;
+};
+
+class CacheItem {
+public:
+    std::vector<CacheElement> elements;
+    CacheItem() {}
+    CacheItem(const CacheElement& el) { elements.push_back(el); }
+    CacheItem(const std::vector<CacheElement>& els) : elements(els) {}
 };
 
 // TODO - I think I need to be using std::condition_variable
