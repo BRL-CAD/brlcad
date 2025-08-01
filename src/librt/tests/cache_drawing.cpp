@@ -42,7 +42,7 @@
 
 // Exercise the LoD structs in the cache (TODO - validate data somehow...)
 static bool
-do_lod(struct db_i *dbip, struct directory *dp, bool do_init)
+do_lod(struct db_i *dbip, struct directory *dp)
 {
 #ifdef LOD_TIMING
     int64_t start, elapsed;
@@ -59,18 +59,8 @@ do_lod(struct db_i *dbip, struct directory *dp, bool do_init)
 
     struct bv_lod_mesh *mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
     if (!mlod) {
-	if (do_init) {
-	    bu_log("(Re)generating LoD for %s\n", dp->d_namep);
-	    db_cache_update(dbip, dp->d_namep);
-	    while (db_cache_processing(dbip))
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
-	    mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
-	}
-	if (!mlod) {
-	    bu_log("ERROR: %s - no mesh LoD available\n", dp->d_namep);
-	    return false;
-	}
+	bu_log("ERROR: %s - no mesh LoD available\n", dp->d_namep);
+	return false;
     }
 
     struct bv_scene_obj *s = bv_obj_get(NULL);
@@ -224,7 +214,7 @@ validate_dp(struct db_i *dbip, struct directory *dp)
 		bu_cache_get_done(&txn);
 		rt_db_free_internal(ip);
 		BU_PUT(ip, struct rt_db_internal);
-		bu_exit(-1, "empty lookup\n");
+		return false;
 	    }
 	}
     }
@@ -248,7 +238,7 @@ validate_dp(struct db_i *dbip, struct directory *dp)
 		bu_cache_get_done(&txn);
 		rt_db_free_internal(ip);
 		BU_PUT(ip, struct rt_db_internal);
-		bu_exit(-1, "empty lookup\n");
+		return false;
 	    }
 	    bool obbvalid = true;
 	    for (int j = 0; j < 4; j++) {
@@ -279,7 +269,7 @@ validate_dp(struct db_i *dbip, struct directory *dp)
     BU_PUT(ip, struct rt_db_internal);
 
     // Level of Detail
-    if (!do_lod(dbip, dp, false))
+    if (!do_lod(dbip, dp))
 	valid = false;
 
     return valid;
@@ -288,164 +278,25 @@ validate_dp(struct db_i *dbip, struct directory *dp)
 // For this step, we read the data from the cache and trigger an update if we
 // don't find it.  Idea is to roughly simulate what would happen if someone
 // started editing a database while the initial cache build was still ongoing.
-bool
+void
 work_dp(struct db_i *dbip, struct directory *dp)
 {
-    void *cdata = NULL;
-    static char ckey[BU_CACHE_KEY_MAXLEN];
+    if (!dbip || !dp)
+	return;
 
-    bu_log("Processing %s\n", dp->d_namep);
-
-    struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
-    if (db5_get_attributes(dbip, &c_avs, dp) < 0) {
-	bu_log("ERROR - unable to get attributes: %s\n", dp->d_namep);
-	return false;
-    }
-
-    unsigned long long user_hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-
-    // Region flag
-    int rflag = 0;
-    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_REGION_FLAG);
-    if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
-	memcpy(&rflag, cdata, sizeof(int));
-	bu_free(cdata, "cdata");
-	cdata = NULL;
-    } else {
+    // TODO - can't be calling db_cache_update from here - we need to call
+    // it from the same thread that db_cache_start was called from.  Need
+    // to rethink how we trigger an update if validation fails
+    if (!validate_dp(dbip, dp)) {
+	bu_log("Validation failed for %s, asking for update\n", dp->d_namep);
 	db_cache_update(dbip, dp->d_namep);
 	// Sleep this thread until the cache says it is done, and then try again
 	while (db_cache_processing(dbip))
 	    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
-	    memcpy(&rflag, cdata, sizeof(int));
-	    bu_free(cdata, "cdata");
-	    cdata = NULL;
-	} else {
-	    bu_log("Region flag read failed for %s\n", dp->d_namep);
-	    return false;
+	if (!validate_dp(dbip, dp)) {
+	    bu_log("*************Validation failed for %s even after db_cache_update!*********\n", dp->d_namep);
 	}
     }
-
-    // Region id
-    int region_id = -1;
-    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_REGION_ID);
-    if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
-	memcpy(&region_id, cdata, sizeof(int));
-	bu_free(cdata, "cdata");
-	cdata = NULL;
-    } else {
-	db_cache_update(dbip, dp->d_namep);
-	// Sleep this thread until the cache says it is done, and then try again
-	while (db_cache_processing(dbip))
-	    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
-	    memcpy(&region_id, cdata, sizeof(int));
-	    bu_free(cdata, "cdata");
-	    cdata = NULL;
-	} else {
-	    bu_log("Region id read failed for %s\n", dp->d_namep);
-	    return false;
-	}
-    }
-
-    // Inherit flag
-    int color_inherit = -1;
-    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_INHERIT_FLAG);
-    if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
-	memcpy(&color_inherit, cdata, sizeof(int));
-	bu_free(cdata, "cdata");
-	cdata = NULL;
-    } else {
-	db_cache_update(dbip, dp->d_namep);
-	// Sleep this thread until the cache says it is done, and then try again
-	while (db_cache_processing(dbip))
-	    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
-	    memcpy(&color_inherit, cdata, sizeof(int));
-	    bu_free(cdata, "cdata");
-	    cdata = NULL;
-	} else {
-	    bu_log("Color inherit read failed for %s\n", dp->d_namep);
-	    return false;
-	}
-    }
-
-    // Color
-    unsigned int colors = UINT_MAX; // Using UINT_MAX to indicate unset
-    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_COLOR);
-    if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
-	memcpy(&colors, cdata, sizeof(unsigned int));
-	bu_free(cdata, "cdata");
-	cdata = NULL;
-    } else {
-	db_cache_update(dbip, dp->d_namep);
-	// Sleep this thread until the cache says it is done, and then try again
-	while (db_cache_processing(dbip))
-	    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
-	    memcpy(&colors, cdata, sizeof(unsigned int));
-	    bu_free(cdata, "cdata");
-	    cdata = NULL;
-	} else {
-	    bu_log("Colors read failed for %s\n", dp->d_namep);
-	    return false;
-	}
-    }
-
-    // Axis-Aligned Bounding Box, if primitive supports it
-    if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION) {
-	point_t aabb[2] = {VINIT_ZERO};
-	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_AABB);
-	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
-	    memcpy(&aabb, cdata, 2*sizeof(point_t));
-	    bu_free(cdata, "cdata");
-	    cdata = NULL;
-	} else {
-	    db_cache_update(dbip, dp->d_namep);
-	    // Sleep this thread until the cache says it is done, and then try again
-	    while (db_cache_processing(dbip))
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
-	    if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
-		memcpy(&aabb, cdata, 2*sizeof(point_t));
-		bu_free(cdata, "cdata");
-		cdata = NULL;
-	    } else {
-		bu_log("AABB read failed for %s\n", dp->d_namep);
-		return false;
-	    }
-	}
-    }
-
-
-    // Check Oriented Bounding Box, if primitive supports it
-    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
-	point_t obb[4] = {VINIT_ZERO};
-	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_OBB);
-	if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
-	    memcpy(&obb, cdata, 4*sizeof(point_t));
-	    bu_free(cdata, "cdata");
-	    cdata = NULL;
-	} else {
-	    db_cache_update(dbip, dp->d_namep);
-	    // Sleep this thread until the cache says it is done, and then try again
-	    while (db_cache_processing(dbip))
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
-	    if (bu_cache_get(&cdata, ckey, dbip->i->c, NULL)) {
-		memcpy(&obb, cdata, 4*sizeof(point_t));
-		bu_free(cdata, "cdata");
-		cdata = NULL;
-	    } else {
-		bu_log("OBB read failed for %s\n", dp->d_namep);
-		return false;
-	    }
-	}
-    }
-
-    // Level of Detail
-    if (!do_lod(dbip, dp, true))
-	return false;
-
-    return true;
 }
 
 
@@ -525,7 +376,7 @@ main(int argc, char *argv[])
     bu_dirclear(cache_dir);
 
     // Pause a few seconds so we can see what the basic setup did
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(std::chrono::seconds(3));
 
     // Reset
     bu_mkdir(cache_dir);
@@ -560,8 +411,7 @@ main(int argc, char *argv[])
     }
     std::vector<std::thread> wthreads;
     while (!dpq.empty()) {
-	if (wthreads.size() < 6) {
-	    // Simulate multithreaded app interrogation of the cache
+	while (wthreads.size() < 6 && !dpq.empty()) {
 	    struct directory *dp = *dpq.begin();
 	    dpq.erase(dp);
 	    wthreads.emplace_back(work_dp, dbip, dp);
@@ -575,6 +425,19 @@ main(int argc, char *argv[])
 
     db_close(dbip);
     bu_dirclear(cache_dir);
+
+    // After that's over, check everything
+    bu_log("Final validation check\n");
+    for (int i = 0; i < RT_DBNHASH; i++) {
+	struct directory *dp;
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
+		continue;
+	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
+		continue;
+	    validate_dp(dbip, dp);
+	}
+    }
 
     return 0;
 }
