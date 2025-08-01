@@ -58,14 +58,14 @@ public:
     ~ThreadCnt() {--counter;}
 };
 
-CacheItem::CacheItem()
+CacheElement::CacheElement()
 {
     erase_op = false;
     data_len = 0;
     data = NULL;
 }
 
-CacheItem::CacheItem(const char *dkey, void *dval, size_t dlen)
+CacheElement::CacheElement(const char *dkey, void *dval, size_t dlen)
 {
     snprintf(key, BU_CACHE_KEY_MAXLEN, "%s", dkey);
     erase_op = (!dval || !dlen) ? true : false;
@@ -78,7 +78,7 @@ CacheItem::CacheItem(const char *dkey, void *dval, size_t dlen)
     }
 }
 
-CacheItem::CacheItem(const CacheItem &o)
+CacheElement::CacheElement(const CacheElement &o)
 {
     erase_op = o.erase_op;
     data_len = o.data_len;
@@ -89,7 +89,7 @@ CacheItem::CacheItem(const CacheItem &o)
     }
 }
 
-CacheItem& CacheItem::operator=(const CacheItem& o)
+CacheElement& CacheElement::operator=(const CacheElement& o)
 {
     if (this == &o)
         return *this;
@@ -107,7 +107,7 @@ CacheItem& CacheItem::operator=(const CacheItem& o)
     return *this;
 }
 
-CacheItem::~CacheItem()
+CacheElement::~CacheElement()
 {
     bu_free(data, "free data");
     data = NULL;
@@ -179,54 +179,68 @@ attr_calc(std::shared_ptr<ProcessDrawData> p)
 	ip->idb_uptr = bu_strdup(name.c_str());
 
 	// We will not be directly writing to the cache from this thread - instead
-	// we will queue up CacheItem entries to be written from the q_write thread.
+	// we will queue up CacheElement entries to be written from the q_write thread.
 	unsigned long long hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
 
+	// Prepare a vector to hold the elements
+	std::vector<CacheElement> elements;
 
 	// Region flag.
-	int rflag = 0;
-	const char *region_flag_str = bu_avs_get(&c_avs, "region");
-	if (region_flag_str && (BU_STR_EQUAL(region_flag_str, "R") || BU_STR_EQUAL(region_flag_str, "1")))
-	    rflag = 1;
-	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_FLAG);
-	CacheItem ritem(ckey, &rflag, sizeof(int));
-	p.get()->write_enqueue(ritem);
-	//bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
+	{
+	    int rflag = 0;
+	    const char *region_flag_str = bu_avs_get(&c_avs, "region");
+	    if (region_flag_str && (BU_STR_EQUAL(region_flag_str, "R") || BU_STR_EQUAL(region_flag_str, "1")))
+		rflag = 1;
+	    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_FLAG);
+	    CacheElement relement(ckey, &rflag, sizeof(int));
+	    elements.push_back(relement);
+	    //bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
+	}
 
 	// Region id.  For drawing purposes this needs to be a number.
-	int region_id = -1;
-	const char *region_id_str = bu_avs_get(&c_avs, "region_id");
-	if (region_id_str)
-	    bu_opt_int(NULL, 1, &region_id_str, (void *)&region_id);
-	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_ID);
-	CacheItem reg_item(ckey, &region_id, sizeof(int));
-	p.get()->write_enqueue(reg_item);
-	//bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
+	{
+	    int region_id = -1;
+	    const char *region_id_str = bu_avs_get(&c_avs, "region_id");
+	    if (region_id_str)
+		bu_opt_int(NULL, 1, &region_id_str, (void *)&region_id);
+	    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_ID);
+	    CacheElement reg_element(ckey, &region_id, sizeof(int));
+	    elements.push_back(reg_element);
+	    //bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
+	}
 
 	// Inherit flag
-	int color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
-	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_INHERIT_FLAG);
-	CacheItem inherit_item(ckey, &color_inherit, sizeof(int));
-	p.get()->write_enqueue(inherit_item);
-	//bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
+	{
+	    int color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
+	    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_INHERIT_FLAG);
+	    CacheElement inherit_element(ckey, &color_inherit, sizeof(int));
+	    elements.push_back(inherit_element);
+	    //bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
+	}
 
 	// Color
-	unsigned int colors = UINT_MAX; // Using UINT_MAX to indicate unset
-	const char *color_str = bu_avs_get(&c_avs, "color");
-	if (!color_str)
-	    color_str = bu_avs_get(&c_avs, "rgb");
-	if (color_str) {
-	    struct bu_color color;
-	    bu_opt_color(NULL, 1, &color_str, (void *)&color);
-	    // Serialize for cache
-	    int r, g, b;
-	    bu_color_to_rgb_ints(&color, &r, &g, &b);
-	    colors = r + (g << 8) + (b << 16);
+	{
+	    unsigned int colors = UINT_MAX; // Using UINT_MAX to indicate unset
+	    const char *color_str = bu_avs_get(&c_avs, "color");
+	    if (!color_str)
+		color_str = bu_avs_get(&c_avs, "rgb");
+	    if (color_str) {
+		struct bu_color color;
+		bu_opt_color(NULL, 1, &color_str, (void *)&color);
+		// Serialize for cache
+		int r, g, b;
+		bu_color_to_rgb_ints(&color, &r, &g, &b);
+		colors = r + (g << 8) + (b << 16);
+	    }
+	    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_COLOR);
+	    CacheElement colors_element(ckey, &colors, sizeof(unsigned int));
+	    elements.push_back(colors_element);
+	    //bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
 	}
-	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_COLOR);
-	CacheItem colors_item(ckey, &colors, sizeof(unsigned int));
-	p.get()->write_enqueue(colors_item);
-	//bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
+
+	// Queue up the elements
+	CacheItem ritems(elements);
+	p.get()->write_enqueue(ritems);
 
 	// Done with attribute data
 	bu_avs_free(&c_avs);
@@ -259,28 +273,26 @@ aabb_calc(std::shared_ptr<ProcessDrawData> p)
 	unsigned long long hash = bu_data_hash(name, strlen(name)*sizeof(char));
 	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_AABB);
 
+	// If a named item changed type, we may need to clear
+	// out an old bbox entry.  Unless we successfully generate
+	// a box, create a clear element.
+	point_t **bbp = NULL;
+	size_t dlen = 0;
+
 	// Do aabb calc
+	point_t bb[2];
 	if (ip->idb_meth->ft_bbox) {
 	    const struct bn_tol btol = BN_TOL_INIT_TOL;
-	    point_t bb[2];
 	    if (!(ip->idb_meth->ft_bbox(ip, &bb[0], &bb[1], &btol) < 0)) {
-		CacheItem aabb_item(ckey, &bb, 2*sizeof(point_t));
-		p.get()->write_enqueue(aabb_item);
-		//bu_log("enqueue: %s\n", ckey);
-	    } else {
-		// If we couldn't get a bbox, clear out any old entry
-		CacheItem aabb_item(ckey, NULL, 0);
-		p.get()->write_enqueue(aabb_item);
-		//bu_log("enqueue: %s\n", ckey);
-		bu_log("%s: aabb calc failure\n", name);
+		bbp = (point_t **)&bb;
+		dlen = 2*sizeof(point_t);
 	    }
-	} else {
-	    // If a named item changed type, we may need to clear
-	    // out an old bbox entry
-	    CacheItem aabb_item(ckey, NULL, 0);
-	    p.get()->write_enqueue(aabb_item);
-	    //bu_log("enqueue: %s\n", ckey);
 	}
+
+	// Queue it up
+	CacheElement aabb_element(ckey, bbp, dlen);
+	CacheItem aabb_item(aabb_element);
+	p.get()->write_enqueue(aabb_item);
 
 	// Hand ip off to the obb queue
 	p.get()->q_obb.enqueue(ip);
@@ -310,13 +322,21 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
 	unsigned long long hash = bu_data_hash(name, strlen(name)*sizeof(char));
 	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_OBB);
 
+	// If a named item changed type, we may need to clear out an old
+	// oriented bbox entry.  Unless we successfully generate an obb,
+	// write a clear element
+	vect_t **obbp = NULL;
+	size_t dlen = 0;
+
 	// Do obb calc
+	vect_t obb[4] = {VINIT_ZERO};
 	if (ip->idb_meth->ft_oriented_bbox) {
 	    double btol = BN_TOL_DIST;
 	    struct rt_arb_internal arb;
 	    arb.magic = RT_ARB_INTERNAL_MAGIC;
 	    if (!(ip->idb_meth->ft_oriented_bbox(&arb, ip, btol) < 0)) {
-		vect_t obb[4] = {VINIT_ZERO};
+		// The arb bbox method returns the explicit points, but we cache
+		// the four vectors - translate
 		bg_pnts_obb(&obb[0], &obb[1], &obb[2], &obb[3], (const point_t *)arb.pt, 8);
 		bool cfailure = false;
 		for (int k = 0; k < 4; k++) {
@@ -326,33 +346,16 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
 		    }
 		}
 		if (!cfailure){
-		    CacheItem obb_item(ckey, &obb, 4*sizeof(vect_t));
-		    p.get()->write_enqueue(obb_item);
-		    //bu_log("enqueue: %s\n", ckey);
-		} else {
-		    // If calculation failed, clear out any old data
-		    CacheItem obb_item(ckey, NULL, 0);
-		    p.get()->write_enqueue(obb_item);
-		    //bu_log("enqueue: %s\n", ckey);
-
-		    bu_log("%s: obb calc failure\n", name);
-		    //bg_pnts_obb(&obb[0], &obb[1], &obb[2], &obb[3], (const point_t *)arb.pt, 8);
+		    obbp = (vect_t **)&obb;
+		    dlen = 4*sizeof(vect_t);
 		}
-	    } else {
-		// If calculation failed, clear out any old data
-		CacheItem obb_item(ckey, NULL, 0);
-		p.get()->write_enqueue(obb_item);
-		//bu_log("enqueue: %s\n", ckey);
-
-		bu_log("%s: obb calc failure\n", name);
 	    }
-	} else {
-	    // If a named item changed type, we may need to clear out an old
-	    // oriented bbox entry
-	    CacheItem obb_item(ckey, NULL, 0);
-	    p.get()->write_enqueue(obb_item);
-	    //bu_log("enqueue: %s\n", ckey);
 	}
+
+	// Queue it up for writing
+	CacheElement obb_element(ckey, obbp, dlen);
+	CacheItem obb_item(obb_element);
+	p.get()->write_enqueue(obb_item);
 
 	// Hand ip off to the LoD queue
 	p.get()->q_lod.enqueue(ip);
@@ -395,15 +398,19 @@ lod_calc(std::shared_ptr<ProcessDrawData> p)
 	    bv_lod_clear_gen(&cache_items, name, p.get()->dbip->i->c);
 	}
 
-	// Do the actual cache ops
+	// Do the actual cache ops - batch up into elements and submit as a
+	// single CacheItem for writing
+	std::vector<CacheElement> elements;
 	for (size_t i = 0; i < BU_PTBL_LEN(&cache_items); i++) {
 	    struct bu_cache_item *itm = (struct bu_cache_item *)BU_PTBL_GET(&cache_items, i);
-	    CacheItem lod_item(itm->key, itm->data, itm->data_len);
+	    CacheElement lod_element(itm->key, itm->data, itm->data_len);
+	    elements.push_back(lod_element);
 	    //bu_log("enqueue: %s\n", itm->key);
 	    bu_free(itm->data, "bu_cache_item data");
 	    bu_free(itm, "bu_cache_item");
-	    p.get()->write_enqueue(lod_item);
 	}
+	CacheItem lod_item(elements);
+	p.get()->write_enqueue(lod_item);
 
 	// LoD calc is the last use of rt_db_internal - free
 	bu_free(ip->idb_uptr, "name uptr");
@@ -453,21 +460,25 @@ q_write(std::shared_ptr<ProcessDrawData> p)
 	if (!p.get()->q_write.try_dequeue(item))
 	    continue;
 
-	// If this is an erase op, do the erasing
-	if (item.erase_op) {
-	    //bu_log("Clearing : %s\n", item.key);
-	    bu_cache_clear(item.key, p.get()->dbip->i->c, &t);
-	    wcnt++;
-	    continue;
+	// Iterate over the elements and write them out
+	for (size_t i = 0; i < item.elements.size(); i++) {
+	    // If this is an erase op, do the erasing
+	    if (item.elements[i].erase_op) {
+		//bu_log("Clearing : %s\n", item.key);
+		bu_cache_clear(item.elements[i].key, p.get()->dbip->i->c, &t);
+		continue;
+	    }
+
+	    // TODO - see if we need to make copies of item data in order
+	    // to safely pass to bu_cache_write...
+	    //bu_log("Writing: %s\n", item.key);
+	    if (!bu_cache_write(item.elements[i].data, item.elements[i].data_len, item.elements[i].key, p.get()->dbip->i->c, &t)) {
+		bu_log("ERROR:  %s cache write failure\n", item.elements[i].key);
+		continue;
+	    }
 	}
 
-	// TODO - see if we need to make copies of item data in order
-	// to safely pass to bu_cache_write...
-	//bu_log("Writing: %s\n", item.key);
-	if (!bu_cache_write(item.data, item.data_len, item.key, p.get()->dbip->i->c, &t)) {
-	    bu_log("ERROR:  %s cache write failure\n", item.key);
-	    continue;
-	}
+	// No matter how this plays out, we've dequeued the cache item
 	wcnt++;
 
     }
@@ -561,7 +572,8 @@ db_cache_start(struct db_i *dbip, int verbose)
 	    // No pre-existing entry - we have work to do.  First order of
 	    // business is to write the timestamp.
 	    int64_t dp_start = bu_gettime();
-	    CacheItem ts_item(ckey, &dp_start, sizeof(int64_t));
+	    CacheElement ts_element(ckey, &dp_start, sizeof(int64_t));
+	    CacheItem ts_item(ts_element);
 	    dbip->i->p.get()->write_enqueue(ts_item);
 
 	    // Queue up for attr processing.
@@ -656,7 +668,8 @@ db_cache_update(struct db_i *dbip, const char *name)
     unsigned long long hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_TIMESTAMP);
     int64_t dp_start = bu_gettime();
-    CacheItem ts_item(ckey, &dp_start, sizeof(int64_t));
+    CacheElement ts_element(ckey, &dp_start, sizeof(int64_t));
+    CacheItem ts_item(ts_element);
     dbip->i->p.get()->write_enqueue(ts_item);
 
 
