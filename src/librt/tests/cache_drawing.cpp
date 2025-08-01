@@ -58,20 +58,21 @@ do_lod(struct db_i *dbip, struct directory *dp, bool do_init)
 	return true;
 
     struct bv_lod_mesh *mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
-    if (!mlod && do_init) {
+    if (!mlod) {
+	if (do_init) {
+	    bu_log("(Re)generating LoD for %s\n", dp->d_namep);
+	    db_cache_update(dbip, dp->d_namep);
+	    while (db_cache_processing(dbip))
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-	bu_log("(Re)generating LoD for %s\n", dp->d_namep);
-	db_cache_update(dbip, dp->d_namep);
-	while (db_cache_processing(dbip))
-	    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
-	mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
+	    mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
+	}
+	if (!mlod) {
+	    bu_log("ERROR: %s - no mesh LoD available\n", dp->d_namep);
+	    return false;
+	}
     } else {
 	bu_log("Found LoD: %s\n", dp->d_namep);
-    }
-    if (!mlod) {
-	bu_log("ERROR: %s - no mesh LoD available\n", dp->d_namep);
-	return false;
     }
 
     struct bv_scene_obj *s = bv_obj_get(NULL);
@@ -295,6 +296,8 @@ work_dp(struct db_i *dbip, struct directory *dp)
     void *cdata = NULL;
     static char ckey[BU_CACHE_KEY_MAXLEN];
 
+    bu_log("Processing %s\n", dp->d_namep);
+
     struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
     if (db5_get_attributes(dbip, &c_avs, dp) < 0) {
 	bu_log("ERROR - unable to get attributes: %s\n", dp->d_namep);
@@ -461,7 +464,6 @@ main(int argc, char *argv[])
 	bu_exit(1, "Usage: %s file.g [object]", argv[0]);
     }
 
-    start = bu_gettime();
 
     // Set up to use a local cache
     char cache_dir[MAXPATHLEN] = {0};
@@ -482,14 +484,15 @@ main(int argc, char *argv[])
     db_update_nref(dbip, &rt_uniresource);
 
     // Initialize cache
+    start = bu_gettime();
     db_cache_start(dbip, 1);
 
     // Wait until librt claims there is no more processing going on
-    bu_log("Waiting for cache initialization...\n");
+    bu_log("Waiting for full cache initialization...\n");
     while (db_cache_processing(dbip)) {
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
-    bu_log("Waiting for cache initialization... done.\n");
+    bu_log("Waiting for full cache initialization... done.\n");
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
@@ -504,25 +507,17 @@ main(int argc, char *argv[])
 	bu_log("%s\n", keys[i]);
     }
 #endif
-    if (argc < 3) {
-	for (int i = 0; i < RT_DBNHASH; i++) {
-	    struct directory *dp;
-	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (dp->d_addr == RT_DIR_PHONY_ADDR)
-		    continue;
-		if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
-		    continue;
-		validate_dp(dbip, dp);
-	    }
+    start = bu_gettime();
+    for (int i = 0; i < RT_DBNHASH; i++) {
+	struct directory *dp;
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
+		continue;
+	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
+		continue;
+	    validate_dp(dbip, dp);
 	}
-    } else {
-	struct directory *dp = db_lookup(dbip, argv[2], LOOKUP_QUIET);
-	if (dp == RT_DIR_NULL) {
-	    bu_exit(1, "ERROR: Unable to look up object %s\n", argv[2]);
-	}
-	validate_dp(dbip, dp);
     }
-
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     init_time = seconds;
@@ -531,8 +526,9 @@ main(int argc, char *argv[])
     db_close(dbip);
     bu_dirclear(cache_dir);
 
+bu_exit(0, "done");
 
-    // Reset and repeat
+    // Reset
     bu_mkdir(cache_dir);
     dbip = db_open(argv[1], DB_OPEN_READWRITE);
     if (dbip == DBI_NULL)
@@ -540,40 +536,40 @@ main(int argc, char *argv[])
     if (db_dirbuild(dbip) < 0)
 	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
     db_update_nref(dbip, &rt_uniresource);
-
     db_cache_start(dbip, 1);
 
-    bu_log("Not waiting for cache init - starting work immediately\n");
 
 
-    if (argc < 3) {
-	int fed = 0;
-	for (int i = 0; i < RT_DBNHASH; i++) {
-	    struct directory* dp;
-	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (dp->d_addr == RT_DIR_PHONY_ADDR)
-		    continue;
-		if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
-		    continue;
-		if (!dp->d_namep || !strlen(dp->d_namep))
-		    continue;
-		bu_log("enqueue: %s\n", dp->d_namep);
-		dbip->i->p.get()->q_attr.enqueue(std::string(dp->d_namep));
-		fed++;
-	    }
-	}
-	bu_log("Bulk enqueued %d objects to q_attr for pipeline processing\n", fed);
-	while (db_cache_processing(dbip)) {
-	    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-	}
+    // This part of the test attempts to simulate a contentious environment
+    // where the app is trying to read from the cache while it is in the
+    // process of building.  We already know the properties of the cache
+    // behavior in a clean setup from the above test - this one 
+    bu_log("Deliberately not waiting for cache init to finish - starting app work immediately.\n");
 
-	 bu_log("Pipeline finished processing all objects\n");
-    } else {
-	struct directory *dp = db_lookup(dbip, argv[2], LOOKUP_QUIET);
-	if (dp == RT_DIR_NULL) {
-	    bu_exit(1, "ERROR: Unable to look up object %s\n", argv[2]);
+    std::set<struct directory *> dpq;
+    for (int i = 0; i < RT_DBNHASH; i++) {
+	struct directory *dp;
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
+		continue;
+	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
+		continue;
+	    dpq.insert(dp);
 	}
-	work_dp(dbip, dp);
+    }
+    std::vector<std::thread> wthreads;
+    while (!dpq.empty()) {
+	if (wthreads.size() < 6) {
+	    // Simulate multithreaded app interrogation of the cache 
+	    struct directory *dp = *dpq.begin();
+	    dpq.erase(dp);
+	    wthreads.emplace_back(work_dp, dbip, dp);
+	}
+	for (std::thread& t : wthreads) {
+	    if (t.joinable())
+		t.join();
+	}
+	wthreads.clear();
     }
 
     db_close(dbip);
