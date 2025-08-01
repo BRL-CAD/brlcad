@@ -106,6 +106,11 @@ class ProcessDrawData {
         std::atomic<int> thread_cnt = 0;
         std::atomic<bool> shutdown = false;
 
+	void write_enqueue(CacheItem &i) {
+	    wcnt++;
+	    q_write.enqueue(i);
+	}
+
 	// A database object is processed in order - first q_attr, then
 	// q_aabb, q_obb and q_lod.  Each of the first four queues will
 	// send a CacheItem to the q_write queue, whose sole job is to

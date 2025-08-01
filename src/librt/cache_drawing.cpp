@@ -177,8 +177,7 @@ attr_calc(std::shared_ptr<ProcessDrawData> p)
 	    rflag = 1;
 	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_FLAG);
 	CacheItem ritem(ckey, &rflag, sizeof(int));
-	p.get()->wcnt++;
-	p.get()->q_write.enqueue(ritem);
+	p.get()->write_enqueue(ritem);
 	//bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
 
 	// Region id.  For drawing purposes this needs to be a number.
@@ -188,16 +187,14 @@ attr_calc(std::shared_ptr<ProcessDrawData> p)
 	    bu_opt_int(NULL, 1, &region_id_str, (void *)&region_id);
 	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_ID);
 	CacheItem reg_item(ckey, &region_id, sizeof(int));
-	p.get()->wcnt++;
-	p.get()->q_write.enqueue(reg_item);
+	p.get()->write_enqueue(reg_item);
 	//bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
 
 	// Inherit flag
 	int color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
 	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_INHERIT_FLAG);
 	CacheItem inherit_item(ckey, &color_inherit, sizeof(int));
-	p.get()->wcnt++;
-	p.get()->q_write.enqueue(inherit_item);
+	p.get()->write_enqueue(inherit_item);
 	//bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
 
 	// Color
@@ -215,8 +212,7 @@ attr_calc(std::shared_ptr<ProcessDrawData> p)
 	}
 	snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_COLOR);
 	CacheItem colors_item(ckey, &colors, sizeof(unsigned int));
-	p.get()->wcnt++;
-	p.get()->q_write.enqueue(colors_item);
+	p.get()->write_enqueue(colors_item);
 	//bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
 
 	// Done with attribute data
@@ -255,14 +251,12 @@ aabb_calc(std::shared_ptr<ProcessDrawData> p)
 	    point_t bb[2];
 	    if (!(ip->idb_meth->ft_bbox(ip, &bb[0], &bb[1], &btol) < 0)) {
 		CacheItem aabb_item(ckey, &bb, 2*sizeof(point_t));
-		p.get()->wcnt++;
-		p.get()->q_write.enqueue(aabb_item);
+		p.get()->write_enqueue(aabb_item);
 		//bu_log("enqueue: %s\n", ckey);
 	    } else {
 		// If we couldn't get a bbox, clear out any old entry
 		CacheItem aabb_item(ckey, NULL, 0);
-		p.get()->wcnt++;
-		p.get()->q_write.enqueue(aabb_item);
+		p.get()->write_enqueue(aabb_item);
 		//bu_log("enqueue: %s\n", ckey);
 		bu_log("%s: aabb calc failure\n", name);
 	    }
@@ -270,8 +264,7 @@ aabb_calc(std::shared_ptr<ProcessDrawData> p)
 	    // If a named item changed type, we may need to clear
 	    // out an old bbox entry
 	    CacheItem aabb_item(ckey, NULL, 0);
-	    p.get()->wcnt++;
-	    p.get()->q_write.enqueue(aabb_item);
+	    p.get()->write_enqueue(aabb_item);
 	    //bu_log("enqueue: %s\n", ckey);
 	}
 
@@ -319,14 +312,12 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
 		}
 		if (!cfailure){
 		    CacheItem obb_item(ckey, &obb, 4*sizeof(vect_t));
-		    p.get()->wcnt++;
-		    p.get()->q_write.enqueue(obb_item);
+		    p.get()->write_enqueue(obb_item);
 		    //bu_log("enqueue: %s\n", ckey);
 		} else {
 		    // If calculation failed, clear out any old data
 		    CacheItem obb_item(ckey, NULL, 0);
-		    p.get()->wcnt++;
-		    p.get()->q_write.enqueue(obb_item);
+		    p.get()->write_enqueue(obb_item);
 		    //bu_log("enqueue: %s\n", ckey);
 
 		    bu_log("%s: obb calc failure\n", name);
@@ -335,8 +326,7 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
 	    } else {
 		// If calculation failed, clear out any old data
 		CacheItem obb_item(ckey, NULL, 0);
-		p.get()->wcnt++;
-		p.get()->q_write.enqueue(obb_item);
+		p.get()->write_enqueue(obb_item);
 		//bu_log("enqueue: %s\n", ckey);
 
 		bu_log("%s: obb calc failure\n", name);
@@ -345,8 +335,7 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
 	    // If a named item changed type, we may need to clear out an old
 	    // oriented bbox entry
 	    CacheItem obb_item(ckey, NULL, 0);
-	    p.get()->wcnt++;
-	    p.get()->q_write.enqueue(obb_item);
+	    p.get()->write_enqueue(obb_item);
 	    //bu_log("enqueue: %s\n", ckey);
 	}
 
@@ -397,8 +386,7 @@ lod_calc(std::shared_ptr<ProcessDrawData> p)
 	    //bu_log("enqueue: %s\n", itm->key);
 	    bu_free(itm->data, "bu_cache_item data");
 	    bu_free(itm, "bu_cache_item");
-	    p.get()->wcnt++;
-	    p.get()->q_write.enqueue(lod_item);
+	    p.get()->write_enqueue(lod_item);
 	}
 
 	// LoD calc is the last use of rt_db_internal - free
@@ -559,8 +547,7 @@ db_cache_start(struct db_i *dbip, int verbose)
 	    // business is to write the timestamp.
 	    int64_t dp_start = bu_gettime();
 	    CacheItem ts_item(ckey, &dp_start, sizeof(int64_t));
-	    dbip->i->p.get()->wcnt++;
-	    dbip->i->p.get()->q_write.enqueue(ts_item);
+	    dbip->i->p.get()->write_enqueue(ts_item);
 
 	    // Queue up for attr processing.
 	    dbip->i->p.get()->q_attr.enqueue(std::string(dp->d_namep));
@@ -655,8 +642,7 @@ db_cache_update(struct db_i *dbip, const char *name)
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_TIMESTAMP);
     int64_t dp_start = bu_gettime();
     CacheItem ts_item(ckey, &dp_start, sizeof(int64_t));
-    dbip->i->p.get()->wcnt++;
-    dbip->i->p.get()->q_write.enqueue(ts_item);
+    dbip->i->p.get()->write_enqueue(ts_item);
 
 
     // Enqueue to process
