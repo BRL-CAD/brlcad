@@ -71,8 +71,6 @@ do_lod(struct db_i *dbip, struct directory *dp, bool do_init)
 	    bu_log("ERROR: %s - no mesh LoD available\n", dp->d_namep);
 	    return false;
 	}
-    } else {
-	bu_log("Found LoD: %s\n", dp->d_namep);
     }
 
     struct bv_scene_obj *s = bv_obj_get(NULL);
@@ -526,7 +524,8 @@ main(int argc, char *argv[])
     db_close(dbip);
     bu_dirclear(cache_dir);
 
-bu_exit(0, "done");
+    // Pause a few seconds so we can see what the basic setup did
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
     // Reset
     bu_mkdir(cache_dir);
@@ -536,15 +535,17 @@ bu_exit(0, "done");
     if (db_dirbuild(dbip) < 0)
 	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
     db_update_nref(dbip, &rt_uniresource);
-    db_cache_start(dbip, 1);
 
 
-
-    // This part of the test attempts to simulate a contentious environment
-    // where the app is trying to read from the cache while it is in the
-    // process of building.  We already know the properties of the cache
-    // behavior in a clean setup from the above test - this one 
+    // Now we get rugged.  This part of the test attempts to simulate a
+    // contentious environment where the app is trying to read from the cache
+    // while it is in the process of building.  We already know the properties
+    // of the cache behavior in a clean setup from the above test - this one
+    // is intended to simulate what might happen if someone opens a large .g
+    // file and immediately tries to draw up the whole thing while the cache
+    // is still in the process of building.
     bu_log("Deliberately not waiting for cache init to finish - starting app work immediately.\n");
+    db_cache_start(dbip, 1);
 
     std::set<struct directory *> dpq;
     for (int i = 0; i < RT_DBNHASH; i++) {
@@ -560,7 +561,7 @@ bu_exit(0, "done");
     std::vector<std::thread> wthreads;
     while (!dpq.empty()) {
 	if (wthreads.size() < 6) {
-	    // Simulate multithreaded app interrogation of the cache 
+	    // Simulate multithreaded app interrogation of the cache
 	    struct directory *dp = *dpq.begin();
 	    dpq.erase(dp);
 	    wthreads.emplace_back(work_dp, dbip, dp);
