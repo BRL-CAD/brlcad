@@ -2662,7 +2662,7 @@ rt_bot_find_e_nearest_pt2(
     fastf_t dist=MAX_FASTF, tmp_dist;
     size_t *edge_list;
     size_t edge_count = 0;
-    struct bn_tol tol;
+    struct bn_tol tol = BN_TOL_INIT_ZERO;
 
     RT_BOT_CK_MAGIC(bot);
 
@@ -2672,13 +2672,6 @@ rt_bot_find_e_nearest_pt2(
     /* first build a list of edges */
     if ((edge_count = rt_bot_get_edge_list(bot, &edge_list)) == 0)
 	return -1;
-
-    /* build a tolerance structure for the bn_dist routine */
-    tol.magic   = BN_TOL_MAGIC;
-    tol.dist    = 0.0;
-    tol.dist_sq = 0.0;
-    tol.perp    = 0.0;
-    tol.para    =  1.0;
 
     /* now look for the closest edge */
     for (i = 0; i < edge_count; i++) {
@@ -5551,6 +5544,7 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
     /* allocate pts array, 3 vertices per bot face */
     face.pts = (point_t *)bu_calloc(3, sizeof(point_t), "rt_bot_volume: pts");
     BN_TOL_INIT(&tol);
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = BN_TOL_DIST * BN_TOL_DIST;
 
     for (face.npts = 0, i = 0; i < bot->num_faces; face.npts = 0, i++) {
