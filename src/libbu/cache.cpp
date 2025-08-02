@@ -314,7 +314,7 @@ bu_cache_get(void **data, const char *key, struct bu_cache *c, struct bu_cache_t
 	// We're not persisting the transaction token - copy the data
 	// before we finish up
 	size_t mdatasize = mdb_data[0].mv_size;
-	if (mdatasize) {
+	if (mdatasize && data) {
 	    void *dcpy = bu_malloc(mdatasize, "data copy");
 	    memcpy(dcpy, mdb_data[0].mv_data, mdatasize);
 	    (*data) = dcpy;
