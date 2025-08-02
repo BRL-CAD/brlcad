@@ -1034,6 +1034,7 @@ rt_bot_unoriented_segs(struct hit *hits,
     int removed = 0;
     static const int IN_SEG = 0;
     static const int OUT_SEG = 1;
+    const fastf_t toldist = (ap && ap->a_rt_i)?ap->a_rt_i->rti_tol.dist:BN_TOL_DIST;
 
     if (nhits == 1) {
 	triangle_s *trip = (triangle_s *)hits[0].hit_private;
@@ -1059,7 +1060,7 @@ rt_bot_unoriented_segs(struct hit *hits,
 	fastf_t dist;
 
 	dist = hits[i].hit_dist - hits[i+1].hit_dist;
-	if (NEAR_ZERO(dist, ap->a_rt_i->rti_tol.dist)) {
+	if (NEAR_ZERO(dist, toldist)) {
 	    removed++;
 	    rm_dist = hits[i+1].hit_dist;
 	    for (j = i; j < nhits - 1; j++)
@@ -1129,6 +1130,7 @@ rt_bot_oriented_segs(hit_da *hits_da, struct soltab *stp, struct application *ap
      * r44239 as a bug in another project was segfaulting. */
     ssize_t snhits = (ssize_t)hits_da->count;
     struct hit *hits = hits_da->items;
+    const fastf_t toldist = (ap && ap->a_rt_i)?ap->a_rt_i->rti_tol.dist:BN_TOL_DIST;
 
     /* Remove duplicate hits */
     {
@@ -1144,7 +1146,7 @@ rt_bot_oriented_segs(hit_da *hits_da, struct soltab *stp, struct application *ap
 	    dist = hits[i].hit_dist - hits[k].hit_dist;
 
 	    /* count number of hits at this distance */
-	    while (NEAR_ZERO(dist, ap->a_rt_i->rti_tol.dist)) {
+	    while (NEAR_ZERO(dist, toldist)) {
 		k++;
 		if (k > snhits - 1)
 		    break;
@@ -5550,7 +5552,6 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
     face.pts = (point_t *)bu_calloc(3, sizeof(point_t), "rt_bot_volume: pts");
     BN_TOL_INIT(&tol);
     tol.dist_sq = BN_TOL_DIST * BN_TOL_DIST;
-
 
     for (face.npts = 0, i = 0; i < bot->num_faces; face.npts = 0, i++) {
 	int a, b, c;
