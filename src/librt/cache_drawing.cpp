@@ -65,7 +65,7 @@ CacheElement::CacheElement()
     data = NULL;
 }
 
-CacheElement::CacheElement(const char *dkey, void *dval, size_t dlen)
+CacheElement::CacheElement(const char *dkey, const void *dval, size_t dlen)
 {
     snprintf(key, BU_CACHE_KEY_MAXLEN, "%s", dkey);
     erase_op = (!dval || !dlen) ? true : false;
@@ -74,6 +74,7 @@ CacheElement::CacheElement(const char *dkey, void *dval, size_t dlen)
 	data = bu_malloc(data_len, "cache data");
 	memcpy(data, dval, data_len);
     } else {
+	data_len = 0;
 	data = NULL;
     }
 }
@@ -86,6 +87,9 @@ CacheElement::CacheElement(const CacheElement &o)
     if (o.data) {
 	data = bu_malloc(o.data_len, "cache data");
 	memcpy(data, o.data, o.data_len);
+    } else {
+	data_len = 0;
+	data = NULL;
     }
 }
 
@@ -103,14 +107,19 @@ CacheElement& CacheElement::operator=(const CacheElement& o)
     if (o.data) {
 	data = bu_malloc(o.data_len, "cache data");
 	memcpy(data, o.data, o.data_len);
+    } else {
+    	data_len = 0;
+	data = NULL;
     }
     return *this;
 }
 
 CacheElement::~CacheElement()
 {
-    bu_free(data, "free data");
-    data = NULL;
+    if (data) {
+	bu_free(data, "free data");
+	data = NULL;
+    }
 }
 
 int64_t cache_timestamp(const char *ckey, struct bu_cache *c)
