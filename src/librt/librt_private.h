@@ -114,7 +114,7 @@ class ProcessDrawData {
         std::atomic<int> thread_cnt = 0;
         std::atomic<bool> shutdown = false;
 
-	void write_enqueue(CacheItem &i) {
+	void write_enqueue(std::shared_ptr<CacheItem> i) {
 	    wcnt++;
 	    q_write.enqueue(i);
 	}
@@ -140,11 +140,11 @@ class ProcessDrawData {
 	// A1:lod.  The worst that might happen is a caller getting a
 	// cache value that is out of date if the most current version
 	// of the database object is still in the "to process" queue.
-	moodycamel::ConcurrentQueue<std::string> q_attr;
+	moodycamel::ConcurrentQueue<std::shared_ptr<std::string>> q_attr;
 	moodycamel::ConcurrentQueue<struct rt_db_internal *> q_aabb;
 	moodycamel::ConcurrentQueue<struct rt_db_internal *> q_obb;
 	moodycamel::ConcurrentQueue<struct rt_db_internal *> q_lod;
-	moodycamel::ConcurrentQueue<CacheItem> q_write;
+	moodycamel::ConcurrentQueue<std::shared_ptr<CacheItem>> q_write;
 
 	// Counter tracking if there is work in the pipeline.
 	std::atomic<int> wcnt = 0;

@@ -165,12 +165,12 @@ attr_calc(std::shared_ptr<ProcessDrawData> p)
 	    continue;
 	}
 
-	std::string name;
+	std::shared_ptr<std::string> name;
 	if (!p.get()->q_attr.try_dequeue(name))
 	    continue;
 
 	// Got a name - look up the attributes and internal
-	struct directory *dp = db_lookup(p.get()->dbip, name.c_str(), LOOKUP_QUIET);
+	struct directory *dp = db_lookup(p.get()->dbip, name->c_str(), LOOKUP_QUIET);
 	if (dp == RT_DIR_NULL)
 	    continue;
 	struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
@@ -185,7 +185,7 @@ attr_calc(std::shared_ptr<ProcessDrawData> p)
 	    bu_avs_free(&c_avs);
 	    continue;
 	}
-	ip->idb_uptr = bu_strdup(name.c_str());
+	ip->idb_uptr = bu_strdup(name->c_str());
 
 	// We will not be directly writing to the cache from this thread - instead
 	// we will queue up CacheElement entries to be written from the q_write thread.
@@ -249,7 +249,7 @@ attr_calc(std::shared_ptr<ProcessDrawData> p)
 
 	// Queue up the elements
 	CacheItem ritems(elements);
-	p.get()->write_enqueue(ritems);
+	p.get()->write_enqueue(std::make_shared<CacheItem>(ritems));
 
 	// Done with attribute data
 	bu_avs_free(&c_avs);
@@ -301,7 +301,7 @@ aabb_calc(std::shared_ptr<ProcessDrawData> p)
 	// Queue it up
 	CacheElement aabb_element(ckey, bbp, dlen);
 	CacheItem aabb_item(aabb_element);
-	p.get()->write_enqueue(aabb_item);
+	p.get()->write_enqueue(std::make_shared<CacheItem>(aabb_item));
 
 	// Hand ip off to the obb queue
 	p.get()->q_obb.enqueue(ip);
@@ -364,7 +364,7 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
 	// Queue it up for writing
 	CacheElement obb_element(ckey, obbp, dlen);
 	CacheItem obb_item(obb_element);
-	p.get()->write_enqueue(obb_item);
+	p.get()->write_enqueue(std::make_shared<CacheItem>(obb_item));
 
 	// Hand ip off to the LoD queue
 	p.get()->q_lod.enqueue(ip);
@@ -419,7 +419,7 @@ lod_calc(std::shared_ptr<ProcessDrawData> p)
 	    bu_free(itm, "bu_cache_item");
 	}
 	CacheItem lod_item(elements);
-	p.get()->write_enqueue(lod_item);
+	p.get()->write_enqueue(std::make_shared<CacheItem>(lod_item));
 
 	// LoD calc is the last use of rt_db_internal - free
 	bu_free(ip->idb_uptr, "name uptr");
@@ -465,24 +465,24 @@ q_write(std::shared_ptr<ProcessDrawData> p)
 	    continue;
 	}
 
-	CacheItem item;
-	if (!p.get()->q_write.try_dequeue(item))
+	std::shared_ptr<CacheItem> item_ptr;
+	if (!p.get()->q_write.try_dequeue(item_ptr))
 	    continue;
 
 	// Iterate over the elements and write them out
-	for (size_t i = 0; i < item.elements.size(); i++) {
+	for (size_t i = 0; i < item_ptr->elements.size(); i++) {
 	    // If this is an erase op, do the erasing
-	    if (item.elements[i].erase_op) {
+	    if (item_ptr->elements[i].erase_op) {
 		//bu_log("Clearing : %s\n", item.key);
-		bu_cache_clear(item.elements[i].key, p.get()->dbip->i->c, &t);
+		bu_cache_clear(item_ptr->elements[i].key, p.get()->dbip->i->c, &t);
 		continue;
 	    }
 
 	    // TODO - see if we need to make copies of item data in order
 	    // to safely pass to bu_cache_write...
 	    //bu_log("Writing: %s\n", item.key);
-	    if (!bu_cache_write(item.elements[i].data, item.elements[i].data_len, item.elements[i].key, p.get()->dbip->i->c, &t)) {
-		bu_log("ERROR:  %s cache write failure\n", item.elements[i].key);
+	    if (!bu_cache_write(item_ptr->elements[i].data, item_ptr->elements[i].data_len, item_ptr->elements[i].key, p.get()->dbip->i->c, &t)) {
+		bu_log("ERROR:  %s cache write failure\n", item_ptr->elements[i].key);
 		continue;
 	    }
 	}
@@ -583,10 +583,10 @@ db_cache_start(struct db_i *dbip, int verbose)
 	    int64_t dp_start = bu_gettime();
 	    CacheElement ts_element(ckey, &dp_start, sizeof(int64_t));
 	    CacheItem ts_item(ts_element);
-	    dbip->i->p.get()->write_enqueue(ts_item);
+	    dbip->i->p.get()->write_enqueue(std::make_shared<CacheItem>(ts_item));
 
 	    // Queue up for attr processing.
-	    dbip->i->p.get()->q_attr.enqueue(std::string(dp->d_namep));
+	    dbip->i->p.get()->q_attr.enqueue(std::make_shared<std::string>(std::string(dp->d_namep)));
 	}
     }
 
@@ -679,11 +679,11 @@ db_cache_update(struct db_i *dbip, const char *name)
     int64_t dp_start = bu_gettime();
     CacheElement ts_element(ckey, &dp_start, sizeof(int64_t));
     CacheItem ts_item(ts_element);
-    dbip->i->p.get()->write_enqueue(ts_item);
+    dbip->i->p.get()->write_enqueue(std::make_shared<CacheItem>(ts_item));
 
 
     // Enqueue to process
-    dbip->i->p.get()->q_attr.enqueue(std::string(dp->d_namep));
+    dbip->i->p.get()->q_attr.enqueue(std::make_shared<std::string>(std::string(dp->d_namep)));
 
     // TODO - Make sure we can retrieve the cached data
 
