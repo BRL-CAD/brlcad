@@ -80,7 +80,7 @@ __BEGIN_DECLS
 class CacheElement {
     public:
 	CacheElement();
-	CacheElement(const char *dkey, void *dval, size_t dlen);
+	CacheElement(const char *dkey, const void *dval, size_t dlen);
 	~CacheElement();
 	CacheElement(const CacheElement &o);
 
