@@ -125,10 +125,14 @@ validate_dp(struct db_i *dbip, struct directory *dp)
     int db_rflag = (region_flag_str && (BU_STR_EQUAL(region_flag_str, "R") || BU_STR_EQUAL(region_flag_str, "1"))) ? 1 : 0;
     int cache_rflag = 0;
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_REGION_FLAG);
-    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn))
+    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn)) {
 	memcpy(&cache_rflag, cdata, sizeof(int));
-    if (db_rflag != cache_rflag) {
-	bu_log("Cache(%d) vs. db(%d) region flags mismatch for %s\n", cache_rflag, db_rflag, dp->d_namep);
+	if (db_rflag != cache_rflag) {
+	    bu_log("Cache(%d) vs. db(%d) region flags mismatch for %s\n", cache_rflag, db_rflag, dp->d_namep);
+	    valid = false;
+	}
+    } else {
+	bu_log("Cache miss for region flag on %s\n", dp->d_namep);
 	valid = false;
     }
 
@@ -139,10 +143,14 @@ validate_dp(struct db_i *dbip, struct directory *dp)
 	bu_opt_int(NULL, 1, &region_id_str, (void *)&db_region_id);
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_REGION_ID);
     int cache_region_id = -1;
-    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn))
+    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn)) {
 	memcpy(&cache_region_id, cdata, sizeof(int));
-    if (db_region_id != cache_region_id) {
-	bu_log("Cache(%d) vs. db(%d) region_id mismatch for %s\n", cache_region_id, db_region_id, dp->d_namep);
+	if (db_region_id != cache_region_id) {
+	    bu_log("Cache(%d) vs. db(%d) region_id mismatch for %s\n", cache_region_id, db_region_id, dp->d_namep);
+	    valid = false;
+	}
+    } else {
+    	bu_log("Cache miss for region id on %s\n", dp->d_namep);
 	valid = false;
     }
 
@@ -150,10 +158,14 @@ validate_dp(struct db_i *dbip, struct directory *dp)
     int db_color_inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_INHERIT_FLAG);
     int cache_color_inherit = 0;
-    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn))
+    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn)) {
 	memcpy(&cache_color_inherit, cdata, sizeof(int));
-    if (db_color_inherit != cache_color_inherit) {
-	bu_log("Cache(%d) vs. db(%d) color_inherit flag mismatch for %s\n", cache_color_inherit, db_color_inherit, dp->d_namep);
+	if (db_color_inherit != cache_color_inherit) {
+	    bu_log("Cache(%d) vs. db(%d) color_inherit flag mismatch for %s\n", cache_color_inherit, db_color_inherit, dp->d_namep);
+	    valid = false;
+	}
+    } else {
+    	bu_log("Cache miss for inherit flag on %s\n", dp->d_namep);
 	valid = false;
     }
 
@@ -172,14 +184,23 @@ validate_dp(struct db_i *dbip, struct directory *dp)
     }
     unsigned int cache_colors = UINT_MAX; // Using UINT_MAX to indicate unset
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_COLOR);
-    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn))
+    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn)) {
 	memcpy(&cache_colors, cdata, sizeof(unsigned int));
-    if (db_colors!= cache_colors) {
-	bu_log("Cache(%d) vs. db(%d) color_inherit flag mismatch for %s\n", cache_colors, db_colors, dp->d_namep);
+	if (db_colors!= cache_colors) {
+	    bu_log("Cache(%d) vs. db(%d) color mismatch for %s\n", cache_colors, db_colors, dp->d_namep);
+	    valid = false;
+	}
+    } else {
+	bu_log("Cache miss for color on %s\n", dp->d_namep);
 	valid = false;
     }
+
     bu_cache_get_done(&txn);
     bu_avs_free(&c_avs);
+
+    // If we've already failed, don't bother going further
+    if (!valid)
+	return false;
 
     // For bounding boxes we need the internal to validate
     const struct bn_tol btol = BN_TOL_INIT_TOL;
@@ -210,7 +231,7 @@ validate_dp(struct db_i *dbip, struct directory *dp)
 		    valid = false;
 		}
 	    } else {
-		bu_log("aabb cache get failed\n");
+		bu_log("Cache miss for aabb on %s\n", dp->d_namep);
 		bu_cache_get_done(&txn);
 		rt_db_free_internal(ip);
 		BU_PUT(ip, struct rt_db_internal);
@@ -233,33 +254,33 @@ validate_dp(struct db_i *dbip, struct directory *dp)
 	    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_OBB);
 	    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn)) {
 		memcpy(&cache_obb, cdata, 4*sizeof(point_t));
+		bool obbvalid = true;
+		for (int j = 0; j < 4; j++) {
+		    if (!VNEAR_EQUAL(db_obb[j], cache_obb[j], VUNITIZE_TOL)) {
+			if (j > 0) {
+			    // Check for flipped vector, which is equivalent for an OBB
+			    vect_t vflip;
+			    VMOVE(vflip, cache_obb[j]);
+			    VSCALE(vflip, vflip, -1);
+			    if (!VNEAR_EQUAL(db_obb[j], vflip, VUNITIZE_TOL))
+				obbvalid = false;
+			} else {
+			    obbvalid = false;
+			}
+		    }
+		}
+		if (!obbvalid) {
+		    bu_log("Cache obb vs. db obb mismatch for %s\n", dp->d_namep);
+		    bu_log("   db_obb: (%0.15f %0.15f %0.15f) -> (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f)\n", V3ARGS(db_obb[0]), V3ARGS(db_obb[1]), V3ARGS(db_obb[2]), V3ARGS(db_obb[3]));
+		    bu_log("cache_obb: (%0.15f %0.15f %0.15f) -> (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f)\n", V3ARGS(cache_obb[0]), V3ARGS(cache_obb[1]), V3ARGS(cache_obb[2]), V3ARGS(cache_obb[3]));
+		    valid = false;
+		}
 	    } else {
-		bu_log("obb cache get failed\n");
+		bu_log("Cache miss for obb on %s\n", dp->d_namep);
 		bu_cache_get_done(&txn);
 		rt_db_free_internal(ip);
 		BU_PUT(ip, struct rt_db_internal);
 		return false;
-	    }
-	    bool obbvalid = true;
-	    for (int j = 0; j < 4; j++) {
-		if (!VNEAR_EQUAL(db_obb[j], cache_obb[j], VUNITIZE_TOL)) {
-		    if (j > 0) {
-			// Check for flipped vector, which is equivalent for an OBB
-			vect_t vflip;
-			VMOVE(vflip, cache_obb[j]);
-			VSCALE(vflip, vflip, -1);
-			if (!VNEAR_EQUAL(db_obb[j], vflip, VUNITIZE_TOL))
-			    obbvalid = false;
-		    } else {
-			obbvalid = false;
-		    }
-		}
-	    }
-	    if (!obbvalid) {
-		bu_log("Cache obb vs. db obb mismatch for %s\n", dp->d_namep);
-		bu_log("   db_obb: (%0.15f %0.15f %0.15f) -> (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f)\n", V3ARGS(db_obb[0]), V3ARGS(db_obb[1]), V3ARGS(db_obb[2]), V3ARGS(db_obb[3]));
-		bu_log("cache_obb: (%0.15f %0.15f %0.15f) -> (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f)\n", V3ARGS(cache_obb[0]), V3ARGS(cache_obb[1]), V3ARGS(cache_obb[2]), V3ARGS(cache_obb[3]));
-		valid = false;
 	    }
 	}
     }
