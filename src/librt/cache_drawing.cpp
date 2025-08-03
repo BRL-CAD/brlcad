@@ -289,7 +289,7 @@ aabb_calc(std::shared_ptr<ProcessDrawData> p)
 	size_t dlen = 0;
 
 	// Do aabb calc
-	point_t bb[2];
+	point_t bb[2] = {VINIT_ZERO};
 	if (ip->idb_meth->ft_bbox) {
 	    const struct bn_tol btol = BN_TOL_INIT_TOL;
 	    if (!(ip->idb_meth->ft_bbox(ip, &bb[0], &bb[1], &btol) < 0)) {
@@ -536,6 +536,12 @@ db_cache_start(struct db_i *dbip, int verbose)
     long long fsize = 2*bu_file_size(dbip->dbi_filename);
     if (fsize < BU_CACHE_DEFAULT_DB_SIZE)
 	fsize = 0;
+
+    // TODO - this isn't correct - we need to hash dbi_filename and get the
+    // filename without the path, then make that into a name to use in a
+    // drawing_cache directory.  As it stands this is writing things out
+    // next to the .g file.  The test cleanup logic almost certainly isn't
+    // clearing out the directories correctly.
     dbip->i->c = bu_cache_open(dbip->dbi_filename, 1, fsize);
     if (!dbip->i->c) {
 	return BRLCAD_ERROR;

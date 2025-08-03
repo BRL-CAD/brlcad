@@ -127,6 +127,8 @@ validate_dp(struct db_i *dbip, struct directory *dp)
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_REGION_FLAG);
     if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn)) {
 	memcpy(&cache_rflag, cdata, sizeof(int));
+	if (cache_rflag < 0 || cache_rflag > 1)
+	    bu_exit(-1, "Got what should be impossible region flag value: %s %s\n", ckey, dp->d_namep);
 	if (db_rflag != cache_rflag) {
 	    bu_log("Cache(%d) vs. db(%d) region flags mismatch for %s\n", cache_rflag, db_rflag, dp->d_namep);
 	    valid = false;
@@ -271,8 +273,8 @@ validate_dp(struct db_i *dbip, struct directory *dp)
 		}
 		if (!obbvalid) {
 		    bu_log("Cache obb vs. db obb mismatch for %s\n", dp->d_namep);
-		    bu_log("   db_obb: (%0.15f %0.15f %0.15f) -> (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f)\n", V3ARGS(db_obb[0]), V3ARGS(db_obb[1]), V3ARGS(db_obb[2]), V3ARGS(db_obb[3]));
-		    bu_log("cache_obb: (%0.15f %0.15f %0.15f) -> (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f)\n", V3ARGS(cache_obb[0]), V3ARGS(cache_obb[1]), V3ARGS(cache_obb[2]), V3ARGS(cache_obb[3]));
+		    //bu_log("   db_obb: (%0.15f %0.15f %0.15f) -> (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f)\n", V3ARGS(db_obb[0]), V3ARGS(db_obb[1]), V3ARGS(db_obb[2]), V3ARGS(db_obb[3]));
+		    //bu_log("cache_obb: (%0.15f %0.15f %0.15f) -> (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f) (%0.15f %0.15f %0.15f)\n", V3ARGS(cache_obb[0]), V3ARGS(cache_obb[1]), V3ARGS(cache_obb[2]), V3ARGS(cache_obb[3]));
 		    valid = false;
 		}
 	    } else {
@@ -444,9 +446,6 @@ main(int argc, char *argv[])
 	wthreads.clear();
     }
 
-    db_close(dbip);
-    bu_dirclear(cache_dir);
-
     // After that's over, check everything
     bu_log("Final validation check\n");
     for (int i = 0; i < RT_DBNHASH; i++) {
@@ -459,6 +458,9 @@ main(int argc, char *argv[])
 	    validate_dp(dbip, dp);
 	}
     }
+
+    db_close(dbip);
+    bu_dirclear(cache_dir);
 
     return 0;
 }
