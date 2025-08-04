@@ -173,6 +173,7 @@ set(
   operators.asc
   pic.asc
   pinewood.asc
+  primitives.asc
   prim.asc
   radialgrid.asc
   rounds.asc
@@ -275,16 +276,19 @@ endif(SH_EXEC)
 cmakefiles(
   ${G_BENCHMARK_MODELS}
   ${G_SAMPLE_MODELS}
+  1647260.dsp
   CMakeLists.txt
   aet.rt
   cornell.rt
   cube.rt
-  traffic_light.rt
   db.php
+  ebm_data.bw
   include/ctype.inc
   include/debug.inc
   terra.bin
   to_g.cmake.in
+  traffic_light.rt
+  vol_data.bw
 )
 
 # Local Variables:

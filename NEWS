@@ -19,6 +19,7 @@ affects output styling (e.g., showing/hiding attributes).  To restore
 default behavior, delete .mgedrc in your home directory or remove
 existing qray settings manually.
 
+* added example geometry model showcasing all types - Mitchell Roberts
 * fixed mged crash when switching databases after rt - Sean Morrison
 * mitigated multithreading contention on >32 core cpus - Sean Morrison
 * clarified material_name not found warning in rtweight - Cliff Yapp
