@@ -722,6 +722,38 @@ rt_arb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 }
 
 
+static fastf_t
+arb_concave_eps(const point_t v[8])
+{
+    fastf_t minx = v[0][X];
+    fastf_t maxx = v[0][X];
+    fastf_t miny = v[0][Y];
+    fastf_t maxy = v[0][Y];
+    fastf_t minz = v[0][Z];
+    fastf_t maxz = v[0][Z];
+
+    for (int i = 1; i < 8; ++i) {
+	V_MIN(minx, v[i][X]);
+	V_MAX(maxx, v[i][X]);
+	V_MIN(miny, v[i][Y]);
+	V_MAX(maxy, v[i][Y]);
+	V_MIN(minz, v[i][Z]);
+	V_MAX(maxz, v[i][Z]);
+    }
+    fastf_t span = maxx - minx;
+    if (maxy - miny > span) span = maxy - miny;
+    if (maxz - minz > span) span = maxz - minz;
+
+    const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+    fastf_t eps = default_tol.dist; /* distance units */
+    fastf_t scale_eps = span * 1.0e-4; /* 1e-4 of span */
+    if (scale_eps > eps)
+	eps = scale_eps;
+
+    return eps;
+}
+
+
 /**
  * Half‑space test: does point P lie on inner side of quad f?
  */
@@ -734,6 +766,7 @@ point_inside_face(const point_t v[8], const int f[4], const point_t P, const poi
     VSUB2(b, v[f[2]], v[f[0]]);        /* b = v2 - v0 */
     VCROSS(n, a, b);                   /* face normal  n = a × b */
 
+    VUNITIZE(n);
     VSUB2(c, centroid, v[f[0]]);       /* c = centroid − v0         */
     if (VDOT(n, c) > 0.0) {            /* make sure n faces OUTward */
         VREVERSE(n, n);
@@ -754,10 +787,9 @@ point_inside_face(const point_t v[8], const int f[4], const point_t P, const poi
  * outward facing planes.  If it lies outside any, it's concave.
  */
 static bool
-arb_is_concave(const struct rt_arb_internal *aip, const struct bn_tol *tol)
+arb_is_concave(const struct rt_arb_internal *aip)
 {
     register const point_t *v = aip->pt;
-    static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
     static const int F[6][4] = {       /* BRL‑CAD face order */
 	{3,2,1,0}, {4,5,6,7}, {4,7,3,0},
 	{2,6,5,1}, {1,5,4,0}, {7,6,2,3}
@@ -765,15 +797,14 @@ arb_is_concave(const struct rt_arb_internal *aip, const struct bn_tol *tol)
 //	{1,2,6,5}, {2,3,7,6}, {3,0,4,7}
     };
 
-    if (!tol)
-	tol = &default_tol;
-
     /* to ensure outward facing regardless of vertex ordering */
-    point_t centroid = {0.0, 0.0, 0.0};
+    point_t centroid = VINIT_ZERO;
     for (size_t i = 0; i < 8; ++i) {
 	VADD2(centroid, centroid, v[i]);
     }
     VSCALE(centroid, centroid, 1.0 / 8.0);
+
+    const fastf_t eps = arb_concave_eps(v);
 
     /* every vertex‑pair midpoint must stay inside */
     for (size_t i = 0; i < 8; ++i) {
@@ -783,21 +814,18 @@ arb_is_concave(const struct rt_arb_internal *aip, const struct bn_tol *tol)
 	    point_t mid;
 	    VADD2SCALE(mid, v[i], v[j], 0.5); /* (vi + vj)/2 */
 
-	    bool inside = true;
 	    for (size_t f = 0; f < 6; ++f) {
-		if (!point_inside_face(v, F[f], mid, centroid, tol->dist)) {
-		    inside = false;
-		    break;
+		if (!point_inside_face(v, F[f], mid, centroid, eps)) {
+		    return true; /* concave */
 		}
 	    }
-	    if (!inside)
-		return true; /* concave */
 	}
     }
-    return false; /* all mid‑points inside => convex */
+    return false; /* convex */
 }
 
 
+#if 0
 /**
  * Are all ARB8 faces planar?
  */
@@ -829,6 +857,7 @@ arb_is_planar(const struct rt_arb_internal *aip, const struct bn_tol *tol)
     }
     return true; /* all coplanar */
 }
+#endif
 
 
 /* helper: is triangle (p,q,r) oriented the same as face normal N ? */
@@ -998,7 +1027,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 	}
     }
 
-    if (pa.pa_faces == 6 && arb_is_concave(aip, NULL)) {
+    if (pa.pa_faces == 6 && arb_is_concave(aip)) {
 	bu_log("ARB8(%s) IS CONCAVE\n", stp->st_dp?stp->st_name:"_unnamed_");
 
 	rt_arb_print(stp);
@@ -1017,9 +1046,11 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 
 	return rt_obj_prep(stp, &internal, rtip);
     }
+#if 0
     if (pa.pa_faces == 6 && !arb_is_planar(aip, NULL)) {
 	bu_log("ARB8(%s) IS NON-PLANAR\n", stp->st_dp?stp->st_name:"_unnamed_");
     }
+#endif
 
     /*
      * Compute bounding sphere which contains the bounding RPP.
