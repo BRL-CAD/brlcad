@@ -825,7 +825,6 @@ arb_is_concave(const struct rt_arb_internal *aip)
 }
 
 
-#if 0
 /**
  * Are all ARB8 faces planar?
  */
@@ -857,7 +856,6 @@ arb_is_planar(const struct rt_arb_internal *aip, const struct bn_tol *tol)
     }
     return true; /* all coplanar */
 }
-#endif
 
 
 /* helper: is triangle (p,q,r) oriented the same as face normal N ? */
@@ -1028,11 +1026,10 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
     }
 
     if (pa.pa_faces == 6 && arb_is_concave(aip)) {
-#if 0
-	bu_log("ARB8(%s) IS CONCAVE\n", stp->st_dp?stp->st_name:"_unnamed_");
-
-	rt_arb_print(stp);
-#endif
+	if (UNLIKELY(RT_G_DEBUG & RT_DEBUG_ARB8)) {
+	    bu_log("ARB8(%s) IS CONCAVE\n", stp->st_dp?stp->st_name:"_unnamed_");
+	    rt_arb_print(stp);
+	}
 
 	/* get a bot for this arb, then pretend */
 	struct rt_bot_internal *botp = arb_to_bot(aip, arbp);
@@ -1048,11 +1045,11 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 
 	return rt_obj_prep(stp, &internal, rtip);
     }
-#if 0
-    if (pa.pa_faces == 6 && !arb_is_planar(aip, NULL)) {
-	bu_log("ARB8(%s) IS NON-PLANAR\n", stp->st_dp?stp->st_name:"_unnamed_");
+    if (UNLIKELY(RT_G_DEBUG & RT_DEBUG_ARB8)) {
+	if (pa.pa_faces == 6 && !arb_is_planar(aip, NULL)) {
+	    bu_log("ARB8(%s) IS NON-PLANAR\n", stp->st_dp?stp->st_name:"_unnamed_");
+	}
     }
-#endif
 
     /*
      * Compute bounding sphere which contains the bounding RPP.
