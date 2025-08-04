@@ -11,7 +11,7 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2024-XX-XX  Release X.XX.X                                     ---
+--- 2025-08-XX  Release 7.40.3                                     ---
 ----------------------------------------------------------------------
 
 MGED's nirt command use of .mgedrc qray settings was restored, which
