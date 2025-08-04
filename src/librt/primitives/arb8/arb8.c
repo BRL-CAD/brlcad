@@ -1028,9 +1028,11 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
     }
 
     if (pa.pa_faces == 6 && arb_is_concave(aip)) {
+#if 1
 	bu_log("ARB8(%s) IS CONCAVE\n", stp->st_dp?stp->st_name:"_unnamed_");
 
 	rt_arb_print(stp);
+#endif
 
 	/* get a bot for this arb, then pretend */
 	struct rt_bot_internal *botp = arb_to_bot(aip, arbp);
