@@ -24,6 +24,7 @@ the users home directory - to identify which directory is being used
 as the home directory on a particular machine users can type
 "bu_dir home" on the MGED command line.)
 
+* fixed mged crash when switching databases after rt - Sean Morrison
 * mitigated multithreading contention on >32 core cpus - Sean Morrison
 * clarified material_name not found warning in rtweight - Cliff Yapp
 * fixed stat command crash with invalid path specifiers - Cliff Yapp
