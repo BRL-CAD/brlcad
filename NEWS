@@ -14,11 +14,17 @@ changes made.  See document footer for additional details.
 --- 2025-08-XX  Release 7.40.3                                     ---
 ----------------------------------------------------------------------
 
+This release expands Arbitrary Polyhedron support with 8 vertices
+(i.e., ARB8) to include concave definitions.  ARB8 surfaces must
+(still) be planar and not self-intersect, but polyhedral edges
+creating concavities are now supported for ray tracing.
+
 MGED's nirt command use of .mgedrc qray settings was restored, which
 affects output styling (e.g., showing/hiding attributes).  To restore
 default behavior, delete .mgedrc in your home directory or remove
 existing qray settings manually.
 
+* added support for concave arb8 primitive definitions - Sean Morrison
 * added example geometry model showcasing all types - Mitchell Roberts
 * fixed mged crash when switching databases after rt - Sean Morrison
 * mitigated multithreading contention on >32 core cpus - Sean Morrison
