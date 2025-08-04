@@ -282,7 +282,7 @@ cmakefiles(
   cornell.rt
   cube.rt
   db.php
-  ebm_data.bw
+  ebm_logo.bw
   include/ctype.inc
   include/debug.inc
   terra.bin
