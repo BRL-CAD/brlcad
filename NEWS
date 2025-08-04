@@ -14,15 +14,10 @@ changes made.  See document footer for additional details.
 --- 2024-XX-XX  Release X.XX.X                                     ---
 ----------------------------------------------------------------------
 
-Note that in this release the "nirt" command inside MGED has been
-restored to reading .mgedrc qray configurations, which may surprise
-users who are accustomed to default nirt behavior. (In particular,
-older defaults did not show an attributes column.)  To remedy this,
-users should delete the qray settings section in their .mgedrc file
-before launching MGED.  (If present, the .mgedrc file is located in
-the users home directory - to identify which directory is being used
-as the home directory on a particular machine users can type
-"bu_dir home" on the MGED command line.)
+MGED's nirt command use of .mgedrc qray settings was restored, which
+affects output styling (e.g., showing/hiding attributes).  To restore
+default behavior, delete .mgedrc in your home directory or remove
+existing qray settings manually.
 
 * fixed mged crash when switching databases after rt - Sean Morrison
 * mitigated multithreading contention on >32 core cpus - Sean Morrison
