@@ -189,6 +189,7 @@ expected_result_t expected_results[] = {
     {"Elongated_Y2", "Elongated_Y2", 2},
     {"Elongated_Z1", "Elongated_Z1", 2},
     {"Elongated_Z2", "Elongated_Z2", 2},
+
     {"ReverseUnitCube", "ReverseUnitCube", 2},
     {"TopSlanted", "TopSlanted", 2},
     {"UnevenSlanted", "UnevenSlanted", 2},
@@ -196,8 +197,10 @@ expected_result_t expected_results[] = {
     {"PlanarARB6", "PlanarARB6", 2},
     {"ConcavePlanar", "ConcavePlanar", 2},
     {"MoreConcavePlanar", "MoreConcavePlanar", 2},
-    {"LongConvexPlanar", "LongConvexPlanar", 2},
-    {"TaperedConvexPlanar", "TaperedConvexPlanar", 2},
+
+    {"LongConvexPlanar", "LongConvexPlanar", 0}, // not near origin
+    {"TaperedConvexPlanar", "TaperedConvexPlanar", 0}, // not near origin
+
     {"WarpedNonPlanar", "WarpedNonPlanar", -2},
     {"TwistedTopNonPlanar", "TwistedTopNonPlanar", -2},
     {"ComplexNonPlanar", "ComplexNonPlanar", -2},
