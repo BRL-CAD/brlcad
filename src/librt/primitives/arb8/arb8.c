@@ -759,9 +759,10 @@ arb_is_concave(const struct rt_arb_internal *aip, const struct bn_tol *tol)
     register const point_t *v = aip->pt;
     static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
     static const int F[6][4] = {       /* BRL‑CAD face order */
-	{0,1,2,3}, {4,5,6,7},
-	{0,1,5,4}, {1,2,6,5},
-	{2,3,7,6}, {3,0,4,7}
+	{3,2,1,0}, {4,5,6,7}, {4,7,3,0},
+	{2,6,5,1}, {1,5,4,0}, {7,6,2,3}
+//	{0,1,2,3}, {4,5,6,7}, {0,1,5,4},
+//	{1,2,6,5}, {2,3,7,6}, {3,0,4,7}
     };
 
     if (!tol)
@@ -808,9 +809,10 @@ arb_is_planar(const struct rt_arb_internal *aip, const struct bn_tol *tol)
     point_t pts[4] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
     static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
     static const int F[6][4] = {
-        {0,1,2,3}, {4,5,6,7},
-        {0,1,5,4}, {1,2,6,5},
-        {2,3,7,6}, {3,0,4,7}
+	{3,2,1,0}, {4,5,6,7}, {4,7,3,0},
+	{2,6,5,1}, {1,5,4,0}, {7,6,2,3}
+//	{0,1,2,3}, {4,5,6,7}, {0,1,5,4},
+//	{1,2,6,5}, {2,3,7,6}, {3,0,4,7}
     };
 
     if (!tol)
@@ -860,8 +862,10 @@ arb_to_bot(const struct rt_arb_internal *aip, const struct arb_specific *asp)
     bot->bot_flags = 0;
 
     static const int face_v[6][4] = {
-	{0,1,2,3},{4,5,6,7},{0,1,5,4},
-	{1,2,6,5},{2,3,7,6},{3,0,4,7}
+	{3,2,1,0}, {4,5,6,7}, {4,7,3,0},
+	{2,6,5,1}, {1,5,4,0}, {7,6,2,3}
+//	{0,1,2,3}, {4,5,6,7}, {0,1,5,4},
+//	{1,2,6,5}, {2,3,7,6}, {3,0,4,7}
     };
     bot->num_faces = asp->arb_nmfaces * 2;
     bot->faces = (int *)bu_calloc(bot->num_faces*3, sizeof(int), "bot->faces");
@@ -892,20 +896,23 @@ arb_to_bot(const struct rt_arb_internal *aip, const struct arb_specific *asp)
 	    && tri_matches_face(aip->pt[a], aip->pt[c], aip->pt[d], afp->peqn);
 
 	/* indices for our two face triangles */
-	const int *tri1 = good_ac ? triA1 : triB1;
-	const int *tri2 = good_ac ? triA2 : triB2;
+	int *tri1 = good_ac ? triA1 : triB1;
+	int *tri2 = good_ac ? triA2 : triB2;
 
-#if 0
 	vect_t ab, ac, n;
 	VSUB2(ab, aip->pt[b], aip->pt[a]);
 	VSUB2(ac, aip->pt[c], aip->pt[a]);
 	VCROSS(n, ab, ac);
 	if (VDOT(n, afp->peqn) < 0.0) {
 	    /* wrong winding – swap */
-	    tri1[1] = c; tri1[2] = b;
-	    tri2[1] = d; tri2[2] = c;
+	    int tmp = tri1[1];
+	    tri1[1] = tri1[2];
+	    tri1[2] = tmp;
+	    tmp = tri2[1];
+	    tri2[1] = tri2[2];
+	    tri2[2] = tmp;
 	}
-#endif
+
 	memcpy(&bot->faces[3*f++], tri1, 3*sizeof(int));
 	memcpy(&bot->faces[3*f++], tri2, 3*sizeof(int));
     }
@@ -991,8 +998,8 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 	}
     }
 
-    if (arb_is_concave(aip, NULL)) {
-	bu_log("ARB(%s) IS CONCAVE\n", stp->st_dp?stp->st_name:"_unnamed_");
+    if (pa.pa_faces == 6 && arb_is_concave(aip, NULL)) {
+	bu_log("ARB8(%s) IS CONCAVE\n", stp->st_dp?stp->st_name:"_unnamed_");
 
 	rt_arb_print(stp);
 
@@ -1010,8 +1017,8 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 
 	return rt_obj_prep(stp, &internal, rtip);
     }
-    if (!arb_is_planar(aip, NULL)) {
-	bu_log("ARB(%s) IS NON-PLANAR\n", stp->st_dp?stp->st_name:"_unnamed_");
+    if (pa.pa_faces == 6 && !arb_is_planar(aip, NULL)) {
+	bu_log("ARB8(%s) IS NON-PLANAR\n", stp->st_dp?stp->st_name:"_unnamed_");
     }
 
     /*
