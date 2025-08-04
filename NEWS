@@ -53,6 +53,7 @@ existing qray settings manually.
 * various manpage and help text updates - Josh Baker
 * fixed -exec behavior with 'flat' search in mged - Chris McGregor
 * improved logging behavior from multiple threads - Kenneth Davis
+* removed libgdiam dependency - Chris McGregor
 
 
 ----------------------------------------------------------------------
