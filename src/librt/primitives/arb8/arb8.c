@@ -790,12 +790,6 @@ static bool
 arb_is_concave(const struct rt_arb_internal *aip)
 {
     register const point_t *v = aip->pt;
-    static const int F[6][4] = {       /* BRL‑CAD face order */
-	{3,2,1,0}, {4,5,6,7}, {4,7,3,0},
-	{2,6,5,1}, {1,5,4,0}, {7,6,2,3}
-//	{0,1,2,3}, {4,5,6,7}, {0,1,5,4},
-//	{1,2,6,5}, {2,3,7,6}, {3,0,4,7}
-    };
 
     /* to ensure outward facing regardless of vertex ordering */
     point_t centroid = VINIT_ZERO;
@@ -815,7 +809,7 @@ arb_is_concave(const struct rt_arb_internal *aip)
 	    VADD2SCALE(mid, v[i], v[j], 0.5); /* (vi + vj)/2 */
 
 	    for (size_t f = 0; f < 6; ++f) {
-		if (!point_inside_face(v, F[f], mid, centroid, eps)) {
+		if (!point_inside_face(v, rt_arb_info[f].ai_sub, mid, centroid, eps)) {
 		    return true; /* concave */
 		}
 	    }
@@ -835,21 +829,15 @@ arb_is_planar(const struct rt_arb_internal *aip, const struct bn_tol *tol)
 
     point_t pts[4] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
     static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
-    static const int F[6][4] = {
-	{3,2,1,0}, {4,5,6,7}, {4,7,3,0},
-	{2,6,5,1}, {1,5,4,0}, {7,6,2,3}
-//	{0,1,2,3}, {4,5,6,7}, {0,1,5,4},
-//	{1,2,6,5}, {2,3,7,6}, {3,0,4,7}
-    };
 
     if (!tol)
 	tol = &default_tol;
 
     for (size_t f = 0; f < 6; ++f) {
-      VMOVE(pts[0], v[F[f][0]]);
-      VMOVE(pts[1], v[F[f][1]]);
-      VMOVE(pts[2], v[F[f][2]]);
-      VMOVE(pts[3], v[F[f][3]]);
+      VMOVE(pts[0], v[rt_arb_info[f].ai_sub[0]]);
+      VMOVE(pts[1], v[rt_arb_info[f].ai_sub[1]]);
+      VMOVE(pts[2], v[rt_arb_info[f].ai_sub[2]]);
+      VMOVE(pts[3], v[rt_arb_info[f].ai_sub[3]]);
       if (!bg_coplanar_pts((const point_t *)pts, 4, tol)) {
         return false;
       }
@@ -891,8 +879,6 @@ arb_to_bot(const struct rt_arb_internal *aip, const struct arb_specific *asp)
     static const int face_v[6][4] = {
 	{3,2,1,0}, {4,5,6,7}, {4,7,3,0},
 	{2,6,5,1}, {1,5,4,0}, {7,6,2,3}
-//	{0,1,2,3}, {4,5,6,7}, {0,1,5,4},
-//	{1,2,6,5}, {2,3,7,6}, {3,0,4,7}
     };
     bot->num_faces = asp->arb_nmfaces * 2;
     bot->faces = (int *)bu_calloc(bot->num_faces*3, sizeof(int), "bot->faces");
