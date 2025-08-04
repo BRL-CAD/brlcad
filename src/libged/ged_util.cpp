@@ -1854,13 +1854,13 @@ _ged_rt_output_handler(void *clientData, int mask)
     if ((rrtp == (struct ged_subprocess *)NULL) || (rrtp->gedp == (struct ged *)NULL))
 	return;
 
+    BU_CKMAG(rrtp, GED_CMD_MAGIC, "ged subprocess");
+
     struct ged *gedp = rrtp->gedp;
     if (gedp->new_cmd_forms) {
 	_ged_rt_output_handler2(clientData, mask);
 	return;
     }
-
-    BU_CKMAG(rrtp, GED_CMD_MAGIC, "ged subprocess");
 
     /* Get data from rt */
     if (ged_rt_output_handler_helper(rrtp, BU_PROCESS_STDERR) || ged_rt_output_handler_helper(rrtp, BU_PROCESS_STDOUT)) {
