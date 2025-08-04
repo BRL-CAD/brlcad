@@ -201,7 +201,10 @@ foreach(g_input ${G_SAMPLE_MODELS})
 endforeach(g_input ${G_SAMPLE_MODELS})
 
 if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY AND TARGET gcv)
+  brlcad_adddata(1647260.dsp db)
+  brlcad_adddata(ebm_logo.bw db)
   brlcad_adddata(terra.bin db)
+  brlcad_adddata(vol_data.bw db)
 endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY AND TARGET gcv)
 
 if(SH_EXEC)
