@@ -37,7 +37,7 @@ extern "C" int
 ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 {
     // If we don't have an open database, this is a no-op
-    if (!gedp->dbip)
+    if (!gedp || !gedp->dbip)
 	return BRLCAD_OK;
 
     /* set result while we still have the info */
@@ -65,7 +65,7 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     gedp->ged_lod = NULL;
 
     /* Terminate any ged subprocesses */
-    if (gedp != GED_NULL) {
+    if (gedp->ged_subp) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
 	    struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
 	    if (!rrp->aborted) {
