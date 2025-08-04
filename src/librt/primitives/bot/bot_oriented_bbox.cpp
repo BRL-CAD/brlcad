@@ -1,7 +1,7 @@
 /*              B O T _ O R I E N T E D _ B B O X . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2025 United States Government as represented by
+ * Copyright (c) 2013-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,10 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot_oriented_bbox.cpp
- *
- *
- */
 
 #include "common.h"
 
@@ -28,6 +24,7 @@
 
 #include "raytrace.h"
 #include "rt/geom.h"
+
 
 /* calc oriented bounding box using GTE */
 extern "C" int
