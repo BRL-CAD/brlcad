@@ -103,7 +103,16 @@ arb8_config_t arb8_configs[] = {
       {0.3, 0.3, 1.0},
       {0.0, 1.0, 1.0}}},
 
-    // Additional planar configurations (not at origin)
+    // Additional planar configurations (some not near origin)
+    {"TwistedCubeNonPlanar",
+     {{0, 0, 0},
+      {1, 0, 0},
+      {1, 1, 0},
+      {0, 1, 0},
+      {-0.183, 0.317, 1},
+      {0.683, -0.183, 1},
+      {1.183, 0.683, 1},
+      {0.317, 1.183, 1}}},
     {"LongConvexPlanar",
      {{4281, -119, 1531},
       {4281, 78, 1531},
@@ -198,6 +207,7 @@ expected_result_t expected_results[] = {
     {"ConcavePlanar", "ConcavePlanar", 2},
     {"MoreConcavePlanar", "MoreConcavePlanar", 2},
 
+    {"TwistedCubeNonPlanar", "TwistedCubePlanar", 2},
     {"LongConvexPlanar", "LongConvexPlanar", 0}, // not near origin
     {"TaperedConvexPlanar", "TaperedConvexPlanar", 0}, // not near origin
 
