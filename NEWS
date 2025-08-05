@@ -57,6 +57,9 @@ existing qray settings manually.
 * added (align, dir and print) subcommands to 'view' - Chris McGregor
 * added (autoview, lookat, saveview) to 'view' - Chris McGregor
 * fixed mged 'process' command on read-only databases - Sean Morrison
+* accelerated BoT ray tracing HLBVH integration across all librt apps
+	- Timothy Reynolds, Connor McLean, Ian Beckett, Samuel Reed,
+	- Gaultier Debarre, Sean Morrison, Chris McGregor, Cliff Yapp
 * various manpage and help text updates - Josh Baker
 * fixed -exec behavior with 'flat' search in mged - Chris McGregor
 * improved logging behavior from multiple threads - Kenneth Davis
