@@ -131,6 +131,15 @@ arb8_config_t arb8_configs[] = {
       {105.434, -7.4, 39.708},
       {105.295, -5, 42.228},
       {105.295, 0, 42.228}}},
+    {"BigConcavePlanar",
+     {{500, -500, -500},
+      {500, 500, -500},
+      {500, -169.922, -304.688},
+      {500, -500, 500},
+      {400, -500, -500},
+      {400, 500, -500},
+      {400, -169.922, -304.688},
+      {400, -500, 500}}},
 
     // Complex Non-planar configurations
     {"WarpedNonPlanar", {{0, 0, 0}, {1, 0, 0.1}, {1.1, 1, 0}, {0, 1.1, -0.1}, {0.1, 0, 1}, {1, 0.1, 1.1}, {1.1, 1.1, 0.9}, {0, 1, 1}}},
@@ -162,8 +171,16 @@ arb8_config_t arb8_configs[] = {
       {0.0, 0.2, 1.0},
       {0.9, 0.0, 1.25},
       {1.0, 0.8, 0.60},
-      {0.4, 0.3, 0.80}}}
-
+      {0.4, 0.3, 0.80}}},
+    {"LargeSaddlePlanar",
+     {{1000, -1000, -1000},
+      {1000, 1000, -900},
+      {1000, 1000, 1100},
+      {1000, -1000, 1000},
+      {-1000, -1000, -900},
+      {-1000, 1000, -1000},
+      {-1000, 1000, 1000},
+      {-1000, -1000, 1100}}}
 };
 
 
@@ -210,6 +227,7 @@ expected_result_t expected_results[] = {
     {"TwistedCubeNonPlanar", "TwistedCubePlanar", 2},
     {"LongConvexPlanar", "LongConvexPlanar", 0}, // not near origin
     {"TaperedConvexPlanar", "TaperedConvexPlanar", 0}, // not near origin
+    {"BigConcavePlanar", "BigConcavePlanar", 0}, // not near origin
 
     {"WarpedNonPlanar", "WarpedNonPlanar", -2},
     {"TwistedTopNonPlanar", "TwistedTopNonPlanar", -2},
