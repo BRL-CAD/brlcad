@@ -300,6 +300,18 @@ main(int argc, char **argv)
 		argv += 4;
 		continue;
 
+	    case 't':
+		bu_log("DEPRECATION WARNING: remove -t option.\nNo longer used since 7.42 BoT ray tracing.\n");
+		argc -= 2;
+		argv += 2;
+		break;
+
+	    case 'b':
+		bu_log("DEPRECATION WARNING: remove -b option.\nNo longer used since 7.42 BoT ray tracing.\n");
+		argc -= 2;
+		argv += 2;
+		break;
+
 	    case 'O':
 		{
 		    if (BU_STR_EQUAL(argv[1], "resolve") || BU_STR_EQUAL(argv[1], "0"))

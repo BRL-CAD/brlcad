@@ -179,6 +179,19 @@ GED commands
 	option instead (i.e. nirt -xyz x y z obj1 obj2 ...)
 	[deprecated 7.42]
 
+rt
+        rt_bot_minpieces and rt_bot_tri_per_piece variables
+        Obsoleted by new BoT ray tracing. [deprecated 7.42]
+
+rtshot
+        -b and -t options
+        Obsoleted by new BoT ray tracing. [deprecated 7.42]
+
+nirt
+        -B and -T options and bot_minpieces command
+        Obsoleted by new BoT ray tracing. [deprecated 7.42]
+
+
 7.40
 ----
 include/bu/process.h

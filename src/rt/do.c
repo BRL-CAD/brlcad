@@ -489,6 +489,14 @@ int cm_closedb(const int UNUSED(argc), const char **UNUSED(argv))
 }
 
 
+static void
+parse_deprecated(const struct bu_structparse *sp, const char *name, void *UNUSED(base), const char *UNUSED(value), void *UNUSED(data))
+{
+    bu_log("DEPRECATION WARNING: remove %s setting.\nNo longer used since 7.42 BoT ray tracing.\n");
+    return;
+}
+
+
 /* viewing module specific variables */
 extern struct bu_structparse view_parse[];
 
@@ -498,6 +506,7 @@ struct bu_structparse set_parse[] = {
     {"%d",	1, "save_overlaps",		bu_byteoffset(save_overlaps),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "perspective",		bu_byteoffset(rt_perspective),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "angle",			bu_byteoffset(rt_perspective),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "rt_bot_minpieces", 0 ,	parse_deprecated, NULL, NULL },
 #if !defined(_WIN32) || defined(__CYGWIN__)
     /* FIXME: these cannot be listed in here because they are LIBRT
      * globals.  due to the way symbols are not imported until a DLL

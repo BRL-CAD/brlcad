@@ -41,11 +41,6 @@ existing qray settings manually.
 * added bot support for plate mode thickness get/set cmds - Cliff Yapp
 * fixed dbconcat treatment of a '/' prefix character - Cliff Yapp
 * fixed bb '-o' in MGED - Chris McGregor
-* removed obsolete -b and -t options from rtshot - Cliff Yapp
-* removed obsolete rt_bot_minpieces variable from rt - Cliff Yapp
-* removed obsolete rt_bot_tri_per_piece variable from rt - Cliff Yapp
-* removed obsolete -B and -T options from nirt - Cliff Yapp
-* removed obsolete bot_minpieces command from nirt - Cliff Yapp
 * added manual page for pixcmp, bwish, btclsh - Sean Morrison
 * fixed MGED solid editing "ted" command - Cliff Yapp
 * added support for console text editing on Windows - Cliff Yapp
