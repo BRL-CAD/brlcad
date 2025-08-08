@@ -44,6 +44,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* fix libanalyze.  it has turned into a seeming dumping ground with no
+  design or naming consistency evident or documented, or at least
+  extensive violations from the prevailing analyze_* naming prefix and
+  binary interface to analytic routines.  notable outliers include
+  nirt_* (including CLI handling..), voxelize*, rt_gen*, rectangular*
+
 * ensure datum objects convert out via g2asc and back (currently
   writes "a Tcl output routine for this type of object has not yet
   been implemented")
