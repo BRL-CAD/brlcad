@@ -24,7 +24,6 @@ affects output styling (e.g., showing/hiding attributes).  To restore
 default behavior, delete .mgedrc in your home directory or remove
 existing qray settings manually.
 
-* ported CLINE radius override support to Windows - Sean Morrison
 * added support for concave arb8 primitive definitions - Sean Morrison
 * added example geometry model showcasing all types - Mitchell Roberts
 * fixed mged crash when switching databases after rt - Sean Morrison
