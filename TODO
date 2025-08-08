@@ -25,6 +25,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * finish reviewing commit window since 2024-09-24 for other publicly
   visible changes and CHANGES file omissions
 
+* document slew of 3rd party version updates in bext in the news tail
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
