@@ -416,7 +416,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     // look for a requested bundle size
     size_t bot_max_prims_in_node = RT_DEFAULT_MAX_PRIMS_IN_NODE ;
-    const char *bmintie = getenv("LIBRT_BOT_MAX_PRIMS_IN_NODE");
+    const char *bmintie = getenv("LIBRT_BOT_MINTIE");
     if (bmintie)
 	bot_max_prims_in_node = atoi(bmintie);
 
