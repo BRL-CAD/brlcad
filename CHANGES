@@ -188,7 +188,7 @@ rtshot
         Obsoleted by new BoT ray tracing. [deprecated 7.42]
 
 nirt
-        -B and -T options and bot_minpieces command
+        -B option and bot_minpieces command
         Obsoleted by new BoT ray tracing. [deprecated 7.42]
 
 
