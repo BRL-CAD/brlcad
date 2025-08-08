@@ -18,11 +18,19 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* complete preliminary concave arb8 support
+* verify BoT gqa change encountered is improvement or regression
+
+* write up BoT perf summary note in NEWS
+
+* finish reviewing commit window since 2024-09-24 for other publicly
+  visible changes and CHANGES file omissions
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* fix ARB8 promotion to BoT, so calls between prep and shot don't get
+  inconsistent data (soltab needs to match).
 
 * Adjust bext patching to use file copying for cases where we are
   adding our own files wholesale
