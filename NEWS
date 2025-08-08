@@ -43,8 +43,8 @@ existing qray settings manually.
 * fixed bb '-o' oriented bounding box option in MGED - Chris McGregor
 * added manual page for pixcmp, bwish, btclsh - Sean Morrison
 * fixed "ted" text edit and "make_pnts" GED commands - Cliff Yapp
+* fixed Archer "Center View" button and vslew GED command - Cliff Yapp
 * added support for console text editing on Windows - Cliff Yapp
-* fixed Archer Center View button - Cliff Yapp
 * added bb '-m' option for outputting midpoint - Chris McGregor
 * fixed sed crash when editing a brep object in MGED - Cliff Yapp
 * fixed primitive & matrix edit GUIs in MGED ("x -1") - Sean Morrison
