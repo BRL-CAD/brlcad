@@ -18,8 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* verify BoT gqa change encountered is improvement or regression
-
 * write up BoT perf summary note in NEWS
 
 * finish reviewing commit window since 2024-09-24 for other publicly
