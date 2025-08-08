@@ -357,8 +357,9 @@ static double _nirt_backout(struct nirt_state *nss)
     bsphere_diameter = MAGNITUDE(diag);
 
     /*
-     * calculate the distance from a plane normal to the ray direction through the center of
-     * the bounding sphere and a plane normal to the ray direction through the aim point.
+     * calculate the distance from a plane normal to the ray direction
+     * through the center of the bounding sphere and a plane normal to
+     * the ray direction through the aim point.
      */
     VADD2SCALE(center_bsphere, nss->i->ap->a_rt_i->mdl_max, nss->i->ap->a_rt_i->mdl_min, 0.5);
 
@@ -369,7 +370,8 @@ static double _nirt_backout(struct nirt_state *nss)
     delta = dist_to_target*VDOT(ray_dir, dvec);
 
     /*
-     * this should put us about a bounding sphere radius in front of the bounding sphere
+     * this should put us about a bounding sphere radius in front of
+     * the bounding sphere
      */
     bov = bsphere_diameter + delta;
 

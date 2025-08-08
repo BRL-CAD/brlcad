@@ -21,6 +21,8 @@
  *
  * Natalie's Interactive Ray-Tracer (NIRT) option parsing.
  *
+ * FIXME: option handling specific to nirt's CLI does not belong in
+ * libanalyze.
  */
 
 /* BRL-CAD includes */
@@ -187,7 +189,7 @@ nirt_opt_desc(struct nirt_opt_vals *v)
     if (!v)
 	return NULL;
 
-    struct bu_opt_desc *d = (struct bu_opt_desc *)bu_calloc(25, sizeof(struct bu_opt_desc), "opt array");
+    struct bu_opt_desc *d = (struct bu_opt_desc *)bu_calloc(26, sizeof(struct bu_opt_desc), "opt array");
     BU_OPT(d[0],  "h", "help",      "",         NULL,             &v->print_help,     "print help and exit");
     BU_OPT(d[1],  "?", "",          "",         NULL,             &v->print_help,     "print help and exit");
     BU_OPT(d[2],  "A", "",          "n",        &enqueue_attrs,   &v->attrs,          "add attribute_name=n");
@@ -212,7 +214,8 @@ nirt_opt_desc(struct nirt_opt_vals *v)
     BU_OPT(d[21], "", "color_even", "r/g/b",    &bu_opt_color,    &v->color_even,     "Color to use when plotting even segments (default rgb:255/255/0");
     BU_OPT(d[22], "", "color_gap",  "r/g/b",    &bu_opt_color,    &v->color_gap,      "Color to use when plotting gaps between segments (default rgb:255/0/255");
     BU_OPT(d[23], "", "color_ovlp", "r/g/b",    &bu_opt_color,    &v->color_ovlp,     "Color to use when plotting overlap segments (default rgb:255/255/255");
-    BU_OPT_NULL(d[24]);
+    BU_OPT(d[24], "B", "",          "",         NULL,             NULL, "(DEPRECATED, no longer used)");
+    BU_OPT_NULL(d[25]);
 
     return d;
 }
