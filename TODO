@@ -44,6 +44,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* ensure datum objects convert out via g2asc and back (currently
+  writes "a Tcl output routine for this type of object has not yet
+  been implemented")
+
 * fix recursive bu_parallel() to not have a hard-coded limit on the
   number of threads or to more aggressively abort when more that
   supported are dispatched.  currently supporting 64x64 threads and
