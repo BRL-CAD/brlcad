@@ -551,10 +551,10 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 
 void
-rt_bot_print(const struct soltab *stp)
+rt_bot_print(const struct soltab *UNUSED(stp))
 {
-    if (stp) RT_CK_SOLTAB(stp);
 }
+
 
 /* Forward declare for rt_bot_shot */
 int
