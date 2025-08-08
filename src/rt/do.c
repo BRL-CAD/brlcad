@@ -490,9 +490,9 @@ int cm_closedb(const int UNUSED(argc), const char **UNUSED(argv))
 
 
 static void
-parse_deprecated(const struct bu_structparse *sp, const char *name, void *UNUSED(base), const char *UNUSED(value), void *UNUSED(data))
+parse_deprecated(const struct bu_structparse *UNUSED(sp), const char *name, void *UNUSED(base), const char *UNUSED(value), void *UNUSED(data))
 {
-    bu_log("DEPRECATION WARNING: remove %s setting.\nNo longer used since 7.42 BoT ray tracing.\n");
+    bu_log("DEPRECATION WARNING: remove %s setting.\nNo longer used since 7.42 BoT ray tracing.\n", name);
     return;
 }
 
