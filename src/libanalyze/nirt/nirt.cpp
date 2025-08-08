@@ -2589,7 +2589,7 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 
 
 extern "C" int
-_nirt_cmd_deprecated(void *ns, int argc, const char **argv)
+_nirt_cmd_deprecated(void *UNUSED(ns), int UNUSED(argc), const char **argv)
 {
     bu_log("DEPRECATION WARNING: command '%s' is deprecated and scheduled for removal.\nPlease update your nirt scripts.\n", argv[0]);
     return 0;
