@@ -280,7 +280,8 @@ Lastly, the "smooth" command will smooth the BoT's topology.
 * fixed nirt -f (fmt) to work within MGED - Chris McGregor
 * fixed nirt of objects with hyphens in name - Chris McGregor
 * correct facetall.sh to automatically restart on failure - Cliff Yapp
-
+* updated nirt to backout of geometry by default - Chris McGregor
+* added nirt -c flag to use view center, not backout - Chris McGregor
 
 ----------------------------------------------------------------------
 --- 2022-11-23  Release 7.34.0                                     ---
