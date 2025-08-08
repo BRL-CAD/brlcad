@@ -229,16 +229,6 @@ include/bg/chull.h
         bg_polyline_2d_chull, bg_2d_chull, bg_3d_coplanar_chull,
         bg_3d_chull [deprecated 7.32]
 
-include/bu/exit.h
-        TODO: warrants discussion
-
-        considering replacing bu_backtrace and bu_crashreport with
-        versions that take an optional parameter to pass in a full
-        path from the calling application.  (Currently available as
-        bu_backtrace_app and bu_crashreport_app, these would replace
-        existing versions after deprecation is final.)
-	[deprecated 7.32]
-
 MGED gui
 	The following will be removed from MGED's menu bar (unused
 	features, can be accomplished another way, or will be exposed
