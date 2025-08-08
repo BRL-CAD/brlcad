@@ -188,7 +188,6 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     }
 
     result = "";
-    read_cnt = 0;
     while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buffer)) > 0) {
         buffer[read_cnt] = '\0';
         result += buffer;
@@ -215,7 +214,6 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     }
 
     result = "";
-    read_cnt = 0;
     while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buffer)) > 0) {
         buffer[read_cnt] = '\0';
         result += buffer;
@@ -524,7 +522,7 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
         totalEntities += res_len;
     }
     db_search_free(&results);
-    res_len = 0;
+
     // gather primitive shapes
     sFilter = "-not -type region -and -not -type comb";
     if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL, NULL, NULL) >= 0) {
@@ -533,7 +531,7 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
         totalEntities += res_len;
     }
     db_search_free(&results);
-    res_len = 0;
+
     // gather primitive shapes
     sFilter = "-type region";
     if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL, NULL, NULL) >= 0) {
