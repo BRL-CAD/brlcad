@@ -499,6 +499,7 @@ parse_deprecated(const struct bu_structparse *UNUSED(sp), const char *name, void
 
 /* viewing module specific variables */
 extern struct bu_structparse view_parse[];
+static int rt_bot_minpieces_deprecated = 0;
 
 struct bu_structparse set_parse[] = {
     {"%d",	1, "width",			bu_byteoffset(width),			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -506,7 +507,7 @@ struct bu_structparse set_parse[] = {
     {"%d",	1, "save_overlaps",		bu_byteoffset(save_overlaps),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "perspective",		bu_byteoffset(rt_perspective),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "angle",			bu_byteoffset(rt_perspective),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1, "rt_bot_minpieces", 0 ,	parse_deprecated, NULL, NULL },
+    {"%d",	1, "rt_bot_minpieces",		bu_byteoffset(rt_bot_minpieces_deprecated),	parse_deprecated, NULL, NULL },
 #if !defined(_WIN32) || defined(__CYGWIN__)
     /* FIXME: these cannot be listed in here because they are LIBRT
      * globals.  due to the way symbols are not imported until a DLL
