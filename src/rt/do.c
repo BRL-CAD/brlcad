@@ -501,9 +501,6 @@ parse_deprecated(const struct bu_structparse *UNUSED(sp), const char *name, void
 extern struct bu_structparse view_parse[];
 static int rt_bot_minpieces_deprecated = 0;
 
-/* librt global */
-extern fastf_t rt_cline_radius; 
-
 
 struct bu_structparse set_parse[] = {
     {"%d",	1, "width",			bu_byteoffset(width),			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
