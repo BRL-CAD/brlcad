@@ -537,13 +537,21 @@ db_cache_start(struct db_i *dbip, int verbose)
     if (fsize < BU_CACHE_DEFAULT_DB_SIZE)
 	fsize = 0;
 
-    // TODO - this isn't correct - we need to hash dbi_filename and get the
-    // filename without the path, then make that into a name to use in a
-    // drawing_cache directory.  As it stands this is writing things out
-    // next to the .g file.  The test cleanup logic almost certainly isn't
-    // clearing out the directories correctly.
-    dbip->i->c = bu_cache_open(dbip->dbi_filename, 1, fsize);
+
+    // Generate the name we will use for this database's cache
+    char fabs[MAXPATHLEN];
+    bu_file_realpath(dbip->dbi_filename, fabs);
+    unsigned long long dhash = bu_data_hash(fabs, strlen(fabs)*sizeof(char));
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
+    bu_path_component(&fname, fabs, BU_PATH_BASENAME);
+    struct bu_vls cache_file = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&cache_file, "drawing/%llu_%s", dhash, bu_vls_cstr(&fname));
+    bu_vls_free(&fname);
+
+    // Set up the cache
+    dbip->i->c = bu_cache_open(bu_vls_cstr(&cache_file), 1, fsize);
     if (!dbip->i->c) {
+	bu_vls_free(&cache_file);
 	return BRLCAD_ERROR;
     }
 
@@ -631,6 +639,7 @@ db_cache_start(struct db_i *dbip, int verbose)
     // lock cache ops when we're mid gc so nobody can queue up until the gc
     // is done.
 
+    bu_vls_free(&cache_file);
     return BRLCAD_OK;
 }
 
