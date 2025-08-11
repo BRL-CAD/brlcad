@@ -110,7 +110,7 @@ validate_dp(struct db_i *dbip, struct directory *dp)
     bool valid = true;
     struct bu_cache_txn *txn = NULL;
     void *cdata = NULL;
-    static char ckey[BU_CACHE_KEY_MAXLEN];
+    char ckey[BU_CACHE_KEY_MAXLEN];
 
     struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
     if (db5_get_attributes(dbip, &c_avs, dp) < 0) {
@@ -125,16 +125,19 @@ validate_dp(struct db_i *dbip, struct directory *dp)
     int db_rflag = (region_flag_str && (BU_STR_EQUAL(region_flag_str, "R") || BU_STR_EQUAL(region_flag_str, "1"))) ? 1 : 0;
     int cache_rflag = 0;
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", user_hash, CACHE_REGION_FLAG);
-    if (bu_cache_get(&cdata, ckey, dbip->i->c, &txn)) {
+    int cret = bu_cache_get(&cdata, ckey, dbip->i->c, &txn);
+    if (cret == sizeof(int)) {
 	memcpy(&cache_rflag, cdata, sizeof(int));
-	if (cache_rflag < 0 || cache_rflag > 1)
-	    bu_exit(-1, "Got what should be impossible region flag value: %s %s\n", ckey, dp->d_namep);
+	if (cache_rflag < 0 || cache_rflag > 1) {
+	    bu_log("Got what should be impossible region flag value: %s %s: %d\n", ckey, dp->d_namep, cache_rflag);
+	    valid = false;
+	}
 	if (db_rflag != cache_rflag) {
 	    bu_log("Cache(%d) vs. db(%d) region flags mismatch for %s\n", cache_rflag, db_rflag, dp->d_namep);
 	    valid = false;
 	}
     } else {
-	bu_log("Cache miss for region flag on %s\n", dp->d_namep);
+	bu_log("Cache miss for region flag on %s (%d)\n", dp->d_namep, cret);
 	valid = false;
     }
 
@@ -213,6 +216,7 @@ validate_dp(struct db_i *dbip, struct directory *dp)
     int ret = rt_db_get_internal(ip, dp, dbip, NULL, &rt_uniresource);
     if (ret < 0) {
 	BU_PUT(ip, struct rt_db_internal);
+	bu_log("Failed to get internal for %s\n", dp->d_namep);
 	return false;
     }
 
@@ -291,9 +295,14 @@ validate_dp(struct db_i *dbip, struct directory *dp)
     rt_db_free_internal(ip);
     BU_PUT(ip, struct rt_db_internal);
 
+    if (!valid)
+	return false;
+
     // Level of Detail
-    if (!do_lod(dbip, dp))
+    if (!do_lod(dbip, dp)) {
+	bu_log("do_lod failure for %s\n", dp->d_namep);
 	valid = false;
+    }
 
     return valid;
 }
@@ -307,9 +316,6 @@ work_dp(struct db_i *dbip, struct directory *dp)
     if (!dbip || !dp)
 	return;
 
-    // TODO - can't be calling db_cache_update from here - we need to call
-    // it from the same thread that db_cache_start was called from.  Need
-    // to rethink how we trigger an update if validation fails
     if (!validate_dp(dbip, dp)) {
 	bu_log("Validation failed for %s, asking for update\n", dp->d_namep);
 	db_cache_update(dbip, dp->d_namep);
@@ -322,12 +328,81 @@ work_dp(struct db_i *dbip, struct directory *dp)
     }
 }
 
+bool
+single_threaded_read_check(struct db_i *dbip)
+{
+    int64_t start, elapsed;
+    fastf_t seconds;
+
+    bu_log("Starting single threaded read check.\n");
+
+    start = bu_gettime();
+
+    for (int i = 0; i < RT_DBNHASH; i++) {
+	struct directory *dp;
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
+		continue;
+	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
+		continue;
+	    validate_dp(dbip, dp);
+	}
+    }
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+    bu_log("Single threaded validation time: %f seconds\n", seconds);
+
+    return true;
+}
+
+bool
+multi_threaded_read_check(struct db_i *dbip)
+{
+    int64_t start, elapsed;
+    fastf_t seconds;
+
+    start = bu_gettime();
+
+    bu_log("Starting multithreaded read check.\n");
+
+    std::set<struct directory *> dpq;
+    for (int i = 0; i < RT_DBNHASH; i++) {
+	struct directory *dp;
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
+		continue;
+	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
+		continue;
+	    dpq.insert(dp);
+	}
+    }
+    std::vector<std::thread> wthreads;
+    while (!dpq.empty()) {
+	while (wthreads.size() < 6 && !dpq.empty()) {
+	    struct directory *dp = *dpq.begin();
+	    dpq.erase(dp);
+	    wthreads.emplace_back(work_dp, dbip, dp);
+	}
+	for (std::thread& t : wthreads) {
+	    if (t.joinable())
+		t.join();
+	}
+	wthreads.clear();
+    }
+
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+    bu_log("Multithreaded validation time: %f seconds\n", seconds);
+
+    return true;
+}
+
 
 int
 main(int argc, char *argv[])
 {
     int64_t start, elapsed;
-    fastf_t seconds, init_time;
+    fastf_t seconds;
     struct db_i *dbip;
 
     bu_setprogname(argv[0]);
@@ -370,35 +445,14 @@ main(int argc, char *argv[])
     seconds = elapsed / 1000000.0;
     bu_log("Total cache initialization time: %f seconds\n", seconds);
 
-    // Validate properties in the cache
-    start = bu_gettime();
-#if 0
-    char **keys;
-    int kcnt = bu_cache_keys(&keys, dbip->i->c);
-    for (int i = 0; i < kcnt; i++) {
-	bu_log("%s\n", keys[i]);
-    }
-#endif
-    start = bu_gettime();
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
-		continue;
-	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
-		continue;
-	    validate_dp(dbip, dp);
-	}
-    }
-    elapsed = bu_gettime() - start;
-    seconds = elapsed / 1000000.0;
-    init_time = seconds;
-    bu_log("Validation time: %f seconds\n", init_time);
+    single_threaded_read_check(dbip);
+    multi_threaded_read_check(dbip);
 
     db_close(dbip);
     bu_dirclear(cache_dir);
 
-    // Pause a few seconds so we can see what the basic setup did
+    // Pause so we can see what the basic setup did
+    bu_log("Basic test complete.\n");
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
     // Reset
@@ -421,43 +475,14 @@ main(int argc, char *argv[])
     bu_log("Deliberately not waiting for cache init to finish - starting app work immediately.\n");
     db_cache_start(dbip, 1);
 
-    std::set<struct directory *> dpq;
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
-		continue;
-	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
-		continue;
-	    dpq.insert(dp);
-	}
-    }
-    std::vector<std::thread> wthreads;
-    while (!dpq.empty()) {
-	while (wthreads.size() < 6 && !dpq.empty()) {
-	    struct directory *dp = *dpq.begin();
-	    dpq.erase(dp);
-	    wthreads.emplace_back(work_dp, dbip, dp);
-	}
-	for (std::thread& t : wthreads) {
-	    if (t.joinable())
-		t.join();
-	}
-	wthreads.clear();
-    }
+    multi_threaded_read_check(dbip);
 
-    // After that's over, check everything
-    bu_log("Final validation check\n");
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
-		continue;
-	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
-		continue;
-	    validate_dp(dbip, dp);
-	}
+    // After that's over, check again
+    while (db_cache_processing(dbip)) {
+	std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
+    bu_log("Final validation check\n");
+    single_threaded_read_check(dbip);
 
     db_close(dbip);
     bu_dirclear(cache_dir);
