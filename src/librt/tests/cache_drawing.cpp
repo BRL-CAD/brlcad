@@ -311,7 +311,7 @@ validate_dp(struct db_i *dbip, struct directory *dp)
 // don't find it.  Idea is to roughly simulate what would happen if someone
 // started editing a database while the initial cache build was still ongoing.
 void
-work_dp(struct db_i *dbip, struct directory *dp)
+work_dp(struct db_i *dbip, struct directory *dp, std::atomic<int> &miss_counter)
 {
     if (!dbip || !dp)
 	return;
@@ -319,12 +319,7 @@ work_dp(struct db_i *dbip, struct directory *dp)
     if (!validate_dp(dbip, dp)) {
 	bu_log("Validation failed for %s, asking for update\n", dp->d_namep);
 	db_cache_update(dbip, dp->d_namep);
-	// Sleep this thread until the cache says it is done, and then try again
-	while (db_cache_processing(dbip))
-	    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-	if (!validate_dp(dbip, dp)) {
-	    bu_log("*************Validation failed for %s even after db_cache_update!*********\n", dp->d_namep);
-	}
+	miss_counter.fetch_add(1);
     }
 }
 
@@ -365,6 +360,8 @@ multi_threaded_read_check(struct db_i *dbip)
 
     bu_log("Starting multithreaded read check.\n");
 
+    std::atomic<int> miss_counter = 0;
+
     std::set<struct directory *> dpq;
     for (int i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
@@ -381,13 +378,40 @@ multi_threaded_read_check(struct db_i *dbip)
 	while (wthreads.size() < 6 && !dpq.empty()) {
 	    struct directory *dp = *dpq.begin();
 	    dpq.erase(dp);
-	    wthreads.emplace_back(work_dp, dbip, dp);
+	    wthreads.emplace_back(work_dp, dbip, dp, std::ref(miss_counter));
 	}
 	for (std::thread& t : wthreads) {
 	    if (t.joinable())
 		t.join();
 	}
 	wthreads.clear();
+    }
+
+    // As long as we have misses reported, repeat the process
+    while (miss_counter) {
+	miss_counter = 0;
+	for (int i = 0; i < RT_DBNHASH; i++) {
+	    struct directory *dp;
+	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		if (dp->d_addr == RT_DIR_PHONY_ADDR)
+		    continue;
+		if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD)
+		    continue;
+		dpq.insert(dp);
+	    }
+	}
+	while (!dpq.empty()) {
+	    while (wthreads.size() < 6 && !dpq.empty()) {
+		struct directory *dp = *dpq.begin();
+		dpq.erase(dp);
+		wthreads.emplace_back(work_dp, dbip, dp, std::ref(miss_counter));
+	    }
+	    for (std::thread& t : wthreads) {
+		if (t.joinable())
+		    t.join();
+	    }
+	    wthreads.clear();
+	}
     }
 
     elapsed = bu_gettime() - start;
