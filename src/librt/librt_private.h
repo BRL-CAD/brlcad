@@ -115,7 +115,7 @@ class ProcessDrawData {
         std::atomic<bool> shutdown = false;
 
 	void write_enqueue(std::shared_ptr<CacheItem> i) {
-	    wcnt++;
+	    wcnt.fetch_add(1);
 	    q_write.enqueue(i);
 	}
 

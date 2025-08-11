@@ -44,56 +44,26 @@
 static bool
 do_lod(struct db_i *dbip, struct directory *dp)
 {
-#ifdef LOD_TIMING
-    int64_t start, elapsed;
-    fastf_t seconds;
-    start = bu_gettime();
-#endif
-#ifdef LOD_TIMING_PER_LEVEL
-    int64_t lstart, lelapsed;
-#endif
-
     // For the moment at least, only BoTs have cached LoD data
     if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
 	return true;
 
     struct bv_lod_mesh *mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
     if (!mlod) {
-	bu_log("ERROR: %s - no mesh LoD available\n", dp->d_namep);
-	return false;
+	bu_log("%s - no mesh LoD available\n", dp->d_namep);
+	mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
+	if (!mlod) {
+	    bu_log("%s - second attempt failed, aborting\n", dp->d_namep);
+	    return false;
+	}
     }
 
     struct bv_scene_obj *s = bv_obj_get(NULL);
     s->draw_data = (void *)mlod;
 
-#ifdef LOD_TIMING
-    elapsed = bu_gettime() - start;
-    seconds = elapsed / 1000000.0;
-    bu_log("%s: initialization time: %f seconds\n", dp->d_namep, seconds);
-#endif
-
-    // We have our LoD container - now exercise it
-#ifdef LOD_TIMING
-    start = bu_gettime();
-#endif
-
     for (int i = 0; i < 16; i++) {
-#ifdef LOD_TIMING_PER_LEVEL
-	lstart = bu_gettime();
-#endif
 	bv_lod_level(s, i, 0);
-#ifdef LOD_TIMING_PER_LEVEL
-	lelapsed = bu_gettime() - lstart;
-	seconds = lelapsed / 1000000.0;
-	bu_log("%s: level %d time: %f seconds\n", dp->d_namep, i, seconds);
-#endif
     }
-
-#ifdef LOD_TIMING
-    //elapsed = bu_gettime() - start;
-    //seconds = elapsed / 1000000.0;
-    //bu_log("%s: total LoD level setting time: %f sec\n", dp->d_namep, seconds);
-#endif
 
     bv_lod_mesh_put(mlod);
     bv_obj_put(s);
@@ -461,7 +431,7 @@ main(int argc, char *argv[])
     // Wait until librt claims there is no more processing going on
     bu_log("Waiting for full cache initialization...\n");
     while (db_cache_processing(dbip)) {
-	std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     }
     bu_log("Waiting for full cache initialization... done.\n");
 

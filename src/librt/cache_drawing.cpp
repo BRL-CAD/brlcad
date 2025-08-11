@@ -247,6 +247,9 @@ attr_calc(std::shared_ptr<ProcessDrawData> p)
 	    //bu_log("enqueue: %s:%s\n", dp->d_namep, ckey);
 	}
 
+	// We're handing off to aabb, make sure to increment
+	p.get()->wcnt.fetch_add(1);
+
 	// Queue up the elements
 	CacheItem ritems(elements);
 	p.get()->write_enqueue(std::make_shared<CacheItem>(ritems));
@@ -256,6 +259,9 @@ attr_calc(std::shared_ptr<ProcessDrawData> p)
 
 	// Hand ip off to the aabb queue
 	p.get()->q_aabb.enqueue(ip);
+
+	// done, decrement
+	p.get()->wcnt.fetch_sub(1);
     }
 }
 
@@ -298,6 +304,9 @@ aabb_calc(std::shared_ptr<ProcessDrawData> p)
 	    }
 	}
 
+	// We're handing off to obb, make sure to increment
+	p.get()->wcnt.fetch_add(1);
+
 	// Queue it up
 	CacheElement aabb_element(ckey, bbp, dlen);
 	CacheItem aabb_item(aabb_element);
@@ -305,6 +314,9 @@ aabb_calc(std::shared_ptr<ProcessDrawData> p)
 
 	// Hand ip off to the obb queue
 	p.get()->q_obb.enqueue(ip);
+
+	// done, decrement
+	p.get()->wcnt.fetch_sub(1);
     }
 }
 
@@ -361,6 +373,10 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
 	    }
 	}
 
+	// We're handing off to lod, make sure to increment
+	p.get()->wcnt.fetch_add(1);
+
+
 	// Queue it up for writing
 	CacheElement obb_element(ckey, obbp, dlen);
 	CacheItem obb_item(obb_element);
@@ -368,6 +384,9 @@ obb_calc(std::shared_ptr<ProcessDrawData> p)
 
 	// Hand ip off to the LoD queue
 	p.get()->q_lod.enqueue(ip);
+
+	// done, decrement
+	p.get()->wcnt.fetch_sub(1);
     }
 }
 
@@ -425,6 +444,9 @@ lod_calc(std::shared_ptr<ProcessDrawData> p)
 	bu_free(ip->idb_uptr, "name uptr");
 	rt_db_free_internal(ip);
 	BU_PUT(ip, struct rt_db_internal);
+
+	// done, decrement
+	p.get()->wcnt.fetch_sub(1);
     }
 }
 
@@ -438,7 +460,7 @@ q_write(std::shared_ptr<ProcessDrawData> p)
     struct bu_cache_txn *t = NULL;
     int64_t start, elapsed;
     start = bu_gettime();
-    int wcnt = 0;
+    int lwcnt = 0;
     while (!p.get()->shutdown) {
 
 	elapsed = bu_gettime() - start;
@@ -454,8 +476,8 @@ q_write(std::shared_ptr<ProcessDrawData> p)
 	    }
 
 	    // Update work count - we're now done with the items we committed to disk
-	    p.get()->wcnt -= wcnt;
-	    wcnt = 0;
+	    p.get()->wcnt.fetch_sub(lwcnt);
+	    lwcnt = 0;
 
 	    start = bu_gettime();
 	}
@@ -488,7 +510,7 @@ q_write(std::shared_ptr<ProcessDrawData> p)
 	}
 
 	// No matter how this plays out, we've dequeued the cache item
-	wcnt++;
+	lwcnt++;
 
     }
 
@@ -600,6 +622,7 @@ db_cache_start(struct db_i *dbip, int verbose)
 	    dbip->i->p.get()->write_enqueue(std::make_shared<CacheItem>(ts_item));
 
 	    // Queue up for attr processing.
+	    dbip->i->p.get()->wcnt.fetch_add(1);
 	    dbip->i->p.get()->q_attr.enqueue(std::make_shared<std::string>(std::string(dp->d_namep)));
 	}
     }
@@ -697,6 +720,7 @@ db_cache_update(struct db_i *dbip, const char *name)
 
 
     // Enqueue to process
+    dbip->i->p.get()->wcnt.fetch_add(1);
     dbip->i->p.get()->q_attr.enqueue(std::make_shared<std::string>(std::string(dp->d_namep)));
 
     // TODO - Make sure we can retrieve the cached data
