@@ -11,7 +11,7 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2025-08-XX  Release 7.40.3                                     ---
+--- 2025-08-11  Release 7.42.0                                     ---
 ----------------------------------------------------------------------
 
 Polygonal BoT ray tracing is now dramatically faster.  Integration of
