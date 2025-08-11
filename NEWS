@@ -14,6 +14,18 @@ changes made.  See document footer for additional details.
 --- 2025-08-XX  Release 7.40.3                                     ---
 ----------------------------------------------------------------------
 
+Polygonal BoT ray tracing is now dramatically faster.  Integration of
+a new spatial partition acceleration method (HLBVH) into librt's BoT
+ray tracing pipeline yields substantial speedups, better multicore
+scaling, and reduced memory overhead across all BRL-CAD ray tracing of
+scenes with BoTs.  In general, new overall performence is typicaly in
+the 2-25x range depending on the model, scene, and other factors.  The
+culmination of many efforts, the improvement was verified, validated,
+and performance tested against numerous real and test models to
+confirm gains and assert correctness.  As a result, users no longer
+need to tune TIE or ADRT-specific settings as both are fully obsoleted
+and replaced.
+
 This release expands Arbitrary Polyhedron support with 8 vertices
 (i.e., ARB8-only, not ARB7/6/5/4) to include concave definitions.
 Surfaces must (still) be planar and not self-intersect, but polyhedral
@@ -24,6 +36,8 @@ affects output styling (e.g., showing/hiding attributes).  To restore
 default behavior, delete .mgedrc in your home directory or remove
 existing qray settings manually.
 
+* increased app parallelism ceiling to 4096 threads - Sean Morrison
+* removed obsolete nirt -T BoT spatial partition option - Cliff Yapp
 * added support for concave arb8 primitive definitions - Sean Morrison
 * added example geometry model showcasing all types - Mitchell Roberts
 * fixed mged crash when switching databases after rt - Sean Morrison
@@ -43,6 +57,7 @@ existing qray settings manually.
 * fixed bb '-o' oriented bounding box option in MGED - Chris McGregor
 * added manual page for pixcmp, bwish, btclsh - Sean Morrison
 * fixed "ted" text edit and "make_pnts" GED commands - Cliff Yapp
+* renamed MGED x command to solid_report for clarity - Sean Morrison
 * fixed Archer "Center View" button and vslew GED command - Cliff Yapp
 * added support for console text editing on Windows - Cliff Yapp
 * added bb '-m' option for outputting midpoint - Chris McGregor
@@ -51,6 +66,7 @@ existing qray settings manually.
 * added (align, dir and print) subcommands to 'view' - Chris McGregor
 * added (autoview, lookat, saveview) to 'view' - Chris McGregor
 * fixed mged 'process' command on read-only databases - Sean Morrison
+* replaced ADRT with HLBVH-acclerated BoT tracing - Timothy Reynolds
 * accelerated BoT ray tracing HLBVH integration across all librt apps
 	- Timothy Reynolds, Connor McLean, Ian Beckett, Samuel Reed,
 	- Gaultier Debarre, Sean Morrison, Chris McGregor, Cliff Yapp
