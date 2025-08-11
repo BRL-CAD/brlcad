@@ -74,6 +74,7 @@ existing qray settings manually.
 * fixed -exec behavior with 'flat' search in mged - Chris McGregor
 * improved logging behavior from multiple threads - Kenneth Davis
 * removed libgdiam dependency - Chris McGregor
+* updated strclear dependency to latest bsd upstream - Cliff Yapp
 
 
 ----------------------------------------------------------------------
