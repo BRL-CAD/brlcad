@@ -1370,7 +1370,7 @@ bv_lod_clear_gen(struct bu_ptbl *tbl, const char *name, struct bu_cache *c)
 	return;
 
     // Translate database object name key to data key
-    static char ckey[BU_CACHE_KEY_MAXLEN];
+    char ckey[BU_CACHE_KEY_MAXLEN];
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu", key);
     void *cdata = NULL;
     struct bu_cache_txn *txn = NULL;

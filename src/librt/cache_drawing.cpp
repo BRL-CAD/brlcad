@@ -515,7 +515,7 @@ if (verbose && seconds > 5.0) {
 int
 db_cache_start(struct db_i *dbip, int verbose)
 {
-    static char ckey[BU_CACHE_KEY_MAXLEN];
+    char ckey[BU_CACHE_KEY_MAXLEN];
 
     if (!dbip || !dbip->i)
 	return BRLCAD_ERROR;
@@ -652,11 +652,10 @@ db_cache_lod_mesh_get(struct db_i *dbip, const char *name)
     return bv_lod_mesh_get(dbip->i->c, name);
 }
 
-// Must be called from the same thread as db_cache_start
 int
 db_cache_update(struct db_i *dbip, const char *name)
 {
-    static char ckey[BU_CACHE_KEY_MAXLEN];
+    char ckey[BU_CACHE_KEY_MAXLEN];
 
     // no name == no-op
     if (!name)
@@ -712,7 +711,7 @@ db_cache_clear_entries(struct db_i *dbip, unsigned long long hash)
 
     // Key length is limited, so we don't need to malloc
     // and free a full bu_vls for this.
-    static char ckey[MAXPATHLEN];
+    char ckey[MAXPATHLEN];
 
     // Clear attr entries
     snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, CACHE_REGION_ID);
