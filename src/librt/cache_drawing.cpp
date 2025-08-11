@@ -782,7 +782,7 @@ db_cache_clear_entries(struct db_i *dbip, unsigned long long hash)
 
 }
 
-// Return 1 if there is processing going on, else 0
+// Return wcnt if there is processing going on, else 0
 int
 db_cache_processing(struct db_i *dbip)
 {
@@ -792,11 +792,7 @@ db_cache_processing(struct db_i *dbip)
     int wcnt = dbip->i->p.get()->wcnt;
     bu_log("%d\n", wcnt);
 
-    // Check work counter
-    if (wcnt)
-	return 1;
-
-    return 0;
+    return (wcnt <= 0) ? 0 : wcnt;
 }
 
 
