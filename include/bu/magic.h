@@ -1,7 +1,7 @@
 /*                         M A G I C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -189,6 +189,7 @@ __BEGIN_DECLS
 
 /* ged */
 
+#define GED_MAGIC	                0x20474544 /**<  GED */
 #define GED_CMD_MAGIC			0x65786563 /**< exec */
 
 /* fb */

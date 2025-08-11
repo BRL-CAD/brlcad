@@ -1,5 +1,6 @@
-set(lib_TCLSCRIPTS
-  Accordian.tcl
+set(
+  lib_TCLSCRIPTS
+  Accordion.tcl
   CellPlot.tcl
   ColorEntry.tcl
   ComboBox.tcl
@@ -29,17 +30,17 @@ set(lib_TCLSCRIPTS
   gui_conversion.tcl
   pattern.tcl
   pattern_gui.tcl
-  )
-if (BRLCAD_ENABLE_TCL)
-  BRLCAD_ADDDATA(lib_TCLSCRIPTS tclscripts/lib)
-  pkgIndex_BUILD(tclscripts/lib)
-  tclIndex_BUILD(tclscripts/lib)
-endif (BRLCAD_ENABLE_TCL)
+)
+if(BRLCAD_ENABLE_TCL)
+  brlcad_adddata(lib_TCLSCRIPTS tclscripts/lib)
+  pkgindex_build(tclscripts/lib)
+  tclindex_build(tclscripts/lib)
+endif(BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${lib_TCLSCRIPTS}
-  )
+)
 
 # Local Variables:
 # tab-width: 8

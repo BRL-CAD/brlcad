@@ -1,7 +1,7 @@
 /*                     B A C K T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2024 United States Government as represented by
+ * Copyright (c) 2007-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -191,9 +191,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 	snprintf(attach_msg, sizeof(attach_msg), "attach %d\n", processid);
 
 	if (have_gdb) {
-	    /*    if (write(input[1], "set prompt\n", 12) != 12) {
-		  perror("write [set prompt] failed");
-		  } else */if (write(input[1], "set confirm off\n", 16) != 16) {
+	    if (write(input[1], "set confirm off\n", 16) != 16) {
 		perror("write [set confirm off] failed");
 	    } else if (write(input[1], "set backtrace past-main on\n", 27) != 27) {
 		perror("write [set backtrace past-main on] failed");
@@ -362,7 +360,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 #    endif
 
 #    ifdef SIGCHLD
-	/* premptively send a SIGCHLD to parent */
+	/* preemptively send a SIGCHLD to parent */
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("[BACKTRACE] backtrace() sending CHLD to parent %d\n", getppid());
 	}

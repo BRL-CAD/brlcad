@@ -1,7 +1,7 @@
 /*                       P N T S . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ __BEGIN_DECLS
 #define ANALYZE_OBJ_TO_PNTS_GRID  0x2 /**< @brief sample using an XYZ grid based on the bounding box (default if no method flags are specified) */
 #define ANALYZE_OBJ_TO_PNTS_RAND  0x4 /**< @brief sample using Marsaglia sampling on the bounding sphere with pseudo random numbers */
 #define ANALYZE_OBJ_TO_PNTS_SOBOL 0x8 /**< @brief sample using Marsaglia sampling on the bounding sphere with Sobol' low-discrepancy-sequence generation */
-ANALYZE_EXPORT int analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, double *avg_thickness, struct db_i *dbip,
+DEPRECATED ANALYZE_EXPORT int analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, double *avg_thickness, struct db_i *dbip,
 				       const char *obj, struct bn_tol *tol, int flags, int max_pnts, int max_time, int verbosity);
 
 __END_DECLS

@@ -4,19 +4,15 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-hide SHARED hide.c)
+ged_plugin_library(ged-hide hide.c)
 target_link_libraries(ged-hide libged libbu)
-set_property(TARGET ged-hide APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-hide hide.c)
-PLUGIN_SETUP(ged-hide ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   hide.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

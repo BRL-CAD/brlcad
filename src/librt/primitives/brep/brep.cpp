@@ -1,7 +1,7 @@
 /*                     B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2024 United States Government as represented by
+ * Copyright (c) 2007-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -76,6 +76,7 @@ extern "C" {
     int rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr);
     int rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv);
     int rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
+    int rt_brep_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip);
     int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip);
     void rt_brep_ifree(struct rt_db_internal *ip);
     int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
@@ -1892,7 +1893,7 @@ rt_brep_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const st
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
@@ -2010,7 +2011,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
@@ -2342,7 +2343,7 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
     ON_3dmObjectAttributes* attributes = new ON_3dmObjectAttributes();
     attributes->m_uuid = ON_opennurbs4_id;
     attributes->m_name = "brep";
-    ON_ModelGeometryComponent *gc = ON_ModelGeometryComponent::CreateForExperts(true, ON_Geometry::Cast(bi->brep), true, attributes, NULL);
+    ON_ModelGeometryComponent *gc = ON_ModelGeometryComponent::CreateForExperts(false, ON_Geometry::Cast(bi->brep), true, attributes, NULL);
     ON_ModelGeometryComponent ngc(*gc);
     delete gc;
     model.AddModelComponent(ngc);
@@ -2398,7 +2399,7 @@ rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
 	ON_ModelComponentReference cr = it.FirstComponentReference();
 	const ON_ModelGeometryComponent *mo = ON_ModelGeometryComponent::Cast(cr.ModelComponent());
-	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo->Geometry(nullptr)));
+	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo->ExclusiveGeometry()));
     }
     return BRLCAD_OK;
 }
@@ -2432,6 +2433,28 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     }
 }
 
+int
+rt_brep_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !mat)
+	return BRLCAD_OK;
+
+    // For the moment, we only support applying a mat to a brep in place - the
+    // input and output must be the same.
+    if (ip && rop != ip) {
+	bu_log("rt_brep_mat:  alignment of points between multiple breps is unsupported - input brep must be the same as the output brep.\n");
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *bi = (struct rt_brep_internal *)rop->idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+
+    ON_Xform xform(mat);
+    if (!xform.IsIdentity())
+	bi->brep->Transform(xform);
+
+    return BRLCAD_OK;
+}
 
 int
 rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
@@ -2469,15 +2492,8 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
     bi->brep = ON_Brep::New(*ON_Brep::Cast(geom_comp->Geometry(NULL)));
 
-    if (mat) {
-	ON_Xform xform(mat);
-
-	if (!xform.IsIdentity()) {
-	    bi->brep->Transform(xform);
-	}
-    }
-
-    return 0;
+    /* Apply transform */
+    return rt_brep_mat(ip, mat, NULL);
 }
 
 
@@ -2714,7 +2730,7 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
 	    continue;
 	}
 
-	// TODO: should only consider vertices in untrimmed regions
+	// TODO: should only consider vertexes in untrimmed regions
 	int num_rows = nurbs_surface->m_cv_count[0];
 	int num_cols = nurbs_surface->m_cv_count[1];
 	for (int i = 0; i < num_rows; ++i) {
@@ -2738,7 +2754,7 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
 	}
     }
 
-    // narrow down the list to just the control vertexes closest to
+    // narrow down the list to just the control vertices closest to
     // the query line, and sort them by proximity to the query start
     std::list<brep_selectable_cv *>::iterator s, tmp_s;
     for (s = selectable.begin(); s != selectable.end();) {
@@ -3029,6 +3045,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct directory *dp, struct 
     if (!vhead || dp == RT_DIR_NULL || !ip || !ttol || !tol)
 	return -1;
 
+    struct bu_list *vlfree = &rt_vlfree;
     struct rt_brep_internal* bi;
     const char *solid_name =  dp->d_namep;
     ON_wString wstr;
@@ -3041,7 +3058,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct directory *dp, struct 
 
     ON_Brep* brep = bi->brep;
 
-    if (brep_facecdt_plot(NULL, solid_name, ttol, tol, brep, vhead, NULL, &RTG.rtg_vlfree, -1, 0, -1)) {
+    if (brep_facecdt_plot(NULL, solid_name, ttol, tol, brep, vhead, NULL, vlfree, -1, 0, -1)) {
 	return -1;
     }
     return 0;

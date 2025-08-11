@@ -1,7 +1,7 @@
 /*                         T O R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -168,7 +168,7 @@ size_t
 clt_tor_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct tor_specific *tor =
-        (struct tor_specific *)stp->st_specific;
+	(struct tor_specific *)stp->st_specific;
     struct clt_tor_specific *args;
 
     const size_t size = sizeof(*args);
@@ -349,10 +349,9 @@ rt_tor_print(register const struct soltab *stp)
 }
 
 
-
 void matXvec(double result[3], const mat_t mat, const double vec[3]) {
     for (int i = 0; i < 3; i++) {
-        result[i] = mat[i] * vec[0] + mat[i + 4] * vec[1] + mat[i + 8] * vec[2];
+	result[i] = mat[i] * vec[0] + mat[i + 4] * vec[1] + mat[i + 8] * vec[2];
     }
 }
 
@@ -365,7 +364,7 @@ inside_overlapping_region(struct tor_specific *tor, point_t hp)
 
     /* inside overlapping region's bounding sphere? */
     if (sq_dist < sq_overlap_size) {
-        return 1;
+	return 1;
     }
 
     return 0;
@@ -1071,7 +1070,7 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     tor = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tor);
 
@@ -1176,7 +1175,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
 
@@ -1631,6 +1630,44 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_tor_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
+    struct rt_tor_internal *top = (struct rt_tor_internal *)rop->idb_ptr;
+    RT_TOR_CK_MAGIC(top);
+
+    double r_a, r_h;
+    vect_t v, h;
+    VMOVE(v, tip->v);
+    VMOVE(h, tip->h);
+    r_a = tip->r_a;
+    r_h = tip->r_h;
+
+    /* Apply modeling transformations */
+    MAT4X3PNT(top->v, mat, v);
+    MAT4X3VEC(top->h, mat, h);
+    VUNITIZE(top->h);			/* just to be sure */
+
+    top->r_a = r_a / mat[15];
+    top->r_h = r_h / mat[15];
+
+    /* Prepare the extra information */
+    top->r_b = top->r_a;
+
+    /* Calculate two mutually perpendicular vectors, perpendicular to N */
+    bn_vec_ortho(top->a, top->h);	 /* a has unit length */
+    VCROSS(top->b, top->h, top->a); /* |A| = |H| = 1, so |B|=1 */
+
+    VSCALE(top->a, top->a, top->r_a);
+    VSCALE(top->b, top->b, top->r_b);
+
+    return BRLCAD_OK;
+}
 
 /**
  * Taken from the database record:
@@ -1679,24 +1716,14 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     bu_cv_ntohd((unsigned char *)&rec, ep->ext_buf, 2*3+2);
 
+    /* Set up initial data */
+    VMOVE(tip->v, rec.v);
+    VMOVE(tip->h, rec.h);
+    tip->r_a = rec.ra;
+    tip->r_h = rec.rh;
+
     /* Apply modeling transformations */
-    MAT4X3PNT(tip->v, mat, rec.v);
-    MAT4X3VEC(tip->h, mat, rec.h);
-    VUNITIZE(tip->h);			/* just to be sure */
-
-    tip->r_a = rec.ra / mat[15];
-    tip->r_h = rec.rh / mat[15];
-
-    /* Prepare the extra information */
-    tip->r_b = tip->r_a;
-
-    /* Calculate two mutually perpendicular vectors, perpendicular to N */
-    bn_vec_ortho(tip->a, tip->h);	/* a has unit length */
-    VCROSS(tip->b, tip->h, tip->a);	/* |A| = |H| = 1, so |B|=1 */
-
-    VSCALE(tip->a, tip->a, tip->r_a);
-    VSCALE(tip->b, tip->b, tip->r_b);
-    return 0;
+    return rt_tor_mat(ip, mat, ip);
 }
 
 
@@ -1812,51 +1839,75 @@ rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
     VMOVE(*cent,tip->v);
 }
 
-void
-rt_tor_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_tor_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
+    int lcnt = 4;
+    if (!pl || pl_max < 4 || !ip)
+	return 0;
 
     struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tor);
 
-    // Set up the containers
-    struct bv_label *l[4];
-    for (int i = 0; i < 4; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
-
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
-
-	l[i] = la;
-    }
-
-    // Do the specific data assignments for each label
+    point_t work, pos_view;
     fastf_t r3, r4;
     vect_t adir;
+    int npl = 0;
+
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
+
     bn_vec_ortho(adir, tor->h);
+
+    MAT4X3PNT(pos_view, xform, tor->v);
+    POINT_LABEL(pos_view, 'V');
+
     r3 = tor->r_a - tor->r_h;
+    VJOIN1(work, tor->v, r3, adir);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'I');
+
     r4 = tor->r_a + tor->r_h;
+    VJOIN1(work, tor->v, r4, adir);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'O');
 
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, tor->v);
+    VJOIN1(work, tor->v, tor->r_a, adir);
+    VADD2(work, work, tor->h);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'H');
 
-    bu_vls_sprintf(&l[1]->label, "I");
-    VJOIN1(l[1]->p, tor->v, r3, adir);
+    return lcnt;
+}
 
-    bu_vls_sprintf(&l[2]->label, "O");
-    VJOIN1(l[2]->p, tor->v, r4, adir);
+const char *
+rt_tor_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
 
-    bu_vls_sprintf(&l[3]->label, "H");
-    VJOIN1(l[3]->p, tor->v, tor->r_a, adir);
-    VADD2(l[3]->p, l[3]->p, tor->h);
+    point_t mpt = VINIT_ZERO;
+    struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tor);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, tor->v);
+	goto tor_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+tor_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
 }
 
 

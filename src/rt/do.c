@@ -1,7 +1,7 @@
 /*                            D O . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2024 United States Government as represented by
+ * Copyright (c) 1987-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -465,8 +465,6 @@ int cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
 
     rt_clean(APP.a_rt_i);
 
-    if (OPTICAL_DEBUG&OPTICAL_DEBUG_RTMEM_END)
-	bu_prmem("After cm_clean");
     return 0;
 }
 
@@ -485,15 +483,24 @@ int cm_closedb(const int UNUSED(argc), const char **UNUSED(argv))
     bu_free((void *)APP.a_rt_i, "struct rt_i");
     APP.a_rt_i = RTI_NULL;
 
-    bu_prmem("After _closedb");
-    bu_exit(0, NULL);
+    bu_exit(0, "After _closedb");
 
     return 1;	/* for compiler */
 }
 
 
+static void
+parse_deprecated(const struct bu_structparse *UNUSED(sp), const char *name, void *UNUSED(base), const char *UNUSED(value), void *UNUSED(data))
+{
+    bu_log("DEPRECATION WARNING: remove %s setting.\nNo longer used since 7.42 BoT ray tracing.\n", name);
+    return;
+}
+
+
 /* viewing module specific variables */
 extern struct bu_structparse view_parse[];
+static int rt_bot_minpieces_deprecated = 0;
+
 
 struct bu_structparse set_parse[] = {
     {"%d",	1, "width",			bu_byteoffset(width),			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -501,17 +508,8 @@ struct bu_structparse set_parse[] = {
     {"%d",	1, "save_overlaps",		bu_byteoffset(save_overlaps),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "perspective",		bu_byteoffset(rt_perspective),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "angle",			bu_byteoffset(rt_perspective),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-#if !defined(_WIN32) || defined(__CYGWIN__)
-    /* FIXME: these cannot be listed in here because they are LIBRT
-     * globals.  due to the way symbols are not imported until a DLL
-     * is loaded on Windows, the byteoffset address of the global is
-     * not known at compile-time.  they would needed to be added to
-     * set_parse() during runtime initialization.
-     */
-    {"%d",	1, "rt_bot_minpieces",		bu_byteoffset(rt_bot_minpieces),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1, "rt_bot_tri_per_piece",	bu_byteoffset(rt_bot_tri_per_piece),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "rt_cline_radius",		bu_byteoffset(rt_cline_radius),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-#endif
+    {"%d",	1, "rt_bot_minpieces", bu_byteoffset(rt_bot_minpieces_deprecated),	parse_deprecated, NULL, NULL },
+    {"%f",	1, "rt_cline_radius", 0 /* must be set manually since from lib */, 	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     /* daisy-chain to additional app-specific parameters */
     {"%p",	1, "Application-Specific Parameters", bu_byteoffset(view_parse[0]),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,		0,						BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
@@ -524,6 +522,15 @@ struct bu_structparse set_parse[] = {
 int cm_set(const int argc, const char **argv)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
+
+    /* FIXME: this init should happen elsewhere but neither set_parse
+     * is not exposed externally and app init is only external.
+     * rt_cline_radius must be handled separately because it's
+     * imported from librt with an address not known until runtime.
+     */
+    if (!set_parse[6].sp_offset && BU_STR_EQUAL(set_parse[6].sp_name, "rt_cline_radius")) {
+	set_parse[6].sp_offset = bu_byteoffset(rt_cline_radius);
+    }
 
     if (argc <= 1) {
 	bu_struct_print("Generic and Application-Specific Parameter Values",

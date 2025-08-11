@@ -564,7 +564,7 @@ int subprocess_create_ex(const char *const commandLine[], int options,
 
       used_environment = SUBPROCESS_CAST(char *, _alloca(len));
 
-      // Re-use len for the insertion position
+      // Reuse len for the insertion position
       len = 0;
 
       for (i = 0; environment[i]; i++) {
@@ -712,7 +712,7 @@ int subprocess_create_ex(const char *const commandLine[], int options,
     return -1;
   }
 
-  // Gonna re-use len to store the write index into commandLineCombined
+  // Gonna reuse len to store the write index into commandLineCombined
   len = 0;
 
   for (i = 0; commandLine[i]; i++) {

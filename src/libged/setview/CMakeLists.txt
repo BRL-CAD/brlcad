@@ -4,19 +4,15 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-setview SHARED setview.c)
+ged_plugin_library(ged-setview setview.c)
 target_link_libraries(ged-setview libged libbu)
-set_property(TARGET ged-setview APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-setview setview.c)
-PLUGIN_SETUP(ged-setview ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   setview.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

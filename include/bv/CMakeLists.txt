@@ -1,4 +1,5 @@
-set(bv_headers
+set(
+  bv_headers
   adc.h
   defines.h
   events.h
@@ -13,10 +14,10 @@ set(bv_headers
   vectfont.h
   vlist.h
   view_sets.h
-  )
-BRLCAD_MANAGE_FILES(bv_headers ${INCLUDE_DIR}/brlcad/bv REQUIRED libbv)
+)
+brlcad_manage_files(bv_headers ${INCLUDE_DIR}/brlcad/bv REQUIRED libbv)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*                         M A T E R I A L . C
  * BRL-CAD
  *
- * Copyright (c) 2021-2024 United States Government as represented by
+ * Copyright (c) 2021-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -339,7 +339,7 @@ create_material(struct ged *gedp, int argc, const char *argv[])
     struct bu_attribute_value_set opticalProperties;
     struct bu_attribute_value_set thermalProperties;
 
-    // Intialize AVS stores
+    // Initialize AVS stores
     bu_avs_init_empty(&physicalProperties);
     bu_avs_init_empty(&mechanicalProperties);
     bu_avs_init_empty(&opticalProperties);

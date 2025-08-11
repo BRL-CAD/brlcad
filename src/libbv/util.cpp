@@ -1,7 +1,7 @@
 /*                      U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2024 United States Government as represented by
+ * Copyright (c) 2020-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -308,6 +308,21 @@ bv_init(struct bview *gvp, struct bview_set *s)
     gvp->gv_base2local = 1.0;
     gvp->gv_local2base = 1.0;
 
+    // Initialize knob vars
+    bv_knobs_reset(&gvp->k, BV_KNOBS_ALL);
+    gvp->k.origin_m = '\0';
+    gvp->k.origin_o = '\0';
+    gvp->k.origin_v = '\0';
+    gvp->k.rot_m_udata = NULL;
+    gvp->k.rot_o_udata = NULL;
+    gvp->k.rot_v_udata = NULL;
+    gvp->k.sca_udata = NULL;
+    gvp->k.tra_m_udata = NULL;
+    gvp->k.tra_v_udata = NULL;
+
+    // Initialize trackball pos
+    MAT_DELTAS_GET_NEG(gvp->orig_pos, gvp->gv_center);
+
     // Initialize tclcad specific data (primarily doing this so hashing calculations
     // can succeed)
     _data_tclcad_init(&gvp->gv_tcl);
@@ -406,23 +421,23 @@ _bound_objs_view(int *is_empty, vect_t min, vect_t max, struct bu_ptbl *so, stru
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
 	_bound_objs_view(is_empty, min, max, &s->children, v, have_geom_objs, all_view_objs);
-        if (have_geom_objs && !all_view_objs) {
-            if (!(s->s_type_flags & BV_DBOBJ_BASED) &&
-                !(s->s_type_flags & BV_POLYGONS) &&
-                !(s->s_type_flags & BV_LABELS))
-                continue;
-        }
-        if (bv_scene_obj_bound(s, v)) {
-            (*is_empty) = 0;
-            minus[X] = s->s_center[X] - s->s_size;
-            minus[Y] = s->s_center[Y] - s->s_size;
-            minus[Z] = s->s_center[Z] - s->s_size;
-            VMIN(min, minus);
-            plus[X] = s->s_center[X] + s->s_size;
-            plus[Y] = s->s_center[Y] + s->s_size;
-            plus[Z] = s->s_center[Z] + s->s_size;
-            VMAX(max, plus);
-        }
+	if (have_geom_objs && !all_view_objs) {
+	    if (!(s->s_type_flags & BV_DBOBJ_BASED) &&
+		!(s->s_type_flags & BV_POLYGONS) &&
+		!(s->s_type_flags & BV_LABELS))
+		continue;
+	}
+	if (bv_scene_obj_bound(s, v)) {
+	    (*is_empty) = 0;
+	    minus[X] = s->s_center[X] - s->s_size;
+	    minus[Y] = s->s_center[Y] - s->s_size;
+	    minus[Z] = s->s_center[Z] - s->s_size;
+	    VMIN(min, minus);
+	    plus[X] = s->s_center[X] + s->s_size;
+	    plus[Y] = s->s_center[Y] + s->s_size;
+	    plus[Z] = s->s_center[Z] + s->s_size;
+	    VMAX(max, plus);
+	}
     }
 }
 
@@ -512,9 +527,9 @@ bv_mat_aet(struct bview *v)
     fastf_t s_twist;
 
     bn_mat_angles(v->gv_rotation,
-                  270.0 + v->gv_aet[1],
-                  0.0,
-                  270.0 - v->gv_aet[0]);
+		  270.0 + v->gv_aet[1],
+		  0.0,
+		  270.0 - v->gv_aet[0]);
 
     twist = -v->gv_aet[2] * DEG2RAD;
     c_twist = cos(twist);
@@ -526,8 +541,6 @@ bv_mat_aet(struct bview *v)
 void
 bv_settings_init(struct bview_settings *s)
 {
-    s->obj_s = BV_OBJ_SETTINGS_INIT;
-
     s->gv_cleared = 1;
 
     s->gv_adc.draw = 0;
@@ -662,11 +675,11 @@ bv_update(struct bview *gvp)
     vect_t temp, temp1;
 
     if (!gvp)
-        return;
+	return;
 
     bn_mat_mul(gvp->gv_model2view,
-               gvp->gv_rotation,
-               gvp->gv_center);
+	       gvp->gv_rotation,
+	       gvp->gv_center);
     gvp->gv_model2view[15] = gvp->gv_scale;
     bn_mat_inv(gvp->gv_view2model, gvp->gv_model2view);
 
@@ -679,18 +692,18 @@ bv_update(struct bview *gvp)
     /* calculate angles using accuracy of 0.005, since display
      * shows 2 digits right of decimal point */
     bn_aet_vec(&gvp->gv_aet[0],
-               &gvp->gv_aet[1],
-               &gvp->gv_aet[2],
-               temp, temp1, (fastf_t)0.005);
+	       &gvp->gv_aet[1],
+	       &gvp->gv_aet[2],
+	       temp, temp1, (fastf_t)0.005);
 
     /* Force azimuth range to be [0, 360] */
     if ((NEAR_EQUAL(gvp->gv_aet[1], 90.0, (fastf_t)0.005) ||
-         NEAR_EQUAL(gvp->gv_aet[1], -90.0, (fastf_t)0.005)) &&
-        gvp->gv_aet[0] < 0 &&
-        !NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
-        gvp->gv_aet[0] += 360.0;
+	 NEAR_EQUAL(gvp->gv_aet[1], -90.0, (fastf_t)0.005)) &&
+	gvp->gv_aet[0] < 0 &&
+	!NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
+	gvp->gv_aet[0] += 360.0;
     else if (NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
-        gvp->gv_aet[0] = 0.0;
+	gvp->gv_aet[0] = 0.0;
 
     /* apply the perspective angle to model2view */
     bn_mat_mul(gvp->gv_pmodel2view, gvp->gv_pmat, gvp->gv_model2view);
@@ -853,7 +866,7 @@ _bv_scale(struct bview *v, int sensitivity, int factor, point_t UNUSED(keypoint)
     double f = (double)factor/(double)sensitivity;
     v->gv_scale /= f;
     if (v->gv_scale < BV_MINVIEWSCALE)
-        v->gv_scale = BV_MINVIEWSCALE;
+	v->gv_scale = BV_MINVIEWSCALE;
     v->gv_size = 2.0 * v->gv_scale;
     v->gv_isize = 1.0 / v->gv_size;
 
@@ -1049,7 +1062,7 @@ bv_obj_stale(struct bv_scene_obj *s)
 
     std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
     for (vo_it = s->i->vobjs.begin(); vo_it != s->i->vobjs.end(); vo_it++) {
-	struct bv_scene_obj *sv = vo_it->second; 
+	struct bv_scene_obj *sv = vo_it->second;
 	bv_obj_stale(sv);
     }
 }
@@ -1246,6 +1259,7 @@ bv_obj_reset(struct bv_scene_obj *s)
     struct bv_obj_settings defaults = BV_OBJ_SETTINGS_INIT;
     bv_obj_settings_sync(&s->s_local_os, &defaults);
     s->s_os = &s->s_local_os;
+    s->s_inherit_settings = 0;
 
     MAT_IDN(s->s_mat);
     VSET(s->s_color, 255, 0, 0);
@@ -1265,6 +1279,7 @@ bv_obj_reset(struct bv_scene_obj *s)
     s->s_arrow = 0;
     s->s_csize = 0;
     s->s_flag = UP;
+    s->s_force_draw = 0;
     s->s_i_data = NULL;
     s->s_iflag = DOWN;
     s->s_path = NULL;
@@ -1462,7 +1477,6 @@ bv_obj_get_vo(struct bv_scene_obj *s, struct bview *v)
 
     vo->s_v = v;
     vo->dp = s->dp;
-
 
 
     s->i->vobjs[v] = vo;

@@ -3,11 +3,17 @@ set(BRLCAD_EXEC_LIST "@BRLCAD_EXEC_LIST@")
 set(BRLCAD_REGRESS_LIST "@BRLCAD_REGRESS_LIST@")
 set(LOGFILE "@LOG_FILE@")
 
-file(WRITE ${LOGFILE} "Running regression test coverage check:\n${COVERAGE_CHECK_EXEC} ${BRLCAD_EXEC_LIST} ${BRLCAD_REGRESS_LIST}\n")
+file(
+  WRITE
+  ${LOGFILE}
+  "Running regression test coverage check:\n${COVERAGE_CHECK_EXEC} ${BRLCAD_EXEC_LIST} ${BRLCAD_REGRESS_LIST}\n"
+)
 execute_process(
   COMMAND "${COVERAGE_CHECK_EXEC}" "${BRLCAD_EXEC_LIST}" "${BRLCAD_REGRESS_LIST}"
-  RESULT_VARIABLE coverage_result OUTPUT_VARIABLE coverage_log ERROR_VARIABLE coverage_log
-  )
+  RESULT_VARIABLE coverage_result
+  OUTPUT_VARIABLE coverage_log
+  ERROR_VARIABLE coverage_log
+)
 if(coverage_result)
   file(APPEND ${LOGFILE} "${coverage_log}\n")
   file(READ ${LOGFILE} LOGMSG)

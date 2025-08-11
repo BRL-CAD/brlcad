@@ -1,19 +1,14 @@
-set(util_TCLSCRIPTS
-  expand_int_ranges.tcl
-  luniq.tcl
-  metastrength.tcl
-  regionstobots.tcl
-  )
-if (BRLCAD_ENABLE_TCL)
-  BRLCAD_ADDDATA(util_TCLSCRIPTS tclscripts/util)
-  pkgIndex_BUILD(tclscripts/util)
-  tclIndex_BUILD(tclscripts/util)
-endif (BRLCAD_ENABLE_TCL)
+set(util_TCLSCRIPTS expand_int_ranges.tcl luniq.tcl metastrength.tcl regionstobots.tcl)
+if(BRLCAD_ENABLE_TCL)
+  brlcad_adddata(util_TCLSCRIPTS tclscripts/util)
+  pkgindex_build(tclscripts/util)
+  tclindex_build(tclscripts/util)
+endif(BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${util_TCLSCRIPTS}
-  )
+)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -153,6 +153,7 @@ main(int argc, char *argv [])
     int c;
     int file_count = 0;
     char *output_file = (char *)NULL;
+    struct bu_list *vlfree = &rt_vlfree;
 
     bu_setprogname(argv[0]);
 
@@ -287,17 +288,17 @@ main(int argc, char *argv [])
 	Check_names();	/* Look for name entities */
 
 	if (do_drawings)
-	    Conv_drawings();	/* convert drawings to wire edges */
+	    Conv_drawings(vlfree);	/* convert drawings to wire edges */
 	else if (trimmed_surf) {
 	    Do_subfigs();		/* Look for Singular Subfigure Instances */
 
-	    Convtrimsurfs();	/* try to convert trimmed surfaces to a single solid */
+	    Convtrimsurfs(vlfree);	/* try to convert trimmed surfaces to a single solid */
 	} else if (do_splines)
 	    Convsurfs();		/* Convert NURBS to a single solid */
 	else {
 	    Convinst();	/* Handle Instances */
 
-	    Convsolids();	/* Convert solid entities */
+	    Convsolids(vlfree);	/* Convert solid entities */
 
 	    Convtree();	/* Convert Boolean Trees */
 

@@ -1,7 +1,7 @@
 /*                         I M G D I F F . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2024 United States Government as represented by
+ * Copyright (c) 2015-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -105,9 +105,9 @@ main(int ac, const char **av)
 	{"?", "",                 "",           NULL,         &need_help,             "",                                         },
 	{"o", "output",           "file",       &file_null,   (void *)&out_path,      "Output file.",                             },
 	{"",  "width-img1",       "#",          &bu_opt_int,  (void *)&width1,        "Image width of first image.",              },
-	{"",  "height-img1",      "#",          &bu_opt_int,  (void *)&height1,       "Image height of first iamge.",             },
+	{"",  "height-img1",      "#",          &bu_opt_int,  (void *)&height1,       "Image height of first image.",             },
 	{"",  "width-img2",       "#",          &bu_opt_int,  (void *)&width2,        "Image width of second image.",             },
-	{"",  "height-img2",      "#",          &bu_opt_int,  (void *)&height2,       "Image height of second iamge.",            },
+	{"",  "height-img2",      "#",          &bu_opt_int,  (void *)&height2,       "Image height of second image.",            },
 	{"",  "format-img1",      "format",     &image_mime,  (void *)&in_type_1,     "File format of first input file.",         },
 	{"",  "format-img2",      "format",     &image_mime,  (void *)&in_type_2,     "File format of second input file.",        },
 	{"",  "output-format",    "format",     &image_mime,  (void *)&out_type,      "File format of output file."               },

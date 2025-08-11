@@ -1,7 +1,7 @@
 /*                     N M G _ C L A S S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -698,7 +698,7 @@ nmg_class_pnt_s(const point_t pt, const struct shell *s, const int in_or_out_onl
 		}
 
 		if (nmg_class == NMG_CLASS_AinB) {
-		    /* Point is IN face, therefor it must be
+		    /* Point is IN face, therefore it must be
 		     * ON the shell also.
 		     */
 		    nmg_class = NMG_CLASS_AonBanti;

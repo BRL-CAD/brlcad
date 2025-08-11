@@ -1,28 +1,36 @@
 # Style sheet for XSLT transformation to HTML pages
 if(BRLCAD_EXTRADOCS_HTML)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-man-xhtml-stylesheet.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-xhtml-stylesheet.xsl)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-xhtml-stylesheet.xsl")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-man-xhtml-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-xhtml-stylesheet.xsl
+  )
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-xhtml-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_HTML)
 
 if(BRLCAD_EXTRADOCS_PHP)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-man-xhtml-stylesheet.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-xhtml-stylesheet.xsl)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-xhtml-stylesheet.xsl")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-man-xhtml-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-xhtml-stylesheet.xsl
+  )
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-xhtml-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_PHP)
 
 # Style sheet for XSLT transformation to manual pages
 if(BRLCAD_EXTRADOCS_MAN)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-man-stylesheet.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-stylesheet.xsl)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-stylesheet.xsl")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-man-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-stylesheet.xsl
+  )
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_MAN)
 
 # Files for PDF
 if(BRLCAD_EXTRADOCS_PDF)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-man-fo-stylesheet.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-fo-stylesheet.xsl)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-fo-stylesheet.xsl")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-man-fo-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-fo-stylesheet.xsl
+  )
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-fo-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_PDF)
 
 # For HTML, MAN and FO (FO is an intermediate file used in the
@@ -36,11 +44,10 @@ set(XSL_HTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-
 set(XSL_MAN_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-stylesheet.xsl")
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-fo-stylesheet.xsl")
 
-set(devguides_EN
-  bool_eval_development.xml
-  )
+set(devguides_EN bool_eval_development.xml)
 
-set(devguides_EN_IMAGES
+set(
+  devguides_EN_IMAGES
   images/ccx_overlap_event.png
   images/ssx_transverse_event.png
   images/ssx_tangent_event.png
@@ -52,20 +59,20 @@ set(devguides_EN_IMAGES
   images/intermediate_linked_curves.png
   images/ssx_overlap_event.png
   images/evaluation_overview.png
-  )
+)
 
-if (TARGET mged OR TARGET qged OR TARGET archer)
-  if (BRLCAD_EXTRADOCS)
-    ADD_DOC(devguides_EN_IMAGES html/devguides/images)
-    ADD_DOCBOOK("HTML;PHP;PDF" devguides_EN devguides/en devguides_EN_IMAGES_cp)
-  endif (BRLCAD_EXTRADOCS)
-endif (TARGET mged OR TARGET qged OR TARGET archer)
+if(TARGET mged OR TARGET qged OR TARGET archer)
+  if(BRLCAD_EXTRADOCS)
+    add_doc(devguides_EN_IMAGES html/devguides/images)
+    add_docbook("HTML;PHP;PDF" devguides_EN devguides/en devguides_EN_IMAGES_cp)
+  endif(BRLCAD_EXTRADOCS)
+endif(TARGET mged OR TARGET qged OR TARGET archer)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${devguides_EN}
   ${devguides_EN_IMAGES}
-  )
+)
 
 # Local Variables:
 # tab-width: 8

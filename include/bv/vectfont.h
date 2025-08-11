@@ -1,7 +1,7 @@
 /*                        V E C T F O N T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,13 +69,6 @@ __BEGIN_DECLS
 #define dneg(x, y)	NEGY, drk(x, y)
 
 BV_EXPORT extern int *tp_getchar(const unsigned char *c);
-
-/*
- *  Once-only setup routine
- *  Used by libplot3/symbol.c, so it can't be static.
- *  DEPRECATED: libplot3 has been merged into libbn, so this no longer needs to be public.
- */
-BV_EXPORT extern void tp_setup(void);
 
 /** @} */
 

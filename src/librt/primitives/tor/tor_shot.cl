@@ -66,7 +66,7 @@ int tor_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const ui
     A[0] = X2_Y2[0] + dprime.z * dprime.z;
     A[1] = X2_Y2[1] + 2.0 * dprime.z * cor_pprime.z;
     A[2] = X2_Y2[2] + cor_pprime.z * cor_pprime.z
-        + 1.0 - tor->tor_alpha * tor->tor_alpha;
+	+ 1.0 - tor->tor_alpha * tor->tor_alpha;
 
     /* Inline expansion of (void) bn_poly_mul(&Asqr, &A, &A) */
     /* Both polys have degree two */
@@ -135,7 +135,7 @@ int tor_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const ui
     /* k[1] is entry point, and k[0] is farthest exit point */
     /* k[3] is entry point, and k[2] is exit point */
     for (i=npts-1; i>0; i -= 2) {
-        struct hit hits[2];
+	struct hit hits[2];
 
 	hits[0].hit_dist = k[i] * tor->tor_r1;
 	hits[0].hit_surfno = i/2;

@@ -91,7 +91,6 @@ fix_polysolids
 g_diff
 g_lint
 g_qa
-lgt
 mged (GUI)
 nirt
 nmg-bot

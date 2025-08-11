@@ -1,7 +1,7 @@
 /*                         D A T U M . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2024 United States Government as represented by
+ * Copyright (c) 2015-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -151,7 +151,7 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     datum_ip = (struct rt_datum_internal *)ip->idb_ptr;
     RT_DATUM_CK_MAGIC(datum_ip);
 
@@ -368,6 +368,36 @@ rt_datum_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     return 0;
 }
 
+int
+rt_datum_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !mat)
+	return BRLCAD_OK;
+
+    // For the moment, we only support applying a mat to a datum in place - the
+    // input and output must be the same.
+    if (ip && rop != ip) {
+	bu_log("rt_datum_mat:  alignment of data between multiple datums is unsupported - input datum must be the same as the output datum.\n");
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_datum_internal *datum_ip = (struct rt_datum_internal *)rop->idb_ptr;
+    RT_DATUM_CK_MAGIC(datum_ip);
+
+    vect_t v;
+    while (datum_ip) {
+	VMOVE(v, datum_ip->pnt);
+	MAT4X3PNT(datum_ip->pnt, mat, v);
+	if (MAGNITUDE(datum_ip->dir) > 0.0) {
+	    VMOVE(v, datum_ip->dir);
+	    MAT4X3PNT(datum_ip->dir , mat, v);
+	}
+	datum_ip = datum_ip->next;
+    }
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Import datums from the database format to the internal format.
@@ -412,9 +442,9 @@ rt_datum_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 	    first = datum_ip;
 
 	if (vals >= ELEMENTS_PER_POINT)
-	    MAT4X3PNT(datum_ip->pnt, mat, vec);
+	    VMOVE(datum_ip->pnt, vec);
 	if (vals >= ELEMENTS_PER_POINT + ELEMENTS_PER_VECT)
-	    MAT4X3VEC(datum_ip->dir, mat, vec+3);
+	    VMOVE(datum_ip->dir, vec+3);
 	if (vals == MAX_VALS)
 	    datum_ip->w = vec[6];
 
@@ -430,7 +460,8 @@ rt_datum_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
     ip->idb_type = ID_DATUM;
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 
-    return 0;			/* OK */
+    /* Apply transform */
+    return rt_datum_mat(ip, mat, ip);
 }
 
 
@@ -511,6 +542,34 @@ rt_datum_ifree(struct rt_db_internal *ip)
 	datum_ip = next;
     }
     ip->idb_ptr = NULL;	/* sanity */
+}
+
+const char *
+rt_datum_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_datum_internal *datum = (struct rt_datum_internal *)ip->idb_ptr;
+    RT_DATUM_CK_MAGIC(datum);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, datum->pnt);
+	goto datum_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+datum_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
 }
 
 

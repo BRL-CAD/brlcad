@@ -1,7 +1,7 @@
 /*                        U P D A T E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2024 United States Government as represented by
+ * Copyright (c) 1995-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,19 +37,25 @@
 
 #include "./mged.h"
 
+// Defined in mged.c
+extern int event_check(struct mged_state *s, int non_blocking);
 
 void
-mged_update(int non_blocking)
+mged_update(struct mged_state *s, int non_blocking)
 {
     if (non_blocking >= 0)
-	event_check(non_blocking);
-    refresh();
+	event_check(s, non_blocking);
+    refresh(s);
 }
 
 
 int
-f_update(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_update(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     int non_blocking;
 
     if (argc != 2 || sscanf(argv[1], "%d", &non_blocking) != 1) {
@@ -62,7 +68,7 @@ f_update(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_ERROR;
     }
 
-    mged_update(non_blocking);
+    mged_update(s, non_blocking);
 
     return TCL_OK;
 }
@@ -129,12 +135,16 @@ WaitWindowProc(ClientData clientData,
  * would get refreshed.
  */
 int
-f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter. */
+f_wait(ClientData clientData,	/* Main window associated with interpreter. */
        Tcl_Interp *interp,		/* Current interpreter. */
        int argc,			/* Number of arguments. */
        const char *argv[])		/* Argument strings. */
 {
 #ifdef HAVE_TK
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     int c;
     size_t length;
     Tk_Window window;
@@ -163,7 +173,7 @@ f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter
 	/* Tcl sets 'done' to non-zero */
 	done = 0;
 	while (!done) {
-	    mged_update(0);
+	    mged_update(s, 0);
 	}
 
 	/* unbind to 'done' var */
@@ -186,7 +196,7 @@ f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter
 	/* Tcl sets 'done' to non-zero */
 	done = 0;
 	while (!done) {
-	    mged_update(0);
+	    mged_update(s, 0);
 	}
 	if (done != 1) {
 	    /*
@@ -219,7 +229,7 @@ f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter
 	/* Tcl sets 'done' to non-zero */
 	done = 0;
 	while (!done) {
-	    mged_update(0);
+	    mged_update(s, 0);
 	}
 	/*
 	 * Note: there's no need to delete the event handler.  It was
@@ -231,6 +241,7 @@ f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter
 	return TCL_ERROR;
     }
 #else /* HAVE_TK */
+    if (!clientData) bu_log("clientData issue with fwait");
     if (!argc || !argv) bu_log("argc/argv issue with fwait");
 #endif /* HAVE_TK */
 

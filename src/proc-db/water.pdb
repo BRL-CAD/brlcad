@@ -1,0 +1,5 @@
+HEADER    WATER MOLECULE                                                        
+ATOM      1  O   HOH     1       0.000   0.000   0.000  1.00  0.00              
+ATOM      2  H1  HOH     1       0.957   0.000   0.000  1.00  0.00              
+ATOM      3  H2  HOH     1       0.239   0.927   0.000  1.00  0.00              
+END                                                                             

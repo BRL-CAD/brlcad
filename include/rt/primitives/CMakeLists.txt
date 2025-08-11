@@ -1,4 +1,5 @@
-set(primitives_headers
+set(
+  primitives_headers
   arb8.h
   annot.h
   bot.h
@@ -18,10 +19,10 @@ set(primitives_headers
   sketch.h
   tgc.h
   tor.h
-  )
-BRLCAD_MANAGE_FILES(primitives_headers ${INCLUDE_DIR}/brlcad/rt/primitives REQUIRED librt)
+)
+brlcad_manage_files(primitives_headers ${INCLUDE_DIR}/brlcad/rt/primitives REQUIRED librt)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*                         R T S R V . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -311,13 +311,7 @@ main(int argc, char **argv)
 
     avail_cpus = bu_avail_cpus();
 
-    /* Need to set rtg_parallel non_zero here for RES_INIT to work */
     npsw = avail_cpus;
-    if (npsw == 1) {
-	RTG.rtg_parallel = 0;
-    } else {
-	RTG.rtg_parallel = 1;
-    }
 
     bu_log("using %zd of %zu cpus\n", npsw, avail_cpus);
 
@@ -543,20 +537,12 @@ ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
 	view_end(&APP);
 	view_cleanup(rtip);
 	rt_clean(rtip);
-	if (optical_debug&OPTICAL_DEBUG_RTMEM_END)
-	    bu_prmem("After rt_clean");
     }
 
     /* Load the desired portion of the model */
     if (rt_gettrees(rtip, argc, (const char **)argv, npsw) < 0)
 	fprintf(stderr, "rt_gettrees(%s) FAILED\n", argv[0]);
     bu_free(argv, "free argv");
-
-    /* In case it changed from startup time via an OPT command */
-    if (npsw > 1) {
-	RTG.rtg_parallel = 1;
-    } else
-	RTG.rtg_parallel = 0;
 
     seen_gettrees = 1;
     (void)free(buf);

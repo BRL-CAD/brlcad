@@ -627,7 +627,7 @@
 	  or
 	  <citerefentry><refentrytitle>gdb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 	  for debugging.  (Notice that <option>-x #</option> sets the
-	  <citerefentry><refentrytitle>libbt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+	  <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 	  debug flags to the given hexadecimal bit vector.  See
 	  raytrace.h for the bit definitions.)</para>
 	</listitem>
@@ -708,7 +708,6 @@
   <refsection xml:id="see_also"><title>SEE ALSO</title>
   <para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-  <citerefentry><refentrytitle>lgt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>png-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
@@ -732,7 +731,7 @@
   </refsection>
 
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
-  <para>This software is Copyright (c) 1984-2024 United States Government as
+  <para>This software is Copyright (c) 1984-2025 United States Government as
   represented by the U.S. Army Research Laboratory.</para>
   </refsection>
 

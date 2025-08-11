@@ -1,7 +1,7 @@
 /*                  C O L O R _ S C H E M E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,9 @@
 #include "raytrace.h"
 #include "./mged.h"
 #include "./mged_dm.h"
+
+void cs_update(const struct bu_structparse *, const char *, void *, const char *, void *);
+void cs_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 struct _color_scheme default_color_scheme = {
     /* cs_rc */			1,
@@ -241,8 +244,10 @@ cs_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		  const char *UNUSED(name),
 		  void *UNUSED(base),
 		  const char *UNUSED(value),
-		  void *UNUSED(data))
+		  void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (m_dmp->dm_color_scheme == color_scheme) {
@@ -260,6 +265,8 @@ cs_update(const struct bu_structparse *sdp,
 	  const char *value,
 	  void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     struct bu_structparse *sp;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     int offset;
@@ -272,7 +279,7 @@ cs_update(const struct bu_structparse *sdp,
     for (sp = &color_scheme_vparse[CS_OFFSET]; sp->sp_name != NULL; sp += 3) {
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "rset cs %s [rset cs %s]", sp->sp_name, (sp+offset)->sp_name);
-	Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	Tcl_Eval(s->interp, bu_vls_addr(&vls));
     }
 
     cs_set_bg(sdp, name, base, value, data);
@@ -286,9 +293,11 @@ cs_set_bg(const struct bu_structparse *UNUSED(sdp),
 	  const char *UNUSED(name),
 	  void *UNUSED(base),
 	  const char *UNUSED(value),
-	  void *UNUSED(data))
+	  void *data)
 {
-    struct mged_dm *save_curr_m_dmp = mged_curr_dm;
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
+    struct mged_dm *save_curr_m_dmp = s->mged_curr_dm;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     bu_vls_printf(&vls, "dm bg %d %d %d",
@@ -302,20 +311,20 @@ cs_set_bg(const struct bu_structparse *UNUSED(sdp),
     // the notion of the "current" dm in situations
     // where we act on all dm instances.  set_curr_dm
     // should probably be replaced with get_next_dm
-    struct bview *cbv = GEDP->ged_gvp;
+    struct bview *cbv = s->gedp->ged_gvp;
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (m_dmp->dm_color_scheme == color_scheme) {
 	    m_dmp->dm_dirty = 1;
 	    dm_set_dirty(m_dmp->dm_dmp, 1);
-	    set_curr_dm(m_dmp);
-	    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	    set_curr_dm(s, m_dmp);
+	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	}
     }
 
     bu_vls_free(&vls);
-    set_curr_dm(save_curr_m_dmp);
-    GEDP->ged_gvp = cbv;
+    set_curr_dm(s, save_curr_m_dmp);
+    s->gedp->ged_gvp = cbv;
 }
 
 

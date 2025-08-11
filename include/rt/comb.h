@@ -1,7 +1,7 @@
 /*                      C O M B . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,6 +37,29 @@
 __BEGIN_DECLS
 
 /* db_comb.c */
+
+
+/**
+ * Take an old v4 shader specification of the form
+ *
+ *   shadername arg1=value1 arg2=value2 color=1/2/3
+ *
+ * and convert it into the v5 {} list form
+ *
+ *   shadername {arg1 value1 arg2 value2 color 1/2/3}
+ *
+ * Note -- the input string is smashed with nulls.
+ *
+ * Note -- the v5 version is used everywhere internally, and in v5
+ * databases.
+ *
+ * @return 1 error
+ * @return 0 OK
+ */
+RT_EXPORT extern int rt_shader_to_list(const char *in, struct bu_vls *vls);
+
+RT_EXPORT extern int rt_shader_to_key_eq(const char *in, struct bu_vls *vls);
+
 
 /**
  * Import a combination record from a V4 database into internal form.

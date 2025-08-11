@@ -1,7 +1,7 @@
 /*                           S P H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -81,7 +81,7 @@ size_t
 clt_sph_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct sph_specific *sph =
-        (struct sph_specific *)stp->st_specific;
+	(struct sph_specific *)stp->st_specific;
     struct clt_sph_specific *args;
 
     const size_t size = sizeof(*args);
@@ -426,39 +426,6 @@ rt_sph_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
-}
-
-void
-rt_sph_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
-{
-    if (!ps || !ip)
-	return;
-
-    struct rt_ell_internal *ell = (struct rt_ell_internal *)ip->idb_ptr;
-    RT_ELL_CK_MAGIC(ell);
-
-    // Set up the containers
-    struct bv_label *l[4];
-    for (int i = 0; i < 4; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
-
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
-
-	l[i] = la;
-    }
-
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, ell->v);
-
-    bu_vls_sprintf(&l[1]->label, "R");
-    VADD2(l[1]->p, ell->v, ell->a);
 }
 
 /* ELL versions are used for many of the callbacks */

@@ -1,4 +1,5 @@
-set(osl_ignore_files
+set(
+  osl_ignore_files
   CMakeLists.txt
   blue.osl
   checker.osl
@@ -14,9 +15,9 @@ set(osl_ignore_files
   red.osl
   sh_texture.osl
   stdosl.h
-  )
-CMAKEFILES(${osl_ignore_files})
-CMAKEFILES(CMakeLists.txt)
+)
+cmakefiles(${osl_ignore_files})
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*                         S E D I T . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
 
 #ifndef MGED_SEDIT_H
 #define MGED_SEDIT_H
+
+#include "mged.h"
 
 #define MGED_SMALL_SCALE 1.0e-10
 
@@ -144,18 +146,18 @@
 #define ECMD_HYP_ROT_H		91
 #define ECMD_HYP_ROT_A		92
 
-#define SEDIT_ROTATE (STATE == ST_S_EDIT && \
+#define SEDIT_ROTATE (GEOM_EDIT_STATE == ST_S_EDIT && \
 		      (es_edflag == SROT || \
 		       es_edflag == ECMD_TGC_ROT_H || \
 		       es_edflag ==  ECMD_TGC_ROT_AB || \
 		       es_edflag == ECMD_ARB_ROTATE_FACE || \
 		       es_edflag == ECMD_EXTR_ROT_H || \
 		       es_edflag == ECMD_ETO_ROT_C))
-#define OEDIT_ROTATE (STATE == ST_O_EDIT && \
+#define OEDIT_ROTATE (GEOM_EDIT_STATE == ST_O_EDIT && \
 		      edobj == BE_O_ROTATE)
 #define EDIT_ROTATE (SEDIT_ROTATE || OEDIT_ROTATE)
 
-#define SEDIT_SCALE (STATE == ST_S_EDIT && \
+#define SEDIT_SCALE (GEOM_EDIT_STATE == ST_S_EDIT && \
 		     (es_edflag == SSCALE || \
 		      es_edflag == PSCALE || \
 		      es_edflag == ECMD_VOL_THRESH_LO || \
@@ -169,14 +171,14 @@
 		      es_edflag == ECMD_CLINE_SCALE_R || \
 		      es_edflag == ECMD_CLINE_SCALE_T || \
 		      es_edflag == ECMD_EXTR_SCALE_H))
-#define OEDIT_SCALE (STATE == ST_O_EDIT && \
+#define OEDIT_SCALE (GEOM_EDIT_STATE == ST_O_EDIT && \
 		     (edobj == BE_O_XSCALE || \
 		      edobj == BE_O_YSCALE || \
 		      edobj == BE_O_ZSCALE || \
 		      edobj == BE_O_SCALE))
 #define EDIT_SCALE (SEDIT_SCALE || OEDIT_SCALE)
 
-#define SEDIT_TRAN (STATE == ST_S_EDIT && \
+#define SEDIT_TRAN (GEOM_EDIT_STATE == ST_S_EDIT && \
 		    (es_edflag == STRANS || \
 		     es_edflag == ECMD_TGC_MV_H || \
 		     es_edflag == ECMD_TGC_MV_HH || \
@@ -199,13 +201,13 @@
 		     es_edflag == ECMD_BOT_MOVET || \
 		     es_edflag == ECMD_CLINE_MOVE_H || \
 		     es_edflag == ECMD_EXTR_MOV_H))
-#define OEDIT_TRAN (STATE == ST_O_EDIT && \
+#define OEDIT_TRAN (GEOM_EDIT_STATE == ST_O_EDIT && \
 		    (edobj == BE_O_X || \
 		     edobj == BE_O_Y || \
 		     edobj == BE_O_XY))
 #define EDIT_TRAN (SEDIT_TRAN || OEDIT_TRAN)
 
-#define SEDIT_PICK (STATE == ST_S_EDIT && \
+#define SEDIT_PICK (GEOM_EDIT_STATE == ST_S_EDIT && \
 		    (es_edflag == ECMD_NMG_EPICK || \
 		     es_edflag == ECMD_PIPE_PICK || \
 		     es_edflag == ECMD_ARS_PICK || \
@@ -214,43 +216,7 @@
 		     es_edflag == ECMD_BOT_PICKT || \
 		     es_edflag == ECMD_METABALL_PT_PICK))
 
-extern vect_t edit_absolute_model_rotate;
-extern vect_t edit_absolute_object_rotate;
-extern vect_t edit_absolute_view_rotate;
-extern vect_t last_edit_absolute_model_rotate;
-extern vect_t last_edit_absolute_object_rotate;
-extern vect_t last_edit_absolute_view_rotate;
-extern vect_t edit_rate_model_rotate;
-extern vect_t edit_rate_object_rotate;
-extern vect_t edit_rate_view_rotate;
-extern int edit_rateflag_model_rotate;
-extern int edit_rateflag_object_rotate;
-extern int edit_rateflag_view_rotate;
 
-extern vect_t edit_absolute_model_tran;
-extern vect_t edit_absolute_view_tran;
-extern vect_t last_edit_absolute_model_tran;
-extern vect_t last_edit_absolute_view_tran;
-extern vect_t edit_rate_model_tran;
-extern vect_t edit_rate_view_tran;
-extern int edit_rateflag_model_tran;
-extern int edit_rateflag_view_tran;
-
-extern fastf_t edit_absolute_scale;
-extern fastf_t edit_rate_scale;
-extern int edit_rateflag_scale;
-
-extern char edit_rate_model_origin;
-extern char edit_rate_object_origin;
-extern char edit_rate_view_origin;
-extern char edit_rate_coords;
-extern struct mged_dm *edit_rate_mr_dm_list;
-extern struct mged_dm *edit_rate_or_dm_list;
-extern struct mged_dm *edit_rate_vr_dm_list;
-extern struct mged_dm *edit_rate_mt_dm_list;
-extern struct mged_dm *edit_rate_vt_dm_list;
-
-extern fastf_t es_scale;	/* scale factor */
 extern fastf_t es_para[3];	/* keyboard input parameter changes */
 extern fastf_t es_peqn[7][4];	/* ARBs defining plane equations */
 extern int es_menu;		/* item/edit_mode selected from menu */
@@ -258,7 +224,16 @@ extern int es_edflag;		/* type of editing for this solid */
 extern int es_edclass;		/* type of editing class for this solid */
 extern int es_type;		/* COMGEOM solid type */
 extern int es_keyfixed;		/* keypoint specified by user */
-extern struct rt_db_internal es_int;
+
+// NMG editing vars
+extern struct edgeuse *es_eu;
+extern struct loopuse *lu_copy;
+extern point_t lu_keypoint;
+extern plane_t lu_pl;
+extern struct shell *es_s;
+
+extern struct wdb_pipe_pnt *es_pipe_pnt;
+extern struct wdb_metaball_pnt *es_metaball_pnt;
 
 extern mat_t es_mat;		/* accumulated matrix of path */
 extern mat_t es_invmat;		/* inverse of es_mat KAA */
@@ -267,13 +242,11 @@ extern point_t es_keypoint;	/* center of editing xforms */
 extern char *es_keytag;		/* string identifying the keypoint */
 extern point_t curr_e_axes_pos;	/* center of editing xforms */
 
-extern int arb_faces[5][24];	/* from edarb.c */
-extern int arb_planes[5][24];	/* from edarb.c */
+extern void
+get_solid_keypoint(struct mged_state *s, fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t *mat);
 
-extern void get_solid_keypoint(fastf_t *pt,
-			       char **strp,
-			       struct rt_db_internal *ip,
-			       fastf_t *mat);
+extern void set_e_axes_pos(struct mged_state *s, int both);
+
 
 #endif /* MGED_SEDIT_H */
 

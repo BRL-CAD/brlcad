@@ -1,7 +1,7 @@
 /*                 O P _ P N T S _ V O L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2024 United States Government as represented by
+ * Copyright (c) 2020-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -225,11 +225,10 @@ op_pnts_vol(
     // in the point set being unchanged.
     if (!dp && (op == DB_OP_UNION || op == DB_OP_SUBTRACT)) {
 	if (output_pnts_obj) {
-	    const char *av[3];
-	    av[0] = "copy";
+	    const char *av[3] = {"copy", NULL, NULL};
 	    av[1] = pnts_obj;
 	    av[2] = output_pnts_obj;
-	    (void)ged_exec(gedp, 3, (const char **)av);
+	    (void)ged_exec_copy(gedp, 3, (const char **)av);
 	}
 	rt_db_free_internal(&tpnts_intern);
 	return pnts->count;
@@ -244,7 +243,7 @@ op_pnts_vol(
      * non non-volumetric object types in its hierarchy.  If
      * there is such an object, abandon the test.  */
     const char *tfilter = "! -type shape";
-    if (db_search(NULL, DB_SEARCH_QUIET, tfilter, 1, &dp, gedp->dbip, NULL) > 0) {
+    if (db_search(NULL, DB_SEARCH_QUIET, tfilter, 1, &dp, gedp->dbip, NULL, NULL, NULL) > 0) {
 	bu_vls_printf(gedp->ged_result_str, "Non-solid object found in %s, aborting\n", vol_obj);
 	rt_db_free_internal(&tpnts_intern);
 	return -1;
@@ -413,7 +412,7 @@ pnts_internal_memfree:
     rt_free_rti(rtip);
     rt_db_free_internal(&tpnts_intern);
     BU_PUT(resp, struct resource);
-    BU_PUT(ap, struct appliation);
+    BU_PUT(ap, struct application);
 
     return pntcnt;
 }
@@ -457,7 +456,7 @@ pnt_inside_vol(
     rt_clean_resource(rtip, resp);
     rt_free_rti(rtip);
     BU_PUT(resp, struct resource);
-    BU_PUT(ap, struct appliation);
+    BU_PUT(ap, struct application);
 
     return ret;
 }

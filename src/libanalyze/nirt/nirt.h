@@ -1,7 +1,7 @@
 /*                          N I R T . H
  * BRL-CAD
  *
- * Copyright (c) 2020-2024 United States Government as represented by
+ * Copyright (c) 2020-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,6 @@ extern "C" b_off_t ftello(FILE *);
 #endif
 
 #include "bu/app.h"
-#include "bu/color.h"
 #include "bu/cmd.h"
 #include "bu/malloc.h"
 #include "bu/path.h"
@@ -313,10 +312,6 @@ class nirt_fmt_state {
 
 struct nirt_state_impl {
     /* Output options */
-    struct bu_color *hit_odd_color;
-    struct bu_color *hit_even_color;
-    struct bu_color *void_color;
-    struct bu_color *overlap_color;
     int print_header;
     int print_ident_flag;
 
@@ -337,7 +332,7 @@ struct nirt_state_impl {
     nirt_hook_t h_out;     // output
     nirt_hook_t h_msg;     // messages (not errors) not part of command output
     nirt_hook_t h_err;     // err changes
-    nirt_hook_t h_segs;    // segement list is changed
+    nirt_hook_t h_segs;    // segment list is changed
     nirt_hook_t h_objs;    // active list of objects in scene changes
     nirt_hook_t h_frmts;   // output formatting is changed
     nirt_hook_t h_view;    // the camera view is changed
@@ -357,7 +352,7 @@ struct nirt_state_impl {
 
     /* state alteration flags */
     bool b_state;   // updated for any state change
-    bool b_segs;    // updated when segement list is changed
+    bool b_segs;    // updated when segment list is changed
     bool b_objs;    // updated when active list of objects in scene changes
     bool b_frmts;   // updated when output formatting is changed
     bool b_view;    // updated when the camera view is changed

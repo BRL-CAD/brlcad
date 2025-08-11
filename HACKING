@@ -397,14 +397,17 @@ should be POSIX-compliant Bourne Shell Script.  The build system uses
 the CMake build tool.  An initial implementation of a BRL-CAD Geometry
 Server is written in PHP.
 
-With release 7.28, BRL-CAD intends to conform strictly with the 2011
-ANSI/ISO standards for C and C++ language compilation
-(ISO/IEC 9899:2011, i.e. C11 and ISO/IEC 14882:2011, i.e. C++11).
+With release 7.38, BRL-CAD intends to conform strictly with the
+following ANSI/ISO standards for C and C++ language compilation:
+
+C  : ISO/IEC  9899:2011, i.e. C11
+C++: ISO/IEC 14882:2017, i.e. C++17
+
 Support for use of necessary non-standard system facilities is
 handled by build system declarations and preprocessor defines driven
 by build configuration tests.  The working feature set for normal
-development should be widely supported C++11 features and the subset
-of C11 that is also valid (and widely supported) C++11.
+development should be widely supported C++17 features and the subset
+of C11 that is also valid (and widely supported) C++17.
 
 C++ is used as an implementation language within libraries, but there
 are no public C++ APIs in use outside of OpenNURBS.  For new work,
@@ -613,7 +616,7 @@ the end of the file:
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:
- * ex: shiftwidth=4 tabstop=8
+ * ex: shiftwidth=4 tabstop=8 cino=N-s
  */
 
 In emacs, the 'indent-region' command (bound to C-M-\ by default)
@@ -915,9 +918,9 @@ PATCH SUBMISSION GUIDELINES
 ---------------------------
 
 To contribute to BRL-CAD, begin by submitting pull requests to the
-Github project at https://github.com/BRL-CAD/brlcad.
+GitHub project at https://github.com/BRL-CAD/brlcad.
 
-For an introduction to the standard Github workflow for forking and
+For an introduction to the standard GitHub workflow for forking and
 submitting pull requests, see:
 
 https://git-scm.com/book/en/v2/GitHub-Contributing-to-a-Project
@@ -930,8 +933,8 @@ particularly important when working with BRL-CAD.  Patches need to be
 based on the latest sources and avoid reverting improvements that have
 been added to the upstream sources since your fork was created.
 
-Although the Github pull request based workflow is recommended and
-preferred, if for any reason you cannot use Github you may also
+Although the GitHub pull request based workflow is recommended and
+preferred, if for any reason you cannot use GitHub you may also
 submit "git format-patch" patches through other channels.  See:
 
 https://git-scm.com/docs/git-format-patch
@@ -952,7 +955,7 @@ BUGS & UNEXPECTED BEHAVIOR
 
 When a bug or unexpected behavior is encountered that cannot be
 quickly fixed, it needs to be documented in our BUGS file or more
-formally reported to the Github issues tracker at:
+formally reported to the GitHub issues tracker at:
 
 https://github.com/BRL-CAD/brlcad/issues
 
@@ -984,7 +987,7 @@ access to be granted:
 
 3) Join the brlcad-devel developer mailing list, introduce yourself.
 
-4) Create a Github account, submit at least pull requests that
+4) Create a GitHub account, submit at least pull requests that
 demonstrate competency with our coding style, apply flawlessly, and
 provide some significant improvement.
 
@@ -1032,10 +1035,10 @@ developers to address issues as they are encountered regardless of who
 introduces the problem.
 
 To assist developers in these efforts,  BRL-CAD utilizes Continuous
-Integration (CI) testing via the Github Actions infrastructure to
+Integration (CI) testing via the GitHub Actions infrastructure to
 monitor code health:  https://github.com/BRL-CAD/brlcad/actions
 Under normal conditions, all developers should strive to keep all
-Github Actions tests passing.
+GitHub Actions tests passing.
 
 3) Contributors making commits to the repository are required to
 uphold the legal conventions and requirements summarized in the
@@ -1349,6 +1352,12 @@ Release steps are as follows:
     # NON-AUTO: Verify all interface changes are in CHANGES.
     # NON-AUTO: Verify usage/options are documented in doc/.
 
+    A useful trick for this step is to use gitk to display all
+    commits made since the last time the RELEASE branch was
+    updated:
+
+    gitk --no-merges origin/RELEASE..main
+
 #####################################################################
 # 06: Update the version numbers.
 
@@ -1377,17 +1386,11 @@ Release steps are as follows:
 
 #####################################################################
 # 08: Update the bext submodule in BRL-CAD's main repository.
+      (TODO - this can probably be scripted...)
 
-    rm -rf src/bext && git checkout -- src/bext
-    git submodule update --init
-    git submodule update --remote
-    git add src/bext
-    cd src/bext
-    BSHA1=$(git log -1 --pretty=format:"%h")
-    cd ../..
-    git commit -m "Update bext submodule to SHA1 $BSHA1"
+    # NON-AUTO: Update BEXT_SHA1 hash in misc/CMake/BRLCAD_EXT_Setup.cmake
+    git commit -m "Update bext submodule to SHA1 <hashval>"
     git push
-    rm -rf src/bext && git checkout -- src/bext
 
 #####################################################################
 # 09: Update ChangeLog.  Use the YYYY-MM-DD of previous NEWS entry.
@@ -1500,7 +1503,7 @@ Release steps are as follows:
 # 18: Upload the source distributions and release notes.  Use source
 # tarballs to create binaries.
 
-------------- TODO - need new procedures for Github... ------------
+------------- TODO - need new procedures for GitHub... ------------
 
 
 #####################################################################

@@ -1,7 +1,7 @@
 /*                           O P T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2024 United States Government as represented by
+ * Copyright (c) 1989-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -141,6 +141,8 @@ int sub_ymax = 0;
 int use_air = 0;                        /* whether librt should handle air */
 
 int save_overlaps = 0;                  /* flag for setting rti_save_overlaps */
+
+int rtg_parallel = 0;
 
 /***** end variables shared with do.c *****/
 

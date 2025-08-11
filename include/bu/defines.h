@@ -1,7 +1,7 @@
 /*                      D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -195,6 +195,27 @@
  */
 #define BU_FORTRAN(lc, uc) lc ## _
 
+
+/**
+ * There are a fair number of callback mechanisms defined in BRL-CAD code.
+ * Many use a common function prototype, so define it here to provide all the
+ * various libraries a common type to use.
+ */
+typedef int(*bu_clbk_t)(int, const char**,void*,void*);
+
+/**
+ * When callbacks are used, there are different points during the execution
+ * process when the callback may need to be triggered.  Establish common
+ * definitions so various libraries can use a consistent convention.
+ */
+// Make some definitions so it's clear what callback slot we are addressing
+#define BU_CLBK_PRE -1
+#define BU_CLBK_DURING 0
+#define BU_CLBK_POST 1
+/* In some cases (rt launches are an example) the client application may need
+ * to take action when a subprocess ends, not simply when the command returns.
+ * Distinguished from BU_CLBK_POST with this setting. */
+#define BU_CLBK_LINGER 2
 
 /** @} */
 

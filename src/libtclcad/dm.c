@@ -1,7 +1,7 @@
 /*                            D M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1946,10 +1946,10 @@ dmo_bounds_tcl(void *clientData, int argc, const char **argv)
 	 * of the zclipping plane in dm-ogl.c. dm-X.c uses
 	 * dm_clipmin and dm_clipmax.
 	 */
-	if (dmop->dmo_dmp->i->dm_clipmax[2] <= GED_MAX)
+	if (dmop->dmo_dmp->i->dm_clipmax[2] <= BV_MAX)
 	    dm_set_bound(dmop->dmo_dmp, 1.0);
 	else
-	    dm_set_bound(dmop->dmo_dmp, GED_MAX / dmop->dmo_dmp->i->dm_clipmax[2]);
+	    dm_set_bound(dmop->dmo_dmp, BV_MAX / dmop->dmo_dmp->i->dm_clipmax[2]);
 
 	return BRLCAD_OK;
     }
@@ -2781,9 +2781,6 @@ Dmo_Init(Tcl_Interp *interp)
     return BRLCAD_OK;
 }
 
-
-/* from libdm/query.c */
-extern int dm_validXType(const char *dpy_string, const char *name);
 
 static int
 dm_validXType_tcl(void *clientData, int argc, const char **argv)

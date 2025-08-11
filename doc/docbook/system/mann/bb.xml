@@ -62,6 +62,14 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
+	<term><option>-m</option></term>
+	<listitem>
+	  <para>
+	   Report the midpoint / center (x y z) of the bounding box.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><option>-o</option></term>
 	<listitem>
 	  <para>
@@ -194,7 +202,7 @@ havoc_parts_bbox.s:  ARB8
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
     <para>
-      This software is Copyright (c) 2009-2024 United States Government as represented by the
+      This software is Copyright (c) 2009-2025 United States Government as represented by the
       U.S. Army Research Laboratory.
     </para>
   </refsection>

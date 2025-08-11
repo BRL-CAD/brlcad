@@ -1,7 +1,7 @@
 /*                      P L Y _ R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include "wdb.h"
 #include "rply.h"
 
-double scale_factor;                    // without refactor to callbacks theres no easy way to avoid this global
+double scale_factor;                    // without refactor to callbacks there's no easy way to avoid this global
 struct ply_read_options
 {
     int verbose;                        /* verbose output flag */

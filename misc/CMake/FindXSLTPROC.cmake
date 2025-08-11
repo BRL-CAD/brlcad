@@ -1,7 +1,7 @@
 #                F I N D X S L T P R O C . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2010-2024 United States Government as represented by
+# Copyright (c) 2010-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@ find_program(XSLTPROC_EXECUTABLE xsltproc DOC "path to the xsltproc executable")
 mark_as_advanced(XSLTPROC_EXECUTABLE)
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(XSLTPROC DEFAULT_MSG XSLTPROC_EXECUTABLE)
+find_package_handle_standard_args(XSLTPROC DEFAULT_MSG XSLTPROC_EXECUTABLE)
 
 # FindXSLTPROC.cmake ends here
 

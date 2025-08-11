@@ -1,7 +1,7 @@
 /*                      P L A N A R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2024 United States Government as represented by
+ * Copyright (c) 2020-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -509,7 +509,7 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
  * 3.  Do the test as determined by #2.
  */
 
-// How close to paralle will we tolerate before moving to another corner?
+// How close to parallel will we tolerate before moving to another corner?
 #define NPOLY_DOTP_TOL 0.01
 
 int

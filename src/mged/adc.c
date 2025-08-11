@@ -1,7 +1,7 @@
 /*                           A D C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -74,7 +74,7 @@ static char adc_syntax4[] = "\
 
 
 void
-adc_set_dirty_flag(void)
+adc_set_dirty_flag(struct mged_state *s)
 {
 
     for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
@@ -88,49 +88,48 @@ adc_set_dirty_flag(void)
 
 
 void
-adc_set_scroll(void)
+adc_set_scroll(struct mged_state *s)
 {
-    struct mged_dm *save_m_dmp;
-    save_m_dmp = mged_curr_dm;
+    struct mged_dm *save_m_dmp = s->mged_curr_dm;
 
     for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
 	if (m_dmp->dm_adc_state == adc_state) {
-	    set_curr_dm(m_dmp);
-	    set_scroll();
+	    set_curr_dm(s, m_dmp);
+	    set_scroll(s);
 	    DMP_dirty = 1;
 	    dm_set_dirty(DMP, 1);
 	}
     }
 
-    set_curr_dm(save_m_dmp);
+    set_curr_dm(s, save_m_dmp);
 }
 
 
 static void
-adc_model_To_adc_view(void)
+adc_model_To_adc_view(struct mged_state *s)
 {
     MAT4X3PNT(adc_state->adc_pos_view, view_state->vs_gvp->gv_model2view, adc_state->adc_pos_model);
-    adc_state->adc_dv_x = adc_state->adc_pos_view[X] * GED_MAX;
-    adc_state->adc_dv_y = adc_state->adc_pos_view[Y] * GED_MAX;
+    adc_state->adc_dv_x = adc_state->adc_pos_view[X] * BV_MAX;
+    adc_state->adc_dv_y = adc_state->adc_pos_view[Y] * BV_MAX;
 }
 
 
 static void
-adc_grid_To_adc_view(void)
+adc_grid_To_adc_view(struct mged_state *s)
 {
     point_t model_pt = VINIT_ZERO;
     point_t view_pt;
 
     MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, model_pt);
     VADD2(adc_state->adc_pos_view, view_pt, adc_state->adc_pos_grid);
-    adc_state->adc_dv_x = adc_state->adc_pos_view[X] * GED_MAX;
-    adc_state->adc_dv_y = adc_state->adc_pos_view[Y] * GED_MAX;
+    adc_state->adc_dv_x = adc_state->adc_pos_view[X] * BV_MAX;
+    adc_state->adc_dv_y = adc_state->adc_pos_view[Y] * BV_MAX;
 }
 
 
 static void
-adc_view_To_adc_grid(void)
+adc_view_To_adc_grid(struct mged_state *s)
 {
     point_t model_pt = VINIT_ZERO;
     point_t view_pt;
@@ -141,61 +140,61 @@ adc_view_To_adc_grid(void)
 
 
 static void
-calc_adc_pos(void)
+calc_adc_pos(struct mged_state *s)
 {
     if (adc_state->adc_anchor_pos == 1) {
-	adc_model_To_adc_view();
-	adc_view_To_adc_grid();
+	adc_model_To_adc_view(s);
+	adc_view_To_adc_grid(s);
     } else if (adc_state->adc_anchor_pos == 2) {
-	adc_grid_To_adc_view();
+	adc_grid_To_adc_view(s);
 	MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_view);
     } else {
-	adc_view_To_adc_grid();
+	adc_view_To_adc_grid(s);
 	MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_view);
     }
 }
 
 
 static void
-calc_adc_a1(void)
+calc_adc_a1(struct mged_state *s)
 {
     if (adc_state->adc_anchor_a1) {
 	fastf_t dx, dy;
 	point_t view_pt;
 
 	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, adc_state->adc_anchor_pt_a1);
-	dx = view_pt[X] * GED_MAX - adc_state->adc_dv_x;
-	dy = view_pt[Y] * GED_MAX - adc_state->adc_dv_y;
+	dx = view_pt[X] * BV_MAX - adc_state->adc_dv_x;
+	dy = view_pt[Y] * BV_MAX - adc_state->adc_dv_y;
 
 	if (!ZERO(dx) || !ZERO(dy)) {
 	    adc_state->adc_a1 = RAD2DEG*atan2(dy, dx);
-	    adc_state->adc_dv_a1 = (1.0 - (adc_state->adc_a1 / 45.0)) * GED_MAX;
+	    adc_state->adc_dv_a1 = (1.0 - (adc_state->adc_a1 / 45.0)) * BV_MAX;
 	}
     }
 }
 
 
 static void
-calc_adc_a2(void)
+calc_adc_a2(struct mged_state *s)
 {
     if (adc_state->adc_anchor_a2) {
 	fastf_t dx, dy;
 	point_t view_pt;
 
 	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, adc_state->adc_anchor_pt_a2);
-	dx = view_pt[X] * GED_MAX - adc_state->adc_dv_x;
-	dy = view_pt[Y] * GED_MAX - adc_state->adc_dv_y;
+	dx = view_pt[X] * BV_MAX - adc_state->adc_dv_x;
+	dy = view_pt[Y] * BV_MAX - adc_state->adc_dv_y;
 
 	if (!ZERO(dx) || !ZERO(dy)) {
 	    adc_state->adc_a2 = RAD2DEG*atan2(dy, dx);
-	    adc_state->adc_dv_a2 = (1.0 - (adc_state->adc_a2 / 45.0)) * GED_MAX;
+	    adc_state->adc_dv_a2 = (1.0 - (adc_state->adc_a2 / 45.0)) * BV_MAX;
 	}
     }
 }
 
 
 static void
-calc_adc_dst(void)
+calc_adc_dst(struct mged_state *s)
 {
     if (adc_state->adc_anchor_dst) {
 	fastf_t dist;
@@ -204,18 +203,18 @@ calc_adc_dst(void)
 
 	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, adc_state->adc_anchor_pt_dst);
 
-	dx = view_pt[X] * GED_MAX - adc_state->adc_dv_x;
-	dy = view_pt[Y] * GED_MAX - adc_state->adc_dv_y;
+	dx = view_pt[X] * BV_MAX - adc_state->adc_dv_x;
+	dy = view_pt[Y] * BV_MAX - adc_state->adc_dv_y;
 	dist = sqrt(dx * dx + dy * dy);
-	adc_state->adc_dst = dist * INV_GED;
-	adc_state->adc_dv_dist = (dist / M_SQRT1_2) - GED_MAX;
+	adc_state->adc_dst = dist * INV_BV;
+	adc_state->adc_dv_dist = (dist / M_SQRT1_2) - BV_MAX;
     } else
-	adc_state->adc_dst = (adc_state->adc_dv_dist * INV_GED + 1.0) * M_SQRT1_2;
+	adc_state->adc_dst = (adc_state->adc_dv_dist * INV_BV + 1.0) * M_SQRT1_2;
 }
 
 
 static void
-draw_ticks(fastf_t angle)
+draw_ticks(struct mged_state *s, fastf_t angle)
 {
     fastf_t c_tdist;
     fastf_t d1, d2;
@@ -228,7 +227,7 @@ draw_ticks(fastf_t angle)
      */
     /* map -2048 - 2047 into 0 - 2048 * sqrt (2) */
     /* Tick distance */
-    c_tdist = ((fastf_t)(adc_state->adc_dv_dist) + GED_MAX) * M_SQRT1_2;
+    c_tdist = ((fastf_t)(adc_state->adc_dv_dist) + BV_MAX) * M_SQRT1_2;
 
     d1 = c_tdist * cos (angle);
     d2 = c_tdist * sin (angle);
@@ -285,7 +284,7 @@ draw_ticks(fastf_t angle)
  * Compute and display the angle/distance cursor.
  */
 void
-adcursor(void)
+adcursor(struct mged_state *s)
 {
     fastf_t x1, Y1;	/* not "y1", due to conflict with math lib */
     fastf_t x2, y2;
@@ -294,10 +293,10 @@ adcursor(void)
     fastf_t d1, d2;
     fastf_t angle1, angle2;
 
-    calc_adc_pos();
-    calc_adc_a1();
-    calc_adc_a2();
-    calc_adc_dst();
+    calc_adc_pos(s);
+    calc_adc_a1(s);
+    calc_adc_a2(s);
+    calc_adc_dst(s);
 
     dm_set_fg(DMP,
 		   color_scheme->cs_adc_line[0],
@@ -307,13 +306,13 @@ adcursor(void)
 
     /* Horizontal */
     dm_draw_line_2d(DMP,
-		    GED2PM1(GED_MIN), GED2PM1(adc_state->adc_dv_y) * dm_get_aspect(DMP),
-		    GED2PM1(GED_MAX), GED2PM1(adc_state->adc_dv_y) * dm_get_aspect(DMP));
+		    GED2PM1(BV_MIN), GED2PM1(adc_state->adc_dv_y) * dm_get_aspect(DMP),
+		    GED2PM1(BV_MAX), GED2PM1(adc_state->adc_dv_y) * dm_get_aspect(DMP));
 
     /* Vertical */
     dm_draw_line_2d(DMP,
-		    GED2PM1(adc_state->adc_dv_x), GED2PM1(GED_MAX),
-		    GED2PM1(adc_state->adc_dv_x), GED2PM1(GED_MIN));
+		    GED2PM1(adc_state->adc_dv_x), GED2PM1(BV_MAX),
+		    GED2PM1(adc_state->adc_dv_x), GED2PM1(BV_MIN));
 
     angle1 = adc_state->adc_a1 * DEG2RAD;
     angle2 = adc_state->adc_a2 * DEG2RAD;
@@ -363,14 +362,14 @@ adcursor(void)
 		   color_scheme->cs_adc_tick[0],
 		   color_scheme->cs_adc_tick[1],
 		   color_scheme->cs_adc_tick[2], 1, 1.0);
-    draw_ticks(0.0);
-    draw_ticks(angle1);
-    draw_ticks(angle2);
+    draw_ticks(s, 0.0);
+    draw_ticks(s, angle1);
+    draw_ticks(s, angle2);
 }
 
 
 static void
-mged_adc_reset(void)
+mged_adc_reset(struct mged_state *s)
 {
     adc_state->adc_dv_x = adc_state->adc_dv_y = 0;
     adc_state->adc_dv_a1 = adc_state->adc_dv_a2 = 0;
@@ -378,9 +377,9 @@ mged_adc_reset(void)
 
     VSETALL(adc_state->adc_pos_view, 0.0);
     MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_view);
-    adc_state->adc_dst = (adc_state->adc_dv_dist * INV_GED + 1.0) * M_SQRT1_2;
+    adc_state->adc_dst = (adc_state->adc_dv_dist * INV_BV + 1.0) * M_SQRT1_2;
     adc_state->adc_a1 = adc_state->adc_a2 = 45.0;
-    adc_view_To_adc_grid();
+    adc_view_To_adc_grid(s);
 
     VSETALL(adc_state->adc_anchor_pt_a1, 0.0);
     VSETALL(adc_state->adc_anchor_pt_a2, 0.0);
@@ -394,22 +393,22 @@ mged_adc_reset(void)
 
 
 static void
-adc_print_vars(void)
+adc_print_vars(struct mged_state *s)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     bu_vls_printf(&vls, "draw = %d\n", adc_state->adc_draw);
     bu_vls_printf(&vls, "a1 = %.15e\n", adc_state->adc_a1);
     bu_vls_printf(&vls, "a2 = %.15e\n", adc_state->adc_a2);
-    bu_vls_printf(&vls, "dst = %.15e\n", adc_state->adc_dst * view_state->vs_gvp->gv_scale * base2local);
+    bu_vls_printf(&vls, "dst = %.15e\n", adc_state->adc_dst * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
     bu_vls_printf(&vls, "odst = %d\n", adc_state->adc_dv_dist);
     bu_vls_printf(&vls, "hv = %.15e %.15e\n",
-		  adc_state->adc_pos_grid[X] * view_state->vs_gvp->gv_scale * base2local,
-		  adc_state->adc_pos_grid[Y] * view_state->vs_gvp->gv_scale * base2local);
+		  adc_state->adc_pos_grid[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		  adc_state->adc_pos_grid[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
     bu_vls_printf(&vls, "xyz = %.15e %.15e %.15e\n",
-		  adc_state->adc_pos_model[X] * base2local,
-		  adc_state->adc_pos_model[Y] * base2local,
-		  adc_state->adc_pos_model[Z] * base2local);
+		  adc_state->adc_pos_model[X] * s->dbip->dbi_base2local,
+		  adc_state->adc_pos_model[Y] * s->dbip->dbi_base2local,
+		  adc_state->adc_pos_model[Z] * s->dbip->dbi_base2local);
     bu_vls_printf(&vls, "x = %d\n", adc_state->adc_dv_x);
     bu_vls_printf(&vls, "y = %d\n", adc_state->adc_dv_y);
     bu_vls_printf(&vls, "anchor_pos = %d\n", adc_state->adc_anchor_pos);
@@ -417,29 +416,33 @@ adc_print_vars(void)
     bu_vls_printf(&vls, "anchor_a2 = %d\n", adc_state->adc_anchor_a2);
     bu_vls_printf(&vls, "anchor_dst = %d\n", adc_state->adc_anchor_dst);
     bu_vls_printf(&vls, "anchorpoint_a1 = %.15e %.15e %.15e\n",
-		  adc_state->adc_anchor_pt_a1[X] * base2local,
-		  adc_state->adc_anchor_pt_a1[Y] * base2local,
-		  adc_state->adc_anchor_pt_a1[Z] * base2local);
+		  adc_state->adc_anchor_pt_a1[X] * s->dbip->dbi_base2local,
+		  adc_state->adc_anchor_pt_a1[Y] * s->dbip->dbi_base2local,
+		  adc_state->adc_anchor_pt_a1[Z] * s->dbip->dbi_base2local);
     bu_vls_printf(&vls, "anchorpoint_a2 = %.15e %.15e %.15e\n",
-		  adc_state->adc_anchor_pt_a2[X] * base2local,
-		  adc_state->adc_anchor_pt_a2[Y] * base2local,
-		  adc_state->adc_anchor_pt_a2[Z] * base2local);
+		  adc_state->adc_anchor_pt_a2[X] * s->dbip->dbi_base2local,
+		  adc_state->adc_anchor_pt_a2[Y] * s->dbip->dbi_base2local,
+		  adc_state->adc_anchor_pt_a2[Z] * s->dbip->dbi_base2local);
     bu_vls_printf(&vls, "anchorpoint_dst = %.15e %.15e %.15e\n",
-		  adc_state->adc_anchor_pt_dst[X] * base2local,
-		  adc_state->adc_anchor_pt_dst[Y] * base2local,
-		  adc_state->adc_anchor_pt_dst[Z] * base2local);
-    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+		  adc_state->adc_anchor_pt_dst[X] * s->dbip->dbi_base2local,
+		  adc_state->adc_anchor_pt_dst[Y] * s->dbip->dbi_base2local,
+		  adc_state->adc_anchor_pt_dst[Z] * s->dbip->dbi_base2local);
+    Tcl_AppendResult(s->interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 }
 
 
 int
 f_adc (
-    ClientData UNUSED(clientData),
+    ClientData clientData,
     Tcl_Interp *interp,
     int argc,
     const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     const char *parameter;
     const char **argp = argv;
@@ -465,11 +468,11 @@ f_adc (
 	    adc_state->adc_draw = 1;
 
 	if (adc_auto) {
-	    mged_adc_reset();
+	    mged_adc_reset(s);
 	    adc_auto = 0;
 	}
 
-	adc_set_scroll();
+	adc_set_scroll(s);
 
 	return TCL_OK;
     }
@@ -512,7 +515,7 @@ f_adc (
 	    else
 		adc_state->adc_draw = 0;
 
-	    adc_set_scroll();
+	    adc_set_scroll(s);
 
 	    return TCL_OK;
 	}
@@ -535,8 +538,8 @@ f_adc (
 		else
 		    adc_state->adc_a1 = user_pt[0];
 
-		adc_state->adc_dv_a1 = (1.0 - (adc_state->adc_a1 / 45.0)) * GED_MAX;
-		adc_set_dirty_flag();
+		adc_state->adc_dv_a1 = (1.0 - (adc_state->adc_a1 / 45.0)) * BV_MAX;
+		adc_set_dirty_flag(s);
 	    }
 
 	    return TCL_OK;
@@ -560,8 +563,8 @@ f_adc (
 		else
 		    adc_state->adc_a2 = user_pt[0];
 
-		adc_state->adc_dv_a2 = (1.0 - (adc_state->adc_a2 / 45.0)) * GED_MAX;
-		adc_set_dirty_flag();
+		adc_state->adc_dv_a2 = (1.0 - (adc_state->adc_a2 / 45.0)) * BV_MAX;
+		adc_set_dirty_flag(s);
 	    }
 
 	    return TCL_OK;
@@ -573,7 +576,7 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "dst")) {
 	if (argc == 0) {
-	    bu_vls_printf(&vls, "%.15e", adc_state->adc_dst * view_state->vs_gvp->gv_scale * base2local);
+	    bu_vls_printf(&vls, "%.15e", adc_state->adc_dst * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
@@ -581,13 +584,13 @@ f_adc (
 	} else if (argc == 1) {
 	    if (!adc_state->adc_anchor_dst) {
 		if (incr_flag)
-		    adc_state->adc_dst += user_pt[0] / (view_state->vs_gvp->gv_scale * base2local);
+		    adc_state->adc_dst += user_pt[0] / (view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 		else
-		    adc_state->adc_dst = user_pt[0] / (view_state->vs_gvp->gv_scale * base2local);
+		    adc_state->adc_dst = user_pt[0] / (view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
-		adc_state->adc_dv_dist = (adc_state->adc_dst / M_SQRT1_2 - 1.0) * GED_MAX;
+		adc_state->adc_dv_dist = (adc_state->adc_dst / M_SQRT1_2 - 1.0) * BV_MAX;
 
-		adc_set_dirty_flag();
+		adc_set_dirty_flag(s);
 	    }
 
 	    return TCL_OK;
@@ -611,8 +614,8 @@ f_adc (
 		else
 		    adc_state->adc_dv_dist = user_pt[0];
 
-		adc_state->adc_dst = (adc_state->adc_dv_dist * INV_GED + 1.0) * M_SQRT1_2;
-		adc_set_dirty_flag();
+		adc_state->adc_dst = (adc_state->adc_dv_dist * INV_BV + 1.0) * M_SQRT1_2;
+		adc_set_dirty_flag(s);
 	    }
 
 	    return TCL_OK;
@@ -625,11 +628,11 @@ f_adc (
     if (BU_STR_EQUAL(parameter, "dh")) {
 	if (argc == 1) {
 	    if (!adc_state->adc_anchor_pos) {
-		adc_state->adc_pos_grid[X] += user_pt[0] / (view_state->vs_gvp->gv_scale * base2local);
-		adc_grid_To_adc_view();
+		adc_state->adc_pos_grid[X] += user_pt[0] / (view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+		adc_grid_To_adc_view(s);
 		MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_view);
 
-		adc_set_dirty_flag();
+		adc_set_dirty_flag(s);
 	    }
 
 	    return TCL_OK;
@@ -642,11 +645,11 @@ f_adc (
     if (BU_STR_EQUAL(parameter, "dv")) {
 	if (argc == 1) {
 	    if (!adc_state->adc_anchor_pos) {
-		adc_state->adc_pos_grid[Y] += user_pt[0] / (view_state->vs_gvp->gv_scale * base2local);
-		adc_grid_To_adc_view();
+		adc_state->adc_pos_grid[Y] += user_pt[0] / (view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+		adc_grid_To_adc_view(s);
 		MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_view);
 
-		adc_set_dirty_flag();
+		adc_set_dirty_flag(s);
 	    }
 
 	    return TCL_OK;
@@ -659,8 +662,8 @@ f_adc (
     if (BU_STR_EQUAL(parameter, "hv")) {
 	if (argc == 0) {
 	    bu_vls_printf(&vls, "%.15e %.15e",
-			  adc_state->adc_pos_grid[X] * view_state->vs_gvp->gv_scale * base2local,
-			  adc_state->adc_pos_grid[Y] * view_state->vs_gvp->gv_scale * base2local);
+			  adc_state->adc_pos_grid[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  adc_state->adc_pos_grid[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
@@ -668,18 +671,18 @@ f_adc (
 	} else if (argc == 2) {
 	    if (!adc_state->adc_anchor_pos) {
 		if (incr_flag) {
-		    adc_state->adc_pos_grid[X] += user_pt[X] / (view_state->vs_gvp->gv_scale * base2local);
-		    adc_state->adc_pos_grid[Y] += user_pt[Y] / (view_state->vs_gvp->gv_scale * base2local);
+		    adc_state->adc_pos_grid[X] += user_pt[X] / (view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+		    adc_state->adc_pos_grid[Y] += user_pt[Y] / (view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 		} else {
-		    adc_state->adc_pos_grid[X] = user_pt[X] / (view_state->vs_gvp->gv_scale * base2local);
-		    adc_state->adc_pos_grid[Y] = user_pt[Y] / (view_state->vs_gvp->gv_scale * base2local);
+		    adc_state->adc_pos_grid[X] = user_pt[X] / (view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+		    adc_state->adc_pos_grid[Y] = user_pt[Y] / (view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 		}
 
 		adc_state->adc_pos_grid[Z] = 0.0;
-		adc_grid_To_adc_view();
+		adc_grid_To_adc_view(s);
 		MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_model);
 
-		adc_set_dirty_flag();
+		adc_set_dirty_flag(s);
 	    }
 
 	    return TCL_OK;
@@ -692,11 +695,11 @@ f_adc (
     if (BU_STR_EQUAL(parameter, "dx")) {
 	if (argc == 1) {
 	    if (!adc_state->adc_anchor_pos) {
-		adc_state->adc_pos_model[X] += user_pt[0] * local2base;
-		adc_model_To_adc_view();
-		adc_view_To_adc_grid();
+		adc_state->adc_pos_model[X] += user_pt[0] * s->dbip->dbi_local2base;
+		adc_model_To_adc_view(s);
+		adc_view_To_adc_grid(s);
 
-		adc_set_dirty_flag();
+		adc_set_dirty_flag(s);
 	    }
 
 	    return TCL_OK;
@@ -709,11 +712,11 @@ f_adc (
     if (BU_STR_EQUAL(parameter, "dy")) {
 	if (argc == 1) {
 	    if (!adc_state->adc_anchor_pos) {
-		adc_state->adc_pos_model[Y] += user_pt[0] * local2base;
-		adc_model_To_adc_view();
-		adc_view_To_adc_grid();
+		adc_state->adc_pos_model[Y] += user_pt[0] * s->dbip->dbi_local2base;
+		adc_model_To_adc_view(s);
+		adc_view_To_adc_grid(s);
 
-		adc_set_dirty_flag();
+		adc_set_dirty_flag(s);
 	    }
 
 	    return TCL_OK;
@@ -726,11 +729,11 @@ f_adc (
     if (BU_STR_EQUAL(parameter, "dz")) {
 	if (argc == 1) {
 	    if (!adc_state->adc_anchor_pos) {
-		adc_state->adc_pos_model[Z] += user_pt[0] * local2base;
-		adc_model_To_adc_view();
-		adc_view_To_adc_grid();
+		adc_state->adc_pos_model[Z] += user_pt[0] * s->dbip->dbi_local2base;
+		adc_model_To_adc_view(s);
+		adc_view_To_adc_grid(s);
 
-		adc_set_dirty_flag();
+		adc_set_dirty_flag(s);
 	    }
 
 	    return TCL_OK;
@@ -742,7 +745,7 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "xyz")) {
 	if (argc == 0) {
-	    VSCALE(scaled_pos, adc_state->adc_pos_model, base2local);
+	    VSCALE(scaled_pos, adc_state->adc_pos_model, s->dbip->dbi_base2local);
 
 	    bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -750,7 +753,7 @@ f_adc (
 
 	    return TCL_OK;
 	} else if (argc == 3) {
-	    VSCALE(user_pt, user_pt, local2base);
+	    VSCALE(user_pt, user_pt, s->dbip->dbi_local2base);
 
 	    if (incr_flag) {
 		VADD2(adc_state->adc_pos_model, adc_state->adc_pos_model, user_pt);
@@ -758,10 +761,10 @@ f_adc (
 		VMOVE(adc_state->adc_pos_model, user_pt);
 	    }
 
-	    adc_model_To_adc_view();
-	    adc_view_To_adc_grid();
+	    adc_model_To_adc_view(s);
+	    adc_view_To_adc_grid(s);
 
-	    adc_set_dirty_flag();
+	    adc_set_dirty_flag(s);
 
 	    return TCL_OK;
 	}
@@ -785,12 +788,12 @@ f_adc (
 		    adc_state->adc_dv_x = user_pt[0];
 		}
 
-		adc_state->adc_pos_view[X] = adc_state->adc_dv_x * INV_GED;
-		adc_state->adc_pos_view[Y] = adc_state->adc_dv_y * INV_GED;
-		adc_view_To_adc_grid();
+		adc_state->adc_pos_view[X] = adc_state->adc_dv_x * INV_BV;
+		adc_state->adc_pos_view[Y] = adc_state->adc_dv_y * INV_BV;
+		adc_view_To_adc_grid(s);
 		MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_view);
 
-		adc_set_dirty_flag();
+		adc_set_dirty_flag(s);
 	    }
 
 	    return TCL_OK;
@@ -815,12 +818,12 @@ f_adc (
 		    adc_state->adc_dv_y = user_pt[0];
 		}
 
-		adc_state->adc_pos_view[X] = adc_state->adc_dv_x * INV_GED;
-		adc_state->adc_pos_view[Y] = adc_state->adc_dv_y * INV_GED;
-		adc_view_To_adc_grid();
+		adc_state->adc_pos_view[X] = adc_state->adc_dv_x * INV_BV;
+		adc_state->adc_pos_view[Y] = adc_state->adc_dv_y * INV_BV;
+		adc_view_To_adc_grid(s);
 		MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_view);
 
-		adc_set_dirty_flag();
+		adc_set_dirty_flag(s);
 	    }
 
 	    return TCL_OK;
@@ -848,8 +851,8 @@ f_adc (
 
 	    adc_state->adc_anchor_pos = i;
 
-	    calc_adc_pos();
-	    adc_set_dirty_flag();
+	    calc_adc_pos(s);
+	    adc_set_dirty_flag(s);
 	    return TCL_OK;
 	}
 
@@ -873,8 +876,8 @@ f_adc (
 	    else
 		adc_state->adc_anchor_a1 = 0;
 
-	    calc_adc_a1();
-	    adc_set_dirty_flag();
+	    calc_adc_a1(s);
+	    adc_set_dirty_flag(s);
 	    return TCL_OK;
 	}
 
@@ -885,7 +888,7 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "anchorpoint_a1")) {
 	if (argc == 0) {
-	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_a1, base2local);
+	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_a1, s->dbip->dbi_base2local);
 
 	    bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -893,7 +896,7 @@ f_adc (
 
 	    return TCL_OK;
 	} else if (argc == 3) {
-	    VSCALE(user_pt, user_pt, local2base);
+	    VSCALE(user_pt, user_pt, s->dbip->dbi_local2base);
 
 	    if (incr_flag) {
 		VADD2(adc_state->adc_anchor_pt_a1, adc_state->adc_anchor_pt_a1, user_pt);
@@ -901,8 +904,8 @@ f_adc (
 		VMOVE(adc_state->adc_anchor_pt_a1, user_pt);
 	    }
 
-	    calc_adc_a1();
-	    adc_set_dirty_flag();
+	    calc_adc_a1(s);
+	    adc_set_dirty_flag(s);
 	    return TCL_OK;
 	}
 
@@ -926,8 +929,8 @@ f_adc (
 	    else
 		adc_state->adc_anchor_a2 = 0;
 
-	    calc_adc_a2();
-	    adc_set_dirty_flag();
+	    calc_adc_a2(s);
+	    adc_set_dirty_flag(s);
 	    return TCL_OK;
 	}
 
@@ -938,7 +941,7 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "anchorpoint_a2")) {
 	if (argc == 0) {
-	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_a2, base2local);
+	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_a2, s->dbip->dbi_base2local);
 
 	    bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -946,7 +949,7 @@ f_adc (
 
 	    return TCL_OK;
 	} else if (argc == 3) {
-	    VSCALE(user_pt, user_pt, local2base);
+	    VSCALE(user_pt, user_pt, s->dbip->dbi_local2base);
 
 	    if (incr_flag) {
 		VADD2(adc_state->adc_anchor_pt_a2, adc_state->adc_anchor_pt_a2, user_pt);
@@ -954,8 +957,8 @@ f_adc (
 		VMOVE(adc_state->adc_anchor_pt_a2, user_pt);
 	    }
 
-	    calc_adc_a2();
-	    adc_set_dirty_flag();
+	    calc_adc_a2(s);
+	    adc_set_dirty_flag(s);
 	    return TCL_OK;
 	}
 
@@ -979,8 +982,8 @@ f_adc (
 	    } else
 		adc_state->adc_anchor_dst = 0;
 
-	    calc_adc_dst();
-	    adc_set_dirty_flag();
+	    calc_adc_dst(s);
+	    adc_set_dirty_flag(s);
 	    return TCL_OK;
 	}
 
@@ -991,7 +994,7 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "anchorpoint_dst")) {
 	if (argc == 0) {
-	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_dst, base2local);
+	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_dst, s->dbip->dbi_base2local);
 
 	    bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -999,7 +1002,7 @@ f_adc (
 
 	    return TCL_OK;
 	} else if (argc == 3) {
-	    VSCALE(user_pt, user_pt, local2base);
+	    VSCALE(user_pt, user_pt, s->dbip->dbi_local2base);
 
 	    if (incr_flag) {
 		VADD2(adc_state->adc_anchor_pt_dst, adc_state->adc_anchor_pt_dst, user_pt);
@@ -1007,8 +1010,8 @@ f_adc (
 		VMOVE(adc_state->adc_anchor_pt_dst, user_pt);
 	    }
 
-	    calc_adc_dst();
-	    adc_set_dirty_flag();
+	    calc_adc_dst(s);
+	    adc_set_dirty_flag(s);
 	    return TCL_OK;
 	}
 
@@ -1019,9 +1022,9 @@ f_adc (
 
     if (BU_STR_EQUAL(parameter, "reset")) {
 	if (argc == 0) {
-	    mged_adc_reset();
+	    mged_adc_reset(s);
 
-	    adc_set_dirty_flag();
+	    adc_set_dirty_flag(s);
 	    return TCL_OK;
 	}
 
@@ -1030,7 +1033,7 @@ f_adc (
     }
 
     if (BU_STR_EQUAL(parameter, "vars")) {
-	adc_print_vars();
+	adc_print_vars(s);
 	return TCL_OK;
     }
 

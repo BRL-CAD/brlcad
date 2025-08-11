@@ -1,7 +1,7 @@
 #                    E O B J M E N U . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2024 United States Government as represented by
+# Copyright (c) 2004-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -28,11 +28,11 @@
 #	Ensure that all commands that this script uses without defining
 #	are provided by the calling application
 #
-check_externs "_mged_x _mged_press _mged_aip _mged_M"
+check_externs "_mged_solid_report _mged_press _mged_aip _mged_M"
 
 proc eobjmenu {} {
 
-    if {![llength [_mged_x -1]]} {
+    if {![llength [_mged_solid_report -1]]} {
 	puts "No objects are currently being displayed"
 	return
     }
@@ -67,7 +67,7 @@ proc eobjmenu {} {
     frame .om.meat
     listbox .om.meat.objects -yscrollcommand {.om.meat.slider set}
     set i 0
-    foreach word [_mged_x -1] {
+    foreach word [_mged_solid_report -1] {
 	.om.meat.objects insert end $word
 	incr i
     }

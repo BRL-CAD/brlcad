@@ -1,7 +1,7 @@
 /*                  F A C T S H A N D L E R . H
  * BRL-CAD
  *
- * Copyright (c) 2023-2024 United States Government as represented by
+ * Copyright (c) 2023-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
  * multiple textual sections of information about the graphics file.
  *
  * The code will automatically layout the information in its designated section after
- * retreiving said information from the InformationGatherer helper file.
+ * retrieving said information from the InformationGatherer helper file.
  */
 
 class InformationGatherer;

@@ -5,7 +5,7 @@ if(MSVC)
   add_library(bs SHARED bootstrap.cpp)
 endif(MSVC)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

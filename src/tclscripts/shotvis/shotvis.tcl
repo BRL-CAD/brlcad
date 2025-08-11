@@ -1,7 +1,7 @@
 #                     S H O T V I S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2019-2024 United States Government as represented by
+# Copyright (c) 2019-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -1188,7 +1188,7 @@ namespace eval shotvis {
 	return $o
     }
 
-    # make a tranformation matrix that rotates deg around the axis defined by the given pt and dir
+    # make a transformation matrix that rotates deg around the axis defined by the given pt and dir
     proc mat_arb_rot {axis_pt axis_dir deg} {
 	global DEG2RAD
 

@@ -2,7 +2,6 @@
 
 #export PATH=~/brlcad.trunk/.build/bin:$PATH
 #export DYLD_LIBRARY_PATH=~/brlcad.trunk/.build/lib
-export LIBRT_BOT_MINTIE=1
 
 DB="share/db/m35.g"
 

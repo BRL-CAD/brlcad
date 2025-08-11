@@ -1,4 +1,5 @@
-set(bu_headers
+set(
+  bu_headers
   app.h
   assert.h
   avs.h
@@ -47,12 +48,12 @@ set(bu_headers
   vfont.h
   vlb.h
   vls.h
-  )
-BRLCAD_MANAGE_FILES(bu_headers ${INCLUDE_DIR}/brlcad/bu REQUIRED libbu)
+)
+brlcad_manage_files(bu_headers ${INCLUDE_DIR}/brlcad/bu REQUIRED libbu)
 
-CMAKEFILES(CMakeLists.txt)
-CMAKEFILES(column.h)
-CMAKEFILES(tbl.h)
+cmakefiles(CMakeLists.txt)
+cmakefiles(column.h)
+cmakefiles(tbl.h)
 
 # Local Variables:
 # tab-width: 8

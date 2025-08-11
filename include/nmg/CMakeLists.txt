@@ -1,4 +1,5 @@
-set(nmg_headers
+set(
+  nmg_headers
   check.h
   debug.h
   defines.h
@@ -20,10 +21,10 @@ set(nmg_headers
   topology.h
   vertex.h
   visit.h
-  )
-BRLCAD_MANAGE_FILES(nmg_headers ${INCLUDE_DIR}/brlcad/nmg REQUIRED libnmg)
+)
+brlcad_manage_files(nmg_headers ${INCLUDE_DIR}/brlcad/nmg REQUIRED libnmg)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

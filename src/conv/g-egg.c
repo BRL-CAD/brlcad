@@ -1,7 +1,7 @@
 /*                         G - E G G . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2024 United States Government as represented by
+ * Copyright (c) 2003-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,6 +53,7 @@ struct egg_conv_data {
     FILE *fp;
     unsigned long tot_polygons;
     struct bn_tol tol;
+    struct bu_list *vlfree;
 };
 
 
@@ -85,7 +86,7 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &conv_data->tol);
+    nmg_triangulate_model(m, conv_data->vlfree, &conv_data->tol);
 
     /* Write pertinent info for this region */
     fprintf(conv_data->fp, "  <VertexPool> %s {\n", (region_name+1));
@@ -192,14 +193,15 @@ main(int argc, char *argv[])
 
     int i, use_mc = 0, use_bottess = 0;
     struct egg_conv_data conv_data;
-    struct gcv_region_end_data gcvwriter = {nmg_to_egg, NULL};
+    struct gcv_region_end_data gcvwriter = {nmg_to_egg, NULL, NULL};
 
+    gcvwriter.vlfree = &rt_vlfree;
     gcvwriter.client_data = (void *)&conv_data;
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
-    tree_state = rt_initial_tree_state;	/* struct copy */
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &conv_data.tol;
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
@@ -223,7 +225,7 @@ main(int argc, char *argv[])
 
     /* make empty NMG model */
     the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    conv_data.vlfree = &rt_vlfree;
 
     /* Get command line arguments. */
     while ((i = bu_getopt(argc, argv, "a:89n:o:r:vx:D:P:X:h?")) != -1) {

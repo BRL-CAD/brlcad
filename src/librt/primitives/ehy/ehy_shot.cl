@@ -40,23 +40,23 @@ int ehy_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const ui
     b = 2.0 * (dp.z * (pp.z + cp + 1) - (2 * cp + 1) * (dp.x * pp.x + dp.y * pp.y));
     c = pp.z * pp.z - (2 * cp + 1) * (pp.x * pp.x + pp.y * pp.y - 1.0) + 2 * (cp + 1) * pp.z;
     if (!NEAR_ZERO(a, RT_PCOEF_TOL)) {
-        disc = b*b - 4 * a * c;
-        if (disc > 0.0) {
-            disc = sqrt(disc);
+	disc = b*b - 4 * a * c;
+	if (disc > 0.0) {
+	    disc = sqrt(disc);
 
-            k1 = (-b + disc) / (2.0 * a);
-            k2 = (-b - disc) / (2.0 * a);
+	    k1 = (-b + disc) / (2.0 * a);
+	    k2 = (-b - disc) / (2.0 * a);
 
-            /*
-             * k1 and k2 are potential solutions to intersection with
-             * side.  See if they fall in range.
-             */
-             hitp->hit_vpriv = pp + k1 * dp;		// hit'
-             if (hitp->hit_vpriv.z >= -1.0
+	    /*
+	     * k1 and k2 are potential solutions to intersection with
+	     * side.  See if they fall in range.
+	     */
+	     hitp->hit_vpriv = pp + k1 * dp;		// hit'
+	     if (hitp->hit_vpriv.z >= -1.0
 		 && hitp->hit_vpriv.z <= 0.0) {
 		hitp->hit_dist = k1;
 		hitp->hit_surfno = EHY_NORM_BODY;	// compute N
-                hitp++;
+		hitp++;
 	     }
 
 	     hitp->hit_vpriv = pp + k2 * dp;		// hit'
@@ -64,18 +64,18 @@ int ehy_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const ui
 		 && hitp->hit_vpriv.z <= 0.0) {
 		hitp->hit_dist = k2;
 		hitp->hit_surfno = EHY_NORM_BODY;	// compute N
-                hitp++;
+		hitp++;
 	     }
-        }
+	}
     } else if (!NEAR_ZERO(b, RT_PCOEF_TOL)) {
-        k1 = -c/b;
+	k1 = -c/b;
 	hitp->hit_vpriv = pp + k1 * dp;			// hit'
 	if (hitp->hit_vpriv.z >= -1.0
 	    && hitp->hit_vpriv.z <= 0.0) {   // hit'
 	    hitp->hit_dist = k1;
 	    hitp->hit_surfno = EHY_NORM_BODY;		// compute N
 	    hitp++;
-        }
+	}
     }
 
     /*
@@ -83,20 +83,20 @@ int ehy_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const ui
      */
     /* check top plate */
     if (hitp == &hits[1] && !ZERO(dp.z)) {
-        // 1 hit so far, this is worthwhile
-        k1 = -pp.z/dp.z;    // top plate
+	// 1 hit so far, this is worthwhile
+	k1 = -pp.z/dp.z;    // top plate
 
 	hitp->hit_vpriv = pp + k1 * dp;   /* hit' */
-        if (hitp->hit_vpriv.x * hitp->hit_vpriv.x +
+	if (hitp->hit_vpriv.x * hitp->hit_vpriv.x +
 	    hitp->hit_vpriv.y * hitp->hit_vpriv.y <= 1.0) {
 	    hitp->hit_dist = k1;
 	    hitp->hit_surfno = EHY_NORM_TOP;   // -H
 	    hitp++;
-        }
+	}
     }
 
     if (hitp != &hits[2]) {
-        return 0; // MISS
+	return 0; // MISS
     }
 
     if (hits[0].hit_dist < hits[1].hit_dist) {

@@ -1,7 +1,7 @@
 /*                           G C V . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2024 United States Government as represented by
+ * Copyright (c) 2015-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,12 +19,12 @@
  */
 /** @file gcv.c
  *
- * Brief description
+ * Main header for LIBGCV.  Includes all available public headers.
  *
  */
 
-
 #include "common.h"
+
 #include <string.h>
 
 #include "vmath.h"
@@ -46,6 +46,7 @@
 #include "rt/global.h"
 #include "rt/resource.h"
 #include "gcv/api.h"
+
 
 struct gcv_context_internal {
     struct bu_ptbl *handles;

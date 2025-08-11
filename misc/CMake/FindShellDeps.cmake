@@ -1,7 +1,7 @@
 #             F I N D S H E L L D E P S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2024 United States Government as represented by
+# Copyright (c) 2011-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,14 @@ find_program(CP_EXEC NAMES cp DOC "path to copy executable")
 find_program(RM_EXEC NAMES rm DOC "path to remove executable")
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(SHELL_SUPPORTED DEFAULT_MSG SH_EXEC CP_EXEC MV_EXEC RM_EXEC)
+find_package_handle_standard_args(
+  SHELL_SUPPORTED
+  DEFAULT_MSG
+  SH_EXEC
+  CP_EXEC
+  MV_EXEC
+  RM_EXEC
+)
 mark_as_advanced(SH_EXEC)
 mark_as_advanced(MV_EXEC)
 mark_as_advanced(CP_EXEC)

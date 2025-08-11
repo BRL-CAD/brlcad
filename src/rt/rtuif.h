@@ -1,7 +1,7 @@
 /*                         R T U I F . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
  * Private API header for developing applications that utilize rt's
  * common Ray Trace User Interface Framework (RTUIF).
  *
- * While not (yet) public API, it's a useable interface for rapidly
+ * While not (yet) public API, it's a usable interface for rapidly
  * developing applications involving grids of rays.  It provides the
  * same command-line interface as 'rt' and is the foundation for
  * numerous BRL-CAD ray tracing based applications such as rtweight,

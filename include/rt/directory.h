@@ -1,7 +1,7 @@
 /*                     D I R E C T O R Y . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,6 +55,9 @@ __BEGIN_DECLS
  * db_rename(), so that it can be requeued on the correct linked list,
  * based on new hash.  This should be followed by rt_db_put_internal()
  * on the object to modify the on-disk name.
+ *
+ * Note that d_minor_type and the corresponding idb_minor_type of an
+ * rt_db_internal associated with a given directory structure should match.
  */
 struct directory {
     uint32_t d_magic;   /**< @brief Magic number */

@@ -1,7 +1,7 @@
 /*                        S N A P . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,6 +18,8 @@
  * information.
  */
 /** @addtogroup bv_snap
+ *
+ * @brief Logic for snapping sample points to view elements and grids.
  *
  */
 /** @{ */

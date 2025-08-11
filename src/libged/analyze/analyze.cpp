@@ -1,7 +1,7 @@
 /*                      A N A L Y Z E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2024 United States Government as represented by
+ * Copyright (c) 2020-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -396,12 +396,9 @@ clear_obj(struct ged *gedp, const char *name)
 {
     struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&tmpstr, "%s", bu_vls_cstr(gedp->ged_result_str));
-    const char *av[4];
-    av[0] = "kill";
-    av[1] = "-f";
-    av[2] = "-q";
+    const char *av[4] = {"kill", "-f", "-q", NULL};
     av[3] = name;
-    ged_exec(gedp, 4, (const char **)av);
+    ged_exec_kill(gedp, 4, (const char **)av);
     bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&tmpstr));
 }
 
@@ -412,11 +409,10 @@ mv_obj(struct ged *gedp, const char *n1, const char *n2)
     clear_obj(gedp, n2);
     struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&tmpstr, "%s", bu_vls_cstr(gedp->ged_result_str));
-    const char *av[3];
-    av[0] = "mv";
+    const char *av[3] = {"mv", NULL, NULL};
     av[1] = n1;
     av[2] = n2;
-    ged_exec(gedp, 3, (const char **)av);
+    ged_exec_mv(gedp, 3, (const char **)av);
     bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&tmpstr));
 }
 

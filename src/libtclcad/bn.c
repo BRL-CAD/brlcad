@@ -1,7 +1,7 @@
 /*                             B N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1321,19 +1321,6 @@ bn_cmd_random(ClientData UNUSED(clientData),
     Tcl_AppendResult(interp, buf, NULL);
     return TCL_OK;
 }
-
-
-void
-tclcad_bn_mat_print(Tcl_Interp *interp,
-		 const char *title,
-		 const mat_t m)
-{
-    char obuf[1024];	/* snprintf may be non-PARALLEL */
-
-    bn_mat_print_guts(title, m, obuf, 1024);
-    Tcl_AppendResult(interp, obuf, "\n", (char *)NULL);
-}
-
 
 void
 tclcad_bn_setup(Tcl_Interp *interp)

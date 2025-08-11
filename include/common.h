@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -413,7 +413,7 @@ typedef ptrdiff_t ssize_t;
  * constitute a return.  Functions that (always) infinite loop can be
  * considered functions that do not return.  Functions that do not
  * return should have a void return type.  This option is a hint to
- * compilers and static analyers, to reduce false positive reporting.
+ * compilers and static analyzers, to reduce false positive reporting.
  */
 #ifdef NORETURN
 #  undef NORETURN
@@ -472,6 +472,12 @@ typedef _TCHAR TCHAR;
 #  define __STDC_VERSION__ 0
 #endif
 
+
+/* workaround for system Eigen on Mac which uses alloca without proper includes */
+#if defined(__APPLE__) && !defined(alloca)
+#  define alloca(x) malloc(x)
+#endif
+
 /**
  * globally disable certain warnings.  do NOT add new warnings here
  * without discussion and research.  only warnings that cannot be
@@ -498,7 +504,7 @@ typedef _TCHAR TCHAR;
 
 /* warning C5105: macro expansion producing 'defined' has undefined behavior
  *
- * this appears to be an erronous issue in the latest msvc
+ * this appears to be an erroneous issue in the latest msvc
  * pre-processor that has support for the new C17 standard, which
  * triggers warnings in Windows SDK headers (e.g., winbase.h) that
  * use the defined operator in certain macros.

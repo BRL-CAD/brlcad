@@ -1,7 +1,7 @@
 /*                      Q G E D A P P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2024 United States Government as represented by
+ * Copyright (c) 2014-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,34 +37,38 @@
 #include "fbserv.h"
 #include "QgEdFilter.h"
 
-void
-qged_pre_opendb_clbk(struct ged *UNUSED(gedp), void *UNUSED(ctx))
+int
+qged_pre_opendb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *UNUSED(ctx))
 {
+    return BRLCAD_OK;
 }
 
-void
-qged_post_opendb_clbk(struct ged *UNUSED(gedp), void *ctx)
+int
+qged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *ctx)
 {
     QgEdApp *a = (QgEdApp *)ctx;
     emit a->dbi_update(a->mdl->gedp->dbip);
     if (!a->w)
-	return;
+	return BRLCAD_OK;
     if (!a->mdl->gedp->dbip) {
 	a->w->statusBar()->showMessage("open failed");
-	return;
+	return BRLCAD_OK;
     }
     QString fileName(a->mdl->gedp->dbip->dbi_filename);
     a->w->statusBar()->showMessage(fileName);
+    return BRLCAD_OK;
 }
 
-void
-qged_pre_closedb_clbk(struct ged *UNUSED(gedp), void *UNUSED(ctx))
+int
+qged_pre_closedb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *UNUSED(ctx))
 {
+    return BRLCAD_OK;
 }
 
-void
-qged_post_closedb_clbk(struct ged *UNUSED(gedp), void *UNUSED(ctx))
+int
+qged_post_closedb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *UNUSED(ctx))
 {
+    return BRLCAD_OK;
 }
 
 extern "C" void
@@ -137,7 +141,7 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
     // time to call the end callback (if any)
     if (!p->stdin_active && !p->stdout_active && !p->stderr_active) {
 	if (p->end_clbk)
-	    p->end_clbk(0, p->end_clbk_data);
+	    p->end_clbk(0, NULL, NULL, p->end_clbk_data);
     }
 
     emit ca->view_update(QG_VIEW_REFRESH);
@@ -157,13 +161,8 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
 
     /* Let LIBRT know to process comb instance specifiers in paths */
     bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
-    /* Let LIBGED know to initialize its instance state container */
-    bu_setenv("LIBGED_DBI_STATE", "1", 1);
-    /* Let LIBGED know to use new command forms */
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
 
     mdl = new QgModel();
-    BU_LIST_INIT(&RTG.rtg_vlfree);
 
     // Install a filter to handle the top level key bindings and other
     // interactive event management requiring global application knowledge.
@@ -171,9 +170,6 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     installEventFilter(efilter);
 
     // Use the dark theme from https://github.com/Alexhuszagh/BreezeStyleSheets
-    //
-    // TODO - need to fix a bug with the theme - observing it in qged.  See
-    // https://github.com/Alexhuszagh/BreezeStyleSheets/issues/25
     QFile file(":/dark.qss");
     file.open(QFile::ReadOnly | QFile::Text);
     QTextStream stream(&file);
@@ -190,10 +186,10 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     gedp->ged_gvp = w->CurrentView();
 
     // Set up the connections needed for embedded raytracing
-    gedp->fbs_is_listening = &qdm_is_listening;
-    gedp->fbs_listen_on_port = &qdm_listen_on_port;
-    gedp->fbs_open_server_handler = &qdm_open_server_handler;
-    gedp->fbs_close_server_handler = &qdm_close_server_handler;
+    gedp->ged_fbs->fbs_is_listening = &qdm_is_listening;
+    gedp->ged_fbs->fbs_listen_on_port = &qdm_listen_on_port;
+    gedp->ged_fbs->fbs_open_server_handler = &qdm_open_server_handler;
+    gedp->ged_fbs->fbs_close_server_handler = &qdm_close_server_handler;
 
     // Unfortunately, there are technical differences involved with
     // the embedded fb mechanisms depending on whether we are using
@@ -201,13 +197,13 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     int type = w->CurrentDisplay()->view_type();
 #ifdef BRLCAD_OPENGL
     if (type == QgView_GL) {
-	gedp->fbs_open_client_handler = &qdm_open_client_handler;
+	gedp->ged_fbs->fbs_open_client_handler = &qdm_open_client_handler;
     }
 #endif
     if (type == QgView_SW) {
-	gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
+	gedp->ged_fbs->fbs_open_client_handler = &qdm_open_sw_client_handler;
     }
-    gedp->fbs_close_client_handler = &qdm_close_client_handler;
+    gedp->ged_fbs->fbs_close_client_handler = &qdm_close_client_handler;
 
     // Read the saved window size, if any
     QSettings settings("BRL-CAD", "QGED");
@@ -247,11 +243,10 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     }
 
     // Assign QGED specific open/close db handlers to the gedp
-    mdl->gedp->ged_pre_opendb_callback = &qged_pre_opendb_clbk;
-    mdl->gedp->ged_post_opendb_callback = &qged_post_opendb_clbk;
-    mdl->gedp->ged_pre_closedb_callback = &qged_pre_closedb_clbk;
-    mdl->gedp->ged_post_closedb_callback = &qged_post_closedb_clbk;
-    mdl->gedp->ged_db_callback_udata = (void *)qApp;
+    ged_clbk_set(mdl->gedp, "opendb", BU_CLBK_PRE, &qged_pre_opendb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->gedp, "opendb", BU_CLBK_POST, &qged_post_opendb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->gedp, "closedb", BU_CLBK_PRE, &qged_pre_closedb_clbk, (void *)qApp);
+    ged_clbk_set(mdl->gedp, "closedb", BU_CLBK_POST, &qged_post_closedb_clbk, (void *)qApp);
 
     // Assign QGED specific I/O handlers to the gedp
     mdl->gedp->ged_create_io_handler = &qt_create_io_handler;
@@ -311,7 +306,7 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
 
 QgEdApp::~QgEdApp() {
     delete mdl;
-    // TODO - free RTG.rtg_vlfree?
+    // TODO - free rt_vlfree?
 }
 
 void
@@ -398,18 +393,23 @@ qged_view_update(struct ged *gedp)
     return view_flags;
 }
 
-extern "C" void
-raytrace_start(int val, void *ctx)
+extern "C" int
+raytrace_start(int UNUSED(argc), const char **UNUSED(argv), void *valp, void *ctx)
 {
+    if (!valp)
+	return BRLCAD_OK;
+    int val = *(int *)valp;
     QgEdApp *ap = (QgEdApp *)ctx;
     ap->w->IndicateRaytraceStart(val);
+    return BRLCAD_OK;
 }
 
-extern "C" void
-raytrace_done(int val, void *ctx)
+extern "C" int
+raytrace_done(int UNUSED(argc), const char **UNUSED(argv), void *UNUSED(valp), void *ctx)
 {
     QgEdApp *ap = (QgEdApp *)ctx;
-    ap->w->IndicateRaytraceDone(val);
+    ap->w->IndicateRaytraceDone();
+    return BRLCAD_OK;
 }
 
 int
@@ -444,18 +444,17 @@ QgEdApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	// If we need command-specific subprocess awareness for
 	// a command, set it up
 	if (BU_STR_EQUAL(argv[0], "ert")) {
-	    gedp->ged_subprocess_init_callback = &raytrace_start;
-	    gedp->ged_subprocess_end_callback = &raytrace_done;
-	    gedp->ged_subprocess_clbk_context = (void *)this;
+	    ged_clbk_set(gedp, "ert", BU_CLBK_DURING, &raytrace_start, (void *)this);
+	    ged_clbk_set(gedp, "ert", BU_CLBK_LINGER, &raytrace_done, (void *)this);
 	}
 
 	// Ask the model to execute the command
 	ret = mdl->run_cmd(msg, argc, argv);
 
-	gedp->ged_subprocess_init_callback = NULL;
-	gedp->ged_subprocess_end_callback = NULL;
-	gedp->ged_subprocess_clbk_context = NULL;
-
+	if (BU_STR_EQUAL(argv[0], "ert")) {
+	    ged_clbk_set(gedp, "ert", BU_CLBK_DURING, NULL, NULL);
+	    ged_clbk_set(gedp, "ert", BU_CLBK_LINGER, NULL, NULL);
+	}
     } else {
 	for (int i = 0; i < argc; i++) {
 	    char *tstr = bu_strdup(argv[i]);
@@ -538,11 +537,13 @@ QgEdApp::run_qcmd(const QString &command)
     QgConsole *console = w->console;
     const char *cmd = bu_strdup(command.toLocal8Bit().data());
 
+    // TODO - replace with "quit" cmd libged callback
     if (BU_STR_EQUAL(cmd, "q")) {
 	w->closeEvent(NULL);
 	bu_exit(0, "exit");
     }
 
+    // TODO - replace with "clear" cmd libged callback
     if (BU_STR_EQUAL(cmd, "clear")) {
 	if (console) {
 	    console->clear();

@@ -1,7 +1,7 @@
 /*                        B O T . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,7 +65,6 @@ struct bot_specific {
     struct bu_bitv *bot_facemode;
     void *bot_facelist; /* head of linked list */
     void **bot_facearray;       /* head of face array */
-    size_t bot_tri_per_piece;   /* log # tri per piece. 1 << bot_ltpp is tri per piece */
     void *tie; /* FIXME: horrible blind cast, points to one in rt_bot_internal */
 
 #ifdef USE_OPENCL
@@ -75,19 +74,25 @@ struct bot_specific {
 #endif
 };
 
-RT_EXPORT extern void rt_bot_prep_pieces(struct bot_specific    *bot,
-					 struct soltab          *stp,
-					 size_t                 ntri,
-					 const struct bn_tol    *tol);
 
-RT_EXPORT extern size_t rt_botface(struct soltab                *stp,
-				   struct bot_specific  *bot,
-				   fastf_t                      *ap,
-				   fastf_t                      *bp,
-				   fastf_t                      *cp,
-				   size_t                       face_no,
-				   const struct bn_tol  *tol);
+// this is really close to struct tri_specific in plane.h
+// TODO: see if that ever gets serialized, and if it doesn't
+// then change that to this - memory coherency win
+// sizeof(triangle_s) should be 15/16 * (4/8) bytes
+typedef struct _triangle_s {
+    point_t A;
+    vect_t AB;
+    vect_t AC;
+    vect_t face_norm;
+    fastf_t face_norm_scalar;
+    fastf_t *norms;
+    size_t face_id;
+} triangle_s;
 
+// BoT specific editing info
+struct rt_bot_edit {
+    int bot_verts[3];           /* vertices for the BOT solid */
+};
 
 /* bot.c */
 RT_EXPORT extern size_t rt_bot_get_edge_list(const struct rt_bot_internal *bot,
@@ -142,8 +147,6 @@ RT_EXPORT extern struct rt_bot_internal * rt_bot_merge(size_t num_bots, const st
 
 /* defined in bot.c */
 /* TODO - these global variables need to be rolled in to the rt_i structure */
-RT_EXPORT extern size_t rt_bot_minpieces;
-RT_EXPORT extern size_t rt_bot_tri_per_piece;
 RT_EXPORT extern int rt_bot_sort_faces(struct rt_bot_internal *bot,
 				       size_t tris_per_piece);
 RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,
@@ -166,13 +169,18 @@ RT_EXPORT extern int rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct r
 struct rt_bot_repair_info {
     fastf_t max_hole_area;
     fastf_t max_hole_area_percent;
+    int strict;
 };
 
 /* For now the default upper hole size limit will be 5 percent of the mesh
  * area, but calling codes should not rely on that value to remain consistent
  * between versions.
+ *
+ * By default, don't return a mesh that can't pass the lint solid raytracing
+ * tests.  This isn't always desirable - sometimes manifold is enough even if
+ * the mesh is not otherwise well behaved - so it is an user settable param.
  */
-#define RT_BOT_REPAIR_INFO_INIT {0.0, 5.0};
+#define RT_BOT_REPAIR_INFO_INIT {0.0, 5.0, 1};
 
 /* Function to attempt repairing a non-manifold BoT.  Returns 1 if ibot was
  * already manifold (obot will contain NULL), 0 if a manifold BoT was created

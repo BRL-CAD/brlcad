@@ -1,4 +1,4 @@
-if (TARGET libged AND BUILD_TESTING)
+if(TARGET libged AND BUILD_TESTING)
   # This program is intended to test the usability of BRL-CAD's libraries without
   # the internal compile-time APIs - i.e., to simulate what a BRL-CAD client code
   # might experience when trying to use the BRL-CAD libraries.
@@ -8,7 +8,6 @@ if (TARGET libged AND BUILD_TESTING)
   # directories or compile definitions as a precaution:
   set_property(DIRECTORY PROPERTY COMPILE_DEFINITIONS "")
   set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES "")
-
 
   # NOTE - for the moment we are not overriding the compile flags (optimization,
   # warnings, etc.) from the parent build, although eventually we should probably
@@ -26,26 +25,22 @@ if (TARGET libged AND BUILD_TESTING)
   # Include only the folder with the build-output headers (this will be a
   # superset of what will be installed, but is the best available option without
   # performing an actual install step.)
-  if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
-    target_include_directories(cad_user BEFORE PUBLIC "${CMAKE_BINARY_DIR}/$<CONFIG>/${INCLUDE_DIR}/brlcad")
-  else(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
-    target_include_directories(cad_user BEFORE PUBLIC "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad")
-  endif(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
+  target_include_directories(cad_user BEFORE PUBLIC "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad")
 
   set_target_properties(cad_user PROPERTIES FOLDER "BRL-CAD Regression Tests/user")
 
-  if (TARGET moss.g)
+  if(TARGET moss.g)
     set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-user.log")
-    BRLCAD_REGRESSION_TEST(regress-user "cad_user;moss.g" EXEC cad_user)
-    DISTCLEAN(${LOG_FILE})
-  endif (TARGET moss.g)
-endif (TARGET libged AND BUILD_TESTING)
+    brlcad_regression_test(regress-user "cad_user;moss.g" EXEC cad_user)
+    distclean(${LOG_FILE})
+  endif(TARGET moss.g)
+endif(TARGET libged AND BUILD_TESTING)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   cad_user.c
   regress-user.cmake.in
-  )
+)
 
 # Local Variables:
 # tab-width: 8

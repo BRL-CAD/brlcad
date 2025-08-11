@@ -1,4 +1,5 @@
-set(LIBNMG_SOURCES
+set(
+  LIBNMG_SOURCES
   nurb_basis.c
   nurb_bezier.c
   nurb_bound.c
@@ -47,16 +48,16 @@ set(LIBNMG_SOURCES
   isect.c
   tri.c
   visit.c
-  )
+)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   junk.c
   nmg_private.h
 )
 
 # Note - libnmg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-BRLCAD_ADDLIB(libnmg "${LIBNMG_SOURCES}" "${libnmg_deps};${STDCXX_LIBRARIES}" "" "")
+brlcad_addlib(libnmg "${LIBNMG_SOURCES}" "${libnmg_deps};${STDCXX_LIBRARIES}" "" "")
 
 add_subdirectory(tests)
 

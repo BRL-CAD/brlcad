@@ -1,7 +1,7 @@
 /*                         F G E T S . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2024 United States Government as represented by
+ * Copyright (c) 2006-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ bu_fgets(char *s, int size, FILE *stream)
 	    break;
 	}
 
-	/* chech for CR */
+	/* check for CR */
 	if (c == '\r') {
 
 	    /* check for CR/LF combination */

@@ -1,7 +1,7 @@
 #                F I N D X M L L I N T . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2010-2024 United States Government as represented by
+# Copyright (c) 2010-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ else(NOT XMLLINT_EXECUTABLE)
 endif(NOT XMLLINT_EXECUTABLE)
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(XMLLINT DEFAULT_MSG XMLLINT_EXECUTABLE)
+find_package_handle_standard_args(XMLLINT DEFAULT_MSG XMLLINT_EXECUTABLE)
 
 # FindXMLLINT.cmake ends here
 

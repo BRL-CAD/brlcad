@@ -1,7 +1,7 @@
 /*                         W H I C H . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -161,7 +161,7 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 	struct bu_ptbl comb_objs = BU_PTBL_INIT_ZERO;
-	(void)db_search(&comb_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, sstring, 1, &sdp, gedp->dbip, NULL);
+	(void)db_search(&comb_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, sstring, 1, &sdp, gedp->dbip, NULL, NULL, NULL);
 	for(size_t i = 0; i < BU_PTBL_LEN(&comb_objs); i++) {
 	    dp = (struct directory *)BU_PTBL_GET(&comb_objs, i);
 

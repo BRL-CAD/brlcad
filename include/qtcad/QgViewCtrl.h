@@ -1,7 +1,7 @@
 /*                        Q G V I E W C T R L . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2024 United States Government as represented by
+ * Copyright (c) 2014-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ class QTCAD_EXPORT QgViewCtrl : public QToolBar
 	// execution logic.
 	void raytrace_cmd();
 	void raytrace_start(int);
-	void raytrace_done(int);
+	void raytrace_done();
 
     public:
 	// Left mouse behavior controls (when not using a tool or editing)

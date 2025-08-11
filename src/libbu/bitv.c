@@ -1,7 +1,7 @@
 /*                          B I T V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -136,7 +136,7 @@ bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv)
     size_t words;
 
     if (UNLIKELY(ov->nbits != iv->nbits))
-	bu_bomb("bu_bitv_or: length mis-match");
+	bu_bomb("bu_bitv_or: length mismatch");
 
     out = ov->bits;
     in = iv->bits;
@@ -159,7 +159,7 @@ bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv)
     size_t words;
 
     if (UNLIKELY(ov->nbits != iv->nbits))
-	bu_bomb("bu_bitv_and: length mis-match");
+	bu_bomb("bu_bitv_and: length mismatch");
 
     out = ov->bits;
     in = iv->bits;

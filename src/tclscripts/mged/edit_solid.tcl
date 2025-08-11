@@ -1,7 +1,7 @@
 #                  E D I T _ S O L I D . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2024 United States Government as represented by
+# Copyright (c) 2004-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -471,7 +471,7 @@ proc esol_apply { id w sform } {
 }
 
 proc esol_isdrawn { sol } {
-    set sol_list [_mged_x -2]
+    set sol_list [_mged_solid_report -2]
 
     if {-1 < [lsearch -exact $sol_list $sol]} {
 	return 1

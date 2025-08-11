@@ -1,7 +1,7 @@
 /*                      G F I L E . C P P
  * BRL-ISST
  *
- * Copyright (c) 2014-2024 United States Government as represented by
+ * Copyright (c) 2014-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,6 +41,7 @@ struct isst_nmg_data {
     struct tie_s *cur_tie;
     struct db_i *dbip;
     struct bn_tol *tol;
+    struct bu_list *vlfree;
 };
 
 struct gcv_data {
@@ -50,7 +51,7 @@ struct gcv_data {
 
 static void nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, void *client_data);
 
-static struct gcv_data gcvwriter = {{nmg_to_adrt_gcvwrite, NULL}, NULL};
+static struct gcv_data gcvwriter = {{nmg_to_adrt_gcvwrite, NULL, NULL}, NULL};
 
 /* load the region into the tie image */
 static void
@@ -213,7 +214,7 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, stru
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, d->tol);
+    nmg_triangulate_model(m, d->vlfree, d->tol);
 
     /* FIXME: where is this released? */
     BU_ALLOC(mesh, struct adrt_mesh_s);
@@ -241,7 +242,7 @@ GFile::load_g(const char *filename, int argc, const char *argv[])
     struct db_tree_state tree_state;	/* includes tol & model */
     struct isst_nmg_data d;
 
-    tree_state = rt_initial_tree_state;	/* struct copy */
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
@@ -266,7 +267,7 @@ GFile::load_g(const char *filename, int argc, const char *argv[])
 
     /* make empty NMG model */
     the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    d.vlfree = &rt_vlfree;
 
     /*
      * these should probably encode so the result can be passed back to client
@@ -294,6 +295,7 @@ GFile::load_g(const char *filename, int argc, const char *argv[])
     BU_LIST_INIT(&((this->meshes)->l));
 
     gcvwriter.meshes = &this->meshes;
+    gcvwriter.region_end_data.vlfree = &rt_vlfree;
     gcvwriter.region_end_data.client_data = &d;
 
     tribuf = (TIE_3 **)bu_malloc(sizeof(TIE_3 *) * 3, "triangle tribuffer tribuffer");

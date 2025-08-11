@@ -1,7 +1,7 @@
 #         B R L C A D _ R E G R E S S _ U T I L . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2010-2024 United States Government as represented by
+# Copyright (c) 2010-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,6 @@
 include(CMakeParseArguments)
 
 function(ensearch efile efound)
-
   # set policies for the CBD setting behavior -
   # avoids warnings
   cmake_policy(SET CMP0011 NEW)
@@ -48,12 +47,14 @@ function(ensearch efile efound)
   endif(NOT EXISTS "${CBD}")
 
   cmake_parse_arguments(ENS "REQUIRED" "" "" ${ARGN})
-  set(sdirs
+  set(
+    sdirs
     "${CBD}/bin"
     ../bin
     "${CBD}/../bin"
     ../bench
-    "${CBD}/../bench")
+    "${CBD}/../bench"
+  )
   foreach(sd ${sdirs})
     if(EXISTS ${sd}/${efile})
       set(${efound} "${sd}/${efile}" PARENT_SCOPE)
@@ -74,4 +75,3 @@ endfunction(ensearch efile efound)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

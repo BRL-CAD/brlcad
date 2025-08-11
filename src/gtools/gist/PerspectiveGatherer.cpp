@@ -1,7 +1,7 @@
 /*         P E R S P E C T I V E G A T H E R E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2023-2024 United States Government as represented by
+ * Copyright (c) 2023-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,7 +69,7 @@ static std::string createOutputBase(std::string inFile, std::string workingDir, 
 static std::string getCmdPath(std::string exeDir, const char* cmd) {
     char buf[MAXPATHLEN] = {0};
     if (!bu_dir(buf, MAXPATHLEN, exeDir.c_str(), cmd, BU_DIR_EXT, NULL)) {
-        bu_exit(BRLCAD_ERROR, "Coudn't find %s, aborting.\n", cmd);
+        bu_exit(BRLCAD_ERROR, "Couldn't find %s, aborting.\n", cmd);
     }
 
     return std::string(buf);
@@ -116,6 +116,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[0] = cmd.c_str();
             av[6] = "0";
             av[8] = "0";
+	    av[10] = "set bs=1 draw_axes=1";
             av[12] = outputname.c_str();
             av[15] = NULL;
             break;
@@ -146,6 +147,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[0] = cmd.c_str();
             av[6] = "270";
             av[8] = "0";
+	    av[10] = "set bs=1 draw_axes=1";
             av[12] = outputname.c_str();
             av[15] = NULL;
             break;
@@ -156,6 +158,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[0] = cmd.c_str();
             av[6] = "0";
             av[8] = "90";
+	    av[10] = "set bs=1 draw_axes=1";
             av[12] = outputname.c_str();
             av[15] = NULL;
             break;
@@ -180,8 +183,8 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[5] = "-a";  av[6] = "45";
             av[7] = "-e";  av[8] = "45";
             av[9] = "-C";  av[10] = "255/255/255";
-            av[11] = "-A"; av[12] = "1.5";
-            av[13] = "-c"; av[14] = "set ambSamples=64 ambSlow=1";
+            av[11] = "-A"; av[12] = "1.2";
+            av[13] = "-c"; av[14] = "set ambSamples=64";
             av[15] = "-o"; av[16] = outputname.c_str();
             av[17] = pathToInput.c_str();
             av[18] = component.c_str();

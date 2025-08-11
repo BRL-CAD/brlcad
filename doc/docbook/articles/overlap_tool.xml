@@ -48,7 +48,7 @@ mged&gt; overlaps_tool -F [.overlaps file]
     <section>
       <title>Overlaps Menu GUI</title>
       <para>
-	The overlaps menu has two sections -- New File and Exisiting File.
+	The overlaps menu has two sections -- New File and Existing File.
       </para>
       <para>
 	<screenshot>
@@ -116,7 +116,7 @@ mged&gt; overlaps_tool -F [.overlaps file]
       </section>
     </section>
     <section>
-      <title>Exisiting File</title>
+      <title>Existing File</title>
       <para>
 	These options are to launch the checker tool directly for a previously created overlaps file.
       </para>

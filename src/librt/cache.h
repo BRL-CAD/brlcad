@@ -1,7 +1,7 @@
 /*                         C A C H E . H
  * BRL-CAD
  *
- * Copyright (c) 2016-2024 United States Government as represented by
+ * Copyright (c) 2016-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,7 +83,7 @@ void rt_cache_close(struct rt_cache *cache);
  * that object, rt_obj_prep() is run.
  *
  * typically, this means an object will prep via rt_obj_prep() the
- * first time it is encountered, and read from cache on subsequnt
+ * first time it is encountered, and read from cache on subsequent
  * calls.
  */
 int rt_cache_prep(struct rt_cache *cache, struct soltab *stp, struct rt_db_internal *ip);

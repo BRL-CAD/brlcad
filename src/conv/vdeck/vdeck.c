@@ -1,7 +1,7 @@
 /*                         V D E C K . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1230,7 +1230,7 @@ delete_obj(char *args[])
 }
 
 /**
- * Re-use the librt "soltab" structures here, for our own purposes.
+ * Reuse the librt "soltab" structures here, for our own purposes.
  */
 union tree *
 gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
@@ -1470,8 +1470,10 @@ deck(char *prefix)
 
     /*  Build the whole card deck.	*/
     /*  '1' indicates one CPU.  This code isn't ready for parallelism */
+    struct db_tree_state tree_state;
+    RT_DBTS_INIT(&tree_state);
     if (db_walk_tree(dbip, curr_ct, (const char **)curr_list,
-		     1, &rt_initial_tree_state,
+		     1, &tree_state,
 		     0, region_end, gettree_leaf, (void *)NULL) < 0) {
 	fprintf(stderr, "Unable to treewalk any trees!\n");
 	bu_exit(11, NULL);

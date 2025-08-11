@@ -1,7 +1,7 @@
 /*                         E A C . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -95,10 +95,9 @@ ged_eac_core(struct ged *gedp, int argc, const char *argv[])
     if (lim > 1) {
 	int retval;
 	char **new_argv;
-
 	new_argv = (char **)bu_calloc(lim+1, sizeof(char *), "ged_eac_core: new_argv");
 	new_argc = bu_argv_from_string(new_argv, lim, bu_vls_addr(&v));
-	retval = ged_exec(gedp, new_argc, (const char **)new_argv);
+	retval = ged_exec_draw(gedp, new_argc, (const char **)new_argv);
 	bu_free((void *)new_argv, "ged_eac_core: new_argv");
 	bu_vls_free(&v);
 	return retval;

@@ -1,7 +1,7 @@
 /*              B R E P _ T R I M M E D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2019-2024 United States Government as represented by
+ * Copyright (c) 2019-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -426,7 +426,7 @@ static int MakeInnerTrimmingLoop(
 	}
 
 	/* Create new trim topology that references edge, direction
-	 * reletive to edge, loop and trim curve geometry
+	 * relative to edge, loop and trim curve geometry
 	 */
 	ON_BrepTrim& trim = brep.NewTrim(brep.m_E[ei], bRev3d, loop, c2i);
 	trim.m_iso = iso;

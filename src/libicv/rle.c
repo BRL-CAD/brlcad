@@ -1,7 +1,7 @@
 /*                           R L E . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2024 United States Government as represented by
+ * Copyright (c) 2013-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,9 +40,11 @@ typedef struct {
 } ColorMap;
 
 int
-rle_write(icv_image_t *bif, const char *filename)
+rle_write(icv_image_t *bif, FILE *fp)
 {
-    if (!bif)
+    if (UNLIKELY(!bif))
+	return BRLCAD_ERROR;
+    if (UNLIKELY(!fp))
 	return BRLCAD_ERROR;
 
     int bg_color[3] = {0, 0, 0};
@@ -61,14 +63,7 @@ rle_write(icv_image_t *bif, const char *filename)
     rle_icv.xmax = bif->width-1;
     rle_icv.ymax = bif->height-1;
     rle_icv.comments = NULL;
-    rle_icv.rle_file = stdout;
-    if (filename) {
-	rle_icv.rle_file = fopen(filename, "wb");
-	if (!rle_icv.rle_file) {
-	    bu_log("rle_write: Could not open %s for writing\n", filename);
-	    return BRLCAD_ERROR;
-	}
-    }
+    rle_icv.rle_file = fp;
 
     // pix-rle had more extensive info in comments (date, time, hostname, user,
     // etc.) - for now let's just note the originating software.  User should
@@ -109,23 +104,16 @@ rle_write(icv_image_t *bif, const char *filename)
 	rle_putrow(rows, bif->width, &rle_icv);
     }
     rle_puteof(&rle_icv);
-    fclose(rle_icv.rle_file);
     bu_free(scan_buf, "scan_buf");
 
     return BRLCAD_OK;
 }
 
 icv_image_t*
-rle_read(const char *filename)
+rle_read(FILE *fp)
 {
-    FILE *fp = NULL;
-    if (filename == NULL) {
-	fp = stdin;
-	setmode(fileno(fp), O_BINARY);
-    } else if ((fp = fopen(filename, "r")) == NULL) {
-	bu_log("ERROR: Cannot open file for reading\n");
+    if (UNLIKELY(!fp))
 	return NULL;
-    }
 
     // Older BRL-CAD code used the default header from libutahrle.
     // Globals are usually bad news, so we'll start out with a local

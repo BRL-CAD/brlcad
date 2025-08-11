@@ -1,7 +1,7 @@
 /*                        D B 5 _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -969,6 +969,14 @@ rt_db_external5_to_internal5(
     ip->idb_major_type = raw.major_type;
     ip->idb_minor_type = raw.minor_type;
     ip->idb_meth = &OBJ[id];
+
+    /* Some comb methods need to know about the name of the original database
+     * object.  ft_import5 doesn't have that info and so can't record it - do
+     * so here.  */
+    if (raw.minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION) {
+	struct rt_comb_internal *comb = (struct rt_comb_internal *)ip->idb_ptr;
+	comb->src_objname = bu_strdup(name);
+    }
 
     return id;			/* OK */
 }

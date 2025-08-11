@@ -1,7 +1,7 @@
 /*                     C H U L L 3 D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2024 United States Government as represented by
+ * Copyright (c) 2018-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -105,4 +105,3 @@ bg_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

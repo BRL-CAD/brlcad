@@ -4,19 +4,15 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-oscale SHARED oscale.c)
+ged_plugin_library(ged-oscale oscale.c)
 target_link_libraries(ged-oscale libged libbu)
-set_property(TARGET ged-oscale APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-oscale oscale.c)
-PLUGIN_SETUP(ged-oscale ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   oscale.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*                         R T C H E C K . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,6 +36,25 @@
 #include "bu/app.h"
 
 #include "../ged_private.h"
+
+static void
+dl_set_flag(struct bu_list *hdlp, int flag)
+{
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    struct bv_scene_obj *sp;
+    /* calculate the bounding for of all solids being displayed */
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    sp->s_flag = flag;
+	}
+
+	gdlp = next_gdlp;
+    }
+}
 
 struct ged_rtcheck {
     struct ged_subprocess *rrtp;
@@ -91,7 +110,7 @@ rtcheck_vector_handler(void *clientData, int UNUSED(mask))
 
 	rtcp->draw_read_failed = 1;
 
-	dl_set_flag(gedp->ged_gdp->gd_headDisplay, DOWN);
+	dl_set_flag(gedp->i->ged_gdp->gd_headDisplay, DOWN);
 
 	/* Add overlay (or, if nothing to draw, clear any stale overlay) */
 	if (rtcp->vbp) {
@@ -133,7 +152,7 @@ rtcheck_vector_handler(void *clientData, int UNUSED(mask))
 		rtcp->fp,
 		value,
 		rtcp->csize,
-		gedp->ged_gdp->gd_uplotOutputMode);
+		gedp->i->ged_gdp->gd_uplotOutputMode);
     }
 }
 
@@ -150,8 +169,8 @@ rtcheck_output_handler(void *clientData, int UNUSED(mask))
     /* Get textual output from rtcheck */
     if ((count = bu_process_read_n(rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE, (char *)line)) <= 0) {
 	rtcp->read_failed = 1;
-	if (gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
-	    gedp->ged_gdp->gd_rtCmdNotify(0);
+	if (gedp->i->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    gedp->i->ged_gdp->gd_rtCmdNotify(0);
     }
 
 
@@ -180,8 +199,7 @@ extern int ged_rtcheck2_core(struct ged *gedp, int argc, const char *argv[]);
 int
 ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
 {
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(cmd2, "1"))
+    if (gedp->new_cmd_forms)
 	return ged_rtcheck2_core(gedp, argc, argv);
 
     char **vp;
@@ -191,6 +209,7 @@ ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_process *p = NULL;
     char ** gd_rt_cmd = NULL;
     int gd_rt_cmd_len = 0;
+    struct bu_list *vlfree = &rt_vlfree;
 
     vect_t eye_model;
 
@@ -273,7 +292,7 @@ ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
     rtcp->fp = bu_process_file_open(p, BU_PROCESS_STDOUT);
     /* Needed on Windows for successful rtcheck drawing data communication */
     setmode(fileno(rtcp->fp), O_BINARY);
-    rtcp->vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+    rtcp->vbp = bv_vlblock_init(vlfree, 32);
     rtcp->vhead = bv_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
     rtcp->csize = gedp->ged_gvp->gv_scale * 0.01;
     rtcp->read_failed = 0;

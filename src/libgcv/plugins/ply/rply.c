@@ -131,7 +131,7 @@ static const char *const ply_type_list[] = {
  * value: value of property
  * pdata/idata: user data defined with ply_set_cb
  *
- * Returns handle to PLY file if succesful, NULL otherwise.
+ * Returns handle to PLY file if successful, NULL otherwise.
  * ---------------------------------------------------------------------- */
 typedef struct t_ply_argument_ {
     p_ply_element element;
@@ -216,7 +216,7 @@ typedef t_ply_odriver *p_ply_odriver;
  * nobj_infos: number of obj_info items in file
  * fp: file pointer associated with ply file
  * rn: skip extra char after end_header?
- * buffer: last word/chunck of data read from ply file
+ * buffer: last word/chunk of data read from ply file
  * buffer_first, buffer_last: interval of untouched good data in buffer
  * buffer_token: start of parsed token (line or word) in buffer
  * idriver, odriver: input driver used to get property fields from file
@@ -972,8 +972,8 @@ int ply_write(p_ply ply, double value) {
         } while (ply->welement < ply->nelements && !element->ninstances);
     }
     if (ply->storage_mode == PLY_ASCII) {
-        return (!spaceafter || putc(' ', ply->fp) > 0) &&
-               (!breakafter || putc('\n', ply->fp) > 0);
+        return (!spaceafter || fputc(' ', ply->fp) > 0) &&
+               (!breakafter || fputc('\n', ply->fp) > 0);
     } else {
         return 1;
     }

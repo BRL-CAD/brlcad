@@ -1,7 +1,7 @@
 /*                 L I B R T _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2024 United States Government as represented by
+ * Copyright (c) 2011-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,22 +46,55 @@
 /* logic to ensure bboxes are not degenerate in any dimension - zero thickness
  * bounding boxes will get missed by the raytracer */
 #define BBOX_NONDEGEN(min, max, dist) do {\
-    if (NEAR_EQUAL(min[X], max[X], dist)) { \
-	min[X] -= dist; \
-	max[X] += dist; \
+    if (NEAR_EQUAL((min)[X], (max)[X], (dist))) { \
+	(min)[X] -= dist; \
+	(max)[X] += dist; \
     } \
-    if (NEAR_EQUAL(min[Y], max[Y], dist)) { \
-	min[Y] -= dist; \
-	max[Y] += dist; \
+    if (NEAR_EQUAL((min)[Y], (max)[Y], (dist))) { \
+	(min)[Y] -= dist; \
+	(max)[Y] += dist; \
     } \
-    if (NEAR_EQUAL(min[Z], max[Z], dist)) { \
-	min[Z] -= dist; \
-	max[Z] += dist; \
+    if (NEAR_EQUAL((min)[Z], (max)[Z], (dist))) { \
+	(min)[Z] -= dist; \
+	(max)[Z] += dist; \
     } \
 } while (0)
 
 
 __BEGIN_DECLS
+
+// TODO - eventually, all the "LIBRT ONLY" elements in db_i should move here.
+// The librt prep caching container should also go here.
+//
+// At the moment, it is just an experiment to put drawing related object data
+// caches in the db_i.
+struct db_i_internal {
+    uint32_t dbi_magic;
+
+    /* BoT level of detail cached data for drawing */
+    struct bv_mesh_lod_context *mesh_c;
+    int mesh_c_completed;
+    int mesh_c_target;
+
+    // TODO - really need to get the rt prep cache container
+    // in here and add a pointer slot to it for rt_db_internal
+    // so the librt point generation routines can take advantage
+    // of cached prep even if they're using an inmem db...
+};
+
+struct db_i_internal * db_i_internal_create(void);
+void db_i_internal_destroy(struct db_i_internal *i);
+
+
+/* Used by sketch extrude revolve */
+extern int curve_to_vlist(struct bu_list              *vlfree,
+                         struct bu_list              *vhead,
+                         const struct bg_tess_tol    *ttol,
+                         point_t                     V,
+                         vect_t                      u_vec,
+                         vect_t                      v_vec,
+                         struct rt_sketch_internal *sketch_ip,
+                         struct rt_curve             *crv);
 
 /* db_flip.c */
 
@@ -175,6 +208,7 @@ extern RT_EXPORT long db5_size(struct db_i *dbip, struct directory *dp, int flag
 /* FIXME: should have gone away with v6.  needed now to pass the minor_type down during read */
 extern int rt_binunif_import5_minor_type(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *, struct resource *, int);
 
+extern const char *rt_binunif_type_to_string(int type);
 
 /* primitive_util.c */
 

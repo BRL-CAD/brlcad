@@ -1,7 +1,7 @@
 /*                         C O N C A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -408,6 +408,11 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
     // If we have an affix, set it
     if (argc > 1)
 	cc_data.affix = std::string(argv[1]);
+
+    // For compatibility (and because '/' isn't a sane character to use for obj
+    // names in any case) clear if such a character was supplied.
+    if (BU_STR_EQUAL(argv[1], "/"))
+	cc_data.affix = std::string("");
 
     // For all incoming objects, compare their names against the current
     // database.  In case of any collisions, generate a new unique name based

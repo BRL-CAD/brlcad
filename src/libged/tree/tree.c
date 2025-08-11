@@ -1,7 +1,7 @@
 /*                         T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -121,7 +121,7 @@ _tree_print_node(struct ged *gedp,
 	}
 
 	/* FIXME: manually list all the attributes, if any.  should be
-	 * calling ged_exec(attr show) so output formatting is consistent.
+	 * calling ged_exec_attr(show) so output formatting is consistent.
 	 */
 	if (avs.count) {
 	    struct bu_attribute_value_pair *avpp;
@@ -312,8 +312,8 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
 
     /* tree of all displayed objects */
     if (argc == 1) {
-	char *whocmd[2] = {"who", NULL};
-	if (ged_exec(gedp, 1, (const char **)whocmd) == BRLCAD_OK) {
+	const char *whocmd[1] = {"who"};
+	if (ged_exec_who(gedp, 1, (const char **)whocmd) == BRLCAD_OK) {
 	    buffer = bu_strdup(bu_vls_addr(gedp->ged_result_str));
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 

@@ -1,7 +1,7 @@
 /*		T R A N S F O R M _ N O D E. C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2024 United States Government as represented by
+ * Copyright (c) 2015-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
 #include "node.h"
 #include "parser.h"
 
-//Peforms transforms on transform node children
+//Performs transforms on transform node children
 void
 TRANSFORM::transformChild(NODE *pnode)
 {
@@ -53,7 +53,7 @@ TRANSFORM::transformChild(NODE *pnode)
 		tempvec[1] = mychildlist[count]->vertics[i+1];
 		tempvec[2] = mychildlist[count]->vertics[i+2];
 
-		VEC3X4MAT(temprotvec, tempvec, pnode->rotmat);  //Mutiply vector by rotation matrix
+		VEC3X4MAT(temprotvec, tempvec, pnode->rotmat);  //Multiply vector by rotation matrix
 		//Do scaling and translation
 		if (mychildlist[count]->ispoly || (mychildlist[count]->nnodetype == NODE_BOX)) {
 		    mychildlist[count]->vertics[i] = (temprotvec[0]*pnode->scale[0])+pnode->translation[0] ;

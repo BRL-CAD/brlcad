@@ -1,7 +1,7 @@
 /*                      D B 5 _ S C A N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -184,9 +184,6 @@ db_diradd5(
 	bu_vls_free(&local);
 	return RT_DIR_NULL;
     }
-
-    if (rt_uniresource.re_magic == 0)
-	rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* Duplicates the guts of db_diradd() */
     RT_GET_DIRECTORY(dp, &rt_uniresource);

@@ -1,7 +1,7 @@
 /*                         V L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2024 United States Government as represented by
+ * Copyright (c) 1992-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,26 +39,30 @@
 struct bv_vlblock *
 rt_vlblock_init(void)
 {
-    return bv_vlblock_init(&RTG.rtg_vlfree, 32);
+    struct bu_list *vlfree = &rt_vlfree;
+    return bv_vlblock_init(vlfree, 32);
 }
 
 void
 rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
 {
-    bv_vlist_copy(&RTG.rtg_vlfree, dest, src);
+    struct bu_list *vlfree = &rt_vlfree;
+    bv_vlist_copy(vlfree, dest, src);
 }
 
 
 void
 rt_vlist_cleanup(void)
 {
-    bv_vlist_cleanup(&RTG.rtg_vlfree);
+    struct bu_list *vlfree = &rt_vlfree;
+    bv_vlist_cleanup(vlfree);
 }
 
 void
 rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char *buf)
 {
-    bv_vlist_import(&RTG.rtg_vlfree, hp, namevls, buf);
+    struct bu_list *vlfree = &rt_vlfree;
+    bv_vlist_import(vlfree, hp, namevls, buf);
 }
 
 #define TBAD	0 /* no such command */

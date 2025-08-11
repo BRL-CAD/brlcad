@@ -1,7 +1,7 @@
 /*                          S O L T A B . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -102,7 +102,6 @@ RT_EXPORT extern void rt_free_soltab(struct soltab *stp);
 
 /* Print a soltab */
 RT_EXPORT extern void rt_pr_soltab(const struct soltab *stp);
-
 
 __END_DECLS
 

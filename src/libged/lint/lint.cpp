@@ -1,7 +1,7 @@
 /*                         L I N T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2024 United States Government as represented by
+ * Copyright (c) 2014-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,8 +40,8 @@ extern "C" {
 lint_data::lint_data()
 {
     color = NULL;
-    vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
-    vlfree = &RTG.rtg_vlfree;
+    vlfree = &rt_vlfree;
+    vbp = bv_vlblock_init(vlfree, 32);
 }
 
 lint_data::~lint_data()
@@ -347,9 +347,8 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (visualize) {
-	const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
 	struct bview *view = gedp->ged_gvp;
-	if (BU_STR_EQUAL(nview, "1")) {
+	if (gedp->new_cmd_forms) {
 	    bv_vlblock_obj(ldata.vbp, view, "lint_visual");
 	} else {
 	    _ged_cvt_vlblock_to_solids(gedp, ldata.vbp, "lint_visual", 0);

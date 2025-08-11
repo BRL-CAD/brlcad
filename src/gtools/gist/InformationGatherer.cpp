@@ -1,7 +1,7 @@
 /*         I N F O R M A T I O N G A T H E R E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2023-2024 United States Government as represented by
+ * Copyright (c) 2023-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
 static std::string getCmdPath(std::string exeDir, const char* cmd) {
     char buf[MAXPATHLEN] = {0};
     if (!bu_dir(buf, MAXPATHLEN, exeDir.c_str(), cmd, BU_DIR_EXT, NULL))
-        bu_exit(BRLCAD_ERROR, "Coudn't find %s, aborting.\n", cmd);
+        bu_exit(BRLCAD_ERROR, "Couldn't find %s, aborting.\n", cmd);
 
     return std::string(buf);
 }
@@ -120,6 +120,35 @@ parseMass(std::string res)
     return ret;
 }
 
+static std::string GqaGridSize(std::map<std::string, std::string> map, std::string lUnit) {
+    // create a reasonable but fast grid size based on our bounding box
+    double dimX = 1.0;
+    double dimY = 1.0;
+    double dimZ = 1.0;
+
+    if (map.find("dimX") != map.end())
+        dimX = std::stod(map["dimX"]);
+    if (map.find("dimY") != map.end())
+        dimY = std::stod(map["dimY"]);
+    if (map.find("dimZ") != map.end())
+        dimZ = std::stod(map["dimZ"]);
+
+
+    double shortest = std::min({dimX, dimY, dimZ});
+    // clamp
+    if (shortest < 1.0)
+        shortest = 1.0;
+
+    // find the smallest magnitude in relation to our smallest size
+    // i.e. if we have smallest side 234 -> we want 10 for the grid size
+    double magnitude = std::pow(10.0, std::floor(std::log10(shortest)) - 1);
+    int grid_step = static_cast<int>(magnitude);    // drop the decimal
+
+    std::string grid = std::to_string(grid_step) + lUnit + "," + std::to_string(grid_step) + lUnit;
+
+    return grid;
+}
+
 
 void
 getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, bool &UNUSED(hasDensities), double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit)
@@ -135,6 +164,7 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     //Get Volume and Mass (using gqa)
     const std::string no_density_msg = "Could not find any density information";
     std::string gqa = getCmdPath(opt->getExeDir(), "gqa");
+    std::string grid = GqaGridSize(map, lUnit);
     std::string units = lUnit + ",cu " + lUnit + "," + mUnit;
     struct bu_process* p;
     int read_cnt = 0;
@@ -145,7 +175,7 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     const char* gqa_av[10] = { gqa.c_str(),
                                 "-Avm",
                                 "-q",
-                                "-g", "2",
+                                "-g", grid.c_str(),
                                 "-u", units.c_str(),
                                 in_file.c_str(),
                                 top_comp.c_str(),
@@ -158,7 +188,6 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     }
 
     result = "";
-    read_cnt = 0;
     while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buffer)) > 0) {
         buffer[read_cnt] = '\0';
         result += buffer;
@@ -185,7 +214,6 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     }
 
     result = "";
-    read_cnt = 0;
     while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buffer)) > 0) {
         buffer[read_cnt] = '\0';
         result += buffer;
@@ -214,8 +242,8 @@ boundingBox
 InformationGatherer::getBBData(std::string component)
 {
     // Gather bounding box dimensions
-    const char* cmd[4] = { "bb", "-q", component.c_str(), NULL };
-    ged_exec(g, 3, cmd);
+    const char* cmd[3] = { "bb", "-q", component.c_str()};
+    ged_exec_bb(g, 3, cmd);
     std::istringstream ss(bu_vls_addr(g->ged_result_str));
 
     /* interested in saving X, Y, Z, Volume from output
@@ -256,7 +284,7 @@ InformationGatherer::getNumEntities(std::string component)
     // TODO/NOTE: is union the best heuristic for 'entities'?
     struct directory* dp = db_lookup(g->dbip, component.c_str(), LOOKUP_QUIET);
     const char* filter = "-bool u";
-    int entities = db_search(NULL, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, filter, 1, &dp, g->dbip, NULL);
+    int entities = db_search(NULL, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, filter, 1, &dp, g->dbip, NULL, NULL, NULL);
 
     return entities > 0 ? entities : 0; // clamp errors to 0
 }
@@ -268,11 +296,11 @@ InformationGatherer::getMainComp()
     if (!topcomp.empty()) {
 	const char *topname = topcomp.c_str();
         // check if main comp exists
-        const char* cmd[3] = { "exists", topname, NULL };
-        ged_exec(g, 2, cmd);
+        const char* cmd[2] = { "exists", topname };
+        ged_exec_exists(g, 2, cmd);
         std::string res = bu_vls_addr(g->ged_result_str);
         if (res != "1") {
-            bu_exit(BRLCAD_ERROR, "Coult not find component (%s), aborting.\n", topname);
+            bu_exit(BRLCAD_ERROR, "Could not find component (%s), aborting.\n", topname);
         }
 
         int entities = getNumEntities(opt->getTopComp());
@@ -282,9 +310,8 @@ InformationGatherer::getMainComp()
     }
 
     // get top level objects
-    const char* cmd[3] = { "tops", "-n", NULL };
-
-    ged_exec(g, 2, cmd);
+    const char* cmd[2] = { "tops", "-n" };
+    ged_exec_tops(g, 2, cmd);
     std::istringstream ss(bu_vls_addr(g->ged_result_str));
     std::string comp;
     std::vector<ComponentData> topComponents;
@@ -306,9 +333,8 @@ InformationGatherer::getMainComp()
     if (largestComponents.size() != 0) {
         return;
     } else {
-        const char* search_cmd[5] = { "search",  ".",  "-type", "comb", NULL };
-
-        ged_exec(g, 4, search_cmd);
+        const char* search_cmd[4] = { "search",  ".",  "-type", "comb" };
+        ged_exec_search(g, 4, search_cmd);
         std::stringstream ss2(bu_vls_addr(g->ged_result_str));
         std::string val2;
         std::vector<ComponentData> topComponents2;
@@ -398,21 +424,21 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
 
     //Gather title
     const char* cmd[6] = { "title", NULL, NULL, NULL, NULL };
-    ged_exec(g, 1, cmd);
+    ged_exec_title(g, 1, cmd);
     infoMap["title"] = bu_vls_addr(g->ged_result_str);
 
 
     //Gather DB Version
     cmd[0] = "dbversion";
     cmd[1] = NULL;
-    ged_exec(g, 1, cmd);
+    ged_exec_dbversion(g, 1, cmd);
     infoMap["version"] = bu_vls_addr(g->ged_result_str);
 
     // CHECK
     //Gather primitives, regions, total objects
     /*
     cmd[0] = "summary";
-    ged_exec(g, 1, cmd);
+    ged_exec_summary(g, 1, cmd);
     char* res = strtok(bu_vls_addr(g->ged_result_str), " ");
     int count = 0;
     while (res != NULL) {
@@ -432,7 +458,7 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     // Gather units
     cmd[0] = "units";
     cmd[1] = NULL;
-    ged_exec(g, 1, cmd);
+    ged_exec_units(g, 1, cmd);
     std::string result = bu_vls_addr(g->ged_result_str);
     std::size_t first = result.find_first_of("\'");
     std::size_t last = result.find_last_of("\'");
@@ -481,7 +507,7 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     unitsMap["bbVolume"] = u3;
 
     //Gather entity counts
-    // init infoMap incase searches fail
+    // init infoMap in case searches fail
     infoMap["assemblies"] = "ERROR";
     infoMap["primitives"] = "ERROR";
     infoMap["regions"] = "ERROR";
@@ -490,25 +516,25 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     int totalEntities = 0;
     // gather groups and regions
     const char* sFilter = "-above -type region";
-    if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL) >= 0) {
+    if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL, NULL, NULL) >= 0) {
         res_len = BU_PTBL_LEN(&results);
         infoMap["assemblies"] = std::to_string(res_len);
         totalEntities += res_len;
     }
     db_search_free(&results);
-    res_len = 0;
+
     // gather primitive shapes
     sFilter = "-not -type region -and -not -type comb";
-    if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL) >= 0) {
+    if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL, NULL, NULL) >= 0) {
         res_len = BU_PTBL_LEN(&results);
         infoMap["primitives"] = std::to_string(res_len);
         totalEntities += res_len;
     }
     db_search_free(&results);
-    res_len = 0;
+
     // gather primitive shapes
     sFilter = "-type region";
-    if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL) >= 0) {
+    if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL, NULL, NULL) >= 0) {
         res_len = BU_PTBL_LEN(&results);
         infoMap["regions"] = std::to_string(res_len);
         totalEntities += res_len;
@@ -565,11 +591,11 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
     bool hasImplicit = false;
     const char* tfilter = "-type brep -or -type bot -or -type vol -or -type sketch";
 
-    if (db_search(NULL, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, tfilter, 1, &dp, g->dbip, NULL) > 0) {
+    if (db_search(NULL, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, tfilter, 1, &dp, g->dbip, NULL, NULL, NULL) > 0) {
         hasExplicit = true;
     }
     tfilter = "-below -type region -not -type comb -not -type brep -not -type bot -not -type vol -not -type sketch";
-    if (db_search(NULL, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, tfilter, 1, &dp, g->dbip, NULL) > 0) {
+    if (db_search(NULL, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, tfilter, 1, &dp, g->dbip, NULL, NULL, NULL) > 0) {
         hasImplicit = true;
     }
 

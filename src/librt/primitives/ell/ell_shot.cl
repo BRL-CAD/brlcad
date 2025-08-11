@@ -31,16 +31,16 @@ int ell_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const ui
 	root = sqrt(root);
 	if ((k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd)) {
 	    /* k1 is entry, k2 is exit */
-            hits[0].hit_dist = k1;
-            hits[0].hit_surfno = 0;
-            hits[1].hit_dist = k2;
-            hits[1].hit_surfno = 0;
+	    hits[0].hit_dist = k1;
+	    hits[0].hit_surfno = 0;
+	    hits[1].hit_dist = k2;
+	    hits[1].hit_surfno = 0;
 	} else {
 	    /* k2 is entry, k1 is exit */
-            hits[0].hit_dist = k2;
-            hits[0].hit_surfno = 0;
-            hits[1].hit_dist = k1;
-            hits[1].hit_surfno = 0;
+	    hits[0].hit_dist = k2;
+	    hits[0].hit_surfno = 0;
+	    hits[1].hit_dist = k1;
+	    hits[1].hit_surfno = 0;
 	}
 
 	do_segp(res, idx, &hits[0], &hits[1]);
@@ -74,4 +74,3 @@ void ell_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global 
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

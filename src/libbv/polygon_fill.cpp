@@ -1,7 +1,7 @@
 /*                 P O L Y G O N _ F I L L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2011-2024 United States Government as represented by
+ * Copyright (c) 2011-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ bv_polygon_fill_segments(struct bg_polygon *poly, plane_t *vp, vect2d_t line_slo
 	poly_2d.contour[i].point = (point_t *)bu_calloc(poly->contour[i].num_points, sizeof(point_t), "pc_point");
 	for (size_t j = 0; j < poly->contour[i].num_points; ++j) {
 	    vect2d_t p2d;
-	    bg_plane_closest_pt(&p2d[0], &p2d[1], *vp, poly->contour[i].point[j]);
+	    bg_plane_closest_pt(&p2d[0], &p2d[1], vp, &poly->contour[i].point[j]);
 	    VSET(poly_2d.contour[i].point[j], p2d[0], p2d[1], 0);
 	    // bounding box
 	    V2MINMAX(b2d_min, b2d_max, p2d);
@@ -169,7 +169,7 @@ bv_polygon_fill_segments(struct bg_polygon *poly, plane_t *vp, vect2d_t line_slo
 	poly_fill->contour[i].num_points = fpoly->contour[i].num_points;
 	poly_fill->contour[i].point = (point_t *)bu_calloc(fpoly->contour[i].num_points, sizeof(point_t), "f_point");
 	for (size_t j = 0; j < fpoly->contour[i].num_points; ++j) {
-	    bg_plane_pt_at(&poly_fill->contour[i].point[j], *vp, fpoly->contour[i].point[j][0], fpoly->contour[i].point[j][1]);
+	    bg_plane_pt_at(&poly_fill->contour[i].point[j], vp, fpoly->contour[i].point[j][0], fpoly->contour[i].point[j][1]);
 	}
     }
 
@@ -214,4 +214,3 @@ int bv_polygon_calc_fdelta(struct bv_polygon *p)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

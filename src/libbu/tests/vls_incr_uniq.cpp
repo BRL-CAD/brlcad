@@ -1,7 +1,7 @@
 /*                     V L S _ I N C R . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2024 United States Government as represented by
+ * Copyright (c) 2015-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ struct StrCmp {
 };
 
 
-int
+static int
 uniq_test(struct bu_vls *n, void *data)
 {
     std::set<const char *, StrCmp> *sset = (std::set<const char *, StrCmp> *)data;
@@ -77,6 +77,7 @@ main(int argc, char **argv)
     return ret;
 }
 
+
 // Local Variables:
 // tab-width: 8
 // mode: C++
@@ -85,4 +86,3 @@ main(int argc, char **argv)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

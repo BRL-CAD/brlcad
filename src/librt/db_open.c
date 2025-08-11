@@ -1,7 +1,7 @@
 /*                       D B _ O P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2024 United States Government as represented by
+ * Copyright (c) 1988-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,14 +40,16 @@
 #endif
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/parallel.h"
 #include "bu/path.h"
-#include "bu/app.h"
+#include "bu/time.h"
 #include "vmath.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "wdb.h"
 
+#include "./librt_private.h"
 
 #ifndef SEEK_SET
 #  define SEEK_SET 0
@@ -109,7 +111,7 @@ db_open(const char *name, const char *mode)
 	    return DBI_NULL;
 	}
 
-	/* Is this a re-use of a previously mapped file? */
+	/* Is this a reuse of a previously mapped file? */
 	if (mfp->apbuf) {
 	    dbip = (struct db_i *)mfp->apbuf;
 	    RT_CK_DBI(dbip);
@@ -145,6 +147,8 @@ db_open(const char *name, const char *mode)
 	    return DBI_NULL;
 	}
 
+	dbip->i = db_i_internal_create();
+
 	dbip->dbi_use_comb_instance_ids = 0;
 	const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
 	if (BU_STR_EQUAL(need_comb_inst, "1")) {
@@ -165,6 +169,8 @@ db_open(const char *name, const char *mode)
 	    bu_free((char *)dbip, "struct db_i");
 	    return DBI_NULL;
 	}
+
+	dbip->i = db_i_internal_create();
 
 	dbip->dbi_use_comb_instance_ids = 0;
 	const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
@@ -221,6 +227,7 @@ db_open(const char *name, const char *mode)
 
 	    bu_free((void *)argv[0], "db_open: argv[0]");
 	    bu_free((void *)argv, "db_open: argv");
+	    db_i_internal_destroy(dbip->i);
 	    bu_free((char *)dbip, "struct db_i");
 
 	    return DBI_NULL;
@@ -271,10 +278,6 @@ db_open(const char *name, const char *mode)
     }
 
     /* Initialize tolerances */
-
-    /* Set up the four possible wdb containers. */
-    if (rt_uniresource.re_magic != RESOURCE_MAGIC)
-	rt_init_resource(&rt_uniresource, 0, NULL);
 
     BU_ALLOC(dbip->dbi_wdbp, struct rt_wdb);
     wdb_init(dbip->dbi_wdbp, dbip, RT_WDB_TYPE_DB_DISK);
@@ -508,6 +511,7 @@ db_close(register struct db_i *dbip)
     }
 
     dbip->dbi_magic = (uint32_t)0x10101010;
+    db_i_internal_destroy(dbip->i);
     bu_free((char *)dbip, "struct db_i");
 }
 
@@ -634,6 +638,27 @@ db_sync(struct db_i *dbip)
     bu_semaphore_release(BU_SEM_SYSCALL);
 }
 
+struct db_i_internal *
+db_i_internal_create(void)
+{
+    struct db_i_internal *i;
+    BU_GET(i, struct db_i_internal);
+    i->dbi_magic = DBI_MAGIC;
+
+    return i;
+}
+
+void
+db_i_internal_destroy(struct db_i_internal *i)
+{
+    if (!i)
+	return;
+
+    if (i->mesh_c)
+	bv_mesh_lod_context_destroy(i->mesh_c);
+
+    BU_PUT(i, struct db_i_internal);
+}
 
 /** @} */
 /*

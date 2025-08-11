@@ -1,7 +1,7 @@
 /*                   I F P A I N T E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2023-2024 United States Government as represented by
+ * Copyright (c) 2023-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -200,7 +200,7 @@ IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgP
     try {
 	destRoi = img(cv::Rect(x + widthOffset, y + heightOffset, resized_image.cols, resized_image.rows));
     } catch (...) {
-	bu_log("WARNING: Tyring to create roi out of image boundaries\n");
+	bu_log("WARNING: Trying to create roi out of image boundaries\n");
 	return;
     }
     resized_image.copyTo(destRoi);
@@ -284,7 +284,7 @@ IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string im
     return countCharDisplayedText;
 }
 
-//Helper funciton to support getting the width of a text
+//Helper function to support getting the width of a text
 int
 IFPainter::getTextWidth(int height, int width, std::string text, int flags)
 {
@@ -423,7 +423,7 @@ IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::string
 
 
 /* This function will evenly space out all of the texts in the header
- * and footer. The algorithm is to get the total lenght of all of the
+ * and footer. The algorithm is to get the total length of all of the
  * words combined and then the spacing is the total length divided by
  * how many words there are
  */
@@ -502,44 +502,70 @@ IFPainter::justifyWithCenterWord(int UNUSED(x), int y, int height, int width, st
 }
 
 
-// This is a text wrapping function. If a text goes beyond the set x
-// or y, it will wrap around to the next line. It also has ellipsis
-// fucntion.
+/* This is a text wrapping function. If a text goes beyond the set x
+   or y, it will wrap around to the next line. It also has ellipsis
+   function.
+
+    (x1, y1): top left corner of bounding box
+    (x2, y2): bottom right corner of bounding box
+    width: section width
+    height: text height
+    text: text string to draw
+    ellipsis: enum for ellipsis on/off
+    numOfCharactersBeforeEllipsis: UNUSED
+    flags: drawing flags
+*/
 void
-IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int height, std::string text, int ellipsis, int numOfCharactersBeforeEllipsis, int flags)
+IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int height, std::string text, int ellipsis, int UNUSED(numOfCharactersBeforeEllipsis), int flags)
 {
-    if (ellipsis == TO_ELLIPSIS) {
-	if ((size_t)numOfCharactersBeforeEllipsis < text.length()) {
-	    text = text.substr(0, numOfCharactersBeforeEllipsis) + " ...";
-	}
-    }
     std::istringstream iss(text);
     std::vector<std::string> words;
-
     std::string word;
+    const std::string ellipsis_str = (ellipsis == TO_ELLIPSIS) ? "..." : "";
+
+    // break text into words
     while (iss >> word) {
 	words.push_back(word);
     }
+
+    // loop vars
     int x = x1;
     int y = y1;
-    int wordWidth;
-    int wordWidthWithSpace;
-    for (const auto& w : words) {
-	wordWidth = getTextWidth(height, width, w, flags);
-	wordWidthWithSpace = getTextWidth(height, width, w + " ", flags);
-	if (x + wordWidth <= x2) {
-	    drawText(x, y, height, width, w + " ", flags);
+    int ellipsisWidth = (ellipsis == TO_ELLIPSIS) ? getTextWidth(height, width, ellipsis_str, flags) : 0;
+    int spaceWidth = getTextWidth(height, width, " ", flags);
+    bool isLastLine = (y + height > y2 - height);
+    int wordWidth, wordWidthWithSpace;
+
+    for (size_t i = 0; i < words.size(); i++) {
+	word = words[i];
+	wordWidth = getTextWidth(height, width, word, flags);
+	wordWidthWithSpace = wordWidth + spaceWidth;
+
+	if ((!isLastLine || !ellipsisWidth || (i == words.size() - 1)) && x + wordWidth <= x2) {
+	    // greedy add word if we can
+	    drawText(x, y, height, width, word + " ", flags);
 	    x += wordWidthWithSpace;
-	} else {
-	    if (y + height <= y2 - height) {
-		x = x1;
-		y += height;
-		drawText(x, y, height, width, w + " ", flags);
+	} else if (isLastLine) {
+	    // reserve space for ellipse if needed on last line
+	    if (x + wordWidth + ellipsisWidth <= x2) {
+		drawText(x, y, height, width, word + " ", flags);
 		x += wordWidthWithSpace;
+	    } else if (x + ellipsisWidth <= x2) {
+		// not enough room for the word - add ellipse
+		drawText(x, y, height, width, ellipsis_str, flags);
+
+		return;	// no more room - stop
 	    } else {
-		throw std::invalid_argument("Text is larger than the bounding box");
+		// on last line with no more room
 		return;
 	    }
+	} else if (y + height <= y2 - height) {
+	    // move to next line
+	    x = x1;
+	    y += height;
+	    isLastLine = (y + height > y2 - height);
+	    drawText(x, y, height, width, word + " ", flags);
+	    x += wordWidthWithSpace;
 	}
     }
 }

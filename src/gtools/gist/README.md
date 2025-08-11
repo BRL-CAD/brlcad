@@ -17,7 +17,7 @@ This code has been run and tested on:
 ## External Deps  ##
 
 * BRL-CAD - Download latest version at https://brlcad.org/wiki/Compiling
-* OpenCV C++ - Download lastest version at https://docs.opencv.org/4.x/df/d65/tutorial_table_of_content_introduction.html
+* OpenCV C++ - Download latest version at https://docs.opencv.org/4.x/df/d65/tutorial_table_of_content_introduction.html
 * Boost - Download required version at Boost C++ Libraries download | SourceForge.net
 * CMake - Download latest CMake at https://cmake.org/
 * Git - Download latest version at https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
@@ -74,7 +74,7 @@ You can see these by running:
     E = path to folder to export reports. Used for processing folder of models
     g = GUI output
     f = filepath of png export, MUST end in .png
-    w = override name of owner of geometry file (defauts to system name), to be used in report
+    w = override name of owner of geometry file (defaults to system name), to be used in report
     n = name of preparer, to be used in report
     T = directory where rt and rtwizard executables are stored
     c = classification of a file, to be displayed in uppercase on top and bottom of report.
@@ -83,7 +83,7 @@ You can see these by running:
     o = orientation of the file, default is right hand, flag will change orientation output to left hand
     O = orientation of the file, default is +Z-up, flag will change orientation output to +Y-up
     N = notes that a user would like to add to be specified in the report
-    Z = option to re-use pre-made renders in the output folder.  Should only be used when running on the same model multiple times.
+    Z = option to reuse pre-made renders in the output folder.  Should only be used when running on the same model multiple times.
     t = option to specify the top component of the report. Useful when there are multiple tops
     l = override the default length units in a file.
     L = filepath for optional logo.

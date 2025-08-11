@@ -1,7 +1,7 @@
 /*                    P A R A L L E L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2024 United States Government as represented by
+ * Copyright (c) 2013-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@ struct parallel_data {
     size_t iterations;
     void (*call)(int, void*);
 };
+
 
 /* intentionally not in struct so we can test the data arg,
  * intentionally per-cpu so we can avoid calling
@@ -100,8 +101,8 @@ main(int argc, char *argv[])
     unsigned long ncpu_opt;
     struct parallel_data data;
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 
@@ -147,7 +148,9 @@ main(int argc, char *argv[])
     }
     bu_log("bu_parallel simple callback with data, no iterations [PASS]\n");
 
-    /* test calling a simple hook function with data, minimal potential for collisions */
+    /* test calling a simple hook function with data, minimal
+     * potential for collisions.
+     */
     memset(counter, 0, sizeof(counter));
     data.iterations = 10;
     bu_parallel(callback, ncpu, &data);
@@ -157,7 +160,9 @@ main(int argc, char *argv[])
     }
     bu_log("bu_parallel simple callback with data, few iterations [PASS]\n");
 
-    /* test calling a simple hook function again with data, but lots of collision potential */
+    /* test calling a simple hook function again with data, but lots
+     * of collision potential.
+     */
     memset(counter, 0, sizeof(counter));
     data.iterations = 1000000;
     bu_parallel(callback, ncpu, &data);
@@ -167,7 +172,9 @@ main(int argc, char *argv[])
     }
     bu_log("bu_parallel simple callback with data, many iterations [PASS]\n");
 
-    /* test calling a simple hook function with data, zero cpus, potential for collisions */
+    /* test calling a simple hook function with data, zero cpus,
+     * potential for collisions.
+     */
     memset(counter, 0, sizeof(counter));
     data.iterations = 1000000;
     bu_parallel(callback, 0, &data);
@@ -188,7 +195,9 @@ main(int argc, char *argv[])
     }
     bu_log("bu_parallel recursive callback, few iterations [PASS]\n");
 
-    /* test calling a recursive hook function without data, more collision potential */
+    /* test calling a recursive hook function without data, more
+     * collision potential.
+     */
     memset(counter, 0, sizeof(counter));
     data.iterations = 1000000;
     data.call = &callback;

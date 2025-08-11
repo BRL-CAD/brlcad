@@ -1,4 +1,4 @@
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="tire1">
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="gist1">
 
 	<refmeta>
 		<refentrytitle>GIST</refentrytitle>
@@ -266,7 +266,7 @@
 	<refsection xml:id="copyright"><title>COPYRIGHT</title>
 
 		<para>
-			This software is Copyright (c) 2008-2024 United States Government as
+			This software is Copyright (c) 2008-2025 United States Government as
 			represented by the U.S. Army Research Laboratory.
 		</para>
 	</refsection>

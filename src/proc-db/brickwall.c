@@ -1,7 +1,7 @@
 /*                     B R I C K W A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -380,7 +380,7 @@ int main(int ac, char **av)
 	    vert_spacing / units_conv);
 
 
-    (void)putc((int)'\n', stdout);
+    (void)fputc((int)'\n', stdout);
     gen_bricks(horiz_bricks, vert_bricks, horiz_spacing, vert_spacing);
 
     if (make_mortar && (vert_spacing > tol || horiz_spacing > tol))

@@ -1,7 +1,7 @@
 /*                           E P A . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -198,7 +198,7 @@ size_t
 clt_epa_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct epa_specific *epa =
-        (struct epa_specific *)stp->st_specific;
+	(struct epa_specific *)stp->st_specific;
     struct clt_epa_specific *args;
 
     const size_t size = sizeof(*args);
@@ -837,7 +837,7 @@ rt_epa_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     epa = (struct rt_epa_internal *)ip->idb_ptr;
     if (!epa_is_valid(epa)) {
 	return -2;
@@ -914,7 +914,7 @@ rt_epa_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 int
 rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     fastf_t dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_new, theta_prev;
     int *pts_dbl, i, j, nseg;
@@ -1222,6 +1222,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex *apex_v;
     struct vertexuse *vu;
     struct faceuse *fu;
+    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -1429,7 +1430,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Mark the edges of this face as real, this is the only real edge */
-    (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic, &RTG.rtg_vlfree);
+    (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic, vlfree);
 
     /* connect ellipses with triangles */
     for (i = nell-2; i >= 0; i--) {
@@ -1583,13 +1584,13 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Glue the edges of different outward pointing face uses together */
-    nmg_gluefaces(outfaceuses, face, &RTG.rtg_vlfree, tol);
+    nmg_gluefaces(outfaceuses, face, vlfree, tol);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
     /* XXX just for testing, to make up for loads of triangles ... */
-    nmg_shell_coplanar_face_merge(s, tol, 1, &RTG.rtg_vlfree);
+    nmg_shell_coplanar_face_merge(s, tol, 1, vlfree);
 
     /* free mem */
     bu_free((char *)outfaceuses, "faceuse []");
@@ -1747,6 +1748,40 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_epa_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_epa_internal *tip = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(tip);
+    struct rt_epa_internal *top = (struct rt_epa_internal *)rop->idb_ptr;
+    RT_EPA_CK_MAGIC(top);
+
+    vect_t eV, eH, eAu;
+    double epa_r1, epa_r2;
+
+    VMOVE(eV, tip->epa_V);
+    VMOVE(eH, tip->epa_H);
+    VMOVE(eAu, tip->epa_Au);
+    epa_r1 = tip->epa_r1 / mat[15];
+    epa_r2 = tip->epa_r2 / mat[15];
+
+    if (epa_r1 <= SMALL_FASTF || epa_r2 <= SMALL_FASTF) {
+	bu_log("rt_epa_mat: r1 or r2 are zero\n");
+	return BRLCAD_ERROR;
+    }
+
+    MAT4X3PNT(top->epa_V, mat, eV);
+    MAT4X3VEC(top->epa_H, mat, eH);
+    MAT4X3VEC(top->epa_Au, mat, eAu);
+    VUNITIZE(top->epa_Au);
+    top->epa_r1 = epa_r1;
+    top->epa_r2 = epa_r2;
+
+    return BRLCAD_OK;
+}
 
 /**
  * Import an EPA from the database format to the internal format.
@@ -1777,8 +1812,25 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 11);
 
-    /* Apply modeling transformations */
+    /* Sanity */
     if (mat == NULL) mat = bn_mat_identity;
+    double epa_r1 = vec[3*3] / mat[15];
+    double epa_r2 = vec[3*3+1] / mat[15];
+    if (epa_r1 <= SMALL_FASTF || epa_r2 <= SMALL_FASTF) {
+	bu_log("rt_epa_import5: r1 or r2 are zero\n");
+	bu_free((char *)ip->idb_ptr, "rt_epa_import5: ip->idb_ptr");
+	return -1;
+    }
+
+    /* Assign values */
+    VMOVE(xip->epa_V, &vec[0*3]);
+    VMOVE(xip->epa_H, &vec[1*3]);
+    VMOVE(xip->epa_Au, &vec[2*3]);
+    VUNITIZE(xip->epa_Au);
+    xip->epa_r1 = vec[3*3];
+    xip->epa_r2 = vec[3*3+1];
+
+    /* Apply modeling transformations */
     MAT4X3PNT(xip->epa_V, mat, &vec[0*3]);
     MAT4X3VEC(xip->epa_H, mat, &vec[1*3]);
     MAT4X3VEC(xip->epa_Au, mat, &vec[2*3]);
@@ -1787,7 +1839,7 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     xip->epa_r2 = vec[3*3+1] / mat[15];
 
     if (xip->epa_r1 <= SMALL_FASTF || xip->epa_r2 <= SMALL_FASTF) {
-	bu_log("rt_epa_import4: r1 or r2 are zero\n");
+	bu_log("rt_epa_import5: r1 or r2 are zero\n");
 	bu_free((char *)ip->idb_ptr, "rt_epa_import4: ip->idb_ptr");
 	return -1;
     }
@@ -2019,51 +2071,74 @@ epa_is_valid(struct rt_epa_internal *epa)
     return 1;
 }
 
-void
-rt_epa_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_epa_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
+    int lcnt = 4;
+    if (!pl || pl_max < lcnt || !ip)
+	return 0;
 
     struct rt_epa_internal *epa = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(epa);
 
-    // Set up the containers
-    struct bv_label *l[4];
-    for (int i = 0; i < 4; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
+    point_t work, pos_view;
+    int npl = 0;
 
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
 
-	l[i] = la;
-    }
+    vect_t A, B;
 
+    MAT4X3PNT(pos_view, xform, epa->epa_V);
+    POINT_LABEL(pos_view, 'V');
 
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, epa->epa_V);
+    VADD2(work, epa->epa_V, epa->epa_H);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'H');
 
-    bu_vls_sprintf(&l[1]->label, "H");
-    VADD2(l[1]->p, epa->epa_V, epa->epa_H);
-
-    bu_vls_sprintf(&l[2]->label, "A");
-    vect_t A;
     VSCALE(A, epa->epa_Au, epa->epa_r1);
-    VADD2(l[2]->p, epa->epa_V, A);
+    VADD2(work, epa->epa_V, A);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'A');
 
-    bu_vls_sprintf(&l[3]->label, "B");
-    vect_t B;
     VCROSS(B, epa->epa_Au, epa->epa_H);
     VUNITIZE(B);
     VSCALE(B, B, epa->epa_r2);
-    VADD2(l[3]->p, epa->epa_V, B);
+    VADD2(work, epa->epa_V, B);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'B');
 
+    return lcnt;
+}
+
+const char *
+rt_epa_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_epa_internal *epa = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(epa);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, epa->epa_V);
+	goto epa_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+epa_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
 }
 
 

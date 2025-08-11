@@ -1,7 +1,7 @@
 /*                           A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -265,6 +265,38 @@ rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_ars_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_ars_internal *tip = (struct rt_ars_internal *)ip->idb_ptr;
+    RT_ARS_CK_MAGIC(tip);
+    struct rt_ars_internal *top = (struct rt_ars_internal *)rop->idb_ptr;
+    RT_ARS_CK_MAGIC(top);
+
+    if (tip->ncurves != top->ncurves)
+	return BRLCAD_ERROR;
+    if (tip->pts_per_curve != top->pts_per_curve)
+	return BRLCAD_ERROR;
+
+    fastf_t *fp, *ofp;
+    for (size_t i = 0; i < tip->ncurves; i++) {
+	fp = tip->curves[i];
+	ofp = top->curves[i];
+	for (size_t j = 0; j < tip->pts_per_curve; j++) {
+	    vect_t tmp_pnt;
+	    VMOVE(tmp_pnt, fp);
+	    MAT4X3PNT(ofp, mat, tmp_pnt);
+	    fp += ELEMENTS_PER_POINT;
+	    ofp += ELEMENTS_PER_POINT;
+	}
+	VMOVE(fp, top->curves[i]);	/* duplicate first point */
+    }
+
+   return BRLCAD_OK;
+}
 
 /**
  * Read all the curves in as a two dimensional array.  The caller is
@@ -314,13 +346,15 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	fp = ari->curves[i];
 	for (j = 0; j < ari->pts_per_curve; j++) {
 	    bu_cv_ntohd((unsigned char *)tmp_pnt, cp, ELEMENTS_PER_POINT);
-	    MAT4X3PNT(fp, mat, tmp_pnt);
+	    VMOVE(fp, tmp_pnt);
 	    cp += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
 	    fp += ELEMENTS_PER_POINT;
 	}
 	VMOVE(fp, ari->curves[i]);	/* duplicate first point */
     }
-    return 0;
+
+    /* Apply modeling transformations */
+    return rt_ars_mat(ip, mat, ip);
 }
 
 
@@ -460,6 +494,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct faceuse *fu;
     struct bu_ptbl kill_fus;
     int bad_ars = 0;
+    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
     arip = (struct rt_ars_internal *)ip->idb_ptr;
@@ -555,7 +590,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		ASSOC_GEOM(0, 0, 0);
 		ASSOC_GEOM(1, 0, 1);
 		ASSOC_GEOM(2, 1, 1);
-		if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+		if (nmg_calc_face_g(fu, vlfree)) {
 		    bu_log("Degenerate face created, will kill it later\n");
 		    bu_ptbl_ins(&kill_fus, (long *)fu);
 		}
@@ -586,7 +621,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		ASSOC_GEOM(0, 1, 0);
 		ASSOC_GEOM(1, 0, 0);
 		ASSOC_GEOM(2, 1, 1);
-		if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+		if (nmg_calc_face_g(fu, vlfree)) {
 		    bu_log("Degenerate face created, will kill it later\n");
 		    bu_ptbl_ins(&kill_fus, (long *)fu);
 		}
@@ -606,16 +641,16 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* ARS solids are often built with incorrect face normals.  Don't
      * depend on them to be correct.
      */
-    nmg_fix_normals(s, &RTG.rtg_vlfree, tol);
+    nmg_fix_normals(s, vlfree, tol);
 
     /* set edge's is_real flag */
-    nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
+    nmg_mark_edges_real(&s->l.magic, vlfree);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
-    nmg_shell_coplanar_face_merge(s, tol, 0, &RTG.rtg_vlfree);
-    nmg_simplify_shell(s,&RTG.rtg_vlfree);
+    nmg_shell_coplanar_face_merge(s, tol, 0, vlfree);
+    nmg_simplify_shell(s, vlfree);
 
     return 0;
 }
@@ -675,6 +710,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct nmgregion *r;
     struct shell *s;
     int ret;
+    struct bu_list *vlfree = &rt_vlfree;
 
     /*point_t min, max;*/
     /*if (rt_ars_bbox(ip, &min, &max, &rtip->rti_tol)) return -1;*/
@@ -689,7 +725,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     s = BU_LIST_FIRST(shell, &r->s_hd);
-    bot = nmg_bot(s, &RTG.rtg_vlfree, &rtip->rti_tol);
+    bot = nmg_bot(s, vlfree, &rtip->rti_tol);
 
     if (!bot) {
 	bu_log("Failed to convert ARS to BOT (%s)\n", stp->st_dp->d_namep);
@@ -722,7 +758,7 @@ rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     register size_t i;
     register size_t j;
     struct rt_ars_internal *arip;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -966,38 +1002,28 @@ rt_ars_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
-void
-rt_ars_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_ars_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
-
-    /*XXX Needs work - doesn't really represent the ARS data well... */
+    int lcnt = 1;
+    if (!pl || pl_max < lcnt || !ip)
+	return 0;
 
     struct rt_ars_internal *ars = (struct rt_ars_internal *)ip->idb_ptr;
     RT_ARS_CK_MAGIC(ars);
 
-    // Set up the containers
-    struct bv_label *l[2];
-    int lcnt = 1;
-    for (int i = 0; i < lcnt; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
+    point_t pos_view;
+    int npl = 0;
 
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
 
-	l[i] = la;
-    }
+    MAT4X3PNT(pos_view, xform, ars->curves[0]);
+    POINT_LABEL(pos_view, 'V');
 
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, ars->curves[0]);
-
+    return lcnt;
 }
 
 /** @} */

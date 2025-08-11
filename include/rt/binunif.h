@@ -1,7 +1,7 @@
 /*                      B I N U N I F . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include "vmath.h"
 #include "bu/vls.h"
 #include "rt/defines.h"
+#include "rt/directory.h"
 
 __BEGIN_DECLS
 
@@ -51,6 +52,10 @@ RT_EXPORT extern void rt_binunif_free(struct rt_binunif_internal *bip);
  */
 RT_EXPORT extern void rt_binunif_dump(struct rt_binunif_internal *bip);
 
+/**
+ * Decode binunif type into string.
+ */
+RT_EXPORT extern const char * rt_binunif_typestr(const struct directory *dp);
 
 __END_DECLS
 

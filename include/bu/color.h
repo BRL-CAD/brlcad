@@ -1,7 +1,7 @@
 /*                        C O L O R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,8 +61,15 @@ typedef struct bu_color bu_color_t;
  * initializes a bu_color struct without allocating any memory.
  */
 #define BU_COLOR_INIT(_c) { \
-	(_c)->buc_rgb[RED] = (_c)->buc_rgb[GRN] = (_c)->buc_rgb[BLU] = 0; (_c)->buc_rgb[ALP]; \
+	(_c)->buc_rgb[RED] = (_c)->buc_rgb[GRN] = (_c)->buc_rgb[BLU] = 0; (_c)->buc_rgb[ALP] = 0; \
     }
+
+/**
+ * Check whether two colors are equal within a tolerance.
+ */
+#define BU_COLOR_NEAR_EQUAL(_c1, _c2, _tol) \
+    HNEAR_EQUAL(_c1.buc_rgb, _c2.buc_rgb, _tol)
+
 
 /**
  * macro suitable for declaration statement initialization of a bu_color
@@ -71,9 +78,12 @@ typedef struct bu_color bu_color_t;
 #define BU_COLOR_INIT_ZERO {{0, 0, 0, 0}}
 
 /* Initializers for commonly used colors */
-#define BU_COLOR_RED    {{1, 0, 0, 0}}
-#define BU_COLOR_GREEN  {{0, 1, 0, 0}}
 #define BU_COLOR_BLUE   {{0, 0, 1, 0}}
+#define BU_COLOR_CYAN   {{0, 1, 1, 0}}
+#define BU_COLOR_GREEN  {{0, 1, 0, 0}}
+#define BU_COLOR_PURPLE {{1, 0, 1, 0}}
+#define BU_COLOR_RED    {{1, 0, 0, 0}}
+#define BU_COLOR_WHITE  {{1, 1, 1, 0}}
 #define BU_COLOR_YELLOW {{1, 1, 0, 0}}
 
 /**

@@ -1,7 +1,7 @@
 /*                     N M G _ T R I _ M C . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2024 United States Government as represented by
+ * Copyright (c) 1994-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@
  *   [ ] ???
  *   [ ] profit! (Mid Apr10)
  *   [ ] explore optimizations if time left?
- *   [ ] compare old nmg tesselator for accuracy/performance/robustness?
+ *   [ ] compare old nmg tessellator for accuracy/performance/robustness?
  */
 
 #include "common.h"
@@ -398,6 +398,7 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
     int *vi, fo, valids = 0;
     struct faceuse *fu;
     struct vertex *vertl[3], **f_vertl[3];
+    struct bu_list *vlfree = &rt_vlfree;
 
     f_vertl[0] = &vertl[0];
     f_vertl[1] = &vertl[2];
@@ -434,7 +435,7 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
 	nmg_vertex_gv(vertl[0], edges[vi[0]]);
 	nmg_vertex_gv(vertl[1], edges[vi[1]]);
 	nmg_vertex_gv(vertl[2], edges[vi[2]]);
-	if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	if (nmg_calc_face_g(fu, vlfree)) {
 	    /* this flips out and spins. */
 	    bu_log("Face calc failed\n");
 	    nmg_kfu(fu);

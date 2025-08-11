@@ -1,7 +1,7 @@
 /*                            H F . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2024 United States Government as represented by
+ * Copyright (c) 1994-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1660,7 +1660,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     xip = (struct rt_hf_internal *)ip->idb_ptr;
     RT_HF_CK_MAGIC(xip);
 
@@ -2056,7 +2056,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     }
 
     if (bu_cv_optimize(in_cookie) == bu_cv_optimize(out_cookie)) {
-	/* Don't replicate the data, just re-use the pointer */
+	/* Don't replicate the data, just reuse the pointer */
 	mp->apbuf = mp->buf;
 	return 0;		/* OK */
     }
@@ -2206,6 +2206,34 @@ rt_hf_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
+}
+
+const char *
+rt_hf_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_hf_internal *hf = (struct rt_hf_internal *)ip->idb_ptr;
+    RT_HF_CK_MAGIC(hf);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, hf->v);
+	goto hf_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+hf_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
 }
 
 

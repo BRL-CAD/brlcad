@@ -4,19 +4,15 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-copyeval SHARED copyeval.c)
+ged_plugin_library(ged-copyeval copyeval.c)
 target_link_libraries(ged-copyeval libged libbu)
-set_property(TARGET ged-copyeval APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-copyeval copyeval.c)
-PLUGIN_SETUP(ged-copyeval ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   copyeval.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

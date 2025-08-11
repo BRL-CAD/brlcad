@@ -268,7 +268,7 @@ struct vdsState {
 
 /* Routines for maintaining the vertex tree (dynamic.c) */
 extern void vdsAdjustTreeTopDown(vdsNode *, vdsFoldCriterion, void *);
-/* Low-level vertex tree maintainance routines; not need by most users: */
+/* Low-level vertex tree maintenance routines; not need by most users: */
 extern void vdsFoldNode(vdsNode *);
 extern void vdsUnfoldNode(vdsNode *);
 extern void vdsFoldSubtree(vdsNode *);

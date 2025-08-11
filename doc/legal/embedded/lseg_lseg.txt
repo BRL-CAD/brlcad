@@ -1,7 +1,7 @@
-https://github.com/davideberly/GeometricTools/blob/master/GTE/Mathematics/DistSegmentSegment.h
+https://github.com/davideberly/GeometricTools
 
 David Eberly, Geometric Tools, Redmond WA 98052
-Copyright (c) 1998-2019
+Copyright (c) 1998-2024
 
 Boost Software License - Version 1.0 - August 17th, 2003
 
@@ -27,5 +27,5 @@ FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 
-file:/src/libbg/lseg_lseg.c
+file:/src/libbg/lseg_lseg.cpp
 

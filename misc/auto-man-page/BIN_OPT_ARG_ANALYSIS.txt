@@ -2671,23 +2671,6 @@ Usage: /usr/local/src2/brlcad-build/bin/kurt
 
 ----- end usage -----------------------------------
 ***** end lens ***********************************
-***** begin lgt ***********************************
-	result : (usage)
-	file(s):
-	error  : 3:exit status: exit code 1
------ begin usage -----------------------------------
-
-
-
-This program is deprecated and will not be supported in future releases
-	Please use \"rtedge\" instead
-	Please notify \"devs@brlcad.org\" if you need enhancements to \"rtedge\"
-
-Press \"Enter\" to continue
-(snip...)
-
------ end usage -----------------------------------
-***** end lgt ***********************************
 ***** begin loop ***********************************
 	result : (usage)
 	file(s):

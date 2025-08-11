@@ -1,4 +1,5 @@
-set(LIBBN_SOURCES
+set(
+  LIBBN_SOURCES
   anim.c
   complex.c
   globals.c
@@ -18,24 +19,22 @@ set(LIBBN_SOURCES
   ulp.c
   vers.c
   wavelet.c
-  )
+)
 
-set(BN_LOCAL_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  )
+set(BN_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Note - libbn_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-BRLCAD_ADDLIB(libbn "${LIBBN_SOURCES}" "${libbn_deps}" "" "${BN_LOCAL_INCLUDE_DIRS}")
+brlcad_addlib(libbn "${LIBBN_SOURCES}" "${libbn_deps}" "" "${BN_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libbn PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   README
   soboldata.h
   numgen.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

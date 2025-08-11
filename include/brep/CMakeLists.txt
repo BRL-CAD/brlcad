@@ -1,4 +1,5 @@
-set(brep_headers
+set(
+  brep_headers
   defines.h
   bbnode.h
   boolean.h
@@ -12,10 +13,10 @@ set(brep_headers
   ray.h
   surfacetree.h
   util.h
-  )
-BRLCAD_MANAGE_FILES(brep_headers ${INCLUDE_DIR}/brlcad/brep REQUIRED libbrep)
+)
+brlcad_manage_files(brep_headers ${INCLUDE_DIR}/brlcad/brep REQUIRED libbrep)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

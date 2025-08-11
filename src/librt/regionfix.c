@@ -1,7 +1,7 @@
 /*                     R E G I O N F I X . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2024 United States Government as represented by
+ * Copyright (c) 1989-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ rt_regionfix(struct rt_i *rtip)
 
     fp = fopen(file, "rb");
     if (fp == NULL) {
-	if (rtip->rti_region_fix_file) perror(file);
+	if (rtip->rti_region_fix_file) bu_log("unable to open REGEXP file: %s\n", file);
 	bu_vls_free(&name);
 	return;
     }

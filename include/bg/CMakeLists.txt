@@ -1,10 +1,12 @@
-set(bg_headers
+set(
+  bg_headers
   aabb_ray.h
   chull.h
   clip.h
   defines.h
   lseg.h
   obr.h
+  pca.h
   plane.h
   polygon.h
   polygon_types.h
@@ -15,11 +17,11 @@ set(bg_headers
   tri_tri.h
   trimesh.h
   vert_tree.h
-  )
-BRLCAD_MANAGE_FILES(bg_headers ${INCLUDE_DIR}/brlcad/bg REQUIRED libbg)
+)
+brlcad_manage_files(bg_headers ${INCLUDE_DIR}/brlcad/bg REQUIRED libbg)
 
-CMAKEFILES(pointgen.h)
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(pointgen.h)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

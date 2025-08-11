@@ -1,7 +1,7 @@
 #                R E S E T C A C H E . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2024 United States Government as represented by
+# Copyright (c) 2011-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,19 +41,18 @@ macro(RESET_CACHE_FILE)
     string(REGEX REPLACE "\r?\n" ";" ENT "${ENT1}")
     foreach(line ${ENT})
       if(NOT ${line} MATCHES "^CMAKE_")
-	if(NOT ${line} MATCHES "^//")
-	  if(${line} MATCHES "FILEPATH=")
-	    if(${line} MATCHES "LIB")
-	      string(REGEX REPLACE ":.*" "" var ${line})
-	      set(${var} NOTFOUND CACHE FILEPATH "reset" FORCE)
-	    endif(${line} MATCHES "LIB")
-	  endif(${line} MATCHES "FILEPATH=")
-	endif(NOT ${line} MATCHES "^//")
+        if(NOT ${line} MATCHES "^//")
+          if(${line} MATCHES "FILEPATH=")
+            if(${line} MATCHES "LIB")
+              string(REGEX REPLACE ":.*" "" var ${line})
+              set(${var} NOTFOUND CACHE FILEPATH "reset" FORCE)
+            endif(${line} MATCHES "LIB")
+          endif(${line} MATCHES "FILEPATH=")
+        endif(NOT ${line} MATCHES "^//")
       endif(NOT ${line} MATCHES "^CMAKE_")
     endforeach(line ${ENT})
   endif(EXISTS "${CMAKE_BINARY_DIR}/CMakeCache.txt")
 endmacro()
-
 
 # Local Variables:
 # tab-width: 8

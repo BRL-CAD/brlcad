@@ -1,7 +1,7 @@
 /*                     M A L L O C . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -254,15 +254,6 @@ BU_EXPORT extern int bu_shmget(int *shmid, char **shared_memory, int key, size_t
 #define BU_FREE(_ptr, _type) do { bu_free(_ptr, #_type " (BU_FREE) " CPP_FILELINE); _ptr = (_type *)NULL; } while (0)
 
 /** @} */
-
-/* DEPRECATED */
-BU_EXPORT extern void bu_prmem(const char *str);
-
-/* DEPRECATED: use valgrind/memcheck, SGcheck */
-BU_EXPORT extern void bu_ck_malloc_ptr(void *ptr, const char *str);
-
-/* DEPRECATED: use valgrind/memcheck, SGcheck */
-BU_EXPORT extern int bu_mem_barriercheck(void);
 
 __END_DECLS
 

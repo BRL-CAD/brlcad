@@ -1,7 +1,7 @@
 /*                 M A P P E D F I L E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2024 United States Government as represented by
+ * Copyright (c) 2011-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -86,6 +86,7 @@ test_mapped_file_serial(long int file_cnt, long int test_num)
     return 1;
 }
 
+
 static int
 test_mapped_file_serial_repeat(long int file_cnt, long int test_num)
 {
@@ -98,6 +99,7 @@ test_mapped_file_serial_repeat(long int file_cnt, long int test_num)
     }
     return 0;
 }
+
 
 static void
 mapped_file_worker(int cpu, void *data)
@@ -167,6 +169,7 @@ test_mapped_file_parallel(size_t file_cnt, long int test_num)
     return ret;
 }
 
+
 static int
 test_mapped_file_parallel_repeat(long int file_cnt, long int test_num)
 {
@@ -179,6 +182,7 @@ test_mapped_file_parallel_repeat(long int file_cnt, long int test_num)
     }
     return 0;
 }
+
 
 static void
 mapped_file_worker_with_free(int cpu, void *data)
@@ -219,6 +223,7 @@ mapped_file_worker_with_free(int cpu, void *data)
     }
 }
 
+
 static int
 test_mapped_file_parallel_with_free(size_t file_cnt, long int test_num)
 {
@@ -251,6 +256,7 @@ test_mapped_file_parallel_with_free(size_t file_cnt, long int test_num)
     return ret;
 }
 
+
 int
 main(int ac, char *av[])
 {
@@ -260,8 +266,8 @@ main(int ac, char *av[])
     long int test_num = 0;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(av[0]);
 

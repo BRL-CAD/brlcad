@@ -1,7 +1,7 @@
 /*                      S H _ L I G H T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2024 United States Government as represented by
+ * Copyright (c) 1998-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1258,7 +1258,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	tryagain = 0;
 	for (k = 0; k < los->lsp->lt_pt_count; k++) {
 	    if (flags[k] & VF_SEEN) {
-		/* this one was used, we can re-use it */
+		/* this one was used, we can reuse it */
 		tryagain = 1;
 		flags[k] &= VF_BACKFACE;
 	    }

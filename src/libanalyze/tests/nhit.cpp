@@ -1,7 +1,7 @@
 /*                      N H I T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -133,8 +133,6 @@ main(int argc, const char **argv)
 
     /* OK, from here on out we are actually going to be working with NIRT
      * itself.  Set up the initial environment */
-    if (rt_uniresource.re_magic == 0)
-	rt_init_resource(&rt_uniresource, 0, NULL);
 
     if ((dbip = db_open(argv[0], DB_OPEN_READONLY)) == DBI_NULL) {
 	bu_log("Unable to open db file %s\n", argv[0]);

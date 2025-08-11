@@ -1,7 +1,7 @@
 /*                        P L A N E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,6 +61,8 @@ struct plane_specific  {
 
 /**
  * Describe the tri_specific structure.
+ *
+ * DEPRECATED - removing this as public API.  (marked 7.42.0)
  */
 struct tri_specific  {
     point_t tri_A;			/**< triangle vertex (A) */
@@ -1156,13 +1158,13 @@ BG_EXPORT extern int bg_fit_plane(point_t *c, vect_t *n, size_t npnts, point_t *
  * @brief
  * Find the closest U,V point on the plane p to 3d point pt.
  */
-BG_EXPORT extern int bg_plane_closest_pt(fastf_t *u, fastf_t *v, plane_t p, point_t pt);
+BG_EXPORT extern int bg_plane_closest_pt(fastf_t *u, fastf_t *v, plane_t *p, point_t *pt);
 
 /**
  * @brief
  * Return the 3D point on the plane at parametric coordinates u, v.
  */
-BG_EXPORT extern int bg_plane_pt_at(point_t *pt, plane_t p, fastf_t u, fastf_t v);
+BG_EXPORT extern int bg_plane_pt_at(point_t *pt, plane_t *p, fastf_t u, fastf_t v);
 
 
 

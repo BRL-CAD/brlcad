@@ -1,7 +1,7 @@
 /*                        A U T O V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2024 United States Government as represented by
+ * Copyright (c) 2000-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,9 +46,9 @@ to_autoview_view(struct bview *gdvp, const char *scale)
     av[2] = NULL;
 
     if (scale)
-	ret = ged_exec(tvd->gedp, 2, (const char **)av);
+	ret = ged_exec_autoview(tvd->gedp, 2, (const char **)av);
     else
-	ret = ged_exec(tvd->gedp, 1, (const char **)av);
+	ret = ged_exec_autoview(tvd->gedp, 1, (const char **)av);
 
     if (ret == BRLCAD_OK) {
 	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {

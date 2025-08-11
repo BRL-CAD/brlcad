@@ -1,7 +1,7 @@
 /*                          H A S H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -489,8 +489,6 @@ bu_data_hash_val(struct bu_data_hash_state *s)
     hash_val = XXH64_digest(s->i->h_state);
     return (unsigned long long)hash_val;
 }
-
-
 
 
 /*

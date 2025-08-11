@@ -1,7 +1,7 @@
 /*                         O V E R L A Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -77,6 +77,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     struct dm *dmp = NULL;
     struct fb *fbp = NULL;
     struct bu_vls vname = BU_VLS_INIT_ZERO;
+    struct bu_list *vlfree = &rt_vlfree;
 
     static char usage[] = "Usage: overlay [options] file\n";
 
@@ -201,7 +202,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_free(&vname);
 		return BRLCAD_ERROR;
 	    }
-	    vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+	    vbp = bv_vlblock_init(vlfree, 32);
 	    for (size_t i = 0; i < count; i++) {
 		if ((fp = fopen(files[i], "rb")) == NULL) {
 		    bu_vls_printf(gedp->ged_result_str, "ged_overlay_core: failed to open file - %s\n", files[i]);
@@ -210,7 +211,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_free(&vname);
 		    return BRLCAD_ERROR;
 		}
-		ret = rt_uplot_to_vlist(vbp, fp, size, gedp->ged_gdp->gd_uplotOutputMode);
+		ret = rt_uplot_to_vlist(vbp, fp, size, gedp->i->ged_gdp->gd_uplotOutputMode);
 		fclose(fp);
 		if (ret < 0) {
 		    bv_vlblock_free(vbp);
@@ -222,8 +223,8 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    bu_argv_free(count, files);
 	} else {
-	    vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
-	    ret = rt_uplot_to_vlist(vbp, fp, size, gedp->ged_gdp->gd_uplotOutputMode);
+	    vbp = bv_vlblock_init(vlfree, 32);
+	    ret = rt_uplot_to_vlist(vbp, fp, size, gedp->i->ged_gdp->gd_uplotOutputMode);
 	    fclose(fp);
 	    if (ret < 0) {
 		bv_vlblock_free(vbp);
@@ -233,8 +234,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 
-	const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
-	if (BU_STR_EQUAL(nview, "1")) {
+	if (gedp->new_cmd_forms) {
 	    struct bview *v = gedp->ged_gvp;
 	    bv_vlblock_obj(vbp, v, bu_vls_cstr(&nroot));
 	} else {

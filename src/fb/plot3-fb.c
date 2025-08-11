@@ -1,7 +1,7 @@
 /*                      P L O T 3 - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2024 United States Government as represented by
+ * Copyright (c) 1986-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1255,7 +1255,7 @@ DoFile(void)	/* returns vpl status code */
 			put_vector_char(c, &newpos);
 
 			if (debug)
-			    putc(c, stderr);
+			    fputc(c, stderr);
 		    }
 
 		    plotted = true;

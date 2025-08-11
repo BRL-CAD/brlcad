@@ -1,7 +1,7 @@
 /*                          L I N E S . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2024 United States Government as represented by
+ * Copyright (c) 2000-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -118,7 +118,7 @@ to_data_lines(struct ged *gedp,
     struct bview *btmp = gedp->ged_gvp;
     gedp->ged_gvp = gdvp;
 
-    ret = ged_exec(gedp, argc, argv);
+    ret = ged_exec_view(gedp, argc, argv);
 
     gedp->ged_gvp = btmp;
 

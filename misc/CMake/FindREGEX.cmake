@@ -50,18 +50,22 @@ if(REGEX_ROOT)
 endif()
 
 # Normal search.
-set(_REGEX_SEARCH_NORMAL
-	PATHS "[HKEY_LOCAL_MACHINE\\SOFTWARE\\GnuWin32\\Regex;InstallPath]"
-        "$ENV{PROGRAMFILES}/regex"
-  )
+set(_REGEX_SEARCH_NORMAL PATHS "[HKEY_LOCAL_MACHINE\\SOFTWARE\\GnuWin32\\Regex;InstallPath]" "$ENV{PROGRAMFILES}/regex")
 list(APPEND _REGEX_SEARCHES _REGEX_SEARCH_NORMAL)
 
-set(REGEX_NAMES regex_brl regex_brld regex regexd regexd1)
+set(
+  REGEX_NAMES
+  regex_brl
+  regex_brld
+  regex
+  regexd
+  regexd1
+)
 
 # Try each search configuration.
 foreach(search ${_REGEX_SEARCHES})
-  find_path(REGEX_INCLUDE_DIR NAMES regex.h        ${${search}} PATH_SUFFIXES include)
-  find_library(REGEX_LIBRARY  NAMES ${REGEX_NAMES} ${${search}} PATH_SUFFIXES lib)
+  find_path(REGEX_INCLUDE_DIR NAMES regex.h ${${search}} PATH_SUFFIXES include)
+  find_library(REGEX_LIBRARY NAMES ${REGEX_NAMES} ${${search}} PATH_SUFFIXES lib)
 endforeach()
 
 mark_as_advanced(REGEX_LIBRARY REGEX_INCLUDE_DIR)
@@ -69,16 +73,17 @@ mark_as_advanced(REGEX_LIBRARY REGEX_INCLUDE_DIR)
 # handle the QUIETLY and REQUIRED arguments and set REGEX_FOUND to TRUE if
 # all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(REGEX REQUIRED_VARS REGEX_LIBRARY REGEX_INCLUDE_DIR)
+find_package_handle_standard_args(REGEX REQUIRED_VARS REGEX_LIBRARY REGEX_INCLUDE_DIR)
 
 if(REGEX_FOUND)
-    set(REGEX_INCLUDE_DIRS ${REGEX_INCLUDE_DIR})
-    set(REGEX_LIBRARIES ${REGEX_LIBRARY})
+  set(REGEX_INCLUDE_DIRS ${REGEX_INCLUDE_DIR})
+  set(REGEX_LIBRARIES ${REGEX_LIBRARY})
 
-    if(NOT TARGET REGEX::REGEX)
-      add_library(REGEX::REGEX UNKNOWN IMPORTED)
-      set_target_properties(REGEX::REGEX PROPERTIES
-        IMPORTED_LOCATION "${REGEX_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${REGEX_INCLUDE_DIRS}")
-    endif()
+  if(NOT TARGET REGEX::REGEX)
+    add_library(REGEX::REGEX UNKNOWN IMPORTED)
+    set_target_properties(
+      REGEX::REGEX
+      PROPERTIES IMPORTED_LOCATION "${REGEX_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES "${REGEX_INCLUDE_DIRS}"
+    )
+  endif()
 endif()

@@ -194,7 +194,7 @@ namespace eval ::hv3::string {
   # A generic tokeniser procedure for strings. This proc splits the
   # input string $input into a list of tokens, where each token is either:
   #
-  #     * A continuous set of alpha-numeric characters, or
+  #     * A continuous set of alphanumeric characters, or
   #     * A quoted string (quoted by " or '), or
   #     * Any single character.
   #
@@ -207,7 +207,7 @@ namespace eval ::hv3::string {
     while {[string length $zIn] > 0} {
 
       if {[ regexp {^([[:alnum:]_.-]+)(.*)$} $zIn -> zToken zIn ]} {
-	# Contiguous alpha-numeric characters
+	# Contiguous alphanumeric characters
 	lappend tokens $zToken
 
       } elseif {[ regexp {^(["'])} $zIn -> zQuote]} {      #;'"

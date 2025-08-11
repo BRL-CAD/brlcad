@@ -1,7 +1,7 @@
 /*                 F I L E _ M I M E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2024 United States Government as represented by
+ * Copyright (c) 2011-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,8 +48,8 @@ main(int ac, char *av[])
     int context = 0;
     int expected = 0;
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(av[0]);
 

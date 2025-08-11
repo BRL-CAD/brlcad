@@ -1,7 +1,7 @@
 /*                     N U R B _ T E S S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
  * Algorithm -
  *
  * See paper in Computer Aided Design (CAD) Volume 27, Number 1,
- * January 1995 TESSELATING TRIMMED NURBS SURFACES, Leslie A Piegl
+ * January 1995 TESSELLATING TRIMMED NURBS SURFACES, Leslie A Piegl
  * and Arnaud Richard.
  *
  * There is a slight deviation from the paper; since libnurb

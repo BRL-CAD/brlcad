@@ -98,7 +98,7 @@ Be specific.
   simply using "{}" as the object name replacement marker (unless we
   specify a -m {marker_name}).  Using the same positional markers will
   help keep the interface consistent for the user, but it will require
-  forethought on how batch interfacts with the search and repeat
+  forethought on how batch interfaces with the search and repeat
   commands.
 
 * 'calc' command: geometry calculator for scalar values, points,
@@ -196,7 +196,7 @@ Be specific.
   (e.g., sysdef or regmap) that would be good to generically support.
 
 * 'gsort' or 'tables' or 'filter' command.  Distinction is that this
-  comamnd is object-aware and can process geometry by name in a given
+  command is object-aware and can process geometry by name in a given
   column or list.  This way, one could sort output from search, nirt,
   idents, and other table/list-based commands. Examples:
 
@@ -581,7 +581,7 @@ specifier modifiers.
 A path modifier is a single or multiple character pattern specified at the head
 of an object name, path, or glob pattern:
 
-[modifer]object_pattern[/object_pattern]
+[modifier]object_pattern[/object_pattern]
 
 Valid single character modifiers and their behaviors:
 
@@ -774,7 +774,7 @@ kill/nice/nohup/runcon/sleep/stdbuf/timeout/yes/true/false
 link/ln
         create reference to an object
 ls
-        display listing of objcts
+        display listing of objects
 mkdir/mkfifo/mknod/mktemp
         make combination directory
 seq

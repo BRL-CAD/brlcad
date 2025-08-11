@@ -1,7 +1,7 @@
 /*                    O P E R A T I O N S . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2024 United States Government as represented by
+ * Copyright (c) 2013-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include <math.h>
+#include <string.h>
 
 #include "icv.h"
 
@@ -35,7 +36,6 @@
 #include "bu/malloc.h"
 #include "bn/tol.h"
 #include "vmath.h"
-
 
 int icv_sanitize(icv_image_t* img)
 {

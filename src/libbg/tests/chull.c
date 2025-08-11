@@ -1,7 +1,7 @@
 /*                      B G _ C H U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2024 United States Government as represented by
+ * Copyright (c) 2013-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -225,7 +225,6 @@ main(int argc, const char **argv)
 	    plot2d_chull2(1, hull, hcnt, (const point2d_t *)test1_points);
 	}
 	if (!retval) {return -1;} else {bu_log("Test #002-1 Passed!\n");}
-
 
 
     }

@@ -1,7 +1,7 @@
 /*                           R E C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -171,7 +171,7 @@ size_t
 clt_rec_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct rec_specific *rec =
-        (struct rec_specific *)stp->st_specific;
+	(struct rec_specific *)stp->st_specific;
     struct clt_rec_specific *args;
 
     const size_t size = sizeof(*args);

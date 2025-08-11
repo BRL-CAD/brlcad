@@ -1,7 +1,7 @@
 /*                       B U T T O N S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,17 +29,15 @@
 #include "vmath.h"
 
 #include "./mged.h"
-#include "./mged_dm.h"
 #include "./sedit.h"
+#include "./menu.h"
 
 /* external sp_hook function */
 extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *, void *);	/* defined in set.c */
 
-extern int mged_svbase(void);
-extern void set_e_axes_pos(int both);
-extern int mged_zoom(double val);
-extern void set_absolute_tran(void);	/* defined in set.c */
-extern void adc_set_scroll(void);	/* defined in adc.c */
+extern void set_e_axes_pos(struct mged_state *s, int both);
+extern int mged_zoom(struct mged_state *s, double val);
+extern void adc_set_scroll(struct mged_state *s);	/* defined in adc.c */
 
 /* forward declarations for the buttons table */
 int be_accept(ClientData, Tcl_Interp *, int, char **);
@@ -149,12 +147,12 @@ static mat_t sav_viewrot, sav_toviewcenter;
 static fastf_t sav_vscale;
 static int vsaved = 0;	/* set if view saved */
 
-extern void mged_color_soltab(void);
-extern void sl_halt_scroll(int, int, int);	/* in scroll.c */
-extern void sl_toggle_scroll(int, int, int);
+extern void mged_color_soltab(struct mged_state *s);
+extern void sl_halt_scroll(struct mged_state *s, int, int, int);	/* in scroll.c */
+extern void sl_toggle_scroll(struct mged_state *s, int, int, int);
 
-void btn_head_menu(int i, int menu, int item);
-void btn_item_hit(int arg, int menu, int item);
+void btn_head_menu(struct mged_state *s, int i, int menu, int item);
+void btn_item_hit(struct mged_state *s, int arg, int menu, int item);
 
 static struct menu_item first_menu[] = {
     { "BUTTON MENU", btn_head_menu, 1 },		/* chg to 2nd menu */
@@ -207,7 +205,7 @@ struct menu_item oed_menu[] = {
 
 
 void
-button(int bnum)
+button(struct mged_state *s, int bnum)
 {
     struct buttons *bp;
 
@@ -219,7 +217,8 @@ button(int bnum)
 	if (bnum != bp->bu_code)
 	    continue;
 
-	bp->bu_func((ClientData)NULL, INTERP, 0, NULL);
+	struct cmdtab bcmdtab = {MGED_CMD_MAGIC, bp->bu_name, NULL, NULL, s};
+	bp->bu_func((ClientData)&bcmdtab, s->interp, 0, NULL);
 	return;
     }
 
@@ -241,6 +240,10 @@ f_press(ClientData clientData,
 	int argc,
 	char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     int i;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -285,7 +288,7 @@ f_press(ClientData clientData,
 	}
 
 	for (menu = 0, m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
-	    if (*m == MENU_NULL) continue;
+	    if (*m == NULL) continue;
 	    for (item = 0, mptr = *m;
 		 mptr->menu_string[0] != '\0';
 		 mptr++, item++) {
@@ -298,7 +301,7 @@ f_press(ClientData clientData,
 		/* It's up to the menu_func to set menu_state->ms_flag = 0
 		 * if no arrow is desired */
 		if (mptr->menu_func != NULL)
-		    (*(mptr->menu_func))(mptr->menu_arg, menu, item);
+		    (*(mptr->menu_func))(s, mptr->menu_arg, menu, item);
 
 		goto next;
 	    }
@@ -318,7 +321,7 @@ f_press(ClientData clientData,
  * Useful for displays with programmable button labels, etc.
  */
 char *
-label_button(int bnum)
+label_button(struct mged_state *s, int bnum)
 {
     struct buttons *bp;
 
@@ -333,7 +336,7 @@ label_button(int bnum)
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&tmp_vls, "label_button(%d):  Not a defined operation\n", bnum);
-	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
     }
 
@@ -342,24 +345,35 @@ label_button(int bnum)
 
 
 int
-bv_zoomin(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+bv_zoomin(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    (void)mged_zoom(2.0);
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+    (void)mged_zoom(s, 2.0);
     return TCL_OK;
 }
 
 
 int
-bv_zoomout(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+bv_zoomout(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    (void)mged_zoom(0.5);
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    (void)mged_zoom(s, 0.5);
     return TCL_OK;
 }
 
 
 int
-bv_rate_toggle(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+bv_rate_toggle(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     mged_variables->mv_rateknobs = !mged_variables->mv_rateknobs;
 
     {
@@ -368,7 +382,7 @@ bv_rate_toggle(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UN
 	const char name[] = "name";
 	void *base = 0;
 	const char value[] = "value";
-	set_scroll_private(sdp, name, base, value, NULL);
+	set_scroll_private(sdp, name, base, value, s);
     }
 
     return TCL_OK;
@@ -376,70 +390,91 @@ bv_rate_toggle(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UN
 
 
 int
-bv_top(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+bv_top(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     /* Top view */
-    setview(0.0, 0.0, 0.0);
+    setview(s, 0.0, 0.0, 0.0);
     return TCL_OK;
 }
 
 
 int
-bv_bottom(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+bv_bottom(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     /* Bottom view */
-    setview(180.0, 0.0, 0.0);
+    setview(s, 180.0, 0.0, 0.0);
     return TCL_OK;
 }
 
 
 int
-bv_right(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+bv_right(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     /* Right view */
-    setview(270.0, 0.0, 0.0);
+    setview(s, 270.0, 0.0, 0.0);
     return TCL_OK;
 }
 
 
 int
-bv_left(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+bv_left(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     /* Left view */
-    setview(270.0, 0.0, 180.0);
+    setview(s, 270.0, 0.0, 180.0);
     return TCL_OK;
 }
 
 
 int
-bv_front(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+bv_front(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     /* Front view */
-    setview(270.0, 0.0, 270.0);
+    setview(s, 270.0, 0.0, 270.0);
     return TCL_OK;
 }
 
 
 int
-bv_rear(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+bv_rear(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     /* Rear view */
-    setview(270.0, 0.0, 90.0);
+    setview(s, 270.0, 0.0, 90.0);
     return TCL_OK;
 }
 
 
 int
-bv_vrestore(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+bv_vrestore(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    /* restore to saved view */
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+     /* restore to saved view */
     if (vsaved) {
 	view_state->vs_gvp->gv_scale = sav_vscale;
 	MAT_COPY(view_state->vs_gvp->gv_rotation, sav_viewrot);
 	MAT_COPY(view_state->vs_gvp->gv_center, sav_toviewcenter);
-	new_mats();
+	new_mats(s);
 
-	(void)mged_svbase();
+	(void)mged_svbase(s);
     }
 
     return TCL_OK;
@@ -447,9 +482,12 @@ bv_vrestore(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSE
 
 
 int
-bv_vsave(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+bv_vsave(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    /* save current view */
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+     /* save current view */
     sav_vscale = view_state->vs_gvp->gv_scale;
     MAT_COPY(sav_viewrot, view_state->vs_gvp->gv_rotation);
     MAT_COPY(sav_toviewcenter, view_state->vs_gvp->gv_center);
@@ -465,8 +503,12 @@ bv_vsave(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(a
  * can't be bound as "adc", only as "press adc".
  */
 int
-bv_adcursor(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+bv_adcursor(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     if (adc_state->adc_draw) {
 	/* Was on, turn off */
 	adc_state->adc_draw = 0;
@@ -475,46 +517,55 @@ bv_adcursor(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSE
 	adc_state->adc_draw = 1;
     }
 
-    adc_set_scroll();
+    adc_set_scroll(s);
     return TCL_OK;
 }
 
 
 int
-bv_reset(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[])) {
+bv_reset(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[])) {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     /* Reset view such that all solids can be seen */
-    size_reset();
-    setview(0.0, 0.0, 0.0);
-    (void)mged_svbase();
+    size_reset(s);
+    setview(s, 0.0, 0.0, 0.0);
+    (void)mged_svbase(s);
     return TCL_OK;
 }
 
 
 int
-bv_45_45(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[])) {
-    setview(270.0+45.0, 0.0, 270.0-45.0);
+bv_45_45(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[])) {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+    setview(s, 270.0+45.0, 0.0, 270.0-45.0);
     return TCL_OK;
 }
 
 
 int
-bv_35_25(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[])) {
+bv_35_25(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[])) {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     /* Use Azimuth=35, Elevation=25 in GIFT's backwards space */
-    setview(270.0+25.0, 0.0, 270.0-35.0);
+    setview(s, 270.0+25.0, 0.0, 270.0-35.0);
     return TCL_OK;
 }
 
 
 /* returns 0 if error, !0 if success */
 static int
-ill_common(void) {
+ill_common(struct mged_state *s) {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     int is_empty = 1;
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
@@ -526,7 +577,7 @@ ill_common(void) {
     }
 
     if (is_empty) {
-	Tcl_AppendResult(INTERP, "no solids in view\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "no solids in view\n", (char *)NULL);
 	return 0;	/* BAD */
     }
 
@@ -543,13 +594,17 @@ ill_common(void) {
 
 
 int
-be_o_illuminate(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_o_illuminate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_VIEW, "Matrix Illuminate"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_VIEW, "Matrix Illuminate"))
 	return TCL_ERROR;
 
-    if (ill_common()) {
-	(void)chg_state(ST_VIEW, ST_O_PICK, "Matrix Illuminate");
+    if (ill_common(s)) {
+	(void)chg_state(s, ST_VIEW, ST_O_PICK, "Matrix Illuminate");
     }
     /* reset accumulation local scale factors */
     acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
@@ -561,187 +616,227 @@ be_o_illuminate(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int U
 
 
 int
-be_s_illuminate(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_s_illuminate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_VIEW, "Primitive Illuminate"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_VIEW, "Primitive Illuminate"))
 	return TCL_ERROR;
 
-    if (ill_common()) {
-	(void)chg_state(ST_VIEW, ST_S_PICK, "Primitive Illuminate");
+    if (ill_common(s)) {
+	(void)chg_state(s, ST_VIEW, ST_S_PICK, "Primitive Illuminate");
     }
     return TCL_OK;
 }
 
 
 int
-be_o_scale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_o_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_O_EDIT, "Matrix Scale"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_O_EDIT, "Matrix Scale"))
 	return TCL_ERROR;
 
     edobj = BE_O_SCALE;
     movedir = SARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 
-    edit_absolute_scale = acc_sc_obj - 1.0;
-    if (edit_absolute_scale > 0.0)
-	edit_absolute_scale /= 3.0;
+    s->edit_state.edit_absolute_scale = acc_sc_obj - 1.0;
+    if (s->edit_state.edit_absolute_scale > 0.0)
+	s->edit_state.edit_absolute_scale /= 3.0;
     return TCL_OK;
 }
 
 
 int
-be_o_xscale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_o_xscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_O_EDIT, "Matrix Local X Scale"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_O_EDIT, "Matrix Local X Scale"))
 	return TCL_ERROR;
 
     edobj = BE_O_XSCALE;
     movedir = SARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 
-    edit_absolute_scale = acc_sc[0] - 1.0;
-    if (edit_absolute_scale > 0.0)
-	edit_absolute_scale /= 3.0;
+    s->edit_state.edit_absolute_scale = acc_sc[0] - 1.0;
+    if (s->edit_state.edit_absolute_scale > 0.0)
+	s->edit_state.edit_absolute_scale /= 3.0;
     return TCL_OK;
 }
 
 
 int
-be_o_yscale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_o_yscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_O_EDIT, "Matrix Local Y Scale"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_O_EDIT, "Matrix Local Y Scale"))
 	return TCL_ERROR;
 
     edobj = BE_O_YSCALE;
     movedir = SARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 
-    edit_absolute_scale = acc_sc[1] - 1.0;
-    if (edit_absolute_scale > 0.0)
-	edit_absolute_scale /= 3.0;
+    s->edit_state.edit_absolute_scale = acc_sc[1] - 1.0;
+    if (s->edit_state.edit_absolute_scale > 0.0)
+	s->edit_state.edit_absolute_scale /= 3.0;
     return TCL_OK;
 }
 
 
 int
-be_o_zscale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_o_zscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_O_EDIT, "Matrix Local Z Scale"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_O_EDIT, "Matrix Local Z Scale"))
 	return TCL_ERROR;
 
     edobj = BE_O_ZSCALE;
     movedir = SARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 
-    edit_absolute_scale = acc_sc[2] - 1.0;
-    if (edit_absolute_scale > 0.0)
-	edit_absolute_scale /= 3.0;
+    s->edit_state.edit_absolute_scale = acc_sc[2] - 1.0;
+    if (s->edit_state.edit_absolute_scale > 0.0)
+	s->edit_state.edit_absolute_scale /= 3.0;
     return TCL_OK;
 }
 
 
 int
-be_o_x(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_o_x(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_O_EDIT, "Matrix X Motion"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_O_EDIT, "Matrix X Motion"))
 	return TCL_ERROR;
 
     edobj = BE_O_X;
     movedir = RARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
 
 int
-be_o_y(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_o_y(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_O_EDIT, "Matrix Y Motion"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_O_EDIT, "Matrix Y Motion"))
 	return TCL_ERROR;
 
     edobj = BE_O_Y;
     movedir = UARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
 
 int
-be_o_xy(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_o_xy(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_O_EDIT, "Matrix XY Motion"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_O_EDIT, "Matrix XY Motion"))
 	return TCL_ERROR;
 
     edobj = BE_O_XY;
     movedir = UARROW | RARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
 
 int
-be_o_rotate(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_o_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (not_state(ST_O_EDIT, "Matrix Rotation"))
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (not_state(s, ST_O_EDIT, "Matrix Rotation"))
 	return TCL_ERROR;
 
     edobj = BE_O_ROTATE;
     movedir = ROTARROW;
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
 
 int
-be_accept(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_accept(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (STATE == ST_S_EDIT) {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	/* Accept a solid edit */
 	edsol = 0;
 
-	sedit_accept();		/* zeros "edsol" var */
+	sedit_accept(s);		/* zeros "edsol" var */
 
-	mmenu_set_all(MENU_L1, MENU_NULL);
-	mmenu_set_all(MENU_L2, MENU_NULL);
+	mmenu_set_all(s, MENU_L1, NULL);
+	mmenu_set_all(s, MENU_L2, NULL);
 
-	dl_set_iflag(GEDP->ged_gdp->gd_headDisplay, DOWN);
+	dl_set_iflag((struct bu_list *)ged_dl(s->gedp), DOWN);
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = NULL;
-	mged_color_soltab();
-	(void)chg_state(ST_S_EDIT, ST_VIEW, "Edit Accept");
-    }  else if (STATE == ST_O_EDIT) {
+	mged_color_soltab(s);
+	(void)chg_state(s, ST_S_EDIT, ST_VIEW, "Edit Accept");
+    }  else if (GEOM_EDIT_STATE == ST_O_EDIT) {
 	/* Accept an object edit */
 	edobj = 0;
 	movedir = 0;	/* No edit modes set */
 
-	oedit_accept();
+	oedit_accept(s);
 
-	mmenu_set_all(MENU_L2, MENU_NULL);
+	mmenu_set_all(s, MENU_L2, NULL);
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = NULL;
-	mged_color_soltab();
-	(void)chg_state(ST_O_EDIT, ST_VIEW, "Edit Accept");
+	mged_color_soltab(s);
+	(void)chg_state(s, ST_O_EDIT, ST_VIEW, "Edit Accept");
     } else {
-	if (not_state(ST_S_EDIT, "Edit Accept"))
+	if (not_state(s, ST_S_EDIT, "Edit Accept"))
 	    return TCL_ERROR;
 	return TCL_OK;
     }
@@ -756,7 +851,7 @@ be_accept(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_strcpy(&vls, "end_edit_callback");
-	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	(void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
     return TCL_OK;
@@ -764,30 +859,34 @@ be_accept(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(
 
 
 int
-be_reject(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     update_views = 1;
     dm_set_dirty(DMP, 1);
 
     /* Reject edit */
 
-    switch (STATE) {
+    switch (GEOM_EDIT_STATE) {
 	default:
-	    state_err("Edit Reject");
+	    state_err(s, "Edit Reject");
 	    return TCL_ERROR;
 
 	case ST_S_EDIT:
 	    /* Reject a solid edit */
-	    mmenu_set_all(MENU_L1, MENU_NULL);
-	    mmenu_set_all(MENU_L2, MENU_NULL);
+	    mmenu_set_all(s, MENU_L1, NULL);
+	    mmenu_set_all(s, MENU_L2, NULL);
 
-	    sedit_reject();
+	    sedit_reject(s);
 	    break;
 
 	case ST_O_EDIT:
-	    mmenu_set_all(MENU_L2, MENU_NULL);
+	    mmenu_set_all(s, MENU_L2, NULL);
 
-	    oedit_reject();
+	    oedit_reject(s);
 	    break;
 	case ST_O_PICK:
 	    break;
@@ -806,10 +905,10 @@ be_reject(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(
     illump = NULL;		/* None selected */
 
     /* Clear illumination flags */
-    dl_set_iflag(GEDP->ged_gdp->gd_headDisplay, DOWN);
+    dl_set_iflag((struct bu_list *)ged_dl(s->gedp), DOWN);
 
-    mged_color_soltab();
-    (void)chg_state(STATE, ST_VIEW, "Edit Reject");
+    mged_color_soltab(s);
+    (void)chg_state(s, GEOM_EDIT_STATE, ST_VIEW, "Edit Reject");
 
     for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
@@ -821,7 +920,7 @@ be_reject(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_strcpy(&vls, "end_edit_callback");
-	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	(void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
     return TCL_OK;
@@ -829,64 +928,80 @@ be_reject(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(
 
 
 int
-be_s_edit(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_s_edit(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     /* solid editing */
-    if (not_state(ST_S_EDIT, "Primitive Edit (Menu)"))
+    if (not_state(s, ST_S_EDIT, "Primitive Edit (Menu)"))
 	return TCL_ERROR;
 
     edsol = BE_S_EDIT;
-    sedit_menu();		/* Install appropriate menu */
+    sedit_menu(s);		/* Install appropriate menu */
     return TCL_OK;
 }
 
 
 int
-be_s_rotate(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_s_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     /* rotate solid */
-    if (not_state(ST_S_EDIT, "Primitive Rotate"))
+    if (not_state(s, ST_S_EDIT, "Primitive Rotate"))
 	return TCL_ERROR;
 
     es_edflag = SROT;
     edsol = BE_S_ROTATE;
-    mmenu_set(MENU_L1, MENU_NULL);
+    mmenu_set(s, MENU_L1, NULL);
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
 
 int
-be_s_trans(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_s_trans(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     /* translate solid */
-    if (not_state(ST_S_EDIT, "Primitive Translate"))
+    if (not_state(s, ST_S_EDIT, "Primitive Translate"))
 	return TCL_ERROR;
 
     edsol = BE_S_TRANS;
     es_edflag = STRANS;
     movedir = UARROW | RARROW;
-    mmenu_set(MENU_L1, MENU_NULL);
+    mmenu_set(s, MENU_L1, NULL);
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
 
 int
-be_s_scale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     /* scale solid */
-    if (not_state(ST_S_EDIT, "Primitive Scale"))
+    if (not_state(s, ST_S_EDIT, "Primitive Scale"))
 	return TCL_ERROR;
 
     edsol = BE_S_SCALE;
     es_edflag = SSCALE;
-    mmenu_set(MENU_L1, MENU_NULL);
+    mmenu_set(s, MENU_L1, NULL);
     acc_sc_sol = 1.0;
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     return TCL_OK;
 }
 
@@ -896,11 +1011,11 @@ be_s_scale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED
  * Returns !0 and prints error message if state mismatch.
  */
 int
-not_state(int desired, char *str)
+not_state(struct mged_state *s, int desired, char *str)
 {
-    if (STATE != desired) {
-	Tcl_AppendResult(INTERP, "Unable to do <", str, "> from ", state_str[STATE], " state.\n", (char *)NULL);
-	Tcl_AppendResult(INTERP, "Expecting ", state_str[desired], " state.\n", (char *)NULL);
+    if (GEOM_EDIT_STATE != desired) {
+	Tcl_AppendResult(s->interp, "Unable to do <", str, "> from ", state_str[GEOM_EDIT_STATE], " state.\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "Expecting ", state_str[desired], " state.\n", (char *)NULL);
 	return -1;
     }
 
@@ -946,32 +1061,32 @@ stateChange(int UNUSED(oldstate), int newstate)
  * Returns !0 and prints error message if error.
  */
 int
-chg_state(int from, int to, char *str)
+chg_state(struct mged_state *s, int from, int to, char *str)
 {
     struct mged_dm *save_dm_list;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (STATE != from) {
+    if (GEOM_EDIT_STATE != from) {
 	bu_log("Unable to do <%s> going from %s to %s state.\n", str, state_str[from], state_str[to]);
 	return 1;	/* BAD */
     }
 
-    STATE = to;
+    GEOM_EDIT_STATE = to;
 
     stateChange(from, to);
 
-    save_dm_list = mged_curr_dm;
+    save_dm_list = s->mged_curr_dm;
     for (size_t i = 0; i < BU_PTBL_LEN(&active_dm_set); i++) {
 	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, i);
-	set_curr_dm(p);
+	set_curr_dm(s, p);
 
-	new_mats();
+	new_mats(s);
     }
 
-    set_curr_dm(save_dm_list);
+    set_curr_dm(s, save_dm_list);
 
     bu_vls_printf(&vls, "%s(state)", MGED_DISPLAY_VAR);
-    Tcl_SetVar(INTERP, bu_vls_addr(&vls), state_str[STATE], TCL_GLOBAL_ONLY);
+    Tcl_SetVar(s->interp, bu_vls_addr(&vls), state_str[GEOM_EDIT_STATE], TCL_GLOBAL_ONLY);
     bu_vls_free(&vls);
 
     return 0;		/* GOOD */
@@ -979,9 +1094,9 @@ chg_state(int from, int to, char *str)
 
 
 void
-state_err(char *str)
+state_err(struct mged_state *s, char *str)
 {
-    Tcl_AppendResult(INTERP, "Unable to do <", str, "> from ", state_str[STATE],
+    Tcl_AppendResult(s->interp, "Unable to do <", str, "> from ", state_str[GEOM_EDIT_STATE],
 		     " state.\n", (char *)NULL);
 }
 
@@ -990,9 +1105,9 @@ state_err(char *str)
  * Called when a menu item is hit
  */
 void
-btn_item_hit(int arg, int menu, int UNUSED(item))
+btn_item_hit(struct mged_state *s, int arg, int menu, int UNUSED(item))
 {
-    button(arg);
+    button(s, arg);
     if (menu == MENU_GEN &&
 	(arg != BE_O_ILLUMINATE && arg != BE_S_ILLUMINATE))
 	menu_state->ms_flag = 0;
@@ -1004,13 +1119,13 @@ btn_item_hit(int arg, int menu, int UNUSED(item))
  * Also called from main() with arg 0 in init.
  */
 void
-btn_head_menu(int i, int UNUSED(menu), int UNUSED(item)) {
+btn_head_menu(struct mged_state *s, int i, int UNUSED(menu), int UNUSED(item)) {
     switch (i) {
 	case 0:
-	    mmenu_set(MENU_GEN, first_menu);
+	    mmenu_set(s, MENU_GEN, first_menu);
 	    break;
 	case 1:
-	    mmenu_set(MENU_GEN, second_menu);
+	    mmenu_set(s, MENU_GEN, second_menu);
 	    break;
 	case 2:
 	    /* nothing happens */
@@ -1020,7 +1135,7 @@ btn_head_menu(int i, int UNUSED(menu), int UNUSED(item)) {
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 		bu_vls_printf(&tmp_vls, "btn_head_menu(%d): bad arg\n", i);
-		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 	    }
 
@@ -1030,23 +1145,23 @@ btn_head_menu(int i, int UNUSED(menu), int UNUSED(item)) {
 
 
 void
-chg_l2menu(int i) {
+chg_l2menu(struct mged_state *s, int i) {
     switch (i) {
 	case ST_S_EDIT:
-	    mmenu_set_all(MENU_L2, sed_menu);
+	    mmenu_set_all(s, MENU_L2, sed_menu);
 	    break;
 	case ST_S_NO_EDIT:
-	    mmenu_set_all(MENU_L2, MENU_NULL);
+	    mmenu_set_all(s, MENU_L2, NULL);
 	    break;
 	case ST_O_EDIT:
-	    mmenu_set_all(MENU_L2, oed_menu);
+	    mmenu_set_all(s, MENU_L2, oed_menu);
 	    break;
 	default:
 	    {
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 		bu_vls_printf(&tmp_vls, "chg_l2menu(%d): bad arg\n", i);
-		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 	    }
 

@@ -1,7 +1,7 @@
 #               M A N _ B R O W S E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2024 United States Government as represented by
+# Copyright (c) 1998-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ package provide ManBrowser 1.0
 package require Tk
 package require Itcl
 package require hv3
-package require cadwidgets::Accordian 1.0
+package require cadwidgets::Accordion 1.0
 
 ::itcl::class ::ManBrowser {
     inherit iwidgets::Dialog
@@ -195,7 +195,7 @@ package require cadwidgets::Accordian 1.0
     if {$itk_option(-useToC)} {
 
 	itk_component add treeAccordian {
-	    ::cadwidgets::Accordian $parent.treeAccordian
+	    ::cadwidgets::Accordion $parent.treeAccordian
 	} {}
 	$itk_component(treeAccordian) addTogglePanelCallback [::itcl::code $this accordianCallback]
 	$itk_component(treeAccordian) insert 0 "MGED (mann)"

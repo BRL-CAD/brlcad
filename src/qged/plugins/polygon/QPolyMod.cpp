@@ -1,7 +1,7 @@
 /*                     Q P O L Y M O D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2024 United States Government as represented by
+ * Copyright (c) 2014-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -595,7 +595,7 @@ QPolyMod::align_to_poly()
     point_t center;
     vect_t dir = VINIT_ZERO;
     VSET(dir, ip->vp[0], ip->vp[1], ip->vp[2]);
-    bg_plane_pt_at(&center, ip->vp, 0, 0);
+    bg_plane_pt_at(&center, &ip->vp, 0, 0);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, center);
     bn_ae_vec(&gedp->ged_gvp->gv_aet[0], &gedp->ged_gvp->gv_aet[1], dir);
     gedp->ged_gvp->gv_aet[2] = 0;
@@ -776,11 +776,10 @@ QPolyMod::sketch_name_update()
 
 	// Passed the tests - remove old object.
 	int ac = 2;
-	const char *av[3];
+	const char *av[2] = {"kill", NULL};
 	av[0] = "kill";
 	av[1] = dp->d_namep;
-	av[2] = NULL;
-	ged_exec(gedp, ac, av);
+	ged_exec_kill(gedp, ac, av);
     }
 
     ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);

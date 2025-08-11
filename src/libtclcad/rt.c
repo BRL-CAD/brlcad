@@ -1,7 +1,7 @@
 /*                              R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ static struct dbcmdstruct tclcad_rt_cmds[] = {
 };
 
 
-int
+static int
 tclcad_rt_parse_ray(Tcl_Interp *interp, struct xray *rp, const char *const*argv)
 {
     if (bn_decode_vect(rp->r_pt,  argv[0]) != 3) {
@@ -110,7 +110,7 @@ tclcad_rt_parse_ray(Tcl_Interp *interp, struct xray *rp, const char *const*argv)
 }
 
 
-void
+static void
 tclcad_rt_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 {
     static const char xyz[4] = "XYZ";
@@ -200,7 +200,7 @@ tclcad_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char
 }
 
 
-void
+static void
 tclcad_rt_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int flipflag)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -584,6 +584,10 @@ tclcad_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *c
 int
 tclcad_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
+    // Make sure we didn't accidentally wind up with the wrong data type
+    struct application *ap = (struct application *)clientData;
+    RT_CK_APPLICATION(ap);
+
     struct dbcmdstruct *dbcmd;
 
     if (argc < 2) {
@@ -692,36 +696,9 @@ tclcad_rt_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const 
     return TCL_OK;
 }
 
-
-void
-tclcad_rt_setup(Tcl_Interp *interp)
-{
-    Tcl_LinkVar(interp, "rt_bot_minpieces", (char *)&rt_bot_minpieces, TCL_LINK_WIDE_INT);
-
-    Tcl_LinkVar(interp, "rt_bot_tri_per_piece",
-		(char *)&rt_bot_tri_per_piece, TCL_LINK_WIDE_INT);
-}
-
-
 int
 Rt_Init(Tcl_Interp *interp)
 {
-    /*XXX how much will this break? */
-    if (!BU_LIST_IS_INITIALIZED(&RTG.rtg_vlfree)) {
-	if (bu_avail_cpus() > 1) {
-	    RTG.rtg_parallel = 1;
-	}
-
-	/* initialize RT's global state */
-	BU_LIST_INIT(&RTG.rtg_vlfree);
-	BU_LIST_INIT(&RTG.rtg_headwdb.l);
-	if (rt_uniresource.re_magic != RESOURCE_MAGIC) {
-	    rt_init_resource(&rt_uniresource, 0, NULL);
-	}
-    }
-
-    tclcad_rt_setup(interp);
-
     Tcl_PkgProvide(interp,  "Rt", brlcad_version());
 
     return TCL_OK;
@@ -731,20 +708,6 @@ Rt_Init(Tcl_Interp *interp)
 /* ====================================================================== */
 
 /* TCL-oriented C support for LIBRT */
-
-
-void
-db_full_path_appendresult(Tcl_Interp *interp, const struct db_full_path *pp)
-{
-    size_t i;
-
-    RT_CK_FULL_PATH(pp);
-
-    for (i=0; i<pp->fp_len; i++) {
-	Tcl_AppendResult(interp, "/", pp->fp_names[i]->d_namep, (char *)NULL);
-    }
-}
-
 
 int
 tcl_obj_to_int_array(Tcl_Interp *interp, Tcl_Obj *list, int **array, int *array_len)

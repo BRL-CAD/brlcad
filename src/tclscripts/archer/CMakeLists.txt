@@ -1,6 +1,7 @@
 add_subdirectory(images)
 
-set(archer_TCLSCRIPTS
+set(
+  archer_TCLSCRIPTS
   Arb4EditFrame.tcl
   Arb5EditFrame.tcl
   Arb6EditFrame.tcl
@@ -43,17 +44,17 @@ set(archer_TCLSCRIPTS
   bgerror.tcl
   itk_redefines.tcl
   tabwindow.itk
-  )
-if (BRLCAD_ENABLE_TCL)
-  BRLCAD_ADDDATA(archer_TCLSCRIPTS tclscripts/archer)
-  pkgIndex_BUILD(tclscripts/archer)
-  tclIndex_BUILD(tclscripts/archer)
-endif (BRLCAD_ENABLE_TCL)
+)
+if(BRLCAD_ENABLE_TCL)
+  brlcad_adddata(archer_TCLSCRIPTS tclscripts/archer)
+  pkgindex_build(tclscripts/archer)
+  tclindex_build(tclscripts/archer)
+endif(BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${archer_TCLSCRIPTS}
-  )
+)
 
 # Local Variables:
 # tab-width: 8

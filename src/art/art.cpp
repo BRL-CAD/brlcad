@@ -1,7 +1,7 @@
 /*                     A R T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@
  */
 /** @file art/art.cpp
  *
- * COMPILAITON NOTES
+ * COMPILATION NOTES
  * -----------------
  * Once you have Appleseed and a corresponding Boost installed, run
  * BRL-CAD's CMake with Appleseed enabled:
@@ -227,7 +227,7 @@ color_hook(const struct bu_structparse *sp, const char *name, void *UNUSED(base)
 }
 
 
-// holds application specific paramaters
+// holds application specific parameters
 extern "C" {
     struct bu_structparse view_parse[] = {
 	{"%d", 1, "samples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
@@ -446,7 +446,7 @@ register_region(struct db_tree_state* tsp,
     //     // bu_log("shader: %s\n", bu_vls_addr(&combp->shader));
     //     shader = "as_glass";
     //   }
-    //   // check for override paramaters
+    //   // check for override parameters
     //   if (((ptr=strstr(bu_vls_addr(&combp->shader), "{")) != NULL)) {
     //     if (((ptr=strstr(bu_vls_addr(&combp->shader), "tr")) != NULL)) {
     //       int i = 3;
@@ -696,7 +696,8 @@ build_project(const char* file, const char* UNUSED(objects))
     //------------------------------------------------------------------------
 
     // walk the db to register all regions
-    struct db_tree_state state = rt_initial_tree_state;
+    struct db_tree_state state;
+    RT_DBTS_INIT(&state);
     struct db_i* dbip = db_open(file, DB_OPEN_READONLY);
     state.ts_dbip = dbip;
     state.ts_resp = resources;

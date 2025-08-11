@@ -1,7 +1,7 @@
 /*                       E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1398,7 +1398,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
 
@@ -2086,7 +2086,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     struct bv_vlist *vlp;
 
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
 
@@ -2216,9 +2216,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     }
 
     BU_LIST_INIT(&vhead);
-    if (!BU_LIST_IS_INITIALIZED(&RTG.rtg_vlfree)) {
-	BU_LIST_INIT(&RTG.rtg_vlfree);
-    }
+
     for (i = 0; outer_loop && i<(size_t)BU_PTBL_LEN(outer_loop); i++) {
 	void *seg;
 
@@ -2255,11 +2253,11 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	    }
 	}
     }
-    BV_FREE_VLIST(&RTG.rtg_vlfree, &vhead);
+    BV_FREE_VLIST(vlfree, &vhead);
 
     /* make sure face normal is in correct direction */
     bu_free((char *)verts, "verts");
-    if (nmg_calc_face_plane(fu, pl, &RTG.rtg_vlfree)) {
+    if (nmg_calc_face_plane(fu, pl, vlfree)) {
 	bu_log("Failed to calculate face plane for extrusion\n");
 	return -1;
     }
@@ -2347,7 +2345,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     }
 
     /* extrude this face */
-    if (nmg_extrude_face(fu, extrude_ip->h, &RTG.rtg_vlfree, tol)) {
+    if (nmg_extrude_face(fu, extrude_ip->h, vlfree, tol)) {
 	bu_log("Failed to extrude face sketch\n");
 	return -1;
     }
@@ -2410,10 +2408,6 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	       sketch_name, rp->extr.ex_name);
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
     } else {
-	/* initialize before our first use */
-	if (rt_uniresource.re_magic != RESOURCE_MAGIC)
-	    rt_init_resource(&rt_uniresource, 0, NULL);
-
 	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 	    bu_log("rt_extrude_import4: ERROR: Cannot import sketch (%.16s) for extrusion (%.16s)\n",
 		   sketch_name, rp->extr.ex_name);
@@ -2539,6 +2533,31 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     return 0;
 }
 
+int
+rt_extrude_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_extrude_internal *tip = (struct rt_extrude_internal *)ip->idb_ptr;
+    RT_EXTRUDE_CK_MAGIC(tip);
+    struct rt_extrude_internal *top = (struct rt_extrude_internal *)rop->idb_ptr;
+    RT_EXTRUDE_CK_MAGIC(top);
+
+    vect_t V, h, u_vec, v_vec;
+    VMOVE(V, tip->V);
+    VMOVE(h, tip->h);
+    VMOVE(u_vec, tip->u_vec);
+    VMOVE(v_vec, tip->v_vec);
+
+    MAT4X3PNT(top->V, mat, V);
+    MAT4X3VEC(top->h, mat, h);
+    MAT4X3VEC(top->u_vec, mat, u_vec);
+    MAT4X3VEC(top->v_vec, mat, v_vec);
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Import an EXTRUDE from the database format to the internal format.
@@ -2576,10 +2595,6 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	       sketch_name);
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
     } else {
-	/* initialize before our first use */
-	if (rt_uniresource.re_magic != RESOURCE_MAGIC)
-	    rt_init_resource(&rt_uniresource, 0, NULL);
-
 	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 	    bu_log("rt_extrude_import4: ERROR: Cannot import sketch (%s) for extrusion\n",
 		   sketch_name);
@@ -2591,17 +2606,18 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     }
 
     bu_cv_ntohd((unsigned char *)tmp_vec, ptr, ELEMENTS_PER_VECT*4);
-    if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(extrude_ip->V, mat, tmp_vec[0]);
-    MAT4X3VEC(extrude_ip->h, mat, tmp_vec[1]);
-    MAT4X3VEC(extrude_ip->u_vec, mat, tmp_vec[2]);
-    MAT4X3VEC(extrude_ip->v_vec, mat, tmp_vec[3]);
+    VMOVE(extrude_ip->V, tmp_vec[0]);
+    VMOVE(extrude_ip->h, tmp_vec[1]);
+    VMOVE(extrude_ip->u_vec, tmp_vec[2]);
+    VMOVE(extrude_ip->v_vec, tmp_vec[3]);
     ptr += ELEMENTS_PER_VECT * 4 * SIZEOF_NETWORK_DOUBLE;
     extrude_ip->keypoint = ntohl(*(uint32_t *)ptr);
     ptr += SIZEOF_NETWORK_LONG;
     extrude_ip->sketch_name = bu_strdup((const char *)ptr);
 
-    return 0;			/* OK */
+    /* Apply transform */
+    if (mat == NULL) mat = bn_mat_identity;
+    return rt_extrude_mat(ip, mat, ip);
 }
 
 
@@ -2869,6 +2885,40 @@ rt_extrude_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
+const char *
+rt_extrude_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_extrude_internal *extrude = (struct rt_extrude_internal *)ip->idb_ptr;
+    RT_EXTRUDE_CK_MAGIC(extrude);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, extrude->V);
+	goto extrude_kpt_end;
+    }
+
+    if (BU_STR_EQUAL(k, "V1")) {
+	if (extrude->skt && extrude->skt->verts) {
+	    VJOIN2(mpt, extrude->V, extrude->skt->verts[0][0], extrude->u_vec, extrude->skt->verts[0][1], extrude->v_vec);
+	    goto extrude_kpt_end;
+	}
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+extrude_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
 
 /** @} */
 

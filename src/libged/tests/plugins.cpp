@@ -1,7 +1,7 @@
 /*                        P L U G I N S . C
  * BRL-CAD
  *
- * Copyright (c) 2019-2024 United States Government as represented by
+ * Copyright (c) 2019-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -390,33 +390,13 @@ main(int ac, char *av[]) {
 	wav[1] = NULL;
 	int ret = ged_exec(gbp, 1, (const char **)wav);
 	if (ret & GED_UNKNOWN && wav[0] != wav0) {
-	    bu_log("\nged_ls called with command name \"%s\" correctly returned with GED_UNKNOWN set\n", wav0);
+	    bu_log("\nged_exec called with command name \"%s\" correctly returned with GED_UNKNOWN set\n", wav0);
 	} else {
 	    if (!(ret & GED_UNKNOWN)) {
-		bu_log("\nged_ls called with command name \"%s\" did not return with GED_UNKNOWN set\n", wav0);
+		bu_log("\nged_exec called with command name \"%s\" did not return with GED_UNKNOWN set\n", wav0);
 	    }
 	    if (wav[0] == wav0) {
-		bu_log("\nged_ls called with command name \"%s\" did not override wav[0]\n", wav0);
-	    }
-	}
-    }
-
-    /* Deliberately call a ged function with wrong argv[0] (which is a valid
-     * command, just not one matching the function) */
-    {
-	const char *wav1 = "search";
-	const char *wav[2];
-	wav[0] = wav1;
-	wav[1] = NULL;
-	int ret = ged_exec(gbp, 1, (const char **)wav);
-	if (ret & GED_UNKNOWN && wav[0] != wav1) {
-	    bu_log("\nged_ls called with command name \"%s\" correctly returned with GED_UNKNOWN set\n", wav1);
-	} else {
-	    if (!(ret & GED_UNKNOWN)) {
-		bu_log("\nged_ls called with command name \"%s\" did not return with GED_UNKNOWN set\n", wav1);
-	    }
-	    if (wav[0] == wav1) {
-		bu_log("\nged_ls called with command name \"%s\" did not override wav[0]\n", wav1);
+		bu_log("\nged_exec called with command name \"%s\" did not override wav[0]\n", wav0);
 	    }
 	}
     }
@@ -446,8 +426,8 @@ main(int ac, char *av[]) {
 	    std::set<std::string> cdone;
 	    for (cs_it = cmd_set.begin(); cs_it != cmd_set.end(); cs_it++) {
 		std::string cs = *cs_it;
-		int cval = ged_cmd_valid(cmd.c_str(), cs.c_str());
-		if (cval == 0) {
+		int same = ged_cmd_same(cmd.c_str(), cs.c_str());
+		if (same) {
 		    // Aliases - use cmd as the key
 		    alias_sets[cmd].insert(cmd);
 		    alias_sets[cmd].insert(cs);

@@ -1,7 +1,7 @@
 /*                     R E G I O N S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,6 +51,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 {
     int ret = BRLCAD_OK;
     struct db_i *dbip = s->dbip;
+    struct bu_list *vlfree = &rt_vlfree;
 
     /* Used the libged tolerances */
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -76,7 +77,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     const char *active_regions = "( -type r ! -below -type r )";
     struct bu_ptbl *ar = NULL;
     BU_ALLOC(ar, struct bu_ptbl);
-    if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, argc, dpa, dbip, NULL) < 0) {
+    if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, argc, dpa, dbip, NULL, NULL, NULL) < 0) {
 	if (s->verbosity >= 0) {
 	    bu_log("regions.cpp:%d Problem searching for active regions - aborting.\n", __LINE__);
 	}
@@ -146,7 +147,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     const char *active_solids = "! -type comb";
     struct bu_ptbl *as = NULL;
     BU_ALLOC(as, struct bu_ptbl);
-    if (db_search(as, DB_SEARCH_RETURN_UNIQ_DP, active_solids, argc, dpa, dbip, NULL) < 0) {
+    if (db_search(as, DB_SEARCH_RETURN_UNIQ_DP, active_solids, argc, dpa, dbip, NULL, NULL, NULL) < 0) {
 	if (s->verbosity >= 0) {
 	    bu_log("regions.cpp:%d Problem searching for active solids - aborting.\n", __LINE__);
 	}
@@ -252,7 +253,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     const char *implicit_regions = "( ! -below -type r ! -type comb )";
     struct bu_ptbl *ir = NULL;
     BU_ALLOC(ir, struct bu_ptbl);
-    if (db_search(ir, DB_SEARCH_RETURN_UNIQ_DP, implicit_regions, argc, dpa, dbip, NULL) < 0) {
+    if (db_search(ir, DB_SEARCH_RETURN_UNIQ_DP, implicit_regions, argc, dpa, dbip, NULL, NULL, NULL) < 0) {
 	if (s->verbosity >= 0) {
 	    bu_log("Problem searching for implicit regions - aborting.\n");
 	}
@@ -327,7 +328,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    // Need wdbp in the next two stages for tolerances
 	    struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
 	    char *obj_name = bu_strdup(dpw[0]->d_namep);
-	    bret = _ged_facetize_booleval_tri(s, wdbip, wwdbp, 1, (const char **)&obj_name, bu_vls_cstr(&bname), 1);
+	    bret = _ged_facetize_booleval_tri(s, wdbip, wwdbp, 1, (const char **)&obj_name, bu_vls_cstr(&bname), vlfree, 1);
 	    bu_free(obj_name, "obj_name");
 	    db_close(wdbip);
 	}
@@ -393,7 +394,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	av[i+2] = argv[i];
     }
     av[argc+2] = NULL;
-    ged_exec(wgedp, argc+2, av);
+    ged_exec_keep(wgedp, argc+2, av);
     ged_close(wgedp);
 
     /* Capture the current tops list.  If we're not doing an in-place overwrite, we
@@ -434,7 +435,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     av[3] = kfname;
     av[4] = affix;
     av[5] = NULL;
-    ged_exec(s->gedp, 5, av);
+    ged_exec_dbconcat(s->gedp, 5, av);
     bu_free(av, "av");
 
     bu_vls_free(&prefix_str);
@@ -479,7 +480,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	mav[1] = oname;
 	mav[2] = bu_vls_cstr(&nname);
 	mav[3] = NULL;
-	ged_exec(s->gedp, 3, mav);
+	ged_exec_mvall(s->gedp, 3, mav);
 	new_tobjs.erase(std::string(oname));
 	new_tobjs.insert(std::string(bu_vls_cstr(&nname)));
 	bu_vls_free(&nname);

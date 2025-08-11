@@ -1,7 +1,7 @@
 /*                        R E D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -840,7 +840,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
     }
 
     /* Edit the file */
-    if (_ged_editit(editstring, _ged_tmpfil)) {
+    if (_ged_editit(gedp, editstring, _ged_tmpfil)) {
 
 	/* specifically avoid CHECK_READ_ONLY; above so that we can
 	 * delay checking if the geometry is read-only until here so
@@ -903,7 +903,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	    av[0] = "kill";
 	    av[1] = bu_vls_addr(&temp_name);
 	    av[2] = NULL;
-	    (void)ged_exec(gedp, 2, (const char **)av);
+	    (void)ged_exec_kill(gedp, 2, (const char **)av);
 
 	    /* restore ged_result_str */
 	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tmp_ged_result_str));
@@ -927,7 +927,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 			/* save ged_result_str */
 			bu_vls_sprintf(&tmp_ged_result_str, "%s", bu_vls_addr(gedp->ged_result_str));
 
-			(void)ged_exec(gedp, 2, (const char **)av);
+			(void)ged_exec_kill(gedp, 2, (const char **)av);
 
 			/* restore ged_result_str */
 			bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tmp_ged_result_str));
@@ -960,7 +960,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 		/* save ged_result_str */
 		bu_vls_sprintf(&tmp_ged_result_str, "%s", bu_vls_addr(gedp->ged_result_str));
 
-		(void)ged_exec(gedp, 2, (const char **)av);
+		(void)ged_exec_kill(gedp, 2, (const char **)av);
 
 		/* restore ged_result_str */
 		bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tmp_ged_result_str));
@@ -973,7 +973,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	/* save ged_result_str */
 	bu_vls_sprintf(&tmp_ged_result_str, "%s", bu_vls_addr(gedp->ged_result_str));
 
-	(void)ged_exec(gedp, 3, (const char **)av);
+	(void)ged_exec_mv(gedp, 3, (const char **)av);
 
 	/* restore ged_result_str */
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tmp_ged_result_str));

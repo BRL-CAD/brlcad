@@ -1,7 +1,7 @@
 /*                       P I X D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,8 +48,9 @@ rgb_diff(int c1, int c2, FILE *output, size_t *offmany, size_t *off1, size_t *ma
 {
     int i;
 
-    if (!output)
+    if (!output) {
 	output = stdout;
+    }
     if (!offmany || !off1 || !matching)
 	return;
 
@@ -58,14 +59,17 @@ rgb_diff(int c1, int c2, FILE *output, size_t *offmany, size_t *off1, size_t *ma
 	if (i < 0)
 	    i = -i;
 	if (i > 1) {
-	    putc(0xFF, output);
+	    if (output)
+		fputc(0xFF, output);
 	    (*offmany)++;
 	} else {
-	    putc(0xC0, output);
+	    if (output)
+		fputc(0xC0, output);
 	    (*off1)++;
 	}
     } else {
-	putc(0, output);
+	if (output)
+	    fputc(0, output);
 	(*matching)++;
     }
 }
@@ -136,9 +140,9 @@ main(int argc, char *argv[])
 	    if (i < 0)
 		i = 0;
 	    i /= 2;
-	    putc(i, stdout);
-	    putc(i, stdout);
-	    putc(i, stdout);
+	    fputc(i, stdout);
+	    fputc(i, stdout);
+	    fputc(i, stdout);
 	    matching += 3;
 	}
     }

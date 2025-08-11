@@ -1,11 +1,11 @@
-if (TARGET gcv-assetimport)
-  GCV_regress_util("lwo" "tetra.lwo" DEPS "gcv;gcv-assetimport" GCV_OPTIONS "--input-format=assetimport" EXPECTED_FILE_SIZE "1136")
-endif (TARGET gcv-assetimport)
+if(TARGET gcv-assetimport)
+  gcv_regress_util("lwo" "tetra.lwo" DEPS "gcv;gcv-assetimport" GCV_OPTIONS "--input-format=assetimport" EXPECTED_FILE_SIZE "1136")
+endif(TARGET gcv-assetimport)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   tetra.lwo
-  )
+)
 
 # Local Variables:
 # tab-width: 8

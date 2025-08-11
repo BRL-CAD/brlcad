@@ -1,7 +1,7 @@
 /*                         P U T M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -241,7 +241,7 @@ ged_putmat_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (result != BRLCAD_ERROR)
-	result = ged_exec(gedp, 20, (const char **)newargv);
+	result = ged_exec_arced(gedp, 20, (const char **)newargv);
 
     bu_vls_vlsfree(avp);
     return result;

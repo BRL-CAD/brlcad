@@ -1,7 +1,7 @@
 /*                           E B M . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2024 United States Government as represented by
+ * Copyright (c) 1988-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -118,7 +118,7 @@ bit(struct rt_ebm_internal *eip, size_t x, size_t y)
 	case RT_EBM_SRC_OBJ:
 	    ret = &((eip->buf)[(y+BIT_YWIDEN)*(eip->xdim+BIT_XWIDEN*2)+x+BIT_XWIDEN]);
 	    break;
-        default:
+	default:
 	    bu_log("Unrecognized EBM data source (datasrc='%d')\n", eip->datasrc);
 	    bu_bomb("Internal Error, exiting.\n");
     }
@@ -598,7 +598,7 @@ get_file_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
 {
     struct bu_mapped_file *mp;
     int nbytes;
-    
+
     /* get file */
     mp = bu_open_mapped_file_with_path(dbip->dbi_filepath, eip->name, "ebm");
     if (!mp) {
@@ -612,14 +612,14 @@ get_file_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
 	       (long unsigned int) mp->buflen, eip->xdim*eip->ydim);
 	return -1;
     }
-  
+
     nbytes = (eip->xdim+BIT_XWIDEN*2)*(eip->ydim+BIT_YWIDEN*2);
-   
+
     /* If first use of this file, prepare in-memory buffer */
     if (!mp->apbuf) {
 	size_t y;
 	unsigned char* cp;
-	
+
 	/* Prevent a multi-processor race */
 	bu_semaphore_acquire(RT_SEM_MODEL);
 	if (mp->apbuf) {
@@ -742,14 +742,9 @@ get_obj_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
  * !0 failure
  */
 static int
-ebm_get_data(struct rt_ebm_internal *eip, const mat_t mat, const struct db_i *dbip)
+ebm_get_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
 {
-    mat_t tmp;
     char *p;
-
-    /* Apply Modelling transform */
-    bn_mat_mul(tmp, mat, eip->mat);
-    MAT_COPY(eip->mat, tmp);
 
     p = eip->name;
 
@@ -941,6 +936,25 @@ rt_ebm_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 }
 
 
+int
+rt_ebm_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_ebm_internal *tip = (struct rt_ebm_internal *)ip->idb_ptr;
+    RT_EBM_CK_MAGIC(tip);
+    struct rt_ebm_internal *top = (struct rt_ebm_internal *)rop->idb_ptr;
+    RT_EBM_CK_MAGIC(top);
+
+    /* Apply transform */
+    mat_t tmp;
+    bn_mat_mul(tmp, mat, tip->mat);
+    MAT_COPY(top->mat, tmp);
+
+    return BRLCAD_OK;
+}
+
 /**
  * Read in the information from the string solid record.  Then, as a
  * service to the application, read in the bitmap and set up some of
@@ -970,7 +984,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_vls_strcpy(&str, (const char *)ep->ext_buf);
     if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip, NULL) < 0) {
 	bu_vls_free(&str);
-	bu_free((char *)eip, "rt_ebm_import4: eip");
+	bu_free((char *)eip, "rt_ebm_import5: eip");
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (void *)NULL;
 	return -2;
@@ -982,7 +996,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	eip->xdim < 1 || eip->ydim < 1 || eip->mat[15] <= 0.0 ||
 	(eip->datasrc != RT_EBM_SRC_FILE && eip->datasrc != RT_EBM_SRC_OBJ)) {
 	bu_struct_print("Unreasonable EBM parameters", rt_ebm_parse, (char *)eip);
-	bu_free((char *)eip, "rt_ebm_import4: eip");
+	bu_free((char *)eip, "rt_ebm_import5: eip");
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (void *)NULL;
 	return -1;
@@ -990,10 +1004,11 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* Apply modelling transforms and fetch actual data */
     if (mat == NULL) mat = bn_mat_identity;
-    if (ebm_get_data(eip, mat, dbip) != 0) {
-	bu_log("rt_ebm_import4(%d) '%s' %s\n", __LINE__,
+    rt_ebm_mat(ip, mat, ip);
+    if (ebm_get_data(eip, dbip) != 0) {
+	bu_log("rt_ebm_import5(%d) '%s' %s\n", __LINE__,
 		eip->name, "unable to load bitmap data");
-	bu_free((char *)eip, "rt_ebm_import4: eip");
+	bu_free((char *)eip, "rt_ebm_import5: eip");
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (void *)NULL;
 	return -1;
@@ -1358,7 +1373,7 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);
 
@@ -1595,6 +1610,7 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     size_t max_loop_length;
     size_t loop_length;
     vect_t height, h;
+    struct bu_list *vlfree = &rt_vlfree;
 
     BN_CK_TOL(tol);
     NMG_CK_MODEL(m);
@@ -1740,7 +1756,7 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* all faces should merge into one */
-    nmg_shell_coplanar_face_merge(s, tol, 1, &RTG.rtg_vlfree);
+    nmg_shell_coplanar_face_merge(s, tol, 1, vlfree);
 
     fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
     NMG_CK_FACEUSE(fu);
@@ -1748,11 +1764,11 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     VSET(h, 0.0, 0.0, eip->tallness);
     MAT4X3VEC(height, eip->mat, h);
 
-    nmg_extrude_face(fu, height, &RTG.rtg_vlfree,tol);
+    nmg_extrude_face(fu, height, vlfree, tol);
 
     nmg_region_a(*r, tol);
 
-    (void)nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
+    (void)nmg_mark_edges_real(&s->l.magic, vlfree);
 
     bu_free((char *)vertp, "rt_ebm_tess: vertp");
     bu_free((char *)loop_verts, "rt_ebm_tess: loop_verts");
@@ -2025,6 +2041,30 @@ rt_ebm_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	}
     }
     *area = _area;
+}
+
+
+const char *
+rt_ebm_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_ebm_internal *ebm = (struct rt_ebm_internal *)ip->idb_ptr;
+    RT_EBM_CK_MAGIC(ebm);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (!BU_STR_EQUAL(k, default_keystr))
+	return NULL;
+
+    point_t pnt = VINIT_ZERO;
+    MAT4X3PNT(mpt, ebm->mat, pnt);
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
 }
 
 

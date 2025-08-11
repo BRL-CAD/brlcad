@@ -1473,7 +1473,7 @@ if {[package vsatisfies [package provide Tcl] 8.3]} {
         set options {
             {a          "set the atime only"}
             {m          "set the mtime only"}
-            {c          "do not create non-existant files"}
+            {c          "do not create non-existent files"}
             {r.arg  ""  "use time from ref_file"}
             {t.arg  -1  "use specified time"}
         }

@@ -1,7 +1,7 @@
 /*                 R E N D E R H A N D L E R . H
  * BRL-CAD
  *
- * Copyright (c) 2023-2024 United States Government as represented by
+ * Copyright (c) 2023-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -73,7 +73,7 @@ class Options;
  * |   |   |  Amb  |
  *  ---------------
  *
- * The diagram above shows the grid layout for the preceeding
+ * The diagram above shows the grid layout for the preceding
  * "LayoutChoice" specification.  Since "lockRows" is false, a
  * column-major ordering is used.  The top, bottom, front, and right
  * views will be placed first at the top of the page.  Then, the back

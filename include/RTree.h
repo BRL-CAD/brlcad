@@ -151,7 +151,7 @@ public:
 
     // TODO - make an ASCII version of this stream, or find some other way
     // to interactively debug the tree structure.  Getting some unexpected
-    // results from tree opertions, and need to rule out incremental
+    // results from tree operations, and need to rule out incremental
     // insertion/removal bugs in RTree... probably in my code, but in at
     // least one case a vertex tree missed an intersect test and then found
     // it after a full tree rebuild with no other data changes...
@@ -1248,7 +1248,7 @@ typename RTREE_QUAL::ElementTypeReal RTREE_QUAL::RectSphericalVolume(Rect* a_rec
 }
 
 
-// Use one of the methods to calculate retangle volume
+// Use one of the methods to calculate rectangle volume
 RTREE_TEMPLATE
 typename RTREE_QUAL::ElementTypeReal RTREE_QUAL::CalcRectVolume(Rect* a_rect)
 {
@@ -1579,7 +1579,7 @@ void RTREE_QUAL::ReInsert(Node* a_node, ListNode** a_listNode)
 }
 
 
-// Search in an index tree or subtree for all data retangles that overlap the argument rectangle.
+// Search in an index tree or subtree for all data rectangles that overlap the argument rectangle.
 RTREE_TEMPLATE
 bool RTREE_QUAL::Search(Node* a_node, Rect* a_rect, int& a_foundCount, std::function<bool(const DataType&, void *)> callback, void *a_context) const
 {

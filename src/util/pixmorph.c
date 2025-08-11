@@ -1,7 +1,7 @@
 /*                      P I X M O R P H . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2024 United States Government as represented by
+ * Copyright (c) 1996-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -480,39 +480,26 @@ main(int argc, char **argv)
     }
 
     /* Allocate memory for our bag o' pixels. */
-
-    pa = (unsigned char *)malloc(pa_width*pa_height*3);
-    pb = (unsigned char *)malloc(pa_width*pa_height*3);
-    wa = (unsigned char *)malloc(pa_width*pa_height*3);
-    wb = (unsigned char *)malloc(pa_width*pa_height*3);
-    morph = (unsigned char *)malloc(pa_width*pa_height*3);
-
-    if (pa == NULL || pb == NULL || wa == NULL ||  wb == NULL ||
-	morph == NULL) {
-	fprintf(stderr, "pixmorph: memory allocation failure\n");
-	bu_free(pa, "pa alloc from malloc");
-	bu_free(pb, "pb alloc from malloc");
-	bu_free(wa, "wa alloc from malloc");
-	bu_free(wb, "wb alloc from malloc");
-	bu_free(morph, "morph alloc from malloc");
-	return 1;
-    }
+    pa = (unsigned char *)bu_malloc(pa_width*pa_height*3, "pa");
+    pb = (unsigned char *)bu_malloc(pa_width*pa_height*3, "pb");
+    wa = (unsigned char *)bu_malloc(pa_width*pa_height*3, "wa");
+    wb = (unsigned char *)bu_malloc(pa_width*pa_height*3, "wb");
+    morph = (unsigned char *)bu_malloc(pa_width*pa_height*3, "morph");
 
     /* The following is our memorizing table for weight calculation. */
-
     for (i = 0; i < MAXLEN; i++)
 	weightlookup[i] = -1.0;
 
     fprintf(stderr, "pixmorph: Reading images and lines file.\n");
 
     if (pix_readpixels(picA, pa_width*pa_height, pa) < pa_width*pa_height) {
-	fprintf(stderr, "Error reading %lu pixels from %s\n",
-		(unsigned long)pa_width*pa_height, picAname);
+	fprintf(stderr, "Error reading %zu pixels from %s\n",
+		pa_width*pa_height, picAname);
 	return 1;
     }
     if (pix_readpixels(picB, pa_width*pa_height, pb) < pa_width*pa_height) {
-	fprintf(stderr, "Error reading %lu pixels from %s\n",
-		(unsigned long)pa_width*pa_height,  picBname);
+	fprintf(stderr, "Error reading %zu pixels from %s\n",
+		pa_width*pa_height,  picBname);
 	return 1;
     }
     fclose(picA);
@@ -521,7 +508,7 @@ main(int argc, char **argv)
     /* Process the lines file. */
 
     lines_headerinfo(linesfile, &a, &b, &p, &numlines);
-    lines = (struct lineseg *)malloc(numlines * sizeof(struct lineseg));
+    lines = (struct lineseg *)bu_malloc(numlines * sizeof(struct lineseg), "lines");
     numlines = lines_read(linesfile, numlines, lines,
 			  pa_width, pa_height, warpfrac, p*b);
     fprintf(stderr, "pixmorph: %ld line segments read\n", numlines);
@@ -548,7 +535,13 @@ main(int argc, char **argv)
 
     fprintf(stderr, "pixmorph: Morph complete.\n");
 
-    /* System takes care of memory deallocation. */
+    /* memory deallocation. */
+    bu_free(pa, "pa");
+    bu_free(pb, "pb");
+    bu_free(wa, "wa");
+    bu_free(wb, "wb");
+    bu_free(morph, "morph");
+    bu_free(lines, "lines");
 
     return 0;
 }

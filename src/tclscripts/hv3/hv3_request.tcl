@@ -61,7 +61,7 @@ catch {namespace eval hv3 { set {version($Id$)} 1 }}
 #
 # OPTIONS:
 #
-#     The following options are set only by the requestor (the Hv3 widget)
+#     The following options are set only by the requester (the Hv3 widget)
 #     for the protocol to use as request parameters:
 #
 #       -cachecontrol
@@ -71,18 +71,18 @@ catch {namespace eval hv3 { set {version($Id$)} 1 }}
 #       -enctype
 #       -encoding
 #
-#     This is set by the requestor also to show the origin of the request:
+#     This is set by the requester also to show the origin of the request:
 #
 #       -hv3
 #
-#     These are set by the requestor before the request is made to
+#     These are set by the requester before the request is made to
 #     configure callbacks invoked by this object when requested data
 #     is available:
 #
 #       -incrscript
 #       -finscript
 #
-#     This is initially set by the requestor. It may be modified by the
+#     This is initially set by the requester. It may be modified by the
 #     protocol implementation before the first invocation of -incrscript
 #     or -finscript is made.
 #
@@ -122,7 +122,7 @@ namespace eval ::hv3::request {
 
     upvar $me O
 
-    # The requestor (i.e. the creator of the ::hv3::request object) sets the
+    # The requester (i.e. the creator of the ::hv3::request object) sets the
     # following configuration options. The protocol implementation may set the
     # -mimetype option before returning.
     #
@@ -170,7 +170,7 @@ namespace eval ::hv3::request {
     #
     set O(-expectedsize) ""
 
-    # Callbacks configured by the requestor.
+    # Callbacks configured by the requester.
     #
     set O(-incrscript) ""
     set O(-finscript) ""

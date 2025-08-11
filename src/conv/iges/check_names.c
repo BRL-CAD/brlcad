@@ -1,7 +1,7 @@
 /*                   C H E C K _ N A M E S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,9 +25,19 @@
 char *
 Add_brl_name(char *name)
 {
+    /* NOTE: this is obviously not thread-safe */
+    static size_t nocnt = 0;
+#define NOBUF_SZ 32
+    char nobuf[NOBUF_SZ] = {0};
+
     struct name_list *ptr;
     size_t namelen;
     size_t i;
+
+    if (!name) {
+	snprintf(nobuf, NOBUF_SZ, "noname_%zu", nocnt++);
+	name = nobuf;
+    }
 
     /* replace white space */
     namelen = strlen(name);
@@ -565,7 +575,7 @@ Check_names(void)
     bu_log("Assigning names to entities without names...\n");
 
     for (i = 0; i < totentities; i++) {
-	char tmp_name[NAMESIZE+1];
+	char tmp_name[NAMESIZE+1] = {0};
 
 	if (dir[i]->name == (char *)NULL) {
 	    switch (dir[i]->type) {

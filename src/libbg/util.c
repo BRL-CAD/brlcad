@@ -1,7 +1,7 @@
 /*                       U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2024 United States Government as represented by
+ * Copyright (c) 2013-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Copyright 2001 softSurfer, 2012 Dan Sunday
@@ -43,7 +43,7 @@
  *
  * I don't think it's relevant in this case (if we operate on 3D points as a matrix, the result
  * won't be what the original BoT expects...) but when it comes to Eigen pay attention to Map,
- * which may allow us to apply Eigen operations to BRL-CAD's libbn matricies:
+ * which may allow us to apply Eigen operations to BRL-CAD's libbn matrices:
  *
  * https://eigen.tuxfamily.org/dox/group__TutorialMapClass.html
  */

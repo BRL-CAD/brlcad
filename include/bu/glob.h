@@ -1,7 +1,7 @@
 /*                         G L O B . H
  * BRL-CAD
  *
- * Copyright (c) 2015-2024 United States Government as represented by
+ * Copyright (c) 2015-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,6 +33,10 @@ __BEGIN_DECLS
  *
  * NOTE - the glob API below is a work in progress - until this notice is
  * removed it should not be considered functional, much less stable!
+ *
+ * TODO: test whether leveraging a modern glob implementation might be
+ * worthwhile and portable, or unnecessary complexity.  For example:
+ *  https://github.com/openbsd/src/blob/master/lib/libc/gen/glob.c
  *
  *  @brief Routines and structures for getting a list of entities that
  *  match a given pattern.

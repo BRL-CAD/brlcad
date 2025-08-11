@@ -1,7 +1,7 @@
 /*                           E H Y . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -202,7 +202,7 @@ size_t
 clt_ehy_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct ehy_specific *ehy =
-        (struct ehy_specific *)stp->st_specific;
+	(struct ehy_specific *)stp->st_specific;
     struct clt_ehy_specific *args;
 
     const size_t size = sizeof(*args);
@@ -873,7 +873,7 @@ rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     int i, num_curve_points, num_ellipse_points, num_curves;
     struct rt_ehy_internal *ehy;
     struct rt_pnt_node *pts_r1, *pts_r2, *node, *node1, *node2;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     fastf_t point_spacing = solid_point_spacing(v, s_size);
 
@@ -951,7 +951,7 @@ rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 int
 rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     fastf_t c, dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_prev, theta_new;
     int *pts_dbl;
@@ -1222,6 +1222,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex ***vells = (struct vertex ***)NULL;
     vect_t A, Au, B, Bu, Hu, V;
     struct bu_ptbl vert_tab;
+    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
@@ -1568,13 +1569,13 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Glue the edges of different outward pointing face uses together */
-    nmg_gluefaces(outfaceuses, face, &RTG.rtg_vlfree, tol);
+    nmg_gluefaces(outfaceuses, face, vlfree, tol);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
     /* XXX just for testing, to make up for loads of triangles ... */
-    nmg_shell_coplanar_face_merge(s, tol, 1, &RTG.rtg_vlfree);
+    nmg_shell_coplanar_face_merge(s, tol, 1, vlfree);
 
     /* free mem */
     bu_free((char *)outfaceuses, "faceuse []");
@@ -1586,7 +1587,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)vells, "vertex [][]");
 
     /* Assign vertexuse normals */
-    nmg_vertex_tabulate(&vert_tab, &s->l.magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&vert_tab, &s->l.magic, vlfree);
     for (i = 0; i < BU_PTBL_LEN(&vert_tab); i++) {
 	point_t pt_prime, tmp_pt;
 	vect_t norm, rev_norm, tmp_vect;
@@ -1773,6 +1774,42 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_ehy_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_ehy_internal *tip = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(tip);
+    struct rt_ehy_internal *top = (struct rt_ehy_internal *)rop->idb_ptr;
+    RT_EHY_CK_MAGIC(top);
+
+    vect_t eV, eH, eAu;
+    double er1, er2, ec;
+    VMOVE(eV, tip->ehy_V);
+    VMOVE(eH, tip->ehy_H);
+    VMOVE(eAu, tip->ehy_Au);
+    er1 = tip->ehy_r1 / mat[15];
+    er2 = tip->ehy_r2 / mat[15];
+    ec = tip->ehy_c / mat[15];
+
+    if (er1 <= SMALL_FASTF || er2 <= SMALL_FASTF || ec <= SMALL_FASTF) {
+	bu_log("rt_ehy_mat: r1, r2, or c are zero\n");
+	return BRLCAD_ERROR;
+    }
+
+    MAT4X3PNT(top->ehy_V, mat, eV);
+    MAT4X3VEC(top->ehy_H, mat, eH);
+    MAT4X3VEC(top->ehy_Au, mat, eAu);
+    VUNITIZE(top->ehy_Au);
+    top->ehy_r1 = er1;
+    top->ehy_r2 = er2;
+    top->ehy_c  = ec;
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Import an EHY from the database format to the internal format.
@@ -1803,23 +1840,27 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 3*4);
 
-    /* Apply modeling transformations */
+    /* Sanity */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(xip->ehy_V, mat, &vec[0*3]);
-    MAT4X3VEC(xip->ehy_H, mat, &vec[1*3]);
-    MAT4X3VEC(xip->ehy_Au, mat, &vec[2*3]);
-    VUNITIZE(xip->ehy_Au);
-    xip->ehy_r1 = vec[3*3] / mat[15];
-    xip->ehy_r2 = vec[3*3+1] / mat[15];
-    xip->ehy_c  = vec[3*3+2] / mat[15];
-
-    if (xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF) {
+    double ehy_r1 = vec[3*3] / mat[15];
+    double ehy_r2 = vec[3*3+1] / mat[15];
+    double ehy_c  = vec[3*3+2] / mat[15];
+    if (ehy_r1 <= SMALL_FASTF || ehy_r2 <= SMALL_FASTF || ehy_c <= SMALL_FASTF) {
 	bu_log("rt_ehy_import5: r1, r2, or c are zero\n");
 	bu_free((char *)ip->idb_ptr, "rt_ehy_import5: ip->idb_ptr");
 	return -1;
     }
 
-    return 0;			/* OK */
+    /* Assign values */
+    VMOVE(xip->ehy_V, &vec[0*3]);
+    VMOVE(xip->ehy_H, &vec[1*3]);
+    VMOVE(xip->ehy_Au, &vec[2*3]);
+    xip->ehy_r1 = vec[3*3];
+    xip->ehy_r2 = vec[3*3+1];
+    xip->ehy_c  = vec[3*3+2];
+
+    /* Apply modeling transformations */
+    return rt_ehy_mat(ip, mat, ip);
 }
 
 
@@ -2076,59 +2117,83 @@ rt_ehy_centroid(point_t *cent, const struct rt_db_internal *ip)
     VJOIN1(*cent, apex, dist_C, unit_vec);
 }
 
-void
-rt_ehy_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_ehy_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
+    int lcnt = 5;
+    if (!pl || pl_max < lcnt || !ip)
+	return 0;
 
     struct rt_ehy_internal *ehy = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(ehy);
 
-    // Set up the containers
-    struct bv_label *l[5];
-    for (int i = 0; i < 5; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
+    point_t work, pos_view;
+    int npl = 0;
 
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
 
-	l[i] = la;
-    }
+    vect_t A, B;
 
-    // Do the specific data assignments for each label
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, ehy->ehy_V);
+    MAT4X3PNT(pos_view, xform, ehy->ehy_V);
+    POINT_LABEL(pos_view, 'V');
 
-    bu_vls_sprintf(&l[1]->label, "H");
-    VADD2(l[1]->p, ehy->ehy_V, ehy->ehy_H);
+    VADD2(work, ehy->ehy_V, ehy->ehy_H);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'H');
 
-    bu_vls_sprintf(&l[2]->label, "A");
-    vect_t A;
     VSCALE(A, ehy->ehy_Au, ehy->ehy_r1);
-    VADD2(l[2]->p, ehy->ehy_V, A);
+    VADD2(work, ehy->ehy_V, A);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'A');
 
-    bu_vls_sprintf(&l[3]->label, "B");
-    vect_t B;
     VCROSS(B, ehy->ehy_Au, ehy->ehy_H);
     VUNITIZE(B);
     VSCALE(B, B, ehy->ehy_r2);
-    VADD2(l[3]->p, ehy->ehy_V, B);
+    VADD2(work, ehy->ehy_V, B);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'B');
 
-    bu_vls_sprintf(&l[4]->label, "c");
-    VMOVE(l[4]->p, ehy->ehy_H);
-    VUNITIZE(l[4]->p);
-    VSCALE(l[4]->p, l[4]->p, MAGNITUDE(ehy->ehy_H) + ehy->ehy_c);
-    VADD2(l[4]->p, ehy->ehy_V, l[4]->p);
+    VMOVE(work, ehy->ehy_H);
+    VUNITIZE(work);
+    VSCALE(work, work,
+	    MAGNITUDE(ehy->ehy_H) + ehy->ehy_c);
+    VADD2(work, ehy->ehy_V, work);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'c');
 
+    return lcnt;
 }
 
+const char *
+rt_ehy_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_ehy_internal *ehy = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(ehy);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, ehy->ehy_V);
+	goto ehy_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+ehy_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
 
 /** @} */
 /*

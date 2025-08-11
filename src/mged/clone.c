@@ -1,7 +1,7 @@
 /*	                  C L O N E . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2024 United States Government as represented by
+ * Copyright (c) 2005-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -80,6 +80,7 @@
  * requested and values necessary to perform the cloning operation.
  */
 struct clone_state {
+    struct mged_state *s;
     Tcl_Interp *interp;         /* Stash a pointer to the tcl interpreter for output */
     struct directory *src;	/* Source object */
     size_t incr;		/* Amount to increment between copies */
@@ -283,6 +284,7 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
     struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
     size_t i, j;
+    struct mged_state *s = state->s;
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
@@ -305,13 +307,14 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	/* add the object to the directory */
 	dp = db_diradd(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i]), RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
 	if ((dp == RT_DIR_NULL) || (db_alloc(_dbip, dp, proto->d_len) < 0)) {
-	    TCL_ALLOC_ERR;
-	    return;
+	    Tcl_AppendResult(s->interp, "An error has occurred while adding a new object to the database.\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
+	    continue;
 	}
 
 	/* get an in-memory reference to the object being copied */
 	if ((rp = db_getmrec(_dbip, proto)) == (union record *)0) {
-	    TCL_READ_ERR;
+	    Tcl_AppendResult(s->interp, "Database read error, aborting\n", (char *)NULL);
 	    return;
 	}
 
@@ -373,6 +376,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
     mat_t matrix;
     struct directory *proto2;
     struct bu_external external;
+    struct mged_state *s = state->s;
 
     MAT_IDN(matrix);
 
@@ -421,41 +425,41 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
 
 	/* actually copy the primitive to the new name */
-	if ((proto2 = db_lookup(WDBP->dbip,  proto->d_namep, LOOKUP_NOISY)) == RT_DIR_NULL)
+	if ((proto2 = db_lookup(s->wdbp->dbip,  proto->d_namep, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    return;
 
-	if (db_lookup(WDBP->dbip, bu_vls_addr(name), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    if (WDBP->wdb_interp) {
-		Tcl_AppendResult((Tcl_Interp *)WDBP->wdb_interp, bu_vls_addr(name), ":  already exists", (char *)NULL);
+	if (db_lookup(s->wdbp->dbip, bu_vls_addr(name), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    if (s->wdbp->wdb_interp) {
+		Tcl_AppendResult((Tcl_Interp *)s->wdbp->wdb_interp, bu_vls_addr(name), ":  already exists", (char *)NULL);
 	    } else {
 		bu_log("%s: already exists\n", bu_vls_addr(name));
 	    }
 	    return;
 	}
 
-	if (db_get_external(&external, proto2, WDBP->dbip)) {
-	    if (WDBP->wdb_interp) {
-		Tcl_AppendResult((Tcl_Interp *)WDBP->wdb_interp, "Database read error, aborting", (char *)NULL);
+	if (db_get_external(&external, proto2, s->wdbp->dbip)) {
+	    if (s->wdbp->wdb_interp) {
+		Tcl_AppendResult((Tcl_Interp *)s->wdbp->wdb_interp, "Database read error, aborting", (char *)NULL);
 	    } else {
 		bu_log("Database read error, aborting\n");
 	    }
 	    return;
 	}
 
-	dp = db_diradd(WDBP->dbip, bu_vls_addr(name), RT_DIR_PHONY_ADDR, 0, proto2->d_flags, (void *)&proto2->d_minor_type);
+	dp = db_diradd(s->wdbp->dbip, bu_vls_addr(name), RT_DIR_PHONY_ADDR, 0, proto2->d_flags, (void *)&proto2->d_minor_type);
 	if (dp == RT_DIR_NULL) {
-	    if (WDBP->wdb_interp) {
-		Tcl_AppendResult((Tcl_Interp *)WDBP->wdb_interp, "An error has occurred while adding a new object to the database.", (char *)NULL);
+	    if (s->wdbp->wdb_interp) {
+		Tcl_AppendResult((Tcl_Interp *)s->wdbp->wdb_interp, "An error has occurred while adding a new object to the database.", (char *)NULL);
 	    } else {
 		bu_log("An error has occurred while adding a new object to the database.");
 	    }
 	    return;
 	}
 
-	if (db_put_external(&external, dp, WDBP->dbip) < 0) {
+	if (db_put_external(&external, dp, s->wdbp->dbip) < 0) {
 	    bu_free_external(&external);
-	    if (WDBP->wdb_interp) {
-		Tcl_AppendResult((Tcl_Interp *)WDBP->wdb_interp, "Database write error, aborting", (char *)NULL);
+	    if (s->wdbp->wdb_interp) {
+		Tcl_AppendResult((Tcl_Interp *)s->wdbp->wdb_interp, "Database write error, aborting", (char *)NULL);
 	    } else {
 		bu_log("Database write error, aborting\n");
 	    }
@@ -479,7 +483,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	}
 
 	/* write the new matrix to the new object */
-	if (rt_db_put_internal(dp, WDBP->dbip, &intern, &rt_uniresource) < 0)
+	if (rt_db_put_internal(dp, s->wdbp->dbip, &intern, &rt_uniresource) < 0)
 	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
 	rt_db_free_internal(&intern);
     } /* end iteration over each copy */
@@ -529,13 +533,14 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
     union record *rp = (union record *)NULL;
     size_t i;
     size_t j;
+    struct mged_state *s = state->s;
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
 
 	/* get a v4 in-memory reference to the object being copied */
 	if ((rp = db_getmrec(_dbip, proto)) == (union record *)0) {
-	    TCL_READ_ERR;
+	    Tcl_AppendResult(s->interp, "Database read error, aborting\n", (char *)NULL);
 	    return NULL;
 	}
 
@@ -566,7 +571,8 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	/* add the object to the directory */
 	dp = db_diradd(_dbip, rp->c.c_name, RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
 	if ((dp == NULL) || (db_alloc(_dbip, dp, proto->d_len) < 0)) {
-	    TCL_ALLOC_ERR;
+	    Tcl_AppendResult(s->interp, "An error has occurred while adding a new object to the database.\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
 	    return NULL;
 	}
 
@@ -636,6 +642,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
     struct directory *dp = (struct directory *)NULL;
     struct bu_vls *name;
     size_t i;
+    struct mged_state *s = state->s;
 
     /* sanity */
     if (!proto) {
@@ -671,7 +678,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		return NULL;
 	    }
 
-	    if ((dp=db_diradd(WDBP->dbip, bu_vls_addr(name), -1, 0, proto->d_flags, (void *)&proto->d_minor_type)) == RT_DIR_NULL) {
+	    if ((dp=db_diradd(s->wdbp->dbip, bu_vls_addr(name), -1, 0, proto->d_flags, (void *)&proto->d_minor_type)) == RT_DIR_NULL) {
 		bu_log("An error has occurred while adding a new object to the database.");
 		return NULL;
 	    }
@@ -684,7 +691,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	    /* recursively update the tree */
 	    copy_v5_comb_tree(comb->tree, i);
 
-	    if (rt_db_put_internal(dp, WDBP->dbip, &dbintern, &rt_uniresource) < 0) {
+	    if (rt_db_put_internal(dp, s->wdbp->dbip, &dbintern, &rt_uniresource) < 0) {
 		bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
 		bu_vls_free(name);
 		return NULL;
@@ -743,6 +750,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
     union record *rp = (union record *)NULL;
     struct directory *mdp = (struct directory *)NULL;
     struct directory *copy = (struct directory *)NULL;
+    struct mged_state *s = state->s;
 
     struct bu_vls *copyname = NULL;
     struct bu_vls *nextname = NULL;
@@ -760,7 +768,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 
 	    /* get an in-memory record of this object */
 	    if ((rp = db_getmrec(_dbip, dp)) == (union record *)0) {
-		TCL_READ_ERR;
+		Tcl_AppendResult(s->interp, "Database read error, aborting\n", (char *)NULL);
 		goto done_copy_tree;
 	    }
 	    /*
@@ -901,10 +909,15 @@ interp_spl(fastf_t t, struct spline spl, vect_t pt)
  * copies of objects along a spline path.
  */
 int
-f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     size_t ret;
-    struct spline s;
+    //struct spline s;
+    struct spline c_s;
     vect_t *verts;
     struct link *links;
     int opt;
@@ -1016,19 +1029,19 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
     bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
     bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
-    s.n_segs = atoi(tok);
-    s.t = (fastf_t *)bu_malloc(sizeof(fastf_t) * (s.n_segs+1), "t");
-    s.k = (struct knot *)bu_malloc(sizeof(struct knot) * (s.n_segs+1), "k");
-    for (i = 0; i <= s.n_segs; i++) {
+    c_s.n_segs = atoi(tok);
+    c_s.t = (fastf_t *)bu_malloc(sizeof(fastf_t) * (c_s.n_segs+1), "t");
+    c_s.k = (struct knot *)bu_malloc(sizeof(struct knot) * (c_s.n_segs+1), "k");
+    for (i = 0; i <= c_s.n_segs; i++) {
 	bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
 	if (strstr(tok, "P") != NULL) {
 	    bu_fgets(line, 81, points);
 	    bu_fgets(line, 81, points);
 	    bu_strlcpy(tok, strtok(line, ","), sizeof(tok));
 	}
-	s.t[i] = atof(tok);
+	c_s.t[i] = atof(tok);
     }
-    for (i = 0; i <= s.n_segs; i++)
+    for (i = 0; i <= c_s.n_segs; i++)
 	for (j = 0; j < 3; j++) {
 	    for (k = 0; k < 4; k++) {
 		bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
@@ -1037,17 +1050,17 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 		    bu_fgets(line, 81, points);
 		    bu_strlcpy(tok, strtok(line, ","), sizeof(tok));
 		}
-		s.k[i].c[j][k] = atof(tok);
+		c_s.k[i].c[j][k] = atof(tok);
 	    }
-	    s.k[i].pt[j] = s.k[i].c[j][0];
+	    c_s.k[i].pt[j] = c_s.k[i].c[j][0];
 	}
     fclose(points);
 
     /* Interpolate link vertices *********************/
-    for (i = 0; i < s.n_segs; i++) /* determine initial track length */
-	totlen += DIST_PNT_PNT(s.k[i].pt, s.k[i+1].pt);
+    for (i = 0; i < c_s.n_segs; i++) /* determine initial track length */
+	totlen += DIST_PNT_PNT(c_s.k[i].pt, c_s.k[i+1].pt);
     len = totlen/(n_verts-1);
-    VMOVE(verts[0], s.k[0].pt);
+    VMOVE(verts[0], c_s.k[0].pt);
     olen = 2*len;
 
     for (i = 0; (fabs(olen-len) >= VUNITIZE_TOL) && (i < 250); i++) {
@@ -1063,9 +1076,9 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 		/* for each sub-link */
 		if ((k == 0) && (j == 0)) {continue;} /* the first sub-link of the first link is already in position */
 		min = mid;
-		max = s.t[s.n_segs];
+		max = c_s.t[c_s.n_segs];
 		mid = (min+max)/2;
-		interp_spl(mid, s, pt);
+		interp_spl(mid, c_s, pt);
 		dist_to_next = (k > 0) ? links[k-1].len : links[n_links-1].len; /* links[k].len;*/
 		while (fabs(DIST_PNT_PNT(verts[n_links*j+k-1], pt) - dist_to_next) >= VUNITIZE_TOL) {
 		    if (DIST_PNT_PNT(verts[n_links*j+k-1], pt) > dist_to_next) {
@@ -1075,13 +1088,13 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 			min = mid;
 			mid = (min+max)/2;
 		    }
-		    interp_spl(mid, s, pt);
+		    interp_spl(mid, c_s, pt);
 		    if (fabs(min-max) <= VUNITIZE_TOL) {break;}
 		}
-		interp_spl(mid, s, verts[n_links*j+k]);
+		interp_spl(mid, c_s, verts[n_links*j+k]);
 	    }
 
-	interp_spl(s.t[s.n_segs], s, verts[n_verts*n_links-1]);
+	interp_spl(c_s.t[c_s.n_segs], c_s, verts[n_verts*n_links-1]);
 	totlen = 0.0;
 	for (j = 0; j < n_verts*n_links-1; j++)
 	    totlen += DIST_PNT_PNT(verts[j], verts[j+1]);
@@ -1109,6 +1122,7 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	struct clone_state state;
 	struct directory **dps = (struct directory **)NULL;
 
+	state.s = s;
 	state.interp = interp;
 	state.incr = inc;
 	state.n_copies = 1;
@@ -1119,17 +1133,17 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	/* rots = (vect_t *)bu_malloc(sizeof(vect_t)*n_links, "alloc rots");*/
 	for (i = 0; i < n_links; i++) {
 	    /* global dbip */
-	    dps[i] = db_lookup(DBIP, bu_vls_addr(&links[i].name), LOOKUP_QUIET);
+	    dps[i] = db_lookup(s->dbip, bu_vls_addr(&links[i].name), LOOKUP_QUIET);
 	    /* VSET(rots[i], 0, 0, 0);*/
 	}
 
 	for (i = 0; i < n_verts-1; i++) {
 	    for (j = 0; j < n_links; j++) {
 		if (i == 0) {
-		    VSCALE(state.trans, verts[n_links*i+j], local2base);
+		    VSCALE(state.trans, verts[n_links*i+j], s->dbip->dbi_local2base);
 		} else
-		    VSUB2SCALE(state.trans, verts[n_links*(i-1)+j], verts[n_links*i+j], local2base);
-		VSCALE(state.rpnt, verts[n_links*i+j], local2base);
+		    VSUB2SCALE(state.trans, verts[n_links*(i-1)+j], verts[n_links*i+j], s->dbip->dbi_local2base);
+		VSCALE(state.rpnt, verts[n_links*i+j], s->dbip->dbi_local2base);
 
 		VSUB2(pt, verts[n_links*i+j], verts[n_links*i+j+1]);
 		VSET(state.rot, 0, (M_PI - atan2(pt[Z], pt[X])),
@@ -1142,14 +1156,14 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
 		state.src = dps[j];
 		/* global dbip */
-		dps[j] = copy_object(DBIP, &rt_uniresource, &state);
+		dps[j] = copy_object(s->dbip, &rt_uniresource, &state);
 
-		if (!no_draw || !is_dm_null()) {
-		    redraw_visible_objects();
-		    size_reset();
-		    new_mats();
-		    mged_color_soltab();
-		    refresh();
+		if (!no_draw || s->mged_curr_dm != mged_dm_init_state) {
+		    redraw_visible_objects(s);
+		    size_reset(s);
+		    new_mats(s);
+		    mged_color_soltab(s);
+		    refresh(s);
 		}
 		fprintf(stdout, ".");
 		fflush(stdout);
@@ -1159,8 +1173,8 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	bu_free(dps, "free dps array");
     }
 
-    free(s.t);
-    free(s.k);
+    free(c_s.t);
+    free(c_s.k);
     free(links);
     free(verts);
     (void)signal(SIGINT, SIG_IGN);

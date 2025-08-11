@@ -1,7 +1,7 @@
 /*                        P L O T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2024 United States Government as represented by
+ * Copyright (c) 2020-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -169,7 +169,7 @@ void plotcurveonsurface(const ON_Curve *curve,
 	ON_3dPoint pt1, pt2;
 	pt2d = curve->PointAt(curve->Domain().ParameterAt((double)i/plotres));
 	pt3d = surface->PointAt(pt2d.x, pt2d.y);
-	pt1 = pt2;
+	pt1 = pt2d;
 	pt2 = pt3d;
 	if (i != 0) {
 	    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
@@ -993,9 +993,8 @@ plot_nurbs_cv(struct bu_list *vlfree, struct bv_vlblock *vbp, int ucount, int vc
 static void
 _brep_vlblock_plot(struct ged *gedp, struct bv_vlblock *vbp, const char *sname)
 {
-    const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
     struct bview *view = gedp->ged_gvp;
-    if (BU_STR_EQUAL(nview, "1")) {
+    if (gedp->new_cmd_forms) {
 	struct bu_vls nroot = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&nroot, "brep::%s", sname);
 	bv_vlblock_obj(vbp, view, bu_vls_cstr(&nroot));
@@ -1042,7 +1041,7 @@ _brep_cmd_curve_2d_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
@@ -1103,7 +1102,7 @@ _brep_cmd_curve_3d_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
@@ -1162,7 +1161,7 @@ _brep_cmd_edge_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
@@ -1226,7 +1225,7 @@ _brep_cmd_face_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
@@ -1285,7 +1284,7 @@ _brep_cmd_face_2d_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
@@ -1345,7 +1344,7 @@ _brep_cmd_face_surface_bbox_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     std::set<int> elements;
     if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
@@ -1411,7 +1410,7 @@ _brep_cmd_face_surface_bbox_2d_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     std::set<int> elements;
     if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
@@ -1477,7 +1476,7 @@ _brep_cmd_face_trim_bbox_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     std::set<int> elements;
     if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
@@ -1533,7 +1532,7 @@ _brep_cmd_face_trim_bbox_2d_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     std::set<int> elements;
     if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
@@ -1590,7 +1589,7 @@ _brep_cmd_face_trim_direction_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
@@ -1646,7 +1645,7 @@ _brep_cmd_isosurface_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
@@ -1703,7 +1702,7 @@ _brep_cmd_loop_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
@@ -1767,7 +1766,7 @@ _brep_cmd_loop_2d_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
@@ -1830,7 +1829,7 @@ _brep_cmd_surface_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
@@ -1891,7 +1890,7 @@ _brep_cmd_surface_control_verts_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     std::set<int> elements;
     if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
@@ -1951,7 +1950,7 @@ _brep_cmd_surface_knot_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     std::set<int> elements;
     if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
@@ -2005,7 +2004,7 @@ _brep_cmd_surface_knot_2d_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     std::set<int> elements;
     if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
@@ -2059,7 +2058,7 @@ _brep_cmd_surface_normal_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
@@ -2118,7 +2117,7 @@ _brep_cmd_surface_uv_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     std::set<int> elements;
     if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
@@ -2214,7 +2213,7 @@ _brep_cmd_surface_uv_point_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     if (argc != 3) {
 	bu_vls_printf(gib->vls, "%s", usage_string);
@@ -2287,7 +2286,7 @@ _brep_cmd_trim_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
@@ -2347,7 +2346,7 @@ _brep_cmd_trim_2d_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
@@ -2407,7 +2406,7 @@ _brep_cmd_vertex_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     std::set<int> elements;
     if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
@@ -2465,7 +2464,7 @@ _brep_cmd_face_cdt_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     //struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     const char *solid_name = gib->gb->solid_name.c_str();
     const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->wdbp->wdb_ttol;
     const struct bn_tol *tol = &gib->gb->wdbp->wdb_tol;
@@ -2510,7 +2509,7 @@ _brep_cmd_face_cdt_2d_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     //struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     const char *solid_name = gib->gb->solid_name.c_str();
     const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->wdbp->wdb_ttol;
     const struct bn_tol *tol = &gib->gb->wdbp->wdb_tol;
@@ -2555,7 +2554,7 @@ _brep_cmd_face_cdt_m2d_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     //struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     const char *solid_name = gib->gb->solid_name.c_str();
     const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->wdbp->wdb_ttol;
     const struct bn_tol *tol = &gib->gb->wdbp->wdb_tol;
@@ -2600,7 +2599,7 @@ _brep_cmd_face_cdt_p2d_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     //struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     const char *solid_name = gib->gb->solid_name.c_str();
     const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->wdbp->wdb_ttol;
     const struct bn_tol *tol = &gib->gb->wdbp->wdb_tol;
@@ -2645,7 +2644,7 @@ _brep_cmd_face_cdt_wireframe_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     //struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     const char *solid_name = gib->gb->solid_name.c_str();
     const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->wdbp->wdb_ttol;
     const struct bn_tol *tol = &gib->gb->wdbp->wdb_tol;
@@ -2690,7 +2689,7 @@ _brep_cmd_face_cdt2_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     //struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     const char *solid_name = gib->gb->solid_name.c_str();
     const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->wdbp->wdb_ttol;
 
@@ -2752,7 +2751,7 @@ _brep_cmd_face_cdt2_2d_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     //struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     const char *solid_name = gib->gb->solid_name.c_str();
     const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->wdbp->wdb_ttol;
 
@@ -2813,7 +2812,7 @@ _brep_cmd_face_cdt2_wireframe_plot(void *bs, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
     //struct bu_color *color = gib->gb->color;
     struct bv_vlblock *vbp = gib->gb->vbp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     const char *solid_name = gib->gb->solid_name.c_str();
     const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->wdbp->wdb_ttol;
 

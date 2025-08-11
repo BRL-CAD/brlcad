@@ -1,7 +1,7 @@
 #                     M E N U . T C L
 # BRL-CAD
 #
-# Copyright (c) 2018-2024 United States Government as represented by
+# Copyright (c) 2018-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ catch {delete class OverlapMenu} error
 	-text "Create New Overlaps File" -padding 8 -command [ code $this runOvFileTool ]
     } {}
     itk_component add existingFileFrame {
-	ttk::labelframe $itk_component(buttonsFrame).existingFileFrame -padding 8 -text " Exisiting File "
+	ttk::labelframe $itk_component(buttonsFrame).existingFileFrame -padding 8 -text " Existing File "
     } {}
     itk_component add buttonBrowse {
 	ttk::button $itk_component(existingFileFrame).buttonBrowse \

@@ -1,7 +1,7 @@
 /*                      H A S H . C
  * BRL-CAD
  *
- * Copyright (c) 2020-2024 United States Government as represented by
+ * Copyright (c) 2020-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -265,7 +265,6 @@ bv_settings_hash(struct bu_data_hash_state *state, struct bview_settings *s)
 {
     bu_data_hash_update(state, s, sizeof(struct bview_settings));
 
-    _bv_obj_settings_hash(state, &s->obj_s);
     _bv_adc_state_hash(state, &s->gv_adc);
     _bv_axes_hash(state, &s->gv_model_axes);
     _bv_axes_hash(state, &s->gv_view_axes);

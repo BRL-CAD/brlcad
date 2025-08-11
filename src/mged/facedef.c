@@ -1,7 +1,7 @@
 /*                       F A C E D E F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2024 United States Government as represented by
+ * Copyright (c) 1986-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,8 +34,6 @@
 #include "./sedit.h"
 
 
-extern struct rt_db_internal es_int;
-
 char *p_rotfb[] = {
     "Enter rot, fb angles: ",
     "Enter fb angle: ",
@@ -67,8 +65,10 @@ char *p_nupnt[] = {
 };
 
 
-static void get_pleqn(fastf_t *plane, const char *argv[]), get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb), get_nupnt(fastf_t *plane, const char *argv[]);
-static int get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol);
+static void get_pleqn(struct mged_state *s, fastf_t *plane, const char *argv[]);
+static void get_rotfb(struct mged_state *s, fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb);
+static void get_nupnt(struct mged_state *s, fastf_t *plane, const char *argv[]);
+static int get_3pts(struct mged_state *s, fastf_t *plane, const char *argv[], const struct bn_tol *tol);
 
 /*
  * Redefines one of the defining planes for a GENARB8. Finds which
@@ -76,8 +76,11 @@ static int get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol
  * one of four functions before calculating new vertices.
  */
 int
-f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     short int i;
     int face, prod, plane;
     struct rt_db_internal intern;
@@ -105,25 +108,25 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     BU_VLS_INIT(&error_msg);
     RT_DB_INTERNAL_INIT(&intern);
 
-    if (STATE != ST_S_EDIT) {
+    if (GEOM_EDIT_STATE != ST_S_EDIT) {
 	Tcl_AppendResult(interp, "Facedef: must be in solid edit mode\n", (char *)NULL);
 	status = TCL_ERROR;
 	goto end;
     }
-    if (es_int.idb_type != ID_ARB8) {
+    if (s->edit_state.es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Facedef: solid type must be ARB\n");
 	status = TCL_ERROR;
 	goto end;
     }
 
     /* apply es_mat editing to parameters.  "new way" */
-    transform_editing_solid(&intern, es_mat, &es_int, 0);
+    transform_editing_solid(s, &intern, es_mat, &s->edit_state.es_int, 0);
 
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
     /* find new planes to account for any editing */
-    if (rt_arb_calc_planes(&error_msg, arb, es_type, planes, &mged_tol)) {
+    if (rt_arb_calc_planes(&error_msg, arb, es_type, planes, &s->tol.tol)) {
 	Tcl_AppendResult(interp, bu_vls_addr(&error_msg),
 			 "Unable to determine plane equations\n", (char *)NULL);
 	status = TCL_ERROR;
@@ -220,7 +223,7 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 		status = TCL_ERROR;
 		goto end;
 	    }
-	    get_pleqn(planes[plane], &argv[3]);
+	    get_pleqn(s, planes[plane], &argv[3]);
 	    break;
 	case 'b':
 	    /* special case for arb7, because of 2 4-pt planes meeting */
@@ -240,7 +243,7 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 		status = TCL_ERROR;
 		goto end;
 	    }
-	    if (get_3pts(planes[plane], &argv[3], &mged_tol)) {
+	    if (get_3pts(s, planes[plane], &argv[3], &s->tol.tol)) {
 		status = TCL_ERROR;
 		goto end;
 	    }
@@ -264,7 +267,7 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 		status = TCL_ERROR;
 		goto end;
 	    }
-	    get_rotfb(planes[plane], &argv[3], arb);
+	    get_rotfb(s, planes[plane], &argv[3], arb);
 	    break;
 	case 'd':
 	    /* special case for arb7, because of 2 4-pt planes meeting */
@@ -280,7 +283,7 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 		status = TCL_ERROR;
 		goto end;
 	    }
-	    get_nupnt(planes[plane], &argv[3]);
+	    get_nupnt(s, planes[plane], &argv[3]);
 	    break;
 	case 'q':
 	    return TCL_OK;
@@ -291,7 +294,7 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     /* find all vertices from the plane equations */
-    if (rt_arb_calc_points(arb, es_type, (const plane_t *)planes, &mged_tol) < 0) {
+    if (rt_arb_calc_points(arb, es_type, (const plane_t *)planes, &s->tol.tol) < 0) {
 	Tcl_AppendResult(interp, "facedef:  unable to find points\n", (char *)NULL);
 	status = TCL_ERROR;
 	goto end;
@@ -300,7 +303,7 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
     /* Transform points back before es_mat changes */
     /* This is the "new way" */
-    arbo = (struct rt_arb_internal *)es_int.idb_ptr;
+    arbo = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arbo);
 
     for (i=0; i<8; i++) {
@@ -309,7 +312,7 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     rt_db_free_internal(&intern);
 
     /* draw the new solid */
-    replot_editing_solid();
+    replot_editing_solid(s);
 
  end:
     (void)signal(SIGINT, SIG_IGN);
@@ -322,17 +325,17 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
  * into 'plane'.
  */
 static void
-get_pleqn(fastf_t *plane, const char *argv[])
+get_pleqn(struct mged_state *s, fastf_t *plane, const char *argv[])
 {
     int i;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     for (i=0; i<4; i++)
 	plane[i]= atof(argv[i]);
     VUNITIZE(&plane[0]);
-    plane[W] *= local2base;
+    plane[W] *= s->dbip->dbi_local2base;
     return;
 }
 
@@ -347,7 +350,7 @@ get_pleqn(fastf_t *plane, const char *argv[])
  * -1 failure
  */
 static int
-get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol)
+get_3pts(struct mged_state *s, fastf_t *plane, const char *argv[], const struct bn_tol *tol)
 {
     int i;
     point_t a, b, c;
@@ -355,14 +358,14 @@ get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol)
     CHECK_DBI_NULL;
 
     for (i=0; i<3; i++)
-	a[i] = atof(argv[0+i]) * local2base;
+	a[i] = atof(argv[0+i]) * s->dbip->dbi_local2base;
     for (i=0; i<3; i++)
-	b[i] = atof(argv[3+i]) * local2base;
+	b[i] = atof(argv[3+i]) * s->dbip->dbi_local2base;
     for (i=0; i<3; i++)
-	c[i] = atof(argv[6+i]) * local2base;
+	c[i] = atof(argv[6+i]) * s->dbip->dbi_local2base;
 
     if (bg_make_plane_3pnts(plane, a, b, c, tol) < 0) {
-	Tcl_AppendResult(INTERP, "Facedef: not a plane\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "Facedef: not a plane\n", (char *)NULL);
 	return -1;		/* failure */
     }
     return 0;			/* success */
@@ -376,13 +379,13 @@ get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol)
  * a vertex is chosen as fixed point.
  */
 static void
-get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
+get_rotfb(struct mged_state *s, fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
 {
     fastf_t rota, fb_a;
     short int i, temp;
     point_t pt;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     rota= atof(argv[0]) * DEG2RAD;
@@ -401,7 +404,7 @@ get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
     } else {
 	/* definite point given */
 	for (i=0; i<3; i++)
-	    pt[i]=atof(argv[2+i]) * local2base;
+	    pt[i]=atof(argv[2+i]) * s->dbip->dbi_local2base;
 	plane[W]=VDOT(&plane[0], pt);
     }
 }
@@ -413,16 +416,16 @@ get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
  * input point.
  */
 static void
-get_nupnt(fastf_t *plane, const char *argv[])
+get_nupnt(struct mged_state *s, fastf_t *plane, const char *argv[])
 {
     int i;
     point_t pt;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     for (i=0; i<3; i++)
-	pt[i] = atof(argv[i]) * local2base;
+	pt[i] = atof(argv[i]) * s->dbip->dbi_local2base;
     plane[W] = VDOT(&plane[0], pt);
 }
 

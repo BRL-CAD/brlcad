@@ -1,7 +1,7 @@
 /*                      B V I E W _ U T I L . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,6 +66,81 @@ BV_EXPORT extern void bv_update(struct bview *gvp);
 
 /* Update objects in the selection set (if any) and their children */
 BV_EXPORT extern int bv_update_selected(struct bview *gvp);
+
+/* Clear or reset the knob states.  Specify a category to indicate which
+ * variables should be reset:
+ *
+ * BV_KNOBS_ALL resets both rate and absolute values
+ * BV_KNOBS_RATE resets rate only
+ * BV_KNOBS_ABS resets absolute only
+ */
+#define BV_KNOBS_ALL 0
+#define BV_KNOBS_RATE 1
+#define BV_KNOBS_ABS 2
+BV_EXPORT extern void bv_knobs_reset(struct bview_knobs *k, int category);
+
+/**
+ * @brief
+ * Process an individual libbv knob command.
+ *
+ * Note that the reason rvec, do_rot, tvec and do_tran are set, rather than an
+ * immediate view update being performed, is to allow parent applications to
+ * process multiple commands before finally triggering the bv_knobs_rot or
+ * bv_knobs_tran functions to implement the accumulated instructions.
+ *
+ * @param[out] rvec     Pointer to rotation vector
+ * @param[out] do_rot   Pointer to flag indicating whether the command implies a rotation op is needed
+ * @param[out] tvec     Pointer to translation vector
+ * @param[out] do_tran  Pointer to flag indicating whether the command implies a translation op is needed
+ *
+ * @param[in] v          bview structure
+ * @param[in] cmd        command string - valid entries are x, y, z, X, Y Z, ax, ay, az, aX, aY, aZ, S, aS
+ * @param[in] f          numerical parameter to cmd (i.e. aX 0.1 - required for all commands)
+ * @param[in] origin     char indicating origin - may be 'e' (eye_pt), 'm' (model origin) or 'v' (view origin - default)
+ * @param[in] model_flag Manipulate view using model coordinates rather than view coordinates
+ * @param[in] incr_flag  Treat f parameter as an incremental change rather than an absolute setting
+ *
+ * @return
+ * Returns BRLCAD_OK if command was successfully processed, BRLCAD_ERROR otherwise.
+ * */
+BV_EXPORT extern int bv_knobs_cmd_process(
+	vect_t *rvec, int *do_rot, vect_t *tvec, int *do_tran,
+        struct bview *v, const char *cmd, fastf_t f,
+        char origin, int model_flag, int incr_flag
+	);
+
+/* @brief
+ * Process a knob rotation vector.
+ *
+ * @param[in] v          bview structure
+ * @param[in] rvec      Pointer to rotation vector
+ * @param[in] origin     char indicating origin - may be 'e' (eye_pt), 'm' (model origin) or 'v' (view origin - default)
+ * @param[in] model_flag Manipulate view using model coordinates rather than view coordinates
+ */
+BV_EXPORT extern void
+bv_knobs_rot(struct bview *v,
+	vect_t *rvec,
+	char origin,
+	int model_flag);
+
+
+/* @brief
+ * Process a knob translation vector.
+ *
+ * @param[in] v          bview structure
+ * @param[in] tvec      Pointer to translation vector
+ * @param[in] model_flag Manipulate view using model coordinates rather than view coordinates
+ */
+BV_EXPORT extern void
+bv_knobs_tran(struct bview *v,
+	vect_t *tvec,
+	int model_flag);
+
+
+/* Update the bview struct's knob rate flags based on the vector values. */
+BV_EXPORT extern void
+bv_update_rate_flags(struct bview *v);
+
 
 /* Return 1 if the visible contents differ
  * Return 2 if visible content is the same but settings differ

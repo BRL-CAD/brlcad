@@ -1,7 +1,7 @@
 /*                      N M G _ I N F O . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -568,7 +568,7 @@ out:
  * Search through all the vertices in a loop.
  * If there are two distinct uses of one vertex in the loop,
  * return true.
- * This is useful for detecting "accordian pleats"
+ * This is useful for detecting "accordion pleats"
  * unexpectedly showing up in a loop.
  * Derived from nmg_split_touchingloops().
  *

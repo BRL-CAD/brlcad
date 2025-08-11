@@ -32,13 +32,132 @@ subcommands:
 <refsection xml:id="subcommands"><title>SUBCOMMANDS</title>
 <variablelist remap="TP">
   <varlistentry>
+    <term><emphasis remap="B" role="bold">ae</emphasis>
+    [[<emphasis>-i</emphasis>]<emphasis> azimuth elevation </emphasis>[<emphasis>twist</emphasis>]]
+    </term>
+    <listitem>
+      <para>
+	Get (without arguments) or set the azimuth, elevation, and (optional) twist.
+	If only 2 arguments are supplied, a twist of 0 is assumed. The <emphasis>-i</emphasis>
+	flag can be used to set the AET incrementally. Setting the azimuth and elevation also changes the eye point
+	while keeping the center and view size static.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><emphasis remap="B" role="bold">align</emphasis>
+      <emphasis>[-i] x y z</emphasis>
+    </term>
+    <listitem>
+      <para>
+	Aligns the eye point with a desired point and the current center (eye -> pt -> center). The 
+	<emphasis>-i</emphasis> flag can be used to align from the opposite direction (eye -> center -> pt). Align
+	changes the eye point, azimuth, and elevation while keeping the center and view size static.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><emphasis remap="B" role="bold">auto</emphasis>
+    </term>
+    <listitem>
+      <para>
+	Resets the view size, center, and eye point such that all displayed objects are visible in the
+	graphics window. Azimuth and elevation remain static.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
     <term><emphasis remap="B" role="bold">center</emphasis>
       [<emphasis>x y z</emphasis>]
     </term>
     <listitem>
       <para>
-	Get (without arguments) or set the view center. Setting the center also changes the eye point while keeping
+	Get (without arguments) or set the center. Setting the center also changes the eye point while keeping
 	the azimuth, elevation, and view size static.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><emphasis remap="B" role="bold">dir</emphasis>
+    [[<emphasis>-i</emphasis>]
+    <emphasis>x y z</emphasis>
+    [<emphasis>twist</emphasis>]]
+    </term>
+    <listitem>
+      <para>
+	Get (without arguments) or set the view in the form of a direction vector and optional twist. Setting the direction also changes 
+	the azimuth, elevation, and eye point while keeping the center and view size static. The <emphasis>-i</emphasis> flag
+	can be used to invert all values (for both getting and setting). The direction vector that is returned (without
+	arguments) does not include the twist; the twist can be acertained by taking the inverse of the twist returned with the
+	<command>ae</command> subcommand.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><emphasis remap="B" role="bold">eye</emphasis>
+      [<emphasis>x y z</emphasis>]
+    </term>
+    <listitem>
+      <para>
+	Get (without arguments) or set the eye point. Setting the eye point also changes the center while keeping the
+	azimuth, elevation, and view size static.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><emphasis remap="B" role="bold">faceplate</emphasis>
+      [<emphasis>options</emphasis>]
+       <emphasis>subcommand</emphasis>
+      [<emphasis>args</emphasis>]
+    </term>
+    <listitem>
+      <para><emphasis remap="B" role="bold">Not Implemented.</emphasis></para>
+      <para>
+	Manipulate options for the faceplate.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><emphasis remap="B" role="bold">lookat</emphasis>
+      <emphasis>x y z</emphasis>
+    </term>
+    <listitem>
+      <para>
+	Adjusts the current view such that the eye is looking in the direction of the given coordinates, but does not
+	move the eye point nor change the view size. Center, azimuth, and elevation will change.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><emphasis remap="B" role="bold">print</emphasis>
+    </term>
+    <listitem>
+      <para>
+	Returns the current azimuth, elevation, and twist; direction vector; center; eye point; and view size.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><emphasis remap="B" role="bold">quat</emphasis>
+    [<emphasis>v1 v2 v3 v4</emphasis>]
+    </term>
+    <listitem>
+      <para>
+	Get (without arguments) or set the view in the form of a quarternion. Setting the quarternion also changes the azimuth,
+	elevation, and eye point while keeping the center and view size static.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><emphasis remap="B" role="bold">save</emphasis>
+      [<emphasis>options</emphasis>]
+       <emphasis>file</emphasis>
+      [<emphasis>args</emphasis>]
+    </term>
+    <listitem>
+      <para>
+	Saves the current viewing parameters in the specified <emphasis>file</emphasis> in the form of a shell script that
+	will run the BRL-CAD rt program.
       </para>
     </listitem>
   </varlistentry>
@@ -53,71 +172,48 @@ subcommands:
       </para>
     </listitem>
   </varlistentry>
-  <varlistentry>
-    <term><emphasis remap="B" role="bold">eye</emphasis>
-      [<emphasis>x y z</emphasis>]
+  <!-- <varlistentry>
+    <term><emphasis remap="B" role="bold">snap</emphasis>
+      [<emphasis>options</emphasis>]
+       <emphasis>x y</emphasis>
+      [<emphasis>z</emphasis>]
     </term>
     <listitem>
       <para>
-	Get (without arguments) or set the eye point. Setting the eye point also changes center while keeping the
-	azimuth, elevation, and view size static.
+	??
       </para>
     </listitem>
-  </varlistentry>
+  </varlistentry> -->
   <varlistentry>
     <term><emphasis remap="B" role="bold">ypr</emphasis>
     [<emphasis>yaw pitch roll</emphasis>]
     </term>
     <listitem>
       <para>
-	Get (witout arguments) or set the view in the form of yaw, pitch, roll. A ypr of 0 0 0 is a rear view (AE = 180, 0).
+	Get (without arguments) or set the view in the form of yaw, pitch, roll. A ypr of 0 0 0 is a rear view (AE = 180, 0).
 	Setting the ypr also changes the azimuth, elevation, and eye point while keeping the center and view size static.
       </para>
     </listitem>
   </varlistentry>
-  <varlistentry>
-    <term><emphasis remap="B" role="bold">quat</emphasis>
-    [<emphasis>v1 v2 v3 v4</emphasis>]
-    </term>
-    <listitem>
-      <para>
-	Get (witout arguments) or set the view in the form of a quarternion. Setting the quarternion also changes the azimuth,
-	elevation, and eye point while keeping the center and view size static.
-      </para>
-    </listitem>
-  </varlistentry>
-  <varlistentry>
-    <term><emphasis remap="B" role="bold">aet</emphasis>
-    [[<emphasis>-i</emphasis>]<emphasis> azimuth elevation </emphasis>[<emphasis>twist</emphasis>]]
-    </term>
-    <listitem>
-      <para>
-	Get (without arguments) or set the azimuth, elevation, and (optional) twist.
-	If only 2 arguments are supplied, a twist of 0 is assumed. The <emphasis>-i</emphasis>
-	flag can be use to set the AET incrementally. Setting the azimuth and elevation also changes the eye point
-	while keeping the center and view size static.
-      </para>
-    </listitem>
-  </varlistentry>   
   </variablelist>
   </refsection>
   
 <refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <example><title>Get the view center.</title>
+  <example><title>Get the center.</title>
 
     <para>
       <prompt>mged&gt; </prompt><userinput>view center</userinput>
     </para>
-    <para>Gets the view center.
+    <para>Gets the center.
     </para>
   </example>
-  <example><title>Set the view center at the origin of model space.</title>
+  <example><title>Set the center at the origin of model space.</title>
 
     <para>
       <prompt>mged&gt; </prompt><userinput>view center 0 0 0</userinput>
     </para>
-    <para>Sets the view center at the origin of model space.
+    <para>Sets the center at the origin of model space.
     </para>
   </example>
 
@@ -139,7 +235,7 @@ subcommands:
 
 	     <example><title>Increase the azimuth by 10 degrees</title>
     <para>
-      <prompt>mged&gt; </prompt><userinput>view aet -i 10 0</userinput>
+      <prompt>mged&gt; </prompt><userinput>view ae -i 10 0</userinput>
     </para>
     <para>Sets the view by increasing the current azimuth by 10 degrees
     </para>

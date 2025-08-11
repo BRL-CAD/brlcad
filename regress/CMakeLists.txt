@@ -1,14 +1,19 @@
 # Define the toplevel regression target - unless specifically excluded
 # via a macro argument, this should collect all regression targets.
 include(ProcessorCount)
-ProcessorCount(N)
+processorcount(N)
 if(NOT N EQUAL 0 AND NOT BRLCAD_SERIAL_TESTING)
   set(JFLAG "-j${N}")
 else()
   set(JFLAG)
 endif()
-add_custom_target(regress COMMAND ${CMAKE_CTEST_COMMAND} -L Regression --output-on-failure --output-log "${CMAKE_BINARY_DIR}/regress_output.log" ${JFLAG})
-DISTCLEAN(${CMAKE_BINARY_DIR}/regress_output.log)
+add_custom_target(
+  regress
+  COMMAND
+    ${CMAKE_CTEST_COMMAND} -L Regression --output-on-failure --output-log "${CMAKE_BINARY_DIR}/regress_output.log"
+    ${JFLAG}
+)
+distclean(${CMAKE_BINARY_DIR}/regress_output.log)
 set_target_properties(regress PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 set_target_properties(regress PROPERTIES FOLDER "BRL-CAD Regression Tests")
 
@@ -100,17 +105,15 @@ add_subdirectory(shaders)
 add_subdirectory(weight)
 
 if(SH_EXEC)
-
-  BRLCAD_ADD_TEST(NAME regress-usage COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/usage.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-usage "rt" STAND_ALONE TEST_DEFINED)
+  brlcad_add_test(NAME regress-usage COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/usage.sh" ${CMAKE_SOURCE_DIR})
+  brlcad_regression_test(regress-usage "rt" STAND_ALONE TEST_DEFINED)
 
   # TODO - test for Python before adding this one
-  BRLCAD_ADD_TEST(NAME regress-flawfinder COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/flawfinder.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-flawfinder "" STAND_ALONE TEST_DEFINED)
-
+  brlcad_add_test(NAME regress-flawfinder COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/flawfinder.sh" ${CMAKE_SOURCE_DIR})
+  brlcad_regression_test(regress-flawfinder "" STAND_ALONE TEST_DEFINED)
 endif(SH_EXEC)
 
-CMAKEFILES(
+cmakefiles(
   art.sh
   flawfinder.sh
   g-dot.sh
@@ -118,9 +121,9 @@ CMAKEFILES(
   library.sh
   rtweight.sh
   usage.sh
-  )
+)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

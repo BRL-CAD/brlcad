@@ -1,7 +1,7 @@
 /*			M G E D _ D M . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,9 +33,14 @@
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
 
-#include "./menu.h" /* struct menu_item */
-#include "./scroll.h" /* struct scroll_item */
+#include "mged.h"
 
+struct scroll_item {
+    char *scroll_string;
+    void (*scroll_func)(struct scroll_item *, double);
+    int scroll_val;
+    char *scroll_cmd;
+};
 
 #ifndef COMMA
 #  define COMMA ','
@@ -44,12 +49,9 @@
 #define MGED_DISPLAY_VAR "mged_display"
 
 /* +-2048 to +-1 */
-#define GED2PM1(x) (((fastf_t)(x))*INV_GED)
-
-#define SL_TOL 0.03125  /* size of dead spot - 64/2048 */
+#define GED2PM1(x) (((fastf_t)(x))*INV_BV)
 
 #define LAST_SOLID(_sp)       DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
-#define FIRST_SOLID(_sp)      ((_sp)->s_fullpath.fp_names[0])
 
 #define AMM_IDLE 0
 #define AMM_ROT 1
@@ -73,16 +75,6 @@
 #define AMM_CON_ANG1 19
 #define AMM_CON_ANG2 20
 #define AMM_CON_DIST 21
-
-#define IS_CONSTRAINED_ROT(_mode) (\
-	(_mode) == AMM_CON_ROT_X || \
-	(_mode) == AMM_CON_ROT_Y || \
-	(_mode) == AMM_CON_ROT_Z)
-
-#define IS_CONSTRAINED_TRAN(_mode) (\
-	(_mode) == AMM_CON_TRAN_X || \
-	(_mode) == AMM_CON_TRAN_Y || \
-	(_mode) == AMM_CON_TRAN_Z)
 
 struct view_ring {
     struct bu_list	l;
@@ -111,7 +103,7 @@ struct trail {
 
 struct client {
     int			c_fd;
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
     Tcl_Channel         c_chan;
     Tcl_FileProc        *c_handler;
 #endif
@@ -384,7 +376,7 @@ struct mged_dm {
     struct dm		*dm_dmp;
     struct fb		*dm_fbp;
     int			dm_netfd;			/* socket used to listen for connections */
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
     Tcl_Channel		dm_netchan;
 #endif
     struct client	dm_clients[MAX_CLIENTS];
@@ -434,59 +426,55 @@ struct mged_dm {
     struct _dlist_state	*dm_dlist_state;
 
     /* Hooks */
-    int			(*dm_cmd_hook)(int, const char **);
+    int			(*dm_cmd_hook)(int, const char **, void *);
     void			(*dm_viewpoint_hook)(void);
     int			(*dm_eventHandler)(void);
 };
 
 /* If we're changing the active DM, use this function so
  * libged also gets the word. */
-extern void set_curr_dm(struct mged_dm *nl);
+extern void set_curr_dm(struct mged_state *s, struct mged_dm *nl);
 
 #define MGED_DM_NULL ((struct mged_dm *)NULL)
-#define DMP mged_curr_dm->dm_dmp
-#define DMP_dirty mged_curr_dm->dm_dirty
-#define fbp mged_curr_dm->dm_fbp
-#define netfd mged_curr_dm->dm_netfd
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#define netchan mged_curr_dm->dm_netchan
-#endif
-#define clients mged_curr_dm->dm_clients
-#define mapped mged_curr_dm->dm_mapped
-#define owner mged_curr_dm->dm_owner
-#define am_mode mged_curr_dm->dm_am_mode
-#define perspective_angle mged_curr_dm->dm_perspective_angle
-#define zclip_ptr mged_curr_dm->dm_zclip_ptr
+#define DMP s->mged_curr_dm->dm_dmp
+#define DMP_dirty s->mged_curr_dm->dm_dirty
+#define fbp s->mged_curr_dm->dm_fbp
+#define clients s->mged_curr_dm->dm_clients
+#define mapped s->mged_curr_dm->dm_mapped
+#define owner s->mged_curr_dm->dm_owner
+#define am_mode s->mged_curr_dm->dm_am_mode
+#define perspective_angle s->mged_curr_dm->dm_perspective_angle
+#define zclip_ptr s->mged_curr_dm->dm_zclip_ptr
 
-#define view_state mged_curr_dm->dm_view_state
-#define adc_state mged_curr_dm->dm_adc_state
-#define menu_state mged_curr_dm->dm_menu_state
-#define rubber_band mged_curr_dm->dm_rubber_band
-#define mged_variables mged_curr_dm->dm_mged_variables
-#define color_scheme mged_curr_dm->dm_color_scheme
-#define grid_state mged_curr_dm->dm_grid_state
-#define axes_state mged_curr_dm->dm_axes_state
-#define dlist_state mged_curr_dm->dm_dlist_state
+#define view_state s->mged_curr_dm->dm_view_state
+#define adc_state s->mged_curr_dm->dm_adc_state
+#define menu_state s->mged_curr_dm->dm_menu_state
+#define rubber_band s->mged_curr_dm->dm_rubber_band
+#define mged_variables s->mged_curr_dm->dm_mged_variables
+#define color_scheme s->mged_curr_dm->dm_color_scheme
+#define grid_state s->mged_curr_dm->dm_grid_state
+#define axes_state s->mged_curr_dm->dm_axes_state
+#define dlist_state s->mged_curr_dm->dm_dlist_state
 
-#define cmd_hook mged_curr_dm->dm_cmd_hook
-#define viewpoint_hook mged_curr_dm->dm_viewpoint_hook
-#define eventHandler mged_curr_dm->dm_eventHandler
+#define cmd_hook s->mged_curr_dm->dm_cmd_hook
+#define viewpoint_hook s->mged_curr_dm->dm_viewpoint_hook
+#define eventHandler s->mged_curr_dm->dm_eventHandler
 
-#define adc_auto mged_curr_dm->dm_adc_auto
-#define grid_auto_size mged_curr_dm->dm_grid_auto_size
+#define adc_auto s->mged_curr_dm->dm_adc_auto
+#define grid_auto_size s->mged_curr_dm->dm_grid_auto_size
 
 /* Names of macros must be different than actual struct element */
-#define dm_mouse_dx mged_curr_dm->_dm_mouse_dx
-#define dm_mouse_dy mged_curr_dm->_dm_mouse_dy
-#define dm_omx mged_curr_dm->_dm_omx
-#define dm_omy mged_curr_dm->_dm_omy
-#define dm_knobs mged_curr_dm->_dm_knobs
-#define dm_work_pt mged_curr_dm->_dm_work_pt
+#define dm_mouse_dx s->mged_curr_dm->_dm_mouse_dx
+#define dm_mouse_dy s->mged_curr_dm->_dm_mouse_dy
+#define dm_omx s->mged_curr_dm->_dm_omx
+#define dm_omy s->mged_curr_dm->_dm_omy
+#define dm_knobs s->mged_curr_dm->_dm_knobs
+#define dm_work_pt s->mged_curr_dm->_dm_work_pt
 
-#define scroll_top mged_curr_dm->dm_scroll_top
-#define scroll_active mged_curr_dm->dm_scroll_active
-#define scroll_y mged_curr_dm->dm_scroll_y
-#define scroll_array mged_curr_dm->dm_scroll_array
+#define scroll_top s->mged_curr_dm->dm_scroll_top
+#define scroll_active s->mged_curr_dm->dm_scroll_active
+#define scroll_y s->mged_curr_dm->dm_scroll_y
+#define scroll_array s->mged_curr_dm->dm_scroll_array
 
 #define VIEWSIZE	(view_state->vs_gvp->gv_size)	/* Width of viewing cube */
 #define VIEWFACTOR	(1/view_state->vs_gvp->gv_scale)
@@ -561,7 +549,6 @@ extern double frametime;		/* defined in mged.c */
 extern int dm_pipe[];			/* defined in mged.c */
 extern int update_views;		/* defined in mged.c */
 extern struct bu_ptbl active_dm_set;	/* defined in attach.c */
-extern struct mged_dm *mged_curr_dm;	/* defined in attach.c */
 extern struct mged_dm *mged_dm_init_state;
 
 /* defined in doevent.c */
@@ -572,10 +559,10 @@ extern int doEvent(ClientData, void *);
 #endif
 
 /* defined in attach.c */
-extern void dm_var_init(struct mged_dm *target_dm);
+extern void dm_var_init(struct mged_state *s, struct mged_dm *target_dm);
 
 /* defined in dm-generic.c */
-extern int common_dm(int argc, const char *argv[]);
+extern int common_dm(struct mged_state *s, int argc, const char *argv[]);
 extern void view_state_flag_hook(const struct bu_structparse *, const char *, void *,const char *, void *);
 extern void dirty_hook(const struct bu_structparse *, const char *, void *,const char *, void *);
 extern void zclip_hook(const struct bu_structparse *, const char *, void *,const char *, void *);
@@ -595,9 +582,9 @@ struct mged_view_hook_state {
     struct _view_state *vs;
     int *dirty_global;
 };
-extern void *set_hook_data(struct mged_view_hook_state *hs);
+extern void *set_hook_data(struct mged_state *s, struct mged_view_hook_state *hs);
 
-int dm_commands(int argc, const char *argv[]);
+int dm_commands(int argc, const char *argv[], void *data);
 
 
 #endif /* MGED_MGED_DM_H */

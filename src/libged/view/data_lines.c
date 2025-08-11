@@ -1,7 +1,7 @@
 /*                      D A T A _ L I N E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file libged/data_lines.c
  *
- * Logic for drawing arbitary lines not associated with geometry.
+ * Logic for drawing arbitrary lines not associated with geometry.
  *
  * TODO - at the moment this will only display in Archer - MGED
  * doesn't appear to have the necessary drawing hooks to view

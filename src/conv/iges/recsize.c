@@ -1,7 +1,7 @@
 /*                       R E C S I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 #include "./iges_extern.h"
 
 #define NRECS 20  /* Maximum number of records to sample */
-#define NCHAR 256 /* Maximuim number of characters to read in case
+#define NCHAR 256 /* Maximum number of characters to read in case
 		   * there are no LF's
 		   */
 

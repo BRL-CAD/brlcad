@@ -1,7 +1,7 @@
 /*                       P L A N E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,13 +33,12 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <Eigen/SVD>
-
 #include "bu/debug.h"
 #include "bu/log.h"
 #include "vmath.h"
 #include "bn/mat.h"
 #include "bn/tol.h"
+#include "bg/pca.h"
 #include "bg/plane.h"
 
 #define UNIT_SQ_TOL 1.0e-13
@@ -1785,7 +1784,7 @@ are_equal(fastf_t a_in, fastf_t b_in, fastf_t t)
 	af = modf((double)a, (double *)&ai);
 	bf = modf((double)b, (double *)&bi);
     } else {
-	bu_bomb("are_equal(): unexpect size for type fastf_t");
+	bu_bomb("are_equal(): unexpected size for type fastf_t");
     }
 
     if (EQUAL(ai, bi)) {
@@ -2562,12 +2561,11 @@ bg_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml)
     (*p)[0] = unrml[0];
     (*p)[1] = unrml[1];
     (*p)[2] = unrml[2];
-    (*p)[3] = -(unrml[0]*pt[0] + unrml[1]*pt[1] + unrml[2]*pt[2]);
+    (*p)[3] = unrml[0]*pt[0] + unrml[1]*pt[1] + unrml[2]*pt[2];
     return 0;
 }
 
-// Use SVD algorithm from Soderkvist to fit a plane to vertex points
-// http://www.math.ltu.se/~jove/courses/mam208/svd.pdf
+// Use PCA fit a plane to vertex points
 extern "C" int
 bg_fit_plane(point_t *c, vect_t *n, size_t npnts, point_t *pnts)
 {
@@ -2575,51 +2573,34 @@ bg_fit_plane(point_t *c, vect_t *n, size_t npnts, point_t *pnts)
 	return -1;
     }
 
-    // 1.  Find the center point
-    point_t center = VINIT_ZERO;
-    for (size_t i = 0; i < npnts; i++) {
-	VADD2(center, pnts[i], center);
-    }
-    VSCALE(center, center, 1.0/(fastf_t)npnts);
+    point_t center;
+    vect_t xaxis, yaxis, zaxis;
 
-    // 2.  Transfer the points into Eigen data types
-    Eigen::MatrixXd A(3, npnts);
-    for (size_t i = 0; i < npnts; i++) {
-	A(0,i) = pnts[i][X] - center[X];
-	A(1,i) = pnts[i][Y] - center[Y];
-	A(2,i) = pnts[i][Z] - center[Z];
-    }
+    // Principle Component Analysis
+    if (bg_pca(&center, &xaxis, &yaxis, &zaxis, npnts, pnts) != BRLCAD_OK)
+	return -1;
 
-    // 3.  Perform SVD
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeThinU);
-
-    // 4.  Normal is in column 3 of U matrix
-    vect_t normal;
-    normal[X] = svd.matrixU()(0,2);
-    normal[Y] = svd.matrixU()(1,2);
-    normal[Z] = svd.matrixU()(2,2);
-
-    // 5.  Set the outputs
+    // Set the outputs
     VMOVE(*c, center);
-    VMOVE(*n, normal);
+    VMOVE(*n, zaxis);
 
     return 0;
 }
 
 /* Translate the OpenNURBS algorithm to VMATH types */
 extern "C" int
-bg_plane_closest_pt(fastf_t *u, fastf_t *v, plane_t p, point_t pt)
+bg_plane_closest_pt(fastf_t *u, fastf_t *v, plane_t *p, point_t *pt)
 {
-    if (!u || !v)
+    if (!u || !v || !p || !pt)
 	return -1;
 
     point_t origin;
     vect_t xaxis, yaxis, zaxis;
-    VSET(zaxis, p[0], p[1], p[2]);
+    VSET(zaxis, (*p)[0], (*p)[1], (*p)[2]);
     fastf_t x, y, z, d;
-    x = fabs(p[0]);
-    y = fabs(p[1]);
-    z = fabs(p[2]);
+    x = fabs((*p)[0]);
+    y = fabs((*p)[1]);
+    z = fabs((*p)[2]);
     d = 0.0;
     if ( y >= x && y >= z ) {
 	d = x;
@@ -2642,14 +2623,14 @@ bg_plane_closest_pt(fastf_t *u, fastf_t *v, plane_t p, point_t pt)
 	return -1;
 
     VMOVE(origin, zaxis);
-    VSCALE(origin, origin, -1/d*p[3]);
+    VSCALE(origin, origin, 1/d*(*p)[3]);
     VUNITIZE(zaxis);
     bn_vec_perp(xaxis, zaxis);
     VUNITIZE(xaxis);
     VCROSS(yaxis, zaxis, xaxis);
     VUNITIZE(yaxis);
     vect_t vc;
-    VSUB2(vc, pt, origin);
+    VSUB2(vc, *pt, origin);
 
     *u = VDOT(vc, xaxis);
     *v = VDOT(vc, yaxis);
@@ -2659,18 +2640,18 @@ bg_plane_closest_pt(fastf_t *u, fastf_t *v, plane_t p, point_t pt)
 
 /* Translate the OpenNURBS algorithm to VMATH types */
 extern "C" int
-bg_plane_pt_at(point_t *pt, plane_t p, fastf_t u, fastf_t v)
+bg_plane_pt_at(point_t *pt, plane_t *p, fastf_t u, fastf_t v)
 {
     if (!pt)
 	return -1;
 
     point_t origin;
     vect_t xaxis, yaxis, zaxis;
-    VSET(zaxis, p[0], p[1], p[2]);
+    VSET(zaxis, (*p)[0], (*p)[1], (*p)[2]);
     fastf_t x, y, z, d;
-    x = fabs(p[0]);
-    y = fabs(p[1]);
-    z = fabs(p[2]);
+    x = fabs((*p)[0]);
+    y = fabs((*p)[1]);
+    z = fabs((*p)[2]);
     d = 0.0;
     if ( y >= x && y >= z ) {
 	d = x;
@@ -2693,7 +2674,7 @@ bg_plane_pt_at(point_t *pt, plane_t p, fastf_t u, fastf_t v)
 	return -1;
 
     VMOVE(origin, zaxis);
-    VSCALE(origin, origin, -1/d*p[3]);
+    VSCALE(origin, origin, 1/d*(*p)[3]);
     VUNITIZE(zaxis);
     bn_vec_perp(xaxis, zaxis);
     VUNITIZE(xaxis);
@@ -2718,4 +2699,3 @@ bg_plane_pt_at(point_t *pt, plane_t p, fastf_t u, fastf_t v)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

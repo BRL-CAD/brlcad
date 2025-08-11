@@ -1,7 +1,7 @@
 /*                           E T O . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2024 United States Government as represented by
+ * Copyright (c) 1992-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -167,7 +167,7 @@ size_t
 clt_eto_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct eto_specific *eto =
-        (struct eto_specific *)stp->st_specific;
+	(struct eto_specific *)stp->st_specific;
     struct clt_eto_specific *args;
 
     const size_t size = sizeof(*args);
@@ -918,7 +918,7 @@ rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     eto = (struct rt_eto_internal *)ip->idb_ptr;
     if (!eto_is_valid(eto)) {
 	return -1;
@@ -1062,7 +1062,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     tip = (struct rt_eto_internal *)ip->idb_ptr;
     if (!eto_is_valid(tip)) {
 	return -1;
@@ -1438,6 +1438,34 @@ rt_eto_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_eto_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_eto_internal *tip = (struct rt_eto_internal *)ip->idb_ptr;
+    RT_ETO_CK_MAGIC(tip);
+    struct rt_eto_internal *top = (struct rt_eto_internal *)rop->idb_ptr;
+    RT_ETO_CK_MAGIC(top);
+
+    vect_t eV, eN, eC;
+    double er, erd;
+    VMOVE(eV, tip->eto_V);
+    VMOVE(eN, tip->eto_N);
+    VMOVE(eC, tip->eto_C);
+    er = tip->eto_r;
+    erd = tip->eto_rd;
+
+    MAT4X3PNT(top->eto_V, mat, eV);
+    MAT4X3VEC(top->eto_N, mat, eN);
+    MAT4X3VEC(top->eto_C, mat, eC);
+    top->eto_r  = er / mat[15];
+    top->eto_rd = erd / mat[15];
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Import a eto from the database format to the internal format.
@@ -1468,17 +1496,19 @@ rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 11);
 
+    /* Assign values */
+    VMOVE(tip->eto_V, &vec[0*3]);
+    VMOVE(tip->eto_N, &vec[1*3]);
+    VMOVE(tip->eto_C, &vec[2*3]);
+    tip->eto_r  = vec[3*3];
+    tip->eto_rd = vec[3*3+1];
+
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(tip->eto_V, mat, &vec[0*3]);
-    MAT4X3VEC(tip->eto_N, mat, &vec[1*3]);
-    MAT4X3VEC(tip->eto_C, mat, &vec[2*3]);
-    tip->eto_r  = vec[3*3] / mat[15];
-    tip->eto_rd = vec[3*3+1] / mat[15];
+    rt_eto_mat(ip, mat, ip);
 
-    if (!eto_is_valid(tip)) {
+    if (!eto_is_valid(tip))
 	return -1;
-    }
 
     return 0;		/* OK */
 }
@@ -1676,38 +1706,29 @@ eto_is_valid(struct rt_eto_internal *eto)
     return 1;
 }
 
-void
-rt_eto_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_eto_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
+    int lcnt = 4;
+    if (!pl || pl_max < lcnt || !ip)
+	return 0;
 
     struct rt_eto_internal *eto = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(eto);
 
-    // Set up the containers
-    struct bv_label *l[4];
-    for (int i = 0; i < 4; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
+    point_t work, pos_view;
+    int npl = 0;
 
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
-
-	l[i] = la;
-    }
-
-    // Do the specific data assignments for each label
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, eto->eto_V);
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
 
     fastf_t ch, cv, dh, dv, cmag, phi;
     vect_t Au, Nu;
+
+    MAT4X3PNT(pos_view, xform, eto->eto_V);
+    POINT_LABEL(pos_view, 'V');
 
     VMOVE(Nu, eto->eto_N);
     VUNITIZE(Nu);
@@ -1723,16 +1744,49 @@ rt_eto_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
     dv = -eto->eto_rd * sin(phi);
     dh = eto->eto_rd * cos(phi);
 
-    bu_vls_sprintf(&l[1]->label, "C");
-    VJOIN2(l[1]->p, eto->eto_V, eto->eto_r+ch, Au, cv, Nu);
+    VJOIN2(work, eto->eto_V, eto->eto_r+ch, Au, cv, Nu);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'C');
 
-    bu_vls_sprintf(&l[2]->label, "D");
-    VJOIN2(l[2]->p, eto->eto_V, eto->eto_r+dh, Au, dv, Nu);
+    VJOIN2(work, eto->eto_V, eto->eto_r+dh, Au, dv, Nu);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'D');
 
-    bu_vls_sprintf(&l[3]->label, "r");
-    VJOIN1(l[3]->p, eto->eto_V, eto->eto_r, Au);
+    VJOIN1(work, eto->eto_V, eto->eto_r, Au);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'r');
 
+    return lcnt;
 }
+
+const char *
+rt_eto_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_eto_internal *eto = (struct rt_eto_internal *)ip->idb_ptr;
+    RT_ETO_CK_MAGIC(eto);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, eto->eto_V);
+	goto eto_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+eto_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
+
 
 /** @} */
 /*

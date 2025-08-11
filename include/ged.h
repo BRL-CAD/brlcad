@@ -1,7 +1,7 @@
 /*                           G E D . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,14 +50,18 @@
 #include "raytrace.h"
 #include "analyze.h"
 #include "ged/defines.h"
+#include "ged/version.h"
 #include "ged/database.h"
 #include "ged/commands.h"
 #include "ged/objects.h"
-#include "ged/framebuffer.h"
 #include "ged/view.h"
-#include "ged/analyze.h"
 #include "ged/debug.h"
-#include "ged/rt.h"
+
+// At least for the moment these wrappers are not public API - include them
+// only for the BRL-CAD build itself.
+#ifdef BRLCADBUILD
+#include "ged/ged_cmds.h"
+#endif
 
 /** @} */
 

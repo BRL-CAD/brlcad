@@ -1,7 +1,7 @@
 /*                        W R A P P E R . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2024 United States Government as represented by
+ * Copyright (c) 2000-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@ to_autoview_func(struct ged *gedp,
 
     av[0] = "who";
     av[1] = (char *)0;
-    ret = ged_exec(gedp, 1, (const char **)av);
+    ret = ged_exec_who(gedp, 1, (const char **)av);
 
     for (i = 1; i < (size_t)argc; ++i) {
 	if (argv[i][0] != '-') {
@@ -291,7 +291,7 @@ to_view_func_common(struct ged *gedp,
     {
 	char *gr_av[] = {"redraw", NULL};
 
-	ged_exec(gedp, 1, (const char **)gr_av);
+	ged_exec_redraw(gedp, 1, (const char **)gr_av);
 
 	gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
 	gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);

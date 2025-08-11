@@ -1,17 +1,15 @@
+if(SH_EXEC AND TARGET mged)
+  brlcad_add_test(NAME regress-bots COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/bots.sh" ${CMAKE_SOURCE_DIR})
+  brlcad_regression_test(regress-bots "mged;pixdiff;rt" TEST_DEFINED)
+endif(SH_EXEC AND TARGET mged)
 
-if (SH_EXEC AND TARGET mged)
-
-  BRLCAD_ADD_TEST(NAME regress-bots COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/bots.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-bots "mged;pixdiff;rt" TEST_DEFINED)
-
-endif (SH_EXEC AND TARGET mged)
-
-CMAKEFILES(
+cmakefiles(
   bots.sh
-  )
+)
 
 # list of temporary files
-set(bots_outfiles
+set(
+  bots_outfiles
   bots.diff.log
   bots.diff.pix
   bots.g
@@ -24,12 +22,12 @@ set(bots_outfiles
   bots.rs.diff.pix
   bots.sph.pix
   bots.sync.pix
-  )
+)
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${bots_outfiles}")
-DISTCLEAN(${bots_outfiles})
+distclean(${bots_outfiles})
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

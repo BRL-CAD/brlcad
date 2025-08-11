@@ -1,7 +1,7 @@
 /*              I M P O R T F G 4 S E C T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2024 United States Government as represented by
+ * Copyright (c) 1994-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,9 +30,6 @@
 #include "common.h"
 
 #include "../ged_private.h"
-
-
-extern int wdb_importFg4Section_cmd(void *data, int argc, const char *argv[]);
 
 int
 ged_importFg4Section_core(struct ged *gedp, int argc, const char *argv[])

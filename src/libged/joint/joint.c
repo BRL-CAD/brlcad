@@ -1,7 +1,7 @@
 /*                      J O I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -252,7 +252,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
     if (gedp->dbip == DBI_NULL)
 	return BRLCAD_OK;
 
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     if (argc <= 2) {
 	name = "_ANIM_";
@@ -261,7 +261,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
     }
 
     topc = ged_who_argv(gedp, topv, (const char **)(topv+2000));
-    dl_set_iflag(gedp->ged_gdp->gd_headDisplay, DOWN);
+    dl_set_iflag(gedp->i->ged_gdp->gd_headDisplay, DOWN);
 
     (void)db_walk_tree(gedp->dbip, topc, (const char **)topv,
 		     1,			/* Number of cpus */
@@ -275,7 +275,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
      * Now we draw the overlays.  We do this by building a mesh from
      * each grip to every other grip in that list.
      */
-    vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+    vbp = bv_vlblock_init(vlfree, 32);
     vhead = bv_vlblock_find(vbp, 0x00, 0xff, 0xff);
 
     for (BU_LIST_FOR(jp, artic_joints, &artic_head)) {
@@ -295,8 +295,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(nview, "1")) {
+    if (gedp->new_cmd_forms) {
 	struct bview *view = gedp->ged_gvp;
 	bv_vlblock_obj(vbp, view, "joint");
     } else {

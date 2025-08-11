@@ -1,7 +1,7 @@
 /*                         A E T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2024 United States Government as represented by
+ * Copyright (c) 2018-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ dm_refresh(struct ged *gedp, int vnum)
     dm_draw_end(dmp);
 }
 
-void
+int
 img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, int soft_fail)
 {
     icv_image_t *ctrl, *timg;
@@ -84,10 +84,10 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, int soft_fail)
     s_av[1] = "-D";
     s_av[2] = bu_vls_cstr(dm_get_pathname(dmp));
     s_av[3] = bu_vls_cstr(&tname);
-    if (ged_exec(gedp, 4, s_av) & BRLCAD_ERROR) {
+    if (ged_exec_screengrab(gedp, 4, s_av) & BRLCAD_ERROR) {
 	bu_log("Failed to grab screen for DM %s\n", bu_vls_cstr(dm_get_pathname(dmp)));
 	bu_vls_free(&tname);
-	return;
+	return BRLCAD_ERROR;
     }
 
     timg = icv_read(bu_vls_cstr(&tname), BU_MIME_IMAGE_PNG, 0, 0);
@@ -95,7 +95,7 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, int soft_fail)
 	if (soft_fail) {
 	    bu_log("Failed to read %s\n", bu_vls_cstr(&tname));
 	    bu_vls_free(&tname);
-	    return;
+	    return BRLCAD_ERROR;
 	}
 	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&tname));
     }
@@ -105,7 +105,7 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, int soft_fail)
 	    bu_log("Failed to read %s\n", bu_vls_cstr(&cname));
 	    bu_vls_free(&tname);
 	    bu_vls_free(&cname);
-	    return;
+	    return BRLCAD_ERROR;
 	}
 	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&cname));
     }
@@ -119,7 +119,7 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, int soft_fail)
 	    bu_log("%d wireframe diff failed.  %d matching, %d off by 1, %d off by many\n", id, matching_cnt, off_by_1_cnt, off_by_many_cnt);
 	    icv_destroy(ctrl);
 	    icv_destroy(timg);
-	    return;
+	    return BRLCAD_ERROR;
 	}
 	bu_exit(EXIT_FAILURE, "%d wireframe diff failed.  %d matching, %d off by 1, %d off by many\n", id, matching_cnt, off_by_1_cnt, off_by_many_cnt);
     }
@@ -130,15 +130,18 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, int soft_fail)
     // Image comparison done and successful
     bu_file_delete(bu_vls_cstr(&tname));
     bu_vls_free(&tname);
+
+    return BRLCAD_OK;
 }
 
 int
 main(int ac, char *av[]) {
-    struct ged *dbp;
+    struct ged *gedp;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     int need_help = 0;
     int run_unstable_tests = 0;
     int soft_fail = 0;
+    int ret = BRLCAD_OK;
 
     bu_setprogname(av[0]);
 
@@ -158,16 +161,11 @@ main(int ac, char *av[]) {
 
     /* Enable all the experimental logic */
     bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
-    bu_setenv("LIBGED_DBI_STATE", "1", 1);
 
     if (!bu_file_exists(av[1], NULL)) {
 	printf("ERROR: [%s] does not exist, expecting .g file\n", av[1]);
 	return 2;
     }
-
-    /* FIXME: To draw, we need to init this LIBRT global */
-    BU_LIST_INIT(&RTG.rtg_vlfree);
 
     /* make a temporary copy of moss */
     bu_vls_sprintf(&fname, "%s/moss.g", av[1]);
@@ -179,9 +177,15 @@ main(int ac, char *av[]) {
 
     /* Open the temp file */
     const char *s_av[15] = {NULL};
-    dbp = ged_open("db", "moss_aet_tmp.g", 1);
+    gedp = ged_open("db", "moss_aet_tmp.g", 1);
+
+    // Set up new cmd data (not yet done by default in ged_open
+    gedp->dbi_state = new DbiState(gedp);
+    gedp->new_cmd_forms = 1;
+    bu_setenv("DM_SWRAST", "1", 1);
+
     // We don't want the default GED views for this test
-    bv_set_rm_view(&dbp->ged_views, NULL);
+    bv_set_rm_view(&gedp->ged_views, NULL);
 
     // Set up the views.  Unlike the other drawing tests, we are explicitly
     // out to test the behavior of multiple views and dms, so we need to
@@ -192,12 +196,12 @@ main(int ac, char *av[]) {
     for (size_t i = 0; i < 4; i++) {
 	BU_GET(views[i], struct bview);
 	if (!i)
-	    dbp->ged_gvp = views[i];
+	    gedp->ged_gvp = views[i];
 	struct bview *v = views[i];
-	bv_init(v, &dbp->ged_views);
+	bv_init(v, &gedp->ged_views);
 	bu_vls_sprintf(&v->gv_name, "V%zd", i);
-	bv_set_add_view(&dbp->ged_views, v);
-	bu_ptbl_ins(&dbp->ged_free_views, (long *)v);
+	bv_set_add_view(&gedp->ged_views, v);
+	bu_ptbl_ins(&gedp->ged_free_views, (long *)v);
 
 	/* To generate images that will allow us to check if the drawing
 	 * is proceeding as expected, we use the swrast off-screen dm. */
@@ -210,7 +214,7 @@ main(int ac, char *av[]) {
 	bu_vls_sprintf(&dm_name, "SW%zd", i);
 	s_av[5] = bu_vls_cstr(&dm_name);
 	s_av[6] = NULL;
-	ged_exec(dbp, 6, s_av);
+	ged_exec_dm(gedp, 6, s_av);
 	bu_vls_free(&dm_name);
 
 	struct dm *dmp = (struct dm *)v->dmp;
@@ -228,8 +232,8 @@ main(int ac, char *av[]) {
 	v->dmp = dmp;
 	v->gv_width = dm_get_width(dmp);
 	v->gv_height = dm_get_height(dmp);
-	v->gv_base2local = dbp->dbip->dbi_base2local;
-	v->gv_local2base = dbp->dbip->dbi_local2base;
+	v->gv_base2local = gedp->dbip->dbi_base2local;
+	v->gv_local2base = gedp->dbip->dbi_local2base;
     }
 
     /* Set distinct view az/el for each of the four quad views.  For
@@ -262,13 +266,13 @@ main(int ac, char *av[]) {
     s_av[1] = "-m0";
     s_av[2] = "all.g";
     s_av[3] = NULL;
-    ged_exec(dbp, 4, s_av);
+    ged_exec_draw(gedp, 4, s_av);
 
     // Sanity
-    img_cmp(0, 1, dbp, av[1], soft_fail);
-    img_cmp(1, 1, dbp, av[1], soft_fail);
-    img_cmp(2, 1, dbp, av[1], soft_fail);
-    img_cmp(3, 1, dbp, av[1], soft_fail);
+    ret += img_cmp(0, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(1, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(2, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(3, 1, gedp, av[1], soft_fail);
 
     // Resize dm to larger dimensions
     bu_log("Resize to 600x600...\n");
@@ -284,10 +288,10 @@ main(int ac, char *av[]) {
 	// stable without adjustment.
 	bv_update(views[i]);
     }
-    img_cmp(0, 2, dbp, av[1], soft_fail);
-    img_cmp(1, 2, dbp, av[1], soft_fail);
-    img_cmp(2, 2, dbp, av[1], soft_fail);
-    img_cmp(3, 2, dbp, av[1], soft_fail);
+    ret += img_cmp(0, 2, gedp, av[1], soft_fail);
+    ret += img_cmp(1, 2, gedp, av[1], soft_fail);
+    ret += img_cmp(2, 2, gedp, av[1], soft_fail);
+    ret += img_cmp(3, 2, gedp, av[1], soft_fail);
 
     // Shrink back to default dimensions
     bu_log("Shrink to 512x512...\n");
@@ -303,10 +307,10 @@ main(int ac, char *av[]) {
 	// stable without adjustment.
 	bv_update(views[i]);
     }
-    img_cmp(0, 1, dbp, av[1], soft_fail);
-    img_cmp(1, 1, dbp, av[1], soft_fail);
-    img_cmp(2, 1, dbp, av[1], soft_fail);
-    img_cmp(3, 1, dbp, av[1], soft_fail);
+    ret += img_cmp(0, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(1, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(2, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(3, 1, gedp, av[1], soft_fail);
 
     // Cycle through a bunch of resizes
     bu_log("Cycle through multiple resizes...\n");
@@ -335,16 +339,14 @@ main(int ac, char *av[]) {
 	// stable without adjustment.
 	bv_update(views[i]);
     }
-    img_cmp(0, 1, dbp, av[1], soft_fail);
-    img_cmp(1, 1, dbp, av[1], soft_fail);
-    img_cmp(2, 1, dbp, av[1], soft_fail);
-    img_cmp(3, 1, dbp, av[1], soft_fail);
+    ret += img_cmp(0, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(1, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(2, 1, gedp, av[1], soft_fail);
+    ret += img_cmp(3, 1, gedp, av[1], soft_fail);
 
+    ged_close(gedp);
 
-
-    ged_close(dbp);
-
-    return 0;
+    return ret;
 }
 
 

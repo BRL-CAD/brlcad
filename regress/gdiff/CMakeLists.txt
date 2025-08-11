@@ -1,23 +1,23 @@
 set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-gdiff.log")
 set(GDIFF_CLEAN_FILE ${CMAKE_CURRENT_BINARY_DIR}/gdiff.out)
 
-BRLCAD_REGRESSION_TEST(regress-gdiff "gdiff" EXEC gdiff)
+brlcad_regression_test(regress-gdiff "gdiff" EXEC gdiff)
 
-DISTCLEAN(
+distclean(
   ${LOG_FILE}
   ${GDIFF_CLEAN_FILE}
   ${CMAKE_CURRENT_BINARY_DIR}/gdiff_ref.log
   ${CMAKE_CURRENT_BINARY_DIR}/gdiff_out.log
-  )
+)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   gdiff.ref
   regress-gdiff.cmake.in
   moss_1.g
   moss_2.g
   moss_3.g
-  )
+)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 #                 E X P A N D _ C O M B . T C L
 # BRL-CAD
 #
-# Copyright (c) 2007-2024 United States Government as represented by
+# Copyright (c) 2007-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -93,7 +93,7 @@ proc expand_comb {args} {
     set comb [lindex $args 1]
 
     if {[catch {db get_type $comb} dbtype]} {
-	puts " cant get type for $comb"
+	puts " can't get type for $comb"
 	return
     }
     if {$dbtype != "comb"} {

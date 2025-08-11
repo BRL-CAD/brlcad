@@ -1,7 +1,7 @@
 /*                           R P C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -200,24 +200,24 @@ struct clt_rpc_specific {
     cl_double rpc_SoR[16];	/* Scale(Rot(vect)) */
     cl_double rpc_invRoS[16];	/* invRot(Scale(vect)) */
 };
- 
+
 size_t
 clt_rpc_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct rpc_specific *rpc =
     (struct rpc_specific *)stp->st_specific;
     struct clt_rpc_specific *args;
-    
+
     const size_t size = sizeof(*args);
     args = (struct clt_rpc_specific*)bu_pool_alloc(pool, 1, size);
-    
+
     VMOVE(args->rpc_V, rpc->rpc_V);
     VMOVE(args->rpc_Bunit, rpc->rpc_Bunit);
     VMOVE(args->rpc_Hunit, rpc->rpc_Hunit);
     VMOVE(args->rpc_Runit, rpc->rpc_Runit);
     MAT_COPY(args->rpc_SoR, rpc->rpc_SoR);
     MAT_COPY(args->rpc_invRoS, rpc->rpc_invRoS);
-    
+
     return size;
 }
 
@@ -872,7 +872,7 @@ rt_rpc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     int num_curve_points, num_connections;
     struct rt_rpc_internal *rpc;
     struct rt_pnt_node *pts, *node, *tmp;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -941,7 +941,7 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     int i, n;
     struct rt_pnt_node *old, *pos, *pts;
     vect_t Bu, Hu, Ru, B, R;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -1121,6 +1121,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex **vfront, **vback, **vtemp, *vertlist[4];
     vect_t *norms;
     fastf_t r_sq_over_b;
+    struct bu_list *vlfree = &rt_vlfree;
 
     NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
@@ -1219,12 +1220,12 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Front face topology.  Verts are considered to go CCW */
     outfaceuses[0] = nmg_cface(s, vfront, n);
 
-    (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic,&RTG.rtg_vlfree);
+    (void)nmg_mark_edges_real(&outfaceuses[0]->l.magic, vlfree);
 
     /* Back face topology.  Verts must go in opposite dir (CW) */
     outfaceuses[1] = nmg_cface(s, vtemp, n);
 
-    (void)nmg_mark_edges_real(&outfaceuses[1]->l.magic,&RTG.rtg_vlfree);
+    (void)nmg_mark_edges_real(&outfaceuses[1]->l.magic, vlfree);
 
     for (i=0; i<n; i++) vback[i] = vtemp[n-1-i];
 
@@ -1244,7 +1245,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	outfaceuses[2+i] = nmg_cface(s, vertlist, 4);
     }
 
-    (void)nmg_mark_edges_real(&outfaceuses[n+1]->l.magic,&RTG.rtg_vlfree);
+    (void)nmg_mark_edges_real(&outfaceuses[n+1]->l.magic, vlfree);
 
     for (i=0; i<n; i++) {
 	NMG_CK_VERTEX(vfront[i]);
@@ -1318,7 +1319,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Glue the edges of different outward pointing face uses together */
-    nmg_gluefaces(outfaceuses, n+2, &RTG.rtg_vlfree, tol);
+    nmg_gluefaces(outfaceuses, n+2, vlfree, tol);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
@@ -1448,6 +1449,36 @@ rt_rpc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_rpc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_rpc_internal *tip = (struct rt_rpc_internal *)ip->idb_ptr;
+    RT_RPC_CK_MAGIC(tip);
+    struct rt_rpc_internal *top = (struct rt_rpc_internal *)rop->idb_ptr;
+    RT_RPC_CK_MAGIC(top);
+
+
+    /* Sanity */
+    if (tip->rpc_r / mat[15] <= SMALL_FASTF) {
+	bu_log("rt_rpc_mat: r is zero\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* Apply modeling transformations */
+    vect_t rV, rH, rB;
+    VMOVE(rV, tip->rpc_V);
+    VMOVE(rH, tip->rpc_H);
+    VMOVE(rB, tip->rpc_B);
+    MAT4X3PNT(top->rpc_V, mat, rV);
+    MAT4X3VEC(top->rpc_H, mat, rH);
+    MAT4X3VEC(top->rpc_B, mat, rB);
+    top->rpc_r = tip->rpc_r / mat[15];
+
+    return BRLCAD_OK;
+}
 
 /**
  * Import an RPC from the database format to the internal format.
@@ -1478,20 +1509,23 @@ rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 10);
 
-    /* Apply modeling transformations */
+    /* Sanity */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(xip->rpc_V, mat, &vec[0*3]);
-    MAT4X3VEC(xip->rpc_H, mat, &vec[1*3]);
-    MAT4X3VEC(xip->rpc_B, mat, &vec[2*3]);
-    xip->rpc_r = vec[3*3] / mat[15];
-
-    if (xip->rpc_r <= SMALL_FASTF) {
+    double rpc_r = vec[3*3] / mat[15];
+    if (rpc_r <= SMALL_FASTF) {
 	bu_log("rt_rpc_import4: r is zero\n");
 	bu_free((char *)ip->idb_ptr, "rt_rpc_import4: ip->idp_ptr");
 	return -1;
     }
 
-    return 0;			/* OK */
+    /* Assign parameters */
+    VMOVE(xip->rpc_V, &vec[0*3]);
+    VMOVE(xip->rpc_H, &vec[1*3]);
+    VMOVE(xip->rpc_B, &vec[2*3]);
+    xip->rpc_r = vec[3*3];
+
+    /* Apply modeling transformations */
+    return rt_rpc_mat(ip, mat, ip);
 }
 
 
@@ -1730,48 +1764,72 @@ rpc_is_valid(struct rt_rpc_internal *rpc)
     return 1;
 }
 
-void
-rt_rpc_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_rpc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
+    int lcnt = 4;
+    if (!pl || pl_max < lcnt || !ip)
+	return 0;
 
     struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(rpc);
 
-    // Set up the containers
-    struct bv_label *l[4];
-    for (int i = 0; i < 4; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
-
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
-
-	l[i] = la;
-    }
-
-    // Do the specific data assignments for each label
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, rpc->rpc_V);
-
-    bu_vls_sprintf(&l[1]->label, "B");
-    VADD2(l[1]->p, rpc->rpc_V, rpc->rpc_B);
-
-    bu_vls_sprintf(&l[2]->label, "H");
-    VADD2(l[2]->p, rpc->rpc_V, rpc->rpc_H);
-
-    bu_vls_sprintf(&l[3]->label, "r");
     vect_t Ru;
+    point_t work, pos_view;
+    int npl = 0;
+
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
+
+    MAT4X3PNT(pos_view, xform, rpc->rpc_V);
+    POINT_LABEL(pos_view, 'V');
+
+    VADD2(work, rpc->rpc_V, rpc->rpc_B);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'B');
+
+    VADD2(work, rpc->rpc_V, rpc->rpc_H);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'H');
+
     VCROSS(Ru, rpc->rpc_B, rpc->rpc_H);
     VUNITIZE(Ru);
     VSCALE(Ru, Ru, rpc->rpc_r);
-    VADD2(l[3]->p, rpc->rpc_V, Ru);
+    VADD2(work, rpc->rpc_V, Ru);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'r');
+
+    return lcnt;
+}
+
+const char *
+rt_rpc_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)ip->idb_ptr;
+    RT_RPC_CK_MAGIC(rpc);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, rpc->rpc_V);
+	goto rpc_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+rpc_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
 }
 
 

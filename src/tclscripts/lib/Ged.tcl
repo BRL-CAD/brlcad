@@ -1,7 +1,7 @@
 #                          G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2024 United States Government as represented by
+# Copyright (c) 1998-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -163,7 +163,6 @@ package provide cadwidgets::Ged 1.0
 	method bounds_all {args}
 	method brep {args}
 	method bu_units_conversion {args}
-	method bu_prmem {args}
 	method bu_get_value_by_keyword {args}
 	method bu_rgb_to_hsv {args}
 	method bu_hsv_to_rgb {args}
@@ -1387,10 +1386,6 @@ package provide cadwidgets::Ged 1.0
     uplevel \#0 bu_units_conversion $args
 }
 
-::itcl::body cadwidgets::Ged::bu_prmem {args} {
-    uplevel \#0 bu_prmem $args
-}
-
 ::itcl::body cadwidgets::Ged::bu_get_value_by_keyword {args} {
     uplevel \#0 bu_get_value_by_keyword $args
 }
@@ -1580,6 +1575,7 @@ package provide cadwidgets::Ged 1.0
     eval $mGed dbfind $args
 }
 
+# TODO - this needs to go away
 ::itcl::body cadwidgets::Ged::dbip {args} {
     eval $mGed dbip $args
 }
@@ -6224,7 +6220,6 @@ package provide cadwidgets::Ged 1.0
 	[brepname] - convert the non-BREP object to BREP form
 	[suffix] - convert non-BREP comb to unevaluated BREP form}}
     $help add bu_units_conversion  {{units} {}}
-    $help add bu_prmem		{{title} {}}
     $help add bu_get_value_by_keyword {{iwant list} {}}
     $help add bu_rgb_to_hsv	{{rgb} {}}
     $help add bu_hsv_to_rgb	{{hsv} {}}

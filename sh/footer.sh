@@ -2,7 +2,7 @@
 #                       F O O T E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2024 United States Government as represented by
+# Copyright (c) 2004-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -420,7 +420,7 @@ done
 
 comment_block="${comment_block}${prefixspace}${commentchar} End:
 "
-comment_block="${comment_block}${prefixspace}${commentchar} ex: shiftwidth=$indentation tabstop=$tab_width"
+comment_block="${comment_block}${prefixspace}${commentchar} ex: shiftwidth=$indentation tabstop=$tab_width cino=N-s"
 
 if [ "x$wrap" = "x1" ] ; then
     comment_block="${comment_block}
@@ -466,10 +466,10 @@ existing_vi="`grep -i "${prefixspace}${commentchar} ex:" "$FILE"`"
 if [ "x$existing_vi" = "x" ] ; then
     echo "No vi line found..."
 else
-    vi_line="${prefixspace}${commentchar} ex: shiftwidth=$indentation tabstop=$tab_width"
+    vi_line="${prefixspace}${commentchar} ex: shiftwidth=$indentation tabstop=$tab_width cino=N-s"
     if [ "x$existing_vi" != "x$vi_line" ] ; then
 	echo "vi line is wrong ... fixing"
-	perl -pi -e "s,(${prefixspace}[${commentchar}]+ ex:.*),${prefixspace}${commentchar} ex: shiftwidth=${indentation} tabstop=${tab_width},i" $FILE
+	perl -pi -e "s,(${prefixspace}[${commentchar}]+ ex:.*),${prefixspace}${commentchar} ex: shiftwidth=${indentation} tabstop=${tab_width} cino=N-s,i" $FILE
     fi
 fi
 
@@ -521,4 +521,4 @@ fi
 # sh-basic-offset: 4
 # indent-tabs-mode: t
 # End:
-# ex: shiftwidth=4 tabstop=8
+# ex: shiftwidth=4 tabstop=8 cino=N-s

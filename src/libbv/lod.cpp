@@ -1,7 +1,7 @@
 /*                       L O D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2022-2024 United States Government as represented by
+ * Copyright (c) 2022-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Based off of code from https://github.com/bhaettasch/pop-buffer-demo
@@ -206,7 +206,7 @@ obb_arb(vect_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_ex
 
 static void
 view_obb(struct bview *v,
-       	point_t sbbc, fastf_t radius,
+	point_t sbbc, fastf_t radius,
 	vect_t dir,
 	point_t ec, point_t ep1, point_t ep2)
 {
@@ -216,8 +216,10 @@ view_obb(struct bview *v,
     plane_t p;
     bg_plane_pt_nrml(&p, sbbc, dir);
     fastf_t pu, pv;
-    bg_plane_closest_pt(&pu, &pv, p, ec);
-    bg_plane_pt_at(&v->obb_center, p, pu, pv);
+    point_t lec;
+    VMOVE(lec, ec);
+    bg_plane_closest_pt(&pu, &pv, &p, &lec);
+    bg_plane_pt_at(&v->obb_center, &p, pu, pv);
 
     // The first extent is just the scene radius in the lookat direction
     VSCALE(dir, dir, radius);
@@ -405,8 +407,8 @@ bv_view_objs_select(struct bu_ptbl *sset, struct bview *v, int x, int y)
     plane_t p;
     bg_plane_pt_nrml(&p, sbbc, dir);
     fastf_t pu, pv;
-    bg_plane_closest_pt(&pu, &pv, p, ec);
-    bg_plane_pt_at(&obb_c, p, pu, pv);
+    bg_plane_closest_pt(&pu, &pv, &p, &ec);
+    bg_plane_pt_at(&obb_c, &p, pu, pv);
 
 
     // The first extent is just the scene radius in the lookat direction
@@ -499,8 +501,8 @@ bv_view_objs_rect_select(struct bu_ptbl *sset, struct bview *v, int x1, int y1, 
     plane_t p;
     bg_plane_pt_nrml(&p, sbbc, dir);
     fastf_t pu, pv;
-    bg_plane_closest_pt(&pu, &pv, p, ec);
-    bg_plane_pt_at(&obb_c, p, pu, pv);
+    bg_plane_closest_pt(&pu, &pv, &p, &ec);
+    bg_plane_pt_at(&obb_c, &p, pu, pv);
 
 
     // The first extent is just the scene radius in the lookat direction
@@ -1034,7 +1036,7 @@ POPState::tri_process()
 
     // Beyond a certain depth, there is little benefit to the POP process.  If
     // we check the count of level_tris, we will find a level at which most of
-    // the triangles are active. 
+    // the triangles are active.
     // TODO: Not clear yet when the tradeoff between memory and the work of LoD
     // point snapping trades off - 0.66 is just a guess.  We also need to
     // calculate this maximum size ratio as a function of the overall database

@@ -1,7 +1,7 @@
 /*                     S T R _ I S P R I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2024 United States Government as represented by
+ * Copyright (c) 2007-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #include "bu.h"
 
 
-int
+static int
 test_str_isprint(const char *inp , int texp)
 {
     int res;
@@ -51,8 +51,8 @@ main(int argc, char *argv[])
 {
     int test_num = 0;
 
-    // Normally this file is part of bu_test, so only set this if it looks like
-    // the program name is still unset.
+    // Normally this file is part of bu_test, so only set this if it
+    // looks like the program name is still unset.
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 
@@ -67,17 +67,21 @@ main(int argc, char *argv[])
 	case 1:
 	    return !test_str_isprint("abc", 1);
 	case 2:
-	    return !test_str_isprint("abc123\n", 0);	/* \n is end of line -not printable */
+	    /* \n is end of line -not printable */
+	    return !test_str_isprint("abc123\n", 0);
 	case 3:
 	    return !test_str_isprint("abc123\\n1!", 1);
 	case 4:
-	    return !test_str_isprint("123\txyz", 0);	/* \t is horizontal tab - not printable */
+	    /* \t is horizontal tab - not printable */
+	    return !test_str_isprint("123\txyz", 0);
 	case 5:
 	    return !test_str_isprint("#$ ab12", 1);
 	case 6:
-	    return !test_str_isprint("#$%\n 748", 0);	/* \n is end of line -not printable */
+	    /* \n is end of line -not printable */
+	    return !test_str_isprint("#$%\n 748", 0);
 	case 7:
-	    return !test_str_isprint("#$^\ry", 0);	/* \r is carriage return - not printable */
+	    /* \r is carriage return - not printable */
+	    return !test_str_isprint("#$^\ry", 0);
     }
 
     return 1;

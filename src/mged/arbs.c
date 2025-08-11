@@ -1,7 +1,7 @@
 /*                          A R B S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2024 United States Government as represented by
+ * Copyright (c) 1986-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -64,6 +64,10 @@ char *p_rfin[] = {
 int
 f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct directory *dp;
     int i;
     int solve[3];
@@ -92,7 +96,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter name for this arb: ", (char *)NULL);
 	return TCL_ERROR;
     }
-    if (db_lookup(DBIP, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(s->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(interp, argv[1], ":  already exists\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -153,8 +157,8 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				     "Enter the Z coordinate value: ", (char *)NULL);
 		    return TCL_ERROR;
 		}
-		pt[i][0] = atof(argv[7+3*i+1]) * local2base;
-		pt[i][1] = atof(argv[7+3*i+2]) * local2base;
+		pt[i][0] = atof(argv[7+3*i+1]) * s->dbip->dbi_local2base;
+		pt[i][1] = atof(argv[7+3*i+2]) * s->dbip->dbi_local2base;
 		break;
 
 	    case 'y':
@@ -174,8 +178,8 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				     "Enter the Z coordinate value: ", (char *)NULL);
 		    return TCL_ERROR;
 		}
-		pt[i][0] = atof(argv[7+3*i+1]) * local2base;
-		pt[i][1] = atof(argv[7+3*i+2]) * local2base;
+		pt[i][0] = atof(argv[7+3*i+1]) * s->dbip->dbi_local2base;
+		pt[i][1] = atof(argv[7+3*i+2]) * s->dbip->dbi_local2base;
 		break;
 
 	    case 'z':
@@ -195,8 +199,8 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				     "Enter the Y coordinate value: ", (char *)NULL);
 		    return TCL_ERROR;
 		}
-		pt[i][0] = atof(argv[7+3*i+1]) * local2base;
-		pt[i][1] = atof(argv[7+3*i+2]) * local2base;
+		pt[i][0] = atof(argv[7+3*i+1]) * s->dbip->dbi_local2base;
+		pt[i][1] = atof(argv[7+3*i+2]) * s->dbip->dbi_local2base;
 		break;
 
 	    default:
@@ -215,7 +219,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	Tcl_AppendResult(interp, "thickness = 0.0\n", (char *)NULL);
 	return TCL_ERROR;
     }
-    thick *= local2base;
+    thick *= s->dbip->dbi_local2base;
 
     RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -230,7 +234,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	VSET(aip->pt[i], 0.0, 0.0, 0.0);
     }
 
-    VSET(aip->pt[0], atof(argv[2])*local2base, atof(argv[3])*local2base, atof(argv[4])*local2base);
+    VSET(aip->pt[0], atof(argv[2])*s->dbip->dbi_local2base, atof(argv[3])*s->dbip->dbi_local2base, atof(argv[4])*s->dbip->dbi_local2base);
 
     ndotv = VDOT(aip->pt[0], norm);
 
@@ -278,14 +282,16 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     /* no interrupts */
     (void)signal(SIGINT, SIG_IGN);
 
-    if ((dp = db_diradd(DBIP, argv[1], -1L, 0, RT_DIR_SOLID, (void *)&internal.idb_type)) == RT_DIR_NULL) {
+    if ((dp = db_diradd(s->dbip, argv[1], -1L, 0, RT_DIR_SOLID, (void *)&internal.idb_type)) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot add ", argv[1], " to the directory\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if (rt_db_put_internal(dp, DBIP, &internal, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, s->dbip, &internal, &rt_uniresource) < 0) {
 	rt_db_free_internal(&internal);
-	TCL_WRITE_ERR_return;
+    	Tcl_AppendResult(s->interp, "Database write error, aborting.\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
+	return TCL_ERROR;
     }
 
     {

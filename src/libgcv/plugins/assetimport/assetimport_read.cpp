@@ -1,7 +1,7 @@
 /*               A S S E T I M P O R T _ R E A D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2022-2024 United States Government as represented by
+ * Copyright (c) 2022-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -534,7 +534,7 @@ assetimport_read(struct gcv_context *context, const struct gcv_opts* gcv_options
     struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
     state.fd_out = wdbp;
 
-    /* check and validate the specied input file type against ai
+    /* check and validate the specified input file type against ai
      * checks using file extension if no --format is supplied
      * this is likely all a 'can_read' function would need
      */

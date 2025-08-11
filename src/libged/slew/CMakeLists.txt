@@ -4,19 +4,15 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-slew SHARED slew.c)
+ged_plugin_library(ged-slew slew.c)
 target_link_libraries(ged-slew libged libbu)
-set_property(TARGET ged-slew APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-slew slew.c)
-PLUGIN_SETUP(ged-slew ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   slew.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

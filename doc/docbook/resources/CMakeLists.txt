@@ -1,11 +1,8 @@
 add_subdirectory(brlcad)
 add_subdirectory(other)
 
-set(ignore_files
-  CMakeLists.txt
-  README
-  )
-CMAKEFILES(${ignore_files})
+set(ignore_files CMakeLists.txt README)
+cmakefiles(${ignore_files})
 
 # Local Variables:
 # tab-width: 8

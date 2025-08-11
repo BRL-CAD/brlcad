@@ -1,7 +1,7 @@
 /*              S A M P L I N G _ C H E C K S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2024 United States Government as represented by
+ * Copyright (c) 2024-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,6 +63,8 @@ struct coplanar_info {
     std::set<int> problem_indices;
 };
 
+// Tie the tc_hit checking tolerance to the backout distance
+#define RT_BOT_CHECK_TOL SQRT_SMALL_FASTF
 
 static int
 _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
@@ -78,7 +80,7 @@ _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     // passed the initial first-hit check, something is up.  Unfortunately
     // the conditions that might trigger this aren't exclusively thin face
     // pairings, but since it is possible go ahead and flag it.
-    if (s->seg_in.hit_dist > 2*SQRT_SMALL_FASTF) {
+    if (s->seg_in.hit_dist > 2*RT_BOT_CHECK_TOL) {
 	tinfo->is_thin = 1;
 	tinfo->problem_indices.insert(tinfo->curr_tri);
 	return 0;
@@ -136,8 +138,6 @@ rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
     tinfo.bot = bot;
 
     // Set up the raytrace
-    if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_parthead))
-	rt_init_resource(&rt_uniresource, 0, rtip);
     struct application ap;
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = rtip;     /* application uses this instance */
@@ -156,7 +156,7 @@ rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
 
 	// We want backout to get the ray origin off the triangle surface
 	VMOVE(backout, n);
-	VSCALE(backout, backout, SQRT_SMALL_FASTF);
+	VSCALE(backout, backout, RT_BOT_CHECK_TOL);
 	// Reverse the triangle normal for a ray direction
 	VREVERSE(rnorm, n);
 

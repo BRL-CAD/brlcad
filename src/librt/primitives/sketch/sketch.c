@@ -1,7 +1,7 @@
 /*                        S K E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -882,7 +882,7 @@ rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg
     RT_CK_DB_INTERNAL(ip);
     sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(sketch_ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     ret=curve_to_vlist(vlfree, vhead, ttol, sketch_ip->V, sketch_ip->u_vec, sketch_ip->v_vec, sketch_ip, &sketch_ip->curve);
     if (ret) {
@@ -941,7 +941,7 @@ sketch_centroid_check_precision(const struct rt_sketch_internal *skt,
 		V2SUB2(size, skt->verts[csg->end], skt->verts[csg->start]);
 		V_MIN(min_size, MAGNITUDE2(size));
 		break;
- 	    case CURVE_NURB_MAGIC:
+	    case CURVE_NURB_MAGIC:
 		nsg = (struct nurb_seg *)lng;
 		for (j = 0; j < nsg->c_size; j++) {
 		    V2MINMAX(min_pt, max_pt, skt->verts[nsg->ctl_points[j]]);
@@ -949,7 +949,7 @@ sketch_centroid_check_precision(const struct rt_sketch_internal *skt,
 		V2SUB2(size, max_pt, min_pt);
 		V_MIN(min_size, MAGNITUDE2(size));
 		break;
-     	    case CURVE_BEZIER_MAGIC:
+	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
 		for (j = 0; j <= bsg->degree; j++) {
 		    V2MINMAX(min_pt, max_pt, skt->verts[bsg->ctl_points[j]]);
@@ -1458,6 +1458,28 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
     return 0;
 }
 
+int
+rt_sketch_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_sketch_internal *tip = (struct rt_sketch_internal *)ip->idb_ptr;
+    RT_SKETCH_CK_MAGIC(tip);
+    struct rt_sketch_internal *top = (struct rt_sketch_internal *)rop->idb_ptr;
+    RT_SKETCH_CK_MAGIC(top);
+
+    vect_t V, u_vec, v_vec;
+    VMOVE(V, tip->V);
+    VMOVE(u_vec, tip->u_vec);
+    VMOVE(v_vec, tip->v_vec);
+    MAT4X3PNT(top->V, mat, V);
+    MAT4X3VEC(top->u_vec, mat, u_vec);
+    MAT4X3VEC(top->v_vec, mat, v_vec);
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Import an SKETCH from the database format to the internal format.
@@ -1489,20 +1511,23 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
     sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
 
     ptr = ep->ext_buf;
-    if (mat == NULL) mat = bn_mat_identity;
     bu_cv_ntohd((unsigned char *)v, ptr, ELEMENTS_PER_VECT);
-    MAT4X3PNT(sketch_ip->V, mat, v);
+    VMOVE(sketch_ip->V, v);
     ptr += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
     bu_cv_ntohd((unsigned char *)v, ptr, ELEMENTS_PER_VECT);
-    MAT4X3VEC(sketch_ip->u_vec, mat, v);
+    VMOVE(sketch_ip->u_vec, v);
     ptr += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
     bu_cv_ntohd((unsigned char *)v, ptr, ELEMENTS_PER_VECT);
-    MAT4X3VEC(sketch_ip->v_vec, mat, v);
+    VMOVE(sketch_ip->v_vec, v);
     ptr += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
     sketch_ip->vert_count = ntohl(*(uint32_t *)ptr);
     ptr += SIZEOF_NETWORK_LONG;
     sketch_ip->curve.count = ntohl(*(uint32_t *)ptr);
     ptr += SIZEOF_NETWORK_LONG;
+
+    /* Apply transform */
+    if (mat == NULL) mat = bn_mat_identity;
+    rt_sketch_mat(ip, mat, ip);
 
     if (sketch_ip->vert_count) {
 	sketch_ip->verts = (point2d_t *)bu_calloc(sketch_ip->vert_count, sizeof(point2d_t), "sketch_ip->vert");
@@ -2212,7 +2237,7 @@ rt_copy_sketch(const struct rt_sketch_internal *sketch_ip)
 }
 
 
-int
+static int
 curve_to_tcl_list(struct bu_vls *vls, struct rt_curve *crv)
 {
     size_t i, j;
@@ -2707,6 +2732,34 @@ rt_curve_order_segments(struct rt_curve *crv)
 	    break;
 	}
     }
+}
+
+const char *
+rt_sketch_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_sketch_internal *sketch = (struct rt_sketch_internal *)ip->idb_ptr;
+    RT_SKETCH_CK_MAGIC(sketch);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, sketch->V);
+	goto sketch_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+sketch_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
 }
 
 

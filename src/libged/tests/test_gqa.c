@@ -1,7 +1,7 @@
 /*                     T E S T _ G Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2024 United States Government as represented by
+ * Copyright (c) 2018-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ main(int ac, char *av[]) {
     }
 
     gedp = ged_open("db", av[1], 1);
-    ged_exec(gedp, 3, gqa);
+    ged_exec_gqa(gedp, 3, gqa);
     printf("%s\n", bu_vls_cstr(gedp->ged_result_str));
 
     // Example of programmatically extracting the resulting plot data (assuming
@@ -61,7 +61,7 @@ main(int ac, char *av[]) {
     // the different colored vlists...)
     struct display_list *gdlp;
     struct bv_scene_obj *vdata = NULL;
-    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, display_list, (struct bu_list *)ged_dl(gedp))) {
 	if (!BU_STR_EQUAL(bu_vls_cstr(&gdlp->dl_path), "OVERLAPSffff00"))
 	    continue;
 	printf("found %s;\n", bu_vls_cstr(&gdlp->dl_path));

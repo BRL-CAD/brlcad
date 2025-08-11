@@ -1,7 +1,7 @@
 /*                      C D T _ M E S H . H
  * BRL-CAD
  *
- * Copyright (c) 2019-2024 United States Government as represented by
+ * Copyright (c) 2019-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -795,6 +795,11 @@ private:
 
 
     // Repair functionality using cpolygon
+    //
+    // TODO - is there anything we could do in the 2D parametric space to help
+    // avoid getting the misbehaving 3D triangles?  Distorting the polygon and
+    // steiner points by pushing them closer together as a function of their
+    // distance from a singularity edge, for example?
 
     // Use the seed triangle and build an initial loop.  If repair is set, find a nearby triangle that is
     // valid and use that instead.

@@ -1,7 +1,7 @@
 /*                        B S P L I N E . C P P
  * BRL-CAD
  *
- * Copyright (c) 1991-2024 United States Government as represented by
+ * Copyright (c) 1991-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -566,6 +566,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
     RT_NURB_CK_MAGIC(sip);
 
 #ifdef OLD_WIREFRAME
+    struct bu_list *vlfree = &rt_vlfree;
     for (s=0; s < sip->nsrf; s++) {
 	struct face_g_snurb * n, *r, *c;
 	int coords;
@@ -635,10 +636,10 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 
 	vp = c->ctl_points;
 	for (i = 0; i < c->s_size[0]; i++) {
-	    RT_ADD_VLIST(vhead, vp, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, vp, BV_VLIST_LINE_MOVE);
 	    vp += coords;
 	    for (j = 1; j < c->s_size[1]; j++) {
-		RT_ADD_VLIST(vhead, vp, BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, vp, BV_VLIST_LINE_DRAW);
 		vp += coords;
 	    }
 	}
@@ -648,9 +649,9 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 
 	    stride = c->s_size[1] * coords;
 	    vp = &c->ctl_points[j * coords];
-	    RT_ADD_VLIST(vhead, vp, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, vp, BV_VLIST_LINE_MOVE);
 	    for (i = 0; i < c->s_size[0]; i++) {
-		RT_ADD_VLIST(vhead, vp, BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, vp, BV_VLIST_LINE_DRAW);
 		vp += stride;
 	    }
 	}
@@ -700,7 +701,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
     int s;
 
     if (dbip)
-       	RT_CK_DBI(dbip);
+	RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -1051,6 +1052,50 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     return 0;
 }
 
+int
+rt_nurb_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_nurb_internal *tip = (struct rt_nurb_internal *)ip->idb_ptr;
+    RT_NURB_CK_MAGIC(tip);
+    struct rt_nurb_internal *top = (struct rt_nurb_internal *)rop->idb_ptr;
+    RT_NURB_CK_MAGIC(top);
+
+    if (tip->nsrf != top->nsrf)
+	return BRLCAD_ERROR;
+
+    fastf_t tmp_vec[4];
+    for (int s = 0; s < tip->nsrf; s++) {
+	struct face_g_snurb *srf = tip->srfs[s];
+	struct face_g_snurb *osrf = top->srfs[s];
+	if (srf->s_size[0] != osrf->s_size[0])
+	    return BRLCAD_ERROR;
+	if (srf->s_size[1] != osrf->s_size[1])
+	    return BRLCAD_ERROR;
+
+	for (int i=0; i < srf->s_size[0] * srf->s_size[1]; i++) {
+	    int coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+	    if (coords == 3) {
+		VMOVE(tmp_vec, &srf->ctl_points[i*coords]);
+		MAT4X3PNT(&osrf->ctl_points[i*coords], mat, tmp_vec);
+	    } else if (coords == 4) {
+		HMOVE(tmp_vec, &srf->ctl_points[i*coords]);
+		MAT4X4PNT(&osrf->ctl_points[i*coords], mat, tmp_vec);
+	    } else {
+		bu_log("rt_nurb_mat: %d invalid elements per vect\n", coords);
+		return -1;
+	    }
+	}
+
+	/* bound the surface for tolerancing and other bounding box tests */
+	nmg_nurb_s_bound(top->srfs[s], top->srfs[s]->min_pt, top->srfs[s]->max_pt);
+    }
+
+    return BRLCAD_OK;
+}
+
 
 int
 rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
@@ -1060,7 +1105,6 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     int i;
     int s;
     unsigned char *cp;
-    fastf_t tmp_vec[4];
 
     if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
@@ -1157,25 +1201,10 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
 	cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
 
-	if (mat == NULL) mat = bn_mat_identity;
-	for (i=0; i<srf->s_size[0] * srf->s_size[1]; i++) {
-	    if (coords == 3) {
-		VMOVE(tmp_vec, &srf->ctl_points[i*coords]);
-		MAT4X3PNT(&srf->ctl_points[i*coords], mat, tmp_vec);
-	    } else if (coords == 4) {
-		HMOVE(tmp_vec, &srf->ctl_points[i*coords]);
-		MAT4X4PNT(&srf->ctl_points[i*coords], mat, tmp_vec);
-	    } else {
-		bu_log("rt_nurb_internal: %d invalid elements per vect\n", coords);
-		return -1;
-	    }
-	}
-
-	/* bound the surface for tolerancing and other bounding box tests */
-	nmg_nurb_s_bound(sip->srfs[s], sip->srfs[s]->min_pt,
-			sip->srfs[s]->max_pt);
     }
-    return 0;
+
+    if (mat == NULL) mat = bn_mat_identity;
+    return rt_nurb_mat(ip, mat, ip);
 }
 
 
@@ -1438,62 +1467,6 @@ rt_nurb_params(struct pc_pc_set *, const struct rt_db_internal *)
     return 0;			/* OK */
 }
 
-extern "C" void
-rt_nurb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
-{
-    if (!ps || !ip)
-	return;
-
-    struct rt_nurb_internal *nurb = (struct rt_nurb_internal *)ip->idb_ptr;
-    RT_NURB_CK_MAGIC(nurb);
-
-    // Set up the containers
-    struct bv_label *l[5];
-    for (int i = 0; i < 5; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
-
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
-
-	l[i] = la;
-    }
-
-    // Do the specific data assignments for each label
-    /*XXX Needs work */
-
-    struct face_g_snurb *surf;
-    fastf_t *fp;
-    surf = nurb->srfs[0];
-    NMG_CK_SNURB(surf);
-    fp = &RT_NURB_GET_CONTROL_POINT(surf, 0, 0);
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, fp);
-
-    fp = &RT_NURB_GET_CONTROL_POINT(surf, 0, 0);
-    bu_vls_sprintf(&l[1]->label, "  0, 0");
-    VMOVE(l[1]->p, fp);
-
-    fp = &RT_NURB_GET_CONTROL_POINT(surf, 0, surf->s_size[1]-1);
-    bu_vls_sprintf(&l[2]->label, "u, 0");
-    VMOVE(l[2]->p, fp);
-
-
-    fp = &RT_NURB_GET_CONTROL_POINT(surf, surf->s_size[0]-1, 0);
-    bu_vls_sprintf(&l[3]->label, "0, v");
-    VMOVE(l[3]->p, fp);
-
-    fp = &RT_NURB_GET_CONTROL_POINT(surf, surf->s_size[0]-1, surf->s_size[1]-1);
-    bu_vls_sprintf(&l[4]->label, "u, v");
-    VMOVE(l[4]->p, fp);
-
-}
-
 #ifdef __cplusplus
 }
 #endif
@@ -1506,4 +1479,3 @@ rt_nurb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

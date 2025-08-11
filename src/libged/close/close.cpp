@@ -1,7 +1,7 @@
 /*                     C L O S E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,12 +37,8 @@ extern "C" int
 ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 {
     // If we don't have an open database, this is a no-op
-    if (!gedp->dbip)
+    if (!gedp || !gedp->dbip)
 	return BRLCAD_OK;
-
-    // If the caller has work to do first, trigger it
-    if (gedp->ged_pre_closedb_callback)
-	(*gedp->ged_pre_closedb_callback)(gedp, gedp->ged_db_callback_udata);
 
     /* set result while we still have the info */
     bu_vls_sprintf(gedp->ged_result_str, "closed %s", gedp->dbip->dbi_filename);
@@ -52,10 +48,8 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     /* Clear any geometry displayed in application views.
      * TODO - properly speaking, we should only be zapping geometry data here
      * and not clearing all scene objects... */
-    const char *av[2];
-    av[0] = "zap";
-    av[1] = (char *)0;
-    ged_exec(gedp, 1, (const char **)av);
+    const char *av[1] = {"zap"};
+    ged_exec_zap(gedp, 1, (const char **)av);
 
     /* close current database */
     if (gedp->dbip)
@@ -63,8 +57,7 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     gedp->dbip = NULL;
 
     /* Clean up any old acceleration states, if present */
-    const char *use_dbi_state = getenv("LIBGED_DBI_STATE");
-    if (use_dbi_state && gedp->dbi_state)
+    if (gedp->dbi_state)
 	delete gedp->dbi_state;
     gedp->dbi_state = NULL;
     if (gedp->ged_lod)
@@ -72,22 +65,21 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     gedp->ged_lod = NULL;
 
     /* Terminate any ged subprocesses */
-    if (gedp != GED_NULL) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
-	    struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
-	    if (!rrp->aborted) {
-		bu_pid_terminate(bu_process_pid(rrp->p));
-		rrp->aborted = 1;
-	    }
-	    bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);
-	    BU_PUT(rrp, struct ged_subprocess);
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
+	struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
+	if (gedp->ged_delete_io_handler) {
+	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDIN);
+	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDOUT);
+	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDERR);
 	}
-	bu_ptbl_reset(&gedp->ged_subp);
+	if (!rrp->aborted) {
+	    bu_pid_terminate(bu_process_pid(rrp->p));
+	    rrp->aborted = 1;
+	}
+	bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);
+	    BU_PUT(rrp, struct ged_subprocess);
     }
-
-    // If the caller has work to do after close, trigger it
-    if (gedp->ged_post_closedb_callback)
-	(*gedp->ged_post_closedb_callback)(gedp, gedp->ged_db_callback_udata);
+    bu_ptbl_reset(&gedp->ged_subp);
 
     return BRLCAD_OK;
 }

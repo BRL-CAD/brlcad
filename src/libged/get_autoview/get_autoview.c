@@ -1,7 +1,7 @@
 /*                         G E T _ A U T O V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -75,7 +75,7 @@ ged_get_core_autoview(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    is_empty = dl_bounding_sph(gedp->ged_gdp->gd_headDisplay, &min, &max, pflag);
+    is_empty = dl_bounding_sph(gedp->i->ged_gdp->gd_headDisplay, &min, &max, pflag);
 
     if (is_empty) {
 	/* Nothing is in view */

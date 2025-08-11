@@ -1,8 +1,8 @@
 # Make sure the converter executable exists
 string(REPLACE "\\" "" CONV_EXEC "${EXEC}")
-if (NOT EXISTS "${CONV_EXEC}")
+if(NOT EXISTS "${CONV_EXEC}")
   message(FATAL_ERROR "Invalid geometry converter executable specified: ${CONV_EXEC}")
-endif (NOT EXISTS "${CONV_EXEC}")
+endif(NOT EXISTS "${CONV_EXEC}")
 
 # Use local cache directories for the conversion
 set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
@@ -28,8 +28,10 @@ set(ENV{BRLCAD_ROOT} "${CROOT}")
 # run the conversion.
 execute_process(
   COMMAND "${CONV_EXEC}" @CONV_ARGS@
-  RESULT_VARIABLE conv_result OUTPUT_VARIABLE conv_log ERROR_VARIABLE conv_log
-  )
+  RESULT_VARIABLE conv_result
+  OUTPUT_VARIABLE conv_log
+  ERROR_VARIABLE conv_log
+)
 
 if(conv_result)
   set(CARGS @CONV_ARGS@)
@@ -37,8 +39,12 @@ if(conv_result)
 endif(conv_result)
 
 # Cleanup
-execute_process(COMMAND "@CMAKE_COMMAND@" -E rm -rf ${BU_DIR_CACHE})
-execute_process(COMMAND "@CMAKE_COMMAND@" -E rm -rf ${LIBRT_CACHE})
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E rm -rf ${BU_DIR_CACHE}
+)
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E rm -rf ${LIBRT_CACHE}
+)
 
 # Local Variables:
 # tab-width: 8

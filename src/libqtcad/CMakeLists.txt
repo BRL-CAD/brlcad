@@ -1,30 +1,25 @@
 set(QG_DIRS)
 
 if(BRLCAD_ENABLE_QT)
-
   find_package_qt(REQUIRED)
 
-  if (BRLCAD_ENABLE_OPENGL)
-    if (OPENGL_opengl_LIBRARY)
+  if(BRLCAD_ENABLE_OPENGL)
+    if(OPENGL_opengl_LIBRARY)
       set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})
-    endif (OPENGL_opengl_LIBRARY)
-    if (OPENGL_gl_LIBRARY)
+    endif(OPENGL_opengl_LIBRARY)
+    if(OPENGL_gl_LIBRARY)
       set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
-    endif (OPENGL_gl_LIBRARY)
-  endif (BRLCAD_ENABLE_OPENGL)
-  if (OPENGL_LIBS)
-    if (Qt6Widgets_FOUND)
+    endif(OPENGL_gl_LIBRARY)
+  endif(BRLCAD_ENABLE_OPENGL)
+  if(OPENGL_LIBS)
+    if(Qt6Widgets_FOUND)
       set(OPENGL_LIBS "Qt6::OpenGL;Qt6::OpenGLWidgets;${OPENGL_LIBS}")
     else()
       set(OPENGL_LIBS "Qt5::OpenGL;${OPENGL_LIBS}")
-    endif (Qt6Widgets_FOUND)
-  endif (OPENGL_LIBS)
+    endif(Qt6Widgets_FOUND)
+  endif(OPENGL_LIBS)
 
-  set(QG_DIRS ${QG_DIRS}
-    ${CMAKE_CURRENT_BINARY_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${OPENGL_INCLUDE_DIR_GL}
-    )
+  set(QG_DIRS ${QG_DIRS} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${OPENGL_INCLUDE_DIR_GL})
 endif(BRLCAD_ENABLE_QT)
 
 # We build the resources in at this level, but list them out
@@ -35,7 +30,8 @@ add_subdirectory(images)
 # because most of BRL-CAD's targets are not Qt targets.  We don't
 # want to run the automatic moc logic for all of them.
 
-set(qtcad_srcs
+set(
+  qtcad_srcs
   bindings.cpp
   QgAccordion.cpp
   QgAppExecDialog.cpp
@@ -59,10 +55,10 @@ set(qtcad_srcs
   QgUtil.cpp
   QgView.cpp
   QgViewCtrl.cpp
-  )
-if (OPENGL_LIBS)
+)
+if(OPENGL_LIBS)
   set(qtcad_srcs ${qtcad_srcs} QgGL.cpp)
-endif (OPENGL_LIBS)
+endif(OPENGL_LIBS)
 
 # We need to run Qt's Meta-Object Compiler on some of the
 # libqtcad headers - prepare that list here.  We will also
@@ -71,7 +67,8 @@ endif (OPENGL_LIBS)
 # header files to allow for easy generation of both header
 # and file-cleanup lists.
 set(QTCAD_HDR_DIR ${BRLCAD_SOURCE_DIR}/include/qtcad)
-set(qth_names
+set(
+  qth_names
   QgAccordion
   QgAppExecDialog
   QgAttributesModel
@@ -92,10 +89,10 @@ set(qth_names
   QgTreeView
   QgView
   QgViewCtrl
-  )
-if (OPENGL_LIBS)
+)
+if(OPENGL_LIBS)
   set(qth_names ${qth_names} QgGL)
-endif (OPENGL_LIBS)
+endif(OPENGL_LIBS)
 
 foreach(qh ${qth_names})
   set(qtcad_moc_hdrs ${qtcad_moc_hdrs} ${QTCAD_HDR_DIR}/${qh}.h)
@@ -103,48 +100,47 @@ endforeach(qh ${qth_names})
 
 # Note - libqtcad_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 if(BRLCAD_ENABLE_QT)
-
   set(USE_OBJECT_LIBS OFF)
   set(QTCAD_SRCS ${qtcad_srcs})
   set(QTCAD_LIBS ${libqtcad_deps})
 
-  if (Qt6Widgets_FOUND)
-    QT6_WRAP_CPP(qtcad_moc_srcs ${qtcad_moc_hdrs})
-    QT6_ADD_RESOURCES(qtcad_qrc qtcad_resources.qrc)
+  if(Qt6Widgets_FOUND)
+    qt6_wrap_cpp(qtcad_moc_srcs ${qtcad_moc_hdrs})
+    qt6_add_resources(qtcad_qrc qtcad_resources.qrc)
     set(QTCAD_LIBS ${QTCAD_LIBS} Qt6::Core Qt6::Widgets ${OPENGL_LIBS})
   else()
-    QT5_WRAP_CPP(qtcad_moc_srcs ${qtcad_moc_hdrs})
-    QT5_ADD_RESOURCES(qtcad_qrc qtcad_resources.qrc)
+    qt5_wrap_cpp(qtcad_moc_srcs ${qtcad_moc_hdrs})
+    qt5_add_resources(qtcad_qrc qtcad_resources.qrc)
     set(QTCAD_LIBS ${QTCAD_LIBS} Qt5::Core;Qt5::Widgets;${OPENGL_LIBS})
-  endif (Qt6Widgets_FOUND)
+  endif(Qt6Widgets_FOUND)
   set(QTCAD_SRCS ${QTCAD_SRCS} ${qtcad_moc_srcs} ${qtcad_qrc})
 
-  BRLCAD_ADDLIB(libqtcad "${QTCAD_SRCS}" "${QTCAD_LIBS}" "${QG_DIRS}" "" SHARED)
+  brlcad_addlib(libqtcad "${QTCAD_SRCS}" "${QTCAD_LIBS}" "${QG_DIRS}" "" SHARED)
   set_target_properties(libqtcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
-  if (OPENGL_LIBS)
+  if(OPENGL_LIBS)
     set_property(TARGET libqtcad APPEND PROPERTY COMPILE_DEFINITIONS "QT_SYSTEM_OPENGL")
-  endif (OPENGL_LIBS)
+  endif(OPENGL_LIBS)
 
-  DISTCLEAN(qtcad_resources.qrc.depends)
+  distclean(qtcad_resources.qrc.depends)
   # Generate the cpp_parameters cleanup commands for the headers
   foreach(qh ${qth_names})
-    DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/__/__/include/qtcad/moc_${qh}.cpp_parameters)
+    distclean(${CMAKE_CURRENT_BINARY_DIR}/__/__/include/qtcad/moc_${qh}.cpp_parameters)
   endforeach(qh ${qth_names})
-
 endif(BRLCAD_ENABLE_QT)
 
 add_subdirectory(tests)
 
-set(qtcad_ignore_srcs
+set(
+  qtcad_ignore_srcs
   CMakeLists.txt
   ${qtcad_srcs}
   ${qtcad_moc_hdrs}
   bindings.h
   qtcad_resources.qrc
   QgGL.cpp
-  )
+)
 
-CMAKEFILES(${qtcad_ignore_srcs})
+cmakefiles(${qtcad_ignore_srcs})
 
 # Local Variables:
 # tab-width: 8
@@ -152,4 +148,3 @@ CMAKEFILES(${qtcad_ignore_srcs})
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

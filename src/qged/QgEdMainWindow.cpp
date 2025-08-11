@@ -1,7 +1,7 @@
 /*                 Q G E D M A I N W I N D O W . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2024 United States Government as represented by
+ * Copyright (c) 2014-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -360,13 +360,13 @@ QgEdMainWindow::do_dm_init()
     av[1] = "bg";
     av[2] = "110/110/110";
     av[3] = "0/0/50";
-    ged_exec(gedp, 4, (const char **)av);
+    ged_exec_dm(gedp, 4, (const char **)av);
 
     av[0] = "view";
     av[1] = "lod";
     av[2] = "mesh";
     av[3] = "1";
-    ged_exec(gedp, 4, (const char **)av);
+    ged_exec_view(gedp, 4, (const char **)av);
 
     emit ap->view_update(QG_VIEW_REFRESH);
     ///////////////////////////////////////////////////////////////////////////
@@ -465,9 +465,9 @@ QgEdMainWindow::IndicateRaytraceStart(int val)
 }
 
 void
-QgEdMainWindow::IndicateRaytraceDone(int val)
+QgEdMainWindow::IndicateRaytraceDone()
 {
-    vcw->raytrace_done(val);
+    vcw->raytrace_done();
 }
 
 int

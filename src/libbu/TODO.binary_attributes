@@ -12,8 +12,8 @@ BSON
   specification:           http://bsonspec.org/spec.html
   libbson source:          https://github.com/mongodb/libbson
   current release tarball: https://github.com/mongodb/libbson/releases/
-                             libbson-1.3.0-beta0.tar.gz
-  converter: libbson has tools included to convert BSON to/from JSON 
+			     libbson-1.3.0-beta0.tar.gz
+  converter: libbson has tools included to convert BSON to/from JSON
 
 Scheme
 ------
@@ -57,7 +57,7 @@ Usage: attr {[-c sep_char][-b] set|get|show|rm|append|sort|list} object [key [va
 
 Where the '-b', indicating a binary attribute (BA), works with 'get'
 and 'set' only (and ignored for the other commands).
- 
+
 Note that 'set' and 'get' for binary attributes require an external
 file name (which must must be a valid JSON file for 'set') and must
 NOT exist for 'get'.  The 'append' command will NOT work for a BA.
@@ -71,7 +71,7 @@ The BAs will have both a key and a comment, and it is an error to try
 to add a BA with a key the same as an existing key.
 
 Tentative JSON format of a BA
------------------------------ 
+-----------------------------
 
 (See http://www.json.org/ for the JSON specification.)
 
@@ -131,7 +131,7 @@ The following describes the current V5 db:
 The following describes the proposed V6 db with the binary attributes:
 
   BRL_CAD_g_format_V6.xml
- 
+
 
 Possible tests:
 

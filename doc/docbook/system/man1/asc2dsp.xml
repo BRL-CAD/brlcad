@@ -1,4 +1,4 @@
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="rt1">
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="asc2dsp1">
   <refmeta>
     <refentrytitle>ASC2DSP</refentrytitle>
     <manvolnum>1</manvolnum>
@@ -79,7 +79,7 @@
   </refsection>
 
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
-  <para>This software is Copyright (c) 2012-2024 United States Government as
+  <para>This software is Copyright (c) 2012-2025 United States Government as
   represented by the U.S. Army Research Laboratory.</para>
   </refsection>
 

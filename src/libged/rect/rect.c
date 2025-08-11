@@ -1,7 +1,7 @@
 /*                          R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2024 United States Government as represented by
+ * Copyright (c) 1998-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -195,7 +195,7 @@ rect_rt(struct ged *gedp, int port)
 	av[12] = bu_vls_addr(&cvls);
 	av[13] = (char *)0;
 
-	ret = ged_exec(gedp, 13, (const char **)av);
+	ret = ged_exec_rt(gedp, 13, (const char **)av);
 
 	bu_vls_free(&wvls);
 	bu_vls_free(&nvls);

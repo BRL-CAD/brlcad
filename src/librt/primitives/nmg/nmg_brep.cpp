@@ -1,7 +1,7 @@
 /*                    N M G _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -237,7 +237,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     m = (struct model *)ip->idb_ptr;
     NMG_CK_MODEL(m);
 
-    // Both NMG and brep structures re-use components between faces.  In order to track
+    // Both NMG and brep structures reuse components between faces.  In order to track
     // when the conversion routine has already handled an NMG element, use an array.
     long *brepi = static_cast<long*>(bu_malloc(m->maxindex * sizeof(long), "rt_nmg_brep: brepi[]"));
     for (int i = 0; i < m->maxindex; i++) brepi[i] = -INT_MAX;

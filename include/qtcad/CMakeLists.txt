@@ -1,4 +1,5 @@
-set(qtcad_headers
+set(
+  qtcad_headers
   QgAccordion.h
   QgAppExecDialog.h
   QgAttributesModel.h
@@ -25,10 +26,10 @@ set(qtcad_headers
   QgView.h
   QgViewCtrl.h
   defines.h
-  )
-BRLCAD_MANAGE_FILES(qtcad_headers ${INCLUDE_DIR}/brlcad/qtcad REQUIRED libqtcad)
+)
+brlcad_manage_files(qtcad_headers ${INCLUDE_DIR}/brlcad/qtcad REQUIRED libqtcad)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

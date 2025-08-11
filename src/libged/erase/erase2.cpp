@@ -1,7 +1,7 @@
 /*                         E R A S E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,6 @@
 #include "bv/view_sets.h"
 #include "ged/database.h"
 #include "ged/view.h"
-#include "ged/view/state.h"
 
 /*
  * Erase objects from the scene.  In many ways this is the most complex

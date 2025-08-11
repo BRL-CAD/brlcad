@@ -1,22 +1,28 @@
 # Style sheet for XSLT transformation to book HTML pages
 if(BRLCAD_EXTRADOCS_HTML)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-specification-xhtml-stylesheet.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-specification-xhtml-stylesheet.xsl)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-specification-xhtml-stylesheet.xsl")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-specification-xhtml-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-specification-xhtml-stylesheet.xsl
+  )
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-specification-xhtml-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_HTML)
 
 if(BRLCAD_EXTRADOCS_PHP)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-specification-xhtml-stylesheet.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-specification-xhtml-stylesheet.xsl)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-specification-xhtml-stylesheet.xsl")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-specification-xhtml-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-specification-xhtml-stylesheet.xsl
+  )
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-specification-xhtml-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_PHP)
 
 # Files for PDF products
 if(BRLCAD_EXTRADOCS_PDF)
   # Style sheet for XSLT transformation to PDF
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-specification-fo-stylesheet.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-specification-fo-stylesheet.xsl)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-specification-fo-stylesheet.xsl")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-specification-fo-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-specification-fo-stylesheet.xsl
+  )
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-specification-fo-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_PDF)
 
 # For HTML and FO (FO is an intermediate file used in the
@@ -26,20 +32,18 @@ set(XSL_PHP_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/wordpres
 set(XSL_HTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-specification-xhtml-stylesheet.xsl")
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-specification-fo-stylesheet.xsl")
 
-set(specifications_EN
-  BRL_CAD_g_format_V5.xml
-  )
-if (TARGET librt)
-  if (BRLCAD_EXTRADOCS)
-    ADD_DOCBOOK("HTML;PHP;PDF" specifications_EN specifications/en "")
-  endif (BRLCAD_EXTRADOCS)
-endif (TARGET librt)
+set(specifications_EN BRL_CAD_g_format_V5.xml)
+if(TARGET librt)
+  if(BRLCAD_EXTRADOCS)
+    add_docbook("HTML;PHP;PDF" specifications_EN specifications/en "")
+  endif(BRLCAD_EXTRADOCS)
+endif(TARGET librt)
 
-CMAKEFILES(
+cmakefiles(
   ${specifications_EN}
   BRL_CAD_g_format_V6.xml
   CMakeLists.txt
-  )
+)
 
 # Local Variables:
 # tab-width: 8

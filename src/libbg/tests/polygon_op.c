@@ -2,7 +2,7 @@
  *
  * BRL-CAD
  *
- * Copyright (c) 2015-2024 United States Government as represented by
+ * Copyright (c) 2015-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -185,7 +185,6 @@ main(int argc, const char **argv)
     ret += _bg_polygon_diff(ir, &intersection_expected);
 
     /* Note - clipper doesn't yet support Xor */
-
 
 
     /* Next, test a polygon full contained within another polygon. */

@@ -1,7 +1,7 @@
 /*                           N M G . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2024 United States Government as represented by
+ * Copyright (c) 1989-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,8 +55,9 @@ int
 mk_bot_from_nmg(struct rt_wdb *ofp, const char *name, struct shell *s)
 {
     struct rt_bot_internal *botp;
+    struct bu_list *vlfree = &rt_vlfree;
 
-    botp = nmg_bot(s, &RTG.rtg_vlfree, &ofp->wdb_tol);
+    botp = nmg_bot(s, vlfree, &ofp->wdb_tol);
 
     /* FIXME: wdb_export is documented as always free'ing the entity
      * passed to it.  that means this routine needs to make a copy of

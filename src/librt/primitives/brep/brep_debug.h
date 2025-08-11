@@ -1,7 +1,7 @@
 /*                     B R E P _ D E B U G . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2024 United States Government as represented by
+ * Copyright (c) 2007-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -110,8 +110,6 @@ void plotleafuv(BBNode* bb);
 void plottrim(ON_BrepFace &face, struct bv_vlblock *vbp);
 void plottrim(const ON_Curve &curve, double from, double to);
 void plottrim(ON_Curve &curve);
-
-int brep_translate_scv(ON_Brep *brep, int surface_index, int i, int j, fastf_t dx, fastf_t dy, fastf_t dz);
 
 #endif
 /** @} */

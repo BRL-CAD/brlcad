@@ -7,11 +7,17 @@ function(GCV_regress_util fmt INPUT_FILES)
   # EXPECTED_FILE_SIZE  : for conversions resulting in file sizes outside of 150-850 bytes
   # DEPS                : for converters using 3rd party build dependencies (i.e. gcv-gdal, gcv-assetimport)
   # CONVERTERS          : for file types with multiple converters (i.e. obj). runs 'default' and then specified converter(s)
-  cmake_parse_arguments("${fmt}" "EXPORTER" "DEPS;EXPECTED_FILE_SIZE;EXPECTED_FILE_SIZE_DELTA" "GCV_OPTIONS;CONVERTERS" ${ARGN})
+  cmake_parse_arguments(
+    "${fmt}"
+    "EXPORTER"
+    "DEPS;EXPECTED_FILE_SIZE;EXPECTED_FILE_SIZE_DELTA"
+    "GCV_OPTIONS;CONVERTERS"
+    ${ARGN}
+  )
 
-  if (NOT TARGET gcv)
+  if(NOT TARGET gcv)
     return()
-  endif (NOT TARGET gcv)
+  endif(NOT TARGET gcv)
 
   if(${fmt}_EXPORTER)
     set(TARGET_DIRECTION "regress-g-${fmt}")
@@ -29,23 +35,25 @@ function(GCV_regress_util fmt INPUT_FILES)
   # 150-850 bytes
   if(${fmt}_EXPECTED_FILE_SIZE)
     set(EXPECTED_FILE_SIZE ${${fmt}_EXPECTED_FILE_SIZE})
-    if (${fmt}_EXPECTED_FILE_SIZE_DELTA)
+    if(${fmt}_EXPECTED_FILE_SIZE_DELTA)
       set(FILE_SIZE_DELTA ${${fmt}_EXPECTED_FILE_SIZE_DELTA})
-    else (${fmt}_EXPECTED_FILE_SIZE_DELTA)
+    else(${fmt}_EXPECTED_FILE_SIZE_DELTA)
       # set the delta to 3% of file size
       math(EXPR FILE_SIZE_DELTA "${EXPECTED_FILE_SIZE} * 3 / 100")
       if(FILE_SIZE_DELTA LESS 350)
-	set(FILE_SIZE_DELTA 350)
+        set(FILE_SIZE_DELTA 350)
       endif(FILE_SIZE_DELTA LESS 350)
-    endif (${fmt}_EXPECTED_FILE_SIZE_DELTA)
+    endif(${fmt}_EXPECTED_FILE_SIZE_DELTA)
   else()
     set(EXPECTED_FILE_SIZE 500)
     set(FILE_SIZE_DELTA 350)
   endif(${fmt}_EXPECTED_FILE_SIZE)
 
   # setup logfile and gcv EXEC call in cmake.in
-  file(APPEND "${cmake_in_path}"
-  "
+  file(
+    APPEND
+    "${cmake_in_path}"
+    "
 # lets cmake if() recognize numbers and boolean constants.
 if (POLICY CMP0012)
   cmake_policy(SET CMP0012 NEW)
@@ -101,9 +109,15 @@ endif(NOT EXISTS \"\${GCV_EXEC}\")\n"
 
       # command string can't have empty "" - have to build it explicitly with cmd line flags if supplied
       if(${fmt}_GCV_OPTIONS)
-        set(CMD_STR "${CMD_STR} COMMAND \"\${GCV_EXEC}\" \"${${fmt}_GCV_OPTIONS}\" \"${fmt_input_output}\" \"\${in_path}\" \"$${out_path}-${out_fmt}${out_suffix}\"")
+        set(
+          CMD_STR
+          "${CMD_STR} COMMAND \"\${GCV_EXEC}\" \"${${fmt}_GCV_OPTIONS}\" \"${fmt_input_output}\" \"\${in_path}\" \"$${out_path}-${out_fmt}${out_suffix}\""
+        )
       else()
-        set(CMD_STR "${CMD_STR} COMMAND \"\${GCV_EXEC}\" \"${fmt_input_output}\" \"\${in_path}\" \"${out_path}-${out_fmt}${out_suffix}\"")
+        set(
+          CMD_STR
+          "${CMD_STR} COMMAND \"\${GCV_EXEC}\" \"${fmt_input_output}\" \"\${in_path}\" \"${out_path}-${out_fmt}${out_suffix}\""
+        )
       endif(${fmt}_GCV_OPTIONS)
 
       set(out_distclean ${out_distclean}} "${out_path}-${out_fmt}${out_suffix}")
@@ -115,8 +129,10 @@ endif(NOT EXISTS \"\${GCV_EXEC}\")\n"
     string(REPLACE "COMMAND" "\n  COMMAND" cleaned_CMD_STR ${cleaned_CMD_STR})
 
     # setup tests in cmake.in
-    file(APPEND "${cmake_in_path}"
-    "
+    file(
+      APPEND
+      "${cmake_in_path}"
+      "
 # check for input file in source and binary dir - priority of src
 if(EXISTS \"\${CSDIR}/${in_file}\")
   set(in_path \"\${CSDIR}/${in_file}\")
@@ -146,15 +162,18 @@ execute_process(
 
 file(APPEND \"\${LOGFILE}\" \"\${log_msg}\\n\")
 unset(log_msg)
-  ")
+  "
+    )
 
-  set(OUTPUT_FILES ${OUTPUT_FILES} ${out_distclean})
-  unset(expected_output_files)
-  unset(out_distclean)
+    set(OUTPUT_FILES ${OUTPUT_FILES} ${out_distclean})
+    unset(expected_output_files)
+    unset(out_distclean)
   endforeach(in_file ${INPUT_FILES})
 
-  file(APPEND ${cmake_in_path}
-  "
+  file(
+    APPEND
+    ${cmake_in_path}
+    "
 # check output files exists and are a reasonable size
 foreach(out_file \${ofiles})
   if(NOT EXISTS \"\${out_file}\")
@@ -177,7 +196,8 @@ foreach(out_file \${ofiles})
   # cleanup file from build dir
   file(REMOVE \"\${out_file}\")
 endforeach(out_file \${ofiles})
-    ")
+    "
+  )
 
   # assume the fmt is the gcv dependency unless specified
   if(${fmt}_DEPS)
@@ -187,12 +207,12 @@ endforeach(out_file \${ofiles})
   endif(${fmt}_DEPS)
 
   # create actual regression target
-  BRLCAD_REGRESSION_TEST(${TARGET_DIRECTION} ${DEPS} EXEC gcv TEST_SCRIPT "${cmake_in_path}")
+  brlcad_regression_test(${TARGET_DIRECTION} ${DEPS} EXEC gcv TEST_SCRIPT "${cmake_in_path}")
 
   # BRLCAD_REGRESSION_TEST copies and evaluates the cmake.in - safe to get rid of it now
   file(REMOVE ${cmake_in_path})
 
-  DISTCLEAN(
+  distclean(
     "${cmake_in_path}"                                      # cmake.in file
     "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_DIRECTION}.log"   # logfile
     "${OUTPUT_FILES}"                                       # any expected output files
@@ -221,12 +241,12 @@ add_subdirectory(vrml)
 add_subdirectory(x)
 add_subdirectory(x3d)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   README
   TESTING_STATUS
   tetra.g           # used for exporters - keep in root to eliminate copying duplicate file to all subdirectories
-  )
+)
 
 # Local Variables:
 # tab-width: 8

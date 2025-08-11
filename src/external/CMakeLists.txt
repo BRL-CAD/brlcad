@@ -8,8 +8,8 @@ add_subdirectory(Creo)
 add_subdirectory(Cubit)
 add_subdirectory(Unigraphics)
 
-CMAKEFILES(README)
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(README)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8
@@ -17,4 +17,3 @@ CMAKEFILES(CMakeLists.txt)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

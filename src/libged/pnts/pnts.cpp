@@ -1,7 +1,7 @@
 /*                         P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -562,16 +562,16 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
 
 
     if (pnt_surf_mode) {
-	flags |= ANALYZE_OBJ_TO_PNTS_SURF;
+	flags |= RT_GEN_OBJ_PNTS_SURF;
     }
 
     /* Pick our mode(s) */
     if (!pnt_grid_mode && !pnt_rand_mode && !pnt_sobol_mode) {
-	flags |= ANALYZE_OBJ_TO_PNTS_GRID;
+	flags |= RT_GEN_OBJ_PNTS_GRID;
     } else {
-	if (pnt_grid_mode)  flags |= ANALYZE_OBJ_TO_PNTS_GRID;
-	if (pnt_rand_mode)  flags |= ANALYZE_OBJ_TO_PNTS_RAND;
-	if (pnt_sobol_mode) flags |= ANALYZE_OBJ_TO_PNTS_SOBOL;
+	if (pnt_grid_mode)  flags |= RT_GEN_OBJ_PNTS_GRID;
+	if (pnt_rand_mode)  flags |= RT_GEN_OBJ_PNTS_RAND;
+	if (pnt_sobol_mode) flags |= RT_GEN_OBJ_PNTS_SOBOL;
     }
 
     /* If we don't have a tolerance, try to guess something sane from the bbox */
@@ -598,7 +598,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     pnts->scale = 0.0;
     pnts->type = RT_PNT_TYPE_NRM;
 
-    if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->dbip, obj_name, &btol, flags, max_pnts, max_time, 2)) {
+    if (rt_gen_obj_pnts(pnts, &avg_thickness, gedp->dbip, obj_name, &btol, flags, max_pnts, max_time, 2)) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: point generation failed\n");
 	return BRLCAD_ERROR;
     }
@@ -1351,7 +1351,7 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    nargv[0] = argv[0];
+    nargv[0] = "pnts";
     nargv[1] = r_cmd;
     nargv[2] = s_opt;
     nargv[3] = argv[5];
@@ -1362,7 +1362,7 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     nargv[8] = argv[2];
     nargv[9] = argv[1];
 
-    return ged_exec(gedp, 10, (const char **)nargv);
+    return ged_exec_pnts(gedp, 10, (const char **)nargv);
 }
 
 

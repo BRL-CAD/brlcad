@@ -39,7 +39,7 @@ including instructions for building on Windows.
 
 Required tools:
   - Git must be 2.17 or later
-  - CMake must be 3.18 or later
+  - CMake must be 3.20 or later
   - Compiler must be C++17-compliant
     - If using Visual Studio, version 2019 (16.8+) or later
     - If using GCC/G++, version 7 or later
@@ -381,6 +381,12 @@ If specified, BRL-CAD will look in this directory for bext source files. Use
 this when you have a pre-existing bext clone and don't want BRL-CAD's configure
 process to pull down another copy, but are still looking to have the BRL-CAD
 configure process manage producing bext build outputs.
+
+
+--- BRLCAD_EXT_PARALLEL ---
+
+This number, when specified, describes how many compilation threads to use
+when compiling bext sources.  Default is 8.
 
 
 --- BRLCAD_DEBUGGING ---

@@ -1,7 +1,7 @@
 /*                         G - X X X . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -425,7 +425,7 @@ main(int argc, char *argv[])
 	bu_exit(1, "g-xxx: rt_dirbuild failure\n");
     }
 
-    init_state = rt_initial_tree_state;
+    RT_DBTS_INIT(&init_state);
 
     bu_optind++;
 

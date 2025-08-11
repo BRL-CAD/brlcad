@@ -1,7 +1,7 @@
 /*                       M A T E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -142,7 +142,7 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
     } else {
 	if (!BU_STR_EQUAL(bu_vls_addr(&vls), ".")) {
 	    bu_vls_trunc(&comb->shader, 0);
-	    if (bu_shader_to_list(bu_vls_addr(&vls), &comb->shader)) {
+	    if (rt_shader_to_list(bu_vls_addr(&vls), &comb->shader)) {
 		bu_vls_printf(gedp->ged_result_str, "Problem with shader string [%s]", argv[2]);
 		rt_db_free_internal(&intern);
 		bu_vls_free(&vls);
@@ -418,8 +418,8 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
     db_update_nref(gedp->dbip, &rt_uniresource);
     const char *mname_search = "-attr material_name";
     const char *mid_search = "-attr material_id";
-    (void)db_search(&mn_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->dbip, NULL);
-    (void)db_search(&id_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->dbip, NULL);
+    (void)db_search(&mn_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->dbip, NULL, NULL, NULL);
+    (void)db_search(&id_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->dbip, NULL, NULL, NULL);
     for(size_t i = 0; i < BU_PTBL_LEN(&mn_objs); i++) {
 	dp = (struct directory *)BU_PTBL_GET(&mn_objs, i);
 	mns.insert(dp);
@@ -690,10 +690,8 @@ mater_import(struct ged *gedp, size_t argc, const char *argv[])
 
     /* Mark it hidden */
     {
-	const char *av[2];
-	av[0] = "hide";
-	av[1] = GED_DB_DENSITY_OBJECT;
-	(void)ged_exec(gedp, 2, (const char **)av);
+	const char *av[2] = {"hide", GED_DB_DENSITY_OBJECT};
+	(void)ged_exec_hide(gedp, 2, (const char **)av);
     }
 
     return BRLCAD_OK;
@@ -1203,10 +1201,8 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
 
     /* Mark it hidden */
     {
-	const char *av[2];
-	av[0] = "hide";
-	av[1] = GED_DB_DENSITY_OBJECT;
-	(void)ged_exec(gedp, 2, (const char **)av);
+	const char *av[2] = {"hide", GED_DB_DENSITY_OBJECT};
+	(void)ged_exec_hide(gedp, 2, (const char **)av);
     }
 
     return BRLCAD_OK;
@@ -1485,8 +1481,8 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 
     // Find the objects we need to work with (if any)
     db_update_nref(gedp->dbip, &rt_uniresource);
-    (void)db_search(&mn_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->dbip, NULL);
-    (void)db_search(&id_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->dbip, NULL);
+    (void)db_search(&mn_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->dbip, NULL, NULL, NULL);
+    (void)db_search(&id_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->dbip, NULL, NULL, NULL);
     for(size_t i = 0; i < BU_PTBL_LEN(&mn_objs); i++) {
 	dp = (struct directory *)BU_PTBL_GET(&mn_objs, i);
 	mns.insert(dp);

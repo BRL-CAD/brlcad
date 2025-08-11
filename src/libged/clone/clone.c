@@ -1,7 +1,7 @@
 /*                         C L O N E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -424,7 +424,7 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	argv[1] = proto->d_namep;
 	argv[2] = bu_vls_addr(name);
 	argv[3] = (char *)0;
-	ret = ged_exec(state->gedp, 3, (const char **)argv);
+	ret = ged_exec_copy(state->gedp, 3, (const char **)argv);
 	if (ret != BRLCAD_OK)
 	    bu_vls_printf(state->gedp->ged_result_str, "WARNING: failure cloning \"%s\" to \"%s\"\n",
 			  proto->d_namep, bu_vls_addr(name));

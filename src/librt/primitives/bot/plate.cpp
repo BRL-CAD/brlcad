@@ -1,7 +1,7 @@
 /*                      P L A T E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2024 United States Government as represented by
+ * Copyright (c) 2020-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,13 +30,7 @@
 #include <set>
 #include <unordered_set>
 
-// flag to enable writing debugging output in case of boolean failure
-#define CHECK_INTERMEDIATES 1
-
 #include "manifold/manifold.h"
-#ifdef CHECK_INTERMEDIATES
-#  include "manifold/meshIO.h"
-#endif
 
 #include "vmath.h"
 #include "bu/time.h"
@@ -49,6 +43,11 @@
 #include "rt/global.h"
 #include "rt/nmg_conv.h"
 #include "rt/primitives/bot.h"
+
+// TODO - investigate geogram's isotropic remeshing to see if it can help us
+// deal with plate mode bots having lots of long, super-thin triangles (they
+// seem to be really messing with performance in newer Manifold releases...)
+// https://github.com/BrunoLevy/geogram/wiki/Remeshing
 
 static bool
 bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
@@ -237,16 +236,9 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     std::map<int, int> verts_fcnt;
     std::map<std::pair<int, int>, double> edges_thickness;
     std::map<std::pair<int, int>, int> edges_fcnt;
-    std::map<std::pair<int, int>, int> edges_fmode;
     std::set<std::pair<int, int>> edges;
     for (size_t i = 0; i < bot->num_faces; i++) {
 	point_t eind;
-	// face_mode is a view dependent reporting option, where the full thickness is appended to the
-	// hit point reported from the BoT.  Because a volumetric BoT cannot exhibit view dependent
-	// behavior, we instead use the full thickness to encompass the maximal volume that might be
-	// claimed by the plate mode raytracing depending on the direction of the ray.  This will change
-	// the shotline thickness reported for any given ray, but provides a volume representative of
-	// the space the plate mode may claim as part of its solidity.
 	double fthickness = 0.5*bot->thickness[i];
 	if (NEAR_ZERO(fthickness, SMALL_FASTF))
 	    continue;
@@ -300,63 +292,16 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	// Make a sph at the vertex point with a radius based on the thickness
 	VMOVE(v, &bot->vertices[3**v_it]);
 
-	struct rt_ell_internal ell;
-	ell.magic = RT_ELL_INTERNAL_MAGIC;
-	VMOVE(ell.v, v);
-	VSET(ell.a, r, 0, 0);
-	VSET(ell.b, 0, r, 0);
-	VSET(ell.c, 0, 0, r);
-
-	struct rt_db_internal intern;
-	RT_DB_INTERNAL_INIT(&intern);
-	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	intern.idb_type = ID_ELL;
-	intern.idb_ptr = &ell;
-	intern.idb_meth = &OBJ[ID_ELL];
-
-	struct nmgregion *r1 = NULL;
-	struct model *m = nmg_mm();
-	struct bg_tess_tol ttol = BG_TESS_TOL_INIT_TOL; // TODO - may need to adjust this based on plate mode thickness setting.
-	const struct bn_tol tol = BN_TOL_INIT_TOL;
-	if (intern.idb_meth->ft_tessellate(&r1, m, &intern, &ttol, &tol))
-	    continue;
-
-	struct rt_bot_internal *sbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, &tol);
-	if (!sbot)
-	    continue;
-
-	nmg_km(m);
-
-	manifold::Mesh sph_m;
-	for (size_t j = 0; j < sbot->num_vertices ; j++)
-	    sph_m.vertPos.push_back(glm::vec3(sbot->vertices[3*j], sbot->vertices[3*j+1], sbot->vertices[3*j+2]));
-	for (size_t j = 0; j < sbot->num_faces; j++)
-	    sph_m.triVerts.push_back(glm::ivec3(sbot->faces[3*j], sbot->faces[3*j+1], sbot->faces[3*j+2]));
-
-	if (sbot->vertices)
-	    bu_free(sbot->vertices, "verts");
-	if (sbot->faces)
-	    bu_free(sbot->faces, "faces");
-	BU_FREE(sbot, struct rt_bot_internal);
-
-	manifold::Manifold left = c;
-	manifold::Manifold right(sph_m);
+	manifold::Manifold sph = manifold::Manifold::Sphere(r, 8);
+	manifold::Manifold right = sph.Translate(glm::vec3(v[0], v[1], v[2]));
 
 	try {
-	    c = left.Boolean(right, manifold::OpType::Add);
-#if defined(CHECK_INTERMEDIATES)
-	    c.GetMesh();
-#endif
+	    c += right;
 	} catch (const std::exception &e) {
 	    if (!quiet_mode) {
 		bu_log("Vertices - manifold boolean op failure\n");
 		std::cerr << e.what() << "\n";
 	    }
-#if defined(CHECK_INTERMEDIATES)
-	    manifold::ExportMesh(std::string("left.glb"), left.GetMesh(), {});
-	    manifold::ExportMesh(std::string("right.glb"), right.GetMesh(), {});
-	    bu_exit(EXIT_FAILURE, "halting on boolean failure");
-#endif
 	    return -1;
 	}
     }
@@ -399,23 +344,14 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	if (faces)
 	    bu_free(faces, "faces");
 
-	manifold::Manifold left = c;
 	manifold::Manifold right(rcc_m);
 	try {
-	    c = left.Boolean(right, manifold::OpType::Add);
-#if defined(CHECK_INTERMEDIATES)
-	    c.GetMesh();
-#endif
+	    c += right;
 	} catch (const std::exception &e) {
 	    if (!quiet_mode) {
 		bu_log("Edges - manifold boolean op failure\n");
 		std::cerr << e.what() << "\n";
 	    }
-#if defined(CHECK_INTERMEDIATES)
-	    manifold::ExportMesh(std::string("left.glb"), left.GetMesh(), {});
-	    manifold::ExportMesh(std::string("right.glb"), right.GetMesh(), {});
-	    bu_exit(EXIT_FAILURE, "halting on boolean failure");
-#endif
 	    return -1;
 	}
 
@@ -481,49 +417,21 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	faces[18] = 5; faces[19] = 4; faces[20] = 1;  // 6 5 2
 	faces[21] = 1; faces[22] = 2; faces[23] = 5;  // 2 3 6
 
-#if 0
-	bu_log("title {face}\n");
-	bu_log("units mm\n");
-	struct bu_vls vstr = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&vstr, "put {face.bot} bot mode volume orient rh flags {} V { ");
-	for (int il = 0; il < 6; il++) {
-	    bu_vls_printf(&vstr, " { %g %g %g } ", V3ARGS(((point_t *)pts)[il]));
-	}
-	bu_vls_printf(&vstr, "} F { ");
-	for (int il = 0; il < 8; il++) {
-	    bu_vls_printf(&vstr, " { %d %d %d } ", faces[il*3], faces[il*3+1], faces[il*3+2]);
-	}
-	bu_vls_printf(&vstr, "}\n");
-	bu_log("%s\n", bu_vls_cstr(&vstr));
-	bu_vls_free(&vstr);
-
-	bu_exit(EXIT_FAILURE, "test");
-#endif
-
 	manifold::Mesh arb_m;
 	for (size_t j = 0; j < 6; j++)
 	    arb_m.vertPos.push_back(glm::vec3(pts[3*j], pts[3*j+1], pts[3*j+2]));
 	for (size_t j = 0; j < 8; j++)
 	    arb_m.triVerts.push_back(glm::ivec3(faces[3*j], faces[3*j+1], faces[3*j+2]));
 
-	manifold::Manifold left = c;
 	manifold::Manifold right(arb_m);
 
 	try {
-	    c = left.Boolean(right, manifold::OpType::Add);
-#if defined(CHECK_INTERMEDIATES)
-	    c.GetMesh();
-#endif
+	    c += right;
 	} catch (const std::exception &e) {
 	    if (!quiet_mode) {
 		bu_log("Faces - manifold boolean op failure\n");
 		std::cerr << e.what() << "\n";
 	    }
-#if defined(CHECK_INTERMEDIATES)
-	    manifold::ExportMesh(std::string("left.glb"), left.GetMesh(), {});
-	    manifold::ExportMesh(std::string("right.glb"), right.GetMesh(), {});
-	    bu_exit(EXIT_FAILURE, "halting on boolean failure");
-#endif
 	    return -1;
 	}
 

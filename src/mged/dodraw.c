@@ -1,7 +1,7 @@
 /*                        D O D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,45 +50,13 @@
           } \
           BU_LIST_INIT( &((p)->s_vlist) ); }
 
-void
-cvt_vlblock_to_solids(struct bv_vlblock *vbp, const char *name, int copy)
-{
-    size_t i;
-    char shortname[32];
-    char namebuf[64];
-    char *av[4];
-
-    bu_strlcpy(shortname, name, sizeof(shortname));
-
-    /* Remove any residue colors from a previous overlay w/same name */
-    if (DBIP->dbi_read_only) {
-	av[0] = "erase";
-	av[1] = shortname;
-	av[2] = NULL;
-	(void)ged_exec(GEDP, 2, (const char **)av);
-    } else {
-	av[0] = "kill";
-	av[1] = "-f";
-	av[2] = shortname;
-	av[3] = NULL;
-	(void)ged_exec(GEDP, 3, (const char **)av);
-    }
-
-    for (i=0; i < vbp->nused; i++) {
-	if (BU_LIST_IS_EMPTY(&(vbp->head[i]))) continue;
-
-	snprintf(namebuf, sizeof(namebuf), "%s%lx",	shortname, vbp->rgb[i]);
-	invent_solid(GEDP, namebuf, &vbp->head[i], vbp->rgb[i], copy, 1.0, 0, 0);
-    }
-}
-
 
 /*
  * Compute the min, max, and center points of the solid.
  * Also finds s_vlen;
  */
 static void
-mged_bound_solid(struct bv_scene_obj *sp)
+mged_bound_solid(struct mged_state *s, struct bv_scene_obj *sp)
 {
     point_t bmin, bmax;
     size_t length = 0;
@@ -101,7 +69,7 @@ mged_bound_solid(struct bv_scene_obj *sp)
     if (cmd) {
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", cmd);
-	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
     }
 
@@ -124,14 +92,14 @@ mged_bound_solid(struct bv_scene_obj *sp)
  * This routine must be prepared to run in parallel.
  */
 void
-drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct bv_scene_obj *existing_sp)
+drawH_part2(struct mged_state *s, int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct bv_scene_obj *existing_sp)
 {
     struct display_list *gdlp;
     struct bv_scene_obj *sp;
 
     if (!existing_sp) {
 	/* Handling a new solid */
-	struct bv_scene_obj *free_scene_obj = bv_set_fsos(&GEDP->ged_views);
+	struct bv_scene_obj *free_scene_obj = bv_set_fsos(&s->gedp->ged_views);
 	GET_BV_SCENE_OBJ(sp, &free_scene_obj->l);
 	BU_LIST_APPEND(&free_scene_obj->l, &((sp)->l) );
 	sp->s_dlist = 0;
@@ -146,7 +114,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
      * Compute the min, max, and center points.
      */
     BU_LIST_APPEND_LIST(&(sp->s_vlist), vhead);
-    mged_bound_solid(sp);
+    mged_bound_solid(s, sp);
 
     /*
      * If this solid is new, fill in its information.
@@ -178,7 +146,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	    sp->s_old.s_regionid = tsp->ts_regionid;
     }
 
-    createDListSolid(sp);
+    createDListSolid(s, sp);
 
     /* Solid is successfully drawn */
     if (!existing_sp) {
@@ -186,7 +154,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	bu_semaphore_acquire(RT_SEM_MODEL);
 
 	/* Grab the last display list */
-	gdlp = BU_LIST_PREV(display_list, GEDP->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_PREV(display_list, (struct bu_list *)ged_dl(s->gedp));
 	BU_LIST_APPEND(gdlp->dl_head_scene_obj.back, &sp->l);
 
 	bu_semaphore_release(RT_SEM_MODEL);
@@ -206,13 +174,13 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
  * 0 OK
  */
 int
-replot_original_solid(struct bv_scene_obj *sp)
+replot_original_solid(struct mged_state *s, struct bv_scene_obj *sp)
 {
     struct rt_db_internal intern;
     struct directory *dp;
     mat_t mat;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return 0;
 
     if (!sp->s_u_data)
@@ -220,19 +188,19 @@ replot_original_solid(struct bv_scene_obj *sp)
     struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
     dp = LAST_SOLID(bdata);
     if (sp->s_old.s_Eflag) {
-	Tcl_AppendResult(INTERP, "replot_original_solid(", dp->d_namep,
+	Tcl_AppendResult(s->interp, "replot_original_solid(", dp->d_namep,
 			 "): Unable to plot evaluated regions, skipping\n", (char *)NULL);
 	return -1;
     }
-    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
-    if (rt_db_get_internal(&intern, dp, DBIP, mat, &rt_uniresource) < 0) {
-	Tcl_AppendResult(INTERP, dp->d_namep, ":  solid import failure\n", (char *)NULL);
+    if (rt_db_get_internal(&intern, dp, s->dbip, mat, &rt_uniresource) < 0) {
+	Tcl_AppendResult(s->interp, dp->d_namep, ":  solid import failure\n", (char *)NULL);
 	return -1;		/* ERROR */
     }
     RT_CK_DB_INTERNAL(&intern);
 
-    if (replot_modified_solid(sp, &intern, bn_mat_identity) < 0) {
+    if (replot_modified_solid(s, sp, &intern, bn_mat_identity) < 0) {
 	rt_db_free_internal(&intern);
 	return -1;
     }
@@ -253,9 +221,10 @@ replot_original_solid(struct bv_scene_obj *sp)
  */
 int
 replot_modified_solid(
-    struct bv_scene_obj *sp,
-    struct rt_db_internal *ip,
-    const mat_t mat)
+	struct mged_state *s,
+	struct bv_scene_obj *sp,
+	struct rt_db_internal *ip,
+	const mat_t mat)
 {
     struct rt_db_internal intern;
     struct bu_list vhead;
@@ -265,36 +234,36 @@ replot_modified_solid(
     BU_LIST_INIT(&vhead);
 
     if (sp == NULL) {
-	Tcl_AppendResult(INTERP, "replot_modified_solid() sp==NULL?\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "replot_modified_solid() sp==NULL?\n", (char *)NULL);
 	return -1;
     }
 
     /* Release existing vlist of this solid */
-    RT_FREE_VLIST(&(sp->s_vlist));
+    BV_FREE_VLIST(s->vlfree, &(sp->s_vlist));
 
     /* Draw (plot) a normal solid */
     RT_CK_DB_INTERNAL(ip);
 
-    mged_ttol.magic = BG_TESS_TOL_MAGIC;
-    mged_ttol.abs = mged_abs_tol;
-    mged_ttol.rel = mged_rel_tol;
-    mged_ttol.norm = mged_nrm_tol;
+    s->tol.ttol.magic = BG_TESS_TOL_MAGIC;
+    s->tol.ttol.abs = s->tol.abs_tol;
+    s->tol.ttol.rel = s->tol.rel_tol;
+    s->tol.ttol.norm = s->tol.nrm_tol;
 
-    transform_editing_solid(&intern, mat, ip, 0);
+    transform_editing_solid(s, &intern, mat, ip, 0);
 
-    if (OBJ[ip->idb_type].ft_plot(&vhead, &intern, &mged_ttol, &mged_tol, NULL) < 0) {
+    if (OBJ[ip->idb_type].ft_plot(&vhead, &intern, &s->tol.ttol, &s->tol.tol, NULL) < 0) {
 	if (!sp->s_u_data)
 	    return -1;
 	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 	if (bdata->s_fullpath.fp_len > 0)
-	    Tcl_AppendResult(INTERP, LAST_SOLID(bdata)->d_namep,
+	    Tcl_AppendResult(s->interp, LAST_SOLID(bdata)->d_namep,
 		    ": re-plot failure\n", (char *)NULL);
 	return -1;
     }
     rt_db_free_internal(&intern);
 
     /* Write new displaylist */
-    drawH_part2(sp->s_soldash, &vhead,
+    drawH_part2(s, sp->s_soldash, &vhead,
 		(struct db_full_path *)0,
 		(struct db_tree_state *)0, sp);
 
@@ -317,17 +286,13 @@ add_solid_path_to_result(
 }
 
 int
-redraw_visible_objects(void)
+redraw_visible_objects(struct mged_state *s)
 {
-    int ret, ac = 1;
-    char *av[] = {NULL, NULL};
+    const char *av[1] = {"redraw"};
+    int ret = ged_exec_redraw(s->gedp, 1, av);
 
-    av[0] = "redraw";
-    ret = ged_exec(GEDP, ac, (const char **)av);
-
-    if (ret & BRLCAD_ERROR) {
+    if (ret & BRLCAD_ERROR)
 	return TCL_ERROR;
-    }
 
     return TCL_OK;
 }

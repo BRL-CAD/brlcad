@@ -11,3 +11,59 @@
   vlist tree automatically to ease the drawing load for OpenGL.  May or may
   not be doable in a way that improves performance, but leveraging the RTree
   work done for the meshing code it may be relatively simple to test...
+
+--------------------------------------------------------------------------------
+Vulkan/VulkanSceneGraph
+
+BRL-CAD's OpenGL code is *extremely* old style - old style even by Fixed
+Function Pipeline standards, which itself has long been regarded as outdated:
+https://www.khronos.org/opengl/wiki/Legacy_OpenGL
+
+Current industry trends appear to be centered on Vulkan as the way forward,
+but directly using Vulkan is not a trivial task (all the more so since our
+code doesn't use shaders even in OpenGL - modern rendering pipelines look
+VERY different.)
+
+The osmesa library gives us a way to keep our existing OpenGL drawing code at
+least minimally viable indefinitely, providing a stand-alone self contained
+software implementation of the fixed function pipeline, but it is VERY slow
+compared to almost any system OpenGL renderer.  It's self contained nature,
+portability and relative simplicity make it a useful last resort when system
+resources are unavailable for any reason, but should be regarded as something
+to be used ONLY as a fallback or for regression testing - it is NOT a viable
+solution as the primary geometry display layer.
+
+Looking at ways forward, there are two immediately interesting technologies.
+One is Zink - an OpenGL implementation built atop Vulkan:
+
+https://docs.mesa3d.org/drivers/zink.html
+
+OpenGL 2.1 is supported by Zink, which pre-dates the removal of the fixed
+function pipeline. (2.1 is the version of OpenGL supported by osmesa.)  In
+principle, BRL-CAD's existing OpenGL might be able to utilize Zink.  This is
+something we should set up to test - if our existing OpenGL doesn't work in
+Zink but can be tweaked to do so in such a way as to also allow it to keep
+working with osmesa, that would offer us some breathing room.  It also offers a
+possible way to handle OSX's deprecation of OpenGL - there are paths to getting
+Vulkan running on OSX, although whether support there would be up to handling
+Zink+BRL-CAD would be something knowable only via experimentation.
+
+The other interesting possibility for Vulkan is VulkanSceneGraph, the successor
+code to OpenSceneGraph:  https://github.com/vsg-dev/VulkanSceneGraph  It is not
+yet clear what would be needed to get BRL-CAD's geometry displaying in VSG, but
+the new drawing work done for the qged interface might be a suitable test bed
+for exploring the possibilities.
+
+There is apparently support for embedding VSG in Qt:
+https://github.com/vsg-dev/vsgQt
+
+There is also apparently a way to get VSG to use a software based Vulkan
+backend:  https://github.com/vsg-dev/VulkanSceneGraph/discussions/1181
+
+Although it might be a heavy lift, bext dependency management could offer us
+the possibility of bootstrapping the software backend and Vulkan SDK libraries
+(as well as Zink) to guarantee a modern rendering pipeline.  If
+VulkanSceneGraph can work with that to make displaying CAD geometry and scene
+elements more straightfoward, that might offer us a path forward to a display
+system built on more modern rendering stacks.
+

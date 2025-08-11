@@ -1,7 +1,7 @@
 /*                        G - I G E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ extern void w_terminate(FILE *fp);
 extern void write_edge_list(struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
 extern void write_vertex_list(struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
 extern void nmg_region_edge_list(struct bu_ptbl *tab, struct nmgregion *r);
-extern int nmgregion_to_iges(char *name, struct nmgregion *r, int dependent, FILE *fp_dir, FILE *fp_param);
+extern int nmgregion_to_iges(char *name, struct nmgregion *r, int dependent, FILE *fp_dir, FILE *fp_param, struct bu_list *vlfree);
 extern int write_shell_face_loop(struct nmgregion *r, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
 extern void csg_comb_func(struct db_i *dbip, struct directory *dp, void *ptr);
 extern void csg_leaf_func(struct db_i *dbip, struct directory *dp, void *ptr);
@@ -127,20 +127,20 @@ struct db_i *DBIP;
 static struct db_tree_state tree_state;	/* includes tol & model */
 
 /* function table for converting solids to iges */
-extern int null_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
-extern int arb_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
-extern int ell_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
-extern int sph_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
-extern int tor_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
-extern int tgc_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
-extern int nmg_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
-extern int sketch_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
+extern int null_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int arb_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int ell_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int sph_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int tor_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int tgc_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int nmg_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
+extern int sketch_to_iges(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
 extern void iges_init(struct bn_tol *, struct bg_tess_tol *, int, struct db_i *);
 extern void Print_stats(FILE *);
 
 struct iges_functab
 {
-    int (*do_iges_write)(struct rt_db_internal *, char *, FILE *, FILE *);
+    int (*do_iges_write)(struct rt_db_internal *, char *, FILE *, FILE *, struct bu_list *);
 };
 
 
@@ -204,7 +204,7 @@ main(int argc, char *argv[])
     bu_log("%s", brlcad_ident("BRL-CAD to IGES Translator"));
     bu_log("Please direct bug reports to <bugs@brlcad.org>\n\n");
 
-    tree_state = rt_initial_tree_state;	/* struct copy */
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
@@ -223,7 +223,7 @@ main(int argc, char *argv[])
     tol.para = 1 - tol.perp;
 
     the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    struct bu_list *vlfree = &rt_vlfree;
 
     prog_name = argv[0];
 
@@ -346,7 +346,7 @@ main(int argc, char *argv[])
 			   0,			/* take all regions */
 			   do_nmg_region_end,
 			   rt_booltree_leaf_tess,
-			   (void *)NULL);	/* in librt/nmg_bool.c */
+			   (void *)vlfree);	/* in librt/nmg_bool.c */
 
 	if (ret)
 	    bu_exit(1, "g-iges: Could not facetize anything!");
@@ -443,7 +443,7 @@ main(int argc, char *argv[])
 
 
 static union tree *
-process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_full_path *pathp)
+process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_full_path *pathp, struct bu_list *vlfree)
 {
     static union tree *result = NULL;
 
@@ -451,8 +451,8 @@ process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
-	result = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	(void)nmg_model_fuse(*tsp->ts_m, vlfree, tsp->ts_tol);
+	result = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else {
 	/* catch */
@@ -491,7 +491,7 @@ process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_
  * This routine must be prepared to run in parallel.
  */
 union tree *
-do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
+do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     union tree *result;
     struct nmgregion *r;
@@ -499,6 +499,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     struct directory *dp;
     int dependent;
     size_t i;
+    struct bu_list *vlfree = (struct bu_list *)client_data;
 
     BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
@@ -524,7 +525,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	bu_log("\ndoing boolean tree evaluate...\n");
 
     /* evaluate the boolean */
-    result = process_boolean(tsp, curtree, pathp);
+    result = process_boolean(tsp, curtree, pathp, vlfree);
 
     if (result)
 	r = result->tr_d.td_r;
@@ -611,7 +612,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		}
 	    }
 
-	    dp->d_uses = (-nmgregion_to_iges(dp->d_namep, r, dependent, fp_dir, fp_param));
+	    dp->d_uses = (-nmgregion_to_iges(dp->d_namep, r, dependent, fp_dir, fp_param, vlfree));
 	} else if (mode == TRIMMED_SURF_MODE)
 	    dp->d_uses = (-nmgregion_to_tsurf(dp->d_namep, r, fp_dir, fp_param));
 
@@ -796,6 +797,7 @@ void
 csg_leaf_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {
     struct rt_db_internal ip;
+    struct bu_list *vlfree = &rt_vlfree;
 
     /* if this solid has already been output, don't do it again */
     if (dp->d_uses < 0)
@@ -808,7 +810,7 @@ csg_leaf_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 	bu_log("Error in import");
 
     solid_is_brep = 0;
-    dp->d_uses = (-iges_write[ip.idb_type].do_iges_write(&ip, dp->d_namep, fp_dir, fp_param));
+    dp->d_uses = (-iges_write[ip.idb_type].do_iges_write(&ip, dp->d_namep, fp_dir, fp_param, vlfree));
 
     if (!dp->d_uses) {
 	bu_log("g-iges: failed to translate %s to IGES format\n", dp->d_namep);

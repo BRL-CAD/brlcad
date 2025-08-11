@@ -1,7 +1,7 @@
 /*                  D M _ P L U G I N S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2024 United States Government as represented by
+ * Copyright (c) 2020-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -152,7 +152,7 @@ dm_list_types(struct bu_vls *list, const char *separator)
     }
 
     /* Report anything not included in the priority list but still available */
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    const char *cmd2 = getenv("DM_SWRAST");
     int report_swrast = 0;
     if (BU_STR_EQUAL(cmd2, "1"))
 	report_swrast = 1;
@@ -196,7 +196,7 @@ dm_validXType(const char *dpy_string, const char *name)
 	return 0;
     }
 
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    const char *cmd2 = getenv("DM_SWRAST");
     int report_swrast = 0;
     if (BU_STR_EQUAL(cmd2, "1"))
 	report_swrast = 1;

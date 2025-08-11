@@ -1,7 +1,7 @@
 /*                    O B J _ P R E P . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2024 United States Government as represented by
+ * Copyright (c) 2010-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,12 +30,14 @@ rt_obj_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     int id;
     const struct rt_functab *ft;
 
-    if (!stp || !ip)
+    if (!stp)
 	return -1;
 
     RT_CK_SOLTAB(stp);
-    RT_CK_DB_INTERNAL(ip);
-    if (rtip) RT_CK_RTI(rtip);
+    if (ip)
+	RT_CK_DB_INTERNAL(ip);
+    if (rtip)
+	RT_CK_RTI(rtip);
 
     id = stp->st_id;
     if (id < 0)
@@ -56,12 +58,14 @@ rt_obj_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struc
 {
     const struct rt_functab *ft;
 
-    if (!stp || !ip || !external || !version)
+    if (!stp)
 	return -1;
 
     RT_CK_SOLTAB(stp);
-    RT_CK_DB_INTERNAL(ip);
-    BU_CK_EXTERNAL(external);
+    if (ip)
+	RT_CK_DB_INTERNAL(ip);
+    if (external)
+	BU_CK_EXTERNAL(external);
 
     if (stp->st_id < 0)
 	return -2;

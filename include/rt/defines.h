@@ -1,7 +1,7 @@
 /*                       D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2024 United States Government as represented by
+ * Copyright (c) 2011-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -141,6 +141,12 @@
 #define ID_SCRIPT       45      /**< @brief Script */
 #define ID_MAXIMUM      47      /**< @brief Maximum defined ID_xxx value */
 
+
+/* Used when instructing whether lower nodes in trees override higher nodes
+ * or vice versa. */
+#define DB_INH_LOWER	0	/* Lower nodes override */
+#define DB_INH_HIGHER   1	/* Higher nodes override */
+
 /**
  * DEPRECATED: external applications should use other LIBRT API to
  * access database objects.
@@ -171,12 +177,6 @@
  */
 #define RT_DBHASH(sum)  ((size_t)(sum) & ((RT_DBNHASH)-1))
 #endif
-
-/* Used to set globals declared in bot.c */
-#define RT_DEFAULT_MINPIECES            32
-#define RT_DEFAULT_TRIS_PER_PIECE       4
-#define RT_DEFAULT_MINTIE               0       /* TODO: find the best value */
-
 
 #define BACKING_DIST    (-2.0)          /**< @brief  mm to look behind start point */
 #define OFFSET_DIST     0.01            /**< @brief  mm to advance point into box */

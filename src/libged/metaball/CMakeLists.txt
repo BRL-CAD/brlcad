@@ -4,19 +4,15 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-metaball SHARED metaball.c)
+ged_plugin_library(ged-metaball metaball.c)
 target_link_libraries(ged-metaball libged libbu)
-set_property(TARGET ged-metaball APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-metaball metaball.c)
-PLUGIN_SETUP(ged-metaball ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   metaball.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

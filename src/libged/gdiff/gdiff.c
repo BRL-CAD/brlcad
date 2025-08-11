@@ -1,7 +1,7 @@
 /*                         G D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2024 United States Government as represented by
+ * Copyright (c) 2014-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -414,8 +414,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 
-	const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
-	if (BU_STR_EQUAL(nview, "1")) {
+	if (gedp->new_cmd_forms) {
 	    struct bview *view = gedp->ged_gvp;
 	    bv_vlblock_obj(vbp, view, "gdiff");
 	} else {

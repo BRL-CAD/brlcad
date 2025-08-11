@@ -1,7 +1,7 @@
 /*                    O B J _ P A R S E R . H
  * BRL-CAD
  *
- * Copyright (c) 1995-2024 United States Government as represented by
+ * Copyright (c) 1995-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

@@ -1,7 +1,7 @@
 /*                         T I G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ BV_EXPORT extern void BU_FORTRAN(f3list, F3LIST)(FILE **fpp,
 						 int *n);
 
 /**
- * Take a set of x, y co-ordinates and plots them, with a combination
+ * Take a set of x, y coordinates and plots them, with a combination
  * of connecting lines and/or place markers.  It is important to note
  * that the arrays are arrays of doubles, and express UNIX-plot
  * coordinates in the current pl_space().

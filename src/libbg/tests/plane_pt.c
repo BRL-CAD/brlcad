@@ -1,7 +1,7 @@
 /*                    P L A N E _ P T . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2024 United States Government as represented by
+ * Copyright (c) 2013-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -188,11 +188,11 @@ test_bg_plane_closest_pt(int argc, char **argv)
 
     fastf_t u, v;
     point_t npt;
-    if (bg_plane_closest_pt(&u, &v, plane, p)) {
+    if (bg_plane_closest_pt(&u, &v, &plane, &p)) {
 	bu_log("closest pt calculation failed\n");
 	return -1;
     }
-    if (bg_plane_pt_at(&npt, plane, u, v)) {
+    if (bg_plane_pt_at(&npt, &plane, u, v)) {
 	bu_log("pt at u,v calculation failed\n");
 	return -1;
     }

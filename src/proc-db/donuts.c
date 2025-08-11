@@ -1,7 +1,7 @@
 /*                        D O N U T S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2024 United States Government as represented by
+ * Copyright (c) 1998-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -820,7 +820,7 @@ argumentHelp(FILE *outfp, const char *progname, char *message)
 	);
 
     fprintf(outfp, "\t-[zZ]\n\t\tdisplays the default settings\n");
-    putc((int)'\n', outfp);
+    fputc((int)'\n', outfp);
 
     return;
 }
@@ -859,8 +859,7 @@ main(int argc, char **argv)
 
     if (verbose) {
 	fprintf(DEFAULT_VERBOSE_OUTPUT, "\nDonut Flake Properties:\n");
-
-	putc((int)'\n', DEFAULT_VERBOSE_OUTPUT);
+	fputc((int)'\n', DEFAULT_VERBOSE_OUTPUT);
     }
 
     initializeInfo(&parameters, parameters.fileName, parameters.maxDepth);

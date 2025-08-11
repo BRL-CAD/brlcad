@@ -1,7 +1,7 @@
 /*                    C O N V S O L I D S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #include "./iges_extern.h"
 
 void
-Convsolids(void)
+Convsolids(struct bu_list *vlfree)
 {
 
     size_t i;
@@ -69,7 +69,7 @@ Convsolids(void)
 		break;
 	    case 164:
 		totsolids++;
-		conv += extrude(i);
+		conv += extrude(i, vlfree);
 		break;
 	    case 168:
 		totsolids++;
@@ -77,7 +77,7 @@ Convsolids(void)
 		break;
 	    case 186:
 		totsolids++;
-		conv += brep(i);
+		conv += brep(i, vlfree);
 		break;
 	}
     }

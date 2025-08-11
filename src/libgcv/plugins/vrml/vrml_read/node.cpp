@@ -1,7 +1,7 @@
 /*			 N O D E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2024 United States Government as represented by
+ * Copyright (c) 2015-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -512,7 +512,7 @@ NODE::rotXNode(NODE *node, double rad) {
 	tempvec[0] = node->vertics[i];
 	tempvec[1] = node->vertics[i+1];
 	tempvec[2] = node->vertics[i+2];
-	VEC3X4MAT(&node->vertics[i], tempvec, rotmatt);  //Mutiply vector by rotation matrix
+	VEC3X4MAT(&node->vertics[i], tempvec, rotmatt);  //Multiply vector by rotation matrix
     }
 
 }

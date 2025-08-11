@@ -1,7 +1,7 @@
 /*                         E R A S E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,8 +39,7 @@ extern int ged_erase2_core(struct ged *gedp, int argc, const char **argv);
 int
 ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 {
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(cmd2, "1"))
+    if (gedp->new_cmd_forms)
 	return ged_erase2_core(gedp, argc, argv);
 
     size_t i;

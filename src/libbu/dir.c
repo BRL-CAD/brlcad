@@ -1,7 +1,7 @@
 /*                           D I R . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2024 United States Government as represented by
+ * Copyright (c) 2018-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -325,8 +325,7 @@ path_append(struct bu_vls *vp, const char *buf)
  *
  * @return boolean on whether a match was found.
  */
-// TODO - this can be static once bu_brlcad_root is removed
-int
+static int
 _bu_dir_join_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_vls *searched, const char *where)
 {
     size_t llen, rlen;

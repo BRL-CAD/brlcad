@@ -1,7 +1,7 @@
 /*                          V I E W . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,13 @@
 #include "rt/defines.h"
 
 __BEGIN_DECLS
+
+
+/* Routines for managing the mesh LoD cache */
+RT_EXPORT extern void db_mesh_lod_init(struct db_i *dbip, int verbose);
+RT_EXPORT extern void db_mesh_lod_clear(struct db_i *dbip);
+RT_EXPORT extern int db_mesh_lod_update(struct db_i *dbip, const char *name);
+RT_EXPORT extern struct bv_mesh_lod *db_mesh_lod_get(struct db_i *dbip, const char *name);
 
 /**
  * NOTE: Normally, librt doesn't have a concept of a "display" of the geometry.

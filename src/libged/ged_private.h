@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,6 +42,92 @@
 #include "bv/util.h"
 #include "ged.h"
 
+#ifdef __cplusplus
+
+#include <map>
+#include <stack>
+#include <string>
+
+#endif
+
+struct ged_qray_color {
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+};
+
+struct ged_qray_fmt {
+    char type;
+    struct bu_vls fmt;
+};
+
+struct vd_curve {
+    struct bu_list      l;
+    char                vdc_name[RT_VDRW_MAXNAME+1];    /**< @brief name array */
+    long                vdc_rgb;        /**< @brief color */
+    struct bu_list      vdc_vhd;        /**< @brief head of list of vertices */
+};
+#define VD_CURVE_NULL   ((struct vd_curve *)NULL)
+
+struct ged_drawable {
+    struct bu_list              *gd_headDisplay;        /**< @brief  head of display list */
+    struct bu_list              *gd_headVDraw;          /**< @brief  head of vdraw list */
+    struct vd_curve             *gd_currVHead;          /**< @brief  current vdraw head */
+
+    ged_drawable_notify_func_t  gd_rtCmdNotify; /**< @brief  function called when rt command completes */
+
+    int                         gd_uplotOutputMode;     /**< @brief  output mode for unix plots */
+
+    /* qray state */
+    struct bu_vls               gd_qray_basename;       /**< @brief  basename of query ray vlist */
+    struct bu_vls               gd_qray_script;         /**< @brief  query ray script */
+    char                        gd_qray_effects;        /**< @brief  t for text, g for graphics or b for both */
+    int                         gd_qray_cmd_echo;       /**< @brief  0 - don't echo command, 1 - echo command */
+    struct ged_qray_fmt         *gd_qray_fmts;
+    struct ged_qray_color       gd_qray_odd_color;
+    struct ged_qray_color       gd_qray_even_color;
+    struct ged_qray_color       gd_qray_void_color;
+    struct ged_qray_color       gd_qray_overlap_color;
+    int                         gd_shaded_mode;         /**< @brief  1 - draw bots shaded by default */
+};
+
+
+#ifdef __cplusplus
+
+class Ged_Internal {
+    public:
+	struct ged *gedp;
+	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_prerun_clbk;
+	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_during_clbk;
+	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_postrun_clbk;
+	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_linger_clbk;
+
+	std::map<bu_clbk_t, int> clbk_recursion_depth_cnt;
+	std::map<std::string, int> cmd_recursion_depth_cnt;
+
+	std::stack<std::string> exec_stack;
+
+	std::map<std::string, void *> dm_map;
+
+	// Persisting state between loadview and preview
+	// commands and subcommands.
+	vect_t ged_eye_model = VINIT_ZERO;
+	mat_t ged_viewrot = MAT_INIT_ZERO;
+};
+
+#else
+
+#define Ged_Internal void
+
+#endif
+
+struct ged_impl {
+    uint32_t magic;
+    Ged_Internal *i;
+
+    struct ged_drawable *ged_gdp;
+};
+
 __BEGIN_DECLS
 
 #ifndef FALSE
@@ -53,6 +139,7 @@ __BEGIN_DECLS
 #endif
 
 #define _GED_V4_MAXNAME NAMESIZE
+/* Default libged column width assumption */
 #define _GED_TERMINAL_WIDTH 80
 #define _GED_COLUMNS ((_GED_TERMINAL_WIDTH + _GED_V4_MAXNAME - 1) / _GED_V4_MAXNAME)
 
@@ -79,12 +166,7 @@ __BEGIN_DECLS
 /* Container for defining sub-command structures */
 #define _GED_FUNTAB_UNLIMITED -1
 
-#define DG_GED_MAX 2047.0
-#define DG_GED_MIN -2048.0
-
-/* Default libged column width assumption */
-#define GED_TERMINAL_WIDTH 80
-
+#define GED_CMD_RECURSION_LIMIT 100
 
 /* Callback management related structures */
 #define GED_REFRESH_FUNC_NULL ((ged_refresh_func_t)0)
@@ -117,79 +199,6 @@ GED_EXPORT extern void ged_create_vlist_display_list_cb(struct ged *, struct dis
 GED_EXPORT extern void ged_destroy_vlist_cb(struct ged *, unsigned int, int);
 GED_EXPORT extern void ged_io_handler_cb(struct ged *, void *, int);
 
-struct ged_solid_data {
-    struct display_list *gdlp;
-    int draw_solid_lines_only;
-    int wireframe_color_override;
-    int wireframe_color[3];
-    fastf_t transparency;
-    int dmode;
-    struct bview *v;
-};
-
-struct _ged_funtab {
-    char *ft_name;
-    char *ft_parms;
-    char *ft_comment;
-    int (*ft_func)(void);
-    int ft_min;
-    int ft_max;
-    int tcl_converted;
-};
-
-
-struct _ged_id_names {
-    struct bu_list l;
-    struct bu_vls name;		/**< name associated with region id */
-};
-
-
-struct _ged_id_to_names {
-    struct bu_list l;
-    int id;				/**< starting id (i.e. region id or air code) */
-    struct _ged_id_names headName;	/**< head of list of names */
-};
-
-
-struct _ged_client_data {
-    uint32_t magic;  /* add this so a pointer to the struct and a pointer to any of its active elements will differ */
-    struct ged *gedp;
-    struct rt_wdb *wdbp;
-    struct display_list *gdlp;
-    int fastpath_count;			/* statistics */
-    struct bv_vlblock *draw_edge_uses_vbp;
-    struct bview *v;
-
-
-
-    /* bigE related members */
-    struct application *ap;
-    struct bu_ptbl leaf_list;
-    struct rt_i *rtip;
-    time_t start_time;
-    time_t etime;
-    long nvectors;
-    int do_polysolids;
-    int num_halfs;
-    int autoview;
-    int nmg_fast_wireframe_draw;
-
-    // Debugging plotting specific options.  These don't actually belong with
-    // the drawing routines at all - they are analogous to the brep debugging
-    // plotting routines, and belong with nmg/bot/etc. plot subcommands.
-    int draw_nmg_only;
-    int nmg_triangulate;
-    int draw_normals;
-    int draw_no_surfaces;
-    int shade_per_vertex_normals;
-    int draw_edge_uses;
-    int do_not_draw_nmg_solids_during_debugging;
-
-
-    struct bv_obj_settings vs;
-};
-
-
 /* Data for tree walk */
 struct draw_data_t {
     struct db_i *dbip;
@@ -216,16 +225,11 @@ struct draw_data_t {
     std::map<struct directory *, fastf_t> *s_size;
 #endif
 };
-GED_EXPORT void draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
-          void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
-          void *client_data, void *comb_inst_map);
+
 GED_EXPORT void draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data);
 
 GED_EXPORT void vls_col_item(struct bu_vls *str, const char *cp);
 GED_EXPORT void vls_col_eol(struct bu_vls *str);
-
-/* defined in facedef.c */
-GED_EXPORT extern int edarb_facedef(void *data, int argc, const char *argv[]);
 
 /* defined in ged.c */
 GED_EXPORT extern struct db_i *_ged_open_dbip(const char *filename,
@@ -254,82 +258,20 @@ GED_EXPORT extern int _ged_combadd2(struct ged *gedp,
 GED_EXPORT extern void _dl_eraseAllNamesFromDisplay(struct ged *gedp, const char *name, const int skip_first);
 GED_EXPORT extern void _dl_eraseAllPathsFromDisplay(struct ged *gedp, const char *path, const int skip_first);
 extern void _dl_freeDisplayListItem(struct ged *gedp, struct display_list *gdlp);
-extern int headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list *gdlp, struct db_full_path *path);
 GED_EXPORT extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag);
-/* Returns a bu_ptbl of all solids referenced by the display list */
-extern struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
 
-GED_EXPORT extern void dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, struct _ged_client_data *dgcdp);
-
-GED_EXPORT extern int dl_redraw(struct display_list *gdlp, struct ged *gedp, int skip_subtractions);
-GED_EXPORT extern union tree * append_solid_to_display_list(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data);
-GED_EXPORT int dl_set_illum(struct display_list *gdlp, const char *obj, int illum);
-GED_EXPORT void dl_set_flag(struct bu_list *hdlp, int flag);
-GED_EXPORT void dl_set_wflag(struct bu_list *hdlp, int wflag);
-GED_EXPORT void dl_zap(struct ged *gedp);
-GED_EXPORT int dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both);
-GED_EXPORT void dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t center, fastf_t scale, int Three_D, int Z_clip);
-GED_EXPORT void dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_pos, size_t size, size_t half_size, unsigned char **image);
-
-#define PS_COORD(_x) ((int)((_x)+2048))
-#define PS_COLOR(_c) ((_c)*(1.0/255.0))
-GED_EXPORT void dl_ps(struct bu_list *hdlp, FILE *fp, int border, char *font, char *title, char *creator, int linewidth, fastf_t scale, int xoffset, int yoffset, mat_t model2view, fastf_t perspective, vect_t eye_pos, float red, float green, float blue);
-
-
-GED_EXPORT void dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, struct bu_vls *vls);
-
-GED_EXPORT void dl_bitwise_and_fullpath(struct bu_list *hdlp, int flag);
-
-GED_EXPORT void dl_write_animate(struct bu_list *hdlp, FILE *fp);
-
-GED_EXPORT int dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx, double vy, double vwidth, double vheight, int rflag);
-GED_EXPORT int dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx, double vy, double vwidth, double vheight, int rflag);
-GED_EXPORT void dl_set_transparency(struct ged *gedp, struct directory **dpp, double transparency);
+GED_EXPORT extern void color_soltab(struct bv_scene_obj *sp);
 
 /* defined in draw.c */
 GED_EXPORT extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
 				       struct bv_vlblock *vbp,
 				       const char *name,
 				       int copy);
-GED_EXPORT extern int _ged_drawtrees(struct ged *gedp,
-			  int argc,
-			  const char *argv[],
-			  int kind,
-			  struct _ged_client_data *_dgcdp);
-GED_EXPORT extern void _ged_drawH_part2(int dashflag,
-			     struct bu_list *vhead,
-			     const struct db_full_path *pathp,
-			     struct db_tree_state *tsp,
-			     struct _ged_client_data *dgcdp);
-
-/* defined in edbot.c */
-GED_EXPORT extern int _ged_select_botpts(struct ged *gedp,
-			      struct rt_bot_internal *botip,
-			      double vx,
-			      double vy,
-			      double vwidth,
-			      double vheight,
-			      double vminz,
-			      int rflag);
-
 
 /* defined in editit.c */
-GED_EXPORT extern int _ged_editit(const char *editstring,
+GED_EXPORT extern int _ged_editit(struct ged *gedp,
+	               const char *editstring,
 		       const char *file);
-
-/* defined in erase.c */
-extern void _ged_eraseobjpath(struct ged *gedp,
-			      int argc,
-			      const char *argv[],
-			      const int noisy,
-			      const int all,
-			      const int skip_first);
-extern void _ged_eraseobjall(struct ged *gedp,
-			     struct directory **dpp,
-			     int skip_first);
-extern void _ged_eraseobj(struct ged *gedp,
-			  struct directory **dpp,
-			  int skip_first);
 
 GED_EXPORT extern int _ged_get_obj_bounds2(struct ged *gedp,
 				int argc,
@@ -344,13 +286,6 @@ GED_EXPORT extern int _ged_get_solid_keypoint(struct ged *const gedp,
 				   const struct rt_db_internal *const ip,
 				   const fastf_t *const mat);
 
-/*  defined in gqa.c (TODO - this is in lieu of putting these in struct ged.
- *  gqa is using globals, which may explain some bug reports we've gotten -
- *  this and the _ged_current_gedp both need to be scrubbed down to local gqa
- *  vars. */
-extern struct analyze_densities *_gd_densities;
-extern char *_gd_densities_source;
-
 /* defined in how.c */
 GED_EXPORT extern struct directory **_ged_build_dpp(struct ged *gedp,
 					 const char *path);
@@ -360,44 +295,23 @@ GED_EXPORT extern void _ged_do_list(struct ged *gedp,
 			 struct directory *dp,
 			 int verbose);
 
-/* defined in loadview.c */
-GED_EXPORT extern vect_t _ged_eye_model;
-GED_EXPORT extern mat_t _ged_viewrot;
-GED_EXPORT extern struct ged *_ged_current_gedp;
-GED_EXPORT extern int _ged_cm_vsize(const int argc,
-			 const char **argv);
-GED_EXPORT extern int _ged_cm_eyept(const int argc,
-			 const char **argv);
-GED_EXPORT extern int _ged_cm_lookat_pt(const int argc,
-			     const char **argv);
-GED_EXPORT extern int _ged_cm_vrot(const int argc,
-			const char **argv);
-GED_EXPORT extern int _ged_cm_orientation(const int argc,
-			       const char **argv);
-GED_EXPORT extern int _ged_cm_set(const int argc,
-		       const char **argv);
-GED_EXPORT extern int _ged_cm_end(const int argc,
-		       const char **argv);
-GED_EXPORT extern int _ged_cm_null(const int argc,
-			const char **argv);
-
-/* defined in preview.c */
-extern void _ged_setup_rt(struct ged *gedp,
-			  char **vp,
-			  int printcmd);
-
-/* defined in red.c */
-
-extern char _ged_tmpfil[];
-
-
 /* defined in rt.c */
 GED_EXPORT extern void
 _ged_rt_output_handler(void *clientData, int mask);
 
 GED_EXPORT extern void _ged_rt_set_eye_model(struct ged *gedp,
 				  vect_t eye_model);
-GED_EXPORT extern int _ged_run_rt(struct ged *gdp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv, int stdout_is_txt);
+GED_EXPORT extern int _ged_run_rt(
+	struct ged *gdp,
+       	int cmd_len,
+       	const char **gd_rt_cmd,
+       	int argc,
+       	const char **argv,
+       	int stdout_is_txt,
+       	int *pid,
+	bu_clbk_t end_clbk,
+	void *end_clbk_data);
+
 GED_EXPORT extern void _ged_rt_write(struct ged *gedp,
 			  FILE *fp,
 			  vect_t eye_model,
@@ -408,120 +322,10 @@ GED_EXPORT extern void _ged_rt_write(struct ged *gedp,
 GED_EXPORT extern void _ged_wait_status(struct bu_vls *logstr,
 			     int status);
 
-/* defined in rotate_eto.c */
-GED_EXPORT extern int _ged_rotate_eto(struct ged *gedp,
-			   struct rt_eto_internal *eto,
-			   const char *attribute,
-			   matp_t rmat);
-
-/* defined in rotate_extrude.c */
-GED_EXPORT extern int _ged_rotate_extrude(struct ged *gedp,
-			       struct rt_extrude_internal *extrude,
-			       const char *attribute,
-			       matp_t rmat);
-
-/* defined in rotate_hyp.c */
-GED_EXPORT extern int _ged_rotate_hyp(struct ged *gedp,
-			   struct rt_hyp_internal *hyp,
-			   const char *attribute,
-			   matp_t rmat);
-
-/* defined in rotate_tgc.c */
-GED_EXPORT extern int _ged_rotate_tgc(struct ged *gedp,
-			   struct rt_tgc_internal *tgc,
-			   const char *attribute,
-			   matp_t rmat);
-
-/* defined in edit_metaball.c */
-GED_EXPORT extern int _ged_scale_metaball(struct ged *gedp,
-			       struct rt_metaball_internal *mbip,
-			       const char *attribute,
-			       fastf_t sf,
-			       int rflag);
-GED_EXPORT extern int _ged_set_metaball(struct ged *gedp,
-			     struct rt_metaball_internal *mbip,
-			     const char *attribute,
-			     fastf_t sf);
-GED_EXPORT extern struct wdb_metaball_pnt *
-_ged_get_metaball_pt_i(struct rt_metaball_internal *mbip, int mbp_i);
-
-/* defined in scale_part.c */
-GED_EXPORT extern int _ged_scale_part(struct ged *gedp,
-			   struct rt_part_internal *part,
-			   const char *attribute,
-			   fastf_t sf,
-			   int rflag);
-
-/* defined in edpipe.c */
-GED_EXPORT extern int _ged_scale_pipe(struct ged *gedp,
-			   struct rt_pipe_internal *pipe_internal,
-			   const char *attribute,
-			   fastf_t sf,
-			   int rflag);
-
-GED_EXPORT extern int _ged_get_pipe_i_seg(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps);
-GED_EXPORT extern int _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], struct wdb_pipe_pnt *(*func)(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t));
-GED_EXPORT extern int _ged_pipe_move_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps, const point_t new_pt);
-GED_EXPORT extern struct wdb_pipe_pnt *_ged_get_pipe_seg_i(struct rt_pipe_internal *pipeip, int seg_i);
-GED_EXPORT extern struct wdb_pipe_pnt *_ged_pipe_add_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const point_t new_pt);
-GED_EXPORT extern struct wdb_pipe_pnt *_ged_pipe_delete_pnt(struct wdb_pipe_pnt *ps);
-GED_EXPORT extern struct wdb_pipe_pnt *_ged_pipe_ins_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const point_t new_pt);
-GED_EXPORT extern struct wdb_pipe_pnt *find_pipe_pnt_nearest_pnt(const struct bu_list *pipe_hd, const point_t model_pt, matp_t view2model);
-
-
-/* defined in scale_rhc.c */
-GED_EXPORT extern int _ged_scale_rhc(struct ged *gedp,
-			  struct rt_rhc_internal *rhc,
-			  const char *attribute,
-			  fastf_t sf,
-			  int rflag);
-
-/* defined in scale_rpc.c */
-GED_EXPORT extern int _ged_scale_rpc(struct ged *gedp,
-			  struct rt_rpc_internal *rpc,
-			  const char *attribute,
-			  fastf_t sf,
-			  int rflag);
-
-/* defined in scale_superell.c */
-GED_EXPORT extern int _ged_scale_superell(struct ged *gedp,
-			       struct rt_superell_internal *superell,
-			       const char *attribute,
-			       fastf_t sf,
-			       int rflag);
-
-/* defined in scale_tgc.c */
-GED_EXPORT extern int _ged_scale_tgc(struct ged *gedp,
-			  struct rt_tgc_internal *tgc,
-			  const char *attribute,
-			  fastf_t sf,
-			  int rflag);
-
-/* defined in scale_tor.c */
-GED_EXPORT extern int _ged_scale_tor(struct ged *gedp,
-			  struct rt_tor_internal *tor,
-			  const char *attribute,
-			  fastf_t sf,
-			  int rflag);
-
-/* defined in tops.c */
+/* defined in ged_util.cpp */
 GED_EXPORT struct directory **
 _ged_dir_getspace(struct db_i *dbip,
 		  size_t num_entries);
-
-/* defined in translate_extrude.c */
-GED_EXPORT extern int _ged_translate_extrude(struct ged *gedp,
-				  struct rt_extrude_internal *extrude,
-				  const char *attribute,
-				  vect_t tvec,
-				  int rflag);
-
-/* defined in translate_tgc.c */
-GED_EXPORT extern int _ged_translate_tgc(struct ged *gedp,
-			      struct rt_tgc_internal *tgc,
-			      const char *attribute,
-			      vect_t tvec,
-			      int rflag);
 
 /* defined in vutil.c */
 GED_EXPORT extern int _ged_do_rot(struct ged *gedp,
@@ -583,15 +387,8 @@ GED_EXPORT extern void _ged_vls_col_pr4v(struct bu_vls *vls,
 			      int no_decorate,
 			      int ssflag);
 
-/**
- * This routine walks through the directory entry list and mallocs
- * enough space for pointers to hold the number of entries specified
- * by the argument if > 0.
- *
- */
-GED_EXPORT extern struct directory ** _ged_getspace(struct db_i *dbip,
-					 size_t num_entries);
 
+GED_EXPORT extern int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode, int csoltab);
 
 #if 0
 /**

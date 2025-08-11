@@ -1,7 +1,7 @@
 /*               T R I M E S H _ I S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2024 United States Government as represented by
+ * Copyright (c) 2018-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -220,7 +220,6 @@ bg_trimesh_isect(
     plot_faces("m2.plot3", &m2_intersecting_faces, faces_2, vertices_2);
 
 
-
 #if 0
 
     /* From the set of intersecting faces in each face, characterize the vertices
@@ -252,4 +251,3 @@ bg_trimesh_isect(
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

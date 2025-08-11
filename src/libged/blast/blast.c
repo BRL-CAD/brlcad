@@ -1,7 +1,7 @@
 /*                         B L A S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,16 +51,13 @@ ged_blast_core(struct ged *gedp, int argc, const char *argv[])
 
     /* First, clear the screen */
     {
-	const char *av[2];
-
-	av[0] = "zap";
-	av[1] = (char *)0;
-	ged_exec(gedp, 1, av);
+	const char *av[1] = {"zap"};
+	ged_exec_zap(gedp, 1, av);
     }
 
     /* Draw the new object(s) */
     argv[0] = "draw";
-    return ged_exec(gedp, argc, argv);
+    return ged_exec_draw(gedp, argc, argv);
 }
 
 

@@ -134,6 +134,9 @@
 	# history originated on that branch.  SVN, however, DID know which branch its commits
 	# originated on, and that information is encoded in the commit notes.  Accordingly, we
 	# can use that key to inspect the historical commit history of SVN branches.
+	#
+	# TODO - investigate use of --first-parent option for git log to see if it can help
+	# visualize topic-branch history in similar scenarios...
         logb = "!f() { \
                 if [ x$1 != x ] ; then \
                    CURRBRANCH=$1; \
@@ -158,6 +161,26 @@
 # Set the graphical tool used by "git difftool -g"
 [diff]
 	guitool = meld
+
+#****************************************************************************#
+# Work with local github mirror (assuming location of mirror on local
+# filesystem is /home/user/BRL-CAD) - see sh/mirror_repos.sh script for
+# more details.
+#
+# Contents of .githubbrlcad should be:
+#
+# [protocol "file"]
+#        allow = always
+#
+# [url "/home/user/BRL-CAD/"]
+#         insteadOf = https://github.com/BRL-CAD
+#
+#*********************************
+#[includeIf "hasconfig:remote.*.url:https://github.com/BRL-CAD/**"]
+#        path = .githubbrlcad
+#[includeIf "gitdir:/home/user/BRL-CAD/"]
+#        path = .githubbrlcad
+
 
 # -*- mode: gitconfig; -*-
 # vim: set filetype=gitconfig:

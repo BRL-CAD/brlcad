@@ -1,7 +1,7 @@
 /*                          P A R T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -244,7 +244,7 @@ size_t
 clt_part_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct part_specific *part =
-        (struct part_specific *)stp->st_specific;
+	(struct part_specific *)stp->st_specific;
     struct clt_part_specific *args;
 
     const size_t size = sizeof(*args);
@@ -979,7 +979,7 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
 
@@ -1092,7 +1092,7 @@ struct part_vert_strip {
 
 
 /**
- * Based upon the tesselator for the ellipsoid.
+ * Based upon the tessellator for the ellipsoid.
  *
  * Break the particle into three parts:
  * Upper hemisphere	0..nsegs		H	North
@@ -1586,11 +1586,71 @@ rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     return 0;
 }
 
+int
+rt_part_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_part_internal *tip = (struct rt_part_internal *)ip->idb_ptr;
+    RT_PART_CK_MAGIC(tip);
+    struct rt_part_internal *part = (struct rt_part_internal *)rop->idb_ptr;
+    RT_PART_CK_MAGIC(part);
+
+    vect_t part_V, part_H;
+    MAT4X3PNT(part_V, mat, tip->part_V);
+    MAT4X3VEC(part_H, mat, tip->part_H);
+    double vrad = tip->part_vrad / mat[15];
+    double hrad = tip->part_hrad / mat[15];
+    double maxrad = (vrad > hrad) ? vrad : hrad;
+    double minrad = (vrad < hrad) ? vrad : hrad;
+
+    if (vrad < 0) {
+	bu_log("rt_part_mat: unable to apply matrix, produces negative v radius\n");
+	return BRLCAD_ERROR;
+    }
+    if (hrad < 0) {
+	bu_log("rt_part_mat: unable to apply matrix, negative h radius\n");
+	return BRLCAD_ERROR;
+    }
+    if (maxrad <= 0) {
+	bu_log("rt_part_mat: unable to apply matrix, negative radius\n");
+	return BRLCAD_ERROR;
+    }
+
+    // Passed validity checks, actually alter values
+    VMOVE(part->part_V, part_V);
+    VMOVE(part->part_H, part_H);
+    part->part_vrad = vrad;
+    part->part_hrad = hrad;
+
+
+    // Based on new parameter values, assign part type
+
+    if (MAGSQ(part->part_H) * 1000000 < maxrad * maxrad) {
+	/* Height vector is insignificant, particle is a sphere */
+	part->part_vrad = part->part_hrad = maxrad;
+	VSETALL(part->part_H, 0);		/* sanity */
+	part->part_type = RT_PARTICLE_TYPE_SPHERE;
+	return BRLCAD_OK;		/* OK */
+    }
+
+    if ((maxrad - minrad) / maxrad < 0.001) {
+	/* radii are nearly equal, particle is a cylinder (lozenge) */
+	part->part_vrad = part->part_hrad = maxrad;
+	part->part_type = RT_PARTICLE_TYPE_CYLINDER;
+	return BRLCAD_OK;		/* OK */
+    }
+
+    part->part_type = RT_PARTICLE_TYPE_CONE;
+    return BRLCAD_OK;		/* OK */
+
+}
 
 int
 rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-    fastf_t maxrad, minrad;
+    fastf_t maxrad;
     struct rt_part_internal *part;
 
     /* must be double for import and export */
@@ -1614,30 +1674,26 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 8);
 
-    /* Apply modeling transformations */
+    /* Do some sanity checks.  We're not actually applying the
+     * matrix to the data parameters yet - that's handled by
+     * rt_part_mat - but we want to return some specific errors
+     * in particular failure cases on import. */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(part->part_V, mat, &vec[0*3]);
-    MAT4X3VEC(part->part_H, mat, &vec[1*3]);
-    if ((part->part_vrad = vec[2*3] / mat[15]) < 0) {
+    double vrad = vec[2*3] / mat[15];
+    double hrad = vec[2*3+1] / mat[15];
+    if (vrad < 0) {
 	bu_free(ip->idb_ptr, "rt_part_internal");
 	ip->idb_ptr=NULL;
 	bu_log("unable to import particle, negative v radius\n");
 	return -2;
     }
-    if ((part->part_hrad = vec[2*3+1] / mat[15]) < 0) {
+    if (hrad < 0) {
 	bu_free(ip->idb_ptr, "rt_part_internal");
 	ip->idb_ptr=NULL;
 	bu_log("unable to import particle, negative h radius\n");
 	return -3;
     }
-
-    if (part->part_vrad > part->part_hrad) {
-	maxrad = part->part_vrad;
-	minrad = part->part_hrad;
-    } else {
-	maxrad = part->part_hrad;
-	minrad = part->part_vrad;
-    }
+    maxrad = (vrad > hrad) ? vrad : hrad;
     if (maxrad <= 0) {
 	bu_free(ip->idb_ptr, "rt_part_internal");
 	ip->idb_ptr=NULL;
@@ -1645,23 +1701,14 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	return -4;
     }
 
-    if (MAGSQ(part->part_H) * 1000000 < maxrad * maxrad) {
-	/* Height vector is insignificant, particle is a sphere */
-	part->part_vrad = part->part_hrad = maxrad;
-	VSETALL(part->part_H, 0);		/* sanity */
-	part->part_type = RT_PARTICLE_TYPE_SPHERE;
-	return 0;		/* OK */
-    }
+    // Initial value population
+    VMOVE(part->part_V, &vec[0*3]);
+    VMOVE(part->part_H, &vec[1*3]);
+    part->part_vrad = vec[2*3];
+    part->part_hrad = vec[2*3+1];
 
-    if ((maxrad - minrad) / maxrad < 0.001) {
-	/* radii are nearly equal, particle is a cylinder (lozenge) */
-	part->part_vrad = part->part_hrad = maxrad;
-	part->part_type = RT_PARTICLE_TYPE_CYLINDER;
-	return 0;		/* OK */
-    }
-
-    part->part_type = RT_PARTICLE_TYPE_CONE;
-    return 0;		/* OK */
+    /* Apply modeling transformations */
+    return rt_part_mat(ip, mat, ip);
 }
 
 
@@ -1870,59 +1917,90 @@ rt_part_centroid(point_t *cent, const struct rt_db_internal *ip)
 
     /* find frustum and hemisphere centroids separately, weight points */
     for (idx=0; idx < 3; idx++) {
-        fcent[idx]  = (hvec_n[idx] * c_frst + vpt[idx]) / 3.0;
-        hhcent[idx] = (hvec_n[idx] * ch_hem + vpt[idx]) / 3.0;
-        cvcent[idx] = (hvec_n[idx] * cv_hem + vpt[idx] + hvec[idx]) / 3.0;
+	fcent[idx]  = (hvec_n[idx] * c_frst + vpt[idx]) / 3.0;
+	hhcent[idx] = (hvec_n[idx] * ch_hem + vpt[idx]) / 3.0;
+	cvcent[idx] = (hvec_n[idx] * cv_hem + vpt[idx] + hvec[idx]) / 3.0;
     }
 
     VADD3(*cent, fcent, hhcent, cvcent);
 }
 
-void
-rt_part_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_part_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
+    int lcnt = 4;
+    if (!pl || pl_max < lcnt || !ip)
+	return 0;
 
     struct rt_part_internal *part = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(part);
 
-    // Set up the containers
-    struct bv_label *l[4];
-    for (int i = 0; i < 4; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
+    point_t work, pos_view;
+    int npl = 0;
 
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
 
-	l[i] = la;
-    }
-
-    // Do the specific data assignments for each label
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, part->part_V);
-
-    bu_vls_sprintf(&l[1]->label, "H");
-    VADD2(l[1]->p, part->part_V, part->part_H);
-
-    bu_vls_sprintf(&l[2]->label, "v");
     vect_t Ru, ortho;
+
+    MAT4X3PNT(pos_view, xform, part->part_V);
+    POINT_LABEL(pos_view, 'V');
+
+    VADD2(work, part->part_V, part->part_H);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'H');
+
     VMOVE(Ru, part->part_H);
     VUNITIZE(Ru);
     bn_vec_ortho(ortho, Ru);
-    VSCALE(l[2]->p, ortho, part->part_vrad);
-    VADD2(l[2]->p, part->part_V, l[2]->p);
+    VSCALE(work, ortho, part->part_vrad);
+    VADD2(work, part->part_V, work);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'v');
 
-    bu_vls_sprintf(&l[3]->label, "h");
-    VSCALE(l[3]->p, ortho, part->part_hrad);
-    VADD3(l[3]->p, part->part_V, part->part_H, l[3]->p);
+    VSCALE(work, ortho, part->part_hrad);
+    VADD3(work, part->part_V, part->part_H, work);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'h');
+
+    return lcnt;
 }
+
+const char *
+rt_part_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_part_internal *part = (struct rt_part_internal *)ip->idb_ptr;
+    RT_PART_CK_MAGIC(part);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, part->part_V);
+	goto part_kpt_end;
+    }
+
+    if (BU_STR_EQUAL(k, "H")) {
+	VADD2(mpt, part->part_V, part->part_H);
+	goto part_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+part_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
+
 
 /*
  * Local Variables:

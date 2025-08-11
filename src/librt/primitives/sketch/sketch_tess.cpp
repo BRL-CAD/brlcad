@@ -1,7 +1,7 @@
 /*                        S K E T C H _ T E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2024 United States Government as represented by
+ * Copyright (c) 2012-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -351,4 +351,3 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

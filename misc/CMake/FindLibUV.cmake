@@ -77,14 +77,10 @@ They may be set by end users to point at libuv components.
 #]=======================================================================]
 
 #-----------------------------------------------------------------------------
-find_library(LibUV_LIBRARY
-  NAMES uv libuv
-  )
+find_library(LibUV_LIBRARY NAMES uv libuv)
 mark_as_advanced(LibUV_LIBRARY)
 
-find_path(LibUV_INCLUDE_DIR
-  NAMES uv.h
-  )
+find_path(LibUV_INCLUDE_DIR NAMES uv.h)
 mark_as_advanced(LibUV_INCLUDE_DIR)
 
 #-----------------------------------------------------------------------------
@@ -130,11 +126,12 @@ unset(_LibUV_H)
 
 #-----------------------------------------------------------------------------
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(LibUV
+find_package_handle_standard_args(
+  LibUV
   FOUND_VAR LibUV_FOUND
   REQUIRED_VARS LibUV_LIBRARY LibUV_INCLUDE_DIR
   VERSION_VAR LibUV_VERSION
-  )
+)
 set(LIBUV_FOUND ${LibUV_FOUND})
 
 #-----------------------------------------------------------------------------
@@ -144,9 +141,9 @@ if(LibUV_FOUND)
   set(LibUV_LIBRARIES ${LibUV_LIBRARY})
   if(NOT TARGET LibUV::LibUV)
     add_library(LibUV::LibUV UNKNOWN IMPORTED)
-    set_target_properties(LibUV::LibUV PROPERTIES
-      IMPORTED_LOCATION "${LibUV_LIBRARY}"
-      INTERFACE_INCLUDE_DIRECTORIES "${LibUV_INCLUDE_DIRS}"
-      )
+    set_target_properties(
+      LibUV::LibUV
+      PROPERTIES IMPORTED_LOCATION "${LibUV_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES "${LibUV_INCLUDE_DIRS}"
+    )
   endif()
 endif()

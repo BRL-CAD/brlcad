@@ -1,7 +1,7 @@
 /*                           U L P . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2024 United States Government as represented by
+ * Copyright (c) 2010-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,9 +33,13 @@
 
 #include "common.h"
 
-#include <math.h>
+/*interface header */
+#include "bn/ulp.h"
+
+#include <math.h>     /* for isnan(), isinf() */
 #include <limits.h>
 #include <float.h>
+#include <stdint.h>   /* for int32_t, uint64_t */
 
 #if defined(__STDC_IEC_559__)
 #  define HAVE_IEEE754 1
@@ -49,6 +53,31 @@ extern int isnan(double x);
 extern int isinf(double x);
 #endif
 
+#if defined(HAVE_NEXTAFTER) && !defined(HAVE_DECL_NEXTAFTER) && !defined(nextafter)
+extern double nextafter(double x, double y);
+#endif
+
+#if defined(HAVE_NEXTAFTERF) && !defined(HAVE_DECL_NEXTAFTERF) && !defined(nextafterf)
+extern float nextafterf(float x, float y);
+#endif
+
+#if defined(HAVE_FPCLASSIFY) && !defined(HAVE_DECL_FPCLASSIFY) && !defined(fpclassify)
+extern int fpclassify(double x);
+#endif
+
+
+/* tag‑type unions for bit‑punning */
+union dbl_bits {
+    double    d;
+    int64_t   i;
+    uint64_t  u;
+};
+union flt_bits {
+    float     f;
+    int32_t   i;
+    uint32_t  u;
+};
+
 
 double
 bn_dbl_epsilon(void)
@@ -56,24 +85,23 @@ bn_dbl_epsilon(void)
 #if defined(DBL_EPSILON)
     return DBL_EPSILON;
 #elif defined(HAVE_IEEE754)
-    union {
-        double d;
-        long long ll;
-    } val;
+    union dbl_bits val;
     val.d = 1.0;
-    val.ll += 1LL;
+    val.i += 1;
     return val.d - 1.0;
 #else
     /* static for computed epsilon so it's only calculated once. */
     static double tol = 0.0;
+    static int precomputed = 0;
 
-    if (tol == 0.0) {
-        /* volatile to avoid long registers and compiler optimizing away the loop */
-        volatile double temp_tol = 1.0;
-        while (1.0 + (temp_tol * 0.5) > 1.0) {
-            temp_tol *= 0.5;
-        }
-        tol = temp_tol;
+    if (!precomputed) {
+	/* volatile to avoid long registers and compiler optimizing away the loop */
+	volatile double temp_tol = 1.0;
+	while (1.0 + (temp_tol * 0.5) > 1.0) {
+	    temp_tol *= 0.5;
+	}
+	tol = temp_tol;
+	precomputed = 1;
     }
 
     return tol;
@@ -87,24 +115,23 @@ bn_flt_epsilon(void)
 #if defined(FLT_EPSILON)
     return FLT_EPSILON;
 #elif defined(HAVE_IEEE754)
-    union {
-        float f;
-        long long ll;
-    } val;
+    union flt_bits val;
     val.f = 1.0;
-    val.ll += 1LL;
+    val.d += 1;
     return val.f - 1.0;
 #else
     /* static for computed epsilon so it's only calculated once. */
     static float tol = 0.0;
+    static int precomputed = 0;
 
-    if (tol == 0.0) {
-        /* volatile to avoid long registers and compiler optimizing away the loop */
-        volatile float temp_tol = 1.0f;
-        while (1.0f + (temp_tol * 0.5f) > 1.0f) {
-            temp_tol *= 0.5f;
-        }
-        tol = temp_tol;
+    if (!precomputed) {
+	/* volatile to avoid long registers and compiler optimizing away the loop */
+	volatile float temp_tol = 1.0f;
+	while (1.0f + (temp_tol * 0.5f) > 1.0f) {
+	    temp_tol *= 0.5f;
+	}
+	tol = temp_tol;
+	precomputed = 1;
     }
 
     return tol;
@@ -118,13 +145,10 @@ bn_dbl_min(void)
 #if defined(DBL_MIN)
     return DBL_MIN;
 #else
-    union {
-        double d;
-        unsigned long long ull;
-    } minVal;
+    union dbl_bits minVal;
 
     /* set exponent to min non-subnormal value (i.e., 1) */
-    minVal.ull = 1ULL << 52; /* 52 zeros for the fraction*/
+    minVal.u = 1 << 52; /* 52 zeros for the fraction*/
 
     return minVal.d;
 #endif
@@ -137,27 +161,27 @@ bn_dbl_max(void)
 #if defined(DBL_MAX)
     return DBL_MAX;
 #elif defined(INFINITY)
-    union {
-        double d;
-        long long ll;
-    } val;
+    union dbl_bits val;
+
     val.d = INFINITY;
-    val.ll -= 1LL;
+    val.u -= 1;
     return val.d;
 #else
     static double max_val = 0.0;
+    static int precomputed = 0;
 
-    if (max_val == 0.0) {
-        double val = 1.0;
-        double prev_val;
+    if (!precomputed) {
+	double val = 1.0;
+	double prev_val;
 
 	/* double until it no longer doubles */
-        do {
-            prev_val = val;
-            val *= 2.0;
-        } while (!isinf(val) && val > prev_val);
+	do {
+	    prev_val = val;
+	    val *= 2.0;
+	} while (!isinf(val) && val > prev_val);
 
-        max_val = prev_val;
+	max_val = prev_val;
+	precomputed = 1;
     }
 
     return max_val;
@@ -171,13 +195,10 @@ bn_flt_min(void)
 #if defined(FLT_MIN)
     return FLT_MIN;
 #else
-    union {
-        float f;
-        long long ll;
-    } minVal;
+    union flt_bits minVal;
 
     // set exponent to min non-subnormal value (i.e., 1)
-    minVal.ll = 1LL << 23; // 23 zeros for the fraction
+    minVal.d = 1 << 23; // 23 zeros for the fraction
 
     return minVal.f;
 #endif
@@ -190,9 +211,10 @@ bn_flt_max(void)
 #if defined(FLT_MAX)
     return FLT_MAX;
 #elif defined(INFINITY)
-    static const float val = INFINITY;
-    long next = *(long*)&val - 1;
-    return *(float *)&next;
+    union flt_bits bits;
+    bits.f = INFINITY;
+    bits.i--;
+    return bits.f;
 #else
     return 1.0/bn_flt_min();
 #endif
@@ -202,14 +224,14 @@ bn_flt_max(void)
 float
 bn_flt_min_sqrt(void)
 {
-    return sqrt(bn_flt_min());
+    return (float)sqrt(bn_flt_min());
 }
 
 
 float
 bn_flt_max_sqrt(void)
 {
-    return sqrt(bn_flt_max());
+    return (float)sqrt(bn_flt_max());
 }
 
 
@@ -228,19 +250,139 @@ bn_dbl_max_sqrt(void)
 
 
 double
-bn_ulp(double val)
+bn_nextafter_up(double val)
 {
-    long long up, dn;
+#ifdef HAVE_NEXTAFTER
+    return nextafter(val, val+1.0);
+#else
+    union dbl_bits bits;
+    int type = fpclassify(val);
 
-    if (isnan(val) || isinf(val))
+    if (type == FP_NAN || type == FP_INFINITE)
 	return val;
 
-    if (val >=0) {
-	up = *(long long*)&val + 1;
-	return *(double *)&up - val;
+    /* unify both +0 and -0 into +0’s next subnormal */
+    if (type == FP_ZERO) {
+        bits.u = 1ULL; /* raw 0x0000…001 */
+        return bits.d;
     }
-    dn = *(long long*)&val - 1;
-    return *(double *)&dn - val;
+
+    bits.d = val;
+    bits.i++; /* always moves toward +∞ */
+    return bits.d;
+#endif
+}
+
+
+double
+bn_nextafter_dn(double val)
+{
+#ifdef HAVE_NEXTAFTER
+    return nextafter(val, val-1.0);
+#else
+    union dbl_bits bits;
+    int type = fpclassify(val);
+
+    if (type == FP_NAN || type == FP_INFINITE)
+	return val;
+
+    /* unify both +0 and -0 into -0’s next subnormal */
+    if (type == FP_ZERO) {
+        /* raw, largest negative subnormal */
+        bits.i = (int64_t)0x8000000000000001ULL;
+        return bits.d;
+    }
+
+    bits.d = val;
+    bits.i--; /* always moves toward −∞ */
+    return bits.d;
+#endif
+}
+
+
+float
+bn_nextafterf_up(float val)
+{
+#ifdef HAVE_NEXTAFTERF
+    return nextafterf(val, val+1.0f);
+#else
+    union flt_bits bits;
+    int type = fpclassify(val);
+
+    if (type == FP_NAN || type == FP_INFINITE)
+	return val;
+
+    if (type == FP_ZERO) {
+        bits.u = 1U; /* raw 0x00000001 */
+        return bits.f;
+    }
+
+    bits.f = val;
+    bits.i++; /* always moves toward +∞ */
+    return bits.f;
+#endif
+}
+
+
+float
+bn_nextafterf_dn(float val)
+{
+#ifdef HAVE_NEXTAFTERF
+    return nextafterf(val, val-1.0f);
+#else
+    union flt_bits bits;
+    int type = fpclassify(val);
+
+    if (type == FP_NAN || type == FP_INFINITE)
+	return val;
+
+    /* unify both +0 and -0 into -0’s next subnormal */
+    if (type == FP_ZERO) {
+        /* raw, largest negative subnormal */
+        bits.u = 0x80000001U;
+        return bits.f;
+    }
+
+    bits.f = val;
+    bits.i--; /* always moves toward −∞ */
+    return bits.f;
+#endif
+}
+
+
+double
+bn_ulp(double val)
+{
+    union dbl_bits bits;
+    int type = fpclassify(val);
+
+    if (type == FP_NAN || type == FP_INFINITE)
+	return val;
+
+    bits.d = val;
+    bits.u++; /* next "bigger" val */
+    if (type == FP_ZERO || val > 0.0) {
+	return bits.d - val;
+    }
+    return -bits.d + val;
+}
+
+
+float
+bn_ulpf(float val)
+{
+    union flt_bits bits;
+    int type = fpclassify(val);
+
+    if (type == FP_NAN || type == FP_INFINITE)
+	return val;
+
+    bits.f = val;
+    bits.i++; /* next "bigger" val */
+    if (type == FP_ZERO || val > 0.0f) {
+	return bits.f - val;
+    }
+    return -bits.f + val;
 }
 
 

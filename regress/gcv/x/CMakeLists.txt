@@ -1,12 +1,12 @@
-if (TARGET gcv-assetimport)
-  GCV_regress_util("x" "tetra.x" DEPS "gcv;gcv-assetimport" GCV_OPTIONS "--input-format=assetimport" EXPECTED_FILE_SIZE "1136")
-  GCV_regress_util("x" "tetra.g" DEPS "gcv;gcv-assetimport" GCV_OPTIONS "--output-format=assetimport" EXPECTED_FILE_SIZE "3526" EXPORTER)
-endif (TARGET gcv-assetimport)
+if(TARGET gcv-assetimport)
+  gcv_regress_util("x" "tetra.x" DEPS "gcv;gcv-assetimport" GCV_OPTIONS "--input-format=assetimport" EXPECTED_FILE_SIZE "1136")
+  gcv_regress_util("x" "tetra.g" DEPS "gcv;gcv-assetimport" GCV_OPTIONS "--output-format=assetimport" EXPECTED_FILE_SIZE "3526" EXPORTER)
+endif(TARGET gcv-assetimport)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   tetra.x
-  )
+)
 
 # Local Variables:
 # tab-width: 8

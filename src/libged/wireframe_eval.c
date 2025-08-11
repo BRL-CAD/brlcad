@@ -1,7 +1,7 @@
 /*                 W I R E F R A M E _ E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2024 United States Government as represented by
+ * Copyright (c) 1997-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

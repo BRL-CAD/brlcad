@@ -1,7 +1,7 @@
 /*			 F I L E _ U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2024 United States Government as represented by
+ * Copyright (c) 2015-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@ FileUtil::getFileType()
 
     int fileType = FILEUTIL_TYPE_UNKNOWN;
 
-    //compares file formate with known formats to check for vrml version 1 or 2
+    //compares file format with known formats to check for vrml version 1 or 2
     if (bu_strncmp((char *)format, "#VRML V2.0", 10) == 0) {
 	    fileType = FILEUTIL_TYPE_VRML;  //vrml version 2
     }

@@ -1,7 +1,7 @@
 /*                           M A T . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2024 United States Government as represented by
+ * Copyright (c) 1996-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -944,6 +944,7 @@ bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
 }
 
 
+// TODO - look into https://math.stackexchange.com/a/4112622
 void
 bn_vec_ortho(vect_t out, const vect_t in)
 {
@@ -1311,7 +1312,7 @@ bn_wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t 
 /*
  * Compute a perspective matrix for a right-handed coordinate system.
  * Reference: SGI Graphics Reference Appendix C
- * (Note:  SGI is left-handed, but the fix is done in the Display Manger).
+ * (Note:  SGI is left-handed, but the fix is done in the Display Manager).
  */
 void
 persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fastf_t backoff)

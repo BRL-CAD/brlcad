@@ -1,7 +1,7 @@
 /*                         B E V . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -91,6 +91,7 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     const char *opstr;
     int failed;
+    struct bu_list *vlfree = &rt_vlfree;
 
     /* static due to longjmp */
     static int triangulate = 0;
@@ -244,7 +245,7 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	failed = nmg_boolean(tmp_tree, bev_nmg_model, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource);
+	failed = nmg_boolean(tmp_tree, bev_nmg_model, vlfree, &wdbp->wdb_tol, &rt_uniresource);
 	BU_UNSETJUMP;
     } else
 	failed = 1;
@@ -277,7 +278,7 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 	    bev_nmg_model = (struct model *)NULL;
 	    return BRLCAD_ERROR;
 	}
-	nmg_triangulate_model(bev_nmg_model, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+	nmg_triangulate_model(bev_nmg_model, vlfree, &wdbp->wdb_tol);
 	BU_UNSETJUMP;
     }
 

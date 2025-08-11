@@ -1,7 +1,7 @@
 /*                          Q G S W . C P P
  * BRL-CAD
  *
- * Copyright (c) 2021-2024 United States Government as represented by
+ * Copyright (c) 2021-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ extern "C" {
 #include "bindings.h"
 #include "qtcad/QgSW.h"
 
-// Using the full GED_MIN/GED_MAX was causing drawing artifacts with moss I
+// Using the full BV_MIN/BV_MAX was causing drawing artifacts with moss I
 // in shaded mode (I think I was seeing the "Z-fighting" problem:
 // https://www.sjbaker.org/steve/omniv/love_your_z_buffer.html )
 //

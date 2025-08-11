@@ -1,7 +1,7 @@
 /*                        N I R T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 #include "./nirt.h"
 
 #include "./debug_cmd.c"
+
 
 /**************************
  * Internal functionality *
@@ -99,7 +100,6 @@ nirt_cmd_str(struct bu_vls *nirt_cmd, struct nirt_state *nss)
 }
 
 
-
 void nmsg(struct nirt_state *nss, const char *fmt, ...)
 {
     va_list ap;
@@ -113,6 +113,7 @@ void nmsg(struct nirt_state *nss, const char *fmt, ...)
     }
     va_end(ap);
 }
+
 
 void nout(struct nirt_state *nss, const char *fmt, ...)
 {
@@ -128,6 +129,7 @@ void nout(struct nirt_state *nss, const char *fmt, ...)
     va_end(ap);
 }
 
+
 void nerr(struct nirt_state *nss, const char *fmt, ...)
 {
     va_list ap;
@@ -142,6 +144,7 @@ void nerr(struct nirt_state *nss, const char *fmt, ...)
     va_end(ap);
 }
 
+
 void ndbg(struct nirt_state *nss, int flag, const char *fmt, ...)
 {
     va_list ap;
@@ -155,6 +158,7 @@ void ndbg(struct nirt_state *nss, int flag, const char *fmt, ...)
     }
     va_end(ap);
 }
+
 
 size_t
 _nirt_find_first_unescaped(std::string &s, const char *keys, size_t offset)
@@ -173,6 +177,7 @@ _nirt_find_first_unescaped(std::string &s, const char *keys, size_t offset)
     }
     return candidate;
 }
+
 
 size_t
 _nirt_find_first_unquoted(std::string &ts, const char *key, size_t offset)
@@ -198,6 +203,7 @@ _nirt_find_first_unquoted(std::string &ts, const char *key, size_t offset)
     return pos;
 }
 
+
 void
 _nirt_trim_whitespace(std::string &s)
 {
@@ -209,6 +215,7 @@ _nirt_trim_whitespace(std::string &s)
     }
     s = s.substr(sp, ep-sp+1);
 }
+
 
 std::vector<std::string>
 _nirt_string_split(std::string s)
@@ -226,6 +233,7 @@ _nirt_string_split(std::string s)
     return substrs;
 }
 
+
 int
 _nirt_digits(fastf_t ftol)
 {
@@ -242,6 +250,7 @@ _nirt_digits(fastf_t ftol)
     return tol;
 }
 
+
 std::string
 _nirt_dbl_to_str(double d, size_t p)
 {
@@ -254,6 +263,7 @@ _nirt_dbl_to_str(double d, size_t p)
     return sd;
 }
 
+
 double
 _nirt_str_to_dbl(std::string s, size_t p)
 {
@@ -265,6 +275,7 @@ _nirt_str_to_dbl(std::string s, size_t p)
     return d;
 }
 
+
 int
 _nirt_str_to_int(std::string s)
 {
@@ -273,6 +284,7 @@ _nirt_str_to_int(std::string s)
     ss >> i;
     return i;
 }
+
 
 /********************************
  * Conversions and Calculations *
@@ -286,12 +298,14 @@ d_calc(struct nirt_state *nss, point_t p)
     return p[X] * cos(er) * cos(ar) + p[Y] * cos(er) * sin(ar) + p[Z] * sin(er);
 }
 
+
 static fastf_t
 h_calc(struct nirt_state *nss, point_t p)
 {
     fastf_t ar = nss->i->vals->a * DEG2RAD;
     return p[X] * (-sin(ar)) + p[Y] * cos(ar);
 }
+
 
 static fastf_t
 v_calc(struct nirt_state *nss, point_t p)
@@ -300,6 +314,7 @@ v_calc(struct nirt_state *nss, point_t p)
     fastf_t er = nss->i->vals->e * DEG2RAD;
     return p[X] * (-sin(er)) * cos(ar) + p[Y] * (-sin(er)) * sin(ar) + p[Z] * cos(er);
 }
+
 
 static void _nirt_grid2targ(struct nirt_state *nss)
 {
@@ -310,6 +325,7 @@ static void _nirt_grid2targ(struct nirt_state *nss)
     nss->i->vals->orig[Z] =   nss->i->vals->v * cos(er) + nss->i->vals->d_orig * sin(er);
 }
 
+
 void _nirt_targ2grid(struct nirt_state *nss)
 {
     double ar = nss->i->vals->a * DEG2RAD;
@@ -319,6 +335,7 @@ void _nirt_targ2grid(struct nirt_state *nss)
     nss->i->vals->d_orig =   nss->i->vals->orig[X] * cos(er) * cos(ar) + nss->i->vals->orig[Y] * cos(er) * sin(ar) + nss->i->vals->orig[Z] * sin(er);
 }
 
+
 void _nirt_dir2ae(struct nirt_state *nss)
 {
     int zeroes = ZERO(nss->i->vals->dir[Y]) && ZERO(nss->i->vals->dir[X]);
@@ -327,6 +344,7 @@ void _nirt_dir2ae(struct nirt_state *nss)
     nss->i->vals->a = zeroes ? 0.0 : atan2 (-(nss->i->vals->dir[Y]), -(nss->i->vals->dir[X])) / DEG2RAD;
     nss->i->vals->e = atan2(-(nss->i->vals->dir[Z]), square) / DEG2RAD;
 }
+
 
 static void _nirt_ae2dir(struct nirt_state *nss)
 {
@@ -340,6 +358,7 @@ static void _nirt_ae2dir(struct nirt_state *nss)
     VUNITIZE(dir);
     VMOVE(nss->i->vals->dir, dir);
 }
+
 
 static double _nirt_backout(struct nirt_state *nss)
 {
@@ -357,8 +376,9 @@ static double _nirt_backout(struct nirt_state *nss)
     bsphere_diameter = MAGNITUDE(diag);
 
     /*
-     * calculate the distance from a plane normal to the ray direction through the center of
-     * the bounding sphere and a plane normal to the ray direction through the aim point.
+     * calculate the distance from a plane normal to the ray direction
+     * through the center of the bounding sphere and a plane normal to
+     * the ray direction through the aim point.
      */
     VADD2SCALE(center_bsphere, nss->i->ap->a_rt_i->mdl_max, nss->i->ap->a_rt_i->mdl_min, 0.5);
 
@@ -369,12 +389,14 @@ static double _nirt_backout(struct nirt_state *nss)
     delta = dist_to_target*VDOT(ray_dir, dvec);
 
     /*
-     * this should put us about a bounding sphere radius in front of the bounding sphere
+     * this should put us about a bounding sphere radius in front of
+     * the bounding sphere
      */
     bov = bsphere_diameter + delta;
 
     return bov;
 }
+
 
 static fastf_t
 _nirt_get_obliq(fastf_t *ray, fastf_t *normal)
@@ -407,6 +429,7 @@ _nirt_get_obliq(fastf_t *ray, fastf_t *normal)
 
     return obliquity;
 }
+
 
 /********************
  * Raytracing setup *
@@ -446,6 +469,7 @@ _nirt_get_rtip(struct nirt_state *nss)
     return nss->i->rtip;
 }
 
+
 struct resource *
 _nirt_get_resource(struct nirt_state *nss)
 {
@@ -453,6 +477,7 @@ _nirt_get_resource(struct nirt_state *nss)
     if (nss->i->use_air) return nss->i->res_air;
     return nss->i->res;
 }
+
 
 int
 _nirt_raytrace_prep(struct nirt_state *nss)
@@ -509,6 +534,7 @@ _nirt_raytrace_prep(struct nirt_state *nss)
     return 0;
 }
 
+
 /*****************************************
  * Routines to support output formatting *
  *****************************************/
@@ -532,6 +558,8 @@ _nirt_fmt_sp_cnt(const char *fmt) {
  * the system limits and types supported by NIRT.*/
 #define NIRT_PRINTF_FLAGS "-+# "
 static int
+
+
 _nirt_fmt_sp_flags_check(struct nirt_state *nss, std::string &fmt_sp)
 {
     size_t sp = fmt_sp.find_first_of(NIRT_PRINTF_FLAGS);
@@ -546,10 +574,13 @@ _nirt_fmt_sp_flags_check(struct nirt_state *nss, std::string &fmt_sp)
     return 0;
 }
 
+
 /* Validate the precision specification portion of the format specifier against
  * the system limits */
 #define NIRT_PRINTF_PRECISION "0123456789."
 #define NIRT_PRINTF_MAXWIDTH 1000 //Arbitrary sanity boundary for width specification
+
+
 static int
 _nirt_fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 {
@@ -637,6 +668,7 @@ _nirt_fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
     return 0;
 }
 
+
 static int
 _nirt_fmt_sp_validate(struct nirt_state *nss, std::string &fmt_sp)
 {
@@ -645,6 +677,7 @@ _nirt_fmt_sp_validate(struct nirt_state *nss, std::string &fmt_sp)
     if (_nirt_fmt_sp_width_precision_check(nss, fmt_sp)) return -1;
     return 0;
 }
+
 
 /* Processes the first format specifier.  (We use _nirt_split_fmt to break up a format string into
  * substrings with one format specifier per string - _nirt_fmt_sp_get's job is to extract the actual
@@ -695,6 +728,7 @@ _nirt_fmt_sp_get(struct nirt_state *nss, const char *fmt, std::string &fmt_sp)
 
     return 0;
 }
+
 
 /* Given a key and a format specifier string, use the NIRT type to check that the
  * supplied key is an appropriate input for that specifier. */
@@ -748,6 +782,7 @@ _nirt_fmt_sp_key_check(struct nirt_state *nss, const char *key, std::string &fmt
 
     return 0;
 }
+
 
 /* Given a format string, produce an array of substrings each of which contain
  * at most one format specifier */
@@ -828,6 +863,7 @@ _nirt_split_fmt(const char *ofmt, char ***breakout)
     }
 }
 
+
 /* Given a vector breakout of a format string, generate the NIRT report string
  * displaying the full, assembled format string and listing NIRT keys (Items) */
 static void
@@ -854,6 +890,7 @@ _nirt_print_fmt_str(struct bu_vls *ostr, std::vector<std::pair<std::string,std::
     bu_vls_trimspace(ostr);
 }
 
+
 /* Given a vector breakout of a format string, generate the NIRT fmt command that
  * created it */
 static void
@@ -879,12 +916,14 @@ _nirt_print_fmt_cmd(struct bu_vls *ostr, char f, std::vector<std::pair<std::stri
     bu_vls_sprintf(ostr, "fmt %c \"%s\"%s\n", f, fmt_str.c_str(), fmt_keys.c_str());
 }
 
+
 /* Translate NIRT fmt substrings into fully evaluated printf output, while also
  * handling units on key values.  This should never be called using any fmt
  * string that hasn't been validated by _nirt_fmt_sp_validate and _nirt_fmt_sp_key_check */
 #define nirt_print_key(keystr,val) \
     do {if (BU_STR_EQUAL(key, keystr)) { bu_vls_printf(ostr, fmt, val); return; } } \
     while (0)
+
 
 void
 _nirt_print_fmt_substr(struct nirt_state *nss, struct bu_vls *ostr, const char *fmt, const char *key, struct nirt_output_record *r, fastf_t base2local)
@@ -1005,6 +1044,7 @@ _nirt_print_fmt_substr(struct nirt_state *nss, struct bu_vls *ostr, const char *
     }
 }
 
+
 /* Generate the full report string defined by the array of fmt,key pairs
  * associated with the supplied type, based on current values */
 static void
@@ -1054,6 +1094,80 @@ _nirt_report(struct nirt_state *nss, char type, struct nirt_output_record *r)
  * Raytracing Callbacks *
  ************************/
 
+static void
+_nirt_find_ovlps(std::set<struct nirt_overlap *> &ovlps, struct nirt_state *nss, struct partition *pp)
+{
+    struct nirt_overlap *op;
+
+    for (op = nss->i->vals->ovlp_list.forw; op != &(nss->i->vals->ovlp_list); op = op->forw) {
+	if (((pp->pt_inhit->hit_dist <= op->in_dist)
+		    && (op->in_dist <= pp->pt_outhit->hit_dist)) ||
+		((pp->pt_inhit->hit_dist <= op->out_dist)
+		 && (op->in_dist <= pp->pt_outhit->hit_dist))) {
+	    ovlps.insert(op);
+	}
+    }
+}
+
+
+static bool
+_nirt_in_ovlp(struct nirt_overlap **op, std::set<struct nirt_overlap *> &ovlps, fastf_t curr_dist)
+{
+    fastf_t closest_dist = MAX_FASTF;
+    struct nirt_overlap *closest_ovlp = NULL;
+    fastf_t furthest_containing_dist = -MAX_FASTF;
+    struct nirt_overlap *containing_ovlp = NULL;
+    std::set<struct nirt_overlap *> to_erase;
+    std::set<struct nirt_overlap *>::iterator o_it;
+    for (o_it = ovlps.begin(); o_it != ovlps.end(); o_it++) {
+	struct nirt_overlap *o = *o_it;
+	// If the overlap is behind the current distance, skip
+	if (o->in_dist < curr_dist && o->out_dist < curr_dist)
+	    continue;
+	// If the overlap contains the current distance, record it
+	if ((o->in_dist < curr_dist || NEAR_EQUAL(o->in_dist, curr_dist, VUNITIZE_TOL)) &&
+		(o->out_dist > curr_dist || NEAR_EQUAL(o->out_dist, curr_dist, VUNITIZE_TOL))) {
+	    if (furthest_containing_dist < o->out_dist) {
+		furthest_containing_dist = o->out_dist;
+		if (containing_ovlp) {
+		    // Found another overlap with a further distance - we don't
+		    // want this one
+		    to_erase.insert(containing_ovlp);
+		}
+		containing_ovlp = o;
+	    } else {
+		// Contains the point, but there's another overlap with
+		// a further distance - we don't want this one
+		to_erase.insert(o);
+	    }
+	}
+	// If the overlap is beyond the current distance, see if it is
+	// the closest
+	if (o->in_dist > curr_dist) {
+	    if (closest_dist > o->out_dist) {
+		closest_dist = o->in_dist;
+		closest_ovlp = o;
+	    }
+	}
+    }
+
+    // If multiple overlaps contain the current distance, we need to erase
+    // all but the longest from the set so we don't further complicate
+    // plotting.
+    for (o_it = to_erase.begin(); o_it != to_erase.end(); ++o_it) {
+	ovlps.erase(*o_it);
+    }
+
+    if (containing_ovlp) {
+	*op = containing_ovlp;
+    } else {
+	*op = closest_ovlp;
+    }
+
+    return (containing_ovlp) ? true : false;
+}
+
+
 static struct nirt_overlap *
 _nirt_find_ovlp(struct nirt_state *nss, struct partition *pp)
 {
@@ -1077,6 +1191,7 @@ _nirt_del_ovlp(struct nirt_overlap *op)
     op->backw->forw = op->forw;
     bu_free((char *)op, "free op in del_ovlp");
 }
+
 
 void
 _nirt_init_ovlp(struct nirt_state *nss)
@@ -1159,9 +1274,13 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 		    _nirt_diff_add_seg(nss, &gseg);
 		}
 		/* vlist segment for gap */
-		vhead = bv_vlblock_find(nss->i->segs, nss->i->void_color->buc_rgb[RED], nss->i->void_color->buc_rgb[GRN], nss->i->void_color->buc_rgb[BLU]);
-		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->gap_in, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BV_VLIST_LINE_DRAW);
+		{
+		    int rgb[3] = {0, 0, 0};
+		    bu_color_to_rgb_ints(&nss->color_gap, &rgb[RED], &rgb[GRN], &rgb[BLU]);
+		    vhead = bv_vlblock_find(nss->i->segs, rgb[RED], rgb[GRN], rgb[BLU]);
+		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->gap_in, BV_VLIST_LINE_MOVE);
+		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BV_VLIST_LINE_DRAW);
+		}
 		nss->i->b_segs = true;
 		s->type = NIRT_PARTITION_SEG;
 	    }
@@ -1173,7 +1292,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	{
 	    char *tmp_regname = (char *)bu_calloc(s->path_name.size() + 1, sizeof(char), "tmp reg_name");
 	    bu_path_basename(part->pt_regionp->reg_name, tmp_regname);
-	    s->reg_name = std::string(tmp_regname);	
+	    s->reg_name = std::string(tmp_regname);
 	    bu_free(tmp_regname, "tmp reg_name");
 	}
 
@@ -1225,18 +1344,90 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	_nirt_report(nss, 'p', vals);
 
 	/* vlist segment for hit */
+	int seg_rgb[3] = {0, 0, 0};
 	if (ev_odd % 2) {
-	    vhead = bv_vlblock_find(nss->i->segs, nss->i->hit_odd_color->buc_rgb[RED], nss->i->hit_odd_color->buc_rgb[GRN], nss->i->hit_odd_color->buc_rgb[BLU]);
+	    bu_color_to_rgb_ints(&nss->color_odd, &seg_rgb[RED], &seg_rgb[GRN], &seg_rgb[BLU]);
 	} else {
-	    vhead = bv_vlblock_find(nss->i->segs, nss->i->hit_even_color->buc_rgb[RED], nss->i->hit_even_color->buc_rgb[GRN], nss->i->hit_even_color->buc_rgb[BLU]);
+	    bu_color_to_rgb_ints(&nss->color_even, &seg_rgb[RED], &seg_rgb[GRN], &seg_rgb[BLU]);
 	}
-	BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BV_VLIST_LINE_DRAW);
+	int ovlp_rgb[3] = {0, 0, 0};
+	bu_color_to_rgb_ints(&nss->color_ovlp, &ovlp_rgb[RED], &ovlp_rgb[GRN], &ovlp_rgb[BLU]);
+
+	/* Plotting gets a little tricky if there are overlaps involved - to ensure
+	 * proper drawing, we want to only draw the portions of the segment that
+	 * aren't part of an overlap as the segment rgb and draw the overlap parts
+	 * as the ovlp rgb. It is possible to have an overlap be a subset of a
+	 * segment, in which case we need to finish drawing the segment after we
+	 * have drawn the overlap.  We thus find all overlaps that overlay this
+	 * segment.  If we have them, we march down them until either we plot an
+	 * overlap that corresponds to the end of the segment or we draw the final
+	 * part of the segment. At least at the moment overlap seg reporting is
+	 * destructive, so do the plotting up front. */
+	std::set<struct nirt_overlap *> seg_ovlps;
+	_nirt_find_ovlps(seg_ovlps, nss, part);
+	if (!seg_ovlps.size()) {
+	    // Easy case - no ovlps, just draw the segment
+	    vhead = bv_vlblock_find(nss->i->segs, seg_rgb[RED], seg_rgb[GRN], seg_rgb[BLU]);
+	    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BV_VLIST_LINE_DRAW);
+	} else {
+	    // Have ovlps - need to be nuanced about what we draw and when
+	    fastf_t curr_dist = part->pt_inhit->hit_dist;
+	    point_t curr_pnt;
+	    VMOVE(curr_pnt, s->in);
+	    while (seg_ovlps.size()) {
+		struct nirt_overlap *op = NULL;
+		if (_nirt_in_ovlp(&op, seg_ovlps, curr_dist)) {
+		    // Current distance is in an overlap - draw the overlap.  If the ovlp
+		    // extends beyond the segment (is that possible?) Draw only until the
+		    // end of the segment - else, draw to the end of the overlap.
+		    if (op->out_dist > s->d_out) {
+			VMOVE(curr_pnt, s->out);
+			curr_dist = s->d_out;
+		    } else {
+			VMOVE(curr_pnt, op->out_point);
+			curr_dist = op->out_dist;
+		    }
+		    vhead = bv_vlblock_find(nss->i->segs, ovlp_rgb[RED], ovlp_rgb[GRN], ovlp_rgb[BLU]);
+		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, op->in_point, BV_VLIST_LINE_MOVE);
+		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, op->out_point, BV_VLIST_LINE_DRAW);
+		    seg_ovlps.erase(op);
+		    VMOVE(curr_pnt, op->out_point);
+		    curr_dist = op->out_dist;
+		    seg_ovlps.erase(op);
+		} else {
+		    // Current distance is not in an overlap.  If op ended up as non-NULL,
+		    // there is still an overlap ahead of the curr_dist in the segment.
+		    // If that is the case, we need to draw segment color from the current distance
+		    // to the start of the next overlap.  Otherwise, we need to complete the
+		    // segment.
+		    vhead = bv_vlblock_find(nss->i->segs, seg_rgb[RED], seg_rgb[GRN], seg_rgb[BLU]);
+		    BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, curr_pnt, BV_VLIST_LINE_MOVE);
+		    if (op) {
+			BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, op->in_point, BV_VLIST_LINE_DRAW);
+			VMOVE(curr_pnt, op->in_point);
+			curr_dist = op->in_dist;
+		    } else {
+			BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BV_VLIST_LINE_DRAW);
+		    }
+		}
+	    }
+	    if (curr_dist < part->pt_outhit->hit_dist) {
+		vhead = bv_vlblock_find(nss->i->segs, seg_rgb[RED], seg_rgb[GRN], seg_rgb[BLU]);
+		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, curr_pnt, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BV_VLIST_LINE_DRAW);
+	    }
+	}
 	nss->i->b_segs = true;
+
+	// Bump even/odd counter
+	ev_odd++;
 
 	/* done with hit portion - if diff, stash */
 	_nirt_diff_add_seg(nss, s);
 
+
+	// Report on (and delete) overlaps
 	while ((ovp = _nirt_find_ovlp(nss, part)) != NIRT_OVERLAP_NULL) {
 
 	    s->type = NIRT_OVERLAP_SEG;
@@ -1269,14 +1460,6 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 
 	    _nirt_report(nss, 'o', vals);
 
-	    /* vlist segment for overlap */
-	    if (nss->i->plot_overlaps) {
-		vhead = bv_vlblock_find(nss->i->segs, nss->i->overlap_color->buc_rgb[RED], nss->i->overlap_color->buc_rgb[GRN], nss->i->overlap_color->buc_rgb[BLU]);
-		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->ov_in, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->ov_out, BV_VLIST_LINE_DRAW);
-		nss->i->b_segs = true;
-	    }
-
 	    /* Diff */
 	    {
 		nirt_seg novlp = *s;
@@ -1287,7 +1470,6 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 
 	    _nirt_del_ovlp(ovp);
 	}
-
 
     }
 
@@ -1308,6 +1490,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
     return HIT;
 }
 
+
 extern "C" int
 _nirt_if_miss(struct application *ap)
 {
@@ -1319,6 +1502,7 @@ _nirt_if_miss(struct application *ap)
 
     return MISS;
 }
+
 
 extern "C" int
 _nirt_if_overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *InputHdp)
@@ -1358,6 +1542,8 @@ struct nirt_cmd_desc {
 static const struct nirt_cmd_desc nirt_descs[] = {
     { "attr",           "select attributes",                             NULL },
     { "ae",             "set/query azimuth and elevation",               "azimuth elevation" },
+    { "center",         "set/query target coordinates",                  "X Y Z" },
+    { "color",          "set/query plot colors",                         "<odd|even|gap|ovlp> [r/g/b]" },
     { "dir",            "set/query direction vector",                    "x-component y-component z-component" },
     { "diff",           "test a ray result against a supplied default",  "[-t tol] partition_info" },
     { "hv",             "set/query gridplane coordinates",               "horz vert [dist]" },
@@ -1368,13 +1554,14 @@ static const struct nirt_cmd_desc nirt_descs[] = {
     { "units",          "set/query local units",                         "<mm|cm|m|in|ft>" },
     { "overlap_claims", "set/query overlap rebuilding/retention",        "<0|1|2|3>" },
     { "fmt",            "set/query output formats",                      "{rhpfmog} format item item ..." },
+    { "plotfile",       "designate an output file to hold plot data",    "file" },
     { "print",          "query an output item",                          "item" },
-    { "bot_minpieces",  "Get/Set value for rt_bot_minpieces (0 means do not use pieces, default is 32)", "min_pieces" },
     { "debug",          "set/query nirt debug flags",                    "[-h] [-l [lib]] [-C [lib]] [-V [lib] [val]] [lib [flag]]" },
     { "q",              "quit",                                          NULL },
     { "?",              "display this help menu",                        NULL },
     { (char *)NULL,     NULL,                                            NULL}
 };
+
 
 static const char *
 _nirt_get_desc_args(const char *key)
@@ -1385,6 +1572,7 @@ _nirt_get_desc_args(const char *key)
     }
     return NULL;
 }
+
 
 extern "C" int
 _nirt_cmd_attr(void *ns, int argc, const char *argv[])
@@ -1454,6 +1642,7 @@ _nirt_cmd_attr(void *ns, int argc, const char *argv[])
     return 0;
 }
 
+
 extern "C" int
 _nirt_cmd_az_el(void *ns, int argc, const char *argv[])
 {
@@ -1509,6 +1698,7 @@ azel_done:
     return ret;
 }
 
+
 extern "C" int
 _nirt_cmd_dir_vect(void *ns, int argc, const char *argv[])
 {
@@ -1539,6 +1729,7 @@ _nirt_cmd_dir_vect(void *ns, int argc, const char *argv[])
     _nirt_dir2ae(nss);
     return 0;
 }
+
 
 extern "C" int
 _nirt_cmd_grid_coor(void *ns, int argc, const char *argv[])
@@ -1591,6 +1782,7 @@ _nirt_cmd_grid_coor(void *ns, int argc, const char *argv[])
     return 0;
 }
 
+
 extern "C" int
 _nirt_cmd_target_coor(void *ns, int argc, const char *argv[])
 {
@@ -1624,6 +1816,7 @@ _nirt_cmd_target_coor(void *ns, int argc, const char *argv[])
 
     return 0;
 }
+
 
 extern "C" int
 _nirt_cmd_shoot(void *ns, int argc, const char **UNUSED(argv))
@@ -1681,6 +1874,7 @@ _nirt_cmd_shoot(void *ns, int argc, const char **UNUSED(argv))
     return 0;
 }
 
+
 extern "C" int
 _nirt_cmd_backout(void *ns, int argc, const char *argv[])
 {
@@ -1706,6 +1900,51 @@ _nirt_cmd_backout(void *ns, int argc, const char *argv[])
     return -1;
 }
 
+
+extern "C" int
+_nirt_cmd_color_plot(void *ns, int argc, const char *argv[])
+{
+    struct nirt_state *nss = (struct nirt_state *)ns;
+    if (!ns) return -1;
+
+    argv++; argc--;
+
+    if (!argc || argc == 3 || argc > 4) {
+	nerr(nss, "Usage:  color %s\n", _nirt_get_desc_args("color"));
+	return -1;
+    }
+
+    struct bu_color *c = NULL;
+    if (BU_STR_EQUIV(argv[0], "odd"))
+	c = &nss->color_odd;
+    if (BU_STR_EQUIV(argv[0], "even"))
+	c = &nss->color_even;
+    if (BU_STR_EQUIV(argv[0], "gap") || BU_STR_EQUIV(argv[0], "void"))
+	c = &nss->color_gap;
+    if (BU_STR_EQUIV(argv[0], "ovlp") || BU_STR_EQUIV(argv[0], "overlap"))
+	c = &nss->color_ovlp;
+
+    argv++; argc--;
+
+    if (argc) {
+	// More args - reading a color in
+	int ret_c = bu_opt_color(NULL, argc, argv, c);
+	if (ret_c != 1 && ret_c != 3) {
+	    nerr(nss, "Usage:  color %s\n", _nirt_get_desc_args("color"));
+	    return -1;
+	}
+    }
+
+    // Return the current color
+    int rgb[3] = {0, 0, 0};
+    if (!bu_color_to_rgb_ints(c, &rgb[RED], &rgb[GRN], &rgb[BLU]))
+	return -1;
+    nout(nss, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
+
+    return 0;
+}
+
+
 extern "C" int
 _nirt_cmd_use_air(void *ns, int argc, const char *argv[])
 {
@@ -1726,6 +1965,7 @@ _nirt_cmd_use_air(void *ns, int argc, const char *argv[])
     }
     return 0;
 }
+
 
 extern "C" int
 _nirt_cmd_units(void *ns, int argc, const char *argv[])
@@ -1760,6 +2000,7 @@ _nirt_cmd_units(void *ns, int argc, const char *argv[])
 
     return 0;
 }
+
 
 extern "C" int
 _nirt_cmd_do_overlap_claims(void *ns, int argc, const char *argv[])
@@ -1820,6 +2061,7 @@ _nirt_cmd_do_overlap_claims(void *ns, int argc, const char *argv[])
 
     return 0;
 }
+
 
 extern "C" int
 _nirt_cmd_format_output(void *ns, int argc, const char **argv)
@@ -1989,6 +2231,30 @@ set_fmt:
     return 0;
 }
 
+
+extern "C" int
+_nirt_cmd_plotfile(void *ns, int argc, const char **argv)
+{
+    struct nirt_state *nss = (struct nirt_state *)ns;
+    if (!ns) return -1;
+
+    argc--; argv++;
+
+    if (argc > 1) {
+	nerr(nss, "Usage:  plotfile %s\n", _nirt_get_desc_args("plotfile"));
+	return 0;
+    }
+
+    if (argc)
+	bu_vls_sprintf(&nss->plotfile, "%s", argv[0]);
+
+
+    nout(nss, "%s\n", bu_vls_cstr(&nss->plotfile));
+
+    return 0;
+}
+
+
 extern "C" int
 _nirt_cmd_print_item(void *ns, int argc, const char **argv)
 {
@@ -2036,50 +2302,6 @@ _nirt_cmd_print_item(void *ns, int argc, const char **argv)
     return 0;
 }
 
-extern "C" int
-_nirt_cmd_bot_minpieces(void *ns, int argc, const char **argv)
-{
-    /* Ew - rt_bot_minpieces is a librt global.  Why isn't it
-     * a part of the specific rtip? */
-    int ret = 0;
-    long minpieces = 0;
-    struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
-    struct nirt_state *nss = (struct nirt_state *)ns;
-    if (!ns) return -1;
-
-    if (argc == 1) {
-	nout(nss, "rt_bot_minpieces = %d\n", (unsigned int)rt_bot_minpieces);
-	return 0;
-    }
-
-    argc--; argv++;
-
-    if (argc > 1) {
-	nerr(nss, "Usage:  bot_minpieces %s\n", _nirt_get_desc_args("bot_minpieces"));
-	return -1;
-    }
-
-    if ((ret = bu_opt_long(&opt_msg, 1, argv, (void *)&minpieces)) == -1) {
-	nerr(nss, "Error: bu_opt value read failure reading minpieces value: %s\n", bu_vls_cstr(&opt_msg));
-	goto bot_minpieces_done;
-    }
-
-    if (minpieces < 0) {
-	nerr(nss, "Error: rt_bot_minpieces cannot be less than 0\n");
-	ret = -1;
-	goto bot_minpieces_done;
-    }
-
-    if (rt_bot_minpieces != (size_t)minpieces) {
-	rt_bot_minpieces = minpieces;
-	bu_vls_free(&opt_msg);
-	nss->i->need_reprep = 1;
-    }
-
-bot_minpieces_done:
-    bu_vls_free(&opt_msg);
-    return ret;
-}
 
 extern "C" int
 _nirt_cmd_debug(void *ns, int argc, const char **argv)
@@ -2106,12 +2328,23 @@ _nirt_cmd_debug(void *ns, int argc, const char **argv)
     return ret;
 }
 
+
 extern "C" int
-_nirt_cmd_quit(void *ns, int UNUSED(argc), const char **UNUSED(argv))
+_nirt_cmd_quit(void *nsv, int UNUSED(argc), const char **UNUSED(argv))
 {
-    nmsg((struct nirt_state *)ns, "Quitting...\n");
+    struct nirt_state *ns = (struct nirt_state *)nsv;
+    if (bu_vls_strlen(&ns->plotfile)) {
+	FILE *fp = fopen(bu_vls_cstr(&ns->plotfile), "wb");
+	if (fp) {
+	    bv_plot_vlblock(fp, ns->i->segs);
+	    fclose(fp);
+	}
+    }
+
+    nmsg(ns, "Quitting...\n");
     return 1;
 }
+
 
 extern "C" int
 _nirt_cmd_show_menu(void *ns, int UNUSED(argc), const char **UNUSED(argv))
@@ -2135,6 +2368,7 @@ _nirt_cmd_show_menu(void *ns, int UNUSED(argc), const char **UNUSED(argv))
     return 0;
 }
 
+
 extern "C" int
 _nirt_cmd_draw(void *ns, int argc, const char *argv[])
 {
@@ -2149,6 +2383,7 @@ _nirt_cmd_draw(void *ns, int argc, const char *argv[])
     if (nss->i->active_paths.size() != orig_size) nss->i->need_reprep = 1;
     return 0;
 }
+
 
 extern "C" int
 _nirt_cmd_erase(void *ns, int argc, const char **argv)
@@ -2167,10 +2402,11 @@ _nirt_cmd_erase(void *ns, int argc, const char **argv)
     return 0;
 }
 
+
 extern "C" int
 _nirt_cmd_state(void *ns, int argc, const char *argv[])
 {
-    unsigned char rgb[3];
+    int rgb[3] = {0, 0, 0};
     struct bu_vls optmsg = BU_VLS_INIT_ZERO;
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
@@ -2181,11 +2417,12 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
     argc--; argv++;
     if (BU_STR_EQUAL(argv[0], "oddcolor")) {
 	if (argc == 1) {
-	    if (bu_color_to_rgb_chars(nss->i->hit_odd_color, (unsigned char *)rgb)) return -1;
-	    nout(nss, "%c %c %c", rgb[0], rgb[1], rgb[2]);
+	    if (!bu_color_to_rgb_ints(&nss->color_odd, &rgb[RED], &rgb[GRN], &rgb[BLU]))
+		return -1;
+	    nout(nss, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
 	    return 0;
 	}
-	if (bu_opt_color(&optmsg, argc, argv, (void *)nss->i->hit_odd_color) == -1) {
+	if (bu_opt_color(&optmsg, argc, argv, (void *)&nss->color_odd) == -1) {
 	    nerr(nss, "Error: bu_opt color read failure reading parsing");
 	    for (int i = 0; i < argc; i++) {nerr(nss, " %s", argv[i]);}
 	    nerr(nss, ": %s\n", bu_vls_cstr(&optmsg));
@@ -2195,11 +2432,12 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
     }
     if (BU_STR_EQUAL(argv[0], "evencolor")) {
 	if (argc == 1) {
-	    if (bu_color_to_rgb_chars(nss->i->hit_even_color, (unsigned char *)rgb)) return -1;
-	    nout(nss, "%c %c %c", rgb[0], rgb[1], rgb[2]);
+	    if (!bu_color_to_rgb_ints(&nss->color_even, &rgb[RED], &rgb[GRN], &rgb[BLU]))
+		return -1;
+	    nout(nss, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
 	    return 0;
 	}
-	if (bu_opt_color(&optmsg, argc, argv, (void *)nss->i->hit_even_color) == -1) {
+	if (bu_opt_color(&optmsg, argc, argv, (void *)&nss->color_even) == -1) {
 	    nerr(nss, "Error: bu_opt color read failure reading parsing");
 	    for (int i = 0; i < argc; i++) {nerr(nss, " %s", argv[i]);}
 	    nerr(nss, ": %s\n", bu_vls_cstr(&optmsg));
@@ -2210,11 +2448,11 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
     }
     if (BU_STR_EQUAL(argv[0], "voidcolor")) {
 	if (argc == 1) {
-	    if (bu_color_to_rgb_chars(nss->i->void_color, (unsigned char *)rgb)) return -1;
-	    nout(nss, "%c %c %c", rgb[0], rgb[1], rgb[2]);
+	    if (!bu_color_to_rgb_ints(&nss->color_gap, &rgb[RED], &rgb[GRN], &rgb[BLU])) return -1;
+	    nout(nss, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
 	    return 0;
 	}
-	if (bu_opt_color(&optmsg, argc, argv, (void *)nss->i->void_color) == -1) {
+	if (bu_opt_color(&optmsg, argc, argv, (void *)&nss->color_gap) == -1) {
 	    nerr(nss, "Error: bu_opt color read failure reading parsing");
 	    for (int i = 0; i < argc; i++) {nerr(nss, " %s", argv[i]);}
 	    nerr(nss, ": %s\n", bu_vls_cstr(&optmsg));
@@ -2225,11 +2463,11 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
     }
     if (BU_STR_EQUAL(argv[0], "overlapcolor")) {
 	if (argc == 1) {
-	    if (bu_color_to_rgb_chars(nss->i->overlap_color, (unsigned char *)rgb)) return -1;
-	    nout(nss, "%c %c %c", rgb[0], rgb[1], rgb[2]);
+	    if (!bu_color_to_rgb_ints(&nss->color_ovlp, &rgb[RED], &rgb[GRN], &rgb[BLU])) return -1;
+	    nout(nss, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
 	    return 0;
 	}
-	if (bu_opt_color(&optmsg, argc, argv, (void *)nss->i->overlap_color) == -1) {
+	if (bu_opt_color(&optmsg, argc, argv, (void *)&nss->color_ovlp) == -1) {
 	    nerr(nss, "Error: bu_opt color read failure reading parsing");
 	    for (int i = 0; i < argc; i++) {nerr(nss, " %s", argv[i]);}
 	    nerr(nss, ": %s\n", bu_vls_cstr(&optmsg));
@@ -2349,28 +2587,39 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
     return 0;
 }
 
+
+extern "C" int
+_nirt_cmd_deprecated(void *UNUSED(ns), int UNUSED(argc), const char **argv)
+{
+    bu_log("DEPRECATION WARNING: command '%s' is deprecated and scheduled for removal.\nPlease update your nirt scripts.\n", argv[0]);
+    return 0;
+}
+
+
 const struct bu_cmdtab _libanalyze_nirt_cmds[] = {
-    { "attr",           _nirt_cmd_attr},
+    { "?",              _nirt_cmd_show_menu},
     { "ae",             _nirt_cmd_az_el},
+    { "attr",           _nirt_cmd_attr},
+    { "backout",        _nirt_cmd_backout},
+    { "center",         _nirt_cmd_target_coor},
+    { "color",          _nirt_cmd_color_plot},
+    { "debug",          _nirt_cmd_debug},
     { "diff",           _nirt_cmd_diff},
     { "dir",            _nirt_cmd_dir_vect},
-    { "hv",             _nirt_cmd_grid_coor},
-    { "xyz",            _nirt_cmd_target_coor},
-    { "s",              _nirt_cmd_shoot},
-    { "backout",        _nirt_cmd_backout},
-    { "useair",         _nirt_cmd_use_air},
-    { "units",          _nirt_cmd_units},
-    { "overlap_claims", _nirt_cmd_do_overlap_claims},
-    { "fmt",            _nirt_cmd_format_output},
-    { "print",          _nirt_cmd_print_item},
-    { "bot_minpieces",  _nirt_cmd_bot_minpieces},
-    { "debug",          _nirt_cmd_debug},
-    { "q",              _nirt_cmd_quit},
-    { "?",              _nirt_cmd_show_menu},
-    // New commands...
     { "draw",           _nirt_cmd_draw},
     { "erase",          _nirt_cmd_erase},
+    { "fmt",            _nirt_cmd_format_output},
+    { "hv",             _nirt_cmd_grid_coor},
+    { "overlap_claims", _nirt_cmd_do_overlap_claims},
+    { "plotfile",       _nirt_cmd_plotfile},
+    { "print",          _nirt_cmd_print_item},
+    { "bot_minpieces",  _nirt_cmd_deprecated},
+    { "q",              _nirt_cmd_quit},
+    { "s",              _nirt_cmd_shoot},
     { "state",          _nirt_cmd_state},
+    { "units",          _nirt_cmd_units},
+    { "useair",         _nirt_cmd_use_air},
+    { "xyz",            _nirt_cmd_target_coor},
     { (char *)NULL,     NULL}
 };
 
@@ -2593,32 +2842,33 @@ static const char *nirt_cmd_tbl_defs =
 extern "C" int
 nirt_init(struct nirt_state *ns)
 {
-    unsigned int rgb[3] = {0, 0, 0};
     struct nirt_state_impl *n = NULL;
 
     if (!ns) return -1;
 
-    ns->nirt_cmd = BU_VLS_INIT_ZERO;
-    ns->nirt_format_file = BU_VLS_INIT_ZERO;
+    bu_vls_init(&ns->nirt_cmd);
+    bu_vls_init(&ns->nirt_format_file);
+    bu_vls_init(&ns->plotfile);
 
     /* Get memory */
     n = new nirt_state_impl;
     ns->i = n;
     n->overlap_claims = NIRT_OVLP_RESOLVE;
-    BU_GET(n->hit_odd_color, struct bu_color);
-    BU_GET(n->hit_even_color, struct bu_color);
-    BU_GET(n->void_color, struct bu_color);
-    BU_GET(n->overlap_color, struct bu_color);
 
     /* Strictly speaking these initializations are more
      * than an "alloc" function needs to do, but we want
      * a nirt state to be "functional" even though it
      * is not set up with a database (it's true/proper
      * initialization.)*/
-    bu_color_from_rgb_chars(n->hit_odd_color, (unsigned char *)&rgb);
-    bu_color_from_rgb_chars(n->hit_even_color, (unsigned char *)&rgb);
-    bu_color_from_rgb_chars(n->void_color, (unsigned char *)&rgb);
-    bu_color_from_rgb_chars(n->overlap_color, (unsigned char *)&rgb);
+    struct bu_color cyan = BU_COLOR_CYAN;
+    struct bu_color yellow = BU_COLOR_YELLOW;
+    struct bu_color purple = BU_COLOR_PURPLE;
+    struct bu_color white = BU_COLOR_WHITE;
+    BU_COLOR_CPY(&ns->color_odd, &cyan);
+    BU_COLOR_CPY(&ns->color_even, &yellow);
+    BU_COLOR_CPY(&ns->color_gap, &purple);
+    BU_COLOR_CPY(&ns->color_ovlp, &white);
+
     n->print_header = 0;
     n->print_ident_flag = 0;
 
@@ -2817,10 +3067,6 @@ nirt_destroy(struct nirt_state *ns)
     BU_PUT(ns->i->msg, struct bu_vls);
     BU_PUT(ns->i->out, struct bu_vls);
     BU_PUT(ns->i->ap, struct application);
-    BU_PUT(ns->i->hit_odd_color, struct bu_color);
-    BU_PUT(ns->i->hit_even_color, struct bu_color);
-    BU_PUT(ns->i->void_color, struct bu_color);
-    BU_PUT(ns->i->overlap_color, struct bu_color);
     delete ns->i;
 }
 

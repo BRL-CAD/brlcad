@@ -1,7 +1,7 @@
 /*                         G - O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2024 United States Government as represented by
+ * Copyright (c) 1996-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -195,7 +195,7 @@ main(int argc, const char **argv)
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
-    tree_state = rt_initial_tree_state;	/* struct copy */
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
@@ -214,7 +214,7 @@ main(int argc, const char **argv)
     tol.para = 1 - tol.perp;
 
     the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    struct bu_list *vlfree = &rt_vlfree;
 
     /* Get command line arguments. */
     ++argv; --argc;
@@ -277,7 +277,7 @@ main(int argc, const char **argv)
 			0,			/* take all regions */
 			do_region_end,
 			rt_booltree_leaf_tess,
-			(void *)NULL);	/* in librt/nmg_bool.c */
+			(void *)vlfree);	/* in librt/nmg_bool.c */
 
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100.0) / regions_tried;
@@ -300,7 +300,7 @@ main(int argc, const char **argv)
 
 
 static void
-nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int aircode, int los, int material_id)
+nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int aircode, int los, int material_id, struct bu_list *vlfree)
 {
     struct model *m = NULL;
     struct shell *s = NULL;
@@ -320,17 +320,17 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
+    nmg_triangulate_model(m, vlfree, &tol);
 
     /* list all vertices in result */
-    nmg_vertex_tabulate(&verts, &r->l.magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&verts, &r->l.magic, vlfree);
 
     /* Get number of vertices */
     numverts = BU_PTBL_LEN(&verts);
 
     /* get list of vertexuse normals */
     if (do_normals)
-	nmg_vertexuse_normal_tabulate(&norms, &r->l.magic, &RTG.rtg_vlfree);
+	nmg_vertexuse_normal_tabulate(&norms, &r->l.magic, vlfree);
 
     /* BEGIN CHECK SECTION */
     /* Check vertices */
@@ -520,13 +520,13 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
 
 static void
-process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp)
+process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, struct bu_list *vlfree)
 {
     if (!BU_SETJUMP) {
 	/* try */
 
 	/* Write the region to the TANKILL file */
-	nmg_to_obj(r, pathp, tsp->ts_regionid, tsp->ts_aircode, tsp->ts_los, tsp->ts_gmater);
+	nmg_to_obj(r, pathp, tsp->ts_regionid, tsp->ts_aircode, tsp->ts_los, tsp->ts_gmater, vlfree);
 
     } else {
 	/* catch */
@@ -559,7 +559,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 
 
 static union tree *
-process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct bu_list *vlfree)
 {
     static union tree *ret_tree = TREE_NULL;
 
@@ -567,8 +567,8 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	(void)nmg_model_fuse(*tsp->ts_m, vlfree, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
 
     } else {
 	/* catch */
@@ -610,11 +610,12 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
  * This routine must be prepared to run in parallel.
  */
 union tree *
-do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     union tree *ret_tree;
     struct bu_list vhead;
     struct nmgregion *r;
+    struct bu_list *vlfree = (struct bu_list *)client_data;
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
@@ -638,7 +639,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
     regions_tried++;
 
-    ret_tree = process_boolean(curtree, tsp, pathp);
+    ret_tree = process_boolean(curtree, tsp, pathp, vlfree);
 
     if (ret_tree)
 	r = ret_tree->tr_d.td_r;
@@ -673,7 +674,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	}
 
 	if (!empty_region && !empty_model) {
-	    process_triangulation(r, pathp, tsp);
+	    process_triangulation(r, pathp, tsp, vlfree);
 
 	    regions_written++;
 

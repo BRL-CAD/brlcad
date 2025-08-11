@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -424,7 +424,7 @@ int main(int argc, char *argv[])
 	    npsw = avail_cpus;
 	}
 
-	RTG.rtg_parallel = (npsw == 1) ? 0 : 1;
+	rtg_parallel = (npsw == 1) ? 0 : 1;
 	if (rt_verbosity & VERBOSE_MULTICPU)
 	    fprintf(stderr, "Planning to run with %zd processor(s)\n", npsw);
     }

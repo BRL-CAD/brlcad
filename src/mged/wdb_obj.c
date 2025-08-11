@@ -1,7 +1,7 @@
 /*                       W D B _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2024 United States Government as represented by
+ * Copyright (c) 2000-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,24 +54,12 @@
 #include "wdb.h"
 #include "raytrace.h"
 #include "tclcad.h"
+#include "./mged_wdb.h"
 
-
-/* A verbose message to attempt to soothe and advise the user */
-#define WDB_TCL_ERROR_RECOVERY_SUGGESTION\
-    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "\
-The in-memory table of contents may not match the status of the on-disk\n\
-database.  The on-disk database should still be intact.  For safety, \n\
-you should exit now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
-
-
-#define WDB_TCL_WRITE_ERR { \
-	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database write error, aborting.\n", (char *)NULL); \
-	WDB_TCL_ERROR_RECOVERY_SUGGESTION; }
-
-#define WDB_TCL_WRITE_ERR_return { \
-	WDB_TCL_WRITE_ERR; \
-	return TCL_ERROR; }
-
+#define ERROR_RECOVERY_SUGGESTION "\
+  The in-memory table of contents may not match the status of the on-disk\n\
+  database.  The on-disk database should still be intact.  For safety, \n\
+  you should exit MGED now, and resolve the I/O problem, before continuing.\n"
 
 #define WDB_TCL_CHECK_READ_ONLY \
     if ((Tcl_Interp *)wdbp->wdb_interp) { \
@@ -82,7 +70,6 @@ you should exit now, and resolve the I/O problem, before continuing.\n", (char *
     } else { \
 	bu_log("Sorry, this database is READ-ONLY\n"); \
     }
-
 
 static int
 wdb_decode_dbip(const char *dbip_string, struct db_i **dbipp)
@@ -306,7 +293,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
     struct rt_db_internal new_intern;
     const char *new_name;
     int use_air = 0;
-    struct ged ged;
+    struct ged ged; // Use a local ged struct to avoid needing global MGED state
 
     WDB_TCL_CHECK_READ_ONLY;
 
@@ -320,8 +307,8 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    /*XXX Temporary.  TODO - why are we not using the applications GEDP here? */
-    GED_INIT(&ged, wdbp);
+    ged_init(&ged);
+    ged.dbip = wdbp->dbip;
 
     i = 1;
 
@@ -750,6 +737,7 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
     char count_str[32];
     fastf_t tol_coll;
     fastf_t min_angle;
+    struct bu_list *vlfree = &rt_vlfree;
 
     WDB_TCL_CHECK_READ_ONLY;
 
@@ -814,7 +802,7 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
     NMG_CK_MODEL(m);
 
     /* check that all faces are planar */
-    nmg_face_tabulate(&faces, &m->magic, &RTG.rtg_vlfree);
+    nmg_face_tabulate(&faces, &m->magic, vlfree);
     for (BU_PTBL_FOR (fp, (struct face *), &faces)) {
 	if (fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
 	    bu_ptbl_free(&faces);
@@ -826,9 +814,9 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
     bu_ptbl_free(&faces);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+    nmg_triangulate_model(m, vlfree, &wdbp->wdb_tol);
 
-    count = nmg_edge_collapse(m, &wdbp->wdb_tol, tol_coll, min_angle, &RTG.rtg_vlfree);
+    count = nmg_edge_collapse(m, &wdbp->wdb_tol, tol_coll, min_angle, vlfree);
 
     dp = db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
@@ -839,7 +827,9 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
 
     if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern);
-	WDB_TCL_WRITE_ERR_return;
+	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database write error, aborting.\n", (char *)NULL);
+	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
+	return TCL_ERROR;
     }
 
     rt_db_free_internal(&intern);
@@ -1099,14 +1089,6 @@ wdb_rmap_tcl(void *clientData, int argc, const char *argv[])
 
     return wdb_rmap_cmd(wdbp, argc-1, argv+1);
 }
-
-static short int rt_arb_vertices[5][24] = {
-    { 1, 2, 3, 0, 1, 2, 4, 0, 2, 3, 4, 0, 1, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0 },	/* arb4 */
-    { 1, 2, 3, 4, 1, 2, 5, 0, 2, 3, 5, 0, 3, 4, 5, 0, 1, 4, 5, 0, 0, 0, 0, 0 },	/* arb5 */
-    { 1, 2, 3, 4, 2, 3, 6, 5, 1, 5, 6, 4, 1, 2, 5, 0, 3, 4, 6, 0, 0, 0, 0, 0 },	/* arb6 */
-    { 1, 2, 3, 4, 5, 6, 7, 0, 1, 4, 5, 0, 2, 3, 7, 6, 1, 2, 6, 5, 4, 3, 7, 5 },	/* arb7 */
-    { 1, 2, 3, 4, 5, 6, 7, 8, 1, 5, 8, 4, 2, 3, 7, 6, 1, 2, 6, 5, 4, 3, 7, 8 }	/* arb8 */
-};
 
 static int
 wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
@@ -1834,79 +1816,77 @@ wdb_version_tcl(void *clientData,
 
 
 static struct bu_cmdtab wdb_newcmds[] = {
-    {"adjust",		(int (*)(void *, int, const char **))ged_exec},
-    {"arced",		(int (*)(void *, int, const char **))ged_exec},
-    {"attr",		(int (*)(void *, int, const char **))ged_exec},
-    {"bo",		(int (*)(void *, int, const char **))ged_exec},
-    {"bot_face_sort",	(int (*)(void *, int, const char **))ged_exec},
-    {"bot_smooth",	(int (*)(void *, int, const char **))ged_exec},
-    {"bot_smooth",	(int (*)(void *, int, const char **))ged_exec},
-    {"c",		(int (*)(void *, int, const char **))ged_exec},
-    {"cat",		(int (*)(void *, int, const char **))ged_exec},
-    {"cc",		(int (*)(void *, int, const char **))ged_exec},
-    {"color",		(int (*)(void *, int, const char **))ged_exec},
-    {"comb",		(int (*)(void *, int, const char **))ged_exec},
-    {"comb_color",	(int (*)(void *, int, const char **))ged_exec},
-    {"concat",		(int (*)(void *, int, const char **))ged_exec},
-    {"copyeval",	(int (*)(void *, int, const char **))ged_exec},
-    {"cp",		(int (*)(void *, int, const char **))ged_exec},
-    {"dbip",		(int (*)(void *, int, const char **))ged_exec},
-    {"dump",		(int (*)(void *, int, const char **))ged_exec},
-    {"dup",		(int (*)(void *, int, const char **))ged_exec},
-    {"edcomb",		(int (*)(void *, int, const char **))ged_exec},
-    {"edit",		(int (*)(void *, int, const char **))ged_exec},
-    {"edmater",		(int (*)(void *, int, const char **))ged_exec},
-    {"expand",		(int (*)(void *, int, const char **))ged_exec},
-    {"facetize",	(int (*)(void *, int, const char **))ged_exec},
-    {"form",		(int (*)(void *, int, const char **))ged_exec},
-    {"g",		(int (*)(void *, int, const char **))ged_exec},
-    {"get",		(int (*)(void *, int, const char **))ged_exec},
-    {"get_type",	(int (*)(void *, int, const char **))ged_exec},
-    {"hide",		(int (*)(void *, int, const char **))ged_exec},
-    {"i",		(int (*)(void *, int, const char **))ged_exec},
-    {"item",		(int (*)(void *, int, const char **))ged_exec},
-    {"keep",		(int (*)(void *, int, const char **))ged_exec},
-    {"kill",		(int (*)(void *, int, const char **))ged_exec},
-    {"killall",		(int (*)(void *, int, const char **))ged_exec},
-    {"killtree",	(int (*)(void *, int, const char **))ged_exec},
-    {"l",		(int (*)(void *, int, const char **))ged_exec},
-    {"listeval",	(int (*)(void *, int, const char **))ged_exec},
-    {"log",		(int (*)(void *, int, const char **))ged_exec},
-    {"ls",		(int (*)(void *, int, const char **))ged_exec},
-    {"lt",		(int (*)(void *, int, const char **))ged_exec},
-    {"make",		(int (*)(void *, int, const char **))ged_exec},
-    {"make_name",	(int (*)(void *, int, const char **))ged_exec},
-    {"match",		(int (*)(void *, int, const char **))ged_exec},
-    {"mater",		(int (*)(void *, int, const char **))ged_exec},
-    {"mirror",		(int (*)(void *, int, const char **))ged_exec},
-    {"mv",		(int (*)(void *, int, const char **))ged_exec},
-    {"mvall",		(int (*)(void *, int, const char **))ged_exec},
-    {"nirt",		(int (*)(void *, int, const char **))ged_exec},
-    {"nirt",		(int (*)(void *, int, const char **))ged_exec},
-    {"ocenter",		(int (*)(void *, int, const char **))ged_exec},
-    {"orotate",		(int (*)(void *, int, const char **))ged_exec},
-    {"oscale",		(int (*)(void *, int, const char **))ged_exec},
-    {"otranslate",	(int (*)(void *, int, const char **))ged_exec},
-    {"pathlist",	(int (*)(void *, int, const char **))ged_exec},
-    {"paths",		(int (*)(void *, int, const char **))ged_exec},
-    {"prcolor",		(int (*)(void *, int, const char **))ged_exec},
-    {"push",		(int (*)(void *, int, const char **))ged_exec},
-    {"put",		(int (*)(void *, int, const char **))ged_exec},
-    {"r",		(int (*)(void *, int, const char **))ged_exec},
-    {"rm",		(int (*)(void *, int, const char **))ged_exec},
-    {"rmater",		(int (*)(void *, int, const char **))ged_exec},
-    {"shader",		(int (*)(void *, int, const char **))ged_exec},
-    {"shells",		(int (*)(void *, int, const char **))ged_exec},
-    {"showmats",	(int (*)(void *, int, const char **))ged_exec},
-    {"summary",		(int (*)(void *, int, const char **))ged_exec},
-    {"title",		(int (*)(void *, int, const char **))ged_exec},
-    {"tops",		(int (*)(void *, int, const char **))ged_exec},
-    {"unhide",		(int (*)(void *, int, const char **))ged_exec},
-    {"whatid",		(int (*)(void *, int, const char **))ged_exec},
-    {"whichair",	(int (*)(void *, int, const char **))ged_exec},
-    {"whichid",		(int (*)(void *, int, const char **))ged_exec},
-    {"wmater",		(int (*)(void *, int, const char **))ged_exec},
-    {"xpush",		(int (*)(void *, int, const char **))ged_exec},
+    {"adjust",		(int (*)(void *, int, const char **))ged_exec_adjust},
+    {"arced",		(int (*)(void *, int, const char **))ged_exec_arced},
+    {"attr",		(int (*)(void *, int, const char **))ged_exec_attr},
+    {"bo",		(int (*)(void *, int, const char **))ged_exec_bo},
+    {"bot_face_sort",	(int (*)(void *, int, const char **))ged_exec_bot_face_sort},
+    {"bot_smooth",	(int (*)(void *, int, const char **))ged_exec_bot_smooth},
+    {"c",		(int (*)(void *, int, const char **))ged_exec_c},
+    {"cat",		(int (*)(void *, int, const char **))ged_exec_cat},
+    {"cc",		(int (*)(void *, int, const char **))ged_exec_cc},
+    {"color",		(int (*)(void *, int, const char **))ged_exec_color},
+    {"comb",		(int (*)(void *, int, const char **))ged_exec_comb},
+    {"comb_color",	(int (*)(void *, int, const char **))ged_exec_comb_color},
+    {"concat",		(int (*)(void *, int, const char **))ged_exec_concat},
+    {"copyeval",	(int (*)(void *, int, const char **))ged_exec_copyeval},
+    {"cp",		(int (*)(void *, int, const char **))ged_exec_cp},
+    {"dbip",		(int (*)(void *, int, const char **))ged_exec_dbip}, // TODO - this needs to go away
+    {"dump",		(int (*)(void *, int, const char **))ged_exec_dump},
+    {"dup",		(int (*)(void *, int, const char **))ged_exec_dup},
+    {"edcomb",		(int (*)(void *, int, const char **))ged_exec_edcomb},
+    {"edit",		(int (*)(void *, int, const char **))ged_exec_edit},
+    {"edmater",		(int (*)(void *, int, const char **))ged_exec_edmater},
+    {"expand",		(int (*)(void *, int, const char **))ged_exec_expand},
+    {"facetize",	(int (*)(void *, int, const char **))ged_exec_facetize},
+    {"form",		(int (*)(void *, int, const char **))ged_exec_form},
+    {"g",		(int (*)(void *, int, const char **))ged_exec_g},
+    {"get",		(int (*)(void *, int, const char **))ged_exec_get},
+    {"get_type",	(int (*)(void *, int, const char **))ged_exec_get_type},
+    {"hide",		(int (*)(void *, int, const char **))ged_exec_hide},
+    {"i",		(int (*)(void *, int, const char **))ged_exec_i},
+    {"item",		(int (*)(void *, int, const char **))ged_exec_item},
+    {"keep",		(int (*)(void *, int, const char **))ged_exec_keep},
+    {"kill",		(int (*)(void *, int, const char **))ged_exec_kill},
+    {"killall",		(int (*)(void *, int, const char **))ged_exec_killall},
+    {"killtree",	(int (*)(void *, int, const char **))ged_exec_killtree},
+    {"l",		(int (*)(void *, int, const char **))ged_exec_l},
+    {"listeval",	(int (*)(void *, int, const char **))ged_exec_listeval},
+    {"log",		(int (*)(void *, int, const char **))ged_exec_log},
+    {"ls",		(int (*)(void *, int, const char **))ged_exec_ls},
+    {"lt",		(int (*)(void *, int, const char **))ged_exec_lt},
+    {"make",		(int (*)(void *, int, const char **))ged_exec_make},
+    {"make_name",	(int (*)(void *, int, const char **))ged_exec_make_name},
+    {"match",		(int (*)(void *, int, const char **))ged_exec_match},
+    {"mater",		(int (*)(void *, int, const char **))ged_exec_mater},
+    {"mirror",		(int (*)(void *, int, const char **))ged_exec_mirror},
+    {"mv",		(int (*)(void *, int, const char **))ged_exec_mv},
+    {"mvall",		(int (*)(void *, int, const char **))ged_exec_mvall},
+    {"nirt",		(int (*)(void *, int, const char **))ged_exec_nirt},
+    {"ocenter",		(int (*)(void *, int, const char **))ged_exec_ocenter},
+    {"orotate",		(int (*)(void *, int, const char **))ged_exec_orotate},
+    {"oscale",		(int (*)(void *, int, const char **))ged_exec_oscale},
+    {"otranslate",	(int (*)(void *, int, const char **))ged_exec_otranslate},
+    {"pathlist",	(int (*)(void *, int, const char **))ged_exec_pathlist},
+    {"paths",		(int (*)(void *, int, const char **))ged_exec_paths},
+    {"prcolor",		(int (*)(void *, int, const char **))ged_exec_prcolor},
+    {"push",		(int (*)(void *, int, const char **))ged_exec_push},
+    {"put",		(int (*)(void *, int, const char **))ged_exec_put},
+    {"r",		(int (*)(void *, int, const char **))ged_exec_r},
+    {"rm",		(int (*)(void *, int, const char **))ged_exec_rm},
+    {"rmater",		(int (*)(void *, int, const char **))ged_exec_rmater},
+    {"shader",		(int (*)(void *, int, const char **))ged_exec_shader},
+    {"shells",		(int (*)(void *, int, const char **))ged_exec_shells},
+    {"showmats",	(int (*)(void *, int, const char **))ged_exec_showmats},
+    {"summary",		(int (*)(void *, int, const char **))ged_exec_summary},
+    {"title",		(int (*)(void *, int, const char **))ged_exec_title},
+    {"tops",		(int (*)(void *, int, const char **))ged_exec_tops},
+    {"unhide",		(int (*)(void *, int, const char **))ged_exec_unhide},
+    {"whatid",		(int (*)(void *, int, const char **))ged_exec_whatid},
+    {"whichair",	(int (*)(void *, int, const char **))ged_exec_whichair},
+    {"whichid",		(int (*)(void *, int, const char **))ged_exec_whichid},
+    {"wmater",		(int (*)(void *, int, const char **))ged_exec_wmater},
+    {"xpush",		(int (*)(void *, int, const char **))ged_exec_xpush},
     {(const char *)NULL, BU_CMD_NULL}
 };
 
@@ -1952,13 +1932,14 @@ int
 wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-    struct ged ged;
+    RT_CHECK_WDB(wdbp);
+    struct ged ged; // Use a local ged struct to avoid needing global MGED state
     struct bu_hook_list save_hook_list = BU_HOOK_LIST_INIT_ZERO;
     int ret;
 
     /* look for the new libged commands before trying one of the old ones */
-    /* TODO - why are we not using the applications GEDP here? */
-    GED_INIT(&ged, wdbp);
+    ged_init(&ged);
+    ged.dbip = wdbp->dbip;
 
     bu_log_hook_save_all(&save_hook_list);
 
@@ -2053,7 +2034,7 @@ wdb_init_obj(Tcl_Interp *interp,
     wdbp->wdb_interp = (void *)interp;
 
     /* append to list of rt_wdb's */
-    BU_LIST_APPEND(&RTG.rtg_headwdb.l, &wdbp->l);
+    BU_LIST_APPEND(&rtg_headwdb.l, &wdbp->l);
 
     return TCL_OK;
 }
@@ -2091,7 +2072,7 @@ wdb_open_tcl(ClientData UNUSED(clientData),
 
     if (argc == 1) {
 	/* get list of database objects */
-	for (BU_LIST_FOR (wdbp, rt_wdb, &RTG.rtg_headwdb.l))
+	for (BU_LIST_FOR (wdbp, rt_wdb, &rtg_headwdb.l))
 	    Tcl_AppendResult(interp, bu_vls_addr(&wdbp->wdb_name), " ", (char *)NULL);
 
 	return TCL_OK;

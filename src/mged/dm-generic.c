@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,32 +46,33 @@
 #include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
+#include "./menu.h"
 
 
 extern point_t e_axes_pos;
 extern point_t curr_e_axes_pos;
 
 int
-common_dm(int argc, const char *argv[])
+common_dm(struct mged_state *s, int argc, const char *argv[])
 {
     int status;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return TCL_OK;
 
     if (BU_STR_EQUAL(argv[0], "idle")) {
 
 	/* redraw after scaling */
-	if (GEDP && GEDP->ged_gvp &&
-	    GEDP->ged_gvp->gv_s->adaptive_plot_csg &&
-	    GEDP->ged_gvp->gv_s->redraw_on_zoom &&
+	if (s->gedp && s->gedp->ged_gvp &&
+	    s->gedp->ged_gvp->gv_s->adaptive_plot_csg &&
+	    s->gedp->ged_gvp->gv_s->redraw_on_zoom &&
 	    (am_mode == AMM_SCALE ||
 	     am_mode == AMM_CON_SCALE_X ||
 	     am_mode == AMM_CON_SCALE_Y ||
 	     am_mode == AMM_CON_SCALE_Z))
 	{
-	    if (redraw_visible_objects() == TCL_ERROR) {
+	    if (redraw_visible_objects(s) == TCL_ERROR) {
 		return TCL_ERROR;
 	    }
 	}
@@ -90,9 +91,9 @@ common_dm(int argc, const char *argv[])
 		rb_set_dirty_flag(sdp, name, base, value, NULL);
 	    }
 	    else if (mged_variables->mv_mouse_behavior == 'r')
-		rt_rect_area();
+		rt_rect_area(s);
 	    else if (mged_variables->mv_mouse_behavior == 'z')
-		zoom_rect_area();
+		zoom_rect_area(s);
 	}
 
 	return TCL_OK;
@@ -106,7 +107,7 @@ common_dm(int argc, const char *argv[])
 	fastf_t fx, fy;
 
 	if (argc < 3) {
-	    Tcl_AppendResult(INTERP, "dm m: need more parameters\n",
+	    Tcl_AppendResult(s->interp, "dm m: need more parameters\n",
 			     "dm m xpos ypos\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -115,19 +116,19 @@ common_dm(int argc, const char *argv[])
 
 	fx = dm_Xx2Normal(DMP, atoi(argv[1]));
 	fy = dm_Xy2Normal(DMP, atoi(argv[2]), 0);
-	x = fx * GED_MAX;
-	y = fy * GED_MAX;
+	x = fx * BV_MAX;
+	y = fy * BV_MAX;
 
 	if (mged_variables->mv_faceplate &&
 	    mged_variables->mv_orig_gui) {
 #define MENUXLIM (-1250)
 
-	    if (x >= MENUXLIM && scroll_select(x, y, 0)) {
+	    if (x >= MENUXLIM && scroll_select(s, x, y, 0)) {
 		stolen = 1;
 		goto end;
 	    }
 
-	    if (x < MENUXLIM && mmenu_select(y, 0)) {
+	    if (x < MENUXLIM && mmenu_select(s, y, 0)) {
 		stolen = 1;
 		goto end;
 	    }
@@ -135,7 +136,7 @@ common_dm(int argc, const char *argv[])
 
 	mged_variables->mv_orig_gui = 0;
 	fy = dm_Xy2Normal(DMP, atoi(argv[2]), 1);
-	y = fy * GED_MAX;
+	y = fy * BV_MAX;
 
     end:
 	if (mged_variables->mv_mouse_behavior == 'q' && !stolen) {
@@ -143,7 +144,7 @@ common_dm(int argc, const char *argv[])
 	    point_t model_pt;
 
 	    if (grid_state->snap)
-		snap_to_grid(&fx, &fy);
+		snap_to_grid(s, &fx, &fy);
 
 	    if (mged_variables->mv_perspective_mode)
 		VSET(view_pt, fx, fy, 0.0);
@@ -151,7 +152,7 @@ common_dm(int argc, const char *argv[])
 		VSET(view_pt, fx, fy, 1.0);
 
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
-	    VSCALE(model_pt, model_pt, base2local);
+	    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 	    if (dm_get_zclip(DMP))
 		bu_vls_printf(&vls, "qray_nirt %lf %lf %lf",
 			      model_pt[X], model_pt[Y], model_pt[Z]);
@@ -163,14 +164,14 @@ common_dm(int argc, const char *argv[])
 		    mged_variables->mv_mouse_behavior == 'z') && !stolen) {
 
 	    if (grid_state->snap)
-		snap_to_grid(&fx, &fy);
+		snap_to_grid(s, &fx, &fy);
 
 	    rubber_band->rb_active = 1;
 	    rubber_band->rb_x = fx;
 	    rubber_band->rb_y = fy;
 	    rubber_band->rb_width = 0.0;
 	    rubber_band->rb_height = 0.0;
-	    rect_view2image();
+	    rect_view2image(s);
 	    {
 		/* need dummy values for func signature--they are unused in the func */
 		const struct bu_structparse *sdp = 0;
@@ -192,55 +193,55 @@ common_dm(int argc, const char *argv[])
 	    point_t view_pt;
 
 	    if (grid_state->snap)
-		snap_to_grid(&fx, &fy);
+		snap_to_grid(s, &fx, &fy);
 
 	    VSET(view_pt, fx, fy, 1.0);
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
-	    VSCALE(model_pt, model_pt, base2local);
+	    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 	    bu_vls_printf(&vls, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
 	} else if (grid_state->snap && !stolen &&
 		   SEDIT_TRAN && mged_variables->mv_transform == 'e') {
 	    point_t view_pt;
 	    point_t model_pt;
 
-	    snap_to_grid(&fx, &fy);
+	    snap_to_grid(s, &fx, &fy);
 	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
-	    VSCALE(model_pt, model_pt, base2local);
+	    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 	    bu_vls_printf(&vls, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 	} else if (grid_state->snap && !stolen &&
 		   OEDIT_TRAN && mged_variables->mv_transform == 'e') {
 	    point_t view_pt;
 	    point_t model_pt;
 
-	    snap_to_grid(&fx, &fy);
+	    snap_to_grid(s, &fx, &fy);
 	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
-	    VSCALE(model_pt, model_pt, base2local);
+	    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 	    bu_vls_printf(&vls, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 	} else if (grid_state->snap && !stolen &&
-		   STATE != ST_S_PICK && STATE != ST_O_PICK &&
-		   STATE != ST_O_PATH && !SEDIT_PICK && !EDIT_SCALE) {
+		   GEOM_EDIT_STATE != ST_S_PICK && GEOM_EDIT_STATE != ST_O_PICK &&
+		   GEOM_EDIT_STATE != ST_O_PATH && !SEDIT_PICK && !EDIT_SCALE) {
 	    point_t view_pt;
 	    point_t model_pt;
 	    point_t vcenter;
 
-	    snap_to_grid(&fx, &fy);
+	    snap_to_grid(s, &fx, &fy);
 	    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
 	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, vcenter);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
-	    VSCALE(model_pt, model_pt, base2local);
+	    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 	    bu_vls_printf(&vls, "center %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 	} else
 	    bu_vls_printf(&vls, "M 1 %d %d\n", x, y);
 
-	status = Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	status = Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	mged_variables->mv_orig_gui = old_orig_gui;
 	bu_vls_free(&vls);
 
@@ -249,7 +250,7 @@ common_dm(int argc, const char *argv[])
 
     if (BU_STR_EQUAL(argv[0], "am")) {
 	if (argc < 4) {
-	    Tcl_AppendResult(INTERP, "dm am: need more parameters\n",
+	    Tcl_AppendResult(s->interp, "dm am: need more parameters\n",
 			     "dm am <r|t|s> xpos ypos\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -267,9 +268,9 @@ common_dm(int argc, const char *argv[])
 		if (grid_state->snap) {
 		    int save_edflag;
 
-		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
+		    if ((GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) &&
 			mged_variables->mv_transform == 'e') {
-			if (STATE == ST_S_EDIT) {
+			if (GEOM_EDIT_STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_TRAN)
 				es_edflag = STRANS;
@@ -278,31 +279,31 @@ common_dm(int argc, const char *argv[])
 			    edobj = BE_O_XY;
 			}
 
-			snap_keypoint_to_grid();
+			snap_keypoint_to_grid(s);
 
-			if (STATE == ST_S_EDIT)
+			if (GEOM_EDIT_STATE == ST_S_EDIT)
 			    es_edflag = save_edflag;
 			else
 			    edobj = save_edflag;
 		    } else
-			snap_view_center_to_grid();
+			snap_view_center_to_grid(s);
 		}
 
 		break;
 	    case 's':
-		if (STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
+		if (GEOM_EDIT_STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
 		    ZERO(acc_sc_sol))
 		    acc_sc_sol = 1.0;
-		else if (STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-		    edit_absolute_scale = acc_sc_obj - 1.0;
-		    if (edit_absolute_scale > 0.0)
-			edit_absolute_scale /= 3.0;
+		else if (GEOM_EDIT_STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
+		    s->edit_state.edit_absolute_scale = acc_sc_obj - 1.0;
+		    if (s->edit_state.edit_absolute_scale > 0.0)
+			s->edit_state.edit_absolute_scale /= 3.0;
 		}
 
 		am_mode = AMM_SCALE;
 		break;
 	    default:
-		Tcl_AppendResult(INTERP, "dm am: need more parameters\n",
+		Tcl_AppendResult(s->interp, "dm am: need more parameters\n",
 				 "dm am <r|t|s> xpos ypos\n", (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -315,7 +316,7 @@ common_dm(int argc, const char *argv[])
 	fastf_t td; /* tick distance */
 
 	if (argc < 4) {
-	    Tcl_AppendResult(INTERP, "dm adc: need more parameters\n",
+	    Tcl_AppendResult(s->interp, "dm adc: need more parameters\n",
 			     "dm adc 1|2|t|d xpos ypos\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -325,21 +326,21 @@ common_dm(int argc, const char *argv[])
 
 	switch (*argv[1]) {
 	    case '1':
-		fx = dm_Xx2Normal(DMP, dm_omx) * GED_MAX - adc_state->adc_dv_x;
-		fy = dm_Xy2Normal(DMP, dm_omy, 1) * GED_MAX - adc_state->adc_dv_y;
+		fx = dm_Xx2Normal(DMP, dm_omx) * BV_MAX - adc_state->adc_dv_x;
+		fy = dm_Xy2Normal(DMP, dm_omy, 1) * BV_MAX - adc_state->adc_dv_y;
 
 		bu_vls_printf(&vls, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
-		Tcl_Eval(INTERP, bu_vls_addr(&vls));
+		Tcl_Eval(s->interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 
 		am_mode = AMM_ADC_ANG1;
 		break;
 	    case '2':
-		fx = dm_Xx2Normal(DMP, dm_omx) * GED_MAX - adc_state->adc_dv_x;
-		fy = dm_Xy2Normal(DMP, dm_omy, 1) * GED_MAX - adc_state->adc_dv_y;
+		fx = dm_Xx2Normal(DMP, dm_omx) * BV_MAX - adc_state->adc_dv_x;
+		fy = dm_Xy2Normal(DMP, dm_omy, 1) * BV_MAX - adc_state->adc_dv_y;
 
 		bu_vls_printf(&vls, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
-		Tcl_Eval(INTERP, bu_vls_addr(&vls));
+		Tcl_Eval(s->interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 
 		am_mode = AMM_ADC_ANG2;
@@ -352,13 +353,13 @@ common_dm(int argc, const char *argv[])
 		    VSET(view_pt, dm_Xx2Normal(DMP, dm_omx), dm_Xy2Normal(DMP, dm_omy, 1), 0.0);
 
 		    if (grid_state->snap)
-			snap_to_grid(&view_pt[X], &view_pt[Y]);
+			snap_to_grid(s, &view_pt[X], &view_pt[Y]);
 
 		    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
-		    VSCALE(model_pt, model_pt, base2local);
+		    VSCALE(model_pt, model_pt, s->dbip->dbi_base2local);
 
 		    bu_vls_printf(&vls, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
-		    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+		    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 
 		    bu_vls_free(&vls);
 		    am_mode = AMM_ADC_TRAN;
@@ -366,21 +367,21 @@ common_dm(int argc, const char *argv[])
 
 		break;
 	    case 'd':
-		fx = (dm_Xx2Normal(DMP, dm_omx) * GED_MAX -
-		      adc_state->adc_dv_x) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
-		fy = (dm_Xy2Normal(DMP, dm_omy, 1) * GED_MAX -
-		      adc_state->adc_dv_y) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
+		fx = (dm_Xx2Normal(DMP, dm_omx) * BV_MAX -
+		      adc_state->adc_dv_x) * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local * INV_BV;
+		fy = (dm_Xy2Normal(DMP, dm_omy, 1) * BV_MAX -
+		      adc_state->adc_dv_y) * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local * INV_BV;
 
 		td = sqrt(fx * fx + fy * fy);
 
 		bu_vls_printf(&vls, "adc dst %lf\n", td);
-		Tcl_Eval(INTERP, bu_vls_addr(&vls));
+		Tcl_Eval(s->interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 
 		am_mode = AMM_ADC_DIST;
 		break;
 	    default:
-		Tcl_AppendResult(INTERP, "dm adc: unrecognized parameter - ", argv[1],
+		Tcl_AppendResult(s->interp, "dm adc: unrecognized parameter - ", argv[1],
 				 "\ndm adc 1|2|t|d xpos ypos\n", (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -390,7 +391,7 @@ common_dm(int argc, const char *argv[])
 
     if (BU_STR_EQUAL(argv[0], "con")) {
 	if (argc < 5) {
-	    Tcl_AppendResult(INTERP, "dm con: need more parameters\n",
+	    Tcl_AppendResult(s->interp, "dm con: need more parameters\n",
 			     "dm con r|t|s x|y|z xpos ypos\n",
 			     "dm con a x|y|1|2|d xpos ypos\n", (char *)NULL);
 	    return TCL_ERROR;
@@ -418,7 +419,7 @@ common_dm(int argc, const char *argv[])
 			am_mode = AMM_CON_DIST;
 			break;
 		    default:
-			Tcl_AppendResult(INTERP, "dm con: unrecognized parameter - ", argv[2],
+			Tcl_AppendResult(s->interp, "dm con: unrecognized parameter - ", argv[2],
 					 "\ndm con a x|y|1|2|d xpos ypos\n", (char *)NULL);
 		}
 		break;
@@ -434,7 +435,7 @@ common_dm(int argc, const char *argv[])
 			am_mode = AMM_CON_ROT_Z;
 			break;
 		    default:
-			Tcl_AppendResult(INTERP, "dm con: unrecognized parameter - ", argv[2],
+			Tcl_AppendResult(s->interp, "dm con: unrecognized parameter - ", argv[2],
 					 "\ndm con r|t|s x|y|z xpos ypos\n", (char *)NULL);
 			return TCL_ERROR;
 		}
@@ -451,7 +452,7 @@ common_dm(int argc, const char *argv[])
 			am_mode = AMM_CON_TRAN_Z;
 			break;
 		    default:
-			Tcl_AppendResult(INTERP, "dm con: unrecognized parameter - ", argv[2],
+			Tcl_AppendResult(s->interp, "dm con: unrecognized parameter - ", argv[2],
 					 "\ndm con r|t|s x|y|z xpos ypos\n", (char *)NULL);
 			return TCL_ERROR;
 		}
@@ -459,49 +460,49 @@ common_dm(int argc, const char *argv[])
 	    case 's':
 		switch (*argv[2]) {
 		    case 'x':
-			if (STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
+			if (GEOM_EDIT_STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
 			    ZERO(acc_sc_sol))
 			    acc_sc_sol = 1.0;
-			else if (STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    edit_absolute_scale = acc_sc[0] - 1.0;
-			    if (edit_absolute_scale > 0.0)
-				edit_absolute_scale /= 3.0;
+			else if (GEOM_EDIT_STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
+			    s->edit_state.edit_absolute_scale = acc_sc[0] - 1.0;
+			    if (s->edit_state.edit_absolute_scale > 0.0)
+				s->edit_state.edit_absolute_scale /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_X;
 			break;
 		    case 'y':
-			if (STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
+			if (GEOM_EDIT_STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
 			    ZERO(acc_sc_sol))
 			    acc_sc_sol = 1.0;
-			else if (STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    edit_absolute_scale = acc_sc[1] - 1.0;
-			    if (edit_absolute_scale > 0.0)
-				edit_absolute_scale /= 3.0;
+			else if (GEOM_EDIT_STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
+			    s->edit_state.edit_absolute_scale = acc_sc[1] - 1.0;
+			    if (s->edit_state.edit_absolute_scale > 0.0)
+				s->edit_state.edit_absolute_scale /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_Y;
 			break;
 		    case 'z':
-			if (STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
+			if (GEOM_EDIT_STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
 			    ZERO(acc_sc_sol))
 			    acc_sc_sol = 1.0;
-			else if (STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    edit_absolute_scale = acc_sc[2] - 1.0;
-			    if (edit_absolute_scale > 0.0)
-				edit_absolute_scale /= 3.0;
+			else if (GEOM_EDIT_STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
+			    s->edit_state.edit_absolute_scale = acc_sc[2] - 1.0;
+			    if (s->edit_state.edit_absolute_scale > 0.0)
+				s->edit_state.edit_absolute_scale /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_Z;
 			break;
 		    default:
-			Tcl_AppendResult(INTERP, "dm con: unrecognized parameter - ", argv[2],
+			Tcl_AppendResult(s->interp, "dm con: unrecognized parameter - ", argv[2],
 					 "\ndm con r|t|s x|y|z xpos ypos\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 		break;
 	    default:
-		Tcl_AppendResult(INTERP, "dm con: unrecognized parameter - ", argv[1],
+		Tcl_AppendResult(s->interp, "dm con: unrecognized parameter - ", argv[1],
 				 "\ndm con r|t|s x|y|z xpos ypos\n", (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -515,7 +516,7 @@ common_dm(int argc, const char *argv[])
 	/* get the window size */
 	if (argc == 1) {
 	    bu_vls_printf(&vls, "%d %d", dm_get_width(DMP), dm_get_height(DMP));
-	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	    Tcl_AppendResult(s->interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
 	    return TCL_OK;
@@ -531,7 +532,7 @@ common_dm(int argc, const char *argv[])
 	    return TCL_OK;
 	}
 
-	Tcl_AppendResult(INTERP, "Usage: dm size [width height]\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "Usage: dm size [width height]\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
@@ -543,7 +544,7 @@ common_dm(int argc, const char *argv[])
 	} else if (argc == 2) {
 	    dm_internal_var(&tmp_vls, DMP, argv[1]);
 	}
-	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
 	return TCL_OK;
     }
@@ -553,7 +554,7 @@ common_dm(int argc, const char *argv[])
 
 	if (argc != 1 && argc != 4) {
 	    bu_vls_printf(&vls, "Usage: dm bg [r g b]");
-	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	    Tcl_AppendResult(s->interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
 	    return TCL_ERROR;
@@ -564,7 +565,7 @@ common_dm(int argc, const char *argv[])
 	    unsigned char *dm_bg;
 	    dm_get_bg(&dm_bg, NULL, DMP);
 	    bu_vls_printf(&vls, "%d %d %d", dm_bg[0], dm_bg[1], dm_bg[2]);
-	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	    Tcl_AppendResult(s->interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
 	    return TCL_OK;
@@ -574,7 +575,7 @@ common_dm(int argc, const char *argv[])
 	    sscanf(argv[2], "%d", &g) != 1 ||
 	    sscanf(argv[3], "%d", &b) != 1) {
 	    bu_vls_printf(&vls, "Usage: dm bg r g b");
-	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	    Tcl_AppendResult(s->interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
 	    return TCL_ERROR;
@@ -586,7 +587,7 @@ common_dm(int argc, const char *argv[])
 	return dm_set_bg(DMP, r, g, b, r, g, b);
     }
 
-    Tcl_AppendResult(INTERP, "dm: bad command - ", argv[0], "\n", (char *)NULL);
+    Tcl_AppendResult(s->interp, "dm: bad command - ", argv[0], "\n", (char *)NULL);
     return TCL_ERROR;
 }
 
@@ -628,7 +629,7 @@ zclip_hook(const struct bu_structparse *sdp,
 }
 
 void *
-set_hook_data(struct mged_view_hook_state *hs) {
+set_hook_data(struct mged_state *s, struct mged_view_hook_state *hs) {
     hs->hs_dmp = DMP;
     hs->vs = view_state;
     hs->dirty_global = &(DMP_dirty);
@@ -649,9 +650,10 @@ struct bu_structparse_map vparse_map[] = {
 };
 
 int
-dm_commands(int argc,
-       const char *argv[])
+dm_commands(int argc, const char *argv[], void *data)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     struct dm_hook_data mged_dm_hook;
     if (BU_STR_EQUAL(argv[0], "set")) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -675,9 +677,9 @@ dm_commands(int argc,
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		int ret;
 		struct mged_view_hook_state global_hs;
-		void *data = set_hook_data(&global_hs);
+		void *hdata = set_hook_data(s, &global_hs);
 
-		ret = dm_set_hook(vparse_map, argv[1], data, &mged_dm_hook);
+		ret = dm_set_hook(vparse_map, argv[1], hdata, &mged_dm_hook);
 		if (ret < 0) {
 		    bu_log("Warning - failed to set dm hook - dm-generic.c:%d\n", __LINE__);
 		}
@@ -694,13 +696,13 @@ dm_commands(int argc,
 	    }
 	}
 
-	Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(s->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
     }
 
-    return common_dm(argc, argv);
+    return common_dm(s, argc, argv);
 }
 
 /*

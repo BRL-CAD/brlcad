@@ -132,6 +132,10 @@
 			with potentially problematic features is still recommended - see the <command>lint</command>
 			man page for more details.)
 		</para>
+		<para>
+			Different tolerance settings will create finer or coarser meshes. See the <command>tol</command> man
+			page for more details.
+		</para>
 	</refsection>
 
 

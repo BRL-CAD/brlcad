@@ -1,7 +1,7 @@
 #                S K E T C H E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2024 United States Government as represented by
+# Copyright (c) 2002-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -2883,12 +2883,12 @@ class SketchCArc {
 		return "0 0"
 	    }
 	    set normalx [expr $ex - $sx]
-	    set normaly [expr $ey - $sy]
+	    set normally [expr $ey - $sy]
 	    set len [::dist $sx $sy $ex $ey]
 	    if { [catch {expr 1.0 / $len} one_over_len] } {
 		return "0 0"
 	    }
-	    set tangentx [expr -$normaly * $one_over_len ]
+	    set tangentx [expr -$normally * $one_over_len ]
 	    set tangenty [expr $normalx * $one_over_len ]
 	} else {
 	    set tmp_radius [expr {$myscale * $radius}]
@@ -2897,30 +2897,30 @@ class SketchCArc {
 	    set cy [lindex $center 1]
 	    if { $vertex == $start_index } {
 		set normalx [expr $sx - $cx]
-		set normaly [expr $sy - $cy]
+		set normally [expr $sy - $cy]
 		set len [::dist $sx $sy $cx $cy]
 		if { [catch {expr 1.0 / $len} one_over_len] } {
 		    return "0 0"
 		}
 		if { $orientation } {
-		    set tangentx [expr $normaly * $one_over_len ]
+		    set tangentx [expr $normally * $one_over_len ]
 		    set tangenty [expr -$normalx * $one_over_len ]
 		} else  {
-		    set tangentx [expr -$normaly * $one_over_len ]
+		    set tangentx [expr -$normally * $one_over_len ]
 		    set tangenty [expr $normalx * $one_over_len ]
 		}
 	    } else {
 		set normalx [expr $ex - $cx]
-		set normaly [expr $ey - $cy]
+		set normally [expr $ey - $cy]
 		set len [::dist $ex $ey $cx $cy]
 		if { [catch {expr 1.0 / $len} one_over_len] } {
 		    return "0 0"
 		}
 		if { $orientation } {
-		    set tangentx [expr -$normaly * $one_over_len ]
+		    set tangentx [expr -$normally * $one_over_len ]
 		    set tangenty [expr $normalx * $one_over_len ]
 		} else  {
-		    set tangentx [expr $normaly * $one_over_len ]
+		    set tangentx [expr $normally * $one_over_len ]
 		    set tangenty [expr -$normalx * $one_over_len ]
 		}
 	    }

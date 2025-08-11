@@ -1,7 +1,7 @@
 /*                        A N N O T . C
  * BRL-CAD
  *
- * Copyright (c) 2017-2024 United States Government as represented by
+ * Copyright (c) 2017-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -142,7 +142,7 @@ ant_check_pos(const struct txt_seg *tsg, char **rel_pos)
 
 
 static void
-ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fastf_t* hight)
+ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fastf_t* height, struct bu_list *vlfree)
 {
     point_t bmin, bmax;
     struct bu_list vhead;
@@ -151,22 +151,22 @@ ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fast
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
 
-    bv_vlist_2string(&vhead, &RTG.rtg_vlfree, tsg->label.vls_str, ref_pt[0], ref_pt[1], tsg->txt_size, tsg->txt_rot_angle);
+    bv_vlist_2string(&vhead, vlfree, tsg->label.vls_str, ref_pt[0], ref_pt[1], tsg->txt_size, tsg->txt_rot_angle);
     bv_vlist_bbox(&vhead, &bmin, &bmax, NULL, NULL);
 
     *length = bmax[0] - ref_pt[0];
-    *hight = bmax[1] - ref_pt[1];
+    *height = bmax[1] - ref_pt[1];
 }
 
 
 static int
-ant_pos_adjs(struct txt_seg* tsg, struct rt_annot_internal* annot_ip)
+ant_pos_adjs(struct txt_seg* tsg, struct rt_annot_internal* annot_ip, struct bu_list *vlfree)
 {
     point2d_t pt = V2INIT_ZERO;
     fastf_t length = 0;
     fastf_t height = 0;
 
-    ant_label_dimensions(tsg, annot_ip->verts[tsg->ref_pt], &length, &height);
+    ant_label_dimensions(tsg, annot_ip->verts[tsg->ref_pt], &length, &height, vlfree);
 
     if (tsg->rel_pos == RT_TXT_POS_BL) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
@@ -451,9 +451,9 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 		ret++;
 		break;
 	    }
-	    ant_pos_adjs(tsg, annot_ip);
+	    ant_pos_adjs(tsg, annot_ip, vlfree);
 	    V2ADD2(pt, V, annot_ip->verts[tsg->ref_pt]);
-	    bv_vlist_2string(vhead, &RTG.rtg_vlfree, tsg->label.vls_str, pt[0], pt[1], tsg->txt_size, tsg->txt_rot_angle);
+	    bv_vlist_2string(vhead, vlfree, tsg->label.vls_str, pt[0], pt[1], tsg->txt_size, tsg->txt_rot_angle);
 	    break;
 	case CURVE_CARC_MAGIC:
 	    {
@@ -839,7 +839,7 @@ rt_annot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
     struct rt_annot_internal *annot_ip;
     int ret;
     int myret=0;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -856,6 +856,23 @@ rt_annot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
     return myret;
 }
 
+int
+rt_annot_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_annot_internal *tip = (struct rt_annot_internal *)ip->idb_ptr;
+    RT_ANNOT_CK_MAGIC(tip);
+    struct rt_annot_internal *top = (struct rt_annot_internal *)rop->idb_ptr;
+    RT_ANNOT_CK_MAGIC(top);
+
+    vect_t v;
+    VMOVE(v, tip->V);
+    MAT4X3PNT(top->V, mat, v);
+
+    return BRLCAD_OK;
+}
 
 /**
  * Import an annotation from the database format to the internal format.
@@ -887,9 +904,8 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
     annot_ip->magic = RT_ANNOT_INTERNAL_MAGIC;
 
     ptr = ep->ext_buf;
-    if (mat == NULL) mat = bn_mat_identity;
     bu_cv_ntohd((unsigned char *)v, ptr, ELEMENTS_PER_VECT);
-    MAT4X3PNT(annot_ip->V, mat, v);
+    VMOVE(annot_ip->V, v);
 
     ptr += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
     annot_ip->vert_count = ntohl(*(uint32_t *)ptr);
@@ -1048,7 +1064,9 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 	ptr += SIZEOF_NETWORK_LONG;
     }
 
-    return 0;			/* OK */
+    /* Apply transform */
+    if (mat == NULL) mat = bn_mat_identity;
+    return rt_annot_mat(ip, mat, ip);
 }
 
 
@@ -1640,7 +1658,7 @@ ant_copy(struct rt_ant *ant_out, const struct rt_ant *ant_in)
 		}
 		break;
 	    default:
-		bu_bomb("ERROR: unrecognized segment type enountered while copying annotation\n");
+		bu_bomb("ERROR: unrecognized segment type encountered while copying annotation\n");
 	}
     }
 
@@ -2063,6 +2081,34 @@ rt_annot_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
+}
+
+const char *
+rt_annot_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_annot_internal *annot = (struct rt_annot_internal *)ip->idb_ptr;
+    RT_ANNOT_CK_MAGIC(annot);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, annot->V);
+	goto annot_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+annot_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
 }
 
 

@@ -1,7 +1,7 @@
 /*                     N A S T R A N - G . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2024 United States Government as represented by
+ * Copyright (c) 1997-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -610,7 +610,7 @@ convert_pnt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 }
 
 
-/* routine to convert a grid point ot BRL-CAD (default cartesian)
+/* routine to convert a grid point to BRL-CAD (default cartesian)
  *
  * returns:
  * 0 on success
@@ -860,7 +860,7 @@ get_pid_index(int pid)
 
 
 static void
-get_cquad4(void)
+get_cquad4(struct bu_list *vlfree)
 {
     int pid;
     int g1, g2, g3, g4;
@@ -946,7 +946,7 @@ get_cquad4(void)
 	nmg_vertex_gv(g_pts[gin2].v[pid_index], pt2);
     if (!g_pts[gin3].v[pid_index]->vg_p)
 	nmg_vertex_gv(g_pts[gin3].v[pid_index], pt3);
-    nmg_calc_face_g(fu, &RTG.rtg_vlfree);
+    nmg_calc_face_g(fu, vlfree);
 
     v[0] = &g_pts[gin1].v[pid_index];
     v[1] = &g_pts[gin3].v[pid_index];
@@ -956,12 +956,12 @@ get_cquad4(void)
 
     if (!g_pts[gin4].v[pid_index]->vg_p)
 	nmg_vertex_gv(g_pts[gin4].v[pid_index], pt4);
-    nmg_calc_face_g(fu, &RTG.rtg_vlfree);
+    nmg_calc_face_g(fu, vlfree);
 }
 
 
 static void
-get_ctria3(void)
+get_ctria3(struct bu_list *vlfree)
 {
     int pid;
     int g1, g2, g3;
@@ -1044,7 +1044,7 @@ get_ctria3(void)
     if (!g_pts[gin3].v[pid_index]->vg_p)
 	nmg_vertex_gv(g_pts[gin3].v[pid_index], pt3);
 
-    nmg_calc_face_g(fu, &RTG.rtg_vlfree);
+    nmg_calc_face_g(fu, vlfree);
 }
 
 
@@ -1111,6 +1111,8 @@ main(int argc, char **argv)
     struct wmember head;
     struct wmember all_head;
     char *nastran_file = "Converted from NASTRAN file (stdin)";
+
+    struct bu_list *vlfree = &rt_vlfree;
 
     bu_setprogname(argv[0]);
     fpin = stdin;
@@ -1310,9 +1312,9 @@ main(int argc, char **argv)
 	else if (!bu_strncmp(curr_rec[0], "CROD", 4))
 	    get_cbar();
 	else if (!bu_strncmp(curr_rec[0], "CTRIA3", 6))
-	    get_ctria3();
+	    get_ctria3(vlfree);
 	else if (!bu_strncmp(curr_rec[0], "CQUAD4", 6))
-	    get_cquad4();
+	    get_cquad4(vlfree);
     }
 
     if (nmg_model) {
@@ -1333,10 +1335,10 @@ main(int argc, char **argv)
 
 	m = nmg_find_model(&psh->s->l.magic);
 	nmg_rebound(m, &tol);
-	nmg_fix_normals(psh->s, &RTG.rtg_vlfree, &tol);
+	nmg_fix_normals(psh->s, vlfree, &tol);
 	if (psh->thick > tol.dist) {
-	    nmg_model_face_fuse(m, &RTG.rtg_vlfree, &tol);
-	    nmg_hollow_shell(psh->s, psh->thick*conv[units], 1, &RTG.rtg_vlfree, &tol);
+	    nmg_model_face_fuse(m, vlfree, &tol);
+	    nmg_hollow_shell(psh->s, psh->thick*conv[units], 1, vlfree, &tol);
 	}
 	sprintf(name, "pshell.%d", psh->pid);
 	if (polysolids)

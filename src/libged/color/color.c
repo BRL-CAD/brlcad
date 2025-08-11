@@ -1,7 +1,7 @@
 /*                         C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -128,7 +128,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     bu_optind = 1;
-    /* First, grab the editstring off of the argv list */
+    /* First, grab the editstring (if present) off of the argv list */
     while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != -1) {
 	switch (c) {
 	    case 'E' :
@@ -162,7 +162,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     }
     (void)fclose(fp);
 
-    if (!_ged_editit(editstring, (const char *)tmpfil)) {
+    if (!_ged_editit(gedp, editstring, (const char *)tmpfil)) {
 	bu_vls_printf(gedp->ged_result_str, "%s: editor returned bad status. Aborted\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -242,8 +242,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     bu_file_delete(tmpfil);
 
     /* if there are drawables, update their colors */
-    if (gedp->ged_gdp)
-	dl_color_soltab(gedp->ged_gdp->gd_headDisplay);
+    dl_color_soltab((struct bu_list *)ged_dl(gedp));
 
     return BRLCAD_OK;
 }

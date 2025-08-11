@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.20)
 project(EXAMPLES)
 if(NOT MSVC)
   add_definitions(-g)
@@ -34,4 +34,3 @@ add_test(05_PImpl_CXX 05_PImpl_CXX/ntest05)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

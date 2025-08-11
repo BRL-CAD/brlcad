@@ -1,7 +1,7 @@
 /*                        S C R O L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,13 +30,11 @@
 #include "vmath.h"
 #include "ged.h"
 #include "./mged.h"
-#include "./titles.h"
 #include "./mged_dm.h"
 
 #include "./sedit.h"
 
-extern int mged_svbase(void);   /* defined in chgview.c */
-extern void set_scroll(void);   /* defined in set.c */
+#define SL_TOL 0.03125  /* size of dead spot - 64/2048 */
 
 /************************************************************************
  *									*
@@ -96,7 +94,7 @@ struct scroll_item sl_adc_menu[] = {
  * Set scroll_array.
  */
 void
-set_scroll(void)
+set_scroll(struct mged_state *s)
 {
     if (mged_variables->mv_sliders) {
 	if (mged_variables->mv_rateknobs)
@@ -107,11 +105,11 @@ set_scroll(void)
 	if (adc_state->adc_draw)
 	    scroll_array[1] = sl_adc_menu;
 	else
-	    scroll_array[1] = SCROLL_NULL;
+	    scroll_array[1] = NULL;
 
     } else {
-	scroll_array[0] = SCROLL_NULL;
-	scroll_array[1] = SCROLL_NULL;
+	scroll_array[0] = NULL;
+	scroll_array[1] = NULL;
     }
 }
 
@@ -120,18 +118,18 @@ set_scroll(void)
  * Reset all scroll bars to the zero position.
  */
 void
-sl_halt_scroll(int UNUSED(a), int UNUSED(b), int UNUSED(c))
+sl_halt_scroll(struct mged_state *s, int UNUSED(a), int UNUSED(b), int UNUSED(c))
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     bu_vls_printf(&vls, "knob zero");
-    (void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
+    (void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
 
 
 void
-sl_toggle_scroll(int UNUSED(a), int UNUSED(b), int UNUSED(c))
+sl_toggle_scroll(struct mged_state *s, int UNUSED(a), int UNUSED(b), int UNUSED(c))
 {
     mged_variables->mv_sliders = mged_variables->mv_sliders ? 0 : 1;
 
@@ -141,7 +139,7 @@ sl_toggle_scroll(int UNUSED(a), int UNUSED(b), int UNUSED(c))
 	const char name[] = "name";
 	void *base = 0;
 	const char value[] = "value";
-	set_scroll_private(sdp, name, base, value, NULL);
+	set_scroll_private(sdp, name, base, value, s);
     }
 }
 
@@ -159,6 +157,7 @@ sl_toggle_scroll(int UNUSED(a), int UNUSED(b), int UNUSED(c))
 static void
 sl_tol(struct scroll_item *mptr, double val)
 {
+    struct mged_state *s = MGED_STATE;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (val < -SL_TOL) {
@@ -170,7 +169,7 @@ sl_tol(struct scroll_item *mptr, double val)
     }
 
     bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val);
-    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+    Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
 
@@ -178,9 +177,10 @@ sl_tol(struct scroll_item *mptr, double val)
 static void
 sl_atol(struct scroll_item *mptr, double val)
 {
+    struct mged_state *s = MGED_STATE;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     if (val < -SL_TOL) {
@@ -191,8 +191,8 @@ sl_atol(struct scroll_item *mptr, double val)
 	val = 0.0;
     }
 
-    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*view_state->vs_gvp->gv_scale*base2local);
-    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*view_state->vs_gvp->gv_scale*s->dbip->dbi_base2local);
+    Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
 
@@ -200,6 +200,7 @@ sl_atol(struct scroll_item *mptr, double val)
 static void
 sl_rrtol(struct scroll_item *mptr, double val)
 {
+    struct mged_state *s = MGED_STATE;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (val < -SL_TOL) {
@@ -211,7 +212,7 @@ sl_rrtol(struct scroll_item *mptr, double val)
     }
 
     bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val * RATE_ROT_FACTOR);
-    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+    Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
 
@@ -219,6 +220,7 @@ sl_rrtol(struct scroll_item *mptr, double val)
 static void
 sl_artol(struct scroll_item *mptr, double val)
 {
+    struct mged_state *s = MGED_STATE;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (val < -SL_TOL) {
@@ -230,7 +232,7 @@ sl_artol(struct scroll_item *mptr, double val)
     }
 
     bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*ABS_ROT_FACTOR);
-    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+    Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
 
@@ -238,6 +240,7 @@ sl_artol(struct scroll_item *mptr, double val)
 static void
 sl_adctol(struct scroll_item *mptr, double val)
 {
+    struct mged_state *s = MGED_STATE;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (val < -SL_TOL) {
@@ -249,7 +252,7 @@ sl_adctol(struct scroll_item *mptr, double val)
     }
 
     bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, 45.0 - val*45.0);
-    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+    Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
 
@@ -257,6 +260,7 @@ sl_adctol(struct scroll_item *mptr, double val)
 static void
 sl_itol(struct scroll_item *mptr, double val)
 {
+    struct mged_state *s = MGED_STATE;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (val < -SL_TOL) {
@@ -267,8 +271,8 @@ sl_itol(struct scroll_item *mptr, double val)
 	val = 0.0;
     }
 
-    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*GED_MAX);
-    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*BV_MAX);
+    Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
 
@@ -285,7 +289,7 @@ sl_itol(struct scroll_item *mptr, double val)
  * position used.
  */
 int
-scroll_display(int y_top)
+scroll_display(struct mged_state *s, int y_top)
 {
     int y;
     struct scroll_item *mptr;
@@ -299,7 +303,7 @@ scroll_display(int y_top)
 
     dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
 
-    for (m = &scroll_array[0]; *m != SCROLL_NULL; m++) {
+    for (m = &scroll_array[0]; *m != NULL; m++) {
 	++second_menu;
 	for (mptr = *m; mptr->scroll_string[0] != '\0'; mptr++) {
 	    y += SCROLL_DY;		/* y is now bottom line pos */
@@ -307,7 +311,7 @@ scroll_display(int y_top)
 	    switch (mptr->scroll_val) {
 		case 0:
 		    if (second_menu) {
-			f = (double)adc_state->adc_dv_x * INV_GED;
+			f = (double)adc_state->adc_dv_x * INV_BV;
 
 			dm_set_fg(DMP,
 				       color_scheme->cs_slider_text2[0],
@@ -319,16 +323,16 @@ scroll_display(int y_top)
 				case 'm':
 				case 'o':
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_model_tran[X];
+					f = s->edit_state.edit_rate_model_tran[X];
 				    else
-					f = edit_absolute_model_tran[X];
+					f = s->edit_state.edit_absolute_model_tran[X];
 				    break;
 				case 'v':
 				default:
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_view_tran[X];
+					f = s->edit_state.edit_rate_view_tran[X];
 				    else
-					f = edit_absolute_view_tran[X];
+					f = s->edit_state.edit_absolute_view_tran[X];
 				    break;
 			    }
 
@@ -358,7 +362,7 @@ scroll_display(int y_top)
 		    break;
 		case 1:
 		    if (second_menu) {
-			f = (double)adc_state->adc_dv_y * INV_GED;
+			f = (double)adc_state->adc_dv_y * INV_BV;
 
 			dm_set_fg(DMP,
 				       color_scheme->cs_slider_text2[0],
@@ -370,15 +374,15 @@ scroll_display(int y_top)
 				case 'm':
 				case 'o':
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_model_tran[Y];
+					f = s->edit_state.edit_rate_model_tran[Y];
 				    else
-					f = edit_absolute_model_tran[Y];
+					f = s->edit_state.edit_absolute_model_tran[Y];
 				    break;
 				case 'v':
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_view_tran[Y];
+					f = s->edit_state.edit_rate_view_tran[Y];
 				    else
-					f = edit_absolute_view_tran[Y];
+					f = s->edit_state.edit_absolute_view_tran[Y];
 				    break;
 			    }
 
@@ -408,7 +412,7 @@ scroll_display(int y_top)
 		    break;
 		case 2:
 		    if (second_menu) {
-			f = (double)adc_state->adc_dv_a1 * INV_GED;
+			f = (double)adc_state->adc_dv_a1 * INV_BV;
 
 			dm_set_fg(DMP,
 				       color_scheme->cs_slider_text2[0],
@@ -420,15 +424,15 @@ scroll_display(int y_top)
 				case 'm':
 				case 'o':
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_model_tran[Z];
+					f = s->edit_state.edit_rate_model_tran[Z];
 				    else
-					f = edit_absolute_model_tran[Z];
+					f = s->edit_state.edit_absolute_model_tran[Z];
 				    break;
 				case 'v':
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_view_tran[Z];
+					f = s->edit_state.edit_rate_view_tran[Z];
 				    else
-					f = edit_absolute_view_tran[Z];
+					f = s->edit_state.edit_absolute_view_tran[Z];
 				    break;
 			    }
 
@@ -458,7 +462,7 @@ scroll_display(int y_top)
 		    break;
 		case 3:
 		    if (second_menu) {
-			f = (double)adc_state->adc_dv_a2 * INV_GED;
+			f = (double)adc_state->adc_dv_a2 * INV_BV;
 
 			dm_set_fg(DMP,
 				       color_scheme->cs_slider_text2[0],
@@ -467,9 +471,9 @@ scroll_display(int y_top)
 		    } else {
 			if (EDIT_SCALE && mged_variables->mv_transform == 'e') {
 			    if (mged_variables->mv_rateknobs)
-				f = edit_rate_scale;
+				f = s->edit_state.edit_rate_scale;
 			    else
-				f = edit_absolute_scale;
+				f = s->edit_state.edit_absolute_scale;
 
 			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text1[0],
@@ -490,7 +494,7 @@ scroll_display(int y_top)
 		    break;
 		case 4:
 		    if (second_menu) {
-			f = (double)adc_state->adc_dv_dist * INV_GED;
+			f = (double)adc_state->adc_dv_dist * INV_BV;
 
 			dm_set_fg(DMP,
 				       color_scheme->cs_slider_text2[0],
@@ -501,22 +505,22 @@ scroll_display(int y_top)
 			    switch (mged_variables->mv_coords) {
 				case 'm':
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_model_rotate[X] / RATE_ROT_FACTOR;
+					f = s->edit_state.edit_rate_model_rotate[X] / RATE_ROT_FACTOR;
 				    else
-					f = edit_absolute_model_rotate[X] / ABS_ROT_FACTOR;
+					f = s->edit_state.edit_absolute_model_rotate[X] / ABS_ROT_FACTOR;
 				    break;
 				case 'o':
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_object_rotate[X] / RATE_ROT_FACTOR;
+					f = s->edit_state.edit_rate_object_rotate[X] / RATE_ROT_FACTOR;
 				    else
-					f = edit_absolute_object_rotate[X] / ABS_ROT_FACTOR;
+					f = s->edit_state.edit_absolute_object_rotate[X] / ABS_ROT_FACTOR;
 				    break;
 				case 'v':
 				default:
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_view_rotate[X] / RATE_ROT_FACTOR;
+					f = s->edit_state.edit_rate_view_rotate[X] / RATE_ROT_FACTOR;
 				    else
-					f = edit_absolute_view_rotate[X] / ABS_ROT_FACTOR;
+					f = s->edit_state.edit_absolute_view_rotate[X] / ABS_ROT_FACTOR;
 				    break;
 			    }
 
@@ -546,29 +550,29 @@ scroll_display(int y_top)
 		    break;
 		case 5:
 		    if (second_menu)
-			Tcl_AppendResult(INTERP, "scroll_display: 2nd scroll menu is hosed\n",
+			Tcl_AppendResult(s->interp, "scroll_display: 2nd scroll menu is hosed\n",
 					 (char *)NULL);
 		    else {
 			if (EDIT_ROTATE && mged_variables->mv_transform == 'e') {
 			    switch (mged_variables->mv_coords) {
 				case 'm':
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_model_rotate[Y] / RATE_ROT_FACTOR;
+					f = s->edit_state.edit_rate_model_rotate[Y] / RATE_ROT_FACTOR;
 				    else
-					f = edit_absolute_model_rotate[Y] / ABS_ROT_FACTOR;
+					f = s->edit_state.edit_absolute_model_rotate[Y] / ABS_ROT_FACTOR;
 				    break;
 				case 'o':
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_object_rotate[Y] / RATE_ROT_FACTOR;
+					f = s->edit_state.edit_rate_object_rotate[Y] / RATE_ROT_FACTOR;
 				    else
-					f = edit_absolute_object_rotate[Y] / ABS_ROT_FACTOR;
+					f = s->edit_state.edit_absolute_object_rotate[Y] / ABS_ROT_FACTOR;
 				    break;
 				case 'v':
 				default:
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_view_rotate[Y] / RATE_ROT_FACTOR;
+					f = s->edit_state.edit_rate_view_rotate[Y] / RATE_ROT_FACTOR;
 				    else
-					f = edit_absolute_view_rotate[Y] / ABS_ROT_FACTOR;
+					f = s->edit_state.edit_absolute_view_rotate[Y] / ABS_ROT_FACTOR;
 				    break;
 			    }
 
@@ -598,29 +602,29 @@ scroll_display(int y_top)
 		    break;
 		case 6:
 		    if (second_menu)
-			Tcl_AppendResult(INTERP, "scroll_display: 2nd scroll menu is hosed\n",
+			Tcl_AppendResult(s->interp, "scroll_display: 2nd scroll menu is hosed\n",
 					 (char *)NULL);
 		    else {
 			if (EDIT_ROTATE && mged_variables->mv_transform == 'e') {
 			    switch (mged_variables->mv_coords) {
 				case 'm':
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_model_rotate[Z] / RATE_ROT_FACTOR;
+					f = s->edit_state.edit_rate_model_rotate[Z] / RATE_ROT_FACTOR;
 				    else
-					f = edit_absolute_model_rotate[Z] / ABS_ROT_FACTOR;
+					f = s->edit_state.edit_absolute_model_rotate[Z] / ABS_ROT_FACTOR;
 				    break;
 				case 'o':
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_object_rotate[Z] / RATE_ROT_FACTOR;
+					f = s->edit_state.edit_rate_object_rotate[Z] / RATE_ROT_FACTOR;
 				    else
-					f = edit_absolute_object_rotate[Z] / ABS_ROT_FACTOR;
+					f = s->edit_state.edit_absolute_object_rotate[Z] / ABS_ROT_FACTOR;
 				    break;
 				case 'v':
 				default:
 				    if (mged_variables->mv_rateknobs)
-					f = edit_rate_view_rotate[Z] / RATE_ROT_FACTOR;
+					f = s->edit_state.edit_rate_view_rotate[Z] / RATE_ROT_FACTOR;
 				    else
-					f = edit_absolute_view_rotate[Z] / ABS_ROT_FACTOR;
+					f = s->edit_state.edit_absolute_view_rotate[Z] / ABS_ROT_FACTOR;
 				    break;
 			    }
 
@@ -650,15 +654,15 @@ scroll_display(int y_top)
 		    break;
 		default:
 		    if (second_menu)
-			Tcl_AppendResult(INTERP, "scroll_display: 2nd scroll menu is hosed\n",
+			Tcl_AppendResult(s->interp, "scroll_display: 2nd scroll menu is hosed\n",
 					 (char *)NULL);
 		    else
-			Tcl_AppendResult(INTERP, "scroll_display: first scroll menu is hosed\n",
+			Tcl_AppendResult(s->interp, "scroll_display: first scroll menu is hosed\n",
 					 (char *)NULL);
 	    }
 
 	    if (f > 0)
-		xpos = (f + SL_TOL) * GED_MAX;
+		xpos = (f + SL_TOL) * BV_MAX;
 	    else if (f < 0)
 		xpos = (f - SL_TOL) * -MENUXLIM;
 	    else
@@ -671,7 +675,7 @@ scroll_display(int y_top)
 			   color_scheme->cs_slider_line[1],
 			   color_scheme->cs_slider_line[2], 1, 1.0);
 	    dm_draw_line_2d(DMP,
-			    GED2PM1(XMAX), GED2PM1(y),
+			    GED2PM1((int)BV_MAX), GED2PM1(y),
 			    GED2PM1(MENUXLIM), GED2PM1(y));
 	}
     }
@@ -694,12 +698,12 @@ scroll_display(int y_top)
  * Called with Y coordinate of pen in menu area.
  *
  * Returns:
- * 1 if menu claims these pen co-ordinates,
+ * 1 if menu claims these pen coordinates,
  * 0 if pen is BELOW scroll
  * -1 if pen is ABOVE scroll (error)
  */
 int
-scroll_select(int pen_x, int pen_y, int do_func)
+scroll_select(struct mged_state *s, int pen_x, int pen_y, int do_func)
 {
     int yy;
     struct scroll_item **m;
@@ -715,7 +719,7 @@ scroll_select(int pen_x, int pen_y, int do_func)
      * above here.
      */
     yy = scroll_top;
-    for (m = &scroll_array[0]; *m != SCROLL_NULL; m++) {
+    for (m = &scroll_array[0]; *m != NULL; m++) {
 	for (mptr = *m; mptr->scroll_string[0] != '\0'; mptr++) {
 	    fastf_t val;
 	    yy += SCROLL_DY;	/* bottom line pos */
@@ -729,7 +733,7 @@ scroll_select(int pen_x, int pen_y, int do_func)
 	     * menu text area on the left.
 	     */
 	    if (pen_x >= 0) {
-		val = pen_x * INV_GED;
+		val = pen_x * INV_BV;
 	    } else {
 		val = pen_x/(double)(-MENUXLIM);
 	    }

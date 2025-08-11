@@ -1,20 +1,16 @@
-set(tgf_SRCS
-  read_dra.cpp
-  regtab.cpp
-  tgf-g.cpp
-  write_brl.cpp
-  )
-BRLCAD_ADDEXEC(tgf-g "${tgf_SRCS}" "libwdb;librt;libbu" FOLDER Conv)
+set(tgf_SRCS read_dra.cpp regtab.cpp tgf-g.cpp write_brl.cpp)
+brlcad_addexec(tgf-g "${tgf_SRCS}" "libwdb;librt;libbu" FOLDER Conv)
 
-set(intaval_ignore_files
+set(
+  intaval_ignore_files
   CMakeLists.txt
   glob.h
   read_dra.h
   readme.txt
   regtab.h
   write_brl.h
-  )
-CMAKEFILES(${intaval_ignore_files})
+)
+cmakefiles(${intaval_ignore_files})
 
 # Local Variables:
 # tab-width: 8

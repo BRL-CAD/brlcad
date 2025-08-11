@@ -52,8 +52,8 @@ set(LMDB_NAMES lmdb lmdbd)
 
 # Try each search configuration.
 foreach(search ${_LMDB_SEARCHES})
-  find_path(LMDB_INCLUDE_DIR NAMES lmdb.h        ${${search}} PATH_SUFFIXES include include/lmdb)
-  find_library(LMDB_LIBRARY  NAMES ${LMDB_NAMES} ${${search}} PATH_SUFFIXES lib)
+  find_path(LMDB_INCLUDE_DIR NAMES lmdb.h ${${search}} PATH_SUFFIXES include include/lmdb)
+  find_library(LMDB_LIBRARY NAMES ${LMDB_NAMES} ${${search}} PATH_SUFFIXES lib)
 endforeach()
 
 mark_as_advanced(LMDB_LIBRARY LMDB_INCLUDE_DIR)
@@ -61,16 +61,17 @@ mark_as_advanced(LMDB_LIBRARY LMDB_INCLUDE_DIR)
 # handle the QUIETLY and REQUIRED arguments and set LMDB_FOUND to TRUE if
 # all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(LMDB REQUIRED_VARS LMDB_LIBRARY LMDB_INCLUDE_DIR)
+find_package_handle_standard_args(LMDB REQUIRED_VARS LMDB_LIBRARY LMDB_INCLUDE_DIR)
 
 if(LMDB_FOUND)
-    set(LMDB_INCLUDE_DIRS ${LMDB_INCLUDE_DIR})
-    set(LMDB_LIBRARIES ${LMDB_LIBRARY})
+  set(LMDB_INCLUDE_DIRS ${LMDB_INCLUDE_DIR})
+  set(LMDB_LIBRARIES ${LMDB_LIBRARY})
 
-    if(NOT TARGET LMDB::LMDB)
-      add_library(LMDB::LMDB UNKNOWN IMPORTED)
-      set_target_properties(LMDB::LMDB PROPERTIES
-        IMPORTED_LOCATION "${LMDB_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${LMDB_INCLUDE_DIRS}")
-    endif()
+  if(NOT TARGET LMDB::LMDB)
+    add_library(LMDB::LMDB UNKNOWN IMPORTED)
+    set_target_properties(
+      LMDB::LMDB
+      PROPERTIES IMPORTED_LOCATION "${LMDB_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES "${LMDB_INCLUDE_DIRS}"
+    )
+  endif()
 endif()

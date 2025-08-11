@@ -3,7 +3,7 @@ add_subdirectory(info)
 add_subdirectory(measure)
 add_subdirectory(settings)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

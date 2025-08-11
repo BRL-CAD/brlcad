@@ -1,7 +1,7 @@
 /*                       D B 5 _ B I N . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2024 United States Government as represented by
+ * Copyright (c) 2000-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 #include "rt/db5.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-
+#include "../librt_private.h"
 
 /* size of each element (in bytes) for the different BINUNIF types */
 /* this array depends on the values of the definitions of the DB5_MINORTYPE_BINU_... in db5.h */
@@ -596,7 +596,7 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 	    }
 	    if (new_type < 0 ||
 		 new_type > DB5_MINORTYPE_BINU_64BITINT ||
-		 binu_types[new_type] == NULL) {
+		 rt_binunif_type_to_string(new_type) == NULL) {
 		/* Illegal value for type */
 		bu_vls_printf(logstr, "Illegal value for binary type: %s", argv[1]);
 		return BRLCAD_ERROR;

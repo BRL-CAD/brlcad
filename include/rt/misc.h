@@ -1,7 +1,7 @@
 /*                      M I S C . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,6 +54,8 @@ struct rt_point_labels {
     char str[8];
     point_t pt;
 };
+
+#define RT_POINT_LABELS_INIT { {'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'}, VINIT_ZERO }
 
 /**
  * reduce an object into some form of simpler representation

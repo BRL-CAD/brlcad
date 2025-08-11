@@ -1,7 +1,7 @@
 /*                       G L O B A L . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,6 +19,27 @@
  */
 /** @file rt/global.h
  *
+ * TODO - rather than completely eliminating the rt_vlfree global, a better
+ * approach might be to make it optional - i.e., have our code fall back on it
+ * automatically if a user doesn't supply their own vlfree.  That would allow
+ * user code to "just work" in all cases, but allow applications to manage
+ * their vlfree containers if they so choose (right now, once vlist memory is
+ * allocated, it generally gets added to rt_vlfree and memory usage grows until
+ * the app is shut down.  This may be fine, but if an app wants to discard
+ * their vlfree memory for a particular use case to reduce memory footprint, or
+ * use different vlfree lists for multithreading situations, they should be
+ * able to manage their own vlfree to do so:
+ *
+ * struct bu_list usr_vlfree;
+ * BU_LIST_INIT(&usr_vlfree);
+ *
+ *
+ * rt_uniresource is a similar case in point - the convenience is very useful,
+ * but there are situations where applications want/need to manage their own
+ * resources for more demanding scenarios.
+ *
+ * NOTE for developers - for library initialization reasons, the globals
+ * documented here are located in the source file src/librt/rt_init.cpp
  */
 
 #ifndef RT_GLOBAL_H
@@ -26,56 +47,35 @@
 
 #include "common.h"
 
-#include "rt/wdb.h"
 #include "vmath.h"
+#include "rt/defines.h"
 
 __BEGIN_DECLS
-
 
 /**
  * Definitions for librt.a which are global to the library regardless
  * of how many different models are being worked on
  */
-struct rt_g {
-    /* DEPRECATED:  rtg_parallel is not used by LIBRT any longer (and will be removed) */
-    int8_t              rtg_parallel;   /**< @brief  !0 = trying to use multi CPUs */
-    struct bu_list      rtg_vlfree;     /**< @brief  head of bv_vlist freelist */
-    struct rt_wdb       rtg_headwdb;    /**< @brief  head of database object list */
-};
-#define RT_G_INIT_ZERO { 0, BU_LIST_INIT_ZERO, RT_WDB_INIT_ZERO }
 
 /**
- * global ray-trace geometry state
- */
-RT_EXPORT extern struct rt_g RTG;
+ * Global container for holding reusable vlist elements.  This is an
+ * acceleration mechanism for things like GED drawing, which would otherwise
+ * need to (re)allocate massive numbers of individual vlists. */
+RT_EXPORT extern struct bu_list rt_vlfree;
 
 /**
- * Applications that are going to use RT_ADD_VLIST and RT_GET_VLIST
- * are required to execute this macro once, first:
+ * Default librt-supplied resource structure for uniprocessor cases.  Because
+ * only one of these structures can be used with each thread of execution (see
+ * struct resource documentation), rt_uniresource cannot be used for parallel
+ * (i.e. multithreaded/multiple CPU) raytracing.   It is a convenient way to
+ * supply a resource to single-threaded functions without requiring the client
+ * code to create and manage their own resource.
  *
- * BU_LIST_INIT(&RTG.rtg_vlfree);
- *
- * Note that RT_GET_VLIST and RT_FREE_VLIST are non-PARALLEL.
+ * Unlike user-declared struct resource instances, rt_uniresource does not need
+ * to be initialized with rt_init_resource - that is handled by LIBRT.
  */
-#define RT_GET_VLIST(p) BV_GET_VLIST(&RTG.rtg_vlfree, p)
-
-/** Place an entire chain of bv_vlist structs on the freelist */
-#define RT_FREE_VLIST(hd) BV_FREE_VLIST(&RTG.rtg_vlfree, hd)
-
-#define RT_ADD_VLIST(hd, pnt, draw) BV_ADD_VLIST(&RTG.rtg_vlfree, hd, pnt, draw)
-
-/** set the transformation matrix to display matrix */
-#define RT_VLIST_SET_DISP_MAT(_dest_hd, _ref_pt) BV_VLIST_SET_DISP_MAT(&RTG.rtg_vlfree, _dest_hd, _ref_pt)
-
-/** set the transformation matrix to model matrix */
-#define RT_VLIST_SET_MODEL_MAT(_dest_hd) BV_VLIST_SET_MODEL_MAT(&RTG.rtg_vlfree, _dest_hd)
-
-/** Set a point size to apply to the vlist elements that follow. */
-#define RT_VLIST_SET_POINT_SIZE(hd, size) BV_VLIST_SET_POINT_SIZE(&RTG.rtg_vlfree, hd, size)
-
-/** Set a line width to apply to the vlist elements that follow. */
-#define RT_VLIST_SET_LINE_WIDTH(hd, width) BV_VLIST_SET_LINE_WIDTH(&RTG.rtg_vlfree, hd, width)
-
+struct resource;
+RT_EXPORT extern struct resource rt_uniresource;
 
 __END_DECLS
 

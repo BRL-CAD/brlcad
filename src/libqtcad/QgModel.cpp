@@ -1,7 +1,7 @@
 /*                         Q G M O D E L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2024 United States Government as represented by
+ * Copyright (c) 2014-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -291,10 +291,15 @@ QgModel::QgModel(QObject *p, const char *npath)
 {
     // There are commands such as open that we want to work even without
     // a database instance opened - rather than using ged_open to create
-    // a gedp, we sure one is always available - callers should use the
+    // a gedp, be sure one is always available - callers should use the
     // libged "open" command to open a .g file.
     BU_GET(gedp, struct ged);
     ged_init(gedp);
+
+    // Set up new cmd data (not yet done by default in ged_init
+    gedp->dbi_state = new DbiState(gedp);
+    gedp->new_cmd_forms = 1;
+    bu_setenv("DM_SWRAST", "1", 1);
 
     // By default we will use this built-in view, to guarantee that ged_gvp is
     // always valid.  It will usually be overridden by application provided views,
@@ -365,7 +370,7 @@ QgModel::item_rebuild(QgItem *item)
 
     // If we have no cached children, update only the child count - fetchMore
     // will populate it if and when it is expanded, and there will be no
-    // QgItems we need to re-use.  However, an edit operation may have
+    // QgItems we need to reuse.  However, an edit operation may have
     // invalidated the original c_count stored when the item was created.
     if (!item->children.size()) {
 	item->c_count = gedp->dbi_state->p_v[chash].size();
@@ -819,9 +824,7 @@ QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
     changed_dp.clear();
 
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
-
-    if (ged_cmd_valid(argv[0], NULL)) {
+    if (!ged_cmd_exists(argv[0])) {
 	const char *ccmd = NULL;
 	int edist = ged_cmd_lookup(&ccmd, argv[0]);
 	if (edist) {
@@ -892,8 +895,7 @@ QgModel::draw(const char *inst_path)
     argv[0] = "draw";
     argv[1] = inst_path;
 
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
-    int ret = ged_exec(gedp, 2, argv);
+    int ret = ged_exec_draw(gedp, 2, argv);
 
     emit view_change(QG_VIEW_DRAWN);
     return ret;
@@ -925,8 +927,7 @@ QgModel::erase(const char *inst_path)
     argv[0] = "erase";
     argv[1] = inst_path;
 
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
-    int ret = ged_exec(gedp, 2, argv);
+    int ret = ged_exec_erase(gedp, 2, argv);
 
     emit view_change(QG_VIEW_DRAWN);
     return ret;

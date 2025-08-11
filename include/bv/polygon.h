@@ -1,7 +1,7 @@
 /*                        P O L Y G O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,13 +19,12 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file polygon.h */
-/** @addtogroup bv_polygon */
-/** @{ */
-
-/**
+/** @addtogroup bv_polygon
+ *
  *  @brief Functions for working with polygons
  */
+/* @file polygon.h */
+/** @{ */
 
 #ifndef BV_POLYGON_H
 #define BV_POLYGON_H
@@ -76,7 +75,7 @@ struct bv_polygon {
 BV_EXPORT extern struct bv_scene_obj *bv_create_polygon_obj(struct bview *v, int flags, struct bv_polygon *p);
 
 // Creates a scene object with a default polygon
-BV_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bview *v, int flags, int type, point_t fp);
+BV_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bview *v, int flags, int type, point_t *fp);
 
 // Various update modes have similar logic - we pass in the flags to the update
 // routine to enable/disable specific portions of the overall flow.
@@ -92,9 +91,9 @@ BV_EXPORT extern int bv_update_polygon(struct bv_scene_obj *s, struct bview *v, 
 BV_EXPORT extern void bv_polygon_vlist(struct bv_scene_obj *s);
 
 // Find the closest polygon obj to a point
-BV_EXPORT extern struct bv_scene_obj *bv_select_polygon(struct bu_ptbl *objs, point_t cp);
+BV_EXPORT extern struct bv_scene_obj *bv_select_polygon(struct bu_ptbl *objs, point_t *cp);
 
-BV_EXPORT extern int bv_move_polygon(struct bv_scene_obj *s, point_t cp, point_t pp);
+BV_EXPORT extern int bv_move_polygon(struct bv_scene_obj *s, point_t *cp, point_t *pp);
 BV_EXPORT extern struct bv_scene_obj *bv_dup_view_polygon(const char *nname, struct bv_scene_obj *s);
 
 // Copy a bv polygon.  Note that this also performs a

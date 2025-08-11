@@ -35,11 +35,13 @@ calc(char **result, int rlen, int input)
 	ret = 1;
     }
 
-    // Copy result into the provided buffer with guaranteed nul-termination
+    // Copy result into the provided buffer with guaranteed
+    // nul-termination
     bu_strlcpy((*result), sout.c_str(), rlen);
 
     return ret;
 }
+
 
 static const struct dylib_contents pcontents = {"Plugin 1", 1.0, &calc};
 

@@ -1,7 +1,7 @@
 /*                  I C V _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2024 United States Government as represented by
+ * Copyright (c) 2007-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,28 +27,28 @@
 #define ICV_PRIVATE_H
 
 /* defined in bw.c */
-extern int bw_write(icv_image_t *bif, const char *filename);
-extern icv_image_t *bw_read(const char *filename, size_t width, size_t height);
+extern icv_image_t *bw_read(FILE *fp, size_t width, size_t height);
+extern int bw_write(icv_image_t *bif, FILE *fp);
 
 /* defined in pix.c */
-extern int pix_write(icv_image_t *bif, const char *filename);
-extern icv_image_t *pix_read(const char* filename, size_t width, size_t height);
+extern icv_image_t *pix_read(FILE *fp, size_t width, size_t height);
+extern int pix_write(icv_image_t *bif, FILE *fp);
 
 /* defined in dpix.c */
-extern icv_image_t *dpix_read(const char* filename, size_t width, size_t height);
-extern int dpix_write(icv_image_t *bif, const char *filename);
+extern icv_image_t *dpix_read(FILE *fp, size_t width, size_t height);
+extern int dpix_write(icv_image_t *bif, FILE *fp);
 
 /* defined in png.c */
-extern int png_write(icv_image_t *bif, const char *filename);
-extern icv_image_t* png_read(const char *filename);
+extern icv_image_t* png_read(FILE *fp);
+extern int png_write(icv_image_t *bif, FILE *fp);
 
 /* defined in ppm.c */
-extern int ppm_write(icv_image_t *bif, const char *filename);
-extern icv_image_t* ppm_read(const char *filename);
+extern icv_image_t* ppm_read(FILE *fp);
+extern int ppm_write(icv_image_t *bif, FILE *fp);
 
 /* defined in rle.c */
-extern int rle_write(icv_image_t *bif, const char *filename);
-extern icv_image_t* rle_read(const char *filename);
+extern icv_image_t* rle_read(FILE *fp);
+extern int rle_write(icv_image_t *bif, FILE *fp);
 
 #endif /* ICV_PRIVATE_H */
 

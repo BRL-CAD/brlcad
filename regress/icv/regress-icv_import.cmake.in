@@ -11,11 +11,11 @@ file(WRITE "${LOGFILE}" "Starting icv_import run\n")
 # is passed in via the EXEC variable at runtime.  De-quote it and assign it to
 # the appropriate variable.
 string(REPLACE "\\" "" ICV_EXEC "${EXEC}")
-if (NOT EXISTS "${ICV_EXEC}")
+if(NOT EXISTS "${ICV_EXEC}")
   file(WRITE "${LOGFILE}" "icv not found at location \"${ICV_EXEC}\" - aborting\n")
   file(READ "${LOGFILE}" LOG)
   message(FATAL_ERROR "Unable to find icv, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
-endif (NOT EXISTS "${ICV_EXEC}")
+endif(NOT EXISTS "${ICV_EXEC}")
 
 # Apparently CMAKE_EXECUTABLE_SUFFIX is not reliably defined in cmake -P - get
 # it from the executable passed in to us.
@@ -26,44 +26,58 @@ get_filename_component(EXE_SUFFIX "${ICV_EXEC}" EXT)
 # other necessary programs.
 get_filename_component(BDIR "${ICV_EXEC}" DIRECTORY)
 set(PIXCMP_EXEC "${BDIR}/pixcmp${EXE_SUFFIX}")
-if (NOT EXISTS "${PIXCMP_EXEC}")
+if(NOT EXISTS "${PIXCMP_EXEC}")
   file(WRITE "${LOGFILE}" "pixcmp not found at location \"${PIXCMP_EXEC}\" - aborting\n")
   file(READ "${LOGFILE}" LOG)
   message(FATAL_ERROR "Unable to find pixcmp, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
-endif (NOT EXISTS "${PIXCMP_EXEC}")
+endif(NOT EXISTS "${PIXCMP_EXEC}")
 
 # Clean up in case we've run before unsuccessfully
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${TGTIMG}")
+execute_process(
+  COMMAND "@CMAKE_COMMAND@" -E remove -f "${TGTIMG}"
+)
 
 # Perform the ICV conversion
 file(APPEND "${LOGFILE}" "Converting ${SRCIMG} to ${TGTIMG}\n")
 execute_process(
   COMMAND "${ICV_EXEC}" "${SRCIMG}" "${TGTIMG}"
-  RESULT_VARIABLE icv_result OUTPUT_VARIABLE icv_log ERROR_VARIABLE icv_log
-  )
+  RESULT_VARIABLE icv_result
+  OUTPUT_VARIABLE icv_log
+  ERROR_VARIABLE icv_log
+)
 file(APPEND "${LOGFILE}" "${icv_log}")
 set(icv_log)
 if(NOT EXISTS "${TGTIMG}")
   file(APPEND "${LOGFILE}" "Failure: ${icv_result}")
   file(READ "${LOGFILE}" LOG)
-  message(FATAL_ERROR "Unable to convert ${SRCIMG} to ${TGTIMG} with ${ICV_EXEC}, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
+  message(
+    FATAL_ERROR
+    "Unable to convert ${SRCIMG} to ${TGTIMG} with ${ICV_EXEC}, aborting.\nSee ${LOGFILE} for more details.\n${LOG}"
+  )
 endif(NOT EXISTS "${TGTIMG}")
 
 # pixcmp the results with the control image to make sure icv got it right
 file(APPEND "${LOGFILE}" "\nComparing ${TGTIMG} to ${CTRLIMG}\n")
 execute_process(
   COMMAND "${PIXCMP_EXEC}" "${TGTIMG}" "${CTRLIMG}"
-  RESULT_VARIABLE pixcmp_val OUTPUT_VARIABLE icv_log ERROR_VARIABLE icv_log
-  )
+  RESULT_VARIABLE pixcmp_val
+  OUTPUT_VARIABLE icv_log
+  ERROR_VARIABLE icv_log
+)
 file(APPEND "${LOGFILE}" "${icv_log}")
 
 # Final success/failure check
 if(${pixcmp_val} GREATER 0)
   file(APPEND "${LOGFILE}" "Failure: ${pixcmp_val}")
   file(READ "${LOGFILE}" LOG)
-  message(FATAL_ERROR "Differences found between ${TGTIMG} and ${CTRLIMG} with ${PIXCMP_EXEC}, aborting.\nSee ${LOGFILE} for more details.\n${LOG}")
+  message(
+    FATAL_ERROR
+    "Differences found between ${TGTIMG} and ${CTRLIMG} with ${PIXCMP_EXEC}, aborting.\nSee ${LOGFILE} for more details.\n${LOG}"
+  )
 else(${pixcmp_val} GREATER 0)
-  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f ${TGTIMG})
+  execute_process(
+    COMMAND "@CMAKE_COMMAND@" -E remove -f ${TGTIMG}
+  )
 endif(${pixcmp_val} GREATER 0)
 
 # Local Variables:
@@ -72,4 +86,3 @@ endif(${pixcmp_val} GREATER 0)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

@@ -1,7 +1,7 @@
 /*                       C H G T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,6 +53,10 @@
 int
 f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct directory *proto;
     struct directory *dp;
     struct rt_db_internal internal;
@@ -71,16 +75,17 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	return TCL_ERROR;
     }
 
-    if ((proto = db_lookup(DBIP,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
+    if ((proto = db_lookup(s->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return TCL_ERROR;
 
-    if (db_lookup(DBIP,  argv[2], LOOKUP_QUIET) != RT_DIR_NULL) {
-	aexists(argv[2]);
+    if (db_lookup(s->dbip,  argv[2], LOOKUP_QUIET) != RT_DIR_NULL) {
+	Tcl_AppendResult(s->interp, argv[2], ":  already exists\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if ((id = rt_db_get_internal(&internal, proto, DBIP, (fastf_t *)NULL, &rt_uniresource)) < 0) {
-	TCL_READ_ERR_return;
+    if ((id = rt_db_get_internal(&internal, proto, s->dbip, (fastf_t *)NULL, &rt_uniresource)) < 0) {
+	Tcl_AppendResult(s->interp, "Database read error, aborting\n", (char *)NULL);
+	return TCL_ERROR;
     }
     /* make sure it is a TGC */
     if (id != ID_TGC) {
@@ -97,12 +102,16 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
     /* no interrupts */
     (void)signal(SIGINT, SIG_IGN);
 
-    if ((dp = db_diradd(DBIP, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == RT_DIR_NULL) {
-	TCL_ALLOC_ERR_return;
+    if ((dp = db_diradd(s->dbip, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == RT_DIR_NULL) {
+	Tcl_AppendResult(s->interp, "An error has occurred while adding a new object to the database.\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
+	return TCL_ERROR;
     }
 
-    if (rt_db_put_internal(dp, DBIP, &internal, &rt_uniresource) < 0) {
-	TCL_WRITE_ERR_return;
+    if (rt_db_put_internal(dp, s->dbip, &internal, &rt_uniresource) < 0) {
+	Tcl_AppendResult(s->interp, "Database write error, aborting.\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);
+	return TCL_ERROR;
     }
 
     {
@@ -116,15 +125,14 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	(void)cmd_draw(clientData, interp, 2, av);
     }
 
-    if (STATE == ST_VIEW) {
-	const char *av[3];
-
-	av[0] = "sed";
-	av[1] = argv[2];  /* new name in argv[2] */
-	av[2] = NULL;
+    if (GEOM_EDIT_STATE == ST_VIEW) {
+	struct bu_vls sed_cmd = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&sed_cmd, "sed %s", argv[2]);
 
 	/* solid edit this new cylinder */
-	(void)f_sed(clientData, interp, 2, av);
+	Tcl_Eval(interp, bu_vls_cstr(&sed_cmd));
+
+	bu_vls_free(&sed_cmd);
     }
 
     return TCL_OK;
@@ -132,7 +140,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 
 
 struct bv_scene_obj *
-find_solid_with_path(struct db_full_path *pathp)
+find_solid_with_path(struct mged_state *s, struct db_full_path *pathp)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
@@ -142,8 +150,8 @@ find_solid_with_path(struct db_full_path *pathp)
 
     RT_CK_FULL_PATH(pathp);
 
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -166,7 +174,7 @@ find_solid_with_path(struct db_full_path *pathp)
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&tmp_vls, "find_solid_with_path() found %d matches\n", count);
-	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
     }
 
@@ -187,13 +195,14 @@ find_solid_with_path(struct db_full_path *pathp)
 int
 cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct db_full_path lhs;
     struct db_full_path rhs;
     struct db_full_path both;
-    const char *new_argv[4];
-    char number[32];
     int is_empty = 1;
 
     CHECK_DBI_NULL;
@@ -207,13 +216,13 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_VIEW, "Object Illuminate")) {
+    if (not_state(s, ST_VIEW, "Object Illuminate")) {
 	return TCL_ERROR;
     }
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
@@ -229,11 +238,11 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (db_string_to_path(&lhs, DBIP, argv[1]) < 0) {
+    if (db_string_to_path(&lhs, s->dbip, argv[1]) < 0) {
 	Tcl_AppendResult(interp, "bad lhs path", (char *)NULL);
 	return TCL_ERROR;
     }
-    if (db_string_to_path(&rhs, DBIP, argv[2]) < 0) {
+    if (db_string_to_path(&rhs, s->dbip, argv[2]) < 0) {
 	db_free_full_path(&lhs);
 	Tcl_AppendResult(interp, "bad rhs path", (char *)NULL);
 	return TCL_ERROR;
@@ -255,13 +264,13 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     edobj = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
     MAT_IDN(modelchanges);	/* No changes yet */
-    (void)chg_state(ST_VIEW, ST_O_PICK, "internal change of state");
+    (void)chg_state(s, ST_VIEW, ST_O_PICK, "internal change of state");
     /* reset accumulation local scale factors */
     acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
-    new_mats();
+    new_mats(s);
 
     /* Find the one solid, set s_iflag UP, point illump at it */
-    illump = find_solid_with_path(&both);
+    illump = find_solid_with_path(s, &both);
     if (!illump) {
 	db_free_full_path(&lhs);
 	db_free_full_path(&rhs);
@@ -269,24 +278,24 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	Tcl_AppendResult(interp, "Unable to find solid matching path", (char *)NULL);
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = 0;
-	(void)chg_state(ST_O_PICK, ST_VIEW, "error recovery");
+	(void)chg_state(s, ST_O_PICK, ST_VIEW, "error recovery");
 	return TCL_ERROR;
     }
-    (void)chg_state(ST_O_PICK, ST_O_PATH, "internal change of state");
+    (void)chg_state(s, ST_O_PICK, ST_O_PATH, "internal change of state");
 
     /* Select the matrix */
-    sprintf(number, "%lu", (long unsigned)lhs.fp_len);
-    new_argv[0] = "matpick";
-    new_argv[1] = number;
-    new_argv[2] = NULL;
-    if (f_matpick(clientData, interp, 2, new_argv) != TCL_OK) {
+    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+    bu_vls_printf(&tcl_cmd, "matpick %lu", (long unsigned)lhs.fp_len);
+    if (Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd)) != TCL_OK) {
 	db_free_full_path(&lhs);
 	db_free_full_path(&rhs);
 	db_free_full_path(&both);
+	bu_vls_free(&tcl_cmd);
 	Tcl_AppendResult(interp, "error detected inside f_matpick", (char *)NULL);
 	return TCL_ERROR;
     }
-    if (not_state(ST_O_EDIT, "Object EDIT")) {
+    bu_vls_free(&tcl_cmd);
+    if (not_state(s, ST_O_EDIT, "Object EDIT")) {
 	db_free_full_path(&lhs);
 	db_free_full_path(&rhs);
 	db_free_full_path(&both);

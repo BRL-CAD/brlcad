@@ -1,0 +1,579 @@
+#******************************************************************************
+#
+#                   BRL-CAD Example Density Table v 1.1
+#
+#     *** IMPORTANT: This file may change over time and should not be
+#     *** relied upon for production analysis work.
+#
+
+#     Based on data present in various databases and reports available on
+#     various .gov websites - each subsection below cites the particular
+#     source from which information is drawn.
+#
+#     The numbering provided for each entry is somewhat arbitrary in
+#     that the number does not typically contain any information about
+#     the particular material in question, but each "grouping" of
+#     materials will share a common two digit prefix.  For example,
+#     all pure elements will share the prefix "11".
+#
+#     All densities are in units of g/cm^3.
+#
+#******************************************************************************
+#
+# To import this density information into a .g file, use the "mater -d"
+# command (note that this will clear previously defined densities):
+#
+# mater -d import share/data/EXAMPLE_DENSITIES
+#
+# To verify data is imported (note that reporting units may not be g/cm^3):
+#
+# mater -d get \*
+#
+#******************************************************************************
+
+
+#                  Densities of Elementally Pure Materials
+#
+# Drawn from the FCOMP database file included with ESTAR, available from this
+# web address:
+#
+# http://physics.nist.gov/PhysRefData/Star/Text/contents.html
+#
+# Numbering Conventions: All pure elements will have a prefix of "11".  The
+# last three digits will be the atomic number of the element in question.  The
+# third digit will be the beginning of a counter - the first value will always
+# be one, and any subsequent entries for the same element will be counted up.
+#
+# Note: For BRL-CAD use, the first digit (1) has been dropped to allow the
+# resulting material code to fit in the MAXMTLS array (32768).
+
+11001	0.000083748	Hydrogen
+11002	0.000166322	Helium
+11003	0.534000	Lithium
+11004	1.84800		Beryllium
+11005	2.37000		Boron
+11006	2.00000		Carbon, Amorphous
+12006	1.70000		Carbon, Graphite
+11007	0.00116528	Nitrogen
+11008	0.00133151	Oxygen
+11009	0.00158029	Fluorine
+11010	0.000838505	Neon
+11011	0.97100		Sodium
+11012	1.74000		Magnesium
+11013	2.69890		Aluminum
+11014	2.33000		Silicon
+11015	2.20000		Phosphorus
+11016	2.00000		Sulfur
+11017	0.00299473	Chlorine
+11018	0.00166201	Argon
+11019	0.862000	Potassium
+11020	1.55000		Calcium
+11021	2.98900		Scandium
+11022	4.54000		Titanium
+11023	6.11000		Vanadium
+11024	7.18000		Chromium
+11025	7.44000		Manganese
+11026	7.87400		Iron
+11027	8.90000		Cobalt
+11028	8.90200		Nickel
+11029	8.96000		Copper
+11030	7.13300		Zinc
+11031	5.90400		Gallium
+11032	5.32300		Germanium
+11033	5.73000		Arsenic
+11034	4.50000		Selenium
+11035	0.00707218	Bromine
+11036	0.00347832	Krypton
+11037	1.53200		Rubidium
+11038	2.54000		Strontium
+11039	4.46900		Yttrium
+11040	6.50600		Zirconium
+11041	8.57000		Niobium
+11042	10.2200		Molybdenum
+11043	11.5000		Technetium
+11044	12.4100		Ruthenium
+11045	12.4100		Rhodium
+11046	12.0200		Palladium
+11047	10.5000		Silver
+11048	8.65000		Cadmium
+11049	7.31000		Indium
+11050	7.31000		Tin
+11051	6.69100		Antimony
+11052	6.24000		Tellurium
+11053	4.93000		Iodine
+11054	0.00548536	Xenon
+11055	1.87300		Cesium
+11056	3.50000		Barium
+11057	6.15400		Lanthanum
+11058	6.65700		Cerium
+11059	6.71000		Praseodymium
+11060	6.90000		Neodymium
+11061	7.22000		Promethium
+11062	7.46000		Samarium
+11063	5.24300		Europium
+11064	7.90040		Gadolinium
+11065	8.22900		Terbium
+11066	8.55000		Dysprosium
+11067	8.79500		Holmium
+11068	9.06600		Erbium
+11069	9.32100		Thulium
+11070	6.73000		Ytterbium
+11071	9.84000		Lutetium
+11072	13.3100		Hafnium
+11073	16.6540		Tantalum
+11074	19.3000		Tungsten
+11075	21.0200		Rhenium
+11076	22.5700		Osmium
+11077	22.4200		Iridium
+11078	21.4500		Platinum
+11079	19.3200		Gold
+11080	13.5460		Mercury
+11081	11.7200		Thallium
+11082	11.3500		Lead
+11083	9.74700		Bismuth
+11084	9.32000		Polonium
+11085	9.32000		Astatine
+11086	0.00906618	Radon
+11087	1.00000		Francium
+11088	5.00000		Radium
+11089	10.0700		Actinium
+11090	11.7200		Thorium
+11091	15.3700		Protactinium
+11092	18.9500		Uranium
+11093	20.2500		Neptunium
+11094	19.8400		Plutonium
+11095	13.6700		Americium
+11096	13.5100		Curium
+11097	14.0000		Berkelium
+11098	10.0000		Californium
+
+#	             Densities of Real World Materials
+#
+# Drawn from the FCOMP database file included with ESTAR, available from this
+# web address:
+#
+# http://physics.nist.gov/PhysRefData/Star/Text/contents.html
+#
+# Numbering Conventions: All real world materials from FCOMP will have a prefix
+# of 12, followed by their ID number in the FCOMP database.
+
+12099	1.12700		A-150 Tissue-Equivalent Plastic
+12100	0.78990		Acetone
+12101	0.00109670	Acetylene
+12102	1.35000		Adenine
+12103	9.20000		Adipose Tissue (ICRP)
+12104	0.00120479	Air, Dry (near sea level)
+12105	1.42000		Alanine
+12106	3.97000		Aluminum Oxide
+12107	1.10000		Amber
+12108	0.000826019	Ammonia
+12109	1.02350		Aniline
+12110	1.28300		Anthracene
+12111	1.45000		B-100 Bone-Equivalent Plastic
+12112	1.25000		Bakelite
+12113	4.89000		Barium Fluoride
+12114	4.50000		Barium Sulfate
+12115	0.878650	Benzene
+12116	3.01000		Beryllium oxide
+12117	7.13000		Bismuth Germanium oxide
+12118	1.06000		Blood (ICRP)
+12119	1.85000		Bone, Compact (ICRU)
+12120	1.85000		Bone, Cortical (ICRP)
+12121	2.52000		Boron Carbide
+12122	1.81200		Boron Oxide
+12123	1.03000		Brain (ICRP)
+12124	0.00249343	Butane
+12125	0.809800	N-Butyl Alcohol
+12126	1.76000		C-552 Air-Equivalent Plastic
+12127	6.20000		Cadmium Telluride
+12128	7.90000		Cadmium Tungstate
+12129	2.80000		Calcium Carbonate
+12130	3.18000		Calcium Fluoride
+12131	3.30000		Calcium Oxide
+12132	2.96000		Calcium Sulfate
+12133	6.06200		Calcium Tungstate
+12134	0.00184212	Carbon Dioxide
+12135	1.59400		Carbon Tetrachloride
+12136	1.42000		Cellulose Acetate, Cellophane
+12137	1.20000		Cellulose Acetate Butyrate
+12138	1.49000		Cellulose Nitrate
+12139	1.03000		Ceric Sulfate Dosimeter Solution
+12140	4.11500		Cesium Fluoride
+12141	4.51000		Cesium Iodide
+12142	1.10580		Chlorobenzene
+12143	1.48320		Chloroform
+12144	2.30000		Concrete, Portland
+12145	0.779000	Cyclohexane
+12146	1.30480		1,2-Dichlorobenzene
+12147	1.21990		Dichlorodiethyl Ether
+12148	1.23510		1,2-Dichloroethane
+12149	0.713780	Diethyl Ether
+12150	0.948700	N,N-Dimethyl Formamide
+12151	1.10140		Dimethyl Sulfoxide
+12152	0.00125324	Ethane
+12153	0.789300	Ethyl Alcohol
+12154	1.13000		Ethyl Cellulose
+12155	0.00117497	Ethylene
+12156	1.10000		Eye Lens (ICRP)
+12157	5.20000		Ferric Oxide
+12158	7.15000		Ferroboride
+12159	5.70000		Ferrous Oxide
+12160	1.02400		Ferrous Sulfate Dosimeter Solution
+12161	1.12000		Freon-12
+12162	1.80000		Freon-12B2
+12163	0.95000		Freon-13
+12164	1.50000		Freon-13B1
+12165	1.80000		Freon-13I1
+12166	7.44000		Gadolinium Oxysulfide
+12167	5.31000		Gallium Arsenide
+12168	1.29140		Gel in Photographic Emulsion
+12169	2.23000		Glass, Pyrex
+12170	6.22000		Glass, Lead
+12171	2.40000		Glass, Plate
+12172	1.54000		Glucose
+12173	1.46000		Glutamine
+12174	1.26130		Glycerol
+12175	1.58000		Guanine
+12176	2.32000		Gypsum, Plaster of Paris
+12177	0.683760	N-Heptane
+12178	0.660300	N-Hexane
+12179	1.42000		Kapton Polyimide Film
+12180	6.28000		Lanthanum Oxybromide
+12181	5.86000		Lanthanum Oxysulfide
+12182	9.53000		Lead Oxide
+12183	1.17800		Lithium Amide
+12184	2.11000		Lithium Carbonate
+12185	2.63500		Lithium Fluoride
+12186	0.820000	Lithium Hydride
+12187	3.49400		Lithium Iodide
+12188	2.01300		Lithium Oxide
+12189	2.44000		Lithium Tetraborate
+12190	1.05000		Lung (ICRP)
+12191	1.05000		M3 Wax
+12192	2.95800		Magnesium Carbonate
+12193	3.00000		Magnesium Fluoride
+12194	3.58000		Magnesium Oxide
+12195	2.53000		Magnesium Tetraborate
+12196	6.36000		Mercuric Iodide
+12197	0.000667151	Methane
+12198	0.791400	Methanol
+12199	0.990000	Mix D Wax
+12200	1.000000	MS20 Tissue Substitute
+12201	1.04000		Muscle, Skeletal
+12202	1.04000		Muscle, Striated
+12203	1.11000		Muscle-Equivalent Liquid, with Sucrose
+12204	1.07000		Muscle-Equivalent Liquid, without Sucrose
+12205	1.14500		Naphthalene
+12206	1.19867		Nitrobenzene
+12207	0.00183094	Nitrous Oxide
+12208	1.08000		Nylon, Du Pont ELVAmide 8062
+12209	1.14000		Nylon, type 6 and type 6/6
+12210	1.14000		Nylon, type 6/10
+12211	1.42500		Nylon, type 11 (Rilsan)
+12212	0.702600	Octane, Liquid
+12213	0.930000	Paraffin Wax
+12214	0.626200	N-Pentane
+12215	3.81500		Photographic Emulsion
+12216	1.03200		Plastic Scintillator (Vinyltoluene based)
+12217	1.14600		Plutonium Dioxide
+12218	1.17000		Polyacrylonitrile
+12219	1.20000		Polycarbonate (Makrolon, Lexan)
+12220	1.30000		Polychlorostyrene
+12221	0.940000	Polyethylene
+12222	1.40000		Polyethylene Terephthalate (Mylar)
+12223	1.19000		Polymethyl Methacralate (Lucite, Perspex)
+12224	1.42500		Polyoxymethylene
+12225	0.900000	Polypropylene
+12226	1.06000		Polystyrene
+12227	2.20000		Polytetrafluoroethylene (Teflon)
+12228	2.10000		Polytrifluorochloroethylene
+12229	1.19000		Polyvinyl Acetate
+12230	1.30000		Polyvinyl Alcohol
+12231	1.12000		Polyvinyl Butyral
+12232	1.30000		Polyvinyl Chloride
+12233	1.70000		Polyvinylidene Chloride, Saran
+12234	1.76000		Polyvinylidene Fluoride
+12235	1.25000		Polyvinyl Pyrrolidone
+12236	3.13000		Potassium Iodide
+12237	2.32000		Potassium Oxide
+12238	0.00187939	Propane
+12239	0.430000	Propane, Liquid
+12240	0.803500	N-Propyl Alcohol
+12241	0.981900	Pyridine
+12242	0.920000	Rubber, Butyl
+12243	0.920000	Rubber, Natural
+12244	1.23000		Rubber, Neoprene
+12245	2.32000		Silicon Dioxide
+12246	6.47300		Silver Bromide
+12247	5.56000		Silver Chloride
+12248	6.47000		Silver Halides in Photographic Emulsion
+12249	6.01000		Silver Iodide
+12250	1.10000		Skin (ICRP)
+12251	2.53200		Sodium Carbonate
+12252	3.66700		Sodium Iodide
+12253	2.27000		Sodium Monoxide
+12254	2.26100		Sodium Nitrate
+12255	0.970700	Stilbene
+12256	1.58050		Sucrose
+12257	1.23400		Terphenyl
+12258	1.04000		Testes (ICRP)
+12259	1.62500		Tetrachloroethylene
+12260	7.00400		Thallium Chloride
+12261	1.00000		Tissue, Soft (ICRP)
+12262	1.00000		Tissue, Soft (ICRU four-component)
+12263	0.00106409	Tissue-Equivalent GAS (Methane based)
+12264	0.00182628	Tissue-Equivalent GAS (Propane based)
+12265	4.26000		Titanium Dioxide
+12266	0.866900	Toluene
+12267	1.46000		Trichloroethylene
+12268	1.07000		Triethyl Phosphate
+12269	2.40000		Tungsten Hexafluoride
+12270	11.2800		Uranium Dicarbide
+12271	13.6300		Uranium Monocarbide
+12272	10.9600		Uranium Oxide
+12273	1.32300		Urea
+12274	1.23000		Valine
+12275	1.80000		Viton Fluoroelastomer
+12276	1.00000		Water, Liquid
+12277	0.000756182	Water Vapor
+12278	0.870000	Xylene
+
+#	                 TPSX Densities
+#
+# Drawn from the NASA TPSX Material Properties Database
+#
+# https://tpsx.arc.nasa.gov
+#
+# Numbering Conventions: All materials drawn from TPSX will have a prefix of
+# 13.
+
+13001	0.130	wood balsa (across grain)
+13002	0.460   wood cypress (across grain)
+13003	0.540   wood mahogany (across grain)
+13004	0.710   wood maple (across grain)
+13005	0.550   wood norway pine (across grain)
+13006	0.610   wood oak red black (across grain)
+13007	0.825	wood oak white live (across grain)
+13008	0.510   wood oregon pine (across grain)
+13009	0.550   wood pine (with grain)
+13010	0.410   wood spruce (across grain)
+13011	0.410   wood spruce (with grain)
+13012	0.640   wood teak (across grain)
+13013	0.540   wood virginia pine (across grain)
+13014	0.450   wood white fir (across grain)
+13015	0.530   wood white pine (across grain)
+13016	7.830   Stainless Steel (17-4 PH)
+13017	8.060   Stainless Steel-AISI 302
+13018	7.900   Stainless Steel-AISI 304
+13019	7.750   steel alloy and mild (4130 4340)
+13020	7.830   steel alloy cast
+13021	7.860   steel carbon type 1020 (0.2 - 0.6 c)
+13022	7.830   steel free cutting eutectoid
+13023	8.200   steel high speed (m1 m10 m-2 ti)
+13024	8.220   steel multimet (n-155) (low c)
+13025	8.220   steel multimet (n-155) (wrought)
+13026	7.750   steel stainless (cr 12-13 ni 0-3)
+13027	8.000   steel stainless (cr 16-26 ni 8-36)
+13028	7.750   steel stainless 17-4ph
+13029	7.600   steel stainless 17-7ph
+13030	7.800   steel stainless 19-9dl
+13031	7.700   steel stainless 201 and 202
+13032	7.920   steel stainless 304
+13033	7.920   steel stainless 321 and 347
+13034	7.750   steel stainless 430 430f and 431
+13035	7.600   steel stainless 446
+13036	7.800   steel stainless 501 and 502
+13037	7.610   steel stainless ca15 ca40 (cast)
+13038	7.530   steel stainless cb30 cc50 (cast)
+13039	7.750   steel stainless cf (cast)
+13040	7.730   steel stainless ck ch hi (cast)
+13041	8.040   steel stainless cn-7m (cast)
+13042	7.720   steel stainless ha (cast)
+13043	7.550   steel stainless hc hd (cast)
+13044	7.750   steel stainless hf (cast)
+13045	7.730   steel stainless hh hl hk (cast)
+13046	7.960   steel stainless ht (cast)
+13047	8.030   steel stainless hu (cast)
+13048	8.150   steel stainless hw (cast)
+13049	8.000   steel stainless series 300
+13050	7.750   steel stainless series 400
+13051	14.000	steel tool tungsten carbide ca2
+13052	14.000	steel tool tungsten carbide ca4
+13053	8.030   Steel Type 321
+13054	7.840   steel ultra high strength type 300-m
+
+#	                   USDA Wood Densities
+#
+# Drawn from the U.S. Department of Agriculture Forest Service Northern
+# Research Station Research Note NSR-38:
+#
+# Specific Gravity and Other Properties of Wood and Bark for 156 Tree Species
+# Found in North America
+#
+# https://www.nrs.fs.usda.gov/pubs/rn/rn_nrs38.pdf
+#
+# Density is derived from Table 1A, specifically the oven-dry wood weight
+# column.  Units have been converted from kg/m^3 in the original research note
+# to g/cm^3
+#
+# Numbering Conventions: All real world materials from NRS-38 will have a
+# prefix of 14.  The ordering is based on the row order used in the 1A table
+# from the report.
+
+14001	0.430	Pacific silver fir
+14002	0.350	Balsam fir
+14003	0.390	White fir
+14004	0.370	Grand fir
+14005	0.320	Subalpine fir
+14006	0.380	California red fir
+14007	0.390	Noble fir
+14008	0.430	Port-Orford-cedar
+14009	0.440	Alaska yellow-cedar
+14010	0.320	Atlantic white-cedar
+14011	0.510	Alligator juniper
+14012	0.720	Utah juniper
+14013	0.440	Southern redcedar
+14014	0.470	Eastern redcedar
+14015	0.530	Tamarack (native)
+14016	0.520	Western larch
+14017	0.370	Incense-cedar
+14018	0.350	Engelmann spruce
+14019	0.400	White spruce
+14020	0.460	Black spruce
+14021	0.400	Red spruce
+14022	0.360	Sitka spruce
+14023	0.420	Knobcone pine
+14024	0.430	Jack pine
+14025	0.570	Common or two- needle pinyon
+14026	0.480	Sand pine
+14027	0.410	Lodgepole pine
+14028	0.510	Shortleaf pine
+14029	0.590	Slash pine
+14030	0.420	Limber pine
+14031	0.440	Spruce pine
+14032	0.420	Jeffrey pine
+14033	0.360	Sugar pine
+14034	0.380	Western white pine
+14035	0.490	Bishop pine
+14036	0.590	Longleaf pine
+14037	0.400	Ponderosa pine
+14038	0.520	Table Mountain pine
+14039	0.529	Monterey pine
+14040	0.460	Red pine
+14041	0.520	Pitch pine
+14042	0.430	Gray or California foothill pine
+14043	0.560	Pond pine
+14044	0.350	Eastern white pine
+14045	0.510	Loblolly pine
+14046	0.480	Virginia pine
+14047	0.480	Douglas-fir
+14048	0.380	Redwood
+14049	0.380	Giant sequoia
+14050	0.460	Baldcypress
+14051	0.670	Pacific yew
+14052	0.310	Northern white-cedar
+14053	0.320	Western redcedar
+14054	0.400   Eastern hemlock
+14055	0.450	Western hemlock
+14056	0.450	Mountain hemlock
+14057	0.480	Bigleaf maple
+14058	0.460	Boxelder
+14059	0.570	Black maple
+14060	0.460	Striped maple
+14061	0.540	Red maple
+14062	0.470	Silver maple
+14063	0.630	Sugar maple
+14064	0.360	Yellow buckeye
+14065	0.530	Ailanthus
+14066	0.410	Red alder
+14067	0.790	Serviceberry spp.
+14068	0.650	Pacific madrone
+14069	0.620	Yellow birch
+14070	0.650	Sweet birch
+14071	0.560	River birch
+14072	0.550	Paper birch
+14073	0.510	Gray birch
+14074	0.700   American hornbeam, musclewood
+14075	0.620	Water hickory
+14076	0.660	Bitternut hickory
+14077	0.750	Pignut hickory
+14078	0.660	Pecan
+14079	0.690	Shellbark hickory
+14080	0.600   Nutmeg hickory
+14081	0.720	Shagbark hickory
+14082	0.720	Mockernut hickory
+14083	0.430	American chestnut
+14084	0.460	Giant chinkapin, golden chinkapin
+14085	0.410	Northern catalpa
+14086	0.530	Hackberry
+14087	0.730	Flowering dogwood
+14088	0.620	Pacific dogwood
+14089	0.740	Common persimmon
+14090	0.640	American beech
+14091	0.600   White ash
+14092	0.550	Oregon ash
+14093	0.490	Black ash
+14094	0.560	Green ash
+14095	0.520	Pumpkin ash
+14096	0.580	Blue ash
+14097	0.650	Honeylocust
+14098	0.600   Kentucky coffeetree
+14099	0.450	Silverbell spp.
+14100	0.570	American holly
+14101	0.380	Butternut
+14102	0.550	Black walnut
+14103	0.520	Sweetgum
+14104	0.420	Yellow-poplar
+14105	0.620	Tanoak
+14106	0.850	Osage-orange
+14107	0.480	Cucumbertree
+14108	0.500   Southern magnolia
+14109	0.460	Sweetbay
+14110	0.440	Mountain or Fraser magnolia
+14111	0.670	Apple spp.
+14112	0.500   Water tupelo
+14113	0.500   Blackgum
+14114	0.700   Eastern hophornbeam
+14115	0.550	Sourwood
+14116	0.490	American sycamore
+14117	0.340	Balsam poplar
+14118	0.400   Eastern cottonwood
+14119	0.390	Bigtooth aspen
+14120	0.380	Quaking aspen
+14121	0.350	Black cottonwood
+14122	0.450	Fremont cottonwood
+14123	0.820	Mesquite spp.
+14124	0.500   Blackcherry
+14125	0.680	White oak
+14126	0.720	Swamp white oak
+14127	0.740	Canyon live oak
+14128	0.670	Scarlet oak
+14129	0.590	Southern red oak
+14130	0.690	Cherrybark oak
+14131	0.630	Gambel oak
+14132	0.720	Oregon white oak
+14133	0.550	California black oak
+14134	0.630	Laurel oak
+14135	0.580	California white oak
+14136	0.630	Overcup oak
+14137	0.640	Bur oak
+14138	0.670	Swamp chestnut oak
+14139	0.630	Water oak
+14140	0.630	Pin oak
+14141	0.690	Willow oak
+14142	0.660	Chestnut oak
+14143	0.630	Northern red oak
+14144	0.670	Post oak
+14145	0.610	Black oak
+14146	0.880	Live oak
+14147	0.690	Black locust
+14148	0.390	Black willow
+14149	0.460	Sassafras
+14150	0.370	American basswood
+14151	0.660	Winged elm
+14152	0.500   American elm
+14153	0.640	Cedar elm
+14154	0.530	Slippery elm
+14155	0.630	Rock elm
+14156	0.550	California-laurel
+

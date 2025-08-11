@@ -1,7 +1,7 @@
 /*                      I C V _ C R O P . C
  * BRL-CAD
  *
- * Copyright (c) 2016-2024 United States Government as represented by
+ * Copyright (c) 2016-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file icv_crop.c
  *
- * Brief description
+ * Detailed unit test for cropping images.
  *
  */
 

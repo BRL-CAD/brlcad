@@ -1,7 +1,7 @@
 /*                         D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,12 +34,399 @@
 #include "bu/time.h"
 #include "raytrace.h"
 
-
 #include "../ged_private.h"
+#include "./ged_draw.h"
 
 /* declare our callbacks used by _ged_drawtrees() */
 static int drawtrees_depth = 0;
 
+/* Set solid's basecolor, color, and color flags based on client data and tree
+ * state. If user color isn't set in client data, the solid's region id must be
+ * set for proper material lookup.
+ */
+static void
+solid_set_color_info(
+    struct bv_scene_obj *sp,
+    unsigned char *wireframe_color_override,
+    struct db_tree_state *tsp)
+{
+    unsigned char bcolor[3] = {255, 0, 0}; /* default */
+
+    sp->s_old.s_uflag = 0;
+    sp->s_old.s_dflag = 0;
+    if (wireframe_color_override) {
+	sp->s_old.s_uflag = 1;
+
+	bcolor[RED] = wireframe_color_override[RED];
+	bcolor[GRN] = wireframe_color_override[GRN];
+	bcolor[BLU] = wireframe_color_override[BLU];
+    } else if (tsp) {
+	if (tsp->ts_mater.ma_color_valid) {
+	    bcolor[RED] = tsp->ts_mater.ma_color[RED] * 255.0;
+	    bcolor[GRN] = tsp->ts_mater.ma_color[GRN] * 255.0;
+	    bcolor[BLU] = tsp->ts_mater.ma_color[BLU] * 255.0;
+	} else {
+	    sp->s_old.s_dflag = 1;
+	}
+    }
+
+    sp->s_old.s_basecolor[RED] = bcolor[RED];
+    sp->s_old.s_basecolor[GRN] = bcolor[GRN];
+    sp->s_old.s_basecolor[BLU] = bcolor[BLU];
+
+    color_soltab(sp);
+}
+
+
+
+void
+dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, struct _ged_client_data *dgcdp)
+{
+    if (!dgcdp || !dgcdp->v)
+	return;
+
+    struct bv_scene_obj *sp = bv_obj_get(dgcdp->v, BV_DB_OBJS);
+    if (!sp)
+	return;
+
+    struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
+    if (!bdata) {
+	BU_GET(bdata, struct ged_bv_data);
+	db_full_path_init(&bdata->s_fullpath);
+	sp->s_u_data = (void *)bdata;
+    } else {
+	bdata->s_fullpath.fp_len = 0;
+    }
+    if (!sp->s_u_data)
+	return;
+
+
+    if (BU_LIST_IS_EMPTY(&(sp->s_vlist)))
+	sp->s_vlen = 0;
+
+    struct bv_vlist *bvv = (struct bv_vlist *)vhead;
+    sp->s_vlen += bv_vlist_cmd_cnt(bvv);
+    BU_LIST_APPEND_LIST(&(sp->s_vlist), &(bvv->l));
+
+    bv_scene_obj_bound(sp, dgcdp->v);
+
+    db_dup_full_path(&bdata->s_fullpath, pathp);
+
+    sp->s_flag = DOWN;
+    sp->s_iflag = DOWN;
+    sp->s_soldash = dashflag;
+    sp->s_old.s_Eflag = 0;
+
+    if (tsp) {
+	sp->s_old.s_regionid = tsp->ts_regionid;
+    }
+
+    solid_set_color_info(sp, wireframe_color_override, tsp);
+
+    sp->s_dlist = 0;
+    sp->s_os->transparency = dgcdp->vs.transparency;
+    sp->s_os->s_dmode = dgcdp->vs.s_dmode;
+
+    /* append solid to display list */
+    bu_semaphore_acquire(RT_SEM_MODEL);
+    BU_LIST_APPEND(dgcdp->gdlp->dl_head_scene_obj.back, &sp->l);
+    bu_semaphore_release(RT_SEM_MODEL);
+
+    ged_create_vlist_solid_cb(dgcdp->gedp, sp);
+
+}
+
+/**
+ * Once the vlist has been created, perform the common tasks
+ * in handling the drawn solid.
+ *
+ * This routine must be prepared to run in parallel.
+ */
+void
+_ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct _ged_client_data *dgcdp)
+{
+
+    if (dgcdp->vs.color_override) {
+	unsigned char wcolor[3];
+
+	wcolor[0] = (unsigned char)dgcdp->vs.color[0];
+	wcolor[1] = (unsigned char)dgcdp->vs.color[1];
+	wcolor[2] = (unsigned char)dgcdp->vs.color[2];
+	dl_add_path(dashflag, vhead, pathp, tsp, wcolor, dgcdp);
+    } else {
+	dl_add_path(dashflag, vhead, pathp, tsp, NULL, dgcdp);
+    }
+}
+
+static fastf_t
+draw_solid_wireframe(struct bv_scene_obj *sp, struct bview *gvp, struct db_i *dbip,
+		     const struct bn_tol *tol, const struct bg_tess_tol *ttol)
+{
+    int ret;
+    struct bu_list vhead;
+    struct rt_db_internal dbintern;
+    struct rt_db_internal *ip = &dbintern;
+
+    BU_LIST_INIT(&vhead);
+    if (!sp->s_u_data)
+	return -1;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
+
+    ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(&bdata->s_fullpath),
+			     dbip, sp->s_mat, &rt_uniresource);
+
+    if (ret < 0) {
+	return -1;
+    }
+
+    if (gvp && gvp->gv_s->adaptive_plot_csg && ip->idb_meth->ft_adaptive_plot) {
+	ret = ip->idb_meth->ft_adaptive_plot(&vhead, ip, tol, gvp, sp->s_size);
+    } else if (ip->idb_meth->ft_plot) {
+	ret = ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, gvp);
+    }
+
+    rt_db_free_internal(ip);
+
+    if (ret < 0) {
+	if (DB_FULL_PATH_CUR_DIR(&bdata->s_fullpath))
+	    bu_log("%s: plot failure\n", DB_FULL_PATH_CUR_DIR(&bdata->s_fullpath)->d_namep);
+
+	return -1;
+    }
+
+    /* add plot to solid */
+    if (BU_LIST_IS_EMPTY(&(sp->s_vlist)))
+	sp->s_vlen = 0;
+
+    struct bv_vlist *bvv = (struct bv_vlist *)&vhead;
+    sp->s_vlen += bv_vlist_cmd_cnt(bvv);
+    BU_LIST_APPEND_LIST(&(sp->s_vlist), &(bvv->l));
+
+    return 0;
+}
+
+static int
+redraw_solid(struct bv_scene_obj *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, struct bu_list *vlfree)
+{
+    if (sp->s_os->s_dmode == _GED_WIREFRAME) {
+	/* replot wireframe */
+	if (BU_LIST_NON_EMPTY(&sp->s_vlist)) {
+	    BV_FREE_VLIST(vlfree, &sp->s_vlist);
+	}
+	return draw_solid_wireframe(sp, gvp, dbip, tsp->ts_tol, tsp->ts_ttol);
+    }
+    return 0;
+}
+
+static int
+dl_redraw(struct display_list *gdlp, struct ged *gedp, int skip_subtractions)
+{
+    struct db_i *dbip = gedp->dbip;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct db_tree_state *tsp = &wdbp->wdb_initial_tree_state;
+    struct bview *gvp = gedp->ged_gvp;
+    int ret = 0;
+    struct bv_scene_obj *sp;
+    struct bu_list *vlfree = &rt_vlfree;
+    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+	if (!skip_subtractions || (skip_subtractions && !sp->s_soldash)) {
+	    ret += redraw_solid(sp, dbip, tsp, gvp, vlfree);
+	}
+    }
+    ged_create_vlist_display_list_cb(gedp, gdlp);
+    return ret;
+}
+
+union tree *
+append_solid_to_display_list(
+    struct db_tree_state *tsp,
+    const struct db_full_path *pathp,
+    struct rt_db_internal *ip,
+    void *client_data)
+{
+    point_t min, max;
+    union tree *curtree;
+    struct ged_solid_data *bv_data = (struct ged_solid_data *)client_data;
+
+    RT_CK_DB_INTERNAL(ip);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
+    BN_CK_TOL(tsp->ts_tol);
+    RT_CK_RESOURCE(tsp->ts_resp);
+
+    VSETALL(min, INFINITY);
+    VSETALL(max, -INFINITY);
+
+    if (!bv_data) {
+        return TREE_NULL;
+    }
+
+    if (RT_G_DEBUG & RT_DEBUG_TREEWALK) {
+        char *sofar = db_path_to_string(pathp);
+
+        bu_log("append_solid_to_display_list(%s) path='%s'\n", ip->idb_meth->ft_name, sofar);
+
+        bu_free((void *)sofar, "path string");
+    }
+
+    /* create solid */
+    struct bv_scene_obj *sp = bv_obj_get(bv_data->v, BV_DB_OBJS);
+    struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
+    if (!bdata) {
+	BU_GET(bdata, struct ged_bv_data);
+	db_full_path_init(&bdata->s_fullpath);
+	sp->s_u_data = (void *)bdata;
+    } else {
+	bdata->s_fullpath.fp_len = 0;
+    }
+    if (!sp->s_u_data)
+	return TREE_NULL;
+
+    sp->s_size = 0;
+    VSETALL(sp->s_center, 0.0);
+
+    if (ip->idb_meth->ft_bbox) {
+        if (ip->idb_meth->ft_bbox(ip, &min, &max, tsp->ts_tol) < 0) {
+	    if (pathp && DB_FULL_PATH_CUR_DIR(pathp)) {
+		bu_log("%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+	    } else {
+		bu_log("plot failure - invalid path\n");
+	    }
+
+            return TREE_NULL;
+        }
+
+        sp->s_center[X] = (min[X] + max[X]) * 0.5;
+        sp->s_center[Y] = (min[Y] + max[Y]) * 0.5;
+        sp->s_center[Z] = (min[Z] + max[Z]) * 0.5;
+
+        sp->s_size = max[X] - min[X];
+        V_MAX(sp->s_size, max[Y] - min[Y]);
+        V_MAX(sp->s_size, max[Z] - min[Z]);
+    } else if (ip->idb_meth->ft_plot) {
+        /* As a fallback for primitives that don't have a bbox function, use
+         * the old bounding method of calculating a plot for the primitive and
+         * using the extent of the plotted segments as the bounds.
+         */
+        int plot_status;
+        struct bu_list vhead;
+        struct bv_vlist *vp;
+
+        BU_LIST_INIT(&vhead);
+
+        plot_status = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
+					    tsp->ts_tol, NULL);
+
+        if (plot_status < 0) {
+	    if (pathp && DB_FULL_PATH_CUR_DIR(pathp)) {
+		bu_log("%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+	    } else {
+		bu_log("plot failure - invalid path\n");
+	    }
+
+            return TREE_NULL;
+        }
+
+	if (BU_LIST_IS_EMPTY(&(sp->s_vlist)))
+	    sp->s_vlen = 0;
+
+	struct bv_vlist *bvv = (struct bv_vlist *)&vhead;
+	sp->s_vlen += bv_vlist_cmd_cnt(bvv);
+	BU_LIST_APPEND_LIST(&(sp->s_vlist), &(bvv->l));
+	
+	bv_scene_obj_bound(sp, bv_data->v);
+
+        while (BU_LIST_WHILE(vp, bv_vlist, &(sp->s_vlist))) {
+            BU_LIST_DEQUEUE(&vp->l);
+            bu_free(vp, "solid vp");
+        }
+    }
+
+    sp->s_vlen = 0;
+    db_dup_full_path(&bdata->s_fullpath, pathp);
+    sp->s_flag = DOWN;
+    sp->s_iflag = DOWN;
+
+    if (bv_data->draw_solid_lines_only) {
+        sp->s_soldash = 0;
+    } else {
+        sp->s_soldash = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER));
+    }
+
+    sp->s_old.s_Eflag = 0;
+    sp->s_old.s_regionid = tsp->ts_regionid;
+
+    if (ip->idb_type == ID_GRIP) {
+        float mater_color[3];
+
+        /* Temporarily change mater color for pseudo solid to get the desired
+         * default color.
+         */
+        mater_color[RED] = tsp->ts_mater.ma_color[RED];
+        mater_color[GRN] = tsp->ts_mater.ma_color[GRN];
+        mater_color[BLU] = tsp->ts_mater.ma_color[BLU];
+
+        tsp->ts_mater.ma_color[RED] = 0;
+        tsp->ts_mater.ma_color[GRN] = 128;
+        tsp->ts_mater.ma_color[BLU] = 128;
+
+        if (bv_data->wireframe_color_override) {
+            solid_set_color_info(sp, (unsigned char *)&(bv_data->wireframe_color), tsp);
+        } else {
+            solid_set_color_info(sp, NULL, tsp);
+        }
+
+        tsp->ts_mater.ma_color[RED] = mater_color[RED];
+        tsp->ts_mater.ma_color[GRN] = mater_color[GRN];
+        tsp->ts_mater.ma_color[BLU] = mater_color[BLU];
+
+    } else {
+        if (bv_data->wireframe_color_override) {
+	    unsigned char wire_color[3];
+	    wire_color[RED] = (unsigned char)bv_data->wireframe_color[RED];
+	    wire_color[GRN] = (unsigned char)bv_data->wireframe_color[GRN];
+	    wire_color[BLU] = (unsigned char)bv_data->wireframe_color[BLU];
+            solid_set_color_info(sp, wire_color, tsp);
+        } else {
+	    const char *attr_color = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_COLOR));
+	    if (attr_color) {
+		int i;
+		unsigned char obj_color[3];
+		int color[3];
+		int color_cnt = sscanf(attr_color, "%3i%*c%3i%*c%3i", color+0, color+1, color+2);
+		if (color_cnt == 3 && color[0] >= 0 && color[1] >= 0 && color[2] >= 0) {
+		    for (i = 0; i < 3; i++) {
+			if (color[i] > 255) color[i] = 255;
+		    }
+		    obj_color[RED] = (unsigned char)color[RED];
+		    obj_color[GRN] = (unsigned char)color[GRN];
+		    obj_color[BLU] = (unsigned char)color[BLU];
+		    solid_set_color_info(sp, obj_color, tsp);
+		} else {
+		    solid_set_color_info(sp, NULL, tsp);
+		}
+	    } else {
+		solid_set_color_info(sp, NULL, tsp);
+	    }
+	}
+    }
+
+    sp->s_dlist = 0;
+    sp->s_os->transparency = bv_data->transparency;
+    sp->s_os->s_dmode = bv_data->dmode;
+    MAT_COPY(sp->s_mat, tsp->ts_mat);
+
+    /* append solid to display list */
+    bu_semaphore_acquire(RT_SEM_MODEL);
+    BU_LIST_APPEND(bv_data->gdlp->dl_head_scene_obj.back, &sp->l);
+    bu_semaphore_release(RT_SEM_MODEL);
+
+    /* indicate success by returning something other than TREE_NULL */
+    BU_GET(curtree, union tree);
+    RT_TREE_INIT(curtree);
+    curtree->tr_op = OP_NOP;
+
+    return curtree;
+}
 
 static union tree *
 draw_check_region_end(struct db_tree_state *tsp,
@@ -64,7 +451,7 @@ draw_forced_wireframe(
 
     /* draw the path with the given client data, but force wireframe mode */
     struct _ged_client_data dgcd = *dgcdp;
-    dgcd.gedp->ged_gdp->gd_shaded_mode = 0;
+    dgcd.gedp->i->ged_gdp->gd_shaded_mode = 0;
     dgcd.vs.s_dmode = _GED_WIREFRAME;
 
     av[0] = db_path_to_string(pathp);
@@ -196,8 +583,7 @@ plot_shaded_eval(
     /* make a name for the temp brep */
     av[0] = "make_name";
     av[1] = tmp_basename;
-
-    ged_exec(gedp, 2, (const char **)av);
+    ged_exec_make_name(gedp, 2, (const char **)av);
 
     brep_name = bu_vls_strdup(gedp->ged_result_str);
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -206,7 +592,7 @@ plot_shaded_eval(
     av[0] = "brep";
     av[1] = path_name;
     av[2] = brep_name;
-    ret = ged_exec(gedp, 3, av);
+    ret = ged_exec_brep(gedp, 3, av);
 
     if (ret == BRLCAD_OK) {
 	int brep_made = 0;
@@ -250,7 +636,7 @@ plot_shaded_eval(
 	/* kill temp brep */
 	av[0] = "kill";
 	av[1] = brep_name;
-	ged_exec(gedp, 2, av);
+	ged_exec_kill(gedp, 2, av);
     }
     bu_free((char *)brep_name, "vls_strdup");
 
@@ -401,7 +787,7 @@ out:
 
 
 static int
-process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct _ged_client_data *dgcdp)
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct _ged_client_data *dgcdp, struct bu_list *vlfree)
 {
     static int result; /* static due to jumping */
 
@@ -410,7 +796,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	result = nmg_boolean(curtree, *tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol, tsp->ts_resp);
+	result = nmg_boolean(curtree, *tsp->ts_m, vlfree, tsp->ts_tol, tsp->ts_resp);
 
     } else {
 	/* catch */
@@ -425,7 +811,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 static int
-process_triangulation(struct db_tree_state *tsp, const struct db_full_path *pathp, struct _ged_client_data *dgcdp)
+process_triangulation(struct db_tree_state *tsp, const struct db_full_path *pathp, struct _ged_client_data *dgcdp, struct bu_list *vlfree)
 {
     static int result; /* static due to jumping */
 
@@ -434,7 +820,7 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
     if (!BU_SETJUMP) {
 	/* try */
 
-	nmg_triangulate_model(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
+	nmg_triangulate_model(*tsp->ts_m, vlfree, tsp->ts_tol);
 	result = 0;
 
     } else {
@@ -459,8 +845,9 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 {
     struct nmgregion *r;
     struct bu_list vhead;
-    int failed = 1;
+    int failed;
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
+    struct bu_list *vlfree = &rt_vlfree;
 
     BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
@@ -485,7 +872,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 
     if (!dgcdp->draw_nmg_only) {
 
-	failed = process_boolean(curtree, tsp, pathp, dgcdp);
+	failed = process_boolean(curtree, tsp, pathp, dgcdp, vlfree);
 	if (failed) {
 	    db_free_tree(curtree, tsp->ts_resp);
 	    return (union tree *)NULL;
@@ -505,7 +892,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
     }
 
     if (dgcdp->nmg_triangulate) {
-	failed = process_triangulation(tsp, pathp, dgcdp);
+	failed = process_triangulation(tsp, pathp, dgcdp, vlfree);
 	if (failed) {
 	    db_free_tree(curtree, tsp->ts_resp);
 	    return (union tree *)NULL;
@@ -533,12 +920,12 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	if (dgcdp->draw_no_surfaces) {
 	    style |= NMG_VLIST_STYLE_NO_SURFACES;
 	}
-	nmg_r_to_vlist(&vhead, r, style, &RTG.rtg_vlfree);
+	nmg_r_to_vlist(&vhead, r, style, vlfree);
 
 	_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
 
 	if (dgcdp->draw_edge_uses) {
-	    nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1, &RTG.rtg_vlfree);
+	    nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1, vlfree);
 	}
 	/* NMG region is no longer necessary, only vlist remains */
 	db_free_tree(curtree, tsp->ts_resp);
@@ -574,6 +961,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     int bot_threshold = 0;
     int threshold_cached = 0;
     int shaded_mode_override = _GED_SHADED_MODE_UNSET;
+    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CHECK_DBI(gedp->dbip);
 
@@ -776,8 +1164,8 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		dgcdp.vs.s_dmode = _GED_WIREFRAME;
 		if (shaded_mode_override != _GED_SHADED_MODE_UNSET) {
 		    dgcdp.vs.s_dmode = shaded_mode_override;
-		} else if (gedp->ged_gdp->gd_shaded_mode) {
-		    dgcdp.vs.s_dmode = gedp->ged_gdp->gd_shaded_mode;
+		} else if (gedp->i->ged_gdp->gd_shaded_mode) {
+		    dgcdp.vs.s_dmode = gedp->i->ged_gdp->gd_shaded_mode;
 		}
 		break;
 	    case _GED_DRAW_NMG_POLY:
@@ -820,7 +1208,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		for (i = 0; i < argc; ++i) {
 		    if (drawtrees_depth == 1)
-			dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
+			dgcdp.gdlp = dl_addToDisplay(gedp->i->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
 
 		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL)
 			continue;
@@ -833,7 +1221,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			    continue;
 			}
 			/* if evaluated shading failed, fall back to "all" mode */
-			dgcdp.gedp->ged_gdp->gd_shaded_mode = 0;
+			dgcdp.gedp->i->ged_gdp->gd_shaded_mode = 0;
 			dgcdp.vs.s_dmode = _GED_SHADED_MODE_ALL;
 		    }
 
@@ -856,7 +1244,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		for (int ie = 0; ie < argc; ie++) {
 		    eav[ie+1] = argv[ie];
 		}
-		int eret = ged_exec(gedp, argc+1, eav);
+		int eret = ged_exec_E(gedp, argc+1, eav);
 		bu_free(eav, "eav");
 		return eret;
 	    } else {
@@ -879,7 +1267,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    bv_data.dmode = dgcdp.vs.s_dmode;
 		    bv_data.v = gedp->ged_gvp;
 
-		    dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
+		    dgcdp.gdlp = dl_addToDisplay(gedp->i->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
 		    bv_data.gdlp = dgcdp.gdlp;
 
 		    /* store draw path */
@@ -908,8 +1296,8 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		 * view size for plotting.
 		 */
 		if (dgcdp.autoview) {
-		    const char *autoview_args[2] = {"autoview", NULL};
-		    ged_exec(gedp, 1, autoview_args);
+		    const char *autoview_args[1] = {"autoview"};
+		    ged_exec_autoview(gedp, 1, autoview_args);
 		}
 
 		/* Set the view threshold */
@@ -945,12 +1333,12 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		wdbp->wdb_initial_tree_state.ts_m = &nmg_model;
 		if (dgcdp.draw_edge_uses) {
 		    bu_vls_printf(gedp->ged_result_str, "Doing the edgeuse thang (-u)\n");
-		    dgcdp.draw_edge_uses_vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+		    dgcdp.draw_edge_uses_vbp = bv_vlblock_init(vlfree, 32);
 		}
 
 		for (i = 0; i < argc; ++i) {
 		    if (drawtrees_depth == 1)
-			dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
+			dgcdp.gdlp = dl_addToDisplay(gedp->i->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
 
 		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL)
 			continue;
@@ -1041,7 +1429,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    /* Done checking options. If our display is non-empty,
 	     * add -R to keep current view.
 	     */
-	    if (BU_LIST_NON_EMPTY(gedp->ged_gdp->gd_headDisplay)) {
+	    if (BU_LIST_NON_EMPTY(gedp->i->ged_gdp->gd_headDisplay)) {
 		bu_vls_strcat(&vls, " -R");
 	    }
 	    break;
@@ -1168,7 +1556,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	bu_vls_free(&vls);
 
 	empty_display = 1;
-	if (BU_LIST_NON_EMPTY(gedp->ged_gdp->gd_headDisplay)) {
+	if (BU_LIST_NON_EMPTY(gedp->i->ged_gdp->gd_headDisplay)) {
 	    empty_display = 0;
 	}
 
@@ -1240,8 +1628,7 @@ extern int ged_draw2_core(struct ged *gedp, int argc, const char *argv[]);
 int
 ged_draw_core(struct ged *gedp, int argc, const char *argv[])
 {
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(cmd2, "1"))
+    if (gedp->new_cmd_forms)
 	return ged_draw2_core(gedp, argc, argv);
 
     return ged_draw_guts(gedp, argc, argv, _GED_DRAW_WIREFRAME);
@@ -1258,8 +1645,7 @@ extern int ged_redraw2_core(struct ged *gedp, int argc, const char *argv[]);
 int
 ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 {
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(cmd2, "1"))
+    if (gedp->new_cmd_forms)
 	return ged_redraw2_core(gedp, argc, argv);
 
     int ret;
@@ -1274,7 +1660,7 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc == 1) {
 	/* redraw everything */
-	for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay))
+	for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay))
 	{
 	    ret = dl_redraw(gdlp, gedp, 0);
 	    if (ret < 0) {
@@ -1296,7 +1682,7 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    found_path = 0;
-	    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay))
+	    for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay))
 	    {
 		ret = db_string_to_path(&dl_path, gedp->dbip,
 			bu_vls_addr(&gdlp->dl_path));
@@ -1342,6 +1728,9 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 struct ged_cmd_impl draw_cmd_impl = {"draw", ged_draw_core, GED_CMD_DEFAULT};
 const struct ged_cmd draw_cmd = { &draw_cmd_impl };
 
+struct ged_cmd_impl bigE_cmd_impl = {"E", ged_E_core, GED_CMD_DEFAULT};
+const struct ged_cmd bigE_cmd = { &bigE_cmd_impl };
+
 struct ged_cmd_impl e_cmd_impl = {"e", ged_draw_core, GED_CMD_DEFAULT};
 const struct ged_cmd e_cmd = { &e_cmd_impl };
 
@@ -1359,9 +1748,9 @@ extern int ged_preview_core(struct ged *gedp, int argc, const char *argv[]);
 struct ged_cmd_impl preview_cmd_impl = {"preview", ged_preview_core, GED_CMD_DEFAULT};
 const struct ged_cmd preview_cmd = { &preview_cmd_impl };
 
-const struct ged_cmd *draw_cmds[] = { &draw_cmd, &e_cmd, &ev_cmd, &redraw_cmd, &loadview_cmd, &preview_cmd, NULL };
+const struct ged_cmd *draw_cmds[] = { &draw_cmd, &bigE_cmd, &e_cmd, &ev_cmd, &redraw_cmd, &loadview_cmd, &preview_cmd, NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  draw_cmds, 6 };
+static const struct ged_plugin pinfo = { GED_API,  draw_cmds, 7 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {

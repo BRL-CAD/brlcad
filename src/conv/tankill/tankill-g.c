@@ -1,7 +1,7 @@
 /*                     T A N K I L L - G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -157,6 +157,7 @@ main(int argc, char **argv)
     int polysolids;					/* flag indicating polysolid output */
     int group_len[100];
     int all_len=0;
+    struct bu_list *vlfree = &rt_vlfree;
 
     bu_setprogname(argv[0]);
 
@@ -342,7 +343,7 @@ main(int argc, char **argv)
 		NMG_CK_FACEUSE( fu );
 		if ( fu->orientation == OT_SAME )
 		{
-		    if ( nmg_calc_face_g( fu, &RTG.rtg_vlfree ) )
+		    if ( nmg_calc_face_g( fu, vlfree ) )
 			bu_log( "Failed to calculate plane eqn\n" );
 
 		    /* save the face in a table */
@@ -365,7 +366,7 @@ main(int argc, char **argv)
 	nmg_break_long_edges( s, &tol );
 
 	/* glue all the faces together */
-	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces), BU_PTBL_LEN( &faces ), &RTG.rtg_vlfree, &tol );
+	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces), BU_PTBL_LEN( &faces ), vlfree, &tol );
 
 	/* re-initialize the face list */
 	bu_ptbl_reset( &faces );
@@ -376,7 +377,7 @@ main(int argc, char **argv)
 	/* fix the normals */
 	s = BU_LIST_FIRST( shell, &r->s_hd );
 
-	nmg_fix_normals( s, &RTG.rtg_vlfree, &tol );
+	nmg_fix_normals( s, vlfree, &tol );
 
 	/* make a name for this solid */
 	sprintf( name, "s.%d.%d", comp_code, Add_solid( comp_code ) );

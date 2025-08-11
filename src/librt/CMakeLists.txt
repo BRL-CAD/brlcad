@@ -1,24 +1,99 @@
-BRLCAD_Find_Package(MANIFOLD REQUIRED)
-BRLCAD_Find_Package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
-BRLCAD_Find_Package(REGEX REQUIRED)
-if (BRLCAD_ENABLE_ASSETIMPORT)
-  BRLCAD_Find_Package(ASSETIMPORT)
-endif (BRLCAD_ENABLE_ASSETIMPORT)
-BRLCAD_Find_Package(GEOGRAM REQUIRED SYSPATTERN geogram)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+brlcad_find_package(MANIFOLD REQUIRED)
+brlcad_find_package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
+brlcad_find_package(REGEX REQUIRED)
+brlcad_find_package(Geogram REQUIRED SYSPATTERN geogram)
+find_package_gte(REQUIRED)
 add_definitions(-DUSE_GEOGRAM)
 
-if(ASSETIMPORT_LIBRARIES)
-  add_definitions(-DUSE_ASSETIMPORT)
-endif(ASSETIMPORT_LIBRARIES)
-
+if(NOT BRLCAD_ENABLE_GCT)
+  brlcad_find_package(MMESH REQUIRED)
+  if(MMESH_LIBRARY)
+    add_definitions(-DBRLCAD_MMESH)
+  endif(MMESH_LIBRARY)
+endif(NOT BRLCAD_ENABLE_GCT)
 
 if(BRLCAD_ENABLE_OPENCL)
   add_definitions(-DUSE_OPENCL)
-endif (BRLCAD_ENABLE_OPENCL)
+endif(BRLCAD_ENABLE_OPENCL)
+
+
+set(
+  LIBRT_PRIMEDIT_SOURCES
+  primitives/arb8/edarb.c
+  primitives/ars/edars.c
+  primitives/bot/edbot.c
+  primitives/bspline/edbspline.c
+  primitives/cline/edcline.c
+  primitives/datum/eddatum.c
+  primitives/dsp/eddsp.c
+  primitives/ebm/edebm.c
+  primitives/ehy/edehy.c
+  primitives/ell/edell.c
+  primitives/epa/edepa.c
+  primitives/eto/edeto.c
+  primitives/extrude/edextrude.c
+  primitives/grip/edgrip.c
+  primitives/half/edhalf.c
+  primitives/hyp/edhyp.c
+  primitives/metaball/edmetaball.c
+  primitives/nmg/ednmg.c
+  primitives/part/edpart.c
+  primitives/pipe/edpipe.c
+  primitives/rhc/edrhc.c
+  primitives/rpc/edrpc.c
+  primitives/superell/edsuperell.c
+  primitives/tgc/edtgc.c
+  primitives/tor/edtor.c
+  primitives/vol/edvol.c
+)
+
+# NOTE - for now this is an internal, build-only header and
+# does not have install logic associated with it.  Eventually,
+# if this API proves out and becomes stable, we may end up
+# installing rt_ecmds.h.  Applications external to the main
+# BRL-CAD build may also want to exploit the callback API.
+set(RT_ECMD_SCANNER ${CMAKE_BINARY_DIR}/CMakeTmp/rt_ecmd_scanner${CMAKE_EXECUTABLE_SUFFIX})
+set(RT_ECMD_SCANNER_SRC "${CMAKE_CURRENT_SOURCE_DIR}/primitives/rt_ecmd_scanner.cpp")
+try_compile(
+  rt_ecmd_scanner
+  "${CMAKE_BINARY_DIR}/CMakeTmp"
+  SOURCES "${RT_ECMD_SCANNER_SRC}"
+  OUTPUT_VARIABLE RT_SCANNER_BLD_OUT
+  COPY_FILE "${RT_ECMD_SCANNER}"
+)
+if (NOT EXISTS ${RT_ECMD_SCANNER})
+  message(FATAL_ERROR "Unable to build edit command scanner: ${RT_SCANNER_BLD_OUT}")
+endif()
+distclean(${RT_ECMD_SCANNER})
+
+set(RT_PFILE_OUT "${CMAKE_BINARY_DIR}/CMakeTmp/rt_primitive_files.txt")
+set(RT_PFILE_IN)
+foreach(esf ${LIBRT_PRIMEDIT_SOURCES})
+  list(APPEND RT_PFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/${esf})
+endforeach()
+string(REPLACE ";" "\n" RT_PFILES "${RT_PFILE_IN}")
+file(WRITE "${RT_PFILE_OUT}" ${RT_PFILES})
+distclean(${RT_PFILE_OUT})
+
+set(RT_ECMD_HDR "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad/rt/rt_ecmds.h")
+add_custom_command(
+  OUTPUT ${RT_ECMD_HDR}
+  COMMAND ${RT_ECMD_SCANNER} ${RT_PFILE_OUT} ${RT_ECMD_HDR}
+  COMMENT "[RT_ECMD_SCANNER] Scanning for RT editing mode flags"
+  DEPENDS "${RT_ECMD_SCANNER_SRC}"
+)
+distclean(${RT_ECMD_HDR})
+foreach(esf ${LIBRT_PRIMEDIT_SOURCES})
+  set_source_files_properties(${esf} PROPERTIES OBJECT_DEPENDS ${RT_ECMD_HDR})
+endforeach()
+
 
 # FIXME: needs materialX
 #  material/materialX.cpp
-set(LIBRT_SOURCES
+set(
+  LIBRT_SOURCES
   attr.cpp
   attributes.c
   bbox.c
@@ -28,6 +103,7 @@ set(LIBRT_SOURCES
   bool_tess.c
   bundle.c
   cache.c
+  cache_lod.c
   cache_lz4.c
   cmd.c
   cyclic.c
@@ -63,8 +139,8 @@ set(LIBRT_SOURCES
   db_walk.c
   dir.c
   dspline.c
+  edit.cpp
   fortray.c
-  gdiam/gdiam.cpp
   globals.c
   htbl.c
   ls.c
@@ -74,11 +150,11 @@ set(LIBRT_SOURCES
   op.c
   pr.c
   prep.cpp
+  ${LIBRT_PRIMEDIT_SOURCES}
   primitives/annot/annot.c
   primitives/arb8/arb8.c
   primitives/arb8/arb8_brep.cpp
   primitives/arb8/arb8_mirror.c
-  primitives/arb8/arb_edit.c
   primitives/arbn/arbn.c
   primitives/arbn/arbn_brep.cpp
   primitives/arbn/arbn_mirror.c
@@ -90,6 +166,7 @@ set(LIBRT_SOURCES
   primitives/bot/bot_edge.c
   primitives/bot/bot_mirror.c
   primitives/bot/bot_oriented_bbox.cpp
+  primitives/bot/bot_plot.cpp
   primitives/bot/btg.c
   primitives/bot/btgf.c
   primitives/bot/decimate.c
@@ -109,6 +186,8 @@ set(LIBRT_SOURCES
   primitives/ebm/ebm.c
   primitives/ebm/ebm_brep.cpp
   primitives/ebm/ebm_mirror.c
+  primitives/edgeneric.c
+  primitives/edtable.cpp
   primitives/ehy/ehy.c
   primitives/ehy/ehy_brep.cpp
   primitives/ell/ell.c
@@ -188,6 +267,8 @@ set(LIBRT_SOURCES
   primitives/rpc/rpc.c
   primitives/rpc/rpc_brep.cpp
   primitives/rpc/rpc_mirror.c
+  primitives/sample.c
+  primitives/sample_pnts.cpp
   primitives/script/script.c
   primitives/sketch/polygons.c
   primitives/sketch/sketch.c
@@ -214,7 +295,9 @@ set(LIBRT_SOURCES
   reduce_db.cpp
   regionfix.c
   roots.c
+  rt_init.cpp
   search.cpp
+  search_old.cpp
   shoot.c
   timer.cpp
   tol.c
@@ -227,37 +310,36 @@ set(LIBRT_SOURCES
   vlist.c
   vshoot.c
   wdb.c
-  )
+)
 
-set_source_files_properties(gdiam/gdiam.cpp PROPERTIES COMPILE_FLAGS -w)
+set(
+  GCT_SRCS
+  primitives/bot/gct_decimation/auxiliary/mmbinsort.c
+  primitives/bot/gct_decimation/auxiliary/mmbitmap.c
+  primitives/bot/gct_decimation/auxiliary/mm.c
+  primitives/bot/gct_decimation/auxiliary/mmhash.c
+  primitives/bot/gct_decimation/meshoptimization.c
+  primitives/bot/gct_decimation/meshoptimizer.c
+  primitives/bot/gct_decimation/meshdecimation.c
+  primitives/bot/gct_decimation/meshdecimationSSE2.c
+  primitives/bot/gct_decimation/meshdecimationSSE3.c
+  primitives/bot/gct_decimation/meshdecimationSSE4p1.c
+)
+if(BRLCAD_ENABLE_GCT AND NOT MMESH_FOUND)
+  set(LIBRT_SOURCES ${LIBRT_SOURCES} ${GCT_SRCS})
+endif(BRLCAD_ENABLE_GCT AND NOT MMESH_FOUND)
 
-
-if(BRLCAD_ENABLE_GCT)
-  set(LIBRT_SOURCES
-    ${LIBRT_SOURCES}
-    primitives/bot/gct_decimation/auxiliary/mmbinsort.c
-    primitives/bot/gct_decimation/auxiliary/mmbitmap.c
-    primitives/bot/gct_decimation/auxiliary/mm.c
-    primitives/bot/gct_decimation/auxiliary/mmhash.c
-    primitives/bot/gct_decimation/meshoptimization.c
-    primitives/bot/gct_decimation/meshoptimizer.c
-    primitives/bot/gct_decimation/meshdecimation.c
-    primitives/bot/gct_decimation/meshdecimationSSE2.c
-    primitives/bot/gct_decimation/meshdecimationSSE3.c
-    primitives/bot/gct_decimation/meshdecimationSSE4p1.c
-    )
-endif(BRLCAD_ENABLE_GCT)
-
-set(librt_ignored_files
+set(
+  librt_ignored_files
   cache.h
   librt_private.h
   material/materialX.cpp
   material/materialX.h
+  cut_hlbvh.h
   prcomb.c
   primitives/bot/bot_edge.h
   primitives/bot/bot_wireframe.cpp
-  primitives/bot/btg.h
-  primitives/bot/g_bot_include.c
+  ${GCT_SRCS}
   primitives/bot/gct_decimation/auxiliary/cc.h
   primitives/bot/gct_decimation/auxiliary/mm.h
   primitives/bot/gct_decimation/auxiliary/mmatomic.h
@@ -275,17 +357,17 @@ set(librt_ignored_files
   primitives/brep/brep_local.h
   primitives/datum/datum.h
   primitives/dsp/dsp.h
+  primitives/edit_private.h
   primitives/fixpt.h
   primitives/metaball/metaball.h
   primitives/revolve/revolve.h
+  primitives/rt_ecmd_scanner.cpp
   primitives/sph/benchmark.sh
   primitives/xxx/xxx.h
-
   primitives/bool.cl
   primitives/common.cl
   primitives/rt.cl
   primitives/solver.cl
-
   primitives/arb8/arb8_shot.cl
   primitives/arbn/arbn_shot.cl
   primitives/bot/bot_shot.cl
@@ -304,8 +386,8 @@ set(librt_ignored_files
   primitives/superell/superell_shot.cl
   primitives/tgc/tgc_shot.cl
   primitives/tor/tor_shot.cl
-
   search.h
+  search_old.h
   subd_test_bot.asc
   test_bot2nurbs.cpp
   test_brepreport.cpp
@@ -313,30 +395,15 @@ set(librt_ignored_files
   test_nurbsfit.cpp
   test_root3-subd.cpp
   uvpoints.cpp
-  )
-if(NOT BRLCAD_ENABLE_GCT)
-  set(librt_ignored_files
-    ${librt_ignored_files}
-    primitives/bot/gct_decimation/auxiliary/mmbinsort.c
-    primitives/bot/gct_decimation/auxiliary/mmbitmap.c
-    primitives/bot/gct_decimation/auxiliary/mm.c
-    primitives/bot/gct_decimation/auxiliary/mmhash.c
-    primitives/bot/gct_decimation/meshoptimization.c
-    primitives/bot/gct_decimation/meshoptimizer.c
-    primitives/bot/gct_decimation/meshdecimation.c
-    primitives/bot/gct_decimation/meshdecimationSSE2.c
-    primitives/bot/gct_decimation/meshdecimationSSE3.c
-    primitives/bot/gct_decimation/meshdecimationSSE4p1.c
-    )
-endif(NOT BRLCAD_ENABLE_GCT)
-CMAKEFILES(${librt_ignored_files})
+)
+cmakefiles(${librt_ignored_files})
 
-set(CL_FILES
+set(
+  CL_FILES
   primitives/bool.cl
   primitives/common.cl
   primitives/rt.cl
   primitives/solver.cl
-
   primitives/arb8/arb8_shot.cl
   primitives/arbn/arbn_shot.cl
   primitives/bot/bot_shot.cl
@@ -355,11 +422,11 @@ set(CL_FILES
   primitives/superell/superell_shot.cl
   primitives/tgc/tgc_shot.cl
   primitives/tor/tor_shot.cl
-  )
+)
 
-BRLCAD_ADDDATA(nurb_example.c sample_applications)
-BRLCAD_ADDDATA(raydebug.tcl sample_applications)
-BRLCAD_ADDDATA(CL_FILES opencl)
+brlcad_adddata(nurb_example.c sample_applications)
+brlcad_adddata(raydebug.tcl sample_applications)
+brlcad_adddata(CL_FILES opencl)
 
 if(BRLCAD_ENABLE_OPENCL)
   set(OPENCL_LIBS ${OPENCL_LIBRARIES})
@@ -370,85 +437,82 @@ if(BRLCAD_ENABLE_SPR)
 endif(BRLCAD_ENABLE_SPR)
 
 # Note - librt_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-set(LIBRT_LIBS
+set(
+  LIBRT_LIBS
   ${OPENCL_LIBS}
   ${librt_deps}
   ${OPENNURBS_LIBRARIES}
   ${MANIFOLD_LIBRARIES}
-  ${ASSETIMPORT_LIBRARIES}
-  ${GEOGRAM_LIBRARY}
+  ${Geogram_LIBRARY}
+  ${MMESH_LIBRARY}
   ${REGEX_LIBRARIES}
   ${WINSOCK_LIB}
   ${RPCRT_LIB}
   ${STDCXX_LIBRARIES}
-  )
+)
 
 # Include directories needed by librt users
-set(RT_INCLUDE_DIRS
-  ${OPENNURBS_INCLUDE_DIRS}
-  ${OPENCL_INCLUDE_DIRS}
-  )
+set(RT_INCLUDE_DIRS ${OPENNURBS_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS} ${GTE_INCLUDE_DIR})
 
 # locally used but not needed by users of the library
-set(RT_LOCAL_INCLUDE_DIRS
+set(
+  RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/vds
-  ${CMAKE_CURRENT_SOURCE_DIR}/gdiam
   ${REGEX_INCLUDE_DIRS}
-  ${GEOGRAM_INCLUDE_DIR}
+  ${Geogram_INCLUDE_DIR}
   ${MANIFOLD_INCLUDE_DIRS}
-  ${ASSETIMPORT_INCLUDE_DIR}
-  ${MANIFOLD_INCLUDE_DIRS}
-  ${ASSETIMPORT_INCLUDE_DIR}
-  )
+  ${MMESH_INCLUDE_DIR}
+)
 # FIXME: needs materialX
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${LIBRT_LIBS}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_DIRS}")
+brlcad_addlib(librt "${LIBRT_SOURCES}" "${LIBRT_LIBS}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_DIRS}")
 
 # set(MATERIALX_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXCore.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXFormat.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenOsl.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenShader.lib)
 # BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${MATERIALX_LIBS};${OPENCL_LIBS};libbrep;libnmg;libbg;libbv;libbn;libbu;${OPENNURBS_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
-
 
 set_target_properties(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_EXPORTS")
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_EXPORTS")
-  if (TARGET librt-obj)
+  if(TARGET librt-obj)
     set_property(TARGET librt-obj APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_EXPORTS")
     set_property(TARGET librt-obj APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_EXPORTS")
-  endif (TARGET librt-obj)
+  endif(TARGET librt-obj)
 endif(HIDE_INTERNAL_SYMBOLS)
 
 # loudly append an underscore on musl so that we build by default but
 # not without protest.
 find_program(MUSL_LD NAMES /lib/ld-musl-x86_64.so.1)
 mark_as_advanced(MUSL_LD)
-if (MUSL_LD)
-  message("WARNING: MUSL LibC Detected.  Protecting BRL-CAD's librt.
+if(MUSL_LD)
+  message(
+    "WARNING: MUSL LibC Detected.  Protecting BRL-CAD's librt.
 
-     MUSL's dynamic linker erroneously overrides AT RUNTIME 'librt'
-     references regardless of rpath or search logic specified during
-     compilation and linking.  MUSL claims POSIX allows this despite
-     POSIX not defining any dynamic linker behavior whatsoever. They
-     (reportedly) do so to ease porting glibc-assuming apps to their
-     libc, auto-converting those linked with -lm, -lpthread, -lrt
-     and such during runtime loading regardless of search path logic.
+    MUSL's dynamic linker erroneously overrides AT RUNTIME 'librt'
+    references regardless of rpath or search logic specified during
+    compilation and linking.  MUSL claims POSIX allows this despite
+    POSIX not defining any dynamic linker behavior whatsoever. They
+    (reportedly) do so to ease porting glibc-assuming apps to their
+    libc, auto-converting those linked with -lm, -lpthread, -lrt
+    and such during runtime loading regardless of search path logic.
 
-     Legacy mention in POSIX 'c99' man page would allow (only) the
-     c99 tool to treat BRL-CAD's librt as undefined (not C++, fort77,
-     or other tools like ld), however clang/gcc/c99 compiling and
-     linking are all well-behaved. Issue reported with suggestion to
-     only override as fallback behavior in July 2022.
+    Legacy mention in POSIX 'c99' man page would allow (only) the
+    c99 tool to treat BRL-CAD's librt as undefined (not C++, fort77,
+    or other tools like ld), however clang/gcc/c99 compiling and
+    linking are all well-behaved. Issue reported with suggestion to
+    only override as fallback behavior in July 2022.
 
-     Until MUSL changes (see root/ldso/dynlink.c), a workaround is
-     employed to avoid user action.  Setting LD_PRELOAD also works.
+    Until MUSL changes (see root/ldso/dynlink.c), a workaround is
+    employed to avoid user action.  Setting LD_PRELOAD also works.
 
-     WARNING: MUSL ENVIRONMENT UNSUPPORTED. DO NOT RELY ON 'librt_'
-     WORKAROUND. PLEASE REPORT IF YOU DEVELOP AGAINST BRL-CAD LIBRT
-     AND ENCOUNTER THIS MESSAGE: devs@brlcad.org")
+    WARNING: MUSL ENVIRONMENT UNSUPPORTED. DO NOT RELY ON 'librt_'
+    WORKAROUND. PLEASE REPORT IF YOU DEVELOP AGAINST BRL-CAD LIBRT
+    AND ENCOUNTER THIS MESSAGE: devs@brlcad.org"
+  )
   set_target_properties(librt PROPERTIES OUTPUT_NAME "librt_")
-endif (MUSL_LD)
+endif(MUSL_LD)
 
 # The following is build code for test applications used during
 # development
@@ -467,16 +531,12 @@ endif (MUSL_LD)
 
 add_subdirectory(tests)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   vds/README
   vds/COPYING
   vds/vds.h
-  gdiam/gdiam.hpp
-  gdiam/gdiam_test.cpp
-  gdiam/LICENSE.MIT
-  gdiam/README
-  )
+)
 
 # Local Variables:
 # tab-width: 8
@@ -484,4 +544,3 @@ CMAKEFILES(
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

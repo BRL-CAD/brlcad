@@ -1,7 +1,7 @@
 /*                      R T _ F U N C T A B . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,10 @@
 #include "rt/application.h"
 #include "rt/db_internal.h"
 #include "rt/db_instance.h"
+#include "rt/directory.h"
+#include "rt/edit.h"
 #include "rt/hit.h"
+#include "rt/misc.h"
 #include "rt/resource.h"
 #include "rt/rt_instance.h"
 #include "rt/seg.h"
@@ -269,18 +272,165 @@ struct rt_functab {
     int (*ft_prep_serialize)(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version);
 #define RTFUNCTAB_FUNC_PREP_SERIALIZE_CAST(_func) ((int (*)(struct soltab *, const struct rt_db_internal *, struct bu_external *, size_t *))((void (*)(void))_func))
 
-    /** generate struct bv_scene_obj labels for the primitive */
-    void (*ft_labels)(struct bv_scene_obj *ps, const struct rt_db_internal *ip);
-#define RTFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(struct bv_scene_obj *, const struct rt_db_internal *))((void (*)(void))_func))
+    /** generate labels for the primitive.  Returns the number of labels populated in pl */
+    int (*ft_labels)(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *tol);
+#define RTFUNCTAB_FUNC_LABELS_CAST(_func) ((int (*)(struct rt_point_labels *, int, const mat_t, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
+
+    /** Return keypoint information.  If keystr is non-NULL, that string will
+     * be used as a lookup - otherwise, a primitive-defined default will be
+     * used.  If the internal default was used for the lookup a pointer to a
+     * static copy of the default keystr is returned. Otherwise, if the
+     * keypoint lookup was successful, keystr is returned. If NULL is returned,
+     * no keypoint was determined.
+     *
+     * TODO - The format of keystr may be specific to individual primitives.
+     * In principle something complex like "F10E2V1" (for example) might be
+     * desirable to select a particular brep face/edge/vertex - right now the
+     * valid inputs aren't yet documented. */
+    const char *(*ft_keypoint)(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *tol);
+#define RTFUNCTAB_FUNC_KEYPOINT_CAST(_func) ((const char *(*)(point_t *, const char *, const mat_t, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
+
+    /* Apply matrix to primitive parameters */
+    int (*ft_mat)(struct rt_db_internal *, const mat_t, const struct rt_db_internal *);
+#define RTFUNCTAB_FUNC_MAT_CAST(_func) ((int (*)(struct rt_db_internal *, const mat_t, const struct rt_db_internal *))((void (*)(void))_func))
+
+    /** perturb geometry parameters of primitive.  NOTE:  the oip primitive
+     * returned is NOT guaranteed to be the same type as that of ip - for example,
+     * ARB8 perturbations will return an ARBN primitive. */
+    int (*ft_perturb)(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t factor);
+#define RTFUNCTAB_FUNC_PERTURB_CAST(_func) ((int (*)(struct rt_db_internal **, const struct rt_db_internal *, int, fastf_t))((void (*)(void))_func))
+
+    /* Populate a scene object with the appropriate visualization data.  Unlike
+     * ft_plot, this routine handles multiple drawing modes (e.g. shaded) and
+     * adaptive plotting based on a view. If NULL parameters are passed for
+     * tolerance, defaults will be used.  If no view info is available, adaptive
+     * settings are ignored and the standard visuals will be generated.
+     *
+     * Unlike most functab methods, we deliberately use a directory pointer and
+     * the database instance pointer as inputs rather than the rt_db_internal.
+     * This is for performance reasons - some primitives cache drawing data
+     * in a way that lets them draw more quickly than they could trying to process
+     * the full rt_db_internal primitive data, and in those cases we want to avoid
+     * the memory overhead of populating an rt_db_internal unless it is actually
+     * needed.
+     *
+     * TODO - for combs, we either need the evaluated tree output or an agglomeration
+     * of all the leaf wireframes.  Normally the latter won't be what apps want,
+     * since it wouldn't reuse solid leaf wireframes, but from an API perspective
+     * it's what this function would return... */
+    int (*ft_scene_obj)(struct bv_scene_obj * /*s*/,
+		   struct directory * /*dp*/,
+		   struct db_i * /*dbip*/,
+		   const struct bg_tess_tol * /*ttol*/,
+		   const struct bn_tol * /*tol*/,
+		   const struct bview * /*v*/);
+#define RTFUNCTAB_FUNC_SCENE_OBJ_CAST(_func) ((int (*)(struct bv_scene_obj *, struct directory *, struct db_i *, const struct bg_tess_tol *, const struct bn_tol *, const struct bview *))((void (*)(void))_func))
 
 };
 
-
+/**
+ * Function table defining per-primitive methods for plotting, tessellation,
+ * etc.  In essence this is a way to do "object oriented" coding strictly
+ * in C. */
 RT_EXPORT extern const struct rt_functab OBJ[];
 
 #define RT_CK_FUNCTAB(_p) BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab");
 
 RT_EXPORT extern const struct rt_functab *rt_get_functab_by_label(const char *label);
+
+
+
+////////////////////////////////////////////////////////////////////////////////////
+/* Second table specific to editing functionality.  Eventually this may simply fold
+ * into the main librt table, but currently (in 2025) we're in early testing so
+ * keeping things separate for now. */
+struct rt_edit_functab {
+    uint32_t magic;
+    char ft_name[17]; /* current longest name is 16 chars, need one element for terminating NULL */
+    char ft_label[9]; /* current longest label is 8 chars, need one element for terminating NULL */
+
+    void (*ft_labels)(int *num_lines,
+            point_t *lines,
+            struct rt_point_labels *pl,
+            int max_pl,
+            const mat_t xform,
+            struct rt_edit *s,
+            struct bn_tol *tol);
+#define EDFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(int *, point_t *, struct rt_point_labels *, int, const mat_t, struct rt_edit *, struct bn_tol *))((void (*)(void))_func))
+
+    const char *(*ft_keypoint)(point_t *pt,
+            const char *keystr,
+            const mat_t mat,
+            struct rt_edit *s,
+            const struct bn_tol *tol);
+#define EDFUNCTAB_FUNC_KEYPOINT_CAST(_func) ((const char *(*)(point_t *, const char *, const mat_t, struct rt_edit *, const struct bn_tol *))((void (*)(void))_func))
+
+    void(*ft_e_axes_pos)(
+            struct rt_edit *s,
+            const struct rt_db_internal *ip,
+            const struct bn_tol *tol);
+#define EDFUNCTAB_FUNC_E_AXES_POS_CAST(_func) ((void(*)(struct rt_edit *s, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
+
+    // Written format is intended to be human editable text that will be parsed
+    // by ft_read_params.  There are no guarantees of formatting consistency by
+    // this API, so external apps should not rely on this format being
+    // consistent release-to-release.  The only API guarantee is that
+    // ft_write_params output for a given BRL-CAD version is readable by
+    // ft_read_params.
+    void(*ft_write_params)(
+            struct bu_vls *p,
+            const struct rt_db_internal *ip,
+            const struct bn_tol *tol,
+            fastf_t base2local);
+#define EDFUNCTAB_FUNC_WRITE_PARAMS_CAST(_func) ((void(*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *, fastf_t))((void (*)(void))_func))
+
+    // Parse ft_write_params output and assign numerical values to ip.
+    int(*ft_read_params)(
+            struct rt_db_internal *ip,
+            const char *fc,
+            const struct bn_tol *tol,
+            fastf_t local2base);
+#define EDFUNCTAB_FUNC_READ_PARAMS_CAST(_func) ((int(*)(struct rt_db_internal *, const char *, const struct bn_tol *, fastf_t))((void (*)(void))_func))
+
+    int(*ft_edit)(struct rt_edit *s);
+#define EDFUNCTAB_FUNC_EDIT_CAST(_func) ((int(*)(struct rt_edit *))((void (*)(void))_func))
+
+    /* Translate mouse info into edit ready info.  mousevec [X] and [Y] are in
+     * the range -1.0...+1.0, corresponding to viewspace.
+     *
+     * In order to allow command line commands to do the same things that a
+     * mouse movements can, the preferred strategy is to store values and allow
+     * ft_edit to actually do the work. */
+    int(*ft_edit_xy)(struct rt_edit *s, const vect_t mousevec);
+#define EDFUNCTAB_FUNC_EDITXY_CAST(_func) ((int(*)(struct rt_edit *, const vect_t))((void (*)(void))_func))
+
+    /* Create primitive specific editing struct */
+    void *(*ft_prim_edit_create)(struct rt_edit *s);
+#define EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(_func) ((void *(*)(struct rt_edit *))((void (*)(void))_func))
+
+    /* Destroy primitive specific editing struct */
+    void (*ft_prim_edit_destroy)(void *);
+#define EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(_func) ((void(*)(void *))((void (*)(void))_func))
+
+    /* Create primitive specific editing struct */
+    void (*ft_prim_edit_reset)(struct rt_edit *s);
+#define EDFUNCTAB_FUNC_PRIMEDIT_RESET_CAST(_func) ((void(*)(struct rt_edit *))((void (*)(void))_func))
+
+    int (*ft_menu_str)(struct bu_vls *m, const struct rt_db_internal *ip, const struct bn_tol *tol);
+#define EDFUNCTAB_FUNC_MENU_STR_CAST(_func) ((int(*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
+
+    /* Set up a particular solid editing mode.  Does any internal setup needed
+     * to prepare for the specified editing operation. */
+    void (*ft_set_edit_mode)(struct rt_edit *s, int mode);
+#define EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(_func) ((void(*)(struct rt_edit *, int))((void (*)(void))_func))
+
+    struct rt_edit_menu_item *(*ft_menu_item)(const struct bn_tol *tol);
+#define EDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct rt_edit_menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))
+
+};
+
+RT_EXPORT extern const struct rt_edit_functab EDOBJ[];
+
 
 __END_DECLS
 

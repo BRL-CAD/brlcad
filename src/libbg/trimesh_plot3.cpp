@@ -1,7 +1,7 @@
 /*                 T R I M E S H _ P L O T 3 . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -376,7 +376,6 @@ polyline_2d_plot3(const char *fname, std::vector<std::pair<int64_t, int64_t>> &x
 }
 
 
-
 // Local Variables:
 // tab-width: 8
 // mode: C++
@@ -385,4 +384,3 @@ polyline_2d_plot3(const char *fname, std::vector<std::pair<int64_t, int64_t>> &x
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

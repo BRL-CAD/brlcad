@@ -1,7 +1,7 @@
 /*                           H Y P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -136,7 +136,7 @@ size_t
 clt_hyp_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct hyp_specific *hyp =
-        (struct hyp_specific *)stp->st_specific;
+	(struct hyp_specific *)stp->st_specific;
     struct clt_hyp_specific *args;
 
     const size_t size = sizeof(*args);
@@ -648,7 +648,7 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(incoming);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     hyp_in = (struct rt_hyp_internal *)incoming->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_in);
 
@@ -762,6 +762,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex ***vells = (struct vertex ***)NULL;
     vect_t A, Au, B, Bu, Hu, V;
     struct bu_ptbl vert_tab;
+    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
     iip = (struct rt_hyp_internal *)ip->idb_ptr;
@@ -1131,13 +1132,13 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Glue the edges of different outward pointing face uses together */
-    nmg_gluefaces(outfaceuses, face, &RTG.rtg_vlfree, tol);
+    nmg_gluefaces(outfaceuses, face, vlfree, tol);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
     /* XXX just for testing, to make up for loads of triangles ... */
-    nmg_shell_coplanar_face_merge(s, tol, 1, &RTG.rtg_vlfree);
+    nmg_shell_coplanar_face_merge(s, tol, 1, vlfree);
 
     /* free mem */
     if (outfaceuses)
@@ -1154,7 +1155,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	bu_free((char *)vells, "vertex [][]");
 
     /* Assign vertexuse normals */
-    nmg_vertex_tabulate(&vert_tab, &s->l.magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&vert_tab, &s->l.magic, vlfree);
     for (i = 0; i < BU_PTBL_LEN(&vert_tab); i++) {
 	point_t pt_prime, tmp_pt;
 	vect_t norm, rev_norm, tmp_vect;
@@ -1218,6 +1219,31 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     return -1;
 }
 
+int
+rt_hyp_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_hyp_internal *tip = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(tip);
+    struct rt_hyp_internal *top = (struct rt_hyp_internal *)rop->idb_ptr;
+    RT_HYP_CK_MAGIC(top);
+
+    vect_t Vi, Hi, A;
+    VMOVE(Vi, tip->hyp_Vi);
+    VMOVE(Hi, tip->hyp_Hi);
+    VMOVE(A, tip->hyp_A);
+
+    MAT4X3PNT(top->hyp_Vi, mat, Vi);
+    MAT4X3VEC(top->hyp_Hi, mat, Hi);
+    MAT4X3VEC(top->hyp_A, mat, A);
+    top->hyp_b = (!ZERO(mat[15])) ? tip->hyp_b / mat[15] : INFINITY;
+
+    return BRLCAD_OK;
+}
+
+
 
 /**
  * Import an HYP from the database format to the internal format.
@@ -1255,19 +1281,16 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
      */
     bu_cv_ntohd((unsigned char *)&vec, (const unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*4);
 
-    /* Apply the modeling transformation */
-    if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(hyp_ip->hyp_Vi, mat, &vec[0*3]);
-    MAT4X3VEC(hyp_ip->hyp_Hi, mat, &vec[1*3]);
-    MAT4X3VEC(hyp_ip->hyp_A, mat, &vec[2*3]);
-
-    if (!ZERO(mat[15]))
-	hyp_ip->hyp_b = vec[9] / mat[15];
-    else
-	hyp_ip->hyp_b = INFINITY;
+    /* Assign values */
+    VMOVE(hyp_ip->hyp_Vi, &vec[0*3]);
+    VMOVE(hyp_ip->hyp_Hi, &vec[1*3]);
+    VMOVE(hyp_ip->hyp_A, &vec[2*3]);
+    hyp_ip->hyp_b = vec[9];
     hyp_ip->hyp_bnr = vec[10] ;
 
-    return 0;			/* OK */
+    /* Apply the modeling transformation */
+    if (mat == NULL) mat = bn_mat_identity;
+    return rt_hyp_mat(ip, mat, ip);
 }
 
 
@@ -1433,49 +1456,75 @@ rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
     }
 }
 
-void
-rt_hyp_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_hyp_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
+    int lcnt = 4;
+    if (!pl || pl_max < lcnt || !ip)
+	return 0;
 
     struct rt_hyp_internal *hyp = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(hyp);
 
-    // Set up the containers
-    struct bv_label *l[4];
-    for (int i = 0; i < 4; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
+    point_t work, pos_view;
+    int npl = 0;
 
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
 
-	l[i] = la;
-    }
-
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, hyp->hyp_Vi);
-
-    bu_vls_sprintf(&l[1]->label, "H");
-    VADD2(l[1]->p, hyp->hyp_Vi, hyp->hyp_Hi);
-
-    bu_vls_sprintf(&l[2]->label, "A");
-    VADD2(l[2]->p, hyp->hyp_Vi, hyp->hyp_A);
-
-    bu_vls_sprintf(&l[3]->label, "B");
     vect_t vB;
+
+    MAT4X3PNT(pos_view, xform, hyp->hyp_Vi);
+    POINT_LABEL(pos_view, 'V');
+
+    VADD2(work, hyp->hyp_Vi, hyp->hyp_Hi);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'H');
+
+    VADD2(work, hyp->hyp_Vi, hyp->hyp_A);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'A');
+
     VCROSS(vB, hyp->hyp_A, hyp->hyp_Hi);
     VUNITIZE(vB);
     VSCALE(vB, vB, hyp->hyp_b);
-    VADD2(l[3]->p, hyp->hyp_Vi, vB);
+    VADD2(work, hyp->hyp_Vi, vB);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'B');
 
+    return lcnt;
 }
+
+const char *
+rt_hyp_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_hyp_internal *hyp = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(hyp);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, hyp->hyp_Vi);
+	goto hyp_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+hyp_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
+
 
 /*
  * Local Variables:

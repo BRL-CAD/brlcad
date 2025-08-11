@@ -1,7 +1,7 @@
 /*                      N M G M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -426,7 +426,7 @@ make_3manifold_bits(struct bn_tol *tol)
 
 
 void
-make_2manifold_bits(struct bn_tol *tol)
+make_2manifold_bits(struct bn_tol *tol, struct bu_list *vlfree)
 {
     struct vertex *f2_vertl[8];
 
@@ -442,10 +442,10 @@ make_2manifold_bits(struct bn_tol *tol)
     /*
      * we need to make the 2-manifolds share edge topology
      */
-    nmg_mesh_faces(tc_fu, fu, &RTG.rtg_vlfree, tol);
-    nmg_mesh_faces(fl_fu, fu, &RTG.rtg_vlfree, tol);
-    nmg_mesh_faces(bl_fu, fu, &RTG.rtg_vlfree, tol);
-    nmg_mesh_faces(ul_fu, fu, &RTG.rtg_vlfree, tol);
+    nmg_mesh_faces(tc_fu, fu, vlfree, tol);
+    nmg_mesh_faces(fl_fu, fu, vlfree, tol);
+    nmg_mesh_faces(bl_fu, fu, vlfree, tol);
+    nmg_mesh_faces(ul_fu, fu, vlfree, tol);
 
     /* make a dangling internal face */
     f2_vertl[0] = vertl[9];
@@ -456,9 +456,9 @@ make_2manifold_bits(struct bn_tol *tol)
     (void)nmg_fu_planeeqn(fu, tol);
 
     /* make faces share edge topology */
-    nmg_mesh_faces(tc_fu, fu, &RTG.rtg_vlfree, tol);
-    nmg_mesh_faces(fl_fu, fu, &RTG.rtg_vlfree, tol);
-    nmg_mesh_faces(bl_fu, fu, &RTG.rtg_vlfree, tol);
+    nmg_mesh_faces(tc_fu, fu, vlfree, tol);
+    nmg_mesh_faces(fl_fu, fu, vlfree, tol);
+    nmg_mesh_faces(bl_fu, fu, vlfree, tol);
 
 
     /* make an exterior, connected dangling face */
@@ -472,7 +472,7 @@ make_2manifold_bits(struct bn_tol *tol)
     nmg_vertex_g(vertl[30],  150.0, 100.0, 150.0);
     nmg_vertex_g(vertl[31],  150.0,   0.0, 150.0);
     (void)nmg_fu_planeeqn(fu, tol);
-    nmg_mesh_faces(fr_fu, fu, &RTG.rtg_vlfree, tol);
+    nmg_mesh_faces(fr_fu, fu, vlfree, tol);
 
 
 }
@@ -519,6 +519,7 @@ main(int ac, char *av[])
     struct bn_tol tol;
     FILE *fdplot;
     struct rt_wdb *fdmodel;
+    struct bu_list *vlfree = &rt_vlfree;
 
     bu_setprogname(av[0]);
 
@@ -537,7 +538,7 @@ main(int ac, char *av[])
     tol.para = 0.999;
 
     if (manifold[3]) make_3manifold_bits(&tol);
-    if (manifold[2]) make_2manifold_bits(&tol);
+    if (manifold[2]) make_2manifold_bits(&tol, vlfree);
     if (manifold[1]) make_1manifold_bits();
     if (manifold[0]) make_0manifold_bits();
 
@@ -549,7 +550,7 @@ main(int ac, char *av[])
     if ((fdplot = fopen(plotfilename, "w")) == (FILE *)NULL)
 	perror(plotfilename);
     else {
-	nmg_pl_m(fdplot, m, &RTG.rtg_vlfree);
+	nmg_pl_m(fdplot, m, vlfree);
 	fclose(fdplot);
     }
 

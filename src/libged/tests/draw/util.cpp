@@ -1,7 +1,7 @@
 /*                       U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2024 United States Government as represented by
+ * Copyright (c) 2018-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -102,13 +102,12 @@ dm_refresh(struct ged *gedp)
 extern "C" void
 scene_clear(struct ged *gedp)
 {
-    const char *s_av[2] = {NULL};
-    s_av[0] = "Z";
-    ged_exec(gedp, 1, s_av);
+    const char *s_av[1] = {"Z"};
+    ged_exec_Z(gedp, 1, s_av);
     dm_refresh(gedp);
 }
 
-extern "C" void
+extern "C" int
 img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear_image, int soft_fail, int approximate_check, const char *clear_root, const char *img_root)
 {
     icv_image_t *ctrl, *timg;
@@ -123,10 +122,9 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
     }
 
     dm_refresh(gedp);
-    const char *s_av[2] = {NULL};
-    s_av[0] = "screengrab";
+    const char *s_av[2] = {"screengrab", NULL};
     s_av[1] = bu_vls_cstr(&tname);
-    ged_exec(gedp, 2, s_av);
+    ged_exec_screengrab(gedp, 2, s_av);
 
     timg = icv_read(bu_vls_cstr(&tname), BU_MIME_IMAGE_PNG, 0, 0);
     if (!timg) {
@@ -135,7 +133,7 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 	    if (clear_scene)
 		scene_clear(gedp);
 	    bu_vls_free(&tname);
-	    return;
+	    return BRLCAD_ERROR;
 	}
 	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&tname));
     }
@@ -147,7 +145,7 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 		scene_clear(gedp);
 	    bu_vls_free(&tname);
 	    bu_vls_free(&cname);
-	    return;
+	    return BRLCAD_ERROR;
 	}
 	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&cname));
     }
@@ -203,7 +201,8 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 
 		if (clear_scene)
 		    scene_clear(gedp);
-		return;
+
+		return BRLCAD_ERROR;
 	    } else {
 		// Hard fail - generate a diff image for debugging work
 		struct bu_vls diff_name = BU_VLS_INIT_ZERO;
@@ -228,6 +227,8 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 
     if (clear_scene)
 	scene_clear(gedp);
+
+    return BRLCAD_OK;
 }
 
 // Local Variables:

@@ -2,7 +2,7 @@
 #                       R T E D G E . S H
 # BRL-CAD
 #
-# Copyright (c) 2019-2024 United States Government as represented by
+# Copyright (c) 2019-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without

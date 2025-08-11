@@ -1,7 +1,7 @@
 /*                       T E A _ N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -188,7 +188,7 @@ main(int argc, char **argv)
 
     bu_log("Writing out geometry to file [tea_nmg.g] ...");
 
-    BU_LIST_INIT(&RTG.rtg_vlfree);
+    struct bu_list *vlfree = &rt_vlfree;
 
     outfp = wdb_fopen("tea_nmg.g");
 
@@ -210,7 +210,7 @@ main(int argc, char **argv)
     }
 
     /* Connect up the coincident vertexuses and edges */
-    (void)nmg_model_fuse(m, &RTG.rtg_vlfree, &tol);
+    (void)nmg_model_fuse(m, vlfree, &tol);
 
     /* write NMG to output file */
     (void)mk_nmg(outfp, tea_name, m);
@@ -218,7 +218,7 @@ main(int argc, char **argv)
 
     /* Make a vlist drawing of the model */
     BU_LIST_INIT(&vhead);
-    nmg_m_to_vlist(&vhead, m, 0, &RTG.rtg_vlfree);
+    nmg_m_to_vlist(&vhead, m, 0, vlfree);
 
     /* Make a UNIX plot file from this vlist */
     if ((fp=fopen(uplot_name, "w")) == NULL) {

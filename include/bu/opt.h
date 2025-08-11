@@ -1,7 +1,7 @@
 /*                         O P T . H
  * BRL-CAD
  *
- * Copyright (c) 2015-2024 United States Government as represented by
+ * Copyright (c) 2015-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -396,6 +396,11 @@ BU_EXPORT extern int bu_opt_long_hex(struct bu_vls *msg, size_t argc, const char
  * or a double, depending on how BRL-CAD was compiled)
  */
 BU_EXPORT extern int bu_opt_fastf_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+
+/**
+ * Process 1 argument to set a char
+ */
+BU_EXPORT extern int bu_opt_char(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * Process 1 argument to set a char pointer (uses the original argv

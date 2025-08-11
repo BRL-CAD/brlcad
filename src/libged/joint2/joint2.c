@@ -1,7 +1,7 @@
 /*                        J O I N T 2 . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2024 United States Government as represented by
+ * Copyright (c) 2014-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,17 @@
 #include "wdb.h"
 
 #include "../ged_private.h"
+
+struct _ged_funtab {
+    char *ft_name;
+    char *ft_parms;
+    char *ft_comment;
+    int (*ft_func)(void);
+    int ft_min;
+    int ft_max;
+    int tcl_converted;
+};
+
 
 static struct _ged_funtab joint_subcommand_table[] = {
     {"joint ", "",                        "Joint command table",                                NULL, 0, 0,                     FALSE},

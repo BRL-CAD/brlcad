@@ -1,7 +1,7 @@
 /*                           V L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -74,20 +74,6 @@ bu_vls_init(struct bu_vls *vp)
     vp->vls_magic = BU_VLS_MAGIC;
     vp->vls_str = (char *)0;
     vp->vls_len = vp->vls_max = vp->vls_offset = 0;
-}
-
-
-void
-bu_vls_init_if_uninit(struct bu_vls *vp)
-{
-    bu_log("DEPRECATION WARNING: bu_vls_init_if_uninit() should no longer be called.\n\t\tUse bu_vls_init() instead.\n");
-
-    if (UNLIKELY(vp == (struct bu_vls *)NULL))
-	bu_bomb("bu_vls_init_if_uninit() passed NULL pointer");
-
-    if (vp->vls_magic == BU_VLS_MAGIC)
-	return;
-    bu_vls_init(vp);
 }
 
 

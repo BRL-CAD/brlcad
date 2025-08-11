@@ -1,7 +1,7 @@
 /*                         B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
     /* If anything specified has subtractions or intersections, we can't facetize it with
      * this logic - that would require all-up Boolean evaluation processing. */
     const char *non_union = "-bool + -or -bool -";
-    if (db_search(NULL, DB_SEARCH_QUIET, non_union, newobj_cnt, dpa, s->dbip, NULL) > 0) {
+    if (db_search(NULL, DB_SEARCH_QUIET, non_union, newobj_cnt, dpa, s->dbip, NULL, NULL, NULL) > 0) {
 	bu_free(dpa, "dp array");
 	bu_vls_printf(s->gedp->ged_result_str, "Found intersection or subtraction objects in specified inputs - currently unsupported. Aborting.\n");
 	return BRLCAD_ERROR;
@@ -63,7 +63,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
     /* If anything other than combs or breps exists in the specified inputs, we can't
      * process with this logic - requires a preliminary brep conversion. */
     const char *obj_types = "! -type c -and ! -type brep";
-    if (db_search(NULL, DB_SEARCH_QUIET, obj_types, newobj_cnt, dpa, s->dbip, NULL) > 0) {
+    if (db_search(NULL, DB_SEARCH_QUIET, obj_types, newobj_cnt, dpa, s->dbip, NULL, NULL, NULL) > 0) {
 	bu_free(dpa, "dp array");
 	bu_vls_printf(s->gedp->ged_result_str, "Found objects in specified inputs which are not of type comb or brep- currently unsupported. Aborting.\n");
 	return BRLCAD_ERROR;
@@ -88,7 +88,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
 	const char *xav[3] = {NULL};
 	xav[0] = "xpush";
 	xav[1] = dpa[i]->d_namep;
-	ged_exec(wgedp, xac, (const char **)xav);
+	ged_exec_xpush(wgedp, xac, (const char **)xav);
     }
 
     /* Used the libged tolerances */
@@ -103,7 +103,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
     const char *active_breps = "-type brep";
     struct bu_ptbl *br;
     BU_ALLOC(br, struct bu_ptbl);
-    if (db_search(br, DB_SEARCH_RETURN_UNIQ_DP, active_breps, newobj_cnt, dpa, wgedp->dbip, NULL) < 0) {
+    if (db_search(br, DB_SEARCH_RETURN_UNIQ_DP, active_breps, newobj_cnt, dpa, wgedp->dbip, NULL, NULL, NULL) < 0) {
 	bu_free(dpa, "dp array");
 	bu_free(br, "brep results");
 	return BRLCAD_ERROR;
@@ -227,7 +227,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
 	av[i+2] = argv[i];
     }
     av[argc+2] = NULL;
-    ged_exec(wgedp, argc+2, av);
+    ged_exec_keep(wgedp, argc+2, av);
 
     /* Merge working geometry into original file */
     av[0] = "dbconcat";
@@ -235,7 +235,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
     av[2] = bu_vls_cstr(&kwfile);
     av[3] = "brep_facetize_"; // TODO - customize
     av[4] = NULL;
-    ged_exec(s->gedp, 4, av);
+    ged_exec_dbconcat(s->gedp, 4, av);
     bu_free(av, "av");
     bu_vls_free(&kwfile);
 

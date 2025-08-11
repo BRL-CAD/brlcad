@@ -1,7 +1,7 @@
 /*                         D P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2024 United States Government as represented by
+ * Copyright (c) 2014-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -100,7 +100,7 @@ dplot_overlay(
     if (name) {
 	cmd_av[3] = name;
     }
-    ret = ged_exec(gedp, cmd_ac, cmd_av);
+    ret = ged_exec_overlay(gedp, cmd_ac, cmd_av);
     bu_vls_free(&overlay_name);
 
     if (ret != BRLCAD_OK) {

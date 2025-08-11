@@ -1,7 +1,7 @@
 /*                           S T R . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2024 United States Government as represented by
+ * Copyright (c) 1995-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -174,7 +174,6 @@ bn_encode_hvect(struct bu_vls *vp, const hvect_t v, int clamp)
 	bu_vls_printf(vp, "%.15g %.15g %.15g %.15g", V4ARGS(v));
     }
 }
-
 
 
 /** @} */

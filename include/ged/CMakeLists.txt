@@ -1,20 +1,17 @@
-add_subdirectory(view)
-
-set(ged_headers
-  analyze.h
+set(
+  ged_headers
   commands.h
   database.h
   dbi.h
   debug.h
   defines.h
-  framebuffer.h
   objects.h
-  rt.h
+  version.h
   view.h
-  )
-BRLCAD_MANAGE_FILES(ged_headers ${INCLUDE_DIR}/brlcad/ged REQUIRED libged)
+)
+brlcad_manage_files(ged_headers ${INCLUDE_DIR}/brlcad/ged REQUIRED libged)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

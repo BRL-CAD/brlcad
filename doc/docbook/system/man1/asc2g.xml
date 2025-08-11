@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- lifted from troff+man by doclifter -->
-<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='asc2g'>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='asc2g1'>
 <refmeta>
     <refentrytitle>ASC2G
 </refentrytitle>
@@ -97,7 +97,7 @@
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
 <!-- <para><command>asc2g</command>, BRL-CAD and this man page are released under the <emphasis remap='B'>BSD Documentation License (BDL)</emphasis>, a content license similar to the FreeBSD Documentation License allowing flexible modification and redistribution of content.</para> -->
-<para>This software is Copyright (c) 1989-2024 by the United States Government as represented by U.S. Army Research Laboratory.</para>
+<para>This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsect1>
 

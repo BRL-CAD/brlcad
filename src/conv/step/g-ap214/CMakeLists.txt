@@ -1,11 +1,12 @@
 set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ap214e3.exp)
 add_definitions(-DAP214e3)
 
-if (DEFINED ENABLE_STEP_EXPERIMENTAL)
-  GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} gap214)
-endif (DEFINED ENABLE_STEP_EXPERIMENTAL)
+if(DEFINED ENABLE_STEP_EXPERIMENTAL)
+  generate_schema_inputs(${STEP_SCHEMA_FILE} gap214)
+endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
 
-set(gap214_SOURCES
+set(
+  gap214_SOURCES
   ${express_srcs}
   ../BRLCADWrapper.cpp
   ../g-step/AP203.cpp
@@ -21,9 +22,10 @@ set(gap214_SOURCES
   Comb.cpp
   G_Objects.cpp
   g-ap214.cpp
-  )
+)
 
-set(gap214_LIBS
+set(
+  gap214_LIBS
   libwdb
   librt
   libbrep
@@ -34,33 +36,31 @@ set(gap214_LIBS
   ${STEPCODE_DAI_LIBRARY}
   ${STEPCODE_CORE_LIBRARY}
   ${OPENNURBS_LIBRARIES}
-  )
+)
 
-set(AP214_INCLUDE_DIRS
+set(
+  AP214_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/..
   ${CMAKE_CURRENT_SOURCE_DIR}/../g-step
   ${STEPCODE_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}/src/libbrep # for PullbackCurve.h
-  )
+)
 
-if (DEFINED ENABLE_STEP_EXPERIMENTAL)
-  BRLCAD_ADDEXEC(g-ap214 "${gap214_SOURCES}" "${gap214_LIBS}" NO_STRICT FOLDER Conv)
+if(DEFINED ENABLE_STEP_EXPERIMENTAL)
+  brlcad_addexec(g-ap214 "${gap214_SOURCES}" "${gap214_LIBS}" NO_STRICT FOLDER Conv)
   target_include_directories(g-ap214 BEFORE PRIVATE ${AP214_INCLUDE_DIRS})
   add_dependencies(g-ap214 step-express-${SCHEMA_NAME}-gap214)
-  set_property(SOURCE
-    ${CMAKE_CURRENT_BINARY_DIR}/AUTOMOTIVE_DESIGN/SdaiAUTOMOTIVE_DESIGN.cc
-    APPEND PROPERTY COMPILE_FLAGS "/bigobj")
-endif (DEFINED ENABLE_STEP_EXPERIMENTAL)
-
-set(IGNORE_FILES
-  ${gap214_SOURCES}
-  CMakeLists.txt
-  AP214e3.h
-  ap214e3.exp
+  set_property(
+    SOURCE ${CMAKE_CURRENT_BINARY_DIR}/AUTOMOTIVE_DESIGN/SdaiAUTOMOTIVE_DESIGN.cc
+    APPEND
+    PROPERTY COMPILE_FLAGS "/bigobj"
   )
-CMAKEFILES(${IGNORE_FILES})
+endif(DEFINED ENABLE_STEP_EXPERIMENTAL)
+
+set(IGNORE_FILES ${gap214_SOURCES} CMakeLists.txt AP214e3.h ap214e3.exp)
+cmakefiles(${IGNORE_FILES})
 
 # Local Variables:
 # tab-width: 8

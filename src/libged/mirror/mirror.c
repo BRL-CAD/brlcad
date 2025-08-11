@@ -1,7 +1,7 @@
 /*                        M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -204,13 +204,9 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
     {
 	/* draw the new object */
 	const char *object = (const char *)argv[bu_optind+1];
-	const char *e_argv[3] = {0, 0, 0};
-
-	e_argv[0] = "draw";
+	const char *e_argv[2] = {"draw", NULL};
 	e_argv[1] = object;
-	e_argv[2] = NULL;
-
-	(void)ged_exec(gedp, 2, e_argv);
+	(void)ged_exec_draw(gedp, 2, e_argv);
 	bv_update(gedp->ged_gvp);
     }
 

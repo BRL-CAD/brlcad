@@ -1,7 +1,7 @@
 /*                  S U B P R O C E S S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2024 United States Government as represented by
+ * Copyright (c) 2013-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,9 @@
 
 #include "bu.h"
 
+
 const char* lorem_25 = "sagittis id consectetur purus ut faucibus pulvinar elementum integer enim neque volutpat ac tincidunt vitae semper quis lectus nulla at volutpat diam ut venenatis tellus";
+
 
 int
 main(int argc, const char *argv[])
@@ -49,7 +51,7 @@ main(int argc, const char *argv[])
     bu_setprogname(argv[0]);
 
     if (BU_STR_EQUAL(argv[1], "basic")) {
-        // just return
+	// just return
 	return 0;
     }
 
@@ -124,4 +126,3 @@ main(int argc, const char *argv[])
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

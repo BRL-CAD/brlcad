@@ -1,12 +1,7 @@
-set(dm_headers
-  defines.h
-  fbserv.h
-  util.h
-  view.h
-  )
-BRLCAD_MANAGE_FILES(dm_headers ${INCLUDE_DIR}/brlcad/dm REQUIRED libdm)
+set(dm_headers defines.h fbserv.h util.h view.h)
+brlcad_manage_files(dm_headers ${INCLUDE_DIR}/brlcad/dm REQUIRED libdm)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*               G A R B A G E _ C O L L E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,7 +59,6 @@ extern "C" int
 ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 {
     const char *av[10] = {NULL};
-    const char *ncmd = NULL;
     fastf_t fs_percent = 0.0;
     int confirmed = 0;
     int new_file_size = 0;
@@ -154,8 +153,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
      * views to their original state when we open the garbage collected
      * database.  Save the who list. (TODO - do we need to save views?  Or
      * will drawing without resize work?) */
-    ncmd = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(ncmd, "1")) {
+    if (gedp->new_cmd_forms) {
 	BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
 	std::vector<std::string> wpaths = bvs->list_drawn_paths(-1, false);
 	for (size_t i = 0; i < wpaths.size(); i++) {
@@ -163,7 +161,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 	}
     } else {
 	struct display_list *gdlp;
-	for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay))
+	for (BU_LIST_FOR(gdlp, display_list, (struct bu_list *)ged_dl(gedp)))
 	    who_objs.push_back(std::string(bu_vls_cstr(&gdlp->dl_path)));
     }
 
@@ -234,11 +232,11 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     // one, and verify the data
     av[0] = "closedb";
     av[1] = NULL;
-    ged_exec(gedp, 1, (const char **)av);
+    ged_exec_closedb(gedp, 1, (const char **)av);
     av[0] = "opendb";
     av[1] = bu_vls_cstr(&working_file);
     av[2] = NULL;
-    if (ged_exec(gedp, 2, (const char **)av) != BRLCAD_OK) {
+    if (ged_exec_opendb(gedp, 2, (const char **)av) != BRLCAD_OK) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s was not opened successfully!  Something is very wrong.  Aborting garbage collect, database unchanged\n", bu_vls_cstr(&working_file));
 	ret = BRLCAD_ERROR;
 	goto gc_cleanup;
@@ -274,14 +272,14 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s has incorrect data!  Something is very wrong.  Aborting garbage collect, database unchanged\n", bu_vls_cstr(&working_file));
 	av[0] = "closedb";
 	av[1] = NULL;
-	ged_exec(gedp, 1, (const char **)av);
+	ged_exec_closedb(gedp, 1, (const char **)av);
 	goto gc_cleanup;
     }
 
     // Done verifying
     av[0] = "closedb";
     av[1] = NULL;
-    ged_exec(gedp, 1, (const char **)av);
+    ged_exec_closedb(gedp, 1, (const char **)av);
 
     // Approaching the moment of truth, where we have to swap the new .g in for the
     // old one.  Time to back up the original file
@@ -316,7 +314,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     av[0] = "opendb";
     av[1] = bu_vls_cstr(&fpath);
     av[2] = NULL;
-    if (ged_exec(gedp, 2, (const char **)av) != BRLCAD_OK) {
+    if (ged_exec_opendb(gedp, 2, (const char **)av) != BRLCAD_OK) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s was not opened successfully!\nSomething is very wrong, aborting - user needs to manually restore %s to its original name/location.\n", bu_vls_cstr(&fpath), bu_vls_cstr(&bkup_file));
 	ret = BRLCAD_ERROR;
 	goto gc_cleanup;
@@ -327,7 +325,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     av[1] = "-R";
     for (size_t i = 0; i < who_objs.size(); i++) {
 	av[2] = who_objs[i].c_str();
-	ged_exec(gedp, 3, (const char **)av);
+	ged_exec_draw(gedp, 3, (const char **)av);
     }
 
     // We should be done now - check the sizes.  These warnings are not fatal

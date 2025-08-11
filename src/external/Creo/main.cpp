@@ -2,7 +2,7 @@
  *                    M A I N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2017-2024 United States Government as represented by
+ * Copyright (c) 2017-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -502,7 +502,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType m
 
 
 extern "C" void
-doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
+doit(char *UNUSED(dialog), char *UNUSED(component), ProAppData UNUSED(appdata))
 {
     ProError   err = PRO_TK_GENERAL_ERROR;
     ProMdl     model;
@@ -1259,7 +1259,7 @@ elim_small_activate(char *dialog_name, char *button_name, ProAppData UNUSED(data
 
 
 extern "C" void
-do_quit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
+do_quit(char *UNUSED(dialog), char *UNUSED(component), ProAppData UNUSED(appdata))
 {
     ProUIDialogDestroy("creo_brl");
 }

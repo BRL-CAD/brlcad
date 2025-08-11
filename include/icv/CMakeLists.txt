@@ -1,4 +1,5 @@
-set(icv_headers
+set(
+  icv_headers
   defines.h
   colorspace.h
   crop.h
@@ -6,10 +7,10 @@ set(icv_headers
   io.h
   ops.h
   stat.h
-  )
-BRLCAD_MANAGE_FILES(icv_headers ${INCLUDE_DIR}/brlcad/icv REQUIRED libicv)
+)
+brlcad_manage_files(icv_headers ${INCLUDE_DIR}/brlcad/icv REQUIRED libicv)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

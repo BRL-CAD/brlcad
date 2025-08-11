@@ -4,19 +4,15 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-comb_std SHARED comb_std.c)
+ged_plugin_library(ged-comb_std comb_std.c)
 target_link_libraries(ged-comb_std libged libbu)
-set_property(TARGET ged-comb_std APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-comb_std comb_std.c)
-PLUGIN_SETUP(ged-comb_std ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   comb_std.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*                         L S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -93,7 +93,7 @@ vls_long_dpp(struct ged *gedp,
 		    len = strlen("binary (mime)");
 		    break;
 		case DB5_MAJORTYPE_BINARY_UNIF:
-		    len = strlen(binu_types[list_of_names[i]->d_minor_type]);
+		    len = strlen(rt_binunif_typestr(list_of_names[i]));
 		    break;
 	    }
 	}
@@ -141,7 +141,7 @@ vls_long_dpp(struct ged *gedp,
 		case DB5_MAJORTYPE_BINARY_UNIF:
 		    isSolid = 0;
 		    isRegion = 0;
-		    type = binu_types[dp->d_minor_type];
+		    type = rt_binunif_typestr(dp);
 		    break;
 	    }
 	}

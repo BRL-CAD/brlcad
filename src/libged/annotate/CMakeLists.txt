@@ -4,19 +4,15 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-annotate SHARED annotate.c)
+ged_plugin_library(ged-annotate annotate.c)
 target_link_libraries(ged-annotate libged libbu)
-set_property(TARGET ged-annotate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-annotate annotate.c)
-PLUGIN_SETUP(ged-annotate ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   annotate.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

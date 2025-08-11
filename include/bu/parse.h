@@ -1,7 +1,7 @@
 /*                      P A R S E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -368,27 +368,6 @@ BU_EXPORT extern int bu_vls_struct_item_named(struct bu_vls *vp,
 BU_EXPORT extern int bu_key_eq_to_key_val(const char *in,
 					  const char **next,
 					  struct bu_vls *vls);
-
-/**
- * Take an old v4 shader specification of the form
- *
- *   shadername arg1=value1 arg2=value2 color=1/2/3
- *
- * and convert it into the v5 {} list form
- *
- *   shadername {arg1 value1 arg2 value2 color 1/2/3}
- *
- * Note -- the input string is smashed with nulls.
- *
- * Note -- the v5 version is used everywhere internally, and in v5
- * databases.
- *
- * @return 1 error
- * @return 0 OK
- */
-BU_EXPORT extern int bu_shader_to_list(const char *in, struct bu_vls *vls);
-
-BU_EXPORT extern int bu_shader_to_key_eq(const char *in, struct bu_vls *vls);
 
 /**
  * Take a block of memory, and write it into a file.

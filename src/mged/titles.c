@@ -1,7 +1,7 @@
 /*                        T I T L E S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,9 +32,9 @@
 #include "ged.h"
 
 #include "./mged.h"
-#include "./titles.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
+#include "./menu.h"
 
 #define USE_OLD_MENUS 0
 
@@ -55,13 +55,12 @@ char *state_str[] = {
 
 
 extern mat_t perspective_mat;  /* defined in dozoom.c */
-extern struct rt_db_internal es_int;
 
 /*
  * Prepare the numerical display of the currently edited solid/object.
  */
 void
-create_text_overlay(struct bu_vls *vp)
+create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 {
     struct directory *dp;
 
@@ -86,7 +85,7 @@ create_text_overlay(struct bu_vls *vp)
 	bu_vls_strcat(vp, dp->d_namep);
 	bu_vls_strcat(vp, ": ");
 
-	vls_solid(vp, &es_int, bn_mat_identity);
+	vls_solid(s, vp, &s->edit_state.es_int, bn_mat_identity);
 
 	if (bdata->s_fullpath.fp_len > 1) {
 	    bu_vls_strcat(vp, "\n** PATH --  ");
@@ -94,12 +93,12 @@ create_text_overlay(struct bu_vls *vp)
 	    bu_vls_strcat(vp, ": ");
 
 	    /* print the evaluated (path) solid parameters */
-	    vls_solid(vp, &es_int, es_mat);
+	    vls_solid(s, vp, &s->edit_state.es_int, es_mat);
 	}
     }
 
     /* display path info for object editing also */
-    if (STATE == ST_O_EDIT && illump != NULL && illump->s_u_data != NULL) {
+    if (GEOM_EDIT_STATE == ST_O_EDIT && illump != NULL && illump->s_u_data != NULL) {
 	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	bu_vls_strcat(vp, "** PATH --  ");
@@ -113,7 +112,7 @@ create_text_overlay(struct bu_vls *vp)
 	    /* object edit option selected */
 	    bn_mat_mul(new_mat, modelchanges, es_mat);
 
-	    vls_solid(vp, &es_int, new_mat);
+	    vls_solid(s, vp, &s->edit_state.es_int, new_mat);
 	}
     }
 
@@ -161,7 +160,7 @@ create_text_overlay(struct bu_vls *vp)
 	    }
 	}
 
-	Tcl_SetVar(INTERP, "edit_info", bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, "edit_info", bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	bu_vls_free(&vls);
     }
 }
@@ -177,9 +176,10 @@ create_text_overlay(struct bu_vls *vp)
  */
 void
 screen_vls(
-    int xbase,
-    int ybase,
-    struct bu_vls *vp)
+	struct mged_state *s,
+	int xbase,
+	int ybase,
+	struct bu_vls *vp)
 {
     char *start;
     char *end;
@@ -212,7 +212,7 @@ screen_vls(
  * NOTE that this routine depends on being called AFTER dozoom();
  */
 void
-dotitles(struct bu_vls *overlay_vls)
+dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 {
     size_t i = 0;
 
@@ -237,7 +237,7 @@ dotitles(struct bu_vls *overlay_vls)
     vect_t temp = VINIT_ZERO;
     fastf_t tmp_val = 0.0;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     /* Set the Tcl variables to the appropriate values. */
@@ -272,34 +272,34 @@ dotitles(struct bu_vls *overlay_vls)
 	}
 
 	bu_vls_printf(&vls, "%s(path_lhs)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(INTERP, bu_vls_addr(&vls), bu_vls_addr(&path_lhs), TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, bu_vls_addr(&vls), bu_vls_addr(&path_lhs), TCL_GLOBAL_ONLY);
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "%s(path_rhs)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(INTERP, bu_vls_addr(&vls), bu_vls_addr(&path_rhs), TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, bu_vls_addr(&vls), bu_vls_addr(&path_rhs), TCL_GLOBAL_ONLY);
 	bu_vls_free(&path_rhs);
 	bu_vls_free(&path_lhs);
     } else {
 	bu_vls_printf(&vls, "%s(path_lhs)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(INTERP, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "%s(path_rhs)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(INTERP, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
     }
 
     /* take some care here to avoid buffer overrun */
-    tmp_val = -view_state->vs_gvp->gv_center[MDX]*base2local;
+    tmp_val = -view_state->vs_gvp->gv_center[MDX]*s->dbip->dbi_base2local;
     if (fabs(tmp_val) < 10e70) {
 	sprintf(cent_x, "%.3f", tmp_val);
     } else {
 	sprintf(cent_x, "%.3g", tmp_val);
     }
-    tmp_val = -view_state->vs_gvp->gv_center[MDY]*base2local;
+    tmp_val = -view_state->vs_gvp->gv_center[MDY]*s->dbip->dbi_base2local;
     if (fabs(tmp_val) < 10e70) {
 	sprintf(cent_y, "%.3f", tmp_val);
     } else {
 	sprintf(cent_y, "%.3g", tmp_val);
     }
-    tmp_val = -view_state->vs_gvp->gv_center[MDZ]*base2local;
+    tmp_val = -view_state->vs_gvp->gv_center[MDZ]*s->dbip->dbi_base2local;
     if (fabs(tmp_val) < 10e70) {
 	sprintf(cent_z, "%.3f", tmp_val);
     } else {
@@ -307,26 +307,26 @@ dotitles(struct bu_vls *overlay_vls)
     }
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "cent=(%s %s %s)", cent_x, cent_y, cent_z);
-    Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_center_name),
+    Tcl_SetVar(s->interp, bu_vls_addr(&s->mged_curr_dm->dm_center_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
-    tmp_val = view_state->vs_gvp->gv_size*base2local;
+    tmp_val = view_state->vs_gvp->gv_size*s->dbip->dbi_base2local;
     if (fabs(tmp_val) < 10e70) {
 	sprintf(size, "sz=%.3f", tmp_val);
     } else {
 	sprintf(size, "sz=%.3g", tmp_val);
     }
-    Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_size_name),
+    Tcl_SetVar(s->interp, bu_vls_addr(&s->mged_curr_dm->dm_size_name),
 	       size, TCL_GLOBAL_ONLY);
 
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "%s(units)", MGED_DISPLAY_VAR);
-    Tcl_SetVar(INTERP, bu_vls_addr(&vls),
-	       (char *)bu_units_string(DBIP->dbi_local2base), TCL_GLOBAL_ONLY);
+    Tcl_SetVar(s->interp, bu_vls_addr(&vls),
+	       (char *)bu_units_string(s->dbip->dbi_local2base), TCL_GLOBAL_ONLY);
 
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "az=%3.2f  el=%3.2f  tw=%3.2f", V3ARGS(view_state->vs_gvp->gv_aet));
-    Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_aet_name),
+    Tcl_SetVar(s->interp, bu_vls_addr(&s->mged_curr_dm->dm_aet_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     sprintf(ang_x, "%.2f", view_state->vs_rate_rotate[X]);
@@ -335,13 +335,13 @@ dotitles(struct bu_vls *overlay_vls)
 
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "ang=(%s %s %s)", ang_x, ang_y, ang_z);
-    Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_ang_name),
+    Tcl_SetVar(s->interp, bu_vls_addr(&s->mged_curr_dm->dm_ang_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
 
     /* Label the vertices of the edited solid */
-    if (es_edflag >= 0 || (STATE == ST_O_EDIT && illump->s_old.s_Eflag == 0)) {
+    if (es_edflag >= 0 || (GEOM_EDIT_STATE == ST_O_EDIT && illump->s_old.s_Eflag == 0)) {
 	mat_t xform;
 	struct rt_point_labels pl[8+1];
 	point_t lines[2*4];	/* up to 4 lines to draw */
@@ -356,7 +356,7 @@ dotitles(struct bu_vls *overlay_vls)
 	    bn_mat_mul(xform, perspective_mat, tmat);
 	}
 
-	label_edited_solid(&num_lines, lines,  pl, 8+1, xform, &es_int);
+	label_edited_solid(s, &num_lines, lines,  pl, 8+1, xform, &s->edit_state.es_int);
 
 	dm_set_fg(DMP,
 		       color_scheme->cs_geo_label[0],
@@ -364,15 +364,15 @@ dotitles(struct bu_vls *overlay_vls)
 		       color_scheme->cs_geo_label[2], 1, 1.0);
 	for (i=0; i<(size_t)num_lines; i++)
 	    dm_draw_line_2d(DMP,
-			    GED2PM1(((int)(lines[i*2][X]*GED_MAX))),
-			    GED2PM1(((int)(lines[i*2][Y]*GED_MAX)) * dm_get_aspect(DMP)),
-			    GED2PM1(((int)(lines[i*2+1][X]*GED_MAX))),
-			    GED2PM1(((int)(lines[i*2+1][Y]*GED_MAX)) * dm_get_aspect(DMP)));
+			    GED2PM1(((int)(lines[i*2][X]*BV_MAX))),
+			    GED2PM1(((int)(lines[i*2][Y]*BV_MAX)) * dm_get_aspect(DMP)),
+			    GED2PM1(((int)(lines[i*2+1][X]*BV_MAX))),
+			    GED2PM1(((int)(lines[i*2+1][Y]*BV_MAX)) * dm_get_aspect(DMP)));
 	for (i=0; i<8+1; i++) {
 	    if (pl[i].str[0] == '\0') break;
 	    dm_draw_string_2d(DMP, pl[i].str,
-			      GED2PM1(((int)(pl[i].pt[X]*GED_MAX))+15),
-			      GED2PM1(((int)(pl[i].pt[Y]*GED_MAX))+15), 0, 1);
+			      GED2PM1(((int)(pl[i].pt[X]*BV_MAX))+15),
+			      GED2PM1(((int)(pl[i].pt[Y]*BV_MAX))+15), 0, 1);
 	}
     }
 
@@ -383,26 +383,26 @@ dotitles(struct bu_vls *overlay_vls)
 		       color_scheme->cs_other_line[1],
 		       color_scheme->cs_other_line[2], 1, 1.0);
 	dm_draw_line_2d(DMP,
-			GED2PM1(XMIN), GED2PM1(TITLE_YBASE-TEXT1_DY),
-			GED2PM1(XMAX), GED2PM1(TITLE_YBASE-TEXT1_DY));
+			GED2PM1((int)BV_MIN), GED2PM1(TITLE_YBASE-TEXT1_DY),
+			GED2PM1((int)BV_MAX), GED2PM1(TITLE_YBASE-TEXT1_DY));
 
 	if (mged_variables->mv_orig_gui) {
 	    /* Enclose window in decorative box.  Mostly for alignment. */
 	    dm_draw_line_2d(DMP,
-			    GED2PM1(XMIN), GED2PM1(YMIN),
-			    GED2PM1(XMAX), GED2PM1(YMIN));
+			    GED2PM1((int)BV_MIN), GED2PM1((int)BV_MIN),
+			    GED2PM1((int)BV_MAX), GED2PM1((int)BV_MIN));
 	    dm_draw_line_2d(DMP,
-			    GED2PM1(XMAX), GED2PM1(YMIN),
-			    GED2PM1(XMAX), GED2PM1(YMAX));
+			    GED2PM1((int)BV_MAX), GED2PM1((int)BV_MIN),
+			    GED2PM1((int)BV_MAX), GED2PM1((int)BV_MAX));
 	    dm_draw_line_2d(DMP,
-			    GED2PM1(XMAX), GED2PM1(YMAX),
-			    GED2PM1(XMIN), GED2PM1(YMAX));
+			    GED2PM1((int)BV_MAX), GED2PM1((int)BV_MAX),
+			    GED2PM1((int)BV_MIN), GED2PM1((int)BV_MAX));
 	    dm_draw_line_2d(DMP,
-			    GED2PM1(XMIN), GED2PM1(YMAX),
-			    GED2PM1(XMIN), GED2PM1(YMIN));
+			    GED2PM1((int)BV_MIN), GED2PM1((int)BV_MAX),
+			    GED2PM1((int)BV_MIN), GED2PM1((int)BV_MIN));
 
 	    /* Display scroll bars */
-	    scroll_ybot = scroll_display(SCROLLY);
+	    scroll_ybot = scroll_display(s, SCROLLY);
 	    y = MENUY;
 	    x = MENUX;
 
@@ -411,24 +411,24 @@ dotitles(struct bu_vls *overlay_vls)
 			   color_scheme->cs_state_text1[0],
 			   color_scheme->cs_state_text1[1],
 			   color_scheme->cs_state_text1[2], 1, 1.0);
-	    dm_draw_string_2d(DMP, state_str[STATE],
+	    dm_draw_string_2d(DMP, state_str[GEOM_EDIT_STATE],
 			      GED2PM1(MENUX), GED2PM1(MENUY - MENU_DY), 1, 0);
 	} else {
 	    scroll_ybot = SCROLLY;
-	    x = XMIN + 20;
-	    y = YMAX+TEXT0_DY;
+	    x = (int)BV_MIN + 20;
+	    y = (int)BV_MAX+TEXT0_DY;
 	}
 
 	/*
 	 * Print information about object illuminated
 	 */
 	if (illump != NULL && illump->s_u_data != NULL &&
-	    (STATE==ST_O_PATH || STATE==ST_O_PICK || STATE==ST_S_PICK)) {
+	    (GEOM_EDIT_STATE == ST_O_PATH || GEOM_EDIT_STATE==ST_O_PICK || GEOM_EDIT_STATE==ST_S_PICK)) {
 
 	    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	    for (i=0; i < bdata->s_fullpath.fp_len; i++) {
-		if (i == (size_t)ipathpos  &&  STATE == ST_O_PATH) {
+		if (i == (size_t)ipathpos  &&  GEOM_EDIT_STATE == ST_O_PATH) {
 		    dm_set_fg(DMP,
 				   color_scheme->cs_state_text1[0],
 				   color_scheme->cs_state_text1[1],
@@ -455,18 +455,18 @@ dotitles(struct bu_vls *overlay_vls)
 			   color_scheme->cs_other_line[2], 1, 1.0);
 	    dm_draw_line_2d(DMP,
 			    GED2PM1(MENUXLIM), GED2PM1(y),
-			    GED2PM1(MENUXLIM), GED2PM1(YMAX));	/* vert. */
+			    GED2PM1(MENUXLIM), GED2PM1((int)BV_MAX));	/* vert. */
 	    /*
 	     * The top of the menu (if any) begins at the Y value specified.
 	     */
-	    mmenu_display(y);
+	    mmenu_display(s, y);
 
 	    /* print parameter locations on screen */
-	    if (STATE == ST_O_EDIT && illump->s_old.s_Eflag) {
+	    if (GEOM_EDIT_STATE == ST_O_EDIT && illump->s_old.s_Eflag) {
 		/* region is a processed region */
 		MAT4X3PNT(temp, view_state->vs_model2objview, es_keypoint);
-		xloc = (int)(temp[X]*GED_MAX);
-		yloc = (int)(temp[Y]*GED_MAX);
+		xloc = (int)(temp[X]*BV_MAX);
+		yloc = (int)(temp[Y]*BV_MAX);
 		dm_set_fg(DMP,
 			       color_scheme->cs_edit_info[0],
 			       color_scheme->cs_edit_info[1],
@@ -495,11 +495,11 @@ dotitles(struct bu_vls *overlay_vls)
 	/*
 	 * Prepare the numerical display of the currently edited solid/object.
 	 */
-	/* create_text_overlay(&vls); */
+	/* create_text_overlay(s, &vls); */
 	if (mged_variables->mv_orig_gui) {
-	    screen_vls(SOLID_XBASE, scroll_ybot+TEXT0_DY, overlay_vls);
+	    screen_vls(s, SOLID_XBASE, scroll_ybot+TEXT0_DY, overlay_vls);
 	} else {
-	    screen_vls(x, y, overlay_vls);
+	    screen_vls(s, x, y, overlay_vls);
 	}
 
 	/*
@@ -508,7 +508,7 @@ dotitles(struct bu_vls *overlay_vls)
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls,
 		      " cent=(%s, %s, %s), %s %s, ", cent_x, cent_y, cent_z,
-		      size, bu_units_string(DBIP->dbi_local2base));
+		      size, bu_units_string(s->dbip->dbi_local2base));
 	bu_vls_printf(&vls, "az=%3.2f el=%3.2f tw=%3.2f ang=(%s, %s, %s)", V3ARGS(view_state->vs_gvp->gv_aet),
 		      ang_x, ang_y, ang_z);
 	dm_set_fg(DMP,
@@ -534,7 +534,7 @@ dotitles(struct bu_vls *overlay_vls)
     if (adc_state->adc_draw) {
 	fastf_t f;
 
-	f = view_state->vs_gvp->gv_scale * base2local;
+	f = view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
 	/* Angle/Distance cursor */
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls,
@@ -551,23 +551,23 @@ dotitles(struct bu_vls *overlay_vls)
 	    dm_draw_string_2d(DMP, bu_vls_addr(&vls),
 			      GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0);
 	}
-	Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_adc_name),
+	Tcl_SetVar(s->interp, bu_vls_addr(&s->mged_curr_dm->dm_adc_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	ss_line_not_drawn = 0;
     } else {
-	Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_adc_name), "", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, bu_vls_addr(&s->mged_curr_dm->dm_adc_name), "", TCL_GLOBAL_ONLY);
     }
 
-    if (STATE == ST_S_EDIT || STATE == ST_O_EDIT) {
+    if (GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT) {
 	struct bu_vls kp_vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&kp_vls,
 		      " Keypoint: %s %s: (%g, %g, %g)",
-		      OBJ[es_int.idb_type].ft_name+3,	/* Skip ID_ */
+		      OBJ[s->edit_state.es_int.idb_type].ft_name+3,	/* Skip ID_ */
 		      es_keytag,
-		      es_keypoint[X] * base2local,
-		      es_keypoint[Y] * base2local,
-		      es_keypoint[Z] * base2local);
+		      es_keypoint[X] * s->dbip->dbi_base2local,
+		      es_keypoint[Y] * s->dbip->dbi_base2local,
+		      es_keypoint[Z] * s->dbip->dbi_base2local);
 	if (mged_variables->mv_faceplate && ss_line_not_drawn) {
 	    dm_set_fg(DMP,
 			   color_scheme->cs_status_text2[0],
@@ -580,13 +580,13 @@ dotitles(struct bu_vls *overlay_vls)
 
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "%s(keypoint)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(INTERP, bu_vls_addr(&vls), bu_vls_addr(&kp_vls), TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, bu_vls_addr(&vls), bu_vls_addr(&kp_vls), TCL_GLOBAL_ONLY);
 
 	bu_vls_free(&kp_vls);
     } else {
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "%s(keypoint)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(INTERP, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
     }
 
     if (illump != NULL && illump->s_u_data != NULL) {
@@ -600,7 +600,7 @@ dotitles(struct bu_vls *overlay_vls)
 	    bu_vls_strcat(&vls, " Path: ");
 	    for (i=0; i < bdata->s_fullpath.fp_len; i++) {
 		if (i == (size_t)ipathpos  &&
-		    (STATE == ST_O_PATH || STATE == ST_O_EDIT))
+		    (GEOM_EDIT_STATE == ST_O_PATH || GEOM_EDIT_STATE == ST_O_EDIT))
 		    bu_vls_strcat(&vls, "/__MATRIX__");
 		bu_vls_printf(&vls, "/%s",
 			      DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_namep);
@@ -626,7 +626,7 @@ dotitles(struct bu_vls *overlay_vls)
 	dm_draw_string_2d(DMP, bu_vls_addr(&vls),
 			  GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0);
     }
-    Tcl_SetVar(INTERP, bu_vls_addr(&mged_curr_dm->dm_fps_name),
+    Tcl_SetVar(s->interp, bu_vls_addr(&s->mged_curr_dm->dm_fps_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     bu_vls_free(&vls);

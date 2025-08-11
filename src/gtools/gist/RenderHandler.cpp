@@ -1,7 +1,7 @@
 /*               R E N D E R H A N D L E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2023-2024 United States Government as represented by
+ * Copyright (c) 2023-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -773,7 +773,7 @@ makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
 	if (startPos != std::string::npos) {
 	    continuation = continuation.substr(startPos);
 
-	    if (opt.getNotes() == "None") {
+	    if (opt.getNotes() == "N/A") {
 		opt.setNotes("... " + continuation);
 	    } else {
 		opt.setNotes("... " + continuation + "\n" + opt.getNotes());

@@ -1,7 +1,7 @@
 /*                        P I X - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2024 United States Government as represented by
+ * Copyright (c) 1986-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -128,8 +128,8 @@ hexout(FILE *fp, int byte)
     high = (byte>>4) & 0xf;
     low = byte & 0xf;
 
-    putc(symbol[high], fp);
-    putc(symbol[low], fp);
+    fputc(symbol[high], fp);
+    fputc(symbol[low], fp);
 }
 
 int

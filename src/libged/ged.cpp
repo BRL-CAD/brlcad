@@ -1,7 +1,7 @@
 /*                       G E D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2000-2024 United States Government as represented by
+ * Copyright (c) 2000-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,19 +50,14 @@
 #include "bv/defines.h"
 
 #include "./ged_private.h"
+#include "./include/plugin.h"
+
+extern "C" void libged_init(void);
+
 extern "C" {
 #include "./qray.h"
 }
 
-#define FREE_BV_SCENE_OBJ(p, fp) { \
-    BU_LIST_APPEND(fp, &((p)->l)); \
-    BV_FREE_VLIST(&RTG.rtg_vlfree, &((p)->s_vlist)); }
-
-
-/* TODO:  Ew.  Globals. Make this go away... */
-struct ged *_ged_current_gedp;
-vect_t _ged_eye_model;
-mat_t _ged_viewrot;
 
 void
 ged_close(struct ged *gedp)
@@ -92,73 +87,8 @@ ged_close(struct ged *gedp)
 	bu_ptbl_reset(&gedp->ged_subp);
     }
 
-    ged_free(gedp);
-    BU_PUT(gedp, struct ged);
+    ged_destroy(gedp);
     gedp = NULL;
-}
-
-void
-ged_free(struct ged *gedp)
-{
-    if (gedp == GED_NULL)
-	return;
-
-    bu_vls_free(&gedp->go_name);
-
-    gedp->ged_gvp = NULL;
-
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_free_views); i++) {
-	struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_free_views, i);
-	bv_free(gdvp);
-	bu_free((void *)gdvp, "bv");
-    }
-    bu_ptbl_free(&gedp->ged_free_views);
-    bv_set_free(&gedp->ged_views);
-
-    if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
-
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->free_solids); i++) {
-	    // TODO - FREE_BV_SCENE_OBJ macro is stashing on the free_scene_obj list, not
-	    // BU_PUT-ing the solid objects themselves - is that what we expect
-	    // when doing ged_free?  I.e., is ownership of the free solid list
-	    // with the struct ged or with the application as a whole?  We're
-	    // BU_PUT-ing gedp->ged_views.free_scene_obj - above why just that one?
-#if 0
-	    struct bv_scene_obj *sp = (struct bv_scene_obj *)BU_PTBL_GET(&gedp->free_solids, i);
-	    RT_FREE_VLIST(&(sp->s_vlist));
-#endif
-	}
-	bu_ptbl_free(&gedp->free_solids);
-
-	if (gedp->ged_gdp->gd_headDisplay)
-	    BU_PUT(gedp->ged_gdp->gd_headDisplay, struct bu_vls);
-	if (gedp->ged_gdp->gd_headVDraw)
-	    BU_PUT(gedp->ged_gdp->gd_headVDraw, struct bu_vls);
-	qray_free(gedp->ged_gdp);
-	BU_PUT(gedp->ged_gdp, struct ged_drawable);
-    }
-
-    if (gedp->ged_log) {
-	bu_vls_free(gedp->ged_log);
-	BU_PUT(gedp->ged_log, struct bu_vls);
-    }
-
-    if (gedp->ged_results) {
-	ged_results_free(gedp->ged_results);
-	BU_PUT(gedp->ged_results, struct ged_results);
-    }
-
-    if (gedp->ged_result_str) {
-	bu_vls_free(gedp->ged_result_str);
-	BU_PUT(gedp->ged_result_str, struct bu_vls);
-    }
-
-    BU_PUT(gedp->ged_cbs, struct ged_callback_state);
-
-    bu_ptbl_free(&gedp->ged_subp);
-
-    if (gedp->ged_fbs)
-	BU_PUT(gedp->ged_fbs, struct fbserv_obj);
 }
 
 void
@@ -167,7 +97,13 @@ ged_init(struct ged *gedp)
     if (gedp == GED_NULL)
 	return;
 
+    /* Create internal containers */
+    BU_GET(gedp->i, struct ged_impl);
+    gedp->i->magic = GED_MAGIC;
+    gedp->i->i = new Ged_Internal;
+
     gedp->dbip = NULL;
+    gedp->u_data = NULL;
 
     // TODO - rename to ged_name
     bu_vls_init(&gedp->go_name);
@@ -182,37 +118,25 @@ ged_init(struct ged *gedp)
      * just calling FREE_BV_SCENE_OBJ which doesn't de-allocate... */
     BU_PTBL_INIT(&gedp->free_solids);
 
-    /* In principle we should be establishing an initial view here,
-     * but Archer won't tolerate it. */
-    gedp->ged_gvp = GED_VIEW_NULL;
+    // Establish an initial view
+    BU_ALLOC(gedp->ged_gvp, struct bview);
+    bv_init(gedp->ged_gvp, &gedp->ged_views);
+    bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
+    bv_set_add_view(&gedp->ged_views, gedp->ged_gvp);
+    bu_ptbl_ins(&gedp->ged_free_views, (long *)gedp->ged_gvp);
 
     /* Create a non-opened fbserv */
     BU_GET(gedp->ged_fbs, struct fbserv_obj);
     gedp->ged_fbs->fbs_listener.fbsl_fd = -1;
-    gedp->fbs_is_listening = NULL;
-    gedp->fbs_listen_on_port = NULL;
-    gedp->fbs_open_server_handler = NULL;
-    gedp->fbs_close_server_handler = NULL;
-    gedp->fbs_open_client_handler = NULL;
-    gedp->fbs_close_client_handler = NULL;
 
-    gedp->ged_pre_opendb_callback = NULL;
-    gedp->ged_post_opendb_callback = NULL;
-    gedp->ged_pre_closedb_callback = NULL;
-    gedp->ged_post_closedb_callback = NULL;
-    gedp->ged_db_callback_udata = NULL;
+    BU_GET(gedp->i->ged_gdp, struct ged_drawable);
+    BU_GET(gedp->i->ged_gdp->gd_headDisplay, struct bu_list);
+    BU_LIST_INIT(gedp->i->ged_gdp->gd_headDisplay);
+    BU_GET(gedp->i->ged_gdp->gd_headVDraw, struct bu_list);
+    BU_LIST_INIT(gedp->i->ged_gdp->gd_headVDraw);
 
-    gedp->ged_subprocess_init_callback = NULL;
-    gedp->ged_subprocess_end_callback = NULL;
-
-    BU_GET(gedp->ged_gdp, struct ged_drawable);
-    BU_GET(gedp->ged_gdp->gd_headDisplay, struct bu_list);
-    BU_LIST_INIT(gedp->ged_gdp->gd_headDisplay);
-    BU_GET(gedp->ged_gdp->gd_headVDraw, struct bu_list);
-    BU_LIST_INIT(gedp->ged_gdp->gd_headVDraw);
-
-    gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
-    qray_init(gedp->ged_gdp);
+    gedp->i->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
+    qray_init(gedp->i->ged_gdp);
 
     BU_GET(gedp->ged_log, struct bu_vls);
     bu_vls_init(gedp->ged_log);
@@ -238,22 +162,127 @@ ged_init(struct ged *gedp)
     gedp->ged_delete_io_handler = NULL;
     gedp->ged_io_data = NULL;
 
+    /* Editor info */
+    gedp->app_editors_cnt = 0;
+    gedp->app_editors = NULL;
+    memset(gedp->editor, '\0', sizeof(gedp->editor));
+    BU_PTBL_INIT(&gedp->editor_opts);
+    memset(gedp->terminal, '\0', sizeof(gedp->terminal));
+    BU_PTBL_INIT(&gedp->terminal_opts);
+
+    /* User data */
+    BU_PTBL_INIT(&gedp->ged_uptrs);
+
     /* ? */
     gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;
 
     gedp->dbi_state = NULL;
 
-    gedp->ged_ctx = NULL;
     gedp->ged_interp = NULL;
+
+    gedp->new_cmd_forms = 0;
 }
 
+struct ged *
+ged_create(void)
+{
+    struct ged *gedp;
+    BU_GET(gedp, struct ged);
+    ged_init(gedp);
+    return gedp;
+}
+
+void
+ged_free(struct ged *gedp)
+{
+    if (!gedp)
+	return;
+
+    bu_vls_free(&gedp->go_name);
+
+    gedp->ged_gvp = NULL;
+
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_free_views); i++) {
+	struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_free_views, i);
+	bv_free(gdvp);
+	bu_free((void *)gdvp, "bv");
+    }
+    bu_ptbl_free(&gedp->ged_free_views);
+    bv_set_free(&gedp->ged_views);
+
+    if (gedp->i->ged_gdp != GED_DRAWABLE_NULL) {
+
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->free_solids); i++) {
+	    // TODO - FREE_BV_SCENE_OBJ macro is stashing on the free_scene_obj list, not
+	    // BU_PUT-ing the solid objects themselves - is that what we expect
+	    // when doing ged_free?  I.e., is ownership of the free solid list
+	    // with the struct ged or with the application as a whole?  We're
+	    // BU_PUT-ing gedp->ged_views.free_scene_obj - above why just that one?
+#if 0
+	    struct bv_scene_obj *sp = (struct bv_scene_obj *)BU_PTBL_GET(&gedp->free_solids, i);
+	    BV_FREE_VLIST(vlfree, &(sp->s_vlist));
+#endif
+	}
+	bu_ptbl_free(&gedp->free_solids);
+
+	if (gedp->i->ged_gdp->gd_headDisplay)
+	    BU_PUT(gedp->i->ged_gdp->gd_headDisplay, struct bu_vls);
+	if (gedp->i->ged_gdp->gd_headVDraw)
+	    BU_PUT(gedp->i->ged_gdp->gd_headVDraw, struct bu_vls);
+	qray_free(gedp->i->ged_gdp);
+	BU_PUT(gedp->i->ged_gdp, struct ged_drawable);
+    }
+
+    if (gedp->ged_log) {
+	bu_vls_free(gedp->ged_log);
+	BU_PUT(gedp->ged_log, struct bu_vls);
+    }
+
+    if (gedp->ged_results) {
+	ged_results_free(gedp->ged_results);
+	BU_PUT(gedp->ged_results, struct ged_results);
+    }
+
+    if (gedp->ged_result_str) {
+	bu_vls_free(gedp->ged_result_str);
+	BU_PUT(gedp->ged_result_str, struct bu_vls);
+    }
+
+    BU_PUT(gedp->ged_cbs, struct ged_callback_state);
+
+    bu_ptbl_free(&gedp->ged_subp);
+
+    if (gedp->ged_fbs)
+	BU_PUT(gedp->ged_fbs, struct fbserv_obj);
+
+    bu_ptbl_free(&gedp->editor_opts);
+    bu_ptbl_free(&gedp->terminal_opts);
+    bu_ptbl_free(&gedp->ged_uptrs);
+
+    /* Free internal containers */
+    delete gedp->i->i;
+    gedp->i->i = NULL;
+    gedp->i->magic = 0;
+    BU_PUT(gedp->i, struct ged_impl);
+    gedp->i = NULL;;
+}
+
+void
+ged_destroy(struct ged *gedp)
+{
+    if (!gedp)
+	return;
+
+    ged_free(gedp);
+    BU_PUT(gedp, struct ged);
+}
 
 struct ged *
 ged_open(const char *dbtype, const char *filename, int existing_only)
 {
-    struct ged *gedp;
-    struct rt_wdb *wdbp;
+    struct ged *gedp = NULL;
+    struct rt_wdb *wdbp = NULL;
     struct mater *save_materp = MATER_NULL;
 
     if (filename == NULL)
@@ -344,28 +373,12 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	}
     }
 
-    BU_GET(gedp, struct ged);
-    GED_INIT(gedp, wdbp);
-#if 0
-    // Archer doesn't tolerate populating the GEDP with an initial view at the
-    // moment.  Probably should fix that, as there are lots of ged commands
-    // that only work correctly with a view present...
-    BU_ALLOC(gedp->ged_gvp, struct bview);
-    bv_init(gedp->ged_gvp, &gedp->ged_views);
-    bv_set_add_view(&gedp->ged_views, gedp->ged_gvp);
-    bu_ptbl_ins(&gedp->ged_free_views, (long *)gedp->ged_gvp);
-#endif
+    gedp = ged_create();
+    gedp->dbip = wdbp->dbip;
 
     db_update_nref(gedp->dbip, &rt_uniresource);
 
     gedp->ged_lod = bv_mesh_lod_context_create(filename);
-
-    const char *use_dbi_state = getenv("LIBGED_DBI_STATE");
-    if (use_dbi_state) {
-	gedp->dbi_state = new DbiState(gedp);
-    } else {
-	gedp->dbi_state = NULL;
-    }
 
     return gedp;
 }
@@ -418,6 +431,40 @@ _ged_open_dbip(const char *filename, int existing_only)
 
 /* Callback wrapper functions */
 
+int
+ged_clbk_exec(struct bu_vls *log, struct ged *gedp, int limit, bu_clbk_t f, int ac, const char **av, void *u1, void *u2)
+{
+    if (!gedp || !f)
+	return BRLCAD_ERROR;
+    GED_CK_MAGIC(gedp);
+    Ged_Internal *gedip = gedp->i->i;
+    int rlimit = (limit > 0) ? limit : 1;
+
+    gedip->clbk_recursion_depth_cnt[f]++;
+
+    if (gedip->clbk_recursion_depth_cnt[f] > rlimit) {
+	if (log) {
+	    // Print out ged_exec call stack that got us here.  If the
+	    // recursion is all in callback functions this won't help, but at
+	    // the very least we'll know which ged command to start with.
+	    bu_vls_printf(log, "Callback recursion limit %d exceeded.  ged_exec call stack:\n", rlimit);
+	    std::stack<std::string> lexec_stack = gedip->exec_stack;
+	    while (!lexec_stack.empty()) {
+		bu_vls_printf(log, "%s\n", lexec_stack.top().c_str());
+		lexec_stack.pop();
+	    }
+	}
+	return BRLCAD_ERROR;
+    }
+
+    // Checks complete - actually run the callback
+    int ret = (*f)(ac, av, u1, u2);
+
+    gedip->clbk_recursion_depth_cnt[f]++;
+
+    return ret;
+}
+
 void
 ged_refresh_cb(struct ged *gedp)
 {
@@ -452,7 +499,7 @@ ged_create_vlist_solid_cb(struct ged *gedp, struct bv_scene_obj *s)
 	if (gedp->ged_cbs->ged_create_vlist_scene_obj_callback_cnt > 1) {
 	    bu_log("Warning - recursive call of gedp->ged_create_vlist_scene_obj_callback!\n");
 	}
-	(*gedp->ged_create_vlist_scene_obj_callback)(s);
+	(*gedp->ged_create_vlist_scene_obj_callback)(gedp->vlist_ctx, s);
 	gedp->ged_cbs->ged_create_vlist_scene_obj_callback_cnt--;
     }
 }
@@ -465,7 +512,7 @@ ged_create_vlist_display_list_cb(struct ged *gedp, struct display_list *dl)
 	if (gedp->ged_cbs->ged_create_vlist_display_list_callback_cnt > 1) {
 	    bu_log("Warning - recursive call of gedp->ged_create_vlist_callback!\n");
 	}
-	(*gedp->ged_create_vlist_display_list_callback)(dl);
+	(*gedp->ged_create_vlist_display_list_callback)(gedp->vlist_ctx, dl);
 	gedp->ged_cbs->ged_create_vlist_display_list_callback_cnt--;
     }
 }
@@ -478,18 +525,102 @@ ged_destroy_vlist_cb(struct ged *gedp, unsigned int i, int j)
 	if (gedp->ged_cbs->ged_destroy_vlist_callback_cnt > 1) {
 	    bu_log("Warning - recursive call of gedp->ged_destroy_vlist_callback!\n");
 	}
-	(*gedp->ged_destroy_vlist_callback)(i, j);
+	(*gedp->ged_destroy_vlist_callback)(gedp->vlist_ctx, i, j);
 	gedp->ged_cbs->ged_destroy_vlist_callback_cnt--;
     }
 }
 
-#if 0
 int
-ged_io_handler_cb(struct ged *, ged_io_handler_callback_t *cb, void *, int)
+ged_clbk_set(struct ged *gedp, const char *cmd_str, int mode, bu_clbk_t f, void *d)
 {
-    if (
+    int ret = BRLCAD_OK;
+    if (!gedp || !cmd_str)
+	return BRLCAD_ERROR;
+
+    GED_CK_MAGIC(gedp);
+    Ged_Internal *gedip = gedp->i->i;
+
+    // Translate the string to a ged pointer.  Commands can have multiple strings
+    // associated with the same function - we want to use the cmd pointer as the
+    // lookup key, since it will be the same regardless of the string.
+    std::map<std::string, const struct ged_cmd *> *cmap = (std::map<std::string, const struct ged_cmd *> *)ged_cmds;
+    if (!cmap->size())
+	libged_init();
+    std::string scmd = std::string(cmd_str);
+    std::map<std::string, const struct ged_cmd *>::iterator cm_it = cmap->find(scmd);
+    if (cm_it == cmap->end())
+	return (BRLCAD_ERROR | GED_UNKNOWN);
+    const struct ged_cmd *cmd = cm_it->second;
+
+    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> *cm = (mode == BU_CLBK_PRE) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
+    cm = (mode == BU_CLBK_DURING) ? &gedip->cmd_during_clbk : cm;
+    cm = (mode == BU_CLBK_LINGER) ? &gedip->cmd_linger_clbk : cm;
+    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(cmd->i->cmd);
+    if (c_it != cm->end())
+	ret |= GED_OVERRIDE;
+    (*cm)[cmd->i->cmd] = std::make_pair(f, d);
+    return ret;
 }
-#endif
+
+int
+ged_clbk_get(bu_clbk_t *f, void **d, struct ged *gedp, const char *cmd_str, int mode)
+{
+    if (!gedp || !cmd_str || !f || !d)
+	return BRLCAD_ERROR;
+    GED_CK_MAGIC(gedp);
+    Ged_Internal *gedip = gedp->i->i;
+
+    // Translate the string to a ged pointer.  Commands can have multiple strings
+    // associated with the same function - we want to use the cmd pointer as the
+    // lookup key, since it will be the same regardless of the string.
+    std::map<std::string, const struct ged_cmd *> *cmap = (std::map<std::string, const struct ged_cmd *> *)ged_cmds;
+    if (!cmap->size())
+	libged_init();
+    std::string scmd = std::string(cmd_str);
+    std::map<std::string, const struct ged_cmd *>::iterator cm_it = cmap->find(scmd);
+    if (cm_it == cmap->end())
+	return (BRLCAD_ERROR | GED_UNKNOWN);
+    const struct ged_cmd *cmd = cm_it->second;
+
+    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> *cm = (mode == BU_CLBK_PRE) ? &gedip->cmd_prerun_clbk : &gedip->cmd_postrun_clbk;
+    cm = (mode == BU_CLBK_DURING) ? &gedip->cmd_during_clbk : cm;
+    cm = (mode == BU_CLBK_LINGER) ? &gedip->cmd_linger_clbk : cm;
+    std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>>::iterator c_it = cm->find(cmd->i->cmd);
+    if (c_it == cm->end()) {
+	// Nothing set, which is fine - return NULL
+	(*f) = NULL;
+	(*d) = NULL;
+	return BRLCAD_OK;
+    }
+    (*f) = c_it->second.first;
+    (*d) = c_it->second.second;
+    return BRLCAD_OK;
+}
+
+void
+ged_dm_ctx_set(struct ged *gedp, const char *dm_type, void *ctx)
+{
+    if (!gedp || !dm_type)
+	return;
+
+    GED_CK_MAGIC(gedp);
+    Ged_Internal *gedip = gedp->i->i;
+    gedip->dm_map[std::string(dm_type)] = ctx;
+}
+
+void *
+ged_dm_ctx_get(struct ged *gedp, const char *dm_type)
+{
+    if (!gedp || !dm_type)
+	return NULL;
+
+    GED_CK_MAGIC(gedp);
+    Ged_Internal *gedip = gedp->i->i;
+    std::string dm(dm_type);
+    if (gedip->dm_map.find(dm) == gedip->dm_map.end())
+	return NULL;
+    return gedip->dm_map[dm];
+}
 
 // Local Variables:
 // tab-width: 8

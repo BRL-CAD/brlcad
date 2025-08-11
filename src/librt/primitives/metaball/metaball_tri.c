@@ -1,7 +1,7 @@
 /*                    M E T A B A L L _ T R I . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,6 +71,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     struct wdb_metaball_pnt *mbpt;
     struct shell *s;
     int numtri = 0;
+    struct bu_list *vlfree = &rt_vlfree;
 
     if (r == NULL || m == NULL)
 	return -1;
@@ -162,10 +163,10 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		}
 	    }
 
-    nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
+    nmg_mark_edges_real(&s->l.magic, vlfree);
     nmg_region_a(*r, tol);
 
-    nmg_model_fuse(m, &RTG.rtg_vlfree, tol);
+    nmg_model_fuse(m, vlfree, tol);
 
     rt_get_timer(&times, NULL);
     bu_log("metaball tessellate (%d triangles): %s\n", numtri, bu_vls_addr(&times));

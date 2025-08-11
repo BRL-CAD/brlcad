@@ -1,7 +1,7 @@
 /*                         M A G I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -289,7 +289,7 @@ bu_identify_magic(register uint32_t magic)
 	case CURVE_LSEG_MAGIC:
 	    return "curve_lseg";
 	case CURVE_NURB_MAGIC:
-	    return "curve_nurb"; 
+	    return "curve_nurb";
 	case DB5_RAW_INTERNAL_MAGIC:
 	    return "db5 raw internal";
 	case DBI_MAGIC:

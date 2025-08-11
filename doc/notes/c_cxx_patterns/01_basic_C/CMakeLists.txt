@@ -9,4 +9,3 @@ target_link_libraries(ntest01 nlib01)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

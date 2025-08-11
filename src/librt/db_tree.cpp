@@ -1,7 +1,7 @@
 /*                     D B _ T R E E . C P P
  * BRL-CAD
  *
- * Copyright (c) 1988-2024 United States Government as represented by
+ * Copyright (c) 1988-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -264,7 +264,7 @@ db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *p
 	    if (tsp->ts_mater.ma_shader)
 		bu_free((void *)tsp->ts_mater.ma_shader, "ma_shader");
 
-	    if (bu_shader_to_key_eq(bu_vls_addr(&comb->shader), &tmp_vls)) {
+	    if (rt_shader_to_key_eq(bu_vls_addr(&comb->shader), &tmp_vls)) {
 		char *sofar = db_path_to_string(pathp);
 
 		bu_log("db_apply_state_from_comb: Warning: bad shader in %s (ignored):\n", sofar);
@@ -2089,10 +2089,6 @@ db_walk_tree(struct db_i *dbip,
     RT_CK_DBTS(init_state);
     RT_CHECK_DBI(dbip);
 
-    if (rt_uniresource.re_magic != RESOURCE_MAGIC) {
-	rt_init_resource(&rt_uniresource, 0, NULL);
-    }
-
     if (init_state->ts_rtip == NULL || ncpu == 1) {
 	resp = &rt_uniresource;
     } else {
@@ -2388,7 +2384,7 @@ rt_shader_mat(
 
 	/* XXX This should really be handled by a special set of tree
 	 * walker routines which just build up the RPP of the region.
-	 * For now we just re-use rt_rpp_region() with a scratch rtip.
+	 * For now we just reuse rt_rpp_region() with a scratch rtip.
 	 */
 	my_rtip = rt_new_rti(rtip->rti_dbip);
 	my_rtip->useair = rtip->useair;

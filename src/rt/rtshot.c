@@ -1,7 +1,7 @@
 /*                        R T S H O T . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2024 United States Government as represented by
+ * Copyright (c) 1987-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,6 +44,38 @@
 
 #include "./rtuif.h"
 
+struct inv_mat_data {
+    const char *attr_key;
+    struct bu_hash_tbl *tbl;
+};
+
+void
+inv_mat_clbk(struct rt_i *rtip, struct db_tree_state *tsp, struct region *rp)
+{
+    if (!rtip || !tsp || !rp)
+	return;
+
+    struct inv_mat_data *d = (struct inv_mat_data *)rtip->rti_udata;
+    if (!d)
+	return;
+    struct bu_hash_tbl *tbl = d->tbl;
+    if (!d->attr_key || !tbl)
+	return;
+
+    if (!bu_avs_get(&tsp->ts_attrs, d->attr_key))
+	return;
+
+    uint32_t key = rp->reg_bit;
+
+    matp_t inv_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "inv_mat");
+    bn_mat_inv(inv_mat, tsp->ts_mat);
+
+    bu_semaphore_acquire(RT_SEM_RESULTS);
+
+    (void)bu_hash_set(tbl, (const uint8_t *)&key, sizeof(key), (void *)inv_mat);
+
+    bu_semaphore_release(RT_SEM_RESULTS);
+}
 
 void
 usage(const char *argv0)
@@ -59,8 +91,6 @@ usage(const char *argv0)
     bu_log(" -x #		Set librt debug flags\n");
     bu_log(" -X #		Set rt program debug flags\n");
     bu_log(" -N #		Set NMG debug flags\n");
-    bu_log(" -t #		Set number of triangles per piece for BOT's (default is 4)\n");
-    bu_log(" -b #		Set threshold number of triangles to use pieces (default is 32)\n");
     bu_log(" -O #		Set overlap-claimant handling\n");
     bu_log(" -o #		Set onehit flag\n");
     bu_log(" -r #		Set ray length\n");
@@ -106,6 +136,7 @@ main(int argc, char **argv)
     const char *argv0 = argv[0];
     int atoival;
     struct resource res = RT_RESOURCE_INIT_ZERO;
+    struct bu_vls attr_key = BU_VLS_INIT_ZERO;
 
     bu_setprogname(argv[0]);
 
@@ -125,6 +156,11 @@ main(int argc, char **argv)
 	    return 1;
 
 	switch (argv[0][1]) {
+	    case 'A':
+		bu_vls_sprintf(&attr_key, "%s", argv[1]);
+		argc -= 2;
+		argv += 2;
+		break;
 	    case 'R':
 		bundle_radius = atof(argv[1]);
 		argc -= 2;
@@ -187,16 +223,6 @@ main(int argc, char **argv)
 		    ptr = strtok((char *)NULL, "\t ");
 		    i++;
 		}
-		argc -= 2;
-		argv += 2;
-		break;
-	    case 't':
-		rt_bot_tri_per_piece = atoi(argv[1]);
-		argc -= 2;
-		argv += 2;
-		break;
-	    case 'b':
-		rt_bot_minpieces = atoi(argv[1]);
 		argc -= 2;
 		argv += 2;
 		break;
@@ -274,6 +300,18 @@ main(int argc, char **argv)
 		argv += 4;
 		continue;
 
+	    case 't':
+		bu_log("DEPRECATION WARNING: remove -t option.\nNo longer used since 7.42 BoT ray tracing.\n");
+		argc -= 2;
+		argv += 2;
+		break;
+
+	    case 'b':
+		bu_log("DEPRECATION WARNING: remove -b option.\nNo longer used since 7.42 BoT ray tracing.\n");
+		argc -= 2;
+		argv += 2;
+		break;
+
 	    case 'O':
 		{
 		    if (BU_STR_EQUAL(argv[1], "resolve") || BU_STR_EQUAL(argv[1], "0"))
@@ -300,6 +338,7 @@ main(int argc, char **argv)
 	    default:
 	    err:
 		usage(argv0);
+		bu_vls_free(&attr_key);
 		return 1;
 	}
     }
@@ -342,8 +381,19 @@ main(int argc, char **argv)
     fprintf(stderr, "db title:  %s\n", idbuf);
     rtip->useair = set_air;
 
+    /* Set up rti_getrees_clbk data */
+    struct inv_mat_data *imd;
+    BU_GET(imd, struct inv_mat_data);
+    imd->attr_key = (bu_vls_strlen(&attr_key)) ? bu_vls_cstr(&attr_key) : NULL;
+    imd->tbl = bu_hash_create(64);
+    rtip->rti_udata = (void *)imd;
+    rtip->rti_gettrees_clbk = &inv_mat_clbk;
+
     /* Walk trees */
     if (rt_gettrees_and_attrs(rtip, (const char **)attrs, argc, (const char **)argv, 1)) {
+	bu_vls_free(&attr_key);
+	bu_hash_destroy(imd->tbl);
+	BU_PUT(imd, struct inv_mat_data);
 	bu_exit(1, "rt_gettrees FAILED\n");
     }
     ap.attrs = attrs;
@@ -455,6 +505,10 @@ main(int argc, char **argv)
 	(void)rt_shootray(&ap);
     }
 
+    bu_vls_free(&attr_key);
+    bu_hash_destroy(imd->tbl);
+    BU_PUT(imd, struct inv_mat_data);
+
     return 0;
 }
 
@@ -498,7 +552,9 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	       pp->pt_outseg->seg_stp->st_name,
 	       pp->pt_regionp->reg_bit);
 
-	inv_mat = (matp_t)bu_hash_get((struct bu_hash_tbl *)ap->a_rt_i->Orca_hash_tbl, key, sizeof(pp->pt_regionp->reg_bit));
+	struct inv_mat_data *imd = (struct inv_mat_data *)ap->a_rt_i->rti_udata;
+
+	inv_mat = (matp_t)bu_hash_get(imd->tbl, key, sizeof(pp->pt_regionp->reg_bit));
 	if (inv_mat) {
 	    bn_mat_print("inv_mat", inv_mat);
 	}
@@ -528,7 +584,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	    point_t in_trans;
 
 	    MAT4X3PNT(in_trans, inv_mat, inpt);
-	    bu_log("\ttransformed ORCA inhit = (%g %g %g)\n", V3ARGS(in_trans));
+	    bu_log("\ttransformed %s inhit = (%g %g %g)\n", imd->attr_key, V3ARGS(in_trans));
 	}
 
 	/* outhit info */
@@ -550,8 +606,8 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	    MAT4X3PNT(out_trans, inv_mat, outpt);
 	    MAT4X3VEC(dir_trans, inv_mat, ap->a_ray.r_dir);
 	    VUNITIZE(dir_trans);
-	    bu_log("\ttransformed ORCA outhit = (%g %g %g)\n", V3ARGS(out_trans));
-	    bu_log("\ttransformed ORCA ray direction = (%g %g %g)\n", V3ARGS(dir_trans));
+	    bu_log("\ttransformed %s outhit = (%g %g %g)\n", imd->attr_key, V3ARGS(out_trans));
+	    bu_log("\ttransformed %s ray direction = (%g %g %g)\n", imd->attr_key, V3ARGS(dir_trans));
 	}
 
 	/* Plot inhit to outhit */
@@ -647,7 +703,8 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 		   pp->pt_regionp->reg_name, pp->pt_inseg->seg_stp->st_name,
 		   pp->pt_outseg->seg_stp->st_name, pp->pt_regionp->reg_bit);
 
-	    inv_mat = (matp_t)bu_hash_get((struct bu_hash_tbl *)pl->ap->a_rt_i->Orca_hash_tbl, key, sizeof(pp->pt_regionp->reg_bit));
+	    struct inv_mat_data *imd = (struct inv_mat_data *)pl->ap->a_rt_i->rti_udata;
+	    inv_mat = (matp_t)bu_hash_get(imd->tbl, key, sizeof(pp->pt_regionp->reg_bit));
 
 	    if (inv_mat) {
 		bn_mat_print("inv_mat", inv_mat);
@@ -680,8 +737,7 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 		point_t in_trans;
 
 		MAT4X3PNT(in_trans, inv_mat, inpt);
-		bu_log("\ttransformed ORCA inhit = (%g %g %g)\n", V3ARGS(
-			   in_trans));
+		bu_log("\ttransformed %s inhit = (%g %g %g)\n", imd->attr_key, V3ARGS(in_trans));
 	    }
 
 	    /* outhit info */
@@ -705,10 +761,8 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 		MAT4X3PNT(out_trans, inv_mat, outpt);
 		MAT4X3VEC(dir_trans, inv_mat, pl->ap->a_ray.r_dir);
 		VUNITIZE(dir_trans);
-		bu_log("\ttransformed ORCA outhit = (%g %g %g)\n", V3ARGS(
-			   out_trans));
-		bu_log("\ttransformed ORCA ray direction = (%g %g %g)\n",
-		       V3ARGS(dir_trans));
+		bu_log("\ttransformed %s outhit = (%g %g %g)\n", imd->attr_key, V3ARGS(out_trans));
+		bu_log("\ttransformed %s ray direction = (%g %g %g)\n", imd->attr_key, V3ARGS(dir_trans));
 	    }
 
 	    /* Plot inhit to outhit */

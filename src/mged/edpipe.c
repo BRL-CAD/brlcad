@@ -1,7 +1,7 @@
 /*                        E D P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2024 United States Government as represented by
+ * Copyright (c) 1995-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ pipe_split_pnt(struct bu_list *UNUSED(pipe_hd), struct wdb_pipe_pnt *UNUSED(ps),
 
 
 void
-pipe_scale_od(struct rt_db_internal *db_int, fastf_t scale)
+pipe_scale_od(struct mged_state *s, struct rt_db_internal *db_int, fastf_t scale)
 {
     struct wdb_pipe_pnt *ps;
     struct rt_pipe_internal *pipeip=(struct rt_pipe_internal *)db_int->idb_ptr;
@@ -68,11 +68,11 @@ pipe_scale_od(struct rt_db_internal *db_int, fastf_t scale)
 	else
 	    tmp_od = ps->pp_od*scale;
 	if (ps->pp_id > tmp_od) {
-	    Tcl_AppendResult(INTERP, "Cannot make OD less than ID\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "Cannot make OD less than ID\n", (char *)NULL);
 	    return;
 	}
 	if (tmp_od > 2.0*ps->pp_bendradius) {
-	    Tcl_AppendResult(INTERP, "Cannot make outer radius greater than bend radius\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "Cannot make outer radius greater than bend radius\n", (char *)NULL);
 	    return;
 	}
     }
@@ -83,7 +83,7 @@ pipe_scale_od(struct rt_db_internal *db_int, fastf_t scale)
 
 
 void
-pipe_scale_id(struct rt_db_internal *db_int, fastf_t scale)
+pipe_scale_id(struct mged_state *s, struct rt_db_internal *db_int, fastf_t scale)
 {
     struct wdb_pipe_pnt *ps;
     struct rt_pipe_internal *pipeip=(struct rt_pipe_internal *)db_int->idb_ptr;
@@ -98,11 +98,11 @@ pipe_scale_id(struct rt_db_internal *db_int, fastf_t scale)
 	else
 	    tmp_id = (-scale);
 	if (ps->pp_od < tmp_id) {
-	    Tcl_AppendResult(INTERP, "Cannot make ID greater than OD\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "Cannot make ID greater than OD\n", (char *)NULL);
 	    return;
 	}
 	if (tmp_id > 2.0*ps->pp_bendradius) {
-	    Tcl_AppendResult(INTERP, "Cannot make inner radius greater than bend radius\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "Cannot make inner radius greater than bend radius\n", (char *)NULL);
 	    return;
 	}
     }
@@ -117,7 +117,7 @@ pipe_scale_id(struct rt_db_internal *db_int, fastf_t scale)
 
 
 void
-pipe_seg_scale_od(struct wdb_pipe_pnt *ps, fastf_t scale)
+pipe_seg_scale_od(struct mged_state *s, struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t tmp_od;
 
@@ -131,11 +131,11 @@ pipe_seg_scale_od(struct wdb_pipe_pnt *ps, fastf_t scale)
     else
 	tmp_od = scale*ps->pp_od;
     if (ps->pp_id > tmp_od) {
-	Tcl_AppendResult(INTERP, "Cannot make OD smaller than ID\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "Cannot make OD smaller than ID\n", (char *)NULL);
 	return;
     }
     if (tmp_od > 2.0*ps->pp_bendradius) {
-	Tcl_AppendResult(INTERP, "Cannot make outer radius greater than bend radius\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "Cannot make outer radius greater than bend radius\n", (char *)NULL);
 	return;
     }
 
@@ -147,7 +147,7 @@ pipe_seg_scale_od(struct wdb_pipe_pnt *ps, fastf_t scale)
 
 
 void
-pipe_seg_scale_id(struct wdb_pipe_pnt *ps, fastf_t scale)
+pipe_seg_scale_id(struct mged_state *s, struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t tmp_id;
 
@@ -159,11 +159,11 @@ pipe_seg_scale_id(struct wdb_pipe_pnt *ps, fastf_t scale)
     else
 	tmp_id = (-scale);
     if (ps->pp_od < tmp_id) {
-	Tcl_AppendResult(INTERP, "Cannot make ID greater than OD\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "Cannot make ID greater than OD\n", (char *)NULL);
 	return;
     }
     if (tmp_id > 2.0*ps->pp_bendradius) {
-	Tcl_AppendResult(INTERP, "Cannot make inner radius greater than bend radius\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "Cannot make inner radius greater than bend radius\n", (char *)NULL);
 	return;
     }
 
@@ -175,7 +175,7 @@ pipe_seg_scale_id(struct wdb_pipe_pnt *ps, fastf_t scale)
 
 
 void
-pipe_seg_scale_radius(struct wdb_pipe_pnt *ps, fastf_t scale)
+pipe_seg_scale_radius(struct mged_state *s, struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t old_radius;
     struct wdb_pipe_pnt *head;
@@ -194,7 +194,7 @@ pipe_seg_scale_radius(struct wdb_pipe_pnt *ps, fastf_t scale)
 	ps->pp_bendradius = (-scale);
 
     if (ps->pp_bendradius < ps->pp_od * 0.5) {
-	Tcl_AppendResult(INTERP, "Cannot make bend radius less than pipe outer radius\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "Cannot make bend radius less than pipe outer radius\n", (char *)NULL);
 	ps->pp_bendradius = old_radius;
 	return;
     }
@@ -209,7 +209,7 @@ pipe_seg_scale_radius(struct wdb_pipe_pnt *ps, fastf_t scale)
 
 
 void
-pipe_scale_radius(struct rt_db_internal *db_int, fastf_t scale)
+pipe_scale_radius(struct mged_state *s, struct rt_db_internal *db_int, fastf_t scale)
 {
     struct bu_list head;
     struct wdb_pipe_pnt *old_ps, *new_ps;
@@ -222,12 +222,12 @@ pipe_scale_radius(struct rt_db_internal *db_int, fastf_t scale)
     for (BU_LIST_FOR(old_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
 	if (scale < 0.0) {
 	    if ((-scale) < old_ps->pp_od * 0.5) {
-		Tcl_AppendResult(INTERP, "Cannot make bend radius less than pipe outer radius\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "Cannot make bend radius less than pipe outer radius\n", (char *)NULL);
 		return;
 	    }
 	} else {
 	    if (old_ps->pp_bendradius * scale < old_ps->pp_od * 0.5) {
-		Tcl_AppendResult(INTERP, "Cannot make bend radius less than pipe outer radius\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "Cannot make bend radius less than pipe outer radius\n", (char *)NULL);
 		return;
 	    }
 	}
@@ -279,7 +279,7 @@ pipe_scale_radius(struct rt_db_internal *db_int, fastf_t scale)
 
 
 struct wdb_pipe_pnt *
-find_pipe_pnt_nearest_pnt(const struct bu_list *pipe_hd, const point_t pt)
+find_pipe_pnt_nearest_pnt(struct mged_state *s, const struct bu_list *pipe_hd, const point_t pt)
 {
     struct wdb_pipe_pnt *ps;
     struct wdb_pipe_pnt *nearest=(struct wdb_pipe_pnt *)NULL;
@@ -409,7 +409,7 @@ pipe_ins_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const poi
 
 
 struct wdb_pipe_pnt *
-pipe_del_pnt(struct wdb_pipe_pnt *ps)
+pipe_del_pnt(struct mged_state *s, struct wdb_pipe_pnt *ps)
 {
     struct wdb_pipe_pnt *next;
     struct wdb_pipe_pnt *prev;
@@ -430,14 +430,14 @@ pipe_del_pnt(struct wdb_pipe_pnt *ps)
 	prev = (struct wdb_pipe_pnt *)NULL;
 
     if (!prev && !next) {
-	Tcl_AppendResult(INTERP, "Cannot delete last point in pipe\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "Cannot delete last point in pipe\n", (char *)NULL);
 	return ps;
     }
 
     BU_LIST_DEQUEUE(&ps->l);
 
     if (rt_pipe_ck(&head->l)) {
-	Tcl_AppendResult(INTERP, "Cannot delete this point, it will result in an illegal pipe\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "Cannot delete this point, it will result in an illegal pipe\n", (char *)NULL);
 	if (next)
 	    BU_LIST_INSERT(&next->l, &ps->l)
 		else if (prev)
@@ -458,7 +458,7 @@ pipe_del_pnt(struct wdb_pipe_pnt *ps)
 
 
 void
-pipe_move_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps, const point_t new_pt)
+pipe_move_pnt(struct mged_state *s, struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps, const point_t new_pt)
 {
     point_t old_pt;
 
@@ -469,7 +469,7 @@ pipe_move_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps, const po
 
     VMOVE(ps->pp_coord, new_pt);
     if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
-	Tcl_AppendResult(INTERP, "Cannot move point there\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "Cannot move point there\n", (char *)NULL);
 	VMOVE(ps->pp_coord, old_pt);
     }
 }

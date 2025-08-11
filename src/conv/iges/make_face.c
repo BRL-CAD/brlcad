@@ -1,7 +1,7 @@
 /*                     M A K E _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
 #include "./iges_extern.h"
 
 struct faceuse *
-Make_planar_face(struct shell *s, size_t entityno, int face_orient)
+Make_planar_face(struct shell *s, size_t entityno, int face_orient, struct bu_list *vlfree)
 {
 
     int sol_num = 0;		/* IGES solid type number */
@@ -166,7 +166,7 @@ Make_planar_face(struct shell *s, size_t entityno, int face_orient)
 	dist = DIST_PNT_PLANE(outside_pt, pl);
 	VJOIN1(outside_pt, outside_pt, -dist, pl);
 
-	if (nmg_class_pnt_lu_except(outside_pt, lu, (struct edge *)NULL, &RTG.rtg_vlfree, &tol) != NMG_CLASS_AoutB) {
+	if (nmg_class_pnt_lu_except(outside_pt, lu, (struct edge *)NULL, vlfree, &tol) != NMG_CLASS_AoutB) {
 	    nmg_reverse_face(fu);
 	    if (fu->orientation != OT_SAME) {
 		fu = fu->fumate_p;

@@ -1,7 +1,7 @@
 /*                         G T I M E S . C
  * BRL-CAD
  *
- * Copyright (c) 2016-2024 United States Government as represented by
+ * Copyright (c) 2016-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -98,11 +98,12 @@ main(int ac, char *av[])
     timer = bu_gettime();
     {
       struct ged ged;
-      int tops_ac = 1;
-      const char *tops_av[2] = {"tops", NULL};
-      struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-      GED_INIT(&ged, wdbp);
-      (void)ged_exec(&ged, tops_ac, (const char **)tops_av);
+      const struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+      ged_init(&ged);
+      ged.dbip = wdbp->dbip;
+
+      const char *tops_av[1] = {"tops"};
+      (void)ged_exec_tops(&ged, 1, (const char **)tops_av);
     }
     seconds[4] += (bu_gettime() - timer) / 1000000.0;
     if (iterations < SKIP || (i % SKIP == 0))

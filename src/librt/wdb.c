@@ -1,7 +1,7 @@
 /*                           W D B . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2024 United States Government as represented by
+ * Copyright (c) 2000-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,10 +41,6 @@ wdb_fopen_v(const char *filename, int version)
 
     if ( filename == NULL ) return RT_WDB_NULL;
 
-    if (rt_uniresource.re_magic != RESOURCE_MAGIC) {
-	rt_init_resource(&rt_uniresource, 0, NULL);
-    }
-
     if ((dbip = db_create(filename, version)) == DBI_NULL)
 	return RT_WDB_NULL;
 
@@ -65,9 +61,6 @@ struct rt_wdb *
 wdb_dbopen(struct db_i *dbip, int mode)
 {
     RT_CK_DBI(dbip);
-
-    if (rt_uniresource.re_magic != RESOURCE_MAGIC)
-	rt_init_resource(&rt_uniresource, 0, NULL);
 
     switch(mode) {
 	case RT_WDB_TYPE_DB_DEFAULT:
@@ -330,7 +323,7 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
     bu_vls_init(&wdbp->wdb_prestr);
 
     /* initialize tree state */
-    wdbp->wdb_initial_tree_state = rt_initial_tree_state;  /* struct copy */
+    RT_DBTS_INIT(&wdbp->wdb_initial_tree_state);
     wdbp->wdb_initial_tree_state.ts_ttol = &wdbp->wdb_ttol;
     wdbp->wdb_initial_tree_state.ts_tol = &wdbp->wdb_tol;
 

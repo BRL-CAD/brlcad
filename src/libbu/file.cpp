@@ -1,7 +1,7 @@
 /*                      F I L E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -156,7 +156,6 @@ bu_file_size(const char *path)
 #endif
     return fbytes;
 }
-
 
 
 #ifdef HAVE_GETFULLPATHNAME
@@ -415,42 +414,48 @@ bu_file_executable(const char *path)
 int
 bu_file_directory(const char *path)
 {
-    struct stat sb;
+    std::filesystem::file_status fs;
 
     if (UNLIKELY(!path || (path[0] == '\0'))) {
 	return 0;
     }
 
-    if (stat(path, &sb) == -1) {
+    try
+    {
+	fs = std::filesystem::status(path);
+    }
+    catch (std::filesystem::filesystem_error const &)
+    {
+	bu_log("Error: unable to get permissions for %s\n", path);
 	return 0;
     }
 
-    return (S_ISDIR(sb.st_mode));
+    bool is_directory = std::filesystem::is_directory(fs);
+    return (is_directory) ? 1 : 0;
 }
 
 
 int
 bu_file_symbolic(const char *path)
 {
-    struct stat sb;
+    std::filesystem::file_status fs;
 
     if (UNLIKELY(!path || (path[0] == '\0'))) {
 	return 0;
     }
 
-    if (stat(path, &sb) == -1) {
+    try
+    {
+	fs = std::filesystem::status(path);
+    }
+    catch (std::filesystem::filesystem_error const &)
+    {
+	bu_log("Error: unable to get permissions for %s\n", path);
 	return 0;
     }
 
-    /* c99 portability */
-#if !defined(S_ISLNK)
-#  if defined(S_IFLNK)
-#    define S_ISLNK(m) (((m) & S_IFMT) == S_IFLNK)
-#  else
-#    define S_ISLNK(m) (((m) & 0170000) == 0120000)
-#  endif
-#endif
-    return (S_ISLNK(sb.st_mode));
+    bool is_symlink = std::filesystem::is_symlink(fs);
+    return (is_symlink) ? 1 : 0;
 }
 
 
@@ -614,4 +619,3 @@ bu_ftell(FILE *stream)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

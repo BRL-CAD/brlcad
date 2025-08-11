@@ -1,7 +1,7 @@
 /*                         C L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2024 United States Government as represented by
+ * Copyright (c) 2000-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -176,7 +176,6 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 {
     register struct cline_specific *cline =
 	(struct cline_specific *)stp->st_specific;
-    struct seg ref_seghead;
     register struct seg *segp;
     fastf_t reff;
     fastf_t dist[3];
@@ -192,8 +191,6 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 	return 0;
 
     RT_CK_APPLICATION(ap);
-
-    BU_LIST_INIT(&ref_seghead.l);
 
     /* This is a CLINE FASTGEN element */
     if (rt_cline_radius > 0.0) {
@@ -448,7 +445,7 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cline_ip);
 
@@ -540,6 +537,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     struct rt_cline_internal *cline_ip;
     struct shell *s;
     vect_t v1, v2;
+    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
@@ -781,7 +779,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	fu = (struct faceuse *)BU_PTBL_GET(&faces, i);
 	NMG_CK_FACEUSE(fu);
 
-	if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	if (nmg_calc_face_g(fu,vlfree)) {
 	    bu_log("rt_tess_cline: failed to calculate plane equation\n");
 	    nmg_pr_fu_briefly(fu, "");
 	    return -1;
@@ -883,6 +881,29 @@ rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
     return 0;
 }
 
+int
+rt_cline_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_cline_internal *tip = (struct rt_cline_internal *)ip->idb_ptr;
+    RT_CLINE_CK_MAGIC(tip);
+    struct rt_cline_internal *top = (struct rt_cline_internal *)rop->idb_ptr;
+    RT_CLINE_CK_MAGIC(top);
+
+    vect_t cv, ch;
+    VMOVE(cv, tip->v);
+    VMOVE(ch, tip->h);
+
+    MAT4X3PNT(top->v, mat, cv);
+    MAT4X3VEC(top->h, mat, ch);
+    top->thickness = tip->thickness / mat[15];
+    top->radius = tip->radius / mat[15];
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Import an cline from the database format to the internal format.
@@ -913,13 +934,15 @@ rt_cline_import5(struct rt_db_internal *ip, const struct bu_external *ep, regist
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 8);
 
-    if (mat == NULL) mat = bn_mat_identity;
-    cline_ip->thickness = vec[0] / mat[15];
-    cline_ip->radius = vec[1] / mat[15];
-    MAT4X3PNT(cline_ip->v, mat, &vec[2]);
-    MAT4X3VEC(cline_ip->h, mat, &vec[5]);
+    /* Assign values */
+    cline_ip->thickness = vec[0];
+    cline_ip->radius = vec[1];
+    VMOVE(cline_ip->v, &vec[2]);
+    VMOVE(cline_ip->h, &vec[5]);
 
-    return 0;			/* OK */
+    /* Apply transform */
+    if (mat == NULL) mat = bn_mat_identity;
+    return rt_cline_mat(ip, mat, ip);
 }
 
 
@@ -1143,42 +1166,66 @@ rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip
     return 0;
 }
 
-void
-rt_cline_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_cline_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
+    int lcnt = 2;
+    if (!pl || pl_max < lcnt || !ip)
+	return 0;
 
     struct rt_cline_internal *cline = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cline);
 
-    // Set up the containers
-    struct bv_label *l[2];
-    for (int i = 0; i < 2; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
+    point_t work1, pos_view;
+    int npl = 0;
 
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
 
-	l[i] = la;
-    }
+    MAT4X3PNT(pos_view, xform, cline->v);
+    POINT_LABEL(pos_view, 'V');
 
-    // Do the specific data assignments for each label
+    VADD2(work1, cline->v, cline->h);
+    MAT4X3PNT(pos_view, xform, work1);
+    POINT_LABEL(pos_view, 'H');
 
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, cline->v);
-
-    bu_vls_sprintf(&l[0]->label, "H");
-    VADD2(l[1]->p, cline->v, cline->h);
-
+    return lcnt;
 }
 
+const char *
+rt_cline_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_cline_internal *cline = (struct rt_cline_internal *)ip->idb_ptr;
+    RT_CLINE_CK_MAGIC(cline);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, cline->v);
+	goto cline_kpt_end;
+    }
+
+    if (BU_STR_EQUAL(k, "H")) {
+	VADD2(mpt, cline->v, cline->h);
+	goto cline_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+cline_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
 
 /** @} */
 /*

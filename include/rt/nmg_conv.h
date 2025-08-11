@@ -1,7 +1,7 @@
 /*                     N M G _ C O N V . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -128,12 +128,6 @@ struct ray_data {
 #define NMG_PCA_EDGE    1
 #define NMG_PCA_EDGE_VERTEX 2
 #define NMG_PCA_VERTEX 3
-
-/**
- * global nmg animation plot callback
- */
-RT_EXPORT extern void (*nmg_plot_anim_upcall)(void);
-
 
 /* From nmg_rt_isect.c */
 RT_EXPORT extern void rt_nmg_print_hitlist(struct bu_list *hd);

@@ -1,7 +1,7 @@
 /*                   V I E W _ S E T S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2024 United States Government as represented by
+ * Copyright (c) 2020-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -139,7 +139,6 @@ bv_set_fsos(struct bview_set *s)
 {
     return s->i->free_scene_obj;
 }
-
 
 
 // Local Variables:

@@ -1,7 +1,7 @@
 /*                       D M - W G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2024 United States Government as represented by
+ * Copyright (c) 1988-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -865,7 +865,7 @@ struct bu_structparse wgl_vparse[] = {
 };
 
 /* Forward declare for dm_wgl_impl */
-struct dm *wgl_open(void *ctx, void *vinterp, int argc, char *argv[]);
+struct dm *wgl_open(void *ctx, void *vinterp, int argc, const char *argv[]);
 
 struct dm_impl dm_wgl_impl = {
     wgl_open,
@@ -960,8 +960,8 @@ struct dm_impl dm_wgl_impl = {
     {0, 0, 0},			/* bg1 color */
     {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
-    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
-    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
+    {BV_MIN, BV_MIN, BV_MIN},	/* clipmin */
+    {BV_MAX, BV_MAX, BV_MAX},	/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
     1,				/* depth buffer is writable */
@@ -983,7 +983,7 @@ struct dm_impl dm_wgl_impl = {
  *
  */
 struct dm *
-wgl_open(void *UNUSED(ctx), void *vinterp, int argc, char *argv[])
+wgl_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
 {
     static int count = 0;
     GLfloat backgnd[4];

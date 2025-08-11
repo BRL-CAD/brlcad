@@ -1,7 +1,7 @@
 /*                      C H G M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,30 +45,25 @@
 #include "./mged_dm.h"
 #include "./sedit.h"
 #include "./cmd.h"
+#include "./f_cmd.h"
 
 
 /* defined in chgview.c */
-extern int edit_com(int argc, const char *argv[]);
+extern int edit_com(struct mged_state *s, int argc, const char *argv[]);
 
 /* defined in buttons.c */
 extern int be_s_trans(ClientData, Tcl_Interp *, int, char **);
-
-
-/* tell him it already exists */
-void
-aexists(const char *name)
-{
-    Tcl_AppendResult(INTERP, name, ":  already exists\n", (char *)NULL);
-}
-
 
 /*
  * Create a new solid of a given type
  * (Generic, or explicit)
  */
 int
-f_make(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_make(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     Tcl_DString ds;
     int ret;
 
@@ -95,12 +90,12 @@ f_make(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	av[6] = argv[2];
 	av[7] = (char *)0;
 
-	ret = ged_exec(GEDP, 7, (const char **)av);
+	ret = ged_exec(s->gedp, 7, (const char **)av);
     } else
-	ret = ged_exec(GEDP, argc, (const char **)argv);
+	ret = ged_exec(s->gedp, argc, (const char **)argv);
 
     Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == BRLCAD_OK) {
@@ -110,7 +105,7 @@ f_make(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	av[1] = "-R";
 	av[2] = argv[argc-2];
 	av[3] = NULL;
-	edit_com(3, av);
+	edit_com(s, 3, av);
     } else {
 	return TCL_ERROR;
     }
@@ -120,7 +115,7 @@ f_make(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 
 
 int
-mged_rot_obj(int iflag, fastf_t *argvect)
+mged_rot_obj(struct mged_state *s, int iflag, fastf_t *argvect)
 {
     point_t model_pt;
     point_t point;
@@ -173,7 +168,7 @@ mged_rot_obj(int iflag, fastf_t *argvect)
      */
     wrt_point(modelchanges, temp, modelchanges, point);
 
-    new_edit_mats();
+    new_edit_mats(s);
 
     return TCL_OK;
 }
@@ -181,8 +176,12 @@ mged_rot_obj(int iflag, fastf_t *argvect)
 
 /* allow precise changes to object rotation */
 int
-f_rot_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_rot_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     int iflag = 0;
     vect_t argvect;
 
@@ -198,7 +197,7 @@ f_rot_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_O_EDIT, "Object Rotation"))
+    if (not_state(s, ST_O_EDIT, "Object Rotation"))
 	return TCL_ERROR;
 
     /* Check for -i option */
@@ -215,14 +214,18 @@ f_rot_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     argvect[1] = atof(argv[2]);
     argvect[2] = atof(argv[3]);
 
-    return mged_rot_obj(iflag, argvect);
+    return mged_rot_obj(s, iflag, argvect);
 }
 
 
 /* allow precise changes to object scaling, both local & global */
 int
-f_sc_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     mat_t incr;
     vect_t point, temp;
 
@@ -238,7 +241,7 @@ f_sc_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_O_EDIT, "Object Scaling"))
+    if (not_state(s, ST_O_EDIT, "Object Scaling"))
 	return TCL_ERROR;
 
     if (atof(argv[1]) <= 0.0) {
@@ -281,7 +284,7 @@ f_sc_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     MAT4X3PNT(point, modelchanges, temp);
 
     wrt_point(modelchanges, incr, modelchanges, point);
-    new_edit_mats();
+    new_edit_mats(s);
 
     return TCL_OK;
 }
@@ -295,6 +298,10 @@ f_sc_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 int
 f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     int i;
     mat_t incr, old;
     vect_t model_sol_pt, model_incr, ed_sol_pt, new_vertex;
@@ -311,16 +318,16 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	return TCL_ERROR;
     }
 
-    if (STATE == ST_S_EDIT) {
+    if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	/* In solid edit mode,
 	 * perform the equivalent of "press sxy" and "p xyz"
 	 */
-	if (be_s_trans(NULL, NULL, 0, NULL) == TCL_ERROR)
+	if (be_s_trans(ctp, NULL, 0, NULL) == TCL_ERROR)
 	    return TCL_ERROR;
 	return f_param(clientData, interp, argc, argv);
     }
 
-    if (not_state(ST_O_EDIT, "Object Translation"))
+    if (not_state(s, ST_O_EDIT, "Object Translation"))
 	return TCL_ERROR;
 
     /* Remainder of code concerns object edit case */
@@ -337,7 +344,7 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     }
 
     for (i=0; i<3; i++) {
-	new_vertex[i] = atof(argv[i+1]) * local2base;
+	new_vertex[i] = atof(argv[i+1]) * s->dbip->dbi_local2base;
     }
 
     VMOVE(model_sol_pt, es_keypoint);
@@ -347,7 +354,7 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     MAT_DELTAS_VEC(incr, model_incr);
     MAT_COPY(old, modelchanges);
     bn_mat_mul(modelchanges, incr, old);
-    new_edit_mats();
+    new_edit_mats(s);
 
     return TCL_OK;
 }
@@ -360,8 +367,12 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
  * about a specified ray.
  */
 int
-f_qorot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     mat_t temp;
     vect_t specified_pt, direc;
     double ang;
@@ -378,7 +389,7 @@ f_qorot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_O_EDIT, "Object Rotation"))
+    if (not_state(s, ST_O_EDIT, "Object Rotation"))
 	return TCL_ERROR;
 
     if (movedir != ROTARROW) {
@@ -386,7 +397,7 @@ f_qorot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	movedir = ROTARROW;
     }
     VSET(specified_pt, atof(argv[1]), atof(argv[2]), atof(argv[3]));
-    VSCALE(specified_pt, specified_pt, DBIP->dbi_local2base);
+    VSCALE(specified_pt, specified_pt, s->dbip->dbi_local2base);
     VSET(direc, atof(argv[4]), atof(argv[5]), atof(argv[6]));
 
     if (NEAR_ZERO(direc[0], SQRT_SMALL_FASTF) &&
@@ -405,30 +416,30 @@ f_qorot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     bn_mat_arb_rot(temp, specified_pt, direc, ang);
     bn_mat_mul2(temp, modelchanges);
 
-    new_edit_mats();
+    new_edit_mats(s);
 
     return TCL_OK;
 }
 
 
 void
-set_localunit_TclVar(void)
+set_localunit_TclVar(struct mged_state *s)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct bu_vls units_vls = BU_VLS_INIT_ZERO;
     const char *str = NULL;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
-    str = bu_units_string(DBIP->dbi_local2base);
+    str = bu_units_string(s->dbip->dbi_local2base);
     if (str)
 	bu_vls_strcpy(&units_vls, str);
     else
-	bu_vls_printf(&units_vls, "%gmm", DBIP->dbi_local2base);
+	bu_vls_printf(&units_vls, "%gmm", s->dbip->dbi_local2base);
 
     bu_vls_strcpy(&vls, "localunit");
-    Tcl_SetVar(INTERP, bu_vls_addr(&vls), bu_vls_addr(&units_vls), TCL_GLOBAL_ONLY);
+    Tcl_SetVar(s->interp, bu_vls_addr(&vls), bu_vls_addr(&units_vls), TCL_GLOBAL_ONLY);
 
     bu_vls_free(&vls);
     bu_vls_free(&units_vls);

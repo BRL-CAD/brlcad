@@ -1,10 +1,9 @@
-
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 
-BRLCAD_ADDEXEC(test_brep_ppx ppx.cpp "libbrep" TEST)
-BRLCAD_ADD_TEST(NAME brep_ppx COMMAND test_brep_ppx)
+brlcad_addexec(test_brep_ppx ppx.cpp "libbrep" TEST)
+brlcad_add_test(NAME brep_ppx COMMAND test_brep_ppx)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ayam_hyperbolid.3dm
   brep_cdt_mesh.cpp
@@ -19,7 +18,7 @@ CMAKEFILES(
   test_curve_intersect.cpp
   test_point_intersect.cpp
   vsp.stp
-  )
+)
 
 # Local Variables:
 # tab-width: 8

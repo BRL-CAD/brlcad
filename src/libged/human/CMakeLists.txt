@@ -4,19 +4,15 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-human SHARED human.c)
+ged_plugin_library(ged-human human.c)
 target_link_libraries(ged-human libged libbu)
-set_property(TARGET ged-human APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-human human.c)
-PLUGIN_SETUP(ged-human ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   human.c
-  )
+)
 
 # Local Variables:
 # tab-width: 8

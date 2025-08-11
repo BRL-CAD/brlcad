@@ -1,7 +1,7 @@
 /*                          A R B 8 . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,13 +24,16 @@
  * Intersect a ray with an Arbitrary Polyhedron with as many as 8
  * vertices.
  *
- * An ARB is a convex volume bounded by 4 (pyramid), 5 (wedge), or 6
- * (box) planes.  This analysis depends on the properties of objects
- * with convex hulls.  Let the ray in question be defined such that
- * any point X on the ray may be expressed as X = P + k D.  Intersect
- * the ray with each of the planes bounding the ARB as discussed
- * above, and record the values of the parametric distance k along the
- * ray.
+ * An ARB is a volume bounded by 4 (pyramid), 5 (wedge), or 6 (box)
+ * planes.  Traditionally, this analysis depended on the properties of
+ * objects with convex hulls, but support was extended to include
+ * concave definitions as well (as a special case).  For convex, the
+ * following applies:
+ *
+ * Let the ray in question be defined such that any point X on the ray
+ * may be expressed as X = P + k D.  Intersect the ray with each of
+ * the planes bounding the ARB as discussed above, and record the
+ * values of the parametric distance k along the ray.
  *
  * With outward pointing normal vectors, note that the ray enters the
  * half-space defined by a plane when D cdot N < 0, is parallel to the
@@ -57,16 +60,17 @@
 #include "bu/cv.h"
 #include "vmath.h"
 #include "bn.h"
+#include "bg.h"
 #include "nmg.h"
 #include "rt/db4.h"
 #include "rt/geom.h"
-#include "rt/arb_edit.h"
 #include "raytrace.h"
 
 #include "../../librt_private.h"
 
 
 #define RT_SLOPPY_DOT_TOL 0.0087 /* inspired by RT_DOT_TOL, but less tight (.5 deg) */
+
 
 /* Optionally, one of these for each face.  (Lazy evaluation) */
 struct oface {
@@ -141,6 +145,25 @@ static const int farb4[6][4] = {
 };
 
 
+/* ARB vertices */
+const short int rt_arb_vertices[5][24] = {
+    { 1, 2, 3, 0, 1, 2, 4, 0, 2, 3, 4, 0, 1, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, /* arb4 */
+    { 1, 2, 3, 4, 1, 2, 5, 0, 2, 3, 5, 0, 3, 4, 5, 0, 1, 4, 5, 0, 0, 0, 0, 0 }, /* arb5 */
+    { 1, 2, 3, 4, 2, 3, 6, 5, 1, 5, 6, 4, 1, 2, 5, 0, 3, 4, 6, 0, 0, 0, 0, 0 }, /* arb6 */
+    { 1, 2, 3, 4, 5, 6, 7, 0, 1, 4, 5, 0, 2, 3, 7, 6, 1, 2, 6, 5, 4, 3, 7, 5 }, /* arb7 */
+    { 1, 2, 3, 4, 5, 6, 7, 8, 1, 5, 8, 4, 2, 3, 7, 6, 1, 2, 6, 5, 4, 3, 7, 8 }  /* arb8 */
+};
+
+/* planes to define ARB vertices */
+static const int rt_arb_planes[5][24] = {
+    {0, 1, 3, 0, 1, 2, 0, 2, 3, 0, 1, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3},	/* ARB4 */
+    {0, 1, 4, 0, 1, 2, 0, 2, 3, 0, 3, 4, 1, 2, 4, 1, 2, 4, 1, 2, 4, 1, 2, 4},	/* ARB5 */
+    {0, 2, 3, 0, 1, 3, 0, 1, 4, 0, 2, 4, 1, 2, 3, 1, 2, 3, 1, 2, 4, 1, 2, 4},	/* ARB6 */
+    {0, 2, 4, 0, 3, 4, 0, 3, 5, 0, 2, 5, 1, 4, 5, 1, 3, 4, 1, 3, 5, 1, 2, 4},	/* ARB7 */
+    {0, 2, 4, 0, 3, 4, 0, 3, 5, 0, 2, 5, 1, 2, 4, 1, 3, 4, 1, 3, 5, 1, 2, 5},	/* ARB8 */
+};
+
+
 #define ARB_AO(_t, _a, _i) offsetof(_t, _a) + sizeof(point_t) * _i + sizeof(point_t) / ELEMENTS_PER_POINT * X
 
 const struct bu_structparse rt_arb_parse[] = {
@@ -185,13 +208,14 @@ const short local_arb4_edge_vertex_mapping[6][2] = {
 struct clt_arb_specific {
     cl_double arb_peqns[4*6];
     cl_int arb_nmfaces;
+    /* FIXME: need support for convex! */
 };
 
 size_t
 clt_arb_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct arb_specific *arb =
-        (struct arb_specific *)stp->st_specific;
+	(struct arb_specific *)stp->st_specific;
     struct clt_arb_specific *args;
 
     const struct aface *afp;
@@ -201,7 +225,7 @@ clt_arb_pack(struct bu_pool *pool, struct soltab *stp)
     args = (struct clt_arb_specific*)bu_pool_alloc(pool, 1, size);
 
     for (afp = &arb->arb_face[j=0]; j < 6; j++, afp++) {
-        HMOVE(args->arb_peqns+4*j, afp->peqn);
+	HMOVE(args->arb_peqns+4*j, afp->peqn);
     }
     args->arb_nmfaces = arb->arb_nmfaces;
     return size;
@@ -209,24 +233,7 @@ clt_arb_pack(struct bu_pool *pool, struct soltab *stp)
 #endif /* USE_OPENCL */
 
 
-/* rt_arb_get_cgtype(), rt_arb_std_type(), and rt_arb_centroid()
- * stolen from mged/arbs.c */
 
-/**
- * determines COMGEOM arb types from GED general arbs
- *
- * Inputs -
- *
- * Returns number of distinct edge vectors (number of entries in uvec array)
- *
- * Implicit returns -
- * *cgtype - Comgeom type (number range 4..8;  ARB4 .. ARB8).
- * uvec[8] - indices of unique vertices (return value is the number of valid entries)
- * svec[11] - Entries [0] and [1] are special (they are the counts of duplicates)
- *            entries 2-10 are 2 lists of duplicate vertices
- *            entry[0] gives length of first list (starts at entry[2])
- *            entry[1] gives length of second list (starts at entry[2+entry[0]])
- */
 int
 rt_arb_get_cgtype(
     int *cgtype,
@@ -326,22 +333,6 @@ rt_arb_get_cgtype(
 }
 
 
-/**
- * Given an ARB in internal form, return its specific ARB type.
- *
- * Set tol.dist = 0.0001 to obtain past behavior.
- *
- * Returns -
- * 0 Error in input ARB
- * 4 ARB4
- * 5 ARB5
- * 6 ARB6
- * 7 ARB7
- * 8 ARB8
- *
- * Implicit return -
- * rt_arb_internal pt[] array reorganized into GIFT "standard" order.
- */
 int
 rt_arb_std_type(const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
@@ -366,10 +357,6 @@ rt_arb_std_type(const struct rt_db_internal *ip, const struct bn_tol *tol)
 }
 
 
-/**
- * Find the center point for the arb in the rt_db_internal structure,
- * and return it as a point_t.
- */
 void
 rt_arb_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
@@ -683,6 +670,36 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
 }
 
 
+void
+rt_arb_print(register const struct soltab *stp)
+{
+    register struct arb_specific *arbp =
+	(struct arb_specific *)stp->st_specific;
+    register struct aface *afp;
+    register int i;
+
+    if (arbp == (struct arb_specific *)0) {
+	bu_log("arb(%s):  no faces\n", stp->st_name);
+	return;
+    }
+    bu_log("%d faces:\n", arbp->arb_nmfaces);
+    for (i = 0; i < arbp->arb_nmfaces; i++) {
+	afp = &(arbp->arb_face[i]);
+	VPRINT("A", afp->A);
+	HPRINT("Peqn", afp->peqn);
+	if (arbp->arb_opt) {
+	    register struct oface *op;
+	    op = &(arbp->arb_opt[i]);
+	    VPRINT("UVorig", op->arb_UVorig);
+	    VPRINT("U", op->arb_U);
+	    VPRINT("V", op->arb_V);
+	    bu_log("Ulen = %g, Vlen = %g\n",
+		   op->arb_Ulen, op->arb_Vlen);
+	}
+    }
+}
+
+
 /**
  * Find the bounding RPP of an arb
  */
@@ -705,40 +722,145 @@ rt_arb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 }
 
 
-static bool
-arb_is_concave(const struct arb_specific *arbp, const struct bn_tol *tol)
+static fastf_t
+arb_concave_eps(const point_t v[8])
 {
-    /* iterate over all plane equation face pairings */
-    for (int i = 0; i < arbp->arb_nmfaces; i++) {
-        for (int j = i + 1; j < arbp->arb_nmfaces; j++) {
-            /* check whether any vertices are in front of a given face */
-            for (int k = 0; k < arbp->arb_nmfaces; k++) {
-                if (k != i && k != j) {
-		    /* positive means point is in front of the face */
-		    fastf_t dist = DIST_PNT_PLANE(arbp->arb_face[k].A, arbp->arb_face[i].peqn);
-		    // bu_log("dist = %lf\n", dist);
-                    if (dist > tol->dist) {
-			// bu_log("DIST > %.16lf = %.16lf\n", tol->dist, dist);
+    fastf_t minx = v[0][X];
+    fastf_t maxx = v[0][X];
+    fastf_t miny = v[0][Y];
+    fastf_t maxy = v[0][Y];
+    fastf_t minz = v[0][Z];
+    fastf_t maxz = v[0][Z];
 
-			/* concave */
-			return true;
-                    }
-                }
-            }
-        }
+    for (int i = 1; i < 8; ++i) {
+	V_MIN(minx, v[i][X]);
+	V_MAX(maxx, v[i][X]);
+	V_MIN(miny, v[i][Y]);
+	V_MAX(maxy, v[i][Y]);
+	V_MIN(minz, v[i][Z]);
+	V_MAX(maxz, v[i][Z]);
     }
+    fastf_t span = maxx - minx;
+    if (maxy - miny > span) span = maxy - miny;
+    if (maxz - minz > span) span = maxz - minz;
 
-    /* convex */
-    return false;
+    const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+    fastf_t eps = default_tol.dist; /* distance units */
+    fastf_t scale_eps = span * 1.0e-4; /* 1e-4 of span */
+    if (scale_eps > eps)
+	eps = scale_eps;
+
+    return eps;
 }
 
 
-#if 0
 /**
- * Note: This current implementation assumes the ARB definition is
- * still planar with one place per face.  Next step might be to expand
- * support for splitting faces (still maintaining planar faces) in
- * order to support twisted definitions and non-planar vertices.
+ * Half‑space test: does point P lie on inner side of quad f?
+ */
+static bool
+point_inside_face(const point_t v[8], const int f[4], const point_t P, const point_t centroid, fastf_t eps)
+{
+    point_t a, b, n, c, d;
+
+    VSUB2(a, v[f[1]], v[f[0]]);        /* a = v1 - v0 */
+    VSUB2(b, v[f[2]], v[f[0]]);        /* b = v2 - v0 */
+    VCROSS(n, a, b);                   /* face normal  n = a × b */
+
+    VUNITIZE(n);
+    VSUB2(c, centroid, v[f[0]]);       /* c = centroid − v0         */
+    if (VDOT(n, c) > 0.0) {            /* make sure n faces OUTward */
+        VREVERSE(n, n);
+    }
+
+    VSUB2(d, P, v[f[0]]);              /* d = P − v0                */
+    return VDOT(n, d) <= eps;          /* inside (or on) the plane? */
+}
+
+
+/**
+ * An ARB8 solid is convex iff the line‑segment joining every pair of
+ * vertices lies on or inside the solid.
+ *
+ * To determine this, we 1) get outward facing normals for all 6 faces
+ * (outward from the centroid), 2) compute segment midpoint for all 28
+ * vertex pairings, and 3) half-space test midpoint against all 6
+ * outward facing planes.  If it lies outside any, it's concave.
+ */
+static bool
+arb_is_concave(const struct rt_arb_internal *aip)
+{
+    register const point_t *v = aip->pt;
+
+    /* to ensure outward facing regardless of vertex ordering */
+    point_t centroid = VINIT_ZERO;
+    for (size_t i = 0; i < 8; ++i) {
+	VADD2(centroid, centroid, v[i]);
+    }
+    VSCALE(centroid, centroid, 1.0 / 8.0);
+
+    const fastf_t eps = arb_concave_eps(v);
+
+    /* every vertex‑pair midpoint must stay inside */
+    for (size_t i = 0; i < 8; ++i) {
+	for (size_t j = i + 1; j < 8; ++j) {
+
+	    /* using midpoint as it'll be furthest from plane */
+	    point_t mid;
+	    VADD2SCALE(mid, v[i], v[j], 0.5); /* (vi + vj)/2 */
+
+	    for (size_t f = 0; f < 6; ++f) {
+		if (!point_inside_face(v, rt_arb_info[f].ai_sub, mid, centroid, eps)) {
+		    return true; /* concave */
+		}
+	    }
+	}
+    }
+    return false; /* convex */
+}
+
+
+/**
+ * Are all ARB8 faces planar?
+ */
+static bool
+arb_is_planar(const struct rt_arb_internal *aip, const struct bn_tol *tol)
+{
+    register const point_t *v = aip->pt;
+
+    point_t pts[4] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+    static const struct bn_tol default_tol = BN_TOL_INIT_TOL;
+
+    if (!tol)
+	tol = &default_tol;
+
+    for (size_t f = 0; f < 6; ++f) {
+      VMOVE(pts[0], v[rt_arb_info[f].ai_sub[0]]);
+      VMOVE(pts[1], v[rt_arb_info[f].ai_sub[1]]);
+      VMOVE(pts[2], v[rt_arb_info[f].ai_sub[2]]);
+      VMOVE(pts[3], v[rt_arb_info[f].ai_sub[3]]);
+      if (!bg_coplanar_pts((const point_t *)pts, 4, tol)) {
+        return false;
+      }
+    }
+    return true; /* all coplanar */
+}
+
+
+/* helper: is triangle (p,q,r) oriented the same as face normal N ? */
+static bool
+tri_matches_face(const point_t p, const point_t q, const point_t r, const vect_t  N)
+{
+    vect_t u, v, tN;
+    VSUB2(u, q, p);
+    VSUB2(v, r, p);
+    VCROSS(tN, u, v);
+    return VDOT(tN, N) > 0.0;   /* same hemi‑space ⇒ correct winding */
+}
+
+
+/**
+ * Note: Current implementation to BOT assumes ARBs are planar.
+ * Possible to expand support for non-planar via BREP or subdivision..
  */
 static struct rt_bot_internal *
 arb_to_bot(const struct rt_arb_internal *aip, const struct arb_specific *asp)
@@ -751,24 +873,76 @@ arb_to_bot(const struct rt_arb_internal *aip, const struct arb_specific *asp)
     BU_ALLOC(bot, struct rt_bot_internal);
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->mode = RT_BOT_SOLID;
-    bot->num_vertices = 8;
-    bot->num_faces = asp->arb_nmfaces;
+    bot->orientation = RT_BOT_UNORIENTED;
+    bot->bot_flags = 0;
 
+    static const int face_v[6][4] = {
+	{3,2,1,0}, {4,5,6,7}, {4,7,3,0},
+	{2,6,5,1}, {1,5,4,0}, {7,6,2,3}
+    };
+    bot->num_faces = asp->arb_nmfaces * 2;
+    bot->faces = (int *)bu_calloc(bot->num_faces*3, sizeof(int), "bot->faces");
+
+    bot->num_vertices = 8;
     bot->vertices = (fastf_t *)bu_calloc(bot->num_vertices*3, sizeof(fastf_t), "bot->vertices");
     for (i=0; i < bot->num_vertices; i++) {
-	bot->vertices[i*3+X] = aip->pt[i][X];
-	bot->vertices[i*3+Y] = aip->pt[i][Y];
-	bot->vertices[i*3+Z] = aip->pt[i][Z];
+	VMOVE(&bot->vertices[3*i], aip->pt[i]);
     }
 
-    bot->faces = (int *)bu_calloc(bot->num_faces * 3, sizeof(int), "bot->faces");
-    for (i=0; i < bot->num_faces*3; i++) {
-	bot->faces[i] = i; //faces[i];
+    size_t f = 0; /* track the face we're adding */
+    for (int q = 0; q < asp->arb_nmfaces; ++q) {
+	const struct aface *afp = &(asp->arb_face[q]);
+
+	/* test so all triangles wind same as face */
+	int a = face_v[q][0];
+	int b = face_v[q][1];
+	int c = face_v[q][2];
+	int d = face_v[q][3];
+
+	int triA1[3] = {a, b, c};
+	int triA2[3] = {a, c, d}; /* <= if diagonal a‑c */
+	int triB1[3] = {a, b, d};
+	int triB2[3] = {b, c, d}; /* <= if diagonal b‑d */
+
+	bool good_ac =
+	    tri_matches_face(aip->pt[a], aip->pt[b], aip->pt[c], afp->peqn)
+	    && tri_matches_face(aip->pt[a], aip->pt[c], aip->pt[d], afp->peqn);
+
+	/* indices for our two face triangles */
+	int *tri1 = good_ac ? triA1 : triB1;
+	int *tri2 = good_ac ? triA2 : triB2;
+
+	vect_t ab, ac, n;
+	VSUB2(ab, aip->pt[b], aip->pt[a]);
+	VSUB2(ac, aip->pt[c], aip->pt[a]);
+	VCROSS(n, ab, ac);
+	if (VDOT(n, afp->peqn) < 0.0) {
+	    /* wrong winding – swap */
+	    int tmp = tri1[1];
+	    tri1[1] = tri1[2];
+	    tri1[2] = tmp;
+	    tmp = tri2[1];
+	    tri2[1] = tri2[2];
+	    tri2[2] = tmp;
+	}
+
+	memcpy(&bot->faces[3*f++], tri1, 3*sizeof(int));
+	memcpy(&bot->faces[3*f++], tri2, 3*sizeof(int));
     }
+
+    bot->thickness = NULL;
+    bot->face_mode = NULL;
+    bot->normals = NULL;
+    bot->num_normals = 0;
+    bot->face_normals = NULL;
+    bot->num_face_normals = 0;
+    bot->uvs = NULL;
+    bot->num_uvs = 0;
+    bot->face_uvs = NULL;
+    bot->num_face_uvs = 0;
 
     return bot;
 }
-#endif
 
 
 /**
@@ -789,9 +963,15 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
     RT_ARB_CK_MAGIC(aip);
 
     pa.pa_doopt = uv_wanted;
-    pa.pa_tol_sq = rtip->rti_tol.dist_sq;
+    if (rtip) {
+	pa.pa_tol_sq = rtip->rti_tol.dist_sq;
+    } else {
+	struct bn_tol defaults = BN_TOL_INIT_TOL;
+	rt_tol_default(&defaults);
+	pa.pa_tol_sq = defaults.dist_sq;
+    }
 
-    if (rt_arb_mk_planes(&pa, aip, stp->st_dp->d_namep) < 0) {
+    if (rt_arb_mk_planes(&pa, aip, "(prep)") < 0) {
 	return -2;		/* Error */
     }
 
@@ -827,24 +1007,39 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 		   pa.pa_faces * sizeof(struct oface));
 	    arbp->arb_opt = ofp;
 	} else {
-	    arbp->arb_opt = (struct oface *)0;
+	    arbp->arb_opt = NULL;
 	}
     }
 
+    if (pa.pa_faces == 6 && arb_is_concave(aip)) {
+	if (UNLIKELY(RT_G_DEBUG & RT_DEBUG_ARB8)) {
+	    bu_log("ARB8(%s) IS CONCAVE\n", stp->st_dp?stp->st_name:"_unnamed_");
+	    rt_arb_print(stp);
+	}
 
-    if (arb_is_concave(arbp, &rtip->rti_tol)) {
-#if 0
-	bu_log("ARB IS CONCAVE\n");
+	/* get a bot for this arb, then pretend */
 	struct rt_bot_internal *botp = arb_to_bot(aip, arbp);
-	if (!botp)
-	    bu_log("oops\n");
-#endif
-    }
 
+	stp->st_id = ID_BOT;
+	stp->st_meth = &OBJ[ID_BOT];
+	stp->st_specific = NULL; /* reset for BoT prep */
+
+	struct rt_db_internal internal;
+	internal.idb_magic = RT_DB_INTERNAL_MAGIC;
+	internal.idb_major_type = ID_BOT;
+	internal.idb_ptr = botp;
+
+	return rt_obj_prep(stp, &internal, rtip);
+    }
+    if (UNLIKELY(RT_G_DEBUG & RT_DEBUG_ARB8)) {
+	if (pa.pa_faces == 6 && !arb_is_planar(aip, NULL)) {
+	    bu_log("ARB8(%s) IS NON-PLANAR\n", stp->st_dp?stp->st_name:"_unnamed_");
+	}
+    }
 
     /*
      * Compute bounding sphere which contains the bounding RPP.
-     * Find min and max of the point co-ordinates to find the
+     * Find min and max of the point coordinates to find the
      * bounding RPP.  Note that this center is NOT guaranteed
      * to be contained within the solid!
      */
@@ -864,6 +1059,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 	stp->st_aradius = f;
 	stp->st_bradius = MAGNITUDE(work);
     }
+
     return 0;		/* OK */
 }
 
@@ -880,40 +1076,11 @@ rt_arb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_arb_internal *aip;
 
+    RT_CK_DB_INTERNAL(ip);
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
     return rt_arb_setup(stp, aip, rtip, 0);
-}
-
-
-void
-rt_arb_print(register const struct soltab *stp)
-{
-    register struct arb_specific *arbp =
-	(struct arb_specific *)stp->st_specific;
-    register struct aface *afp;
-    register int i;
-
-    if (arbp == (struct arb_specific *)0) {
-	bu_log("arb(%s):  no faces\n", stp->st_name);
-	return;
-    }
-    bu_log("%d faces:\n", arbp->arb_nmfaces);
-    for (i = 0; i < arbp->arb_nmfaces; i++) {
-	afp = &(arbp->arb_face[i]);
-	VPRINT("A", afp->A);
-	HPRINT("Peqn", afp->peqn);
-	if (arbp->arb_opt) {
-	    register struct oface *op;
-	    op = &(arbp->arb_opt[i]);
-	    VPRINT("UVorig", op->arb_UVorig);
-	    VPRINT("U", op->arb_U);
-	    VPRINT("V", op->arb_V);
-	    bu_log("Ulen = %g, Vlen = %g\n",
-		   op->arb_Ulen, op->arb_Vlen);
-	}
-    }
 }
 
 
@@ -991,14 +1158,18 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     }
     /* Validate */
     if (iplane == -1 || oplane == -1) {
-	bu_log("rt_arb_shoot(%s): 1 hit => MISS\n",
-	       stp->st_name);
+	const char *name = NULL;
+	if (stp->st_dp && stp->st_name)
+	    name = stp->st_name;
+	else
+	    name = "_unnamed_";
+	bu_log("rt_arb_shoot(%s): 1 hit => MISS\n", name);
 	return 0;	/* MISS */
     }
     if (in >= out || out >= INFINITY)
 	return 0;	/* MISS */
 
-    {
+    if (seghead) {
 	register struct seg *segp;
 
 	RT_GET_SEG(segp, ap->a_resource);
@@ -1230,7 +1401,7 @@ rt_arb_free(register struct soltab *stp)
 	(struct arb_specific *)stp->st_specific;
 
     if (arbp->arb_opt)
-	bu_free((char *)arbp->arb_opt, "arb_opt");
+	bu_free((void *)arbp->arb_opt, "arb_opt");
     bu_free((char *)arbp, "arb_specific");
 }
 
@@ -1245,21 +1416,21 @@ rt_arb_free(register struct soltab *stp)
  * Plot an ARB by tracing out four "U" shaped contours This draws each
  * edge only once.
  *
- * XXX No checking for degenerate faces is done, but probably should
- * be.
+ * TODO: does not currently optimize for arb7/6/5/4, but should.
  */
 int
 rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     point_t *pts;
     struct rt_arb_internal *aip;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
+    /* FIXME: blindly adds to vlist even when edge is collapsed */
     pts = aip->pt;
     ARB_FACE(vlfree, vhead, pts, 0, 1, 2, 3);
     ARB_FACE(vlfree, vhead, pts, 4, 0, 3, 7);
@@ -1377,6 +1548,26 @@ rt_arb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_arb_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_arb_internal *tip = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(tip);
+    struct rt_arb_internal *top = (struct rt_arb_internal *)rop->idb_ptr;
+    RT_ARB_CK_MAGIC(top);
+
+    point_t pt[8];
+    for (int i = 0; i < 8; i++)
+	VMOVE(pt[i], tip->pt[i]);
+    for (int i = 0; i < 8; i++)
+	MAT4X3PNT(top->pt[i], mat, pt[i]);
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Import an arb from the db5 format and convert to the internal
@@ -1409,10 +1600,11 @@ rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 8*3);
     if (mat == NULL) mat = bn_mat_identity;
-    for (i = 0; i < 8; i++) {
-	MAT4X3PNT(aip->pt[i], mat, &vec[i*3]);
-    }
-    return 0;	/* OK */
+    for (i = 0; i < 8; i++)
+	VMOVE(aip->pt[i], &vec[i*3]);
+
+    /* Apply modeling transformations */
+    return rt_arb_mat(ip, mat, ip);
 }
 
 
@@ -1520,6 +1712,7 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 			    INTCLAMP(aip->pt[i][Z] * mm2local));
 		    bu_vls_strcat(str, buf);
 		}
+		/* skips pt[5] */
 		sprintf(buf, "\t6 (%g, %g, %g)\n",
 			INTCLAMP(aip->pt[6][X] * mm2local),
 			INTCLAMP(aip->pt[6][Y] * mm2local),
@@ -1543,6 +1736,7 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 			    INTCLAMP(aip->pt[i][Z] * mm2local));
 		    bu_vls_strcat(str, buf);
 		}
+		/* skips pt[3] */
 		sprintf(buf, "\t4 (%g, %g, %g)\n",
 			INTCLAMP(aip->pt[4][X] * mm2local),
 			INTCLAMP(aip->pt[4][Y] * mm2local),
@@ -1586,6 +1780,7 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct faceuse *fu[6];
     struct vertex *verts[8];
     struct vertex **vertp[4];
+    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
     aip = (struct rt_arb_internal *)ip->idb_ptr;
@@ -1645,13 +1840,13 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Mark edges as real */
-    (void)nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
+    (void)nmg_mark_edges_real(&s->l.magic, vlfree);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
     /* Some arbs may not be within tolerance, so triangulate faces where needed */
-    nmg_make_faces_within_tol(s, &RTG.rtg_vlfree, tol);
+    nmg_make_faces_within_tol(s, vlfree, tol);
 
     return 0;
 }
@@ -1693,6 +1888,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     struct vertex **vertp[4];
     struct edgeuse *eu;
     struct loopuse *lu;
+    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
     aip = (struct rt_arb_internal *)ip->idb_ptr;
@@ -1826,7 +2022,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 
     /* Mark edges as real */
-    (void)nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
+    (void)nmg_mark_edges_real(&s->l.magic, vlfree);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
@@ -1836,11 +2032,6 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 /* --- General ARB8 utility routines --- */
 
-/**
- * Takes the planes[] array and intersects the planes to find the
- * vertices of a GENARB8.  The vertices are stored into arb->pt[].
- * This is an analog of rt_arb_calc_planes().
- */
 int
 rt_arb_calc_points(struct rt_arb_internal *arb, int cgtype, const plane_t planes[6], const struct bn_tol *tol)
 {
@@ -1924,23 +2115,6 @@ rt_arb_check_points(struct rt_arb_internal *arb, int cgtype, const struct bn_tol
 }
 
 
-/* planes to define ARB vertices */
-static const int rt_arb_planes[5][24] = {
-    {0, 1, 3, 0, 1, 2, 0, 2, 3, 0, 1, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3},	/* ARB4 */
-    {0, 1, 4, 0, 1, 2, 0, 2, 3, 0, 3, 4, 1, 2, 4, 1, 2, 4, 1, 2, 4, 1, 2, 4},	/* ARB5 */
-    {0, 2, 3, 0, 1, 3, 0, 1, 4, 0, 2, 4, 1, 2, 3, 1, 2, 3, 1, 2, 4, 1, 2, 4},	/* ARB6 */
-    {0, 2, 4, 0, 3, 4, 0, 3, 5, 0, 2, 5, 1, 4, 5, 1, 3, 4, 1, 3, 5, 1, 2, 4},	/* ARB7 */
-    {0, 2, 4, 0, 3, 4, 0, 3, 5, 0, 2, 5, 1, 2, 4, 1, 3, 4, 1, 3, 5, 1, 2, 5},	/* ARB8 */
-};
-
-
-/**
- * Finds the intersection point of three faces of an ARB.
- *
- * Returns -
- * 0 success, value is in 'point'
- * -1 failure
- */
 int
 rt_arb_3face_intersect(
     point_t point,
@@ -1961,17 +2135,6 @@ rt_arb_3face_intersect(
 }
 
 
-/**
- * Calculate the plane (face) equations for an arb output previously
- * went to es_peqn[i].
- *
- * Returns -
- * -1 Failure
- * 0 OK
- *
- * Note -
- * This function migrated from mged/edsol.c.
- */
 int
 rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 		   struct rt_arb_internal *arb,
@@ -1979,20 +2142,23 @@ rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 		   plane_t planes[6],
 		   const struct bn_tol *tol)
 {
-    register int i, p1, p2, p3;
-    int type = cgtype - ARB4; /* ARB4 at location 0, ARB5 at 1, etc. */
     const int arb_faces[5][24] = rt_arb_faces;
+
+    /* ARB4 at location 0, ARB5 at 1, etc. */
+    int type = cgtype - ARB4;
+    if (type < 0 || type > 4)
+	return -1;
 
     RT_ARB_CK_MAGIC(arb);
     BN_CK_TOL(tol);
 
-    for (i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
 	if (arb_faces[type][i*4] == -1)
 	    break;	/* faces are done */
 
-	p1 = arb_faces[type][i*4];
-	p2 = arb_faces[type][i*4+1];
-	p3 = arb_faces[type][i*4+2];
+	int p1 = arb_faces[type][i*4];
+	int p2 = arb_faces[type][i*4+1];
+	int p3 = arb_faces[type][i*4+2];
 
 	if (bg_make_plane_3pnts(planes[i],
 			     arb->pt[p1],
@@ -2009,14 +2175,6 @@ rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 }
 
 
-/**
- * Moves an arb edge (end1, end2) with bounding planes bp1 and bp2
- * through point "thru".  The edge has (non-unit) slope "dir".  Note
- * that the fact that the normals here point in rather than out makes
- * no difference for computing the correct intercepts.  After the
- * intercepts are found, they should be checked against the other
- * faces to make sure that they are always "inside".
- */
 int
 rt_arb_move_edge(struct bu_vls *error_msg_ret,
 		 struct rt_arb_internal *arb,
@@ -2044,44 +2202,6 @@ rt_arb_move_edge(struct bu_vls *error_msg_ret,
 
     return 0;
 }
-
-
-/**
- * An ARB edge is moved by finding the direction of the line
- * containing the edge and the 2 "bounding" planes.  The new edge is
- * found by intersecting the new line location with the bounding
- * planes.  The two "new" planes thus defined are calculated and the
- * affected points are calculated by intersecting planes.  This keeps
- * ALL faces planar.
- *
- * Note: This code came from mged/edarb.c (written mostly by Keith
- * Applin) and was modified to live here.
- *
- */
-
-/* The storage for the "specific" ARB types is :
- *
- * ARB4 0 1 2 0 3 3 3 3
- * ARB5 0 1 2 3 4 4 4 4
- * ARB6 0 1 2 3 4 4 5 5
- * ARB7 0 1 2 3 4 5 6 4
- * ARB8 0 1 2 3 4 5 6 7
- */
-
-/*
- * ARB6 0 1 2 3 4 5 5 4
- */
-
-/* Another summary of how the vertices of ARBs are stored:
- *
- * Vertices:	1	2	3	4	5	6	7	8
- * Location----------------------------------------------------------------
- *	ARB8	0	1	2	3	4	5	6	7
- *	ARB7	0	1	2	3	4, 7	5	6
- *	ARB6	0	1	2	3	4, 5	6, 7
- * 	ARB5	0	1	2	3	4, 5, 6, 7
- *	ARB4	0, 3	1	2	4, 5, 6, 7
- */
 
 
 #define RT_ARB_EDIT_EDGE 0
@@ -2408,6 +2528,7 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
     tmp_tol.dist = RT_LEN_TOL;
     tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
 
+    *vol = 0.0;
     for (i = 0; i < 6; i++) {
 	/* a, b, c = base of the arb4 */
 	a = farb4[i][0];
@@ -2610,75 +2731,201 @@ rt_arb_find_e_nearest_pt2(int *edge,
     return 0;
 }
 
-void
-rt_arb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_arb_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *utol)
 {
-    int i;
+    if (!pl || pl_max < 8 || !ip)
+	return 0;
 
-    if (!ps || !ip)
-	return;
+    const struct bn_tol ltol = BN_TOL_INIT_TOL;
+    const struct bn_tol *tol = (utol) ? utol : &ltol;
+    struct rt_arb_internal *arb= (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+    int es_type = rt_arb_std_type(ip, tol);
 
+    point_t pos_view;
+    int npl = 0;
+
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
+
+    switch (es_type)
+    {
+	case ARB8:
+	    for (int i=0; i<8; i++) {
+		MAT4X3PNT(pos_view, xform, arb->pt[i]);
+		POINT_LABEL(pos_view, i+'1');
+	    }
+	    return 8;
+	case ARB7:
+	    for (int i=0; i<7; i++) {
+		MAT4X3PNT(pos_view, xform, arb->pt[i]);
+		POINT_LABEL(pos_view, i+'1');
+	    }
+	    return 7;
+	case ARB6:
+	    for (int i=0; i<5; i++) {
+		MAT4X3PNT(pos_view, xform, arb->pt[i]);
+		POINT_LABEL(pos_view, i+'1');
+	    }
+	    MAT4X3PNT(pos_view, xform, arb->pt[6]);
+	    POINT_LABEL(pos_view, '6');
+	    return 6;
+	case ARB5:
+	    for (int i=0; i<5; i++) {
+		MAT4X3PNT(pos_view, xform, arb->pt[i]);
+		POINT_LABEL(pos_view, i+'1');
+	    }
+	    return 5;
+	case ARB4:
+	    for (int i=0; i<3; i++) {
+		MAT4X3PNT(pos_view, xform, arb->pt[i]);
+		POINT_LABEL(pos_view, i+'1');
+	    }
+	    MAT4X3PNT(pos_view, xform, arb->pt[4]);
+	    POINT_LABEL(pos_view, '4');
+	    return 4;
+	default:
+	    return 0;
+    }
+}
+
+int
+rt_arb_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(planar_only), fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_arb_internal *oarb = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(oarb);
+
+    struct bn_tol arb_tol = BN_TOL_INIT_TOL;
+    arb_tol.dist = 0.0001; /* to get old behavior of rt_arb_std_type() */
+    arb_tol.dist_sq = arb_tol.dist * arb_tol.dist;
+    int arbType = rt_arb_std_type(ip, &arb_tol);
+
+    // For arbs, we bump all the faces in or out.  Rather than trying to
+    // update all the vertices to reflect all the planar moves without
+    // rotating any of the faces, we just construct the planes and return
+    // an ARBN.  This will take up to 6 planes.
+    plane_t planes[6];
+    struct bu_vls calc_plane_err = BU_VLS_INIT_ZERO;
+    if (rt_arb_calc_planes(&calc_plane_err, oarb, arbType, planes, &arb_tol) < 0) {
+	bu_log("rt_arb_perturb(arb8.c:%d): %s\n", __LINE__, bu_vls_cstr(&calc_plane_err));
+	bu_vls_free(&calc_plane_err);
+	return BRLCAD_ERROR;
+    }
+    bu_vls_free(&calc_plane_err);
+
+
+    const int arb_faces[5][24] = rt_arb_faces;
+    int type = arbType - ARB4;  /* ARB4 is at 0, ARB5 at 1, etc. */
+
+    // For each active plane, we:
+    // 1.  Determine the closest point on the plane to the arb center.
+    // 2.  Construct the scale vector based on the plane normal
+    // 3.  Apply that vector to the closest point
+    // 4.  Use the new point and original plane vector to define a new
+    //     plane
+    point_t arb_center;
+    rt_arb_centroid(&arb_center, ip);
+    int afaces = 0;
+    for (int i = 0; i < 6; i++) {
+	if (arb_faces[type][i*4] == -1)
+	    continue;
+	fastf_t fx, fy;
+	bg_plane_closest_pt(&fx, &fy, &planes[i], &arb_center);
+	point_t cp;
+	bg_plane_pt_at(&cp, &planes[i], fx, fy);
+	// Out of the box, rt_arb_calc_planes apparently aren't necessarily
+	// suitable for use in an ARBN primitive. Make sure normal points out
+	// from center.
+	vect_t cvec;
+	VSUB2(cvec, cp, arb_center);
+	VUNITIZE(cvec);
+	if (VDOT(planes[i], cvec) < 0) {
+	    HREVERSE(planes[i], planes[i]);
+	}
+	vect_t pnorm;
+	VMOVE(pnorm, planes[i]);
+	VUNITIZE(pnorm);
+	VSCALE(pnorm, pnorm, val);
+	point_t np;
+	VADD2(np, cp, pnorm);
+	plane_t nplane;
+	VUNITIZE(pnorm);
+	bg_plane_pt_nrml(&nplane, np, pnorm);
+	HMOVE(planes[i], nplane);
+	afaces++;
+    }
+
+    // Make the output ARBN
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_ARBN;
+    nip->idb_meth = &OBJ[ID_ARBN];
+    struct rt_arbn_internal *arbn = NULL;
+    BU_ALLOC(arbn, struct rt_arbn_internal);
+    nip->idb_ptr = arbn;
+    arbn->magic = RT_ARBN_INTERNAL_MAGIC;
+    arbn->neqn = afaces;
+    arbn->eqn = (plane_t *)bu_calloc(afaces, sizeof(plane_t), "arbn eqns");
+    afaces = 0;
+    for (int i = 0; i < 6; i++) {
+	if (arb_faces[type][i*4] == -1)
+	    continue;
+	HMOVE(arbn->eqn[afaces], planes[afaces]);
+	afaces++;
+    }
+
+    *oip = nip;
+    return BRLCAD_OK;
+}
+
+const char *
+rt_arb_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    const struct bn_tol arb_tol = BN_TOL_INIT_TOL;
-    int arbType = rt_arb_std_type(ip, &arb_tol);
+    static const char *default_keystr = "V1";
+    const char *k = (keystr) ? keystr : default_keystr;
+    const char *w = (keystr) ? keystr : default_keystr;
 
-    // Set up the containers
-    struct bv_label *l[8];
-    for (i = 0; i < arbType; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
-
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
-
-	l[i] = la;
+    // Allow V# style specification of vertex numbers
+    if (*w == 'V') {
+	const char *ptr = w + 1;
+	int vertex_number = (*ptr) - '0';
+	if (vertex_number < 1 || vertex_number > 8) {
+	    // Overriding (TODO - this matches MGED behavior, but probably
+	    // isn't really what we should be doing - this indicates an invalid
+	    // V# specifier.)
+	    vertex_number = 1;
+	    k = default_keystr;
+	}
+	VMOVE(mpt, arb->pt[vertex_number-1]);
+	goto arb_kpt_end;
     }
 
-    // Do the specific data assignments for each label
-    switch (arbType) {
-	case ARB8:
-	    for (i=0; i<8; i++) {
-		bu_vls_sprintf(&l[i]->label, "%d", i+1);
-		VMOVE(l[i]->p, arb->pt[i]);
-	    }
-	    break;
-	case ARB7:
-	    for (i=0; i<7; i++) {
-		bu_vls_sprintf(&l[i]->label, "%d", i+1);
-		VMOVE(l[i]->p, arb->pt[i]);
-	    }
-	    break;
-	case ARB6:
-	    for (i=0; i<5; i++) {
-		bu_vls_sprintf(&l[i]->label, "%d", i+1);
-		VMOVE(l[i]->p, arb->pt[i]);
-	    }
-	    bu_vls_sprintf(&l[5]->label, "6");
-	    VMOVE(l[5]->p, arb->pt[6]);
-	    break;
-	case ARB5:
-	    for (i=0; i<5; i++) {
-		bu_vls_sprintf(&l[i]->label, "%d", i+1);
-		VMOVE(l[i]->p, arb->pt[i]);
-	    }
-	    break;
-	case ARB4:
-	    for (i=0; i<3; i++) {
-		bu_vls_sprintf(&l[i]->label, "%d", i+1);
-		VMOVE(l[i]->p, arb->pt[i]);
-	    }
-	    bu_vls_sprintf(&l[3]->label, "4");
-	    VMOVE(l[3]->p, arb->pt[4]);
-	    break;
-    }
+    // No keystr matches - failed
+    return NULL;
 
+arb_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
 }
 
 

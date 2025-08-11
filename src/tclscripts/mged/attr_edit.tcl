@@ -1,7 +1,7 @@
 #                   A T T R _ E D I T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2024 United States Government as represented by
+# Copyright (c) 2004-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -385,7 +385,7 @@ class Attr_editor {
 
     method new_attr {} {
 
-	# cannot create a new attribute if we do ot have an object
+	# cannot create a new attribute if we do to have an object
 	if { $obj_name == "" } return
 	set cur_index -1
 	set cur_attr_name ""

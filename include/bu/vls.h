@@ -1,7 +1,7 @@
 /*                           V L S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -93,14 +93,6 @@ typedef struct bu_vls bu_vls_t;
  * must be able to live with that.
  */
 BU_EXPORT extern void bu_vls_init(struct bu_vls *vp);
-
-/**
- * DEPRECATED: use if (!vls) bu_vls_init(vls)
- *
- * If a VLS is uninitialized, initialize it.  If it is already
- * initialized, leave it alone, caller wants to append to it.
- */
-DEPRECATED BU_EXPORT extern void bu_vls_init_if_uninit(struct bu_vls *vp);
 
 /**
  * Allocate storage for a struct bu_vls, call bu_vls_init on it, and
@@ -479,7 +471,7 @@ BU_EXPORT extern const char *bu_vls_decode(struct bu_vls *vp, const char *str);
  * processing or readability of strings.  This function takes a vls as an
  * input and simplifies it as follows:
  *
- * 1) Reduce characters present to alpha-numeric characters and those
+ * 1) Reduce characters present to alphanumeric characters and those
  *    characters supplied to the routine in the "keep" string.  Substitute
  *    is performed as follows:
  *

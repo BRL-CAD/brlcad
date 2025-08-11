@@ -1,7 +1,7 @@
 /*                        D M - O G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2024 United States Government as represented by
+ * Copyright (c) 1988-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -798,23 +798,6 @@ ogl_open(void *UNUSED(ctx), void *vinterp, int argc, const char **argv)
 		for (cip = dev->classes, k = 0; k < dev->num_classes;
 		     ++k, ++cip) {
 		    switch (cip->input_class) {
-#ifdef IR_BUTTONS
-			case ButtonClass:
-			    DeviceButtonPress(dev, pubvars->devbuttonpress,
-					      e_class[nclass]);
-			    ++nclass;
-			    DeviceButtonRelease(dev, pubvars->devbuttonrelease,
-						e_class[nclass]);
-			    ++nclass;
-			    break;
-#endif
-#ifdef IR_KNOBS
-			case ValuatorClass:
-			    DeviceMotionNotify(dev, pubvars->devmotionnotify,
-					       e_class[nclass]);
-			    ++nclass;
-			    break;
-#endif
 			default:
 			    break;
 		    }
@@ -1524,8 +1507,8 @@ struct dm_impl dm_ogl_impl = {
     {0, 0, 0},			/* bg1 color */
     {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
-    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
-    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
+    {BV_MIN, BV_MIN, BV_MIN},	/* clipmin */
+    {BV_MAX, BV_MAX, BV_MAX},	/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
     1,				/* depth buffer is writable */

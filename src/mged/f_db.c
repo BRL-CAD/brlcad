@@ -1,7 +1,7 @@
 /*                           F _ D B . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,27 +36,13 @@
 #include "./mged.h"
 
 /* defined in chgmodel.c */
-extern void set_localunit_TclVar(void);
+extern void set_localunit_TclVar(struct mged_state *s);
 
 /* Shorthand for open/close db callback function pointer type */
 typedef void (*db_clbk_t )(struct ged *, void *);
 
-void
-mged_output_handler(struct ged *UNUSED(gp), char *line)
-{
-    if (line)
-	bu_log("%s", line);
-}
-
-void
-mged_refresh_handler(void *UNUSED(clientdata))
-{
-    view_state->vs_flag = 1;
-    refresh();
-}
-
 static void
-_post_opendb_failed(struct ged *gedp, struct mged_opendb_ctx *ctx)
+_post_opendb_failed(struct mged_state *s, struct ged *gedp, struct mged_opendb_ctx *ctx)
 {
     char line[128];
     int argc = ctx->argc;
@@ -86,9 +72,9 @@ _post_opendb_failed(struct ged *gedp, struct mged_opendb_ctx *ctx)
 
     /* File does not exist, but nobody told us one way or the other
      * about creation - ask */
-    if (interactive && !ctx->force_create) {
-	if (mged_init_flag) {
-	    if (classic_mged) {
+    if (s->interactive && !ctx->force_create) {
+	if (ctx->init_flag) {
+	    if (s->classic_mged) {
 		bu_log("Create new database (y|n)[n]? ");
 		(void)bu_fgets(line, sizeof(line), stdin);
 		if (bu_str_false(line)) {
@@ -100,9 +86,9 @@ _post_opendb_failed(struct ged *gedp, struct mged_opendb_ctx *ctx)
 		struct bu_vls vls = BU_VLS_INIT_ZERO;
 		int status;
 
-		if (dpy_string != (char *)NULL)
+		if (s->dpy_string != (char *)NULL)
 		    bu_vls_printf(&vls, "cad_dialog .createdb %s \"Create New Database?\" \"Create new database named %s?\" \"\" 0 Yes No Quit",
-			    dpy_string, fname);
+			    s->dpy_string, fname);
 		else
 		    bu_vls_printf(&vls, "cad_dialog .createdb :0 \"Create New Database?\" \"Create new database named %s?\" \"\" 0 Yes No Quit",
 			    fname);
@@ -136,17 +122,15 @@ _post_opendb_failed(struct ged *gedp, struct mged_opendb_ctx *ctx)
     }
 
     if (ctx->post_open_cnt < 2) {
-	const char *av[3];
-	av[0] = "opendb";
-	av[1] = "-c";
+	const char *av[3] = {"opendb", "-c", NULL};
 	av[2] = fname;
-	ctx->ged_ret = ged_exec(gedp, 3, (const char **)av);
+	ctx->ged_ret = ged_exec_opendb(gedp, 3, av);
     }
 
     if (gedp->dbip == DBI_NULL) {
 	ctx->ret = TCL_ERROR;
 
-	if (mged_init_flag) {
+	if (ctx->init_flag) {
 	    /* we need to use bu_log here */
 	    bu_log("opendb: failed to create %s\n", fname);
 	    bu_log("opendb: no database is currently opened!\n");
@@ -154,7 +138,7 @@ _post_opendb_failed(struct ged *gedp, struct mged_opendb_ctx *ctx)
 	}
 
 	Tcl_AppendResult(ctx->interpreter, "opendb: failed to create ", fname, "\n", (char *)NULL);
-	if (DBIP == DBI_NULL)
+	if (s->dbip == DBI_NULL)
 	    Tcl_AppendResult(ctx->interpreter, "opendb: no database is currently opened!", (char *)NULL);
 
 	return;
@@ -164,8 +148,8 @@ _post_opendb_failed(struct ged *gedp, struct mged_opendb_ctx *ctx)
     bu_vls_printf(gedp->ged_result_str, "The new database %s was successfully created.\n", fname);
 }
 
-void
-mged_pre_opendb_clbk(struct ged *UNUSED(gedp), void *ctx)
+int
+mged_pre_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *UNUSED(gedp), void *ctx)
 {
     struct mged_opendb_ctx *mctx = (struct mged_opendb_ctx *)ctx;
     mctx->force_create = 0;
@@ -173,60 +157,63 @@ mged_pre_opendb_clbk(struct ged *UNUSED(gedp), void *ctx)
     mctx->created_new_db = 0;
     mctx->ret = 0;
     mctx->ged_ret = 0;
+    return BRLCAD_OK;
 }
 
-void
-mged_post_opendb_clbk(struct ged *gedp, void *ctx)
+int
+mged_post_opendb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *vgedp, void *ctx)
 {
     struct mged_opendb_ctx *mctx = (struct mged_opendb_ctx *)ctx;
     mctx->post_open_cnt++;
+    struct ged *gedp = (struct ged *)vgedp; // TODO - just use s->gedp here?
+    struct mged_state *s = mctx->s;
 
     /* Sync global to GED results */
-    DBIP = gedp->dbip;
+    s->dbip = gedp->dbip;
 
-    if (DBIP == DBI_NULL || mctx->old_dbip == gedp->dbip) {
-	_post_opendb_failed(gedp, mctx);
+    if (s->dbip == DBI_NULL || mctx->old_dbip == gedp->dbip) {
+	_post_opendb_failed(s, gedp, mctx);
 	mctx->post_open_cnt--;
-	return;
+	return BRLCAD_OK;
     }
 
     /* Opened database file */
     mctx->old_dbip = gedp->dbip;
-    if (DBIP->dbi_read_only)
-	bu_vls_printf(gedp->ged_result_str, "%s: READ ONLY\n", DBIP->dbi_filename);
+    if (s->dbip->dbi_read_only)
+	bu_vls_printf(gedp->ged_result_str, "%s: READ ONLY\n", s->dbip->dbi_filename);
 
     /* increment use count for gedp db instance */
-    (void)db_clone_dbi(DBIP, NULL);
+    (void)db_clone_dbi(s->dbip, NULL);
 
     /* Provide LIBWDB C access to the on-disk database */
-    if ((WDBP = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK)) == RT_WDB_NULL) {
+    if ((s->wdbp = wdb_dbopen(s->dbip, RT_WDB_TYPE_DB_DISK)) == RT_WDB_NULL) {
 	Tcl_AppendResult(mctx->interpreter, "wdb_dbopen() failed?\n", (char *)NULL);
 	mctx->ret = TCL_ERROR;
 	mctx->post_open_cnt--;
-	return;
+	return BRLCAD_OK;
     }
 
     /* increment use count for tcl db instance */
-    (void)db_clone_dbi(DBIP, NULL);
+    (void)db_clone_dbi(s->dbip, NULL);
 
     /* Establish LIBWDB TCL access to both disk and in-memory databases */
 
     /* initialize rt_wdb */
-    bu_vls_init(&WDBP->wdb_name);
-    bu_vls_strcpy(&WDBP->wdb_name, MGED_DB_NAME);
+    bu_vls_init(&s->wdbp->wdb_name);
+    bu_vls_strcpy(&s->wdbp->wdb_name, MGED_DB_NAME);
 
-    WDBP->wdb_interp = mctx->interpreter;
+    s->wdbp->wdb_interp = mctx->interpreter;
 
     /* append to list of rt_wdb's */
-    BU_LIST_APPEND(&RTG.rtg_headwdb.l, &WDBP->l);
+    BU_LIST_APPEND(&rtg_headwdb.l, &s->wdbp->l);
 
     /* This creates a "db" command object */
 
     /* Beware, returns a "token", not TCL_OK. */
-    (void)Tcl_CreateCommand((Tcl_Interp *)WDBP->wdb_interp, MGED_DB_NAME, (Tcl_CmdProc *)wdb_cmd, (ClientData)WDBP, wdb_deleteProc);
+    (void)Tcl_CreateCommand((Tcl_Interp *)s->wdbp->wdb_interp, MGED_DB_NAME, (Tcl_CmdProc *)wdb_cmd, (ClientData)s->wdbp, wdb_deleteProc);
 
     /* Return new function name as result */
-    Tcl_AppendResult((Tcl_Interp *)WDBP->wdb_interp, MGED_DB_NAME, (char *)NULL);
+    Tcl_AppendResult((Tcl_Interp *)s->wdbp->wdb_interp, MGED_DB_NAME, (char *)NULL);
 
     /* This creates the ".inmem" in-memory geometry container and sets
      * up the GUI.
@@ -235,31 +222,30 @@ mged_post_opendb_clbk(struct ged *gedp, void *ctx)
 	struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
 	// Stash the result string state prior to doing the following Tcl commands.
-	// get_dbip in particular uses it...
 	struct bu_vls tmp_gedr = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&tmp_gedr, "%s", bu_vls_cstr(gedp->ged_result_str));
 
-	bu_vls_printf(&cmd, "wdb_open %s inmem [get_dbip]", MGED_INMEM_NAME);
+	bu_vls_printf(&cmd, "wdb_open %s inmem %p", MGED_INMEM_NAME, (void *)s->dbip);
 	if (Tcl_Eval(mctx->interpreter, bu_vls_addr(&cmd)) != TCL_OK) {
 	    bu_vls_sprintf(gedp->ged_result_str, "%s\n%s\n", Tcl_GetStringResult(mctx->interpreter), Tcl_GetVar(mctx->interpreter, "errorInfo", TCL_GLOBAL_ONLY));
 	    Tcl_AppendResult(mctx->interpreter, bu_vls_addr(gedp->ged_result_str), (char *)NULL);
 	    bu_vls_free(&cmd);
 	    mctx->ret = TCL_ERROR;
-	    return;
+	    return BRLCAD_OK;
 	}
 
 	/* Perhaps do something special with the GUI */
 	bu_vls_trunc(&cmd, 0);
-	bu_vls_printf(&cmd, "opendb_callback {%s}", DBIP->dbi_filename);
+	bu_vls_printf(&cmd, "opendb_callback {%s}", s->dbip->dbi_filename);
 	(void)Tcl_Eval(mctx->interpreter, bu_vls_addr(&cmd));
 
 	bu_vls_strcpy(&cmd, "local2base");
 	Tcl_UnlinkVar(mctx->interpreter, bu_vls_addr(&cmd));
-	Tcl_LinkVar(mctx->interpreter, bu_vls_addr(&cmd), (char *)&local2base, TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
+	Tcl_LinkVar(mctx->interpreter, bu_vls_addr(&cmd), (char *)&s->dbip->dbi_local2base, TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
 
 	bu_vls_strcpy(&cmd, "base2local");
 	Tcl_UnlinkVar(mctx->interpreter, bu_vls_addr(&cmd));
-	Tcl_LinkVar(mctx->interpreter, bu_vls_addr(&cmd), (char *)&base2local, TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
+	Tcl_LinkVar(mctx->interpreter, bu_vls_addr(&cmd), (char *)&s->dbip->dbi_base2local, TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
 
 	// Restore the pre Tcl ged_result_str
 	bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&tmp_gedr));
@@ -268,27 +254,27 @@ mged_post_opendb_clbk(struct ged *gedp, void *ctx)
 	bu_vls_free(&cmd);
     }
 
-    set_localunit_TclVar();
+    set_localunit_TclVar(s);
 
     /* Print title/units information */
-    if (interactive) {
-	bu_vls_printf(gedp->ged_result_str, "%s (units=%s)\n", DBIP->dbi_title,
-		      bu_units_string(DBIP->dbi_local2base));
+    if (s->interactive) {
+	bu_vls_printf(gedp->ged_result_str, "%s (units=%s)\n", s->dbip->dbi_title,
+		      bu_units_string(s->dbip->dbi_local2base));
     }
 
     /*
      * We have an old database version AND we're not in the process of
      * creating a new database.
      */
-    if (db_version(DBIP) < 5 && !mctx->created_new_db) {
-	if (mged_db_upgrade) {
-	    if (mged_db_warn)
+    if (db_version(s->dbip) < 5 && !mctx->created_new_db) {
+	if (mctx->db_upgrade) {
+	    if (mctx->db_warn)
 		bu_vls_printf(gedp->ged_result_str, "Warning:\n\tDatabase version is old.\n\tConverting to the new format.\n");
 
 	    (void)Tcl_Eval(mctx->interpreter, "after idle dbupgrade -f y");
 	} else {
-	    if (mged_db_warn) {
-		if (classic_mged)
+	    if (mctx->db_warn) {
+		if (s->classic_mged)
 		    bu_vls_printf(gedp->ged_result_str, "Warning:\n\tDatabase version is old.\n\tSee the dbupgrade command.");
 		else
 		    bu_vls_printf(gedp->ged_result_str, "Warning:\n\tDatabase version is old.\n\tSelect Tools-->Upgrade Database for info.");
@@ -300,28 +286,33 @@ mged_post_opendb_clbk(struct ged *gedp, void *ctx)
     Tcl_AppendResult(mctx->interpreter, bu_vls_addr(gedp->ged_result_str), (char *)NULL);
 
     /* Update the background colors now that we have a file open */
-    cs_set_bg(NULL, NULL, NULL, NULL, NULL);
+    cs_set_bg(NULL, NULL, NULL, NULL, mctx->s);
 
     mctx->post_open_cnt--;
     mctx->ret = TCL_OK;
+    return BRLCAD_OK;
 }
 
-void
-mged_pre_closedb_clbk(struct ged *UNUSED(gedp), void *ctx)
+int
+mged_pre_closedb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *UNUSED(gedp), void *ctx)
 {
     struct mged_opendb_ctx *mctx = (struct mged_opendb_ctx *)ctx;
 
-   /* Close the Tcl database objects */
+    /* Close the Tcl database objects */
     Tcl_Eval(mctx->interpreter, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
+
+    return BRLCAD_OK;
 }
 
-void
-mged_post_closedb_clbk(struct ged *UNUSED(gedp), void *ctx)
+int
+mged_post_closedb_clbk(int UNUSED(ac), const char **UNUSED(argv), void *UNUSED(gedp), void *ctx)
 {
     struct mged_opendb_ctx *mctx = (struct mged_opendb_ctx *)ctx;
+    struct mged_state *s = mctx->s;
     mctx->old_dbip = NULL;
-    WDBP = RT_WDB_NULL;
-    DBIP = DBI_NULL;
+    s->wdbp = RT_WDB_NULL;
+    s->dbip = DBI_NULL;
+    return BRLCAD_OK;
 }
 
 
@@ -338,16 +329,21 @@ mged_post_closedb_clbk(struct ged *UNUSED(gedp), void *ctx)
  * NOT opened (and the user didn't abort).
  */
 int
-f_opendb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
+f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct mged_opendb_ctx ctx;
     ctx.old_dbip = NULL;
+    ctx.s = s;
 
     if (argc <= 1) {
 	/* Invoked without args, return name of current database */
 
-	if (DBIP != DBI_NULL) {
-	    Tcl_AppendResult(interpreter, DBIP->dbi_filename, (char *)NULL);
+	if (s->dbip != DBI_NULL) {
+	    Tcl_AppendResult(interpreter, s->dbip->dbi_filename, (char *)NULL);
 	    return TCL_OK;
 	}
 
@@ -381,18 +377,20 @@ f_opendb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
     // and callbacks to manage a default ctx.  However, if we're going the
     // f_opendb route, our options are handled a bit differently - use a local
     // data container for this call and stash the default.
-    void (*pre_opendb_clbk)(struct ged *, void *) = GEDP->ged_pre_opendb_callback;
-    void (*post_opendb_clbk)(struct ged *, void *) = GEDP->ged_post_opendb_callback;
-    void (*pre_closedb_clbk)(struct ged *, void *) = GEDP->ged_pre_closedb_callback;
-    void (*post_closedb_clbk)(struct ged *, void *) = GEDP->ged_post_closedb_callback;
-    void *gctx = GEDP->ged_db_callback_udata;
+    bu_clbk_t opendb_clbk[2] = {NULL};
+    void * opendb_clbk_data[2] = {NULL};
+    bu_clbk_t closedb_clbk[2] = {NULL};
+    void * closedb_clbk_data[2] = {NULL};
+    ged_clbk_get(&opendb_clbk[0], &opendb_clbk_data[0], s->gedp, "opendb", BU_CLBK_PRE);
+    ged_clbk_get(&opendb_clbk[1], &opendb_clbk_data[1], s->gedp, "opendb", BU_CLBK_POST);
+    ged_clbk_get(&closedb_clbk[0], &closedb_clbk_data[0], s->gedp, "closedb", BU_CLBK_PRE);
+    ged_clbk_get(&closedb_clbk[1], &closedb_clbk_data[1], s->gedp, "closedb", BU_CLBK_POST);
 
     // Assign the local values
-    GEDP->ged_pre_opendb_callback = NULL;
-    GEDP->ged_post_opendb_callback = &mged_post_opendb_clbk;
-    GEDP->ged_pre_closedb_callback = &mged_pre_closedb_clbk;
-    GEDP->ged_post_closedb_callback = &mged_post_closedb_clbk;
-    GEDP->ged_db_callback_udata = (void *)&ctx;
+    ged_clbk_set(s->gedp, "opendb", BU_CLBK_PRE, NULL, NULL);
+    ged_clbk_set(s->gedp, "opendb", BU_CLBK_POST, &mged_post_opendb_clbk, (void *)&ctx);
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_PRE, &mged_pre_closedb_clbk, (void *)&ctx);
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_POST, &mged_post_closedb_clbk, (void *)&ctx);
 
     const char **av = (const char **)bu_calloc(argc+2, sizeof(const char *), "av");
     int ind = 0;
@@ -408,14 +406,13 @@ f_opendb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
     ctx.argv = av;
     ctx.argc = argc+ind;
 
-    ctx.ged_ret = ged_exec(GEDP, argc+ind, (const char **)av);
+    ctx.ged_ret = ged_exec_opendb(s->gedp, argc+ind, (const char **)av);
 
     // Done - restore standard values
-    GEDP->ged_pre_opendb_callback = pre_opendb_clbk;
-    GEDP->ged_post_opendb_callback = post_opendb_clbk;
-    GEDP->ged_pre_closedb_callback = pre_closedb_clbk;
-    GEDP->ged_post_closedb_callback = post_closedb_clbk;
-    GEDP->ged_db_callback_udata = gctx;
+    ged_clbk_set(s->gedp, "opendb", BU_CLBK_PRE, opendb_clbk[0], opendb_clbk_data[0]);
+    ged_clbk_set(s->gedp, "opendb", BU_CLBK_POST, opendb_clbk[1], opendb_clbk_data[1]);
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_PRE, closedb_clbk[0], closedb_clbk_data[0]);
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_POST, closedb_clbk[1], closedb_clbk_data[1]);
 
     if (ctx.ged_ret == GED_HELP) {
 	Tcl_Eval(interpreter, "help opendb");
@@ -429,8 +426,12 @@ f_opendb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
  * Close the current database, if open.
  */
 int
-f_closedb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
+f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     // For the most part when it comes to close, the default
     // callbacks should be fine, but since f_closedb potentially
     // specifies a Tcl_Interp prepare a context to be sure
@@ -439,6 +440,7 @@ f_closedb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     ctx.interpreter = interpreter;
     ctx.ret = TCL_OK;
     ctx.old_dbip = NULL;
+    ctx.s = s;
 
     if (argc != 1) {
 	Tcl_AppendResult(interpreter, "Unexpected argument [%s]\n", (const char *)argv[1], NULL);
@@ -446,20 +448,24 @@ f_closedb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
 	return TCL_ERROR;
     }
 
-    if (DBIP == DBI_NULL) {
+    if (s->dbip == DBI_NULL) {
 	Tcl_AppendResult(interpreter, "No database is open\n", NULL);
 	return TCL_OK;
     }
 
-    void *gctx = GEDP->ged_db_callback_udata;
-    GEDP->ged_db_callback_udata = (void *)&ctx;
+    bu_clbk_t closedb_clbk[2] = {NULL};
+    void * closedb_clbk_data[2] = {NULL};
+    ged_clbk_get(&closedb_clbk[0], &closedb_clbk_data[0], s->gedp, "closedb", BU_CLBK_PRE);
+    ged_clbk_get(&closedb_clbk[1], &closedb_clbk_data[1], s->gedp, "closedb", BU_CLBK_POST);
 
-    const char *av[2];
-    av[0] = "closedb";
-    av[1] = NULL;
-    ged_exec(GEDP, 1, (const char **)av);
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_PRE, closedb_clbk[0], (void *)&ctx);
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_POST, closedb_clbk[1], (void *)&ctx);
 
-    GEDP->ged_db_callback_udata = gctx;
+    const char *av[1] = {"closedb"};
+    ged_exec_closedb(s->gedp, 1, (const char **)av);
+
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_PRE, closedb_clbk[0], closedb_clbk_data[0]);
+    ged_clbk_set(s->gedp, "closedb", BU_CLBK_POST, closedb_clbk[1], closedb_clbk_data[1]);
 
     return ctx.ret;
 }

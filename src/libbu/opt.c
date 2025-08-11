@@ -1,7 +1,7 @@
 /*                        O P T . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2024 United States Government as represented by
+ * Copyright (c) 2015-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1131,6 +1131,18 @@ bu_opt_fastf_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_var
     return 1;
 }
 
+int
+bu_opt_char(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    char *c_set = (char *)set_var;
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
+
+    if (c_set && strlen(argv[0]) > 0)
+	*c_set = argv[0][0];
+
+    return 1;
+}
 
 int
 bu_opt_str(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)

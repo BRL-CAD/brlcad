@@ -1,7 +1,7 @@
 /*                         F E N C E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -222,7 +222,7 @@ __BEGIN_DECLS
 /**
  * the max wire segments should not be changed as it is merely a max
  * upper bound on the maximum number of segments that may be generated
- * for any wire pair.  it is provided as a saveguard against having an
+ * for any wire pair.  it is provided as a safeguard against having an
  * "out-of-control" program if invalid wire values are entered.
  */
 #define DEFAULT_MAXWIRESEGMENTS 1234567890L

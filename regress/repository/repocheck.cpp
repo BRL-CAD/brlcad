@@ -1,7 +1,7 @@
 /*                   R E P O C H E C K . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,7 @@ extern "C" char *
 bu_strnstr(const char *h, const char *n, size_t hlen);
 
 #define MAX_LINES_CHECK 500
-#define EXPECTED_PLATFORM_SYMBOLS 242
+#define EXPECTED_PLATFORM_SYMBOLS 170
 
 class repo_info_t {
     public:
@@ -172,8 +172,6 @@ regex_init(repo_info_t &r) {
 	    "bio.h",
 	    "bnetwork.h",
 	    "config_win.h",
-	    "csg_parser.c",
-	    "csg_scanner.h",
 	    "obj_grammar.c",
 	    "obj_grammar.cpp",
 	    "obj_libgcv_grammar.cpp",
@@ -239,6 +237,7 @@ regex_init(repo_info_t &r) {
 	    "bu/path[.]h$",
 	    "bu/str[.]h$",
 	    "cursor[.]c$",
+	    "linenoise[.]hpp$",
 	    "misc/CMake/compat/.*",
 	    "ttcp[.]c$",
 	    "file[.]cpp$",
@@ -384,6 +383,7 @@ regex_init(repo_info_t &r) {
 	}
 
 	const char *platform_exemption_strs[] {
+	    ".*/linenoise[.]hpp$",
 	    ".*/pstdint[.]h$",
 	    ".*/pinttypes[.]h$",
 	    ".*/uce-dirent[.]h$",
@@ -886,27 +886,25 @@ main(int argc, const char *argv[])
 	// Build a set of filters that will cull out files which would otherwise
 	// be matches for items of interest
 	const char *reject_filters[] {
-	    ".log",
-		".svn",
-		"/bullet/",
+	    ".git",
+		".log",
+		"/detria.hpp",
 		"/doc/",
 		"/fontstash/",
-		"/qtads/",
-		"/shapelib/",
-		"gltf/",
-		"/concurrentqueue.h",
-		"/detria.hpp",
 		"/json.hpp",
+		"/linenoise.hpp",
+		"/shapelib/",
+		"/spsr/",
+		"/whereami.c",
 		"/xxhash.h",
 		"misc/CMake/Find",
 		"misc/debian",
-		"misc/repoconv",
-		"misc/repowork",
+		"misc/opencl-raytracer-tests",
 		"misc/tools",
 		"pkg.h",
-		"subprocess.h",
 		"src/libdm/wgl/wintk/",
 		"src/libpkg",
+		"subprocess.h",
 		"~",
 		NULL
 	};

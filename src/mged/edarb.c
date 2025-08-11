@@ -1,7 +1,7 @@
 /*                         E D A R B . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 
 #include "vmath.h"
 #include "rt/geom.h"
-#include "rt/arb_edit.h"
+#include "rt/primitives/arb8.h"
 #include "ged.h"
 #include "rt/db4.h"
 
@@ -39,11 +39,7 @@
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-extern struct rt_db_internal es_int;
-extern struct rt_db_internal es_int_orig;
-
 int newedge;
-
 
 /*
  * An ARB edge is moved by finding the direction of the line
@@ -55,13 +51,13 @@ int newedge;
  *
  */
 int
-editarb(vect_t pos_model)
+editarb(struct mged_state *s, vect_t pos_model)
 {
     int ret = 0;
     struct rt_arb_internal *arb;
-    arb = (struct rt_arb_internal *)es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 
-    ret = arb_edit(arb, es_peqn, es_menu, newedge, pos_model, &mged_tol);
+    ret = arb_edit(arb, es_peqn, es_menu, newedge, pos_model, &s->tol.tol);
 
     // arb_edit doesn't zero out our global any more as a library call, so
     // reset once operation is complete.
@@ -77,8 +73,12 @@ editarb(vect_t pos_model)
 /* Extrude command - project an arb face */
 /* Format: extrude face distance */
 int
-f_extrude(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     static int face;
     static fastf_t dist;
     struct rt_arb_internal *arb;
@@ -95,10 +95,10 @@ f_extrude(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_S_EDIT, "Extrude"))
+    if (not_state(s, ST_S_EDIT, "Extrude"))
 	return TCL_ERROR;
 
-    if (es_int.idb_type != ID_ARB8) {
+    if (s->edit_state.es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Extrude: solid type must be ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -119,18 +119,18 @@ f_extrude(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     dist = atof(argv[2]);
     /* apply es_mat[15] to get to real model space */
     /* convert from the local unit (as input) to the base unit */
-    dist = dist * es_mat[15] * local2base;
+    dist = dist * es_mat[15] * s->dbip->dbi_local2base;
 
-    arb = (struct rt_arb_internal *)es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    if (arb_extrude(arb, face, dist, &mged_tol, es_peqn)) {
+    if (arb_extrude(arb, face, dist, &s->tol.tol, es_peqn)) {
 	Tcl_AppendResult(interp, "Error extruding ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
     /* draw the updated solid */
-    replot_editing_solid();
+    replot_editing_solid(s);
     update_views = 1;
     dm_set_dirty(DMP, 1);
 
@@ -141,8 +141,11 @@ f_extrude(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 /* Mirface command - mirror an arb face */
 /* Format: mirror face axis */
 int
-f_mirface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
 
     int face;
     struct rt_arb_internal *arb;
@@ -157,26 +160,26 @@ f_mirface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_S_EDIT, "Mirface"))
+    if (not_state(s, ST_S_EDIT, "Mirface"))
 	return TCL_ERROR;
 
-    if (es_int.idb_type != ID_ARB8) {
+    if (s->edit_state.es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Mirface: solid type must be ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    arb = (struct rt_arb_internal *)es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
     face = atoi(argv[1]);
 
-    if (arb_mirror_face_axis(arb, es_peqn, face, argv[2], &mged_tol)) {
+    if (arb_mirror_face_axis(arb, es_peqn, face, argv[2], &s->tol.tol)) {
 	Tcl_AppendResult(interp, "Mirface: mirror operation failed\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
     /* draw the updated solid */
-    replot_editing_solid();
+    replot_editing_solid(s);
     view_state->vs_flag = 1;
 
     return TCL_OK;
@@ -187,8 +190,12 @@ f_mirface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
  * Format: edgedir deltax deltay deltaz OR edgedir rot fb
 */
 int
-f_edgedir(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     int i;
     vect_t slope;
     fastf_t rot, fb_a;
@@ -203,7 +210,7 @@ f_edgedir(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_S_EDIT, "Edgedir"))
+    if (not_state(s, ST_S_EDIT, "Edgedir"))
 	return TCL_ERROR;
 
     if (es_edflag != EARB) {
@@ -211,7 +218,7 @@ f_edgedir(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	return TCL_ERROR;
     }
 
-    if (es_int.idb_type != ID_ARB8) {
+    if (s->edit_state.es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Edgedir: solid type must be an ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -240,8 +247,8 @@ f_edgedir(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
     /* get it done */
     newedge = 1;
-    editarb(slope);
-    sedit();
+    editarb(s, slope);
+    sedit(s);
     return TCL_OK;
 }
 
@@ -262,8 +269,12 @@ f_edgedir(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
  *     ------------------------------------------------
  */
 int
-f_permute(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_permute(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     /*
      * 1) Why were all vars declared static?
      * 2) Recompute plane equations?
@@ -281,28 +292,29 @@ f_permute(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_S_EDIT, "Permute"))
+    if (not_state(s, ST_S_EDIT, "Permute"))
 	return TCL_ERROR;
 
-    if (es_int.idb_type != ID_ARB8) {
+    if (s->edit_state.es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Permute: solid type must be an ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    arb = (struct rt_arb_internal *)es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    if (arb_permute(arb, argv[1], &mged_tol)) {
+    if (arb_permute(arb, argv[1], &s->tol.tol)) {
 	Tcl_AppendResult(interp, "Permute failed.\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
     /* draw the updated solid */
-    replot_editing_solid();
+    replot_editing_solid(s);
     view_state->vs_flag = 1;
 
     return TCL_OK;
 }
+
 
 
 /*

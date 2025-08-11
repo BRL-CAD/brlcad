@@ -1,7 +1,7 @@
 #                     B G E R R O R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2000-2024 United States Government as represented by
+# Copyright (c) 2000-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 # This file contains the procedures used to override the standard
 # Tcl/Tk error code. To use it all you need to do is source it into
 # your main Tcl/Tk file. The following global variables are used in
-# this code (they could interfer with other code):
+# this code (they could interfere with other code):
 #
 #                 bgerrorMessage - holds error message displayed in error dialog
 #                 bgerrorLog    - holds stack track error

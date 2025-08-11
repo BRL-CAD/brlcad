@@ -1,7 +1,7 @@
 /*                        E D I T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2023-2024 United States Government as represented by
+ * Copyright (c) 2023-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -353,7 +353,7 @@ int brep_surface_copy(ON_Brep *brep, int surface_id)
 }
 
 /**
- * caculate parameter values of each point
+ * calculate parameter values of each point
  */
 int SurfMeshParams(int n, int m, std::vector<ON_3dPoint> points, std::vector<double> &uk, std::vector<double> &ul);
 
@@ -748,7 +748,7 @@ void calcuBsplineCVsKnots(std::vector<ON_3dPoint> &cvs, std::vector<double> &kno
 	knots.push_back(1);
 }
 
-// caculate parameters of the surface
+// calculate parameters of the surface
 // input: n, m, points
 // output: uk, ul
 int SurfMeshParams(int n, int m, std::vector<ON_3dPoint> points, std::vector<double> &uk, std::vector<double> &ul)

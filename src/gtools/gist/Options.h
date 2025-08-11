@@ -1,7 +1,7 @@
 /*                       O P T I O N S . H
  * BRL-CAD
  *
- * Copyright (c) 2023-2024 United States Government as represented by
+ * Copyright (c) 2023-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -110,7 +110,7 @@ private:
     int length;
     // Whether path is a folder with multiple files or not
     bool isFolder;
-    // Whether user specifices to open GUI as well
+    // Whether user specifies to open GUI as well
     int openGUI;
     //Whether user decides to export to a png
     bool exportToFile;

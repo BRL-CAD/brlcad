@@ -1,7 +1,7 @@
 /*                         W H O . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,8 +37,7 @@ extern int ged_who2_core(struct ged *gedp, int argc, const char **argv);
 int
 ged_who_core(struct ged *gedp, int argc, const char *argv[])
 {
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(cmd2, "1"))
+    if (gedp->new_cmd_forms)
 	return ged_who2_core(gedp, argc, argv);
 
     struct display_list *gdlp;
@@ -78,7 +77,7 @@ ged_who_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, display_list, (struct bu_list *)ged_dl(gedp))) {
 	if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR) {
 	    if (skip_phony) continue;
 	} else {

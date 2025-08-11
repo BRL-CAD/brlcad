@@ -1,7 +1,7 @@
 /*                       T A B L E . C P P
  * BRL-CAD
  *
- * Copyright (c) 1989-2024 United States Government as represented by
+ * Copyright (c) 1989-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -80,7 +80,11 @@ extern "C" {
     extern struct rt_selection *rt_##name##_evaluate_selection(const struct rt_db_internal *ip, int op, const struct rt_selection *a, const struct rt_selection *b); \
     extern int rt_##name##_process_selection(struct rt_db_internal *ip, struct db_i *, const struct rt_selection *selection, const struct rt_selection_operation *op); \
     extern int rt_##name##_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version); \
-    extern void rt_##name##_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+    extern int rt_##name##_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *utol); \
+    extern const char *rt_##name##_keypoint(point_t *pt, const char *keystr, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *tol); \
+    extern int rt_##name##_mat(struct rt_db_internal *op, const mat_t mat, const struct rt_db_internal *ip); \
+    extern int rt_##name##_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t factor); \
+    extern int rt_##name##_scene_obj(struct bv_scene_obj *vhead, struct directory *dp, struct db_i *dbip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *info) \
 
 RT_DECLARE_INTERFACE(tor);
 RT_DECLARE_INTERFACE(tgc);
@@ -133,6 +137,7 @@ extern int rt_generic_adjust(struct bu_vls *, struct rt_db_internal *, int, cons
 extern int rt_generic_form(struct bu_vls *, const struct rt_functab *);
 extern void rt_generic_make(const struct rt_functab *, struct rt_db_internal *);
 extern int rt_generic_xform(struct rt_db_internal *, const mat_t, struct rt_db_internal *, int, struct db_i *);
+extern int rt_generic_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *v);
 
 /* from db5_bin.c */
 extern int rt_binunif_import5(struct rt_db_internal * ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
@@ -143,7 +148,7 @@ extern void rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal 
 extern int rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr);
 extern int rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv);
 
-/* from tcl.c and db5_comb.c */
+/* from comb/comb.c and comb/db_comb.c */
 extern int rt_comb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp);
 extern int rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
 extern int rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *item);
@@ -151,6 +156,8 @@ extern int rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, 
 extern int rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern void rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
 extern void rt_comb_ifree(struct rt_db_internal *ip);
+extern int rt_comb_mat(struct rt_db_internal *op, const mat_t mat, const struct rt_db_internal *ip);
+extern int rt_comb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
 
 extern int rt_annot_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_bot_form(struct bu_vls *logstr, const struct rt_functab *ftp);
@@ -193,6 +200,10 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	0,
 	0,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -254,7 +265,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_tor_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_tor_labels), /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_tor_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_tor_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -301,7 +316,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_tgc_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_tgc_labels), /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_tgc_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_tgc_mat),
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_tgc_perturb), /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -348,7 +367,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_ell_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_ell_labels), /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_ell_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_ell_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -395,7 +418,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_arb_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_arb_labels), /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_arb_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_arb_mat),
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_arb_perturb), /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -406,8 +433,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_bot_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_bot_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_bot_norm),
-	RTFUNCTAB_FUNC_PIECE_SHOT_CAST(rt_bot_piece_shot),
-	RTFUNCTAB_FUNC_PIECE_HITSEGS_CAST(rt_bot_piece_hitsegs),
+	NULL, /* piece_shot */
+	NULL, /* piece hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_bot_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_bot_curve),
 	NULL, /* classify */
@@ -442,7 +469,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_ars_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_ars_labels), /* label */
+	NULL, /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_ars_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -489,7 +520,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_hlf_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_hlf_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -536,7 +571,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_tgc_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_tgc_labels), /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_tgc_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_tgc_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -583,7 +622,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_pg_keypoint), /* keypoint */
+	NULL, /* mat */
+	NULL, /* perturb */
+	NULL  /* scene_obj */
     },
 
     {
@@ -630,7 +673,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_nurb_labels) /* label */
+	NULL, /* label */
+	NULL, /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_nurb_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -677,7 +724,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_sph_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_ell_labels), /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_ell_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_ell_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -724,7 +775,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL, /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_nmg_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -771,7 +826,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_ebm_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_ebm_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -818,7 +877,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_vol_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_vol_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -865,7 +928,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_arbn_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_arbn_mat),
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_arbn_perturb), /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -912,7 +979,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL, /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_pipe_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -959,7 +1030,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_part_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_part_labels), /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_part_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_part_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -1006,7 +1081,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_rpc_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_rpc_labels), /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_rpc_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_rpc_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -1053,7 +1132,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_rhc_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_rhc_labels), /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_rhc_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_rhc_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -1100,7 +1183,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_epa_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_epa_labels), /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_epa_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_epa_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -1147,7 +1234,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_ehy_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_epa_labels), /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_ehy_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_ehy_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -1194,7 +1285,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_eto_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_eto_labels), /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_eto_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_eto_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -1241,7 +1336,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_grp_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_grp_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -1288,51 +1387,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selections */
 	RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(rt_joint_process_selection),
 	NULL, /* serialize */
-	NULL  /* label */
-#if 0
-	0, /* ft_use_rpp */
-	NULL, /* prep */
-	NULL, /* shot */
-	NULL, /* print */
-	NULL, /* norm */
-	NULL, /* piece_shot */
-	NULL, /* piece_hitsegs */
-	NULL, /* uv */
-	NULL, /* curve */
-	NULL, /* classify */
-	NULL, /* free */
-	RTFUNCTAB_FUNC_PLOT_CAST(rt_joint_plot), /* plot */
-	NULL, /* adaptive_plot */
-	NULL, /* vshot */
-	NULL, /* tess */
-	NULL, /* tnurb */
-	NULL, /* brep */
-	NULL, /* import5 */
-	NULL, /* export5 */
-	NULL, /* import4 */
-	NULL, /* export4 */
-	NULL, /* ifree */
-	NULL, /* describe */
-	NULL, /* xform */
-	NULL, /* parse */
-	0, /* sizeof(internal) */
-	0, /* magic */
-	NULL, /* get */
-	NULL, /* adjust */
-	NULL, /* form */
-	NULL, /* make */
-	NULL, /* params */
-	NULL, /* bbox */
-	NULL, /* volume */
-	NULL, /* surf_area */
-	NULL, /* centroid */
-	NULL, /* oriented_bbox */
-	NULL, /* find_selections */
-	NULL, /* evaluate_selection */
-	NULL, /* process_selection */
-	NULL, /* serialize */
-	NULL  /* label */
-#endif
+	NULL, /* label */
+	NULL, /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_joint_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -1379,7 +1438,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_hf_keypoint), /* keypoint */
+	NULL, /* mat */
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -1426,7 +1489,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_dsp_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_dsp_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -1473,7 +1540,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_sketch_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_sketch_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -1520,7 +1591,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_extrude_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_extrude_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -1567,7 +1642,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL, /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_submodel_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -1614,7 +1693,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_cline_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_cline_labels), /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_cline_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_cline_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -1625,8 +1708,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_SHOT_CAST(rt_bot_shot),
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_bot_print),
 	RTFUNCTAB_FUNC_NORM_CAST(rt_bot_norm),
-	RTFUNCTAB_FUNC_PIECE_SHOT_CAST(rt_bot_piece_shot),
-	RTFUNCTAB_FUNC_PIECE_HITSEGS_CAST(rt_bot_piece_hitsegs),
+	NULL, /* piece shot */
+	NULL, /* piece hitsegs */
 	RTFUNCTAB_FUNC_UV_CAST(rt_bot_uv),
 	RTFUNCTAB_FUNC_CURVE_CAST(rt_bot_curve),
 	NULL, /* classify */
@@ -1661,7 +1744,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_bot_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_bot_mat),
+	NULL, /* perturb */
+	NULL   /* scene_obj */
     },
 
     {
@@ -1681,7 +1768,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* plot */
 	NULL, /* adaptive_plot */
 	NULL, /* vshot */
-	NULL, /* tess - TODO - is there any reason we can't do the treewalk evaluation as a rt_comb_tess? */
+	RTFUNCTAB_FUNC_TESS_CAST(rt_comb_tess),
 	NULL, /* tnurb */
 	NULL, /* brep */
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_comb_import5),
@@ -1708,7 +1795,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL, /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_comb_mat),
+	NULL, /* perturb */
+	NULL   /* scene_obj */
     },
 
     {
@@ -1757,7 +1848,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL, /* keypoint */
+	NULL, /* mat */
+	NULL, /* perturb */
+	NULL  /* scene_obj */
     },
 
     {
@@ -1804,7 +1899,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL, /* keypoint */
+	NULL, /* mat */
+	NULL, /* perturb */
+	NULL  /* scene_obj */
     },
 
     {
@@ -1853,7 +1952,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL, /* keypoint */
+	NULL, /* mat */
+	NULL, /* perturb */
+	NULL  /* scene_obj */
     },
 
     {
@@ -1900,7 +2003,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_superell_labels), /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_superell_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_superell_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -1947,7 +2054,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL, /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_metaball_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -1994,7 +2105,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(rt_brep_process_selection),
         RTFUNCTAB_FUNC_PREP_SERIALIZE_CAST(rt_brep_prep_serialize),
-	NULL  /* label */
+	NULL, /* label */
+	NULL, /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_brep_mat),
+	NULL, /* perturb */
+	NULL   /* scene_obj */
     },
 
     {
@@ -2041,7 +2156,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	RTFUNCTAB_FUNC_LABELS_CAST(rt_hyp_labels) /* label */
+	RTFUNCTAB_FUNC_LABELS_CAST(rt_hyp_labels), /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_hyp_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_hyp_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -2088,7 +2207,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL, /* keypoint */
+	NULL, /* mat */
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -2135,7 +2258,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL, /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_revolve_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -2182,7 +2309,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL, /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_pnts_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -2229,7 +2360,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_annot_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_annot_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
     {
@@ -2276,7 +2411,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL, /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_hrt_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
 
@@ -2324,7 +2463,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_datum_keypoint), /* keypoint */
+	RTFUNCTAB_FUNC_MAT_CAST(rt_datum_mat),
+	NULL, /* perturb */
+	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
 
@@ -2372,7 +2515,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL, /* keypoint */
+	NULL, /* mat */
+	NULL, /* perturb */
+	NULL  /* scene_obj */
     },
 
     {
@@ -2419,7 +2566,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL, /* keypoint */
+	NULL, /* mat */
+	NULL, /* perturb */
+	NULL  /* scene_obj */
     },
 
     {
@@ -2466,7 +2617,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* evaluate_selection */
 	NULL, /* process_selection */
 	NULL, /* serialize */
-	NULL  /* label */
+	NULL, /* label */
+	NULL, /* keypoint */
+	NULL, /* mat */
+	NULL, /* perturb */
+	NULL  /* scene_obj */
     }
 };
 

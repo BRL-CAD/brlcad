@@ -1,7 +1,7 @@
 /*                        P I X C M P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,15 @@
 #  include <sys/stat.h>
 #endif
 #include "bio.h"
+
+// TODO - replace with std::filesystem::is_fifo
+#ifndef S_ISFIFO
+#  ifdef S_IFIFO
+#    define S_ISFIFO(mode) (((mode) & S_IFMT) == S_IFIFO)
+#  else
+#    define S_ISFIFO(mode) (0)
+#  endif
+#endif
 
 #include <errno.h>
 #include "bu/app.h"

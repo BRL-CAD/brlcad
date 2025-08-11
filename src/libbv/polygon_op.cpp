@@ -1,7 +1,7 @@
 /*                 P O L Y G O N _ O P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2024 United States Government as represented by
+ * Copyright (c) 2020-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -121,4 +121,3 @@ bv_polygon_csg(struct bv_scene_obj *target, struct bv_scene_obj *stencil, bg_cli
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

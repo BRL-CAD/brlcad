@@ -177,11 +177,11 @@ void hyp_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global 
 	case HYP_NORM_TOP:
 	    hitp->hit_normal = vload3(0, hyp->hyp_Hunit);
 	    break;
-	
+
 	case HYP_NORM_BOTTOM:
 	    hitp->hit_normal = -vload3(0, hyp->hyp_Hunit);
 	    break;
-	
+
 	case HYP_NORM_BODY:
 	    /* normal vector is VUNITIZE(z * dz/dx, z * dz/dy, -z) */
 	    /* z = +- (c/a) * sqrt(x^2/a^2 + y^2/b^2 -1) */

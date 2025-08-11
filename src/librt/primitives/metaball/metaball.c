@@ -1,7 +1,7 @@
 /*			  M E T A B A L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -652,7 +652,7 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
     rad = rt_metaball_get_bounding_sphere(&bsc, mb->threshold, mb);
@@ -667,6 +667,32 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     return 0;
 }
 
+int
+rt_metaball_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !mat)
+	return BRLCAD_OK;
+
+    // For the moment, we only support applying a mat to a metaball in place - the
+    // input and output must be the same.
+    if (ip && rop != ip) {
+	bu_log("rt_metaball_mat:  alignment of points between multiple metaballs is unsupported - input metaball must be the same as the output metaball.\n");
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_metaball_internal *top = (struct rt_metaball_internal *)rop->idb_ptr;
+    RT_METABALL_CK_MAGIC(top);
+
+    struct wdb_metaball_pnt *mbpt;
+    for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, &top->metaball_ctrl_head)) {
+	vect_t ctmp;
+	VMOVE(ctmp, mbpt->coord);
+	MAT4X3PNT(mbpt->coord, mat, ctmp);
+	mbpt->fldstr = mbpt->fldstr / mat[15];
+    }
+
+    return BRLCAD_OK;
+}
 
 /**
  * Import an metaball/sphere from the database format to the internal
@@ -700,20 +726,21 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
     mb->method = ntohl(*(uint32_t *)(ep->ext_buf + SIZEOF_NETWORK_LONG));
     mb->threshold = buf[0];
 
+    /* Assign values */
     BU_LIST_INIT(&mb->metaball_ctrl_head);
     if (mat == NULL) mat = bn_mat_identity;
     for (i = 1; i <= metaball_count * 5; i += 5) {
-	/* Apply modeling transformations */
 	BU_GET(mbpt, struct wdb_metaball_pnt);
 	mbpt->l.magic = WDB_METABALLPT_MAGIC;
-	MAT4X3PNT(mbpt->coord, mat, &buf[i]);
-	mbpt->fldstr = buf[i+3] / mat[15];
+	VMOVE(mbpt->coord, &buf[i]);
+	mbpt->fldstr = buf[i+3];
 	mbpt->sweat = buf[i+4];
 	BU_LIST_INSERT(&mb->metaball_ctrl_head, &mbpt->l);
     }
-
     bu_free((void *)buf, "rt_metaball_import5: buf");
-    return 0;		/* OK */
+
+    /* Apply modeling transformations */
+    return rt_metaball_mat(ip, mat, NULL);
 }
 
 
@@ -994,6 +1021,24 @@ rt_metaball_form(struct bu_vls *logstr, const struct rt_functab *ftp)
     return BRLCAD_OK;
 }
 
+/*
+ * Returns point mbp_i.
+ */
+struct wdb_metaball_pnt *
+rt_metaball_get_pt_i(struct rt_metaball_internal *mbip, int mbp_i)
+{
+    int i = 0;
+    struct wdb_metaball_pnt *curr_mbpp;
+
+    for (BU_LIST_FOR(curr_mbpp, wdb_metaball_pnt, &mbip->metaball_ctrl_head)) {
+	if (i == mbp_i)
+	    return curr_mbpp;
+
+	++i;
+    }
+
+    return (struct wdb_metaball_pnt *)NULL;
+}
 
 /*
  * Local Variables:

@@ -1,10 +1,8 @@
 add_custom_command(
   OUTPUT "${CMAKE_BINARY_DIR}/gcv_plugins.sentinel"
   COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/gcv_plugins.sentinel"
-  )
-add_custom_target(gcv_plugins_sentinel
-  DEPENDS ${CMAKE_BINARY_DIR}/gcv_plugins.sentinel
-  )
+)
+add_custom_target(gcv_plugins_sentinel DEPENDS ${CMAKE_BINARY_DIR}/gcv_plugins.sentinel)
 set_target_properties(gcv_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/gcv")
 
 function(gcv_plugin_library name)
@@ -31,9 +29,9 @@ add_subdirectory(stl)
 add_subdirectory(vol)
 add_subdirectory(vrml)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
-  )
+)
 
 # Local Variables:
 # tab-width: 8
@@ -41,4 +39,3 @@ CMAKEFILES(
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-

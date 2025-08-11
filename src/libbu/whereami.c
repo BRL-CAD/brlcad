@@ -105,7 +105,7 @@ int _bu_getExecutablePath(char* out, int capacity, int* dirname_length)
 	// them for realpath to try and digest down into something sane.
         bu_vls_sprintf(&epath, "%s%c%s", iwd, BU_DIR_SEPARATOR, pname);
         if (!bu_file_realpath(bu_vls_cstr(&epath), fullpath)) {
-            /* Unable to resolve initial path concatentation */
+            /* Unable to resolve initial path concatenation */
 	    bu_vls_free(&epath);
 	    return -1;
         }

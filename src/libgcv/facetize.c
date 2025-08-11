@@ -1,7 +1,7 @@
 /*                      F A C E T I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2024 United States Government as represented by
+ * Copyright (c) 2015-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -140,7 +140,7 @@ _gcv_optimize_model(struct model *nmg_model)
 
 struct rt_bot_internal *
 gcv_facetize(struct db_i *db, const struct db_full_path *path,
-	     const struct bn_tol *tol, const struct bg_tess_tol *tess_tol)
+	     const struct bn_tol *tol, const struct bg_tess_tol *tess_tol, struct bu_list *vlfree)
 {
     union tree *facetize_tree;
     struct model *nmg_model;
@@ -157,7 +157,8 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 
     {
 	char * const str_path = db_path_to_string(path);
-	struct db_tree_state initial_tree_state = rt_initial_tree_state;
+	struct db_tree_state initial_tree_state;
+	RT_DBTS_INIT(&initial_tree_state);
 	initial_tree_state.ts_tol = tol;
 	initial_tree_state.ts_ttol = tess_tol;
 	initial_tree_state.ts_m = &nmg_model;
@@ -181,7 +182,7 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
     /* Now, evaluate the boolean tree into ONE region */
     if (!BU_SETJUMP) {
 	/* try */
-	if (nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, tol, &rt_uniresource)) {
+	if (nmg_boolean(facetize_tree, nmg_model, vlfree, tol, &rt_uniresource)) {
 	    BU_UNSETJUMP;
 	    return _gcv_facetize_cleanup(nmg_model, facetize_tree);
 	}
@@ -210,11 +211,11 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 	    if (!BU_SETJUMP) {
 		/* try */
 		if (!result)
-		    result = nmg_bot(current_shell, &RTG.rtg_vlfree, tol);
+		    result = nmg_bot(current_shell, vlfree, tol);
 		else {
 		    struct rt_bot_internal *bots[2];
 		    bots[0] = result;
-		    bots[1] = nmg_bot(current_shell, &RTG.rtg_vlfree, tol);
+		    bots[1] = nmg_bot(current_shell, vlfree, tol);
 		    result = rt_bot_merge(sizeof(bots) / sizeof(bots[0]),
 					  (const struct rt_bot_internal * const *)bots);
 		    _gcv_facetize_free_bot(bots[0]);

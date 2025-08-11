@@ -1,7 +1,7 @@
 /*                  N M G _ F I X _ N O R M A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2024 United States Government as represented by
+ * Copyright (c) 2009-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,6 +44,7 @@ ged_nmg_fix_normals_core(struct ged *gedp, int argc, const char *argv[])
     struct shell *s;
     const char *nmg_name;
     struct bn_tol tol;
+    struct bu_list *vlfree = &rt_vlfree;
 
     static const char *usage = "nmg_prim";
 
@@ -88,7 +89,7 @@ ged_nmg_fix_normals_core(struct ged *gedp, int argc, const char *argv[])
     /* hum, here we go */
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
 	for (BU_LIST_FOR(s, shell, &r->s_hd))
-	    nmg_fix_normals(s, &RTG.rtg_vlfree, &tol);
+	    nmg_fix_normals(s, vlfree, &tol);
 
     return BRLCAD_OK;
 }

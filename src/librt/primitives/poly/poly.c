@@ -1,7 +1,7 @@
 /*                            P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -494,7 +494,7 @@ rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
 
@@ -525,7 +525,7 @@ rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
 
@@ -575,6 +575,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
     struct faceuse *fu;
     size_t p;	/* current polygon number */
     struct rt_pg_internal *pgp;
+    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
@@ -614,7 +615,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 	}
 
 	/* Associate face geometry */
-	if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	if (nmg_calc_face_g(fu, vlfree)) {
 	    nmg_pr_fu_briefly(fu, "");
 	    bu_free((char *)verts, "pg_tess verts[]");
 	    bu_free((char *)vertp, "pg_tess vertp[]");
@@ -628,7 +629,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
     /* Polysolids are often built with incorrect face normals.
      * Don't depend on them here.
      */
-    nmg_fix_normals(s, &RTG.rtg_vlfree, tol);
+    nmg_fix_normals(s, vlfree, tol);
     bu_free((char *)verts, "pg_tess verts[]");
     bu_free((char *)vertp, "pg_tess vertp[]");
 
@@ -782,7 +783,7 @@ rt_pg_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	return -1;
     if (dbip) RT_CK_DBI(dbip);
 
-    bu_log("As of release 6.0 the polysolid is superceded by the BOT primitive.\n");
+    bu_log("As of release 6.0 the polysolid is superseded by the BOT primitive.\n");
     bu_log("\tTo convert polysolids to BOT primitives, use 'dbupgrade'.\n");
     /* The rt_pg_to_bot() routine can also be used. */
     return -1;
@@ -1018,6 +1019,35 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
     ip->idb_ptr = ip_bot;
 
     return 0;
+}
+
+const char *
+rt_pg_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_pg_internal *pg = (struct rt_pg_internal *)ip->idb_ptr;
+    RT_PG_CK_MAGIC(pg);
+    struct rt_pg_face_internal *_poly = pg->poly;
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, _poly->verts);
+	goto pg_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+pg_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
 }
 
 

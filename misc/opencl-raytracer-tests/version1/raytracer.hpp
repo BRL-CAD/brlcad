@@ -1,7 +1,7 @@
 /*                   R A Y T R A C E R . H P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2024 United States Government as represented by
+ * Copyright (c) 2020-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -16,11 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @file raytracer.hpp
- *
- * Brief description
- *
  */
 
 #ifndef __RAYTRACER_H

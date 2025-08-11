@@ -2,7 +2,7 @@
 /*                         R T S U R F . C
  * BRL-CAD
  *
- * Copyright (c) 2024 United States Government as represented by
+ * Copyright (c) 2024-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -392,7 +392,7 @@ compute_surface_area(int intersections, int lines, double radius)
     /* apply Cauchy-Crofton formula.
      *
      * each line intersection represents an entry and exit hit point,
-     * so we devide by 2 so it becomes a ratio of shots that hit to
+     * so we divide by 2 so it becomes a ratio of shots that hit to
      * shots that miss.
      */
     double area = PROPORTIONALITY_CONSTANT * (double)intersections / ((double)lines * 2.0);

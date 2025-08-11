@@ -1,7 +1,7 @@
 /*                          C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -476,6 +476,71 @@ rt_comb_export5(
     return 0;	/* OK */
 }
 
+/* We assume the calling function has already verified that
+ * mat is not an identity matrix, to avoid having to do the
+ * check over and over while walking. */
+static void
+_comb_mat_leaf(const mat_t mat, union tree *tp)
+{
+    if (!tp)
+	return;
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+	        case OP_UNION:
+        case OP_INTERSECT:
+        case OP_SUBTRACT:
+        case OP_XOR:
+            _comb_mat_leaf(mat, tp->tr_b.tb_right);
+            /* fall through */
+        case OP_NOT:
+        case OP_GUARD:
+        case OP_XNOP:
+            _comb_mat_leaf(mat, tp->tr_b.tb_left);
+            break;
+        case OP_DB_LEAF:
+	    if (tp->tr_l.tl_mat) {
+		mat_t mat_tmp;
+		MAT_COPY(mat_tmp, tp->tr_l.tl_mat);
+		bn_mat_mul(tp->tr_l.tl_mat, mat, mat_tmp);
+		/* Check if we created an identity matrix */
+		if (bn_mat_is_identity(tp->tr_l.tl_mat)) {
+		    bu_free((char *)tp->tr_l.tl_mat, "tl_mat");
+		    tp->tr_l.tl_mat = NULL;
+		}
+	    } else {
+		tp->tr_l.tl_mat = bn_mat_dup(mat);
+	    }
+	    break;
+	default:
+            bu_log("_comb_mat_leaf: unrecognized operator %d\n", tp->tr_op);
+            bu_bomb("_comb_mat_leaf\n");
+    }
+}
+
+int
+rt_comb_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !mat)
+	return BRLCAD_OK;
+
+    // Identity matrix is a no-op
+    if (bn_mat_is_identity(mat))
+	return BRLCAD_OK;
+
+    // For the moment, we only support applying a mat to combs in place - the
+    // input and output must be the same.
+    if (ip && rop != ip) {
+	bu_log("rt_comb_mat:  verification of matching comb trees is unsupported - input comb must be the same as the output comb.\n");
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_comb_internal *comb = (struct rt_comb_internal *)rop->idb_ptr;
+    RT_CK_COMB(comb);
+    _comb_mat_leaf(mat, comb->tree);
+
+    return BRLCAD_OK;
+}
 
 int
 rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
@@ -552,10 +617,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 
 	    if (mi == (size_t)-1) {
 		/* Signal identity matrix */
-		if (!mat || bn_mat_is_identity(mat)) {
-		    tp->tr_l.tl_mat = (matp_t)NULL;
-		} else
-		    tp->tr_l.tl_mat = bn_mat_dup(mat);
+		tp->tr_l.tl_mat = (matp_t)NULL;
 	    } else {
 		mat_t diskmat;
 
@@ -569,17 +631,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		bu_cv_ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
 		MAT_COPY(diskmat, scanmat); /* convert double to fastf_t */
 
-		if (!mat || bn_mat_is_identity(mat)) {
-		    tp->tr_l.tl_mat = bn_mat_dup(diskmat);
-		} else {
-		    tp->tr_l.tl_mat = (matp_t)bu_malloc(
-			sizeof(mat_t), "v5comb mat");
-		    bn_mat_mul(tp->tr_l.tl_mat, mat, diskmat);
-		    if (bn_mat_is_identity(tp->tr_l.tl_mat)) {
-			bu_free((char *)tp->tr_l.tl_mat, "tl_mat");
-			tp->tr_l.tl_mat = (matp_t)NULL;
-		    }
-		}
+		tp->tr_l.tl_mat = bn_mat_dup(diskmat);
 	    }
 	    bu_ptbl_ins(tbl1, (long *)tp);
 	}
@@ -677,10 +729,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 
 		if ((ssize_t)mi < 0) {
 		    /* Signal identity matrix */
-		    if (!mat || bn_mat_is_identity(mat)) {
-			tp->tr_l.tl_mat = (matp_t)NULL;
-		    } else
-			tp->tr_l.tl_mat = bn_mat_dup(mat);
+		    tp->tr_l.tl_mat = (matp_t)NULL;
 		} else {
 		    mat_t diskmat;
 
@@ -694,17 +743,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		    bu_cv_ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
 		    MAT_COPY(diskmat, scanmat); /* convert double to fastf_t */
 
-		    if (!mat || bn_mat_is_identity(mat)) {
-			tp->tr_l.tl_mat = bn_mat_dup(diskmat);
-		    } else {
-			tp->tr_l.tl_mat = (matp_t)bu_malloc(
-			    sizeof(mat_t), "v5comb mat");
-			bn_mat_mul(tp->tr_l.tl_mat, mat, diskmat);
-			if (bn_mat_is_identity(tp->tr_l.tl_mat)) {
-			    bu_free((char *)tp->tr_l.tl_mat, "tl_mat");
-			    tp->tr_l.tl_mat = (matp_t)NULL;
-			}
-		    }
+		    tp->tr_l.tl_mat = bn_mat_dup(diskmat);
 		}
 		break;
 
@@ -759,6 +798,10 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
     RT_CK_TREE(comb->tree);
 
 finish:
+
+    /* Apply transform */
+    rt_comb_mat(ip, mat, NULL);
+
     if (ip->idb_avs.magic != BU_AVS_MAGIC) return 0;	/* OK */
 
     /* Unpack the attributes */
@@ -820,6 +863,9 @@ finish:
 	bu_vls_strcat(&comb->shader, ap);
     }
 
+    /* Combs need to know about their database context. */
+    comb->src_dbip = dbip;
+
     return 0; /* OK */
 }
 
@@ -868,7 +914,7 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	}
 
 	if (bu_vls_strlen(&comb->material) > 0) {
-	    bu_vls_printf(logstr, "material %s ", bu_vls_addr(&comb->material));
+	    bu_vls_printf(logstr, "material {%s} ", bu_vls_addr(&comb->material));
 	}
 
 	if (comb->inherit) {
@@ -1134,6 +1180,133 @@ rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern
     bu_vls_init(&comb->material);
 }
 
+
+
+
+
+static union tree *
+facetize_region_end(struct db_tree_state *tsp,
+                    const struct db_full_path *pathp,
+                    union tree *curtree,
+                    void *client_data)
+{
+    union tree **facetize_tree;
+
+    if (tsp) RT_CK_DBTS(tsp);
+    if (pathp) RT_CK_FULL_PATH(pathp);
+
+    facetize_tree = (union tree **)client_data;
+
+    if (curtree->tr_op == OP_NOP) return curtree;
+
+    if (*facetize_tree) {
+        union tree *tr;
+        BU_ALLOC(tr, union tree);
+        RT_TREE_INIT(tr);
+        tr->tr_op = OP_UNION;
+        tr->tr_b.tb_regionp = REGION_NULL;
+        tr->tr_b.tb_left = *facetize_tree;
+        tr->tr_b.tb_right = curtree;
+        *facetize_tree = tr;
+    } else {
+        *facetize_tree = curtree;
+    }
+
+    /* Tree has been saved, and will be freed later */
+    return TREE_NULL;
+}
+
+
+
+/**
+ * Execute NMG tessellation routines on the tree to produce an explicitly
+ * bounded, evaluated version of the geometry.
+ *
+ * Although (to my knowledge) there aren't any real world scenarios requiring a
+ * current rt_db_internal that persists after its dbip is invalid, there is no
+ * API guarantee that such a rt_db_internal couldn't be created and this routine
+ * WILL fail catastrophically if the database info in rt_comb_internal is not
+ * current.  ONLY use comb methods on rt_db_internals when they are associated
+ * with a current, valid dbip.
+ */
+int
+rt_comb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+{
+    if (!r || !m  || !ip || !ttol || !tol)
+	return BRLCAD_ERROR;
+
+    struct bu_list *vlfree = &rt_vlfree;
+   /* validate it's a comb */
+    if (ip->idb_type != ID_COMBINATION) bu_bomb("rt_comb_tess() type not ID_COMBINATION");
+    struct rt_comb_internal *comb = (struct rt_comb_internal *)ip->idb_ptr;
+    RT_CK_COMB(comb);
+    RT_CK_DBI(comb->src_dbip);
+    if (!comb->src_objname) {
+	bu_log("rt_comb_tess() - comb object name not defined in rt_comb_internal, cannot perform database db_walk_tree");
+	return BRLCAD_ERROR;
+    }
+
+    int i = 0;
+    int failed = 0;
+    union tree *facetize_tree = (union tree *)0;
+    struct db_tree_state init_state;
+    db_init_db_tree_state(&init_state, (struct db_i *)comb->src_dbip, &rt_uniresource);
+
+    /* Establish tolerances */
+    init_state.ts_ttol = ttol;
+    init_state.ts_tol = tol;
+    init_state.ts_m = &m;
+
+
+    const char *argv[2];
+    argv[0] = comb->src_objname;
+    argv[1] = NULL;
+
+
+    if (!BU_SETJUMP) {
+        /* try */
+        i = db_walk_tree((struct db_i *)comb->src_dbip, 1, (const char **)argv,
+                         1,
+                        &init_state,
+                         0,                     /* take all regions */
+                         facetize_region_end,
+                         rt_booltree_leaf_tess,
+                         (void *)&facetize_tree
+                        );
+    } else {
+        /* catch */
+        BU_UNSETJUMP;
+        return BRLCAD_ERROR;
+    } BU_UNSETJUMP;
+
+    if (i < 0)
+        return BRLCAD_ERROR;
+
+    if (facetize_tree) {
+        if (!BU_SETJUMP) {
+            /* try */
+            failed = nmg_boolean(facetize_tree, m, vlfree, tol, &rt_uniresource);
+        } else {
+            /* catch */
+            BU_UNSETJUMP;
+            return BRLCAD_ERROR;
+        } BU_UNSETJUMP;
+
+    } else {
+        failed = 1;
+    }
+
+    if (!failed && facetize_tree) {
+        NMG_CK_REGION(facetize_tree->tr_d.td_r);
+        facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
+    }
+
+    if (facetize_tree) {
+        db_free_tree(facetize_tree, &rt_uniresource);
+    }
+
+    return (failed) ? BRLCAD_ERROR : BRLCAD_OK;
+}
 
 /*
  * Local Variables:

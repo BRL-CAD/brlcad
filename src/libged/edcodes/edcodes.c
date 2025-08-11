@@ -1,7 +1,7 @@
 /*                         E D C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -227,7 +227,7 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 
     (void)fclose(fp);
 
-    if (ged_exec(gedp, argc + 1, (const char **)av) & BRLCAD_ERROR) {
+    if (ged_exec_wcodes(gedp, argc + 1, (const char **)av) & BRLCAD_ERROR) {
 	bu_file_delete(tmpfil);
 	bu_free((void *)av, "ged_edcodes_core av");
 	return BRLCAD_ERROR;
@@ -280,10 +280,10 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 	fclose(f_srt);
     }
 
-    if (_ged_editit(editstring, tmpfil)) {
+    if (_ged_editit(gedp, editstring, tmpfil)) {
 	av[0] = "rcodes";
 	av[2] = NULL;
-	status = ged_exec(gedp, 2, (const char **)av);
+	status = ged_exec_rcodes(gedp, 2, (const char **)av);
     } else
 	status = BRLCAD_ERROR;
 

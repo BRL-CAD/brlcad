@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2024 United States Government as represented by
+ * Copyright (c) 1994-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -355,7 +355,7 @@ track_mk_comb(
 	    {
 		struct bu_vls old = BU_VLS_INIT_ZERO;
 		bu_vls_vlscatzap(&old, &comb->shader);
-		if (bu_shader_to_list(bu_vls_addr(&old), &comb->shader))
+		if (rt_shader_to_list(bu_vls_addr(&old), &comb->shader))
 		    bu_log("Unable to convert shader string '%s %s'\n", shadername, shaderargs);
 		bu_vls_free(&old);
 	    }
@@ -586,15 +586,15 @@ slope(struct bu_vls *log_str,
       fastf_t wh1[],
       fastf_t wh2[],
       fastf_t t[]) {
-    int i, j, switchs;
+    int i, j, switches;
     fastf_t temp;
     fastf_t mag;
     fastf_t z, r, b;
     vect_t del, work;
 
-    switchs = 0;
+    switches = 0;
     if (wh1[2] < wh2[2]) {
-	switchs++;
+	switches++;
 	for (i = 0; i < 3; i++) {
 	    temp = wh1[i];
 	    wh1[i] = wh2[i];
@@ -602,7 +602,7 @@ slope(struct bu_vls *log_str,
 	}
     }
     tancir(log_str, wh1, wh2);
-    if (switchs) {
+    if (switches) {
 	for (i = 0; i < 3; i++) {
 	    temp = wh1[i];
 	    wh1[i] = wh2[i];

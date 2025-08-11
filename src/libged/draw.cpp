@@ -1,7 +1,7 @@
 /*                         D R A W . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@
 #include "nmg.h"
 #include "rt/view.h"
 
-#include "ged/view/state.h"
+#include "ged/view.h"
 #include "./alphanum.h"
 #include "./ged_private.h"
 
@@ -866,8 +866,7 @@ tree_color(struct directory *dp, struct draw_data_t *dd)
   step.  That mode is also supported by this subtree walk.
 
 ******************************************************************************/
-
-extern "C" void
+static void
 draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
 			 void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
 			 void *client_data, void *comb_inst_map)
@@ -955,7 +954,6 @@ draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
 	    bu_bomb("db_functree_subtree: unrecognized operator\n");
     }
 }
-
 
 /**
  * This walker builds a list of db_full_path entries corresponding to

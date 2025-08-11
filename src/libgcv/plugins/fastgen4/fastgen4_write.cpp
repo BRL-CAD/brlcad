@@ -1,7 +1,7 @@
 /*              F A S T G E N 4 _ W R I T E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2024 United States Government as represented by
+ * Copyright (c) 2015-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1358,7 +1358,8 @@ get_region_path(const db_full_path &path)
 static bool
 path_is_subtracted(db_i &db, const db_full_path &path)
 {
-    db_tree_state tree_state = rt_initial_tree_state;
+    db_tree_state tree_state;
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_resp = &rt_uniresource;
     tree_state.ts_dbip = &db;
 
@@ -1878,6 +1879,7 @@ public:
     const bn_tol m_tol;
     std::set<const directory *> m_failed_regions;
 
+    struct bu_list *vlfree;
 
 private:
     FastgenConversion(const FastgenConversion &source);
@@ -2348,7 +2350,7 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
     for (BU_LIST_FOR(current_shell, shell, &nmg_region->s_hd)) {
 	NMG_CK_SHELL(current_shell);
 
-	rt_bot_internal * const bot = nmg_bot(current_shell, &RTG.rtg_vlfree,
+	rt_bot_internal * const bot = nmg_bot(current_shell, data.vlfree,
 					      &data.m_tol);
 
 	// fill in an rt_db_internal with our new bot so we can free it
@@ -2418,7 +2420,8 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     }
 
     tree *result;
-    RT_GET_TREE(result, tree_state->ts_resp);
+    BU_GET(result, union tree);
+    RT_TREE_INIT(result);
     result->tr_op = OP_NOP;
     return result;
 }
@@ -2437,7 +2440,7 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
     if (tree_state->ts_mater.ma_color_valid)
 	section.set_color(color_from_floats(tree_state->ts_mater.ma_color));
 
-    gcv_region_end_data gcv_data = {write_nmg_region, &data};
+    gcv_region_end_data gcv_data = {write_nmg_region, data.vlfree, &data};
     return gcv_region_end(tree_state, path, current_tree, &gcv_data);
 }
 
@@ -2449,7 +2452,8 @@ do_conversion(db_i &db, const struct gcv_opts &gcv_options,
 		  std::set<const directory *>())
 {
     AutoPtr<model, nmg_km> nmg_model;
-    db_tree_state initial_tree_state = rt_initial_tree_state;
+    db_tree_state initial_tree_state;
+    RT_DBTS_INIT(&initial_tree_state);
     initial_tree_state.ts_tol = &gcv_options.calculational_tolerance;
     initial_tree_state.ts_ttol = &gcv_options.tessellation_tolerance;;
     initial_tree_state.ts_m = &nmg_model.ptr;
@@ -2457,6 +2461,9 @@ do_conversion(db_i &db, const struct gcv_opts &gcv_options,
     nmg_model.ptr = nmg_mm();
     FastgenConversion data(db, gcv_options.calculational_tolerance,
 			   facetize_regions);
+
+    data.vlfree = &rt_vlfree;
+
     const int ret = db_walk_tree(&db,
 				 static_cast<int>(gcv_options.num_objects),
 				 const_cast<const char **>(gcv_options.object_names),

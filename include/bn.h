@@ -1,7 +1,7 @@
 /*                            B N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,6 +58,7 @@
 #include "bn/wavelet.h"
 #include "bn/sobol.h"
 #include "bn/str.h"
+#include "bn/ulp.h"
 #include "bn/tabdata.h"
 #include "bg/vert_tree.h"
 #include "bv/vectfont.h"

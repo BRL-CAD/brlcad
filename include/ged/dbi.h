@@ -1,7 +1,7 @@
 /*                          D B I . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,10 +39,12 @@
 #define GED_DBI_H
 
 #include "common.h"
+#include "vmath.h"
 #include "bu/vls.h"
 
 #ifdef __cplusplus
 #include <set>
+#include <map>
 #include <unordered_map>
 #include <unordered_set>
 #include <string>

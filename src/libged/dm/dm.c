@@ -1,7 +1,7 @@
 /*                            D M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -607,12 +607,12 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 
     // If the application has not provided a toolkit specific context, use the
     // view itself as the context
-    if (!gedp->ged_ctx) {
-	gedp->ged_ctx = (void *)target_view;
-    }
+    void *ctx = ged_dm_ctx_get(gedp, argv[0]);
+    if (!ctx)
+	ctx = (void *)target_view;
 
     const char *acmd = "attach";
-    struct dm *dmp = dm_open(gedp->ged_ctx, gedp->ged_interp, argv[0], 1, &acmd);
+    struct dm *dmp = dm_open(ctx, gedp->ged_interp, argv[0], 1, &acmd);
     if (!dmp) {
 	bu_vls_printf(gedp->ged_result_str, "failed to create DM %s", bu_vls_cstr(&dm_name));
 	bu_vls_free(&dm_name);
@@ -624,7 +624,7 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
     dm_configure_win(dmp, 0);
     dm_set_pathname(dmp, bu_vls_cstr(&dm_name));
     dm_set_zbuffer(dmp, 1);
-    fastf_t windowbounds[6] = { -1, 1, -1, 1, (int)GED_MIN, (int)GED_MAX };
+    fastf_t windowbounds[6] = { -1, 1, -1, 1, (int)BV_MIN, (int)BV_MAX };
     dm_set_win_bounds(dmp, windowbounds);
 
     // We have the dmp - let the view know

@@ -1,7 +1,7 @@
 /*                         E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include "raytrace.h"
 #include "ged.h"
 #include "../ged_private.h"
-
+#include "./ged_edit.h"
 
 /*
  * rotate: Proposed operations, and manual page
@@ -1697,7 +1697,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 					 BRLCAD_ERROR) == BRLCAD_ERROR)
 		    return BRLCAD_ERROR;
 		num_args_set += num_target_objs;
-		break; /* batch opertor should be last arg */
+		break; /* batch operator should be last arg */
 	    }
 	    if (cur_arg->object) {
 		if (edit_arg_to_coord(gedp, cur_arg, (vect_t *)NULL) ==
@@ -1972,8 +1972,7 @@ extern int ged_edit2_core(struct ged *gedp, int argc, const char *argv[]);
 int
 ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 {
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(cmd2, "1"))
+    if (gedp->new_cmd_forms)
 	return ged_edit2_core(gedp, argc, argv);
 
     const char *const cmd_name = argv[0];
@@ -2267,7 +2266,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 		conv_flags = GED_QUIET;
 		allow_subopts = 0;
 		break;
-	    case 'x': /* singular coord specif. sub-opts */
+	    case 'x': /* singular coord specific. sub-opts */
 	    case 'y':
 	    case 'z':
 		idx_cur_opt = 0;
@@ -2434,16 +2433,25 @@ err_missing_arg:
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl edit_cmd_impl = {
-    "edit",
-    ged_edit_core,
-    GED_CMD_DEFAULT
-};
-
+struct ged_cmd_impl edit_cmd_impl = {"edit", ged_edit_core, GED_CMD_DEFAULT};
 const struct ged_cmd edit_cmd = { &edit_cmd_impl };
-const struct ged_cmd *edit_pcmds[] = { &edit_cmd, NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  edit_pcmds, 1 };
+struct ged_cmd_impl edarb_cmd_impl = {"edarb", ged_edarb_core, GED_CMD_DEFAULT};
+const struct ged_cmd edarb_cmd = { &edarb_cmd_impl };
+
+struct ged_cmd_impl protate_cmd_impl = {"protate", ged_protate_core, GED_CMD_DEFAULT};
+const struct ged_cmd protate_cmd = { &protate_cmd_impl };
+
+struct ged_cmd_impl pscale_cmd_impl = {"pscale", ged_pscale_core, GED_CMD_DEFAULT};
+const struct ged_cmd pscale_cmd = { &pscale_cmd_impl };
+
+struct ged_cmd_impl ptranslate_cmd_impl = {"ptranslate", ged_ptranslate_core, GED_CMD_DEFAULT};
+const struct ged_cmd ptranslate_cmd = { &ptranslate_cmd_impl };
+
+
+const struct ged_cmd *edit_pcmds[] = { &edit_cmd, &edarb_cmd, &protate_cmd, &pscale_cmd, &ptranslate_cmd, NULL };
+
+static const struct ged_plugin pinfo = { GED_API,  edit_pcmds, 5 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {

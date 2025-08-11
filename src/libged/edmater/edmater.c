@@ -1,7 +1,7 @@
 /*                       E D M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -91,16 +91,16 @@ ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
 
     (void)fclose(fp);
 
-    if (ged_exec(gedp, argc, av) & BRLCAD_ERROR) {
+    if (ged_exec_wmater(gedp, argc, av) & BRLCAD_ERROR) {
 	bu_file_delete(tmpfil);
 	bu_free((void *)av, "f_edmater: av");
 	return BRLCAD_ERROR;
     }
 
-    if (_ged_editit(editstring, tmpfil)) {
+    if (_ged_editit(gedp, editstring, tmpfil)) {
 	av[0] = "rmater";
 	av[2] = NULL;
-	status = ged_exec(gedp, 2, av);
+	status = ged_exec_rmater(gedp, 2, av);
     } else {
 	status = BRLCAD_ERROR;
     }

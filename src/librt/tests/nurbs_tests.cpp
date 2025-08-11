@@ -1,7 +1,7 @@
 /*                 N U R B S _ T E S T S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2024 United States Government as represented by
+ * Copyright (c) 2013-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,7 +69,7 @@ int
 nurbs_test(long int test_number, struct db_i *dbip)
 {
     /* Have various specific surface structures - there are potentially
-     * multiple surfaces in the .g, but multiple tests may re-use a single
+     * multiple surfaces in the .g, but multiple tests may reuse a single
      * surface.*/
 
     /* openNURBS pointers */

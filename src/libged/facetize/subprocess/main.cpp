@@ -1,7 +1,7 @@
 /*                        M A I N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -165,6 +165,9 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	    if (!bot_is_manifold(bot)) {
 		// Nope - try repairing
 		struct rt_bot_repair_info settings = RT_BOT_REPAIR_INFO_INIT;
+		// We're aggressive preparing facetize inputs, since non-lint-passing
+		// "repairs" may still be enough to allow booleans to succeed.
+		settings.strict = 0;
 		bu_vls_sprintf(method_flag, "REPAIR");
 		ret = rt_bot_repair(obot, bot, &settings);
 	    } else {
@@ -464,8 +467,8 @@ facetize_process(int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-extern "C" {
 #include "../../include/plugin.h"
+extern "C" {
 struct ged_cmd_process_impl fp_impl = {
     facetize_process
 };

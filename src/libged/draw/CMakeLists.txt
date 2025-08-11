@@ -4,26 +4,18 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
-set(DRAW_SRCS
-  draw.c
-  draw2.cpp
-  loadview.c
-  preview.c
-  )
+set(DRAW_SRCS bigE.c draw.c draw2.cpp loadview.cpp preview.cpp)
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-draw SHARED ${DRAW_SRCS})
+ged_plugin_library(ged-draw ${DRAW_SRCS})
 target_link_libraries(ged-draw libged libbu)
-set_property(TARGET ged-draw APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-draw ${DRAW_SRCS})
-PLUGIN_SETUP(ged-draw ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
+  ged_draw.h
   ${DRAW_SRCS}
-  )
+)
 
 # Local Variables:
 # tab-width: 8

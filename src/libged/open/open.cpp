@@ -1,7 +1,7 @@
 /*                       O P E N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -92,9 +92,15 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 
 	// If the caller has work to do after opendb call, trigger it - even
 	// though the open in its current form can't succeed, the caller may
-	// want to try again
-	if (gedp->ged_post_opendb_callback)
-	    (*gedp->ged_post_opendb_callback)(gedp, gedp->ged_db_callback_udata);
+	// want to try again.  Doing this here rather than the normal ged_exec
+	// post cmd callback because in this specific case we're returning an
+	// error AND still wanting to execute the post-cmd hook - that's
+	// non-standard behavior for ged_exec.
+	bu_clbk_t opendb_clbk = NULL;
+	void *opendb_clbk_data = NULL;
+	ged_clbk_get(&opendb_clbk, &opendb_clbk_data, gedp, "opendb", BU_CLBK_POST);
+	if (opendb_clbk)
+	    (*opendb_clbk)(argc, argv, (void *)gedp, opendb_clbk_data);
 
 	return BRLCAD_ERROR;
     }
@@ -119,10 +125,8 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Close current database, if we have one */
     if (gedp->dbip) {
-	const char *av[2];
-	av[0] = "closedb";
-	av[1] = (char *)0;
-	ged_exec(gedp, 1, (const char **)av);
+	const char *av[1] = {"closedb"};
+	ged_exec_closedb(gedp, 1, (const char **)av);
     }
 
     /* Set up the new database info in gedp */
@@ -137,8 +141,7 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_lod = bv_mesh_lod_context_create(argv[0]);
 
     // If enabled, set up the DbiState container for fast structure access
-    const char *use_dbi_state = getenv("LIBGED_DBI_STATE");
-    if (use_dbi_state)
+    if (gedp->new_cmd_forms)
 	gedp->dbi_state = new DbiState(gedp);
 
     // Set the view units, if we have a view
@@ -146,10 +149,6 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 	gedp->ged_gvp->gv_base2local = gedp->dbip->dbi_base2local;
 	gedp->ged_gvp->gv_local2base = gedp->dbip->dbi_local2base;
     }
-
-    // If the caller has work to do after open, trigger it
-    if (gedp->ged_post_opendb_callback)
-	(*gedp->ged_post_opendb_callback)(gedp, gedp->ged_db_callback_udata);
 
     return BRLCAD_OK;
 }

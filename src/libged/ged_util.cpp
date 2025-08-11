@@ -1,7 +1,7 @@
 /*                       G E D _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2024 United States Government as represented by
+ * Copyright (c) 2000-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,6 +45,7 @@
 
 #include "bu/app.h"
 #include "bu/cmd.h"
+#include "bu/env.h"
 #include "bu/file.h"
 #include "bu/opt.h"
 #include "bu/path.h"
@@ -243,36 +244,6 @@ _ged_subcmd2_help(struct ged *gedp, struct bu_opt_desc *gopts, std::map<std::str
     }
 
     return BRLCAD_OK;
-}
-
-
-
-void
-ged_push_scene_obj(struct ged *gedp, struct bv_scene_obj *sp)
-{
-    BV_FREE_VLIST(&RTG.rtg_vlfree, &(sp->s_vlist));
-    if (sp->s_u_data) {
-	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
-	bdata->s_fullpath.fp_len = 0; // Don't free memory, but implicitly clear contents
-    }
-    bu_ptbl_ins(&gedp->free_solids, (long *)sp);
-}
-
-struct bv_scene_obj *
-ged_pop_scene_obj(struct ged *gedp)
-{
-    struct bv_scene_obj *sp = NULL;
-    if (BU_PTBL_LEN(&gedp->free_solids)) {
-	sp = (struct bv_scene_obj *)BU_PTBL_GET(&gedp->free_solids, (BU_PTBL_LEN(&gedp->free_solids) - 1));
-	bu_ptbl_rm(&gedp->free_solids, (long *)sp);
-    } else {
-	BU_ALLOC(sp, struct bv_scene_obj); // from GET_BV_SCENE_OBJ in bv/defines.h
-	struct ged_bv_data *bdata;
-	BU_GET(bdata, struct ged_bv_data);
-	db_full_path_init(&bdata->s_fullpath);
-	sp->s_u_data = (void *)bdata;
-    }
-    return sp;
 }
 
 /* NOTE - caller must initialize vmin and vmax to INFINITY and -INFINITY
@@ -477,7 +448,7 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
 
     if (cwidth > 80)
 	cwidth = 80;
-    numcol = GED_TERMINAL_WIDTH / cwidth;
+    numcol = _GED_TERMINAL_WIDTH / cwidth;
 
     /*
      * For the number of (full and partial) lines that will be needed,
@@ -528,21 +499,6 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
 }
 
 /*********************************************************/
-
-struct directory **
-_ged_getspace(struct db_i *dbip,
-	      size_t num_entries)
-{
-    struct directory **dir_basep;
-
-    if (num_entries == 0)
-	num_entries = db_directory_size(dbip);
-
-    /* Allocate and cast num_entries worth of pointers */
-    dir_basep = (struct directory **) bu_calloc((num_entries+1), sizeof(struct directory *), "_ged_getspace *dir[]");
-    return dir_basep;
-}
-
 
 void
 _ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d)
@@ -712,7 +668,7 @@ _ged_read_densities(struct analyze_densities **dens, char **den_src, struct ged 
 	if (dp != (struct directory *)NULL) {
 
 	    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
-		bu_vls_printf(_ged_current_gedp->ged_result_str, "could not import %s\n", dp->d_namep);
+		bu_vls_printf(gedp->ged_result_str, "could not import %s\n", dp->d_namep);
 		return BRLCAD_ERROR;
 	    }
 
@@ -1108,8 +1064,7 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fas
 size_t
 ged_who_argc(struct ged *gedp)
 {
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(cmd2, "1")) {
+    if (gedp->new_cmd_forms) {
 	if (!gedp || !gedp->ged_gvp || !gedp->dbi_state)
 	    return 0;
 	BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
@@ -1121,10 +1076,10 @@ ged_who_argc(struct ged *gedp)
     struct display_list *gdlp = NULL;
     size_t visibleCount = 0;
 
-    if (!gedp || !gedp->ged_gdp || !gedp->ged_gdp->gd_headDisplay)
+    if (!gedp || !gedp->i->ged_gdp || !gedp->i->ged_gdp->gd_headDisplay)
 	return 0;
 
-    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay)) {
 	visibleCount++;
     }
 
@@ -1144,9 +1099,10 @@ int
 ged_who_argv(struct ged *gedp, char **start, const char **end)
 {
     char **vp = start;
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(cmd2, "1")) {
-	if (!gedp || !gedp->ged_gvp || !gedp->dbi_state)
+    if (!gedp)
+	return 0;
+    if (gedp->new_cmd_forms) {
+	if (!gedp->ged_gvp || !gedp->dbi_state)
 	    return 0;
 	BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
 	if (bvs) {
@@ -1166,7 +1122,7 @@ ged_who_argv(struct ged *gedp, char **start, const char **end)
 
     struct display_list *gdlp;
 
-    if (!gedp || !gedp->ged_gdp || !gedp->ged_gdp->gd_headDisplay)
+    if (!gedp || !gedp->i->ged_gdp || !gedp->i->ged_gdp->gd_headDisplay)
 	return 0;
 
     if (UNLIKELY(!start || !end)) {
@@ -1174,7 +1130,7 @@ ged_who_argv(struct ged *gedp, char **start, const char **end)
 	return 0;
     }
 
-    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay)) {
 	if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
 	    continue;
 
@@ -1258,28 +1214,6 @@ _ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
     }
 }
 
-/**
- * Once the vlist has been created, perform the common tasks
- * in handling the drawn solid.
- *
- * This routine must be prepared to run in parallel.
- */
-void
-_ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct _ged_client_data *dgcdp)
-{
-
-    if (dgcdp->vs.color_override) {
-	unsigned char wcolor[3];
-
-	wcolor[0] = (unsigned char)dgcdp->vs.color[0];
-	wcolor[1] = (unsigned char)dgcdp->vs.color[1];
-	wcolor[2] = (unsigned char)dgcdp->vs.color[2];
-	dl_add_path(dashflag, vhead, pathp, tsp, wcolor, dgcdp);
-    } else {
-	dl_add_path(dashflag, vhead, pathp, tsp, NULL, dgcdp);
-    }
-}
-
 void
 _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bv_vlblock *vbp, const char *name, int copy)
 {
@@ -1297,129 +1231,177 @@ _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bv_vlblock *vbp, const char 
     }
 }
 
-#define WIN_EDITOR "c:/Program Files/Windows NT/Accessories/wordpad.exe"
-#define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
-#define EMACS_EDITOR "emacs"
-#define NANO_EDITOR "nano"
-#define VIM_EDITOR "vim"
-#define VI_EDITOR "vi"
+/* print a message to let the user know they need to quit their
+     * editor before the application will come back to life.
+     */
+
+static void
+editit_msg(const char *editor, int opts_cnt, const char **editor_opts, const char *file, const char *terminal)
+{
+    size_t length;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls sep = BU_VLS_INIT_ZERO;
+    char *editor_basename;
+
+    if (!editor)
+	return;
+
+    if (terminal && opts_cnt > 0) {
+	bu_vls_sprintf(&str, "Invoking [%s ", editor);
+	for (int i = 0; i < opts_cnt; i++)
+	    bu_vls_printf(&str, "%s ", editor_opts[i]);
+	bu_vls_printf(&str, "%s] via %s\n\n", file, terminal);
+	bu_log("%s", bu_vls_cstr(&str));
+    } else if (terminal) {
+	bu_log("Invoking [%s %s] via %s\n\n", editor, file, terminal);
+    } else if (opts_cnt > 0) {
+	bu_vls_sprintf(&str, "Invoking [%s ", editor);
+	for (int i = 0; i < opts_cnt; i++)
+	    bu_vls_printf(&str, "%s ", editor_opts[i]);
+	bu_vls_printf(&str, "%s]\n\n", file);
+	bu_log("%s", bu_vls_cstr(&str));
+    } else {
+	bu_log("Invoking [%s %s]\n\n", editor, file);
+    }
+    editor_basename = bu_path_basename(editor, NULL);
+    bu_vls_sprintf(&str, "\nNOTE: You must QUIT %s before %s will respond and continue.\n", editor_basename, bu_getprogname());
+    for (length = bu_vls_strlen(&str) - 2; length > 0; length--) {
+	bu_vls_putc(&sep, '*');
+    }
+    bu_log("%s%s%s\n\n", bu_vls_addr(&sep), bu_vls_addr(&str), bu_vls_addr(&sep));
+    bu_vls_free(&str);
+    bu_vls_free(&sep);
+    bu_free(editor_basename, "editor_basename free");
+}
+
+
+/* Edit string breakdown has some limitations - eventually this should go away */
+static void
+editit_parse_editstring(char **editor, char **terminal, char **editor_opt, char **terminal_opt, const char *editstring)
+{
+    /* Convert the edit string into pieces suitable for arguments to execlp.
+     * Because we are using bu_argv_from_string, there are some limitations on
+     * what can successfully be passed through the various layers of logic
+     * using this approach.  For more robust handling use the struct ged
+     * entries to assign this information before calling _ged_editit. */
+    char **avtmp = (char **)NULL;
+    char *editstring_cpy = (char *)bu_calloc(2*strlen(editstring), sizeof(char), "editstring_cpy");
+    bu_str_escape(editstring, "\\", editstring_cpy, 2*strlen(editstring));
+    avtmp = (char **)bu_calloc(5, sizeof(char *), "ged_editit: editstring args");
+    bu_argv_from_string(avtmp, 4, editstring_cpy);
+
+    if (avtmp[0] && !BU_STR_EQUAL(avtmp[0], "(null)"))
+	*terminal = bu_strdup(avtmp[0]);
+    if (avtmp[1] && !BU_STR_EQUAL(avtmp[1], "(null)"))
+	*terminal_opt = bu_strdup(avtmp[1]);
+    if (avtmp[2] && !BU_STR_EQUAL(avtmp[2], "(null)"))
+	*editor = bu_strdup(avtmp[2]);
+    if (avtmp[3] && !BU_STR_EQUAL(avtmp[3], "(null)"))
+	*editor_opt = bu_strdup(avtmp[3]);
+
+    bu_free((void *)avtmp, "ged_editit: avtmp");
+    bu_free(editstring_cpy, "editstring copy");
+}
 
 int
-_ged_editit(const char *editstring, const char *filename)
+_ged_editit(struct ged *gedp, const char *editstring, const char *filename)
 {
+    int ret = 1;
+    if (!gedp)
+	return 0;
+
 #ifdef HAVE_UNISTD_H
     int xpid = 0;
     int status = 0;
 #endif
     int pid = 0;
-    char **avtmp = (char **)NULL;
-    const char *terminal = (char *)NULL;
-    const char *terminal_opt = (char *)NULL;
-    const char *editor = (char *)NULL;
-    const char *editor_opt = (char *)NULL;
-    const char *file = (const char *)filename;
+    char *editor = (char *)NULL;
+    char *editor_opt = (char *)NULL;
+    char *terminal = (char *)NULL;
+    char *terminal_opt = (char *)NULL;
+
+    int eac = 0;
+    char *eargv[MAXPATHLEN] = {NULL};
+    int listexec = 0;
 
 #if defined(SIGINT) && defined(SIGQUIT)
     void (*s2)(int);
     void (*s3)(int);
 #endif
 
-    if (!file) {
+    if (!filename) {
 	bu_log("INTERNAL ERROR: editit filename missing\n");
 	return 0;
     }
 
-    char *editstring_cpy = NULL;
+    if (editstring && strlen(editstring)) {
 
-    /* convert the edit string into pieces suitable for arguments to execlp */
+	// Highest precedence - parse an edit string, if we have one
+	editit_parse_editstring(&editor, &terminal, &editor_opt, &terminal_opt, editstring);
 
-    if (editstring != NULL) {
-	editstring_cpy = bu_strdup(editstring);
-	avtmp = (char **)bu_calloc(5, sizeof(char *), "ged_editit: editstring args");
-	bu_argv_from_string(avtmp, 4, editstring_cpy);
+	// Produce the editing message
+	editit_msg(editor, (editor_opt) ? 1 : 0, (const char **)&editor_opt, filename, terminal);
 
-	if (avtmp[0] && !BU_STR_EQUAL(avtmp[0], "(null)"))
-	    terminal = avtmp[0];
-	if (avtmp[1] && !BU_STR_EQUAL(avtmp[1], "(null)"))
-	    terminal_opt = avtmp[1];
-	if (avtmp[2] && !BU_STR_EQUAL(avtmp[2], "(null)"))
-	    editor = avtmp[2];
-	if (avtmp[3] && !BU_STR_EQUAL(avtmp[3], "(null)"))
-	    editor_opt = avtmp[3];
+	// Tell exec logic we're in list mode
+	listexec = 1;
+
+    } else if (strlen(gedp->editor)) {
+
+	/* Second highest precedence - assemble ged struct info into editit form, if defined */
+	editor = bu_strdup(gedp->editor);
+
+	// If we're going to use a terminal, stage that first - unlike editstring
+	// mode, we'll be feeding the argv array directly to exec
+	if (strlen(gedp->terminal)) {
+	    terminal = bu_strdup(gedp->terminal);
+	    eargv[0] = terminal;
+	    eac = 1;
+	    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->terminal_opts); i++) {
+		eargv[eac] = bu_strdup((const char *)BU_PTBL_GET(&gedp->terminal_opts, i));
+		eac++;
+	    }
+	}
+
+	// Terminal handled - add editor and any opts
+	eargv[eac] = editor;
+	eac++;
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->editor_opts); i++) {
+	    eargv[eac] = bu_strdup((const char *)BU_PTBL_GET(&gedp->editor_opts, i));
+	    eac++;
+	}
+
+	// Last comes the filename
+	eargv[eac] = bu_strdup(filename);
+	eac++;
+
+	// Produce the editing message
+	editit_msg(editor, BU_PTBL_LEN(&gedp->editor_opts), (const char **)gedp->editor_opts.buffer, filename, terminal);
+
     } else {
-	editor = getenv("EDITOR");
 
-	/* still unset? try windows */
-	if (!editor || editor[0] == '\0') {
-	    if (bu_file_exists(WIN_EDITOR, NULL)) {
-		editor = WIN_EDITOR;
-	    }
+	// If neither an edit string nor gedp are telling us what to use,
+	// try to find something
+	struct bu_ptbl eo = BU_PTBL_INIT_ZERO;
+	editor = bu_strdup(bu_editor(&eo, 0, 0, NULL));
+	eargv[0] = editor;
+	eac = 1;
+	for (size_t i = 0; i < BU_PTBL_LEN(&eo); i++) {
+	    eargv[eac] = bu_strdup((const char *)BU_PTBL_GET(&eo, i));
+	    eac++;
 	}
 
-	/* still unset? try mac os x */
-	if (!editor || editor[0] == '\0') {
-	    if (bu_file_exists(MAC_EDITOR, NULL)) {
-		editor = MAC_EDITOR;
-	    }
-	}
+	// Append filename
+	eargv[eac] = bu_strdup(filename);
+	eac++;
 
-	/* still unset? try emacs */
-	if (!editor || editor[0] == '\0') {
-	    editor = bu_which(EMACS_EDITOR);
-	}
-
-	/* still unset? try nano */
-	if (!editor || editor[0] == '\0') {
-	    editor = bu_which(NANO_EDITOR);
-	}
-
-	/* still unset? try vim */
-	if (!editor || editor[0] == '\0') {
-	    editor = bu_which(VIM_EDITOR);
-	}
-
-	/* still unset? As a last resort, go with vi -
-	 * vi is part of the POSIX standard, which is as
-	 * close as we can get currently to an editor
-	 * that should always be present:
-	 * http://pubs.opengroup.org/onlinepubs/9699919799/utilities/vi.html */
-	if (!editor || editor[0] == '\0') {
-	    editor = bu_which(VI_EDITOR);
-	}
+	// Produce the editing message
+	editit_msg(editor, (BU_PTBL_LEN(&eo)) ? 1 : 0, (const char **)eo.buffer, filename, terminal);
     }
 
     if (!editor) {
 	bu_log("INTERNAL ERROR: editit editor missing\n");
-	return 0;
-    }
-
-    /* print a message to let the user know they need to quit their
-     * editor before the application will come back to life.
-     */
-    {
-	size_t length;
-	struct bu_vls str = BU_VLS_INIT_ZERO;
-	struct bu_vls sep = BU_VLS_INIT_ZERO;
-	char *editor_basename;
-
-	if (terminal && editor_opt) {
-	    bu_log("Invoking [%s %s %s] via %s\n\n", editor, editor_opt, file, terminal);
-	} else if (terminal) {
-	    bu_log("Invoking [%s %s] via %s\n\n", editor, file, terminal);
-	} else if (editor_opt) {
-	    bu_log("Invoking [%s %s %s]\n\n", editor, editor_opt, file);
-	} else {
-	    bu_log("Invoking [%s %s]\n\n", editor, file);
-	}
-	editor_basename = bu_path_basename(editor, NULL);
-	bu_vls_sprintf(&str, "\nNOTE: You must QUIT %s before %s will respond and continue.\n", editor_basename, bu_getprogname());
-	for (length = bu_vls_strlen(&str) - 2; length > 0; length--) {
-	    bu_vls_putc(&sep, '*');
-	}
-	bu_log("%s%s%s\n\n", bu_vls_addr(&sep), bu_vls_addr(&str), bu_vls_addr(&sep));
-	bu_vls_free(&str);
-	bu_vls_free(&sep);
-	bu_free(editor_basename, "editor_basename free");
+	ret = 0;
+	goto editit_cleanup;
     }
 
 #if defined(SIGINT) && defined(SIGQUIT)
@@ -1430,7 +1412,8 @@ _ged_editit(const char *editstring, const char *filename)
 #ifdef HAVE_UNISTD_H
     if ((pid = fork()) < 0) {
 	perror("fork");
-	return 0;
+	ret = 0;
+	goto editit_cleanup;
     }
 #endif
 
@@ -1444,9 +1427,7 @@ _ged_editit(const char *editstring, const char *filename)
 #endif
 
 	{
-
 #if defined(_WIN32) && !defined(__CYGWIN__)
-	    char buffer[RT_MAXLINE + 1] = {0};
 	    STARTUPINFO si = {0};
 	    PROCESS_INFORMATION pi = {0};
 	    si.cb = sizeof(STARTUPINFO);
@@ -1456,32 +1437,66 @@ _ged_editit(const char *editstring, const char *filename)
 	    si.lpDesktop = NULL;
 	    si.dwFlags = 0;
 
-	    snprintf(buffer, RT_MAXLINE, "%s %s", editor, file);
+	    // Windows doesn't have terminal launches, so we just append all the args
+	    struct bu_vls buffer = BU_VLS_INIT_ZERO;
+	    if (listexec) {
+		bu_vls_printf(&buffer, "%s " , editor);
+		if (editor_opt)
+		    bu_vls_printf(&buffer, "%s " , editor_opt);
+		bu_vls_printf(&buffer, "%s" , filename);
+	    } else {
+		for (int i = 0; i < eac - 1; i++)
+		    bu_vls_printf(&buffer, "%s " , eargv[i]);
+		bu_vls_printf(&buffer, "%s" , eargv[eac - 1]);
+	    }
 
-	    CreateProcess(NULL, buffer, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+	    // Note - CreateProcess requires us to use bu_vls_addr here to get
+	    // something usable as an LPSTR - const char * won't work.
+	    if (!CreateProcess(NULL, bu_vls_addr(&buffer), NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi)) {
+		DWORD ec = GetLastError();
+		LPSTR mb = NULL;
+		size_t mblen = FormatMessageA(
+			FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL, ec, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&mb, 0, NULL);
+		std::string mstr(mb, mblen);
+		LocalFree(mb);
+		fprintf(stderr, "CreateProcess failed with editor \"%s\" and file \"%s\": %s\n", eargv[0], filename, mstr.c_str());
+	    }
 	    WaitForSingleObject(pi.hProcess, INFINITE);
+	    bu_vls_free(&buffer);
 	    return 1;
 #else
+
+	    /* If we're using TextEdit close stdout/stderr so we don't get blather
+	     * about service registration failure */
 	    char *editor_basename = bu_path_basename(editor, NULL);
 	    if (BU_STR_EQUAL(editor_basename, "TextEdit")) {
-		/* close stdout/stderr so we don't get blather from TextEdit about service registration failure */
 		close(fileno(stdout));
 		close(fileno(stderr));
 	    }
 	    bu_free(editor_basename, "editor_basename free");
 
-	    if (!terminal && !editor_opt) {
-		(void)execlp(editor, editor, file, NULL);
-	    } else if (!terminal) {
-		(void)execlp(editor, editor, editor_opt, file, NULL);
-	    } else if (terminal && !terminal_opt) {
-		(void)execlp(terminal, terminal, editor, file, NULL);
-	    } else if (terminal && !editor_opt) {
-		(void)execlp(terminal, terminal, terminal_opt, editor, file, NULL);
+	    // Non-Windows platforms might be doing one of several things.  If we're
+	    // listexec, then av isn't necessarily in execution order and we need to be
+	    // careful about what goes where
+	    if (listexec) {
+		if (!terminal && !editor_opt) {
+		    (void)execlp(editor, editor, filename, NULL);
+		} else if (!terminal) {
+		    (void)execlp(editor, editor, editor_opt, filename, NULL);
+		} else if (terminal && !terminal_opt) {
+		    (void)execlp(terminal, terminal, editor, filename, NULL);
+		} else if (terminal && !editor_opt) {
+		    (void)execlp(terminal, terminal, terminal_opt, editor, filename, NULL);
+		} else {
+		    (void)execlp(terminal, terminal, terminal_opt, editor, editor_opt, filename, NULL);
+		}
 	    } else {
-		(void)execlp(terminal, terminal, terminal_opt, editor, editor_opt, file, NULL);
+		// Not doing listexec, so we can just go with the av array.
+		(void)execvp(eargv[0], (char * const *)eargv);
 	    }
 #endif
+
 	    /* should not reach */
 	    perror(editor);
 	    bu_exit(1, NULL);
@@ -1502,13 +1517,161 @@ _ged_editit(const char *editstring, const char *filename)
     (void)signal(SIGQUIT, s3);
 #endif
 
-    if (editstring != NULL) {
-	bu_free((void *)avtmp, "ged_editit: avtmp");
-	bu_free(editstring_cpy, "editstring copy");
+editit_cleanup:
+    for (int i = 0; i < eac; i++)
+	bu_free(eargv[i], "eargv");
+
+    if (listexec) {
+	// listexec isn't using eargv
+	bu_free(editor, "editor");
+	bu_free(editor_opt, "editor_opt");
+	bu_free(terminal, "terminal");
+	bu_free(terminal_opt, "terminal_opt");
     }
+
+    return ret;
+}
+
+/* Terminals to try. */
+#define UXTERM_COMMAND "uxterm"
+#define XTERM_COMMAND "xterm"
+
+/* Can the mac terminal be used to launch applications?  Doesn't seem like it
+ * in initial trials, but maybe there's some trick? */
+#define MAC_BINARY "/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal"
+
+static int
+have_terminal(struct ged *gedp)
+{
+    const char *terminal_list[] = {
+	UXTERM_COMMAND, XTERM_COMMAND,
+	NULL
+    };
+
+    bu_ptbl_reset(&gedp->terminal_opts);
+
+    // Try to find a terminal emulator
+    int i = 0;
+    const char *terminal = terminal_list[i];
+    const char *terminal_fullpath = NULL;
+    struct bu_vls twp = BU_VLS_INIT_ZERO;
+    while (terminal && !terminal_fullpath) {
+
+	// Check the default which lookup
+	terminal_fullpath = bu_which(terminal_list[i]);
+
+	// If that didn't work, try some common paths
+	if (!terminal_fullpath) {
+	    bu_vls_sprintf(&twp, "/usr/X11R6/bin/%s", terminal_list[i]);
+	    terminal_fullpath = bu_which(bu_vls_cstr(&twp));
+	}
+	if (!terminal_fullpath) {
+	    bu_vls_sprintf(&twp, "/usr/X11/bin/%s", terminal_list[i]);
+	    terminal_fullpath = bu_which(bu_vls_cstr(&twp));
+	}
+
+	if (terminal_fullpath)
+	    break;
+
+	// Nope, try the next one
+	i++;
+	terminal = terminal_list[i];
+    }
+    bu_vls_free(&twp);
+
+    if (terminal_fullpath) {
+	snprintf(gedp->terminal, MAXPATHLEN, "%s", terminal_fullpath);
+	static const char *topt = "-e";
+	bu_ptbl_ins(&gedp->terminal_opts, (long *)topt);
+	return 1;
+    }
+
+    return 0;
+}
+
+int
+ged_set_editor(struct ged *gedp, int non_gui)
+{
+    /* There are two possible situations - in classic mode the assumption is
+     * made that the command window is a controlling terminal, and an editor
+     * should be launched that will utilize that controlling window.  In GUI
+     * mode, the editor will be launched either as a separate GUI application
+     * or in a separate terminal. */
+    int need_terminal = 0;
+    const char *editor = NULL;
+
+    if (non_gui) {
+        // Console editors only
+        editor = bu_editor(&gedp->editor_opts, 1, gedp->app_editors_cnt, gedp->app_editors);
+    } else {
+
+        // Because we know we're willing to try setting up to use
+        // a terminal, we do a little extra checking of any user
+        // specified editors.  Define a "short circuiting" list
+        // to specify that will prevent libbu's default lists from
+        // being invoked
+        const char *check_for_editors[2] = {"MGED_NULL_EDITOR", NULL};
+
+        // First check for user-specified GUI editors
+        editor = bu_editor(&gedp->editor_opts, 2, 2, (const char **)check_for_editors);
+        if (!editor) {
+            // First check for user-specified console editors
+            // Falling back to console, will need terminal
+            editor = bu_editor(&gedp->editor_opts, 1, 2, (const char **)check_for_editors);
+            if (editor)
+                need_terminal = 1;
+        }
+
+        // If the user specified editor can't be launched without a terminal,
+        // check if we can do that.  If not, we'll have to fall back to other
+        // options
+        if (need_terminal) {
+            int h = have_terminal(gedp);
+            if (!h)
+                editor = NULL;
+        }
+
+        // If initial attempts didn't find an editor, be more aggressive
+        if (!editor) {
+            editor = bu_editor(&gedp->editor_opts, 2, gedp->app_editors_cnt, gedp->app_editors);
+            if (!editor) {
+                // Falling back to console, will need terminal
+                editor = bu_editor(&gedp->editor_opts, 1, gedp->app_editors_cnt, gedp->app_editors);
+                if (editor)
+                    need_terminal = 1;
+            }
+
+            if (need_terminal) {
+                int h = have_terminal(gedp);
+                if (!h)
+                    editor = NULL;
+            }
+        }
+
+    }
+
+    if (!editor) {
+        // No suitable editor found
+        return 0;
+    }
+
+    // Copy editor into ged struct
+    snprintf(gedp->editor, MAXPATHLEN, "%s", editor);
 
     return 1;
 }
+
+void
+ged_clear_editor(struct ged *gedp)
+{
+    if (!gedp)
+        return;
+    gedp->editor[0] = '\0';
+    gedp->terminal[0] = '\0';
+    bu_ptbl_reset(&gedp->editor_opts);
+    bu_ptbl_reset(&gedp->terminal_opts);
+}
+
 
 void
 _ged_rt_set_eye_model(struct ged *gedp,
@@ -1537,8 +1700,7 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	    extremum[1][i] = -INFINITY;
 	}
 
-	const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-	if (BU_STR_EQUAL(cmd2, "1")) {
+	if (gedp->new_cmd_forms) {
 	    VSETALL(extremum[0],  INFINITY);
 	    VSETALL(extremum[1], -INFINITY);
 	    struct bu_ptbl *db_objs = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS);
@@ -1548,7 +1710,7 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	    if (local_db_objs)
 		(void)scene_bounding_sph(local_db_objs, &(extremum[0]), &(extremum[1]), 1);
 	} else {
-	    (void)dl_bounding_sph(gedp->ged_gdp->gd_headDisplay, &(extremum[0]), &(extremum[1]), 1);
+	    (void)dl_bounding_sph(gedp->i->ged_gdp->gd_headDisplay, &(extremum[0]), &(extremum[1]), 1);
 	}
 
 	VMOVEN(direction, gedp->ged_gvp->gv_rotation + 8, 3);
@@ -1625,11 +1787,11 @@ _ged_rt_output_handler2(void *clientData, int type)
 	else
 	    bu_log("Raytrace complete.\n");
 
-	if (gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
-	    gedp->ged_gdp->gd_rtCmdNotify(aborted);
+	if (gedp->i->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    gedp->i->ged_gdp->gd_rtCmdNotify(aborted);
 
 	if (rrtp->end_clbk)
-	    rrtp->end_clbk(aborted, rrtp->end_clbk_data);
+	    rrtp->end_clbk(0, NULL, &aborted, rrtp->end_clbk_data);
 
 	/* free rrtp */
 	bu_ptbl_rm(&gedp->ged_subp, (long *)rrtp);
@@ -1688,17 +1850,17 @@ ged_rt_output_handler_helper(struct ged_subprocess* rrtp, bu_process_io_t type)
 void
 _ged_rt_output_handler(void *clientData, int mask)
 {
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(cmd2, "1")) {
-	_ged_rt_output_handler2(clientData, mask);
-	return;
-    }
     struct ged_subprocess *rrtp = (struct ged_subprocess *)clientData;
-
     if ((rrtp == (struct ged_subprocess *)NULL) || (rrtp->gedp == (struct ged *)NULL))
 	return;
 
     BU_CKMAG(rrtp, GED_CMD_MAGIC, "ged subprocess");
+
+    struct ged *gedp = rrtp->gedp;
+    if (gedp->new_cmd_forms) {
+	_ged_rt_output_handler2(clientData, mask);
+	return;
+    }
 
     /* Get data from rt */
     if (ged_rt_output_handler_helper(rrtp, BU_PROCESS_STDERR) || ged_rt_output_handler_helper(rrtp, BU_PROCESS_STDOUT)) {
@@ -1707,7 +1869,6 @@ _ged_rt_output_handler(void *clientData, int mask)
 	    return;
 
 	int retcode = 0;
-	struct ged *gedp = rrtp->gedp;
 
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
@@ -1721,17 +1882,78 @@ _ged_rt_output_handler(void *clientData, int mask)
 	else
 	    bu_log("Raytrace complete.\n");
 
-	if (gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
-	    gedp->ged_gdp->gd_rtCmdNotify(aborted);
+	if (gedp->i->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    gedp->i->ged_gdp->gd_rtCmdNotify(aborted);
 
 	if (rrtp->end_clbk)
-	    rrtp->end_clbk(aborted, rrtp->end_clbk_data);
+	    rrtp->end_clbk(0, NULL, &aborted, rrtp->end_clbk_data);
 
 	/* free rrtp */
 	bu_ptbl_rm(&gedp->ged_subp, (long *)rrtp);
 	BU_PUT(rrtp, struct ged_subprocess);
 
 	return;
+    }
+}
+
+
+static void
+dl_bitwise_and_fullpath(struct bu_list *hdlp, int flag_val)
+{
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    size_t i;
+    struct bv_scene_obj *sp;
+
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+        next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+        for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    if (!sp->s_u_data)
+		continue;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
+
+	    for (i = 0; i < bdata->s_fullpath.fp_len; i++) {
+                DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_flags &= flag_val;
+	    }
+        }
+
+        gdlp = next_gdlp;
+    }
+}
+
+
+
+static void
+dl_write_animate(struct bu_list *hdlp, FILE *fp)
+{
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    size_t i;
+    struct bv_scene_obj *sp;
+
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+        next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+        for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    if (!sp->s_u_data)
+		continue;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
+
+	    for (i = 0; i < bdata->s_fullpath.fp_len; i++) {
+                if (!(DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_flags & RT_DIR_USED)) {
+		    struct animate *anp;
+                    for (anp = DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_animate; anp; anp=anp->an_forw) {
+			db_write_anim(fp, anp);
+		    }
+                    DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_flags |= RT_DIR_USED;
+		}
+	    }
+        }
+
+        gdlp = next_gdlp;
     }
 }
 
@@ -1770,8 +1992,7 @@ _ged_rt_write(struct ged *gedp,
      * remove the -1 case.) */
     if (argc >= 0) {
 	if (!argc) {
-	    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-	    if (BU_STR_EQUAL(cmd2, "1")) {
+	    if (gedp->new_cmd_forms) {
 		BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
 		if (bvs) {
 		    std::vector<std::string> drawn_paths = bvs->list_drawn_paths(-1, true);
@@ -1781,7 +2002,7 @@ _ged_rt_write(struct ged *gedp,
 		}
 	    } else {
 		struct display_list *gdlp;
-		for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+		for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay)) {
 		    if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
 			continue;
 		    fprintf(fp, "draw %s;\n", bu_vls_addr(&gdlp->dl_path));
@@ -1797,17 +2018,17 @@ _ged_rt_write(struct ged *gedp,
 	fprintf(fp, "prep;\n");
     }
 
-    dl_bitwise_and_fullpath(gedp->ged_gdp->gd_headDisplay, ~RT_DIR_USED);
+    dl_bitwise_and_fullpath(gedp->i->ged_gdp->gd_headDisplay, ~RT_DIR_USED);
 
-    dl_write_animate(gedp->ged_gdp->gd_headDisplay, fp);
+    dl_write_animate(gedp->i->ged_gdp->gd_headDisplay, fp);
 
-    dl_bitwise_and_fullpath(gedp->ged_gdp->gd_headDisplay, ~RT_DIR_USED);
+    dl_bitwise_and_fullpath(gedp->i->ged_gdp->gd_headDisplay, ~RT_DIR_USED);
 
     fprintf(fp, "end;\n");
 }
 
 int
-_ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv, int stdout_is_txt)
+_ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv, int stdout_is_txt, int *pid_ctx, bu_clbk_t end_clbk, void *end_clbk_data)
 {
     FILE *fp_in;
     vect_t eye_model;
@@ -1816,6 +2037,9 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
 
     bu_process_create(&p, gd_rt_cmd, BU_PROCESS_DEFAULT);
 
+    if (pid_ctx)
+	*pid_ctx = bu_process_pid(p);
+
     if (bu_process_pid(p) == -1) {
 	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
 	for (int i = 0; i < cmd_len; i++) {
@@ -1823,10 +2047,6 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
 	}
 	bu_vls_printf(gedp->ged_result_str, "\n");
 	return BRLCAD_ERROR;
-    }
-
-    if (gedp->ged_subprocess_init_callback) {
-	(*gedp->ged_subprocess_init_callback)(bu_process_pid(p), gedp->ged_subprocess_clbk_context);
     }
 
     fp_in = bu_process_file_open(p, BU_PROCESS_STDIN);
@@ -1841,8 +2061,8 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     run_rtp->stdin_active = 0;
     run_rtp->stdout_active = 0;
     run_rtp->stderr_active = 0;
-    run_rtp->end_clbk = gedp->ged_subprocess_end_callback;
-    run_rtp->end_clbk_data = gedp->ged_subprocess_clbk_context;
+    run_rtp->end_clbk = end_clbk;
+    run_rtp->end_clbk_data = end_clbk_data;
     bu_ptbl_ins(&gedp->ged_subp, (long *)run_rtp);
 
     run_rtp->p = p;
@@ -2218,182 +2438,6 @@ _ged_dir_getspace(struct db_i *dbip,
     return dir_basep;
 }
 
-int
-_ged_set_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const char *attribute, fastf_t sf)
-{
-    RT_METABALL_CK_MAGIC(mbip);
-
-    switch (attribute[0]) {
-	case 'm':
-	case 'M':
-	    if (sf <= METABALL_METABALL)
-		mbip->method = METABALL_METABALL;
-	    else if (sf >= METABALL_BLOB)
-		mbip->method = METABALL_BLOB;
-	    else
-		mbip->method = (int)sf;
-
-	    break;
-	case 't':
-	case 'T':
-	    if (sf < 0)
-		mbip->threshold = -sf;
-	    else
-		mbip->threshold = sf;
-
-	    break;
-	default:
-	    bu_vls_printf(gedp->ged_result_str, "bad metaball attribute - %s", attribute);
-	    return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
-}
-
-int
-_ged_select_botpts(struct ged *gedp, struct rt_bot_internal *botip, double vx, double vy, double vwidth, double vheight, double vminz, int rflag)
-{
-    size_t i;
-    fastf_t vr = 0.0;
-    fastf_t vmin_x = 0.0;
-    fastf_t vmin_y = 0.0;
-    fastf_t vmax_x = 0.0;
-    fastf_t vmax_y = 0.0;
-
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-
-    if (rflag) {
-	vr = vwidth;
-    } else {
-	vmin_x = vx;
-	vmin_y = vy;
-
-	if (vwidth > 0)
-	    vmax_x = vx + vwidth;
-	else {
-	    vmin_x = vx + vwidth;
-	    vmax_x = vx;
-	}
-
-	if (vheight > 0)
-	    vmax_y = vy + vheight;
-	else {
-	    vmin_y = vy + vheight;
-	    vmax_y = vy;
-	}
-    }
-
-    if (rflag) {
-	for (i = 0; i < botip->num_vertices; i++) {
-	    point_t vloc;
-	    point_t vpt;
-	    vect_t diff;
-	    fastf_t mag;
-
-	    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, &botip->vertices[i*3]);
-
-	    if (vpt[Z] < vminz)
-		continue;
-
-	    VSET(vloc, vx, vy, vpt[Z]);
-	    VSUB2(diff, vpt, vloc);
-	    mag = MAGNITUDE(diff);
-
-	    if (mag > vr)
-		continue;
-
-	    bu_vls_printf(gedp->ged_result_str, "%zu ", i);
-	}
-    } else {
-	for (i = 0; i < botip->num_vertices; i++) {
-	    point_t vpt;
-
-	    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, &botip->vertices[i*3]);
-
-	    if (vpt[Z] < vminz)
-		continue;
-
-	    if (vmin_x <= vpt[X] && vpt[X] <= vmax_x &&
-		vmin_y <= vpt[Y] && vpt[Y] <= vmax_y) {
-		bu_vls_printf(gedp->ged_result_str, "%zu ", i);
-	    }
-	}
-    }
-
-    return BRLCAD_OK;
-}
-
-/*
- * Returns point mbp_i.
- */
-struct wdb_metaball_pnt *
-_ged_get_metaball_pt_i(struct rt_metaball_internal *mbip, int mbp_i)
-{
-    int i = 0;
-    struct wdb_metaball_pnt *curr_mbpp;
-
-    for (BU_LIST_FOR(curr_mbpp, wdb_metaball_pnt, &mbip->metaball_ctrl_head)) {
-	if (i == mbp_i)
-	    return curr_mbpp;
-
-	++i;
-    }
-
-    return (struct wdb_metaball_pnt *)NULL;
-}
-
-
-#define GED_METABALL_SCALE(_d, _scale) \
-    if ((_scale) < 0.0) \
-	(_d) = -(_scale); \
-    else		  \
-	(_d) *= (_scale);
-
-int
-_ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const char *attribute, fastf_t sf, int rflag)
-{
-    int mbp_i;
-    struct wdb_metaball_pnt *mbpp;
-
-    RT_METABALL_CK_MAGIC(mbip);
-
-    if (!rflag && sf > 0)
-	sf = -sf;
-
-    switch (attribute[0]) {
-	case 'f':
-	case 'F':
-	    if (sscanf(attribute+1, "%d", &mbp_i) != 1)
-		mbp_i = 0;
-
-	    if ((mbpp = _ged_get_metaball_pt_i(mbip, mbp_i)) == (struct wdb_metaball_pnt *)NULL)
-		return BRLCAD_ERROR;
-
-	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
-	    GED_METABALL_SCALE(mbpp->fldstr, sf);
-
-	    break;
-	case 's':
-	case 'S':
-	    if (sscanf(attribute+1, "%d", &mbp_i) != 1)
-		mbp_i = 0;
-
-	    if ((mbpp = _ged_get_metaball_pt_i(mbip, mbp_i)) == (struct wdb_metaball_pnt *)NULL)
-		return BRLCAD_ERROR;
-
-	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
-	    GED_METABALL_SCALE(mbpp->sweat, sf);
-
-	    break;
-	default:
-	    bu_vls_printf(gedp->ged_result_str, "bad metaball attribute - %s", attribute);
-	    return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
-}
-
 #if 0
 
 // TODO - need to generalize the path specifier parsing per notes in TODO.  This is a first
@@ -2487,6 +2531,31 @@ _ged_characterize_pathspec(struct bu_vls *normalized, struct ged *gedp, const ch
 
 #endif
 
+struct display_list *
+ged_dl(struct ged *gedp)
+{
+    if (!gedp || !gedp->i || !gedp->i->ged_gdp)
+	return NULL;
+    return (struct display_list *)gedp->i->ged_gdp->gd_headDisplay;
+}
+
+void
+ged_dl_notify_func_set(struct ged *gedp, ged_drawable_notify_func_t f)
+{
+    if (!gedp || !gedp->i || !gedp->i->ged_gdp)
+	return;
+
+    gedp->i->ged_gdp->gd_rtCmdNotify = f;
+}
+
+ged_drawable_notify_func_t
+ged_dl_notify_func_get(struct ged *gedp)
+{
+    if (!gedp || !gedp->i || !gedp->i->ged_gdp)
+	return NULL;
+
+    return gedp->i->ged_gdp->gd_rtCmdNotify;
+}
 
 /*
  * Local Variables:

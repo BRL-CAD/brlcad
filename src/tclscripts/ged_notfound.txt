@@ -1,0 +1,21 @@
+Scanning through the BRL-CAD Tcl sources looking for mGed and gedWrapper
+commands executed on the object, the following don't seem to have corresponding
+GED commands - at least, they aren't present on a gsh command line.  Not
+sure if the Tcl Ged object has some alternative means of making these work,
+but since this is where vslew came from it warrants checking...
+
+find_botpt
+igraph
+mouse_bot_move_pnt
+mouse_find_botpt
+mouse_find_pipe_pnt
+mouse_metaball_add_pnt
+mouse_metaball_move_pnt
+mouse_pipe_append_pnt
+mouse_pipe_move_pnt
+mouse_pipe_prepend_pnt
+pipe_move_pnt_mode
+pipe_pnt_delete
+pmodel2view
+translate
+

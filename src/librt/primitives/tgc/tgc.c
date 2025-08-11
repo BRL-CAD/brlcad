@@ -1,7 +1,7 @@
 /*                           T G C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -138,7 +138,7 @@ size_t
 clt_tgc_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct tgc_specific *tgc =
-        (struct tgc_specific *)stp->st_specific;
+	(struct tgc_specific *)stp->st_specific;
     struct clt_tgc_specific *args;
 
     const size_t size = sizeof(*args);
@@ -1674,6 +1674,35 @@ rt_tgc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+int
+rt_tgc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_tgc_internal *tip = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tip);
+    struct rt_tgc_internal *top = (struct rt_tgc_internal *)rop->idb_ptr;
+    RT_TGC_CK_MAGIC(top);
+
+    vect_t v, h, a, b, c, d;
+    VMOVE(v, tip->v);
+    VMOVE(h, tip->h);
+    VMOVE(a, tip->a);
+    VMOVE(b, tip->b);
+    VMOVE(c, tip->c);
+    VMOVE(d, tip->d);
+
+    MAT4X3PNT(top->v, mat, v);
+    MAT4X3VEC(top->h, mat, h);
+    MAT4X3VEC(top->a, mat, a);
+    MAT4X3VEC(top->b, mat, b);
+    MAT4X3VEC(top->c, mat, c);
+    MAT4X3VEC(top->d, mat, d);
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Import a TGC from the database format to the internal format.
@@ -1704,14 +1733,16 @@ rt_tgc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*6);
 
+    VMOVE(tip->v, &vec[0*ELEMENTS_PER_VECT]);
+    VMOVE(tip->h, &vec[1*ELEMENTS_PER_VECT]);
+    VMOVE(tip->a, &vec[2*ELEMENTS_PER_VECT]);
+    VMOVE(tip->b, &vec[3*ELEMENTS_PER_VECT]);
+    VMOVE(tip->c, &vec[4*ELEMENTS_PER_VECT]);
+    VMOVE(tip->d, &vec[5*ELEMENTS_PER_VECT]);
+
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(tip->v, mat, &vec[0*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(tip->h, mat, &vec[1*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(tip->a, mat, &vec[2*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(tip->b, mat, &vec[3*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(tip->c, mat, &vec[4*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(tip->d, mat, &vec[5*ELEMENTS_PER_VECT]);
+    rt_tgc_mat(ip, mat, ip);
 
     return 0;		/* OK */
 }
@@ -1892,6 +1923,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct bu_ptbl verts;		/* table of vertices used for top and bottom faces */
     struct bu_ptbl faces;		/* table of faceuses for nmg_gluefaces */
     struct vertex **v[3];		/* array for making triangular faces */
+    struct bu_list *vlfree = &rt_vlfree;
 
     size_t i;
 
@@ -2388,7 +2420,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	fu = (struct faceuse *)BU_PTBL_GET(&faces, i);
 	NMG_CK_FACEUSE(fu);
 
-	if (nmg_calc_face_g(fu, &RTG.rtg_vlfree)) {
+	if (nmg_calc_face_g(fu, vlfree)) {
 	    bu_log("rt_tess_tgc: failed to calculate plane equation\n");
 	    nmg_pr_fu_briefly(fu, "");
 	    return -1;
@@ -2505,7 +2537,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     nmg_region_a(*r, tol);
 
     /* glue faces together */
-    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &RTG.rtg_vlfree, tol);
+    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), vlfree, tol);
     bu_ptbl_free(&faces);
 
     return 0;
@@ -3071,7 +3103,6 @@ tgc_connecting_lines(
 }
 
 
-
 int
 rt_tgc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
@@ -3084,7 +3115,7 @@ rt_tgc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
@@ -3188,7 +3219,7 @@ rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
@@ -3418,47 +3449,163 @@ rt_tgc_centroid(point_t *cent, const struct rt_db_internal *ip)
     }
 }
 
-void
-rt_tgc_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
+int
+rt_tgc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
-    if (!ps || !ip)
-	return;
+    int lcnt = 5;
+    if (!pl || pl_max < lcnt || !ip)
+	return 0;
+
+    point_t work, pos_view;
+    int npl = 0;
+
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
 
     struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
+    MAT4X3PNT(pos_view, xform, tgc->v);
+    POINT_LABEL(pos_view, 'V');
 
-    // Set up the containers
-    struct bv_label *l[5];
-    for (int i = 0; i < 5; i++) {
-	struct bv_scene_obj *s = bv_obj_get_child(ps);
-	struct bv_label *la;
-	BU_GET(la, struct bv_label);
-	s->s_i_data = (void *)la;
+    VADD2(work, tgc->v, tgc->a);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'A');
 
-	BU_LIST_INIT(&(s->s_vlist));
-	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
-	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
+    VADD2(work, tgc->v, tgc->b);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'B');
 
-	l[i] = la;
+    VADD3(work, tgc->v, tgc->h, tgc->c);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'C');
+
+    VADD3(work, tgc->v, tgc->h, tgc->d);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'D');
+
+    return lcnt;
+}
+
+int
+rt_tgc_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_tgc_internal *otgc = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(otgc);
+
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_TGC;
+    nip->idb_meth = &OBJ[ID_TGC];
+    struct rt_tgc_internal *tgc = NULL;
+    BU_ALLOC(tgc, struct rt_tgc_internal);
+    nip->idb_ptr = tgc;
+    tgc->magic = RT_TGC_INTERNAL_MAGIC;
+    VMOVE(tgc->v, otgc->v);
+    VMOVE(tgc->h, otgc->h);
+    VMOVE(tgc->a, otgc->a);
+    VMOVE(tgc->b, otgc->b);
+    VMOVE(tgc->c, otgc->c);
+    VMOVE(tgc->d, otgc->d);
+
+    // Height vector is used for the V and H bumps
+    vect_t mvec, mrvec;
+    VMOVE(mvec, tgc->h);
+    VUNITIZE(mvec);
+    VREVERSE(mrvec, mvec);
+    VSCALE(mvec, mvec, val);
+    VSCALE(mrvec, mrvec, val);
+    VADD2(tgc->v, tgc->v, mrvec);
+    VSCALE(mvec, mvec, 2); // Offset for movement of v
+    VADD2(tgc->h, tgc->h, mvec);
+
+    // If we're only bumping planar elements, we're done
+    if (planar_only) {
+	*oip = nip;
+	return BRLCAD_OK;
     }
 
-    // Do the specific data assignments for each label
-    bu_vls_sprintf(&l[0]->label, "V");
-    VMOVE(l[0]->p, tgc->v);
+    // Bumping everything - scale the axis vecs
+    VMOVE(mvec, tgc->a);
+    VUNITIZE(mvec);
+    VSCALE(mvec, mvec, val);
+    VADD2(tgc->a, tgc->a, mvec);
 
-    bu_vls_sprintf(&l[1]->label, "A");
-    VADD2(l[1]->p, tgc->v, tgc->a);
+    VMOVE(mvec, tgc->b);
+    VUNITIZE(mvec);
+    VSCALE(mvec, mvec, val);
+    VADD2(tgc->b, tgc->b, mvec);
 
-    bu_vls_sprintf(&l[2]->label, "B");
-    VADD2(l[2]->p, tgc->v, tgc->b);
+    VMOVE(mvec, tgc->c);
+    VUNITIZE(mvec);
+    VSCALE(mvec, mvec, val);
+    VADD2(tgc->c, tgc->c, mvec);
 
-    bu_vls_sprintf(&l[3]->label, "C");
-    VADD3(l[3]->p, tgc->v, tgc->h, tgc->c);
+    VMOVE(mvec, tgc->d);
+    VUNITIZE(mvec);
+    VSCALE(mvec, mvec, val);
+    VADD2(tgc->d, tgc->d, mvec);
 
-    bu_vls_sprintf(&l[4]->label, "D");
-    VADD3(l[4]->p, tgc->v, tgc->h, tgc->d);
+    *oip = nip;
+
+    return BRLCAD_OK;
+}
+
+const char *
+rt_tgc_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tgc);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, tgc->v);
+	goto tgc_kpt_end;
+    }
+    if (BU_STR_EQUAL(k, "H")) {
+	VMOVE(mpt, tgc->h);
+	goto tgc_kpt_end;
+    }
+    if (BU_STR_EQUAL(k, "A")) {
+	VMOVE(mpt, tgc->a);
+	goto tgc_kpt_end;
+    }
+    if (BU_STR_EQUAL(k, "B")) {
+	VMOVE(mpt, tgc->b);
+	goto tgc_kpt_end;
+    }
+    if (BU_STR_EQUAL(k, "C")) {
+	VMOVE(mpt, tgc->c);
+	goto tgc_kpt_end;
+    }
+    if (BU_STR_EQUAL(k, "D")) {
+	VMOVE(mpt, tgc->d);
+	goto tgc_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+tgc_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
 }
 
 

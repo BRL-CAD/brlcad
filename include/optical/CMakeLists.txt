@@ -1,14 +1,15 @@
-set(optical_headers
+set(
+  optical_headers
   defines.h
   debug.h
   light.h
   plastic.h
   shadework.h
   shadefuncs.h
-  )
-BRLCAD_MANAGE_FILES(optical_headers ${INCLUDE_DIR}/brlcad/optical REQUIRED liboptical)
+)
+brlcad_manage_files(optical_headers ${INCLUDE_DIR}/brlcad/optical REQUIRED liboptical)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

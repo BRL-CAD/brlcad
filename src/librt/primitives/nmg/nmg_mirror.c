@@ -1,7 +1,7 @@
 /*                    N M G _ M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2024 United States Government as represented by
+ * Copyright (c) 2009-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,6 +45,7 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
     vect_t mirror_dir;
     point_t mirror_pt;
     fastf_t ang;
+    struct bu_list *vlfree = &rt_vlfree;
 
     size_t i;
     struct nmgregion *r;
@@ -89,7 +90,7 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
     mirmat[3 + Z*4] += mirror_pt[Z] * mirror_dir[Z];
 
     /* move every vertex */
-    nmg_vertex_tabulate(&table, &nmg->magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&table, &nmg->magic, vlfree);
     for (i=0; i<BU_PTBL_LEN(&table); i++) {
 	point_t pt;
 
@@ -102,7 +103,7 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
 
     bu_ptbl_reset(&table);
 
-    nmg_face_tabulate(&table, &nmg->magic, &RTG.rtg_vlfree);
+    nmg_face_tabulate(&table, &nmg->magic, vlfree);
     for (i=0; i<BU_PTBL_LEN(&table); i++) {
 	struct face *f;
 
@@ -143,7 +144,7 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
 	    return 2;
 	}
 
-	if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	if (nmg_calc_face_g(fu, vlfree)) {
 	    bu_log("ERROR: Unable to calculate NMG faces for mirroring\n");
 	    bu_ptbl_free(&table);
 	    return 3;

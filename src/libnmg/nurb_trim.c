@@ -1,7 +1,7 @@
 /*                     N U R B _ T R I M . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -502,7 +502,7 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
 
 	if (!eu->g.magic_p) {
 	    bu_log("nmg_uv_in_lu: eu (%p) has no geometry!!!\n", (void *)eu);
-	    bu_bomb("nmg_uv_in_lu: eu has no geometry!!!\n");
+	    continue;
 	}
 
 	if (*eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC) {

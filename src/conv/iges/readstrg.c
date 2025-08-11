@@ -1,7 +1,7 @@
 /*                      R E A D S T R G . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,18 +34,23 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+#define MAX_NUM 4096
+
+
 void
 Readstrg(char *id)
 {
-    int i = (-1), length = 0, done = 0, lencard;
-    char num[80];
+    int i = 0, length = 0, done = 0, lencard;
+    char num[MAX_NUM] = {0};
 
     if (card[counter] == eofd) {
 	/* This is an empty field */
 	counter++;
 	return;
-    } else if (card[counter] == eord) /* Up against the end of record */
+    } else if (card[counter] == eord) {
+	/* Up against the end of record */
 	return;
+    }
 
     if (card[72] == 'P')
 	lencard = PARAMLEN;
@@ -62,16 +67,24 @@ Readstrg(char *id)
     if (*id != '\0')
 	bu_log("%s", id);
 
-    while (!done) {
-	while ((num[++i] = card[counter++]) != 'H' &&
-	       counter <= lencard);
+    while (!done && i < MAX_NUM-1) {
+	while (i < MAX_NUM-1 &&
+	       (num[i] = card[counter++]) != 'H' &&
+	       counter <= lencard)
+	{
+	    if (i >= MAX_NUM-1) {
+		done = 1;
+	    }
+	    i++;
+	}
 	if (counter > lencard)
 	    Readrec(++currec);
 	if (num[i] == 'H')
 	    done = 1;
     }
-    num[++i] = '\0';
+
     length = atoi(num);
+
     for (i = 0; i < length; i++) {
 	if (counter > lencard)
 	    Readrec(++currec);
@@ -79,6 +92,7 @@ Readstrg(char *id)
 	    bu_log("%c", card[counter]);
 	counter++;
     }
+
     if (*id != '\0')
 	bu_log("%c", '\n');
 

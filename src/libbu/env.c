@@ -1,7 +1,7 @@
 /*                        E N V . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2024 United States Government as represented by
+ * Copyright (c) 2014-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,8 +53,12 @@
 #  include <mach/mach_host.h>
 #endif
 
+#include "bu/app.h"
 #include "bu/env.h"
+#include "bu/file.h"
 #include "bu/malloc.h"
+#include "bu/path.h"
+#include "bu/str.h"
 
 /* strict c89 doesn't declare setenv() */
 #ifndef HAVE_DECL_SETENV
@@ -320,6 +324,249 @@ bu_mem(int type, size_t *sz)
 
     /* error if the above didn't work */
     return -1;
+}
+
+// If we've been asked for a non-graphical editor and we know we have a
+// graphical one, or vice versa, flag as incompatible.  Otherwise, assume it
+// will work since we have no way of knowing otherwise.
+static int
+editor_not_compatible(const char **elist, const char *candidate)
+{
+    if (!elist)
+	return 0;
+
+    int i = 0;
+    const char *e_str = elist[i];
+    char tstr[MAXPATHLEN];
+    struct bu_vls component=BU_VLS_INIT_ZERO;
+    while (e_str) {
+
+	if (BU_STR_EQUAL(e_str, candidate))
+	    return 1;
+
+	bu_dir(tstr, MAXPATHLEN, candidate, BU_DIR_EXT, NULL);
+	if (BU_STR_EQUAL(e_str, tstr))
+	    return 1;
+
+	bu_path_component(&component, candidate, BU_PATH_BASENAME_EXTLESS);
+	if (BU_STR_EQUAL(e_str, bu_vls_cstr(&component))) {
+	    bu_vls_free(&component);
+	    return 1;
+	}
+
+	bu_path_component(&component, candidate, BU_PATH_EXTLESS);
+	if (BU_STR_EQUAL(e_str, bu_vls_cstr(&component))) {
+	    bu_vls_free(&component);
+	    return 1;
+	}
+
+	e_str = elist[i++];
+    }
+
+    bu_vls_free(&component);
+
+    return 0;
+}
+
+static int
+editor_file_check(char *bu_editor, const char *estr, const char **elist)
+{
+    // First check if we have a mode issue
+    if (editor_not_compatible(elist, estr))
+	return 0;
+
+    // If the input is a full, valid path go with that.
+    if (bu_file_exists(estr, NULL)) {
+	bu_strlcpy(bu_editor, estr, MAXPATHLEN);
+	return 1;
+    } else {
+	const char *le = bu_dir(NULL, 0, estr, BU_DIR_EXT, NULL);
+	if (bu_file_exists(le, NULL)) {
+	    bu_strlcpy(bu_editor, le, MAXPATHLEN);
+	    return 1;
+	}
+    }
+    // Doesn't exist as-is - see if we have a BRL-CAD bundled copy
+    const char *le = bu_dir(NULL, 0, BU_DIR_BIN, estr, NULL);
+    if (bu_file_exists(le, NULL)) {
+	bu_strlcpy(bu_editor, le, MAXPATHLEN);
+	return 1;
+    } else {
+	le = bu_dir(NULL, 0, BU_DIR_BIN, estr, BU_DIR_EXT, NULL);
+	if (bu_file_exists(le, NULL)) {
+	    bu_strlcpy(bu_editor, le, MAXPATHLEN);
+	    return 1;
+	}
+    }
+    // Try bu_which
+    const char *which_str = bu_which(estr);
+    if (which_str) {
+	bu_strlcpy(bu_editor, which_str, MAXPATHLEN);
+	return 1;
+    }
+
+    return 0;
+}
+
+/* editors to test for */
+#define EMACS_EDITOR "emacs"
+#define GEDIT_EDITOR "gedit"
+#define GTKEMACS_EDITOR "emacs-gtk"
+#define GVIM_EDITOR "gvim"
+#define KATE_EDITOR "kate"
+#define MICRO_EDITOR "micro"
+#define NANO_EDITOR "nano"
+#define NOTEPADPP_EDITOR "C:/Program Files/Notepad++/notepad++.exe"
+#define TEXTEDIT_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
+#define VIM_EDITOR "vim"
+#define VI_EDITOR "vi"
+#define WORDPAD_EDITOR "C:/Program Files/Windows NT/Accessories/wordpad.exe"
+#define YEDIT_EDITOR "yedit"
+
+const char *
+bu_editor(struct bu_ptbl *editor_opts, int etype, int check_for_cnt, const char **check_for_editors)
+{
+    int i;
+    static char bu_editor[MAXPATHLEN] = {0};
+    const char *e_str = NULL;
+    const char **ncompat_list = NULL;
+    // Arrays for internal editor checking, in priority order.
+    // Note that this order may be changed arbitrarily and is
+    // explicitly NOT guaranteed by the API.
+    const char *gui_editor_list[] = {
+	NOTEPADPP_EDITOR, WORDPAD_EDITOR, TEXTEDIT_EDITOR, GEDIT_EDITOR, KATE_EDITOR, GTKEMACS_EDITOR, GVIM_EDITOR, NULL
+    };
+    const char *nongui_editor_list[] = {
+	MICRO_EDITOR, NANO_EDITOR, EMACS_EDITOR, VIM_EDITOR, VI_EDITOR, YEDIT_EDITOR, NULL
+    };
+    if (etype == 1)
+	ncompat_list = gui_editor_list;
+    if (etype == 2)
+	ncompat_list = nongui_editor_list;
+
+    // Reset the editor_opts ptbl
+    if (editor_opts)
+	bu_ptbl_reset(editor_opts);
+
+    // BRLCAD_EDITOR_GUI takes precedence, if set and GUI is an option
+    if (!etype || etype == 2) {
+	const char *env_editor = getenv("BRLCAD_EDITOR_GUI");
+	if (env_editor && env_editor[0] != '\0') {
+	    if (editor_file_check(bu_editor, env_editor, ncompat_list))
+		goto do_opt;
+	}
+    }
+
+    // BRLCAD_EDITOR_CONSOLE takes precedence, if set and CONSOLE is an option
+    if (!etype || etype == 1) {
+	const char *env_editor = getenv("BRLCAD_EDITOR_CONSOLE");
+	if (env_editor && env_editor[0] != '\0') {
+	    if (editor_file_check(bu_editor, env_editor, ncompat_list))
+		goto do_opt;
+	}
+    }
+
+    // VISUAL/EDITOR environment variables take precedence, if set
+    const char *env_editor = getenv("VISUAL");
+    if (env_editor && env_editor[0] != '\0') {
+	if (editor_file_check(bu_editor, env_editor, ncompat_list))
+	    goto do_opt;
+    }
+    env_editor = getenv("EDITOR");
+    if (env_editor && env_editor[0] != '\0') {
+	if (editor_file_check(bu_editor, env_editor, ncompat_list))
+	    goto do_opt;
+    }
+
+    // If the app wants us to check some candidates it has specified, handle
+    // them first before investigating our default set.
+    if (check_for_cnt && check_for_editors) {
+	for (i = 0; i < check_for_cnt; i++) {
+	    if (!check_for_editors[i]) {
+		// If we reached a NULL entry in the list supplied by the
+		// calling application, it means a) we weren't successful
+		// and b) the application is requesting we not use libbu's
+		// own list to continue.
+		return NULL;
+	    }
+	    if (editor_file_check(bu_editor, check_for_editors[i], ncompat_list))
+		goto do_opt;
+	}
+    }
+
+    // No environment variable and no application-provided list - use
+    // our internal list
+
+    // Start with GUI editors
+    if (!etype || etype == 2) {
+	i = 0;
+	e_str = gui_editor_list[i];
+	while (e_str) {
+	    if (editor_file_check(bu_editor, e_str, ncompat_list))
+		goto do_opt;
+	    e_str = gui_editor_list[i++];
+	}
+    }
+
+    // Next up are console editors
+    if (!etype || etype == 1) {
+	i = 0;
+	e_str = nongui_editor_list[i];
+	while (e_str) {
+	    if (editor_file_check(bu_editor, e_str, ncompat_list))
+		goto do_opt;
+	    e_str = nongui_editor_list[i++];
+	}
+    }
+
+    // If we have nothing after all that, we're done
+    return NULL;
+
+do_opt:
+
+    // If the caller didn't supply an option bu_ptbl, just return the editor
+    // string
+    if (!editor_opts)
+	return (const char *)bu_editor;
+
+    // If we're doing a console editor but we've got emacs, we need to add
+    // the -nw option.
+    struct bu_vls rootname = BU_VLS_INIT_ZERO;
+    if (bu_path_component(&rootname, bu_editor, BU_PATH_BASENAME_EXTLESS)) {
+	if (BU_STR_EQUAL(bu_vls_cstr(&rootname), "emacs") && etype == 1) {
+	    // Non-graphical emacs requires an option
+	    static const char *eopt = "-nw";
+	    bu_ptbl_ins(editor_opts, (long *)eopt);
+	}
+    }
+    bu_vls_free(&rootname);
+
+    // Use both -multiInst and -nosession together for Notepad++ so we
+    // get a stand-alone version rather than adding our editing file
+    // to an existing instance - that produces unexpected results for
+    // commands expecting to wait on the launched editor. See
+    // https://superuser.com/questions/459705/open-two-instances-of-notepad
+    if (BU_STR_EQUAL(bu_editor, NOTEPADPP_EDITOR)) {
+	static const char *miopt = "-multiInst";
+	static const char *nsopt = "-nosession";
+	bu_ptbl_ins(editor_opts, (long *)miopt);
+	bu_ptbl_ins(editor_opts, (long *)nsopt);
+    }
+
+    // Paths with spaces are Bad News - one of the BRL-CAD code paths for using
+    // bu_editor outputs splits strings by spaces.  We can't do much on other
+    // platforms, but on Windows (where such paths are more common to begin
+    // with) we can try to use the short paths API.
+#ifdef HAVE_WINDOWS_H
+    char sp[MAXPATHLEN];
+    DWORD r = GetShortPathNameA(bu_editor, sp, MAXPATHLEN);
+    if (r != 0 && r < MAXPATHLEN) {
+	// Unless short path call failed, use sp
+	snprintf(bu_editor, MAXPATHLEN, "%s", sp);
+    }
+#endif
+
+    return (const char *)bu_editor;
 }
 
 /*

@@ -1,7 +1,7 @@
 /*                         A R B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ ged_arb_core(struct ged *gedp, int argc, const char *argv[])
     /* FIXME: we should be creating the arb at the center of the
      * screen.  Extract bounding box code from both autoview.c and
      * get_autoview.c into a general bounding rpp function, and use
-     * accordingly.  Should combin autoview.c with get_autoview.c
+     * accordingly.  Should combine autoview.c with get_autoview.c
      * (perhaps as a flag).
      */
     VSET(arb->pt[0], 0.0, 0.0, 0.0);

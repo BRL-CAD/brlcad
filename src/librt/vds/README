@@ -4,7 +4,7 @@
 VDSlib is a software package that implements view-dependent simplification, 
 a geometric level-of-detail algorithm for managing the complexity of polygonal 
 scenes for interactive 3-D graphics. Unlike traditional approaches, which 
-compute discreet levels of detail for each object in a preprocess, VDSlib 
+compute discrete levels of detail for each object in a preprocess, VDSlib 
 computes a data structure from which the desired level of detail can be 
 dynamically extracted at run-time.
 

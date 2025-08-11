@@ -1,11 +1,12 @@
 find_package_zlib(REQUIRED)
 
-IS_SUBPATH("${CMAKE_BINARY_DIR}" "${ZLIB_LIBRARY}" LOCAL_TEST)
+is_subpath("${CMAKE_BINARY_DIR}" "${ZLIB_LIBRARY}" LOCAL_TEST)
 if(LOCAL_TEST OR TARGET ZLIB_BLD)
   add_definitions(-DZ_PREFIX)
 endif(LOCAL_TEST OR TARGET ZLIB_BLD)
 
-set(LIBRENDER_SRCS
+set(
+  LIBRENDER_SRCS
   load.c
   load_g.c
   librender/camera.c
@@ -32,19 +33,21 @@ set(LIBRENDER_SRCS
   librender/texture_mix.c
   librender/texture_perlin.c
   librender/texture_stack.c
-  )
+)
 
-set(ADRT_LOCAL_INCLUDE_DIRS
+set(
+  ADRT_LOCAL_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/src/adrt
   ${BRLCAD_SOURCE_DIR}/src/adrt/libcommon
   ${BRLCAD_SOURCE_DIR}/src/adrt/librender
-  )
+)
 
-BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" "libgcv;${ZLIB_LIBRARIES}" "" "${ADRT_LOCAL_INCLUDE_DIRS}")
+brlcad_addlib(librender "${LIBRENDER_SRCS}" "libgcv;${ZLIB_LIBRARIES}" "" "${ADRT_LOCAL_INCLUDE_DIRS}")
 set_target_properties(librender PROPERTIES VERSION 20.0.1 SOVERSION 20)
 add_dependencies(librender gcv_plugins)
 
-set(tie_HDRS
+set(
+  tie_HDRS
   adrt.h
   adrt_struct.h
   librender/camera.h
@@ -53,46 +56,46 @@ set(tie_HDRS
   librender/render_util.h
   librender/texture.h
   librender/texture_internal.h
-  )
+)
 # TODO - should these be in brlcad/tie instead?
-BRLCAD_MANAGE_FILES(tie_HDRS ${INCLUDE_DIR}/tie)
+brlcad_manage_files(tie_HDRS ${INCLUDE_DIR}/tie)
 
 # Tcl/Tk based ISST
 
 if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
+  set(isst_dirs ${OPENGL_INCLUDE_DIR_GL} ${OPENGL_INCLUDE_DIR_GLX})
+  set(local_isst_dirs ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/librender)
 
-  set(isst_dirs
-    ${OPENGL_INCLUDE_DIR_GL}
-    ${OPENGL_INCLUDE_DIR_GLX}
-    )
-  set(local_isst_dirs
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/librender
-    )
+  set(
+    isst_libs
+    libtclcad
+    librender
+    libdm
+    ${TCL_LIBRARY}
+    ${OPENGL_LIBRARIES}
+    ${IMM32_LIBRARY}
+    ${COMCTL32_LIBRARY}
+    ${OPENGL32_LIBRARY}
+  )
 
-  set(isst_libs libtclcad librender libdm ${TCL_LIBRARY} ${OPENGL_LIBRARIES} ${IMM32_LIBRARY} ${COMCTL32_LIBRARY} ${OPENGL32_LIBRARY})
-
-  BRLCAD_ADDDATA(isst.tcl tclscripts/isst)
-  BRLCAD_ADDEXEC(isst isst.c "${isst_libs}" GUI)
-  if (isst_dirs)
+  brlcad_adddata(isst.tcl tclscripts/isst)
+  brlcad_addexec(isst isst.c "${isst_libs}" GUI)
+  if(isst_dirs)
     target_include_directories(isst PRIVATE ${isst_dirs})
-  endif (isst_dirs)
+  endif(isst_dirs)
   target_include_directories(isst BEFORE PRIVATE ${local_isst_dirs})
-  ADD_TARGET_DEPS(isst isst_tcl_cp TclIndexBld dm_plugins)
+  add_target_deps(isst isst_tcl_cp TclIndexBld dm_plugins)
 endif(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
-CMAKEFILES(isst.tcl)
-CMAKEFILES(isst.c)
+cmakefiles(isst.tcl)
+cmakefiles(isst.c)
 
 add_subdirectory(master)
 add_subdirectory(slave)
 
-set(adrt_ignore_files
-  load.h
-  tienet.h
-  )
-CMAKEFILES(${adrt_ignore_files})
-CMAKEFILES(CMakeLists.txt)
+set(adrt_ignore_files load.h tienet.h)
+cmakefiles(${adrt_ignore_files})
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

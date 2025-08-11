@@ -1,7 +1,7 @@
 /*                         E D S O L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,30 +35,22 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-#include "rt/arb_edit.h"
+#include "rt/primitives/arb8.h"
 #include "wdb.h"
 #include "rt/db4.h"
+#include "ged/view.h"
 
 #include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
+#include "./menu.h"
 
-
-extern struct wdb_pipe_pnt *find_pipe_pnt_nearest_pnt(const struct bu_list *, const point_t);
 extern void pipe_split_pnt(struct bu_list *, struct wdb_pipe_pnt *, point_t);
-extern struct wdb_pipe_pnt *pipe_del_pnt(struct wdb_pipe_pnt *);
 extern struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
 
-static void arb8_edge(int, int, int), ars_ed(int, int, int), ell_ed(int, int, int), tgc_ed(int, int, int), tor_ed(int, int, int), spline_ed(int, int, int);
-static void nmg_ed(int, int, int), pipe_ed(int, int, int), vol_ed(int, int, int), ebm_ed(int, int, int), dsp_ed(int, int, int), cline_ed(int, int, int), bot_ed(int, int, int), extr_ed(int, int, int);
-static void rpc_ed(int, int, int), rhc_ed(int, int, int), part_ed(int, int, int), epa_ed(int, int, int), ehy_ed(int, int, int), eto_ed(int, int, int), hyp_ed(int, int, int);
-static void superell_ed(int, int, int), metaball_ed(int, int, int);
+static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);
 
-static void arb7_edge(int, int, int), arb6_edge(int, int, int), arb5_edge(int, int, int), arb4_point(int, int, int);
-static void arb8_mv_face(int, int, int), arb7_mv_face(int, int, int), arb6_mv_face(int, int, int);
-static void arb5_mv_face(int, int, int), arb4_mv_face(int, int, int), arb8_rot_face(int, int, int), arb7_rot_face(int, int, int);
-static void arb6_rot_face(int, int, int), arb5_rot_face(int, int, int), arb4_rot_face(int, int, int), arb_control(int, int, int);
-static void init_sedit_vars(void), init_oedit_vars(void), init_oedit_guts(void);
+int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const point_t ref_pt  , const mat_t mat);
 
 point_t e_axes_pos;
 point_t curr_e_axes_pos;
@@ -68,13 +60,9 @@ short int fixv;		/* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */
 /* data for solid editing */
 int sedraw;	/* apply solid editing changes */
 
-struct rt_db_internal es_int;
-struct rt_db_internal es_int_orig;
-
 int es_type;		/* COMGEOM solid type */
 int es_edflag;		/* type of editing for this solid */
 int es_edclass;		/* type of editing class for this solid */
-fastf_t es_scale;		/* scale factor */
 fastf_t es_peqn[7][4];		/* ARBs defining plane equations */
 fastf_t es_m[3];		/* edge(line) slope */
 mat_t es_mat;			/* accumulated matrix of path */
@@ -100,128 +88,17 @@ static int es_ars_crv;	/* curve and column identifying selected ARS point */
 static int es_ars_col;
 static point_t es_pt;		/* coordinates of selected ARS point */
 
-static struct edgeuse *es_eu=(struct edgeuse *)NULL;	/* Currently selected NMG edgeuse */
-static struct loopuse *lu_copy=(struct loopuse*)NULL;	/* copy of loop to be extruded */
-static plane_t lu_pl;	/* plane equation for loop to be extruded */
-static struct shell *es_s=(struct shell *)NULL;	/* Shell where extrusion is to end up */
-static point_t lu_keypoint;	/* keypoint of lu_copy for extrusion */
+struct edgeuse *es_eu=(struct edgeuse *)NULL;	/* Currently selected NMG edgeuse */
+struct loopuse *lu_copy=(struct loopuse*)NULL;	/* copy of loop to be extruded */
+plane_t lu_pl;	/* plane equation for loop to be extruded */
+struct shell *es_s=(struct shell *)NULL;	/* Shell where extrusion is to end up */
+point_t lu_keypoint;	/* keypoint of lu_copy for extrusion */
 
-static struct wdb_pipe_pnt *es_pipe_pnt=(struct wdb_pipe_pnt *)NULL; /* Currently selected PIPE segment */
-static struct wdb_metaball_pnt *es_metaball_pnt=(struct wdb_metaball_pnt *)NULL; /* Currently selected METABALL Point */
+struct wdb_pipe_pnt *es_pipe_pnt=(struct wdb_pipe_pnt *)NULL; /* Currently selected PIPE segment */
+struct wdb_metaball_pnt *es_metaball_pnt=(struct wdb_metaball_pnt *)NULL; /* Currently selected METABALL Point */
 
 /* These values end up in es_menu, as do ARB vertex numbers */
 int es_menu;		/* item selected from menu */
-#define MENU_TOR_R1		21
-#define MENU_TOR_R2		22
-#define MENU_TGC_ROT_H		23
-#define MENU_TGC_ROT_AB 	24
-#define MENU_TGC_MV_H		25
-#define MENU_TGC_MV_HH		26
-#define MENU_TGC_SCALE_H	27
-#define MENU_TGC_SCALE_H_V	28
-#define MENU_TGC_SCALE_A	29
-#define MENU_TGC_SCALE_B	30
-#define MENU_TGC_SCALE_C	31
-#define MENU_TGC_SCALE_D	32
-#define MENU_TGC_SCALE_AB	33
-#define MENU_TGC_SCALE_CD	34
-#define MENU_TGC_SCALE_ABCD	35
-#define MENU_ARB_MV_EDGE	36
-#define MENU_ARB_MV_FACE	37
-#define MENU_ARB_ROT_FACE	38
-#define MENU_ELL_SCALE_A	39
-#define MENU_ELL_SCALE_B	40
-#define MENU_ELL_SCALE_C	41
-#define MENU_ELL_SCALE_ABC	42
-#define MENU_RPC_B		43
-#define MENU_RPC_H		44
-#define MENU_RPC_R		45
-#define MENU_RHC_B		46
-#define MENU_RHC_H		47
-#define MENU_RHC_R		48
-#define MENU_RHC_C		49
-#define MENU_EPA_H		50
-#define MENU_EPA_R1		51
-#define MENU_EPA_R2		52
-#define MENU_EHY_H		53
-#define MENU_EHY_R1		54
-#define MENU_EHY_R2		55
-#define MENU_EHY_C		56
-#define MENU_ETO_R		57
-#define MENU_ETO_RD		58
-#define MENU_ETO_SCALE_C	59
-#define MENU_ETO_ROT_C		60
-#define MENU_PIPE_SELECT	61
-#define MENU_PIPE_NEXT_PT	62
-#define MENU_PIPE_PREV_PT	63
-#define MENU_PIPE_SPLIT		64
-#define MENU_PIPE_PT_OD		65
-#define MENU_PIPE_PT_ID		66
-#define MENU_PIPE_SCALE_OD	67
-#define MENU_PIPE_SCALE_ID	68
-#define MENU_PIPE_ADD_PT	69
-#define MENU_PIPE_INS_PT	70
-#define MENU_PIPE_DEL_PT	71
-#define MENU_PIPE_MOV_PT	72
-#define MENU_PIPE_PT_RADIUS	73
-#define MENU_PIPE_SCALE_RADIUS	74
-#define MENU_VOL_FNAME		75
-#define MENU_VOL_FSIZE		76
-#define MENU_VOL_CSIZE		77
-#define MENU_VOL_THRESH_LO	78
-#define MENU_VOL_THRESH_HI	79
-#define MENU_EBM_FNAME		80
-#define MENU_EBM_FSIZE		81
-#define MENU_EBM_HEIGHT		82
-#define MENU_DSP_FNAME		83
-#define MENU_DSP_FSIZE		84	/* Not implemented yet */
-#define MENU_DSP_SCALE_X	85
-#define MENU_DSP_SCALE_Y	86
-#define MENU_DSP_SCALE_ALT	87
-#define MENU_PART_H		88
-#define MENU_PART_v		89
-#define MENU_PART_h		90
-#define MENU_BOT_PICKV		91
-#define MENU_BOT_PICKE		92
-#define MENU_BOT_PICKT		93
-#define MENU_BOT_MOVEV		94
-#define MENU_BOT_MOVEE		95
-#define MENU_BOT_MOVET		96
-#define MENU_BOT_MODE		97
-#define MENU_BOT_ORIENT		98
-#define MENU_BOT_THICK		99
-#define MENU_BOT_FMODE		100
-#define MENU_BOT_DELETE_TRI	101
-#define MENU_BOT_FLAGS		102
-#define MENU_EXTR_SCALE_H	103
-#define MENU_EXTR_MOV_H		104
-#define MENU_EXTR_ROT_H		105
-#define MENU_EXTR_SKT_NAME	106
-#define MENU_CLINE_SCALE_H	107
-#define MENU_CLINE_MOVE_H	108
-#define MENU_CLINE_SCALE_R	109
-#define MENU_CLINE_SCALE_T	110
-#define MENU_TGC_SCALE_H_CD	111
-#define MENU_TGC_SCALE_H_V_AB	112
-#define MENU_SUPERELL_SCALE_A	113
-#define MENU_SUPERELL_SCALE_B	114
-#define MENU_SUPERELL_SCALE_C	115
-#define MENU_SUPERELL_SCALE_ABC	116
-#define MENU_METABALL_SET_THRESHOLD	117
-#define MENU_METABALL_SET_METHOD	118
-#define MENU_METABALL_PT_SET_GOO	119
-#define MENU_METABALL_SELECT	120
-#define MENU_METABALL_NEXT_PT	121
-#define MENU_METABALL_PREV_PT	122
-#define MENU_METABALL_MOV_PT	123
-#define MENU_METABALL_PT_FLDSTR	124
-#define MENU_METABALL_DEL_PT	125
-#define MENU_METABALL_ADD_PT	126
-#define MENU_HYP_H              127
-#define MENU_HYP_SCALE_A        128
-#define MENU_HYP_SCALE_B	129
-#define MENU_HYP_C		130
-#define MENU_HYP_ROT_H		131
 
 #define PARAM_1ARG (es_edflag == SSCALE || \
 		    es_edflag == PSCALE || \
@@ -239,513 +116,8 @@ int es_menu;		/* item selected from menu */
 #define PARAM_2ARG (es_edflag == ECMD_DSP_FSIZE || \
 		    es_edflag == ECMD_EBM_FSIZE)
 
-struct menu_item cline_menu[] = {
-    { "CLINE MENU",		NULL, 0 },
-    { "Set H",		cline_ed, ECMD_CLINE_SCALE_H },
-    { "Move End H",		cline_ed, ECMD_CLINE_MOVE_H },
-    { "Set R",		cline_ed, ECMD_CLINE_SCALE_R },
-    { "Set plate thickness", cline_ed, ECMD_CLINE_SCALE_T },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item extr_menu[] = {
-    { "EXTRUSION MENU",	NULL, 0 },
-    { "Set H",		extr_ed, ECMD_EXTR_SCALE_H },
-    { "Move End H",		extr_ed, ECMD_EXTR_MOV_H },
-    { "Rotate H",		extr_ed, ECMD_EXTR_ROT_H },
-    { "Referenced Sketch",	extr_ed, ECMD_EXTR_SKT_NAME },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item ars_pick_menu[] = {
-    { "ARS PICK MENU", NULL, 0 },
-    { "Pick Vertex", ars_ed, ECMD_ARS_PICK },
-    { "Next Vertex", ars_ed, ECMD_ARS_NEXT_PT },
-    { "Prev Vertex", ars_ed, ECMD_ARS_PREV_PT },
-    { "Next Curve", ars_ed, ECMD_ARS_NEXT_CRV },
-    { "Prev Curve", ars_ed, ECMD_ARS_PREV_CRV },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item ars_menu[] = {
-    { "ARS MENU", NULL, 0 },
-    { "Pick Vertex", ars_ed, ECMD_ARS_PICK_MENU },
-    { "Move Point", ars_ed, ECMD_ARS_MOVE_PT },
-    { "Delete Curve", ars_ed, ECMD_ARS_DEL_CRV },
-    { "Delete Column", ars_ed, ECMD_ARS_DEL_COL },
-    { "Dup Curve", ars_ed, ECMD_ARS_DUP_CRV },
-    { "Dup Column", ars_ed, ECMD_ARS_DUP_COL },
-    { "Move Curve", ars_ed, ECMD_ARS_MOVE_CRV },
-    { "Move Column", ars_ed, ECMD_ARS_MOVE_COL },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item edge8_menu[] = {
-    { "ARB8 EDGES", NULL, 0 },
-    { "Move Edge 12", arb8_edge, 0 },
-    { "Move Edge 23", arb8_edge, 1 },
-    { "Move Edge 34", arb8_edge, 2 },
-    { "Move Edge 14", arb8_edge, 3 },
-    { "Move Edge 15", arb8_edge, 4 },
-    { "Move Edge 26", arb8_edge, 5 },
-    { "Move Edge 56", arb8_edge, 6 },
-    { "Move Edge 67", arb8_edge, 7 },
-    { "Move Edge 78", arb8_edge, 8 },
-    { "Move Edge 58", arb8_edge, 9 },
-    { "Move Edge 37", arb8_edge, 10 },
-    { "Move Edge 48", arb8_edge, 11 },
-    { "RETURN",       arb8_edge, 12 },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item edge7_menu[] = {
-    { "ARB7 EDGES", NULL, 0 },
-    { "Move Edge 12", arb7_edge, 0 },
-    { "Move Edge 23", arb7_edge, 1 },
-    { "Move Edge 34", arb7_edge, 2 },
-    { "Move Edge 14", arb7_edge, 3 },
-    { "Move Edge 15", arb7_edge, 4 },
-    { "Move Edge 26", arb7_edge, 5 },
-    { "Move Edge 56", arb7_edge, 6 },
-    { "Move Edge 67", arb7_edge, 7 },
-    { "Move Edge 37", arb7_edge, 8 },
-    { "Move Edge 57", arb7_edge, 9 },
-    { "Move Edge 45", arb7_edge, 10 },
-    { "Move Point 5", arb7_edge, 11 },
-    { "RETURN",       arb7_edge, 12 },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item edge6_menu[] = {
-    { "ARB6 EDGES", NULL, 0 },
-    { "Move Edge 12", arb6_edge, 0 },
-    { "Move Edge 23", arb6_edge, 1 },
-    { "Move Edge 34", arb6_edge, 2 },
-    { "Move Edge 14", arb6_edge, 3 },
-    { "Move Edge 15", arb6_edge, 4 },
-    { "Move Edge 25", arb6_edge, 5 },
-    { "Move Edge 36", arb6_edge, 6 },
-    { "Move Edge 46", arb6_edge, 7 },
-    { "Move Point 5", arb6_edge, 8 },
-    { "Move Point 6", arb6_edge, 9 },
-    { "RETURN",       arb6_edge, 10 },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item edge5_menu[] = {
-    { "ARB5 EDGES", NULL, 0 },
-    { "Move Edge 12", arb5_edge, 0 },
-    { "Move Edge 23", arb5_edge, 1 },
-    { "Move Edge 34", arb5_edge, 2 },
-    { "Move Edge 14", arb5_edge, 3 },
-    { "Move Edge 15", arb5_edge, 4 },
-    { "Move Edge 25", arb5_edge, 5 },
-    { "Move Edge 35", arb5_edge, 6 },
-    { "Move Edge 45", arb5_edge, 7 },
-    { "Move Point 5", arb5_edge, 8 },
-    { "RETURN",       arb5_edge, 9 },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item point4_menu[] = {
-    { "ARB4 POINTS", NULL, 0 },
-    { "Move Point 1", arb4_point, 0 },
-    { "Move Point 2", arb4_point, 1 },
-    { "Move Point 3", arb4_point, 2 },
-    { "Move Point 4", arb4_point, 4 },
-    { "RETURN",       arb4_point, 5 },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item tgc_menu[] = {
-    { "TGC MENU", NULL, 0 },
-    { "Set H",	tgc_ed, MENU_TGC_SCALE_H },
-    { "Set H (move V)", tgc_ed, MENU_TGC_SCALE_H_V },
-    { "Set H (adj C,D)",	tgc_ed, MENU_TGC_SCALE_H_CD },
-    { "Set H (move V, adj A,B)", tgc_ed, MENU_TGC_SCALE_H_V_AB },
-    { "Set A",	tgc_ed, MENU_TGC_SCALE_A },
-    { "Set B",	tgc_ed, MENU_TGC_SCALE_B },
-    { "Set C",	tgc_ed, MENU_TGC_SCALE_C },
-    { "Set D",	tgc_ed, MENU_TGC_SCALE_D },
-    { "Set A,B",	tgc_ed, MENU_TGC_SCALE_AB },
-    { "Set C,D",	tgc_ed, MENU_TGC_SCALE_CD },
-    { "Set A,B,C,D", tgc_ed, MENU_TGC_SCALE_ABCD },
-    { "Rotate H",	tgc_ed, MENU_TGC_ROT_H },
-    { "Rotate AxB",	tgc_ed, MENU_TGC_ROT_AB },
-    { "Move End H(rt)", tgc_ed, MENU_TGC_MV_H },
-    { "Move End H", tgc_ed, MENU_TGC_MV_HH },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item tor_menu[] = {
-    { "TORUS MENU", NULL, 0 },
-    { "Set Radius 1", tor_ed, MENU_TOR_R1 },
-    { "Set Radius 2", tor_ed, MENU_TOR_R2 },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item eto_menu[] = {
-    { "ELL-TORUS MENU", NULL, 0 },
-    { "Set r", eto_ed, MENU_ETO_R },
-    { "Set D", eto_ed, MENU_ETO_RD },
-    { "Set C", eto_ed, MENU_ETO_SCALE_C },
-    { "Rotate C", eto_ed, MENU_ETO_ROT_C },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item ell_menu[] = {
-    { "ELLIPSOID MENU", NULL, 0 },
-    { "Set A", ell_ed, MENU_ELL_SCALE_A },
-    { "Set B", ell_ed, MENU_ELL_SCALE_B },
-    { "Set C", ell_ed, MENU_ELL_SCALE_C },
-    { "Set A,B,C", ell_ed, MENU_ELL_SCALE_ABC },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item spline_menu[] = {
-    { "SPLINE MENU", NULL, 0 },
-    { "Pick Vertex", spline_ed, -1 },
-    { "Move Vertex", spline_ed, ECMD_VTRANS },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item nmg_menu[] = {
-    { "NMG MENU", NULL, 0 },
-    { "Pick Edge", nmg_ed, ECMD_NMG_EPICK },
-    { "Move Edge", nmg_ed, ECMD_NMG_EMOVE },
-    { "Split Edge", nmg_ed, ECMD_NMG_ESPLIT },
-    { "Delete Edge", nmg_ed, ECMD_NMG_EKILL },
-    { "Next EU", nmg_ed, ECMD_NMG_FORW },
-    { "Prev EU", nmg_ed, ECMD_NMG_BACK },
-    { "Radial EU", nmg_ed, ECMD_NMG_RADIAL },
-    { "Extrude Loop", nmg_ed, ECMD_NMG_LEXTRU },
-    { "Eebug Edge", nmg_ed, ECMD_NMG_EDEBUG },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item mv8_menu[] = {
-    { "ARB8 FACES", NULL, 0 },
-    { "Move Face 1234", arb8_mv_face, 1 },
-    { "Move Face 5678", arb8_mv_face, 2 },
-    { "Move Face 1584", arb8_mv_face, 3 },
-    { "Move Face 2376", arb8_mv_face, 4 },
-    { "Move Face 1265", arb8_mv_face, 5 },
-    { "Move Face 4378", arb8_mv_face, 6 },
-    { "RETURN",         arb8_mv_face, 7 },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item mv7_menu[] = {
-    { "ARB7 FACES", NULL, 0 },
-    { "Move Face 1234", arb7_mv_face, 1 },
-    { "Move Face 2376", arb7_mv_face, 4 },
-    { "RETURN",         arb7_mv_face, 7 },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item mv6_menu[] = {
-    { "ARB6 FACES", NULL, 0 },
-    { "Move Face 1234", arb6_mv_face, 1 },
-    { "Move Face 2365", arb6_mv_face, 2 },
-    { "Move Face 1564", arb6_mv_face, 3 },
-    { "Move Face 125", arb6_mv_face, 4 },
-    { "Move Face 346", arb6_mv_face, 5 },
-    { "RETURN",         arb6_mv_face, 6 },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item mv5_menu[] = {
-    { "ARB5 FACES", NULL, 0 },
-    { "Move Face 1234", arb5_mv_face, 1 },
-    { "Move Face 125", arb5_mv_face, 2 },
-    { "Move Face 235", arb5_mv_face, 3 },
-    { "Move Face 345", arb5_mv_face, 4 },
-    { "Move Face 145", arb5_mv_face, 5 },
-    { "RETURN",         arb5_mv_face, 6 },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item mv4_menu[] = {
-    { "ARB4 FACES", NULL, 0 },
-    { "Move Face 123", arb4_mv_face, 1 },
-    { "Move Face 124", arb4_mv_face, 2 },
-    { "Move Face 234", arb4_mv_face, 3 },
-    { "Move Face 134", arb4_mv_face, 4 },
-    { "RETURN",         arb4_mv_face, 5 },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item rot8_menu[] = {
-    { "ARB8 FACES", NULL, 0 },
-    { "Rotate Face 1234", arb8_rot_face, 1 },
-    { "Rotate Face 5678", arb8_rot_face, 2 },
-    { "Rotate Face 1584", arb8_rot_face, 3 },
-    { "Rotate Face 2376", arb8_rot_face, 4 },
-    { "Rotate Face 1265", arb8_rot_face, 5 },
-    { "Rotate Face 4378", arb8_rot_face, 6 },
-    { "RETURN",         arb8_rot_face, 7 },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item rot7_menu[] = {
-    { "ARB7 FACES", NULL, 0 },
-    { "Rotate Face 1234", arb7_rot_face, 1 },
-    { "Rotate Face 567", arb7_rot_face, 2 },
-    { "Rotate Face 145", arb7_rot_face, 3 },
-    { "Rotate Face 2376", arb7_rot_face, 4 },
-    { "Rotate Face 1265", arb7_rot_face, 5 },
-    { "Rotate Face 4375", arb7_rot_face, 6 },
-    { "RETURN",         arb7_rot_face, 7 },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item rot6_menu[] = {
-    { "ARB6 FACES", NULL, 0 },
-    { "Rotate Face 1234", arb6_rot_face, 1 },
-    { "Rotate Face 2365", arb6_rot_face, 2 },
-    { "Rotate Face 1564", arb6_rot_face, 3 },
-    { "Rotate Face 125", arb6_rot_face, 4 },
-    { "Rotate Face 346", arb6_rot_face, 5 },
-    { "RETURN",         arb6_rot_face, 6 },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item rot5_menu[] = {
-    { "ARB5 FACES", NULL, 0 },
-    { "Rotate Face 1234", arb5_rot_face, 1 },
-    { "Rotate Face 125", arb5_rot_face, 2 },
-    { "Rotate Face 235", arb5_rot_face, 3 },
-    { "Rotate Face 345", arb5_rot_face, 4 },
-    { "Rotate Face 145", arb5_rot_face, 5 },
-    { "RETURN",         arb5_rot_face, 6 },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item rot4_menu[] = {
-    { "ARB4 FACES", NULL, 0 },
-    { "Rotate Face 123", arb4_rot_face, 1 },
-    { "Rotate Face 124", arb4_rot_face, 2 },
-    { "Rotate Face 234", arb4_rot_face, 3 },
-    { "Rotate Face 134", arb4_rot_face, 4 },
-    { "RETURN",         arb4_rot_face, 5 },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item cntrl_menu[] = {
-    { "ARB MENU", NULL, 0 },
-    { "Move Edges", arb_control, MENU_ARB_MV_EDGE },
-    { "Move Faces", arb_control, MENU_ARB_MV_FACE },
-    { "Rotate Faces", arb_control, MENU_ARB_ROT_FACE },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item part_menu[] = {
-    { "Particle MENU", NULL, 0 },
-    { "Set H", part_ed, MENU_PART_H },
-    { "Set v", part_ed, MENU_PART_v },
-    { "Set h", part_ed, MENU_PART_h },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item rpc_menu[] = {
-    { "RPC MENU", NULL, 0 },
-    { "Set B", rpc_ed, MENU_RPC_B },
-    { "Set H", rpc_ed, MENU_RPC_H },
-    { "Set r", rpc_ed, MENU_RPC_R },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item rhc_menu[] = {
-    { "RHC MENU", NULL, 0 },
-    { "Set B", rhc_ed, MENU_RHC_B },
-    { "Set H", rhc_ed, MENU_RHC_H },
-    { "Set r", rhc_ed, MENU_RHC_R },
-    { "Set c", rhc_ed, MENU_RHC_C },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item epa_menu[] = {
-    { "EPA MENU", NULL, 0 },
-    { "Set H", epa_ed, MENU_EPA_H },
-    { "Set A", epa_ed, MENU_EPA_R1 },
-    { "Set B", epa_ed, MENU_EPA_R2 },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item ehy_menu[] = {
-    { "EHY MENU", NULL, 0 },
-    { "Set H", ehy_ed, MENU_EHY_H },
-    { "Set A", ehy_ed, MENU_EHY_R1 },
-    { "Set B", ehy_ed, MENU_EHY_R2 },
-    { "Set c", ehy_ed, MENU_EHY_C },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item  hyp_menu[] = {
-    { "HYP MENU", NULL, 0 },
-    { "Set H", hyp_ed, MENU_HYP_H },
-    { "Set A", hyp_ed, MENU_HYP_SCALE_A },
-    { "Set B", hyp_ed, MENU_HYP_SCALE_B },
-    { "Set c", hyp_ed, MENU_HYP_C },
-    { "Rotate H", hyp_ed, MENU_HYP_ROT_H },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item pipe_menu[] = {
-    { "PIPE MENU", NULL, 0 },
-    { "Select Point", pipe_ed, MENU_PIPE_SELECT },
-    { "Next Point", pipe_ed, MENU_PIPE_NEXT_PT },
-    { "Previous Point", pipe_ed, MENU_PIPE_PREV_PT },
-    { "Move Point", pipe_ed, MENU_PIPE_MOV_PT },
-    { "Delete Point", pipe_ed, MENU_PIPE_DEL_PT },
-    { "Append Point", pipe_ed, MENU_PIPE_ADD_PT },
-    { "Prepend Point", pipe_ed, MENU_PIPE_INS_PT },
-    { "Set Point OD", pipe_ed, MENU_PIPE_PT_OD },
-    { "Set Point ID", pipe_ed, MENU_PIPE_PT_ID },
-    { "Set Point Bend", pipe_ed, MENU_PIPE_PT_RADIUS },
-    { "Set Pipe OD", pipe_ed, MENU_PIPE_SCALE_OD },
-    { "Set Pipe ID", pipe_ed, MENU_PIPE_SCALE_ID },
-    { "Set Pipe Bend", pipe_ed, MENU_PIPE_SCALE_RADIUS },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item vol_menu[] = {
-    {"VOL MENU", NULL, 0 },
-    {"File Name", vol_ed, MENU_VOL_FNAME },
-    {"File Size (X Y Z)", vol_ed, MENU_VOL_FSIZE },
-    {"Voxel Size (X Y Z)", vol_ed, MENU_VOL_CSIZE },
-    {"Threshold (low)", vol_ed, MENU_VOL_THRESH_LO },
-    {"Threshold (hi)", vol_ed, MENU_VOL_THRESH_HI },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item ebm_menu[] = {
-    {"EBM MENU", NULL, 0 },
-    {"File Name", ebm_ed, MENU_EBM_FNAME },
-    {"File Size (W N)", ebm_ed, MENU_EBM_FSIZE },
-    {"Extrude Depth", ebm_ed, MENU_EBM_HEIGHT },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item dsp_menu[] = {
-    {"DSP MENU", NULL, 0 },
-    {"Name", dsp_ed, MENU_DSP_FNAME },
-    {"Set X", dsp_ed, MENU_DSP_SCALE_X },
-    {"Set Y", dsp_ed, MENU_DSP_SCALE_Y },
-    {"Set ALT", dsp_ed, MENU_DSP_SCALE_ALT },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item bot_menu[] = {
-    { "BOT MENU", NULL, 0 },
-    { "Pick Vertex", bot_ed, ECMD_BOT_PICKV },
-    { "Pick Edge", bot_ed, ECMD_BOT_PICKE },
-    { "Pick Triangle", bot_ed, ECMD_BOT_PICKT },
-    { "Move Vertex", bot_ed, ECMD_BOT_MOVEV },
-    { "Move Edge", bot_ed, ECMD_BOT_MOVEE },
-    { "Move Triangle", bot_ed, ECMD_BOT_MOVET },
-    { "Delete Triangle", bot_ed, ECMD_BOT_FDEL },
-    { "Select Mode", bot_ed, ECMD_BOT_MODE },
-    { "Select Orientation", bot_ed, ECMD_BOT_ORIENT },
-    { "Set flags", bot_ed, ECMD_BOT_FLAGS },
-    { "Set Face Thickness", bot_ed, ECMD_BOT_THICK },
-    { "Set Face Mode", bot_ed, ECMD_BOT_FMODE },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item superell_menu[] = {
-    { "SUPERELLIPSOID MENU", NULL, 0 },
-    { "Set A", superell_ed, MENU_SUPERELL_SCALE_A },
-    { "Set B", superell_ed, MENU_SUPERELL_SCALE_B },
-    { "Set C", superell_ed, MENU_SUPERELL_SCALE_C },
-    { "Set A,B,C", superell_ed, MENU_SUPERELL_SCALE_ABC },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item metaball_menu[] = {
-    { "METABALL MENU", NULL, 0 },
-    { "Set Threshold", metaball_ed, MENU_METABALL_SET_THRESHOLD },
-    { "Set Render Method", metaball_ed, MENU_METABALL_SET_METHOD },
-    { "Select Point", metaball_ed, MENU_METABALL_SELECT },
-    { "Next Point", metaball_ed, MENU_METABALL_NEXT_PT },
-    { "Previous Point", metaball_ed, MENU_METABALL_PREV_PT },
-    { "Move Point", metaball_ed, MENU_METABALL_MOV_PT },
-    { "Scale Point fldstr", metaball_ed, MENU_METABALL_PT_FLDSTR },
-    { "Scale Point \"goo\" value", metaball_ed, MENU_METABALL_PT_SET_GOO },
-    { "Delete Point", metaball_ed, MENU_METABALL_DEL_PT },
-    { "Add Point", metaball_ed, MENU_METABALL_ADD_PT },
-    { "", NULL, 0 }
-};
-
-
-struct menu_item *which_menu[] = {
-    point4_menu,
-    edge5_menu,
-    edge6_menu,
-    edge7_menu,
-    edge8_menu,
-    mv4_menu,
-    mv5_menu,
-    mv6_menu,
-    mv7_menu,
-    mv8_menu,
-    rot4_menu,
-    rot5_menu,
-    rot6_menu,
-    rot7_menu,
-    rot8_menu
-};
-
-
-short int arb_vertices[5][24] = {
-    { 1, 2, 3, 0, 1, 2, 4, 0, 2, 3, 4, 0, 1, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0 },	/* arb4 */
-    { 1, 2, 3, 4, 1, 2, 5, 0, 2, 3, 5, 0, 3, 4, 5, 0, 1, 4, 5, 0, 0, 0, 0, 0 },	/* arb5 */
-    { 1, 2, 3, 4, 2, 3, 6, 5, 1, 5, 6, 4, 1, 2, 5, 0, 3, 4, 6, 0, 0, 0, 0, 0 },	/* arb6 */
-    { 1, 2, 3, 4, 5, 6, 7, 0, 1, 4, 5, 0, 2, 3, 7, 6, 1, 2, 6, 5, 4, 3, 7, 5 },	/* arb7 */
-    { 1, 2, 3, 4, 5, 6, 7, 8, 1, 5, 8, 4, 2, 3, 7, 6, 1, 2, 6, 5, 4, 3, 7, 8 }	/* arb8 */
-};
-
-
 void
-set_e_axes_pos(int both)
+set_e_axes_pos(struct mged_state *s, int both)
     /* if (!both) then set only curr_e_axes_pos, otherwise
        set e_axes_pos and curr_e_axes_pos */
 {
@@ -758,9 +130,9 @@ set_e_axes_pos(int both)
 
     update_views = 1;
     dm_set_dirty(DMP, 1);
-    switch (es_int.idb_type) {
+    switch (s->edit_state.es_int.idb_type) {
 	case ID_ARB8:
-	    if (STATE == ST_O_EDIT) {
+	    if (GEOM_EDIT_STATE == ST_O_EDIT) {
 		i = 0;
 	    } else {
 		switch (es_edflag) {
@@ -834,13 +206,13 @@ set_e_axes_pos(int both)
 		}
 	    }
 	    MAT4X3PNT(curr_e_axes_pos, es_mat,
-		      ((struct rt_arb_internal *)es_int.idb_ptr)->pt[i]);
+		      ((struct rt_arb_internal *)s->edit_state.es_int.idb_ptr)->pt[i]);
 	    break;
 	case ID_TGC:
 	case ID_REC:
 	    if (es_edflag == ECMD_TGC_MV_H ||
 		es_edflag == ECMD_TGC_MV_HH) {
-		struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)es_int.idb_ptr;
+		struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		point_t tgc_v;
 		vect_t tgc_h;
 
@@ -854,7 +226,7 @@ set_e_axes_pos(int both)
 	    break;
 	case ID_EXTRUDE:
 	    if (es_edflag == ECMD_EXTR_MOV_H) {
-		struct rt_extrude_internal *extr = (struct rt_extrude_internal *)es_int.idb_ptr;
+		struct rt_extrude_internal *extr = (struct rt_extrude_internal *)s->edit_state.es_int.idb_ptr;
 		point_t extr_v;
 		vect_t extr_h;
 
@@ -871,7 +243,7 @@ set_e_axes_pos(int both)
 	case ID_CLINE:
 	    if (es_edflag == ECMD_CLINE_MOVE_H) {
 		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)es_int.idb_ptr;
+		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 		point_t cli_v;
 		vect_t cli_h;
 
@@ -895,23 +267,23 @@ set_e_axes_pos(int both)
 
 	if (EDIT_ROTATE) {
 	    es_edclass = EDIT_CLASS_ROTATE;
-	    VSETALL(edit_absolute_model_rotate, 0.0);
-	    VSETALL(edit_absolute_object_rotate, 0.0);
-	    VSETALL(edit_absolute_view_rotate, 0.0);
-	    VSETALL(last_edit_absolute_model_rotate, 0.0);
-	    VSETALL(last_edit_absolute_object_rotate, 0.0);
-	    VSETALL(last_edit_absolute_view_rotate, 0.0);
+	    VSETALL(s->edit_state.edit_absolute_model_rotate, 0.0);
+	    VSETALL(s->edit_state.edit_absolute_object_rotate, 0.0);
+	    VSETALL(s->edit_state.edit_absolute_view_rotate, 0.0);
+	    VSETALL(s->edit_state.last_edit_absolute_model_rotate, 0.0);
+	    VSETALL(s->edit_state.last_edit_absolute_object_rotate, 0.0);
+	    VSETALL(s->edit_state.last_edit_absolute_view_rotate, 0.0);
 	} else if (EDIT_TRAN) {
 	    es_edclass = EDIT_CLASS_TRAN;
-	    VSETALL(edit_absolute_model_tran, 0.0);
-	    VSETALL(edit_absolute_view_tran, 0.0);
-	    VSETALL(last_edit_absolute_model_tran, 0.0);
-	    VSETALL(last_edit_absolute_view_tran, 0.0);
+	    VSETALL(s->edit_state.edit_absolute_model_tran, 0.0);
+	    VSETALL(s->edit_state.edit_absolute_view_tran, 0.0);
+	    VSETALL(s->edit_state.last_edit_absolute_model_tran, 0.0);
+	    VSETALL(s->edit_state.last_edit_absolute_view_tran, 0.0);
 	} else if (EDIT_SCALE) {
 	    es_edclass = EDIT_CLASS_SCALE;
 
 	    if (SEDIT_SCALE) {
-		edit_absolute_scale = 0.0;
+		s->edit_state.edit_absolute_scale = 0.0;
 		acc_sc_sol = 1.0;
 	    }
 	} else {
@@ -927,946 +299,6 @@ set_e_axes_pos(int both)
     }
 }
 
-
-static void
-arb8_edge(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = EARB;
-    if (arg == 12) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
-	sedit();
-    }
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-arb7_edge(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = EARB;
-    if (arg == 11) {
-	/* move point 5 */
-	es_edflag = PTARB;
-	es_menu = 4;	/* location of point */
-    }
-    if (arg == 12) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
-	sedit();
-    }
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-arb6_edge(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = EARB;
-    if (arg == 8) {
-	/* move point 5, location = 4 */
-	es_edflag = PTARB;
-	es_menu = 4;
-    }
-    if (arg == 9) {
-	/* move point 6, location = 6 */
-	es_edflag = PTARB;
-	es_menu = 6;
-    }
-    if (arg == 10) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
-	sedit();
-    }
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-arb5_edge(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = EARB;
-    if (arg == 8) {
-	/* move point 5 at location 4 */
-	es_edflag = PTARB;
-	es_menu = 4;
-    }
-    if (arg == 9) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
-	sedit();
-    }
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-arb4_point(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = PTARB;
-    if (arg == 5) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
-	sedit();
-    }
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-bot_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = arg;
-
-    sedit();
-    set_e_axes_pos(1);
-}
-
-
-static void
-ebm_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-
-    switch (arg) {
-	case MENU_EBM_FNAME:
-	    es_edflag = ECMD_EBM_FNAME;
-	    break;
-	case MENU_EBM_FSIZE:
-	    es_edflag = ECMD_EBM_FSIZE;
-	    break;
-	case MENU_EBM_HEIGHT:
-	    es_edflag = ECMD_EBM_HEIGHT;
-	    break;
-    }
-
-    sedit();
-    set_e_axes_pos(1);
-}
-
-
-static void
-dsp_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-
-    switch (arg) {
-	case MENU_DSP_FNAME:
-	    es_edflag = ECMD_DSP_FNAME;
-	    break;
-	case MENU_DSP_FSIZE:
-	    es_edflag = ECMD_DSP_FSIZE;
-	    break;
-	case MENU_DSP_SCALE_X:
-	    es_edflag = ECMD_DSP_SCALE_X;
-	    break;
-	case MENU_DSP_SCALE_Y:
-	    es_edflag = ECMD_DSP_SCALE_Y;
-	    break;
-	case MENU_DSP_SCALE_ALT:
-	    es_edflag = ECMD_DSP_SCALE_ALT;
-	    break;
-    }
-    sedit();
-    set_e_axes_pos(1);
-}
-
-
-static void
-cline_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_edflag = arg;
-    sedit();
-}
-
-
-static void
-vol_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-
-    switch (arg) {
-	case MENU_VOL_FNAME:
-	    es_edflag = ECMD_VOL_FNAME;
-	    break;
-	case MENU_VOL_FSIZE:
-	    es_edflag = ECMD_VOL_FSIZE;
-	    break;
-	case MENU_VOL_CSIZE:
-	    es_edflag = ECMD_VOL_CSIZE;
-	    break;
-	case MENU_VOL_THRESH_LO:
-	    es_edflag = ECMD_VOL_THRESH_LO;
-	    break;
-	case MENU_VOL_THRESH_HI:
-	    es_edflag = ECMD_VOL_THRESH_HI;
-	    break;
-    }
-
-    sedit();
-    set_e_axes_pos(1);
-}
-
-
-static void
-pipe_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    struct wdb_pipe_pnt *next;
-    struct wdb_pipe_pnt *prev;
-
-    if (DBIP == DBI_NULL)
-	return;
-
-    switch (arg) {
-	case MENU_PIPE_SELECT:
-	    es_menu = arg;
-	    es_edflag = ECMD_PIPE_PICK;
-	    break;
-	case MENU_PIPE_NEXT_PT:
-	    if (!es_pipe_pnt) {
-		Tcl_AppendResult(INTERP, "No Pipe Segment selected\n", (char *)NULL);
-		return;
-	    }
-	    next = BU_LIST_NEXT(wdb_pipe_pnt, &es_pipe_pnt->l);
-	    if (next->l.magic == BU_LIST_HEAD_MAGIC) {
-		Tcl_AppendResult(INTERP, "Current segment is the last\n", (char *)NULL);
-		return;
-	    }
-	    es_pipe_pnt = next;
-	    rt_pipe_pnt_print(es_pipe_pnt, base2local);
-	    es_menu = arg;
-	    es_edflag = IDLE;
-	    sedit();
-	    break;
-	case MENU_PIPE_PREV_PT:
-	    if (!es_pipe_pnt) {
-		Tcl_AppendResult(INTERP, "No Pipe Segment selected\n", (char *)NULL);
-		return;
-	    }
-	    prev = BU_LIST_PREV(wdb_pipe_pnt, &es_pipe_pnt->l);
-	    if (prev->l.magic == BU_LIST_HEAD_MAGIC) {
-		Tcl_AppendResult(INTERP, "Current segment is the first\n", (char *)NULL);
-		return;
-	    }
-	    es_pipe_pnt = prev;
-	    rt_pipe_pnt_print(es_pipe_pnt, base2local);
-	    es_menu = arg;
-	    es_edflag = IDLE;
-	    sedit();
-	    break;
-	case MENU_PIPE_SPLIT:
-	    /* not used */
-	    break;
-	case MENU_PIPE_MOV_PT:
-	    if (!es_pipe_pnt) {
-		Tcl_AppendResult(INTERP, "No Pipe Segment selected\n", (char *)NULL);
-		es_edflag = IDLE;
-		return;
-	    }
-	    es_menu = arg;
-	    es_edflag = ECMD_PIPE_PT_MOVE;
-	    break;
-	case MENU_PIPE_PT_OD:
-	case MENU_PIPE_PT_ID:
-	case MENU_PIPE_PT_RADIUS:
-	    if (!es_pipe_pnt) {
-		Tcl_AppendResult(INTERP, "No Pipe Segment selected\n", (char *)NULL);
-		es_edflag = IDLE;
-		return;
-	    }
-	    es_menu = arg;
-	    es_edflag = PSCALE;
-	    break;
-	case MENU_PIPE_SCALE_OD:
-	case MENU_PIPE_SCALE_ID:
-	case MENU_PIPE_SCALE_RADIUS:
-	    es_menu = arg;
-	    es_edflag = PSCALE;
-	    break;
-	case MENU_PIPE_ADD_PT:
-	    es_menu = arg;
-	    es_edflag = ECMD_PIPE_PT_ADD;
-	    break;
-	case MENU_PIPE_INS_PT:
-	    es_menu = arg;
-	    es_edflag = ECMD_PIPE_PT_INS;
-	    break;
-	case MENU_PIPE_DEL_PT:
-	    es_menu = arg;
-	    es_edflag = ECMD_PIPE_PT_DEL;
-	    sedit();
-	    break;
-    }
-    set_e_axes_pos(1);
-}
-
-
-static void
-tgc_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = PSCALE;
-    if (arg == MENU_TGC_ROT_H)
-	es_edflag = ECMD_TGC_ROT_H;
-    if (arg == MENU_TGC_ROT_AB)
-	es_edflag = ECMD_TGC_ROT_AB;
-    if (arg == MENU_TGC_MV_H)
-	es_edflag = ECMD_TGC_MV_H;
-    if (arg == MENU_TGC_MV_HH)
-	es_edflag = ECMD_TGC_MV_HH;
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-tor_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = PSCALE;
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-eto_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    if (arg == MENU_ETO_ROT_C)
-	es_edflag = ECMD_ETO_ROT_C;
-    else
-	es_edflag = PSCALE;
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-rpc_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = PSCALE;
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-part_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = PSCALE;
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-rhc_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = PSCALE;
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-epa_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = PSCALE;
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-ehy_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = PSCALE;
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-hyp_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    switch (arg) {
-	case MENU_HYP_ROT_H:
-	    es_edflag = ECMD_HYP_ROT_H;
-	    break;
-	default:
-	    es_edflag = PSCALE;
-	    break;
-    }
-    set_e_axes_pos(1);
-    return;
-}
-
-
-static void
-ell_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = PSCALE;
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-arb8_mv_face(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg - 1;
-    es_edflag = ECMD_ARB_MOVE_FACE;
-    if (arg == 7) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
-	sedit();
-    }
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-arb7_mv_face(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg - 1;
-    es_edflag = ECMD_ARB_MOVE_FACE;
-    if (arg == 7) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
-	sedit();
-    }
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-arb6_mv_face(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg - 1;
-    es_edflag = ECMD_ARB_MOVE_FACE;
-    if (arg == 6) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
-	sedit();
-    }
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-arb5_mv_face(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg - 1;
-    es_edflag = ECMD_ARB_MOVE_FACE;
-    if (arg == 6) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
-	sedit();
-    }
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-arb4_mv_face(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg - 1;
-    es_edflag = ECMD_ARB_MOVE_FACE;
-    if (arg == 5) {
-	es_edflag = ECMD_ARB_MAIN_MENU;
-	sedit();
-    }
-
-    set_e_axes_pos(1);
-}
-
-
-static void
-arb8_rot_face(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg - 1;
-    es_edflag = ECMD_ARB_SETUP_ROTFACE;
-    if (arg == 7)
-	es_edflag = ECMD_ARB_MAIN_MENU;
-
-    sedit();
-}
-
-
-static void
-arb7_rot_face(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg - 1;
-    es_edflag = ECMD_ARB_SETUP_ROTFACE;
-    if (arg == 7)
-	es_edflag = ECMD_ARB_MAIN_MENU;
-
-    sedit();
-}
-
-
-static void
-arb6_rot_face(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg - 1;
-    es_edflag = ECMD_ARB_SETUP_ROTFACE;
-    if (arg == 6)
-	es_edflag = ECMD_ARB_MAIN_MENU;
-
-    sedit();
-}
-
-
-static void
-arb5_rot_face(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg - 1;
-    es_edflag = ECMD_ARB_SETUP_ROTFACE;
-    if (arg == 6)
-	es_edflag = ECMD_ARB_MAIN_MENU;
-
-    sedit();
-}
-
-
-static void
-arb4_rot_face(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg - 1;
-    es_edflag = ECMD_ARB_SETUP_ROTFACE;
-    if (arg == 5)
-	es_edflag = ECMD_ARB_MAIN_MENU;
-
-    sedit();
-}
-
-
-static void
-arb_control(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_menu = arg;
-    es_edflag = ECMD_ARB_SPECIFIC_MENU;
-    sedit();
-}
-
-
-/*ARGSUSED*/
-static void
-ars_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_edflag = arg;
-    sedit();
-}
-
-
-/*ARGSUSED*/
-static void
-extr_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    es_edflag = arg;
-    sedit();
-}
-
-
-static void
-superell_ed(int arg, int UNUSED(a), int UNUSED(b)) {
-    es_menu = arg;
-    es_edflag = PSCALE;
-    set_e_axes_pos(1);
-    return;
-}
-
-
-static void
-metaball_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    struct wdb_metaball_pnt *next, *prev;
-
-    if (DBIP == DBI_NULL)
-	return;
-
-    switch (arg) {
-	case MENU_METABALL_SET_THRESHOLD:
-	    es_menu = arg;
-	    es_edflag = PSCALE;
-	    break;
-	case MENU_METABALL_SET_METHOD:
-	    es_menu = arg;
-	    es_edflag = PSCALE;
-	    break;
-	case MENU_METABALL_PT_SET_GOO:
-	    es_menu = arg;
-	    es_edflag = PSCALE;
-	    break;
-	case MENU_METABALL_SELECT:
-	    es_menu = arg;
-	    es_edflag = ECMD_METABALL_PT_PICK;
-	    break;
-	case MENU_METABALL_NEXT_PT:
-	    if (!es_metaball_pnt) {
-		Tcl_AppendResult(INTERP, "No Metaball Point selected\n", (char *)NULL);
-		return;
-	    }
-	    next = BU_LIST_NEXT(wdb_metaball_pnt, &es_metaball_pnt->l);
-	    if (next->l.magic == BU_LIST_HEAD_MAGIC) {
-		Tcl_AppendResult(INTERP, "Current point is the last\n", (char *)NULL);
-		return;
-	    }
-	    es_metaball_pnt = next;
-	    rt_metaball_pnt_print(es_metaball_pnt, base2local);
-	    es_menu = arg;
-	    es_edflag = IDLE;
-	    sedit();
-	    break;
-	case MENU_METABALL_PREV_PT:
-	    if (!es_metaball_pnt) {
-		Tcl_AppendResult(INTERP, "No Metaball Point selected\n", (char *)NULL);
-		return;
-	    }
-	    prev = BU_LIST_PREV(wdb_metaball_pnt, &es_metaball_pnt->l);
-	    if (prev->l.magic == BU_LIST_HEAD_MAGIC) {
-		Tcl_AppendResult(INTERP, "Current point is the first\n", (char *)NULL);
-		return;
-	    }
-	    es_metaball_pnt = prev;
-	    rt_metaball_pnt_print(es_metaball_pnt, base2local);
-	    es_menu = arg;
-	    es_edflag = IDLE;
-	    sedit();
-	    break;
-	case MENU_METABALL_MOV_PT:
-	    if (!es_metaball_pnt) {
-		Tcl_AppendResult(INTERP, "No Metaball Point selected\n", (char *)NULL);
-		es_edflag = IDLE;
-		return;
-	    }
-	    es_menu = arg;
-	    es_edflag = ECMD_METABALL_PT_MOV;
-	    sedit();
-	    break;
-	case MENU_METABALL_PT_FLDSTR:
-	    if (!es_metaball_pnt) {
-		Tcl_AppendResult(INTERP, "No Metaball Point selected\n", (char *)NULL);
-		es_edflag = IDLE;
-		return;
-	    }
-	    es_menu = arg;
-	    es_edflag = PSCALE;
-	    break;
-	case MENU_METABALL_DEL_PT:
-	    es_menu = arg;
-	    es_edflag = ECMD_METABALL_PT_DEL;
-	    sedit();
-	    break;
-	case MENU_METABALL_ADD_PT:
-	    es_menu = arg;
-	    es_edflag = ECMD_METABALL_PT_ADD;
-	    break;
-    }
-    set_e_axes_pos(1);
-    return;
-}
-
-
-/*ARGSUSED*/
-static void
-spline_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    /* XXX Why wasn't this done by setting es_edflag = ECMD_SPLINE_VPICK? */
-    if (arg < 0) {
-	/* Enter picking state */
-	chg_state(ST_S_EDIT, ST_S_VPICK, "Vertex Pick");
-	return;
-    }
-    /* For example, this will set es_edflag = ECMD_VTRANS */
-    es_edflag = arg;
-    sedit();
-
-    set_e_axes_pos(1);
-}
-/*
- * Handler for events in the NMG menu.
- * Mostly just set appropriate state flags to prepare us for user's
- * next event.
- */
-/*ARGSUSED*/
-static void
-nmg_ed(int arg, int UNUSED(a), int UNUSED(b))
-{
-    switch (arg) {
-	default:
-	    Tcl_AppendResult(INTERP, "nmg_ed: undefined menu event?\n", (char *)NULL);
-	    return;
-	case ECMD_NMG_EPICK:
-	case ECMD_NMG_EMOVE:
-	case ECMD_NMG_ESPLIT:
-	case ECMD_NMG_EKILL:
-	    break;
-	case ECMD_NMG_EDEBUG:
-	    if (!es_eu) {
-		Tcl_AppendResult(INTERP, "nmg_ed: no edge selected yet\n", (char *)NULL);
-		return;
-	    }
-
-	    nmg_pr_fu_around_eu(es_eu, &mged_tol);
-	    {
-		struct model *m;
-		struct bv_vlblock*vbp;
-		long *tab;
-
-		m = nmg_find_model(&es_eu->l.magic);
-		NMG_CK_MODEL(m);
-
-		if (*es_eu->g.magic_p == NMG_EDGE_G_LSEG_MAGIC) {
-		    /* get space for list of items processed */
-		    tab = (long *)bu_calloc(m->maxindex+1, sizeof(long),
-					    "nmg_ed tab[]");
-		    vbp = rt_vlblock_init();
-
-		    nmg_vlblock_around_eu(vbp, es_eu, tab, 1, &RTG.rtg_vlfree, &mged_tol);
-		    cvt_vlblock_to_solids(vbp, "_EU_", 0);	/* swipe vlist */
-
-		    bv_vlblock_free(vbp);
-		    bu_free((void *)tab, "nmg_ed tab[]");
-		}
-		view_state->vs_flag = 1;
-	    }
-	    if (*es_eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
-		nmg_veu(&es_eu->up.lu_p->down_hd, es_eu->up.magic_p);
-	    }
-	    /* no change of state or es_edflag */
-	    return;
-	case ECMD_NMG_FORW:
-	    if (!es_eu) {
-		Tcl_AppendResult(INTERP, "nmg_ed: no edge selected yet\n", (char *)NULL);
-		return;
-	    }
-	    NMG_CK_EDGEUSE(es_eu);
-	    es_eu = BU_LIST_PNEXT_CIRC(edgeuse, es_eu);
-
-	    {
-		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
-		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
-			      (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
-			      V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
-		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
-		bu_vls_free(&tmp_vls);
-	    }
-
-	    sedit();
-	    return;
-	case ECMD_NMG_BACK:
-	    if (!es_eu) {
-		bu_log("nmg_ed: no edge selected yet\n");
-		return;
-	    }
-	    NMG_CK_EDGEUSE(es_eu);
-	    es_eu = BU_LIST_PPREV_CIRC(edgeuse, es_eu);
-
-	    {
-		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
-		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
-			      (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
-			      V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
-		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
-		bu_vls_free(&tmp_vls);
-	    }
-
-	    sedit();
-	    return;
-	case ECMD_NMG_RADIAL:
-	    if (!es_eu) {
-		bu_log("nmg_ed: no edge selected yet\n");
-		return;
-	    }
-	    NMG_CK_EDGEUSE(es_eu);
-	    es_eu = es_eu->eumate_p->radial_p;
-
-	    {
-		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
-		bu_vls_printf(&tmp_vls, "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
-			      (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
-			      V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
-		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
-		bu_vls_free(&tmp_vls);
-	    }
-
-	    sedit();
-	    return;
-	case ECMD_NMG_LEXTRU:
-	    {
-		struct model *m, *m_tmp;
-		struct nmgregion *r, *r_tmp;
-		struct shell *s, *s_tmp;
-		struct loopuse *lu=(struct loopuse *)NULL;
-		struct loopuse *lu_tmp;
-		struct edgeuse *eu;
-		fastf_t area;
-		int wire_loop_count = 0;
-
-		m = (struct model *)es_int.idb_ptr;
-		NMG_CK_MODEL(m);
-
-		/* look for wire loops */
-		for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-		    NMG_CK_REGION(r);
-		    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-			if (BU_LIST_IS_EMPTY(&s->lu_hd))
-			    continue;
-
-			for (BU_LIST_FOR(lu_tmp, loopuse, &s->lu_hd)) {
-			    if (!lu)
-				lu = lu_tmp;
-			    else if (lu_tmp == lu->lumate_p)
-				continue;
-
-			    wire_loop_count++;
-			}
-		    }
-		}
-
-		if (!wire_loop_count) {
-		    Tcl_AppendResult(INTERP, "No sketch (wire loop) to extrude\n",
-				     (char *)NULL);
-		    return;
-		}
-
-		if (wire_loop_count > 1) {
-		    Tcl_AppendResult(INTERP, "Too many wire loops!  Don't know which to extrude!\n", (char *)NULL);
-		    return;
-		}
-
-		if (!lu || *lu->up.magic_p != NMG_SHELL_MAGIC) {
-		    /* This should never happen */
-		    bu_exit(EXIT_FAILURE,  "Cannot find wire loop!\n");
-		}
-
-		/* Make sure loop is not a crack */
-		area = nmg_loop_plane_area(lu, lu_pl);
-
-		if (area < 0.0) {
-		    Tcl_AppendResult(INTERP, "Cannot extrude loop with no area\n",
-				     (char *)NULL);
-		    return;
-		}
-
-		/* Check if loop crosses itself */
-		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-		    struct edgeuse *eu2;
-		    struct vertex *v1;
-		    vect_t edge1;
-
-		    NMG_CK_EDGEUSE(eu);
-
-		    v1 = eu->vu_p->v_p;
-		    NMG_CK_VERTEX(v1);
-		    VSUB2(edge1, eu->eumate_p->vu_p->v_p->vg_p->coord, v1->vg_p->coord);
-
-		    for (eu2 = BU_LIST_PNEXT(edgeuse, &eu->l); BU_LIST_NOT_HEAD(eu2, &lu->down_hd); eu2=BU_LIST_PNEXT(edgeuse, &eu2->l)) {
-			struct vertex *v2;
-			vect_t edge2;
-			fastf_t dist[2];
-			int ret_val;
-
-			NMG_CK_EDGEUSE(eu2);
-
-			if (eu2 == eu)
-			    continue;
-			if (eu2 == BU_LIST_PNEXT_CIRC(edgeuse,  &eu->l))
-			    continue;
-			if (eu2 == BU_LIST_PPREV_CIRC(edgeuse, &eu->l))
-			    continue;
-
-			v2 = eu2->vu_p->v_p;
-			NMG_CK_VERTEX(v2);
-			VSUB2(edge2, eu2->eumate_p->vu_p->v_p->vg_p->coord, v2->vg_p->coord);
-
-			if ((ret_val = bg_isect_lseg3_lseg3(dist, v1->vg_p->coord, edge1,
-							    v2->vg_p->coord, edge2, &mged_tol)) > (-1))
-			{
-			    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
-			    bu_vls_printf(&tmp_vls,
-					  "Loop crosses itself, cannot extrude\n");
-			    bu_vls_printf(&tmp_vls,
-					  "edge1: pt=(%g %g %g), dir=(%g %g %g)\n",
-					  V3ARGS(v1->vg_p->coord), V3ARGS(edge1));
-			    bu_vls_printf(&tmp_vls,
-					  "edge2: pt=(%g %g %g), dir=(%g %g %g)\n",
-					  V3ARGS(v2->vg_p->coord), V3ARGS(edge2));
-			    if (ret_val == 0) {
-				bu_vls_printf(&tmp_vls,
-					      "edges are collinear and overlap\n");
-			    } else {
-				point_t isect_pt;
-
-				VJOIN1(isect_pt, v1->vg_p->coord, dist[0], edge1);
-				bu_vls_printf(&tmp_vls,
-					      "edges intersect at (%g %g %g)\n",
-					      V3ARGS(isect_pt));
-			    }
-
-			    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls),
-					     (char *)NULL);
-			    bu_vls_free(&tmp_vls);
-			    return;
-			}
-		    }
-		}
-
-		/* Create a temporary model to store the basis loop */
-		m_tmp = nmg_mm();
-		r_tmp = nmg_mrsv(m_tmp);
-		s_tmp = BU_LIST_FIRST(shell, &r_tmp->s_hd);
-		lu_copy = nmg_dup_loop(lu, &s_tmp->l.magic, (long **)0);
-		if (!lu_copy) {
-		    Tcl_AppendResult(INTERP, "Failed to make copy of loop\n", (char *)NULL);
-		    nmg_km(m_tmp);
-		    return;
-		}
-
-		/* Get the first vertex in the loop as the basis for extrusion */
-		eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-		VMOVE(lu_keypoint, eu->vu_p->v_p->vg_p->coord);
-
-		s = lu->up.s_p;
-
-		if (BU_LIST_NON_EMPTY(&s->fu_hd)) {
-		    /* make a new shell to hold the extruded solid */
-
-		    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-		    NMG_CK_REGION(r);
-		    es_s = nmg_msv(r);
-		} else {
-		    es_s = s;
-		}
-
-	    }
-	    break;
-    }
-    /* For example, this will set es_edflag = ECMD_NMG_EPICK */
-    es_edflag = arg;
-    sedit();
-}
-
-
 /*
  * Keypoint in model space is established in "pt".
  * If "str" is set, then that point is used, else default
@@ -1880,7 +312,7 @@ nmg_ed(int arg, int UNUSED(a), int UNUSED(b))
  * processed as well?
  */
 void
-get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t *mat)
+get_solid_keypoint(struct mged_state *s, fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t *mat)
 {
     char *cp = *strp;
     point_t mpt = VINIT_ZERO;
@@ -1981,7 +413,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				    if (l == i || l == j || l == k)
 					continue;
 
-				    if (DIST_PNT_PLANE(mpt, arbn->eqn[l]) > mged_tol.dist) {
+				    if (DIST_PNT_PLANE(mpt, arbn->eqn[l]) > s->tol.tol.dist) {
 					good_vert = 0;
 					break;
 				    }
@@ -2224,7 +656,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 	case ID_BSPLINE:
 	    {
 		struct rt_nurb_internal *sip =
-		    (struct rt_nurb_internal *) es_int.idb_ptr;
+		    (struct rt_nurb_internal *) s->edit_state.es_int.idb_ptr;
 		struct face_g_snurb *surf;
 		fastf_t *fp;
 
@@ -2250,7 +682,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 	case ID_ARS:
 	    {
 		struct rt_ars_internal *ars =
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ARS_CK_MAGIC(ars);
 
 		if (es_ars_crv < 0 || es_ars_col < 0) {
@@ -2386,10 +818,10 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		struct edgeuse *eu;
 		struct loopuse *lu;
 		struct faceuse *fu;
-		struct shell *s;
+		struct shell *nmg_s;
 		struct nmgregion *r;
 		struct model *m =
-		    (struct model *) es_int.idb_ptr;
+		    (struct model *) s->edit_state.es_int.idb_ptr;
 		NMG_CK_MODEL(m);
 		/* XXX Fall through, for now (How about first vertex?? - JRA) */
 
@@ -2417,15 +849,15 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		if (BU_LIST_IS_EMPTY(&r->s_hd))
 		    break;
 
-		s = BU_LIST_FIRST(shell, &r->s_hd);
+		nmg_s = BU_LIST_FIRST(shell, &r->s_hd);
 		if (!s)
 		    break;
-		NMG_CK_SHELL(s);
+		NMG_CK_SHELL(nmg_s);
 
-		if (BU_LIST_IS_EMPTY(&s->fu_hd))
+		if (BU_LIST_IS_EMPTY(&nmg_s->fu_hd))
 		    fu = (struct faceuse *)NULL;
 		else
-		    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
+		    fu = BU_LIST_FIRST(faceuse, &nmg_s->fu_hd);
 		if (fu) {
 		    NMG_CK_FACEUSE(fu);
 		    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
@@ -2447,10 +879,10 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		    *strp = "V";
 		    break;
 		}
-		if (BU_LIST_IS_EMPTY(&s->lu_hd))
+		if (BU_LIST_IS_EMPTY(&nmg_s->lu_hd))
 		    lu = (struct loopuse *)NULL;
 		else
-		    lu = BU_LIST_FIRST(loopuse, &s->lu_hd);
+		    lu = BU_LIST_FIRST(loopuse, &nmg_s->lu_hd);
 		if (lu) {
 		    NMG_CK_LOOPUSE(lu);
 		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
@@ -2470,10 +902,10 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		    *strp = "V";
 		    break;
 		}
-		if (BU_LIST_IS_EMPTY(&s->eu_hd))
+		if (BU_LIST_IS_EMPTY(&nmg_s->eu_hd))
 		    eu = (struct edgeuse *)NULL;
 		else
-		    eu = BU_LIST_FIRST(edgeuse, &s->eu_hd);
+		    eu = BU_LIST_FIRST(edgeuse, &nmg_s->eu_hd);
 		if (eu) {
 		    NMG_CK_EDGEUSE(eu);
 		    NMG_CK_VERTEXUSE(eu->vu_p);
@@ -2485,7 +917,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		    *strp = "V";
 		    break;
 		}
-		vu = s->vu_p;
+		vu = nmg_s->vu_p;
 		if (vu) {
 		    NMG_CK_VERTEXUSE(vu);
 		    v = vu->v_p;
@@ -2499,7 +931,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 	    }
 	    /* fall through */
 	default:
-	    Tcl_AppendResult(INTERP, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n", (char *)NULL);
 	    VSETALL(mpt, 0.0);
 	    *strp = "(origin)";
 	    break;
@@ -2509,12 +941,16 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 
 
 int
-f_get_solid_keypoint(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_get_solid_keypoint(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
-    if (STATE == ST_VIEW || STATE == ST_S_PICK || STATE == ST_O_PICK)
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (GEOM_EDIT_STATE == ST_VIEW || GEOM_EDIT_STATE == ST_S_PICK || GEOM_EDIT_STATE == ST_O_PICK)
 	return TCL_OK;
 
-    get_solid_keypoint(es_keypoint, &es_keytag, &es_int, es_mat);
+    get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
     return TCL_OK;
 }
 
@@ -2525,65 +961,65 @@ f_get_solid_keypoint(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), 
  * Solid editing is completed only via sedit_accept() / sedit_reject().
  */
 void
-init_sedit(void)
+init_sedit(struct mged_state *s)
 {
     int type;
     int id;
 
-    if (DBIP == DBI_NULL || !illump)
+    if (s->dbip == DBI_NULL || !illump)
 	return;
 
     /*
      * Check for a processed region or other illegal solid.
      */
     if (illump->s_old.s_Eflag) {
-	Tcl_AppendResult(INTERP,
+	Tcl_AppendResult(s->interp,
 			 "Unable to Solid_Edit a processed region;  select a primitive instead\n", (char *)NULL);
 	return;
     }
 
-    /* Read solid description into es_int */
+    /* Read solid description into s->edit_state.es_int */
     if (!illump->s_u_data)
 	return;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
-			   DBIP, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&s->edit_state.es_int, LAST_SOLID(bdata),
+			   s->dbip, NULL, &rt_uniresource) < 0) {
 	if (bdata->s_fullpath.fp_len > 0) {
-	    Tcl_AppendResult(INTERP, "init_sedit(",
+	    Tcl_AppendResult(s->interp, "init_sedit(",
 		    LAST_SOLID(bdata)->d_namep,
 		    "):  solid import failure\n", (char *)NULL);
 	} else {
-	    Tcl_AppendResult(INTERP, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
 	}
-	rt_db_free_internal(&es_int);
+	rt_db_free_internal(&s->edit_state.es_int);
 	return;				/* FAIL */
     }
-    RT_CK_DB_INTERNAL(&es_int);
-    id = es_int.idb_type;
+    RT_CK_DB_INTERNAL(&s->edit_state.es_int);
+    id = s->edit_state.es_int.idb_type;
 
     es_menu = 0;
     if (id == ID_ARB8) {
 	struct rt_arb_internal *arb;
 	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
-	arb = (struct rt_arb_internal *)es_int.idb_ptr;
+	arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	type = rt_arb_std_type(&es_int, &mged_tol);
+	type = rt_arb_std_type(&s->edit_state.es_int, &s->tol.tol);
 	es_type = type;
 
-	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol)) {
-	    Tcl_AppendResult(INTERP, bu_vls_addr(&error_msg),
+	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &s->tol.tol)) {
+	    Tcl_AppendResult(s->interp, bu_vls_addr(&error_msg),
 			     "\nCannot calculate plane equations for ARB8\n",
 			     (char *)NULL);
-	    rt_db_free_internal(&es_int);
+	    rt_db_free_internal(&s->edit_state.es_int);
 	    bu_vls_free(&error_msg);
 	    return;
 	}
 	bu_vls_free(&error_msg);
     } else if (id == ID_BSPLINE) {
 	struct rt_nurb_internal *sip =
-	    (struct rt_nurb_internal *) es_int.idb_ptr;
+	    (struct rt_nurb_internal *) s->edit_state.es_int.idb_ptr;
 	struct face_g_snurb *surf;
 	RT_NURB_CK_MAGIC(sip);
 	spl_surfno = sip->nsrf/2;
@@ -2594,14 +1030,14 @@ init_sedit(void)
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
 
     /* Establish initial keypoint */
     es_keytag = "";
-    get_solid_keypoint(es_keypoint, &es_keytag, &es_int, es_mat);
+    get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
 
     es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
@@ -2615,50 +1051,50 @@ init_sedit(void)
     bot_verts[2] = -1;
 
     /* Finally, enter solid edit state */
-    (void)chg_state(ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
-    chg_l2menu(ST_S_EDIT);
+    (void)chg_state(s, ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
+    chg_l2menu(s, ST_S_EDIT);
     es_edflag = IDLE;
 
-    button(BE_S_EDIT);	/* Drop into edit menu right away */
-    init_sedit_vars();
+    button(s, BE_S_EDIT);	/* Drop into edit menu right away */
+    init_sedit_vars(s);
 
     {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_strcpy(&vls, "begin_edit_callback ");
 	db_path_to_vls(&vls, &bdata->s_fullpath);
-	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	(void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
 }
 
 
 static void
-init_sedit_vars(void)
+init_sedit_vars(struct mged_state *s)
 {
     MAT_IDN(acc_rot_sol);
     MAT_IDN(incr_change);
 
-    VSETALL(edit_absolute_model_rotate, 0.0);
-    VSETALL(edit_absolute_object_rotate, 0.0);
-    VSETALL(edit_absolute_view_rotate, 0.0);
-    VSETALL(last_edit_absolute_model_rotate, 0.0);
-    VSETALL(last_edit_absolute_object_rotate, 0.0);
-    VSETALL(last_edit_absolute_view_rotate, 0.0);
-    VSETALL(edit_absolute_model_tran, 0.0);
-    VSETALL(edit_absolute_view_tran, 0.0);
-    VSETALL(last_edit_absolute_model_tran, 0.0);
-    VSETALL(last_edit_absolute_view_tran, 0.0);
-    edit_absolute_scale = 0.0;
+    VSETALL(s->edit_state.edit_absolute_model_rotate, 0.0);
+    VSETALL(s->edit_state.edit_absolute_object_rotate, 0.0);
+    VSETALL(s->edit_state.edit_absolute_view_rotate, 0.0);
+    VSETALL(s->edit_state.last_edit_absolute_model_rotate, 0.0);
+    VSETALL(s->edit_state.last_edit_absolute_object_rotate, 0.0);
+    VSETALL(s->edit_state.last_edit_absolute_view_rotate, 0.0);
+    VSETALL(s->edit_state.edit_absolute_model_tran, 0.0);
+    VSETALL(s->edit_state.edit_absolute_view_tran, 0.0);
+    VSETALL(s->edit_state.last_edit_absolute_model_tran, 0.0);
+    VSETALL(s->edit_state.last_edit_absolute_view_tran, 0.0);
+    s->edit_state.edit_absolute_scale = 0.0;
     acc_sc_sol = 1.0;
 
-    VSETALL(edit_rate_model_rotate, 0.0);
-    VSETALL(edit_rate_object_rotate, 0.0);
-    VSETALL(edit_rate_view_rotate, 0.0);
-    VSETALL(edit_rate_model_tran, 0.0);
-    VSETALL(edit_rate_view_tran, 0.0);
+    VSETALL(s->edit_state.edit_rate_model_rotate, 0.0);
+    VSETALL(s->edit_state.edit_rate_object_rotate, 0.0);
+    VSETALL(s->edit_state.edit_rate_view_rotate, 0.0);
+    VSETALL(s->edit_state.edit_rate_model_tran, 0.0);
+    VSETALL(s->edit_state.edit_rate_view_tran, 0.0);
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 }
 
 
@@ -2667,7 +1103,7 @@ init_sedit_vars(void)
  * making a change to es_int or es_mat.
  */
 void
-replot_editing_solid(void)
+replot_editing_solid(struct mged_state *s)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
@@ -2683,16 +1119,16 @@ replot_editing_solid(void)
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     illdp = LAST_SOLID(bdata);
 
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (sp->s_u_data) {
 		bdata = (struct ged_bv_data *)sp->s_u_data;
 		if (LAST_SOLID(bdata) == illdp) {
-		    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
-		    (void)replot_modified_solid(sp, &es_int, mat);
+		    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+		    (void)replot_modified_solid(s, sp, &s->edit_state.es_int, mat);
 		}
 	    }
 	}
@@ -2704,12 +1140,13 @@ replot_editing_solid(void)
 
 void
 transform_editing_solid(
+    struct mged_state *s,
     struct rt_db_internal *os,		/* output solid */
     const mat_t mat,
     struct rt_db_internal *is,		/* input solid */
     int freeflag)
 {
-    if (rt_matrix_transform(os, mat, is, freeflag, DBIP, &rt_uniresource) < 0)
+    if (rt_matrix_transform(os, mat, is, freeflag, s->dbip, &rt_uniresource) < 0)
 	bu_exit(EXIT_FAILURE, "transform_editing_solid failed to apply a matrix transform, aborting");
 }
 
@@ -2718,83 +1155,83 @@ transform_editing_solid(
  * Put up menu header
  */
 void
-sedit_menu(void) {
+sedit_menu(struct mged_state *s) {
 
     menu_state->ms_flag = 0;		/* No menu item selected yet */
 
-    mmenu_set_all(MENU_L1, MENU_NULL);
-    chg_l2menu(ST_S_EDIT);
+    mmenu_set_all(s, MENU_L1, NULL);
+    chg_l2menu(s, ST_S_EDIT);
 
-    switch (es_int.idb_type) {
+    switch (s->edit_state.es_int.idb_type) {
 
 	case ID_ARB8:
-	    mmenu_set_all(MENU_L1, cntrl_menu);
+	    mmenu_set_all(s, MENU_L1, cntrl_menu);
 	    break;
 	case ID_TGC:
-	    mmenu_set_all(MENU_L1, tgc_menu);
+	    mmenu_set_all(s, MENU_L1, tgc_menu);
 	    break;
 	case ID_TOR:
-	    mmenu_set_all(MENU_L1, tor_menu);
+	    mmenu_set_all(s, MENU_L1, tor_menu);
 	    break;
 	case ID_ELL:
-	    mmenu_set_all(MENU_L1, ell_menu);
+	    mmenu_set_all(s, MENU_L1, ell_menu);
 	    break;
 	case ID_SUPERELL:
-	    mmenu_set_all(MENU_L1, superell_menu);
+	    mmenu_set_all(s, MENU_L1, superell_menu);
 	    break;
 	case ID_ARS:
-	    mmenu_set_all(MENU_L1, ars_menu);
+	    mmenu_set_all(s, MENU_L1, ars_menu);
 	    break;
 	case ID_BSPLINE:
-	    mmenu_set_all(MENU_L1, spline_menu);
+	    mmenu_set_all(s, MENU_L1, spline_menu);
 	    break;
 	case ID_RPC:
-	    mmenu_set_all(MENU_L1, rpc_menu);
+	    mmenu_set_all(s, MENU_L1, rpc_menu);
 	    break;
 	case ID_RHC:
-	    mmenu_set_all(MENU_L1, rhc_menu);
+	    mmenu_set_all(s, MENU_L1, rhc_menu);
 	    break;
 	case ID_EPA:
-	    mmenu_set_all(MENU_L1, epa_menu);
+	    mmenu_set_all(s, MENU_L1, epa_menu);
 	    break;
 	case ID_EHY:
-	    mmenu_set_all(MENU_L1, ehy_menu);
+	    mmenu_set_all(s, MENU_L1, ehy_menu);
 	    break;
 	case ID_HYP:
-	    mmenu_set_all(MENU_L1, hyp_menu);
+	    mmenu_set_all(s, MENU_L1, hyp_menu);
 	    break;
 	case ID_ETO:
-	    mmenu_set_all(MENU_L1, eto_menu);
+	    mmenu_set_all(s, MENU_L1, eto_menu);
 	    break;
 	case ID_NMG:
-	    mmenu_set_all(MENU_L1, nmg_menu);
+	    mmenu_set_all(s, MENU_L1, nmg_menu);
 	    break;
 	case ID_PIPE:
-	    mmenu_set_all(MENU_L1, pipe_menu);
+	    mmenu_set_all(s, MENU_L1, pipe_menu);
 	    break;
 	case ID_METABALL:
-	    mmenu_set_all(MENU_L1, metaball_menu);
+	    mmenu_set_all(s, MENU_L1, metaball_menu);
 	    break;
 	case ID_VOL:
-	    mmenu_set_all(MENU_L1, vol_menu);
+	    mmenu_set_all(s, MENU_L1, vol_menu);
 	    break;
 	case ID_EBM:
-	    mmenu_set_all(MENU_L1, ebm_menu);
+	    mmenu_set_all(s, MENU_L1, ebm_menu);
 	    break;
 	case ID_DSP:
-	    mmenu_set_all(MENU_L1, dsp_menu);
+	    mmenu_set_all(s, MENU_L1, dsp_menu);
 	    break;
 	case ID_PARTICLE:
-	    mmenu_set_all(MENU_L1, part_menu);
+	    mmenu_set_all(s, MENU_L1, part_menu);
 	    break;
 	case ID_BOT:
-	    mmenu_set_all(MENU_L1, bot_menu);
+	    mmenu_set_all(s, MENU_L1, bot_menu);
 	    break;
 	case ID_EXTRUDE:
-	    mmenu_set_all(MENU_L1, extr_menu);
+	    mmenu_set_all(s, MENU_L1, extr_menu);
 	    break;
 	case ID_CLINE:
-	    mmenu_set_all(MENU_L1, cline_menu);
+	    mmenu_set_all(s, MENU_L1, cline_menu);
 	    break;
     }
     es_edflag = IDLE;	/* Drop out of previous edit mode */
@@ -2803,7 +1240,7 @@ sedit_menu(void) {
 
 
 int
-get_rotation_vertex(void)
+get_rotation_vertex(struct mged_state *s)
 {
     int i, j;
     int type, loc, valid;
@@ -2818,27 +1255,27 @@ get_rotation_vertex(void)
 
     bu_vls_printf(&str, "Enter fixed vertex number(");
     for (i=0; i<4; i++) {
-	if (arb_vertices[type][loc+i])
-	    bu_vls_printf(&str, "%d ", arb_vertices[type][loc+i]);
+	if (rt_arb_vertices[type][loc+i])
+	    bu_vls_printf(&str, "%d ", rt_arb_vertices[type][loc+i]);
     }
-    bu_vls_printf(&str, ") [%d]: ", arb_vertices[type][loc]);
+    bu_vls_printf(&str, ") [%d]: ", rt_arb_vertices[type][loc]);
 
-    const struct bu_vls *dnvp = dm_get_dname(mged_curr_dm->dm_dmp);
+    const struct bu_vls *dnvp = dm_get_dname(s->mged_curr_dm->dm_dmp);
 
     bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %s {Need vertex for solid rotate}\
  {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
-		  (dnvp) ? bu_vls_addr(dnvp) : "id", bu_vls_addr(&str), arb_vertices[type][loc]);
+		  (dnvp) ? bu_vls_addr(dnvp) : "id", bu_vls_addr(&str), rt_arb_vertices[type][loc]);
 
     while (!valid) {
-	if (Tcl_Eval(INTERP, bu_vls_addr(&cmd)) != TCL_OK) {
-	    Tcl_AppendResult(INTERP, "get_rotation_vertex: Error reading vertex\n", (char *)NULL);
+	if (Tcl_Eval(s->interp, bu_vls_addr(&cmd)) != TCL_OK) {
+	    Tcl_AppendResult(s->interp, "get_rotation_vertex: Error reading vertex\n", (char *)NULL);
 	    /* Using default */
-	    return arb_vertices[type][loc];
+	    return rt_arb_vertices[type][loc];
 	}
 
-	vertex = atoi(Tcl_GetVar(INTERP, "vertex_num", TCL_GLOBAL_ONLY));
+	vertex = atoi(Tcl_GetVar(s->interp, "vertex_num", TCL_GLOBAL_ONLY));
 	for (j=0; j<4; j++) {
-	    if (vertex==arb_vertices[type][loc+j])
+	    if (vertex==rt_arb_vertices[type][loc+j])
 		valid = 1;
 	}
     }
@@ -2849,7 +1286,7 @@ get_rotation_vertex(void)
 
 
 const char *
-get_file_name(char *str)
+get_file_name(struct mged_state *s, char *str)
 {
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
     struct bu_vls varname_vls = BU_VLS_INIT_ZERO;
@@ -2867,7 +1304,7 @@ get_file_name(char *str)
 	while (ptr1 != fptr)
 	    *ptr2++ = *ptr1++;
 	*ptr2 = '\0';
-	Tcl_SetVar(INTERP, bu_vls_addr(&varname_vls), dir, TCL_GLOBAL_ONLY);
+	Tcl_SetVar(s->interp, bu_vls_addr(&varname_vls), dir, TCL_GLOBAL_ONLY);
 	bu_free((void *)dir, "get_file_name: directory string");
     }
 
@@ -2879,21 +1316,21 @@ get_file_name(char *str)
     }
     bu_vls_free(&varname_vls);
 
-    if (Tcl_Eval(INTERP, bu_vls_addr(&cmd))) {
+    if (Tcl_Eval(s->interp, bu_vls_addr(&cmd))) {
 	bu_vls_free(&cmd);
 	return (char *)NULL;
-    } else if (Tcl_GetStringResult(INTERP)[0] != '\0') {
+    } else if (Tcl_GetStringResult(s->interp)[0] != '\0') {
 	bu_vls_free(&cmd);
-	return Tcl_GetStringResult(INTERP);
+	return Tcl_GetStringResult(s->interp);
     } else {
 	bu_vls_free(&cmd);
-	return (char *)NULL;
     }
+    return (char *)NULL;
 }
 
 
 static void
-dsp_scale(struct rt_dsp_internal *dsp, int idx)
+dsp_scale(struct mged_state *s, struct rt_dsp_internal *dsp, int idx)
 {
     mat_t m, scalemat;
 
@@ -2908,10 +1345,10 @@ dsp_scale(struct rt_dsp_internal *dsp, int idx)
     if (inpara > 0) {
 	m[idx] = es_para[0];
 	bu_log("Keyboard %g\n", es_para[0]);
-    } else if (!ZERO(es_scale)) {
-	m[idx] *= es_scale;
-	bu_log("es_scale %g\n", es_scale);
-	es_scale = 0.0;
+    } else if (!ZERO(s->edit_state.es_scale)) {
+	m[idx] *= s->edit_state.es_scale;
+	bu_log("s->edit_state.es_scale %g\n", s->edit_state.es_scale);
+	s->edit_state.es_scale = 0.0;
     }
 
     bn_mat_xform_about_pnt(scalemat, m, es_keypoint);
@@ -2929,7 +1366,7 @@ dsp_scale(struct rt_dsp_internal *dsp, int idx)
  * Partial scaling of a solid.
  */
 void
-pscale(void)
+pscale(struct mged_state *s)
 {
     static fastf_t ma, mb;
 
@@ -2937,21 +1374,21 @@ pscale(void)
 
 	case MENU_VOL_CSIZE:	/* scale voxel size */
 	    {
-		bu_log("es_scale = %g\n", es_scale);
+		bu_log("s->edit_state.es_scale = %g\n", s->edit_state.es_scale);
 	    }
 	    break;
 
 	case MENU_TGC_SCALE_H:	/* scale height vector */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->h);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->h);
 		}
-		VSCALE(tgc->h, tgc->h, es_scale);
+		VSCALE(tgc->h, tgc->h, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -2960,15 +1397,15 @@ pscale(void)
 		point_t old_top;
 
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->h);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->h);
 		}
 		VADD2(old_top, tgc->v, tgc->h);
-		VSCALE(tgc->h, tgc->h, es_scale);
+		VSCALE(tgc->h, tgc->h, s->edit_state.es_scale);
 		VSUB2(tgc->v, old_top, tgc->h);
 	    }
 	    break;
@@ -2978,24 +1415,24 @@ pscale(void)
 		vect_t vec1, vec2;
 		vect_t c, d;
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_TGC_CK_MAGIC(tgc);
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->h);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->h);
 		}
 
 		/* calculate new c */
 		VSUB2(vec1, tgc->a, tgc->c);
-		VSCALE(vec2, vec1, 1-es_scale);
+		VSCALE(vec2, vec1, 1-s->edit_state.es_scale);
 		VADD2(c, tgc->c, vec2);
 
 		/* calculate new d */
 		VSUB2(vec1, tgc->b, tgc->d);
-		VSCALE(vec2, vec1, 1-es_scale);
+		VSCALE(vec2, vec1, 1-s->edit_state.es_scale);
 		VADD2(d, tgc->d, vec2);
 
 		if (0 <= VDOT(tgc->c, c) &&
@@ -3005,7 +1442,7 @@ pscale(void)
 		    /* adjust c, d and h */
 		    VMOVE(tgc->c, c);
 		    VMOVE(tgc->d, d);
-		    VSCALE(tgc->h, tgc->h, es_scale);
+		    VSCALE(tgc->h, tgc->h, s->edit_state.es_scale);
 		}
 	    }
 	    break;
@@ -3016,24 +1453,24 @@ pscale(void)
 		vect_t a, b;
 		point_t old_top;
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_TGC_CK_MAGIC(tgc);
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->h);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->h);
 		}
 
 		/* calculate new a */
 		VSUB2(vec1, tgc->c, tgc->a);
-		VSCALE(vec2, vec1, 1-es_scale);
+		VSCALE(vec2, vec1, 1-s->edit_state.es_scale);
 		VADD2(a, tgc->a, vec2);
 
 		/* calculate new b */
 		VSUB2(vec1, tgc->d, tgc->b);
-		VSCALE(vec2, vec1, 1-es_scale);
+		VSCALE(vec2, vec1, 1-s->edit_state.es_scale);
 		VADD2(b, tgc->b, vec2);
 
 		if (0 <= VDOT(tgc->a, a) &&
@@ -3044,7 +1481,7 @@ pscale(void)
 		    VMOVE(tgc->a, a);
 		    VMOVE(tgc->b, b);
 		    VADD2(old_top, tgc->v, tgc->h);
-		    VSCALE(tgc->h, tgc->h, es_scale);
+		    VSCALE(tgc->h, tgc->h, s->edit_state.es_scale);
 		    VSUB2(tgc->v, old_top, tgc->h);
 		}
 	    }
@@ -3054,7 +1491,7 @@ pscale(void)
 	    /* scale radius 1 of TOR */
 	    {
 		struct rt_tor_internal *tor =
-		    (struct rt_tor_internal *)es_int.idb_ptr;
+		    (struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t newrad;
 		RT_TOR_CK_MAGIC(tor);
 		if (inpara) {
@@ -3062,7 +1499,7 @@ pscale(void)
 		    es_para[0] *= es_mat[15];
 		    newrad = es_para[0];
 		} else {
-		    newrad = tor->r_a * es_scale;
+		    newrad = tor->r_a * s->edit_state.es_scale;
 		}
 		if (newrad < SMALL) newrad = 4*SMALL;
 		if (tor->r_h <= newrad)
@@ -3074,7 +1511,7 @@ pscale(void)
 	    /* scale radius 2 of TOR */
 	    {
 		struct rt_tor_internal *tor =
-		    (struct rt_tor_internal *)es_int.idb_ptr;
+		    (struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t newrad;
 		RT_TOR_CK_MAGIC(tor);
 		if (inpara) {
@@ -3082,7 +1519,7 @@ pscale(void)
 		    es_para[0] *= es_mat[15];
 		    newrad = es_para[0];
 		} else {
-		    newrad = tor->r_h * es_scale;
+		    newrad = tor->r_h * s->edit_state.es_scale;
 		}
 		if (newrad < SMALL) newrad = 4*SMALL;
 		if (newrad <= tor->r_a)
@@ -3094,7 +1531,7 @@ pscale(void)
 	    /* scale radius 1 (r) of ETO */
 	    {
 		struct rt_eto_internal *eto =
-		    (struct rt_eto_internal *)es_int.idb_ptr;
+		    (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t ch, cv, dh, newrad;
 		vect_t Nu;
 
@@ -3104,7 +1541,7 @@ pscale(void)
 		    es_para[0] *= es_mat[15];
 		    newrad = es_para[0];
 		} else {
-		    newrad = eto->eto_r * es_scale;
+		    newrad = eto->eto_r * s->edit_state.es_scale;
 		}
 		if (newrad < SMALL) newrad = 4*SMALL;
 		VMOVE(Nu, eto->eto_N);
@@ -3124,7 +1561,7 @@ pscale(void)
 	    /* scale Rd, ellipse semi-minor axis length, of ETO */
 	    {
 		struct rt_eto_internal *eto =
-		    (struct rt_eto_internal *)es_int.idb_ptr;
+		    (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t dh, newrad, work;
 		vect_t Nu;
 
@@ -3134,7 +1571,7 @@ pscale(void)
 		    es_para[0] *= es_mat[15];
 		    newrad = es_para[0];
 		} else {
-		    newrad = eto->eto_rd * es_scale;
+		    newrad = eto->eto_rd * s->edit_state.es_scale;
 		}
 		if (newrad < SMALL) newrad = 4*SMALL;
 		work = MAGNITUDE(eto->eto_C);
@@ -3153,7 +1590,7 @@ pscale(void)
 	    /* scale vector C */
 	    {
 		struct rt_eto_internal *eto =
-		    (struct rt_eto_internal *)es_int.idb_ptr;
+		    (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t ch, cv;
 		vect_t Nu, Work;
 
@@ -3161,12 +1598,12 @@ pscale(void)
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(eto->eto_C);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(eto->eto_C);
 		}
-		if (es_scale * MAGNITUDE(eto->eto_C) >= eto->eto_rd) {
+		if (s->edit_state.es_scale * MAGNITUDE(eto->eto_C) >= eto->eto_rd) {
 		    VMOVE(Nu, eto->eto_N);
 		    VUNITIZE(Nu);
-		    VSCALE(Work, eto->eto_C, es_scale);
+		    VSCALE(Work, eto->eto_C, s->edit_state.es_scale);
 		    /* get horiz and vert comps of C and Rd */
 		    cv = VDOT(Work, Nu);
 		    ch = sqrt(VDOT(Work, Work) - cv * cv);
@@ -3180,15 +1617,15 @@ pscale(void)
 	    /* scale vector B */
 	    {
 		struct rt_rpc_internal *rpc =
-		    (struct rt_rpc_internal *)es_int.idb_ptr;
+		    (struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_RPC_CK_MAGIC(rpc);
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(rpc->rpc_B);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(rpc->rpc_B);
 		}
-		VSCALE(rpc->rpc_B, rpc->rpc_B, es_scale);
+		VSCALE(rpc->rpc_B, rpc->rpc_B, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3196,15 +1633,15 @@ pscale(void)
 	    /* scale vector H */
 	    {
 		struct rt_rpc_internal *rpc =
-		    (struct rt_rpc_internal *)es_int.idb_ptr;
+		    (struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_RPC_CK_MAGIC(rpc);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(rpc->rpc_H);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(rpc->rpc_H);
 		}
-		VSCALE(rpc->rpc_H, rpc->rpc_H, es_scale);
+		VSCALE(rpc->rpc_H, rpc->rpc_H, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3212,15 +1649,15 @@ pscale(void)
 	    /* scale rectangular half-width of RPC */
 	    {
 		struct rt_rpc_internal *rpc =
-		    (struct rt_rpc_internal *)es_int.idb_ptr;
+		    (struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_RPC_CK_MAGIC(rpc);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / rpc->rpc_r;
+		    s->edit_state.es_scale = es_para[0] / rpc->rpc_r;
 		}
-		rpc->rpc_r *= es_scale;
+		rpc->rpc_r *= s->edit_state.es_scale;
 	    }
 	    break;
 
@@ -3228,15 +1665,15 @@ pscale(void)
 	    /* scale vector B */
 	    {
 		struct rt_rhc_internal *rhc =
-		    (struct rt_rhc_internal *)es_int.idb_ptr;
+		    (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_RHC_CK_MAGIC(rhc);
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(rhc->rhc_B);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(rhc->rhc_B);
 		}
-		VSCALE(rhc->rhc_B, rhc->rhc_B, es_scale);
+		VSCALE(rhc->rhc_B, rhc->rhc_B, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3244,15 +1681,15 @@ pscale(void)
 	    /* scale vector H */
 	    {
 		struct rt_rhc_internal *rhc =
-		    (struct rt_rhc_internal *)es_int.idb_ptr;
+		    (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_RHC_CK_MAGIC(rhc);
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(rhc->rhc_H);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(rhc->rhc_H);
 		}
-		VSCALE(rhc->rhc_H, rhc->rhc_H, es_scale);
+		VSCALE(rhc->rhc_H, rhc->rhc_H, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3260,15 +1697,15 @@ pscale(void)
 	    /* scale rectangular half-width of RHC */
 	    {
 		struct rt_rhc_internal *rhc =
-		    (struct rt_rhc_internal *)es_int.idb_ptr;
+		    (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_RHC_CK_MAGIC(rhc);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / rhc->rhc_r;
+		    s->edit_state.es_scale = es_para[0] / rhc->rhc_r;
 		}
-		rhc->rhc_r *= es_scale;
+		rhc->rhc_r *= s->edit_state.es_scale;
 	    }
 	    break;
 
@@ -3276,15 +1713,15 @@ pscale(void)
 	    /* scale rectangular half-width of RHC */
 	    {
 		struct rt_rhc_internal *rhc =
-		    (struct rt_rhc_internal *)es_int.idb_ptr;
+		    (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_RHC_CK_MAGIC(rhc);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / rhc->rhc_c;
+		    s->edit_state.es_scale = es_para[0] / rhc->rhc_c;
 		}
-		rhc->rhc_c *= es_scale;
+		rhc->rhc_c *= s->edit_state.es_scale;
 	    }
 	    break;
 
@@ -3292,15 +1729,15 @@ pscale(void)
 	    /* scale height vector H */
 	    {
 		struct rt_epa_internal *epa =
-		    (struct rt_epa_internal *)es_int.idb_ptr;
+		    (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EPA_CK_MAGIC(epa);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(epa->epa_H);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(epa->epa_H);
 		}
-		VSCALE(epa->epa_H, epa->epa_H, es_scale);
+		VSCALE(epa->epa_H, epa->epa_H, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3308,16 +1745,16 @@ pscale(void)
 	    /* scale semimajor axis of EPA */
 	    {
 		struct rt_epa_internal *epa =
-		    (struct rt_epa_internal *)es_int.idb_ptr;
+		    (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EPA_CK_MAGIC(epa);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / epa->epa_r1;
+		    s->edit_state.es_scale = es_para[0] / epa->epa_r1;
 		}
-		if (epa->epa_r1 * es_scale >= epa->epa_r2)
-		    epa->epa_r1 *= es_scale;
+		if (epa->epa_r1 * s->edit_state.es_scale >= epa->epa_r2)
+		    epa->epa_r1 *= s->edit_state.es_scale;
 		else
 		    bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
 	    }
@@ -3327,16 +1764,16 @@ pscale(void)
 	    /* scale semiminor axis of EPA */
 	    {
 		struct rt_epa_internal *epa =
-		    (struct rt_epa_internal *)es_int.idb_ptr;
+		    (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EPA_CK_MAGIC(epa);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / epa->epa_r2;
+		    s->edit_state.es_scale = es_para[0] / epa->epa_r2;
 		}
-		if (epa->epa_r2 * es_scale <= epa->epa_r1)
-		    epa->epa_r2 *= es_scale;
+		if (epa->epa_r2 * s->edit_state.es_scale <= epa->epa_r1)
+		    epa->epa_r2 *= s->edit_state.es_scale;
 		else
 		    bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
 	    }
@@ -3346,15 +1783,15 @@ pscale(void)
 	    /* scale height vector H */
 	    {
 		struct rt_ehy_internal *ehy =
-		    (struct rt_ehy_internal *)es_int.idb_ptr;
+		    (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EHY_CK_MAGIC(ehy);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(ehy->ehy_H);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(ehy->ehy_H);
 		}
-		VSCALE(ehy->ehy_H, ehy->ehy_H, es_scale);
+		VSCALE(ehy->ehy_H, ehy->ehy_H, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3362,16 +1799,16 @@ pscale(void)
 	    /* scale semimajor axis of EHY */
 	    {
 		struct rt_ehy_internal *ehy =
-		    (struct rt_ehy_internal *)es_int.idb_ptr;
+		    (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EHY_CK_MAGIC(ehy);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / ehy->ehy_r1;
+		    s->edit_state.es_scale = es_para[0] / ehy->ehy_r1;
 		}
-		if (ehy->ehy_r1 * es_scale >= ehy->ehy_r2)
-		    ehy->ehy_r1 *= es_scale;
+		if (ehy->ehy_r1 * s->edit_state.es_scale >= ehy->ehy_r2)
+		    ehy->ehy_r1 *= s->edit_state.es_scale;
 		else
 		    bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
 	    }
@@ -3381,16 +1818,16 @@ pscale(void)
 	    /* scale semiminor axis of EHY */
 	    {
 		struct rt_ehy_internal *ehy =
-		    (struct rt_ehy_internal *)es_int.idb_ptr;
+		    (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EHY_CK_MAGIC(ehy);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / ehy->ehy_r2;
+		    s->edit_state.es_scale = es_para[0] / ehy->ehy_r2;
 		}
-		if (ehy->ehy_r2 * es_scale <= ehy->ehy_r1)
-		    ehy->ehy_r2 *= es_scale;
+		if (ehy->ehy_r2 * s->edit_state.es_scale <= ehy->ehy_r1)
+		    ehy->ehy_r2 *= s->edit_state.es_scale;
 		else
 		    bu_log("pscale:  semi-minor axis cannot be longer than semi-major axis!");
 	    }
@@ -3400,15 +1837,15 @@ pscale(void)
 	    /* scale distance between apex of EHY & asymptotic cone */
 	    {
 		struct rt_ehy_internal *ehy =
-		    (struct rt_ehy_internal *)es_int.idb_ptr;
+		    (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EHY_CK_MAGIC(ehy);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / ehy->ehy_c;
+		    s->edit_state.es_scale = es_para[0] / ehy->ehy_c;
 		}
-		ehy->ehy_c *= es_scale;
+		ehy->ehy_c *= s->edit_state.es_scale;
 	    }
 	    break;
 
@@ -3416,15 +1853,15 @@ pscale(void)
 	    /* scale height of HYP */
 	    {
 		struct rt_hyp_internal *hyp =
-		    (struct rt_hyp_internal *)es_int.idb_ptr;
+		    (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_HYP_CK_MAGIC(hyp);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0];
+		    s->edit_state.es_scale = es_para[0];
 		}
-		VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, es_scale);
+		VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3432,15 +1869,15 @@ pscale(void)
 	    /* scale A vector of HYP */
 	    {
 		struct rt_hyp_internal *hyp =
-		    (struct rt_hyp_internal *)es_int.idb_ptr;
+		    (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_HYP_CK_MAGIC(hyp);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0];
+		    s->edit_state.es_scale = es_para[0];
 		}
-		VSCALE(hyp->hyp_A, hyp->hyp_A, es_scale);
+		VSCALE(hyp->hyp_A, hyp->hyp_A, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3448,15 +1885,15 @@ pscale(void)
 	    /* scale B vector of HYP */
 	    {
 		struct rt_hyp_internal *hyp =
-		    (struct rt_hyp_internal *)es_int.idb_ptr;
+		    (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_HYP_CK_MAGIC(hyp);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0];
+		    s->edit_state.es_scale = es_para[0];
 		}
-		hyp->hyp_b = hyp->hyp_b * es_scale;
+		hyp->hyp_b = hyp->hyp_b * s->edit_state.es_scale;
 	    }
 	    break;
 
@@ -3465,16 +1902,16 @@ pscale(void)
 	    /* scale Neck to Base ratio of HYP */
 	    {
 		struct rt_hyp_internal *hyp =
-		    (struct rt_hyp_internal *)es_int.idb_ptr;
+		    (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_HYP_CK_MAGIC(hyp);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0];
+		    s->edit_state.es_scale = es_para[0];
 		}
-		if (hyp->hyp_bnr * es_scale <= 1.0) {
-		    hyp->hyp_bnr = hyp->hyp_bnr * es_scale;
+		if (hyp->hyp_bnr * s->edit_state.es_scale <= 1.0) {
+		    hyp->hyp_bnr = hyp->hyp_bnr * s->edit_state.es_scale;
 		}
 	    }
 	    break;
@@ -3484,15 +1921,15 @@ pscale(void)
 	    /* scale vector A */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->a);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->a);
 		}
-		VSCALE(tgc->a, tgc->a, es_scale);
+		VSCALE(tgc->a, tgc->a, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3500,15 +1937,15 @@ pscale(void)
 	    /* scale vector B */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->b);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->b);
 		}
-		VSCALE(tgc->b, tgc->b, es_scale);
+		VSCALE(tgc->b, tgc->b, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3516,14 +1953,14 @@ pscale(void)
 	    /* scale vector A */
 	    {
 		struct rt_ell_internal *ell =
-		    (struct rt_ell_internal *)es_int.idb_ptr;
+		    (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ELL_CK_MAGIC(ell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    es_scale = es_para[0] * es_mat[15] /
+		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
 			MAGNITUDE(ell->a);
 		}
-		VSCALE(ell->a, ell->a, es_scale);
+		VSCALE(ell->a, ell->a, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3531,14 +1968,14 @@ pscale(void)
 	    /* scale vector B */
 	    {
 		struct rt_ell_internal *ell =
-		    (struct rt_ell_internal *)es_int.idb_ptr;
+		    (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ELL_CK_MAGIC(ell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    es_scale = es_para[0] * es_mat[15] /
+		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
 			MAGNITUDE(ell->b);
 		}
-		VSCALE(ell->b, ell->b, es_scale);
+		VSCALE(ell->b, ell->b, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3546,14 +1983,14 @@ pscale(void)
 	    /* scale vector C */
 	    {
 		struct rt_ell_internal *ell =
-		    (struct rt_ell_internal *)es_int.idb_ptr;
+		    (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ELL_CK_MAGIC(ell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    es_scale = es_para[0] * es_mat[15] /
+		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
 			MAGNITUDE(ell->c);
 		}
-		VSCALE(ell->c, ell->c, es_scale);
+		VSCALE(ell->c, ell->c, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3561,45 +1998,45 @@ pscale(void)
 	    /* TGC: scale ratio "c" */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->c);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->c);
 		}
-		VSCALE(tgc->c, tgc->c, es_scale);
+		VSCALE(tgc->c, tgc->c, s->edit_state.es_scale);
 	    }
 	    break;
 
 	case MENU_TGC_SCALE_D:   /* scale d for tgc */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->d);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->d);
 		}
-		VSCALE(tgc->d, tgc->d, es_scale);
+		VSCALE(tgc->d, tgc->d, s->edit_state.es_scale);
 	    }
 	    break;
 
 	case MENU_TGC_SCALE_AB:
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->a);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->a);
 		}
-		VSCALE(tgc->a, tgc->a, es_scale);
+		VSCALE(tgc->a, tgc->a, s->edit_state.es_scale);
 		ma = MAGNITUDE(tgc->a);
 		mb = MAGNITUDE(tgc->b);
 		VSCALE(tgc->b, tgc->b, ma/mb);
@@ -3609,15 +2046,15 @@ pscale(void)
 	case MENU_TGC_SCALE_CD:	/* scale C and D of tgc */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->c);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->c);
 		}
-		VSCALE(tgc->c, tgc->c, es_scale);
+		VSCALE(tgc->c, tgc->c, s->edit_state.es_scale);
 		ma = MAGNITUDE(tgc->c);
 		mb = MAGNITUDE(tgc->d);
 		VSCALE(tgc->d, tgc->d, ma/mb);
@@ -3627,15 +2064,15 @@ pscale(void)
 	case MENU_TGC_SCALE_ABCD: 		/* scale A, B, C, and D of tgc */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(tgc->a);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(tgc->a);
 		}
-		VSCALE(tgc->a, tgc->a, es_scale);
+		VSCALE(tgc->a, tgc->a, s->edit_state.es_scale);
 		ma = MAGNITUDE(tgc->a);
 		mb = MAGNITUDE(tgc->b);
 		VSCALE(tgc->b, tgc->b, ma/mb);
@@ -3649,14 +2086,14 @@ pscale(void)
 	case MENU_ELL_SCALE_ABC:	/* set A, B, and C length the same */
 	    {
 		struct rt_ell_internal *ell =
-		    (struct rt_ell_internal *)es_int.idb_ptr;
+		    (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ELL_CK_MAGIC(ell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    es_scale = es_para[0] * es_mat[15] /
+		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
 			MAGNITUDE(ell->a);
 		}
-		VSCALE(ell->a, ell->a, es_scale);
+		VSCALE(ell->a, ell->a, s->edit_state.es_scale);
 		ma = MAGNITUDE(ell->a);
 		mb = MAGNITUDE(ell->b);
 		VSCALE(ell->b, ell->b, ma/mb);
@@ -3670,14 +2107,14 @@ pscale(void)
 	    /* scale vector A */
 	    {
 		struct rt_superell_internal *superell =
-		    (struct rt_superell_internal *)es_int.idb_ptr;
+		    (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_SUPERELL_CK_MAGIC(superell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    es_scale = es_para[0] * es_mat[15] /
+		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
 			MAGNITUDE(superell->a);
 		}
-		VSCALE(superell->a, superell->a, es_scale);
+		VSCALE(superell->a, superell->a, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3685,14 +2122,14 @@ pscale(void)
 	    /* scale vector B */
 	    {
 		struct rt_superell_internal *superell =
-		    (struct rt_superell_internal *)es_int.idb_ptr;
+		    (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_SUPERELL_CK_MAGIC(superell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    es_scale = es_para[0] * es_mat[15] /
+		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
 			MAGNITUDE(superell->b);
 		}
-		VSCALE(superell->b, superell->b, es_scale);
+		VSCALE(superell->b, superell->b, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3700,28 +2137,28 @@ pscale(void)
 	    /* scale vector C */
 	    {
 		struct rt_superell_internal *superell =
-		    (struct rt_superell_internal *)es_int.idb_ptr;
+		    (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_SUPERELL_CK_MAGIC(superell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    es_scale = es_para[0] * es_mat[15] /
+		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
 			MAGNITUDE(superell->c);
 		}
-		VSCALE(superell->c, superell->c, es_scale);
+		VSCALE(superell->c, superell->c, s->edit_state.es_scale);
 	    }
 	    break;
 
 	case MENU_SUPERELL_SCALE_ABC:	/* set A, B, and C length the same */
 	    {
 		struct rt_superell_internal *superell =
-		    (struct rt_superell_internal *)es_int.idb_ptr;
+		    (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_SUPERELL_CK_MAGIC(superell);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    es_scale = es_para[0] * es_mat[15] /
+		    s->edit_state.es_scale = es_para[0] * es_mat[15] /
 			MAGNITUDE(superell->a);
 		}
-		VSCALE(superell->a, superell->a, es_scale);
+		VSCALE(superell->a, superell->a, s->edit_state.es_scale);
 		ma = MAGNITUDE(superell->a);
 		mb = MAGNITUDE(superell->b);
 		VSCALE(superell->b, superell->b, ma/mb);
@@ -3734,58 +2171,58 @@ pscale(void)
 	case MENU_PIPE_PT_OD:	/* scale OD of one pipe segment */
 	    {
 		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(INTERP, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
 		    return;
 		}
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    if (es_pipe_pnt->pp_od > 0.0)
-			es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_od;
+			s->edit_state.es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_od;
 		    else
-			es_scale = (-es_para[0] * es_mat[15]);
+			s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
 		}
-		pipe_seg_scale_od(es_pipe_pnt, es_scale);
+		pipe_seg_scale_od(s, es_pipe_pnt, s->edit_state.es_scale);
 	    }
 	    break;
 	case MENU_PIPE_PT_ID:	/* scale ID of one pipe segment */
 	    {
 		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(INTERP, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
 		    return;
 		}
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    if (es_pipe_pnt->pp_id > 0.0)
-			es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_id;
+			s->edit_state.es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_id;
 		    else
-			es_scale = (-es_para[0] * es_mat[15]);
+			s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
 		}
-		pipe_seg_scale_id(es_pipe_pnt, es_scale);
+		pipe_seg_scale_id(s, es_pipe_pnt, s->edit_state.es_scale);
 	    }
 	    break;
 	case MENU_PIPE_PT_RADIUS:	/* scale bend radius at selected point */
 	    {
 		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(INTERP, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
 		    return;
 		}
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    if (es_pipe_pnt->pp_id > 0.0)
-			es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_bendradius;
+			s->edit_state.es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_bendradius;
 		    else
-			es_scale = (-es_para[0] * es_mat[15]);
+			s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
 		}
-		pipe_seg_scale_radius(es_pipe_pnt, es_scale);
+		pipe_seg_scale_radius(s, es_pipe_pnt, s->edit_state.es_scale);
 	    }
 	    break;
 	case MENU_PIPE_SCALE_OD:	/* scale entire pipe OD */
 	    if (inpara) {
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 		struct wdb_pipe_pnt *ps;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -3794,25 +2231,25 @@ pscale(void)
 		BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
 		if (ps->pp_od > 0.0) {
-		    es_scale = es_para[0] * es_mat[15]/ps->pp_od;
+		    s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_od;
 		} else {
 		    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_od <= 0.0)
 			ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
 
 		    if (ps->l.magic == BU_LIST_HEAD_MAGIC) {
-			Tcl_AppendResult(INTERP, "Entire pipe solid has zero OD!\n", (char *)NULL);
+			Tcl_AppendResult(s->interp, "Entire pipe solid has zero OD!\n", (char *)NULL);
 			return;
 		    }
 
-		    es_scale = es_para[0] * es_mat[15]/ps->pp_od;
+		    s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_od;
 		}
 	    }
-	    pipe_scale_od(&es_int, es_scale);
+	    pipe_scale_od(s, &s->edit_state.es_int, s->edit_state.es_scale);
 	    break;
 	case MENU_PIPE_SCALE_ID:	/* scale entire pipe ID */
 	    if (inpara) {
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 		struct wdb_pipe_pnt *ps;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -3821,24 +2258,24 @@ pscale(void)
 		BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
 		if (ps->pp_id > 0.0) {
-		    es_scale = es_para[0] * es_mat[15]/ps->pp_id;
+		    s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_id;
 		} else {
 		    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_id <= 0.0)
 			ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
 
 		    /* Check if entire pipe has zero ID */
 		    if (ps->l.magic == BU_LIST_HEAD_MAGIC)
-			es_scale = (-es_para[0] * es_mat[15]);
+			s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
 		    else
-			es_scale = es_para[0] * es_mat[15]/ps->pp_id;
+			s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_id;
 		}
 	    }
-	    pipe_scale_id(&es_int, es_scale);
+	    pipe_scale_id(s, &s->edit_state.es_int, s->edit_state.es_scale);
 	    break;
 	case MENU_PIPE_SCALE_RADIUS:	/* scale entire pipr bend radius */
 	    if (inpara) {
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 		struct wdb_pipe_pnt *ps;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -3847,33 +2284,33 @@ pscale(void)
 		BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
 		if (ps->pp_bendradius > 0.0) {
-		    es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
+		    s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
 		} else {
 		    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_bendradius <= 0.0)
 			ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
 
 		    /* Check if entire pipe has zero ID */
 		    if (ps->l.magic == BU_LIST_HEAD_MAGIC)
-			es_scale = (-es_para[0] * es_mat[15]);
+			s->edit_state.es_scale = (-es_para[0] * es_mat[15]);
 		    else
-			es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
+			s->edit_state.es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
 		}
 	    }
-	    pipe_scale_radius(&es_int, es_scale);
+	    pipe_scale_radius(s, &s->edit_state.es_int, s->edit_state.es_scale);
 	    break;
 	case MENU_PART_H:
 	    /* scale vector H */
 	    {
 		struct rt_part_internal *part =
-		    (struct rt_part_internal *)es_int.idb_ptr;
+		    (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_PART_CK_MAGIC(part);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(part->part_H);
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(part->part_H);
 		}
-		VSCALE(part->part_H, part->part_H, es_scale);
+		VSCALE(part->part_H, part->part_H, s->edit_state.es_scale);
 	    }
 	    break;
 
@@ -3881,15 +2318,15 @@ pscale(void)
 	    /* scale v end radius */
 	    {
 		struct rt_part_internal *part =
-		    (struct rt_part_internal *)es_int.idb_ptr;
+		    (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_PART_CK_MAGIC(part);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / part->part_vrad;
+		    s->edit_state.es_scale = es_para[0] / part->part_vrad;
 		}
-		part->part_vrad *= es_scale;
+		part->part_vrad *= s->edit_state.es_scale;
 	    }
 	    break;
 
@@ -3897,21 +2334,21 @@ pscale(void)
 	    /* scale h end radius */
 	    {
 		struct rt_part_internal *part =
-		    (struct rt_part_internal *)es_int.idb_ptr;
+		    (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_PART_CK_MAGIC(part);
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / part->part_hrad;
+		    s->edit_state.es_scale = es_para[0] / part->part_hrad;
 		}
-		part->part_hrad *= es_scale;
+		part->part_hrad *= s->edit_state.es_scale;
 	    }
 	    break;
 	case MENU_METABALL_SET_THRESHOLD:
 	    {
 		struct rt_metaball_internal *ball =
-		    (struct rt_metaball_internal *)es_int.idb_ptr;
+		    (struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
 		RT_METABALL_CK_MAGIC(ball);
 		ball->threshold = es_para[0];
 	    }
@@ -3919,7 +2356,7 @@ pscale(void)
 	case MENU_METABALL_SET_METHOD:
 	    {
 		struct rt_metaball_internal *ball =
-		    (struct rt_metaball_internal *)es_int.idb_ptr;
+		    (struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
 		RT_METABALL_CK_MAGIC(ball);
 		ball->method = es_para[0];
 	    }
@@ -3927,19 +2364,19 @@ pscale(void)
 	case MENU_METABALL_PT_SET_GOO:
 	    {
 		if (!es_metaball_pnt || !inpara) {
-		    Tcl_AppendResult(INTERP, "pscale: no metaball point selected for scaling goo\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "pscale: no metaball point selected for scaling goo\n", (char *)NULL);
 		    return;
 		}
-		es_metaball_pnt->sweat *= *es_para * ((es_scale > -SMALL_FASTF) ? es_scale : 1.0);
+		es_metaball_pnt->sweat *= *es_para * ((s->edit_state.es_scale > -SMALL_FASTF) ? s->edit_state.es_scale : 1.0);
 	    }
 	    break;
 	case MENU_METABALL_PT_FLDSTR:
 	    {
 		if (!es_metaball_pnt || !inpara) {
-		    Tcl_AppendResult(INTERP, "pscale: no metaball point selected for scaling strength\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "pscale: no metaball point selected for scaling strength\n", (char *)NULL);
 		    return;
 		}
-		es_metaball_pnt->fldstr *= *es_para * ((es_scale > -SMALL_FASTF) ? es_scale : 1.0);
+		es_metaball_pnt->fldstr *= *es_para * ((s->edit_state.es_scale > -SMALL_FASTF) ? s->edit_state.es_scale : 1.0);
 	    }
 	    break;
     }
@@ -3950,7 +2387,7 @@ pscale(void)
  * A great deal of magic takes place here, to accomplish solid editing.
  *
  * Called from mged main loop after any event handlers:
- * if (sedraw > 0) sedit();
+ * if (sedraw > 0) sedit(s);
  * to process any residual events that the event handlers were too
  * lazy to handle themselves.
  *
@@ -3958,7 +2395,7 @@ pscale(void)
  * can operate on an equal footing to mouse events.
  */
 void
-sedit(void)
+sedit(struct mged_state *s)
 {
     struct rt_arb_internal *arb;
     fastf_t *eqp;
@@ -3971,7 +2408,7 @@ sedit(void)
     mat_t edit;
     point_t rot_point;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     sedraw = 0;
@@ -3985,18 +2422,18 @@ sedit(void)
 	    break;
 
 	case ECMD_DSP_SCALE_X:
-	    dsp_scale((struct rt_dsp_internal *)es_int.idb_ptr, MSX);
+	    dsp_scale(s, (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr, MSX);
 	    break;
 	case ECMD_DSP_SCALE_Y:
-	    dsp_scale((struct rt_dsp_internal *)es_int.idb_ptr, MSY);
+	    dsp_scale(s, (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr, MSY);
 	    break;
 	case ECMD_DSP_SCALE_ALT:
-	    dsp_scale((struct rt_dsp_internal *)es_int.idb_ptr, MSZ);
+	    dsp_scale(s, (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr, MSZ);
 	    break;
 	case ECMD_DSP_FNAME:
 	    {
 		struct rt_dsp_internal *dsp =
-		    (struct rt_dsp_internal *)es_int.idb_ptr;
+		    (struct rt_dsp_internal *)s->edit_state.es_int.idb_ptr;
 		const char *fname;
 		struct stat stat_buf;
 		b_off_t need_size;
@@ -4005,23 +2442,23 @@ sedit(void)
 		RT_DSP_CK_MAGIC(dsp);
 
 		/* Pop-up the Tk file browser */
-		fname = get_file_name(bu_vls_addr(&dsp->dsp_name));
+		fname = get_file_name(s, bu_vls_addr(&dsp->dsp_name));
 		if (! fname) break;
 
 		if (stat(fname, &stat_buf)) {
 		    bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
-		    Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
+		    Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
 		    bu_vls_free(&message);
-		    mged_print_result(TCL_ERROR);
+		    mged_print_result(s, TCL_ERROR);
 		    return;
 		}
 
 		need_size = dsp->dsp_xcnt * dsp->dsp_ycnt * 2;
 		if (stat_buf.st_size < need_size) {
 		    bu_vls_printf(&message, "File (%s) is too small, adjust the file size parameters first", fname);
-		    Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
+		    Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
 		    bu_vls_free(&message);
-		    mged_print_result(TCL_ERROR);
+		    mged_print_result(s, TCL_ERROR);
 		    return;
 		}
 		bu_vls_strcpy(&dsp->dsp_name, fname);
@@ -4032,7 +2469,7 @@ sedit(void)
 	case ECMD_EBM_FSIZE:	/* set file size */
 	    {
 		struct rt_ebm_internal *ebm =
-		    (struct rt_ebm_internal *)es_int.idb_ptr;
+		    (struct rt_ebm_internal *)s->edit_state.es_int.idb_ptr;
 		struct stat stat_buf;
 		b_off_t need_size;
 
@@ -4040,22 +2477,22 @@ sedit(void)
 
 		if (inpara == 2) {
 		    if (stat(ebm->name, &stat_buf)) {
-			Tcl_AppendResult(INTERP, "Cannot get status of ebm data source ", ebm->name, (char *)NULL);
-			mged_print_result(TCL_ERROR);
+			Tcl_AppendResult(s->interp, "Cannot get status of ebm data source ", ebm->name, (char *)NULL);
+			mged_print_result(s, TCL_ERROR);
 			return;
 		    }
 		    need_size = es_para[0] * es_para[1] * sizeof(unsigned char);
 		    if (stat_buf.st_size < need_size) {
-			Tcl_AppendResult(INTERP, "File (", ebm->name,
+			Tcl_AppendResult(s->interp, "File (", ebm->name,
 					 ") is too small, set data source name first", (char *)NULL);
-			mged_print_result(TCL_ERROR);
+			mged_print_result(s, TCL_ERROR);
 			return;
 		    }
 		    ebm->xdim = es_para[0];
 		    ebm->ydim = es_para[1];
 		} else if (inpara > 0) {
-		    Tcl_AppendResult(INTERP, "width and length of data source are required\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "width and length of data source are required\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    return;
 		}
 	    }
@@ -4064,30 +2501,30 @@ sedit(void)
 	case ECMD_EBM_FNAME:
 	    {
 		struct rt_ebm_internal *ebm =
-		    (struct rt_ebm_internal *)es_int.idb_ptr;
+		    (struct rt_ebm_internal *)s->edit_state.es_int.idb_ptr;
 		const char *fname;
 		struct stat stat_buf;
 		b_off_t need_size;
 
 		RT_EBM_CK_MAGIC(ebm);
 
-		fname = get_file_name(ebm->name);
+		fname = get_file_name(s, ebm->name);
 		if (fname) {
 		    struct bu_vls message = BU_VLS_INIT_ZERO;
 
 		    if (stat(fname, &stat_buf)) {
 			bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
-			Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
+			Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
 			bu_vls_free(&message);
-			mged_print_result(TCL_ERROR);
+			mged_print_result(s, TCL_ERROR);
 			return;
 		    }
 		    need_size = ebm->xdim * ebm->ydim * sizeof(unsigned char);
 		    if (stat_buf.st_size < need_size) {
 			bu_vls_printf(&message, "File (%s) is too small, adjust the file size parameters first", fname);
-			Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
+			Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
 			bu_vls_free(&message);
-			mged_print_result(TCL_ERROR);
+			mged_print_result(s, TCL_ERROR);
 			return;
 		    }
 		    bu_strlcpy(ebm->name, fname, RT_EBM_NAME_LEN);
@@ -4099,21 +2536,21 @@ sedit(void)
 	case ECMD_EBM_HEIGHT:	/* set extrusion depth */
 	    {
 		struct rt_ebm_internal *ebm =
-		    (struct rt_ebm_internal *)es_int.idb_ptr;
+		    (struct rt_ebm_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EBM_CK_MAGIC(ebm);
 
 		if (inpara == 1)
 		    ebm->tallness = es_para[0];
 		else if (inpara > 0) {
-		    Tcl_AppendResult(INTERP,
+		    Tcl_AppendResult(s->interp,
 				     "extrusion depth required\n",
 				     (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    mged_print_result(s, TCL_ERROR);
 		    return;
-		} else if (es_scale > 0.0) {
-		    ebm->tallness *= es_scale;
-		    es_scale = 0.0;
+		} else if (s->edit_state.es_scale > 0.0) {
+		    ebm->tallness *= s->edit_state.es_scale;
+		    s->edit_state.es_scale = 0.0;
 		}
 	    }
 	    break;
@@ -4121,19 +2558,19 @@ sedit(void)
 	case ECMD_VOL_CSIZE:	/* set voxel size */
 	    {
 		struct rt_vol_internal *vol =
-		    (struct rt_vol_internal *)es_int.idb_ptr;
+		    (struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_VOL_CK_MAGIC(vol);
 
 		if (inpara == 3) {
 		    VMOVE(vol->cellsize, es_para);
 		} else if (inpara > 0 && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x, y, and z cell sizes are required\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "x, y, and z cell sizes are required\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    return;
-		} else if (es_scale > 0.0) {
-		    VSCALE(vol->cellsize, vol->cellsize, es_scale);
-		    es_scale = 0.0;
+		} else if (s->edit_state.es_scale > 0.0) {
+		    VSCALE(vol->cellsize, vol->cellsize, s->edit_state.es_scale);
+		    s->edit_state.es_scale = 0.0;
 		}
 	    }
 	    break;
@@ -4141,7 +2578,7 @@ sedit(void)
 	case ECMD_VOL_FSIZE:	/* set file size */
 	    {
 		struct rt_vol_internal *vol =
-		    (struct rt_vol_internal *)es_int.idb_ptr;
+		    (struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
 		struct stat stat_buf;
 		b_off_t need_size;
 
@@ -4149,23 +2586,23 @@ sedit(void)
 
 		if (inpara == 3) {
 		    if (stat(vol->name, &stat_buf)) {
-			Tcl_AppendResult(INTERP, "Cannot get status of file ", vol->name, (char *)NULL);
-			mged_print_result(TCL_ERROR);
+			Tcl_AppendResult(s->interp, "Cannot get status of file ", vol->name, (char *)NULL);
+			mged_print_result(s, TCL_ERROR);
 			return;
 		    }
 		    need_size = es_para[0] * es_para[1] * es_para[2] * sizeof(unsigned char);
 		    if (stat_buf.st_size < need_size) {
-			Tcl_AppendResult(INTERP, "File (", vol->name,
+			Tcl_AppendResult(s->interp, "File (", vol->name,
 					 ") is too small, set file name first", (char *)NULL);
-			mged_print_result(TCL_ERROR);
+			mged_print_result(s, TCL_ERROR);
 			return;
 		    }
 		    vol->xdim = es_para[0];
 		    vol->ydim = es_para[1];
 		    vol->zdim = es_para[2];
 		} else if (inpara > 0) {
-		    Tcl_AppendResult(INTERP, "x, y, and z file sizes are required\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "x, y, and z file sizes are required\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    return;
 		}
 	    }
@@ -4174,18 +2611,18 @@ sedit(void)
 	case ECMD_VOL_THRESH_LO:
 	    {
 		struct rt_vol_internal *vol =
-		    (struct rt_vol_internal *)es_int.idb_ptr;
+		    (struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_VOL_CK_MAGIC(vol);
 
 		i = vol->lo;
 		if (inpara) {
 		    i = es_para[0];
-		} else if (es_scale > 0.0) {
-		    i = vol->lo * es_scale;
-		    if (i == vol->lo && es_scale > 1.0) {
+		} else if (s->edit_state.es_scale > 0.0) {
+		    i = vol->lo * s->edit_state.es_scale;
+		    if (i == vol->lo && s->edit_state.es_scale > 1.0) {
 			i++;
-		    } else if (i == vol->lo && es_scale < 1.0) {
+		    } else if (i == vol->lo && s->edit_state.es_scale < 1.0) {
 			i--;
 		    }
 		}
@@ -4200,18 +2637,18 @@ sedit(void)
 	case ECMD_VOL_THRESH_HI:
 	    {
 		struct rt_vol_internal *vol =
-		    (struct rt_vol_internal *)es_int.idb_ptr;
+		    (struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_VOL_CK_MAGIC(vol);
 
 		i = vol->hi;
 		if (inpara) {
 		    i = es_para[0];
-		} else if (es_scale > 0.0) {
-		    i = vol->hi * es_scale;
-		    if (i == vol->hi && es_scale > 1.0) {
+		} else if (s->edit_state.es_scale > 0.0) {
+		    i = vol->hi * s->edit_state.es_scale;
+		    if (i == vol->hi && s->edit_state.es_scale > 1.0) {
 			i++;
-		    } else if (i == vol->hi && es_scale < 1.0) {
+		    } else if (i == vol->hi && s->edit_state.es_scale < 1.0) {
 			i--;
 		    }
 		}
@@ -4226,30 +2663,30 @@ sedit(void)
 	case ECMD_VOL_FNAME:
 	    {
 		struct rt_vol_internal *vol =
-		    (struct rt_vol_internal *)es_int.idb_ptr;
+		    (struct rt_vol_internal *)s->edit_state.es_int.idb_ptr;
 		const char *fname;
 		struct stat stat_buf;
 		b_off_t need_size;
 
 		RT_VOL_CK_MAGIC(vol);
 
-		fname = get_file_name(vol->name);
+		fname = get_file_name(s, vol->name);
 		if (fname) {
 		    struct bu_vls message = BU_VLS_INIT_ZERO;
 
 		    if (stat(fname, &stat_buf)) {
 			bu_vls_printf(&message, "Cannot get status of file %s\n", fname);
-			Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
+			Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
 			bu_vls_free(&message);
-			mged_print_result(TCL_ERROR);
+			mged_print_result(s, TCL_ERROR);
 			return;
 		    }
 		    need_size = vol->xdim * vol->ydim * vol->zdim * sizeof(unsigned char);
 		    if (stat_buf.st_size < need_size) {
 			bu_vls_printf(&message, "File (%s) is too small, adjust the file size parameters first", fname);
-			Tcl_SetResult(INTERP, bu_vls_addr(&message), TCL_VOLATILE);
+			Tcl_SetResult(s->interp, bu_vls_addr(&message), TCL_VOLATILE);
 			bu_vls_free(&message);
-			mged_print_result(TCL_ERROR);
+			mged_print_result(s, TCL_ERROR);
 			return;
 		    }
 		    bu_strlcpy(vol->name, fname, RT_VOL_NAME_LEN);
@@ -4261,7 +2698,7 @@ sedit(void)
 	case ECMD_BOT_MODE:
 	    {
 		struct rt_bot_internal *bot =
-		    (struct rt_bot_internal *)es_int.idb_ptr;
+		    (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		const char *radio_result;
 		char mode[10];
 		int ret_tcl = TCL_ERROR;
@@ -4271,17 +2708,17 @@ sedit(void)
 		old_mode = bot->mode;
 		sprintf(mode, " %d", old_mode - 1);
 		if (dm_get_pathname(DMP)) {
-		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_mode_radio ",
+		    ret_tcl = Tcl_VarEval(s->interp, "cad_radio", " .bot_mode_radio ",
 			    bu_vls_addr(dm_get_pathname(DMP)), " _bot_mode_result",
 			    " \"BOT Mode\"", "  \"Select the desired mode\"", mode,
 			    " { surface volume plate plate/nocosine }",
 			    " { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL);
 		}
 		if (ret_tcl != TCL_OK) {
-		    Tcl_AppendResult(INTERP, "Mode selection failed!\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "Mode selection failed!\n", (char *)NULL);
 		    break;
 		}
-		radio_result = Tcl_GetVar(INTERP, "_bot_mode_result", TCL_GLOBAL_ONLY);
+		radio_result = Tcl_GetVar(s->interp, "_bot_mode_result", TCL_GLOBAL_ONLY);
 		bot->mode = atoi(radio_result) + 1;
 		if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
 		    if (old_mode != RT_BOT_PLATE && old_mode != RT_BOT_PLATE_NOCOS) {
@@ -4303,7 +2740,7 @@ sedit(void)
 	case ECMD_BOT_ORIENT:
 	    {
 		struct rt_bot_internal *bot =
-		    (struct rt_bot_internal *)es_int.idb_ptr;
+		    (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		const char *radio_result;
 		char orient[10];
 		int ret_tcl = TCL_ERROR;
@@ -4311,35 +2748,35 @@ sedit(void)
 		RT_BOT_CK_MAGIC(bot);
 		sprintf(orient, " %d", bot->orientation - 1);
 		if (dm_get_pathname(DMP)) {
-		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_orient_radio ",
+		    ret_tcl = Tcl_VarEval(s->interp, "cad_radio", " .bot_orient_radio ",
 			    bu_vls_addr(dm_get_pathname(DMP)), " _bot_orient_result",
 			    " \"BOT Face Orientation\"", "  \"Select the desired orientation\"", orient,
 			    " { none right-hand-rule left-hand-rule }",
 			    " { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL);
 		}
 		if (ret_tcl != TCL_OK) {
-		    Tcl_AppendResult(INTERP, "Face orientation selection failed!\n", (char *)NULL);
+		    Tcl_AppendResult(s->interp, "Face orientation selection failed!\n", (char *)NULL);
 		    break;
 		}
-		radio_result = Tcl_GetVar(INTERP, "_bot_orient_result", TCL_GLOBAL_ONLY);
+		radio_result = Tcl_GetVar(s->interp, "_bot_orient_result", TCL_GLOBAL_ONLY);
 		bot->orientation = atoi(radio_result) + 1;
 	    }
 	    break;
 	case ECMD_BOT_THICK:
 	    {
 		struct rt_bot_internal *bot =
-		    (struct rt_bot_internal *)es_int.idb_ptr;
+		    (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		size_t face_no = 0;
 		int face_state = 0;
 
 		RT_BOT_CK_MAGIC(bot);
 
 		if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
-		    if (Tcl_VarEval(INTERP, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
+		    if (Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
 				    "{Cannot edit face thickness in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
 				    (char *)NULL) != TCL_OK)
 		    {
-			bu_log("cad_dialog failed: %s\n", Tcl_GetStringResult(INTERP));
+			bu_log("cad_dialog failed: %s\n", Tcl_GetStringResult(s->interp));
 		    }
 		    break;
 		}
@@ -4349,11 +2786,11 @@ sedit(void)
 		    if (!inpara)
 			break;
 
-		    (void)Tcl_VarEval(INTERP, "cad_dialog ", ".bot_err ",
+		    (void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ",
 				      "$mged_gui(mged,screen) ", "{Setting Thickness for All Faces} ",
 				      "{No face is selected, so this operation will modify all the faces in this BOT} ",
 				      "\"\" ", "0 ", "OK ", "CANCEL ", (char *)NULL);
-		    if (atoi(Tcl_GetStringResult(INTERP)))
+		    if (atoi(Tcl_GetStringResult(s->interp)))
 			break;
 
 		    for (i=0; i<bot->num_faces; i++)
@@ -4390,7 +2827,7 @@ sedit(void)
 		const char *dialog_result;
 		char cur_settings[11];
 		struct rt_bot_internal *bot =
-		    (struct rt_bot_internal *)es_int.idb_ptr;
+		    (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_BOT_CK_MAGIC(bot);
 
@@ -4404,7 +2841,7 @@ sedit(void)
 		}
 
 		if (dm_get_pathname(DMP)) {
-		    ret_tcl = Tcl_VarEval(INTERP,
+		    ret_tcl = Tcl_VarEval(s->interp,
 			    "cad_list_buts",
 			    " .bot_list_flags ",
 			    bu_vls_addr(dm_get_pathname(DMP)),
@@ -4417,10 +2854,10 @@ sedit(void)
 			    (char *)NULL);
 		}
 		if (ret_tcl != TCL_OK) {
-		    bu_log("ERROR: cad_list_buts: %s\n", Tcl_GetStringResult(INTERP));
+		    bu_log("ERROR: cad_list_buts: %s\n", Tcl_GetStringResult(s->interp));
 		    break;
 		}
-		dialog_result = Tcl_GetVar(INTERP, "_bot_flags_result", TCL_GLOBAL_ONLY);
+		dialog_result = Tcl_GetVar(s->interp, "_bot_flags_result", TCL_GLOBAL_ONLY);
 
 		if (dialog_result[0] == '1') {
 		    bot->bot_flags |= RT_BOT_USE_NORMALS;
@@ -4437,7 +2874,7 @@ sedit(void)
 	case ECMD_BOT_FMODE:
 	    {
 		struct rt_bot_internal *bot =
-		    (struct rt_bot_internal *)es_int.idb_ptr;
+		    (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		char fmode[10];
 		const char *radio_result;
 		size_t face_no = 0;
@@ -4447,7 +2884,7 @@ sedit(void)
 		RT_BOT_CK_MAGIC(bot);
 
 		if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
-		    (void)Tcl_VarEval(INTERP, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
+		    (void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
 				      "{Cannot edit face mode in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
 				      (char *)NULL);
 		    break;
@@ -4455,11 +2892,11 @@ sedit(void)
 
 		if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
 		    /* setting mode for all faces */
-		    (void)Tcl_VarEval(INTERP, "cad_dialog ", ".bot_err ",
+		    (void)Tcl_VarEval(s->interp, "cad_dialog ", ".bot_err ",
 				      "$mged_gui(mged,screen) ", "{Setting Mode for All Faces} ",
 				      "{No face is selected, so this operation will modify all the faces in this BOT} ",
 				      "\"\" ", "0 ", "OK ", "CANCEL ", (char *)NULL);
-		    if (atoi(Tcl_GetStringResult(INTERP)))
+		    if (atoi(Tcl_GetStringResult(s->interp)))
 			break;
 
 		    face_state = -2;
@@ -4489,7 +2926,7 @@ sedit(void)
 		    sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, 0)?1:0);
 
 		if (dm_get_pathname(DMP)) {
-		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(dm_get_pathname(DMP)),
+		    ret_tcl = Tcl_VarEval(s->interp, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(dm_get_pathname(DMP)),
 			    " _bot_fmode_result ", "\"BOT Face Mode\"",
 			    " \"Select the desired face mode\"", fmode,
 			    " { {Thickness centered about hit point} {Thickness appended to hit point} }",
@@ -4497,10 +2934,10 @@ sedit(void)
 			    (char *)NULL);
 		}
 		if (ret_tcl != TCL_OK) {
-		    bu_log("ERROR: cad_radio: %s\n", Tcl_GetStringResult(INTERP));
+		    bu_log("ERROR: cad_radio: %s\n", Tcl_GetStringResult(s->interp));
 		    break;
 		}
-		radio_result = Tcl_GetVar(INTERP, "_bot_fmode_result", TCL_GLOBAL_ONLY);
+		radio_result = Tcl_GetVar(s->interp, "_bot_fmode_result", TCL_GLOBAL_ONLY);
 
 		if (face_state > -1) {
 		    if (atoi(radio_result))
@@ -4519,7 +2956,7 @@ sedit(void)
 	case ECMD_BOT_FDEL:
 	    {
 		struct rt_bot_internal *bot =
-		    (struct rt_bot_internal *)es_int.idb_ptr;
+		    (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 
 		int j, face_no;
 
@@ -4578,7 +3015,7 @@ sedit(void)
 	case ECMD_EXTR_SKT_NAME:
 	    {
 		struct rt_extrude_internal *extr =
-		    (struct rt_extrude_internal *)es_int.idb_ptr;
+		    (struct rt_extrude_internal *)s->edit_state.es_int.idb_ptr;
 		const char *sketch_name;
 		int ret_tcl;
 		struct directory *dp;
@@ -4589,19 +3026,19 @@ sedit(void)
 
 		bu_vls_printf(&tcl_cmd, "cad_input_dialog .get_sketch_name $mged_gui(mged,screen) {Select Sketch} {Enter the name of the sketch to be extruded} final_sketch_name %s 0 {{summary \"Enter sketch name\"}} APPLY DISMISS",
 			      extr->sketch_name);
-		ret_tcl = Tcl_Eval(INTERP, bu_vls_addr(&tcl_cmd));
+		ret_tcl = Tcl_Eval(s->interp, bu_vls_addr(&tcl_cmd));
 		if (ret_tcl != TCL_OK) {
-		    bu_log("ERROR: %s\n", Tcl_GetStringResult(INTERP));
+		    bu_log("ERROR: %s\n", Tcl_GetStringResult(s->interp));
 		    bu_vls_free(&tcl_cmd);
 		    break;
 		}
 
-		if (atoi(Tcl_GetStringResult(INTERP)) == 1)
+		if (atoi(Tcl_GetStringResult(s->interp)) == 1)
 		    break;
 
 		bu_vls_free(&tcl_cmd);
 
-		sketch_name = Tcl_GetVar(INTERP, "final_sketch_name", TCL_GLOBAL_ONLY);
+		sketch_name = Tcl_GetVar(s->interp, "final_sketch_name", TCL_GLOBAL_ONLY);
 		if (extr->sketch_name)
 		    bu_free((char *)extr->sketch_name, "extr->sketch_name");
 		extr->sketch_name = bu_strdup(sketch_name);
@@ -4616,14 +3053,14 @@ sedit(void)
 		    rt_db_free_internal(&tmp_ip);
 		}
 
-		if ((dp = db_lookup(DBIP, sketch_name, 0)) == RT_DIR_NULL) {
+		if ((dp = db_lookup(s->dbip, sketch_name, 0)) == RT_DIR_NULL) {
 		    bu_log("Warning: %s does not exist!\n",
 			   sketch_name);
 		    extr->skt = (struct rt_sketch_internal *)NULL;
 		} else {
 		    /* import the new sketch */
 
-		    if (rt_db_get_internal(&tmp_ip, dp, DBIP, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
+		    if (rt_db_get_internal(&tmp_ip, dp, s->dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 			bu_log("rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion\n",
 			       sketch_name);
 			extr->skt = (struct rt_sketch_internal *)NULL;
@@ -4636,7 +3073,7 @@ sedit(void)
 	case ECMD_EXTR_MOV_H:
 	    {
 		struct rt_extrude_internal *extr =
-		    (struct rt_extrude_internal *)es_int.idb_ptr;
+		    (struct rt_extrude_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EXTRUDE_CK_MAGIC(extr);
 		if (inpara) {
@@ -4651,9 +3088,9 @@ sedit(void)
 
 		/* check for zero H vector */
 		if (MAGNITUDE(extr->h) <= SQRT_SMALL_FASTF) {
-		    Tcl_AppendResult(INTERP, "Zero H vector not allowed, resetting to +Z\n",
+		    Tcl_AppendResult(s->interp, "Zero H vector not allowed, resetting to +Z\n",
 				     (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    mged_print_result(s, TCL_ERROR);
 		    VSET(extr->h, 0.0, 0.0, 1.0);
 		    break;
 		}
@@ -4662,18 +3099,18 @@ sedit(void)
 	case ECMD_EXTR_SCALE_H:
 	    {
 		struct rt_extrude_internal *extr =
-		    (struct rt_extrude_internal *)es_int.idb_ptr;
+		    (struct rt_extrude_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EXTRUDE_CK_MAGIC(extr);
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(extr->h);
-		    VSCALE(extr->h, extr->h, es_scale);
-		} else if (es_scale > 0.0) {
-		    VSCALE(extr->h, extr->h, es_scale);
-		    es_scale = 0.0;
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(extr->h);
+		    VSCALE(extr->h, extr->h, s->edit_state.es_scale);
+		} else if (s->edit_state.es_scale > 0.0) {
+		    VSCALE(extr->h, extr->h, s->edit_state.es_scale);
+		    s->edit_state.es_scale = 0.0;
 		}
 	    }
 	    break;
@@ -4681,7 +3118,7 @@ sedit(void)
 	    /* put up control (main) menu for GENARB8s */
 	    menu_state->ms_flag = 0;
 	    es_edflag = IDLE;
-	    mmenu_set(MENU_L1, cntrl_menu);
+	    mmenu_set(s, MENU_L1, cntrl_menu);
 	    break;
 
 	case ECMD_ARB_SPECIFIC_MENU:
@@ -4690,17 +3127,17 @@ sedit(void)
 	    es_edflag = IDLE;
 	    switch (es_menu) {
 		case MENU_ARB_MV_EDGE:
-		    mmenu_set(MENU_L1, which_menu[es_type-4]);
+		    mmenu_set(s, MENU_L1, which_menu[es_type-4]);
 		    break;
 		case MENU_ARB_MV_FACE:
-		    mmenu_set(MENU_L1, which_menu[es_type+1]);
+		    mmenu_set(s, MENU_L1, which_menu[es_type+1]);
 		    break;
 		case MENU_ARB_ROT_FACE:
-		    mmenu_set(MENU_L1, which_menu[es_type+6]);
+		    mmenu_set(s, MENU_L1, which_menu[es_type+6]);
 		    break;
 		default:
-		    Tcl_AppendResult(INTERP, "Bad menu item.\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "Bad menu item.\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    return;
 	    }
 	    break;
@@ -4708,7 +3145,7 @@ sedit(void)
 	case ECMD_ARB_MOVE_FACE:
 	    /* move face through definite point */
 	    if (inpara) {
-		arb = (struct rt_arb_internal *)es_int.idb_ptr;
+		arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ARB_CK_MAGIC(arb);
 
 		if (mged_variables->mv_context) {
@@ -4721,39 +3158,39 @@ sedit(void)
 		es_peqn[es_menu][W]=VDOT(&es_peqn[es_menu][0], work);
 		/* find new vertices, put in record in vector notation */
 
-		(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
+		(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &s->tol.tol);
 	    }
 	    break;
 	case ECMD_ARB_SETUP_ROTFACE:
-	    arb = (struct rt_arb_internal *)es_int.idb_ptr;
+	    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	    RT_ARB_CK_MAGIC(arb);
 
 	    /* check if point 5 is in the face */
 	    pnt5 = 0;
 	    for (i=0; i<4; i++) {
-		if (arb_vertices[es_type-4][es_menu*4+i]==5)
+		if (rt_arb_vertices[es_type-4][es_menu*4+i]==5)
 		    pnt5=1;
 	    }
 
 	    /* special case for arb7 */
 	    if (es_type == ARB7  && pnt5) {
-		Tcl_AppendResult(INTERP, "\nFixed vertex is point 5.\n", (char *)NULL);
+		Tcl_AppendResult(s->interp, "\nFixed vertex is point 5.\n", (char *)NULL);
 		fixv = 5;
 	    } else {
-		fixv = get_rotation_vertex();
+		fixv = get_rotation_vertex(s);
 	    }
 
-	    pr_prompt(interactive);
+	    pr_prompt(s);
 	    fixv--;
 	    es_edflag = ECMD_ARB_ROTATE_FACE;
 	    view_state->vs_flag = 1;	/* draw arrow, etc. */
-	    set_e_axes_pos(1);
+	    set_e_axes_pos(s, 1);
 	    break;
 
 	case ECMD_ARB_ROTATE_FACE:
 	    /* rotate a GENARB8 defining plane through a fixed vertex */
 
-	    arb = (struct rt_arb_internal *)es_int.idb_ptr;
+	    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	    RT_ARB_CK_MAGIC(arb);
 
 	    if (inpara) {
@@ -4811,9 +3248,9 @@ sedit(void)
 		    es_peqn[es_menu][1] = cos(fb_a) * sin(rota);
 		    es_peqn[es_menu][2] = sin(fb_a);
 		} else {
-		    Tcl_AppendResult(INTERP, "Must be < rot fb | xdeg ydeg zdeg >\n",
+		    Tcl_AppendResult(s->interp, "Must be < rot fb | xdeg ydeg zdeg >\n",
 				     (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    mged_print_result(s, TCL_ERROR);
 		    return;
 		}
 
@@ -4843,11 +3280,11 @@ sedit(void)
 		es_peqn[es_menu][W]=VDOT(eqp, tempvec);
 	    }
 
-	    (void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
+	    (void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &s->tol.tol);
 	    MAT_IDN(incr_change);
 
 	    /* no need to calc_planes again */
-	    replot_editing_solid();
+	    replot_editing_solid(s);
 
 	    inpara = 0;
 	    return;
@@ -4865,17 +3302,17 @@ sedit(void)
 		bot_verts[2] = -1;
 		if (inpara) {
 		    /* accumulate the scale factor */
-		    es_scale = es_para[0] / acc_sc_sol;
+		    s->edit_state.es_scale = es_para[0] / acc_sc_sol;
 		    acc_sc_sol = es_para[0];
 		}
 
-		bn_mat_scale_about_pnt(scalemat, es_keypoint, es_scale);
+		bn_mat_scale_about_pnt(scalemat, es_keypoint, s->edit_state.es_scale);
 		bn_mat_mul(mat1, scalemat, es_mat);
 		bn_mat_mul(mat, es_invmat, mat1);
-		transform_editing_solid(&es_int, mat, &es_int, 1);
+		transform_editing_solid(s, &s->edit_state.es_int, mat, &s->edit_state.es_int, 1);
 
 		/* reset solid scale factor */
-		es_scale = 1.0;
+		s->edit_state.es_scale = 1.0;
 	    }
 	    break;
 
@@ -4911,7 +3348,7 @@ sedit(void)
 			MAT_IDN(mat);
 			MAT_DELTAS_VEC_NEG(mat, delta);
 		    }
-		    transform_editing_solid(&es_int, mat, &es_int, 1);
+		    transform_editing_solid(s, &s->edit_state.es_int, mat, &s->edit_state.es_int, 1);
 		}
 	    }
 	    break;
@@ -4934,7 +3371,7 @@ sedit(void)
 		/* Keyboard parameter:  new position in model space.
 		 * XXX for now, splines only here */
 		struct rt_nurb_internal *sip =
-		    (struct rt_nurb_internal *) es_int.idb_ptr;
+		    (struct rt_nurb_internal *) s->edit_state.es_int.idb_ptr;
 		struct face_g_snurb *surf;
 		fastf_t *fp;
 
@@ -4957,17 +3394,17 @@ sedit(void)
 	     */
 	    {
 		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)es_int.idb_ptr;
+		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_CLINE_CK_MAGIC(cli);
 
 		if (inpara) {
 		    es_para[0] *= es_mat[15];
-		    es_scale = es_para[0] / MAGNITUDE(cli->h);
-		    VSCALE(cli->h, cli->h, es_scale);
-		} else if (es_scale > 0.0) {
-		    VSCALE(cli->h, cli->h, es_scale);
-		    es_scale = 0.0;
+		    s->edit_state.es_scale = es_para[0] / MAGNITUDE(cli->h);
+		    VSCALE(cli->h, cli->h, s->edit_state.es_scale);
+		} else if (s->edit_state.es_scale > 0.0) {
+		    VSCALE(cli->h, cli->h, s->edit_state.es_scale);
+		    s->edit_state.es_scale = 0.0;
 		}
 	    }
 	    break;
@@ -4978,15 +3415,15 @@ sedit(void)
 	     */
 	    {
 		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)es_int.idb_ptr;
+		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_CLINE_CK_MAGIC(cli);
 
 		if (inpara)
 		    cli->radius = es_para[0];
-		else if (es_scale > 0.0) {
-		    cli->radius *= es_scale;
-		    es_scale = 0.0;
+		else if (s->edit_state.es_scale > 0.0) {
+		    cli->radius *= s->edit_state.es_scale;
+		    s->edit_state.es_scale = 0.0;
 		}
 	    }
 	    break;
@@ -4997,15 +3434,15 @@ sedit(void)
 	     */
 	    {
 		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)es_int.idb_ptr;
+		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_CLINE_CK_MAGIC(cli);
 
 		if (inpara)
 		    cli->thickness = es_para[0];
-		else if (es_scale > 0.0) {
-		    cli->thickness *= es_scale;
-		    es_scale = 0.0;
+		else if (s->edit_state.es_scale > 0.0) {
+		    cli->thickness *= s->edit_state.es_scale;
+		    s->edit_state.es_scale = 0.0;
 		}
 	    }
 	    break;
@@ -5016,7 +3453,7 @@ sedit(void)
 	     */
 	    {
 		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)es_int.idb_ptr;
+		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_CLINE_CK_MAGIC(cli);
 
@@ -5029,9 +3466,9 @@ sedit(void)
 		}
 		/* check for zero H vector */
 		if (MAGNITUDE(cli->h) <= SQRT_SMALL_FASTF) {
-		    Tcl_AppendResult(INTERP, "Zero H vector not allowed, resetting to +Z\n",
+		    Tcl_AppendResult(s->interp, "Zero H vector not allowed, resetting to +Z\n",
 				     (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    mged_print_result(s, TCL_ERROR);
 		    VSET(cli->h, 0.0, 0.0, 1.0);
 		    break;
 		}
@@ -5045,7 +3482,7 @@ sedit(void)
 	     */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_TGC_CK_MAGIC(tgc);
 		if (inpara) {
@@ -5060,9 +3497,9 @@ sedit(void)
 
 		/* check for zero H vector */
 		if (MAGNITUDE(tgc->h) <= SQRT_SMALL_FASTF) {
-		    Tcl_AppendResult(INTERP, "Zero H vector not allowed, resetting to +Z\n",
+		    Tcl_AppendResult(s->interp, "Zero H vector not allowed, resetting to +Z\n",
 				     (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    mged_print_result(s, TCL_ERROR);
 		    VSET(tgc->h, 0.0, 0.0, 1.0);
 		    break;
 		}
@@ -5093,7 +3530,7 @@ sedit(void)
 	    /* Move end of H of tgc - leave ends alone */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_TGC_CK_MAGIC(tgc);
 		if (inpara) {
@@ -5108,9 +3545,9 @@ sedit(void)
 
 		/* check for zero H vector */
 		if (MAGNITUDE(tgc->h) <= SQRT_SMALL_FASTF) {
-		    Tcl_AppendResult(INTERP, "Zero H vector not allowed, resetting to +Z\n",
+		    Tcl_AppendResult(s->interp, "Zero H vector not allowed, resetting to +Z\n",
 				     (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    mged_print_result(s, TCL_ERROR);
 		    VSET(tgc->h, 0.0, 0.0, 1.0);
 		    break;
 		}
@@ -5122,7 +3559,7 @@ sedit(void)
 	    bot_verts[0] = -1;
 	    bot_verts[1] = -1;
 	    bot_verts[2] = -1;
-	    pscale();
+	    pscale(s);
 	    break;
 
 	case PTARB:	/* move an ARB point */
@@ -5134,7 +3571,7 @@ sedit(void)
 		} else {
 		    VMOVE(work, es_para);
 		}
-		editarb(work);
+		editarb(s, work);
 	    }
 	    break;
 
@@ -5207,7 +3644,7 @@ sedit(void)
 		    MAT4X3PNT(work, es_invmat, rot_point);
 		    bn_mat_xform_about_pnt(mat, incr_change, work);
 		}
-		transform_editing_solid(&es_int, mat, &es_int, 1);
+		transform_editing_solid(s, &s->edit_state.es_int, mat, &s->edit_state.es_int, 1);
 
 		MAT_IDN(incr_change);
 	    }
@@ -5217,7 +3654,7 @@ sedit(void)
 	    /* rotate height vector */
 	    {
 		struct rt_extrude_internal *extr =
-		    (struct rt_extrude_internal *)es_int.idb_ptr;
+		    (struct rt_extrude_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_EXTRUDE_CK_MAGIC(extr);
 		if (inpara) {
@@ -5270,7 +3707,7 @@ sedit(void)
 	    /* rotate height vector */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_TGC_CK_MAGIC(tgc);
 		if (inpara) {
@@ -5323,7 +3760,7 @@ sedit(void)
 	    /* rotate surfaces AxB and CxD (tgc) */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_TGC_CK_MAGIC(tgc);
 		if (inpara) {
@@ -5381,7 +3818,7 @@ sedit(void)
 	    /* rotate hyperboloid height vector */
 	    {
 		struct rt_hyp_internal *hyp =
-		    (struct rt_hyp_internal *)es_int.idb_ptr;
+		    (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_HYP_CK_MAGIC(hyp);
 		if (inpara) {
@@ -5434,7 +3871,7 @@ sedit(void)
 	    /* rotate ellipse semi-major axis vector */
 	    {
 		struct rt_eto_internal *eto =
-		    (struct rt_eto_internal *)es_int.idb_ptr;
+		    (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_ETO_CK_MAGIC(eto);
 		if (inpara) {
@@ -5491,8 +3928,8 @@ sedit(void)
 		point_t new_pt;
 
 		if (!es_eu) {
-		    Tcl_AppendResult(INTERP, "No edge selected!\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "No edge selected!\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		}
 		NMG_CK_EDGEUSE(es_eu);
@@ -5507,9 +3944,9 @@ sedit(void)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for edge move\n",
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for edge move\n",
 				     (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara)
 		    break;
@@ -5537,17 +3974,17 @@ sedit(void)
 			MAT4X3VEC(view_dir, view_state->vs_gvp->gv_view2model, view_z_dir);
 
 			/* intersect line through new_pt with plane of loop */
-			if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &mged_tol) < 1) {
+			if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &s->tol.tol) < 1) {
 			    /* line does not intersect plane, don't do an esplit */
-			    Tcl_AppendResult(INTERP, "Edge Move: Cannot place new point in plane of loop\n", (char *)NULL);
-			    mged_print_result(TCL_ERROR);
+			    Tcl_AppendResult(s->interp, "Edge Move: Cannot place new point in plane of loop\n", (char *)NULL);
+			    mged_print_result(s, TCL_ERROR);
 			    break;
 			}
 			VJOIN1(new_pt, new_pt, dist, view_dir);
 		    }
 		}
 
-		if (nmg_move_edge_thru_pnt(es_eu, new_pt, &mged_tol) < 0) {
+		if (nmg_move_edge_thru_pnt(es_eu, new_pt, &s->tol.tol) < 0) {
 		    VPRINT("Unable to hit", new_pt);
 		}
 	    }
@@ -5559,8 +3996,8 @@ sedit(void)
 		struct edge_g_lseg *eg;
 
 		if (!es_eu) {
-		    Tcl_AppendResult(INTERP, "No edge selected!\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "No edge selected!\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		}
 		NMG_CK_EDGEUSE(es_eu);
@@ -5576,8 +4013,8 @@ sedit(void)
 
 		    if (*lu->up.magic_p != NMG_SHELL_MAGIC) {
 			/* Currently can only kill wire edges or edges in wire loops */
-			Tcl_AppendResult(INTERP, "Currently, we can only kill wire edges or edges in wire loops\n", (char *)NULL);
-			mged_print_result(TCL_ERROR);
+			Tcl_AppendResult(s->interp, "Currently, we can only kill wire edges or edges in wire loops\n", (char *)NULL);
+			mged_print_result(s, TCL_ERROR);
 			es_edflag = IDLE;
 			break;
 		    }
@@ -5593,8 +4030,8 @@ sedit(void)
 			    /* refuse to delete last edge that runs
 			     * to/from same vertex
 			     */
-			    Tcl_AppendResult(INTERP, "Cannot delete last edge running to/from same vertex\n", (char *)NULL);
-			    mged_print_result(TCL_ERROR);
+			    Tcl_AppendResult(s->interp, "Cannot delete last edge running to/from same vertex\n", (char *)NULL);
+			    mged_print_result(s, TCL_ERROR);
 			    break;
 			}
 			NMG_CK_EDGEUSE(es_eu->eumate_p);
@@ -5608,10 +4045,10 @@ sedit(void)
 		    nmg_movevu(next_eu->vu_p, es_eu->vu_p->v_p);
 		    if (nmg_keu(es_eu)) {
 			/* Should never happen! */
-			bu_exit(EXIT_FAILURE,  "sedit(): killed edge and emptied loop!\n");
+			bu_exit(EXIT_FAILURE,  "sedit(s): killed edge and emptied loop!\n");
 		    }
 		    es_eu = prev_eu;
-		    nmg_rebound(m, &mged_tol);
+		    nmg_rebound(m, &s->tol.tol);
 
 		    /* fix edge geometry for modified edge (next_eu) */
 		    eg = next_eu->g.lseg_p;
@@ -5624,7 +4061,7 @@ sedit(void)
 		    /* wire edge, just kill it */
 		    (void)nmg_keu(es_eu);
 		    es_eu = (struct edgeuse *)NULL;
-		    nmg_rebound(m, &mged_tol);
+		    nmg_rebound(m, &s->tol.tol);
 		}
 	    }
 
@@ -5640,8 +4077,8 @@ sedit(void)
 		plane_t pl;
 
 		if (!es_eu) {
-		    Tcl_AppendResult(INTERP, "No edge selected!\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "No edge selected!\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		}
 		NMG_CK_EDGEUSE(es_eu);
@@ -5657,9 +4094,9 @@ sedit(void)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for edge split\n",
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for edge split\n",
 				     (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara)
 		    break;
@@ -5672,9 +4109,9 @@ sedit(void)
 
 		    /* Currently, can only split wire edges or edges in wire loops */
 		    if (*lu->up.magic_p != NMG_SHELL_MAGIC) {
-			Tcl_AppendResult(INTERP, "Currently, we can only split wire edges or edges in wire loops\n", (char *)NULL);
+			Tcl_AppendResult(s->interp, "Currently, we can only split wire edges or edges in wire loops\n", (char *)NULL);
 			es_edflag = IDLE;
-			mged_print_result(TCL_ERROR);
+			mged_print_result(s, TCL_ERROR);
 			break;
 		    }
 
@@ -5690,10 +4127,10 @@ sedit(void)
 			MAT4X3VEC(view_dir, view_state->vs_gvp->gv_view2model, view_z_dir);
 
 			/* intersect line through new_pt with plane of loop */
-			if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &mged_tol) < 1) {
+			if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &s->tol.tol) < 1) {
 			    /* line does not intersect plane, don't do an esplit */
-			    Tcl_AppendResult(INTERP, "Edge Split: Cannot place new point in plane of loop\n", (char *)NULL);
-			    mged_print_result(TCL_ERROR);
+			    Tcl_AppendResult(s->interp, "Edge Split: Cannot place new point in plane of loop\n", (char *)NULL);
+			    mged_print_result(s, TCL_ERROR);
 			    break;
 			}
 			VJOIN1(new_pt, new_pt, dist, view_dir);
@@ -5701,7 +4138,7 @@ sedit(void)
 		}
 		es_eu = nmg_esplit(v, es_eu, 0);
 		nmg_vertex_gv(es_eu->vu_p->v_p, new_pt);
-		nmg_rebound(m, &mged_tol);
+		nmg_rebound(m, &s->tol.tol);
 		eg = es_eu->g.lseg_p;
 		NMG_CK_EDGE_G_LSEG(eg);
 		VMOVE(eg->e_pt, new_pt);
@@ -5731,8 +4168,8 @@ sedit(void)
 		} else if (inpara == 1) {
 		    VJOIN1(to_pt, lu_keypoint, es_para[0], lu_pl);
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for loop extrusion\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for loop extrusion\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara) {
 		    break;
@@ -5740,9 +4177,9 @@ sedit(void)
 
 		VSUB2(extrude_vec, to_pt, lu_keypoint);
 
-		if (bg_isect_line3_plane(&dist, to_pt, extrude_vec, lu_pl, &mged_tol) < 1) {
-		    Tcl_AppendResult(INTERP, "Cannot extrude parallel to plane of loop\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		if (bg_isect_line3_plane(&dist, to_pt, extrude_vec, lu_pl, &s->tol.tol) < 1) {
+		    Tcl_AppendResult(s->interp, "Cannot extrude parallel to plane of loop\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    return;
 		}
 
@@ -5757,8 +4194,8 @@ sedit(void)
 		new_lu = nmg_dup_loop(lu_copy, &es_s->l.magic, (long **)0);
 		area = nmg_loop_plane_area(new_lu, new_lu_pl);
 		if (area < 0.0) {
-		    Tcl_AppendResult(INTERP, "loop to be extruded as no area!\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "loop to be extruded as no area!\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    return;
 		}
 
@@ -5775,24 +4212,24 @@ sedit(void)
 		    nmg_face_g(fu, new_lu_pl);
 		}
 
-		(void)nmg_extrude_face(fu, extrude_vec, &RTG.rtg_vlfree, &mged_tol);
+		(void)nmg_extrude_face(fu, extrude_vec, s->vlfree, &s->tol.tol);
 
-		nmg_fix_normals(fu->s_p, &RTG.rtg_vlfree, &mged_tol);
+		nmg_fix_normals(fu->s_p, s->vlfree, &s->tol.tol);
 
 		m = nmg_find_model(&fu->l.magic);
-		nmg_rebound(m, &mged_tol);
-		(void)nmg_ck_geometry(m, &RTG.rtg_vlfree, &mged_tol);
+		nmg_rebound(m, &s->tol.tol);
+		(void)nmg_ck_geometry(m, s->vlfree, &s->tol.tol);
 
 		es_eu = (struct edgeuse *)NULL;
 
-		replot_editing_solid();
+		replot_editing_solid(s);
 		view_state->vs_flag = 1;
 	    }
 	    break;
 	case ECMD_PIPE_PICK:
 	    {
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -5807,24 +4244,24 @@ sedit(void)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for segment selection\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for segment selection\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara)
 		    break;
 
-		es_pipe_pnt = find_pipe_pnt_nearest_pnt(&pipeip->pipe_segs_head, new_pt);
+		es_pipe_pnt = find_pipe_pnt_nearest_pnt(s, &pipeip->pipe_segs_head, new_pt);
 		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(INTERP, "No PIPE segment selected\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "No PIPE segment selected\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		} else
-		    rt_pipe_pnt_print(es_pipe_pnt, base2local);
+		    rt_pipe_pnt_print(es_pipe_pnt, s->dbip->dbi_base2local);
 	    }
 	    break;
 	case ECMD_PIPE_SPLIT:
 	    {
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -5839,15 +4276,15 @@ sedit(void)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for segment split\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for segment split\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara)
 		    break;
 
 		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(INTERP, "No pipe segment selected\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "No pipe segment selected\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		}
 
@@ -5857,7 +4294,7 @@ sedit(void)
 	case ECMD_PIPE_PT_MOVE:
 	    {
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -5872,25 +4309,25 @@ sedit(void)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for segment movement\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for segment movement\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara)
 		    break;
 
 		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(INTERP, "No pipe segment selected\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "No pipe segment selected\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		}
 
-		pipe_move_pnt(pipeip, es_pipe_pnt, new_pt);
+		pipe_move_pnt(s, pipeip, es_pipe_pnt, new_pt);
 	    }
 	    break;
 	case ECMD_PIPE_PT_ADD:
 	    {
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -5905,8 +4342,8 @@ sedit(void)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for 'append segment'\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for 'append segment'\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara)
 		    break;
@@ -5917,7 +4354,7 @@ sedit(void)
 	case ECMD_PIPE_PT_INS:
 	    {
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -5932,8 +4369,8 @@ sedit(void)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for 'prepend segment'\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for 'prepend segment'\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara)
 		    break;
@@ -5944,29 +4381,29 @@ sedit(void)
 	case ECMD_PIPE_PT_DEL:
 	    {
 		if (!es_pipe_pnt) {
-		    Tcl_AppendResult(INTERP, "No pipe segment selected\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "No pipe segment selected\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		}
-		es_pipe_pnt = pipe_del_pnt(es_pipe_pnt);
+		es_pipe_pnt = pipe_del_pnt(s, es_pipe_pnt);
 	    }
 	    break;
 	case ECMD_ARS_PICK_MENU:
 	    /* put up point pick menu for ARS solid */
 	    menu_state->ms_flag = 0;
 	    es_edflag = ECMD_ARS_PICK;
-	    mmenu_set(MENU_L1, ars_pick_menu);
+	    mmenu_set(s, MENU_L1, ars_pick_menu);
 	    break;
 	case ECMD_ARS_EDIT_MENU:
 	    /* put up main ARS edit menu */
 	    menu_state->ms_flag = 0;
 	    es_edflag = IDLE;
-	    mmenu_set(MENU_L1, ars_menu);
+	    mmenu_set(s, MENU_L1, ars_menu);
 	    break;
 	case ECMD_ARS_PICK:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		point_t pick_pt;
 		vect_t view_dir;
 		vect_t z_dir;
@@ -5985,8 +4422,8 @@ sedit(void)
 			VMOVE(pick_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for 'pick point'\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for 'pick point'\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara)
 		    break;
@@ -5996,20 +4433,20 @@ sedit(void)
 		MAT4X3VEC(view_dir, view_state->vs_gvp->gv_view2model, z_dir);
 		find_ars_nearest_pnt(&es_ars_crv, &es_ars_col, ars, pick_pt, view_dir);
 		VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
-		VSCALE(selected_pt, es_pt, base2local);
+		VSCALE(selected_pt, es_pt, s->dbip->dbi_base2local);
 		bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 		       es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 		bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
-		mged_print_result(TCL_ERROR);
+		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		mged_print_result(s, TCL_ERROR);
 		bu_vls_free(&tmp_vls);
 	    }
 	    break;
 	case ECMD_ARS_NEXT_PT:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t selected_pt;
 
@@ -6020,13 +4457,13 @@ sedit(void)
 		    if ((size_t)es_ars_col >= ars->pts_per_curve)
 			es_ars_col = 0;
 		    VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
-		    VSCALE(selected_pt, es_pt, base2local);
+		    VSCALE(selected_pt, es_pt, s->dbip->dbi_base2local);
 		    bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 			   es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 		    bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    bu_vls_free(&tmp_vls);
 		}
 	    }
@@ -6034,7 +4471,7 @@ sedit(void)
 	case ECMD_ARS_PREV_PT:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t selected_pt;
 
@@ -6045,13 +4482,13 @@ sedit(void)
 		    if (es_ars_col < 0)
 			es_ars_col = ars->pts_per_curve - 1;
 		    VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
-		    VSCALE(selected_pt, es_pt, base2local);
+		    VSCALE(selected_pt, es_pt, s->dbip->dbi_base2local);
 		    bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 			   es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 		    bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    bu_vls_free(&tmp_vls);
 		}
 	    }
@@ -6059,7 +4496,7 @@ sedit(void)
 	case ECMD_ARS_NEXT_CRV:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t selected_pt;
 
@@ -6070,13 +4507,13 @@ sedit(void)
 		    if ((size_t)es_ars_crv >= ars->ncurves)
 			es_ars_crv = 0;
 		    VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
-		    VSCALE(selected_pt, es_pt, base2local);
+		    VSCALE(selected_pt, es_pt, s->dbip->dbi_base2local);
 		    bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 			   es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 		    bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    bu_vls_free(&tmp_vls);
 		}
 	    }
@@ -6084,7 +4521,7 @@ sedit(void)
 	case ECMD_ARS_PREV_CRV:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t selected_pt;
 
@@ -6095,13 +4532,13 @@ sedit(void)
 		    if (es_ars_crv < 0)
 			es_ars_crv = ars->ncurves - 1;
 		    VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
-		    VSCALE(selected_pt, es_pt, base2local);
+		    VSCALE(selected_pt, es_pt, s->dbip->dbi_base2local);
 		    bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
 			   es_ars_col, es_ars_crv, V3ARGS(selected_pt));
 
 		    bu_vls_printf(&tmp_vls, "Selected point #%d from curve #%d (%f %f %f)\n", es_ars_col, es_ars_crv, V3ARGS(selected_pt));
-		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    bu_vls_free(&tmp_vls);
 		}
 	    }
@@ -6109,7 +4546,7 @@ sedit(void)
 	case ECMD_ARS_DUP_CRV:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t **curves;
 
 		RT_ARS_CK_MAGIC(ars);
@@ -6148,7 +4585,7 @@ sedit(void)
 	case ECMD_ARS_DUP_COL:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t **curves;
 
 		RT_ARS_CK_MAGIC(ars);
@@ -6190,7 +4627,7 @@ sedit(void)
 	case ECMD_ARS_DEL_CRV:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t **curves;
 		int k;
 
@@ -6239,7 +4676,7 @@ sedit(void)
 	case ECMD_ARS_DEL_COL:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t **curves;
 
 		RT_ARS_CK_MAGIC(ars);
@@ -6295,7 +4732,7 @@ sedit(void)
 	case ECMD_ARS_MOVE_COL:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt = VINIT_ZERO;
 		vect_t diff;
 
@@ -6330,8 +4767,8 @@ sedit(void)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for point movement\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara) {
 		    break;
@@ -6348,7 +4785,7 @@ sedit(void)
 	case ECMD_ARS_MOVE_CRV:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt = VINIT_ZERO;
 		vect_t diff;
 
@@ -6383,8 +4820,8 @@ sedit(void)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for point movement\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara) {
 		    break;
@@ -6401,7 +4838,7 @@ sedit(void)
 	case ECMD_ARS_MOVE_PT:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt = VINIT_ZERO;
 
 		RT_ARS_CK_MAGIC(ars);
@@ -6435,8 +4872,8 @@ sedit(void)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for point movement\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara) {
 		    break;
@@ -6447,7 +4884,7 @@ sedit(void)
 	    break;
 	case ECMD_BOT_MOVEV:
 	    {
-		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+		struct rt_bot_internal *bot = (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		int vert;
 		point_t new_pt = VINIT_ZERO;
 
@@ -6479,8 +4916,8 @@ sedit(void)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for point movement\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara) {
 		    break;
@@ -6491,7 +4928,7 @@ sedit(void)
 	    break;
 	case ECMD_BOT_MOVEE:
 	    {
-		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+		struct rt_bot_internal *bot = (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		int v1, v2;
 		vect_t diff;
 		point_t new_pt = VINIT_ZERO;
@@ -6499,8 +4936,8 @@ sedit(void)
 		RT_BOT_CK_MAGIC(bot);
 
 		if (bot_verts[0] < 0 || bot_verts[1] < 0) {
-		    Tcl_AppendResult(INTERP, "No BOT edge selected\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "No BOT edge selected\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		}
 
@@ -6520,8 +4957,8 @@ sedit(void)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for point movement\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara) {
 		    break;
@@ -6535,7 +4972,7 @@ sedit(void)
 	    break;
 	case ECMD_BOT_MOVET:
 	    {
-		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+		struct rt_bot_internal *bot = (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		int v1, v2, v3;
 		point_t new_pt = VINIT_ZERO;
 		vect_t diff;
@@ -6543,8 +4980,8 @@ sedit(void)
 		RT_BOT_CK_MAGIC(bot);
 
 		if (bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0) {
-		    Tcl_AppendResult(INTERP, "No BOT triangle selected\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "No BOT triangle selected\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		}
 		v1 = bot_verts[0];
@@ -6561,8 +4998,8 @@ sedit(void)
 			VMOVE(new_pt, es_para);
 		    }
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for point movement\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for point movement\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara) {
 		    break;
@@ -6582,7 +5019,7 @@ sedit(void)
 	case ECMD_METABALL_PT_PICK:
 	    {
 		struct rt_metaball_internal *metaball=
-		    (struct rt_metaball_internal *)es_int.idb_ptr;
+		    (struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
 		point_t new_pt;
 		struct wdb_metaball_pnt *ps;
 		struct wdb_metaball_pnt *nearest=(struct wdb_metaball_pnt *)NULL;
@@ -6597,8 +5034,8 @@ sedit(void)
 		} else if (inpara == 3) {
 		    VMOVE(new_pt, es_para);
 		} else if (inpara && inpara != 3) {
-		    Tcl_AppendResult(INTERP, "x y z coordinates required for control point selection\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "x y z coordinates required for control point selection\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    break;
 		} else if (!es_mvalid && !inpara) {
 		    break;
@@ -6627,10 +5064,10 @@ sedit(void)
 		es_metaball_pnt = nearest;
 
 		if (!es_metaball_pnt) {
-		    Tcl_AppendResult(INTERP, "No METABALL control point selected\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "No METABALL control point selected\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		} else {
-		    rt_metaball_pnt_print(es_metaball_pnt, base2local);
+		    rt_metaball_pnt_print(es_metaball_pnt, s->dbip->dbi_base2local);
 		}
 	    }
 	    break;
@@ -6665,7 +5102,7 @@ sedit(void)
 	    break;
 	case ECMD_METABALL_PT_ADD:
 	    {
-		struct rt_metaball_internal *metaball= (struct rt_metaball_internal *)es_int.idb_ptr;
+		struct rt_metaball_internal *metaball= (struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
 		struct wdb_metaball_pnt *n = (struct wdb_metaball_pnt *)malloc(sizeof(struct wdb_metaball_pnt));
 
 		if (inpara != 3) {
@@ -6687,38 +5124,38 @@ sedit(void)
 	    {
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_printf(&tmp_vls, "sedit():  unknown edflag = %d.\n", es_edflag);
-		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
-		mged_print_result(TCL_ERROR);
+		bu_vls_printf(&tmp_vls, "sedit(s):  unknown edflag = %d.\n", es_edflag);
+		Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		mged_print_result(s, TCL_ERROR);
 		bu_vls_free(&tmp_vls);
 	    }
     }
 
     /* must re-calculate the face plane equations for arbs */
-    if (es_int.idb_type == ID_ARB8) {
+    if (s->edit_state.es_int.idb_type == ID_ARB8) {
 	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
-	arb = (struct rt_arb_internal *)es_int.idb_ptr;
+	arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol) < 0)
-	    Tcl_AppendResult(INTERP, bu_vls_addr(&error_msg), (char *)0);
+	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &s->tol.tol) < 0)
+	    Tcl_AppendResult(s->interp, bu_vls_addr(&error_msg), (char *)0);
 	bu_vls_free(&error_msg);
     }
 
     /* If the keypoint changed location, find about it here */
     if (!es_keyfixed)
-	get_solid_keypoint(es_keypoint, &es_keytag, &es_int, es_mat);
+	get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
 
-    set_e_axes_pos(0);
-    replot_editing_solid();
+    set_e_axes_pos(s, 0);
+    replot_editing_solid(s);
 
     if (update_views) {
 	dm_set_dirty(DMP, 1);
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&vls, "active_edit_callback");
-	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	(void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
 
@@ -6728,7 +5165,7 @@ sedit(void)
 
 
 void
-update_edit_absolute_tran(vect_t view_pos)
+update_edit_absolute_tran(struct mged_state *s, vect_t view_pos)
 {
     vect_t model_pos;
     vect_t ea_view_pos;
@@ -6737,12 +5174,12 @@ update_edit_absolute_tran(vect_t view_pos)
 
     MAT4X3PNT(model_pos, view_state->vs_gvp->gv_view2model, view_pos);
     VSUB2(diff, model_pos, e_axes_pos);
-    VSCALE(edit_absolute_model_tran, diff, inv_Viewscale);
-    VMOVE(last_edit_absolute_model_tran, edit_absolute_model_tran);
+    VSCALE(s->edit_state.edit_absolute_model_tran, diff, inv_Viewscale);
+    VMOVE(s->edit_state.last_edit_absolute_model_tran, s->edit_state.edit_absolute_model_tran);
 
     MAT4X3PNT(ea_view_pos, view_state->vs_gvp->gv_model2view, e_axes_pos);
-    VSUB2(edit_absolute_view_tran, view_pos, ea_view_pos);
-    VMOVE(last_edit_absolute_view_tran, edit_absolute_view_tran);
+    VSUB2(s->edit_state.edit_absolute_view_tran, view_pos, ea_view_pos);
+    VMOVE(s->edit_state.last_edit_absolute_view_tran, s->edit_state.edit_absolute_view_tran);
 }
 
 
@@ -6754,11 +5191,11 @@ update_edit_absolute_tran(vect_t view_pos)
  * In order to allow the "p" command to do the same things that
  * a mouse event can, the preferred strategy is to store the value
  * corresponding to what the "p" command would give in es_mparam,
- * set es_mvalid = 1, set sedraw = 1, and return, allowing sedit()
+ * set es_mvalid = 1, set sedraw = 1, and return, allowing sedit(s)
  * to actually do the work.
  */
 void
-sedit_mouse(const vect_t mousevec)
+sedit_mouse(struct mged_state *s, const vect_t mousevec)
 {
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
     vect_t pos_model = VINIT_ZERO;	/* Rotated screen space pos */
@@ -6786,19 +5223,19 @@ sedit_mouse(const vect_t mousevec)
 	case ECMD_CLINE_SCALE_T:
 	case ECMD_CLINE_SCALE_R:
 	    /* use mouse to get a scale factor */
-	    es_scale = 1.0 + 0.25 * ((fastf_t)
+	    s->edit_state.es_scale = 1.0 + 0.25 * ((fastf_t)
 				     (mousevec[Y] > 0 ? mousevec[Y] : -mousevec[Y]));
 	    if (mousevec[Y] <= 0)
-		es_scale = 1.0 / es_scale;
+		s->edit_state.es_scale = 1.0 / s->edit_state.es_scale;
 
 	    /* accumulate scale factor */
-	    acc_sc_sol *= es_scale;
+	    acc_sc_sol *= s->edit_state.es_scale;
 
-	    edit_absolute_scale = acc_sc_sol - 1.0;
-	    if (edit_absolute_scale > 0)
-		edit_absolute_scale /= 3.0;
+	    s->edit_state.edit_absolute_scale = acc_sc_sol - 1.0;
+	    if (s->edit_state.edit_absolute_scale > 0)
+		s->edit_state.edit_absolute_scale /= 3.0;
 
-	    sedit();
+	    sedit(s);
 
 	    return;
 	case STRANS:
@@ -6826,7 +5263,7 @@ sedit_mouse(const vect_t mousevec)
 		VSUB2(delta, raw_kp, raw_mp);
 		MAT_IDN(mat);
 		MAT_DELTAS_VEC_NEG(mat, delta);
-		transform_editing_solid(&es_int, mat, &es_int, 1);
+		transform_editing_solid(s, &s->edit_state.es_int, mat, &s->edit_state.es_int, 1);
 	    }
 
 	    break;
@@ -6845,7 +5282,7 @@ sedit_mouse(const vect_t mousevec)
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
 	    MAT4X3PNT(es_mparam, es_invmat, temp);
 	    es_mvalid = 1;	/* es_mparam is valid */
-	    /* Leave the rest to code in sedit() */
+	    /* Leave the rest to code in sedit(s) */
 
 	    break;
 	case ECMD_TGC_MV_H:
@@ -6853,7 +5290,7 @@ sedit_mouse(const vect_t mousevec)
 	    /* Use mouse to change location of point V+H */
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
 		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
@@ -6870,7 +5307,7 @@ sedit_mouse(const vect_t mousevec)
 	    /* Use mouse to change location of point V+H */
 	    {
 		struct rt_extrude_internal *extr =
-		    (struct rt_extrude_internal *)es_int.idb_ptr;
+		    (struct rt_extrude_internal *)s->edit_state.es_int.idb_ptr;
 		RT_EXTRUDE_CK_MAGIC(extr);
 
 		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
@@ -6886,7 +5323,7 @@ sedit_mouse(const vect_t mousevec)
 	case ECMD_CLINE_MOVE_H:
 	    {
 		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)es_int.idb_ptr;
+		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_CLINE_CK_MAGIC(cli);
 
@@ -6908,7 +5345,7 @@ sedit_mouse(const vect_t mousevec)
 	    pos_view[Y] = mousevec[Y];
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
 	    MAT4X3PNT(pos_model, es_invmat, temp);
-	    editarb(pos_model);
+	    editarb(s, pos_model);
 
 	    break;
 	case EARB:
@@ -6917,7 +5354,7 @@ sedit_mouse(const vect_t mousevec)
 	    pos_view[Y] = mousevec[Y];
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
 	    MAT4X3PNT(pos_model, es_invmat, temp);
-	    editarb(pos_model);
+	    editarb(s, pos_model);
 
 	    break;
 	case ECMD_ARB_MOVE_FACE:
@@ -6931,17 +5368,17 @@ sedit_mouse(const vect_t mousevec)
 	    /* calculate new vertices, put in record as vectors */
 	    {
 		struct rt_arb_internal *arb=
-		    (struct rt_arb_internal *)es_int.idb_ptr;
+		    (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_ARB_CK_MAGIC(arb);
 
-		(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
+		(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &s->tol.tol);
 	    }
 
 	    break;
 	case ECMD_BOT_PICKV:
 	    {
-		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+		struct rt_bot_internal *bot = (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		int tmp_vert;
 		char tmp_msg[256];
 		point_t selected_pt;
@@ -6954,23 +5391,23 @@ sedit_mouse(const vect_t mousevec)
 
 		tmp_vert = rt_bot_find_v_nearest_pt2(bot, pos_view, view_state->vs_gvp->gv_model2view);
 		if (tmp_vert < 0) {
-		    Tcl_AppendResult(INTERP, "ECMD_BOT_PICKV: unable to find a vertex!\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "ECMD_BOT_PICKV: unable to find a vertex!\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    return;
 		}
 
 		bot_verts[0] = tmp_vert;
 		bot_verts[1] = -1;
 		bot_verts[2] = -1;
-		VSCALE(selected_pt, &bot->vertices[tmp_vert*3], base2local);
+		VSCALE(selected_pt, &bot->vertices[tmp_vert*3], s->dbip->dbi_base2local);
 		sprintf(tmp_msg, "picked point at (%g %g %g), vertex #%d\n", V3ARGS(selected_pt), tmp_vert);
-		Tcl_AppendResult(INTERP, tmp_msg, (char *)NULL);
-		mged_print_result(TCL_OK);
+		Tcl_AppendResult(s->interp, tmp_msg, (char *)NULL);
+		mged_print_result(s, TCL_OK);
 	    }
 	    break;
 	case ECMD_BOT_PICKE:
 	    {
-		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+		struct rt_bot_internal *bot = (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		int vert1, vert2;
 		char tmp_msg[256];
 		point_t from_pt, to_pt;
@@ -6982,24 +5419,24 @@ sedit_mouse(const vect_t mousevec)
 		pos_view[Y] = mousevec[Y];
 
 		if (rt_bot_find_e_nearest_pt2(&vert1, &vert2, bot, pos_view, view_state->vs_gvp->gv_model2view)) {
-		    Tcl_AppendResult(INTERP, "ECMD_BOT_PICKE: unable to find an edge!\n", (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, "ECMD_BOT_PICKE: unable to find an edge!\n", (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    return;
 		}
 
 		bot_verts[0] = vert1;
 		bot_verts[1] = vert2;
 		bot_verts[2] = -1;
-		VSCALE(from_pt, &bot->vertices[vert1*3], base2local);
-		VSCALE(to_pt, &bot->vertices[vert2*3], base2local);
+		VSCALE(from_pt, &bot->vertices[vert1*3], s->dbip->dbi_base2local);
+		VSCALE(to_pt, &bot->vertices[vert2*3], s->dbip->dbi_base2local);
 		sprintf(tmp_msg, "picked edge from (%g %g %g) to (%g %g %g)\n", V3ARGS(from_pt), V3ARGS(to_pt));
-		Tcl_AppendResult(INTERP, tmp_msg, (char *)NULL);
-		mged_print_result(TCL_OK);
+		Tcl_AppendResult(s->interp, tmp_msg, (char *)NULL);
+		mged_print_result(s, TCL_OK);
 	    }
 	    break;
 	case ECMD_BOT_PICKT:
 	    {
-		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+		struct rt_bot_internal *bot = (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 		point_t start_pt, tmp;
 		vect_t dir;
 		size_t i;
@@ -7042,14 +5479,14 @@ sedit_mouse(const vect_t mousevec)
 		    sscanf(bu_vls_addr(&vls), " { { %d %d %d", &bot_verts[0], &bot_verts[1], &bot_verts[2]);
 		    bu_vls_free(&vls);
 		} else {
-		    Tcl_LinkVar(INTERP, "bot_v1", (char *)&bot_verts[0], TCL_LINK_INT);
-		    Tcl_LinkVar(INTERP, "bot_v2", (char *)&bot_verts[1], TCL_LINK_INT);
-		    Tcl_LinkVar(INTERP, "bot_v3", (char *)&bot_verts[2], TCL_LINK_INT);
+		    Tcl_LinkVar(s->interp, "bot_v1", (char *)&bot_verts[0], TCL_LINK_INT);
+		    Tcl_LinkVar(s->interp, "bot_v2", (char *)&bot_verts[1], TCL_LINK_INT);
+		    Tcl_LinkVar(s->interp, "bot_v3", (char *)&bot_verts[2], TCL_LINK_INT);
 
-		    ret_tcl = Tcl_VarEval(INTERP, "bot_face_select ", bu_vls_addr(&vls), (char *)NULL);
+		    ret_tcl = Tcl_VarEval(s->interp, "bot_face_select ", bu_vls_addr(&vls), (char *)NULL);
 		    bu_vls_free(&vls);
 		    if (ret_tcl != TCL_OK) {
-			bu_log("bot_face_select failed: %s\n", Tcl_GetStringResult(INTERP));
+			bu_log("bot_face_select failed: %s\n", Tcl_GetStringResult(s->interp));
 			bot_verts[0] = -1;
 			bot_verts[1] = -1;
 			bot_verts[2] = -1;
@@ -7059,10 +5496,10 @@ sedit_mouse(const vect_t mousevec)
 	    }
 	    break;
 	case ECMD_NMG_EPICK:
-	    /* XXX Should just leave desired location in es_mparam for sedit() */
+	    /* XXX Should just leave desired location in es_mparam for sedit(s) */
 	    {
 		struct model *m =
-		    (struct model *)es_int.idb_ptr;
+		    (struct model *)s->edit_state.es_int.idb_ptr;
 		struct edge *e;
 		struct bn_tol tmp_tol;
 		NMG_CK_MODEL(m);
@@ -7078,10 +5515,10 @@ sedit_mouse(const vect_t mousevec)
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
 		if ((e = nmg_find_e_nearest_pt2(&m->magic, pos_view,
-						view_state->vs_gvp->gv_model2view, &RTG.rtg_vlfree, &tmp_tol)) == (struct edge *)NULL) {
-		    Tcl_AppendResult(INTERP, "ECMD_NMG_EPICK: unable to find an edge\n",
+						view_state->vs_gvp->gv_model2view, s->vlfree, &tmp_tol)) == (struct edge *)NULL) {
+		    Tcl_AppendResult(s->interp, "ECMD_NMG_EPICK: unable to find an edge\n",
 				     (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    mged_print_result(s, TCL_ERROR);
 		    return;
 		}
 		es_eu = e->eu_p;
@@ -7094,8 +5531,8 @@ sedit_mouse(const vect_t mousevec)
 				  "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
 				  (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
 				  V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
-		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
-		    mged_print_result(TCL_ERROR);
+		    Tcl_AppendResult(s->interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    mged_print_result(s, TCL_ERROR);
 		    bu_vls_free(&tmp_vls);
 		}
 	    }
@@ -7129,18 +5566,18 @@ sedit_mouse(const vect_t mousevec)
 
 	    break;
 	default:
-	    Tcl_AppendResult(INTERP, "mouse press undefined in this solid edit mode\n", (char *)NULL);
-	    mged_print_result(TCL_ERROR);
+	    Tcl_AppendResult(s->interp, "mouse press undefined in this solid edit mode\n", (char *)NULL);
+	    mged_print_result(s, TCL_ERROR);
 	    return;
     }
 
-    update_edit_absolute_tran(pos_view);
-    sedit();
+    update_edit_absolute_tran(s, pos_view);
+    sedit(s);
 }
 
 
 void
-sedit_abs_scale(void)
+sedit_abs_scale(struct mged_state *s)
 {
     fastf_t old_acc_sc_sol;
 
@@ -7149,19 +5586,19 @@ sedit_abs_scale(void)
 
     old_acc_sc_sol = acc_sc_sol;
 
-    if (-SMALL_FASTF < edit_absolute_scale && edit_absolute_scale < SMALL_FASTF)
+    if (-SMALL_FASTF < s->edit_state.edit_absolute_scale && s->edit_state.edit_absolute_scale < SMALL_FASTF)
 	acc_sc_sol = 1.0;
-    else if (edit_absolute_scale > 0.0)
-	acc_sc_sol = 1.0 + edit_absolute_scale * 3.0;
+    else if (s->edit_state.edit_absolute_scale > 0.0)
+	acc_sc_sol = 1.0 + s->edit_state.edit_absolute_scale * 3.0;
     else {
-	if ((edit_absolute_scale - MGED_SMALL_SCALE) < -1.0)
-	    edit_absolute_scale = -1.0 + MGED_SMALL_SCALE;
+	if ((s->edit_state.edit_absolute_scale - MGED_SMALL_SCALE) < -1.0)
+	    s->edit_state.edit_absolute_scale = -1.0 + MGED_SMALL_SCALE;
 
-	acc_sc_sol = 1.0 + edit_absolute_scale;
+	acc_sc_sol = 1.0 + s->edit_state.edit_absolute_scale;
     }
 
-    es_scale = acc_sc_sol / old_acc_sc_sol;
-    sedit();
+    s->edit_state.es_scale = acc_sc_sol / old_acc_sc_sol;
+    sedit(s);
 }
 
 
@@ -7169,7 +5606,7 @@ sedit_abs_scale(void)
  * Object Edit
  */
 void
-objedit_mouse(const vect_t mousevec)
+objedit_mouse(struct mged_state *s, const vect_t mousevec)
 {
     fastf_t scale = 1.0;
     vect_t pos_view;	 	/* Unrotated view space pos */
@@ -7193,9 +5630,9 @@ objedit_mouse(const vect_t mousevec)
 		incr_change[15] = 1.0 / scale;
 
 		acc_sc_obj /= incr_change[15];
-		edit_absolute_scale = acc_sc_obj - 1.0;
-		if (edit_absolute_scale > 0.0)
-		    edit_absolute_scale /= 3.0;
+		s->edit_state.edit_absolute_scale = acc_sc_obj - 1.0;
+		if (s->edit_state.edit_absolute_scale > 0.0)
+		    s->edit_state.edit_absolute_scale /= 3.0;
 		break;
 
 	    case BE_O_XSCALE:
@@ -7203,9 +5640,9 @@ objedit_mouse(const vect_t mousevec)
 		incr_change[0] = scale;
 		/* accumulate the scale factor */
 		acc_sc[0] *= scale;
-		edit_absolute_scale = acc_sc[0] - 1.0;
-		if (edit_absolute_scale > 0.0)
-		    edit_absolute_scale /= 3.0;
+		s->edit_state.edit_absolute_scale = acc_sc[0] - 1.0;
+		if (s->edit_state.edit_absolute_scale > 0.0)
+		    s->edit_state.edit_absolute_scale /= 3.0;
 		break;
 
 	    case BE_O_YSCALE:
@@ -7213,9 +5650,9 @@ objedit_mouse(const vect_t mousevec)
 		incr_change[5] = scale;
 		/* accumulate the scale factor */
 		acc_sc[1] *= scale;
-		edit_absolute_scale = acc_sc[1] - 1.0;
-		if (edit_absolute_scale > 0.0)
-		    edit_absolute_scale /= 3.0;
+		s->edit_state.edit_absolute_scale = acc_sc[1] - 1.0;
+		if (s->edit_state.edit_absolute_scale > 0.0)
+		    s->edit_state.edit_absolute_scale /= 3.0;
 		break;
 
 	    case BE_O_ZSCALE:
@@ -7223,9 +5660,9 @@ objedit_mouse(const vect_t mousevec)
 		incr_change[10] = scale;
 		/* accumulate the scale factor */
 		acc_sc[2] *= scale;
-		edit_absolute_scale = acc_sc[2] - 1.0;
-		if (edit_absolute_scale > 0.0)
-		    edit_absolute_scale /= 3.0;
+		s->edit_state.edit_absolute_scale = acc_sc[2] - 1.0;
+		if (s->edit_state.edit_absolute_scale > 0.0)
+		    s->edit_state.edit_absolute_scale /= 3.0;
 		break;
 	}
 
@@ -7237,7 +5674,7 @@ objedit_mouse(const vect_t mousevec)
 	wrt_point(modelchanges, incr_change, modelchanges, pos_model);
 
 	MAT_IDN(incr_change);
-	new_edit_mats();
+	new_edit_mats(s);
     } else if (movedir & (RARROW|UARROW)) {
 	mat_t oldchanges;	/* temporary matrix */
 
@@ -7258,18 +5695,18 @@ objedit_mouse(const vect_t mousevec)
 	bn_mat_mul(modelchanges, incr_change, oldchanges);
 
 	MAT_IDN(incr_change);
-	new_edit_mats();
+	new_edit_mats(s);
 
-	update_edit_absolute_tran(pos_view);
+	update_edit_absolute_tran(s, pos_view);
     } else {
-	Tcl_AppendResult(INTERP, "No object edit mode selected;  mouse press ignored\n", (char *)NULL);
+	Tcl_AppendResult(s->interp, "No object edit mode selected;  mouse press ignored\n", (char *)NULL);
 	return;
     }
 }
 
 
 void
-oedit_abs_scale(void)
+oedit_abs_scale(struct mged_state *s)
 {
     fastf_t scale;
     vect_t temp;
@@ -7278,15 +5715,15 @@ oedit_abs_scale(void)
 
     MAT_IDN(incr_mat);
 
-    if (-SMALL_FASTF < edit_absolute_scale && edit_absolute_scale < SMALL_FASTF)
+    if (-SMALL_FASTF < s->edit_state.edit_absolute_scale && s->edit_state.edit_absolute_scale < SMALL_FASTF)
 	scale = 1;
-    else if (edit_absolute_scale > 0.0)
-	scale = 1.0 + edit_absolute_scale * 3.0;
+    else if (s->edit_state.edit_absolute_scale > 0.0)
+	scale = 1.0 + s->edit_state.edit_absolute_scale * 3.0;
     else {
-	if ((edit_absolute_scale - MGED_SMALL_SCALE) < -1.0)
-	    edit_absolute_scale = -1.0 + MGED_SMALL_SCALE;
+	if ((s->edit_state.edit_absolute_scale - MGED_SMALL_SCALE) < -1.0)
+	    s->edit_state.edit_absolute_scale = -1.0 + MGED_SMALL_SCALE;
 
-	scale = 1.0 + edit_absolute_scale;
+	scale = 1.0 + s->edit_state.edit_absolute_scale;
     }
 
     /* switch depending on scaling option selected */
@@ -7327,33 +5764,33 @@ oedit_abs_scale(void)
     MAT4X3PNT(pos_model, modelchanges, temp);
     wrt_point(modelchanges, incr_mat, modelchanges, pos_model);
 
-    new_edit_mats();
+    new_edit_mats(s);
 }
 
 
 void
-vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
+vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
 {
     struct rt_db_internal intern;
     int id;
 
     RT_DB_INTERNAL_INIT(&intern);
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
     BU_CK_VLS(vp);
     RT_CK_DB_INTERNAL(ip);
 
     id = ip->idb_type;
-    transform_editing_solid(&intern, mat, (struct rt_db_internal *)ip, 0);
+    transform_editing_solid(s, &intern, mat, (struct rt_db_internal *)ip, 0);
 
     if (id != ID_ARS && id != ID_POLY && id != ID_BOT) {
-	if (OBJ[id].ft_describe(vp, &intern, 1 /*verbose*/, base2local) < 0)
-	    Tcl_AppendResult(INTERP, "vls_solid: describe error\n", (char *)NULL);
+	if (OBJ[id].ft_describe(vp, &intern, 1 /*verbose*/, s->dbip->dbi_base2local) < 0)
+	    Tcl_AppendResult(s->interp, "vls_solid: describe error\n", (char *)NULL);
     } else {
-	if (OBJ[id].ft_describe(vp, &intern, 0 /* not verbose */, base2local) < 0)
-	    Tcl_AppendResult(INTERP, "vls_solid: describe error\n", (char *)NULL);
+	if (OBJ[id].ft_describe(vp, &intern, 0 /* not verbose */, s->dbip->dbi_base2local) < 0)
+	    Tcl_AppendResult(s->interp, "vls_solid: describe error\n", (char *)NULL);
     }
 
     if (id == ID_PIPE && es_pipe_pnt) {
@@ -7371,7 +5808,7 @@ vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
 	}
 
 	if (ps == es_pipe_pnt)
-	    rt_vls_pipe_pnt(vp, seg_no, &intern, base2local);
+	    rt_vls_pipe_pnt(vp, seg_no, &intern, s->dbip->dbi_base2local);
     }
 
     rt_db_free_internal(&intern);
@@ -7379,7 +5816,7 @@ vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
 
 
 static void
-init_oedit_guts(void)
+init_oedit_guts(struct mged_state *s)
 {
     int id;
     char *strp="";
@@ -7389,7 +5826,7 @@ init_oedit_guts(void)
     es_edflag = -1;
     MAT_IDN(es_mat);
 
-    if (DBIP == DBI_NULL || !illump) {
+    if (s->dbip == DBI_NULL || !illump) {
 	return;
     }
 
@@ -7409,67 +5846,67 @@ init_oedit_guts(void)
     if (!illump->s_u_data)
 	return;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
-			   DBIP, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&s->edit_state.es_int, LAST_SOLID(bdata),
+			   s->dbip, NULL, &rt_uniresource) < 0) {
 	if (bdata->s_fullpath.fp_len > 0) {
-	    Tcl_AppendResult(INTERP, "init_oedit(",
+	    Tcl_AppendResult(s->interp, "init_oedit(",
 		    LAST_SOLID(bdata)->d_namep,
 		    "):  solid import failure\n", (char *)NULL);
 	} else {
-	    Tcl_AppendResult(INTERP, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
+	    Tcl_AppendResult(s->interp, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
 	}
-	rt_db_free_internal(&es_int);
-	button(BE_REJECT);
+	rt_db_free_internal(&s->edit_state.es_int);
+	button(s, BE_REJECT);
 	return;				/* FAIL */
     }
-    RT_CK_DB_INTERNAL(&es_int);
-    id = es_int.idb_type;
+    RT_CK_DB_INTERNAL(&s->edit_state.es_int);
+    id = s->edit_state.es_int.idb_type;
 
     if (id == ID_ARB8) {
 	struct rt_arb_internal *arb;
 
-	arb = (struct rt_arb_internal *)es_int.idb_ptr;
+	arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	es_type = rt_arb_std_type(&es_int, &mged_tol);
+	es_type = rt_arb_std_type(&s->edit_state.es_int, &s->tol.tol);
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
 
-    get_solid_keypoint(es_keypoint, &strp, &es_int, es_mat);
-    init_oedit_vars();
+    get_solid_keypoint(s, es_keypoint, &strp, &s->edit_state.es_int, es_mat);
+    init_oedit_vars(s);
 }
 
 
 static void
-init_oedit_vars(void)
+init_oedit_vars(struct mged_state *s)
 {
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
 
-    VSETALL(edit_absolute_model_rotate, 0.0);
-    VSETALL(edit_absolute_object_rotate, 0.0);
-    VSETALL(edit_absolute_view_rotate, 0.0);
-    VSETALL(last_edit_absolute_model_rotate, 0.0);
-    VSETALL(last_edit_absolute_object_rotate, 0.0);
-    VSETALL(last_edit_absolute_view_rotate, 0.0);
-    VSETALL(edit_absolute_model_tran, 0.0);
-    VSETALL(edit_absolute_view_tran, 0.0);
-    VSETALL(last_edit_absolute_model_tran, 0.0);
-    VSETALL(last_edit_absolute_view_tran, 0.0);
-    edit_absolute_scale = 0.0;
+    VSETALL(s->edit_state.edit_absolute_model_rotate, 0.0);
+    VSETALL(s->edit_state.edit_absolute_object_rotate, 0.0);
+    VSETALL(s->edit_state.edit_absolute_view_rotate, 0.0);
+    VSETALL(s->edit_state.last_edit_absolute_model_rotate, 0.0);
+    VSETALL(s->edit_state.last_edit_absolute_object_rotate, 0.0);
+    VSETALL(s->edit_state.last_edit_absolute_view_rotate, 0.0);
+    VSETALL(s->edit_state.edit_absolute_model_tran, 0.0);
+    VSETALL(s->edit_state.edit_absolute_view_tran, 0.0);
+    VSETALL(s->edit_state.last_edit_absolute_model_tran, 0.0);
+    VSETALL(s->edit_state.last_edit_absolute_view_tran, 0.0);
+    s->edit_state.edit_absolute_scale = 0.0;
     acc_sc_sol = 1.0;
     acc_sc_obj = 1.0;
     VSETALL(acc_sc, 1.0);
 
-    VSETALL(edit_rate_model_rotate, 0.0);
-    VSETALL(edit_rate_object_rotate, 0.0);
-    VSETALL(edit_rate_view_rotate, 0.0);
-    VSETALL(edit_rate_model_tran, 0.0);
-    VSETALL(edit_rate_view_tran, 0.0);
+    VSETALL(s->edit_state.edit_rate_model_rotate, 0.0);
+    VSETALL(s->edit_state.edit_rate_object_rotate, 0.0);
+    VSETALL(s->edit_state.edit_rate_view_rotate, 0.0);
+    VSETALL(s->edit_state.edit_rate_model_tran, 0.0);
+    VSETALL(s->edit_state.edit_rate_view_tran, 0.0);
 
     MAT_IDN(modelchanges);
     MAT_IDN(acc_rot_sol);
@@ -7477,26 +5914,26 @@ init_oedit_vars(void)
 
 
 void
-init_oedit(void)
+init_oedit(struct mged_state *s)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     /* do real initialization work */
-    init_oedit_guts();
+    init_oedit_guts(s);
 
     es_edclass = EDIT_CLASS_NULL;
 
     /* begin edit callback */
     bu_vls_strcpy(&vls, "begin_edit_callback {}");
-    (void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
+    (void)Tcl_Eval(s->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
 
 
-void oedit_reject(void);
+void oedit_reject(struct mged_state *s);
 
 static void
-oedit_apply(int continue_editing)
+oedit_apply(struct mged_state *s, int continue_editing)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
@@ -7515,11 +5952,11 @@ oedit_apply(int continue_editing)
 
     switch (ipathpos) {
 	case 0:
-	    moveHobj(DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
+	    moveHobj(s, DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
 		     modelchanges);
 	    break;
 	case 1:
-	    moveHinstance(DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos-1),
+	    moveHinstance(s, DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos-1),
 			  DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
 			  modelchanges);
 	    break;
@@ -7529,14 +5966,14 @@ oedit_apply(int continue_editing)
 	    MAT_IDN(deltam);
 	    MAT_IDN(tempm);
 
-	    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, topm, ipathpos-1, &rt_uniresource);
+	    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, topm, ipathpos-1, &rt_uniresource);
 
 	    bn_mat_inv(inv_topm, topm);
 
 	    bn_mat_mul(tempm, modelchanges, topm);
 	    bn_mat_mul(deltam, inv_topm, tempm);
 
-	    moveHinstance(DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos-1),
+	    moveHinstance(s, DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos-1),
 			  DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
 			  deltam);
 	    break;
@@ -7551,14 +5988,14 @@ oedit_apply(int continue_editing)
     modelchanges[15] = 1000000000;	/* => small ratio */
 
     /* Now, recompute new chunks of displaylist */
-    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (sp->s_iflag == DOWN)
 		continue;
-	    (void)replot_original_solid(sp);
+	    (void)replot_original_solid(s, sp);
 
 	    if (continue_editing == DOWN) {
 		sp->s_iflag = DOWN;
@@ -7571,26 +6008,26 @@ oedit_apply(int continue_editing)
 
 
 void
-oedit_accept(void)
+oedit_accept(struct mged_state *s)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct bv_scene_obj *sp;
 
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
-    if (DBIP->dbi_read_only) {
-	oedit_reject();
+    if (s->dbip->dbi_read_only) {
+	oedit_reject(s);
 
-	gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+	while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 		if (sp->s_iflag == DOWN)
 		    continue;
-		(void)replot_original_solid(sp);
+		(void)replot_original_solid(s, sp);
 		sp->s_iflag = DOWN;
 	    }
 
@@ -7598,20 +6035,20 @@ oedit_accept(void)
 	}
 
 	bu_log("Sorry, this database is READ-ONLY\n");
-	pr_prompt(interactive);
+	pr_prompt(s);
 
 	return;
     }
 
-    oedit_apply(DOWN); /* finished editing */
-    oedit_reject();
+    oedit_apply(s, DOWN); /* finished editing */
+    oedit_reject(s);
 }
 
 
 void
-oedit_reject(void)
+oedit_reject(struct mged_state *s)
 {
-    rt_db_free_internal(&es_int);
+    rt_db_free_internal(&s->edit_state.es_int);
 }
 
 
@@ -7622,8 +6059,12 @@ oedit_reject(void)
  * when in solid edit and rotating the face of a GENARB8.
  */
 int
-f_eqn(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     short int i;
     vect_t tempvec;
     struct rt_arb_internal *arb;
@@ -7640,12 +6081,12 @@ f_eqn(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	return TCL_ERROR;
     }
 
-    if (STATE != ST_S_EDIT) {
+    if (GEOM_EDIT_STATE != ST_S_EDIT) {
 	Tcl_AppendResult(interp, "Eqn: must be in solid edit\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if (es_int.idb_type != ID_ARB8) {
+    if (s->edit_state.es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Eqn: type must be GENARB8\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -7655,7 +6096,7 @@ f_eqn(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	return TCL_ERROR;
     }
 
-    arb = (struct rt_arb_internal *)es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
     /* get the A, B, C from the command line */
@@ -7666,11 +6107,11 @@ f_eqn(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     VMOVE(tempvec, arb->pt[fixv]);
     es_peqn[es_menu][W]=VDOT(es_peqn[es_menu], tempvec);
 
-    if (rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol))
+    if (rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &s->tol.tol))
 	return CMD_BAD;
 
     /* draw the new version of the solid */
-    replot_editing_solid();
+    replot_editing_solid(s);
 
     /* update display information */
     view_state->vs_flag = 1;
@@ -7686,7 +6127,7 @@ f_eqn(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
  * solid edit state.
  */
 static int
-sedit_apply(int accept_flag)
+sedit_apply(struct mged_state *s, int accept_flag)
 {
     struct directory *dp;
 
@@ -7721,8 +6162,8 @@ sedit_apply(int accept_flag)
     }
 
     /* make sure that any BOT solid is minimally legal */
-    if (es_int.idb_type == ID_BOT) {
-	struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+    if (s->edit_state.es_int.idb_type == ID_BOT) {
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 
 	RT_BOT_CK_MAGIC(bot);
 	if (bot->mode == RT_BOT_SURFACE || bot->mode == RT_BOT_SOLID) {
@@ -7746,11 +6187,11 @@ sedit_apply(int accept_flag)
     }
 
     /* Scale change on export is 1.0 -- no change */
-    if (rt_db_put_internal(dp, DBIP, &es_int, &rt_uniresource) < 0) {
-	Tcl_AppendResult(INTERP, "sedit_apply(", dp->d_namep,
+    if (rt_db_put_internal(dp, s->dbip, &s->edit_state.es_int, &rt_uniresource) < 0) {
+	Tcl_AppendResult(s->interp, "sedit_apply(", dp->d_namep,
 			 "):  solid export failure\n", (char *)NULL);
 	if (accept_flag) {
-	    rt_db_free_internal(&es_int);
+	    rt_db_free_internal(&s->edit_state.es_int);
 	}
 	return TCL_ERROR;				/* FAIL */
     }
@@ -7761,16 +6202,16 @@ sedit_apply(int accept_flag)
 	es_edflag = -1;
 	es_edclass = EDIT_CLASS_NULL;
 
-	rt_db_free_internal(&es_int);
+	rt_db_free_internal(&s->edit_state.es_int);
     } else {
-	/* XXX hack to restore es_int after rt_db_put_internal blows it away */
-	/* Read solid description into es_int again! Gaak! */
-	if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
-			       DBIP, NULL, &rt_uniresource) < 0) {
-	    Tcl_AppendResult(INTERP, "sedit_apply(",
+	/* XXX hack to restore s->edit_state.es_int after rt_db_put_internal blows it away */
+	/* Read solid description into s->edit_state.es_int again! Gaak! */
+	if (rt_db_get_internal(&s->edit_state.es_int, LAST_SOLID(bdata),
+			       s->dbip, NULL, &rt_uniresource) < 0) {
+	    Tcl_AppendResult(s->interp, "sedit_apply(",
 			     LAST_SOLID(bdata)->d_namep,
 			     "):  solid reimport failure\n", (char *)NULL);
-	    rt_db_free_internal(&es_int);
+	    rt_db_free_internal(&s->edit_state.es_int);
 	    return TCL_ERROR;
 	}
     }
@@ -7781,37 +6222,37 @@ sedit_apply(int accept_flag)
 
 
 void
-sedit_accept(void)
+sedit_accept(struct mged_state *s)
 {
-    if (DBIP == DBI_NULL)
+    if (s->dbip == DBI_NULL)
 	return;
 
-    if (not_state(ST_S_EDIT, "Solid edit accept"))
+    if (not_state(s, ST_S_EDIT, "Solid edit accept"))
 	return;
 
-    if (DBIP->dbi_read_only) {
-	sedit_reject();
+    if (s->dbip->dbi_read_only) {
+	sedit_reject(s);
 	bu_log("Sorry, this database is READ-ONLY\n");
-	pr_prompt(interactive);
+	pr_prompt(s);
 	return;
     }
 
     if (sedraw > 0)
-	sedit();
+	sedit(s);
 
-    (void)sedit_apply(1);
+    (void)sedit_apply(s, 1);
 }
 
 
 void
-sedit_reject(void)
+sedit_reject(struct mged_state *s)
 {
-    if (not_state(ST_S_EDIT, "Solid edit reject") || !illump) {
+    if (not_state(s, ST_S_EDIT, "Solid edit reject") || !illump) {
 	return;
     }
 
     if (sedraw > 0)
-	sedit();
+	sedit(s);
 
     es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
@@ -7838,8 +6279,8 @@ sedit_reject(void)
 	    return;
 	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
-	gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+	while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -7847,7 +6288,7 @@ sedit_reject(void)
 		    continue;
 		struct ged_bv_data *bdatas = (struct ged_bv_data *)sp->s_u_data;
 		if (LAST_SOLID(bdatas) == LAST_SOLID(bdata))
-		    (void)replot_original_solid(sp);
+		    (void)replot_original_solid(s, sp);
 	    }
 
 	    gdlp = next_gdlp;
@@ -7859,12 +6300,12 @@ sedit_reject(void)
     es_edflag = -1;
     es_edclass = EDIT_CLASS_NULL;
 
-    rt_db_free_internal(&es_int);
+    rt_db_free_internal(&s->edit_state.es_int);
 }
 
 
 int
-mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
+mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
 {
     int i;
 
@@ -7971,29 +6412,29 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 	case ECMD_METABALL_PT_MOV:
 	case ECMD_METABALL_PT_ADD:
 	    /* must convert to base units */
-	    es_para[0] *= local2base;
-	    es_para[1] *= local2base;
-	    es_para[2] *= local2base;
+	    es_para[0] *= s->dbip->dbi_local2base;
+	    es_para[1] *= s->dbip->dbi_local2base;
+	    es_para[2] *= s->dbip->dbi_local2base;
 	    /* fall through */
 	default:
 	    break;
     }
 
-    sedit();
+    sedit(s);
 
     if (SEDIT_TRAN) {
 	vect_t diff;
 	fastf_t inv_Viewscale = 1/view_state->vs_gvp->gv_scale;
 
 	VSUB2(diff, es_para, e_axes_pos);
-	VSCALE(edit_absolute_model_tran, diff, inv_Viewscale);
-	VMOVE(last_edit_absolute_model_tran, edit_absolute_model_tran);
+	VSCALE(s->edit_state.edit_absolute_model_tran, diff, inv_Viewscale);
+	VMOVE(s->edit_state.last_edit_absolute_model_tran, s->edit_state.edit_absolute_model_tran);
     } else if (SEDIT_ROTATE) {
-	VMOVE(edit_absolute_model_rotate, es_para);
+	VMOVE(s->edit_state.edit_absolute_model_rotate, es_para);
     } else if (SEDIT_SCALE) {
-	edit_absolute_scale = acc_sc_sol - 1.0;
-	if (edit_absolute_scale > 0)
-	    edit_absolute_scale /= 3.0;
+	s->edit_state.edit_absolute_scale = acc_sc_sol - 1.0;
+	if (s->edit_state.edit_absolute_scale > 0)
+	    s->edit_state.edit_absolute_scale /= 3.0;
     }
     return TCL_OK;
 }
@@ -8002,8 +6443,12 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 /* Input parameter editing changes from keyboard */
 /* Format: p dx [dy dz]		*/
 int
-f_param(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_param(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     int i;
     vect_t argvect;
 
@@ -8023,7 +6468,7 @@ f_param(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	argvect[i-1] = atof(argv[i]);
     }
 
-    return mged_param(interp, argc-1, argvect);
+    return mged_param(s, interp, argc-1, argvect);
 }
 
 
@@ -8033,6 +6478,7 @@ f_param(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
  */
 void
 label_edited_solid(
+    struct mged_state *s,
     int *num_lines,
     point_t *lines,
     struct rt_point_labels pl[],
@@ -8061,7 +6507,7 @@ label_edited_solid(
 	case ID_ARB8:
 	    {
 		struct rt_arb_internal *arb=
-		    (struct rt_arb_internal *)es_int.idb_ptr;
+		    (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ARB_CK_MAGIC(arb);
 		switch (es_type)
 		{
@@ -8105,7 +6551,7 @@ label_edited_solid(
 	case ID_TGC:
 	    {
 		struct rt_tgc_internal *tgc =
-		    (struct rt_tgc_internal *)es_int.idb_ptr;
+		    (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 		MAT4X3PNT(pos_view, xform, tgc->v);
 		POINT_LABEL(pos_view, 'V');
@@ -8131,7 +6577,7 @@ label_edited_solid(
 	case ID_ELL:
 	    {
 		struct rt_ell_internal *ell =
-		    (struct rt_ell_internal *)es_int.idb_ptr;
+		    (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_ELL_CK_MAGIC(ell);
 
 		MAT4X3PNT(pos_view, xform, ell->v);
@@ -8154,7 +6600,7 @@ label_edited_solid(
 	case ID_SUPERELL:
 	    {
 		struct rt_superell_internal *superell =
-		    (struct rt_superell_internal *)es_int.idb_ptr;
+		    (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
 		RT_SUPERELL_CK_MAGIC(superell);
 
 		MAT4X3PNT(pos_view, xform, superell->v);
@@ -8177,7 +6623,7 @@ label_edited_solid(
 	case ID_TOR:
 	    {
 		struct rt_tor_internal *tor =
-		    (struct rt_tor_internal *)es_int.idb_ptr;
+		    (struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t r3, r4;
 		vect_t adir;
 		RT_TOR_CK_MAGIC(tor);
@@ -8207,7 +6653,7 @@ label_edited_solid(
 	case ID_RPC:
 	    {
 		struct rt_rpc_internal *rpc =
-		    (struct rt_rpc_internal *)es_int.idb_ptr;
+		    (struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
 		vect_t Ru;
 
 		RT_RPC_CK_MAGIC(rpc);
@@ -8234,7 +6680,7 @@ label_edited_solid(
 	case ID_PARTICLE:
 	    {
 		struct rt_part_internal *part =
-		    (struct rt_part_internal *)es_int.idb_ptr;
+		    (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
 		vect_t Ru, ortho;
 
 		RT_PART_CK_MAGIC(part);
@@ -8263,7 +6709,7 @@ label_edited_solid(
 	case ID_RHC:
 	    {
 		struct rt_rhc_internal *rhc =
-		    (struct rt_rhc_internal *)es_int.idb_ptr;
+		    (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
 		vect_t Ru;
 
 		RT_RHC_CK_MAGIC(rhc);
@@ -8298,7 +6744,7 @@ label_edited_solid(
 	case ID_EPA:
 	    {
 		struct rt_epa_internal *epa =
-		    (struct rt_epa_internal *)es_int.idb_ptr;
+		    (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
 		vect_t A, B;
 
 		RT_EPA_CK_MAGIC(epa);
@@ -8326,7 +6772,7 @@ label_edited_solid(
 	case ID_EHY:
 	    {
 		struct rt_ehy_internal *ehy =
-		    (struct rt_ehy_internal *)es_int.idb_ptr;
+		    (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
 		vect_t A, B;
 
 		RT_EHY_CK_MAGIC(ehy);
@@ -8362,7 +6808,7 @@ label_edited_solid(
 	case ID_HYP:
 	    {
 		struct rt_hyp_internal *hyp =
-		    (struct rt_hyp_internal *)es_int.idb_ptr;
+		    (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
 		vect_t vB;
 
 		RT_HYP_CK_MAGIC(hyp);
@@ -8390,7 +6836,7 @@ label_edited_solid(
 	case ID_ETO:
 	    {
 		struct rt_eto_internal *eto =
-		    (struct rt_eto_internal *)es_int.idb_ptr;
+		    (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
 		fastf_t ch, cv, dh, dv, cmag, phi;
 		vect_t Au, Nu;
 
@@ -8430,7 +6876,7 @@ label_edited_solid(
 	case ID_ARS:
 	    {
 		struct rt_ars_internal *ars=
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_ARS_CK_MAGIC(ars);
 
@@ -8450,7 +6896,7 @@ label_edited_solid(
 	case ID_BSPLINE:
 	    {
 		struct rt_nurb_internal *sip =
-		    (struct rt_nurb_internal *) es_int.idb_ptr;
+		    (struct rt_nurb_internal *) s->edit_state.es_int.idb_ptr;
 		struct face_g_snurb *surf;
 		fastf_t *fp;
 
@@ -8480,7 +6926,7 @@ label_edited_solid(
 	    {
 #ifndef NO_MAGIC_CHECKING
 		struct model *m =
-		    (struct model *) es_int.idb_ptr;
+		    (struct model *) s->edit_state.es_int.idb_ptr;
 		NMG_CK_MODEL(m);
 #endif
 
@@ -8500,7 +6946,7 @@ label_edited_solid(
 	    {
 #ifndef NO_MAGIC_CHECKING
 		struct rt_pipe_internal *pipeip =
-		    (struct rt_pipe_internal *)es_int.idb_ptr;
+		    (struct rt_pipe_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_PIPE_CK_MAGIC(pipeip);
 #endif
@@ -8516,7 +6962,7 @@ label_edited_solid(
 	case ID_CLINE:
 	    {
 		struct rt_cline_internal *cli =
-		    (struct rt_cline_internal *)es_int.idb_ptr;
+		    (struct rt_cline_internal *)s->edit_state.es_int.idb_ptr;
 		point_t work1;
 
 		RT_CLINE_CK_MAGIC(cli);
@@ -8532,7 +6978,7 @@ label_edited_solid(
 	case ID_BOT:
 	    {
 		struct rt_bot_internal *bot =
-		    (struct rt_bot_internal *)es_int.idb_ptr;
+		    (struct rt_bot_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_BOT_CK_MAGIC(bot);
 
@@ -8580,7 +7026,7 @@ label_edited_solid(
 	    {
 #ifndef NO_MAGIC_CHECKING
 		struct rt_metaball_internal *metaball =
-		    (struct rt_metaball_internal *)es_int.idb_ptr;
+		    (struct rt_metaball_internal *)s->edit_state.es_int.idb_ptr;
 
 		RT_METABALL_CK_MAGIC(metaball);
 #endif
@@ -8602,7 +7048,7 @@ label_edited_solid(
 
 /* -------------------------------- */
 void
-sedit_vpick(point_t v_pos)
+sedit_vpick(struct mged_state *s, point_t v_pos)
 {
     point_t m_pos;
     int surfno, u, v;
@@ -8610,14 +7056,14 @@ sedit_vpick(point_t v_pos)
     MAT4X3PNT(m_pos, view_state->vs_objview2model, v_pos);
 
     if (nurb_closest2d(&surfno, &u, &v,
-		       (struct rt_nurb_internal *)es_int.idb_ptr,
+		       (struct rt_nurb_internal *)s->edit_state.es_int.idb_ptr,
 		       m_pos, view_state->vs_model2objview) >= 0) {
 	spl_surfno = surfno;
 	spl_ui = u;
 	spl_vi = v;
-	get_solid_keypoint(es_keypoint, &es_keytag, &es_int, es_mat);
+	get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
     }
-    chg_state(ST_S_VPICK, ST_S_EDIT, "Vertex Pick Complete");
+    chg_state(s, ST_S_VPICK, ST_S_EDIT, "Vertex Pick Complete");
     view_state->vs_flag = 1;
 }
 
@@ -8697,8 +7143,12 @@ nurb_closest2d(
 
 
 int
-f_keypoint(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     CHECK_DBI_NULL;
 
     if (argc < 1 || 4 < argc) {
@@ -8710,8 +7160,8 @@ f_keypoint(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 	return TCL_ERROR;
     }
 
-    if ((STATE != ST_S_EDIT) && (STATE != ST_O_EDIT)) {
-	state_err("keypoint assignment");
+    if ((GEOM_EDIT_STATE != ST_S_EDIT) && (GEOM_EDIT_STATE != ST_O_EDIT)) {
+	state_err(s, "keypoint assignment");
 	return TCL_ERROR;
     }
 
@@ -8721,7 +7171,7 @@ f_keypoint(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t key;
 
-		VSCALE(key, es_keypoint, base2local);
+		VSCALE(key, es_keypoint, s->dbip->dbi_base2local);
 		bu_vls_printf(&tmp_vls, "%s (%g, %g, %g)\n", es_keytag, V3ARGS(key));
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
@@ -8730,9 +7180,9 @@ f_keypoint(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 	    break;
 	case 3:
 	    VSET(es_keypoint,
-		 atof(argv[1]) * local2base,
-		 atof(argv[2]) * local2base,
-		 atof(argv[3]) * local2base);
+		 atof(argv[1]) * s->dbip->dbi_local2base,
+		 atof(argv[2]) * s->dbip->dbi_local2base,
+		 atof(argv[3]) * s->dbip->dbi_local2base);
 	    es_keytag = "user-specified";
 	    es_keyfixed = 1;
 	    break;
@@ -8740,8 +7190,8 @@ f_keypoint(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 	    if (BU_STR_EQUAL(argv[1], "reset")) {
 		es_keytag = "";
 		es_keyfixed = 0;
-		get_solid_keypoint(es_keypoint, &es_keytag,
-				   &es_int, es_mat);
+		get_solid_keypoint(s, es_keypoint, &es_keytag,
+				   &s->edit_state.es_int, es_mat);
 		break;
 	    }
 	    /* fall through */
@@ -8756,15 +7206,19 @@ f_keypoint(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 
 
 int
-f_get_sedit_menus(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc), const char *UNUSED(argv[]))
+f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct menu_item *mip = (struct menu_item *)NULL;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (STATE != ST_S_EDIT)
+    if (GEOM_EDIT_STATE != ST_S_EDIT)
 	return TCL_ERROR;
 
-    switch (es_int.idb_type) {
+    switch (s->edit_state.es_int.idb_type) {
 	case ID_ARB8:
 	    {
 		struct bu_vls vls2 = BU_VLS_INIT_ZERO;
@@ -8832,7 +7286,7 @@ f_get_sedit_menus(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(
 
 	    break;
 	default:
-	    switch (es_int.idb_type) {
+	    switch (s->edit_state.es_int.idb_type) {
 		case ID_TGC:
 		    mip = tgc_menu;
 		    break;
@@ -8918,8 +7372,12 @@ f_get_sedit_menus(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(
 
 
 int
-f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     int status;
     struct rt_db_internal ces_int;
     Tcl_Obj *pto;
@@ -8934,7 +7392,7 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_ERROR;
     }
 
-    if (STATE != ST_S_EDIT || !illump) {
+    if (GEOM_EDIT_STATE != ST_S_EDIT || !illump) {
 	Tcl_AppendResult(interp, "get_sed: must be in solid edit state", (char *)0);
 	return TCL_ERROR;
     }
@@ -8947,9 +7405,9 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	struct bu_vls logstr = BU_VLS_INIT_ZERO;
 
 	/* get solid type and parameters */
-	RT_CK_DB_INTERNAL(&es_int);
-	RT_CK_FUNCTAB(es_int.idb_meth);
-	status = es_int.idb_meth->ft_get(&logstr, &es_int, (char *)0);
+	RT_CK_DB_INTERNAL(&s->edit_state.es_int);
+	RT_CK_FUNCTAB(s->edit_state.es_int.idb_meth);
+	status = s->edit_state.es_int.idb_meth->ft_get(&logstr, &s->edit_state.es_int, (char *)0);
 	Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)0);
 	pto = Tcl_GetObjResult(interp);
 
@@ -8971,7 +7429,7 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     /* apply matrices along the path */
     RT_DB_INTERNAL_INIT(&ces_int);
-    transform_editing_solid(&ces_int, es_mat, &es_int, 0);
+    transform_editing_solid(s, &ces_int, es_mat, &s->edit_state.es_int, 0);
 
     /* get solid type and parameters */
     RT_CK_DB_INTERNAL(&ces_int);
@@ -9007,8 +7465,12 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
 
 int
-f_put_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     const struct rt_functab *ftp;
     uint32_t save_magic;
     int context;
@@ -9023,7 +7485,7 @@ f_put_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_ERROR;
     }
 
-    if (STATE != ST_S_EDIT) {
+    if (GEOM_EDIT_STATE != ST_S_EDIT) {
 	Tcl_AppendResult(interp, "put_sed: must be in solid edit state", (char *)0);
 	return TCL_ERROR;
     }
@@ -9045,59 +7507,62 @@ f_put_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_ERROR;
     }
 
-    RT_CK_FUNCTAB(es_int.idb_meth);
-    if (es_int.idb_meth != ftp) {
+    RT_CK_FUNCTAB(s->edit_state.es_int.idb_meth);
+    if (s->edit_state.es_int.idb_meth != ftp) {
 	Tcl_AppendResult(interp,
 			 "put_sed: idb_meth type mismatch",
 			 (char *)0);
     }
 
-    save_magic = *((uint32_t *)es_int.idb_ptr);
-    *((uint32_t *)es_int.idb_ptr) = ftp->ft_internal_magic;
+    save_magic = *((uint32_t *)s->edit_state.es_int.idb_ptr);
+    *((uint32_t *)s->edit_state.es_int.idb_ptr) = ftp->ft_internal_magic;
     {
 	int ret;
 	struct bu_vls vlog = BU_VLS_INIT_ZERO;
 
-	ret = bu_structparse_argv(&vlog, argc-2, argv+2, ftp->ft_parsetab, (char *)es_int.idb_ptr, NULL);
+	ret = bu_structparse_argv(&vlog, argc-2, argv+2, ftp->ft_parsetab, (char *)s->edit_state.es_int.idb_ptr, NULL);
 	Tcl_AppendResult(interp, bu_vls_addr(&vlog), (char *)NULL);
 	bu_vls_free(&vlog);
 	if (ret != BRLCAD_OK)
 	    return TCL_ERROR;
     }
-    *((uint32_t *)es_int.idb_ptr) = save_magic;
+    *((uint32_t *)s->edit_state.es_int.idb_ptr) = save_magic;
 
     if (context)
-	transform_editing_solid(&es_int, es_invmat, &es_int, 1);
+	transform_editing_solid(s, &s->edit_state.es_int, es_invmat, &s->edit_state.es_int, 1);
 
     /* must re-calculate the face plane equations for arbs */
-    if (es_int.idb_type == ID_ARB8) {
+    if (s->edit_state.es_int.idb_type == ID_ARB8) {
 	struct rt_arb_internal *arb;
 	struct bu_vls error_msg = BU_VLS_INIT_ZERO;
 
-	arb = (struct rt_arb_internal *)es_int.idb_ptr;
+	arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arb);
 
-	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol) < 0)
+	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &s->tol.tol) < 0)
 	    Tcl_AppendResult(interp, bu_vls_addr(&error_msg), (char *)0);
 	bu_vls_free(&error_msg);
     }
 
     if (!es_keyfixed)
-	get_solid_keypoint(es_keypoint, &es_keytag, &es_int, es_mat);
+	get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
 
-    set_e_axes_pos(0);
-    replot_editing_solid();
+    set_e_axes_pos(s, 0);
+    replot_editing_solid(s);
 
     return TCL_OK;
 }
 
 
 int
-f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *UNUSED(argv[]))
+f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (STATE != ST_S_EDIT || !illump)
+    if (GEOM_EDIT_STATE != ST_S_EDIT || !illump)
 	return TCL_ERROR;
 
     if (argc != 1) {
@@ -9108,7 +7573,7 @@ f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
     }
 
     /* free old copy */
-    rt_db_free_internal(&es_int);
+    rt_db_free_internal(&s->edit_state.es_int);
 
     /* reset */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL;
@@ -9120,8 +7585,8 @@ f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
     if (!illump || !illump->s_u_data)
 	return TCL_ERROR;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
-			   DBIP, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&s->edit_state.es_int, LAST_SOLID(bdata),
+			   s->dbip, NULL, &rt_uniresource) < 0) {
 	if (bdata->s_fullpath.fp_len > 0) {
 	    Tcl_AppendResult(interp, "sedit_reset(",
 		    LAST_SOLID(bdata)->d_namep,
@@ -9132,34 +7597,34 @@ f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 	}
 	return TCL_ERROR;				/* FAIL */
     }
-    RT_CK_DB_INTERNAL(&es_int);
-    replot_editing_solid();
+    RT_CK_DB_INTERNAL(&s->edit_state.es_int);
+    replot_editing_solid(s);
 
     /* Establish initial keypoint */
     es_keytag = "";
-    get_solid_keypoint(es_keypoint, &es_keytag, &es_int, es_mat);
+    get_solid_keypoint(s, es_keypoint, &es_keytag, &s->edit_state.es_int, es_mat);
 
     /* Reset relevant variables */
     MAT_IDN(acc_rot_sol);
-    VSETALL(edit_absolute_model_rotate, 0.0);
-    VSETALL(edit_absolute_object_rotate, 0.0);
-    VSETALL(edit_absolute_view_rotate, 0.0);
-    VSETALL(last_edit_absolute_model_rotate, 0.0);
-    VSETALL(last_edit_absolute_object_rotate, 0.0);
-    VSETALL(last_edit_absolute_view_rotate, 0.0);
-    VSETALL(edit_absolute_model_tran, 0.0);
-    VSETALL(edit_absolute_view_tran, 0.0);
-    VSETALL(last_edit_absolute_model_tran, 0.0);
-    VSETALL(last_edit_absolute_view_tran, 0.0);
-    edit_absolute_scale = 0.0;
+    VSETALL(s->edit_state.edit_absolute_model_rotate, 0.0);
+    VSETALL(s->edit_state.edit_absolute_object_rotate, 0.0);
+    VSETALL(s->edit_state.edit_absolute_view_rotate, 0.0);
+    VSETALL(s->edit_state.last_edit_absolute_model_rotate, 0.0);
+    VSETALL(s->edit_state.last_edit_absolute_object_rotate, 0.0);
+    VSETALL(s->edit_state.last_edit_absolute_view_rotate, 0.0);
+    VSETALL(s->edit_state.edit_absolute_model_tran, 0.0);
+    VSETALL(s->edit_state.edit_absolute_view_tran, 0.0);
+    VSETALL(s->edit_state.last_edit_absolute_model_tran, 0.0);
+    VSETALL(s->edit_state.last_edit_absolute_view_tran, 0.0);
+    s->edit_state.edit_absolute_scale = 0.0;
     acc_sc_sol = 1.0;
-    VSETALL(edit_rate_model_rotate, 0.0);
-    VSETALL(edit_rate_object_rotate, 0.0);
-    VSETALL(edit_rate_view_rotate, 0.0);
-    VSETALL(edit_rate_model_tran, 0.0);
-    VSETALL(edit_rate_view_tran, 0.0);
+    VSETALL(s->edit_state.edit_rate_model_rotate, 0.0);
+    VSETALL(s->edit_state.edit_rate_object_rotate, 0.0);
+    VSETALL(s->edit_state.edit_rate_view_rotate, 0.0);
+    VSETALL(s->edit_state.edit_rate_model_tran, 0.0);
+    VSETALL(s->edit_state.edit_rate_view_tran, 0.0);
 
-    set_e_axes_pos(1);
+    set_e_axes_pos(s, 1);
     update_views = 1;
     dm_set_dirty(DMP, 1);
 
@@ -9173,21 +7638,25 @@ f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 
 
 int
-f_sedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc), const char *UNUSED(argv[]))
+f_sedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     CHECK_DBI_NULL;
 
-    if (not_state(ST_S_EDIT, "Solid edit apply")) {
+    if (not_state(s, ST_S_EDIT, "Solid edit apply")) {
 	return TCL_ERROR;
     }
 
     if (sedraw > 0)
-	sedit();
+	sedit(s);
 
-    init_sedit_vars();
-    (void)sedit_apply(0);
+    init_sedit_vars(s);
+    (void)sedit_apply(s, 0);
 
     /* active edit callback */
     bu_vls_printf(&vls, "active_edit_callback");
@@ -9199,11 +7668,15 @@ f_sedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc
 
 
 int
-f_oedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *UNUSED(argv[]))
+f_oedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (STATE != ST_O_EDIT)
+    if (GEOM_EDIT_STATE != ST_O_EDIT)
 	return TCL_ERROR;
 
     if (argc != 1) {
@@ -9213,10 +7686,10 @@ f_oedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 	return TCL_ERROR;
     }
 
-    oedit_reject();
-    init_oedit_guts();
+    oedit_reject(s);
+    init_oedit_guts(s);
 
-    new_edit_mats();
+    new_edit_mats(s);
     update_views = 1;
     dm_set_dirty(DMP, 1);
 
@@ -9230,13 +7703,17 @@ f_oedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 
 
 int
-f_oedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc), const char *UNUSED(argv[]))
+f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const char *UNUSED(argv[]))
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     char *strp="";
 
     CHECK_DBI_NULL;
-    oedit_apply(UP); /* apply changes, but continue editing */
+    oedit_apply(s, UP); /* apply changes, but continue editing */
 
     if (!illump->s_u_data)
 	return TCL_ERROR;
@@ -9244,14 +7721,14 @@ f_oedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc
 
     /* Save aggregate path matrix */
     MAT_IDN(es_mat);
-    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, es_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
 
-    get_solid_keypoint(es_keypoint, &strp, &es_int, es_mat);
-    init_oedit_vars();
-    new_edit_mats();
+    get_solid_keypoint(s, es_keypoint, &strp, &s->edit_state.es_int, es_mat);
+    init_oedit_vars(s);
+    new_edit_mats(s);
     update_views = 1;
     dm_set_dirty(DMP, 1);
 

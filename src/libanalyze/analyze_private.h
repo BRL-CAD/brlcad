@@ -1,7 +1,7 @@
 /*               A N A L Y Z E _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2015-2024 United States Government as represented by
+ * Copyright (c) 2015-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -165,7 +165,7 @@ struct current_state {
     fastf_t *m_moi;       /* one vector per view for collecting the partial moments of inertia calculation */
     fastf_t *m_poi;       /* one vector per view for collecting the partial products of inertia calculation */
 
-    /* single gird variables */
+    /* single grid variables */
     mat_t Viewrotscale;
     fastf_t viewsize;
     mat_t model2view;

@@ -1,7 +1,7 @@
 /*                          P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2315,7 +2315,7 @@ rt_pipe_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const st
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     pipeobj = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pipeobj);
 
@@ -2363,7 +2363,7 @@ rt_pipe_plot(
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pip);
 
@@ -2407,7 +2407,8 @@ tesselate_pipe_start(
     fastf_t *r1,
     fastf_t *r2,
     struct shell *s,
-    const struct bn_tol *tol)
+    const struct bn_tol *tol,
+    struct bu_list *vlfree)
 {
     struct faceuse *fu;
     struct loopuse *lu;
@@ -2499,7 +2500,7 @@ tesselate_pipe_start(
 	nmg_vertex_gv(vu->v_p, pipe_pnt->pp_coord);
     }
 
-    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+    if (nmg_calc_face_g(fu, vlfree)) {
 	bu_bomb("tesselate_pipe_start: nmg_calc_face_g failed\n");
     }
 
@@ -2530,7 +2531,8 @@ tesselate_pipe_linear(
     fastf_t *r1,
     fastf_t *r2,
     struct shell *s,
-    const struct bn_tol *tol)
+    const struct bn_tol *tol,
+    struct bu_list *vlfree)
 {
     struct vertex **new_outer_loop = NULL;
     struct vertex **new_inner_loop = NULL;
@@ -2593,7 +2595,7 @@ tesselate_pipe_linear(
 
 	    if (fu_prev) {
 		nmg_vertex_gv(new_outer_loop[i], pt);
-		if (nmg_calc_face_g(fu_prev,&RTG.rtg_vlfree)) {
+		if (nmg_calc_face_g(fu_prev, vlfree)) {
 		    bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu_prev);
 		} else {
@@ -2655,7 +2657,7 @@ tesselate_pipe_linear(
 		nmg_vertex_gv(new_outer_loop[i], pt);
 	    }
 
-	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	    if (nmg_calc_face_g(fu, vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -2708,7 +2710,7 @@ tesselate_pipe_linear(
 		continue;
 	    }
 	    if (i == arc_segs - 1) {
-		if (nmg_calc_face_g(fu_prev,&RTG.rtg_vlfree)) {
+		if (nmg_calc_face_g(fu_prev, vlfree)) {
 		    bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu_prev);
 		}
@@ -2747,7 +2749,7 @@ tesselate_pipe_linear(
 		VUNITIZE(norms[j]);
 	    }
 
-	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	    if (nmg_calc_face_g(fu, vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -2839,7 +2841,7 @@ tesselate_pipe_linear(
 	    if (!new_outer_loop[j]->vg_p) {
 		nmg_vertex_gv(new_outer_loop[j], pt_next);
 	    }
-	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	    if (nmg_calc_face_g(fu, vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -2913,7 +2915,7 @@ tesselate_pipe_linear(
 
 	    if (fu_prev) {
 		nmg_vertex_gv(new_inner_loop[i], pt);
-		if (nmg_calc_face_g(fu_prev,&RTG.rtg_vlfree)) {
+		if (nmg_calc_face_g(fu_prev, vlfree)) {
 		    bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu_prev);
 		} else {
@@ -2975,7 +2977,7 @@ tesselate_pipe_linear(
 		nmg_vertex_gv(new_inner_loop[i], pt);
 	    }
 
-	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	    if (nmg_calc_face_g(fu, vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -3033,7 +3035,7 @@ tesselate_pipe_linear(
 		continue;
 	    }
 	    if (i == arc_segs - 1) {
-		if (nmg_calc_face_g(fu_prev,&RTG.rtg_vlfree)) {
+		if (nmg_calc_face_g(fu_prev, vlfree)) {
 		    bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu_prev);
 		}
@@ -3075,7 +3077,7 @@ tesselate_pipe_linear(
 		VREVERSE(norms[j], norms[j]);
 	    }
 
-	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	    if (nmg_calc_face_g(fu, vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -3167,7 +3169,7 @@ tesselate_pipe_linear(
 	    if (!new_inner_loop[j]->vg_p) {
 		nmg_vertex_gv(new_inner_loop[j], pt_next);
 	    }
-	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	    if (nmg_calc_face_g(fu, vlfree)) {
 		bu_log("tesselate_pipe_linear: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -3229,7 +3231,8 @@ tesselate_pipe_bend(
     fastf_t *start_r2,
     struct shell *s,
     const struct bn_tol *tol,
-    const struct bg_tess_tol *ttol)
+    const struct bg_tess_tol *ttol,
+    struct bu_list *vlfree)
 {
     struct vertex **new_outer_loop = NULL;
     struct vertex **new_inner_loop = NULL;
@@ -3360,7 +3363,7 @@ tesselate_pipe_bend(
 		if (!new_outer_loop[i]->vg_p) {
 		    nmg_vertex_gv(new_outer_loop[i], pt);
 		}
-		if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+		if (nmg_calc_face_g(fu, vlfree)) {
 		    bu_log("tesselate_pipe_bend: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu);
 		} else {
@@ -3429,7 +3432,7 @@ tesselate_pipe_bend(
 		if (!(*verts[2])->vg_p) {
 		    nmg_vertex_gv(*verts[2], pt);
 		}
-		if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+		if (nmg_calc_face_g(fu, vlfree)) {
 		    bu_log("tesselate_pipe_bend: nmg_calc_face_g failed\n");
 		    nmg_kfu(fu);
 		} else {
@@ -3539,7 +3542,7 @@ tesselate_pipe_bend(
 	    if (!new_inner_loop[i]->vg_p) {
 		nmg_vertex_gv(new_inner_loop[i], pt);
 	    }
-	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	    if (nmg_calc_face_g(fu, vlfree)) {
 		bu_log("tesselate_pipe_bend: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -3599,7 +3602,7 @@ tesselate_pipe_bend(
 	    if (!(*verts[2])->vg_p) {
 		nmg_vertex_gv(*verts[2], pt);
 	    }
-	    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+	    if (nmg_calc_face_g(fu, vlfree)) {
 		bu_log("tesselate_pipe_bend: nmg_calc_face_g failed\n");
 		nmg_kfu(fu);
 	    } else {
@@ -3659,7 +3662,8 @@ tesselate_pipe_end(
     struct vertex ***outer_loop,
     struct vertex ***inner_loop,
     struct shell *s,
-    const struct bn_tol *tol)
+    const struct bn_tol *tol,
+    struct bu_list *vlfree)
 {
     struct wdb_pipe_pnt *prev;
     struct faceuse *fu;
@@ -3681,7 +3685,7 @@ tesselate_pipe_end(
 	return;
     }
     fu = fu->fumate_p;
-    if (nmg_calc_face_g(fu,&RTG.rtg_vlfree)) {
+    if (nmg_calc_face_g(fu, vlfree)) {
 	bu_log("tesselate_pipe_end: nmg_calc_face_g failed\n");
 	nmg_kfu(fu);
 	return;
@@ -3740,6 +3744,7 @@ rt_pipe_tess(
     const struct bg_tess_tol *ttol,
     const struct bn_tol *tol)
 {
+    struct bu_list *vlfree = &rt_vlfree;
     struct wdb_pipe_pnt *pp1;
     struct wdb_pipe_pnt *pp2;
     struct wdb_pipe_pnt *pp3;
@@ -3772,7 +3777,7 @@ rt_pipe_tess(
     *r = (struct nmgregion *)NULL;
 
     if (BU_LIST_IS_EMPTY(&pip->pipe_segs_head)) {
-	return 0;    /* nothing to tesselate */
+	return 0;    /* nothing to tessellate */
     }
 
     pp1 = BU_LIST_FIRST(wdb_pipe_pnt, &pip->pipe_segs_head);
@@ -3790,7 +3795,7 @@ rt_pipe_tess(
     }
 
     if (max_diam <= tol->dist) {
-	return 0;    /* nothing to tesselate */
+	return 0;    /* nothing to tessellate */
     }
 
     /* calculate pipe size for relative tolerance */
@@ -3830,7 +3835,7 @@ rt_pipe_tess(
 
     pp1 = BU_LIST_FIRST(wdb_pipe_pnt, &(pip->pipe_segs_head));
     tesselate_pipe_start(pp1, arc_segs, sin_del, cos_del,
-			 &outer_loop, &inner_loop, r1, r2, s, tol);
+			 &outer_loop, &inner_loop, r1, r2, s, tol, vlfree);
 
     pp2 = BU_LIST_NEXT(wdb_pipe_pnt, &pp1->l);
     if (BU_LIST_IS_HEAD(&pp2->l, &(pip->pipe_segs_head))) {
@@ -3856,7 +3861,7 @@ rt_pipe_tess(
 	    /* last segment */
 	    tesselate_pipe_linear(curr_pt, curr_od / 2.0, curr_id / 2.0,
 				  pp2->pp_coord, pp2->pp_od / 2.0, pp2->pp_id / 2.0,
-				  arc_segs, sin_del, cos_del, &outer_loop, &inner_loop, r1, r2, s, tol);
+				  arc_segs, sin_del, cos_del, &outer_loop, &inner_loop, r1, r2, s, tol, vlfree);
 	    break;
 	}
 
@@ -3872,7 +3877,7 @@ rt_pipe_tess(
 	    /* points are collinear, treat as a linear segment */
 	    tesselate_pipe_linear(curr_pt, curr_od / 2.0, curr_id / 2.0,
 				  pp2->pp_coord, pp2->pp_od / 2.0, pp2->pp_id / 2.0,
-				  arc_segs, sin_del, cos_del, &outer_loop, &inner_loop, r1, r2, s, tol);
+				  arc_segs, sin_del, cos_del, &outer_loop, &inner_loop, r1, r2, s, tol, vlfree);
 
 	    VMOVE(curr_pt, pp2->pp_coord);
 	    curr_id = pp2->pp_id;
@@ -3890,7 +3895,7 @@ rt_pipe_tess(
 	VJOIN1(bend_start, pp2->pp_coord, dist_to_bend, n1);
 	tesselate_pipe_linear(curr_pt, curr_od / 2.0, curr_id / 2.0,
 			      bend_start, pp2->pp_od / 2.0, pp2->pp_id / 2.0,
-			      arc_segs, sin_del, cos_del, &outer_loop, &inner_loop, r1, r2, s, tol);
+			      arc_segs, sin_del, cos_del, &outer_loop, &inner_loop, r1, r2, s, tol, vlfree);
 
 	/* and bend section */
 	VJOIN1(bend_end, pp2->pp_coord, dist_to_bend, n2);
@@ -3898,7 +3903,7 @@ rt_pipe_tess(
 	VJOIN1(bend_center, bend_start, -pp2->pp_bendradius, v1);
 	tesselate_pipe_bend(bend_start, bend_end, bend_center, curr_od / 2.0, curr_id / 2.0,
 			    arc_segs, sin_del, cos_del, &outer_loop, &inner_loop,
-			    r1, r2, s, tol, ttol);
+			    r1, r2, s, tol, ttol, vlfree);
 
 	VMOVE(curr_pt, bend_end);
 	curr_id = pp2->pp_id;
@@ -3911,13 +3916,13 @@ rt_pipe_tess(
 	}
     }
 
-    tesselate_pipe_end(pp2, arc_segs, &outer_loop, &inner_loop, s, tol);
+    tesselate_pipe_end(pp2, arc_segs, &outer_loop, &inner_loop, s, tol, vlfree);
 
     bu_free((char *)outer_loop, "rt_pipe_tess: outer_loop");
     bu_free((char *)inner_loop, "rt_pipe_tess: inner_loop");
 
     nmg_rebound(m, tol);
-    nmg_edge_fuse(&s->l.magic, &RTG.rtg_vlfree, tol);
+    nmg_edge_fuse(&s->l.magic, vlfree, tol);
 
     return 0;
 }
@@ -4079,6 +4084,36 @@ rt_pipe_export4(
     return 0;
 }
 
+int
+rt_pipe_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_pipe_internal *tip = (struct rt_pipe_internal *)ip->idb_ptr;
+    RT_PIPE_CK_MAGIC(tip);
+    struct rt_pipe_internal *top = (struct rt_pipe_internal *)rop->idb_ptr;
+    RT_PIPE_CK_MAGIC(top);
+
+    if (tip->pipe_count != top->pipe_count)
+	return BRLCAD_ERROR;
+
+    struct wdb_pipe_pnt *in_pipe_pnt, *out_pipe_pnt;
+    in_pipe_pnt = BU_LIST_FIRST(wdb_pipe_pnt, &tip->pipe_segs_head);
+    out_pipe_pnt = BU_LIST_FIRST(wdb_pipe_pnt, &top->pipe_segs_head);
+    while (BU_LIST_NOT_HEAD(&in_pipe_pnt->l, &tip->pipe_segs_head)) {
+	vect_t v;
+	VMOVE(v, in_pipe_pnt->pp_coord);
+	MAT4X3PNT(out_pipe_pnt->pp_coord, mat, v);
+	out_pipe_pnt->pp_id         = in_pipe_pnt->pp_id / mat[15];
+	out_pipe_pnt->pp_od         = in_pipe_pnt->pp_od / mat[15];
+	out_pipe_pnt->pp_bendradius = in_pipe_pnt->pp_bendradius / mat[15];
+	in_pipe_pnt = BU_LIST_NEXT(wdb_pipe_pnt, &in_pipe_pnt->l);
+	out_pipe_pnt = BU_LIST_NEXT(wdb_pipe_pnt, &out_pipe_pnt->l);
+    }
+
+    return BRLCAD_OK;
+}
 
 int
 rt_pipe_import5(
@@ -4131,22 +4166,21 @@ rt_pipe_import5(
      * same structures as libwdb.
      */
     BU_LIST_INIT(&pip->pipe_segs_head);
-    if (mat == NULL) {
-	mat = bn_mat_identity;
-    }
     for (i = 0; i < double_count; i += 6) {
-	/* Apply modeling transformations */
 	BU_ALLOC(ptp, struct wdb_pipe_pnt);
 	ptp->l.magic = WDB_PIPESEG_MAGIC;
-	MAT4X3PNT(ptp->pp_coord, mat, &vec[i]);
-	ptp->pp_id =		vec[i + 3] / mat[15];
-	ptp->pp_od =		vec[i + 4] / mat[15];
-	ptp->pp_bendradius =	vec[i + 5] / mat[15];
+	VMOVE(ptp->pp_coord, &vec[i]);
+	ptp->pp_id =		vec[i + 3];
+	ptp->pp_od =		vec[i + 4];
+	ptp->pp_bendradius =	vec[i + 5];
 	BU_LIST_INSERT(&pip->pipe_segs_head, &ptp->l);
     }
-
     bu_free((void *)vec, "rt_pipe_import5: vec");
-    return 0;			/* OK */
+
+    /* Apply modeling transformations */
+    if (mat == NULL)
+	mat = bn_mat_identity;
+    return rt_pipe_mat(ip, mat, ip);
 }
 
 
@@ -4877,6 +4911,252 @@ rt_pipe_centroid(point_t *cent, struct rt_db_internal *ip)
     pipe_elements_free(&head);
 }
 
+/*
+ * Returns the index for the pipe segment matching ps.
+ */
+int
+rt_pipe_get_i_seg(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps)
+{
+    struct wdb_pipe_pnt *curr_ps;
+    int seg_i = 0;
+
+    for (BU_LIST_FOR(curr_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
+	if (curr_ps == ps)
+	    return seg_i;
+
+	++seg_i;
+    }
+
+    return -1;
+}
+
+
+/*
+ * Returns segment seg_i.
+ */
+struct wdb_pipe_pnt *
+rt_pipe_get_seg_i(struct rt_pipe_internal *pipeip, int seg_i)
+{
+    int i = 0;
+    struct wdb_pipe_pnt *curr_ps;
+
+    for (BU_LIST_FOR(curr_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
+	if (i == seg_i)
+	    return curr_ps;
+
+	++i;
+    }
+
+    return (struct wdb_pipe_pnt *)NULL;
+}
+
+int
+rt_pipe_move_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps, const point_t new_pt)
+{
+    point_t old_pt;
+
+    RT_PIPE_CK_MAGIC(pipeip);
+    BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "pipe segment");
+
+    VMOVE(old_pt, ps->pp_coord);
+
+    VMOVE(ps->pp_coord, new_pt);
+    if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
+	bu_log("Cannot move point there\n");
+	VMOVE(ps->pp_coord, old_pt);
+	return 1;
+    }
+
+    return 0;
+}
+
+struct wdb_pipe_pnt *
+rt_pipe_add_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const point_t new_pt)
+{
+    struct wdb_pipe_pnt *last;
+    struct wdb_pipe_pnt *newpp;
+
+    RT_PIPE_CK_MAGIC(pipeip);
+
+    if (pp) {
+	BU_CKMAG(pp, WDB_PIPESEG_MAGIC, "pipe point");
+	last = pp;
+    } else {
+	/* add new point to end of pipe solid */
+	last = BU_LIST_LAST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
+
+	if (last->l.magic == BU_LIST_HEAD_MAGIC) {
+	    BU_GET(newpp, struct wdb_pipe_pnt);
+	    newpp->l.magic = WDB_PIPESEG_MAGIC;
+	    newpp->pp_od = 30.0;
+	    newpp->pp_id = 0.0;
+	    newpp->pp_bendradius = 40.0;
+	    VMOVE(newpp->pp_coord, new_pt);
+	    BU_LIST_INSERT(&pipeip->pipe_segs_head, &newpp->l);
+	    return newpp;
+	}
+    }
+
+    /* build new point */
+    BU_GET(newpp, struct wdb_pipe_pnt);
+    newpp->l.magic = WDB_PIPESEG_MAGIC;
+    newpp->pp_od = last->pp_od;
+    newpp->pp_id = last->pp_id;
+    newpp->pp_bendradius = last->pp_bendradius;
+    VMOVE(newpp->pp_coord, new_pt);
+
+    if (pp) {
+	/* append after current point */
+	BU_LIST_APPEND(&pp->l, &newpp->l);
+    } else {
+	/* add to end of pipe solid */
+	BU_LIST_INSERT(&pipeip->pipe_segs_head, &newpp->l);
+    }
+
+    if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
+	/* won't work here, so refuse to do it */
+	BU_LIST_DEQUEUE(&newpp->l);
+	BU_PUT(newpp, struct wdb_pipe_pnt);
+	return pp;
+    }
+
+    return newpp;
+}
+
+struct wdb_pipe_pnt *
+rt_pipe_ins_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const point_t new_pt)
+{
+    struct wdb_pipe_pnt *first;
+    struct wdb_pipe_pnt *newpp;
+
+    RT_PIPE_CK_MAGIC(pipeip);
+
+    if (pp) {
+	BU_CKMAG(pp, WDB_PIPESEG_MAGIC, "pipe point");
+	first = pp;
+    } else {
+	/* insert new point at start of pipe solid */
+	first = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
+
+	if (first->l.magic == BU_LIST_HEAD_MAGIC) {
+	    BU_GET(newpp, struct wdb_pipe_pnt);
+	    newpp->l.magic = WDB_PIPESEG_MAGIC;
+	    newpp->pp_od = 30.0;
+	    newpp->pp_id = 0.0;
+	    newpp->pp_bendradius = 40.0;
+	    VMOVE(newpp->pp_coord, new_pt);
+	    BU_LIST_APPEND(&pipeip->pipe_segs_head, &newpp->l);
+	    return newpp;
+	}
+    }
+
+    /* build new point */
+    BU_GET(newpp, struct wdb_pipe_pnt);
+    newpp->l.magic = WDB_PIPESEG_MAGIC;
+    newpp->pp_od = first->pp_od;
+    newpp->pp_id = first->pp_id;
+    newpp->pp_bendradius = first->pp_bendradius;
+    VMOVE(newpp->pp_coord, new_pt);
+
+    if (pp) {
+	/* insert before current point */
+	BU_LIST_INSERT(&pp->l, &newpp->l);
+    } else {
+	/* add to start of pipe */
+	BU_LIST_APPEND(&pipeip->pipe_segs_head, &newpp->l);
+    }
+
+    if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
+	/* won't work here, so refuse to do it */
+	BU_LIST_DEQUEUE(&newpp->l);
+	BU_PUT(newpp, struct wdb_pipe_pnt);
+	return pp;
+    }
+
+    return newpp;
+}
+
+struct wdb_pipe_pnt *
+rt_pipe_delete_pnt(struct wdb_pipe_pnt *ps)
+{
+    struct wdb_pipe_pnt *next;
+    struct wdb_pipe_pnt *prev;
+    struct wdb_pipe_pnt *head;
+
+    BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "pipe segment");
+
+    head = ps;
+    while (head->l.magic != BU_LIST_HEAD_MAGIC)
+	head = BU_LIST_NEXT(wdb_pipe_pnt, &head->l);
+
+    next = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
+    if (next->l.magic == BU_LIST_HEAD_MAGIC)
+	next = (struct wdb_pipe_pnt *)NULL;
+
+    prev = BU_LIST_PREV(wdb_pipe_pnt, &ps->l);
+    if (prev->l.magic == BU_LIST_HEAD_MAGIC)
+	prev = (struct wdb_pipe_pnt *)NULL;
+
+    if (!prev && !next) {
+	bu_log("Cannot delete last point in pipe\n");
+	return ps;
+    }
+
+    BU_LIST_DEQUEUE(&ps->l);
+
+    if (rt_pipe_ck(&head->l)) {
+	bu_log("Cannot delete this point, it will result in an illegal pipe\n");
+	if (next) {
+	    BU_LIST_INSERT(&next->l, &ps->l);
+	} else if (prev) {
+	    BU_LIST_APPEND(&prev->l, &ps->l);
+	} else {
+	    BU_LIST_INSERT(&head->l, &ps->l);
+	}
+
+	return ps;
+    } else {
+	BU_PUT(ps, struct wdb_pipe_pnt);
+    }
+
+    if (prev)
+	return prev;
+    else
+	return next;
+
+}
+
+struct wdb_pipe_pnt *
+rt_pipe_find_pnt_nearest_pnt(const struct bu_list *pipe_hd, const point_t model_pt, matp_t view2model)
+{
+    struct wdb_pipe_pnt *ps;
+    struct wdb_pipe_pnt *nearest=(struct wdb_pipe_pnt *)NULL;
+    struct bn_tol tmp_tol;
+    fastf_t min_dist = MAX_FASTF;
+    vect_t dir, work;
+
+    tmp_tol.magic = BN_TOL_MAGIC;
+    tmp_tol.dist = 0.0;
+    tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+    tmp_tol.perp = 0.0;
+    tmp_tol.para = 1.0 - tmp_tol.perp;
+
+    /* get a direction vector in model space corresponding to z-direction in view */
+    VSET(work, 0.0, 0.0, 1.0);
+    MAT4X3VEC(dir, view2model, work);
+
+    for (BU_LIST_FOR(ps, wdb_pipe_pnt, pipe_hd)) {
+	fastf_t dist;
+
+	dist = bg_dist_line3_pnt3(model_pt, dir, ps->pp_coord);
+	if (dist < min_dist) {
+	    min_dist = dist;
+	    nearest = ps;
+	}
+    }
+
+    return nearest;
+}
 
 /*
  * Local Variables:

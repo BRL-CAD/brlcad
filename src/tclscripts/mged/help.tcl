@@ -1,7 +1,7 @@
 #                        H E L P . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2024 United States Government as represented by
+# Copyright (c) 2004-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ set mged_help_data(3ptarb)	{{}	{makes arb given 3 pts, 2 coord of 4th pt, and th
 set mged_help_data(adc)		{{[<a1|a2|dst|dh|dv|hv|dx|dy|dz|xyz|reset|help> [value(s)]]}	{control the angle/distance cursor}}
 set mged_help_data(adjust)	$helplib_data(wdb_adjust)
 set mged_help_data(ae)		$helplib_data(vo_aet)
-set mged_help_data(ae2dir)	{{[-i] az el}	{return direction vector using inputed azimuth and elevation}}	
+set mged_help_data(ae2dir)	{{[-i] az el}	{return direction vector using inputted azimuth and elevation}}	
 set mged_help_data(analyze)	{{[arbname]}	{analyze faces of ARB}}
 set mged_help_data(apropos)	{{keyword}	{finds commands whose descriptions contain the given keyword}}
 set mged_help_data(aproposdevel)	{{keyword}	{finds commands used for development whose descriptions
@@ -62,6 +62,8 @@ Options:
 	-c bbname       Create an rpp primitive of the bbox named 'bbname'.
 	-d              Show bbox dimensions.
 	-e              Show bbox coordinates.
+	-m		Show the midpoint / center of bbox
+	-o		Calculate oriented bbox
 	-q              Do not print header.
 	-u              Use air.
 	-v              Show volume.
@@ -146,7 +148,7 @@ set mged_help_data(debuglib)	{{[hex_code]}	{show/set debugging bit vector for li
 set mged_help_data(debugnmg)	{{[hex code]}	{show/set debugging bit vector for NMG}}
 set mged_help_data(decompose)	{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connectedshells}} 
 set mged_help_data(delay)	{{sec usec}	{delay for the specified amount of time}}
-set mged_help_data(dir2ae)	{{[-i] dx dy dz}	{return azimuth and elevation using inputed direction vector}}	
+set mged_help_data(dir2ae)	{{[-i] dx dy dz}	{return azimuth and elevation using inputted direction vector}}	
 set mged_help_data(dm)		{{[type|valid|set] [dmtype|var [val]]}	{print/check the display-manager type or list/set specific variables}}
 set mged_help_data(draw)	$helplib_data(dgo_draw)
 set mged_help_data(dsp)         {{obj [command]} {work with DSP primitives}}
@@ -210,7 +212,6 @@ set mged_help_data(killtree)	$helplib_data(wdb_killtree)
 set mged_help_data(knob)	{{[-e -i -m -v] [-o v/m/e/k] [zap|zero|(x|y|z|X|Y|Z|S|ax|ay|az|aX|aY|aZ|aS|xadc|yadc|ang1|ang2|distadc [val])]}	{emulate knob twist (e.g. knob x 1)}}
 set mged_help_data(l)		$helplib_data(wdb_list)
 set mged_help_data(labelface)	{{object[s]}	{label faces of wireframes of objects}}
-set mged_help_data(labelvert)	{{object[s]}	{label vertices of wireframes of objects}}
 set mged_help_data(lc)          {{[-d|-m|-s] [-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {fileName}] {groupName}} {list ident, material id, LOS, and aircode of regions within a group}}
 set mged_help_data(lint)        {{[options] object} {check/analyze/validate the given object}}
 set mged_help_data(listeval)	$helplib_data(wdb_listeval)
@@ -252,7 +253,7 @@ set mged_help_data(nirt)	$helplib_data(dgo_nirt)
 set mged_help_data(nmg_collapse)	$helplib_data(wdb_nmg_collapse)
 set mged_help_data(nmg_fix_normals)	{{NMG object} {Attempt to fix the normals of an NMG object.}}
 set mged_help_data(nmg_simplify)	$helplib_data(wdb_nmg_simplify)
-set mged_help_data(npush)	{{[-h][-?][-v][-f][-x][-r][-s][-d #] object}	{push/move matrices in the tree heirarchy}}
+set mged_help_data(npush)	{{[-h][-?][-v][-f][-x][-r][-s][-d #] object}	{push/move matrices in the tree hierarchy}}
 set mged_help_data(oed)		{{path_lhs path_rhs}	{go from view to object_edit of path_lhs/path_rhs}}
 set mged_help_data(opendb)	{{[-f] [database.g] [y|n]}	{close any currently open .g file and open the specified database.g file, or return the name of the currently open geometry database.  A trailing 'y' or 'n' indicates whether to create a new database if one does not already exist.  A -f option specifies that binary-incompatible v4 files should have their endianness flipped.}}
 set mged_help_data(orientation)	$helplib_data(vo_orient)
@@ -362,7 +363,7 @@ set mged_help_data(unhide)	$helplib_data(wdb_unhide)
 set mged_help_data(units)	$helplib_data(wdb_units)
 set mged_help_data(vars)	{{[var=opt]}	{get/set mged variables}}
 set mged_help_data(vdraw)	{{write|insert|delete|read|length|send [args]}	{draw custom data into the wireframe view}}
-set mged_help_data(view)	{{center|size|eye|ypr|quat|aet}	{get/set view parameters (center, view size, eye point, yaw/pitch/roll, quaternion, azimuth/elevation/twist) in local units}}
+set mged_help_data(view)	{{ae|align|auto|center|dir|eye|lookat|print|quat|save|size|ypr}	{get/set view parameters (azimuth/elevation/twist, center, direction vector, eye point, quaternion, view size, yaw/pitch/roll) in local units}}
 set mged_help_data(viewdir)	{{[-i]}	{return direction vector based on current view}}
 set mged_help_data(viewsize)	{{[view_size]}	{sets the size of the current viewing cube (view size)}}
 set mged_help_data(vnirt)	{{x y}  	{trace a single ray from x y}}

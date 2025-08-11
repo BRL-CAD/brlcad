@@ -1,7 +1,7 @@
 /*                     W A L K _ E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -270,7 +270,7 @@ int main(int ac, char *av[])
 
     arg_count++;
 
-    init_state = rt_initial_tree_state;
+    RT_DBTS_INIT(&init_state);
     int ret = db_walk_tree(rtip->rti_dbip, /* database instance */
 		 ac-arg_count,		/* number of trees to get from the database */
 		 (const char **)&av[arg_count],

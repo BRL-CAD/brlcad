@@ -1,7 +1,7 @@
 /*                   C R A S H R E P O R T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2024 United States Government as represented by
+ * Copyright (c) 2007-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -129,10 +129,10 @@ bu_crashreport_app(const char *filename, const char *argv0)
 		if (ret != len)
 		    perror("fwrite failed");
 	    }
-	}
 #ifdef HAVE_POPEN
-	(void)pclose(popenfp);
+	    (void)pclose(popenfp);
 #endif
+	}
 	popenfp = NULL;
 	path = NULL;
     }
@@ -167,10 +167,10 @@ bu_crashreport_app(const char *filename, const char *argv0)
 		if (ret != len)
 		    perror("fwrite failed");
 	    }
-	}
 #ifdef HAVE_POPEN
-	(void)pclose(popenfp);
+	    (void)pclose(popenfp);
 #endif
+	}
 	popenfp = NULL;
 	path = NULL;
     }

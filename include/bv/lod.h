@@ -1,7 +1,7 @@
 /*                            L O D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,14 +19,14 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file lod.h */
-/** @addtogroup bv_lod */
-/** @{ */
-
-/**
- *  @brief Functions for generating view dependent level-of-detail data,
+/** @addtogroup bv_lod
+ *
+ *  @brief
+ *  Functions for generating view dependent level-of-detail data,
  *  particularly for meshes.
  */
+/** @{ */
+/* @file lod.h */
 
 #ifndef BV_LOD_H
 #define BV_LOD_H

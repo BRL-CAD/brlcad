@@ -18,19 +18,137 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* more manual testing, and tag it up
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
-* Validate and merge hlbvh BoT raytracing improvements
+* fix ARB8 promotion to BoT, so calls between prep and shot don't get
+  inconsistent data (soltab needs to match).
 
-* rtarea is sometimes missing regions on summary reporting, at least on
-  Windwos, possibly a threading issue setting up the results container.
+* Adjust bext patching to use file copying for cases where we are
+  adding our own files wholesale
 
-* complete preliminary concave arb8 support
+* verify arb6 editing in cheese wedge tutorial
+
+* rtarea is sometimes missing regions on summary reporting, at least
+  on Windows, possibly a threading issue setting up the results
+  container.
+
+* Investigate whether we can use the newer version of the gct
+  decimator (mmesh) to replace the version currently bundled in librt.
+
+* Create EXPORT targets for BRL-CAD libraries to support newer CMake
+  find_package style.  If possible, try to also support older style
+  variables in FindBRLCAD.cmake
+
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* fix libanalyze.  it has turned into a seeming dumping ground with no
+  design or naming consistency evident or documented, or at least
+  extensive violations from the prevailing analyze_* naming prefix and
+  binary interface to analytic routines.  notable outliers include
+  nirt_* (including CLI handling..), voxelize*, rt_gen*, rectangular*
+
+* ensure datum objects convert out via g2asc and back (currently
+  writes "a Tcl output routine for this type of object has not yet
+  been implemented")
+
+* fix recursive bu_parallel() to not have a hard-coded limit on the
+  number of threads or to more aggressively abort when more that
+  supported are dispatched.  currently supporting 64x64 threads and
+  still with some potential for race conditions on the book-keeping.
+
+* Teach lint command to look for comb instance paths with non-uniform
+  scaling matrices that have tor primitives as leaves - those will not
+  raytrace as expected.  May be other primitives that should be
+  searched for as well.  Would be ideal if we could also have the comb
+  creation routines (group, comb, r...) reject any operation that
+  would result in such a configuration being created and reporting the
+  details of why it wouldn't work.  Maybe allow a -f forcing flag to
+  do it anyway, since it *can* be done currently in MGED, but it
+  definitely seems like a practice to discourage - if TOR did someday
+  get support for handling such raytraces, any users depending on it
+  NOT doing that would be caught by surprise.  Seems more likely
+  though that users would expect the TOR to be stretched (as it is in
+  comb editing wireframes) and be let down when it ultimately doesn't
+  work...
+
+* Per discussion with Sean - look into whether the draw command
+  (probably the one in the qged draw stack) could be modified to do
+  async population of drawing structures, starting from fastest
+  possible and refining to greater detail.  Goal would be to make draw
+  a non-blocking operation for the GUI, getting up whatever info we
+  can quickly.  Might also be able to take into account metrics like
+  FPS and memory usage to decide when we're approaching the "too much
+  info for available resources" threshold.
+
+* consider retiring the mater -d option in favor of a "mater density"
+  subcommand (which is really how it is being used anyway.)  Might be
+  worth considering whether shader related functionality should go
+  under a "mater shader" subcommand.
+
+* user request for a way to scan arbs in a .g looking for invalid
+  definitions (non-convex, non-planar faces, etc.)
+
+* implement nirt flag to report a secondary ray fired in the direction
+  of the hit point surface normal.
+
+* calculate maximum/minimum presented area az/el for a given model
+
+* optimize mged/libged init and exit performance.  profiling shows
+  over 90% of entire execution time to run a single command is
+  dominated by libged's dlopen/dlclose.  cumulatively about 1sec on
+  Mac, but likely extrapolates to all platforms.
+
+* convert non-planar arb's to brep objects for ray-tracing.  see how
+  well it works to see if we can remove an arb limitation.
+
+* combine solid_report with the "who" command (subcommand options)
+
+* explore c++ fastf_t class.  compile-time support for using GMP or CLN
+  for arbitrary exact precision arithmetic computation support
+
+* Update find_package uses to take advantage of EXPORT targets when
+  upstream packages have them available.  This should let us reduce
+  the number of Find*.cmake files we need to include.  Ultimately,
+  we may want to look at using the new *Config.cmake mechanism for
+  all bundled dependencies, except when we still need Find*.cmake
+  to locate system installs that don't provide them.
+
+* Investigate viability of providing EXPORT installs and *Config.cmake
+  files for BRL-CAD targets - that's the "modern" way to support
+  CMake's find_package mechanism.
+
+* Look into CMinx CMake documentation system to see if it might be
+  useful for documenting the build system.
+  https://github.com/CMakePP/CMinx
+
+* Windows installer does not respect the "add to path" checkbox
+  and always adds BRL-CAD to the system path
+
+* Add a "perturb" callback function to librt's primitive tables, that
+  will accept a primitive definition and return a version that has been
+  slightly increased or decreased in size.  For example, a "perturbed"
+  TGC would have its base and height planes bumped slightly in or out
+  and its radius slightly increased or decreased.  The intent would be
+  to see if we can automatically perturb primitives just slightly out
+  of numerical co-planarity for facetize.  For union (and probably
+  intersection) we would bump out slightly, and for subtraction bump
+  in slightly.  Probably want to do this at the implicit level, rather
+  than after triangles have been produced, so it's easier to understand
+  what happens.  For things like pipes especially, getting the intended
+  effect post-triangulation might be tricky.
+
+* Newer SPSR code apparently has a header-only mode that we might be
+  able to use to replace our current embedded customized version:
+
+  https://github.com/mkazhdan/PoissonRecon
+
+  (See the HEADER-ONLY LIBRARY section of their README.md)
 
 * replace translations of various Geometric Tools algorithms in BRL-CAD
   with calls to a bundled Geometric Tools.  With bext coming online,
@@ -94,8 +212,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * race condition causing bus errors on exit
 
-* re-enable regress-asc and regress-weight
-
 * material infrastructure has regressions due to attr sync code that
   needs to be resolved.
 
@@ -121,13 +237,13 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * modify libfb's default memory buffer allocation to be dynamic
 
 * create a BRL-CAD .g with all possible object types embedded.
-  integrate into testing. e.g., scene with all object types plus a
-  lookup check to ensure none are missing.
+integrate into testing. e.g., scene with all object types plus a
+lookup check to ensure none are missing.
 
 * fix pipe subtractions shaded display issue in archer
 
-* attribute normalization is drastically slowing down
-  region creation - need to fix or back out
+* attribute normalization is drastically slowing down region creation
+  - need to fix or back out
 
 * add regression test for directional light sources
 
@@ -135,9 +251,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   rt_shootrays(), modify to pass all rays down through the spatial
   partitioning simultaneously
 
-* readd support for vrml v1 to g-vrml so that users can select whether
-  they want v2 (default) or previous v1 output format via a
-  command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
+* re-add support for vrml v1 to g-vrml so that users can select
+  whether they want v2 (default) or previous v1 output format via a
+  command-line switch.  see
+  http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
 
 * metaball in command input needs sanity checks and better validation.
 
@@ -159,9 +276,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * make sure we can run db_dirbuild() multiple times without creating
   duplicate entries.
 
-* tree command shouldn't infinite loop when encountering a cyclic
-  path - need to print a warning and stop walking.  Requires full
-  path awareness in tree command walk.
+* tree command shouldn't infinite loop when encountering a cyclic path
+  - need to print a warning and stop walking.  Requires full path
+  awareness in tree command walk.
 
   Consider implementing a corollary to FTS instead of dirent for
   simplified tree traversal with cyclic awareness.
@@ -179,15 +296,15 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * heap unit test needs to actually compare performance against system
   allocation, not just do some work
 
-* mged> nirt -f fmt needs output cleanup. When run with -f csv there are 
-  unexpected warnings and duplicate line prints
+* mged> nirt -f fmt needs output cleanup. When run with -f csv there
+  are unexpected warnings and duplicate line prints
 
 * move the rt_*_timer timing facilities to libbu and rework to allow
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
 
-* update code requiring lemon parser generator to support newest upstream
-  code.
+* update code requiring lemon parser generator to support newest
+  upstream code.
 
 * consider user interface and usability implications of gchecker
   and/or overlap_tool as commands that kick off GUI.  need to consider
@@ -199,9 +316,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
   db_ls with the DB_LS_TOPS flag can supply us with a list of top
   level entities.  Implement a db_tops_default() to support automatic
-  default object loading for commands like rt* that typically work with
-  top-level objects.  let some commands default to an unspecified object when
-  there's an identifiable priority according to matching criteria:
+  default object loading for commands like rt* that typically work
+  with top-level objects.  let some commands default to an unspecified
+  object when there's an identifiable priority according to matching
+  criteria:
 
   a) _GLOBAL has a tops_default attribute set, default to that object
   b) there's only one object, default to that object
@@ -280,23 +398,21 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * add script/command for changing metaball weights in masse
 
 * gdiff in mged appears to be broken?  get "no primitives found" on
-  second comb when specifying two combs (gdiff comb1 comb2).
-  UPDATE - this appears to be a consequence of how gdiff internally
-  implements its raytrace diffing.  The "fix" would be to separately
-  raytrace each object and post-process the line segments, rather
-  than drawing up everything at once - the latter has problems if
-  part or all of comb2 is shared with comb1.  A workaround is to
-  keep out comb2 and dbconcat it back in, then gdiff comb1 with the
-  imported tree.
+  second comb when specifying two combs (gdiff comb1 comb2).  UPDATE -
+  this appears to be a consequence of how gdiff internally implements
+  its raytrace diffing.  The "fix" would be to separately raytrace
+  each object and post-process the line segments, rather than drawing
+  up everything at once - the latter has problems if part or all of
+  comb2 is shared with comb1.  A workaround is to keep out comb2 and
+  dbconcat it back in, then gdiff comb1 with the imported tree.
 
 * pixscale doesn't seem to handle stdin (due to bu_seek) for very
   long
 
 * The embedded framebuffer for the X display manager is not working
   with Tcl/Tk 8.6 - it brings down mged with an Xerror when it tries
-  to XFlush after X24_blit.  Better solution is to replace the X
-  dm/fb with a cross platform software rasterizing solution of some
-  sort.
+  to XFlush after X24_blit.  Better solution is to replace the X dm/fb
+  with a cross platform software rasterizing solution of some sort.
 
 * extract a skin or other exterior surface for a given model.  3 options:
   1. Implement a "shrinkwrap" feature that calculates a concave hull
@@ -309,7 +425,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
   * add an option to rtarea for onehit.  this is probably best as an
     option that reports the requested objects only and then has a
-    verbose option for the more detailed hiearchical report that is
+    verbose option for the more detailed hierarchical report that is
     currently produced.
 
   * verify rtarea.  There are reports that the rtarea
@@ -327,7 +443,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
   * add an option to rtarea for onehit.  this is probably best as an
     option that reports the requested objects only and then has a
-    verbose option for the more detailed hiearchical report that is
+    verbose option for the more detailed hierarchical report that is
     currently produced.
 
   * verify rtarea.  There are reports that the rtarea
@@ -347,6 +463,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   first drawn in MGED - should properly "overlay" them so the user
   doesn't have to first erase the solid from the scene visual.
 
+* add bot plot and bot pick subcommands to mirror brep subcommands
+  and let us inspect individual aspects of a BoT's structure.
+
 * rtwizard's reopening of the database is causing db_dircheck
   "Duplicate of..." errors when opening read-only .g files.
 
@@ -361,16 +480,16 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   accordingly since los is ambiguous and a source of user confusion.
 
 * enhance env command to handle debug variables, use sysctl style
-  groupings of variables, and in general make the setup simpler
-  and more uniform (ideally we'll fold the debug command's
-  capabilities into env in some form.)  Need to have a usability
-  brainstorming session, but after discussion with Sean general
-  outlines are to:
-  Switch all debug variable management to staging through
-  environment variables rather than directly setting hex values
-  on the globals, but leave the globals as the low level mechanism
-  for performance reasons (getenv is much more expensive, don't
-  want it in core code.)  Something like:
+  groupings of variables, and in general make the setup simpler and
+  more uniform (ideally we'll fold the debug command's capabilities
+  into env in some form.)  Need to have a usability brainstorming
+  session, but after discussion with Sean general outlines are to:
+
+  Switch all debug variable management to staging through environment
+  variables rather than directly setting hex values on the globals,
+  but leave the globals as the low level mechanism for performance
+  reasons (getenv is much more expensive, don't want it in core code.)
+  Something like:
 
   LIBRT_DEBUG_HF (env variable) -> debug.rt_hf (env cmd) -> rt_debug hex val (library)
 
@@ -406,7 +525,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   * investigate why the new bbox() routines for ARS and BoT result in
     bounding boxes that are way too big.
 
-  * implement prep optimzation to the default fast bbox approximation
+  * implement prep optimization to the default fast bbox approximation
     specifically for arb8/rpp since we know the exact extent of their
     bounds and can chop away at a box with a box.
 
@@ -468,7 +587,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * cppclean audit
 
-* add a multiview rt script to regression testing (e.g., see rtwalk output)
+* add a multiview rt script to regression testing (e.g., see rtwalk
+  output)
 
 * finish implementing pnts:
   - ray trace pnts
@@ -481,16 +601,19 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * STIX 2.0 fonts are released, using OpenType - check to see whether
   we can upgrade to these for our DocBook processing
 
-* Fedora doesn't have the old fonts mged assumes: dm-X: Can't open font '9x15' or '-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1'
+* Fedora doesn't have the old fonts mged assumes: dm-X: Can't open
+  font '9x15' or
+  '-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1'
 
 * lay out filesystem and URI models for database storage and access -
-  these design decisions are fundamental and have broad implications for many
-  other design decisions.  Issues to consider include where and how versioning,
-  how to access attribute data from URIs, what the filesystem analogies are
-  (combs -> directories, objects -> hard links, etc...), where they break down
-  (comb boolean expressions don't map cleanly to the notion of directory
-   contents, for example) and how to handle the various cases, how to present
-  a "db_glob" API etc.  Need a proper document laying all of this out.
+  these design decisions are fundamental and have broad implications
+  for many other design decisions.  Issues to consider include where
+  and how versioning, how to access attribute data from URIs, what the
+  filesystem analogies are (combs -> directories, objects -> hard
+  links, etc...), where they break down (comb boolean expressions
+  don't map cleanly to the notion of directory contents, for example)
+  and how to handle the various cases, how to present a "db_glob" API
+  etc.  Need a proper document laying all of this out.
 
   Potentially relevant/useful links:
   URI specification:  https://tools.ietf.org/html/rfc3986
@@ -542,8 +665,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   and z=1524 (was hit/overlap, now misses).
 
 * havoc.g s.nos5g reliably exhibits the grazing edge bug where only
-  one hit point is being returned.  to reproduce:
-  e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
+  one hit point is being returned.  to reproduce: e s.nos5g ; ae 35 25
+  ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
 
 * obsd stack crashers
 
@@ -563,10 +686,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   control randomization better.
 
 * get_eyemodel returns an eye_pt entry, but feeding the results to
-  archer's eye_pt command results in get_eyemodel returning a different
-  eye_pt, even when the units are all in mm.  is this expected?
-  intuitively, I would expected feeding the results of get_eyemodel to
-  eye_pt to result in no change, modulo unit conversions.
+  archer's eye_pt command results in get_eyemodel returning a
+  different eye_pt, even when the units are all in mm.  is this
+  expected?  intuitively, I would expected feeding the results of
+  get_eyemodel to eye_pt to result in no change, modulo unit
+  conversions.
 
 * make rt -b accept a pixel index in addition to x,y pixel coordinates
 
@@ -582,16 +706,16 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * The current libbu mime API needs to be retired in favor of something
   more powerful.  It was a mistake to use enums generated from the
-  mime types - they are static, cannot be enriched at runtime (say,
-  by icv plugins) and the separation of the context from the type
-  itself (image/png -> BU_MIME_IMAGE and BU_MIME_IMAGE_PNG for example)
-  is both cumbersome and unnecessary.  Instead, grab a subset of the
-  capabilities of libmagic (https://github.com/file/file) and define
-  a new libbu mime/data-typing subsystem that is runtime populated by
-  a default set of pseudo-libmagic style file definitions (may want
-  to adjust their format slightly, to require a mime type for each
-  entry, and we need an way to define entries where we don't (yet)
-  know how to inspect the file contents to identify them...)
+  mime types - they are static, cannot be enriched at runtime (say, by
+  icv plugins) and the separation of the context from the type itself
+  (image/png -> BU_MIME_IMAGE and BU_MIME_IMAGE_PNG for example) is
+  both cumbersome and unnecessary.  Instead, grab a subset of the
+  capabilities of libmagic (https://github.com/file/file) and define a
+  new libbu mime/data-typing subsystem that is runtime populated by a
+  default set of pseudo-libmagic style file definitions (may want to
+  adjust their format slightly, to require a mime type for each entry,
+  and we need an way to define entries where we don't (yet) know how
+  to inspect the file contents to identify them...)
 
   This approach will let us define the types that are of interest to
   BRL-CAD, while also letting plugins "educate" the system to support
@@ -740,26 +864,27 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * add an mk_extrude() routine to libwdb.
 
-* Teach CMake to respect and use user-defined CMAKE_C_FLAGS and
-  other options supplied at the command line and in environment
-  variables.  See whether we can pass a variable into CMAKE_C_FLAGS
-  that will allow specification of build flags at make time.
-  Relevant link: https://cmake.org/Bug/view.php?id=12928
+* Teach CMake to respect and use user-defined CMAKE_C_FLAGS and other
+  options supplied at the command line and in environment variables.
+  See whether we can pass a variable into CMAKE_C_FLAGS that will
+  allow specification of build flags at make time.  Relevant link:
+  https://cmake.org/Bug/view.php?id=12928
 
-* investigate the possibility of allowing functions to define
-  their own custom filters for some version of the db_search API.
-  If we can figure out a programmatic approach of some kind, why
-  not allow code to define their own "filters" that don't have
-  a corresponding mapping to the MGED command string?  As long
-  as the functions satisfy the API templates used by the db_plan
-  structures, wouldn't custom functions work?
+* investigate the possibility of allowing functions to define their
+  own custom filters for some version of the db_search API.  If we can
+  figure out a programmatic approach of some kind, why not allow code
+  to define their own "filters" that don't have a corresponding
+  mapping to the MGED command string?  As long as the functions
+  satisfy the API templates used by the db_plan structures, wouldn't
+  custom functions work?
 
 * implement rt_volume() API for computing geometry volume (gqa style
   for complex, direct for primitives)
 
-* See if it is possible to simplify btclsh/bwish code when it comes
-  to relying on libtermio - linenoise can do the basics, and for fancier
-  keybinding/word based navigation see if launching in Emacs can suffice:
+* See if it is possible to simplify btclsh/bwish code when it comes to
+  relying on libtermio - linenoise can do the basics, and for fancier
+  keybinding/word based navigation see if launching in Emacs can
+  suffice:
 
   ;; per https://emacs.stackexchange.com/q/18672
   (defun btclsh ()
@@ -776,17 +901,18 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   structures that cross over to both such as the rtgeom.h types.
 
 * Translate logic from clipper polygon clipping library
-  (http://www.angusj.com/delphi/clipper.php) into libbg and use it
-  as a pre-processing step for detria's algorithm along the lines
-  of what bitfighter did:  https://github.com/raptor/clip2tri
-  Some useful notes here: http://stackoverflow.com/a/16115775
+  (http://www.angusj.com/delphi/clipper.php) into libbg and use it as
+  a pre-processing step for detria's algorithm along the lines of what
+  bitfighter did: https://github.com/raptor/clip2tri Some useful notes
+  here: http://stackoverflow.com/a/16115775
 
 * Implement Shamos-Hoey test for checking whether a polygon is simple
   in libbg: http://geomalgorithms.com/a09-_intersect-3.html
 
-* figure out what in f_matpick (or possibly some other related function)
-  is causing ipathpos to get incremented to a number larger than the
-  number of objects in the full path it's supposed to be referencing.
+* figure out what in f_matpick (or possibly some other related
+  function) is causing ipathpos to get incremented to a number larger
+  than the number of objects in the full path it's supposed to be
+  referencing.
 
 * refactor rt_mirror (src/librt/primitives/mirror.c) into the functab
 
@@ -807,12 +933,12 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   variable override used by the library.
 
 * In tree.c line 531, the initialization of the local storage of the
-  full path in stp->st_path is conditionalized on the specifics of
-  the tree structure.  Why?  Could we get away with always initializing
+  full path in stp->st_path is conditionalized on the specifics of the
+  tree structure.  Why?  Could we get away with always initializing
   (or never initializing, if it is not used) the st_path?  Current
-  behavior is odd - if a region has a solid unioned under it the st_path
-  is not set, but if it has a comb unioned in the path is set - is this
-  an optimization, and if so is it necessary?
+  behavior is odd - if a region has a solid unioned under it the
+  st_path is not set, but if it has a comb unioned in the path is set
+  - is this an optimization, and if so is it necessary?
 
 * investigate integrating Blender's (OSL-based) Cycles engine:
   http://code.blender.org/index.php/2013/08/cycles-render-engine-released-with-permissive-license/
@@ -820,8 +946,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * investigate integrating Pixar's OpenSubdiv for subdivision surfaces:
   http://graphics.pixar.com/opensubdiv/
 
-* investigate the possibility of using Appleseed (http://appleseedhq.net/)
-  to perform visual image rendering using librt shotline data for input.
+* investigate the possibility of using Appleseed
+  (http://appleseedhq.net/) to perform visual image rendering using
+  librt shotline data for input.
 
 * the scale structure in bn_cmd_noise_slice (bn_tcl.c) was never
   initialized. it looks like somebody has planned to extend the
@@ -942,9 +1069,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   for the faces and face_normals members
 
 * pixdiff reports bytes, but reports incorrect (off-by-one) bytes for
-  .bw input files.  cause is due to tool assuming input is rgb triplets
-  (even though output is bytes, wtf?).  should probably report pixels
-  and/or have a -b option for handling byte/bw input.
+  .bw input files.  cause is due to tool assuming input is rgb
+  triplets (even though output is bytes, wtf?).  should probably
+  report pixels and/or have a -b option for handling byte/bw input.
 
 * investigate why epa primitive is so sensitive to coarse absolute
   value changes (run csgbrep, tol abs=1, facetize and get 321k poly)
@@ -960,8 +1087,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   of the versioning details (such as described from "gcc -v" if we
   compiled with gcc) too.
 
-* make bu_dirname not allocation memory.  have caller pass
-  buffer in as a parameter with size ala snprintf/memcpy.
+* make bu_dirname not allocation memory.  have caller pass buffer in
+  as a parameter with size ala snprintf/memcpy.
 
 * make mged not have a garbled display manager window if the
   framebuffer is enabled and the window is resized.  initialize and
@@ -1001,10 +1128,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   just ignore the db).
 
 * add a force option to the tracers to support overwriting the current
-  output file (so long as we're going to make it read-only by default).
-
-* convert non-planar arb's to brep objects for ray-tracing.  see how
-  well it works to see if we can remove an arb limitation.
+  output file (so long as we're going to make it read-only by
+  default).
 
 * clean up new rt -l8 heat graph lighting model so that it works in
   parallel and with no "splotches"
@@ -1014,8 +1139,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   diagnostic output.  this is a fairly separate idea from having log
   levels (ala syslog) but is somewhat related to the concept of having
   definable output streams.  idea in mind is to have a bu facility to
-  obtain a bu_log()-style callback function returned from a
-  logger registration function.
+  obtain a bu_log()-style callback function returned from a logger
+  registration function.
 
 * investigate impact of using lookup tables for root solving.
   implement lookup tables for a range of linear, quadratic, cubic, and
@@ -1150,17 +1275,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * Implement an optical shader for the new "pixelated" military
   camouflage style
 
-* preserve an arb8 as an arb8 (instead of writing as arb6 or arb5) and
-  similarly for the other arb# sizes
-
 * enhance dxf-g to create more than just one combination per layer,
   creating multiple objects for the individual objects in the dxf file
   (instead of one conglomerate BoT)
 
 * review and merge in the rest of the GSI modifications
-
-* Optional compile-time support for using GMP or CLN for arbitrary
-  exact precision arithmetic computation support
 
 * inside/outside point and voxel testing capability in librt
 
@@ -1174,7 +1293,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   2x2 example, position=>coordinate: 0=>0,0,0; 1=>1,0,0; 2=>0,1,0;
   3=>1,1,0; 4=>0,0,1; 5=>1,0,1; 6=>0,1,1; 7=>1,1,1. See
   http://support.echoview.com/WebHelp/Reference/File_formats/
-    Export_file_formats/Volume_data_set_file_formats.htm
+  Export_file_formats/Volume_data_set_file_formats.htm
 
 * add support for querying geometry properties to library including
   computing surface area and weight/mass.
@@ -1249,36 +1368,37 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
     (DRY) that supports all of our various documentation styles.
     Discussed with Sean in the past - initial thoughts:
 
-    + support printing out the options and documentation in
-      formatted structures that allow our build system to build the
-      command and have the command itself supply a generated block
-      of text or markup that could be incorporated into the final
-      document.  For example, the DocBook man page for a command
-      would be set up to expect the <command>_options.xml file generated
-      by <command> --print-options DocBook (or some other mechanism,
-      that's just an idea) and the CMake build could first build and
-      then run the command at compilation time to provide the most
-      current option listing and short descriptions for the other docs.
+    + support printing out the options and documentation in formatted
+      structures that allow our build system to build the command and
+      have the command itself supply a generated block of text or
+      markup that could be incorporated into the final document.  For
+      example, the DocBook man page for a command would be set up to
+      expect the <command>_options.xml file generated by <command>
+      --print-options DocBook (or some other mechanism, that's just an
+      idea) and the CMake build could first build and then run the
+      command at compilation time to provide the most current option
+      listing and short descriptions for the other docs.
 
 * investigate the libngpcore and libngput libraries from the ngPlant
   project as a possible means of procedurally generating plant models
   in BRL-CAD (libraries are BSD licensed:
   https://github.com/stager13/ngplant)
 
-* Literally days after I completed my initial extraction of the
-  OSMesa code for a software rendering fallback, a project for a compact C99
+* Literally days after I completed my initial extraction of the OSMesa
+  code for a software rendering fallback, a project for a compact C99
   implementation of OpenGL 3.x first released some public code:
-  https://github.com/rswinkle/PortableGL  The project shows current
-  activity, and it appears based on some code used there that TinyGL itself
-  has also gotten some fixes from the original author.  Based on experiments
-  with the other "cleaned up" fork, TinyGL on its own doesn't have enough of
-  OpenGL to support all of BRL-CAD's currently used features, but it would be
-  interesting to know if PortableGL could be a viable alternative to
-  libosmesa.  Given the latter works and has been cleaned up quite a lot the
-  question is not urgent, but if PortableGL is actively maintained, gives us
-  a similar capability with a newer standard and similar independence from
-  any third party dependencies, it is of interest.  First question is how
-  much of our existing OpenGL would need to be updated to target 3.x...
+  https://github.com/rswinkle/PortableGL The project shows current
+  activity, and it appears based on some code used there that TinyGL
+  itself has also gotten some fixes from the original author.  Based
+  on experiments with the other "cleaned up" fork, TinyGL on its own
+  doesn't have enough of OpenGL to support all of BRL-CAD's currently
+  used features, but it would be interesting to know if PortableGL
+  could be a viable alternative to libosmesa.  Given the latter works
+  and has been cleaned up quite a lot the question is not urgent, but
+  if PortableGL is actively maintained, gives us a similar capability
+  with a newer standard and similar independence from any third party
+  dependencies, it is of interest.  First question is how much of our
+  existing OpenGL would need to be updated to target 3.x...
 
 
 OVERLAP TOOLS
@@ -1620,9 +1740,10 @@ LIBGED
   should create a combination and fail if there is an existing
   combination (with flag to append).
 
-* Update the comb "region lift" capability to handle automatic duplication
-  and substitution of the duplicate into the tree of combs who can't have
-  their definitions changed without impacting other geometry in the .g file.
+* Update the comb "region lift" capability to handle automatic
+  duplication and substitution of the duplicate into the tree of combs
+  who can't have their definitions changed without impacting other
+  geometry in the .g file.
 
 * change 'mirror' command offset to be prior to mirror instead of
   after, so that you can mirror intuitively over a specified point
@@ -1666,9 +1787,9 @@ LIBGED
 * implement 'analyze' command option to write output to a file
 
 * implement mged object name globbing similar to tclsh's globbing
-  (i.e. via a globbing command and quoting globs that use []).  testing
-  shows db_glob doesn't seem to behave correctly, at least not like
-  glob.  hook globbing into all commands so glob_compat_mode
+  (i.e. via a globbing command and quoting globs that use []).
+  testing shows db_glob doesn't seem to behave correctly, at least not
+  like glob.  hook globbing into all commands so glob_compat_mode
   statefulness can go away.  a db_glob expression that doesn't match
   anything should not return the expression.
 
@@ -2045,8 +2166,6 @@ NEW OBJECTS
   a malformed procedure (e.g., an infinite loop, fork bomb, syntax
   error, thrashing condition, etc.).
 
-* spheroid (quadratic) - special performance case of ell
-
 * ovoid - a 3D rotated oval "egg" shape.  can be constructed as the
   union of two separate ell.  very similar to our pill/particle
   primitive except that an elliptical curve connects the two shapes
@@ -2073,12 +2192,13 @@ NEW OBJECTS
 
 * lemon (quartic) - elliptical nose cap (requested shape) shape.
 
-* box-spline blend - blending object that is defined by an arb8
-  volume, blending any entities within that volume that intersect
-
 * lipschitz blend - means to procedurally blend surface edges based on
   a blend function and sphere tracing. see "Combining CSG modeling
   with soft blending using Lipschitz-based implicit surfaces".
+
+* SDF blending - likely requires defining per-prim distance functions,
+  but would then allow automatic implicit blending, chamfer/bevel,
+  rounding, and filleting.
 
 
 WINDOWS
@@ -2088,9 +2208,6 @@ The following binaries are not yet available on Windows.  The reason
 is identified in parentheses.
 
 bombardier (possibly just a problem with the build logic)
-fbcolor    (TERMLIB)
-fbpoint    (TERMLIB)
-fbzoom     (TERMLIB)
 remrt      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
 rtsrv      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
 ttcp       (not ported)
@@ -2101,8 +2218,6 @@ CONVERTERS
 
 * add obj cstype/bezier/surf/curv/param/trim/etc import for nurbs
   import/export support
-
-* improve glTF importer
 
 * add glTF exporter (.gltf and .glb file formats)
 
@@ -2118,7 +2233,7 @@ CONVERTERS
 * add support to x3d-g for NURBS entities
 
 * compare libIGES (lgpl, https://github.com/cbernardo/libIGES) as
-  potential replacement for our compelx IGES conversion logic.
+  potential replacement for our complex IGES conversion logic.
   appropriate time for review when IGES gets added to libGCV.
 
 * investigate the asset import library (assimp.sf.net) to see whether

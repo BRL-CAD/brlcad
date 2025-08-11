@@ -1,7 +1,7 @@
 /*                         V D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -109,7 +109,6 @@
 
 #include "../ged_private.h"
 
-
 #define REV_BU_LIST_FOR(p, structure, hp)	\
     (p)=BU_LIST_LAST(structure, hp);	\
        BU_LIST_NOT_HEAD(p, hp);		\
@@ -128,6 +127,7 @@ vdraw_write(void *data, int argc, const char *argv[])
     unsigned long uind = 0;
     struct bv_vlist *vp, *cp;
     static const char *usage = "i|next c x y z";
+    struct bu_list *vlfree = &rt_vlfree;
 
     /* must be wanting help */
     if (argc == 2) {
@@ -135,7 +135,7 @@ vdraw_write(void *data, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (!gedp->ged_gdp->gd_currVHead) {
+    if (!gedp->i->ged_gdp->gd_currVHead) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw write: no vlist is currently open.");
 	return BRLCAD_ERROR;
     }
@@ -145,24 +145,24 @@ vdraw_write(void *data, int argc, const char *argv[])
     }
     if (argv[2][0] == 'n') {
 	/* next */
-	for (REV_BU_LIST_FOR(vp, bv_vlist, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
+	for (REV_BU_LIST_FOR(vp, bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
 	    if (vp->nused > 0) {
 		break;
 	    }
 	}
-	if (BU_LIST_IS_HEAD(vp, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
+	if (BU_LIST_IS_HEAD(vp, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
 	    /* we went all the way through */
 	    vp = BU_LIST_PNEXT(bv_vlist, vp);
-	    if (BU_LIST_IS_HEAD(vp, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
-		BV_GET_VLIST(&RTG.rtg_vlfree, vp);
-		BU_LIST_INSERT(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
+	    if (BU_LIST_IS_HEAD(vp, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
+		BV_GET_VLIST(vlfree, vp);
+		BU_LIST_INSERT(&(gedp->i->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
 	    }
 	}
 	if (vp->nused >= BV_VLIST_CHUNK) {
 	    vp = BU_LIST_PNEXT(bv_vlist, vp);
-	    if (BU_LIST_IS_HEAD(vp, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
-		BV_GET_VLIST(&RTG.rtg_vlfree, vp);
-		BU_LIST_INSERT(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
+	    if (BU_LIST_IS_HEAD(vp, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
+		BV_GET_VLIST(vlfree, vp);
+		BU_LIST_INSERT(&(gedp->i->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
 	    }
 	}
 	cp = vp;
@@ -174,7 +174,7 @@ vdraw_write(void *data, int argc, const char *argv[])
 	/* uind holds user-specified index */
 	/* only allow one past the end */
 
-	for (BU_LIST_FOR(vp, bv_vlist, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
+	for (BU_LIST_FOR(vp, bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
 	    if ((size_t)uind < BV_VLIST_CHUNK) {
 		/* this is the right vlist */
 		break;
@@ -185,13 +185,13 @@ vdraw_write(void *data, int argc, const char *argv[])
 	    uind -= vp->nused;
 	}
 
-	if (BU_LIST_IS_HEAD(vp, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
+	if (BU_LIST_IS_HEAD(vp, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
 	    if (uind > 0) {
 		bu_vls_printf(gedp->ged_result_str, "vdraw: write out of range\n");
 		return BRLCAD_ERROR;
 	    }
-	    BV_GET_VLIST(&RTG.rtg_vlfree, vp);
-	    BU_LIST_INSERT(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
+	    BV_GET_VLIST(vlfree, vp);
+	    BU_LIST_INSERT(&(gedp->i->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
 	}
 	if ((size_t)uind > vp->nused) {
 	    bu_vls_printf(gedp->ged_result_str, "vdraw: write out of range\n");
@@ -243,6 +243,7 @@ vdraw_insert(void *data, int argc, const char *argv[])
     size_t idx;
     unsigned long uind = 0;
     static const char *usage = "i c x y z";
+    struct bu_list *vlfree = &rt_vlfree;
 
     /* must be wanting help */
     if (argc == 2) {
@@ -250,7 +251,7 @@ vdraw_insert(void *data, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (!gedp->ged_gdp->gd_currVHead) {
+    if (!gedp->i->ged_gdp->gd_currVHead) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw: no vlist is currently open.");
 	return BRLCAD_ERROR;
     }
@@ -264,7 +265,7 @@ vdraw_insert(void *data, int argc, const char *argv[])
     }
 
     /* uinds hold user specified index */
-    for (BU_LIST_FOR(vp, bv_vlist, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
+    for (BU_LIST_FOR(vp, bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
 	if ((size_t)uind < BV_VLIST_CHUNK) {
 	    /* this is the right vlist */
 	    break;
@@ -275,13 +276,13 @@ vdraw_insert(void *data, int argc, const char *argv[])
 	uind -= vp->nused;
     }
 
-    if (BU_LIST_IS_HEAD(vp, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
+    if (BU_LIST_IS_HEAD(vp, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
 	if (uind > 0) {
 	    bu_vls_printf(gedp->ged_result_str, "vdraw: insert out of range\n");
 	    return BRLCAD_ERROR;
 	}
-	BV_GET_VLIST(&RTG.rtg_vlfree, vp);
-	BU_LIST_INSERT(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
+	BV_GET_VLIST(vlfree, vp);
+	BU_LIST_INSERT(&(gedp->i->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
     }
     if ((size_t)uind > vp->nused) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw: insert out of range\n");
@@ -292,7 +293,7 @@ vdraw_insert(void *data, int argc, const char *argv[])
     cp = vp;
     idx = uind;
 
-    vp = BU_LIST_LAST(bv_vlist, &(gedp->ged_gdp->gd_currVHead->vdc_vhd));
+    vp = BU_LIST_LAST(bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd));
     vp->nused++;
 
     while (vp != cp) {
@@ -341,7 +342,7 @@ vdraw_delete(void *data, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (!gedp->ged_gdp->gd_currVHead) {
+    if (!gedp->i->ged_gdp->gd_currVHead) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: no vlist is currently open.", argv[0], argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -351,14 +352,14 @@ vdraw_delete(void *data, int argc, const char *argv[])
     }
     if (argv[2][0] == 'a') {
 	/* delete all */
-	for (BU_LIST_FOR(vp, bv_vlist, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
+	for (BU_LIST_FOR(vp, bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
 	    vp->nused = 0;
 	}
 	return BRLCAD_OK;
     }
     if (argv[2][0] == 'l') {
 	/* delete last */
-	for (REV_BU_LIST_FOR(vp, bv_vlist, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
+	for (REV_BU_LIST_FOR(vp, bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
 	    if (vp->nused > 0) {
 		vp->nused--;
 		break;
@@ -371,7 +372,7 @@ vdraw_delete(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    for (BU_LIST_FOR(vp, bv_vlist, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
+    for (BU_LIST_FOR(vp, bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
 	if ((size_t)uind < BV_VLIST_CHUNK) {
 	    /* this is the right vlist */
 	    break;
@@ -397,7 +398,7 @@ vdraw_delete(void *data, int argc, const char *argv[])
     }
 
     wp = BU_LIST_PNEXT(bv_vlist, vp);
-    while (BU_LIST_NOT_HEAD(wp, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
+    while (BU_LIST_NOT_HEAD(wp, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
 	if (wp->nused == 0) {
 	    break;
 	}
@@ -445,7 +446,7 @@ vdraw_read(void *data, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (!gedp->ged_gdp->gd_currVHead) {
+    if (!gedp->i->ged_gdp->gd_currVHead) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: no vlist is currently open.", argv[0], argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -455,19 +456,19 @@ vdraw_read(void *data, int argc, const char *argv[])
     }
     if (argv[2][0] == 'c') {
 	/* read color of current solid */
-	bu_vls_printf(gedp->ged_result_str, "%.6lx", gedp->ged_gdp->gd_currVHead->vdc_rgb);
+	bu_vls_printf(gedp->ged_result_str, "%.6lx", gedp->i->ged_gdp->gd_currVHead->vdc_rgb);
 	return BRLCAD_OK;
     }
     if (argv[2][0] == 'n') {
 	/*read name of currently open solid*/
-	bu_vls_printf(gedp->ged_result_str, "%.89s", gedp->ged_gdp->gd_currVHead->vdc_name);
+	bu_vls_printf(gedp->ged_result_str, "%.89s", gedp->i->ged_gdp->gd_currVHead->vdc_name);
 	return BRLCAD_OK;
     }
     if (argv[2][0] == 'l') {
 	/* return length of list */
 	length = 0;
-	vp = BU_LIST_FIRST(bv_vlist, &(gedp->ged_gdp->gd_currVHead->vdc_vhd));
-	while (!BU_LIST_IS_HEAD(vp, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
+	vp = BU_LIST_FIRST(bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd));
+	while (!BU_LIST_IS_HEAD(vp, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
 	    length += vp->nused;
 	    vp = BU_LIST_PNEXT(bv_vlist, vp);
 	}
@@ -479,7 +480,7 @@ vdraw_read(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    for (BU_LIST_FOR(vp, bv_vlist, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
+    for (BU_LIST_FOR(vp, bv_vlist, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
 	if ((size_t)uind < BV_VLIST_CHUNK) {
 	    /* this is the right vlist */
 	    break;
@@ -523,12 +524,12 @@ vdraw_send(void *data, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (!gedp->ged_gdp->gd_currVHead) {
+    if (!gedp->i->ged_gdp->gd_currVHead) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: no vlist is currently open.", argv[0], argv[1]);
 	return BRLCAD_ERROR;
     }
 
-    snprintf(solid_name, RT_VDRW_MAXNAME+RT_VDRW_PREFIX_LEN+1, "%s%s", RT_VDRW_PREFIX, gedp->ged_gdp->gd_currVHead->vdc_name);
+    snprintf(solid_name, RT_VDRW_MAXNAME+RT_VDRW_PREFIX_LEN+1, "%s%s", RT_VDRW_PREFIX, gedp->i->ged_gdp->gd_currVHead->vdc_name);
     if ((dp = db_lookup(gedp->dbip, solid_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	real_flag = 0;
     } else {
@@ -542,7 +543,7 @@ vdraw_send(void *data, int argc, const char *argv[])
     }
 
     /* 0 means OK, -1 means conflict with real solid name */
-    idx = invent_solid(gedp, solid_name, &(gedp->ged_gdp->gd_currVHead->vdc_vhd), gedp->ged_gdp->gd_currVHead->vdc_rgb, 1, 1.0, 0, 0);
+    idx = invent_solid(gedp, solid_name, &(gedp->i->ged_gdp->gd_currVHead->vdc_vhd), gedp->i->ged_gdp->gd_currVHead->vdc_rgb, 1, 1.0, 0, 0);
 
     bu_vls_printf(gedp->ged_result_str, "%d", idx);
 
@@ -568,7 +569,7 @@ vdraw_params(void *data, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (!gedp->ged_gdp->gd_currVHead) {
+    if (!gedp->i->ged_gdp->gd_currVHead) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: no vlist is currently open.", argv[0], argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -578,19 +579,19 @@ vdraw_params(void *data, int argc, const char *argv[])
     }
     if (argv[2][0] == 'c') {
 	if (sscanf(argv[3], "%lx", &rgb)>0)
-	    gedp->ged_gdp->gd_currVHead->vdc_rgb = rgb;
+	    gedp->i->ged_gdp->gd_currVHead->vdc_rgb = rgb;
 	return BRLCAD_OK;
     }
     if (argv[2][0] == 'n') {
 	/* check for conflicts with existing vlists*/
-	for (BU_LIST_FOR(rcp, vd_curve, gedp->ged_gdp->gd_headVDraw)) {
+	for (BU_LIST_FOR(rcp, vd_curve, gedp->i->ged_gdp->gd_headVDraw)) {
 	    if (!bu_strncmp(rcp->vdc_name, argv[2], RT_VDRW_MAXNAME)) {
 		bu_vls_printf(gedp->ged_result_str, "%s %s: name %.40s is already in use\n", argv[0], argv[1], argv[2]);
 		return BRLCAD_ERROR;
 	    }
 	}
 	/* otherwise name not yet used */
-	bu_strlcpy(gedp->ged_gdp->gd_currVHead->vdc_name, argv[2], RT_VDRW_MAXNAME);
+	bu_strlcpy(gedp->i->ged_gdp->gd_currVHead->vdc_name, argv[2], RT_VDRW_MAXNAME);
 
 	bu_vls_printf(gedp->ged_result_str, "0");
 	return BRLCAD_OK;
@@ -612,9 +613,10 @@ vdraw_open(void *data, int argc, const char *argv[])
     struct bv_vlist *vp;
     char temp_name[RT_VDRW_MAXNAME+1];
     static const char *usage = "[name]";
+    struct bu_list *vlfree = &rt_vlfree;
 
     if (argc == 2) {
-	if (gedp->ged_gdp->gd_currVHead) {
+	if (gedp->i->ged_gdp->gd_currVHead) {
 	    bu_vls_printf(gedp->ged_result_str, "1");
 	    return BRLCAD_OK;
 	} else {
@@ -630,36 +632,36 @@ vdraw_open(void *data, int argc, const char *argv[])
 
     bu_strlcpy(temp_name, argv[2], RT_VDRW_MAXNAME);
 
-    gedp->ged_gdp->gd_currVHead = (struct vd_curve *) NULL;
-    for (BU_LIST_FOR(rcp, vd_curve, gedp->ged_gdp->gd_headVDraw)) {
+    gedp->i->ged_gdp->gd_currVHead = (struct vd_curve *) NULL;
+    for (BU_LIST_FOR(rcp, vd_curve, gedp->i->ged_gdp->gd_headVDraw)) {
 	if (!bu_strncmp(rcp->vdc_name, temp_name, RT_VDRW_MAXNAME)) {
-	    gedp->ged_gdp->gd_currVHead = rcp;
+	    gedp->i->ged_gdp->gd_currVHead = rcp;
 	    break;
 	}
     }
 
-    if (!gedp->ged_gdp->gd_currVHead) {
+    if (!gedp->i->ged_gdp->gd_currVHead) {
 	/* create new entry */
 	BU_GET(rcp, struct vd_curve);
-	BU_LIST_APPEND(gedp->ged_gdp->gd_headVDraw, &(rcp->l));
+	BU_LIST_APPEND(gedp->i->ged_gdp->gd_headVDraw, &(rcp->l));
 
 	bu_strlcpy(rcp->vdc_name, temp_name, RT_VDRW_MAXNAME);
 
 	rcp->vdc_rgb = RT_VDRW_DEF_COLOR;
 	BU_LIST_INIT(&(rcp->vdc_vhd));
-	BV_GET_VLIST(&RTG.rtg_vlfree, vp);
+	BV_GET_VLIST(vlfree, vp);
 	BU_LIST_APPEND(&(rcp->vdc_vhd), &(vp->l));
-	gedp->ged_gdp->gd_currVHead = rcp;
+	gedp->i->ged_gdp->gd_currVHead = rcp;
 	/* 1 means new entry */
 	bu_vls_printf(gedp->ged_result_str, "1");
 	return BRLCAD_OK;
     } else {
 	/* entry already existed */
-	if (BU_LIST_IS_EMPTY(&(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
-	    BV_GET_VLIST(&RTG.rtg_vlfree, vp);
-	    BU_LIST_APPEND(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
+	if (BU_LIST_IS_EMPTY(&(gedp->i->ged_gdp->gd_currVHead->vdc_vhd))) {
+	    BV_GET_VLIST(vlfree, vp);
+	    BU_LIST_APPEND(&(gedp->i->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
 	}
-	gedp->ged_gdp->gd_currVHead->vdc_name[RT_VDRW_MAXNAME] = '\0'; /*safety*/
+	gedp->i->ged_gdp->gd_currVHead->vdc_name[RT_VDRW_MAXNAME] = '\0'; /*safety*/
 	/* 0 means entry already existed*/
 	bu_vls_printf(gedp->ged_result_str, "0");
 	return BRLCAD_OK;
@@ -678,6 +680,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
     struct ged *gedp = (struct ged *)data;
     struct vd_curve *rcp, *rcp2;
     static const char *usage = "list\n\tdelete name";
+    struct bu_list *vlfree = &rt_vlfree;
 
     /* must be needing help */
     if (argc < 3 || argc > 4) {
@@ -687,7 +690,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 
     switch  (argv[2][0]) {
 	case 'l':
-	    for (BU_LIST_FOR(rcp, vd_curve, gedp->ged_gdp->gd_headVDraw)) {
+	    for (BU_LIST_FOR(rcp, vd_curve, gedp->i->ged_gdp->gd_headVDraw)) {
 		bu_vls_strcat(gedp->ged_result_str, rcp->vdc_name);
 		bu_vls_strcat(gedp->ged_result_str, " ");
 	    }
@@ -695,7 +698,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 	    return BRLCAD_OK;
 	case 'd':
 	    rcp2 = (struct vd_curve *)NULL;
-	    for (BU_LIST_FOR(rcp, vd_curve, gedp->ged_gdp->gd_headVDraw)) {
+	    for (BU_LIST_FOR(rcp, vd_curve, gedp->i->ged_gdp->gd_headVDraw)) {
 		if (!bu_strncmp(rcp->vdc_name, argv[3], RT_VDRW_MAXNAME)) {
 		    rcp2 = rcp;
 		    break;
@@ -706,14 +709,14 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 		return BRLCAD_ERROR;
 	    }
 	    BU_LIST_DEQUEUE(&(rcp2->l));
-	    if (gedp->ged_gdp->gd_currVHead == rcp2) {
-		if (BU_LIST_IS_EMPTY(gedp->ged_gdp->gd_headVDraw)) {
-		    gedp->ged_gdp->gd_currVHead = (struct vd_curve *)NULL;
+	    if (gedp->i->ged_gdp->gd_currVHead == rcp2) {
+		if (BU_LIST_IS_EMPTY(gedp->i->ged_gdp->gd_headVDraw)) {
+		    gedp->i->ged_gdp->gd_currVHead = (struct vd_curve *)NULL;
 		} else {
-		    gedp->ged_gdp->gd_currVHead = BU_LIST_LAST(vd_curve, gedp->ged_gdp->gd_headVDraw);
+		    gedp->i->ged_gdp->gd_currVHead = BU_LIST_LAST(vd_curve, gedp->i->ged_gdp->gd_headVDraw);
 		}
 	    }
-	    BV_FREE_VLIST(&RTG.rtg_vlfree, &(rcp2->vdc_vhd));
+	    BV_FREE_VLIST(vlfree, &(rcp2->vdc_vhd));
 	    BU_PUT(rcp2, struct vd_curve);
 	    return BRLCAD_OK;
 	default:

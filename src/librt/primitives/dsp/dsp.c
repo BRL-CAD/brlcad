@@ -1,7 +1,7 @@
 /*                           D S P . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2024 United States Government as represented by
+ * Copyright (c) 1999-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1088,7 +1088,7 @@ plot_seg(struct isect_stuff *isect,
 	MAT4X3PNT(rpp.max, stom, bbmax);
 	plot_rpp(fp, &rpp, r/2, g/2, b/2);
 
-	/* re-use the rpp for the points for the segment */
+	/* reuse the rpp for the points for the segment */
 	MAT4X3PNT(rpp.min, stom, in_hit->hit_point);
 	MAT4X3PNT(rpp.max, stom, out_hit->hit_point);
 
@@ -3095,7 +3095,7 @@ rt_dsp_free(register struct soltab *stp)
 int
 rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     struct rt_dsp_internal *dsp_ip =
 	(struct rt_dsp_internal *)ip->idb_ptr;
     point_t m_pt;
@@ -3358,7 +3358,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
  * desired here.
  *
  * inputs:
- * dsp_ip - pointer to the rt_dsp_internal struct fro thi DSP
+ * dsp_ip - pointer to the rt_dsp_internal struct for this DSP
  * x - the DSP cell x-coord of the lower left corner of the cell
  * y - the DSP cell y-coord of the lower left corner of the cell
  * xlim - the maximum value of the DSP x coordinates
@@ -3480,6 +3480,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     int base_vert_no1;
     int base_vert_no2;
     int has_holes = 0;
+    struct bu_list *vlfree = &rt_vlfree;
 
     if (RT_G_DEBUG & RT_DEBUG_HF)
 	bu_log("rt_dsp_tess()\n");
@@ -3945,13 +3946,13 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Mark edges as real */
-    (void)nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
+    (void)nmg_mark_edges_real(&s->l.magic, vlfree);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
     /* sanity check */
-    nmg_make_faces_within_tol(s, &RTG.rtg_vlfree, tol);
+    nmg_make_faces_within_tol(s, vlfree, tol);
 
     return 0;
 }
@@ -4115,18 +4116,9 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
  * !0 failure
  */
 static int
-dsp_get_data(struct rt_dsp_internal *dsp_ip, const mat_t mat, const struct db_i *dbip)
+dsp_get_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 {
-    mat_t tmp;
-    char *p;
-
-    /* Apply Modeling transform */
-    MAT_COPY(tmp, dsp_ip->dsp_stom);
-    bn_mat_mul(dsp_ip->dsp_stom, mat, tmp);
-
-    bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
-
-    p = bu_vls_addr(&dsp_ip->dsp_name);
+    const char *p = bu_vls_cstr(&dsp_ip->dsp_name);
 
     switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
@@ -4171,6 +4163,25 @@ dsp_get_data(struct rt_dsp_internal *dsp_ip, const mat_t mat, const struct db_i 
     return 1;
 }
 
+int
+rt_dsp_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_dsp_internal *tip = (struct rt_dsp_internal *)ip->idb_ptr;
+    RT_DSP_CK_MAGIC(tip);
+    struct rt_dsp_internal *top = (struct rt_dsp_internal *)rop->idb_ptr;
+    RT_DSP_CK_MAGIC(top);
+
+    mat_t tmp;
+
+    MAT_COPY(tmp, tip->dsp_stom);
+    bn_mat_mul(top->dsp_stom, mat, tmp);
+    bn_mat_inv(top->dsp_mtos, top->dsp_stom);
+
+    return BRLCAD_OK;
+}
 
 /**
  * Import an DSP from the database format to the internal format.
@@ -4232,7 +4243,9 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     }
 
     if (mat == NULL) mat = bn_mat_identity;
-    if (dsp_get_data(dsp_ip, mat, dbip)!=0) {
+    rt_dsp_mat(ip, mat, ip);
+
+    if (dsp_get_data(dsp_ip, dbip)!=0) {
 	IMPORT_FAIL("unable to load displacement map data");
     }
 
@@ -4297,7 +4310,6 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     return 0;
 }
-
 
 /**
  * Import an DSP from the database format to the internal format.
@@ -4400,8 +4412,11 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     bu_vls_strncpy(&dsp_ip->dsp_name, (char *)cp,
 		   ep->ext_nbytes - (cp - (unsigned char *)ep->ext_buf));
 
+    /* Apply Modeling transform */
     if (mat == NULL) mat = bn_mat_identity;
-    if (dsp_get_data(dsp_ip, mat, dbip) != 0) {
+    rt_dsp_mat(ip, mat, ip);
+
+    if (dsp_get_data(dsp_ip, dbip) != 0) {
 	IMPORT_FAIL("unable to load displacement map data");
     }
 
@@ -4952,6 +4967,34 @@ dsp_pos(point_t out, /* return value */
     return 0;
 }
 
+const char *
+rt_dsp_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_dsp_internal *dsp = (struct rt_dsp_internal *)ip->idb_ptr;
+    RT_DSP_CK_MAGIC(dsp);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	point_t pnt = VINIT_ZERO;
+	MAT4X3PNT(mpt, dsp->dsp_stom, pnt);
+	goto dsp_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+dsp_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
+}
 
 /* Important when concatenating source files together */
 #undef dlog

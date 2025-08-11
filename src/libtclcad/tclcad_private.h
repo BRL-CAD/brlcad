@@ -1,7 +1,7 @@
 /*                T C L C A D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2012-2024 United States Government as represented by
+ * Copyright (c) 2012-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,10 +32,25 @@
 #include <tcl.h>
 
 #include "ged/defines.h"
+#include "tclcad/defines.h"
 
 __BEGIN_DECLS
 
 #define TO_UNLIMITED -1
+
+typedef int (*to_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_ptr, const char *, int);
+#define TO_WRAPPER_FUNC_PTR_NULL (to_wrapper_func_ptr)0
+
+struct to_cmdtab {
+    const char *to_name;
+    const char *to_usage;
+    int to_maxargs;
+    to_wrapper_func_ptr to_wrapper_func;
+    ged_func_ptr to_func;
+};
+
+// For the test program check_tclcad_cmds
+TCLCAD_EXPORT extern struct to_cmdtab to_cmds[];
 
 extern struct tclcad_obj HeadTclcadObj;
 extern struct tclcad_obj *current_top;
@@ -64,12 +79,10 @@ extern int tclcad_eval_noresult(Tcl_Interp *interp, const char *command, size_t 
 /* Tcl initialization routines */
 extern int Bu_Init(Tcl_Interp *interp);
 extern int Bn_Init(Tcl_Interp *interp);
-extern int Cho_Init(Tcl_Interp *interp);
 extern int Dm_Init(Tcl_Interp *interp);
 extern int Dmo_Init(Tcl_Interp *interp);
 extern int Fbo_Init(Tcl_Interp *interp);
 extern int Ged_Init(Tcl_Interp *interp);
-extern int Rt_Init(Tcl_Interp *interp);
 
 /* Fb functions */
 extern int to_close_fbs(struct bview *gdvp);

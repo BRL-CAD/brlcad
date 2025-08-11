@@ -1,7 +1,7 @@
 /*                 T R I M E S H _ S Y N C . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2024 United States Government as represented by
+ * Copyright (c) 2018-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -268,4 +268,3 @@ bg_trimesh_sync(int *of, int *f, int fcnt)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

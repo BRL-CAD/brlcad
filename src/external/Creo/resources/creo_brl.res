@@ -258,7 +258,7 @@
         (region_counter_l.LeftOffset   16)
         (region_counter_l.RightOffset  0)
         (region_counter.AttachLeft     True)
-        (region_counter.HelpText       "Enter desired value for intial region counter")
+        (region_counter.HelpText       "Enter desired value for initial region counter")
         (region_counter.InputType      2)
         (region_counter.LeftOffset     0)
         (region_counter.RightOffset    2)

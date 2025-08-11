@@ -20,7 +20,6 @@ if(BRLCAD_ENABLE_BULLET)
   set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_STATIC_LIBRARY_SUFFIX})
   find_package(Bullet REQUIRED)
   set(CMAKE_FIND_LIBRARY_SUFFIXES ${CFLS_TMP})
-
 endif(BRLCAD_ENABLE_BULLET)
 
 if(BRLCAD_ENABLE_BULLET AND BULLET_LIBRARIES)
@@ -32,7 +31,8 @@ if(BRLCAD_ENABLE_BULLET AND BULLET_LIBRARIES)
   add_definitions(-DBT_USE_DOUBLE_PRECISION=1)
 endif(BRLCAD_ENABLE_BULLET AND BULLET_LIBRARIES)
 
-set(bullet_srcs
+set(
+  bullet_srcs
   ged_command.cpp
   rt_collision_algorithm.cpp
   rt_collision_shape.cpp
@@ -41,23 +41,15 @@ set(bullet_srcs
   rt_motion_state.cpp
   simulation.cpp
   utility.cpp
-  )
+)
 
-set(SIM_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/simulate
-  ${BULLET_INCLUDE_DIR}
-  )
+set(SIM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-simulate SHARED ${bullet_srcs})
+ged_plugin_library(ged-simulate ${bullet_srcs})
 target_include_directories(ged-simulate BEFORE PRIVATE ${SIM_INCLUDE_DIRS})
 target_link_libraries(ged-simulate libged libbu ${BULLET_LIBRARIES})
-set_property(TARGET ged-simulate APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-simulate ${bullet_srcs})
-PLUGIN_SETUP(ged-simulate ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${bullet_srcs}
   rt_collision_algorithm.hpp
@@ -69,7 +61,7 @@ CMAKEFILES(
   tests/CMakeLists.txt
   tests/simulate_test.cpp
   utility.hpp
-  )
+)
 
 # Local Variables:
 # tab-width: 8

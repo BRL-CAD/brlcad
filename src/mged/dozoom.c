@@ -1,7 +1,7 @@
 /*                        D O Z O O M . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ unsigned char geometry_default_color[] = { 255, 0, 0 };
  * screen position for the object.
  */
 void
-dozoom(int which_eye)
+dozoom(struct mged_state *s, int which_eye)
 {
     int ndrawn = 0;
     fastf_t inv_viewsize = 0.0;
@@ -59,11 +59,11 @@ dozoom(int which_eye)
 
     /*
      * The vectorThreshold stuff in libdm may turn the
-     * Tcl-crank causing mged_curr_dm to change.
+     * Tcl-crank causing s->mged_curr_dm to change.
      */
-    struct mged_dm *save_dm_list = mged_curr_dm;
+    struct mged_dm *save_dm_list = s->mged_curr_dm;
 
-    mged_curr_dm->dm_ndrawn = 0;
+    s->mged_curr_dm->dm_ndrawn = 0;
     inv_viewsize = view_state->vs_gvp->gv_isize;
 
     /*
@@ -137,21 +137,21 @@ dozoom(int which_eye)
     if (dm_get_transparency(DMP)) {
 	/* First, draw opaque stuff */
 
-	ndrawn = dm_draw_head_dl(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+	ndrawn = dm_draw_head_dl(DMP, (struct bu_list *)ged_dl(s->gedp), 1.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 1, mged_variables->mv_dlist);
 
-	/* The vectorThreshold stuff in libdm may turn the Tcl-crank causing mged_curr_dm to change. */
-	if (mged_curr_dm != save_dm_list) set_curr_dm(save_dm_list);
+	/* The vectorThreshold stuff in libdm may turn the Tcl-crank causing s->mged_curr_dm to change. */
+	if (s->mged_curr_dm != save_dm_list) set_curr_dm(s, save_dm_list);
 
-	mged_curr_dm->dm_ndrawn += ndrawn;
+	s->mged_curr_dm->dm_ndrawn += ndrawn;
 
 	/* disable write to depth buffer */
 	dm_set_depth_mask(DMP, 0);
 
 	/* Second, draw transparent stuff */
 
-	ndrawn = dm_draw_head_dl(DMP, GEDP->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
+	ndrawn = dm_draw_head_dl(DMP, (struct bu_list *)ged_dl(s->gedp), 0.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 0, mged_variables->mv_dlist);
 
@@ -160,16 +160,16 @@ dozoom(int which_eye)
 
     } else {
 
-	ndrawn = dm_draw_head_dl(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+	ndrawn = dm_draw_head_dl(DMP, (struct bu_list *)ged_dl(s->gedp), 1.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 1, mged_variables->mv_dlist);
 
     }
 
-    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing mged_curr_dm to change. */
-    if (mged_curr_dm != save_dm_list) set_curr_dm(save_dm_list);
+    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing s->mged_curr_dm to change. */
+    if (s->mged_curr_dm != save_dm_list) set_curr_dm(s, save_dm_list);
 
-    mged_curr_dm->dm_ndrawn += ndrawn;
+    s->mged_curr_dm->dm_ndrawn += ndrawn;
 
 
     /* draw predictor vlist */
@@ -178,14 +178,14 @@ dozoom(int which_eye)
 		       color_scheme->cs_predictor[0],
 		       color_scheme->cs_predictor[1],
 		       color_scheme->cs_predictor[2], 1, 1.0);
-	dm_draw_vlist(DMP, (struct bv_vlist *)&mged_curr_dm->dm_p_vlist);
+	dm_draw_vlist(DMP, (struct bv_vlist *)&s->mged_curr_dm->dm_p_vlist);
     }
 
     /*
      * Draw all solids involved in editing.
      * They may be getting transformed away from the other solids.
      */
-    if (STATE == ST_VIEW)
+    if (GEOM_EDIT_STATE == ST_VIEW)
 	return;
 
     if (view_state->vs_gvp->gv_perspective <= 0) {
@@ -202,22 +202,24 @@ dozoom(int which_eye)
 		   color_scheme->cs_geo_hl[2], 1, 1.0);
 
 
-    ndrawn = dm_draw_head_dl(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+    ndrawn = dm_draw_head_dl(DMP, (struct bu_list *)ged_dl(s->gedp), 1.0, inv_viewsize,
 	    r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 1,
 	    geometry_default_color, 0, mged_variables->mv_dlist);
 
-    mged_curr_dm->dm_ndrawn += ndrawn;
+    s->mged_curr_dm->dm_ndrawn += ndrawn;
 
-    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing mged_curr_dm to change. */
-    if (mged_curr_dm != save_dm_list) set_curr_dm(save_dm_list);
+    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing s->mged_curr_dm to change. */
+    if (s->mged_curr_dm != save_dm_list) set_curr_dm(s, save_dm_list);
 }
 
 /*
  * Create Display Lists
  */
 void
-createDLists(struct bu_list *hdlp)
+createDLists(void *data, struct bu_list *hdlp)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     struct display_list *gdlp;
     struct display_list *next_gdlp;
 
@@ -241,11 +243,13 @@ createDLists(struct bu_list *hdlp)
  * display manager that has already created the display list)
  */
 void
-createDListSolid(struct bv_scene_obj *sp)
+createDListSolid(void *vlist_ctx, struct bv_scene_obj *sp)
 {
+    struct mged_state *s = (struct mged_state *)vlist_ctx;
+    MGED_CK_STATE(s);
     struct mged_dm *save_dlp;
 
-    save_dlp = mged_curr_dm;
+    save_dlp = s->mged_curr_dm;
 
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
@@ -273,7 +277,7 @@ createDListSolid(struct bv_scene_obj *sp)
 	dm_set_dirty(DMP, 1);
     }
 
-    set_curr_dm(save_dlp);
+    set_curr_dm(s, save_dlp);
 }
 
 /*
@@ -285,11 +289,13 @@ createDListSolid(struct bv_scene_obj *sp)
  * display manager that has already created the display list)
  */
 void
-createDListAll(struct display_list *gdlp)
+createDListAll(void *vlist_ctx, struct display_list *gdlp)
 {
+    struct mged_state *s = (struct mged_state *)vlist_ctx;
+    MGED_CK_STATE(s);
     struct bv_scene_obj *sp;
     for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	createDListSolid(sp);
+	createDListSolid(s, sp);
     }
 }
 
@@ -299,8 +305,10 @@ createDListAll(struct display_list *gdlp)
  * that support display lists and have them activated.
  */
 void
-freeDListsAll(unsigned int dlist, int range)
+freeDListsAll(void *data, unsigned int dlist, int range)
 {
+    struct mged_state *s = (struct mged_state *)data;
+    MGED_CK_STATE(s);
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *dlp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (dm_get_displaylist(dlp->dm_dmp) &&

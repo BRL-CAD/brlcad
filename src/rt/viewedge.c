@@ -1,7 +1,7 @@
 /*                      V I E W E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2024 United States Government as represented by
+ * Copyright (c) 2001-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -578,7 +578,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	 * Output is to a file stream.  Do not allow parallel
 	 * processing since we can't seek to the rows.
 	 */
-	RTG.rtg_parallel = 0;
+	rtg_parallel = 0;
 	bu_log("view_init: deactivating parallelism due to -o option.\n");
 	/*
 	 * The overlay and blend cannot be used in -o mode.  Note that
@@ -620,9 +620,7 @@ view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
     pixsize = 3;
 
     /*
-     * Set the hit distance difference necessary to trigger an edge.
-     * This algorithm was stolen from lgt, I may make it settable
-     * later.
+     * Set default hit distance difference necessary to trigger an edge.
      */
     if (max_dist < .00001)
 	max_dist = (cell_width*ARCTAN_87)+2;
@@ -943,6 +941,7 @@ view_end(struct application* UNUSED(ap))
         return;
     }
 
+    // TODO: axis color should be configurable, e.g., draw_axes=red or draw_axes=10/23/255
     const RGBpixel pixel = { 31, 73, 133 };
 
     // model center in pixel coordinates

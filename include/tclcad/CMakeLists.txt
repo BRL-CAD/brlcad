@@ -1,12 +1,7 @@
-set(tclcad_headers
-  defines.h
-  draw.h
-  misc.h
-  setup.h
-  )
-BRLCAD_MANAGE_FILES(tclcad_headers ${INCLUDE_DIR}/brlcad/tclcad REQUIRED libtclcad)
+set(tclcad_headers defines.h draw.h misc.h setup.h)
+brlcad_manage_files(tclcad_headers ${INCLUDE_DIR}/brlcad/tclcad REQUIRED libtclcad)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

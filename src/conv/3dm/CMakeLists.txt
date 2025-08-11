@@ -1,7 +1,7 @@
-BRLCAD_ADDEXEC(3dm-g 3dm-g.c "libgcv" FOLDER Conv)
+brlcad_addexec(3dm-g 3dm-g.c "libgcv" FOLDER Conv)
 add_dependencies(3dm-g gcv_plugins)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

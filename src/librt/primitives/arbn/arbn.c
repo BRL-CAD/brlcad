@@ -1,7 +1,7 @@
 /*                          A R B N . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2024 United States Government as represented by
+ * Copyright (c) 1989-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ size_t
 clt_arbn_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct rt_arbn_internal *arb =
-        (struct rt_arbn_internal *)stp->st_specific;
+	(struct rt_arbn_internal *)stp->st_specific;
     struct clt_arbn_specific *args;
 
     cl_int j;
@@ -425,7 +425,7 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
     size_t i;
     size_t j;
     size_t k;
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -602,6 +602,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     size_t max_edge_count; /* maximum number of edges for any face */
     struct vertex **verts;	/* Array of pointers to vertex structs */
     struct vertex ***loop_verts;	/* Array of pointers to vertex structs to pass to nmg_cmface */
+    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
@@ -811,9 +812,9 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
     bu_free((char *)fu, "rt_arbn_tess: fu");
 
-    nmg_fix_normals(s, &RTG.rtg_vlfree, tol);
+    nmg_fix_normals(s, vlfree, tol);
 
-    (void)nmg_mark_edges_real(&s->l.magic, &RTG.rtg_vlfree);
+    (void)nmg_mark_edges_real(&s->l.magic, vlfree);
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
@@ -960,6 +961,47 @@ rt_arbn_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     return 0;			/* OK */
 }
 
+int
+rt_arbn_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_arbn_internal *tip = (struct rt_arbn_internal *)ip->idb_ptr;
+    RT_ARBN_CK_MAGIC(tip);
+    struct rt_arbn_internal *top = (struct rt_arbn_internal *)rop->idb_ptr;
+    RT_ARBN_CK_MAGIC(top);
+
+    if (tip->neqn != top->neqn)
+	return BRLCAD_ERROR;
+
+    for (size_t i = 0; i < tip->neqn; i++) {
+	point_t orig_pt;
+	point_t pt;
+	vect_t norm;
+	fastf_t factor;
+
+	/* unitize the plane equation first */
+	factor = 1.0 / MAGNITUDE(tip->eqn[i]);
+	VSCALE(top->eqn[i], tip->eqn[i], factor);
+	top->eqn[i][W] = tip->eqn[i][W] * factor;
+
+	/* Pick a point on the original halfspace */
+	VSCALE(orig_pt, top->eqn[i], top->eqn[i][W]);
+
+	/* Transform the point, and the normal */
+	MAT4X3VEC(norm, mat, top->eqn[i]);
+	MAT4X3PNT(pt, mat, orig_pt);
+
+	/* Measure new distance from origin to new point */
+	VUNITIZE(norm);
+	VMOVE(top->eqn[i], norm);
+	top->eqn[i][W] = VDOT(pt, norm);
+    }
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Convert from "network" doubles to machine specific.
@@ -1007,29 +1049,7 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
     /* Transform by the matrix, if we have one that is not the identity */
     if (mat && !bn_mat_is_identity(mat)) {
-	for (i = 0; i < aip->neqn; i++) {
-	    point_t orig_pt;
-	    point_t pt;
-	    vect_t norm;
-	    fastf_t factor;
-
-	    /* unitize the plane equation first */
-	    factor = 1.0 / MAGNITUDE(aip->eqn[i]);
-	    VSCALE(aip->eqn[i], aip->eqn[i], factor);
-	    aip->eqn[i][W] = aip->eqn[i][W] * factor;
-
-	    /* Pick a point on the original halfspace */
-	    VSCALE(orig_pt, aip->eqn[i], aip->eqn[i][W]);
-
-	    /* Transform the point, and the normal */
-	    MAT4X3VEC(norm, mat, aip->eqn[i]);
-	    MAT4X3PNT(pt, mat, orig_pt);
-
-	    /* Measure new distance from origin to new point */
-	    VUNITIZE(norm);
-	    VMOVE(aip->eqn[i], norm);
-	    aip->eqn[i][W] = VDOT(pt, norm);
-	}
+	return rt_arbn_mat(ip, mat, ip);
     }
 
     return 0;
@@ -1360,16 +1380,16 @@ rt_arbn_faces_area(struct poly_face* faces, struct rt_arbn_internal* aip)
     plane_t *eqs = (plane_t *)bu_calloc(aip->neqn, sizeof(plane_t), "rt_arbn_faces_area: eqs");
 
     for (i = 0; i < aip->neqn; i++) {
-    	HMOVE(faces[i].plane_eqn, aip->eqn[i]);
-    	VUNITIZE(faces[i].plane_eqn);
+	HMOVE(faces[i].plane_eqn, aip->eqn[i]);
+	VUNITIZE(faces[i].plane_eqn);
 	tmp_pts[i] = faces[i].pts;
-    	HMOVE(eqs[i], faces[i].plane_eqn);
+	HMOVE(eqs[i], faces[i].plane_eqn);
     }
     bg_3d_polygon_make_pnts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
     for (i = 0; i < aip->neqn; i++) {
 	faces[i].npts = npts[i];
-    	bg_3d_polygon_sort_ccw(faces[i].npts, faces[i].pts, faces[i].plane_eqn);
-    	bg_3d_polygon_area(&faces[i].area, faces[i].npts, (const point_t *)faces[i].pts);
+	bg_3d_polygon_sort_ccw(faces[i].npts, faces[i].pts, faces[i].plane_eqn);
+	bg_3d_polygon_area(&faces[i].area, faces[i].npts, (const point_t *)faces[i].pts);
     }
     bu_free((char *)tmp_pts, "rt_arbn_faces_area: tmp_pts");
     bu_free((char *)npts, "rt_arbn_faces_area: npts");
@@ -1483,6 +1503,88 @@ rt_arbn_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	bu_free((char *)faces[i].pts, "rt_arbn_volume: pts");
     }
     bu_free((char *)faces, "rt_arbn_volume: faces");
+}
+
+const char *
+rt_arbn_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *tol)
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_arbn_internal *arbn = (struct rt_arbn_internal *)ip->idb_ptr;
+    RT_ARBN_CK_MAGIC(arbn);
+
+    static const char *default_keystr = "V";
+    const char *kr = (keystr) ? keystr : default_keystr;
+
+    int good_vert = 0;
+    for (size_t i=0; i<arbn->neqn; i++) {
+	for (size_t j=i+1; j<arbn->neqn; j++) {
+	    for (size_t k=j+1; k<arbn->neqn; k++) {
+		if (!bg_make_pnt_3planes(mpt, arbn->eqn[i], arbn->eqn[j], arbn->eqn[k])) {
+		    size_t l;
+
+		    good_vert = 1;
+		    for (l=0; l<arbn->neqn; l++) {
+			if (l == i || l == j || l == k)
+			    continue;
+
+			if (DIST_PNT_PLANE(mpt, arbn->eqn[l]) > tol->dist) {
+			    good_vert = 0;
+			    break;
+			}
+		    }
+
+		    if (good_vert)
+			break;
+		}
+	    }
+	    if (good_vert)
+		break;
+	}
+	if (good_vert)
+	    break;
+    }
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return kr;
+}
+
+
+int
+rt_arbn_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(planar_only), fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_arbn_internal *oarb = (struct rt_arbn_internal *)ip->idb_ptr;
+    RT_ARBN_CK_MAGIC(oarb);
+
+    // Make the output ARBN
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_ARBN;
+    nip->idb_meth = &OBJ[ID_ARBN];
+    struct rt_arbn_internal *arbn = NULL;
+    BU_ALLOC(arbn, struct rt_arbn_internal);
+    nip->idb_ptr = arbn;
+    arbn->magic = RT_ARBN_INTERNAL_MAGIC;
+    arbn->neqn = oarb->neqn;
+    arbn->eqn = (plane_t *)bu_calloc(oarb->neqn, sizeof(plane_t), "arbn eqns");
+    for (unsigned long i = 0; i < oarb->neqn; i++) {
+	HMOVE(arbn->eqn[i], oarb->eqn[i]);
+	arbn->eqn[i][3]+=val;
+    }
+
+    *oip = nip;
+    return BRLCAD_OK;
 }
 
 

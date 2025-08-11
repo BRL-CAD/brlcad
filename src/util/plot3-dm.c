@@ -1,7 +1,7 @@
 /*                      P L O T 3 - D M . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2024 United States Government as represented by
+ * Copyright (c) 1999-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -408,7 +408,7 @@ X_doEvent(ClientData UNUSED(clientData), XEvent *eventPtr)
 
 
 /*
- * Handle X display manger specific commands.
+ * Handle X display manager specific commands.
  */
 static int
 X_dm(int argc, char *argv[])

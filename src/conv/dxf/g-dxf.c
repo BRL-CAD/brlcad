@@ -1,7 +1,7 @@
 /*                         G - D X F . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2024 United States Government as represented by
+ * Copyright (c) 2003-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -145,6 +145,7 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
     int tri_count=0;
     int color_num;
     int do_triangulate=0;
+    struct bu_list *vlfree = &rt_vlfree;
 
     NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
@@ -192,7 +193,7 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
  triangulate:
     if (do_triangulate) {
 	/* triangulate model */
-	nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
+	nmg_triangulate_model(m, vlfree, &tol);
 
 	/* Count triangles */
 	tri_count = 0;
@@ -215,7 +216,7 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
 	}
     }
 
-    nmg_vertex_tabulate(&verts, &r->l.magic, &RTG.rtg_vlfree);
+    nmg_vertex_tabulate(&verts, &r->l.magic, vlfree);
 
     color_num = find_closest_color(tsp->ts_mater.ma_color);
 
@@ -364,7 +365,7 @@ union tree *get_layer(struct db_tree_state *tsp, const struct db_full_path *path
 }
 
 
-static struct gcv_region_end_data gcvwriter = {nmg_to_dxf, NULL};
+static struct gcv_region_end_data gcvwriter = {nmg_to_dxf, NULL, NULL};
 
 
 /**
@@ -388,7 +389,9 @@ main(int argc, char *argv[])
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
-    tree_state = rt_initial_tree_state;	/* struct copy */
+    gcvwriter.vlfree = &rt_vlfree;
+
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
@@ -407,8 +410,6 @@ main(int argc, char *argv[])
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
-
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:n:o:pr:vx:D:P:X:ih?")) != -1) {
@@ -520,7 +521,7 @@ main(int argc, char *argv[])
     fprintf(fp, "0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n");
 
     /* Walk indicated tree(s).  Each region will be output separately */
-    tree_state = rt_initial_tree_state;	/* struct copy */
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
     /* make empty NMG model */

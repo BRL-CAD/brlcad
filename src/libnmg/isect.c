@@ -1,7 +1,7 @@
 /*                  N M G _ R T _ I S E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2024 United States Government as represented by
+ * Copyright (c) 1994-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1910,7 +1910,7 @@ isect_ray_snurb_face(struct nmg_ray_data *rd, struct faceuse *fu, struct face_g_
 		nmg_nurb_free_snurb(srf);
 		continue;
 	    }
-	    hp = nmg_nurb_intersect(srf, pl1, pl2, UV_TOL, NULL);
+	    hp = nmg_nurb_intersect(srf, pl1, pl2, UV_TOL, NULL, 0);
 	}
 
 	/* process each hit point */

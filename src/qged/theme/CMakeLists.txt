@@ -1,4 +1,5 @@
-set(theme_files
+set(
+  theme_files
   CMakeLists.txt
   LICENSE.md
   breeze.qrc
@@ -89,9 +90,9 @@ set(theme_files
   dark/vmovetoolbar.svg
   dark/vseptoolbar.svg
   dark/window_close.svg
-  )
+)
 
-CMAKEFILES(${theme_files})
+cmakefiles(${theme_files})
 
 # Local Variables:
 # tab-width: 8
@@ -99,5 +100,3 @@ CMAKEFILES(${theme_files})
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-
-

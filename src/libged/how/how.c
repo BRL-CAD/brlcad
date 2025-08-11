@@ -1,7 +1,7 @@
 /*                         H O W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,57 @@
 #include "bu/str.h"
 #include "dm.h"
 #include "../ged_private.h"
+
+static int
+dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both)
+{
+    size_t i;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
+    struct bv_scene_obj *sp;
+    struct directory **tmp_dpp;
+
+    gdlp = BU_LIST_NEXT(display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
+
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    if (!sp->s_u_data)
+		continue;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
+
+	    for (i = 0, tmp_dpp = dpp;
+		 i < bdata->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
+		 ++i, ++tmp_dpp) {
+		if (bdata->s_fullpath.fp_names[i] != *tmp_dpp)
+		    break;
+	    }
+
+	    if (*tmp_dpp != RT_DIR_NULL)
+		continue;
+
+
+	    /* found a match */
+	    if (sp->s_os->s_dmode == 4) {
+		if (both)
+		    bu_vls_printf(vls, "%d 1", _GED_HIDDEN_LINE);
+		else
+		    bu_vls_printf(vls, "%d", _GED_HIDDEN_LINE);
+	    } else {
+		if (both)
+		    bu_vls_printf(vls, "%d %g", sp->s_os->s_dmode, sp->s_os->transparency);
+		else
+		    bu_vls_printf(vls, "%d", sp->s_os->s_dmode);
+	    }
+
+	    return 1;
+	}
+
+	gdlp = next_gdlp;
+    }
+
+    return 0;
+}
 
 
 /*
@@ -79,7 +130,7 @@ ged_how_core(struct ged *gedp, int argc, const char *argv[])
 	    goto good_label;
     }
 
-    good = dl_how(gedp->ged_gdp->gd_headDisplay, gedp->ged_result_str, dpp, both);
+    good = dl_how(gedp->i->ged_gdp->gd_headDisplay, gedp->ged_result_str, dpp, both);
 
     /* match NOT found */
     if (!good) bu_vls_printf(gedp->ged_result_str, "-1");

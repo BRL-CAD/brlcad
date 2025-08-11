@@ -4,9 +4,10 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
-set(analyze_srcs
+set(
+  analyze_srcs
   analyze.cpp
   arb8.cpp
   arbn.cpp
@@ -15,20 +16,16 @@ set(analyze_srcs
   sketch.cpp
   util.cpp
   op_pnts_vol.cpp
-  )
+)
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-analyze SHARED ${analyze_srcs})
+ged_plugin_library(ged-analyze ${analyze_srcs})
 target_link_libraries(ged-analyze libged libanalyze libbu)
-set_property(TARGET ged-analyze APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-analyze analyze.c)
-PLUGIN_SETUP(ged-analyze ged)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${analyze_srcs}
   ged_analyze.h
-  )
+)
 
 # Local Variables:
 # tab-width: 8

@@ -52,7 +52,7 @@
 #   The conditional suppression of attributes is intended to permit BRL-CAD
 #   users to quickly identify Creo parts which contain what the user may deem
 #   to be an unwanted Creo material assignment.  Resolving disparities with
-#   the material assigned in the upstream Creo part model is a desireable
+#   the material assigned in the upstream Creo part model is a desirable
 #   "best practice" in the conversion of CAD models from Creo to BRL-CAD in
 #   an effort to enhance process automation.
 #

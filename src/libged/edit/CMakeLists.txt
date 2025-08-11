@@ -4,21 +4,49 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  )
+)
 
-add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-edit SHARED "edit.c;edit2.cpp")
-target_link_libraries(ged-edit libged libbu)
-set_property(TARGET ged-edit APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-edit "edit.c;edit2.cpp")
-PLUGIN_SETUP(ged-edit ged)
-
-CMAKEFILES(
-  CMakeLists.txt
+set(edit_srcs
   edit.c
   edit2.cpp
-  ged_edit2.h
+  protate.c
+  pscale.c
+  ptranslate.c
+  pscale.c
+  rotate_eto.c
+  rotate_extrude.c
+  rotate_hyp.c
+  rotate_tgc.c
+  scale_ehy.c
+  scale_ell.c
+  scale_epa.c
+  scale_eto.c
+  scale_extrude.c
+  scale_hyp.c
+  scale_metaball.c
+  scale_part.c
+  scale_pipe.c
+  scale_rhc.c
+  scale_rpc.c
+  scale_superell.c
+  scale_tgc.c
+  scale_tor.c
+  translate_extrude.c
+  translate_tgc.c
+  edarb.c
+  facedef.c
   )
+
+ged_plugin_library(ged-edit ${edit_srcs})
+target_link_libraries(ged-edit libged libbu)
+
+cmakefiles(
+  CMakeLists.txt
+  ${edit_srcs}
+  ged_edit.h
+  ged_edit2.h
+  uri.hh
+)
 
 # Local Variables:
 # tab-width: 8

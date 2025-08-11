@@ -476,10 +476,19 @@ d2.r
 	    <table><title>Standard Attributes</title>
 
 	      <tgroup cols="2">
-		<tbody>
-		  <row><entry>GIFTmater</entry><entry>inherit</entry></row>
-		  <row><entry>material_id</entry><entry>oshader</entry></row>
-		  <row><entry>region_id</entry><entry>rgb</entry></row>
+		<thead>
+		  <row>
+		    <entry>Attribute</entry>
+		    <entry>Value Type</entry>
+		  </row>
+		</thead>
+			<tbody>
+		  <row><entry>GIFTmater</entry><entry>#</entry></row>
+			<row><entry>inherit</entry><entry>0 or 1</entry></row>
+		  <row><entry>material_id</entry><entry>#</entry></row>
+		  <row><entry>oshader</entry><entry>shader string</entry></row>
+		  <row><entry>region_id</entry><entry>#</entry></row>
+			<row><entry>rgb</entry><entry>#/#/#</entry></row>
 		</tbody>
 	      </tgroup>
 	    </table>
@@ -1115,7 +1124,7 @@ d2.r
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
     <para>
-      This software is Copyright (c) 2008-2024 United States Government as
+      This software is Copyright (c) 2008-2025 United States Government as
       represented by the U.S. Army Research Laboratory.
       Portions Copyright 1990, 1993, 1994 The Regents of the University of California,
       per copyright and license information from OpenBSD and NetBSD.  For more details

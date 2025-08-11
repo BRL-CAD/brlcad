@@ -20,13 +20,11 @@ include(FindPkgMacros)
 getenv_path(NSIS_HOME)
 
 # construct search paths
-set(NSIS_PREFIX_PATH ${NSIS_HOME} ${ENV_NSIS_HOME}
-	"C:/Program Files (x86)/NSIS"
-)
+set(NSIS_PREFIX_PATH ${NSIS_HOME} ${ENV_NSIS_HOME} "C:/Program Files (x86)/NSIS")
 find_path(NSIS_BINARY_DIR NAMES makensis.exe HINTS ${NSIS_PREFIX_PATH} PATH_SUFFIXES bin)
 
 if(NSIS_BINARY_DIR)
-	set (NSIS_FOUND TRUE)
+  set(NSIS_FOUND TRUE)
 endif()
 
 mark_as_advanced(NSIS_BINARY_DIR NSIS_FOUND)

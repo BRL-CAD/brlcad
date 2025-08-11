@@ -1,7 +1,7 @@
 /*                        S E A R C H . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,36 +37,6 @@
 
 __BEGIN_DECLS
 
-typedef int(*db_search_callback_t)(int, const char*[],void*);
-
-/**
- * @brief Execution context for the -exec filter.
- */
-struct db_search_context {
-    db_search_callback_t _e_callback; /**< @brief A function that evaluates an array of strings and returns a boolean. */
-    void *_e_userdata; /**< @brief A pointer that will be passed to the callback, usually a pointer to an interpreter. */
-};
-
-/**
- * @brief Allocates a new context.
- */
-RT_EXPORT extern struct db_search_context *db_search_context_create(void); /* FIXME: is this really needed? why not just use the struct directly from the stack or let the user handle allocation? */
-
-/**
- * @brief Free a context created by db_search_context_create.
- */
-RT_EXPORT extern void db_search_context_destroy(struct db_search_context *ctx);
-
-/**
- * @brief Register a callback for -exec filters.
- */
-RT_EXPORT extern void db_search_register_exec(struct db_search_context *, db_search_callback_t);
-
-/**
- * @brief Register a userdata for the callback.
- */
-RT_EXPORT extern void db_search_register_data(struct db_search_context *, void *);
-
 /**
  * @brief Search for objects in a geometry database using filters
  *
@@ -97,8 +67,11 @@ RT_EXPORT extern void db_search_register_data(struct db_search_context *, void *
  * @param dbip The database instance pointer corresponding to the
  * current geometry database.
  *
- * @param ctx Context for -exec. Can be NULL if there are no -exec filters present.
+ * @param clbk Optional callback function to call for -exec
  *
+ * @param u1 Optional user data pointer
+ *
+ * @param u2 Optional user data pointer
  *
  * @return Negative return values indicate a problem with the search,
  * and non-negative values indicate a successful search.  Non-negative
@@ -139,7 +112,9 @@ RT_EXPORT extern int db_search(struct bu_ptbl *results,
 			       int path_c,
 			       struct directory **path_v,
 			       struct db_i *dbip,
-			       struct db_search_context *ctx
+			       bu_clbk_t clbk,
+			       void *u1,
+			       void *u2
 			      );
 
 /* These are the possible search flags. */
@@ -186,8 +161,9 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
 #define DB_LS_NON_GEOM     0x10   /**< @brief filter for non-geometry objects */
 #define DB_LS_TOPS         0x20   /**< @brief filter for objects un-referenced by other objects */
 #define DB_LS_CYCLIC       0x40   /**< @brief filter for objects with a cyclic reference in subtrees */
+#define DB_LS_PHONY        0x80   /**< @brief enable and filter for objects such as the nirt display list entries */
 /* TODO - implement this flag
-   #define DB_LS_REGEX        0x80*/ /* interpret pattern using regex rules, instead of
+   #define DB_LS_REGEX        0x100*/ /* interpret pattern using regex rules, instead of
 					globbing rules (default) */
 
 /* cyclic.c */
@@ -208,6 +184,25 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
  */
 RT_EXPORT extern int db_cyclic_paths(struct bu_ptbl *cyclic_paths, const struct db_i *dbip, struct directory *sdp);
 
+
+/* Deprecated */
+typedef int(*db_search_callback_t)(int, const char*[],void*);
+struct db_search_context {
+    db_search_callback_t _e_callback; /**< @brief A function that evaluates an array of strings and returns a boolean. */
+    void *_e_userdata; /**< @brief A pointer that will be passed to the callback, usually a pointer to an interpreter. */
+};
+RT_EXPORT extern struct db_search_context *db_search_context_create(void); /* FIXME: is this really needed? why not just use the struct directly from the stack or let the user handle allocation? */
+RT_EXPORT extern void db_search_context_destroy(struct db_search_context *ctx);
+RT_EXPORT extern void db_search_register_exec(struct db_search_context *, db_search_callback_t);
+RT_EXPORT extern void db_search_register_data(struct db_search_context *, void *);
+RT_EXPORT extern int db_search_old(struct bu_ptbl *results,
+			       int flags,
+			       const char *filter,
+			       int path_c,
+			       struct directory **path_v,
+			       struct db_i *dbip,
+			       struct db_search_context *ctx
+			      );
 
 __END_DECLS
 

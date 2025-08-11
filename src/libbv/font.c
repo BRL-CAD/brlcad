@@ -1,7 +1,7 @@
 /*                          F O N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ bv_vlist_3string(struct bu_list *vhead,
 	    } else
 		draw = 1;
 
-	    /* stroke co-ordinates in string coord system */
+	    /* stroke coordinates in string coord system */
 	    VSET( temp, (stroke/11) * 0.1 * scale + offset,
 		  (ysign * (stroke%11)) * 0.1 * scale, 0 );
 	    MAT4X3PNT( loc, mat, temp );

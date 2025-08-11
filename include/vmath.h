@@ -1,7 +1,7 @@
 /*                         V M A T H . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,7 +83,7 @@
  * Most of these macros require that the result be in separate
  * storage, distinct from the input parameters, except where noted.
  *
- * IMPLEMENTOR NOTES
+ * IMPLEMENTER NOTES
  *
  * When writing macros like this, it is very important that any
  * variables declared within a macro code blocks start with an

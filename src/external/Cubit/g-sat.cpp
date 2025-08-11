@@ -1,7 +1,7 @@
 /*                       G - S A T . C P P
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1181,7 +1181,7 @@ main(int argc, char *argv[])
 	bu_exit(1, "[g-sat]: rt_dirbuild failure\n");
     }
 
-    init_state = rt_initial_tree_state;
+    RT_DBTS_INIT(&init_state);
     init_state.ts_dbip = rtip->rti_dbip;
     init_state.ts_rtip = rtip;
     init_state.ts_resp = NULL;

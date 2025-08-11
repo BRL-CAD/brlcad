@@ -1,7 +1,7 @@
 /*                          R T I F . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2024 United States Government as represented by
+ * Copyright (c) 1988-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,7 +46,6 @@
 #include "./sedit.h"
 #include "./mged.h"
 #include "./mged_dm.h"
-#include "./qray.h"
 #include "./cmd.h"
 
 
@@ -54,11 +53,15 @@
  * rt, rtarea, rtweight, rtcheck, and rtedge all use this.
  */
 int
-cmd_rt(ClientData UNUSED(clientData),
+cmd_rt(ClientData clientData,
        Tcl_Interp *interp,
        int argc,
        const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
     int ret;
     Tcl_DString ds;
 
@@ -71,9 +74,9 @@ cmd_rt(ClientData UNUSED(clientData),
 
     Tcl_DStringInit(&ds);
 
-    ret = ged_exec(GEDP, argc, (const char **)argv);
+    ret = ged_exec(s->gedp, argc, (const char **)argv);
 
-    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == BRLCAD_OK)
@@ -89,8 +92,11 @@ cmd_rt(ClientData UNUSED(clientData),
  * Typically used to invoke a remote RT (hence the name).
  */
 int
-cmd_rrt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     int ret;
     Tcl_DString ds;
 
@@ -105,13 +111,13 @@ cmd_rrt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_VIEW, "Ray-trace of current view"))
+    if (not_state(s, ST_VIEW, "Ray-trace of current view"))
 	return TCL_ERROR;
 
     Tcl_DStringInit(&ds);
 
-    ret = ged_exec(GEDP, argc, (const char **)argv);
-    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
+    ret = ged_exec(s->gedp, argc, (const char **)argv);
+    Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == BRLCAD_OK)
@@ -156,8 +162,11 @@ rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
  * 1 leave view alone, animate solid named "EYE"
  */
 int
-f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     FILE *fp = NULL;
     fastf_t scale = 0.0;
     mat_t rot;
@@ -185,7 +194,7 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	return TCL_ERROR;
     }
 
-    if (not_state(ST_VIEW, "animate from matrix file"))
+    if (not_state(s, ST_VIEW, "animate from matrix file"))
 	return TCL_ERROR;
 
     if ((fp = fopen(argv[1], "r")) == NULL) {
@@ -200,13 +209,13 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	mode = atoi(argv[2]);
     switch (mode) {
 	case 1:
-	    if ((dp = db_lookup(DBIP, "EYE", LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    if ((dp = db_lookup(s->dbip, "EYE", LOOKUP_NOISY)) == RT_DIR_NULL) {
 		mode = -1;
 		break;
 	    }
 
-	    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
-	    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
+	    gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
+	    while (BU_LIST_NOT_HEAD(gdlp, (struct bu_list *)ged_dl(s->gedp))) {
 		next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 		for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
@@ -249,18 +258,18 @@ work:
 		view_state->vs_gvp->gv_scale = scale;
 		MAT_COPY(view_state->vs_gvp->gv_rotation, rot);
 		MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, eye_model);
-		new_mats();
+		new_mats(s);
 		/* Second step:  put eye in front */
 		VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
 		MAT4X3PNT(eye_model, view_state->vs_gvp->gv_view2model, xlate);
 		MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, eye_model);
-		new_mats();
+		new_mats(s);
 		break;
 	    case 0:
 		view_state->vs_gvp->gv_scale = scale;
 		MAT_IDN(view_state->vs_gvp->gv_rotation);	/* top view */
 		MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, eye_model);
-		new_mats();
+		new_mats(s);
 		break;
 	    case 1:
 		/* Adjust center for displaylist devices */
@@ -298,7 +307,7 @@ work:
 		break;
 	}
 	view_state->vs_flag = 1;
-	refresh();	/* Draw new display */
+	refresh(s);	/* Draw new display */
     }
 
     if (mode == 1) {
@@ -335,7 +344,7 @@ work:
     }
 
     fclose(fp);
-    (void)mged_svbase();
+    (void)mged_svbase(s);
 
     (void)signal(SIGINT, SIG_IGN);
     return TCL_OK;
@@ -346,8 +355,11 @@ work:
  * Invoke nirt with the current view & stuff
  */
 int
-f_nirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     int ret;
     Tcl_DString ds;
 
@@ -371,13 +383,13 @@ f_nirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	insertArgv[2] = (char *)0;
 	newArgv = bu_argv_dupinsert(1, insertArgc, (const char **)insertArgv, argc, (const char **)argv);
 	newArgc = argc + insertArgc;
-	ret = ged_exec(GEDP, newArgc, (const char **)newArgv);
+	ret = ged_exec(s->gedp, newArgc, (const char **)newArgv);
 	bu_argv_free(newArgc, newArgv);
     } else {
-	ret = ged_exec(GEDP, argc, (const char **)argv);
+	ret = ged_exec(s->gedp, argc, (const char **)argv);
     }
 
-    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == BRLCAD_OK)
@@ -388,8 +400,11 @@ f_nirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 
 
 int
-f_vnirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
+f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
     int ret;
     Tcl_DString ds;
 
@@ -402,9 +417,9 @@ f_vnirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
     Tcl_DStringInit(&ds);
 
-    ret = ged_exec(GEDP, argc, (const char **)argv);
+    ret = ged_exec(s->gedp, argc, (const char **)argv);
 
-    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == BRLCAD_OK)

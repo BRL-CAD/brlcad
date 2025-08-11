@@ -22,6 +22,8 @@
 /**  @defgroup ged_raytrace Raytracing */
 /** @ingroup libged */
 /**  @defgroup ged_misc Miscellaneous */
+/** @ingroup libged */
+/**  @defgroup ged_version Version */
 
 /* Third tier groups */
 /** @ingroup ged_view */

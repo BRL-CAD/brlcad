@@ -23,4 +23,6 @@
  /**  @defgroup brep_boolean Boolean Operations On B-Reps */
  /** @ingroup libbrep */
  /**  @defgroup brep_csg CSG Hierarchy Reconstruction from B-Reps */
+ /** @ingroup libbrep */
+ /**  @defgroup brep_edit Editing Operations for B-Reps */
 

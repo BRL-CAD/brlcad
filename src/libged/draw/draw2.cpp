@@ -1,7 +1,7 @@
 /*                         D R A W 2 . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@
 #include "nmg.h"
 #include "rt/view.h"
 
-#include "ged/view/state.h"
+#include "ged/view.h"
 #include "../ged_private.h"
 
 static int
@@ -129,11 +129,9 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* User settings may override various options - set up to collect them.
-     * Option defaults come from the current view, but may be overridden for
-     * the purposes of the current draw command by command line options. */
+     * Option defaults may be overridden for the purposes of the current draw
+     * command by command line options. */
     struct bv_obj_settings vs = BV_OBJ_SETTINGS_INIT;
-    if (cv)
-	bv_obj_settings_sync(&vs, &cv->gv_s->obj_s);
 
     int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
     struct bu_opt_desc d[18];

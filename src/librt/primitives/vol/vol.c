@@ -1,7 +1,7 @@
 /*                           V O L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2024 United States Government as represented by
+ * Copyright (c) 1989-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -629,10 +629,10 @@ vol_file_data(struct rt_vol_internal *vip)
    size_t nbytes;
 
    size_t bytes = vip->xdim * vip->ydim * vip->zdim;
- 	nbytes = vol_from_file(vip->name, vip->xdim, vip->ydim, vip->zdim, &vip->map);
- 	if (nbytes != bytes) {
- 	    bu_log("WARNING: unexpected VOL bytes (read %zu, expected %zu) in %s\n", nbytes, bytes, vip->name);
- 	}
+	nbytes = vol_from_file(vip->name, vip->xdim, vip->ydim, vip->zdim, &vip->map);
+	if (nbytes != bytes) {
+	    bu_log("WARNING: unexpected VOL bytes (read %zu, expected %zu) in %s\n", nbytes, bytes, vip->name);
+	}
 
    return 0;
 }
@@ -728,51 +728,63 @@ get_obj_data(struct rt_vol_internal *vip, const struct db_i *dbip)
  * !0 fail
  */
 static int
-get_vol_data(struct rt_vol_internal *vip, const mat_t mat, const struct db_i *dbip)
+get_vol_data(struct rt_vol_internal *vip, const struct db_i *dbip)
 {
-  mat_t tmp;
+    switch (vip->datasrc) {
+	case RT_VOL_SRC_FILE:
+	    /* Retrieve the data from an external file */
+	    if (RT_G_DEBUG & RT_DEBUG_HF)
+		bu_log("getting data from file \"%s\"\n", vip->name);
 
-  /* Apply Modelling transform */
-  bn_mat_mul(tmp, mat, vip->mat);
-  MAT_COPY(vip->mat, tmp);
+	    if(vol_file_data(vip) != 0) {
+		return 1;
+	    }
+	    else {
+		return 0;
+	    }
+	    break;
+	case RT_VOL_SRC_OBJ:
+	    /* Retrieve the data from an internal db object */
+	    if (RT_G_DEBUG & RT_DEBUG_HF)
+		bu_log("getting data from object \"%s\"\n", vip->name);
 
-  switch (vip->datasrc) {
-case RT_VOL_SRC_FILE:
-    /* Retrieve the data from an external file */
-    if (RT_G_DEBUG & RT_DEBUG_HF)
-	bu_log("getting data from file \"%s\"\n", vip->name);
-
-    if(vol_file_data(vip) != 0) {
-      return 1;
+	    if (get_obj_data(vip, dbip) != 0) {
+		return 1;
+	    } else {
+		RT_CK_DB_INTERNAL(vip->bip);
+		RT_CK_BINUNIF(vip->bip->idb_ptr);
+		return 0;
+	    }
+	    break;
+	default:
+	    bu_log("%s:%d Odd vol data src '%c' s/b '%c' or '%c'\n",
+		    __FILE__, __LINE__, vip->datasrc,
+		    RT_VOL_SRC_FILE, RT_VOL_SRC_OBJ);
     }
-    else {
-      return 0;
-    }
-    break;
-case RT_VOL_SRC_OBJ:
-    /* Retrieve the data from an internal db object */
-    if (RT_G_DEBUG & RT_DEBUG_HF)
-	bu_log("getting data from object \"%s\"\n", vip->name);
 
-    if (get_obj_data(vip, dbip) != 0) {
-	return 1;
-    } else {
-	RT_CK_DB_INTERNAL(vip->bip);
-	RT_CK_BINUNIF(vip->bip->idb_ptr);
-	return 0;
-    }
-    break;
-default:
-bu_log("%s:%d Odd vol data src '%c' s/b '%c' or '%c'\n",
-  __FILE__, __LINE__, vip->datasrc,
-  RT_VOL_SRC_FILE, RT_VOL_SRC_OBJ);
-  }
-
-  if (dbip)
-      bu_log("%s", dbip->dbi_filename);
-  return 0; //temporary
+    if (dbip)
+	bu_log("%s", dbip->dbi_filename);
+    return 0; //temporary
 }
 
+int
+rt_vol_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_vol_internal *tip = (struct rt_vol_internal *)ip->idb_ptr;
+    RT_VOL_CK_MAGIC(tip);
+    struct rt_vol_internal *top = (struct rt_vol_internal *)rop->idb_ptr;
+    RT_VOL_CK_MAGIC(top);
+
+    /* Apply transform */
+    mat_t tmp;
+    bn_mat_mul(tmp, mat, tip->mat);
+    MAT_COPY(top->mat, tmp);
+
+    return BRLCAD_OK;
+}
 
 /**
  * Read in the information from the string solid record.
@@ -784,7 +796,6 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 {
     register struct rt_vol_internal *vip;
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    mat_t tmat;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -829,11 +840,10 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	mat = bn_mat_identity;
 
     /* Apply any modeling transforms to get final matrix */
-    bn_mat_mul(tmat, mat, vip->mat);
-    MAT_COPY(vip->mat, tmat);
+    rt_vol_mat(ip, mat, ip);
 
-    if (get_vol_data(vip, mat, dbip) == 1)
-  bu_log("Couldn't find the associated file/object %s",vip->name);
+    if (get_vol_data(vip, dbip) == 1)
+	bu_log("Couldn't find the associated file/object %s",vip->name);
 
     return 0;
 }
@@ -899,9 +909,9 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(
 		  V3INTCLAMPARGS(local));
     } else {
       bu_vls_printf(&substr, "\tobject name=\"%s\"\n\tw=%u n=%u d=%u\n\tlo=%u hi=%u\n\tsize=%g,%g,%g\n",
-  		  vip->name,
-  		  vip->xdim, vip->ydim, vip->zdim, vip->lo, vip->hi,
-  		  V3INTCLAMPARGS(local));
+		  vip->name,
+		  vip->xdim, vip->ydim, vip->zdim, vip->lo, vip->hi,
+		  V3INTCLAMPARGS(local));
     }
 
     bu_vls_vlscat(str, &substr);
@@ -1145,7 +1155,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
 
@@ -1274,6 +1284,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct faceuse *fu;
     struct model *m_tmp;
     struct nmgregion *r_tmp;
+    struct bu_list *vlfree = &rt_vlfree;
 
     NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
@@ -1473,10 +1484,10 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     nmg_region_a(r_tmp, tol);
 
     /* fuse model */
-    nmg_model_fuse(m_tmp, &RTG.rtg_vlfree, tol);
+    nmg_model_fuse(m_tmp, vlfree, tol);
 
     /* simplify shell */
-    nmg_shell_coplanar_face_merge(s, tol, 1, &RTG.rtg_vlfree);
+    nmg_shell_coplanar_face_merge(s, tol, 1, vlfree);
 
     /* kill snakes */
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
@@ -1488,12 +1499,12 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    continue;
 
 	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
-	    (void)nmg_kill_snakes(lu,&RTG.rtg_vlfree);
+	    (void)nmg_kill_snakes(lu, vlfree);
     }
 
-    (void)nmg_unbreak_region_edges((uint32_t *)(&s->l),&RTG.rtg_vlfree);
+    (void)nmg_unbreak_region_edges((uint32_t *)(&s->l), vlfree);
 
-    (void)nmg_mark_edges_real((uint32_t *)&s->l,&RTG.rtg_vlfree);
+    (void)nmg_mark_edges_real((uint32_t *)&s->l, vlfree);
 
     nmg_merge_models(m, m_tmp);
     *r = r_tmp;
@@ -1725,6 +1736,35 @@ rt_vol_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	}
     }
     *volume = fabs(_vol);
+}
+
+const char *
+rt_vol_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_vol_internal *vol = (struct rt_vol_internal *)ip->idb_ptr;
+    RT_VOL_CK_MAGIC(vol);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	point_t pnt = VINIT_ZERO;
+	MAT4X3PNT(mpt, vol->mat, pnt);
+	goto vol_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+vol_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
 }
 
 

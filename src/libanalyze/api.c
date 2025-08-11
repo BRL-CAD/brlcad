@@ -1,7 +1,7 @@
 /*                           A P I . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2024 United States Government as represented by
+ * Copyright (c) 2015-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -693,7 +693,7 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 	    tmp = 0.0;
 	    for (view = 0; view < state->num_views; view++) {
 		val = state->objs[obj].o_surf_area[view] = state->objs[obj].o_area[view];
-		/* divide by 4 to prepare for next iteration of grid refinment */
+		/* divide by 4 to prepare for next iteration of grid refinement */
 		state->objs[obj].o_area[view] /= 4;
 		V_MIN(low, val);
 		V_MAX(hi, val);
@@ -720,7 +720,7 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 	    int view;
 	    for (view = 0; view < state->num_views; view++) {
 		state->reg_tbl[i].r_surf_area[view] = state->reg_tbl[i].r_area[view];
-		/* divide by 4 to prepare for next iteration of grid refinment */
+		/* divide by 4 to prepare for next iteration of grid refinement */
 		state->reg_tbl[i].r_area[view] /= 4;
 	    }
 	}

@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2024 United States Government as represented by
+ * Copyright (c) 1995-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -74,10 +74,10 @@ fbserv_setup_socket(int fd)
 	for (size = 256; size > 16; size /= 2) {
 	    val = size * 1024;
 	    m = setsockopt(fd, SOL_SOCKET, SO_RCVBUF,
-			   (char *)&val, sizeof(val));
+		    (char *)&val, sizeof(val));
 	    val = size * 1024;
 	    n = setsockopt(fd, SOL_SOCKET, SO_SNDBUF,
-			   (char *)&val, sizeof(val));
+		    (char *)&val, sizeof(val));
 	    if (m >= 0 && n >= 0) break;
 	}
 
@@ -91,12 +91,13 @@ fbserv_setup_socket(int fd)
 static void
 fbserv_drop_client(int sub)
 {
+    struct mged_state *s = MGED_STATE;
     if (clients[sub].c_pkg != PKC_NULL) {
 	pkg_close(clients[sub].c_pkg);
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef USE_TCL_CHAN
 	Tcl_DeleteChannelHandler(clients[sub].c_chan,
-				 clients[sub].c_handler,
-				 (ClientData)clients[sub].c_fd);
+		clients[sub].c_handler,
+		(ClientData)clients[sub].c_fd);
 
 	if (dm_interp(DMP) != NULL) {
 	    Tcl_Close((Tcl_Interp *)dm_interp(DMP), clients[sub].c_chan);
@@ -110,13 +111,13 @@ fbserv_drop_client(int sub)
     }
 }
 
-
 /*
  * Process arrivals from existing clients.
  */
 static void
 fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 {
+    struct mged_state *s = MGED_STATE;
     int i;
 
     /* NOTE: assumes fd's will be small */
@@ -137,11 +138,11 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 
     return;
 
- found:
+found:
     /* save */
-    scdlp = mged_curr_dm;
+    scdlp = s->mged_curr_dm;
 
-    set_curr_dm(dlp);
+    set_curr_dm(MGED_STATE, dlp);
     for (i = MAX_CLIENTS-1; i >= 0; i--) {
 	if (clients[i].c_fd == 0)
 	    continue;
@@ -174,153 +175,13 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
     }
 
     /* restore */
-    set_curr_dm(scdlp);
+    set_curr_dm(MGED_STATE, scdlp);
 }
 
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-static struct pkg_conn *fbserv_makeconn(int fd, const struct pkg_switch *switchp);
-
-static void
-fbserv_new_client(struct pkg_conn *pcp,
-		  Tcl_Channel chan)
-
-{
-    int i;
-
-    if (pcp == PKC_ERROR)
-	return;
-
-    for (i = MAX_CLIENTS-1; i >= 0; i--) {
-	ClientData fd;
-	if (clients[i].c_fd != 0)
-	    continue;
-
-	/* Found an available slot */
-	clients[i].c_pkg = pcp;
-	clients[i].c_fd = pcp->pkc_fd;
-	fbserv_setup_socket(pcp->pkc_fd);
-
-	clients[i].c_chan = chan;
-	clients[i].c_handler = fbserv_existing_client_handler;
-	fd = (ClientData)clients[i].c_fd;
-	Tcl_CreateChannelHandler(clients[i].c_chan, TCL_READABLE, clients[i].c_handler, fd);
-
-	return;
-    }
-
-    bu_log("fbserv_new_client: too many clients\n");
-    pkg_close(pcp);
-}
-
-
-static void
-fbserv_new_client_handler(ClientData clientData,
-			  Tcl_Channel chan,
-			  char *host,
-			  int port)
-{
-    struct mged_dm *dlp = (struct mged_dm *)clientData;
-    struct mged_dm *scdlp;  /* save current dm_list pointer */
-    uintptr_t fd;
-
-    if (dlp == NULL)
-	return;
-
-    /* save */
-    scdlp = mged_curr_dm;
-
-    set_curr_dm(dlp);
-
-    if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
-	fbserv_new_client(fbserv_makeconn((int)fd, pkg_switch), chan);
-
-    /* restore */
-    set_curr_dm(scdlp);
-}
-
-
-void
-fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1), void *UNUSED(v1), const char *UNUSED(c2), void *UNUSED(v2))
-{
-    int i;
-    int save_port;
-    int port;
-    char hostname[32];
-
-    /* Check to see if previously active --- if so then deactivate */
-    if (netchan != NULL) {
-	ClientData fd;
-
-	/* first drop all clients */
-	for (i = 0; i < MAX_CLIENTS; ++i)
-	    fbserv_drop_client(i);
-
-	fd = (ClientData)netfd;
-	Tcl_DeleteChannelHandler(netchan, (Tcl_ChannelProc *)fbserv_new_client_handler, fd);
-
-	if (dm_interp(DMP) != NULL) {
-	    Tcl_Close((Tcl_Interp *)dm_interp(DMP), netchan);
-	}
-	netchan = NULL;
-
-	closesocket(netfd);
-	netfd = -1;
-    }
-
-    if (!mged_variables->mv_listen)
-	return;
-
-    if (!mged_variables->mv_fb) {
-	mged_variables->mv_listen = 0;
-	return;
-    }
-
-    /*XXX hardwired for now */
-    sprintf(hostname, "localhost");
-
-#define MAX_PORT_TRIES 100
-
-    save_port = mged_variables->mv_port;
-
-    if (mged_variables->mv_port < 0)
-	port = 5559;
-    else if (mged_variables->mv_port < 1024)
-	port = mged_variables->mv_port + 5559;
-    else
-	port = mged_variables->mv_port;
-
-    /* Try a reasonable number of times to hang a listen */
-    for (i = 0; i < MAX_PORT_TRIES; ++i) {
-	/*
-	 * Hang an unending listen for PKG connections
-	 */
-
-	if (dm_interp(DMP) != NULL) {
-	    netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(DMP), port, hostname, fbserv_new_client_handler, (ClientData)mged_curr_dm);
-	}
-
-	if (netchan == NULL)
-	    ++port;
-	else
-	    break;
-    }
-
-    if (netchan == NULL) {
-	mged_variables->mv_port = save_port;
-	mged_variables->mv_listen = 0;
-	bu_log("fbserv_set_port: failed to hang a listen on ports %d - %d\n",
-	       mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
-    } else {
-	mged_variables->mv_port = port;
-	Tcl_GetChannelHandle(netchan, TCL_READABLE, (ClientData *)&netfd);
-    }
-}
-
-
+#ifdef USE_TCL_CHAN
 static struct pkg_conn *
-fbserv_makeconn(int fd,
-		const struct pkg_switch *switchp)
+fbserv_makeconn(int fd, const struct pkg_switch *switchp)
 {
     struct pkg_conn *pc;
 #ifdef HAVE_WINSOCK_H
@@ -354,14 +215,17 @@ fbserv_makeconn(int fd,
 
     return pc;
 }
+#endif
 
-
-#else /* defined(_WIN32) && !defined(__CYGWIN__) */
-
-
+#ifdef USE_TCL_CHAN
+static void
+fbserv_new_client(struct pkg_conn *pcp, Tcl_Channel chan)
+#else
 static void
 fbserv_new_client(struct pkg_conn *pcp)
+#endif
 {
+    struct mged_state *s = MGED_STATE;
     int i;
 
     if (pcp == PKC_ERROR)
@@ -376,9 +240,14 @@ fbserv_new_client(struct pkg_conn *pcp)
 	clients[i].c_fd = pcp->pkc_fd;
 	fbserv_setup_socket(pcp->pkc_fd);
 
+#ifdef USE_TCL_CHAN
+	clients[i].c_chan = chan;
+	clients[i].c_handler = fbserv_existing_client_handler;
+	Tcl_CreateChannelHandler(clients[i].c_chan, TCL_READABLE, clients[i].c_handler, (ClientData)clients[i].c_fd);
+#else
 	Tcl_CreateFileHandler(clients[i].c_fd, TCL_READABLE,
-			      fbserv_existing_client_handler, (ClientData)(size_t)clients[i].c_fd);
-
+		fbserv_existing_client_handler, (ClientData)(size_t)clients[i].c_fd);
+#endif
 	return;
     }
 
@@ -386,57 +255,95 @@ fbserv_new_client(struct pkg_conn *pcp)
     pkg_close(pcp);
 }
 
-
 /*
  * Accept any new client connections.
  */
+#ifdef USE_TCL_CHAN
+static void
+fbserv_new_client_handler(ClientData clientData,
+	Tcl_Channel chan,
+	char *host,
+	int port)
+#else
 static void
 fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
+#endif
 {
-    uintptr_t datafd = (uintptr_t)clientData;
-    int fd = (int)((int32_t)datafd & 0xFFFF);	/* fd's will be small */
-    struct mged_dm *dlp;
+    struct mged_state *s = MGED_STATE;
     struct mged_dm *scdlp;  /* save current dm_list pointer */
 
+#ifdef USE_TCL_CHAN
+    struct mged_dm *dlp = (struct mged_dm *)clientData;
+#else
+    uintptr_t datafd = (uintptr_t)clientData;
+    int fd = (int)((int32_t)datafd & 0xFFFF);   /* fd's will be small */
+    struct mged_dm *dlp = NULL;
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (fd == m_dmp->dm_netfd) {
 	    dlp = m_dmp;
-	    goto found;
+	    break;
 	}
     }
+#endif
+    if (dlp == NULL)
+	return;
 
-    return;
-
- found:
     /* save */
-    scdlp = mged_curr_dm;
+    scdlp = s->mged_curr_dm;
 
-    set_curr_dm(dlp);
+    set_curr_dm(MGED_STATE, dlp);
+
+#ifdef USE_TCL_CHAN
+    uintptr_t fd;
+    if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
+	fbserv_new_client(fbserv_makeconn((int)fd, pkg_switch), chan);
+#else
     fbserv_new_client(pkg_getclient(fd, pkg_switch, communications_error, 0));
+#endif
 
     /* restore */
-    set_curr_dm(scdlp);
+    set_curr_dm(MGED_STATE, scdlp);
 }
-
 
 void
 fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1), void *UNUSED(v1), const char *UNUSED(c2), void *UNUSED(v2))
 {
+    struct mged_state *s = MGED_STATE;
     int i;
     int save_port;
-    char portname[32];
+
+#define MAX_PORT_TRIES 100
 
     /* Check to see if previously active --- if so then deactivate */
-    if (netfd >= 0) {
+#ifdef USE_TCL_CHAN
+    if (s->mged_curr_dm->dm_netchan != NULL) {
 	/* first drop all clients */
 	for (i = 0; i < MAX_CLIENTS; ++i)
 	    fbserv_drop_client(i);
 
-	Tcl_DeleteFileHandler(netfd);
-	close(netfd);
-	netfd = -1;
+	ClientData fd = (ClientData)s->mged_curr_dm->dm_netfd;
+	Tcl_DeleteChannelHandler(s->mged_curr_dm->dm_netchan, (Tcl_ChannelProc *)fbserv_new_client_handler, fd);
+
+	if (dm_interp(DMP) != NULL)
+	    Tcl_Close((Tcl_Interp *)dm_interp(DMP), s->mged_curr_dm->dm_netchan);
+
+	s->mged_curr_dm->dm_netchan = NULL;
+
+	closesocket(s->mged_curr_dm->dm_netfd);
+	s->mged_curr_dm->dm_netfd = -1;
     }
+#else
+    if (s->mged_curr_dm->dm_netfd >= 0) {
+	/* first drop all clients */
+	for (i = 0; i < MAX_CLIENTS; ++i)
+	    fbserv_drop_client(i);
+
+	Tcl_DeleteFileHandler(s->mged_curr_dm->dm_netfd);
+	close(s->mged_curr_dm->dm_netfd);
+	s->mged_curr_dm->dm_netfd = -1;
+    }
+#endif
 
     if (!mged_variables->mv_listen)
 	return;
@@ -446,39 +353,81 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 	return;
     }
 
-#define MAX_PORT_TRIES 100
-
     save_port = mged_variables->mv_port;
+
+#ifdef USE_TCL_CHAN
+    int port;
+    if (mged_variables->mv_port < 0)
+	port = 5559;
+    else if (mged_variables->mv_port < 1024)
+	port = mged_variables->mv_port + 5559;
+    else
+	port = mged_variables->mv_port;
+#else
     if (mged_variables->mv_port < 0)
 	mged_variables->mv_port = 0;
+#endif
+
+
+
 
     /* Try a reasonable number of times to hang a listen */
     for (i = 0; i < MAX_PORT_TRIES; ++i) {
+	/*
+	 * Hang an unending listen for PKG connections
+	 */
+
+#ifdef USE_TCL_CHAN
+	/*XXX hardwired for now */
+	char hostname[32];
+	sprintf(hostname, "localhost");
+
+	if (dm_interp(DMP) != NULL)
+	    s->mged_curr_dm->dm_netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(DMP), port, hostname, fbserv_new_client_handler, (ClientData)s->mged_curr_dm);
+
+	if (s->mged_curr_dm->dm_netchan == NULL)
+	    ++port;
+	else
+	    break;
+#else
+	char portname[32];
 	if (mged_variables->mv_port < 1024)
 	    sprintf(portname, "%d", mged_variables->mv_port + 5559);
 	else
 	    sprintf(portname, "%d", mged_variables->mv_port);
 
-	/*
-	 * Hang an unending listen for PKG connections
-	 */
-	if ((netfd = pkg_permserver(portname, 0, 0, communications_error)) < 0)
+	if ((s->mged_curr_dm->dm_netfd = pkg_permserver(portname, 0, 0, communications_error)) < 0)
 	    ++mged_variables->mv_port;
 	else
 	    break;
+#endif
     }
 
-    if (netfd < 0) {
+#ifdef USE_TCL_CHAN
+    if (s->mged_curr_dm->dm_netchan == NULL) {
 	mged_variables->mv_port = save_port;
 	mged_variables->mv_listen = 0;
 	bu_log("fbserv_set_port: failed to hang a listen on ports %d - %d\n",
-	       mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
-    } else
-	Tcl_CreateFileHandler(netfd, TCL_READABLE,
-			      fbserv_new_client_handler, (ClientData)(size_t)netfd);
+		mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
+    } else {
+	mged_variables->mv_port = port;
+	Tcl_GetChannelHandle(s->mged_curr_dm->dm_netchan, TCL_READABLE, (ClientData *)&s->mged_curr_dm->dm_netfd);
+    }
+#else
+    if (s->mged_curr_dm->dm_netfd < 0) {
+	mged_variables->mv_port = save_port;
+	mged_variables->mv_listen = 0;
+	bu_log("fbserv_set_port: failed to hang a listen on ports %d - %d\n",
+		mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
+    } else {
+	// Need to pass a few things to fbserv_new_client_handler. ncdata's
+	// lifetime is governed by the needs of the Tcl file handlers, so it
+	// has to be freed once fbserv_new_client_handler is done.
+	Tcl_CreateFileHandler(s->mged_curr_dm->dm_netfd, TCL_READABLE,
+		fbserv_new_client_handler, (ClientData)(size_t)s->mged_curr_dm->dm_netfd);
+    }
+#endif
 }
-#endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
-
 
 /*
  * This is where we go for message types we don't understand.
@@ -501,6 +450,7 @@ fb_server_fb_unknown(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_open(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     char rbuf[5*NET_LONG_LEN+1] = {0};
     int want;
 
@@ -527,6 +477,7 @@ fb_server_fb_open(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_close(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     char rbuf[NET_LONG_LEN+1] = {0};
 
     /*
@@ -563,6 +514,7 @@ fb_server_fb_free(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_clear(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     RGBpixel bg;
     char rbuf[NET_LONG_LEN+1] = {0};
 
@@ -586,6 +538,7 @@ fb_server_fb_clear(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_read(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int x, y;
     size_t num;
     int ret;
@@ -628,6 +581,7 @@ fb_server_fb_read(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_write(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int x, y, num;
     char rbuf[NET_LONG_LEN+1] = {0};
     int ret;
@@ -656,6 +610,7 @@ fb_server_fb_write(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_readrect(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int xmin, ymin;
     int width, height;
     size_t num;
@@ -701,6 +656,7 @@ fb_server_fb_readrect(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_writerect(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int x, y;
     int width, height;
     char rbuf[NET_LONG_LEN+1] = {0};
@@ -719,7 +675,7 @@ fb_server_fb_writerect(struct pkg_conn *pcp, char *buf)
 
     type = pcp->pkc_type;
     ret = fb_writerect(fbp, x, y, width, height,
-		       (unsigned char *)&buf[4*NET_LONG_LEN]);
+	    (unsigned char *)&buf[4*NET_LONG_LEN]);
 
     if (type < MSG_NORETURN) {
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
@@ -733,6 +689,7 @@ fb_server_fb_writerect(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int xmin, ymin;
     int width, height;
     int num;
@@ -779,6 +736,7 @@ fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int x, y;
     int width, height;
     char rbuf[NET_LONG_LEN+1] = {0};
@@ -797,7 +755,7 @@ fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf)
 
     type = pcp->pkc_type;
     ret = fb_writerect(fbp, x, y, width, height,
-		       (unsigned char *)&buf[4*NET_LONG_LEN]);
+	    (unsigned char *)&buf[4*NET_LONG_LEN]);
 
     if (type < MSG_NORETURN) {
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
@@ -811,6 +769,7 @@ fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_cursor(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1] = {0};
 
@@ -833,6 +792,7 @@ fb_server_fb_cursor(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_getcursor(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int ret;
     int mode, x, y;
     char rbuf[4*NET_LONG_LEN+1];
@@ -851,6 +811,7 @@ fb_server_fb_getcursor(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     char rbuf[NET_LONG_LEN+1] = {0};
     int ret;
     int xbits, ybits;
@@ -867,7 +828,7 @@ fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
     yorig = pkg_glong(&buf[3*NET_LONG_LEN]);
 
     ret = fb_setcursor(fbp, (unsigned char *)&buf[4*NET_LONG_LEN],
-		       xbits, ybits, xorig, yorig);
+	    xbits, ybits, xorig, yorig);
 
     if (pcp->pkc_type < MSG_NORETURN) {
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
@@ -884,6 +845,7 @@ fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_scursor(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1] = {0};
 
@@ -908,6 +870,7 @@ fb_server_fb_scursor(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_window(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int x, y;
     char rbuf[NET_LONG_LEN+1] = {0};
 
@@ -932,6 +895,7 @@ fb_server_fb_window(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_zoom(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int x, y;
     char rbuf[NET_LONG_LEN+1] = {0};
 
@@ -953,6 +917,7 @@ fb_server_fb_zoom(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_view(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int ret;
     int xcenter, ycenter, xzoom, yzoom;
     char rbuf[NET_LONG_LEN+1] = {0};
@@ -978,6 +943,7 @@ fb_server_fb_view(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_getview(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int ret;
     int xcenter, ycenter, xzoom, yzoom;
     char rbuf[5*NET_LONG_LEN+1];
@@ -997,6 +963,7 @@ fb_server_fb_getview(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_rmap(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int i;
     char rbuf[NET_LONG_LEN+1] = {0};
     ColorMap map;
@@ -1024,6 +991,7 @@ fb_server_fb_rmap(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_wmap(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int i;
     char rbuf[NET_LONG_LEN+1] = {0};
     long ret;
@@ -1054,6 +1022,7 @@ fb_server_fb_wmap(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_flush(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     int ret;
     char rbuf[NET_LONG_LEN+1] = {0};
 
@@ -1072,6 +1041,7 @@ fb_server_fb_flush(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_poll(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     if (!pcp) return;
     (void)fb_poll(fbp);
     if (buf) (void)free(buf);
@@ -1085,6 +1055,7 @@ fb_server_fb_poll(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_help(struct pkg_conn *pcp, char *buf)
 {
+    struct mged_state *s = MGED_STATE;
     long ret;
     char rbuf[NET_LONG_LEN+1] = {0};
 

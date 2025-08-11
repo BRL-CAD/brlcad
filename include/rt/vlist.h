@@ -1,7 +1,7 @@
 /*                      V L I S T . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2024 United States Government as represented by
+ * Copyright (c) 1993-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ __BEGIN_DECLS
 
 /**
  * TODO - replace these with the appropriate libbn calls specifically
- * passing &RTG.rtg_vlfree
+ * passing &rt_vlfree
  */
 RT_EXPORT extern void rt_vlist_copy(struct bu_list *dest,
 				    const struct bu_list *src);

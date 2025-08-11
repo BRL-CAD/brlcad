@@ -1,10 +1,10 @@
-BRLCAD_Find_Package(LMDB REQUIRED)
+brlcad_find_package(LMDB REQUIRED)
 
-if (BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
   # If this becomes a default we'll need to bundle libbson to ensure it is
   # available - while it is not on by default, require a system version
   find_package(BSON REQUIRED)
-endif (BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
 # Use configure_file to make copies of the mime input files,
 # so CMake will get notified for the need for a re-configure
@@ -18,18 +18,10 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
 
 # We do want to install the mime header
 set_source_files_properties("${BU_MIME_TYPES_H_FILE}" PROPERTIES GENERATED TRUE)
-BUILD_CFG_HDR("${BU_MIME_TYPES_H_FILE}" ${INCLUDE_DIR}/brlcad/bu)
+build_cfg_hdr("${BU_MIME_TYPES_H_FILE}" ${INCLUDE_DIR}/brlcad/bu)
 
-# Year 2038+ support
-set_property(SOURCE y2038/time64.c PROPERTY EXTERNAL 1)
-include(CheckCCompilerFlag)
-check_c_compiler_flag(-fPIC HAVE_FPIC)
-if(HAVE_FPIC)
-  set_property(SOURCE y2038/time64.c APPEND PROPERTY COMPILE_FLAGS "-fPIC")
-endif(HAVE_FPIC)
-
-set(LIBBU_SOURCES
-  y2038/time64.c
+set(
+  LIBBU_SOURCES
   affinity.c
   argv.c
   avs.c
@@ -39,7 +31,6 @@ set(LIBBU_SOURCES
   bitv.c
   bomb.c
   booleanize.c
-  brlcad_path.c
   bu_init.cpp
   cache.cpp
   cmd.c
@@ -50,7 +41,7 @@ set(LIBBU_SOURCES
   dir.c
   dirent.c
   damlevlim.cpp
-  datetime.c
+  datetime.cpp
   dylib.c
   encode.c
   endian.c
@@ -102,7 +93,7 @@ set(LIBBU_SOURCES
   sort.c
   sscanf.c
   scan.c
-  snooze.c
+  snooze.cpp
   str.c
   tc.c
   tcllist.c
@@ -123,7 +114,7 @@ set(LIBBU_SOURCES
   whereis.c
   which.c
   xdr.c
-  )
+)
 
 if(NOT CMAKE_CXX_STANDARD EQUAL 98)
   set(LIBBU_SOURCES ${LIBBU_SOURCES} parallel_cpp11thread.cpp)
@@ -131,7 +122,8 @@ else(NOT CMAKE_CXX_STANDARD EQUAL 98)
 endif(NOT CMAKE_CXX_STANDARD EQUAL 98)
 
 # Note - libbu_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-set(BU_LIBS
+set(
+  BU_LIBS
   ${Foundation_LIBRARIES}
   Threads::Threads
   ${libbu_deps}
@@ -142,31 +134,23 @@ set(BU_LIBS
   ${LMDB_LIBRARIES}
   ${UUID_LIBRARIES}
   ${M_LIBRARY}
-  )
+)
 
 # Include directories needed by libbu users
-set(BU_INCLUDE_DIRS
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  )
+set(BU_INCLUDE_DIRS ${BRLCAD_BINARY_DIR}/include ${BRLCAD_SOURCE_DIR}/include)
 
 # locally used but not needed by users of the library
-set(BU_LOCAL_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}/y2038
-  ${BSON_INCLUDE_DIR}
-  ${LMDB_INCLUDE_DIR}
-  ${UUID_INCLUDE_DIR}
-  )
+set(BU_LOCAL_INCLUDE_DIRS ${BSON_INCLUDE_DIR} ${LMDB_INCLUDE_DIR} ${UUID_INCLUDE_DIR})
 
-BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${BU_LIBS}" "${BU_INCLUDE_DIRS}" "${BU_LOCAL_INCLUDE_DIRS}")
+brlcad_addlib(libbu "${LIBBU_SOURCES}" "${BU_LIBS}" "${BU_INCLUDE_DIRS}" "${BU_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(bu_atgts)
 set(bu_targets libbu-obj libbu libbu-static)
 foreach(bt ${bu_targets})
-  if (TARGET ${bt})
+  if(TARGET ${bt})
     list(APPEND bu_atgts ${bt})
-  endif ()
+  endif()
 endforeach()
 
 foreach(bt ${bu_atgts})
@@ -175,15 +159,6 @@ foreach(bt ${bu_atgts})
   target_compile_definitions(${bt} PRIVATE EXECUTABLE_SUFFIX=\"${CMAKE_EXECUTABLE_SUFFIX}\")
   target_compile_definitions(${bt} PRIVATE SHARED_LIBRARY_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\")
   target_compile_definitions(${bt} PRIVATE SIZEOF_VOID_P=${CMAKE_SIZEOF_VOID_P})
-
-  # OpenBSD doesn't define __WORD_SIZE, used by y2038/time64.h.  Remove this
-  # once we can replace y2038 with a C++ based solution
-  if(${CMAKE_WORD_SIZE} MATCHES "32BIT")
-    target_compile_definitions(${bt} PRIVATE __OS_WORDSIZE=32)
-  endif(${CMAKE_WORD_SIZE} MATCHES "32BIT")
-  if(${CMAKE_WORD_SIZE} MATCHES "64BIT")
-    target_compile_definitions(${bt} PRIVATE __OS_WORDSIZE=64)
-  endif(${CMAKE_WORD_SIZE} MATCHES "64BIT")
 
   # Define the various relative paths for bu_dir
   include(Path_Setup)
@@ -200,20 +175,22 @@ endforeach(bt ${bu_atgts})
 # warning about writing 1 byte into a region of size 0.
 if(${BRLCAD_OPTIMIZED} MATCHES "ON")
   check_c_compiler_flag(-Wno-error=stringop-overflow= HAVE_NO_STRINGOP_OVERFLOW)
-  if (HAVE_NO_STRINGOP_OVERFLOW)
+  if(HAVE_NO_STRINGOP_OVERFLOW)
     target_link_options(libbu PRIVATE -Wno-error=stringop-overflow=)
-  endif (HAVE_NO_STRINGOP_OVERFLOW)
+  endif(HAVE_NO_STRINGOP_OVERFLOW)
 endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
 
-BRLCAD_ADDDATA(fix.6r vfont)
-BRLCAD_ADDDATA(nonie.r.12 vfont)
+brlcad_adddata(fix.6r vfont)
+brlcad_adddata(nonie.r.12 vfont)
 
 add_subdirectory(tests)
 
-set(bu_ignore_files
+set(
+  bu_ignore_files
   CMakeLists.txt
   bitv.h
   charclass.h
+  date.h
   fort.h
   mime.cmake
   parallel.h
@@ -227,13 +204,8 @@ set(bu_ignore_files
   uce-dirent.h
   whereami.h
   xxhash.h
-  y2038/LICENSE
-  y2038/README.txt
-  y2038/time64.h
-  y2038/time64_config.h
-  y2038/time64_limits.h
-  )
-CMAKEFILES(${bu_ignore_files})
+)
+cmakefiles(${bu_ignore_files})
 
 # Local Variables:
 # tab-width: 8

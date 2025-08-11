@@ -1,7 +1,7 @@
 /*                      D M - Q T G L . C P P
  * BRL-CAD
  *
- * Copyright (c) 1988-2024 United States Government as represented by
+ * Copyright (c) 1988-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -673,8 +673,8 @@ struct dm_impl dm_qtgl_impl = {
     {0, 0, 0},			/* bg1 color */
     {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
-    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
-    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
+    {BV_MIN, BV_MIN, BV_MIN},	/* clipmin */
+    {BV_MAX, BV_MAX, BV_MAX},	/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
     1,				/* depth buffer is writable */

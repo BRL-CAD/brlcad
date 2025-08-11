@@ -1,7 +1,7 @@
 /*                         K I L L T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ find_reference(struct db_i *dbip, const char *topobj, const char *obj)
      */
     bu_vls_printf(&str, "-depth >0 -not -below -name %s -name %s", topobj, obj);
 
-    ret = db_search(NULL, DB_SEARCH_TREE, bu_vls_cstr(&str), 0, NULL, dbip, NULL);
+    ret = db_search(NULL, DB_SEARCH_TREE, bu_vls_cstr(&str), 0, NULL, dbip, NULL, NULL, NULL);
 
     bu_vls_free(&str);
 
@@ -235,7 +235,7 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 
     if (gktd.killrefs && gktd.ac > 1) {
 	gedp->ged_internal_call = 1;
-	(void)ged_exec(gedp, gktd.ac, (const char **)gktd.av);
+	(void)ged_exec_killrefs(gedp, gktd.ac, (const char **)gktd.av);
 	gedp->ged_internal_call = 0;
 
 	for (i = 1; i < gktd.ac; i++) {

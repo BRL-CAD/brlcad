@@ -1,7 +1,7 @@
 /*                         M O V E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -87,7 +87,7 @@ ged_move_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Change object name if it matches the first element in the display list path. */
-    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, display_list, gedp->i->ged_gdp->gd_headDisplay)) {
 	int first = 1;
 	int found = 0;
 	struct bu_vls new_path = BU_VLS_INIT_ZERO;

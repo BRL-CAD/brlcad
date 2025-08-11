@@ -1,7 +1,7 @@
 /*                           M G E D . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -71,68 +71,168 @@
 #include "bu/list.h"
 #include "bu/str.h"
 #include "bu/vls.h"
+#include "ged.h"
 #include "wdb.h"
-
-/* Needed to define struct menu_item */
-#include "./menu.h"
 
 /* Needed to define struct bv_scene_obj */
 #include "bv/defines.h"
 
-#include "./mged_dm.h" /* _view_state */
+// We have to use different I/O mechanisms based on which
+// platform we're on.  Make a define to key off of.
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  define USE_TCL_CHAN
+#endif
 
 #define MGED_DB_NAME "db"
 #define MGED_INMEM_NAME ".inmem"
 
 
-/* global state */
-extern struct ged *GEDP;    /* defined in mged.c */
-extern struct db_i *DBIP;   /* defined in mged.c */
-extern struct rt_wdb *WDBP; /* defined in mged.c */
+#define MGED_CMD_MAGIC 0x4D474544 /**< MGED */
+#define MGED_CK_CMD(_bp) BU_CKMAG(_bp, MGED_CMD_MAGIC , "cmdtab")
 
-/* initialization states */
-extern int mged_init_flag;	/* >0 means in initialization stage */
-extern int classic_mged;        /* >0 means interactive. gets set to 0 if
-			         * there's libdm graphics support, and forced
-			         * with -c option. */
-extern char *dpy_string;
-extern int mged_db_upgrade;
-extern int mged_db_version;
-extern int mged_db_warn;
+#define MGED_STATE_MAGIC 0x4D474553 /**< MGEDS*/
+#define MGED_CK_STATE(_bp) BU_CKMAG(_bp, MGED_STATE_MAGIC , "mged_state")
 
-/*
- * All GED files are stored in a fixed base unit (MM).  These factors
- * convert database unit to local (or working) units.
- */
-#define base2local (DBIP->dbi_base2local)
-#define local2base (DBIP->dbi_local2base)
-#define cur_title (DBIP->dbi_title)      /* current model title */
-
-
-/* Some useful constants, if they haven't been defined elsewhere. */
-
-#ifndef FALSE
-#  define FALSE 0
-#endif
-
-#ifndef TRUE
-#  define TRUE 1
-#endif
+/* Forward declaration */
+struct mged_state;
 
 /* Tolerances */
-extern double mged_abs_tol; /* abs surface tolerance */
-extern double mged_rel_tol; /* rel surface tolerance */
-extern double mged_nrm_tol; /* surface normal tolerance */
+struct mged_tol {
+    double abs_tol; /* abs surface tolerance */
+    double rel_tol; /* rel surface tolerance */
+    double nrm_tol; /* surface normal tolerance */
+    struct bn_tol tol;  /* calculation tolerance */
+    struct bg_tess_tol ttol; /* XXX needs to replace abs_tol, et al. */
+};
 
-extern struct bn_tol mged_tol;  /* calculation tolerance */
-extern struct bg_tess_tol mged_ttol; /* XXX needs to replace mged_abs_tol, et al. */
+
+typedef int (*tcl_func_ptr)(ClientData, Tcl_Interp *, int, const char *[]);
+
+struct cmdtab {
+    uint32_t magic;
+    const char *name;
+    tcl_func_ptr tcl_func;
+    ged_func_ptr ged_func;
+    struct mged_state *s;
+};
+
+/* Menu structures and defines
+ *
+ * Each active menu is installed by having a non-null entry in
+ * menu_array[] which is a pointer
+ * to an array of menu items.  The first ([0]) menu item is the title
+ * for the menu, and the remaining items are individual menu entries.
+ */
+struct menu_item {
+    char *menu_string;
+    void (*menu_func)(struct mged_state *, int, int, int);
+    int menu_arg;
+};
+
+#define NMENU 3
+#define MENU_L1 0 /* top-level solid-edit menu */
+#define MENU_L2 1 /* second-level menu */
+#define MENU_GEN 2 /* general features (mouse buttons) */
+
+#define MENUXLIM        (-1250)         /* Value to set X lim to for menu */
+#define MENUX           (-2048+115)     /* pixel position for menu, X */
+#define MENUY           1780            /* pixel position for menu, Y */
+#define SCROLLY         (2047)          /* starting Y pos for scroll area */
+#define MENU_DY         (-104)          /* Distance between menu items */
+#define SCROLL_DY       (-100)          /* Distance between scrollers */
+
+#define TITLE_XBASE     (-2048)         /* pixel X of title line start pos */
+#define TITLE_YBASE     (-1920)         /* pixel pos of last title line */
+#define SOLID_XBASE     MENUXLIM        /* X to start display text */
+#define SOLID_YBASE     (1920)          /* pixel pos of first solid line */
+#define TEXT0_DY        (-60)           /* #pixels per line, Size 0 */
+#define TEXT1_DY        (-90)           /* #pixels per line, Size 1 */
+
+#include "./mged_dm.h" /* _view_state */
+
+struct mged_edit_state {
+    // Rotate
+    vect_t edit_absolute_model_rotate;
+    vect_t edit_absolute_object_rotate;
+    vect_t edit_absolute_view_rotate;
+    vect_t last_edit_absolute_model_rotate;
+    vect_t last_edit_absolute_object_rotate;
+    vect_t last_edit_absolute_view_rotate;
+    vect_t edit_rate_model_rotate;
+    vect_t edit_rate_object_rotate;
+    vect_t edit_rate_view_rotate;
+    int edit_rateflag_model_rotate;
+    int edit_rateflag_object_rotate;
+    int edit_rateflag_view_rotate;
+
+    // Translate
+    vect_t edit_absolute_model_tran;
+    vect_t edit_absolute_view_tran;
+    vect_t last_edit_absolute_model_tran;
+    vect_t last_edit_absolute_view_tran;
+    vect_t edit_rate_model_tran;
+    vect_t edit_rate_view_tran;
+    int edit_rateflag_model_tran;
+    int edit_rateflag_view_tran;
+
+    // Scale
+    fastf_t es_scale;	/* scale factor */
+    fastf_t edit_absolute_scale;
+    fastf_t edit_rate_scale;
+    int edit_rateflag_scale;
+
+    // Origin
+    char edit_rate_model_origin;
+    char edit_rate_object_origin;
+    char edit_rate_view_origin;
 
 
-/* default region codes defined in mover.c */
-extern int item_default;
-extern int air_default;
-extern int mat_default;
-extern int los_default;
+    // DM pointers - used by the editing code to stash current dm pointers for
+    // later restoration when editing.  Not 100% sure yet what the purpose is -
+    // seems to be allowing for the possibility of a change of mged_curr_dm
+    // mid-edit?
+    struct mged_dm *edit_rate_mr_dm;
+    struct mged_dm *edit_rate_or_dm;
+    struct mged_dm *edit_rate_vr_dm;
+    struct mged_dm *edit_rate_mt_dm;
+    struct mged_dm *edit_rate_vt_dm;
+
+    // Container to hold the intermediate state
+    // of the object being edited (I think?)
+    struct rt_db_internal es_int;
+};
+
+/* global application state */
+struct mged_state {
+    uint32_t magic;
+    struct ged *gedp;
+    struct db_i *dbip;
+    struct rt_wdb *wdbp;
+    struct mged_tol tol;
+    Tcl_Interp *interp;
+
+    /* >0 means interactive. Gets set to 0 if there's libdm graphics support,
+     * and forced with -c option. */
+    int classic_mged;
+    int interactive; /* for pr_prompt */
+
+    /* Prompt and input lines */
+    size_t input_str_index;
+    struct bu_vls input_str;
+    struct bu_vls input_str_prefix;
+    struct bu_vls scratchline;
+    struct bu_vls mged_prompt;
+
+    /* Display related */
+    struct mged_dm *mged_curr_dm;
+    char *dpy_string;
+    struct bu_list *vlfree;
+
+    /* Editing related */
+    struct mged_edit_state edit_state;
+};
+extern struct mged_state *MGED_STATE;
+
 
 /**
  * Definitions.
@@ -165,7 +265,6 @@ extern int los_default;
 
 extern mat_t modelchanges;		/* full changes this edit */
 extern mat_t incr_change;		/* change(s) from last cycle */
-extern point_t recip_vanishing_point;
 
 /* defined in buttons.c */
 extern fastf_t acc_sc_sol;	/* accumulate solid scale factor */
@@ -174,60 +273,41 @@ extern fastf_t acc_sc[3];	/* accumulate local object scale factors */
 extern mat_t acc_rot_sol;	/* accumulate solid rotations */
 
 /* defined in mged.c */
-extern FILE *infile;
-extern FILE *outfile;
 extern jmp_buf jmp_env;
 
-/* FIXME: ugh, main global interpreter */
-extern Tcl_Interp *ged_interp;
-#define INTERP ged_interp
-
+#include "./mged_wdb.h"
 
 /*
  * GED functions referenced in more than one source file:
  */
 
-extern void mged_setup(Tcl_Interp **interpreter);
-extern void mged_global_variable_teardown(Tcl_Interp *interpreter); /* cmd.c */
-extern void buildHrot(mat_t, double, double, double);
-extern void dozoom(int which_eye);
-#ifndef _WIN32
-extern void itoa(int n, char *s, int w);
-#endif
-extern void eraseobj(struct directory **dpp);
-extern void eraseobjall(struct directory **dpp);
-extern void mged_finish(int exitcode);
-extern void slewview(vect_t view_pos);
-extern void mmenu_init(void);
-extern void moveHinstance(struct directory *cdp, struct directory *dp, matp_t xlate);
-extern void moveHobj(struct directory *dp, matp_t xlate);
-extern void quit(void);
-extern void refresh(void);
-extern void sedit(void);
-extern void setview(double a1, double a2, double a3);
-extern void adcursor(void);
-extern void mmenu_display(int y_top);
-extern void mmenu_set(int idx, struct menu_item *value);
-extern void mmenu_set_all(int idx, struct menu_item *value);
-extern void sedit_menu(void);
-extern void get_attached(void);
+extern void mged_setup(struct mged_state *s);
+extern void mged_global_variable_teardown(struct mged_state *s); /* cmd.c */
+extern void dozoom(struct mged_state *s, int which_eye);
+extern void mged_finish(struct mged_state *s, int exitcode);
+extern void slewview(struct mged_state *s, vect_t view_pos);
+extern void moveHinstance(struct mged_state *s, struct directory *cdp, struct directory *dp, matp_t xlate);
+extern void moveHobj(struct mged_state *s, struct directory *dp, matp_t xlate);
+extern void quit(struct mged_state *s);
+extern void refresh(struct mged_state *s);
+extern void sedit(struct mged_state *s);
+extern void setview(struct mged_state *s, double a1, double a2, double a3);
+extern void adcursor(struct mged_state *s);
+extern void get_attached(struct mged_state *s);
 extern void (*cur_sigint)(int);	/* Current SIGINT status */
 extern void sig2(int);
 extern void sig3(int);
-
-extern void aexists(const char *name);
-extern int release(char *name, int need_close);
 
 /* mged.c */
 extern void mged_view_callback(struct bview *gvp, void *clientData);
 
 /* buttons.c */
-extern void button(int bnum);
+extern void button(struct mged_state *s, int bnum);
 extern void press(char *str);
-extern char *label_button(int bnum);
-extern int not_state(int desired, char *str);
-extern int chg_state(int from, int to, char *str);
-extern void state_err(char *str);
+extern char *label_button(struct mged_state *s, int bnum);
+extern int not_state(struct mged_state *s, int desired, char *str);
+extern int chg_state(struct mged_state *s, int from, int to, char *str);
+extern void state_err(struct mged_state *s, char *str);
 
 extern int invoke_db_wrapper(Tcl_Interp *interpreter, int argc, const char *argv[]);
 
@@ -255,7 +335,7 @@ extern int edobj; /* object editing options */
 
 /* FIXME: ugh, main global editing state */
 extern int ged_state;	  /* (defined in titles.c) */
-#define STATE ged_state
+#define GEOM_EDIT_STATE ged_state
 
 /**
  * Editor States
@@ -270,131 +350,25 @@ extern char *state_str[]; /* identifying strings */
 #define ST_S_VPICK	7 /* Vertex Pick */
 #define ST_S_NO_EDIT	8 /* Solid edit without Rotate, translate, or scale */
 
-
-/* Cloned mged macros for use in Tcl/Tk */
-#define TCL_READ_ERR {\
-	Tcl_AppendResult(INTERP, "Database read error, aborting\n", (char *)NULL);\
-    }
-
-#define TCL_READ_ERR_return {\
-	TCL_READ_ERR;\
-	return TCL_ERROR;\
-    }
-
-#define TCL_WRITE_ERR { \
-	Tcl_AppendResult(INTERP, "Database write error, aborting.\n", (char *)NULL);\
-	TCL_ERROR_RECOVERY_SUGGESTION; }
-
-#define TCL_WRITE_ERR_return { \
-	TCL_WRITE_ERR; \
-	return TCL_ERROR; }
-
-#define TCL_ALLOC_ERR { \
-	Tcl_AppendResult(INTERP, "\
-An error has occurred while adding a new object to the database.\n", (char *)NULL); \
-	TCL_ERROR_RECOVERY_SUGGESTION; }
-
-#define TCL_ALLOC_ERR_return { \
-	TCL_ALLOC_ERR; \
-	return TCL_ERROR;  }
-
-/* For errors from db_delete() or db_dirdelete() */
-#define TCL_DELETE_ERR(_name) { \
-	Tcl_AppendResult(INTERP, "An error has occurred while deleting '", _name, \
-			 "' from the database.\n", (char *)NULL);\
-	TCL_ERROR_RECOVERY_SUGGESTION; }
-
-#define TCL_DELETE_ERR_return(_name) {  \
-	TCL_DELETE_ERR(_name); \
-	return TCL_ERROR;  }
-
-/* A verbose message to attempt to soothe and advise the user */
-#define TCL_ERROR_RECOVERY_SUGGESTION\
-    Tcl_AppendResult(INTERP, "\
+#define ERROR_RECOVERY_SUGGESTION "\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety, \n\
-you should exit MGED now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
+you should exit MGED now, and resolve the I/O problem, before continuing.\n"
 
-
-/**
- * Helpful macros to inform the user of trouble encountered in library
- * routines, and bail out.  They are intended to be used mainly in
- * top-level command processing routines, and therefore include a
- * "return" statement and curley brackets.  Thus, they should only be
- * used in void functions.  The word "return" is not in upper case in
- * these macros, to enable editor searches for the word "return" to
- * succeed.
- */
-/* For errors from db_get() or db_getmrec() */
-#define READ_ERR { \
-	printf("Database read error, aborting\n"); }
-
-#define READ_ERR_return { \
-	READ_ERR; \
-	return;  }
-
-/* For errors from db_put() */
-#define WRITE_ERR { \
-	printf("Database write error, aborting.\n"); \
-	ERROR_RECOVERY_SUGGESTION; }
-
-#define WRITE_ERR_return { \
-	WRITE_ERR; \
-	return;  }
-
-/* For errors from db_diradd() or db_alloc() */
-#define ALLOC_ERR { \
-	printf("\
-An error has occurred while adding a new object to the database.\n"); \
-	ERROR_RECOVERY_SUGGESTION; }
-
-#define ALLOC_ERR_return { \
-	ALLOC_ERR; \
-	return;  }
-
-/* For errors from db_delete() or db_dirdelete() */
-#define DELETE_ERR(_name) { \
-	printf("\
-An error has occurred while deleting '%s' from the database.\n", _name); \
-	ERROR_RECOVERY_SUGGESTION; }
-
-#define DELETE_ERR_return(_name) {  \
-	DELETE_ERR(_name); \
-	return;  }
-
-/* A verbose message to attempt to soothe and advise the user */
-#define ERROR_RECOVERY_SUGGESTION	\
-    printf("\
-The in-memory table of contents may not match the status of the on-disk\n\
-database.  The on-disk database should still be intact.  For safety, \n\
-you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 
 /* Check if database pointer is NULL */
 #define CHECK_DBI_NULL \
-    if (DBIP == DBI_NULL) { \
-	Tcl_AppendResult(INTERP, "A database is not open!\n", (char *)NULL); \
+    if (s->dbip == DBI_NULL) { \
+	Tcl_AppendResult(s->interp, "A database is not open!\n", (char *)NULL); \
 	return TCL_ERROR; \
     }
 
 /* Check if the database is read only, and if so return TCL_ERROR */
 #define CHECK_READ_ONLY	\
-    if (DBIP->dbi_read_only) { \
-	Tcl_AppendResult(INTERP, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
+    if (s->dbip->dbi_read_only) { \
+	Tcl_AppendResult(s->interp, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
 	return TCL_ERROR; \
     }
-
-
-#define FUNTAB_UNLIMITED -1
-
-struct funtab {
-    char *ft_name;
-    char *ft_parms;
-    char *ft_comment;
-    int (*ft_func)(int, const char **);
-    int ft_min;
-    int ft_max;
-    int tcl_converted;
-};
 
 
 struct mged_hist {
@@ -440,86 +414,48 @@ extern struct run_rt head_run_rt;
 
 
 /* attach.c */
-int is_dm_null(void);
-int mged_attach(const char *wp_name, int argc, const char *argv[]);
+int mged_attach(struct mged_state *s, const char *wp_name, int argc, const char *argv[]);
 void mged_link_vars(struct mged_dm *p);
 void mged_slider_free_vls(struct mged_dm *p);
-int gui_setup(const char *dstr);
+int gui_setup(struct mged_state *s, const char *dstr);
 
 
 /* buttons.c */
-void btn_head_menu(int i, int menu, int item);
-void chg_l2menu(int i);
-
-/* chgmodel.c */
-int extract_mater_from_line(
-    char *line,
-    char *name,
-    char *shader,
-    int *r, int *g, int *b,
-    int *override,
-    int *inherit);
+void btn_head_menu(struct mged_state *s, int i, int menu, int item);
+void chg_l2menu(struct mged_state *s, int i);
 
 /* chgview.c */
-int mged_erot_xyz(char origin, vect_t rvec);
-int mged_svbase(void);
-int mged_vrot_xyz(char origin, char coords, vect_t rvec);
-void size_reset(void);
-void solid_list_callback(void);
+int mged_svbase(struct mged_state *s);
+void size_reset(struct mged_state *s);
+void solid_list_callback(struct mged_state *s);
 
 extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
 extern void view_ring_destroy(struct mged_dm *dlp);
 
 /* cmd.c */
-int cmdline(struct bu_vls *vp, int record);
-int mged_cmd(int argc, const char *argv[], struct funtab in_functions[]);
-void mged_print_result(int status);
+int cmdline(struct mged_state *s, struct bu_vls *vp, int record);
+void mged_print_result(struct mged_state *s, int status);
 int gui_output(void *clientData, void *str);
 void mged_pr_output(Tcl_Interp *interp);
-
-/* color_scheme.c */
-void cs_set_bg(const struct bu_structparse *, const char *, void *, const char *, void *);
-void cs_update(const struct bu_structparse *, const char *, void *, const char *, void *);
-void cs_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 /* columns.c */
 void vls_col_item(struct bu_vls *str, const char *cp);
 void vls_col_eol(struct bu_vls *str);
 
-/* dir.c */
-void dir_summary(int flag);
-int cmd_killall(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    const char *argv[]);
-int cmd_killrefs(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    const char *argv[]);
-int cmd_killtree(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    const char *argv[]);
-
 /* dodraw.c */
-void cvt_vlblock_to_solids(struct bv_vlblock *vbp, const char *name, int copy);
-int drawtrees(int argc, const char *argv[], int kind);
-int replot_modified_solid(struct bv_scene_obj *sp, struct rt_db_internal *ip, const mat_t mat);
-int replot_original_solid(struct bv_scene_obj *sp);
+int replot_modified_solid(struct mged_state *s, struct bv_scene_obj *sp, struct rt_db_internal *ip, const mat_t mat);
+int replot_original_solid(struct mged_state *s, struct bv_scene_obj *sp);
 void add_solid_path_to_result(Tcl_Interp *interpreter, struct bv_scene_obj *sp);
-int redraw_visible_objects(void);
+int redraw_visible_objects(struct mged_state *s);
 
 /* dozoom.c */
-void createDLists(struct bu_list *hdlp);
-void createDListSolid(struct bv_scene_obj *sp);
-void createDListAll(struct display_list *gdlp);
-void freeDListsAll(unsigned int dlist, int range);
+void createDLists(void *, struct bu_list *hdlp);
+void createDListSolid(void *, struct bv_scene_obj *);
+void createDListAll(void *, struct display_list *);
+void freeDListsAll(void *, unsigned int dlist, int range);
 
 /* edarb.c */
-int editarb(vect_t pos_model);
+int editarb(struct mged_state *s, vect_t pos_model);
 extern int newedge;	/* new edge for arb editing */
 
 /* edars.c */
@@ -537,144 +473,116 @@ struct mged_opendb_ctx {
     Tcl_Interp *interpreter;
     struct db_i *old_dbip;
     int post_open_cnt;
+    struct mged_state *s;
+    int init_flag; /* >0 means in initialization stage */
+    int db_upgrade; /* 0 (default) no upgrade, 1 upgrade */
+    int db_version; /* force creation of specific database version (default = BRLCAD_DB_FORMAT_LATEST) */
+    int db_warn; /* 0 (default) no warn, 1 warn */
 };
 extern struct mged_opendb_ctx mged_global_db_ctx;
-int f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[]);
-int f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[]);
-void mged_output_handler(struct ged *, char *line);
-void mged_refresh_handler(void *clientdata);
-void mged_pre_opendb_clbk(struct ged *gedp, void *ctx);
-void mged_post_opendb_clbk(struct ged *gedp, void *ctx);
-void mged_pre_closedb_clbk(struct ged *gedp, void *ctx);
-void mged_post_closedb_clbk(struct ged *gedp, void *ctx);
 
 /* mged.c */
-int event_check(int non_blocking);
-void new_edit_mats(void);
-void new_mats(void);
+void new_edit_mats(struct mged_state *s);
+void new_mats(struct mged_state *s);
 void pr_beep(void);
 
-extern int interactive; /* for pr_prompt */
-void pr_prompt(int show_prompt);
+void pr_prompt(struct mged_state *s);
 
 /* grid.c */
-extern void round_to_grid(fastf_t *view_dx, fastf_t *view_dy);
-extern void snap_keypoint_to_grid(void);
-extern void snap_view_center_to_grid(void);
-extern void snap_to_grid(fastf_t *mx, fastf_t *my);
-extern void snap_view_to_grid(fastf_t view_dx, fastf_t view_dy);
-extern void draw_grid(void);
-
-/* menu.c */
-int mmenu_select(int pen_y, int do_func);
+extern void round_to_grid(struct mged_state *s, fastf_t *view_dx, fastf_t *view_dy);
+extern void snap_keypoint_to_grid(struct mged_state *s);
+extern void snap_view_center_to_grid(struct mged_state *s);
+extern void snap_to_grid(struct mged_state *s, fastf_t *mx, fastf_t *my);
+extern void snap_view_to_grid(struct mged_state *s, fastf_t view_dx, fastf_t view_dy);
+extern void draw_grid(struct mged_state *s);
 
 /* predictor.c */
-extern void predictor_frame(void);
-extern void predictor_init(void);
+extern void predictor_frame(struct mged_state *s);
+extern void predictor_init(struct mged_state *s);
 
 /* usepen.c */
-void buildHrot(mat_t mat, double alpha, double beta, double ggamma);
-void wrt_view(mat_t out, const mat_t change, const mat_t in);
+void wrt_view(struct mged_state *s, mat_t out, const mat_t change, const mat_t in);
 void wrt_point(mat_t out, const mat_t change, const mat_t in, const point_t point);
 
 /* tedit.c */
-int get_editor_string(struct bu_vls *editstring);
+int get_editor(struct mged_state *s);
+void clear_editor(struct mged_state *s);
 
 /* titles.c */
-void create_text_overlay(struct bu_vls *vp);
-void screen_vls(int xbase, int ybase, struct bu_vls *vp);
-void dotitles(struct bu_vls *overlay_vls);
+void create_text_overlay(struct mged_state *s, struct bu_vls *vp);
+void dotitles(struct mged_state *s, struct bu_vls *overlay_vls);
 
 /* rect.c */
-void zoom_rect_area(void);
-void paint_rect_area(void);
-void rt_rect_area(void);
-void draw_rect(void);
+void zoom_rect_area(struct mged_state *);
+void paint_rect_area(struct mged_state *);
+void rt_rect_area(struct mged_state *);
+void draw_rect(struct mged_state *);
 void set_rect(const struct bu_structparse *, const char *, void *, const char *, void *);
-void rect_view2image(void);
-void rect_image2view(void);
+void rect_view2image(struct mged_state *);
+void rect_image2view(struct mged_state *);
 void rb_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
-
-
-/* track.c */
-int wrobj(char name[], int flags);
 
 /* edsol.c */
 extern int inpara;	/* parameter input from keyboard flag */
-void vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat);
+void vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat);
 void transform_editing_solid(
+    struct mged_state *s,
     struct rt_db_internal *os,		/* output solid */
     const mat_t mat,
     struct rt_db_internal *is,		/* input solid */
     int freedbi);
-void replot_editing_solid(void);
-void sedit_abs_scale(void);
-void sedit_accept(void);
-void sedit_mouse(const vect_t mousevec);
-void sedit_reject(void);
-void sedit_vpick(point_t v_pos);
-void oedit_abs_scale(void);
-void oedit_accept(void);
-void oedit_reject(void);
-void objedit_mouse(const vect_t mousevec);
-extern int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const point_t ref_pt, const mat_t mat);
-void label_edited_solid(int *num_lines, point_t *lines, struct rt_point_labels pl[], int max_pl, const mat_t xform, struct rt_db_internal *ip);
-void init_oedit(void);
-void init_sedit(void);
+void replot_editing_solid(struct mged_state *s);
+void sedit_abs_scale(struct mged_state *s);
+void sedit_accept(struct mged_state *s);
+void sedit_mouse(struct mged_state *s, const vect_t mousevec);
+void sedit_reject(struct mged_state *s);
+void sedit_vpick(struct mged_state *s, point_t v_pos);
+void oedit_abs_scale(struct mged_state *s);
+void oedit_accept(struct mged_state *s);
+void oedit_reject(struct mged_state *s);
+void objedit_mouse(struct mged_state *s, const vect_t mousevec);
+void label_edited_solid(struct mged_state *s, int *num_lines, point_t *lines, struct rt_point_labels pl[], int max_pl, const mat_t xform, struct rt_db_internal *ip);
+void init_oedit(struct mged_state *s);
+void init_sedit(struct mged_state *s);
 
 /* share.c */
 void usurp_all_resources(struct mged_dm *dlp1, struct mged_dm *dlp2);
 
-/* inside.c */
-int torin(struct rt_db_internal *ip, fastf_t thick[6]);
-int tgcin(struct rt_db_internal *ip, fastf_t thick[6]);
-int rhcin(struct rt_db_internal *ip, fastf_t thick[4]);
-int rpcin(struct rt_db_internal *ip, fastf_t thick[4]);
-int partin(struct rt_db_internal *ip, fastf_t *thick);
-int nmgin(struct rt_db_internal *ip, fastf_t thick);
-
-/* cgtype is # of points, 4..8 */
-int arbin(struct rt_db_internal *ip, fastf_t thick[6], int face, int cgtype, plane_t planes[6]);
-int ehyin(struct rt_db_internal *ip, fastf_t thick[2]);
-int ellgin(struct rt_db_internal *ip, fastf_t thick[6]);
-int epain(struct rt_db_internal *ip, fastf_t thick[2]);
-int etoin(struct rt_db_internal *ip, fastf_t thick[1]);
-
 /* set.c */
+extern void set_absolute_tran(struct mged_state *);
+extern void set_absolute_view_tran(struct mged_state *);
+extern void set_absolute_model_tran(struct mged_state *);
 extern void fbserv_set_port(const struct bu_structparse *, const char *, void *, const char *, void *);
 extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *, void *);
-extern void mged_variable_setup(Tcl_Interp *interpreter);
+extern void mged_variable_setup(struct mged_state *s);
 
 /* scroll.c */
-void set_scroll(void);
-int scroll_select(int pen_x, int pen_y, int do_func);
-int scroll_display(int y_top);
+void set_scroll(struct mged_state *);
+int scroll_select(struct mged_state *s, int pen_x, int pen_y, int do_func);
+int scroll_display(struct mged_state *s, int y_top);
 
 /* edpipe.c */
-void pipe_scale_od(struct rt_db_internal *, fastf_t);
-void pipe_scale_id(struct rt_db_internal *, fastf_t);
-void pipe_seg_scale_od(struct wdb_pipe_pnt *, fastf_t);
-void pipe_seg_scale_id(struct wdb_pipe_pnt *, fastf_t);
-void pipe_seg_scale_radius(struct wdb_pipe_pnt *, fastf_t);
-void pipe_scale_radius(struct rt_db_internal *, fastf_t);
-struct wdb_pipe_pnt *find_pipe_pnt_nearest_pnt(const struct bu_list *, const point_t);
+void pipe_scale_od(struct mged_state *s, struct rt_db_internal *, fastf_t);
+void pipe_scale_id(struct mged_state *s, struct rt_db_internal *, fastf_t);
+void pipe_seg_scale_od(struct mged_state *s, struct wdb_pipe_pnt *, fastf_t);
+void pipe_seg_scale_id(struct mged_state *s, struct wdb_pipe_pnt *, fastf_t);
+void pipe_seg_scale_radius(struct mged_state *s, struct wdb_pipe_pnt *, fastf_t);
+void pipe_scale_radius(struct mged_state *s, struct rt_db_internal *, fastf_t);
+struct wdb_pipe_pnt *find_pipe_pnt_nearest_pnt(struct mged_state *s, const struct bu_list *, const point_t);
 struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
 void pipe_ins_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
-struct wdb_pipe_pnt *pipe_del_pnt(struct wdb_pipe_pnt *);
-void pipe_move_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
+struct wdb_pipe_pnt *pipe_del_pnt(struct mged_state *s, struct wdb_pipe_pnt *);
+void pipe_move_pnt(struct mged_state *s, struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
 
 /* vparse.c */
-extern void mged_vls_struct_parse(struct bu_vls *vls, const char *title, struct bu_structparse *how_to_parse, const char *structp, int argc, const char *argv[]); /* defined in vparse.c */
-extern void mged_vls_struct_parse_old(struct bu_vls *vls, const char *title, struct bu_structparse *how_to_parse, char *structp, int argc, const char *argv[]);
-
-/* rtif.c */
-int build_tops(char **start, char **end);
+extern void mged_vls_struct_parse(struct mged_state *s, struct bu_vls *vls, const char *title, struct bu_structparse *how_to_parse, const char *structp, int argc, const char *argv[]); /* defined in vparse.c */
+extern void mged_vls_struct_parse_old(struct mged_state *s, struct bu_vls *vls, const char *title, struct bu_structparse *how_to_parse, char *structp, int argc, const char *argv[]);
 
 /* mater.c */
-void mged_color_soltab(void);
+void mged_color_soltab(struct mged_state *s);
 
 /* utility1.c */
-int editit(const char *command, const char *tempfile);
+int editit(struct mged_state *s, const char *command, const char *tempfile);
 
 int Wdb_Init(Tcl_Interp *interp);
 int wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);

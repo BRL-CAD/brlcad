@@ -1,7 +1,7 @@
 /*                        P R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -77,21 +77,6 @@ rt_new_rti(struct db_i *dbip)
 
     RT_CK_DBI(dbip);
 
-    /* XXX Move to rt_global_init() ? */
-    if (BU_LIST_FIRST(bu_list, &RTG.rtg_vlfree) == 0) {
-	char *debug_flags;
-	debug_flags = getenv("LIBRT_DEBUG");
-	if (debug_flags) {
-	    if (rt_debug) {
-		bu_log("WARNING: discarding LIBRT_DEBUG value in favor of application-specified flags\n");
-	    } else {
-		rt_debug = strtol(debug_flags, NULL, 0x10);
-	    }
-	}
-
-	BU_LIST_INIT(&RTG.rtg_vlfree);
-    }
-
     BU_ALLOC(rtip, struct rt_i);
     rtip->rti_magic = RTI_MAGIC;
     for (i=0; i < RT_DBNHASH; i++) {
@@ -107,6 +92,10 @@ rt_new_rti(struct db_i *dbip)
     bu_ptbl_trunc(&rtip->rti_resources, MAX_PSW); /* Make 'em all available */
 
     rt_uniresource.re_magic = RESOURCE_MAGIC;
+
+    /* Zero-initialize user data and clbk */
+    rtip->rti_gettrees_clbk = NULL;
+    rtip->rti_udata = NULL;
 
     /* list of invisible light regions to be deleted after light_init() */
     bu_ptbl_init(&rtip->delete_regs, 8, "rt_i delete regions list");
@@ -226,6 +215,21 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
 					 rtip->rti_dbip->dbi_uses, ncpu);
 
     bu_semaphore_acquire(RT_SEM_RESULTS);	/* start critical section */
+
+    /*
+     * Check if we're going to try using rt_uniresource.  If we're also asking
+     * for more than one CPU, that's not gonna fly.
+     */
+    resp = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, 0);
+    if (!resp)
+	resp = &rt_uniresource;
+
+    if (ncpu > 1 && resp == &rt_uniresource) {
+	bu_log("ERROR: attempting a parallel prep, but the resource being used is rt_uniresource.  Caller will need to allocate their own resource structures for parallel raytracing.\n");
+	bu_semaphore_release(RT_SEM_RESULTS);
+	return;
+    }
+
     if (!rtip->needprep) {
 	bu_log("WARNING: rt_prep_parallel(%s, %d) invoked a second time, ignored",
 	       rtip->rti_dbip->dbi_filename,
@@ -279,11 +283,7 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
     VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
     rtip->rti_radius = 0.5 * MAGNITUDE(diag);
 
-    /* If a resource structure has been provided for us, use it. */
-    resp = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, 0);
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
+    /* Check our resource struct. */
     RT_CK_RESOURCE(resp);
 
     /* Build array of region pointers indexed by reg_bit.  Optimize
@@ -796,6 +796,7 @@ rt_plot_solid(
 {
     struct bu_list vhead;
     struct region *regp;
+    struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_RTI(rtip);
     RT_CK_SOLTAB(stp);
@@ -823,7 +824,7 @@ rt_plot_solid(
 
     bv_vlist_to_uplot(fp, &vhead);
 
-    RT_FREE_VLIST(&vhead);
+    BV_FREE_VLIST(vlfree, &vhead);
     return 0;			/* OK */
 }
 
@@ -1237,12 +1238,6 @@ rt_clean(struct rt_i *rtip)
 	}
     }
 
-    /* Clear the hash table, if we have one */
-    if (rtip->Orca_hash_tbl) {
-	bu_hash_destroy((struct bu_hash_tbl *)rtip->Orca_hash_tbl);
-	rtip->Orca_hash_tbl = NULL;
-    }
-
     if (rt_uniresource.re_magic) {
 	rt_clean_resource(rtip, &rt_uniresource);/* Used for rt_optim_tree() */
     }
@@ -1406,75 +1401,6 @@ rt_ck(struct rt_i *rtip)
     /* rti_CutHead */
 
 }
-
-
-/**
- * Loads a new set of attribute values (corresponding to the provided
- * list of attribute names) for each region structure in the provided
- * rtip.
- *
- * Returns -
- * The number of region structures affected
- */
-int rt_load_attrs(struct rt_i *rtip, char **attrs)
-{
-    struct region *regp;
-    struct bu_attribute_value_set avs;
-    struct directory *dp;
-    const char *reg_name;
-    const char *attr;
-    int attr_count=0;
-    int region_count=0;
-    int did_set, i;
-
-    RT_CHECK_RTI(rtip);
-    RT_CK_DBI(rtip->rti_dbip);
-
-    if (db_version(rtip->rti_dbip) < 5)
-	return 0;
-
-    while (attrs[attr_count])
-	attr_count++;
-
-    for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
-	RT_CK_REGION(regp);
-
-	did_set = 0;
-	reg_name = strrchr(regp->reg_name, '/');
-	if (reg_name == NULL)
-	    reg_name = regp->reg_name;
-	else
-	    reg_name++;
-
-	dp = db_lookup(rtip->rti_dbip, reg_name, LOOKUP_NOISY);
-	if (dp == RT_DIR_NULL)
-	    continue;
-
-	bu_avs_init_empty(&avs);
-	if (db5_get_attributes(rtip->rti_dbip, &avs, dp)) {
-	    bu_log("rt_load_attrs: Failed to get attributes for region %s\n", reg_name);
-	    continue;
-	}
-
-	bu_avs_init_empty(&(regp->attr_values));
-	for (i = 0; i < attr_count; i++) {
-	    attr = bu_avs_get(&avs, attrs[i]);
-	    if (attr == NULL)
-		continue;
-
-	    bu_avs_add(&(regp->attr_values), attrs[i], attr);
-	    did_set = 1;
-	}
-
-	if (did_set)
-	    region_count++;
-
-	bu_avs_free(&avs);
-    }
-
-    return region_count;
-}
-
 
 /**
  * Routine called by "rt_find_paths". Used for recursing through a
@@ -1825,7 +1751,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 
 	BU_ALLOC(tree_state, struct db_tree_state);
 
-	*tree_state = rt_initial_tree_state;	/* struct copy */
+	RT_DBTS_INIT(tree_state);
 	tree_state->ts_dbip = rtip->rti_dbip;
 	tree_state->ts_resp = resp;
 	tree_state->ts_rtip = rtip;

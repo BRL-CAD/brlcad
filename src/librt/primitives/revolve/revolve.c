@@ -1,7 +1,7 @@
 /*                           R E V O L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,6 +39,7 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
+#include "../../librt_private.h"
 
 /* local interface header */
 #include "./revolve.h"
@@ -1220,7 +1221,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
 
@@ -1463,6 +1464,27 @@ rt_revolve_tess(struct nmgregion **UNUSED(r), struct model *UNUSED(m), struct rt
     return -1;
 }
 
+int
+rt_revolve_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_revolve_internal *tip = (struct rt_revolve_internal *)ip->idb_ptr;
+    RT_REVOLVE_CK_MAGIC(tip);
+    struct rt_revolve_internal *top = (struct rt_revolve_internal *)rop->idb_ptr;
+    RT_REVOLVE_CK_MAGIC(top);
+
+    vect_t v3d, axis3d, r;
+    VMOVE(v3d, tip->v3d);
+    VMOVE(axis3d, tip->axis3d);
+    VMOVE(r, tip->r);
+    MAT4X3PNT(top->v3d, mat, v3d);
+    MAT4X3PNT(top->axis3d, mat, axis3d);
+    MAT4X3PNT(top->r, mat, r);
+
+   return BRLCAD_OK;
+}
 
 /**
  * Import an REVOLVE from the database format to the internal format.
@@ -1512,10 +1534,6 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	       sketch_name);
 	rip->skt = (struct rt_sketch_internal *)NULL;
     } else {
-	/* initialize before our first use */
-	if (rt_uniresource.re_magic != RESOURCE_MAGIC)
-	    rt_init_resource(&rt_uniresource, 0, NULL);
-
 	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 	    bu_log("ERROR: Cannot import sketch (%s) for extrusion\n",
 		   sketch_name);
@@ -1527,18 +1545,19 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 
     bu_cv_ntohd((unsigned char *)&vv, (unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*3 + 1);
 
-    /* Apply the modeling transformation */
-    if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(rip->v3d, mat, &vv[0*3]);
-    MAT4X3PNT(rip->axis3d, mat, &vv[1*3]);
-    MAT4X3PNT(rip->r, mat, &vv[2*3]);
+    /* Assign values */
+    VMOVE(rip->v3d, &vv[0*3]);
+    VMOVE(rip->axis3d, &vv[1*3]);
+    VMOVE(rip->r, &vv[2*3]);
     rip->ang = vv[9];
 
     /* convert name of data location */
     bu_vls_init(&rip->sketch_name);
     bu_vls_strcpy(&rip->sketch_name, (char *)ep->ext_buf + (ELEMENTS_PER_VECT * 3 + 1) * SIZEOF_NETWORK_DOUBLE);
 
-    return 0;			/* OK */
+    /* Apply the modeling transformation */
+    if (mat == NULL) mat = bn_mat_identity;
+    return rt_revolve_mat(ip, mat, ip);
 }
 
 

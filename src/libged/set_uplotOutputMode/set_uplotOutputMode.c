@@ -1,7 +1,7 @@
 /*                         S E T _ U P L O T O U T P U T M O D E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,9 @@
 
 #include "common.h"
 #include <string.h>
-#include "ged.h"
 #include "bv/plot3.h"
+#include "ged.h"
+#include "../ged_private.h"
 
 /*
  * Set/get the unix plot output mode
@@ -53,7 +54,7 @@ ged_set_uplotOutputMode_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Get the plot output mode */
     if (argc == 1) {
-	if (gedp->ged_gdp->gd_uplotOutputMode == PL_OUTPUT_MODE_BINARY)
+	if (gedp->i->ged_gdp->gd_uplotOutputMode == PL_OUTPUT_MODE_BINARY)
 	    bu_vls_printf(gedp->ged_result_str, "binary");
 	else
 	    bu_vls_printf(gedp->ged_result_str, "text");
@@ -63,10 +64,10 @@ ged_set_uplotOutputMode_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argv[1][0] == 'b' &&
 	BU_STR_EQUAL("binary", argv[1]))
-	gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
+	gedp->i->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     else if (argv[1][0] == 't' &&
 	     BU_STR_EQUAL("text", argv[1]))
-	gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_TEXT;
+	gedp->i->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_TEXT;
     else {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;

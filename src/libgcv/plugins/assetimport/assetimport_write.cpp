@@ -1,7 +1,7 @@
 /*                A S S I M P _ W R I T E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2022-2024 United States Government as represented by
+ * Copyright (c) 2022-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,6 +48,7 @@ typedef struct assetimport_write_state {
 
     struct db_i *dbip;
     struct model *the_model;
+    struct bu_list *vlfree;
 
     aiScene* scene;                     /* generated scene to be exported */
     std::vector<aiNode*> children;      /* dynamically keeps track of children while walking */
@@ -59,6 +60,7 @@ typedef struct assetimport_write_state {
 	assetimport_write_options = NULL;
 	dbip = NULL;
 	the_model = NULL;
+	vlfree = NULL;
 	scene = NULL;
 	children = {};
 	meshes = {};
@@ -98,16 +100,16 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &pstate->gcv_options->calculational_tolerance);
+    nmg_triangulate_model(m, pstate->vlfree, &pstate->gcv_options->calculational_tolerance);
 
-    /* list all verticies in result */
-    nmg_vertex_tabulate(&verts, &r->l.magic, &RTG.rtg_vlfree);
+    /* list all vertices in result */
+    nmg_vertex_tabulate(&verts, &r->l.magic, pstate->vlfree);
 
     /* Get number of vertices */
     numverts = BU_PTBL_LEN(&verts);
 
     /* get list of vertexuse normals */
-    nmg_vertexuse_normal_tabulate(&norms, &r->l.magic, &RTG.rtg_vlfree);
+    nmg_vertexuse_normal_tabulate(&norms, &r->l.magic, pstate->vlfree);
 
     /* Prelim check all vertices */
     for (i = 0; i < numverts; i++) {
@@ -364,17 +366,18 @@ static int
 assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *dest_path)
 {
     assetimport_write_state_t state;
-    struct gcv_region_end_data gcvwriter { NULL, NULL };
+    struct gcv_region_end_data gcvwriter { NULL, NULL, NULL };
     struct db_tree_state tree_state;
     int ret = 1;
 
     gcvwriter.write_region = nmg_to_assetimport;
+    gcvwriter.vlfree = &rt_vlfree;
     gcvwriter.client_data = &state;
 
     state.gcv_options = gcv_options;
     state.assetimport_write_options = (assetimport_write_options_t*)options_data;
 
-    /* check and validate the specied output file type against ai 
+    /* check and validate the specified output file type against ai 
      * checks using file extension if no --format is supplied 
      * this is likely all a 'can_write' function would need
      */
@@ -404,14 +407,14 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
     state.scene = new aiScene();
     state.scene->mRootNode = new aiNode();
 
-    tree_state = rt_initial_tree_state;	/* struct copy */
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &state.gcv_options->calculational_tolerance;
     tree_state.ts_ttol = &state.gcv_options->tessellation_tolerance;
     tree_state.ts_m = &state.the_model;
 
     /* make empty NMG model */
     state.the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
+    state.vlfree = &rt_vlfree;
 
     /* Walk indicated tree(s).  Each region will be output separately */
     if (state.assetimport_write_options->model_workaround) {

@@ -1,7 +1,7 @@
 /*                  P L Y _ W R I T E . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2024 United States Government as represented by
+ * Copyright (c) 2003-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,6 +59,8 @@ struct conversion_state
     struct db_i *dbip;
     FILE *fp;			               /* Output file pointer */
     struct model *the_model;
+
+    struct bu_list *vlfree;
 
     // globals from g-ply
     int color_info;
@@ -188,7 +190,7 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &pstate->gcv_options->calculational_tolerance);
+    nmg_triangulate_model(m, pstate->vlfree, &pstate->gcv_options->calculational_tolerance);
 
     /* Output triangles */
     if (pstate->ply_write_options->verbose || pstate->gcv_options->verbosity_level)
@@ -400,7 +402,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 
 
 static union tree *
-process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct bu_list *vlfree)
 {
     static union tree *ret_tree = TREE_NULL;
 
@@ -408,8 +410,8 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
+	(void)nmg_model_fuse(*tsp->ts_m, vlfree, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
     } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);
@@ -477,7 +479,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     if (pstate->ply_write_options->verbose || pstate->gcv_options->verbosity_level)
 	bu_log("Attempting to process region %s\n", db_path_to_string(pathp));
 
-    ret_tree = process_boolean(curtree, tsp, pathp);
+    ret_tree = process_boolean(curtree, tsp, pathp, pstate->vlfree);
 
     if (ret_tree) {
 	r = ret_tree->tr_d.td_r;
@@ -625,11 +627,11 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
     state.dbip = context->dbip;
     state.color_info = 0;
 
-    tree_state = rt_initial_tree_state; /* struct copy */
+    RT_DBTS_INIT(&tree_state);
     struct bn_tol tol = state.gcv_options->calculational_tolerance;             // init tol with gcv_options defaults
     struct bg_tess_tol ttol = state.gcv_options->tessellation_tolerance;        // init ttol with gcv_options defaults
-    tree_state.ts_tol = &tol;   // point tree_state at modifable tol
-    tree_state.ts_ttol = &ttol; // point tree_state at modifable ttol
+    tree_state.ts_tol = &tol;   // point tree_state at modifiable tol
+    tree_state.ts_ttol = &ttol; // point tree_state at modifiable ttol
     tree_state.ts_m = &state.the_model;
 
     /* update tolerances if user explicitly set with flag */
@@ -647,7 +649,7 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
     /* make empty NMG model */
     state.the_model = nmg_mm();
 
-    BU_LIST_INIT(&RTG.rtg_vlfree);      /* for vlist macros */
+    state.vlfree = &rt_vlfree;
 
     if (!state.ply_write_options->separate) {
         /* open outputfile using specified type */

@@ -28,16 +28,16 @@
 /* Data on the primitive binary polynomials (a) and the corresponding
    starting values m, for Sobol sequences in up to 1111 dimensions,
    taken from:
-        P. Bratley and B. L. Fox, Algorithm 659, ACM Trans.
+	P. Bratley and B. L. Fox, Algorithm 659, ACM Trans.
 	Math. Soft. 14 (1), 88-100 (1988),
    as modified by:
-        S. Joe and F. Y. Kuo, ACM Trans. Math. Soft 29 (1), 49-57 (2003). */
+	S. Joe and F. Y. Kuo, ACM Trans. Math. Soft 29 (1), 49-57 (2003). */
 
 #define MAXDIM 1111
 #define MAXDEG 12
 
 /* successive primitive binary-coefficient polynomials p(z)
-   = a_0 + a_1 z + a_2 z^2 + ... a_31 z^31, where a_i is the 
+   = a_0 + a_1 z + a_2 z^2 + ... a_31 z^31, where a_i is the
      i-th bit of sobol_a[j] for the j-th polynomial. */
 static const uint32_t sobol_a[MAXDIM-1] = {
      3,7,11,13,19,25,37,59,47,61,55,41,67,97,91,

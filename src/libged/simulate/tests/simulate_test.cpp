@@ -1,7 +1,7 @@
 /*               S I M U L A T E _ T E S T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2017-2024 United States Government as represented by
+ * Copyright (c) 2017-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -143,7 +143,7 @@ namespace
 
 	    const char *argv[] = {"simulate", "scene.c", "3.0"};
 
-	    if (BRLCAD_OK != ged_exec(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
+	    if (BRLCAD_OK != ged_exec_simulate(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
 		bu_bomb("ged_simulate() failed");
 
 	    {
@@ -226,7 +226,7 @@ namespace
 
 	    const char *argv[] = {"simulate", "scene.c", "3.0"};
 
-	    if (BRLCAD_OK != ged_exec(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
+	    if (BRLCAD_OK != ged_exec_simulate(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
 		bu_bomb("ged_simulate() failed");
 
 	    const mat_t expected_falling_matrix = {
@@ -307,7 +307,7 @@ namespace
 
 	    const char *argv[] = {"simulate", "scene.c", "10.0"};
 
-	    if (BRLCAD_OK != ged_exec(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
+	    if (BRLCAD_OK != ged_exec_simulate(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
 		bu_bomb("ged_simulate() failed");
 
 	    {

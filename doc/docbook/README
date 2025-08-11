@@ -161,7 +161,7 @@ OTHER CONSIDERATIONS
 These documents make extensive use of the XInclude modular
 documentation specification. Consequently, the contents of any one
 particular "document" may be scattered over many other documents.
-This design direction is intended to allow re-use of standard
+This design direction is intended to allow reuse of standard
 definitions and descriptions in multiple documents serving multiple
 purposes.  When a definition is updated for one document,
 re-generation of other documents will incorporate the update as well

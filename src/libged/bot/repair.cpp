@@ -1,7 +1,7 @@
 /*                     R E P A I R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2024 United States Government as represented by
+ * Copyright (c) 2020-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,6 +24,16 @@
  * If a BoT is not manifold according to the Manifold library attempt various
  * repair operations to try and produce a manifold output using the specified
  * bot as input.
+ *
+ * TODO - need to do some post repair checks to validate the repair - recent
+ * use cases have shown some gnarly failure modes where the result is manifold
+ * and not particularly different visually, but resulted in a massive volume
+ * change and odd raytracing result due to geometry sort of turning "inside out".
+ *
+ * Checks we need:
+ *
+ * BoT raytracing sanity check - if we're manifold but can't pass the lint BoT
+ * raytracing checks (observed case in the wild) then we need to reject the repair.
  */
 
 #include "common.h"
@@ -77,7 +87,12 @@ bot_repair(struct rt_bot_internal *bot, struct rt_bot_repair_info *i)
 static void
 repair_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
     char *option_help = bu_opt_describe(d, NULL);
-    bu_vls_sprintf(str, "Usage: %s [options] input_bot [output_name]\n", cmd);
+    bu_vls_sprintf(str, "Usage: %s [options] input_bot [output_name]\n\n", cmd);
+    bu_vls_printf(str, "Attempts to produce a manifold output using objname's geometry as an input.  If\n");
+    bu_vls_printf(str, "successful, the resulting manifold geometry will either overwrite the original\n");
+    bu_vls_printf(str, "objname object (if no repaired_obj_name is supplied) or be written to\n");
+    bu_vls_printf(str, "repaired_obj_name.  Note that in-place repair is destructive - the original BoT\n");
+    bu_vls_printf(str, "data is lost.  If the input is already manifold repair is a no-op.\n\n");
     if (option_help) {
 	bu_vls_printf(str, "Options:\n%s\n", option_help);
 	bu_free(option_help, "help str");
@@ -88,7 +103,7 @@ extern "C" int
 _bot_cmd_repair(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "bot repair [options] <namepattern1> [namepattern2 ...]";
-    const char *purpose_string = "Attempt to produce a manifold output using objname's geometry as an input.  If successful, the resulting manifold geometry will either overwrite the original objname object (if no repaired_obj_name is supplied) or be written to repaired_obj_name.  Note that in-place repair is destructive - the original BoT data is lost.  If the input is already manifold repair is a no-op.";
+    const char *purpose_string = "Attempt to convert objname to a manifold BoT.";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }

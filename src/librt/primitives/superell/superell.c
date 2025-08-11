@@ -1,7 +1,7 @@
 /*                      S U P E R E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2024 United States Government as represented by
+ * Copyright (c) 1985-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -188,7 +188,7 @@ size_t
 clt_superell_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct superell_specific *superell =
-        (struct superell_specific *)stp->st_specific;
+	(struct superell_specific *)stp->st_specific;
     struct clt_superell_specific *args;
 
     const size_t size = sizeof(*args);
@@ -716,7 +716,7 @@ rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = &RTG.rtg_vlfree;
+    struct bu_list *vlfree = &rt_vlfree;
     eip = (struct rt_superell_internal *)ip->idb_ptr;
     RT_SUPERELL_CK_MAGIC(eip);
 
@@ -889,6 +889,32 @@ rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     return 0;
 }
 
+int
+rt_superell_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
+{
+    if (!rop || !ip || !mat)
+	return BRLCAD_OK;
+
+    struct rt_superell_internal *tip = (struct rt_superell_internal *)ip->idb_ptr;
+    RT_SUPERELL_CK_MAGIC(tip);
+    struct rt_superell_internal *top = (struct rt_superell_internal *)rop->idb_ptr;
+    RT_SUPERELL_CK_MAGIC(top);
+
+    vect_t sv, sa, sb ,sc;
+
+    VMOVE(sv, tip->v);
+    VMOVE(sa, tip->a);
+    VMOVE(sb, tip->b);
+    VMOVE(sc, tip->c);
+
+    MAT4X3PNT(top->v, mat, sv);
+    MAT4X3VEC(top->a, mat, sa);
+    MAT4X3VEC(top->b, mat, sb);
+    MAT4X3VEC(top->c, mat, sc);
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Import an superellipsoid/sphere from the database format to the
@@ -920,16 +946,17 @@ rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 2);
 
-    /* Apply modeling transformations */
-    if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(eip->v, mat, &vec[0*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(eip->a, mat, &vec[1*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(eip->b, mat, &vec[2*ELEMENTS_PER_VECT]);
-    MAT4X3VEC(eip->c, mat, &vec[3*ELEMENTS_PER_VECT]);
+    /* Assign values */
+    VMOVE(eip->v, &vec[0*ELEMENTS_PER_VECT]);
+    VMOVE(eip->a, &vec[1*ELEMENTS_PER_VECT]);
+    VMOVE(eip->b, &vec[2*ELEMENTS_PER_VECT]);
+    VMOVE(eip->c, &vec[3*ELEMENTS_PER_VECT]);
     eip->n = vec[4*ELEMENTS_PER_VECT];
     eip->e = vec[4*ELEMENTS_PER_VECT + 1];
 
-    return 0;		/* OK */
+    /* Apply modeling transformations */
+    if (mat == NULL) mat = bn_mat_identity;
+    return rt_superell_mat(ip, mat, ip);
 }
 
 
@@ -1291,6 +1318,82 @@ rt_superell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	}
 	*area = current_area;
     }
+}
+
+int
+rt_superell_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    int lcnt = 4;
+    if (!pl || pl_max < lcnt || !ip)
+	return 0;
+
+    struct rt_superell_internal *superell = (struct rt_superell_internal *)ip->idb_ptr;
+    RT_SUPERELL_CK_MAGIC(superell);
+
+    point_t work, pos_view;
+    int npl = 0;
+
+#define POINT_LABEL(_pt, _char) { \
+    VMOVE(pl[npl].pt, _pt); \
+    pl[npl].str[0] = _char; \
+    pl[npl++].str[1] = '\0'; }
+
+    MAT4X3PNT(pos_view, xform, superell->v);
+    POINT_LABEL(pos_view, 'V');
+
+    VADD2(work, superell->v, superell->a);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'A');
+
+    VADD2(work, superell->v, superell->b);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'B');
+
+    VADD2(work, superell->v, superell->c);
+    MAT4X3PNT(pos_view, xform, work);
+    POINT_LABEL(pos_view, 'C');
+
+    return lcnt;
+}
+
+const char *
+rt_superell_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    point_t mpt = VINIT_ZERO;
+    struct rt_superell_internal *superell = (struct rt_superell_internal *)ip->idb_ptr;
+    RT_SUPERELL_CK_MAGIC(superell);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	VMOVE(mpt, superell->v);
+	goto superell_kpt_end;
+    }
+    if (BU_STR_EQUAL(k, "A")) {
+	VADD2(mpt, superell->v, superell->a);
+	goto superell_kpt_end;
+    }
+    if (BU_STR_EQUAL(k, "B")) {
+	VADD2(mpt, superell->v, superell->b);
+	goto superell_kpt_end;
+    }
+    if (BU_STR_EQUAL(k, "C")) {
+	VADD2(mpt, superell->v, superell->c);
+	goto superell_kpt_end;
+    }
+
+    // No keystr matches - failed
+    return NULL;
+
+superell_kpt_end:
+
+    MAT4X3PNT(*pt, mat, mpt);
+
+    return k;
 }
 
 

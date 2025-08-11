@@ -2,7 +2,7 @@
 #
 # BRL-CAD
 #
-# Copyright (c) 2020-2024 United States Government as represented by
+# Copyright (c) 2020-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -54,81 +54,83 @@ else(NOT N EQUAL 0)
   set(JFLAG)
 endif(NOT N EQUAL 0)
 
-if ("${CONFIG}" STREQUAL "")
+if("${CONFIG}" STREQUAL "")
   set(CONFIG "\"${CMAKE_BUILD_TYPE}\"")
-endif ("${CONFIG}" STREQUAL "")
+endif("${CONFIG}" STREQUAL "")
 
-if (NOT TARGET check)
-  add_custom_target(check
+if(NOT TARGET check)
+  add_custom_target(
+    check
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
     COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"check\\\" a.k.a. \\\"BRL-CAD Validation Testing\\\" target runs"
     COMMAND ${CMAKE_COMMAND} -E echo "      BRL-CAD\\'s unit, system, integration, benchmark \\(performance\\), and"
     COMMAND ${CMAKE_COMMAND} -E echo "      regression tests.  These tests must pass to consider a build viable"
     COMMAND ${CMAKE_COMMAND} -E echo "      for production use."
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|STAND_ALONE\" -E \"^regress-|NOTE|benchmark|slow-\" --output-on-failure ${JFLAG}
+    COMMAND
+      ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|STAND_ALONE\" -E \"^regress-|NOTE|benchmark|slow-\"
+      --output-on-failure ${JFLAG}
     COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -R \"benchmark\" --output-on-failure ${JFLAG}
     COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -L \"Regression\" --output-on-failure ${JFLAG}
-    )
+  )
   set_target_properties(check PROPERTIES FOLDER "BRL-CAD Validation Testing")
-endif (NOT TARGET check)
+endif(NOT TARGET check)
 
-if (NOT TARGET unit)
-  add_custom_target(unit
+if(NOT TARGET unit)
+  add_custom_target(
+    unit
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
     COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"unit\\\" a.k.a. \\\"BRL-CAD Unit Testing\\\" target runs all"
     COMMAND ${CMAKE_COMMAND} -E echo "      the BRL-CAD API unit tests that are expected to pass."
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark|slow-\" ${JFLAG}
-    )
+    COMMAND
+      ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark|slow-\" ${JFLAG}
+  )
   set_target_properties(unit PROPERTIES FOLDER "BRL-CAD Validation Testing")
-endif (NOT TARGET unit)
+endif(NOT TARGET unit)
 
 # We wrap the CMake add_test() function in order to automatically set up test
 # dependencies for the 'unit' and 'check' test targets.
 function(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
-
   # If the user is telling us tests are disabled, nothing to do
-  if (NOT BUILD_TESTING)
+  if(NOT BUILD_TESTING)
     return()
-  endif (NOT BUILD_TESTING)
+  endif(NOT BUILD_TESTING)
 
-  # CMake 3.18, cmake_language based wrapper for add_test, replaces the
-  # previous workaround for default ARGN behavior that doesn't pass through
-  # empty strings.  See https://gitlab.kitware.com/cmake/cmake/-/issues/21414
+  # cmake_language based wrapper for add_test, replaces the previous workaround
+  # for default ARGN behavior that doesn't pass through empty strings.  See
+  # https://gitlab.kitware.com/cmake/cmake/-/issues/21414
   cmake_parse_arguments(PARSE_ARGV 3 ARG "" "" "")
   foreach(_av IN LISTS ARG_UNPARSED_ARGUMENTS)
     string(APPEND test_args " [==[${_av}]==]")
   endforeach()
   cmake_language(EVAL CODE "add_test(NAME ${test_name} COMMAND ${test_args})")
 
- # There are a variety of criteria that disqualify test_prog as a
+  # There are a variety of criteria that disqualify test_prog as a
   # dependency - check and return if we hit any of them.
-  if (NOT TARGET ${test_prog})
+  if(NOT TARGET ${test_prog})
     return()
-  endif ()
-  if ("${test_name}" MATCHES ^regress-)
+  endif()
+  if("${test_name}" MATCHES ^regress-)
     return()
-  endif ()
-  if ("${test_prog}" MATCHES ^regress-)
+  endif()
+  if("${test_prog}" MATCHES ^regress-)
     return()
-  endif ()
-  if ("${test_name}" MATCHES ^slow-)
+  endif()
+  if("${test_name}" MATCHES ^slow-)
     return()
-  endif ()
-  if ("${test_name}" STREQUAL "benchmark")
+  endif()
+  if("${test_name}" STREQUAL "benchmark")
     return()
-  endif ()
-  if ("${test_name}" MATCHES ^NOTE:)
+  endif()
+  if("${test_name}" MATCHES ^NOTE:)
     return()
-  endif ()
+  endif()
 
   # add program needed for test to unit and check target dependencies
   add_dependencies(unit ${test_prog})
   add_dependencies(check ${test_prog})
-
 endfunction(BRLCAD_ADD_TEST)
-
 
 # Local Variables:
 # mode: cmake

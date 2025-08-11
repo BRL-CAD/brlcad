@@ -2,7 +2,7 @@
 #                T E S T _ C H E C K E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2017-2024 United States Government as represented by
+# Copyright (c) 2017-2025 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -263,7 +263,7 @@ if {![file exists $check_sh]} {
   exit 1
 }
 
-# operate in test directory on test databse with public version of
+# operate in test directory on test database with public version of
 # check script
 cd [set testdir [file join [pwd] [tmp_dir]]]
 

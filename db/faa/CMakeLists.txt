@@ -1,17 +1,14 @@
-set(FAA_SAMPLE_MODELS
-  Business_Jet.fg4
-  Generic_Twin.fg4
-  )
+set(FAA_SAMPLE_MODELS Business_Jet.fg4 Generic_Twin.fg4)
 
 foreach(faa_input ${FAA_SAMPLE_MODELS})
-  G_TARGET(${faa_input} "BRL-CAD Geometry Models/Sample")
+  g_target(${faa_input} "BRL-CAD Geometry Models/Sample")
 endforeach(faa_input ${FAA_SAMPLE_MODELS})
 
-CMAKEFILES(
+cmakefiles(
   ${FAA_SAMPLE_MODELS}
   CMakeLists.txt
   README
-  )
+)
 
 # Local Variables:
 # tab-width: 8

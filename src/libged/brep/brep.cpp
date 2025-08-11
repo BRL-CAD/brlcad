@@ -1,7 +1,7 @@
 /*                        B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2024 United States Government as represented by
+ * Copyright (c) 2020-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -438,7 +438,7 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
     bu_vls_sprintf(&suffix, ".brep");
 
     struct bu_opt_desc d[3];
-    BU_OPT(d[0], "", "no-evaluation", "",         NULL,        &no_evaluation, "if converting a comb object, create a CSG brep tree rather than evluating booleans");
+    BU_OPT(d[0], "", "no-evaluation", "",         NULL,        &no_evaluation, "if converting a comb object, create a CSG brep tree rather than evaluating booleans");
     BU_OPT(d[1], "", "suffix",        "str",      &bu_opt_vls, &suffix,        "suffix for use in no-evalution object naming");
     BU_OPT_NULL(d[2]);
 
@@ -487,7 +487,7 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 	bu_vls_sprintf(&bname, "%s", argv[0]);
     }
 
-    // Attempt to evalute to a single object
+    // Attempt to evaluate to a single object
     struct rt_db_internal brep_db_internal;
     ON_Brep* brep;
     if (db_lookup(gedp->dbip, bu_vls_cstr(&bname), LOOKUP_QUIET) != RT_DIR_NULL) {
@@ -575,7 +575,7 @@ _brep_cmd_dump(void *bs, int argc, const char **argv)
     struct bu_ptbl breps = BU_PTBL_INIT_ZERO;
     const char *brep_search = "-type brep";
     db_update_nref(gedp->dbip, &rt_uniresource);
-    (void)db_search(&breps, DB_SEARCH_TREE, brep_search, 1, &gb->dp, gedp->dbip, NULL);
+    (void)db_search(&breps, DB_SEARCH_TREE, brep_search, 1, &gb->dp, gedp->dbip, NULL, NULL, NULL);
     for (size_t i = 0; i < BU_PTBL_LEN(&breps); i++) {
 	struct db_full_path *fp = (struct db_full_path *)BU_PTBL_GET(&breps, i);
 	mat_t m;
@@ -778,8 +778,7 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "Invalid intersection type %s.\n", argv[6]);
     }
 
-    const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(nview, "1")) {
+    if (gedp->new_cmd_forms) {
 	struct bview *view = gedp->ged_gvp;
 	bv_vlblock_obj(gb->vbp, view, "brep_intersect");
     } else {
@@ -1459,6 +1458,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     int help = 0;
     struct bu_color *color = NULL;
     int plotres = 100;
+    struct bu_list *vlfree = &rt_vlfree;
     struct _ged_brep_info gb;
     gb.verbosity = 0;
     gb.gedp = gedp;
@@ -1561,7 +1561,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     GED_DB_GET_INTERNAL(gedp, &gb.intern, gb.dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&gb.intern);
 
-    gb.vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+    gb.vbp = bv_vlblock_init(vlfree, 32);
     gb.color = color;
     gb.plotres = plotres;
 

@@ -1,7 +1,7 @@
 /*                         P L O T 3 . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2024 United States Government as represented by
+ * Copyright (c) 2004-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,27 +17,25 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup plot3
+/** @addtogroup bv_plot
  *
- * @brief A public-domain UNIX plot library, for 2-D and 3-D plotting
- * in 16-bit VAX signed integer spaces, or 64-bit IEEE floating point.
+ * @brief A public-domain UNIX plot library, for 2-D and 3-D plotting in 16-bit
+ * VAX signed integer spaces, or 64-bit IEEE floating point.
  *
- * These routines generate "UNIX plot" output (with the addition of
- * 3-D commands).  They behave almost exactly like the regular libplot
- * routines, except:
+ * These routines generate "UNIX plot" output (with the addition of 3-D
+ * commands).  They behave almost exactly like the regular libplot routines,
+ * except:
  *
- * -# These all take a stdio file pointer, and can thus be used to
- *    create multiple plot files simultaneously.
+ * -# These all take a stdio file pointer, and can thus be used to create
+ *    multiple plot files simultaneously.
  * -# There are 3-D versions of most commands.
  * -# There are IEEE floating point versions of the commands.
  * -# The names have been changed.
  *
- * The 3-D extensions are those of Doug Gwyn, from his System V
- * extensions.
+ * The 3-D extensions are those of Doug Gwyn, from his System V extensions.
  *
- * These are the ascii command letters allocated to various actions.
- * Care has been taken to consistently match lowercase and uppercase
- * letters.
+ * These are the ascii command letters allocated to various actions.  Care has
+ * been taken to consistently match lowercase and uppercase letters.
  *
  * @code
  2d	3d	2df	3df
@@ -65,6 +63,10 @@
  * NOTE:  from libbv's perspective, plot3.h is a stand-alone header that does
  * not use any other library functionality.  To use this header without libbv,
  * define PLOT3_IMPLEMENTATION before including the plot3.h header.
+ * The PLOT_PREFIX_STR mechanism below also can be used to allow
+ * PLOT3_IMPLEMENTATION to be included multiple times without conflict.  (TODO
+ * - check if we can use inline instead of static to achieve a similar
+ * result...)
  *
  * Of interest:  the Plan 9 sources (recently MIT licensed) appear to be
  * related to the original code that would have formed the conceptual basis for

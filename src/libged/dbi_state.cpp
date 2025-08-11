@@ -1,7 +1,7 @@
 /*                D B I _ S T A T E . C P P
  * BRL-CAD
  *
- * Copyright (c) 1990-2024 United States Government as represented by
+ * Copyright (c) 1990-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ extern "C" {
 #include "bv/lod.h"
 #include "raytrace.h"
 #include "ged/defines.h"
-#include "ged/view/state.h"
+#include "ged/view.h"
 #include "./ged_private.h"
 
 // Subdirectory in BRL-CAD cache to Dbi state data
@@ -720,7 +720,7 @@ DbiState::print_hash(struct bu_vls *opath, unsigned long long phash)
 	return true;
     }
 
-    bu_exit(EXIT_FAILURE, "DbiState::print_hash failure, dbi_state.cpp::%d - a hash not known to tha database's DbiState was passed in.  This can happen when the dbip contents change and dbi_state->update() isn't called in the parent application after doing so.\n", __LINE__);
+    bu_exit(EXIT_FAILURE, "DbiState::print_hash failure, dbi_state.cpp::%d - a hash not known to the database's DbiState was passed in.  This can happen when the dbip contents change and dbi_state->update() isn't called in the parent application after doing so.\n", __LINE__);
     bu_vls_printf(opath, "\nERROR!!!\n");
     return false;
 }
@@ -2374,7 +2374,7 @@ BViewState::scene_obj(
     s_map[phash][sp->s_os->s_dmode] = sp;
     s_keys[phash] = path_hashes;
 
-    // Final geometry generation is deferred
+    // Final geometry generation is deferred - see draw_scene
     objs.insert(sp);
 
     return sp;

@@ -1,7 +1,7 @@
 /*                C H E C K _ C E N T R O I D . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2024 United States Government as represented by
+ * Copyright (c) 2018-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
 #include "../ged_private.h"
 #include "./check_private.h"
 
-int check_centroid(struct current_state *state,
+int check_centroid(struct ged *gedp, struct current_state *state,
 		   struct db_i *dbip,
 		   char **tobjtab,
 		   int tnobjs,
@@ -36,17 +36,17 @@ int check_centroid(struct current_state *state,
 
     if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_MASS|ANALYSIS_CENTROIDS)) return BRLCAD_ERROR;
 
-    print_verbose_debug(options);
-    bu_vls_printf(_ged_current_gedp->ged_result_str, "Centroid:\n");
+    print_verbose_debug(gedp, options);
+    bu_vls_printf(gedp->ged_result_str, "Centroid:\n");
 
     for (i=0; i < tnobjs; i++){
 	analyze_centroid(state, tobjtab[i], centroid);
 	VSCALE(centroid, centroid, 1/options->units[LINE]->val);
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "\t\t%s: (%g %g %g) %s\n", tobjtab[i], V3ARGS(centroid), options->units[LINE]->name);
+	bu_vls_printf(gedp->ged_result_str, "\t\t%s: (%g %g %g) %s\n", tobjtab[i], V3ARGS(centroid), options->units[LINE]->name);
     }
     analyze_total_centroid(state, centroid);
     VSCALE(centroid, centroid, 1/options->units[LINE]->val);
-    bu_vls_printf(_ged_current_gedp->ged_result_str, "\n  Average centroid: (%g %g %g) %s\n", V3ARGS(centroid), options->units[LINE]->name);
+    bu_vls_printf(gedp->ged_result_str, "\n  Average centroid: (%g %g %g) %s\n", V3ARGS(centroid), options->units[LINE]->name);
 
     return BRLCAD_OK;
 }

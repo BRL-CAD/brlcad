@@ -1,7 +1,7 @@
 /*                         G - R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2024 United States Government as represented by
+ * Copyright (c) 2013-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -102,6 +102,7 @@ nmg_to_raw(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
     struct shell *s;
     struct vertex *v;
     char *region_name;
+    struct bu_list *vlfree = (struct bu_list *)&rt_vlfree;
 
     NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
@@ -142,7 +143,7 @@ nmg_to_raw(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
     fprintf(fp, "%s\n", (region_name+1));
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
+    nmg_triangulate_model(m, vlfree, &tol);
 
     /* Check triangles */
     for (BU_LIST_FOR (s, shell, &r->s_hd))
@@ -208,7 +209,7 @@ nmg_to_raw(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
 }
 
 
-static struct gcv_region_end_data gcvwriter = {nmg_to_raw, NULL};
+static struct gcv_region_end_data gcvwriter = {nmg_to_raw, NULL, NULL};
 
 
 int
@@ -225,7 +226,9 @@ main(int argc, char *argv[])
 
     bu_setlinebuf(stderr);
 
-    tree_state = rt_initial_tree_state;	/* struct copy */
+    gcvwriter.vlfree = &rt_vlfree;
+
+    RT_DBTS_INIT(&tree_state);
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
@@ -247,7 +250,6 @@ main(int argc, char *argv[])
 
     /* make empty NMG model */
     the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:b8m:n:o:r:vx:D:X:i")) != -1) {

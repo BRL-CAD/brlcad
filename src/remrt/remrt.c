@@ -1,7 +1,7 @@
 /*                         R E M R T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2024 United States Government as represented by
+ * Copyright (c) 1989-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -3123,7 +3123,7 @@ ph_version(struct pkg_conn *pc, char *buf)
 
     sp = &servers[pc->pkc_fd];
     if (!BU_STR_EQUAL(PROTOCOL_VERSION, buf)) {
-	bu_log("ERROR %s: protocol version mis-match\n",
+	bu_log("ERROR %s: protocol version mismatch\n",
 	       sp->sr_host->ht_name);
 	bu_log("  local='%s'\n", PROTOCOL_VERSION);
 	bu_log(" remote='%s'\n", buf);

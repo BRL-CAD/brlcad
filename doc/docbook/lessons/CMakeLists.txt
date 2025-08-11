@@ -1,21 +1,27 @@
 # Style sheet for XSLT transformation to book HTML pages
 if(BRLCAD_EXTRADOCS_HTML)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl
+  )
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_HTML)
 if(BRLCAD_EXTRADOCS_PHP)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl
+  )
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_PHP)
 
 # Files for PDF products
 if(BRLCAD_EXTRADOCS_PDF)
   # Style sheet for XSLT transformation to PDF
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-lesson-fo-stylesheet.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-fo-stylesheet.xsl)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-fo-stylesheet.xsl")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../resources/brlcad/brlcad-lesson-fo-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-fo-stylesheet.xsl
+  )
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-fo-stylesheet.xsl")
 endif(BRLCAD_EXTRADOCS_PDF)
 
 # For HTML and FO (FO is an intermediate file used in the
@@ -25,7 +31,8 @@ set(XSL_PHP_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/wordpres
 set(XSL_HTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-xhtml-stylesheet.xsl")
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-lesson-fo-stylesheet.xsl")
 
-set(lessons_EN
+set(
+  lessons_EN
   mged01_creating_primitive_shapes.xml
   mged02_learning_viewing_options.xml
   mged03_using_insert_command.xml
@@ -42,9 +49,10 @@ set(lessons_EN
   mged14_placing_shapes_in_3d_2.xml
   mged15_creating_a_toy_truck.xml
   mged16_mod_tech_struct.xml
-  )
+)
 
-set(lessons_EN_IMAGES
+set(
+  lessons_EN_IMAGES
   images/mged01_commandwindow.png
   images/mged01_graphicswindow.png
   images/mged01_terminal.png
@@ -156,21 +164,21 @@ set(lessons_EN_IMAGES
   images/mged16_radio_structure_2.png
   images/mged16_radio_structure_3.png
   images/mged16_radio_cutaways.png
-  )
-if (TARGET mged OR TARGET qged OR TARGET archer)
+)
+if(TARGET mged OR TARGET qged OR TARGET archer)
   if(BRLCAD_EXTRADOCS)
-    ADD_DOC(lessons_EN_IMAGES html/lessons/images)
-    ADD_DOCBOOK("HTML;PHP;PDF" lessons_EN lessons lessons_EN_IMAGES_cp)
+    add_doc(lessons_EN_IMAGES html/lessons/images)
+    add_docbook("HTML;PHP;PDF" lessons_EN lessons lessons_EN_IMAGES_cp)
   endif(BRLCAD_EXTRADOCS)
-endif (TARGET mged OR TARGET qged OR TARGET archer)
+endif(TARGET mged OR TARGET qged OR TARGET archer)
 
 add_subdirectory(es)
 
-CMAKEFILES(
+cmakefiles(
   CMakeLists.txt
   ${lessons_EN}
   ${lessons_EN_IMAGES}
-  )
+)
 
 # Local Variables:
 # tab-width: 8

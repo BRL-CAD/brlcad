@@ -1,7 +1,7 @@
 /*                 Q G E D M A I N W I N D O W . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2024 United States Government as represented by
+ * Copyright (c) 2014-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,7 +83,7 @@ class QgEdMainWindow : public QMainWindow
 	void IndicateRaytraceStart(int);
 
 	// Clear visual window changes indicating a raytrace has begun
-	void IndicateRaytraceDone(int);
+	void IndicateRaytraceDone();
 
 	// Determine interaction mode based on selected palettes and the supplied point
 	int InteractionMode(QPoint &gpos);

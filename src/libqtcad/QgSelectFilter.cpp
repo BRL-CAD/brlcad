@@ -1,7 +1,7 @@
 /*                 Q G S E L E C T F I L T E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2021-2024 United States Government as represented by
+ * Copyright (c) 2021-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -323,7 +323,7 @@ QgSelectRayFilter::eventFilter(QObject *, QEvent *e)
 	bu_free(objs, "objs");
 	rt_free_rti(rtip);
 	BU_PUT(resp, struct resource);
-	BU_PUT(ap, struct appliation);
+	BU_PUT(ap, struct application);
 	return false;
     }
     size_t ncpus = bu_avail_cpus();
@@ -358,7 +358,7 @@ QgSelectRayFilter::eventFilter(QObject *, QEvent *e)
     bu_free(objs, "objs");
     rt_free_rti(rtip);
     BU_PUT(resp, struct resource);
-    BU_PUT(ap, struct appliation);
+    BU_PUT(ap, struct application);
 
     // We only have reg_names from the raytrace - translate into scene objects.
     bu_ptbl_reset(&selected_set);

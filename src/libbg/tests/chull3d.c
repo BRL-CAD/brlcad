@@ -1,7 +1,7 @@
 /*                      B N _ C H U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2024 United States Government as represented by
+ * Copyright (c) 2013-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -125,7 +125,6 @@ main(int UNUSED(argc), const char **argv)
 	}
 	if (retval != 2) {return -1;} else {bu_log("Flat Triangles Passed!\n");}
     }
-
 
 
     return 0;

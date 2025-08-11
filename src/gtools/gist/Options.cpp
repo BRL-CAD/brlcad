@@ -1,7 +1,7 @@
 /*                     O P T I O N S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2023-2024 United States Government as represented by
+ * Copyright (c) 2023-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -108,7 +108,7 @@ bool Options::readParameters(int argc, const char **argv) {
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     int ret_ac = bu_opt_parse(&msg, argc, argv, d);
 
-    if (ret_ac) {   // asssume a leftover option is a .g file
+    if (ret_ac) {   // assume a leftover option is a .g file
 	setInFile(argv[0]);
 	ret_ac--;
     }

@@ -1,7 +1,7 @@
 /*                         R M A P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2024 United States Government as represented by
+ * Copyright (c) 2008-2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,6 +31,16 @@
 
 #include "../ged_private.h"
 
+struct _ged_id_names {
+    struct bu_list l;
+    struct bu_vls name;         /**< name associated with region id */
+};
+
+struct _ged_id_to_names {
+    struct bu_list l;
+    int id;                             /**< starting id (i.e. region id or air code) */
+    struct _ged_id_names headName;      /**< head of list of names */
+};
 
 int
 ged_rmap_core(struct ged *gedp, int argc, const char *argv[])

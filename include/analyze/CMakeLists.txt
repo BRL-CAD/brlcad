@@ -1,4 +1,5 @@
-set(analyze_headers
+set(
+  analyze_headers
   debug.h
   defines.h
   density.h
@@ -11,10 +12,10 @@ set(analyze_headers
   polygonize.h
   voxelize.h
   worker.h
-  )
-BRLCAD_MANAGE_FILES(analyze_headers ${INCLUDE_DIR}/brlcad/analyze REQUIRED libanalyze)
+)
+brlcad_manage_files(analyze_headers ${INCLUDE_DIR}/brlcad/analyze REQUIRED libanalyze)
 
-CMAKEFILES(CMakeLists.txt)
+cmakefiles(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8
