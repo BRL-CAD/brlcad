@@ -75,6 +75,17 @@ existing qray settings manually.
 * improved logging behavior from multiple threads - Kenneth Davis
 * removed libgdiam dependency - Chris McGregor
 * updated strclear dependency to latest bsd upstream - Cliff Yapp
+* updated Assimp to v5.4.3, with patch for CVE-2025-2151 - Cliff Yapp
+* updated OpenNURBS dependency to v8.10.24228.13001 - Cliff Yapp
+* updated GeometricTools dependency to 7adae93f8 - Cliff Yapp
+* updated GDAL dependency to v3.9.2 - Cliff Yapp
+* updated PROJ dependency to v9.5.0 - Cliff Yapp
+* updated SQLite dependency to v3.46.1 - Cliff Yapp
+* updated lmdb dependency to 9c9d345 - Cliff Yapp
+* updated libtiff dependency to v4.7.0 - Cliff Yapp
+* updated netpbm dependency to v10.86.42 - Cliff Yapp
+* updated LIEF dependency to v0.15.1 - Cliff Yapp
+* updated libpng dependency to v1.6.44 - Cliff Yapp
 
 
 ----------------------------------------------------------------------
