@@ -496,7 +496,7 @@ rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
 
     moOptimizeMesh(
 	    bot->num_vertices, bot->num_faces, bot->faces,
-	    MD_FORMAT_INT, 3*sizeof(int),
+	    sizeof(int), 3*sizeof(int),
 	    NULL, NULL,
 	    0, (int)bu_avail_cpus(), 0
 	    );
