@@ -1266,7 +1266,13 @@ Release steps are as follows:
     git clone git@github.com:BRL-CAD/brlcad.git
     cd brlcad
     git checkout RELEASE
-    git merge main
+
+    # NOTE - it is not strictly necessary to use the strategy-option,
+    # but barring some specific reason not to the goal will be to
+    # have RELEASE match the contents of main.  The "theirs"
+    # strategy option helps simplify that process.
+
+    git merge --strategy-option theirs main
 
     # NON-AUTO:  The merge may succeed without conflicts.  If
     # not, you will see the message:
@@ -1312,10 +1318,6 @@ Release steps are as follows:
 #####################################################################
 # 02: Test the merge.
 
-    # NON-AUTO: Confirm versioning in include/conf/.
-    # BRLCAD_VERSION_AMEND may be defined during CMake for an
-    # amendment build.
-
     mkdir -p .build && cd .build
     cmake .. -DENABLE_ALL=ON -DCMAKE_BUILD_TYPE=Release && make
 
@@ -1329,16 +1331,16 @@ Release steps are as follows:
     cd .. && rm -rf .build
 
 #####################################################################
-# 03: Commit the merge (if necessary) and push.
+# 03: Commit the merge (if necessary).
+
+    # Note - we don't push the merge at this stage, since we
+    # will be using the upstream RELEASE branch when we generate a
+    # ChangeLog file.
 
     # If merge conflict resolution was needed, make a merge commit:
     MSHA1=$(git log -1 main --pretty=format:"%h")
     echo $MSHA1
     git commit -m "merge of main $MSHA1 to RELEASE branch"
-
-    # Whether or not their was a conflict, let upstream know what
-    # has changed
-    git push
 
 #####################################################################
 # 04: Reprioritize or address remaining TODO items.
@@ -1352,14 +1354,17 @@ Release steps are as follows:
     # NON-AUTO: Verify all interface changes are in CHANGES.
     # NON-AUTO: Verify usage/options are documented in doc/.
 
-    A useful trick for this step is to use gitk to display all
-    commits made since the last time the RELEASE branch was
-    updated:
+    # A useful trick for this step is to use gitk to display all
+    # commits made since the last time the RELEASE branch was
+    # updated:
 
-    gitk --no-merges origin/RELEASE..main
+    gitk --no-merges origin/RELEASE..RELEASE
 
 #####################################################################
 # 06: Update the version numbers.
+
+    # NOTE - BRLCAD_VERSION_AMEND may also be defined during CMake
+    # for an amendment build.
 
     # NON-AUTO: NEWS
     # NON-AUTO: README
@@ -1386,20 +1391,36 @@ Release steps are as follows:
 
 #####################################################################
 # 08: Update the bext submodule in BRL-CAD's main repository.
-      (TODO - this can probably be scripted...)
 
-    # NON-AUTO: Update BEXT_SHA1 hash in misc/CMake/BRLCAD_EXT_Setup.cmake
+    # NON-AUTO: Update BEXT_SHA1 hash in CMakeLists.txt (argument
+    # to brlcad_bext_init function).  If already pointing to the
+    # sha1 being used for the bext rel-$MAJOR-$MINOR-$PATCH branch
+    # this is a no-op - otherwise, commit the update.
+
+    git add CMakeLists.txt
     git commit -m "Update bext submodule to SHA1 <hashval>"
-    git push
 
 #####################################################################
-# 09: Update ChangeLog.  Use the YYYY-MM-DD of previous NEWS entry.
+# 09: Update ChangeLog.
 
-    LAST=`grep -E "\--- [0-9]{4}-[0-9X]{2}-[0-9X]{2}" NEWS | head -n 2 | tail -n 1 | awk '{print $2}'`
-    echo "LAST=$LAST"
-    git log --since=$LAST > ChangeLog
+    # We have held off pushing to upstream RELEASE branch until now,
+    # so we can use that as an anchor point from which to start the
+    # ChangeLog logging.  If for some reason that won't work, replace
+    # origin/RELEASE with the sha1 of the previous release's final
+    # commit in the RELEASE branch.
+
+    # We do this instead of date based logging to capture commits that
+    # may have been originally made before the last release (i.e. older
+    # commits made in a fork and incorporated into the history via PR)
+
+    git log origin/RELEASE..RELEASE > ChangeLog
     git add ChangeLog
-    git commit -m "Update log with commits since $LAST"
+    git commit -m "Update log with commits being incorporated into rel-$MAJOR-$MINOR-$PATCH"
+
+    # Now that we have updated the ChangeLog, push the changes to
+    # upstream RELEASE branch.
+
+    git push
 
 #####################################################################
 # 10: Run distcheck on at least two platforms.
@@ -1428,7 +1449,13 @@ Release steps are as follows:
 #####################################################################
 # 12: If there are any differences between RELEASE and STABLE trees,
       test the merge.  In normal usage STABLE should match RELEASE,
-      so this is only necessary in special circumstances.
+      so this is only necessary in unusual circumstances.  To check
+      if there are any differences, use git diff:
+
+    git diff RELEASE STABLE
+
+    # NON-AUTO:  If differences were observed, either correct them
+    # or (if expected) test:
 
     mkdir .merge && cd .merge
     cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck && cd .. && rm -rf .merge
@@ -1441,8 +1468,7 @@ Release steps are as follows:
     echo $RSHA1
     git commit -m "merge of RELEASE $RSHA1 to STABLE branch"
 
-    # Whether or not their was a conflict, let upstream know what
-    # has changed
+    # Let upstream know what has changed
     git push
 
 #####################################################################
