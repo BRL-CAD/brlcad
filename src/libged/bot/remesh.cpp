@@ -325,9 +325,6 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
     struct ged *gedp = gb->gedp;
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     const char *usage_string = "bot [options] remesh <objname> <output_bot>\n";
     const char *purpose_string = "Store a remeshed version of the BoT in object <output_bot>";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {

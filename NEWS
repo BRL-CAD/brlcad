@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2026-XX-XX  Release 7.42.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed bot subcmd help printing - Cliff Yapp
 * corrected BoT shotline behavior when starting ray pt in mesh
         - Sean Morrison Chris McGregor Cliff Yapp
 
