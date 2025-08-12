@@ -51,11 +51,7 @@ do_lod(struct db_i *dbip, struct directory *dp)
     struct bv_lod_mesh *mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
     if (!mlod) {
 	bu_log("%s - no mesh LoD available\n", dp->d_namep);
-	mlod = db_cache_lod_mesh_get(dbip, dp->d_namep);
-	if (!mlod) {
-	    bu_log("%s - second attempt failed, aborting\n", dp->d_namep);
-	    return false;
-	}
+	return false;
     }
 
     struct bv_scene_obj *s = bv_obj_get(NULL);
