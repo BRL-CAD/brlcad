@@ -485,10 +485,10 @@ rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
     mdOperation mdop;
     mdOperationInit(&mdop);
     mdOperationData(&mdop, bot->num_vertices, bot->vertices,
-		    MD_FORMAT_DOUBLE, 3, bot->num_faces,
-		    bot->faces, MD_FORMAT_INT, 3);
+		    MD_FORMAT_DOUBLE, 3*sizeof(double), bot->num_faces,
+		    bot->faces, MD_FORMAT_INT, 3*sizeof(int));
     mdOperationStrength(&mdop, feature_size);
-    mdOperationComputeNormals(&mdop, bot->face_normals, MD_FORMAT_DOUBLE, 3);
+    mdOperationComputeNormals(&mdop, bot->face_normals, MD_FORMAT_DOUBLE, 3*sizeof(double));
     mdMeshDecimation(&mdop, (int)bu_avail_cpus(), MD_FLAGS_NORMAL_VERTEX_SPLITTING | MD_FLAGS_TRIANGLE_WINDING_CCW);
 
     bot->num_vertices = mdop.vertexcount;
@@ -496,7 +496,7 @@ rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
 
     moOptimizeMesh(
 	    bot->num_vertices, bot->num_faces, bot->faces,
-	    MD_FORMAT_INT, 3,
+	    MD_FORMAT_INT, 3*sizeof(int),
 	    NULL, NULL,
 	    0, (int)bu_avail_cpus(), 0
 	    );
