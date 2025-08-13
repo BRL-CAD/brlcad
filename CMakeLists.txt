@@ -2407,7 +2407,6 @@ set(
   .github/workflows/linux_interactive.yml
   .gitattributes
   .gitignore
-  .gitmodules
 )
 foreach(hf ${hidden_files})
   if(EXISTS ${CMAKE_SOURCE_DIR}/${hf})
