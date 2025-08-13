@@ -38,13 +38,6 @@
 #include "bu/getopt.h"
 #include "bu/log.h"
 
-#ifdef HAVE_IO_H
-#  include <io.h>
-#endif
-#ifdef HAVE_FCNTL_H
-#  include <fcntl.h>
-#endif
-
 static void print_usage()
 {
     static const char usage[] = "Usage: pixcount [-# bytes_per_pixel] [infile.pix [outfile]]\n";
