@@ -92,7 +92,6 @@
 #include "./bu/path.h"
 #include "./bu/process.h"
 #include "./bu/ptbl.h"
-#include "./bu/redblack.h"
 #include "./bu/simd.h"
 #include "./bu/snooze.h"
 #include "./bu/sort.h"
