@@ -20,9 +20,6 @@
 /** @file cache.c
  *
  * Routines for creating and manipulating a key/value cache database.
- *
- * TODO - unit test that verifies read/write is successful and pushes
- * the limits of database size to see what the failure mode looks like.
  */
 
 #include "common.h"
@@ -536,7 +533,13 @@ bu_cache_clear(const char *key, struct bu_cache *c, struct bu_cache_txn **t)
 	return;
     }
 
-    int rc = mdb_txn_commit(txn);
+    int rc = 0;
+    {
+	std::lock_guard<std::mutex> guard(c->i->write_txn_mutex); // lock
+	rc = mdb_txn_commit(txn);
+	// No longer have an active write txn - let the cache know
+	c->i->write_txn_active = 0;
+    }
     if (rc && rc != MDB_NOTFOUND)
 	bu_log("Clear operation for %s failed\n", key);
     mdb_env_sync(c->i->env, 0);

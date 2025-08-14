@@ -449,7 +449,7 @@ val_incr(struct bu_cache *c, int item_cnt)
 {
     int ret = 0;
 
-    struct bu_cache_txn *t;
+    struct bu_cache_txn *t = NULL;
     char keystr[BU_CACHE_KEY_MAXLEN];
     for (int i = 0; i < item_cnt; i++) {
 	int ival = i;
@@ -1027,7 +1027,7 @@ void print_test_summary(int ret_basic, int ret_limit, int ret_threading, int ret
 //------------------------ Section: Main Entry ------------------------------
 
 int
-main(int argc, const char **argv)
+main(int argc, char **argv)
 {
     // Number of each type to write in the basic test - can be overridden by
     // explicit specification on command line.
