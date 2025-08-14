@@ -197,7 +197,7 @@ basic_test(int item_cnt)
 	double rval = 0;
 	memcpy(&rval, rdata, sizeof(double));
 	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF)) {
-	    bu_log("Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
+	    bu_log("Failed read from dbl:%d expected %0.15f, got %0.15f\n", i, dblseed*i, rval);
 	    ret = 1;
 	}
     }
