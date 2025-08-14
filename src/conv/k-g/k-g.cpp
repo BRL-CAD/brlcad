@@ -334,6 +334,19 @@ int main
 
 				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
 			    }
+			    else if (kData.elementDiscreteSphere[*itr].radius > 0) {
+				    point_t     center;
+				    int centerId = kData.elementDiscreteSphere[*itr].nodeId;
+
+				    center[X] = kData.nodes[centerId].x * factor;
+				    center[Y] = kData.nodes[centerId].y * factor;
+				    center[Z] = kData.nodes[centerId].z * factor;
+
+				    std::string sphName = std::to_string(*itr);
+				    float        radius = kData.elementDiscreteSphere[*itr].radius * factor;
+
+				    geometry.addSphere(sphName.c_str(), center, radius);
+				    }
 			    else
 				std::cout << "Un supported element in k-file " << argv[1] << std::endl;
 			}
