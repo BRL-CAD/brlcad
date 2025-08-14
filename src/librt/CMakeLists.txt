@@ -1,24 +1,16 @@
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 brlcad_find_package(MANIFOLD REQUIRED)
-brlcad_find_package(MMESH REQUIRED)
+brlcad_find_package(mmesh REQUIRED)
 brlcad_find_package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
 brlcad_find_package(REGEX REQUIRED)
 brlcad_find_package(Geogram REQUIRED SYSPATTERN geogram)
 find_package_gte(REQUIRED)
 add_definitions(-DUSE_GEOGRAM)
 
-if(NOT BRLCAD_ENABLE_GCT)
-  brlcad_find_package(MMESH REQUIRED)
-  if(MMESH_LIBRARY)
-    add_definitions(-DBRLCAD_MMESH)
-  endif(MMESH_LIBRARY)
-endif(NOT BRLCAD_ENABLE_GCT)
-
 if(BRLCAD_ENABLE_OPENCL)
   add_definitions(-DUSE_OPENCL)
 endif(BRLCAD_ENABLE_OPENCL)
-
 
 set(
   LIBRT_PRIMEDIT_SOURCES
@@ -314,23 +306,6 @@ set(
 )
 
 set(
-  GCT_SRCS
-  primitives/bot/gct_decimation/auxiliary/mmbinsort.c
-  primitives/bot/gct_decimation/auxiliary/mmbitmap.c
-  primitives/bot/gct_decimation/auxiliary/mm.c
-  primitives/bot/gct_decimation/auxiliary/mmhash.c
-  primitives/bot/gct_decimation/meshoptimization.c
-  primitives/bot/gct_decimation/meshoptimizer.c
-  primitives/bot/gct_decimation/meshdecimation.c
-  primitives/bot/gct_decimation/meshdecimationSSE2.c
-  primitives/bot/gct_decimation/meshdecimationSSE3.c
-  primitives/bot/gct_decimation/meshdecimationSSE4p1.c
-)
-if(BRLCAD_ENABLE_GCT AND NOT MMESH_FOUND)
-  set(LIBRT_SOURCES ${LIBRT_SOURCES} ${GCT_SRCS})
-endif(BRLCAD_ENABLE_GCT AND NOT MMESH_FOUND)
-
-set(
   librt_ignored_files
   cache.h
   librt_private.h
@@ -434,7 +409,7 @@ set(
   ${OPENNURBS_LIBRARIES}
   ${MANIFOLD_LIBRARIES}
   ${Geogram_LIBRARY}
-  ${MMESH_LIBRARIES}
+  mmesh::mmesh
   ${REGEX_LIBRARIES}
   ${WINSOCK_LIB}
   ${RPCRT_LIB}
@@ -452,7 +427,6 @@ set(
   ${REGEX_INCLUDE_DIRS}
   ${Geogram_INCLUDE_DIR}
   ${MANIFOLD_INCLUDE_DIRS}
-  ${MMESH_INCLUDE_DIRS}
 )
 # FIXME: needs materialX
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source
