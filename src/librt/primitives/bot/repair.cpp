@@ -484,7 +484,7 @@ bot_to_geogram(GEO::Mesh *gm, struct rt_bot_internal *bot)
 }
 
 static void
-geogram_to_manifold(manifold::Mesh *gmm, GEO::Mesh &gm)
+geogram_to_manifold(manifold::MeshGL *gmm, GEO::Mesh &gm)
 {
     for (GEO::index_t v = 0; v < gm.vertices.nb(); v++) {
 	const double *p = gm.vertices.point_ptr(v);
@@ -500,7 +500,7 @@ geogram_to_manifold(manifold::Mesh *gmm, GEO::Mesh &gm)
 }
 
 static struct rt_bot_internal *
-manifold_to_bot(manifold::Mesh *omesh)
+manifold_to_bot(manifold::MeshGL *omesh)
 {
     struct rt_bot_internal *nbot;
     BU_GET(nbot, struct rt_bot_internal);
@@ -608,7 +608,7 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
 	// MeshGL.Merge() produced a manifold mesh.  That this worked
 	// essentially means the changes needed were EXTREMELY minimal, and we
 	// don't bother with further processing before returning the result.
-	manifold::Mesh omesh = omanifold.GetMesh();
+	manifold::MeshGL omesh = omanifold.GetMeshGL();
 	struct rt_bot_internal *nbot = manifold_to_bot(&omesh);
 	*obot = nbot;
 	return 0;
@@ -710,7 +710,7 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
     // of the result - if Manifold doesn't think we're there, then
     // the results won't fly for boolean evaluation and we go ahead
     // and reject.
-    manifold::Mesh gmm;
+    manifold::MeshGL gmm;
     geogram_to_manifold(&gmm, gm);
     manifold::Manifold gmanifold(gmm);
     if (gmanifold.Status() != manifold::Manifold::Error::NoError) {
@@ -719,7 +719,7 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
     }
 
     // Output is manifold, make a new bot
-    manifold::Mesh omesh = gmanifold.GetMesh();
+    manifold::MeshGL omesh = gmanifold.GetMeshGL();
     struct rt_bot_internal *nbot = manifold_to_bot(&omesh);
 
     // Once we have an rt_bot_internal, see what the solid raytracer's linting

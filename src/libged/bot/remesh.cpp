@@ -175,23 +175,18 @@ bot_remesh_vdb(struct ged *gedp, struct rt_bot_internal *UNUSED(bot), double UNU
 #endif /* OPENVDB_ABI_VERSION_NUMBER */
 
 static void
-geogram_to_manifold(manifold::Mesh *gmm, GEO::Mesh &gm)
+geogram_to_manifold(manifold::MeshGL *gmm, GEO::Mesh &gm)
 {
-    for(GEO::index_t v = 0; v < gm.vertices.nb(); v++) {
-	double gm_v[3];
+    for (GEO::index_t v = 0; v < gm.vertices.nb(); v++) {
 	const double *p = gm.vertices.point_ptr(v);
-	for (int i = 0; i < 3; i++) {
-	    gm_v[i] = p[i];
-	}
-	gmm->vertPos.push_back(glm::vec3(gm_v[0], gm_v[1], gm_v[2]));
+	for (int i = 0; i < 3; i++)
+	    gmm->vertProperties.insert(gmm->vertProperties.end(), p[i]);
     }
     for (GEO::index_t f = 0; f < gm.facets.nb(); f++) {
-	double tri_verts[3];
 	for (int i = 0; i < 3; i++) {
-	    tri_verts[i] = gm.facets.vertex(f, i);
+	    // TODO - CW vs CCW orientation handling?
+	    gmm->triVerts.insert(gmm->triVerts.end(), gm.facets.vertex(f, i));
 	}
-	// TODO - CW vs CCW orientation handling?
-	gmm->triVerts.push_back(glm::ivec3(tri_verts[0], tri_verts[1], tri_verts[2]));
     }
 }
 
@@ -267,7 +262,7 @@ bot_remesh_geogram(struct rt_bot_internal **obot, struct ged *gedp, struct rt_bo
     GEO::remesh_smooth(gm, remesh, nb_pts);
 
     // See if we have a solid
-    manifold::Mesh gmm;
+    manifold::MeshGL gmm;
     geogram_to_manifold(&gmm, gm);
     manifold::Manifold gmanifold(gmm);
     int bmode = RT_BOT_SURFACE;
