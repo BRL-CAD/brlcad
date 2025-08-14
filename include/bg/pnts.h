@@ -78,9 +78,9 @@ bg_pnts_obb(point_t *c, vect_t *v1, vect_t *v2, vect_t *v3, const point_t *p, si
  *
  * @param[out] verts array of 8 XYZ coordinates defining the bbox
  * @param[in] c XYZ coordinate defining the bbox center
- * @param[out] v1 first extent vector of the bbox
- * @param[out] v2 second extent vector of the bbox
- * @param[out] v3 third extent vector of the bbox
+ * @param[in] v1 first extent vector of the bbox
+ * @param[in] v2 second extent vector of the bbox
+ * @param[in] v3 third extent vector of the bbox
  *
  * Output vertices are organized according to the librt arb8 convention:
  * verts[0]: 0,0,0
