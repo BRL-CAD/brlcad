@@ -29,6 +29,7 @@
 #include <set>
 #include <sstream>
 #include <thread>
+#include <unordered_set>
 #include "json.hpp"
 
 #include "vmath.h"

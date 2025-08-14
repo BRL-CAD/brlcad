@@ -57,6 +57,7 @@
 
 #include "ged.h"
 #include "./ged_private.h"
+#include "./dbi.h"
 
 int
 _ged_subcmd_help(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cmdtab *cmds, const char *cmdname, const char *cmdargs, void *gd, int argc, const char **argv)
@@ -1067,7 +1068,8 @@ ged_who_argc(struct ged *gedp)
     if (gedp->new_cmd_forms) {
 	if (!gedp || !gedp->ged_gvp || !gedp->dbi_state)
 	    return 0;
-	BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
+	DbiState *dbis = (DbiState *)gedp->dbi_state;
+	BViewState *bvs = dbis->get_view_state(gedp->ged_gvp);
 	if (bvs)
 	    return bvs->count_drawn_paths(-1, true);
 	return 0;
@@ -1104,7 +1106,8 @@ ged_who_argv(struct ged *gedp, char **start, const char **end)
     if (gedp->new_cmd_forms) {
 	if (!gedp->ged_gvp || !gedp->dbi_state)
 	    return 0;
-	BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
+	DbiState *dbis = (DbiState *)gedp->dbi_state;
+	BViewState *bvs = dbis->get_view_state(gedp->ged_gvp);
 	if (bvs) {
 	    std::vector<std::string> drawn_paths = bvs->list_drawn_paths(-1, true);
 	    for (size_t i = 0; i < drawn_paths.size(); i++) {
@@ -1993,7 +1996,8 @@ _ged_rt_write(struct ged *gedp,
     if (argc >= 0) {
 	if (!argc) {
 	    if (gedp->new_cmd_forms) {
-		BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
+		DbiState *dbis = (DbiState *)gedp->dbi_state;
+		BViewState *bvs = dbis->get_view_state(gedp->ged_gvp);
 		if (bvs) {
 		    std::vector<std::string> drawn_paths = bvs->list_drawn_paths(-1, true);
 		    for (size_t i = 0; i < drawn_paths.size(); i++) {

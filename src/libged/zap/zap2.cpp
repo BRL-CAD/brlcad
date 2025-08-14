@@ -29,6 +29,7 @@
 
 
 #include "../ged_private.h"
+#include "../dbi.h"
 
 /*
  * Erase all currently displayed geometry
@@ -103,7 +104,8 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 	if (clear_solid_objs) {
 	    flags |= BV_DB_OBJS;
 	    if (gedp->dbi_state) {
-		BViewState *bvs = gedp->dbi_state->get_view_state(v);
+		DbiState *dbis = (DbiState *)gedp->dbi_state;
+		BViewState *bvs = dbis->get_view_state(v);
 		bvs->clear();
 	    }
 	}
@@ -129,7 +131,8 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 	if (clear_solid_objs) {
 	    flags |= BV_DB_OBJS;
 	    if (gedp->dbi_state) {
-		BViewState *bvs = gedp->dbi_state->get_view_state(v);
+		DbiState *dbis = (DbiState *)gedp->dbi_state;
+		BViewState *bvs = dbis->get_view_state(v);
 		bvs->clear();
 	    }
 	}

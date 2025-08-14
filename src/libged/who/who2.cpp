@@ -31,6 +31,8 @@
 #include "bu/str.h"
 #include "ged.h"
 
+#include "../dbi.h"
+
 /*
  * List the db objects currently drawn
  *
@@ -80,7 +82,8 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    BViewState *bvs = gedp->dbi_state->get_view_state(v);
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    BViewState *bvs = dbis->get_view_state(v);
     std::vector<std::string> paths = bvs->list_drawn_paths(mode, (bool)!expand);
     for (size_t i = 0; i < paths.size(); i++) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", paths[i].c_str());

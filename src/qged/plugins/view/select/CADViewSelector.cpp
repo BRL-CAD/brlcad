@@ -36,6 +36,8 @@
 #include "bg/aabb_ray.h"
 #include "bg/plane.h"
 
+#include "../../../../libged/dbi.h"
+
 #include "qtcad/QgSelectFilter.h"
 #include "./CADViewSelector.h"
 
@@ -195,7 +197,8 @@ CADViewSelector::do_view_update(unsigned long long flags)
     if (!gedp || !gedp->dbi_state)
 	return;
 
-    BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    BSelectState *ss = dbis->find_selected_state(NULL);
     if (!ss)
 	return;
 
@@ -207,7 +210,7 @@ CADViewSelector::do_view_update(unsigned long long flags)
 	std::set<std::string> ordered_paths;
 	std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
 	for (s_it = ss->selected.begin(); s_it != ss->selected.end(); s_it++) {
-	    std::string spath = std::string(gedp->dbi_state->pathstr(s_it->second));
+	    std::string spath = std::string(dbis->pathstr(s_it->second));
 	    ordered_paths.insert(spath);
 	}
 	std::set<std::string>::iterator o_it;
@@ -220,7 +223,8 @@ CADViewSelector::do_view_update(unsigned long long flags)
 void
 CADViewSelector::select_objs()
 {
-    BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    BSelectState *ss = dbis->find_selected_state(NULL);
     if (!ss)
 	return;
 
@@ -244,7 +248,8 @@ CADViewSelector::select_objs()
 void
 CADViewSelector::deselect_objs()
 {
-    BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    BSelectState *ss = dbis->find_selected_state(NULL);
     if (!ss)
 	return;
 
@@ -290,7 +295,8 @@ CADViewSelector::do_draw_selections()
     if (!gedp || !gedp->ged_gvp)
 	return;
 
-    BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    BSelectState *ss = dbis->find_selected_state(NULL);
     if (!ss || !ss->selected.size())
 	return;
 
@@ -300,7 +306,7 @@ CADViewSelector::do_draw_selections()
     int i = 0;
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
     for (s_it = ss->selected.begin(); s_it != ss->selected.end(); s_it++) {
-	av[i+1] = bu_strdup(gedp->dbi_state->pathstr(s_it->second));
+	av[i+1] = bu_strdup(dbis->pathstr(s_it->second));
 	i++;
     }
 
@@ -319,7 +325,8 @@ CADViewSelector::do_erase_selections()
     if (!gedp || !gedp->ged_gvp)
 	return;
 
-    BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    BSelectState *ss = dbis->find_selected_state(NULL);
     if (!ss || !ss->selected.size())
 	return;
 
@@ -329,7 +336,7 @@ CADViewSelector::do_erase_selections()
     int i = 0;
     std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator s_it;
     for (s_it = ss->selected.begin(); s_it != ss->selected.end(); s_it++) {
-	av[i+1] = bu_strdup(gedp->dbi_state->pathstr(s_it->second));
+	av[i+1] = bu_strdup(dbis->pathstr(s_it->second));
 	i++;
     }
 

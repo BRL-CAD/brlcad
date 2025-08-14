@@ -34,6 +34,8 @@
 #include <dm.h>
 #include <ged.h>
 
+#include "../../dbi.h"
+
 void
 dm_refresh(struct ged *gedp, int vnum)
 {
@@ -41,8 +43,9 @@ dm_refresh(struct ged *gedp, int vnum)
     struct bview *v = (struct bview *)BU_PTBL_GET(views, vnum);
     if (!v)
 	return;
-    BViewState *bvs = gedp->dbi_state->get_view_state(v);
-    gedp->dbi_state->update();
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    BViewState *bvs = dbis->get_view_state(v);
+    dbis->update();
     std::unordered_set<struct bview *> uset;
     uset.insert(v);
     bvs->redraw(NULL, uset, 1);

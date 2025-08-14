@@ -2,7 +2,6 @@ set(
   ged_headers
   commands.h
   database.h
-  dbi.h
   debug.h
   defines.h
   objects.h

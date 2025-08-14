@@ -47,6 +47,8 @@
 
 #include "ged.h"
 
+#include "../../libged/dbi.h"
+
 #define DEFAULT_GSH_PROMPT "g> "
 
 
@@ -174,7 +176,8 @@ DisplayHash::hash(struct ged *gedp, bool dbi_state_check, bool new_cmd_forms)
 
     if (new_cmd_forms && gedp->dbi_state) {
 	if (dbi_state_check) {
-	    unsigned long long updated = gedp->dbi_state->update();
+	    DbiState *dbis = (DbiState *)gedp->dbi_state;
+	    unsigned long long updated = dbis->update();
 	    l = (updated) ? l + 1 : 0;
 	    if (bv->gv_s->gv_cleared) {
 		l = 1;

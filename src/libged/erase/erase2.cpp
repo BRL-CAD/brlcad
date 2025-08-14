@@ -37,6 +37,8 @@
 #include "ged/database.h"
 #include "ged/view.h"
 
+#include "../dbi.h"
+
 /*
  * Erase objects from the scene.  In many ways this is the most complex
  * operation we need to perform on a displayed set of objects.  When subsets of
@@ -106,7 +108,8 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     if (!gedp->dbi_state)
 	return BRLCAD_OK;
 
-    BViewState *bvs = gedp->dbi_state->get_view_state(v);
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    BViewState *bvs = dbis->get_view_state(v);
     bvs->erase_path(mode, argc, argv);
 
     return BRLCAD_OK;

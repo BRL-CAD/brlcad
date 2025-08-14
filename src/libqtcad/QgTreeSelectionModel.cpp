@@ -33,12 +33,15 @@
 #include "qtcad/QgTreeSelectionModel.h"
 #include "qtcad/QgSignalFlags.h"
 
+#include "../libged/dbi.h"
+
 void
 QgTreeSelectionModel::clear_all()
 {
     QgModel *m = treeview->m;
 
-    std::vector<BSelectState *> sv = m->gedp->dbi_state->get_selected_states(NULL);
+    DbiState *dbis = (DbiState *)m->gedp->dbi_state;
+    std::vector<BSelectState *> sv = dbis->get_selected_states(NULL);
     BSelectState *ss = sv[0];
     ss->clear();
     ss->characterize();
@@ -51,7 +54,8 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
     QgModel *m = treeview->m;
     struct ged *gedp = m->gedp;
 
-    std::vector<BSelectState *> ssv = gedp->dbi_state->get_selected_states(NULL);
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    std::vector<BSelectState *> ssv = dbis->get_selected_states(NULL);
 
     if (ssv.size() != 1)
 	return;
@@ -109,7 +113,8 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
     QgModel *m = treeview->m;
     struct ged *gedp = m->gedp;
 
-    std::vector<BSelectState *> ssv = gedp->dbi_state->get_selected_states(NULL);
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    std::vector<BSelectState *> ssv = dbis->get_selected_states(NULL);
 
     if (ssv.size() != 1)
 	return;

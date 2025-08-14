@@ -38,6 +38,8 @@
 #include "raytrace.h"
 #include "ged.h"
 
+#include "../dbi.h"
+
 void print_help_msg(struct bu_vls *str)
 {
     bu_vls_printf(str, "Usage: garbage_collect [-c|--confirm] [-h|--help]\n");
@@ -154,7 +156,8 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
      * database.  Save the who list. (TODO - do we need to save views?  Or
      * will drawing without resize work?) */
     if (gedp->new_cmd_forms) {
-	BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
+	DbiState *dbis = (DbiState *)gedp->dbi_state;
+	BViewState *bvs = dbis->get_view_state(gedp->ged_gvp);
 	std::vector<std::string> wpaths = bvs->list_drawn_paths(-1, false);
 	for (size_t i = 0; i < wpaths.size(); i++) {
 	    who_objs.push_back(wpaths[i]);

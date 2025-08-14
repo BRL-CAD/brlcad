@@ -36,6 +36,8 @@
 #include <dm.h>
 #include <ged.h>
 
+#include "../../dbi.h"
+
 // In order to handle changes to .g geometry contents, we need to defined
 // callbacks for the librt hooks that will update the working data structures.
 // In Qt we have libqtcad handle this, but as we are not using a QgModel we
@@ -45,7 +47,7 @@ ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, 
 {
     unsigned long long hash;
     struct ged *gedp = (struct ged *)u_data;
-    DbiState *ctx = gedp->dbi_state;
+    DbiState *ctx = (DbiState *)gedp->dbi_state;
 
     // Clear cached GED drawing data and update
     ctx->clear_cache(dp);
@@ -83,8 +85,9 @@ extern "C" void
 dm_refresh(struct ged *gedp)
 {
     struct bview *v= gedp->ged_gvp;
-    BViewState *bvs = gedp->dbi_state->get_view_state(v);
-    gedp->dbi_state->update();
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    BViewState *bvs = dbis->get_view_state(v);
+    dbis->update();
     std::unordered_set<struct bview *> uset;
     uset.insert(v);
     bvs->redraw(NULL, uset, 1);

@@ -27,6 +27,8 @@
 #include <bu.h>
 #include <ged.h>
 
+#include "../dbi.h"
+
 int
 main(int ac, char *av[]) {
     struct ged *gedp;

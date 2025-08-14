@@ -30,6 +30,8 @@
 #include <dm.h>
 #include <ged.h>
 
+#include "../../dbi.h"
+
 extern "C" void ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data);
 extern "C" int img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear_image, int soft_fail, int approximate_check, const char *clear_root, const char *img_root);
 
@@ -247,6 +249,7 @@ main(int ac, char *av[]) {
 
     // Set up new cmd data (not yet done by default in ged_open
     gedp->dbi_state = new DbiState(gedp);
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
     gedp->new_cmd_forms = 1;
     bu_setenv("DM_SWRAST", "1", 1);
 
@@ -604,7 +607,7 @@ main(int ac, char *av[]) {
     s_av[3] = "all.bot";
     s_av[4] = NULL;
     ged_exec_facetize(gedp, 4, s_av);
-    gedp->dbi_state->update();
+    dbis->update();
 
 
     s_av[0] = "draw";

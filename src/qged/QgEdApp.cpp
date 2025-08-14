@@ -37,6 +37,8 @@
 #include "fbserv.h"
 #include "QgEdFilter.h"
 
+#include "../libged/dbi.h"
+
 int
 qged_pre_opendb_clbk(int UNUSED(ac), const char **UNUSED(av), void *UNUSED(gedp), void *UNUSED(ctx))
 {
@@ -329,9 +331,10 @@ QgEdApp::do_view_changed(unsigned long long flags)
 	std::unordered_map<BViewState *, std::unordered_set<struct bview *>> vmap;
 	struct bu_ptbl *views = bv_set_views(&mdl->gedp->ged_views);
 	if (mdl->gedp->dbi_state) {
+	    DbiState *dbis = (DbiState *)mdl->gedp->dbi_state;
 	    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
 		struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-		BViewState *bvs = mdl->gedp->dbi_state->get_view_state(v);
+		BViewState *bvs = dbis->get_view_state(v);
 		if (!bvs)
 		    continue;
 		vmap[bvs].insert(v);
@@ -386,7 +389,8 @@ qged_view_update(struct ged *gedp)
     if (!gedp->dbi_state)
 	return view_flags;
 
-    unsigned long long updated = gedp->dbi_state->update();
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    unsigned long long updated = dbis->update();
     if (updated & GED_DBISTATE_VIEW_CHANGE)
 	view_flags |= QG_VIEW_DRAWN;
 
@@ -423,7 +427,7 @@ QgEdApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
     struct ged *gedp = mdl->gedp;
 
-    BSelectState *ss = (gedp->dbi_state) ? gedp->dbi_state->find_selected_state(NULL) : NULL;
+    BSelectState *ss = (gedp->dbi_state) ? ((DbiState *)gedp->dbi_state)->find_selected_state(NULL) : NULL;
     select_hash = (ss) ? ss->state_hash() : 0;
 
     /* Set the local unit conversions */

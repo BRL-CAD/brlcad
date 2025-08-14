@@ -65,6 +65,7 @@
 #include "bu/opt.h"
 
 #include "../ged_private.h"
+#include "../dbi.h"
 #include "./ged_edit2.h"
 
 // Container to hold information about top level options and
@@ -301,7 +302,8 @@ cmd_perturb::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
     }
     bu_ptbl_free(&objs);
 
-    einfo->gedp->dbi_state->update();
+    DbiState *dbis = (DbiState *)einfo->gedp->dbi_state;
+    dbis->update();
 
     return ret;
 }
@@ -366,6 +368,7 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
     // and/or subcommand.
     int geom_pos = INT_MAX;
     std::vector<unsigned long long> gs;
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
     for (int i = 0; i < argc; i++) {
 	// TODO - de-quote so we can support obj names matching options...
 	// TODO - Allow URI specifications to call out primitive params
@@ -386,15 +389,15 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
 		if (obj_uri.get_query().length() > 0)
 		    bu_log("have query: %s\n", obj_uri.get_query().c_str());
 	    }
-	    gs = gedp->dbi_state->digest_path(obj_path.c_str());
+	    gs = dbis->digest_path(obj_path.c_str());
 	}
 	catch (std::invalid_argument &uri_e)
 	{
 	    std::string uri_error = uri_e.what();
 	    bu_log("invalid uri: %s\n", uri_error.c_str());
-	    gs = gedp->dbi_state->digest_path(argv[i]);
+	    gs = dbis->digest_path(argv[i]);
 	}
-	if (gs.size() > 1 || gedp->dbi_state->get_hdp(gs[0]) != RT_DIR_NULL) {
+	if (gs.size() > 1 || dbis->get_hdp(gs[0]) != RT_DIR_NULL) {
 	    geom_pos = i;
 
 	    break;
@@ -493,7 +496,7 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
     // to all geometry, but the majority of editing operations are specific to
     // each individual geometric primitive type.  We first decode the specifier,
     // to determine what operations we're able to support.
-    einfo.dp = gedp->dbi_state->get_hdp(gs[0]);
+    einfo.dp = dbis->get_hdp(gs[0]);
     if (gs.size() == 1 && !einfo.dp) {
 	bu_vls_printf(gedp->ged_result_str, ": geometry specifier lookup failed for %s\n", argv[0]);
 	return BRLCAD_ERROR;

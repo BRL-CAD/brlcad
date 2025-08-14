@@ -31,6 +31,7 @@
 #include "bv/lod.h"
 
 #include "../ged_private.h"
+#include "../dbi.h"
 
 
 extern "C" int
@@ -58,7 +59,7 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 
     /* Clean up any old acceleration states, if present */
     if (gedp->dbi_state)
-	delete gedp->dbi_state;
+	delete (DbiState *)gedp->dbi_state;
     gedp->dbi_state = NULL;
     if (gedp->ged_lod)
 	bv_mesh_lod_context_destroy(gedp->ged_lod);

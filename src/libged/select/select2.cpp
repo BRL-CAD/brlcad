@@ -110,6 +110,8 @@
 #include "bu/opt.h"
 #include "../ged_private.h"
 
+#include "../dbi.h"
+
 struct _ged_select_info {
     struct ged *gedp;
     struct bu_vls curr_set;
@@ -146,8 +148,10 @@ _select_cmd_list(void *bs, int argc, const char **argv)
     if (!gedp->dbi_state || argc > 1)
 	return BRLCAD_ERROR;
 
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+
     if (!argc) {
-	std::vector<std::string> ssets = gedp->dbi_state->list_selection_sets();
+	std::vector<std::string> ssets = dbis->list_selection_sets();
 	for (size_t i = 0; i < ssets.size(); i++) {
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", ssets[i].c_str());
 	}
@@ -155,7 +159,7 @@ _select_cmd_list(void *bs, int argc, const char **argv)
     }
 
     const char *sname = argv[0];
-    std::vector<BSelectState *> ss = gedp->dbi_state->get_selected_states(sname);
+    std::vector<BSelectState *> ss = dbis->get_selected_states(sname);
     if (!ss.size()) {
 	bu_vls_printf(gedp->ged_result_str, ": %s does not match any selection sets\n", sname);
 	return BRLCAD_ERROR;
@@ -188,6 +192,8 @@ _select_cmd_clear(void *bs, int argc, const char **argv)
     if (!gedp->dbi_state)
 	return BRLCAD_ERROR;
 
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+
     const char *sname = NULL;
     if (argc) {
 	sname = argv[0];
@@ -195,7 +201,7 @@ _select_cmd_clear(void *bs, int argc, const char **argv)
 	sname = bu_vls_cstr(&gd->curr_set);
     }
 
-    std::vector<BSelectState *> ss = gedp->dbi_state->get_selected_states(sname);
+    std::vector<BSelectState *> ss = dbis->get_selected_states(sname);
     if (!ss.size()) {
 	if (sname)
 	    bu_vls_printf(gedp->ged_result_str, ": %s does not match any selection sets\n", sname);
@@ -232,11 +238,13 @@ _select_cmd_add(void *bs, int argc, const char **argv)
     if (!gedp->dbi_state)
 	return BRLCAD_ERROR;
 
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+
     const char *sname = NULL;
     if (bu_vls_strlen(&gd->curr_set))
 	sname = bu_vls_cstr(&gd->curr_set);
 
-    std::vector<BSelectState *> ss = gedp->dbi_state->get_selected_states(sname);
+    std::vector<BSelectState *> ss = dbis->get_selected_states(sname);
     if (ss.size() != 1) {
 	if (sname)
 	    bu_vls_printf(gedp->ged_result_str, ": %s does not match one selection set\n", sname);
@@ -284,11 +292,13 @@ _select_cmd_rm(void *bs, int argc, const char **argv)
     if (!gedp->dbi_state)
 	return BRLCAD_ERROR;
 
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+
     const char *sname = NULL;
     if (bu_vls_strlen(&gd->curr_set))
 	sname = bu_vls_cstr(&gd->curr_set);
 
-    std::vector<BSelectState *> ss = gedp->dbi_state->get_selected_states(sname);
+    std::vector<BSelectState *> ss = dbis->get_selected_states(sname);
     if (ss.size() != 1) {
 	if (sname)
 	    bu_vls_printf(gedp->ged_result_str, ": %s does not match one selection set\n", sname);
@@ -329,6 +339,8 @@ _select_cmd_collapse(void *bs, int argc, const char **argv)
     if (!gedp->dbi_state)
 	return BRLCAD_ERROR;
 
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+
     const char *sname = NULL;
     if (argc) {
 	sname = argv[0];
@@ -336,7 +348,7 @@ _select_cmd_collapse(void *bs, int argc, const char **argv)
 	sname = bu_vls_cstr(&gd->curr_set);
     }
 
-    std::vector<BSelectState *> ss = gedp->dbi_state->get_selected_states(sname);
+    std::vector<BSelectState *> ss = dbis->get_selected_states(sname);
     if (!ss.size()) {
 	if (sname)
 	    bu_vls_printf(gedp->ged_result_str, ": %s does not match any selection sets\n", sname);
@@ -376,6 +388,8 @@ _select_cmd_expand(void *bs, int argc, const char **argv)
     if (!gedp->dbi_state)
 	return BRLCAD_ERROR;
 
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+
     const char *sname = NULL;
     if (argc) {
 	sname = argv[0];
@@ -383,7 +397,7 @@ _select_cmd_expand(void *bs, int argc, const char **argv)
 	sname = bu_vls_cstr(&gd->curr_set);
     }
 
-    std::vector<BSelectState *> ss = gedp->dbi_state->get_selected_states(sname);
+    std::vector<BSelectState *> ss = dbis->get_selected_states(sname);
     if (!ss.size()) {
 	if (sname)
 	    bu_vls_printf(gedp->ged_result_str, ": %s does not match any selection sets\n", sname);

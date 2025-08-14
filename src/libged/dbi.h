@@ -50,6 +50,8 @@
 #include <string>
 #include <vector>
 
+#include "ged/defines.h"
+
 class GED_EXPORT DbiState;
 
 class GED_EXPORT BSelectState {

@@ -33,6 +33,7 @@
 
 #include "../ged_private.h"
 
+#include "../dbi.h"
 
 extern "C" int
 ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
