@@ -125,8 +125,7 @@ bu_cache_open(const char *cache_db, int create, size_t max_cache_size)
 
     struct bu_cache *c = NULL;
     BU_GET(c, struct bu_cache);
-    BU_GET(c->i, struct bu_cache_impl);
-    new (&c->i->write_txn_mutex) std::mutex; // Placement-new to construct the mutex
+    c->i = new bu_cache_impl();
     BU_GET(c->i->fname, struct bu_vls);
     bu_vls_init(c->i->fname);
     bu_vls_sprintf(c->i->fname, "%s", cdb);
@@ -180,8 +179,7 @@ bu_context_close_fail:
 bu_context_fail:
     bu_vls_free(c->i->fname);
     BU_PUT(c->i->fname, struct bu_vls);
-    c->i->write_txn_mutex.~mutex(); // Call destructor before freeing
-    BU_PUT(c->i, struct bu_cache_impl);
+    delete c->i;
     BU_PUT(c, struct bu_cache);
     return NULL;
 }
