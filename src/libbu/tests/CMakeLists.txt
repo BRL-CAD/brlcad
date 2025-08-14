@@ -10,6 +10,7 @@ set(
   basename.c
   bitv.c
   booleanize.c
+  cache.cpp
   color.c
   datetime.c
   dir.c
@@ -345,6 +346,11 @@ brlcad_add_test(NAME bu_sort_dist_to_int_1 COMMAND bu_test sort 7)
 brlcad_add_test(NAME bu_sort_dist_to_int_2 COMMAND bu_test sort 8)
 brlcad_add_test(NAME bu_sort_fastf_empty COMMAND bu_test sort 9)
 brlcad_add_test(NAME bu_sort_fastf_inf COMMAND bu_test sort 10)
+
+#
+#  *********** cache.cpp tests ************
+#
+brlcad_add_test(NAME bu_cache COMMAND bu_test cache)
 
 #
 #  ************ color.c tests *************

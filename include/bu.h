@@ -65,6 +65,7 @@
 #include "./bu/app.h"
 #include "./bu/avs.h"
 #include "./bu/bitv.h"
+#include "./bu/cache.h"
 #include "./bu/cmd.h"
 #include "./bu/color.h"
 #include "./bu/cv.h"
