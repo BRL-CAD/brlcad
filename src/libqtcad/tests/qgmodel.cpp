@@ -34,7 +34,9 @@
 #include "bu/app.h"
 #include "bu/log.h"
 #include "../../libged/alphanum.h"
+#include "../../libged/dbi.h"
 #include "qtcad/QgModel.h"
+
 
 void
 open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
@@ -89,7 +91,8 @@ print_children(QgItem *itm, QgModel *s, int depth)
 
     struct bu_vls path_str = BU_VLS_INIT_ZERO;
     std::vector<unsigned long long> path_hashes = itm->path_items();
-    itm->mdl->gedp->dbi_state->print_hash(&path_str, path_hashes[path_hashes.size()-1]);
+    DbiState *dbis = (DbiState *)itm->mdl->gedp->dbi_state;
+    dbis->print_hash(&path_str, path_hashes[path_hashes.size()-1]);
     std::cout << bu_vls_cstr(&path_str) << "\n";
     bu_vls_free(&path_str);
 
