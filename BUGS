@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* obj-g and gcv converters choke and crash on obj with unnamed g line.
+  spec wording on whether that's valid is unclear, but encountered in
+  wild.
+
 * recursive bu_parallel() failure, tbd whether cpp11 or pthread impl,
   likely because IDs are exceeding MAX_PSW, causing mayhem and chaos.
 
