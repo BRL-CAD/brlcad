@@ -85,41 +85,4 @@ the person performing the modification, the date of modification, and the
 reason for such modification.
 
 file:/include/bg/spsr.h
-file:/src/libbg/spsr/Allocator.h
-file:/src/libbg/spsr/Array.h
-file:/src/libbg/spsr/Array.inl
-file:/src/libbg/spsr/BSplineData.h
-file:/src/libbg/spsr/BSplineData.inl
-file:/src/libbg/spsr/BinaryNode.h
-file:/src/libbg/spsr/Factor.cpp
-file:/src/libbg/spsr/Factor.h
-file:/src/libbg/spsr/FunctionData.h
-file:/src/libbg/spsr/FunctionData.inl
-file:/src/libbg/spsr/Geometry.cpp
-file:/src/libbg/spsr/Geometry.h
-file:/src/libbg/spsr/Geometry.inl
-file:/src/libbg/spsr/MAT.h
-file:/src/libbg/spsr/MAT.inl
-file:/src/libbg/spsr/MarchingCubes.cpp
-file:/src/libbg/spsr/MarchingCubes.h
-file:/src/libbg/spsr/MultiGridOctreeData.IsoSurface.inl
-file:/src/libbg/spsr/MultiGridOctreeData.SortedTreeNodes.inl
-file:/src/libbg/spsr/MultiGridOctreeData.h
-file:/src/libbg/spsr/MultiGridOctreeData.inl
-file:/src/libbg/spsr/Octree.h
-file:/src/libbg/spsr/Octree.inl
-file:/src/libbg/spsr/PPolynomial.h
-file:/src/libbg/spsr/PPolynomial.inl
-file:/src/libbg/spsr/PlyVertexMini.h
-file:/src/libbg/spsr/PointStream.h
-file:/src/libbg/spsr/PointStream.inl
-file:/src/libbg/spsr/Polynomial.h
-file:/src/libbg/spsr/Polynomial.inl
-file:/src/libbg/spsr/SPSR.cpp
-file:/src/libbg/spsr/SPSR.h
-file:/src/libbg/spsr/SparseMatrix.h
-file:/src/libbg/spsr/SparseMatrix.inl
-file:/src/libbg/spsr/Vector.h
-file:/src/libbg/spsr/Vector.inl
-file:/src/libbg/spsr/cvertex.h
 
