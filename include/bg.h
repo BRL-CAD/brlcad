@@ -57,6 +57,7 @@
 #include "bg/plane.h"
 #include "bg/polygon.h"
 #include "bg/sat.h"
+#include "bg/spsr.h"
 #include "bg/tri_pt.h"
 #include "bg/tri_ray.h"
 #include "bg/tri_tri.h"
