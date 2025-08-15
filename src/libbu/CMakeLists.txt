@@ -174,9 +174,9 @@ endforeach(bt ${bu_atgts})
 # With newer GCC, our bitv structure triggers a compiler
 # warning about writing 1 byte into a region of size 0.
 if(${BRLCAD_OPTIMIZED} MATCHES "ON")
-  check_c_compiler_flag(-Wno-error=stringop-overflow= HAVE_NO_STRINGOP_OVERFLOW)
+  check_c_compiler_flag(-Wno-stringop-overflow HAVE_NO_STRINGOP_OVERFLOW)
   if(HAVE_NO_STRINGOP_OVERFLOW)
-    target_link_options(libbu PRIVATE -Wno-error=stringop-overflow=)
+    target_link_options(libbu PRIVATE -Wno-stringop-overflow)
   endif(HAVE_NO_STRINGOP_OVERFLOW)
 endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
 
