@@ -34,16 +34,12 @@
 #include <string.h>
 #include "bu.h"
 
+/* how many debug items to print */
 #define PRINT_LIMIT 10
 
-// We have multiple tests where we write out and then read back in a floating
-// point number, looking to see if we read what was expected.  Different
-// platforms have different reproducibility behaviors when it comes to the
-// i*dblseed calculation we use to generate numbers for writing and testing.
-// We want the tightest tolerance the floating point math will reliably allow
-// us, since we want to check the values were read in correctly, but too tight
-// and we're into calculation fuzz.  For current test inputs this is the
-// tightest value that works on OSX.
+/* tol for tests comparing printed floats, currently supporting vals
+ * in the +-1e1 range.
+ */
 #define FLOAT_CMP_TOL 1e-14
 
 //---------------------- Section: Key Printing Utility ----------------------
