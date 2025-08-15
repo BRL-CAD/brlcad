@@ -22,28 +22,22 @@
  * Interface to Adaptive Multigrid Solvers for Screened Poisson Surface Reconstruction
  * Compatible with mkazhdan/PoissonRecon API (v18.x+).
  *
- *  TODO - it may be worth porting the Open3D ball pivot code to vmath.h
- * types and using straight nanoflann to provide another alternative to
- * the SPSR methodology:
- *
- * https://github.com/isl-org/Open3D/blob/master/cpp/open3d/geometry/SurfaceReconstructionBallPivoting.cpp
- *
- * Not sure if that would be easier than reviving the src/other/gct code or not
- * at this point, but the latter hasn't been built in a long time.
- *
- * Ball Pivot lacks the solidity properties of SPSR, but it may be a useful,
- * fast alternative in some situations now that the patent is expired and we
- * can look at using it.  In particular, I'm wondering if it might be used to
- * construct plate mode meshes for thin surface shapes that SPSR doesn't do
- * well with...
- *
+ * For want of a better place to put it, there is also a wrapper function here
+ * for a BallPivot mesher.  This is not a SPSR algorithm and in particular does
+ * not necessarily produce manifold output, but it does produce a wrapping mesh
+ * around point clouds.  Since it has some commonality with SPSR in that sense
+ * we stash it here.  It is also supposed to be fairly fast, and for
+ * applications where its output is sufficient that may make it a better choice
+ * than SPSR.
  */
 #include "common.h"
 #include "vmath.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bg/spsr.h"
+#include "bg/trimesh.h"
 #include "SPSR/Reconstructors.h"
+#include "BallPivot.hpp"
 
 using namespace PoissonRecon;
 
@@ -179,6 +173,50 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
     return 0;
 }
 
+int bg_3d_ballpivot(
+	int **faces, int *num_faces, point_t **vertices, int *num_vertices,
+	const point_t *input_points_3d, const vect_t *input_normals_3d,
+       	int num_input_pnts, double radius)
+{
+    if (!faces || !num_faces || !vertices || !num_vertices || !input_points_3d || !input_normals_3d || num_input_pnts < 3)
+	return -1;
+
+    // Run the Ball Pivoting Algorithm (radius selection is handled inside)
+    std::vector<int> face_vec;
+    int nfaces = ball_pivoting_run(face_vec, input_points_3d, input_normals_3d, num_input_pnts, radius);
+
+    if (nfaces == 0) {
+	*faces = NULL;
+	*num_faces = 0;
+	*vertices = NULL;
+	*num_vertices = 0;
+	return -2;
+    }
+
+    // Compact the mesh: only keep vertices actually used in the mesh
+    int *comp_faces = NULL;
+    point_t *comp_verts = NULL;
+    int n_comp_verts = 0;
+    int n_comp_faces = bg_trimesh_3d_gc(
+	    &comp_faces, &comp_verts, &n_comp_verts,
+	    face_vec.data(), nfaces, input_points_3d
+	    );
+
+    if (n_comp_faces < 0) {
+	*faces = NULL;
+	*num_faces = 0;
+	*vertices = NULL;
+	*num_vertices = 0;
+	return -3;
+    }
+
+    *faces = comp_faces;
+    *num_faces = n_comp_faces;
+    *vertices = comp_verts;
+    *num_vertices = n_comp_verts;
+
+    return 0;
+}
 
 // Local Variables:
 // tab-width: 8

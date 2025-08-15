@@ -171,6 +171,30 @@ BG_EXPORT int bg_3d_spsr(int **faces, int *num_faces, point_t **vertices, int *n
 			 const point_t *input_points_3d, const vect_t *input_normals_3d,
 			 int num_input_pnts, struct bg_3d_spsr_opts *opts);
 
+
+/**
+ *@brief
+ * Build a mesh using the Ball Pivot methodology.  Note that this
+ * has fewer topology guarantees as compared to the SPSR method,
+ * so callers should validate that the output has the properties
+ * they are looking for. 
+ *
+ * @param[out]  faces set of faces in the output surface, stored as integer indices to the vertices.  The first three indices are the vertices of the face, the second three define the second face, and so forth.
+ * @param[out]  num_faces the number of faces in the faces array
+ * @param[out]  vertices the set of vertices used by the surface.
+ * @param[out]  num_vertices the number of vertices in the surface.
+ * @param       input_points_3d The input points
+ * @param       num_input_pnts the number of points in the input set
+ * @param       radius the ball radius to be used.  If radius < 0 or NEAR_ZERO, a default radius is calculated based on the point density.
+ * @return 0 if successful, else error
+ *
+ */
+#define BG_3D_BALLPIVOT_DEFAULT_RADIUS -1
+BG_EXPORT int bg_3d_ballpivot(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
+			 const point_t *input_points_3d, const vect_t *input_normals_3d,
+			 int num_input_pnts, double radius);
+
+
 __END_DECLS
 
 #endif  /* BG_SPSR_H */
