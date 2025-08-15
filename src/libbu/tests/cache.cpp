@@ -151,6 +151,7 @@ basic_test(int item_cnt)
 	if (rsize != sizeof(int)) {
 	    bu_log("Failed to read int:%d - expected to read %zd bytes but read %zd\n", i, sizeof(int), rsize);
 	    ret = 1;
+	    continue;
 	}
 	int rval = 0;
 	memcpy(&rval, rdata, sizeof(rval));
@@ -194,6 +195,7 @@ basic_test(int item_cnt)
 	if (rsize != sizeof(double)) {
 	    bu_log("Failed to read dbl:%d - expected to read %zd bytes but read %zd\n", i, sizeof(double), rsize);
 	    ret = 1;
+	    continue;
 	}
 	double rval = 0;
 	memcpy(&rval, rdata, sizeof(double));
@@ -236,6 +238,7 @@ basic_test(int item_cnt)
 		continue;
 	    bu_log("Failed to read non-removed value dbl:%d\n", i);
 	    ret = 1;
+	    continue;
 	}
 	rcnt++;
 	double rval = 0;
@@ -321,7 +324,7 @@ limit_test()
     // Write doubles - this is where we expect to hit failure
     double dblseed = M_PI;
     int failed = -1;
-    int expected_failed = 4557;
+    int expected_failed_max = 4557;
     for (int i = 0; i < item_cnt; i++) {
 	bu_vls_sprintf(&keystr, "dbl:%d", i);
 	double dval = i*dblseed;
@@ -336,10 +339,10 @@ limit_test()
     if (failed == -1) {
 	bu_log("FAIL: Expected failure not observed\n");
 	ret = 1;
-    } else if (failed != expected_failed) {
-	bu_log("Warning - expected fail at %d, but observed failure was at %d\n", expected_failed, failed);
+    } else if (failed > expected_failed_max) {
+	bu_log("Warning - expected fail at <=%d, but observed failure was at %d\n", expected_failed_max, failed);
     } else {
-	bu_log("Expected failure at %d observed\n", expected_failed);
+	bu_log("Expected failure at %d observed\n", failed);
     }
 
     // Test reading DBL
@@ -388,7 +391,7 @@ limit_test()
     bu_log("Reopened with larger max size\n");
 
     // Write remaining doubles - this time there shouldn't be a failure
-    for (int i = expected_failed; i < item_cnt; i++) {
+    for (int i = failed; i < item_cnt; i++) {
 	bu_vls_sprintf(&keystr, "dbl:%d", i);
 	double dval = i*dblseed;
 	size_t written = bu_cache_write((char *)&dval, sizeof(double), bu_vls_cstr(&keystr), c, NULL);
@@ -408,6 +411,7 @@ limit_test()
 	if (rsize != sizeof(double)) {
 	    bu_log("Failed to read dbl:%d - expected to read %zd bytes but read %zd\n", i, sizeof(double), rsize);
 	    ret = 1;
+	    continue;
 	}
 	double rval = 0;
 	memcpy(&rval, rdata, sizeof(double));
@@ -552,6 +556,7 @@ threading_test()
 	if (rsize != sizeof(int)) {
 	    bu_log("Failed to read int:%d - expected to read %zd bytes but read %zd\n", i, sizeof(int), rsize);
 	    ret = 1;
+	    continue;
 	}
 	int rval = 0;
 	memcpy(&rval, rdata, sizeof(rval));
