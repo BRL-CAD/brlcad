@@ -35,6 +35,7 @@
 #include "bu.h"
 
 #define PRINT_LIMIT 10
+#define FLOAT_CMP_TOL 1e-14
 
 //---------------------- Section: Key Printing Utility ----------------------
 
@@ -197,7 +198,7 @@ basic_test(int item_cnt)
 	double rval = 0;
 	memcpy(&rval, rdata, sizeof(double));
 	double ctrl = i*dblseed;
-	if (!NEAR_EQUAL(rval, ctrl, 1.0e-14)) {
+	if (!NEAR_EQUAL(rval, ctrl, FLOAT_CMP_TOL)) {
 	    bu_log("Failed read from dbl:%d expected %0.15f, got %0.15f (delta: %0.17f)\n", i, ctrl, rval, ctrl - rval);
 	    ret = 1;
 	}
@@ -239,8 +240,9 @@ basic_test(int item_cnt)
 	rcnt++;
 	double rval = 0;
 	memcpy(&rval, rdata, sizeof(double));
-	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF)) {
-	    bu_log("Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
+	double ctrl = i*dblseed;
+	if (!NEAR_EQUAL(rval, ctrl, FLOAT_CMP_TOL)) {
+	    bu_log("Failed read from dbl:%d expected %0.15f, got %0.15f (delta: %0.17f)\n", i, ctrl, rval, ctrl - rval);
 	    ret = 1;
 	}
     }
@@ -311,7 +313,6 @@ limit_test()
 	int ival = i;
 	size_t written = bu_cache_write((char *)&ival, sizeof(int), bu_vls_cstr(&keystr), c, NULL);
 	if (written != sizeof(int)) {
-	    bu_vls_free(&keystr);
 	    bu_log("FAIL: Unexpected - failed to write int %d\n", i);
 	    ret = 1;
 	}
@@ -327,7 +328,6 @@ limit_test()
 	size_t written = bu_cache_write((char *)&dval, sizeof(double), bu_vls_cstr(&keystr), c, NULL);
 	if (written != sizeof(double)) {
 	    bu_log("Failed to assign %s value %g\n", bu_vls_cstr(&keystr), dval);
-	    bu_vls_free(&keystr);
 	    failed = i;
 	    break;
 	}
@@ -349,15 +349,14 @@ limit_test()
 	void *rdata = NULL;
 	size_t rsize = bu_cache_get(&rdata, bu_vls_cstr(&keystr), c, &txn);
 	if (rsize != sizeof(double)) {
-	    bu_vls_free(&keystr);
 	    bu_log("Failed to read dbl:%d - expected to read %zd bytes but read %zd\n", i, sizeof(double), rsize);
 	    ret = 1;
 	}
 	double rval = 0;
 	memcpy(&rval, rdata, sizeof(double));
-	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF)) {
-	    bu_vls_free(&keystr);
-	    bu_log("Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
+	double ctrl = i*dblseed;
+	if (!NEAR_EQUAL(rval, ctrl, FLOAT_CMP_TOL)) {
+	    bu_log("Failed read from dbl:%d expected %0.15f, got %0.15f (delta: %0.17f)\n", i, ctrl, rval, ctrl - rval);
 	    ret = 1;
 	}
     }
@@ -407,15 +406,14 @@ limit_test()
 	void *rdata = NULL;
 	size_t rsize = bu_cache_get(&rdata, bu_vls_cstr(&keystr), c, &txn);
 	if (rsize != sizeof(double)) {
-	    bu_vls_free(&keystr);
 	    bu_log("Failed to read dbl:%d - expected to read %zd bytes but read %zd\n", i, sizeof(double), rsize);
 	    ret = 1;
 	}
 	double rval = 0;
 	memcpy(&rval, rdata, sizeof(double));
-	if (!NEAR_EQUAL(rval, dblseed*i, SMALL_FASTF)) {
-	    bu_vls_free(&keystr);
-	    bu_log("Failed read from dbl:%d expected %g, got %g\n", i, dblseed*i, rval);
+	double ctrl = i*dblseed;
+	if (!NEAR_EQUAL(rval, ctrl, FLOAT_CMP_TOL)) {
+	    bu_log("Failed read from dbl:%d expected %0.15f, got %0.15f (delta: %0.17f)\n", i, ctrl, rval, ctrl - rval);
 	    ret = 1;
 	}
     }
@@ -439,6 +437,7 @@ limit_test()
 	ret = 1;
     }
 
+    bu_vls_free(&keystr);
     bu_log("Limit/size test %s\n", ret ? "[FAIL]" : "[PASS]");
     return ret;
 }
