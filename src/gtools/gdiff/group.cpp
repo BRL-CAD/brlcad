@@ -482,7 +482,7 @@ std::string content_hash(struct db_i *dbip, bool use_names, bool use_geometry, i
 	} FOR_ALL_DIRECTORY_END;
 	std::sort(directories.begin(), directories.end(),
 		[](const directory* a, const directory* b) {
-		return strcmp(a->d_namep, b->d_namep) < 0;
+		return bu_strcmp(a->d_namep, b->d_namep) < 0;
 		});
 
 	if (!geom_fast) {
