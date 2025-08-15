@@ -62,10 +62,11 @@ edit_keypoint(
 	const struct bn_tol *tol)
 {
     struct rt_db_internal *ip = &s->es_int;
-    static const char *vert_str = "V";
     const char *strp = OBJ[ip->idb_type].ft_keypoint(pt, keystr, mat, ip, tol);
-    if (strp)
+    if (!strp) {
+	static const char *vert_str = "V";
 	strp = OBJ[ip->idb_type].ft_keypoint(pt, vert_str, mat, ip, tol);
+    }
     return strp;
 }
 
