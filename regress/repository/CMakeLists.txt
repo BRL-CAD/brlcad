@@ -1,7 +1,7 @@
 include_directories(${BRLCAD_BINARY_DIR}/include ${BRLCAD_SOURCE_DIR}/include)
 
 # Build a scanner to check the repository for various problems
-brlcad_addexec(repocheck "repocheck.cpp;strnstr.c" "libbu;Threads::Threads" TEST)
+brlcad_addexec(repocheck "repocheck.cpp" "libbu;Threads::Threads" TEST)
 if(TARGET repocheck)
   if(O3_COMPILER_FLAG)
     # This check benefits greatly from optimization. If we have the O3 flag, use
@@ -22,7 +22,6 @@ distclean(${LOG_FILE})
 cmakefiles(
   CMakeLists.txt
   repocheck.cpp
-  strnstr.c
   regress-repository.cmake.in
 )
 
