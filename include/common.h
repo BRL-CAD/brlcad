@@ -109,6 +109,8 @@ double rint(double x);
 #    define THREADLOCAL __declspec(thread)
 #  elif defined(__GNUC__) || defined(__clang__)
 #    define THREADLOCAL __thread
+#  else
+#    error "Cannot define THREADLOCAL for this compiler/platform"
 #  endif
 #endif
 
