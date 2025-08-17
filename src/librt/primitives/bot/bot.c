@@ -684,7 +684,7 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 }
 
 
-_Thread_local hit_da hits_per_cpu = {0};
+THREADLOCAL hit_da hits_per_cpu = {0};
 
 
 /**
