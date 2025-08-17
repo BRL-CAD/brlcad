@@ -1593,8 +1593,8 @@ bool_meshes(
 #if 0
 #ifdef USE_ASSETIMPORT
     std::cerr << lname << " " << (int)b_op << " " << rname << "\n";
-    std::remove("left.glb");
-    std::remove("right.glb");
+    bu_file_delete("left.glb");
+    bu_file_delete("right.glb");
     manifold::ExportMesh(std::string("left.glb"), a_manifold.GetMesh(), {});
     manifold::ExportMesh(std::string("right.glb"), b_manifold.GetMesh(), {});
 #endif

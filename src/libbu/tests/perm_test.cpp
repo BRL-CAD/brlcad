@@ -13,6 +13,8 @@
 #include <string>
 #include <system_error>
 
+#include "bu/file.h"
+
 void pprint(char lbl, std::filesystem::perms filep, std::filesystem::perms p)
 {
     std::cout << (std::filesystem::perms::none == (filep & p) ? '-' : lbl);
@@ -100,7 +102,7 @@ main(int argc, const char **argv)
     pout(out_perms);
     std::cout << "\n";
 
-    std::filesystem::remove(f);
+    bu_file_delete(f);
     return 0;
 }
 

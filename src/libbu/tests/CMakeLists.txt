@@ -788,7 +788,7 @@ if(TARGET bu_mappedfile_parallel_16384)
 endif()
 
 if(BUILD_TESTING)
-  add_executable(perm_test perm_test.cpp)
+  brlcad_addexec(perm_test perm_test.cpp libbu TEST)
   set_target_properties(perm_test PROPERTIES FOLDER "BRL-CAD Executables/Test Programs")
 endif(BUILD_TESTING)
 
