@@ -218,7 +218,7 @@ function(bext_sha1_checks)
     if(NOT "${BEXT_SHA1}" STREQUAL "${REMOTE_BRANCH_SHA1}")
       message(
 	WARNING
-	"The local SHA1 (${BEXT_SHA1}) does not match the latest bext ${TARGET_BRANCH} branch SHA1 (${REMOTE_BRANCH_SHA1}).  This typically indicates upstream BRL-CAD has updated the bext repository and you will want to update your local clone.  To clear this warning, set BEXT_SHA1 in misc/CMake/BRLCAD_EXT_Setup.cmake to ${REMOTE_BRANCH_SHA1}."
+	"The local SHA1 (${BEXT_SHA1}) does not match the latest bext ${TARGET_BRANCH} branch SHA1 (${REMOTE_BRANCH_SHA1}).  This typically indicates upstream BRL-CAD has updated the bext repository and you will want to update your local clone.  To clear this warning, update the brlcad_bext_init argument in the top level CMakeLists.txt file ${REMOTE_BRANCH_SHA1}."
 	)
     endif()
   endif(BEXT_SHA1 AND REMOTE_BRANCH_SHA1 AND NOT REMOTE_VER_SHA1)
@@ -229,7 +229,7 @@ function(bext_sha1_checks)
     if(NOT "${BEXT_SHA1}" STREQUAL "${REMOTE_VER_SHA1}")
       message(
 	WARNING
-	"The local SHA1 (${BEXT_SHA1}) does not match the ${BRLCAD_REL} SHA1 (${REMOTE_VER_SHA1}).  If preparing a release, remember to update BEXT_SHA1 in misc/CMake/BRLCAD_EXT_Setup.cmake to point to bext's ${BRLCAD_REL} tag."
+	"The local SHA1 (${BEXT_SHA1}) does not match the ${BRLCAD_REL} SHA1 (${REMOTE_VER_SHA1}).  If preparing a release, remember to update the argument to brlcad_bext_init in the top level CMakeLists.txt file to point to bext's ${BRLCAD_REL} tag."
 	)
     endif()
   endif(BEXT_SHA1 AND REMOTE_VER_SHA1)
