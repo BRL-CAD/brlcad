@@ -52,7 +52,7 @@ function runtest {
 
 # configure using the correct compiler and values.  We don't
 # need this report, so clear it after configure is done
-scan-build --use-analyzer=/usr/bin/$CCC_CC -o ./scan-reports-config cmake .. -DBRLCAD_EXTRADOCS=OFF -DBRLCAD_ENABLE_QT=ON -DBRLCAD_EXT_DIR=$cwdir/bext_output -DCMAKE_C_COMPILER=ccc-analyzer -DCMAKE_CXX_COMPILER=c++-analyzer
+scan-build --use-analyzer=/usr/bin/$CCC_CC -o ./scan-reports-config cmake .. -DBRLCAD_EXTRADOCS=OFF -DBRLCAD_ENABLE_QT=ON -DBRLCAD_EXT_DIR=$cwdir -DCMAKE_C_COMPILER=ccc-analyzer -DCMAKE_CXX_COMPILER=c++-analyzer
 
 # clear out any old reports
 rm -rfv ./scan-reports-*
