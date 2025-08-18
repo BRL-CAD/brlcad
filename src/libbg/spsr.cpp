@@ -113,6 +113,9 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
     static const unsigned int FEMSig = FEMDegreeAndBType<Reconstructor::Poisson::DefaultFEMDegree, Reconstructor::Poisson::DefaultFEMBoundary>::Signature;
     using FEMSigs = IsotropicUIntPack<3, FEMSig>;
 
+    // Set up multithreading
+    PoissonRecon::ThreadPool::ParallelizationType = PoissonRecon::ThreadPool::ASYNC;
+
     // Solver and extraction parameters
     Reconstructor::Poisson::SolutionParameters<Real> solverParams;
     solverParams.verbose = false;
