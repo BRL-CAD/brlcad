@@ -43,7 +43,19 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bg/spsr.h"
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push /* start new diagnostic pragma */
+#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#elif defined(__clang__)
+#  pragma clang diagnostic push /* start new diagnostic pragma */
+#  pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
 #include "SPSR/Reconstructors.h"
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif defined(__clang__)
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
 
 using namespace PoissonRecon;
 
