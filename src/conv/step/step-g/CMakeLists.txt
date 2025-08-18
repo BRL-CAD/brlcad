@@ -477,6 +477,15 @@ if(BRLCAD_ENABLE_STEP)
   set_property(TARGET step-g APPEND PROPERTY INCLUDE_DIRECTORIES "${stepg_SCHEMA_OUT_DIR}")
   target_compile_definitions(step-g PRIVATE SC_SCHEMA_DLL_EXPORTS)
 
+  # We have the PRECOMILE_HEADER that includes the generated stepcode
+  # outputs - add our fixed headers as well:
+  foreach(header ${stepg_HDRS})
+    # Use relative include for portability
+    get_filename_component(header_name "${header}" NAME)
+    file(APPEND "${PRECOMPILE_HEADER}" "#include \"${header_name}\"\n")
+  endforeach()
+  target_precompile_headers(step-g PRIVATE "${PRECOMPILE_HEADER}")
+
   if(HIDE_INTERNAL_SYMBOLS)
     set(
       SCIMPORTS
