@@ -30,7 +30,7 @@ declare -i report_cnt num
 export CC=clang
 export CXX=clang++
 cwdir=$(pwd)
-git clone -b RELEASE https://github.com/BRL-CAD/bext
+git clone https://github.com/BRL-CAD/bext
 mkdir bext-build
 cmake -S $cwdir/bext -B $cwdir/bext-build -DCMAKE_INSTALL_PREFIX=$cwdir -DCMAKE_BUILD_TYPE=Debug
 cmake --build bext-build --config Debug -j 1
