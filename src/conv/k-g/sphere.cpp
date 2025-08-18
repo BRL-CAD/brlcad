@@ -25,7 +25,6 @@
 
 #include "sphere.h"
 
-
 Sphere::Sphere(void) : m_name() {}
 
 void Sphere::setName
@@ -46,14 +45,15 @@ void Sphere::addSphere
     const point_t& center,
     const float& radius
 ) {
-    rt_part_internal temp;
+    rt_ell_internal temp;
 
-    temp.part_magic = RT_PART_INTERNAL_MAGIC;
-    temp.part_type = ID_SPH;
+    temp.magic = RT_ELL_INTERNAL_MAGIC;
 
-    VMOVE(temp.part_V, center);
-    temp.part_hrad = radius;
-    temp.part_vrad = radius;
+    VMOVE(temp.v, center);
+    VSET(temp.a, radius, 0.0, 0.0);
+    VSET(temp.b, 0.0, radius, 0.0);
+    VSET(temp.c, 0.0, 0.0, radius);
+
     m_sphere[sphereName] = temp;
 }
 
@@ -63,7 +63,7 @@ std::vector<std::string> Sphere::write
 ) {
     std::vector<std::string> ret;
 
-    for (std::map<std::string, rt_part_internal>::iterator it = m_sphere.begin(); it != m_sphere.end(); it++) {
+    for (std::map<std::string, rt_ell_internal>::iterator it = m_sphere.begin(); it != m_sphere.end(); it++) {
 	std::string sphereName = m_name;
 	sphereName += ".";
 	sphereName += it->first;
@@ -71,19 +71,18 @@ std::vector<std::string> Sphere::write
 
 	ret.push_back(sphereName);
 
-	vect_t HH = { 0,0,0 };
-	rt_part_internal* part_wdb;
+	rt_ell_internal* sph_wdb;
 
-	BU_GET(part_wdb, rt_part_internal);
-	part_wdb->part_magic = RT_PART_INTERNAL_MAGIC;
-	part_wdb->part_type = ID_SPH;
-
-	*part_wdb = it->second;
-
-	VMOVE(part_wdb->part_H, HH);
-
-	if (part_wdb->part_vrad > 0) {
-	    wdb_export(wdbp, sphereName.c_str(), (void*) part_wdb, ID_PARTICLE, 1);
+	BU_GET(sph_wdb, rt_ell_internal);
+	
+	sph_wdb->magic = RT_ELL_INTERNAL_MAGIC;
+	VMOVE(sph_wdb->v, it->second.v);
+	VMOVE(sph_wdb->a, it->second.a);
+	VMOVE(sph_wdb->b, it->second.b);
+	VMOVE(sph_wdb->c, it->second.c);
+	
+	if (sph_wdb->a[0] > 0) {
+	    wdb_export(wdbp, sphereName.c_str(), (void*) sph_wdb, ID_SPH, 1);
 	}
     }
 

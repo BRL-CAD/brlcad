@@ -39,12 +39,12 @@ public:
     void                     addSphere(const char* sphereName,
 				       const point_t& center,
 				       const float& radious);
+    //rt_part_internal*        getSphere(void) const;
 
     std::vector<std::string> write(rt_wdb* wdbp);
-
 private:
     std::string                      m_name;
-    std::map<std::string,rt_part_internal>  m_sphere;
+    std::map<std::string, rt_ell_internal>  m_sphere;
 };
 
 
