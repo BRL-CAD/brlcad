@@ -484,28 +484,23 @@ bot_to_geogram(GEO::Mesh *gm, struct rt_bot_internal *bot)
 }
 
 static void
-geogram_to_manifold(manifold::Mesh *gmm, GEO::Mesh &gm)
+geogram_to_manifold(manifold::MeshGL *gmm, GEO::Mesh &gm)
 {
-    for(GEO::index_t v = 0; v < gm.vertices.nb(); v++) {
-	double gm_v[3];
+    for (GEO::index_t v = 0; v < gm.vertices.nb(); v++) {
 	const double *p = gm.vertices.point_ptr(v);
-	for (int i = 0; i < 3; i++) {
-	    gm_v[i] = p[i];
-	}
-	gmm->vertPos.push_back(glm::vec3(gm_v[0], gm_v[1], gm_v[2]));
+	for (int i = 0; i < 3; i++)
+	    gmm->vertProperties.insert(gmm->vertProperties.end(), p[i]);
     }
     for (GEO::index_t f = 0; f < gm.facets.nb(); f++) {
-	double tri_verts[3];
 	for (int i = 0; i < 3; i++) {
-	    tri_verts[i] = gm.facets.vertex(f, i);
+	    // TODO - CW vs CCW orientation handling?
+	    gmm->triVerts.insert(gmm->triVerts.end(), gm.facets.vertex(f, i));
 	}
-	// TODO - CW vs CCW orientation handling?
-	gmm->triVerts.push_back(glm::ivec3(tri_verts[0], tri_verts[1], tri_verts[2]));
     }
 }
 
 static struct rt_bot_internal *
-manifold_to_bot(manifold::Mesh *omesh)
+manifold_to_bot(manifold::MeshGL *omesh)
 {
     struct rt_bot_internal *nbot;
     BU_GET(nbot, struct rt_bot_internal);
@@ -515,20 +510,14 @@ manifold_to_bot(manifold::Mesh *omesh)
     nbot->thickness = NULL;
     nbot->face_mode = (struct bu_bitv *)NULL;
     nbot->bot_flags = 0;
-    nbot->num_vertices = (int)omesh->vertPos.size();
-    nbot->num_faces = (int)omesh->triVerts.size();
-    nbot->vertices = (double *)calloc(omesh->vertPos.size()*3, sizeof(double));;
-    nbot->faces = (int *)calloc(omesh->triVerts.size()*3, sizeof(int));
-    for (size_t j = 0; j < omesh->vertPos.size(); j++) {
-	nbot->vertices[3*j] = omesh->vertPos[j].x;
-	nbot->vertices[3*j+1] = omesh->vertPos[j].y;
-	nbot->vertices[3*j+2] = omesh->vertPos[j].z;
-    }
-    for (size_t j = 0; j < omesh->triVerts.size(); j++) {
-	nbot->faces[3*j] = omesh->triVerts[j].x;
-	nbot->faces[3*j+1] = omesh->triVerts[j].y;
-	nbot->faces[3*j+2] = omesh->triVerts[j].z;
-    }
+    nbot->num_vertices = (int)omesh->vertProperties.size()/3;
+    nbot->num_faces = (int)omesh->triVerts.size()/3;
+    nbot->vertices = (double *)calloc(omesh->vertProperties.size(), sizeof(double));;
+    nbot->faces = (int *)calloc(omesh->triVerts.size(), sizeof(int));
+    for (size_t j = 0; j < omesh->vertProperties.size(); j++)
+	nbot->vertices[j] = omesh->vertProperties[j];
+    for (size_t j = 0; j < omesh->triVerts.size(); j++)
+	nbot->faces[j] = omesh->triVerts[j];
 
     return nbot;
 }
@@ -585,38 +574,41 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
     // Unless we produce something, obot will be NULL
     *obot = NULL;
 
-    manifold::Mesh bot_mesh;
-    for (size_t j = 0; j < bot->num_vertices ; j++)
-	bot_mesh.vertPos.push_back(glm::vec3(bot->vertices[3*j], bot->vertices[3*j+1], bot->vertices[3*j+2]));
-    if (bot->orientation == RT_BOT_CW) {
-	for (size_t j = 0; j < bot->num_faces; j++)
-	    bot_mesh.triVerts.push_back(glm::ivec3(bot->faces[3*j], bot->faces[3*j+2], bot->faces[3*j+1]));
-    } else {
-	for (size_t j = 0; j < bot->num_faces; j++)
-	    bot_mesh.triVerts.push_back(glm::ivec3(bot->faces[3*j], bot->faces[3*j+1], bot->faces[3*j+2]));
+    manifold::MeshGL64 bot_mesh;
+    for (size_t j = 0; j < bot->num_vertices ; j++) {
+	bot_mesh.vertProperties.insert(bot_mesh.vertProperties.end(), bot->vertices[3*j+0]);
+	bot_mesh.vertProperties.insert(bot_mesh.vertProperties.end(), bot->vertices[3*j+1]);
+	bot_mesh.vertProperties.insert(bot_mesh.vertProperties.end(), bot->vertices[3*j+2]);
     }
-
-    manifold::MeshGL bot_gl(bot_mesh);
-    if (!bot_gl.NumTri()) {
-	// GetMeshGL failed, cannot process.
-	return -1;
+    if (bot->orientation == RT_BOT_CW) {
+	for (size_t j = 0; j < bot->num_faces; j++) {
+	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), bot->faces[3*j]);
+	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), bot->faces[3*j+2]);
+	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), bot->faces[3*j+1]);
+	}
+    } else {
+	for (size_t j = 0; j < bot->num_faces; j++) {
+	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), bot->faces[3*j]);
+	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), bot->faces[3*j+1]);
+	    bot_mesh.triVerts.insert(bot_mesh.triVerts.end(), bot->faces[3*j+2]);
+	}
     }
 
     int num_vertices = (int)bot->num_vertices;
     int num_faces = (int)bot->num_faces;
     int bg_not_solid = bg_trimesh_solid2(num_vertices, num_faces, bot->vertices, bot->faces, NULL);
 
-    if (!bot_gl.Merge() && !bg_not_solid) {
+    if (!bot_mesh.Merge() && !bg_not_solid) {
 	// BoT is already manifold
 	return 1;
     }
 
-    manifold::Manifold omanifold(bot_gl);
+    manifold::Manifold omanifold(bot_mesh);
     if (omanifold.Status() == manifold::Manifold::Error::NoError) {
 	// MeshGL.Merge() produced a manifold mesh.  That this worked
 	// essentially means the changes needed were EXTREMELY minimal, and we
 	// don't bother with further processing before returning the result.
-	manifold::Mesh omesh = omanifold.GetMesh();
+	manifold::MeshGL omesh = omanifold.GetMeshGL();
 	struct rt_bot_internal *nbot = manifold_to_bot(&omesh);
 	*obot = nbot;
 	return 0;
@@ -718,7 +710,7 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
     // of the result - if Manifold doesn't think we're there, then
     // the results won't fly for boolean evaluation and we go ahead
     // and reject.
-    manifold::Mesh gmm;
+    manifold::MeshGL gmm;
     geogram_to_manifold(&gmm, gm);
     manifold::Manifold gmanifold(gmm);
     if (gmanifold.Status() != manifold::Manifold::Error::NoError) {
@@ -727,7 +719,7 @@ rt_bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, struct
     }
 
     // Output is manifold, make a new bot
-    manifold::Mesh omesh = gmanifold.GetMesh();
+    manifold::MeshGL omesh = gmanifold.GetMeshGL();
     struct rt_bot_internal *nbot = manifold_to_bot(&omesh);
 
     // Once we have an rt_bot_internal, see what the solid raytracer's linting

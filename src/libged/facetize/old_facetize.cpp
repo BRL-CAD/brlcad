@@ -25,18 +25,15 @@
 
 #include "common.h"
 
+#include <fstream>
+#include <iostream>
 #include <map>
 #include <set>
 #include <vector>
 
 #include <string.h>
 
-#ifdef USE_MANIFOLD
 #include "manifold/manifold.h"
-#ifdef USE_ASSETIMPORT
-#include "manifold/meshIO.h"
-#endif
-#endif
 
 #include "bu/app.h"
 #include "bu/env.h"
@@ -1565,19 +1562,20 @@ bool_meshes(
     double *b_coords, int b_ccnt, unsigned int *b_tris, int b_tricnt,
     const char *lname, const char *rname)
 {
+    const char *evar = getenv("GED_MANIFOLD_DEBUG");
     if (!o_coords || !o_ccnt || !o_tris || !o_tricnt)
 	return -1;
 
-    manifold::Mesh a_mesh;
-    for (int i = 0; i < a_ccnt; i++)
-	a_mesh.vertPos.push_back(glm::vec3(a_coords[3*i], a_coords[3*i+1], a_coords[3*i+2]));
-    for (int i = 0; i < a_tricnt; i++)
-	a_mesh.triVerts.push_back(glm::ivec3(a_tris[3*i], a_tris[3*i+1], a_tris[3*i+2]));
-    manifold::Mesh b_mesh;
-    for (int i = 0; i < b_ccnt; i++)
-	b_mesh.vertPos.push_back(glm::vec3(b_coords[3*i], b_coords[3*i+1], b_coords[3*i+2]));
-    for (int i = 0; i < b_tricnt; i++)
-	b_mesh.triVerts.push_back(glm::ivec3(b_tris[3*i], b_tris[3*i+1], b_tris[3*i+2]));
+    manifold::MeshGL64 a_mesh;
+    for (int i = 0; i < a_ccnt*3; i++)
+	a_mesh.vertProperties.insert(a_mesh.vertProperties.end(), a_coords[i]);
+    for (int i = 0; i < a_tricnt*3; i++)
+	a_mesh.triVerts.insert(a_mesh.triVerts.end(), a_tris[i]);
+    manifold::MeshGL64 b_mesh;
+    for (int i = 0; i < b_ccnt*3; i++)
+	b_mesh.vertProperties.insert(b_mesh.vertProperties.end(), b_coords[i]);
+    for (int i = 0; i < b_tricnt*3; i++)
+	b_mesh.triVerts.insert(b_mesh.triVerts.end(), b_tris[i]);
 
     manifold::Manifold a_manifold(a_mesh);
     if (a_manifold.Status() != manifold::Manifold::Error::NoError) {
@@ -1590,15 +1588,14 @@ bool_meshes(
 	return -1;
     }
 
-#if 0
-#ifdef USE_ASSETIMPORT
-    std::cerr << lname << " " << (int)b_op << " " << rname << "\n";
-    bu_file_delete("left.glb");
-    bu_file_delete("right.glb");
-    manifold::ExportMesh(std::string("left.glb"), a_manifold.GetMesh(), {});
-    manifold::ExportMesh(std::string("right.glb"), b_manifold.GetMesh(), {});
-#endif
-#endif
+    if (evar && strlen(evar)) {
+	std::cerr << lname << " " << (int)b_op << " " << rname << "\n";
+	bu_file_delete("left.obj"); bu_file_delete("right.obj");
+	std::ofstream lofile, rofile;
+	lofile.open("left.obj"); rofile.open("right.obj");
+	a_manifold.WriteOBJ(lofile); b_manifold.WriteOBJ(rofile);
+	lofile.close(); rofile.close();
+    }
 
     manifold::Manifold result;
     try {
@@ -1609,34 +1606,29 @@ bool_meshes(
 	}
     } catch (...) {
 	bu_log("Manifold boolean library threw failure\n");
-#ifdef USE_ASSETIMPORT
-	const char *evar = getenv("GED_MANIFOLD_DEBUG");
 	// write out the failing inputs to files to aid in debugging
 	if (evar && strlen(evar)) {
 	    std::cerr << "Manifold op: " << (int)b_op << "\n";
-	    manifold::ExportMesh(std::string(lname)+std::string(".glb"), a_manifold.GetMesh(), {});
-	    manifold::ExportMesh(std::string(rname)+std::string(".glb"), b_manifold.GetMesh(), {});
+	    bu_file_delete("left.obj"); bu_file_delete("right.obj");
+	    std::ofstream lofile, rofile;
+	    lofile.open(std::string(lname)+std::string(".obj"));
+	    rofile.open(std::string(rname)+std::string(".obj"));
+	    a_manifold.WriteOBJ(lofile); b_manifold.WriteOBJ(rofile);
+	    lofile.close(); rofile.close();
 	    bu_exit(EXIT_FAILURE, "Exiting to avoid overwriting debug outputs from Manifold boolean failure.\n");
 	}
-#endif
 	return -1;
     }
-    manifold::Mesh rmesh = result.GetMesh();
+    manifold::MeshGL64 rmesh = result.GetMeshGL64();
 
-    (*o_coords) = (double *)calloc(rmesh.vertPos.size()*3, sizeof(double));
-    (*o_tris) = (unsigned int *)calloc(rmesh.triVerts.size()*3, sizeof(unsigned int));
-    for (size_t i = 0; i < rmesh.vertPos.size(); i++) {
-	(*o_coords)[3*i] = rmesh.vertPos[i].x;
-	(*o_coords)[3*i+1] = rmesh.vertPos[i].y;
-	(*o_coords)[3*i+2] = rmesh.vertPos[i].z;
-    }
-    for (size_t i = 0; i < rmesh.triVerts.size(); i++) {
-	(*o_tris)[3*i] = rmesh.triVerts[i].x;
-	(*o_tris)[3*i+1] = rmesh.triVerts[i].y;
-	(*o_tris)[3*i+2] = rmesh.triVerts[i].z;
-    }
-    *o_ccnt = (int)rmesh.vertPos.size();
-    *o_tricnt = (int)rmesh.triVerts.size();
+    (*o_coords) = (double *)calloc(rmesh.vertProperties.size(), sizeof(double));
+    (*o_tris) = (unsigned int *)calloc(rmesh.triVerts.size(), sizeof(unsigned int));
+    for (size_t i = 0; i < rmesh.vertProperties.size(); i++)
+	(*o_coords)[i] = rmesh.vertProperties[i];
+    for (size_t i = 0; i < rmesh.triVerts.size(); i++)
+	(*o_tris)[i] = rmesh.triVerts[i];
+    *o_ccnt = (int)rmesh.vertProperties.size()/3;
+    *o_tricnt = (int)rmesh.triVerts.size()/3;
 
 
     int not_solid = bg_trimesh_solid2(*o_ccnt, *o_tricnt, (fastf_t *)*o_coords, (int *)*o_tris, NULL);
@@ -2914,12 +2906,10 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct bu_l
 	ssize_t avail_mem = 0;
 	bu_ptbl_reset(ar2);
 
-#ifdef USE_MANIFOLD
 	if (!cmethod && (methods & FACETIZE_MANIFOLD)) {
 	    cmethod = FACETIZE_MANIFOLD;
 	    methods = methods & ~(FACETIZE_MANIFOLD);
 	}
-#endif
 
 	if (!cmethod && (methods & FACETIZE_NMGBOOL)) {
 	    cmethod = FACETIZE_NMGBOOL;
@@ -3350,12 +3340,8 @@ ged_facetize_old_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[17], "",  "max-pnts",      "#", &bu_opt_int,     &(opts->max_pnts),                "Maximum number of pnts to use when applying ray sampling methods.");
     BU_OPT(d[18], "B",  "",             "",  NULL,  &nonovlp_brep,              "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
     BU_OPT(d[19], "t",  "threshold",    "#",  &bu_opt_fastf_t, &(opts->nonovlp_threshold),  "EXPERIMENTAL: max ovlp threshold length.");
-#ifdef USE_MANIFOLD
     BU_OPT(d[20],  "",  "MANIFOLD",           "",  NULL,  &(opts->manifold),          "Use the experimental MANIFOLD boolean evaluation");
     BU_OPT_NULL(d[21]);
-#else
-    BU_OPT_NULL(d[20]);
-#endif
 
     /* Poisson specific options */
     BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts->s_opts.depth),            "Maximum reconstruction depth (default 8)");

@@ -19,9 +19,16 @@
  */
 /** @file plate.cpp
  *
- * Given a plate mode bot, represent its volumetric thickness with
- * individual CSG primitives, then tessellate and combine them to
- * make an evaluated representation of the plate mode volume.
+ * Given a plate mode bot, represent its volumetric thickness with individual
+ * CSG primitives, then tessellate and combine them to make an evaluated
+ * representation of the plate mode volume.
+ *
+ * NOTE: older Manifold versions would ignore "error" empty manifolds and
+ * proceed with the boolean by treating them as empty inputs, but newer
+ * versions propagate the error - this means we need to catch cases where our
+ * inputs wind up not giving us a manifold (feeding in degenerate edge
+ * segments, for example) and NOT use them. If we don't catch them, we wind up
+ * wiping out some of our output geometry with the errors.
  */
 
 #include "common.h"
@@ -36,6 +43,7 @@
 #include "bu/time.h"
 #include "bn/tol.h"
 #include "bg/defines.h"
+#include "bg/trimesh.h"
 #include "rt/defines.h"
 #include "rt/db5.h"
 #include "rt/db_internal.h"
@@ -44,10 +52,9 @@
 #include "rt/nmg_conv.h"
 #include "rt/primitives/bot.h"
 
-// TODO - investigate geogram's isotropic remeshing to see if it can help us
-// deal with plate mode bots having lots of long, super-thin triangles (they
-// seem to be really messing with performance in newer Manifold releases...)
-// https://github.com/BrunoLevy/geogram/wiki/Remeshing
+// TODO - newer Manifold has a way to generate cylinders, added for a regression
+// test related to this code - we may be able to replace edge_cyl with the Manifold
+// version and simplify our own code.
 
 static bool
 bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
@@ -202,22 +209,94 @@ edge_cyl(point_t **verts, int **faces, int *vert_cnt, int *face_cnt, point_t p1,
     return 0;
 }
 
-int
-rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, int round_outer_edges, int quiet_mode)
+static struct rt_bot_internal *
+collapse_faces(struct rt_bot_internal *bot, fastf_t working_tol)
 {
+    if (NEAR_ZERO(working_tol, VUNITIZE_TOL))
+	return bot;
+
+    // Do the initial decimation
+    int *ofaces = NULL;
+    int n_ofaces = 0;
+    struct bg_trimesh_decimation_settings s = BG_TRIMESH_DECIMATION_SETTINGS_INIT;
+    s.feature_size = working_tol;
+    int ret = bg_trimesh_decimate(&ofaces, &n_ofaces, bot->faces, (int)bot->num_faces, (point_t *)bot->vertices, (int)bot->num_vertices, &s);
+    if (bu_vls_strlen(&s.msgs)) {
+	//bu_log("%s", bu_vls_cstr(&s.msgs));
+    }
+    bu_vls_free(&s.msgs);
+
+    // If didn't work, we're done
+    if (ret != BRLCAD_OK) {
+	bu_free(ofaces, "ofaces");
+	return bot;
+    }
+
+    // bg_trimesh_decimate will filter out degenerate faces, but we still need
+    // to trim out any unused points.
+    int *gcfaces = NULL;
+    point_t *opnts = NULL;
+    int n_opnts;
+    int n_gcfaces = bg_trimesh_3d_gc(&gcfaces, &opnts, &n_opnts, ofaces, n_ofaces, (point_t *)bot->vertices);
+
+    // If garbage collection didn't work, we're done
+    if (n_gcfaces != n_ofaces) {
+	bu_free(gcfaces, "gcfaces");
+	bu_free(opnts , "opnts");
+	bu_free(ofaces, "ofaces");
+	return bot;
+    }
+
+    // We have our new input bot
+    //bu_log("New input BoT has %d vertices and %d faces, merge_tol = %f\n", n_opnts, n_gcfaces, s.feature_size);
+
+    // Indices may be updated after gc, so the old array is obsolete
+    bu_free(ofaces, "ofaces");
+
+    // New input bot
+    struct rt_bot_internal *input_bot;
+    BU_ALLOC(input_bot, struct rt_bot_internal);
+    input_bot->magic = RT_BOT_INTERNAL_MAGIC;
+    input_bot->mode = input_bot->mode;
+    // We're not mapping plate mode thickness info at the moment, so we
+    // can't persist a plate mode type
+    if (input_bot->mode == RT_BOT_PLATE || input_bot->mode == RT_BOT_PLATE_NOCOS)
+	input_bot->mode = RT_BOT_SURFACE;
+    input_bot->orientation = input_bot->orientation;
+    // We changed the faces, but we still need to set their thicknesses
+    input_bot->thickness = (fastf_t *)bu_calloc(n_ofaces, sizeof(fastf_t), "thickness array");
+    for (int i = 0; i < n_ofaces; i++)
+	input_bot->thickness[i] = bot->thickness[0];
+    input_bot->face_mode = NULL; // Face mode doesn't matter here - we can only extrude using one method
+    input_bot->num_faces = n_ofaces;
+    input_bot->num_vertices = n_opnts;
+    input_bot->faces = gcfaces;
+    input_bot->vertices = (fastf_t *)opnts;
+
+    return input_bot;
+}
+
+int
+rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *input_bot, int round_outer_edges, int quiet_mode, fastf_t max_area_delta, fastf_t min_tri_threshold)
+{
+    double mtol = std::numeric_limits<float>::min();
+    struct rt_bot_internal *bot = input_bot;
     if (!obot || !bot)
 	return 1;
 
     if (bot->mode != RT_BOT_PLATE)
 	return 1;
 
-    // Check for at least 1 non-zero thickness, or there's no volume to define
+    // Check for at least 1 non-zero thickness, or there's no volume to define.
+    // While we're at it see if we have variable thickness - if we do, we can't
+    // simplify the BoT up front.
     bool have_solid = false;
+    bool is_uniform = true;
     for (size_t i = 0; i < bot->num_faces; i++) {
-	if (bot->thickness[i] > VUNITIZE_TOL) {
+	if (bot->thickness[i] > VUNITIZE_TOL)
 	    have_solid = true;
-	    break;
-	}
+	if (!NEAR_EQUAL(bot->thickness[i], bot->thickness[0], VUNITIZE_TOL))
+	    is_uniform = false;
     }
 
     // If there's no volume, there's nothing to produce
@@ -226,9 +305,66 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	return 0;
     }
 
+    // If we have a non-zero max_area_delta and uniform thickness,
+    // pre-process the mesh to try and filter out near degenerate inputs.
+    // Those can have serious boolean evaluation performance implications and
+    // contribute virtually nothing to the final shape (such features also
+    // seriously inflate triangle counts for essentially no gain.)
+    if (is_uniform && !NEAR_ZERO(max_area_delta, VUNITIZE_TOL)) {
+
+	// Calculate our initial tolerance using one tenth of the length of the
+	// diagonal of the bounding box as a starting point, and tighten vertex
+	// merging criteria from there if the change in area is larger than the
+	// user allowed maximum.
+	point_t bbmin = VINIT_ZERO;
+	point_t bbmax = VINIT_ZERO;
+	if (!bg_trimesh_aabb(&bbmin, &bbmax, bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices)) {
+
+	    fastf_t working_tol = DIST_PNT_PNT(bbmax, bbmin) * 0.1;
+
+	    fastf_t orig_area = bg_trimesh_area(bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices);
+	    fastf_t narea = 0;
+	    fastf_t pdelta = 1.0;
+
+	    while (pdelta > min_tri_threshold) {
+		struct rt_bot_internal *cbot = collapse_faces(bot, working_tol);
+		if (cbot == input_bot)
+		    break;
+
+		// We have a new candidate - check its area and the triangle delta
+		narea = bg_trimesh_area(cbot->faces, cbot->num_faces, (const point_t *)cbot->vertices, cbot->num_vertices);
+		pdelta = ((fastf_t)bot->num_faces - (fastf_t)cbot->num_faces)/(fastf_t)bot->num_faces;
+
+
+		// If we satisfy the criteria, declare victory
+		if (pdelta > min_tri_threshold && NEAR_EQUAL(orig_area, narea, max_area_delta)) {
+		    if (!quiet_mode) {
+			bu_log("face cnt: %zd -> %zd:  Δ: -%g%%\n", bot->num_faces, cbot->num_faces, 100*pdelta);
+			bu_log("area: %g -> %g:  Δ: %g%%\n", orig_area, narea, 100*(orig_area - narea)/orig_area);
+		    }
+		    bot = cbot;
+		    break;
+		}
+
+		// One way or the other, we're not using cbot - free it up
+		rt_bot_internal_free(cbot);
+		bu_free(cbot, "cbot");
+
+		// If we're not getting enough reduction in face cnt, give up
+		if (pdelta < .2)
+		   break;
+
+		// If we don't have a winner yet, but we haven't hit the
+		// stopping criteria, continue
+		working_tol *= 0.5;
+	    }
+	}
+    }
+
     // OK, we have volume.  Now we need to build up the manifold definition
     // using unioned CSG elements
     manifold::Manifold c;
+    c.SetTolerance(mtol);
 
     // Collect the active vertices and edges
     std::set<int> verts;
@@ -290,10 +426,10 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	point_t v;
 	double r = ((double)verts_thickness[*v_it]/(double)(verts_fcnt[*v_it]));
 	// Make a sph at the vertex point with a radius based on the thickness
-	VMOVE(v, &bot->vertices[3**v_it]);
+	VMOVE(v, &bot->vertices[3*(*v_it)]);
 
 	manifold::Manifold sph = manifold::Manifold::Sphere(r, 8);
-	manifold::Manifold right = sph.Translate(glm::vec3(v[0], v[1], v[2]));
+	manifold::Manifold right = sph.Translate(linalg::vec<fastf_t, 3>(v[0], v[1], v[2]));
 
 	try {
 	    c += right;
@@ -333,11 +469,18 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	if (edge_cyl(&vertices, &faces, &vert_cnt, &face_cnt, base, v, r))
 	    continue;
 
-	manifold::Mesh rcc_m;
-	for (int j = 0; j < vert_cnt; j++)
-	    rcc_m.vertPos.push_back(glm::vec3(vertices[j][X], vertices[j][Y], vertices[j][Z]));
-	for (int j = 0; j < face_cnt; j++)
-	    rcc_m.triVerts.push_back(glm::ivec3(faces[3*j], faces[3*j+1], faces[3*j+2]));
+	manifold::MeshGL64 rcc_m;
+	rcc_m.tolerance = mtol;
+	for (int j = 0; j < vert_cnt; j++) {
+	    rcc_m.vertProperties.insert(rcc_m.vertProperties.end(), vertices[j][X]);
+	    rcc_m.vertProperties.insert(rcc_m.vertProperties.end(), vertices[j][Y]);
+	    rcc_m.vertProperties.insert(rcc_m.vertProperties.end(), vertices[j][Z]);
+	}
+	for (int j = 0; j < face_cnt; j++) {
+	    rcc_m.triVerts.insert(rcc_m.triVerts.end(), faces[3*j]);
+	    rcc_m.triVerts.insert(rcc_m.triVerts.end(), faces[3*j+1]);
+	    rcc_m.triVerts.insert(rcc_m.triVerts.end(), faces[3*j+2]);
+	}
 
 	if (vertices)
 	    bu_free(vertices, "verts");
@@ -345,6 +488,12 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	    bu_free(faces, "faces");
 
 	manifold::Manifold right(rcc_m);
+	// If we couldn't make the cylinder, skip
+	if (right.Status() != manifold::Manifold::Error::NoError) {
+	    bu_log("Warning - failed to generate manifold edge cyl - skipping!\n");
+	    continue;
+	}
+
 	try {
 	    c += right;
 	} catch (const std::exception &e) {
@@ -407,6 +556,26 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	/* 5 */ pts[12] = pnts[5][X]; pts[13] = pnts[5][Y]; pts[14] = pnts[5][Z];
 	/* 6 */ pts[15] = pnts[2][X]; pts[16] = pnts[2][Y]; pts[17] = pnts[2][Z];
 
+	// To minimize coplanarity with neighboring faces if the source BoT is
+	// planar, bump all points out very slightly from the arb center point.
+	point_t pcenter = VINIT_ZERO;
+	for (size_t j = 0; j < 6; j++) {
+	    point_t apnt;
+	    VMOVE(apnt, ((point_t *)pts)[j]);
+	    VADD2(pcenter, pcenter, apnt);
+	}
+	VSCALE(pcenter, pcenter, 1.0/6.0);
+
+	for (size_t j = 0; j < 6; j++) {
+	    point_t apnt;
+	    vect_t bumpv;
+	    VMOVE(apnt, ((point_t *)pts)[j]);
+	    VSUB2(bumpv, apnt, pcenter);
+	    VUNITIZE(bumpv);
+	    VSCALE(bumpv, bumpv, 1 + VUNITIZE_TOL);
+	    VADD2(((point_t *)pts)[j], apnt, bumpv);
+	}
+
 	int faces[24];
 	faces[ 0] = 0; faces[ 1] = 1; faces[ 2] = 4;  // 1 2 5
 	faces[ 3] = 2; faces[ 4] = 3; faces[ 5] = 5;  // 3 4 6
@@ -417,13 +586,23 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	faces[18] = 5; faces[19] = 4; faces[20] = 1;  // 6 5 2
 	faces[21] = 1; faces[22] = 2; faces[23] = 5;  // 2 3 6
 
-	manifold::Mesh arb_m;
-	for (size_t j = 0; j < 6; j++)
-	    arb_m.vertPos.push_back(glm::vec3(pts[3*j], pts[3*j+1], pts[3*j+2]));
-	for (size_t j = 0; j < 8; j++)
-	    arb_m.triVerts.push_back(glm::ivec3(faces[3*j], faces[3*j+1], faces[3*j+2]));
-
+	manifold::MeshGL64 arb_m;
+	for (size_t j = 0; j < 6; j++) {
+	    arb_m.vertProperties.insert(arb_m.vertProperties.end(), pts[3*j]);
+	    arb_m.vertProperties.insert(arb_m.vertProperties.end(), pts[3*j+1]);
+	    arb_m.vertProperties.insert(arb_m.vertProperties.end(), pts[3*j+2]);
+	}
+	for (size_t j = 0; j < 8; j++) {
+	    arb_m.triVerts.insert(arb_m.triVerts.end(), faces[3*j]);
+	    arb_m.triVerts.insert(arb_m.triVerts.end(), faces[3*j+1]);
+	    arb_m.triVerts.insert(arb_m.triVerts.end(), faces[3*j+2]);
+	}
 	manifold::Manifold right(arb_m);
+	// If we couldn't make the arb, skip
+	if (right.Status() != manifold::Manifold::Error::NoError) {
+	    bu_log("Warning - failed to generate manifold face arb - skipping!\n");
+	    continue;
+	}
 
 	try {
 	    c += right;
@@ -434,7 +613,6 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
 	    }
 	    return -1;
 	}
-
 	fcnt++;
 	elapsed = bu_gettime() - start;
 	seconds = elapsed / 1000000.0;
@@ -448,7 +626,18 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     if (!quiet_mode)
 	bu_log("Processing %zd faces... done.\n" , bot->num_faces);
 
-    manifold::Mesh rmesh = c.GetMesh();
+    if (c.Status() != manifold::Manifold::Error::NoError) {
+	bu_log("Boolean op failure!\n");
+	// TODO - if debugging, re-run to generate specific failure
+	// inputs
+	return -1;
+    }
+
+
+    manifold::MeshGL64 rmesh;
+    rmesh.tolerance = mtol;
+    rmesh = c.GetMeshGL64();
+
     struct rt_bot_internal *rbot;
     BU_GET(rbot, struct rt_bot_internal);
     rbot->magic = RT_BOT_INTERNAL_MAGIC;
@@ -457,21 +646,24 @@ rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, 
     rbot->thickness = NULL;
     rbot->face_mode = (struct bu_bitv *)NULL;
     rbot->bot_flags = 0;
-    rbot->num_vertices = (int)rmesh.vertPos.size();
-    rbot->num_faces = (int)rmesh.triVerts.size();
-    rbot->vertices = (double *)calloc(rmesh.vertPos.size()*3, sizeof(double));;
-    rbot->faces = (int *)calloc(rmesh.triVerts.size()*3, sizeof(int));
-    for (size_t j = 0; j < rmesh.vertPos.size(); j++) {
-	rbot->vertices[3*j] = rmesh.vertPos[j].x;
-	rbot->vertices[3*j+1] = rmesh.vertPos[j].y;
-	rbot->vertices[3*j+2] = rmesh.vertPos[j].z;
-    }
-    for (size_t j = 0; j < rmesh.triVerts.size(); j++) {
-	rbot->faces[3*j] = rmesh.triVerts[j].x;
-	rbot->faces[3*j+1] = rmesh.triVerts[j].y;
-	rbot->faces[3*j+2] = rmesh.triVerts[j].z;
-    }
+    rbot->num_vertices = (int)rmesh.vertProperties.size()/3;
+    rbot->num_faces = (int)rmesh.triVerts.size()/3;
+    rbot->vertices = (double *)calloc(rmesh.vertProperties.size(), sizeof(double));;
+    rbot->faces = (int *)calloc(rmesh.triVerts.size(), sizeof(int));
+    for (size_t j = 0; j < rmesh.vertProperties.size(); j++)
+	rbot->vertices[j] = rmesh.vertProperties[j];
+    for (size_t j = 0; j < rmesh.triVerts.size(); j++)
+	rbot->faces[j] = rmesh.triVerts[j];
     *obot = rbot;
+
+    if (!quiet_mode)
+	bu_log("Extrusion has %ld vertices and %ld faces\n", rbot->num_vertices, rbot->num_faces);
+
+    if (input_bot != bot) {
+	rt_bot_internal_free(bot);
+	bu_free(bot, "bot");
+    }
+
     return 0;
 }
 

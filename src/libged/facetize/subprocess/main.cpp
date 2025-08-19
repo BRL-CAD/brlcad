@@ -35,6 +35,7 @@
 #include "bu/app.h"
 #include "bu/env.h"
 #include "bu/opt.h"
+#include "bg/trimesh.h"
 #include "rt/primitives/bot.h"
 #include "ged.h"
 #define TESS_OPTS_IMPLEMENTATION
@@ -158,7 +159,8 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	    // Plate mode BoTs need an explicit volume representation
 	    if (propVal == RT_BOT_PLATE || propVal == RT_BOT_PLATE_NOCOS) {
 		bu_vls_sprintf(method_flag, "PLATE");
-		return rt_bot_plate_to_vol(obot, bot, 0, 1);
+		fastf_t bot_area = bg_trimesh_area(bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices);
+		return rt_bot_plate_to_vol(obot, bot, 0, 1, 0.1*bot_area, 0.2);
 	    }
 	    // Volumetric bot - if it can be manifold we're good, but if
 	    // not we need to try and repair it.

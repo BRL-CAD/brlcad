@@ -1,7 +1,7 @@
 find_package_eigen(REQUIRED)
-brlcad_find_package(MANIFOLD REQUIRED)
+brlcad_find_package(manifold REQUIRED)
 
-set(BOT_LIBS libged libbg libbu ${MANIFOLD_LIBRARIES})
+set(BOT_LIBS libged libbg libbu manifold::manifold)
 
 brlcad_find_package(Geogram REQUIRED SYSPATTERN geogram)
 set(BOT_LOCAL_INCLUDE_DIRS ${BOT_LOCAL_INCLUDE_DIRS} ${Geogram_INCLUDE_DIR})
@@ -65,7 +65,7 @@ ged_plugin_library(ged-bot ${BOT_SRCS})
 target_include_directories(
   ged-bot
   BEFORE
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${MANIFOLD_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR} ${BRLCAD_SOURCE_DIR}/src/libbu
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${EIGEN3_INCLUDE_DIR} ${BRLCAD_SOURCE_DIR}/src/libbu
   ) # for fort.h
 target_include_directories(ged-bot SYSTEM PRIVATE ${BOT_LOCAL_INCLUDE_DIRS})
 target_link_libraries(ged-bot ${BOT_LIBS})

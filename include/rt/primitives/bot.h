@@ -156,7 +156,7 @@ RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,
 RT_EXPORT extern size_t rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size);
 
 /* Function to convert plate mode BoT to volumetric BoT */
-RT_EXPORT extern int rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, int round_outer_edges, int quiet_mode);
+RT_EXPORT extern int rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, int round_outer_edges, int quiet_mode, fastf_t max_area_delta, fastf_t min_tri_threshold);
 
 
 
