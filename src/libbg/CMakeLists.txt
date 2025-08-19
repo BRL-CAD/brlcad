@@ -49,6 +49,17 @@ set(BG_INCLUDE_DIRS
 brlcad_addlib(libbg "${LIBBG_SOURCES}" "${BG_LIBS}" "" "${BG_INCLUDE_DIRS}")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
+# enable /bigobj for spsr.cpp if we can
+# spsr has a lot of templates and inlines that will exceed (MSVC in particular)
+# default section limit without /bigobj
+check_cxx_compiler_flag("/bigobj" CXX_BIGOBJ_SUPPORTED)
+if (CXX_BIGOBJ_SUPPORTED)
+  set_source_files_properties(
+    ${CMAKE_CURRENT_SOURCE_DIR}/spsr.cpp
+    PROPERTIES COMPILE_OPTIONS "/bigobj"
+  )
+endif()
+
 # altivec vectorization is broken in our bundled version of eigen.
 # looks like it was fixed in upstream long time ago, so just disable
 # for now.  TODO: remove this / retest after next Eigen upgrade.
