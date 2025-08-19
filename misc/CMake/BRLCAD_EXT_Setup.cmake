@@ -35,15 +35,16 @@ include(CMakeParseArguments)
 # Preliminary setup and variable population
 function(brlcad_bext_init BEXT_SHA1)
 
-  # **************************************************************************
+  # ******************************************************************
   # We store the targeted bext repository hash (BEXT_SHA1) in the top
   # level CMakeLists.txt file, passed as an arg.  The hash needs to be
   # updated whenever BRL-CAD needs to target a new version of bext.
-  # **************************************************************************
+  # ******************************************************************
 
   # Populate these early, even though their main use is in
-  # misc/CMake/BRLCAD_ExternalDeps.cmake - find_program and find_package calls
-  # may also make use of them, particularly BRLCAD_EXT_NOINSTALL_DIR
+  # misc/CMake/BRLCAD_ExternalDeps.cmake - find_program and
+  # find_package calls may also make use of them, particularly
+  # BRLCAD_EXT_NOINSTALL_DIR
   set(BRLCAD_EXT_DIR_ENV "$ENV{BRLCAD_EXT_DIR}")
   if(BRLCAD_EXT_DIR_ENV AND NOT DEFINED BRLCAD_EXT_DIR)
     set(BRLCAD_EXT_DIR ${BRLCAD_EXT_DIR_ENV})
@@ -51,30 +52,30 @@ function(brlcad_bext_init BEXT_SHA1)
 
   # Handle a pre-defined BRLCAD_EXT_DIR variable
   if(DEFINED BRLCAD_EXT_DIR)
-    # Make sure we cache the BRLCAD_EXT_DIR setting - if we don't, then a re-configure
-    # with CMake is going to ignore a previously specified directory
+    # Make sure to cache BRLCAD_EXT_DIR setting - otherwise, CMake
+    # re-configure is going to ignore a previously specified directory
     set(BRLCAD_EXT_DIR "${BRLCAD_EXT_DIR}" CACHE PATH "BRL-CAD external dependency sources")
 
     if(NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
       set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_DIR}/install")
     endif(NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
-    # Need to handle the case where BRLCAD_EXT_DIR is a symlink - if it
-    # is, we need to expand the symlink in order for the tar tricks we use
-    # later for file copying to work...
+    # Need to handle the case where BRLCAD_EXT_DIR is a symlink - if
+    # it is, we need to expand the symlink in order for the tar tricks
+    # we use later for file copying to work...
     if(DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
       file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" EXT_PATH)
       set(BRLCAD_EXT_INSTALL_DIR "${EXT_PATH}")
     endif(DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
 
-    # For noinstall we don't need to worry about symlinks since we'll be using
-    # the contents in place.
+    # For noinstall we don't need to worry about symlinks since we'll
+    # be using the contents in place.
     if(NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
       set(BRLCAD_EXT_NOINSTALL_DIR "${BRLCAD_EXT_DIR}/noinstall")
     endif(NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
   endif(DEFINED BRLCAD_EXT_DIR)
 
-  # We've got to have bext for at least a few custom components no matter how
-  # many system packages are installed.
+  # We've got to have bext for at least a few custom components no
+  # matter how many system packages are installed.
   if(NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
     message(
       WARNING
@@ -88,11 +89,10 @@ function(brlcad_bext_init BEXT_SHA1)
     )
   endif(NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
 
-  # Before we do a lot of configure work, check whether we've got a type mismatch
-  # between bext and the BRL-CAD build type. If not, on Windows at least, it's a
-  # fatal error.
+  # Before configure, check whether there's a type mismatch with bext
+  # and BRL-CAD build types.  Some platforms (Windows), that's fatal.
   #
-  # NOTE: This test must come AFTER the inclusion of BRLCAD_Build_Types
+  # NOTE: This test must come AFTER inclusion of BRLCAD_Build_Types
   if(CMAKE_BUILD_TYPE AND EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
     find_program(DUMPBIN_EXEC dumpbin)
     set(TEST_BINFILE ${BRLCAD_EXT_NOINSTALL_DIR}/bin/strclear.exe)
@@ -169,9 +169,8 @@ endfunction()
 # Do a variety of checks and validations on the SHA1 hashes of bext
 function(bext_sha1_checks)
 
-  # If we have a pre-defined source directory, and it's not in the BRL-CAD
-  # source tree, we're not doing any checking - just use what the user has
-  # defined.
+  # If we have a pre-defined source dir and it's not in BRL-CAD's
+  # source tree, skip bext checks - just use what user has defined.
   if(DEFINED BRLCAD_EXT_SOURCE_DIR)
     IS_SUBPATH("${CMAKE_SOURCE_DIR}" "${BRLCAD_EXT_SOURCE_DIR}" BEXT_SUBDIR)
     if (NOT BEXT_SUBDIR)
@@ -179,8 +178,7 @@ function(bext_sha1_checks)
     endif()
   endif()
 
-  # If this is a non-git archive, there's no point in proceeding - we
-  # don't have the info we need for these checks.
+  # If non-git archive, we don't have enough info to check bext.
   if (NOT EXISTS "${PROJECT_SOURCE_DIR}/.git")
     return()
   endif()
@@ -190,14 +188,14 @@ function(bext_sha1_checks)
     return()
   endif()
 
-  # The next two tags are used for validation of the currently specified SHA1
-  # against the upstream bext repository state
+  # Next two tags are used for validation of the currently specified
+  # SHA1 against the upstream bext repository state
   brlcad_rel_version(BRLCAD_REL)
   remote_sha1(REMOTE_VER_SHA1 ${BRLCAD_REL})
   set(TARGET_BRANCH main)
   remote_sha1(REMOTE_BRANCH_SHA1 ${TARGET_BRANCH})
 
-  # If we're re-configuring, we may need to redo an obsolete bext build
+  # If re-configuring, we may need to redo an obsolete bext build
   set(OLD_SHA1)
   if (EXISTS "${CMAKE_CURRENT_BINARY_DIR}/bext.sha1")
     file(READ "${CMAKE_CURRENT_BINARY_DIR}/bext.sha1" OLD_SHA1)
@@ -210,40 +208,39 @@ function(bext_sha1_checks)
   #message("remote ${TARGET_BRANCH} SHA1: ${REMOTE_BRANCH_SHA1}")
   #message("OLD_SHA1: ${OLD_SHA1}")
 
-  # If we don't have a matching release tag, check whether the specified SHA1
-  # and the bext sha1 line up.  It's not (always) a show stopper if they
-  # do not, but the general intent is that specified should keep up with the
-  # bext branch.
+  # If not on a tag, check whether the specified SHA1 and the bext
+  # sha1 match.  It's not (always) a show stopper if they don't, but
+  # general expectation is the bext build will be kept up-to-date.
   if(BEXT_SHA1 AND REMOTE_BRANCH_SHA1 AND NOT REMOTE_VER_SHA1)
     if(NOT "${BEXT_SHA1}" STREQUAL "${REMOTE_BRANCH_SHA1}")
       message(
 	WARNING
-	"The local SHA1 (${BEXT_SHA1}) does not match the latest bext ${TARGET_BRANCH} branch SHA1 (${REMOTE_BRANCH_SHA1}).  This typically indicates upstream BRL-CAD has updated the bext repository and you will want to update your local clone.  To clear this warning, update the brlcad_bext_init argument in the top level CMakeLists.txt file ${REMOTE_BRANCH_SHA1}."
+	"Local checkout SHA1 (${BEXT_SHA1}) does not match latest bext '${TARGET_BRANCH}' branch SHA1 (${REMOTE_BRANCH_SHA1}).  Mistmatch typically indicates either upstream repo updated and you need to update your local clone manually, or the brlcad_bext_init() argument in top level CMakeLists.txt needs ${REMOTE_BRANCH_SHA1}."
 	)
     endif()
   endif(BEXT_SHA1 AND REMOTE_BRANCH_SHA1 AND NOT REMOTE_VER_SHA1)
 
-  # If we do have a versioned tag in github.com, check that the locally specified SHA1 
-  # matches it.  This check is primarily useful during release prep.
+  # If we have a tag, check whether the locally specified SHA1
+  # matches.  This check is primarily useful during release prep.
   if(BEXT_SHA1 AND REMOTE_VER_SHA1)
     if(NOT "${BEXT_SHA1}" STREQUAL "${REMOTE_VER_SHA1}")
       message(
 	WARNING
-	"The local SHA1 (${BEXT_SHA1}) does not match the ${BRLCAD_REL} SHA1 (${REMOTE_VER_SHA1}).  If preparing a release, remember to update the argument to brlcad_bext_init in the top level CMakeLists.txt file to point to bext's ${BRLCAD_REL} tag."
+	"Local SHA1 (${BEXT_SHA1}) does not match ${BRLCAD_REL} SHA1 (${REMOTE_VER_SHA1}).  If preparing a release, remember to update the argument to brlcad_bext_init in the top level CMakeLists.txt file to point to bext's ${BRLCAD_REL} tag."
 	)
     endif()
   endif(BEXT_SHA1 AND REMOTE_VER_SHA1)
 
-  # A clone into the build directory is transient - we don't keep it beyond the
-  # configure stage in order to save space.  However, we do want to be able to
-  # detect if the bext we built no longer matches upstream, so a cached record
-  # of the bext SHA1 used is retained.  If we have such a record, see if it
-  # matches our target BEXT_SHA1.  If not, we need to clear any old bext build
-  # products from the build directory and start fresh.
+  # A clone into the build dir is transient - we don't keep it after
+  # configure and successful bext build in order to save space.  We
+  # still want to detect if bext we built no longer matches upstream,
+  # though, so we cache the bext SHA1.  If it is cached, see if it
+  # matches our target BEXT_SHA1.  If not, we need to clear old bext
+  # build products from the build directory and restart fresh.
   if (OLD_SHA1 AND NOT "${OLD_SHA1}" STREQUAL "${BEXT_SHA1}")
     message("Previously compiled bext build products do not match current target - resetting.")
     if (EXISTS "${CMAKE_INSTALL_PREFIX}/include/brlcad/bu.h")
-      message(WARNING "${CMAKE_INSTALL_PREFIX} appears to contain a BRL-CAD install.  We are resetting bext components in the build, but not clearing the installed contents - to avoid any unexpected behaviors, recommend clearing ${CMAKE_INSTALL_PREFIX}.")
+      message(WARNING "${CMAKE_INSTALL_PREFIX} appears to contain a BRL-CAD install.  We are resetting bext components in the build, but not clearing installed contents.  To avoid unexpected behavior, clearing ${CMAKE_INSTALL_PREFIX} is recommended.")
     endif()
     # Remove all old bext output files in build directory
     if (EXISTS "${TP_INVENTORY}")
@@ -274,9 +271,8 @@ endfunction()
 # the build needs to clear out the source directory.
 function(setup_bext_dir)
 
-  # If we have a pre-defined source directory, and it's not in the BRL-CAD
-  # source tree, we're not doing any setup or checking - just use what the user
-  # has defined.
+  # If we have a pre-defined bext source dir and it's not in the
+  # source tree, we skip setup checks and just use what user defined.
   if(DEFINED BRLCAD_EXT_SOURCE_DIR)
     IS_SUBPATH("${CMAKE_SOURCE_DIR}" "${BRLCAD_EXT_SOURCE_DIR}" BEXT_SUBDIR)
     if (NOT BEXT_SUBDIR)
@@ -287,9 +283,8 @@ function(setup_bext_dir)
   # If we don't have a user-specified source directory, it's time to clone.
   if (NOT BRLCAD_EXT_SOURCE_DIR)
 
-    # With a pre-populated bext source directory we could build even without
-    # git, but if we don't have bext sources AND we don't have git at this
-    # stage we're done.
+    # With pre-populated bext source dir we can build without git, but
+    # if we don't have bext sources AND we don't have git, we're done.
     if (NOT GIT_EXEC)
       message(FATAL_ERROR "No bext sources specified, and git executable not found.")
     endif()
@@ -341,10 +336,9 @@ function(brlcad_ext_setup)
   set(BRLCAD_EXT_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/bext_build)
   set(BRLCAD_EXT_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/bext_output)
 
-  # If we don't have the bext source directory, try to clone it.  If the user
-  # specified a BRLCAD_EXT_SOURCE_DIR we won't delete it, but if we end up
-  # cloning we will - setup_bext_dir will need to set BEXT_SRC_CLEANUP based on
-  # what it finds.
+  # If we don't have a bext source dir and BRLCAD_EXT_SOURCE_DIR isn't
+  # set, try to clone.  setup_bext_dir() will set BEXT_SRC_CLEANUP if
+  # we're out of date.
   set(BEXT_SRC_CLEANUP FALSE)
   setup_bext_dir()
 
@@ -356,22 +350,22 @@ function(brlcad_ext_setup)
     message(FATAL_ERROR "Invalid bext directory: ${BRLCAD_EXT_SOURCE_DIR}")
   endif(NOT EXISTS "${BRLCAD_EXT_SOURCE_DIR}/dependencies.dot")
 
-  # We do allow the user to specify a build directory to be reused.  This is a
-  # rather unusual configuration, and may have unexpected results depending on
-  # what is or isn't rebuilt - use with care.
+  # We do allow the user to specify a build dir to be reused, however
+  # this is unpredictable and may cause unexpected results depending
+  # on what is or isn't rebuilt - use with care.
   set(BEXT_BLD_CLEANUP FALSE)
   if(NOT EXISTS ${BRLCAD_EXT_BUILD_DIR})
     file(MAKE_DIRECTORY ${BRLCAD_EXT_BUILD_DIR})
     if (BRLCAD_BEXT_CLEANUP)
-      # If the cleanup step is specifically enabled, we need to clear the build
-      # dir after completing to save space.
+      # If the cleanup step is specifically enabled, we need to clear
+      # the build dir after completing to save space.
       set(BEXT_BLD_CLEANUP TRUE)
     endif(BRLCAD_BEXT_CLEANUP)
   endif(NOT EXISTS ${BRLCAD_EXT_BUILD_DIR})
 
-  # Need to control options for this based on BRL-CAD configure settings.
-  # Unlike an independent bext build, we know for this one what we can turn on
-  # and off
+  # Need to control options for this based on BRL-CAD configure
+  # settings.  Unlike an independent bext build, we know for this one
+  # what we can turn on and off
   set(BEXT_ENABLE_ALL OFF)
   if("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED" OR ENABLE_ALL)
     set(BEXT_ENABLE_ALL ON)
@@ -401,12 +395,12 @@ function(brlcad_ext_setup)
     -DCMAKE_INSTALL_PREFIX=${BRLCAD_EXT_INSTALL_DIR}
     )
 
-  # If we're doing a components build, add the component list to the CMake
-  # arguments
+  # If we're doing a components build, add the component list to the
+  # CMake arguments
   if(BRLCAD_COMPONENTS)
-    # To avoid problems involved with quoting semicolons on command lines, we
-    # support using ':' as a delimiter in addition to the standard CMake list
-    # entry delimiter ';'
+    # To avoid problems involved with quoting semicolons on command
+    # lines, we support using ':' as a delimiter in addition to the
+    # standard CMake list entry delimiter ';'
     string(REPLACE ":" ";" BRLCAD_COMPONENTS "${BRLCAD_COMPONENTS}")
 
     set(active_dirs ${BRLCAD_COMPONENTS})
@@ -448,9 +442,9 @@ function(brlcad_ext_setup)
     message(FATAL_ERROR "Unable to successfully build bext dependency repository")
   endif(EXT_BUILD_STATUS)
 
-  # If we were successful, and set up things ourselves, clear out the src and
-  # build directories to save space.  In some environments, like the Github
-  # runners, space can be at a premium
+  # If cmake was successful and we set up bext src and build dirs,
+  # clear them out to save space.  Highly beneficial for some
+  # environments, e.g., Github runners,
   if(BEXT_SRC_CLEANUP)
     message("Removing ${BRLCAD_EXT_SOURCE_DIR}")
     execute_process(
