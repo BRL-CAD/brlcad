@@ -35,7 +35,7 @@ jobs:
 
   windows:
     name: Windows Latest MSVC - Ninja
-    runs-on: windows-latest
+    runs-on: windows-2025
     strategy:
       fail-fast: true
     steps:
@@ -96,7 +96,7 @@ jobs:
 
   windows_std_tools:
     name: Windows Latest MSVC - Standard Tools
-    runs-on: windows-latest
+    runs-on: windows-2025
     strategy:
       fail-fast: true
     steps:
