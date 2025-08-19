@@ -153,6 +153,26 @@ RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,
 				     fastf_t max_chord_error,
 				     fastf_t max_normal_error,
 				     fastf_t min_edge_length);
+
+
+/* Decimate the input Bot using feature_size to determine the target scale of
+ * geometric detail that is preserved in the output mesh.
+ *
+ * Geometrically, it represents the smallest meaningful feature or minimum
+ * detail size that should be retained. During decimation, edges, vertices, and
+ * triangles representing features smaller than feature_size are candidates for
+ * removal or simplification, while larger features are preserved. Thus,
+ * increasing feature_size produces a coarser mesh with fewer, larger
+ * triangles, removing fine details; decreasing it retains more of the original
+ * geometry and fine features. In essence, feature_size acts as a filter for
+ * the geometric fidelity of the simplified mesh.
+ *
+ * Note that feature_size is NOT a direct geometric measure, but is transformed
+ * internally into a collapse cost threshold.  The detailed geometric
+ * consequences of the feature_size parameter on the output are an
+ * implementation detail, so calling codes may see differences in output meshes
+ * between different library versions for the same feature_size parameter.
+ */
 RT_EXPORT extern size_t rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size);
 
 /* Function to convert plate mode BoT to volumetric BoT */

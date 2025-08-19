@@ -19,7 +19,6 @@ brlcad_manage_files(earcut.txt                 ${DOC_DIR}/legal/embedded TRIGGER
 brlcad_manage_files(fnmatch.txt                ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(fontstash.txt              ${DOC_DIR}/legal/embedded TRIGGER libdm)
 brlcad_manage_files(fort.txt                   ${DOC_DIR}/legal/embedded TRIGGER libbu)
-brlcad_manage_files(gct.txt                    ${DOC_DIR}/legal/embedded TRIGGER librt)
 brlcad_manage_files(gecode.txt                 ${DOC_DIR}/legal/embedded TRIGGER librt)
 brlcad_manage_files(gdal_gcv_plugin1.txt       ${DOC_DIR}/legal/embedded TRIGGER libgcv)
 brlcad_manage_files(gdal_gcv_plugin2.txt       ${DOC_DIR}/legal/embedded TRIGGER libgcv)

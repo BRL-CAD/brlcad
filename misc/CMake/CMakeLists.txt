@@ -38,7 +38,6 @@ set(
   FindLEMON.cmake
   FindLMDB.cmake
   FindLibUV.cmake
-  FindMMESH.cmake
   FindNETPBM.cmake
   FindNSIS.cmake
   FindOpenMesh.cmake
