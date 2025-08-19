@@ -112,8 +112,6 @@ int main(int argc, char **argv)
 
     if (infp != stdin && infp)
 	fclose(infp);
-    if (outfp != stdout && outfp)
-	fclose(outfp);
 
     // Output sorted by color
     for (const auto &kv : palette) {
@@ -121,6 +119,9 @@ int main(int argc, char **argv)
 	    fprintf(outfp, "%3d ", kv.first[i]);
 	fprintf(outfp, " %d\n", kv.second);
     }
+
+    if (outfp != stdout && outfp)
+	fclose(outfp);
 
     return 0;
 }

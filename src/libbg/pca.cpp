@@ -31,7 +31,21 @@
 #include <stdlib.h>
 #include <math.h>
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push /* start new diagnostic pragma */
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#elif defined(__clang__)
+#  pragma clang diagnostic push /* start new diagnostic pragma */
+#  pragma clang diagnostic ignored "-Wdocumentation"
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
 #include <Eigen/SVD>
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif defined(__clang__)
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
+
 
 #include "vmath.h"
 #include "bn/mat.h"

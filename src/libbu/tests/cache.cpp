@@ -537,8 +537,6 @@ threading_test()
 
     struct bu_cache *c = bu_cache_open(cfile, 1, 0);
 
-    start = bu_gettime();
-
     int tcnt = 20;
     int item_cnt = 300;
 
@@ -550,7 +548,6 @@ threading_test()
     }
 
     // Read the values from a single thread as a control
-    start = bu_gettime();
     std::map<int, int> ivals;
     struct bu_cache_txn *txn = NULL;
     char keystr[BU_CACHE_KEY_MAXLEN];
