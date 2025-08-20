@@ -24,7 +24,9 @@
 #include "common.h"
 
 /* interface header */
+extern "C" {
 #include "./master.h"
+}
 
 /* system headers */
 #include <stdlib.h>
@@ -50,6 +52,7 @@
 #include "bu/snooze.h"
 
 /* adrt headers */
+extern "C" {
 #include "adrt.h"		/* adrt Defines */
 #include "adrt_struct.h"	/* adrt common structs */
 #include "tienet.h"
@@ -57,7 +60,7 @@
 #include "camera.h"
 #include "dispatcher.h"		/* Dispatcher that creates work units */
 #include "compnet.h"		/* Component Networking, Sends Component Names via Network */
-
+}
 
 /* socket structure */
 typedef struct master_socket_s
@@ -324,11 +327,11 @@ int
 master_networking(void *ptr)
 {
     master_socket_t *sock = NULL, *tmp = NULL;
-    struct sockaddr_in master_addr = {0};
-    struct sockaddr_in observer_addr = {0};
+    struct sockaddr_in master_addr{};
+    struct sockaddr_in observer_addr{};
     fd_set readfds;
     int port=0, master_socket=0, highest_fd=0, new_socket=0, error=0;
-    unsigned int addrlen = 0;
+    socklen_t addrlen = 0;
     uint8_t op = 0;
     uint16_t endian = 0;
 

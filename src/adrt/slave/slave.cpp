@@ -44,13 +44,14 @@
 #include "bu/str.h"
 #include "rt/tie.h"
 
+extern "C" {
 /* adrt headers */
 #include "adrt.h"
 #include "load.h"
 #include "camera.h"
 #include "render_util.h"
 #include "tienet_slave.h"
-
+}
 
 typedef struct adrt_slave_project_s {
     struct tie_s tie;
@@ -113,7 +114,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	case ADRT_WORK_STATUS:
 	{
 #ifndef HAVE_DECL_GETLOADAVG
-	    extern int getloadavg(double loadavg[], int nelem);
+	    extern "C" int getloadavg(double loadavg[], int nelem);
 #endif /* HAVE_DECL_GETLOADAVG */
 #ifdef HAVE_GETLOADAVG
 	    double loadavg = -1.0;

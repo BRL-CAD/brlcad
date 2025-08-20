@@ -22,7 +22,9 @@
  */
 
 /* interface header */
+extern "C" {
 #include "compnet.h"
+}
 
 #include <stdlib.h>
 #include <string.h>
@@ -33,8 +35,10 @@
 #include "bio.h"
 
 #include "rt/tie.h"
+extern "C" {
 #include "adrt.h"
 #include "tienet.h"
+}
 
 #if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
 extern struct hostent *gethostbyname(const char *);
@@ -62,8 +66,8 @@ int master_compserv_active;
  */
 void compnet_connect(char *host, int port) {
     struct hostent hostent;
-    struct sockaddr_in compserv = {0};
-    struct sockaddr_in master = {0};
+    struct sockaddr_in compserv{};
+    struct sockaddr_in master{};
 
     master_compserv_active = 0;
 

@@ -54,13 +54,14 @@
 
 #include "bu/malloc.h"
 #include "rt/tie.h"
+extern "C" {
 #include "adrt.h"
 
 #include "tienet.h"
 #include "tienet_master.h"
 #include "dispatcher.h"
 #include "camera.h"
-
+}
 
 uint16_t dispatcher_frame;
 tienet_buffer_t dispatcher_mesg;

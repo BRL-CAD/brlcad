@@ -1,4 +1,4 @@
-set(ADRT_SLAVE_SOURCES ../tienet.c slave.c tienet_slave.c)
+set(ADRT_SLAVE_SOURCES ../tienet.cpp slave.cpp tienet_slave.cpp)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR}/../librender)
 

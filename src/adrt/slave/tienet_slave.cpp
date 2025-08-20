@@ -40,13 +40,14 @@
 /* public api headers */
 #include "rt/tie.h"
 
+extern "C" {
 /* adrt headers */
 #include "adrt.h"
 #include "tienet.h"
 
 /* local api headers */
 #include "./tienet_slave.h"
-
+}
 
 #if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
 extern struct hostent *gethostbyname(const char *);
@@ -97,15 +98,15 @@ void tienet_slave_free(void)
 
 
 void tienet_slave_worker(int port, char *host) {
-    tienet_buffer_t result = {0};
-    tienet_buffer_t buffer = {0};
-    struct sockaddr_in master = {0};
-    struct sockaddr_in slave = {0};
+    tienet_buffer_t result{};
+    tienet_buffer_t buffer{};
+    struct sockaddr_in master{};
+    struct sockaddr_in slave{};
     struct hostent h;
     short op = 0;
     uint32_t size = 0;
     int slave_socket = 0;
-    tienet_buffer_t buffer_comp = {0};
+    tienet_buffer_t buffer_comp{};
     unsigned long dest_len = 0;
 
 

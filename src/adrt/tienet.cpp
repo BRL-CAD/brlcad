@@ -18,7 +18,11 @@
  * information.
  */
 
+#include "common.h"
+
+extern "C" {
 #include "tienet.h"
+}
 
 #include "bio.h"
 #include "bresource.h"
