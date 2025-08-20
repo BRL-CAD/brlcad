@@ -52,6 +52,7 @@
 #include <cmath>
 #include <cassert>
 #include <array>
+#include <algorithm>
 #include "nanoflann.hpp"
 #include "robust_orient3d.hpp"
 extern "C" {
@@ -83,8 +84,7 @@ struct PCAdaptor {
     {
 	return (double)pts[i][d];
     }
-    template <class BBOX>
-    bool kdtree_get_bbox(BBOX&) const
+    template <class BBOX> bool kdtree_get_bbox(BBOX&) const
     {
 	return false;
     }
@@ -96,7 +96,6 @@ struct Edge {
     VPtr a, b;
     FPtr f0 = nullptr, f1 = nullptr;
     Type type = Front;
-
     Edge(VPtr s, VPtr t) : a(s), b(t) {}
     void add_face(FPtr f);
     VPtr opp_vert();
@@ -109,10 +108,8 @@ struct Vertex {
     std::array<fastf_t, 3> pos, nrm;
     std::unordered_set<EPtr> edges;
     Type type = Orphan;
-
     Vertex(int i, const std::array<fastf_t, 3>& p, const std::array<fastf_t, 3>& n)
 	: id(i), pos(p), nrm(n) {}
-
     void update_type()
     {
 	if (edges.empty()) type = Orphan;
@@ -210,13 +207,15 @@ public:
 	    v->edges.clear();
 	    v->type = Vertex::Orphan;
 	}
-	if (is_debug()) bu_log("[BallPivot] Run: %zu points, %zu normals, %zu radii\n", points.size(), normals.size(), radii.size());
+	if (is_debug()) bu_log("[BallPivot] Run: %zu points, %zu normals, %zu radii\n",
+				   points.size(), normals.size(), radii.size());
 	for (double r : radii) {
 	    if (is_debug()) bu_log("[BallPivot] Radius: %g\n", r);
 	    update_borders(r);
 	    if (e_front.empty()) find_seed(r);
 	    else expand(r);
-	    if (is_debug()) bu_log("[BallPivot] After r=%g, tris: %zu, fronts: %zu, borders: %zu\n", r, mesh.tris.size(), e_front.size(), e_border.size());
+	    if (is_debug()) bu_log("[BallPivot] After r=%g, tris: %zu, fronts: %zu, borders: %zu\n",
+				       r, mesh.tris.size(), e_front.size(), e_border.size());
 	}
 	if (is_debug() && mesh.tris.empty()) {
 	    bu_log("[BallPivot] No tris generated.\n");
@@ -249,6 +248,33 @@ public:
 	return mean;
     }
 
+    // Multi-scale radii heuristic
+    static std::vector<double> choose_auto_radii(const std::vector<std::array<fastf_t, 3>>& pts)
+    {
+	std::vector<double> nn;
+	double avg = avg_spacing(pts, &nn);
+	std::vector<double> radii;
+	if (avg <= 0.0 || nn.size() < 3) {
+	    if (avg > 0.0) radii.push_back(1.5 * avg);
+	    return radii;
+	}
+	std::nth_element(nn.begin(), nn.begin() + nn.size()/2, nn.end());
+	double med = nn[nn.size()/2];
+	size_t p90_i = (size_t)std::floor(0.9 * (nn.size() - 1));
+	std::nth_element(nn.begin(), nn.begin() + p90_i, nn.end());
+	double p90 = nn[p90_i];
+	double r0 = 0.9 * med;
+	double r1 = 1.2 * avg;
+	double r2 = std::min(2.5 * avg, 1.1 * p90);
+	if (!(r1 > r0)) r1 = r0 * 1.1;
+	if (!(r2 > r1)) r2 = r1 * 1.1;
+	if (r0 <= 0) r0 = avg * 0.8;
+	if (r1 <= 0) r1 = avg * 1.2;
+	if (r2 <= 0) r2 = avg * 2.0;
+	radii = {r0, r1, r2};
+	return radii;
+    }
+
 private:
     PCAdaptor pc_adapt;
     nanoflann::KDTreeSingleIndexAdaptor<
@@ -267,7 +293,8 @@ private:
 	return f;
     }
 
-    static void face_nrm(const std::array<fastf_t, 3>& p0, const std::array<fastf_t, 3>& p1, const std::array<fastf_t, 3>& p2, fastf_t n[3])
+    static void face_nrm(const std::array<fastf_t, 3>& p0, const std::array<fastf_t, 3>& p1,
+			 const std::array<fastf_t, 3>& p2, fastf_t n[3])
     {
 	vect_t v1, v2;
 	VSUB2(v1, p1.data(), p0.data());
@@ -277,7 +304,8 @@ private:
 	else VSETALL(n, 0.0);
     }
 
-    static bool robust_ok(const std::array<fastf_t, 3>& a, const std::array<fastf_t, 3>& b, const std::array<fastf_t, 3>& c, const std::array<fastf_t, 3>& na)
+    static bool robust_ok(const std::array<fastf_t, 3>& a, const std::array<fastf_t, 3>& b,
+			  const std::array<fastf_t, 3>& c, const std::array<fastf_t, 3>& na)
     {
 	fastf_t n[3];
 	face_nrm(a, b, c, n);
@@ -290,7 +318,9 @@ private:
 
     bool ball_ctr(int i0, int i1, int i2, double R, std::array<fastf_t, 3>& c)
     {
-	const auto& p0 = points[i0], &p1 = points[i1], &p2 = points[i2];
+	const auto& p0 = points[i0];
+	const auto& p1 = points[i1];
+	const auto& p2 = points[i2];
 	vect_t e1, e2, n;
 	VSUB2(e1, p1.data(), p0.data());
 	VSUB2(e2, p2.data(), p0.data());
@@ -314,7 +344,7 @@ private:
 	    return false;
 	}
 	double alpha = a * (b + c2 - a) / abg;
-	double beta = b * (a + c2 - b) / abg;
+	double beta  = b * (a + c2 - b) / abg;
 	double gamma = c2 * (a + b - c2) / abg;
 	fastf_t cc[3] = {0,0,0};
 	VSCALE(cc, p0.data(), alpha);
@@ -337,7 +367,6 @@ private:
 	    if (is_debug()) bu_log("[ball_ctr] ball too small\n");
 	    return false;
 	}
-
 	vect_t tr_n, nsum;
 	VMOVE(tr_n, n);
 	VUNITIZE(tr_n);
@@ -609,19 +638,22 @@ private:
 extern "C" {
 #endif
 
-// --- C Linkage Adapter ---
+// ---  C linkage adapter ---
 int ball_pivoting_run(
     std::vector<int>& faces,
     const point_t* pts3,
     const vect_t* nrms3,
     int n_pts,
-    double radius
+    const double* radii,
+    int n_radii
 )
 {
     using fastf = fastf_t;
+    if (!pts3 || !nrms3 || n_pts <= 0)
+	return 0;
+
     std::vector<std::array<fastf, 3>> pts(n_pts);
     std::vector<std::array<fastf, 3>> nrms(n_pts);
-
     for (int i = 0; i < n_pts; ++i) {
 	pts[i][0] = pts3[i][0];
 	pts[i][1] = pts3[i][1];
@@ -631,16 +663,31 @@ int ball_pivoting_run(
 	nrms[i][2] = nrms3[i][2];
     }
 
-    if (radius < 0.0 || NEAR_EQUAL(radius, 0.0, VUNITIZE_TOL)) {
-	double avg = bpiv::BallPivot::avg_spacing(pts);
-	radius = 1.5 * avg;
+    std::vector<double> rvec;
+    if (radii && n_radii > 0) {
+	rvec.reserve(n_radii);
+	for (int i = 0; i < n_radii; ++i)
+	    if (radii[i] > 0.0) rvec.push_back(radii[i]);
+	std::sort(rvec.begin(), rvec.end());
+	rvec.erase(std::unique(rvec.begin(), rvec.end()), rvec.end());
+    }
+
+    // Fallback to automatic radii if none supplied/valid
+    if (rvec.empty()) {
+	rvec = bpiv::BallPivot::choose_auto_radii(pts);
+	if (rvec.empty()) {
+	    double avg = bpiv::BallPivot::avg_spacing(pts);
+	    if (avg <= 0.0) return 0;
+	    rvec = {1.5 * avg};
+	}
     }
 
     bpiv::BallPivot bp(pts, nrms);
-    auto mesh = bp.run({radius});
+    auto mesh = bp.run(rvec);
     if (mesh.tris.empty()) return 0;
 
     faces.clear();
+    faces.reserve(mesh.tris.size() * 3);
     for (const auto& t : mesh.tris) {
 	faces.push_back(t[0]);
 	faces.push_back(t[1]);
@@ -654,17 +701,17 @@ int ball_pivoting_run(
 #endif
 
 /*
-   Debug/Telemetry usage:
+Usage:
 
-// Enable telemetry
-bpiv::BallPivot::debug(true);
+// Automatic multi-scale fallback if none provided:
+std::vector<int> faces;
+int tri_cnt = ball_pivoting_run(faces, pts, nrms, n_pts, nullptr, 0);
 
-// Run the algorithm
-auto mesh = bp.run({radius});
+// Explicit radii:
+double radii[] = {r_small, r_medium, r_large};
+int tri_cnt2 = ball_pivoting_run(faces, pts, nrms, n_pts, radii, 3);
 
-// If mesh.tris.empty(), check bu_log output for diagnostics.
 */
-
 
 // Local Variables:
 // tab-width: 8

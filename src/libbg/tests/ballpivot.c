@@ -89,8 +89,9 @@ main(int UNUSED(argc), const char **argv)
     int num_faces = 0;
     point_t *verts = NULL;
     int num_verts = 0;
+    const double radii[] = {BALL_RADIUS};
     int result = bg_3d_ballpivot(&faces, &num_faces, &verts, &num_verts,
-				 (const point_t *)points, (const vect_t *)normals, num_points, BALL_RADIUS);
+				 (const point_t *)points, (const vect_t *)normals, num_points, radii, 1);
 
     bu_log("Test #001:  Ball Pivot on Sphere:\n");
     bu_log("  Input points: %d\n", num_points);
