@@ -32,21 +32,24 @@
  *   1. All pixel modifications update the CPU backing store (shared or
  *      private memory as before).
  *   2. Modified pixel regions accumulate into a single dirty rectangle.
- *   3. On flush (or immediate mode) the dirty region is uploaded with
- *      glTexSubImage2D and the view is presented by drawing a textured quad
- *      covering the viewport (accounting for zoom/pan).
+ *   3. On flush or throttled interval the dirty region is uploaded with
+ *      glTexSubImage2D and the view is presented by drawing a textured quad.
  *
  * Benefits:
- *   - Pan/zoom no longer needs backbuffer copies or glPixelZoom – it is purely
- *     coordinate math when drawing the textured quad.
- *   - Avoids poorly accelerated legacy raster operations on modern drivers.
- *   - Provides a foundation for future shader/palette GPU paths if desired
- *     (still staying within fixed‑function for current compatibility).
+ *   - Pan/zoom no longer needs backbuffer copies or glPixelZoom.
+ *   - Avoids poorly accelerated legacy raster ops on modern drivers.
+ *   - Allows throttling of expensive uploads (see 'T' mode flag / env var).
  *
  * MODE_11COPY is retained (and still displayed) for compatibility with
- * scripts, but it is now a deprecated no‑op. Historically it enabled a
- * “fast” pan/zoom by copying from an off‑screen backbuffer; the texture
- * approach makes this optimization unnecessary.
+ * scripts, but it is now a deprecated no‑op (texture presentation makes the
+ * former optimization irrelevant.)
+ *
+ * Throttling:
+ *   - Default progressive present interval is 0.1 seconds (100 ms).
+ *   - User can specify /dev/oglT<ms> (e.g. /dev/oglT50 for 50 ms) to change.
+ *   - Environment variable FB_OGL_UPDATE_INTERVAL (seconds, float) can also
+ *     set interval.  Mode flag 'T' overrides the environment variable.
+ *   - Delayed mode ('D') still accumulates all writes until fb_flush().
  */
 /** @} */
 
@@ -63,6 +66,7 @@
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
+#include <time.h>
 
 #define j1 J1
 #define y1 Y1
@@ -110,16 +114,6 @@ extern struct fb ogl_interface;
 static int ogl_nwindows = 0;     /* number of open windows */
 static XColor color_cell[256];   /* used to set colormap */
 
-#if 0
-static void gl_printglmat(struct bu_vls *tmp_vls, GLfloat *m)
-{
-    bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[0], m[4], m[8], m[12]);
-    bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[1], m[5], m[9], m[13]);
-    bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[2], m[6], m[10], m[14]);
-    bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[3], m[7], m[11], m[15]);
-}
-#endif
-
 /* Per window state information */
 struct wininfo {
     short mi_curs_on;
@@ -157,6 +151,10 @@ struct oglinfo {
     int dirty;
     int dirty_xmin, dirty_ymin, dirty_xmax, dirty_ymax;
     int view_changed;
+
+    /* Throttling */
+    double last_present_time;
+    double min_present_interval; /* seconds */
 };
 
 #define WIN(ptr) ((struct wininfo *)((ptr)->i->u1.p))
@@ -218,19 +216,33 @@ static struct modeflags {
     { 'd', MODE_4MASK, MODE_4NODITH, "Suppress dithering - else dither if not 24-bit buffer" },
     { 'c', MODE_7MASK, MODE_7SWCMAP, "Perform software colormap - else use hardware colormap if possible" },
     { 's', MODE_9MASK, MODE_9SINGLEBUF, "Single buffer - else double buffer if possible" },
-    { 'b', MODE_11MASK, MODE_11COPY, "Deprecated: legacy backbuffer copy pan/zoom (texture path supersedes)" },
-    { 'D', MODE_12MASK, MODE_12DELAY_WRITES_TILL_FLUSH, "Don't update screen until fb_flush() is called." },
+    { 'b', MODE_11MASK, MODE_11COPY,  "Deprecated: legacy backbuffer copy pan/zoom (no-op)" },
+    { 'D', MODE_12MASK, MODE_12DELAY_WRITES_TILL_FLUSH, "Accumulate writes until fb_flush() (disables progressive presents)" },
     { 'z', MODE_15MASK, MODE_15ZAP, "Zap (free) shared memory." },
+    /* 'T' handled specially (throttle interval), not a bit flag */
     { '\0', 0, 0, "" }
 };
 
 /* Forward declarations */
 static void fb_clipper(struct fb *ifp);
 
-/******************** Texture Path Helpers ************************/
+/******************** Time Helper ************************/
+static double
+ogl_now(void)
+{
+#if defined(CLOCK_MONOTONIC)
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double)ts.tv_sec + (double)ts.tv_nsec * 1.0e-9;
+#else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (double)tv.tv_sec + (double)tv.tv_usec * 1.0e-6;
+#endif
+}
 
-static void
-ogl_dirty_clear(struct fb *ifp)
+/******************** Texture Path Helpers ************************/
+static void ogl_dirty_clear(struct fb *ifp)
 {
     OGL(ifp)->dirty = 0;
     OGL(ifp)->dirty_xmin = OGL(ifp)->dirty_ymin = 0;
@@ -264,9 +276,7 @@ ogl_make_current(struct fb *ifp)
     }
     return 1;
 }
-
-static void
-ogl_release_current(struct fb *ifp)
+static void ogl_release_current(struct fb *ifp)
 {
     glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
 }
@@ -276,7 +286,6 @@ ogl_init_texture(struct fb *ifp)
 {
     if (OGL(ifp)->tex_initialized) return;
     if (!ogl_make_current(ifp)) return;
-
     glGenTextures(1, &OGL(ifp)->texid);
     glBindTexture(GL_TEXTURE_2D, OGL(ifp)->texid);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -284,10 +293,7 @@ ogl_init_texture(struct fb *ifp)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-		 ifp->i->if_width, ifp->i->if_height,
-		 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, ifp->i->if_mem);
-
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ifp->i->if_width, ifp->i->if_height, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, ifp->i->if_mem);
     OGL(ifp)->tex_initialized = 1;
     ogl_dirty_clear(ifp);
     ogl_release_current(ifp);
@@ -309,12 +315,9 @@ ogl_upload_region(struct fb *ifp, int x, int y, int w, int h)
     if (x + w > ifp->i->if_width)  w = ifp->i->if_width - x;
     if (y + h > ifp->i->if_height) h = ifp->i->if_height - y;
     if (w <= 0 || h <= 0) return;
-
     if (!ogl_make_current(ifp)) return;
-
     int sw_cmap = (OGL(ifp)->soft_cmap_flag && WIN(ifp)->mi_cmap_flag);
     glBindTexture(GL_TEXTURE_2D, OGL(ifp)->texid);
-
     if (sw_cmap) {
 	struct fb_pixel *tmp = (struct fb_pixel *)bu_malloc(sizeof(struct fb_pixel)*w*h, "ogl sw cmap tmp");
 	for (int row=0; row<h; row++) {
@@ -338,7 +341,6 @@ ogl_upload_region(struct fb *ifp, int x, int y, int w, int h)
 	glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
 	glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
     }
-
     ogl_release_current(ifp);
 }
 
@@ -359,10 +361,8 @@ ogl_present(struct fb *ifp)
 {
     if (!OGL(ifp)->tex_initialized) return;
     if (!ogl_make_current(ifp)) return;
-
     if ((ifp->i->if_mode & MODE_4MASK) == MODE_4NODITH)
 	glDisable(GL_DITHER);
-
     struct fb_clip *clp = &(OGL(ifp)->clip);
     glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);
     glMatrixMode(GL_PROJECTION);
@@ -374,17 +374,12 @@ ogl_present(struct fb *ifp)
     glDisable(GL_LIGHTING);
     glClearColor(0,0,0,0);
     glClear(GL_COLOR_BUFFER_BIT);
-
-    int xpixmin = clp->xpixmin;
-    int xpixmax = clp->xpixmax;
-    int ypixmin = clp->ypixmin;
-    int ypixmax = clp->ypixmax;
-
+    int xpixmin = clp->xpixmin, xpixmax = clp->xpixmax;
+    int ypixmin = clp->ypixmin, ypixmax = clp->ypixmax;
     if (xpixmin > xpixmax || ypixmin > ypixmax) {
 	ogl_release_current(ifp);
 	return;
     }
-
     int vis_w = xpixmax - xpixmin + 1;
     int vis_h = ypixmax - ypixmin + 1;
     double zx = ifp->i->if_xzoom;
@@ -393,14 +388,12 @@ ogl_present(struct fb *ifp)
     if (zy < 1) zy = 1;
     double draw_w = vis_w * zx;
     double draw_h = vis_h * zy;
-    double sx = (OGL(ifp)->win_width  - draw_w)/2.0;
+    double sx = (OGL(ifp)->win_width - draw_w)/2.0;
     double sy = (OGL(ifp)->win_height - draw_h)/2.0;
-
     float tx0 = (float)xpixmin / (float)ifp->i->if_width;
     float ty0 = (float)ypixmin / (float)ifp->i->if_height;
     float tx1 = (float)(xpixmax + 1) / (float)ifp->i->if_width;
     float ty1 = (float)(ypixmax + 1) / (float)ifp->i->if_height;
-
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, OGL(ifp)->texid);
     glBegin(GL_TRIANGLE_STRIP);
@@ -413,31 +406,47 @@ ogl_present(struct fb *ifp)
     glTexCoord2f(tx1, ty1);
     glVertex2f(sx+draw_w, sy + draw_h);
     glEnd();
-
-    if (WIN(ifp)->mi_doublebuffer)
-	glXSwapBuffers(OGL(ifp)->dispp, OGL(ifp)->wind);
-    else
-	glFlush();
-
+    if (WIN(ifp)->mi_doublebuffer) glXSwapBuffers(OGL(ifp)->dispp, OGL(ifp)->wind);
+    else glFlush();
     ogl_release_current(ifp);
     OGL(ifp)->view_changed = 0;
 }
 
-/******************* Colormap / Memory Helpers ************************/
-
+/* Throttled present helper */
 static void
-ogl_cminit(struct fb *ifp)
+ogl_maybe_present(struct fb *ifp, int force)
+{
+    /* If in delayed mode and not forcing, do nothing */
+    if (!force && ((ifp->i->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH))
+        return;
+
+    double now = ogl_now();
+    if (!force && (now - OGL(ifp)->last_present_time) < OGL(ifp)->min_present_interval)
+        return;
+
+    int had_dirty = OGL(ifp)->dirty;
+    int had_view  = OGL(ifp)->view_changed;
+
+    if (had_dirty)
+        ogl_upload_dirty(ifp);  /* this clears dirty */
+
+    if (had_dirty || had_view) {
+        ogl_present(ifp);
+        OGL(ifp)->last_present_time = now;
+    }
+}
+
+/******************* Colormap / Memory Helpers ************************/
+static void ogl_cminit(struct fb *ifp)
 {
     for (int i=0; i<256; i++) {
-	CMR(ifp)[i] = i;
-	CMB(ifp)[i] = i;
-	CMG(ifp)[i] = i;
+	CMR(ifp)[i]=i;
+	CMG(ifp)[i]=i;
+	CMB(ifp)[i]=i;
     }
 }
 
 /******************* Shared Memory Support ****************************/
-
-/* (Unchanged logic apart from formatting / warnings) */
 static int
 ogl_getmem(struct fb *ifp)
 {
@@ -447,19 +456,14 @@ ogl_getmem(struct fb *ifp)
     char *sp;
     int new_mem = 0;
     int shm_result = 0;
-
     errno = 0;
-
-    if (pixsize > sizeof(struct fb_pixel)*1000*1000) {
-	ifp->i->if_mode |= MODE_1MALLOC;
-    }
-
+    if (pixsize > sizeof(struct fb_pixel)*1000*1000) ifp->i->if_mode |= MODE_1MALLOC;
     if ((ifp->i->if_mode & MODE_1MASK) == MODE_1MALLOC) {
 	WIN(ifp)->mi_pixwidth = ifp->i->if_width;
 	size = pixsize + sizeof(struct fb_cmap);
 	sp = (char *)calloc(1, size);
 	if (!sp) {
-	    fb_log("ogl_getmem: frame buffer memory malloc failed\n");
+	    fb_log("ogl_getmem: malloc failed\n");
 	    return -1;
 	}
 	new_mem = 1;
@@ -473,7 +477,7 @@ ogl_getmem(struct fb *ifp)
 	    new_mem = 1;
 	} else if (shm_result == 1) {
 	    ifp->i->if_mode |= MODE_1MALLOC;
-	    fb_log("ogl_getmem: Unable to attach to shared memory, using private\n");
+	    fb_log("ogl_getmem: Using private memory (shm attach failed)\n");
 	    sp = (char *)calloc(1, size);
 	    if (!sp) {
 		fb_log("ogl_getmem: malloc failure\n");
@@ -482,12 +486,10 @@ ogl_getmem(struct fb *ifp)
 	    new_mem = 1;
 	}
     }
-
     ifp->i->if_mem = sp;
     ifp->i->if_cmap = sp + (size - sizeof(struct fb_cmap));
     i = CMB(ifp)[255];
     CMB(ifp)[255] = i;
-
     if (new_mem) ogl_cminit(ifp);
     return 0;
 }
@@ -512,32 +514,26 @@ ogl_zapmem(void)
 }
 
 /******************* Clipping ****************************************/
-
 void
 fb_clipper(struct fb *ifp)
 {
-    struct fb_clip *clp;
+    struct fb_clip *clp = &(OGL(ifp)->clip);
     int i;
     double pixels;
-
-    clp = &(OGL(ifp)->clip);
-
     i = OGL(ifp)->vp_width/(2*ifp->i->if_xzoom);
     clp->xscrmin = ifp->i->if_xcenter - i;
     i = OGL(ifp)->vp_width/ifp->i->if_xzoom;
     clp->xscrmax = clp->xscrmin + i;
-    pixels = (double) i;
-    clp->oleft = ((double) clp->xscrmin) - 0.25*pixels/((double) OGL(ifp)->vp_width);
+    pixels = (double)i;
+    clp->oleft = ((double)clp->xscrmin) - 0.25*pixels/((double)OGL(ifp)->vp_width);
     clp->oright = clp->oleft + pixels;
-
     i = OGL(ifp)->vp_height/(2*ifp->i->if_yzoom);
     clp->yscrmin = ifp->i->if_ycenter - i;
     i = OGL(ifp)->vp_height/ifp->i->if_yzoom;
     clp->yscrmax = clp->yscrmin + i;
-    pixels = (double) i;
-    clp->obottom = ((double) clp->yscrmin) - 0.25*pixels/((double) OGL(ifp)->vp_height);
+    pixels = (double)i;
+    clp->obottom = ((double)clp->yscrmin) - 0.25*pixels/((double)OGL(ifp)->vp_height);
     clp->otop = clp->obottom + pixels;
-
     clp->xpixmin = clp->xscrmin;
     if (clp->xpixmin < 0) clp->xpixmin = 0;
     clp->xpixmax = clp->xscrmax;
@@ -549,81 +545,61 @@ fb_clipper(struct fb *ifp)
 }
 
 /******************* Expose / Events ********************************/
-
 static void
 expose_callback(struct fb *ifp)
 {
     XWindowAttributes xwa;
-
     if (OGL(ifp)->firstTime) {
 	if (!ogl_make_current(ifp)) return;
 	OGL(ifp)->firstTime = 0;
 	XGetWindowAttributes(OGL(ifp)->dispp, OGL(ifp)->wind, &xwa);
 	OGL(ifp)->win_width = xwa.width;
 	OGL(ifp)->win_height = xwa.height;
-
-	OGL(ifp)->vp_width = (OGL(ifp)->win_width < ifp->i->if_width) ?
-			     OGL(ifp)->win_width : ifp->i->if_width;
-	OGL(ifp)->vp_height = (OGL(ifp)->win_height < ifp->i->if_height) ?
-			      OGL(ifp)->win_height : ifp->i->if_height;
-
+	OGL(ifp)->vp_width = (OGL(ifp)->win_width < ifp->i->if_width)? OGL(ifp)->win_width : ifp->i->if_width;
+	OGL(ifp)->vp_height = (OGL(ifp)->win_height < ifp->i->if_height)? OGL(ifp)->win_height : ifp->i->if_height;
 	ifp->i->if_xcenter = OGL(ifp)->vp_width/2;
 	ifp->i->if_ycenter = OGL(ifp)->vp_height/2;
-
-	WIN(ifp)->mi_xoff = (OGL(ifp)->win_width - OGL(ifp)->vp_width)/2;
-	WIN(ifp)->mi_yoff = (OGL(ifp)->win_height - OGL(ifp)->vp_height)/2;
-
-	glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);
+	WIN(ifp)->mi_xoff=(OGL(ifp)->win_width-OGL(ifp)->vp_width)/2;
+	WIN(ifp)->mi_yoff=(OGL(ifp)->win_height-OGL(ifp)->vp_height)/2;
+	glViewport(0,0,OGL(ifp)->win_width,OGL(ifp)->win_height);
 	glClearColor(0,0,0,0);
 	glClear(GL_COLOR_BUFFER_BIT);
 	ogl_release_current(ifp);
-
 	fb_clipper(ifp);
     }
-
     if (!OGL(ifp)->tex_initialized) {
 	ogl_init_texture(ifp);
-	/* upload full initial image */
 	ogl_dirty_add(ifp, 0, 0, ifp->i->if_width, ifp->i->if_height);
     }
-
-    /* Ensure any outstanding dirty region is uploaded before present */
     if (OGL(ifp)->dirty) ogl_upload_dirty(ifp);
     ogl_present(ifp);
+    OGL(ifp)->last_present_time = ogl_now();
 }
 
 int
 ogl_configureWindow(struct fb *ifp, int width, int height)
 {
-    if (width == OGL(ifp)->win_width && height == OGL(ifp)->win_height)
-	return 1;
-
+    if (width == OGL(ifp)->win_width && height == OGL(ifp)->win_height) return 1;
     ifp->i->if_width = ifp->i->if_max_width = width;
     ifp->i->if_height = ifp->i->if_max_height = height;
-
     OGL(ifp)->win_width = OGL(ifp)->vp_width = width;
     OGL(ifp)->win_height = OGL(ifp)->vp_height = height;
-
     ifp->i->if_zoomflag = 0;
     ifp->i->if_xzoom = ifp->i->if_yzoom = 1;
     ifp->i->if_xcenter = width/2;
     ifp->i->if_ycenter = height/2;
-
     ogl_getmem(ifp);
     fb_clipper(ifp);
-
-    /* Recreate texture to new size */
-    if (OGL(ifp)->tex_initialized) {
-	if (ogl_make_current(ifp)) {
-	    glDeleteTextures(1, &OGL(ifp)->texid);
-	    ogl_release_current(ifp);
-	}
+    if (OGL(ifp)->tex_initialized && ogl_make_current(ifp)) {
+	glDeleteTextures(1, &OGL(ifp)->texid);
+	ogl_release_current(ifp);
 	OGL(ifp)->tex_initialized = 0;
     }
     ogl_init_texture(ifp);
-    ogl_dirty_add(ifp, 0, 0, ifp->i->if_width, ifp->i->if_height);
+    ogl_dirty_add(ifp,0,0,ifp->i->if_width,ifp->i->if_height);
     ogl_upload_dirty(ifp);
     ogl_present(ifp);
+    OGL(ifp)->last_present_time = ogl_now();
     return 0;
 }
 
@@ -634,8 +610,7 @@ ogl_do_event(struct fb *ifp)
     while (XCheckWindowEvent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->event_mask, &event)) {
 	switch (event.type) {
 	    case Expose:
-		if (!OGL(ifp)->use_ext_ctrl)
-		    expose_callback(ifp);
+		if (!OGL(ifp)->use_ext_ctrl) expose_callback(ifp);
 		break;
 	    case ButtonPress: {
 		int button = (int)event.xbutton.button;
@@ -679,13 +654,10 @@ ogl_do_event(struct fb *ifp)
 }
 
 /******************* Visual Selection / Open ************************/
-
 static int is_linear_cmap(struct fb *ifp)
 {
     for (int i=0; i<256; i++) {
-	if (CMR(ifp)[i] != i) return 0;
-	if (CMG(ifp)[i] != i) return 0;
-	if (CMB(ifp)[i] != i) return 0;
+	if (CMR(ifp)[i]!=i||CMG(ifp)[i]!=i||CMB(ifp)[i]!=i) return 0;
     }
     return 1;
 }
@@ -694,26 +666,21 @@ static XVisualInfo *
 fb_ogl_choose_visual(struct fb *ifp)
 {
     XVisualInfo *vip, *vibase, *maxvip, _template;
-#define NGOOD 200
-    int good[NGOOD];
+    int good[200];
     int num, i, j;
     int m_hard_cmap, m_sing_buf, m_doub_buf;
     int use, rgba, dbfr;
-
     m_hard_cmap = ((ifp->i->if_mode & MODE_7MASK)==MODE_7NORMAL);
-    m_sing_buf  = ((ifp->i->if_mode & MODE_9MASK)==MODE_9SINGLEBUF);
+    m_sing_buf = ((ifp->i->if_mode & MODE_9MASK)==MODE_9SINGLEBUF);
     m_doub_buf = !m_sing_buf;
-
-    memset((void *)&_template, 0, sizeof(XVisualInfo));
+    memset(&_template,0,sizeof(XVisualInfo));
     vibase = XGetVisualInfo(OGL(ifp)->dispp, 0, &_template, &num);
-
     while (1) {
-	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
+	for (i=0,j=0,vip=vibase; i<num; i++,vip++) {
 	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_USE_GL, &use);
 	    if (!use) continue;
 	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_RGBA, &rgba);
 	    if (!rgba) continue;
-
 #ifdef HAVE_XRENDER
 	    XRenderPictFormat *pict_format = XRenderFindVisualFormat(OGL(ifp)->dispp, vip->visual);
 	    if (pict_format && pict_format->direct.alphaMask > 0) continue;
@@ -723,49 +690,43 @@ fb_ogl_choose_visual(struct fb *ifp)
 	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_DOUBLEBUFFER, &dbfr);
 	    if (m_doub_buf && (!dbfr)) continue;
 	    if (m_sing_buf && dbfr) continue;
-	    if (j >= NGOOD-1) {
-		fb_log("fb_ogl_open: More than %d candidate visuals!\n", NGOOD);
+	    if (j >= 199) {
+		fb_log("fb_ogl_open: Too many candidate visuals!\n");
 		break;
 	    }
 	    good[j++] = i;
 	}
-
 	if (j >= 1) {
 	    maxvip = vibase + good[0];
 	    for (i=1; i<j; i++) {
 		vip = vibase + good[i];
-		if (vip->depth > maxvip->depth)
-		    maxvip = vip;
+		if (vip->depth > maxvip->depth) maxvip = vip;
 	    }
 	    OGL(ifp)->soft_cmap_flag = !m_hard_cmap;
 	    WIN(ifp)->mi_doublebuffer = m_doub_buf;
 	    return maxvip;
 	}
-
 	if (m_hard_cmap) {
 	    m_hard_cmap = 0;
-	    fb_log("fb_ogl_open: hardware colormapping not available. Using software colormap.\n");
+	    fb_log("fb_ogl_open: hardware colormap not available. Using software.\n");
 	} else if (m_sing_buf) {
 	    m_sing_buf = 0;
 	} else if (m_doub_buf) {
 	    m_doub_buf = 0;
 	    fb_log("fb_ogl_open: double buffering not available. Using single buffer.\n");
-	} else {
-	    return NULL;
-	}
+	} else return NULL;
     }
 }
 
-/* Open a new window */
 static int
 fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 {
     static char title[128] = {0};
     int mode;
-
+    double throttle_ms = -1.0; /* -1 => not set by mode flag */
     FB_CK_FB(ifp->i);
 
-    /* Default: no delayed writes. User must add 'D' flag explicitly. */
+    /* Default: lingering window, NO delayed writes unless user supplied 'D' */
     mode = MODE_2LINGERING;
 
     if (file) {
@@ -778,24 +739,37 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 	    cp = &file[8];
 	    while (*cp && !isspace((int)(*cp))) {
 		*mp++ = *cp;
+		if (*cp == 'T') {
+		    cp++; /* consume 'T' */
+		    const char *start = cp;
+		    while (isdigit((int)(*cp))) cp++;
+		    if (cp > start) {
+			char numbuf[16] = {0};
+			size_t len = (size_t)(cp - start);
+			if (len > 15) len = 15;
+			memcpy(numbuf, start, len);
+			throttle_ms = atof(numbuf); /* milliseconds */
+		    } else {
+			throttle_ms = 100.0; /* default 100 ms if no number */
+		    }
+		    continue;
+		}
 		if (isdigit((int)(*cp))) {
 		    cp++;
 		    continue;
 		}
 		alpha++;
-		for (mfp=modeflags; mfp->c != '\0'; mfp++) {
+		for (mfp = modeflags; mfp->c != '\0'; mfp++) {
 		    if (mfp->c == *cp) {
 			mode = (mode & ~mfp->mask) | mfp->value;
 			break;
 		    }
 		}
-		if (mfp->c == '\0' && *cp != '-') {
-		    fb_log("if_ogl: unknown option '%c' ignored\n", *cp);
-		}
+		if (mfp->c == '\0' && *cp != '-') fb_log("if_ogl: unknown option '%c' ignored\n", *cp);
 		cp++;
 	    }
 	    *mp = '\0';
-	    if (!alpha) mode |= atoi(modebuf);
+	    if (!alpha && modebuf[0]) mode |= atoi(modebuf);
 	}
 	if ((mode & MODE_15MASK) == MODE_15ZAP) {
 	    ogl_zapmem();
@@ -815,7 +789,6 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 	fb_log("fb_ogl_open: wininfo malloc failed\n");
 	return -1;
     }
-
     struct oglinfo *oinfo = (struct oglinfo *)calloc(1, sizeof(struct oglinfo));
     OGLL(ifp) = (char *)oinfo;
     if (!OGL(ifp)) {
@@ -829,12 +802,9 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
     if (height <= 0) height = ifp->i->if_height;
     if (width > ifp->i->if_max_width) width = ifp->i->if_max_width;
     if (height > ifp->i->if_max_height) height = ifp->i->if_max_height;
-
     ifp->i->if_width = width;
     ifp->i->if_height = height;
-
-    if (ogl_getmem(ifp) < 0)
-	return -1;
+    if (ogl_getmem(ifp) < 0) return -1;
 
     WIN(ifp)->mi_curs_on = 1;
 
@@ -849,46 +819,38 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 
     OGL(ifp)->dispp = XOpenDisplay(NULL);
     if (!OGL(ifp)->dispp) {
-	fb_log("fb_ogl_open: Failed to open display. Check DISPLAY.\n");
+	fb_log("fb_ogl_open: Failed to open display.\n");
 	return -1;
     }
     ifp->i->if_selfd = ConnectionNumber(OGL(ifp)->dispp);
 
     OGL(ifp)->vip = fb_ogl_choose_visual(ifp);
     if (!OGL(ifp)->vip) {
-	fb_log("fb_ogl_open: Couldn't find an appropriate visual.\n");
+	fb_log("fb_ogl_open: No appropriate visual.\n");
 	return -1;
     }
-
     OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp, OGL(ifp)->vip, 0, GL_TRUE);
     if (!OGL(ifp)->glxc) {
-	fb_log("ERROR: Couldn't create an OpenGL context!\n");
+	fb_log("ERROR: Couldn't create OpenGL context!\n");
 	return -1;
     }
 
     WIN(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
     if (!OGL(ifp)->soft_cmap_flag) {
-	OGL(ifp)->xcmap = XCreateColormap(OGL(ifp)->dispp,
-					  RootWindow(OGL(ifp)->dispp, OGL(ifp)->vip->screen),
-					  OGL(ifp)->vip->visual,
-					  AllocAll);
+	OGL(ifp)->xcmap = XCreateColormap(OGL(ifp)->dispp, RootWindow(OGL(ifp)->dispp, OGL(ifp)->vip->screen), OGL(ifp)->vip->visual, AllocAll);
 	for (int i=0; i<256; i++) {
 	    color_cell[i].pixel = i;
 	    color_cell[i].red = CMR(ifp)[i];
 	    color_cell[i].green = CMG(ifp)[i];
 	    color_cell[i].blue = CMB(ifp)[i];
-	    color_cell[i].flags = DoRed | DoGreen | DoBlue;
+	    color_cell[i].flags = DoRed|DoGreen|DoBlue;
 	}
 	XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell, 256);
     } else {
-	OGL(ifp)->xcmap = XCreateColormap(OGL(ifp)->dispp,
-					  RootWindow(OGL(ifp)->dispp, OGL(ifp)->vip->screen),
-					  OGL(ifp)->vip->visual,
-					  AllocNone);
+	OGL(ifp)->xcmap = XCreateColormap(OGL(ifp)->dispp, RootWindow(OGL(ifp)->dispp, OGL(ifp)->vip->screen), OGL(ifp)->vip->visual, AllocNone);
     }
 
     XSync(OGL(ifp)->dispp, 0);
-
     XSetWindowAttributes swa;
     memset(&swa, 0, sizeof(swa));
     long valuemask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
@@ -897,33 +859,31 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
     swa.event_mask = OGL(ifp)->event_mask = ExposureMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask;
     swa.colormap = OGL(ifp)->xcmap;
 
-    OGL(ifp)->wind = XCreateWindow(OGL(ifp)->dispp,
-				   RootWindow(OGL(ifp)->dispp, OGL(ifp)->vip->screen),
-				   0, 0, ifp->i->if_width, ifp->i->if_height, 0,
-				   OGL(ifp)->vip->depth, InputOutput,
-				   OGL(ifp)->vip->visual,
-				   valuemask, &swa);
-
+    OGL(ifp)->wind = XCreateWindow(OGL(ifp)->dispp, RootWindow(OGL(ifp)->dispp, OGL(ifp)->vip->screen), 0,0, ifp->i->if_width, ifp->i->if_height, 0, OGL(ifp)->vip->depth, InputOutput, OGL(ifp)->vip->visual, valuemask, &swa);
     XStoreName(OGL(ifp)->dispp, OGL(ifp)->wind, title);
     ogl_nwindows++;
     XMapRaised(OGL(ifp)->dispp, OGL(ifp)->wind);
-
     OGL(ifp)->alive = 1;
     OGL(ifp)->firstTime = 1;
 
-    while (OGL(ifp)->firstTime == 1)
-	ogl_do_event(ifp);
+    /* Throttle interval defaults */
+    OGL(ifp)->min_present_interval = 0.1; /* 100ms default */
+    const char *env_int = getenv("FB_OGL_UPDATE_INTERVAL");
+    if (env_int) {
+	double v = atof(env_int);
+	if (v > 0.0) OGL(ifp)->min_present_interval = v;
+    }
+    if (throttle_ms > 0.0) OGL(ifp)->min_present_interval = throttle_ms / 1000.0;
+    OGL(ifp)->last_present_time = 0.0;
 
+    while (OGL(ifp)->firstTime == 1) ogl_do_event(ifp);
     return 0;
 }
 
-/* Open existing controlled externally */
 static int
-open_existing(struct fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip,
-	      int width, int height, GLXContext glxc, int double_buffer, int soft_cmap)
+open_existing(struct fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap)
 {
-    ifp->i->if_mode = MODE_1MALLOC; /* force private memory */
-
+    ifp->i->if_mode = MODE_1MALLOC;
     struct wininfo *winfo = (struct wininfo *)calloc(1, sizeof(struct wininfo));
     WINL(ifp) = (char *)winfo;
     if (!WINL(ifp)) {
@@ -936,26 +896,18 @@ open_existing(struct fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
 	fb_log("fb_ogl_open: oglinfo malloc failed\n");
 	return -1;
     }
-
     OGL(ifp)->use_ext_ctrl = 1;
     WIN(ifp)->mi_shmid = -1;
-
     ifp->i->if_width = ifp->i->if_max_width = width;
     ifp->i->if_height = ifp->i->if_max_height = height;
-
     OGL(ifp)->win_width = OGL(ifp)->vp_width = width;
     OGL(ifp)->win_height = OGL(ifp)->vp_height = height;
-
     WIN(ifp)->mi_curs_on = 1;
-
-    ifp->i->if_zoomflag = 0;
-    ifp->i->if_xzoom = ifp->i->if_yzoom = 1;
-    ifp->i->if_xcenter = width/2;
-    ifp->i->if_ycenter = height/2;
-
-    if (ogl_getmem(ifp) < 0)
-	return -1;
-
+    ifp->i->if_zoomflag=0;
+    ifp->i->if_xzoom=ifp->i->if_yzoom=1;
+    ifp->i->if_xcenter=width/2;
+    ifp->i->if_ycenter=height/2;
+    if (ogl_getmem(ifp) < 0) return -1;
     OGL(ifp)->dispp = dpy;
     ifp->i->if_selfd = ConnectionNumber(OGL(ifp)->dispp);
     OGL(ifp)->vip = vip;
@@ -964,15 +916,13 @@ open_existing(struct fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
     OGL(ifp)->soft_cmap_flag = soft_cmap;
     WIN(ifp)->mi_doublebuffer = double_buffer;
     OGL(ifp)->xcmap = cmap;
-
     OGL(ifp)->wind = win;
     ++ogl_nwindows;
-
-    OGL(ifp)->alive = 1;
-    OGL(ifp)->firstTime = 1;
-
+    OGL(ifp)->alive=1;
+    OGL(ifp)->firstTime=1;
     fb_clipper(ifp);
-
+    OGL(ifp)->min_present_interval = 0.1;
+    OGL(ifp)->last_present_time = 0.0;
     return 0;
 }
 
@@ -1002,40 +952,33 @@ ogl_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spec
     struct ogl_fb_info *ogl_internal = (struct ogl_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_OGL_MAGIC, "ogl framebuffer");
     return open_existing(ifp, ogl_internal->dpy, ogl_internal->win,
-			 ogl_internal->cmap, ogl_internal->vip, width, height, ogl_internal->glxc,
-			 ogl_internal->double_buffer, ogl_internal->soft_cmap);
+                        ogl_internal->cmap, ogl_internal->vip, width, height, ogl_internal->glxc,
+                        ogl_internal->double_buffer, ogl_internal->soft_cmap);
 }
 
 int
 ogl_close_existing(struct fb *ifp)
 {
-    if (OGL(ifp)->cursor)
-	XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
-
+    if (OGL(ifp)->cursor) XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
     if (WINL(ifp)) {
 	if (WIN(ifp)->mi_shmid != -1) {
-	    errno = 0;
 	    if (shmdt(ifp->i->if_mem) == -1) {
 		fb_log("fb_ogl_close: shmdt failed, errno=%d\n", errno);
 		perror("shmdt");
 		return -1;
 	    }
-	} else {
-	    free(ifp->i->if_mem);
-	}
+	} else free(ifp->i->if_mem);
 	free((char *)WINL(ifp));
-	WINL(ifp) = NULL;
+	WINL(ifp)=NULL;
     }
-
     if (OGL(ifp)) {
 	if (OGL(ifp)->tex_initialized && ogl_make_current(ifp)) {
 	    glDeleteTextures(1, &OGL(ifp)->texid);
 	    ogl_release_current(ifp);
 	}
 	free((char *)OGLL(ifp));
-	OGLL(ifp) = NULL;
+	OGLL(ifp)=NULL;
     }
-
     return 0;
 }
 
@@ -1045,29 +988,19 @@ ogl_final_close(struct fb *ifp)
     Display *display = OGL(ifp)->dispp;
     Window window = OGL(ifp)->wind;
     Colormap colormap = OGL(ifp)->xcmap;
-
     ogl_close_existing(ifp);
-
     XDestroyWindow(display, window);
     XFreeColormap(display, colormap);
-
     ogl_nwindows--;
     return 0;
 }
 
 /******************* Flush / Poll / Close ***************************/
-
 static int
 ogl_flush(struct fb *ifp)
 {
-    /* Always commit any outstanding changes */
-    if (OGL(ifp)->dirty)
-	ogl_upload_dirty(ifp);
-    if (OGL(ifp)->view_changed || OGL(ifp)->dirty)
-	ogl_present(ifp);
-    if (OGL(ifp)->dispp) {
-	XFlush(OGL(ifp)->dispp);
-    }
+    ogl_maybe_present(ifp, 1);
+    if (OGL(ifp)->dispp) XFlush(OGL(ifp)->dispp);
     return 0;
 }
 
@@ -1082,15 +1015,9 @@ static int
 fb_ogl_close(struct fb *ifp)
 {
     ogl_flush(ifp);
-
-    if (ogl_nwindows > 1 ||
-	(ifp->i->if_mode & MODE_2MASK) == MODE_2TRANSIENT)
-	return ogl_final_close(ifp);
-
+    if (ogl_nwindows > 1 || ((ifp->i->if_mode & MODE_2MASK) == MODE_2TRANSIENT)) return ogl_final_close(ifp);
     fclose(stdin);
-    while (!ogl_poll(ifp)) {
-	bu_snooze(fb_poll_rate(ifp));
-    }
+    while (!ogl_poll(ifp)) bu_snooze(fb_poll_rate(ifp));
     return ogl_final_close(ifp);
 }
 
@@ -1098,40 +1025,29 @@ static int
 ogl_free(struct fb *ifp)
 {
     int ret = ogl_final_close(ifp);
-    if ((ifp->i->if_mode & MODE_1MASK) == MODE_1SHARED) {
-	ogl_zapmem();
-    }
+    if ((ifp->i->if_mode & MODE_1MASK) == MODE_1SHARED) ogl_zapmem();
     return ret;
 }
 
 /******************* Clear / View ***********************************/
-
 static int
 ogl_clear(struct fb *ifp, unsigned char *pp)
 {
     struct fb_pixel bg;
     bg.alpha = 0;
-    if (pp != RGBPIXEL_NULL) {
-	bg.red = pp[RED];
-	bg.green = pp[GRN];
-	bg.blue = pp[BLU];
+    if (pp) {
+	bg.red=pp[RED];
+	bg.green=pp[GRN];
+	bg.blue=pp[BLU];
     } else {
-	bg.red = bg.green = bg.blue = 0;
+	bg.red=bg.green=bg.blue=0;
     }
-
-    for (int y=0; y < ifp->i->if_height; y++) {
-	struct fb_pixel *oglp = (struct fb_pixel *)&ifp->i->if_mem[(size_t)(y * WIN(ifp)->mi_pixwidth) * sizeof(struct fb_pixel)];
-	for (int cnt=ifp->i->if_width; cnt>0; cnt--) {
-	    *oglp++ = bg;
-	}
+    for (int y=0; y<ifp->i->if_height; y++) {
+	struct fb_pixel *oglp = (struct fb_pixel *)&ifp->i->if_mem[(size_t)y * WIN(ifp)->mi_pixwidth * sizeof(struct fb_pixel)];
+	for (int x=0; x<ifp->i->if_width; x++) *oglp++ = bg;
     }
-
-    ogl_dirty_add(ifp, 0, 0, ifp->i->if_width, ifp->i->if_height);
-    if ((ifp->i->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH) {
-	ogl_upload_dirty(ifp);
-	ogl_present(ifp);
-    }
-
+    ogl_dirty_add(ifp, 0,0, ifp->i->if_width, ifp->i->if_height);
+    ogl_maybe_present(ifp, 0);
     return 0;
 }
 
@@ -1140,28 +1056,18 @@ ogl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     if (xzoom < 1) xzoom = 1;
     if (yzoom < 1) yzoom = 1;
-
     if (xcenter < 0 || xcenter >= ifp->i->if_width) return -1;
     if (ycenter < 0 || ycenter >= ifp->i->if_height) return -1;
     if (xzoom >= ifp->i->if_width || yzoom >= ifp->i->if_height) return -1;
-
-    if (ifp->i->if_xcenter == xcenter && ifp->i->if_ycenter == ycenter &&
-	ifp->i->if_xzoom == xzoom && ifp->i->if_yzoom == yzoom)
-	return 0;
-
-    ifp->i->if_xcenter = xcenter;
-    ifp->i->if_ycenter = ycenter;
-    ifp->i->if_xzoom = xzoom;
-    ifp->i->if_yzoom = yzoom;
-    ifp->i->if_zoomflag = (xzoom > 1 || yzoom > 1) ? 1 : 0;
-
+    if (ifp->i->if_xcenter == xcenter && ifp->i->if_ycenter == ycenter && ifp->i->if_xzoom == xzoom && ifp->i->if_yzoom == yzoom) return 0;
+    ifp->i->if_xcenter=xcenter;
+    ifp->i->if_ycenter=ycenter;
+    ifp->i->if_xzoom=xzoom;
+    ifp->i->if_yzoom=yzoom;
+    ifp->i->if_zoomflag = (xzoom>1 || yzoom>1) ? 1 : 0;
     fb_clipper(ifp);
     OGL(ifp)->view_changed = 1;
-
-    if ((ifp->i->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH) {
-	/* No new pixel data, just re-present */
-	ogl_present(ifp);
-    }
+    ogl_maybe_present(ifp, 0);
     return 0;
 }
 
@@ -1176,39 +1082,28 @@ ogl_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 }
 
 /******************* Read/Write Pixels ********************************/
-
 static ssize_t
 ogl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
-    if (x < 0 || x >= ifp->i->if_width ||
-	y < 0 || y >= ifp->i->if_height)
-	return -1;
-
+    if (x < 0 || x >= ifp->i->if_width || y < 0 || y >= ifp->i->if_height) return -1;
     size_t remaining = count;
-    ssize_t ret = 0;
+    ssize_t ret=0;
     unsigned char *cp = pixelp;
-    int cx = x;
-    int cy = y;
-
+    int cx=x, cy=y;
     while (remaining) {
 	if (cy >= ifp->i->if_height) break;
-	size_t scan_count = remaining;
 	size_t line_remain = (size_t)(ifp->i->if_width - cx);
-	if (scan_count > line_remain) scan_count = line_remain;
-
-	struct fb_pixel *oglp = (struct fb_pixel *)&ifp->i->if_mem[
-				    ((size_t)cy*WIN(ifp)->mi_pixwidth + cx) * sizeof(struct fb_pixel)];
-
+	size_t scan_count = remaining < line_remain ? remaining : line_remain;
+	struct fb_pixel *oglp = (struct fb_pixel *)&ifp->i->if_mem[((size_t)cy*WIN(ifp)->mi_pixwidth + cx) * sizeof(struct fb_pixel)];
 	for (size_t i=0; i<scan_count; i++) {
-	    cp[0] = oglp[i].red;
-	    cp[1] = oglp[i].green;
-	    cp[2] = oglp[i].blue;
-	    cp += 3;
+	    cp[0]=oglp[i].red;
+	    cp[1]=oglp[i].green;
+	    cp[2]=oglp[i].blue;
+	    cp+=3;
 	}
-
 	ret += scan_count;
 	remaining -= scan_count;
-	cx = 0;
+	cx=0;
 	cy++;
     }
     return ret;
@@ -1217,59 +1112,43 @@ ogl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 static ssize_t
 ogl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
-    if (xstart < 0 || xstart >= ifp->i->if_width ||
-	ystart < 0 || ystart >= ifp->i->if_height)
-	return -1;
+    if (xstart < 0 || xstart >= ifp->i->if_width || ystart < 0 || ystart >= ifp->i->if_height) return -1;
     if (count == 0) return 0;
-
     size_t remaining = count;
-    ssize_t written = 0;
+    ssize_t written=0;
     const unsigned char *cp = pixelp;
     int cx = xstart;
     int cy = ystart;
-
-    int minx = ifp->i->if_width, miny = ifp->i->if_height;
-    int maxx = 0, maxy = 0;
-
+    int minx=ifp->i->if_width, miny=ifp->i->if_height, maxx=0, maxy=0;
     while (remaining) {
 	if (cy >= ifp->i->if_height) break;
 	size_t line_space = (size_t)(ifp->i->if_width - cx);
-	size_t scan_count = (remaining < line_space) ? remaining : line_space;
-
-	struct fb_pixel *oglp = (struct fb_pixel *)&ifp->i->if_mem[
-				    ((size_t)cy*WIN(ifp)->mi_pixwidth + cx) * sizeof(struct fb_pixel)];
-
-	size_t n = scan_count;
+	size_t scan_count = remaining < line_space ? remaining : line_space;
+	struct fb_pixel *oglp = (struct fb_pixel *)&ifp->i->if_mem[((size_t)cy*WIN(ifp)->mi_pixwidth + cx) * sizeof(struct fb_pixel)];
+	size_t n=scan_count;
 	while (n) {
-	    oglp->red   = cp[0];
-	    oglp->green = cp[1];
-	    oglp->blue  = cp[2];
-	    oglp->alpha = 0;
+	    oglp->red=cp[0];
+	    oglp->green=cp[1];
+	    oglp->blue=cp[2];
+	    oglp->alpha=0;
 	    oglp++;
-	    cp += 3;
+	    cp+=3;
 	    n--;
 	}
-
-	if (cx < minx) minx = cx;
-	if (cy < miny) miny = cy;
-	int endx = cx + (int)scan_count - 1;
-	if (endx > maxx) maxx = endx;
-	if (cy > maxy) maxy = cy;
-
+	if (cx < minx) minx=cx;
+	if (cy < miny) miny=cy;
+	int endx = cx + (int)scan_count -1;
+	if (endx > maxx) maxx=endx;
+	if (cy > maxy) maxy=cy;
 	written += scan_count;
 	remaining -= scan_count;
-	cx = 0;
+	cx=0;
 	cy++;
     }
-
     if (written > 0) {
-	ogl_dirty_add(ifp, minx, miny, (maxx - minx + 1), (maxy - miny + 1));
-	if ((ifp->i->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH) {
-	    ogl_upload_dirty(ifp);
-	    ogl_present(ifp);
-	}
+	ogl_dirty_add(ifp, minx, miny, (maxx-minx+1), (maxy-miny+1));
+	ogl_maybe_present(ifp, 0);
     }
-
     return written;
 }
 
@@ -1277,70 +1156,52 @@ static int
 ogl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     if (width <= 0 || height <= 0) return 0;
-    if (xmin < 0 || xmin+width > ifp->i->if_width ||
-	ymin < 0 || ymin+height > ifp->i->if_height)
-	return -1;
-
+    if (xmin < 0 || xmin+width > ifp->i->if_width || ymin < 0 || ymin+height > ifp->i->if_height) return -1;
     const unsigned char *cp = pp;
-    for (int y = ymin; y < ymin+height; y++) {
-	struct fb_pixel *oglp = (struct fb_pixel *)&ifp->i->if_mem[
-				    ((size_t)y*WIN(ifp)->mi_pixwidth + xmin) * sizeof(struct fb_pixel)];
-	for (int x = xmin; x < xmin+width; x++) {
-	    oglp->red   = cp[RED];
-	    oglp->green = cp[GRN];
-	    oglp->blue  = cp[BLU];
-	    oglp->alpha = 0;
+    for (int y=ymin; y<ymin+height; y++) {
+	struct fb_pixel *oglp = (struct fb_pixel *)&ifp->i->if_mem[((size_t)y*WIN(ifp)->mi_pixwidth + xmin)*sizeof(struct fb_pixel)];
+	for (int x=xmin; x<xmin+width; x++) {
+	    oglp->red=cp[RED];
+	    oglp->green=cp[GRN];
+	    oglp->blue=cp[BLU];
+	    oglp->alpha=0;
 	    oglp++;
-	    cp += 3;
+	    cp+=3;
 	}
     }
-
     ogl_dirty_add(ifp, xmin, ymin, width, height);
-    if ((ifp->i->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH) {
-	ogl_upload_dirty(ifp);
-	ogl_present(ifp);
-    }
-
-    return width * height;
+    ogl_maybe_present(ifp, 0);
+    return width*height;
 }
 
 static int
 ogl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     if (width <= 0 || height <= 0) return 0;
-    if (xmin < 0 || xmin+width > ifp->i->if_width ||
-	ymin < 0 || ymin+height > ifp->i->if_height)
-	return -1;
-
+    if (xmin < 0 || xmin+width > ifp->i->if_width || ymin < 0 || ymin+height > ifp->i->if_height) return -1;
     const unsigned char *cp = pp;
-    for (int y = ymin; y < ymin+height; y++) {
-	struct fb_pixel *oglp = (struct fb_pixel *)&ifp->i->if_mem[
-				    ((size_t)y*WIN(ifp)->mi_pixwidth + xmin) * sizeof(struct fb_pixel)];
-	for (int x = xmin; x < xmin+width; x++) {
-	    int val = *cp++;
-	    oglp->red = oglp->green = oglp->blue = (unsigned char)val;
-	    oglp->alpha = 0;
+    for (int y=ymin; y<ymin+height; y++) {
+	struct fb_pixel *oglp = (struct fb_pixel *)&ifp->i->if_mem[((size_t)y*WIN(ifp)->mi_pixwidth + xmin)*sizeof(struct fb_pixel)];
+	for (int x=xmin; x<xmin+width; x++) {
+	    int val=*cp++;
+	    oglp->red=oglp->green=oglp->blue=(unsigned char)val;
+	    oglp->alpha=0;
 	    oglp++;
 	}
     }
-
     ogl_dirty_add(ifp, xmin, ymin, width, height);
-    if ((ifp->i->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH) {
-	ogl_upload_dirty(ifp);
-	ogl_present(ifp);
-    }
-    return width * height;
+    ogl_maybe_present(ifp, 0);
+    return width*height;
 }
 
 /******************* Colormap ****************************************/
-
 static int
 ogl_rmap(struct fb *ifp, ColorMap *cmp)
 {
     for (int i=0; i<256; i++) {
-	cmp->cm_red[i]   = CMR(ifp)[i] << 8;
-	cmp->cm_green[i] = CMG(ifp)[i] << 8;
-	cmp->cm_blue[i]  = CMB(ifp)[i] << 8;
+	cmp->cm_red[i]=CMR(ifp)[i]<<8;
+	cmp->cm_green[i]=CMG(ifp)[i]<<8;
+	cmp->cm_blue[i]=CMB(ifp)[i]<<8;
     }
     return 0;
 }
@@ -1349,33 +1210,25 @@ static int
 ogl_wmap(struct fb *ifp, const ColorMap *cmp)
 {
     int prev = WIN(ifp)->mi_cmap_flag;
-    if (cmp == COLORMAP_NULL) {
-	ogl_cminit(ifp);
-    } else {
-	for (int i=0; i<256; i++) {
-	    CMR(ifp)[i] = cmp->cm_red[i]>>8;
-	    CMG(ifp)[i] = cmp->cm_green[i]>>8;
-	    CMB(ifp)[i] = cmp->cm_blue[i]>>8;
+    if (cmp == COLORMAP_NULL) ogl_cminit(ifp);
+    else for (int i=0; i<256; i++) {
+	    CMR(ifp)[i]=cmp->cm_red[i]>>8;
+	    CMG(ifp)[i]=cmp->cm_green[i]>>8;
+	    CMB(ifp)[i]=cmp->cm_blue[i]>>8;
 	}
-    }
     WIN(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
-
     if (!OGL(ifp)->use_ext_ctrl && OGL(ifp)->soft_cmap_flag) {
-	/* If either previously or now non-linear, repaint. */
 	if (WIN(ifp)->mi_cmap_flag || prev) {
-	    ogl_dirty_add(ifp, 0, 0, ifp->i->if_width, ifp->i->if_height);
-	    if ((ifp->i->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH) {
-		ogl_upload_dirty(ifp);
-		ogl_present(ifp);
-	    }
+	    ogl_dirty_add(ifp,0,0,ifp->i->if_width,ifp->i->if_height);
+	    ogl_maybe_present(ifp, 0);
 	}
     } else if (!OGL(ifp)->soft_cmap_flag) {
 	for (int i=0; i<256; i++) {
-	    color_cell[i].pixel = i;
-	    color_cell[i].red   = CMR(ifp)[i];
-	    color_cell[i].green = CMG(ifp)[i];
-	    color_cell[i].blue  = CMB(ifp)[i];
-	    color_cell[i].flags = DoRed | DoGreen | DoBlue;
+	    color_cell[i].pixel=i;
+	    color_cell[i].red=CMR(ifp)[i];
+	    color_cell[i].green=CMG(ifp)[i];
+	    color_cell[i].blue=CMB(ifp)[i];
+	    color_cell[i].flags=DoRed|DoGreen|DoBlue;
 	}
 	XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell, 256);
     }
@@ -1383,68 +1236,27 @@ ogl_wmap(struct fb *ifp, const ColorMap *cmp)
 }
 
 /******************* Help ********************************************/
-
 static int
 ogl_help(struct fb *ifp)
 {
     struct modeflags *mfp;
     XVisualInfo *visual = OGL(ifp)->vip;
-
     fb_log("Description: %s\n", ifp->i->if_type);
     fb_log("Device: %s\n", ifp->i->if_name);
     fb_log("Max width height: %d %d\n", ifp->i->if_max_width, ifp->i->if_max_height);
     fb_log("Default width height: %d %d\n", ifp->i->if_width, ifp->i->if_height);
-    fb_log("Usage: /dev/ogl[option letters]\n");
-    for (mfp = modeflags; mfp->c != '\0'; mfp++) {
-	fb_log("   %c   %s\n", mfp->c, mfp->help);
-    }
-
-    fb_log("\nCurrent internal state:\n");
-    fb_log("    mi_doublebuffer=%d\n", WIN(ifp)->mi_doublebuffer);
-    fb_log("    mi_cmap_flag=%d\n", WIN(ifp)->mi_cmap_flag);
-    fb_log("    ogl_nwindows=%d\n", ogl_nwindows);
-
-    fb_log("X11 Visual:\n");
-    switch (visual->class) {
-	case DirectColor:
-	    fb_log("\tDirectColor: Alterable RGB maps\n");
-	    fb_log("\tRGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask, visual->green_mask, visual->blue_mask);
-	    break;
-	case TrueColor:
-	    fb_log("\tTrueColor: Fixed RGB maps\n");
-	    fb_log("\tRGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask, visual->green_mask, visual->blue_mask);
-	    break;
-	case PseudoColor:
-	    fb_log("\tPseudoColor: Alterable RGB map, single index\n");
-	    break;
-	case StaticColor:
-	    fb_log("\tStaticColor: Fixed RGB maps, single index\n");
-	    break;
-	case GrayScale:
-	    fb_log("\tGrayScale: Alterable map (R=G=B)\n");
-	    break;
-	case StaticGray:
-	    fb_log("\tStaticGray: Fixed map (R=G=B)\n");
-	    break;
-	default:
-	    fb_log("\tUnknown visual class %d\n", visual->class);
-	    break;
-    }
-    fb_log("\tColormap Size: %d\n", visual->colormap_size);
-    fb_log("\tBits per RGB: %d\n", visual->bits_per_rgb);
-    fb_log("\tscreen: %d\n", visual->screen);
-    fb_log("\tdepth: %d\n", visual->depth);
-    if (visual->depth < 24)
-	fb_log("\tWARNING: <24-bit color depth may quantize image.\n");
+    fb_log("Usage: /dev/ogl[option letters][T<ms>]  (T sets update throttle in ms)\n");
+    for (mfp=modeflags; mfp->c!='\0'; mfp++) fb_log("   %c   %s\n", mfp->c, mfp->help);
+    fb_log("   T   Throttle interval in milliseconds (e.g. T33 for ~30Hz). Default 100ms. Env FB_OGL_UPDATE_INTERVAL (seconds) also accepted.\n");
+    fb_log("Current throttle: %.3f s\n", OGL(ifp)->min_present_interval);
+    fb_log("mi_doublebuffer=%d mi_cmap_flag=%d ogl_nwindows=%d\n", WIN(ifp)->mi_doublebuffer, WIN(ifp)->mi_cmap_flag, ogl_nwindows);
+    fb_log("X11 Visual depth=%d class=%d colormap_size=%d bits_per_rgb=%d\n", visual->depth, visual->class, visual->colormap_size, visual->bits_per_rgb);
     return 0;
 }
 
 /******************* Cursor ******************************************/
-
 static int
-ogl_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits),
-	      int UNUSED(xbits), int UNUSED(ybits),
-	      int UNUSED(xorig), int UNUSED(yorig))
+ogl_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     FB_CK_FB(ifp->i);
     return 0;
@@ -1454,9 +1266,7 @@ static int
 ogl_cursor(struct fb *ifp, int mode, int x, int y)
 {
     if (mode) {
-	int xx, xy;
-	int delta;
-
+	int xx, xy, delta;
 	if (!OGL(ifp)->cursor) {
 	    XSetWindowAttributes xswa;
 	    XColor rgb_db_def;
@@ -1467,30 +1277,21 @@ ogl_cursor(struct fb *ifp, int mode, int x, int y)
 	    xswa.border_pixel = bd.pixel;
 	    xswa.colormap = OGL(ifp)->xcmap;
 	    xswa.save_under = True;
-	    OGL(ifp)->cursor = XCreateWindow(OGL(ifp)->dispp, OGL(ifp)->wind,
-					     0, 0, 4, 4, 2, OGL(ifp)->vip->depth,
-					     InputOutput, OGL(ifp)->vip->visual,
-					     CWBackPixel | CWBorderPixel |
-					     CWSaveUnder | CWColormap, &xswa);
+	    OGL(ifp)->cursor = XCreateWindow(OGL(ifp)->dispp, OGL(ifp)->wind, 0,0,4,4,2, OGL(ifp)->vip->depth, InputOutput, OGL(ifp)->vip->visual, CWBackPixel|CWBorderPixel|CWSaveUnder|CWColormap, &xswa);
 	}
-
 	delta = ifp->i->if_width/ifp->i->if_xzoom/2;
 	xx = x - (ifp->i->if_xcenter - delta);
 	xx *= ifp->i->if_xzoom;
 	xx += ifp->i->if_xzoom/2;
-
 	delta = ifp->i->if_height/ifp->i->if_yzoom/2;
 	xy = y - (ifp->i->if_ycenter - delta);
 	xy *= ifp->i->if_yzoom;
 	xy += ifp->i->if_yzoom/2;
 	xy = OGL(ifp)->win_height - xy;
-
 	XMoveWindow(OGL(ifp)->dispp, OGL(ifp)->cursor, xx - 4, xy - 4);
-	if (!ifp->i->if_cursmode)
-	    XMapRaised(OGL(ifp)->dispp, OGL(ifp)->cursor);
+	if (!ifp->i->if_cursmode) XMapRaised(OGL(ifp)->dispp, OGL(ifp)->cursor);
     } else {
-	if (OGL(ifp)->cursor && ifp->i->if_cursmode)
-	    XUnmapWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
+	if (OGL(ifp)->cursor && ifp->i->if_cursmode) XUnmapWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
     }
     XFlush(OGL(ifp)->dispp);
     ifp->i->if_cursmode = mode;
@@ -1500,7 +1301,6 @@ ogl_cursor(struct fb *ifp, int mode, int x, int y)
 }
 
 /******************* Refresh *****************************************/
-
 int
 ogl_refresh(struct fb *ifp, int x, int y, int w, int h)
 {
@@ -1513,21 +1313,13 @@ ogl_refresh(struct fb *ifp, int x, int y, int w, int h)
 	y -= h;
     }
     if (w <= 0 || h <= 0) return 0;
-
-    /* Ensure texture exists */
     if (!OGL(ifp)->tex_initialized) ogl_init_texture(ifp);
-
-    /* Mark region dirty and optionally upload immediately */
-    ogl_dirty_add(ifp, x, y, w, h);
-    if ((ifp->i->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH) {
-	ogl_upload_dirty(ifp);
-	ogl_present(ifp);
-    }
+    ogl_dirty_add(ifp, x,y,w,h);
+    ogl_maybe_present(ifp, 1); /* force immediate for explicit refresh */
     return 0;
 }
 
 /******************* Implementation Table ***************************/
-
 struct fb_impl ogl_interface_impl =  {
     0,
     FB_OGL_MAGIC,
@@ -1557,7 +1349,7 @@ struct fb_impl ogl_interface_impl =  {
     ogl_flush,
     ogl_free,
     ogl_help,
-    "OpenGL (texture blit modernized)",
+    "OpenGL (texture + throttled blit)",
     FB_XMAXSCREEN,
     FB_YMAXSCREEN,
     "/dev/ogl",
@@ -1581,12 +1373,7 @@ struct fb_impl ogl_interface_impl =  {
     NULL,
     0,
     NULL,
-    {0},
-    {0},
-    {0},
-    {0},
-    {0},
-    {0}
+    {0}, {0}, {0}, {0}, {0}, {0}
 };
 
 struct fb ogl_interface = { &ogl_interface_impl };
