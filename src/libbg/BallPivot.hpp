@@ -40,10 +40,6 @@
  *   (c) 2024 Clifford Yapp, BRL-CAD
  *
  *   See included nanoflann and robust_orient3d.hpp for their respective licenses.
- *
- * Features:
- *   - Optional debugging telemetry: set BallPivoting::set_debug(true) to enable verbose diagnostics.
- *   - Header-only, minimal dependency.
  */
 
 #pragma once
@@ -55,589 +51,602 @@
 #include <limits>
 #include <cmath>
 #include <cassert>
-#include <iostream>
-#include <sstream>
 #include <array>
 #include "nanoflann.hpp"
 #include "robust_orient3d.hpp"
 extern "C" {
 #include "vmath.h"
+#include "bu/log.h"
 }
 
-namespace ball_pivoting {
+namespace bpiv
+{
 
-// Forward declarations for pointer types
-struct BallPivotingVertex;
-struct BallPivotingEdge;
-struct BallPivotingTriangle;
+// --- Forward Declarations ---
+struct Vertex;
+struct Edge;
+struct Face;
 
-// Smart pointers
-using BallPivotingVertexPtr = BallPivotingVertex*;
-using BallPivotingEdgePtr = std::shared_ptr<BallPivotingEdge>;
-using BallPivotingTrianglePtr = std::shared_ptr<BallPivotingTriangle>;
+// --- Pointer Types ---
+using VPtr = Vertex*;
+using EPtr = std::shared_ptr<Edge>;
+using FPtr = std::shared_ptr<Face>;
 
-// Point cloud adaptor for nanoflann (std::array<fastf_t,3>)
-struct PointCloudAdaptor {
+// --- PointCloud Adaptor for nanoflann ---
+struct PCAdaptor {
     const std::vector<std::array<fastf_t, 3>>& pts;
-    inline size_t kdtree_get_point_count() const { return pts.size(); }
-    inline double kdtree_get_pt(const size_t idx, const size_t dim) const {
-        return static_cast<double>(pts[idx][dim]);
+    inline size_t kdtree_get_point_count() const
+    {
+	return pts.size();
+    }
+    inline double kdtree_get_pt(size_t i, size_t d) const
+    {
+	return (double)pts[i][d];
     }
     template <class BBOX>
-    bool kdtree_get_bbox(BBOX&) const { return false; }
+    bool kdtree_get_bbox(BBOX&) const
+    {
+	return false;
+    }
 };
 
-// Edge definition must come first for correct use in BallPivotingVertex
-struct BallPivotingEdge {
+// --- Edge ---
+struct Edge {
     enum Type { Border = 0, Front = 1, Inner = 2 };
-    BallPivotingVertexPtr source;
-    BallPivotingVertexPtr target;
-    BallPivotingTrianglePtr triangle0 = nullptr;
-    BallPivotingTrianglePtr triangle1 = nullptr;
+    VPtr a, b;
+    FPtr f0 = nullptr, f1 = nullptr;
     Type type = Front;
 
-    BallPivotingEdge(BallPivotingVertexPtr s, BallPivotingVertexPtr t)
-        : source(s), target(t) {}
-
-    void AddAdjacentTriangle(BallPivotingTrianglePtr tri);
-    BallPivotingVertexPtr GetOppositeVertex();
+    Edge(VPtr s, VPtr t) : a(s), b(t) {}
+    void add_face(FPtr f);
+    VPtr opp_vert();
 };
 
-// Vertex definition
-struct BallPivotingVertex {
+// --- Vertex ---
+struct Vertex {
     enum Type { Orphan = 0, Front = 1, Inner = 2 };
-    int idx;
-    std::array<fastf_t, 3> point;
-    std::array<fastf_t, 3> normal;
-    std::unordered_set<BallPivotingEdgePtr> edges;
+    int id;
+    std::array<fastf_t, 3> pos, nrm;
+    std::unordered_set<EPtr> edges;
     Type type = Orphan;
 
-    BallPivotingVertex(int i, const std::array<fastf_t, 3>& p, const std::array<fastf_t, 3>& n)
-        : idx(i), point(p), normal(n) {}
+    Vertex(int i, const std::array<fastf_t, 3>& p, const std::array<fastf_t, 3>& n)
+	: id(i), pos(p), nrm(n) {}
 
-    void UpdateType() {
-        if (edges.empty()) {
-            type = Orphan;
-        } else {
-            for (const auto& e : edges)
-                if (e->type != BallPivotingEdge::Inner) {
-                    type = Front; return;
-                }
-            type = Inner;
-        }
+    void update_type()
+    {
+	if (edges.empty()) type = Orphan;
+	else {
+	    for (const auto& e : edges)
+		if (e->type != Edge::Inner) {
+		    type = Front;
+		    return;
+		}
+	    type = Inner;
+	}
     }
 };
 
-// Triangle definition
-struct BallPivotingTriangle {
-    BallPivotingVertexPtr vert0, vert1, vert2;
-    std::array<fastf_t, 3> ball_center;
-    BallPivotingTriangle(BallPivotingVertexPtr v0, BallPivotingVertexPtr v1, BallPivotingVertexPtr v2, const std::array<fastf_t, 3>& c)
-        : vert0(v0), vert1(v1), vert2(v2), ball_center(c) {}
+// --- Face (Triangle) ---
+struct Face {
+    VPtr v0, v1, v2;
+    std::array<fastf_t, 3> center;
+    Face(VPtr a, VPtr b, VPtr c, const std::array<fastf_t, 3>& ctr)
+	: v0(a), v1(b), v2(c), center(ctr) {}
 };
 
-// AddAdjacentTriangle and GetOppositeVertex implementations
-inline void BallPivotingEdge::AddAdjacentTriangle(BallPivotingTrianglePtr tri) {
-    if (triangle0 == nullptr) {
-        triangle0 = tri; type = Front;
-        auto opp = GetOppositeVertex();
-        if (opp) {
-            vect_t tr_norm, tmp1, tmp2, pt_norm;
-            VSUB2(tmp1, target->point.data(), source->point.data());
-            VSUB2(tmp2, opp->point.data(), source->point.data());
-            VCROSS(tr_norm, tmp1, tmp2);
-            VUNITIZE(tr_norm);
-
-            VADD2(pt_norm, source->normal.data(), target->normal.data());
-            VADD2(pt_norm, pt_norm, opp->normal.data());
-            VUNITIZE(pt_norm);
-
-            if (VDOT(pt_norm, tr_norm) < 0) std::swap(target, source);
-        }
-    } else if (triangle1 == nullptr) {
-        triangle1 = tri; type = Inner;
+// --- Edge implementation ---
+inline void Edge::add_face(FPtr f)
+{
+    if (!f0) {
+	f0 = f;
+	type = Front;
+	auto o = opp_vert();
+	if (o) {
+	    vect_t tn, tmp1, tmp2, nsum;
+	    VSUB2(tmp1, b->pos.data(), a->pos.data());
+	    VSUB2(tmp2, o->pos.data(), a->pos.data());
+	    VCROSS(tn, tmp1, tmp2);
+	    VUNITIZE(tn);
+	    VADD2(nsum, a->nrm.data(), b->nrm.data());
+	    VADD2(nsum, nsum, o->nrm.data());
+	    VUNITIZE(nsum);
+	    if (VDOT(nsum, tn) < 0) std::swap(b, a);
+	}
+    } else if (!f1) {
+	f1 = f;
+	type = Inner;
     }
 }
-inline BallPivotingVertexPtr BallPivotingEdge::GetOppositeVertex() {
-    if (!triangle0) return nullptr;
-    for (auto v : {triangle0->vert0, triangle0->vert1, triangle0->vert2}) {
-        if (v != source && v != target) return v;
-    }
+inline VPtr Edge::opp_vert()
+{
+    if (!f0) return nullptr;
+    for (auto v : {
+	     f0->v0, f0->v1, f0->v2
+	 })
+	if (v != a && v != b) return v;
     return nullptr;
 }
 
-// Output mesh structure (no vertices array needed for static input)
+// --- Output Mesh ---
 struct Mesh {
-    std::vector<std::array<int, 3>> triangles;
-    std::vector<std::array<fastf_t, 3>> triangle_normals;
+    std::vector<std::array<int, 3>> tris;
+    std::vector<std::array<fastf_t, 3>> tri_nrms;
 };
 
-class BallPivoting {
+// --- Main Ball Pivoting Class ---
+class BallPivot
+{
 public:
-    BallPivoting(const std::vector<std::array<fastf_t, 3>>& pts, const std::vector<std::array<fastf_t, 3>>& nrm)
-        : pc_adaptor{pts}, kdtree(3, pc_adaptor, nanoflann::KDTreeSingleIndexAdaptorParams(10)), points(pts), normals(nrm) {
-        kdtree.buildIndex();
-        for (size_t i = 0; i < pts.size(); ++i)
-            vertices.emplace_back(new BallPivotingVertex((int)i, pts[i], nrm[i]));
+    BallPivot(const std::vector<std::array<fastf_t, 3>>& pts,
+	      const std::vector<std::array<fastf_t, 3>>& nrms)
+	: pc_adapt{pts}, kdtree(3, pc_adapt, nanoflann::KDTreeSingleIndexAdaptorParams(10)), points(pts), normals(nrms)
+    {
+	kdtree.buildIndex();
+	for (size_t i = 0; i < pts.size(); ++i)
+	    verts.emplace_back(new Vertex((int)i, pts[i], nrms[i]));
     }
-    ~BallPivoting() { for (auto v : vertices) delete v; }
-
-    static void set_debug(bool flag) { debug_enabled() = flag; }
-    static std::string get_debug_log() { return debug_log().str(); }
-    static void clear_debug_log() { debug_log().str(""); debug_log().clear(); }
-
-    Mesh Run(const std::vector<double>& radii) {
-        mesh.triangles.clear();
-        mesh.triangle_normals.clear();
-        edge_front.clear();
-        border_edges.clear();
-        for (auto v : vertices) {
-            v->edges.clear();
-            v->type = BallPivotingVertex::Orphan;
-        }
-        clear_debug_log();
-        if (debug_enabled()) {
-            log() << "[BallPivoting] Run called with " << points.size() << " points, "
-                  << normals.size() << " normals, " << radii.size() << " radii\n";
-        }
-        for (double radius : radii) {
-            if (debug_enabled()) {
-                log() << "[BallPivoting] Trying radius: " << radius << "\n";
-            }
-            UpdateBorderEdges(radius);
-            if (edge_front.empty()) {
-                FindSeedTriangle(radius);
-            } else {
-                ExpandTriangulation(radius);
-            }
-            if (debug_enabled()) {
-                log() << "[BallPivoting] After radius " << radius << ", mesh has "
-                      << mesh.triangles.size() << " triangles, "
-                      << edge_front.size() << " front edges, "
-                      << border_edges.size() << " border edges\n";
-            }
-        }
-        if (debug_enabled() && mesh.triangles.empty()) {
-            log() << "[BallPivoting] No mesh triangles generated for input.\n";
-            if (points.empty()) {
-                log() << "  - Reason: Input point cloud is empty.\n";
-            } else if (normals.empty()) {
-                log() << "  - Reason: Input normals are empty.\n";
-            }
-        }
-        return mesh;
+    ~BallPivot()
+    {
+	for (auto v : verts) delete v;
     }
 
-    static double estimate_average_spacing(const std::vector<std::array<fastf_t, 3>>& points, std::vector<double>* dists_out = nullptr) {
-        if (points.size() < 2) return 0.0;
-        PointCloudAdaptor pc_adaptor{points};
-        nanoflann::KDTreeSingleIndexAdaptor<
-            nanoflann::L2_Simple_Adaptor<double, PointCloudAdaptor>,
-            PointCloudAdaptor, 3> kdtree(3, pc_adaptor, nanoflann::KDTreeSingleIndexAdaptorParams(10));
-        kdtree.buildIndex();
-        std::vector<double> dists(points.size(), 0.0);
-        for (size_t i = 0; i < points.size(); ++i) {
-            size_t idx[2];
-            double dist2[2];
-            nanoflann::KNNResultSet<double> resultSet(2);
-            resultSet.init(idx, dist2);
-            kdtree.findNeighbors(resultSet, points[i].data(), nanoflann::SearchParameters());
-            dists[i] = std::sqrt(dist2[1]);
-        }
-        double mean = std::accumulate(dists.begin(), dists.end(), 0.0) / dists.size();
-        if (dists_out) *dists_out = std::move(dists);
-        return mean;
+    static void debug(bool flag)
+    {
+	dbg_flag() = flag;
+    }
+    static bool is_debug()
+    {
+	return dbg_flag();
+    }
+
+    Mesh run(const std::vector<double>& radii)
+    {
+	mesh.tris.clear();
+	mesh.tri_nrms.clear();
+	e_front.clear();
+	e_border.clear();
+	for (auto v : verts) {
+	    v->edges.clear();
+	    v->type = Vertex::Orphan;
+	}
+	if (is_debug()) bu_log("[BallPivot] Run: %zu points, %zu normals, %zu radii\n", points.size(), normals.size(), radii.size());
+	for (double r : radii) {
+	    if (is_debug()) bu_log("[BallPivot] Radius: %g\n", r);
+	    update_borders(r);
+	    if (e_front.empty()) find_seed(r);
+	    else expand(r);
+	    if (is_debug()) bu_log("[BallPivot] After r=%g, tris: %zu, fronts: %zu, borders: %zu\n", r, mesh.tris.size(), e_front.size(), e_border.size());
+	}
+	if (is_debug() && mesh.tris.empty()) {
+	    bu_log("[BallPivot] No tris generated.\n");
+	    if (points.empty()) bu_log("  - Empty input cloud.\n");
+	    else if (normals.empty()) bu_log("  - Empty input normals.\n");
+	}
+	return mesh;
+    }
+
+    // Estimate nearest neighbor average spacing
+    static double avg_spacing(const std::vector<std::array<fastf_t, 3>>& pts, std::vector<double>* out_dists = nullptr)
+    {
+	if (pts.size() < 2) return 0.0;
+	PCAdaptor pc{pts};
+	nanoflann::KDTreeSingleIndexAdaptor<
+	nanoflann::L2_Simple_Adaptor<double, PCAdaptor>,
+		  PCAdaptor, 3> kd(3, pc, nanoflann::KDTreeSingleIndexAdaptorParams(10));
+	kd.buildIndex();
+	std::vector<double> dists(pts.size(), 0.0);
+	for (size_t i = 0; i < pts.size(); ++i) {
+	    size_t idx[2];
+	    double d2[2];
+	    nanoflann::KNNResultSet<double> rs(2);
+	    rs.init(idx, d2);
+	    kd.findNeighbors(rs, pts[i].data(), nanoflann::SearchParameters());
+	    dists[i] = std::sqrt(d2[1]);
+	}
+	double mean = std::accumulate(dists.begin(), dists.end(), 0.0) / dists.size();
+	if (out_dists) *out_dists = std::move(dists);
+	return mean;
     }
 
 private:
-    PointCloudAdaptor pc_adaptor;
+    PCAdaptor pc_adapt;
     nanoflann::KDTreeSingleIndexAdaptor<
-        nanoflann::L2_Simple_Adaptor<double, PointCloudAdaptor>,
-        PointCloudAdaptor, 3> kdtree;
+    nanoflann::L2_Simple_Adaptor<double, PCAdaptor>,
+	      PCAdaptor, 3> kdtree;
     const std::vector<std::array<fastf_t, 3>>& points;
     const std::vector<std::array<fastf_t, 3>>& normals;
 
-    std::vector<BallPivotingVertexPtr> vertices;
-    std::list<BallPivotingEdgePtr> edge_front, border_edges;
+    std::vector<VPtr> verts;
+    std::list<EPtr> e_front, e_border;
     Mesh mesh;
 
-    static bool& debug_enabled() { static bool flag = false; return flag; }
-    static std::ostringstream& debug_log() { static std::ostringstream ss; return ss; }
-    static std::ostream& log() { return debug_log(); }
-
-    static void FaceNormal(const std::array<fastf_t, 3>& v0, const std::array<fastf_t, 3>& v1, const std::array<fastf_t, 3>& v2, fastf_t out_n[3]) {
-        vect_t tmp1, tmp2;
-        VSUB2(tmp1, v1.data(), v0.data());
-        VSUB2(tmp2, v2.data(), v0.data());
-        VCROSS(out_n, tmp1, tmp2);
-        if (MAGNITUDE(out_n) > 0.0) {
-            VUNITIZE(out_n);
-        } else {
-            VSETALL(out_n, 0.0);
-        }
+    static bool& dbg_flag()
+    {
+	static bool f = false;
+	return f;
     }
 
-    static bool RobustCompatible(const std::array<fastf_t, 3>& v0,
-                                const std::array<fastf_t, 3>& v1,
-                                const std::array<fastf_t, 3>& v2,
-                                const std::array<fastf_t, 3>& n0) {
-        fastf_t normal[3];
-        FaceNormal(v0, v1, v2, normal);
-        if (VDOT(normal, n0.data()) < 0) VREVERSE(normal, normal);
-        fastf_t test_pt[3];
-        VADD2(test_pt, v0.data(), n0.data());
-        int orient = robust_orient3d(v0.data(), v1.data(), v2.data(), test_pt);
-        return orient > 0;
+    static void face_nrm(const std::array<fastf_t, 3>& p0, const std::array<fastf_t, 3>& p1, const std::array<fastf_t, 3>& p2, fastf_t n[3])
+    {
+	vect_t v1, v2;
+	VSUB2(v1, p1.data(), p0.data());
+	VSUB2(v2, p2.data(), p0.data());
+	VCROSS(n, v1, v2);
+	if (MAGNITUDE(n) > 0.0) VUNITIZE(n);
+	else VSETALL(n, 0.0);
     }
 
-    bool ComputeBallCenter(int i1, int i2, int i3, double R, std::array<fastf_t, 3>& c) {
-        const auto& v1 = points[i1];
-        const auto& v2 = points[i2];
-        const auto& v3 = points[i3];
-        vect_t e12, e13, n;
-        VSUB2(e12, v2.data(), v1.data());
-        VSUB2(e13, v3.data(), v1.data());
-        VCROSS(n, e12, e13);
-        double n2 = MAGSQ(n);
-        double d = 2.0 * n2;
-        if (d < 1e-16) {
-            if (debug_enabled()) log() << "[ComputeBallCenter] Degenerate triangle (area ~ 0)\n";
-            return false;
-        }
-        vect_t vtmp;
-        VSUB2(vtmp, v2.data(), v3.data());
-        double a = MAGSQ(vtmp);
-        VSUB2(vtmp, v3.data(), v1.data());
-        double b = MAGSQ(vtmp);
-        VSUB2(vtmp, v1.data(), v2.data());
-        double c2 = MAGSQ(vtmp);
-        double abg = a*(b + c2 - a) + b*(a + c2 - b) + c2*(a + b - c2);
-        if (fabs(abg) < 1e-16) {
-            if (debug_enabled()) log() << "[ComputeBallCenter] Degenerate triangle (abg ~ 0)\n";
-            return false;
-        }
-        double alpha = a * (b + c2 - a) / abg;
-        double beta = b * (a + c2 - b) / abg;
-        double gamma = c2 * (a + b - c2) / abg;
-        fastf_t circ_c[3] = {0,0,0};
-        VSCALE(circ_c, v1.data(), alpha);
-        vect_t tmp2;
-        VSCALE(tmp2, v2.data(), beta); VADD2(circ_c, circ_c, tmp2);
-        VSCALE(tmp2, v3.data(), gamma); VADD2(circ_c, circ_c, tmp2);
-
-        double r2 = MAGSQ(e12) * MAGSQ(e13) * MAGSQ(vtmp);
-        double a1 = sqrt(MAGSQ(e12)), a2 = sqrt(MAGSQ(e13)), a3 = sqrt(MAGSQ(vtmp));
-        double denom = (a1+a2+a3)*(a2+a3-a1)*(a3+a1-a2)*(a1+a2-a3);
-        if (fabs(denom) < 1e-16) {
-            if (debug_enabled()) log() << "[ComputeBallCenter] Degenerate triangle (circumradius denominator ~ 0)\n";
-            return false;
-        }
-        r2 /= denom;
-        double h2 = R*R - r2;
-        if (h2 < 0.0) {
-            if (debug_enabled()) log() << "[ComputeBallCenter] Ball radius too small, no sphere possible\n";
-            return false;
-        }
-        vect_t tr_norm, pt_norm;
-        VMOVE(tr_norm, n); VUNITIZE(tr_norm);
-        VADD2(pt_norm, normals[i1].data(), normals[i2].data()); VADD2(pt_norm, pt_norm, normals[i3].data()); VUNITIZE(pt_norm);
-        if (VDOT(tr_norm, pt_norm) < 0) VREVERSE(tr_norm, tr_norm);
-        double h = sqrt(h2);
-        VSCALE(tmp2, tr_norm, h);
-        VADD2(c.data(), circ_c, tmp2);
-        return true;
+    static bool robust_ok(const std::array<fastf_t, 3>& a, const std::array<fastf_t, 3>& b, const std::array<fastf_t, 3>& c, const std::array<fastf_t, 3>& na)
+    {
+	fastf_t n[3];
+	face_nrm(a, b, c, n);
+	if (VDOT(n, na.data()) < 0) VREVERSE(n, n);
+	fastf_t tp[3];
+	VADD2(tp, a.data(), na.data());
+	int o = robust_orient3d(a.data(), b.data(), c.data(), tp);
+	return o > 0;
     }
 
-    void SearchRadius(const std::array<fastf_t, 3>& query, double radius, std::vector<int>& out_indices) {
-        out_indices.clear();
-        nanoflann::SearchParameters p;
-        std::vector<nanoflann::ResultItem<unsigned int, double>> ret_matches;
-        kdtree.radiusSearch(query.data(), radius*radius, ret_matches, p);
-        for (auto& m : ret_matches)
-            out_indices.push_back(static_cast<int>(m.first));
+    bool ball_ctr(int i0, int i1, int i2, double R, std::array<fastf_t, 3>& c)
+    {
+	const auto& p0 = points[i0], &p1 = points[i1], &p2 = points[i2];
+	vect_t e1, e2, n;
+	VSUB2(e1, p1.data(), p0.data());
+	VSUB2(e2, p2.data(), p0.data());
+	VCROSS(n, e1, e2);
+	double n2 = MAGSQ(n);
+	double d = 2.0 * n2;
+	if (d < 1e-16) {
+	    if (is_debug()) bu_log("[ball_ctr] degenerate triangle\n");
+	    return false;
+	}
+	vect_t t;
+	VSUB2(t, p1.data(), p2.data());
+	double a = MAGSQ(t);
+	VSUB2(t, p2.data(), p0.data());
+	double b = MAGSQ(t);
+	VSUB2(t, p0.data(), p1.data());
+	double c2 = MAGSQ(t);
+	double abg = a*(b + c2 - a) + b*(a + c2 - b) + c2*(a + b - c2);
+	if (fabs(abg) < 1e-16) {
+	    if (is_debug()) bu_log("[ball_ctr] degenerate abg\n");
+	    return false;
+	}
+	double alpha = a * (b + c2 - a) / abg;
+	double beta = b * (a + c2 - b) / abg;
+	double gamma = c2 * (a + b - c2) / abg;
+	fastf_t cc[3] = {0,0,0};
+	VSCALE(cc, p0.data(), alpha);
+	vect_t t2;
+	VSCALE(t2, p1.data(), beta);
+	VADD2(cc, cc, t2);
+	VSCALE(t2, p2.data(), gamma);
+	VADD2(cc, cc, t2);
+
+	double r2 = MAGSQ(e1) * MAGSQ(e2) * MAGSQ(t);
+	double a1 = sqrt(MAGSQ(e1)), a2 = sqrt(MAGSQ(e2)), a3 = sqrt(MAGSQ(t));
+	double denom = (a1+a2+a3)*(a2+a3-a1)*(a3+a1-a2)*(a1+a2-a3);
+	if (fabs(denom) < 1e-16) {
+	    if (is_debug()) bu_log("[ball_ctr] degenerate denom\n");
+	    return false;
+	}
+	r2 /= denom;
+	double h2 = R*R - r2;
+	if (h2 < 0.0) {
+	    if (is_debug()) bu_log("[ball_ctr] ball too small\n");
+	    return false;
+	}
+
+	vect_t tr_n, nsum;
+	VMOVE(tr_n, n);
+	VUNITIZE(tr_n);
+	VADD2(nsum, normals[i0].data(), normals[i1].data());
+	VADD2(nsum, nsum, normals[i2].data());
+	VUNITIZE(nsum);
+	if (VDOT(tr_n, nsum) < 0) VREVERSE(tr_n, tr_n);
+	double h = sqrt(h2);
+	VSCALE(t2, tr_n, h);
+	VADD2(c.data(), cc, t2);
+	return true;
     }
 
-    BallPivotingEdgePtr GetLinkingEdge(BallPivotingVertexPtr v0, BallPivotingVertexPtr v1) {
-        for (const auto& e0 : v0->edges)
-            for (const auto& e1 : v1->edges)
-                if ((e0->source == e1->source && e0->target == e1->target) ||
-                    (e0->source == e1->target && e0->target == e1->source))
-                    return e0;
-        return nullptr;
+    void radius_search(const std::array<fastf_t, 3>& p, double r, std::vector<int>& idxs)
+    {
+	idxs.clear();
+	nanoflann::SearchParameters params;
+	std::vector<nanoflann::ResultItem<unsigned int, double>> matches;
+	kdtree.radiusSearch(p.data(), r*r, matches, params);
+	for (auto& m : matches) idxs.push_back((int)m.first);
     }
 
-    void CreateTriangle(BallPivotingVertexPtr v0, BallPivotingVertexPtr v1, BallPivotingVertexPtr v2, const std::array<fastf_t, 3>& center) {
-        auto tri = std::make_shared<BallPivotingTriangle>(v0, v1, v2, center);
-        BallPivotingEdgePtr e0 = GetOrCreateEdge(v0, v1, tri);
-        BallPivotingEdgePtr e1 = GetOrCreateEdge(v1, v2, tri);
-        BallPivotingEdgePtr e2 = GetOrCreateEdge(v2, v0, tri);
-        v0->UpdateType(); v1->UpdateType(); v2->UpdateType();
-        fastf_t f_n[3];
-        FaceNormal(v0->point, v1->point, v2->point, f_n);
-        if (VDOT(f_n, v0->normal.data()) > -1e-16)
-            mesh.triangles.push_back({v0->idx, v1->idx, v2->idx});
-        else
-            mesh.triangles.push_back({v0->idx, v2->idx, v1->idx});
-        mesh.triangle_normals.push_back({f_n[0], f_n[1], f_n[2]});
-        if (debug_enabled()) log() << "[CreateTriangle] (" << v0->idx << "," << v1->idx << "," << v2->idx << ")\n";
+    EPtr edge_between(VPtr v0, VPtr v1)
+    {
+	for (const auto& e0 : v0->edges)
+	    for (const auto& e1 : v1->edges)
+		if ((e0->a == e1->a && e0->b == e1->b) || (e0->a == e1->b && e0->b == e1->a))
+		    return e0;
+	return nullptr;
     }
 
-    BallPivotingEdgePtr GetOrCreateEdge(BallPivotingVertexPtr v0, BallPivotingVertexPtr v1, BallPivotingTrianglePtr tri) {
-        BallPivotingEdgePtr e = GetLinkingEdge(v0, v1);
-        if (!e) e = std::make_shared<BallPivotingEdge>(v0, v1);
-        e->AddAdjacentTriangle(tri);
-        v0->edges.insert(e); v1->edges.insert(e);
-        return e;
+    void make_face(VPtr v0, VPtr v1, VPtr v2, const std::array<fastf_t, 3>& ctr)
+    {
+	auto f = std::make_shared<Face>(v0, v1, v2, ctr);
+	EPtr e0 = get_edge(v0, v1, f);
+	EPtr e1 = get_edge(v1, v2, f);
+	EPtr e2 = get_edge(v2, v0, f);
+	v0->update_type();
+	v1->update_type();
+	v2->update_type();
+	fastf_t n[3];
+	face_nrm(v0->pos, v1->pos, v2->pos, n);
+	if (VDOT(n, v0->nrm.data()) > -1e-16)
+	    mesh.tris.push_back({v0->id, v1->id, v2->id});
+	else
+	    mesh.tris.push_back({v0->id, v2->id, v1->id});
+	mesh.tri_nrms.push_back({n[0], n[1], n[2]});
+	if (is_debug()) bu_log("[make_face] (%d,%d,%d)\n", v0->id, v1->id, v2->id);
     }
 
-    void UpdateBorderEdges(double radius) {
-        for (auto it = border_edges.begin(); it != border_edges.end(); ) {
-            BallPivotingEdgePtr e = *it;
-            BallPivotingTrianglePtr tri = e->triangle0;
-            std::array<fastf_t, 3> c;
-            if (ComputeBallCenter(tri->vert0->idx, tri->vert1->idx, tri->vert2->idx, radius, c)) {
-                std::vector<int> indices; SearchRadius(c, radius, indices);
-                bool empty_ball = true;
-                for (auto idx : indices)
-                    if (idx != tri->vert0->idx && idx != tri->vert1->idx && idx != tri->vert2->idx) {
-                        empty_ball = false; break;
-                    }
-                if (empty_ball) {
-                    e->type = BallPivotingEdge::Front;
-                    edge_front.push_back(e);
-                    it = border_edges.erase(it);
-                    if (debug_enabled()) log() << "[UpdateBorderEdges] Added edge to front\n";
-                    continue;
-                }
-            }
-            ++it;
-        }
+    EPtr get_edge(VPtr v0, VPtr v1, FPtr f)
+    {
+	EPtr e = edge_between(v0, v1);
+	if (!e) e = std::make_shared<Edge>(v0, v1);
+	e->add_face(f);
+	v0->edges.insert(e);
+	v1->edges.insert(e);
+	return e;
     }
 
-    void ExpandTriangulation(double radius) {
-        if (debug_enabled()) log() << "[ExpandTriangulation] radius=" << radius << "\n";
-        while (!edge_front.empty()) {
-            BallPivotingEdgePtr e = edge_front.front(); edge_front.pop_front();
-            if (e->type != BallPivotingEdge::Front) continue;
-            std::array<fastf_t, 3> center;
-            BallPivotingVertexPtr candidate = FindCandidateVertex(e, radius, center);
-            if (!candidate) {
-                if (debug_enabled()) log() << "[ExpandTriangulation] No candidate found for edge (" << e->source->idx << "," << e->target->idx << ")\n";
-            }
-            if (!candidate || candidate->type == BallPivotingVertex::Inner
-                || !RobustCompatible(candidate->point, e->source->point, e->target->point, candidate->normal)) {
-                e->type = BallPivotingEdge::Border;
-                border_edges.push_back(e);
-                continue;
-            }
-            BallPivotingEdgePtr e0 = GetLinkingEdge(candidate, e->source);
-            BallPivotingEdgePtr e1 = GetLinkingEdge(candidate, e->target);
-            if ((e0 && e0->type != BallPivotingEdge::Front) ||
-                (e1 && e1->type != BallPivotingEdge::Front)) {
-                e->type = BallPivotingEdge::Border;
-                border_edges.push_back(e);
-                if (debug_enabled()) log() << "[ExpandTriangulation] Candidate edge already not front; skipping\n";
-                continue;
-            }
-            CreateTriangle(e->source, e->target, candidate, center);
-            e0 = GetLinkingEdge(candidate, e->source);
-            e1 = GetLinkingEdge(candidate, e->target);
-            if (e0 && e0->type == BallPivotingEdge::Front) edge_front.push_front(e0);
-            if (e1 && e1->type == BallPivotingEdge::Front) edge_front.push_front(e1);
-        }
+    void update_borders(double r)
+    {
+	for (auto it = e_border.begin(); it != e_border.end();) {
+	    EPtr e = *it;
+	    FPtr f = e->f0;
+	    std::array<fastf_t, 3> c;
+	    if (ball_ctr(f->v0->id, f->v1->id, f->v2->id, r, c)) {
+		std::vector<int> idxs;
+		radius_search(c, r, idxs);
+		bool empty = true;
+		for (auto i : idxs)
+		    if (i != f->v0->id && i != f->v1->id && i != f->v2->id) {
+			empty = false;
+			break;
+		    }
+		if (empty) {
+		    e->type = Edge::Front;
+		    e_front.push_back(e);
+		    it = e_border.erase(it);
+		    if (is_debug()) bu_log("[update_borders] border->front\n");
+		    continue;
+		}
+	    }
+	    ++it;
+	}
     }
 
-    void FindSeedTriangle(double radius) {
-        bool found_seed = false;
-        for (size_t i = 0; i < vertices.size(); ++i) {
-            if (vertices[i]->type == BallPivotingVertex::Orphan) {
-                if (TrySeed(vertices[i], radius)) {
-                    found_seed = true;
-                    ExpandTriangulation(radius);
-                }
-            }
-        }
-        if (debug_enabled() && !found_seed) {
-            log() << "[FindSeedTriangle] No valid seed triangle found for radius " << radius << "\n";
-        }
+    void expand(double r)
+    {
+	if (is_debug()) bu_log("[expand] r=%g\n", r);
+	while (!e_front.empty()) {
+	    EPtr e = e_front.front();
+	    e_front.pop_front();
+	    if (e->type != Edge::Front) continue;
+	    std::array<fastf_t, 3> ctr;
+	    VPtr cand = find_next_vert(e, r, ctr);
+	    if (!cand) {
+		if (is_debug()) bu_log("[expand] No candidate for (%d,%d)\n", e->a->id, e->b->id);
+	    }
+	    if (!cand || cand->type == Vertex::Inner || !robust_ok(cand->pos, e->a->pos, e->b->pos, cand->nrm)) {
+		e->type = Edge::Border;
+		e_border.push_back(e);
+		continue;
+	    }
+	    EPtr ea = edge_between(cand, e->a), eb = edge_between(cand, e->b);
+	    if ((ea && ea->type != Edge::Front) || (eb && eb->type != Edge::Front)) {
+		e->type = Edge::Border;
+		e_border.push_back(e);
+		if (is_debug()) bu_log("[expand] candidate edge not front\n");
+		continue;
+	    }
+	    make_face(e->a, e->b, cand, ctr);
+	    ea = edge_between(cand, e->a);
+	    eb = edge_between(cand, e->b);
+	    if (ea && ea->type == Edge::Front) e_front.push_front(ea);
+	    if (eb && eb->type == Edge::Front) e_front.push_front(eb);
+	}
     }
 
-    bool TrySeed(BallPivotingVertexPtr v, double radius) {
-        std::vector<int> indices; SearchRadius(v->point, 2*radius, indices);
-        if (indices.size() < 3) {
-            if (debug_enabled()) log() << "[TrySeed] Not enough neighbors for point " << v->idx << "\n";
-            return false;
-        }
-        for (size_t i0 = 0; i0 < indices.size(); ++i0) {
-            BallPivotingVertexPtr nb0 = vertices[indices[i0]];
-            if (nb0->type != BallPivotingVertex::Orphan || nb0->idx == v->idx) continue;
-            int candidate2 = -1;
-            std::array<fastf_t, 3> center;
-            for (size_t i1 = i0+1; i1 < indices.size(); ++i1) {
-                BallPivotingVertexPtr nb1 = vertices[indices[i1]];
-                if (nb1->type != BallPivotingVertex::Orphan || nb1->idx == v->idx) continue;
-                if (TryTriangleSeed(v, nb0, nb1, indices, radius, center)) {
-                    candidate2 = nb1->idx; break;
-                }
-            }
-            if (candidate2 >= 0) {
-                BallPivotingVertexPtr nb1 = vertices[candidate2];
-                BallPivotingEdgePtr e0 = GetLinkingEdge(v, nb1);
-                BallPivotingEdgePtr e1 = GetLinkingEdge(nb0, nb1);
-                BallPivotingEdgePtr e2 = GetLinkingEdge(v, nb0);
-                if ((e0 && e0->type != BallPivotingEdge::Front) ||
-                    (e1 && e1->type != BallPivotingEdge::Front) ||
-                    (e2 && e2->type != BallPivotingEdge::Front)) continue;
-                CreateTriangle(v, nb0, nb1, center);
-                e0 = GetLinkingEdge(v, nb1); e1 = GetLinkingEdge(nb0, nb1); e2 = GetLinkingEdge(v, nb0);
-                if (e0 && e0->type == BallPivotingEdge::Front) edge_front.push_front(e0);
-                if (e1 && e1->type == BallPivotingEdge::Front) edge_front.push_front(e1);
-                if (e2 && e2->type == BallPivotingEdge::Front) edge_front.push_front(e2);
-                if (!edge_front.empty()) return true;
-            }
-        }
-        return false;
+    void find_seed(double r)
+    {
+	bool found = false;
+	for (size_t i = 0; i < verts.size(); ++i) {
+	    if (verts[i]->type == Vertex::Orphan) {
+		if (try_seed(verts[i], r)) {
+		    found = true;
+		    expand(r);
+		}
+	    }
+	}
+	if (is_debug() && !found)
+	    bu_log("[find_seed] No seed for r=%g\n", r);
     }
 
-    bool TryTriangleSeed(BallPivotingVertexPtr v0, BallPivotingVertexPtr v1, BallPivotingVertexPtr v2,
-                         const std::vector<int>& nb_indices, double radius, std::array<fastf_t, 3>& center) {
-        if (!RobustCompatible(v0->point, v1->point, v2->point, v0->normal)) {
-            if (debug_enabled()) log() << "[TryTriangleSeed] Triangle (" << v0->idx << "," << v1->idx << "," << v2->idx << ") orientation not compatible\n";
-            return false;
-        }
-        BallPivotingEdgePtr e0 = GetLinkingEdge(v0, v2), e1 = GetLinkingEdge(v1, v2);
-        if ((e0 && e0->type == BallPivotingEdge::Inner) ||
-            (e1 && e1->type == BallPivotingEdge::Inner)) {
-            if (debug_enabled()) log() << "[TryTriangleSeed] Triangle (" << v0->idx << "," << v1->idx << "," << v2->idx << ") blocked by inner edge\n";
-            return false;
-        }
-        if (!ComputeBallCenter(v0->idx, v1->idx, v2->idx, radius, center)) {
-            if (debug_enabled()) log() << "[TryTriangleSeed] Triangle (" << v0->idx << "," << v1->idx << "," << v2->idx << ") cannot compute ball center\n";
-            return false;
-        }
-        for (auto nbidx : nb_indices) {
-            BallPivotingVertexPtr v = vertices[nbidx];
-            if (v == v0 || v == v1 || v == v2) continue;
-            vect_t diff;
-            VSUB2(diff, center.data(), v->point.data());
-            if (MAGNITUDE(diff) < radius - 1e-16) {
-                if (debug_enabled()) log() << "[TryTriangleSeed] Ball not empty for triangle (" << v0->idx << "," << v1->idx << "," << v2->idx << ")\n";
-                return false;
-            }
-        }
-        return true;
+    bool try_seed(VPtr v, double r)
+    {
+	std::vector<int> idxs;
+	radius_search(v->pos, 2*r, idxs);
+	if (idxs.size() < 3) {
+	    if (is_debug()) bu_log("[try_seed] few nbrs %d\n", v->id);
+	    return false;
+	}
+	for (size_t i0 = 0; i0 < idxs.size(); ++i0) {
+	    VPtr n0 = verts[idxs[i0]];
+	    if (n0->type != Vertex::Orphan || n0->id == v->id) continue;
+	    int c2 = -1;
+	    std::array<fastf_t, 3> ctr;
+	    for (size_t i1 = i0+1; i1 < idxs.size(); ++i1) {
+		VPtr n1 = verts[idxs[i1]];
+		if (n1->type != Vertex::Orphan || n1->id == v->id) continue;
+		if (try_tri_seed(v, n0, n1, idxs, r, ctr)) {
+		    c2 = n1->id;
+		    break;
+		}
+	    }
+	    if (c2 >= 0) {
+		VPtr n1 = verts[c2];
+		EPtr e0 = edge_between(v, n1), e1 = edge_between(n0, n1), e2 = edge_between(v, n0);
+		if ((e0 && e0->type != Edge::Front) || (e1 && e1->type != Edge::Front) || (e2 && e2->type != Edge::Front)) continue;
+		make_face(v, n0, n1, ctr);
+		e0 = edge_between(v, n1);
+		e1 = edge_between(n0, n1);
+		e2 = edge_between(v, n0);
+		if (e0 && e0->type == Edge::Front) e_front.push_front(e0);
+		if (e1 && e1->type == Edge::Front) e_front.push_front(e1);
+		if (e2 && e2->type == Edge::Front) e_front.push_front(e2);
+		if (!e_front.empty()) return true;
+	    }
+	}
+	return false;
     }
 
-    BallPivotingVertexPtr FindCandidateVertex(const BallPivotingEdgePtr& edge, double radius, std::array<fastf_t, 3>& candidate_center) {
-        BallPivotingVertexPtr src = edge->source, tgt = edge->target, opp = edge->GetOppositeVertex();
-        if (!opp) {
-            if (debug_enabled()) log() << "[FindCandidateVertex] No opposite vertex\n";
-            return nullptr;
-        }
-        std::array<fastf_t, 3> mp;
-        for (int i = 0; i < 3; ++i) mp[i] = fastf_t(0.5) * (src->point[i] + tgt->point[i]);
-        BallPivotingTrianglePtr tri = edge->triangle0;
-        const auto& center = tri->ball_center;
-        vect_t v, a;
-        VSUB2(v, tgt->point.data(), src->point.data()); VUNITIZE(v);
-        VSUB2(a, center.data(), mp.data()); VUNITIZE(a);
-        std::vector<int> indices; SearchRadius(mp, 2*radius, indices);
-        BallPivotingVertexPtr min_candidate = nullptr;
-        double min_angle = 2 * M_PI;
-        for (auto nbidx : indices) {
-            BallPivotingVertexPtr candidate = vertices[nbidx];
-            if (candidate==src || candidate==tgt || candidate==opp) continue;
-            int coplanar = robust_orient3d(src->point.data(), tgt->point.data(), opp->point.data(), candidate->point.data());
-            if (coplanar == 0) continue;
-            std::array<fastf_t, 3> new_center;
-            if (!ComputeBallCenter(src->idx, tgt->idx, candidate->idx, radius, new_center)) continue;
-            vect_t b;
-            VSUB2(b, new_center.data(), mp.data()); VUNITIZE(b);
-            double cos_theta = clamp(VDOT(a, b), -1.0, 1.0);
-            double angle = acos(cos_theta);
-            vect_t cross;
-            VCROSS(cross, a, b);
-            if (VDOT(cross, v) < 0) angle = 2*M_PI - angle;
-            if (angle >= min_angle) continue;
-            bool empty_ball = true;
-            for (auto nbidx2 : indices) {
-                BallPivotingVertexPtr nb = vertices[nbidx2];
-                if (nb==src || nb==tgt || nb==candidate) continue;
-                vect_t d2;
-                VSUB2(d2, new_center.data(), nb->point.data());
-                if (MAGNITUDE(d2) < radius - 1e-16) {
-                    empty_ball = false; break;
-                }
-            }
-            if (empty_ball) {
-                min_angle = angle;
-                min_candidate = candidate;
-                candidate_center = new_center;
-            }
-        }
-        if (debug_enabled() && !min_candidate) {
-            log() << "[FindCandidateVertex] No candidate found for edge ("
-                  << src->idx << "," << tgt->idx << ") with opp " << opp->idx << "\n";
-        }
-        return min_candidate;
+    bool try_tri_seed(VPtr v0, VPtr v1, VPtr v2, const std::vector<int>& nb_idx, double r, std::array<fastf_t, 3>& ctr)
+    {
+	if (!robust_ok(v0->pos, v1->pos, v2->pos, v0->nrm)) {
+	    if (is_debug()) bu_log("[try_tri_seed] orient (%d,%d,%d)\n", v0->id, v1->id, v2->id);
+	    return false;
+	}
+	EPtr e0 = edge_between(v0, v2), e1 = edge_between(v1, v2);
+	if ((e0 && e0->type == Edge::Inner) || (e1 && e1->type == Edge::Inner)) {
+	    if (is_debug()) bu_log("[try_tri_seed] blocked (%d,%d,%d)\n", v0->id, v1->id, v2->id);
+	    return false;
+	}
+	if (!ball_ctr(v0->id, v1->id, v2->id, r, ctr)) {
+	    if (is_debug()) bu_log("[try_tri_seed] no ctr (%d,%d,%d)\n", v0->id, v1->id, v2->id);
+	    return false;
+	}
+	for (auto ni : nb_idx) {
+	    VPtr v = verts[ni];
+	    if (v == v0 || v == v1 || v == v2) continue;
+	    vect_t d;
+	    VSUB2(d, ctr.data(), v->pos.data());
+	    if (MAGNITUDE(d) < r - 1e-16) {
+		if (is_debug()) bu_log("[try_tri_seed] not empty (%d,%d,%d)\n", v0->id, v1->id, v2->id);
+		return false;
+	    }
+	}
+	return true;
+    }
+
+    VPtr find_next_vert(const EPtr& e, double r, std::array<fastf_t, 3>& ctr)
+    {
+	VPtr a = e->a, b = e->b, o = e->opp_vert();
+	if (!o) {
+	    if (is_debug()) bu_log("[find_next_vert] No opp\n");
+	    return nullptr;
+	}
+	std::array<fastf_t, 3> mp;
+	for (int i = 0; i < 3; ++i) mp[i] = fastf_t(0.5) * (a->pos[i] + b->pos[i]);
+	FPtr f = e->f0;
+	const auto& c0 = f->center;
+	vect_t v, va;
+	VSUB2(v, b->pos.data(), a->pos.data());
+	VUNITIZE(v);
+	VSUB2(va, c0.data(), mp.data());
+	VUNITIZE(va);
+	std::vector<int> idxs;
+	radius_search(mp, 2*r, idxs);
+
+	VPtr min_cand = nullptr;
+	double min_ang = 2 * M_PI;
+	for (auto ni : idxs) {
+	    VPtr cand = verts[ni];
+	    if (cand==a || cand==b || cand==o) continue;
+	    int copl = robust_orient3d(a->pos.data(), b->pos.data(), o->pos.data(), cand->pos.data());
+	    if (copl == 0) continue;
+	    std::array<fastf_t, 3> nc;
+	    if (!ball_ctr(a->id, b->id, cand->id, r, nc)) continue;
+	    vect_t vb;
+	    VSUB2(vb, nc.data(), mp.data());
+	    VUNITIZE(vb);
+	    double cosa = clamp(VDOT(va, vb), -1.0, 1.0);
+	    double ang = acos(cosa);
+	    vect_t cross;
+	    VCROSS(cross, va, vb);
+	    if (VDOT(cross, v) < 0) ang = 2*M_PI - ang;
+	    if (ang >= min_ang) continue;
+	    bool empty = true;
+	    for (auto ni2 : idxs) {
+		VPtr nb = verts[ni2];
+		if (nb==a || nb==b || nb==cand) continue;
+		vect_t d2;
+		VSUB2(d2, nc.data(), nb->pos.data());
+		if (MAGNITUDE(d2) < r - 1e-16) {
+		    empty = false;
+		    break;
+		}
+	    }
+	    if (empty) {
+		min_ang = ang;
+		min_cand = cand;
+		ctr = nc;
+	    }
+	}
+	if (is_debug() && !min_cand) bu_log("[find_next_vert] No cand for (%d,%d) opp %d\n", a->id, b->id, o->id);
+	return min_cand;
     }
 
     template <typename T>
-    static inline const T& clamp(const T& v, const T& lo, const T& hi) {
-        return (v < lo) ? lo : (hi < v) ? hi : v;
+    static inline const T& clamp(const T& v, const T& lo, const T& hi)
+    {
+	return (v < lo) ? lo : (hi < v) ? hi : v;
     }
 };
 
-} // namespace ball_pivoting
+} // namespace bpiv
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// C linkage C adapter, outside namespace
+// --- C Linkage Adapter ---
 int ball_pivoting_run(
-    std::vector<int> &face_vec,
-    const point_t *input_points_3d,
-    const vect_t *input_normals_3d,
-    int num_input_pnts,
+    std::vector<int>& faces,
+    const point_t* pts3,
+    const vect_t* nrms3,
+    int n_pts,
     double radius
-) {
+)
+{
     using fastf = fastf_t;
-    std::vector<std::array<fastf, 3>> points(num_input_pnts);
-    std::vector<std::array<fastf, 3>> normals(num_input_pnts);
+    std::vector<std::array<fastf, 3>> pts(n_pts);
+    std::vector<std::array<fastf, 3>> nrms(n_pts);
 
-    for (int i = 0; i < num_input_pnts; ++i) {
-        points[i][0] = input_points_3d[i][0];
-        points[i][1] = input_points_3d[i][1];
-        points[i][2] = input_points_3d[i][2];
-        normals[i][0] = input_normals_3d[i][0];
-        normals[i][1] = input_normals_3d[i][1];
-        normals[i][2] = input_normals_3d[i][2];
+    for (int i = 0; i < n_pts; ++i) {
+	pts[i][0] = pts3[i][0];
+	pts[i][1] = pts3[i][1];
+	pts[i][2] = pts3[i][2];
+	nrms[i][0] = nrms3[i][0];
+	nrms[i][1] = nrms3[i][1];
+	nrms[i][2] = nrms3[i][2];
     }
 
-    // If the user supplied radius is negative or "near zero", estimate it.
     if (radius < 0.0 || NEAR_EQUAL(radius, 0.0, VUNITIZE_TOL)) {
-        double avg_spacing = ball_pivoting::BallPivoting::estimate_average_spacing(points);
-        // Use a typical "safety" scaling factor
-        radius = 1.5 * avg_spacing;
+	double avg = bpiv::BallPivot::avg_spacing(pts);
+	radius = 1.5 * avg;
     }
 
-    ball_pivoting::BallPivoting bp(points, normals);
-    auto mesh = bp.Run({radius});
+    bpiv::BallPivot bp(pts, nrms);
+    auto mesh = bp.run({radius});
+    if (mesh.tris.empty()) return 0;
 
-    if (mesh.triangles.empty())
-        return 0;
-
-    face_vec.clear();
-
-    // Faces (triangle indices)
-    for (const auto &t : mesh.triangles) {
-        face_vec.push_back(t[0]);
-        face_vec.push_back(t[1]);
-        face_vec.push_back(t[2]);
+    faces.clear();
+    for (const auto& t : mesh.tris) {
+	faces.push_back(t[0]);
+	faces.push_back(t[1]);
+	faces.push_back(t[2]);
     }
-
-    return static_cast<int>(mesh.triangles.size());
+    return (int)mesh.tris.size();
 }
 
 #ifdef __cplusplus
@@ -645,19 +654,23 @@ int ball_pivoting_run(
 #endif
 
 /*
-Debugging/Telemetry usage:
+   Debug/Telemetry usage:
 
 // Enable telemetry
-ball_pivoting::BallPivoting::set_debug(true);
+bpiv::BallPivot::debug(true);
 
-// Run the algorithm as usual
-auto mesh = bp.Run({radius});
+// Run the algorithm
+auto mesh = bp.run({radius});
 
-// If the mesh is empty, get logs:
-if(mesh.triangles.empty()) {
-    std::cerr << ball_pivoting::BallPivoting::get_debug_log();
-}
-
-// You can clear the log any time:
-ball_pivoting::BallPivoting::clear_debug_log();
+// If mesh.tris.empty(), check bu_log output for diagnostics.
 */
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s

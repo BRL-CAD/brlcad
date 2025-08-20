@@ -73,6 +73,7 @@ add_subdirectory(tests)
 
 set(
   bg_ignore
+  BallPivot.hpp
   QuickHull.hpp
   bg_private.h
   clipper.hpp
