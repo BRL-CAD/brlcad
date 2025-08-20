@@ -43,6 +43,7 @@
 #include "bu/str.h"
 #include "bu/log.h"
 
+extern "C" {
 /* adrt headers */
 #include "adrt.h"
 #include "tienet.h"
@@ -50,7 +51,7 @@
 /* local api headers */
 #include "./tienet_master.h"
 #include "./master.h"
-
+}
 
 #if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
 extern struct hostent *gethostbyname(const char *);
@@ -299,8 +300,8 @@ void tienet_master_wait(void)
 void tienet_master_connect_slaves(fd_set *readfds)
 {
     FILE *fh;
-    struct sockaddr_in tdaemon = {0};
-    struct sockaddr_in slave = {0};
+    struct sockaddr_in tdaemon{};
+    struct sockaddr_in slave{};
     struct hostent slave_ent;
     tienet_master_socket_t *tmp = NULL;
     short op = 0;

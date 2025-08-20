@@ -1,10 +1,10 @@
 set(
   ADRT_MASTER_SOURCES
-  ../tienet.c
-  compnet.c
-  dispatcher.c
-  master.c
-  tienet_master.c
+  ../tienet.cpp
+  compnet.cpp
+  dispatcher.cpp
+  master.cpp
+  tienet_master.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR}/../librender)
