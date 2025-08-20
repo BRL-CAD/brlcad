@@ -5,6 +5,7 @@ find_package_spsr(REQUIRED)
 set(
   LIBBG_SOURCES
   aabb_ray.c
+  ballpivot.cpp
   chull.c
   chull2.cpp
   QuickHull.cpp
