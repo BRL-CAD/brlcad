@@ -111,7 +111,8 @@ static int ogl_nwindows = 0;     /* number of open windows */
 static XColor color_cell[256];   /* used to set colormap */
 
 #if 0
-static void gl_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
+static void gl_printglmat(struct bu_vls *tmp_vls, GLfloat *m)
+{
     bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[0], m[4], m[8], m[12]);
     bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[1], m[5], m[9], m[13]);
     bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[2], m[6], m[10], m[14]);
@@ -297,8 +298,14 @@ ogl_upload_region(struct fb *ifp, int x, int y, int w, int h)
 {
     if (!OGL(ifp)->tex_initialized) return;
     if (w <= 0 || h <= 0) return;
-    if (x < 0) { w += x; x = 0; }
-    if (y < 0) { h += y; y = 0; }
+    if (x < 0) {
+	w += x;
+	x = 0;
+    }
+    if (y < 0) {
+	h += y;
+	y = 0;
+    }
     if (x + w > ifp->i->if_width)  w = ifp->i->if_width - x;
     if (y + h > ifp->i->if_height) h = ifp->i->if_height - y;
     if (w <= 0 || h <= 0) return;
@@ -358,9 +365,11 @@ ogl_present(struct fb *ifp)
 
     struct fb_clip *clp = &(OGL(ifp)->clip);
     glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);
-    glMatrixMode(GL_PROJECTION); glLoadIdentity();
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
     glOrtho(0, OGL(ifp)->win_width, 0, OGL(ifp)->win_height, -1, 1);
-    glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
     glClearColor(0,0,0,0);
@@ -378,8 +387,10 @@ ogl_present(struct fb *ifp)
 
     int vis_w = xpixmax - xpixmin + 1;
     int vis_h = ypixmax - ypixmin + 1;
-    double zx = ifp->i->if_xzoom; if (zx < 1) zx = 1;
-    double zy = ifp->i->if_yzoom; if (zy < 1) zy = 1;
+    double zx = ifp->i->if_xzoom;
+    if (zx < 1) zx = 1;
+    double zy = ifp->i->if_yzoom;
+    if (zy < 1) zy = 1;
     double draw_w = vis_w * zx;
     double draw_h = vis_h * zy;
     double sx = (OGL(ifp)->win_width  - draw_w)/2.0;
@@ -393,10 +404,14 @@ ogl_present(struct fb *ifp)
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, OGL(ifp)->texid);
     glBegin(GL_TRIANGLE_STRIP);
-	glTexCoord2f(tx0, ty0); glVertex2f(sx,       sy);
-	glTexCoord2f(tx0, ty1); glVertex2f(sx,       sy + draw_h);
-	glTexCoord2f(tx1, ty0); glVertex2f(sx+draw_w, sy);
-	glTexCoord2f(tx1, ty1); glVertex2f(sx+draw_w, sy + draw_h);
+    glTexCoord2f(tx0, ty0);
+    glVertex2f(sx,       sy);
+    glTexCoord2f(tx0, ty1);
+    glVertex2f(sx,       sy + draw_h);
+    glTexCoord2f(tx1, ty0);
+    glVertex2f(sx+draw_w, sy);
+    glTexCoord2f(tx1, ty1);
+    glVertex2f(sx+draw_w, sy + draw_h);
     glEnd();
 
     if (WIN(ifp)->mi_doublebuffer)
@@ -523,10 +538,14 @@ fb_clipper(struct fb *ifp)
     clp->obottom = ((double) clp->yscrmin) - 0.25*pixels/((double) OGL(ifp)->vp_height);
     clp->otop = clp->obottom + pixels;
 
-    clp->xpixmin = clp->xscrmin; if (clp->xpixmin < 0) clp->xpixmin = 0;
-    clp->xpixmax = clp->xscrmax; if (clp->xpixmax > ifp->i->if_width-1) clp->xpixmax = ifp->i->if_width-1;
-    clp->ypixmin = clp->yscrmin; if (clp->ypixmin < 0) clp->ypixmin = 0;
-    clp->ypixmax = clp->yscrmax; if (clp->ypixmax > ifp->i->if_height-1) clp->ypixmax = ifp->i->if_height-1;
+    clp->xpixmin = clp->xscrmin;
+    if (clp->xpixmin < 0) clp->xpixmin = 0;
+    clp->xpixmax = clp->xscrmax;
+    if (clp->xpixmax > ifp->i->if_width-1) clp->xpixmax = ifp->i->if_width-1;
+    clp->ypixmin = clp->yscrmin;
+    if (clp->ypixmin < 0) clp->ypixmin = 0;
+    clp->ypixmax = clp->yscrmax;
+    if (clp->ypixmax > ifp->i->if_height-1) clp->ypixmax = ifp->i->if_height-1;
 }
 
 /******************* Expose / Events ********************************/
@@ -544,9 +563,9 @@ expose_callback(struct fb *ifp)
 	OGL(ifp)->win_height = xwa.height;
 
 	OGL(ifp)->vp_width = (OGL(ifp)->win_width < ifp->i->if_width) ?
-	    OGL(ifp)->win_width : ifp->i->if_width;
+			     OGL(ifp)->win_width : ifp->i->if_width;
 	OGL(ifp)->vp_height = (OGL(ifp)->win_height < ifp->i->if_height) ?
-	    OGL(ifp)->win_height : ifp->i->if_height;
+			      OGL(ifp)->win_height : ifp->i->if_height;
 
 	ifp->i->if_xcenter = OGL(ifp)->vp_width/2;
 	ifp->i->if_ycenter = OGL(ifp)->vp_height/2;
@@ -618,8 +637,7 @@ ogl_do_event(struct fb *ifp)
 		if (!OGL(ifp)->use_ext_ctrl)
 		    expose_callback(ifp);
 		break;
-	    case ButtonPress:
-	    {
+	    case ButtonPress: {
 		int button = (int)event.xbutton.button;
 		if (button == Button1) {
 		    if (event.xbutton.state & ControlMask) button = Button2;
@@ -627,8 +645,7 @@ ogl_do_event(struct fb *ifp)
 		    else if (event.xbutton.state & Mod2Mask) button = Button3;
 		}
 		switch (button) {
-		    case Button2:
-		    {
+		    case Button2: {
 			int x = event.xbutton.x;
 			int y = ifp->i->if_height - event.xbutton.y - 1;
 			if (x < 0 || y < 0) {
@@ -648,8 +665,7 @@ ogl_do_event(struct fb *ifp)
 		}
 		break;
 	    }
-	    case ConfigureNotify:
-	    {
+	    case ConfigureNotify: {
 		XConfigureEvent *conf = (XConfigureEvent *)&event;
 		if (!(conf->width == OGL(ifp)->win_width && conf->height == OGL(ifp)->win_height)) {
 		    ogl_configureWindow(ifp, conf->width, conf->height);
@@ -823,8 +839,8 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
     WIN(ifp)->mi_curs_on = 1;
 
     snprintf(title, 128, "BRL-CAD /dev/ogl %s, %s",
-	    ((ifp->i->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ? "Transient Win":"Lingering Win",
-	    ((ifp->i->if_mode & MODE_1MASK) == MODE_1MALLOC) ? "Private Mem":"Shared Mem");
+	     ((ifp->i->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ? "Transient Win":"Lingering Win",
+	     ((ifp->i->if_mode & MODE_1MASK) == MODE_1MALLOC) ? "Private Mem":"Shared Mem");
 
     ifp->i->if_zoomflag = 0;
     ifp->i->if_xzoom = ifp->i->if_yzoom = 1;
@@ -1046,9 +1062,9 @@ ogl_flush(struct fb *ifp)
 {
     /* Always commit any outstanding changes */
     if (OGL(ifp)->dirty)
-        ogl_upload_dirty(ifp);
+	ogl_upload_dirty(ifp);
     if (OGL(ifp)->view_changed || OGL(ifp)->dirty)
-        ogl_present(ifp); 
+	ogl_present(ifp);
     if (OGL(ifp)->dispp) {
 	XFlush(OGL(ifp)->dispp);
     }
@@ -1181,7 +1197,7 @@ ogl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	if (scan_count > line_remain) scan_count = line_remain;
 
 	struct fb_pixel *oglp = (struct fb_pixel *)&ifp->i->if_mem[
-	    ((size_t)cy*WIN(ifp)->mi_pixwidth + cx) * sizeof(struct fb_pixel)];
+				    ((size_t)cy*WIN(ifp)->mi_pixwidth + cx) * sizeof(struct fb_pixel)];
 
 	for (size_t i=0; i<scan_count; i++) {
 	    cp[0] = oglp[i].red;
@@ -1221,7 +1237,7 @@ ogl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, s
 	size_t scan_count = (remaining < line_space) ? remaining : line_space;
 
 	struct fb_pixel *oglp = (struct fb_pixel *)&ifp->i->if_mem[
-	    ((size_t)cy*WIN(ifp)->mi_pixwidth + cx) * sizeof(struct fb_pixel)];
+				    ((size_t)cy*WIN(ifp)->mi_pixwidth + cx) * sizeof(struct fb_pixel)];
 
 	size_t n = scan_count;
 	while (n) {
@@ -1268,7 +1284,7 @@ ogl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const u
     const unsigned char *cp = pp;
     for (int y = ymin; y < ymin+height; y++) {
 	struct fb_pixel *oglp = (struct fb_pixel *)&ifp->i->if_mem[
-	    ((size_t)y*WIN(ifp)->mi_pixwidth + xmin) * sizeof(struct fb_pixel)];
+				    ((size_t)y*WIN(ifp)->mi_pixwidth + xmin) * sizeof(struct fb_pixel)];
 	for (int x = xmin; x < xmin+width; x++) {
 	    oglp->red   = cp[RED];
 	    oglp->green = cp[GRN];
@@ -1299,7 +1315,7 @@ ogl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const
     const unsigned char *cp = pp;
     for (int y = ymin; y < ymin+height; y++) {
 	struct fb_pixel *oglp = (struct fb_pixel *)&ifp->i->if_mem[
-	    ((size_t)y*WIN(ifp)->mi_pixwidth + xmin) * sizeof(struct fb_pixel)];
+				    ((size_t)y*WIN(ifp)->mi_pixwidth + xmin) * sizeof(struct fb_pixel)];
 	for (int x = xmin; x < xmin+width; x++) {
 	    int val = *cp++;
 	    oglp->red = oglp->green = oglp->blue = (unsigned char)val;
@@ -1488,8 +1504,14 @@ ogl_cursor(struct fb *ifp, int mode, int x, int y)
 int
 ogl_refresh(struct fb *ifp, int x, int y, int w, int h)
 {
-    if (w < 0) { w = -w; x -= w; }
-    if (h < 0) { h = -h; y -= h; }
+    if (w < 0) {
+	w = -w;
+	x -= w;
+    }
+    if (h < 0) {
+	h = -h;
+	y -= h;
+    }
     if (w <= 0 || h <= 0) return 0;
 
     /* Ensure texture exists */
