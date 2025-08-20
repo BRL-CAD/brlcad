@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rt -j# for sub-grid-mode assumes a framebuffer, causing pix data to
+  get written to the -o file (e.g., even with -o file.png).  See
+  view_pixel() near src/rt/view.c:472 for problem area.  Need to scrub
+  all fb_write() and ideally make this a non-issue.
+
 * obj-g and gcv converters choke and crash on obj with unnamed g line.
   spec wording on whether that's valid is unclear, but encountered in
   wild.
