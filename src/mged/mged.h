@@ -230,6 +230,13 @@ struct mged_state {
 
     /* Editing related */
     struct mged_edit_state *s_edit;
+    // TODO - can we eliminate these?
+    int es_edclass;            /* type of editing class for this solid */
+    int es_type;               /* COMGEOM solid type */
+
+    /* called by numerous functions to indicate truthfully whether the
+     * views need to be redrawn. */
+    int update_views;
 };
 extern struct mged_state *MGED_STATE;
 

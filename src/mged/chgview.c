@@ -385,7 +385,7 @@ edit_com(struct mged_state *s,
 	}
     }
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     if (flag_R_noresize) {
@@ -589,7 +589,7 @@ cmd_zap(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), con
 
     CHECK_DBI_NULL;
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
     s->gedp->ged_destroy_vlist_callback = freeDListsAll;
 
@@ -967,7 +967,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	}
     }
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     if (path_piece) {
@@ -1056,7 +1056,7 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     button(s, BE_S_ILLUMINATE);	/* To ST_S_PICK */
@@ -1194,7 +1194,7 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (mged_variables->mv_rateknobs) {
-	if (es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
+	if (s->es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "x = %f\n", s->s_edit->edit_rate_model_rotate[X]);
 	    bu_vls_printf(&vls, "y = %f\n", s->s_edit->edit_rate_model_rotate[Y]);
 	    bu_vls_printf(&vls, "z = %f\n", s->s_edit->edit_rate_model_rotate[Z]);
@@ -1204,13 +1204,13 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	    bu_vls_printf(&vls, "z = %f\n", view_state->vs_rate_rotate[Z]);
 	}
 
-	if (es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
+	if (s->es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "S = %f\n", s->s_edit->edit_rate_scale);
 	} else {
 	    bu_vls_printf(&vls, "S = %f\n", view_state->vs_rate_scale);
 	}
 
-	if (es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
+	if (s->es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "X = %f\n", s->s_edit->edit_rate_model_tran[X]);
 	    bu_vls_printf(&vls, "Y = %f\n", s->s_edit->edit_rate_model_tran[Y]);
 	    bu_vls_printf(&vls, "Z = %f\n", s->s_edit->edit_rate_model_tran[Z]);
@@ -1220,7 +1220,7 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	    bu_vls_printf(&vls, "Z = %f\n", view_state->vs_rate_tran[Z]);
 	}
     } else {
-	if (es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
+	if (s->es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "ax = %f\n", s->s_edit->edit_absolute_model_rotate[X]);
 	    bu_vls_printf(&vls, "ay = %f\n", s->s_edit->edit_absolute_model_rotate[Y]);
 	    bu_vls_printf(&vls, "az = %f\n", s->s_edit->edit_absolute_model_rotate[Z]);
@@ -1230,13 +1230,13 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	    bu_vls_printf(&vls, "az = %f\n", view_state->vs_absolute_rotate[Z]);
 	}
 
-	if (es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
+	if (s->es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "aS = %f\n", s->s_edit->edit_absolute_scale);
 	} else {
 	    bu_vls_printf(&vls, "aS = %f\n", view_state->vs_gvp->gv_a_scale);
 	}
 
-	if (es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
+	if (s->es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "aX = %f\n", s->s_edit->edit_absolute_model_tran[X]);
 	    bu_vls_printf(&vls, "aY = %f\n", s->s_edit->edit_absolute_model_tran[Y]);
 	    bu_vls_printf(&vls, "aZ = %f\n", s->s_edit->edit_absolute_model_tran[Z]);
@@ -3231,7 +3231,7 @@ mged_erot(struct mged_state *s,
     int save_edflag;
     mat_t temp1, temp2;
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     switch (coords) {
@@ -3644,7 +3644,7 @@ mged_etran(struct mged_state *s,
 	bn_mat_mul2(xlatemat, modelchanges);
 
 	new_edit_mats(s);
-	update_views = 1;
+	s->update_views = 1;
 	dm_set_dirty(DMP, 1);
     }
 

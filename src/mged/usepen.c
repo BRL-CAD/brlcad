@@ -82,7 +82,7 @@ illuminate(struct mged_state *s, int y) {
 	gdlp = next_gdlp;
     }
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 }
 
@@ -171,7 +171,7 @@ f_aip(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	illum_gdlp = gdlp;
     }
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
     return TCL_OK;
 }
@@ -328,7 +328,7 @@ f_matpick(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	init_oedit(s);
     }
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
     return TCL_OK;
 }

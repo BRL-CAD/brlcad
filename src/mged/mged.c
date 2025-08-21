@@ -139,11 +139,6 @@ struct stdio_data {
 
 struct mged_state *MGED_STATE = NULL;
 
-/* called by numerous functions to indicate truthfully whether the
- * views need to be redrawn.
- */
-int update_views = 0;
-
 jmp_buf jmp_env;	/* For non-local gotos */
 double frametime;	/* time needed to draw last frame */
 
@@ -1510,7 +1505,7 @@ refresh(struct mged_state *s)
 	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (!p->dm_view_state)
 	    continue;
-	if (update_views || p->dm_view_state->vs_flag)
+	if (s->update_views || p->dm_view_state->vs_flag)
 	    p->dm_dirty = 1;
     }
 
@@ -1525,7 +1520,7 @@ refresh(struct mged_state *s)
 	p->dm_view_state->vs_flag = 0;
     }
 
-    update_views = 0;
+    s->update_views = 0;
 
     save_dm_list = s->mged_curr_dm;
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
@@ -2083,7 +2078,7 @@ main(int argc, char *argv[])
 
     GEOM_EDIT_STATE = ST_VIEW;
     es_edflag = -1;
-    es_edclass = EDIT_CLASS_NULL;
+    s->es_edclass = EDIT_CLASS_NULL;
     inpara = newedge = 0;
 
     /* These values match old GED.  Use 'tol' command to change them. */
