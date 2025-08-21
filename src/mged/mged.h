@@ -212,6 +212,13 @@ struct mged_edit_state {
     fastf_t acc_sc_obj;	/* accumulate global object scale factor */
     fastf_t acc_sc[3];	/* accumulate local object scale factors */
     mat_t acc_rot_sol;	/* accumulate solid rotations */
+
+    int e_inpara;	/* parameter input from keyboard flag */
+    vect_t e_para;      /* keyboard input param. Only when s->s_edit->e_inpara set.  */
+
+    int e_mvalid;	/* es_mparam valid.  s->s_edit->e_inpara must = 0 */
+    vect_t e_mparam;	/* mouse input param.  Only when es_mvalid set */
+
 };
 
 
@@ -528,7 +535,6 @@ void rect_image2view(struct mged_state *);
 void rb_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 /* edsol.c */
-extern int inpara;	/* parameter input from keyboard flag */
 void vls_solid(struct mged_state *s, struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat);
 void transform_editing_solid(
     struct mged_state *s,

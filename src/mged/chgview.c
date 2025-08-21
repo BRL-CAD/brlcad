@@ -3262,7 +3262,7 @@ mged_erot(struct mged_state *s,
 	    es_edflag = SROT;
 	}
 
-	inpara = 0;
+	s->s_edit->e_inpara = 0;
 	MAT_COPY(s->s_edit->incr_change, newrot);
 	bn_mat_mul2(s->s_edit->incr_change, s->s_edit->acc_rot_sol);
 	sedit(s);
@@ -3631,8 +3631,8 @@ mged_etran(struct mged_state *s,
 	    es_edflag = STRANS;
 	}
 
-	VADD2(es_para, delta, s->s_edit->curr_e_axes_pos);
-	inpara = 3;
+	VADD2(s->s_edit->e_para, delta, s->s_edit->curr_e_axes_pos);
+	s->s_edit->e_inpara = 3;
 	sedit(s);
 	es_edflag = save_edflag;
     } else {

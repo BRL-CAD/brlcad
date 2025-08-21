@@ -2079,7 +2079,7 @@ main(int argc, char *argv[])
     s->global_editing_state = ST_VIEW;
     es_edflag = -1;
     s->es_edclass = EDIT_CLASS_NULL;
-    inpara = newedge = 0;
+    s->s_edit->e_inpara = newedge = 0;
 
     /* These values match old GED.  Use 'tol' command to change them. */
     s->tol.tol.magic = BN_TOL_MAGIC;
