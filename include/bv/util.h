@@ -79,6 +79,9 @@ BV_EXPORT extern int bv_update_selected(struct bview *gvp);
 #define BV_KNOBS_ABS 2
 BV_EXPORT extern void bv_knobs_reset(struct bview_knobs *k, int category);
 
+/* Sync the values between two bview_knobs containers */
+BV_EXPORT extern void bv_knobs_sync(struct bview_knobs *dest, const struct bview_knobs *src);
+
 /**
  * @brief
  * Process an individual libbv knob command.
