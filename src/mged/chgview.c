@@ -62,11 +62,6 @@ int mged_vrot_xyz(struct mged_state *s, char origin, char coords, vect_t rvec);
 
 extern long nvectors;
 
-double mged_abs_tol;
-double mged_rel_tol = 0.01;		/* 1%, by default */
-double mged_nrm_tol;			/* normal ang tol, radians */
-
-
 /* DEBUG -- force view center */
 /* Format: C x y z */
 int
