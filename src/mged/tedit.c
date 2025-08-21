@@ -155,7 +155,7 @@ writesolid(struct mged_state *s)
     fp = fopen(tmpfil, "w");
 
     /* Print solid parameters, 1 vector or point per line */
-    switch (s->edit_state.es_int.idb_type) {
+    switch (s->s_edit->es_int.idb_type) {
 	struct rt_tor_internal *tor;
 	struct rt_tgc_internal *tgc;
 	struct rt_ell_internal *ell;
@@ -177,7 +177,7 @@ writesolid(struct mged_state *s)
 	    (void)fclose(fp);
 	    return 1;
 	case ID_TOR:
-	    tor = (struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
+	    tor = (struct rt_tor_internal *)s->s_edit->es_int.idb_ptr;
 	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(tor->v), eol);
 	    fprintf(fp, "Normal: %.9f %.9f %.9f%s", V3BASE2LOCAL(tor->h), eol);
 	    fprintf(fp, "radius_1: %.9f%s", tor->r_a*s->dbip->dbi_base2local, eol);
@@ -185,7 +185,7 @@ writesolid(struct mged_state *s)
 	    break;
 	case ID_TGC:
 	case ID_REC:
-	    tgc = (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
+	    tgc = (struct rt_tgc_internal *)s->s_edit->es_int.idb_ptr;
 	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->v), eol);
 	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->h), eol);
 	    fprintf(fp, "A: %.9f %.9f %.9f%s", V3BASE2LOCAL(tgc->a), eol);
@@ -195,7 +195,7 @@ writesolid(struct mged_state *s)
 	    break;
 	case ID_ELL:
 	case ID_SPH:
-	    ell = (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
+	    ell = (struct rt_ell_internal *)s->s_edit->es_int.idb_ptr;
 	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(ell->v), eol);
 	    fprintf(fp, "A: %.9f %.9f %.9f%s", V3BASE2LOCAL(ell->a), eol);
 	    fprintf(fp, "B: %.9f %.9f %.9f%s", V3BASE2LOCAL(ell->b), eol);
@@ -203,7 +203,7 @@ writesolid(struct mged_state *s)
 	    break;
 	case ID_ARB8:
 	    for (j=0; j<8; j++) uvec[j] = -1;
-	    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
+	    arb = (struct rt_arb_internal *)s->s_edit->es_int.idb_ptr;
 	    numUnique = rt_arb_get_cgtype(&cgtype, arb, &s->tol.tol, uvec, svec);
 	    j = 0;
 	    for (i=0; i<8; i++) {
@@ -215,31 +215,31 @@ writesolid(struct mged_state *s)
 	    }
 	    break;
 	case ID_HALF:
-	    haf = (struct rt_half_internal *)s->edit_state.es_int.idb_ptr;
+	    haf = (struct rt_half_internal *)s->s_edit->es_int.idb_ptr;
 	    fprintf(fp, "Plane: %.9f %.9f %.9f %.9f%s", V4BASE2LOCAL(haf->eqn), eol);
 	    break;
 	case ID_GRIP:
-	    grip = (struct rt_grip_internal *)s->edit_state.es_int.idb_ptr;
+	    grip = (struct rt_grip_internal *)s->s_edit->es_int.idb_ptr;
 	    fprintf(fp, "Center: %.9f %.9f %.9f%s", V3BASE2LOCAL(grip->center), eol);
 	    fprintf(fp, "Normal: %.9f %.9f %.9f%s", V3BASE2LOCAL(grip->normal), eol);
 	    fprintf(fp, "Magnitude: %.9f%s", grip->mag*s->dbip->dbi_base2local, eol);
 	    break;
 	case ID_PARTICLE:
-	    part = (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
+	    part = (struct rt_part_internal *)s->s_edit->es_int.idb_ptr;
 	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(part->part_V), eol);
 	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(part->part_H), eol);
 	    fprintf(fp, "v radius: %.9f%s", part->part_vrad * s->dbip->dbi_base2local, eol);
 	    fprintf(fp, "h radius: %.9f%s", part->part_hrad * s->dbip->dbi_base2local, eol);
 	    break;
 	case ID_RPC:
-	    rpc = (struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
+	    rpc = (struct rt_rpc_internal *)s->s_edit->es_int.idb_ptr;
 	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(rpc->rpc_V), eol);
 	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(rpc->rpc_H), eol);
 	    fprintf(fp, "Breadth: %.9f %.9f %.9f%s", V3BASE2LOCAL(rpc->rpc_B), eol);
 	    fprintf(fp, "Half-width: %.9f%s", rpc->rpc_r * s->dbip->dbi_base2local, eol);
 	    break;
 	case ID_RHC:
-	    rhc = (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
+	    rhc = (struct rt_rhc_internal *)s->s_edit->es_int.idb_ptr;
 	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(rhc->rhc_V), eol);
 	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(rhc->rhc_H), eol);
 	    fprintf(fp, "Breadth: %.9f %.9f %.9f%s", V3BASE2LOCAL(rhc->rhc_B), eol);
@@ -247,7 +247,7 @@ writesolid(struct mged_state *s)
 	    fprintf(fp, "Dist_to_asymptotes: %.9f%s", rhc->rhc_c * s->dbip->dbi_base2local, eol);
 	    break;
 	case ID_EPA:
-	    epa = (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
+	    epa = (struct rt_epa_internal *)s->s_edit->es_int.idb_ptr;
 	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(epa->epa_V), eol);
 	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(epa->epa_H), eol);
 	    fprintf(fp, "Semi-major axis: %.9f %.9f %.9f%s", V3ARGS(epa->epa_Au), eol);
@@ -255,7 +255,7 @@ writesolid(struct mged_state *s)
 	    fprintf(fp, "Semi-minor length: %.9f%s", epa->epa_r2 * s->dbip->dbi_base2local, eol);
 	    break;
 	case ID_EHY:
-	    ehy = (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
+	    ehy = (struct rt_ehy_internal *)s->s_edit->es_int.idb_ptr;
 	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(ehy->ehy_V), eol);
 	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(ehy->ehy_H), eol);
 	    fprintf(fp, "Semi-major axis: %.9f %.9f %.9f%s", V3ARGS(ehy->ehy_Au), eol);
@@ -264,7 +264,7 @@ writesolid(struct mged_state *s)
 	    fprintf(fp, "Dist to asymptotes: %.9f%s", ehy->ehy_c * s->dbip->dbi_base2local, eol);
 	    break;
 	case ID_HYP:
-	    hyp = (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
+	    hyp = (struct rt_hyp_internal *)s->s_edit->es_int.idb_ptr;
 	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(hyp->hyp_Vi), eol);
 	    fprintf(fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL(hyp->hyp_Hi), eol);
 	    fprintf(fp, "Semi-major axis: %.9f %.9f %.9f%s", V3BASE2LOCAL(hyp->hyp_A), eol);
@@ -272,7 +272,7 @@ writesolid(struct mged_state *s)
 	    fprintf(fp, "Ratio of Neck to Base: %.9f%s", hyp->hyp_bnr, eol);
 	    break;
 	case ID_ETO:
-	    eto = (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
+	    eto = (struct rt_eto_internal *)s->s_edit->es_int.idb_ptr;
 	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(eto->eto_V), eol);
 	    fprintf(fp, "Normal: %.9f %.9f %.9f%s", V3BASE2LOCAL(eto->eto_N), eol);
 	    fprintf(fp, "Semi-major axis: %.9f %.9f %.9f%s", V3BASE2LOCAL(eto->eto_C), eol);
@@ -280,7 +280,7 @@ writesolid(struct mged_state *s)
 	    fprintf(fp, "Radius of rotation: %.9f%s", eto->eto_r * s->dbip->dbi_base2local, eol);
 	    break;
 	case ID_SUPERELL:
-	    superell = (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
+	    superell = (struct rt_superell_internal *)s->s_edit->es_int.idb_ptr;
 	    fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(superell->v), eol);
 	    fprintf(fp, "A: %.9f %.9f %.9f%s", V3BASE2LOCAL(superell->a), eol);
 	    fprintf(fp, "B: %.9f %.9f %.9f%s", V3BASE2LOCAL(superell->b), eol);
@@ -288,7 +288,7 @@ writesolid(struct mged_state *s)
 	    fprintf(fp, "<n, e>: <%.9f, %.9f>%s", superell->n, superell->e, eol);
 	    break;
 	case ID_DATUM:
-	    datum = (struct rt_datum_internal *)s->edit_state.es_int.idb_ptr;
+	    datum = (struct rt_datum_internal *)s->s_edit->es_int.idb_ptr;
 	    do {
 		if (!ZERO(datum->w))
 		    fprintf(fp, "Plane: %.9f %.9f %.9f (pnt) %.9f %.9f %.9f (dir) %.9f (scale)%s", V3BASE2LOCAL(datum->pnt), V3BASE2LOCAL(datum->dir), datum->w, eol);
@@ -344,7 +344,7 @@ readsolid(struct mged_state *s)
 	return 1;	/* FAIL */
     }
 
-    switch (s->edit_state.es_int.idb_type) {
+    switch (s->s_edit->es_int.idb_type) {
 	struct rt_tor_internal *tor;
 	struct rt_tgc_internal *tgc;
 	struct rt_ell_internal *ell;
@@ -369,7 +369,7 @@ readsolid(struct mged_state *s)
 	    ret_val = 1;
 	    break;
 	case ID_TOR:
-	    tor = (struct rt_tor_internal *)s->edit_state.es_int.idb_ptr;
+	    tor = (struct rt_tor_internal *)s->s_edit->es_int.idb_ptr;
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;
@@ -402,7 +402,7 @@ readsolid(struct mged_state *s)
 	    break;
 	case ID_TGC:
 	case ID_REC:
-	    tgc = (struct rt_tgc_internal *)s->edit_state.es_int.idb_ptr;
+	    tgc = (struct rt_tgc_internal *)s->s_edit->es_int.idb_ptr;
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;
@@ -454,7 +454,7 @@ readsolid(struct mged_state *s)
 	    break;
 	case ID_ELL:
 	case ID_SPH:
-	    ell = (struct rt_ell_internal *)s->edit_state.es_int.idb_ptr;
+	    ell = (struct rt_ell_internal *)s->s_edit->es_int.idb_ptr;
 
 	    fprintf(stderr, "ID_SPH\n");
 
@@ -491,7 +491,7 @@ readsolid(struct mged_state *s)
 	    VSCALE(ell->c, ell->c, s->dbip->dbi_local2base);
 	    break;
 	case ID_ARB8:
-	    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
+	    arb = (struct rt_arb_internal *)s->s_edit->es_int.idb_ptr;
 	    for (i=0; i<8; i++) {
 		/* only read vertices that we wrote */
 		if (useThisVertex(i)) {
@@ -521,7 +521,7 @@ readsolid(struct mged_state *s)
 	    }
 	    break;
 	case ID_HALF:
-	    haf = (struct rt_half_internal *)s->edit_state.es_int.idb_ptr;
+	    haf = (struct rt_half_internal *)s->s_edit->es_int.idb_ptr;
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;
@@ -531,7 +531,7 @@ readsolid(struct mged_state *s)
 	    haf->eqn[W] = d * s->dbip->dbi_local2base;
 	    break;
 	case ID_GRIP:
-	    grip = (struct rt_grip_internal *)s->edit_state.es_int.idb_ptr;
+	    grip = (struct rt_grip_internal *)s->s_edit->es_int.idb_ptr;
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;
@@ -548,7 +548,7 @@ readsolid(struct mged_state *s)
 	    VSET(grip->normal, a, b, c);
 	    break;
 	case ID_PARTICLE:
-	    part = (struct rt_part_internal *)s->edit_state.es_int.idb_ptr;
+	    part = (struct rt_part_internal *)s->s_edit->es_int.idb_ptr;
 
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
@@ -582,7 +582,7 @@ readsolid(struct mged_state *s)
 
 	    break;
 	case ID_RPC:
-	    rpc = (struct rt_rpc_internal *)s->edit_state.es_int.idb_ptr;
+	    rpc = (struct rt_rpc_internal *)s->s_edit->es_int.idb_ptr;
 
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
@@ -616,7 +616,7 @@ readsolid(struct mged_state *s)
 	    rpc->rpc_r = a * s->dbip->dbi_local2base;
 	    break;
 	case ID_RHC:
-	    rhc = (struct rt_rhc_internal *)s->edit_state.es_int.idb_ptr;
+	    rhc = (struct rt_rhc_internal *)s->s_edit->es_int.idb_ptr;
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;
@@ -656,7 +656,7 @@ readsolid(struct mged_state *s)
 	    rhc->rhc_c = a * s->dbip->dbi_local2base;
 	    break;
 	case ID_EPA:
-	    epa = (struct rt_epa_internal *)s->edit_state.es_int.idb_ptr;
+	    epa = (struct rt_epa_internal *)s->s_edit->es_int.idb_ptr;
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;
@@ -696,7 +696,7 @@ readsolid(struct mged_state *s)
 	    epa->epa_r2 = a * s->dbip->dbi_local2base;
 	    break;
 	case ID_EHY:
-	    ehy = (struct rt_ehy_internal *)s->edit_state.es_int.idb_ptr;
+	    ehy = (struct rt_ehy_internal *)s->s_edit->es_int.idb_ptr;
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;
@@ -743,7 +743,7 @@ readsolid(struct mged_state *s)
 	    ehy->ehy_c = a * s->dbip->dbi_local2base;
 	    break;
 	case ID_HYP:
-	    hyp = (struct rt_hyp_internal *)s->edit_state.es_int.idb_ptr;
+	    hyp = (struct rt_hyp_internal *)s->s_edit->es_int.idb_ptr;
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;
@@ -784,7 +784,7 @@ readsolid(struct mged_state *s)
 
 	    break;
 	case ID_ETO:
-	    eto = (struct rt_eto_internal *)s->edit_state.es_int.idb_ptr;
+	    eto = (struct rt_eto_internal *)s->s_edit->es_int.idb_ptr;
 	    if ((str=Get_next_line(fp)) == NULL) {
 		ret_val = 1;
 		break;
@@ -824,7 +824,7 @@ readsolid(struct mged_state *s)
 	    eto->eto_r = a * s->dbip->dbi_local2base;
 	    break;
 	case ID_SUPERELL:
-	    superell = (struct rt_superell_internal *)s->edit_state.es_int.idb_ptr;
+	    superell = (struct rt_superell_internal *)s->s_edit->es_int.idb_ptr;
 
 	    fprintf(stderr, "ID_SUPERELL\n");
 
@@ -867,7 +867,7 @@ readsolid(struct mged_state *s)
 	    (void) sscanf(str, "%lf %lf", &superell->n, &superell->e);
 	    break;
 	case ID_DATUM:
-	    datum = (struct rt_datum_internal *)s->edit_state.es_int.idb_ptr;
+	    datum = (struct rt_datum_internal *)s->s_edit->es_int.idb_ptr;
 	    do {
 		if ((str=Get_next_line(fp)) == NULL) {
 		    ret_val = 1;

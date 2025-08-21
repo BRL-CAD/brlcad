@@ -229,7 +229,7 @@ struct mged_state {
     struct bu_list *vlfree;
 
     /* Editing related */
-    struct mged_edit_state edit_state;
+    struct mged_edit_state *s_edit;
 };
 extern struct mged_state *MGED_STATE;
 

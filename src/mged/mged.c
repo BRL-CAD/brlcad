@@ -1010,11 +1010,11 @@ event_check(struct mged_state *s, int non_blocking)
      * Handle rate-based processing *
      *********************************/
     save_dm_list = s->mged_curr_dm;
-    if (s->edit_state.edit_rateflag_model_rotate) {
+    if (s->s_edit->edit_rateflag_model_rotate) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	set_curr_dm(s, s->edit_state.edit_rate_mr_dm);
+	set_curr_dm(s, s->s_edit->edit_rate_mr_dm);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'm';
 
@@ -1029,10 +1029,10 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		      s->edit_state.edit_rate_model_origin,
-		      s->edit_state.edit_rate_model_rotate[X],
-		      s->edit_state.edit_rate_model_rotate[Y],
-		      s->edit_state.edit_rate_model_rotate[Z]);
+		      s->s_edit->edit_rate_model_origin,
+		      s->s_edit->edit_rate_model_rotate[X],
+		      s->s_edit->edit_rate_model_rotate[Y],
+		      s->s_edit->edit_rate_model_rotate[Z]);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1044,11 +1044,11 @@ event_check(struct mged_state *s, int non_blocking)
 	else
 	    edobj = save_edflag;
     }
-    if (s->edit_state.edit_rateflag_object_rotate) {
+    if (s->s_edit->edit_rateflag_object_rotate) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	set_curr_dm(s, s->edit_state.edit_rate_or_dm);
+	set_curr_dm(s, s->s_edit->edit_rate_or_dm);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'o';
 
@@ -1063,10 +1063,10 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		      s->edit_state.edit_rate_object_origin,
-		      s->edit_state.edit_rate_object_rotate[X],
-		      s->edit_state.edit_rate_object_rotate[Y],
-		      s->edit_state.edit_rate_object_rotate[Z]);
+		      s->s_edit->edit_rate_object_origin,
+		      s->s_edit->edit_rate_object_rotate[X],
+		      s->s_edit->edit_rate_object_rotate[Y],
+		      s->s_edit->edit_rate_object_rotate[Z]);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1078,11 +1078,11 @@ event_check(struct mged_state *s, int non_blocking)
 	else
 	    edobj = save_edflag;
     }
-    if (s->edit_state.edit_rateflag_view_rotate) {
+    if (s->s_edit->edit_rateflag_view_rotate) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	set_curr_dm(s, s->edit_state.edit_rate_vr_dm);
+	set_curr_dm(s, s->s_edit->edit_rate_vr_dm);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'v';
 
@@ -1097,10 +1097,10 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		      s->edit_state.edit_rate_view_origin,
-		      s->edit_state.edit_rate_view_rotate[X],
-		      s->edit_state.edit_rate_view_rotate[Y],
-		      s->edit_state.edit_rate_view_rotate[Z]);
+		      s->s_edit->edit_rate_view_origin,
+		      s->s_edit->edit_rate_view_rotate[X],
+		      s->s_edit->edit_rate_view_rotate[Y],
+		      s->s_edit->edit_rate_view_rotate[Z]);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1112,11 +1112,11 @@ event_check(struct mged_state *s, int non_blocking)
 	else
 	    edobj = save_edflag;
     }
-    if (s->edit_state.edit_rateflag_model_tran) {
+    if (s->s_edit->edit_rateflag_model_tran) {
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	set_curr_dm(s, s->edit_state.edit_rate_mt_dm);
+	set_curr_dm(s, s->s_edit->edit_rate_mt_dm);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'm';
 
@@ -1131,9 +1131,9 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		      s->edit_state.edit_rate_model_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      s->edit_state.edit_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      s->edit_state.edit_rate_model_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+		      s->s_edit->edit_rate_model_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      s->s_edit->edit_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      s->s_edit->edit_rate_model_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1145,11 +1145,11 @@ event_check(struct mged_state *s, int non_blocking)
 	else
 	    edobj = save_edflag;
     }
-    if (s->edit_state.edit_rateflag_view_tran) {
+    if (s->s_edit->edit_rateflag_view_tran) {
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	set_curr_dm(s, s->edit_state.edit_rate_vt_dm);
+	set_curr_dm(s, s->s_edit->edit_rate_vt_dm);
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'v';
 
@@ -1164,9 +1164,9 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		      s->edit_state.edit_rate_view_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      s->edit_state.edit_rate_view_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      s->edit_state.edit_rate_view_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+		      s->s_edit->edit_rate_view_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      s->s_edit->edit_rate_view_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      s->s_edit->edit_rate_view_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1178,7 +1178,7 @@ event_check(struct mged_state *s, int non_blocking)
 	else
 	    edobj = save_edflag;
     }
-    if (s->edit_state.edit_rateflag_scale) {
+    if (s->s_edit->edit_rateflag_scale) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	if (GEOM_EDIT_STATE == ST_S_EDIT) {
@@ -1192,7 +1192,7 @@ event_check(struct mged_state *s, int non_blocking)
 	}
 
 	non_blocking++;
-	bu_vls_printf(&vls, "knob -i -e aS %f\n", s->edit_state.edit_rate_scale * 0.01);
+	bu_vls_printf(&vls, "knob -i -e aS %f\n", s->s_edit->edit_rate_scale * 0.01);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1775,6 +1775,7 @@ mged_finish(struct mged_state *s, int exitcode)
     bu_vls_free(&s->input_str_prefix);
     bu_vls_free(&s->scratchline);
     bu_vls_free(&s-> mged_prompt);
+    BU_PUT(s->s_edit, struct mged_edit_state);
     BU_PUT(s, struct mged_state);
     MGED_STATE = NULL; // sanity
 
@@ -1825,6 +1826,7 @@ main(int argc, char *argv[])
 #endif
 
     BU_GET(MGED_STATE, struct mged_state);
+    BU_GET(MGED_STATE->s_edit, struct mged_edit_state);
     struct mged_state *s = MGED_STATE;
     s->magic = MGED_STATE_MAGIC;
     s->classic_mged = 1;
