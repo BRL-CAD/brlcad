@@ -14,8 +14,8 @@ set(
   chgmodel.c
   chgtree.c
   chgview.c
-  cmd.c
   clone.c
+  cmd.c
   color_scheme.c
   columns.c
   dm-generic.c
@@ -76,7 +76,11 @@ set(
 # but I'm not sure if that would be a problem for scripting with mged.exe on
 # Windows so leave it for now...
 if(BRLCAD_ENABLE_TCL)
-  set(MGED_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio)
+  set(MGED_INCLUDE_DIRS
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio
+  )
   brlcad_addexec(mged "${MGED_SOURCES}" "${mged_libs}")
   if(TK_LIBRARY)
     target_compile_definitions(mged PRIVATE HAVE_TK=1)
@@ -108,11 +112,11 @@ set(
   f_cmd.h
   menu.h
   mged.h
+  mged.ico
+  mged.rc
   mged_dm.h
   mged_wdb.h
   sedit.h
-  mged.ico
-  mged.rc
 )
 cmakefiles(${mged_ignore_files})
 
