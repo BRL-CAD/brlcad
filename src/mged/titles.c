@@ -110,7 +110,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	    mat_t new_mat;
 	    /* NOT an evaluated region */
 	    /* object edit option selected */
-	    bn_mat_mul(new_mat, modelchanges, es_mat);
+	    bn_mat_mul(new_mat, s->s_edit->model_changes, es_mat);
 
 	    vls_solid(s, vp, &s->s_edit->es_int, new_mat);
 	}

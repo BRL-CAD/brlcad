@@ -279,13 +279,13 @@ set_e_axes_pos(struct mged_state *s, int both)
 
 	    if (SEDIT_SCALE) {
 		s->s_edit->edit_absolute_scale = 0.0;
-		acc_sc_sol = 1.0;
+		s->s_edit->acc_sc_sol = 1.0;
 	    }
 	} else {
 	    s->es_edclass = EDIT_CLASS_NULL;
 	}
 
-	MAT_IDN(acc_rot_sol);
+	MAT_IDN(s->s_edit->acc_rot_sol);
 
 	for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	    struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
@@ -1067,8 +1067,8 @@ init_sedit(struct mged_state *s)
 static void
 init_sedit_vars(struct mged_state *s)
 {
-    MAT_IDN(acc_rot_sol);
-    MAT_IDN(incr_change);
+    MAT_IDN(s->s_edit->acc_rot_sol);
+    MAT_IDN(s->s_edit->incr_change);
 
     VSETALL(s->s_edit->edit_absolute_model_rotate, 0.0);
     VSETALL(s->s_edit->edit_absolute_object_rotate, 0.0);
@@ -1081,7 +1081,7 @@ init_sedit_vars(struct mged_state *s)
     VSETALL(s->s_edit->last_edit_absolute_model_tran, 0.0);
     VSETALL(s->s_edit->last_edit_absolute_view_tran, 0.0);
     s->s_edit->edit_absolute_scale = 0.0;
-    acc_sc_sol = 1.0;
+    s->s_edit->acc_sc_sol = 1.0;
 
     VSETALL(s->s_edit->edit_rate_model_rotate, 0.0);
     VSETALL(s->s_edit->edit_rate_object_rotate, 0.0);
@@ -3198,7 +3198,7 @@ sedit(struct mged_state *s)
 		 * First, cancel any existing rotations,
 		 * then perform new rotation
 		 */
-		bn_mat_inv(invsolr, acc_rot_sol);
+		bn_mat_inv(invsolr, s->s_edit->acc_rot_sol);
 		eqp = &es_peqn[es_menu][0];	/* es_menu==plane of interest */
 		VMOVE(work, eqp);
 		MAT4X3VEC(eqp, invsolr, work);
@@ -3206,18 +3206,18 @@ sedit(struct mged_state *s)
 		if (inpara == 3) {
 		    /* 3 params:  absolute X, Y, Z rotations */
 		    /* Build completely new rotation change */
-		    MAT_IDN(modelchanges);
-		    bn_mat_angles(modelchanges,
+		    MAT_IDN(s->s_edit->model_changes);
+		    bn_mat_angles(s->s_edit->model_changes,
 				  es_para[0],
 				  es_para[1],
 				  es_para[2]);
-		    MAT_COPY(acc_rot_sol, modelchanges);
+		    MAT_COPY(s->s_edit->acc_rot_sol, s->s_edit->model_changes);
 
-		    /* Borrow incr_change matrix here */
-		    bn_mat_mul(incr_change, modelchanges, invsolr);
+		    /* Borrow s->s_edit->incr_change matrix here */
+		    bn_mat_mul(s->s_edit->incr_change, s->s_edit->model_changes, invsolr);
 		    if (mged_variables->mv_context) {
 			/* calculate rotations about keypoint */
-			bn_mat_xform_about_pnt(edit, incr_change, s->s_edit->e_keypoint);
+			bn_mat_xform_about_pnt(edit, s->s_edit->incr_change, s->s_edit->e_keypoint);
 
 			/* We want our final matrix (mat) to xform the original solid
 			 * to the position of this instance of the solid, perform the
@@ -3226,12 +3226,12 @@ sedit(struct mged_state *s)
 			 */
 			bn_mat_mul(mat1, edit, es_mat);
 			bn_mat_mul(mat, es_invmat, mat1);
-			MAT_IDN(incr_change);
+			MAT_IDN(s->s_edit->incr_change);
 			/* work contains original es_peqn[es_menu][0] */
 			MAT4X3VEC(eqp, mat, work);
 		    } else {
 			VMOVE(work, eqp);
-			MAT4X3VEC(eqp, modelchanges, work);
+			MAT4X3VEC(eqp, s->s_edit->model_changes, work);
 		    }
 		} else if (inpara == 2) {
 		    /* 2 parameters:  rot, fb were given */
@@ -3257,7 +3257,7 @@ sedit(struct mged_state *s)
 		es_peqn[es_menu][W]=VDOT(eqp, tempvec);
 
 		/* Clear out solid rotation */
-		MAT_IDN(modelchanges);
+		MAT_IDN(s->s_edit->model_changes);
 
 	    } else {
 		/* Apply incremental changes */
@@ -3265,7 +3265,7 @@ sedit(struct mged_state *s)
 
 		eqp = &es_peqn[es_menu][0];
 		VMOVE(work, eqp);
-		MAT4X3VEC(eqp, incr_change, work);
+		MAT4X3VEC(eqp, s->s_edit->incr_change, work);
 
 		/* point notation of fixed vertex */
 		VMOVE(tempvec, arb->pt[fixv]);
@@ -3276,7 +3276,7 @@ sedit(struct mged_state *s)
 	    }
 
 	    (void)rt_arb_calc_points(arb, s->es_type, (const plane_t *)es_peqn, &s->tol.tol);
-	    MAT_IDN(incr_change);
+	    MAT_IDN(s->s_edit->incr_change);
 
 	    /* no need to calc_planes again */
 	    replot_editing_solid(s);
@@ -3297,8 +3297,8 @@ sedit(struct mged_state *s)
 		bot_verts[2] = -1;
 		if (inpara) {
 		    /* accumulate the scale factor */
-		    s->s_edit->es_scale = es_para[0] / acc_sc_sol;
-		    acc_sc_sol = es_para[0];
+		    s->s_edit->es_scale = es_para[0] / s->s_edit->acc_sc_sol;
+		    s->s_edit->acc_sc_sol = es_para[0];
 		}
 
 		bn_mat_scale_about_pnt(scalemat, s->s_edit->e_keypoint, s->s_edit->es_scale);
@@ -3586,23 +3586,23 @@ sedit(struct mged_state *s)
 		     * in degrees.  First, cancel any existing rotations,
 		     * then perform new rotation
 		     */
-		    bn_mat_inv(invsolr, acc_rot_sol);
+		    bn_mat_inv(invsolr, s->s_edit->acc_rot_sol);
 
 		    /* Build completely new rotation change */
-		    MAT_IDN(modelchanges);
-		    bn_mat_angles(modelchanges,
+		    MAT_IDN(s->s_edit->model_changes);
+		    bn_mat_angles(s->s_edit->model_changes,
 				  es_para[0],
 				  es_para[1],
 				  es_para[2]);
-		    /* Borrow incr_change matrix here */
-		    bn_mat_mul(incr_change, modelchanges, invsolr);
-		    MAT_COPY(acc_rot_sol, modelchanges);
+		    /* Borrow s->s_edit->incr_change matrix here */
+		    bn_mat_mul(s->s_edit->incr_change, s->s_edit->model_changes, invsolr);
+		    MAT_COPY(s->s_edit->acc_rot_sol, s->s_edit->model_changes);
 
 		    /* Apply new rotation to solid */
 		    /* Clear out solid rotation */
-		    MAT_IDN(modelchanges);
+		    MAT_IDN(s->s_edit->model_changes);
 		} else {
-		    /* Apply incremental changes already in incr_change */
+		    /* Apply incremental changes already in s->s_edit->incr_change */
 		}
 		/* Apply changes to solid */
 		/* xlate keypoint to origin, rotate, then put back. */
@@ -3626,7 +3626,7 @@ sedit(struct mged_state *s)
 
 		if (mged_variables->mv_context) {
 		    /* calculate rotations about keypoint */
-		    bn_mat_xform_about_pnt(edit, incr_change, rot_point);
+		    bn_mat_xform_about_pnt(edit, s->s_edit->incr_change, rot_point);
 
 		    /* We want our final matrix (mat) to xform the original solid
 		     * to the position of this instance of the solid, perform the
@@ -3637,11 +3637,11 @@ sedit(struct mged_state *s)
 		    bn_mat_mul(mat, es_invmat, mat1);
 		} else {
 		    MAT4X3PNT(work, es_invmat, rot_point);
-		    bn_mat_xform_about_pnt(mat, incr_change, work);
+		    bn_mat_xform_about_pnt(mat, s->s_edit->incr_change, work);
 		}
 		transform_editing_solid(s, &s->s_edit->es_int, mat, &s->s_edit->es_int, 1);
 
-		MAT_IDN(incr_change);
+		MAT_IDN(s->s_edit->incr_change);
 	    }
 	    break;
 
@@ -3659,28 +3659,28 @@ sedit(struct mged_state *s)
 		     * in degrees.  First, cancel any existing rotations,
 		     * then perform new rotation
 		     */
-		    bn_mat_inv(invsolr, acc_rot_sol);
+		    bn_mat_inv(invsolr, s->s_edit->acc_rot_sol);
 
 		    /* Build completely new rotation change */
-		    MAT_IDN(modelchanges);
-		    bn_mat_angles(modelchanges,
+		    MAT_IDN(s->s_edit->model_changes);
+		    bn_mat_angles(s->s_edit->model_changes,
 				  es_para[0],
 				  es_para[1],
 				  es_para[2]);
-		    /* Borrow incr_change matrix here */
-		    bn_mat_mul(incr_change, modelchanges, invsolr);
-		    MAT_COPY(acc_rot_sol, modelchanges);
+		    /* Borrow s->s_edit->incr_change matrix here */
+		    bn_mat_mul(s->s_edit->incr_change, s->s_edit->model_changes, invsolr);
+		    MAT_COPY(s->s_edit->acc_rot_sol, s->s_edit->model_changes);
 
 		    /* Apply new rotation to solid */
 		    /* Clear out solid rotation */
-		    MAT_IDN(modelchanges);
+		    MAT_IDN(s->s_edit->model_changes);
 		} else {
-		    /* Apply incremental changes already in incr_change */
+		    /* Apply incremental changes already in s->s_edit->incr_change */
 		}
 
 		if (mged_variables->mv_context) {
 		    /* calculate rotations about keypoint */
-		    bn_mat_xform_about_pnt(edit, incr_change, s->s_edit->e_keypoint);
+		    bn_mat_xform_about_pnt(edit, s->s_edit->incr_change, s->s_edit->e_keypoint);
 
 		    /* We want our final matrix (mat) to xform the original solid
 		     * to the position of this instance of the solid, perform the
@@ -3691,10 +3691,10 @@ sedit(struct mged_state *s)
 		    bn_mat_mul(mat, es_invmat, mat1);
 		    MAT4X3VEC(extr->h, mat, extr->h);
 		} else {
-		    MAT4X3VEC(extr->h, incr_change, extr->h);
+		    MAT4X3VEC(extr->h, s->s_edit->incr_change, extr->h);
 		}
 
-		MAT_IDN(incr_change);
+		MAT_IDN(s->s_edit->incr_change);
 	    }
 	    break;
 
@@ -3712,28 +3712,28 @@ sedit(struct mged_state *s)
 		     * in degrees.  First, cancel any existing rotations,
 		     * then perform new rotation
 		     */
-		    bn_mat_inv(invsolr, acc_rot_sol);
+		    bn_mat_inv(invsolr, s->s_edit->acc_rot_sol);
 
 		    /* Build completely new rotation change */
-		    MAT_IDN(modelchanges);
-		    bn_mat_angles(modelchanges,
+		    MAT_IDN(s->s_edit->model_changes);
+		    bn_mat_angles(s->s_edit->model_changes,
 				  es_para[0],
 				  es_para[1],
 				  es_para[2]);
-		    /* Borrow incr_change matrix here */
-		    bn_mat_mul(incr_change, modelchanges, invsolr);
-		    MAT_COPY(acc_rot_sol, modelchanges);
+		    /* Borrow s->s_edit->incr_change matrix here */
+		    bn_mat_mul(s->s_edit->incr_change, s->s_edit->model_changes, invsolr);
+		    MAT_COPY(s->s_edit->acc_rot_sol, s->s_edit->model_changes);
 
 		    /* Apply new rotation to solid */
 		    /* Clear out solid rotation */
-		    MAT_IDN(modelchanges);
+		    MAT_IDN(s->s_edit->model_changes);
 		} else {
-		    /* Apply incremental changes already in incr_change */
+		    /* Apply incremental changes already in s->s_edit->incr_change */
 		}
 
 		if (mged_variables->mv_context) {
 		    /* calculate rotations about keypoint */
-		    bn_mat_xform_about_pnt(edit, incr_change, s->s_edit->e_keypoint);
+		    bn_mat_xform_about_pnt(edit, s->s_edit->incr_change, s->s_edit->e_keypoint);
 
 		    /* We want our final matrix (mat) to xform the original solid
 		     * to the position of this instance of the solid, perform the
@@ -3744,10 +3744,10 @@ sedit(struct mged_state *s)
 		    bn_mat_mul(mat, es_invmat, mat1);
 		    MAT4X3VEC(tgc->h, mat, tgc->h);
 		} else {
-		    MAT4X3VEC(tgc->h, incr_change, tgc->h);
+		    MAT4X3VEC(tgc->h, s->s_edit->incr_change, tgc->h);
 		}
 
-		MAT_IDN(incr_change);
+		MAT_IDN(s->s_edit->incr_change);
 	    }
 	    break;
 
@@ -3765,28 +3765,28 @@ sedit(struct mged_state *s)
 		     * in degrees.  First, cancel any existing rotations,
 		     * then perform new rotation
 		     */
-		    bn_mat_inv(invsolr, acc_rot_sol);
+		    bn_mat_inv(invsolr, s->s_edit->acc_rot_sol);
 
 		    /* Build completely new rotation change */
-		    MAT_IDN(modelchanges);
-		    bn_mat_angles(modelchanges,
+		    MAT_IDN(s->s_edit->model_changes);
+		    bn_mat_angles(s->s_edit->model_changes,
 				  es_para[0],
 				  es_para[1],
 				  es_para[2]);
-		    /* Borrow incr_change matrix here */
-		    bn_mat_mul(incr_change, modelchanges, invsolr);
-		    MAT_COPY(acc_rot_sol, modelchanges);
+		    /* Borrow s->s_edit->incr_change matrix here */
+		    bn_mat_mul(s->s_edit->incr_change, s->s_edit->model_changes, invsolr);
+		    MAT_COPY(s->s_edit->acc_rot_sol, s->s_edit->model_changes);
 
 		    /* Apply new rotation to solid */
 		    /* Clear out solid rotation */
-		    MAT_IDN(modelchanges);
+		    MAT_IDN(s->s_edit->model_changes);
 		} else {
-		    /* Apply incremental changes already in incr_change */
+		    /* Apply incremental changes already in s->s_edit->incr_change */
 		}
 
 		if (mged_variables->mv_context) {
 		    /* calculate rotations about keypoint */
-		    bn_mat_xform_about_pnt(edit, incr_change, s->s_edit->e_keypoint);
+		    bn_mat_xform_about_pnt(edit, s->s_edit->incr_change, s->s_edit->e_keypoint);
 
 		    /* We want our final matrix (mat) to xform the original solid
 		     * to the position of this instance of the solid, perform the
@@ -3800,12 +3800,12 @@ sedit(struct mged_state *s)
 		    MAT4X3VEC(tgc->c, mat, tgc->c);
 		    MAT4X3VEC(tgc->d, mat, tgc->d);
 		} else {
-		    MAT4X3VEC(tgc->a, incr_change, tgc->a);
-		    MAT4X3VEC(tgc->b, incr_change, tgc->b);
-		    MAT4X3VEC(tgc->c, incr_change, tgc->c);
-		    MAT4X3VEC(tgc->d, incr_change, tgc->d);
+		    MAT4X3VEC(tgc->a, s->s_edit->incr_change, tgc->a);
+		    MAT4X3VEC(tgc->b, s->s_edit->incr_change, tgc->b);
+		    MAT4X3VEC(tgc->c, s->s_edit->incr_change, tgc->c);
+		    MAT4X3VEC(tgc->d, s->s_edit->incr_change, tgc->d);
 		}
-		MAT_IDN(incr_change);
+		MAT_IDN(s->s_edit->incr_change);
 	    }
 	    break;
 
@@ -3823,28 +3823,28 @@ sedit(struct mged_state *s)
 		     * in degrees.  First, cancel any existing rotations,
 		     * then perform new rotation
 		     */
-		    bn_mat_inv(invsolr, acc_rot_sol);
+		    bn_mat_inv(invsolr, s->s_edit->acc_rot_sol);
 
 		    /* Build completely new rotation change */
-		    MAT_IDN(modelchanges);
-		    bn_mat_angles(modelchanges,
+		    MAT_IDN(s->s_edit->model_changes);
+		    bn_mat_angles(s->s_edit->model_changes,
 				  es_para[0],
 				  es_para[1],
 				  es_para[2]);
-		    /* Borrow incr_change matrix here */
-		    bn_mat_mul(incr_change, modelchanges, invsolr);
-		    MAT_COPY(acc_rot_sol, modelchanges);
+		    /* Borrow s->s_edit->incr_change matrix here */
+		    bn_mat_mul(s->s_edit->incr_change, s->s_edit->model_changes, invsolr);
+		    MAT_COPY(s->s_edit->acc_rot_sol, s->s_edit->model_changes);
 
 		    /* Apply new rotation to solid */
 		    /* Clear out solid rotation */
-		    MAT_IDN(modelchanges);
+		    MAT_IDN(s->s_edit->model_changes);
 		} else {
-		    /* Apply incremental changes already in incr_change */
+		    /* Apply incremental changes already in s->s_edit->incr_change */
 		}
 
 		if (mged_variables->mv_context) {
 		    /* calculate rotations about keypoint */
-		    bn_mat_xform_about_pnt(edit, incr_change, s->s_edit->e_keypoint);
+		    bn_mat_xform_about_pnt(edit, s->s_edit->incr_change, s->s_edit->e_keypoint);
 
 		    /* We want our final matrix (mat) to xform the original solid
 		     * to the position of this instance of the solid, perform the
@@ -3856,10 +3856,10 @@ sedit(struct mged_state *s)
 
 		    MAT4X3VEC(hyp->hyp_Hi, mat, hyp->hyp_Hi);
 		} else {
-		    MAT4X3VEC(hyp->hyp_Hi, incr_change, hyp->hyp_Hi);
+		    MAT4X3VEC(hyp->hyp_Hi, s->s_edit->incr_change, hyp->hyp_Hi);
 		}
 	    }
-	    MAT_IDN(incr_change);
+	    MAT_IDN(s->s_edit->incr_change);
 	    break;
 
 	case ECMD_ETO_ROT_C:
@@ -3876,28 +3876,28 @@ sedit(struct mged_state *s)
 		     * in degrees.  First, cancel any existing rotations,
 		     * then perform new rotation
 		     */
-		    bn_mat_inv(invsolr, acc_rot_sol);
+		    bn_mat_inv(invsolr, s->s_edit->acc_rot_sol);
 
 		    /* Build completely new rotation change */
-		    MAT_IDN(modelchanges);
-		    bn_mat_angles(modelchanges,
+		    MAT_IDN(s->s_edit->model_changes);
+		    bn_mat_angles(s->s_edit->model_changes,
 				  es_para[0],
 				  es_para[1],
 				  es_para[2]);
-		    /* Borrow incr_change matrix here */
-		    bn_mat_mul(incr_change, modelchanges, invsolr);
-		    MAT_COPY(acc_rot_sol, modelchanges);
+		    /* Borrow s->s_edit->incr_change matrix here */
+		    bn_mat_mul(s->s_edit->incr_change, s->s_edit->model_changes, invsolr);
+		    MAT_COPY(s->s_edit->acc_rot_sol, s->s_edit->model_changes);
 
 		    /* Apply new rotation to solid */
 		    /* Clear out solid rotation */
-		    MAT_IDN(modelchanges);
+		    MAT_IDN(s->s_edit->model_changes);
 		} else {
-		    /* Apply incremental changes already in incr_change */
+		    /* Apply incremental changes already in s->s_edit->incr_change */
 		}
 
 		if (mged_variables->mv_context) {
 		    /* calculate rotations about keypoint */
-		    bn_mat_xform_about_pnt(edit, incr_change, s->s_edit->e_keypoint);
+		    bn_mat_xform_about_pnt(edit, s->s_edit->incr_change, s->s_edit->e_keypoint);
 
 		    /* We want our final matrix (mat) to xform the original solid
 		     * to the position of this instance of the solid, perform the
@@ -3909,10 +3909,10 @@ sedit(struct mged_state *s)
 
 		    MAT4X3VEC(eto->eto_C, mat, eto->eto_C);
 		} else {
-		    MAT4X3VEC(eto->eto_C, incr_change, eto->eto_C);
+		    MAT4X3VEC(eto->eto_C, s->s_edit->incr_change, eto->eto_C);
 		}
 	    }
-	    MAT_IDN(incr_change);
+	    MAT_IDN(s->s_edit->incr_change);
 	    break;
 
 	case ECMD_NMG_EPICK:
@@ -5224,9 +5224,9 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 		s->s_edit->es_scale = 1.0 / s->s_edit->es_scale;
 
 	    /* accumulate scale factor */
-	    acc_sc_sol *= s->s_edit->es_scale;
+	    s->s_edit->acc_sc_sol *= s->s_edit->es_scale;
 
-	    s->s_edit->edit_absolute_scale = acc_sc_sol - 1.0;
+	    s->s_edit->edit_absolute_scale = s->s_edit->acc_sc_sol - 1.0;
 	    if (s->s_edit->edit_absolute_scale > 0)
 		s->s_edit->edit_absolute_scale /= 3.0;
 
@@ -5579,20 +5579,20 @@ sedit_abs_scale(struct mged_state *s)
     if (es_edflag != SSCALE && es_edflag != PSCALE)
 	return;
 
-    old_acc_sc_sol = acc_sc_sol;
+    old_acc_sc_sol = s->s_edit->acc_sc_sol;
 
     if (-SMALL_FASTF < s->s_edit->edit_absolute_scale && s->s_edit->edit_absolute_scale < SMALL_FASTF)
-	acc_sc_sol = 1.0;
+	s->s_edit->acc_sc_sol = 1.0;
     else if (s->s_edit->edit_absolute_scale > 0.0)
-	acc_sc_sol = 1.0 + s->s_edit->edit_absolute_scale * 3.0;
+	s->s_edit->acc_sc_sol = 1.0 + s->s_edit->edit_absolute_scale * 3.0;
     else {
 	if ((s->s_edit->edit_absolute_scale - MGED_SMALL_SCALE) < -1.0)
 	    s->s_edit->edit_absolute_scale = -1.0 + MGED_SMALL_SCALE;
 
-	acc_sc_sol = 1.0 + s->s_edit->edit_absolute_scale;
+	s->s_edit->acc_sc_sol = 1.0 + s->s_edit->edit_absolute_scale;
     }
 
-    s->s_edit->es_scale = acc_sc_sol / old_acc_sc_sol;
+    s->s_edit->es_scale = s->s_edit->acc_sc_sol / old_acc_sc_sol;
     sedit(s);
 }
 
@@ -5609,7 +5609,7 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
     vect_t tr_temp;		/* temp translation vector */
     vect_t temp;
 
-    MAT_IDN(incr_change);
+    MAT_IDN(s->s_edit->incr_change);
     if (movedir & SARROW) {
 	/* scaling option is in effect */
 	scale = 1.0 + (fastf_t)(mousevec[Y]>0 ?
@@ -5622,40 +5622,40 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 
 	    case BE_O_SCALE:
 		/* global scaling */
-		incr_change[15] = 1.0 / scale;
+		s->s_edit->incr_change[15] = 1.0 / scale;
 
-		acc_sc_obj /= incr_change[15];
-		s->s_edit->edit_absolute_scale = acc_sc_obj - 1.0;
+		s->s_edit->acc_sc_obj /= s->s_edit->incr_change[15];
+		s->s_edit->edit_absolute_scale = s->s_edit->acc_sc_obj - 1.0;
 		if (s->s_edit->edit_absolute_scale > 0.0)
 		    s->s_edit->edit_absolute_scale /= 3.0;
 		break;
 
 	    case BE_O_XSCALE:
 		/* local scaling ... X-axis */
-		incr_change[0] = scale;
+		s->s_edit->incr_change[0] = scale;
 		/* accumulate the scale factor */
-		acc_sc[0] *= scale;
-		s->s_edit->edit_absolute_scale = acc_sc[0] - 1.0;
+		s->s_edit->acc_sc[0] *= scale;
+		s->s_edit->edit_absolute_scale = s->s_edit->acc_sc[0] - 1.0;
 		if (s->s_edit->edit_absolute_scale > 0.0)
 		    s->s_edit->edit_absolute_scale /= 3.0;
 		break;
 
 	    case BE_O_YSCALE:
 		/* local scaling ... Y-axis */
-		incr_change[5] = scale;
+		s->s_edit->incr_change[5] = scale;
 		/* accumulate the scale factor */
-		acc_sc[1] *= scale;
-		s->s_edit->edit_absolute_scale = acc_sc[1] - 1.0;
+		s->s_edit->acc_sc[1] *= scale;
+		s->s_edit->edit_absolute_scale = s->s_edit->acc_sc[1] - 1.0;
 		if (s->s_edit->edit_absolute_scale > 0.0)
 		    s->s_edit->edit_absolute_scale /= 3.0;
 		break;
 
 	    case BE_O_ZSCALE:
 		/* local scaling ... Z-axis */
-		incr_change[10] = scale;
+		s->s_edit->incr_change[10] = scale;
 		/* accumulate the scale factor */
-		acc_sc[2] *= scale;
-		s->s_edit->edit_absolute_scale = acc_sc[2] - 1.0;
+		s->s_edit->acc_sc[2] *= scale;
+		s->s_edit->edit_absolute_scale = s->s_edit->acc_sc[2] - 1.0;
 		if (s->s_edit->edit_absolute_scale > 0.0)
 		    s->s_edit->edit_absolute_scale /= 3.0;
 		break;
@@ -5665,10 +5665,10 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 	 * NOT the view center.
 	 */
 	VMOVE(temp, s->s_edit->e_keypoint);
-	MAT4X3PNT(pos_model, modelchanges, temp);
-	wrt_point(modelchanges, incr_change, modelchanges, pos_model);
+	MAT4X3PNT(pos_model, s->s_edit->model_changes, temp);
+	wrt_point(s->s_edit->model_changes, s->s_edit->incr_change, s->s_edit->model_changes, pos_model);
 
-	MAT_IDN(incr_change);
+	MAT_IDN(s->s_edit->incr_change);
 	new_edit_mats(s);
     } else if (movedir & (RARROW|UARROW)) {
 	mat_t oldchanges;	/* temporary matrix */
@@ -5683,13 +5683,13 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 	    pos_view[Y] = mousevec[Y];
 
 	MAT4X3PNT(pos_model, view_state->vs_gvp->gv_view2model, pos_view);/* NOT objview */
-	MAT4X3PNT(tr_temp, modelchanges, temp);
+	MAT4X3PNT(tr_temp, s->s_edit->model_changes, temp);
 	VSUB2(tr_temp, pos_model, tr_temp);
-	MAT_DELTAS_VEC(incr_change, tr_temp);
-	MAT_COPY(oldchanges, modelchanges);
-	bn_mat_mul(modelchanges, incr_change, oldchanges);
+	MAT_DELTAS_VEC(s->s_edit->incr_change, tr_temp);
+	MAT_COPY(oldchanges, s->s_edit->model_changes);
+	bn_mat_mul(s->s_edit->model_changes, s->s_edit->incr_change, oldchanges);
 
-	MAT_IDN(incr_change);
+	MAT_IDN(s->s_edit->incr_change);
 	new_edit_mats(s);
 
 	update_edit_absolute_tran(s, pos_view);
@@ -5726,29 +5726,29 @@ oedit_abs_scale(struct mged_state *s)
 
 	case BE_O_SCALE:
 	    /* global scaling */
-	    incr_mat[15] = acc_sc_obj / scale;
-	    acc_sc_obj = scale;
+	    incr_mat[15] = s->s_edit->acc_sc_obj / scale;
+	    s->s_edit->acc_sc_obj = scale;
 	    break;
 
 	case BE_O_XSCALE:
 	    /* local scaling ... X-axis */
-	    incr_mat[0] = scale / acc_sc[0];
+	    incr_mat[0] = scale / s->s_edit->acc_sc[0];
 	    /* accumulate the scale factor */
-	    acc_sc[0] = scale;
+	    s->s_edit->acc_sc[0] = scale;
 	    break;
 
 	case BE_O_YSCALE:
 	    /* local scaling ... Y-axis */
-	    incr_mat[5] = scale / acc_sc[1];
+	    incr_mat[5] = scale / s->s_edit->acc_sc[1];
 	    /* accumulate the scale factor */
-	    acc_sc[1] = scale;
+	    s->s_edit->acc_sc[1] = scale;
 	    break;
 
 	case BE_O_ZSCALE:
 	    /* local scaling ... Z-axis */
-	    incr_mat[10] = scale / acc_sc[2];
+	    incr_mat[10] = scale / s->s_edit->acc_sc[2];
 	    /* accumulate the scale factor */
-	    acc_sc[2] = scale;
+	    s->s_edit->acc_sc[2] = scale;
 	    break;
     }
 
@@ -5756,8 +5756,8 @@ oedit_abs_scale(struct mged_state *s)
      * NOT the view center.
      */
     VMOVE(temp, s->s_edit->e_keypoint);
-    MAT4X3PNT(pos_model, modelchanges, temp);
-    wrt_point(modelchanges, incr_mat, modelchanges, pos_model);
+    MAT4X3PNT(pos_model, s->s_edit->model_changes, temp);
+    wrt_point(s->s_edit->model_changes, incr_mat, s->s_edit->model_changes, pos_model);
 
     new_edit_mats(s);
 }
@@ -5893,9 +5893,9 @@ init_oedit_vars(struct mged_state *s)
     VSETALL(s->s_edit->last_edit_absolute_model_tran, 0.0);
     VSETALL(s->s_edit->last_edit_absolute_view_tran, 0.0);
     s->s_edit->edit_absolute_scale = 0.0;
-    acc_sc_sol = 1.0;
-    acc_sc_obj = 1.0;
-    VSETALL(acc_sc, 1.0);
+    s->s_edit->acc_sc_sol = 1.0;
+    s->s_edit->acc_sc_obj = 1.0;
+    VSETALL(s->s_edit->acc_sc, 1.0);
 
     VSETALL(s->s_edit->edit_rate_model_rotate, 0.0);
     VSETALL(s->s_edit->edit_rate_object_rotate, 0.0);
@@ -5903,8 +5903,8 @@ init_oedit_vars(struct mged_state *s)
     VSETALL(s->s_edit->edit_rate_model_tran, 0.0);
     VSETALL(s->s_edit->edit_rate_view_tran, 0.0);
 
-    MAT_IDN(modelchanges);
-    MAT_IDN(acc_rot_sol);
+    MAT_IDN(s->s_edit->model_changes);
+    MAT_IDN(s->s_edit->acc_rot_sol);
 }
 
 
@@ -5938,7 +5938,7 @@ oedit_apply(struct mged_state *s, int continue_editing)
      */
     mat_t topm;	/* accum matrix from pathpos 0 to i-2 */
     mat_t inv_topm;	/* inverse */
-    mat_t deltam;	/* final "changes":  deltam = (inv_topm)(modelchanges)(topm) */
+    mat_t deltam;	/* final "changes":  deltam = (inv_topm)(s->s_edit->model_changes)(topm) */
     mat_t tempm;
 
     if (!illump || !illump->s_u_data)
@@ -5948,12 +5948,12 @@ oedit_apply(struct mged_state *s, int continue_editing)
     switch (ipathpos) {
 	case 0:
 	    moveHobj(s, DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
-		     modelchanges);
+		     s->s_edit->model_changes);
 	    break;
 	case 1:
 	    moveHinstance(s, DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos-1),
 			  DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos),
-			  modelchanges);
+			  s->s_edit->model_changes);
 	    break;
 	default:
 	    MAT_IDN(topm);
@@ -5965,7 +5965,7 @@ oedit_apply(struct mged_state *s, int continue_editing)
 
 	    bn_mat_inv(inv_topm, topm);
 
-	    bn_mat_mul(tempm, modelchanges, topm);
+	    bn_mat_mul(tempm, s->s_edit->model_changes, topm);
 	    bn_mat_mul(deltam, inv_topm, tempm);
 
 	    moveHinstance(s, DB_FULL_PATH_GET(&bdata->s_fullpath, ipathpos-1),
@@ -5980,7 +5980,7 @@ oedit_apply(struct mged_state *s, int continue_editing)
      * include the solids about to be replaced,
      * so we can safely fiddle the displaylist.
      */
-    modelchanges[15] = 1000000000;	/* => small ratio */
+    s->s_edit->model_changes[15] = 1000000000;	/* => small ratio */
 
     /* Now, recompute new chunks of displaylist */
     gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)ged_dl(s->gedp));
@@ -6427,7 +6427,7 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
     } else if (SEDIT_ROTATE) {
 	VMOVE(s->s_edit->edit_absolute_model_rotate, es_para);
     } else if (SEDIT_SCALE) {
-	s->s_edit->edit_absolute_scale = acc_sc_sol - 1.0;
+	s->s_edit->edit_absolute_scale = s->s_edit->acc_sc_sol - 1.0;
 	if (s->s_edit->edit_absolute_scale > 0)
 	    s->s_edit->edit_absolute_scale /= 3.0;
     }
@@ -7600,7 +7600,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     get_solid_keypoint(s, s->s_edit->e_keypoint, &es_keytag, &s->s_edit->es_int, es_mat);
 
     /* Reset relevant variables */
-    MAT_IDN(acc_rot_sol);
+    MAT_IDN(s->s_edit->acc_rot_sol);
     VSETALL(s->s_edit->edit_absolute_model_rotate, 0.0);
     VSETALL(s->s_edit->edit_absolute_object_rotate, 0.0);
     VSETALL(s->s_edit->edit_absolute_view_rotate, 0.0);
@@ -7612,7 +7612,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
     VSETALL(s->s_edit->last_edit_absolute_model_tran, 0.0);
     VSETALL(s->s_edit->last_edit_absolute_view_tran, 0.0);
     s->s_edit->edit_absolute_scale = 0.0;
-    acc_sc_sol = 1.0;
+    s->s_edit->acc_sc_sol = 1.0;
     VSETALL(s->s_edit->edit_rate_model_rotate, 0.0);
     VSETALL(s->s_edit->edit_rate_object_rotate, 0.0);
     VSETALL(s->s_edit->edit_rate_view_rotate, 0.0);

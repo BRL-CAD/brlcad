@@ -3235,10 +3235,10 @@ mged_erot(struct mged_state *s,
 	case 'm':
 	    break;
 	case 'o':
-	    bn_mat_inv(temp1, acc_rot_sol);
+	    bn_mat_inv(temp1, s->s_edit->acc_rot_sol);
 
 	    /* transform into object rotations */
-	    bn_mat_mul(temp2, acc_rot_sol, newrot);
+	    bn_mat_mul(temp2, s->s_edit->acc_rot_sol, newrot);
 	    bn_mat_mul(newrot, temp2, temp1);
 	    break;
 	case 'v':
@@ -3263,8 +3263,8 @@ mged_erot(struct mged_state *s,
 	}
 
 	inpara = 0;
-	MAT_COPY(incr_change, newrot);
-	bn_mat_mul2(incr_change, acc_rot_sol);
+	MAT_COPY(s->s_edit->incr_change, newrot);
+	bn_mat_mul2(s->s_edit->incr_change, s->s_edit->acc_rot_sol);
 	sedit(s);
 
 	mged_variables->mv_rotate_about = save_rotate_about;
@@ -3273,7 +3273,7 @@ mged_erot(struct mged_state *s,
 	point_t point;
 	vect_t work;
 
-	bn_mat_mul2(newrot, acc_rot_sol);
+	bn_mat_mul2(newrot, s->s_edit->acc_rot_sol);
 
 	/* find point for rotation to take place wrt */
 	switch (rotate_about) {
@@ -3290,13 +3290,13 @@ mged_erot(struct mged_state *s,
 		break;
 	    case 'k':
 	    default:
-		MAT4X3PNT(point, modelchanges, s->s_edit->e_keypoint);
+		MAT4X3PNT(point, s->s_edit->model_changes, s->s_edit->e_keypoint);
 	}
 
 	/*
-	 * Apply newrot to the modelchanges matrix wrt "point"
+	 * Apply newrot to the s->s_edit->model_changes matrix wrt "point"
 	 */
-	wrt_point(modelchanges, newrot, modelchanges, point);
+	wrt_point(s->s_edit->model_changes, newrot, s->s_edit->model_changes, point);
 
 	new_edit_mats(s);
     }
@@ -3399,7 +3399,7 @@ mged_vrot(struct mged_state *s, char origin, fastf_t *newrot)
 	} else if (origin == 'k' && s->global_editing_state == ST_O_EDIT) {
 	    point_t kpWmc;
 
-	    MAT4X3PNT(kpWmc, modelchanges, s->s_edit->e_keypoint);
+	    MAT4X3PNT(kpWmc, s->s_edit->model_changes, s->s_edit->e_keypoint);
 	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, kpWmc);
 	} else {
 	    /* rotate around model center (0, 0, 0) */
@@ -3454,8 +3454,8 @@ mged_vrot_xyz(struct mged_state *s,
 	bn_mat_mul(newrot, temp2, temp1);
     } else if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) && coords == 'o') {
 	/* first, transform object rotations into model rotations */
-	bn_mat_inv(temp1, acc_rot_sol);
-	bn_mat_mul(temp2, acc_rot_sol, newrot);
+	bn_mat_inv(temp1, s->s_edit->acc_rot_sol);
+	bn_mat_mul(temp2, s->s_edit->acc_rot_sol, newrot);
 	bn_mat_mul(newrot, temp2, temp1);
 
 	/* now transform model rotations into view rotations */
@@ -3609,7 +3609,7 @@ mged_etran(struct mged_state *s,
 	    break;
 	case 'o':
 	    VSCALE(p2, tvec, s->dbip->dbi_local2base);
-	    MAT4X3PNT(delta, acc_rot_sol, p2);
+	    MAT4X3PNT(delta, s->s_edit->acc_rot_sol, p2);
 	    break;
 	case 'v':
 	default:
@@ -3638,7 +3638,7 @@ mged_etran(struct mged_state *s,
     } else {
 	MAT_IDN(xlatemat);
 	MAT_DELTAS_VEC(xlatemat, delta);
-	bn_mat_mul2(xlatemat, modelchanges);
+	bn_mat_mul2(xlatemat, s->s_edit->model_changes);
 
 	new_edit_mats(s);
 	s->update_views = 1;
@@ -3655,8 +3655,8 @@ mged_otran(struct mged_state *s, const vect_t tvec)
     vect_t work = VINIT_ZERO;
 
     if (s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) {
-	/* apply acc_rot_sol to tvec */
-	MAT4X3PNT(work, acc_rot_sol, tvec);
+	/* apply s->s_edit->acc_rot_sol to tvec */
+	MAT4X3PNT(work, s->s_edit->acc_rot_sol, tvec);
     }
 
     return mged_mtran(s, work);
@@ -3771,19 +3771,19 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	}
 
 	s->s_edit->es_scale = sfactor;
-	old_scale = acc_sc_sol;
-	acc_sc_sol *= sfactor;
+	old_scale = s->s_edit->acc_sc_sol;
+	s->s_edit->acc_sc_sol *= sfactor;
 
-	if (acc_sc_sol < MGED_SMALL_SCALE) {
-	    acc_sc_sol = old_scale;
+	if (s->s_edit->acc_sc_sol < MGED_SMALL_SCALE) {
+	    s->s_edit->acc_sc_sol = old_scale;
 	    es_edflag = save_edflag;
 	    return TCL_OK;
 	}
 
-	if (acc_sc_sol >= 1.0) {
-	    s->s_edit->edit_absolute_scale = (acc_sc_sol - 1.0) / 3.0;
+	if (s->s_edit->acc_sc_sol >= 1.0) {
+	    s->s_edit->edit_absolute_scale = (s->s_edit->acc_sc_sol - 1.0) / 3.0;
 	} else {
-	    s->s_edit->edit_absolute_scale = acc_sc_sol - 1.0;
+	    s->s_edit->edit_absolute_scale = s->s_edit->acc_sc_sol - 1.0;
 	}
 
 	sedit(s);
@@ -3801,33 +3801,33 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	switch (edobj) {
 	    case BE_O_XSCALE:			    /* local scaling ... X-axis */
 		smat[0] = sfactor;
-		old_scale = acc_sc[X];
-		acc_sc[X] *= sfactor;
+		old_scale = s->s_edit->acc_sc[X];
+		s->s_edit->acc_sc[X] *= sfactor;
 
-		if (acc_sc[X] < MGED_SMALL_SCALE) {
-		    acc_sc[X] = old_scale;
+		if (s->s_edit->acc_sc[X] < MGED_SMALL_SCALE) {
+		    s->s_edit->acc_sc[X] = old_scale;
 		    return TCL_OK;
 		}
 
 		break;
 	    case BE_O_YSCALE:			    /* local scaling ... Y-axis */
 		smat[5] = sfactor;
-		old_scale = acc_sc[Y];
-		acc_sc[Y] *= sfactor;
+		old_scale = s->s_edit->acc_sc[Y];
+		s->s_edit->acc_sc[Y] *= sfactor;
 
-		if (acc_sc[Y] < MGED_SMALL_SCALE) {
-		    acc_sc[Y] = old_scale;
+		if (s->s_edit->acc_sc[Y] < MGED_SMALL_SCALE) {
+		    s->s_edit->acc_sc[Y] = old_scale;
 		    return TCL_OK;
 		}
 
 		break;
 	    case BE_O_ZSCALE:			    /* local scaling ... Z-axis */
 		smat[10] = sfactor;
-		old_scale = acc_sc[Z];
-		acc_sc[Z] *= sfactor;
+		old_scale = s->s_edit->acc_sc[Z];
+		s->s_edit->acc_sc[Z] *= sfactor;
 
-		if (acc_sc[Z] < MGED_SMALL_SCALE) {
-		    acc_sc[Z] = old_scale;
+		if (s->s_edit->acc_sc[Z] < MGED_SMALL_SCALE) {
+		    s->s_edit->acc_sc[Z] = old_scale;
 		    return TCL_OK;
 		}
 
@@ -3835,11 +3835,11 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	    case BE_O_SCALE:			     /* global scaling */
 	    default:
 		smat[15] = inv_sfactor;
-		old_scale = acc_sc_sol;
-		acc_sc_sol *= inv_sfactor;
+		old_scale = s->s_edit->acc_sc_sol;
+		s->s_edit->acc_sc_sol *= inv_sfactor;
 
-		if (acc_sc_sol < MGED_SMALL_SCALE) {
-		    acc_sc_sol = old_scale;
+		if (s->s_edit->acc_sc_sol < MGED_SMALL_SCALE) {
+		    s->s_edit->acc_sc_sol = old_scale;
 		    return TCL_OK;
 		}
 
@@ -3850,8 +3850,8 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	 * NOT the view center.
 	 */
 	VMOVE(temp, s->s_edit->e_keypoint);
-	MAT4X3PNT(pos_model, modelchanges, temp);
-	wrt_point(modelchanges, smat, modelchanges, pos_model);
+	MAT4X3PNT(pos_model, s->s_edit->model_changes, temp);
+	wrt_point(s->s_edit->model_changes, smat, s->s_edit->model_changes, pos_model);
 
 	new_edit_mats(s);
     }

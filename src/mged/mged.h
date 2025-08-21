@@ -204,7 +204,45 @@ struct mged_edit_state {
     point_t e_keypoint;
     point_t e_axes_pos;
     point_t curr_e_axes_pos;
+
+    mat_t model_changes;	/* full changes this edit */
+    mat_t incr_change;		/* change(s) from last cycle */
+
+    fastf_t acc_sc_sol;	/* accumulate solid scale factor */
+    fastf_t acc_sc_obj;	/* accumulate global object scale factor */
+    fastf_t acc_sc[3];	/* accumulate local object scale factors */
+    mat_t acc_rot_sol;	/* accumulate solid rotations */
 };
+
+
+/**
+ * Definitions (TODO - update this...)
+ *
+ * Solids are defined in "model space".  The screen is in "view
+ * space".  The visible part of view space is -1.0 <= x, y, z <= +1.0
+ *
+ * The transformation from the origin of model space to the origin of
+ * view space (the "view center") is contained in the matrix
+ * "toViewcenter".  The viewing rotation is contained in the "Viewrot"
+ * matrix.  The viewscale factor (for [15] use) is kept in the float
+ * "Viewscale".
+ *
+ * model2view = Viewscale * Viewrot * toViewcenter;
+ *
+ * model2view is the matrix going from model space coordinates to the
+ * view coordinates, and view2model is the inverse.  It is recomputed
+ * by new_mats() only.
+ *
+ * CHANGE matrix.  Defines the change between the un-edited and the
+ * present state in the edited solid or combination.
+ *
+ * model2objview = modelchanges * model2view
+ *
+ * For object editing and solid edit, model2objview translates from
+ * model space to view space with all the modelchanges too.
+ *
+ * These are allocated storage in dozoom.c
+ */
 
 /* global application state */
 struct mged_state {
@@ -246,43 +284,6 @@ struct mged_state {
 extern struct mged_state *MGED_STATE;
 
 
-/**
- * Definitions.
- *
- * Solids are defined in "model space".  The screen is in "view
- * space".  The visible part of view space is -1.0 <= x, y, z <= +1.0
- *
- * The transformation from the origin of model space to the origin of
- * view space (the "view center") is contained in the matrix
- * "toViewcenter".  The viewing rotation is contained in the "Viewrot"
- * matrix.  The viewscale factor (for [15] use) is kept in the float
- * "Viewscale".
- *
- * model2view = Viewscale * Viewrot * toViewcenter;
- *
- * model2view is the matrix going from model space coordinates to the
- * view coordinates, and view2model is the inverse.  It is recomputed
- * by new_mats() only.
- *
- * CHANGE matrix.  Defines the change between the un-edited and the
- * present state in the edited solid or combination.
- *
- * model2objview = modelchanges * model2view
- *
- * For object editing and solid edit, model2objview translates from
- * model space to view space with all the modelchanges too.
- *
- * These are allocated storage in dozoom.c
- */
-
-extern mat_t modelchanges;		/* full changes this edit */
-extern mat_t incr_change;		/* change(s) from last cycle */
-
-/* defined in buttons.c */
-extern fastf_t acc_sc_sol;	/* accumulate solid scale factor */
-extern fastf_t acc_sc_obj;	/* accumulate global object scale factor */
-extern fastf_t acc_sc[3];	/* accumulate local object scale factors */
-extern mat_t acc_rot_sol;	/* accumulate solid rotations */
 
 /* defined in mged.c */
 extern jmp_buf jmp_env;

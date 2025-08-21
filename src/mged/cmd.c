@@ -590,8 +590,8 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	    return TCL_ERROR;
 	}
 	/* use the solid at bottom of path (key solid) */
-	/* apply es_mat and modelchanges editing to parameters */
-	bn_mat_mul(newmat, modelchanges, es_mat);
+	/* apply es_mat and s->s_edit->model_changes editing to parameters */
+	bn_mat_mul(newmat, s->s_edit->model_changes, es_mat);
 	transform_editing_solid(s, &intern, newmat, &s->s_edit->es_int, 0);
 	if (illump && illump->s_u_data) {
 	    bdata = (struct ged_bv_data *)illump->s_u_data;
