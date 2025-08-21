@@ -504,10 +504,6 @@ extern void predictor_init(struct mged_state *s);
 void wrt_view(struct mged_state *s, mat_t out, const mat_t change, const mat_t in);
 void wrt_point(mat_t out, const mat_t change, const mat_t in, const point_t point);
 
-/* tedit.c */
-int get_editor(struct mged_state *s);
-void clear_editor(struct mged_state *s);
-
 /* titles.c */
 void create_text_overlay(struct mged_state *s, struct bu_vls *vp);
 void dotitles(struct mged_state *s, struct bu_vls *overlay_vls);
@@ -580,9 +576,6 @@ extern void mged_vls_struct_parse_old(struct mged_state *s, struct bu_vls *vls, 
 
 /* mater.c */
 void mged_color_soltab(struct mged_state *s);
-
-/* utility1.c */
-int editit(struct mged_state *s, const char *command, const char *tempfile);
 
 int Wdb_Init(Tcl_Interp *interp);
 int wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);

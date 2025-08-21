@@ -65,8 +65,35 @@ static int j;
 
 int writesolid(struct mged_state *), readsolid(struct mged_state *);
 
+/*
+ *
+ * No-frills edit - opens an editor on the supplied
+ * file name.
+ *
+ */
 int
-f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+editit(struct mged_state *s, const char *tempfile) {
+    int argc = 3;
+    const char *av[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+
+    CHECK_DBI_NULL;
+
+    if (!ged_set_editor(s->gedp, s->classic_mged))
+       return TCL_ERROR;
+
+    av[0] = "editit";
+    av[1] = "-f";
+    av[2] = tempfile;
+    av[3] = NULL;
+
+    ged_exec(s->gedp, argc, (const char **)av);
+
+    ged_clear_editor(s->gedp);
+    return TCL_OK;
+}
+
+int
+f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char **UNUSED(argv))
 {
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
@@ -102,7 +129,7 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     (void)fclose(fp);
 
-    if (editit(s, argv[0], tmpfil) == TCL_OK) {
+    if (editit(s, tmpfil) == TCL_OK) {
 	if (readsolid(s)) {
 	    bu_file_delete(tmpfil);
 	    return TCL_ERROR;
@@ -898,111 +925,6 @@ readsolid(struct mged_state *s)
 
     (void)fclose(fp);
     return ret_val;
-}
-
-static int
-have_terminal(struct mged_state *s)
-{
-    bu_ptbl_reset(&s->gedp->terminal_opts);
-
-    // If we do need a terminal, try to find one
-    const char *terminal = bu_which(XTERM_COMMAND);
-    if (!terminal)
-	terminal = bu_which("/usr/X11R6/bin/" XTERM_COMMAND);
-    if (!terminal)
-	terminal = bu_which("/usr/X11/bin/" XTERM_COMMAND);
-
-    if (terminal) {
-	snprintf(s->gedp->terminal, MAXPATHLEN, "%s", terminal);
-	static const char *topt = "-e";
-	bu_ptbl_ins(&s->gedp->terminal_opts, (long *)topt);
-	return 1;
-    }
-
-    return 0;
-}
-
-int
-get_editor(struct mged_state *s)
-{
-    /* There are two possible situations for MGED - in classic mode
-     * the assumption is made that the command window is a controlling
-     * terminal, and an editor should be launched that will utilize
-     * that controlling window.  In GUI mode, the editor will be launched
-     * either as a separate GUI application or in a separate terminal. */
-    int need_terminal = 0;
-    const char *editor = NULL;
-
-    if (s->classic_mged) {
-	// Console editors only
-	editor = bu_editor(&s->gedp->editor_opts, 1, s->gedp->app_editors_cnt, s->gedp->app_editors);
-    } else {
-
-	// Because we know we're willing to try setting up to use
-	// a terminal, we do a little extra checking of any user
-	// specified editors.  Define a "short circuiting" list
-	// to specify that will prevent libbu's default lists from
-	// being invoked
-	const char *check_for_editors[2] = {"MGED_NULL_EDITOR", NULL};
-
-	// First check for user-specified GUI editors
-	editor = bu_editor(&s->gedp->editor_opts, 2, 2, (const char **)check_for_editors);
-	if (!editor) {
-	    // First check for user-specified console editors
-	    // Falling back to console, will need terminal
-	    editor = bu_editor(&s->gedp->editor_opts, 1, 2, (const char **)check_for_editors);
-	    if (editor)
-		need_terminal = 1;
-	}
-
-	// If the user specified editor can't be launched without a terminal,
-	// check if we can do that.  If not, we'll have to fall back to other
-	// options
-	if (need_terminal) {
-	    int h = have_terminal(s);
-	    if (!h)
-		editor = NULL;
-	}
-
-	// If initial attempts didn't find an editor, be more aggressive
-	if (!editor) {
-	    editor = bu_editor(&s->gedp->editor_opts, 2, s->gedp->app_editors_cnt, s->gedp->app_editors);
-	    if (!editor) {
-		// Falling back to console, will need terminal
-		editor = bu_editor(&s->gedp->editor_opts, 1, s->gedp->app_editors_cnt, s->gedp->app_editors);
-		if (editor)
-		    need_terminal = 1;
-	    }
-
-	    if (need_terminal) {
-		int h = have_terminal(s);
-		if (!h)
-		    editor = NULL;
-	    }
-	}
-
-    }
-
-    if (!editor) {
-	// No suitable editor found
-	return 0;
-    }
-
-    // Copy editor into ged struct
-    snprintf(s->gedp->editor, MAXPATHLEN, "%s", editor);
-
-    return 1;
-}
-
-void
-clear_editor(struct mged_state *s)
-{
-    if (!s || !s->gedp)
-	return;
-    s->gedp->editor[0] = '\0';
-    s->gedp->terminal[0] = '\0';
-    bu_ptbl_reset(&s->gedp->editor_opts);
-    bu_ptbl_reset(&s->gedp->terminal_opts);
 }
 
 /*
