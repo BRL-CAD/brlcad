@@ -76,7 +76,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
      * Check if the illuminated solid still exists or it has been killed
      * before Accept was clicked.
      */
-    if (es_edflag >= 0 && illump != NULL && illump->s_u_data != NULL) {
+    if (s->s_edit->edit_flag >= 0 && illump != NULL && illump->s_u_data != NULL) {
 	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	dp = LAST_SOLID(bdata);
@@ -93,7 +93,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	    bu_vls_strcat(vp, ": ");
 
 	    /* print the evaluated (path) solid parameters */
-	    vls_solid(s, vp, &s->s_edit->es_int, es_mat);
+	    vls_solid(s, vp, &s->s_edit->es_int, s->s_edit->e_mat);
 	}
     }
 
@@ -110,7 +110,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	    mat_t new_mat;
 	    /* NOT an evaluated region */
 	    /* object edit option selected */
-	    bn_mat_mul(new_mat, s->s_edit->model_changes, es_mat);
+	    bn_mat_mul(new_mat, s->s_edit->model_changes, s->s_edit->e_mat);
 
 	    vls_solid(s, vp, &s->s_edit->es_int, new_mat);
 	}
@@ -341,18 +341,18 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
     dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
 
     /* Label the vertices of the edited solid */
-    if (es_edflag >= 0 || (s->global_editing_state == ST_O_EDIT && illump->s_old.s_Eflag == 0)) {
+    if (s->s_edit->edit_flag >= 0 || (s->global_editing_state == ST_O_EDIT && illump->s_old.s_Eflag == 0)) {
 	mat_t xform;
 	struct rt_point_labels pl[8+1];
 	point_t lines[2*4];	/* up to 4 lines to draw */
 	int num_lines=0;
 
 	if (view_state->vs_gvp->gv_perspective <= 0)
-	    bn_mat_mul(xform, view_state->vs_model2objview, es_mat);
+	    bn_mat_mul(xform, view_state->vs_model2objview, s->s_edit->e_mat);
 	else {
 	    mat_t tmat;
 
-	    bn_mat_mul(tmat, view_state->vs_model2objview, es_mat);
+	    bn_mat_mul(tmat, view_state->vs_model2objview, s->s_edit->e_mat);
 	    bn_mat_mul(xform, perspective_mat, tmat);
 	}
 
@@ -564,7 +564,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	bu_vls_printf(&kp_vls,
 		      " Keypoint: %s %s: (%g, %g, %g)",
 		      OBJ[s->s_edit->es_int.idb_type].ft_name+3,	/* Skip ID_ */
-		      es_keytag,
+		      s->s_edit->e_keytag,
 		      s->s_edit->e_keypoint[X] * s->dbip->dbi_base2local,
 		      s->s_edit->e_keypoint[Y] * s->dbip->dbi_base2local,
 		      s->s_edit->e_keypoint[Z] * s->dbip->dbi_base2local);

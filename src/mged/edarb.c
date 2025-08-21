@@ -64,7 +64,7 @@ editarb(struct mged_state *s, vect_t pos_model)
     newedge = 0;
 
     if (ret) {
-	es_edflag = IDLE;
+	s->s_edit->edit_flag = IDLE;
     }
 
     return ret;
@@ -117,9 +117,9 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 
     /* get distance to project face */
     dist = atof(argv[2]);
-    /* apply es_mat[15] to get to real model space */
+    /* apply s->s_edit->e_mat[15] to get to real model space */
     /* convert from the local unit (as input) to the base unit */
-    dist = dist * es_mat[15] * s->dbip->dbi_local2base;
+    dist = dist * s->s_edit->e_mat[15] * s->dbip->dbi_local2base;
 
     arb = (struct rt_arb_internal *)s->s_edit->es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
@@ -213,7 +213,7 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (not_state(s, ST_S_EDIT, "Edgedir"))
 	return TCL_ERROR;
 
-    if (es_edflag != EARB) {
+    if (s->s_edit->edit_flag != EARB) {
 	Tcl_AppendResult(interp, "Not moving an ARB edge\n", (char *)NULL);
 	return TCL_ERROR;
     }

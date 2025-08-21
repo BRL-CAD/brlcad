@@ -892,7 +892,7 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
     movedir = 0;
     edsol = 0;
     edobj = 0;
-    es_edflag = -1;
+    s->s_edit->edit_flag = -1;
     illum_gdlp = GED_DISPLAY_LIST_NULL;
     illump = NULL;		/* None selected */
 
@@ -947,7 +947,7 @@ be_s_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     if (not_state(s, ST_S_EDIT, "Primitive Rotate"))
 	return TCL_ERROR;
 
-    es_edflag = SROT;
+    s->s_edit->edit_flag = SROT;
     edsol = BE_S_ROTATE;
     mmenu_set(s, MENU_L1, NULL);
 
@@ -968,7 +968,7 @@ be_s_trans(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 	return TCL_ERROR;
 
     edsol = BE_S_TRANS;
-    es_edflag = STRANS;
+    s->s_edit->edit_flag = STRANS;
     movedir = UARROW | RARROW;
     mmenu_set(s, MENU_L1, NULL);
 
@@ -989,7 +989,7 @@ be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 	return TCL_ERROR;
 
     edsol = BE_S_SCALE;
-    es_edflag = SSCALE;
+    s->s_edit->edit_flag = SSCALE;
     mmenu_set(s, MENU_L1, NULL);
     s->s_edit->acc_sc_sol = 1.0;
 

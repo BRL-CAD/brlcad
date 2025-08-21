@@ -267,9 +267,9 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
 			mged_variables->mv_transform == 'e') {
 			if (s->global_editing_state == ST_S_EDIT) {
-			    save_edflag = es_edflag;
+			    save_edflag = s->s_edit->edit_flag;
 			    if (!SEDIT_TRAN)
-				es_edflag = STRANS;
+				s->s_edit->edit_flag = STRANS;
 			} else {
 			    save_edflag = edobj;
 			    edobj = BE_O_XY;
@@ -278,7 +278,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			snap_keypoint_to_grid(s);
 
 			if (s->global_editing_state == ST_S_EDIT)
-			    es_edflag = save_edflag;
+			    s->s_edit->edit_flag = save_edflag;
 			else
 			    edobj = save_edflag;
 		    } else

@@ -219,6 +219,11 @@ struct mged_edit_state {
     int e_mvalid;	/* es_mparam valid.  s->s_edit->e_inpara must = 0 */
     vect_t e_mparam;	/* mouse input param.  Only when es_mvalid set */
 
+    int edit_flag;	/* type of editing for this solid */
+    mat_t e_mat;	/* accumulated matrix of path */
+    mat_t e_invmat;	/* inverse of es_mat KAA */
+    char *e_keytag;	/* string identifying the keypoint */
+    int e_keyfixed;	/* keypoint specified by user? */
 };
 
 
