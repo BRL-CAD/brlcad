@@ -48,10 +48,6 @@
 #include "./mged_dm.h"
 #include "./menu.h"
 
-
-extern point_t e_axes_pos;
-extern point_t curr_e_axes_pos;
-
 int
 common_dm(struct mged_state *s, int argc, const char *argv[])
 {
@@ -205,7 +201,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    point_t model_pt;
 
 	    snap_to_grid(s, &fx, &fy);
-	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
@@ -217,7 +213,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    point_t model_pt;
 
 	    snap_to_grid(s, &fx, &fy);
-	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);

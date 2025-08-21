@@ -200,6 +200,10 @@ struct mged_edit_state {
     // Container to hold the intermediate state
     // of the object being edited (I think?)
     struct rt_db_internal es_int;
+
+    point_t e_keypoint;
+    point_t e_axes_pos;
+    point_t curr_e_axes_pos;
 };
 
 /* global application state */

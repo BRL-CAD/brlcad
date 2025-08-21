@@ -52,8 +52,6 @@ static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_st
 
 int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const point_t ref_pt  , const mat_t mat);
 
-point_t e_axes_pos;
-point_t curr_e_axes_pos;
 short int fixv;		/* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */
 
 
@@ -68,7 +66,6 @@ mat_t es_invmat;		/* inverse of es_mat KAA */
 
 int bot_verts[3];		/* vertices for the BOT solid */
 
-point_t es_keypoint;		/* center of editing xforms */
 char *es_keytag;		/* string identifying the keypoint */
 int es_keyfixed;		/* keypoint specified by user? */
 
@@ -116,8 +113,8 @@ int es_menu;		/* item selected from menu */
 
 void
 set_e_axes_pos(struct mged_state *s, int both)
-    /* if (!both) then set only curr_e_axes_pos, otherwise
-       set e_axes_pos and curr_e_axes_pos */
+    /* if (!both) then set only s->s_edit->curr_e_axes_pos, otherwise
+       set s->s_edit->e_axes_pos and s->s_edit->curr_e_axes_pos */
 {
     int i;
     const short earb8[12][18] = earb8_edit_array;
@@ -203,7 +200,7 @@ set_e_axes_pos(struct mged_state *s, int both)
 			break;
 		}
 	    }
-	    MAT4X3PNT(curr_e_axes_pos, es_mat,
+	    MAT4X3PNT(s->s_edit->curr_e_axes_pos, es_mat,
 		      ((struct rt_arb_internal *)s->s_edit->es_int.idb_ptr)->pt[i]);
 	    break;
 	case ID_TGC:
@@ -216,9 +213,9 @@ set_e_axes_pos(struct mged_state *s, int both)
 
 		MAT4X3PNT(tgc_v, es_mat, tgc->v);
 		MAT4X3VEC(tgc_h, es_mat, tgc->h);
-		VADD2(curr_e_axes_pos, tgc_h, tgc_v);
+		VADD2(s->s_edit->curr_e_axes_pos, tgc_h, tgc_v);
 	    } else {
-		VMOVE(curr_e_axes_pos, es_keypoint);
+		VMOVE(s->s_edit->curr_e_axes_pos, s->s_edit->e_keypoint);
 	    }
 
 	    break;
@@ -232,9 +229,9 @@ set_e_axes_pos(struct mged_state *s, int both)
 
 		MAT4X3PNT(extr_v, es_mat, extr->V);
 		MAT4X3VEC(extr_h, es_mat, extr->h);
-		VADD2(curr_e_axes_pos, extr_h, extr_v);
+		VADD2(s->s_edit->curr_e_axes_pos, extr_h, extr_v);
 	    } else {
-		VMOVE(curr_e_axes_pos, es_keypoint);
+		VMOVE(s->s_edit->curr_e_axes_pos, s->s_edit->e_keypoint);
 	    }
 
 	    break;
@@ -249,19 +246,19 @@ set_e_axes_pos(struct mged_state *s, int both)
 
 		MAT4X3PNT(cli_v, es_mat, cli->v);
 		MAT4X3VEC(cli_h, es_mat, cli->h);
-		VADD2(curr_e_axes_pos, cli_h, cli_v);
+		VADD2(s->s_edit->curr_e_axes_pos, cli_h, cli_v);
 	    } else {
-		VMOVE(curr_e_axes_pos, es_keypoint);
+		VMOVE(s->s_edit->curr_e_axes_pos, s->s_edit->e_keypoint);
 	    }
 
 	    break;
 	default:
-	    VMOVE(curr_e_axes_pos, es_keypoint);
+	    VMOVE(s->s_edit->curr_e_axes_pos, s->s_edit->e_keypoint);
 	    break;
     }
 
     if (both) {
-	VMOVE(e_axes_pos, curr_e_axes_pos);
+	VMOVE(s->s_edit->e_axes_pos, s->s_edit->curr_e_axes_pos);
 
 	if (EDIT_ROTATE) {
 	    s->es_edclass = EDIT_CLASS_ROTATE;
@@ -948,7 +945,7 @@ f_get_solid_keypoint(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUS
     if (GEOM_EDIT_STATE == ST_VIEW || GEOM_EDIT_STATE == ST_S_PICK || GEOM_EDIT_STATE == ST_O_PICK)
 	return TCL_OK;
 
-    get_solid_keypoint(s, es_keypoint, &es_keytag, &s->s_edit->es_int, es_mat);
+    get_solid_keypoint(s, s->s_edit->e_keypoint, &es_keytag, &s->s_edit->es_int, es_mat);
     return TCL_OK;
 }
 
@@ -1035,7 +1032,7 @@ init_sedit(struct mged_state *s)
 
     /* Establish initial keypoint */
     es_keytag = "";
-    get_solid_keypoint(s, es_keypoint, &es_keytag, &s->s_edit->es_int, es_mat);
+    get_solid_keypoint(s, s->s_edit->e_keypoint, &es_keytag, &s->s_edit->es_int, es_mat);
 
     es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
     es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
@@ -1349,7 +1346,7 @@ dsp_scale(struct mged_state *s, struct rt_dsp_internal *dsp, int idx)
 	s->s_edit->es_scale = 0.0;
     }
 
-    bn_mat_xform_about_pnt(scalemat, m, es_keypoint);
+    bn_mat_xform_about_pnt(scalemat, m, s->s_edit->e_keypoint);
 
     bn_mat_mul(m, dsp->dsp_stom, scalemat);
     MAT_COPY(dsp->dsp_stom, m);
@@ -3220,7 +3217,7 @@ sedit(struct mged_state *s)
 		    bn_mat_mul(incr_change, modelchanges, invsolr);
 		    if (mged_variables->mv_context) {
 			/* calculate rotations about keypoint */
-			bn_mat_xform_about_pnt(edit, incr_change, es_keypoint);
+			bn_mat_xform_about_pnt(edit, incr_change, s->s_edit->e_keypoint);
 
 			/* We want our final matrix (mat) to xform the original solid
 			 * to the position of this instance of the solid, perform the
@@ -3304,7 +3301,7 @@ sedit(struct mged_state *s)
 		    acc_sc_sol = es_para[0];
 		}
 
-		bn_mat_scale_about_pnt(scalemat, es_keypoint, s->s_edit->es_scale);
+		bn_mat_scale_about_pnt(scalemat, s->s_edit->e_keypoint, s->s_edit->es_scale);
 		bn_mat_mul(mat1, scalemat, es_mat);
 		bn_mat_mul(mat, es_invmat, mat1);
 		transform_editing_solid(s, &s->s_edit->es_int, mat, &s->s_edit->es_int, 1);
@@ -3330,18 +3327,18 @@ sedit(struct mged_state *s)
 		     * to desired new location.
 		     */
 		    if (mged_variables->mv_context) {
-			/* move solid so that es_keypoint is at position es_para */
+			/* move solid so that s->s_edit->e_keypoint is at position es_para */
 			vect_t raw_para;
 
 			MAT4X3PNT(raw_para, es_invmat, es_para);
-			MAT4X3PNT(work, es_invmat, es_keypoint);
+			MAT4X3PNT(work, es_invmat, s->s_edit->e_keypoint);
 			VSUB2(delta, work, raw_para);
 			MAT_IDN(mat);
 			MAT_DELTAS_VEC_NEG(mat, delta);
 		    } else {
 			/* move solid to position es_para */
 			/* move solid to position es_para */
-			MAT4X3PNT(work, es_invmat, es_keypoint);
+			MAT4X3PNT(work, es_invmat, s->s_edit->e_keypoint);
 			VSUB2(delta, work, es_para);
 			MAT_IDN(mat);
 			MAT_DELTAS_VEC_NEG(mat, delta);
@@ -3623,7 +3620,7 @@ sedit(struct mged_state *s)
 			break;
 		    case 'k':       /* Key Point */
 		    default:
-			VMOVE(rot_point, es_keypoint);
+			VMOVE(rot_point, s->s_edit->e_keypoint);
 			break;
 		}
 
@@ -3683,7 +3680,7 @@ sedit(struct mged_state *s)
 
 		if (mged_variables->mv_context) {
 		    /* calculate rotations about keypoint */
-		    bn_mat_xform_about_pnt(edit, incr_change, es_keypoint);
+		    bn_mat_xform_about_pnt(edit, incr_change, s->s_edit->e_keypoint);
 
 		    /* We want our final matrix (mat) to xform the original solid
 		     * to the position of this instance of the solid, perform the
@@ -3736,7 +3733,7 @@ sedit(struct mged_state *s)
 
 		if (mged_variables->mv_context) {
 		    /* calculate rotations about keypoint */
-		    bn_mat_xform_about_pnt(edit, incr_change, es_keypoint);
+		    bn_mat_xform_about_pnt(edit, incr_change, s->s_edit->e_keypoint);
 
 		    /* We want our final matrix (mat) to xform the original solid
 		     * to the position of this instance of the solid, perform the
@@ -3789,7 +3786,7 @@ sedit(struct mged_state *s)
 
 		if (mged_variables->mv_context) {
 		    /* calculate rotations about keypoint */
-		    bn_mat_xform_about_pnt(edit, incr_change, es_keypoint);
+		    bn_mat_xform_about_pnt(edit, incr_change, s->s_edit->e_keypoint);
 
 		    /* We want our final matrix (mat) to xform the original solid
 		     * to the position of this instance of the solid, perform the
@@ -3847,7 +3844,7 @@ sedit(struct mged_state *s)
 
 		if (mged_variables->mv_context) {
 		    /* calculate rotations about keypoint */
-		    bn_mat_xform_about_pnt(edit, incr_change, es_keypoint);
+		    bn_mat_xform_about_pnt(edit, incr_change, s->s_edit->e_keypoint);
 
 		    /* We want our final matrix (mat) to xform the original solid
 		     * to the position of this instance of the solid, perform the
@@ -3900,7 +3897,7 @@ sedit(struct mged_state *s)
 
 		if (mged_variables->mv_context) {
 		    /* calculate rotations about keypoint */
-		    bn_mat_xform_about_pnt(edit, incr_change, es_keypoint);
+		    bn_mat_xform_about_pnt(edit, incr_change, s->s_edit->e_keypoint);
 
 		    /* We want our final matrix (mat) to xform the original solid
 		     * to the position of this instance of the solid, perform the
@@ -5143,7 +5140,7 @@ sedit(struct mged_state *s)
 
     /* If the keypoint changed location, find about it here */
     if (!es_keyfixed)
-	get_solid_keypoint(s, es_keypoint, &es_keytag, &s->s_edit->es_int, es_mat);
+	get_solid_keypoint(s, s->s_edit->e_keypoint, &es_keytag, &s->s_edit->es_int, es_mat);
 
     set_e_axes_pos(s, 0);
     replot_editing_solid(s);
@@ -5171,11 +5168,11 @@ update_edit_absolute_tran(struct mged_state *s, vect_t view_pos)
     fastf_t inv_Viewscale = 1/view_state->vs_gvp->gv_scale;
 
     MAT4X3PNT(model_pos, view_state->vs_gvp->gv_view2model, view_pos);
-    VSUB2(diff, model_pos, e_axes_pos);
+    VSUB2(diff, model_pos, s->s_edit->e_axes_pos);
     VSCALE(s->s_edit->edit_absolute_model_tran, diff, inv_Viewscale);
     VMOVE(s->s_edit->last_edit_absolute_model_tran, s->s_edit->edit_absolute_model_tran);
 
-    MAT4X3PNT(ea_view_pos, view_state->vs_gvp->gv_model2view, e_axes_pos);
+    MAT4X3PNT(ea_view_pos, view_state->vs_gvp->gv_model2view, s->s_edit->e_axes_pos);
     VSUB2(s->s_edit->edit_absolute_view_tran, view_pos, ea_view_pos);
     VMOVE(s->s_edit->last_edit_absolute_view_tran, s->s_edit->edit_absolute_view_tran);
 }
@@ -5199,7 +5196,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
     vect_t pos_model = VINIT_ZERO;	/* Rotated screen space pos */
     vect_t tr_temp = VINIT_ZERO;	/* temp translation vector */
     vect_t temp = VINIT_ZERO;
-    vect_t raw_kp = VINIT_ZERO;        	/* es_keypoint with es_invmat applied */
+    vect_t raw_kp = VINIT_ZERO;        	/* s->s_edit->e_keypoint with es_invmat applied */
     vect_t raw_mp = VINIT_ZERO;        	/* raw model position */
     mat_t mat;
 
@@ -5248,7 +5245,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 		point_t pt;
 		vect_t delta;
 
-		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
 		MAT4X3PNT(pt, view_state->vs_gvp->gv_view2model, pos_view);
@@ -5257,7 +5254,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 		 * to desired new location.
 		 */
 		MAT4X3PNT(raw_mp, es_invmat, pt);
-		MAT4X3PNT(raw_kp, es_invmat, curr_e_axes_pos);
+		MAT4X3PNT(raw_kp, es_invmat, s->s_edit->curr_e_axes_pos);
 		VSUB2(delta, raw_kp, raw_mp);
 		MAT_IDN(mat);
 		MAT_DELTAS_VEC_NEG(mat, delta);
@@ -5274,7 +5271,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	     * Leave desired location in es_mparam.
 	     */
 
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 	    pos_view[X] = mousevec[X];
 	    pos_view[Y] = mousevec[Y];
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
@@ -5291,7 +5288,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 		    (struct rt_tgc_internal *)s->s_edit->es_int.idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
-		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
 		/* Do NOT change pos_view[Z] ! */
@@ -5308,7 +5305,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 		    (struct rt_extrude_internal *)s->s_edit->es_int.idb_ptr;
 		RT_EXTRUDE_CK_MAGIC(extr);
 
-		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
 		/* Do NOT change pos_view[Z] ! */
@@ -5325,7 +5322,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 
 		RT_CLINE_CK_MAGIC(cli);
 
-		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
 		/* Do NOT change pos_view[Z] ! */
@@ -5338,7 +5335,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	case PTARB:
 	    /* move an arb point to indicated point */
 	    /* point is located at es_values[es_menu*3] */
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 	    pos_view[X] = mousevec[X];
 	    pos_view[Y] = mousevec[Y];
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
@@ -5347,7 +5344,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 
 	    break;
 	case EARB:
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 	    pos_view[X] = mousevec[X];
 	    pos_view[Y] = mousevec[Y];
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
@@ -5356,7 +5353,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 
 	    break;
 	case ECMD_ARB_MOVE_FACE:
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 	    pos_view[X] = mousevec[X];
 	    pos_view[Y] = mousevec[Y];
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
@@ -5383,7 +5380,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 
 		RT_BOT_CK_MAGIC(bot);
 
-		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
 
@@ -5412,7 +5409,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 
 		RT_BOT_CK_MAGIC(bot);
 
-		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
 
@@ -5509,7 +5506,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 		tmp_tol.perp = 0.0;
 		tmp_tol.para = 1 - tmp_tol.perp;
 
-		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+		MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
 		if ((e = nmg_find_e_nearest_pt2(&m->magic, pos_view,
@@ -5555,7 +5552,7 @@ sedit_mouse(struct mged_state *s, const vect_t mousevec)
 	case ECMD_METABALL_PT_MOV:
 	case ECMD_METABALL_PT_ADD:
 
-	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	    MAT4X3PNT(pos_view, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 	    pos_view[X] = mousevec[X];
 	    pos_view[Y] = mousevec[Y];
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
@@ -5667,7 +5664,7 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 	/* Have scaling take place with respect to keypoint,
 	 * NOT the view center.
 	 */
-	VMOVE(temp, es_keypoint);
+	VMOVE(temp, s->s_edit->e_keypoint);
 	MAT4X3PNT(pos_model, modelchanges, temp);
 	wrt_point(modelchanges, incr_change, modelchanges, pos_model);
 
@@ -5677,7 +5674,7 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 	mat_t oldchanges;	/* temporary matrix */
 
 	/* Vector from object keypoint to cursor */
-	VMOVE(temp, es_keypoint);
+	VMOVE(temp, s->s_edit->e_keypoint);
 	MAT4X3PNT(pos_view, view_state->vs_model2objview, temp);
 
 	if (movedir & RARROW)
@@ -5758,7 +5755,7 @@ oedit_abs_scale(struct mged_state *s)
     /* Have scaling take place with respect to keypoint,
      * NOT the view center.
      */
-    VMOVE(temp, es_keypoint);
+    VMOVE(temp, s->s_edit->e_keypoint);
     MAT4X3PNT(pos_model, modelchanges, temp);
     wrt_point(modelchanges, incr_mat, modelchanges, pos_model);
 
@@ -5835,7 +5832,7 @@ init_oedit_guts(struct mged_state *s)
 	/* Have a processed (E'd) region - NO key solid.
 	 * Use the 'center' as the key
 	 */
-	VMOVE(es_keypoint, illump->s_center);
+	VMOVE(s->s_edit->e_keypoint, illump->s_center);
 
 	/* The s_center takes the es_mat into account already */
     }
@@ -5875,7 +5872,7 @@ init_oedit_guts(struct mged_state *s)
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
 
-    get_solid_keypoint(s, es_keypoint, &strp, &s->s_edit->es_int, es_mat);
+    get_solid_keypoint(s, s->s_edit->e_keypoint, &strp, &s->s_edit->es_int, es_mat);
     init_oedit_vars(s);
 }
 
@@ -6424,7 +6421,7 @@ mged_param(struct mged_state *s, Tcl_Interp *interp, int argc, fastf_t *argvect)
 	vect_t diff;
 	fastf_t inv_Viewscale = 1/view_state->vs_gvp->gv_scale;
 
-	VSUB2(diff, es_para, e_axes_pos);
+	VSUB2(diff, es_para, s->s_edit->e_axes_pos);
 	VSCALE(s->s_edit->edit_absolute_model_tran, diff, inv_Viewscale);
 	VMOVE(s->s_edit->last_edit_absolute_model_tran, s->s_edit->edit_absolute_model_tran);
     } else if (SEDIT_ROTATE) {
@@ -7059,7 +7056,7 @@ sedit_vpick(struct mged_state *s, point_t v_pos)
 	spl_surfno = surfno;
 	spl_ui = u;
 	spl_vi = v;
-	get_solid_keypoint(s, es_keypoint, &es_keytag, &s->s_edit->es_int, es_mat);
+	get_solid_keypoint(s, s->s_edit->e_keypoint, &es_keytag, &s->s_edit->es_int, es_mat);
     }
     chg_state(s, ST_S_VPICK, ST_S_EDIT, "Vertex Pick Complete");
     view_state->vs_flag = 1;
@@ -7169,7 +7166,7 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 		point_t key;
 
-		VSCALE(key, es_keypoint, s->dbip->dbi_base2local);
+		VSCALE(key, s->s_edit->e_keypoint, s->dbip->dbi_base2local);
 		bu_vls_printf(&tmp_vls, "%s (%g, %g, %g)\n", es_keytag, V3ARGS(key));
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
@@ -7177,7 +7174,7 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 
 	    break;
 	case 3:
-	    VSET(es_keypoint,
+	    VSET(s->s_edit->e_keypoint,
 		 atof(argv[1]) * s->dbip->dbi_local2base,
 		 atof(argv[2]) * s->dbip->dbi_local2base,
 		 atof(argv[3]) * s->dbip->dbi_local2base);
@@ -7188,7 +7185,7 @@ f_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	    if (BU_STR_EQUAL(argv[1], "reset")) {
 		es_keytag = "";
 		es_keyfixed = 0;
-		get_solid_keypoint(s, es_keypoint, &es_keytag,
+		get_solid_keypoint(s, s->s_edit->e_keypoint, &es_keytag,
 				   &s->s_edit->es_int, es_mat);
 		break;
 	    }
@@ -7543,7 +7540,7 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     }
 
     if (!es_keyfixed)
-	get_solid_keypoint(s, es_keypoint, &es_keytag, &s->s_edit->es_int, es_mat);
+	get_solid_keypoint(s, s->s_edit->e_keypoint, &es_keytag, &s->s_edit->es_int, es_mat);
 
     set_e_axes_pos(s, 0);
     replot_editing_solid(s);
@@ -7600,7 +7597,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 
     /* Establish initial keypoint */
     es_keytag = "";
-    get_solid_keypoint(s, es_keypoint, &es_keytag, &s->s_edit->es_int, es_mat);
+    get_solid_keypoint(s, s->s_edit->e_keypoint, &es_keytag, &s->s_edit->es_int, es_mat);
 
     /* Reset relevant variables */
     MAT_IDN(acc_rot_sol);
@@ -7724,7 +7721,7 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
 
-    get_solid_keypoint(s, es_keypoint, &strp, &s->s_edit->es_int, es_mat);
+    get_solid_keypoint(s, s->s_edit->e_keypoint, &strp, &s->s_edit->es_int, es_mat);
     init_oedit_vars(s);
     new_edit_mats(s);
     s->update_views = 1;

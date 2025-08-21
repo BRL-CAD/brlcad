@@ -464,7 +464,7 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 	    /* print parameter locations on screen */
 	    if (GEOM_EDIT_STATE == ST_O_EDIT && illump->s_old.s_Eflag) {
 		/* region is a processed region */
-		MAT4X3PNT(temp, view_state->vs_model2objview, es_keypoint);
+		MAT4X3PNT(temp, view_state->vs_model2objview, s->s_edit->e_keypoint);
 		xloc = (int)(temp[X]*BV_MAX);
 		yloc = (int)(temp[Y]*BV_MAX);
 		dm_set_fg(DMP,
@@ -565,9 +565,9 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
 		      " Keypoint: %s %s: (%g, %g, %g)",
 		      OBJ[s->s_edit->es_int.idb_type].ft_name+3,	/* Skip ID_ */
 		      es_keytag,
-		      es_keypoint[X] * s->dbip->dbi_base2local,
-		      es_keypoint[Y] * s->dbip->dbi_base2local,
-		      es_keypoint[Z] * s->dbip->dbi_base2local);
+		      s->s_edit->e_keypoint[X] * s->dbip->dbi_base2local,
+		      s->s_edit->e_keypoint[Y] * s->dbip->dbi_base2local,
+		      s->s_edit->e_keypoint[Z] * s->dbip->dbi_base2local);
 	if (mged_variables->mv_faceplate && ss_line_not_drawn) {
 	    dm_set_fg(DMP,
 			   color_scheme->cs_status_text2[0],

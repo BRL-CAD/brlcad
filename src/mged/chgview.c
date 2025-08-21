@@ -60,10 +60,7 @@ int mged_vtran(struct mged_state *s, const vect_t tvec);
 int mged_vrot_xyz(struct mged_state *s, char origin, char coords, vect_t rvec);
 
 
-extern vect_t curr_e_axes_pos;
 extern long nvectors;
-
-extern vect_t e_axes_pos;
 
 fastf_t ar_scale_factor = BV_MAX / ABS_ROT_FACTOR;
 fastf_t rr_scale_factor = BV_MAX / RATE_ROT_FACTOR;
@@ -3293,7 +3290,7 @@ mged_erot(struct mged_state *s,
 		break;
 	    case 'k':
 	    default:
-		MAT4X3PNT(point, modelchanges, es_keypoint);
+		MAT4X3PNT(point, modelchanges, s->s_edit->e_keypoint);
 	}
 
 	/*
@@ -3398,11 +3395,11 @@ mged_vrot(struct mged_state *s, char origin, fastf_t *newrot)
 	    VSET(rot_pt, 0.0, 0.0, 1.0);		/* point to rotate around */
 	} else if (origin == 'k' && GEOM_EDIT_STATE == ST_S_EDIT) {
 	    /* rotate around keypoint */
-	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
 	} else if (origin == 'k' && GEOM_EDIT_STATE == ST_O_EDIT) {
 	    point_t kpWmc;
 
-	    MAT4X3PNT(kpWmc, modelchanges, es_keypoint);
+	    MAT4X3PNT(kpWmc, modelchanges, s->s_edit->e_keypoint);
 	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, kpWmc);
 	} else {
 	    /* rotate around model center (0, 0, 0) */
@@ -3626,7 +3623,7 @@ mged_etran(struct mged_state *s,
 
     if (GEOM_EDIT_STATE == ST_S_EDIT) {
 	es_keyfixed = 0;
-	get_solid_keypoint(s, es_keypoint, &es_keytag,
+	get_solid_keypoint(s, s->s_edit->e_keypoint, &es_keytag,
 			   &s->s_edit->es_int, es_mat);
 	save_edflag = es_edflag;
 
@@ -3634,7 +3631,7 @@ mged_etran(struct mged_state *s,
 	    es_edflag = STRANS;
 	}
 
-	VADD2(es_para, delta, curr_e_axes_pos);
+	VADD2(es_para, delta, s->s_edit->curr_e_axes_pos);
 	inpara = 3;
 	sedit(s);
 	es_edflag = save_edflag;
@@ -3852,7 +3849,7 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	/* Have scaling take place with respect to keypoint,
 	 * NOT the view center.
 	 */
-	VMOVE(temp, es_keypoint);
+	VMOVE(temp, s->s_edit->e_keypoint);
 	MAT4X3PNT(pos_model, modelchanges, temp);
 	wrt_point(modelchanges, smat, modelchanges, pos_model);
 

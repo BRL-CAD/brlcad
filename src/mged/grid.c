@@ -34,9 +34,6 @@
 #include "./mged_dm.h"
 
 
-extern point_t e_axes_pos;  /* from edsol.c */
-extern point_t curr_e_axes_pos;  /* from edsol.c */
-
 static void grid_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *, void *);
 static void set_grid_draw(const struct bu_structparse *, const char *, void *, const char *, void *);
 static void set_grid_res(const struct bu_structparse *, const char *, void *, const char *, void *);
@@ -310,9 +307,9 @@ snap_keypoint_to_grid(struct mged_state *s)
     }
 
     if (GEOM_EDIT_STATE == ST_S_EDIT) {
-	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
+	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
     } else {
-	MAT4X3PNT(model_pt, modelchanges, e_axes_pos);
+	MAT4X3PNT(model_pt, modelchanges, s->s_edit->e_axes_pos);
 	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, model_pt);
     }
     snap_to_grid(s, &view_pt[X], &view_pt[Y]);
