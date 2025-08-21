@@ -640,9 +640,9 @@ be_o_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
 
-    s->s_edit->edit_absolute_scale = s->s_edit->acc_sc_obj - 1.0;
-    if (s->s_edit->edit_absolute_scale > 0.0)
-	s->s_edit->edit_absolute_scale /= 3.0;
+    s->s_edit->k.sca_abs = s->s_edit->acc_sc_obj - 1.0;
+    if (s->s_edit->k.sca_abs > 0.0)
+	s->s_edit->k.sca_abs /= 3.0;
     return TCL_OK;
 }
 
@@ -663,9 +663,9 @@ be_o_xscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
 
-    s->s_edit->edit_absolute_scale = s->s_edit->acc_sc[0] - 1.0;
-    if (s->s_edit->edit_absolute_scale > 0.0)
-	s->s_edit->edit_absolute_scale /= 3.0;
+    s->s_edit->k.sca_abs = s->s_edit->acc_sc[0] - 1.0;
+    if (s->s_edit->k.sca_abs > 0.0)
+	s->s_edit->k.sca_abs /= 3.0;
     return TCL_OK;
 }
 
@@ -686,9 +686,9 @@ be_o_yscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
 
-    s->s_edit->edit_absolute_scale = s->s_edit->acc_sc[1] - 1.0;
-    if (s->s_edit->edit_absolute_scale > 0.0)
-	s->s_edit->edit_absolute_scale /= 3.0;
+    s->s_edit->k.sca_abs = s->s_edit->acc_sc[1] - 1.0;
+    if (s->s_edit->k.sca_abs > 0.0)
+	s->s_edit->k.sca_abs /= 3.0;
     return TCL_OK;
 }
 
@@ -709,9 +709,9 @@ be_o_zscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
 
-    s->s_edit->edit_absolute_scale = s->s_edit->acc_sc[2] - 1.0;
-    if (s->s_edit->edit_absolute_scale > 0.0)
-	s->s_edit->edit_absolute_scale /= 3.0;
+    s->s_edit->k.sca_abs = s->s_edit->acc_sc[2] - 1.0;
+    if (s->s_edit->k.sca_abs > 0.0)
+	s->s_edit->k.sca_abs /= 3.0;
     return TCL_OK;
 }
 

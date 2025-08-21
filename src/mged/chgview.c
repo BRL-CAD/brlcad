@@ -1121,55 +1121,55 @@ check_nonzero_rates(struct mged_state *s)
 	view_state->vs_rateflag_scale = 0;
     }
 
-    if (!ZERO(s->s_edit->edit_rate_model_tran[X])
-	|| !ZERO(s->s_edit->edit_rate_model_tran[Y])
-	|| !ZERO(s->s_edit->edit_rate_model_tran[Z]))
+    if (!ZERO(s->s_edit->k.tra_m[X])
+	|| !ZERO(s->s_edit->k.tra_m[Y])
+	|| !ZERO(s->s_edit->k.tra_m[Z]))
     {
-	s->s_edit->edit_rateflag_model_tran = 1;
+	s->s_edit->k.tra_m_flag = 1;
     } else {
-	s->s_edit->edit_rateflag_model_tran = 0;
+	s->s_edit->k.tra_m_flag = 0;
     }
 
-    if (!ZERO(s->s_edit->edit_rate_view_tran[X])
-	|| !ZERO(s->s_edit->edit_rate_view_tran[Y])
-	|| !ZERO(s->s_edit->edit_rate_view_tran[Z]))
+    if (!ZERO(s->s_edit->k.tra_v[X])
+	|| !ZERO(s->s_edit->k.tra_v[Y])
+	|| !ZERO(s->s_edit->k.tra_v[Z]))
     {
-	s->s_edit->edit_rateflag_view_tran = 1;
+	s->s_edit->k.tra_v_flag = 1;
     } else {
-	s->s_edit->edit_rateflag_view_tran = 0;
+	s->s_edit->k.tra_v_flag = 0;
     }
 
-    if (!ZERO(s->s_edit->edit_rate_model_rotate[X])
-	|| !ZERO(s->s_edit->edit_rate_model_rotate[Y])
-	|| !ZERO(s->s_edit->edit_rate_model_rotate[Z]))
+    if (!ZERO(s->s_edit->k.rot_m[X])
+	|| !ZERO(s->s_edit->k.rot_m[Y])
+	|| !ZERO(s->s_edit->k.rot_m[Z]))
     {
-	s->s_edit->edit_rateflag_model_rotate = 1;
+	s->s_edit->k.rot_m_flag = 1;
     } else {
-	s->s_edit->edit_rateflag_model_rotate = 0;
+	s->s_edit->k.rot_m_flag = 0;
     }
 
-    if (!ZERO(s->s_edit->edit_rate_object_rotate[X])
-	|| !ZERO(s->s_edit->edit_rate_object_rotate[Y])
-	|| !ZERO(s->s_edit->edit_rate_object_rotate[Z]))
+    if (!ZERO(s->s_edit->k.rot_o[X])
+	|| !ZERO(s->s_edit->k.rot_o[Y])
+	|| !ZERO(s->s_edit->k.rot_o[Z]))
     {
-	s->s_edit->edit_rateflag_object_rotate = 1;
+	s->s_edit->k.rot_o_flag = 1;
     } else {
-	s->s_edit->edit_rateflag_object_rotate = 0;
+	s->s_edit->k.rot_o_flag = 0;
     }
 
-    if (!ZERO(s->s_edit->edit_rate_view_rotate[X])
-	|| !ZERO(s->s_edit->edit_rate_view_rotate[Y])
-	|| !ZERO(s->s_edit->edit_rate_view_rotate[Z]))
+    if (!ZERO(s->s_edit->k.rot_v[X])
+	|| !ZERO(s->s_edit->k.rot_v[Y])
+	|| !ZERO(s->s_edit->k.rot_v[Z]))
     {
-	s->s_edit->edit_rateflag_view_rotate = 1;
+	s->s_edit->k.rot_v_flag = 1;
     } else {
-	s->s_edit->edit_rateflag_view_rotate = 0;
+	s->s_edit->k.rot_v_flag = 0;
     }
 
-    if (s->s_edit->edit_rate_scale > SMALL_FASTF) {
-	s->s_edit->edit_rateflag_scale = 1;
+    if (s->s_edit->k.sca > SMALL_FASTF) {
+	s->s_edit->k.sca_flag = 1;
     } else {
-	s->s_edit->edit_rateflag_scale = 0;
+	s->s_edit->k.sca_flag = 0;
     }
 
     view_state->vs_flag = 1;	/* values changed so update faceplate */
@@ -1192,9 +1192,9 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 
     if (mged_variables->mv_rateknobs) {
 	if (s->es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "x = %f\n", s->s_edit->edit_rate_model_rotate[X]);
-	    bu_vls_printf(&vls, "y = %f\n", s->s_edit->edit_rate_model_rotate[Y]);
-	    bu_vls_printf(&vls, "z = %f\n", s->s_edit->edit_rate_model_rotate[Z]);
+	    bu_vls_printf(&vls, "x = %f\n", s->s_edit->k.rot_m[X]);
+	    bu_vls_printf(&vls, "y = %f\n", s->s_edit->k.rot_m[Y]);
+	    bu_vls_printf(&vls, "z = %f\n", s->s_edit->k.rot_m[Z]);
 	} else {
 	    bu_vls_printf(&vls, "x = %f\n", view_state->vs_rate_rotate[X]);
 	    bu_vls_printf(&vls, "y = %f\n", view_state->vs_rate_rotate[Y]);
@@ -1202,15 +1202,15 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	}
 
 	if (s->es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "S = %f\n", s->s_edit->edit_rate_scale);
+	    bu_vls_printf(&vls, "S = %f\n", s->s_edit->k.sca);
 	} else {
 	    bu_vls_printf(&vls, "S = %f\n", view_state->vs_rate_scale);
 	}
 
 	if (s->es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "X = %f\n", s->s_edit->edit_rate_model_tran[X]);
-	    bu_vls_printf(&vls, "Y = %f\n", s->s_edit->edit_rate_model_tran[Y]);
-	    bu_vls_printf(&vls, "Z = %f\n", s->s_edit->edit_rate_model_tran[Z]);
+	    bu_vls_printf(&vls, "X = %f\n", s->s_edit->k.tra_m[X]);
+	    bu_vls_printf(&vls, "Y = %f\n", s->s_edit->k.tra_m[Y]);
+	    bu_vls_printf(&vls, "Z = %f\n", s->s_edit->k.tra_m[Z]);
 	} else {
 	    bu_vls_printf(&vls, "X = %f\n", view_state->vs_rate_tran[X]);
 	    bu_vls_printf(&vls, "Y = %f\n", view_state->vs_rate_tran[Y]);
@@ -1218,9 +1218,9 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	}
     } else {
 	if (s->es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "ax = %f\n", s->s_edit->edit_absolute_model_rotate[X]);
-	    bu_vls_printf(&vls, "ay = %f\n", s->s_edit->edit_absolute_model_rotate[Y]);
-	    bu_vls_printf(&vls, "az = %f\n", s->s_edit->edit_absolute_model_rotate[Z]);
+	    bu_vls_printf(&vls, "ax = %f\n", s->s_edit->k.rot_m_abs[X]);
+	    bu_vls_printf(&vls, "ay = %f\n", s->s_edit->k.rot_m_abs[Y]);
+	    bu_vls_printf(&vls, "az = %f\n", s->s_edit->k.rot_m_abs[Z]);
 	} else {
 	    bu_vls_printf(&vls, "ax = %f\n", view_state->vs_absolute_rotate[X]);
 	    bu_vls_printf(&vls, "ay = %f\n", view_state->vs_absolute_rotate[Y]);
@@ -1228,15 +1228,15 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 	}
 
 	if (s->es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "aS = %f\n", s->s_edit->edit_absolute_scale);
+	    bu_vls_printf(&vls, "aS = %f\n", s->s_edit->k.sca_abs);
 	} else {
 	    bu_vls_printf(&vls, "aS = %f\n", view_state->vs_gvp->gv_a_scale);
 	}
 
 	if (s->es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "aX = %f\n", s->s_edit->edit_absolute_model_tran[X]);
-	    bu_vls_printf(&vls, "aY = %f\n", s->s_edit->edit_absolute_model_tran[Y]);
-	    bu_vls_printf(&vls, "aZ = %f\n", s->s_edit->edit_absolute_model_tran[Z]);
+	    bu_vls_printf(&vls, "aX = %f\n", s->s_edit->k.tra_m_abs[X]);
+	    bu_vls_printf(&vls, "aY = %f\n", s->s_edit->k.tra_m_abs[Y]);
+	    bu_vls_printf(&vls, "aZ = %f\n", s->s_edit->k.tra_m_abs[Z]);
 	} else {
 	    bu_vls_printf(&vls, "aX = %f\n", view_state->vs_absolute_tran[X]);
 	    bu_vls_printf(&vls, "aY = %f\n", view_state->vs_absolute_tran[Y]);
@@ -1346,12 +1346,12 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    VSETALL(view_state->vs_rate_rotate, 0.0);
 	    VSETALL(view_state->vs_rate_tran, 0.0);
 	    view_state->vs_rate_scale = 0.0;
-	    VSETALL(s->s_edit->edit_rate_model_rotate, 0.0);
-	    VSETALL(s->s_edit->edit_rate_object_rotate, 0.0);
-	    VSETALL(s->s_edit->edit_rate_view_rotate, 0.0);
-	    VSETALL(s->s_edit->edit_rate_model_tran, 0.0);
-	    VSETALL(s->s_edit->edit_rate_view_tran, 0.0);
-	    s->s_edit->edit_rate_scale = 0.0;
+	    VSETALL(s->s_edit->k.rot_m, 0.0);
+	    VSETALL(s->s_edit->k.rot_o, 0.0);
+	    VSETALL(s->s_edit->k.rot_v, 0.0);
+	    VSETALL(s->s_edit->k.tra_m, 0.0);
+	    VSETALL(s->s_edit->k.tra_v, 0.0);
+	    s->s_edit->k.sca = 0.0;
 	    knob_update_rate_vars(s);
 
 	    Tcl_Eval(interp, "adc reset");
@@ -1378,21 +1378,21 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 						 !view_flag && !model_flag) || edit_flag)) {
 				switch (mged_variables->mv_coords) {
 				    case 'm':
-					s->s_edit->edit_rate_model_rotate[X] += f;
-					s->s_edit->edit_rate_model_origin = origin;
+					s->s_edit->k.rot_m[X] += f;
+					s->s_edit->k.origin_m = origin;
 					s->s_edit->edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
-					s->s_edit->edit_rate_object_rotate[X] += f;
-					s->s_edit->edit_rate_object_origin = origin;
+					s->s_edit->k.rot_o[X] += f;
+					s->s_edit->k.origin_o = origin;
 					s->s_edit->edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
-					s->s_edit->edit_rate_view_rotate[X] += f;
-					s->s_edit->edit_rate_view_origin = origin;
+					s->s_edit->k.rot_v[X] += f;
+					s->s_edit->k.origin_v = origin;
 					s->s_edit->edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
@@ -1412,21 +1412,21 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 						 !view_flag && !model_flag) || edit_flag)) {
 				switch (mged_variables->mv_coords) {
 				    case 'm':
-					s->s_edit->edit_rate_model_rotate[X] = f;
-					s->s_edit->edit_rate_model_origin = origin;
+					s->s_edit->k.rot_m[X] = f;
+					s->s_edit->k.origin_m = origin;
 					s->s_edit->edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
-					s->s_edit->edit_rate_object_rotate[X] = f;
-					s->s_edit->edit_rate_object_origin = origin;
+					s->s_edit->k.rot_o[X] = f;
+					s->s_edit->k.origin_o = origin;
 					s->s_edit->edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
-					s->s_edit->edit_rate_view_rotate[X] = f;
-					s->s_edit->edit_rate_view_origin = origin;
+					s->s_edit->k.rot_v[X] = f;
+					s->s_edit->k.origin_v = origin;
 					s->s_edit->edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
@@ -1450,21 +1450,21 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 						 !view_flag && !model_flag) || edit_flag)) {
 				switch (mged_variables->mv_coords) {
 				    case 'm':
-					s->s_edit->edit_rate_model_rotate[Y] += f;
-					s->s_edit->edit_rate_model_origin = origin;
+					s->s_edit->k.rot_m[Y] += f;
+					s->s_edit->k.origin_m = origin;
 					s->s_edit->edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
-					s->s_edit->edit_rate_object_rotate[Y] += f;
-					s->s_edit->edit_rate_object_origin = origin;
+					s->s_edit->k.rot_o[Y] += f;
+					s->s_edit->k.origin_o = origin;
 					s->s_edit->edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
-					s->s_edit->edit_rate_view_rotate[Y] += f;
-					s->s_edit->edit_rate_view_origin = origin;
+					s->s_edit->k.rot_v[Y] += f;
+					s->s_edit->k.origin_v = origin;
 					s->s_edit->edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
@@ -1483,21 +1483,21 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 						 !view_flag && !model_flag) || edit_flag)) {
 				switch (mged_variables->mv_coords) {
 				    case 'm':
-					s->s_edit->edit_rate_model_rotate[Y] = f;
-					s->s_edit->edit_rate_model_origin = origin;
+					s->s_edit->k.rot_m[Y] = f;
+					s->s_edit->k.origin_m = origin;
 					s->s_edit->edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
-					s->s_edit->edit_rate_object_rotate[Y] = f;
-					s->s_edit->edit_rate_object_origin = origin;
+					s->s_edit->k.rot_o[Y] = f;
+					s->s_edit->k.origin_o = origin;
 					s->s_edit->edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
-					s->s_edit->edit_rate_view_rotate[Y] = f;
-					s->s_edit->edit_rate_view_origin = origin;
+					s->s_edit->k.rot_v[Y] = f;
+					s->s_edit->k.origin_v = origin;
 					s->s_edit->edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
@@ -1520,21 +1520,21 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 						 !view_flag && !model_flag) || edit_flag)) {
 				switch (mged_variables->mv_coords) {
 				    case 'm':
-					s->s_edit->edit_rate_model_rotate[Z] += f;
-					s->s_edit->edit_rate_model_origin = origin;
+					s->s_edit->k.rot_m[Z] += f;
+					s->s_edit->k.origin_m = origin;
 					s->s_edit->edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
-					s->s_edit->edit_rate_object_rotate[Z] += f;
-					s->s_edit->edit_rate_object_origin = origin;
+					s->s_edit->k.rot_o[Z] += f;
+					s->s_edit->k.origin_o = origin;
 					s->s_edit->edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
-					s->s_edit->edit_rate_view_rotate[Z] += f;
-					s->s_edit->edit_rate_view_origin = origin;
+					s->s_edit->k.rot_v[Z] += f;
+					s->s_edit->k.origin_v = origin;
 					s->s_edit->edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
@@ -1553,21 +1553,21 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 						 !view_flag && !model_flag) || edit_flag)) {
 				switch (mged_variables->mv_coords) {
 				    case 'm':
-					s->s_edit->edit_rate_model_rotate[Z] = f;
-					s->s_edit->edit_rate_model_origin = origin;
+					s->s_edit->k.rot_m[Z] = f;
+					s->s_edit->k.origin_m = origin;
 					s->s_edit->edit_rate_mr_dm = s->mged_curr_dm;
 
 					break;
 				    case 'o':
-					s->s_edit->edit_rate_object_rotate[Z] = f;
-					s->s_edit->edit_rate_object_origin = origin;
+					s->s_edit->k.rot_o[Z] = f;
+					s->s_edit->k.origin_o = origin;
 					s->s_edit->edit_rate_or_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
-					s->s_edit->edit_rate_view_rotate[Z] = f;
-					s->s_edit->edit_rate_view_origin = origin;
+					s->s_edit->k.rot_v[Z] = f;
+					s->s_edit->k.origin_v = origin;
 					s->s_edit->edit_rate_vr_dm = s->mged_curr_dm;
 
 					break;
@@ -1591,13 +1591,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					s->s_edit->edit_rate_model_tran[X] += f;
+					s->s_edit->k.tra_m[X] += f;
 					s->s_edit->edit_rate_mt_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
-					s->s_edit->edit_rate_view_tran[X] += f;
+					s->s_edit->k.tra_v[X] += f;
 					s->s_edit->edit_rate_vt_dm = s->mged_curr_dm;
 
 					break;
@@ -1615,13 +1615,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					s->s_edit->edit_rate_model_tran[X] = f;
+					s->s_edit->k.tra_m[X] = f;
 					s->s_edit->edit_rate_mt_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
-					s->s_edit->edit_rate_view_tran[X] = f;
+					s->s_edit->k.tra_v[X] = f;
 					s->s_edit->edit_rate_vt_dm = s->mged_curr_dm;
 
 					break;
@@ -1643,13 +1643,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					s->s_edit->edit_rate_model_tran[Y] += f;
+					s->s_edit->k.tra_m[Y] += f;
 					s->s_edit->edit_rate_mt_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
-					s->s_edit->edit_rate_view_tran[Y] += f;
+					s->s_edit->k.tra_v[Y] += f;
 					s->s_edit->edit_rate_vt_dm = s->mged_curr_dm;
 
 					break;
@@ -1667,13 +1667,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					s->s_edit->edit_rate_model_tran[Y] = f;
+					s->s_edit->k.tra_m[Y] = f;
 					s->s_edit->edit_rate_mt_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
-					s->s_edit->edit_rate_view_tran[Y] = f;
+					s->s_edit->k.tra_v[Y] = f;
 					s->s_edit->edit_rate_vt_dm = s->mged_curr_dm;
 
 					break;
@@ -1695,13 +1695,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					s->s_edit->edit_rate_model_tran[Z] += f;
+					s->s_edit->k.tra_m[Z] += f;
 					s->s_edit->edit_rate_mt_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
-					s->s_edit->edit_rate_view_tran[Z] += f;
+					s->s_edit->k.tra_v[Z] += f;
 					s->s_edit->edit_rate_vt_dm = s->mged_curr_dm;
 
 					break;
@@ -1719,13 +1719,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					s->s_edit->edit_rate_model_tran[Z] = f;
+					s->s_edit->k.tra_m[Z] = f;
 					s->s_edit->edit_rate_mt_dm = s->mged_curr_dm;
 
 					break;
 				    case 'v':
 				    default:
-					s->s_edit->edit_rate_view_tran[Z] = f;
+					s->s_edit->k.tra_v[Z] = f;
 					s->s_edit->edit_rate_vt_dm = s->mged_curr_dm;
 
 					break;
@@ -1743,13 +1743,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		    case 'S':
 			if (incr_flag) {
 			    if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
-				s->s_edit->edit_rate_scale += f;
+				s->s_edit->k.sca += f;
 			    } else {
 				view_state->vs_rate_scale += f;
 			    }
 			} else {
 			    if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
-				s->s_edit->edit_rate_scale = f;
+				s->s_edit->k.sca = f;
 			    } else {
 				view_state->vs_rate_scale = f;
 			    }
@@ -1767,13 +1767,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 						 !view_flag && !model_flag) || edit_flag)) {
 				switch (mged_variables->mv_coords) {
 				    case 'm':
-					s->s_edit->edit_absolute_model_rotate[X] += f;
+					s->s_edit->k.rot_m_abs[X] += f;
 					break;
 				    case 'o':
-					s->s_edit->edit_absolute_object_rotate[X] += f;
+					s->s_edit->k.rot_o_abs[X] += f;
 					break;
 				    case 'v':
-					s->s_edit->edit_absolute_view_rotate[X] += f;
+					s->s_edit->k.rot_v_abs[X] += f;
 					break;
 				}
 			    } else {
@@ -1790,16 +1790,16 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 						 !view_flag && !model_flag) || edit_flag)) {
 				switch (mged_variables->mv_coords) {
 				    case 'm':
-					rvec[X] = f - s->s_edit->last_edit_absolute_model_rotate[X];
-					s->s_edit->edit_absolute_model_rotate[X] = f;
+					rvec[X] = f - s->s_edit->k.rot_m_abs_last[X];
+					s->s_edit->k.rot_m_abs[X] = f;
 					break;
 				    case 'o':
-					rvec[X] = f - s->s_edit->last_edit_absolute_object_rotate[X];
-					s->s_edit->edit_absolute_object_rotate[X] = f;
+					rvec[X] = f - s->s_edit->k.rot_o_abs_last[X];
+					s->s_edit->k.rot_o_abs[X] = f;
 					break;
 				    case 'v':
-					rvec[X] = f - s->s_edit->last_edit_absolute_view_rotate[X];
-					s->s_edit->edit_absolute_view_rotate[X] = f;
+					rvec[X] = f - s->s_edit->k.rot_v_abs_last[X];
+					s->s_edit->k.rot_v_abs[X] = f;
 					break;
 				}
 			    } else {
@@ -1821,16 +1821,16 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 			    switch (mged_variables->mv_coords) {
 				case 'm':
-				    arp = s->s_edit->edit_absolute_model_rotate;
-				    larp = s->s_edit->last_edit_absolute_model_rotate;
+				    arp = s->s_edit->k.rot_m_abs;
+				    larp = s->s_edit->k.rot_m_abs_last;
 				    break;
 				case 'o':
-				    arp = s->s_edit->edit_absolute_object_rotate;
-				    larp = s->s_edit->last_edit_absolute_object_rotate;
+				    arp = s->s_edit->k.rot_o_abs;
+				    larp = s->s_edit->k.rot_o_abs_last;
 				    break;
 				case 'v':
-				    arp = s->s_edit->edit_absolute_view_rotate;
-				    larp = s->s_edit->last_edit_absolute_view_rotate;
+				    arp = s->s_edit->k.rot_v_abs;
+				    larp = s->s_edit->k.rot_v_abs_last;
 				    break;
 				default:
 				    bu_log("unknown mv_coords\n");
@@ -1874,13 +1874,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 						 !view_flag && !model_flag) || edit_flag)) {
 				switch (mged_variables->mv_coords) {
 				    case 'm':
-					s->s_edit->edit_absolute_model_rotate[Y] += f;
+					s->s_edit->k.rot_m_abs[Y] += f;
 					break;
 				    case 'o':
-					s->s_edit->edit_absolute_object_rotate[Y] += f;
+					s->s_edit->k.rot_o_abs[Y] += f;
 					break;
 				    case 'v':
-					s->s_edit->edit_absolute_view_rotate[Y] += f;
+					s->s_edit->k.rot_v_abs[Y] += f;
 					break;
 				}
 			    } else {
@@ -1897,16 +1897,16 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 						 !view_flag && !model_flag) || edit_flag)) {
 				switch (mged_variables->mv_coords) {
 				    case 'm':
-					rvec[Y] = f - s->s_edit->last_edit_absolute_model_rotate[Y];
-					s->s_edit->edit_absolute_model_rotate[Y] = f;
+					rvec[Y] = f - s->s_edit->k.rot_m_abs_last[Y];
+					s->s_edit->k.rot_m_abs[Y] = f;
 					break;
 				    case 'o':
-					rvec[Y] = f - s->s_edit->last_edit_absolute_object_rotate[Y];
-					s->s_edit->edit_absolute_object_rotate[Y] = f;
+					rvec[Y] = f - s->s_edit->k.rot_o_abs_last[Y];
+					s->s_edit->k.rot_o_abs[Y] = f;
 					break;
 				    case 'v':
-					rvec[Y] = f - s->s_edit->last_edit_absolute_view_rotate[Y];
-					s->s_edit->edit_absolute_view_rotate[Y] = f;
+					rvec[Y] = f - s->s_edit->k.rot_v_abs_last[Y];
+					s->s_edit->k.rot_v_abs[Y] = f;
 					break;
 				}
 			    } else {
@@ -1928,16 +1928,16 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 			    switch (mged_variables->mv_coords) {
 				case 'm':
-				    arp = s->s_edit->edit_absolute_model_rotate;
-				    larp = s->s_edit->last_edit_absolute_model_rotate;
+				    arp = s->s_edit->k.rot_m_abs;
+				    larp = s->s_edit->k.rot_m_abs_last;
 				    break;
 				case 'o':
-				    arp = s->s_edit->edit_absolute_object_rotate;
-				    larp = s->s_edit->last_edit_absolute_object_rotate;
+				    arp = s->s_edit->k.rot_o_abs;
+				    larp = s->s_edit->k.rot_o_abs_last;
 				    break;
 				case 'v':
-				    arp = s->s_edit->edit_absolute_view_rotate;
-				    larp = s->s_edit->last_edit_absolute_view_rotate;
+				    arp = s->s_edit->k.rot_v_abs;
+				    larp = s->s_edit->k.rot_v_abs_last;
 				    break;
 				default:
 				    bu_log("unknown mv_transform\n");
@@ -1981,13 +1981,13 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 						 !view_flag && !model_flag) || edit_flag)) {
 				switch (mged_variables->mv_coords) {
 				    case 'm':
-					s->s_edit->edit_absolute_model_rotate[Z] += f;
+					s->s_edit->k.rot_m_abs[Z] += f;
 					break;
 				    case 'o':
-					s->s_edit->edit_absolute_object_rotate[Z] += f;
+					s->s_edit->k.rot_o_abs[Z] += f;
 					break;
 				    case 'v':
-					s->s_edit->edit_absolute_view_rotate[Z] += f;
+					s->s_edit->k.rot_v_abs[Z] += f;
 					break;
 				}
 			    } else {
@@ -2004,16 +2004,16 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 						 !view_flag && !model_flag) || edit_flag)) {
 				switch (mged_variables->mv_coords) {
 				    case 'm':
-					rvec[Z] = f - s->s_edit->last_edit_absolute_model_rotate[Z];
-					s->s_edit->edit_absolute_model_rotate[Z] = f;
+					rvec[Z] = f - s->s_edit->k.rot_m_abs_last[Z];
+					s->s_edit->k.rot_m_abs[Z] = f;
 					break;
 				    case 'o':
-					rvec[Z] = f - s->s_edit->last_edit_absolute_object_rotate[Z];
-					s->s_edit->edit_absolute_object_rotate[Z] = f;
+					rvec[Z] = f - s->s_edit->k.rot_o_abs_last[Z];
+					s->s_edit->k.rot_o_abs[Z] = f;
 					break;
 				    case 'v':
-					rvec[Z] = f - s->s_edit->last_edit_absolute_view_rotate[Z];
-					s->s_edit->edit_absolute_view_rotate[Z] = f;
+					rvec[Z] = f - s->s_edit->k.rot_v_abs_last[Z];
+					s->s_edit->k.rot_v_abs[Z] = f;
 					break;
 				}
 			    } else {
@@ -2035,16 +2035,16 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 			    switch (mged_variables->mv_coords) {
 				case 'm':
-				    arp = s->s_edit->edit_absolute_model_rotate;
-				    larp = s->s_edit->last_edit_absolute_model_rotate;
+				    arp = s->s_edit->k.rot_m_abs;
+				    larp = s->s_edit->k.rot_m_abs_last;
 				    break;
 				case 'o':
-				    arp = s->s_edit->edit_absolute_object_rotate;
-				    larp = s->s_edit->last_edit_absolute_object_rotate;
+				    arp = s->s_edit->k.rot_o_abs;
+				    larp = s->s_edit->k.rot_o_abs_last;
 				    break;
 				case 'v':
-				    arp = s->s_edit->edit_absolute_view_rotate;
-				    larp = s->s_edit->last_edit_absolute_view_rotate;
+				    arp = s->s_edit->k.rot_v_abs;
+				    larp = s->s_edit->k.rot_v_abs_last;
 				    break;
 				default:
 				    bu_log("unknown mv_coords\n");
@@ -2091,12 +2091,12 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					s->s_edit->edit_absolute_model_tran[X] += sf;
-					s->s_edit->last_edit_absolute_model_tran[X] = s->s_edit->edit_absolute_model_tran[X];
+					s->s_edit->k.tra_m_abs[X] += sf;
+					s->s_edit->k.tra_m_abs_last[X] = s->s_edit->k.tra_m_abs[X];
 					break;
 				    case 'v':
-					s->s_edit->edit_absolute_view_tran[X] += sf;
-					s->s_edit->last_edit_absolute_view_tran[X] = s->s_edit->edit_absolute_view_tran[X];
+					s->s_edit->k.tra_v_abs[X] += sf;
+					s->s_edit->k.tra_v_abs_last[X] = s->s_edit->k.tra_v_abs[X];
 					break;
 				}
 			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
@@ -2114,14 +2114,14 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					tvec[X] = f - s->s_edit->last_edit_absolute_model_tran[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
-					s->s_edit->edit_absolute_model_tran[X] = sf;
-					s->s_edit->last_edit_absolute_model_tran[X] = s->s_edit->edit_absolute_model_tran[X];
+					tvec[X] = f - s->s_edit->k.tra_m_abs_last[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->s_edit->k.tra_m_abs[X] = sf;
+					s->s_edit->k.tra_m_abs_last[X] = s->s_edit->k.tra_m_abs[X];
 					break;
 				    case 'v':
-					tvec[X] = f - s->s_edit->last_edit_absolute_view_tran[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
-					s->s_edit->edit_absolute_view_tran[X] = sf;
-					s->s_edit->last_edit_absolute_view_tran[X] = s->s_edit->edit_absolute_view_tran[X];
+					tvec[X] = f - s->s_edit->k.tra_v_abs_last[X] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->s_edit->k.tra_v_abs[X] = sf;
+					s->s_edit->k.tra_v_abs_last[X] = s->s_edit->k.tra_v_abs[X];
 					break;
 				}
 			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
@@ -2147,12 +2147,12 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					s->s_edit->edit_absolute_model_tran[Y] += sf;
-					s->s_edit->last_edit_absolute_model_tran[Y] = s->s_edit->edit_absolute_model_tran[Y];
+					s->s_edit->k.tra_m_abs[Y] += sf;
+					s->s_edit->k.tra_m_abs_last[Y] = s->s_edit->k.tra_m_abs[Y];
 					break;
 				    case 'v':
-					s->s_edit->edit_absolute_view_tran[Y] += sf;
-					s->s_edit->last_edit_absolute_view_tran[Y] = s->s_edit->edit_absolute_view_tran[Y];
+					s->s_edit->k.tra_v_abs[Y] += sf;
+					s->s_edit->k.tra_v_abs_last[Y] = s->s_edit->k.tra_v_abs[Y];
 					break;
 				}
 			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
@@ -2170,14 +2170,14 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					tvec[Y] = f - s->s_edit->last_edit_absolute_model_tran[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
-					s->s_edit->edit_absolute_model_tran[Y] = sf;
-					s->s_edit->last_edit_absolute_model_tran[Y] = s->s_edit->edit_absolute_model_tran[Y];
+					tvec[Y] = f - s->s_edit->k.tra_m_abs_last[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->s_edit->k.tra_m_abs[Y] = sf;
+					s->s_edit->k.tra_m_abs_last[Y] = s->s_edit->k.tra_m_abs[Y];
 					break;
 				    case 'v':
-					tvec[Y] = f - s->s_edit->last_edit_absolute_view_tran[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
-					s->s_edit->edit_absolute_view_tran[Y] = sf;
-					s->s_edit->last_edit_absolute_view_tran[Y] = s->s_edit->edit_absolute_view_tran[Y];
+					tvec[Y] = f - s->s_edit->k.tra_v_abs_last[Y] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->s_edit->k.tra_v_abs[Y] = sf;
+					s->s_edit->k.tra_v_abs_last[Y] = s->s_edit->k.tra_v_abs[Y];
 					break;
 				}
 			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
@@ -2202,12 +2202,12 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					s->s_edit->edit_absolute_model_tran[Z] += sf;
-					s->s_edit->last_edit_absolute_model_tran[Z] = s->s_edit->edit_absolute_model_tran[Z];
+					s->s_edit->k.tra_m_abs[Z] += sf;
+					s->s_edit->k.tra_m_abs_last[Z] = s->s_edit->k.tra_m_abs[Z];
 					break;
 				    case 'v':
-					s->s_edit->edit_absolute_view_tran[Z] += sf;
-					s->s_edit->last_edit_absolute_view_tran[Z] = s->s_edit->edit_absolute_view_tran[Z];
+					s->s_edit->k.tra_v_abs[Z] += sf;
+					s->s_edit->k.tra_v_abs_last[Z] = s->s_edit->k.tra_v_abs[Z];
 					break;
 				}
 			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
@@ -2225,14 +2225,14 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				switch (mged_variables->mv_coords) {
 				    case 'm':
 				    case 'o':
-					tvec[Z] = f - s->s_edit->last_edit_absolute_model_tran[Z] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
-					s->s_edit->edit_absolute_model_tran[Z] = sf;
-					s->s_edit->last_edit_absolute_model_tran[Z] = s->s_edit->edit_absolute_model_tran[Z];
+					tvec[Z] = f - s->s_edit->k.tra_m_abs_last[Z] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->s_edit->k.tra_m_abs[Z] = sf;
+					s->s_edit->k.tra_m_abs_last[Z] = s->s_edit->k.tra_m_abs[Z];
 					break;
 				    case 'v':
-					tvec[Z] = f - s->s_edit->last_edit_absolute_view_tran[Z] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
-					s->s_edit->edit_absolute_view_tran[Z] = sf;
-					s->s_edit->last_edit_absolute_view_tran[Z] = s->s_edit->edit_absolute_view_tran[Z];
+					tvec[Z] = f - s->s_edit->k.tra_v_abs_last[Z] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
+					s->s_edit->k.tra_v_abs[Z] = sf;
+					s->s_edit->k.tra_v_abs_last[Z] = s->s_edit->k.tra_v_abs[Z];
 					break;
 				}
 			    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
@@ -2251,7 +2251,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		    case 'S':
 			if (incr_flag) {
 			    if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
-				s->s_edit->edit_absolute_scale += f;
+				s->s_edit->k.sca_abs += f;
 
 				if (s->global_editing_state == ST_S_EDIT) {
 				    sedit_abs_scale(s);
@@ -2264,7 +2264,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 			    }
 			} else {
 			    if (EDIT_SCALE && ((mged_variables->mv_transform == 'e' && !view_flag) || edit_flag)) {
-				s->s_edit->edit_absolute_scale = f;
+				s->s_edit->k.sca_abs = f;
 
 				if (s->global_editing_state == ST_S_EDIT) {
 				    sedit_abs_scale(s);
@@ -3781,9 +3781,9 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	}
 
 	if (s->s_edit->acc_sc_sol >= 1.0) {
-	    s->s_edit->edit_absolute_scale = (s->s_edit->acc_sc_sol - 1.0) / 3.0;
+	    s->s_edit->k.sca_abs = (s->s_edit->acc_sc_sol - 1.0) / 3.0;
 	} else {
-	    s->s_edit->edit_absolute_scale = s->s_edit->acc_sc_sol - 1.0;
+	    s->s_edit->k.sca_abs = s->s_edit->acc_sc_sol - 1.0;
 	}
 
 	sedit(s);

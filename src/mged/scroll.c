@@ -334,16 +334,16 @@ edit_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 		case 'm':
 		case 'o':
 		    if (mged_variables->mv_rateknobs)
-			*f = s->s_edit->edit_rate_model_tran[mptr->scroll_val];
+			*f = s->s_edit->k.tra_m[mptr->scroll_val];
 		    else
-			*f = s->s_edit->edit_absolute_model_tran[mptr->scroll_val];
+			*f = s->s_edit->k.tra_m_abs[mptr->scroll_val];
 		    break;
 		case 'v':
 		default:
 		    if (mged_variables->mv_rateknobs)
-			*f = s->s_edit->edit_rate_view_tran[mptr->scroll_val];
+			*f = s->s_edit->k.tra_v[mptr->scroll_val];
 		    else
-			*f = s->s_edit->edit_absolute_view_tran[mptr->scroll_val];
+			*f = s->s_edit->k.tra_v_abs[mptr->scroll_val];
 		    break;
 	    }
 	    break;
@@ -352,9 +352,9 @@ edit_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 	    if (!(EDIT_SCALE && mged_variables->mv_transform == 'e'))
 		return 0;
 	    if (mged_variables->mv_rateknobs)
-		*f = s->s_edit->edit_rate_scale;
+		*f = s->s_edit->k.sca;
 	    else
-		*f = s->s_edit->edit_absolute_scale;
+		*f = s->s_edit->k.sca_abs;
 	    break;
 
 	case 4: /* X rotation */
@@ -365,22 +365,22 @@ edit_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 	    switch (mged_variables->mv_coords) {
 		case 'm':
 		    if (mged_variables->mv_rateknobs)
-			*f = s->s_edit->edit_rate_model_rotate[mptr->scroll_val - 4] / RATE_ROT_FACTOR;
+			*f = s->s_edit->k.rot_m[mptr->scroll_val - 4] / RATE_ROT_FACTOR;
 		    else
-			*f = s->s_edit->edit_absolute_model_rotate[mptr->scroll_val - 4] / ABS_ROT_FACTOR;
+			*f = s->s_edit->k.rot_m_abs[mptr->scroll_val - 4] / ABS_ROT_FACTOR;
 		    break;
 		case 'o':
 		    if (mged_variables->mv_rateknobs)
-			*f = s->s_edit->edit_rate_object_rotate[mptr->scroll_val - 4] / RATE_ROT_FACTOR;
+			*f = s->s_edit->k.rot_o[mptr->scroll_val - 4] / RATE_ROT_FACTOR;
 		    else
-			*f = s->s_edit->edit_absolute_object_rotate[mptr->scroll_val - 4] / ABS_ROT_FACTOR;
+			*f = s->s_edit->k.rot_o_abs[mptr->scroll_val - 4] / ABS_ROT_FACTOR;
 		    break;
 		case 'v':
 		default:
 		    if (mged_variables->mv_rateknobs)
-			*f = s->s_edit->edit_rate_view_rotate[mptr->scroll_val - 4] / RATE_ROT_FACTOR;
+			*f = s->s_edit->k.rot_v[mptr->scroll_val - 4] / RATE_ROT_FACTOR;
 		    else
-			*f = s->s_edit->edit_absolute_view_rotate[mptr->scroll_val - 4] / ABS_ROT_FACTOR;
+			*f = s->s_edit->k.rot_v_abs[mptr->scroll_val - 4] / ABS_ROT_FACTOR;
 		    break;
 	    }
 	    break;
