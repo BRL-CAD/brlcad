@@ -217,7 +217,6 @@ struct _view_state {
     int		vs_flag;
 
     struct bview *vs_gvp;
-    fastf_t	vs_i_Viewscale;
     mat_t	vs_model2objview;
     mat_t	vs_objview2model;
     mat_t	vs_ModelDelta;		/* changes to Viewrot this frame */
