@@ -64,6 +64,7 @@ rt_edit_ars_prim_edit_create(struct rt_edit *UNUSED(s))
 
     e->es_ars_crv = (-1);
     e->es_ars_col = (-1);
+    VSETALL(e->es_pt, 0.0);
 
     return (void *)e;
 }
@@ -194,7 +195,10 @@ rt_edit_ars_labels(
     npl = OBJ[ip->idb_type].ft_labels(pl, max_pl, xform, ip, tol);
 
     // Conditional additional labeling
-    if (a->es_ars_crv >= 0 && a->es_ars_col >= 0) {
+    if (a->es_ars_crv >= 0 && a->es_ars_col >= 0 &&
+	    (size_t)a->es_ars_crv < ars->ncurves &&
+	    (size_t)a->es_ars_col < ars->pts_per_curve &&
+	    npl >= 0 && npl < max_pl - 1) {
 	point_t ars_pt;
 
 	VMOVE(work, &ars->curves[a->es_ars_crv][a->es_ars_col*3]);
@@ -202,7 +206,12 @@ rt_edit_ars_labels(
 	POINT_LABEL_STR(ars_pt, "pt");
     }
 
-    pl[npl].str[0] = '\0';      /* Mark ending */
+    /* Ensure a terminator inside bounds */
+    if (npl < max_pl) {
+	pl[npl].str[0] = '\0';
+    } else if (max_pl > 0) {
+	pl[max_pl-1].str[0] = '\0';
+    }
 }
 
 const char *
@@ -220,13 +229,26 @@ rt_edit_ars_keypoint(
     struct rt_ars_internal *ars = (struct rt_ars_internal *)ip->idb_ptr;
     RT_ARS_CK_MAGIC(ars);
 
-    if (a->es_ars_crv < 0 || a->es_ars_col < 0) {
-	VMOVE(mpt, a->es_pt);
-    } else {
+    /* Defensive clamp if indices drift out of range after edits */
+    if ((size_t)a->es_ars_crv >= ars->ncurves)
+	a->es_ars_crv = -1;
+    if ((size_t)a->es_ars_col >= ars->pts_per_curve)
+	a->es_ars_col = -1;
+
+    if (a->es_ars_crv >= 0 && a->es_ars_col >= 0) {
+	/* Valid selection */
 	VMOVE(mpt, &ars->curves[a->es_ars_crv][a->es_ars_col*3]);
+    } else {
+	/* No selection yet: if ARS has data use first point, else fallback to stored es_pt (initialized to origin) */
+	if (ars->ncurves > 0 && ars->pts_per_curve > 0) {
+	    VMOVE(mpt, &ars->curves[0][0]);
+	} else {
+	    VMOVE(mpt, a->es_pt);
+	}
     }
 
     MAT4X3PNT(*pt, mat, mpt);
+
     return strp;
 }
 
@@ -780,7 +802,7 @@ ecmd_ars_move_pt(struct rt_edit *s)
     point_t new_pt = VINIT_ZERO;
     bu_clbk_t f = NULL;
     void *d = NULL;
- 
+
     RT_ARS_CK_MAGIC(ars);
 
     /* must convert to base units */
@@ -945,12 +967,12 @@ rt_edit_ars_edit_xy(
 	    MAT4X3PNT(s->e_mparam, s->e_invmat, temp);
 	    s->e_mvalid = 1;
 	    break;
-        case RT_PARAMS_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
+	case RT_PARAMS_EDIT_ROT:
+	    bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
+	    return BRLCAD_ERROR;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
 	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);

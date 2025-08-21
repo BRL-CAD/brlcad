@@ -614,13 +614,11 @@ rt_edit_arb_keypoint(
 	const struct bn_tol *tol)
 {
     struct rt_db_internal *ip = &s->es_int;
-    if (*keystr == 'V') {
-	const char *strp = OBJ[ip->idb_type].ft_keypoint(pt, keystr, mat, ip, tol);
-	return strp;
+    if (!keystr || keystr[0] != 'V') {
+	static const char *v1 = "V1";
+	keystr = v1;
     }
-    static const char *vstr = "V1";
-    const char *strp = OBJ[ip->idb_type].ft_keypoint(pt, vstr, mat, ip, tol);
-    return strp;
+    return OBJ[ip->idb_type].ft_keypoint(pt, keystr, mat, ip, tol);
 }
 
 void
