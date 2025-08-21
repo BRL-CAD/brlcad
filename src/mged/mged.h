@@ -234,6 +234,7 @@ struct mged_state {
 
     /* Editing related */
     struct mged_edit_state *s_edit;
+    int global_editing_state; // main global editing state (ugh)
     // TODO - can we eliminate these?
     int es_edclass;            /* type of editing class for this solid */
     int es_type;               /* COMGEOM solid type */
@@ -343,10 +344,6 @@ extern int edobj; /* object editing options */
 /* Flags for line type decisions */
 #define ROOT 0
 #define INNER 1
-
-/* FIXME: ugh, main global editing state */
-extern int ged_state;	  /* (defined in titles.c) */
-#define GEOM_EDIT_STATE ged_state
 
 /**
  * Editor States

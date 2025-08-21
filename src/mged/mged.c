@@ -323,7 +323,7 @@ mged_view_callback(struct bview *gvp,
     if (!gvp)
 	return;
 
-    if (GEOM_EDIT_STATE != ST_VIEW) {
+    if (s->global_editing_state != ST_VIEW) {
 	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, modelchanges);
 	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
     }
@@ -1013,7 +1013,7 @@ event_check(struct mged_state *s, int non_blocking)
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'm';
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = es_edflag;
 	    if (!SEDIT_ROTATE)
 		es_edflag = SROT;
@@ -1034,7 +1034,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	mged_variables->mv_coords = save_coords;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
+	if (s->global_editing_state == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
@@ -1047,7 +1047,7 @@ event_check(struct mged_state *s, int non_blocking)
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'o';
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = es_edflag;
 	    if (!SEDIT_ROTATE)
 		es_edflag = SROT;
@@ -1068,7 +1068,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	mged_variables->mv_coords = save_coords;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
+	if (s->global_editing_state == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
@@ -1081,7 +1081,7 @@ event_check(struct mged_state *s, int non_blocking)
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'v';
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = es_edflag;
 	    if (!SEDIT_ROTATE)
 		es_edflag = SROT;
@@ -1102,7 +1102,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	mged_variables->mv_coords = save_coords;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
+	if (s->global_editing_state == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
@@ -1115,7 +1115,7 @@ event_check(struct mged_state *s, int non_blocking)
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'm';
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = es_edflag;
 	    if (!SEDIT_TRAN)
 		es_edflag = STRANS;
@@ -1135,7 +1135,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	mged_variables->mv_coords = save_coords;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
+	if (s->global_editing_state == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
@@ -1148,7 +1148,7 @@ event_check(struct mged_state *s, int non_blocking)
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'v';
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = es_edflag;
 	    if (!SEDIT_TRAN)
 		es_edflag = STRANS;
@@ -1168,7 +1168,7 @@ event_check(struct mged_state *s, int non_blocking)
 
 	mged_variables->mv_coords = save_coords;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
+	if (s->global_editing_state == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
@@ -1176,7 +1176,7 @@ event_check(struct mged_state *s, int non_blocking)
     if (s->s_edit->edit_rateflag_scale) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
+	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = es_edflag;
 	    if (!SEDIT_SCALE)
 		es_edflag = SSCALE;
@@ -1192,7 +1192,7 @@ event_check(struct mged_state *s, int non_blocking)
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
+	if (s->global_editing_state == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
@@ -1630,7 +1630,7 @@ refresh(struct mged_state *s)
 			    draw_m_axes(s);
 
 			if (axes_state->ax_edit_draw &&
-				(GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT))
+				(s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT))
 			    draw_e_axes(s);
 
 			/* Display titles, etc., if desired */
@@ -2076,7 +2076,7 @@ main(int argc, char *argv[])
     MAT_IDN(modelchanges);
     MAT_IDN(acc_rot_sol);
 
-    GEOM_EDIT_STATE = ST_VIEW;
+    s->global_editing_state = ST_VIEW;
     es_edflag = -1;
     s->es_edclass = EDIT_CLASS_NULL;
     inpara = newedge = 0;

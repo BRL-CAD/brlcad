@@ -100,10 +100,10 @@ draw_e_axes(struct mged_state *s)
     mat_t rot_mat;
     struct bv_axes gas;
 
-    if (GEOM_EDIT_STATE == ST_S_EDIT) {
+    if (s->global_editing_state == ST_S_EDIT) {
 	MAT4X3PNT(v_ap1, view_state->vs_gvp->gv_model2view, s->s_edit->e_axes_pos);
 	MAT4X3PNT(v_ap2, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
-    } else if (GEOM_EDIT_STATE == ST_O_EDIT) {
+    } else if (s->global_editing_state == ST_O_EDIT) {
 	point_t m_ap2;
 
 	MAT4X3PNT(v_ap1, view_state->vs_gvp->gv_model2view, s->s_edit->e_keypoint);
