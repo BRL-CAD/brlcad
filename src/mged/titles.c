@@ -38,9 +38,6 @@
 
 #define USE_OLD_MENUS 0
 
-/* should only be accessed via STATE define in mged.h */
-int ged_state;
-
 char *state_str[] = {
     "-ZOT-",
     "VIEWING",
