@@ -152,22 +152,20 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 {
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
     int save_edflag = -1;
-    int mx, my;
-    int dx, dy;
-    int width, height;
     fastf_t f;
     fastf_t fx, fy;
     fastf_t td;
+    int em = ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) && mged_variables->mv_transform == 'e') ? 1 : 0;
 
     if (s->dbip == DBI_NULL)
 	return;
 
-    width = dm_get_width(DMP);
-    height = dm_get_height(DMP);
-    mx = xmotion->x;
-    my = xmotion->y;
-    dx = mx - dm_omx;
-    dy = my - dm_omy;
+    int width = dm_get_width(DMP);
+    int height = dm_get_height(DMP);
+    int mx = xmotion->x;
+    int my = xmotion->y;
+    int dx = mx - dm_omx;
+    int dy = my - dm_omy;
 
     switch (am_mode) {
 	case AMM_IDLE:
@@ -219,8 +217,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		save_coords = mged_variables->mv_coords;
 		mged_variables->mv_coords = 'v';
 
-		if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
-		    mged_variables->mv_transform == 'e') {
+		if (em) {
 
 		    if (s->global_editing_state == ST_S_EDIT) {
 			save_edflag = es_edflag;
@@ -263,8 +260,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		fx = dx / (fastf_t)width * 2.0;
 		fy = -dy / (fastf_t)height / dm_get_aspect(DMP) * 2.0;
 
-		if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
-		    mged_variables->mv_transform == 'e') {
+		if (em) {
 
 		    if (s->global_editing_state == ST_S_EDIT) {
 			save_edflag = es_edflag;
@@ -329,8 +325,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 		goto reset_edflag;
 	    }
 	case AMM_SCALE:
-	    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (em) {
 		if (s->global_editing_state == ST_S_EDIT && !SEDIT_SCALE) {
 		    save_edflag = es_edflag;
 		    es_edflag = SSCALE;
@@ -387,8 +382,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_ROT_X:
-	    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (em) {
 		if (s->global_editing_state == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_ROTATE)
@@ -412,8 +406,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_ROT_Y:
-	    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (em) {
 		if (s->global_editing_state == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_ROTATE)
@@ -437,8 +430,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_ROT_Z:
-	    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (em) {
 		if (s->global_editing_state == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_ROTATE)
@@ -462,8 +454,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_TRAN_X:
-	    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (em) {
 		if (s->global_editing_state == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_TRAN)
@@ -486,8 +477,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_TRAN_Y:
-	    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (em) {
 		if (s->global_editing_state == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_TRAN)
@@ -510,8 +500,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_TRAN_Z:
-	    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (em) {
 		if (s->global_editing_state == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_TRAN)
@@ -534,8 +523,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_SCALE_X:
-	    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (em) {
 		if (s->global_editing_state == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_SCALE)
@@ -558,8 +546,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_SCALE_Y:
-	    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (em) {
 		if (s->global_editing_state == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_SCALE)
@@ -582,8 +569,7 @@ motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_SCALE_Z:
-	    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
-		mged_variables->mv_transform == 'e') {
+	    if (em) {
 		if (s->global_editing_state == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_SCALE)
