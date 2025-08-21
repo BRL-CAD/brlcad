@@ -407,22 +407,22 @@ view_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 	case 2: /* Z translation */
 	    if (mged_variables->mv_rateknobs) {
 		if (mged_variables->mv_coords == 'm')
-		    *f = view_state->vs_rate_model_tran[mptr->scroll_val];
+		    *f = view_state->k.tra_m[mptr->scroll_val];
 		else
-		    *f = view_state->vs_rate_tran[mptr->scroll_val];
+		    *f = view_state->k.tra_v[mptr->scroll_val];
 	    } else {
 		if (mged_variables->mv_coords == 'm')
-		    *f = view_state->vs_absolute_model_tran[mptr->scroll_val];
+		    *f = view_state->k.tra_m_abs[mptr->scroll_val];
 		else
-		    *f = view_state->vs_absolute_tran[mptr->scroll_val];
+		    *f = view_state->k.tra_v_abs[mptr->scroll_val];
 	    }
 	    break;
 
 	case 3: /* scale */
 	    if (mged_variables->mv_rateknobs)
-		*f = view_state->vs_rate_scale;
+		*f = view_state->k.sca;
 	    else
-		*f = view_state->vs_absolute_scale;
+		*f = view_state->k.sca_abs;
 	    break;
 
 	case 4: /* X rotation */
@@ -430,14 +430,14 @@ view_scroll_display(fastf_t *f, struct scroll_item *mptr, struct mged_state *s)
 	case 6: /* Z rotation */
 	    if (mged_variables->mv_rateknobs) {
 		if (mged_variables->mv_coords == 'm')
-		    *f = view_state->vs_rate_model_rotate[mptr->scroll_val - 4] / RATE_ROT_FACTOR;
+		    *f = view_state->k.rot_m[mptr->scroll_val - 4] / RATE_ROT_FACTOR;
 		else
-		    *f = view_state->vs_rate_rotate[mptr->scroll_val - 4] / RATE_ROT_FACTOR;
+		    *f = view_state->k.rot_v[mptr->scroll_val - 4] / RATE_ROT_FACTOR;
 	    } else {
 		if (mged_variables->mv_coords == 'm')
-		    *f = view_state->vs_absolute_model_rotate[mptr->scroll_val - 4] / ABS_ROT_FACTOR;
+		    *f = view_state->k.rot_m_abs[mptr->scroll_val - 4] / ABS_ROT_FACTOR;
 		else
-		    *f = view_state->vs_absolute_rotate[mptr->scroll_val - 4] / ABS_ROT_FACTOR;
+		    *f = view_state->k.rot_v_abs[mptr->scroll_val - 4] / ABS_ROT_FACTOR;
 	    }
 	    break;
 
