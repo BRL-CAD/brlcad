@@ -2080,10 +2080,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    int incr_flag = 0;
-    int view_flag = 0;
-    int model_flag = 0;
-    int force_edit = 0;
+    int incr_flag = 0;	/* interpret values as increments */
+    int view_flag = 0;	/* manipulate view using view coords */
+    int model_flag = 0;	/* manipulate view using model coords */
+    int force_edit = 0;	/* force edit interpretation */
     char origin = '\0';
 
     vect_t rvec; VSETALL(rvec, 0.0);
@@ -2496,19 +2496,33 @@ mged_svbase(struct mged_state *s)
     MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_gvp->gv_center);
     view_state->vs_gvp->gv_i_scale = view_state->vs_gvp->gv_scale;
 
-    /* reset absolute slider values */
-    VSETALL(view_state->k.rot_v_abs, 0.0);
-    VSETALL(view_state->k.rot_v_abs_last, 0.0);
-    VSETALL(view_state->k.rot_m_abs, 0.0);
-    VSETALL(view_state->k.rot_m_abs_last, 0.0);
-    VSETALL(view_state->k.tra_v_abs, 0.0);
-    VSETALL(view_state->k.tra_v_abs_last, 0.0);
-    VSETALL(view_state->k.tra_m_abs, 0.0);
-    VSETALL(view_state->k.tra_m_abs_last, 0.0);
+    /* Snapshot object absolute rotations (not previously reset by svbase)
+     * TODO - for now we're preserving existing behavior, but should these
+     * be reset? */
+    vect_t saved_rot_o_abs      = VINIT_ZERO;
+    vect_t saved_rot_o_abs_last = VINIT_ZERO;
+    VMOVE(saved_rot_o_abs,      view_state->k.rot_o_abs);
+    VMOVE(saved_rot_o_abs_last, view_state->k.rot_o_abs_last);
+
+    /* Reset all absolute knob baselines */
+    bv_knobs_reset(&view_state->k, 2);
+
+    /* Restore object absolute rotations to preserve legacy behavior
+     * TODO - for now we're preserving existing behavior, but should these
+     * be reset? */
+    VMOVE(view_state->k.rot_o_abs,      saved_rot_o_abs);
+    VMOVE(view_state->k.rot_o_abs_last, saved_rot_o_abs_last);
+
     // TODO - should we be modding vs_gvp here when everything else is in view_state?
-    // Alternately, should we just use vs_gvp rather than values in view_state?
+    // Alternately, should we just use vs_gvp rather than values in view_state?  The
+    // latter has compilations if we're using ged_gvp in vs_gvp, since multipane
+    // mode is involved with viewstate - need to study in more detail. */
     view_state->vs_gvp->gv_a_scale = 0.0;
-    view_state->k.sca_abs = view_state->vs_gvp->gv_a_scale;
+
+    /* Sync active bview knob struct */
+    if (view_state->vs_gvp) {
+        view_state->vs_gvp->k = view_state->k;
+    }
 
     if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui) {
 	s->mged_curr_dm->dm_dirty = 1;
