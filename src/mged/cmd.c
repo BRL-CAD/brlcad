@@ -559,9 +559,9 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 
     if (s->global_editing_state == ST_S_EDIT) {
 	/* solid edit mode */
-	/* apply s->s_edit->e_mat editing to parameters */
+	/* apply MEDIT(s)->e_mat editing to parameters */
 	struct directory *outdp = RT_DIR_NULL;
-	transform_editing_solid(s, &intern, s->s_edit->e_mat, &s->s_edit->es_int, 0);
+	transform_editing_solid(s, &intern, MEDIT(s)->e_mat, &MEDIT(s)->es_int, 0);
 	if (illump && illump->s_u_data) {
 	    bdata = (struct ged_bv_data *)illump->s_u_data;
 	    outdp = LAST_SOLID(bdata);
@@ -591,9 +591,9 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	    return TCL_ERROR;
 	}
 	/* use the solid at bottom of path (key solid) */
-	/* apply s->s_edit->e_mat and s->s_edit->model_changes editing to parameters */
-	bn_mat_mul(newmat, s->s_edit->model_changes, s->s_edit->e_mat);
-	transform_editing_solid(s, &intern, newmat, &s->s_edit->es_int, 0);
+	/* apply MEDIT(s)->e_mat and MEDIT(s)->model_changes editing to parameters */
+	bn_mat_mul(newmat, MEDIT(s)->model_changes, MEDIT(s)->e_mat);
+	transform_editing_solid(s, &intern, newmat, &MEDIT(s)->es_int, 0);
 	if (illump && illump->s_u_data) {
 	    bdata = (struct ged_bv_data *)illump->s_u_data;
 	    outdp = LAST_SOLID(bdata);
@@ -1631,8 +1631,8 @@ mged_global_variable_setup(struct mged_state *s)
     Tcl_LinkVar(s->interp, "mged_default(db_upgrade)", (char *)&mged_global_db_ctx.db_upgrade, TCL_LINK_INT);
     Tcl_LinkVar(s->interp, "mged_default(db_version)", (char *)&mged_global_db_ctx.db_version, TCL_LINK_INT);
 
-    Tcl_LinkVar(s->interp, "edit_class", (char *)&s->es_edclass, TCL_LINK_INT);
-    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "edit_class", (char *)&s->s_edit->es_edclass, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&MEDIT(s)->edit_flag, TCL_LINK_INT);
     Tcl_LinkVar(s->interp, "edit_object_flag", (char *)&edobj, TCL_LINK_INT);
 
     /* link some tcl variables to these corresponding globals */

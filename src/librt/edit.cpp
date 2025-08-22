@@ -108,6 +108,8 @@ rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, 
     s->k.tra_v_udata = NULL;
 
     s->acc_sc_sol = 1.0;
+    s->acc_sc_obj = 1.0;
+    VSETALL(s->acc_sc, 1.0);
     s->base2local = 1.0;
     s->e_inpara = 0;
     s->e_keyfixed = 0;
@@ -173,8 +175,10 @@ rt_edit_destroy(struct rt_edit *s)
 
     struct rt_db_internal *ip = &s->es_int;
 
-    if (s->ipe_ptr && EDOBJ[ip->idb_type].ft_prim_edit_destroy)
+    if (s->ipe_ptr && EDOBJ[ip->idb_type].ft_prim_edit_destroy) {
 	 (*EDOBJ[ip->idb_type].ft_prim_edit_destroy)(s->ipe_ptr);
+	 s->ipe_ptr = NULL;
+    }
 
     bu_ptbl_free(&s->comb_insts);
 

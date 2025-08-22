@@ -579,7 +579,7 @@ ill_common(struct mged_state *s) {
     edobj = 0;		/* sanity */
     edsol = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
-    MAT_IDN(s->s_edit->model_changes);	/* No changes yet */
+    MAT_IDN(MEDIT(s)->model_changes);	/* No changes yet */
 
     return 1;		/* OK */
 }
@@ -599,10 +599,10 @@ be_o_illuminate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(ar
 	(void)chg_state(s, ST_VIEW, ST_O_PICK, "Matrix Illuminate");
     }
     /* reset accumulation local scale factors */
-    s->s_edit->acc_sc[0] = s->s_edit->acc_sc[1] = s->s_edit->acc_sc[2] = 1.0;
+    MEDIT(s)->acc_sc[0] = MEDIT(s)->acc_sc[1] = MEDIT(s)->acc_sc[2] = 1.0;
 
     /* reset accumulation global scale factors */
-    s->s_edit->acc_sc_obj = 1.0;
+    MEDIT(s)->acc_sc_obj = 1.0;
     return TCL_OK;
 }
 
@@ -640,9 +640,9 @@ be_o_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
 
-    s->s_edit->k.sca_abs = s->s_edit->acc_sc_obj - 1.0;
-    if (s->s_edit->k.sca_abs > 0.0)
-	s->s_edit->k.sca_abs /= 3.0;
+    MEDIT(s)->k.sca_abs = MEDIT(s)->acc_sc_obj - 1.0;
+    if (MEDIT(s)->k.sca_abs > 0.0)
+	MEDIT(s)->k.sca_abs /= 3.0;
     return TCL_OK;
 }
 
@@ -663,9 +663,9 @@ be_o_xscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
 
-    s->s_edit->k.sca_abs = s->s_edit->acc_sc[0] - 1.0;
-    if (s->s_edit->k.sca_abs > 0.0)
-	s->s_edit->k.sca_abs /= 3.0;
+    MEDIT(s)->k.sca_abs = MEDIT(s)->acc_sc[0] - 1.0;
+    if (MEDIT(s)->k.sca_abs > 0.0)
+	MEDIT(s)->k.sca_abs /= 3.0;
     return TCL_OK;
 }
 
@@ -686,9 +686,9 @@ be_o_yscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
 
-    s->s_edit->k.sca_abs = s->s_edit->acc_sc[1] - 1.0;
-    if (s->s_edit->k.sca_abs > 0.0)
-	s->s_edit->k.sca_abs /= 3.0;
+    MEDIT(s)->k.sca_abs = MEDIT(s)->acc_sc[1] - 1.0;
+    if (MEDIT(s)->k.sca_abs > 0.0)
+	MEDIT(s)->k.sca_abs /= 3.0;
     return TCL_OK;
 }
 
@@ -709,9 +709,9 @@ be_o_zscale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     dm_set_dirty(DMP, 1);
     set_e_axes_pos(s, 1);
 
-    s->s_edit->k.sca_abs = s->s_edit->acc_sc[2] - 1.0;
-    if (s->s_edit->k.sca_abs > 0.0)
-	s->s_edit->k.sca_abs /= 3.0;
+    MEDIT(s)->k.sca_abs = MEDIT(s)->acc_sc[2] - 1.0;
+    if (MEDIT(s)->k.sca_abs > 0.0)
+	MEDIT(s)->k.sca_abs /= 3.0;
     return TCL_OK;
 }
 
@@ -892,7 +892,7 @@ be_reject(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), c
     movedir = 0;
     edsol = 0;
     edobj = 0;
-    s->s_edit->edit_flag = -1;
+    MEDIT(s)->edit_flag = -1;
     illum_gdlp = GED_DISPLAY_LIST_NULL;
     illump = NULL;		/* None selected */
 
@@ -947,7 +947,7 @@ be_s_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     if (not_state(s, ST_S_EDIT, "Primitive Rotate"))
 	return TCL_ERROR;
 
-    s->s_edit->edit_flag = SROT;
+    MEDIT(s)->edit_flag = SROT;
     edsol = BE_S_ROTATE;
     mmenu_set(s, MENU_L1, NULL);
 
@@ -968,7 +968,7 @@ be_s_trans(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 	return TCL_ERROR;
 
     edsol = BE_S_TRANS;
-    s->s_edit->edit_flag = STRANS;
+    MEDIT(s)->edit_flag = STRANS;
     movedir = UARROW | RARROW;
     mmenu_set(s, MENU_L1, NULL);
 
@@ -989,9 +989,9 @@ be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 	return TCL_ERROR;
 
     edsol = BE_S_SCALE;
-    s->s_edit->edit_flag = SSCALE;
+    MEDIT(s)->edit_flag = SSCALE;
     mmenu_set(s, MENU_L1, NULL);
-    s->s_edit->acc_sc_sol = 1.0;
+    MEDIT(s)->acc_sc_sol = 1.0;
 
     set_e_axes_pos(s, 1);
     return TCL_OK;

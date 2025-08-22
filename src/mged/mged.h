@@ -152,10 +152,9 @@ struct menu_item {
 
 struct mged_edit_state {
 
-    // Knob based editing data
-    struct bview_knobs k;
-
-    fastf_t es_scale;	/* scale factor */
+    // librt edit container, holds most of the state.  We need
+    // a few additional MGED-only slots, hence mged_edit_state
+    struct rt_edit *e;
 
     // DM pointers - used by the editing code to stash current dm pointers for
     // later restoration when editing.  Not 100% sure yet what the purpose is -
@@ -167,35 +166,12 @@ struct mged_edit_state {
     struct mged_dm *edit_rate_mt_dm;
     struct mged_dm *edit_rate_vt_dm;
 
-    // Container to hold the intermediate state
-    // of the object being edited (I think?)
-    struct rt_db_internal es_int;
-
-    point_t e_keypoint;
-    point_t e_axes_pos;
-    point_t curr_e_axes_pos;
-
-    mat_t model_changes;	/* full changes this edit */
-    mat_t incr_change;		/* change(s) from last cycle */
-
-    fastf_t acc_sc_sol;	/* accumulate solid scale factor */
-    fastf_t acc_sc_obj;	/* accumulate global object scale factor */
-    fastf_t acc_sc[3];	/* accumulate local object scale factors */
-    mat_t acc_rot_sol;	/* accumulate solid rotations */
-
-    int e_inpara;	/* parameter input from keyboard flag */
-    vect_t e_para;      /* keyboard input param. Only when s->s_edit->e_inpara set.  */
-
-    int e_mvalid;	/* es_mparam valid.  s->s_edit->e_inpara must = 0 */
-    vect_t e_mparam;	/* mouse input param.  Only when es_mvalid set */
-
-    int edit_flag;	/* type of editing for this solid */
-    mat_t e_mat;	/* accumulated matrix of path */
-    mat_t e_invmat;	/* inverse of es_mat KAA */
-    char *e_keytag;	/* string identifying the keypoint */
-    int e_keyfixed;	/* keypoint specified by user? */
+    // TODO - can we eliminate these?
+    int es_edclass;            /* type of editing class for this solid */
+    int es_type;               /* COMGEOM solid type */
 };
 
+#define MEDIT(s) ((s)->s_edit->e)
 
 /**
  * Definitions (TODO - update this...)
@@ -255,9 +231,6 @@ struct mged_state {
     /* Editing related */
     struct mged_edit_state *s_edit;
     int global_editing_state; // main global editing state (ugh)
-    // TODO - can we eliminate these?
-    int es_edclass;            /* type of editing class for this solid */
-    int es_type;               /* COMGEOM solid type */
 
     /* called by numerous functions to indicate truthfully whether the
      * views need to be redrawn. */

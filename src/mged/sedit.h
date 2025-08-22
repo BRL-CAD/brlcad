@@ -38,7 +38,7 @@
 #define EDIT_CLASS_ROTATE 2
 #define EDIT_CLASS_SCALE 3
 
-/* These ECMD_ values go in s->s_edit->edit_flag.  Some names not changed yet */
+/* These ECMD_ values go in MEDIT(s)->edit_flag.  Some names not changed yet */
 #define IDLE		0	/* edarb.c */
 #define STRANS		1	/* buttons.c */
 #define SSCALE		2	/* buttons.c */	/* Scale whole solid by scalar */
@@ -147,30 +147,30 @@
 #define ECMD_HYP_ROT_A		92
 
 #define SEDIT_ROTATE (s->global_editing_state == ST_S_EDIT && \
-		      (s->s_edit->edit_flag == SROT || \
-		       s->s_edit->edit_flag == ECMD_TGC_ROT_H || \
-		       s->s_edit->edit_flag ==  ECMD_TGC_ROT_AB || \
-		       s->s_edit->edit_flag == ECMD_ARB_ROTATE_FACE || \
-		       s->s_edit->edit_flag == ECMD_EXTR_ROT_H || \
-		       s->s_edit->edit_flag == ECMD_ETO_ROT_C))
+		      (MEDIT(s)->edit_flag == SROT || \
+		       MEDIT(s)->edit_flag == ECMD_TGC_ROT_H || \
+		       MEDIT(s)->edit_flag ==  ECMD_TGC_ROT_AB || \
+		       MEDIT(s)->edit_flag == ECMD_ARB_ROTATE_FACE || \
+		       MEDIT(s)->edit_flag == ECMD_EXTR_ROT_H || \
+		       MEDIT(s)->edit_flag == ECMD_ETO_ROT_C))
 #define OEDIT_ROTATE (s->global_editing_state == ST_O_EDIT && \
 		      edobj == BE_O_ROTATE)
 #define EDIT_ROTATE (SEDIT_ROTATE || OEDIT_ROTATE)
 
 #define SEDIT_SCALE (s->global_editing_state == ST_S_EDIT && \
-		     (s->s_edit->edit_flag == SSCALE || \
-		      s->s_edit->edit_flag == PSCALE || \
-		      s->s_edit->edit_flag == ECMD_VOL_THRESH_LO || \
-		      s->s_edit->edit_flag == ECMD_VOL_THRESH_HI || \
-		      s->s_edit->edit_flag == ECMD_VOL_CSIZE || \
-		      s->s_edit->edit_flag == ECMD_DSP_SCALE_X || \
-		      s->s_edit->edit_flag == ECMD_DSP_SCALE_Y || \
-		      s->s_edit->edit_flag == ECMD_DSP_SCALE_ALT || \
-		      s->s_edit->edit_flag == ECMD_EBM_HEIGHT || \
-		      s->s_edit->edit_flag == ECMD_CLINE_SCALE_H || \
-		      s->s_edit->edit_flag == ECMD_CLINE_SCALE_R || \
-		      s->s_edit->edit_flag == ECMD_CLINE_SCALE_T || \
-		      s->s_edit->edit_flag == ECMD_EXTR_SCALE_H))
+		     (MEDIT(s)->edit_flag == SSCALE || \
+		      MEDIT(s)->edit_flag == PSCALE || \
+		      MEDIT(s)->edit_flag == ECMD_VOL_THRESH_LO || \
+		      MEDIT(s)->edit_flag == ECMD_VOL_THRESH_HI || \
+		      MEDIT(s)->edit_flag == ECMD_VOL_CSIZE || \
+		      MEDIT(s)->edit_flag == ECMD_DSP_SCALE_X || \
+		      MEDIT(s)->edit_flag == ECMD_DSP_SCALE_Y || \
+		      MEDIT(s)->edit_flag == ECMD_DSP_SCALE_ALT || \
+		      MEDIT(s)->edit_flag == ECMD_EBM_HEIGHT || \
+		      MEDIT(s)->edit_flag == ECMD_CLINE_SCALE_H || \
+		      MEDIT(s)->edit_flag == ECMD_CLINE_SCALE_R || \
+		      MEDIT(s)->edit_flag == ECMD_CLINE_SCALE_T || \
+		      MEDIT(s)->edit_flag == ECMD_EXTR_SCALE_H))
 #define OEDIT_SCALE (s->global_editing_state == ST_O_EDIT && \
 		     (edobj == BE_O_XSCALE || \
 		      edobj == BE_O_YSCALE || \
@@ -179,28 +179,28 @@
 #define EDIT_SCALE (SEDIT_SCALE || OEDIT_SCALE)
 
 #define SEDIT_TRAN (s->global_editing_state == ST_S_EDIT && \
-		    (s->s_edit->edit_flag == STRANS || \
-		     s->s_edit->edit_flag == ECMD_TGC_MV_H || \
-		     s->s_edit->edit_flag == ECMD_TGC_MV_HH || \
-		     s->s_edit->edit_flag == EARB || \
-		     s->s_edit->edit_flag == PTARB || \
-		     s->s_edit->edit_flag == ECMD_ARB_MOVE_FACE || \
-		     s->s_edit->edit_flag == ECMD_VTRANS || \
-		     s->s_edit->edit_flag == ECMD_NMG_EMOVE || \
-		     s->s_edit->edit_flag == ECMD_NMG_ESPLIT || \
-		     s->s_edit->edit_flag == ECMD_NMG_LEXTRU || \
-		     s->s_edit->edit_flag == ECMD_PIPE_PT_MOVE || \
-		     s->s_edit->edit_flag == ECMD_PIPE_SPLIT || \
-		     s->s_edit->edit_flag == ECMD_PIPE_PT_ADD || \
-		     s->s_edit->edit_flag == ECMD_PIPE_PT_INS || \
-		     s->s_edit->edit_flag == ECMD_ARS_MOVE_PT || \
-		     s->s_edit->edit_flag == ECMD_ARS_MOVE_CRV || \
-		     s->s_edit->edit_flag == ECMD_ARS_MOVE_COL || \
-		     s->s_edit->edit_flag == ECMD_BOT_MOVEV || \
-		     s->s_edit->edit_flag == ECMD_BOT_MOVEE || \
-		     s->s_edit->edit_flag == ECMD_BOT_MOVET || \
-		     s->s_edit->edit_flag == ECMD_CLINE_MOVE_H || \
-		     s->s_edit->edit_flag == ECMD_EXTR_MOV_H))
+		    (MEDIT(s)->edit_flag == STRANS || \
+		     MEDIT(s)->edit_flag == ECMD_TGC_MV_H || \
+		     MEDIT(s)->edit_flag == ECMD_TGC_MV_HH || \
+		     MEDIT(s)->edit_flag == EARB || \
+		     MEDIT(s)->edit_flag == PTARB || \
+		     MEDIT(s)->edit_flag == ECMD_ARB_MOVE_FACE || \
+		     MEDIT(s)->edit_flag == ECMD_VTRANS || \
+		     MEDIT(s)->edit_flag == ECMD_NMG_EMOVE || \
+		     MEDIT(s)->edit_flag == ECMD_NMG_ESPLIT || \
+		     MEDIT(s)->edit_flag == ECMD_NMG_LEXTRU || \
+		     MEDIT(s)->edit_flag == ECMD_PIPE_PT_MOVE || \
+		     MEDIT(s)->edit_flag == ECMD_PIPE_SPLIT || \
+		     MEDIT(s)->edit_flag == ECMD_PIPE_PT_ADD || \
+		     MEDIT(s)->edit_flag == ECMD_PIPE_PT_INS || \
+		     MEDIT(s)->edit_flag == ECMD_ARS_MOVE_PT || \
+		     MEDIT(s)->edit_flag == ECMD_ARS_MOVE_CRV || \
+		     MEDIT(s)->edit_flag == ECMD_ARS_MOVE_COL || \
+		     MEDIT(s)->edit_flag == ECMD_BOT_MOVEV || \
+		     MEDIT(s)->edit_flag == ECMD_BOT_MOVEE || \
+		     MEDIT(s)->edit_flag == ECMD_BOT_MOVET || \
+		     MEDIT(s)->edit_flag == ECMD_CLINE_MOVE_H || \
+		     MEDIT(s)->edit_flag == ECMD_EXTR_MOV_H))
 #define OEDIT_TRAN (s->global_editing_state == ST_O_EDIT && \
 		    (edobj == BE_O_X || \
 		     edobj == BE_O_Y || \
@@ -208,13 +208,13 @@
 #define EDIT_TRAN (SEDIT_TRAN || OEDIT_TRAN)
 
 #define SEDIT_PICK (s->global_editing_state == ST_S_EDIT && \
-		    (s->s_edit->edit_flag == ECMD_NMG_EPICK || \
-		     s->s_edit->edit_flag == ECMD_PIPE_PICK || \
-		     s->s_edit->edit_flag == ECMD_ARS_PICK || \
-		     s->s_edit->edit_flag == ECMD_BOT_PICKV || \
-		     s->s_edit->edit_flag == ECMD_BOT_PICKE || \
-		     s->s_edit->edit_flag == ECMD_BOT_PICKT || \
-		     s->s_edit->edit_flag == ECMD_METABALL_PT_PICK))
+		    (MEDIT(s)->edit_flag == ECMD_NMG_EPICK || \
+		     MEDIT(s)->edit_flag == ECMD_PIPE_PICK || \
+		     MEDIT(s)->edit_flag == ECMD_ARS_PICK || \
+		     MEDIT(s)->edit_flag == ECMD_BOT_PICKV || \
+		     MEDIT(s)->edit_flag == ECMD_BOT_PICKE || \
+		     MEDIT(s)->edit_flag == ECMD_BOT_PICKT || \
+		     MEDIT(s)->edit_flag == ECMD_METABALL_PT_PICK))
 
 
 extern fastf_t es_peqn[7][4];	/* ARBs defining plane equations */
@@ -238,7 +238,7 @@ extern char *es_keytag;		/* string identifying the keypoint */
 extern point_t curr_e_axes_pos;	/* center of editing xforms */
 
 extern void
-get_solid_keypoint(struct mged_state *s, fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t *mat);
+get_solid_keypoint(struct mged_state *s, fastf_t *pt, const char **strp, struct rt_db_internal *ip, fastf_t *mat);
 
 extern void set_e_axes_pos(struct mged_state *s, int both);
 

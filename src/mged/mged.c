@@ -311,7 +311,7 @@ new_edit_mats(struct mged_state *s)
 	    continue;
 
 	set_curr_dm(s, p);
-	bn_mat_mul(view_state->vs_model2objview, view_state->vs_gvp->gv_model2view, s->s_edit->model_changes);
+	bn_mat_mul(view_state->vs_model2objview, view_state->vs_gvp->gv_model2view, MEDIT(s)->model_changes);
 	bn_mat_inv(view_state->vs_objview2model, view_state->vs_model2objview);
 	view_state->vs_flag = 1;
     }
@@ -331,7 +331,7 @@ mged_view_callback(struct bview *gvp,
 	return;
 
     if (s->global_editing_state != ST_VIEW) {
-	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, s->s_edit->model_changes);
+	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, MEDIT(s)->model_changes);
 	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
     }
     vsp->vs_flag = 1;
@@ -1012,7 +1012,7 @@ event_check(struct mged_state *s, int non_blocking)
      * Handle rate-based processing *
      *********************************/
     save_dm_list = s->mged_curr_dm;
-    if (s->s_edit->k.rot_m_flag) {
+    if (MEDIT(s)->k.rot_m_flag) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
@@ -1021,9 +1021,9 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = 'm';
 
 	if (s->global_editing_state == ST_S_EDIT) {
-	    save_edflag = s->s_edit->edit_flag;
+	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		s->s_edit->edit_flag = SROT;
+		MEDIT(s)->edit_flag = SROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1031,10 +1031,10 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		      s->s_edit->k.origin_m,
-		      s->s_edit->k.rot_m[X],
-		      s->s_edit->k.rot_m[Y],
-		      s->s_edit->k.rot_m[Z]);
+		      MEDIT(s)->k.origin_m,
+		      MEDIT(s)->k.rot_m[X],
+		      MEDIT(s)->k.rot_m[Y],
+		      MEDIT(s)->k.rot_m[Z]);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1042,11 +1042,11 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = save_coords;
 
 	if (s->global_editing_state == ST_S_EDIT)
-	    s->s_edit->edit_flag = save_edflag;
+	    MEDIT(s)->edit_flag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
-    if (s->s_edit->k.rot_o_flag) {
+    if (MEDIT(s)->k.rot_o_flag) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
@@ -1055,9 +1055,9 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = 'o';
 
 	if (s->global_editing_state == ST_S_EDIT) {
-	    save_edflag = s->s_edit->edit_flag;
+	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		s->s_edit->edit_flag = SROT;
+		MEDIT(s)->edit_flag = SROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1065,10 +1065,10 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		      s->s_edit->k.origin_o,
-		      s->s_edit->k.rot_o[X],
-		      s->s_edit->k.rot_o[Y],
-		      s->s_edit->k.rot_o[Z]);
+		      MEDIT(s)->k.origin_o,
+		      MEDIT(s)->k.rot_o[X],
+		      MEDIT(s)->k.rot_o[Y],
+		      MEDIT(s)->k.rot_o[Z]);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1076,11 +1076,11 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = save_coords;
 
 	if (s->global_editing_state == ST_S_EDIT)
-	    s->s_edit->edit_flag = save_edflag;
+	    MEDIT(s)->edit_flag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
-    if (s->s_edit->k.rot_v_flag) {
+    if (MEDIT(s)->k.rot_v_flag) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
@@ -1089,9 +1089,9 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = 'v';
 
 	if (s->global_editing_state == ST_S_EDIT) {
-	    save_edflag = s->s_edit->edit_flag;
+	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		s->s_edit->edit_flag = SROT;
+		MEDIT(s)->edit_flag = SROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1099,10 +1099,10 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		      s->s_edit->k.origin_v,
-		      s->s_edit->k.rot_v[X],
-		      s->s_edit->k.rot_v[Y],
-		      s->s_edit->k.rot_v[Z]);
+		      MEDIT(s)->k.origin_v,
+		      MEDIT(s)->k.rot_v[X],
+		      MEDIT(s)->k.rot_v[Y],
+		      MEDIT(s)->k.rot_v[Z]);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1110,11 +1110,11 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = save_coords;
 
 	if (s->global_editing_state == ST_S_EDIT)
-	    s->s_edit->edit_flag = save_edflag;
+	    MEDIT(s)->edit_flag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
-    if (s->s_edit->k.tra_m_flag) {
+    if (MEDIT(s)->k.tra_m_flag) {
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -1123,9 +1123,9 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = 'm';
 
 	if (s->global_editing_state == ST_S_EDIT) {
-	    save_edflag = s->s_edit->edit_flag;
+	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_TRAN)
-		s->s_edit->edit_flag = STRANS;
+		MEDIT(s)->edit_flag = STRANS;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1133,9 +1133,9 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		      s->s_edit->k.tra_m[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      s->s_edit->k.tra_m[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      s->s_edit->k.tra_m[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+		      MEDIT(s)->k.tra_m[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      MEDIT(s)->k.tra_m[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      MEDIT(s)->k.tra_m[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1143,11 +1143,11 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = save_coords;
 
 	if (s->global_editing_state == ST_S_EDIT)
-	    s->s_edit->edit_flag = save_edflag;
+	    MEDIT(s)->edit_flag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
-    if (s->s_edit->k.tra_v_flag) {
+    if (MEDIT(s)->k.tra_v_flag) {
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -1156,9 +1156,9 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = 'v';
 
 	if (s->global_editing_state == ST_S_EDIT) {
-	    save_edflag = s->s_edit->edit_flag;
+	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_TRAN)
-		s->s_edit->edit_flag = STRANS;
+		MEDIT(s)->edit_flag = STRANS;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1166,9 +1166,9 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		      s->s_edit->k.tra_v[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      s->s_edit->k.tra_v[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      s->s_edit->k.tra_v[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+		      MEDIT(s)->k.tra_v[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      MEDIT(s)->k.tra_v[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      MEDIT(s)->k.tra_v[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1176,17 +1176,17 @@ event_check(struct mged_state *s, int non_blocking)
 	mged_variables->mv_coords = save_coords;
 
 	if (s->global_editing_state == ST_S_EDIT)
-	    s->s_edit->edit_flag = save_edflag;
+	    MEDIT(s)->edit_flag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
-    if (s->s_edit->k.sca_flag) {
+    if (MEDIT(s)->k.sca_flag) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	if (s->global_editing_state == ST_S_EDIT) {
-	    save_edflag = s->s_edit->edit_flag;
+	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_SCALE)
-		s->s_edit->edit_flag = SSCALE;
+		MEDIT(s)->edit_flag = SSCALE;
 	} else {
 	    save_edflag = edobj;
 	    if (!OEDIT_SCALE)
@@ -1194,13 +1194,13 @@ event_check(struct mged_state *s, int non_blocking)
 	}
 
 	non_blocking++;
-	bu_vls_printf(&vls, "knob -i -e aS %f\n", s->s_edit->k.sca * 0.01);
+	bu_vls_printf(&vls, "knob -i -e aS %f\n", MEDIT(s)->k.sca * 0.01);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
 	if (s->global_editing_state == ST_S_EDIT)
-	    s->s_edit->edit_flag = save_edflag;
+	    MEDIT(s)->edit_flag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
@@ -1777,6 +1777,7 @@ mged_finish(struct mged_state *s, int exitcode)
     bu_vls_free(&s->input_str_prefix);
     bu_vls_free(&s->scratchline);
     bu_vls_free(&s-> mged_prompt);
+    rt_edit_destroy(s->s_edit->e);
     BU_PUT(s->s_edit, struct mged_edit_state);
     BU_PUT(s, struct mged_state);
     MGED_STATE = NULL; // sanity
@@ -1829,6 +1830,7 @@ main(int argc, char *argv[])
 
     BU_GET(MGED_STATE, struct mged_state);
     BU_GET(MGED_STATE->s_edit, struct mged_edit_state);
+    MGED_STATE->s_edit->e = rt_edit_create(NULL, NULL, NULL, NULL);
     struct mged_state *s = MGED_STATE;
     s->magic = MGED_STATE_MAGIC;
     s->classic_mged = 1;
@@ -2080,13 +2082,13 @@ main(int argc, char *argv[])
     owner = 1;
     frametime = 1;
 
-    MAT_IDN(s->s_edit->model_changes);
-    MAT_IDN(s->s_edit->acc_rot_sol);
+    MAT_IDN(MEDIT(s)->model_changes);
+    MAT_IDN(MEDIT(s)->acc_rot_sol);
 
     s->global_editing_state = ST_VIEW;
-    s->s_edit->edit_flag = -1;
-    s->es_edclass = EDIT_CLASS_NULL;
-    s->s_edit->e_inpara = newedge = 0;
+    MEDIT(s)->edit_flag = -1;
+    s->s_edit->es_edclass = EDIT_CLASS_NULL;
+    MEDIT(s)->e_inpara = newedge = 0;
 
     /* These values match old GED.  Use 'tol' command to change them. */
     s->tol.tol.magic = BN_TOL_MAGIC;
@@ -2102,7 +2104,7 @@ main(int argc, char *argv[])
 
     rt_prep_timer();		/* Initialize timer */
 
-    s->s_edit->edit_flag = -1;		/* no solid editing just now */
+    MEDIT(s)->edit_flag = -1;		/* no solid editing just now */
 
     /* prepare mged, adjust our path, get set up to use Tcl */
 

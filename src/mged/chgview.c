@@ -58,10 +58,10 @@ mged_erot(struct mged_state *s,
 	case 'm':
 	    break;
 	case 'o':
-	    bn_mat_inv(temp1, s->s_edit->acc_rot_sol);
+	    bn_mat_inv(temp1, MEDIT(s)->acc_rot_sol);
 
 	    /* transform into object rotations */
-	    bn_mat_mul(temp2, s->s_edit->acc_rot_sol, newrot);
+	    bn_mat_mul(temp2, MEDIT(s)->acc_rot_sol, newrot);
 	    bn_mat_mul(newrot, temp2, temp1);
 	    break;
 	case 'v':
@@ -79,24 +79,24 @@ mged_erot(struct mged_state *s,
 	save_rotate_about = mged_variables->mv_rotate_about;
 	mged_variables->mv_rotate_about = rotate_about;
 
-	save_edflag = s->s_edit->edit_flag;
+	save_edflag = MEDIT(s)->edit_flag;
 
 	if (!SEDIT_ROTATE) {
-	    s->s_edit->edit_flag = SROT;
+	    MEDIT(s)->edit_flag = SROT;
 	}
 
-	s->s_edit->e_inpara = 0;
-	MAT_COPY(s->s_edit->incr_change, newrot);
-	bn_mat_mul2(s->s_edit->incr_change, s->s_edit->acc_rot_sol);
+	MEDIT(s)->e_inpara = 0;
+	MAT_COPY(MEDIT(s)->incr_change, newrot);
+	bn_mat_mul2(MEDIT(s)->incr_change, MEDIT(s)->acc_rot_sol);
 	sedit(s);
 
 	mged_variables->mv_rotate_about = save_rotate_about;
-	s->s_edit->edit_flag = save_edflag;
+	MEDIT(s)->edit_flag = save_edflag;
     } else {
 	point_t point;
 	vect_t work;
 
-	bn_mat_mul2(newrot, s->s_edit->acc_rot_sol);
+	bn_mat_mul2(newrot, MEDIT(s)->acc_rot_sol);
 
 	/* find point for rotation to take place wrt */
 	switch (rotate_about) {
@@ -113,13 +113,13 @@ mged_erot(struct mged_state *s,
 		break;
 	    case 'k':
 	    default:
-		MAT4X3PNT(point, s->s_edit->model_changes, s->s_edit->e_keypoint);
+		MAT4X3PNT(point, MEDIT(s)->model_changes, MEDIT(s)->e_keypoint);
 	}
 
 	/*
-	 * Apply newrot to the s->s_edit->model_changes matrix wrt "point"
+	 * Apply newrot to the MEDIT(s)->model_changes matrix wrt "point"
 	 */
-	wrt_point(s->s_edit->model_changes, newrot, s->s_edit->model_changes, point);
+	wrt_point(MEDIT(s)->model_changes, newrot, MEDIT(s)->model_changes, point);
 
 	new_edit_mats(s);
     }
@@ -166,8 +166,8 @@ mged_otran(struct mged_state *s, const vect_t tvec)
     vect_t work = VINIT_ZERO;
 
     if (s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) {
-	/* apply s->s_edit->acc_rot_sol to tvec */
-	MAT4X3PNT(work, s->s_edit->acc_rot_sol, tvec);
+	/* apply MEDIT(s)->acc_rot_sol to tvec */
+	MAT4X3PNT(work, MEDIT(s)->acc_rot_sol, tvec);
     }
 
     return mged_mtran(s, work);
@@ -192,7 +192,7 @@ mged_etran(struct mged_state *s,
 	    break;
 	case 'o':
 	    VSCALE(p2, tvec, s->dbip->dbi_local2base);
-	    MAT4X3PNT(delta, s->s_edit->acc_rot_sol, p2);
+	    MAT4X3PNT(delta, MEDIT(s)->acc_rot_sol, p2);
 	    break;
 	case 'v':
 	default:
@@ -205,23 +205,23 @@ mged_etran(struct mged_state *s,
     }
 
     if (s->global_editing_state == ST_S_EDIT) {
-	s->s_edit->e_keyfixed = 0;
-	get_solid_keypoint(s, s->s_edit->e_keypoint, &s->s_edit->e_keytag,
-			   &s->s_edit->es_int, s->s_edit->e_mat);
-	save_edflag = s->s_edit->edit_flag;
+	MEDIT(s)->e_keyfixed = 0;
+	get_solid_keypoint(s, MEDIT(s)->e_keypoint, &MEDIT(s)->e_keytag,
+			   &MEDIT(s)->es_int, MEDIT(s)->e_mat);
+	save_edflag = MEDIT(s)->edit_flag;
 
 	if (!SEDIT_TRAN) {
-	    s->s_edit->edit_flag = STRANS;
+	    MEDIT(s)->edit_flag = STRANS;
 	}
 
-	VADD2(s->s_edit->e_para, delta, s->s_edit->curr_e_axes_pos);
-	s->s_edit->e_inpara = 3;
+	VADD2(MEDIT(s)->e_para, delta, MEDIT(s)->curr_e_axes_pos);
+	MEDIT(s)->e_inpara = 3;
 	sedit(s);
-	s->s_edit->edit_flag = save_edflag;
+	MEDIT(s)->edit_flag = save_edflag;
     } else {
 	MAT_IDN(xlatemat);
 	MAT_DELTAS_VEC(xlatemat, delta);
-	bn_mat_mul2(xlatemat, s->s_edit->model_changes);
+	bn_mat_mul2(xlatemat, MEDIT(s)->model_changes);
 
 	new_edit_mats(s);
 	s->update_views = 1;
@@ -275,11 +275,11 @@ mged_vrot(struct mged_state *s, char origin, fastf_t *newrot)
 	    VSET(rot_pt, 0.0, 0.0, 1.0);		/* point to rotate around */
 	} else if (origin == 'k' && s->global_editing_state == ST_S_EDIT) {
 	    /* rotate around keypoint */
-	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
+	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, MEDIT(s)->curr_e_axes_pos);
 	} else if (origin == 'k' && s->global_editing_state == ST_O_EDIT) {
 	    point_t kpWmc;
 
-	    MAT4X3PNT(kpWmc, s->s_edit->model_changes, s->s_edit->e_keypoint);
+	    MAT4X3PNT(kpWmc, MEDIT(s)->model_changes, MEDIT(s)->e_keypoint);
 	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, kpWmc);
 	} else {
 	    /* rotate around model center (0, 0, 0) */
@@ -333,8 +333,8 @@ mged_vrot_xyz(struct mged_state *s,
 	bn_mat_mul(newrot, temp2, temp1);
     } else if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) && coords == 'o') {
 	/* first, transform object rotations into model rotations */
-	bn_mat_inv(temp1, s->s_edit->acc_rot_sol);
-	bn_mat_mul(temp2, s->s_edit->acc_rot_sol, newrot);
+	bn_mat_inv(temp1, MEDIT(s)->acc_rot_sol);
+	bn_mat_mul(temp2, MEDIT(s)->acc_rot_sol, newrot);
 	bn_mat_mul(newrot, temp2, temp1);
 
 	/* now transform model rotations into view rotations */
@@ -1433,11 +1433,11 @@ check_nonzero_rates(struct mged_state *s)
 
     /* Edit vectors */
     struct rate_vec_desc edit_vecs[] = {
-	{s->s_edit->k.tra_m, &s->s_edit->k.tra_m_flag, 0},
-	{s->s_edit->k.tra_v, &s->s_edit->k.tra_v_flag, 0},
-	{s->s_edit->k.rot_m, &s->s_edit->k.rot_m_flag, 0},
-	{s->s_edit->k.rot_o, &s->s_edit->k.rot_o_flag, 0},
-	{s->s_edit->k.rot_v, &s->s_edit->k.rot_v_flag, 0},
+	{MEDIT(s)->k.tra_m, &MEDIT(s)->k.tra_m_flag, 0},
+	{MEDIT(s)->k.tra_v, &MEDIT(s)->k.tra_v_flag, 0},
+	{MEDIT(s)->k.rot_m, &MEDIT(s)->k.rot_m_flag, 0},
+	{MEDIT(s)->k.rot_o, &MEDIT(s)->k.rot_o_flag, 0},
+	{MEDIT(s)->k.rot_v, &MEDIT(s)->k.rot_v_flag, 0},
 	{NULL, NULL, 0}
     };
 
@@ -1446,7 +1446,7 @@ check_nonzero_rates(struct mged_state *s)
 
     /* Scalar scale rates */
     view_state->k.sca_flag = (!ZERO(view_state->k.sca)) ? 1 : 0;
-    s->s_edit->k.sca_flag  = (s->s_edit->k.sca > SMALL_FASTF) ? 1 : 0;
+    MEDIT(s)->k.sca_flag  = (MEDIT(s)->k.sca > SMALL_FASTF) ? 1 : 0;
 
     view_state->vs_flag = 1;
 }
@@ -1466,52 +1466,52 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (mged_variables->mv_rateknobs) {
-	if (s->es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "x = %f\n", s->s_edit->k.rot_m[X]);
-	    bu_vls_printf(&vls, "y = %f\n", s->s_edit->k.rot_m[Y]);
-	    bu_vls_printf(&vls, "z = %f\n", s->s_edit->k.rot_m[Z]);
+	if (s->s_edit->es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
+	    bu_vls_printf(&vls, "x = %f\n", MEDIT(s)->k.rot_m[X]);
+	    bu_vls_printf(&vls, "y = %f\n", MEDIT(s)->k.rot_m[Y]);
+	    bu_vls_printf(&vls, "z = %f\n", MEDIT(s)->k.rot_m[Z]);
 	} else {
 	    bu_vls_printf(&vls, "x = %f\n", view_state->k.rot_v[X]);
 	    bu_vls_printf(&vls, "y = %f\n", view_state->k.rot_v[Y]);
 	    bu_vls_printf(&vls, "z = %f\n", view_state->k.rot_v[Z]);
 	}
 
-	if (s->es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "S = %f\n", s->s_edit->k.sca);
+	if (s->s_edit->es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
+	    bu_vls_printf(&vls, "S = %f\n", MEDIT(s)->k.sca);
 	} else {
 	    bu_vls_printf(&vls, "S = %f\n", view_state->k.sca);
 	}
 
-	if (s->es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "X = %f\n", s->s_edit->k.tra_m[X]);
-	    bu_vls_printf(&vls, "Y = %f\n", s->s_edit->k.tra_m[Y]);
-	    bu_vls_printf(&vls, "Z = %f\n", s->s_edit->k.tra_m[Z]);
+	if (s->s_edit->es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
+	    bu_vls_printf(&vls, "X = %f\n", MEDIT(s)->k.tra_m[X]);
+	    bu_vls_printf(&vls, "Y = %f\n", MEDIT(s)->k.tra_m[Y]);
+	    bu_vls_printf(&vls, "Z = %f\n", MEDIT(s)->k.tra_m[Z]);
 	} else {
 	    bu_vls_printf(&vls, "X = %f\n", view_state->k.tra_v[X]);
 	    bu_vls_printf(&vls, "Y = %f\n", view_state->k.tra_v[Y]);
 	    bu_vls_printf(&vls, "Z = %f\n", view_state->k.tra_v[Z]);
 	}
     } else {
-	if (s->es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "ax = %f\n", s->s_edit->k.rot_m_abs[X]);
-	    bu_vls_printf(&vls, "ay = %f\n", s->s_edit->k.rot_m_abs[Y]);
-	    bu_vls_printf(&vls, "az = %f\n", s->s_edit->k.rot_m_abs[Z]);
+	if (s->s_edit->es_edclass == EDIT_CLASS_ROTATE && mged_variables->mv_transform == 'e') {
+	    bu_vls_printf(&vls, "ax = %f\n", MEDIT(s)->k.rot_m_abs[X]);
+	    bu_vls_printf(&vls, "ay = %f\n", MEDIT(s)->k.rot_m_abs[Y]);
+	    bu_vls_printf(&vls, "az = %f\n", MEDIT(s)->k.rot_m_abs[Z]);
 	} else {
 	    bu_vls_printf(&vls, "ax = %f\n", view_state->k.rot_v_abs[X]);
 	    bu_vls_printf(&vls, "ay = %f\n", view_state->k.rot_v_abs[Y]);
 	    bu_vls_printf(&vls, "az = %f\n", view_state->k.rot_v_abs[Z]);
 	}
 
-	if (s->es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "aS = %f\n", s->s_edit->k.sca_abs);
+	if (s->s_edit->es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
+	    bu_vls_printf(&vls, "aS = %f\n", MEDIT(s)->k.sca_abs);
 	} else {
 	    bu_vls_printf(&vls, "aS = %f\n", view_state->vs_gvp->gv_a_scale);
 	}
 
-	if (s->es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
-	    bu_vls_printf(&vls, "aX = %f\n", s->s_edit->k.tra_m_abs[X]);
-	    bu_vls_printf(&vls, "aY = %f\n", s->s_edit->k.tra_m_abs[Y]);
-	    bu_vls_printf(&vls, "aZ = %f\n", s->s_edit->k.tra_m_abs[Z]);
+	if (s->s_edit->es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
+	    bu_vls_printf(&vls, "aX = %f\n", MEDIT(s)->k.tra_m_abs[X]);
+	    bu_vls_printf(&vls, "aY = %f\n", MEDIT(s)->k.tra_m_abs[Y]);
+	    bu_vls_printf(&vls, "aZ = %f\n", MEDIT(s)->k.tra_m_abs[Z]);
 	} else {
 	    bu_vls_printf(&vls, "aX = %f\n", view_state->k.tra_v_abs[X]);
 	    bu_vls_printf(&vls, "aY = %f\n", view_state->k.tra_v_abs[Y]);
@@ -1722,27 +1722,27 @@ knob_apply_rotation_rate(struct mged_state *s,
 	switch (mged_variables->mv_coords) {
 	    case 'm':
 		if (incr)
-		    s->s_edit->k.rot_m[axis] += val;
+		    MEDIT(s)->k.rot_m[axis] += val;
 		else
-		    s->s_edit->k.rot_m[axis] = val;
-		s->s_edit->k.origin_m = origin;
+		    MEDIT(s)->k.rot_m[axis] = val;
+		MEDIT(s)->k.origin_m = origin;
 		s->s_edit->edit_rate_mr_dm = s->mged_curr_dm;
 		break;
 	    case 'o':
 		if (incr)
-		    s->s_edit->k.rot_o[axis] += val;
+		    MEDIT(s)->k.rot_o[axis] += val;
 		else
-		    s->s_edit->k.rot_o[axis] = val;
-		s->s_edit->k.origin_o = origin;
+		    MEDIT(s)->k.rot_o[axis] = val;
+		MEDIT(s)->k.origin_o = origin;
 		s->s_edit->edit_rate_or_dm = s->mged_curr_dm;
 		break;
 	    case 'v':
 	    default:
 		if (incr)
-		    s->s_edit->k.rot_v[axis] += val;
+		    MEDIT(s)->k.rot_v[axis] += val;
 		else
-		    s->s_edit->k.rot_v[axis] = val;
-		s->s_edit->k.origin_v = origin;
+		    MEDIT(s)->k.rot_v[axis] = val;
+		MEDIT(s)->k.origin_v = origin;
 		s->s_edit->edit_rate_vr_dm = s->mged_curr_dm;
 		break;
 	}
@@ -1788,12 +1788,12 @@ knob_apply_rotation_abs(struct mged_state *s,
     if (edit_this_cmd) {
 	switch (mged_variables->mv_coords) {
 	    case 'm':
-		abs_arr = s->s_edit->k.rot_m_abs; last_arr = s->s_edit->k.rot_m_abs_last; break;
+		abs_arr = MEDIT(s)->k.rot_m_abs; last_arr = MEDIT(s)->k.rot_m_abs_last; break;
 	    case 'o':
-		abs_arr = s->s_edit->k.rot_o_abs; last_arr = s->s_edit->k.rot_o_abs_last; break;
+		abs_arr = MEDIT(s)->k.rot_o_abs; last_arr = MEDIT(s)->k.rot_o_abs_last; break;
 	    case 'v':
 	    default:
-		abs_arr = s->s_edit->k.rot_v_abs; last_arr = s->s_edit->k.rot_v_abs_last; break;
+		abs_arr = MEDIT(s)->k.rot_v_abs; last_arr = MEDIT(s)->k.rot_v_abs_last; break;
 	}
     } else {
 	if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
@@ -1839,17 +1839,17 @@ knob_apply_translation_rate(struct mged_state *s,
 	    case 'm':
 	    case 'o': /* object shares tra_m in legacy editing */
 		if (incr)
-		    s->s_edit->k.tra_m[axis] += val;
+		    MEDIT(s)->k.tra_m[axis] += val;
 		else
-		    s->s_edit->k.tra_m[axis] = val;
+		    MEDIT(s)->k.tra_m[axis] = val;
 		s->s_edit->edit_rate_mt_dm = s->mged_curr_dm;
 		break;
 	    case 'v':
 	    default:
 		if (incr)
-		    s->s_edit->k.tra_v[axis] += val;
+		    MEDIT(s)->k.tra_v[axis] += val;
 		else
-		    s->s_edit->k.tra_v[axis] = val;
+		    MEDIT(s)->k.tra_v[axis] = val;
 		s->s_edit->edit_rate_vt_dm = s->mged_curr_dm;
 		break;
 	}
@@ -1893,13 +1893,13 @@ knob_apply_translation_abs(struct mged_state *s,
 	switch (mged_variables->mv_coords) {
 	    case 'm':
 	    case 'o':
-		abs_arr  = s->s_edit->k.tra_m_abs;
-		last_arr = s->s_edit->k.tra_m_abs_last;
+		abs_arr  = MEDIT(s)->k.tra_m_abs;
+		last_arr = MEDIT(s)->k.tra_m_abs_last;
 		break;
 	    case 'v':
 	    default:
-		abs_arr  = s->s_edit->k.tra_v_abs;
-		last_arr = s->s_edit->k.tra_v_abs_last;
+		abs_arr  = MEDIT(s)->k.tra_v_abs;
+		last_arr = MEDIT(s)->k.tra_v_abs_last;
 		break;
 	}
     } else {
@@ -1928,7 +1928,7 @@ knob_apply_translation_abs(struct mged_state *s,
 }
 
 /* --- Scale (Rate) ---
- * edit vs view.  Legacy: immediate modify of s->s_edit->k.sca or view_state->k.sca.
+ * edit vs view.  Legacy: immediate modify of MEDIT(s)->k.sca or view_state->k.sca.
  */
 static void
 knob_apply_scale_rate(struct mged_state *s,
@@ -1938,9 +1938,9 @@ knob_apply_scale_rate(struct mged_state *s,
 {
     if (edit_this_cmd) {
 	if (incr)
-	    s->s_edit->k.sca += val;
+	    MEDIT(s)->k.sca += val;
 	else
-	    s->s_edit->k.sca  = val;
+	    MEDIT(s)->k.sca  = val;
     } else {
 	if (incr)
 	    view_state->k.sca += val;
@@ -1951,7 +1951,7 @@ knob_apply_scale_rate(struct mged_state *s,
 
 /* --- Scale (Absolute) ---
  * For view scale: manipulate gv_a_scale + abs_zoom logic (legacy).
- * For edit scale: updates s->s_edit->k.sca_abs and calls sedit_abs_scale or oedit_abs_scale.
+ * For edit scale: updates MEDIT(s)->k.sca_abs and calls sedit_abs_scale or oedit_abs_scale.
  */
 static void
 knob_apply_scale_abs(struct mged_state *s,
@@ -1961,9 +1961,9 @@ knob_apply_scale_abs(struct mged_state *s,
 {
     if (edit_this_cmd) {
 	if (incr)
-	    s->s_edit->k.sca_abs += val;
+	    MEDIT(s)->k.sca_abs += val;
 	else
-	    s->s_edit->k.sca_abs = val;
+	    MEDIT(s)->k.sca_abs = val;
 
 	if (s->global_editing_state == ST_S_EDIT) {
 	    sedit_abs_scale(s);
@@ -2045,12 +2045,12 @@ knob_apply_misc(struct mged_state *s,
 	VSETALL(view_state->k.tra_v, 0.0);
 	view_state->k.sca = 0.0;
 
-	VSETALL(s->s_edit->k.rot_m, 0.0);
-	VSETALL(s->s_edit->k.rot_o, 0.0);
-	VSETALL(s->s_edit->k.rot_v, 0.0);
-	VSETALL(s->s_edit->k.tra_m, 0.0);
-	VSETALL(s->s_edit->k.tra_v, 0.0);
-	s->s_edit->k.sca = 0.0;
+	VSETALL(MEDIT(s)->k.rot_m, 0.0);
+	VSETALL(MEDIT(s)->k.rot_o, 0.0);
+	VSETALL(MEDIT(s)->k.rot_v, 0.0);
+	VSETALL(MEDIT(s)->k.tra_m, 0.0);
+	VSETALL(MEDIT(s)->k.tra_v, 0.0);
+	MEDIT(s)->k.sca = 0.0;
 
 	knob_update_rate_vars(s);
 	Tcl_Eval(interp, "adc reset");
@@ -3267,31 +3267,31 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
     if (s->global_editing_state == ST_S_EDIT) {
 	int save_edflag;
 
-	save_edflag = s->s_edit->edit_flag;
+	save_edflag = MEDIT(s)->edit_flag;
 
 	if (!SEDIT_SCALE) {
-	    s->s_edit->edit_flag = SSCALE;
+	    MEDIT(s)->edit_flag = SSCALE;
 	}
 
-	s->s_edit->es_scale = sfactor;
-	old_scale = s->s_edit->acc_sc_sol;
-	s->s_edit->acc_sc_sol *= sfactor;
+	MEDIT(s)->es_scale = sfactor;
+	old_scale = MEDIT(s)->acc_sc_sol;
+	MEDIT(s)->acc_sc_sol *= sfactor;
 
-	if (s->s_edit->acc_sc_sol < MGED_SMALL_SCALE) {
-	    s->s_edit->acc_sc_sol = old_scale;
-	    s->s_edit->edit_flag = save_edflag;
+	if (MEDIT(s)->acc_sc_sol < MGED_SMALL_SCALE) {
+	    MEDIT(s)->acc_sc_sol = old_scale;
+	    MEDIT(s)->edit_flag = save_edflag;
 	    return TCL_OK;
 	}
 
-	if (s->s_edit->acc_sc_sol >= 1.0) {
-	    s->s_edit->k.sca_abs = (s->s_edit->acc_sc_sol - 1.0) / 3.0;
+	if (MEDIT(s)->acc_sc_sol >= 1.0) {
+	    MEDIT(s)->k.sca_abs = (MEDIT(s)->acc_sc_sol - 1.0) / 3.0;
 	} else {
-	    s->s_edit->k.sca_abs = s->s_edit->acc_sc_sol - 1.0;
+	    MEDIT(s)->k.sca_abs = MEDIT(s)->acc_sc_sol - 1.0;
 	}
 
 	sedit(s);
 
-	s->s_edit->edit_flag = save_edflag;
+	MEDIT(s)->edit_flag = save_edflag;
     } else {
 	point_t temp;
 	point_t pos_model;
@@ -3304,33 +3304,33 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	switch (edobj) {
 	    case BE_O_XSCALE:			    /* local scaling ... X-axis */
 		smat[0] = sfactor;
-		old_scale = s->s_edit->acc_sc[X];
-		s->s_edit->acc_sc[X] *= sfactor;
+		old_scale = MEDIT(s)->acc_sc[X];
+		MEDIT(s)->acc_sc[X] *= sfactor;
 
-		if (s->s_edit->acc_sc[X] < MGED_SMALL_SCALE) {
-		    s->s_edit->acc_sc[X] = old_scale;
+		if (MEDIT(s)->acc_sc[X] < MGED_SMALL_SCALE) {
+		    MEDIT(s)->acc_sc[X] = old_scale;
 		    return TCL_OK;
 		}
 
 		break;
 	    case BE_O_YSCALE:			    /* local scaling ... Y-axis */
 		smat[5] = sfactor;
-		old_scale = s->s_edit->acc_sc[Y];
-		s->s_edit->acc_sc[Y] *= sfactor;
+		old_scale = MEDIT(s)->acc_sc[Y];
+		MEDIT(s)->acc_sc[Y] *= sfactor;
 
-		if (s->s_edit->acc_sc[Y] < MGED_SMALL_SCALE) {
-		    s->s_edit->acc_sc[Y] = old_scale;
+		if (MEDIT(s)->acc_sc[Y] < MGED_SMALL_SCALE) {
+		    MEDIT(s)->acc_sc[Y] = old_scale;
 		    return TCL_OK;
 		}
 
 		break;
 	    case BE_O_ZSCALE:			    /* local scaling ... Z-axis */
 		smat[10] = sfactor;
-		old_scale = s->s_edit->acc_sc[Z];
-		s->s_edit->acc_sc[Z] *= sfactor;
+		old_scale = MEDIT(s)->acc_sc[Z];
+		MEDIT(s)->acc_sc[Z] *= sfactor;
 
-		if (s->s_edit->acc_sc[Z] < MGED_SMALL_SCALE) {
-		    s->s_edit->acc_sc[Z] = old_scale;
+		if (MEDIT(s)->acc_sc[Z] < MGED_SMALL_SCALE) {
+		    MEDIT(s)->acc_sc[Z] = old_scale;
 		    return TCL_OK;
 		}
 
@@ -3338,11 +3338,11 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	    case BE_O_SCALE:			     /* global scaling */
 	    default:
 		smat[15] = inv_sfactor;
-		old_scale = s->s_edit->acc_sc_sol;
-		s->s_edit->acc_sc_sol *= inv_sfactor;
+		old_scale = MEDIT(s)->acc_sc_sol;
+		MEDIT(s)->acc_sc_sol *= inv_sfactor;
 
-		if (s->s_edit->acc_sc_sol < MGED_SMALL_SCALE) {
-		    s->s_edit->acc_sc_sol = old_scale;
+		if (MEDIT(s)->acc_sc_sol < MGED_SMALL_SCALE) {
+		    MEDIT(s)->acc_sc_sol = old_scale;
 		    return TCL_OK;
 		}
 
@@ -3369,9 +3369,9 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	 * valid primitive parameters, so regeneration of new wireframes in
 	 * response to the new shape isn't feasible.
 	 */
-	VMOVE(temp, s->s_edit->e_keypoint);
-	MAT4X3PNT(pos_model, s->s_edit->model_changes, temp);
-	wrt_point(s->s_edit->model_changes, smat, s->s_edit->model_changes, pos_model);
+	VMOVE(temp, MEDIT(s)->e_keypoint);
+	MAT4X3PNT(pos_model, MEDIT(s)->model_changes, temp);
+	wrt_point(MEDIT(s)->model_changes, smat, MEDIT(s)->model_changes, pos_model);
 
 	new_edit_mats(s);
     }

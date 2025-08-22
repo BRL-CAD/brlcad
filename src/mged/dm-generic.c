@@ -201,7 +201,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    point_t model_pt;
 
 	    snap_to_grid(s, &fx, &fy);
-	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
+	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, MEDIT(s)->curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
@@ -213,7 +213,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 	    point_t model_pt;
 
 	    snap_to_grid(s, &fx, &fy);
-	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, s->s_edit->curr_e_axes_pos);
+	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, MEDIT(s)->curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
@@ -267,9 +267,9 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
 			mged_variables->mv_transform == 'e') {
 			if (s->global_editing_state == ST_S_EDIT) {
-			    save_edflag = s->s_edit->edit_flag;
+			    save_edflag = MEDIT(s)->edit_flag;
 			    if (!SEDIT_TRAN)
-				s->s_edit->edit_flag = STRANS;
+				MEDIT(s)->edit_flag = STRANS;
 			} else {
 			    save_edflag = edobj;
 			    edobj = BE_O_XY;
@@ -278,7 +278,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			snap_keypoint_to_grid(s);
 
 			if (s->global_editing_state == ST_S_EDIT)
-			    s->s_edit->edit_flag = save_edflag;
+			    MEDIT(s)->edit_flag = save_edflag;
 			else
 			    edobj = save_edflag;
 		    } else
@@ -288,12 +288,12 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		break;
 	    case 's':
 		if (s->global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-		    ZERO(s->s_edit->acc_sc_sol))
-		    s->s_edit->acc_sc_sol = 1.0;
+		    ZERO(MEDIT(s)->acc_sc_sol))
+		    MEDIT(s)->acc_sc_sol = 1.0;
 		else if (s->global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-		    s->s_edit->k.sca_abs = s->s_edit->acc_sc_obj - 1.0;
-		    if (s->s_edit->k.sca_abs > 0.0)
-			s->s_edit->k.sca_abs /= 3.0;
+		    MEDIT(s)->k.sca_abs = MEDIT(s)->acc_sc_obj - 1.0;
+		    if (MEDIT(s)->k.sca_abs > 0.0)
+			MEDIT(s)->k.sca_abs /= 3.0;
 		}
 
 		am_mode = AMM_SCALE;
@@ -457,36 +457,36 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 		switch (*argv[2]) {
 		    case 'x':
 			if (s->global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    ZERO(s->s_edit->acc_sc_sol))
-			    s->s_edit->acc_sc_sol = 1.0;
+			    ZERO(MEDIT(s)->acc_sc_sol))
+			    MEDIT(s)->acc_sc_sol = 1.0;
 			else if (s->global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->s_edit->k.sca_abs = s->s_edit->acc_sc[0] - 1.0;
-			    if (s->s_edit->k.sca_abs > 0.0)
-				s->s_edit->k.sca_abs /= 3.0;
+			    MEDIT(s)->k.sca_abs = MEDIT(s)->acc_sc[0] - 1.0;
+			    if (MEDIT(s)->k.sca_abs > 0.0)
+				MEDIT(s)->k.sca_abs /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_X;
 			break;
 		    case 'y':
 			if (s->global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    ZERO(s->s_edit->acc_sc_sol))
-			    s->s_edit->acc_sc_sol = 1.0;
+			    ZERO(MEDIT(s)->acc_sc_sol))
+			    MEDIT(s)->acc_sc_sol = 1.0;
 			else if (s->global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->s_edit->k.sca_abs = s->s_edit->acc_sc[1] - 1.0;
-			    if (s->s_edit->k.sca_abs > 0.0)
-				s->s_edit->k.sca_abs /= 3.0;
+			    MEDIT(s)->k.sca_abs = MEDIT(s)->acc_sc[1] - 1.0;
+			    if (MEDIT(s)->k.sca_abs > 0.0)
+				MEDIT(s)->k.sca_abs /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_Y;
 			break;
 		    case 'z':
 			if (s->global_editing_state == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    ZERO(s->s_edit->acc_sc_sol))
-			    s->s_edit->acc_sc_sol = 1.0;
+			    ZERO(MEDIT(s)->acc_sc_sol))
+			    MEDIT(s)->acc_sc_sol = 1.0;
 			else if (s->global_editing_state == ST_O_EDIT && mged_variables->mv_transform == 'e') {
-			    s->s_edit->k.sca_abs = s->s_edit->acc_sc[2] - 1.0;
-			    if (s->s_edit->k.sca_abs > 0.0)
-				s->s_edit->k.sca_abs /= 3.0;
+			    MEDIT(s)->k.sca_abs = MEDIT(s)->acc_sc[2] - 1.0;
+			    if (MEDIT(s)->k.sca_abs > 0.0)
+				MEDIT(s)->k.sca_abs /= 3.0;
 			}
 
 			am_mode = AMM_CON_SCALE_Z;
