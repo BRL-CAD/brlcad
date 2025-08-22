@@ -103,6 +103,8 @@ extern struct bu_vls *history_prev(const char *);
 extern struct bu_vls *history_cur(const char *);
 extern struct bu_vls *history_next(const char *);
 
+// FIXME: Globals
+
 /* defined in dozoom.c */
 extern unsigned char geometry_default_color[];
 
@@ -127,6 +129,7 @@ extern struct _rubber_band default_rubber_band;
  * when we're done (which is needed so atexit() calls to bu_log() will
  * still work).
  */
+// FIXME: Global
 static int stdfd[2] = {1, 2};
 #endif
 
@@ -140,16 +143,20 @@ struct stdio_data {
 struct mged_state *MGED_STATE = NULL;
 
 jmp_buf jmp_env;	/* For non-local gotos */
+// FIXME: Global
 double frametime;	/* time needed to draw last frame */
 
+// FIXME: Global
 struct rt_wdb rtg_headwdb;  /* head of database object list */
 
 void (*cur_sigint)(int);	/* Current SIGINT status */
 
+// FIXME: Global
 int cbreak_mode = 0;    /* >0 means in cbreak_mode */
 
 
 /* The old mged gui is temporarily the default. */
+// FIXME: Global
 int old_mged_gui=1;
 
 static int

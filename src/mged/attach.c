@@ -51,6 +51,7 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
+// FIXME: Globals
 /* Geometry display instances used by MGED */
 struct bu_ptbl active_dm_set = BU_PTBL_INIT_ZERO;  /* set of active display managers */
 struct mged_dm *mged_dm_init_state = NULL;

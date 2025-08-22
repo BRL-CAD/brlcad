@@ -36,6 +36,7 @@
 
 #include "raytrace.h"
 
+// FIXME: Global
 extern struct rt_wdb rtg_headwdb;
 
 #endif  /* MGED_MGED_WDB_H */

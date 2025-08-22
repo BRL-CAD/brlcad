@@ -52,8 +52,9 @@ static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_st
 
 int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const point_t ref_pt  , const mat_t mat);
 
-short int fixv;		/* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */
+// FIXME:  Globals
 
+short int fixv;		/* used in ECMD_ARB_ROTATE_FACE, f_eqn(): fixed vertex */
 
 /* data for solid editing */
 int sedraw;	/* apply solid editing changes */
