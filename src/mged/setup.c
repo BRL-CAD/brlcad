@@ -384,7 +384,7 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "v2m_point", cmd_ged_plain_wrapper, ged_exec_v2m_point, NULL},
     {MGED_CMD_MAGIC, "vars", f_set, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "vdraw", cmd_ged_plain_wrapper, ged_exec_vdraw, NULL},
-    {MGED_CMD_MAGIC, "view", cmd_ged_view_wrapper, ged_exec_view, NULL},
+    {MGED_CMD_MAGIC, "view", cmd_view, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "view_ring", f_view_ring, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "view2grid_lu", cmd_ged_plain_wrapper, ged_exec_view2grid_lu, NULL},
     {MGED_CMD_MAGIC, "view2model", cmd_ged_plain_wrapper, ged_exec_view2model, NULL},

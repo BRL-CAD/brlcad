@@ -1727,7 +1727,12 @@ knob_apply_misc(struct mged_state *s,
 	return 1;
     }
     if (BU_STR_EQUAL(token, "calibrate")) {
+	/* Reset BOTH model and view absolute translation baselines and their last arrays.
+	 * This avoids stale last values if the user changes coordinate modes after calibrate. */
 	VSETALL(view_state->k.tra_v_abs, 0.0);
+	VSETALL(view_state->k.tra_v_abs_last, 0.0);
+	VSETALL(view_state->k.tra_m_abs, 0.0);
+	VSETALL(view_state->k.tra_m_abs_last, 0.0);
 	return 1;
     }
     return 0;
@@ -1905,6 +1910,16 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     check_nonzero_rates(s);
+
+    /* Synchronize MGED's authoritative knob state into the active bview so that
+     * subsequent "view knob" (libged) commands see the accumulated rates and
+     * absolute values.  Without this, mixing "knob ..." then "view knob ..."
+     * would drop the earlier MGED changes because vs_gvp->k lags behind
+     * view_state->k. */
+    if (view_state && view_state->vs_gvp) {
+	view_state->vs_gvp->k = view_state->k;
+    }
+
     return TCL_OK;
 
 usage:

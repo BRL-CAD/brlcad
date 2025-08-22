@@ -86,6 +86,7 @@ extern int cmd_tk(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_tol(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_tra(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_units(ClientData, Tcl_Interp *, int, const char *[]);
+extern int cmd_view(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_vrot(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_zap(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_zoom(ClientData, Tcl_Interp *, int, const char *[]);

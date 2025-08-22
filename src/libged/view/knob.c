@@ -140,7 +140,13 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 	if (BU_STR_EQUAL(cmd, "calibrate")) {
+	    /* Reset BOTH model and view absolute translation baselines and their
+	     * corresponding last arrays so switching coord systems after a
+	     * calibrate does not introduce stale deltas. */
 	    VSETALL(v->k.tra_v_abs, 0.0);
+	    VSETALL(v->k.tra_v_abs_last, 0.0);
+	    VSETALL(v->k.tra_m_abs, 0.0);
+	    VSETALL(v->k.tra_m_abs_last, 0.0);
 	    continue;
 	}
 
