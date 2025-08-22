@@ -85,57 +85,6 @@ bv_knobs_reset(struct bview_knobs *k, int category)
 
 }
 
-void
-bv_knobs_sync(struct bview_knobs *dest, const struct bview_knobs *src)
-{
-    if (!src || !dest)
-	return;
-
-    VMOVE(dest->rot_m, src->rot_m);
-    dest->rot_m_flag = src->rot_m_flag;
-    dest->origin_m = src->origin_m;
-    dest->rot_m_udata = src->rot_m_udata;
-
-    VMOVE(dest->rot_o, src->rot_o);
-    dest->rot_o_flag = src->rot_o_flag;
-    dest->origin_o = src->origin_o;
-    dest->rot_o_udata = src->rot_o_udata;
-
-    VMOVE(dest->rot_v, src->rot_v);
-    dest->rot_v_flag = src->rot_v_flag;
-    dest->origin_v = src->origin_v;
-    dest->rot_v_udata = src->rot_v_udata;
-
-    dest->sca = src->sca;
-    dest->sca_flag = src->sca_flag;
-    dest->sca_udata = src->sca_udata;
-
-    VMOVE(dest->tra_m, src->tra_m);
-    dest->tra_m_flag = src->tra_m_flag;
-    dest->tra_m_udata = src->tra_m_udata;
-
-    VMOVE(dest->tra_v, src->tra_v);
-    dest->tra_v_flag = src->tra_v_flag;
-    dest->tra_v_udata = src->tra_v_udata;
-
-    VMOVE(dest->rot_m_abs, src->rot_m_abs);
-    VMOVE(dest->rot_m_abs_last, src->rot_m_abs_last);
-
-    VMOVE(dest->rot_o_abs, src->rot_o_abs);
-    VMOVE(dest->rot_o_abs_last, src->rot_o_abs_last);
-
-    VMOVE(dest->rot_v_abs, src->rot_v_abs);
-    VMOVE(dest->rot_v_abs_last, src->rot_v_abs_last);
-
-    dest->sca_abs = src->sca_abs;
-
-    VMOVE(dest->tra_m_abs, src->tra_m_abs);
-    VMOVE(dest->tra_m_abs_last, src->tra_m_abs_last);
-
-    VMOVE(dest->tra_v_abs, src->tra_v_abs);
-    VMOVE(dest->tra_v_abs_last, src->tra_v_abs_last);
-}
-
 static void
 set_absolute_view_tran(struct bview *v)
 {
