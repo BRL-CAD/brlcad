@@ -46,13 +46,6 @@
 #define V3BASE2LOCAL(_pt)	(_pt)[X]*s->dbip->dbi_base2local, (_pt)[Y]*s->dbip->dbi_base2local, (_pt)[Z]*s->dbip->dbi_base2local
 #define V4BASE2LOCAL(_pt)	(_pt)[X]*s->dbip->dbi_base2local, (_pt)[Y]*s->dbip->dbi_base2local, (_pt)[Z]*s->dbip->dbi_base2local, (_pt)[W]*s->dbip->dbi_base2local
 
-/* used to invoke the above editor if X11 is in use */
-#define XTERM_COMMAND "xterm"
-
-/* Can the mac terminal be used to launch applications?  Doesn't seem like it
- * in initial trials, but maybe there's some trick? */
-#define MAC_BINARY "/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal"
-
 static char tmpfil[MAXPATHLEN] = {0};
 
 /* used in handling different arb types */
