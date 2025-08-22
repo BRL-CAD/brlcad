@@ -2069,6 +2069,10 @@ knob_apply_misc(struct mged_state *s,
     return 0;
 }
 
+/* NOTE:  the MGED knob command will interpret any command that does not match
+ * the current editing state as a view instruction - for example, "x 1" will be
+ * interpreted to mean set the view rotation rate if the MGED editing state is
+ * not set to rotational editing. */
 int
 f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
