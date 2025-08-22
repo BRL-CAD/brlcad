@@ -31,6 +31,7 @@
 #include "vmath.h"
 #include "bu/getopt.h"
 #include "bn.h"
+#include "bv/util.h"
 #include "raytrace.h"
 #include "nmg.h"
 #include "tclcad.h"
@@ -1534,537 +1535,76 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
 }
 
 
-/* ------------------------------------------------------------------------ */
-/* Knob command helpers (rate/absolute rotation, translation, scale)
- *
- * NOTE - future integration can map the helpers here to librt functions (e.g.,
- * bv_knobs_cmd_process style) once stable.
- *
- * Key Semantics:
- *  - 'x','y','z'  : rotation rate (degrees/sec conceptually) in chosen coord
- *  - 'X','Y','Z'  : translation rate (unit/sec conceptually)
- *  - 'S'          : scale rate (view or edit)
- *  - 'ax','ay','az' : absolute rotation
- *  - 'aX','aY','aZ' : absolute translation
- *  - 'aS'         : absolute scale (view or edit)
- *  - zap/zero, calibrate, adc passthroughs
- *  - -i (increment mode), -m / -v coord flags, -e force-edit
- *  - Angle wrap to [-180,180]
- *  - Absolute translation delta calculation identical to legacy
- *
- * Processing steps:
- *  1. Parse global options.
- *  2. Loop token/value pairs; classify each token.
- *  3. Update internal state arrays via concise helper functions.
- *  4. Accumulate rvec/tvec if a rotation or translation needs to be
- *     applied after the parse loop (mirrors original behavior).
- *  5. Apply operations (knob_rot / knob_tran) once per category.
- *  6. Run check_nonzero_rates(s).
- */
-
-typedef enum {
-    KNOB_NONE = 0,
-    KNOB_ROT_RATE,
-    KNOB_ROT_ABS,
-    KNOB_TRAN_RATE,
-    KNOB_TRAN_ABS,
-    KNOB_SCALE_RATE,
-    KNOB_SCALE_ABS,
-    KNOB_ADC,        /* xadc, yadc, ang1, ang2, distadc */
-    KNOB_MISC        /* zap/zero, calibrate */
-} knob_kind_t;
-
-typedef enum {
-    AXIS_NONE = -1,
-    AXIS_X = 0,
-    AXIS_Y = 1,
-    AXIS_Z = 2
-} knob_axis_t;
-
-struct knob_token_desc {
-    const char *name;
-    knob_kind_t kind;
-    knob_axis_t axis;   /* For axis-bearing kinds */
-};
-
-/* Classification table */
-static const struct knob_token_desc knob_tokens[] = {
-    {"x",   KNOB_ROT_RATE,  AXIS_X},
-    {"y",   KNOB_ROT_RATE,  AXIS_Y},
-    {"z",   KNOB_ROT_RATE,  AXIS_Z},
-    {"X",   KNOB_TRAN_RATE, AXIS_X},
-    {"Y",   KNOB_TRAN_RATE, AXIS_Y},
-    {"Z",   KNOB_TRAN_RATE, AXIS_Z},
-    {"S",   KNOB_SCALE_RATE, AXIS_NONE},
-
-    {"ax",  KNOB_ROT_ABS,   AXIS_X},
-    {"ay",  KNOB_ROT_ABS,   AXIS_Y},
-    {"az",  KNOB_ROT_ABS,   AXIS_Z},
-    {"aX",  KNOB_TRAN_ABS,  AXIS_X},
-    {"aY",  KNOB_TRAN_ABS,  AXIS_Y},
-    {"aZ",  KNOB_TRAN_ABS,  AXIS_Z},
-    {"aS",  KNOB_SCALE_ABS, AXIS_NONE},
-
-    {"xadc",    KNOB_ADC, AXIS_X},
-    {"yadc",    KNOB_ADC, AXIS_Y},
-    {"ang1",    KNOB_ADC, AXIS_NONE},
-    {"ang2",    KNOB_ADC, AXIS_NONE},
-    {"distadc", KNOB_ADC, AXIS_NONE},
-
-    {"zap",      KNOB_MISC, AXIS_NONE},
-    {"zero",     KNOB_MISC, AXIS_NONE},
-    {"calibrate",KNOB_MISC, AXIS_NONE},
-
-    {NULL, KNOB_NONE, AXIS_NONE}
-};
-
-/* Return descriptor or NULL if unrecognized */
-static const struct knob_token_desc *
-knob_lookup_token(const char *tok)
+/* Identify tokens handled by libbv core knob processor */
+static int
+is_core_view_knob_token(const char *t)
 {
-    for (const struct knob_token_desc *d = knob_tokens; d->name; d++) {
-	if (BU_STR_EQUAL(d->name, tok))
-	    return d;
-    }
-    return NULL;
+    if (!t) return 0;
+    return
+	BU_STR_EQUAL(t,"x")  || BU_STR_EQUAL(t,"y")  || BU_STR_EQUAL(t,"z")  ||
+	BU_STR_EQUAL(t,"X")  || BU_STR_EQUAL(t,"Y")  || BU_STR_EQUAL(t,"Z")  ||
+	BU_STR_EQUAL(t,"S")  ||
+	BU_STR_EQUAL(t,"ax") || BU_STR_EQUAL(t,"ay") || BU_STR_EQUAL(t,"az") ||
+	BU_STR_EQUAL(t,"aX") || BU_STR_EQUAL(t,"aY") || BU_STR_EQUAL(t,"aZ") ||
+	BU_STR_EQUAL(t,"aS");
 }
 
-/* Decide if (token) should be handled as an editing command for this call. */
+/* MGED-only tokens (ADC + misc) */
 static int
-knob_is_edit_cmd(struct mged_state *s,
-	const char *token,
-	int model_flag,
-	int view_flag,
-	int force_edit)
+is_mged_only_knob_token(const char *t)
 {
-    if (!token || !*token)
-	return 0;
+    if (!t) return 0;
+    return
+	BU_STR_EQUAL(t,"xadc") || BU_STR_EQUAL(t,"yadc") ||
+	BU_STR_EQUAL(t,"ang1") || BU_STR_EQUAL(t,"ang2") ||
+	BU_STR_EQUAL(t,"distadc") ||
+	BU_STR_EQUAL(t,"zap")  || BU_STR_EQUAL(t,"zero") ||
+	BU_STR_EQUAL(t,"calibrate");
+}
 
-    /* Rotation and translation editing required mv_transform=='e'
-     * and no -v and no -m unless -e supplied.
-     * Scale editing ignored the presence of -m (model_flag) and
-     * only required mv_transform=='e' and no -v (unless forced.)
-     */
-    int scale_tok = 0;
-    if ((token[0] == 'S' && token[1] == '\0') ||
-	    (token[0] == 'a' && token[1] == 'S' && token[2] == '\0')) {
-	scale_tok = 1;
+/* Decide whether a token should be treated as an edit knob op */
+static int
+token_is_edit(const char *token,
+	      struct mged_state *s,
+	      int model_flag,
+	      int view_flag,
+	      int force_edit)
+{
+    if (!is_core_view_knob_token(token)) return 0;
+    int in_edit = (s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT);
+    if (!in_edit && !force_edit) return 0;
+
+    /* Scale ops ignore model_flag constraint (legacy) */
+    int is_scale = (token[0] == 'S' && token[1] == '\0') ||
+	(token[0]=='a' && token[1]=='S' && token[2]=='\0');
+
+    int base_ok = (mged_variables->mv_transform == 'e' && !view_flag &&
+		   (is_scale || !model_flag));
+
+    if (force_edit) base_ok = 1;
+
+    if (!base_ok) return 0;
+
+    /* Check that the specific edit type is enabled */
+    if (token[0] == 'a') {
+	switch (token[1]) {
+	    case 'x': case 'y': case 'z':
+		return EDIT_ROTATE ? 1 : 0;
+	    case 'X': case 'Y': case 'Z':
+		return EDIT_TRAN ? 1 : 0;
+	    case 'S':
+		return EDIT_SCALE ? 1 : 0;
+	}
+	return 0;
     }
 
-    int base_edit_condition;
-    if (scale_tok) {
-	/* Ignore model_flag for scale to match legacy behavior */
-	base_edit_condition = (mged_variables->mv_transform == 'e' && !view_flag);
-    } else {
-	base_edit_condition = (mged_variables->mv_transform == 'e' && !view_flag && !model_flag);
-    }
-
-    int edit_mode_ok = base_edit_condition || force_edit;
-
-    if (!edit_mode_ok)
-	return 0;
-
-    if (token[0] == 'a' && token[1] && !token[2]) {
-	/* absolute axis form ax/ay/az/aX/aY/aZ/aS */
-	char c = token[1];
-	if (c == 'x' || c == 'y' || c == 'z')
-	    return EDIT_ROTATE ? 1 : 0;
-	if (c == 'X' || c == 'Y' || c == 'Z')
-	    return EDIT_TRAN ? 1 : 0;
-	if (c == 'S')
-	    return EDIT_SCALE ? 1 : 0;
-	return 0;
-    }
-
-    /* single char tokens */
-    char c = token[0];
-    if (token[1] != '\0')
-	return 0;
-
-    switch (c) {
+    switch (token[0]) {
 	case 'x': case 'y': case 'z':
 	    return EDIT_ROTATE ? 1 : 0;
 	case 'X': case 'Y': case 'Z':
 	    return EDIT_TRAN ? 1 : 0;
 	case 'S':
 	    return EDIT_SCALE ? 1 : 0;
-	default:
-	    return 0;
-    }
-}
-
-/* Clamp absolute rotation angle in-place to [-180,180] */
-static inline fastf_t
-wrap_angle_180(fastf_t a)
-{
-    if (a < -180.0) a += 360.0;
-    else if (a > 180.0) a -= 360.0;
-    return a;
-}
-
-/* --- Rotation (Rate) Update ---
- * incr: if 1, add value; else set
- */
-static void
-knob_apply_rotation_rate(struct mged_state *s,
-	knob_axis_t axis,
-	fastf_t val,
-	int incr,
-	int model_flag,
-	int view_flag,
-	int edit_this_cmd,
-	char origin)
-{
-    if (axis < 0) return;
-
-    if (edit_this_cmd) {
-	/* Choose coordinate system for edit rotation */
-	switch (mged_variables->mv_coords) {
-	    case 'm':
-		if (incr)
-		    MEDIT(s)->k.rot_m[axis] += val;
-		else
-		    MEDIT(s)->k.rot_m[axis] = val;
-		MEDIT(s)->k.origin_m = origin;
-		s->s_edit->edit_rate_mr_dm = s->mged_curr_dm;
-		break;
-	    case 'o':
-		if (incr)
-		    MEDIT(s)->k.rot_o[axis] += val;
-		else
-		    MEDIT(s)->k.rot_o[axis] = val;
-		MEDIT(s)->k.origin_o = origin;
-		s->s_edit->edit_rate_or_dm = s->mged_curr_dm;
-		break;
-	    case 'v':
-	    default:
-		if (incr)
-		    MEDIT(s)->k.rot_v[axis] += val;
-		else
-		    MEDIT(s)->k.rot_v[axis] = val;
-		MEDIT(s)->k.origin_v = origin;
-		s->s_edit->edit_rate_vr_dm = s->mged_curr_dm;
-		break;
-	}
-    } else {
-	/* View (model or view coords) */
-	if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
-	    if (incr)
-		view_state->k.rot_m[axis] += val;
-	    else
-		view_state->k.rot_m[axis] = val;
-	    view_state->k.origin_m = origin;
-	} else {
-	    if (incr)
-		view_state->k.rot_v[axis] += val;
-	    else
-		view_state->k.rot_v[axis] = val;
-	    view_state->k.origin_v = origin;
-	}
-    }
-}
-
-/* --- Rotation (Absolute) ---
- * For incr: just add to absolute value. For set: compute delta = new - last.
- * We also wrap angles and update last.
- * Returns the delta to place in rvec[axis] when non-incremental (set mode)
- * or the raw value (in incremental)
- */
-static fastf_t
-knob_apply_rotation_abs(struct mged_state *s,
-	knob_axis_t axis,
-	fastf_t val,
-	int incr,
-	int model_flag,
-	int view_flag,
-	int edit_this_cmd)
-{
-    if (axis < 0) return 0.0;
-    fastf_t delta = 0.0;
-
-    /* Helpers to pick the right pointer sets */
-    fastf_t *abs_arr = NULL, *last_arr = NULL;
-
-    if (edit_this_cmd) {
-	switch (mged_variables->mv_coords) {
-	    case 'm':
-		abs_arr = MEDIT(s)->k.rot_m_abs; last_arr = MEDIT(s)->k.rot_m_abs_last; break;
-	    case 'o':
-		abs_arr = MEDIT(s)->k.rot_o_abs; last_arr = MEDIT(s)->k.rot_o_abs_last; break;
-	    case 'v':
-	    default:
-		abs_arr = MEDIT(s)->k.rot_v_abs; last_arr = MEDIT(s)->k.rot_v_abs_last; break;
-	}
-    } else {
-	if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
-	    abs_arr  = view_state->k.rot_m_abs;
-	    last_arr = view_state->k.rot_m_abs_last;
-	} else {
-	    abs_arr  = view_state->k.rot_v_abs;
-	    last_arr = view_state->k.rot_v_abs_last;
-	}
-    }
-
-    if (incr) {
-	abs_arr[axis] += val;
-	delta = val; /* legacy rvec[axis] = f in incremental mode */
-    } else {
-	delta = val - last_arr[axis];
-	abs_arr[axis] = val;
-    }
-
-    /* Wrap & sync last */
-    abs_arr[axis] = wrap_angle_180(abs_arr[axis]);
-    last_arr[axis] = abs_arr[axis];
-
-    return delta;
-}
-
-/* --- Translation (Rate) ---
- * Very similar to rotation rate but without origin.
- */
-static void
-knob_apply_translation_rate(struct mged_state *s,
-	knob_axis_t axis,
-	fastf_t val,
-	int incr,
-	int model_flag,
-	int view_flag,
-	int edit_this_cmd)
-{
-    if (axis < 0) return;
-
-    if (edit_this_cmd) {
-	switch (mged_variables->mv_coords) {
-	    case 'm':
-	    case 'o': /* object shares tra_m in legacy editing */
-		if (incr)
-		    MEDIT(s)->k.tra_m[axis] += val;
-		else
-		    MEDIT(s)->k.tra_m[axis] = val;
-		s->s_edit->edit_rate_mt_dm = s->mged_curr_dm;
-		break;
-	    case 'v':
-	    default:
-		if (incr)
-		    MEDIT(s)->k.tra_v[axis] += val;
-		else
-		    MEDIT(s)->k.tra_v[axis] = val;
-		s->s_edit->edit_rate_vt_dm = s->mged_curr_dm;
-		break;
-	}
-    } else {
-	if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
-	    if (incr)
-		view_state->k.tra_m[axis] += val;
-	    else
-		view_state->k.tra_m[axis] = val;
-	} else {
-	    if (incr)
-		view_state->k.tra_v[axis] += val;
-	    else
-		view_state->k.tra_v[axis] = val;
-	}
-    }
-}
-
-/* --- Translation (Absolute) ---
- * Legacy semantics:
- *  - sf = f * local2base / gv_scale (view or edit paths that require conversion)
- *  - incr: add sf to absolute value; last = new; tvec[axis] = original f
- *  - set  : tvec[axis] = f - (last_val * scale * base2local); store sf; last = sf
- * We replicate exactly.  Returns the tvec[axis] contribution.
- */
-static fastf_t
-knob_apply_translation_abs(struct mged_state *s,
-	knob_axis_t axis,
-	fastf_t f_user,
-	int incr,
-	int model_flag,
-	int view_flag,
-	int edit_this_cmd)
-{
-    if (axis < 0) return 0.0;
-
-    fastf_t sf = f_user * s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale;
-    fastf_t *abs_arr = NULL, *last_arr = NULL;
-
-    if (edit_this_cmd) {
-	switch (mged_variables->mv_coords) {
-	    case 'm':
-	    case 'o':
-		abs_arr  = MEDIT(s)->k.tra_m_abs;
-		last_arr = MEDIT(s)->k.tra_m_abs_last;
-		break;
-	    case 'v':
-	    default:
-		abs_arr  = MEDIT(s)->k.tra_v_abs;
-		last_arr = MEDIT(s)->k.tra_v_abs_last;
-		break;
-	}
-    } else {
-	if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
-	    abs_arr  = view_state->k.tra_m_abs;
-	    last_arr = view_state->k.tra_m_abs_last;
-	} else {
-	    abs_arr  = view_state->k.tra_v_abs;
-	    last_arr = view_state->k.tra_v_abs_last;
-	}
-    }
-
-    fastf_t tvec_val = 0.0;
-    if (incr) {
-	abs_arr[axis] += sf;
-	last_arr[axis] = abs_arr[axis];
-	tvec_val = f_user;
-    } else {
-	/* delta = f_user - last * scale * base2local */
-	tvec_val = f_user - last_arr[axis] * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local;
-	abs_arr[axis] = sf;
-	last_arr[axis] = abs_arr[axis];
-    }
-
-    return tvec_val;
-}
-
-/* --- Scale (Rate) ---
- * edit vs view.  Legacy: immediate modify of MEDIT(s)->k.sca or view_state->k.sca.
- */
-static void
-knob_apply_scale_rate(struct mged_state *s,
-	fastf_t val,
-	int incr,
-	int edit_this_cmd)
-{
-    if (edit_this_cmd) {
-	if (incr)
-	    MEDIT(s)->k.sca += val;
-	else
-	    MEDIT(s)->k.sca  = val;
-    } else {
-	if (incr)
-	    view_state->k.sca += val;
-	else
-	    view_state->k.sca  = val;
-    }
-}
-
-/* --- Scale (Absolute) ---
- * For view scale: manipulate gv_a_scale + abs_zoom logic (legacy).
- * For edit scale: updates MEDIT(s)->k.sca_abs and calls sedit_abs_scale or oedit_abs_scale.
- */
-static void
-knob_apply_scale_abs(struct mged_state *s,
-	fastf_t val,
-	int incr,
-	int edit_this_cmd)
-{
-    if (edit_this_cmd) {
-	if (incr)
-	    MEDIT(s)->k.sca_abs += val;
-	else
-	    MEDIT(s)->k.sca_abs = val;
-
-	if (s->global_editing_state == ST_S_EDIT) {
-	    sedit_abs_scale(s);
-	} else {
-	    oedit_abs_scale(s);
-	}
-    } else {
-	if (incr)
-	    view_state->vs_gvp->gv_a_scale += val;
-	else
-	    view_state->vs_gvp->gv_a_scale  = val;
-	{
-	    char *av[2] = {"zoom", "1.0"};
-	    /* abs_zoom inline (kept original function in file) */
-	    if (-SMALL_FASTF < view_state->vs_gvp->gv_a_scale &&
-		    view_state->vs_gvp->gv_a_scale < SMALL_FASTF) {
-		view_state->vs_gvp->gv_scale = view_state->vs_gvp->gv_i_scale;
-	    } else {
-		if (view_state->vs_gvp->gv_a_scale > 0) {
-		    view_state->vs_gvp->gv_scale =
-			view_state->vs_gvp->gv_i_scale * (1.0 - view_state->vs_gvp->gv_a_scale);
-		} else {
-		    view_state->vs_gvp->gv_scale =
-			view_state->vs_gvp->gv_i_scale * (1.0 + (view_state->vs_gvp->gv_a_scale * -9.0));
-		}
-	    }
-	    if (view_state->vs_gvp->gv_scale < BV_MINVIEWSIZE)
-		view_state->vs_gvp->gv_scale = BV_MINVIEWSIZE;
-
-	    ged_exec_zoom(s->gedp, 2, (const char **)av);
-
-	    if (!ZERO(view_state->k.tra_v_abs[X]) ||
-		    !ZERO(view_state->k.tra_v_abs[Y]) ||
-		    !ZERO(view_state->k.tra_v_abs[Z])) {
-		set_absolute_tran(s);
-	    }
-	}
-    }
-}
-
-/* --- ADC pass-through helper --- */
-static void
-knob_apply_adc(struct mged_state *UNUSED(s),
-	Tcl_Interp *interp,
-	const char *token,
-	fastf_t fval,
-	int ival,
-	int incr)
-{
-    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
-    bu_vls_printf(&tcl_cmd, "adc ");
-    if (incr) bu_vls_printf(&tcl_cmd, "-i ");
-
-    if (BU_STR_EQUAL(token, "xadc")) {
-	bu_vls_printf(&tcl_cmd, "x %d", ival);
-    } else if (BU_STR_EQUAL(token, "yadc")) {
-	bu_vls_printf(&tcl_cmd, "y %d", ival);
-    } else if (BU_STR_EQUAL(token, "ang1")) {
-	bu_vls_printf(&tcl_cmd, "a1 %f", fval);
-    } else if (BU_STR_EQUAL(token, "ang2")) {
-	bu_vls_printf(&tcl_cmd, "a2 %f", fval);
-    } else if (BU_STR_EQUAL(token, "distadc")) {
-	bu_vls_printf(&tcl_cmd, "odst %d", ival);
-    }
-    Tcl_Eval(interp, bu_vls_cstr(&tcl_cmd));
-    bu_vls_free(&tcl_cmd);
-}
-
-/* --- zap / calibrate / zero & misc --- */
-static int
-knob_apply_misc(struct mged_state *s,
-	Tcl_Interp *interp,
-	const char *token)
-{
-    if (BU_STR_EQUAL(token, "zap") || BU_STR_EQUAL(token, "zero")) {
-	VSETALL(view_state->k.rot_m, 0.0);
-	VSETALL(view_state->k.tra_m, 0.0);
-	VSETALL(view_state->k.rot_v, 0.0);
-	VSETALL(view_state->k.tra_v, 0.0);
-	view_state->k.sca = 0.0;
-
-	VSETALL(MEDIT(s)->k.rot_m, 0.0);
-	VSETALL(MEDIT(s)->k.rot_o, 0.0);
-	VSETALL(MEDIT(s)->k.rot_v, 0.0);
-	VSETALL(MEDIT(s)->k.tra_m, 0.0);
-	VSETALL(MEDIT(s)->k.tra_v, 0.0);
-	MEDIT(s)->k.sca = 0.0;
-
-	knob_update_rate_vars(s);
-	Tcl_Eval(interp, "adc reset");
-	(void)mged_svbase(s);
-	return 1;
-    }
-    if (BU_STR_EQUAL(token, "calibrate")) {
-	/* Reset BOTH model and view absolute translation baselines and their last arrays.
-	 * This avoids stale last values if the user changes coordinate modes after calibrate. */
-	VSETALL(view_state->k.tra_v_abs, 0.0);
-	VSETALL(view_state->k.tra_v_abs_last, 0.0);
-	VSETALL(view_state->k.tra_m_abs, 0.0);
-	VSETALL(view_state->k.tra_m_abs_last, 0.0);
-	return 1;
     }
     return 0;
 }
@@ -2080,16 +1620,11 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     MGED_CK_CMD(ctp);
     struct mged_state *s = ctp->s;
 
-    int incr_flag = 0;	/* interpret values as increments */
-    int view_flag = 0;	/* manipulate view using view coords */
-    int model_flag = 0;	/* manipulate view using model coords */
-    int force_edit = 0;	/* force edit interpretation */
+    int incr_flag = 0;
+    int view_flag = 0;
+    int model_flag = 0;
+    int force_edit = 0;
     char origin = '\0';
-
-    vect_t rvec; VSETALL(rvec, 0.0);
-    vect_t tvec; VSETALL(tvec, 0.0);
-    int do_rot = 0;
-    int do_tran = 0;
 
     CHECK_DBI_NULL;
 
@@ -2101,29 +1636,18 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    /* Parse options */
+    /* Options */
     {
 	int c;
 	bu_optind = 1;
 	while ((c = bu_getopt(argc, (char * const *)argv, "eimo:v")) != -1) {
 	    switch (c) {
-		case 'e':
-		    force_edit = 1;
-		    break;
-		case 'i':
-		    incr_flag  = 1;
-		    break;
-		case 'm':
-		    model_flag = 1;
-		    break;
-		case 'v':
-		    view_flag  = 1;
-		    break;
-		case 'o':
-		    origin = *bu_optarg;
-		    break;
-		default:
-		    break;
+		case 'e': force_edit = 1; break;
+		case 'i': incr_flag = 1;  break;
+		case 'm': model_flag = 1; break;
+		case 'v': view_flag  = 1; break;
+		case 'o': origin = *bu_optarg; break;
+		default: break;
 	    }
 	}
 	argv += (bu_optind - 1);
@@ -2133,140 +1657,150 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     if (origin != 'v' && origin != 'm' && origin != 'e' && origin != 'k')
 	origin = mged_variables->mv_rotate_about;
 
-    /* No extra args => print current values */
     if (argc == 1) {
 	return mged_print_knobvals(s, interp);
     }
 
-    /* Process token/value pairs */
+    vect_t rvec = VINIT_ZERO;
+    vect_t tvec = VINIT_ZERO;
+    int do_rot = 0;
+    int do_tran = 0;
+    int do_sca = 0; /* edit scale only (view scale aS is applied immediately) */
+
     --argc; ++argv;
     while (argc > 0) {
+
 	const char *token = argv[0];
-	const char *valstr = (argc > 1) ? argv[1] : NULL;
+	const char *val = (argc > 1) ? argv[1] : NULL;
 
-	if (!valstr) {
-	    /* Need a numeric value unless misc/zero handled separately */
-	    if (!knob_apply_misc(s, interp, token)) {
-		goto usage;
+	if (is_core_view_knob_token(token)) {
+
+	    if (!val) {
+		Tcl_AppendResult(interp, "knob: missing value for token ", token, "\n", NULL);
+		return TCL_ERROR;
 	    }
-	    --argc; ++argv;
-	    continue;
-	}
+	    fastf_t fval = atof(val);
 
-	/* Look up token classification */
-	const struct knob_token_desc *desc = knob_lookup_token(token);
-	if (!desc) {
-	    /* Could be zap/zero etc. */
-	    if (!knob_apply_misc(s, interp, token))
-		goto usage;
-	    --argc; ++argv;
-	    continue;
-	}
+	    int use_edit = token_is_edit(token, s, model_flag, view_flag, force_edit);
 
-	/* Handle misc tokens immediately, consuming ONLY the token.
-	 * Any following numeric word will be treated as a separate token
-	 * and (as in legacy) will trigger usage() since it's unknown.
-	 * This restores original behavior where "knob zap 5" produced an error.
-	 */
-	if (desc->kind == KNOB_MISC) {
-	    knob_apply_misc(s, interp, token);
-	    --argc; ++argv;
-	    continue;
-	}
-
-	/* Extract numeric */
-	int ival = atoi(valstr);
-	fastf_t fval = atof(valstr);
-
-	/* Immediate ADC or misc path? */
-	if (desc->kind == KNOB_ADC) {
-	    knob_apply_adc(s, interp, token, fval, ival, incr_flag);
+	    int ret = BRLCAD_OK;
+	    if (use_edit) {
+		ret = rt_edit_knob_cmd_process(MEDIT(s),
+			&rvec, &do_rot, &tvec, &do_tran, &do_sca,
+			view_state->vs_gvp, token, fval,
+			origin, incr_flag, (void *)s->mged_curr_dm);
+	    } else {
+		ret = bv_knobs_cmd_process(&rvec, &do_rot, &tvec, &do_tran,
+			view_state->vs_gvp, token, fval,
+			origin, model_flag, incr_flag);
+	    }
+	    if (ret != BRLCAD_OK) {
+		Tcl_AppendResult(interp, "knob: invalid token ", token, "\n", NULL);
+		return TCL_ERROR;
+	    }
 	    argc -= 2; argv += 2;
 	    continue;
 	}
 
-	/* Determine if this token is handled as edit */
-	int edit_this_cmd = knob_is_edit_cmd(s, token, model_flag, view_flag, force_edit);
+	if (is_mged_only_knob_token(token)) {
 
-	switch (desc->kind) {
+	    /* zap/zero */
+	    if (BU_STR_EQUAL(token,"zap") || BU_STR_EQUAL(token,"zero")) {
+		/* Reset view knobs */
+		bv_knobs_reset(&view_state->vs_gvp->k, BV_KNOBS_ALL);
+		/* Reset MGED cached copy */
+		view_state->k = view_state->vs_gvp->k;
+		/* Reset edit knobs if in edit mode */
+		if (s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) {
+		    bv_knobs_reset(&MEDIT(s)->k, BV_KNOBS_ALL);
+		}
+		knob_update_rate_vars(s);
+		Tcl_Eval(interp, "adc reset");
+		(void)mged_svbase(s);
+		--argc; ++argv;
+		continue;
+	    }
 
-	    case KNOB_ROT_RATE:
-		knob_apply_rotation_rate(s, desc->axis, fval, incr_flag,
-			model_flag, view_flag,
-			edit_this_cmd, origin);
-		break;
+	    /* calibrate */
+	    if (BU_STR_EQUAL(token,"calibrate")) {
+		VSETALL(view_state->vs_gvp->k.tra_v_abs, 0.0);
+		VSETALL(view_state->vs_gvp->k.tra_v_abs_last, 0.0);
+		VSETALL(view_state->vs_gvp->k.tra_m_abs, 0.0);
+		VSETALL(view_state->vs_gvp->k.tra_m_abs_last, 0.0);
+		view_state->k = view_state->vs_gvp->k;
+		--argc; ++argv;
+		continue;
+	    }
 
-	    case KNOB_ROT_ABS: {
-				   fastf_t delta = knob_apply_rotation_abs(s, desc->axis, fval, incr_flag,
-					   model_flag, view_flag,
-					   edit_this_cmd);
-				   rvec[desc->axis] = delta;
-				   do_rot = 1;
-				   break;
-			       }
-
-	    case KNOB_TRAN_RATE:
-			       knob_apply_translation_rate(s, desc->axis, fval, incr_flag,
-				       model_flag, view_flag,
-				       edit_this_cmd);
-			       break;
-
-	    case KNOB_TRAN_ABS: {
-				    fastf_t delta = knob_apply_translation_abs(s, desc->axis, fval, incr_flag,
-					    model_flag, view_flag,
-					    edit_this_cmd);
-				    tvec[desc->axis] = delta;
-				    do_tran = 1;
-				    break;
-				}
-
-	    case KNOB_SCALE_RATE:
-				knob_apply_scale_rate(s, fval, incr_flag, edit_this_cmd);
-				break;
-
-	    case KNOB_SCALE_ABS:
-				knob_apply_scale_abs(s, fval, incr_flag, edit_this_cmd);
-				break;
-
-	    default:
-				goto usage;
+	    /* ADC tokens require a value */
+	    if (!val) {
+		Tcl_AppendResult(interp, "knob: missing value for ADC token ", token, "\n", NULL);
+		return TCL_ERROR;
+	    }
+	    struct bu_vls tc = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&tc, "adc ");
+	    if (incr_flag) bu_vls_strcat(&tc, "-i ");
+	    if (BU_STR_EQUAL(token,"xadc")) bu_vls_printf(&tc, "x %d", atoi(val));
+	    else if (BU_STR_EQUAL(token,"yadc")) bu_vls_printf(&tc, "y %d", atoi(val));
+	    else if (BU_STR_EQUAL(token,"ang1")) bu_vls_printf(&tc, "a1 %f", atof(val));
+	    else if (BU_STR_EQUAL(token,"ang2")) bu_vls_printf(&tc, "a2 %f", atof(val));
+	    else if (BU_STR_EQUAL(token,"distadc")) bu_vls_printf(&tc, "odst %d", atoi(val));
+	    Tcl_Eval(interp, bu_vls_addr(&tc));
+	    bu_vls_free(&tc);
+	    argc -= 2; argv += 2;
+	    continue;
 	}
 
-	argc -= 2;
-	argv += 2;
+	Tcl_AppendResult(interp, "knob: unknown token ", token, "\n", NULL);
+	return TCL_ERROR;
     }
 
-    /* Apply any accumulated translation or rotation (non-abs scale already applied) */
+    /* Apply accumulated geometry edit transforms */
     if (do_tran) {
-	knob_tran(s, tvec, model_flag, view_flag, force_edit);
+	if (s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) {
+	    rt_knob_edit_tran(MEDIT(s),
+		mged_variables->mv_coords,
+		(s->global_editing_state == ST_O_EDIT),
+		tvec);
+	} else {
+	    bv_knobs_tran(view_state->vs_gvp, &tvec, model_flag);
+	}
     }
+
     if (do_rot) {
-	knob_rot(s, rvec, origin, model_flag, view_flag, force_edit);
+	if (s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) {
+	    mat_t rmat;
+	    MAT_IDN(rmat);
+	    bn_mat_angles(rmat, rvec[X], rvec[Y], rvec[Z]);
+	    rt_knob_edit_rot(MEDIT(s),
+		mged_variables->mv_coords,
+		origin,
+		(s->global_editing_state == ST_O_EDIT),
+		rmat);
+	} else {
+	    bv_knobs_rot(view_state->vs_gvp, &rvec, origin, model_flag);
+	}
+    }
+
+    if (do_sca) {
+	/* Only edit scale sets do_sca */
+	if (s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) {
+	    rt_knob_edit_sca(MEDIT(s), (s->global_editing_state == ST_O_EDIT));
+	}
+    }
+
+    /* Update rate flags & sync MGED cached copy */
+    if (!(s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT)) {
+	bv_update_rate_flags(view_state->vs_gvp);
+	view_state->k = view_state->vs_gvp->k;
     }
 
     check_nonzero_rates(s);
 
-    /* Synchronize MGED's authoritative knob state into the active bview so that
-     * subsequent "view knob" (libged) commands see the accumulated rates and
-     * absolute values.  Without this, mixing "knob ..." then "view knob ..."
-     * would drop the earlier MGED changes because vs_gvp->k lags behind
-     * view_state->k. */
-    if (view_state && view_state->vs_gvp) {
-	view_state->vs_gvp->k = view_state->k;
-    }
+    view_state->vs_flag = 1;
+    dm_set_dirty(DMP, 1);
 
     return TCL_OK;
-
-usage:
-    Tcl_AppendResult(interp,
-	    "knob: x, y, z for rotation in degrees\n"
-	    "knob: S for scale; X, Y, Z for slew (rates, range -1..+1)\n"
-	    "knob: ax, ay, az for absolute rotation in degrees; aS for absolute scale.\n"
-	    "knob: aX, aY, aZ for absolute slew.  calibrate to set current slew to 0\n"
-	    "knob: xadc, yadc, distadc (values, range -2048..+2047)\n"
-	    "knob: ang1, ang2 for adc angles in degrees\n"
-	    "knob: zero (cancel motion)\n", (char *)NULL);
-    return TCL_ERROR;
 }
 
 
