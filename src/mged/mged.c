@@ -331,8 +331,10 @@ mged_view_callback(struct bview *gvp,
 	return;
 
     if (s->global_editing_state != ST_VIEW) {
-	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, MEDIT(s)->model_changes);
-	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
+	if (MEDIT(s)) {
+	    bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, MEDIT(s)->model_changes);
+	    bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
+	}
     }
     vsp->vs_flag = 1;
     dm_set_dirty(s->mged_curr_dm->dm_dmp, 1);
@@ -1012,13 +1014,13 @@ event_check(struct mged_state *s, int non_blocking)
      * Handle rate-based processing *
      *********************************/
     save_dm_list = s->mged_curr_dm;
-    if (MEDIT(s)->k.rot_m_flag) {
+    if (MEDIT(s) && MEDIT(s)->k.rot_m_flag) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	set_curr_dm(s, s->s_edit->edit_rate_mr_dm);
-	save_coords = mged_variables->mv_coords;
-	mged_variables->mv_coords = 'm';
+	set_curr_dm(s, MEDIT(s)->k.rot_m_udata);
+	save_coords = view_state->vs_gvp->gv_coord;
+	view_state->vs_gvp->gv_coord = 'm';
 
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
@@ -1046,13 +1048,13 @@ event_check(struct mged_state *s, int non_blocking)
 	else
 	    edobj = save_edflag;
     }
-    if (MEDIT(s)->k.rot_o_flag) {
+    if (MEDIT(s) && MEDIT(s)->k.rot_o_flag) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	set_curr_dm(s, s->s_edit->edit_rate_or_dm);
-	save_coords = mged_variables->mv_coords;
-	mged_variables->mv_coords = 'o';
+	set_curr_dm(s, MEDIT(s)->k.rot_o_udata);
+	save_coords = view_state->vs_gvp->gv_coord;
+	view_state->vs_gvp->gv_coord = 'o';
 
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
@@ -1080,13 +1082,13 @@ event_check(struct mged_state *s, int non_blocking)
 	else
 	    edobj = save_edflag;
     }
-    if (MEDIT(s)->k.rot_v_flag) {
+    if (MEDIT(s) && MEDIT(s)->k.rot_v_flag) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	set_curr_dm(s, s->s_edit->edit_rate_vr_dm);
-	save_coords = mged_variables->mv_coords;
-	mged_variables->mv_coords = 'v';
+	set_curr_dm(s, MEDIT(s)->k.rot_v_udata);
+	save_coords = view_state->vs_gvp->gv_coord;
+	view_state->vs_gvp->gv_coord = 'v';
 
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
@@ -1114,13 +1116,13 @@ event_check(struct mged_state *s, int non_blocking)
 	else
 	    edobj = save_edflag;
     }
-    if (MEDIT(s)->k.tra_m_flag) {
+    if (MEDIT(s) && MEDIT(s)->k.tra_m_flag) {
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	set_curr_dm(s, s->s_edit->edit_rate_mt_dm);
-	save_coords = mged_variables->mv_coords;
-	mged_variables->mv_coords = 'm';
+	set_curr_dm(s, MEDIT(s)->k.tra_m_udata);
+	save_coords = view_state->vs_gvp->gv_coord;
+	view_state->vs_gvp->gv_coord = 'm';
 
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
@@ -1147,13 +1149,13 @@ event_check(struct mged_state *s, int non_blocking)
 	else
 	    edobj = save_edflag;
     }
-    if (MEDIT(s)->k.tra_v_flag) {
+    if (MEDIT(s) && MEDIT(s)->k.tra_v_flag) {
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	set_curr_dm(s, s->s_edit->edit_rate_vt_dm);
-	save_coords = mged_variables->mv_coords;
-	mged_variables->mv_coords = 'v';
+	set_curr_dm(s, MEDIT(s)->k.tra_v_udata);
+	save_coords = view_state->vs_gvp->gv_coord;
+	view_state->vs_gvp->gv_coord = 'v';
 
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
@@ -1180,7 +1182,7 @@ event_check(struct mged_state *s, int non_blocking)
 	else
 	    edobj = save_edflag;
     }
-    if (MEDIT(s)->k.sca_flag) {
+    if (MEDIT(s) && MEDIT(s)->k.sca_flag) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	if (s->global_editing_state == ST_S_EDIT) {
@@ -1772,14 +1774,7 @@ mged_finish(struct mged_state *s, int exitcode)
 
     mged_global_variable_teardown(s);
 
-    s->magic = 0; // make sure anything trying to use this after free gets a magic failure
-    bu_vls_free(&s->input_str);
-    bu_vls_free(&s->input_str_prefix);
-    bu_vls_free(&s->scratchline);
-    bu_vls_free(&s-> mged_prompt);
-    rt_edit_destroy(s->s_edit->e);
-    BU_PUT(s->s_edit, struct mged_edit_state);
-    BU_PUT(s, struct mged_state);
+    mged_state_destroy(s);
     MGED_STATE = NULL; // sanity
 
     /* 8.5 seems to have some bugs in their reference counting */
@@ -1828,21 +1823,8 @@ main(int argc, char *argv[])
     int result;
 #endif
 
-    BU_GET(MGED_STATE, struct mged_state);
-    BU_GET(MGED_STATE->s_edit, struct mged_edit_state);
-    MGED_STATE->s_edit->e = rt_edit_create(NULL, NULL, NULL, NULL);
+    MGED_STATE = mged_state_create();
     struct mged_state *s = MGED_STATE;
-    s->magic = MGED_STATE_MAGIC;
-    s->classic_mged = 1;
-    s->interactive = 0; /* >0 means interactive, intentionally starts
-                         * 0 to know when interactive, e.g., via -C
-                         * option
-			 */
-    bu_vls_init(&s->input_str);
-    bu_vls_init(&s->input_str_prefix);
-    bu_vls_init(&s->scratchline);
-    bu_vls_init(&s->mged_prompt);
-    s->dpy_string = NULL;
 
     /* Set up linked lists */
     s->vlfree = &rt_vlfree;
@@ -2086,9 +2068,7 @@ main(int argc, char *argv[])
     MAT_IDN(MEDIT(s)->acc_rot_sol);
 
     s->global_editing_state = ST_VIEW;
-    MEDIT(s)->edit_flag = -1;
     s->s_edit->es_edclass = EDIT_CLASS_NULL;
-    MEDIT(s)->e_inpara = newedge = 0;
 
     /* These values match old GED.  Use 'tol' command to change them. */
     s->tol.tol.magic = BN_TOL_MAGIC;
@@ -2112,7 +2092,7 @@ main(int argc, char *argv[])
     new_mats(s);
 
     mmenu_init(s);
-    btn_head_menu(s, 0, 0, 0);
+    btn_head_menu(MEDIT(s), 0, 0, 0, s);
     mged_link_vars(s->mged_curr_dm);
 
     bu_vls_printf(&s->input_str, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));

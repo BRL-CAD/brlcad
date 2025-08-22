@@ -69,6 +69,44 @@ struct vd_curve {
 };
 #define VD_CURVE_NULL   ((struct vd_curve *)NULL)
 
+/* Need to figure out a good general scheme for object vlist data management.
+ * In MGED, one of the biggest advantages of oed vs. sed is that oed can do
+ * editing while reusing the wireframes from an already drawn model - i.e., it
+ * doesn't have to use any additional memory to store alternate copies.  oed
+ * operations alter a matrix, which is then use to alter how the EXISTING solid
+ * vlists are drawn for the edited geometry.  However, a drawback of using this
+ * ability is you lose improved wireframe generation if that is an option for
+ * the primitive in question.  If LoD is not in effect BoTs won't need any new
+ * wireframes, but (for example) if a TOR is scaled the existing wireframe may
+ * be coarse in the view when representing the new shape without regenerating
+ * the wireframe.
+ *
+ * A wholesale replacement of the existing wireframe isn't an option, since
+ * other instances in the view may be using the original and not being edited,
+ * so what we really need is an ability to optionally generate a new wireframe
+ * only in the editing cases where that makes sense, and a way for the
+ * primitive edits (sed or oed) to notify the app when it should be using
+ * either the edit local vlist or altering an existing solid with the matrix.
+ *
+ * MGED handles this reuse by having a set of bv_scene_obj containers stored in
+ * the ged_drawable struct's gd_headDisplay list.  It then calls the
+ * dm_draw_head_dl function twice, once for non editing objs and once for
+ * edited objs, with a flag set to filter on whether to draw bv_scene_objs that
+ * are or are not being edited.  The solids in turn have a flag that is set to
+ * indicate whether or not they are part of the current edit.  (Incidently,
+ * that part-of-edit-op flag setting is the reason that multiply drawn objects
+ * are rejected for editing - doing so would require the drawing code to be
+ * able to put up both the edit and non-edited versions of a solid
+ * simultaneously, and this mechanism isn't flexible enough for that.)
+ *
+ * For the new draw code, I think BViewState::redraw will need to check if
+ * bv_scene_objs in the view are overridden by an rt_edit generated bv_scene_obj.
+ * If we allow an rt_edit callback to return a bv_scene_obj from the app (if it
+ * supplies one) or an internally generated one (if the edit op indicates it is
+ * necessary or the parent simply doesn't have one) we might be able to come up
+ * with a way to allow for this sort of reuse...
+ */
+
 struct ged_drawable {
     struct bu_list              *gd_headDisplay;        /**< @brief  head of display list */
     struct bu_list              *gd_headVDraw;          /**< @brief  head of vdraw list */

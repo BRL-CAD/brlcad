@@ -145,7 +145,6 @@ doEvent(ClientData UNUSED(clientData), void *UNUSED(eventPtr)) {
 }
 #endif /* HAVE_X11_XLIB_H */
 
-
 #ifdef HAVE_X11_TYPES
 static void
 motion_event_handler(struct mged_state *s, XMotionEvent *xmotion)

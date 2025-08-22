@@ -45,184 +45,38 @@ extern void mged_color_soltab(struct mged_state *s);
 int
 mged_erot(struct mged_state *s,
 	char coords,
-	  char rotate_about,
-	  mat_t newrot)
+	char rotate_about,
+	mat_t newrot)
 {
-    int save_edflag;
-    mat_t temp1, temp2;
-
     s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
-    switch (coords) {
-	case 'm':
-	    break;
-	case 'o':
-	    bn_mat_inv(temp1, MEDIT(s)->acc_rot_sol);
+    int matrix_edit = (s->global_editing_state == ST_S_EDIT) ? 0 : 1;
+    struct bview *tmp_vp = MEDIT(s)->vp;
+    MEDIT(s)->vp = view_state->vs_gvp;
 
-	    /* transform into object rotations */
-	    bn_mat_mul(temp2, MEDIT(s)->acc_rot_sol, newrot);
-	    bn_mat_mul(newrot, temp2, temp1);
-	    break;
-	case 'v':
-	    bn_mat_inv(temp1, view_state->vs_gvp->gv_rotation);
+    rt_knob_edit_rot(MEDIT(s), coords, rotate_about, matrix_edit, newrot);
 
-	    /* transform into model rotations */
-	    bn_mat_mul(temp2, temp1, newrot);
-	    bn_mat_mul(newrot, temp2, view_state->vs_gvp->gv_rotation);
-	    break;
-    }
+    MEDIT(s)->vp = tmp_vp;
 
-    if (s->global_editing_state == ST_S_EDIT) {
-	char save_rotate_about;
-
-	save_rotate_about = mged_variables->mv_rotate_about;
-	mged_variables->mv_rotate_about = rotate_about;
-
-	save_edflag = MEDIT(s)->edit_flag;
-
-	if (!SEDIT_ROTATE) {
-	    MEDIT(s)->edit_flag = SROT;
-	}
-
-	MEDIT(s)->e_inpara = 0;
-	MAT_COPY(MEDIT(s)->incr_change, newrot);
-	bn_mat_mul2(MEDIT(s)->incr_change, MEDIT(s)->acc_rot_sol);
-	sedit(s);
-
-	mged_variables->mv_rotate_about = save_rotate_about;
-	MEDIT(s)->edit_flag = save_edflag;
-    } else {
-	point_t point;
-	vect_t work;
-
-	bn_mat_mul2(newrot, MEDIT(s)->acc_rot_sol);
-
-	/* find point for rotation to take place wrt */
-	switch (rotate_about) {
-	    case 'v':       /* View Center */
-		VSET(work, 0.0, 0.0, 0.0);
-		MAT4X3PNT(point, view_state->vs_gvp->gv_view2model, work);
-		break;
-	    case 'e':       /* Eye */
-		VSET(work, 0.0, 0.0, 1.0);
-		MAT4X3PNT(point, view_state->vs_gvp->gv_view2model, work);
-		break;
-	    case 'm':       /* Model Center */
-		VSETALL(point, 0.0);
-		break;
-	    case 'k':
-	    default:
-		MAT4X3PNT(point, MEDIT(s)->model_changes, MEDIT(s)->e_keypoint);
-	}
-
-	/*
-	 * Apply newrot to the MEDIT(s)->model_changes matrix wrt "point"
-	 */
-	wrt_point(MEDIT(s)->model_changes, newrot, MEDIT(s)->model_changes, point);
-
+    if (matrix_edit)
 	new_edit_mats(s);
-    }
 
     return TCL_OK;
 }
 
-
-int
-mged_erot_xyz(struct mged_state *s,
-	char rotate_about,
-	vect_t rvec)
-{
-    mat_t newrot;
-
-    MAT_IDN(newrot);
-    bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
-
-    return mged_erot(s, mged_variables->mv_coords, rotate_about, newrot);
-}
-
-int
-mged_mtran(struct mged_state *s, const vect_t tvec)
-{
-    point_t delta;
-    point_t vc, nvc;
-
-    VSCALE(delta, tvec, s->dbip->dbi_local2base);
-    MAT_DELTAS_GET_NEG(vc, view_state->vs_gvp->gv_center);
-    VSUB2(nvc, vc, delta);
-    MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, nvc);
-    new_mats(s);
-
-    /* calculate absolute_tran */
-    set_absolute_view_tran(s);
-
-    return TCL_OK;
-}
-
-
-int
-mged_otran(struct mged_state *s, const vect_t tvec)
-{
-    vect_t work = VINIT_ZERO;
-
-    if (s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) {
-	/* apply MEDIT(s)->acc_rot_sol to tvec */
-	MAT4X3PNT(work, MEDIT(s)->acc_rot_sol, tvec);
-    }
-
-    return mged_mtran(s, work);
-}
-
-int
-mged_etran(struct mged_state *s,
+static int
+knob_edit_tran(struct mged_state *s,
 	char coords,
 	vect_t tvec)
 {
-    point_t p2;
-    int save_edflag;
-    point_t delta;
-    point_t vcenter;
-    point_t work;
-    mat_t xlatemat;
+    int matrix_edit = (s->global_editing_state == ST_S_EDIT) ? 0 : 1;
+    MEDIT(s)->local2base = s->dbip->dbi_local2base;
+    MEDIT(s)->vp = view_state->vs_gvp;
 
-    /* compute delta */
-    switch (coords) {
-	case 'm':
-	    VSCALE(delta, tvec, s->dbip->dbi_local2base);
-	    break;
-	case 'o':
-	    VSCALE(p2, tvec, s->dbip->dbi_local2base);
-	    MAT4X3PNT(delta, MEDIT(s)->acc_rot_sol, p2);
-	    break;
-	case 'v':
-	default:
-	    VSCALE(p2, tvec, s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale);
-	    MAT4X3PNT(work, view_state->vs_gvp->gv_view2model, p2);
-	    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
-	    VSUB2(delta, work, vcenter);
+    rt_knob_edit_tran(MEDIT(s), coords, matrix_edit, tvec);
 
-	    break;
-    }
-
-    if (s->global_editing_state == ST_S_EDIT) {
-	MEDIT(s)->e_keyfixed = 0;
-	get_solid_keypoint(s, MEDIT(s)->e_keypoint, &MEDIT(s)->e_keytag,
-			   &MEDIT(s)->es_int, MEDIT(s)->e_mat);
-	save_edflag = MEDIT(s)->edit_flag;
-
-	if (!SEDIT_TRAN) {
-	    MEDIT(s)->edit_flag = STRANS;
-	}
-
-	VADD2(MEDIT(s)->e_para, delta, MEDIT(s)->curr_e_axes_pos);
-	MEDIT(s)->e_inpara = 3;
-	sedit(s);
-	MEDIT(s)->edit_flag = save_edflag;
-    } else {
-	MAT_IDN(xlatemat);
-	MAT_DELTAS_VEC(xlatemat, delta);
-	bn_mat_mul2(xlatemat, MEDIT(s)->model_changes);
-
+    if (matrix_edit) {
 	new_edit_mats(s);
 	s->update_views = 1;
 	dm_set_dirty(DMP, 1);
@@ -236,159 +90,40 @@ mged_etran(struct mged_state *s,
 int
 mged_vtran(struct mged_state *s, const vect_t tvec)
 {
-    vect_t tt;
-    point_t delta;
-    point_t work;
-    point_t vc, nvc;
+    int matrix_edit = (s->global_editing_state == ST_S_EDIT) ? 0 : 1;
 
-    VSCALE(tt, tvec, s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale);
-    MAT4X3PNT(work, view_state->vs_gvp->gv_view2model, tt);
-    MAT_DELTAS_GET_NEG(vc, view_state->vs_gvp->gv_center);
-    VSUB2(delta, work, vc);
-    VSUB2(nvc, vc, delta);
-    MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, nvc);
+    if (!matrix_edit && MEDIT(s)->edit_flag != RT_PARAMS_EDIT_SCALE && MEDIT(s)->edit_mode != RT_PARAMS_EDIT_SCALE)
+	return;
 
-    new_mats(s);
+    int edit_flag_tmp = MEDIT(s)->edit_flag;
 
-    /* calculate absolute_model_tran */
-    set_absolute_model_tran(s);
-
-    return TCL_OK;
-}
-
-int
-mged_vrot(struct mged_state *s, char origin, fastf_t *newrot)
-{
-    mat_t newinv;
-
-    bn_mat_inv(newinv, newrot);
-
-    if (origin != 'v') {
-	point_t rot_pt;
-	point_t new_origin;
-	mat_t viewchg, viewchginv;
-	point_t new_cent_view;
-	point_t new_cent_model;
-
-	if (origin == 'e') {
-	    /* "VR driver" method: rotate around "eye" point (0, 0, 1) viewspace */
-	    VSET(rot_pt, 0.0, 0.0, 1.0);		/* point to rotate around */
-	} else if (origin == 'k' && s->global_editing_state == ST_S_EDIT) {
-	    /* rotate around keypoint */
-	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, MEDIT(s)->curr_e_axes_pos);
-	} else if (origin == 'k' && s->global_editing_state == ST_O_EDIT) {
-	    point_t kpWmc;
-
-	    MAT4X3PNT(kpWmc, MEDIT(s)->model_changes, MEDIT(s)->e_keypoint);
-	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, kpWmc);
-	} else {
-	    /* rotate around model center (0, 0, 0) */
-	    VSET(new_origin, 0.0, 0.0, 0.0);
-	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, new_origin);  /* point to rotate around */
-	}
-
-	bn_mat_xform_about_pnt(viewchg, newrot, rot_pt);
-	bn_mat_inv(viewchginv, viewchg);
-
-	/* Convert origin in new (viewchg) coords back to old view coords */
-	VSET(new_origin, 0.0, 0.0, 0.0);
-	MAT4X3PNT(new_cent_view, viewchginv, new_origin);
-	MAT4X3PNT(new_cent_model, view_state->vs_gvp->gv_view2model, new_cent_view);
-	MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, new_cent_model);
-
-	/* XXX This should probably capture the translation too */
-	/* XXX I think the only consumer of ModelDelta is the predictor frame */
-	wrt_view(s, view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta);		/* pure rotation */
-    } else
-	/* Traditional method:  rotate around view center (0, 0, 0) viewspace */
-    {
-	wrt_view(s, view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta);
+    if (matrix_edit) {
+       switch (edobj) {
+           case BE_O_SCALE:
+               MEDIT(s)->edit_flag = RT_PARAMS_EDIT_SCALE;
+               break;
+           case BE_O_XSCALE:
+               MEDIT(s)->edit_flag = RT_MATRIX_EDIT_SCALE_X;
+               break;
+           case BE_O_YSCALE:
+               MEDIT(s)->edit_flag = RT_MATRIX_EDIT_SCALE_Y;
+               break;
+           case BE_O_ZSCALE:
+               MEDIT(s)->edit_flag = RT_MATRIX_EDIT_SCALE_Z;
+               break;
+           default:
+               bu_log("knob_edit_sca: unknown scale flag: %d\n", edobj);
+               return;
+       };
     }
 
-    /* Update the rotation component of the model2view matrix */
-    bn_mat_mul2(newrot, view_state->vs_gvp->gv_rotation); /* pure rotation */
-    new_mats(s);
 
-    set_absolute_tran(s);
+    rt_knob_edit_sca(MEDIT(s), matrix_edit);
 
-    return TCL_OK;
-}
+    if (matrix_edit)
+	new_edit_mats(s);
 
-int
-mged_vrot_xyz(struct mged_state *s,
-	      char origin,
-	      char coords,
-	      vect_t rvec)
-{
-    mat_t newrot;
-    mat_t temp1, temp2;
-
-    MAT_IDN(newrot);
-    bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
-
-    if (coords == 'm') {
-	/* transform model rotations into view rotations */
-	bn_mat_inv(temp1, view_state->vs_gvp->gv_rotation);
-	bn_mat_mul(temp2, view_state->vs_gvp->gv_rotation, newrot);
-	bn_mat_mul(newrot, temp2, temp1);
-    } else if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) && coords == 'o') {
-	/* first, transform object rotations into model rotations */
-	bn_mat_inv(temp1, MEDIT(s)->acc_rot_sol);
-	bn_mat_mul(temp2, MEDIT(s)->acc_rot_sol, newrot);
-	bn_mat_mul(newrot, temp2, temp1);
-
-	/* now transform model rotations into view rotations */
-	bn_mat_inv(temp1, view_state->vs_gvp->gv_rotation);
-	bn_mat_mul(temp2, view_state->vs_gvp->gv_rotation, newrot);
-	bn_mat_mul(newrot, temp2, temp1);
-    } /* else assume already view rotations */
-
-    return mged_vrot(s, origin, newrot);
-}
-
-
-
-int
-knob_rot(struct mged_state *s,
-	vect_t rvec,
-	char origin,
-	int model_flag,
-	int view_flag,
-	int edit_flag)
-{
-    if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
-			 !view_flag && !model_flag) || edit_flag)) {
-	mged_erot_xyz(s, origin, rvec);
-    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
-	mged_vrot_xyz(s, origin, 'm', rvec);
-    } else if (mged_variables->mv_coords == 'o') {
-	mged_vrot_xyz(s, origin, 'o', rvec);
-    } else {
-	mged_vrot_xyz(s, origin, 'v', rvec);
-    }
-
-    return TCL_OK;
-}
-
-int
-knob_tran(struct mged_state *s,
-	vect_t tvec,
-	int model_flag,
-	int view_flag,
-	int edit_flag)
-{
-    if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
-		       !view_flag && !model_flag) || edit_flag)) {
-	mged_etran(s, mged_variables->mv_coords, tvec);
-    } else if (model_flag || (mged_variables->mv_coords == 'm' && !view_flag)) {
-	mged_mtran(s, tvec);
-    } else if (mged_variables->mv_coords == 'o') {
-	mged_otran(s, tvec);
-    } else {
-	mged_vtran(s, tvec);
-    }
-
-    return TCL_OK;
+    MEDIT(s)->edit_flag = edit_flag_tmp;
 }
 
 
@@ -1281,7 +1016,17 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    (void)chg_state(s, ST_O_PICK, ST_O_PATH, "Keyboard illuminate");
 	} else {
 	    /* Check details, Init menu, set state=ST_S_EDIT */
-	    init_sedit(s);
+	    if (!MEDIT(s)) {
+		struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+		MEDIT(s) = rt_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
+		if (MEDIT(s)) {
+		    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&MEDIT(s)->edit_flag, TCL_LINK_INT);
+		    MEDIT(s)->mv_context = mged_variables->mv_context;
+		    MEDIT(s)->vlfree = &rt_vlfree;
+		    mged_edit_clbk_sync(MEDIT(s), s);
+		    init_sedit(s);
+		}
+	    }
 	}
     }
 
@@ -1391,6 +1136,18 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	Tcl_SetObjResult(interp, save_result);
 	Tcl_DecrRefCount(save_result);
 	return TCL_ERROR;
+    }
+
+    /* Set up solid edit state, if f_ill hasn't already done so. */
+    if (!MEDIT(s)) {
+	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+	MEDIT(s) = rt_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
+	if (MEDIT(s)) {
+	    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&MEDIT(s)->edit_flag, TCL_LINK_INT);
+	    MEDIT(s)->mv_context = mged_variables->mv_context;
+	    MEDIT(s)->vlfree = &rt_vlfree;
+	    mged_edit_clbk_sync(MEDIT(s), s);
+	}
     }
 
     return TCL_OK;
@@ -3067,7 +2824,7 @@ cmd_mrot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	    return TCL_ERROR;
 	}
 
-	return mged_erot(s, view_state->vs_gvp->gv_coord, view_state->vs_gvp->gv_rotate_about, rmat);
+	return mged_knob_edit_rot(s, view_state->vs_gvp->gv_coord, view_state->vs_gvp->gv_rotate_about, rmat);
     } else {
 	int ret;
 
@@ -3089,125 +2846,61 @@ cmd_mrot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 
 
 int
-cmd_vrot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+mged_otran(struct mged_state *s, const vect_t tvec)
 {
-    struct cmdtab *ctp = (struct cmdtab *)clientData;
-    MGED_CK_CMD(ctp);
-    struct mged_state *s = ctp->s;
-    int ret;
-    Tcl_DString ds;
+    vect_t work = VINIT_ZERO;
 
-    if (s->gedp == GED_NULL) {
-	return TCL_OK;
+    if (s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) {
+	/* apply MEDIT(s)->acc_rot_sol to tvec */
+	MAT4X3PNT(work, MEDIT(s)->acc_rot_sol, tvec);
     }
 
-    Tcl_DStringInit(&ds);
+    return mged_mtran(s, work);
+}
 
-    ret = ged_exec(s->gedp, argc, (const char **)argv);
-    Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
 
-    if (ret != BRLCAD_OK) {
-	return TCL_ERROR;
-    }
+int
+mged_mtran(struct mged_state *s, const vect_t tvec)
+{
+    point_t delta;
+    point_t vc, nvc;
 
-    view_state->vs_flag = 1;
-    set_absolute_tran(s);
+    VSCALE(delta, tvec, s->dbip->dbi_local2base);
+    MAT_DELTAS_GET_NEG(vc, view_state->vs_gvp->gv_center);
+    VSUB2(nvc, vc, delta);
+    MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, nvc);
+    new_mats(s);
+
+    /* calculate absolute_tran */
+    set_absolute_view_tran(s);
 
     return TCL_OK;
 }
 
 
 int
-cmd_rot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+mged_vtran(struct mged_state *s, const vect_t tvec)
 {
-    struct cmdtab *ctp = (struct cmdtab *)clientData;
-    MGED_CK_CMD(ctp);
-    struct mged_state *s = ctp->s;
-    Tcl_DString ds;
+    vect_t tt;
+    point_t delta;
+    point_t work;
+    point_t vc, nvc;
 
-    if (s->gedp == GED_NULL) {
-	return TCL_OK;
-    }
+    VSCALE(tt, tvec, s->dbip->dbi_local2base / view_state->vs_gvp->gv_scale);
+    MAT4X3PNT(work, view_state->vs_gvp->gv_view2model, tt);
+    MAT_DELTAS_GET_NEG(vc, view_state->vs_gvp->gv_center);
+    VSUB2(delta, work, vc);
+    VSUB2(nvc, vc, delta);
+    MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, nvc);
 
-    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
-	mged_variables->mv_transform == 'e') {
-	char coord;
-	mat_t rmat;
+    new_mats(s);
 
-	if (ged_rot_args(s->gedp, argc, (const char **)argv, &coord, rmat) != BRLCAD_OK) {
-	    Tcl_DStringInit(&ds);
-	    Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
-	    Tcl_DStringResult(interp, &ds);
+    /* calculate absolute_model_tran */
+    set_absolute_model_tran(s);
 
-	    return TCL_ERROR;
-	}
-
-	return mged_erot(s, coord, view_state->vs_gvp->gv_rotate_about, rmat);
-    } else {
-	int ret;
-
-	Tcl_DStringInit(&ds);
-
-	ret = ged_exec(s->gedp, argc, (const char **)argv);
-	Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
-	Tcl_DStringResult(interp, &ds);
-
-	if (ret != BRLCAD_OK) {
-	    return TCL_ERROR;
-	}
-
-	view_state->vs_flag = 1;
-
-	return TCL_OK;
-    }
+    return TCL_OK;
 }
 
-
-int
-cmd_arot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
-{
-    struct cmdtab *ctp = (struct cmdtab *)clientData;
-    MGED_CK_CMD(ctp);
-    struct mged_state *s = ctp->s;
-    Tcl_DString ds;
-    /* static const char *usage = "x y z angle"; */
-
-    if (s->gedp == GED_NULL) {
-	return TCL_OK;
-    }
-
-    if ((s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) &&
-	mged_variables->mv_transform == 'e') {
-	mat_t rmat;
-
-	if (ged_arot_args(s->gedp, argc, (const char **)argv, rmat) != BRLCAD_OK) {
-	    Tcl_DStringInit(&ds);
-	    Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
-	    Tcl_DStringResult(interp, &ds);
-
-	    return TCL_ERROR;
-	}
-
-	return mged_erot(s, view_state->vs_gvp->gv_coord, view_state->vs_gvp->gv_rotate_about, rmat);
-    } else {
-	int ret;
-
-	Tcl_DStringInit(&ds);
-
-	ret = ged_exec(s->gedp, argc, (const char **)argv);
-	Tcl_DStringAppend(&ds, bu_vls_addr(s->gedp->ged_result_str), -1);
-	Tcl_DStringResult(interp, &ds);
-
-	if (ret != BRLCAD_OK) {
-	    return TCL_ERROR;
-	}
-
-	view_state->vs_flag = 1;
-
-	return TCL_OK;
-    }
-}
 
 int
 cmd_tra(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
@@ -3289,7 +2982,10 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	    MEDIT(s)->k.sca_abs = MEDIT(s)->acc_sc_sol - 1.0;
 	}
 
-	sedit(s);
+	MEDIT(s)->update_views = s->update_views;
+	sedraw = 0;
+	rt_edit_process(MEDIT(s));
+	s->update_views = MEDIT(s)->update_views;
 
 	MEDIT(s)->edit_flag = save_edflag;
     } else {

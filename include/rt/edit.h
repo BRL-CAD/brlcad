@@ -23,6 +23,47 @@
  * editing code from MGED, libged and other codes to a unified common
  * implementation in LIBRT.  Until this notice is removed, there are NO
  * guarantees of API stability with this code!
+ *
+ * Design notes:
+ *
+ * Aside from the X/Y/Z-only scale operations, the "generic" operations for
+ * both sed and oed seem to differ primarily in that the former update the
+ * wireframe and primitive parameters immediately, and the latter manipulate
+ * only the matrix until the final step.  In the oed case, the altered
+ * primitive wireframes are handled by using the working matrix to distort the
+ * existing draw solids.
+ *
+ * It feels like there should be some sort of consolidation possible here - in
+ * the case where an operation (sed or oed) doesn't need a new wireframe,
+ * reusing an existing one is a sensible approach.  For operations on large
+ * combs, which may involve thousands of large wireframes, reuse is key.
+ * Rather than have two "modes", what we should do instead is have the edit
+ * operations themselves determine if a new wireframe is needed.  If not, then
+ * no matter what the op is we should try to reuse an existing wireframe (if
+ * one is available from the app) and only generate one if the app does not
+ * have the one we need available.  That may allow us to completely eliminate
+ * the distinction between sed and oed, and treat comb edits like any other
+ * primitive edits by using functab methods (semi-related is the attempt to
+ * make a comb tess method in d1dc6a4fae8).
+ *
+ * Such changes would involve a significant update to the MGED drawing logic,
+ * which uses a very simple UP/DOWN flag trick to turn existing solid
+ * wireframes into the edit wireframes (and comes with some significant
+ * limitations as well).  What we really need is a way for a scene obj to
+ * reference another scene obj and override specific values, so we can point to
+ * an existing scene obj and use it for edit drawing without having to do
+ * anything to the original obj except flagging it as involved (so the main
+ * update pass knows to skip drawing it.) Commit de2c0da2d4a has a bit of what
+ * would be needed for that to work, but there's a lot more to think about both
+ * in the original and new draw cycles.  To properly have the edit drawing
+ * independent of other uses of geometry in a scene while still enabling vlist
+ * reuse (which the new drawing path isn't really doing properly) we may need
+ * to have all comb instances define themselves in a scene as an object that
+ * references another scene object which isn't drawn but holds the data
+ * defining the vlist.  Then the instance obj would just hold the matrix and
+ * any override info for color, etc.  Need to check how MGED is handling comb
+ * instances now, the new drawing layer I think is just creating a new
+ * bv_scene_obj for each instance with its own vlist...
  */
 
 #ifndef RT_EDIT_H

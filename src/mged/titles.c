@@ -74,7 +74,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
      * Check if the illuminated solid still exists or it has been killed
      * before Accept was clicked.
      */
-    if (MEDIT(s)->edit_flag >= 0 && illump != NULL && illump->s_u_data != NULL) {
+    if (MEDIT(s) && MEDIT(s)->edit_flag >= 0 && illump != NULL && illump->s_u_data != NULL) {
 	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	dp = LAST_SOLID(bdata);
@@ -83,7 +83,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	bu_vls_strcat(vp, dp->d_namep);
 	bu_vls_strcat(vp, ": ");
 
-	vls_solid(s, vp, &MEDIT(s)->es_int, bn_mat_identity);
+	vls_solid(s, vp, MEDIT(s), bn_mat_identity);
 
 	if (bdata->s_fullpath.fp_len > 1) {
 	    bu_vls_strcat(vp, "\n** PATH --  ");
@@ -91,7 +91,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	    bu_vls_strcat(vp, ": ");
 
 	    /* print the evaluated (path) solid parameters */
-	    vls_solid(s, vp, &MEDIT(s)->es_int, MEDIT(s)->e_mat);
+	    vls_solid(s, vp, MEDIT(s), MEDIT(s)->e_mat);
 	}
     }
 
@@ -110,7 +110,7 @@ create_text_overlay(struct mged_state *s, struct bu_vls *vp)
 	    /* object edit option selected */
 	    bn_mat_mul(new_mat, MEDIT(s)->model_changes, MEDIT(s)->e_mat);
 
-	    vls_solid(s, vp, &MEDIT(s)->es_int, new_mat);
+	    vls_solid(s, vp, MEDIT(s), new_mat);
 	}
     }
 
@@ -339,9 +339,9 @@ dotitles(struct mged_state *s, struct bu_vls *overlay_vls)
     dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
 
     /* Label the vertices of the edited solid */
-    if (MEDIT(s)->edit_flag >= 0 || (s->global_editing_state == ST_O_EDIT && illump->s_old.s_Eflag == 0)) {
+    if ((MEDIT(s) && MEDIT(s)->edit_flag >= 0) || (s->global_editing_state == ST_O_EDIT && illump->s_old.s_Eflag == 0)) {
 	mat_t xform;
-	struct rt_point_labels pl[8+1];
+	struct rt_point_labels pl[8+1] = {RT_POINT_LABELS_INIT};
 	point_t lines[2*4];	/* up to 4 lines to draw */
 	int num_lines=0;
 
