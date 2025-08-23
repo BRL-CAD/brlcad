@@ -230,7 +230,7 @@ BU_EXPORT extern size_t bu_cv_itemlen(int cookie);
  * steps are done.  The more difficult cases are when only a subset of
  * steps need to be done.
  *
- * @par Method:
+ * Method:
  * @code
  *	HOSTDBL defined as true or false
  *	if ! hostother then
