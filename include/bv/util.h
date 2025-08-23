@@ -119,7 +119,7 @@ BV_EXPORT extern int bv_knobs_cmd_process(
  */
 BV_EXPORT extern void
 bv_knobs_rot(struct bview *v,
-	vect_t *rvec,
+	const vect_t rvec,
 	char origin,
 	int model_flag);
 
@@ -133,7 +133,7 @@ bv_knobs_rot(struct bview *v,
  */
 BV_EXPORT extern void
 bv_knobs_tran(struct bview *v,
-	vect_t *tvec,
+	const vect_t tvec,
 	int model_flag);
 
 

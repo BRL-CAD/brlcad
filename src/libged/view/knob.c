@@ -181,11 +181,11 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (do_tran) {
-	bv_knobs_tran(v, &tvec, model_flag);
+	bv_knobs_tran(v, tvec, model_flag);
     }
 
     if (do_rot) {
-	bv_knobs_rot(v, &rvec, origin, model_flag);
+	bv_knobs_rot(v, rvec, origin, model_flag);
     }
 
     bv_update_rate_flags(v);

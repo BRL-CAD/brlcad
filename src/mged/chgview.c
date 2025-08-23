@@ -1763,7 +1763,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		(s->global_editing_state == ST_O_EDIT),
 		tvec);
 	} else {
-	    bv_knobs_tran(view_state->vs_gvp, &tvec, model_flag);
+	    bv_knobs_tran(view_state->vs_gvp, tvec, model_flag);
 	}
     }
 
@@ -1778,7 +1778,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		(s->global_editing_state == ST_O_EDIT),
 		rmat);
 	} else {
-	    bv_knobs_rot(view_state->vs_gvp, &rvec, origin, model_flag);
+	    bv_knobs_rot(view_state->vs_gvp, rvec, origin, model_flag);
 	}
     }
 

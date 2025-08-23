@@ -728,7 +728,7 @@ void
 rt_knob_edit_tran(struct rt_edit *s,
         char coords,
         int matrix_edit,
-        vect_t tvec)
+        const vect_t tvec)
 {
     point_t p2;
     point_t delta;

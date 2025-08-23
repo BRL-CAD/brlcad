@@ -145,12 +145,12 @@ abs_zoom(struct bview *v)
 }
 
 static void
-calc_mtran(struct bview *v, const vect_t *tvec)
+calc_mtran(struct bview *v, const vect_t tvec)
 {
     point_t delta;
     point_t vc, nvc;
 
-    VSCALE(delta, *tvec, v->gv_local2base);
+    VSCALE(delta, tvec, v->gv_local2base);
     MAT_DELTAS_GET_NEG(vc, v->gv_center);
     VSUB2(nvc, vc, delta);
     MAT_DELTAS_VEC_NEG(v->gv_center, nvc);
@@ -161,14 +161,14 @@ calc_mtran(struct bview *v, const vect_t *tvec)
 }
 
 static void
-calc_vtran(struct bview *v, const vect_t *tvec)
+calc_vtran(struct bview *v, const vect_t tvec)
 {
     vect_t tt;
     point_t delta;
     point_t work;
     point_t vc, nvc;
 
-    VSCALE(tt, *tvec, v->gv_local2base / v->gv_scale);
+    VSCALE(tt, tvec, v->gv_local2base / v->gv_scale);
     MAT4X3PNT(work, v->gv_view2model, tt);
     MAT_DELTAS_GET_NEG(vc, v->gv_center);
     VSUB2(delta, work, vc);
@@ -183,7 +183,7 @@ calc_vtran(struct bview *v, const vect_t *tvec)
 
 void
 bv_knobs_tran(struct bview *v,
-	vect_t *tvec,
+	const vect_t tvec,
 	int model_flag)
 {
     if (!v || !tvec)
@@ -192,7 +192,7 @@ bv_knobs_tran(struct bview *v,
 	calc_mtran(v, tvec);
     } else if (v->gv_coord == 'o') {
 	vect_t work = VINIT_ZERO;
-	calc_mtran(v, &work);
+	calc_mtran(v, work);
     } else {
 	calc_vtran(v, tvec);
     }
@@ -244,13 +244,13 @@ static void
 vrot_xyz(struct bview *v,
               char origin,
               int model2view,
-              vect_t *rvec)
+              const vect_t rvec)
 {
     mat_t newrot;
     mat_t temp1, temp2;
 
     MAT_IDN(newrot);
-    bn_mat_angles(newrot, (*rvec)[X], (*rvec)[Y], (*rvec)[Z]);
+    bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
 
     if (model2view) {
         /* transform model rotations into view rotations */
@@ -265,7 +265,7 @@ vrot_xyz(struct bview *v,
 
 void
 bv_knobs_rot(struct bview *v,
-	vect_t *rvec,
+	const vect_t rvec,
 	char origin,
 	int model_flag)
 {
