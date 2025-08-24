@@ -109,20 +109,54 @@ BV_EXPORT extern int bv_knobs_cmd_process(
         char origin, int model_flag, int incr_flag
 	);
 
-/* @brief
- * Process a knob rotation vector.
+/**
+ * @brief
+ * Rotate the view based on an Euler angle triplet (degrees) specified
+ * in one of several coordinate frames, about one of several origins.
  *
- * @param[in] v          bview structure
- * @param[in] rvec      Pointer to rotation vector
- * @param[in] origin     char indicating origin - may be 'e' (eye_pt), 'm' (model origin) or 'v' (view origin - default)
- * @param[in] model_flag Manipulate view using model coordinates rather than view coordinates
+ * coords:  Rotation input frame
+ *   'v' - rvec in view coordinates
+ *   'm' - rvec in model coordinates (converted via Rv * Rm * Rv^{-1})
+ *   'o' - rvec in object coordinates (use obj_rot to map object->model->view,
+ *         fallback to 'v' semantics if obj_rot is NULL)
+ *
+ * origin:  Rotation pivot specifier
+ *   'v' : view center (0,0,0 in view space)
+ *   'm' : model origin
+ *   'e' : eye point (0,0,1 in view space)
+ *   'k' : model-space custom pivot supplied via pvt_pt
+ *   Any unrecognized value falls back to 'v'.
+ *
+ * obj_rot:
+ *   Accumulated object->model rotation matrix when coords=='o'. NULL otherwise.
+ *
+ * pvt_pt:
+ *   Model-space pivot point when origin=='k'. Ignored otherwise.
+ *   NULL == model origin.
+ *
+ * BEHAVIOR
+ * 1. rvec is converted into a pure view-space rotation matrix according
+ *    to 'coords' (and obj_rot for 'o').
+ * 2. If origin != 'v', the view center (gv_center) is relocated so the
+ *    specified pivot is invariant under the applied rotation.
+ * 3. gv_rotation is post-multiplied by the view rotation matrix.
+ * 4. bv_update(v) refreshes derived matrices. Absolute translation bookkeeping
+ *    (tra_v_abs / tra_m_abs) is always recomputed
+ *
+ * @param[in,out] v      target bview structure
+ * @param[in] rvec       rotation vector (Euler angles, degrees) expressed in the coordinate frame indicated by coords.
+ * @param[in] origin     char indicating origin - may be 'e' (eye_pt), 'm' (model origin), 'v' (view origin - default) or 'k' (keypoint)
+ * @param[in] coords     coordinate frame - may be 'm' (model), 'o' (obj coords via obj_rot), or 'v' (view)
+ * @param[in] obj_rot    pointer to accumulated object rotation matrix (may be NULL)
+ * @param[in] pvt_pt     model space pivot point
  */
 BV_EXPORT extern void
 bv_knobs_rot(struct bview *v,
 	const vect_t rvec,
 	char origin,
-	int model_flag);
-
+	char coords,
+	const matp_t obj_rot,
+	const pointp_t pvt_pt);
 
 /* @brief
  * Process a knob translation vector.

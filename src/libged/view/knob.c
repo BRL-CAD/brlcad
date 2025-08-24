@@ -185,7 +185,7 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (do_rot) {
-	bv_knobs_rot(v, rvec, origin, model_flag);
+	bv_knobs_rot(v, rvec, origin, (model_flag ? 'm' : 'v'), NULL, NULL);
     }
 
     bv_update_rate_flags(v);

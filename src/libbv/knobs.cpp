@@ -198,83 +198,103 @@ bv_knobs_tran(struct bview *v,
     }
 }
 
-static void
-vrot(struct bview *v, char origin, fastf_t *newrot)
+void
+bv_knobs_rot(struct bview *v,
+    const vect_t rvec,
+    char origin,
+    char coords,
+    const matp_t obj_rot,
+    const pointp_t pvt_pt)
 {
-    mat_t newinv;
+    if (!v || !rvec)
+        return;
 
-    bn_mat_inv(newinv, newrot);
+    /* 1. Build base rotation from Euler angles (view-space candidate) */
+    mat_t base;
+    MAT_IDN(base);
+    bn_mat_angles(base, rvec[X], rvec[Y], rvec[Z]);
 
-    if (origin != 'v') {
-        point_t rot_pt;
-        point_t new_origin;
-        mat_t viewchg, viewchginv;
-        point_t new_cent_view;
-        point_t new_cent_model;
+    /* 2. Convert to final view-space rotation based on coords */
+    mat_t view_rot;
+    MAT_IDN(view_rot);
 
-        if (origin == 'e') {
-            /* "VR driver" method: rotate around "eye" point (0, 0, 1) viewspace */
-            VSET(rot_pt, 0.0, 0.0, 1.0);                /* point to rotate around */
+    if (coords == 'm') {
+        mat_t t1, rvinv;
+        bn_mat_inv(rvinv, v->gv_rotation);
+        bn_mat_mul(t1, v->gv_rotation, base);
+        bn_mat_mul(view_rot, t1, rvinv);
+    } else if (coords == 'o') {
+        if (obj_rot) {
+            mat_t obj_inv, model_rot, t2, rvinv, t1;
+            bn_mat_inv(obj_inv, obj_rot);
+            bn_mat_mul(t2, obj_rot, base);
+            bn_mat_mul(model_rot, t2, obj_inv);
+            bn_mat_inv(rvinv, v->gv_rotation);
+            bn_mat_mul(t1, v->gv_rotation, model_rot);
+            bn_mat_mul(view_rot, t1, rvinv);
         } else {
-            /* rotate around model center (0, 0, 0) */
-            VSET(new_origin, 0.0, 0.0, 0.0);
-            MAT4X3PNT(rot_pt, v->gv_model2view, new_origin);  /* point to rotate around */
+            /* Fallback: treat as view-space rotation */
+            MAT_COPY(view_rot, base);
         }
+    } else {
+        /* 'v' or unrecognized => direct application */
+        MAT_COPY(view_rot, base);
+    }
 
-        bn_mat_xform_about_pnt(viewchg, newrot, rot_pt);
-        bn_mat_inv(viewchginv, viewchg);
+    /* 3. Determine pivot in view space if origin requires recentering */
+    int recenter = 0;
+    point_t pivot_view;
 
-        /* Convert origin in new (viewchg) coords back to old view coords */
-        VSET(new_origin, 0.0, 0.0, 0.0);
-        MAT4X3PNT(new_cent_view, viewchginv, new_origin);
+    switch (origin) {
+        case 'v':
+            VSET(pivot_view, 0.0, 0.0, 0.0);
+            break;
+        case 'e':
+            VSET(pivot_view, 0.0, 0.0, 1.0);
+            recenter = 1;
+            break;
+        case 'm': {
+            point_t mzero = {0.0, 0.0, 0.0};
+            MAT4X3PNT(pivot_view, v->gv_model2view, mzero);
+            recenter = 1;
+            break;
+        }
+        case 'k': {
+            point_t mp;
+            if (pvt_pt) {
+                VMOVE(mp, pvt_pt);
+            } else {
+                VSET(mp, 0.0, 0.0, 0.0);
+            }
+            MAT4X3PNT(pivot_view, v->gv_model2view, mp);
+            recenter = 1;
+            break;
+        }
+        default:
+            /* Fallback to view center */
+            VSET(pivot_view, 0.0, 0.0, 0.0);
+            break;
+    }
+
+    if (recenter) {
+        mat_t about, about_inv;
+        bn_mat_xform_about_pnt(about, view_rot, pivot_view);
+        bn_mat_inv(about_inv, about);
+
+        point_t new_origin = {0.0, 0.0, 0.0};
+        point_t new_cent_view, new_cent_model;
+        MAT4X3PNT(new_cent_view, about_inv, new_origin);
         MAT4X3PNT(new_cent_model, v->gv_view2model, new_cent_view);
         MAT_DELTAS_VEC_NEG(v->gv_center, new_cent_model);
     }
 
-    /* Update the rotation component of the model2view matrix */
-    bn_mat_mul2(newrot, v->gv_rotation); /* pure rotation */
+    /* 4. Apply rotation */
+    bn_mat_mul2(view_rot, v->gv_rotation);
     bv_update(v);
 
+    /* 5. Refresh absolute translations  */
     set_absolute_view_tran(v);
     set_absolute_model_tran(v);
-}
-
-
-static void
-vrot_xyz(struct bview *v,
-              char origin,
-              int model2view,
-              const vect_t rvec)
-{
-    mat_t newrot;
-    mat_t temp1, temp2;
-
-    MAT_IDN(newrot);
-    bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
-
-    if (model2view) {
-        /* transform model rotations into view rotations */
-        bn_mat_inv(temp1, v->gv_rotation);
-        bn_mat_mul(temp2, v->gv_rotation, newrot);
-        bn_mat_mul(newrot, temp2, temp1);
-    }
-
-    vrot(v, origin, newrot);
-}
-
-
-void
-bv_knobs_rot(struct bview *v,
-	const vect_t rvec,
-	char origin,
-	int model_flag)
-{
-    if (!v || !rvec)
-	return;
-    int model2view = 0;
-    if (model_flag)
-	model2view = 1;
-    vrot_xyz(v, origin, model2view, rvec);
 }
 
 void
