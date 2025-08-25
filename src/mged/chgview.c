@@ -2238,41 +2238,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     /* Apply any accumulated translation or rotation (non-abs scale already applied) */
     if (do_tran) {
-	if (s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) {
-	    rt_knob_edit_tran(MEDIT(s),
-		mged_variables->mv_coords,
-		(s->global_editing_state == ST_O_EDIT),
-		tvec);
-	} else {
-	    bv_knobs_tran(view_state->vs_gvp, tvec, model_flag);
-	}
+	knob_tran(s, tvec, model_flag, view_flag, force_edit);
     }
     if (do_rot) {
-	if (s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) {
-	    mat_t rmat;
-	    MAT_IDN(rmat);
-	    bn_mat_angles(rmat, rvec[X], rvec[Y], rvec[Z]);
-	    rt_knob_edit_rot(MEDIT(s),
-		mged_variables->mv_coords,
-		origin,
-		(s->global_editing_state == ST_O_EDIT),
-		rmat);
-	} else {
-	    bv_knobs_rot(view_state->vs_gvp, rvec, origin, model_flag, NULL, NULL);
-	}
-    }
-
-    if (do_sca) {
-	/* Only edit scale sets do_sca */
-	if (s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT) {
-	    rt_knob_edit_sca(MEDIT(s), (s->global_editing_state == ST_O_EDIT));
-	}
-    }
-
-    /* Update rate flags & sync MGED cached copy */
-    if (!(s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT)) {
-	bv_update_rate_flags(view_state->vs_gvp);
-	view_state->k = view_state->vs_gvp->k;
+	knob_rot(s, rvec, origin, model_flag, view_flag, force_edit);
     }
 
     check_nonzero_rates(s);
