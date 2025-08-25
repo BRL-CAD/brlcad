@@ -49,6 +49,8 @@
 #include "bu/path.h"
 #include "bu/time.h"
 #include "bn.h"
+#include "bv/util.h"
+#include "rt/edit.h"
 #include "rt/geom.h"
 #include "ged.h"
 #include "tclcad.h"
@@ -2424,7 +2426,7 @@ _view_maybe_baseline_reset(struct mged_state *s, int do_reset)
  * transform & knob state.  This deliberately ignores display list contents,
  * settings pointers, and unrelated UI fields to minimize false positives. */
 static unsigned long long
-_view_mutation_hash(struct bview *v)
+_view_mutation_hash(struct mged_state *ms, struct bview *v)
 {
     if (!v) return 0ULL;
 
@@ -2437,6 +2439,7 @@ _view_mutation_hash(struct bview *v)
     bu_data_hash_update(state, &v->gv_a_scale, sizeof(v->gv_a_scale));
     bu_data_hash_update(state, &v->gv_size, sizeof(v->gv_size));
     bu_data_hash_update(state, &v->gv_isize, sizeof(v->gv_isize));
+    bu_data_hash_update(state, &v->gv_perspective, sizeof(v->gv_perspective));
 
     /* Orientation / position / projection related */
     bu_data_hash_update(state, &v->gv_center, sizeof(mat_t));
@@ -2456,7 +2459,31 @@ _view_mutation_hash(struct bview *v)
     bu_data_hash_update(state, &v->gv_rotate_about, sizeof(char));
 
     /* Knob state (rates + absolute values + flags + origins) */
-    bu_data_hash_update(state, &v->k, sizeof(struct bview_knobs));
+    bv_knobs_hash(&v->k, state);
+
+    /*
+     * If we are in an edit mode (solid or object) include the active edit
+     * transform state so that mutations caused by -e (edit) knob operations
+     * or other edit-mode transform updates register as view mutations for
+     * staging/rollback decisions.  We deliberately hash only the geometric
+     * transform subset and associated accumulators, excluding user pointers
+     * and primitive-specific/internal editing data.
+     */
+    if (ms && ms->s_edit && ms->s_edit->e &&
+	    (ms->global_editing_state == ST_S_EDIT ||
+	     ms->global_editing_state == ST_O_EDIT)) {
+	struct rt_edit *e = ms->s_edit->e;
+	/* Core accumulated transform matrices */
+	bu_data_hash_update(state, &e->model_changes, sizeof(mat_t));
+	bu_data_hash_update(state, &e->acc_rot_sol, sizeof(mat_t));
+	bu_data_hash_update(state, &e->model2objview, sizeof(mat_t));
+	/* Scale accumulators */
+	bu_data_hash_update(state, &e->acc_sc_sol, sizeof(e->acc_sc_sol));
+	bu_data_hash_update(state, &e->acc_sc_obj, sizeof(e->acc_sc_obj));
+	bu_data_hash_update(state, &e->acc_sc, sizeof(e->acc_sc));
+	/* Edit knob state */
+	bv_knobs_hash(&e->k, state);
+    }
 
     unsigned long long hv = bu_data_hash_val(state);
     bu_data_hash_destroy(state);
@@ -2547,8 +2574,7 @@ cmd_view(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	s->gedp->ged_gvp = staging;
 
     /* Compute pre-mutation hash */
-    unsigned long long pre_hash =
-	(shared_view) ? _view_mutation_hash(staging) : _view_mutation_hash(staging);
+    unsigned long long pre_hash = _view_mutation_hash(s, staging);
 
     /* Execute libged dispatcher */
     int ret = ged_exec_view(s->gedp, argc, (const char **)argv);
@@ -2612,7 +2638,7 @@ cmd_view(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     }
 
     /* Post-mutation hash (take from staging before any potential restore decision) */
-    unsigned long long post_hash = _view_mutation_hash(staging);
+    unsigned long long post_hash = _view_mutation_hash(s, staging);
 
     if (!shared_view) {
 	if (!created_temp) {

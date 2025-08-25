@@ -313,6 +313,10 @@ new_edit_mats(struct mged_state *s)
 	set_curr_dm(s, p);
 	bn_mat_mul(view_state->vs_model2objview, view_state->vs_gvp->gv_model2view, MEDIT(s)->model_changes);
 	bn_mat_inv(view_state->vs_objview2model, view_state->vs_model2objview);
+
+	/* Keep rt_edit’s own cached matrix in sync for external users */
+	MAT_COPY(MEDIT(s)->model2objview, view_state->vs_model2objview);
+
 	view_state->vs_flag = 1;
     }
 
