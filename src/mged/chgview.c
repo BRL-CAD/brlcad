@@ -163,8 +163,42 @@ token_is_meta(const struct knob_token_entry *e)
     }
 }
 
+/* Decide if a core view/edit transform token should be directed to edit path.
+ * Scaling inherits legacy rules (ignore model_flag). */
+static int
+token_should_edit(const struct knob_token_entry *e,
+                  struct mged_state *s,
+                  int model_flag,
+                  int view_flag,
+                  int force_edit)
+{
+    if (!e) return 0;
+    if (!token_is_core_view(e)) return 0;
+    int in_edit = (s->global_editing_state == ST_S_EDIT ||
+                   s->global_editing_state == ST_O_EDIT);
+    if (!in_edit && !force_edit) return 0;
 
+    int is_scale = (e->type == KNOB_SCA_RATE || e->type == KNOB_SCA_ABS);
+    int base_ok = (mged_variables->mv_transform == 'e' &&
+                   !view_flag &&
+                   (is_scale || !model_flag));
+    if (force_edit) base_ok = 1;
+    if (!base_ok) return 0;
 
+    switch (e->type) {
+        case KNOB_ROT_RATE:
+        case KNOB_ROT_ABS:
+            return EDIT_ROTATE ? 1 : 0;
+        case KNOB_TRA_RATE:
+        case KNOB_TRA_ABS:
+            return EDIT_TRAN ? 1 : 0;
+        case KNOB_SCA_RATE:
+        case KNOB_SCA_ABS:
+            return EDIT_SCALE ? 1 : 0;
+        default:
+            return 0;
+    }
+}
 
 
 int
@@ -1656,74 +1690,6 @@ mged_print_knobvals(struct mged_state *s, Tcl_Interp *interp)
     return TCL_OK;
 }
 
-/* Decide if (token) should be handled as an editing command for this call. */
-static int
-knob_is_edit_cmd(struct mged_state *s,
-		 const char *token,
-		 int model_flag,
-		 int view_flag,
-		 int force_edit)
-{
-    if (!token || !*token)
-	return 0;
-
-    /* Rotation and translation editing required mv_transform=='e'
-     * and no -v and no -m unless -e supplied.
-     * Scale editing ignored the presence of -m (model_flag) and
-     * only required mv_transform=='e' and no -v (unless forced.)
-     */
-    int scale_tok = 0;
-    if ((token[0] == 'S' && token[1] == '\0') ||
-	(token[0] == 'a' && token[1] == 'S' && token[2] == '\0')) {
-	scale_tok = 1;
-    }
-
-    int base_edit_condition;
-    if (scale_tok) {
-	/* Ignore model_flag for scale to match legacy behavior */
-	base_edit_condition = (mged_variables->mv_transform == 'e' && !view_flag);
-    } else {
-	base_edit_condition = (mged_variables->mv_transform == 'e' && !view_flag && !model_flag);
-    }
-
-    int edit_mode_ok = base_edit_condition || force_edit;
-
-    if (!edit_mode_ok)
-	return 0;
-
-    if (token[0] == 'a' && token[1] && !token[2]) {
-	/* absolute axis form ax/ay/az/aX/aY/aZ/aS */
-	char c = token[1];
-	if (c == 'x' || c == 'y' || c == 'z')
-	    return EDIT_ROTATE ? 1 : 0;
-	if (c == 'X' || c == 'Y' || c == 'Z')
-	    return EDIT_TRAN ? 1 : 0;
-	if (c == 'S')
-	    return EDIT_SCALE ? 1 : 0;
-	return 0;
-    }
-
-    /* single char tokens */
-    char c = token[0];
-    if (token[1] != '\0')
-	return 0;
-
-    switch (c) {
-	case 'x':
-	case 'y':
-	case 'z':
-	    return EDIT_ROTATE ? 1 : 0;
-	case 'X':
-	case 'Y':
-	case 'Z':
-	    return EDIT_TRAN ? 1 : 0;
-	case 'S':
-	    return EDIT_SCALE ? 1 : 0;
-	default:
-	    return 0;
-    }
-}
-
 /* Clamp absolute rotation angle in-place to [-180,180] */
 static inline fastf_t
 wrap_angle_180(fastf_t a)
@@ -2116,7 +2082,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    fastf_t fval = atof(valstr);
 
 	    int axis = ke->axis;
-	    int edit_this_cmd = knob_is_edit_cmd(s, token, model_flag, view_flag, force_edit);
+	    int edit_this_cmd = token_should_edit(ke, s, model_flag, view_flag, force_edit);
 
 	    if (edit_this_cmd) {
 		switch (ke->type) {
