@@ -27,6 +27,7 @@
 #define BV_UTIL_H
 
 #include "common.h"
+#include "bu/hash.h"
 #include "bn/tol.h"
 #include "dm/defines.h"
 #include "bv/defines.h"
@@ -78,6 +79,22 @@ BV_EXPORT extern int bv_update_selected(struct bview *gvp);
 #define BV_KNOBS_RATE 1
 #define BV_KNOBS_ABS 2
 BV_EXPORT extern void bv_knobs_reset(struct bview_knobs *k, int category);
+
+/* Hash the semantic (non-pointer) contents of a bview_knobs struct.  This
+ * intentionally excludes any *_udata pointers to avoid pointer address noise
+ * and skips any padding that would be present if hashing the raw struct.
+ *
+ * If 'state' is non-NULL the supplied hash state is updated in-place and the
+ * function returns 0 (the caller is expected to finalize the hash later.)
+ * If 'state' is NULL an internal hash state is created, populated and
+ * finalized and the resulting hash value is returned.
+ *
+ * Returns:
+ *   0     if k is NULL or state supplied (non-owning mode)
+ *   hash  if state is NULL (owning mode)
+ */
+BV_EXPORT extern unsigned long long
+bv_knobs_hash(struct bview_knobs *k, struct bu_data_hash_state *state);
 
 /**
  * @brief

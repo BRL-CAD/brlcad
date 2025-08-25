@@ -85,6 +85,67 @@ bv_knobs_reset(struct bview_knobs *k, int category)
 
 }
 
+unsigned long long
+bv_knobs_hash(struct bview_knobs *k, struct bu_data_hash_state *state)
+{
+    if (!k)
+	return 0ULL;
+
+    int own_state = 0;
+    if (!state) {
+	state = bu_data_hash_create();
+	if (!state)
+	    return 0ULL;
+	own_state = 1;
+    }
+
+    /* Rate rotations */
+    bu_data_hash_update(state, &k->rot_m, sizeof(k->rot_m));
+    bu_data_hash_update(state, &k->rot_m_flag, sizeof(k->rot_m_flag));
+    bu_data_hash_update(state, &k->origin_m, sizeof(k->origin_m));
+    bu_data_hash_update(state, &k->rot_o, sizeof(k->rot_o));
+    bu_data_hash_update(state, &k->rot_o_flag, sizeof(k->rot_o_flag));
+    bu_data_hash_update(state, &k->origin_o, sizeof(k->origin_o));
+    bu_data_hash_update(state, &k->rot_v, sizeof(k->rot_v));
+    bu_data_hash_update(state, &k->rot_v_flag, sizeof(k->rot_v_flag));
+    bu_data_hash_update(state, &k->origin_v, sizeof(k->origin_v));
+
+    /* Rate scale */
+    bu_data_hash_update(state, &k->sca, sizeof(k->sca));
+    bu_data_hash_update(state, &k->sca_flag, sizeof(k->sca_flag));
+
+    /* Rate translations */
+    bu_data_hash_update(state, &k->tra_m, sizeof(k->tra_m));
+    bu_data_hash_update(state, &k->tra_m_flag, sizeof(k->tra_m_flag));
+    bu_data_hash_update(state, &k->tra_v, sizeof(k->tra_v));
+    bu_data_hash_update(state, &k->tra_v_flag, sizeof(k->tra_v_flag));
+
+    /* Absolute rotations */
+    bu_data_hash_update(state, &k->rot_m_abs, sizeof(k->rot_m_abs));
+    bu_data_hash_update(state, &k->rot_m_abs_last, sizeof(k->rot_m_abs_last));
+    bu_data_hash_update(state, &k->rot_o_abs, sizeof(k->rot_o_abs));
+    bu_data_hash_update(state, &k->rot_o_abs_last, sizeof(k->rot_o_abs_last));
+    bu_data_hash_update(state, &k->rot_v_abs, sizeof(k->rot_v_abs));
+    bu_data_hash_update(state, &k->rot_v_abs_last, sizeof(k->rot_v_abs_last));
+
+    /* Absolute scale */
+    bu_data_hash_update(state, &k->sca_abs, sizeof(k->sca_abs));
+
+    /* Absolute translations */
+    bu_data_hash_update(state, &k->tra_m_abs, sizeof(k->tra_m_abs));
+    bu_data_hash_update(state, &k->tra_m_abs_last, sizeof(k->tra_m_abs_last));
+    bu_data_hash_update(state, &k->tra_v_abs, sizeof(k->tra_v_abs));
+    bu_data_hash_update(state, &k->tra_v_abs_last, sizeof(k->tra_v_abs_last));
+
+    if (!own_state)
+	return 0ULL;
+
+    unsigned long long hv = bu_data_hash_val(state);
+    bu_data_hash_destroy(state);
+    return hv;
+}
+
+
 static void
 set_absolute_view_tran(struct bview *v)
 {
