@@ -93,7 +93,7 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[2], "i", "incr",         "",        NULL,          &incr_flag,    "Interpret values as increments");
     BU_OPT(d[3], "v", "view-coords",  "",        NULL,          &view_flag,    "Manipulate view using view coordinates.  Conflicts with 'm' If neither v or m options are specified, current gv_coord setting from parent view is used.");
     BU_OPT(d[4], "m", "model-coords", "",        NULL,          &model_flag,   "Manipulate view using model coordinates.  Conflicts with 'v'");
-    BU_OPT(d[5], "o", "origin",       "<char>",  &bu_opt_char,  &origin,       "Specify origin mode - may be 'e' (eye_pt), 'm' (model origin) or 'v' (view origin - default).");
+    BU_OPT(d[5], "o", "origin",       "<char>",  &bu_opt_char,  &origin,       "Specify origin mode - may be 'e' (eye_pt), 'm' (model origin), 'v' (view origin - default), or 'k' (keypoint - set by keypoint cmd).");
     BU_OPT_NULL(d[6]);
 
     /* parse standard options */
@@ -185,7 +185,8 @@ ged_knob_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (do_rot) {
-	bv_knobs_rot(v, rvec, origin, (model_flag ? 'm' : 'v'), NULL, NULL);
+	// Note - we don't (currently) support 'o' coords here, so the obj_rot matrix is always NULL.
+	bv_knobs_rot(v, rvec, origin, (model_flag ? 'm' : 'v'), NULL, (origin == 'k') ? gedp->ged_gvp->gv_keypoint : NULL);
     }
 
     bv_update_rate_flags(v);
