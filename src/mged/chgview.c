@@ -1553,67 +1553,39 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     return TCL_OK;
 }
 
-/* Descriptor for a 3-component rate vector and its flag */
-struct rate_vec_desc {
-    fastf_t *v;
-    int     *flag;
-    int      use_small;
-};
-
 static void
-process_rate_vecs(struct rate_vec_desc *dlist)
+update_knob_rate_flags(struct bview_knobs *k, int is_edit)
 {
-    for (struct rate_vec_desc *d = dlist; d->v; d++) {
-	if (d->use_small) {
-	    *(d->flag) = ((fabs(d->v[0]) > SMALL_FASTF) ||
-			  (fabs(d->v[1]) > SMALL_FASTF) ||
-			  (fabs(d->v[2]) > SMALL_FASTF)) ? 1 : 0;
-	} else {
-	    *(d->flag) = (!ZERO(d->v[0]) ||
-			  !ZERO(d->v[1]) ||
-			  !ZERO(d->v[2])) ? 1 : 0;
-	}
+    if (!k) return;
+    k->rot_m_flag = (!ZERO(k->rot_m[X]) || !ZERO(k->rot_m[Y]) || !ZERO(k->rot_m[Z]));
+    k->rot_o_flag = (!ZERO(k->rot_o[X]) || !ZERO(k->rot_o[Y]) || !ZERO(k->rot_o[Z]));
+    k->rot_v_flag = (!ZERO(k->rot_v[X]) || !ZERO(k->rot_v[Y]) || !ZERO(k->rot_v[Z]));
+    k->tra_m_flag = (!ZERO(k->tra_m[X]) || !ZERO(k->tra_m[Y]) || !ZERO(k->tra_m[Z]));
+    k->tra_v_flag = (!ZERO(k->tra_v[X]) || !ZERO(k->tra_v[Y]) || !ZERO(k->tra_v[Z]));
+    if (is_edit) {
+	/* Match earlier behavior: edit scale rate flag only set if > SMALL_FASTF */
+	k->sca_flag = (k->sca > SMALL_FASTF) ? 1 : 0;
+    } else {
+	k->sca_flag = (!ZERO(k->sca));
     }
 }
 
 static void
-check_nonzero_rates(struct mged_state *s)
+update_all_rate_flags(struct mged_state *s)
 {
-    /* View (non-edit) vectors */
-    struct rate_vec_desc view_vecs[] = {
-	{view_state->k.rot_m, &view_state->k.rot_m_flag, 0},
-	{view_state->k.tra_m, &view_state->k.tra_m_flag, 0},
-	{view_state->k.rot_v, &view_state->k.rot_v_flag, 0},
-	{view_state->k.tra_v, &view_state->k.tra_v_flag, 0},
-	{NULL, NULL, 0}
-    };
-
-    /* Edit vectors */
-    struct rate_vec_desc edit_vecs[] = {
-	{MEDIT(s)->k.tra_m, &MEDIT(s)->k.tra_m_flag, 0},
-	{MEDIT(s)->k.tra_v, &MEDIT(s)->k.tra_v_flag, 0},
-	{MEDIT(s)->k.rot_m, &MEDIT(s)->k.rot_m_flag, 0},
-	{MEDIT(s)->k.rot_o, &MEDIT(s)->k.rot_o_flag, 0},
-	{MEDIT(s)->k.rot_v, &MEDIT(s)->k.rot_v_flag, 0},
-	{NULL, NULL, 0}
-    };
-
-    process_rate_vecs(view_vecs);
-    process_rate_vecs(edit_vecs);
-
-    /* Scalar scale rates */
-    view_state->k.sca_flag = (!ZERO(view_state->k.sca)) ? 1 : 0;
-    MEDIT(s)->k.sca_flag  = (MEDIT(s)->k.sca > SMALL_FASTF) ? 1 : 0;
-
-    view_state->vs_flag = 1;
-}
-
-void
-knob_update_rate_vars(struct mged_state *s)
-{
-    if (!mged_variables->mv_rateknobs) {
-	return;
+    if (view_state) {
+	update_knob_rate_flags(&view_state->k, 0);
+	/* sync vs_gvp rate flags */
+	view_state->vs_gvp->k.rot_m_flag = view_state->k.rot_m_flag;
+	view_state->vs_gvp->k.rot_v_flag = view_state->k.rot_v_flag;
+	view_state->vs_gvp->k.tra_m_flag = view_state->k.tra_m_flag;
+	view_state->vs_gvp->k.tra_v_flag = view_state->k.tra_v_flag;
+	view_state->vs_gvp->k.sca_flag   = view_state->k.sca_flag;
     }
+    if (s && s->s_edit && MEDIT(s))
+	update_knob_rate_flags(&MEDIT(s)->k, 1);
+    if (view_state)
+	view_state->vs_flag = 1;
 }
 
 
@@ -1930,38 +1902,23 @@ knob_apply_misc(struct mged_state *s,
 		const char *token)
 {
     if (BU_STR_EQUAL(token, "zap") || BU_STR_EQUAL(token, "zero")) {
-	VSETALL(view_state->k.rot_m, 0.0);
-	VSETALL(view_state->k.tra_m, 0.0);
-	VSETALL(view_state->k.rot_v, 0.0);
-	VSETALL(view_state->k.tra_v, 0.0);
-	view_state->k.sca = 0.0;
-
-	VSETALL(MEDIT(s)->k.rot_m, 0.0);
-	VSETALL(MEDIT(s)->k.rot_o, 0.0);
-	VSETALL(MEDIT(s)->k.rot_v, 0.0);
-	VSETALL(MEDIT(s)->k.tra_m, 0.0);
-	VSETALL(MEDIT(s)->k.tra_v, 0.0);
-	MEDIT(s)->k.sca = 0.0;
-
 	bv_knobs_reset(&view_state->vs_gvp->k, 0);
-
-	knob_update_rate_vars(s);
+	if (MEDIT(s)) {
+	    bv_knobs_reset(&MEDIT(s)->k, BV_KNOBS_RATE);
+	}
+	view_state->k = view_state->vs_gvp->k;
+	update_all_rate_flags(s);
 	Tcl_Eval(interp, "adc reset");
 	(void)mged_svbase(s);
 	return 1;
     }
     if (BU_STR_EQUAL(token, "calibrate")) {
-	/* Reset BOTH model and view absolute translation baselines and their last arrays.
-	 * This avoids stale last values if the user changes coordinate modes after calibrate. */
-	VSETALL(view_state->k.tra_v_abs, 0.0);
-	VSETALL(view_state->k.tra_v_abs_last, 0.0);
-	VSETALL(view_state->k.tra_m_abs, 0.0);
-	VSETALL(view_state->k.tra_m_abs_last, 0.0);
-	/* Mirror into bview knob structure to avoid being overwritten */
+	/* older calibrate behavior reset ONLY vs_absolute_tran,
+	 * so that's what we'll do here as well. */
 	VSETALL(view_state->vs_gvp->k.tra_v_abs, 0.0);
-	VSETALL(view_state->vs_gvp->k.tra_v_abs_last, 0.0);
-	VSETALL(view_state->vs_gvp->k.tra_m_abs, 0.0);
-	VSETALL(view_state->vs_gvp->k.tra_m_abs_last, 0.0);
+
+	view_state->k = view_state->vs_gvp->k;
+	update_all_rate_flags(s);
 	return 1;
     }
     return 0;
@@ -2164,7 +2121,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	view_state->k = view_state->vs_gvp->k;
 
     // Update flags before doing the sync into vs_gvp->k so everything is consistent
-    check_nonzero_rates(s);
+    update_all_rate_flags(s);
 
     /* Synchronize MGED's authoritative knob state into the active bview so that
      * subsequent "view knob" (libged) commands see the accumulated rates and
@@ -2173,7 +2130,6 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
      * view_state->k. */
     if (view_state && view_state->vs_gvp)
 	view_state->vs_gvp->k = view_state->k;
-
 
     return TCL_OK;
 
