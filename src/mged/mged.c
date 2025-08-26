@@ -1027,7 +1027,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		MEDIT(s)->edit_flag = SROT;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_ROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1061,7 +1061,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		MEDIT(s)->edit_flag = SROT;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_ROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1095,7 +1095,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		MEDIT(s)->edit_flag = SROT;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_ROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1129,7 +1129,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_TRAN)
-		MEDIT(s)->edit_flag = STRANS;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_TRANS;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1162,7 +1162,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_TRAN)
-		MEDIT(s)->edit_flag = STRANS;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_TRANS;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1190,7 +1190,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_SCALE)
-		MEDIT(s)->edit_flag = SSCALE;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_SCALE;
 	} else {
 	    save_edflag = edobj;
 	    if (!OEDIT_SCALE)
@@ -2090,7 +2090,7 @@ main(int argc, char *argv[])
     s->global_editing_state = ST_VIEW;
     MEDIT(s)->edit_flag = -1;
     s->s_edit->es_edclass = EDIT_CLASS_NULL;
-    MEDIT(s)->e_inpara = newedge = 0;
+    MEDIT(s)->e_inpara = 0;
 
     /* These values match old GED.  Use 'tol' command to change them. */
     s->tol.tol.magic = BN_TOL_MAGIC;
@@ -2114,7 +2114,7 @@ main(int argc, char *argv[])
     new_mats(s);
 
     mmenu_init(s);
-    btn_head_menu(s->s_edit, 0, 0, 0, s);
+    btn_head_menu(MEDIT(s), 0, 0, 0, s);
     mged_link_vars(s->mged_curr_dm);
 
     bu_vls_printf(&s->input_str, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));
