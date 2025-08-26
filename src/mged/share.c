@@ -283,6 +283,7 @@ f_share(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *ar
  * EXAMPLES
  *	rset c bg 0 0 50	--->	sets the background color to dark blue
  */
+// TODO - is e_type actually used here?
 int
 f_rset (ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {

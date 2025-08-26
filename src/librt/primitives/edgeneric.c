@@ -207,10 +207,21 @@ edit_srot(struct rt_edit *s)
 	MAT4X3PNT(work, s->e_invmat, rot_point);
 	bn_mat_xform_about_pnt(mat, s->incr_change, work);
     }
+
     if (OBJ[ip->idb_type].ft_mat)
 	(*OBJ[ip->idb_type].ft_mat)(ip, mat, ip);
 
     MAT_IDN(s->incr_change);
+}
+
+// TODO - no idea if this is correct...
+void
+edit_mrot(struct rt_edit *s)
+{
+    mat_t newrot;
+    MAT_IDN(newrot);
+    bn_mat_angles(newrot, s->e_para[0], s->e_para[1], s->e_para[2]);
+    rt_knob_edit_rot(s, s->vp->gv_coord, s->vp->gv_rotate_about, 1, newrot);
 }
 
 int
@@ -298,12 +309,8 @@ edit_generic(
 	    edit_abs_tra(s, pos_view);
 	    return BRLCAD_OK;
 	case RT_MATRIX_EDIT_ROT:
-	    // TODO - I think this may need to define a knob call?  check with main MGED implementation
-	    bu_vls_printf(s->log_str, "XY rotation editing setup unimplemented\n");
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return BRLCAD_ERROR;
+	    edit_mrot(s);
+	    return BRLCAD_OK;
 	default:
 	    // Primitives should handle their specific editing cases before calling the generic function - if
 	    // we got here, something isn't right
@@ -492,26 +499,44 @@ edit_tra_xy(vect_t *pos_view,
 
     MAT4X3PNT(pos_model, s->vp->gv_view2model, *pos_view);/* NOT objview */
 
-    edit_mtra(s, pos_model);
-}
-
-void
-edit_mtra(
-	struct rt_edit *s,
-	const vect_t pos_model
-	)
-{
-    mat_t incr_mat;
-    MAT_IDN(incr_mat);
     mat_t oldchanges;  // tmp matrix
-    vect_t temp, tr_temp;
-
+    vect_t tr_temp;
     VMOVE(temp, s->e_keypoint);
     MAT4X3PNT(tr_temp, s->model_changes, temp);
     VSUB2(tr_temp, pos_model, tr_temp);
     MAT_DELTAS_VEC(incr_mat, tr_temp);
     MAT_COPY(oldchanges, s->model_changes);
     bn_mat_mul(s->model_changes, incr_mat, oldchanges);
+}
+
+// UNTESTED
+void
+edit_mrot_xy(struct rt_edit *s,
+	const vect_t mousevec
+	)
+{
+    vect_t tvec;
+    vect_t rvec;
+    int do_tran = 0;
+    int do_rot = 0;
+    int do_sca = 0;
+
+    // Knob command args are XY deltas, and mousevec is normalized to -1,1 range
+    if (!NEAR_ZERO(mousevec[X], SMALL_FASTF)) {
+	fastf_t x = mousevec[X]/INV_BV;
+	rt_edit_knob_cmd_process(s, &rvec, &do_rot, &tvec, &do_tran, &do_sca,
+		s->vp, "ax", x, s->vp->gv_rotate_about, 1, NULL);
+    }
+    if (!NEAR_ZERO(mousevec[Y], SMALL_FASTF)) {
+	fastf_t y = mousevec[Y]/INV_BV;
+	rt_edit_knob_cmd_process(s, &rvec, &do_rot, &tvec, &do_tran, &do_sca,
+		s->vp, "ay", y, s->vp->gv_rotate_about, 1, NULL);
+    }
+
+    mat_t newrot;
+    MAT_IDN(newrot);
+    bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
+    rt_knob_edit_rot(s, s->vp->gv_coord, s->vp->gv_rotate_about, 1, newrot);
 }
 
 int
@@ -556,12 +581,8 @@ edit_generic_xy(
 	    edit_abs_tra(s, pos_view);
 	    return BRLCAD_OK;
 	case RT_MATRIX_EDIT_ROT:
-	    // TODO - I think this may need to define a knob call?  check with main MGED implementation
-	    bu_vls_printf(s->log_str, "XY rotation editing setup unimplemented\n");
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return BRLCAD_ERROR;
+	    edit_mrot_xy(s, mousevec);
+	    return BRLCAD_OK;
 	default:
 	    // Primitives should handle their specific editing cases before calling the generic function - if
 	    // we got here, something isn't right

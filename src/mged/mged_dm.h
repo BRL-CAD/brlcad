@@ -32,6 +32,7 @@
 
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
+#include "menu.h"
 
 #include "mged.h"
 
@@ -341,7 +342,7 @@ struct _menu_state {
     int	ms_top;
     int	ms_cur_menu;
     int	ms_cur_item;
-    struct menu_item	*ms_menus[NMENU];    /* base of menu items array */
+    struct rt_edit_menu_item	*ms_menus[NMENU];    /* base of menu items array */
 };
 
 
@@ -518,6 +519,7 @@ extern void set_curr_dm(struct mged_state *s, struct mged_dm *nl);
     \
 }
 
+/* Ew.  Globals. */
 extern double frametime;		/* defined in mged.c */
 extern int dm_pipe[];			/* defined in mged.c */
 extern int update_views;		/* defined in mged.c */
