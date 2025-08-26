@@ -263,12 +263,12 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     /* Set up solid edit state */
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
-    s->s_edit = rt_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
-    if (s->s_edit) {
-	Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
-	s->s_edit->mv_context = mged_variables->mv_context;
-	s->s_edit->vlfree = &rt_vlfree;
-	mged_edit_clbk_sync(s->s_edit, s);
+    MEDIT(s) = rt_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
+    if (MEDIT(s)) {
+	Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&MEDIT(s)->edit_flag, TCL_LINK_INT);
+	MEDIT(s)->mv_context = mged_variables->mv_context;
+	MEDIT(s)->vlfree = &rt_vlfree;
+	mged_edit_clbk_sync(MEDIT(s), s);
     }
 
     /* Patterned after ill_common() ... */

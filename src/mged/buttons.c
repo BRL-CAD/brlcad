@@ -239,7 +239,7 @@ f_press(ClientData clientData,
 		/* It's up to the menu_func to set menu_state->ms_flag = 0
 		 * if no arrow is desired */
 		if (mptr->menu_func != NULL)
-		    (*(mptr->menu_func))(s->s_edit, mptr->menu_arg, menu, item, s);
+		    (*(mptr->menu_func))(MEDIT(s), mptr->menu_arg, menu, item, s);
 
 		goto next;
 	    }
@@ -893,7 +893,7 @@ be_s_rotate(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc),
     if (not_state(s, ST_S_EDIT, "Primitive Rotate"))
 	return TCL_ERROR;
 
-    MEDIT(s)->edit_flag = SROT;
+    MEDIT(s)->edit_flag = RT_PARAMS_EDIT_ROT;
     edsol = BE_S_ROTATE;
     mmenu_set(s, MENU_L1, NULL);
 
@@ -914,7 +914,7 @@ be_s_trans(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 	return TCL_ERROR;
 
     edsol = BE_S_TRANS;
-    MEDIT(s)->edit_flag = STRANS;
+    MEDIT(s)->edit_flag = RT_PARAMS_EDIT_TRANS;
     movedir = UARROW | RARROW;
     mmenu_set(s, MENU_L1, NULL);
 
@@ -935,7 +935,7 @@ be_s_scale(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), 
 	return TCL_ERROR;
 
     edsol = BE_S_SCALE;
-    MEDIT(s)->edit_flag = SSCALE;
+    MEDIT(s)->edit_flag = RT_PARAMS_EDIT_SCALE;
     mmenu_set(s, MENU_L1, NULL);
     MEDIT(s)->acc_sc_sol = 1.0;
 

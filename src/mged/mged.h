@@ -79,11 +79,12 @@ __BEGIN_DECLS
 #  include "tk.h"
 #  define HAVE_X11_TYPES 1
 #endif
+__END_DECLS
 
 #include "mged_impl.h"
 #include "rt/edit.h"
-__END_DECLS
 
+__BEGIN_DECLS
 // We have to use different I/O mechanisms based on which
 // platform we're on.  Make a define to key off of.
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -463,8 +464,6 @@ void freeDListsAll(void *, unsigned int dlist, int range);
 
 /* edarb.c */
 int editarb(struct rt_edit *s, vect_t pos_model);
-/* Ew.  Global. */
-extern int newedge;	/* new edge for arb editing */
 
 /* edars.c */
 void find_ars_nearest_pnt(int *crv, int *col, struct rt_ars_internal *ars, point_t pick_pt, vect_t dir);
