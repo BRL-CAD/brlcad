@@ -33,6 +33,7 @@
 #include "bn.h"
 #include "bv/util.h"
 #include "raytrace.h"
+#include "rt/edit.h"
 #include "nmg.h"
 #include "tclcad.h"
 #include "./sedit.h"
@@ -200,15 +201,58 @@ token_should_edit(const struct knob_token_entry *e,
     }
 }
 
-
-/* Switch placeholder – always false for now */
-int
-mged_knob_edit_use_librt(void)
+/* Apply accumulated edit operations using the librt rt_edit APIs */
+static int
+mged_librt_knob_edit_apply(struct mged_state *s,
+	char origin,
+	const vect_t rvec, int did_rot,
+	const vect_t tvec, int did_tran,
+	int did_sca)
 {
-#ifdef MGED_ENABLE_LIBRT_KNOB_EDIT
-    return 1;
-#endif
-    return 0;
+    if (!s || !MEDIT(s))
+	return BRLCAD_ERROR;
+
+    struct rt_edit *re = MEDIT(s);
+    int matrix_edit = (s->global_editing_state == ST_O_EDIT);
+
+    /* Rotation */
+    if (did_rot) {
+	mat_t newrot;
+	MAT_IDN(newrot);
+	bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
+	rt_knob_edit_rot(re, mged_variables->mv_coords, origin, matrix_edit, newrot);
+    }
+
+    /* Translation */
+    if (did_tran) {
+	rt_knob_edit_tran(re, mged_variables->mv_coords, matrix_edit, tvec);
+    }
+
+    /* Scale */
+    if (did_sca) {
+	rt_knob_edit_sca(re, matrix_edit);
+    }
+
+    /* For parameter edits (solid editing) finalize primitive parameter updates */
+    if (!matrix_edit) {
+	rt_edit_process(re);
+    }
+
+    /* Update MGED's cached edit matrices and mark for redraw */
+    new_edit_mats(s);
+    s->update_views = 1;
+    dm_set_dirty(DMP, 1);
+
+    /* Synchronize MGED es_edclass (used by token_should_edit, knob printouts, rate loop) */
+    if (did_rot) {
+	s->s_edit->es_edclass = EDIT_CLASS_ROTATE;
+    } else if (did_tran) {
+	s->s_edit->es_edclass = EDIT_CLASS_TRAN;
+    } else if (did_sca) {
+	s->s_edit->es_edclass = EDIT_CLASS_SCALE;
+    }
+
+    return BRLCAD_OK;
 }
 
 /* Clamp absolute rotation angle in-place to [-180,180] */
@@ -1762,6 +1806,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     int edit_do_tran = 0;
     int edit_do_sca = 0;
     int view_abs_scale_changed = 0; /* aS (view) only */
+    int using_librt_edit = 0;       /* set to 1 to test librt editing path */
 
     /* Process token/value pairs */
     --argc;
@@ -1809,11 +1854,31 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    int edit_this_cmd = token_should_edit(ke, s, model_flag, view_flag, force_edit);
 
 	    if (edit_this_cmd) {
-		if (mged_knob_edit_process(s, ke, fval, incr_flag, origin,
-			    edit_rvec, &edit_do_rot,
-			    edit_tvec, &edit_do_tran,
-			    &edit_do_sca) != BRLCAD_OK) {
-		    goto usage;
+		if (using_librt_edit) {
+		    /* Use librt editing path */
+		    struct rt_edit *re = MEDIT(s);
+		    if (!re)
+			goto usage;
+		    struct bview *v = view_state->vs_gvp;
+		    char save_coord = v->gv_coord;
+		    v->gv_coord = mged_variables->mv_coords;
+		    if (rt_edit_knob_cmd_process(re,
+				&edit_rvec, &edit_do_rot,
+				&edit_tvec, &edit_do_tran,
+				&edit_do_sca,
+				v, token, fval,
+				origin, incr_flag, NULL) != BRLCAD_OK) {
+			v->gv_coord = save_coord;
+			goto usage;
+		    }
+		    v->gv_coord = save_coord;
+		} else {
+		    if (mged_knob_edit_process(s, ke, fval, incr_flag, origin,
+				edit_rvec, &edit_do_rot,
+				edit_tvec, &edit_do_tran,
+				&edit_do_sca) != BRLCAD_OK) {
+			goto usage;
+		    }
 		}
 	    } else {
 		/* View path via libbv.  Make sure our units are synced. */
@@ -1883,10 +1948,17 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     /* Apply accumulated EDIT transforms */
     if (edit_do_rot || edit_do_tran || edit_do_sca) {
-	mged_knob_edit_apply(s, origin,
-		edit_rvec, edit_do_rot,
-		edit_tvec, edit_do_tran,
-		edit_do_sca);
+	if (using_librt_edit) {
+	    mged_librt_knob_edit_apply(s, origin,
+		    edit_rvec, edit_do_rot,
+		    edit_tvec, edit_do_tran,
+		    edit_do_sca);
+	} else {
+	    mged_knob_edit_apply(s, origin,
+		    edit_rvec, edit_do_rot,
+		    edit_tvec, edit_do_tran,
+		    edit_do_sca);
+	}
     }
 
     /* If we performed a pure view absolute scale (aS) via libbv, replicate

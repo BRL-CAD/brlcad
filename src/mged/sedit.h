@@ -28,6 +28,7 @@
 #ifndef MGED_SEDIT_H
 #define MGED_SEDIT_H
 
+#include "rt/edit.h"
 #include "mged.h"
 
 #define MGED_SMALL_SCALE 1.0e-10
@@ -152,7 +153,10 @@
 		       MEDIT(s)->edit_flag ==  ECMD_TGC_ROT_AB || \
 		       MEDIT(s)->edit_flag == ECMD_ARB_ROTATE_FACE || \
 		       MEDIT(s)->edit_flag == ECMD_EXTR_ROT_H || \
-		       MEDIT(s)->edit_flag == ECMD_ETO_ROT_C))
+		       MEDIT(s)->edit_flag == ECMD_ETO_ROT_C || \
+		       /* librt generic & matrix rotate */ \
+		       MEDIT(s)->edit_flag == RT_PARAMS_EDIT_ROT || \
+		       MEDIT(s)->edit_flag == RT_MATRIX_EDIT_ROT))
 #define OEDIT_ROTATE (s->global_editing_state == ST_O_EDIT && \
 		      edobj == BE_O_ROTATE)
 #define EDIT_ROTATE (SEDIT_ROTATE || OEDIT_ROTATE)
@@ -170,7 +174,13 @@
 		      MEDIT(s)->edit_flag == ECMD_CLINE_SCALE_H || \
 		      MEDIT(s)->edit_flag == ECMD_CLINE_SCALE_R || \
 		      MEDIT(s)->edit_flag == ECMD_CLINE_SCALE_T || \
-		      MEDIT(s)->edit_flag == ECMD_EXTR_SCALE_H))
+		      MEDIT(s)->edit_flag == ECMD_EXTR_SCALE_H  || \
+		      /* librt generic & matrix scales */ \
+		      MEDIT(s)->edit_flag == RT_PARAMS_EDIT_SCALE || \
+		      MEDIT(s)->edit_flag == RT_MATRIX_EDIT_SCALE || \
+		      MEDIT(s)->edit_flag == RT_MATRIX_EDIT_SCALE_X || \
+		      MEDIT(s)->edit_flag == RT_MATRIX_EDIT_SCALE_Y || \
+		      MEDIT(s)->edit_flag == RT_MATRIX_EDIT_SCALE_Z))
 #define OEDIT_SCALE (s->global_editing_state == ST_O_EDIT && \
 		     (edobj == BE_O_XSCALE || \
 		      edobj == BE_O_YSCALE || \
@@ -200,7 +210,12 @@
 		     MEDIT(s)->edit_flag == ECMD_BOT_MOVEE || \
 		     MEDIT(s)->edit_flag == ECMD_BOT_MOVET || \
 		     MEDIT(s)->edit_flag == ECMD_CLINE_MOVE_H || \
-		     MEDIT(s)->edit_flag == ECMD_EXTR_MOV_H))
+		     MEDIT(s)->edit_flag == ECMD_EXTR_MOV_H  || \
+		     /* librt generic & matrix translations */ \
+		     MEDIT(s)->edit_flag == RT_PARAMS_EDIT_TRANS || \
+		     MEDIT(s)->edit_flag == RT_MATRIX_EDIT_TRANS_VIEW_XY || \
+		     MEDIT(s)->edit_flag == RT_MATRIX_EDIT_TRANS_VIEW_X || \
+		     MEDIT(s)->edit_flag == RT_MATRIX_EDIT_TRANS_VIEW_Y))
 #define OEDIT_TRAN (s->global_editing_state == ST_O_EDIT && \
 		    (edobj == BE_O_X || \
 		     edobj == BE_O_Y || \
