@@ -89,7 +89,6 @@ struct rt_edit_menu_item oed_menu[] = {
     { "Scale X", btn_item_hit, BE_O_XSCALE },
     { "Scale Y", btn_item_hit, BE_O_YSCALE },
     { "Scale Z", btn_item_hit, BE_O_ZSCALE },
->>>>>>> 734faa6420 (Restore MGED altered for librt editing in branch)
     { "", NULL, 0 }
 };
 
@@ -477,7 +476,7 @@ mmenu_select(struct mged_state *s, int pen_y, int do_func)
 	    /* It's up to the menu_func to set menu_state->ms_flag=0
 	     * if no arrow is desired */
 	    if (do_func && mptr->menu_func != NULL)
-		(*(mptr->menu_func))(s->s_edit, mptr->menu_arg, menu, item, s);
+		(*(mptr->menu_func))(MEDIT(s), mptr->menu_arg, menu, item, s);
 
 	    return 1;		/* menu claims pen value */
 	}

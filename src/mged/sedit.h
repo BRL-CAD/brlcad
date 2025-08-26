@@ -42,13 +42,13 @@
 /* These values go in edit_flag .  Some names not changed yet */
 
 #define SEDIT_ROTATE (s->global_editing_state == ST_S_EDIT && \
-	s->s_edit->edit_mode == RT_PARAMS_EDIT_ROT)
+	s->s_edit->e->edit_mode == RT_PARAMS_EDIT_ROT)
 #define SEDIT_TRAN (s->global_editing_state == ST_S_EDIT && \
-	s->s_edit->edit_mode == RT_PARAMS_EDIT_TRANS)
+	s->s_edit->e->edit_mode == RT_PARAMS_EDIT_TRANS)
 #define SEDIT_SCALE (s->global_editing_state == ST_S_EDIT && \
-	s->s_edit->edit_mode == RT_PARAMS_EDIT_SCALE)
+	s->s_edit->e->edit_mode == RT_PARAMS_EDIT_SCALE)
 #define SEDIT_PICK (s->global_editing_state == ST_S_EDIT && \
-	s->s_edit->edit_mode == RT_PARAMS_EDIT_PICK)
+	s->s_edit->e->edit_mode == RT_PARAMS_EDIT_PICK)
 
 #define OEDIT_ROTATE (s->global_editing_state == ST_O_EDIT && \
 		      edobj == BE_O_ROTATE)

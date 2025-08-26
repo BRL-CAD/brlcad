@@ -45,6 +45,9 @@ mged_state_create(void)
 {
     struct mged_state *s;
     BU_GET(s, struct mged_state);
+    BU_GET(s->s_edit, struct mged_edit_state);
+    s->s_edit->e = rt_edit_create(NULL, NULL, NULL, NULL);
+
     s->magic = MGED_STATE_MAGIC;
 
     BU_GET(s->i, struct mged_state_impl);
@@ -98,11 +101,11 @@ mged_state_destroy(struct mged_state *s)
     bu_vls_free(&s->input_str_prefix);
     bu_vls_free(&s->scratchline);
     bu_vls_free(&s->mged_prompt);
-    if (s->s_edit)
-	rt_edit_destroy(s->s_edit);
-    s->s_edit = NULL;
+    rt_edit_destroy(MEDIT(s));
+    MEDIT(s) = NULL;
 
     delete s->i->i;
+    BU_PUT(s->s_edit, struct mged_edit_state);
     BU_PUT(s->i, struct mged_state_impl);
     BU_PUT(s, struct mged_state);
 }
@@ -163,7 +166,7 @@ int mged_edit_clbk_sync(struct rt_edit *se, struct mged_state *s)
     struct rt_edit_map *gmp = mged_internal_clbk_map(i, 0);
     rt_edit_map_copy(se->m, gmp);
 
-    struct rt_edit_map *mp = mged_internal_clbk_map(i, s->s_edit->es_int.idb_type);
+    struct rt_edit_map *mp = mged_internal_clbk_map(i, MEDIT(s)->es_int.idb_type);
 
     return rt_edit_map_copy(se->m, mp);
 }

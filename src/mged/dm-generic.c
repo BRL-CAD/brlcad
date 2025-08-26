@@ -269,7 +269,7 @@ common_dm(struct mged_state *s, int argc, const char *argv[])
 			if (s->global_editing_state == ST_S_EDIT) {
 			    save_edflag = MEDIT(s)->edit_flag;
 			    if (!SEDIT_TRAN)
-				MEDIT(s)->edit_flag = STRANS;
+				MEDIT(s)->edit_flag = RT_PARAMS_EDIT_TRANS;
 			} else {
 			    save_edflag = edobj;
 			    edobj = BE_O_XY;

@@ -86,7 +86,7 @@ set_e_axes_pos_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *id)
 	VMOVE(MEDIT(s)->e_axes_pos, MEDIT(s)->curr_e_axes_pos);
 
 	if (EDIT_ROTATE) {
-	    MEDIT(s)->es_edclass = EDIT_CLASS_ROTATE;
+	    s->s_edit->es_edclass = EDIT_CLASS_ROTATE;
 	    VSETALL(MEDIT(s)->k.rot_m_abs, 0.0);
 	    VSETALL(MEDIT(s)->k.rot_o_abs, 0.0);
 	    VSETALL(MEDIT(s)->k.rot_v_abs, 0.0);
@@ -94,20 +94,20 @@ set_e_axes_pos_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *id)
 	    VSETALL(MEDIT(s)->k.rot_o_abs_last, 0.0);
 	    VSETALL(MEDIT(s)->k.rot_v_abs_last, 0.0);
 	} else if (EDIT_TRAN) {
-	    MEDIT(s)->es_edclass = EDIT_CLASS_TRAN;
+	    s->s_edit->es_edclass = EDIT_CLASS_TRAN;
 	    VSETALL(MEDIT(s)->k.tra_m_abs, 0.0);
 	    VSETALL(MEDIT(s)->k.tra_v_abs, 0.0);
 	    VSETALL(MEDIT(s)->k.tra_m_abs_last, 0.0);
 	    VSETALL(MEDIT(s)->k.tra_v_abs_last, 0.0);
 	} else if (EDIT_SCALE) {
-	    MEDIT(s)->es_edclass = EDIT_CLASS_SCALE;
+	    s->s_edit->es_edclass = EDIT_CLASS_SCALE;
 
 	    if (SEDIT_SCALE) {
 		MEDIT(s)->k.sca_abs = 0.0;
 		MEDIT(s)->acc_sc_sol = 1.0;
 	    }
 	} else {
-	    MEDIT(s)->es_edclass = EDIT_CLASS_NULL;
+	    s->s_edit->es_edclass = EDIT_CLASS_NULL;
 	}
 
 	MAT_IDN(MEDIT(s)->acc_rot_sol);
@@ -132,7 +132,7 @@ int
 arb_setup_rotface_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(d2))
 {
     struct mged_state *ms = (struct mged_state *)d;
-    struct rt_edit *s = mMEDIT(s);
+    struct rt_edit *s = MEDIT(ms);
     struct rt_arb8_edit *aint = (struct rt_arb8_edit *)s->ipe_ptr;
     int vertex = -1;
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -189,14 +189,13 @@ arb_setup_rotface_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *U
 
     pr_prompt(ms);
     return vertex;
->>>>>>> 734faa6420 (Restore MGED altered for librt editing in branch)
 }
 
 int
 ecmd_bot_mode_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(d2))
 {
     struct mged_state *ms = (struct mged_state *)d;
-    struct rt_edit *s = mMEDIT(s);
+    struct rt_edit *s = MEDIT(ms);
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
@@ -478,7 +477,7 @@ int
 ecmd_nmg_edebug_clbk(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(d2))
 {
     struct mged_state *ms = (struct mged_state *)d;
-    struct rt_edit *s = mMEDIT(s);
+    struct rt_edit *s = MEDIT(ms);
     struct rt_nmg_edit *en = (struct rt_nmg_edit *)s->ipe_ptr;
     nmg_plot_eu(ms->gedp, en->es_eu, s->tol, s->vlfree);
     return BRLCAD_OK;
@@ -777,8 +776,9 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
     /* Maintain legacy invariant: incr_change starts (and ends) identity */
     MAT_IDN(MEDIT(s)->incr_change);
 
-    struct saved_edflags sf = SAVED_EDFLAGS_INIT;
-    save_edflags(&sf, s);
+    // TODO - not using this anymore, revert/fix
+//    struct saved_edflags sf = SAVED_EDFLAGS_INIT;
+//    save_edflags(&sf, s);
 
     if (movedir & SARROW) {
 	switch (edobj) {
@@ -820,7 +820,8 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 	}
     }
 
-    restore_edflags(s, &sf);
+    // TODO - not using this anymore, revert/fix
+    //restore_edflags(s, &sf);
     new_edit_mats(s);
 }
 
@@ -828,7 +829,7 @@ objedit_mouse(struct mged_state *s, const vect_t mousevec)
 void
 vls_solid(struct mged_state *ms, struct bu_vls *vp, struct rt_edit *s, const mat_t mat)
 {
-    struct rt_db_internal *ip = &mMEDIT(s)->es_int;
+    struct rt_db_internal *ip = &MEDIT(ms)->es_int;
     struct rt_db_internal intern;
     int id;
 
@@ -970,7 +971,7 @@ init_oedit(struct mged_state *s)
     /* do real initialization work */
     init_oedit_guts(s);
 
-    MEDIT(s)->es_edclass = EDIT_CLASS_NULL;
+    s->s_edit->es_edclass = EDIT_CLASS_NULL;
 
     /* begin edit callback */
     bu_vls_strcpy(&vls, "begin_edit_callback {}");
@@ -1232,7 +1233,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	menu_state->ms_flag = 0;
 	movedir = 0;
 	MEDIT(s)->edit_flag = -1;
-	MEDIT(s)->es_edclass = EDIT_CLASS_NULL;
+	s->s_edit->es_edclass = EDIT_CLASS_NULL;
 
 	rt_db_free_internal(&MEDIT(s)->es_int);
     } else {
@@ -1332,7 +1333,7 @@ sedit_reject(struct mged_state *s)
     menu_state->ms_flag = 0;
     movedir = 0;
     MEDIT(s)->edit_flag = -1;
-    MEDIT(s)->es_edclass = EDIT_CLASS_NULL;
+    s->s_edit->es_edclass = EDIT_CLASS_NULL;
 
     rt_db_free_internal(&MEDIT(s)->es_int);
 }
@@ -1421,7 +1422,7 @@ label_edited_solid(
     int *num_lines, // NOTE - currently used only for BOTs
     point_t *lines, // NOTE - currently used only for BOTs
     struct rt_point_labels pl[],
-    int UNUSED(max_pl),
+    int max_pl,
     const mat_t xform,
     struct rt_db_internal *ip)
 {

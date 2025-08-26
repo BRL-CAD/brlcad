@@ -1312,7 +1312,7 @@ mged_print_str(int UNUSED(ac), const char **UNUSED(av), void *d, void *UNUSED(ud
 {
     struct mged_state *s = (struct mged_state *)d;
 
-    Tcl_AppendResult(s->interp, bu_vls_cstr(s->s_edit->log_str), (char *)NULL);
+    Tcl_AppendResult(s->interp, bu_vls_cstr(MEDIT(s)->log_str), (char *)NULL);
 
     return TCL_OK;
 }
