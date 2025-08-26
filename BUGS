@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* fbserv as well as -F option handling (e.g., -F0 or -F/dev/wgls) that
+  is supported across myriad other tools appears to be broken on
+  Windows (at least in a git bash shell.  Something is concatenating
+  EXEPATH and/or fbserv silently fails with return codes (e.g., when
+  not specifying -F, only giving the port).
+
 * rt -H hypersample, -J jitter, and -j# for sub-grid-mode assumes a
   framebuffer, causing pix data to get written to the -o file (e.g.,
   even with -o file.png).  See view_pixel() near src/rt/view.c:472 for
