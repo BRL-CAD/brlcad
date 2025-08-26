@@ -378,18 +378,25 @@ rt_edit_set_edflag(struct rt_edit *s, int edflag)
 
     s->edit_flag = edflag;
 
-    // In the case of the four generic (i.e. not primitive data specific) flag
-    // settings, we can also set the edit_mode state.  For anything else,
-    // it is the responsibility of the primitive specific logic to decode
-    // edit_flag (and any other relevant info) into the proper edit_mode.
-    // Applications like MGED may use edit_mode to adjust interface
-    // behaviors, so it is important to have it properly set, but we can only
-    // do so much here.
+    // In the case of the generic (i.e. not primitive data specific) flag
+    // settings, we can also set the edit_mode state.  For anything else, it is
+    // the responsibility of the primitive specific logic to decode edit_flag
+    // (and any other relevant info) into the proper edit_mode.  Applications
+    // like MGED may use edit_mode to adjust interface behaviors, so it is
+    // important to have it properly set, but we can only do so much here.
     switch (edflag) {
 	case RT_PARAMS_EDIT_ROT:
 	case RT_PARAMS_EDIT_TRANS:
 	case RT_PARAMS_EDIT_SCALE:
 	case RT_PARAMS_EDIT_PICK:
+	case RT_MATRIX_EDIT_ROT:
+	case RT_MATRIX_EDIT_TRANS_VIEW_XY:
+	case RT_MATRIX_EDIT_TRANS_VIEW_X:
+	case RT_MATRIX_EDIT_TRANS_VIEW_Y:
+	case RT_MATRIX_EDIT_SCALE:
+	case RT_MATRIX_EDIT_SCALE_X:
+	case RT_MATRIX_EDIT_SCALE_Y:
+	case RT_MATRIX_EDIT_SCALE_Z:
 	    s->edit_mode = edflag;
 	    break;
 	default:
@@ -830,13 +837,12 @@ rt_knob_edit_sca(struct rt_edit *s, int matrix_edit)
 	s->edit_mode = save_mode;
 
    } else {
-       fastf_t scale;
-       mat_t incr_mat;
-       MAT_IDN(incr_mat);
 
-       // TODO - objedit_mouse SARROW case has different logic for handling mousevec
-       // inputs - looking like we may need a mousevec entry for the rt_edit
-       // struct so we can have both processing methods here....
+       // TODO - edit_mscale_xy has similar logic, but there are differences.
+       // Need to take apart in detail what the math in each is doing and see
+       // if consolidation is possible...
+
+       fastf_t scale;
 
        if (-SMALL_FASTF < s->k.sca_abs && s->k.sca_abs < SMALL_FASTF)
 	   scale = 1;
@@ -848,6 +854,9 @@ rt_knob_edit_sca(struct rt_edit *s, int matrix_edit)
 
 	   scale = 1.0 + s->k.sca_abs;
        }
+
+       mat_t incr_mat;
+       MAT_IDN(incr_mat);
 
        /* switch depending on scaling option selected */
        switch (s->edit_flag) {
@@ -917,9 +926,12 @@ rt_edit_process(struct rt_edit *s)
     bu_clbk_t f = NULL;
     void *d = NULL;
 
-    ++s->update_views;
+    // Unless we're idle, assume we will need to update the view
+    if (s->edit_flag != RT_EDIT_IDLE)
+	++s->update_views;
 
-    int had_method = 0;
+    // The real work is done by per-primitive callbacks into the EDOBJ function
+    // table
     const struct rt_db_internal *ip = &s->es_int;
     if (EDOBJ[ip->idb_type].ft_edit) {
 	bu_vls_trunc(s->log_str, 0);
@@ -938,48 +950,31 @@ rt_edit_process(struct rt_edit *s)
 		(*f)(0, NULL, d, NULL);
 	    bu_vls_trunc(s->log_str, 0);
 	}
-	had_method = 1;
-    }
-
-    switch (s->edit_flag) {
-
-	case RT_EDIT_IDLE:
-	    /* do nothing more */
-	    --s->update_views;
-	    break;
-	default:
-	    {
-		if (had_method)
-		    break;
-		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&tmp_vls, "%s", bu_vls_cstr(s->log_str));
-		bu_vls_sprintf(s->log_str, "rt_edit_process:  unknown edflag = %d.\n", s->edit_flag);
-		rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
-		if (f)
-		    (*f)(0, NULL, d, NULL);
-		bu_vls_sprintf(s->log_str, "%s", bu_vls_cstr(&tmp_vls));
-		bu_vls_free(&tmp_vls);
-		rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-		if (f)
-		    (*f)(0, NULL, d, NULL);
-	    }
+    } else {
+	bu_vls_sprintf(s->log_str, "rt_edit_process: no ft_edit method defined for objects of type %s", EDOBJ[ip->idb_type].ft_label);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_STR, BU_CLBK_DURING);
+	if (f)
+	    (*f)(0, NULL, d, NULL);
     }
 
     /* If the keypoint changed location, find about it here */
     if (!s->e_keyfixed)
 	rt_get_solid_keypoint(s, &s->e_keypoint, &s->e_keytag, s->e_mat);
 
+    // eaxes_pos callback
     int flag = 0;
     f = NULL; d = NULL;
     rt_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 
+    // replot callback
     f = NULL; d = NULL;
     rt_edit_map_clbk_get(&f, &d, s->m, ECMD_REPLOT_EDITING_SOLID, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
 
+    // view update callback
     if (s->update_views) {
 	f = NULL; d = NULL;
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_UPDATE, BU_CLBK_DURING);
@@ -987,6 +982,7 @@ rt_edit_process(struct rt_edit *s)
 	    (*f)(0, NULL, d, NULL);
     }
 
+    // Inputs processed, reset
     s->e_inpara = 0;
     s->e_mvalid = 0;
 }
