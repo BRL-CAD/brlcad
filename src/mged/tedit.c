@@ -158,7 +158,7 @@ readsolid(struct mged_state *s)
 {
     CHECK_DBI_NULL;
 
-    struct rt_db_internal *ip = &s->s_edit->es_int;
+    struct rt_db_internal *ip = &MEDIT(s)->es_int;
 
     if (!EDOBJ[ip->idb_type].ft_read_params) {
 	Tcl_AppendResult(s->interp, "Cannot text edit this solid type\n", (char *)NULL);
