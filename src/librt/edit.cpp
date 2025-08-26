@@ -1003,17 +1003,20 @@ rt_edit_process(struct rt_edit *s)
     if (!s->e_keyfixed)
 	rt_get_solid_keypoint(s, &s->e_keypoint, &s->e_keytag, s->e_mat);
 
+    // eaxes_pos callback
     int flag = 0;
     f = NULL; d = NULL;
     rt_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 
+    // replot callback
     f = NULL; d = NULL;
     rt_edit_map_clbk_get(&f, &d, s->m, ECMD_REPLOT_EDITING_SOLID, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
 
+    // view update callback
     if (s->update_views) {
 	f = NULL; d = NULL;
 	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_UPDATE, BU_CLBK_DURING);
@@ -1021,6 +1024,7 @@ rt_edit_process(struct rt_edit *s)
 	    (*f)(0, NULL, d, NULL);
     }
 
+    // Inputs processed, reset
     s->e_inpara = 0;
     s->e_mvalid = 0;
 }

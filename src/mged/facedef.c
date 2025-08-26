@@ -119,14 +119,15 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	goto end;
     }
 
-    /* apply MEDIT(s)->e_mat editing to parameters.  "new way" */
+    /* apply s->edit_state.e_mat editing to parameters.  "new way" */
     transform_editing_solid(s, &intern, MEDIT(s)->e_mat, &MEDIT(s)->es_int, 0);
 
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
     /* find new planes to account for any editing */
-    if (rt_arb_calc_planes(&error_msg, arb, s->s_edit->es_type, planes, &s->tol.tol)) {
+    int arb_type = rt_arb_std_type(&MEDIT(s)->es_int, MEDIT(s)->tol);
+    if (rt_arb_calc_planes(&error_msg, arb, arb_type, planes, &s->tol.tol)) {
 	Tcl_AppendResult(interp, bu_vls_addr(&error_msg),
 			 "Unable to determine plane equations\n", (char *)NULL);
 	status = TCL_ERROR;
@@ -152,7 +153,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	    /* face 1234 of arb7 */
 	    /* face 1234 of arb6 */
 	    /* face 1234 of arb5 */
-	    if (s->s_edit->es_type==4 && prod==24)
+	    if (arb_type==4 && prod==24)
 		plane=2; 	/* face 234 of arb4 */
 	    break;
 	case 8:			/* face 124 of arb4 */
@@ -164,20 +165,20 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	case 120:		/* face 1564 of arb6 */
 	case 20:      		/* face 145 of arb7 */
 	case 160:plane=2;	/* face 1584 of arb8 */
-	    if (s->s_edit->es_type==5)
+	    if (arb_type==5)
 		plane=4; 	/* face 145 of arb5 */
 	    break;
 	case 12:		/* face 134 of arb4 */
 	case 10:		/* face 125 of arb6 */
 	case 252:plane=3;	/* face 2376 of arb8 */
 	    /* face 2376 of arb7 */
-	    if (s->s_edit->es_type==5)
+	    if (arb_type==5)
 		plane=1; 	/* face 125 of arb5 */
 	    break;
 	case 72:               	/* face 346 of arb6 */
 	case 60:plane=4;	/* face 1265 of arb8 */
 	    /* face 1265 of arb7 */
-	    if (s->s_edit->es_type==5)
+	    if (arb_type==5)
 		plane=3; 	/* face 345 of arb5 */
 	    break;
 	case 420:		/* face 4375 of arb7 */
@@ -211,7 +212,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     switch (argv[2][0]) {
 	case 'a':
 	    /* special case for arb7, because of 2 4-pt planes meeting */
-	    if (s->s_edit->es_type == 7)
+	    if (arb_type == 7)
 		if (plane!=0 && plane!=3) {
 		    Tcl_AppendResult(interp, "Facedef: can't redefine that arb7 plane\n", (char *)NULL);
 		    status = TCL_ERROR;
@@ -227,7 +228,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	    break;
 	case 'b':
 	    /* special case for arb7, because of 2 4-pt planes meeting */
-	    if (s->s_edit->es_type == 7)
+	    if (arb_type == 7)
 		if (plane!=0 && plane!=3) {
 		    Tcl_AppendResult(interp, "Facedef: can't redefine that arb7 plane\n", (char *)NULL);
 		    status = TCL_ERROR;
@@ -250,7 +251,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	    break;
 	case 'c':
 	    /* special case for arb7, because of 2 4-pt planes meeting */
-	    if (s->s_edit->es_type == 7 && (plane != 0 && plane != 3)) {
+	    if (arb_type == 7 && (plane != 0 && plane != 3)) {
 		if (argc < 5) {
 		    /* total # of args under this option */
 		    Tcl_AppendResult(interp, MORE_ARGS_STR, p_rotfb[argc-3], (char *)NULL);
@@ -271,7 +272,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	    break;
 	case 'd':
 	    /* special case for arb7, because of 2 4-pt planes meeting */
-	    if (s->s_edit->es_type == 7)
+	    if (arb_type == 7)
 		if (plane!=0 && plane!=3) {
 		    Tcl_AppendResult(interp, "Facedef: can't redefine that arb7 plane\n", (char *)NULL);
 		    status = TCL_ERROR;
@@ -294,7 +295,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     }
 
     /* find all vertices from the plane equations */
-    if (rt_arb_calc_points(arb, s->s_edit->es_type, (const plane_t *)planes, &s->tol.tol) < 0) {
+    if (rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &s->tol.tol) < 0) {
 	Tcl_AppendResult(interp, "facedef:  unable to find points\n", (char *)NULL);
 	status = TCL_ERROR;
 	goto end;
@@ -312,7 +313,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     rt_db_free_internal(&intern);
 
     /* draw the new solid */
-    replot_editing_solid(s);
+    replot_editing_solid(0, NULL, s, NULL);
 
  end:
     (void)signal(SIGINT, SIG_IGN);

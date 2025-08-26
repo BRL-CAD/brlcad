@@ -482,8 +482,8 @@ mged_erot(struct mged_state *s,
 	 */
 	wrt_point(MEDIT(s)->model_changes, newrot, MEDIT(s)->model_changes, point);
 
+    if (matrix_edit)
 	new_edit_mats(s);
-    }
 
     return TCL_OK;
 }
@@ -552,6 +552,7 @@ mged_etran(struct mged_state *s,
 	MAT_DELTAS_VEC(xlatemat, delta);
 	bn_mat_mul2(xlatemat, MEDIT(s)->model_changes);
 
+    if (matrix_edit) {
 	new_edit_mats(s);
 	s->update_views = 1;
 	dm_set_dirty(DMP, 1);
@@ -1450,7 +1451,17 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    (void)chg_state(s, ST_O_PICK, ST_O_PATH, "Keyboard illuminate");
 	} else {
 	    /* Check details, Init menu, set state=ST_S_EDIT */
-	    init_sedit(s);
+	    if (!s->s_edit) {
+		struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+		s->s_edit = rt_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
+		if (s->s_edit) {
+		    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
+		    s->s_edit->mv_context = mged_variables->mv_context;
+		    s->s_edit->vlfree = &rt_vlfree;
+		    mged_edit_clbk_sync(s->s_edit, s);
+		    init_sedit(s);
+		}
+	    }
 	}
     }
 
@@ -1560,6 +1571,18 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	Tcl_SetObjResult(interp, save_result);
 	Tcl_DecrRefCount(save_result);
 	return TCL_ERROR;
+    }
+
+    /* Set up solid edit state, if f_ill hasn't already done so. */
+    if (!s->s_edit) {
+	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+	s->s_edit = rt_edit_create(&bdata->s_fullpath, s->dbip, &s->tol.tol, view_state->vs_gvp);
+	if (s->s_edit) {
+	    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&s->s_edit->edit_flag, TCL_LINK_INT);
+	    s->s_edit->mv_context = mged_variables->mv_context;
+	    s->s_edit->vlfree = &rt_vlfree;
+	    mged_edit_clbk_sync(s->s_edit, s);
+	}
     }
 
     return TCL_OK;
@@ -2796,7 +2819,7 @@ cmd_mrot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	    return TCL_ERROR;
 	}
 
-	return mged_erot(s, view_state->vs_gvp->gv_coord, view_state->vs_gvp->gv_rotate_about, rmat);
+	return mged_knob_edit_rot(s, view_state->vs_gvp->gv_coord, view_state->vs_gvp->gv_rotate_about, rmat);
     } else {
 	int ret;
 
@@ -2872,7 +2895,7 @@ cmd_rot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    return TCL_ERROR;
 	}
 
-	return mged_erot(s, coord, view_state->vs_gvp->gv_rotate_about, rmat);
+	return mged_knob_edit_rot(s, coord, view_state->vs_gvp->gv_rotate_about, rmat);
     } else {
 	int ret;
 
@@ -2918,7 +2941,7 @@ cmd_arot(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	    return TCL_ERROR;
 	}
 
-	return mged_erot(s, view_state->vs_gvp->gv_coord, view_state->vs_gvp->gv_rotate_about, rmat);
+	return mged_knob_edit_rot(s, view_state->vs_gvp->gv_coord, view_state->vs_gvp->gv_rotate_about, rmat);
     } else {
 	int ret;
 	Tcl_DStringInit(&ds);
@@ -3014,7 +3037,10 @@ mged_escale(struct mged_state *s, fastf_t sfactor)
 	    MEDIT(s)->k.sca_abs = MEDIT(s)->acc_sc_sol - 1.0;
 	}
 
-	sedit(s);
+	s->s_edit->update_views = s->update_views;
+	sedraw = 0;
+	rt_edit_process(s->s_edit);
+	s->update_views = s->s_edit->update_views;
 
 	MEDIT(s)->edit_flag = save_edflag;
     } else {
