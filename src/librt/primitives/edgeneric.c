@@ -211,10 +211,21 @@ edit_srot(struct rt_edit *s)
 	MAT4X3PNT(work, s->e_invmat, rot_point);
 	bn_mat_xform_about_pnt(mat, s->incr_change, work);
     }
+
     if (OBJ[ip->idb_type].ft_mat)
 	(*OBJ[ip->idb_type].ft_mat)(ip, mat, ip);
 
     MAT_IDN(s->incr_change);
+}
+
+// TODO - no idea if this is correct...
+void
+edit_mrot(struct rt_edit *s)
+{
+    mat_t newrot;
+    MAT_IDN(newrot);
+    bn_mat_angles(newrot, s->e_para[0], s->e_para[1], s->e_para[2]);
+    rt_knob_edit_rot(s, s->vp->gv_coord, s->vp->gv_rotate_about, 1, newrot);
 }
 
 int
@@ -578,20 +589,8 @@ edit_tra_xy(vect_t *pos_view,
 
     MAT4X3PNT(pos_model, s->vp->gv_view2model, *pos_view);/* NOT objview */
 
-    edit_mtra(s, pos_model);
-}
-
-void
-edit_mtra(
-	struct rt_edit *s,
-	const vect_t pos_model
-	)
-{
-    mat_t incr_mat;
-    MAT_IDN(incr_mat);
     mat_t oldchanges;  // tmp matrix
-    vect_t temp, tr_temp;
-
+    vect_t tr_temp;
     VMOVE(temp, s->e_keypoint);
     MAT4X3PNT(tr_temp, s->model_changes, temp);
     VSUB2(tr_temp, pos_model, tr_temp);
