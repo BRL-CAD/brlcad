@@ -2402,7 +2402,6 @@ include(BRLCAD_CPack)
 # a "." character are "hidden" and may not be present, so check for them first.
 set(
   hidden_files
-  .github/workflows/analysis.yml
   .github/workflows/check.yml
   .github/workflows/linux_interactive.yml
   .gitattributes

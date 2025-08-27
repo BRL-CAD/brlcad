@@ -19,22 +19,116 @@
 # and iterative debugging is available while preserving the readability of the
 # CI outputs for other issues.
 #
-# Note that there is another reason not to do parallel runs; we have had some
-# trouble with issues that appear to be related to files not being fully
-# written out to disk. To try and help mitigate this, we don't want to stress
-# the I/O subsystem any more than necessary:
-#
-# https://github.com/actions/runner/issues/718
-#
+# Execution order (gated by job dependencies):
+#   1. archives        (Source archive integrity)
+#   2. linux           (Primary Linux build/tests)
+#   3. windows, windows_std_tools, osx (Platform builds in parallel after Linux)
+#   4. linux_static, linux_cov (Static analysis & coverage ONLY on main, after all platform builds succeed)
 
 name: BRL-CAD
 
-on: [push]
+on:
+  push:
 
 jobs:
 
+  linux:
+    name: Ubuntu Latest GCC
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Setup - System
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          # Install X/OpenGL dev pkgs
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          # Install tools
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          # Install dependency dev pkgs
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
+          # Cleanup
+          sudo apt-get clean
+
+      - name: Setup - System Qt Build Requirements
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          # Install XCB/OpenGL dev pkgs for Qt - see:
+          # https://wiki.qt.io/Building_Qt_6_from_Git
+          # https://doc.qt.io/qt-6/linux-requirements.html
+          sudo apt-get install libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-cursor-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxcb-xinput-dev libxcb-xrm-dev
+          sudo apt-get install libgl-dev
+          sudo apt-get install libinput-dev
+          sudo apt-get clean
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Directory setup
+        run: |
+          cmake -E make_directory ./build_linux
+          cmake -E make_directory $HOME/.cache
+          cmake -E make_directory $HOME/.cache/BRL-CAD
+
+      - name: Configure
+        run: |
+          export PATH=$GITHUB_WORKSPACE:$PATH
+          cmake -S . -G Ninja -B build_linux -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_ENABLE_QT=ON -DBRLCAD_BEXT_CLEANUP=ON
+
+      - name: Build + Check + Package
+        run: |
+          export PATH=$GITHUB_WORKSPACE:$PATH
+          cmake --build build_linux --config Release --target check
+          cmake --build build_linux --config Release --target package
+
+  # A full distcheck is too expensive for the runners, but we can run the
+  # repository integrity check and make sure we can build source archives.
+  archives:
+    name: Source Archives
+    runs-on: ubuntu-latest
+    needs: [linux]
+    strategy:
+      fail-fast: true
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Setup - System
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          # Install X/OpenGL dev pkgs
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          # Install tools
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          # Install dependency dev pkgs
+            # (Kept consistent with other jobs to ensure dist targets succeed)
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
+          # Cleanup (we want to avoid wasting disk space)
+          sudo apt-get clean
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+          cmake -E make_directory ./build_archives
+          export PATH=$GITHUB_WORKSPACE:$PATH
+          cmake -S . -B build_archives -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_BEXT_CLEANUP=ON
+          cmake --build build_archives --config Release --target distcheck-source_archives
+
+
   windows:
     name: Windows Latest MSVC - Ninja
+    needs: [linux]
     runs-on: windows-latest
     strategy:
       fail-fast: true
@@ -49,14 +143,14 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Add github workspace to path
-        # https://github.community/t/deprecated-add-path/136621
-        run: echo "$ENV{GITHUB_WORKSPACE}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+        shell: pwsh
+        run: Add-Content -Path $env:GITHUB_PATH -Value $env:GITHUB_WORKSPACE
 
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup - bext
-        shell: powershell
+        shell: pwsh
         run: |
           cmake -E make_directory build_winninja
           cd build_winninja
@@ -71,31 +165,28 @@ jobs:
           cd ..
 
       - name: Configure
-        shell: powershell
+        shell: pwsh
         run: |
-          # We do the Write-VolumeCache calls in order to help ensure files are
-          # "flushed" to disk before compilation is attempted
-          # https://superuser.com/a/1553374/1286142
-          cd build_winninja; cmake .. -G Ninja -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" -DBRLCAD_EXT_DIR=${{ github.workspace }}/build_winninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_ENABLE_QT=ON; Write-VolumeCache C; Write-VolumeCache D; cd ..
+          cd build_winninja; cmake .. -G Ninja -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" -DBRLCAD_EXT_DIR=${{ github.workspace }}/build_winninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_ENABLE_QT=ON
 
       - name: Build
-        shell: powershell
+        shell: pwsh
         run: |
           cd build_winninja; ninja -j1 -v; cd ..
 
       - name: Check
-        shell: powershell
+        shell: pwsh
         run: |
           cd build_winninja; ninja check -v; cd ..
 
       - name: Package
-        shell: powershell
+        shell: pwsh
         run: |
           cd build_winninja; ninja package; cd ..
 
-
   windows_std_tools:
     name: Windows Latest MSVC - Standard Tools
+    needs: [linux]
     runs-on: windows-latest
     strategy:
       fail-fast: true
@@ -107,8 +198,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Add github workspace to path
-        # https://github.community/t/deprecated-add-path/136621
-        run: echo "$ENV{GITHUB_WORKSPACE}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+        shell: cmd
+        run: echo %GITHUB_WORKSPACE%>>"%GITHUB_PATH%"
 
       - name: Build Directory setup
         run: |
@@ -138,74 +229,9 @@ jobs:
           call "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
           cmake --build build_winstd --config Release --target package
 
-
-  linux:
-    name: Ubuntu Latest GCC
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-    steps:
-      - name: Setup - CMake
-        uses: lukka/get-cmake@latest
-
-      - name: Setup - System
-        env:
-          DEBIAN_FRONTEND: noninteractive
-        run: |
-          sudo apt-get update
-          # Install X/OpenGL dev pkgs
-          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
-          # Install tools
-          sudo apt-get install astyle re2c xsltproc libxml2-utils
-          # Install dependency dev pkgs
-          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
-          # Cleanup (we want to avoid wasting disk space)
-          sudo apt-get clean
-
-      - name: Setup - System Qt Build Requirements
-        env:
-          DEBIAN_FRONTEND: noninteractive
-        run: |
-          sudo apt-get update
-          # Install XCB/OpenGL dev pkgs for Qt - see:
-          # https://wiki.qt.io/Building_Qt_6_from_Git
-          # https://doc.qt.io/qt-6/linux-requirements.html
-          sudo apt-get install libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-cursor-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxkbcommon-dev libxkbcommon-x11-dev
-          sudo apt-get install libgl-dev
-          sudo apt-get install libinput-dev
-          sudo apt-get clean
-
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Directory setup
-        run: |
-          cmake -E make_directory ./build_linux
-          cmake -E make_directory $HOME/.cache
-          cmake -E make_directory $HOME/.cache/BRL-CAD
-
-      - name: Configure
-        run: |
-          export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
-          cmake -S . -G Ninja -B build_linux -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_ENABLE_QT=ON -DBRLCAD_BEXT_CLEANUP=ON
-
-      - name: Build
-        run: |
-          export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
-          cmake --build build_linux --config Release --target check
-          cmake --build build_linux --config Release --target package
-
-        # For the moment the space demands are too extreme to enable this
-        # output for every compile test, but leave the enabling logic present
-        # in commented out form so it can be enabled as needed.
-#     - name: Upload Package
-#       uses: actions/upload-artifact@v2
-#       with:
-#         name: BRLCAD_Linux
-#         path: ${{ github.workspace }}/build_linux/BRL-CAD*gz
-
   osx:
     name: macOS Latest Clang
+    needs: [linux]
     runs-on: macos-latest
     strategy:
       fail-fast: true
@@ -243,29 +269,82 @@ jobs:
 
       - name: Configure
         run: |
-          export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
+          export PATH=$GITHUB_WORKSPACE:$PATH
           export CC=clang
           export CXX=clang++
           cmake -S . -G Ninja -B build_osx -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/build_osx/bext_output -DBRLCAD_ENABLE_X11=OFF -DBRLCAD_ENABLE_QT=ON
 
       - name: Build
         run: |
-          export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
+          export PATH=$GITHUB_WORKSPACE:$PATH
           cd build_osx && ninja -j1 && ninja -j1 check && ninja -j1 package
 
-        # For the moment the space demands are too extreme to enable this
-        # output for every compile test, but leave the enabling logic present
-        # in commented out form so it can be enabled as needed.
-#     - name: Upload Package
-#       uses: actions/upload-artifact@v2
-#       with:
-#         name: BRLCAD_OSX
-#         path: ${{ github.workspace }}/build_osx/BRL-CAD*gz
+  linux_static:
+    name: Clang Static Analyser
+    needs: [windows, windows_std_tools, osx]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
 
-  # A full distcheck is too expensive for the runners, but we can run the
-  # repository integrity check and make sure we can build source archives.
-  archives:
-    name: Source Archives
+      # Setup hint from https://github.com/darktable-org/rawspeed/blob/develop/.github/workflows/ci-static-analysis.yml
+      - name: Clang Static Analyzer Setup
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          sudo apt-get install clang-18 clang-tools-18
+          # Install X/OpenGL dev pkgs
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          # Install tools
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          # Install dependency dev pkgs
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
+          # Cleanup
+          sudo apt-get clean
+
+      - name: Setup - System Qt Build Requirements
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          # Install XCB/OpenGL dev pkgs for Qt - see:
+          # https://wiki.qt.io/Building_Qt_6_from_Git
+          # https://doc.qt.io/qt-6/linux-requirements.html
+          sudo apt-get install libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-cursor-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxcb-xinput-dev libxcb-xrm-dev
+          sudo apt-get install libgl-dev
+          sudo apt-get install libinput-dev
+          sudo apt-get clean
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Directory setup
+        run: |
+          cmake -E make_directory ./build_clangstatic
+          cmake -E make_directory $HOME/.cache
+          cmake -E make_directory $HOME/.cache/BRL-CAD
+
+      - name: Run Analyzer
+        run: |
+          export PATH=$GITHUB_WORKSPACE:/usr/share/clang/scan-build-18/bin:/usr/share/clang/scan-build-18/libexec:$PATH
+          cd build_clangstatic && cp ../misc/clang-static-analyzer-run.sh .
+          ./clang-static-analyzer-run.sh
+
+      - name: Summary
+        if: success() || failure()
+        run: |
+          sudo apt-get install html2text
+          html2text build_clangstatic/scan-reports-all/*/index.html
+
+  # See https://app.codecov.io/gh/BRL-CAD/brlcad for analysis results
+  linux_cov:
+    name: LCOV Coverage testing
+    needs: [windows, windows_std_tools, osx]
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
@@ -278,6 +357,8 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
         run: |
           sudo apt-get update
+          # Get the lcov tool and its dependencies
+          sudo apt-get install lcov
           # Install X/OpenGL dev pkgs
           sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
           # Install tools
@@ -287,16 +368,51 @@ jobs:
           # Cleanup (we want to avoid wasting disk space)
           sudo apt-get clean
 
-      - name: Setup - bext
+      - name: Setup - System Qt Build Requirements
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: |
+          sudo apt-get update
+          # Install XCB/OpenGL dev pkgs for Qt - see:
+          # https://wiki.qt.io/Building_Qt_6_from_Git
+          # https://doc.qt.io/qt-6/linux-requirements.html
+          sudo apt-get install libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-cursor-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxcb-xinput-dev libxcb-xrm-dev
+          sudo apt-get install libgl-dev
+          sudo apt-get install libinput-dev
+          sudo apt-get clean
 
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Directory setup
+        run: |
+          cmake -E make_directory ./build_lcov
+          cmake -E make_directory $HOME/.cache
+          cmake -E make_directory $HOME/.cache/BRL-CAD
+
+      - name: Configure
+        run: |
+          export PATH=$GITHUB_WORKSPACE:$PATH
+          cmake -S . -B build_lcov -DBRLCAD_ENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_ENABLE_QT=ON -DBRLCAD_BEXT_CLEANUP=ON
+
       - name: Build
         run: |
-          cmake -E make_directory ./build_archives
-          export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
-          cmake -S . -B build_archives -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_BEXT_CLEANUP=ON
-          cmake --build build_archives --config Release --target distcheck-source_archives
+          export PATH=$GITHUB_WORKSPACE:$PATH
+          cmake --build build_lcov -j1
 
+      - name: Run Coverage Test
+        run: |
+          export PATH=$GITHUB_WORKSPACE:$PATH
+          cd build_lcov
+          find . -name '*.gcda' -exec rm {} \;
+          make check
+          lcov --capture --directory . --output-file coverage.info
+          lcov -r coverage.info \*\/bext_output\/\* > coverage-2.info
+          lcov -r coverage-2.info \/usr\/\* > coverage_cad.info
+          rm coverage-*.info
+          mv coverage_cad.info ..
+
+      - name: Upload
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage_cad.info
