@@ -136,7 +136,7 @@ extern struct hostent *gethostbyname(const char *);
 int pkg_nochecking = 0;	/* set to disable extra checking for input */
 int pkg_permport = 0;	/* TCP port that pkg_permserver() is listening on XXX */
 
-#define MAX_PKG_ERRBUF_SIZE 128
+#define MAX_PKG_ERRBUF_SIZE 2048 + 100 /* Use the fallback MAXPATHLEN from common.h plus some extra for the msgs */
 static char _pkg_errbuf[MAX_PKG_ERRBUF_SIZE] = {0};
 static FILE *_pkg_debug = (FILE*)NULL;
 
