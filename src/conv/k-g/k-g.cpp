@@ -452,6 +452,19 @@ int main
 				    AddSeatBelt(n1, n2, ksectionSeatBelt.area, kData, geometry, arbNumber, factor);
 				}
 			    }
+			    else if (kData.elementDiscreteSphere[*itr].radius > 0) {
+				point_t center;
+				int     centerId = kData.elementDiscreteSphere[*itr].nodeId;
+
+				center[X] = kData.nodes[centerId].x * factor;
+				center[Y] = kData.nodes[centerId].y * factor;
+				center[Z] = kData.nodes[centerId].z * factor;
+
+				std::string sphName = std::to_string(*itr);
+				float       radius = kData.elementDiscreteSphere[*itr].radius * factor;
+
+				geometry.addSphere(sphName.c_str(), center, radius);
+			    }
 			    else
 				std::cout << "Un supported element in k-file " << argv[1] << std::endl;
 			}
