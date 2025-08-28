@@ -64,6 +64,14 @@ BG_EXPORT int bg_3d_ballpivot(int **faces, int *num_faces, point_t **vertices, i
 			 int num_input_pnts, const double *radii, int radii_cnt);
 
 
+/* Throw this in here for now - if it pans out it will warrant its own header */
+BG_EXPORT int
+bg_3d_powercrust(
+    int **faces, int *num_faces,
+    point_t **points, int *num_pnts,
+    const point_t *input_points_3d, int num_input_pnts
+);
+
 __END_DECLS
 
 #endif  /* BG_BALLPIVOT_H */

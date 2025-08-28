@@ -1,6 +1,7 @@
 find_package_eigen(REQUIRED)
 find_package_gte(REQUIRED)
 find_package_spsr(REQUIRED)
+brlcad_find_package(Geogram REQUIRED SYSPATTERN geogram)
 
 set(
   LIBBG_SOURCES
@@ -18,6 +19,7 @@ set(
   obr.c
   pca.cpp
   plane.cpp
+  powercrust.cpp
   polygon.c
   polygon_op.cpp
   polygon_triangulate.cpp
@@ -38,13 +40,17 @@ set(
 )
 
 # Note - libbg_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-set(BG_LIBS ${libbg_deps})
+set(BG_LIBS 
+  ${libbg_deps}
+  ${Geogram_LIBRARY}
+)
 
 set(BG_INCLUDE_DIRS
   ${LMDB_INCLUDE_DIR}
   ${EIGEN3_INCLUDE_DIR}
   ${GTE_INCLUDE_DIR}
   ${SPSR_INCLUDE_DIR}
+  ${Geogram_INCLUDE_DIR}
   )
 
 brlcad_addlib(libbg "${LIBBG_SOURCES}" "${BG_LIBS}" "" "${BG_INCLUDE_DIRS}")
