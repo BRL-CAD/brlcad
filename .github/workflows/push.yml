@@ -101,6 +101,7 @@ jobs:
           cmake -S brlcad -B build_linux -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output -DBRLCAD_ENABLE_QT=ON
 
       - name: Build
+        id: build_parallel
         run: |
           export PATH=$GITHUB_WORKSPACE:$PATH
           cmake --build build_linux --config Release --target check -j2
@@ -255,6 +256,7 @@ jobs:
           cmake -S brlcad -B build_winninja -G Ninja -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" -DBRLCAD_EXT_DIR=${{ github.workspace }}\bext_output -DCMAKE_BUILD_TYPE=Release -DBRLCAD_ENABLE_QT=ON
 
       - name: Build
+        id: build_parallel
         shell: powershell
         run: |
           ninja
@@ -351,6 +353,7 @@ jobs:
           cmake -S brlcad -B build_winstd -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_BUNDLED_LIBS=Bundled -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=%GITHUB_WORKSPACE%\bext_output -DBRLCAD_ENABLE_QT=ON
 
       - name: Build
+        id: build_parallel
         shell: cmd
         run: |
           call "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
@@ -436,6 +439,7 @@ jobs:
           cmake -S brlcad -B build_osx -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output -DBRLCAD_ENABLE_QT=ON
 
       - name: Build
+        id: build_parallel
         run: |
           export PATH=$GITHUB_WORKSPACE:$PATH
           ninja
