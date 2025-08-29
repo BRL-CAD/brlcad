@@ -54,12 +54,19 @@ jobs:
           cd bext
           echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
+      - name: Compute bext cache discriminator
+        id: cachekey
+        shell: bash
+        run: |
+          info="${{ steps.bext-sha.outputs.sha }}-$(uname -s)-$(uname -r)-$(gcc --version | head -n 1)"
+          echo "hash=$(echo -n "$info" | sha1sum | awk '{print $1}')" >> $GITHUB_OUTPUT
+
       - name: Cache bext build outputs
         id: cache-bext
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/bext_output
-          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+          key: ${{ runner.os }}-bext-${{ steps.cachekey.outputs.hash }}
 
       - name: Build bext (if cache miss)
         if: steps.cache-bext.outputs.cache-hit != 'true'

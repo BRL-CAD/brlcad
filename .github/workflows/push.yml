@@ -39,7 +39,7 @@ jobs:
         with:
           path: |
             /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/push.yml') }}
 
       # Install system dependencies
       - name: Install apt dependencies
@@ -68,12 +68,19 @@ jobs:
           cd bext
           echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
+      - name: Compute bext cache discriminator
+        id: cachekey
+        shell: bash
+        run: |
+          info="${{ steps.bext-sha.outputs.sha }}-$(uname -s)-$(uname -r)-$(gcc --version | head -n 1)"
+          echo "hash=$(echo -n "$info" | sha1sum | awk '{print $1}')" >> $GITHUB_OUTPUT
+
       - name: Cache bext build outputs
         id: cache-bext
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/bext_output
-          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+          key: ${{ runner.os }}-bext-${{ steps.cachekey.outputs.hash }}
 
       - name: Build bext (if cache miss)
         if: steps.cache-bext.outputs.cache-hit != 'true'
@@ -135,7 +142,7 @@ jobs:
         with:
           path: |
             /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/push.yml') }}
 
       - name: Setup - System
         run: |
@@ -157,12 +164,19 @@ jobs:
           cd bext
           echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
+      - name: Compute bext cache discriminator
+        id: cachekey
+        shell: bash
+        run: |
+          info="${{ steps.bext-sha.outputs.sha }}-$(uname -s)-$(uname -r)-$(gcc --version | head -n 1)"
+          echo "hash=$(echo -n "$info" | sha1sum | awk '{print $1}')" >> $GITHUB_OUTPUT
+
       - name: Cache bext build outputs
         id: cache-bext
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/bext_output
-          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+          key: ${{ runner.os }}-bext-${{ steps.cachekey.outputs.hash }}
 
       - name: Build bext (if cache miss)
         if: steps.cache-bext.outputs.cache-hit != 'true'
@@ -186,7 +200,6 @@ jobs:
 
   windows:
     name: MSVC - Ninja
-    #needs: [linux]
     runs-on: windows-latest
     strategy:
       fail-fast: true
@@ -221,12 +234,23 @@ jobs:
           cd bext
           echo "sha=$(git rev-parse HEAD)" >> $env:GITHUB_OUTPUT
 
+      - name: Compute bext cache discriminator
+        id: cachekey
+        shell: bash
+        run: |
+          clver=""
+          if command -v cl.exe &> /dev/null; then
+            clver="$(cl.exe 2>&1 | head -n 1)"
+          fi
+          info="${{ steps.bext-sha.outputs.sha }}-$(uname -s)-$(uname -r)-$clver"
+          echo "hash=$(echo -n "$info" | sha1sum | awk '{print $1}')" >> $GITHUB_OUTPUT
+
       - name: Cache bext build outputs
         id: cache-bext
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}\bext_output
-          key: windows-bext-${{ steps.bext-sha.outputs.sha }}
+          key: windows-bext-${{ steps.cachekey.outputs.hash }}
 
       - name: Build bext (if cache miss)
         if: steps.cache-bext.outputs.cache-hit != 'true'
@@ -313,12 +337,23 @@ jobs:
           cd bext
           echo "sha=$(git rev-parse HEAD)" >> $env:GITHUB_OUTPUT
 
+      - name: Compute bext cache discriminator
+        id: cachekey
+        shell: bash
+        run: |
+          clver=""
+          if command -v cl.exe &> /dev/null; then
+            clver="$(cl.exe 2>&1 | head -n 1)"
+          fi
+          info="${{ steps.bext-sha.outputs.sha }}-$(uname -s)-$(uname -r)-$clver"
+          echo "hash=$(echo -n "$info" | sha1sum | awk '{print $1}')" >> $GITHUB_OUTPUT
+
       - name: Cache bext build outputs
         id: cache-bext
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}\bext_output
-          key: windows-bext-${{ steps.bext-sha.outputs.sha }}
+          key: windows-bext-${{ steps.cachekey.outputs.hash }}
 
       - name: Build bext (if cache miss)
         # Note - most of windows_std_tools builds using cmd and avoids ninja,
@@ -401,12 +436,21 @@ jobs:
           cd bext
           echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
+      - name: Compute bext cache discriminator
+        id: cachekey
+        shell: bash
+        run: |
+          xcodever="$(xcodebuild -version | head -n 1 | awk '{print $2}')"
+          clangver="$(clang --version | head -n 1)"
+          info="${{ steps.bext-sha.outputs.sha }}-$(uname -s)-$(uname -r)-$xcodever-$clangver"
+          echo "hash=$(echo -n "$info" | sha1sum | awk '{print $1}')" >> $GITHUB_OUTPUT
+
       - name: Cache bext build outputs
         id: cache-bext
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/bext_output
-          key: macos-bext-${{ steps.bext-sha.outputs.sha }}
+          key: macos-bext-${{ steps.cachekey.outputs.hash }}
 
       - name: Build bext (if cache miss)
         if: steps.cache-bext.outputs.cache-hit != 'true'
