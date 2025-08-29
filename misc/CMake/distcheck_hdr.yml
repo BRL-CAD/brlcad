@@ -1,0 +1,72 @@
+# BRL-CAD's primary distcheck target runs too long and does too much work to
+# be suitable as a CI target, even occasionally.  To achieve essentially the
+# same result, we define individual jobs for each distcheck sub-target and
+# run them in singletons.  To avoid the list of targets going stale, we
+# define this header and then autogenerate the actual build target jobs
+# to append to it from the CMake logic.
+
+name: Distcheck
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 3 * * 5'
+
+jobs:
+  bext:
+    name: Prepare bext (cached)
+    runs-on: ubuntu-latest
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          # Install X/OpenGL dev pkgs
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          # Install tools
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          # Install dependency dev pkgs
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
+          # Install XCB/OpenGL dev pkgs for Qt - see:
+          # https://wiki.qt.io/Building_Qt_6_from_Git
+          # https://doc.qt.io/qt-6/linux-requirements.html
+          sudo apt-get install libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-cursor-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxcb-xinput-dev libxcb-xrm-dev libxkbcommon-dev libxkbcommon-x11-dev
+          sudo apt-get install libgl-dev
+          sudo apt-get install libinput-dev
+
+      - name: Clone bext
+        run: git clone https://github.com/BRL-CAD/bext.git
+
+      - name: Get bext commit SHA
+        id: bext-sha
+        run: |
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+
+      - name: Build bext (if cache miss)
+        if: steps.cache-bext.outputs.cache-hit != 'true'
+        run: |
+          cmake -E make_directory bext_build
+          cmake -S bext -B bext_build -DCMAKE_BUILD_TYPE=Release -DENABLE_ALL=ON -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/bext_output
+          cmake --build bext_build --config Release -j 2
+          cmake -E rm -rf bext
+          cmake -E rm -rf bext_build
+

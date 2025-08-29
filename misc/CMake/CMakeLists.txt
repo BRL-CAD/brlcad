@@ -98,6 +98,7 @@ set(
   compat/test_strncasecmp.c
   compat/test_strtok_r.c
   date_delta.cpp
+  distcheck_hdr.yml
   distcheck_in_src_dir.cmake.in
   distcheck_no_tcl.cmake.in
   distcheck_repo_verify.cmake.in
