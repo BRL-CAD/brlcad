@@ -44,7 +44,7 @@ enum class KState {
     //Element_Blanking,
     //Element_Direct_Matrix_Input,
     //Element_Discrete,
-    //Element_Discrete_Sphere,
+    Element_Discrete_Sphere,
     //Element_Generalized_Shell,
     //Element_Generalized_Solid,
     //Element_Inertia,
@@ -563,7 +563,7 @@ bool parse_k
 			    }
 			    else if ((command.size() > 1) && (command[1] == "DISCRETE")) {
 				if ((command.size() > 2) && (command[2] == "SPHERE")) {
-				    //state = KState::Element_Discrete_Sphere;
+				    state = KState::Element_Discrete_Sphere;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
@@ -1596,6 +1596,47 @@ bool parse_k
 
 			data.elementSeatBelt[eid] = seatBelt;
 			data.parts[pid].elements.insert(eid);
+			break;
+		    }
+
+		    case KState::Element_Discrete_Sphere: {
+			if (tokens.size() < 6) {
+			    std::cout << "Too short ELEMENT_DISCRETE_SPHERE in k-file: " << fileName << std::endl;
+			    break;
+			}
+
+			int nid = std::stoi(tokens[0]);
+			int pid = std::stoi(tokens[1]);
+			float mass = std::stof(tokens[2]);
+			float inertia = std::stof(tokens[3]);
+			float radius = std::stof(tokens[4]);
+
+			int nid2 = 0;
+			if (tokens.size() >= 7) {
+			    nid2 = std::stoi(tokens[5]); // Optional
+			}
+
+			if (nid2 == 0 || nid2 <= nid) {
+
+			    KElementDiscreteSphere sphere;
+			    sphere.nodeId = nid;
+			    sphere.partId = pid;
+			    sphere.radius = radius;
+			    data.elementDiscreteSphere[nid] = sphere;
+			    data.parts[pid].elements.insert(nid);
+			}
+			else {
+
+			    for (int i = nid; i <= nid2; ++i) {
+				KElementDiscreteSphere sphere;
+				sphere.nodeId = i;
+				sphere.partId = pid;
+				sphere.radius = radius;
+				data.elementDiscreteSphere[nid] = sphere;
+				data.parts[pid].elements.insert(nid);
+			    }
+			}
+
 			break;
 		    }
 		}
