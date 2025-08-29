@@ -72,6 +72,12 @@ extern "C++" {
 /* don't let opennurbs include windows.h */
 #define ON_NO_WINDOWS 1
 
+// TODO - need a compile time test that can tell whether this is required or
+// not - needed for building with Xcode 16, apparently. My first attempt at a
+// configure time test didn't work - need someone who can debug interactively
+// in OSX.  In the meantime add this as a temporary measure.
+#define _DARWIN_C_SOURCE
+
 #include "opennurbs.h"
 
 #if defined(__GNUC__) && !defined(__clang__)
