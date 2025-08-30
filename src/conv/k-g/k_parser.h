@@ -88,6 +88,14 @@ struct KElementSeatBelt {
 };
 
 
+struct KElementDiscreteSphere {
+    std::string title;
+    int         nodeId;
+    int         partId;
+    float       radius;
+};
+
+
 struct KPart {
     std::string                        title;
     std::set<int>                      elements;
@@ -132,6 +140,7 @@ struct KData {
     std::map<int, KElementBeamSource> elementsBeamSource;
     std::map<int, KElementBearing>    elementBearing;
     std::map<int, KElementSeatBelt>   elementSeatBelt;
+    std::map<int, KElementDiscreteSphere>  elementDiscreteSphere;
     std::map<int, KPart>              parts;
     std::map<int, KSection>           sections;
     std::map<int, KSectionBeam>       sectionsBeam;
