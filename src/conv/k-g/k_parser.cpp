@@ -1607,8 +1607,8 @@ bool parse_k
 
 			int nid = std::stoi(tokens[0]);
 			int pid = std::stoi(tokens[1]);
-			float mass = std::stof(tokens[2]);
-			float inertia = std::stof(tokens[3]);
+			//float mass = std::stof(tokens[2]);
+			//float inertia = std::stof(tokens[3]);
 			float radius = std::stof(tokens[4]);
 
 			int nid2 = 0;
