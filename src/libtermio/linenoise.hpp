@@ -160,6 +160,48 @@
 #include <sys/types.h>
 #include <vector>
 
+#ifdef _WIN32
+#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+#endif
+static bool  ln_win32_vt_attempted = false;
+static bool  ln_win32_vt_enabled   = false;
+static DWORD ln_win32_vt_orig_out  = 0;
+
+static bool ln_win32_env_disable_vt() {
+    const char* v = ::getenv("DISABLE_VT_CONSOLE");
+    if (!v) return false;
+    if (v[0] == '\0') return true;
+    if (v[0] == '0' && v[1] == '\0') return false;
+    return true;
+}
+
+static bool ln_win32_is_console_handle(HANDLE h) {
+    if (h == INVALID_HANDLE_VALUE) return false;
+    DWORD mode;
+    return GetConsoleMode(h, &mode) != 0;
+}
+
+static void ln_win32_try_enable_vt_once() {
+    if (ln_win32_vt_attempted) return;
+    ln_win32_vt_attempted = true;
+    if (ln_win32_env_disable_vt()) return;
+    HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (!ln_win32_is_console_handle(hout)) return;          /* not a console (pipe/mintty) */
+    UINT cp = GetConsoleOutputCP();
+    if (cp != 65001) return;                                /* only enable if already UTF-8 */
+    DWORD mode = 0;
+    if (!GetConsoleMode(hout, &mode)) return;
+    ln_win32_vt_orig_out = mode;
+    DWORD desired = mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    if (SetConsoleMode(hout, desired)) {
+        ln_win32_vt_enabled = true;
+    } else {
+        ln_win32_vt_orig_out = 0; /* failed, nothing to restore */
+    }
+}
+#endif /* _WIN32 */
+
 namespace linenoise
 {
 
@@ -1175,25 +1217,41 @@ inline int win32read(char *buf, int *c)
 
 inline int win32_write(int fd, const void *buffer, unsigned int count)
 {
-    if (fd == _fileno(stdout)) {
-	DWORD bytesWritten = 0;
-	if (FALSE != ansi::ParseAndPrintANSIString(GetStdHandle(STD_OUTPUT_HANDLE), buffer, (DWORD)count, &bytesWritten)) {
-	    return (int)bytesWritten;
-	} else {
+    HANDLE h;
+    if (fd == _fileno(stderr))
+	h = GetStdHandle(STD_ERROR_HANDLE);
+    else if (fd == _fileno(stdout))
+	h = GetStdHandle(STD_OUTPUT_HANDLE);
+    else
+	return _write(fd, buffer, count); /* non-standard fd: just write */
+
+    /* Path 1: Native VT already enabled -> direct pass-through */
+    if (ln_win32_vt_enabled) {
+	DWORD written = 0;
+	if (!WriteFile(h, buffer, (DWORD)count, &written, NULL)) {
 	    errno = GetLastError();
 	    return 0;
 	}
-    } else if (fd == _fileno(stderr)) {
-	DWORD bytesWritten = 0;
-	if (FALSE != ansi::ParseAndPrintANSIString(GetStdHandle(STD_ERROR_HANDLE), buffer, (DWORD)count, &bytesWritten)) {
-	    return (int)bytesWritten;
-	} else {
-	    errno = GetLastError();
-	    return 0;
-	}
-    } else {
-	return _write(fd, buffer, count);
+	return (int)written;
     }
+
+    /* Determine if handle is a console. If not, (pipe / mintty) just pass through. */
+    if (!ln_win32_is_console_handle(h)) {
+	DWORD written = 0;
+	if (!WriteFile(h, buffer, (DWORD)count, &written, NULL)) {
+	    errno = GetLastError();
+	    return 0;
+	}
+	return (int)written;
+    }
+
+    /* Path 2 (legacy console emulation): use ANSI parser -> WriteConsoleW */
+    DWORD bytesWritten = 0;
+    if (FALSE != ansi::ParseAndPrintANSIString(h, buffer, (DWORD)count, &bytesWritten)) {
+	return (int)bytesWritten;
+    }
+    errno = GetLastError();
+    return 0;
 }
 #endif // _WIN32
 
@@ -1795,6 +1853,9 @@ inline bool enableRawMode(int fd)
 	return false;
     }
 
+    /* Attempt VT enable (only once, safe gating on UTF-8 console). */
+    ln_win32_try_enable_vt_once();
+
     GetConsoleMode(hIn, &consolemodeIn);
     /* Enable raw mode */
     SetConsoleMode(hIn, consolemodeIn & ~ENABLE_PROCESSED_INPUT);
@@ -1811,6 +1872,11 @@ fatal:
 inline void disableRawMode(int fd)
 {
 #ifdef _WIN32
+    if (ln_win32_vt_enabled && ln_win32_vt_orig_out) {
+	/* Restore original console output mode */
+	SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), ln_win32_vt_orig_out);
+	ln_win32_vt_orig_out = 0;
+    }
     if (consolemodeIn) {
 	SetConsoleMode(hIn, consolemodeIn);
 	consolemodeIn = 0;
