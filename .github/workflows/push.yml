@@ -480,23 +480,30 @@ jobs:
           export PATH=$GITHUB_WORKSPACE:$PATH
           export CC=clang
           export CXX=clang++
-          cmake -S brlcad -B build_osx -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output -DBRLCAD_ENABLE_QT=ON
+          cmake -S brlcad -B build_osx -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output -DBRLCAD_ENABLE_QT=ON
 
       - name: Build
         id: build_parallel
         run: |
           export PATH=$GITHUB_WORKSPACE:$PATH
-          ninja
-          ninja check
-          ninja package
+          make -j2
         working-directory: ${{ github.workspace }}/build_osx
         continue-on-error: true
 
       - name: Build (serial for diagnostics)
         if: steps.build_parallel.outcome == 'failure'
         run: |
-          ninja -j1 -v
-          ninja -j1 check -v
-          ninja -j1 package -v
+          make
         working-directory: ${{ github.workspace }}/build_osx
 
+      - name: Check
+        run: |
+          export PATH=$GITHUB_WORKSPACE:$PATH
+          make check
+        working-directory: ${{ github.workspace }}/build_osx
+
+      - name: Package
+        run: |
+          export PATH=$GITHUB_WORKSPACE:$PATH
+          make package
+        working-directory: ${{ github.workspace }}/build_osx
