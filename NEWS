@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * improved nirt behavior in Windows bash consoles - Cliff Yapp
+* updated geogram dependency to v1.9.6 - Cliff Yapp
 * updated GDAL dependency to v3.11.3 - Cliff Yapp
 * updated gct mesh decimation dependency to mmesh - Cliff Yapp
 * added simplification control options to bot extrude - Cliff Yapp
