@@ -1,4 +1,4 @@
-/*                 P I P E . H
+/*                 S P H E R E . H
  * BRL-CAD
  *
  * Copyright (c) 2024-2025 United States Government as represented by
