@@ -741,7 +741,7 @@ void termio_debug_init(void){
     if (termio_debug_enabled) return;
     const char *env=getenv("BRLEDIT_TERMIO_DEBUG");
     if (!env || !*env) return;
-    const char *fname = (strcmp(env,"1")==0) ? "brledit_termio_debug.log" : env;
+    const char *fname = (strncmp(env,"1", 2)==0) ? "brledit_termio_debug.log" : env;
     termio_debug_fp=fopen(fname,"ab");
     if (!termio_debug_fp) return;
     termio_debug_enabled=1;
@@ -795,7 +795,7 @@ void termio_debug_init(void){
     if (termio_debug_enabled) return;
     const char *env=getenv("BRLEDIT_TERMIO_DEBUG");
     if (!env||!*env) return;
-    const char *fname=(strcmp(env,"1")==0)?"brledit_termio_debug.log":env;
+    const char *fname=(strncmp(env,"1", 2)==0)?"brledit_termio_debug.log":env;
     termio_debug_fp=fopen(fname,"ab");
     if (!termio_debug_fp) return;
     termio_debug_enabled=1;
