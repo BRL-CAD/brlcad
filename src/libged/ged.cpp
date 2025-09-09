@@ -378,7 +378,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 
     db_update_nref(gedp->dbip, &rt_uniresource);
 
-    gedp->ged_lod = bv_mesh_lod_context_create(filename);
+    gedp->ged_lod = NULL;
 
     return gedp;
 }

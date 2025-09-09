@@ -99,6 +99,7 @@ main(int ac, char *av[]) {
     // Set up new cmd data (not yet done by default in ged_open
     gedp->dbi_state = new DbiState(gedp);
     gedp->new_cmd_forms = 1;
+    gedp->ged_lod = bv_mesh_lod_context_create(gedp->dbip->dbi_filename);
     bu_setenv("DM_SWRAST", "1", 1);
 
     // Set callback so database changes will update dbi_state
