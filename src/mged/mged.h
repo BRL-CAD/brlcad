@@ -444,6 +444,24 @@ struct mged_opendb_ctx {
     int db_warn; /* 0 (default) no warn, 1 warn */
 };
 extern struct mged_opendb_ctx mged_global_db_ctx;
+#define MGED_OPENDB_CTX_INIT(_p) do {           \
+    (_p)->argc = 0;                             \
+    (_p)->argv = NULL;                          \
+    (_p)->force_create = 0;                     \
+    (_p)->no_create = 0;                        \
+    (_p)->created_new_db = 0;                   \
+    (_p)->ret = 0;                              \
+    (_p)->ged_ret = 0;                          \
+    (_p)->interpreter = NULL;                   \
+    (_p)->old_dbip = NULL;                      \
+    (_p)->post_open_cnt = 0;                    \
+    (_p)->s = NULL;                             \
+    (_p)->init_flag = 0;                        \
+    (_p)->db_upgrade = 0;                       \
+    (_p)->db_version = BRLCAD_DB_FORMAT_LATEST; \
+    (_p)->db_warn = 0;                          \
+} while (0)
+
 
 /* mged.c */
 void new_edit_mats(struct mged_state *s);

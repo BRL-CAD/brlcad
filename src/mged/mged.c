@@ -1853,10 +1853,8 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&rtg_headwdb.l);
 
     // Start out in an initialization state
+    MGED_OPENDB_CTX_INIT(&mged_global_db_ctx);
     mged_global_db_ctx.init_flag = 1;
-    mged_global_db_ctx.db_upgrade = 0; // no upgrade
-    mged_global_db_ctx.db_warn = 0; // no warn
-    mged_global_db_ctx.db_version = BRLCAD_DB_FORMAT_LATEST;
 
     char *attach = (char *)NULL;
     BU_ALLOC(s->mged_curr_dm, struct mged_dm);
