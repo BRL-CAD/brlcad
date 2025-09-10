@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* replaced yedit with brledit as libbu fallback editor - Cliff Yapp
 * improved nirt behavior in Windows bash consoles - Cliff Yapp
 * updated geogram dependency to v1.9.6 - Cliff Yapp
 * updated GDAL dependency to v3.11.3 - Cliff Yapp

@@ -45,7 +45,7 @@
 extern int fileno(FILE *stream);
 # endif
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__MSYS__)
 
 #  ifdef WIN32_LEAN_AND_MEAN
 #    undef WIN32_LEAN_AND_MEAN
