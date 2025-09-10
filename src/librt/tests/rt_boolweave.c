@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h> /* for ap init */
 
+#include "bu.h"
 #include "rt/boolweave.h"
 #include "rt/rt_instance.h"
 #include "rt/resource.h"
@@ -107,6 +108,7 @@ test_rt_boolweave(void)
 int
 main(int ac, char *av[])
 {
+    bu_setprogname(av[0]);
     if (ac && av)
 	test_rt_boolweave();
 

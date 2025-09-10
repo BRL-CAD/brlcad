@@ -542,7 +542,7 @@ brlcad_add_test(NAME bu_badmagic_misaligned  COMMAND bu_test badmagic 4)
 # version number testing
 #
 
-brlcad_addexec(bu_version version.c "" TEST)
+brlcad_addexec(bu_version version.c libbu TEST)
 brlcad_add_test(NAME bu_version_tests COMMAND bu_version)
 
 #

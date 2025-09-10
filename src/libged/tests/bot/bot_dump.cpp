@@ -120,6 +120,8 @@ main(int ac, char *av[])
     char input_file[MAXPATHLEN] = {0};
     char output_file[MAXPATHLEN] = {0};
 
+    bu_setprogname(av[0]);
+
     if (ac != 2)
 	bu_exit(EXIT_FAILURE, "%s <directory>", av[0]);
 

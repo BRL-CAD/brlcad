@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bu/log.h"
+#include "bu.h"
 #include "vmath.h"
 #include "wdb.h"
 #include "raytrace.h"
@@ -265,6 +265,8 @@ releaseRays(ray_input_t *rays)
 int
 main(int ac, char *av[])
 {
+    bu_setprogname(av[0]);
+
     if (ac != 1 && ac != 3) {
 	bu_log("Usage: %s [-g file.g]\n", av[0]);
 	return 1;

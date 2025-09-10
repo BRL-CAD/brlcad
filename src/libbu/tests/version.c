@@ -39,11 +39,13 @@
  */
 
 #include <stdio.h>
+#include "bu.h"
 #include "brlcad_version.h"
 
 int
 main(int ac, char *av[])
 {
+    bu_setprogname(av[0]);
     printf("%d.%d.%d\n", BRLCAD_VERSION_MAJOR, BRLCAD_VERSION_MINOR, BRLCAD_VERSION_PATCH);
     if (ac > 1 && av)
 	return BRLCAD_VERSION_MAJOR+BRLCAD_VERSION_MINOR+BRLCAD_VERSION_PATCH;

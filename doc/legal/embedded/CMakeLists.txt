@@ -66,7 +66,6 @@ brlcad_manage_files(SPSR.txt                   ${DOC_DIR}/legal/embedded TRIGGER
 brlcad_manage_files(sscanf.txt                 ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(stb_truetype.txt           ${DOC_DIR}/legal/embedded TRIGGER libdm)
 brlcad_manage_files(STIX_Font_License_2010.txt ${DOC_DIR}/legal/embedded TRIGGER libbu)
-brlcad_manage_files(strnstr.txt                ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(subprocess.txt             ${DOC_DIR}/legal/embedded TRIGGER libged)
 brlcad_manage_files(tcl_code.txt               ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(tcllib.txt                 ${DOC_DIR}/legal/embedded TRIGGER libtclcad)
