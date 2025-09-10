@@ -295,6 +295,7 @@ regex_init(repo_info_t &r) {
 	r.api_exemptions[std::string("strncasecmp")].push_back(std::regex(".*/str[.]c$"));
 	r.api_exemptions[std::string("strncat")].push_back(std::regex(".*/str[.]c$"));
 	r.api_exemptions[std::string("strncmp")].push_back(std::regex(".*/str[.]c$"));
+	r.api_exemptions[std::string("strncmp")].push_back(std::regex(".*/libtermio.h$"));
 	r.api_exemptions[std::string("strncpy")].push_back(std::regex(".*/rt/db4[.]h$"));
 	r.api_exemptions[std::string("strncpy")].push_back(std::regex(".*/str[.]c$"));
 	r.api_exemptions[std::string("strncpy")].push_back(std::regex(".*/vls[.]c$"));

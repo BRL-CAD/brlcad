@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2026-XX-XX  Release 7.42.2                                     ---
 ----------------------------------------------------------------------
 
+* replaced yedit with brledit as libbu fallback editor - Cliff Yapp
 * updated libtiff dependency to v4.7.1 - Cliff Yapp
 * updated OpenCV dependency to v4.13.0 - Cliff Yapp
 * updated PUGIXML dependency to v1.15 - Cliff Yapp
