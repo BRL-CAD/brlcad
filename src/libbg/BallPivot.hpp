@@ -9,7 +9,7 @@
  *   - Adapted by Clifford Yapp, BRL-CAD.
  *   - Header-only, C++17+, lightweight, simplified for integration with BRL-CAD and similar C/C++ codebases.
  *   - Uses nanoflann (https://github.com/jlblancoc/nanoflann) for KD-tree search.
- *   - Uses robust predicates from https://github.com/wlenthe/GeometricPredicates (MIT)
+ *   - Uses robust predicates from https://github.com/wlenthe/GeometricPredicates
  *
  * License:
  *   Portions of this file are derived from Open3D under the MIT License.
@@ -39,7 +39,7 @@
  *   Additional modifications and original code: MIT License
  *   (c) 2024 Clifford Yapp, BRL-CAD
  *
- *   See included nanoflann and robust_orient3d.hpp for their respective licenses.
+ *   See included nanoflann and predicates.h for their respective licenses.
  */
 
 #pragma once
@@ -54,7 +54,19 @@
 #include <array>
 #include <algorithm>
 #include "nanoflann.hpp"
-#include "robust_orient3d.hpp"
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push /* start new diagnostic pragma */
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#elif defined(__clang__)
+#  pragma clang diagnostic push /* start new diagnostic pragma */
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
+#include "predicates.h"
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif defined(__clang__)
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
 extern "C" {
 #include "vmath.h"
 #include "bu/log.h"
@@ -312,7 +324,13 @@ private:
 	if (VDOT(n, na.data()) < 0) VREVERSE(n, n);
 	fastf_t tp[3];
 	VADD2(tp, a.data(), na.data());
-	int o = robust_orient3d(a.data(), b.data(), c.data(), tp);
+	fastf_t val = predicates::adaptive::orient3d<fastf_t>(a.data(), b.data(), c.data(), tp);
+	int o = 0;
+        if (val > 0) {
+	    o = 1;
+	} else if (val < 0) {
+	    o = -1;
+	}
 	return o > 0;
     }
 
@@ -591,7 +609,13 @@ private:
 	for (auto ni : idxs) {
 	    VPtr cand = verts[ni];
 	    if (cand==a || cand==b || cand==o) continue;
-	    int copl = robust_orient3d(a->pos.data(), b->pos.data(), o->pos.data(), cand->pos.data());
+	    fastf_t val = predicates::adaptive::orient3d<fastf_t>(a->pos.data(), b->pos.data(), o->pos.data(), cand->pos.data());
+	    int copl = 0;
+	    if (val > 0) {
+		copl = 1;
+	    } else if (val < 0) {
+		copl = -1;
+	    }
 	    if (copl == 0) continue;
 	    std::array<fastf_t, 3> nc;
 	    if (!ball_ctr(a->id, b->id, cand->id, r, nc)) continue;
