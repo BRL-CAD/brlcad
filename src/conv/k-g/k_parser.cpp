@@ -1190,66 +1190,98 @@ bool parse_k
 		    }
 
 		    case KState::Section_Shell: {
+			static bool ELFORM = false;
+			static bool ICOMP  = false;
+
 			switch (sectionLinesRead) {
-			    case 0:
-				sectionTitle = line;
-				break;
+			case 0:
+			    sectionTitle = line;
+			    break;
 
-			    case 1: {
-				if (tokens.size() == 0) {
-				    std::cout << "Too short SECTION in k-file " << fileName << std::endl;
-				    break;
-				}
-
-				sectionId                      = stoi(tokens[0]);
-				data.sections[sectionId].title = sectionTitle;
-
-				if (tokens.size() >= 7) {
-				    if (stoi(tokens[6]) == 1 && sectionTitle.size() == 0) {
-					numberOfCardsInSection = 3;
-				    }
-				    else if(stoi(tokens[6]) == 1 && sectionTitle.size() > 0) {
-					numberOfCardsInSection = 4;
-				    }
-				}
+			case 1: {
+			    if (tokens.empty()) {
+				std::cout << "Too short SECTION in k-file " << fileName << std::endl;
 				break;
 			    }
 
-			    case 2: {
-				if (sectionId < 0) {
-				    std::cout << "Bad SECTION in k-file " << fileName << std::endl;
-				    break;
-				}
+			    sectionId                      = stoi(tokens[0]);
+			    data.sections[sectionId].title = sectionTitle;
 
-				if (tokens.size() < 4) {
-				    std::cout << "Too short SECTION in k-file " << fileName << std::endl;
-				    break;
-				}
+			    if (tokens.size() >= 7) {
+				ELFORM = (stoi(tokens[1]) >= 101 && stoi(tokens[1]) <= 105);
+				ICOMP  = (stoi(tokens[6]) == 1);
 
-				data.sections[sectionId].thickness1 = stod(tokens[0]);
-				data.sections[sectionId].thickness2 = stod(tokens[1]);
-				data.sections[sectionId].thickness3 = stod(tokens[2]);
-				data.sections[sectionId].thickness4 = stod(tokens[3]);
+				if (ICOMP && sectionTitle.empty())
+				    numberOfCardsInSection = 3;
 
-				break;
+				else if (ICOMP && !sectionTitle.empty())
+				    numberOfCardsInSection = 4;
+
+				else if (ELFORM && sectionTitle.empty())
+				    numberOfCardsInSection = 4;
+
+				else
+				    numberOfCardsInSection = 2;
 			    }
-
-			    default:
-				std::cout << "Unexpected SECTION length in k-file " << fileName << std::endl;
+			    break;
 			}
 
-			if (sectionLinesRead < numberOfCardsInSection) {
+			case 2: {
+			    if (sectionId < 0 || tokens.size() < 4) {
+				std::cout << "Too short SECTION in k-file " << fileName << std::endl;
+
+				break;
+			    }
+
+			    data.sections[sectionId].thickness1 = stod(tokens[0]);
+			    data.sections[sectionId].thickness2 = stod(tokens[1]);
+			    data.sections[sectionId].thickness3 = stod(tokens[2]);
+			    data.sections[sectionId].thickness4 = stod(tokens[3]);
+			    break;
+			}
+
+			case 3: {
+			    if (ICOMP) {
+				if (sectionId < 0 || tokens.size() < 8) {
+				    std::cout << "Too short ICOMP SECTION in k-file " << fileName << std::endl;
+				    break;
+				}
+			    }
+			    break;
+			}
+
+			case 4: {
+			    if (ELFORM) {
+				if (sectionId < 0 || tokens.size() < 3) {
+				    std::cout << "Too short ELFORM SECTION in k-file " << fileName << std::endl;
+				    break;
+				}
+			    }
+			    break;
+			}
+
+			case 5: {
+			    if (ELFORM) {
+				if (sectionId < 0 || tokens.size() < 3) {
+				    std::cout << "Too short ELFORM extra card in k-file " << fileName << std::endl;
+				    break;
+				}
+			    }
+			    break;
+			}
+
+			default:
+			    std::cout << "Unexpected SECTION length in k-file " << fileName << std::endl;
+			}
+
+			if (sectionLinesRead < numberOfCardsInSection)
 			    ++sectionLinesRead;
-			}
-			else {
-			    if (sectionTitle.size() > 0) {
-				sectionLinesRead = 0;
-			    }
-			    else
-				sectionLinesRead = 1;
-			}
+			else
+			    sectionLinesRead = (sectionTitle.empty() ? 1 : 0);
+
 			break;
 		    }
+
 
 		    case KState::Section_Solid: {
 			switch (sectionLinesRead) {
