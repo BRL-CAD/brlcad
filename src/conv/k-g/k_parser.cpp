@@ -774,11 +774,16 @@ bool parse_k
 				sectionId    = -1;
 				numberOfCardsInSection = 2; // Number of obligatory cards
 
-				if (command.size() == 3) {
-				    if (command[2] == "TITLE") {
+				if (command.size() >= 3) {
+				    if (command[3] == "EFG") {
+					sectionLinesRead = 0;
+					numberOfCardsInSection = 4;
+				    }
+				    else if (command[2] == "TITLE") {
 					sectionLinesRead       = 0;
 					numberOfCardsInSection = 3;
 				    }
+				    
 				    else
 					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
 				}
@@ -1212,13 +1217,16 @@ bool parse_k
 				ICOMP  = (stoi(tokens[6]) == 1);
 
 				if (ICOMP && sectionTitle.empty())
-				    numberOfCardsInSection = 3;
+				    numberOfCardsInSection += 1;
 
 				else if (ICOMP && !sectionTitle.empty())
-				    numberOfCardsInSection = 4;
+				    numberOfCardsInSection += 2;
 
 				else if (ELFORM && sectionTitle.empty())
-				    numberOfCardsInSection = 4;
+				    numberOfCardsInSection += 1;
+
+				else if (ELFORM && !sectionTitle.empty())
+				    numberOfCardsInSection += 2;
 
 				else
 				    numberOfCardsInSection = 2;
@@ -1229,7 +1237,6 @@ bool parse_k
 			case 2: {
 			    if (sectionId < 0 || tokens.size() < 4) {
 				std::cout << "Too short SECTION in k-file " << fileName << std::endl;
-
 				break;
 			    }
 
@@ -1241,23 +1248,21 @@ bool parse_k
 			}
 
 			case 3: {
-			    if (ICOMP) {
+			/*    if (ICOMP) {
 				if (sectionId < 0 || tokens.size() < 8) {
-				    std::cout << "Too short ICOMP SECTION in k-file " << fileName << std::endl;
 				    break;
 				}
 			    }
-			    break;
+			    break;  */
 			}
 
 			case 4: {
-			    if (ELFORM) {
+			/*    if (ELFORM) {
 				if (sectionId < 0 || tokens.size() < 3) {
-				    std::cout << "Too short ELFORM SECTION in k-file " << fileName << std::endl;
 				    break;
 				}
 			    }
-			    break;
+			    break; */
 			}
 
 			case 5: {
