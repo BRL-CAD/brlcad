@@ -143,6 +143,8 @@ static std::string GqaGridSize(std::map<std::string, std::string> map, std::stri
     // i.e. if we have smallest side 234 -> we want 10 for the grid size
     double magnitude = std::pow(10.0, std::floor(std::log10(shortest)) - 1);
     int grid_step = static_cast<int>(magnitude);    // drop the decimal
+    if (grid_step < 1.0)
+        grid_step = 1.0;
 
     std::string grid = std::to_string(grid_step) + lUnit + "," + std::to_string(grid_step) + lUnit;
 
