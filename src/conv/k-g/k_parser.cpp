@@ -775,7 +775,8 @@ bool parse_k
 				numberOfCardsInSection = 2; // Number of obligatory cards
 
 				if (command.size() >= 3) {
-				    if (command[3] == "EFG") {
+
+				    if ((command[3] == "EFG") || (command[3] == "THERMAL") || (command[3] == "XFEM") || (command[3] == "MISC")) {
 					sectionLinesRead = 0;
 					numberOfCardsInSection = 4;
 				    }
@@ -1214,22 +1215,15 @@ bool parse_k
 
 			    if (tokens.size() >= 7) {
 				ELFORM = (stoi(tokens[1]) >= 101 && stoi(tokens[1]) <= 105);
-				ICOMP  = (stoi(tokens[6]) == 1);
+				ICOMP = (stoi(tokens[6]) == 1);
 
-				if (ICOMP && sectionTitle.empty())
+				if (ICOMP)
+				{
 				    numberOfCardsInSection += 1;
-
-				else if (ICOMP && !sectionTitle.empty())
-				    numberOfCardsInSection += 2;
-
-				else if (ELFORM && sectionTitle.empty())
+				}
+				if (ELFORM) {
 				    numberOfCardsInSection += 1;
-
-				else if (ELFORM && !sectionTitle.empty())
-				    numberOfCardsInSection += 2;
-
-				else
-				    numberOfCardsInSection = 2;
+				}
 			    }
 			    break;
 			}
@@ -1247,36 +1241,8 @@ bool parse_k
 			    break;
 			}
 
-			case 3: {
-			/*    if (ICOMP) {
-				if (sectionId < 0 || tokens.size() < 8) {
-				    break;
-				}
-			    }
-			    break;  */
-			}
-
-			case 4: {
-			/*    if (ELFORM) {
-				if (sectionId < 0 || tokens.size() < 3) {
-				    break;
-				}
-			    }
-			    break; */
-			}
-
-			case 5: {
-			    if (ELFORM) {
-				if (sectionId < 0 || tokens.size() < 3) {
-				    std::cout << "Too short ELFORM extra card in k-file " << fileName << std::endl;
-				    break;
-				}
-			    }
-			    break;
-			}
-
 			default:
-			    std::cout << "Unexpected SECTION length in k-file " << fileName << std::endl;
+			    break;
 			}
 
 			if (sectionLinesRead < numberOfCardsInSection)
