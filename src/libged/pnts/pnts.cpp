@@ -1,4 +1,4 @@
-/*                         P N T S . C
+/*                       P N T S . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2025 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/pnts.c
+/** @file libged/pnts.cpp
  *
  * pnts command for simple Point Set (pnts) primitive operations.
  *
@@ -35,12 +35,15 @@ extern "C" {
 #include <sstream>
 #include <iomanip>
 #include <limits>
+#include <vector>
 
 extern "C" {
 #include "bu/color.h"
+#include "bu/cmd.h"
 #include "bu/opt.h"
 #include "bu/sort.h"
 #include "bu/units.h"
+#include "bg/spsr.h"
 #include "rt/geom.h"
 #include "wdb.h"
 #include "analyze.h"
@@ -88,8 +91,7 @@ _pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale
  * used in libanalyze's NIRT as well */
 void _pnts_fastf_t_to_vls(struct bu_vls *o, fastf_t d, int p)
 {
-    // TODO - once we enable C++ 11 switch the precision below to std::numeric_limits<double>::max_digits10
-    size_t prec = (p > 0) ? (size_t)p : std::numeric_limits<fastf_t>::digits10 + 2;
+    size_t prec = (p > 0) ? (size_t)p : std::numeric_limits<fastf_t>::max_digits10;
     std::ostringstream ss;
     ss << std::fixed << std::setprecision(prec) << d;
     std::string sd = ss.str();
