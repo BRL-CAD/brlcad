@@ -57,11 +57,16 @@
       </listitem></varlistentry>
       <varlistentry><term></term><listitem>
       <cmdsynopsis sepchar=" ">
-	<command>tri</command>
+	<command>tri [unit]</command>
 	<arg choice="opt" rep="norepeat">-s #</arg>
       </cmdsynopsis>
       </listitem></varlistentry>
-    </variablelist>
+      <varlistentry><term></term><listitem>
+      <cmdsynopsis sepchar=" ">
+	<command>tri spsr</command>
+      </cmdsynopsis>
+      </listitem></varlistentry>
+		</variablelist>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
@@ -185,7 +190,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><emphasis remap="B" role="bold">tri</emphasis></term>
+	<term><emphasis remap="B" role="bold">tri [unit]</emphasis></term>
     	<listitem>
     	  <para>
 	       Generates unit or scaled triangles for each pnt in a point set. If no normal
@@ -201,7 +206,17 @@
     </variablelist>
 	      </listitem>
       </varlistentry>
-    </variablelist>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">tri spsr</emphasis></term>
+    	<listitem>
+    	  <para>
+					Apply the Screened Poisson Surface Reconstruction methodology to generate a
+					mesh from the point cloud.  See the <option>-h</option> option for the various
+					controls available for this methodology.
+	        </para>
+	      </listitem>
+      </varlistentry>
+		</variablelist>
   </refsection>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
