@@ -99,8 +99,9 @@ void _pnts_fastf_t_to_vls(struct bu_vls *o, fastf_t d, int p)
 }
 
 static int
-_pnts_to_bot(struct ged *gedp, int argc, const char **argv)
+_ged_pnts_cmd_tri(void *bs, int argc, const char **argv)
 {
+    struct ged *gedp = (struct ged *)bs;
     int have_normals = 1;
     unsigned long pntcnt = 0;
     struct rt_db_internal intern, internal;
@@ -256,8 +257,9 @@ _pnts_to_bot(struct ged *gedp, int argc, const char **argv)
 }
 
 static int
-_obj_to_pnts(struct ged *gedp, int argc, const char **argv)
+_ged_pnts_cmd_gen(void *bs, int argc, const char **argv)
 {
+    struct ged *gedp = (struct ged *)bs;
     struct directory *dp;
     int print_help = 0;
     int opt_ret = 0;
@@ -426,8 +428,9 @@ _pnt_read(struct rt_pnts_internal *pnts, int numcnt, const char **nums, const ch
 
 
 static int
-_read_pnts(struct ged *gedp, int argc, const char **argv)
+_ged_pnts_cmd_read(void *bs, int argc, const char **argv)
 {
+    struct ged *gedp = (struct ged *)bs;
     int print_help = 0;
     int opt_ret = 0;
     FILE *fp;
@@ -597,8 +600,9 @@ _read_pnts(struct ged *gedp, int argc, const char **argv)
 }
 
 static int
-_write_pnts(struct ged *gedp, int argc, const char **argv)
+_ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 {
+    struct ged *gedp = (struct ged *)bs;
     int print_help = 0;
     int ply_out = 0;
     int opt_ret = 0;
@@ -932,18 +936,19 @@ _pnts_show_help(struct ged *gedp, struct bu_opt_desc *d)
     bu_vls_free(&str);
 }
 
+static const struct bu_cmdtab _pnts_cmds[] = {
+    { "gen",    _ged_pnts_cmd_gen },
+    { "read",   _ged_pnts_cmd_read },
+    { "tri",    _ged_pnts_cmd_tri },
+    { "write",  _ged_pnts_cmd_write },
+    { (char *)NULL, NULL }
+};
+
 extern "C" int
 ged_pnts_core(struct ged *gedp, int argc, const char *argv[])
 {
-    const char *cmd = argv[0];
-    size_t len;
-    int i;
     int print_help = 0;
-    int opt_ret = 0;
-    int opt_argc = argc;
     struct bu_opt_desc d[2];
-    const char * const pnt_subcommands[] = {"gen", "read", "tri", "write", NULL};
-    const char * const *subcmd;
 
     BU_OPT(d[0], "h", "help",      "", NULL, &print_help,        "Print help and exit");
     BU_OPT_NULL(d[1]);
@@ -963,53 +968,42 @@ ged_pnts_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    /* See if we have any options to deal with.  Once we hit a subcommand, we're done */
-    for (i = 0; i < argc; ++i) {
-	subcmd = pnt_subcommands;
-	for (; *subcmd != NULL; ++subcmd) {
-	    if (BU_STR_EQUAL(argv[i], *subcmd)) {
-		opt_argc = i;
-		i = argc;
-		break;
-	    }
+    int cmd_pos = -1;
+    for (int i = 0; i < argc; i++) {
+	if (bu_cmd_valid(_pnts_cmds, argv[i]) == BRLCAD_OK) {
+	    cmd_pos = i;
+	    break;
 	}
     }
-
-    if (opt_argc > 0) {
-	/* parse standard options */
-	opt_ret = bu_opt_parse(NULL, opt_argc, argv, d);
-	if (opt_ret < 0) {
-	    _pnts_show_help(gedp, d);
-	    return BRLCAD_ERROR;
-	}
-    }
+    int opt_argc = (cmd_pos >= 0) ? cmd_pos : argc;
+    int opt_ret = bu_opt_parse(NULL, opt_argc, argv, d);
 
     if (print_help) {
 	_pnts_show_help(gedp, d);
 	return BRLCAD_OK;
     }
 
-    /* shift argv to subcommand */
-    argc -= opt_argc;
-    argv = &argv[opt_argc];
-
-    /* If we don't have a subcommand, we're done */
-    if (argc < 1) {
+    if (cmd_pos == -1) {
+	bu_vls_printf(gedp->ged_result_str, "pnts: no valid subcommand specified\n");
+	_pnts_show_help(gedp, d);
+	return BRLCAD_ERROR;
+    }
+    if (opt_ret < 0) {
 	_pnts_show_help(gedp, d);
 	return BRLCAD_ERROR;
     }
 
-    len = strlen(argv[0]);
-    if (bu_strncmp(argv[0], "tri", len) == 0) return _pnts_to_bot(gedp, argc, argv);
+    for (int i = cmd_pos; i < argc; i++) {
+	argv[i - cmd_pos] = argv[i];
+    }
+    argc = argc - cmd_pos;
 
-    if (bu_strncmp(argv[0], "gen", len) == 0) return _obj_to_pnts(gedp, argc, argv);
+    int ret = BRLCAD_ERROR;
+    if (bu_cmd(_pnts_cmds, argc, argv, 0, (void *)gedp, &ret) == BRLCAD_OK) {
+	return ret;
+    }
 
-    if (bu_strncmp(argv[0], "write", len) == 0) return _write_pnts(gedp, argc, argv);
-
-    if (bu_strncmp(argv[0], "read", len) == 0) return _read_pnts(gedp, argc, argv);
-
-    /* If we don't have a valid subcommand, we're done */
-    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!\n", cmd, argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "pnts: subcommand %s not defined\n", argv[0]);
     _pnts_show_help(gedp, d);
     return BRLCAD_ERROR;
 }
