@@ -74,7 +74,7 @@ bool Options::readParameters(int argc, const char **argv) {
     std::string param_Umass = "";	// user requested mass units
     std::string param_oFile = "";	// user supplied output file
 
-    struct bu_opt_desc d[23];
+    struct bu_opt_desc d[24];
     BU_OPT(d[0],  "i", "",     "filename.g",        &_param_set_std_str,     &this->inFile,         "input .g");
     BU_OPT(d[1],  "o", "",     "filename.png",      &_param_set_std_str,     &param_oFile,          "output file name");
     BU_OPT(d[2],  "F", "",     "folder",            &_param_set_std_str,     &this->inFolderName,   "folder of .g models to generate");
@@ -94,10 +94,11 @@ bool Options::readParameters(int argc, const char **argv) {
     BU_OPT(d[16], "A", "",     "",                  NULL,                    &param_Yup,            "use +Y-up geometry axis (default is +Z-up)");
     BU_OPT(d[17], "l", "",     "len_units",         &_param_set_std_str,     &param_Ulength,        "specify length units");
     BU_OPT(d[18], "w", "",     "wt_units",          &_param_set_std_str,     &param_Umass,          "specify weight units");
-    BU_OPT(d[19], "v", "",     "",                  NULL,                    &this->verbosePrint,   "verbose printing");
-    BU_OPT(d[20], "h", "help", "",                  NULL,                    &print_help,           "Print help and exit");
-    BU_OPT(d[21], "?", "",     "",                  NULL,                    &print_help,           "");
-    BU_OPT_NULL(d[22]);
+    BU_OPT(d[19], "a", "",     "path/to/dir",	    &_param_set_std_str,     &this->workingDir,     "specify dir to write c(a)ched work to");
+    BU_OPT(d[20], "v", "",     "",                  NULL,                    &this->verbosePrint,   "verbose printing");
+    BU_OPT(d[21], "h", "help", "",                  NULL,                    &print_help,           "Print help and exit");
+    BU_OPT(d[22], "?", "",     "",                  NULL,                    &print_help,           "");
+    BU_OPT_NULL(d[23]);
 
     /* set progname and move on */
     const char* cmd_progname = argv[0];
