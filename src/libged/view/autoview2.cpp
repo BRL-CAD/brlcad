@@ -55,14 +55,15 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
 
-    int all_view_objs = 0;
+    int ignore_db_objs = 0;
+    int ignore_view_objs = 0;
     int print_help = 0;
-    struct bview *v = gedp->ged_gvp;
 
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help",      "",        NULL,     &print_help, "Print help and exit");
-    BU_OPT(d[1], "",   "all-objs", "",        NULL,  &all_view_objs, "Bound all non-faceplate view objects");
-    BU_OPT(d[2], "V", "view",  "name", &bu_opt_vls,           &cvls, "Specify view to adjust");
+    struct bu_opt_desc d[5];
+    BU_OPT(d[0], "h", "help",                  "",            NULL,        &print_help, "Print help and exit");
+    BU_OPT(d[1], "",  "ignore-database-objs",  "",            NULL,    &ignore_db_objs, "Ignore database geometry objects");
+    BU_OPT(d[1], "",  "ignore-view-only-objs", "",            NULL,  &ignore_view_objs, "Ignore view-only objects");
+    BU_OPT(d[2], "V", "view",                  "name", &bu_opt_vls,              &cvls, "Specify view to adjust");
     BU_OPT_NULL(d[3]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
@@ -81,13 +82,16 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    std::vector<BViewState *> vstates;
     if (bu_vls_strlen(&cvls)) {
-	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
-	if (!v) {
+	vstates = gedp->dbi_state->FindBViewState(bu_vls_cstr(&cvls));
+	if (!vstates.size()) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
 	    return BRLCAD_ERROR;
 	}
+    } else {
+	vstates.push_back(gedp->dbi_state->GetBViewState());
     }
     bu_vls_free(&cvls);
 
@@ -106,7 +110,9 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // libbv has the nuts and bolts
-    bv_autoview(v, factor, all_view_objs);
+    for (size_t i = 0; i < vstates.size(); i++) {
+	vstates[i]->Autoview(factor, !ignore_db_objs, !ignore_view_objs);
+    }
 
     return BRLCAD_OK;
 }

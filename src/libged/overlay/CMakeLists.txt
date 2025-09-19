@@ -6,12 +6,11 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-ged_plugin_library(ged-overlay overlay.c)
+ged_plugin_library(ged-overlay overlay.cpp)
 target_link_libraries(ged-overlay libged libdm libbu)
 
 cmakefiles(
   CMakeLists.txt
-  overlay.c
 )
 
 # Local Variables:

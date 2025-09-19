@@ -187,6 +187,28 @@ BU_EXPORT void bu_cache_clear(const char *key, struct bu_cache *c, struct bu_cac
  */
 BU_EXPORT int bu_cache_keys(char ***keysv, struct bu_cache *c);
 
+// It is common convention within the BRL-CAD code to use a ":#[#...]" suffix
+// after a hash string to denote a particular type of data when creating a hash
+// key.  Most of these are internal, but in a few cases the type of hashed data
+// is common to many different libraries.  Therefore, for convenience, we define
+// a few of them here and document the expected storage to enable data reuse.
+
+/* Axis Aligned Bounding Box - stored as an array of two points:
+ * bbmin[0]bbmin[1][bbmin[2][bbmax[0]bbmax[1]bbmax[2] */
+#define CACHE_AABB "aabb"
+
+/* An inversion matrix is intended to take data defined at the origin after a
+ * Principle Component Analysis and restore it to its original position.
+ * Stored as an array of 16 fastf_t values per the vmath.h mat_t convention. */
+#define CACHE_INV_MAT "im"
+
+/* Oriented Bounding Box - stored as an array of a center point
+ * c and three extent vectors v1, v2, v3:
+ * c[0]c[1]c[2]v1[0]v1[1]v1[2]v2[0]v2[1]v2[2]v3[0]v3[1]v3[2] */
+#define CACHE_OBB "obb"
+
+/* Timestamp (microseconds since UNIX epoch) stored as a single int64_t */
+#define CACHE_TIMESTAMP "timestmp"
 
 __END_DECLS
 

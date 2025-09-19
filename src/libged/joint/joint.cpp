@@ -1,4 +1,4 @@
-/*                      J O I N T . C
+/*                      J O I N T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2025 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/joint.c
+/** @file libged/joint.cpp
  *
  * Process all animation edit commands.
  *
@@ -238,7 +238,7 @@ static struct db_tree_state mesh_initial_tree_state = {
 
 
 static int
-joint_mesh(struct ged *gedp, int argc, const char *argv[])
+joint_mesh(struct ged *gedp, int argc, const char **argv)
 {
     const char *name;
     struct bv_vlblock*vbp;
@@ -296,8 +296,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (gedp->new_cmd_forms) {
-	struct bview *view = gedp->ged_gvp;
-	bv_vlblock_obj(vbp, view, "joint");
+	ged_vlblock_scene_obj(gedp, gedp->ged_gvp, "ged::joint", vbp);
     } else {
 	_ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
     }
@@ -318,7 +317,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
 static int
 joint_debug(struct ged *gedp,
 	    int argc,
-	    const char *argv[])
+	    const char **argv)
 {
     if (argc >= 2) {
 	sscanf(argv[1], "%x", &J_DEBUG);
@@ -337,7 +336,7 @@ joint_debug(struct ged *gedp,
  * Common code for help commands
  */
 static int
-helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
+helpcomm(struct ged *gedp, int argc, const char **argv, struct funtab *functions)
 {
     struct funtab *ftp;
     int i, bad;
@@ -368,7 +367,7 @@ helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *function
  * the indicated commands.
  */
 static int
-joint_usage(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
+joint_usage(struct ged *gedp, int argc, const char **argv, struct funtab *functions)
 {
     struct funtab *ftp;
 
@@ -384,7 +383,7 @@ joint_usage(struct ged *gedp, int argc, const char *argv[], struct funtab *funct
 
 
 static int
-joint_command_tab(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
+joint_command_tab(struct ged *gedp, int argc, const char **argv, struct funtab *functions)
 {
     struct funtab *ftp;
 
@@ -402,7 +401,7 @@ joint_command_tab(struct ged *gedp, int argc, const char *argv[], struct funtab 
 
 
 static int
-joint_help_commands(struct ged *gedp, int argc, const char *argv[])
+joint_help_commands(struct ged *gedp, int argc, const char **argv)
 {
     int status;
 
@@ -416,7 +415,7 @@ joint_help_commands(struct ged *gedp, int argc, const char *argv[])
 
 
 static int
-joint_help(struct ged *gedp, int argc, const char *argv[])
+joint_help(struct ged *gedp, int argc, const char **argv)
 {
     int status;
 
@@ -653,7 +652,7 @@ hold_clear_flags(struct hold *hp)
 
 
 static int
-joint_unload(struct ged *gedp, int argc, const char *argv[])
+joint_unload(struct ged *gedp, int argc, const char **argv)
 {
     struct joint *jp;
     struct hold *hp;
@@ -805,7 +804,7 @@ static const char *lex_name;
 static double mm2base, base2mm;
 
 static void
-parse_error(struct ged *gedp, struct bu_vls *vlsp, char *error)
+parse_error(struct ged *gedp, struct bu_vls *vlsp, const char *error)
 {
     char *text;
     size_t i;
@@ -884,7 +883,7 @@ get_token(struct ged *gedp, union bu_lex_token *token, FILE *fip, struct bu_vls 
 static int
 gobble_token(struct ged *gedp, int type_wanted, int value_wanted, FILE *fip, struct bu_vls *str)
 {
-    static char *types[] = {
+    static const char *types[] = {
 	"any",
 	"integer",
 	"double",
@@ -1138,7 +1137,7 @@ parse_ARC(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
 {
     union bu_lex_token token;
     int max;
-    char *error;
+    const char *error;
 
     if (J_DEBUG & DEBUG_J_PARSE) {
 	bu_vls_printf(gedp->ged_result_str, "parse_ARC: open.\n");
@@ -2293,7 +2292,7 @@ joint_adjust(struct ged *gedp, struct joint *jp)
 
 
 static int
-joint_load(struct ged *gedp, int argc, const char *argv[])
+joint_load(struct ged *gedp, int argc, const char **argv)
 {
     static struct bu_list path_head;
 
@@ -2430,7 +2429,7 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
 
 
 static int
-joint_save(struct ged *gedp, int argc, const char *argv[])
+joint_save(struct ged *gedp, int argc, const char **argv)
 {
     struct joint *jp;
     int i;
@@ -2515,7 +2514,7 @@ joint_save(struct ged *gedp, int argc, const char *argv[])
 
 
 static int
-joint_accept(struct ged *gedp, int argc, const char *argv[])
+joint_accept(struct ged *gedp, int argc, const char **argv)
 {
     struct joint *jp;
     int i;
@@ -2554,7 +2553,7 @@ joint_accept(struct ged *gedp, int argc, const char *argv[])
 
 
 static int
-joint_reject(struct ged *gedp, int argc, const char *argv[])
+joint_reject(struct ged *gedp, int argc, const char **argv)
 {
     struct joint *jp;
     int i;
@@ -3175,7 +3174,7 @@ Middle:
 
 
 static int
-joint_solve(struct ged *gedp, int argc, const char *argv[])
+joint_solve(struct ged *gedp, int argc, const char **argv)
 {
     struct hold *hp;
     int loops, count;
@@ -3354,7 +3353,7 @@ joint_solve(struct ged *gedp, int argc, const char *argv[])
 
 
 static int
-joint_hold(struct ged *gedp, int argc, const char *argv[])
+joint_hold(struct ged *gedp, int argc, const char **argv)
 {
     struct hold *hp;
     ++argv;
@@ -3377,7 +3376,7 @@ joint_hold(struct ged *gedp, int argc, const char *argv[])
 
 
 static int
-joint_list(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
+joint_list(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct joint *jp;
 
@@ -3391,7 +3390,7 @@ joint_list(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 
 
 static int
-joint_move(struct ged *gedp, int argc, const char *argv[])
+joint_move(struct ged *gedp, int argc, const char **argv)
 {
     struct joint *jp;
     int i;
@@ -3481,7 +3480,7 @@ joint_move(struct ged *gedp, int argc, const char *argv[])
 static int
 joint_cmd(struct ged *gedp,
 	  int argc,
-	  const char *argv[],
+	  const char **argv,
 	  struct funtab functions[])
 {
     struct funtab *ftp;
@@ -3522,7 +3521,7 @@ joint_cmd(struct ged *gedp,
 
 
 int
-ged_joint_core(struct ged *gedp, int argc, const char *argv[])
+ged_joint_core(struct ged *gedp, int argc, const char **argv)
 {
     int status;
 
@@ -3546,39 +3545,24 @@ ged_joint_core(struct ged *gedp, int argc, const char *argv[])
 
 
 struct funtab joint_tab[] = {
-    {"joint ", "", "Joint command table",
-     0, 0, 0, FALSE},
-    {"?", "[commands]", "summary of available joint commands",
-     joint_help_commands, 0, FUNTAB_UNLIMITED, FALSE},
-    {"accept", "[joints]", "accept a series of moves",
-     joint_accept, 1, FUNTAB_UNLIMITED, FALSE},
-    {"debug", "[hex code]", "Show/set debugging bit vector for joints",
-     joint_debug, 1, 2, FALSE},
-    {"help", "[commands]", "give usage message for given joint commands",
-     joint_help, 0, FUNTAB_UNLIMITED, FALSE},
-    {"holds", "[names]", "list constraints",
-     joint_hold, 1, FUNTAB_UNLIMITED, FALSE},
-    {"list", "[names]", "list joints.",
-     joint_list, 1, FUNTAB_UNLIMITED, FALSE},
-    {"load", "file_name", "load a joint/constraint file",
-     joint_load, 2, FUNTAB_UNLIMITED, FALSE},
-    {"mesh", "", "Build the grip mesh",
-     joint_mesh, 0, 1, FALSE},
-    {"move", "joint_name p1 [p2...p6]", "Manual adjust a joint",
-     joint_move, 3, 8, FALSE},
-    {"reject", "[joint_names]", "reject joint motions",
-     joint_reject, 1, FUNTAB_UNLIMITED, FALSE},
-    {"save",	"file_name", "Save joints and constraints to disk",
-     joint_save, 2, 2, FALSE},
-    {"solve", "constraint", "Solve a or all constraints",
-     joint_solve, 1, FUNTAB_UNLIMITED, FALSE},
-    {"unload", "", "Unload any joint/constraints that have been loaded",
-     joint_unload, 1, 1, FALSE},
-    {NULL, NULL, NULL,
-     NULL, 0, 0, FALSE}
+    {"joint ", "", "Joint command table", 0, 0, 0, FALSE},
+    {"?", "[commands]", "summary of available joint commands", joint_help_commands, 0, FUNTAB_UNLIMITED, FALSE},
+    {"accept", "[joints]", "accept a series of moves", joint_accept, 1, FUNTAB_UNLIMITED, FALSE},
+    {"debug", "[hex code]", "Show/set debugging bit vector for joints", joint_debug, 1, 2, FALSE},
+    {"help", "[commands]", "give usage message for given joint commands", joint_help, 0, FUNTAB_UNLIMITED, FALSE},
+    {"holds", "[names]", "list constraints", joint_hold, 1, FUNTAB_UNLIMITED, FALSE},
+    {"list", "[names]", "list joints.", joint_list, 1, FUNTAB_UNLIMITED, FALSE},
+    {"load", "file_name", "load a joint/constraint file", joint_load, 2, FUNTAB_UNLIMITED, FALSE},
+    {"mesh", "", "Build the grip mesh", joint_mesh, 0, 1, FALSE},
+    {"move", "joint_name p1 [p2...p6]", "Manual adjust a joint", joint_move, 3, 8, FALSE},
+    {"reject", "[joint_names]", "reject joint motions", joint_reject, 1, FUNTAB_UNLIMITED, FALSE},
+    {"save",	"file_name", "Save joints and constraints to disk", joint_save, 2, 2, FALSE},
+    {"solve", "constraint", "Solve a or all constraints", joint_solve, 1, FUNTAB_UNLIMITED, FALSE},
+    {"unload", "", "Unload any joint/constraints that have been loaded", joint_unload, 1, 1, FALSE},
+    {NULL, NULL, NULL, NULL, 0, 0, FALSE}
 };
 
-
+extern "C" {
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 struct ged_cmd_impl joint_cmd_impl = {
@@ -3597,13 +3581,13 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
     return &pinfo;
 }
 #endif /* GED_PLUGIN */
+}
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s

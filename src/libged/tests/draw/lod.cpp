@@ -157,7 +157,7 @@ main(int ac, char *av[]) {
     s_av[3] = "all.bot";
     s_av[4] = NULL;
     ged_exec_facetize(gedp, 4, s_av);
-    dbis->update();
+    gedp->dbi_state->Sync();
 
     s_av[0] = "ae";
     s_av[1] = "35";
@@ -241,7 +241,7 @@ main(int ac, char *av[]) {
     s_av[3] = "all.brep";
     s_av[4] = NULL;
     ged_exec_brep(gedp, 4, s_av);
-    dbis->update();
+    gedp->dbi_state->Sync();
 
     bu_log("Sanity - testing shaded mode 1 (triangle only) drawing, Level-of-Detail disabled...\n");
     s_av[0] = "view";

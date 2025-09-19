@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include <chrono>
 #include <filesystem>
 #include <system_error>
 
@@ -108,13 +109,12 @@ bu_file_exists(const char *path, int *fd)
     return 0;
 }
 
-int
+long long
 bu_file_size(const char *path)
 {
-    int fbytes = 0;
-    if (!bu_file_exists(path, NULL)) {
+    long long fbytes = 0;
+    if (!bu_file_exists(path, NULL))
 	return -1;
-    }
 
 #ifdef HAVE_SYS_STAT_H
     {
@@ -157,6 +157,60 @@ bu_file_size(const char *path)
     return fbytes;
 }
 
+// TODO - once C++20 is implemented and well supported, use that
+// instead: https://stackoverflow.com/q/61030383
+int64_t
+bu_file_timestamp(const char *path)
+{
+    if (!path)
+	return -1;
+
+#ifdef HAVE_WINDOWS_H
+
+    HANDLE h = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    FILETIME ft_lastwrite;
+    int fret = GetFileTime(h, NULL, NULL, &ft_lastwrite);
+    CloseHandle(h);
+    if (!fret)
+	return -1;
+
+    // FILETIME is number of 100-nanosecond intervals since Jan 1, 1601.  For compatibility
+    // with bu_gettime(), we need the number of microseconds since the UNIX epoch.
+
+    // First convert FILETIME to a 64 bit integer
+    ULARGE_INTEGER li;
+    li.LowPart = ft_lastwrite.dwLowDateTime;
+    li.HighPart = ft_lastwrite.dwHighDateTime;
+    uint64_t fileTime100ns = li.QuadPart;
+
+    // Number of 100-nanosecond intervals between 1601-01-01 and 1970-01-01
+    const uint64_t EPOCH_DIFFERENCE_100NS = 116444736000000000ULL;
+
+    // Correct for epoch difference
+    uint64_t unixTime100ns = fileTime100ns - EPOCH_DIFFERENCE_100NS;
+
+    // Convert to microseconds
+    int64_t timestamp = static_cast<int64_t>(unixTime100ns / 10);
+
+    return timestamp;
+
+#elif HAVE_SYS_STAT_H
+
+    struct stat sb;
+    if (stat(path, &sb) != 0)
+	return 0;
+    long long sec_micro = sb.st_mtim.tv_sec * 1000000;
+    long long nano_micro = sb.st_mtim.tv_nsec / 1000;
+    int64_t timestamp = (int64_t)sec_micro + (int64_t)nano_micro;
+    return timestamp;
+
+#else
+
+    // Currently unsupported
+    return 0;
+
+#endif
+}
 
 #ifdef HAVE_GETFULLPATHNAME
 static int

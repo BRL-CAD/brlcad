@@ -208,6 +208,15 @@ bg_trimesh_diff(
     for (size_t i = 0; i < pv2.size(); i++)
 	ind_map_2[i] = pv2[i].orig_ind;
 
+    // TODO - to make this properly insensitive to face ordering, need to make
+    // arrys of faces the same way we did with the points - do the reordering to
+    // always lead with the lowest numerical index in the face (using the maps
+    // to target the sorted vert arrays) and then sort the faces - that should
+    // put all matching faces in the same array positions regardless of where
+    // they started.  Didn't do it yet since for most BRL-CAD applications it
+    // isn't likely an otherwise identical mesh will have its faces scrambled,
+    // but from a completeness standpoint should do it - from a solid raytracing
+    // perspective it doesn't matter which BoT face is where in the faces array.
     for (size_t i = 0; i < num_f1; i++) {
 	size_t tri_1[3];
 	tri_1[0] = ind_map_1[f1[3*i+0]];

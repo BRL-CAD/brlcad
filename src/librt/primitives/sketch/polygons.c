@@ -61,7 +61,7 @@ struct contour_node {
 };
 
 struct bv_scene_obj *
-db_sketch_to_scene_obj(const char *sname, struct db_i *dbip, struct directory *dp, struct bview *sv, int flags)
+db_sketch_to_scene_obj(const char *sname, struct db_i *dbip, struct directory *dp, struct bview *sv)
 {
     if (!sv)
 	return NULL;
@@ -205,7 +205,7 @@ end:
     bu_free((void *)all_segment_nodes, "all_segment_nodes");
 
     /* Create the scene object here so we can read a default color */
-    struct bv_scene_obj *s = bv_create_polygon_obj(sv, flags, p);
+    struct bv_scene_obj *s = bv_create_polygon_obj(sv, p);
     if (!s) {
 	bg_polygon_free(&p->polygon);
 	BU_PUT(p, struct bv_polygon);

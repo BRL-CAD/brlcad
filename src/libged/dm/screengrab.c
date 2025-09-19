@@ -102,7 +102,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 
     if (bu_vls_strlen(&dm_name) && gedp->ged_gvp) {
 	// We have a name - see if we can match it.
-	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	struct bu_ptbl *views = &gedp->ged_views;
 	for (size_t j = 0; j < BU_PTBL_LEN(views); j++) {
 	    if (dmp)
 		break;

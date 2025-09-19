@@ -5,6 +5,7 @@ set(
   events.h
   faceplate.h
   lod.h
+  objs.h
   plot3.h
   polygon.h
   snap.h
@@ -13,7 +14,6 @@ set(
   util.h
   vectfont.h
   vlist.h
-  view_sets.h
 )
 brlcad_manage_files(bv_headers ${INCLUDE_DIR}/brlcad/bv REQUIRED libbv)
 

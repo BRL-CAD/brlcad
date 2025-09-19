@@ -56,6 +56,7 @@
 #include "bg/lseg.h"
 #include "bg/obr.h"
 #include "bg/plane.h"
+#include "bg/pnts.h"
 #include "bg/polygon.h"
 #include "bg/sat.h"
 #include "bg/spsr.h"

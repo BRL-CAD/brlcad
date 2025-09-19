@@ -31,6 +31,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/cache.h"
 #include "bu/vls.h"
 #include "rt/db4.h"
 #include "raytrace.h"
@@ -277,7 +278,12 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
 	}
 	bu_vls_strcpy(&local, name);
     }
+
+    bu_semaphore_acquire(BU_SEM_CACHE);
+    // TODO clear old cache values
+
     if (db_dircheck(dbip, &local, 0, &headp) < 0) {
+	bu_semaphore_release(BU_SEM_CACHE);
 	bu_vls_free(&local);
 	return RT_DIR_NULL;
     }
@@ -299,6 +305,8 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
     dp->d_animate = NULL;
     dp->d_nref = 0;
     dp->d_uses = 0;
+
+    bu_semaphore_release(BU_SEM_CACHE);
 
     /* v4 geometry databases do not use d_major/minor_type */
     if (db_version(dbip) > 4) {

@@ -6,12 +6,11 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-ged_plugin_library(ged-gdiff gdiff.c)
+ged_plugin_library(ged-gdiff gdiff.cpp)
 target_link_libraries(ged-gdiff libged libbu)
 
 cmakefiles(
   CMakeLists.txt
-  gdiff.c
 )
 
 # Local Variables:

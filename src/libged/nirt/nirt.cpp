@@ -586,10 +586,10 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     /* Whether or not we're doing graphics, if we took a shot we should clear any
      * old objects from prior shots. */
     if (gedp->new_cmd_forms) {
-	struct bview *view = gedp->ged_gvp;
-	struct bv_scene_obj *nobj = bv_find_obj(view, bu_vls_cstr(&gedp->i->ged_gdp->gd_qray_basename));
-	if (nobj)
-	    bv_obj_put(nobj);
+	BViewState *vs = gedp->dbi_state->GetBViewState(gedp->ged_gvp);
+	std::vector<struct bv_scene_obj *> nobjs = vs->FindSceneObjs(bu_vls_cstr(&gedp->i->ged_gdp->gd_qray_basename));
+	for (size_t i = 0; i < nobjs.size(); i++)
+	    bv_obj_put(nobjs[i]);
     } else {
 	struct directory **dpv;
 	struct bu_vls dp_pattern = BU_VLS_INIT_ZERO;
@@ -613,9 +613,10 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 		bu_log("Error loading plot data from %s\n", bu_vls_cstr(&nv.plotfile));
 	    } else {
 		if (gedp->new_cmd_forms) {
-		    struct bview *view = gedp->ged_gvp;
-		    struct bv_scene_obj *nobj = bv_vlblock_obj(vbp, view, bu_vls_cstr(&gedp->i->ged_gdp->gd_qray_basename));
-		    bu_vls_sprintf(&nobj->s_name, "%s", bu_vls_cstr(&gedp->i->ged_gdp->gd_qray_basename));
+		    struct bu_vls nroot = BU_VLS_INIT_ZERO;
+		    bu_vls_sprintf(&nroot, "%s", bu_vls_cstr(&gedp->i->ged_gdp->gd_qray_basename));
+		    ged_vlblock_scene_obj(gedp, gedp->ged_gvp, bu_vls_cstr(&nroot), vbp);
+		    bu_vls_free(&nroot);
 		} else {
 		    _ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_cstr(&gedp->i->ged_gdp->gd_qray_basename), 0);
 		}

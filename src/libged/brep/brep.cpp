@@ -779,8 +779,7 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
     }
 
     if (gedp->new_cmd_forms) {
-	struct bview *view = gedp->ged_gvp;
-	bv_vlblock_obj(gb->vbp, view, "brep_intersect");
+	ged_vlblock_scene_obj(gedp, gedp->ged_gvp, "ged::brep_intersect", gb->vbp);
     } else {
 	char namebuf[65];
 	_ged_cvt_vlblock_to_solids(gedp, gb->vbp, namebuf, 0);

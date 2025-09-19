@@ -114,7 +114,7 @@ main(int argc, char *argv[])
     db_add_node_to_full_path(&fp, dp);
     struct bview *v;
     BU_GET(v, struct bview);
-    bv_init(v, NULL);
+    bv_init(v);
     VSET(v->gv_aet, 45, 35, 0);
     bv_mat_aet(v);
     v->gv_size = 73.3197;

@@ -70,9 +70,6 @@ ged_close(struct ged *gedp)
 	gedp->dbip = NULL;
     }
 
-    if (gedp->ged_lod)
-	bv_mesh_lod_context_destroy(gedp->ged_lod);
-
     /* Terminate any ged subprocesses */
     if (gedp != GED_NULL) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
@@ -109,7 +106,7 @@ ged_init(struct ged *gedp)
     bu_vls_init(&gedp->go_name);
 
     // View related containers
-    bv_set_init(&gedp->ged_views);
+    BU_PTBL_INIT(&gedp->ged_views);
     BU_PTBL_INIT(&gedp->ged_free_views);
 
     /* TODO: If we're init-ing the list here, does that mean the gedp has
@@ -120,10 +117,13 @@ ged_init(struct ged *gedp)
 
     // Establish an initial view
     BU_ALLOC(gedp->ged_gvp, struct bview);
-    bv_init(gedp->ged_gvp, &gedp->ged_views);
+    bv_init(gedp->ged_gvp);
     bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
-    bv_set_add_view(&gedp->ged_views, gedp->ged_gvp);
+    bu_ptbl_ins(&gedp->ged_views, (long *)gedp->ged_gvp);
     bu_ptbl_ins(&gedp->ged_free_views, (long *)gedp->ged_gvp);
+
+    // Scene objects pool
+    gedp->free_scene_objs = bv_obj_pool_create();
 
     /* Create a non-opened fbserv */
     BU_GET(gedp->ged_fbs, struct fbserv_obj);
@@ -201,15 +201,24 @@ ged_free(struct ged *gedp)
 
     bu_vls_free(&gedp->go_name);
 
+    // Sanity
     gedp->ged_gvp = NULL;
 
+    // Free views container - any bview structs that aren't the application's
+    // responsibility will be handled by ged_free_views
+    bu_ptbl_free(&gedp->ged_views);
+
+    /* Free scene objects */
+    bv_obj_pool_destroy(gedp->free_scene_objs);
+    gedp->free_scene_objs = NULL;
+
+    /* Free libged owned views */
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_free_views); i++) {
 	struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_free_views, i);
 	bv_free(gdvp);
 	bu_free((void *)gdvp, "bv");
     }
     bu_ptbl_free(&gedp->ged_free_views);
-    bv_set_free(&gedp->ged_views);
 
     if (gedp->i->ged_gdp != GED_DRAWABLE_NULL) {
 
@@ -378,7 +387,13 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 
     db_update_nref(gedp->dbip, &rt_uniresource);
 
-    gedp->ged_lod = NULL;
+    // LoD cache updating may take a while, so we don't want
+    // to block on it.
+    const char *do_lod_init = getenv("LIBGED_LOD_INIT");
+    if (BU_STR_EQUAL(do_lod_init, "1")) {
+	std::thread lod_thread(db_cache_mesh_init, gedp->dbip, 0);
+	lod_thread.detach();
+    }
 
     return gedp;
 }

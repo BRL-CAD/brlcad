@@ -63,6 +63,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     const char *av[10] = {NULL};
     fastf_t fs_percent = 0.0;
     int confirmed = 0;
+    int dbret = 0;
     int new_file_size = 0;
     int old_file_size = 0;
     int path_cnt = 0;
@@ -81,11 +82,12 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     struct bu_vls fpath = BU_VLS_INIT_ZERO;
     struct bu_vls working_file = BU_VLS_INIT_ZERO;
-    struct db_i *old_dbip = NULL;
+    struct db_i *ndbip = NULL;
     struct directory **paths = NULL;
     struct directory *dp = NULL;
     struct directory *new_global_dp = NULL;
     struct directory *old_global_dp = NULL;
+    struct ged_subprocess *rrp = NULL;
     struct rt_wdb *gc_wdbp = NULL;
     std::ifstream cfile;
     std::ofstream ofile;
@@ -138,7 +140,6 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // Stash processing data
-    old_dbip = gedp->dbip;
     old_file_size = bu_file_size(gedp->dbip->dbi_filename);
     bu_vls_sprintf(&fpath, "%s", gedp->dbip->dbi_filename);
 
@@ -151,23 +152,6 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     bu_free(paths, "free db_ls output");
     paths = NULL;
 
-    /* In addition to the database data itself, we also want to restore any
-     * views to their original state when we open the garbage collected
-     * database.  Save the who list. (TODO - do we need to save views?  Or
-     * will drawing without resize work?) */
-    if (gedp->new_cmd_forms) {
-	DbiState *dbis = (DbiState *)gedp->dbi_state;
-	BViewState *bvs = dbis->get_view_state(gedp->ged_gvp);
-	std::vector<std::string> wpaths = bvs->list_drawn_paths(-1, false);
-	for (size_t i = 0; i < wpaths.size(); i++) {
-	    who_objs.push_back(wpaths[i]);
-	}
-    } else {
-	struct display_list *gdlp;
-	for (BU_LIST_FOR(gdlp, display_list, (struct bu_list *)ged_dl(gedp)))
-	    who_objs.push_back(std::string(bu_vls_cstr(&gdlp->dl_path)));
-    }
-
     /* Create "working" database. */
     bu_vls_sprintf(&working_file, "%s/%d_gc_%s", bu_vls_cstr(&fdir),
 	    bu_pid(), bu_vls_cstr(&fname));
@@ -178,7 +162,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 	ret = BRLCAD_ERROR;
 	goto gc_cleanup;
     }
-    gc_wdbp = wdb_fopen_v(bu_vls_cstr(&working_file), db_version(old_dbip));
+    gc_wdbp = wdb_fopen_v(bu_vls_cstr(&working_file), db_version(gedp->dbip));
     if (gc_wdbp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: unable to open working file %s, cannot proceed.\n", bu_vls_cstr(&working_file));
 	bu_vls_printf(gedp->ged_result_str, "Aborting garbage collect, database unchanged.");
@@ -188,7 +172,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // First order of business, copy global properties not stored in database objects
-    if (db_update_ident(gc_wdbp->dbip, old_dbip->dbi_title, old_dbip->dbi_local2base) < 0) {
+    if (db_update_ident(gc_wdbp->dbip, gedp->dbip->dbi_title, gedp->dbip->dbi_local2base) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: db_update_ident() failed on %s, cannot proceed.\n", bu_vls_cstr(&working_file));
 	bu_vls_printf(gedp->ged_result_str, "Aborting garbage collect, database unchanged.");
 	db_close(gc_wdbp->dbip);
@@ -198,15 +182,15 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     }
     old_global_dp = db_lookup(gedp->dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
     new_global_dp = db_lookup(gc_wdbp->dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET);
-    db5_get_attributes(old_dbip, &avs, old_global_dp);
+    db5_get_attributes(gedp->dbip, &avs, old_global_dp);
     db5_update_attributes(new_global_dp, &avs, gc_wdbp->dbip);
     bu_avs_free(&avs);
 
     // Copy objects
     for (int i = 0; i < RT_DBNHASH; i++) {
-	for (dp = old_dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
-	    if (db_get_external(&ext, dp, old_dbip) < 0)
+	    if (db_get_external(&ext, dp, gedp->dbip) < 0)
 		continue;
 	    int id = 0;
 	    if (dp->d_flags & RT_DIR_COMB) {
@@ -231,23 +215,19 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     db_close(gc_wdbp->dbip);
 
 
-    // If we got this far, we need to close the current database, open the new
-    // one, and verify the data
-    av[0] = "closedb";
-    av[1] = NULL;
-    ged_exec_closedb(gedp, 1, (const char **)av);
-    av[0] = "opendb";
-    av[1] = bu_vls_cstr(&working_file);
-    av[2] = NULL;
-    if (ged_exec_opendb(gedp, 2, (const char **)av) != BRLCAD_OK) {
+    // If we got this far, we need to open the new database, and verify the
+    // data.  We don't use close and open for this since we don't want to
+    // completely reset the dbi_state and views.
+    ndbip = db_open(bu_vls_cstr(&working_file), DB_OPEN_READONLY);
+    if (!ndbip) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s was not opened successfully!  Something is very wrong.  Aborting garbage collect, database unchanged\n", bu_vls_cstr(&working_file));
 	ret = BRLCAD_ERROR;
 	goto gc_cleanup;
     }
 
     // See what we've got for tops objects in the new file
-    db_update_nref(gedp->dbip, &rt_uniresource);
-    path_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &paths);
+    db_update_nref(ndbip, &rt_uniresource);
+    path_cnt = db_ls(ndbip, DB_LS_TOPS, NULL, &paths);
     for (int i = 0; i < path_cnt; i++) {
 	new_top_objs.insert(std::string(paths[i]->d_namep));
     }
@@ -273,16 +253,12 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     }
     if (ret == BRLCAD_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s has incorrect data!  Something is very wrong.  Aborting garbage collect, database unchanged\n", bu_vls_cstr(&working_file));
-	av[0] = "closedb";
-	av[1] = NULL;
-	ged_exec_closedb(gedp, 1, (const char **)av);
+	db_close(ndbip);
 	goto gc_cleanup;
     }
 
     // Done verifying
-    av[0] = "closedb";
-    av[1] = NULL;
-    ged_exec_closedb(gedp, 1, (const char **)av);
+    db_close(ndbip);
 
     // Approaching the moment of truth, where we have to swap the new .g in for the
     // old one.  Time to back up the original file
@@ -305,30 +281,75 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     cfile.close();
     ofile.close();
 
+    // Close the current database, but save the view and DbiState info - we
+    // don't need to rebuild all of it in this case.
+    db_close(gedp->dbip);
+    gedp->dbip = NULL;
+
+    // We DO, however, need to terminate subprocesses - there's no telling
+    // how they would react to having the .g yanked out from under them.
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
+	rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
+	if (!rrp->aborted) {
+	    bu_pid_terminate(bu_process_pid(rrp->p));
+	    rrp->aborted = 1;
+	}
+	bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);
+	BU_PUT(rrp, struct ged_subprocess);
+    }
+    bu_ptbl_reset(&gedp->ged_subp);
+
     // *Gulp* - here we go.  Swap the new file in for the old
     bu_file_delete(bu_vls_cstr(&fpath));
     if (std::rename(bu_vls_cstr(&working_file), bu_vls_cstr(&fpath))) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s cannot be renamed to %s: %s!\nSomething is very wrong, aborting - user needs to manually restore %s to its original name/location.\n", bu_vls_cstr(&working_file), bu_vls_cstr(&fpath), strerror(errno), bu_vls_cstr(&bkup_file));
 	ret = BRLCAD_ERROR;
+	// If things are this bad, we can't save the gedp or dbi_state
+	av[0] = "closedb";
+	av[1] = NULL;
+	ged_exec_closedb(gedp, 1, (const char **)av);
 	goto gc_cleanup;
     }
 
-    // Open the renamed, garbage collected file
-    av[0] = "opendb";
-    av[1] = bu_vls_cstr(&fpath);
-    av[2] = NULL;
-    if (ged_exec_opendb(gedp, 2, (const char **)av) != BRLCAD_OK) {
+    // Open the renamed, garbage collected file (if we're doing a garbage-collect,
+    // can assume we were read/write - we shouldn't be trying this on a read-only
+    // database instance.)
+    gedp->dbip = db_open(bu_vls_cstr(&fpath), DB_OPEN_READWRITE);
+    dbret = db_dirbuild(gedp->dbip);
+    if (!gedp->dbip || dbret < 0) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s was not opened successfully!\nSomething is very wrong, aborting - user needs to manually restore %s to its original name/location.\n", bu_vls_cstr(&fpath), bu_vls_cstr(&bkup_file));
 	ret = BRLCAD_ERROR;
+	// If things are this bad, we can't save the gedp or dbi_state
+	av[0] = "closedb";
+	av[1] = NULL;
+	ged_exec_closedb(gedp, 1, (const char **)av);
 	goto gc_cleanup;
     }
+    // Complete the rest of the setup
+    rt_new_material_head(rt_material_head());
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
-    // Restore drawn object set
-    av[0] = "draw";
-    av[1] = "-R";
-    for (size_t i = 0; i < who_objs.size(); i++) {
-	av[2] = who_objs[i].c_str();
-	ged_exec_draw(gedp, 3, (const char **)av);
+    // Let dbi_state know about its new foundation.  The gedp has already been
+    // assigned its new dbip, so the remaining thing to update is the GObj
+    // directory pointers and the dp2g DbiState map.  Everything else should be
+    // internal to the DbiState and still valid.
+    if (gedp->new_cmd_forms) {
+	std::unordered_map<struct directory *, GObj *> gmap;
+	std::unordered_map<struct directory *, GObj *>::iterator go_it;
+	for (go_it = gedp->dbi_state->dp2g.begin(); go_it != gedp->dbi_state->dp2g.end(); go_it++) {
+	    GObj *g = go_it->second;
+	    dp = db_lookup(gedp->dbip, g->name.c_str(), LOOKUP_QUIET);
+	    if (!dp) {
+		bu_log("missing object! %s\n", g->name.c_str());
+		continue;
+	    }
+	    g->dp = dp;
+	    gmap[dp] = g;
+	}
+	gedp->dbi_state->dp2g.clear();
+	for (go_it = gmap.begin(); go_it != gmap.end(); ++go_it) {
+	    gedp->dbi_state->dp2g[go_it->first] = go_it->second;
+	}
     }
 
     // We should be done now - check the sizes.  These warnings are not fatal

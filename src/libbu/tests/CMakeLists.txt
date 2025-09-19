@@ -684,6 +684,14 @@ brlcad_add_test(NAME bu_opt_3_vect_03  COMMAND bu_test opt 3 V 3)
 brlcad_add_test(NAME bu_opt_3_vect_04  COMMAND bu_test opt 3 V 4)
 
 #
+#  *********** hash.c tests ************
+#
+brlcad_addexec(bu_cache cache.cpp libbu TEST)
+if(TARGET bu_test)
+  add_dependencies(bu_test bu_cache)
+endif(TARGET bu_test)
+
+#
 #  *********** datetime.c tests ************
 #
 

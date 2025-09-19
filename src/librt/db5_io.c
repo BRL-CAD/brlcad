@@ -32,6 +32,7 @@
 #include <ctype.h>
 #include "bnetwork.h"
 
+#include "bu/cache.h"
 #include "bu/endian.h"
 #include "bu/parse.h"
 #include "bu/cv.h"
@@ -757,6 +758,10 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
 
     BU_ASSERT(dbip->dbi_version == 5);
 
+    bu_semaphore_acquire(BU_SEM_CACHE);
+    // TODO - clear cache entries
+    bu_semaphore_release(BU_SEM_CACHE);
+
     /* First, change the name. */
     if (db_wrap_v5_external(ep, dp->d_namep) < 0) {
 	bu_log("db_put_external5(%s) failure in db_wrap_v5_external()\n",
@@ -781,6 +786,7 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     if (db_write(dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr) < 0) {
 	return -1;
     }
+
 
     /* Made a change for real - do callback */
     if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
@@ -833,9 +839,14 @@ rt_db_put_internal5(
 	goto ok;
     }
 
+    bu_semaphore_acquire(BU_SEM_CACHE);
+    // TODO - clear cache entries
+    bu_semaphore_release(BU_SEM_CACHE);
+
     if (db_write(dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr) < 0) {
 	goto fail;
     }
+
 
     /* Made a change for real - do callback */
     if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {

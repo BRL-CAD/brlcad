@@ -1,4 +1,4 @@
-/*                         V I E W . C
+/*                       V I E W . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2025 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/view.c
+/** @file libged/view.cpp
  *
  * The view command.
  *
@@ -118,91 +118,6 @@ _view_cmd_faceplate(void *bs, int argc, const char **argv)
     return ret;
 }
 
-/* When a view is "independent", it displays only those objects when have been
- * added to its individual scene storage - the shared objects common to all
- * views will not be drawn.  When shifting a view from shared to independent
- * its local storage is populated with copies of the shared objects to prevent
- * an abrupt change of displayed contents, but once this setup is complete
- * further draw or erase operations in shared views will no longer alter the
- * scene object lists in the independent view.  To modify the independent
- * view's scene, it must be specifically set as the current view in libged.
- * Note also that when a view ceases to be independent, it's local object set
- * is compared to the shared object set and any objects in both are removed
- * from the local set.  However, any object in the independent list that are
- * not present in the shared set will remain, since there is no way for the
- * library to know if the intent is to preserve or remove such objects from the
- * scene.  Removal, as the destructive option, is the responsibility of the
- * application.
- *
- * Note that views may have localized scene objects even when not independent,
- * but they must be defined as view objects rather than database objects. */
-int
-_view_cmd_independent(void *bs, int argc, const char **argv)
-{
-    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
-    const char *usage_string = "view [options] independent <view> [0|1]";
-    const char *purpose_string = "make a view independent (1) or part of the default view set (0)";
-    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return BRLCAD_OK;
-    }
-
-    // We know we're the independent command - start processing args
-    argc--; argv++;
-
-    struct ged *gedp = gd->gedp;
-    if (!argc) {
-	bu_vls_printf(gedp->ged_result_str, "no view specified\n");
-	return BRLCAD_ERROR;
-    }
-
-    struct bview *v = bv_set_find_view(&gedp->ged_views, argv[0]);
-    if (!v) {
-	bu_vls_printf(gedp->ged_result_str, "view %s not found\n", argv[0]);
-	return BRLCAD_ERROR;
-    }
-
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%d\n", v->independent);
-	return BRLCAD_OK;
-    }
-
-    if (BU_STR_EQUAL(argv[1], "1")) {
-	v->independent = 1;
-	// Initialize local containers with current shared grps
-	struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
-	if (!sg)
-	    return BRLCAD_OK;
-	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-	    struct bu_vls opath = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->s_name));
-	    const char *av[5] = {"draw", "-R", "-V", NULL, NULL};
-	    av[3] = bu_vls_cstr(&v->gv_name);
-	    av[4] = bu_vls_cstr(&opath);
-	    ged_exec_draw(gedp, 5, av);
-	    bu_vls_free(&opath);
-	}
-	return BRLCAD_OK;
-    }
-
-    if (BU_STR_EQUAL(argv[1], "0")) {
-	v->independent = 0;
-	// Clear local containers
-	struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-	if (sg) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		bv_obj_put(cg);
-	    }
-	    bu_ptbl_reset(sg);
-	}
-	return BRLCAD_OK;
-    }
-
-    bu_vls_printf(gedp->ged_result_str, "invalid value supplied: %s (need 0 or 1)\n", argv[1]);
-    return BRLCAD_ERROR;
-}
-
 int
 _view_cmd_list(void *bs, int argc, const char **argv)
 {
@@ -214,15 +129,19 @@ _view_cmd_list(void *bs, int argc, const char **argv)
     }
 
     struct ged *gedp = gd->gedp;
-    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-	if (v != gedp->ged_gvp) {
-	    bu_vls_printf(gedp->ged_result_str, "  %s\n", bu_vls_cstr(&v->gv_name));
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, "* %s\n", bu_vls_cstr(&v->gv_name));
-	}
+    BViewState *dv = gedp->dbi_state->GetBViewState();
+    bu_vls_printf(gedp->ged_result_str, "  %s\n", dv->Name().c_str());
+    std::vector<BViewState *> views = gedp->dbi_state->FindBViewState();
+    std::set<std::string> names;
+    for (size_t i = 0; i < views.size(); i++) {
+	if (views[i] == dv)
+	    continue;
+	names.insert(views[i]->Name());
     }
+
+    std::set<std::string>::iterator n_it;
+    for (n_it = names.begin(); n_it != names.end(); ++n_it)
+	bu_vls_printf(gedp->ged_result_str, "* %s\n", (*n_it).c_str());
 
     return BRLCAD_OK;
 }
@@ -383,11 +302,12 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
 
     if (calc_mode != -1) {
 	struct bview *v = gd->cv;
+	BViewState *vs = gedp->dbi_state->GetBViewState(v);
 	if (bu_vls_strlen(&calc_target)) {
 	    // User has specified a view object to use - try to find it
-	    struct bv_scene_obj *wobj = bv_find_obj(v, bu_vls_cstr(&calc_target));
-	    if (wobj) {
-		fastf_t vZ = bv_vZ_calc(wobj, gd->cv, calc_mode);
+	    std::vector<struct bv_scene_obj *> wobjs = vs->FindSceneObjs(bu_vls_cstr(&calc_target));
+	    if (wobjs.size() == 1) {
+		fastf_t vZ = bv_vZ_calc(wobjs[0], gd->cv, calc_mode);
 		bu_vls_sprintf(gedp->ged_result_str, "%0.15f", vZ);
 		return BRLCAD_OK;
 	    } else {
@@ -398,16 +318,13 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
 	} else {
 	    // No specific view object to use - check all drawn
 	    // view objects.
-	    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
-	    struct bu_ptbl *local_view_objs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
-	    struct bu_ptbl *db_objs = bv_view_objs(v, BV_DB_OBJS);
-	    struct bu_ptbl *local_db_objs = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
+	    std::vector<struct bv_scene_obj *> wobjs = vs->FindSceneObjs(bu_vls_cstr(&calc_target));
 	    double vZ = (calc_mode) ? -DBL_MAX : DBL_MAX;
 	    int have_vz = 0;
-	    if (view_objs) {
-		for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-		    fastf_t calc_val = bv_vZ_calc(s, gd->cv, calc_mode);
+	    for (size_t i = 0; i < wobjs.size(); i++) {
+		struct bv_scene_obj *cg = wobjs[i];
+		if (bu_list_len(&cg->s_vlist)) {
+		    fastf_t calc_val = bv_vZ_calc(cg, gd->cv, calc_mode);
 		    if (calc_mode) {
 			if (calc_val > vZ) {
 			    vZ = calc_mode;
@@ -419,31 +336,10 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
 			    have_vz = 1;
 			}
 		    }
-		}
-	    }
-	    if (local_view_objs) {
-		for (size_t i = 0; i < BU_PTBL_LEN(local_view_objs); i++) {
-		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(local_view_objs, i);
-		    fastf_t calc_val = bv_vZ_calc(s, gd->cv, calc_mode);
-		    if (calc_mode) {
-			if (calc_val > vZ) {
-			    vZ = calc_mode;
-			    have_vz = 1;
-			}
-		    } else {
-			if (calc_val < vZ) {
-			    vZ = calc_mode;
-			    have_vz = 1;
-			}
-		    }
-		}
-	    }
-
-	    if (db_objs) {
-		for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
-		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
-		    if (bu_list_len(&cg->s_vlist)) {
-			fastf_t calc_val = bv_vZ_calc(cg, gd->cv, calc_mode);
+		} else {
+		    for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
+			struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
+			fastf_t calc_val = bv_vZ_calc(s, gd->cv, calc_mode);
 			if (calc_mode) {
 			    if (calc_val > vZ) {
 				vZ = calc_mode;
@@ -453,57 +349,6 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
 			    if (calc_val < vZ) {
 				vZ = calc_mode;
 				have_vz = 1;
-			    }
-			}
-		    } else {
-			for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
-			    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
-			    fastf_t calc_val = bv_vZ_calc(s, gd->cv, calc_mode);
-			    if (calc_mode) {
-				if (calc_val > vZ) {
-				    vZ = calc_mode;
-				    have_vz = 1;
-				}
-			    } else {
-				if (calc_val < vZ) {
-				    vZ = calc_mode;
-				    have_vz = 1;
-				}
-			    }
-			}
-		    }
-		}
-	    }
-	    if (local_db_objs) {
-		for (size_t i = 0; i < BU_PTBL_LEN(local_db_objs); i++) {
-		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(local_db_objs, i);
-		    if (bu_list_len(&cg->s_vlist)) {
-			fastf_t calc_val = bv_vZ_calc(cg, gd->cv, calc_mode);
-			if (calc_mode) {
-			    if (calc_val > vZ) {
-				vZ = calc_mode;
-				have_vz = 1;
-			    }
-			} else {
-			    if (calc_val < vZ) {
-				vZ = calc_mode;
-				have_vz = 1;
-			    }
-			}
-		    } else {
-			for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
-			    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
-			    fastf_t calc_val = bv_vZ_calc(s, gd->cv, calc_mode);
-			    if (calc_mode) {
-				if (calc_val > vZ) {
-				    vZ = calc_mode;
-				    have_vz = 1;
-				}
-			    } else {
-				if (calc_val < vZ) {
-				    vZ = calc_mode;
-				    have_vz = 1;
-				}
 			    }
 			}
 		    }
@@ -644,7 +489,6 @@ const struct bu_cmdtab _view_cmds[] = {
     { "faceplate",  _view_cmd_faceplate},
     { "gobjs",      _view_cmd_gobjs},
     { "height",     _view_cmd_height},
-    { "independent",_view_cmd_independent},
     { "knob",       _view_cmd_knob},
     { "list",       _view_cmd_list},
     { "lod",        _view_cmd_lod},
@@ -733,7 +577,7 @@ ged_view_core(struct ged *gedp, int argc, const char *argv[])
 
     // Either a view was specified, or we use the current view
     if (bu_vls_strlen(&vname)) {
-	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	struct bu_ptbl *views = &gedp->ged_views;
 	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
 	    struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
 	    if (BU_STR_EQUAL(bu_vls_cstr(&vname), bu_vls_cstr(&v->gv_name))) {
@@ -864,7 +708,7 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-
+extern "C" {
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 
@@ -955,13 +799,13 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
     return &pinfo;
 }
 #endif /* GED_PLUGIN */
+}
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s

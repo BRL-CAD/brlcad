@@ -85,6 +85,7 @@ class QTCAD_EXPORT QgMeasureFilter : public QObject
         void view_updated(int);
 
     public:
+	struct ged *gedp = NULL;
 	struct bview *v = NULL;
 	struct bv_scene_obj *s = NULL;
 	std::string oname = std::string("tool:measurement");

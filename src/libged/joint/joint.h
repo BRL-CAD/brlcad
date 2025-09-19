@@ -173,9 +173,9 @@ struct hold {
 #define FUNTAB_UNLIMITED -1
 
 struct funtab {
-    char *ft_name;
-    char *ft_parms;
-    char *ft_comment;
+    const char *ft_name;
+    const char *ft_parms;
+    const char *ft_comment;
     int (*ft_func)(struct ged *, int, const char **);
     int ft_min;
     int ft_max;

@@ -45,21 +45,12 @@
 extern "C" void
 ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
 {
-    unsigned long long hash;
     struct ged *gedp = (struct ged *)u_data;
     DbiState *ctx = (DbiState *)gedp->dbi_state;
 
-    // Clear cached GED drawing data and update
-    ctx->clear_cache(dp);
-
     // Need to invalidate any LoD caches associated with this dp
-    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && ctx->gedp) {
-	unsigned long long key = bv_mesh_lod_key_get(ctx->gedp->ged_lod, dp->d_namep);
-	if (key) {
-	    bv_mesh_lod_clear_cache(ctx->gedp->ged_lod, key);
-	    bv_mesh_lod_key_put(ctx->gedp->ged_lod, dp->d_namep, 0);
-	}
-    }
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && ctx->gedp)
+	db_mesh_lod_update(ctx->gedp->dbip, dp->d_namep);
 
     switch(mode) {
 	case 0:
@@ -69,12 +60,7 @@ ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, 
 	    ctx->added.insert(dp);
 	    break;
 	case 2:
-	    // When this callback is made, dp is still valid, but in subsequent
-	    // processing it will not be.  We need to capture everything we
-	    // will need from this dp now, for later use when updating state
-	    hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	    ctx->removed.insert(hash);
-	    ctx->old_names[hash] = std::string(dp->d_namep);
+	    ctx->removed.insert(dp);
 	    break;
 	default:
 	    bu_log("changed callback mode error: %d\n", mode);
@@ -85,21 +71,17 @@ extern "C" void
 dm_refresh(struct ged *gedp)
 {
     struct bview *v= gedp->ged_gvp;
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BViewState *bvs = dbis->get_view_state(v);
-    dbis->update();
-    std::unordered_set<struct bview *> uset;
-    uset.insert(v);
-    bvs->redraw(NULL, uset, 1);
+    BViewState *bvs = gedp->dbi_state->GetBViewState(v);
+    gedp->dbi_state->Sync();
 
     struct dm *dmp = (struct dm *)v->dmp;
     unsigned char *dm_bg1;
     unsigned char *dm_bg2;
     dm_get_bg(&dm_bg1, &dm_bg2, dmp);
     dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
-    dm_set_dirty(dmp, 0);
-    dm_draw_objs(v, NULL, NULL);
-    dm_draw_end(dmp);
+
+    bvs->Redraw(false);
+    bvs->Render();
 }
 
 extern "C" void

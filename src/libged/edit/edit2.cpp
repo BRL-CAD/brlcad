@@ -297,13 +297,13 @@ cmd_perturb::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
     for (size_t i = 0; i < BU_PTBL_LEN(&objs); i++) {
 	struct directory *odp = (struct directory *)BU_PTBL_GET(&objs, i);
 	int oret = dp_perturb(odp);
+	einfo->gedp->dbi_state->changed.insert(odp);
 	if (oret != BRLCAD_OK)
 	    ret = BRLCAD_ERROR;
     }
     bu_ptbl_free(&objs);
 
-    DbiState *dbis = (DbiState *)einfo->gedp->dbi_state;
-    dbis->update();
+    einfo->gedp->dbi_state->Sync();
 
     return ret;
 }
@@ -367,8 +367,7 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
     // High level options are only defined prior to the geometry specifier
     // and/or subcommand.
     int geom_pos = INT_MAX;
-    std::vector<unsigned long long> gs;
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    DbiPath gs;
     for (int i = 0; i < argc; i++) {
 	// TODO - de-quote so we can support obj names matching options...
 	// TODO - Allow URI specifications to call out primitive params
@@ -389,15 +388,15 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
 		if (obj_uri.get_query().length() > 0)
 		    bu_log("have query: %s\n", obj_uri.get_query().c_str());
 	    }
-	    gs = dbis->digest_path(obj_path.c_str());
+	    gs.Init(obj_path.c_str());
 	}
 	catch (std::invalid_argument &uri_e)
 	{
 	    std::string uri_error = uri_e.what();
 	    bu_log("invalid uri: %s\n", uri_error.c_str());
-	    gs = dbis->digest_path(argv[i]);
+	    gs.Init(argv[i]);
 	}
-	if (gs.size() > 1 || dbis->get_hdp(gs[0]) != RT_DIR_NULL) {
+	if (gs.valid()) {
 	    geom_pos = i;
 
 	    break;
@@ -496,13 +495,13 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
     // to all geometry, but the majority of editing operations are specific to
     // each individual geometric primitive type.  We first decode the specifier,
     // to determine what operations we're able to support.
-    einfo.dp = dbis->get_hdp(gs[0]);
-    if (gs.size() == 1 && !einfo.dp) {
+    einfo.dp = gs.GetDp();
+    if (gs.Depth() == 0 && !einfo.dp) {
 	bu_vls_printf(gedp->ged_result_str, ": geometry specifier lookup failed for %s\n", argv[0]);
 	return BRLCAD_ERROR;
     }
 
-    if (gs.size() > 1) {
+    if (gs.Depth() > 1) {
 	bu_log("Comb instance specifier - only generic edit operations.\n");
     } else {
 	// TODO - once we have the object type, ask librt what subcommands and parameters are

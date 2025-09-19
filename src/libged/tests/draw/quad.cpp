@@ -45,21 +45,12 @@
 extern "C" void
 ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
 {
-    unsigned long long hash;
     struct ged *gedp = (struct ged *)u_data;
     DbiState *ctx = (DbiState *)gedp->dbi_state;
 
-    // Clear cached GED drawing data and update
-    ctx->clear_cache(dp);
-
     // Need to invalidate any LoD caches associated with this dp
-    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && ctx->gedp) {
-	unsigned long long key = bv_mesh_lod_key_get(ctx->gedp->ged_lod, dp->d_namep);
-	if (key) {
-	    bv_mesh_lod_clear_cache(ctx->gedp->ged_lod, key);
-	    bv_mesh_lod_key_put(ctx->gedp->ged_lod, dp->d_namep, 0);
-	}
-    }
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && ctx->gedp)
+	db_mesh_lod_update(ctx->gedp->dbip, dp->d_namep);
 
     switch(mode) {
 	case 0:
@@ -69,12 +60,7 @@ ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, 
 	    ctx->added.insert(dp);
 	    break;
 	case 2:
-	    // When this callback is made, dp is still valid, but in subsequent
-	    // processing it will not be.  We need to capture everything we
-	    // will need from this dp now, for later use when updating state
-	    hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	    ctx->removed.insert(hash);
-	    ctx->old_names[hash] = std::string(dp->d_namep);
+	    ctx->removed.insert(dp);
 	    break;
 	default:
 	    bu_log("changed callback mode error: %d\n", mode);
@@ -84,32 +70,27 @@ ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, 
 void
 dm_refresh(struct ged *gedp, int vnum)
 {
-    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-    struct bview *v = (struct bview *)BU_PTBL_GET(views, vnum);
+    struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, vnum);
     if (!v)
 	return;
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BViewState *bvs = dbis->get_view_state(v);
-    dbis->update();
-    std::unordered_set<struct bview *> uset;
-    uset.insert(v);
-    bvs->redraw(NULL, uset, 1);
+    BViewState *bvs = gedp->dbi_state->GetBViewState(v);
+    gedp->dbi_state->Sync();
 
     struct dm *dmp = (struct dm *)v->dmp;
     unsigned char *dm_bg1;
     unsigned char *dm_bg2;
     dm_get_bg(&dm_bg1, &dm_bg2, dmp);
     dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
-    dm_set_dirty(dmp, 0);
-    dm_draw_objs(v, NULL, NULL);
-    dm_draw_end(dmp);
+
+    bvs->Redraw(false);
+    bvs->Render();
 }
 
 void
-scene_clear(struct ged *gedp, int vnum, int cnum)
+scene_clear(struct ged *gedp, int vnum)
 {
     const char *s_av[4] = {NULL};
-    if (cnum < 0) {
+    if (vnum < 0) {
 	s_av[0] = "Z";
 	s_av[1] = NULL;
 	ged_exec_Z(gedp, 1, s_av);
@@ -141,12 +122,10 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, bool clear, int so
 
     dm_refresh(gedp, vnum);
 
-    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-    struct bview *v = (struct bview *)BU_PTBL_GET(views, vnum);
+    struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, vnum);
     if (!v)
 	bu_exit(EXIT_FAILURE, "Invalid view specifier: %d\n", vnum);
     struct dm *dmp = (struct dm *)v->dmp;
-    int cnum = (v->independent) ? vnum : -1;
 
     const char *s_av[4] = {NULL};
     s_av[0] = "screengrab";
@@ -156,7 +135,7 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, bool clear, int so
     if (ged_exec_screengrab(gedp, 4, s_av) & BRLCAD_ERROR) {
 	bu_log("Failed to grab screen for DM %s\n", bu_vls_cstr(dm_get_pathname(dmp)));
 	if (clear)
-	    scene_clear(gedp, vnum, cnum);
+	    scene_clear(gedp, vnum);
 	bu_vls_free(&tname);
 	return BRLCAD_ERROR;
     }
@@ -166,7 +145,7 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, bool clear, int so
 	if (soft_fail) {
 	    bu_log("Failed to read %s\n", bu_vls_cstr(&tname));
 	    if (clear)
-		scene_clear(gedp, vnum, cnum);
+		scene_clear(gedp, vnum);
 	    bu_vls_free(&tname);
 	    return BRLCAD_ERROR;
 	}
@@ -177,7 +156,7 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, bool clear, int so
 	if (soft_fail) {
 	    bu_log("Failed to read %s\n", bu_vls_cstr(&cname));
 	    if (clear)
-		scene_clear(gedp, vnum, cnum);
+		scene_clear(gedp, vnum);
 	    bu_vls_free(&tname);
 	    bu_vls_free(&cname);
 	    return BRLCAD_ERROR;
@@ -195,7 +174,7 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, bool clear, int so
 	    icv_destroy(ctrl);
 	    icv_destroy(timg);
 	    if (clear)
-		scene_clear(gedp, vnum, cnum);
+		scene_clear(gedp, vnum);
 	    return BRLCAD_ERROR;
 	}
 	bu_exit(EXIT_FAILURE, "%d wireframe diff failed.  %d matching, %d off by 1, %d off by many\n", id, matching_cnt, off_by_1_cnt, off_by_many_cnt);
@@ -209,7 +188,7 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, bool clear, int so
     bu_vls_free(&tname);
 
     if (clear)
-	scene_clear(gedp, vnum, cnum);
+	scene_clear(gedp, vnum);
 
     return BRLCAD_OK;
 }
@@ -439,25 +418,24 @@ main(int ac, char *av[]) {
     gedp->new_cmd_forms = 1;
     bu_setenv("DM_SWRAST", "1", 1);
 
-    // We don't want the default GED views for this test
-    bv_set_rm_view(&gedp->ged_views, NULL);
-
     // Set callback so database changes will update dbi_state
     db_add_changed_clbk(gedp->dbip, &ged_changed_callback, (void *)gedp);
 
-    // Set up the views.  Unlike the other drawing tests, we are explicitly
+    // Set up the extra views.  Unlike the other drawing tests, we are explicitly
     // out to test the behavior of multiple views and dms, so we need to
     // set up multiples.  We'll start out with four non-independent views,
     // to mimic the most common multi-dm/view display - a Quad view widget.
     // Each view will get its own attached swrast DM.
-    for (size_t i = 0; i < 4; i++) {
+    //
+    // TODO - properly populate BViewStates in DbiState...
+    for (size_t i = 1; i < 4; i++) {
 	struct bview *v;
 	BU_GET(v, struct bview);
 	if (!i)
 	    gedp->ged_gvp = v;
-	bv_init(v, &gedp->ged_views);
+	bv_init(v);
 	bu_vls_sprintf(&v->gv_name, "V%zd", i);
-	bv_set_add_view(&gedp->ged_views, v);
+	bu_ptbl_ins(&gedp->ged_views, (long *)v);
 	bu_ptbl_ins(&gedp->ged_free_views, (long *)v);
 
 	/* To generate images that will allow us to check if the drawing
@@ -571,13 +549,14 @@ main(int ac, char *av[]) {
     ret += img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
     /***************************************************/
-    /* Check view independent behavior - basic drawing */
+    /* Check view independent behavior - basic drawing
+     *
+     * TODO - rework for new scheme Link/UnLink */
     bu_log("Basic independent views drawing test - V1 active\n");
 
-    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-	v->independent = 1;
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	//struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	//v->independent = 1;
     }
 
     s_av[0] = "draw";
@@ -695,7 +674,13 @@ main(int ac, char *av[]) {
     ret += img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
     /**************************************************/
-    /* Check view independent behavior - view element */
+    /* Check view independent behavior - view element
+     *
+     * TODO - will need to redo this for new scheme - 
+     * BViewState containers will have their
+     * own local objects in addition to (potentially)
+     * linking to a shared view - link/unlink and per
+     * view paths/objects are what to test here... */
     bu_log("Independent views - view object drawing test. V2\n");
     poly_circ(gedp, 2, 1);
     ret += img_cmp(0, -1, gedp, av[1], false, soft_fail);
@@ -779,16 +764,18 @@ main(int ac, char *av[]) {
     ret += img_cmp(3, -1, gedp, av[1], false, soft_fail);
 
     // Scrub all data out of the views, switch back to non-independent
-    scene_clear(gedp, 0, 0);
-    scene_clear(gedp, 1, 1);
-    scene_clear(gedp, 2, 2);
-    scene_clear(gedp, 3, 3);
+    scene_clear(gedp, 0);
+    scene_clear(gedp, 1);
+    scene_clear(gedp, 2);
+    scene_clear(gedp, 3);
 
+#if 0
     for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
 	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
 	v->independent = 0;
     }
-    scene_clear(gedp, 0, -1);
+    scene_clear(gedp, -1);
+#endif
 
     /***************************************************/
     /* Check shared view behavior - non-local line drawing */
@@ -875,7 +862,7 @@ main(int ac, char *av[]) {
 
     // Scrub view specific data
     bu_log("Clearing view-specific data only...\n");
-    scene_clear(gedp, 0, 0);
+    scene_clear(gedp, 0);
     for (int i = 0; i < 4; i++)
 	dm_refresh(gedp, i);
 
@@ -884,7 +871,7 @@ main(int ac, char *av[]) {
     ret += img_cmp(2, 6, gedp, av[1], false, soft_fail);
     ret += img_cmp(3, 6, gedp, av[1], false, soft_fail);
 
-    scene_clear(gedp, 1, 1);
+    scene_clear(gedp, 1);
     for (int i = 0; i < 4; i++)
 	dm_refresh(gedp, i);
 
@@ -894,7 +881,7 @@ main(int ac, char *av[]) {
     ret += img_cmp(3, 6, gedp, av[1], false, soft_fail);
 
 
-    scene_clear(gedp, 2, 2);
+    scene_clear(gedp, 2);
     for (int i = 0; i < 4; i++)
 	dm_refresh(gedp, i);
 
@@ -904,7 +891,7 @@ main(int ac, char *av[]) {
     ret += img_cmp(3, 6, gedp, av[1], false, soft_fail);
 
 
-    scene_clear(gedp, 3, 3);
+    scene_clear(gedp, 3);
     for (int i = 0; i < 4; i++)
 	dm_refresh(gedp, i);
 
@@ -914,7 +901,7 @@ main(int ac, char *av[]) {
     ret += img_cmp(3, 7, gedp, av[1], false, soft_fail);
 
 
-    scene_clear(gedp, 0, -1);
+    scene_clear(gedp, -1);
     for (int i = 0; i < 4; i++)
 	dm_refresh(gedp, i);
 
@@ -959,10 +946,10 @@ main(int ac, char *av[]) {
     ret += img_cmp(2, 8, gedp, av[1], false, soft_fail);
     ret += img_cmp(3, 8, gedp, av[1], false, soft_fail);
 
-    scene_clear(gedp, 0, 0);
-    scene_clear(gedp, 1, 1);
-    scene_clear(gedp, 2, 2);
-    scene_clear(gedp, 3, 3);
+    scene_clear(gedp, 0);
+    scene_clear(gedp, 1);
+    scene_clear(gedp, 2);
+    scene_clear(gedp, 3);
 
     ret += img_cmp(0, -1, gedp, av[1], false, soft_fail);
     ret += img_cmp(1, -1, gedp, av[1], false, soft_fail);
@@ -997,11 +984,11 @@ main(int ac, char *av[]) {
     ret += img_cmp(3, 6, gedp, av[1], false, soft_fail);
 
     bu_log("Clearing everything...\n");
-    scene_clear(gedp, 0, 0);
-    scene_clear(gedp, 1, 1);
-    scene_clear(gedp, 2, 2);
-    scene_clear(gedp, 3, 3);
-    scene_clear(gedp, 0, -1);
+    scene_clear(gedp, 0);
+    scene_clear(gedp, 1);
+    scene_clear(gedp, 2);
+    scene_clear(gedp, 3);
+    scene_clear(gedp, -1);
     for (int i = 0; i < 4; i++)
 	dm_refresh(gedp, i);
     ret += img_cmp(0, -1, gedp, av[1], false, soft_fail);
@@ -1011,10 +998,12 @@ main(int ac, char *av[]) {
 
     // Next, test a mix of shared and independent views
     bu_log("Testing mixed shared and independent views\n");
+#if 0
     ((struct bview *)BU_PTBL_GET(views, 0))->independent = 1;
     ((struct bview *)BU_PTBL_GET(views, 1))->independent = 0;
     ((struct bview *)BU_PTBL_GET(views, 2))->independent = 1;
     ((struct bview *)BU_PTBL_GET(views, 3))->independent = 0;
+#endif
 
     // First, draw without specifying any particular view.
     // This should result in the non-independent views being

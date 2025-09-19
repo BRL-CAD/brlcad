@@ -1,4 +1,4 @@
-/*                         B O T _ F U S E . C
+/*                      B O T _ F U S E . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2025 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/bot_fuse.c
+/** @file libged/bot_fuse.cpp
  *
  * The bot_fuse command.
  *
@@ -129,9 +129,8 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
 	/* Add overlay */
 	if (gedp->new_cmd_forms) {
 	    struct bu_vls nroot = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&nroot, "bot_fuse::%s", name);
-	    struct bview *view = gedp->ged_gvp;
-	    bv_vlblock_obj(vbp, view, bu_vls_cstr(&nroot));
+	    bu_vls_sprintf(&nroot, "ged::bot_fuse::%s", name);
+	    ged_vlblock_scene_obj(gedp, gedp->ged_gvp, bu_vls_cstr(&nroot), vbp);
 	    bu_vls_free(&nroot);
 	} else {
 	    _ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
@@ -151,7 +150,7 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
 }
 
 
-int
+extern "C" int
 ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 {
     struct directory *old_dp, *new_dp;
@@ -323,12 +322,11 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 }
 
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s

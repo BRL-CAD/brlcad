@@ -270,6 +270,8 @@ DM_EXPORT extern void dm_set_bound_flag(struct dm *dmp, int bound);
 
 
 DM_EXPORT extern int dm_draw_obj(struct dm *dmp, struct bv_scene_obj *s);
+DM_EXPORT extern int dm_draw_sobj(void *vdmp, struct bv_scene_obj *s);
+DM_EXPORT extern int dm_draw_view(void *vdmp, struct bview *v);
 
 
 /* Rather low level exposure of display list concepts.  Needed for MGED

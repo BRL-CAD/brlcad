@@ -1,4 +1,4 @@
-/*                       D B _ O P E N . C
+/*                     D B _ O P E N . C P P
  * BRL-CAD
  *
  * Copyright (c) 1988-2025 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file librt/db_open.c
+/** @file librt/db_open.cpp
  *
  * Routines for opening, creating, and replicating BRL-CAD geometry
  * database files.  BRL-CAD geometry database files are managed in a
@@ -31,6 +31,9 @@
 
 #include "common.h"
 
+#include <chrono>
+#include <thread>
+
 #include <string.h>
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -41,6 +44,7 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/cache.h"
 #include "bu/parallel.h"
 #include "bu/path.h"
 #include "bu/time.h"
@@ -69,8 +73,8 @@ db_open(const char *name, const char *mode)
     extern int RT_SEM_TREE1;
     extern int RT_SEM_TREE2;
     extern int RT_SEM_TREE3;
-    register struct db_i *dbip = DBI_NULL;
-    register int i;
+    struct db_i *dbip = DBI_NULL;
+    int i;
     char **argv;
 
     if (!sem_uses)
@@ -367,10 +371,10 @@ db_close_client(struct db_i *dbip, long int *client)
 
 
 void
-db_close(register struct db_i *dbip)
+db_close(struct db_i *dbip)
 {
-    register int i;
-    register struct directory *dp, *nextdp;
+    int i;
+    struct directory *dp, *nextdp;
     static int sem_uses = 0;
     if (!sem_uses)
 	sem_uses = bu_semaphore_register("LIBRT_SEM_USES");
@@ -552,8 +556,8 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
 /* output */
 /* input */
 {
-    register int i;
-    register struct directory *dp;
+    int i;
+    struct directory *dp;
     struct bu_external ext;
 
     RT_CK_DBI(dbip);
@@ -645,6 +649,8 @@ db_i_internal_create(void)
     BU_GET(i, struct db_i_internal);
     i->dbi_magic = DBI_MAGIC;
 
+    i->c = NULL;
+
     return i;
 }
 
@@ -654,19 +660,29 @@ db_i_internal_destroy(struct db_i_internal *i)
     if (!i)
 	return;
 
-    if (i->mesh_c)
-	bv_mesh_lod_context_destroy(i->mesh_c);
+    // Instruct the background cache threads to shut down
+    i->p.get()->shutdown = true;
+    // Wait until they are all done
+    while (i->p.get()->thread_cnt)
+	std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+    if (i->c) {
+	while (bu_cache_close(i->c) != BRLCAD_OK) {
+	    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+	}
+    }
 
     BU_PUT(i, struct db_i_internal);
 }
 
 /** @} */
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s

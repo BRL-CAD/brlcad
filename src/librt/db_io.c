@@ -33,6 +33,7 @@
 #endif
 #include "bio.h"
 
+#include "bu/cache.h"
 #include "bu/parallel.h"
 #include "bu/interrupt.h"
 #include "vmath.h"
@@ -196,6 +197,8 @@ db_write(struct db_i *dbip, const void *addr, size_t count, b_off_t offset)
 	bu_log("db_write() in memory?\n");
 	return -1;
     }
+
+    bu_semaphore_acquire(BU_SEM_CACHE);
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     bu_interrupt_suspend();
 
@@ -205,6 +208,7 @@ db_write(struct db_i *dbip, const void *addr, size_t count, b_off_t offset)
 
     bu_interrupt_restore();
     bu_semaphore_release(BU_SEM_SYSCALL);
+    bu_semaphore_release(BU_SEM_CACHE);
     if (got != count) {
 	perror("db_write");
 	bu_log("db_write(%s):  write error.  Wanted %zu, got %zu bytes.\nFile forced read-only.\n",
@@ -317,24 +321,30 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 	    }
 	}
 
+	bu_semaphore_acquire(BU_SEM_CACHE);
 	ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
 	if (ngran != dp->d_len) {
 	    if (dp->d_addr != RT_DIR_PHONY_ADDR) {
-		if (db_delete(dbip, dp))
+		if (db_delete(dbip, dp)) {
+		    bu_semaphore_release(BU_SEM_CACHE);
 		    return -2;
+		}
 	    }
 	    if (db_alloc(dbip, dp, ngran)) {
+		bu_semaphore_release(BU_SEM_CACHE);
 		return -3;
 	    }
 	}
 	/* Sanity check */
 	if (ngran != dp->d_len) {
+	    bu_semaphore_release(BU_SEM_CACHE);
 	    bu_log("db_put_external(%s) ngran=%zu != dp->d_len %zu\n",
 		   dp->d_namep, ngran, dp->d_len);
 	    bu_bomb("db_io.c: db_put_external()");
 	}
 
 	db_wrap_v4_external(ep, dp->d_namep);
+	bu_semaphore_release(BU_SEM_CACHE);
     } else
 	bu_bomb("db_put_external(): unknown database version\n");
 

@@ -124,13 +124,17 @@ distclean("${GED_CMD_SRC}")
 set(
   LIBGED_SOURCES
   ${GED_CMD_SRC}
-  exec.cpp
-  ged_init.cpp
   columns.c
   dbi_state.cpp
+  dbi2_state.cpp
+  dbi2_bview.cpp
+  dbi2_select.cpp
+  dcache.cpp
   display_list.c
   draw.cpp
+  exec.cpp
   ged.cpp
+  ged_init.cpp
   ged_util.cpp
   get_obj_bounds.c
   get_solid_kp.c
@@ -144,8 +148,8 @@ set(
   trace.c
   track.c
   vers.c
-  vutil.c
   view/data_lines.c
+  vutil.c
   wdb_importFg4Section.c
   wireframe_eval.c
 )
@@ -178,7 +182,7 @@ set(
   ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-brlcad_addlib(libged "${LIBGED_SOURCES}" "${GED_LIBS}" "" "${GED_LOCAL_INCLUDE_DIRS}")
+brlcad_addlib(libged "${LIBGED_SOURCES}" "${GED_LIBS}" "${LMDB_INCLUDE_DIRS}" "${GED_LOCAL_INCLUDE_DIRS}")
 set_target_properties(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 # This executable is used to launch processes from LIBGED commands that may

@@ -15,7 +15,7 @@ set(
   check_gap.c
   check_mass.c
   check_moments.c
-  check_overlaps.c
+  check_overlaps.cpp
   check_surf_area.c
   check_unconf_air.c
   check_volume.c

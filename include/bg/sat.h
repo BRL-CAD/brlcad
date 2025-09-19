@@ -110,8 +110,8 @@ bg_sat_tri_obb(
  */
 BG_EXPORT extern int
 bg_sat_aabb_obb(
-	point_t aabb_min, point_t aabb_max,
-	point_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3
+	const point_t aabb_min, const point_t aabb_max,
+	const point_t obb_center, const vect_t obb_extent1, const vect_t obb_extent2, const vect_t obb_extent3
 	);
 
 /**

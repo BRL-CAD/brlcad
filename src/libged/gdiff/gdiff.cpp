@@ -1,4 +1,4 @@
-/*                         G D I F F . C
+/*                     G D I F F . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2025 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/gdiff.c
+/** @file libged/gdiff.cpp
  *
  * The gdiff command.
  *
@@ -415,8 +415,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (gedp->new_cmd_forms) {
-	    struct bview *view = gedp->ged_gvp;
-	    bv_vlblock_obj(vbp, view, "gdiff");
+	    ged_vlblock_scene_obj(gedp, gedp->ged_gvp, "ged::gdiff", vbp);
 	} else {
 	    _ged_cvt_vlblock_to_solids(gedp, vbp, "diff_visual", 0);
 	}
@@ -429,7 +428,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
+extern "C" {
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 struct ged_cmd_impl gdiff_cmd_impl = {
@@ -448,13 +447,13 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
     return &pinfo;
 }
 #endif /* GED_PLUGIN */
+}
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s

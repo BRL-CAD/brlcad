@@ -36,6 +36,7 @@
 
 #include "bu/defines.h"
 #include "bu/app.h"
+#include "bu/cache.h"
 #include "bu/parallel.h"
 #include "bu/dylib.h"
 
@@ -45,6 +46,7 @@ int BU_SEM_GENERAL;
 int BU_SEM_SYSCALL;
 int BU_SEM_BN_NOISE;
 int BU_SEM_MAPPEDFILE;
+int BU_SEM_CACHE;
 
 /* These ARE NOT exported outside LIBBU */
 extern "C" int BU_SEM_DATETIME;
@@ -62,6 +64,7 @@ libbu_init(void)
     BU_SEMAPHORE_DEFINE(BU_SEM_SYSCALL);
     BU_SEMAPHORE_DEFINE(BU_SEM_BN_NOISE);
     BU_SEMAPHORE_DEFINE(BU_SEM_MAPPEDFILE);
+    BU_SEMAPHORE_DEFINE(BU_SEM_CACHE);
     BU_SEMAPHORE_DEFINE(BU_SEM_THREAD);
     BU_SEMAPHORE_DEFINE(BU_SEM_MALLOC);
     BU_SEMAPHORE_DEFINE(BU_SEM_DATETIME);

@@ -165,6 +165,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 
     mf->s = s;
     mf->v = v;
+    mf->gedp = gedp;
     update_color();
 
     // Connect whatever the current filter is to pass on updating signals from

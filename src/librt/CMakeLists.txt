@@ -96,7 +96,7 @@ set(
   bool_tess.c
   bundle.c
   cache.c
-  cache_lod.c
+  cache_drawing.cpp
   cache_lz4.c
   cmd.c
   cyclic.c
@@ -126,7 +126,7 @@ set(
   db_io.c
   db_lookup.c
   db_match.c
-  db_open.c
+  db_open.cpp
   db_scan.c
   db_tree.cpp
   db_walk.c
@@ -499,6 +499,7 @@ cmakefiles(
   vds/README
   vds/COPYING
   vds/vds.h
+  concurrentqueue.h
 )
 
 # Local Variables:

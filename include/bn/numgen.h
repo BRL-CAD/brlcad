@@ -122,7 +122,7 @@ BN_EXPORT int bn_numgen_next_doubles(double *l, size_t cnt, bn_numgen ngen);
  * https://projecteuclid.org/euclid.aoms/1177692644
  *
  * The user is responsible for selecting the numerical generator used to
- * supply pseudo or quasi-random numbers to bg_sph_sample - different
+ * supply pseudo or quasi-random numbers to bn_sph_sample - different
  * types of inputs may be needed depending on the application.
  */
 BN_EXPORT extern void bn_sph_pnts(point_t *pnts, size_t cnt, bn_numgen n);

@@ -79,6 +79,7 @@ extern "C" {
 
 #include "bu/app.h"
 #include "bu/bitv.h"
+#include "bu/cache.h"
 #include "bu/color.h"
 #include "bu/hash.h"
 #include "bu/malloc.h"
@@ -89,16 +90,13 @@ extern "C" {
 #include "bg/plane.h"
 #include "bg/sat.h"
 #include "bg/trimesh.h"
+#include "bv/objs.h"
 #include "bv/plot3.h"
 #include "bv/lod.h"
 #include "bv/util.h"
-#include "bv/view_sets.h"
 
 // Number of levels of detail to define
 #define POP_MAXLEVEL 16
-
-// Subdirectory in BRL-CAD cache to hold this type of LoD data
-#define POP_CACHEDIR ".POPLoD"
 
 // Factor by which to bump out bounds to avoid points on box edges
 #define MBUMP 1.01
@@ -108,713 +106,23 @@ extern "C" {
 // file, so go with a 4Gb per file limit.
 #define CACHE_MAX_DB_SIZE 4294967296
 
-// Define what format of the cache is current - if it doesn't match, we need
-// to wipe and redo.
-#define CACHE_CURRENT_FORMAT 1
-
 /* There are various individual pieces of data in the cache associated with
  * each object key.  For lookup they use short suffix strings to distinguish
  * them - we define those strings here to have consistent definitions for use
  * in multiple functions.
  *
- * Changing any of these requires incrementing CACHE_CURRENT_FORMAT. */
+ *
+ * Changing any of these requires incrementing BV_CACHE_CURRENT_FORMAT. */
 #define CACHE_POP_MAX_LEVEL "th"
 #define CACHE_POP_SWITCH_LEVEL "sw"
 #define CACHE_VERTEX_COUNT "vc"
 #define CACHE_TRI_COUNT "tc"
-#define CACHE_OBJ_BOUNDS "bb"
 #define CACHE_VERT_LEVEL "v"
 #define CACHE_VERTNORM_LEVEL "vn"
 #define CACHE_TRI_LEVEL "t"
+#define CACHE_OBJ_LBOUNDS "lbb"
 
-typedef int (*full_detail_clbk_t)(struct bv_mesh_lod *, void *);
-
-static void
-obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s, struct bview *v)
-{
-    vect_t minus, plus;
-    if (bv_scene_obj_bound(s, v)) {
-	*have_objs = 1;
-	minus[X] = s->s_center[X] - s->s_size;
-	minus[Y] = s->s_center[Y] - s->s_size;
-	minus[Z] = s->s_center[Z] - s->s_size;
-	VMIN(*min, minus);
-	plus[X] = s->s_center[X] + s->s_size;
-	plus[Y] = s->s_center[Y] + s->s_size;
-	plus[Z] = s->s_center[Z] + s->s_size;
-	VMAX(*max, plus);
-    }
-    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
-	struct bv_scene_obj *sc = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
-	obj_bb(have_objs, min, max, sc, v);
-    }
-}
-
-// Debugging function to see constructed arb
-#define ARB_MAX_STRLEN 400
-const char *
-obb_arb(vect_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3)
-{
-    static char str[ARB_MAX_STRLEN+1];
-
-    // For debugging purposes, construct an arb
-    point_t arb[8];
-    // 1 - c - e1 - e2 - e3
-    VSUB2(arb[0], obb_center, obb_extent1);
-    VSUB2(arb[0], arb[0], obb_extent2);
-    VSUB2(arb[0], arb[0], obb_extent3);
-    // 2 - c - e1 - e2 + e3
-    VSUB2(arb[1], obb_center, obb_extent1);
-    VSUB2(arb[1], arb[1], obb_extent2);
-    VADD2(arb[1], arb[1], obb_extent3);
-    // 3 - c - e1 + e2 + e3
-    VSUB2(arb[2], obb_center, obb_extent1);
-    VADD2(arb[2], arb[2], obb_extent2);
-    VADD2(arb[2], arb[2], obb_extent3);
-    // 4 - c - e1 + e2 - e3
-    VSUB2(arb[3], obb_center, obb_extent1);
-    VADD2(arb[3], arb[3], obb_extent2);
-    VSUB2(arb[3], arb[3], obb_extent3);
-    // 1 - c + e1 - e2 - e3
-    VADD2(arb[4], obb_center, obb_extent1);
-    VSUB2(arb[4], arb[4], obb_extent2);
-    VSUB2(arb[4], arb[4], obb_extent3);
-    // 2 - c + e1 - e2 + e3
-    VADD2(arb[5], obb_center, obb_extent1);
-    VSUB2(arb[5], arb[5], obb_extent2);
-    VADD2(arb[5], arb[5], obb_extent3);
-    // 3 - c + e1 + e2 + e3
-    VADD2(arb[6], obb_center, obb_extent1);
-    VADD2(arb[6], arb[6], obb_extent2);
-    VADD2(arb[6], arb[6], obb_extent3);
-    // 4 - c + e1 + e2 - e3
-    VADD2(arb[7], obb_center, obb_extent1);
-    VADD2(arb[7], arb[7], obb_extent2);
-    VSUB2(arb[7], arb[7], obb_extent3);
-
-#if 0
-    bu_log("center: %f %f %f\n", V3ARGS(obb_center));
-    bu_log("e1: %f %f %f\n", V3ARGS(obb_extent1));
-    bu_log("e2: %f %f %f\n", V3ARGS(obb_extent2));
-    bu_log("e3: %f %f %f\n", V3ARGS(obb_extent3));
-#endif
-
-    snprintf(str, ARB_MAX_STRLEN, "in obb.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
-	    V3ARGS(arb[0]), V3ARGS(arb[1]), V3ARGS(arb[2]), V3ARGS(arb[3]), V3ARGS(arb[4]), V3ARGS(arb[5]), V3ARGS(arb  [6]), V3ARGS(arb[7]));
-    return str;
-}
-
-static void
-view_obb(struct bview *v,
-	point_t sbbc, fastf_t radius,
-	vect_t dir,
-	point_t ec, point_t ep1, point_t ep2)
-{
-
-    // Box center is the closest point to the view center on the plane defined
-    // by the scene's center and the view dir
-    plane_t p;
-    bg_plane_pt_nrml(&p, sbbc, dir);
-    fastf_t pu, pv;
-    point_t lec;
-    VMOVE(lec, ec);
-    bg_plane_closest_pt(&pu, &pv, &p, &lec);
-    bg_plane_pt_at(&v->obb_center, &p, pu, pv);
-
-    // The first extent is just the scene radius in the lookat direction
-    VSCALE(dir, dir, radius);
-    VMOVE(v->obb_extent1, dir);
-
-    // The other two extents we find by subtracting the view center from the edge points
-    VSUB2(v->obb_extent2, ep1, ec);
-    VSUB2(v->obb_extent3, ep2, ec);
-
-    bv_log(3, "view_obb inputs[%s]: sbbc(%f %f %f) radius(%f) dir(%f %f %f)", bu_vls_cstr(&v->gv_name), V3ARGS(sbbc), radius, V3ARGS(dir));
-    bv_log(3, "view_obb[%s]: %f %f %f -> [%f %f %f] [%f %f %f] [%f %f %f]", bu_vls_cstr(&v->gv_name), V3ARGS(v->obb_center), V3ARGS(v->obb_extent1), V3ARGS(v->obb_extent2), V3ARGS(v->obb_extent3));
-    bv_log(3, "%s", obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3));
-}
-
-static void
-_scene_radius(point_t *sbbc, fastf_t *radius, struct bview *v)
-{
-    if (!sbbc || !radius || !v)
-	return;
-    VSET(*sbbc, 0, 0, 0);
-    *radius = 1.0;
-    vect_t min, max, work;
-    VSETALL(min,  INFINITY);
-    VSETALL(max, -INFINITY);
-    int have_objs = 0;
-    struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
-    if (!so)
-	return;
-    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
-	struct bv_scene_obj *g = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
-	obj_bb(&have_objs, &min, &max, g, v);
-    }
-    struct bu_ptbl *sol = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-    if (sol) {
-	for (size_t i = 0; i < BU_PTBL_LEN(sol); i++) {
-	    struct bv_scene_obj *g = (struct bv_scene_obj *)BU_PTBL_GET(sol, i);
-	    obj_bb(&have_objs, &min, &max, g, v);
-	}
-    }
-    if (have_objs) {
-	VADD2SCALE(*sbbc, max, min, 0.5);
-	VSUB2SCALE(work, max, min, 0.5);
-	(*radius) = MAGNITUDE(work);
-    }
-}
-
-void
-bv_view_bounds(struct bview *v)
-{
-    if (!v || !v->gv_width || !v->gv_height)
-	return;
-
-    // Get the radius of the scene.
-    point_t sbbc = VINIT_ZERO;
-    fastf_t radius = 1.0;
-    _scene_radius(&sbbc, &radius, v);
-
-    // Using the pixel width and height of the current "window", construct some
-    // view space dimensions related to that window
-    int w = v->gv_width;
-    int h = v->gv_height;
-    int x = (int)(w * 0.5);
-    int y = (int)(h * 0.5);
-    //bu_log("w,h,x,y: %d %d %d %d\n", w,h, x, y);
-    fastf_t x1 = 0.0, y1 = 0.0, x2 = 0.0, y2 = 0.0, xc = 0.0, yc = 0.0;
-    bv_screen_to_view(v, &x1, &y1, x, h);
-    bv_screen_to_view(v, &x2, &y2, w, y);
-    bv_screen_to_view(v, &xc, &yc, x, y);
-
-    // Also stash the window's view space bbox
-    fastf_t w0, w1, w2, w3;
-    bv_screen_to_view(v, &w0, &w1, 0, 0);
-    bv_screen_to_view(v, &w2, &w3, w, h);
-    v->gv_wmin[0] = (w0 < w2) ? w0 : w2;
-    v->gv_wmin[1] = (w1 < w3) ? w1 : w3;
-    v->gv_wmax[0] = (w0 > w2) ? w0 : w2;
-    v->gv_wmax[1] = (w1 > w3) ? w1 : w3;
-    //bu_log("vbbmin: %f %f\n", v->gv_wmin[0], v->gv_wmin[1]);
-    //bu_log("vbbmax: %f %f\n", v->gv_wmax[0], v->gv_wmax[1]);
-
-    // Get the model space points for the mid points of the top and right edges
-    // of the view.  If we don't have a width or height, we will use the
-    // existing min and max since we don't have a "screen" to base the box on
-    //bu_log("x1,y1: %f %f\n", x1, y1);
-    //bu_log("x2,y2: %f %f\n", x2, y2);
-    //bu_log("xc,yc: %f %f\n", xc, yc);
-    point_t vp1, vp2, vc, ep1, ep2, ec;
-    VSET(vp1, x1, y1, 0);
-    VSET(vp2, x2, y2, 0);
-    VSET(vc, xc, yc, 0);
-    MAT4X3PNT(ep1, v->gv_view2model, vp1);
-    MAT4X3PNT(ep2, v->gv_view2model, vp2);
-    MAT4X3PNT(ec, v->gv_view2model, vc);
-    //bu_log("view center: %f %f %f\n", V3ARGS(ec));
-    //bu_log("edge point 1: %f %f %f\n", V3ARGS(ep1));
-    //bu_log("edge point 2: %f %f %f\n", V3ARGS(ep2));
-
-    // Need the direction vector - i.e., where the camera is looking.  Got this
-    // trick from the libged nirt code...
-    vect_t dir;
-    VMOVEN(dir, v->gv_rotation + 8, 3);
-    VUNITIZE(dir);
-    VSCALE(dir, dir, -1.0);
-
-    // If perspective mode is not enabled, update the oriented bounding box.
-    if (!(SMALL_FASTF < v->gv_perspective)) {
-	view_obb(v, sbbc, radius, dir, ec, ep1, ep2);
-    }
-
-
-    // While we have the info, construct the "backed out" point that will let
-    // us construct the "backed out" view plane, and save that point and the
-    // lookat direction to the view
-    VMOVE(v->gv_lookat, dir);
-    VSCALE(dir, dir, -radius);
-    VADD2(v->gv_vc_backout, sbbc, dir);
-    v->radius = radius;
-}
-
-static void
-_find_active_objs(std::set<struct bv_scene_obj *> &active, struct bv_scene_obj *s, struct bview *v, point_t obb_c, point_t obb_e1, point_t obb_e2, point_t obb_e3)
-{
-    if (BU_PTBL_LEN(&s->children)) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
-	    struct bv_scene_obj *sc = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
-	    _find_active_objs(active, sc, v, obb_c, obb_e1, obb_e2, obb_e3);
-	}
-    } else {
-	bv_scene_obj_bound(s, v);
-	if (bg_sat_aabb_obb(s->bmin, s->bmax, obb_c, obb_e1, obb_e2, obb_e3))
-	    active.insert(s);
-    }
-}
-
-int
-bv_view_objs_select(struct bu_ptbl *sset, struct bview *v, int x, int y)
-{
-    if (!v || !sset || !v->gv_width || !v->gv_height)
-	return 0;
-
-    bu_ptbl_reset(sset);
-
-    if (x < 0 || y < 0 || x > v->gv_width || y > v->gv_height)
-	return 0;
-
-
-    // Get the radius of the scene.
-    point_t sbbc = VINIT_ZERO;
-    fastf_t radius = 1.0;
-    _scene_radius(&sbbc, &radius, v);
-
-    // Using the pixel width and height of the current "window", construct some
-    // view space dimensions related to that window
-    fastf_t x1 = 0.0, y1 = 0.0, x2 = 0.0, y2 = 0.0, xc = 0.0, yc = 0.0;
-    bv_screen_to_view(v, &x1, &y1, x, y+1);
-    bv_screen_to_view(v, &x2, &y2, x+1, y);
-    bv_screen_to_view(v, &xc, &yc, x, y);
-
-    // Get the model space points for the mid points of the top and right edges
-    // of the "pixel + 1" box.
-    //bu_log("x1,y1: %f %f\n", x1, y1);
-    //bu_log("x2,y2: %f %f\n", x2, y2);
-    //bu_log("xc,yc: %f %f\n", xc, yc);
-    point_t vp1, vp2, vc, ep1, ep2, ec;
-    VSET(vp1, x1, y1, 0);
-    VSET(vp2, x2, y2, 0);
-    VSET(vc, xc, yc, 0);
-    MAT4X3PNT(ep1, v->gv_view2model, vp1);
-    MAT4X3PNT(ep2, v->gv_view2model, vp2);
-    MAT4X3PNT(ec, v->gv_view2model, vc);
-
-    // Need the direction vector - i.e., where the camera is looking.  Got this
-    // trick from the libged nirt code...
-    vect_t dir;
-    VMOVEN(dir, v->gv_rotation + 8, 3);
-    VUNITIZE(dir);
-    VSCALE(dir, dir, -1.0);
-
-
-    // Construct the box values needed for the SAT test
-    point_t obb_c, obb_e1, obb_e2, obb_e3;
-
-    // Box center is the closest point to the view center on the plane defined
-    // by the scene's center and the view dir
-    plane_t p;
-    bg_plane_pt_nrml(&p, sbbc, dir);
-    fastf_t pu, pv;
-    bg_plane_closest_pt(&pu, &pv, &p, &ec);
-    bg_plane_pt_at(&obb_c, &p, pu, pv);
-
-
-    // The first extent is just the scene radius in the lookat direction
-    VSCALE(dir, dir, radius);
-    VMOVE(obb_e1, dir);
-
-    // The other two extents we find by subtracting the view center from the edge points
-    VSUB2(obb_e2, ep1, ec);
-    VSUB2(obb_e3, ep2, ec);
-
-    // Having constructed the box, test the scene objects against it.  Any that intersect,
-    // add them to the set
-    std::set<struct bv_scene_obj *> active;
-    struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
-    if (so) {
-	for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
-	    _find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
-	}
-    }
-    struct bu_ptbl *sol = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-    if (sol) {
-	for (size_t i = 0; i < BU_PTBL_LEN(sol); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sol, i);
-	    _find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
-	}
-    }
-    if (active.size()) {
-	std::set<struct bv_scene_obj *>::iterator a_it;
-	for (a_it = active.begin(); a_it != active.end(); a_it++) {
-	    bu_ptbl_ins(sset, (long *)*a_it);
-	}
-    }
-
-    return active.size();
-}
-
-int
-bv_view_objs_rect_select(struct bu_ptbl *sset, struct bview *v, int x1, int y1, int x2, int y2)
-{
-    if (!v || !sset || !v->gv_width || !v->gv_height)
-	return 0;
-
-    bu_ptbl_reset(sset);
-
-    if (x1 < 0 || y1 < 0 || x1 > v->gv_width || y1 > v->gv_height)
-	return 0;
-
-    if (x2 < 0 || y2 < 0 || x2 > v->gv_width || y2 > v->gv_height)
-	return 0;
-
-    // Get the radius of the scene.
-    point_t sbbc = VINIT_ZERO;
-    fastf_t radius = 1.0;
-    _scene_radius(&sbbc, &radius, v);
-
-    // Using the pixel width and height of the current "window", construct some
-    // view space dimensions related to that window
-    fastf_t fx1 = 0.0, fy1 = 0.0, fx2 = 0.0, fy2 = 0.0, fxc = 0.0, fyc = 0.0;
-    bv_screen_to_view(v, &fx1, &fy1, (int)(0.5*(x1+x2)), y2);
-    bv_screen_to_view(v, &fx2, &fy2, x2, (int)(0.5*(y1+y2)));
-    bv_screen_to_view(v, &fxc, &fyc, (int)(0.5*(x1+x2)), (int)(0.5*(y1+y2)));
-
-    // Get the model space points for the mid points of the top and right edges
-    // of the box.
-    point_t vp1, vp2, vc, ep1, ep2, ec;
-    VSET(vp1, fx1, fy1, 0);
-    VSET(vp2, fx2, fy2, 0);
-    VSET(vc, fxc, fyc, 0);
-    MAT4X3PNT(ep1, v->gv_view2model, vp1);
-    MAT4X3PNT(ep2, v->gv_view2model, vp2);
-    MAT4X3PNT(ec, v->gv_view2model, vc);
-    //bu_log("in sph1.s sph %f %f %f 1\n", V3ARGS(ep1));
-    //bu_log("in sph2.s sph %f %f %f 2\n", V3ARGS(ep2));
-    //bu_log("in sphc.s sph %f %f %f 3\n", V3ARGS(ec));
-
-    // Need the direction vector - i.e., where the camera is looking.  Got this
-    // trick from the libged nirt code...
-    vect_t dir;
-    VMOVEN(dir, v->gv_rotation + 8, 3);
-    VUNITIZE(dir);
-    VSCALE(dir, dir, -1.0);
-
-
-    // Construct the box values needed for the SAT test
-    point_t obb_c, obb_e1, obb_e2, obb_e3;
-
-    // Box center is the closest point to the view center on the plane defined
-    // by the scene's center and the view dir
-    plane_t p;
-    bg_plane_pt_nrml(&p, sbbc, dir);
-    fastf_t pu, pv;
-    bg_plane_closest_pt(&pu, &pv, &p, &ec);
-    bg_plane_pt_at(&obb_c, &p, pu, pv);
-
-
-    // The first extent is just the scene radius in the lookat direction
-    VSCALE(dir, dir, radius);
-    VMOVE(obb_e1, dir);
-
-    // The other two extents we find by subtracting the view center from the edge points
-    VSUB2(obb_e2, ep1, ec);
-    VSUB2(obb_e3, ep2, ec);
-
-#if 0
-    bu_log("%s", obb_arb(obb_c, obb_e1, obb_e2, obb_e3));
-#endif
-
-    // Having constructed the box, test the scene objects against it.  Any that intersect,
-    // add them to the set
-    std::set<struct bv_scene_obj *> active;
-    struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
-    if (so) {
-	for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
-	    _find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
-	}
-    }
-    struct bu_ptbl *sol = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-    if (sol) {
-	for (size_t i = 0; i < BU_PTBL_LEN(sol); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sol, i);
-	    _find_active_objs(active, s, v, obb_c, obb_e1, obb_e2, obb_e3);
-	}
-    }
-    if (active.size()) {
-	std::set<struct bv_scene_obj *>::iterator a_it;
-	for (a_it = active.begin(); a_it != active.end(); a_it++) {
-	    bu_ptbl_ins(sset, (long *)*a_it);
-	}
-    }
-
-    return active.size();
-}
-
-static int
-_obj_visible(struct bv_scene_obj *s, struct bview *v)
-{
-    if (bg_sat_aabb_obb(s->bmin, s->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3)) {
-	bv_log(3, "obj_visible[%s] - passed bg_sat_abb_obb: %f %f %f -> %f %f %f", bu_vls_cstr(&v->gv_name), V3ARGS(s->bmin), V3ARGS(s->bmax));
-	bv_log(3, "                          view abb : %f %f %f -> [%f %f %f] [%f %f %f] [%f %f %f]", V3ARGS(v->obb_center), V3ARGS(v->obb_extent1), V3ARGS(v->obb_extent2), V3ARGS(v->obb_extent3));
-	//bv_log(3, "%s", obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3));
-
-	return 1;
-    } else {
-	bv_log(3, "obj_visible[%s] - FAILED bg_sat_abb_obb: %f %f %f -> %f %f %f", bu_vls_cstr(&v->gv_name),V3ARGS(s->bmin), V3ARGS(s->bmax));
-	bv_log(3, "                          view abb : %f %f %f -> [%f %f %f] [%f %f %f] [%f %f %f]", V3ARGS(v->obb_center), V3ARGS(v->obb_extent1), V3ARGS(v->obb_extent2), V3ARGS(v->obb_extent3));
-	//bv_log(3, "%s", obb_arb(v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3));
-    }
-
-    if (SMALL_FASTF < v->gv_perspective) {
-	// For perspective mode, project the vertices of the distorted bounding
-	// box into the view plane, bound them, and see if the box overlaps with
-	// the view screen's box.
-	point_t arb[8];
-	VSET(arb[0], s->bmin[0], s->bmin[1], s->bmin[2]);
-	VSET(arb[1], s->bmin[0], s->bmin[1], s->bmax[2]);
-	VSET(arb[2], s->bmin[0], s->bmax[1], s->bmin[2]);
-	VSET(arb[3], s->bmin[0], s->bmax[1], s->bmax[2]);
-	VSET(arb[4], s->bmax[0], s->bmin[1], s->bmin[2]);
-	VSET(arb[5], s->bmax[0], s->bmin[1], s->bmax[2]);
-	VSET(arb[6], s->bmax[0], s->bmax[1], s->bmin[2]);
-	VSET(arb[7], s->bmax[0], s->bmax[1], s->bmax[2]);
-	point2d_t omin = {INFINITY, INFINITY};
-	point2d_t omax = {-INFINITY, -INFINITY};
-	for (int i = 0; i < 8; i++) {
-	    point_t pp, ppnt;
-	    point2d_t pxy;
-	    MAT4X3PNT(pp, v->gv_pmat, arb[i]);
-	    MAT4X3PNT(ppnt, v->gv_model2view, pp);
-	    V2SET(pxy, ppnt[0], ppnt[1]);
-	    V2MINMAX(omin, omax, pxy);
-	}
-	// IFF the omin/omax box and the corresponding view box overlap, this
-	// object may be visible in the current view and needs to be updated
-	for (int i = 0; i < 2; i++) {
-	    if (omax[i] < v->gv_wmin[i] || omin[i] > v->gv_wmax[i])
-		return 0;
-	}
-	return 1;
-    }
-
-    return 0;
-}
-
-struct bv_mesh_lod_context_internal {
-    MDB_env *lod_env;
-    MDB_txn *lod_txn;
-    MDB_dbi lod_dbi;
-
-    MDB_env *name_env;
-    MDB_txn *name_txn;
-    MDB_dbi name_dbi;
-
-    struct bu_vls *fname;
-};
-
-struct bv_mesh_lod_context *
-bv_mesh_lod_context_create(const char *name)
-{
-    FILE *fp = NULL;
-    std::ifstream format_file;
-    long disk_format_version = -1;
-    char dir[MAXPATHLEN];
-    size_t mreaders = 0;
-    int ncpus = 0;
-    if (!name)
-	return NULL;
-
-    // Hash the input filename to generate a key for uniqueness
-    struct bu_vls fname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&fname, "%s", bu_path_normalize(name));
-    // TODO - xxhash needs a minimum input size per Coverity - figure out what it is...
-    // (may have fixed this - need to check...)
-    if (bu_vls_strlen(&fname) < 10) {
-	bu_vls_printf(&fname, "GGGGGGGGGGGGG");
-    }
-    unsigned long long hash = bu_data_hash(bu_vls_cstr(&fname), bu_vls_strlen(&fname)*sizeof(char));
-    bu_path_component(&fname, bu_path_normalize(name), BU_PATH_BASENAME_EXTLESS);
-    bu_vls_printf(&fname, "_%llu", hash);
-
-    // Create the context
-    struct bv_mesh_lod_context *c;
-    BU_GET(c, struct bv_mesh_lod_context);
-    BU_GET(c->i, struct bv_mesh_lod_context_internal);
-    struct bv_mesh_lod_context_internal *i = c->i;
-    BU_GET(i->fname, struct bu_vls);
-    bu_vls_init(i->fname);
-    bu_vls_sprintf(i->fname, "%s", bu_vls_cstr(&fname));
-
-    // Base maximum readers on an estimate of how many threads
-    // we might want to fire off
-    mreaders = std::thread::hardware_concurrency();
-    if (!mreaders)
-	mreaders = 1;
-    ncpus = bu_avail_cpus();
-    if (ncpus > 0 && (size_t)ncpus > mreaders)
-	mreaders = (size_t)ncpus + 2;
-
-
-    // Set up LMDB environments
-    if (mdb_env_create(&i->lod_env))
-	goto lod_context_fail;
-    if (mdb_env_create(&i->name_env))
-	goto lod_context_fail;
-
-    if (mdb_env_set_maxreaders(i->lod_env, mreaders))
-	goto lod_context_fail;
-    if (mdb_env_set_maxreaders(i->name_env, mreaders))
-	goto lod_context_fail;
-
-    // TODO - the "failure" mode if this limit is ever hit is to back down
-    // the maximum stored LoD on larger objects, but that will take some
-    // doing to implement...
-    if (mdb_env_set_mapsize(i->lod_env, CACHE_MAX_DB_SIZE))
-	goto lod_context_fail;
-
-    if (mdb_env_set_mapsize(i->name_env, CACHE_MAX_DB_SIZE))
-	goto lod_context_fail;
-
-    // Ensure the necessary top level dirs are present
-    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, NULL);
-    if (!bu_file_exists(dir, NULL))
-	bu_mkdir(dir);
-
-    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
-    if (!bu_file_exists(dir, NULL))
-	bu_mkdir(dir);
-
-    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, "format", NULL);
-    format_file.open(dir);
-    if (format_file.is_open()) {
-	format_file >> disk_format_version;
-	format_file.close();
-    }
-    if (disk_format_version > 0 && disk_format_version != CACHE_CURRENT_FORMAT) {
-	bu_log("Old mesh lod cache version (%zd) found at %s - clearing\n", disk_format_version, dir);
-	bv_mesh_lod_clear_cache(NULL, 0);
-    }
-    fp = fopen(dir, "w");
-    if (!fp)
-	goto lod_context_close_lod_fail;
-    fprintf(fp, "%d\n", CACHE_CURRENT_FORMAT);
-    fclose(fp);
-
-    // Create the specific LoD LMDB cache dir, if not already present
-    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&fname), NULL);
-    if (!bu_file_exists(dir, NULL))
-	bu_mkdir(dir);
-
-    // Need to call mdb_env_sync() at appropriate points.
-    if (mdb_env_open(i->lod_env, dir, MDB_NOSYNC, 0664))
-	goto lod_context_close_lod_fail;
-
-    // Create the specific name/key LMDB mapping dir, if not already present
-    bu_vls_printf(&fname, "_namekey");
-    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&fname), NULL);
-    if (!bu_file_exists(dir, NULL))
-	bu_mkdir(dir);
-
-    // Need to call mdb_env_sync() at appropriate points.
-    if (mdb_env_open(i->name_env, dir, MDB_NOSYNC, 0664))
-	goto lod_context_close_name_fail;
-
-    // Success - return the context
-    bu_vls_free(&fname);
-    return c;
-
-    // If something went wrong, clean up and return NULL
-lod_context_close_name_fail:
-    mdb_env_close(i->name_env);
-lod_context_close_lod_fail:
-    mdb_env_close(i->lod_env);
-lod_context_fail:
-    bu_vls_free(&fname);
-    BU_PUT(c->i, struct bv_mesh_lod_context_internal);
-    BU_PUT(c, struct bv_mesh_lod_context);
-    return NULL;
-}
-
-void
-bv_mesh_lod_context_destroy(struct bv_mesh_lod_context *c)
-{
-    if (!c)
-	return;
-    mdb_env_close(c->i->name_env);
-    mdb_env_close(c->i->lod_env);
-    bu_vls_free(c->i->fname);
-    BU_PUT(c->i->fname, struct bu_vls);
-    BU_PUT(c->i, struct bv_mesh_lod_context_internal);
-    BU_PUT(c, struct bv_mesh_lod_context);
-}
-
-unsigned long long
-bv_mesh_lod_key_get(struct bv_mesh_lod_context *c, const char *name)
-{
-    if (!c || !name)
-	return 0;
-
-    MDB_val mdb_key, mdb_data;
-
-    // Database object names may be of arbitrary length - hash
-    // to get the lookup key
-    struct bu_vls keystr = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&keystr, "%s", name);
-    // TODO - xxhash needs a minimum input size per Coverity - figure out what it is...
-    // (may have fixed this - need to check...)
-    if (bu_vls_strlen(&keystr) < 10) {
-	bu_vls_printf(&keystr, "GGGGGGGGGGGGG");
-    }
-    unsigned long long hash = bu_data_hash(bu_vls_cstr(&keystr), bu_vls_strlen(&keystr)*sizeof(char));
-    bu_vls_sprintf(&keystr, "%llu", hash);
-
-    mdb_txn_begin(c->i->name_env, NULL, 0, &c->i->name_txn);
-    mdb_dbi_open(c->i->name_txn, NULL, 0, &c->i->name_dbi);
-    mdb_key.mv_size = bu_vls_strlen(&keystr)*sizeof(char);
-    mdb_key.mv_data = (void *)bu_vls_cstr(&keystr);
-    int rc = mdb_get(c->i->name_txn, c->i->name_dbi, &mdb_key, &mdb_data);
-    if (rc) {
-	mdb_txn_commit(c->i->name_txn);
-	return 0;
-    }
-    unsigned long long *fkeyp = (unsigned long long *)mdb_data.mv_data;
-    unsigned long long fkey = *fkeyp;
-    mdb_txn_commit(c->i->name_txn);
-
-    bu_vls_free(&keystr);
-    //bu_log("GOT %s: %llu\n", name, fkey);
-    return fkey;
-}
-
-int
-bv_mesh_lod_key_put(struct bv_mesh_lod_context *c, const char *name, unsigned long long key)
-{
-    if (!c || !name || !key)
-	return -1;
-
-    // Database object names may be of arbitrary length - hash
-    // to get something appropriate for a lookup key
-    struct bu_vls keystr = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&keystr, "%s", name);
-    // TODO - xxhash needs a minimum input size per Coverity - figure out what it is...
-    // (may have fixed this - need to check...)
-    if (bu_vls_strlen(&keystr) < 10) {
-	bu_vls_printf(&keystr, "GGGGGGGGGGGGG");
-    }
-    unsigned long long hash = bu_data_hash(bu_vls_cstr(&keystr), bu_vls_strlen(&keystr)*sizeof(char));
-    bu_vls_sprintf(&keystr, "%llu", hash);
-
-    MDB_val mdb_key;
-    MDB_val mdb_data[2];
-    mdb_txn_begin(c->i->name_env, NULL, 0, &c->i->name_txn);
-    mdb_dbi_open(c->i->name_txn, NULL, 0, &c->i->name_dbi);
-    mdb_key.mv_size = bu_vls_strlen(&keystr)*sizeof(char);
-    mdb_key.mv_data = (void *)bu_vls_cstr(&keystr);
-    mdb_data[0].mv_size = sizeof(key);
-    mdb_data[0].mv_data = (void *)&key;
-    mdb_data[1].mv_size = 0;
-    mdb_data[1].mv_data = NULL;
-    int rc = mdb_put(c->i->name_txn, c->i->name_dbi, &mdb_key, mdb_data, 0);
-    mdb_txn_commit(c->i->name_txn);
-
-    bu_vls_free(&keystr);
-    //bu_log("PUT %s: %llu\n", name, key);
-    return rc;
-}
+typedef int (*full_detail_clbk_t)(struct bv_lod_mesh *, void *);
 
 // Output record
 class rec {
@@ -824,7 +132,7 @@ class rec {
 
 
 class POPState;
-struct bv_mesh_lod_internal {
+struct bv_lod_mesh_internal {
     POPState *s;
 };
 
@@ -832,10 +140,10 @@ class POPState {
     public:
 
 	// Create cached data (doesn't create a usable container)
-	POPState(struct bv_mesh_lod_context *ctx, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, fastf_t pop_face_cnt_threshold_ratio);
+	POPState(struct bu_ptbl *cache_items, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, fastf_t pop_face_cnt_threshold_ratio);
 
 	// Load cached data (DOES create a usable container)
-	POPState(struct bv_mesh_lod_context *ctx, unsigned long long key);
+	POPState(struct bu_cache *ctx, unsigned long long key);
 
 	// Cleanup
 	~POPState();
@@ -897,7 +205,7 @@ class POPState {
 	point_t bbmin, bbmax;
 
 	// Info for drawing
-	struct bv_mesh_lod *lod = NULL;
+	struct bv_lod_mesh *lod = NULL;
 
     private:
 
@@ -925,11 +233,10 @@ class POPState {
 	// Write data out to cache (only used during initialization from
 	// external data)
 	void cache();
-	bool cache_tri();
-	bool cache_write(const char *component, std::stringstream &s);
+	void cache_tri();
+	void cache_item(const char *component, void *data, size_t len);
 	size_t cache_get(void **data, const char *component);
 	void cache_done();
-	void cache_del(const char *component);
 	MDB_val mdb_key, mdb_data[2];
 
 	// Specific loading and unloading methods
@@ -951,8 +258,11 @@ class POPState {
 	size_t faces_cnt = 0;
 	int *faces_array = NULL;
 
-	// Context
-	struct bv_mesh_lod_context *c;
+	// Cache
+	char keystr[BU_CACHE_KEY_MAXLEN];
+	struct bu_cache *c;
+	struct bu_cache_txn *txn = NULL;
+	struct bu_ptbl *cache_items;
 };
 
 void
@@ -1069,48 +379,36 @@ POPState::tri_process()
     //bu_log("Max LoD POP level: %zd\n", max_pop_threshold_level);
 }
 
-POPState::POPState(struct bv_mesh_lod_context *ctx, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, fastf_t pop_facecnt_threshold_ratio)
+POPState::POPState(struct bu_ptbl *ci, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, fastf_t pop_facecnt_threshold_ratio)
 {
-    // Store the context
-    c = ctx;
+    // Store the output ptbl
+    cache_items = ci;
 
     // Caller set parameter telling us when to switch from POP data
     // to just drawing the full mesh
     max_face_ratio = pop_facecnt_threshold_ratio;
 
-    // Hash the data to generate a key, if the user didn't supply us with one
-    if (!user_key) {
-	struct bu_data_hash_state *s = bu_data_hash_create();
-	bu_data_hash_update(s, v, vcnt*sizeof(point_t));
-	bu_data_hash_update(s, faces, 3*fcnt*sizeof(int));
-	hash = bu_data_hash_val(s);
-	bu_data_hash_destroy(s);
-    } else {
-	hash = user_key;
-    }
+    // Hash the data to generate a POP key
+    struct bu_data_hash_state *s = bu_data_hash_create();
+    bu_data_hash_update(s, v, vcnt*sizeof(point_t));
+    bu_data_hash_update(s, faces, 3*fcnt*sizeof(int));
+    hash = bu_data_hash_val(s);
+    bu_data_hash_destroy(s);
 
-    // Make sure there's no cache before performing the full initializing from
-    // the original data.  In this mode the POPState creation is used to
-    // initialize the cache, not to create a workable data state from that
-    // data.  The hash is set, which is all we really need - loading data from
-    // the cache is handled elsewhere.
-    void *cdata = NULL;
-    size_t csize = cache_get(&cdata, CACHE_POP_MAX_LEVEL);
-    if (csize && cdata) {
-	cache_done();
-	is_valid = true;
-	return;
-    }
-
-    // Cache isn't already populated - go to work.
-    cache_done();
+    // Stash the user_key to hash mapping
+    struct bu_cache_item *itm;
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu", user_key);
+    itm->data = bu_malloc(sizeof(unsigned long long), "key");
+    itm->data_len = sizeof(unsigned long long);
+    memcpy(itm->data, &hash, sizeof(unsigned long long));
+    bu_ptbl_ins(cache_items, (long *)itm);
 
     curr_level = POP_MAXLEVEL - 1;
 
     // Precompute precision masks for each level
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
+    for (int i = 0; i < POP_MAXLEVEL; i++)
 	PRECOMPUTED_MASKS.push_back(pow(2, (POP_MAXLEVEL - i - 1)));
-    }
 
     // Store source data info
     vert_cnt = vcnt;
@@ -1120,6 +418,8 @@ POPState::POPState(struct bv_mesh_lod_context *ctx, const point_t *v, size_t vcn
     faces_array = faces;
 
     // Calculate the full mesh bounding box for later use
+    // TODO - see if this has already been stashed in the cache for us
+    // As six points under CACHE_OBJ_BOUNDS
     bg_trimesh_aabb(&bbmin, &bbmax, faces_array, faces_cnt, verts_array, vert_cnt);
 
     // Find our min and max values, initialize levels
@@ -1146,10 +446,11 @@ POPState::POPState(struct bv_mesh_lod_context *ctx, const point_t *v, size_t vcn
 
     // We're now ready to write out the data
     is_valid = true;
+
     cache();
 
     if (!is_valid)
-	return;
+	bu_log("cache failed\n");
 
 #if 0
     for (size_t i = 0; i < POP_MAXLEVEL; i++) {
@@ -1162,12 +463,12 @@ POPState::POPState(struct bv_mesh_lod_context *ctx, const point_t *v, size_t vcn
 #endif
 }
 
-POPState::POPState(struct bv_mesh_lod_context *ctx, unsigned long long key)
+POPState::POPState(struct bu_cache *ctx, unsigned long long user_key)
 {
     // Store the context
     c = ctx;
 
-    if (!key)
+    if (!user_key)
 	return;
 
     // Initialize so set_level will read in the first level of triangles
@@ -1178,7 +479,20 @@ POPState::POPState(struct bv_mesh_lod_context *ctx, unsigned long long key)
 	PRECOMPUTED_MASKS.push_back(pow(2, (POP_MAXLEVEL - i - 1)));
     }
 
-    hash = key;
+    // Translate a user name key to the content hash
+    {
+	// Construct lookup key
+	struct bu_vls ukey = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&ukey, "%llu", user_key);
+	void *kmem;
+	size_t bsize = bu_cache_get(&kmem, bu_vls_cstr(&ukey), c, &txn);
+	if (bsize != sizeof(unsigned long long)) {
+	    cache_done();
+	    return;
+	}
+	memcpy(&hash, kmem, sizeof(unsigned long long));
+	cache_done();
+    }
 
     // Find the maximum POP level
     {
@@ -1242,7 +556,7 @@ POPState::POPState(struct bv_mesh_lod_context *ctx, unsigned long long key)
     {
 	float minmax[6];
 	const char *b = NULL;
-	size_t bsize = cache_get((void **)&b, CACHE_OBJ_BOUNDS);
+	size_t bsize = cache_get((void **)&b, CACHE_OBJ_LBOUNDS);
 	if (bsize != (sizeof(bbmin) + sizeof(bbmax) + sizeof(minmax))) {
 	    bu_log("Incorrect data size found loading cached bounds data\n");
 	    cache_done();
@@ -1400,37 +714,18 @@ POPState::get_level(fastf_t vlen)
 
     // If all views are orthogonal we just need the diagonal of the bbox, but
     // if we have any active perspective matrices that may change the answer.
-    // We need to provide as much detail as is required by the most demanding
-    // view.  In principle we might also be able to back the LoD down further
-    // for very distant objects, but a quick test with that resulted in too much
-    // loss of detail so for now just look at the "need more" case.
-    struct bu_ptbl *vsets = (lod && lod->s) ? bv_set_views(lod->s->s_v->vset) : NULL;
-    if (!vsets) {
-	struct bview *v = (lod && lod->s) ? lod->s->s_v : NULL;
-	if (v && SMALL_FASTF < v->gv_perspective) {
-	    fastf_t cdist = 0;
-	    point_t pbmin, pbmax;
-	    MAT4X3PNT(pbmin, v->gv_pmat, bmin);
-	    MAT4X3PNT(pbmax, v->gv_pmat, bmax);
-	    bdiag = DIST_PNT_PNT(pbmin, pbmax);
-	    if (cdist > bdiag)
-		bdiag = cdist;
-	}
-    } else {
-	for (size_t i = 0; i < BU_PTBL_LEN(vsets); i++) {
-	    fastf_t cdist = 0;
-	    struct bview *cv = (struct bview *)BU_PTBL_GET(vsets, i);
-	    if (!_obj_visible(lod->s, cv))
-		continue;
-	    if (SMALL_FASTF < cv->gv_perspective) {
-		point_t pbmin, pbmax;
-		MAT4X3PNT(pbmin, cv->gv_pmat, bmin);
-		MAT4X3PNT(pbmax, cv->gv_pmat, bmax);
-		cdist = DIST_PNT_PNT(pbmin, pbmax);
-		if (cdist > bdiag)
-		    bdiag = cdist;
-	    }
-	}
+    // In principle we might also be able to back the LoD down further for very
+    // distant objects, but a quick test with that resulted in too much loss of
+    // detail so for now just look at the "need more" case.
+    struct bview *v = (lod && lod->s) ? lod->s->s_v : NULL;
+    if (v && SMALL_FASTF < v->gv_perspective) {
+	fastf_t cdist = 0;
+	point_t pbmin, pbmax;
+	MAT4X3PNT(pbmin, v->gv_pmat, bmin);
+	MAT4X3PNT(pbmax, v->gv_pmat, bmax);
+	bdiag = DIST_PNT_PNT(pbmin, pbmax);
+	if (cdist > bdiag)
+	    bdiag = cdist;
     }
 
     for (int lev = 0; lev < POP_MAXLEVEL; lev++) {
@@ -1527,37 +822,16 @@ POPState::set_level(int level)
 //
 // This will also allow easier removal of larger subcomponents if we need to
 // back off on saved LoD.
-bool
-POPState::cache_write(const char *component, std::stringstream &s)
+void
+POPState::cache_item(const char *component, void *data, size_t len)
 {
-    // Prepare inputs for writing
-    std::string keystr = std::to_string(hash) + std::string(":") + std::string(component);
-    std::string buffer = s.str();
-
-    // As implemented this shouldn't be necessary, since all our keys are below
-    // the default size limit (511)
-    //if (keystr.length()*sizeof(char) > mdb_env_get_maxkeysize(c->i->lod_env))
-    //	return false;
-
-    // Write out key/value to LMDB database, where the key is the hash
-    // and the value is the serialized LoD data
-    char *keycstr = bu_strdup(keystr.c_str());
-    void *bdata = bu_calloc(buffer.length()+1, sizeof(char), "bdata");
-    memcpy(bdata, buffer.data(), buffer.length()*sizeof(char));
-    mdb_txn_begin(c->i->lod_env, NULL, 0, &c->i->lod_txn);
-    mdb_dbi_open(c->i->lod_txn, NULL, 0, &c->i->lod_dbi);
-    mdb_key.mv_size = keystr.length()*sizeof(char);
-    mdb_key.mv_data = (void *)keycstr;
-    mdb_data[0].mv_size = buffer.length()*sizeof(char);
-    mdb_data[0].mv_data = bdata;
-    mdb_data[1].mv_size = 0;
-    mdb_data[1].mv_data = NULL;
-    int rc = mdb_put(c->i->lod_txn, c->i->lod_dbi, &mdb_key, mdb_data, 0);
-    mdb_txn_commit(c->i->lod_txn);
-    bu_free(keycstr, "keycstr");
-    bu_free(bdata, "buffer data");
-
-    return (!rc) ? true : false;
+    struct bu_cache_item *itm;
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, component);
+    itm->data = bu_malloc(len, "data");
+    itm->data_len = len;
+    memcpy(itm->data, data, len);
+    bu_ptbl_ins(cache_items, (long *)itm);
 }
 
 // This pulls the data, but doesn't close the transaction because the
@@ -1568,167 +842,120 @@ size_t
 POPState::cache_get(void **data, const char *component)
 {
     // Construct lookup key
-    std::string keystr = std::to_string(hash) + std::string(":") + std::string(component);
+    snprintf(keystr, BU_CACHE_KEY_MAXLEN, "%llu:%s", hash, component);
 
-    // As implemented this shouldn't be necessary, since all our keys are below
-    // the default size limit (511)
-    //if (keystr.length()*sizeof(char) > mdb_env_get_maxkeysize(c->i->lod_env))
-    //	return 0;
-    char *keycstr = bu_strdup(keystr.c_str());
-    mdb_txn_begin(c->i->lod_env, NULL, 0, &c->i->lod_txn);
-    mdb_dbi_open(c->i->lod_txn, NULL, 0, &c->i->lod_dbi);
-    mdb_key.mv_size = keystr.length()*sizeof(char);
-    mdb_key.mv_data = (void *)keycstr;
-    int rc = mdb_get(c->i->lod_txn, c->i->lod_dbi, &mdb_key, &mdb_data[0]);
-    if (rc) {
-	bu_free(keycstr, "keycstr");
-	(*data) = NULL;
-	return 0;
-    }
-    bu_free(keycstr, "keycstr");
-    (*data) = mdb_data[0].mv_data;
+    // Initialize
+    (*data) = NULL;
 
-    return mdb_data[0].mv_size;
+    // Do the lookup
+    return bu_cache_get(data, keystr, c, &txn);
 }
 
 void
 POPState::cache_done()
 {
-    mdb_txn_commit(c->i->lod_txn);
+    bu_cache_get_done(&txn);
 }
 
-bool
+void
 POPState::cache_tri()
 {
-    // Write out the threshold level - above this level,
+    // Threshold level - above this level,
     // we need to switch to full-detail drawing
-    {
-	std::stringstream s;
-	s.write(reinterpret_cast<const char *>(&max_pop_threshold_level), sizeof(max_pop_threshold_level));
-	if (!cache_write(CACHE_POP_MAX_LEVEL, s))
-	    return false;
-    }
+    int tmp_maxlevel = max_pop_threshold_level;
+    cache_item(CACHE_POP_MAX_LEVEL, &tmp_maxlevel, sizeof(int));
 
-    // Write out the switch level
-    {
-	std::stringstream s;
-	s.write(reinterpret_cast<const char *>(&max_face_ratio), sizeof(max_face_ratio));
-	if (!cache_write(CACHE_POP_SWITCH_LEVEL, s))
-	    return false;
-    }
+    // Switch level
+    fastf_t tmp_max_face_ratio = max_face_ratio;
+    cache_item(CACHE_POP_SWITCH_LEVEL, &tmp_max_face_ratio, sizeof(fastf_t));
 
-    // Write out the vertex counts for all active levels
-    {
-	std::stringstream s;
-	for (size_t i = 0; i <= POP_MAXLEVEL; i++) {
-	    size_t icnt = 0;
-	    if (level_tri_verts.find(i) == level_tri_verts.end()) {
-		s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
-		continue;
-	    }
-	    if ((int)i > max_pop_threshold_level || !level_tri_verts[i].size()) {
-		s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
-		continue;
-	    }
-	    icnt = level_tri_verts[i].size();
-	    s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
-	}
-	if (!cache_write(CACHE_VERTEX_COUNT, s))
-	    return false;
+    // Vertex counts for all active levels
+    size_t vldata[POP_MAXLEVEL+1] = {0};
+    for (size_t i = 0; i <= POP_MAXLEVEL; i++) {
+	if (level_tri_verts.find(i) == level_tri_verts.end())
+	    continue;
+	if ((int)i > max_pop_threshold_level || !level_tri_verts[i].size())
+	    continue;
+	vldata[i] = level_tri_verts[i].size();
     }
+    cache_item(CACHE_VERTEX_COUNT, &vldata, sizeof(vldata));
 
     // Write out the triangle counts for all active levels
-    {
-	std::stringstream s;
-	for (size_t i = 0; i <= POP_MAXLEVEL; i++) {
-	    size_t tcnt = 0;
-	    if ((int)i > max_pop_threshold_level || !level_tris[i].size()) {
-		s.write(reinterpret_cast<const char *>(&tcnt), sizeof(tcnt));
-		continue;
-	    }
-	    // Store the size of the level tri vector
-	    tcnt = level_tris[i].size();
-	    s.write(reinterpret_cast<const char *>(&tcnt), sizeof(tcnt));
-	}
-	if (!cache_write(CACHE_TRI_COUNT, s))
-	    return false;
+    size_t tldata[POP_MAXLEVEL+1] = {0};
+    for (size_t i = 0; i <= POP_MAXLEVEL; i++) {
+	if ((int)i > max_pop_threshold_level || !level_tris[i].size())
+	    continue;
+	// Store the size of the level tri vector
+	tldata[i] = level_tris[i].size();
     }
-
-    struct bu_vls kbuf = BU_VLS_INIT_ZERO;
+    cache_item(CACHE_TRI_COUNT, &tldata, sizeof(level_tricnt));
 
     // Write out the vertices in LoD order for each level
-    {
-	for (int i = 0; i <= max_pop_threshold_level; i++) {
-	    std::stringstream s;
-	    if (level_tri_verts.find(i) == level_tri_verts.end())
-		continue;
-	    if (!level_tri_verts[i].size())
-		continue;
-	    // Write out the vertex points
-	    std::unordered_set<size_t>::iterator s_it;
-	    for (s_it = level_tri_verts[i].begin(); s_it != level_tri_verts[i].end(); s_it++) {
-		point_t v;
-		VMOVE(v, verts_array[*s_it]);
-		s.write(reinterpret_cast<const char *>(&v[0]), sizeof(point_t));
-	    }
-	    bu_vls_sprintf(&kbuf, "%s%d", CACHE_VERT_LEVEL, i);
-	    if (!cache_write(bu_vls_cstr(&kbuf), s))
-		return false;
+    struct bu_vls kbuf = BU_VLS_INIT_ZERO;
+    for (int i = 0; i <= max_pop_threshold_level; i++) {
+	if (level_tri_verts.find(i) == level_tri_verts.end())
+	    continue;
+	if (!level_tri_verts[i].size())
+	    continue;
+	// Write out the vertex points
+	std::vector<fastf_t> vpnts;
+	std::unordered_set<size_t>::iterator s_it;
+	for (s_it = level_tri_verts[i].begin(); s_it != level_tri_verts[i].end(); s_it++) {
+	    point_t v;
+	    VMOVE(v, verts_array[*s_it]);
+	    for (int j = 0; j < 3; j++)
+		vpnts.push_back(v[j]);
 	}
+	bu_vls_sprintf(&kbuf, "%s%d", CACHE_VERT_LEVEL, i);
+	cache_item(bu_vls_cstr(&kbuf), vpnts.data(), vpnts.size()*sizeof(fastf_t));
     }
 
     // Write out the triangles in LoD order for each level
-    {
-	for (int i = 0; i <= max_pop_threshold_level; i++) {
-	    std::stringstream s;
-	    if (!level_tris[i].size())
-		continue;
-	    // Write out the mapped triangle indices
-	    std::vector<size_t>::iterator s_it;
-	    for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
-		int vt[3];
-		vt[0] = (int)tri_ind_map[faces_array[3*(*s_it)+0]];
-		vt[1] = (int)tri_ind_map[faces_array[3*(*s_it)+1]];
-		vt[2] = (int)tri_ind_map[faces_array[3*(*s_it)+2]];
-		s.write(reinterpret_cast<const char *>(&vt[0]), sizeof(vt));
-	    }
-	    bu_vls_sprintf(&kbuf, "%s%d", CACHE_TRI_LEVEL, i);
-	    if (!cache_write(bu_vls_cstr(&kbuf), s))
-		return false;
+    for (int i = 0; i <= max_pop_threshold_level; i++) {
+	if (!level_tris[i].size())
+	    continue;
+	// Write out the mapped triangle indices
+	std::vector<int> tinds;
+	std::vector<size_t>::iterator s_it;
+	for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); ++s_it) {
+	    tinds.push_back((int)tri_ind_map[faces_array[3*(*s_it)+0]]);
+	    tinds.push_back((int)tri_ind_map[faces_array[3*(*s_it)+1]]);
+	    tinds.push_back((int)tri_ind_map[faces_array[3*(*s_it)+2]]);
 	}
+	bu_vls_sprintf(&kbuf, "%s%d", CACHE_TRI_LEVEL, i);
+	cache_item(bu_vls_cstr(&kbuf), tinds.data(), tinds.size()*sizeof(int));
     }
 
     // Write out the vertex normals in LoD order for each level, if we have them
-    {
-	if (vnorms_array) {
-	    for (int i = 0; i <= max_pop_threshold_level; i++) {
-		std::stringstream s;
-		if (!level_tris[i].size())
-		    continue;
-		// Write out the normals associated with the triangle indices
-		std::vector<size_t>::iterator s_it;
-		for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
-		    vect_t v;
-		    int tind;
-		    tind = 3*(*s_it)+0;
-		    VMOVE(v, vnorms_array[tind]);
-		    s.write(reinterpret_cast<const char *>(&v[0]), sizeof(vect_t));
-		    tind = 3*(*s_it)+1;
-		    VMOVE(v, vnorms_array[tind]);
-		    s.write(reinterpret_cast<const char *>(&v[0]), sizeof(vect_t));
-		    tind = 3*(*s_it)+2;
-		    VMOVE(v, vnorms_array[tind]);
-		    s.write(reinterpret_cast<const char *>(&v[0]), sizeof(vect_t));
-		}
-		bu_vls_sprintf(&kbuf, "%s%d", CACHE_VERTNORM_LEVEL, i);
-		if (!cache_write(bu_vls_cstr(&kbuf), s))
-		    return false;
+    if (vnorms_array) {
+	for (int i = 0; i <= max_pop_threshold_level; i++) {
+	    if (!level_tris[i].size())
+		continue;
+	    // Write out the normals associated with the triangle indices
+	    std::vector<fastf_t> vnorms;
+	    std::vector<size_t>::iterator s_it;
+	    for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
+		vect_t v;
+		int tind;
+		tind = 3*(*s_it)+0;
+		VMOVE(v, vnorms_array[tind]);
+		for (int j = 0; j < 3; j++)
+		    vnorms.push_back(v[j]);
+		tind = 3*(*s_it)+1;
+		VMOVE(v, vnorms_array[tind]);
+		for (int j = 0; j < 3; j++)
+		    vnorms.push_back(v[j]);
+		tind = 3*(*s_it)+2;
+		VMOVE(v, vnorms_array[tind]);
+		for (int j = 0; j < 3; j++)
+		    vnorms.push_back(v[j]);
 	    }
+	    bu_vls_sprintf(&kbuf, "%s%d", CACHE_VERTNORM_LEVEL, i);
+	    cache_item(bu_vls_cstr(&kbuf), vnorms.data(), vnorms.size()*sizeof(fastf_t));
 	}
     }
 
-
-    return true;
+    bu_vls_free(&kbuf);
 }
 
 // Write out the generated LoD data to the BRL-CAD cache
@@ -1741,24 +968,24 @@ POPState::cache()
     }
 
     // Stash the original mesh bbox and the min and max bounds, which will be used in decoding
-    {
-	std::stringstream s;
-	s.write(reinterpret_cast<const char *>(&bbmin), sizeof(bbmin));
-	s.write(reinterpret_cast<const char *>(&bbmax), sizeof(bbmax));
-	s.write(reinterpret_cast<const char *>(&minx), sizeof(minx));
-	s.write(reinterpret_cast<const char *>(&miny), sizeof(miny));
-	s.write(reinterpret_cast<const char *>(&minz), sizeof(minz));
-	s.write(reinterpret_cast<const char *>(&maxx), sizeof(maxx));
-	s.write(reinterpret_cast<const char *>(&maxy), sizeof(maxy));
-	s.write(reinterpret_cast<const char *>(&maxz), sizeof(maxz));
-	is_valid = cache_write(CACHE_OBJ_BOUNDS, s);
-    }
-
-    if (!is_valid)
-	return;
+    void *bb = malloc(sizeof(point_t) * 2 + sizeof(float) * 6);
+    VMOVE(((point_t *)bb)[0], bbmin);
+    VMOVE(((point_t *)bb)[1], bbmax);
+    float *fb = (float *)((char *)bb + 2*sizeof(point_t));
+    fb[0] = minx;
+    fb[1] = miny;
+    fb[2] = minz;
+    fb[3] = maxx;
+    fb[4] = maxy;
+    fb[5] = maxz;
+    cache_item(CACHE_OBJ_LBOUNDS, (char *)bb,  sizeof(point_t) * 2 + sizeof(float) * 6);
+    bu_free(bb, "bb array");
 
     // Serialize triangle-specific data
-    is_valid = cache_tri();
+    cache_tri();
+
+    // Produced the bu_cache_item set
+    is_valid = true;
 }
 
 // Transfer coordinate into level precision
@@ -1895,30 +1122,32 @@ POPState::plot(const char *root)
 }
 
 
-extern "C" unsigned long long
-bv_mesh_lod_cache(struct bv_mesh_lod_context *c, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, double fratio)
+extern "C" int
+bv_lod_mesh_gen(struct bu_ptbl *cache_items, const char *name, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, double fratio)
 {
-    unsigned long long key = 0;
 
-    if (!c || !v || !vcnt || !faces || !fcnt)
+    if (!cache_items || !name || !v || !vcnt || !faces || !fcnt)
 	return 0;
 
-    POPState p(c, v, vcnt, vn, faces, fcnt, user_key, fratio);
-    if (!p.is_valid)
+    unsigned long long user_key = bu_data_hash(name, strlen(name)*sizeof(char));
+
+    POPState p(cache_items, v, vcnt, vn, faces, fcnt, user_key, fratio);
+    if (!BU_PTBL_LEN(cache_items))
 	return 0;
 
-    key = p.hash;
-
-    return key;
+    return 1;
 }
 
-extern "C" struct bv_mesh_lod *
-bv_mesh_lod_create(struct bv_mesh_lod_context *c, unsigned long long key)
+extern "C" struct bv_lod_mesh *
+bv_lod_mesh_get(struct bu_cache *c, const char *name)
 {
-    if (!c || !key)
+    if (!c || !name)
 	return NULL;
 
-    POPState *p = new POPState(c, key);
+    // Name -> user_key
+    unsigned long long user_key = bu_data_hash(name, strlen(name)*sizeof(char));
+
+    POPState *p = new POPState(c, user_key);
     if (!p)
 	return NULL;
 
@@ -1928,11 +1157,12 @@ bv_mesh_lod_create(struct bv_mesh_lod_context *c, unsigned long long key)
     }
 
     // Set up info container
-    struct bv_mesh_lod *lod;
-    BU_GET(lod, struct bv_mesh_lod);
-    BU_GET(lod->i, struct bv_mesh_lod_internal);
-    ((struct bv_mesh_lod_internal *)lod->i)->s = p;
-    lod->c = (void *)c;
+    struct bv_lod_mesh *lod;
+    BU_GET(lod, struct bv_lod_mesh);
+    lod->magic = LOD_MESH_MAGIC;
+    BU_GET(lod->i, struct bv_lod_mesh_internal);
+    ((struct bv_lod_mesh_internal *)lod->i)->s = p;
+    lod->c = c;
     p->lod = lod;
 
     // Important - parent codes need to have a sense of the size of
@@ -1946,17 +1176,17 @@ bv_mesh_lod_create(struct bv_mesh_lod_context *c, unsigned long long key)
 }
 
 extern "C" void
-bv_mesh_lod_destroy(struct bv_mesh_lod *lod)
+bv_lod_mesh_put(struct bv_lod_mesh *lod)
 {
     if (!lod)
 	return;
 
-    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)lod->i;
+    struct bv_lod_mesh_internal *i = (struct bv_lod_mesh_internal *)lod->i;
     delete i->s;
     i->s = NULL;
-    BU_PUT(i, struct bv_mesh_lod_internal);
+    BU_PUT(i, struct bv_lod_mesh_internal);
     lod->i = NULL;
-    BU_PUT(lod, struct bv_mesh_lod);
+    BU_PUT(lod, struct bv_lod_mesh);
 }
 
 static void
@@ -1970,15 +1200,18 @@ dlist_stale(struct bv_scene_obj *s)
 }
 
 extern "C" int
-bv_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
+bv_lod_level(struct bv_scene_obj *s, int level, int reset)
 {
     if (!s)
 	return -1;
 
-    struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
-    if (!l)
+    // If we have anything other than mesh data, we can't (right now
+    // at least) worth with it.
+    if (!s->draw_data || (*((const uint32_t *)(s->draw_data)) != (uint32_t)(LOD_MESH_MAGIC)))
 	return -1;
-    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)l->i;
+
+    struct bv_lod_mesh *l = (struct bv_lod_mesh *)s->draw_data;
+    struct bv_lod_mesh_internal *i = (struct bv_lod_mesh_internal *)l->i;
     POPState *sp = i->s;
     if (level < 0)
 	return sp->curr_level;
@@ -2011,7 +1244,7 @@ bv_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
 	l->pcnt = (int)sp->lod_tri_pnts_snapped.size();
     }
 
-    bv_log(2, "bv_mesh_lod_level %s[%d](%d): %d", bu_vls_cstr(&s->s_name), level, reset, l->fcnt);
+    bv_log(2, "bv_lod_level %s[%d](%d): %d", bu_vls_cstr(&s->s_name), level, reset, l->fcnt);
 
     // If the data changed, any Display List we may have previously generated
     // is now obsolete
@@ -2021,216 +1254,192 @@ bv_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
     return sp->curr_level;
 }
 
-
 extern "C" int
-bv_mesh_lod_view(struct bv_scene_obj *s, struct bview *v, int reset)
+bv_lod_calc_level(struct bv_scene_obj *s, const struct bview *v)
 {
     if (!s || !v)
 	return -1;
-    struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
-    if (!l)
+
+    // If we have anything other than mesh data, we can't (right now
+    // at least) worth with it.
+    if (!s->draw_data || (*((const uint32_t *)(s->draw_data)) != (uint32_t)(LOD_MESH_MAGIC)))
 	return -1;
 
-    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)l->i;
+    struct bv_lod_mesh *l = (struct bv_lod_mesh *)s->draw_data;
+    struct bv_lod_mesh_internal *i = (struct bv_lod_mesh_internal *)l->i;
     POPState *sp = i->s;
-    int ret = sp->curr_level;
     int vscale = (int)((double)sp->get_level(v->gv_size) * v->gv_s->lod_scale);
     vscale = (vscale < 0) ? 0 : vscale;
     vscale = (vscale >= POP_MAXLEVEL) ? POP_MAXLEVEL-1 : vscale;
 
-    bv_log(2, "bv_mesh_lod_view %s[%s][%d]", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name), vscale);
+    return vscale;
+}
 
-    // If the object is not visible in the scene, don't change the data
+extern "C" int
+bv_lod_view(struct bv_scene_obj *s, const struct bview *v, int reset)
+{
+    if (!s || !v)
+	return -1;
+
+    // If we have anything other than mesh data, we can't (right now
+    // at least) worth with it.
+    if (!s->draw_data || (*((const uint32_t *)(s->draw_data)) != (uint32_t)(LOD_MESH_MAGIC)))
+	return -1;
+
+    // Unpack the pop state
+    struct bv_lod_mesh *l = (struct bv_lod_mesh *)s->draw_data;
+    struct bv_lod_mesh_internal *i = (struct bv_lod_mesh_internal *)l->i;
+    POPState *sp = i->s;
+
+    // If the object is not visible in the scene, nothing to do - we're
+    // not changing data for a non-visible object.
+    if (!bv_view_obj_vis(v, s))
+	return sp->curr_level;
+
+    int vscale = bv_lod_calc_level(s, v);
+
+    int ret = bv_lod_level(s, vscale, reset);
+
+    bv_log(2, "bv_lod_view %s[%s][%d]", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name), vscale);
+
     //bu_log("min: %f %f %f max: %f %f %f\n", V3ARGS(s->bmin), V3ARGS(s->bmax));
-    if (_obj_visible(s, v))
-	ret = bv_mesh_lod_level(s, vscale, reset);
-
     return ret;
 }
 
 extern "C" void
-bv_mesh_lod_memshrink(struct bv_scene_obj *s)
+bv_lod_memshrink(struct bv_scene_obj *s)
 {
     if (!s)
 	return;
-    struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
-    if (!l)
+
+    // If we have anything other than mesh data, we can't (right now
+    // at least) shrink it.
+    if (!s->draw_data || (*((const uint32_t *)(s->draw_data)) != (uint32_t)(LOD_MESH_MAGIC)))
 	return;
 
-    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)l->i;
+    struct bv_lod_mesh *l = (struct bv_lod_mesh *)s->draw_data;
+    struct bv_lod_mesh_internal *i = (struct bv_lod_mesh_internal *)l->i;
     POPState *sp = i->s;
     sp->shrink_memory();
     bu_log("memshrink\n");
 }
 
-static void
-cache_del(struct bv_mesh_lod_context *c, unsigned long long hash, const char *component)
-{
-    // Construct lookup key
-    MDB_val mdb_key;
-    std::string keystr = std::to_string(hash) + std::string(":") + std::string(component);
-
-    mdb_txn_begin(c->i->lod_env, NULL, 0, &c->i->lod_txn);
-    mdb_dbi_open(c->i->lod_txn, NULL, 0, &c->i->lod_dbi);
-    mdb_key.mv_size = keystr.length()*sizeof(char);
-    mdb_key.mv_data = (void *)keystr.c_str();
-    mdb_del(c->i->lod_txn, c->i->lod_dbi, &mdb_key, NULL);
-    mdb_txn_commit(c->i->lod_txn);
-}
-
-
 extern "C" void
-bv_mesh_lod_clear_cache(struct bv_mesh_lod_context *c, unsigned long long key)
+bv_lod_clear_gen(struct bu_ptbl *tbl, const char *name, struct bu_cache *c)
 {
-    char dir[MAXPATHLEN];
+    if (!tbl || !name)
+	return;
 
-    if (c && key) {
-	// For this case, we're clearing the data associated with a
-	// specific key (for example, if we're about to edit a BoT but
-	// don't want to redo the whole database's cache.
-	cache_del(c, key, CACHE_POP_MAX_LEVEL);
-	cache_del(c, key, CACHE_POP_SWITCH_LEVEL);
-	cache_del(c, key, CACHE_VERTEX_COUNT);
-	cache_del(c, key, CACHE_TRI_COUNT);
-	cache_del(c, key, CACHE_OBJ_BOUNDS);
-	cache_del(c, key, CACHE_VERT_LEVEL);
-	cache_del(c, key, CACHE_VERTNORM_LEVEL);
-	cache_del(c, key, CACHE_TRI_LEVEL);
+    unsigned long long key = bu_data_hash(name, strlen(name)*sizeof(char));
 
-	// Iterate over the name/key mapper, removing anything with a value
-	// of key
-	MDB_val mdb_key, mdb_data;
-	unsigned long long *fkeyp = NULL;
-	unsigned long long fkey = 0;
-	mdb_txn_begin(c->i->name_env, NULL, 0, &c->i->name_txn);
-	mdb_dbi_open(c->i->name_txn, NULL, 0, &c->i->name_dbi);
-	MDB_cursor *cursor;
-	int rc = mdb_cursor_open(c->i->name_txn, c->i->name_dbi, &cursor);
-	if (rc) {
-	    mdb_txn_commit(c->i->name_txn);
-	    return;
-	}
-	rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_FIRST);
-	if (rc) {
-	    mdb_txn_commit(c->i->name_txn);
-	    return;
-	}
-	fkeyp = (unsigned long long *)mdb_data.mv_data;
-	fkey = *fkeyp;
-	if (fkey == key)
-	    mdb_cursor_del(cursor, 0);
-	while (!mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT)) {
-	    fkeyp = (unsigned long long *)mdb_data.mv_data;
-	    fkey = *fkeyp;
-	    if (fkey == key)
-		mdb_cursor_del(cursor, 0);
-	}
-	mdb_txn_commit(c->i->name_txn);
+    struct bu_cache_item *itm;
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", key, CACHE_POP_MAX_LEVEL);
+    bu_ptbl_ins(tbl, (long *)itm);
+
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", key, CACHE_POP_SWITCH_LEVEL);
+    bu_ptbl_ins(tbl, (long *)itm);
+
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", key, CACHE_VERTEX_COUNT);
+    bu_ptbl_ins(tbl, (long *)itm);
+
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", key, CACHE_TRI_COUNT);
+    bu_ptbl_ins(tbl, (long *)itm);
+
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", key, CACHE_OBJ_LBOUNDS);
+    bu_ptbl_ins(tbl, (long *)itm);
+
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", key, CACHE_VERT_LEVEL);
+    bu_ptbl_ins(tbl, (long *)itm);
+
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", key, CACHE_VERTNORM_LEVEL);
+    bu_ptbl_ins(tbl, (long *)itm);
+
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu:%s", key, CACHE_TRI_LEVEL);
+    bu_ptbl_ins(tbl, (long *)itm);
+
+    // If we weren't given a cache we've done all we can
+    if (!c)
+	return;
+
+    // Translate database object name key to data key
+    char ckey[BU_CACHE_KEY_MAXLEN];
+    snprintf(ckey, BU_CACHE_KEY_MAXLEN, "%llu", key);
+    void *cdata = NULL;
+    struct bu_cache_txn *txn = NULL;
+    if (bu_cache_get(&cdata, ckey, c, &txn) != sizeof(unsigned long long)) {
+	bu_cache_get_done(&txn);
 	return;
     }
+    // Found something - assign it to lhash
+    unsigned long long lhash = 0;
+    memcpy(&lhash, cdata, sizeof(lhash));
+    bu_cache_get_done(&txn);
 
-    if (c && !key) {
-
-	MDB_val mdb_key, mdb_data;
-	MDB_cursor *cursor;
-	int rc;
-
-	// Clear the actual LoD data
-	mdb_txn_begin(c->i->lod_env, NULL, 0, &c->i->lod_txn);
-	mdb_dbi_open(c->i->lod_txn, NULL, 0, &c->i->lod_dbi);
-	rc = mdb_cursor_open(c->i->lod_txn, c->i->lod_dbi, &cursor);
-	if (rc) {
-	    mdb_txn_commit(c->i->lod_txn);
-	    return;
-	}
-	rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_FIRST);
-	if (rc) {
-	    mdb_txn_commit(c->i->lod_txn);
-	    return;
-	}
-	mdb_cursor_del(cursor, 0);
-	while (!mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT))
-	    mdb_cursor_del(cursor, 0);
-	mdb_txn_commit(c->i->lod_txn);
-
-	// Iterate over the name/key mapper, removing anything with a value
-	// of key
-	mdb_txn_begin(c->i->name_env, NULL, 0, &c->i->name_txn);
-	mdb_dbi_open(c->i->name_txn, NULL, 0, &c->i->name_dbi);
-	rc = mdb_cursor_open(c->i->name_txn, c->i->name_dbi, &cursor);
-	if (rc) {
-	    mdb_txn_commit(c->i->name_txn);
-	    return;
-	}
-	rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_FIRST);
-	if (rc) {
-	    mdb_txn_commit(c->i->name_txn);
-	    return;
-	}
-	mdb_cursor_del(cursor, 0);
-	while (!mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT))
-	    mdb_cursor_del(cursor, 0);
-	mdb_txn_commit(c->i->name_txn);
-
-	return;
-    }
-
-    // Clear everything
-    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
-    bu_dirclear((const char *)dir);
+    // Make lhash into a key and make the item for the actual LoD data
+    BU_GET(itm, struct bu_cache_item);
+    snprintf(itm->key, BU_CACHE_KEY_MAXLEN, "%llu", lhash);
+    bu_ptbl_ins(tbl, (long *)itm);
 }
 
 extern "C" void
-bv_mesh_lod_detail_setup_clbk(
-	struct bv_mesh_lod *lod,
-	int (*clbk)(struct bv_mesh_lod *, void *),
+bv_lod_mesh_detail_setup_clbk(
+	struct bv_lod_mesh *lod,
+	int (*clbk)(struct bv_lod_mesh *, void *),
 	void *clbk_data
 	)
 {
     if (!lod || !clbk)
 	return;
 
-    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)lod->i;
+    struct bv_lod_mesh_internal *i = (struct bv_lod_mesh_internal *)lod->i;
     POPState *s = i->s;
     s->full_detail_setup_clbk = clbk;
     s->detail_clbk_data = clbk_data;
 }
 
 extern "C" void
-bv_mesh_lod_detail_clear_clbk(
-	struct bv_mesh_lod *lod,
-	int (*clbk)(struct bv_mesh_lod *, void *)
+bv_lod_mesh_detail_clear_clbk(
+	struct bv_lod_mesh *lod,
+	int (*clbk)(struct bv_lod_mesh *, void *)
 	)
 {
     if (!lod || !clbk)
 	return;
 
-    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)lod->i;
+    struct bv_lod_mesh_internal *i = (struct bv_lod_mesh_internal *)lod->i;
     POPState *s = i->s;
     s->full_detail_clear_clbk = clbk;
 }
 
 extern "C" void
-bv_mesh_lod_detail_free_clbk(
-	struct bv_mesh_lod *lod,
-	int (*clbk)(struct bv_mesh_lod *, void *)
+bv_lod_mesh_detail_free_clbk(
+	struct bv_lod_mesh *lod,
+	int (*clbk)(struct bv_lod_mesh *, void *)
 	)
 {
     if (!lod || !clbk)
 	return;
 
-    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)lod->i;
+    struct bv_lod_mesh_internal *i = (struct bv_lod_mesh_internal *)lod->i;
     POPState *s = i->s;
     s->full_detail_free_clbk = clbk;
 }
 
 void
-bv_mesh_lod_free(struct bv_scene_obj *s)
+bv_lod_free(struct bv_scene_obj *s)
 {
     if (!s || !s->draw_data)
 	return;
-    struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
-    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)l->i;
+    struct bv_lod_mesh *l = (struct bv_lod_mesh *)s->draw_data;
+    struct bv_lod_mesh_internal *i = (struct bv_lod_mesh_internal *)l->i;
     delete i->s;
     s->draw_data = NULL;
 }

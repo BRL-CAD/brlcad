@@ -8,3 +8,57 @@ useful bit of gdb knowledge about the details of how to watch a specific array
 memory location using "watch -l":
 
 https://stackoverflow.com/a/42251209/2037687
+
+
+When wanting to step through a multithreaded program after hitting a breakpoint,
+I found it useful to use the scheduler-locking option (apparently it must
+be set after calling run?):
+https://stackoverflow.com/q/6721940
+
+build (dbi2)$ gdb --args ./src/librt/tests/rt_cache_drawing Generic_Twin.g
+GNU gdb (GDB) Red Hat Enterprise Linux 11.2-3.el8
+(gdb) break main
+Breakpoint 1 at 0x4016f3: file brlcad/src/librt/tests/cache_drawing.cpp, line 149.
+(gdb) break cache_mesh_update
+Function "cache_mesh_update" not defined.
+Make breakpoint pending on future shared library load? (y or [n]) y
+Breakpoint 2 (cache_mesh_update) pending.
+(gdb) run
+Starting program: brlcad/build/src/librt/tests/rt_cache_drawing Generic_Twin.g
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+
+Breakpoint 1, main (argc=2, argv=0x7fffffffd938) at brlcad/src/librt/tests/cache_drawing.cpp:149
+149	{
+(gdb) set scheduler-locking on
+(gdb) c
+Continuing.
+[New Thread 0x7ffef03ec700 (LWP 2566467)]
+[New Thread 0x7ffeefbeb700 (LWP 2566468)]
+[New Thread 0x7ffeef3ea700 (LWP 2566469)]
+[Switching to Thread 0x7ffeef3ea700 (LWP 2566469)]
+
+Thread 4 "rt_cache_drawin" hit Breakpoint 2, cache_mesh_update (c=0x4edfb0, ip=0x57ffa0, name=0x506160 "7602.1.t0") at brlcad/src/librt/cache_drawing.cpp:176
+176	{
+(gdb) bt
+#0  cache_mesh_update (c=0x4edfb0, ip=0x57ffa0, name=0x506160 "7602.1.t0")
+    at brlcad/src/librt/cache_drawing.cpp:176
+#1  0x00007ffff76924ec in lod_calc (
+    p=std::shared_ptr<ProcessDrawData> (use count 4, weak count 0) = {...})
+    at brlcad/src/librt/cache_drawing.cpp:351
+#2  0x00007ffff769fa83 in std::__invoke_impl<void, void (*)(std::shared_ptr<ProcessDrawData>), std::shared_ptr<ProcessDrawData> > (
+    __f=@0x4f8498: 0x7ffff769222f <lod_calc(std::shared_ptr<ProcessDrawData>)>)
+    at /usr/include/c++/12/bits/invoke.h:61
+#3  0x00007ffff769f92e in std::__invoke<void (*)(std::shared_ptr<ProcessDrawData>), std::shared_ptr<ProcessDrawData> > (
+    __fn=@0x4f8498: 0x7ffff769222f <lod_calc(std::shared_ptr<ProcessDrawData>)>) at /usr/include/c++/12/bits/invoke.h:96
+#4  0x00007ffff769f80e in std::thread::_Invoker<std::tuple<void (*)(std::shared_ptr<ProcessDrawData>), std::shared_ptr<ProcessDrawData> > >::_M_invoke<0ul, 1ul> (this=0x4f8488)
+    at /usr/include/c++/12/bits/std_thread.h:258
+#5  0x00007ffff769f6cd in std::thread::_Invoker<std::tuple<void (*)(std::shared_ptr<ProcessDrawData>), std::shared_ptr<ProcessDrawData> > >::operator() (
+    this=0x4f8488)
+    at /usr/include/c++/12/bits/std_thread.h:265
+#6  0x00007ffff769f60f in std::thread::_State_impl<std::thread::_Invoker<std::tuple<void (*)(std::shared_ptr<ProcessDrawData>), std::shared_ptr<ProcessDrawData>----Type--Type <RET> f--Type <RET> for--Type <RE--Type <RET> for more, q to quit, c --Type <RET> for mor--Type <RET> for more, q to quit, c to continue without paging--
+ > > >::_M_run (this=0x4f8480) at /usr/include/c++/12/bits/std_thread.h:210
+#7  0x00007ffff2a29b23 in execute_native_thread_routine () from /lib64/libstdc++.so.6
+#8  0x00007ffff21b51ca in start_thread () from /lib64/libpthread.so.0
+#9  0x00007ffff1e0f8d3 in clone () from /lib64/libc.so.6
+(gdb)

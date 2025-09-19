@@ -66,7 +66,14 @@ BU_EXPORT extern int bu_file_exists(const char *path, int *fd);
  * @return >=0 The given filename exists.
  * @return -1 The given filename does not exist or there was an error.
  */
-BU_EXPORT extern int bu_file_size(const char *path);
+BU_EXPORT extern long long bu_file_size(const char *path);
+
+/**
+ * Returns the timestamp in microseconds since the UNIX
+ * epoch.  Time should be compatible with bu_gettime for
+ * comparison purposes.
+ */
+BU_EXPORT extern int64_t bu_file_timestamp(const char *path);
 
 /**
  * Returns truthfully as to whether the two provided filenames are the

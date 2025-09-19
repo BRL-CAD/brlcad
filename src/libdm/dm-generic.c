@@ -37,6 +37,9 @@
 #include "./include/private.h"
 #include "./null/dm-Null.h"
 
+extern void dm_add_arrows(struct dm *dmp, struct bv_scene_obj *s);
+extern void dm_draw_label(struct dm *dmp, struct bv_scene_obj *s);
+
 void *
 dm_interp(struct dm *dmp)
 {
@@ -627,11 +630,88 @@ dm_draw_vlist_hidden_line(struct dm *dmp, struct bv_vlist *vp)
     return dmp->i->dm_drawVListHiddenLine(dmp, vp);
 }
 
+
 int
-dm_draw_obj(struct dm *dmp, struct bv_scene_obj *s){
-    if (UNLIKELY(!dmp)) return -1;
-    return dmp->i->dm_draw_obj(dmp, s);
+dm_draw_obj(struct dm *dmp, struct bv_scene_obj *s)
+{
+    if (UNLIKELY(!dmp || !s)) return -1;
+
+    // If an object is turned off, we're not drawing it
+    if (s->s_flag == DOWN && !s->s_force_draw)
+	return 0;
+
+    // First, handle any object references
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->obj_refs); i++) {
+	struct bv_scene_obj *o = (struct bv_scene_obj *)BU_PTBL_GET(&s->obj_refs, i);
+	struct bv_obj_settings *tmp_s_os = o->s_os;
+	o->s_os = (s->s_override_obj_ref_settings) ? s->s_os : o->s_os;
+	dm_draw_obj(dmp, o);
+	o->s_os = tmp_s_os;
+    }
+
+    // Coloring
+    if (s->s_iflag == UP) {
+	dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
+    } else {
+	if (s->s_os->color_override) {
+	    dm_set_fg(dmp, s->s_os->color[0], s->s_os->color[1], s->s_os->color[2], 0, s->s_os->transparency);
+	} else {
+	    dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os->transparency);
+	}
+    }
+
+    // Line attributes
+    dm_set_line_attr(dmp, s->s_os->s_line_width, s->s_soldash);
+
+    // Primary object drawing.
+    int ret = dmp->i->dm_draw_obj(dmp, s);
+
+    // There are a few cases that have additional special drawing work we need
+    // to carry out.
+    if (!(s->s_type_flags & BV_MESH_LOD))
+        dm_add_arrows(dmp, s);
+
+    if (s->s_type_flags & BV_AXES)
+        dm_draw_scene_axes(dmp, s);
+
+    if (s->s_type_flags & BV_LABELS)
+        dm_draw_label(dmp, s);
+
+    // Handle any children (TODO - see if we need pre-and-post primary
+    // drawing options for children...)
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_obj *o = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	dm_draw_obj(dmp, o);
+    }
+
+    return ret;
 }
+
+int
+dm_draw_sobj(void *vdmp, struct bv_scene_obj *s)
+{
+    struct dm *dmp = (struct dm *)vdmp;
+    return dm_draw_obj(dmp, s);
+}
+
+
+int
+dm_draw_view(void *vdmp, struct bview *v)
+{
+    if (UNLIKELY(!vdmp || !v)) return -1;
+    struct dm *dmp = (struct dm *)vdmp;
+
+    /* Set up matrices for HUD drawing, rather than 3D scene drawing. */
+    (void)dm_hud_begin(dmp);
+
+    dm_draw_faceplate(v);
+
+    /* Restore non-HUD settings. */
+    (void)dm_hud_end(dmp);
+
+    return 0;
+}
+
 
 int
 dm_draw_begin(struct dm *dmp)

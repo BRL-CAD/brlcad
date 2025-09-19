@@ -31,16 +31,68 @@
 #include "bu/ptbl.h"
 #include "bn/tol.h"
 #include "bv/defines.h"
+#include "bv/lod.h"  // for libbv CACHE_* defines
 #include "rt/defines.h"
 
 __BEGIN_DECLS
 
+// Changes to any of these requires incrementing DB_CACHE_CURRENT_FORMAT.
 
-/* Routines for managing the mesh LoD cache */
-RT_EXPORT extern void db_mesh_lod_init(struct db_i *dbip, int verbose);
-RT_EXPORT extern void db_mesh_lod_clear(struct db_i *dbip);
-RT_EXPORT extern int db_mesh_lod_update(struct db_i *dbip, const char *name);
-RT_EXPORT extern struct bv_mesh_lod *db_mesh_lod_get(struct db_i *dbip, const char *name);
+// Key strings to use in combination with a name hash to look up data.
+#define CACHE_REGION_ID "rid"
+#define CACHE_REGION_FLAG "rf"
+#define CACHE_INHERIT_FLAG "if"
+#define CACHE_COLOR "c"
+// Internal functional key strings
+#define CACHE_GEOM_KEY "gk"
+
+// If BV_CACHE_CURRENT_FORMAT is incremented, this
+// should be as well.
+#define DB_CACHE_CURRENT_FORMAT 3
+
+/**
+ * Set up cache processing.  Will kick off initialization of db_i
+ * data if it is not already found.  Launches and detaches working
+ * threads to handle processing in the background, since cache setup
+ * may be a lengthy process. */
+RT_EXPORT extern int db_cache_start(struct db_i *dbip, int verbose);
+
+/**
+ * Report if the cache backend is actively processing inputs.
+ * Allows applications to wait for the dust to settle before
+ * attempting certain operations. */
+RT_EXPORT extern int db_cache_processing(struct db_i *dbip);
+
+/**
+ * Queue up the named object to regenerate its cache info to reflect the
+ * current state of the object in dbip.  If there is no object present in dbip
+ * with that name, removes any cached data associated with that name from
+ * the cache.
+ *
+ * If no cache is present, or the attempt encounters a problem, return
+ * BRLCAD_ERROR - else returns BRLCAD_OK;
+ *
+ * Note that this queues up the object, but its processing may be delayed
+ * if there is a lot of ongoing caching work - if db_cache_processing
+ * is active the cache contents returned for the named object may be
+ * out of date.
+ */
+RT_EXPORT extern int db_cache_update(struct db_i *dbip, const char *name);
+
+
+/* Routines for managing the Drawing cache.  As many of the details as
+ * possible of the cache should be private, but we do at least need ways to set
+ * up, clear, update and load information. */
+
+/**
+ * Retrieve the bv_lod_mesh data from the dbip's cache associated with
+ * the named object.  If no such data is present, returns NULL.
+ *
+ * Use bv_lod_mesh_put to free.
+ */
+RT_EXPORT extern struct bv_lod_mesh *db_cache_lod_mesh_get(struct db_i *dbip, const char *name);
+
+
 
 /**
  * NOTE: Normally, librt doesn't have a concept of a "display" of the geometry.

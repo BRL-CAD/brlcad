@@ -1,4 +1,4 @@
-/*                      P O L Y G O N S . C
+/*                    P O L Y G O N S . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2025 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/view/polygons.c
+/** @file libged/view/polygons.cpp
  *
  * Commands for view polygons.
  *
@@ -32,6 +32,7 @@
 #include "bu/cmd.h"
 #include "bu/color.h"
 #include "bu/opt.h"
+#include "bu/path.h"
 #include "bu/vls.h"
 #include "bv.h"
 #include "bg/polygon.h"
@@ -95,14 +96,13 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
 	}
     }
 
-    int flags = BV_VIEW_OBJS;
-    if (gd->local_obj)
-	flags |= BV_LOCAL_OBJS;
-    s = bv_create_polygon(gd->cv, flags, type, &sp);
+    s = bv_create_polygon(gd->cv, type, &sp);
+    s->obj_pool = gedp->free_scene_objs;
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return BRLCAD_ERROR;
     }
+    s->s_type_flags |= BV_POLYGONS;
     bu_vls_init(&s->s_name);
     bu_vls_printf(&s->s_name, "%s", gd->vobj);
 
@@ -129,7 +129,7 @@ _poly_cmd_select(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return BRLCAD_ERROR;
     }
-    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
+    if (!(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return BRLCAD_ERROR;
     }
@@ -198,7 +198,7 @@ _poly_cmd_append(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return BRLCAD_ERROR;
     }
-    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
+    if (!(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return BRLCAD_ERROR;
     }
@@ -263,7 +263,7 @@ _poly_cmd_move(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return BRLCAD_ERROR;
     }
-    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
+    if (!(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return BRLCAD_ERROR;
     }
@@ -316,7 +316,7 @@ _poly_cmd_clear(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return BRLCAD_ERROR;
     }
-    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
+    if (!(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return BRLCAD_ERROR;
     }
@@ -349,7 +349,7 @@ _poly_cmd_close(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return BRLCAD_ERROR;
     }
-    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
+    if (!(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return BRLCAD_ERROR;
     }
@@ -405,7 +405,7 @@ _poly_cmd_open(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return BRLCAD_ERROR;
     }
-    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
+    if (!(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return BRLCAD_ERROR;
     }
@@ -462,7 +462,7 @@ _poly_cmd_area(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return BRLCAD_ERROR;
     }
-    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
+    if (!(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return BRLCAD_ERROR;
     }
@@ -500,7 +500,7 @@ _poly_cmd_overlap(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return BRLCAD_ERROR;
     }
-    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
+    if (!(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return BRLCAD_ERROR;
     }
@@ -511,35 +511,24 @@ _poly_cmd_overlap(void *bs, int argc, const char **argv)
     }
 
     // Look up the polygon to check for overlaps
-    struct bview *v = gd->cv;
     struct bv_scene_obj *s2 = NULL;
-    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
-    if (view_objs) {
-	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	    struct bv_scene_obj *stest = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    if (BU_STR_EQUAL(argv[0], bu_vls_cstr(&stest->s_name))) {
-		s2 = stest;
-		break;
-	    }
+    BViewState *vs = gedp->dbi_state->GetBViewState(gd->cv);
+    if (!vs)
+	return BRLCAD_ERROR;
+    std::vector<struct bv_scene_obj *> vobjs = vs->FindSceneObjs(argv[0], false, true);
+    for (size_t i = 0; i < vobjs.size(); i++) {
+	struct bv_scene_obj *stest = vobjs[i];
+	if (BU_STR_EQUAL(argv[0], bu_vls_cstr(&stest->s_name))) {
+	    s2 = stest;
+	    break;
 	}
     }
-    if (!s2) {
-	struct bu_ptbl *local_view_objs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
-	if (local_view_objs) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(local_view_objs); i++) {
-		struct bv_scene_obj *stest = (struct bv_scene_obj *)BU_PTBL_GET(local_view_objs, i);
-		if (BU_STR_EQUAL(argv[1], bu_vls_cstr(&stest->s_name))) {
-		    s2 = stest;
-		    break;
-		}
-	    }
-	}
-    }
+
     if (!s2) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-    if (!(s2->s_type_flags & BV_VIEWONLY) || !(s2->s_type_flags & BV_POLYGONS)) {
+    if (!(s2->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a view polygon.\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -549,7 +538,7 @@ _poly_cmd_overlap(void *bs, int argc, const char **argv)
     struct bv_polygon *polyA = (struct bv_polygon *)s->s_i_data;
     struct bv_polygon *polyB = (struct bv_polygon *)s2->s_i_data;
 
-    int ovlp = bg_polygons_overlap(&polyA->polygon, &polyB->polygon, &polyA->vp, &wdbp->wdb_tol, v->gv_scale);
+    int ovlp = bg_polygons_overlap(&polyA->polygon, &polyB->polygon, &polyA->vp, &wdbp->wdb_tol, gd->cv->gv_scale);
 
     bu_vls_printf(gedp->ged_result_str, "%d", ovlp);
 
@@ -608,7 +597,7 @@ _poly_cmd_import(void *bs, int argc, const char **argv)
     int flags = BV_VIEW_OBJS;
     if (gd->local_obj)
 	flags |= BV_LOCAL_OBJS;
-    s = db_sketch_to_scene_obj(gd->vobj, gedp->dbip, dp, gd->cv, flags);
+    s = db_sketch_to_scene_obj(gd->vobj, gedp->dbip, dp, gd->cv);
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return BRLCAD_ERROR;
@@ -637,7 +626,7 @@ _poly_cmd_export(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return BRLCAD_ERROR;
     }
-    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
+    if (!(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return BRLCAD_ERROR;
     }
@@ -682,7 +671,7 @@ _poly_cmd_fill(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return BRLCAD_ERROR;
     }
-    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
+    if (!(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return BRLCAD_ERROR;
     }
@@ -742,7 +731,7 @@ _poly_cmd_fill_color(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return BRLCAD_ERROR;
     }
-    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
+    if (!(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return BRLCAD_ERROR;
     }
@@ -763,9 +752,12 @@ _poly_cmd_fill_color(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    struct bv_scene_obj *fobj = bv_find_child(s, "*fill*");
-    if (fobj) {
-	bu_color_to_rgb_chars(&p->fill_color, fobj->s_color);
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_obj *fobj = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	if (!bu_path_match("*fill*", bu_vls_cstr(&fobj->s_name), 0)) {
+	    bu_color_to_rgb_chars(&p->fill_color, fobj->s_color);
+	    break;
+	}
     }
 
     return BRLCAD_OK;
@@ -791,7 +783,7 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return BRLCAD_ERROR;
     }
-    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
+    if (!(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return BRLCAD_ERROR;
     }
@@ -821,33 +813,24 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
     // Look up the polygon to check for overlaps
     struct bview *v = gd->cv;
     struct bv_scene_obj *s2 = NULL;
-    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
-    if (view_objs) {
-	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	    struct bv_scene_obj *stest = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    if (BU_STR_EQUAL(argv[1], bu_vls_cstr(&stest->s_name))) {
-		s2 = stest;
-		break;
-	    }
+
+    BViewState *vs = gedp->dbi_state->GetBViewState(v);
+    if (!vs)
+	return BRLCAD_ERROR;
+    std::vector<struct bv_scene_obj *> vobjs = vs->FindSceneObjs(argv[1], false, true);
+    for (size_t i = 0; i < vobjs.size(); i++) {
+	struct bv_scene_obj *stest = vobjs[i];
+	if (BU_STR_EQUAL(argv[1], bu_vls_cstr(&stest->s_name))) {
+	    s2 = stest;
+	    break;
 	}
     }
-    if (!s2) {
-	struct bu_ptbl *local_view_objs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
-	if (local_view_objs) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(local_view_objs); i++) {
-		struct bv_scene_obj *stest = (struct bv_scene_obj *)BU_PTBL_GET(local_view_objs, i);
-		if (BU_STR_EQUAL(argv[1], bu_vls_cstr(&stest->s_name))) {
-		    s2 = stest;
-		    break;
-		}
-	    }
-	}
-    }
+
     if (!s2) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-    if (!(s2->s_type_flags & BV_VIEWONLY) || !(s2->s_type_flags & BV_POLYGONS)) {
+    if (!(s2->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a view polygon.\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -945,12 +928,12 @@ _view_cmd_polygons(void *bs, int argc, const char **argv)
     return _ged_subcmd_exec(gedp, d, _poly_cmds, "view obj <objname>", "[options] subcommand [args]", gd, argc, argv, help, cmd_pos);
 }
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s

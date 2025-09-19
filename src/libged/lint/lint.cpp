@@ -347,9 +347,8 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (visualize) {
-	struct bview *view = gedp->ged_gvp;
 	if (gedp->new_cmd_forms) {
-	    bv_vlblock_obj(ldata.vbp, view, "lint_visual");
+	    ged_vlblock_scene_obj(gedp, gedp->ged_gvp, "ged::lint_visual", ldata.vbp);
 	} else {
 	    _ged_cvt_vlblock_to_solids(gedp, ldata.vbp, "lint_visual", 0);
 	}

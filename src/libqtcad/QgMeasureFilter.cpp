@@ -264,6 +264,16 @@ QMeasure2DFilter::get_point()
 {
     fastf_t vx, vy;
     bv_screen_to_view(v, &vx, &vy, v->gv_mouse_x, v->gv_mouse_y);
+    if (v->gv_s) {
+	int snapped = 0;
+	if (v->gv_s->gv_snap_lines) {
+	    // TODO - get sobjs array
+	    //snapped = bv_snap_lines_2d(v, sobjs, fx, fy);
+	}
+	if (!snapped && v->gv_s->gv_grid.snap) {
+	    bv_snap_grid_2d(v, fx, fy);
+	}
+    }
     point_t vpnt;
     VSET(vpnt, vx, vy, 0);
     MAT4X3PNT(mpnt, v->gv_view2model, vpnt);
@@ -322,6 +332,16 @@ QMeasure3DFilter::get_point()
 
     fastf_t vx, vy;
     bv_screen_to_view(v, &vx, &vy, v->gv_mouse_x, v->gv_mouse_y);
+    if (v->gv_s) {
+	int snapped = 0;
+	if (v->gv_s->gv_snap_lines) {
+	    const struct bu_ptbl *sobjs = ged_find_scene_objs(gedp, v, 1, 1);
+	    snapped = bv_snap_lines_2d(v, sobjs, fx, fy);
+	}
+	if (!snapped && v->gv_s->gv_grid.snap) {
+	    bv_snap_grid_2d(v, fx, fy);
+	}
+    }
     point_t vpnt;
     VSET(vpnt, vx, vy, 0);
     MAT4X3PNT(mpnt, v->gv_view2model, vpnt);

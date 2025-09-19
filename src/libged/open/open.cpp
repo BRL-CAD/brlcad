@@ -137,14 +137,20 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
     /* New database open, need to initialize reference counts */
     db_update_nref(gedp->dbip, &rt_uniresource);
 
-    // LoD context creation (DbiState initialization can use info
-    // stored here, so do this first)
-    if (gedp->new_cmd_forms)
-	gedp->ged_lod = bv_mesh_lod_context_create(argv[0]);
+    // LoD cache updating may take a while, so we don't want
+    // to block on it.
+    const char *do_lod_init = getenv("LIBGED_LOD_INIT");
+    if (BU_STR_EQUAL(do_lod_init, "1")) {
+	std::thread lod_thread(db_cache_mesh_init, gedp->dbip, 0);
+	lod_thread.detach();
+    }
 
     // If enabled, set up the DbiState container for fast structure access
-    if (gedp->new_cmd_forms)
+    if (gedp->new_cmd_forms) {
+	if (gedp->dbi_state)
+	    delete gedp->dbi_state;
 	gedp->dbi_state = new DbiState(gedp);
+    }
 
     // Set the view units, if we have a view
     if (gedp->ged_gvp) {

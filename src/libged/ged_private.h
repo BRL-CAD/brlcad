@@ -31,6 +31,7 @@
 #include <time.h>
 
 #include "bu/avs.h"
+#include "bu/cache.h"
 #include "bu/cmd.h"
 #include "bu/opt.h"
 #include "bg/spsr.h"
@@ -211,7 +212,6 @@ struct draw_data_t {
     int color_inherit;
     int bool_op;
     struct resource *res;
-    struct bv_mesh_lod_context *mesh_c;
 
     /* To avoid the need for multiple subtree walking
      * functions, we also set up to support a bounding
@@ -482,6 +482,24 @@ _ged_subcmd2_help(struct ged *gedp, struct bu_opt_desc *gopts, std::map<std::str
 #endif
 
 __END_DECLS
+
+#ifdef __cplusplus
+#include <sstream>
+
+struct bu_cache *
+dbi_cache_open(const char *name);
+
+size_t
+cache_get(struct bu_cache *c, void **data, unsigned long long hash, const char *component);
+
+void
+cache_write(struct bu_cache *c, unsigned long long hash, const char *component, std::stringstream &s);
+
+void
+cache_del(struct bu_cache *c, unsigned long long hash, const char *component);
+
+#endif
+
 
 #endif /* LIBGED_GED_PRIVATE_H */
 

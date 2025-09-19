@@ -260,7 +260,7 @@ union bu_lex_token {
 };
 struct bu_lex_key {
     int tok_val;
-    char *string;
+    const char *string;
 };
 #define BU_LEX_NEED_MORE 0
 

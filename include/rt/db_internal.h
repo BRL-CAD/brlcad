@@ -58,6 +58,7 @@ struct rt_db_internal {
     const struct rt_functab *idb_meth;  /**< @brief for ft_ifree(), etc. */
     void *              idb_ptr;
     struct bu_attribute_value_set idb_avs;
+    void *		idb_uptr;       /**< @brief pointer to associate user data with the internal */
 };
 #define idb_type                idb_minor_type
 #define RT_DB_INTERNAL_INIT(_p) { \
@@ -66,6 +67,7 @@ struct rt_db_internal {
 	(_p)->idb_minor_type = -1; \
 	(_p)->idb_meth = (const struct rt_functab *) ((void *)0); \
 	(_p)->idb_ptr = ((void *)0); \
+	(_p)->idb_uptr = ((void *)0); \
 	bu_avs_init_empty(&(_p)->idb_avs); \
     }
 #define RT_DB_INTERNAL_INIT_ZERO {RT_DB_INTERNAL_MAGIC, -1, -1, NULL, NULL, BU_AVS_INIT_ZERO}
