@@ -253,10 +253,13 @@ brlcad_addexec(bg_chull chull.c "libbg;libbn;libbu" TEST)
 cmakefiles(chull_test003_bot.asc)
 cmakefiles(chull_test004_bot.asc)
 
-#  ************ chull3d.cpp tests ***********
+#  ************ 3D Hull tests ***********
 
 # 3D Convex Hull tests
 brlcad_addexec(bg_chull3d chull3d.c "libbg;libbn;libbu" TEST)
+
+# Ball Pivot
+brlcad_addexec(bg_ballpivot ballpivot.c "libbg;libbn;libbu" TEST)
 
 #  ************ lseg_lseg.c tests ***********
 

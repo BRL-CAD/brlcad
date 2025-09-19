@@ -5,6 +5,7 @@ find_package_spsr(REQUIRED)
 set(
   LIBBG_SOURCES
   aabb_ray.c
+  ballpivot.cpp
   chull.c
   chull2.cpp
   QuickHull.cpp
@@ -72,6 +73,7 @@ add_subdirectory(tests)
 
 set(
   bg_ignore
+  BallPivot.hpp
   QuickHull.hpp
   bg_private.h
   clipper.hpp

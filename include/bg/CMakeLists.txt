@@ -1,6 +1,7 @@
 set(
   bg_headers
   aabb_ray.h
+  ballpivot.h
   chull.h
   clip.h
   defines.h

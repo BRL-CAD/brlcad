@@ -43,6 +43,7 @@ extern "C" {
 #include "bu/opt.h"
 #include "bu/sort.h"
 #include "bu/units.h"
+#include "bg/ballpivot.h"
 #include "bg/spsr.h"
 #include "rt/geom.h"
 #include "wdb.h"
@@ -347,6 +348,141 @@ _ged_pnts_tri_cmd_unit(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+/* custom bu_opt handlers for ballpivot radii */
+static int
+_pnts_opt_radius(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **argv, void *set_c)
+{
+    std::vector<double> *rset = (std::vector<double> *)set_c;
+    double rv = 0.0;
+    const char *a = argv[0];
+    if (bu_opt_fastf_t(NULL, 1, &a, (void *)&rv) < 0) return -1;
+    rset->push_back(rv);
+    return 1;
+}
+static int
+_pnts_opt_radii(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **argv, void *set_c)
+{
+    std::vector<double> *rset = (std::vector<double> *)set_c;
+    std::string s(argv[0]);
+    std::stringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, ',')) {
+	if (item.empty()) continue;
+	char *istr = bu_strdup(item.c_str());
+	double rv = 0.0;
+	if (bu_opt_fastf_t(NULL, 1, (const char **)&istr, (void *)&rv) < 0) {
+	    bu_free(istr, "istr");
+	    return -1;
+	}
+	rset->push_back(rv);
+	bu_free(istr, "istr");
+    }
+    return 1;
+}
+
+/* tri ballpivot */
+static int
+_ged_pnts_tri_cmd_ballpivot(void *bs, int argc, const char **argv)
+{
+    const char *usage = "Usage: pnts tri ballpivot [options] <pnts> <output_bot>\n";
+    const char *purpose = "Surface reconstruction from oriented points using Ball Pivoting";
+    struct ged *gedp = (struct ged *)bs;
+    if (_ged_pnts_cmd_msgs(gedp, argc, argv, usage, purpose)) return BRLCAD_OK;
+
+    std::vector<double> radii;
+    int print_help = 0;
+    struct bu_opt_desc d[4];
+    BU_OPT(d[0], "h", "help",   "",              NULL,             &print_help,  "Print help and exit");
+    BU_OPT(d[1], "r", "radius", "#",             _pnts_opt_radius, &radii,       "Ball radius to try (can be specified multiple times)");
+    BU_OPT(d[2], "",  "radii",  "r1,r2,r3,...",  _pnts_opt_radii,  &radii,       "Comma-separated list of radii to try");
+    BU_OPT_NULL(d[3]);
+
+    argc -= (argc>0); argv += (argc>0); // skip "ballpivot"
+    if (argc < 1) {
+	_ged_cmd_help(gedp, usage, d);
+	return BRLCAD_OK;
+    }
+    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    if (print_help) {
+	_ged_cmd_help(gedp, usage, d);
+	return BRLCAD_OK;
+    }
+    argc = opt_ret;
+    if (argc != 2) {
+	_ged_cmd_help(gedp, usage, d);
+	return BRLCAD_ERROR;
+    }
+
+    const char *pnt_prim = argv[0];
+    const char *bot_name = argv[1];
+    GED_CHECK_EXISTS(gedp, bot_name, LOOKUP_QUIET, BRLCAD_ERROR);
+
+    struct rt_db_internal intern;
+    struct directory *dp = NULL;
+    GED_DB_LOOKUP(gedp, dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
+	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a PNTS primitive", __func__, pnt_prim);
+	rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
+    struct rt_pnts_internal *pnts = (struct rt_pnts_internal *)intern.idb_ptr;
+    RT_PNTS_CK_MAGIC(pnts);
+
+    // collect arrays (normals required)
+    int pcnt = 0;
+    point_t *ipts = NULL;
+    vect_t *inrms = NULL;
+    if (_pnts_collect_arrays(gedp, pnts, &ipts, &inrms, &pcnt, 1) != BRLCAD_OK) {
+	rt_db_free_internal(&intern);
+	if (ipts) bu_free(ipts, "ipts");
+	if (inrms) bu_free(inrms, "inrms");
+	return BRLCAD_ERROR;
+    }
+
+    // radii array (optional)
+    double *rptr = NULL;
+    int rcnt = (int)radii.size();
+    if (rcnt > 0) {
+	rptr = (double *)bu_calloc((size_t)rcnt, sizeof(double), "bp radii");
+	for (int i = 0; i < rcnt; i++) rptr[i] = radii[(size_t)i];
+    }
+
+    // run ballpivot
+    int *faces = NULL;
+    int nfaces = 0;
+    point_t *overts = NULL;
+    int nverts = 0;
+
+    int bret = bg_3d_ballpivot(&faces, &nfaces, &overts, &nverts, (const point_t *)ipts, (const vect_t *)inrms, pcnt, rptr, rcnt);
+    if (rptr) bu_free(rptr, "bp radii");
+    // free input arrays
+    if (ipts)
+	bu_free(ipts, "ipts");
+    ipts = NULL;
+    if (inrms)
+	bu_free(inrms, "inrms");
+    inrms = NULL;
+
+    if (bret != 0 || nfaces <= 0 || nverts <= 0) {
+	bu_vls_printf(gedp->ged_result_str, "Ball Pivoting reconstruction failed");
+	rt_db_free_internal(&intern);
+	// faces/overts may be NULL or partially allocated; nothing else to do
+	return BRLCAD_ERROR;
+    }
+
+    // write bot
+    int wret = _pnts_write_bot_mesh(gedp, bot_name, faces, nfaces, overts, nverts);
+    if (wret == BRLCAD_OK) {
+	bu_vls_printf(gedp->ged_result_str, "Generated BoT object %s (Ball Pivoting) with %d faces", bot_name, nfaces);
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "Failed to write BoT object %s", bot_name);
+    }
+
+    rt_db_free_internal(&intern);
+    return wret;
+}
+
 /* custom bu_opt for size_t threads in spsr */
 static int
 _pnts_opt_size_t(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **argv, void *set_c)
@@ -477,10 +613,14 @@ _ged_pnts_tri_cmd_spsr(void *bs, int argc, const char **argv)
 
 static const struct bu_cmdtab _pnts_tri_cmds[] = {
     { "unit",      _ged_pnts_tri_cmd_unit },
+    { "ballpivot", _ged_pnts_tri_cmd_ballpivot },
     { "spsr",      _ged_pnts_tri_cmd_spsr },
     { (char *)NULL, NULL }
 };
 
+// NOTE - for the moment, we're deliberately not documenting the ballpivot
+// option - in its current form it is primarily useful for algorithm
+// experimentation and not real-world use.
 static void
 _pnts_tri_show_help(struct ged *gedp)
 {
