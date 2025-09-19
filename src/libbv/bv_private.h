@@ -29,6 +29,70 @@
 #include "bv/defines.h"
 #include <unordered_map>
 
+
+/* --- Forward declarations --- */
+struct bv_scene;
+struct bv_scene_obj;
+
+/* --- bview_new: Render/View Context --- */
+struct bview_new {
+    struct bu_vls           name;
+    struct bv_scene        *scene;         /* Associated scene graph (not owned) */
+
+    struct bview_camera     camera;        /* Camera parameters */
+    struct bv_scene_obj    *camera_object; /* Optional: camera as scene object */
+
+    struct bview_viewport   viewport;      /* Viewport/window info */
+
+    struct bview_material   material;      /* View-level material/appearance (optional) */
+    struct bview_appearance appearance;    /* Display/appearance (axes, grid, bg, etc.) */
+    struct bview_overlay    overlay;       /* HUD/overlay settings */
+
+    struct bview_pick_set   pick_set;      /* Selection/pick state */
+
+    /* Redraw callback */
+    bview_redraw_cb         redraw_cb;
+    void                   *redraw_cb_data;
+
+    /* Legacy bview sync (for migration only) */
+    struct bview           *old_bview;
+};
+
+/* --- bv_scene: Scene Graph --- */
+struct bv_scene {
+    struct bv_scene_obj    *root;           /* Root group object (SoSeparator analogy) */
+    struct bu_ptbl          objects;        /* All objects (flat list for fast lookup) */
+    struct bv_scene_obj    *default_camera; /* Default camera object, if any */
+    /* Add scene-level fields as needed */
+};
+
+/* --- bv_scene_obj: Scene Graph Object --- */
+struct bv_scene_obj {
+    enum bv_scene_obj_type  type;           /* Explicit node type (geometry, group, etc.) */
+    struct bu_vls           name;           /* Unique or descriptive name */
+    struct bv_scene_obj    *parent;         /* Parent in hierarchy (NULL if root) */
+    struct bu_ptbl          children;       /* Children (scene object pointers) */
+
+    /* Transform */
+    mat_t                   transform;      /* Local transform */
+    mat_t                   world_transform;/* Cached world transform (optional) */
+
+    /* Geometry, Material, Style */
+    void                   *geometry;       /* Geometry pointer (type-specific) */
+    struct bview_material   material;       /* Appearance/material for this object */
+
+    int                     visible;        /* Visibility flag */
+
+    /* User data for custom extension, Coin3D mapping, etc. */
+    void                   *user_data;
+
+    /* Optional fields for LoD, selection, etc. */
+    int                     lod_level;      /* Level of detail (if used) */
+    int                     selected;       /* Selection flag (optional, for convenience) */
+};
+
+
+
 struct bview_set_internal {
     struct bu_ptbl views;
     struct bu_ptbl shared_db_objs;
