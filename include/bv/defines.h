@@ -30,6 +30,7 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bu/color.h"
 #include "bu/list.h"
 #include "bu/ptbl.h"
 #include "bu/vls.h"
@@ -76,6 +77,224 @@ __BEGIN_DECLS
 #ifndef DOWN
 #  define DOWN 1
 #endif
+
+// Forward declare struct bview
+struct bview;
+
+/*******************************************************************************
+ *              EXPERIMENTAL EXPERIMENTAL EXPERIMENTALa
+ *
+ * Testing a new style of bview API.
+ *
+ * The exiting code is a result of organic refactoring of older and even more
+ * adhoc code, but has a few undesirable properties - large among them being
+ * direct access to the struct members is the norm, so we don't have a good way
+ * to ensure certain actions are triggered when the view changes.
+ *
+ * Since changing that is a heavy lift, we'll try to see if we can do it
+ * incrementally.
+ *
+ * UNTIL THIS LABEL IS REMOVED, EVERYTHING IN THIS CODE BLOCK IS TO BE
+ * CONSIDERED EXPERIMENTAL.  It is located in this file in the hopes that a
+ * gradual reduction of the old code in favor of the new can be achieved, but
+ * this CANNOT be considered settled API until a great deal of work has
+ * been completed.
+ *
+ *              EXPERIMENTAL EXPERIMENTAL EXPERIMENTALa
+ *******************************************************************************/
+
+/* Opaque rendering/view context (conceptually similar to Coin3D's SoRenderArea) */
+struct bview_new;
+
+/* Opaque scene graph root (conceptually similar to Coin3D's SoSeparator) */
+struct bv_scene;
+
+/* Enum for scene object types (Coin3D compatibility) */
+enum bv_scene_obj_type {
+    BV_OBJ_GROUP,
+    BV_OBJ_GEOMETRY,
+    BV_OBJ_TRANSFORM,
+    BV_OBJ_CAMERA,
+    BV_OBJ_LIGHT,
+    BV_OBJ_MATERIAL,
+    BV_OBJ_OTHER
+};
+
+/* Camera object (view's active camera) */
+struct bview_camera {
+    vect_t position;
+    vect_t target;
+    vect_t up;
+    double fov;
+    int perspective; /* 0 = ortho, 1 = perspective */
+};
+
+/* Viewport/window object */
+struct bview_viewport {
+    int width;
+    int height;
+    double dpi;
+};
+
+/* Appearance/material object (background, grid, axes, Coin3D appearance mapping) */
+struct bview_material {
+    struct bu_color diffuse_color;
+    struct bu_color specular_color;
+    struct bu_color emissive_color;
+    float   transparency;
+    float   shininess;
+    /* Extensible: add Coin3D-style fields as needed */
+};
+
+struct bview_appearance {
+    struct bu_color bg_color;
+    struct bu_color grid_color;
+    struct bu_color axes_color;
+    float   line_width;
+    int     show_axes;
+    int     show_grid;
+    int     show_origin;
+    /* Extensible: add more fields as needed */
+};
+
+/* Overlay/HUD object */
+struct bview_overlay {
+    int    show_fps;
+    int    show_gizmos;
+    char   annotation_text[256];
+    int    show_annotation;
+    /* Extensible: add more overlay fields */
+};
+
+/* Pick set (Coin3D "pick set" analog) */
+struct bview_pick_set {
+    struct bu_ptbl selected_objs; /* scene object pointers */
+    /* Extensible: add selection modes, groups, etc. */
+};
+
+/* Scene object (opaque, named, typed, with user data) */
+struct bv_scene_obj;
+
+/* --- bv_scene API --- */
+
+/* Lifecycle */
+struct bv_scene *bv_scene_create(void);
+void bv_scene_destroy(struct bv_scene *scene);
+
+/* Access scene root object (SoSeparator analogy) */
+struct bv_scene_obj *bv_scene_root(const struct bv_scene *scene);
+
+/* Scene object management */
+void bv_scene_add_object(struct bv_scene *scene, struct bv_scene_obj *object);
+void bv_scene_remove_object(struct bv_scene *scene, struct bv_scene_obj *object);
+const struct bu_ptbl *bv_scene_objects(const struct bv_scene *scene);
+
+/* Hierarchy/grouping */
+void bv_scene_add_child(struct bv_scene *scene, struct bv_scene_obj *parent, struct bv_scene_obj *child);
+void bv_scene_remove_child(struct bv_scene *scene, struct bv_scene_obj *parent, struct bv_scene_obj *child);
+
+/* Scene traversal (for export/interchange, picking, etc.) */
+typedef void (*bv_scene_traverse_cb)(struct bv_scene_obj *, void *);
+void bv_scene_traverse(const struct bv_scene *scene, bv_scene_traverse_cb cb, void *user_data);
+void bv_scene_obj_traverse(const struct bv_scene_obj *object, bv_scene_traverse_cb cb, void *user_data);
+
+/* Lookup scene object by name */
+struct bv_scene_obj *bv_scene_find_object(const struct bv_scene *scene, const char *name);
+
+/* Access default camera object for scene */
+struct bv_scene_obj *bv_scene_default_camera(const struct bv_scene *scene);
+
+/* --- bview_new API --- */
+
+/* Lifecycle */
+struct bview_new *bview_create(const char *name);
+void bview_destroy(struct bview_new *view);
+
+/* Associate a scene with a view */
+void bview_scene_set(struct bview_new *view, struct bv_scene *scene);
+struct bv_scene *bview_scene_get(const struct bview_new *view);
+
+/* Camera (active camera parameters) */
+void bview_camera_set(struct bview_new *view, const struct bview_camera *camera);
+const struct bview_camera *bview_camera_get(const struct bview_new *view);
+
+/* Optionally associate a camera scene object (preparing for Coin3D mapping) */
+void bview_camera_object_set(struct bview_new *view, struct bv_scene_obj *camera_object);
+struct bv_scene_obj *bview_camera_object_get(const struct bview_new *view);
+
+/* Viewport */
+void bview_viewport_set(struct bview_new *view, const struct bview_viewport *viewport);
+const struct bview_viewport *bview_viewport_get(const struct bview_new *view);
+
+/* Appearance/material */
+void bview_material_set(struct bview_new *view, const struct bview_material *material);
+const struct bview_material *bview_material_get(const struct bview_new *view);
+void bview_appearance_set(struct bview_new *view, const struct bview_appearance *appearance);
+const struct bview_appearance *bview_appearance_get(const struct bview_new *view);
+
+/* Overlay/HUD */
+void bview_overlay_set(struct bview_new *view, const struct bview_overlay *overlay);
+const struct bview_overlay *bview_overlay_get(const struct bview_new *view);
+
+/* Pick set (Coin3D pick set analog) */
+void bview_pick_set_set(struct bview_new *view, const struct bview_pick_set *pick_set);
+const struct bview_pick_set *bview_pick_set_get(const struct bview_new *view);
+
+/* Redraw callback (for integration with UI/event loop) */
+typedef void (*bview_redraw_cb)(struct bview_new *, void *);
+void bview_redraw_callback_set(struct bview_new *view, bview_redraw_cb cb, void *data);
+
+/* --- Scene Object API --- */
+
+/* Opaque scene objects -- named, typed, and with user data for app/coin3d mapping */
+struct bv_scene_obj *bv_scene_obj_create(const char *name, enum bv_scene_obj_type type);
+void bv_scene_obj_destroy(struct bv_scene_obj *object);
+
+/* Transform, geometry, material */
+void bv_scene_obj_transform_set(struct bv_scene_obj *object, const mat_t xform);
+const mat_t *bv_scene_obj_transform_get(const struct bv_scene_obj *object);
+void bv_scene_obj_geometry_set(struct bv_scene_obj *object, const void *geometry);
+void bv_scene_obj_material_set(struct bv_scene_obj *object, const struct bview_material *material);
+const struct bview_material *bv_scene_obj_material_get(const struct bv_scene_obj *object);
+
+/* Hierarchy management */
+void bv_scene_obj_add_child(struct bv_scene_obj *parent, struct bv_scene_obj *child);
+void bv_scene_obj_remove_child(struct bv_scene_obj *parent, struct bv_scene_obj *child);
+const struct bu_ptbl *bv_scene_obj_children(const struct bv_scene_obj *object);
+
+/* Visibility */
+void bv_scene_obj_visible_set(struct bv_scene_obj *object, int visible);
+int bv_scene_obj_visible_get(const struct bv_scene_obj *object);
+
+/* Type, name, and user data access */
+enum bv_scene_obj_type bv_scene_obj_type_get(const struct bv_scene_obj *object);
+const char *bv_scene_obj_name_get(const struct bv_scene_obj *object);
+void bv_scene_obj_user_data_set(struct bv_scene_obj *object, void *user_data);
+void *bv_scene_obj_user_data_get(const struct bv_scene_obj *object);
+
+/* Get world transform (accumulated from parent hierarchy) */
+const mat_t *bv_scene_obj_world_transform_get(const struct bv_scene_obj *object);
+
+/* --- LoD/update API --- */
+
+/* Force LoD or redraw updates if needed; LoD should be triggered automatically by
+ * setters but (for the moment) allow for explicit invocation */
+void bview_lod_update(struct bview_new *view);
+void bview_redraw(struct bview_new *view);
+
+/* --- Migration Helpers (optional) --- */
+
+/* Sync with legacy struct during migration */
+void bview_from_old(struct bview_new *view, const struct bview *old);
+void bview_to_old(const struct bview_new *view, struct bview *old);
+struct bview *bview_old_get(const struct bview_new *view);
+
+/*******************************************************************************/
+/*              EXPERIMENTAL EXPERIMENTAL EXPERIMENTAL - END                   */
+/*******************************************************************************/
+
+
+
 
 #define BV_ANCHOR_AUTO          0
 #define BV_ANCHOR_BOTTOM_LEFT   1
@@ -184,7 +403,6 @@ struct bv_obj_settings {
 #define BV_MESH_LOD       0x40
 #define BV_CSG_LOD        0x80
 
-struct bview;
 
 #define BV_DB_OBJS 0x01
 #define BV_VIEW_OBJS 0x02
@@ -192,6 +410,18 @@ struct bview;
 #define BV_CHILD_OBJS 0x08
 
 struct bv_scene_obj_internal;
+
+/* Display style */
+struct bview_display_style {
+    int wireframe;
+    int shaded;
+    int hidden_line;
+    double transparency;
+    unsigned char color[3];
+    int line_width;
+    int point_size;
+    // Extendable: linestyle, material, etc.
+};
 
 struct bv_scene_obj  {
     struct bu_list l;
