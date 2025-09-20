@@ -1002,7 +1002,7 @@ struct array_or_vector<-1, T>
  * \tparam Distance The distance metric to use, these are all classes derived
  * from nanoflann::Metric
  * \tparam DIM Dimensionality of data points (e.g. 3 for 3D points)
- * \tparam IndexType Type of the arguments with which the data can be
+ * \tparam index_t Type of the arguments with which the data can be
  * accessed (e.g. float, double, int64_t, T*)
  */
 template <
