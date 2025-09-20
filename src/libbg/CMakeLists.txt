@@ -80,7 +80,9 @@ set(
   delaunator.hpp
   detria.hpp
   earcut.hpp
+  nanoflann.hpp
   pointgen.c
+  predicates.h
   )
 
 cmakefiles(${bg_ignore})
