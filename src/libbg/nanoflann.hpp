@@ -1537,7 +1537,7 @@ class KDTreeBaseClass
  *         have a lifetime equal or longer than the instance of this class.
  * \tparam Distance The distance metric to use: nanoflann::metric_L1,
  * nanoflann::metric_L2, nanoflann::metric_L2_Simple, etc. \tparam DIM
- * Dimensionality of data points (e.g. 3 for 3D points) \tparam IndexType Will
+ * Dimensionality of data points (e.g. 3 for 3D points) \tparam index_t will
  * be typically size_t or int
  */
 template <
