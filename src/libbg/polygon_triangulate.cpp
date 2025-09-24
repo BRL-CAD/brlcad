@@ -714,6 +714,57 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
 
     if (type == TRI_EAR_CLIPPING) {
 
+	/* -------- Orientation Enforcement (outer CCW, holes CW) -------- */
+	auto strip_dup_and_orient = [&](const int *idx, size_t cnt,
+		bool want_ccw,
+		std::vector<int> &out_indices)->bool
+	{
+	    if (cnt < 3) return false;
+	    out_indices.assign(idx, idx + cnt);
+
+	    // Remove duplicate closing point if present (index list refers to points;
+	    // duplicates more meaningfully checked via coordinates).
+	    // If first and last coordinates coincide, drop last index.
+	    if (cnt >= 2) {
+		const point2d_t &p0 = pts[out_indices.front()];
+		const point2d_t &pl = pts[out_indices.back()];
+		if (p0[X] == pl[X] && p0[Y] == pl[Y]) {
+		    out_indices.pop_back();
+		    if (out_indices.size() < 3) return false;
+		}
+	    }
+
+	    // Determine winding
+	    int dir = bg_polygon_direction(out_indices.size(), pts, out_indices.data());
+	    if (dir == 0) {
+		/* Near-degenerate; leave as-is (earcut may ignore) */
+		return out_indices.size() >= 3;
+	    }
+
+	    bool is_ccw = (dir == BG_CCW);
+	    if (want_ccw && !is_ccw) {
+		std::reverse(out_indices.begin(), out_indices.end());
+	    } else if (!want_ccw && is_ccw) {
+		std::reverse(out_indices.begin(), out_indices.end());
+	    }
+	    return true;
+	};
+
+	std::vector<int> outer_oriented;
+	if (!strip_dup_and_orient(poly, poly_pnts, true, outer_oriented)) {
+	    return 1; /* invalid outer ring */
+	}
+
+	std::vector<std::vector<int>> hole_oriented;
+	hole_oriented.resize(nholes);
+	for (size_t h = 0; h < nholes; h++) {
+	    if (!strip_dup_and_orient(holes_array[h], holes_npts[h], false, hole_oriented[h])) {
+		/* Skip degenerate hole (size <3 or invalid). We silently
+		 * drop it rather than failing the whole triangulation. */
+		hole_oriented[h].clear();
+	    }
+	}
+
 	/* Set up for ear clipping */
 	using Coord = fastf_t;
 	using N = uint32_t;
@@ -722,39 +773,45 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
 
 	/* map from flattened earcut vertex index -> original point index */
 	std::vector<int> index_map;
-	index_map.reserve(poly_pnts
-		+ (holes_array ? [&](){
-		    size_t hc = 0;
-		    for (size_t hi = 0; hi < nholes; hi++) hc += holes_npts[hi];
-		    return hc;
-		    }() : 0)
+	index_map.reserve(outer_oriented.size()
+		+ [&](){
+		size_t hc = 0;
+		for (size_t hi = 0; hi < nholes; hi++)
+		hc += hole_oriented[hi].size();
+		return hc;
+		}()
 		+ steiner_npts);
 
+	// Outer ring (already CCW)
 	std::vector<Point> outer_polygon;
-	for (size_t i = 0; i < poly_pnts; i++) {
+	outer_polygon.reserve(outer_oriented.size());
+	for (size_t i = 0; i < outer_oriented.size(); i++) {
+	    int ind = outer_oriented[i];
 	    Point np;
-	    np[0] = pts[poly[i]][X];
-	    np[1] = pts[poly[i]][Y];
+	    np[0] = pts[ind][X];
+	    np[1] = pts[ind][Y];
 	    outer_polygon.push_back(np);
-	    index_map.push_back(poly[i]);
+	    index_map.push_back(ind);
 	}
-	polygon.push_back(outer_polygon);
+	polygon.push_back(std::move(outer_polygon));
 
-	if (holes_array) {
-	    for (size_t i = 0; i < nholes; i++) {
-		std::vector<Point> hole_polygon;
-		for (size_t j = 0; j < holes_npts[i]; j++) {
-		    Point np;
-		    np[0] = pts[holes_array[i][j]][X];
-		    np[1] = pts[holes_array[i][j]][Y];
-		    hole_polygon.push_back(np);
-		    index_map.push_back(holes_array[i][j]);
-		}
-		polygon.push_back(hole_polygon);
+	// Holes (each oriented CW)
+	for (size_t h = 0; h < nholes; h++) {
+	    if (hole_oriented[h].size() < 3) continue; // dropped/degenerate
+	    std::vector<Point> hole_polygon;
+	    hole_polygon.reserve(hole_oriented[h].size());
+	    for (size_t j = 0; j < hole_oriented[h].size(); j++) {
+		int ind = hole_oriented[h][j];
+		Point np;
+		np[0] = pts[ind][X];
+		np[1] = pts[ind][Y];
+		hole_polygon.push_back(np);
+		index_map.push_back(ind);
 	    }
+	    polygon.push_back(std::move(hole_polygon));
 	}
 
-	/* Append each Steiner point as a single-point ring */
+	/* Append each Steiner point as a single-point ring (no orientation) */
 	for (size_t si = 0; si < steiner_npts; si++) {
 	    std::vector<Point> sp_ring;
 	    Point sp;
@@ -766,12 +823,11 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
 	}
 
 	std::vector<N> indices = mapbox::earcut<N>(polygon);
-
 	if (indices.size() < 3) {
 	    return 1;
 	}
 
-	(*num_faces) = indices.size()/3;
+	(*num_faces) = (int)(indices.size()/3);
 	(*faces) = (int *)bu_calloc(indices.size(), sizeof(int), "faces");
 
 	/* translate earcut’s local indices back to original point indices */
