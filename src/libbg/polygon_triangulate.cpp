@@ -157,10 +157,10 @@ LSteinClbk(size_t data, void *ctx)
 // Need to look at updating our bundled clipper to that version...
 int
 bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-	    const int *poly, const size_t poly_pnts,
-	    const int **holes_array, const size_t *holes_npts, const size_t nholes,
-	    const int *steiner, const size_t steiner_npts,
-	    const point2d_t *pts)
+	const int *poly, const size_t poly_pnts,
+	const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	const int *steiner, const size_t steiner_npts,
+	const point2d_t *pts)
 {
     // Sanity
     if (!faces || !num_faces || !poly || !poly_pnts)
@@ -561,10 +561,10 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 
 int
 bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-	    const int *poly, const size_t poly_pnts,
-	    const int **holes_array, const size_t *holes_npts, const size_t nholes,
-	    const int *steiner, const size_t steiner_npts,
-	    const point2d_t *pts)
+	const int *poly, const size_t poly_pnts,
+	const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	const int *steiner, const size_t steiner_npts,
+	const point2d_t *pts)
 {
     std::unordered_map<int, int> det2pts, pts2det;
     std::set<int> active_pts;
@@ -646,16 +646,16 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 
     int tri_ind = 0;
     tri.forEachTriangle([&](const detria::Triangle<int> triangle)
-    {
-	// `triangle` contains the point indices
-	nfaces[3*tri_ind] = det2pts[triangle.x];
-	nfaces[3*tri_ind+1] = det2pts[triangle.y];
-	nfaces[3*tri_ind+2] = det2pts[triangle.z];
-	active_pts.insert(nfaces[3*tri_ind]);
-	active_pts.insert(nfaces[3*tri_ind+1]);
-	active_pts.insert(nfaces[3*tri_ind+2]);
-	tri_ind++;
-    }, cwTriangles);
+	    {
+	    // `triangle` contains the point indices
+	    nfaces[3*tri_ind] = det2pts[triangle.x];
+	    nfaces[3*tri_ind+1] = det2pts[triangle.y];
+	    nfaces[3*tri_ind+2] = det2pts[triangle.z];
+	    active_pts.insert(nfaces[3*tri_ind]);
+	    active_pts.insert(nfaces[3*tri_ind+1]);
+	    active_pts.insert(nfaces[3*tri_ind+2]);
+	    tri_ind++;
+	    }, cwTriangles);
 
     (*faces) = nfaces;
 
@@ -673,10 +673,10 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 
 extern "C" int
 bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-			      const int *poly, const size_t poly_pnts,
-			      const int **holes_array, const size_t *holes_npts, const size_t nholes,
-			      const int *steiner, const size_t steiner_npts,
-			      const point2d_t *pts, const size_t npts, triangulation_t type)
+	const int *poly, const size_t poly_pnts,
+	const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	const int *steiner, const size_t steiner_npts,
+	const point2d_t *pts, const size_t npts, triangulation_t type)
 {
     if (npts < 3 || poly_pnts < 3) return 1;
     if (!faces || !num_faces || !pts || !poly) return 1;
