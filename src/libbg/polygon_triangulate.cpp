@@ -714,6 +714,10 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
 
     if (type == TRI_EAR_CLIPPING) {
 
+	// earcut.hpp's concept of steiner points isn't the same as detria's,
+	// so we need to pass if steiner points have been supplied.
+	if (steiner_npts) return 1;
+
 	/* -------- Orientation Enforcement (outer CCW, holes CW) -------- */
 	auto strip_dup_and_orient = [&](const int *idx, size_t cnt,
 		bool want_ccw,
@@ -771,7 +775,10 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
 	using Point = std::array<Coord, 2>;
 	std::vector<std::vector<Point>> polygon;
 
-	/* map from flattened earcut vertex index -> original point index */
+	/* map from flattened earcut vertex index -> original point index.
+	 * We originally added this when looking into steiner point support
+	 * with earcut.hpp - that didn't pan out, but we'll leave this
+	 * in place in case it ends up being of interest down the road. */
 	std::vector<int> index_map;
 	index_map.reserve(outer_oriented.size()
 		+ [&](){
@@ -779,8 +786,7 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
 		for (size_t hi = 0; hi < nholes; hi++)
 		hc += hole_oriented[hi].size();
 		return hc;
-		}()
-		+ steiner_npts);
+		}());
 
 	// Outer ring (already CCW)
 	std::vector<Point> outer_polygon;
@@ -809,17 +815,6 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
 		index_map.push_back(ind);
 	    }
 	    polygon.push_back(std::move(hole_polygon));
-	}
-
-	/* Append each Steiner point as a single-point ring (no orientation) */
-	for (size_t si = 0; si < steiner_npts; si++) {
-	    std::vector<Point> sp_ring;
-	    Point sp;
-	    sp[0] = pts[steiner[si]][X];
-	    sp[1] = pts[steiner[si]][Y];
-	    sp_ring.push_back(sp);
-	    polygon.push_back(sp_ring);
-	    index_map.push_back(steiner[si]);
 	}
 
 	std::vector<N> indices = mapbox::earcut<N>(polygon);
