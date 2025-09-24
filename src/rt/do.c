@@ -813,7 +813,7 @@ int
 do_frame(int framenumber)
 {
     struct bu_vls times = BU_VLS_INIT_ZERO;
-    char framename[128] = {0};		/* File name to hold current frame */
+    char framename[256] = {0};		/* File name to hold current frame */
     struct rt_i *rtip = APP.a_rt_i;
     double utime = 0.0;			/* CPU time used */
     double nutime = 0.0;		/* CPU time used, normalized by ncpu */
@@ -949,9 +949,9 @@ do_frame(int framenumber)
      */
     if (outputfile != (char *)0) {
 	if (framenumber <= 0) {
-	    snprintf(framename, 128, "%s", outputfile);
+	    snprintf(framename, 256, "%s", outputfile);
 	} else {
-	    snprintf(framename, 128, "%s.%d", outputfile, framenumber);
+	    snprintf(framename, 256, "%s.%d", outputfile, framenumber);
 	}
 
 #ifdef HAVE_SYS_STAT_H
