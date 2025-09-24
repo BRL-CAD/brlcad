@@ -18,16 +18,15 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* find a path forward on OSX with the following error:
+* figure out what's breaking on the newest macosx CI runners
 
-  install_name_tool: changing install names or rpaths can't be redone
+* Do some binary incompatible changes to the librt API (will
+  need a minor version bump):
 
-  At the moment it's looking like Xcode 16 introduced some
-  new restrictions in install_name_tool that break our previous
-  management logic for path updating.  That may mean we'll need
-  to leverage LIEF's abilities to mod Mac binaries (up until now
-  we've only used it for Linux) to get around the new
-  install_name_tool limitations.
+  - remove void *tie from rt_bot_intenral - TIE is no more.
+
+  - make the non-public elements of db_i actually private.
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
