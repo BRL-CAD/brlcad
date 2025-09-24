@@ -728,7 +728,7 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
 	    if (cnt >= 2) {
 		const point2d_t &p0 = pts[out_indices.front()];
 		const point2d_t &pl = pts[out_indices.back()];
-		if (p0[X] == pl[X] && p0[Y] == pl[Y]) {
+		if (NEAR_EQUAL(p0[X], pl[X], SMALL_FASTF) && NEAR_EQUAL(p0[Y], pl[Y], SMALL_FASTF)) {
 		    out_indices.pop_back();
 		    if (out_indices.size() < 3) return false;
 		}
