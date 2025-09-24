@@ -714,19 +714,29 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
 
     if (type == TRI_EAR_CLIPPING) {
 
-	if (steiner_npts) return 1;
-
 	/* Set up for ear clipping */
 	using Coord = fastf_t;
 	using N = uint32_t;
 	using Point = std::array<Coord, 2>;
 	std::vector<std::vector<Point>> polygon;
+
+	/* map from flattened earcut vertex index -> original point index */
+	std::vector<int> index_map;
+	index_map.reserve(poly_pnts
+		+ (holes_array ? [&](){
+		    size_t hc = 0;
+		    for (size_t hi = 0; hi < nholes; hi++) hc += holes_npts[hi];
+		    return hc;
+		    }() : 0)
+		+ steiner_npts);
+
 	std::vector<Point> outer_polygon;
 	for (size_t i = 0; i < poly_pnts; i++) {
 	    Point np;
 	    np[0] = pts[poly[i]][X];
 	    np[1] = pts[poly[i]][Y];
 	    outer_polygon.push_back(np);
+	    index_map.push_back(poly[i]);
 	}
 	polygon.push_back(outer_polygon);
 
@@ -738,9 +748,21 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
 		    np[0] = pts[holes_array[i][j]][X];
 		    np[1] = pts[holes_array[i][j]][Y];
 		    hole_polygon.push_back(np);
+		    index_map.push_back(holes_array[i][j]);
 		}
 		polygon.push_back(hole_polygon);
 	    }
+	}
+
+	/* Append each Steiner point as a single-point ring */
+	for (size_t si = 0; si < steiner_npts; si++) {
+	    std::vector<Point> sp_ring;
+	    Point sp;
+	    sp[0] = pts[steiner[si]][X];
+	    sp[1] = pts[steiner[si]][Y];
+	    sp_ring.push_back(sp);
+	    polygon.push_back(sp_ring);
+	    index_map.push_back(steiner[si]);
 	}
 
 	std::vector<N> indices = mapbox::earcut<N>(polygon);
@@ -752,10 +774,11 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
 	(*num_faces) = indices.size()/3;
 	(*faces) = (int *)bu_calloc(indices.size(), sizeof(int), "faces");
 
+	/* translate earcut’s local indices back to original point indices */
 	for (size_t i = 0; i < indices.size()/3; i++) {
-	    (*faces)[3*i] = (int)indices[3*i];
-	    (*faces)[3*i+1] = (int)indices[3*i+1];
-	    (*faces)[3*i+2] = (int)indices[3*i+2];
+	    (*faces)[3*i]     = index_map[indices[3*i]];
+	    (*faces)[3*i + 1] = index_map[indices[3*i + 1]];
+	    (*faces)[3*i + 2] = index_map[indices[3*i + 2]];
 	}
 
 	return 0;
