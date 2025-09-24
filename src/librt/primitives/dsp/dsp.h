@@ -25,12 +25,23 @@
 #ifndef LIBRT_PRIMITIVES_DSP_DSP_H
 #define LIBRT_PRIMITIVES_DSP_DSP_H
 
+#include "common.h"
+#include "raytrace.h"
+#include "rt/geom.h"
+
+__BEGIN_DECLS
+
 /* access to the DSP data array */
 # define DSP(_p, _x, _y) (						\
 	((_p) && (_p)->dsp_buf) ?					\
 	((unsigned short *)((_p)->dsp_buf))[				\
 	    (_y) * ((struct rt_dsp_internal *)_p)->dsp_xcnt + (_x)	\
 	    ] : 0)
+
+extern int
+rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
+
+__END_DECLS
 
 #endif /* LIBRT_PRIMITIVES_DSP_DSP_H */
 
