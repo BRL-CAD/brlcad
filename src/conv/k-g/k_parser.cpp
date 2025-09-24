@@ -439,7 +439,7 @@ bool parse_k
 	std::string              partTitle;
 	size_t                   sectionLinesRead       = 0;
 	size_t                   elementLinesRead       = 0;
-	size_t                   numberOfCardsInSection = 0;
+	size_t                   numberOfCards = 0;
 	//size_t                   cardCounter = 0;// this will replace sectionLinesRead elementLinesRead, and partLinesRead
 	size_t                   optionsCounter = 0;
 	std::string              sectionTitle;
@@ -769,44 +769,61 @@ bool parse_k
 				    sectionLinesRead = 1;
 			    }
 			    else if (command[1] == "SHELL") {
-				state        = KState::Section_Shell;
-				sectionTitle = "";
-				sectionId    = -1;
-				numberOfCardsInSection = 2; // Number of obligatory cards
+				state = KState::Section_Shell;
+				sectionTitle     = "";
+				sectionId        = -1;
+				numberOfCards    = 2; // default obligatory cards
+				sectionLinesRead = 1;
 
 				if (command.size() >= 3) {
 
-				    if ((command[3] == "EFG") || (command[3] == "THERMAL") || (command[3] == "XFEM") || (command[3] == "MISC")) {
-					sectionLinesRead = 0;
-					numberOfCardsInSection = 4;
-				    }
-				    else if (command[2] == "TITLE") {
-					sectionLinesRead       = 0;
-					numberOfCardsInSection = 3;
-				    }
-				    
-				    else
-					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
-				}
-				else {
-				    sectionLinesRead       = 1;
-				    numberOfCardsInSection = 2;
-				}
+				    bool hasTitle = (std::find(command.begin(), command.end(), "TITLE") != command.end());
 
+				    static const std::vector<std::string> options = {
+					"EFG", "THERMAL", "XFEM", "MISC"
+				    };
+
+				    bool hasOption = false;
+				    for (const auto& opt : options) {
+					if (std::find(command.begin(), command.end(), opt) != command.end()) {
+					    hasOption = true;
+					    break;
+					}
+				    }
+
+				    if (hasOption) {
+					numberOfCards = 3;
+					sectionLinesRead = 1;
+
+					if (hasTitle) {
+					    numberOfCards = 2; 
+					    sectionLinesRead = 0;
+					}
+				    }
+				    else if (hasTitle) {
+					sectionLinesRead = 0;
+					numberOfCards = 2;
+				    }
+				    else {
+					std::cout << "Unexpected command " << tokens[0]
+					    << " in k-file " << fileName << std::endl;
+				    }
+				}
 			    }
+
 			    else if (command[1] == "SOLID") {
 				state        = KState::Section_Solid;
 				sectionTitle = "";
 				sectionId    = -1;
-				numberOfCardsInSection = 1; // Number of obligatory cards
+				numberOfCards = 1; // Number of obligatory cards
 
 				if (command.size() == 3) {
 				    if (command[2] == "TITLE") {
 					sectionLinesRead = 0;
-					numberOfCardsInSection = 2;
+					numberOfCards = 2;
 				    }
 				    else if ((command[2] == "EFG") || (command[2] == "SPG")) {
-					numberOfCardsInSection = 2;
+					numberOfCards = 2;
 				    }
 				    else
 					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
@@ -1196,8 +1213,8 @@ bool parse_k
 		    }
 
 		    case KState::Section_Shell: {
-			static bool ELFORM = false;
-			static bool ICOMP  = false;
+			static bool ELFORM;
+			static bool ICOMP;
 
 			switch (sectionLinesRead) {
 			case 0:
@@ -1209,7 +1226,8 @@ bool parse_k
 				std::cout << "Too short SECTION in k-file " << fileName << std::endl;
 				break;
 			    }
-
+			    ICOMP  = false;
+			    ELFORM = false;
 			    sectionId                      = stoi(tokens[0]);
 			    data.sections[sectionId].title = sectionTitle;
 
@@ -1219,10 +1237,10 @@ bool parse_k
 
 				if (ICOMP)
 				{
-				    numberOfCardsInSection += 1;
+				    numberOfCards += 1;
 				}
 				if (ELFORM) {
-				    numberOfCardsInSection += 1;
+				    numberOfCards += 2;
 				}
 			    }
 			    break;
@@ -1245,7 +1263,7 @@ bool parse_k
 			    break;
 			}
 
-			if (sectionLinesRead < numberOfCardsInSection)
+			if (sectionLinesRead < numberOfCards)
 			    ++sectionLinesRead;
 			else
 			    sectionLinesRead = (sectionTitle.empty() ? 1 : 0);
@@ -1275,7 +1293,7 @@ bool parse_k
 				std::cout << "Unexpected SECTION length in k-file " << fileName << std::endl;
 			}
 
-			if (sectionLinesRead < numberOfCardsInSection) {
+			if (sectionLinesRead < numberOfCards) {
 			    ++sectionLinesRead;
 			}
 			else {
