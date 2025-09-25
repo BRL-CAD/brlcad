@@ -3652,6 +3652,8 @@ struct vhash {
     size_t used;   /* number of filled slots */
 };
 
+#define VHASH_INIT_ZERO {NULL, 0, 0}
+
 /* Simple pointer mixer */
 static size_t
 vh_hash_ptr(const void *p)
@@ -3763,7 +3765,7 @@ nmg_mdl_to_bot(struct model *m, struct bu_list *vlfree, const struct bn_tol *tol
 	size_t vcount = 0;
 	size_t tri_count = 0;
 	size_t fno = 0;
-	struct vhash vh;
+	struct vhash vh = VHASH_INIT_ZERO;
 	int hash_ok = 0;
 
 	nmg_vertex_tabulate(&verts, &m->magic, vlfree);
