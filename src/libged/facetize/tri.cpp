@@ -651,13 +651,6 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	if (ldp->d_major_type != DB5_MAJORTYPE_BRLCAD)
 	    continue;
 
-	// ID_DSP objects, for the moment, need to avoid NMG processing - set
-	// up to handle separately
-	if (ldp->d_minor_type == ID_DSP) {
-	    q_dsp.push(ldp);
-	    continue;
-	}
-
 	// Plate mode bots only have a realistic chance of being handled by
 	// the plate to vol conversion method, but they can be quite slow
 	// and will run into max-time limitations if they are large.  Separate

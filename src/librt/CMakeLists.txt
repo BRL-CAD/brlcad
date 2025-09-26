@@ -323,6 +323,7 @@ set(
   primitives/brep/brep_local.h
   primitives/datum/datum.h
   primitives/dsp/dsp.h
+  primitives/dsp/TerraScape.hpp
   primitives/edit_private.h
   primitives/fixpt.h
   primitives/metaball/metaball.h

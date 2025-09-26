@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* improved DSP primitive's default facetize behavior - Cliff Yapp
 * improved NMG->bot conv speed for all triangle case - Cliff Yapp
 * added SPSR meshing support to the pnts command - Cliff Yapp
 * replaced yedit with brledit as libbu fallback editor - Cliff Yapp
