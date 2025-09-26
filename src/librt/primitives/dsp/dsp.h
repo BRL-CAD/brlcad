@@ -39,6 +39,9 @@ __BEGIN_DECLS
 	    ] : 0)
 
 extern int
+rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *to);
+
+extern int
 rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
 
 __END_DECLS

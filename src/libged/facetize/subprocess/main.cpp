@@ -177,22 +177,6 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 		*obot = NULL;
 		return BRLCAD_OK;
 	    }
-	case ID_DSP:
-	    // TODO - need to create a Triangulated Irregular Network for these - the
-	    // current NMG routine apparently fails even on the sample terra.g solid.
-	    //
-	    // Would be VERY interesting to try and port the following code to
-	    // work with DSP data:
-	    // http://mgarland.org/software/terra.html
-	    // http://mgarland.org/software/scape.html
-	    //
-	    // Note that the CM methodology actually seems to succeed fairly
-	    // well and quickly with terra.g, so it might be worth defaulting
-	    // the tessellate call in the parent facetize command to just using
-	    // CM for dsp objects rather than trying the long and unsuccessful
-	    // NMG algorithm.  We need to allow all the various methods to have a crack
-	    // at the data here - unlike ID_PNTS, in THEORY nmg should successfully
-	    // produce output, so there's no justification for disabling it.
 	case ID_BREP:
 	    // TODO - need to handle plate mode NURBS the way we handle plate mode BoTs
 	default:
