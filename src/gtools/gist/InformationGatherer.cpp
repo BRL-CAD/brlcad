@@ -39,7 +39,10 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
     std::string in_file(opt->getInFile());  // need local copy for av array copy
     const char* rtarea_av[13] = {rtarea.c_str(),
                                  "-R",
-                                 "-s", "1024",
+				 // TODO: should toggle high/low or
+				 // dynamically size to the level of
+				 // fidelity desired.
+                                 "-s", "512",
                                  "-u", unit.c_str(),
                                  "-a", az.c_str(),
                                  "-e", el.c_str(),
@@ -138,6 +141,9 @@ static std::string GqaGridSize(std::map<std::string, std::string> map, std::stri
     // clamp
     if (shortest < 1.0)
         shortest = 1.0;
+
+    // TODO: this seems to be a 10x10 sampling -- we should verify
+    // whether this is adequate, how much error off precision answer.
 
     // find the smallest magnitude in relation to our smallest size
     // i.e. if we have smallest side 234 -> we want 10 for the grid size
