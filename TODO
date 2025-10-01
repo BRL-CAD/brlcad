@@ -27,6 +27,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
   - make the non-public elements of db_i actually private.
 
+* settle on sane gist quality defaults and/or implement quality knob
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
