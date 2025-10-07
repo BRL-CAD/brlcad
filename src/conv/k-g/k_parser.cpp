@@ -774,6 +774,7 @@ bool parse_k
 				sectionTitle = "";
 				sectionId    = -1;
 				numberOfCards = 2; // Default obligatory cards 
+				sectionLinesRead = 1;
 
 				if (command.size() >= 3) {
 
