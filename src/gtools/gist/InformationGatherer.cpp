@@ -37,18 +37,23 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
     // Run RTArea to get surface area
     std::string rtarea = getCmdPath(opt->getExeDir(), "rtarea");
     std::string in_file(opt->getInFile());  // need local copy for av array copy
-    const char* rtarea_av[13] = {rtarea.c_str(),
-                                 "-R",
-				 // TODO: should toggle high/low or
-				 // dynamically size to the level of
-				 // fidelity desired.
-                                 "-s", "512",
-                                 "-u", unit.c_str(),
-                                 "-a", az.c_str(),
-                                 "-e", el.c_str(),
-                                 in_file.c_str(),
-                                 comp.c_str(),
-                                 NULL};
+    std::string ncpu(opt->getNCPU());
+    const char* rtarea_av[15] = {
+	rtarea.c_str(),
+	"-R",
+	"-P",
+	ncpu,
+	// TODO: should toggle high/low or
+	// dynamically size to the level of
+	// fidelity desired.
+	"-s", "512",
+	"-u", unit.c_str(),
+	"-a", az.c_str(),
+	"-e", el.c_str(),
+	in_file.c_str(),
+	comp.c_str(),
+	NULL
+    };
     struct bu_process* p;
     bu_process_create(&p, rtarea_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
@@ -178,16 +183,21 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     int read_cnt = 0;
     char buffer[1024] = {0};
     std::string result = "";
+    std::string ncpu(opt->getNCPU());
 
     // attempt to get volume and mass in same run
-    const char* gqa_av[10] = { gqa.c_str(),
-                                "-Avm",
-                                "-q",
-                                "-g", grid.c_str(),
-                                "-u", units.c_str(),
-                                in_file.c_str(),
-                                top_comp.c_str(),
-                                NULL };
+    const char* gqa_av[10] = {
+	gqa.c_str(),
+	"-Avm", // first position is assumed elsewhere to be -A
+	"-P",
+	ncpu,
+	"-q",
+	"-g", grid.c_str(),
+	"-u", units.c_str(),
+	in_file.c_str(),
+	top_comp.c_str(),
+	NULL
+    };
 
     bu_process_create(&p, gqa_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
@@ -214,7 +224,7 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
 
 
     // no density data found. need to re-run, only getting volume data
-    gqa_av[1] = "-Av";
+    gqa_av[1] = "-Av"; // FIXME: shouldn't assume -A is as position[1]
     bu_process_create(&p, gqa_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
     if (bu_process_pid(p) <= 0) {
