@@ -18,8 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* figure out what's breaking on the newest macosx CI runners
-
 * Do some binary incompatible changes to the librt API (will
   need a minor version bump):
 
