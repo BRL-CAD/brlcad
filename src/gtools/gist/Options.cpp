@@ -509,7 +509,7 @@ size_t Options::getNCPU() {
 
     if (ncpu < 0)
 	cpus += ncpu;
-    else if (ncpus > 0)
+    else if (ncpu > 0)
 	cpus = ncpu;
 
     if (cpus < 1)
