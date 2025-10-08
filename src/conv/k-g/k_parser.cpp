@@ -792,7 +792,6 @@ bool parse_k
 				    }
 
 				    if (hasTitle) {
-					numberOfCards++;
 					sectionLinesRead = 0;
 				    }
 
@@ -1070,7 +1069,7 @@ bool parse_k
 			    }
 
 			    case 1: {
-				if (tokens.size() < 8) {
+				if (tokens.size() < 5) {
 				    std::cout << "Too short SECTION_BEAM in k-file " << fileName << std::endl;
 				    break;
 				}
@@ -1273,7 +1272,7 @@ bool parse_k
 			    break;
 			}
 
-			if (sectionLinesRead < numberOfCards - 1)
+			if (sectionLinesRead < numberOfCards)
 			    ++sectionLinesRead;
 			else
 			    sectionLinesRead = (sectionTitle.empty() ? 1 : 0);
