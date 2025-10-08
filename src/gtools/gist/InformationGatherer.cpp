@@ -42,7 +42,7 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
 	rtarea.c_str(),
 	"-R",
 	"-P",
-	ncpu,
+	ncpu.c_str(),
 	// TODO: should toggle high/low or
 	// dynamically size to the level of
 	// fidelity desired.
@@ -190,7 +190,7 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
 	gqa.c_str(),
 	"-Avm", // first position is assumed elsewhere to be -A
 	"-P",
-	ncpu,
+	ncpu.c_str(),
 	"-q",
 	"-g", grid.c_str(),
 	"-u", units.c_str(),

@@ -100,7 +100,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
                            "-c",   // [09]
                            "set bs=1", // [10]
 			   "-P",   // [11]
-			   ncpu,   // [12]
+			   ncpu.c_str(), // [12]
                            "-o",   // [13]
                            NULL,   // [14]: output file name
                            pathToInput.c_str(),
@@ -207,7 +207,7 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[9] = "-c";  av[10] = component.c_str();
             av[11] = "-g"; av[12] = ghost.c_str();
             av[13] = "-G"; av[14] = "10";
-            av[15] = "--cpu-count"; av[16] = ncpu;
+            av[15] = "--cpu-count"; av[16] = ncpu.c_str();
             av[17] = "-o"; av[18] = outputname.c_str();
             av[19] = NULL;
             break;
