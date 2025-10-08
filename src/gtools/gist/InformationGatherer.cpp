@@ -183,7 +183,7 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     int read_cnt = 0;
     char buffer[1024] = {0};
     std::string result = "";
-    std::string ncpu(opt->getNCPU());
+    std::string ncpu(std::to_string(opt->getNCPU()));
 
     // attempt to get volume and mass in same run
     const char* gqa_av[12] = {
