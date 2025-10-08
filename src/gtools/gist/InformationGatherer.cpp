@@ -37,7 +37,7 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
     // Run RTArea to get surface area
     std::string rtarea = getCmdPath(opt->getExeDir(), "rtarea");
     std::string in_file(opt->getInFile());  // need local copy for av array copy
-    std::string ncpu(opt->getNCPU());
+    std::string ncpu(std::to_string(opt->getNCPU()));
     const char* rtarea_av[15] = {
 	rtarea.c_str(),
 	"-R",
@@ -186,7 +186,7 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     std::string ncpu(opt->getNCPU());
 
     // attempt to get volume and mass in same run
-    const char* gqa_av[10] = {
+    const char* gqa_av[12] = {
 	gqa.c_str(),
 	"-Avm", // first position is assumed elsewhere to be -A
 	"-P",
