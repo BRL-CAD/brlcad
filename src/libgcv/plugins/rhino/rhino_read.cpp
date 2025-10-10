@@ -468,7 +468,10 @@ get_shader(const ON_Material *im)
 {
     std::ostringstream sstream;
     ON_Material dm;
+	// im->ToPhysicallyBased();
+	
     const ON_Material *material = (im) ? im : &dm;
+
 
     sstream << "{"
 	    << " tr " << material->m_transparency
@@ -481,7 +484,9 @@ get_shader(const ON_Material *im)
 	    << " em " << material->m_emission
 	    << " }";
 
-    return std::make_pair("plastic", sstream.str());
+	std::string name = clean_name(im->Name(), "plastic");
+	std::cout << name << "}" << std::endl;
+    return std::make_pair(name, sstream.str());
 }
 
 
