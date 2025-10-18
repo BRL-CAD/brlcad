@@ -801,15 +801,33 @@ bool parse_k
 				}
 			    }
 			    else if (command[1] == "SOLID") {
-				state        = KState::Section_Solid;
-				sectionTitle = "";
-				sectionId    = -1;
+				state            = KState::Section_Solid;
+				sectionTitle     = "";
+				sectionId        = -1;
+				numberOfCards    = 1;
+				sectionLinesRead = 1;
 
 				if (command.size() == 3) {
-				    if (command[2] == "TITLE")
+				    bool hasTitle = (std::find(command.begin(), command.end(), "TITLE") != command.end());
+
+				    static const std::vector<std::string> options = {
+					"EFG", "MISC", "PERI", "SPG"
+				    };
+
+				    for (const auto& opt : options) {
+					if (std::find(command.begin(), command.end(), opt) != command.end()) {
+					    sectionHasOption = true;
+					    break;
+					}
+				    }
+
+				    if (hasTitle) {
 					sectionLinesRead = 0;
-				    else
-					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
+				    }
+
+				    if (sectionHasOption) {
+					numberOfCards++;
+				    }
 				}
 			    }
 			    else if (command[1] == "SEATBELT") {
@@ -1280,6 +1298,12 @@ bool parse_k
 			break;
 		    }
 		    case KState::Section_Solid: {
+			static bool ELFORM        =false;
+			static bool sawOptional   = false;
+			static bool cardThreeRead = false;
+			int nip;
+			int lmc;
+
 			switch (sectionLinesRead) {
 			    case 0:
 				sectionTitle = line;
@@ -1293,14 +1317,87 @@ bool parse_k
 
 				sectionId = stoi(tokens[0]);
 				data.sections[sectionId].title = sectionTitle;
+
+				ELFORM = (stoi(tokens[1]) >= 101 && stoi(tokens[1]) <= 105);
+
+				if (ELFORM) {
+				    numberOfCards++;
+				}
+				break;
+			    }
+
+			    case 2: {
+				if (!sectionHasOption && ELFORM) {
+				    if (tokens.size() >= 1) {
+					nip = stoi(tokens[0]);
+					numberOfCards += nip;
+				    }
+
+				    if (tokens.size() >= 5) {
+					lmc = stoi(tokens[4]);
+					numberOfCards += (lmc + 7) / 8;
+				    }
+
+				    cardThreeRead = true;
+				}
+				break;
+			    }
+
+			    case 3: {
+				if (cardThreeRead) {
+				    break;
+				}
+
+				if (tokens.size() >= 2) {
+				    char* end = nullptr;
+				    std::strtod(tokens[1].c_str(), &end);
+				    if (end && *end == '\0') {
+					numberOfCards++;
+					sawOptional = true;
+					break; // Optional card not card 3
+				    }
+				}
+				if (tokens.size() >= 1) {
+				    nip = stoi(tokens[0]);
+				    numberOfCards += nip;
+				}
+
+				if (tokens.size() >= 5) {
+				    lmc = stoi(tokens[4]);
+				    numberOfCards += (lmc + 7) / 8;
+				}
+
+				break;
+			    }
+			    case 4: {
+				if (cardThreeRead) {
+				    break;
+				}
+
+				if (sawOptional) {
+				    if (tokens.size() >= 1) {
+					nip = stoi(tokens[0]);
+					numberOfCards += nip;
+				    }
+
+				    if (tokens.size() >= 5) {
+					lmc = stoi(tokens[4]);
+					numberOfCards += (lmc + 7) / 8;
+				    }
+				}
+
 				break;
 			    }
 
 			    default:
-				std::cout << "Unexpected SECTION length in k-file " << fileName << std::endl;
+				break;
 			}
 
-			++sectionLinesRead;
+			if (sectionLinesRead < numberOfCards)
+			    ++sectionLinesRead;
+			else
+			    sectionLinesRead = (sectionTitle.empty() ? 1 : 0);
+
 			break;
 		    }
 
