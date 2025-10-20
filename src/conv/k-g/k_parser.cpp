@@ -807,7 +807,7 @@ bool parse_k
 				numberOfCards    = 1;
 				sectionLinesRead = 1;
 
-				if (command.size() == 3) {
+				if (command.size() >= 3) {
 				    bool hasTitle = (std::find(command.begin(), command.end(), "TITLE") != command.end());
 
 				    static const std::vector<std::string> options = {
@@ -826,7 +826,7 @@ bool parse_k
 				    }
 
 				    if (sectionHasOption) {
-					numberOfCards++;
+					numberOfCards+=2;
 				    }
 				}
 			    }
@@ -1350,9 +1350,12 @@ bool parse_k
 
 				if (tokens.size() >= 2) {
 				    char* end = nullptr;
-				    std::strtod(tokens[1].c_str(), &end);
+				    std::strtol(tokens[1].c_str(), &end,10);
 				    if (end && *end == '\0') {
-					numberOfCards++;
+					numberOfCards--;
+				    }
+				    else
+				    {
 					sawOptional = true;
 					break; // Optional card not card 3
 				    }
