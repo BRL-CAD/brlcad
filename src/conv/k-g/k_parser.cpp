@@ -826,7 +826,7 @@ bool parse_k
 				    }
 
 				    if (sectionHasOption) {
-					numberOfCards+=2;
+					numberOfCards += 2;
 				    }
 				}
 			    }
@@ -1212,8 +1212,8 @@ bool parse_k
 		    }
 
 		    case KState::Section_Shell: {
-			static bool ELFORM;
-			static bool ICOMP;
+			static bool ELFORM = false;
+			static bool ICOMP  = false;
 			int nip;
 			int lmc;
 			int nipp;
@@ -1228,8 +1228,6 @@ bool parse_k
 				std::cout << "Too short SECTION in k-file " << fileName << std::endl;
 				break;
 			    }
-			    ICOMP = false;
-			    ELFORM = false;
 			    sectionId = stoi(tokens[0]);
 			    data.sections[sectionId].title = sectionTitle;
 
@@ -1298,7 +1296,7 @@ bool parse_k
 			break;
 		    }
 		    case KState::Section_Solid: {
-			static bool ELFORM        =false;
+			static bool ELFORM        = false;
 			static bool sawOptional   = false;
 			static bool cardThreeRead = false;
 			int nip;
