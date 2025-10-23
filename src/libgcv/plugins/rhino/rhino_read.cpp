@@ -459,18 +459,21 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Geometry *geometry
     return 1;
 }
 
-std::string create_material(const ON_Material *im, rt_wdb& wdb)
+std::string create_thirdgen_material(const ON_3dmObjectAttributes *attributes, const ONX_Model &model, rt_wdb& wdb)
 {
-    ON_Material dm;
-	
-    const ON_Material *material = (im) ? im : &dm;
-	// dm->ToPhysicallyBased();
-	// look at later
+	const ON_Material *material = ON_Material::Cast(model.MaterialFromAttributes(*attributes).ModelComponent());
+	if (material == nullptr){
+		std::cout << "No material object passed" << std::endl;
+		return "";
+	}
+	// ToPhysicallyBased not possible as material & attributes are provided as const
 
-	// if the name already exists then add some prompt in the cmdline 
-	// to check if they want to overwrite, merge, or keep the old material
+	std::string name = clean_name(material->Name(), "default_material");
 
-	std::string name = clean_name(material->Name(), "plastic");
+	if (db_lookup(wdb.dbip, name.c_str(), false) != NULL) {
+        std::cout << "Material '" << name << "' already exists in the database" << std::endl;
+        return name;
+    }
 
 	struct bu_attribute_value_set physicalProperties;
 	struct bu_attribute_value_set mechanicalProperties;
@@ -482,7 +485,7 @@ std::string create_material(const ON_Material *im, rt_wdb& wdb)
 	bu_avs_init_empty(&opticalProperties);
 	bu_avs_init_empty(&thermalProperties);
 
-	// Add all opticals, key : value
+	// Only optical properties are set on ON_Materials
 	struct bu_vls double_to_cstr = BU_VLS_INIT_ZERO;
 
 	bu_vls_sprintf(&double_to_cstr, "%.4f", material->m_transparency);
@@ -514,6 +517,23 @@ std::string create_material(const ON_Material *im, rt_wdb& wdb)
 	return name;
 }
 
+void assign_thirdgen_material(const std::string& object_name, const std::string& material_name, rt_wdb& wdb)
+{
+    if (db_lookup(wdb.dbip, object_name.c_str(), true) == RT_DIR_NULL) {
+		std::cout << "Object " << object_name << " not found in the database" << std::endl;
+        return;
+    }
+
+    if (db5_update_attribute(object_name.c_str(), "material_name", material_name.c_str(), wdb.dbip)){
+		std::cout << "Setting material_name on the object " << object_name << " failed for " << material_name << std::endl;
+		return;
+	}
+
+    if (db5_update_attribute(object_name.c_str(), "material_id", "1", wdb.dbip)){
+		std::cout << "Setting material_id on the object " << object_name << " failed for " << material_name << std::endl;
+	}
+}
+
 typedef std::pair<std::string, std::string> Shader;
 
 
@@ -535,8 +555,6 @@ get_shader(const ON_Material *im, rt_wdb& wdb)
 	    << " sh " << material->m_shine
 	    << " em " << material->m_emission
 	    << " }";
-
-	create_material(im, wdb);
 
     return std::make_pair("plastic", sstream.str());
 }
@@ -652,6 +670,7 @@ import_model_objects(const gcv_opts& gcv_options, rt_wdb& wdb, ONX_Model& model,
 
 	const ON_3dmObjectAttributes *attributes = mg->Attributes(nullptr);
 	get_object_material(attributes, model, shader, rgb, own_shader, own_rgb, wdb);
+	std::string thirdgen_material_name = create_thirdgen_material(attributes, model, wdb);
 
 	ON_String id;
 	ON_UuidToString(mg->Id(), id);
@@ -667,6 +686,9 @@ import_model_objects(const gcv_opts& gcv_options, rt_wdb& wdb, ONX_Model& model,
 		std::vector<std::string> members_vec;
 		members_vec.push_back(member_name);
 		write_comb(wdb, name, members_vec, NULL, own_shader ? shader.first.c_str() : NULL, own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
+		if (thirdgen_material_name != ""){
+			assign_thirdgen_material(name, thirdgen_material_name, wdb);
+		}
 	    } else
                 to_remove.insert(std::make_pair(member_name, mg->Id()));
 	} else {
