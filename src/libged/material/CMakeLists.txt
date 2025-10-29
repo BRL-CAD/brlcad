@@ -6,11 +6,13 @@ include_directories(
   ${GED_INCLUDE_DIRS}
 )
 
-ged_plugin_library(ged-material material.c)
-target_link_libraries(ged-material libged libbu)
+ged_plugin_library(ged-material material.c parser.c)
+target_link_libraries(ged-material libged libbu libwdb)
+add_dependencies(ged-material libwdb)
 
 cmakefiles(
   CMakeLists.txt
+  parser.c
   material.c
 )
 
