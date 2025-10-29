@@ -35,6 +35,9 @@
 #include "../ged_private.h"
 #include "wdb.h"
 
+#include <stdio.h>
+#include "parser.h"
+
 typedef enum {
     MATERIAL_ASSIGN,
     MATERIAL_CREATE,
@@ -54,9 +57,10 @@ static const char *usage = " help \n\n"
     "material get {object} [propertyGroupName] {propertyName}\n\n"
     "material set {object} [propertyGroupName] {propertyName} [newPropertyValue]\n\n"
     "material remove {object} [propertyGroupName] {propertyName}\n\n"
-    "material import [--id | --name] {fileName}\n\n"
+    "material import [matprop] [--id | --name] {fileName}\n\n"
     "  --id       - Specifies the id the material will be imported with\n\n"
     "  --name     - Specifies the name the material will be imported with\n\n"
+    "  matprop     - Specifies the processing type for the file\n\n"
     "Note: Object, property, and group names are case sensitive.";
 
 static const char *possibleProperties = "The following are properties of material objects that can be set/modified: \n"
@@ -312,6 +316,96 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
     return 0;
 }
 
+/*
+ * Routine handles the import of a .matprop file.
+ * Usage: material import matprop <filename>
+ */
+static int
+import_matprop_file(struct ged *gedp, int argc, const char *argv[])
+{
+    const char* fileName;
+    FILE* file;
+    ParseResult result;
+    int import_count = 0;
+    int i, j;
+    struct db_i *db_i; // Declare db_i at the top of the function
+
+    if (argc < 4) {
+        bu_vls_printf(gedp->ged_result_str, "ERROR: Not enough arguments.\nUsage: material import matprop <filename>\n");
+        return BRLCAD_ERROR;
+    }
+    fileName = argv[3];
+
+    // 1. Open the file
+    file = fopen(fileName, "r");
+    if (file == NULL) {
+        bu_vls_printf(gedp->ged_result_str, "ERROR: Could not open file '%s'\n", fileName);
+        return BRLCAD_ERROR;
+    }
+
+    // 2. Call your C parser from parser.c
+    result = parse_matprop(file);
+    fclose(file); // File is read, close it now.
+
+    // 3. Check for parsing errors
+    if (result.error_message) {
+        bu_vls_printf(gedp->ged_result_str, "ERROR: Failed to parse '%s':\n%s\n", fileName, result.error_message);
+        free_parse_result(&result); // MUST free memory even on error
+        return BRLCAD_ERROR;
+    }
+
+    // 4. Loop through parsed materials and create BRL-CAD objects
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct bu_attribute_value_set physicalProperties;
+	struct bu_attribute_value_set mechanicalProperties;
+	struct bu_attribute_value_set opticalProperties;
+	struct bu_attribute_value_set thermalProperties;
+
+	bu_avs_init_empty(&physicalProperties);
+	bu_avs_init_empty(&mechanicalProperties);
+	bu_avs_init_empty(&opticalProperties);
+	bu_avs_init_empty(&thermalProperties);
+    for (i = 0; i < result.mat_count; i++) {
+        Material* mat = &result.materials[i];
+
+        // Check if material already exists in the .g file
+        // --- THIS IS THE FIX ---
+        db_i = db_find_internal(wdbp, mat->name, NULL);
+        if (db_i != NULL) {
+            bu_vls_printf(gedp->ged_result_str, "Warning: Material '%s' already exists. Skipping.\n", mat->name);
+            continue; // Skip this material
+        }
+
+        // Create the new material object in the database
+        // --- THIS IS THE FIX ---
+        db_i = mk_material(wdbp, mat->name, mat->name, "", "", &physicalProperties, &mechanicalProperties, &opticalProperties, &thermalProperties);
+        if (db_i == NULL) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR: Could not create material object '%s'\n", mat->name);
+            continue; // Skip and try next material
+        }
+
+        // 5. Loop through properties and set them
+        for (j = 0; j < mat->prop_count; j++) {
+            Property* prop = &mat->properties[j];
+            
+            // This is the BRL-CAD function to set a key/value property
+            if (wdb_set_material_property(db_i, prop->key, prop->value) < 0) {
+                 bu_vls_printf(gedp->ged_result_str, "Warning: Could not set property '%s' for material '%s'\n", prop->key, mat->name);
+            }
+        }
+        import_count++;
+    }
+
+    // 6. Free all memory used by the parser result
+    free_parse_result(&result);
+
+    bu_vls_printf(gedp->ged_result_str, "Successfully imported %d new materials from '%s'.\n", import_count, fileName);
+
+    // Tell BRL-CAD's UI to update to show new materials
+    //ged_update_views(gedp, (long)0); 
+
+    return BRLCAD_OK;
+}
 
 static void
 print_avs_value(struct ged *gedp, const struct bu_attribute_value_set * avp, const char * name, const char * avsName)
@@ -610,7 +704,11 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
         destroy_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_IMPORT) {
         // import routine
-        import_materials(gedp, argc, argv);
+        if (BU_STR_EQUIV("matprop", argv[3])) { // material -d import matprop <file_name>
+            import_matprop_file(gedp, argc, argv);
+        } else {
+            import_materials(gedp, argc, argv);
+        }
     } else if (scmd == MATERIAL_GET) {
         // get routine
         get_material(gedp, argc, argv);
