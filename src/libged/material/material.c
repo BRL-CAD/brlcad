@@ -148,6 +148,7 @@ assign_material(struct ged *gedp, int argc, const char *argv[])
 static int
 import_materials(struct ged *gedp, int argc, const char *argv[])
 {
+    printf("material: import_materials");
     const char* fileName;
     const char* flag;
     char buffer[BUFSIZ] = {0};
@@ -316,6 +317,24 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
     return 0;
 }
 
+static int
+import_from_file(struct ged *gedp, int argc, const char *argv[])
+{
+    struct bu_vls file_type = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc d[2];
+    BU_OPT(d[0],  "", "type",         "file_type",         &bu_opt_vls,       &file_type, "Import file based on file type");
+    BU_OPT_NULL(d[1]);
+
+    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    argc = opt_ret;
+
+    if (BU_STR_EQUAL(bu_vls_cstr(&file_type), "matprop")) {
+        import_matprop_file(gedp, argc, argv);
+    } else {
+        import_materials(gedp, argc, argv);
+    }
+}
+
 /*
  * Routine handles the import of a .matprop file.
  * Usage: material import matprop <filename>
@@ -323,6 +342,7 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 static int
 import_matprop_file(struct ged *gedp, int argc, const char *argv[])
 {
+    printf("material: import_matprop_file");
     const char* fileName;
     FILE* file;
     ParseResult result;
@@ -334,7 +354,7 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
         bu_vls_printf(gedp->ged_result_str, "ERROR: Not enough arguments.\nUsage: material import matprop <filename>\n");
         return BRLCAD_ERROR;
     }
-    fileName = argv[3];
+    fileName = argv[3]; // material import matprop <filename>
 
     // 1. Open the file
     file = fopen(fileName, "r");
@@ -367,33 +387,19 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
 	bu_avs_init_empty(&thermalProperties);
     for (i = 0; i < result.mat_count; i++) {
         Material* mat = &result.materials[i];
-
-        // Check if material already exists in the .g file
-        // --- THIS IS THE FIX ---
-        db_i = db_find_internal(wdbp, mat->name, NULL);
-        if (db_i != NULL) {
-            bu_vls_printf(gedp->ged_result_str, "Warning: Material '%s' already exists. Skipping.\n", mat->name);
-            continue; // Skip this material
-        }
-
-        // Create the new material object in the database
-        // --- THIS IS THE FIX ---
+        
+        // add the key values to the bu_avs container, loop thru the materials and properties
         db_i = mk_material(wdbp, mat->name, mat->name, "", "", &physicalProperties, &mechanicalProperties, &opticalProperties, &thermalProperties);
         if (db_i == NULL) {
             bu_vls_printf(gedp->ged_result_str, "ERROR: Could not create material object '%s'\n", mat->name);
             continue; // Skip and try next material
-        }
+        // }
 
-        // 5. Loop through properties and set them
-        for (j = 0; j < mat->prop_count; j++) {
-            Property* prop = &mat->properties[j];
-            
-            // This is the BRL-CAD function to set a key/value property
-            if (wdb_set_material_property(db_i, prop->key, prop->value) < 0) {
-                 bu_vls_printf(gedp->ged_result_str, "Warning: Could not set property '%s' for material '%s'\n", prop->key, mat->name);
-            }
-        }
-        import_count++;
+        // // 5. Loop through properties and set them
+        // for (j = 0; j < mat->prop_count; j++) {
+        //     Property* prop = &mat->properties[j];
+        // }
+        // import_count++;
     }
 
     // 6. Free all memory used by the parser result
@@ -704,11 +710,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
         destroy_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_IMPORT) {
         // import routine
-        if (BU_STR_EQUIV("matprop", argv[3])) { // material -d import matprop <file_name>
-            import_matprop_file(gedp, argc, argv);
-        } else {
-            import_materials(gedp, argc, argv);
-        }
+        import_from_file(gedp, argc, argv);
     } else if (scmd == MATERIAL_GET) {
         // get routine
         get_material(gedp, argc, argv);
