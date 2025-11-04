@@ -57,10 +57,9 @@ static const char *usage = " help \n\n"
     "material get {object} [propertyGroupName] {propertyName}\n\n"
     "material set {object} [propertyGroupName] {propertyName} [newPropertyValue]\n\n"
     "material remove {object} [propertyGroupName] {propertyName}\n\n"
-    "material import [matprop] [--id | --name] {fileName}\n\n"
+    "material import [--id | --name] {fileName}\n\n"
     "  --id       - Specifies the id the material will be imported with\n\n"
     "  --name     - Specifies the name the material will be imported with\n\n"
-    "  matprop     - Specifies the processing type for the file\n\n"
     "Note: Object, property, and group names are case sensitive.";
 
 static const char *possibleProperties = "The following are properties of material objects that can be set/modified: \n"
@@ -332,11 +331,11 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
     int i, j;
     struct db_i *db_i; // Declare db_i at the top of the function
 
-    if (argc < 4) {
-        bu_vls_printf(gedp->ged_result_str, "ERROR: Not enough arguments.\nUsage: material import matprop <filename>\n");
+    if (argc < 3) {
+        bu_vls_printf(gedp->ged_result_str, "ERROR: Not enough arguments.\nUsage: material import --type matprop <filename>\n");
         return BRLCAD_ERROR;
     }
-    fileName = argv[3]; // material import matprop <filename>
+    fileName = argv[2]; // material import --type matprop  <filename>
 
     // 1. Open the file
     file = fopen(fileName, "r");
@@ -456,8 +455,8 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
 
         // Create the material object, passing the AVS containers filled with the properties
         db_i = mk_material(wdbp, 
-            mat->name, 
-            mat->name, 
+            bu_vls_cstr(&mat->name), 
+            bu_vls_cstr(&mat->name), 
             "", 
             "", 
             &physicalProperties, 
@@ -503,8 +502,10 @@ import_from_file(struct ged *gedp, int argc, const char *argv[])
     argc = opt_ret;
 
     if (BU_STR_EQUAL(bu_vls_cstr(&file_type), "matprop")) {
+        bu_log("import matprop file");
         import_matprop_file(gedp, argc, argv);
     } else {
+        bu_log("import materials");
         import_materials(gedp, argc, argv);
     }
 }
@@ -806,6 +807,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
         destroy_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_IMPORT) {
         // import routine
+        bu_log("import from file working in the core");
         import_from_file(gedp, argc, argv);
     } else if (scmd == MATERIAL_GET) {
         // get routine
