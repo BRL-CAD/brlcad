@@ -317,24 +317,6 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
     return 0;
 }
 
-static int
-import_from_file(struct ged *gedp, int argc, const char *argv[])
-{
-    struct bu_vls file_type = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc d[2];
-    BU_OPT(d[0],  "", "type",         "file_type",         &bu_opt_vls,       &file_type, "Import file based on file type");
-    BU_OPT_NULL(d[1]);
-
-    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
-    argc = opt_ret;
-
-    if (BU_STR_EQUAL(bu_vls_cstr(&file_type), "matprop")) {
-        import_matprop_file(gedp, argc, argv);
-    } else {
-        import_materials(gedp, argc, argv);
-    }
-}
-
 /*
  * Routine handles the import of a .matprop file.
  * Usage: material import matprop <filename>
@@ -376,30 +358,126 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
 
     // 4. Loop through parsed materials and create BRL-CAD objects
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    struct bu_attribute_value_set physicalProperties;
-	struct bu_attribute_value_set mechanicalProperties;
-	struct bu_attribute_value_set opticalProperties;
-	struct bu_attribute_value_set thermalProperties;
-
-	bu_avs_init_empty(&physicalProperties);
-	bu_avs_init_empty(&mechanicalProperties);
-	bu_avs_init_empty(&opticalProperties);
-	bu_avs_init_empty(&thermalProperties);
+    
     for (i = 0; i < result.mat_count; i++) {
         Material* mat = &result.materials[i];
         
-        // add the key values to the bu_avs container, loop thru the materials and properties
-        db_i = mk_material(wdbp, mat->name, mat->name, "", "", &physicalProperties, &mechanicalProperties, &opticalProperties, &thermalProperties);
+        // Initialize AVS containers for the current material
+        struct bu_attribute_value_set physicalProperties;
+        struct bu_attribute_value_set mechanicalProperties;
+        struct bu_attribute_value_set opticalProperties;
+        struct bu_attribute_value_set thermalProperties;
+
+        bu_avs_init_empty(&physicalProperties);
+        bu_avs_init_empty(&mechanicalProperties);
+        bu_avs_init_empty(&opticalProperties);
+        bu_avs_init_empty(&thermalProperties);
+
+        // Known optical keys
+        const char* known_optical_keys[] = {
+            "transparency",
+            "reflectivity",
+            "index_of_refraction",
+            "shine",
+            "emission"
+        };
+        const int known_optical_count = sizeof(known_optical_keys) / sizeof(known_optical_keys[0]);
+
+        // Known mechanical keys
+        const char* known_mechanical_keys[] = {
+            "youngs_modulus",
+            "poissons_ratio",
+            "hardness",
+            "tensile_strength",
+            "yield_strength",
+            "density",
+            "brinell_hardness",
+            "ultimate_strength",
+            "shear_strength",
+            "bulk_modulus"
+        };
+        const int known_mechanical_count = sizeof(known_mechanical_keys) / sizeof(known_mechanical_keys[0]);
+
+        // Known thermal keys
+        const char* known_thermal_keys[] = {
+            "thermal_conductivity",
+            "specific_heat",
+            "melting_point",
+            "boiling_point",
+            "thermal_expansion"
+        };
+        const int known_thermal_count = sizeof(known_thermal_keys) / sizeof(known_thermal_keys[0]);
+
+        // Loop through all properties
+        for (j = 0; j < mat->prop_count; j++) {
+            Property* prop = &mat->properties[j];
+
+            // Check if the property key is a known optical property
+            int is_known_optical = 0;
+            for (int k = 0; k < known_optical_count; k++) {
+                if (BU_STR_EQUIV(prop->key, known_optical_keys[k])) {
+                    is_known_optical = 1;
+                    break;
+                }
+            }
+            // Check if the property key is a known mechanical property
+            int is_known_mechanical = 0;
+            if (!is_known_optical) {
+                for (int k = 0; k < known_mechanical_count; k++) {
+                    if (BU_STR_EQUIV(prop->key, known_mechanical_keys[k])) {
+                        is_known_mechanical = 1;
+                        break;
+                    }
+                }
+            }
+        
+            // Check if the property key is a known thermal property
+            int is_known_thermal = 0;
+            if (!is_known_optical && !is_known_mechanical) {
+                for (int k = 0; k < known_thermal_count; k++) {
+                    if (BU_STR_EQUIV(prop->key, known_thermal_keys[k])) {
+                        is_known_thermal = 1;
+                        break;
+                    }
+                }
+            }
+
+            // Assign to the correct AVS container
+            if (is_known_optical) {
+                bu_avs_add(&opticalProperties, prop->key, prop->value);
+            } else if (is_known_mechanical) {
+                bu_avs_add(&mechanicalProperties, prop->key, prop->value);
+            } else if (is_known_thermal) {
+                bu_avs_add(&thermalProperties, prop->key, prop->value);
+            } else {
+                bu_avs_add(&physicalProperties, prop->key, prop->value);
+            }
+        }
+
+        // Create the material object, passing the AVS containers filled with the properties
+        db_i = mk_material(wdbp, 
+            mat->name, 
+            mat->name, 
+            "", 
+            "", 
+            &physicalProperties, 
+            &mechanicalProperties, 
+            &opticalProperties, 
+            &thermalProperties
+        );
+        
+        // Free the AVS containers after use
+        bu_avs_free(&physicalProperties);
+        bu_avs_free(&mechanicalProperties);
+        bu_avs_free(&opticalProperties);
+        bu_avs_free(&thermalProperties);
+
         if (db_i == NULL) {
             bu_vls_printf(gedp->ged_result_str, "ERROR: Could not create material object '%s'\n", mat->name);
             continue; // Skip and try next material
-        // }
+        }
 
-        // // 5. Loop through properties and set them
-        // for (j = 0; j < mat->prop_count; j++) {
-        //     Property* prop = &mat->properties[j];
-        // }
-        // import_count++;
+        import_count++;
     }
 
     // 6. Free all memory used by the parser result
@@ -411,6 +489,24 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
     //ged_update_views(gedp, (long)0); 
 
     return BRLCAD_OK;
+}
+
+static int
+import_from_file(struct ged *gedp, int argc, const char *argv[])
+{
+    struct bu_vls file_type = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc d[2];
+    BU_OPT(d[0],  "", "type",         "file_type",         &bu_opt_vls,       &file_type, "Import file based on file type");
+    BU_OPT_NULL(d[1]);
+
+    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    argc = opt_ret;
+
+    if (BU_STR_EQUAL(bu_vls_cstr(&file_type), "matprop")) {
+        import_matprop_file(gedp, argc, argv);
+    } else {
+        import_materials(gedp, argc, argv);
+    }
 }
 
 static void
