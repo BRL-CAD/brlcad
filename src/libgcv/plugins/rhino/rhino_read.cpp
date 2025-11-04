@@ -459,19 +459,27 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Geometry *geometry
     return 1;
 }
 
-std::string create_thirdgen_material(const ON_3dmObjectAttributes *attributes, const ONX_Model &model, rt_wdb& wdb)
-{
+std::string get_material_name(const ON_3dmObjectAttributes *attributes, const ONX_Model &model, rt_wdb& wdb){
 	const ON_Material *material = ON_Material::Cast(model.MaterialFromAttributes(*attributes).ModelComponent());
 	if (material == nullptr){
-		std::cout << "No material object passed" << std::endl;
 		return "";
 	}
-	// ToPhysicallyBased not possible as material & attributes are provided as const
+	return clean_name(material->Name(), "default_material");
+}
+
+std::string create_thirdgen_material(const gcv_opts& gcv_options, const ON_Material *material, const ONX_Model &model, rt_wdb& wdb)
+{
+	ON_Material *pbr_material = new ON_Material(*material);
+	if (!material->IsPhysicallyBased()){
+		pbr_material->ToPhysicallyBased();
+	}
 
 	std::string name = clean_name(material->Name(), "default_material");
 
 	if (db_lookup(wdb.dbip, name.c_str(), false) != NULL) {
-        std::cout << "Material '" << name << "' already exists in the database" << std::endl;
+		if (gcv_options.verbosity_level) {
+			bu_log("Material %s has already been created\n", name.c_str());
+		}
         return name;
     }
 
@@ -488,19 +496,19 @@ std::string create_thirdgen_material(const ON_3dmObjectAttributes *attributes, c
 	// Only optical properties are set on ON_Materials
 	struct bu_vls double_to_cstr = BU_VLS_INIT_ZERO;
 
-	bu_vls_sprintf(&double_to_cstr, "%.4f", material->m_transparency);
+	bu_vls_sprintf(&double_to_cstr, "%.4f", pbr_material->m_transparency);
 	bu_avs_add(&opticalProperties, "transparency", bu_vls_cstr(&double_to_cstr));
 
-	bu_vls_sprintf(&double_to_cstr, "%.4f", material->m_reflectivity);
+	bu_vls_sprintf(&double_to_cstr, "%.4f", pbr_material->m_reflectivity);
 	bu_avs_add(&opticalProperties, "reflectivity", bu_vls_cstr(&double_to_cstr));
 
-	bu_vls_sprintf(&double_to_cstr, "%.4f", material->m_index_of_refraction);
+	bu_vls_sprintf(&double_to_cstr, "%.4f", pbr_material->m_index_of_refraction);
 	bu_avs_add(&opticalProperties, "index_of_refraction", bu_vls_cstr(&double_to_cstr));
 
-	bu_vls_sprintf(&double_to_cstr, "%.4f", material->m_shine);
+	bu_vls_sprintf(&double_to_cstr, "%.4f", pbr_material->m_shine);
 	bu_avs_add(&opticalProperties, "shine", bu_vls_cstr(&double_to_cstr));
 
-	bu_vls_sprintf(&double_to_cstr, "%.4f", material->m_emission);
+	bu_vls_sprintf(&double_to_cstr, "%.4f", pbr_material->m_emission);
 	bu_avs_add(&opticalProperties, "emission", bu_vls_cstr(&double_to_cstr));
 
     mk_material(&wdb,
@@ -514,6 +522,7 @@ std::string create_thirdgen_material(const ON_3dmObjectAttributes *attributes, c
 		&thermalProperties
 	);
 
+	delete pbr_material;
 	return name;
 }
 
@@ -650,6 +659,20 @@ void
 import_model_objects(const gcv_opts& gcv_options, rt_wdb& wdb, ONX_Model& model,
 		     std::unordered_map<std::string, std::string>& uuid_to_names)
 {
+	// Read and create all existing materials
+	ONX_ModelComponentIterator mat_it(model, ON_ModelComponent::Type::RenderMaterial);
+    for (ON_ModelComponentReference mat_cr = mat_it.FirstComponentReference(); false == mat_cr.IsEmpty(); mat_cr = mat_it.NextComponentReference())
+    {
+        const ON_Material *material = ON_Material::Cast(mat_cr.ModelComponent());
+        if (material) {
+            std::string material_name = clean_name(material->Name(), "default_material");
+            if (gcv_options.verbosity_level) {
+                bu_log("Found and attempting to create existing material: %s\n", material_name.c_str());
+            }
+            std::string thirdgen_material_name = create_thirdgen_material(gcv_options, material, model, wdb);
+        }
+    }
+
     size_t total_count = 0;
     size_t success_count = 0;
     std::unordered_map<std::string, ON_UUID> to_remove;
@@ -670,7 +693,7 @@ import_model_objects(const gcv_opts& gcv_options, rt_wdb& wdb, ONX_Model& model,
 
 	const ON_3dmObjectAttributes *attributes = mg->Attributes(nullptr);
 	get_object_material(attributes, model, shader, rgb, own_shader, own_rgb, wdb);
-	std::string thirdgen_material_name = create_thirdgen_material(attributes, model, wdb);
+	std::string material_name = get_material_name(attributes, model, wdb);
 
 	ON_String id;
 	ON_UuidToString(mg->Id(), id);
@@ -686,8 +709,8 @@ import_model_objects(const gcv_opts& gcv_options, rt_wdb& wdb, ONX_Model& model,
 		std::vector<std::string> members_vec;
 		members_vec.push_back(member_name);
 		write_comb(wdb, name, members_vec, NULL, own_shader ? shader.first.c_str() : NULL, own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
-		if (thirdgen_material_name != ""){
-			assign_thirdgen_material(name, thirdgen_material_name, wdb);
+		if (material_name != ""){
+			assign_thirdgen_material(name, material_name, wdb);
 		}
 	    } else
                 to_remove.insert(std::make_pair(member_name, mg->Id()));
