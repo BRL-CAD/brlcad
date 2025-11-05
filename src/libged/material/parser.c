@@ -23,22 +23,18 @@ typedef struct {
 
 // --- Error Formatting Helper ---
 
-/**
- * @brief Sets the error message string, freeing any old one.
- * Uses printf-style formatting.
- */
+// Sets the error message string, freeing any old one.
 static void set_error(char** error_ptr, const char* format, ...) {
     if (error_ptr == NULL) return;
-    free(*error_ptr); // Free old error, if any
+    free(*error_ptr);
 
     va_list args;
     va_start(args, format);
-    int size = vsnprintf(NULL, 0, format, args); // Get required size
+    int size = vsnprintf(NULL, 0, format, args);
     va_end(args);
 
     *error_ptr = (char*)malloc(size + 1);
-    if (*error_ptr == NULL) {
-        // Oh dear, out of memory while trying to report an error
+    if (*error_ptr == NULL) { // out of memory while trying to report an error
         return; 
     }
 
@@ -49,9 +45,7 @@ static void set_error(char** error_ptr, const char* format, ...) {
 
 // --- Memory Management Helpers ---
 
-/**
- * @brief Safe string duplication. Aborts on failure.
- */
+//Safe string duplication. Aborts on failure.
 static char* safe_strdup(const char* s, char** error_ptr) {
     char* new_str = strdup(s);
     if (new_str == NULL) {
@@ -60,10 +54,8 @@ static char* safe_strdup(const char* s, char** error_ptr) {
     return new_str;
 }
 
-/**
- * @brief Adds a property to an internal list, resizing if needed.
- * Takes ownership of key and value pointers.
- */
+// Adds a property to an internal list, resizing if needed.
+// Takes ownership of key and value pointers.
 static bool add_property(InternalPropertyList* list, char* key, char* value, char** error_ptr) {
     if (list->count >= list->capacity) {
         int new_cap = (list->capacity == 0) ? 8 : list->capacity * 2;
@@ -83,10 +75,8 @@ static bool add_property(InternalPropertyList* list, char* key, char* value, cha
     return true;
 }
 
-/**
- * @brief Adds a material to the internal list, resizing if needed.
- * Takes ownership of the material's internal pointers (name, properties).
- */
+// Adds a material to the internal list, resizing if needed.
+// Takes ownership of the material's internal pointers (name, properties).
 static bool add_material(InternalMaterialList* list, Material mat, char** error_ptr) {
     if (list->count >= list->capacity) {
         int new_cap = (list->capacity == 0) ? 4 : list->capacity * 2;
@@ -103,9 +93,7 @@ static bool add_material(InternalMaterialList* list, Material mat, char** error_
     return true;
 }
 
-/**
- * @brief Frees the heap-allocated contents of a single material.
- */
+// Frees the heap-allocated contents of a single material.
 static void free_material_contents(Material* mat) {
     if (mat == NULL) return;
     free(mat->name);
@@ -124,9 +112,7 @@ static void free_material_contents(Material* mat) {
 // A simple 1-character lookahead buffer for the parser.
 static int g_lookahead = -1;
 
-/**
- * @brief Gets the next character from the stream, skipping comments.
- */
+// Gets the next character from the stream, skipping comments.
 static int next_char(FILE* input) {
     if (g_lookahead != -1) {
         int c = g_lookahead;
@@ -136,24 +122,18 @@ static int next_char(FILE* input) {
     
     int c = fgetc(input);
     if (c == '#') {
-        // Comment, read until newline or EOF
         while ((c = fgetc(input)) != EOF && c != '\n');
-        // If we hit newline, return it. If EOF, return EOF.
         return (c == EOF) ? EOF : '\n';
     }
     return c;
 }
 
-/**
- * @brief Puts a character back into the stream (1-char buffer).
- */
+// Puts a character back into the stream (1-char buffer).
 static void unget_char(int c) {
     g_lookahead = c;
 }
 
-/**
- * @brief Reads a multi-line quoted value from the stream.
- */
+// Reads a multi-line quoted value from the stream.
 static bool get_quoted_value(FILE* input, char* buffer, int max_len, char** error_ptr) {
     int i = 0;
     int c;
@@ -173,32 +153,26 @@ static bool get_quoted_value(FILE* input, char* buffer, int max_len, char** erro
     return false;
 }
 
-/**
- * @brief Gets the next token from the stream.
- * A token is one of: '{', '}', '=', a quoted string, or a word.
- * Returns true on success, false on EOF or error.
- */
+// Gets the next token from the stream.
+// A token is one of: '{', '}', '=', a quoted string, or a word.
+// Returns true on success, false on EOF or error.
 static bool get_token(FILE* input, char* buffer, int max_len, char** error_ptr) {
     int c;
     
-    // 1. Skip whitespace
     while ((c = next_char(input)) != EOF && isspace(c));
     
-    if (c == EOF) return false; // End of file
+    if (c == EOF) return false;
 
-    // 2. Check for single-char tokens
     if (c == '{' || c == '}' || c == '=') {
         buffer[0] = (char)c;
         buffer[1] = '\0';
         return true;
     }
 
-    // 3. Check for quoted string
     if (c == '"') {
         return get_quoted_value(input, buffer, max_len, error_ptr);
     }
 
-    // 4. Must be a regular token (name or value)
     int i = 0;
     while (c != EOF && !isspace(c) && c != '{' && c != '}' && c != '=') {
         if (i >= max_len - 1) {
@@ -209,7 +183,6 @@ static bool get_token(FILE* input, char* buffer, int max_len, char** error_ptr) 
         c = next_char(input);
     }
     
-    // Put back the delimiter we just read
     if (c != EOF) {
         unget_char(c);
     }
@@ -220,10 +193,8 @@ static bool get_token(FILE* input, char* buffer, int max_len, char** error_ptr) 
 
 // --- Validation ---
 
-/**
- * @brief Validates a property key. (Replaces regex)
- * Rules: Starts with [a-zA-Z_], followed by [a-zA-Z0-9_]*
- */
+// Validates a property key. (Replaces regex)
+// Rules: Starts with [a-zA-Z_], followed by [a-zA-Z0-9_]*
 static bool is_valid_key(const char* key) {
     if (key == NULL || key[0] == '\0') return false;
     
@@ -235,9 +206,7 @@ static bool is_valid_key(const char* key) {
     return true;
 }
 
-/**
- * @brief Checks if a property key already exists. O(n) scan.
- */
+// Checks if a property key already exists. O(n) scan.
 static bool property_exists(const InternalPropertyList* list, const char* key) {
     for (int i = 0; i < list->count; i++) {
         if (strcmp(list->properties[i].key, key) == 0) {
@@ -256,7 +225,7 @@ ParseResult parse_matprop(FILE* input) {
     char token_buf[1024];  // Buffer for general tokens
     char value_buf[8192];  // Larger buffer for (multiline) values
     
-    g_lookahead = -1; // Clear lookahead buffer
+    g_lookahead = -1; 
     
     Material current_material = {0};
     InternalPropertyList current_props = {0};
@@ -266,28 +235,23 @@ ParseResult parse_matprop(FILE* input) {
     // which should be the material name.
     while (get_token(input, token_buf, 1024, &result.error_message)) {
         
-        // --- 1. Expect Material Name ---
         current_material.name = safe_strdup(token_buf, &result.error_message);
         if (result.error_message) goto cleanup;
 
-        // --- 2. Expect '{' ---
         if (!get_token(input, token_buf, 1024, &result.error_message) || strcmp(token_buf, "{") != 0) {
             set_error(&result.error_message, "Parsing error: Expected '{' after material name '%s'", current_material.name);
             goto cleanup;
         }
         
         bool found_closing_brace = false;
-        
-        // --- 3. Parse Properties ---
+
         while (get_token(input, token_buf, 1024, &result.error_message)) {
-            
-            // Check for '}'
+
             if (strcmp(token_buf, "}") == 0) {
                 found_closing_brace = true;
                 break;
             }
-            
-            // This token must be a property key
+
             if (!is_valid_key(token_buf)) {
                 set_error(&result.error_message, "Parsing error: Invalid property key '%s' in material '%s'", token_buf, current_material.name);
                 goto cleanup;
@@ -299,13 +263,11 @@ ParseResult parse_matprop(FILE* input) {
             key = safe_strdup(token_buf, &result.error_message);
             if (result.error_message) goto cleanup;
 
-            // Expect '='
             if (!get_token(input, token_buf, 1024, &result.error_message) || strcmp(token_buf, "=") != 0) {
                 set_error(&result.error_message, "Parsing error: Expected '=' after key '%s' in material '%s'", key, current_material.name);
                 goto cleanup;
             }
             
-            // Expect value
             if (!get_token(input, value_buf, 8192, &result.error_message)) {
                 set_error(&result.error_message, "Parsing error: Expected a value after '%s =' in material '%s'", key, current_material.name);
                 goto cleanup;
@@ -313,36 +275,30 @@ ParseResult parse_matprop(FILE* input) {
             
             char* value = safe_strdup(value_buf, &result.error_message);
             if (result.error_message) goto cleanup;
-            
-            // Add the property (takes ownership of key and value)
+
             if (!add_property(&current_props, key, value, &result.error_message)) {
                 goto cleanup;
             }
             key = NULL; // Ownership transferred
         }
 
-        // --- 4. Finalize Material ---
         if (!found_closing_brace) {
             set_error(&result.error_message, "Parsing error: Missing closing '}' for material '%s'", current_material.name);
             goto cleanup;
         }
 
         if (current_props.count == 0) {
-            // Note: The C++ version threw an error here. We'll match it.
             set_error(&result.error_message, "Parsing error: Material '%s' has no properties defined.", current_material.name);
             goto cleanup;
         }
         
-        // Finalize the material struct
         current_material.properties = current_props.properties;
         current_material.prop_count = current_props.count;
         
-        // Add to the final list (takes ownership of pointers)
         if (!add_material(&mat_list, current_material, &result.error_message)) {
             goto cleanup;
         }
         
-        // Reset for next material
         current_material = (Material){0};
         current_props = (InternalPropertyList){0};
     }
@@ -369,7 +325,6 @@ cleanup:
         result.mat_count = 0;
     } else {
         // Success: assign the final list to the result
-        // We could shrink-to-fit here, but it's not strictly necessary.
         result.materials = mat_list.materials;
         result.mat_count = mat_list.count;
     }
@@ -389,7 +344,6 @@ void free_parse_result(ParseResult* result) {
     }
     free(result->materials);
     
-    // Zero out the struct to prevent double-free
     *result = (ParseResult){0};
 }
 

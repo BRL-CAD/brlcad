@@ -316,10 +316,8 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
     return 0;
 }
 
-/*
- * Routine handles the import of a .matprop file.
- * Usage: material import matprop <filename>
- */
+// Import matprop file
+// material import --type matprop  <filename>
 static int
 import_matprop_file(struct ged *gedp, int argc, const char *argv[])
 {
@@ -329,39 +327,34 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
     ParseResult result;
     int import_count = 0;
     int i, j;
-    struct db_i *db_i; // Declare db_i at the top of the function
 
     if (argc < 3) {
         bu_vls_printf(gedp->ged_result_str, "ERROR: Not enough arguments.\nUsage: material import --type matprop <filename>\n");
         return BRLCAD_ERROR;
     }
-    fileName = argv[2]; // material import --type matprop  <filename>
+    fileName = argv[2]; 
 
-    // 1. Open the file
     file = fopen(fileName, "r");
     if (file == NULL) {
         bu_vls_printf(gedp->ged_result_str, "ERROR: Could not open file '%s'\n", fileName);
         return BRLCAD_ERROR;
     }
 
-    // 2. Call your C parser from parser.c
+    // parser from parser.c
     result = parse_matprop(file);
-    fclose(file); // File is read, close it now.
+    fclose(file);
 
-    // 3. Check for parsing errors
     if (result.error_message) {
         bu_vls_printf(gedp->ged_result_str, "ERROR: Failed to parse '%s':\n%s\n", fileName, result.error_message);
         free_parse_result(&result); // MUST free memory even on error
         return BRLCAD_ERROR;
     }
 
-    // 4. Loop through parsed materials and create BRL-CAD objects
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     
     for (i = 0; i < result.mat_count; i++) {
         Material* mat = &result.materials[i];
         
-        // Initialize AVS containers for the current material
         struct bu_attribute_value_set physicalProperties;
         struct bu_attribute_value_set mechanicalProperties;
         struct bu_attribute_value_set opticalProperties;
@@ -372,7 +365,6 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
         bu_avs_init_empty(&opticalProperties);
         bu_avs_init_empty(&thermalProperties);
 
-        // Known optical keys
         const char* known_optical_keys[] = {
             "transparency",
             "reflectivity",
@@ -382,7 +374,6 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
         };
         const int known_optical_count = sizeof(known_optical_keys) / sizeof(known_optical_keys[0]);
 
-        // Known mechanical keys
         const char* known_mechanical_keys[] = {
             "youngs_modulus",
             "poissons_ratio",
@@ -397,7 +388,6 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
         };
         const int known_mechanical_count = sizeof(known_mechanical_keys) / sizeof(known_mechanical_keys[0]);
 
-        // Known thermal keys
         const char* known_thermal_keys[] = {
             "thermal_conductivity",
             "specific_heat",
@@ -407,7 +397,6 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
         };
         const int known_thermal_count = sizeof(known_thermal_keys) / sizeof(known_thermal_keys[0]);
 
-        // Loop through all properties
         for (j = 0; j < mat->prop_count; j++) {
             Property* prop = &mat->properties[j];
 
@@ -453,7 +442,6 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
             }
         }
 
-        // Create the material object, passing the AVS containers filled with the properties
         int material_creation = mk_material(wdbp, 
             mat->name, 
             mat->name, 
@@ -465,7 +453,6 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
             &thermalProperties
         );
         
-        // Free the AVS containers after use
         bu_avs_free(&physicalProperties);
         bu_avs_free(&mechanicalProperties);
         bu_avs_free(&opticalProperties);
@@ -479,19 +466,15 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
         import_count++;
     }
 
-    // 6. Free all memory used by the parser result
     free_parse_result(&result);
 
     bu_vls_printf(gedp->ged_result_str, "Successfully imported %d new materials from '%s'.\n", import_count, fileName);
-
-    // Tell BRL-CAD's UI to update to show new materials
-    //ged_update_views(gedp, (long)0); 
 
     return BRLCAD_OK;
 }
 
 static int
-import_from_file(struct ged *gedp, int argc, const char *argv[])
+import_file_type(struct ged *gedp, int argc, const char *argv[])
 {
     struct bu_vls file_type = BU_VLS_INIT_ZERO;
     struct bu_opt_desc d[2];
@@ -808,7 +791,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
     } else if (scmd == MATERIAL_IMPORT) {
         // import routine
         bu_log("import from file working in the core");
-        import_from_file(gedp, argc, argv);
+        import_file_type(gedp, argc, argv);
     } else if (scmd == MATERIAL_GET) {
         // get routine
         get_material(gedp, argc, argv);
