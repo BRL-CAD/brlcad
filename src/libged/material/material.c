@@ -454,9 +454,9 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
         }
 
         // Create the material object, passing the AVS containers filled with the properties
-        db_i = mk_material(wdbp, 
-            bu_vls_cstr(&mat->name), 
-            bu_vls_cstr(&mat->name), 
+        int material_creation = mk_material(wdbp, 
+            mat->name, 
+            mat->name, 
             "", 
             "", 
             &physicalProperties, 
@@ -471,7 +471,7 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
         bu_avs_free(&opticalProperties);
         bu_avs_free(&thermalProperties);
 
-        if (db_i == NULL) {
+        if (material_creation == 1) {
             bu_vls_printf(gedp->ged_result_str, "ERROR: Could not create material object '%s'\n", mat->name);
             continue; // Skip and try next material
         }
