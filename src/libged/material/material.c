@@ -45,6 +45,7 @@ typedef enum {
     MATERIAL_GET,
     MATERIAL_HELP,
     MATERIAL_IMPORT,
+    MATERIAL_EXPORT,
     MATERIAL_REMOVE,
     MATERIAL_SET,
     ATTR_UNKNOWN
@@ -60,6 +61,7 @@ static const char *usage = " help \n\n"
     "material import [--id | --name] {fileName}\n\n"
     "  --id       - Specifies the id the material will be imported with\n\n"
     "  --name     - Specifies the name the material will be imported with\n\n"
+    "material export {fileName}\n\n"
     "Note: Object, property, and group names are case sensitive.";
 
 static const char *possibleProperties = "The following are properties of material objects that can be set/modified: \n"
@@ -93,6 +95,8 @@ get_material_cmd(const char* arg)
 	return MATERIAL_IMPORT;
     else if (BU_STR_EQUIV("remove", arg))
 	return MATERIAL_REMOVE;
+    else if (BU_STR_EQUIV("export", arg))
+    return MATERIAL_EXPORT;
     else
 	return ATTR_UNKNOWN;
 }
@@ -316,6 +320,65 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
     return 0;
 }
 
+// Export all materials in a file to the filename provided
+static int
+export_materials(struct ged *gedp, int argc, const char *argv[])
+{
+    printf("material: export_matprop_file");
+    const char* fileName;
+    FILE* file;
+
+    if (argc < 3) {
+        bu_vls_printf(gedp->ged_result_str, "ERROR: Not enough arguments.\nUsage: material export <filename>\n");
+        return BRLCAD_ERROR;
+    }
+    fileName = argv[2]; 
+
+    file = fopen(fileName, "w");
+    if (file == NULL) {
+        bu_vls_printf(gedp->ged_result_str, "ERROR: Could not open file '%s'\n", fileName);
+        return BRLCAD_ERROR;
+    }
+
+    for (int i = 0; i < RT_DBNHASH; i++) {
+		for (struct directory *dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+            // Skip non-BRLCAD objects
+            if (!(dp->d_major_type == DB5_MAJORTYPE_BRLCAD)) {
+                continue;
+            }
+            
+            struct rt_db_internal intern;
+            if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+                if (BU_STR_EQUIV(intern.idb_meth->ft_label, "material")) {
+                    fprintf(file, "%s\n{\n", dp->d_namep);
+                    struct rt_material_internal *material = (struct rt_material_internal *)intern.idb_ptr;
+
+                    struct bu_attribute_value_set* avs_list[] = {
+                        &material->opticalProperties,
+                        &material->thermalProperties,
+                        &material->physicalProperties,
+                        &material->mechanicalProperties,
+                    };
+
+                    for (int j = 0; j < 4; j++) {
+                        struct bu_attribute_value_set *avs = avs_list[j];
+                        for (size_t i = 0; i < avs->count; i++) {
+                            const char *key = avs->avp[i].name;
+                            const char *value = avs->avp[i].value;
+                            fprintf(file, "\t%s = %s\n", key, value);
+                        }
+                    }
+                    fprintf(file, "}\n\n");
+                }
+                rt_db_free_internal(&intern);
+            }
+        }
+    }
+    fclose(file);
+    bu_vls_printf(gedp->ged_result_str, "Exported materials to %s\n", fileName);
+    return BRLCAD_OK;
+}
+
 // Import matprop file
 // material import --type matprop  <filename>
 static int
@@ -488,6 +551,7 @@ import_file_type(struct ged *gedp, int argc, const char *argv[])
     } else {
         import_materials(gedp, argc, argv);
     }
+    return BRLCAD_OK;
 }
 
 static void
@@ -788,7 +852,11 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
     } else if (scmd == MATERIAL_IMPORT) {
         // import routine
         import_file_type(gedp, argc, argv);
-    } else if (scmd == MATERIAL_GET) {
+    } else if (scmd == MATERIAL_EXPORT){
+        //export routine
+        export_materials(gedp, argc, argv);
+    }
+    else if (scmd == MATERIAL_GET) {
         // get routine
         get_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_HELP) {
