@@ -321,7 +321,6 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 static int
 import_matprop_file(struct ged *gedp, int argc, const char *argv[])
 {
-    printf("material: import_matprop_file");
     const char* fileName;
     FILE* file;
     ParseResult result;
@@ -485,10 +484,8 @@ import_file_type(struct ged *gedp, int argc, const char *argv[])
     argc = opt_ret;
 
     if (BU_STR_EQUAL(bu_vls_cstr(&file_type), "matprop")) {
-        bu_log("import matprop file");
         import_matprop_file(gedp, argc, argv);
     } else {
-        bu_log("import materials");
         import_materials(gedp, argc, argv);
     }
 }
@@ -790,7 +787,6 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
         destroy_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_IMPORT) {
         // import routine
-        bu_log("import from file working in the core");
         import_file_type(gedp, argc, argv);
     } else if (scmd == MATERIAL_GET) {
         // get routine
