@@ -1368,8 +1368,6 @@ MakeTreadSolid(struct rt_wdb (*file), char *suffix,
     (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_SUBTRACT);
     bu_vls_sprintf(&str, "Ellipse2tread%s.s", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_UNION);
-    bu_vls_sprintf(&str, "InnerTreadCut%s.s", suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_SUBTRACT);
     bu_vls_sprintf(&str, "Ellipse4tread%s.s", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_UNION);
     bu_vls_sprintf(&str, "InnerTreadCut%s.s", suffix);
