@@ -2242,9 +2242,7 @@ if(TARGET rt)
 endif(TARGET rt)
 
 # require geometry conversion tools
-if(TARGET asc2g)
-  verbose_add_subdirectory("" db)
-endif(TARGET asc2g)
+verbose_add_subdirectory("" db)
 
 # docs after we're all done with build tasks
 # NOTE: doc/docbook/resources is added separately (earlier)

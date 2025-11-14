@@ -24,6 +24,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <cstring>
 
 #include "bio.h"
 
@@ -32,137 +33,195 @@
 #include "gcv/api.h"
 #include "gcv/util.h"
 
-// TODO - pinewood.asc exposes a defect in this importer - we need to be able
-// to support multi-line quoted strings as well as multi-line bracket commands.
-// The brep object serializations are spread over many lines, but are part of a
-// single command...
+// NOTE: This importer must support multi-line quoted strings and multi-line
+// brace blocks. Large brep serializations can span thousands of lines.
 
-static int
-check_bracket_balance(int *ocnt, int *ccnt, std::string &s)
+/* ----------------------------------------------------------------
+ * Incremental parse state for Tcl list completeness tracking.
+ * We avoid rescanning the whole accumulated buffer for each new line:
+ * O(total_length) rather than O(total_length^2).
+ * ---------------------------------------------------------------- */
+struct asc_parse_state {
+    bool in_quote = false;
+    bool escape = false;
+    int  brace_depth = 0;
+    bool saw_top_level_quote = false; /* true if we started a top-level quoted
+					 string (brace_depth==0 when it opened) */
+};
+
+/* Scan a fragment updating parse state. */
+static void
+asc_scan_fragment(asc_parse_state &st, const char *frag)
 {
-    for (size_t i = 0; i < s.length(); i++) {
-	char c = s.at(i);
-	if (c == '{')
-	    (*ocnt)++;
-	if (c == '}')
-	    (*ccnt)++;
+    if (!frag || !*frag) return;
+
+    const char *p = frag;
+
+    /* If we are in a large top-level quoted payload (brace_depth==0, in_quote,
+     * and saw_top_level_quote) we can use a faster scan: look for an unescaped
+     * closing quote without analyzing braces. */
+    if (st.in_quote && st.brace_depth == 0 && st.saw_top_level_quote) {
+	while (*p) {
+	    char c = *p++;
+	    if (st.escape) {
+		st.escape = false;
+		continue;
+	    }
+	    if (c == '\\') {
+		st.escape = true;
+		continue;
+	    }
+	    if (c == '"') {
+		st.in_quote = false;
+		/* End of top-level quoted payload */
+		break;
+	    }
+	}
+	return;
     }
-    return (*ocnt == *ccnt);
+
+    /* General scanner */
+    for (; *p; ++p) {
+	char c = *p;
+
+	if (st.escape) {
+	    st.escape = false;
+	    continue;
+	}
+	if (c == '\\') {
+	    st.escape = true;
+	    continue;
+	}
+
+	if (st.in_quote) {
+	    if (c == '"') {
+		st.in_quote = false;
+	    }
+	    continue; /* braces ignored inside quotes */
+	}
+
+	if (c == '"') {
+	    st.in_quote = true;
+	    if (st.brace_depth == 0)
+		st.saw_top_level_quote = true;
+	    continue;
+	}
+	if (c == '{') {
+	    st.brace_depth++;
+	    continue;
+	}
+	if (c == '}') {
+	    if (st.brace_depth > 0)
+		st.brace_depth--;
+	    continue;
+	}
+    }
 }
 
+static inline bool
+asc_command_complete(const asc_parse_state &st)
+{
+    return (!st.in_quote && st.brace_depth == 0);
+}
 
 /* Note - in its full generality, a "v5 ASCII BRL-CAD geometry file" may
- * technically be a completely arbitrary Tcl script, given the way the
- * traditional "asc2g" program is implemented.  However, real world practice is
- * generally go use g2asc to output geometry and asc2g to read it back in,
- * rather than constructing arbitrary procedural Tcl files to be read in by
- * asc2g (such procedural routines are more properly the in the bailiwick of
- * MGED.)  For the purposes of this plugin, the set of commands considered to
- * be legal in a v5 ASCII file are those that can be written out by g2asc.  As
- * of now, the known commands to handle are:
- *
- * color
- * title
- * units
- * attr
- * put
- *
- * The asc2g importer also defines the commands "find", "dbfind" and "rm" in
- * its Tcl environment, but it is not clear that these are necessary to read
- * g2asc exports - they do not appear to be written out by g2asc.  Until we
- * find a real-world use case, those commands will not be supported in this
- * plugin.
+ * technically be a completely arbitrary Tcl script. For this plugin we
+ * assume only commands that g2asc emits: color, title, units, attr, put.
  */
 int
 asc_read_v5(
 	struct gcv_context *c,
-       	const struct gcv_opts *UNUSED(o),
+	const struct gcv_opts *UNUSED(o),
 	std::ifstream &fs
 	)
 {
-    std::string sline;
-    bu_log("Reading v5...\n");
     if (!c)
 	return -1;
+
+    bu_log("Reading v5...\n");
+
+    std::string sline;
     struct bu_vls cur_line = BU_VLS_INIT_ZERO;
-    int ocnt = 0;
-    int ccnt = 0;
-    int balanced = 0;
+    asc_parse_state pst;
     struct rt_wdb *wdbp = wdb_dbopen(c->dbip, RT_WDB_TYPE_DB_INMEM);
 
     while (std::getline(fs, sline)) {
+	/* Efficient append: avoid printf formatting overhead */
+	bu_vls_strcat(&cur_line, sline.c_str());
+	bu_vls_putc(&cur_line, '\n');
 
-	bu_vls_printf(&cur_line, "%s\n", sline.c_str());
+	/* Incremental scan only for the new line */
+	asc_scan_fragment(pst, sline.c_str());
 
-	// If we don't have balanced brackets, we're either invalid or have
-	// a multi-line command.  Assume the latter and try to read another
-	// line.
-	balanced = check_bracket_balance(&ocnt, &ccnt, sline);
-	if (!balanced) {
-	    continue;
-	} else {
-	    ocnt = 0;
-	    ccnt = 0;
+	if (!asc_command_complete(pst)) {
+	    continue; /* Need more lines */
 	}
 
+	/* We believe we have a complete command. Parse once. */
 	int list_c = 0;
 	char **list_v = NULL;
-	if (bu_argv_from_tcl_list(bu_vls_cstr(&cur_line), &list_c, (const char ***)&list_v) != 0 || list_c < 1) {
+	const char *cmd_str = bu_vls_cstr(&cur_line);
+	if (bu_argv_from_tcl_list(cmd_str, &list_c, (const char ***)&list_v) != 0 || list_c < 1) {
+	    bu_log("Skipping invalid Tcl list command: %s\n", cmd_str);
 	    bu_free(list_v, "tcl argv list");
 	    bu_vls_trunc(&cur_line, 0);
+	    pst = asc_parse_state(); /* reset state */
 	    continue;
 	}
 
-	if (BU_STR_EQUAL(list_v[0], "attr")) {
-	    rt_cmd_attr(NULL, c->dbip, list_c, (const char **)list_v);
-	    bu_free(list_v, "tcl argv list");
-	    bu_vls_trunc(&cur_line, 0);
-	    continue;
-	}
-	if (BU_STR_EQUAL(list_v[0], "color")) {
-	    rt_cmd_color(NULL, c->dbip, list_c, (const char **)list_v);
-	    bu_free(list_v, "tcl argv list");
-	    bu_vls_trunc(&cur_line, 0);
-	    continue;
-	}
-	if (BU_STR_EQUAL(list_v[0], "put")) {
-	    rt_cmd_put(NULL, wdbp, list_c, (const char **)list_v);
-	    bu_free(list_v, "tcl argv list");
-	    bu_vls_trunc(&cur_line, 0);
-	    continue;
-	}
-	if (BU_STR_EQUAL(list_v[0], "title")) {
-	    rt_cmd_title(NULL, c->dbip, list_c, (const char **)list_v);
-	    bu_free(list_v, "tcl argv list");
-	    bu_vls_trunc(&cur_line, 0);
-	    continue;
-	}
-	if (BU_STR_EQUAL(list_v[0], "units")) {
-	    rt_cmd_units(NULL, c->dbip, list_c, (const char **)list_v);
-	    bu_free(list_v, "tcl argv list");
-	    bu_vls_trunc(&cur_line, 0);
-	    continue;
+	/* Command dispatch */
+	const char *c0 = list_v[0];
+	switch (c0[0]) {
+	    case 'a':
+		if (BU_STR_EQUAL(c0, "attr")) {
+		    rt_cmd_attr(NULL, c->dbip, list_c, (const char **)list_v);
+		    break;
+		}
+		goto unknown;
+	    case 'c':
+		if (BU_STR_EQUAL(c0, "color")) {
+		    rt_cmd_color(NULL, c->dbip, list_c, (const char **)list_v);
+		    break;
+		}
+		goto unknown;
+	    case 'p':
+		if (BU_STR_EQUAL(c0, "put")) {
+		    rt_cmd_put(NULL, wdbp, list_c, (const char **)list_v);
+		    break;
+		}
+		goto unknown;
+	    case 't':
+		/* 'title' or 'units' */
+		if (c0[1] == 'i' && BU_STR_EQUAL(c0, "title")) {
+		    rt_cmd_title(NULL, c->dbip, list_c, (const char **)list_v);
+		    break;
+		} else if (c0[1] == 'u' && BU_STR_EQUAL(c0, "units")) {
+		    rt_cmd_units(NULL, c->dbip, list_c, (const char **)list_v);
+		    break;
+		}
+		goto unknown;
+	    default:
+unknown:
+		bu_log("Unknown command: %s\n", c0);
+		break;
 	}
 
-	bu_log("Unknown command: %s\n", list_v[0]);
 	bu_free(list_v, "tcl argv list");
 	bu_vls_trunc(&cur_line, 0);
+	pst = asc_parse_state(); /* reset for next command */
     }
 
+    /* Incomplete trailing command (if any) is ignored */
     bu_vls_free(&cur_line);
 
-    return balanced;
+    return 1;
 }
 
 
 static char *tclified_name=NULL;
 static size_t tclified_name_buffer_len=0;
 
-/*	This routine escapes the '{' and '}' characters in any string and returns a static buffer containing the
- *	resulting string. Used for names and db title on output.
- *
- *	NOTE: RETURN OF STATIC BUFFER
- */
+/* Escape '{' and '}' characters in any string (static buffer return). */
 char *
 tclify_name(const char *name)
 {
@@ -196,10 +255,10 @@ tclify_name(const char *name)
 
 int
 asc_write_v5(
-	    struct gcv_context *c,
-	    const struct gcv_opts *UNUSED(o),
-	    const char *dest_path
-	    )
+	struct gcv_context *c,
+	const struct gcv_opts *UNUSED(o),
+	const char *dest_path
+	)
 {
     FILE *v5ofp = NULL;
     if (!dest_path) return 0;
@@ -222,6 +281,7 @@ asc_write_v5(
     }
 
     /* write out the title and units special */
+    /* title and units */
     if (dbip->dbi_title[0]) {
 	fprintf(v5ofp, "title {%s}\n", tclify_name(dbip->dbi_title));
     } else {
@@ -235,22 +295,15 @@ asc_write_v5(
 	struct rt_db_internal	intern;
 	struct bu_attribute_value_set *avs=NULL;
 
-	/* Process the _GLOBAL object */
 	if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0) {
 	    const char *value;
 	    struct bu_attribute_value_set g_avs;
 
-	    /* get _GLOBAL attributes */
 	    if (db5_get_attributes(dbip, &g_avs, dp)) {
 		bu_log("Failed to find any attributes on _GLOBAL\n");
 		continue;
 	    }
 
-	    /* save the associated attributes of
-	     * _GLOBAL (except for title and units
-	     * which were already written out) and
-	     * regionid_colortable (which is written out below)
-	     */
 	    if (g_avs.count) {
 		int printedHeader = 0;
 		for (unsigned int i = 0; i < g_avs.count; i++) {
@@ -274,8 +327,11 @@ asc_write_v5(
 	    }
 
 	    value = bu_avs_get(&g_avs, "regionid_colortable");
-	    if (!value)
+	    if (!value) {
+		bu_avs_free(&g_avs);
 		continue;
+	    }
+
 	    /* TODO - do this without Tcl */
 #if 0
 	    size_t list_len;
@@ -308,6 +364,7 @@ asc_write_v5(
 	}
 	if (!intern.idb_meth->ft_get) {
 	    bu_log("Unable to get '%s' (unimplemented), skipping\n", dp->d_namep);
+	    rt_db_free_internal(&intern);
 	    continue;
 	}
 
@@ -351,8 +408,7 @@ asc_write_v5(
 		if (strlen(avs->avp[i].name) <= 0) {
 		    continue;
 		}
-		fprintf(v5ofp, " {%s}", avs->avp[i].name);
-		fprintf(v5ofp, " {%s}", avs->avp[i].value);
+		fprintf(v5ofp, " {%s} {%s}", avs->avp[i].name, avs->avp[i].value);
 	    }
 	    fprintf(v5ofp, "\n");
 	}
