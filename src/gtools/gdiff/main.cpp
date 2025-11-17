@@ -248,6 +248,29 @@ do_diff3(struct db_i *left_dbip, struct db_i *ancestor_dbip, struct db_i *right_
     return diff3_state;
 }
 
+int
+pdisplay_type(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    static const char *display_path_opts[] = {"auto", "relative", "absolute", NULL};
+    int *val = (int *)set_var;
+    if (!val)
+	return -1;
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "pdisplay_type_t");
+    for (size_t i = 0; display_path_opts[i] != NULL; i++) {
+	if (BU_STR_EQUAL(argv[0], display_path_opts[i])) {
+	    *val = i;
+	    return 1;
+	}
+    }
+
+    if (msg)
+	bu_vls_printf(msg, "Invalid value '%s' for path display option.\n", argv[0]);
+
+    return -1;
+}
+
+
 static void
 gdiff_usage(const char *cmd, struct bu_opt_desc *d) {
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -287,7 +310,7 @@ main(int argc, const char **argv)
     BU_GET(state, struct diff_state);
     diff_state_init(state);
 
-    struct bu_opt_desc d[19];
+    struct bu_opt_desc d[22];
     BU_OPT(d[0],  "h", "help",       "",        NULL,              &print_help,              "Print help and exit");
     BU_OPT(d[1],  "?", "",           "",        NULL,              &print_help,              "");
     BU_OPT(d[2],  "a", "added",      "",        NULL,              &state->return_added,     "Report added objects");
@@ -308,7 +331,10 @@ main(int argc, const char **argv)
     BU_OPT(d[15], "",  "use-geometry",         "",  NULL,         &gopts.use_geometry,        "Incorporate object geometry into similarity checking");
     BU_OPT(d[16], "",  "fast-geometry",        "",  NULL,         &gopts.geom_fast,           "Use a faster but much more sensitive geometry difference test - will decrease similarity results (how much depends on the files, but it is typically substantial).");
     BU_OPT(d[17], "P", "file-pattern",  "pattern", &bu_opt_vls,   &gopts.fpattern,            "Pattern to match for files in root-dir.  If no root-dir is specified, use current working dir.  Default pattern is '*.g'");
-    BU_OPT_NULL(d[18]);
+    BU_OPT(d[18], "",  "read-hashes",      "file", &bu_opt_vls,   &gopts.hash_infile,         "Read precomputed hashes from file and reuse if possible (grouping mode only)");
+    BU_OPT(d[19], "",  "write-hashes",     "file", &bu_opt_vls,   &gopts.hash_outfile,        "Write computed hashes (for all processed files) to file (grouping mode only)");
+    BU_OPT(d[20], "",  "display-paths",  "auto|relative|absolute", &pdisplay_type, &gopts.path_display_mode, "How to display file paths in reports: auto (default), relative, or absolute");
+    BU_OPT_NULL(d[21]);
 
     int ret_ac = bu_opt_parse(&msg, argc, argv, d);
     if (ret_ac < 0) {
