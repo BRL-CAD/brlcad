@@ -357,10 +357,17 @@ main(int argc, const char **argv)
     // If we have a non-negative group_threshold, we're doing a different
     // comparison.
     if (grouping_mode) {
+
+	/* Carry verbosity setting into grouping mode */
+	gopts.verbosity = state->verbosity;
+
+	// Clean up standard gdiff processing structures
 	bu_vls_free(&msg);
 	bu_vls_free(state->search_filter);
 	bu_vls_free(state->merge_file);
 	BU_PUT(state, struct diff_state);
+
+	// Run grouping mode
 	return gdiff_group(ret_ac, argv, &gopts);
     }
 

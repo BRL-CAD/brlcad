@@ -693,7 +693,7 @@ std::unordered_map<std::string, std::string> hash_files_parallel(
 {
     std::unordered_map<std::string, std::string> result;
     result.reserve(dbs.size());
-    std::mutex res_mutex;
+    std::mutex res_mutex; // guards result map and logging
     size_t total = dbs.size();
     std::vector<std::thread> threads;
     std::atomic<size_t> idx{0};
@@ -701,12 +701,20 @@ std::unordered_map<std::string, std::string> hash_files_parallel(
 	while (true) {
 	    size_t i = idx.fetch_add(1);
 	    if (i >= total) break;
+	    auto t0 = std::chrono::steady_clock::now();
 	    std::string hash = content_hash(
 		    dbs[i].dbip,
 		    gopts.use_names,
 		    gopts.use_geometry,
 		    gopts.geom_fast
 		    );
+	    auto t1 = std::chrono::steady_clock::now();
+	    if (gopts.verbosity > 0) {
+		double secs = std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t0).count();
+		std::lock_guard<std::mutex> lock(res_mutex);
+		std::cout << "[hash] " << dbs[i].path << " " << std::fixed << std::setprecision(3)
+		    << secs << "s" << std::endl;
+	    }
 	    if (!hash.empty()) {
 		std::lock_guard<std::mutex> lock(res_mutex);
 		result[dbs[i].path] = hash;
@@ -896,6 +904,50 @@ void print_cluster_report(
 		<< score_ss.str() << " " << format_ymd(std::get<3>(entry_tuple)) << "\n";
 	}
     }
+}
+
+/*
+ * print_grouping_overview - One-time header explaining the grouping output.
+ *
+ * Printed before any per-bin or aggregated grouping reports.
+ *
+ * Explanation of columns:
+ *   Seed/Newest line: the first line for a group (or each filename bin)
+ *     [Δx̄####] -> TLSH distance from the newest file to the group's center (medoid).
+ *
+ *   Member lines:
+ *     [Δ####, Δx̄####]
+ *       Δ####   : TLSH distance from this file to the newest file in its group.
+ *       Δx̄#### : TLSH distance from this file to the group's center (medoid).
+ *
+ * Lower distances mean higher similarity. Distances are computed on the chosen
+ * hash configuration (object names, geometry, or both). The reported dates are
+ * the filesystem last-modified timestamps (YYYY-MM-DD).
+ *
+ * Notes:
+ *   - Groups are formed by transitive similarity: files may be related via chains.
+ *   - The "center" is the file minimizing total TLSH distance to all others in its group.
+ *   - Filename binning (if enabled) limits similarity clustering to files whose
+ *     base names fall within the specified edit threshold.
+ */
+static void print_grouping_overview(const gdiff_group_opts &gopts,
+                                    std::ostream &out,
+                                    bool filename_binning_active)
+{
+    out << "====================== gdiff -G Grouping Summary ======================\n";
+    out << "Hash inputs: " << (gopts.use_names ? "names" : "") << (gopts.use_names && gopts.use_geometry ? "+" : "")
+        << (gopts.use_geometry ? "geometry" : "") << ( (!gopts.use_names && !gopts.use_geometry) ? "none" : "" ) << "\n";
+    if (filename_binning_active) {
+        out << "Filename binning active: edit distance <= " << gopts.filename_threshold << " groups top-level bins.\n";
+    } else {
+        out << "Filename binning inactive: all files clustered together by content similarity.\n";
+    }
+    out << "Distance thresholds (lower value = greater similarity): TLSH < " << gopts.threshold
+        << (gopts.geom_fast ? " (fast geometry mode)" : "") << "\n";
+    out << "Columns:\n";
+    out << "  Seed/Newest line: [Δx̄####] distance from newest file to group center.\n";
+    out << "  Member lines: [Δ####, Δx̄####] distances to newest and to group center.\n";
+    out << "=======================================================================\n\n";
 }
 
 /*
@@ -1114,6 +1166,16 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 	}
     }
 
+    // Verbose summary before hashing begins
+    if (gopts.verbosity > 0) {
+	const size_t total_files = files.size();
+	const size_t to_hash = files_to_hash.size();
+	const size_t from_cache = (total_files >= to_hash) ? (total_files - to_hash) : 0;
+	std::cout << "[group] Discovered " << total_files << " .g file(s). "
+	    << to_hash << " to hash, " << from_cache << " from cache."
+	    << std::endl;
+    }
+
     // 3. Hash computation (only for files that need hashing)
     std::unordered_map<std::string, std::string> newly_computed_hashes;
     size_t parallel_threads = gopts.thread_cnt;
@@ -1142,8 +1204,15 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 	    for (const auto& path : files_to_hash) {
 		struct db_i* dbip = db_open(path.c_str(), DB_OPEN_READONLY);
 		if (dbip && db_dirbuild(dbip) == 0) {
+		    auto t0 = std::chrono::steady_clock::now();
 		    std::string hash = content_hash(dbip, gopts.use_names, gopts.use_geometry, gopts.geom_fast);
+		    auto t1 = std::chrono::steady_clock::now();
 		    newly_computed_hashes[path] = hash;
+		    if (gopts.verbosity > 0) {
+			double secs = std::chrono::duration_cast<std::chrono::duration<double>>(t1 - t0).count();
+			std::cout << "[hash] " << path << " " << std::fixed << std::setprecision(3)
+			    << secs << "s" << std::endl;
+		    }
 		}
 		if (dbip) db_close(dbip);
 	    }
@@ -1172,6 +1241,10 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 	fout.open(bu_vls_cstr(&gopts.ofile));
 	if (fout) out = &fout;
     }
+
+    // One-time explanatory header before detailed grouping output
+    bool filename_binning_active = (filename_threshold >= 0);
+    print_grouping_overview(gopts, *out, filename_binning_active);
 
     if (filename_threshold >= 0) {
 	for (const auto& [key, bin_files] : file_grps) {
