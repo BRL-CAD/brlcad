@@ -864,14 +864,26 @@ void print_cluster_report(
 	bool show_relative = false
 	)
 {
+    // Compute a global column width for top-level (newest) lines so they align
+    // across all groups printed by this call. Sub-entry alignment remains per-group.
+    size_t top_longest_path = 0;
+    for (const auto& [newest, entries] : groups) {
+        auto disp = get_display_path(newest, show_relative);
+        if (disp.size() > top_longest_path) top_longest_path = disp.size();
+    }
+    const size_t top_score_col = top_longest_path + 2;
+
     for (const auto& [newest, entries] : groups) {
 	auto disp_newest = get_display_path(newest, show_relative);
-	size_t longest_path = disp_newest.size();
+	// Per-group width used for entry lines in this group
+	size_t group_longest_path = disp_newest.size();
 	for (const auto& entry_tuple : entries) {
-	    longest_path = std::max(longest_path, get_display_path(std::get<0>(entry_tuple), show_relative).size());
+	    group_longest_path = std::max(group_longest_path,
+		    get_display_path(std::get<0>(entry_tuple), show_relative).size());
 	}
-	size_t score_col = longest_path + 2;
+	size_t entry_score_col = group_longest_path + 2;
 
+	// Compute center-distance for newest (for its top-level line badge)
 	int dc_newest = 0;
 	for (const auto& entry_tuple : entries) {
 	    if (std::get<0>(entry_tuple) == newest) {
@@ -888,7 +900,7 @@ void print_cluster_report(
 	std::filesystem::file_time_type newest_mtime = entries.empty() ? std::filesystem::file_time_type::min()
 	    : std::get<3>(entries.front());
 
-	out << group_indent << std::left << std::setw(score_col) << disp_newest
+	out << group_indent << std::left << std::setw(top_score_col) << disp_newest
 	    << parent_score_ss.str() << " " << format_ymd(newest_mtime) << "\n";
 
 	for (const auto& entry_tuple : entries) {
@@ -900,7 +912,7 @@ void print_cluster_report(
 	    std::ostringstream score_ss;
 	    score_ss << "[Δ" << std::right << std::setw(4) << dn
 		<< ", Δx̄" << std::right << std::setw(4) << dc << "]";
-	    out << group_indent << "  " << std::left << std::setw(score_col-2) << disp_entry
+	    out << group_indent << "  " << std::left << std::setw(entry_score_col-2) << disp_entry
 		<< score_ss.str() << " " << format_ymd(std::get<3>(entry_tuple)) << "\n";
 	}
     }
