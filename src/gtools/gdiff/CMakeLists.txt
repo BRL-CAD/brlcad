@@ -14,7 +14,6 @@ target_include_directories(gdiff BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 cmakefiles(
   CMakeLists.txt
   gdiff.h
-  levenshtein_ull.hpp
   tlsh.hpp
   tests/00_moss-control.asc
   tests/01_moss-diff.asc

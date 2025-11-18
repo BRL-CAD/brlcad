@@ -96,7 +96,6 @@
 #include <atomic>
 #include <sstream>
 #include "tlsh.hpp"
-#include "levenshtein_ull.hpp"
 
 extern "C" {
 #include "bu/app.h"
