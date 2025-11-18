@@ -20,20 +20,37 @@
       <arg choice='plain'><replaceable>left_model.g</replaceable></arg>
       <arg choice='opt'><replaceable>ancestor_model.g</replaceable></arg>
       <arg choice='plain'><replaceable>right_model.g</replaceable></arg>
+		</cmdsynopsis>
+		<cmdsynopsis>
+      <command>gdiff</command>
+      <arg choice='plain'>-G</arg>
+      <arg choice="opt" rep="repeat"><replaceable>grouping_options</replaceable></arg>
+      <arg choice="opt" rep="repeat"><replaceable>pattern</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
 
   <refsect1 xml:id='description'><title>DESCRIPTION</title>
   <para>
-    <command>gdiff</command> compares BRL-CAD models
+    <command>gdiff</command> in its basic mode compares BRL-CAD models
     specified on the command line, reporting differences according to the
     specified options.  It supports a plain "diff" comparison between two
     files, as well as a "3-way" comparison that accepts a third file with
     "ancestral" information that provides a context for the left and right
     files.
+	</para>
+
+	<para>
+    In addition to direct comparison, <command>gdiff</command> supports a similarity
+    grouping mode (<option>-G</option>) that analyzes one or more BRL-CAD database files
+    and clusters them into groups of related models based on <emphasis>per-file content
+    similarity</emphasis> (and optionally on filename similarity for an extra top-level
+    binning pass.) Grouping mode produces a human-readable report showing groups, a
+    representative "newest" file, distances to a computed group center (medoid), and
+		modification dates.
   </para>
-  <para>The following options are recognized:</para>
+
+  <para>The following options are recognized in basic diffing mode:</para>
   <variablelist remap="TP">
     <varlistentry>
       <term><option>-a</option></term>
@@ -91,6 +108,174 @@
     satisfy the supplied options.  Default is to report all differences that rise above RT_LEN_TOL.
   </para>
   </refsect1>
+
+	<refsect1 xml:id='grouping'><title>GROUPING MODE</title>
+
+    <para>
+      In grouping mode, <command>gdiff -G</command> does not compare two databases. Instead,
+      it scans one or more directories and/or file paths, identifies candidate <filename>.g</filename>
+      files (by pattern), computes a content hash for each file using <emphasis>TLSH</emphasis>,
+      and clusters the files by content similarity.
+    </para>
+
+    <refsect2 xml:id='grouping-algorithm'><title>Algorithm overview</title>
+      <itemizedlist>
+        <listitem>
+          <para><emphasis role="bold">Content hashing:</emphasis> For each .g file,
+          a single TLSH digest is computed over selected inputs:
+          (a) a stable sequence of object names (if enabled), and/or
+          (b) geometry data (if enabled). Geometry can be hashed in a
+          <emphasis>deep</emphasis> mode (similarity-sensitive) or a
+          <emphasis>fast</emphasis> mode (robust but treats any change as maximally different per-object,
+          then aggregates those integers deterministically.)</para>
+        </listitem>
+        <listitem>
+          <para><emphasis role="bold">Similarity graph:</emphasis> All files form vertices in a graph.
+          An undirected edge is added between vertices i and j if the TLSH distance
+          between their hashes satisfies the threshold condition (<code>diff &lt; threshold</code>).
+          TLSH is not a metric (triangle inequality is not guaranteed), so direct metric trees
+          are not used for clustering.</para>
+        </listitem>
+        <listitem>
+          <para><emphasis role="bold">Clustering:</emphasis> Clusters are the connected components
+          of the similarity graph (transitive closure). This captures families like A~B~C even if A and C are
+          not directly similar.</para>
+        </listitem>
+        <listitem>
+          <para><emphasis role="bold">Representative files:</emphasis> Within each cluster,
+          the <emphasis>newest</emphasis> file (by filesystem mtime) is used as the top-level label.
+          A <emphasis>center</emphasis> (medoid) is also identified as the file minimizing total TLSH distance
+          to the other cluster members.</para>
+        </listitem>
+        <listitem>
+          <para><emphasis role="bold">Optional filename binning:</emphasis> If enabled, files are first
+          binned by base-name similarity using a <emphasis>BK-tree</emphasis> and Damerau-Levenshtein edit distance.
+          Clustering then runs independently within each filename bin.</para>
+        </listitem>
+      </itemizedlist>
+    </refsect2>
+
+    <refsect2 xml:id='grouping-report'><title>Report format</title>
+      <para>
+        Grouping mode prints a one-time header explaining the report, then one or more groups. For each group:
+      </para>
+      <itemizedlist>
+        <listitem>
+					<para>Top-level (newest) line shows the file path and date, followed by a
+						bracketed score which is the TLSH distance from the
+						<emphasis>newest</emphasis> file to the <emphasis>group center</emphasis>
+						(medoid). Top-level lines are column-aligned across groups.</para>
+        </listitem>
+        <listitem>
+					<para>Member lines (indented) list each group file (excluding the newest), the
+						TLSH distance of each file to the newest, and the TLSH distance to the group
+						center. Dates are YYYY-MM-DD.</para> </listitem>
+        <listitem>
+          <para>Groups (top-level newest lines) are ordered with an <emphasis>alphanumeric</emphasis>
+          comparator (natural sort) by displayed path, so "file2" sorts before "file10".</para>
+        </listitem>
+      </itemizedlist>
+    </refsect2>
+
+    <refsect2 xml:id='grouping-options'><title>Options (grouping mode)</title>
+      <variablelist remap="TP">
+        <varlistentry>
+          <term><option>-G</option>, <option>--group</option></term>
+          <listitem><para>Enable grouping mode - this is needed to trigger grouping mode
+							and enable the other related options. Arguments are treated as directories and/or file paths
+          to scan; patterns may be supplied to constrain discovery (see <option>-P</option>).</para></listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--filename-threshold</option> <replaceable>#</replaceable></term>
+					<listitem><para>Enable an initial filename binning pass using
+							Damerau-Levenshtein edit distance less than or equal to
+							<replaceable>#</replaceable>.  Files whose base names are within this
+							threshold are grouped into a filename bin; content clustering runs within
+							each bin.  Default: disabled.</para></listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--threshold</option> <replaceable>#</replaceable></term>
+					<listitem>
+						<para>
+							Content similarity threshold for TLSH distances. An undirected similarity edge is added between
+							two files when <code>diff &lt; #</code>. Larger values yield looser clustering (more files per group).
+							Default: 30.
+						</para>
+						<para>
+							In normal usage this is the value users will most likely want to adjust. (For
+							large input sets it is <emphasis>highly</emphasis> recommended that hashes
+							be stored and reused with the <option>--write-hashes</option> and
+							<option>--read-hashes</option> options to save processing time.)  Lower and
+							higher values will result in more and less agressive bin creation - the user
+							will need to develop an intuitive feel for what settings produce the most
+							useful groups for their particular inputs.
+						</para>
+					</listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--use-objnames</option></term>
+					<listitem><para>Include sorted object names (with a seed) when building the
+							content hash.  On by default if neither <option>--use-objnames</option> or
+							<option>--use-geometry</option> is specified - if the other is specified,
+							off unless enabled explicitly. </para></listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--use-geometry</option></term>
+					<listitem><para>Include geometry data when building the content hash.  On by
+							default if neither <option>--use-objnames</option> or
+							<option>--use-geometry</option> is specified - if the other is specified,
+							off unless enabled explicitly.</para></listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--fast-geometry</option></term>
+          <listitem><para>Use a faster but more sensitive geometry hashing mode. Any geometric change within an object is treated
+          as maximally different at the object level; file-level aggregation is stable but may report larger distances. Useful for speed
+          at the expense of similarity sensitivity.  Off by default.</para></listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>-P</option>, <option>--file-pattern</option> <replaceable>pattern</replaceable></term>
+          <listitem><para>Recursive discovery pattern for selecting .g files under directories. Default: <code>*.g</code>.
+          Multiple patterns may be supplied. Pattern semantics follow shell-style matching.</para></listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--read-hashes</option> <replaceable>file</replaceable></term>
+          <listitem><para>Read a cache file of precomputed hashes and reuse matching entries when possible.
+          The cache is versioned and entries are validated against current file size and mtime.</para></listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--write-hashes</option> <replaceable>file</replaceable></term>
+          <listitem><para>Write all valid in-memory hashes to a cache file in a versioned CSV format
+          for reuse in subsequent runs.</para></listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--display-paths</option> <replaceable>auto|relative|absolute</replaceable></term>
+          <listitem><para>Controls how file paths are shown in reports. <code>auto</code> displays relative
+          paths when all input arguments are relative; otherwise absolute. <code>relative</code> enforces
+          relative, <code>absolute</code> enforces absolute. Default: <code>auto</code>.</para></listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>-v</option>, <option>-q</option></term>
+          <listitem>
+            <para>Verbosity controls apply to grouping mode as well. With verbosity enabled,
+            <command>gdiff -G</command> prints a one-time summary before hashing
+            (e.g., number of discovered files, how many will be hashed vs. read from cache)
+            and logs each hashed file with elapsed time in seconds:
+            <code>[hash] path/to/file.g 1.234s</code>.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </refsect2>
+	</refsect1>
 
   <refsect1 xml:id='example'><title>EXAMPLES</title>
 
@@ -631,7 +816,64 @@ CONFLICT(light.r).left/R      tgc_new.s
 </para>
 </example>
 
+  <!-- Grouping mode example -->
+  <example><title>GROUPING MODE - Basic Grouping by Content Similarity (-G)</title>
+		<para>A basic example of grouping mode output (note that the actual output
+			will utilize Unicode characters - ascii approximations are used here for
+			broadest display support.)
+		</para>
+		<para>
+			In the example below, you can see two major groupings identified as well as
+			a couple miscellaneous files that don't meet the threshold for either
+			group.  The filenames indicate that at the default threshold value, the major
+			determinator for which group a file goes in is whether it is a triangle (BoT)
+			conversion or an unfacetized original, which is one of the grouping criteria
+			we would expect for content-based grouping analysis.
+		</para>
+		<literallayout>
+			<computeroutput>
+<prompt>~:</prompt><userinput> gdiff -G /Models</userinput>
+[group] Discovered 28 .g file(s). 28 to hash, 0 from cache.
+====================== gdiff -G Grouping Summary ======================
+Hash inputs: names+geometry
+Filename binning inactive: all files clustered together by content similarity.
+Distance thresholds (lower value = greater similarity): TLSH &lt; 30
+Columns:
+  Seed/Newest line: [dx####] distance from newest file to group center.
+  Member lines: [d####, dx####] distances to newest and to group center.
+=======================================================================
 
+/Models/Dir1/model_2018-01-12.g  [dx   6] 2018-01-12
+  /Models/Dir1/model_2017_03_14_bot.g   [d   9, dx  10] 2017-03-14
+  /Models/Dir1/model_tri.g              [d   2, dx   7] 2015-08-25
+  /Models/Dir2/model_031215_bot.g       [d   2, dx   5] 2015-03-12
+  /Models/Dir2/model_2015_01_27_bot.g   [d   6, dx   1] 2015-01-27
+  /Models/Dir2/model_011415_bot.g       [d   6, dx   1] 2015-01-16
+  /Models/Dir1/model_111314_bot.g       [d   6, dx   1] 2014-11-13
+  /Models/Dir1/model_110614_bot.g       [d   3, dx   6] 2014-11-06
+  /Models/Dir1/model_032314_bot.g       [d   6, dx   0] 2014-03-23
+  /Models/Dir2/model_021014_bot.g       [d   7, dx   6] 2014-02-25
+  /Models/Dir2/model_020214_bot.g       [d  22, dx  21] 2014-02-02
+  /Models/Dir2/model_012614_bot.g       [d  22, dx  21] 2014-01-26
+  /Models/Dir2/model_011614_bot.g       [d  22, dx  21] 2014-01-16
+/Models/Dir2/model_011415.g      [dx   0] 2015-01-14
+  /Models/Dir1/model_121318.g      [d   1, dx   1] 2014-12-18
+  /Models/Dir1/model_112214.g      [d   1, dx   1] 2014-12-14
+  /Models/Dir1/model_072114.g      [d   2, dx   2] 2014-07-21
+  /Models/Dir2/model_061014.g      [d   3, dx   3] 2014-06-25
+  /Models/Dir2/model_060114.g      [d  15, dx  15] 2014-06-02
+  /Models/Dir2/model_042314.g      [d  15, dx  15] 2014-04-25
+  /Models/Dir2/orig_042014.g       [d  15, dx  15] 2014-04-20
+  /Models/Dir2/model_041814.g      [d  15, dx  15] 2014-04-18
+  /Models/Dir2/orig_041414.g       [d  15, dx  15] 2014-04-15
+  /Models/Dir2/orig_040414.g       [d  16, dx  16] 2014-04-09
+  /Models/Dir2/model_040214.g      [d  16, dx  16] 2014-04-03
+  /Models/Dir2/orig_040114.g       [d  16, dx  16] 2014-04-01
+/Models/Dir2/misc.g              [dx   0] 2014-02-29
+/Models/Dir2/c.g                 [dx   0] 2014-04-15
+			</computeroutput>
+		</literallayout>
+  </example>
 
 </refsect1>
 
