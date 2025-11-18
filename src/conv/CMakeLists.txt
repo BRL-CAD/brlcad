@@ -17,8 +17,10 @@ brlcad_addexec(asc-nmg nmg/asc-nmg.c "libwdb;${M_LIBRARY}" FOLDER Conv)
 
 brlcad_addexec(bot_dump bot_dump.c "libged;librt" FOLDER Conv)
 
+verbose_add_subdirectory("src/conv" comgeom)
+
 set(
-  comgeom-g_SRCS
+  comgeom-g_old_SRCS
   comgeom/cvt.c
   comgeom/f2a.c
   comgeom/mat.c
@@ -27,7 +29,7 @@ set(
   comgeom/solid.c
   comgeom/tools.c
 )
-brlcad_addexec(comgeom-g "${comgeom-g_SRCS}" "libwdb;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
+brlcad_addexec(comgeom-g_old "${comgeom-g_old_SRCS}" "libwdb;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
 
 brlcad_addexec(conv-vg2g conv-vg2g.c "libbu" FOLDER Conv)
 
