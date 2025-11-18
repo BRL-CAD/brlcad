@@ -1026,6 +1026,7 @@ int gdiff_group(int argc, const char **argv, struct gdiff_group_opts *g_opts)
 	gopts.threshold = g_opts->threshold;
 	gopts.use_names = g_opts->use_names;
 	gopts.use_geometry = g_opts->use_geometry;
+	gopts.verbosity = g_opts->verbosity;
 	gopts.geom_fast = g_opts->geom_fast;
 	gopts.thread_cnt = g_opts->thread_cnt;
 	bu_vls_sprintf(&gopts.fpattern, "%s", bu_vls_cstr(&g_opts->fpattern));
