@@ -102,6 +102,8 @@ extern "C" {
 #include "bu/hash.h"
 #include "bu/file.h"
 #include "bu/path.h"
+#define ALPHANUM_IMPL
+#include "../../libged/alphanum.h"
 #include "rt/db_io.h"
 #include "./gdiff.h"
 }
@@ -864,22 +866,40 @@ void print_cluster_report(
 	bool show_relative = false
 	)
 {
-    // Compute a global column width for top-level (newest) lines so they align
-    // across all groups printed by this call. Sub-entry alignment remains per-group.
+    // Build a stable, alphanum-ordered view of the top-level groups based on
+    // the displayed path (respecting relative/absolute output mode).
+    using GMap = std::map<std::string, std::vector<std::tuple<std::string, int, int, std::filesystem::file_time_type>>>;
+    std::vector<GMap::const_iterator> ordered_groups;
+    ordered_groups.reserve(groups.size());
+    for (auto it = groups.begin(); it != groups.end(); ++it) {
+	ordered_groups.push_back(it);
+    }
+    std::sort(ordered_groups.begin(), ordered_groups.end(),
+	    [&](const GMap::const_iterator &a, const GMap::const_iterator &b){
+	    const std::string da = get_display_path(a->first, show_relative);
+	    const std::string db = get_display_path(b->first, show_relative);
+	    return alphanum_impl(da.c_str(), db.c_str(), NULL) < 0;
+	    });
+
+    // Global column width for top-level (newest) lines so they align across all
+    // groups printed by this call. Sub-entry alignment remains per-group.
     size_t top_longest_path = 0;
-    for (const auto& [newest, entries] : groups) {
-        auto disp = get_display_path(newest, show_relative);
-        if (disp.size() > top_longest_path) top_longest_path = disp.size();
+    for (const auto& it : ordered_groups) {
+	const auto &newest = it->first;
+	auto disp = get_display_path(newest, show_relative);
+	top_longest_path = std::max(top_longest_path, disp.size());
     }
     const size_t top_score_col = top_longest_path + 2;
 
-    for (const auto& [newest, entries] : groups) {
+    for (const auto& it : ordered_groups) {
+	const auto &newest = it->first;
+	const auto &entries = it->second;
 	auto disp_newest = get_display_path(newest, show_relative);
 	// Per-group width used for entry lines in this group
 	size_t group_longest_path = disp_newest.size();
 	for (const auto& entry_tuple : entries) {
-	    group_longest_path = std::max(group_longest_path,
-		    get_display_path(std::get<0>(entry_tuple), show_relative).size());
+	    auto disp_entry = get_display_path(std::get<0>(entry_tuple), show_relative);
+	    group_longest_path = std::max(group_longest_path, disp_entry.size());
 	}
 	size_t entry_score_col = group_longest_path + 2;
 
