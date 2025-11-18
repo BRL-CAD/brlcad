@@ -52,7 +52,6 @@ set(
 brlcad_manage_files(bu_headers ${INCLUDE_DIR}/brlcad/bu REQUIRED libbu)
 
 cmakefiles(CMakeLists.txt)
-cmakefiles(column.h)
 cmakefiles(tbl.h)
 
 # Local Variables:
