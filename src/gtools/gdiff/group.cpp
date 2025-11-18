@@ -102,6 +102,7 @@ extern "C" {
 #include "bu/hash.h"
 #include "bu/file.h"
 #include "bu/path.h"
+#include "bu/tbl.h"
 #define ALPHANUM_IMPL
 #include "../../libged/alphanum.h"
 #include "rt/db_io.h"
@@ -862,80 +863,212 @@ std::map<std::string, std::vector<std::tuple<std::string, int, int, std::filesys
 void print_cluster_report(
 	const std::map<std::string, std::vector<std::tuple<std::string, int, int, std::filesystem::file_time_type>>>& groups,
 	std::ostream& out,
-	bool indent_group = false,
 	bool show_relative = false
 	)
 {
-    // Build a stable, alphanum-ordered view of the top-level groups based on
-    // the displayed path (respecting relative/absolute output mode).
+    // We are implementing a globally aligned compact bracketed style.
+    // Requirements:
+    //   - All lines (top-level newest and member entries) share common column alignment.
+    //   - Paths longer than a max width are shortened with an ellipsis.
+    //   - Unicode (Δ, x̄) used when UTF-8 likely available, fallback to ASCII ('d', 'xbar') otherwise.
+    //   - Top-level lines show only distance to center: [Δx̄####]
+    //   - Member lines show: [Δ####, Δx̄####]
+    //
+    // For this compact bracketed layout we only need minimal column width
+    // management and no multi-line cell wrapping or border styling. bu_tbl is
+    // adequate - we do not need the full capabilities of libfort) here.
     using GMap = std::map<std::string, std::vector<std::tuple<std::string, int, int, std::filesystem::file_time_type>>>;
-    std::vector<GMap::const_iterator> ordered_groups;
-    ordered_groups.reserve(groups.size());
-    for (auto it = groups.begin(); it != groups.end(); ++it) {
-	ordered_groups.push_back(it);
-    }
-    std::sort(ordered_groups.begin(), ordered_groups.end(),
+
+    // Determine Unicode availability (simple heuristic).
+    auto has_utf8 = []() {
+	const char *lang = std::getenv("LANG");
+	const char *lcctype = std::getenv("LC_CTYPE");
+	auto contains_utf8 = [](const char *s) {
+	    if (!s) return false;
+	    std::string v(s);
+	    for (auto &c : v) c = std::tolower(static_cast<unsigned char>(c));
+	    return (v.find("utf-8") != std::string::npos || v.find("utf8") != std::string::npos);
+	};
+	return contains_utf8(lang) || contains_utf8(lcctype);
+    };
+    const bool use_unicode = has_utf8();
+    const std::string sym_delta   = use_unicode ? "Δ"     : "d";
+    const std::string sym_xbar    = use_unicode ? "x̄"     : "xbar";
+
+    // Stable alphanum ordering of top-level groups
+    std::vector<GMap::const_iterator> ordered;
+    ordered.reserve(groups.size());
+    for (auto it = groups.begin(); it != groups.end(); ++it) ordered.push_back(it);
+    std::sort(ordered.begin(), ordered.end(),
 	    [&](const GMap::const_iterator &a, const GMap::const_iterator &b){
 	    const std::string da = get_display_path(a->first, show_relative);
 	    const std::string db = get_display_path(b->first, show_relative);
 	    return alphanum_impl(da.c_str(), db.c_str(), NULL) < 0;
 	    });
 
-    // Global column width for top-level (newest) lines so they align across all
-    // groups printed by this call. Sub-entry alignment remains per-group.
-    size_t top_longest_path = 0;
-    for (const auto& it : ordered_groups) {
-	const auto &newest = it->first;
-	auto disp = get_display_path(newest, show_relative);
-	top_longest_path = std::max(top_longest_path, disp.size());
-    }
-    const size_t top_score_col = top_longest_path + 2;
+    // Collect rows (path, bracket, date)
+    struct Row {
+	std::string path;
+	std::string bracket;
+	std::string date;
+	bool is_top;
+    };
+    std::vector<Row> rows;
+    rows.reserve(groups.size() * 4); // heuristic
 
-    for (const auto& it : ordered_groups) {
+    // Helper: shorten a path but ALWAYS preserve the full filename.
+    // Strategy:
+    //   - If total length fits, return unchanged.
+    //   - If not, extract filename; if filename alone exceeds max width, return filename.
+    //   - Otherwise prepend an ellipsis (Unicode … if available, else "...") plus
+    //     tail of the parent path sufficient to fill remaining space before filename.
+    // Result examples (UTF-8 locale):
+    //   /very/long/deep/tree/with/many/components/modelA.g  (fits) -> unchanged
+    //   /very/long/deep/tree/with/many/components/small.g (too long) ->
+    //       …/components/small.g   (tail of parent retained)
+    //   relative/path/to/a/deeply/nested/design_v12_final.g ->
+    //       …/nested/design_v12_final.g
+    // ASCII fallback uses "...".
+    auto shorten_path =
+	[&](const std::string &p, size_t maxw) -> std::string {
+	    if (p.size() <= maxw) return p;
+	    if (maxw == 0) return std::string();
+	    std::string fname;
+	    try {
+		fname = std::filesystem::path(p).filename().string();
+	    } catch (...) {
+		// Fallback: manual extraction
+		size_t pos = p.find_last_of("/\\");
+		fname = (pos == std::string::npos) ? p : p.substr(pos + 1);
+	    }
+	    // If filename alone larger than max width, just return filename (can't preserve parents)
+	    if (fname.size() >= maxw) return fname;
+	    const std::string ell = use_unicode ? "…" : "...";
+	    size_t avail_parent = maxw - fname.size();
+	    if (avail_parent <= ell.size()) {
+		return ell + fname; // Not enough room for any parent tail
+	    }
+	    std::string parent = p.substr(0, p.size() - fname.size());
+	    // Ensure parent ends with original separator(s) if present
+	    size_t tail_len = avail_parent - ell.size();
+	    if (parent.size() > tail_len) parent = parent.substr(parent.size() - tail_len);
+	    return ell + parent + fname;
+	};
+
+    // First pass: gather raw data and determine max digit widths
+    int max_dn_digits = 1;
+    int max_dc_digits = 1;
+    for (const auto &it : ordered) {
 	const auto &newest = it->first;
 	const auto &entries = it->second;
-	auto disp_newest = get_display_path(newest, show_relative);
-	// Per-group width used for entry lines in this group
-	size_t group_longest_path = disp_newest.size();
-	for (const auto& entry_tuple : entries) {
-	    auto disp_entry = get_display_path(std::get<0>(entry_tuple), show_relative);
-	    group_longest_path = std::max(group_longest_path, disp_entry.size());
-	}
-	size_t entry_score_col = group_longest_path + 2;
-
-	// Compute center-distance for newest (for its top-level line badge)
+	// Find center diff for newest
 	int dc_newest = 0;
-	for (const auto& entry_tuple : entries) {
-	    if (std::get<0>(entry_tuple) == newest) {
-		dc_newest = std::get<2>(entry_tuple);
+	for (const auto &e : entries) {
+	    if (std::get<0>(e) == newest) {
+		dc_newest = std::get<2>(e);
 		break;
 	    }
 	}
-	std::ostringstream parent_score_ss;
-	parent_score_ss << "[Δx̄" << std::right << std::setw(4) << dc_newest << "]";
-
-	std::string group_indent = indent_group ? "  " : "";
-
-	// entries are sorted by mtime descending (cluster_bins), so front is newest.
-	std::filesystem::file_time_type newest_mtime = entries.empty() ? std::filesystem::file_time_type::min()
+	auto disp_newest = get_display_path(newest, show_relative);
+	auto newest_mtime = entries.empty() ? std::filesystem::file_time_type::min()
 	    : std::get<3>(entries.front());
 
-	out << group_indent << std::left << std::setw(top_score_col) << disp_newest
-	    << parent_score_ss.str() << " " << format_ymd(newest_mtime) << "\n";
+	// Track digits for center diff
+	max_dc_digits = std::max<int>(max_dc_digits, (int)std::to_string(dc_newest).size());
 
-	for (const auto& entry_tuple : entries) {
-	    const std::string& entry = std::get<0>(entry_tuple);
-	    auto disp_entry = get_display_path(entry, show_relative);
-	    int dn = std::get<1>(entry_tuple);
-	    int dc = std::get<2>(entry_tuple);
-	    if (entry == newest) continue;
-	    std::ostringstream score_ss;
-	    score_ss << "[Δ" << std::right << std::setw(4) << dn
-		<< ", Δx̄" << std::right << std::setw(4) << dc << "]";
-	    out << group_indent << "  " << std::left << std::setw(entry_score_col-2) << disp_entry
-		<< score_ss.str() << " " << format_ymd(std::get<3>(entry_tuple)) << "\n";
+	rows.push_back({disp_newest, "", format_ymd(newest_mtime), true});
+
+	for (const auto &e : entries) {
+	    const std::string &epath = std::get<0>(e);
+	    if (epath == newest) continue;
+	    int dn = std::get<1>(e);
+	    int dc = std::get<2>(e);
+	    max_dn_digits = std::max<int>(max_dn_digits, (int)std::to_string(dn).size());
+	    max_dc_digits = std::max<int>(max_dc_digits, (int)std::to_string(dc).size());
+	    rows.push_back({ get_display_path(epath, show_relative), "", format_ymd(std::get<3>(e)), false });
 	}
     }
+
+    // Determine bracket strings (second pass, now that we know widths)
+    // Use consistent padding across all rows
+    auto pad_num = [](int v, int width) {
+	std::ostringstream oss;
+	oss << std::right << std::setw(width) << v;
+	return oss.str();
+    };
+    for (size_t i = 0; i < ordered.size(); ++i) {
+	const auto &it = ordered[i];
+	const auto &newest = it->first;
+	const auto &entries = it->second;
+	// Locate top row index in rows vector (first row after accumulation for this group)
+	// Since we inserted sequentially, keep a cursor
+	// We will reconstruct bracket for top:
+	int dc_newest = 0;
+	for (const auto &e : entries) {
+	    if (std::get<0>(e) == newest) {
+		dc_newest = std::get<2>(e);
+		break;
+	    }
+	}
+	// Find the matching top row entry (search backward from current rows size)
+	// More efficient would be to store indices; acceptable as is given group scale.
+	for (auto &r : rows) {
+	    if (r.is_top && r.path == get_display_path(newest, show_relative) && r.bracket.empty()) {
+		r.bracket = "[" + sym_delta + sym_xbar + pad_num(dc_newest, max_dc_digits) + "]";
+		break;
+	    }
+	}
+	// Set member brackets
+	for (const auto &e : entries) {
+	    const std::string &epath = std::get<0>(e);
+	    if (epath == newest) continue;
+	    int dn = std::get<1>(e);
+	    int dc = std::get<2>(e);
+	    for (auto &r : rows) {
+		if (!r.is_top && r.path == get_display_path(epath, show_relative) && r.bracket.empty()) {
+		    r.bracket = "[" + sym_delta + pad_num(dn, max_dn_digits) + ", " + sym_delta + sym_xbar + pad_num(dc, max_dc_digits) + "]";
+		    break;
+		}
+	    }
+	}
+    }
+
+    // Global path width (after optional indent for members)
+    size_t max_path_len = 0;
+    for (auto &r : rows) {
+	size_t len = r.is_top ? r.path.size() : (r.path.size() + 2); // account for member indent
+	max_path_len = std::max(max_path_len, len);
+    }
+    const size_t MAX_PATH_COL = 60; // cap to avoid runaway width
+    size_t path_col = std::min(max_path_len, MAX_PATH_COL);
+
+    // Shorten paths where needed (apply after width decision)
+    for (auto &r : rows) {
+	std::string base = r.path;
+	bool member = !r.is_top;
+	std::string maybe = shorten_path(base, member ? (path_col - 2) : path_col);
+	if (member) maybe = "  " + maybe; // indent members
+	r.path = maybe;
+    }
+
+    // Build output with bu_tbl (style NONE, left align path column, brackets fixed, date fixed)
+    struct bu_tbl *t = bu_tbl_create();
+    bu_tbl_style(t, BU_TBL_STYLE_NONE);
+    bu_tbl_style(t, BU_TBL_ROW_ALIGN_LEFT);
+
+    for (auto &r : rows) {
+	// Columns: path | bracket | date
+	// Use '|' separators expected by bu_tbl_printf
+	bu_tbl_printf(t, "%s|%s|%s", r.path.c_str(), r.bracket.c_str(), r.date.c_str());
+	bu_tbl_style(t, BU_TBL_ROW_END);
+    }
+
+    // Emit table lines to output stream
+    struct bu_vls tvls = BU_VLS_INIT_ZERO;
+    bu_tbl_vls(&tvls, t);
+    out << bu_vls_cstr(&tvls);
+    bu_vls_free(&tvls);
+    bu_tbl_destroy(t);
 }
 
 /*
@@ -1021,7 +1154,7 @@ void group_and_report(
 		if (path2mtime && path2mtime->count(sorted.front()))
 		    mtime = path2mtime->at(sorted.front());
 		out << disp << " (" << format_ymd(mtime) << "):\n";
-		print_cluster_report(hash_bins, out, true, show_relative);
+		print_cluster_report(hash_bins, out, show_relative);
 	    }
 	}
     } else {
@@ -1030,7 +1163,7 @@ void group_and_report(
 	    all_files.insert(all_files.end(), fg.second.begin(), fg.second.end());
 	}
 	auto hash_bins = hash_bins_for_files(all_files, path2hash, threshold, path2mtime);
-	print_cluster_report(hash_bins, out, false, show_relative);
+	print_cluster_report(hash_bins, out, show_relative);
     }
 }
 

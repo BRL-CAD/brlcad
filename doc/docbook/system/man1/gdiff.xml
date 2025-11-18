@@ -843,7 +843,7 @@ Columns:
   Member lines: [d####, dx####] distances to newest and to group center.
 =======================================================================
 
-/Models/Dir1/model_2018-01-12.g  [dx   6] 2018-01-12
+/Models/Dir1/model_2018-01-12.g         [dx   6]        2018-01-12
   /Models/Dir1/model_2017_03_14_bot.g   [d   9, dx  10] 2017-03-14
   /Models/Dir1/model_tri.g              [d   2, dx   7] 2015-08-25
   /Models/Dir2/model_031215_bot.g       [d   2, dx   5] 2015-03-12
@@ -856,21 +856,21 @@ Columns:
   /Models/Dir2/model_020214_bot.g       [d  22, dx  21] 2014-02-02
   /Models/Dir2/model_012614_bot.g       [d  22, dx  21] 2014-01-26
   /Models/Dir2/model_011614_bot.g       [d  22, dx  21] 2014-01-16
-/Models/Dir2/model_011415.g      [dx   0] 2015-01-14
-  /Models/Dir1/model_121318.g      [d   1, dx   1] 2014-12-18
-  /Models/Dir1/model_112214.g      [d   1, dx   1] 2014-12-14
-  /Models/Dir1/model_072114.g      [d   2, dx   2] 2014-07-21
-  /Models/Dir2/model_061014.g      [d   3, dx   3] 2014-06-25
-  /Models/Dir2/model_060114.g      [d  15, dx  15] 2014-06-02
-  /Models/Dir2/model_042314.g      [d  15, dx  15] 2014-04-25
-  /Models/Dir2/orig_042014.g       [d  15, dx  15] 2014-04-20
-  /Models/Dir2/model_041814.g      [d  15, dx  15] 2014-04-18
-  /Models/Dir2/orig_041414.g       [d  15, dx  15] 2014-04-15
-  /Models/Dir2/orig_040414.g       [d  16, dx  16] 2014-04-09
-  /Models/Dir2/model_040214.g      [d  16, dx  16] 2014-04-03
-  /Models/Dir2/orig_040114.g       [d  16, dx  16] 2014-04-01
-/Models/Dir2/misc.g              [dx   0] 2014-02-29
-/Models/Dir2/c.g                 [dx   0] 2014-04-15
+/Models/Dir2/model_011415.g             [dx   0]        2015-01-14
+  /Models/Dir1/model_121318.g           [d   1, dx   1] 2014-12-18
+  /Models/Dir1/model_112214.g           [d   1, dx   1] 2014-12-14
+  /Models/Dir1/model_072114.g           [d   2, dx   2] 2014-07-21
+  /Models/Dir2/model_061014.g           [d   3, dx   3] 2014-06-25
+  /Models/Dir2/model_060114.g           [d  15, dx  15] 2014-06-02
+  /Models/Dir2/model_042314.g           [d  15, dx  15] 2014-04-25
+  /Models/Dir2/orig_042014.g            [d  15, dx  15] 2014-04-20
+  /Models/Dir2/model_041814.g           [d  15, dx  15] 2014-04-18
+  /Models/Dir2/orig_041414.g            [d  15, dx  15] 2014-04-15
+  /Models/Dir2/orig_040414.g            [d  16, dx  16] 2014-04-09
+  /Models/Dir2/model_040214.g           [d  16, dx  16] 2014-04-03
+  /Models/Dir2/orig_040114.g            [d  16, dx  16] 2014-04-01
+/Models/Dir2/misc.g                     [dx   0]        2014-02-29
+/Models/Dir2/c.g                        [dx   0]        2014-04-15
 			</computeroutput>
 		</literallayout>
   </example>
