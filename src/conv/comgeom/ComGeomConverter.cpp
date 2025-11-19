@@ -54,7 +54,7 @@ bool ComGeomConverter::writeDbHeader(const std::string &title, const std::string
 }
 
 int ComGeomConverter::run() {
-    if (m_opts.version != 1 && m_opts.version != 4 && m_opts.version != 5) {
+    if (m_opts.version != 0 && m_opts.version != 1 && m_opts.version != 4 && m_opts.version != 5) {
         std::fprintf(stderr,"version %d not supported\n", m_opts.version);
         return 1;
     }
@@ -69,9 +69,13 @@ int ComGeomConverter::run() {
         auto l = r.next("title card");
         if (!l) { std::printf("Empty input file: no title record\n"); return 10; }
         std::string_view sv(l->s);
-        if (m_opts.version == 1) {
+        if (m_opts.version == 0) {
             title = ComGeomReader::rstrip(sv);
-            ComGeomReader::trimLeadingSpacesInplace(title); // trim leading spaces for v1 as well
+            ComGeomReader::trimLeadingSpacesInplace(title);
+            units = "in";
+        } else if (m_opts.version == 1) {
+            title = ComGeomReader::rstrip(sv);
+            ComGeomReader::trimLeadingSpacesInplace(title);
             units = "in";
         } else {
             units.assign(sv.substr(0,2));
@@ -88,7 +92,36 @@ int ComGeomConverter::run() {
     int solTotal=0, regTotal=0;
     {
         ComGeomReader r(m_in);
-        if (m_opts.version == 1) {
+        if (m_opts.version == 0) {
+            // Attempt single read first
+            auto l = r.next("v0 constraints candidate");
+            if (l) {
+                std::string_view sv(l->s);
+                solTotal = ComGeomReader::fieldInt(sv, 30, 10);
+                regTotal = ComGeomReader::fieldInt(sv, 40, 10);
+            }
+            if (solTotal <= 0 || regTotal <= 0) {
+                // Scan up to 50 lines to find plausible NBODY/NRMAX pair
+                solTotal = regTotal = 0;
+                for (int scan=0; scan<50; ++scan) {
+                    auto cand = r.next("scan constraints");
+                    if (!cand) break;
+                    std::string_view sv2(cand->s);
+                    int nb = ComGeomReader::fieldInt(sv2, 30, 10);
+                    int nr = ComGeomReader::fieldInt(sv2, 40, 10);
+                    if (nb > 0 && nr > 0) {
+                        solTotal = nb;
+                        regTotal = nr;
+                        break;
+                    }
+                }
+                if (solTotal == 0 || regTotal == 0) {
+                    std::printf("Warning: v0 NBODY/NRMAX not found, dynamic sizing will be used\n");
+                    solTotal = 0; // dynamic
+                    regTotal = 0;
+                }
+            }
+        } else if (m_opts.version == 1) {
             solTotal = regTotal = 9999;
         } else {
             auto l = r.next("control card");
@@ -119,7 +152,7 @@ int ComGeomConverter::run() {
             if (res.status == SolidParseResult::Eof) {
                 if (m_opts.verbose)
                     std::printf("\nprocessed %d of %d solids\n\n", sp.solidsProcessed(), solTotal);
-                if (sp.solidsProcessed() < solTotal && m_opts.version > 1) {
+                if (solTotal > 0 && sp.solidsProcessed() < solTotal && m_opts.version > 1) {
                     std::printf("some solids are missing, aborting\n");
                     return 1;
                 }

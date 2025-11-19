@@ -25,7 +25,7 @@ struct SolidParserOptions {
     int version = 5;
     int verbose = 0;
     std::string suffix;
-    bool legacy_trunc = false; // optional legacy suffix truncation (max 13 chars)
+    bool legacy_trunc = false;
 };
 
 class SolidParser {
@@ -45,6 +45,10 @@ private:
                     bool firstCardAlreadyRead, std::string lineBuf);
     bool getXSolData(std::vector<fastf_t> &data, int num, int solidNum);
 
+    /* Helpers */
+    bool isIntegerField(std::string_view sv, size_t start, size_t len, int &value) const;
+    bool isLikelyFaceCard(const std::string &line) const;
+
     /* Primitive handlers */
     SolidParseResult handle_ars(const std::string &name, const std::string &firstLine);
     SolidParseResult handle_rpp(const std::string &name, const std::vector<fastf_t> &dd);
@@ -52,10 +56,11 @@ private:
     SolidParseResult handle_raw_wed(const std::string &name, const std::vector<fastf_t> &dd);
     SolidParseResult handle_rvw(const std::string &name, const std::vector<fastf_t> &dd);
     SolidParseResult handle_arw(const std::string &name, const std::vector<fastf_t> &dd);
-    SolidParseResult handle_arb4(const std::string &name, const std::vector<fastf_t> &dd);
-    SolidParseResult handle_arb5(const std::string &name, const std::vector<fastf_t> &dd);
-    SolidParseResult handle_arb6(const std::string &name, const std::vector<fastf_t> &dd);
-    SolidParseResult handle_arb7(const std::string &name, const std::vector<fastf_t> &dd);
+    SolidParseResult handle_arb_magic(const std::string &name, const std::string &firstLine);
+    SolidParseResult handle_arb4(const std::string &name, const std::vector<fastf_t> &dd4);
+    SolidParseResult handle_arb5(const std::string &name, const std::vector<fastf_t> &dd5);
+    SolidParseResult handle_arb6(const std::string &name, const std::vector<fastf_t> &dd6);
+    SolidParseResult handle_arb7(const std::string &name, const std::vector<fastf_t> &dd7);
     SolidParseResult handle_arb8(const std::string &name, const std::vector<fastf_t> &dd);
     SolidParseResult handle_rcc(const std::string &name, const std::vector<fastf_t> &dd);
     SolidParseResult handle_rec(const std::string &name, const std::vector<fastf_t> &dd);
