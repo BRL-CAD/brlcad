@@ -1,0 +1,498 @@
+COM-GEOM v1 FORMAT DEFINITION FOR THE GIFT CODE
+Based on BRL 1975 Manuals (Vol. I: BRL Report 1802; Vol. II: ARBRL-TR-02189)
+
+---------------------------------------------------------------------
+SECTION 0. GENERAL PRINCIPLES
+
+1. Coordinate System
+- Right-handed Cartesian system (X,Y,Z).
+- Origin is user-defined (e.g., turret datum intersection for a tank).
+- All dimensional values (coordinates, lengths, radii) use a single unit family
+  declared on the Title Card (columns 79-80): IN, FT, CM, M, or MM (default
+  IN).
+
+2. Data Organization (Target Description)
+A COM-GEOM data set consists of (in order):
+1) Title Card
+2) Target Specification Card
+3) Solid Table (one or more cards per solid)
+4) Region Table (one or more cards per region; ends with "-1" sentinel card)
+5) (Optional) Region RPP Table
+6) Region Identification Table
+7) Program Option / Control Cards (for GIFT processing and output runs)
+
+3. Numeric Formats
+Unless otherwise noted:
+- Integers are right- or left-adjusted in their column ranges.
+- Floating point fields: F10.5 (classic) or F10.n where width 10 columns,
+  decimal point explicit.
+- Blank where a "+" intersection operator is implied.
+
+4. Combination Logic (Region Construction)
+Given solids S1, S2 ...
+- Intersection: adjacency (implicit "+"). Example: 1 2 3 means S1 intersect S2
+  intersect S3.
+- Subtraction: prefix "-" before a solid number: ... -7 means subtract volume
+  of S7 from accumulated set.
+- Union: keyword OR splits disjoint boolean branches: BranchA OR BranchB.
+- Dummy region: region card with only region number and no solids (assigned
+  special identification code 111).
+- Recommended practice (per BRL guidance): Avoid OR on Region cards; instead
+  assign identical identification (Item) codes to multiple simple regions.
+
+5. Air Space and Items
+Each region is either:
+- Item (component) region: has item code (e.g., armor plate, wheel).
+- Air region: has air space code (e.g., crew compartment air).
+Rules:
+- Item regions must not overlap (beyond TOL).
+- Air regions may overlap other air regions with same air code.
+- Air regions must NOT overlap air regions with different air codes (beyond
+  TOL).
+- Air regions may overlap item regions (they represent enclosing void).
+
+6. Tolerances (Control Card)
+- Overlap tolerance TOL: maximum allowable spatial overlap distance between
+  regions before flagged as error.
+- Line-of-sight gap tolerance TOLLOS: maximum axial gap along a ray ignored
+  when assembling ray intersection chains.
+
+7. End Sentinel & Codes
+- Void Space Code: numeric code inserted where no component.
+- Phantom Item Code: code assigned to "phantom armor" or shielding constructs
+  generated during checking.
+- End-of-ray Signal Code: code marking termination of component stack for a ray.
+
+8. Storage Model
+MASTER-ASTER equivalence array holds all processed geometry. Size NDQ must be
+large enough; formula given (Section 11 of Vol II) reproduced below (see
+Section 7).
+
+---------------------------------------------------------------------
+SECTION 1. TITLE CARD
+
+Columns (1-80):
+1-60: Free text title (target name/description).
+61-78: (Usually blank or ancillary description).
+79-80: Units code (IN, FT, CM, M, MM). If blank defaults to IN.
+
+Example:
+SAMPLE LIGHT ARMORED CAR WITH DRIVER                               IN
+
+---------------------------------------------------------------------
+SECTION 2. TARGET SPECIFICATION CARD
+
+Format: (Counts of solids / regions / surrounding RPPs)
+Columns (fixed interpretation from manuals):
+ 1-10   Number of Solids (NSOLID)
+11-20   Number of Regions (NREGION, expected or max)
+21-30   Number of Surrounding RPPs (if used) (NRPP) or MAX Regions (context dependent)
+31-40   MAX pointers or storage (implementation field) - historically used internally
+Remaining columns may be reserved or blank.
+
+If a dedicated second card exists (variant implementations) it repeats extended capacity fields.
+
+Example:
+         20        20         1
+
+---------------------------------------------------------------------
+SECTION 3. SOLID TABLE
+
+Each solid has a unique consecutive integer ID starting at 1.
+
+GENERAL CARD FORMAT (all solids):
+Columns:
+ 1-3   Solid Number (integer)
+ 4-6   Solid Symbol (3 chars): RPP BOX RAW ARB ARS ELL SPH RCC REC TRC TEC TOR
+ 7     Variant / Vertex Count / Option flag (for ARB, ARS, ELL1) else blank
+11-70  Numeric fields (F10.5 blocks)
+71-80  Comment (recommended: name or purpose)
+
+3.1 Rectangular Parallelepiped (RPP)
+No explicit vertex; define bounding box aligned to global axes.
+Fields (F10.5 each):
+ XMIN, XMAX, YMIN, YMAX, ZMIN, ZMAX.
+Example:
+  6 RPP      20.0000  23.0000 -10.0000  10.0000  28.0000  46.0000     BODY
+
+3.2 BOX (Arbitrarily oriented)
+Vertex V and three mutually perpendicular edge vectors H, W, D.
+Fields:
+ Vx Vy Vz Hx Hy Hz Wx Wy Wz Dx Dy Dz
+Example:
+  1 BOX       21.5000  37.0000   0.0000  0.0000  45.0000  11.0000  40.0000   0.0000   0.0000  11.0000   0.0000   0.0000  STEERING WHEEL
+
+3.3 RAW (Right Angle Wedge)
+Vertex V; two perpendicular legs H,W in wedge plane; depth D.
+Fields:
+ Vx Vy Vz Hx Hy Hz Wx Wy Wz Dx Dy Dz
+Example:
+ 12 RAW      -75.0000 -36.0000  12.0000  60.0000  12.0000   0.0000  60.0000  12.0000   0.0000 -60.0000  12.0000   0.0000  FENDER
+
+3.4 ARB (Convex Polyhedron) - ARB4 / ARB5 / ARB6 / ARB7 / ARB8
+Column 7 = number of vertices (4-8).
+Card sequence: Enough cards to list all vertices (each vertex: X Y Z).
+One vertex triple per F10.5 block; continue across cards.
+Face set is internally inferred by GIFT according to vertex count pattern (see manual).
+Example ARB5 (two cards if needed):
+  3 ARB5    33.5000  37.0000  12.0000  46.0000 -75.0000 -75.0000  20.0000  50.0000   0.0000  ...
+  (continuation)
+
+3.5 ARS (Triangular Surfaced Polyhedron)
+Column 7: M (number of curves)
+Column 11-20: N (points per curve)
+Then M x N vertex points laid out curve by curve (each curve on one or more cards).
+Repeated vertices allowed; triangles formed between successive curves (see Vol I Fig. 13).
+Example:
+ 11 ARS7   (points...)  (comments)
+
+3.6 ELL / ELL1 (Ellipsoid of Revolution)
+Two input modes:
+(a) ELL: Foci F1, F2 and major axis length L.
+Fields: F1x F1y F1z F2x F2y F2z L
+(b) ELL1 (Column 7 = 1): Center V, semi-major axis vector A, radius R of equatorial circle.
+Fields: Vx Vy Vz Ax Ay Az R
+Example:
+ 14 ELL1    24.0000  52.0000   0.0000  35.0000   0.0000  20.0000   7.5000   DRIVER CHEST
+
+3.7 SPH (Sphere)
+Center V and radius R.
+Fields: Vx Vy Vz R
+Example:
+ 15 SPH      45.0000 -30.0000 -30.0000   7.5000  HEAD
+
+3.8 RCC (Right Circular Cylinder)
+Center of one circular base (vertex V), height vector H, radius R.
+Fields: Vx Vy Vz Hx Hy Hz R
+Example:
+ 16 RCC      -30.0000 -70.0000 -30.0000  48.0000  24.0000   0.0000  13.0000  LEG
+
+3.9 REC (Right Elliptical Cylinder)
+Center V, height vector H, semi-major axis vector A, semi-minor axis vector B (both in base plane).
+Fields: Vx Vy Vz Hx Hy Hz Ax Ay Az Bx By Bz
+Example:
+ 17 REC      -30.0000 -30.0000 -30.0000  48.0000  24.0000   0.0000  13.0000  13.0000  0.0000  5.0000   0.0000   0.0000  ARM
+
+3.10 TRC (Truncated Circular Cone)
+Base center V, height vector H, base radius R1, top radius R2.
+Fields: Vx Vy Vz Hx Hy Hz R1 R2
+Example:
+ 18 TRC      -30.0000 -30.0000 -70.0000  48.0000  24.0000   0.0000  13.0000   9.0000  TORSO LOWER
+
+3.11 TEC (Truncated Elliptic Cone)
+Base center V, height vector H, base semi-major A, base semi-minor B, ratio P (BaseEllipse / TopEllipse).
+Fields: Vx Vy Vz Hx Hy Hz Ax Ay Az Bx By Bz P
+Example:
+ 19 TEC      -30.0000 -70.0000   0.0000  48.0000  24.0000   0.0000  24.0000   0.0000  20.0000  12.0000  0.0000  10.0000  1.5000
+
+3.12 TOR (Torus)
+Center V, normal vector N (to torus plane), major radius R1 (centerline), tube radius R2.
+Fields: Vx Vy Vz Nx Ny Nz R1 R2
+Example:
+ 20 TOR      21.5000  37.0000   0.0000   0.0000  45.0000  11.0000  40.0000  11.0000  STEERING RIM
+
+---------------------------------------------------------------------
+SECTION 4. REGION TABLE
+
+Card Format (per region):
+Columns:
+ 1-2   Blank (recommended)
+ 3-5   Region Number (integer, consecutive starting at 1)
+ 6     Blank
+ 7-8   "OR" if union logic is used (introductory OR for region; optional but required if any OR appears later)
+ 9-69  Sequence of signed solid references (2-3 digit solid numbers with optional leading minus sign; blanks imply "+" intersection). Space or "OR" may appear to break into disjoint branches.
+70-80 Comment (e.g., semantic label, region definition subset index)
+
+Grammar rules:
+- Intersection: adjacency (implicit +).
+- Subtraction: a leading "-" before the solid number.
+- Union: OR separating disjoint boolean expressions.
+- End of Region Table: card with region number -1 in columns 4-5 (" -1" Card).
+
+Example (two-card region expression 1 + 2 - 3 OR 4 + 5 - 6):
+ Card 1:
+   ___111 OR   1   2  -3          4
+ Card 2:
+   ___111       5  -6
+
+Dummy region (no solids):
+   ___012        (columns 9-69 blank)  (Region 12 dummy)
+
+Sentinel:
+   ____-1
+
+Best Practice:
+Prefer multiple simple non-OR regions sharing a common identification code (see Section 5) over complex OR expressions.
+
+---------------------------------------------------------------------
+SECTION 5. REGION IDENTIFICATION TABLE
+
+Each card assigns either an Item Code (component) or Air Space Code to a region.
+
+Format:
+Columns:
+ 1-2   Blank
+ 3-5   Region Number
+ 6-10  Blank or separator
+11-15  Item or Air Space Code (integer)
+16-69  Optional additional codes or reserved blanks
+70-80  Comment (verbal description + region formula)
+
+Special Codes:
+- 01 Exterior air / Surrounding void (example usage; manuals show 02,03,05 for interior categories).
+- 02 Crew compartment air
+- 03 Passenger compartment air
+- 05 Engine compartment air
+- 09 (DO NOT USE) reserved
+- 111 Dummy region code
+- 501 Track region (may be remapped to 502 for track edge by GIFT processing)
+- 999 Forbidden as a component code
+
+Item Code Ranges (per Table 3 of manual):
+  1-  99 Personnel & miscellaneous interior
+100-199 Armor & structural
+200-299 Powertrain / engine group
+300-399 Suspension / drive
+400-499 Mobility auxiliaries
+500-599 Track / running gear (501 special)
+600-699 Armament
+700-799 Fire control
+800-899 Communications / electronics
+900-998 Ammunition
+
+If a region is air: its code is an air space code; otherwise an item code.
+
+Example:
+  __001  40      STEERING WHEEL   1-2
+  __002 100      STEERING SHAFT   2
+  __012 111      DUMMY
+  __019  02      INTERIOR AIR     19
+  __020  02      INTERIOR AIR     20
+
+---------------------------------------------------------------------
+SECTION 6. REGION RPP TABLE (OPTIONAL)
+
+Purpose: Override automatically computed bounding boxes (per region).
+
+Card Format:
+Columns:
+  1-10 Region Number
+ 11-20 XMIN
+ 21-30 XMAX
+ 31-40 YMIN
+ 41-50 YMAX
+ 51-60 ZMIN
+ 61-70 ZMAX
+ 71-80 Comment
+
+Omit dummy regions (those with identification code 111).
+If absent for a region, GIFT computes bounding RPP automatically.
+
+Example:
+         1     20.0000   23.0000  -10.0000   10.0000   28.0000   46.0000
+         2     15.0000   21.5000  -11.0000   11.0000   28.0000   46.0000
+
+---------------------------------------------------------------------
+SECTION 7. STORAGE FORMULA (MASTER-ASTER SIZE NDQ)
+
+Minimum NDQ (memory words) must satisfy largest of:
+1) LDES - 1
+2) 6 * (NSOLID) + LREGON - 1
+3) K * (NREGION) + LRIN - 1        (K = 5 CDC, 8 UNIVAC, 11 IBM)
+
+Plus if alphanumeric region descriptions stored:
+NDQ >= LDES + (K - 1) * NREGION - 1
+
+Detailed formula from Volume II (for precise sizing):
+TOTAL STORAGE =
+ 4 * (#Solids)
++ 7 * (#RCC)
++12 * (#REC)
++ 8 * (#TRC)
++15 * (#TEC)
++ 4 * (#SPH)
++12 * (#ELL/ELL1)
++11 * (#TOR)
++ 6 * (#RPP)
++15 * (#BOX)
++12 * (#RAW)
++ (ARB Storage)
++ (Non-convex ARS Storage)
++ (Convex ARS Storage)
++14 * (#Regions)
++ (#Region Descriptors)
++ 6
++ (Alphanumeric Storage optional)
+
+ARB Storage per ARB:
+ 4 * (#faces) + 1
+
+Non-convex ARS:
+  88 + 4 * (L + 2 * N * M)
+  where L = #points read directly
+        M = #curves
+        N = #points per curve
+
+Convex ARS:
+ 4 * (#non-degenerate faces) + 1
+
+Region Descriptors:
+Count of non-zero entries in columns 9-69 of Region Table.
+
+Alphanumeric storage per region:
+CDC=4, UNIVAC=7, IBM=10 words.
+
+---------------------------------------------------------------------
+SECTION 8. CONTROL (PROGRAM OPTION) CARD (GIFT EXECUTION)
+
+Columns (classic Control Card from Vol II):
+ 1    Use processed geometry from binary Unit 4 (0=no, non-zero=yes)
+ 2    Write processed geometry to binary Unit 4 (0=no, non-zero=yes)
+ 3-5  FORTRAN unit number for raw COM-GEOM input (0 or 5 = Unit 5)
+ 6    Print MASTER-ASTER array (debug) if non-zero
+ 7    Print Ordered Region Identification Table if non-zero
+ 8    Print Ordered Region RPP Equivalent Table if non-zero
+ 9    Print Solid RPP Equivalent Table if non-zero
+10    Suppress printing of Solid/Region tables if non-zero (No Print)
+11-30 Reserved / (legacy fields)
+31-40 Overlap tolerance TOL (F10)
+41-50 Line-of-sight gap tolerance TOLLOS (F10)
+51-55 Void Space Code (integer; default 1 if 0)
+56-60 Phantom Item Code (default 111 if 0)
+61-65 End-of-ray Signal Code (default 9 if 0)
+66-80 Comments
+
+Example:
+ 0 1  5  0 1 1 0          0.010000 0.010000     1  111    9     RUN A
+
+---------------------------------------------------------------------
+SECTION 9. VALIDATION & RULES SUMMARY
+
+1) Solid Numbers: Consecutive starting at 1. No gaps.
+2) Region Numbers: Consecutive starting at 1; end sentinel: region -1 card.
+3) Dummy Regions: Allowed; must carry identification code 111; no solids.
+4) Item Regions: Must not overlap beyond TOL.
+5) Air Regions: May overlap same air code; not different air codes beyond TOL.
+6) Negative Descriptors: Subtraction only applies to immediately preceding accumulated set in branch.
+7) OR Branches: Disjoint boolean unions; minimized use recommended.
+8) Tolerances: Set to reflect modeling precision; typical TOL=TOLLOS=0.01 in same units.
+9) Special Codes: Avoid 999, 09, ensure proper use of 111, 501/502.
+
+---------------------------------------------------------------------
+SECTION 10. MINIMAL WORKED EXAMPLE
+
+Title:
+SAMPLE LIGHT VEHICLE WITH DRIVER                                 IN
+
+Target Specification:
+        20        20         1
+
+Solid (excerpt):
+  1 BOX  21.5000 37.0000 0.0000  0.0000 45.0000 11.0000 40.0000 0.0000 0.0000 11.0000 0.0000 0.0000 STEERING WHEEL
+  2 TOR  21.5000 37.0000 0.0000  0.0000 45.0000 11.0000 40.0000 11.0000 RIM
+  3 SPH  33.5000 37.0000 12.0000  7.5000 HEAD
+  ...
+ 20 RCC  -30.0000 -70.0000 -30.0000 48.0000 24.0000 0.0000 13.0000 LEG
+
+Region Table (excerpt):
+   1    1  2        (STEERING WHEEL ASSEMBLY: BOX intersect TOR)
+   2    3           (HEAD)
+   3    4 -5  6     (ARM: Intersection of solids 4 & 6 minus 5)
+  ...
+  12                 (Dummy)
+  ...
+ End:  -1
+
+Region Identification:
+   1   40 STEERING WHEEL   1 2
+   2  100 STEERING SHAFT   3
+   3  100 ARM (UPPER)      4 -5 6
+  12  111 DUMMY
+  19   02 INTERIOR AIR
+  20   02 INTERIOR AIR
+
+Region RPP (optional):
+   1  20.0 23.0 -10.0 10.0 28.0 46.0
+   2  32.0 37.5 -11.0 11.0 28.0 46.0
+   ...
+
+Control Card:
+ 0 1 5 0 1 0 0 0  0.010000 0.010000 1 111 9   STD RUN
+
+---------------------------------------------------------------------
+SECTION 11. COMMON PITFALLS AND RECOMMENDATIONS
+
+1) Overlapping Items: Resolve by subtracting one from the other or adjusting tolerance; large overlaps are modeling errors, not tolerance issues.
+2) Excessive OR Usage: Replace with multiple regions sharing identification codes to simplify ray tracing and checking.
+3) Insufficient NDQ: Use storage formula; double NDQ if "NO MORE ROOM" messages appear after >75% of Solid Table processed.
+4) Dummy Regions: Keep for numbering alignment only; always code 111.
+5) Precision: If coordinate acquisition is from drawings with limited precision, set TOL/TOLLOS to at least the drawing resolution.
+6) ARS Conversions: For legacy MAGIC/SHOTGEN conversions using ARS, verify point ordering and duplication to preserve intended triangular mesh.
+7) TEC Ratio P: Ensure P > 1; if P < 1 code will treat cone as inverted (swap top/base); better to input consistent orientation.
+
+---------------------------------------------------------------------
+SECTION 12. DIFFERENCES VS. OTHER ERA GEOMETRY FORMATS
+
+MAGIC / SHOTGEN vs COM-GEOM v1:
+- COM-GEOM v1 uses boolean combinatorial solids with explicit card columns.
+- Emphasizes minimal OR, encourages identification grouping.
+- Tolerances (TOL/TOLLOS) user-adjustable on Control Card (MAGIC earlier versions required source edits).
+- Storage formulas explicitly published; user responsible for NDQ sizing (contrast with more opaque internal allocation in other codes).
+
+---------------------------------------------------------------------
+SECTION 13. QUICK REFERENCE TABLES
+
+13.1 Solid Symbols and Required Fields
+
+Symbol | Type | Fields (Order)
+RPP | Axis-aligned box | XMIN XMAX YMIN YMAX ZMIN ZMAX
+BOX | Oriented box | Vx Vy Vz Hx Hy Hz Wx Wy Wz Dx Dy Dz
+RAW | Right wedge | Vx Vy Vz Hx Hy Hz Wx Wy Wz Dx Dy Dz
+ARB4-8 | Convex polyhedron | Vertex triples (count in col 7)
+ARS | Triangulated polyhedron | M, N then M x N vertex triples
+ELL | Ellipsoid (foci) | F1x F1y F1z F2x F2y F2z L
+ELL1 | Ellipsoid (axis) | Vx Vy Vz Ax Ay Az R (col 7=1)
+SPH | Sphere | Vx Vy Vz R
+RCC | Right circular cylinder | Vx Vy Vz Hx Hy Hz R
+REC | Right elliptical cylinder | Vx Vy Vz Hx Hy Hz Ax Ay Az Bx By Bz
+TRC | Truncated circular cone | Vx Vy Vz Hx Hy Hz R1 R2
+TEC | Truncated elliptic cone | Vx Vy Vz Hx Hy Hz Ax Ay Az Bx By Bz P
+TOR | Torus | Vx Vy Vz Nx Ny Nz R1 R2
+
+13.2 Special Identification Codes
+111 Dummy region
+501 Track (may become 502)
+01,02,03,05 Air categories (examples)
+999 Forbidden component code
+09 Forbidden air code
+
+---------------------------------------------------------------------
+SECTION 14. EXTENSIBILITY NOTES
+
+To add new solid types (historical practice for later internal variants):
+- Reserve a new 3-char symbol in columns 4-6.
+- Define fixed F10.5 field sequence and document vertex or vector semantics.
+- Update MASTER-ASTER storage calculator with new per-solid word count.
+- Maintain backward compatibility by keeping existing card column positions.
+
+---------------------------------------------------------------------
+SECTION 15. VALIDATION CHECKLIST
+
+Before running GIFT:
+[ ] Title card unit code set.
+[ ] NSOLID equals number of solid definitions.
+[ ] NREGION equals number of region definitions (excluding -1 sentinel).
+[ ] Solid numbers consecutive from 1.
+[ ] Region numbers consecutive from 1; -1 end card present.
+[ ] Region Identification codes valid (no 999, no 09).
+[ ] Dummy regions have 111 code and no solids.
+[ ] NDQ sized using formula (or rule of thumb 45*NSOLID + margin).
+[ ] TOL/TOLLOS appropriate for measurement precision.
+[ ] Void / Phantom / End-of-ray codes non-zero or rely on defaults (1,111,9).
+[ ] Optional Region RPP Table consistent (no dummy region entries).
+[ ] No unintended overlaps (test with CHECK option).
+[ ] Use CHECK / TESTG GIFT options for geometry validation before production runs.
+
+---------------------------------------------------------------------
+
+End of COM-GEOM v1 ASCII specification.

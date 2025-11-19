@@ -11,6 +11,8 @@ target_include_directories(comgeom-g BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 cmakefiles(
   CMakeLists.txt
+  COMGEOM_V1.txt
+  COMGEOM_versions.txt
   ComGeomConverter.h
   ComGeomReader.h
   RegionManager.h
