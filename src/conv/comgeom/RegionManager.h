@@ -15,7 +15,7 @@ extern "C" {
 
 struct RegionManagerOptions {
     int version = 5;
-    int verbose = 0;
+    long verbose = 0;
     std::string suffix;
     int regTotal = 0;
 };
