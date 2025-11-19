@@ -45,6 +45,7 @@ private:
     void colPrint(const std::string &s);
 
     bool parseRegionTable();
+    bool parseRegionTableV0();
     bool parseIdentTable();
     void registerRegion(int regNum, int id, int air, int mat, int los);
 

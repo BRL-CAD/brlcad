@@ -123,6 +123,39 @@ bool SolidParser::getXSolData(std::vector<fastf_t> &data, int num, int solidNum)
     return true;
 }
 
+bool SolidParser::isIntegerField(std::string_view sv, size_t start, size_t len, int &value) const {
+    if (start >= sv.size()) { value = 0; return false; }
+    size_t end = std::min(sv.size(), start + len);
+    size_t b = start;
+    while (b < end && std::isspace(static_cast<unsigned char>(sv[b]))) b++;
+    if (b >= end) { value = 0; return false; }
+    bool hasDigit=false; bool hasDot=false;
+    for (size_t i=b;i<end;++i) {
+        char c = sv[i];
+        if (std::isspace(static_cast<unsigned char>(c))) break;
+        if (c == '.') hasDot = true;
+        if (std::isdigit(static_cast<unsigned char>(c))) hasDigit = true;
+        else if (c=='-' || c=='+') continue;
+        else { value=0; return false; }
+    }
+    if (!hasDigit || hasDot) { value=0; return false; }
+    std::string token(sv.substr(b, end-b));
+    value = std::atoi(token.c_str());
+    return true;
+}
+
+bool SolidParser::isLikelyFaceCard(const std::string &line) const {
+    // Heuristic: first four 10-char fields each parse as small integers (1..8) & no decimal points.
+    int vals=0;
+    for (int f=0; f<4; ++f) {
+        int v=0;
+        if (!isIntegerField(line, 10 + f*10, 10, v)) return false;
+        if (v < -8 || v > 8 || v==0) return false;
+        vals++;
+    }
+    return (vals==4);
+}
+
 /* ---------------- Primitive Handlers ---------------- */
 
 SolidParseResult SolidParser::handle_ars(const std::string &name, const std::string &firstLine) {
@@ -223,6 +256,134 @@ SolidParseResult SolidParser::handle_arw(const std::string &name, const std::vec
     VMOVE(v[7], v[6]);
     int ret = mk_arb8(m_out, name.c_str(), &v[0][0]);
     return {ret < 0 ? SolidParseResult::Error : SolidParseResult::Ok, ret < 0 ? "mk_arb8(arw) failed" : ""};
+}
+
+/* ---------- MAGIC v0 ARB generic handler ---------- */
+SolidParseResult SolidParser::handle_arb_magic(const std::string &name, const std::string &firstLine) {
+    // Multi-card ARB parsing:
+    // Collect vertex triples until a face card is detected (integer ordinals 1..8).
+    std::vector<fastf_t> vertexDoubles;
+    std::string line = firstLine;
+    int maxVertexTriples = 8;
+
+    // Include data from first line if it contains numeric fields (after header)
+    auto consumeVertexCard = [&](const std::string &card) {
+        std::string_view sv(card);
+        for (int i=0;i<6;++i) { // up to 6 fields (i.e., 2 triples per card typical)
+            double val = ComGeomReader::fieldDouble(sv, 10 + i*10, 10);
+            // Heuristic: consider any numeric (including 0) as part of vertex stream until a face card appears
+            vertexDoubles.push_back(static_cast<fastf_t>(val));
+            if ((int)vertexDoubles.size()/3 >= maxVertexTriples) break;
+        }
+    };
+
+    // First card may have header only; attempt to parse numeric fields
+    consumeVertexCard(line);
+
+    // Read continuation cards until face card or limit reached
+    while ((int)vertexDoubles.size()/3 < maxVertexTriples) {
+        auto next = m_r.next("arb card");
+        if (!next) break;
+        if (isLikelyFaceCard(next->s)) {
+            line = next->s;
+            break;
+        }
+        consumeVertexCard(next->s);
+    }
+
+    int vertexCount = static_cast<int>(vertexDoubles.size()/3);
+    if (vertexCount < 4) return {SolidParseResult::Error, "arb v0 insufficient vertices"};
+
+    // Build point array
+    std::vector<fastf_t> verts(vertexCount*3);
+    std::copy(vertexDoubles.begin(), vertexDoubles.begin()+vertexCount*3, verts.begin());
+
+    // Read face cards (up to 6 faces)
+    std::vector<std::vector<int>> faces;
+    while (true) {
+        if (!isLikelyFaceCard(line)) {
+            auto peek = m_r.next("arb maybe face");
+            if (!peek) break;
+            line = peek->s;
+            if (!isLikelyFaceCard(line)) break;
+        }
+        std::string_view sv(line);
+        std::vector<int> f;
+        for (int i=0;i<4;++i) {
+            int v=0;
+            if (isIntegerField(sv, 10 + i*10, 10, v) && v != 0) {
+                f.push_back(v);
+            }
+        }
+        if (!f.empty()) faces.push_back(f);
+        auto next = m_r.next("arb face next");
+        if (!next) break;
+        if (!isLikelyFaceCard(next->s)) {
+            line = next->s; // pass to main dispatcher for next solid
+            break;
+        }
+        line = next->s;
+        if ((int)faces.size() >= 6) break;
+    }
+
+    // Validate face indices
+    for (const auto &f : faces) {
+        for (int idx : f) {
+            int absIdx = std::abs(idx);
+            if (absIdx < 1 || absIdx > vertexCount)
+                return {SolidParseResult::Error, "arb face index out of range"};
+        }
+    }
+
+    // Convert based on vertex count
+    SolidParseResult result;
+    if (vertexCount == 4) {
+        result = handle_arb4(name, verts);
+    } else if (vertexCount == 5) {
+        result = handle_arb5(name, verts);
+    } else if (vertexCount == 6) {
+        result = handle_arb6(name, verts);
+    } else if (vertexCount == 7) {
+        result = handle_arb7(name, verts);
+    } else if (vertexCount == 8) {
+        result = handle_arb8(name, verts);
+    } else {
+        return {SolidParseResult::Error, "arb v0 unsupported vertex count"};
+    }
+
+    if (result.status != SolidParseResult::Ok) {
+        // Fallback to ARBN if vertex-based conversion fails
+        std::fprintf(stderr, "arb v0 vertex conversion failed, attempting arbn fallback\n");
+        // Build plane equations from faces using indices (if enough faces)
+        if (faces.size() >= 4) {
+            // Simple plane extraction: pick triple for each face (first three indices)
+            std::vector<plane_t> eqn(faces.size());
+            for (size_t i=0;i<faces.size();++i) {
+                int a = std::abs(faces[i][0]) - 1;
+                int b = std::abs(faces[i][1]) - 1;
+                int c = std::abs(faces[i][2]) - 1;
+                if (a<0||b<0||c<0 || a>=vertexCount||b>=vertexCount||c>=vertexCount) continue;
+                plane_t pl;
+                point_t pa, pb, pc;
+                VMOVE(pa, &verts[a*3]);
+                VMOVE(pb, &verts[b*3]);
+                VMOVE(pc, &verts[c*3]);
+                struct bn_tol tol;
+                tol.magic = BN_TOL_MAGIC;
+                tol.dist = 0.0005;
+                tol.dist_sq = tol.dist * tol.dist;
+                tol.perp = 1e-6;
+                tol.para = 1 - tol.perp;
+                if (bg_make_plane_3pnts(pl, pa, pb, pc, &tol) == 0) {
+                    VMOVE(eqn[i], pl);
+                }
+            }
+            int ret = mk_arbn(m_out, name.c_str(), (int)faces.size(), eqn.data());
+            if (ret < 0) return {SolidParseResult::Error, "arbn fallback failed"};
+            return {SolidParseResult::Ok, ""};
+        }
+    }
+    return result;
 }
 
 SolidParseResult SolidParser::handle_arb4(const std::string &name, const std::vector<fastf_t> &dd4) {
@@ -632,6 +793,7 @@ SolidParseResult SolidParser::parseNext() {
     if (type == "raw" || type == "wed") { if(!getSolData(dd,12,solidNum,true,firstLine)) return {SolidParseResult::Error,"raw/wed data read"}; return handle_raw_wed(name,dd); }
     if (type == "rvw")        { if(!getSolData(dd,7,solidNum,true,firstLine)) return {SolidParseResult::Error,"rvw data read"}; return handle_rvw(name,dd); }
     if (type == "arw")        { if(!getSolData(dd,12,solidNum,true,firstLine)) return {SolidParseResult::Error,"arw data read"}; return handle_arw(name,dd); }
+    if (m_opts.version == 0 && type == "arb") return handle_arb_magic(name, firstLine);
     if (type == "arb4")       { if(!getSolData(dd,12,solidNum,true,firstLine)) return {SolidParseResult::Error,"arb4 data read"}; return handle_arb4(name,dd); }
     if (type == "arb5")       { if(!getSolData(dd,15,solidNum,true,firstLine)) return {SolidParseResult::Error,"arb5 data read"}; return handle_arb5(name,dd); }
     if (type == "arb6")       { if(!getSolData(dd,18,solidNum,true,firstLine)) return {SolidParseResult::Error,"arb6 data read"}; return handle_arb6(name,dd); }
