@@ -1,0 +1,350 @@
+# COMGEOM Versions (1967–present)
+
+This is a survey of the COMGEOM geometry input language across its lifecycle,
+from the earliest MAGI/MAGIC card decks through the stable v1 and the tokenized
+v4/v5 formats. It highlights what changed between versions, when those changes
+occurred, and provides practical guidance for recognizing and migrating old
+decks.
+
+Quick summary: v0 (pre‑v1) was the early MAGIC card style with implicit
+intersections and “OR” unions; v1 formalized strict punched‑card columns; v2/v3
+were transitional internal experiments (partial free‑field parsing,
+parentheses, generalized cones); v4 is the fully tokenized, parenthesized
+grammar; v5 added attribute/metadata lines atop v4.
+
+---
+
+## Timeline
+
+- 1967–1974: Pre‑formal MAGIC/MAGI “v0”
+  - 12 primitive shapes; implicit intersection (adjacency), `OR` for unions; no parentheses
+  - Dual ellipsoid input forms; 5‑card ARB; optional TESTG/VOLUM/AREA sections
+  - Region IDs (3‑digit components / 2‑digit spaces) already in place
+- 1974–1976: COMGEOM v1 (formal punched‑card format)
+  - Strict column positions; fixed parameter counts per primitive
+  - Region table layout (cards 16A/16B) and `-1` terminator card
+  - Error taxonomy; RPP enclosure required
+- 1977–1981: Transitional v2 → v3 (internal, not publicly specified)
+  - v2: Column‑first with free‑field fallback; early generalized cones; explicit `+` tokens begin to appear
+  - v3: Free‑field first; limited parentheses; explicit `+ - UNION/OR`; auto bounding boxes begin to appear
+- 1982–1984: COMGEOM v4 (stable token grammar)
+  - Whitespace/tokenized parsing; parentheses; decoupled geometry vs. region structure
+- 1985+: COMGEOM v5 (v4 + attributes)
+  - Attribute/metadata lines: material, aircode, color, region parameters; same boolean grammar as v4
+
+Modern translators (e.g., `comgeom-g`) typically support v1, v4, and v5. Other
+versions would require manual adaptation.
+
+---
+
+## Summary of Noteworthy Changes
+|------------|---------|--------------------------------------|------------------------------------------------|
+| Era        | Version | Context                              | Noteworthy Changes                             |
+|------------|---------|--------------------------------------|------------------------------------------------|
+| 1967–1970  | v0      | Early MAGI/MAGIC on CDC/BRL          | 12 primitives; adjacency = intersection;       |
+|            |         |                                      | `-` subtract; `OR` unions; no parentheses;     |
+|            |         |                                      | TEC permits oblique height vectors             |
+|------------|---------|--------------------------------------|------------------------------------------------|
+| 1970–1974  | v0      | MAGIC manuals                        | Canonical 5‑card ARB; dual ellipsoid input     |
+|            |         |                                      | (foci vs center form); optional                |
+|            |         |                                      | TESTG/VOLUM/AREA cards; strict(er) carding     |
+|------------|---------|--------------------------------------|------------------------------------------------|
+| 1974–1976  | v1      | GIFT integration; CDC/FORTRAN        | Formal fixed‑columns per primitive;            |
+|            |         |                                      | region table cards (16A/16B); `-1` end marker; |
+|            |         |                                      | RPP enclosure required                         |
+|------------|---------|--------------------------------------|------------------------------------------------|
+| 1977–1979  | v2      | Internal expansion                   | Column parsing w/ free‑field fallback;         |
+|            |         |                                      | explicit `+` tokens; early generalized cones;  |
+|            |         |                                      | torus parameter ordering fixes                 |
+|------------|---------|--------------------------------------|------------------------------------------------|
+| 1979–1981  | v3      | Move to machine‑independent parsing  | Whitespace tokenization; shallow parentheses;  |
+|            |         |                                      | explicit `+ - UNION/OR`; auto RPP;             |
+|            |         |                                      | early ARB face validation                      |
+|------------|---------|--------------------------------------|------------------------------------------------|
+| 1982–1984  | v4      | Consolidation into BRL‑CAD pipeline  | Fully tokenized whitespace grammar;            |
+|            |         |                                      | stable parentheses; clean geometry/structure   |
+|            |         |                                      | separation                                     |
+|------------|---------|--------------------------------------|------------------------------------------------|
+| 1985+      | v5      | Attribute/metadata enrichment        | Adds attribute lines (material, aircode,       |
+|            |         |                                      | color, region params); same v4                 |
+|            |         |                                      | geometry/boolean grammar                       |
+|------------|---------|--------------------------------------|------------------------------------------------|
+
+Provenance: v0 details are drawn from the 1967 MAGI report and the MAGIC JTCG
+User Manual (61 JTCG/ME‑71‑7‑1). v1 is documented in BRL Report 1802 and
+ARBRL‑TR‑02189. v2/v3 are reconstructed from tool comments and translator
+heuristics. v4/v5 are reflected in BRL‑CAD-era translators and user guides.
+
+---
+
+## Primitive set by version
+
+The early “MAGIC twelve” primitives were established by 1970 and remained the
+backbone across versions:
+
+- RPP (axis‑aligned box), BOX (oriented box), SPH, RCC (right circular
+  cylinder), REC (right elliptical cylinder), TRC (truncated right angle cone),
+TEC (truncated elliptic cone; height vector need not be perpendicular to base),
+ELL (ellipsoid of revolution), RAW/WED (right angle wedge), ARB (arbitrary
+convex polyhedron), ARS (arbitrary curved surface), TOR (torus)
+
+| Primitive | v0 (MAGIC) | v1 | v2/v3 (notes)                      | v4 | v5 |
+|-----------|------------|----|------------------------------------|----|----|
+| RPP       | ✓          | ✓  | Auto‑derive allowed (v3)           | ✓  | ✓  |
+| BOX       | ✓          | ✓  |                                    | ✓  | ✓  |
+| SPH       | ✓          | ✓  |                                    | ✓  | ✓  |
+| RCC       | ✓          | ✓  | Param order normalized (v3)        | ✓  | ✓  |
+| REC       | ✓          | ✓  |                                    | ✓  | ✓  |
+| TRC       | ✓          | ✓  | Distinct from TEC clarified (v3)   | ✓  | ✓  |
+| TEC       | ✓          | ✓  | Pre‑TGC experiments                | ✓  | ✓  |
+| ELL       | ✓ (dual)   | ✓  | Dual input retained                | ✓  | ✓  |
+| RAW/WED   | ✓          | ✓  |                                    | ✓  | ✓  |
+| ARB       | ✓ (5‑card) | ✓  | Face validation begins (v3)        | ✓  | ✓  |
+| ARS       | ✓          | ✓  | Same semantics                     | ✓  | ✓  |
+| TOR       | ✓          | ✓  | Minor<Major enforcement tightened  | ✓  | ✓  |
+
+Notes:
+- ARB in v0/v1 is the “MAGIC 5‑card” convex polyhedron: 8 vertices then 6 faces
+  by ordinal indices; BRL‑CAD later canonicalizes to `arb8`.
+- Ellipsoid dual input (foci+major length or center+axis+equatorial radius) is
+  an early quirk that persists; translators normalize internally.
+- TEC (truncated elliptic cone) allows a non‑perpendicular height vector as
+  early as v0; generalized cone (TGC) is a later BRL‑CAD primitive outside
+  COMGEOM proper.
+
+---
+
+## Boolean and region semantics across versions
+
+### v0 (pre‑v1)
+- Intersection: implied by adjacency of body references (`Region = 1 2` means
+  inside both 1 and 2)
+- Subtraction: leading minus (`-3` means outside body 3)
+- Union: `OR` between clauses (`Region = (1 -2) OR (4 -5)`)
+- No parentheses: evaluation is effectively left‑to‑right by clause; `OR` lumps
+  subregions
+- “Buttressing” rule: where two bodies share a surface, each region must negate
+  the other body to avoid ambiguous boundaries (e.g., `+2 -3` vs `+3 -2`)
+
+Example (v0 style):
+```
+200 = 2 -3
+300 = 3 -2
+```
+
+### v1
+- Same operators, strict fixed columns:
+  - Region number cols 1–5, optional `OR` marker (IA(1)), then up to 9
+    operator+body tokens per card
+  - Continuation cards permitted; `-1` in cols 1–5 terminates region table
+- Parentheses still not part of the grammar; grouping via `OR` card positions
+
+### v2 / v3 (transitional)
+- v2: Column parsing with free‑field fallback; explicit `+` tokens increasingly
+  required in ambiguous decks
+- v3: Free‑field tokenization; limited parentheses; `UNION`/`U` recognized
+  synonyms for `OR`
+- Automatic bounding boxes if RPP omitted (conventional runs)
+
+### v4 / v5
+- Full token grammar; parentheses supported; explicit `+ - OR UNION` with
+  predictable precedence
+- Geometry declarations cleanly separated from boolean structure; comments
+  supported
+
+Comparative snippets:
+- v0/v1 region equation (fixed columns):
+```
+001  +2  -3
+002  +3  -2
+-1
+```
+- v4/v5 region expression (tokenized):
+```
+region 001: +2 -3
+region 002: +3 -2
+```
+- v4/v5 with grouping:
+```
+region 010: ( +2 -3 ) OR ( +4 -5 )
+```
+
+---
+
+## Card / field structure changes
+
+### v0 (MAGIC card decks)
+- Mixed adherence to columns
+- Multi‑card primitives:
+  - BOX: Vx Vy Vz / Ax Ay Az / Bx By Bz / Cx Cy Cz (2 cards)
+  - RCC/REC/TRC/RAW: 2 cards; TEC: 3 cards; ARB: 5 cards; ARS: 2 +
+    M*ceil((N+1)/2) cards
+- Region identification card per region: region number + component code or
+  space code + description
+
+### v1
+- Formal fixed‑column definitions per primitive; field counts validated
+- RPP mandatory enclosure
+- Region table formatting codified; `-1` terminator
+- Error messages categorized (fatal vs non‑fatal)
+
+### v2/v3 (reconstructed)
+- Free‑field parsing introduced to accept large/overflow coordinates
+- Whole‑line comments (`#` or `!`) accepted in some parsers (internal)
+- Early “DUMMY” region recognition; improved error diagnostics
+
+### v4/v5
+- Whitespace/token parsing only; columns ignored
+- v5 adds attribute/metadata lines (see next section)
+
+---
+
+## Attributes and metadata
+
+- v0/v1: Region identification via numeric codes only (3‑digit component;
+  2‑digit space). Materials/colors external or implicit.
+- v5: Attribute lines augment region definitions:
+  - `material=Steel`, `aircode=02`, `color=0/255/0`, `los=...`, `density=...`
+  - Name=value or token style, parsed separately from geometry/boolean
+
+---
+
+## Recognizing versions in the wild (cheat sheet)
+
+- Likely v0 (MAGIC):
+  - Cards referencing TESTG/VOLUM/AREA sections
+  - Primitive blocks matching MAGIC manual’s 2/3/5‑card counts and ordering
+  - Region tables with `-1` terminator but no parentheses anywhere; `OR`
+    appears literally
+  - Ellipsoid blocks with foci pair + major length
+
+- v1:
+  - Strict columns; values neatly aligned; region table with IA(1) `OR` markers
+  - RPP enclosure present and required
+
+- v2/v3 (transitional):
+  - Mixture of column and free‑field lines; occasional parentheses; `UNION`
+    token present
+  - Comments starting `#` or `!` in legacy sources; generalized cone parameters
+    pre‑TGC
+
+- v4:
+  - Whitespace tokens; parentheses; clean separation of bodies from boolean
+    structure; no attribute lines
+
+- v5:
+  - Same as v4 plus attribute/metadata lines (e.g., `material=`, `aircode=`,
+    `color=`)
+
+---
+
+## Migration guidance
+
+1. Inventory and validate
+   - Count per‑primitive parameters; flag lines with wrong cardinality
+   - Verify region table completeness: every point belongs to exactly one
+     region; buttressing negations present
+
+2. Convert v0 → v1
+   - Pad to fixed columns; split multi‑card primitives correctly
+   - Keep dual ellipsoid inputs; normalize internally if supported
+
+3. Convert v1 → v4/v5
+   - Translate region boolean expressions to explicit tokens with parentheses
+   - Add attributes (v5): material, aircode (01 external, 02 crew, 05 engine,
+     09 terminus), region properties
+
+4. Validate by ray tracing
+   - Reproduce small sample angles from manual output (cell listings,
+     obliquities, LOS/normal thickness) to confirm equivalence
+
+Pitfalls:
+- Ellipsoid dual form mapping; ensure axis vector direction/length matches
+  major axis semantics
+- TEC/TRC confusion in transitional decks; verify height vector
+  perpendicularity (TEC: may be oblique)
+- ARB face index blocks: ensure 6 faces present; repeat a face for 4/5‑face
+  forms (per v1 storage) or convert to `arb8`
+
+---
+
+## Examples
+
+### v0 style (MAGIC region)
+```
+15  +15 -17 -14 -16
+16  +15 +16 -14 -17 -21 -22
+-1
+```
+
+### v1 fixed columns (same semantics)
+```
+00015 +15 -17 -14 -16
+00016 +15 +16 -14 -17 -21 -22
+-1
+```
+
+### v4/v5 tokenized with grouping
+```
+region 15:  (+15 -17 -14 -16)
+region 16:  ((+15 +16 -14 -17) OR (-21 -22))  # if logically intended
+```
+
+### v5 attributes
+```
+region 15: (+15 -17 -14 -16)
+  material=Steel
+  aircode=02
+  color=128/128/128
+```
+
+---
+
+## Region identification codes (early and stable)
+
+Components (3 digits):
+- 001–099 Internal components
+- 100–199 Armor
+- 200–299 Fuel (often reused in later targets)
+- 300–399 Misc external
+- 400–499 Gun components
+- 500–599 Track suspension (501 reserved for track; edge hits become 502)
+- 600–699 Wheel suspension
+- 700–799 Power train
+- 800–899 Miscellaneous
+- 900–998 Unused
+- 999 Ground/soil
+
+Spaces (2 digits):
+- 01 External air
+- 02 Crew compartment air
+- 05 Engine compartment air
+- 09 No further target
+
+---
+
+## References
+
+- MAGI (1967): Early geometric description technique for vulnerability analysis
+  (MAGI‑6701)
+- MAGIC User Manual (JTCG/ME 61 JTCG/ME‑71‑7‑1; ‑7‑2‑1; ‑7‑2‑2): Combinatorial
+  geometry, body/region cards, optional QA routines, sample problems
+- BRL Report 1802; ARBRL‑TR‑02189: Formal COMGEOM v1 card specifications
+- BRL‑CAD documentation: Primitive mappings (e.g., `arb8`, TGC) and later
+  pipeline translators
+
+---
+
+## Appendix: Field counts per primitive (v0/v1 reference)
+
+- RPP: 6 scalars (Xmin Xmax Ymin Ymax Zmin Zmax)
+- BOX: 12 scalars (Vx Vy Vz Ax Ay Az Bx By Bz Cx Cy Cz) over 2 cards
+- SPH: 4 scalars (Cx Cy Cz R)
+- RCC: 7 scalars over 2 cards (Vx Vy Vz Hx Hy Hz R)
+- REC: 12 scalars over 2 cards (Vx Vy Vz Hx Hy Hz R1x R1y R1z R2x R2y R2z)
+- TRC: 8 scalars over 2 cards (Vx Vy Vz Hx Hy Hz R1 R2)
+- ELL: (foci Fl(3) F2(3) + L) OR (center V(3) + A(3) + equatorial R)
+- RAW/WED: 12 scalars over 2 cards (V(3) + leg A(3) + leg B(3) + width C(3); A and B interchangeable)
+- ARB: 5 cards: vertices 1–2 on card A; pairs (3,4), (5,6), (7,8) on cards B; faces (6 x 4 ordinals) on card C
+- TEC: 13 scalars over 3 cards (V(3) H(3) A(3) B(3) P)
+- ARS: 2 header integers (M curves, N points) + M * ceil((N+1)/2) cards of point pairs
