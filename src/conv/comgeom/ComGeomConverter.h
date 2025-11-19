@@ -15,6 +15,7 @@ struct ConverterOptions {
     int version = 5;
     int verbose = 0;
     std::string suffix;
+    bool legacy_truncate_names = false; // enable legacy suffix truncation (max 13 chars)
 };
 
 class ComGeomConverter {

@@ -30,8 +30,10 @@ RegionManager::~RegionManager() {
 }
 
 std::string RegionManager::makeRegionName(int n) const {
+    std::string suf = m_opts.suffix;
+    if (m_opts.legacy_trunc && suf.size() > 13) suf.resize(13);
     char buf[64];
-    std::snprintf(buf, sizeof(buf), "r%d%s", n, m_opts.suffix.c_str());
+    std::snprintf(buf, sizeof(buf), "r%d%s", n, suf.c_str());
     return std::string(buf);
 }
 
@@ -136,9 +138,12 @@ bool RegionManager::parseRegionTable() {
                     }
                 }
 
+                std::string suf = m_opts.suffix;
+                if (m_opts.legacy_trunc && suf.size() > 13) suf.resize(13);
+
                 std::string memberName = region_ref
                     ? makeRegionName(inst_num)
-                    : (std::string("s") + std::to_string(inst_num) + m_opts.suffix);
+                    : (std::string("s") + std::to_string(inst_num) + suf);
 
                 if (!mk_addmember(memberName.c_str(), &head.l, nullptr, op)) {
                     std::fprintf(stderr, "mk_addmember failed for region %d member '%s'\n",
@@ -151,7 +156,10 @@ bool RegionManager::parseRegionTable() {
                 std::fprintf(stderr, "getregion: EOF\n");
                 return false;
             }
-            if (nextLine->s == "  end") {
+            // Compare sentinel with trimmed content (ignore leading/trailing spaces)
+            std::string trimmed = ComGeomReader::rstrip(nextLine->s);
+            ComGeomReader::trimLeadingSpacesInplace(trimmed);
+            if (trimmed == "end") {
                 m_opts.regTotal = reg_num;
                 return true;
             }
@@ -241,7 +249,9 @@ void RegionManager::groupInit() {
 void RegionManager::groupRegister(const char *name, int lo, int hi) {
     Group &g = m_groups[m_groupCount];
     WMEMBER_INIT(&g.head);
-    std::string full = std::string(name) + m_opts.suffix;
+    std::string suf = m_opts.suffix;
+    if (m_opts.legacy_trunc && suf.size() > 13) suf.resize(13);
+    std::string full = std::string(name) + suf;
     g.head.wm_name = bu_strdup(full.c_str());
     g.lo = lo;
     g.hi = hi;
