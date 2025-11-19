@@ -25,6 +25,7 @@ struct SolidParserOptions {
     int version = 5;
     int verbose = 0;
     std::string suffix;
+    bool legacy_trunc = false; // optional legacy suffix truncation (max 13 chars)
 };
 
 class SolidParser {

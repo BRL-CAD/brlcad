@@ -18,6 +18,7 @@ struct RegionManagerOptions {
     long verbose = 0;
     std::string suffix;
     int regTotal = 0;
+    bool legacy_trunc = false; // optional legacy suffix truncation (max 13 chars)
 };
 
 /*

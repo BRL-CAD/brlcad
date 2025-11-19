@@ -29,20 +29,33 @@ std::optional<ComGeomReader::Line> ComGeomReader::next(const char * /*title*/) {
 int ComGeomReader::fieldInt(std::string_view sv, size_t start, size_t len) {
     if (start >= sv.size()) return 0;
     size_t end = std::min(sv.size(), start + len);
-    std::string token(sv.substr(start, end - start));
-    token.erase(std::remove_if(token.begin(), token.end(),
-                 [](unsigned char ch){ return std::isspace(ch); }), token.end());
-    if (token.empty()) return 0;
+    // Work on the field window only
+    size_t b = start, e = end;
+    // Trim leading whitespace
+    while (b < e && std::isspace(static_cast<unsigned char>(sv[b]))) b++;
+    // Trim trailing whitespace
+    while (e > b && std::isspace(static_cast<unsigned char>(sv[e-1]))) e--;
+    if (b >= e) return 0;
+    // Note that we preserve internal spaces to match the behavior of the
+    // original C code - "1 23" would be read as 1 rather than 123.  Whether
+    // or not this is really desirable behavior is a question - i.e. whether
+    // there is a valid use case where a line would make the above separation
+    // with intent in the COMGEOM formats - but for now we match legacy code.
+    std::string token(sv.substr(b, e - b));
     return std::atoi(token.c_str());
 }
 
 double ComGeomReader::fieldDouble(std::string_view sv, size_t start, size_t len) {
     if (start >= sv.size()) return 0.0;
     size_t end = std::min(sv.size(), start + len);
-    std::string token(sv.substr(start, end - start));
-    token.erase(std::remove_if(token.begin(), token.end(),
-                 [](unsigned char ch){ return std::isspace(ch); }), token.end());
-    if (token.empty()) return 0.0;
+    // Work on the field window only
+    size_t b = start, e = end;
+    // Trim leading whitespace
+    while (b < e && std::isspace(static_cast<unsigned char>(sv[b]))) b++;
+    // Trim trailing whitespace
+    while (e > b && std::isspace(static_cast<unsigned char>(sv[e-1]))) e--;
+    if (b >= e) return 0.0;
+    std::string token(sv.substr(b, e - b)); // preserve internal spaces to match legacy C
     return std::atof(token.c_str());
 }
 

@@ -16,8 +16,10 @@ SolidParser::SolidParser(ComGeomReader &reader, rt_wdb *outfp, const SolidParser
 {}
 
 std::string SolidParser::makeSolidName(int n) const {
+    std::string suf = m_opts.suffix;
+    if (m_opts.legacy_trunc && suf.size() > 13) suf.resize(13);
     char buf[64] = {0};
-    std::snprintf(buf, sizeof(buf), "s%d%s", n, m_opts.suffix.c_str());
+    std::snprintf(buf, sizeof(buf), "s%d%s", n, suf.c_str());
     return std::string(buf);
 }
 
@@ -585,7 +587,7 @@ SolidParseResult SolidParser::handle_arbn(const std::string &name, const std::st
     return {ret<0?SolidParseResult::Error:SolidParseResult::Ok, ret<0?"mk_arbn failed":""};
 }
 
-/* ---------------- Dispatcher (fixed to stop at expected solid count) ---------------- */
+/* ---------------- Dispatcher  ---------------- */
 SolidParseResult SolidParser::parseNext() {
     if (m_solWork >= m_solTotal && m_solTotal > 0) {
         return {SolidParseResult::Eof, ""};
@@ -601,6 +603,7 @@ SolidParseResult SolidParser::parseNext() {
         return {SolidParseResult::Error, "invalid solid header"};
     }
 
+    // v1 end sentinel handled in region code; in solids, "end" terminates
     if (type == "end") {
         return {SolidParseResult::Eof, ""};
     }
@@ -608,15 +611,14 @@ SolidParseResult SolidParser::parseNext() {
     if (m_opts.version == 5) {
         int expectedNext = m_solWork + 1;
         if (solidNum != expectedNext) {
-            if (m_solWork >= m_solTotal) {
-                return {SolidParseResult::Eof, ""};
-            }
-            return {SolidParseResult::Error,
-                    "solid numbering mismatch: expected " + std::to_string(expectedNext) +
-                    ", got " + std::to_string(solidNum)};
+            // proceed but warn
+            std::fprintf(stderr,
+                         "warning: solid numbering mismatch: expected %d, got %d - consuming this solid to maintain alignment\n",
+                         expectedNext, solidNum);
         }
     }
 
+    // Always advance processed count; names use sequential counter
     m_solWork++;
 
     std::string name = makeSolidName(m_solWork);

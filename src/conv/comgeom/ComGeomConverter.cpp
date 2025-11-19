@@ -71,6 +71,7 @@ int ComGeomConverter::run() {
         std::string_view sv(l->s);
         if (m_opts.version == 1) {
             title = ComGeomReader::rstrip(sv);
+            ComGeomReader::trimLeadingSpacesInplace(title); // trim leading spaces for v1 as well
             units = "in";
         } else {
             units.assign(sv.substr(0,2));
@@ -110,6 +111,7 @@ int ComGeomConverter::run() {
         if (m_opts.verbose) std::puts("Primitive table");
         ComGeomReader r(m_in);
         SolidParserOptions sopts{m_opts.version,m_opts.verbose,m_opts.suffix};
+        sopts.legacy_trunc = m_opts.legacy_truncate_names;
         SolidParser sp(r, m_out, sopts);
         sp.setSolidsExpected(solTotal);
         while (true) {
@@ -134,7 +136,12 @@ int ComGeomConverter::run() {
     {
         if (m_opts.verbose) std::puts("\nRegion table");
         ComGeomReader r(m_in);
-        RegionManagerOptions ropts{m_opts.version,m_opts.verbose,m_opts.suffix,regTotal};
+        RegionManagerOptions ropts;
+        ropts.version = m_opts.version;
+        ropts.verbose = m_opts.verbose;
+        ropts.suffix = m_opts.suffix;
+        ropts.regTotal = regTotal;
+        ropts.legacy_trunc = m_opts.legacy_truncate_names;
         RegionManager rm(r, m_out, ropts);
         if (!rm.parseRegions()) return 10;
         if (m_opts.verbose) std::puts("\nGroups");
