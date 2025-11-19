@@ -27,6 +27,7 @@ opt_set_string(struct bu_vls *msg, size_t argc, const char **argv, void *set_var
 struct CliOptions {
     ConverterOptions conv;
     int show_help = 0;              /* use int for bu_opt compatibility */
+    int legacy_truncate_names = 0;  /* flag to enable legacy truncation */
     std::vector<std::string> positionals;
 };
 
@@ -36,7 +37,6 @@ static void usage(const char *argv0, const struct bu_opt_desc *opt_defs)
     std::fprintf(stderr,
         "Usage: %s [options] input_file output_file\n\n", argv0);
 
-    /* Build help description string from bu_opt system */
     char *help = bu_opt_describe(opt_defs, NULL);
     if (help) {
         std::fprintf(stderr, "%s\n", help);
@@ -44,10 +44,11 @@ static void usage(const char *argv0, const struct bu_opt_desc *opt_defs)
     }
     std::fprintf(stderr,
         "\nExamples:\n"
-        "  %s model.cg model.g              # convert using defaults (version 5)\n"
-        "  %s -v 4 -s _cg4 in.cg out.g      # convert v4, append suffix to names\n"
-        "  %s -d 2 input.cg out.g           # verbose debug level 2\n",
-        argv0, argv0, argv0);
+        "  %s model.cg model.g                 # convert using defaults (version 5)\n"
+        "  %s -v 4 -s _cg4 in.cg out.g         # convert v4, append suffix to names\n"
+        "  %s -t -s _longsuffix in.cg out.g    # legacy suffix truncation (13 chars)\n"
+        "  %s -d 2 input.cg out.g              # verbose debug level 2\n",
+        argv0, argv0, argv0, argv0);
 }
 
 int main(int argc, const char **argv)
@@ -59,19 +60,16 @@ int main(int argc, const char **argv)
     /* Prepare option descriptor array.
      * If arg_process is NULL, bu_opt will set set_var (int) to 1 when flag is present.
      */
-    struct bu_opt_desc opt_defs[6];
-    BU_OPT(opt_defs[0], "h", "help",    "",  NULL,             &co.show_help,
-           "Show help and exit.");
-    BU_OPT(opt_defs[1], "v", "version", "N", &bu_opt_int,      &co.conv.version,
-           "Set COMGEOM input version (1,4,5; default 5).");
-    BU_OPT(opt_defs[2], "d", "debug",   "N", &bu_opt_int,      &co.conv.verbose,
-           "Set verbosity/debug level (integer).");
-    BU_OPT(opt_defs[3], "s", "suffix",  "STR", opt_set_string, &co.conv.suffix,
-           "Append name suffix to all generated objects.");
+    struct bu_opt_desc opt_defs[7];
+    BU_OPT(opt_defs[0], "h", "help",    "",  NULL,             &co.show_help,       "Show help and exit.");
+    BU_OPT(opt_defs[1], "v", "version", "N", &bu_opt_int,      &co.conv.version,    "Set COMGEOM input version (1,4,5; default 5).");
+    BU_OPT(opt_defs[2], "d", "debug",   "N", &bu_opt_int,      &co.conv.verbose,    "Set verbosity/debug level (integer).");
+    BU_OPT(opt_defs[3], "s", "suffix",  "STR", opt_set_string, &co.conv.suffix,     "Append name suffix to all generated objects.");
     /* Allow multiple -V occurrences to increment verbosity as an alternative */
-    BU_OPT(opt_defs[4], "V", "verbose", "",  &bu_opt_incr_long, &co.conv.verbose,
-           "Increment verbosity (may be repeated).");
-    BU_OPT_NULL(opt_defs[5]);
+    BU_OPT(opt_defs[4], "V", "verbose", "",  &bu_opt_incr_long, &co.conv.verbose,   "Increment verbosity (may be repeated).");
+    /* Legacy suffix truncation (match historic name length behavior) */
+    BU_OPT(opt_defs[5], "t", "legacy-truncate-names", "", NULL, &co.legacy_truncate_names,  "Enable legacy name truncation: limit appended suffix to 13 characters.");
+    BU_OPT_NULL(opt_defs[6]);
 
     /* We need a mutable argv copy (const correctness per bu_opt_parse signature) */
     std::vector<const char *> argvec;
@@ -84,7 +82,6 @@ int main(int argc, const char **argv)
     int ret = bu_opt_parse(&msgs, argvec.size(), argvec.data(), opt_defs);
 
     if (ret < 0) {
-        /* Parsing failed; print messages and usage */
         if (BU_VLS_IS_INITIALIZED(&msgs) && bu_vls_strlen(&msgs) > 0)
             std::fprintf(stderr, "%s", bu_vls_addr(&msgs));
         usage(argv[0], opt_defs);
@@ -92,7 +89,6 @@ int main(int argc, const char **argv)
         return 1;
     }
 
-    /* ret = number of unused (positional) args moved to front of array */
     size_t unused = static_cast<size_t>(ret);
     for (size_t i = 0; i < unused; ++i) {
         co.positionals.emplace_back(argvec[i]);
@@ -104,7 +100,6 @@ int main(int argc, const char **argv)
         return 0;
     }
 
-    /* Validate positional count */
     if (co.positionals.size() != 2) {
         std::fprintf(stderr,
                      "Error: expected 2 positional arguments (input_file output_file), got %zu.\n",
@@ -114,7 +109,6 @@ int main(int argc, const char **argv)
         return 1;
     }
 
-    /* Validate version */
     if (co.conv.version != 1 && co.conv.version != 4 && co.conv.version != 5) {
         std::fprintf(stderr, "Error: unsupported COMGEOM version %d (valid: 1, 4, 5).\n",
                      co.conv.version);
@@ -123,7 +117,6 @@ int main(int argc, const char **argv)
         return 1;
     }
 
-    /* Optionally echo debug messages collected */
     if (BU_VLS_IS_INITIALIZED(&msgs) && bu_vls_strlen(&msgs) > 0 && co.conv.verbose) {
         std::fprintf(stderr, "%s", bu_vls_addr(&msgs));
     }
@@ -131,6 +124,9 @@ int main(int argc, const char **argv)
 
     const std::string inputPath  = co.positionals[0];
     const std::string outputPath = co.positionals[1];
+
+    // Map flag to converter option
+    co.conv.legacy_truncate_names = (co.legacy_truncate_names != 0);
 
     ComGeomConverter converter(inputPath, outputPath, co.conv);
     return converter.run();
