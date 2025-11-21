@@ -17,6 +17,7 @@ cmakefiles(
   ComGeomReader.h
   RegionManager.h
   SolidParser.h
+  bot_to_arbn_pipeline_thoughts.txt
 )
 
 # Local Variables:
