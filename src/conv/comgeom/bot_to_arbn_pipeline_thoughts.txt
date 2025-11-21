@@ -1,0 +1,376 @@
+================================================================================
+BRL-CAD BoT → COMGEOM ARBN Export Pipeline
+RLM (Robust Low-Poly Meshing Inspired) + HACD/V-HACD Convex Decomposition
+================================================================================
+
+Purpose:
+--------
+Provide a clear, implementation-oriented blueprint for converting arbitrary
+triangle meshes (BOTs) into a set of convex COMGEOM ARBN solids suitable for
+region assembly. This document is intended both for human developers and as
+context for future GPT-assisted sessions.
+
+Context:
+--------
+COMGEOM does not have a native arbitrary triangle mesh primitive. ARBN
+(primitives defined by intersection of half-spaces / planes) can represent
+convex polyhedra only. Arbitrary non-convex BOT geometry must be decomposed
+into convex parts, each described as an ARBN. To reduce complexity and noise,
+we first simplify and planarize the mesh with an RLM-inspired stage, then
+decompose using HACD/V-HACD, and finally produce ARBNs.
+
+High-Level Pipeline Stages:
+---------------------------
+1. Mesh Acquisition & Validation
+2. RLM-Inspired Simplification (Planar Clustering & Polygon Extraction)
+3. Optional Primitive Recognition (Planes, Cylinders, Cones) (future enhancement)
+4. Convex Decomposition (HACD/V-HACD or fallback hull partitioning)
+5. Convex Part → Plane Set Conversion
+6. ARBN Construction via Incremental Half-Space Clipping
+7. Region Assembly (OR union of convex ARBN solids)
+8. Quality Assurance (QA) & Reporting
+9. Output COMGEOM Deck (version selectable: v1 / v4 / v5)
+10. Optional JSON summary and statistics
+
+Key Design Goals:
+-----------------
+- Produce clean, planar-faced convex solids minimizing plane count.
+- Heal small cracks, near-coplanar face fragmentation, and sliver triangles.
+- Provide tunable tolerances for clustering, plane fitting, snapping, and decomposition.
+- Maintain sharp features (edges with large dihedral angles).
+- Scale to large meshes (hundreds of thousands of triangles) via segmentation.
+
+Terminology:
+------------
+BOT            : BRL-CAD triangle mesh primitive.
+RLM-inspired   : Robust Low-Poly Meshing style operations (plane clustering, feature retention).
+HACD/V-HACD    : Hierarchical Approximate Convex Decomposition algorithms.
+ARBN           : COMGEOM arbitrary N-plane convex solid.
+Plane cluster  : Group of triangles forming an approximate planar patch.
+Convex part    : Output of HACD or grouping guaranteed to be convex.
+Clipper        : Incremental half-space intersection algorithm producing ARBN vertices.
+Region         : COMGEOM Boolean combination (union/intersection/subtraction) of solids.
+
+Assumptions:
+------------
+- BOT input is either closed and manifold or can be repaired (hole fill / thickening).
+- Decomposition tools are available (HACD or V-HACD library; otherwise fallback convex hull).
+- Numeric tolerances are chosen relative to model scale (bbox diagonal).
+- Complexity controls (max planes per ARBN, max clusters, max convex parts) prevent runaway resource usage.
+
+Environment / Flags (Proposed):
+-------------------------------
+--simplify=none|rlm            : Enable RLM-stage planar clustering.
+--rlm-angle=deg                : Angle threshold for normal clustering (default 2.0).
+--rlm-dist=scale               : Distance tolerance for plane residual (default 1e-3 * bbox_diag).
+--rlm-snap=scale               : Vertex snap tolerance (default 5e-4 * bbox_diag).
+--rlm-sharp=deg                : Dihedral angle above which edges are preserved (default 30).
+--rlm-min-area=scale^2         : Minimum polygon area; discard degenerates.
+--hacd=on|off                  : Enable HACD decomposition stage.
+--hacd-concavity=value         : HACD concavity parameter.
+--hacd-max-parts=N             : Max number of convex parts.
+--hacd-min-volume=scale^3      : Minimum part volume threshold.
+--decomp-order=pre|post        : RLM before or after HACD (default pre).
+--max-planes-per-arbn=N        : Safety cap (default 512).
+--arbn-hash=on|off             : Spatial hash for vertex deduplication (default on).
+--arbn-stats=path              : Stats dump file.
+--export-version=1|4|5         : COMGEOM dialect (default 5).
+--json=path                    : Emit JSON export report.
+--material-map=file.json       : Attribute enrichment mapping.
+--color-map=file.json          : Region color mapping.
+
+Stage 1: Mesh Acquisition & Validation
+--------------------------------------
+Inputs: BOT primitive (triangle list).
+Steps:
+1. Load triangles; compute bounding box.
+2. Verify manifold conditions:
+   - Each edge referenced by 1 or 2 faces.
+   - No zero-area triangles.
+3. If open surface and user requests solid export:
+   - Either abort or apply thickening (offset + stitch) – optional future feature.
+4. Deduplicate vertices (hash by quantized position).
+5. Compute per-face normals and edge dihedral angles.
+
+Outputs:
+- Clean triangle list, adjacency (half-edge or edge-to-face map).
+- BBox, scale metrics.
+
+Stage 2: RLM-Inspired Simplification
+------------------------------------
+Goal: Merge nearly coplanar triangles into planar clusters.
+
+Algorithm Sketch:
+1. Seed clusters: each triangle forms initial cluster with its plane.
+2. Normal clustering: merge cluster pairs if angle between planes < rlm-angle AND distance between centroids projects within rlm-dist residual.
+3. Plane fitting: For each cluster, fit plane via PCA/least squares to vertex set. Recompute residuals.
+4. Split clusters where residual > rlm-dist or non-manifold boundaries arise.
+5. Extract boundary polygon:
+   - Collect boundary edges (adjacent triangle only once).
+   - Project boundary vertices to plane.
+   - Compute 2D convex (or general boundary) hull; remove interior points.
+6. Vertex snapping:
+   - Project vertices onto fitted plane.
+   - Merge vertices within rlm-snap tolerance.
+7. Sharp edges retention:
+   - Do not merge clusters across edges with dihedral > rlm-sharp.
+8. Degeneracy filtering:
+   - Discard polygons with area < rlm-min-area or internal angle < min_angle (~5°).
+9. Optional: Triangulate polygon if required by downstream (for HACD only if non-convex planar patch).
+
+Outputs:
+- Reduced set of planar patches (clusters) with cleaned boundary polygons.
+- Mapping from original faces to cluster.
+
+Stage 3: Optional Primitive Recognition (Future Enhancement)
+------------------------------------------------------------
+Idea: Detect canonical primitives (planes, cylinders, spheres, cones) before clustering to reduce complexity:
+- RANSAC or multi-pass fitting.
+- Replace large planar clusters with a BOX or RPP if axis-aligned.
+- Defer for initial implementation.
+
+Stage 4: Convex Decomposition (HACD/V-HACD)
+-------------------------------------------
+If mesh (post-RLM) remains non-convex:
+1. Run HACD on simplified mesh.
+   - Inputs: tolerance (concavity), max parts, min volume.
+2. Obtain convex parts (triangle subsets).
+3. For each convex part:
+   - Optionally re-run a localized RLM stage again (Mode: post-hacd).
+4. If HACD disabled:
+   - Option hull-only: compute global convex hull (loss of concavity details).
+   - Reject or warn if non-convex and no decomposition path chosen.
+
+Outputs:
+- Collection of convex parts (each either a polygonal shell).
+
+Stage 5: Convex Part → Plane Set Conversion
+-------------------------------------------
+For each convex part:
+1. Compute convex hull of part (even if already convex; double-check).
+2. Extract hull faces; each face yields a plane (normal outward, distance).
+3. Normalize planes; cluster near-duplicates (angle & offset tolerance).
+4. Verify face consistency (no inverted normals; positive volume).
+5. Cap plane count; if > max-planes-per-arbn → either split, relax tolerance, or fallback to legacy enumeration (warning).
+
+Outputs:
+- Plane list per convex part.
+
+Stage 6: ARBN Construction
+--------------------------
+Use incremental half-space clipping (implemented arbn_clip):
+1. Seed bounding polyhedron from plane offsets (derived radius).
+2. For each plane in part:
+   - Clip polyhedron (spatial hash for vertex reuse).
+   - Abort if volume becomes zero (log error; fallback to hull triangulation?).
+3. Gather final vertex set and face loops.
+4. Record stats (input planes, duplicates removed, final face/vertex count).
+
+Outputs:
+- ARBN solid definition: plane equations only (COMGEOM stores planes; vertex enumeration implicit).
+- Optional internal triangulation only for QA (not stored in deck).
+
+Stage 7: Region Assembly
+------------------------
+Single region for entire original BOT:
+- Boolean semantics: Region = OR of all ARBN solids derived from decomposition.
+- If decomposition yields components with distinct attributes (e.g., materials), create multiple regions (each corresponding to an attribute class).
+- For COMGEOM v1: multiple cards with OR semantics; for v4/v5: parenthesized expression: ( +S1 ) OR ( +S2 ) OR ...
+
+Stage 8: QA & Validation
+------------------------
+Checks:
+1. Volume > 0 and matches (within tolerance) original mesh volume (approx. via voxel sampling or Monte Carlo).
+2. Surface area near original (after simplification) minus sliver removal.
+3. Watertightness: ray shoot tests (random directions) see consistent in/out transitions.
+4. Plane count sanity (no explosion).
+5. Overlaps: sampled points belong to exactly one convex part unless intended union.
+
+Stage 9: Output COMGEOM Deck
+----------------------------
+For each ARBN:
+- Solid table entries listing plane equations (v1 fixed columns or v5 token).
+Region table:
+- Union of solids, optional attributes.
+Ident table:
+- Region codes, space codes, materials, LOS (v5 attribute lines or numeric fields).
+Attribute enhancement (v5):
+- material=, color=R/G/B, aircode=, density= if available.
+
+Stage 10: Reporting
+-------------------
+JSON report keys:
+{
+  "input": { "triangles": N, "bbox": [...], "scale": S },
+  "rlm": { "clusters": C, "merged_faces": F, "avg_residual": R },
+  "hacd": { "enabled": true, "parts": P, "concavity": X },
+  "arbn": { "solids": S, "avg_planes": A, "max_planes": M },
+  "region": { "count": Rg, "boolean": "OR" },
+  "stats": { "warnings": W, "errors": E },
+  "timing": { "rlm_ms": t1, "hacd_ms": t2, "arbn_ms": t3 }
+}
+
+Parameter Tuning Guidelines:
+----------------------------
+angle_tol (cluster)      : 1–2 degrees (start small; larger increases merging).
+distance_tol (plane fit) : 1e-3 × bbox_diag (reduce for high precision parts).
+snap_tol (vertex merge)  : 5e-4 × bbox_diag (balance healing vs distortion).
+sharp_threshold          : 30 degrees (increase to preserve more edges).
+hacd_concavity           : 0.002–0.01 typical; lower → more parts, higher → fewer.
+max_planes_per_arbn      : 256–512 recommended safety.
+min_face_area            : 1e-10 × bbox_diag^2 (filter numerical artifacts).
+min_part_volume          : 1e-9 × bbox_diag^3 (discard tiny fragments).
+
+Error Handling Strategy:
+------------------------
+- Non-manifold input → attempt repair; if fails, abort with message.
+- Excessive plane count → split cluster or relax clustering thresholds.
+- Zero-volume ARBN creation → fallback to convex hull or mark as skipped.
+- HACD failure → fallback to hull-only mode with warning.
+- Tolerance misconfiguration → auto-suggest adjustments in JSON report.
+
+Performance Considerations:
+---------------------------
+- Spatial hashing for vertex dedup in ARBN clipper (O(1) average insert/find).
+- Parallelization possibilities:
+  - RLM clustering per spatial block / octree node.
+  - HACD usually internal multi-threading (depending on library).
+  - ARBN construction per convex part in parallel threads.
+- Memory caps: early discard of clusters under min_face_area prevents growth.
+- Streaming: flush solids incrementally to output files.
+
+Security / Robustness Notes:
+----------------------------
+- Validate all user-supplied tolerances; clamp unreasonable values.
+- Protect against extremely large mesh inputs by early bounding checks.
+- Consistent use of relative tolerances tied to model scale to avoid numeric collapse.
+
+Interfaces & Extensibility:
+---------------------------
+Future flags:
+--primitive-detect=on/off           : Pre-pass for cylinders/cones/spheres.
+--thicken-open-mesh=scale          : Convert open surfaces to solids.
+--exact-predicates=on/off          : Introduce robust orientation tests.
+--parallel=N                       : Explicit thread count.
+
+Data Structures (Minimal Outline):
+----------------------------------
+struct RLMCluster {
+    vect_t plane_normal;
+    double plane_offset;
+    double rms_error;
+    size_t *face_indices;
+    size_t face_count;
+    int sharp_boundary; /* flag */
+    point_t *boundary_vertices;
+    size_t boundary_count;
+};
+
+struct ConvexPart {
+    size_t *triangle_indices;
+    size_t tri_count;
+    plane_t *planes;
+    size_t plane_count;
+};
+
+struct ARBNSolid {
+    plane_t *planes;
+    size_t plane_count;
+    /* optional stats */
+};
+
+Pseudo-Code Summary:
+--------------------
+function export_bot_to_comgeom(bot, params):
+    triangles = load(bot)
+    validate(triangles)
+    if params.simplify == RLM:
+        clusters = rlm_cluster(triangles, params)
+        triangles = rebuild_from_clusters(clusters)  // optional
+    parts = (params.hacd ? hacd_decompose(triangles, params) : [triangles])
+    solids = []
+    for part in parts:
+        planes = extract_planes(part, params)
+        arbn = build_arbn(planes, params)
+        if arbn.valid: solids.append(arbn)
+    region = build_region_union(solids)
+    write_comgeom(solids, region, params)
+    write_report(params, stats)
+
+Potential Failure Scenarios & Responses:
+----------------------------------------
+1. Input mesh massively non-manifold:
+   - Response: abort early; suggest repair tool invocation.
+2. RLM merges too aggressively (loss of moderate detail):
+   - Response: output warning; advise lower angle_tol.
+3. HACD produces thousands of tiny parts:
+   - Response: raise concavity tolerance; filter by min_part_volume.
+4. ARBN plane overflow:
+   - Response: split part along largest variance axis; recursively process.
+5. Output region expression too large:
+   - Response: chunk region definitions or group solids logically by type.
+
+Testing Strategy:
+-----------------
+Unit:
+- Plane fitting accuracy (synthetic coplanar sets).
+- Clustering stability under noise.
+- ARBN clipper invariants (volume positive, faces planar).
+
+Integration:
+- BOT sample models (simple, moderate, complex).
+- Comparison of original vs simplified volumes (Monte Carlo sampling).
+- Performance benchmarking (timings for each stage).
+
+Regression:
+- Fuzz small random perturbations in vertex positions; ensure pipeline stable.
+- Large mesh stress (e.g., 250k triangles) within acceptable memory/time.
+
+JSON Report Example:
+--------------------
+{
+  "input": { "triangles": 50234, "bbox": [ [0,0,0], [10,5,7] ], "scale": 12.247 },
+  "rlm": { "clusters": 340, "merged_faces": 48000, "avg_residual": 0.00072 },
+  "hacd": { "enabled": true, "parts": 128, "concavity": 0.005 },
+  "arbn": { "solids": 128, "avg_planes": 18, "max_planes": 42 },
+  "region": { "count": 1, "boolean": "OR" },
+  "stats": { "warnings": 3, "errors": 0 },
+  "timing": { "rlm_ms": 1834, "hacd_ms": 2975, "arbn_ms": 622 }
+}
+
+Open Questions (For Future Iteration):
+--------------------------------------
+- Should we incorporate curved primitive detection before RLM to reduce plane counts further?
+- Acceptable loss thresholds for feature simplification (volume delta %, area delta %)?
+- Deterministic mode (fixed random seeds) for reproducible CI outputs?
+- Support for per-material segmentation feeding separate region definitions?
+
+Recommended Initial Implementation Order:
+----------------------------------------
+Phase 1: BOT validation + adjacency + dihedral computation
+Phase 2: Basic RLM clustering (angle + residual) + boundary extraction
+Phase 3: HACD integration (API wrapper) + parameter mapping
+Phase 4: Plane extraction + ARBN clipper integration
+Phase 5: Region assembly + COMGEOM writing (v5 first)
+Phase 6: JSON reporting + stats instrumentation
+Phase 7: Tuning + advanced cluster splitting + QA benchmarks
+Phase 8: Optional primitive recognition and improved heuristics
+
+Risk Summary:
+-------------
+- Over-simplification: mitigated by exposing user parameters and reporting cluster stats.
+- Performance bottlenecks: spatial hashing, early culling, parallel cluster operations.
+- Numerical instability: per-stage tolerance scaling; failover to hull approximations.
+- Large memory footprints: streaming cluster processing and releasing intermediate buffers.
+
+References (Conceptual Inspirations):
+-------------------------------------
+- Robust Low-Poly Meshing (RLM) paper (site referenced).
+- HACD / V-HACD algorithms (hierarchical approximate convex decomposition).
+- Plane clustering & PCA fitting (standard computational geometry).
+- Incremental half-space intersection for convex polyhedra.
+- Shewchuk robust predicates (optional future exact arithmetic upgrade).
+- RANSAC-based primitive detection (future enhancements).
+
+End of Document
+================================================================================
