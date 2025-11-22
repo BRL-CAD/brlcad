@@ -1,10 +1,7 @@
-find_package(ADAPTAGRAMS)
-if(ADAPTAGRAMS_FOUND)
+brlcad_find_package(Adaptagrams COMPONENTS avoid cola dialect topology)
+if(Adaptagrams_FOUND)
   add_definitions(-DHAVE_ADAPTAGRAMS=1)
-else(ADAPTAGRAMS_FOUND)
-  set(AVOID_INCLUDE_DIR "")
-  set(ADAPTAGRAMS_LIBRARIES "")
-endif(ADAPTAGRAMS_FOUND)
+endif()
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -12,11 +9,25 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  ${AVOID_INCLUDE_DIR}
+  ${Adaptagrams_INCLUDE_DIRS}
 )
 
+set(GED_GRAPH_LIBS
+  libged
+  libbu
+)
+if(Adaptagrams_FOUND)
+  set(GED_GRAPH_LIBS ${GED_GRAPH_LIBS}
+    adaptagrams::dialect
+    adaptagrams::topology
+    adaptagrams::cola
+    adaptagrams::avoid
+    adaptagrams::vpsc
+  )
+endif()
+
 ged_plugin_library(ged-graph graph.cpp)
-target_link_libraries(ged-graph libged libbu ${ADAPTAGRAMS_LIBRARIES})
+target_link_libraries(ged-graph ${GED_GRAPH_LIBS})
 
 cmakefiles(
   CMakeLists.txt

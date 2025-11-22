@@ -25,8 +25,8 @@ set(
   Distcheck.cmake
   DocBook.cmake
   Doxygen.cmake
-  FindADAPTAGRAMS.cmake
   FindASTYLE.cmake
+  FindAdaptagrams.cmake
   FindAppleseed.cmake
   FindBlosc.cmake
   FindBRLCAD.cmake
