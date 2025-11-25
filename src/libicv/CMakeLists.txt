@@ -1,6 +1,5 @@
 brlcad_find_package(NETPBM REQUIRED)
 brlcad_find_package(PNG REQUIRED)
-brlcad_find_package(UTAHRLE REQUIRED)
 
 set(
   LIBICV_SOURCES
@@ -18,15 +17,15 @@ set(
   pix.c
   png.c
   ppm.c
-  rle.c
+  rle.cpp
   rot.c
   size.c
   stat.c
 )
 
 # Note - libicv_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-set(ICV_LIBS ${libicv_deps} ${PNG_LIBRARIES} ${NETPBM_LIBRARY} ${UTAHRLE_LIBRARY})
-set(LOCAL_ICV_INCLUDE_DIRS ${PNG_INCLUDE_DIRS} ${NETPBM_INCLUDE_DIR} ${UTAHRLE_INCLUDE_DIR})
+set(ICV_LIBS ${libicv_deps} ${PNG_LIBRARIES} ${NETPBM_LIBRARY})
+set(LOCAL_ICV_INCLUDE_DIRS ${PNG_INCLUDE_DIRS} ${NETPBM_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 brlcad_addlib(libicv "${LIBICV_SOURCES}" "${ICV_LIBS}" "" "${LOCAL_ICV_INCLUDE_DIRS}")
 set_target_properties(libicv PROPERTIES VERSION 20.0.1 SOVERSION 20)
@@ -45,6 +44,7 @@ cmakefiles(
   PImgHash.h
   pixcii.hpp
   icv_private.h
+  rle.hpp
 )
 
 # Local Variables:
