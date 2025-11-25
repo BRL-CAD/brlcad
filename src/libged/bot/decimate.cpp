@@ -62,7 +62,6 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
     struct _ged_bot_info* gb = (struct _ged_bot_info*)bs;
     struct ged* gedp = gb->gedp;
     struct db_i *dbip = gedp->dbip;
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     const char* usage_string = "bot [options] decimate [decimate_options] <objname> [output_name]";
     const char* purpose_string = "Decimate the BoT";
@@ -98,7 +97,8 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	return GED_HELP;
     }
 
-    /* Sanity check options */
+    /* Sanity checks */
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     int old_method = (max_chord_error > 0 || max_normal_error > 0 || min_edge_length > 0) ? 1 : 0;
     int simple_method = (merge_tol > 0) ? 1 : 0;
     int gct_method = (NEAR_EQUAL(feature_size, 1.0, VUNITIZE_TOL)) ? 0 : 1;

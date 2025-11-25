@@ -242,7 +242,6 @@ _bot_cmd_smooth(void* bs, int argc, const char** argv)
     struct _ged_bot_info* gb = (struct _ged_bot_info*)bs;
     struct ged* gedp = gb->gedp;
     struct db_i *dbip = gedp->dbip;
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     const char* usage_string = "bot [options] smooth [smooth_options] <objname> [output_name]";
     const char* purpose_string = "Smooth the BoT using OpenMesh's Jacobi Laplace smoother";
@@ -276,6 +275,8 @@ _bot_cmd_smooth(void* bs, int argc, const char** argv)
 	smooth_usage(gedp->ged_result_str, "bot smooth", d);
 	return GED_HELP;
     }
+
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
