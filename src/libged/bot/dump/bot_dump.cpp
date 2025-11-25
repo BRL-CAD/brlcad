@@ -510,9 +510,6 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     int write_displayed = 0;
     const char *cmd_name;
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
     struct _ged_bot_dump_client_data ld;
     struct _ged_bot_dump_client_data *d = &ld;
     bot_client_data_init(d);
@@ -548,6 +545,9 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	bot_client_data_cleanup(d);
 	return GED_HELP;
     }
+
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* parse standard options */
     int opt_ret = bu_opt_parse(NULL, argc, argv, od);
@@ -751,7 +751,6 @@ _bot_cmd_dump(void* bs, int argc, const char** argv)
 {
     struct _ged_bot_info* gb = (struct _ged_bot_info*)bs;
     struct ged* gedp = gb->gedp;
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     const char *usage_string = "bot dump [-b] [-n] [-m directory] [-o file] [-t dxf|glb|gltf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n\n";
     const char* purpose_string = "Export raw BoT information, without any processing.";
