@@ -320,6 +320,20 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
     return 0;
 }
 
+static int
+is_in_overwrite_list(const char *name, char **overwrite_list)
+{
+    int i;
+    if (!overwrite_list) return 0;
+
+    for (i = 0; overwrite_list[i] != NULL; i++) {
+        if (BU_STR_EQUIV(name, overwrite_list[i])) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 // Export all materials in a file to the filename provided
 static int
 export_materials(struct ged *gedp, int argc, const char *argv[])
@@ -382,19 +396,28 @@ export_materials(struct ged *gedp, int argc, const char *argv[])
 // Import matprop file
 // material import --type matprop  <filename>
 static int
-import_matprop_file(struct ged *gedp, int argc, const char *argv[])
+import_matprop_file(struct ged *gedp, int argc, const char *argv[], int force_all, const char *specific_overwrites_str)
 {
     const char* fileName;
     FILE* file;
     ParseResult result;
     int import_count = 0;
+    int skipped_count = 0;
     int i, j;
+    struct db_i *db_i; // Declare db_i at the top of the function
+    // Setup overwrite list variables
+    char *overwrite_input_copy = NULL; // We need a copy because argv_from_string modifies the string
+    char *overwrite_argv[1024];        // Static buffer to hold the pointers (limit 1024 names)
+    int overwrite_argc = 0;            // To track how many names we parsed
 
-    if (argc < 3) {
-        bu_vls_printf(gedp->ged_result_str, "ERROR: Not enough arguments.\nUsage: material import --type matprop <filename>\n");
+    // We just check that argc is 3, as expected.
+    if (argc != 3) {
+        bu_vls_printf(gedp->ged_result_str, "ERROR: Invalid arguments passed to import_matprop_file. Expected argc=3, got %d\n", argc);
         return BRLCAD_ERROR;
     }
-    fileName = argv[2]; 
+    
+    // The filename is always at index 2 after parsing
+    fileName = argv[2];
 
     file = fopen(fileName, "r");
     if (file == NULL) {
@@ -412,11 +435,45 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
         return BRLCAD_ERROR;
     }
 
+    // Initialize the array to NULL to be safe
+    memset(overwrite_argv, 0, sizeof(overwrite_argv));
+
+    // Parse the list
+    if (specific_overwrites_str && strlen(specific_overwrites_str) > 0) {
+        // Duplicate the string so we can modify it
+        overwrite_input_copy = bu_strdup(specific_overwrites_str);
+        
+        // Call bu_argv_from_string with 3 arguments:
+        // 1. The array to fill
+        // 2. The limit (size of the array)
+        // 3. The string to chop up
+        overwrite_argc = bu_argv_from_string(overwrite_argv, 1024, overwrite_input_copy);
+    }
+
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     
     for (i = 0; i < result.mat_count; i++) {
         Material* mat = &result.materials[i];
-        
+        struct directory *dp;
+        dp = db_lookup(gedp->dbip, mat->name, 0);
+
+        if (dp != RT_DIR_NULL) {
+            // It exists!
+            int should_overwrite = force_all;
+            
+            // If not forcing all, check if this specific name is in our parsed list
+            if (!should_overwrite && overwrite_argc > 0) {
+                should_overwrite = is_in_overwrite_list(mat->name, overwrite_argv);
+            }
+
+            if (!should_overwrite) {
+                bu_vls_printf(gedp->ged_result_str, "WARNING: Material '%s' already exists. Skipping. Use --force or -o '%s' to overwrite.\n", mat->name, mat->name);
+                skipped_count++;
+                continue; 
+            }
+            bu_vls_printf(gedp->ged_result_str, "INFO: Overwriting existing material '%s'.\n", mat->name);
+        }
+        // Initialize AVS containers for the current material
         struct bu_attribute_value_set physicalProperties;
         struct bu_attribute_value_set mechanicalProperties;
         struct bu_attribute_value_set opticalProperties;
@@ -442,7 +499,6 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
             "hardness",
             "tensile_strength",
             "yield_strength",
-            "density",
             "brinell_hardness",
             "ultimate_strength",
             "shear_strength",
@@ -531,6 +587,10 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[])
     free_parse_result(&result);
 
     bu_vls_printf(gedp->ged_result_str, "Successfully imported %d new materials from '%s'.\n", import_count, fileName);
+    bu_vls_printf(gedp->ged_result_str, "  Skipped (already exist): %d\n", skipped_count);
+
+    // Tell BRL-CAD's UI to update to show new materials
+    //ged_update_views(gedp, (long)0); 
 
     return BRLCAD_OK;
 }
@@ -539,19 +599,29 @@ static int
 import_file_type(struct ged *gedp, int argc, const char *argv[])
 {
     struct bu_vls file_type = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc d[2];
-    BU_OPT(d[0],  "", "type",         "file_type",         &bu_opt_vls,       &file_type, "Import file based on file type");
-    BU_OPT_NULL(d[1]);
+    struct bu_vls specific_overwrites = BU_VLS_INIT_ZERO;
+    int force_overwrite = 0; 
+    struct bu_opt_desc d[4]; 
+
+    BU_OPT(d[0],   "t", "type",        "file_type",       &bu_opt_vls,   &file_type, "Import file based on file type");
+    BU_OPT(d[1], "f", "force",       "bool",              &bu_opt_bool,  &force_overwrite, "Force overwrite of existing materials");
+    BU_OPT(d[2], "o", "overwrite", "names", &bu_opt_vls, &specific_overwrites, "Space-separated list of specific material names to overwrite");
+    BU_OPT_NULL(d[3]); 
 
     int opt_ret = bu_opt_parse(NULL, argc, argv, d);
     argc = opt_ret;
 
     if (BU_STR_EQUAL(bu_vls_cstr(&file_type), "matprop")) {
-        import_matprop_file(gedp, argc, argv);
+        bu_log("import matprop file");
+        import_matprop_file(gedp, argc, argv, force_overwrite, bu_vls_cstr(&specific_overwrites));
     } else {
         import_materials(gedp, argc, argv);
     }
-    return BRLCAD_OK;
+    
+    bu_vls_free(&file_type);
+    bu_vls_free(&specific_overwrites);
+
+    return 0; /* Assuming 0 is BRLCAD_OK, based on import_materials */
 }
 
 static void
