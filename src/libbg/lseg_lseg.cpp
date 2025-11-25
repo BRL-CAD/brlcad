@@ -1,22 +1,33 @@
-// David Eberly, Geometric Tools, Redmond WA 98052
-// Copyright (c) 1998-2019
-// Distributed under the Boost Software License, Version 1.0.
-// http://www.boost.org/LICENSE_1_0.txt
-// http://www.geometrictools.com/License/Boost/LICENSE_1_0.txt
-// File Version: 3.0.1 (2018/10/05)
-
-// Compute the closest points on the line segments P(s) = (1-s)*P0 + s*P1 and
-// Q(t) = (1-t)*Q0 + t*Q1 for 0 <= s <= 1 and 0 <= t <= 1.  The algorithm is
-// robust even for nearly parallel segments.  Effectively, it uses a conjugate
-// gradient search for the minimum of the squared distance function, which
-// avoids the numerical problems introduced by divisions in the case the
-// minimum is located at an interior point of the domain.  See the document
-//   http://www.geometrictools.com/Documentation/DistanceLine3Line3.pdf
-// for details.
-
-// This file is basically
-// https://www.geometrictools.com/GTEngine/Include/Mathematics/GteDistSegmentSegment.h
-// except we are using vmath.h types and the C programming language
+/*                   L S E G _ L S E G . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2025 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file lseg_lseg.cpp
+ *
+ * Compute the closest points on the line segments P(s) = (1-s)*P0 + s*P1 and
+ * Q(t) = (1-t)*Q0 + t*Q1 for 0 <= s <= 1 and 0 <= t <= 1.  The algorithm is
+ * robust even for nearly parallel segments.  Effectively, it uses a conjugate
+ * gradient search for the minimum of the squared distance function, which
+ * avoids the numerical problems introduced by divisions in the case the
+ * minimum is located at an interior point of the domain.  See the document
+ * http://www.geometrictools.com/Documentation/DistanceLine3Line3.pdf
+ * for details.
+ */
 
 #include "common.h"
 #include <string.h>

@@ -14,17 +14,17 @@ set(
   clipper.cpp
   decimate.cpp
   lseg_lseg.cpp
-  lseg_pt.c
-  obr.c
+  lseg_pt.cpp
+  obr.cpp
   pca.cpp
   plane.cpp
   polygon.c
   polygon_op.cpp
   polygon_triangulate.cpp
   polygon_point_in.c
-  sat.c
+  sat.cpp
   spsr.cpp
-  tri_pt.c
+  tri_pt.cpp
   tri_ray.c
   tri_tri.c
   trimesh.cpp
