@@ -43,8 +43,16 @@
 
 #include "./include/private.h"
 
-static std::map<std::string, const struct dm *> dm_map;
-static std::map<std::string, const struct fb *> fb_map;
+// Meyers singletons
+static std::map<std::string, const struct dm *> &get_dm_map() {
+    static std::map<std::string, const struct dm *> dm_map;
+    return dm_map;
+}
+static std::map<std::string, const struct fb *> &get_fb_map() {
+    static std::map<std::string, const struct fb *> fb_map;
+    return fb_map;
+}
+
 void *dm_backends;
 void *fb_backends;
 
@@ -129,13 +137,13 @@ libdm_init(void)
 	    }
 	    std::string key(dname);
 	    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){ return std::tolower(c); });
-	    if (dm_map.find(key) != dm_map.end()) {
+	    if (get_dm_map().find(key) != get_dm_map().end()) {
 		bu_vls_printf(&init_msgs, "Warning - file '%s' provides backend '%s' but that backend has already been loaded, skipping\n", pfile, dname);
 		bu_dlclose(dl_handle);
 		continue;
 	    }
 	    dm_handles.insert(dl_handle);
-	    dm_map[key] = d;
+	    get_dm_map()[key] = d;
 	}
 
 	// If we've gotten this far, we have a dm - see if we also have a framebuffer */
@@ -164,11 +172,11 @@ libdm_init(void)
 	    const struct fb *f = plugin->p;
 	    const char *fname = fb_get_name(f);
 	    std::string key(fname);
-	    if (fb_map.find(key) != fb_map.end()) {
+	    if (get_fb_map().find(key) != get_fb_map().end()) {
 		bu_vls_printf(&init_msgs, "Warning - file '%s' provides framebuffer backend '%s' but that backend has already been loaded, skipping\n", pfile, fname);
 		continue;
 	    }
-	    fb_map[key] = f;
+	    get_fb_map()[key] = f;
 	}
 
 
@@ -176,26 +184,26 @@ libdm_init(void)
     bu_argv_free(dm_nfiles, dm_filenames);
     bu_vls_free(&plugin_pattern);
 
-    dm_backends = (void *)&dm_map;
+    dm_backends = (void *)&get_dm_map();
 
     // Populate the built-in if_* backends
     std::string nullkey("/dev/null");
-    fb_map[nullkey] = &fb_null_interface;
+    get_fb_map()[nullkey] = &fb_null_interface;
     std::string debugkey("/dev/debug");
-    fb_map[debugkey] = &debug_interface;
+    get_fb_map()[debugkey] = &debug_interface;
     std::string memkey("/dev/mem");
-    fb_map[memkey] = &memory_interface;
+    get_fb_map()[memkey] = &memory_interface;
     std::string stackkey("/dev/stack");
-    fb_map[stackkey] = &stk_interface;
+    get_fb_map()[stackkey] = &stk_interface;
 
-    fb_backends = (void *)&fb_map;
+    fb_backends = (void *)&get_fb_map();
 }
 
 
 static void
 libdm_clear(void)
 {
-    dm_map.clear();
+    get_dm_map().clear();
     std::set<void *>::reverse_iterator h_it;
     /* unload in reverse in case symbols are referential */
     for (h_it = dm_handles.rbegin(); h_it != dm_handles.rend(); h_it++) {
