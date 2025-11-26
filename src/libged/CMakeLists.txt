@@ -14,6 +14,7 @@ set_target_properties(ged_plugins_sentinel PROPERTIES FOLDER "BRL-CAD Plugins/ge
 
 # Utility program
 set(GED_CMD_SCANNER ${CMAKE_BINARY_DIR}/CMakeTmp/ged_cmd_scanner${CMAKE_EXECUTABLE_SUFFIX})
+file(REMOVE "${GED_CMD_SCANNER}")
 try_compile(
   ged_cmd_scanner
   "${CMAKE_BINARY_DIR}/CMakeTmp"
