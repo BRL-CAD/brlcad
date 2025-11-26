@@ -333,7 +333,7 @@ ged_scan_plugins(void)
 /* -------------------------------------------------------------------------- */
 /* Initialization & Shutdown                                                  */
 /* -------------------------------------------------------------------------- */
-
+extern "C" void ged_force_static_registration(void);
 extern "C" void
 libged_init(void)
 {
@@ -341,6 +341,7 @@ libged_init(void)
     if (G.shutdown) return;
 
 #if defined(LIBGED_STATIC_CORE)
+    ged_force_static_registration();
     ged_static_register_linkerset();  // Enumerate and register all statically linked commands
 #endif
 
