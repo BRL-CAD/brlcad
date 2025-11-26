@@ -19,8 +19,7 @@
  */
 /** @file plugin.h
  *
- * Brief description
- *
+ * Mechanisms for providing modular commands to the GED framework.
  */
 
 #ifndef LIBGED_PLUGIN_H
@@ -31,38 +30,13 @@
 
 #define GED_API (2*1000000 + (BRLCAD_VERSION_MAJOR*10000) + (BRLCAD_VERSION_MINOR*100) + BRLCAD_VERSION_PATCH)
 
-extern void *ged_cmds;
-
-/* Default command behaviors when it comes to impacts on calling applications.
- * Need callback hooks in gedp so the application can tell the command what it
- * needs in these scenarios.  For some it might be possible to have default
- * libdm based callbacks if none are supplied... */
-
-/* Flags are set and checked with bitwise operations:
- * (see, for example, https://www.learncpp.com/cpp-tutorial/bit-manipulation-with-bitwise-operators-and-bit-masks/)
- *
- * int flags = 0;
- *
- * // Enable one flag:
- * flags |= flag1
- * // Enable multiple flags at once:
- * flags |= ( flag2 | flag3 );
- * // Disable one flag:
- * flags &= ~flag1
- * // Disable multiple flags at once:
- * flags &= &( flag2 | flag3 );
- */
-
-/* Unsigned long long (which we get from C99) must be at least 64 bits, so we
- * may define up to 64 flags here. (although we probably don't want that many,
- * using that type for future proofing...) */
 #define GED_CMD_DEFAULT       0
-#define GED_CMD_INTERACTIVE   1ULL << 0
-#define GED_CMD_UPDATE_SCENE  1ULL << 1
-#define GED_CMD_UPDATE_VIEW   1ULL << 2
-#define GED_CMD_AUTOVIEW      1ULL << 3
-#define GED_CMD_ALL_VIEWS     1ULL << 4
-#define GED_CMD_VIEW_CALLBACK 1ULL << 5
+#define GED_CMD_INTERACTIVE   (1ULL << 0)
+#define GED_CMD_UPDATE_SCENE  (1ULL << 1)
+#define GED_CMD_UPDATE_VIEW   (1ULL << 2)
+#define GED_CMD_AUTOVIEW      (1ULL << 3)
+#define GED_CMD_ALL_VIEWS     (1ULL << 4)
+#define GED_CMD_VIEW_CALLBACK (1ULL << 5)
 
 struct ged_cmd_impl {
     const char *cname;
@@ -74,7 +48,57 @@ struct ged_cmd_process_impl {
     ged_process_ptr func;
 };
 
-#endif /* LIBGED_PLUGIN_H */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+    int ged_register_command(const struct ged_cmd *cmd);
+    int ged_command_exists(const char *name);
+    const struct ged_cmd *ged_get_command(const char *name);
+    size_t ged_registered_count(void);
+    void ged_list_command_names(struct bu_vls *out_csv);
+    void ged_list_command_array(const char * const **cl, size_t *cnt);
+    int ged_load_plugin_file(const char *fullpath);
+    void ged_scan_plugins(void);
+    void libged_init(void);
+    void libged_shutdown(void);
+    const char *ged_init_msgs();
+
+#ifdef __cplusplus
+}
+#endif
+
+/* Static registration macro: active only when building static core AND not flagged GED_PLUGIN_ONLY */
+#if defined(LIBGED_STATIC_CORE) && !defined(GED_PLUGIN_ONLY)
+
+// GCC/Clang: use section attribute. MSVC: use allocate pragma.
+#if defined(_MSC_VER)
+#pragma section(".gedcmd", read)
+#pragma section(".ged_cmd_set$a", read)
+#define GED_CMD_LINKER_SET __declspec(allocate(".ged_cmd_set$a"))
+#define REGISTER_GED_COMMAND(cmd_symbol)                                                   \
+    GED_CMD_LINKER_SET const struct ged_cmd * __ged_cmd_ptr_##cmd_symbol = &cmd_symbol;    \
+    __declspec(allocate(".gedcmd")) const struct ged_cmd * cmd_symbol##_keep = &cmd_symbol;\
+    static void __cdecl register_##cmd_symbol(void) {                                      \
+        (void)ged_register_command(&cmd_symbol);                                           \
+    }                                                                                      \
+    __declspec(allocate(".CRT$XCU")) void (__cdecl *cmd_symbol##_ctor)(void) = register_##cmd_symbol;
+#else
+#define GED_CMD_LINKER_SET __attribute__((used, section("ged_cmd_set")))
+#define REGISTER_GED_COMMAND(cmd_symbol)                                                   \
+    GED_CMD_LINKER_SET const struct ged_cmd * __ged_cmd_ptr_##cmd_symbol = &cmd_symbol;    \
+    static const struct ged_cmd * cmd_symbol##_keep __attribute__((used)) = &cmd_symbol;   \
+    static void register_##cmd_symbol(void) __attribute__((constructor));                  \
+    static void register_##cmd_symbol(void) {                                              \
+        (void)ged_register_command(&cmd_symbol);                                           \
+    }
+#endif
+
+#else
+#define REGISTER_GED_COMMAND(cmd_symbol) /* no-op */
+#endif
+
+#endif
 
 /*
  * Local Variables:
@@ -83,5 +107,5 @@ struct ged_cmd_process_impl {
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:
- * ex: shiftwidth=4 tabstop=8
+ * ex: shiftwidth=4 tabstop=8 cino=N-s
  */
