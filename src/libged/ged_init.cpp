@@ -45,8 +45,17 @@
 
 static char **cmd_list = NULL;
 static size_t cmd_list_len = 0;
-static std::map<std::string, const struct ged_cmd *> ged_cmd_map;
-static std::set<void *> ged_cmd_funcs;
+
+// Meyers singletons
+static std::map<std::string, const struct ged_cmd *> &get_cmd_map() {
+    static std::map<std::string, const struct ged_cmd *> ged_cmd_map;
+    return ged_cmd_map;
+}
+static std::set<void *> &get_cmd_funcs() {
+    static std::set<void *> ged_cmd_funcs;
+    return ged_cmd_funcs;
+}
+
 static struct bu_vls init_msgs = BU_VLS_INIT_ZERO;
 void *ged_cmds;
 
@@ -71,12 +80,12 @@ ged_cmd_exists(const char *cmd)
     // probably what happened, so call libged_init again here.  By the time we
     // are calling ged_cmd_exists bu_setprogname should be set and we should be
     // ready to actually find the commands.
-    if (!ged_cmd_map.size())
+    if (!get_cmd_map().size())
 	libged_init();
 
     std::string scmd(cmd);
-    std::map<std::string, const struct ged_cmd *>::iterator cmd_it = ged_cmd_map.find(scmd);
-    if (cmd_it != ged_cmd_map.end())
+    std::map<std::string, const struct ged_cmd *>::iterator cmd_it = get_cmd_map().find(scmd);
+    if (cmd_it != get_cmd_map().end())
 	return 1;
 
     return 0;
@@ -100,7 +109,7 @@ ged_cmd_same(const char *cmd1, const char *cmd2)
     // probably what happened, so call libged_init again here.  By the time we
     // are calling ged_cmd_same bu_setprogname should be set and we should be
     // ready to actually find the commands.
-    if (!ged_cmd_map.size()) {
+    if (!get_cmd_map().size()) {
 	libged_init();
     }
 
@@ -109,18 +118,18 @@ ged_cmd_same(const char *cmd1, const char *cmd2)
 
     {
 	std::string scmd1(cmd1);
-	std::map<std::string, const struct ged_cmd *>::iterator cmd1_it = ged_cmd_map.find(scmd1);
+	std::map<std::string, const struct ged_cmd *>::iterator cmd1_it = get_cmd_map().find(scmd1);
 	// If we can't map to a GED command, this is a no-go
-	if (cmd1_it == ged_cmd_map.end())
+	if (cmd1_it == get_cmd_map().end())
 	    return 0;
 	c1 = cmd1_it->second->i->cmd;
     }
 
     {
 	std::string scmd2(cmd2);
-	std::map<std::string, const struct ged_cmd *>::iterator cmd2_it = ged_cmd_map.find(scmd2);
+	std::map<std::string, const struct ged_cmd *>::iterator cmd2_it = get_cmd_map().find(scmd2);
 	// If we can't map to a GED command, this is a no-go
-	if (cmd2_it == ged_cmd_map.end())
+	if (cmd2_it == get_cmd_map().end())
 	    return 0;
 	c2 = cmd2_it->second->i->cmd;
     }
@@ -134,8 +143,8 @@ ged_cmd_same(const char *cmd1, const char *cmd2)
 
 
 
-/* If func is NULL, just see if the string has a ged_cmd_map entry.
- * If func is defined, see if a) func and cmd have ged_cmd_map entries and
+/* If func is NULL, just see if the string has a get_cmd_map() entry.
+ * If func is defined, see if a) func and cmd have get_cmd_map() entries and
  * b) if they both do, whether they map to the same function.
  * DEPRECATED - used ged_cmd_exists and ged_cmd_same instead */
 int
@@ -152,13 +161,13 @@ ged_cmd_valid(const char *cmd, const char *func)
     // probably what happened, so call libged_init again here.  By the time we
     // are calling ged_cmd_valid bu_setprogname should be set and we should be
     // ready to actually find the commands.
-    if (!ged_cmd_map.size()) {
+    if (!get_cmd_map().size()) {
 	libged_init();
     }
 
     std::string scmd(cmd);
-    std::map<std::string, const struct ged_cmd *>::iterator cmd_it = ged_cmd_map.find(scmd);
-    if (cmd_it != ged_cmd_map.end()) {
+    std::map<std::string, const struct ged_cmd *>::iterator cmd_it = get_cmd_map().find(scmd);
+    if (cmd_it != get_cmd_map().end()) {
 	cmd_invalid = 0;
     }
     if (cmd_invalid) {
@@ -167,8 +176,8 @@ ged_cmd_valid(const char *cmd, const char *func)
 
     if (func) {
 	ged_func_ptr c1 = cmd_it->second->i->cmd;
-	std::map<std::string, const struct ged_cmd *>::iterator func_it = ged_cmd_map.find(std::string(func));
-	if (func_it == ged_cmd_map.end()) {
+	std::map<std::string, const struct ged_cmd *>::iterator func_it = get_cmd_map().find(std::string(func));
+	if (func_it == get_cmd_map().end()) {
 	    // func not in table, nothing to validate against - return invalid
 	    return 1;
 	}
@@ -201,14 +210,14 @@ ged_cmd_lookup(const char **ncmd, const char *cmd)
     // probably what happened, so call libged_init again here.  By the time we
     // are calling ged_cmd_lookup bu_setprogname should be set and we should be
     // ready to actually find the commands.
-    if (!ged_cmd_map.size()) {
+    if (!get_cmd_map().size()) {
 	libged_init();
     }
 
     const char *ccmd = NULL;
     std::string scmd(cmd);
     std::map<std::string, const struct ged_cmd *>::iterator cmd_it;
-    for (cmd_it = ged_cmd_map.begin(); cmd_it != ged_cmd_map.end(); cmd_it++) {
+    for (cmd_it = get_cmd_map().begin(); cmd_it != get_cmd_map().end(); cmd_it++) {
 	size_t edist = bu_editdist(cmd, cmd_it->first.c_str());
 	if (edist < min_dist) {
 	    ccmd = (*cmd_it).first.c_str();
@@ -229,9 +238,9 @@ ged_cmd_list(const char * const **cl)
 	cmd_list_len = 0;
 	cmd_list = NULL;
     }
-    cmd_list = (char **)bu_calloc(ged_cmd_map.size(), sizeof(char *), "ged cmd argv");
+    cmd_list = (char **)bu_calloc(get_cmd_map().size(), sizeof(char *), "ged cmd argv");
     std::map<std::string, const struct ged_cmd *>::iterator m_it;
-    for (m_it = ged_cmd_map.begin(); m_it != ged_cmd_map.end(); m_it++) {
+    for (m_it = get_cmd_map().begin(); m_it != get_cmd_map().end(); m_it++) {
 	const char *str = m_it->first.c_str();
 	cmd_list[cmd_list_len] = bu_strdup(str);
 	cmd_list_len++;
@@ -313,37 +322,37 @@ libged_init(void)
 		if (!cmd)
 		    break;
 		std::string key(cmd->i->cname);
-		if (ged_cmd_map.find(key) != ged_cmd_map.end()) {
+		if (get_cmd_map().find(key) != get_cmd_map().end()) {
 		    bu_vls_printf(&init_msgs, "Warning - plugin '%s' provides command '%s' but that command has already been loaded, skipping\n", pfile, cmd->i->cname);
 		    continue;
 		}
-		ged_cmd_map[key] = cmd;
+		get_cmd_map()[key] = cmd;
 
 		// MGED calls many of these commands with an _mged_ prefix - allow for that
 		std::string mged_key = std::string("_mged_") + key;
-		ged_cmd_map[mged_key] = cmd;
+		get_cmd_map()[mged_key] = cmd;
 	    }
-	    ged_cmd_funcs.insert(dl_handle);
+	    get_cmd_funcs().insert(dl_handle);
 	}
     }
     bu_argv_free(ged_nfiles, ged_filenames);
     bu_vls_free(&plugin_pattern);
 
-    ged_cmds = (void *)&ged_cmd_map;
+    ged_cmds = (void *)&get_cmd_map();
 }
 
 
 static void
 libged_clear(void)
 {
-    ged_cmd_map.clear();
+    get_cmd_map().clear();
     std::set<void *>::reverse_iterator h_it;
     /* unload in reverse in case symbols are referential */
-    for (h_it = ged_cmd_funcs.rbegin(); h_it != ged_cmd_funcs.rend(); h_it++) {
+    for (h_it = get_cmd_funcs().rbegin(); h_it != get_cmd_funcs().rend(); h_it++) {
 	void *handle = *h_it;
 	bu_dlclose(handle);
     }
-    ged_cmd_funcs.clear();
+    get_cmd_funcs().clear();
 
     bu_vls_free(&init_msgs);
 }
