@@ -459,15 +459,99 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Geometry *geometry
     return 1;
 }
 
+std::string get_material_name(const ON_3dmObjectAttributes *attributes, const ONX_Model &model, rt_wdb& wdb){
+	const ON_Material *material = ON_Material::Cast(model.MaterialFromAttributes(*attributes).ModelComponent());
+	if (material == nullptr){
+		return "";
+	}
+	return clean_name(material->Name(), "default_material");
+}
+
+std::string create_thirdgen_material(const gcv_opts& gcv_options, const ON_Material *material, const ONX_Model &model, rt_wdb& wdb)
+{
+	ON_Material *pbr_material = new ON_Material(*material);
+	if (!material->IsPhysicallyBased()){
+		pbr_material->ToPhysicallyBased();
+	}
+
+	std::string name = clean_name(material->Name(), "default_material");
+
+	if (db_lookup(wdb.dbip, name.c_str(), false) != NULL) {
+		if (gcv_options.verbosity_level) {
+			bu_log("Material %s has already been created\n", name.c_str());
+		}
+        return name;
+    }
+
+	struct bu_attribute_value_set physicalProperties;
+	struct bu_attribute_value_set mechanicalProperties;
+	struct bu_attribute_value_set opticalProperties;
+	struct bu_attribute_value_set thermalProperties;
+
+	bu_avs_init_empty(&physicalProperties);
+	bu_avs_init_empty(&mechanicalProperties);
+	bu_avs_init_empty(&opticalProperties);
+	bu_avs_init_empty(&thermalProperties);
+
+	// Only optical properties are set on ON_Materials
+	struct bu_vls double_to_cstr = BU_VLS_INIT_ZERO;
+
+	bu_vls_sprintf(&double_to_cstr, "%.4f", pbr_material->m_transparency);
+	bu_avs_add(&opticalProperties, "transparency", bu_vls_cstr(&double_to_cstr));
+
+	bu_vls_sprintf(&double_to_cstr, "%.4f", pbr_material->m_reflectivity);
+	bu_avs_add(&opticalProperties, "reflectivity", bu_vls_cstr(&double_to_cstr));
+
+	bu_vls_sprintf(&double_to_cstr, "%.4f", pbr_material->m_index_of_refraction);
+	bu_avs_add(&opticalProperties, "index_of_refraction", bu_vls_cstr(&double_to_cstr));
+
+	bu_vls_sprintf(&double_to_cstr, "%.4f", pbr_material->m_shine);
+	bu_avs_add(&opticalProperties, "shine", bu_vls_cstr(&double_to_cstr));
+
+	bu_vls_sprintf(&double_to_cstr, "%.4f", pbr_material->m_emission);
+	bu_avs_add(&opticalProperties, "emission", bu_vls_cstr(&double_to_cstr));
+
+    mk_material(&wdb,
+		name.c_str(),
+		name.c_str(),
+		NULL,
+		NULL,
+		&physicalProperties,
+		&mechanicalProperties,
+		&opticalProperties,
+		&thermalProperties
+	);
+
+	delete pbr_material;
+	return name;
+}
+
+void assign_thirdgen_material(const std::string& object_name, const std::string& material_name, rt_wdb& wdb)
+{
+    if (db_lookup(wdb.dbip, object_name.c_str(), true) == RT_DIR_NULL) {
+		std::cout << "Object " << object_name << " not found in the database" << std::endl;
+        return;
+    }
+
+    if (db5_update_attribute(object_name.c_str(), "material_name", material_name.c_str(), wdb.dbip)){
+		std::cout << "Setting material_name on the object " << object_name << " failed for " << material_name << std::endl;
+		return;
+	}
+
+    if (db5_update_attribute(object_name.c_str(), "material_id", "1", wdb.dbip)){
+		std::cout << "Setting material_id on the object " << object_name << " failed for " << material_name << std::endl;
+	}
+}
 
 typedef std::pair<std::string, std::string> Shader;
 
 
 Shader
-get_shader(const ON_Material *im)
+get_shader(const ON_Material *im, rt_wdb& wdb)
 {
     std::ostringstream sstream;
     ON_Material dm;
+	
     const ON_Material *material = (im) ? im : &dm;
 
     sstream << "{"
@@ -484,15 +568,14 @@ get_shader(const ON_Material *im)
     return std::make_pair("plastic", sstream.str());
 }
 
-
 void
 get_object_material(const ON_3dmObjectAttributes *attributes,
 		    const ONX_Model &model, Shader &out_shader, unsigned char *out_rgb,
-		    bool &out_own_shader, bool &out_own_rgb)
+		    bool &out_own_shader, bool &out_own_rgb, rt_wdb& wdb)
 {
     if (attributes) {
 	const ON_Material *temp = ON_Material::Cast(model.MaterialFromAttributes(*attributes).ModelComponent());
-	out_shader = get_shader(temp);
+	out_shader = get_shader(temp, wdb);
 	out_own_shader = attributes->MaterialSource() != ON::material_from_parent;
 
 	ON_Color wc = model.WireframeColorFromAttributes(*attributes);
@@ -516,7 +599,7 @@ get_object_material(const ON_3dmObjectAttributes *attributes,
 	    }
 	}
     } else {
-	out_shader = get_shader(NULL);
+	out_shader = get_shader(NULL, wdb);
 	out_rgb[0] = static_cast<unsigned char>(0);
 	out_rgb[1] = static_cast<unsigned char>(0);
 	out_rgb[2] = static_cast<unsigned char>(0);
@@ -576,6 +659,20 @@ void
 import_model_objects(const gcv_opts& gcv_options, rt_wdb& wdb, ONX_Model& model,
 		     std::unordered_map<std::string, std::string>& uuid_to_names)
 {
+	// Read and create all existing materials
+	ONX_ModelComponentIterator mat_it(model, ON_ModelComponent::Type::RenderMaterial);
+    for (ON_ModelComponentReference mat_cr = mat_it.FirstComponentReference(); false == mat_cr.IsEmpty(); mat_cr = mat_it.NextComponentReference())
+    {
+        const ON_Material *material = ON_Material::Cast(mat_cr.ModelComponent());
+        if (material) {
+            std::string material_name = clean_name(material->Name(), "default_material");
+            if (gcv_options.verbosity_level) {
+                bu_log("Found and attempting to create existing material: %s\n", material_name.c_str());
+            }
+            std::string thirdgen_material_name = create_thirdgen_material(gcv_options, material, model, wdb);
+        }
+    }
+
     size_t total_count = 0;
     size_t success_count = 0;
     std::unordered_map<std::string, ON_UUID> to_remove;
@@ -595,7 +692,8 @@ import_model_objects(const gcv_opts& gcv_options, rt_wdb& wdb, ONX_Model& model,
 	bool own_shader, own_rgb;
 
 	const ON_3dmObjectAttributes *attributes = mg->Attributes(nullptr);
-	get_object_material(attributes, model, shader, rgb, own_shader, own_rgb);
+	get_object_material(attributes, model, shader, rgb, own_shader, own_rgb, wdb);
+	std::string material_name = get_material_name(attributes, model, wdb);
 
 	ON_String id;
 	ON_UuidToString(mg->Id(), id);
@@ -611,6 +709,9 @@ import_model_objects(const gcv_opts& gcv_options, rt_wdb& wdb, ONX_Model& model,
 		std::vector<std::string> members_vec;
 		members_vec.push_back(member_name);
 		write_comb(wdb, name, members_vec, NULL, own_shader ? shader.first.c_str() : NULL, own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
+		if (material_name != ""){
+			assign_thirdgen_material(name, material_name, wdb);
+		}
 	    } else
                 to_remove.insert(std::make_pair(member_name, mg->Id()));
 	} else {
@@ -822,7 +923,7 @@ import_layer(rt_wdb &wdb, const ON_Layer *l, const ONX_Model &model,
     rgb[1] = static_cast<unsigned char>(wc.Green());
     rgb[2] = static_cast<unsigned char>(wc.Blue());
 
-    const Shader shader = get_shader(mp);
+    const Shader shader = get_shader(mp, wdb);
 
     auto layer_children = get_layer_members(l, model, uuid_to_names);
 
