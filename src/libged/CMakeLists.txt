@@ -203,7 +203,17 @@ function(ged_plugin_library name)
       _libged_accumulate_global(LIBGED_ACCUM_COPTS ${GEDPL_COMPILE_OPTIONS})
     endif()
 
-
+    # Find package calls will need to be repeated at the parent scope,
+    # so pass the info up
+    get_property(pkg_calls DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.." PROPERTY BRLCAD_LOCAL_PACKAGE_CALLS)
+    if(NOT pkg_calls)
+      set(pkg_calls "")
+    endif()
+    get_property(local_calls DIRECTORY PROPERTY BRLCAD_LOCAL_PACKAGE_CALLS)
+    foreach(c ${local_calls})
+      list(APPEND pkg_calls "${c}")
+    endforeach()
+    set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.." PROPERTY BRLCAD_LOCAL_PACKAGE_CALLS "${pkg_calls}")
   else()
     add_library(${name} SHARED ${plugin_sources})
     target_compile_definitions(${name} PRIVATE GED_PLUGIN BRLCADBUILD HAVE_CONFIG_H)
@@ -602,6 +612,28 @@ add_subdirectory(zoom)
 # Apply accumulated properties to libged (static-core mode only)
 # ================================================================
 if(LIBGED_STATIC_CORE AND TARGET libged)
+
+  # Find package calls from plugins will need to be repeated at the parent scope,
+  # so libged can find the package libraries needed to link correctly with plugin
+  # code included (find_package calls in subdirectories are scoped only in that
+  # subdirectory)
+  message("Repeating libged plugin find_package calls for libged library...")
+  get_property(pkg_calls DIRECTORY PROPERTY BRLCAD_LOCAL_PACKAGE_CALLS)
+  if (pkg_calls)
+    list(REMOVE_DUPLICATES pkg_calls)
+  endif()
+  foreach(c ${pkg_calls})
+    # Undo escaped semicolons
+    string(REPLACE "\\;" "<SEMICOLON>" safe_call "${c}")
+    string(REPLACE "|" ";" safe_call "${safe_call}")
+    string(REPLACE "<SEMICOLON>" ";" safe_call "${safe_call}")
+    separate_arguments(safe_call)
+    # Replay with all original arguments, and add QUIET so we don't
+    # see replays of the same find_package output in the config.
+    brlcad_find_package(${safe_call} QUIET)
+  endforeach()
+  message("Repeating libged plugin find_package calls for libged library... done.")
+
   foreach(prop LIBGED_ACCUM_INCLUDES LIBGED_ACCUM_SYSTEM_INCLUDES LIBGED_ACCUM_LIBS LIBGED_ACCUM_DEFS LIBGED_ACCUM_COPTS)
     get_property(val GLOBAL PROPERTY ${prop})
     if(val)
@@ -640,6 +672,7 @@ endif()
 
 #############################################
 # Plugins defined - now generate the wrappers
+message("Generating plugin wrapper files...")
 
 # We'll need to write input files with source lists
 # for the scanner
@@ -647,7 +680,6 @@ function(write_list_to_file list_var out_filename)
   # Expand the output to a full path if needed
   get_filename_component(abs_out_filename "${out_filename}" ABSOLUTE)
   file(WRITE "${abs_out_filename}" "")
-
   foreach(abs_item IN LISTS ${list_var})
     if(EXISTS "${abs_item}")
       file(APPEND "${abs_out_filename}" "${abs_item}\n")
@@ -663,20 +695,23 @@ endfunction()
 # least calling ged_exec for commands that exist at build time - it does not
 # validate option usage, but will at least catch one category of breakage
 # (using completely removed commands) at build time rather than run time.
+file(REMOVE ${GED_CMD_SRC} ${GED_CMD_HDR})
 get_property(GED_COMMAND_ALL_SRCS GLOBAL PROPERTY GED_COMMAND_ALL_SRCS)
 set(ged_plugins_all_srcs "${CMAKE_BINARY_DIR}/CMakeTmp/ged_plugins_all_sources.txt")
 write_list_to_file(GED_COMMAND_ALL_SRCS ${ged_plugins_all_srcs})
 execute_process(COMMAND ${GED_CMD_SCANNER} --input-list ${ged_plugins_all_srcs} --gen-exec-api-cpp ${GED_CMD_SRC} --gen-exec-api-hdr ${GED_CMD_HDR} OUTPUT_VARIABLE SCAN_OUT ERROR_VARIABLE SCAN_OUT)
-message("exec-api: ${SCAN_OUT}")
 file(REMOVE ${ged_plugins_all_srcs})
 
 # For static plugins bundled with libged, we generate
 # (TODO - add description of the purpose of this file)
+file(REMOVE ${GED_STATIC_REGISTRATION_CPP})
 get_property(GED_COMMAND_STATIC_SRCS GLOBAL PROPERTY GED_COMMAND_STATIC_SRCS)
 set(ged_plugins_static_srcs "${CMAKE_BINARY_DIR}/CMakeTmp/ged_plugins_static_sources.txt")
 write_list_to_file(GED_COMMAND_STATIC_SRCS ${ged_plugins_static_srcs})
 execute_process(COMMAND ${GED_CMD_SCANNER} --input-list ${ged_plugins_static_srcs} --gen-force-cpp ${GED_STATIC_REGISTRATION_CPP} OUTPUT_VARIABLE SCAN_OUT ERROR_VARIABLE SCAN_OUT)
 file(REMOVE ${ged_plugins_static_srcs})
+
+message("Generating plugin wrapper files... done.")
 
 set(
   ged_ignore_files
@@ -690,7 +725,6 @@ set(
   check/check_private.h
   dbi.h
   ged_cmd_scanner.cpp
-  ged_cmds.h
   ged_private.h
   include/plugin.h
   joint/joint.h
