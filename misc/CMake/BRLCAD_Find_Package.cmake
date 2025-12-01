@@ -51,8 +51,90 @@
 # results to be set in scope the same way they would be for a raw
 # find_package call.
 
-macro(BRLCAD_Find_Package pkg_name)
-  cmake_parse_arguments(F "REQUIRED;NOINSTALL" "SYSPATTERN" "COMPONENTS" ${ARGN})
+# Given an imported target Foo::Foo, extract its library file paths at
+# configure time
+function(get_tgt_locs tgt out_list_var)
+  set(_locs "")
+
+  # Collect per-config locations
+  get_target_property(_configs "${tgt}" IMPORTED_CONFIGURATIONS)
+  if(_configs)
+    foreach(cfg IN LISTS _configs)
+      string(TOUPPER "${cfg}" CFGU)
+      get_target_property(_loc "${tgt}" "IMPORTED_LOCATION_${CFGU}")
+      if(_loc)
+	list(APPEND _locs "${_loc}")
+      endif()
+    endforeach()
+  endif()
+
+  # Fallback to generic IMPORTED_LOCATION
+  if(NOT _locs)
+    get_target_property(_loc "${tgt}" IMPORTED_LOCATION)
+    if(_loc)
+      list(APPEND _locs "${_loc}")
+    endif()
+  endif()
+
+  # Also look at interface link libraries to find nested imported targets and collect theirs
+  get_target_property(_ill "${tgt}" INTERFACE_LINK_LIBRARIES)
+  if(_ill)
+    foreach(ll IN LISTS _ill)
+      if(TARGET "${ll}")
+	# Recurse to collect nested imported locations
+	get_tgt_locs("${ll}" _nested_locs)
+	if(_nested_locs)
+	  list(APPEND _locs ${_nested_locs})
+	endif()
+      endif()
+    endforeach()
+  endif()
+
+  # Deduplicate before returning
+  list(REMOVE_DUPLICATES _locs)
+  set(${out_list_var} "${_locs}" PARENT_SCOPE)
+endfunction()
+
+macro(brlcad_find_package pkg_name)
+
+  # Args: pkg_name [REQUIRED] [COMPONENTS] [SYSPATTERN ...] etc.
+  set(pkg_name "${ARGV0}")
+  if(NOT pkg_name)
+    message(FATAL_ERROR "brlcad_find_package called with no package name!")
+    return()
+  endif()
+
+  # Record the full invocation as a string (preserving all arguments)
+  set(this_call "")
+  foreach(arg ${ARGV})
+    # Escape embedded semicolons (ultra-rare, but allowed)
+    string(REPLACE ";" "\\;" escaped_arg "${arg}")
+    if(this_call)
+      set(this_call "${this_call}|${escaped_arg}")
+    else()
+      set(this_call "${escaped_arg}")
+    endif()
+  endforeach()
+
+  # Append argument list to directory-scoped property.  We can use this in a
+  # parent directory to repeat the find_package at a higher scope if needed.
+  # Used to allow plugins to be built directly into parent library targets.
+  #
+  # There is one caveat to this approach - if the system state changes between
+  # the plugin call and the parent library call, in a way that invalidates any
+  # compile/not-compile decisions made by the plugin logic, the build will
+  # break.  Since changing the system under a configure run is likely to make a
+  # mess anyway when trying to build, this should be a workable limitation.
+  get_property(_calls DIRECTORY PROPERTY BRLCAD_LOCAL_PACKAGE_CALLS)
+  if(NOT _calls)
+    set(_calls "")
+  endif()
+  list(APPEND _calls "${this_call}")
+  set_property(DIRECTORY PROPERTY BRLCAD_LOCAL_PACKAGE_CALLS "${_calls}")
+
+  # If we have NOINSTALL or SYSPATTERN, those are BRL-CAD specific add-ons -
+  # otherwise, everything goes on to find package.
+  cmake_parse_arguments(F "NOINSTALL" "SYSPATTERN" "" ${ARGN})
 
   # If we have a bundled copy of this package, always use that.  Packages we
   # are not going to install are not copied to CMAKE_BINARY_DIR, so set the
@@ -78,20 +160,7 @@ macro(BRLCAD_Find_Package pkg_name)
   set(CMAKE_FIND_FRAMEWORK LAST)
 
   # Execute the actual find_package call
-  # Forward COMPONENTS if supplied
-  if(F_REQUIRED)
-    if(F_COMPONENTS)
-      find_package(${pkg_name} REQUIRED COMPONENTS ${F_COMPONENTS})
-    else()
-      find_package(${pkg_name} REQUIRED)
-    endif()
-  else()
-    if(F_COMPONENTS)
-      find_package(${pkg_name} COMPONENTS ${F_COMPONENTS})
-    else()
-      find_package(${pkg_name})
-    endif()
-  endif()
+  find_package(${pkg_name} ${F_UNPARSED_ARGUMENTS})
 
   # Read the cache variables again after find_package is finished
   get_property(cv_new DIRECTORY PROPERTY CACHE_VARIABLES)
@@ -110,17 +179,11 @@ macro(BRLCAD_Find_Package pkg_name)
   # the target.
   set(brlcad_find_package_tloc)
   if (TARGET ${pkg_name}::${pkg_name})
-    # TODO - we may need to check CONFIG versions of this property as well.
-    get_target_property(brlcad_find_package_tloc ${pkg_name}::${pkg_name} LOCATION)
-    if (NOT brlcad_find_package_tloc)
-      get_target_property(llibs ${pkg_name}::${pkg_name} INTERFACE_LINK_LIBRARIES)
-      foreach(ll ${llibs})
-	if ("${ll}" MATCHES "${pkg_name}::.*")
-	  get_target_property(brlcad_find_package_tloc ${ll} LOCATION)
-	endif ("${ll}" MATCHES "${pkg_name}::.*")
-      endforeach(ll ${llibs})
-    endif (NOT brlcad_find_package_tloc)
-    list(APPEND cv_new brlcad_find_package_tloc)
+    set(TGT_LOCS)
+    get_tgt_locs(${pkg_name}::${pkg_name} TGT_LOCS)
+    if (TGT_LOCS)
+      list(APPEND cv_new ${TGT_LOCS})
+    endif()
   endif (TARGET ${pkg_name}::${pkg_name})
 
   if (BRLCAD_FIND_DEBUG_MODE)
