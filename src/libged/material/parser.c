@@ -5,6 +5,9 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
+#define MAX_TOKEN_LEN 1024
+#define MAX_VALUE_LEN 8192
+
 // --- Internal Structs w/ Capacity ---
 // These are used internally to build the lists dynamically.
 
@@ -222,8 +225,8 @@ ParseResult parse_matprop(FILE* input) {
     InternalMaterialList mat_list = {0}; // Our dynamic array of materials
     ParseResult result = {0};            // The final result
     
-    char token_buf[1024];  // Buffer for general tokens
-    char value_buf[8192];  // Larger buffer for (multiline) values
+    char token_buf[MAX_TOKEN_LEN];  // Buffer for general tokens
+    char value_buf[MAX_VALUE_LEN];  // Larger buffer for (multiline) values
     
     g_lookahead = -1; 
     

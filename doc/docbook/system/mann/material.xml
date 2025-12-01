@@ -26,7 +26,7 @@
   </cmdsynopsis>
   <cmdsynopsis sepchar=" ">
     <command>material import</command>
-    <arg choice="opt" rep="norepeat"><replaceable>--id | --name</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>--id | --name | --type</replaceable></arg>
     <arg choice="req" rep="norepeat"><replaceable>file_name</replaceable></arg>
   </cmdsynopsis>
   <cmdsynopsis sepchar=" ">
@@ -119,8 +119,8 @@
           <term><emphasis remap="B" role="bold">import</emphasis></term>
           <listitem>
                 <para>
-                  Import a density file's entries into material objects. --id denotes the material object names will be the id of the entry in the density table, --name the name of the
-                  entry in the density file.
+                  Import a file's entries into material objects. For density files, --id denotes the material object names will be the id of the entry in the density table, --name the name of the
+                  entry in the density file. For matprop files, --force true will overwrite all duplicate materials and --overwrite will only overwrite the space-seperated materials.
                 </para>
           </listitem>
         </varlistentry>
@@ -158,6 +158,19 @@
 	<listitem>
 	  <para>
 	    Imports the density file <emphasis>.density</emphasis> to material objects and names the objects based on the file's ids.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </example>
+
+  <example><title>Import a matprop file to material objects.</title>
+    <variablelist>
+      <varlistentry>
+	<term><prompt>mged&gt; </prompt><userinput>material import --type matprop --overwrite "Air Playdough" matprop.example</userinput></term>
+	<listitem>
+	  <para>
+	    Imports the matprop file <emphasis>.example</emphasis> to material objects and overwrites the materials Air and Playdough.
 	  </para>
 	</listitem>
       </varlistentry>

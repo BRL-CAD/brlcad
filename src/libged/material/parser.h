@@ -44,13 +44,6 @@ typedef struct {
 
 /**
  * @brief Parses a stream containing material property definitions.
- *
- * This function reads from a C input stream (like from fopen() or stdin)
- * and parses material definitions.
- *
- * @param input An input stream to read from.
- * @return A ParseResult struct. The caller MUST call free_parse_result()
- * on this struct when finished.
  */
 ParseResult parse_matprop(FILE* input);
 
