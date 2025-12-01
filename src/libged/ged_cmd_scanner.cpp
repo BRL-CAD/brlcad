@@ -1,3 +1,28 @@
+/*             G E D _ C M D _ S C A N N E R . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2024-2025 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file ged_cmd_scanner.cpp
+ *
+ * Automatically scan for LIBGED plugin signatures in source code files in
+ * order to extract information for use in build systems and management code.
+ */
+
 #include <cstdio>
 #include <fstream>
 #include <iostream>
@@ -18,17 +43,17 @@ std::vector<std::string> load_file_list(const std::string& path) {
     std::vector<std::string> files;
     std::ifstream fs(path);
     if (!fs.is_open()) {
-        std::cerr << "Unable to open input list file: " << path << "\n";
-        return files;
+	std::cerr << "Unable to open input list file: " << path << "\n";
+	return files;
     }
     std::string line;
     while (std::getline(fs, line)) {
-        const auto start = line.find_first_not_of(" \t\r\n");
-        const auto end = line.find_last_not_of(" \t\r\n");
-        if (start == std::string::npos || end == std::string::npos || line.empty())
-            continue;
-        std::string clean = line.substr(start, end - start + 1);
-        if (!clean.empty()) files.push_back(clean);
+	const auto start = line.find_first_not_of(" \t\r\n");
+	const auto end = line.find_last_not_of(" \t\r\n");
+	if (start == std::string::npos || end == std::string::npos || line.empty())
+	    continue;
+	std::string clean = line.substr(start, end - start + 1);
+	if (!clean.empty()) files.push_back(clean);
     }
     return files;
 }
@@ -39,9 +64,9 @@ using ImplNameToCmdMap = std::map<std::string, std::string>;
 int main(int argc, const char *argv[])
 {
     if (argc < 2) {
-        std::cerr << "Usage:\n";
-        std::cerr << "  ged_cmd_scanner [--input-list <input.txt>] [--gen-force-cpp <static.cpp>] [--gen-exec-api-cpp <exec_api.cpp> --gen-exec-api-hdr <exec_api.h>] <input_file1.cpp> ...\n";
-        return EXIT_FAILURE;
+	std::cerr << "Usage:\n";
+	std::cerr << "  ged_cmd_scanner [--input-list <input.txt>] [--gen-force-cpp <static.cpp>] [--gen-exec-api-cpp <exec_api.cpp> --gen-exec-api-hdr <exec_api.h>] <input_file1.cpp> ...\n";
+	return EXIT_FAILURE;
     }
 
     bool gen_force_cpp = false;
@@ -55,47 +80,47 @@ int main(int argc, const char *argv[])
 
     // Parse args
     for (int i = 1; i < argc; ++i) {
-        std::string arg(argv[i]);
-        if (arg == "--gen-force-cpp") {
-            if (i + 1 < argc) {
-                gen_force_cpp = true;
-                cpp_file = argv[++i];
-            } else {
-                std::cerr << "Missing filename after --gen-force-cpp\n";
-                return EXIT_FAILURE;
-            }
-        } else if (arg == "--gen-exec-api-cpp") {
-            if (i + 1 < argc) {
-                gen_exec_api_cpp = true;
-                exec_api_file = argv[++i];
-            } else {
-                std::cerr << "Missing filename after --gen-exec-api-cpp\n";
-                return EXIT_FAILURE;
-            }
-        } else if (arg == "--gen-exec-api-hdr") {
-            if (i + 1 < argc) {
-                gen_exec_api_hdr = true;
-                exec_api_hdr_file = argv[++i];
-            } else {
-                std::cerr << "Missing filename after --gen-exec-api-hdr\n";
-                return EXIT_FAILURE;
-            }
-        } else if (arg == "--input-list") {
-            if (i + 1 < argc) {
-                input_list_file = argv[++i];
-                continue;
-            } else {
-                std::cerr << "Missing filename after --input-list\n";
-                return EXIT_FAILURE;
-            }
-        } else {
-            input_files.push_back(arg);
-        }
+	std::string arg(argv[i]);
+	if (arg == "--gen-force-cpp") {
+	    if (i + 1 < argc) {
+		gen_force_cpp = true;
+		cpp_file = argv[++i];
+	    } else {
+		std::cerr << "Missing filename after --gen-force-cpp\n";
+		return EXIT_FAILURE;
+	    }
+	} else if (arg == "--gen-exec-api-cpp") {
+	    if (i + 1 < argc) {
+		gen_exec_api_cpp = true;
+		exec_api_file = argv[++i];
+	    } else {
+		std::cerr << "Missing filename after --gen-exec-api-cpp\n";
+		return EXIT_FAILURE;
+	    }
+	} else if (arg == "--gen-exec-api-hdr") {
+	    if (i + 1 < argc) {
+		gen_exec_api_hdr = true;
+		exec_api_hdr_file = argv[++i];
+	    } else {
+		std::cerr << "Missing filename after --gen-exec-api-hdr\n";
+		return EXIT_FAILURE;
+	    }
+	} else if (arg == "--input-list") {
+	    if (i + 1 < argc) {
+		input_list_file = argv[++i];
+		continue;
+	    } else {
+		std::cerr << "Missing filename after --input-list\n";
+		return EXIT_FAILURE;
+	    }
+	} else {
+	    input_files.push_back(arg);
+	}
     }
 
     if (!input_list_file.empty()) {
-        std::vector<std::string> from_file = load_file_list(input_list_file);
-        input_files.insert(input_files.end(), from_file.begin(), from_file.end());
+	std::vector<std::string> from_file = load_file_list(input_list_file);
+	input_files.insert(input_files.end(), from_file.begin(), from_file.end());
     }
 
     // ========= Static registration extraction ==========
@@ -103,19 +128,19 @@ int main(int argc, const char *argv[])
     std::regex reg_cmd_macro(R"(REGISTER_GED_COMMAND\s*\(\s*([A-Za-z0-9_]+)\s*\))");
 
     for (const auto &fname : input_files) {
-        std::ifstream fs(fname);
-        if (!fs.is_open()) {
-            std::cerr << "Unable to open file " << fname << "\n";
-            continue;
-        }
-        std::string sline;
-        while (std::getline(fs, sline)) {
-            std::smatch mm;
-            if (std::regex_search(sline, mm, reg_cmd_macro)) {
-                static_cmd_symbols.insert(mm[1]);
-            }
-        }
-        fs.close();
+	std::ifstream fs(fname);
+	if (!fs.is_open()) {
+	    std::cerr << "Unable to open file " << fname << "\n";
+	    continue;
+	}
+	std::string sline;
+	while (std::getline(fs, sline)) {
+	    std::smatch mm;
+	    if (std::regex_search(sline, mm, reg_cmd_macro)) {
+		static_cmd_symbols.insert(mm[1]);
+	    }
+	}
+	fs.close();
     }
 
     // ========= Wrapper API command name extraction =========
@@ -126,111 +151,111 @@ int main(int argc, const char *argv[])
     std::regex reg_impl_cmd_str("\"([A-Za-z0-9?_]+)\"");
 
     for (const auto &fname : input_files) {
-        std::ifstream fs(fname);
-        if (!fs.is_open()) continue;
-        std::string sline;
-        bool in_cmd_impl = false;
-        // After finding ged_cmd_impl, scan for first quoted string
-        while (std::getline(fs, sline)) {
-            if (!in_cmd_impl) {
-                if (std::regex_search(sline, reg_impl_begin)) {
-                    in_cmd_impl = true;
-                }
-            } else {
-                std::smatch m;
-                if (std::regex_search(sline, m, reg_impl_cmd_str)) {
-                    std::string cmd = m[1];
-                    if (cmd.find('?') == std::string::npos) {
-                        cmd_names.insert(cmd);
-                    }
-                    in_cmd_impl = false; // Only first quoted string used
-                }
-                // If struct ends without finding command, abort scanning
-                if (sline.find("};") != std::string::npos || sline.find("}") != std::string::npos) {
-                    in_cmd_impl = false;
-                }
-            }
-        }
-        fs.close();
+	std::ifstream fs(fname);
+	if (!fs.is_open()) continue;
+	std::string sline;
+	bool in_cmd_impl = false;
+	// After finding ged_cmd_impl, scan for first quoted string
+	while (std::getline(fs, sline)) {
+	    if (!in_cmd_impl) {
+		if (std::regex_search(sline, reg_impl_begin)) {
+		    in_cmd_impl = true;
+		}
+	    } else {
+		std::smatch m;
+		if (std::regex_search(sline, m, reg_impl_cmd_str)) {
+		    std::string cmd = m[1];
+		    if (cmd.find('?') == std::string::npos) {
+			cmd_names.insert(cmd);
+		    }
+		    in_cmd_impl = false; // Only first quoted string used
+		}
+		// If struct ends without finding command, abort scanning
+		if (sline.find("};") != std::string::npos || sline.find("}") != std::string::npos) {
+		    in_cmd_impl = false;
+		}
+	    }
+	}
+	fs.close();
     }
 
     // Fallback for classic single-line initializers
     std::regex cmd_impl_regex(".*ged_cmd_impl.*");
     std::regex cmd_str_regex(".*\"([A-Za-z0-9?_]+)\".*");
     for (const auto &fname : input_files) {
-        std::ifstream fs(fname);
-        if (!fs.is_open()) continue;
-        std::string sline;
-        bool in_cmd_impl = false;
-        while (std::getline(fs, sline)) {
-            if (in_cmd_impl) {
-                std::smatch parsevar;
-                if (std::regex_search(sline, parsevar, cmd_str_regex)) {
-                    std::string cmd = parsevar.str(1);
-                    if (cmd.find('?') != std::string::npos)
-                        continue;
-                    cmd_names.insert(cmd);
-                    in_cmd_impl = false;
-                }
-            } else {
-                if (std::regex_match(sline, cmd_impl_regex)) {
-                    std::smatch parsevar;
-                    if (std::regex_search(sline, parsevar, cmd_str_regex)) {
-                        std::string cmd = parsevar.str(1);
-                        if (cmd.find('?') != std::string::npos)
-                            continue;
-                        cmd_names.insert(cmd);
-                    } else {
-                        in_cmd_impl = true;
-                    }
-                }
-            }
-        }
-        fs.close();
+	std::ifstream fs(fname);
+	if (!fs.is_open()) continue;
+	std::string sline;
+	bool in_cmd_impl = false;
+	while (std::getline(fs, sline)) {
+	    if (in_cmd_impl) {
+		std::smatch parsevar;
+		if (std::regex_search(sline, parsevar, cmd_str_regex)) {
+		    std::string cmd = parsevar.str(1);
+		    if (cmd.find('?') != std::string::npos)
+			continue;
+		    cmd_names.insert(cmd);
+		    in_cmd_impl = false;
+		}
+	    } else {
+		if (std::regex_match(sline, cmd_impl_regex)) {
+		    std::smatch parsevar;
+		    if (std::regex_search(sline, parsevar, cmd_str_regex)) {
+			std::string cmd = parsevar.str(1);
+			if (cmd.find('?') != std::string::npos)
+			    continue;
+			cmd_names.insert(cmd);
+		    } else {
+			in_cmd_impl = true;
+		    }
+		}
+	    }
+	}
+	fs.close();
     }
 
     // Supplement from macro+impl lookup for edge cases
     // Map macro_arg_cmd -> macro_arg_cmd_impl, then extract first string from impl (if exists).
     ImplNameToCmdMap impl_to_cmd;
     for (const auto &fname : input_files) {
-        std::ifstream fs(fname);
-        if (!fs.is_open()) continue;
-        std::string sline;
-        bool in_cmd_impl = false;
-        std::string awaiting_cmdimpl_name;
-        while (std::getline(fs, sline)) {
-            if (!in_cmd_impl) {
-                std::smatch impl_begin;
-                if (std::regex_search(sline, impl_begin, reg_impl_begin)) {
-                    awaiting_cmdimpl_name = impl_begin[1];
-                    in_cmd_impl = true;
-                }
-            } else {
-                std::smatch cmd_str_match;
-                if (std::regex_search(sline, cmd_str_match, reg_impl_cmd_str)) {
-                    std::string cmd_str = cmd_str_match[1];
-                    if (cmd_str.find('?') == std::string::npos) // skip weird names
-                        impl_to_cmd[awaiting_cmdimpl_name] = cmd_str;
-                    in_cmd_impl = false;
-                }
-                if (sline.find("};") != std::string::npos || sline.find("}") != std::string::npos) {
-                    in_cmd_impl = false;
-                }
-            }
-        }
-        fs.close();
+	std::ifstream fs(fname);
+	if (!fs.is_open()) continue;
+	std::string sline;
+	bool in_cmd_impl = false;
+	std::string awaiting_cmdimpl_name;
+	while (std::getline(fs, sline)) {
+	    if (!in_cmd_impl) {
+		std::smatch impl_begin;
+		if (std::regex_search(sline, impl_begin, reg_impl_begin)) {
+		    awaiting_cmdimpl_name = impl_begin[1];
+		    in_cmd_impl = true;
+		}
+	    } else {
+		std::smatch cmd_str_match;
+		if (std::regex_search(sline, cmd_str_match, reg_impl_cmd_str)) {
+		    std::string cmd_str = cmd_str_match[1];
+		    if (cmd_str.find('?') == std::string::npos) // skip weird names
+			impl_to_cmd[awaiting_cmdimpl_name] = cmd_str;
+		    in_cmd_impl = false;
+		}
+		if (sline.find("};") != std::string::npos || sline.find("}") != std::string::npos) {
+		    in_cmd_impl = false;
+		}
+	    }
+	}
+	fs.close();
     }
     for (const auto &macro_arg : static_cmd_symbols) {
-        std::string suffix = "_cmd";
-        if (macro_arg.size() > suffix.size() &&
-            macro_arg.compare(macro_arg.size()-suffix.size(), suffix.size(), suffix) == 0)
-        {
-            std::string impl_name = macro_arg + "_impl";
-            auto it = impl_to_cmd.find(impl_name);
-            if (it != impl_to_cmd.end()) {
-                cmd_names.insert(it->second);
-            }
-        }
+	std::string suffix = "_cmd";
+	if (macro_arg.size() > suffix.size() &&
+		macro_arg.compare(macro_arg.size()-suffix.size(), suffix.size(), suffix) == 0)
+	{
+	    std::string impl_name = macro_arg + "_impl";
+	    auto it = impl_to_cmd.find(impl_name);
+	    if (it != impl_to_cmd.end()) {
+		cmd_names.insert(it->second);
+	    }
+	}
     }
 
     // Sorted output for deterministic builds
@@ -241,124 +266,133 @@ int main(int argc, const char *argv[])
 
     // Static registration file (--gen-force-cpp)
     if (gen_force_cpp) {
-        std::ifstream testfs(cpp_file);
-        if (testfs.is_open()) {
-            std::string first_line;
-            std::getline(testfs, first_line);
-            testfs.close();
-            if (first_line != GEN_MARKER) {
-                std::cerr << "ERROR: " << cpp_file << " already exists but doesn't appear to be an auto-generated registration file.\n";
-                std::cerr << "       Refusing to overwrite. Rename or remove the file to allow generation.\n";
-                return EXIT_FAILURE;
-            }
-        }
-        std::ofstream ofs(cpp_file, std::ios::out | std::ios::trunc);
-        if (!ofs.is_open()) {
-            std::cerr << "Cannot open output C++ file: " << cpp_file << "\n";
-            return EXIT_FAILURE;
-        }
-        ofs << GEN_MARKER << "\n";
-        ofs << "#include \"plugin.h\"\n\n";
-        for (const auto &cmd_macro : static_cmd_sorted) {
-            ofs << "extern const struct ged_cmd * __ged_cmd_ptr_" << cmd_macro << ";\n";
-        }
-        ofs << "\nextern \"C\" void ged_force_static_registration(void)\n{\n";
-        ofs << "    const void *volatile dummy[] = {\n";
-        for (const auto &cmd_macro : static_cmd_sorted) {
-            ofs << "        &__ged_cmd_ptr_" << cmd_macro << ",\n";
-        }
-        ofs << "    };\n    (void)dummy;\n}\n";
-        ofs.close();
-        return EXIT_SUCCESS;
+	std::ifstream testfs(cpp_file);
+	if (testfs.is_open()) {
+	    std::string first_line;
+	    std::getline(testfs, first_line);
+	    testfs.close();
+	    if (first_line != GEN_MARKER) {
+		std::cerr << "ERROR: " << cpp_file << " already exists but doesn't appear to be an auto-generated registration file.\n";
+		std::cerr << "       Refusing to overwrite. Rename or remove the file to allow generation.\n";
+		return EXIT_FAILURE;
+	    }
+	}
+	std::ofstream ofs(cpp_file, std::ios::out | std::ios::trunc);
+	if (!ofs.is_open()) {
+	    std::cerr << "Cannot open output C++ file: " << cpp_file << "\n";
+	    return EXIT_FAILURE;
+	}
+	ofs << GEN_MARKER << "\n";
+	ofs << "#include \"plugin.h\"\n\n";
+	for (const auto &cmd_macro : static_cmd_sorted) {
+	    ofs << "extern const struct ged_cmd * __ged_cmd_ptr_" << cmd_macro << ";\n";
+	}
+	ofs << "\nextern \"C\" void ged_force_static_registration(void)\n{\n";
+	ofs << "    const void *volatile dummy[] = {\n";
+	for (const auto &cmd_macro : static_cmd_sorted) {
+	    ofs << "        &__ged_cmd_ptr_" << cmd_macro << ",\n";
+	}
+	ofs << "    };\n    (void)dummy;\n}\n";
+	ofs.close();
+	return EXIT_SUCCESS;
     }
 
     // Exec API wrapper header and source
     if (gen_exec_api_cpp && gen_exec_api_hdr) {
-        // Header: generated from original ged_cmds.h content
-        std::ofstream hdr(exec_api_hdr_file, std::ios::out | std::ios::trunc);
-        if (!hdr.is_open()) {
-            std::cerr << "Cannot open output header file: " << exec_api_hdr_file << "\n";
-            return EXIT_FAILURE;
-        }
-        hdr << "/*                      G E D _ C M D S . H\n"
-            << " * BRL-CAD\n"
-            << " *\n"
-            << " * Copyright (c) 2024-2025 United States Government as represented by\n"
-            << " * the U.S. Army Research Laboratory.\n"
-            << " *\n"
-            << " * This library is free software; you can redistribute it and/or\n"
-            << " * modify it under the terms of the GNU Lesser General Public License\n"
-            << " * version 2.1 as published by the Free Software Foundation.\n"
-            << " *\n"
-            << " * This library is distributed in the hope that it will be useful, but\n"
-            << " * WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-            << " * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n"
-            << " * Lesser General Public License for more details.\n"
-            << " *\n"
-            << " * You should have received a copy of the GNU Lesser General Public\n"
-            << " * License along with this file; see the file named COPYING for more\n"
-            << " * information.\n"
-            << " */\n"
-            << "/** @file ged_cmds.h\n"
-            << " *\n"
-            << " * Autogenerated header defining C function calls for LIBGED commands.  Under\n"
-            << " * the hood the commands are run with ged_exec, and calling ged_exec directly\n"
-            << " * will produce the same results calling these functions will.  However, raw\n"
-            << " * ged_exec calls provide no compile time checking as to whether a particular\n"
-            << " * LIBGED command is actually *available* as a LIBGED plugin.  Programs like\n"
-            << " * gsh need ged_exec because user inputs will be defining commands, but when\n"
-            << " * hard-coding LIBGED command executions into other functions or language\n"
-            << " * bindings that abstraction means disconnects can be detected ONLY with\n"
-            << " * run-time tests - the C/C++ compiler is helpless.\n"
-            << " *\n"
-            << " * Using the following functions in your code will allow you to know\n"
-            << " * immediately upon compilation when a change in BRL-CAD has removed or renamed\n"
-            << " * a command you are using.\n"
-            << " *\n"
-            << " * There is one additional difference between calling these wrappers and using\n"
-            << " * a raw ged_exec call.  The wrapper functions will set the argv[0] command\n"
-            << " * name for you if you have set it to NULL in your code.  The advantage of this\n"
-            << " * is to simplify code updating if a command is renamed - you will have only\n"
-            << " * one thing to update - the wrapper name - rather than needing to update both\n"
-            << " * the function name and the cmd string.  There is no harm in setting the string,\n"
-            << " * and the wrapper functions will not override or check a non-NULL argv[0] if one\n"
-            << " * is passed in.\n"
-            << " */\n\n";
-        hdr << "#include \"common.h\"\n";
-        hdr << "#include \"ged/defines.h\"\n";
-        hdr << "#include \"ged/commands.h\"\n";
-        hdr << "__BEGIN_DECLS\n";
-        for (const auto &cmd : cmds_sorted) {
-            hdr << "GED_EXPORT extern int ged_exec_" << cmd << "(struct ged *, int, const char **);\n";
-        }
-        hdr << "__END_DECLS\n";
-        hdr.close();
+	// Header: generated from original ged_cmds.h content
+	std::ofstream hdr(exec_api_hdr_file, std::ios::out | std::ios::trunc);
+	if (!hdr.is_open()) {
+	    std::cerr << "Cannot open output header file: " << exec_api_hdr_file << "\n";
+	    return EXIT_FAILURE;
+	}
+	hdr << "/*                      G E D _ C M D S . H\n"
+	    << " * BRL-CAD\n"
+	    << " *\n"
+	    << " * Copyright (c) 2024-2025 United States Government as represented by\n"
+	    << " * the U.S. Army Research Laboratory.\n"
+	    << " *\n"
+	    << " * This library is free software; you can redistribute it and/or\n"
+	    << " * modify it under the terms of the GNU Lesser General Public License\n"
+	    << " * version 2.1 as published by the Free Software Foundation.\n"
+	    << " *\n"
+	    << " * This library is distributed in the hope that it will be useful, but\n"
+	    << " * WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+	    << " * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n"
+	    << " * Lesser General Public License for more details.\n"
+	    << " *\n"
+	    << " * You should have received a copy of the GNU Lesser General Public\n"
+	    << " * License along with this file; see the file named COPYING for more\n"
+	    << " * information.\n"
+	    << " */\n"
+	    << "/** @file ged_cmds.h\n"
+	    << " *\n"
+	    << " * Autogenerated header defining C function calls for LIBGED commands.  Under\n"
+	    << " * the hood the commands are run with ged_exec, and calling ged_exec directly\n"
+	    << " * will produce the same results calling these functions will.  However, raw\n"
+	    << " * ged_exec calls provide no compile time checking as to whether a particular\n"
+	    << " * LIBGED command is actually *available* as a LIBGED plugin.  Programs like\n"
+	    << " * gsh need ged_exec because user inputs will be defining commands, but when\n"
+	    << " * hard-coding LIBGED command executions into other functions or language\n"
+	    << " * bindings that abstraction means disconnects can be detected ONLY with\n"
+	    << " * run-time tests - the C/C++ compiler is helpless.\n"
+	    << " *\n"
+	    << " * Using the following functions in your code will allow you to know\n"
+	    << " * immediately upon compilation when a change in BRL-CAD has removed or renamed\n"
+	    << " * a command you are using.\n"
+	    << " *\n"
+	    << " * There is one additional difference between calling these wrappers and using\n"
+	    << " * a raw ged_exec call.  The wrapper functions will set the argv[0] command\n"
+	    << " * name for you if you have set it to NULL in your code.  The advantage of this\n"
+	    << " * is to simplify code updating if a command is renamed - you will have only\n"
+	    << " * one thing to update - the wrapper name - rather than needing to update both\n"
+	    << " * the function name and the cmd string.  There is no harm in setting the string,\n"
+	    << " * and the wrapper functions will not override or check a non-NULL argv[0] if one\n"
+	    << " * is passed in.\n"
+	    << " */\n\n";
+	hdr << "#include \"common.h\"\n";
+	hdr << "#include \"ged/defines.h\"\n";
+	hdr << "#include \"ged/commands.h\"\n";
+	hdr << "__BEGIN_DECLS\n";
+	for (const auto &cmd : cmds_sorted) {
+	    hdr << "GED_EXPORT extern int ged_exec_" << cmd << "(struct ged *, int, const char **);\n";
+	}
+	hdr << "__END_DECLS\n";
+	hdr.close();
 
-        // Source: always begins with #include "ged/ged_cmds.h"
-        std::ofstream src(exec_api_file, std::ios::out | std::ios::trunc);
-        if (!src.is_open()) {
-            std::cerr << "Cannot open output C++ file: " << exec_api_file << "\n";
-            return EXIT_FAILURE;
-        }
-        src << EXEC_API_MARKER << "\n";
-        src << "#include \"ged/ged_cmds.h\"\n";
-        for (const auto &cmd : cmds_sorted) {
-            src << "int ged_exec_" << cmd << "(struct ged *gedp, int argc, const char **argv) {\n";
-            src << "    static const char *cmdname = \"" << cmd << "\";\n";
-            src << "    if (!argv[0]) argv[0] = cmdname;\n";
-            src << "    return ged_exec(gedp, argc, argv);\n";
-            src << "}\n";
-        }
-        src.close();
-        return EXIT_SUCCESS;
+	// Source: always begins with #include "ged/ged_cmds.h"
+	std::ofstream src(exec_api_file, std::ios::out | std::ios::trunc);
+	if (!src.is_open()) {
+	    std::cerr << "Cannot open output C++ file: " << exec_api_file << "\n";
+	    return EXIT_FAILURE;
+	}
+	src << EXEC_API_MARKER << "\n";
+	src << "#include \"ged/ged_cmds.h\"\n";
+	for (const auto &cmd : cmds_sorted) {
+	    src << "int ged_exec_" << cmd << "(struct ged *gedp, int argc, const char **argv) {\n";
+	    src << "    static const char *cmdname = \"" << cmd << "\";\n";
+	    src << "    if (!argv[0]) argv[0] = cmdname;\n";
+	    src << "    return ged_exec(gedp, argc, argv);\n";
+	    src << "}\n";
+	}
+	src.close();
+	return EXIT_SUCCESS;
     } else if (gen_exec_api_cpp || gen_exec_api_hdr) {
-        std::cerr << "ERROR: Both --gen-exec-api-cpp <cpp_file> and --gen-exec-api-hdr <hdr_file> must be specified together.\n";
-        return EXIT_FAILURE;
+	std::cerr << "ERROR: Both --gen-exec-api-cpp <cpp_file> and --gen-exec-api-hdr <hdr_file> must be specified together.\n";
+	return EXIT_FAILURE;
     }
 
     // Fallback: stdout for plain list mode (rare, mostly for testing)
     for (const auto &cmd : cmds_sorted) {
-        std::cout << cmd << "\n";
+	std::cout << cmd << "\n";
     }
     return EXIT_SUCCESS;
 }
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s
