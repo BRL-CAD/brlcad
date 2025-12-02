@@ -9,7 +9,7 @@
  * version 2.1 as published by the Free Software Foundation.
  *
  * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * WITHOUT ANY WARRANTY; without even the implied warranty o
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
@@ -25,7 +25,7 @@
 #include <stdlib.h>
 
 #include "bu.h"
-#include "src\libged\material\parser.h"
+#include "../material/parser.h"
 
 /* Helper: Create a temporary FILE* stream from a string. */
 static FILE*

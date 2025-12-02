@@ -30,6 +30,12 @@ if(TARGET ged_test_material)
 endif(TARGET ged_test_material)
 distclean(${CMAKE_CURRENT_BINARY_DIR}/ged_test_material.g)
 
+brlcad_addexec(ged_test_material_matprop "test_material_matprop.c;../material/parser.c" libged TEST)
+if(TARGET ged_test_material_matprop)
+  add_dependencies(ged_test_material_matprop ged_plugins)
+endif(TARGET ged_test_material_matprop)
+brlcad_add_test(NAME ged_test_material_matprop COMMAND ged_test_material_matprop)
+
 brlcad_addexec(ged_test_select test_select.cpp libged TEST)
 if(TARGET ged_test_select)
   add_dependencies(ged_test_select ged_plugins)

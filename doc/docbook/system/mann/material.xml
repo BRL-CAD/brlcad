@@ -8,7 +8,7 @@
 
 <refnamediv xml:id="name">
   <refname>material</refname>
-  <refpurpose> Used to create, change, retrieve, assign, import, or view materials and their properties.
+  <refpurpose> Used to create, change, retrieve, assign, import, export, or view materials and their properties.
    </refpurpose>
 </refnamediv>
 
@@ -27,6 +27,10 @@
   <cmdsynopsis sepchar=" ">
     <command>material import</command>
     <arg choice="opt" rep="norepeat"><replaceable>--id | --name | --type</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>file_name</replaceable></arg>
+  </cmdsynopsis>
+  <cmdsynopsis sepchar=" ">
+    <command>material export</command>
     <arg choice="req" rep="norepeat"><replaceable>file_name</replaceable></arg>
   </cmdsynopsis>
   <cmdsynopsis sepchar=" ">
@@ -121,6 +125,14 @@
                 <para>
                   Import a file's entries into material objects. For density files, --id denotes the material object names will be the id of the entry in the density table, --name the name of the
                   entry in the density file. For matprop files, --force true will overwrite all duplicate materials and --overwrite will only overwrite the space-seperated materials.
+                </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><emphasis remap="B" role="bold">export</emphasis></term>
+          <listitem>
+                <para>
+                  Export the materials and their properties to a matprop file. 
                 </para>
           </listitem>
         </varlistentry>

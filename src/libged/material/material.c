@@ -58,9 +58,10 @@ static const char *usage = " help \n\n"
     "material get {object} [propertyGroupName] {propertyName}\n\n"
     "material set {object} [propertyGroupName] {propertyName} [newPropertyValue]\n\n"
     "material remove {object} [propertyGroupName] {propertyName}\n\n"
-    "material import [--id | --name] {fileName}\n\n"
+    "material import [--id | --name | --type] {fileName}\n\n"
     "  --id       - Specifies the id the material will be imported with\n\n"
     "  --name     - Specifies the name the material will be imported with\n\n"
+    "  --type     - Specifies the file type to import\n\n"
     "material export {fileName}\n\n"
     "Note: Object, property, and group names are case sensitive.";
 
@@ -612,7 +613,6 @@ import_file_type(struct ged *gedp, int argc, const char *argv[])
     argc = opt_ret;
 
     if (BU_STR_EQUAL(bu_vls_cstr(&file_type), "matprop")) {
-        bu_log("import matprop file");
         import_matprop_file(gedp, argc, argv, force_overwrite, bu_vls_cstr(&specific_overwrites));
     } else {
         import_materials(gedp, argc, argv);
