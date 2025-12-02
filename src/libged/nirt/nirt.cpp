@@ -732,9 +732,10 @@ ged_vnirt_core(struct ged *gedp, int argc, const char *argv[])
     return status;
 }
 
+#include "../include/plugin.h"
+
 extern "C" {
 #ifdef GED_PLUGIN
-#include "../include/plugin.h"
 struct ged_cmd_impl nirt_cmd_impl = {"nirt", ged_nirt_core, GED_CMD_DEFAULT};
 const struct ged_cmd nirt_cmd = { &nirt_cmd_impl };
 
