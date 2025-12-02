@@ -467,7 +467,7 @@ std::string get_material_name(const ON_3dmObjectAttributes *attributes, const ON
 	return clean_name(material->Name(), "default_material");
 }
 
-std::string create_thirdgen_material(const gcv_opts& gcv_options, const ON_Material *material, const ONX_Model &model, rt_wdb& wdb)
+std::string create_material(const gcv_opts& gcv_options, const ON_Material *material, const ONX_Model &model, rt_wdb& wdb)
 {
 	ON_Material *pbr_material = new ON_Material(*material);
 	if (!material->IsPhysicallyBased()){
@@ -548,7 +548,7 @@ std::string create_thirdgen_material(const gcv_opts& gcv_options, const ON_Mater
 	return name;
 }
 
-void assign_thirdgen_material(const gcv_opts& gcv_options, const std::string& object_name, const std::string& material_name, rt_wdb& wdb)
+void assign_material(const gcv_opts& gcv_options, const std::string& object_name, const std::string& material_name, rt_wdb& wdb)
 {
     if (db_lookup(wdb.dbip, object_name.c_str(), true) == RT_DIR_NULL) {
 		std::cout << "Object " << object_name << " not found in the database" << std::endl;
@@ -701,7 +701,7 @@ import_model_objects(const gcv_opts& gcv_options, rt_wdb& wdb, ONX_Model& model,
 				std::cout << "Found and attempting to create material named " << material_name << std::endl;
             }
 			ON_Material material = render_material->ToOnMaterial();
-			create_thirdgen_material(gcv_options, &material, model, wdb);
+			create_material(gcv_options, &material, model, wdb);
 		}
 		component = render_it.NextComponent();
 	}
@@ -715,7 +715,7 @@ import_model_objects(const gcv_opts& gcv_options, rt_wdb& wdb, ONX_Model& model,
             if (gcv_options.verbosity_level) {
                 std::cout << "Found and attempting to create material named " << material_name << std::endl;
             }
-            create_thirdgen_material(gcv_options, material, model, wdb);
+            create_material(gcv_options, material, model, wdb);
         }
 		component = mat_it.NextComponent();
     }
@@ -757,7 +757,7 @@ import_model_objects(const gcv_opts& gcv_options, rt_wdb& wdb, ONX_Model& model,
 		members_vec.push_back(member_name);
 		write_comb(wdb, name, members_vec, NULL, own_shader ? shader.first.c_str() : NULL, own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
 		if (material_name != ""){
-			assign_thirdgen_material(gcv_options, name, material_name, wdb);
+			assign_material(gcv_options, name, material_name, wdb);
 		}
 	    } else
                 to_remove.insert(std::make_pair(member_name, mg->Id()));
