@@ -407,7 +407,7 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[], int force_al
     struct db_i *db_i; // Declare db_i at the top of the function
     // Setup overwrite list variables
     char *overwrite_input_copy = NULL; // We need a copy because argv_from_string modifies the string
-    char *overwrite_argv[1024];        // Static buffer to hold the pointers (limit 1024 names)
+    char **overwrite_argv = NULL;        // Dynamic pointer
     int overwrite_argc = 0;            // To track how many names we parsed
 
     // We just check that argc is 3, as expected.
@@ -435,19 +435,18 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[], int force_al
         return BRLCAD_ERROR;
     }
 
-    // Initialize the array to NULL to be safe
-    memset(overwrite_argv, 0, sizeof(overwrite_argv));
-
-    // Parse the list
     if (specific_overwrites_str && strlen(specific_overwrites_str) > 0) {
+        size_t input_len = strlen(specific_overwrites_str);
+
         // Duplicate the string so we can modify it
         overwrite_input_copy = bu_strdup(specific_overwrites_str);
         
-        // Call bu_argv_from_string with 3 arguments:
-        // 1. The array to fill
-        // 2. The limit (size of the array)
-        // 3. The string to chop up
-        overwrite_argc = bu_argv_from_string(overwrite_argv, 1024, overwrite_input_copy);
+        // Allocate the array dynamically.
+        // We use (input_len + 2) as a safe upper bound for the number of tokens.
+        overwrite_argv = (char **)bu_calloc(input_len + 2, sizeof(char *), "overwrite_argv");
+
+        // Call bu_argv_from_string with the dynamic size limit
+        overwrite_argc = bu_argv_from_string(overwrite_argv, input_len + 2, overwrite_input_copy);
     }
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -591,6 +590,13 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[], int force_al
 
     // Tell BRL-CAD's UI to update to show new materials
     //ged_update_views(gedp, (long)0); 
+
+    if (overwrite_argv) {
+        bu_free(overwrite_argv, "free overwrite_argv");
+    }
+    if (overwrite_input_copy) {
+        bu_free(overwrite_input_copy, "free overwrite_input_copy");
+    }
 
     return BRLCAD_OK;
 }
