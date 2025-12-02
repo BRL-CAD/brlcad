@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include <string>
+#include <mutex>
 
 #include "bu/time.h"
 #include "bu/path.h"
@@ -29,7 +30,7 @@
 #include "./include/plugin.h"
 
 extern "C" void libged_init(void);
-
+extern "C" void ged_force_static_registration();
 
 extern "C" int
 ged_exec(struct ged *gedp, int argc, const char *argv[])
@@ -53,9 +54,19 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    /* Ensure registry is initialized and plugins scanned once */
-    if (ged_registered_count() == 0)
-	libged_init();
+    /* Ensure registry is initialized exactly once (thread-safe). */
+    static std::once_flag _ged_registry_once;
+    std::call_once(_ged_registry_once, []() {
+        #ifdef LIBGED_STATIC_CORE
+            ged_force_static_registration();
+        #endif
+        libged_init();
+    });
+
+    if (ged_registered_count() == 0) {
+        // Fallback path if something went wrong with one-time init:
+        libged_init();
+    }
 
     double start = 0.0;
     const char *tstr = getenv("GED_EXEC_TIME");
