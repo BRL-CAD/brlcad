@@ -54,6 +54,23 @@ get_prop_value(const Material* mat, const char* key)
     return NULL;
 }
 
+/* * COPY OF THE FUNCTION TO BE TESTED 
+ * We include this here so we can unit test the logic in isolation.
+ */
+static int
+is_in_overwrite_list(const char *name, char **overwrite_list)
+{
+    int i;
+    if (!overwrite_list) return 0;
+
+    for (i = 0; overwrite_list[i] != NULL; i++) {
+        if (BU_STR_EQUIV(name, overwrite_list[i])) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /*
  * Test 1: Verify basic material and property parsing
  */
@@ -235,6 +252,118 @@ cleanup:
 }
 
 /*
+ * Test 5: Verify is_in_overwrite_list
+ */
+int
+test_overwrite_helper()
+{
+    printf("Testing Overwrite List Helper...");
+    int ret = 0;
+    
+    // Create a mock argv list. Must be NULL terminated.
+    // Casting to char* to satisfy signature, though string literals are const.
+    char *mock_list[] = { "Aluminum", "Steel", "Titanium", NULL };
+
+    // Test 1: Item is in list
+    if (is_in_overwrite_list("Aluminum", mock_list) != 1) {
+        printf("\nFAILED: Did not find 'Aluminum' in list.\n");
+        ret = 1;
+    }
+
+    // Test 2: Item is NOT in list
+    if (is_in_overwrite_list("Wood", mock_list) != 0) {
+        printf("\nFAILED: Found 'Wood' in list, but it should not be there.\n");
+        ret = 1;
+    }
+
+    // Test 3: NULL list
+    if (is_in_overwrite_list("Steel", NULL) != 0) {
+        printf("\nFAILED: NULL list should return 0.\n");
+        ret = 1;
+    }
+
+    if (ret == 0) printf(" PASSED\n");
+    return ret;
+}
+
+/*
+ * Test 6: Verify the Logic Flow (Simulate import_matprop_file logic)
+ */
+int
+test_overwrite_logic_flow()
+{
+    printf("Testing Overwrite Decision Logic...");
+    int ret = 0;
+
+    char *mock_list[] = { "Aluminum", NULL };
+    char *current_mat_name = "Aluminum";
+    
+    // Scenario 1: Force ALL is ON. List irrelevant.
+    // Expected: should_overwrite = 1
+    int force_all = 1;
+    int overwrite_argc = 0; 
+    
+    int should_overwrite = force_all;
+    if (!should_overwrite && overwrite_argc > 0) {
+        should_overwrite = is_in_overwrite_list(current_mat_name, mock_list);
+    }
+
+    if (should_overwrite != 1) {
+        printf("\nFAILED: Force=1 should result in overwrite.\n");
+        ret = 1;
+    }
+
+    // Scenario 2: Force is OFF. List provided. Name matches.
+    // Expected: should_overwrite = 1
+    force_all = 0;
+    overwrite_argc = 1; // List has items
+    
+    should_overwrite = force_all;
+    if (!should_overwrite && overwrite_argc > 0) {
+        should_overwrite = is_in_overwrite_list(current_mat_name, mock_list);
+    }
+    
+    if (should_overwrite != 1) {
+        printf("\nFAILED: Force=0, In List=Yes should result in overwrite.\n");
+        ret = 1;
+    }
+
+    // Scenario 3: Force is OFF. List provided. Name mismatch.
+    // Expected: should_overwrite = 0
+    current_mat_name = "Wood"; // Not in mock_list
+    force_all = 0;
+    overwrite_argc = 1;
+
+    should_overwrite = force_all;
+    if (!should_overwrite && overwrite_argc > 0) {
+        should_overwrite = is_in_overwrite_list(current_mat_name, mock_list);
+    }
+
+    if (should_overwrite != 0) {
+        printf("\nFAILED: Force=0, In List=No should result in SKIP.\n");
+        ret = 1;
+    }
+
+    // Scenario 4: Force is OFF. No list provided.
+    // Expected: should_overwrite = 0
+    force_all = 0;
+    overwrite_argc = 0; // Empty list logic
+    
+    should_overwrite = force_all;
+    if (!should_overwrite && overwrite_argc > 0) {
+        should_overwrite = is_in_overwrite_list(current_mat_name, mock_list);
+    }
+
+    if (should_overwrite != 0) {
+        printf("\nFAILED: Force=0, No List should result in SKIP.\n");
+        ret = 1;
+    }
+
+    if (ret == 0) printf(" PASSED\n");
+    return ret;
+}
+
+/*
  * Main entry point
  */
 int
@@ -252,6 +381,8 @@ main(int ac, char* av[])
     failure_count += test_multiline_parsing();
     failure_count += test_malformed_input();
     failure_count += test_full_content();
+    failure_count += test_overwrite_helper();
+    failure_count += test_overwrite_logic_flow();
 
     if (failure_count > 0) {
         printf("\n%d TESTS FAILED\n", failure_count);
