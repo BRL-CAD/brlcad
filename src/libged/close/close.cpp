@@ -85,9 +85,10 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     return BRLCAD_OK;
 }
 
+#include "../include/plugin.h"
+
 extern "C" {
 #ifdef GED_PLUGIN
-#include "../include/plugin.h"
 
 struct ged_cmd_impl closedb_cmd_impl = {"closedb", ged_close_core, GED_CMD_DEFAULT};
 const struct ged_cmd closedb_cmd = { &closedb_cmd_impl };

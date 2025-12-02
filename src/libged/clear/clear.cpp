@@ -36,9 +36,10 @@ ged_clear_core(struct ged *UNUSED(gedp), int UNUSED(argc), const char **UNUSED(a
     return BRLCAD_OK;
 }
 
+#include "../include/plugin.h"
+
 extern "C" {
 #ifdef GED_PLUGIN
-#include "../include/plugin.h"
 
 struct ged_cmd_impl clear_cmd_impl = {"clear", ged_clear_core, GED_CMD_DEFAULT};
 const struct ged_cmd clear_cmd = { &clear_cmd_impl };
