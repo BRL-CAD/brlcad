@@ -1,0 +1,37 @@
+# This is a comment line.
+
+Playdough
+{
+  foo_Material     = playdough
+  Bar_Material = squishy_clay
+  Density           = 1.2345
+  Brinell_Hardness  = 10.00
+  Yield_Strength    = 20.0E6
+  Ultimate_Strength = 35.0E6
+  Shear_Strength    = 10.0E6
+  Youngs_Modulus    = 21.0E9
+  Bulk_Modulus      = 111.0E9
+  other_important_param1 =   0.00
+  important_param2  = 2123.00
+}
+
+Air
+        {
+     foo_Material      = Air
+  Density         = 0.001
+  }
+
+###############
+#More comments#
+###############
+
+
+Another_material
+	{
+	Brinell_Hardness = 11
+	Bulk_Modulus = 1.1E11
+	Density = 5.8
+	Ultimate_Strength = 1.86E8
+	Yield_Strength = 2.34E8
+	Youngs_Modulus = 1.0E11
+	}
