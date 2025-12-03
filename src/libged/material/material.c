@@ -377,9 +377,9 @@ export_materials(struct ged *gedp, int argc, const char *argv[])
 
                     for (int j = 0; j < 4; j++) {
                         struct bu_attribute_value_set *avs = avs_list[j];
-                        for (size_t i = 0; i < avs->count; i++) {
-                            const char *key = avs->avp[i].name;
-                            const char *value = avs->avp[i].value;
+                        for (size_t k = 0; k < avs->count; k++) {
+                            const char *key = avs->avp[k].name;
+                            const char *value = avs->avp[k].value;
                             fprintf(file, "\t%s = %s\n", key, value);
                         }
                     }
@@ -405,7 +405,7 @@ import_matprop_file(struct ged *gedp, int argc, const char *argv[], int force_al
     int import_count = 0;
     int skipped_count = 0;
     int i, j;
-    struct db_i *db_i; // Declare db_i at the top of the function
+    struct db_i *UNUSED(db_i); // Declare db_i at the top of the function
     // Setup overwrite list variables
     char *overwrite_input_copy = NULL; // We need a copy because argv_from_string modifies the string
     char *overwrite_argv[1024];        // Static buffer to hold the pointers (limit 1024 names)

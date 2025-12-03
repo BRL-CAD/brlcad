@@ -459,7 +459,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Geometry *geometry
     return 1;
 }
 
-std::string get_material_name(const ON_3dmObjectAttributes *attributes, const ONX_Model &model, rt_wdb& wdb){
+std::string get_material_name(const ON_3dmObjectAttributes *attributes, const ONX_Model &model, rt_wdb& UNUSED(wdb)){
 	const ON_Material *material = ON_Material::Cast(model.MaterialFromAttributes(*attributes).ModelComponent());
 	if (material == nullptr){
 		return "";
@@ -467,7 +467,7 @@ std::string get_material_name(const ON_3dmObjectAttributes *attributes, const ON
 	return clean_name(material->Name(), "default_material");
 }
 
-std::string create_material(const gcv_opts& gcv_options, const ON_Material *material, const ONX_Model &model, rt_wdb& wdb)
+std::string create_material(const gcv_opts& gcv_options, const ON_Material *material, const ONX_Model &UNUSED(model), rt_wdb& wdb)
 {
 	ON_Material *pbr_material = new ON_Material(*material);
 	if (!material->IsPhysicallyBased()){
@@ -508,7 +508,7 @@ std::string create_material(const gcv_opts& gcv_options, const ON_Material *mate
 	bu_vls_sprintf(&num_to_cstr, "%.4f", pbr_material->m_shine);
 	bu_avs_add(&opticalProperties, "shine", bu_vls_cstr(&num_to_cstr));
 
-	bu_vls_sprintf(&num_to_cstr, "%.4f", pbr_material->m_emission);
+	bu_vls_sprintf(&num_to_cstr, "%.4f", double(pbr_material->m_emission));
 	bu_avs_add(&opticalProperties, "emission", bu_vls_cstr(&num_to_cstr));
 
 	// Alpha seems to be unused so Saturation is read instead
@@ -573,7 +573,7 @@ typedef std::pair<std::string, std::string> Shader;
 
 
 Shader
-get_shader(const ON_Material *im, rt_wdb& wdb)
+get_shader(const ON_Material *im, rt_wdb& UNUSED(wdb))
 {
     std::ostringstream sstream;
     ON_Material dm;
