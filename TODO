@@ -42,9 +42,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   on Windows, possibly a threading issue setting up the results
   container.
 
-* Investigate whether we can use the newer version of the gct
-  decimator (mmesh) to replace the version currently bundled in librt.
-
 * Create EXPORT targets for BRL-CAD libraries to support newer CMake
   find_package style.  If possible, try to also support older style
   variables in FindBRLCAD.cmake
