@@ -1,3 +1,26 @@
+/*                        P L U G I N . H
+ * BRL-CAD
+ *
+ * Copyright (c) 2025 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file plugin.h
+ *
+ */
+
 #ifndef LIBGED_PLUGIN_H
 #define LIBGED_PLUGIN_H
 
@@ -28,17 +51,17 @@ struct ged_cmd_process_impl {
 extern "C" {
 #endif
 
-/* Registry API: ensure all callers have prototypes in scope */
-int ged_register_command(const struct ged_cmd *cmd);
-int ged_command_exists(const char *name);
-const struct ged_cmd *ged_get_command(const char *name);
-size_t ged_registered_count(void);
-void ged_list_command_names(struct bu_vls *out_csv);
-void ged_list_command_array(const char * const **cl, size_t *cnt);
-void ged_scan_plugins(void);
-void libged_init(void);
-void libged_shutdown(void);
-const char *ged_init_msgs();
+    /* Registry API: ensure all callers have prototypes in scope */
+    int ged_register_command(const struct ged_cmd *cmd);
+    int ged_command_exists(const char *name);
+    const struct ged_cmd *ged_get_command(const char *name);
+    size_t ged_registered_count(void);
+    void ged_list_command_names(struct bu_vls *out_csv);
+    void ged_list_command_array(const char * const **cl, size_t *cnt);
+    void ged_scan_plugins(void);
+    void libged_init(void);
+    void libged_shutdown(void);
+    const char *ged_init_msgs();
 
 #ifdef __cplusplus
 }
@@ -59,7 +82,7 @@ const char *ged_init_msgs();
 template <typename CmdPtrType>
 struct ged_cmd_autoreg {
     ged_cmd_autoreg(const CmdPtrType *c) {
-        (void)ged_register_command(c);
+	(void)ged_register_command(c);
     }
 };
 
@@ -67,13 +90,13 @@ struct ged_cmd_autoreg {
     GED_CMD_SET_ATTR const struct ged_cmd * __ged_cmd_ptr_##cmd_symbol = &cmd_symbol;       \
     static const struct ged_cmd * cmd_symbol##_keep_ptr = &cmd_symbol;                      \
     static ged_cmd_autoreg<const struct ged_cmd>                                            \
-        cmd_symbol##_autoreg_instance(cmd_symbol##_keep_ptr)
+    cmd_symbol##_autoreg_instance(cmd_symbol##_keep_ptr)
 
 /* ======================= Pure C: GCC / Clang ======================= */
 #elif defined(__GNUC__) || defined(__clang__)
 #define REGISTER_GED_COMMAND(cmd_symbol)                                                    \
     __attribute__((used, section("ged_cmd_set"))) const struct ged_cmd *                    \
-        __ged_cmd_ptr_##cmd_symbol = &cmd_symbol;                                           \
+    __ged_cmd_ptr_##cmd_symbol = &cmd_symbol;                                           \
     static const struct ged_cmd * cmd_symbol##_keep __attribute__((used)) = &cmd_symbol;    \
     static void register_##cmd_symbol(void) __attribute__((constructor));                   \
     static void register_##cmd_symbol(void) { (void)ged_register_command(&cmd_symbol); }
@@ -94,12 +117,12 @@ struct ged_cmd_autoreg {
 #pragma section(".CRT$XCU", read)
 #define REGISTER_GED_COMMAND(cmd_symbol)                                                    \
     __declspec(allocate(".rdata")) const struct ged_cmd * volatile                          \
-        __ged_cmd_ptr_##cmd_symbol = &cmd_symbol;                                           \
+    __ged_cmd_ptr_##cmd_symbol = &cmd_symbol;                                           \
     static void __cdecl register_##cmd_symbol(void) {                                       \
-        (void)ged_register_command(&cmd_symbol);                                            \
+	(void)ged_register_command(&cmd_symbol);                                            \
     }                                                                                       \
     __declspec(allocate(".CRT$XCU")) void (__cdecl * volatile                               \
-        cmd_symbol##_ctor)(void) = register_##cmd_symbol
+	    cmd_symbol##_ctor)(void) = register_##cmd_symbol
 
 /* ======================= Unsupported Pure C Compiler ======================= */
 #else
@@ -111,3 +134,13 @@ struct ged_cmd_autoreg {
 #endif /* LIBGED_STATIC_CORE && !GED_PLUGIN_ONLY */
 
 #endif /* LIBGED_PLUGIN_H */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8 cino=N-s
+ */
