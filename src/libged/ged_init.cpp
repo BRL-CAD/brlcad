@@ -222,64 +222,38 @@ static int load_plugin_handle(void *dl_handle, const char *pfile)
     return 0;
 }
 
-extern "C" int
-ged_load_plugin_file(const char *fullpath)
-{
-    ged_registry &G = get_registry();
-    if (!fullpath || G.shutdown) return -1;
-    void *dl_handle = bu_dlopen(fullpath, BU_RTLD_NOW);
-    if (!dl_handle) {
-	const char *error_msg = bu_dlerror();
-	if (error_msg) bu_vls_printf(&init_msgs, "%s\n", error_msg);
-	bu_vls_printf(&init_msgs, "Failed to load custom plugin '%s'\n", fullpath);
-	return -2;
-    }
-    int ret = load_plugin_handle(dl_handle, fullpath);
-    if (ret != 0) {
-	bu_dlclose(dl_handle);
-	return ret;
-    }
-    G.plugin_handles.insert(dl_handle);
-    return 0;
-}
-
+/* -------------------------------------------------------------------------- */
+/* Static (bundled) registration enumeration                                  */
+/* -------------------------------------------------------------------------- */
 #if defined(LIBGED_STATIC_CORE)
-    // Linker set section enumeration for ELF
-#if defined(__GNUC__)
-    // GCC/Clang: linker offers __start_*/__stop_* symbols.
+  /* GCC/Clang (ELF/Mach-O): iterate linker set */
+  #if defined(__GNUC__)
     extern "C" {
-	extern const struct ged_cmd *__start_ged_cmd_set[];
-	extern const struct ged_cmd *__stop_ged_cmd_set[];
+        extern const struct ged_cmd *__start_ged_cmd_set[];
+        extern const struct ged_cmd *__stop_ged_cmd_set[];
     }
     static void ged_static_register_linkerset()
     {
-	const struct ged_cmd **p = __start_ged_cmd_set;
-	while (p < __stop_ged_cmd_set) {
-	    ged_register_command(*p);
-	    ++p;
-	}
+        const struct ged_cmd **p = __start_ged_cmd_set;
+        while (p < __stop_ged_cmd_set) {
+            const struct ged_cmd *c = *p;
+            if (c) ged_register_command(c);
+            ++p;
+        }
     }
-#elif defined(_MSC_VER)
-    // MSVC: pragma allocate sections and enumerate using section address from map.
-    // For maximal correctness and portability: use __pragma(section) to get start/end.
-    // This relies on VC++ initialization order but is robust if all .obj files are linked.
-    // The code below will work _if_ the linker includes at least one symbol from each TU.
-    // For edge cases, see 'force all objects' below.
-    extern "C" {
-	// __ged_cmd_ptrs_start & end: defined using special MSVC initializers
-	__declspec(selectany) GED_CMD_LINKER_SET const struct ged_cmd * __ged_cmd_ptrs_start = 0;
-	__declspec(selectany) GED_CMD_LINKER_SET const struct ged_cmd * __ged_cmd_ptrs_end = 0;
-    }
+
+  /* MSVC: no enumeration; rely on CRT XCU constructors + force-retention TU */
+  #elif defined(_MSC_VER)
     static void ged_static_register_linkerset()
     {
-	const struct ged_cmd **start = &__ged_cmd_ptrs_start + 1;
-	const struct ged_cmd **end = &__ged_cmd_ptrs_end;
-	for (const struct ged_cmd **p = start; p < end; ++p)
-	    if (*p) ged_register_command(*p);
+        /* No-op on MSVC:
+         * - REGISTER_GED_COMMAND emits CRT XCU constructor entries that already call ged_register_command.
+         * - ged_cmd_scanner generates a TU that references __ged_cmd_ptr_<cmd> to defeat dead-stripping.
+         */
     }
-#else
+  #else
     static void ged_static_register_linkerset() { /* fallback no-op */ }
-#endif
+  #endif
 #endif
 
 
