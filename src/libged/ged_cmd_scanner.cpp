@@ -370,6 +370,8 @@ int main(int argc, const char *argv[])
 	for (const auto &cmd : cmds_sorted) {
 	    src << "int ged_exec_" << cmd << "(struct ged *gedp, int argc, const char **argv) {\n";
 	    src << "    static const char *cmdname = \"" << cmd << "\";\n";
+	    src << "    if (!argv) return BRLCAD_ERROR;\n";
+	    src << "    if (argc > 0 && !argv[0]) argv[0] = cmdname;\n";
 	    src << "    if (!argv[0]) argv[0] = cmdname;\n";
 	    src << "    return ged_exec(gedp, argc, argv);\n";
 	    src << "}\n";
