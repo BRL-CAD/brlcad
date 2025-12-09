@@ -73,7 +73,9 @@ extern "C" {
 #if defined(__cplusplus)
 
 /* ELF/Mach-O compilers – section attribute for linker set manifestation */
-#if defined(__GNUC__) || defined(__clang__) || defined(__INTEL_COMPILER)
+#if defined(__APPLE__)
+#define GED_CMD_SET_ATTR __attribute__((used))
+#elif defined(__GNUC__) || defined(__clang__) || defined(__INTEL_COMPILER)
 #define GED_CMD_SET_ATTR __attribute__((used, section("ged_cmd_set")))
 #else
 #define GED_CMD_SET_ATTR /* Non-ELF fallback – pointer still serves as an anchor */
@@ -92,7 +94,16 @@ struct ged_cmd_autoreg {
     static ged_cmd_autoreg<const struct ged_cmd>                                            \
     cmd_symbol##_autoreg_instance(cmd_symbol##_keep_ptr)
 
+#else
+
 /* ======================= Pure C: GCC / Clang ======================= */
+#if defined(__APPLE__)
+#define REGISTER_GED_COMMAND(cmd_symbol)                                                \
+    __attribute__((used)) const struct ged_cmd *                                        \
+        __ged_cmd_ptr_##cmd_symbol = &cmd_symbol;                                       \
+    static const struct ged_cmd * cmd_symbol##_keep __attribute__((used)) = &cmd_symbol;\
+    static void register_##cmd_symbol(void) __attribute__((constructor));               \
+    static void register_##cmd_symbol(void) { (void)ged_register_command(&cmd_symbol); }
 #elif defined(__GNUC__) || defined(__clang__)
 #define REGISTER_GED_COMMAND(cmd_symbol)                                                    \
     __attribute__((used, section("ged_cmd_set"))) const struct ged_cmd *                    \
@@ -127,6 +138,8 @@ struct ged_cmd_autoreg {
 /* ======================= Unsupported Pure C Compiler ======================= */
 #else
 #error "Static libged core: unsupported pure C compiler. Compile command sources as C++ (.cpp)."
+#endif
+
 #endif
 
 #else
