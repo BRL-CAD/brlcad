@@ -226,22 +226,30 @@ static int load_plugin_handle(void *dl_handle, const char *pfile)
 /* Static (bundled) registration enumeration                                  */
 /* -------------------------------------------------------------------------- */
 #if defined(LIBGED_STATIC_CORE)
-  /* GCC/Clang (ELF/Mach-O): iterate linker set */
-  #if defined(__GNUC__)
-    extern "C" {
-        extern const struct ged_cmd *__start_ged_cmd_set[];
-        extern const struct ged_cmd *__stop_ged_cmd_set[];
-    }
-    static void ged_static_register_linkerset()
-    {
-        const struct ged_cmd **p = __start_ged_cmd_set;
-        while (p < __stop_ged_cmd_set) {
-            const struct ged_cmd *c = *p;
-            if (c) ged_register_command(c);
-            ++p;
-        }
-    }
-
+  /* GCC/Clang: iterate linker set on ELF only. On macOS (Mach-O), rely on constructors. */
+  #if defined(__GNUC__) || defined(__clang__)
+    #if defined(__APPLE__)
+      /* macOS does not provide __start/__stop for custom sections. Registration happens
+       * via constructor calls emitted by REGISTER_GED_COMMAND and the force-retention TU. */
+      static void ged_static_register_linkerset()
+      {
+          /* no-op on macOS */
+      }
+    #else
+      extern "C" {
+          extern const struct ged_cmd *__start_ged_cmd_set[];
+          extern const struct ged_cmd *__stop_ged_cmd_set[];
+      }
+      static void ged_static_register_linkerset()
+      {
+          const struct ged_cmd **p = __start_ged_cmd_set;
+          while (p < __stop_ged_cmd_set) {
+              const struct ged_cmd *c = *p;
+              if (c) ged_register_command(c);
+              ++p;
+          }
+      }
+    #endif
   /* MSVC: no enumeration; rely on CRT XCU constructors + force-retention TU */
   #elif defined(_MSC_VER)
     static void ged_static_register_linkerset()
