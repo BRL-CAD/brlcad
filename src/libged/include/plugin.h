@@ -61,7 +61,7 @@ extern "C" {
     void ged_scan_plugins(void);
     void libged_init(void);
     void libged_shutdown(void);
-    const char *ged_init_msgs();
+    const char *ged_init_msgs(void);
 
 #ifdef __cplusplus
 }
