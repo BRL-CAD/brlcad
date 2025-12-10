@@ -144,7 +144,12 @@ jobs:
             /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/push.yml') }}
 
-      - name: Setup - System
+      # Install system dependencies - we do the full setup here, even though
+      # source archives isn't intended to build the main BRL-CAD, in case
+      # this check is the one where the bext dependency cache check gets a miss.
+      # In that case, this check will have to build bext to proceed - and it will
+      # need the bext environment set up to do so.
+      - name: Install apt dependencies
         run: |
           sudo apt-get update
           # Install X/OpenGL dev pkgs
@@ -152,8 +157,13 @@ jobs:
           # Install tools
           sudo apt-get install astyle re2c xsltproc libxml2-utils
           # Install dependency dev pkgs
-            # (Kept consistent with other jobs to ensure dist targets succeed)
           sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
+          # Install XCB/OpenGL dev pkgs for Qt - see:
+          # https://wiki.qt.io/Building_Qt_6_from_Git
+          # https://doc.qt.io/qt-6/linux-requirements.html
+          sudo apt-get install libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-cursor-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxcb-xinput-dev libxcb-xrm-dev libxkbcommon-dev libxkbcommon-x11-dev
+          sudo apt-get install libgl-dev
+          sudo apt-get install libinput-dev
 
       - name: Clone bext
         run: git clone https://github.com/BRL-CAD/bext.git
