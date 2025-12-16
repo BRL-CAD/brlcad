@@ -73,8 +73,10 @@ ICV_EXPORT int icv_gray2rgb(icv_image_t *img);
  * the input arguments.
  *
  * A normal calling of this functions is as follows:
- * icv_image_rgb2gray(bif, 0, 0, 0, 0); where bif is the rgb image
- * to be converted.
+ *
+ * icv_rgb2gray(bif, ICV_COLOR_RGB, 0, 0, 0);
+ *
+ * where bif is the rgb image to be converted.
  *
  * @param[in,out] img - image
  * @param[in] color Chooses color planes to be selected for combination.

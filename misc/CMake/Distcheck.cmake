@@ -97,7 +97,7 @@ set_target_properties(distcheck-source_archives PROPERTIES FOLDER "BRL-CAD Distr
 
 # Utility function for defining individual distcheck targets
 macro(
-  CREATE_DISTCHECK
+  create_distcheck
   TARGET_SUFFIX
   CMAKE_OPTS_IN
   source_dir
@@ -164,7 +164,8 @@ macro(
   else(NOT TARGET distcheck-${TARGET_SUFFIX})
     message(WARNING "Distcheck target distcheck-${TARGET_SUFFIX} already defined, skipping...")
   endif(NOT TARGET distcheck-${TARGET_SUFFIX})
-endmacro(CREATE_DISTCHECK)
+
+endmacro(create_distcheck)
 
 # Most distcheck targets deliberately specify a build type.  Since we are
 # reusing the bext outputs produced by the parent configure (and we *want* to
@@ -209,6 +210,98 @@ set_target_properties(distcheck-full PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
 add_custom_target(distcheck DEPENDS distcheck-full)
 set_target_properties(distcheck PROPERTIES FOLDER "BRL-CAD Distribution Checking")
+
+# Write out and compare the distcheck.yml actions file.
+set(distcheck_yml_out "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck.yml")
+distclean("${distcheck_yml_out}")
+
+# The distcheck targets don't get defined (at the moment) on all platforms.
+# Consequently, we can't update distcheck.yml on all platforms. Someday
+# we should get these all working on Windows, but for the moment just do
+# here what we do for the more exotic build types - we want distcheck.yml
+# to be comprehensive, so the truncated Windows set won't do.
+if(NOT HAVE_WINDOWS_H)
+  function(emit_job JOBNAME PREVJOB)
+    file(APPEND ${distcheck_yml_out} "  ${JOBNAME}:\n")
+    file(APPEND ${distcheck_yml_out} "    name: ${JOBNAME}\n")
+    file(APPEND ${distcheck_yml_out} "    runs-on: ubuntu-latest\n")
+    if(NOT \"${PREVJOB}\" STREQUAL \"\")
+      file(APPEND ${distcheck_yml_out} "    needs: [${PREVJOB}]\n")
+    endif()
+    file(APPEND ${distcheck_yml_out} "    env:\n")
+    file(APPEND ${distcheck_yml_out} "      DEBIAN_FRONTEND: noninteractive\n")
+    file(APPEND ${distcheck_yml_out} "    if: github.ref == 'refs/heads/main'\n")
+    file(APPEND ${distcheck_yml_out} "    steps:\n")
+    file(APPEND ${distcheck_yml_out} "      - name: Setup - CMake\n")
+    file(APPEND ${distcheck_yml_out} "        uses: lukka/get-cmake@latest\n")
+    file(APPEND ${distcheck_yml_out} "      - name: Cache apt packages\n")
+    file(APPEND ${distcheck_yml_out} "        uses: actions/cache@v4\n")
+    file(APPEND ${distcheck_yml_out} "        with:\n")
+    file(APPEND ${distcheck_yml_out} "          path: |\n")
+    file(APPEND ${distcheck_yml_out} "            /var/cache/apt/archives\n")
+    file(APPEND ${distcheck_yml_out} "          key: \${{ runner.os }}-apt-\${{ hashFiles('.github/workflows/check.yml') }}\n")
+    file(APPEND ${distcheck_yml_out} "      - name: Install apt dependencies\n")
+    file(APPEND ${distcheck_yml_out} "        run: |\n")
+    file(APPEND ${distcheck_yml_out} "          sudo apt-get update\n")
+    file(APPEND ${distcheck_yml_out} "          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev\n")
+    file(APPEND ${distcheck_yml_out} "          sudo apt-get install astyle re2c xsltproc libxml2-utils\n")
+    if ("${JOBNAME}" STREQUAL "distcheck-no_tk")
+      # For the no_tk case we deliberately avoid installing any system Tcl/Tk to
+      # help avoid things accidentally working
+      file(APPEND ${distcheck_yml_out} "          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev libgl-dev libinput-dev\n\n")
+    else ()
+      file(APPEND ${distcheck_yml_out} "          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev\n\n")
+    endif()
+    file(APPEND ${distcheck_yml_out} "      - name: Setup - bext\n")
+    file(APPEND ${distcheck_yml_out} "        run: |\n")
+    file(APPEND ${distcheck_yml_out} "          git clone https://github.com/BRL-CAD/bext.git\n")
+    file(APPEND ${distcheck_yml_out} "          cd bext\n")
+    file(APPEND ${distcheck_yml_out} "          echo \"sha=$(git rev-parse HEAD)\" >> $GITHUB_OUTPUT\n")
+    file(APPEND ${distcheck_yml_out} "          cd ..\n\n")
+    file(APPEND ${distcheck_yml_out} "      - name: Cache bext build outputs\n")
+    file(APPEND ${distcheck_yml_out} "        id: cache-bext\n")
+    file(APPEND ${distcheck_yml_out} "        uses: actions/cache@v4\n")
+    file(APPEND ${distcheck_yml_out} "        with:\n")
+    file(APPEND ${distcheck_yml_out} "          path: \${{ github.workspace }}/bext_output\n")
+    file(APPEND ${distcheck_yml_out} "          key: \${{ runner.os }}-bext-\${{ steps.bext-sha.outputs.sha }}\n")
+    file(APPEND ${distcheck_yml_out} "      - name: Checkout\n")
+    file(APPEND ${distcheck_yml_out} "        uses: actions/checkout@v4\n")
+    file(APPEND ${distcheck_yml_out} "        with:\n")
+    file(APPEND ${distcheck_yml_out} "          path: brlcad\n")
+    file(APPEND ${distcheck_yml_out} "      - name: Directory setup\n")
+    file(APPEND ${distcheck_yml_out} "        run: cmake -E make_directory build_${JOBNAME}\n")
+    file(APPEND ${distcheck_yml_out} "      - name: Configure\n")
+    file(APPEND ${distcheck_yml_out} "        run: cmake -S brlcad -B build_${JOBNAME} -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=\${{ github.workspace }}/bext_output\n")
+    file(APPEND ${distcheck_yml_out} "      - name: Build\n")
+    file(APPEND ${distcheck_yml_out} "        run: cmake --build build_${JOBNAME} --config Release --target ${JOBNAME}\n")
+    file(APPEND ${distcheck_yml_out} "      - name: Log\n")
+    file(APPEND ${distcheck_yml_out} "        if: always()\n")
+    file(APPEND ${distcheck_yml_out} "        run: cat build_${JOBNAME}/${JOBNAME}.log\n")
+    file(APPEND ${distcheck_yml_out} "      - name: Debug if failure\n")
+    file(APPEND ${distcheck_yml_out} "        if: failure()\n")
+    file(APPEND ${distcheck_yml_out} "        uses: mxschmitt/action-tmate@v3\n\n")
+  endfunction()
+
+  execute_process(COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/misc/CMake/distcheck_hdr.yml" "${distcheck_yml_out}")
+  set(PREV_JOB "bext")
+  foreach(JOB ${distcheck_targets})
+    emit_job("${JOB}" "${PREV_JOB}")
+    set(PREV_JOB "${JOB}")
+  endforeach()
+
+  # Now compare to .github/workflows/distcheck.yml
+  file(READ "${distcheck_yml_out}" NEW_YML)
+  string(REPLACE "\r\n" "\n" NEW_YML "${NEW_YML}")
+  file(READ "${PROJECT_SOURCE_DIR}/.github/workflows/distcheck.yml" EXISTING_YML)
+  string(REPLACE "\r\n" "\n" EXISTING_YML "${EXISTING_YML}")
+
+  if(NOT "${NEW_YML}" STREQUAL "${EXISTING_YML}")
+    message(FATAL_ERROR
+      "distcheck.yml is out of sync with .github/workflows/distcheck.yml.\n"
+      "Please copy ${distcheck_yml_out} to .github/workflows/distcheck.yml"
+    )
+  endif()
+endif()
 
 # Local Variables:
 # tab-width: 8

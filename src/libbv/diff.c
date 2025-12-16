@@ -411,20 +411,8 @@ _bv_interactive_rect_state_differ(struct bv_interactive_rect_state *v1, struct b
 }
 
 static int
-_bv_obj_settings_differ(struct bv_obj_settings *v1, struct bv_obj_settings *v2)
-{
-    /* First, do sanity checks */
-    if (!v1 && !v2)
-	return -1;
-    if ((v1 && !v2) || (!v1 && v2))
-	return -1;
-    return 0;
-}
-
-static int
 _bv_settings_differ(struct bview_settings *v1, struct bview_settings *v2)
 {
-    BV_CDIFF(1, _bv_obj_settings_differ, obj_s);
     BV_CDIFF(1, _bv_adc_state_differ, gv_adc);
     BV_CDIFF(1, _bv_axes_differ, gv_model_axes);
     BV_CDIFF(1, _bv_axes_differ, gv_view_axes);

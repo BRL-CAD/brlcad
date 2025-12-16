@@ -43,6 +43,8 @@
  /** @ingroup libbn */
  /**  @defgroup bn_tol Tolerances */
  /** @ingroup libbn */
+ /**  @defgroup bn_ulp Unit in the Last Place (ULP) */
+ /** @ingroup libbn */
  /**  @defgroup bn_wavelet Wavelets */
  /** @ingroup libbn */
  /**  @defgroup bn_version Version */

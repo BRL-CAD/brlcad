@@ -1,11 +1,13 @@
 set(
   bg_headers
   aabb_ray.h
+  ballpivot.h
   chull.h
   clip.h
   defines.h
   lseg.h
   obr.h
+  pca.h
   plane.h
   polygon.h
   polygon_types.h

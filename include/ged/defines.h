@@ -122,13 +122,6 @@ struct ged_subprocess {
 };
 
 
-/* Experimental work on a high-performance in-memory representation of
- * database, view and selection states. We want this to be visible to C++ APIs
- * like libqtcad, so they can reflect the state of the .g hierarchy in their
- * own structures without us or them having to make copies of the data.
- */
-#include "ged/dbi.h"
-
 __BEGIN_DECLS
 
 struct ged_cmd;
@@ -166,7 +159,7 @@ struct ged {
     struct ged_impl             *i;
     struct bu_vls               go_name;
     struct db_i                 *dbip;
-    DbiState			*dbi_state;
+    void			*dbi_state; // for experimental state work
 
     /*************************************************************/
     /* Information pertaining to views and view objects .        */

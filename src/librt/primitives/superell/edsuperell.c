@@ -40,16 +40,16 @@
 #define ECMD_SUPERELL_SCALE_ABC	35116
 
 void
-rt_solid_edit_superell_set_edit_mode(struct rt_solid_edit *s, int mode)
+rt_edit_superell_set_edit_mode(struct rt_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, mode);
+    rt_edit_set_edflag(s, mode);
 
     switch (mode) {
 	case ECMD_SUPERELL_SCALE_A:
 	case ECMD_SUPERELL_SCALE_B:
 	case ECMD_SUPERELL_SCALE_C:
 	case ECMD_SUPERELL_SCALE_ABC:
-	    s->solid_edit_scale = 1;
+	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
 	    break;
 	default:
 	    break;
@@ -58,18 +58,18 @@ rt_solid_edit_superell_set_edit_mode(struct rt_solid_edit *s, int mode)
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
 
 static void
-superell_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+superell_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    rt_solid_edit_superell_set_edit_mode(s, arg);
+    rt_edit_superell_set_edit_mode(s, arg);
 }
 
-struct rt_solid_edit_menu_item superell_menu[] = {
+struct rt_edit_menu_item superell_menu[] = {
     { "SUPERELLIPSOID MENU", NULL, 0 },
     { "Set A", superell_ed, ECMD_SUPERELL_SCALE_A },
     { "Set B", superell_ed, ECMD_SUPERELL_SCALE_B },
@@ -78,8 +78,8 @@ struct rt_solid_edit_menu_item superell_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_solid_edit_menu_item *
-rt_solid_edit_superell_menu_item(const struct bn_tol *UNUSED(tol))
+struct rt_edit_menu_item *
+rt_edit_superell_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return superell_menu;
 }
@@ -87,7 +87,7 @@ rt_solid_edit_superell_menu_item(const struct bn_tol *UNUSED(tol))
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
 void
-rt_solid_edit_superell_write_params(
+rt_edit_superell_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
        	const struct bn_tol *UNUSED(tol),
@@ -114,7 +114,7 @@ rt_solid_edit_superell_write_params(
     while (lc && strchr(lc, ':')) lc++
 
 int
-rt_solid_edit_superell_read_params(
+rt_edit_superell_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
 	const struct bn_tol *UNUSED(tol),
@@ -188,7 +188,7 @@ rt_solid_edit_superell_read_params(
 
 /* scale vector A */
 void
-ecmd_superell_scale_a(struct rt_solid_edit *s)
+ecmd_superell_scale_a(struct rt_edit *s)
 {
     struct rt_superell_internal *superell =
 	(struct rt_superell_internal *)s->es_int.idb_ptr;
@@ -203,7 +203,7 @@ ecmd_superell_scale_a(struct rt_solid_edit *s)
 
 /* scale vector B */
 void
-ecmd_superell_scale_b(struct rt_solid_edit *s)
+ecmd_superell_scale_b(struct rt_edit *s)
 {
     struct rt_superell_internal *superell =
 	(struct rt_superell_internal *)s->es_int.idb_ptr;
@@ -218,7 +218,7 @@ ecmd_superell_scale_b(struct rt_solid_edit *s)
 
 /* scale vector C */
 void
-ecmd_superell_scale_c(struct rt_solid_edit *s)
+ecmd_superell_scale_c(struct rt_edit *s)
 {
     struct rt_superell_internal *superell =
 	(struct rt_superell_internal *)s->es_int.idb_ptr;
@@ -233,7 +233,7 @@ ecmd_superell_scale_c(struct rt_solid_edit *s)
 
 /* set A, B, and C length the same */
 void
-ecmd_superell_scale_abc(struct rt_solid_edit *s)
+ecmd_superell_scale_abc(struct rt_edit *s)
 {
     fastf_t ma, mb;
     struct rt_superell_internal *superell =
@@ -253,7 +253,7 @@ ecmd_superell_scale_abc(struct rt_solid_edit *s)
 }
 
 static int
-rt_solid_edit_superell_pscale(struct rt_solid_edit *s)
+rt_edit_superell_pscale(struct rt_edit *s)
 {
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -293,29 +293,29 @@ rt_solid_edit_superell_pscale(struct rt_solid_edit *s)
 }
 
 int
-rt_solid_edit_superell_edit(struct rt_solid_edit *s)
+rt_edit_superell_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return rt_solid_edit_generic_sscale(s, &s->es_int);
-	case RT_SOLID_EDIT_TRANS:
+	    return edit_sscale(s);
+	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
-	    rt_solid_edit_generic_strans(s, &s->es_int);
+	    edit_stra(s);
 	    break;
-	case RT_SOLID_EDIT_ROT:
+	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
-	    rt_solid_edit_generic_srot(s, &s->es_int);
+	    edit_srot(s);
 	    break;
 	default:
-	    return rt_solid_edit_superell_pscale(s);
+	    return rt_edit_superell_pscale(s);
     }
     return 0;
 }
 
 int
-rt_solid_edit_superell_edit_xy(
-        struct rt_solid_edit *s,
+rt_edit_superell_edit_xy(
+        struct rt_edit *s,
         const vect_t mousevec
         )
 {
@@ -325,21 +325,27 @@ rt_solid_edit_superell_edit_xy(
     void *d = NULL;
 
     switch (s->edit_flag) {
-        case RT_SOLID_EDIT_SCALE:
+        case RT_PARAMS_EDIT_SCALE:
 	case ECMD_SUPERELL_SCALE_A:
 	case ECMD_SUPERELL_SCALE_B:
 	case ECMD_SUPERELL_SCALE_C:
 	case ECMD_SUPERELL_SCALE_ABC:
-            rt_solid_edit_generic_sscale_xy(s, mousevec);
+            edit_sscale_xy(s, mousevec);
             return 0;
-        case RT_SOLID_EDIT_TRANS:
-            rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
-            rt_update_edit_absolute_tran(s, pos_view);
+        case RT_PARAMS_EDIT_TRANS:
+            edit_stra_xy(&pos_view, s, mousevec);
+            edit_abs_tra(s, pos_view);
             return 0;
-        default:
-            bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-            rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
+	case RT_PARAMS_EDIT_ROT:
+	    bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
+	    return BRLCAD_ERROR;
+	default:
+	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    if (f)
                 (*f)(0, NULL, d, NULL);
             return BRLCAD_ERROR;
     }

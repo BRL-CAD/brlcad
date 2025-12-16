@@ -17,6 +17,7 @@ set(
   sobol.h
   str.h
   tol.h
+  ulp.h
   version.h
   wavelet.h
 )

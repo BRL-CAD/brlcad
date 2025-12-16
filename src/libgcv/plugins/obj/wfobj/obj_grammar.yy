@@ -203,19 +203,22 @@ void printToken(YYSTYPE token)
 
 %stack_overflow {
     std::cerr << "Error: Parser experienced stack overflow. Last token was:\n";
-    printToken(yypMinor->yy0);
+    printToken(yypParser->yytos->minor.yy0);
 }
 
 %token_type {YYSTYPE}
 
 %syntax_error {
+    /* prevent unused-parameter warning for yyminor when not referenced */
+    (void)yyminor;
+
     /* only report first error */
     if (!obj::get_state(scanner).syntaxError) {
 	SET_SYNTAX_ERROR;
 
 	std::cerr << "Error: Parser experienced a syntax error.\n";
 	std::cerr << "Last token (type " << yymajor << ") was:\n";
-	printToken(yyminor.yy0);
+	printToken(yypParser->yytos->minor.yy0);
     }
 }
 

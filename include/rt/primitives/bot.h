@@ -153,10 +153,30 @@ RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,
 				     fastf_t max_chord_error,
 				     fastf_t max_normal_error,
 				     fastf_t min_edge_length);
+
+
+/* Decimate the input Bot using feature_size to determine the target scale of
+ * geometric detail that is preserved in the output mesh.
+ *
+ * Geometrically, it represents the smallest meaningful feature or minimum
+ * detail size that should be retained. During decimation, edges, vertices, and
+ * triangles representing features smaller than feature_size are candidates for
+ * removal or simplification, while larger features are preserved. Thus,
+ * increasing feature_size produces a coarser mesh with fewer, larger
+ * triangles, removing fine details; decreasing it retains more of the original
+ * geometry and fine features. In essence, feature_size acts as a filter for
+ * the geometric fidelity of the simplified mesh.
+ *
+ * Note that feature_size is NOT a direct geometric measure, but is transformed
+ * internally into a collapse cost threshold.  The detailed geometric
+ * consequences of the feature_size parameter on the output are an
+ * implementation detail, so calling codes may see differences in output meshes
+ * between different library versions for the same feature_size parameter.
+ */
 RT_EXPORT extern size_t rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size);
 
 /* Function to convert plate mode BoT to volumetric BoT */
-RT_EXPORT extern int rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, int round_outer_edges, int quiet_mode);
+RT_EXPORT extern int rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct rt_bot_internal *bot, int round_outer_edges, int quiet_mode, fastf_t max_area_delta, fastf_t min_tri_threshold);
 
 
 
@@ -169,13 +189,18 @@ RT_EXPORT extern int rt_bot_plate_to_vol(struct rt_bot_internal **obot, struct r
 struct rt_bot_repair_info {
     fastf_t max_hole_area;
     fastf_t max_hole_area_percent;
+    int strict;
 };
 
 /* For now the default upper hole size limit will be 5 percent of the mesh
  * area, but calling codes should not rely on that value to remain consistent
  * between versions.
+ *
+ * By default, don't return a mesh that can't pass the lint solid raytracing
+ * tests.  This isn't always desirable - sometimes manifold is enough even if
+ * the mesh is not otherwise well behaved - so it is an user settable param.
  */
-#define RT_BOT_REPAIR_INFO_INIT {0.0, 5.0};
+#define RT_BOT_REPAIR_INFO_INIT {0.0, 5.0, 1};
 
 /* Function to attempt repairing a non-manifold BoT.  Returns 1 if ibot was
  * already manifold (obot will contain NULL), 0 if a manifold BoT was created

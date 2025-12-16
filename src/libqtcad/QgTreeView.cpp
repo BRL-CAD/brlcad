@@ -38,6 +38,8 @@
 #include "qtcad/QgTreeView.h"
 #include "qtcad/QgSignalFlags.h"
 
+#include "../libged/dbi.h"
+
 void gObjDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     int aflag = 0;
@@ -306,12 +308,13 @@ QgTreeView::do_draw_toggle(const QModelIndex &index)
     if (!v)
 	return;
 
-    BViewState *sv =  m->gedp->dbi_state->get_view_state(v);
+    DbiState *dbis = (DbiState *)m->gedp->dbi_state;
+    BViewState *sv =  dbis->get_view_state(v);
     if (!sv)
 	return;
 
     std::vector<unsigned long long> path_hashes = cnode->path_items();
-    unsigned long long phash = m->gedp->dbi_state->path_hash(path_hashes, 0);
+    unsigned long long phash = dbis->path_hash(path_hashes, 0);
     if (!sv->is_hdrawn(-1, phash)) {
 	sv->add_hpath(path_hashes);
 	std::unordered_set<struct bview *> views;

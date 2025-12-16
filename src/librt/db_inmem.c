@@ -42,6 +42,7 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 
+#include "./librt_private.h"
 
 #define DEFAULT_DB_TITLE "Untitled BRL-CAD Database"
 
@@ -55,6 +56,7 @@ db_open_inmem(void)
     dbip->dbi_eof = (b_off_t)-1L;
     dbip->dbi_fp = NULL;
     dbip->dbi_mf = NULL;
+    dbip->i = NULL;
 
     /* XXX it "should" be safe and recommended to set this to 1 as it
      * merely toggles whether the data can be written to _disk_.  the

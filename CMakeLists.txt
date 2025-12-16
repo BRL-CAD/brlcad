@@ -45,7 +45,7 @@
 # reasonably possible, proper ordering and separation of tests should
 # be added to the labeled sections below as follows:
 #
-#   Stage 0 - project information 
+#   Stage 0 - project information
 #   Stage 1 - define top level options
 #   Stage 2 - check programs
 #   Stage 3 - check compiler characteristics
@@ -65,7 +65,7 @@
 # *               Stage 0 of 9 - Project Info               *
 # ***********************************************************
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.22)
 
 #---------------------------------------------------------------------
 # BRL-CAD's version is centrally stored in include/conf/.  See HACKING
@@ -140,6 +140,27 @@ endif(CMAKE_ORIGINAL_SRC_DIR)
 
 set(CMAKE_ORIGINAL_SRC_DIR "${CMAKE_SOURCE_DIR}" CACHE PATH "Source of original CMakeLists.txt file" FORCE)
 
+#------------------------------------------------------------------------------
+# Check if our working directory is in a symlinked path - that can cause some
+# serious problems for things like install and rpath updating, so be loud.
+set(PROBLEM_PATH 0)
+file(REAL_PATH "${PROJECT_SOURCE_DIR}" PROJECT_REAL_SOURCE_DIR)
+if (NOT "${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_REAL_SOURCE_DIR}")
+  message(WARNING "PROJECT_SOURCE_DIR is \"${PROJECT_SOURCE_DIR}\" but REAL_PATH is \"${PROJECT_REAL_SOURCE_DIR}\".  Working with a symlinked alias path causes problems in subsequent file processing and is NOT recommended.")
+  set(PROBLEM_PATH 1)
+endif()
+file(REAL_PATH "${PROJECT_BINARY_DIR}" PROJECT_REAL_BINARY_DIR)
+if (NOT "${PROJECT_BINARY_DIR}" STREQUAL "${PROJECT_REAL_BINARY_DIR}")
+  message(WARNING "PROJECT_BINARY_DIR is \"${PROJECT_BINARY_DIR}\" but REAL_PATH is \"${PROJECT_REAL_BINARY_DIR}\".  Working with a symlinked alias path causes problems in subsequent file processing and is NOT recommended.")
+  set(PROBLEM_PATH 1)
+endif()
+if (PROBLEM_PATH)
+  find_program(SLEEP_EXEC sleep)
+  if(SLEEP_EXEC)
+    execute_process(COMMAND ${SLEEP_EXEC} 15)
+  endif(SLEEP_EXEC)
+endif(PROBLEM_PATH)
+
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.  If we
@@ -207,10 +228,10 @@ include(BRLCAD_Environment_Setup)
 set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 
 #---------------------------------------------------------------------
-# Prepare to manage and build BRL-CAD's external dependencies.
-# Specifies a specific commit hash to use in the 'bext' repository.
+# Prepare to manage and build BRL-CAD's external dependencies. Specifies a
+# specific commit hash to use in the 'bext' repository.
 include(BRLCAD_ExternalDeps)
-brlcad_bext_init(90ea63597e529a03e05158ffcfbf0803591c87fa)
+brlcad_bext_init(228201d3e1656981fbef8d4a6cfaff93aa9cb6b0)
 
 #---------------------------------------------------------------------
 # Define various utilities.
@@ -1517,6 +1538,7 @@ brlcad_include_file(sys/resource.h HAVE_SYS_RESOURCE_H)
 brlcad_include_file(sys/sched.h HAVE_SYS_SCHED_H)
 brlcad_include_file(sys/select.h HAVE_SYS_SELECT_H)
 brlcad_include_file(sys/shm.h HAVE_SYS_SHM_H)
+brlcad_include_file(sys/signal.h HAVE_SYS_SIGNAL_H)
 brlcad_include_file(sys/socket.h HAVE_SYS_SOCKET_H)
 brlcad_include_file(sys/stat.h HAVE_SYS_STAT_H)
 brlcad_include_file(sys/syscall.h HAVE_SYS_SYSCALL_H)
@@ -1711,6 +1733,7 @@ brlcad_function_exists(drand48)
 brlcad_function_exists(fchmod)
 brlcad_function_exists(fdopen)
 brlcad_function_exists(fmemopen)
+brlcad_function_exists(fpclassify REQUIRED_LIBS ${M_LIBRARY})
 brlcad_function_exists(fseeko) # implies ftello
 brlcad_function_exists(fsync)
 brlcad_function_exists(funopen)
@@ -2219,9 +2242,7 @@ if(TARGET rt)
 endif(TARGET rt)
 
 # require geometry conversion tools
-if(TARGET asc2g)
-  verbose_add_subdirectory("" db)
-endif(TARGET asc2g)
+verbose_add_subdirectory("" db)
 
 # docs after we're all done with build tasks
 # NOTE: doc/docbook/resources is added separately (earlier)
@@ -2380,12 +2401,12 @@ include(BRLCAD_CPack)
 # a "." character are "hidden" and may not be present, so check for them first.
 set(
   hidden_files
-  .github/workflows/analysis.yml
-  .github/workflows/check.yml
+  .github/workflows/distcheck.yml
   .github/workflows/linux_interactive.yml
+  .github/workflows/push.yml
+  .github/workflows/scheduled.yml
   .gitattributes
   .gitignore
-  .gitmodules
 )
 foreach(hf ${hidden_files})
   if(EXISTS ${CMAKE_SOURCE_DIR}/${hf})
@@ -2399,7 +2420,6 @@ set(
   CMakeLists.txt
   ChangeLog
   TODO
-  configure
 )
 cmakefiles(${toplevel_ignore_files})
 
@@ -2440,20 +2460,6 @@ mark_as_advanced(CMAKE_C_COMPILER)
 mark_as_advanced(CMAKE_AR)
 
 # ----------------------------------------------------------------------------
-# If options have been defined that we are going to document, by now they've
-# been documented.  Make an updated copy of the "INSTALL" file and see whether
-# anything has changed.
-#
-# Although the CMake configure process should leave the src dir pristine, the
-# INSTALL and configure files present a problem in that they *do* need to be
-# updated in the source tree.  As a compromise, what will happen when versions
-# of these files are produced that are different from those found in the source
-# tree the configure process will fail, with a message indicating that the user
-# needs to move the newly generated version of the file(s) into the correct
-# locations in the source tree.
-
-set(CONFIG_FATAL_ERROR 0)
-
 # Because the build-time-delta needs a configure-file but comes at the
 # end of the CMake configure, the preparation of the final distclean
 # list must account for it.  Also, the distclean script itself must

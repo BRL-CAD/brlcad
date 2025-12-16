@@ -25,8 +25,8 @@ set(
   Distcheck.cmake
   DocBook.cmake
   Doxygen.cmake
-  FindADAPTAGRAMS.cmake
   FindASTYLE.cmake
+  FindAdaptagrams.cmake
   FindAppleseed.cmake
   FindBlosc.cmake
   FindBRLCAD.cmake
@@ -38,8 +38,6 @@ set(
   FindLEMON.cmake
   FindLMDB.cmake
   FindLibUV.cmake
-  FindMANIFOLD.cmake
-  FindMMESH.cmake
   FindNETPBM.cmake
   FindNSIS.cmake
   FindOpenMesh.cmake
@@ -57,6 +55,7 @@ set(
   FindRE2C.cmake
   FindREGEX.cmake
   FindSCL.cmake
+  FindSPSR.cmake
   FindSTL.cmake
   FindShellDeps.cmake
   FindSTEPCODE.cmake
@@ -99,6 +98,7 @@ set(
   compat/test_strncasecmp.c
   compat/test_strtok_r.c
   date_delta.cpp
+  distcheck_hdr.yml
   distcheck_in_src_dir.cmake.in
   distcheck_no_tcl.cmake.in
   distcheck_repo_verify.cmake.in

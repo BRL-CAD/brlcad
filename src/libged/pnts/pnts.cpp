@@ -1,4 +1,4 @@
-/*                         P N T S . C
+/*                       P N T S . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2025 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/pnts.c
+/** @file libged/pnts.cpp
  *
  * pnts command for simple Point Set (pnts) primitive operations.
  *
@@ -35,12 +35,16 @@ extern "C" {
 #include <sstream>
 #include <iomanip>
 #include <limits>
+#include <vector>
 
 extern "C" {
 #include "bu/color.h"
+#include "bu/cmd.h"
 #include "bu/opt.h"
 #include "bu/sort.h"
 #include "bu/units.h"
+#include "bg/ballpivot.h"
+#include "bg/spsr.h"
 #include "rt/geom.h"
 #include "wdb.h"
 #include "analyze.h"
@@ -48,70 +52,156 @@ extern "C" {
 #include "../ged_private.h"
 #include "../pnts_util.h"
 
-static void
-_pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale, unsigned long pntcnt)
-{
-    fastf_t ty1 =  0.57735026918962573 * scale; /* tan(PI/6) */
-    fastf_t ty2 = -0.28867513459481287 * scale; /* 0.5 * tan(PI/6) */
-    fastf_t tx1 = 0.5 * scale;
-    point_t v1, v2, v3;
-    vect_t n1;
-    vect_t v1pp, v2pp, v3pp = {0.0, 0.0, 0.0};
-    vect_t v1fp, v2fp, v3fp = {0.0, 0.0, 0.0};
-    mat_t rot;
-    struct bn_tol btol = BN_TOL_INIT_TOL;
-
-    VSET(n1, 0, 0, 1);
-    VSET(v1, 0, ty1, 0);
-    VSET(v2, -1*tx1, ty2, 0);
-    VSET(v3, tx1, ty2, 0);
-
-    VMOVE(v1pp, v1);
-    VMOVE(v2pp, v2);
-    VMOVE(v3pp, v3);
-    bn_mat_fromto(rot, n1, *n, &btol);
-    MAT4X3VEC(v1fp, rot, v1pp);
-    MAT4X3VEC(v2fp, rot, v2pp);
-    MAT4X3VEC(v3fp, rot, v3pp);
-    VADD2(v1pp, v1fp, *p);
-    VADD2(v2pp, v2fp, *p);
-    VADD2(v3pp, v3fp, *p);
-    VMOVE(&bot_ip->vertices[pntcnt*3*3], v1pp);
-    VMOVE(&bot_ip->vertices[pntcnt*3*3+3], v2pp);
-    VMOVE(&bot_ip->vertices[pntcnt*3*3+6], v3pp);
-    bot_ip->faces[pntcnt*3] = pntcnt*3;
-    bot_ip->faces[pntcnt*3+1] = pntcnt*3+1;
-    bot_ip->faces[pntcnt*3+2] = pntcnt*3+2;
-}
-
 /* TODO - need some generic version of this logic in libbn -
  * used in libanalyze's NIRT as well */
 void _pnts_fastf_t_to_vls(struct bu_vls *o, fastf_t d, int p)
 {
-    // TODO - once we enable C++ 11 switch the precision below to std::numeric_limits<double>::max_digits10
-    size_t prec = (p > 0) ? (size_t)p : std::numeric_limits<fastf_t>::digits10 + 2;
+    size_t prec = (p > 0) ? (size_t)p : std::numeric_limits<fastf_t>::max_digits10;
     std::ostringstream ss;
     ss << std::fixed << std::setprecision(prec) << d;
     std::string sd = ss.str();
     bu_vls_sprintf(o, "%s", sd.c_str());
 }
 
+
 static int
-_pnts_to_bot(struct ged *gedp, int argc, const char **argv)
+_ged_pnts_cmd_msgs(struct ged *gedp, int argc, const char **argv, const char *us, const char *ps)
 {
-    int have_normals = 1;
-    unsigned long pntcnt = 0;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n%s\n", us, ps);
+	return 1;
+    }
+    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n", ps);
+	return 1;
+    }
+    return 0;
+}
+
+// Collect arrays of points and (optionally) normals from a rt_pnts_internal.
+// If normals_required is non-zero, return error if pnts does not have normals.
+static int
+_pnts_collect_arrays(struct ged *gedp, struct rt_pnts_internal *pnts, point_t **pts, vect_t **nrms, int *cnt, int normals_required)
+{
+    if (!pnts || !pts || !cnt)
+	return BRLCAD_ERROR;
+    int has_normals = !(pnts->type == RT_PNT_TYPE_PNT || pnts->type == RT_PNT_TYPE_COL || pnts->type == RT_PNT_TYPE_SCA || pnts->type == RT_PNT_TYPE_COL_SCA);
+    if (normals_required && !has_normals) {
+	bu_vls_sprintf(gedp->ged_result_str, "Error: point cloud data does not define normals\n");
+	return BRLCAD_ERROR;
+    }
+
+    *cnt = (int)pnts->count;
+    if (*cnt <= 0) {
+	bu_vls_sprintf(gedp->ged_result_str, "Error: zero points in input pnts object\n");
+	return BRLCAD_ERROR;
+    }
+
+    *pts = (point_t *)bu_calloc((size_t)*cnt, sizeof(point_t), "pnts pts array");
+    if (nrms) *nrms = has_normals ? (vect_t *)bu_calloc((size_t)*cnt, sizeof(vect_t), "pnts normals array") : NULL;
+
+    int idx = 0;
+    if (pnts->type == RT_PNT_TYPE_NRM) {
+	struct pnt_normal *pn = NULL;
+	struct pnt_normal *pl = (struct pnt_normal *)pnts->point;
+	for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
+	    VMOVE((*pts)[idx], pn->v);
+	    if (nrms && *nrms) VMOVE((*nrms)[idx], pn->n);
+	    idx++;
+	}
+    }
+    if (pnts->type == RT_PNT_TYPE_COL_NRM) {
+	struct pnt_color_normal *pcn = NULL;
+	struct pnt_color_normal *pl = (struct pnt_color_normal *)pnts->point;
+	for (BU_LIST_FOR(pcn, pnt_color_normal, &(pl->l))) {
+	    VMOVE((*pts)[idx], pcn->v);
+	    if (nrms && *nrms) VMOVE((*nrms)[idx], pcn->n);
+	    idx++;
+	}
+    }
+    if (pnts->type == RT_PNT_TYPE_SCA_NRM) {
+	struct pnt_scale_normal *psn = NULL;
+	struct pnt_scale_normal *pl = (struct pnt_scale_normal *)pnts->point;
+	for (BU_LIST_FOR(psn, pnt_scale_normal, &(pl->l))) {
+	    VMOVE((*pts)[idx], psn->v);
+	    if (nrms && *nrms) VMOVE((*nrms)[idx], psn->n);
+	    idx++;
+	}
+    }
+    if (pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
+	struct pnt_color_scale_normal *pcsn = NULL;
+	struct pnt_color_scale_normal *pl = (struct pnt_color_scale_normal *)pnts->point;
+	for (BU_LIST_FOR(pcsn, pnt_color_scale_normal, &(pl->l))) {
+	    VMOVE((*pts)[idx], pcsn->v);
+	    if (nrms && *nrms) VMOVE((*nrms)[idx], pcsn->n);
+	    idx++;
+	}
+    }
+    if (!has_normals && (pnts->type == RT_PNT_TYPE_PNT || pnts->type == RT_PNT_TYPE_COL || pnts->type == RT_PNT_TYPE_SCA || pnts->type == RT_PNT_TYPE_COL_SCA)) {
+	struct pnt *pn = NULL;
+	struct pnt *pl = (struct pnt *)pnts->point;
+	for (BU_LIST_FOR(pn, pnt, &(pl->l))) {
+	    VMOVE((*pts)[idx], pn->v);
+	    idx++;
+	}
+    }
+    return BRLCAD_OK;
+}
+
+static int
+_pnts_write_bot_mesh(struct ged *gedp, const char *bot_name, int *faces, int nfaces, point_t *verts, int nverts)
+{
+    struct rt_db_internal internal;
+    struct directory *dp = NULL;
+
+    RT_DB_INTERNAL_INIT(&internal);
+    internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    internal.idb_type = ID_BOT;
+    internal.idb_meth = &OBJ[ID_BOT];
+
+    struct rt_bot_internal *bot_ip;
+    BU_ALLOC(bot_ip, struct rt_bot_internal);
+    internal.idb_ptr = (void *)bot_ip;
+    bot_ip->magic = RT_BOT_INTERNAL_MAGIC;
+    bot_ip->mode = RT_BOT_SURFACE;
+    bot_ip->orientation = RT_BOT_UNORIENTED;
+    bot_ip->num_vertices = (size_t)nverts;
+    bot_ip->num_faces = (size_t)nfaces;
+    bot_ip->faces = faces;
+    bot_ip->vertices = (fastf_t *)verts;
+    bot_ip->thickness = NULL;
+    bot_ip->face_mode = NULL;
+    bot_ip->num_normals = 0;
+    bot_ip->num_face_normals = 0;
+    bot_ip->normals = NULL;
+    bot_ip->face_normals = NULL;
+    bot_ip->num_uvs = 0;
+    bot_ip->num_face_uvs = 0;
+    bot_ip->uvs = NULL;
+    bot_ip->face_uvs = NULL;
+
+    GED_DB_DIRADD(gedp, dp, bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
+    return BRLCAD_OK;
+}
+
+static int
+_ged_pnts_tri_cmd_unit(void *bs, int argc, const char **argv)
+{
+    struct ged *gedp = (struct ged *)bs;
+    const char *usage = "Usage: pnts tri unit [options] <pnts> <output_bot>\n";
+    const char *purpose = "Generate unit or scaled triangles for each point in a set, oriented by point normals";
+    if (_ged_pnts_cmd_msgs(gedp, argc, argv, usage, purpose)) return BRLCAD_OK;
+
     struct rt_db_internal intern, internal;
     struct rt_bot_internal *bot_ip;
     struct directory *pnt_dp;
-    struct directory *dp;
     int print_help = 0;
     int opt_ret = 0;
     fastf_t scale;
     struct rt_pnts_internal *pnts = NULL;
     const char *pnt_prim= NULL;
     const char *bot_name = NULL;
-    const char *usage = "Usage: pnts tri [options] <pnts> <output_bot>\n\n";
     struct bu_opt_desc d[3];
     BU_OPT(d[0], "h", "help",      "",  NULL,            &print_help,   "Print help and exit");
     BU_OPT(d[1], "s", "scale",     "#", &bu_opt_fastf_t, &scale,        "Specify scale factor to apply to unit triangle - will scale the triangle size, with the triangle centered on the original point.");
@@ -164,29 +254,23 @@ _pnts_to_bot(struct ged *gedp, int argc, const char **argv)
     /* For the moment, only generate BoTs when we have a normal to guide us.  Eventually,
      * we might add logic to find the avg center point and calculate normals radiating out
      * from that center, but for now skip anything that doesn't provide normals up front. */
-    if (pnts->type == RT_PNT_TYPE_PNT) have_normals = 0;
-    if (pnts->type == RT_PNT_TYPE_COL) have_normals = 0;
-    if (pnts->type == RT_PNT_TYPE_SCA) have_normals = 0;
-    if (pnts->type == RT_PNT_TYPE_COL_SCA) have_normals = 0;
-    if (!have_normals) {
-	bu_vls_sprintf(gedp->ged_result_str, "Error: point cloud data does not define normals\n");
+    int ncnt = 0;
+    point_t *ipts = NULL;
+    vect_t *inrms = NULL;
+    if (_pnts_collect_arrays(gedp, pnts, &ipts, &inrms, &ncnt, 1) != BRLCAD_OK) {
+	rt_db_free_internal(&intern);
+	if (ipts) bu_free(ipts, "ipts");
+	if (inrms) bu_free(inrms, "inrms");
 	return BRLCAD_ERROR;
     }
 
-    /* initialize */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
+    // Set default scale if not specified
     if (NEAR_ZERO(scale, SMALL_FASTF)) {
 	switch (pnts->type) {
 	    case RT_PNT_TYPE_SCA_NRM:
-		scale = pnts->scale;
-		break;
 	    case RT_PNT_TYPE_COL_SCA_NRM:
-		scale = pnts->scale;
-		break;
-	    default:
-		scale = 1.0;
-		break;
+		scale = pnts->scale; break;
+	    default: scale = 1.0; break;
 	}
     }
 
@@ -210,290 +294,415 @@ _pnts_to_bot(struct ged *gedp, int argc, const char **argv)
     bot_ip->thickness = (fastf_t *)NULL;
     bot_ip->face_mode = (struct bu_bitv *)NULL;
 
-    pntcnt = 0;
-    if (pnts->type == RT_PNT_TYPE_NRM) {
-	struct pnt_normal *pn = NULL;
-	struct pnt_normal *pl = (struct pnt_normal *)pnts->point;
-	for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
-	    _pnt_to_tri(&(pn->v), &(pn->n), bot_ip, scale, pntcnt);
-	    pntcnt++;
-	}
-    }
-    if (pnts->type == RT_PNT_TYPE_COL_NRM) {
-	struct pnt_color_normal *pcn = NULL;
-	struct pnt_color_normal *pl = (struct pnt_color_normal *)pnts->point;
-	for (BU_LIST_FOR(pcn, pnt_color_normal, &(pl->l))) {
-	    _pnt_to_tri(&(pcn->v), &(pcn->n), bot_ip, scale, pntcnt);
-	    pntcnt++;
-	}
-    }
-    if (pnts->type == RT_PNT_TYPE_SCA_NRM) {
-	struct pnt_scale_normal *psn = NULL;
-	struct pnt_scale_normal *pl = (struct pnt_scale_normal *)pnts->point;
-	for (BU_LIST_FOR(psn, pnt_scale_normal, &(pl->l))) {
-	    _pnt_to_tri(&(psn->v), &(psn->n), bot_ip, scale, pntcnt);
-	    pntcnt++;
-	}
-    }
-    if (pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
-	struct pnt_color_scale_normal *pcsn = NULL;
-	struct pnt_color_scale_normal *pl = (struct pnt_color_scale_normal *)pnts->point;
-	for (BU_LIST_FOR(pcsn, pnt_color_scale_normal, &(pl->l))) {
-	    _pnt_to_tri(&(pcsn->v), &(pcsn->n), bot_ip, scale, pntcnt);
-	    pntcnt++;
-	}
+    auto pnt_to_tri = [](point_t *p, vect_t *n, struct rt_bot_internal *botp, fastf_t tscale, unsigned long pntcnt) {
+	fastf_t ty1 =  0.57735026918962573 * tscale; // tan(PI/6)
+	fastf_t ty2 = -0.28867513459481287 * tscale; // 0.5 * tan(PI/6)
+	fastf_t tx1 = 0.5 * tscale;
+	point_t v1, v2, v3;
+	vect_t n1;
+	vect_t v1pp, v2pp, v3pp = {0.0, 0.0, 0.0};
+	vect_t v1fp, v2fp, v3fp = {0.0, 0.0, 0.0};
+	mat_t rot;
+	struct bn_tol btol = BN_TOL_INIT_TOL;
+
+	VSET(n1, 0, 0, 1);
+	VSET(v1, 0, ty1, 0);
+	VSET(v2, -1*tx1, ty2, 0);
+	VSET(v3, tx1, ty2, 0);
+
+	VMOVE(v1pp, v1);
+	VMOVE(v2pp, v2);
+	VMOVE(v3pp, v3);
+	bn_mat_fromto(rot, n1, *n, &btol);
+	MAT4X3VEC(v1fp, rot, v1pp);
+	MAT4X3VEC(v2fp, rot, v2pp);
+	MAT4X3VEC(v3fp, rot, v3pp);
+	VADD2(v1pp, v1fp, *p);
+	VADD2(v2pp, v2fp, *p);
+	VADD2(v3pp, v3fp, *p);
+	VMOVE(&botp->vertices[pntcnt*3*3], v1pp);
+	VMOVE(&botp->vertices[pntcnt*3*3+3], v2pp);
+	VMOVE(&botp->vertices[pntcnt*3*3+6], v3pp);
+	botp->faces[pntcnt*3] = (int)(pntcnt*3);
+	botp->faces[pntcnt*3+1] = (int)(pntcnt*3+1);
+	botp->faces[pntcnt*3+2] = (int)(pntcnt*3+2);
+    };
+
+    for (int i = 0; i < ncnt; i++) {
+	pnt_to_tri(&ipts[i], &inrms[i], bot_ip, scale, (unsigned long)i);
     }
 
+    struct directory *dp = NULL;
     GED_DB_DIRADD(gedp, dp, bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
 
-    bu_vls_printf(gedp->ged_result_str, "Generated BoT object %s with %ld triangles", bot_name, pntcnt);
+    bu_vls_printf(gedp->ged_result_str, "Generated BoT object %s with %d triangles", bot_name, ncnt);
 
+    // cleanup
     rt_db_free_internal(&intern);
-    return BRLCAD_OK;
-}
-
-#if 0
-static int
-_pnts_wn(struct ged *gedp, int argc, const char **argv)
-{
-    struct directory *pnt_dp;
-    int print_help = 0;
-    int opt_ret = 0;
-    fastf_t beta = 0.0;
-    struct rt_db_internal intern;
-    struct rt_pnts_internal *pnts = NULL;
-    const char *pnt_prim= NULL;
-    const char *usage = "Usage: pnts wn [options] <pnts> <output_bot>\n\n";
-    struct bu_opt_desc d[3];
-    struct pnt_normal q;
-    point_t qp;
-    BU_OPT(d[0], "h", "help",      "",  NULL,            &print_help,   "Print help and exit");
-    BU_OPT(d[1], "b", "beta",     "#", &bu_opt_fastf_t, &beta,        "Accuracy parameter - paper uses 2.3 for pnts");
-    BU_OPT_NULL(d[2]);
-
-    argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
-
-    /* must be wanting help */
-    if (argc < 1) {
-	_ged_cmd_help(gedp, usage, d);
-	return BRLCAD_OK;
-    }
-
-    /* parse standard options */
-    opt_ret = bu_opt_parse(NULL, argc, argv, d);
-
-    if (print_help) {
-	_ged_cmd_help(gedp, usage, d);
-	return BRLCAD_OK;
-    }
-
-    /* adjust argc to match the leftovers of the options parsing */
-    argc = opt_ret;
-
-    if (argc != 4) {
-	_ged_cmd_help(gedp, usage, d);
-	return BRLCAD_ERROR;
-    }
-
-    pnt_prim = argv[0];
-
-    (void)bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&(qp[X]));
-    (void)bu_opt_fastf_t(NULL, 1, (const char **)&argv[2], (void *)&(qp[Y]));
-    (void)bu_opt_fastf_t(NULL, 1, (const char **)&argv[3], (void *)&(qp[Z]));
-
-    /* get pnt */
-    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
-    GED_DB_GET_INTERNAL(gedp, &intern, pnt_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
-
-    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
-	bu_vls_printf(gedp->ged_result_str, "pnts tri: %s is not a pnts object!", pnt_prim);
-	rt_db_free_internal(&intern);
-	return BRLCAD_ERROR;
-    }
-
-    pnts = (struct rt_pnts_internal *)intern.idb_ptr;
-    RT_PNTS_CK_MAGIC(pnts);
-
-    /* Sanity */
-
-    /* For the moment, only generate BoTs when we have a PNT/NRM type. */
-    if (pnts->type != RT_PNT_TYPE_NRM) {
-	bu_vls_sprintf(gedp->ged_result_str, "Error: point cloud data does not define normals\n");
-	return BRLCAD_ERROR;
-    }
-
-    /* initialize */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* Go with paper's default for pnts */
-    if (NEAR_ZERO(beta, SMALL_FASTF)) {
-	beta = 2.3;
-    }
-
-    VMOVE(q.v, qp);
-
-    bu_log("wn: %g\n", wn_report(pnts, beta, &q));
+    if (ipts)
+	bu_free(ipts, "ipts");
+    if (inrms)
+	bu_free(inrms, "inrms");
 
     return BRLCAD_OK;
 }
 
+/* custom bu_opt handlers for ballpivot radii */
 static int
-_pnts_to_wnmesh(struct ged *gedp, int argc, const char **argv)
+_pnts_opt_radius(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **argv, void *set_c)
 {
-    fastf_t beta = 0.0;
-    int have_normals = 1;
-    unsigned long pntcnt = 0;
-    struct rt_db_internal intern, internal;
-    struct rt_bot_internal *bot_ip;
-    struct directory *pnt_dp;
-    struct directory *dp;
+    std::vector<double> *rset = (std::vector<double> *)set_c;
+    double rv = 0.0;
+    const char *a = argv[0];
+    if (bu_opt_fastf_t(NULL, 1, &a, (void *)&rv) < 0) return -1;
+    rset->push_back(rv);
+    return 1;
+}
+static int
+_pnts_opt_radii(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **argv, void *set_c)
+{
+    std::vector<double> *rset = (std::vector<double> *)set_c;
+    std::string s(argv[0]);
+    std::stringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, ',')) {
+	if (item.empty()) continue;
+	char *istr = bu_strdup(item.c_str());
+	double rv = 0.0;
+	if (bu_opt_fastf_t(NULL, 1, (const char **)&istr, (void *)&rv) < 0) {
+	    bu_free(istr, "istr");
+	    return -1;
+	}
+	rset->push_back(rv);
+	bu_free(istr, "istr");
+    }
+    return 1;
+}
+
+/* tri ballpivot */
+static int
+_ged_pnts_tri_cmd_ballpivot(void *bs, int argc, const char **argv)
+{
+    const char *usage = "Usage: pnts tri ballpivot [options] <pnts> <output_bot>\n";
+    const char *purpose = "Surface reconstruction from oriented points using Ball Pivoting";
+    struct ged *gedp = (struct ged *)bs;
+    if (_ged_pnts_cmd_msgs(gedp, argc, argv, usage, purpose)) return BRLCAD_OK;
+
+    std::vector<double> radii;
     int print_help = 0;
-    int opt_ret = 0;
-    fastf_t scale;
-    struct rt_pnts_internal *pnts = NULL;
-    const char *pnt_prim= NULL;
-    const char *bot_name = NULL;
-    const char *usage = "Usage: pnts wnmesh [options] <pnts> <output_bot>\n\n";
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",      "",  NULL,            &print_help,   "Print help and exit");
-    BU_OPT(d[1], "b", "beta",     "#", &bu_opt_fastf_t, &beta,        "Accuracy parameter - paper uses 2.3 for pnts");
-    BU_OPT_NULL(d[2]);
+    struct bu_opt_desc d[4];
+    BU_OPT(d[0], "h", "help",   "",              NULL,             &print_help,  "Print help and exit");
+    BU_OPT(d[1], "r", "radius", "#",             _pnts_opt_radius, &radii,       "Ball radius to try (can be specified multiple times)");
+    BU_OPT(d[2], "",  "radii",  "r1,r2,r3,...",  _pnts_opt_radii,  &radii,       "Comma-separated list of radii to try");
+    BU_OPT_NULL(d[3]);
 
-    argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
-
-    /* must be wanting help */
+    argc -= (argc>0); argv += (argc>0); // skip "ballpivot"
     if (argc < 1) {
 	_ged_cmd_help(gedp, usage, d);
 	return BRLCAD_OK;
     }
-
-    /* parse standard options */
-    opt_ret = bu_opt_parse(NULL, argc, argv, d);
-
+    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
 	return BRLCAD_OK;
     }
-
-    /* adjust argc to match the leftovers of the options parsing */
     argc = opt_ret;
-
     if (argc != 2) {
 	_ged_cmd_help(gedp, usage, d);
 	return BRLCAD_ERROR;
     }
 
-    pnt_prim = argv[0];
-    bot_name = argv[1];
+    const char *pnt_prim = argv[0];
+    const char *bot_name = argv[1];
+    GED_CHECK_EXISTS(gedp, bot_name, LOOKUP_QUIET, BRLCAD_ERROR);
 
-    /* get pnt */
-    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
-    GED_DB_GET_INTERNAL(gedp, &intern, pnt_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
-
+    struct rt_db_internal intern;
+    struct directory *dp = NULL;
+    GED_DB_LOOKUP(gedp, dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
-	bu_vls_printf(gedp->ged_result_str, "pnts tri: %s is not a pnts object!", pnt_prim);
+	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a PNTS primitive", __func__, pnt_prim);
+	rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
+    struct rt_pnts_internal *pnts = (struct rt_pnts_internal *)intern.idb_ptr;
+    RT_PNTS_CK_MAGIC(pnts);
+
+    // collect arrays (normals required)
+    int pcnt = 0;
+    point_t *ipts = NULL;
+    vect_t *inrms = NULL;
+    if (_pnts_collect_arrays(gedp, pnts, &ipts, &inrms, &pcnt, 1) != BRLCAD_OK) {
+	rt_db_free_internal(&intern);
+	if (ipts) bu_free(ipts, "ipts");
+	if (inrms) bu_free(inrms, "inrms");
+	return BRLCAD_ERROR;
+    }
+
+    // radii array (optional)
+    double *rptr = NULL;
+    int rcnt = (int)radii.size();
+    if (rcnt > 0) {
+	rptr = (double *)bu_calloc((size_t)rcnt, sizeof(double), "bp radii");
+	for (int i = 0; i < rcnt; i++) rptr[i] = radii[(size_t)i];
+    }
+
+    // run ballpivot
+    int *faces = NULL;
+    int nfaces = 0;
+    point_t *overts = NULL;
+    int nverts = 0;
+
+    int bret = bg_3d_ballpivot(&faces, &nfaces, &overts, &nverts, (const point_t *)ipts, (const vect_t *)inrms, pcnt, rptr, rcnt);
+    if (rptr) bu_free(rptr, "bp radii");
+    // free input arrays
+    if (ipts)
+	bu_free(ipts, "ipts");
+    ipts = NULL;
+    if (inrms)
+	bu_free(inrms, "inrms");
+    inrms = NULL;
+
+    if (bret != 0 || nfaces <= 0 || nverts <= 0) {
+	bu_vls_printf(gedp->ged_result_str, "Ball Pivoting reconstruction failed");
+	rt_db_free_internal(&intern);
+	// faces/overts may be NULL or partially allocated; nothing else to do
+	return BRLCAD_ERROR;
+    }
+
+    // write bot
+    int wret = _pnts_write_bot_mesh(gedp, bot_name, faces, nfaces, overts, nverts);
+    if (wret == BRLCAD_OK) {
+	bu_vls_printf(gedp->ged_result_str, "Generated BoT object %s (Ball Pivoting) with %d faces", bot_name, nfaces);
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "Failed to write BoT object %s", bot_name);
+    }
+
+    rt_db_free_internal(&intern);
+    return wret;
+}
+
+/* custom bu_opt for size_t threads in spsr */
+static int
+_pnts_opt_size_t(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **argv, void *set_c)
+{
+    size_t *t = (size_t *)set_c;
+    int tmp = 0;
+    const char *a = argv[0];
+    if (bu_opt_int(NULL, 1, &a, &tmp) < 0) return -1;
+    if (tmp < 0) return -1;
+    *t = (size_t)tmp;
+    return 1;
+}
+
+/* tri spsr */
+static int
+_ged_pnts_tri_cmd_spsr(void *bs, int argc, const char **argv)
+{
+    struct ged *gedp = (struct ged *)bs;
+    const char *usage = "Usage: pnts tri spsr [options] <pnts> <output_bot>\n";
+    const char *purpose = "Screened Poisson Surface Reconstruction from oriented points";
+    if (_ged_pnts_cmd_msgs(gedp, argc, argv, usage, purpose)) return BRLCAD_OK;
+
+    struct bg_3d_spsr_opts opts = BG_3D_SPSR_OPTS_DEFAULT;
+
+    int print_help = 0;
+    struct bu_opt_desc d[23];
+    BU_OPT(d[0],  "h", "help",             "",  NULL,              &print_help,           "Print help and exit");
+    BU_OPT(d[1],  "",  "degree",           "#", &bu_opt_int,       &opts.degree,          "Finite element degree");
+    BU_OPT(d[2],  "",  "btype",            "#", &bu_opt_int,       &opts.btype,           "Boundary type (1:FREE, 2:NEUMANN, 3:DIRICHLET)");
+    BU_OPT(d[3],  "",  "depth",            "#", &bu_opt_int,       &opts.depth,           "Max reconstruction depth");
+    BU_OPT(d[4],  "",  "kerneldepth",      "#", &bu_opt_int,       &opts.kerneldepth,     "Kernel depth");
+    BU_OPT(d[5],  "",  "iterations",       "#", &bu_opt_int,       &opts.iterations,      "Solver iterations");
+    BU_OPT(d[6],  "",  "full-depth",       "#", &bu_opt_int,       &opts.full_depth,      "Full depth");
+    BU_OPT(d[7],  "",  "base-depth",       "#", &bu_opt_int,       &opts.base_depth,      "Coarse MG depth");
+    BU_OPT(d[8],  "",  "base-vcycles",     "#", &bu_opt_int,       &opts.baseVcycles,     "Coarse MG v-cycles");
+    BU_OPT(d[9],  "",  "max-mem",          "#", &bu_opt_int,       &opts.max_memory_GB,   "Max memory (GB)");
+    BU_OPT(d[10], "",  "threads",          "#", _pnts_opt_size_t,  &opts.threads,         "Threads to use");
+    BU_OPT(d[11], "",  "samples-per-node", "#", &bu_opt_fastf_t,   &opts.samples_per_node,"Min samples per node");
+    BU_OPT(d[12], "",  "scale",            "#", &bu_opt_fastf_t,   &opts.scale,           "Scale factor");
+    BU_OPT(d[13], "",  "width",            "#", &bu_opt_fastf_t,   &opts.width,           "Voxel width");
+    BU_OPT(d[14], "",  "confidence",       "#", &bu_opt_fastf_t,   &opts.confidence,      "Normal confidence exponent");
+    BU_OPT(d[15], "",  "confidence-bias",  "#", &bu_opt_fastf_t,   &opts.confidence_bias, "Normal confidence bias exponent");
+    BU_OPT(d[16], "",  "cg-accuracy",      "#", &bu_opt_fastf_t,   &opts.cgsolver_accuracy,"CG solver accuracy");
+    BU_OPT(d[17], "",  "point-weight",     "#", &bu_opt_fastf_t,   &opts.point_weight,     "Interpolation weight");
+    BU_OPT(d[18], "",  "nonmanifold",      "#", &bu_opt_int,       &opts.nonManifold,      "NonManifold (0/1)");
+    BU_OPT(d[19], "",  "linearfit",        "#", &bu_opt_int,       &opts.linearFit,        "Linear Fit (0/1)");
+    BU_OPT(d[20], "",  "exact",            "#", &bu_opt_int,       &opts.exact,            "Exact interpolation (0/1)");
+    BU_OPT_NULL(d[21]);
+
+    argc -= (argc>0); argv += (argc>0); // skip "spsr"
+    if (argc < 1) {
+	_ged_cmd_help(gedp, usage, d);
+	return BRLCAD_OK;
+    }
+    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    if (print_help) {
+	_ged_cmd_help(gedp, usage, d);
+	return BRLCAD_OK;
+    }
+    argc = opt_ret;
+    if (argc != 2) {
+	_ged_cmd_help(gedp, usage, d);
+	return BRLCAD_ERROR;
+    }
+
+    const char *pnt_prim = argv[0];
+    const char *bot_name = argv[1];
+    GED_CHECK_EXISTS(gedp, bot_name, LOOKUP_QUIET, BRLCAD_ERROR);
+
+    struct rt_db_internal intern;
+    struct directory *dp = NULL;
+    GED_DB_LOOKUP(gedp, dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
+	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a PNTS primitive", __func__, pnt_prim);
+	rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
+    struct rt_pnts_internal *pnts = (struct rt_pnts_internal *)intern.idb_ptr;
+    RT_PNTS_CK_MAGIC(pnts);
+
+    // collect arrays (normals required)
+    int pcnt = 0;
+    point_t *ipts = NULL;
+    vect_t *inrms = NULL;
+    if (_pnts_collect_arrays(gedp, pnts, &ipts, &inrms, &pcnt, 1) != BRLCAD_OK) {
+	rt_db_free_internal(&intern);
+	if (ipts) bu_free(ipts, "ipts");
+	if (inrms) bu_free(inrms, "inrms");
+	return BRLCAD_ERROR;
+    }
+
+    // run spsr
+    int *faces = NULL;
+    int nfaces = 0;
+    point_t *overts = NULL;
+    int nverts = 0;
+
+    int sret = bg_3d_spsr(&faces, &nfaces, &overts, &nverts, (const point_t *)ipts, (const vect_t *)inrms, pcnt, &opts);
+
+    // free inputs
+    if (ipts)
+	bu_free(ipts, "ipts");
+    ipts = NULL;
+    if (inrms)
+	bu_free(inrms, "inrms");
+    inrms = NULL;
+
+    if (sret != 0 || nfaces <= 0 || nverts <= 0) {
+	bu_vls_printf(gedp->ged_result_str, "SPSR reconstruction failed");
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }
 
-    pnts = (struct rt_pnts_internal *)intern.idb_ptr;
-    RT_PNTS_CK_MAGIC(pnts);
+    // write bot
+    int wret = _pnts_write_bot_mesh(gedp, bot_name, faces, nfaces, overts, nverts);
+    if (wret == BRLCAD_OK) {
+	bu_vls_printf(gedp->ged_result_str, "Generated BoT object %s (SPSR) with %d faces", bot_name, nfaces);
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "Failed to write BoT object %s", bot_name);
+    }
 
-    /* Sanity */
-    if (!bot_name || !gedp) return BRLCAD_ERROR;
-    GED_CHECK_EXISTS(gedp, bot_name, LOOKUP_QUIET, BRLCAD_ERROR);
+    rt_db_free_internal(&intern);
+    return wret;
+}
 
-    /* For the moment, only generate BoTs when we have a normal to guide us.  Eventually,
-     * we might add logic to find the avg center point and calculate normals radiating out
-     * from that center, but for now skip anything that doesn't provide normals up front. */
-    if (pnts->type != RT_PNT_TYPE_NRM) {;
-	bu_vls_sprintf(gedp->ged_result_str, "Error: point cloud data is not of type PNT_NRM\n");
+
+
+static const struct bu_cmdtab _pnts_tri_cmds[] = {
+    { "unit",      _ged_pnts_tri_cmd_unit },
+    { "ballpivot", _ged_pnts_tri_cmd_ballpivot },
+    { "spsr",      _ged_pnts_tri_cmd_spsr },
+    { (char *)NULL, NULL }
+};
+
+// NOTE - for the moment, we're deliberately not documenting the ballpivot
+// option - in its current form it is primarily useful for algorithm
+// experimentation and not real-world use.
+static void
+_pnts_tri_show_help(struct ged *gedp)
+{
+    bu_vls_printf(gedp->ged_result_str,
+	    "Usage: pnts tri <subcommand> [options] <pnts> <output_bot>\n"
+	    "Subcommands:\n"
+	    "  unit       - Generate per-point oriented triangles (original tri behavior)\n"
+	    "  spsr       - Screened Poisson Surface Reconstruction\n");
+}
+
+static int
+_ged_pnts_cmd_tri(void *bs, int argc, const char **argv)
+{
+    struct ged *gedp = (struct ged *)bs;
+
+    // tri [-h] <subcmd> ...
+    int help = 0;
+    struct bu_opt_desc d[2];
+    BU_OPT(d[0], "h", "help", "", NULL, &help, "Print help");
+    BU_OPT_NULL(d[1]);
+
+    argc--; argv++; // skip "tri"
+
+    if (!argc) {
+	_pnts_tri_show_help(gedp);
+	return BRLCAD_OK;
+    }
+
+    // Find subcommand (unit/spsr)
+    int cmd_pos = -1;
+    for (int i = 0; i < argc; i++) {
+	if (bu_cmd_valid(_pnts_tri_cmds, argv[i]) == BRLCAD_OK) { cmd_pos = i; break; }
+    }
+
+    // Parse any tri-level options before subcommand (currently only -h)
+    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
+    int opt_ret = bu_opt_parse(NULL, acnt, argv, d);
+
+    if (help) {
+	_pnts_tri_show_help(gedp);
+	return BRLCAD_OK;
+    }
+
+    // If we didn't find a subcommand, assume legacy usage -> default to "unit"
+    if (cmd_pos == -1) {
+	// Build argv: ["unit", <original args...>]
+	std::vector<const char *> nargv;
+	nargv.push_back("unit");
+	for (int i = 0; i < argc; i++) nargv.push_back(argv[i]);
+	int ret = BRLCAD_ERROR;
+	if (bu_cmd(_pnts_tri_cmds, (int)nargv.size(), nargv.data(), 0, bs, &ret) == BRLCAD_OK) {
+	    return BRLCAD_OK;
+	}
+	_pnts_tri_show_help(gedp);
 	return BRLCAD_ERROR;
     }
 
-    /* initialize */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* Set up BoT container */
-    RT_DB_INTERNAL_INIT(&internal);
-    internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    internal.idb_type = ID_BOT;
-    internal.idb_meth = &OBJ[ID_BOT];
-    BU_ALLOC(bot_ip, struct rt_bot_internal);
-    internal.idb_ptr = (void *)bot_ip;
-    bot_ip = (struct rt_bot_internal *)internal.idb_ptr;
-    bot_ip->magic = RT_BOT_INTERNAL_MAGIC;
-    bot_ip->mode = RT_BOT_SURFACE;
-    bot_ip->orientation = 2;
-
-
-    /* Go with paper's default for pnts */
-    if (NEAR_ZERO(beta, SMALL_FASTF)) {
-	beta = 2.3;
+    if (opt_ret < 0) {
+	_pnts_tri_show_help(gedp);
+	return BRLCAD_ERROR;
     }
 
-    VMOVE(q.v, qp);
+    // Shift argv to start from the subcommand
+    for (int i = cmd_pos; i < argc; i++) argv[i - cmd_pos] = argv[i];
+    argc = argc - cmd_pos;
 
-    wn_mesh(pnts, beta, &q, );
-
-    /* Allocate BoT memory */
-    bot_ip->num_vertices = pnts->count * 3;
-    bot_ip->num_faces = pnts->count;
-    bot_ip->faces = (int *)bu_calloc(bot_ip->num_faces * 3 + 3, sizeof(int), "bot faces");
-    bot_ip->vertices = (fastf_t *)bu_calloc(bot_ip->num_vertices * 3 + 3, sizeof(fastf_t), "bot vertices");
-    bot_ip->thickness = (fastf_t *)NULL;
-    bot_ip->face_mode = (struct bu_bitv *)NULL;
-
-    pntcnt = 0;
-    if (pnts->type == RT_PNT_TYPE_NRM) {
-	struct pnt_normal *pn = NULL;
-	struct pnt_normal *pl = (struct pnt_normal *)pnts->point;
-	for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
-	    _pnt_to_tri(&(pn->v), &(pn->n), bot_ip, scale, pntcnt);
-	    pntcnt++;
-	}
-    }
-    if (pnts->type == RT_PNT_TYPE_COL_NRM) {
-	struct pnt_color_normal *pcn = NULL;
-	struct pnt_color_normal *pl = (struct pnt_color_normal *)pnts->point;
-	for (BU_LIST_FOR(pcn, pnt_color_normal, &(pl->l))) {
-	    _pnt_to_tri(&(pcn->v), &(pcn->n), bot_ip, scale, pntcnt);
-	    pntcnt++;
-	}
-    }
-    if (pnts->type == RT_PNT_TYPE_SCA_NRM) {
-	struct pnt_scale_normal *psn = NULL;
-	struct pnt_scale_normal *pl = (struct pnt_scale_normal *)pnts->point;
-	for (BU_LIST_FOR(psn, pnt_scale_normal, &(pl->l))) {
-	    _pnt_to_tri(&(psn->v), &(psn->n), bot_ip, scale, pntcnt);
-	    pntcnt++;
-	}
-    }
-    if (pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
-	struct pnt_color_scale_normal *pcsn = NULL;
-	struct pnt_color_scale_normal *pl = (struct pnt_color_scale_normal *)pnts->point;
-	for (BU_LIST_FOR(pcsn, pnt_color_scale_normal, &(pl->l))) {
-	    _pnt_to_tri(&(pcsn->v), &(pcsn->n), bot_ip, scale, pntcnt);
-	    pntcnt++;
-	}
+    int ret = BRLCAD_ERROR;
+    if (bu_cmd(_pnts_tri_cmds, argc, argv, 0, bs, &ret) == BRLCAD_OK) {
+	return BRLCAD_OK;
     }
 
-    GED_DB_DIRADD(gedp, dp, bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
-
-    bu_vls_printf(gedp->ged_result_str, "Generated BoT object %s with %d triangles", bot_name, pntcnt);
-
-    rt_db_free_internal(&intern);
-    return BRLCAD_OK;
+    bu_vls_printf(gedp->ged_result_str, "pnts tri: subcommand %s not defined\n", argv[0]);
+    _pnts_tri_show_help(gedp);
+    return BRLCAD_ERROR;
 }
 
-#endif
 
 
 static int
-_obj_to_pnts(struct ged *gedp, int argc, const char **argv)
+_ged_pnts_cmd_gen(void *bs, int argc, const char **argv)
 {
+    struct ged *gedp = (struct ged *)bs;
     struct directory *dp;
     int print_help = 0;
     int opt_ret = 0;
@@ -562,16 +771,16 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
 
 
     if (pnt_surf_mode) {
-	flags |= ANALYZE_OBJ_TO_PNTS_SURF;
+	flags |= RT_GEN_OBJ_PNTS_SURF;
     }
 
     /* Pick our mode(s) */
     if (!pnt_grid_mode && !pnt_rand_mode && !pnt_sobol_mode) {
-	flags |= ANALYZE_OBJ_TO_PNTS_GRID;
+	flags |= RT_GEN_OBJ_PNTS_GRID;
     } else {
-	if (pnt_grid_mode)  flags |= ANALYZE_OBJ_TO_PNTS_GRID;
-	if (pnt_rand_mode)  flags |= ANALYZE_OBJ_TO_PNTS_RAND;
-	if (pnt_sobol_mode) flags |= ANALYZE_OBJ_TO_PNTS_SOBOL;
+	if (pnt_grid_mode)  flags |= RT_GEN_OBJ_PNTS_GRID;
+	if (pnt_rand_mode)  flags |= RT_GEN_OBJ_PNTS_RAND;
+	if (pnt_sobol_mode) flags |= RT_GEN_OBJ_PNTS_SOBOL;
     }
 
     /* If we don't have a tolerance, try to guess something sane from the bbox */
@@ -598,7 +807,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     pnts->scale = 0.0;
     pnts->type = RT_PNT_TYPE_NRM;
 
-    if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->dbip, obj_name, &btol, flags, max_pnts, max_time, 2)) {
+    if (rt_gen_obj_pnts(pnts, &avg_thickness, gedp->dbip, obj_name, &btol, flags, max_pnts, max_time, 2)) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: point generation failed\n");
 	return BRLCAD_ERROR;
     }
@@ -662,8 +871,9 @@ _pnt_read(struct rt_pnts_internal *pnts, int numcnt, const char **nums, const ch
 
 
 static int
-_read_pnts(struct ged *gedp, int argc, const char **argv)
+_ged_pnts_cmd_read(void *bs, int argc, const char **argv)
 {
+    struct ged *gedp = (struct ged *)bs;
     int print_help = 0;
     int opt_ret = 0;
     FILE *fp;
@@ -833,8 +1043,9 @@ _read_pnts(struct ged *gedp, int argc, const char **argv)
 }
 
 static int
-_write_pnts(struct ged *gedp, int argc, const char **argv)
+_ged_pnts_cmd_write(void *bs, int argc, const char **argv)
 {
+    struct ged *gedp = (struct ged *)bs;
     int print_help = 0;
     int ply_out = 0;
     int opt_ret = 0;
@@ -1168,18 +1379,19 @@ _pnts_show_help(struct ged *gedp, struct bu_opt_desc *d)
     bu_vls_free(&str);
 }
 
+static const struct bu_cmdtab _pnts_cmds[] = {
+    { "gen",    _ged_pnts_cmd_gen },
+    { "read",   _ged_pnts_cmd_read },
+    { "tri",    _ged_pnts_cmd_tri },
+    { "write",  _ged_pnts_cmd_write },
+    { (char *)NULL, NULL }
+};
+
 extern "C" int
 ged_pnts_core(struct ged *gedp, int argc, const char *argv[])
 {
-    const char *cmd = argv[0];
-    size_t len;
-    int i;
     int print_help = 0;
-    int opt_ret = 0;
-    int opt_argc = argc;
     struct bu_opt_desc d[2];
-    const char * const pnt_subcommands[] = {"gen", "read", "tri", "wn", "write", NULL};
-    const char * const *subcmd;
 
     BU_OPT(d[0], "h", "help",      "", NULL, &print_help,        "Print help and exit");
     BU_OPT_NULL(d[1]);
@@ -1199,58 +1411,42 @@ ged_pnts_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    /* See if we have any options to deal with.  Once we hit a subcommand, we're done */
-    for (i = 0; i < argc; ++i) {
-	subcmd = pnt_subcommands;
-	for (; *subcmd != NULL; ++subcmd) {
-	    if (BU_STR_EQUAL(argv[i], *subcmd)) {
-		opt_argc = i;
-		i = argc;
-		break;
-	    }
+    int cmd_pos = -1;
+    for (int i = 0; i < argc; i++) {
+	if (bu_cmd_valid(_pnts_cmds, argv[i]) == BRLCAD_OK) {
+	    cmd_pos = i;
+	    break;
 	}
     }
-
-    if (opt_argc > 0) {
-	/* parse standard options */
-	opt_ret = bu_opt_parse(NULL, opt_argc, argv, d);
-	if (opt_ret < 0) {
-	    _pnts_show_help(gedp, d);
-	    return BRLCAD_ERROR;
-	}
-    }
+    int opt_argc = (cmd_pos >= 0) ? cmd_pos : argc;
+    int opt_ret = bu_opt_parse(NULL, opt_argc, argv, d);
 
     if (print_help) {
 	_pnts_show_help(gedp, d);
 	return BRLCAD_OK;
     }
 
-    /* shift argv to subcommand */
-    argc -= opt_argc;
-    argv = &argv[opt_argc];
-
-    /* If we don't have a subcommand, we're done */
-    if (argc < 1) {
+    if (cmd_pos == -1) {
+	bu_vls_printf(gedp->ged_result_str, "pnts: no valid subcommand specified\n");
+	_pnts_show_help(gedp, d);
+	return BRLCAD_ERROR;
+    }
+    if (opt_ret < 0) {
 	_pnts_show_help(gedp, d);
 	return BRLCAD_ERROR;
     }
 
-    len = strlen(argv[0]);
-    if (bu_strncmp(argv[0], "tri", len) == 0) return _pnts_to_bot(gedp, argc, argv);
+    for (int i = cmd_pos; i < argc; i++) {
+	argv[i - cmd_pos] = argv[i];
+    }
+    argc = argc - cmd_pos;
 
-    if (bu_strncmp(argv[0], "gen", len) == 0) return _obj_to_pnts(gedp, argc, argv);
-
-    if (bu_strncmp(argv[0], "write", len) == 0) return _write_pnts(gedp, argc, argv);
-
-    if (bu_strncmp(argv[0], "read", len) == 0) return _read_pnts(gedp, argc, argv);
-
-    if (bu_strncmp(argv[0], "wn", len) == 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s: %s UNIMPLEMENTED\n", cmd, argv[0]);
-	return BRLCAD_ERROR;
+    int ret = BRLCAD_ERROR;
+    if (bu_cmd(_pnts_cmds, argc, argv, 0, (void *)gedp, &ret) == BRLCAD_OK) {
+	return ret;
     }
 
-    /* If we don't have a valid subcommand, we're done */
-    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!\n", cmd, argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "pnts: subcommand %s not defined\n", argv[0]);
     _pnts_show_help(gedp, d);
     return BRLCAD_ERROR;
 }

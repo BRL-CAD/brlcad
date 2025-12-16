@@ -1,0 +1,768 @@
+# BRL-CAD's primary distcheck target runs too long and does too much work to
+# be suitable as a CI target, even occasionally.  To achieve essentially the
+# same result, we define individual jobs for each distcheck sub-target and
+# run them in singletons.  To avoid the list of targets going stale, we
+# define this header and then autogenerate the actual build target jobs
+# to append to it from the CMake logic.
+
+name: Distcheck
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 3 * * 5'
+
+jobs:
+  bext:
+    name: Prepare bext (cached)
+    runs-on: ubuntu-latest
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          # Install X/OpenGL dev pkgs
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          # Install tools
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          # Install dependency dev pkgs
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
+          # Install XCB/OpenGL dev pkgs for Qt - see:
+          # https://wiki.qt.io/Building_Qt_6_from_Git
+          # https://doc.qt.io/qt-6/linux-requirements.html
+          sudo apt-get install libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-cursor-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxcb-xinput-dev libxcb-xrm-dev libxkbcommon-dev libxkbcommon-x11-dev
+          sudo apt-get install libgl-dev
+          sudo apt-get install libinput-dev
+
+      - name: Clone bext
+        run: git clone https://github.com/BRL-CAD/bext.git
+
+      - name: Get bext commit SHA
+        id: bext-sha
+        run: |
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Compute bext cache discriminator
+        id: cachekey
+        shell: bash
+        run: |
+          info="${{ steps.bext-sha.outputs.sha }}-$(uname -s)-$(uname -r)-$(gcc --version | head -n 1)"
+          echo "hash=$(echo -n "$info" | sha1sum | awk '{print $1}')" >> $GITHUB_OUTPUT
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.cachekey.outputs.hash }}
+
+      - name: Build bext (if cache miss)
+        if: steps.cache-bext.outputs.cache-hit != 'true'
+        run: |
+          cmake -E make_directory bext_build
+          cmake -S bext -B bext_build -DCMAKE_BUILD_TYPE=Release -DENABLE_ALL=ON -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/bext_output
+          cmake --build bext_build --config Release -j 2
+          cmake -E rm -rf bext
+          cmake -E rm -rf bext_build
+
+  distcheck-default_build_type:
+    name: distcheck-default_build_type
+    runs-on: ubuntu-latest
+    needs: [bext]
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
+
+      - name: Setup - bext
+        run: |
+          git clone https://github.com/BRL-CAD/bext.git
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          cd ..
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+      - name: Directory setup
+        run: cmake -E make_directory build_distcheck-default_build_type
+      - name: Configure
+        run: cmake -S brlcad -B build_distcheck-default_build_type -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+      - name: Build
+        run: cmake --build build_distcheck-default_build_type --config Release --target distcheck-default_build_type
+      - name: Log
+        if: always()
+        run: cat build_distcheck-default_build_type/distcheck-default_build_type.log
+      - name: Debug if failure
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+
+  distcheck-debug:
+    name: distcheck-debug
+    runs-on: ubuntu-latest
+    needs: [distcheck-default_build_type]
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
+
+      - name: Setup - bext
+        run: |
+          git clone https://github.com/BRL-CAD/bext.git
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          cd ..
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+      - name: Directory setup
+        run: cmake -E make_directory build_distcheck-debug
+      - name: Configure
+        run: cmake -S brlcad -B build_distcheck-debug -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+      - name: Build
+        run: cmake --build build_distcheck-debug --config Release --target distcheck-debug
+      - name: Log
+        if: always()
+        run: cat build_distcheck-debug/distcheck-debug.log
+      - name: Debug if failure
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+
+  distcheck-release:
+    name: distcheck-release
+    runs-on: ubuntu-latest
+    needs: [distcheck-debug]
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
+
+      - name: Setup - bext
+        run: |
+          git clone https://github.com/BRL-CAD/bext.git
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          cd ..
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+      - name: Directory setup
+        run: cmake -E make_directory build_distcheck-release
+      - name: Configure
+        run: cmake -S brlcad -B build_distcheck-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+      - name: Build
+        run: cmake --build build_distcheck-release --config Release --target distcheck-release
+      - name: Log
+        if: always()
+        run: cat build_distcheck-release/distcheck-release.log
+      - name: Debug if failure
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+
+  distcheck-enableall_debug:
+    name: distcheck-enableall_debug
+    runs-on: ubuntu-latest
+    needs: [distcheck-release]
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
+
+      - name: Setup - bext
+        run: |
+          git clone https://github.com/BRL-CAD/bext.git
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          cd ..
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+      - name: Directory setup
+        run: cmake -E make_directory build_distcheck-enableall_debug
+      - name: Configure
+        run: cmake -S brlcad -B build_distcheck-enableall_debug -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+      - name: Build
+        run: cmake --build build_distcheck-enableall_debug --config Release --target distcheck-enableall_debug
+      - name: Log
+        if: always()
+        run: cat build_distcheck-enableall_debug/distcheck-enableall_debug.log
+      - name: Debug if failure
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+
+  distcheck-enableall_release:
+    name: distcheck-enableall_release
+    runs-on: ubuntu-latest
+    needs: [distcheck-enableall_debug]
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
+
+      - name: Setup - bext
+        run: |
+          git clone https://github.com/BRL-CAD/bext.git
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          cd ..
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+      - name: Directory setup
+        run: cmake -E make_directory build_distcheck-enableall_release
+      - name: Configure
+        run: cmake -S brlcad -B build_distcheck-enableall_release -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+      - name: Build
+        run: cmake --build build_distcheck-enableall_release --config Release --target distcheck-enableall_release
+      - name: Log
+        if: always()
+        run: cat build_distcheck-enableall_release/distcheck-enableall_release.log
+      - name: Debug if failure
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+
+  distcheck-prepared_debug:
+    name: distcheck-prepared_debug
+    runs-on: ubuntu-latest
+    needs: [distcheck-enableall_release]
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
+
+      - name: Setup - bext
+        run: |
+          git clone https://github.com/BRL-CAD/bext.git
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          cd ..
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+      - name: Directory setup
+        run: cmake -E make_directory build_distcheck-prepared_debug
+      - name: Configure
+        run: cmake -S brlcad -B build_distcheck-prepared_debug -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+      - name: Build
+        run: cmake --build build_distcheck-prepared_debug --config Release --target distcheck-prepared_debug
+      - name: Log
+        if: always()
+        run: cat build_distcheck-prepared_debug/distcheck-prepared_debug.log
+      - name: Debug if failure
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+
+  distcheck-prepared_release:
+    name: distcheck-prepared_release
+    runs-on: ubuntu-latest
+    needs: [distcheck-prepared_debug]
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
+
+      - name: Setup - bext
+        run: |
+          git clone https://github.com/BRL-CAD/bext.git
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          cd ..
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+      - name: Directory setup
+        run: cmake -E make_directory build_distcheck-prepared_release
+      - name: Configure
+        run: cmake -S brlcad -B build_distcheck-prepared_release -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+      - name: Build
+        run: cmake --build build_distcheck-prepared_release --config Release --target distcheck-prepared_release
+      - name: Log
+        if: always()
+        run: cat build_distcheck-prepared_release/distcheck-prepared_release.log
+      - name: Debug if failure
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+
+  distcheck-no_tcl:
+    name: distcheck-no_tcl
+    runs-on: ubuntu-latest
+    needs: [distcheck-prepared_release]
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
+
+      - name: Setup - bext
+        run: |
+          git clone https://github.com/BRL-CAD/bext.git
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          cd ..
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+      - name: Directory setup
+        run: cmake -E make_directory build_distcheck-no_tcl
+      - name: Configure
+        run: cmake -S brlcad -B build_distcheck-no_tcl -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+      - name: Build
+        run: cmake --build build_distcheck-no_tcl --config Release --target distcheck-no_tcl
+      - name: Log
+        if: always()
+        run: cat build_distcheck-no_tcl/distcheck-no_tcl.log
+      - name: Debug if failure
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+
+  distcheck-no_tk:
+    name: distcheck-no_tk
+    runs-on: ubuntu-latest
+    needs: [distcheck-no_tcl]
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev libgl-dev libinput-dev
+
+      - name: Setup - bext
+        run: |
+          git clone https://github.com/BRL-CAD/bext.git
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          cd ..
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+      - name: Directory setup
+        run: cmake -E make_directory build_distcheck-no_tk
+      - name: Configure
+        run: cmake -S brlcad -B build_distcheck-no_tk -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+      - name: Build
+        run: cmake --build build_distcheck-no_tk --config Release --target distcheck-no_tk
+      - name: Log
+        if: always()
+        run: cat build_distcheck-no_tk/distcheck-no_tk.log
+      - name: Debug if failure
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+
+  distcheck-no_strict:
+    name: distcheck-no_strict
+    runs-on: ubuntu-latest
+    needs: [distcheck-no_tk]
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
+
+      - name: Setup - bext
+        run: |
+          git clone https://github.com/BRL-CAD/bext.git
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          cd ..
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+      - name: Directory setup
+        run: cmake -E make_directory build_distcheck-no_strict
+      - name: Configure
+        run: cmake -S brlcad -B build_distcheck-no_strict -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+      - name: Build
+        run: cmake --build build_distcheck-no_strict --config Release --target distcheck-no_strict
+      - name: Log
+        if: always()
+        run: cat build_distcheck-no_strict/distcheck-no_strict.log
+      - name: Debug if failure
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+
+  distcheck-no_object:
+    name: distcheck-no_object
+    runs-on: ubuntu-latest
+    needs: [distcheck-no_strict]
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
+
+      - name: Setup - bext
+        run: |
+          git clone https://github.com/BRL-CAD/bext.git
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          cd ..
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+      - name: Directory setup
+        run: cmake -E make_directory build_distcheck-no_object
+      - name: Configure
+        run: cmake -S brlcad -B build_distcheck-no_object -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+      - name: Build
+        run: cmake --build build_distcheck-no_object --config Release --target distcheck-no_object
+      - name: Log
+        if: always()
+        run: cat build_distcheck-no_object/distcheck-no_object.log
+      - name: Debug if failure
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+
+  distcheck-odd_pathnames:
+    name: distcheck-odd_pathnames
+    runs-on: ubuntu-latest
+    needs: [distcheck-no_object]
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
+
+      - name: Setup - bext
+        run: |
+          git clone https://github.com/BRL-CAD/bext.git
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          cd ..
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+      - name: Directory setup
+        run: cmake -E make_directory build_distcheck-odd_pathnames
+      - name: Configure
+        run: cmake -S brlcad -B build_distcheck-odd_pathnames -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+      - name: Build
+        run: cmake --build build_distcheck-odd_pathnames --config Release --target distcheck-odd_pathnames
+      - name: Log
+        if: always()
+        run: cat build_distcheck-odd_pathnames/distcheck-odd_pathnames.log
+      - name: Debug if failure
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+
+  distcheck-in_src_dir:
+    name: distcheck-in_src_dir
+    runs-on: ubuntu-latest
+    needs: [distcheck-odd_pathnames]
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
+
+      - name: Setup - bext
+        run: |
+          git clone https://github.com/BRL-CAD/bext.git
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          cd ..
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.bext-sha.outputs.sha }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+      - name: Directory setup
+        run: cmake -E make_directory build_distcheck-in_src_dir
+      - name: Configure
+        run: cmake -S brlcad -B build_distcheck-in_src_dir -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output
+      - name: Build
+        run: cmake --build build_distcheck-in_src_dir --config Release --target distcheck-in_src_dir
+      - name: Log
+        if: always()
+        run: cat build_distcheck-in_src_dir/distcheck-in_src_dir.log
+      - name: Debug if failure
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+

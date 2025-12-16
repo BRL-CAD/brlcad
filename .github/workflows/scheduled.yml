@@ -1,0 +1,438 @@
+# This file defines Continuous Integration (CI) tests for BRL-CAD using the
+# Github Actions framework.  Currently it defines configurations for Windows,
+# Linux and OSX.  These tests are run on a fixed schedule, rather than per
+# push, and will typically take longer to run.
+#
+# Tests here are intended to test more expensive integrations and longer
+# builds than the ones targeted at per-commit feedback.  The tradeoff is
+# that a failure in these tests might be cause by any commit within a
+# 24 hour block of time, so the developer will need to track down the
+# specifics themselves.
+
+name: Scheduled
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # daily at 03:00 UTC
+
+jobs:
+
+  linux_bext:
+    name: Linux - BRL-CAD bext build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      # Cache apt package downloads (not installed pkgs)
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+
+      # Install system dependencies
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          # Install X/OpenGL dev pkgs
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          # Install tools
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          # Install dependency dev pkgs
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
+          # Install XCB/OpenGL dev pkgs for Qt - see:
+          # https://wiki.qt.io/Building_Qt_6_from_Git
+          # https://doc.qt.io/qt-6/linux-requirements.html
+          sudo apt-get install libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-cursor-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxcb-xinput-dev libxcb-xrm-dev libxkbcommon-dev libxkbcommon-x11-dev
+          sudo apt-get install libgl-dev
+          sudo apt-get install libinput-dev
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+
+      - name: Directory setup
+        run: |
+          cmake -E make_directory build_linux
+          cmake -E make_directory $HOME/.cache
+          cmake -E make_directory $HOME/.cache/BRL-CAD
+
+      - name: Configure
+        run: |
+          export PATH=$GITHUB_WORKSPACE:$PATH
+          cmake -S brlcad -B build_linux -G Ninja -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_BEXT_CLEANUP=ON -DBRLCAD_ENABLE_QT=ON
+
+      - name: Build + Check + Package
+        run: |
+          export PATH=$GITHUB_WORKSPACE:$PATH
+          cmake --build build_linux --config Release --target check
+          cmake --build build_linux --config Release --target package
+
+  windows_bext:
+    name: MSVC - Ninja - BRL-CAD bext build
+    needs: [linux_bext]
+    runs-on: windows-latest
+    strategy:
+      fail-fast: true
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Add cl.exe to PATH
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Add github workspace to path
+        shell: powershell
+        run: Add-Content -Path $env:GITHUB_PATH -Value $env:GITHUB_WORKSPACE
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+
+      - name: Build Directory setup
+        run: cmake -E make_directory ./build_winninja
+
+      - name: Configure
+        shell: powershell
+        run: |
+          cmake -S brlcad -B build_winninja -G Ninja -DCMAKE_C_COMPILER="cl.exe" -DCMAKE_CXX_COMPILER="cl.exe" -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_BEXT_CLEANUP=ON -DBRLCAD_ENABLE_QT=ON
+
+      - name: Build
+        shell: powershell
+        run: |
+          ninja -j1 -v
+        working-directory: ${{ github.workspace }}/build_winninja
+
+      - name: Check
+        shell: powershell
+        run: |
+          ninja check -v
+        working-directory: ${{ github.workspace }}/build_winninja
+
+      - name: Package
+        shell: powershell
+        run: |
+          ninja package
+        working-directory: ${{ github.workspace }}/build_winninja
+
+  windows_std_tools_bext:
+    name: MSVC - Standard Tools - BRL-CAD bext build
+    needs: [windows_bext]
+    runs-on: windows-latest
+    strategy:
+      fail-fast: true
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Add github workspace to path
+        shell: cmd
+        run: echo %GITHUB_WORKSPACE%>>"%GITHUB_PATH%"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+
+      - name: Build Directory setup
+        run: |
+          cmake -E make_directory ./build_winstd
+
+      - name: Configure
+        shell: cmd
+        run: |
+          call "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
+          cmake -S brlcad -B build_winstd -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_BUNDLED_LIBS=Bundled -DBRLCAD_EXT_PARALLEL=1 -DCMAKE_BUILD_TYPE=Release -DBRLCAD_BEXT_CLEANUP=ON -DBRLCAD_ENABLE_QT=ON
+
+      - name: Build
+        shell: cmd
+        run: |
+          call "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
+          cmake --build build_winstd --config Release --target mged
+
+      - name: Check
+        shell: cmd
+        run: |
+          call "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
+          cmake --build build_winstd --config Release --target check
+
+      - name: Package
+        shell: cmd
+        run: |
+          call "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
+          cmake --build build_winstd --config Release --target package
+
+  osx_bext:
+    name: macOS - BRL-CAD bext build
+    needs: [linux_bext]
+    runs-on: macos-14
+    strategy:
+      fail-fast: true
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Install Xquartz
+        run: |
+          brew install xquartz --cask
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+
+      - name: Build Directory setup
+        run: |
+          cmake -E make_directory build_osx
+          cmake -E make_directory $HOME/.cache
+          cmake -E make_directory $HOME/.cache/BRL-CAD
+
+      - name: Configure
+        run: |
+          export PATH=$GITHUB_WORKSPACE:$PATH
+          export CC=clang
+          export CXX=clang++
+          cmake -S brlcad -B build_osx -DCMAKE_BUILD_TYPE=Release -DBRLCAD_EXT_PARALLEL=1 -DBRLCAD_BEXT_CLEANUP=ON -DBRLCAD_ENABLE_QT=ON
+
+      - name: Build
+        run: |
+          make
+        working-directory: ${{ github.workspace }}/build_osx
+
+      - name: Check
+        run: |
+          make check
+        working-directory: ${{ github.workspace }}/build_osx
+
+      - name: Package
+        run: |
+          make package
+        working-directory: ${{ github.workspace }}/build_osx
+
+  linux_static:
+    name: Clang Static Analyser
+    needs: [linux_bext]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.event_name == 'schedule' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+
+     # Setup hint from https://github.com/darktable-org/rawspeed/blob/develop/.github/workflows/ci-static-analysis.yml
+      - name: Clang Static Analyzer Setup
+        run: |
+          sudo apt-get update
+          sudo apt-get install clang-18 clang-tools-18
+          # Install X/OpenGL dev pkgs
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          # Install tools
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          # Install dependency dev pkgs
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
+          # Install XCB/OpenGL dev pkgs for Qt - see:
+          # https://wiki.qt.io/Building_Qt_6_from_Git
+          # https://doc.qt.io/qt-6/linux-requirements.html
+          sudo apt-get install libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-cursor-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxcb-xinput-dev libxcb-xrm-dev libxkbcommon-dev libxkbcommon-x11-dev
+          sudo apt-get install libgl-dev
+          sudo apt-get install libinput-dev          # Cleanup
+
+      - name: Clone bext
+        run: git clone https://github.com/BRL-CAD/bext.git
+
+      - name: Get bext commit SHA
+        id: bext-sha
+        run: |
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Compute bext cache discriminator
+        id: cachekey
+        shell: bash
+        run: |
+          info="${{ steps.bext-sha.outputs.sha }}-$(uname -s)-$(uname -r)-$(gcc --version | head -n 1)"
+          echo "hash=$(echo -n "$info" | sha1sum | awk '{print $1}')" >> $GITHUB_OUTPUT
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.cachekey.outputs.hash }}
+
+      - name: Build bext (if cache miss)
+        if: steps.cache-bext.outputs.cache-hit != 'true'
+        run: |
+          cmake -E make_directory bext_build
+          cmake -S bext -B bext_build -DCMAKE_BUILD_TYPE=Release -DENABLE_ALL=ON -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/bext_output
+          cmake --build bext_build --config Release -j 2
+          cmake -E rm -rf bext
+          cmake -E rm -rf bext_build
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+
+      - name: Directory setup
+        run: |
+          cmake -E make_directory build_clangstatic
+          cmake -E make_directory $HOME/.cache
+          cmake -E make_directory $HOME/.cache/BRL-CAD
+        working-directory: ${{ github.workspace }}/brlcad
+
+      - name: Run Analyzer
+        run: |
+          export PATH=$GITHUB_WORKSPACE:/usr/share/clang/scan-build-18/bin:/usr/share/clang/scan-build-18/libexec:$PATH
+          cp $GITHUB_WORKSPACE/brlcad/misc/clang-static-analyzer-run.sh .
+          ./clang-static-analyzer-run.sh
+        working-directory: ${{ github.workspace }}/brlcad/build_clangstatic
+
+      - name: Summary
+        if: success() || failure()
+        run: |
+          sudo apt-get install html2text
+          html2text scan-reports-all/*/index.html
+        working-directory: ${{ github.workspace }}/brlcad/build_clangstatic
+
+
+  # See https://app.codecov.io/gh/BRL-CAD/brlcad for analysis results
+  linux_cov:
+    name: LCOV Coverage testing
+    needs: [linux_bext]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    if: github.event_name == 'schedule' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/check.yml') }}
+
+      - name: Setup - System
+        run: |
+          sudo apt-get update
+          # Get the lcov tool and its dependencies
+          sudo apt-get install lcov
+          # Install X/OpenGL dev pkgs
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
+          # Install tools
+          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          # Install dependency dev pkgs
+          sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
+          # Install XCB/OpenGL dev pkgs for Qt - see:
+          # https://wiki.qt.io/Building_Qt_6_from_Git
+          # https://doc.qt.io/qt-6/linux-requirements.html
+          sudo apt-get install libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-cursor-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxcb-xinput-dev libxcb-xrm-dev libxkbcommon-dev libxkbcommon-x11-dev
+          sudo apt-get install libgl-dev
+          sudo apt-get install libinput-dev
+
+      - name: Clone bext
+        run: git clone https://github.com/BRL-CAD/bext.git
+
+      - name: Get bext commit SHA
+        id: bext-sha
+        run: |
+          cd bext
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Compute bext cache discriminator
+        id: cachekey
+        shell: bash
+        run: |
+          info="${{ steps.bext-sha.outputs.sha }}-$(uname -s)-$(uname -r)-$(gcc --version | head -n 1)"
+          echo "hash=$(echo -n "$info" | sha1sum | awk '{print $1}')" >> $GITHUB_OUTPUT
+
+      - name: Cache bext build outputs
+        id: cache-bext
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/bext_output
+          key: ${{ runner.os }}-bext-${{ steps.cachekey.outputs.hash }}
+
+      - name: Build bext (if cache miss)
+        if: steps.cache-bext.outputs.cache-hit != 'true'
+        run: |
+          cmake -E make_directory bext_build
+          cmake -S bext -B bext_build -DCMAKE_BUILD_TYPE=Release -DENABLE_ALL=ON -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/bext_output
+          cmake --build bext_build --config Release -j 2
+          cmake -E rm -rf bext
+          cmake -E rm -rf bext_build
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: brlcad
+
+      - name: Directory setup
+        run: |
+          cmake -E make_directory build_lcov
+          cmake -E make_directory $HOME/.cache
+          cmake -E make_directory $HOME/.cache/BRL-CAD
+
+      - name: Configure
+        run: |
+          export PATH=$GITHUB_WORKSPACE:$PATH
+          cmake -S brlcad -B build_lcov -DBRLCAD_ENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug -DBRLCAD_EXT_DIR=${{ github.workspace }}/bext_output -DBRLCAD_ENABLE_QT=ON
+
+      - name: Build
+        run: |
+          export PATH=$GITHUB_WORKSPACE:$PATH
+          cmake --build build_lcov -j2
+
+      - name: Build (serial for diagnostics)
+        if: steps.build_parallel.outcome == 'failure'
+        run: |
+          export PATH=$GITHUB_WORKSPACE:$PATH
+          cmake --build build_lcov -j1
+        continue-on-error: true
+
+      - name: Run Coverage Test
+        run: |
+          find . -name '*.gcda' -exec rm {} \;
+          make check
+          lcov --capture --directory . --output-file coverage.info
+          lcov -r coverage.info \*\/bext_output\/\* > coverage-2.info
+          lcov -r coverage-2.info \/usr\/\* > coverage_cad.info
+          rm coverage-*.info
+          mv coverage_cad.info ..
+        working-directory: ${{ github.workspace }}/build_lcov
+
+      - name: Upload
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage_cad.info
+

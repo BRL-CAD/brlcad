@@ -421,7 +421,7 @@ editor_file_check(char *bu_editor, const char *estr, const char **elist)
 #define VIM_EDITOR "vim"
 #define VI_EDITOR "vi"
 #define WORDPAD_EDITOR "C:/Program Files/Windows NT/Accessories/wordpad.exe"
-#define YEDIT_EDITOR "yedit"
+#define BRLEDIT_EDITOR "brledit"
 
 const char *
 bu_editor(struct bu_ptbl *editor_opts, int etype, int check_for_cnt, const char **check_for_editors)
@@ -437,7 +437,7 @@ bu_editor(struct bu_ptbl *editor_opts, int etype, int check_for_cnt, const char 
 	NOTEPADPP_EDITOR, WORDPAD_EDITOR, TEXTEDIT_EDITOR, GEDIT_EDITOR, KATE_EDITOR, GTKEMACS_EDITOR, GVIM_EDITOR, NULL
     };
     const char *nongui_editor_list[] = {
-	MICRO_EDITOR, NANO_EDITOR, EMACS_EDITOR, VIM_EDITOR, VI_EDITOR, YEDIT_EDITOR, NULL
+	MICRO_EDITOR, NANO_EDITOR, EMACS_EDITOR, VIM_EDITOR, VI_EDITOR, BRLEDIT_EDITOR, NULL
     };
     if (etype == 1)
 	ncompat_list = gui_editor_list;

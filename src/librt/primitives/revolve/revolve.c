@@ -39,6 +39,7 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
+#include "../../librt_private.h"
 
 /* local interface header */
 #include "./revolve.h"

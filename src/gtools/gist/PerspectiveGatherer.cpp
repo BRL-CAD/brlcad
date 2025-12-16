@@ -84,28 +84,32 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
 
     std::string render;
     std::string cmd;
+    std::string ncpu(std::to_string(opt.getNCPU()));
+
     // setup av for rtedge since that's the majority of our work. The outliers (rt / rtwizard) will
     // reset the av to their needs
-    const char* av[20] = { NULL,    // av[0]: cmd
-                           "-s",
-                           "1024",
-                           "-W",
-                           "-R",
-                           "-a",
-                           NULL,    // av[6]: 'a' value
-                           "-e",
-                           NULL,    // av[8]: 'e' value
-                           "-c",
-                           "set bs=1",
-                           "-o",
-                           NULL,   // av[12]: output file name
+    const char* av[22] = { NULL,   // [00]: cmd
+                           "-s",   // [01]
+                           "1024", // [02]
+                           "-W",   // [03]
+                           "-R",   // [04]
+                           "-a",   // [05]
+                           NULL,   // [06]: 'a' value
+                           "-e",   // [07]
+                           NULL,   // [08]: 'e' value
+                           "-c",   // [09]
+                           "set bs=1", // [10]
+			   "-P",   // [11]
+			   ncpu.c_str(), // [12]
+                           "-o",   // [13]
+                           NULL,   // [14]: output file name
                            pathToInput.c_str(),
                            component.c_str(),
-                           NULL,   // EXTRA for other renders
-                           NULL,   // EXTRA for other renders
-                           NULL,   // EXTRA for other renders
-                           NULL,   // EXTRA for other renders
-                           NULL,   // null-termination
+                           NULL,   // [17] EXTRA for other renders
+                           NULL,   // [18] EXTRA for other renders
+                           NULL,   // [19] EXTRA for other renders
+                           NULL,   // [20] EXTRA for other renders
+                           NULL,   // [21] null-termination
                           };
 
     switch (face) {
@@ -116,8 +120,9 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[0] = cmd.c_str();
             av[6] = "0";
             av[8] = "0";
-            av[12] = outputname.c_str();
-            av[15] = NULL;
+	    av[10] = "set bs=1 draw_axes=1";
+            av[13] = outputname.c_str();
+            av[16] = NULL;
             break;
         case RIGHT:
             cmd = getCmdPath(opt.getExeDir(), "rtedge");
@@ -126,8 +131,8 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[0] = cmd.c_str();
             av[6] = "90";
             av[8] = "0";
-            av[12] = outputname.c_str();
-            av[15] = NULL;
+            av[13] = outputname.c_str();
+            av[16] = NULL;
             break;
         case BACK:
             cmd = getCmdPath(opt.getExeDir(), "rtedge");
@@ -136,8 +141,8 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[0] = cmd.c_str();
             av[6] = "180";
             av[8] = "0";
-            av[12] = outputname.c_str();
-            av[15] = NULL;
+            av[13] = outputname.c_str();
+            av[16] = NULL;
             break;
         case LEFT:
             cmd = getCmdPath(opt.getExeDir(), "rtedge");
@@ -146,8 +151,9 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[0] = cmd.c_str();
             av[6] = "270";
             av[8] = "0";
-            av[12] = outputname.c_str();
-            av[15] = NULL;
+	    av[10] = "set bs=1 draw_axes=1";
+            av[13] = outputname.c_str();
+            av[16] = NULL;
             break;
         case TOP:
             cmd = getCmdPath(opt.getExeDir(), "rtedge");
@@ -156,8 +162,9 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[0] = cmd.c_str();
             av[6] = "0";
             av[8] = "90";
-            av[12] = outputname.c_str();
-            av[15] = NULL;
+	    av[10] = "set bs=1 draw_axes=1";
+            av[13] = outputname.c_str();
+            av[16] = NULL;
             break;
         case BOTTOM:
             cmd = getCmdPath(opt.getExeDir(), "rtedge");
@@ -166,8 +173,8 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[0] = cmd.c_str();
             av[6] = "0";
             av[8] = "270";
-            av[12] = outputname.c_str();
-            av[15] = NULL;
+            av[13] = outputname.c_str();
+            av[16] = NULL;
             break;
         case DETAILED:
             cmd = getCmdPath(opt.getExeDir(), "rt");
@@ -180,12 +187,13 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[5] = "-a";  av[6] = "45";
             av[7] = "-e";  av[8] = "45";
             av[9] = "-C";  av[10] = "255/255/255";
-            av[11] = "-A"; av[12] = "1.5";
-            av[13] = "-c"; av[14] = "set ambSamples=64 ambSlow=1";
-            av[15] = "-o"; av[16] = outputname.c_str();
-            av[17] = pathToInput.c_str();
-            av[18] = component.c_str();
-            av[19] = NULL;
+            av[13] = "-A"; av[14] = "1.2";
+	    /* FIXME: this needs to be user-configurable, at least low/high quality (along with image sizes)*/
+            av[15] = "-c"; av[16] = "set ambSamples=8";
+            av[17] = "-o"; av[18] = outputname.c_str();
+            av[19] = pathToInput.c_str();
+            av[20] = component.c_str();
+            av[21] = NULL;
             break;
         case GHOST:
             cmd = getCmdPath(opt.getExeDir(), "rtwizard");
@@ -199,8 +207,9 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             av[9] = "-c";  av[10] = component.c_str();
             av[11] = "-g"; av[12] = ghost.c_str();
             av[13] = "-G"; av[14] = "10";
-            av[15] = "-o"; av[16] = outputname.c_str();
-            av[17] = NULL;
+            av[15] = "--cpu-count"; av[16] = ncpu.c_str();
+            av[17] = "-o"; av[18] = outputname.c_str();
+            av[19] = NULL;
             break;
         default:
             /* how'd we get here? */

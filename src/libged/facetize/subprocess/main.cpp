@@ -35,6 +35,7 @@
 #include "bu/app.h"
 #include "bu/env.h"
 #include "bu/opt.h"
+#include "bg/trimesh.h"
 #include "rt/primitives/bot.h"
 #include "ged.h"
 #define TESS_OPTS_IMPLEMENTATION
@@ -158,13 +159,17 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 	    // Plate mode BoTs need an explicit volume representation
 	    if (propVal == RT_BOT_PLATE || propVal == RT_BOT_PLATE_NOCOS) {
 		bu_vls_sprintf(method_flag, "PLATE");
-		return rt_bot_plate_to_vol(obot, bot, 0, 1);
+		fastf_t bot_area = bg_trimesh_area(bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices);
+		return rt_bot_plate_to_vol(obot, bot, 0, 1, 0.1*bot_area, 0.2);
 	    }
 	    // Volumetric bot - if it can be manifold we're good, but if
 	    // not we need to try and repair it.
 	    if (!bot_is_manifold(bot)) {
 		// Nope - try repairing
 		struct rt_bot_repair_info settings = RT_BOT_REPAIR_INFO_INIT;
+		// We're aggressive preparing facetize inputs, since non-lint-passing
+		// "repairs" may still be enough to allow booleans to succeed.
+		settings.strict = 0;
 		bu_vls_sprintf(method_flag, "REPAIR");
 		ret = rt_bot_repair(obot, bot, &settings);
 	    } else {
@@ -172,22 +177,6 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 		*obot = NULL;
 		return BRLCAD_OK;
 	    }
-	case ID_DSP:
-	    // TODO - need to create a Triangulated Irregular Network for these - the
-	    // current NMG routine apparently fails even on the sample terra.g solid.
-	    //
-	    // Would be VERY interesting to try and port the following code to
-	    // work with DSP data:
-	    // http://mgarland.org/software/terra.html
-	    // http://mgarland.org/software/scape.html
-	    //
-	    // Note that the CM methodology actually seems to succeed fairly
-	    // well and quickly with terra.g, so it might be worth defaulting
-	    // the tessellate call in the parent facetize command to just using
-	    // CM for dsp objects rather than trying the long and unsuccessful
-	    // NMG algorithm.  We need to allow all the various methods to have a crack
-	    // at the data here - unlike ID_PNTS, in THEORY nmg should successfully
-	    // produce output, so there's no justification for disabling it.
 	case ID_BREP:
 	    // TODO - need to handle plate mode NURBS the way we handle plate mode BoTs
 	default:

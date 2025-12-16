@@ -266,7 +266,6 @@ _bot_cmd_subd(void* bs, int argc, const char** argv)
     struct _ged_bot_info* gb = (struct _ged_bot_info*)bs;
     struct ged* gedp = gb->gedp;
     struct db_i *dbip = gedp->dbip;
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     const char* usage_string = "bot [options] subd [subd_options] <objname> [output_name]";
     const char* purpose_string = "Subdivide the BoT; default algorithm is Loop";
@@ -294,6 +293,8 @@ _bot_cmd_subd(void* bs, int argc, const char** argv)
 	subd_usage(gedp->ged_result_str, "bot subd", d);
 	return GED_HELP;
     }
+
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;

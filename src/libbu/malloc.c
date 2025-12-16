@@ -276,14 +276,6 @@ bu_realloc(register void *ptr, size_t siz, const char *str)
 }
 
 
-void
-bu_prmem(const char *str)
-{
-    fprintf(stderr, "bu_prmem: no op\n");
-    fprintf(stderr, "bu_prmem: str=%s\n", str);
-}
-
-
 size_t
 bu_malloc_len_roundup(register size_t nbytes)
 {
@@ -310,23 +302,6 @@ bu_malloc_len_roundup(register size_t nbytes)
     }
     return amt-OVERHEAD-sizeof(size_t);
 #endif
-}
-
-
-void
-bu_ck_malloc_ptr(void *ptr, const char *str)
-{
-    if (UNLIKELY(ptr == (char *)NULL)) {
-	fprintf(stderr, "bu_ck_malloc_ptr(%p, %s) null pointer\n\n", ptr, str);
-	bu_bomb("Goodbye");
-    }
-}
-
-
-int
-bu_mem_barriercheck(void)
-{
-    return 0;
 }
 
 

@@ -76,7 +76,7 @@ bool_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *
     if (RT_G_DEBUG&RT_DEBUG_PARTITION) {
 	bu_log(
 	    "bool_weave0seg:  Zero thickness seg: %s (%.18e, %.18e) %d, %d\n",
-	    segp->seg_stp->st_name,
+	    segp->seg_stp ? segp->seg_stp->st_name : "unnamed",
 	    segp->seg_in.hit_dist,
 	    segp->seg_out.hit_dist,
 	    segp->seg_in.hit_surfno,
@@ -154,12 +154,11 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
     register fastf_t tol_dist;
 
     RT_CK_PT_HD(PartHdp);
-
-    tol_dist = rtip->rti_tol.dist;
-
     RT_CK_RTI(ap->a_rt_i);
     RT_CK_RESOURCE(res);
     RT_CK_RTI(rtip);
+
+    tol_dist = rtip->rti_tol.dist;
 
     if (RT_G_DEBUG&RT_DEBUG_PARTITION) {
 	bu_log("In rt_boolweave, tol_dist = %g\n", tol_dist);
@@ -170,14 +169,13 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	register struct partition *newpp = PT_NULL;
 	register struct seg *lastseg = RT_SEG_NULL;
 	register struct hit *lasthit = HIT_NULL;
+	register struct soltab *stp = NULL;
 	int lastflip = 0;
 
 	segp = BU_LIST_FIRST(seg, &(in_hd->l));
 	RT_CHECK_SEG(segp);
 	RT_CK_HIT(&(segp->seg_in));
-	RT_CK_RAY(segp->seg_in.hit_rayp);
 	RT_CK_HIT(&(segp->seg_out));
-	RT_CK_RAY(segp->seg_out.hit_rayp);
 	if (RT_G_DEBUG&RT_DEBUG_PARTITION) {
 	    point_t pt;
 
@@ -194,8 +192,12 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    VPRINT(" OPoint", pt);
 	    bu_log("***********\n");
 	}
-	if ((size_t)segp->seg_stp->st_bit >= rtip->nsolids)
-	    bu_bomb("rt_boolweave: st_bit");
+	stp = segp->seg_stp;
+	if (stp)
+	    RT_CK_SOLTAB(stp);
+
+	if (stp && (size_t)stp->st_bit >= rtip->nsolids)
+	    bu_bomb("rt_boolweave: st_bit greater than nsolids");
 
 	BU_LIST_DEQUEUE(&(segp->l));
 	BU_LIST_INSERT(&(out_hd->l), &(segp->l));
@@ -210,13 +212,13 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	if (segp->seg_out.hit_dist < -10.0)
 	    continue;
 
-	if (segp->seg_stp->st_aradius < INFINITY &&
-	    !(segp->seg_in.hit_dist >= -INFINITY &&
-	      segp->seg_out.hit_dist <= INFINITY)) {
+	/* make sure we don't have infinite hits on non-infinite solids */
+	if ((stp && stp->st_aradius < INFINITY) &&
+	    !(segp->seg_in.hit_dist >= -INFINITY && segp->seg_out.hit_dist <= INFINITY)) {
 	    if (RT_G_DEBUG&RT_DEBUG_PARTITION) {
 		bu_log("rt_boolweave:  Defective %s segment %s (%.18e, %.18e) %d, %d\n",
-		       OBJ[segp->seg_stp->st_id].ft_name,
-		       segp->seg_stp->st_name,
+		       OBJ[stp->st_id].ft_name,
+		       stp->st_name,
 		       segp->seg_in.hit_dist,
 		       segp->seg_out.hit_dist,
 		       segp->seg_in.hit_surfno,
@@ -224,11 +226,13 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    }
 	    continue;
 	}
+
+	/* make sure in/out book-keeping is in order */
 	if (segp->seg_in.hit_dist > segp->seg_out.hit_dist) {
 	    if (RT_G_DEBUG&RT_DEBUG_PARTITION) {
 		bu_log("rt_boolweave:  Inside-out %s segment %s (%.18e, %.18e) %d, %d\n",
-		       OBJ[segp->seg_stp->st_id].ft_name,
-		       segp->seg_stp->st_name,
+		       stp ? OBJ[stp->st_id].ft_name : "no-object",
+		       stp ? stp->st_name : "unnamed",
 		       segp->seg_in.hit_dist,
 		       segp->seg_out.hit_dist,
 		       segp->seg_in.hit_surfno,

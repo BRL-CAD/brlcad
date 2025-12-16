@@ -2420,7 +2420,8 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
     }
 
     tree *result;
-    RT_GET_TREE(result, tree_state->ts_resp);
+    BU_GET(result, union tree);
+    RT_TREE_INIT(result);
     result->tr_op = OP_NOP;
     return result;
 }

@@ -1,6 +1,7 @@
-brlcad_find_package(MANIFOLD REQUIRED)
+find_package_eigen(REQUIRED)
+brlcad_find_package(manifold REQUIRED)
 
-set(BOT_LIBS libged libbg libbu ${MANIFOLD_LIBRARIES})
+set(BOT_LIBS libged libbg libbu manifold::manifold)
 
 brlcad_find_package(Geogram REQUIRED SYSPATTERN geogram)
 set(BOT_LOCAL_INCLUDE_DIRS ${BOT_LOCAL_INCLUDE_DIRS} ${Geogram_INCLUDE_DIR})
@@ -64,10 +65,16 @@ ged_plugin_library(ged-bot ${BOT_SRCS})
 target_include_directories(
   ged-bot
   BEFORE
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${MANIFOLD_INCLUDE_DIRS} ${BRLCAD_SOURCE_DIR}/src/libbu
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${EIGEN3_INCLUDE_DIR} ${BRLCAD_SOURCE_DIR}/src/libbu
   ) # for fort.h
 target_include_directories(ged-bot SYSTEM PRIVATE ${BOT_LOCAL_INCLUDE_DIRS})
 target_link_libraries(ged-bot ${BOT_LIBS})
+
+# altivec vectorization is broken in our bundled version of eigen.
+# looks like it was fixed in upstream long time ago, so just disable
+# for now.  TODO: remove this / retest after next Eigen upgrade.
+set_property(TARGET ged-bot APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
+
 
 cmakefiles(
   CMakeLists.txt

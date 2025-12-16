@@ -471,7 +471,16 @@ if(BRLCAD_ENABLE_STEP)
     ${CMAKE_SOURCE_DIR}/src/libbrep # for PullbackCurve.h
   )
 
+  # We have the PRECOMILE_HEADER that includes the generated stepcode
+  # outputs - add our fixed headers as well:
+  foreach(header ${stepg_HDRS})
+    # Use relative include for portability
+    get_filename_component(header_name "${header}" NAME)
+    file(APPEND "${PRECOMPILE_HEADER}" "#include \"${header_name}\"\n")
+  endforeach()
+
   brlcad_addexec(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT FOLDER Conv)
+  target_precompile_headers(step-g PRIVATE "${PRECOMPILE_HEADER}")
   target_include_directories(step-g BEFORE PRIVATE ${AP203_INCLUDE_DIRS})
   add_dependencies(step-g step-express-${SCHEMA_NAME}-stepg)
   set_property(TARGET step-g APPEND PROPERTY INCLUDE_DIRECTORIES "${stepg_SCHEMA_OUT_DIR}")

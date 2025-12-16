@@ -29,7 +29,7 @@ if(NOT BRLCAD_COMPONENTS)
 endif(NOT BRLCAD_COMPONENTS)
 
 if(TARGET libanalyze)
-  set(density_DATAFILES GQA_SAMPLE_DENSITIES NIST_DENSITIES)
+  set(density_DATAFILES GQA_SAMPLE_DENSITIES EXAMPLE_DENSITIES)
   brlcad_adddata(density_DATAFILES data)
 endif(TARGET libanalyze)
 
@@ -55,7 +55,7 @@ endif(NOT BRLCAD_COMPONENTS)
 if(TARGET mged)
   # add_subdirectory(bugs)
   include(ExternalProject)
-  set(BUGS_DIR ${CMAKE_CURRENT_BINARY_DIR}/bugs)
+  set(BUGS_DIR ${CMAKE_CURRENT_BINARY_DIR}/bugs_out)
 
   ExternalProject_Add(BrlcadBugs
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bugs
@@ -69,6 +69,10 @@ if(TARGET mged)
     COMMAND ${CMAKE_CTEST_COMMAND} --test-dir ${BUGS_DIR}
     DEPENDS BUGS
   )
+  set_target_properties(bugs PROPERTIES FOLDER "BRL-CAD Tests")
+
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/BrlcadBugs-prefix")
+  distclean("${BUGS_DIR}")
 endif(TARGET mged)
 
 

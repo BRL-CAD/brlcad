@@ -15,9 +15,9 @@ if ! test -f "$db" ; then
     exit 2
 fi
 
-BASE="`basename $db`"
+BASE="`basename $db`_${obj}"
 
-DIR="pametric_demo/$BASE"
+DIR="pametric_demo/${BASE}"
 if ! test -d "$DIR" ; then
     echo "Creating $DIR"
     mkdir -p "$DIR"
@@ -50,7 +50,7 @@ render ( ) {
     # gz=2.54 # 0.1 inch
     
     # render rtedge
-    # echo rtedge -R -W -a $az -e $el -g$gz -o "$pix" "$db" "$obj"
+    echo "rtedge -R -W -a $az -e $el -g$gz -o \"$pix\" \"$db\" \"$obj\" > \"$log\" 2>&1"
     rtedge -R -W -a $az -e $el -g$gz -o "$pix" "$db" "$obj" > "$log" 2>&1
 
     sz="`grep Grid: $log | awk '{print $5,$6}' | tr -d ',()'`"
@@ -71,6 +71,7 @@ render ( ) {
 
     # render rtwizard
     # --viewsize `echo 2k $vsize 1.5 / p | dc`
+    echo "rtwizard -i \"$db\" -o \"$rtwpix\" -w $width -n $height -g \"$obj\" -l \"$obj\" -G 1 --viewsize $vsize --orientation $orient --eye_pt $eye --line-color 255/0/0 -C 0/0/255 > $rtwlog 2>&1"
     rtwizard -i "$db" -o "$rtwpix" -w $width -n $height -g "$obj" -l "$obj" -G 1 --viewsize $vsize --orientation $orient --eye_pt $eye --line-color 255/0/0 -C 0/0/255 > $rtwlog 2>&1
     # rtwizard -i "$db" -o "$rtwpix" -s 1024 -g "$obj" -l "$obj" -G 1 --viewsize $vsize --orientation $orient --eye_pt $eye --line-color 255/0/0 -C 0/0/255 > $rtwlog 2>&1
 
@@ -120,6 +121,7 @@ for az in 0 90 180 270 ; do
     render "$db" "$obj" "$az" 0
 done
 render "$db" "$obj" 0 90
+render "$db" "$obj" 35 25
 
 rtw="${DIR}/${BASE}.35-25.rtw.pix"
 rm -f $rtw
@@ -142,29 +144,30 @@ echo ""
 # how much longer does it take to clean edges
 factor=2
 hard_factored="`echo 10k $TOTAL_HARD $factor \* p | dc`"
-echo "Difficulty factored: $hard_factored"
+echo "Hard factored: $hard_factored"
+hard_pct="`echo 10k $TOTAL_HARD $TOTAL / 100 \* p | dc`"
+printf "Hard percent: %.1f %%\n" $hard_pct
 
 # let's say it's 1 minute per square foot.
 # assumes we're misrepresenting surface area with presented area by about 10x.
 sqmm_to_sqft=929030
 
-# total time estimate
-hardness_est="`echo 10k $hard_factored $TOTAL_EASY + $sqmm_to_sqft / p | dc`"
-printf "Difficulty metric: %.1f\n" $hardness_est
-hardness_pct="`echo 10k $TOTAL_HARD $TOTAL / 100 \* p | dc`"
-printf "It's %.1f %% hard\n" $hardness_pct
-time_est="`echo 2k $hardness_est 60 / p | dc`"
+# total time estimate = ((hard_area * factor) + easy_area) / cleaning_rate
+# total time estimate = ((hard_area * 2) + easy_area) / 60
+difficulty_est="`echo 10k $hard_factored $TOTAL_EASY + $sqmm_to_sqft / p | dc`"
+printf "Difficulty metric: %.1f\n" $difficulty_est
+time_est="`echo 2k $difficulty_est 60 / p | dc`"
 echo "Time: $time_est hour(s)"
-
-render "$db" "$obj" 35 25
 
 out="${BASE}_montage.png"
 outpre="$out.pre.png"
 rm -f $out $outpre
 
+echo "montage -geometry 1024x1024 \"${DIR}/${BASE}.*rtw*.png\" $outpre"
 montage -geometry 1024x1024 "${DIR}/${BASE}.*rtw*.png" $outpre
 
-metric=`printf %.0f $hardness_est`
-percent=`printf %.1f $hardness_pct`
-convert -pointsize 80 -undercolor '#00000080' -fill white -gravity center -annotate +00+100 "\ \ Summary: $metric complexity metric ($percent\% hard)  \n  Cleanup Estimate: $time_est hours  " $outpre -gravity south $out
+metric=`printf %.0f $difficulty_est`
+percent=`printf %.1f $hard_pct`
+echo "convert -pointsize 80 -undercolor '#00000080' -fill white -gravity center -annotate +00+50 \"\\ \\ Summary: $metric complexity metric ($percent\\% hard)  \" -annotate +00+140 \"  Cleanup Estimate: $time_est hours  \" $outpre -gravity south $out"
+convert -pointsize 80 -undercolor '#00000080' -fill white -gravity center -annotate +00+50 "\ \ Summary: $metric complexity metric ($percent\% hard)  " -annotate +00+140 "  Cleanup Estimate: $time_est hours  " $outpre -gravity south $out
 

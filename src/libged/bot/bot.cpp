@@ -48,6 +48,7 @@ extern "C" {
 #include "bu/color.h"
 #include "bu/opt.h"
 #include "bg/chull.h"
+#include "bg/pca.h"
 #include "bg/trimesh.h"
 #include "rt/geom.h"
 #include "wdb.h"
@@ -723,6 +724,108 @@ _bot_cmd_plot(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+// bg_fit_plane uses this underlying math, but will only return the center
+// point and normal vector.  We want all the axis vectors for the coordinate
+// system, so we do the SVD calculation here.
+//
+// Probably this could (and should) be a libbg function that isn't specific to
+// BoTs, but doing it here for testing purposes.
+extern "C" int
+_bot_cmd_pca(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "bot pca <objname> [output_name]";
+    const char *purpose_string = "Calculate Principle Component Analysis for BoT";
+    if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    argc--; argv++;
+
+    struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
+    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
+    }
+
+    argc--; argv++;
+
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+    point_t *vp = (point_t *)bot->vertices;
+
+    // Find the center point
+    point_t center = VINIT_ZERO;
+    vect_t xaxis, yaxis, zaxis;
+
+    if (bg_pca(&center, &xaxis, &yaxis, &zaxis, bot->num_vertices, vp) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+
+    bu_log("X axis:  %g %g %g\n", V3ARGS(xaxis));
+    bu_log("Y axis:  %g %g %g\n", V3ARGS(yaxis));
+    bu_log("Z axis:  %g %g %g\n", V3ARGS(zaxis));
+
+    // Do what ETO prep does to set up a BRL-CAD rotation matrix
+    mat_t R, T, RT;
+    // Rotation
+    MAT_IDN(R);
+    VMOVE(&R[0], xaxis);
+    VMOVE(&R[4], yaxis);
+    VMOVE(&R[8], zaxis);
+    // Translation
+    MAT_IDN(T);
+    MAT_DELTAS_VEC_NEG(T, center);
+    // Combine
+    bn_mat_mul(RT, R, T);
+    bn_mat_print("Rotation & Translation matrix", RT);
+
+    if (!argc)
+	return BRLCAD_OK;
+
+    // We have another arg - make a relocated copy of the input BoT.
+    // First, validate there is no output name collision
+    struct directory *dp = db_lookup(gb->gedp->dbip, argv[0], LOOKUP_QUIET);
+    if (dp != RT_DIR_NULL) {
+	bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists in the database - not writing\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_bot_internal *moved_bot = rt_bot_dup(bot);
+    for (size_t i = 0; i < moved_bot->num_vertices; i++) {
+	// Set up a vect_t from the BoT vertex array
+	vect_t v1;
+	VMOVE(v1, &moved_bot->vertices[i*3]);
+	// Apply matrix to the vect_t
+	vect_t v2;
+	MAT4X3PNT(v2, RT, v1);
+	// Put the new vertex position back in in the moved_bot vertex array
+	VMOVE(&moved_bot->vertices[i*3], v2);
+    }
+
+    // Validate output name doesn't collide
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_BOT;
+    intern.idb_meth = &OBJ[ID_BOT];
+    intern.idb_ptr = (void *)moved_bot;
+
+    dp = db_diradd(gb->gedp->dbip, argv[0], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+    if (dp == RT_DIR_NULL) {
+	bu_vls_printf(gb->gedp->ged_result_str, "Cannot add %s to directory\n", argv[0]);
+	rt_bot_internal_free(moved_bot);
+	BU_PUT(moved_bot, struct rt_bot_internal);
+	rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
+    if (rt_db_put_internal(dp, gb->gedp->dbip, &intern, &rt_uniresource) < 0) {
+	bu_vls_printf(gb->gedp->ged_result_str, "Failed to write %s to database\n", argv[0]);
+	rt_bot_internal_free(moved_bot);
+	BU_PUT(moved_bot, struct rt_bot_internal);
+	rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
 extern "C" int
 _bot_cmd_split(void *bs, int argc, const char **argv)
 {
@@ -1063,6 +1166,7 @@ const struct bu_cmdtab _bot_cmds[] = {
     { "flip",       _bot_cmd_flip},
     { "get",        _bot_cmd_get},
     { "isect",      _bot_cmd_isect},
+    { "pca",        _bot_cmd_pca},
     { "plot",       _bot_cmd_plot},
     { "remesh",     _bot_cmd_remesh},
     { "repair",     _bot_cmd_repair},
@@ -1199,7 +1303,6 @@ bot_cleanup:
     }
     return ret;
 }
-
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"

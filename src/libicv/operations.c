@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include <math.h>
+#include <string.h>
 
 #include "icv.h"
 
@@ -35,7 +36,6 @@
 #include "bu/malloc.h"
 #include "bn/tol.h"
 #include "vmath.h"
-
 
 int icv_sanitize(icv_image_t* img)
 {

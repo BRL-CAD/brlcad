@@ -35,30 +35,46 @@
 
 #include "./edit_private.h"
 
+void
+edit_abs_tra(struct rt_edit *s, vect_t view_pos)
+{
+    vect_t model_pos;
+    vect_t ea_view_pos;
+    vect_t diff;
+    fastf_t inv_Viewscale = 1/s->vp->gv_scale;
+
+    MAT4X3PNT(model_pos, s->vp->gv_view2model, view_pos);
+    VSUB2(diff, model_pos, s->e_axes_pos);
+    VSCALE(s->k.tra_m_abs, diff, inv_Viewscale);
+    VMOVE(s->k.tra_m_abs_last, s->k.tra_m_abs);
+
+    MAT4X3PNT(ea_view_pos, s->vp->gv_model2view, s->e_axes_pos);
+    VSUB2(s->k.tra_v_abs, view_pos, ea_view_pos);
+    VMOVE(s->k.tra_v_abs_last, s->k.tra_v_abs);
+}
 
 const char *
-rt_solid_edit_generic_keypoint(
+edit_keypoint(
 	point_t *pt,
 	const char *keystr,
 	const mat_t mat,
-	struct rt_solid_edit *s,
+	struct rt_edit *s,
 	const struct bn_tol *tol)
 {
     struct rt_db_internal *ip = &s->es_int;
-    static const char *vert_str = "V";
     const char *strp = OBJ[ip->idb_type].ft_keypoint(pt, keystr, mat, ip, tol);
-    if (strp)
+    if (!strp) {
+	static const char *vert_str = "V";
 	strp = OBJ[ip->idb_type].ft_keypoint(pt, vert_str, mat, ip, tol);
+    }
     return strp;
 }
 
 int
-rt_solid_edit_generic_sscale(
-	struct rt_solid_edit *s,
-	struct rt_db_internal *ip
-	)
+edit_sscale(struct rt_edit *s)
 {
     mat_t mat, mat1, scalemat;
+    struct rt_db_internal *ip = &s->es_int;
 
     if (s->e_inpara > 1) {
 	bu_vls_printf(s->log_str, "ERROR: only one argument needed\n");
@@ -85,14 +101,12 @@ rt_solid_edit_generic_sscale(
 }
 
 void
-rt_solid_edit_generic_strans(
-	struct rt_solid_edit *s,
-	struct rt_db_internal *ip
-	)
+edit_stra(struct rt_edit *s)
 {
     mat_t mat;
     static vect_t work;
     vect_t delta;
+    struct rt_db_internal *ip = &s->es_int;
 
     if (s->e_inpara) {
 	/* Need vector from current vertex/keypoint
@@ -126,14 +140,12 @@ rt_solid_edit_generic_strans(
 }
 
 void
-rt_solid_edit_generic_srot(
-	struct rt_solid_edit *s,
-	struct rt_db_internal *ip
-	)
+edit_srot(struct rt_edit *s)
 {
     static vect_t work;
     point_t rot_point;
     mat_t mat, mat1, edit;
+    struct rt_db_internal *ip = &s->es_int;
 
     if (s->e_inpara) {
 	static mat_t invsolr;
@@ -202,18 +214,18 @@ rt_solid_edit_generic_srot(
 }
 
 int
-rt_solid_edit_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol)
+edit_menu_str(struct bu_vls *mstr, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     if (!mstr || !ip)
 	return BRLCAD_ERROR;
 
-    struct rt_solid_edit_menu_item *mip = NULL;
+    struct rt_edit_menu_item *mip = NULL;
 
     if (EDOBJ[ip->idb_type].ft_menu_item)
 	mip = (*EDOBJ[ip->idb_type].ft_menu_item)(tol);
 
     if (!mip)
-       return BRLCAD_OK;
+	return BRLCAD_OK;
 
     /* title */
     bu_vls_printf(mstr, " {{%s} {}}", mip->menu_string);
@@ -225,30 +237,90 @@ rt_solid_edit_generic_menu_str(struct bu_vls *mstr, const struct rt_db_internal 
 }
 
 int
-rt_solid_edit_generic_edit(
-	struct rt_solid_edit *s
+edit_generic(
+	struct rt_edit *s
 	)
 {
+    if (!s)
+	return BRLCAD_ERROR;
+
+    struct rt_db_internal *ip = &s->es_int;
+    bu_clbk_t f = NULL;
+    void *d = NULL;
+
+    // If matrix ops are specified via parameter edits rather than mouse
+    // motions (which is how this function would get called for those types of
+    // edit ops) we need to set up the parameters to be fed into the xy
+    // versions.  (When a param argument is fed in for one of the matrix edit
+    // ops, it amounts to a manual specification of what would otherwise be XY
+    // mouse inputs.)
+    vect_t mousevec = VINIT_ZERO;  /* float pt -1..+1 mouse pos vect */
+    vect_t pos_view = VINIT_ZERO;
+
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    rt_solid_edit_generic_sscale(s, &s->es_int);
-	    break;
-	case RT_SOLID_EDIT_TRANS:
+	    edit_sscale(s);
+	    return BRLCAD_OK;
+	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
-	    rt_solid_edit_generic_strans(s, &s->es_int);
-	    break;
-	case RT_SOLID_EDIT_ROT:
+	    edit_stra(s);
+	    return BRLCAD_OK;
+	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
-	    rt_solid_edit_generic_srot(s, &s->es_int);
-	    break;
+	    edit_srot(s);
+	    return BRLCAD_OK;
+	case RT_MATRIX_EDIT_SCALE:
+	case RT_MATRIX_EDIT_SCALE_X:
+	case RT_MATRIX_EDIT_SCALE_Y:
+	case RT_MATRIX_EDIT_SCALE_Z:
+	    // Scale only takes one parameter, and uses the Y mousevec position
+	    mousevec[Y] =  s->e_para[0] * INV_BV;
+	    edit_mscale_xy(s, mousevec);
+	    return BRLCAD_OK;
+	case RT_MATRIX_EDIT_TRANS_VIEW_XY:
+	    // XY translation takes two parameters
+	    mousevec[X] =  s->e_para[0] * INV_BV;
+	    mousevec[Y] =  s->e_para[1] * INV_BV;
+	    edit_tra_xy(&pos_view, s, mousevec);
+	    edit_abs_tra(s, pos_view);
+	    return BRLCAD_OK;
+	case RT_MATRIX_EDIT_TRANS_VIEW_X:
+	    // X-only translation takes one parameter
+	    mousevec[X] =  s->e_para[0] * INV_BV;
+	    edit_tra_xy(&pos_view, s, mousevec);
+	    edit_abs_tra(s, pos_view);
+	    return BRLCAD_OK;
+	case RT_MATRIX_EDIT_TRANS_VIEW_Y:
+	    // Y-only translation takes one parameter
+	    mousevec[Y] =  s->e_para[0] * INV_BV;
+	    edit_tra_xy(&pos_view, s, mousevec);
+	    edit_abs_tra(s, pos_view);
+	    return BRLCAD_OK;
+	case RT_MATRIX_EDIT_ROT:
+	    // TODO - I think this may need to define a knob call?  check with main MGED implementation
+	    bu_vls_printf(s->log_str, "XY rotation editing setup unimplemented\n");
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
+	    return BRLCAD_ERROR;
+	default:
+	    // Primitives should handle their specific editing cases before calling the generic function - if
+	    // we got here, something isn't right
+	    bu_vls_printf(s->log_str, "%s: edit ID is not a generic edit: %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
+	    return BRLCAD_ERROR;
     }
-    return 0;
+
+    // Shouldn't get here
+    return BRLCAD_ERROR;
 }
 
 void
-rt_solid_edit_generic_sscale_xy(
-	struct rt_solid_edit *s,
+edit_sscale_xy(
+	struct rt_edit *s,
 	const vect_t mousevec
 	)
 {
@@ -261,9 +333,9 @@ rt_solid_edit_generic_sscale_xy(
     /* accumulate scale factor */
     s->acc_sc_sol *= s->es_scale;
 
-    s->edit_absolute_scale = s->acc_sc_sol - 1.0;
-    if (s->edit_absolute_scale > 0)
-	s->edit_absolute_scale /= 3.0;
+    s->k.sca_abs = s->acc_sc_sol - 1.0;
+    if (s->k.sca_abs > 0)
+	s->k.sca_abs /= 3.0;
 }
 
 /*
@@ -274,8 +346,8 @@ rt_solid_edit_generic_sscale_xy(
  * Then move keypoint there.
  */
 void
-rt_solid_edit_generic_strans_xy(vect_t *pos_view,
-	struct rt_solid_edit *s,
+edit_stra_xy(vect_t *pos_view,
+	struct rt_edit *s,
 	const vect_t mousevec
 	)
 {
@@ -303,35 +375,205 @@ rt_solid_edit_generic_strans_xy(vect_t *pos_view,
 	(*OBJ[ip->idb_type].ft_mat)(ip, mat, ip);
 }
 
-int
-rt_solid_edit_generic_edit_xy(
-	struct rt_solid_edit *s,
+void
+edit_mscale_xy(
+	struct rt_edit *s,
 	const vect_t mousevec
 	)
 {
+    fastf_t scale = 1.0;
+    mat_t incr_mat;
+    MAT_IDN(incr_mat);
+
+    // The Y mousevec value is always what determines the scale,
+    // regardless of whether we're doing a uniform, X, Y or Z
+    // scale operation.
+    scale = 1.0 + (fastf_t)(mousevec[Y]>0 ? mousevec[Y] : -mousevec[Y]);
+    if (mousevec[Y] <= 0)
+	scale = 1.0 / scale;
+
+    /* switch depending on scaling option selected */
+    switch (s->edit_flag) {
+
+	case RT_MATRIX_EDIT_SCALE:
+	    /* global scaling */
+	    incr_mat[15] = 1.0 / scale;
+
+	    s->acc_sc_obj /= incr_mat[15];
+	    s->k.sca_abs = s->acc_sc_obj - 1.0;
+	    if (s->k.sca_abs > 0.0)
+		s->k.sca_abs /= 3.0;
+	    break;
+
+	case RT_MATRIX_EDIT_SCALE_X:
+	    /* local scaling ... X-axis */
+	    incr_mat[0] = scale;
+	    /* accumulate the scale factor */
+	    s->acc_sc[0] *= scale;
+	    s->k.sca_abs = s->acc_sc[0] - 1.0;
+	    if (s->k.sca_abs > 0.0)
+		s->k.sca_abs /= 3.0;
+	    break;
+
+	case RT_MATRIX_EDIT_SCALE_Y:
+	    /* local scaling ... Y-axis */
+	    incr_mat[5] = scale;
+	    /* accumulate the scale factor */
+	    s->acc_sc[1] *= scale;
+	    s->k.sca_abs = s->acc_sc[1] - 1.0;
+	    if (s->k.sca_abs > 0.0)
+		s->k.sca_abs /= 3.0;
+	    break;
+
+	case RT_MATRIX_EDIT_SCALE_Z:
+	    /* local scaling ... Z-axis */
+	    incr_mat[10] = scale;
+	    /* accumulate the scale factor */
+	    s->acc_sc[2] *= scale;
+	    s->k.sca_abs = s->acc_sc[2] - 1.0;
+	    if (s->k.sca_abs > 0.0)
+		s->k.sca_abs /= 3.0;
+	    break;
+
+	default:
+	    bu_log("mscale_xy: incorrect matrix edit flag supplied: %d\n", s->edit_flag);
+	    return;
+    }
+
+    mat_t t;
+    vect_t pos_model;
+    VMOVE(t, s->e_keypoint);
+    MAT4X3PNT(pos_model, s->model_changes, t);
+
+    /* Have scaling take place with respect to keypoint, NOT the view
+     * center.  model_changes is the matrix that will ultimately be used to
+     * alter the geometry on disk. */
+    mat_t out;
+    VMOVE(t, s->e_keypoint);
+    bn_mat_xform_about_pnt(t, incr_mat, pos_model);
+    bn_mat_mul(out, t, s->model_changes);
+    MAT_COPY(s->model_changes, out);
+}
+
+void
+edit_tra_xy(vect_t *pos_view,
+	struct rt_edit *s,
+	const vect_t mousevec
+	)
+{
+    mat_t incr_mat;
+    MAT_IDN(incr_mat);
+
+    vect_t temp, pos_model;
+
+    /* Vector from object keypoint to cursor - need to incorporate
+     * any current model2objview updates.
+     *
+     * NOTE!  If an application switches views during the same edit operation,
+     * it is the responsibility of the application to calculate and set the
+     * appropriate model2objview matrix.  The librt code will maintain the
+     * matrix as long as the solid edit processing is not switching views, but
+     * if the editing view changes there is no way for the library itself to
+     * know what happened. */
+    VMOVE(temp, s->e_keypoint);
+    MAT4X3PNT(*pos_view, s->model2objview, temp);
+
+    switch (s->edit_flag) {
+	case RT_MATRIX_EDIT_TRANS_VIEW_X:
+	    (*pos_view)[X] = mousevec[X];
+	    break;
+	case RT_MATRIX_EDIT_TRANS_VIEW_Y:
+	    (*pos_view)[Y] = mousevec[Y];
+	    break;
+	default:
+	    (*pos_view)[X] = mousevec[X];
+	    (*pos_view)[Y] = mousevec[Y];
+    }
+
+    MAT4X3PNT(pos_model, s->vp->gv_view2model, *pos_view);/* NOT objview */
+
+    edit_mtra(s, pos_model);
+}
+
+void
+edit_mtra(
+	struct rt_edit *s,
+	const vect_t pos_model
+	)
+{
+    mat_t incr_mat;
+    MAT_IDN(incr_mat);
+    mat_t oldchanges;  // tmp matrix
+    vect_t temp, tr_temp;
+
+    VMOVE(temp, s->e_keypoint);
+    MAT4X3PNT(tr_temp, s->model_changes, temp);
+    VSUB2(tr_temp, pos_model, tr_temp);
+    MAT_DELTAS_VEC(incr_mat, tr_temp);
+    MAT_COPY(oldchanges, s->model_changes);
+    bn_mat_mul(s->model_changes, incr_mat, oldchanges);
+}
+
+int
+edit_generic_xy(
+	struct rt_edit *s,
+	const vect_t mousevec
+	)
+{
+    if (!s)
+	return BRLCAD_ERROR;
+
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     struct rt_db_internal *ip = &s->es_int;
     bu_clbk_t f = NULL;
     void *d = NULL;
 
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
-	    rt_solid_edit_generic_sscale_xy(s, mousevec);
-	    return 0;
-	case RT_SOLID_EDIT_TRANS:
-	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
-	    break;
+	case RT_PARAMS_EDIT_SCALE:
+	    edit_sscale_xy(s, mousevec);
+	    return BRLCAD_OK;
+	case RT_PARAMS_EDIT_TRANS:
+	    edit_stra_xy(&pos_view, s, mousevec);
+	    edit_abs_tra(s, pos_view);
+	    return BRLCAD_OK;
+	case RT_PARAMS_EDIT_ROT:
+	    // TODO - I think this may need to define a knob call?  check with main MGED implementation
+	    bu_vls_printf(s->log_str, "XY rotation editing setup unimplemented\n");
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
+	    return BRLCAD_ERROR;
+	case RT_MATRIX_EDIT_SCALE:
+	case RT_MATRIX_EDIT_SCALE_X:
+	case RT_MATRIX_EDIT_SCALE_Y:
+	case RT_MATRIX_EDIT_SCALE_Z:
+	    edit_mscale_xy(s, mousevec);
+	    return BRLCAD_OK;
+	case RT_MATRIX_EDIT_TRANS_VIEW_XY:
+	case RT_MATRIX_EDIT_TRANS_VIEW_X:
+	case RT_MATRIX_EDIT_TRANS_VIEW_Y:
+	    edit_tra_xy(&pos_view, s, mousevec);
+	    edit_abs_tra(s, pos_view);
+	    return BRLCAD_OK;
+	case RT_MATRIX_EDIT_ROT:
+	    // TODO - I think this may need to define a knob call?  check with main MGED implementation
+	    bu_vls_printf(s->log_str, "XY rotation editing setup unimplemented\n");
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    if (f)
+		(*f)(0, NULL, d, NULL);
+	    return BRLCAD_ERROR;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    // Primitives should handle their specific editing cases before calling the generic function - if
+	    // we got here, something isn't right
+	    bu_vls_printf(s->log_str, "%s: (XY) edit ID is not a generic edit: %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
     }
 
-    rt_update_edit_absolute_tran(s, pos_view);
-
-    return 0;
+    // Shouldn't get here
+    return BRLCAD_ERROR;
 }
 
 

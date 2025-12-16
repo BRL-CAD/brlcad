@@ -59,48 +59,10 @@ struct tclcad_obj {
 
 #define TCLCAD_OBJ_NULL (struct tclcad_obj *)0
 
-TCLCAD_EXPORT extern void tclcad_bn_mat_print(Tcl_Interp *interp, const char *title, const mat_t m);
-
-/**
- * Allow specification of a ray to trace, in two convenient formats.
- *
- * Examples -
- * {0 0 0} dir {0 0 -1}
- * {20 -13.5 20} at {10 .5 3}
- */
-TCLCAD_EXPORT extern int tclcad_rt_parse_ray(Tcl_Interp *interp,
-					     struct xray *rp,
-					     const char *const*argv);
-
-
-/**
- * Format a "union cutter" structure in a TCL-friendly format.  Useful
- * for debugging space partitioning
- *
- * Examples -
- * type cutnode
- * type boxnode
- */
-TCLCAD_EXPORT extern void tclcad_rt_pr_cutter(Tcl_Interp *interp,
-					      const union cutter *cutp);
 TCLCAD_EXPORT extern int tclcad_rt_cutter(ClientData clientData,
 					  Tcl_Interp *interp,
 					  int argc,
 					  const char *const*argv);
-
-
-/**
- * Format a hit in a TCL-friendly format.
- *
- * It is possible that a solid may have been removed from the
- * directory after this database was prepped, so check pointers
- * carefully.
- *
- * It might be beneficial to use some format other than %g to give the
- * user more precision.
- */
-TCLCAD_EXPORT extern void tclcad_rt_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int flipflag);
-
 
 /**
  * Generic interface for the LIBRT_class manipulation routines.
@@ -140,15 +102,6 @@ TCLCAD_EXPORT extern int tclcad_rt_import_from_path(Tcl_Interp *interp,
 						    struct rt_db_internal *ip,
 						    const char *path,
 						    struct rt_wdb *wdb);
-
-/**
- * Take a db_full_path and append it to the TCL result string.
- *
- * NOT moving to db_fullpath.h because it is evil Tcl_Interp api
- */
-TCLCAD_EXPORT extern void db_full_path_appendresult(Tcl_Interp *interp,
-						    const struct db_full_path *pp);
-
 
 /**
  * Expects the Tcl_obj argument (list) to be a Tcl list and extracts

@@ -101,7 +101,12 @@ typedef void (*dbi_update_nref_t)(struct db_i *, struct directory *, struct dire
  * accumulation and improves numerical stability when calculations are
  * made.
  *
+ * TODO - make a db_i_internal struct, and move all the LIBRT ONLY
+ * elements into it.  That will also give us a place to do fancier
+ * database state management using things like C++ containers without
+ * bothering the public API.
  */
+struct db_i_internal;
 struct db_i {
     uint32_t dbi_magic;         /**< @brief magic number */
 
@@ -134,6 +139,8 @@ struct db_i {
     struct bu_ptbl dbi_changed_clbks;     /**< @brief PRIVATE: dbi_changed_t callbacks registered with dbi */
     struct bu_ptbl dbi_update_nref_clbks; /**< @brief PRIVATE: dbi_update_nref_t callbacks registered with dbi */
     int dbi_use_comb_instance_ids;            /**< @brief PRIVATE: flag to enable/disable comb instance tracking in full paths */
+
+    struct db_i_internal *i;
 };
 #define DBI_NULL ((struct db_i *)0)
 #define RT_CHECK_DBI(_p) BU_CKMAG(_p, DBI_MAGIC, "struct db_i")
@@ -145,6 +152,80 @@ extern RT_EXPORT int db_rm_changed_clbk(struct db_i *dbip, dbi_changed_t c, void
 
 extern RT_EXPORT int db_add_update_nref_clbk(struct db_i *dbip, dbi_update_nref_t c, void *u_data);
 extern RT_EXPORT int db_rm_update_nref_clbk(struct db_i *dbip, dbi_update_nref_t c, void *u_data);
+
+/**
+ * for db_open(), open the specified file as read-only
+ */
+#define DB_OPEN_READONLY "r"
+
+/**
+ * for db_open(), open the specified file as read-write
+ */
+#define DB_OPEN_READWRITE "rw"
+
+/**
+ * Open the named database.
+ *
+ * The 'name' parameter specifies the file or filepath to a .g
+ * geometry database file for reading and/or writing.
+ *
+ * The 'mode' parameter specifies whether to open read-only or in
+ * read-write mode, specified via the DB_OPEN_READONLY and
+ * DB_OPEN_READWRITE symbols respectively.
+ *
+ * As a convenience, the returned db_t structure's dbi_filepath field
+ * is a C-style argv array of dirs to search when attempting to open
+ * related files (such as data files for EBM solids or texture-maps).
+ * The default values are "." and the directory containing the ".g"
+ * file.  They may be overridden by setting the environment variable
+ * BRLCAD_FILE_PATH.
+ *
+ * Returns:
+ * DBI_NULL error
+ * db_i * success
+ */
+RT_EXPORT extern struct db_i *
+db_open(const char *name, const char *mode);
+
+/**
+ * "open" an in-memory-only database instance.  this initializes a
+ * dbip for use, creating an inmem dbi_wdbp as the means to add
+ * geometry to the directory (use wdb_export_external()).
+ */
+RT_EXPORT extern struct db_i * db_open_inmem(void);
+
+
+/**
+ * Create a new database containing just a header record, regardless
+ * of whether the database previously existed or not, and open it for
+ * reading and writing.
+ *
+ * This routine also calls db_dirbuild(), so the caller doesn't need
+ * to.
+ *
+ * Returns:
+ * DBI_NULL on error
+ * db_i * on success
+ */
+RT_EXPORT extern struct db_i *
+db_create(const char *name, int version);
+
+/**
+ * creates an in-memory-only database.  this is very similar to
+ * db_open_inmem() with the exception that the this routine adds a
+ * default _GLOBAL object.
+ */
+RT_EXPORT extern struct db_i * db_create_inmem(void);
+
+
+/**
+ * Close a database, releasing dynamic memory. Will also release the db_i
+ * struct memory itself, not just the internal struct contents.  However, the
+ * actual freeing of memory Waits until last user is done - db_close is a no-op
+ * if dbi_uses is greater than 1.
+ */
+RT_EXPORT extern void db_close(struct db_i *dbip);
+
 
 __END_DECLS
 

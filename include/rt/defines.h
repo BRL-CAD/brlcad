@@ -178,12 +178,6 @@
 #define RT_DBHASH(sum)  ((size_t)(sum) & ((RT_DBNHASH)-1))
 #endif
 
-/* Used to set globals declared in bot.c */
-#define RT_DEFAULT_MINPIECES            32
-#define RT_DEFAULT_TRIS_PER_PIECE       4
-#define RT_DEFAULT_MINTIE               8
-
-
 #define BACKING_DIST    (-2.0)          /**< @brief  mm to look behind start point */
 #define OFFSET_DIST     0.01            /**< @brief  mm to advance point into box */
 

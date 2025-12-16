@@ -47,6 +47,8 @@
 
 #include "ged.h"
 
+#include "../../libged/dbi.h"
+
 #define DEFAULT_GSH_PROMPT "g> "
 
 
@@ -174,7 +176,8 @@ DisplayHash::hash(struct ged *gedp, bool dbi_state_check, bool new_cmd_forms)
 
     if (new_cmd_forms && gedp->dbi_state) {
 	if (dbi_state_check) {
-	    unsigned long long updated = gedp->dbi_state->update();
+	    DbiState *dbis = (DbiState *)gedp->dbi_state;
+	    unsigned long long updated = dbis->update();
 	    l = (updated) ? l + 1 : 0;
 	    if (bv->gv_s->gv_cleared) {
 		l = 1;
@@ -376,12 +379,6 @@ GshState::GshState()
 {
     BU_GET(gedp, struct ged);
     ged_init(gedp);
-    BU_GET(gedp->ged_gvp, struct bview);
-    bv_init(gedp->ged_gvp, &gedp->ged_views);
-    bv_set_add_view(&gedp->ged_views, gedp->ged_gvp);
-    bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
-    bv_set_add_view(&gedp->ged_views, gedp->ged_gvp);
-    bu_ptbl_ins(&gedp->ged_free_views, (long *)gedp->ged_gvp);
 
     view_checkpoint();
 
@@ -850,7 +847,7 @@ main(int argc, const char **argv)
 	int ret = gs.get()->eval(argc, argv);
 	std::string cmd_out(bu_vls_cstr(gs.get()->gedp->ged_result_str));
 	std::cout << cmd_out;
-	if (cmd_out[cmd_out.length()-1] != '\n')
+	if (cmd_out.length() && cmd_out[cmd_out.length()-1] != '\n')
 	    std::cout << "\n";
 	// Need to loop over subprocess listeners and print their
 	// output until they finish.

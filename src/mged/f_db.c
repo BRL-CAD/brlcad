@@ -336,6 +336,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     struct mged_state *s = ctp->s;
 
     struct mged_opendb_ctx ctx;
+    MGED_OPENDB_CTX_INIT(&ctx);
     ctx.old_dbip = NULL;
     ctx.s = s;
 
@@ -437,6 +438,7 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     // specifies a Tcl_Interp prepare a context to be sure
     // we're using the one expected.
     struct mged_opendb_ctx ctx;
+    MGED_OPENDB_CTX_INIT(&ctx);
     ctx.interpreter = interpreter;
     ctx.ret = TCL_OK;
     ctx.old_dbip = NULL;

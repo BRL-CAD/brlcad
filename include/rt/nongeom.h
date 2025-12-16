@@ -55,6 +55,35 @@ struct rt_comb_internal {
     struct bu_vls       shader;
     struct bu_vls       material;
     char                inherit;
+
+    /* This holds the pointer to the parent database from which the comb
+     * definition has come.  Combs are unlike most other BRL-CAD geometry
+     * definitions in that they are not self-contained - an rt_db_internal
+     * representation of a comb does not (by itself) have enough information
+     * for operations like plotting or tessellation.  Hence, we store a pointer
+     * to the database as internal data of the comb, since other data contained
+     * in the database is generally an integral part of making the comb
+     * definition meaningful.
+     *
+     * Note that this has implications for how a comb rt_db_internal must be
+     * treated.  Most rt_db_internal objects are independent of the original .g
+     * database they were loaded from, and can be used with a different dbip
+     * without worry.  That is not true for combs - if a comb is to be copied
+     * to a new database, a new comb instance MUST be opened once the comb data
+     * is established in the new database context.  Without the old dbip being
+     * valid, comb methods such as tess and plot will NOT work.
+     *
+     * Generally speaking this pointer should only be used internally for
+     * functab methods and not by calling codes.  If there is another way to
+     * obtain dbip other than referencing this variable, that's what callers
+     * should do.  Use this ONLY when you're sure it is the only way to get the
+     * job done, and ALWAYS validate it before use with RT_CK_DBI. */
+    const struct db_i  *src_dbip;
+
+    /* Name of the original database object that produced the comb.  If the
+     * database has changed this name may no longer identify a current object
+     * in the database - the caller is responsible for validating it. */
+    const char *src_objname;
 };
 #define RT_CHECK_COMB(_p) BU_CKMAG(_p, RT_COMB_MAGIC, "rt_comb_internal")
 #define RT_CK_COMB(_p) RT_CHECK_COMB(_p)
@@ -79,6 +108,8 @@ struct rt_comb_internal {
 	BU_VLS_INIT(&(_p)->shader); \
 	BU_VLS_INIT(&(_p)->material); \
 	(_p)->inherit = 0; \
+	(_p)->src_dbip = 0; \
+	(_p)->src_objname = 0; \
     }
 
 /**

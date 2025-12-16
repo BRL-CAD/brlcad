@@ -103,6 +103,7 @@ ged_init(struct ged *gedp)
     gedp->i->i = new Ged_Internal;
 
     gedp->dbip = NULL;
+    gedp->u_data = NULL;
 
     // TODO - rename to ged_name
     bu_vls_init(&gedp->go_name);
@@ -117,9 +118,12 @@ ged_init(struct ged *gedp)
      * just calling FREE_BV_SCENE_OBJ which doesn't de-allocate... */
     BU_PTBL_INIT(&gedp->free_solids);
 
-    /* In principle we should be establishing an initial view here,
-     * but Archer won't tolerate it. */
-    gedp->ged_gvp = GED_VIEW_NULL;
+    // Establish an initial view
+    BU_ALLOC(gedp->ged_gvp, struct bview);
+    bv_init(gedp->ged_gvp, &gedp->ged_views);
+    bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
+    bv_set_add_view(&gedp->ged_views, gedp->ged_gvp);
+    bu_ptbl_ins(&gedp->ged_free_views, (long *)gedp->ged_gvp);
 
     /* Create a non-opened fbserv */
     BU_GET(gedp->ged_fbs, struct fbserv_obj);
@@ -371,19 +375,10 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 
     gedp = ged_create();
     gedp->dbip = wdbp->dbip;
-#if 0
-    // Archer doesn't tolerate populating the GEDP with an initial view at the
-    // moment.  Probably should fix that, as there are lots of ged commands
-    // that only work correctly with a view present...
-    BU_ALLOC(gedp->ged_gvp, struct bview);
-    bv_init(gedp->ged_gvp, &gedp->ged_views);
-    bv_set_add_view(&gedp->ged_views, gedp->ged_gvp);
-    bu_ptbl_ins(&gedp->ged_free_views, (long *)gedp->ged_gvp);
-#endif
 
     db_update_nref(gedp->dbip, &rt_uniresource);
 
-    gedp->ged_lod = bv_mesh_lod_context_create(filename);
+    gedp->ged_lod = NULL;
 
     return gedp;
 }

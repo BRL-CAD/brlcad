@@ -445,6 +445,7 @@ set(
   bot/ged_bot.h
   brep/ged_brep.h
   check/check_private.h
+  dbi.h
   ged_cmd_scanner.cpp
   ged_cmds.h
   ged_private.h

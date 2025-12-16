@@ -466,10 +466,10 @@ existing_vi="`grep -i "${prefixspace}${commentchar} ex:" "$FILE"`"
 if [ "x$existing_vi" = "x" ] ; then
     echo "No vi line found..."
 else
-    vi_line="${prefixspace}${commentchar} ex: shiftwidth=$indentation tabstop=$tab_width"
+    vi_line="${prefixspace}${commentchar} ex: shiftwidth=$indentation tabstop=$tab_width cino=N-s"
     if [ "x$existing_vi" != "x$vi_line" ] ; then
 	echo "vi line is wrong ... fixing"
-	perl -pi -e "s,(${prefixspace}[${commentchar}]+ ex:.*),${prefixspace}${commentchar} ex: shiftwidth=${indentation} tabstop=${tab_width},i" $FILE
+	perl -pi -e "s,(${prefixspace}[${commentchar}]+ ex:.*),${prefixspace}${commentchar} ex: shiftwidth=${indentation} tabstop=${tab_width} cino=N-s,i" $FILE
     fi
 fi
 
@@ -521,4 +521,4 @@ fi
 # sh-basic-offset: 4
 # indent-tabs-mode: t
 # End:
-# ex: shiftwidth=4 tabstop=8
+# ex: shiftwidth=4 tabstop=8 cino=N-s

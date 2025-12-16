@@ -43,6 +43,9 @@ struct rt_functab; /* forward declaration */
 /**
  * A handle on the internal format of a BRL-CAD database object.
  *
+ * Note that the d_minor_type of any directory structure associated with a rt_db_internal should
+ * match the value of the rt_db_internal's idb_minor_type.
+ *
  * TODO - right now, rt_db_internal doesn't encode any notion of data version,
  * which appears to be a major reason some APIs need to pass a dbip through in
  * addition to the rt_db_internal.  Should we add an idb_version entry here to

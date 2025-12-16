@@ -54,6 +54,7 @@ extern int mged_post_opendb_clbk(int ac, const char **av, void *gedp, void *ctx)
 extern int mged_pre_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
 extern int mged_post_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
 
+// FIXME: Global
 extern Tk_Window tkwin; /* in cmd.c */
 
 extern void init_qray(void);
@@ -384,7 +385,7 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "v2m_point", cmd_ged_plain_wrapper, ged_exec_v2m_point, NULL},
     {MGED_CMD_MAGIC, "vars", f_set, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "vdraw", cmd_ged_plain_wrapper, ged_exec_vdraw, NULL},
-    {MGED_CMD_MAGIC, "view", cmd_ged_view_wrapper, ged_exec_view, NULL},
+    {MGED_CMD_MAGIC, "view", cmd_view, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "view_ring", f_view_ring, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "view2grid_lu", cmd_ged_plain_wrapper, ged_exec_view2grid_lu, NULL},
     {MGED_CMD_MAGIC, "view2model", cmd_ged_plain_wrapper, ged_exec_view2model, NULL},
@@ -574,7 +575,7 @@ mged_setup(struct mged_state *s)
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);
-    Tcl_SetVar(s->interp, bu_vls_addr(&str), state_str[GEOM_EDIT_STATE], TCL_GLOBAL_ONLY);
+    Tcl_SetVar(s->interp, bu_vls_addr(&str), state_str[s->global_editing_state], TCL_GLOBAL_ONLY);
 
     /* Set defaults for view status variables */
     bu_vls_trunc(&str, 0);

@@ -28,6 +28,9 @@
 
 #include "common.h"
 
+#include <set>
+#include <string>
+
 #include "vmath.h"
 #include "bu/vls.h"
 #include "bn/tol.h"

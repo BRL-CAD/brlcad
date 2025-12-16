@@ -61,6 +61,7 @@ public:
     void setTopComp(std::string t);
     void setUnitLength(std::string l);
     void setUnitMass(std::string m);
+    void setNCPU(int ncpu);
 
 
     //Getter functions
@@ -88,6 +89,7 @@ public:
     std::string getTopComp();
     std::string getUnitLength();
     std::string getUnitMass();
+    size_t getNCPU();
 
     bool isOriginalUnitsLength();
     bool isOriginalUnitsMass();
@@ -143,6 +145,9 @@ private:
     // Unit mass
     std::string uMass;
     bool originalUnitsMass;
+
+    // max number of CPUs to use
+    int ncpu;
 
     // print verbose status messages
     int verbosePrint;

@@ -77,7 +77,7 @@ static struct dbcmdstruct tclcad_rt_cmds[] = {
 };
 
 
-int
+static int
 tclcad_rt_parse_ray(Tcl_Interp *interp, struct xray *rp, const char *const*argv)
 {
     if (bn_decode_vect(rp->r_pt,  argv[0]) != 3) {
@@ -110,7 +110,7 @@ tclcad_rt_parse_ray(Tcl_Interp *interp, struct xray *rp, const char *const*argv)
 }
 
 
-void
+static void
 tclcad_rt_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 {
     static const char xyz[4] = "XYZ";
@@ -200,7 +200,7 @@ tclcad_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char
 }
 
 
-void
+static void
 tclcad_rt_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int flipflag)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -708,20 +708,6 @@ Rt_Init(Tcl_Interp *interp)
 /* ====================================================================== */
 
 /* TCL-oriented C support for LIBRT */
-
-
-void
-db_full_path_appendresult(Tcl_Interp *interp, const struct db_full_path *pp)
-{
-    size_t i;
-
-    RT_CK_FULL_PATH(pp);
-
-    for (i=0; i<pp->fp_len; i++) {
-	Tcl_AppendResult(interp, "/", pp->fp_names[i]->d_namep, (char *)NULL);
-    }
-}
-
 
 int
 tcl_obj_to_int_array(Tcl_Interp *interp, Tcl_Obj *list, int **array, int *array_len)

@@ -142,6 +142,8 @@ main(int argc, const char **argv)
 {
     Options options;
 
+    bu_setprogname(argv[0]);
+
     if (options.readParameters(argc, argv)) {
         if (options.getIsFolder()) {
             handleFolder(options);

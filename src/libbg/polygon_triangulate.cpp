@@ -157,10 +157,10 @@ LSteinClbk(size_t data, void *ctx)
 // Need to look at updating our bundled clipper to that version...
 int
 bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-	    const int *poly, const size_t poly_pnts,
-	    const int **holes_array, const size_t *holes_npts, const size_t nholes,
-	    const int *steiner, const size_t steiner_npts,
-	    const point2d_t *pts)
+	const int *poly, const size_t poly_pnts,
+	const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	const int *steiner, const size_t steiner_npts,
+	const point2d_t *pts)
 {
     // Sanity
     if (!faces || !num_faces || !poly || !poly_pnts)
@@ -561,10 +561,10 @@ bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outp
 
 int
 bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-	    const int *poly, const size_t poly_pnts,
-	    const int **holes_array, const size_t *holes_npts, const size_t nholes,
-	    const int *steiner, const size_t steiner_npts,
-	    const point2d_t *pts)
+	const int *poly, const size_t poly_pnts,
+	const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	const int *steiner, const size_t steiner_npts,
+	const point2d_t *pts)
 {
     std::unordered_map<int, int> det2pts, pts2det;
     std::set<int> active_pts;
@@ -646,16 +646,16 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 
     int tri_ind = 0;
     tri.forEachTriangle([&](const detria::Triangle<int> triangle)
-    {
-	// `triangle` contains the point indices
-	nfaces[3*tri_ind] = det2pts[triangle.x];
-	nfaces[3*tri_ind+1] = det2pts[triangle.y];
-	nfaces[3*tri_ind+2] = det2pts[triangle.z];
-	active_pts.insert(nfaces[3*tri_ind]);
-	active_pts.insert(nfaces[3*tri_ind+1]);
-	active_pts.insert(nfaces[3*tri_ind+2]);
-	tri_ind++;
-    }, cwTriangles);
+	    {
+	    // `triangle` contains the point indices
+	    nfaces[3*tri_ind] = det2pts[triangle.x];
+	    nfaces[3*tri_ind+1] = det2pts[triangle.y];
+	    nfaces[3*tri_ind+2] = det2pts[triangle.z];
+	    active_pts.insert(nfaces[3*tri_ind]);
+	    active_pts.insert(nfaces[3*tri_ind+1]);
+	    active_pts.insert(nfaces[3*tri_ind+2]);
+	    tri_ind++;
+	    }, cwTriangles);
 
     (*faces) = nfaces;
 
@@ -673,10 +673,10 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 
 extern "C" int
 bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-			      const int *poly, const size_t poly_pnts,
-			      const int **holes_array, const size_t *holes_npts, const size_t nholes,
-			      const int *steiner, const size_t steiner_npts,
-			      const point2d_t *pts, const size_t npts, triangulation_t type)
+	const int *poly, const size_t poly_pnts,
+	const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	const int *steiner, const size_t steiner_npts,
+	const point2d_t *pts, const size_t npts, triangulation_t type)
 {
     if (npts < 3 || poly_pnts < 3) return 1;
     if (!faces || !num_faces || !pts || !poly) return 1;
@@ -714,48 +714,122 @@ bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
 
     if (type == TRI_EAR_CLIPPING) {
 
+	// earcut.hpp's concept of steiner points isn't the same as detria's,
+	// so we need to pass if steiner points have been supplied.
 	if (steiner_npts) return 1;
+
+	/* -------- Orientation Enforcement (outer CCW, holes CW) -------- */
+	auto strip_dup_and_orient = [&](const int *idx, size_t cnt,
+		bool want_ccw,
+		std::vector<int> &out_indices)->bool
+	{
+	    if (cnt < 3) return false;
+	    out_indices.assign(idx, idx + cnt);
+
+	    // Remove duplicate closing point if present (index list refers to points;
+	    // duplicates more meaningfully checked via coordinates).
+	    // If first and last coordinates coincide, drop last index.
+	    if (cnt >= 2) {
+		const point2d_t &p0 = pts[out_indices.front()];
+		const point2d_t &pl = pts[out_indices.back()];
+		if (NEAR_EQUAL(p0[X], pl[X], SMALL_FASTF) && NEAR_EQUAL(p0[Y], pl[Y], SMALL_FASTF)) {
+		    out_indices.pop_back();
+		    if (out_indices.size() < 3) return false;
+		}
+	    }
+
+	    // Determine winding
+	    int dir = bg_polygon_direction(out_indices.size(), pts, out_indices.data());
+	    if (dir == 0) {
+		/* Near-degenerate; leave as-is (earcut may ignore) */
+		return out_indices.size() >= 3;
+	    }
+
+	    bool is_ccw = (dir == BG_CCW);
+	    if (want_ccw && !is_ccw) {
+		std::reverse(out_indices.begin(), out_indices.end());
+	    } else if (!want_ccw && is_ccw) {
+		std::reverse(out_indices.begin(), out_indices.end());
+	    }
+	    return true;
+	};
+
+	std::vector<int> outer_oriented;
+	if (!strip_dup_and_orient(poly, poly_pnts, true, outer_oriented)) {
+	    return 1; /* invalid outer ring */
+	}
+
+	std::vector<std::vector<int>> hole_oriented;
+	hole_oriented.resize(nholes);
+	for (size_t h = 0; h < nholes; h++) {
+	    if (!strip_dup_and_orient(holes_array[h], holes_npts[h], false, hole_oriented[h])) {
+		/* Skip degenerate hole (size <3 or invalid). We silently
+		 * drop it rather than failing the whole triangulation. */
+		hole_oriented[h].clear();
+	    }
+	}
 
 	/* Set up for ear clipping */
 	using Coord = fastf_t;
 	using N = uint32_t;
 	using Point = std::array<Coord, 2>;
 	std::vector<std::vector<Point>> polygon;
-	std::vector<Point> outer_polygon;
-	for (size_t i = 0; i < poly_pnts; i++) {
-	    Point np;
-	    np[0] = pts[poly[i]][X];
-	    np[1] = pts[poly[i]][Y];
-	    outer_polygon.push_back(np);
-	}
-	polygon.push_back(outer_polygon);
 
-	if (holes_array) {
-	    for (size_t i = 0; i < nholes; i++) {
-		std::vector<Point> hole_polygon;
-		for (size_t j = 0; j < holes_npts[i]; j++) {
-		    Point np;
-		    np[0] = pts[holes_array[i][j]][X];
-		    np[1] = pts[holes_array[i][j]][Y];
-		    hole_polygon.push_back(np);
-		}
-		polygon.push_back(hole_polygon);
+	/* map from flattened earcut vertex index -> original point index.
+	 * We originally added this when looking into steiner point support
+	 * with earcut.hpp - that didn't pan out, but we'll leave this
+	 * in place in case it ends up being of interest down the road. */
+	std::vector<int> index_map;
+	index_map.reserve(outer_oriented.size()
+		+ [&](){
+		size_t hc = 0;
+		for (size_t hi = 0; hi < nholes; hi++)
+		hc += hole_oriented[hi].size();
+		return hc;
+		}());
+
+	// Outer ring (already CCW)
+	std::vector<Point> outer_polygon;
+	outer_polygon.reserve(outer_oriented.size());
+	for (size_t i = 0; i < outer_oriented.size(); i++) {
+	    int ind = outer_oriented[i];
+	    Point np;
+	    np[0] = pts[ind][X];
+	    np[1] = pts[ind][Y];
+	    outer_polygon.push_back(np);
+	    index_map.push_back(ind);
+	}
+	polygon.push_back(std::move(outer_polygon));
+
+	// Holes (each oriented CW)
+	for (size_t h = 0; h < nholes; h++) {
+	    if (hole_oriented[h].size() < 3) continue; // dropped/degenerate
+	    std::vector<Point> hole_polygon;
+	    hole_polygon.reserve(hole_oriented[h].size());
+	    for (size_t j = 0; j < hole_oriented[h].size(); j++) {
+		int ind = hole_oriented[h][j];
+		Point np;
+		np[0] = pts[ind][X];
+		np[1] = pts[ind][Y];
+		hole_polygon.push_back(np);
+		index_map.push_back(ind);
 	    }
+	    polygon.push_back(std::move(hole_polygon));
 	}
 
 	std::vector<N> indices = mapbox::earcut<N>(polygon);
-
 	if (indices.size() < 3) {
 	    return 1;
 	}
 
-	(*num_faces) = indices.size()/3;
+	(*num_faces) = (int)(indices.size()/3);
 	(*faces) = (int *)bu_calloc(indices.size(), sizeof(int), "faces");
 
+	/* translate earcut’s local indices back to original point indices */
 	for (size_t i = 0; i < indices.size()/3; i++) {
-	    (*faces)[3*i] = (int)indices[3*i];
-	    (*faces)[3*i+1] = (int)indices[3*i+1];
-	    (*faces)[3*i+2] = (int)indices[3*i+2];
+	    (*faces)[3*i]     = index_map[indices[3*i]];
+	    (*faces)[3*i + 1] = index_map[indices[3*i + 1]];
+	    (*faces)[3*i + 2] = index_map[indices[3*i + 2]];
 	}
 
 	return 0;

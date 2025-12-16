@@ -863,6 +863,9 @@ finish:
 	bu_vls_strcat(&comb->shader, ap);
     }
 
+    /* Combs need to know about their database context. */
+    comb->src_dbip = dbip;
+
     return 0; /* OK */
 }
 
@@ -1177,6 +1180,133 @@ rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern
     bu_vls_init(&comb->material);
 }
 
+
+
+
+
+static union tree *
+facetize_region_end(struct db_tree_state *tsp,
+                    const struct db_full_path *pathp,
+                    union tree *curtree,
+                    void *client_data)
+{
+    union tree **facetize_tree;
+
+    if (tsp) RT_CK_DBTS(tsp);
+    if (pathp) RT_CK_FULL_PATH(pathp);
+
+    facetize_tree = (union tree **)client_data;
+
+    if (curtree->tr_op == OP_NOP) return curtree;
+
+    if (*facetize_tree) {
+        union tree *tr;
+        BU_ALLOC(tr, union tree);
+        RT_TREE_INIT(tr);
+        tr->tr_op = OP_UNION;
+        tr->tr_b.tb_regionp = REGION_NULL;
+        tr->tr_b.tb_left = *facetize_tree;
+        tr->tr_b.tb_right = curtree;
+        *facetize_tree = tr;
+    } else {
+        *facetize_tree = curtree;
+    }
+
+    /* Tree has been saved, and will be freed later */
+    return TREE_NULL;
+}
+
+
+
+/**
+ * Execute NMG tessellation routines on the tree to produce an explicitly
+ * bounded, evaluated version of the geometry.
+ *
+ * Although (to my knowledge) there aren't any real world scenarios requiring a
+ * current rt_db_internal that persists after its dbip is invalid, there is no
+ * API guarantee that such a rt_db_internal couldn't be created and this routine
+ * WILL fail catastrophically if the database info in rt_comb_internal is not
+ * current.  ONLY use comb methods on rt_db_internals when they are associated
+ * with a current, valid dbip.
+ */
+int
+rt_comb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+{
+    if (!r || !m  || !ip || !ttol || !tol)
+	return BRLCAD_ERROR;
+
+    struct bu_list *vlfree = &rt_vlfree;
+   /* validate it's a comb */
+    if (ip->idb_type != ID_COMBINATION) bu_bomb("rt_comb_tess() type not ID_COMBINATION");
+    struct rt_comb_internal *comb = (struct rt_comb_internal *)ip->idb_ptr;
+    RT_CK_COMB(comb);
+    RT_CK_DBI(comb->src_dbip);
+    if (!comb->src_objname) {
+	bu_log("rt_comb_tess() - comb object name not defined in rt_comb_internal, cannot perform database db_walk_tree");
+	return BRLCAD_ERROR;
+    }
+
+    int i = 0;
+    int failed = 0;
+    union tree *facetize_tree = (union tree *)0;
+    struct db_tree_state init_state;
+    db_init_db_tree_state(&init_state, (struct db_i *)comb->src_dbip, &rt_uniresource);
+
+    /* Establish tolerances */
+    init_state.ts_ttol = ttol;
+    init_state.ts_tol = tol;
+    init_state.ts_m = &m;
+
+
+    const char *argv[2];
+    argv[0] = comb->src_objname;
+    argv[1] = NULL;
+
+
+    if (!BU_SETJUMP) {
+        /* try */
+        i = db_walk_tree((struct db_i *)comb->src_dbip, 1, (const char **)argv,
+                         1,
+                        &init_state,
+                         0,                     /* take all regions */
+                         facetize_region_end,
+                         rt_booltree_leaf_tess,
+                         (void *)&facetize_tree
+                        );
+    } else {
+        /* catch */
+        BU_UNSETJUMP;
+        return BRLCAD_ERROR;
+    } BU_UNSETJUMP;
+
+    if (i < 0)
+        return BRLCAD_ERROR;
+
+    if (facetize_tree) {
+        if (!BU_SETJUMP) {
+            /* try */
+            failed = nmg_boolean(facetize_tree, m, vlfree, tol, &rt_uniresource);
+        } else {
+            /* catch */
+            BU_UNSETJUMP;
+            return BRLCAD_ERROR;
+        } BU_UNSETJUMP;
+
+    } else {
+        failed = 1;
+    }
+
+    if (!failed && facetize_tree) {
+        NMG_CK_REGION(facetize_tree->tr_d.td_r);
+        facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
+    }
+
+    if (facetize_tree) {
+        db_free_tree(facetize_tree, &rt_uniresource);
+    }
+
+    return (failed) ? BRLCAD_ERROR : BRLCAD_OK;
+}
 
 /*
  * Local Variables:

@@ -33,7 +33,6 @@
 #include "./mged.h"
 #include "./mged_dm.h"
 
-extern void mged_center(struct mged_state *s, fastf_t *center); /* from chgview.c */
 extern int mged_vscale(struct mged_state *s, fastf_t sfactor);
 
 static void adjust_rect_for_zoom(struct mged_state *);
@@ -266,6 +265,31 @@ rt_rect_area(struct mged_state *s)
     bu_vls_free(&vls);
 }
 
+void
+mged_center(struct mged_state *s, point_t center)
+{
+    char *av[5];
+    char xbuf[32];
+    char ybuf[32];
+    char zbuf[32];
+
+    if (s->gedp == GED_NULL) {
+       return;
+    }
+
+    snprintf(xbuf, 32, "%f", center[X]);
+    snprintf(ybuf, 32, "%f", center[Y]);
+    snprintf(zbuf, 32, "%f", center[Z]);
+
+    av[0] = "center";
+    av[1] = xbuf;
+    av[2] = ybuf;
+    av[3] = zbuf;
+    av[4] = (char *)0;
+    ged_exec_center(s->gedp, 4, (const char **)av);
+    (void)mged_svbase(s);
+    view_state->vs_flag = 1;
+}
 
 void
 zoom_rect_area(struct mged_state *s)

@@ -627,7 +627,7 @@
 	  or
 	  <citerefentry><refentrytitle>gdb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 	  for debugging.  (Notice that <option>-x #</option> sets the
-	  <citerefentry><refentrytitle>libbt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+	  <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 	  debug flags to the given hexadecimal bit vector.  See
 	  raytrace.h for the bit definitions.)</para>
 	</listitem>

@@ -814,7 +814,7 @@ BG_EXPORT extern int bg_isect_2lines(fastf_t *t,
  * @return 2	Intersection at vertex B
  * @return 3	Intersection between A and B
  *
- * @par Implicit Returns -
+ * Implicit Returns -
  *
  * t When explicit return >= 0, t is the parameter that describes the
  * intersection of the line and the line segment.  The actual

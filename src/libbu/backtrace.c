@@ -191,9 +191,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 	snprintf(attach_msg, sizeof(attach_msg), "attach %d\n", processid);
 
 	if (have_gdb) {
-	    /*    if (write(input[1], "set prompt\n", 12) != 12) {
-		  perror("write [set prompt] failed");
-		  } else */if (write(input[1], "set confirm off\n", 16) != 16) {
+	    if (write(input[1], "set confirm off\n", 16) != 16) {
 		perror("write [set confirm off] failed");
 	    } else if (write(input[1], "set backtrace past-main on\n", 27) != 27) {
 		perror("write [set backtrace past-main on] failed");

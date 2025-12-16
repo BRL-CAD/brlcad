@@ -55,7 +55,7 @@ editarb(struct mged_state *s, vect_t pos_model)
 {
     int ret = 0;
     struct rt_arb_internal *arb;
-    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)MEDIT(s)->es_int.idb_ptr;
 
     ret = arb_edit(arb, es_peqn, es_menu, newedge, pos_model, &s->tol.tol);
 
@@ -64,7 +64,7 @@ editarb(struct mged_state *s, vect_t pos_model)
     newedge = 0;
 
     if (ret) {
-	es_edflag = IDLE;
+	MEDIT(s)->edit_flag = IDLE;
     }
 
     return ret;
@@ -98,15 +98,15 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (not_state(s, ST_S_EDIT, "Extrude"))
 	return TCL_ERROR;
 
-    if (s->edit_state.es_int.idb_type != ID_ARB8) {
+    if (MEDIT(s)->es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Extrude: solid type must be ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if (es_type != ARB8 && es_type != ARB6 && es_type != ARB4) {
+    if (s->s_edit->es_type != ARB8 && s->s_edit->es_type != ARB6 && s->s_edit->es_type != ARB4) {
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&tmp_vls, "ARB%d: extrusion of faces not allowed\n", es_type);
+	bu_vls_printf(&tmp_vls, "ARB%d: extrusion of faces not allowed\n", s->s_edit->es_type);
 	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
 
@@ -117,11 +117,11 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 
     /* get distance to project face */
     dist = atof(argv[2]);
-    /* apply es_mat[15] to get to real model space */
+    /* apply MEDIT(s)->e_mat[15] to get to real model space */
     /* convert from the local unit (as input) to the base unit */
-    dist = dist * es_mat[15] * s->dbip->dbi_local2base;
+    dist = dist * MEDIT(s)->e_mat[15] * s->dbip->dbi_local2base;
 
-    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)MEDIT(s)->es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
     if (arb_extrude(arb, face, dist, &s->tol.tol, es_peqn)) {
@@ -131,7 +131,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 
     /* draw the updated solid */
     replot_editing_solid(s);
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     return TCL_OK;
@@ -163,12 +163,12 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (not_state(s, ST_S_EDIT, "Mirface"))
 	return TCL_ERROR;
 
-    if (s->edit_state.es_int.idb_type != ID_ARB8) {
+    if (MEDIT(s)->es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Mirface: solid type must be ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)MEDIT(s)->es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
     face = atoi(argv[1]);
@@ -213,12 +213,12 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (not_state(s, ST_S_EDIT, "Edgedir"))
 	return TCL_ERROR;
 
-    if (es_edflag != EARB) {
+    if (MEDIT(s)->edit_flag != EARB) {
 	Tcl_AppendResult(interp, "Not moving an ARB edge\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if (s->edit_state.es_int.idb_type != ID_ARB8) {
+    if (MEDIT(s)->es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Edgedir: solid type must be an ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -295,12 +295,12 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (not_state(s, ST_S_EDIT, "Permute"))
 	return TCL_ERROR;
 
-    if (s->edit_state.es_int.idb_type != ID_ARB8) {
+    if (MEDIT(s)->es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Permute: solid type must be an ARB\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    arb = (struct rt_arb_internal *)s->edit_state.es_int.idb_ptr;
+    arb = (struct rt_arb_internal *)MEDIT(s)->es_int.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
     if (arb_permute(arb, argv[1], &s->tol.tol)) {

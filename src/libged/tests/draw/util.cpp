@@ -36,6 +36,8 @@
 #include <dm.h>
 #include <ged.h>
 
+#include "../../dbi.h"
+
 // In order to handle changes to .g geometry contents, we need to defined
 // callbacks for the librt hooks that will update the working data structures.
 // In Qt we have libqtcad handle this, but as we are not using a QgModel we
@@ -45,7 +47,7 @@ ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, 
 {
     unsigned long long hash;
     struct ged *gedp = (struct ged *)u_data;
-    DbiState *ctx = gedp->dbi_state;
+    DbiState *ctx = (DbiState *)gedp->dbi_state;
 
     // Clear cached GED drawing data and update
     ctx->clear_cache(dp);
@@ -83,8 +85,9 @@ extern "C" void
 dm_refresh(struct ged *gedp)
 {
     struct bview *v= gedp->ged_gvp;
-    BViewState *bvs = gedp->dbi_state->get_view_state(v);
-    gedp->dbi_state->update();
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    BViewState *bvs = dbis->get_view_state(v);
+    dbis->update();
     std::unordered_set<struct bview *> uset;
     uset.insert(v);
     bvs->redraw(NULL, uset, 1);
@@ -107,7 +110,7 @@ scene_clear(struct ged *gedp)
     dm_refresh(gedp);
 }
 
-extern "C" void
+extern "C" int
 img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear_image, int soft_fail, int approximate_check, const char *clear_root, const char *img_root)
 {
     icv_image_t *ctrl, *timg;
@@ -133,7 +136,7 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 	    if (clear_scene)
 		scene_clear(gedp);
 	    bu_vls_free(&tname);
-	    return;
+	    return BRLCAD_ERROR;
 	}
 	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&tname));
     }
@@ -145,7 +148,7 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 		scene_clear(gedp);
 	    bu_vls_free(&tname);
 	    bu_vls_free(&cname);
-	    return;
+	    return BRLCAD_ERROR;
 	}
 	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&cname));
     }
@@ -178,54 +181,70 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 	}
 
 	if (iret) {
+
+	    bu_log("%d %s diff failed.  %d matching, %d off by 1, %d off by many\n", id, img_root, matching_cnt, off_by_1_cnt, off_by_many_cnt);
+
+	    // Generate a diff image for debugging work
+	    icv_image_t *diff_img = icv_diffimg(ctrl, timg);
+	    if (diff_img) {
+		struct bu_vls diff_name = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&diff_name, "%s_%d_diff.png", img_root, id);
+		icv_write(diff_img, bu_vls_cstr(&diff_name), BU_MIME_IMAGE_PNG);
+		bu_vls_free(&diff_name);
+	    }
+
+	    // If we're in soft fail mode, we're not keeping the image unless
+	    // the user requested it. In hard fail, we leave the last image for
+	    // inspection.
+	    if (soft_fail && clear_image)
+		bu_file_delete(bu_vls_cstr(&tname));
+
+	    // Dump an ascii rendering of the difference image to the log.  In
+	    // scenarios such as CI systems, where we don't have a way to
+	    // readily inspect the difference images, this output can still
+	    // give us at least some idea of what is going on as long as the
+	    // user can get their terminal font small enough.  We deliberately
+	    // don't do any resizing of the image - we want to leave diff
+	    // pixels intact, so we accept the terminal aspect ratio distortion
+	    // as a trade-off for pixel rendering accuracy.
+	    if (diff_img) {
+		struct icv_ascii_art_params iparams = ICV_ASCII_ART_PARAMS_DEFAULT;
+		iparams.output_color = 1;
+		char *aart = icv_ascii_art(diff_img, &iparams);
+		bu_log("%s\n", aart);
+	    }
+
+	    // Done with images
+	    bu_vls_free(&tname);
+	    icv_destroy(ctrl);
+	    icv_destroy(timg);
+	    icv_destroy(diff_img);
+
+	    // If we're in soft fail, return
 	    if (soft_fail) {
-		bu_log("%d %s diff failed.  %d matching, %d off by 1, %d off by many\n", id, img_root, matching_cnt, off_by_1_cnt, off_by_many_cnt);
-
-		if (clear_image) {
-		    // We're in soft fail mode, so we're not keeping the image unless the user requested it
-		    // In hard fail, we leave the last image for inspection.
-		    bu_file_delete(bu_vls_cstr(&tname));
-		} else {
-		    // Keeping the image - also generate a diff image for debugging work
-		    struct bu_vls diff_name = BU_VLS_INIT_ZERO;
-		    icv_image_t *diff_img = icv_diffimg(ctrl, timg);
-		    if (diff_img) {
-			bu_vls_sprintf(&diff_name, "%s_%d_diff.png", img_root, id);
-			icv_write(diff_img, bu_vls_cstr(&diff_name), BU_MIME_IMAGE_PNG);
-		    }
-
-		}
-
-		icv_destroy(ctrl);
-		icv_destroy(timg);
-
 		if (clear_scene)
 		    scene_clear(gedp);
-		return;
-	    } else {
-		// Hard fail - generate a diff image for debugging work
-		struct bu_vls diff_name = BU_VLS_INIT_ZERO;
-		icv_image_t *diff_img = icv_diffimg(ctrl, timg);
-		if (diff_img) {
-		    bu_vls_sprintf(&diff_name, "%s_%d_diff.png", img_root, id);
-		    icv_write(diff_img, bu_vls_cstr(&diff_name), BU_MIME_IMAGE_PNG);
-		}
-		icv_destroy(ctrl);
-		icv_destroy(timg);
+		return BRLCAD_ERROR;
 	    }
-	    bu_exit(EXIT_FAILURE, "%d %s diff failed.  %d matching, %d off by 1, %d off by many\n", id, img_root, matching_cnt, off_by_1_cnt, off_by_many_cnt);
+
+	    // Hard fail
+	    bu_exit(EXIT_FAILURE, "Diff failure found, test aborted.\n");
+
 	}
     }
 
+    // Clean up
     if (clear_image)
 	bu_file_delete(bu_vls_cstr(&tname));
-
     bu_vls_free(&tname);
     icv_destroy(ctrl);
     icv_destroy(timg);
 
+    // If we're supposed to clear the scene, do so now.
     if (clear_scene)
 	scene_clear(gedp);
+
+    return BRLCAD_OK;
 }
 
 // Local Variables:

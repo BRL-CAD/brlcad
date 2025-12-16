@@ -97,6 +97,23 @@ double rint(double x);
 #   endif
 # endif
 
+/* Make sure THREADLOCAL is defined, only usable on C "POD" types */
+#ifndef THREADLOCAL
+#  if defined(__cplusplus) && __cplusplus >= 201103L
+#    define THREADLOCAL thread_local // C++11 or newer: thread_local is standard
+#  elif !defined(__cplusplus) && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
+#    define THREADLOCAL thread_local // C23: thread_local is standard
+#  elif !defined(__cplusplus) && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#    define THREADLOCAL _Thread_local // C11: _Thread_local is standard
+#  elif defined(HAVE_WINDOWS_H)
+#    define THREADLOCAL __declspec(thread)
+#  elif defined(__GNUC__) || defined(__clang__)
+#    define THREADLOCAL __thread
+#  else
+#    error "Cannot define THREADLOCAL for this compiler/platform"
+#  endif
+#endif
+
 /* strict c89 doesn't declare snprintf() */
 # if defined(HAVE_SNPRINTF) && !defined(HAVE_DECL_SNPRINTF) && !defined(snprintf) && !defined(__cplusplus)
 # include <stddef.h> /* for size_t */

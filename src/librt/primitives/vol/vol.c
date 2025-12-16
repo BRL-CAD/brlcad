@@ -774,9 +774,9 @@ rt_vol_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
 	return BRLCAD_OK;
 
     struct rt_vol_internal *tip = (struct rt_vol_internal *)ip->idb_ptr;
-    RT_EBM_CK_MAGIC(tip);
+    RT_VOL_CK_MAGIC(tip);
     struct rt_vol_internal *top = (struct rt_vol_internal *)rop->idb_ptr;
-    RT_EBM_CK_MAGIC(top);
+    RT_VOL_CK_MAGIC(top);
 
     /* Apply transform */
     mat_t tmp;

@@ -54,6 +54,8 @@ extern "C" {
 #include "ged/view.h"
 #include "./ged_private.h"
 
+#include "./dbi.h"
+
 // Subdirectory in BRL-CAD cache to Dbi state data
 #define DBI_CACHEDIR ".Dbi"
 
@@ -1627,7 +1629,8 @@ DbiState::update()
     struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
     for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
 	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
-	BViewState *bvs = gedp->dbi_state->get_view_state(v);
+	DbiState *dbis = (DbiState *)gedp->dbi_state;
+	BViewState *bvs = dbis->get_view_state(v);
 	if (!bvs)
 	    continue;
 	vmap[bvs].insert(v);
@@ -2374,7 +2377,7 @@ BViewState::scene_obj(
     s_map[phash][sp->s_os->s_dmode] = sp;
     s_keys[phash] = path_hashes;
 
-    // Final geometry generation is deferred
+    // Final geometry generation is deferred - see draw_scene
     objs.insert(sp);
 
     return sp;

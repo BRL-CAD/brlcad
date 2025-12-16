@@ -3582,6 +3582,165 @@ _nmg_shell_tabulate(struct bu_ptbl *va, struct bu_ptbl *fa, struct shell *s, str
 }
 
 
+/* Fast-path helper: return 1 if the model is already a pure triangle mesh.
+ * Conditions:
+ *  - Every OT_SAME faceuse has exactly one loop with edgeuses.
+ *  - That loop has exactly 3 edgeuses.
+ *  - No vertex-only loops, no holes (additional loops), no polygons >3.
+ */
+static int
+nmg_model_all_triangles(struct model *m)
+{
+    struct nmgregion *r;
+    struct shell *s;
+    struct faceuse *fu;
+
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+	    if (BU_LIST_IS_EMPTY(&s->fu_hd))
+		continue;
+
+	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+		struct loopuse *lu;
+		size_t edge_loop_count = 0;
+
+		if (fu->orientation != OT_SAME)
+		    continue;
+
+		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		    size_t ecount = 0;
+		    struct edgeuse *eu;
+
+		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+			/* vertex-only loop or something unexpected */
+			return 0;
+		    }
+
+		    edge_loop_count++;
+		    if (edge_loop_count > 1) {
+			/* Hole or multiple loops -> not a simple triangle */
+			return 0;
+		    }
+
+		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+			ecount++;
+			if (ecount > 3)
+			    return 0;
+		    }
+		    if (ecount != 3)
+			return 0;
+		}
+
+		if (edge_loop_count != 1)
+		    return 0;
+	    }
+	}
+    }
+
+    return 1;
+}
+
+/* Simple open-address hash map (pointer -> int index) for fast vertex lookup */
+struct vhash_entry {
+    const struct vertex *v;
+    int idx;
+};
+
+struct vhash {
+    struct vhash_entry *slots;
+    size_t size;   /* table size (power of two) */
+    size_t used;   /* number of filled slots */
+};
+
+#define VHASH_INIT_ZERO {NULL, 0, 0}
+
+/* Simple pointer mixer */
+static size_t
+vh_hash_ptr(const void *p)
+{
+    uintptr_t x = (uintptr_t)p;
+    /* 64-bit mix; on 32-bit the higher multiplications will get truncated harmlessly */
+    x ^= x >> 33;
+    x *= 0xff51afd7ed558ccdULL;
+    x ^= x >> 33;
+    x *= 0xc4ceb9fe1a85ec53ULL;
+    x ^= x >> 33;
+    return (size_t)x;
+}
+
+/* Round up to power of two */
+static size_t
+vh_pow2_ge(size_t n)
+{
+    size_t p = 1;
+    while (p < n) p <<= 1;
+    return p;
+}
+
+static int
+vh_init(struct vhash *h, size_t min_capacity)
+{
+    size_t cap = vh_pow2_ge(min_capacity);
+    h->slots = (struct vhash_entry *)bu_calloc(cap, sizeof(struct vhash_entry), "vhash slots");
+    if (!h->slots) return 0;
+    h->size = cap;
+    h->used = 0;
+    return 1;
+}
+
+static void
+vh_free(struct vhash *h)
+{
+    if (!h) return;
+    if (h->slots) bu_free(h->slots, "vhash slots");
+    h->slots = NULL;
+    h->size = 0;
+    h->used = 0;
+}
+
+static int
+vh_insert(struct vhash *h, const struct vertex *v, int idx)
+{
+    size_t mask = h->size - 1;
+    size_t pos = vh_hash_ptr(v) & mask;
+    size_t start = pos;
+
+    while (1) {
+        if (h->slots[pos].v == NULL) {
+            h->slots[pos].v = v;
+            h->slots[pos].idx = idx;
+            h->used++;
+            return 1;
+        }
+        if (h->slots[pos].v == v) {
+            /* Already present (shouldn't happen in this use case) */
+            h->slots[pos].idx = idx;
+            return 1;
+        }
+        pos = (pos + 1) & mask;
+        if (pos == start)
+            return 0; /* table full (should not occur if sized properly) */
+    }
+}
+
+static int
+vh_lookup(const struct vhash *h, const struct vertex *v)
+{
+    size_t mask = h->size - 1;
+    size_t pos = vh_hash_ptr(v) & mask;
+    size_t start = pos;
+
+    while (1) {
+        if (h->slots[pos].v == v)
+            return h->slots[pos].idx;
+        if (h->slots[pos].v == NULL)
+            return -1; /* not found */
+        pos = (pos + 1) & mask;
+        if (pos == start)
+            return -1;
+    }
+}
+
 /**
  * Convert all shells of an NMG to a BOT solid
  */
@@ -3599,6 +3758,130 @@ nmg_mdl_to_bot(struct model *m, struct bu_list *vlfree, const struct bn_tol *tol
 
     BN_CK_TOL(tol);
     NMG_CK_MODEL(m);
+
+    /* Fast path: if already pure triangles, skip triangulation+tabulation */
+    if (nmg_model_all_triangles(m)) {
+	struct bu_ptbl verts = BU_PTBL_INIT_ZERO;
+	size_t vcount = 0;
+	size_t tri_count = 0;
+	size_t fno = 0;
+	struct vhash vh = VHASH_INIT_ZERO;
+	int hash_ok = 0;
+
+	nmg_vertex_tabulate(&verts, &m->magic, vlfree);
+	vcount = BU_PTBL_LEN(&verts);
+
+	/* Count triangles */
+	for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+		struct faceuse *fu;
+		if (BU_LIST_IS_EMPTY(&s->fu_hd))
+		    continue;
+		for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+		    struct loopuse *lu;
+		    if (fu->orientation != OT_SAME)
+			continue;
+		    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+			if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC)
+			    tri_count++;
+		    }
+		}
+	    }
+	}
+
+	BU_ALLOC(bot, struct rt_bot_internal);
+	bot->magic = RT_BOT_INTERNAL_MAGIC;
+	bot->mode = RT_BOT_SOLID;
+	bot->orientation = RT_BOT_CCW;
+	bot->bot_flags = 0;
+	bot->num_vertices = vcount;
+	bot->num_faces = tri_count;
+	bot->vertices = (fastf_t *)bu_calloc(vcount * 3, sizeof(fastf_t), "bot fast vertices");
+	bot->faces = (int *)bu_calloc(tri_count * 3, sizeof(int), "bot fast faces");
+	bot->thickness = NULL;
+	bot->face_mode = NULL;
+
+	/* Copy vertices */
+	{
+	    size_t vi;
+	    for (vi = 0; vi < vcount; vi++) {
+		struct vertex *v = (struct vertex *)BU_PTBL_GET(&verts, vi);
+		struct vertex_g *vg;
+		NMG_CK_VERTEX(v);
+		vg = v->vg_p;
+		NMG_CK_VERTEX_G(vg);
+		bot->vertices[3*vi+0] = vg->coord[0];
+		bot->vertices[3*vi+1] = vg->coord[1];
+		bot->vertices[3*vi+2] = vg->coord[2];
+	    }
+	}
+
+	/* Build hash (size *2 to keep load factor <= 0.5) */
+	if (vcount == 0 || vh_init(&vh, (vcount < 4) ? 4 : (vcount * 2))) {
+	    hash_ok = 1;
+	    if (vcount > 0) {
+		size_t vi;
+		for (vi = 0; vi < vcount; vi++) {
+		    struct vertex *v = (struct vertex *)BU_PTBL_GET(&verts, vi);
+		    if (!vh_insert(&vh, v, (int)vi)) {
+			hash_ok = 0;
+			break;
+		    }
+		}
+	    }
+	}
+	if (!hash_ok) {
+	    bu_log("nmg_mdl_to_bot fast path: hash init failed\n");
+	    bu_ptbl_free(&verts);
+	    if (bot->vertices) bu_free(bot->vertices, "bot fast vertices");
+	    if (bot->faces) bu_free(bot->faces, "bot fast faces");
+	    bu_free(bot, "bot fast");
+	    return NULL;
+	}
+
+	/* Emit faces using hash lookups */
+	for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+		struct faceuse *fu;
+		for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+		    struct loopuse *lu;
+		    if (fu->orientation != OT_SAME)
+			continue;
+		    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+			struct edgeuse *eu;
+			int tri_idx = 0;
+			int face_indices[3];
+			if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+			    continue;
+			for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+			    struct vertex *tv = eu->vu_p->v_p;
+			    int idx = vh_lookup(&vh, tv);
+			    if (idx < 0) {
+				bu_log("nmg_mdl_to_bot fast path: vertex index missing\n");
+				vh_free(&vh);
+				bu_ptbl_free(&verts);
+				if (bot->vertices) bu_free(bot->vertices, "bot fast vertices");
+				if (bot->faces) bu_free(bot->faces, "bot fast faces");
+				bu_free(bot, "bot fast");
+				return NULL;
+			    }
+			    face_indices[tri_idx++] = idx;
+			}
+			if (tri_idx == 3) {
+			    bot->faces[3*fno+0] = face_indices[0];
+			    bot->faces[3*fno+1] = face_indices[1];
+			    bot->faces[3*fno+2] = face_indices[2];
+			    fno++;
+			}
+		    }
+		}
+	    }
+	}
+
+	vh_free(&vh);
+	bu_ptbl_free(&verts);
+	return bot;
+    }
 
     /* first convert the NMG to triangles */
     nmg_triangulate_model(m, vlfree, tol);

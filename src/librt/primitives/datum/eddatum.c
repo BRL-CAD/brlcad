@@ -37,7 +37,7 @@
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
 void
-rt_solid_edit_datum_write_params(
+rt_edit_datum_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
 	const struct bn_tol *UNUSED(tol),
@@ -67,7 +67,7 @@ rt_solid_edit_datum_write_params(
     while (lc && strchr(lc, ':')) lc++
 
 int
-rt_solid_edit_datum_read_params(
+rt_edit_datum_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
 	const struct bn_tol *UNUSED(tol),

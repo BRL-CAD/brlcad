@@ -325,8 +325,7 @@ path_append(struct bu_vls *vp, const char *buf)
  *
  * @return boolean on whether a match was found.
  */
-// TODO - this can be static once bu_brlcad_root is removed
-int
+static int
 _bu_dir_join_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_vls *searched, const char *where)
 {
     size_t llen, rlen;

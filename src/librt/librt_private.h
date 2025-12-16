@@ -63,6 +63,39 @@
 
 __BEGIN_DECLS
 
+// TODO - eventually, all the "LIBRT ONLY" elements in db_i should move here.
+// The librt prep caching container should also go here.
+//
+// At the moment, it is just an experiment to put drawing related object data
+// caches in the db_i.
+struct db_i_internal {
+    uint32_t dbi_magic;
+
+    /* BoT level of detail cached data for drawing */
+    struct bv_mesh_lod_context *mesh_c;
+    int mesh_c_completed;
+    int mesh_c_target;
+
+    // TODO - really need to get the rt prep cache container
+    // in here and add a pointer slot to it for rt_db_internal
+    // so the librt point generation routines can take advantage
+    // of cached prep even if they're using an inmem db...
+};
+
+struct db_i_internal * db_i_internal_create(void);
+void db_i_internal_destroy(struct db_i_internal *i);
+
+
+/* Used by sketch extrude revolve */
+extern int curve_to_vlist(struct bu_list              *vlfree,
+                         struct bu_list              *vhead,
+                         const struct bg_tess_tol    *ttol,
+                         point_t                     V,
+                         vect_t                      u_vec,
+                         vect_t                      v_vec,
+                         struct rt_sketch_internal *sketch_ip,
+                         struct rt_curve             *crv);
+
 /* db_flip.c */
 
 /**

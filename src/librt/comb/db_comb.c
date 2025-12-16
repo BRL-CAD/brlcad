@@ -1280,6 +1280,9 @@ rt_comb_ifree(struct rt_db_internal *ip)
     comb = (struct rt_comb_internal *)ip->idb_ptr;
 
     if (comb) {
+	/* Free the copy of the original name */
+	if (comb->src_objname)
+	    bu_free((void *)comb->src_objname, "comb src_objname");
 	/* If tree hasn't been stolen, release it */
 	db_free_tree(comb->tree, &rt_uniresource);
 	RT_FREE_COMB_INTERNAL(comb);

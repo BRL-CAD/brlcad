@@ -33,6 +33,7 @@
 
 #include "../ged_private.h"
 
+#include "../dbi.h"
 
 extern "C" int
 ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
@@ -138,7 +139,8 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 
     // LoD context creation (DbiState initialization can use info
     // stored here, so do this first)
-    gedp->ged_lod = bv_mesh_lod_context_create(argv[0]);
+    if (gedp->new_cmd_forms)
+	gedp->ged_lod = bv_mesh_lod_context_create(argv[0]);
 
     // If enabled, set up the DbiState container for fast structure access
     if (gedp->new_cmd_forms)

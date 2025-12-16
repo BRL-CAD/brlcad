@@ -10,6 +10,7 @@ set(
   basename.c
   bitv.c
   booleanize.c
+  cache.cpp
   color.c
   datetime.c
   dir.c
@@ -347,6 +348,11 @@ brlcad_add_test(NAME bu_sort_fastf_empty COMMAND bu_test sort 9)
 brlcad_add_test(NAME bu_sort_fastf_inf COMMAND bu_test sort 10)
 
 #
+#  *********** cache.cpp tests ************
+#
+brlcad_add_test(NAME bu_cache COMMAND bu_test cache)
+
+#
 #  ************ color.c tests *************
 
 # For COMMAND bu_test color, the input format is as follows:
@@ -536,7 +542,7 @@ brlcad_add_test(NAME bu_badmagic_misaligned  COMMAND bu_test badmagic 4)
 # version number testing
 #
 
-brlcad_addexec(bu_version version.c "" TEST)
+brlcad_addexec(bu_version version.c libbu TEST)
 brlcad_add_test(NAME bu_version_tests COMMAND bu_version)
 
 #
@@ -782,7 +788,8 @@ if(TARGET bu_mappedfile_parallel_16384)
 endif()
 
 if(BUILD_TESTING)
-  add_executable(perm_test perm_test.cpp)
+  brlcad_addexec(perm_test perm_test.cpp libbu TEST)
+  set_target_properties(perm_test PROPERTIES FOLDER "BRL-CAD Executables/Test Programs")
 endif(BUILD_TESTING)
 
 #

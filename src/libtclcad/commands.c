@@ -4459,7 +4459,12 @@ to_new_view(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    BU_ALLOC(new_gdvp, struct bview);
+    if (!gedp->ged_gvp->u_data) {
+	new_gdvp = gedp->ged_gvp;
+    } else {
+	BU_ALLOC(new_gdvp, struct bview);
+    }
+
     struct bu_ptbl *callbacks;
     BU_GET(callbacks, struct bu_ptbl);
     bu_ptbl_init(callbacks, 8, "bv callbacks");
@@ -4490,7 +4495,8 @@ to_new_view(struct ged *gedp,
 	if ((struct dm *)new_gdvp->dmp == DM_NULL) {
 	    bu_ptbl_free(callbacks);
 	    BU_PUT(callbacks, struct bu_ptbl);
-	    bu_free((void *)new_gdvp, "ged_view");
+	    if (new_gdvp != gedp->ged_gvp)
+		bu_free((void *)new_gdvp, "ged_view");
 	    bu_free((void *)av, "to_new_view: av");
 
 	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", argv[1]);
@@ -4501,7 +4507,8 @@ to_new_view(struct ged *gedp,
 
     }
 
-    bu_vls_init(&new_gdvp->gv_name);
+    if (new_gdvp != gedp->ged_gvp)
+	bu_vls_init(&new_gdvp->gv_name);
 
     struct tclcad_view_data *tvd;
     BU_GET(tvd, struct tclcad_view_data);
@@ -4512,11 +4519,12 @@ to_new_view(struct ged *gedp,
     tvd->gedp = current_top->to_gedp;
     new_gdvp->u_data = (void *)tvd;
 
-    bu_vls_printf(&new_gdvp->gv_name, "%s", argv[name_index]);
+    bu_vls_sprintf(&new_gdvp->gv_name, "%s", argv[name_index]);
     bv_init(new_gdvp, &current_top->to_gedp->ged_views);
     new_gdvp->callbacks = callbacks;
     bv_set_add_view(&current_top->to_gedp->ged_views, new_gdvp);
-    bu_ptbl_ins(&gedp->ged_free_views, (long *)new_gdvp);
+    if (new_gdvp != gedp->ged_gvp)
+	bu_ptbl_ins(&gedp->ged_free_views, (long *)new_gdvp);
 
     new_gdvp->gv_s->point_scale = 1.0;
     new_gdvp->gv_s->curve_scale = 1.0;

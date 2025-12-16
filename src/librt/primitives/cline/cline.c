@@ -176,7 +176,6 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 {
     register struct cline_specific *cline =
 	(struct cline_specific *)stp->st_specific;
-    struct seg ref_seghead;
     register struct seg *segp;
     fastf_t reff;
     fastf_t dist[3];
@@ -192,8 +191,6 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 	return 0;
 
     RT_CK_APPLICATION(ap);
-
-    BU_LIST_INIT(&ref_seghead.l);
 
     /* This is a CLINE FASTGEN element */
     if (rt_cline_radius > 0.0) {

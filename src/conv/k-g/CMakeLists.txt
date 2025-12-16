@@ -8,6 +8,7 @@ set(k-g_soure_files
   pipe.cpp
   sketch.cpp
   extrude.cpp
+  sphere.cpp
   )
 
 BRLCAD_ADDEXEC(k-g "${k-g_soure_files}" "libwdb;librt;libbu" FOLDER Conv)
@@ -22,6 +23,7 @@ set(k-g_ignore_files
   pipe.h
   sketch.h
   extrude.h
+  sphere.h
   )
 
 CMAKEFILES(${k-g_ignore_files})

@@ -44,14 +44,15 @@
 // Necessary C++ header files
 #include <iostream>
 #include <cstdlib>
+#include <cstdio>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <vector>
 #include <ctime>
+#include <filesystem>
+
 #include "picohash.h"
-#include<cstdio>
-#include<filesystem>
 
 // Necessary C++ headers to get user account name for Windows and Unix
 #ifdef HAVE_WINDOWS_H

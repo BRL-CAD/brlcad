@@ -223,10 +223,6 @@ RT_EXPORT extern int rt_gettrees_and_attrs(struct rt_i *rtip,
 				           const char **argv,
 				           int ncpus);
 
-DEPRECATED RT_EXPORT extern int rt_load_attrs(struct rt_i *rtip,
-					      char **attrs);
-
-
 /* Print the partitions */
 RT_EXPORT extern void rt_pr_partitions(const struct rt_i *rtip,
 				       const struct partition *phead,

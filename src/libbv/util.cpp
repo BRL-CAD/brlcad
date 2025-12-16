@@ -308,6 +308,21 @@ bv_init(struct bview *gvp, struct bview_set *s)
     gvp->gv_base2local = 1.0;
     gvp->gv_local2base = 1.0;
 
+    // Initialize knob vars
+    bv_knobs_reset(&gvp->k, BV_KNOBS_ALL);
+    gvp->k.origin_m = '\0';
+    gvp->k.origin_o = '\0';
+    gvp->k.origin_v = '\0';
+    gvp->k.rot_m_udata = NULL;
+    gvp->k.rot_o_udata = NULL;
+    gvp->k.rot_v_udata = NULL;
+    gvp->k.sca_udata = NULL;
+    gvp->k.tra_m_udata = NULL;
+    gvp->k.tra_v_udata = NULL;
+
+    // Initialize trackball pos
+    MAT_DELTAS_GET_NEG(gvp->orig_pos, gvp->gv_center);
+
     // Initialize tclcad specific data (primarily doing this so hashing calculations
     // can succeed)
     _data_tclcad_init(&gvp->gv_tcl);
@@ -526,8 +541,6 @@ bv_mat_aet(struct bview *v)
 void
 bv_settings_init(struct bview_settings *s)
 {
-    s->obj_s = BV_OBJ_SETTINGS_INIT;
-
     s->gv_cleared = 1;
 
     s->gv_adc.draw = 0;
@@ -1246,6 +1259,7 @@ bv_obj_reset(struct bv_scene_obj *s)
     struct bv_obj_settings defaults = BV_OBJ_SETTINGS_INIT;
     bv_obj_settings_sync(&s->s_local_os, &defaults);
     s->s_os = &s->s_local_os;
+    s->s_inherit_settings = 0;
 
     MAT_IDN(s->s_mat);
     VSET(s->s_color, 255, 0, 0);
@@ -1265,6 +1279,7 @@ bv_obj_reset(struct bv_scene_obj *s)
     s->s_arrow = 0;
     s->s_csize = 0;
     s->s_flag = UP;
+    s->s_force_draw = 0;
     s->s_i_data = NULL;
     s->s_iflag = DOWN;
     s->s_path = NULL;

@@ -151,6 +151,12 @@ RT_EXPORT extern int wdb_import(struct rt_wdb *wdbp,
 /**
  * The caller must free "ep".
  *
+ * Note that the minor_type used here should match both the rt_db_internal
+ * idb_minor_type and struct directory d_minor_type, if either or both of those
+ * containers are associated with the bu_external data being written (typically
+ * either ip->idb_minor_type or dp->d_minor_type are used as the last arguments
+ * to wdb_export_external.)
+ *
  * Returns -
  *  0 OK
  * <0 error

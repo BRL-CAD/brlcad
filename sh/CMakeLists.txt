@@ -30,6 +30,7 @@ set(
   linkroot.sh
   make_deb.sh
   make_dmg.sh
+  make_pkg.sh
   make_rpm.sh
   news2tracker.sh
   template.sh

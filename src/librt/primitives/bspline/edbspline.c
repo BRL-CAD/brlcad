@@ -47,7 +47,7 @@ struct rt_bspline_edit {
 };
 
 void *
-rt_solid_edit_bspline_prim_edit_create(struct rt_solid_edit *s)
+rt_edit_bspline_prim_edit_create(struct rt_edit *s)
 {
     struct rt_bspline_edit *e;
     BU_GET(e, struct rt_bspline_edit);
@@ -67,7 +67,7 @@ rt_solid_edit_bspline_prim_edit_create(struct rt_solid_edit *s)
 }
 
 void
-rt_solid_edit_bspline_prim_edit_destroy(struct rt_bspline_edit *e)
+rt_edit_bspline_prim_edit_destroy(struct rt_bspline_edit *e)
 {
     if (!e)
 	return;
@@ -75,25 +75,25 @@ rt_solid_edit_bspline_prim_edit_destroy(struct rt_bspline_edit *e)
 }
 
 void
-rt_solid_edit_bspline_set_edit_mode(struct rt_solid_edit *s, int mode)
+rt_edit_bspline_set_edit_mode(struct rt_edit *s, int mode)
 {
     /* XXX Why were we doing VPICK with chg_state?? */
     //chg_state(s, ST_S_EDIT, ST_S_VPICK, "Vertex Pick");
     if (mode < 0) {
 	/* Enter picking state */
-	rt_solid_edit_set_edflag(s, ECMD_SPLINE_VPICK);
-	s->solid_edit_pick = 1;
+	rt_edit_set_edflag(s, ECMD_SPLINE_VPICK);
+	s->edit_mode = RT_PARAMS_EDIT_PICK;
 	return;
     }
 
-    rt_solid_edit_set_edflag(s, mode);
+    rt_edit_set_edflag(s, mode);
     if (mode == ECMD_VTRANS)
-	s->solid_edit_translate = 1;
+	s->edit_mode = RT_PARAMS_EDIT_TRANS;
 
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 
@@ -101,39 +101,39 @@ rt_solid_edit_bspline_set_edit_mode(struct rt_solid_edit *s, int mode)
 
 /*ARGSUSED*/
 static void
-spline_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+spline_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
     /* XXX Why were we doing VPICK with chg_state?? */
     //chg_state(s, ST_S_EDIT, ST_S_VPICK, "Vertex Pick");
     if (arg < 0) {
 	/* Enter picking state */
-	rt_solid_edit_set_edflag(s, ECMD_SPLINE_VPICK);
-	s->solid_edit_pick = 1;
+	rt_edit_set_edflag(s, ECMD_SPLINE_VPICK);
+	s->edit_mode = RT_PARAMS_EDIT_PICK;
 	return;
     }
 
-    rt_solid_edit_set_edflag(s, arg);
+    rt_edit_set_edflag(s, arg);
     if (arg == ECMD_VTRANS)
-	s->solid_edit_translate = 1;
+	s->edit_mode = RT_PARAMS_EDIT_TRANS;
 
-    rt_solid_edit_process(s);
+    rt_edit_process(s);
 
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
-struct rt_solid_edit_menu_item spline_menu[] = {
+struct rt_edit_menu_item spline_menu[] = {
     { "SPLINE MENU", NULL, 0 },
     { "Pick Vertex", spline_ed, -1 },
     { "Move Vertex", spline_ed, ECMD_VTRANS },
     { "", NULL, 0 }
 };
 
-struct rt_solid_edit_menu_item *
-rt_solid_edit_bspline_menu_item(const struct bn_tol *UNUSED(tol))
+struct rt_edit_menu_item *
+rt_edit_bspline_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return spline_menu;
 }
@@ -215,7 +215,7 @@ nurb_closest2d(
 
 
 void
-sedit_vpick(struct rt_solid_edit *s)
+sedit_vpick(struct rt_edit *s)
 {
 #if 0
     point_t m_pos;
@@ -238,19 +238,19 @@ sedit_vpick(struct rt_solid_edit *s)
     bu_clbk_t f = NULL;
     void *d = NULL;
     int vs_flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_SET_FLAG, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_VIEW_SET_FLAG, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &vs_flag);
 }
 
 void
-rt_solid_edit_bspline_labels(
+rt_edit_bspline_labels(
   	int *UNUSED(num_lines),
 	point_t *UNUSED(lines),
 	struct rt_point_labels *pl,
 	int UNUSED(max_pl),
 	const mat_t xform,
-	struct rt_solid_edit *s,
+	struct rt_edit *s,
 	struct bn_tol *UNUSED(tol)
     )
 {
@@ -295,11 +295,11 @@ rt_solid_edit_bspline_labels(
 }
 
 const char *
-rt_solid_edit_bspline_keypoint(
+rt_edit_bspline_keypoint(
 	point_t *pt,
 	const char *UNUSED(keystr),
 	const mat_t mat,
-	struct rt_solid_edit *s,
+	struct rt_edit *s,
 	const struct bn_tol *UNUSED(tol))
 {
     struct rt_db_internal *ip = &s->es_int;
@@ -327,7 +327,7 @@ rt_solid_edit_bspline_keypoint(
 
 // I think this is bspline only??
 void
-ecmd_vtrans(struct rt_solid_edit *s)
+ecmd_vtrans(struct rt_edit *s)
 {
     struct rt_bspline_edit *b = (struct rt_bspline_edit *)s->ipe_ptr;
 
@@ -367,19 +367,19 @@ ecmd_vtrans(struct rt_solid_edit *s)
 
 
 int
-rt_solid_edit_bspline_edit(struct rt_solid_edit *s)
+rt_edit_bspline_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return rt_solid_edit_generic_sscale(s, &s->es_int);
-	case RT_SOLID_EDIT_TRANS:
+	    return edit_sscale(s);
+	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
-	    rt_solid_edit_generic_strans(s, &s->es_int);
+	    edit_stra(s);
 	    break;
-	case RT_SOLID_EDIT_ROT:
+	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
-	    rt_solid_edit_generic_srot(s, &s->es_int);
+	    edit_srot(s);
 	    break;
 	case ECMD_SPLINE_VPICK:
 	    sedit_vpick(s);
@@ -394,8 +394,8 @@ rt_solid_edit_bspline_edit(struct rt_solid_edit *s)
 }
 
 int
-rt_solid_edit_bspline_edit_xy(
-	struct rt_solid_edit *s,
+rt_edit_bspline_edit_xy(
+	struct rt_edit *s,
 	const vect_t mousevec
 	)
 {
@@ -406,12 +406,12 @@ rt_solid_edit_bspline_edit_xy(
     void *d = NULL;
 
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	case ECMD_SPLINE_VPICK:
-	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    edit_sscale_xy(s, mousevec);
 	    return 0;
-	case RT_SOLID_EDIT_TRANS:
-	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
+	case RT_PARAMS_EDIT_TRANS:
+	    edit_stra_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_VTRANS:
 	    /*
@@ -429,15 +429,21 @@ rt_solid_edit_bspline_edit_xy(
 	    s->e_mvalid = 1;      /* s->e_mparam is valid */
 	    /* Leave the rest to code in ft_edit */
 	    break;
+        case RT_PARAMS_EDIT_ROT:
+            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
+            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+            if (f)
+                (*f)(0, NULL, d, NULL);
+            return BRLCAD_ERROR;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
     }
 
-    rt_update_edit_absolute_tran(s, pos_view);
+    edit_abs_tra(s, pos_view);
 
     return 0;
 }

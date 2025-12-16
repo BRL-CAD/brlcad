@@ -37,13 +37,8 @@
 #include "rt/geom.h"
 #include "rt/primitives/bot.h"
 
-#if !defined(BRLCAD_MMESH)
-#  include "./gct_decimation/meshdecimation.h"
-#  include "./gct_decimation/meshoptimization.h"
-#else
-#  include "meshdecimation.h"
-#  include "meshoptimizer.h"
-#endif
+#include "mmesh/meshdecimation.h"
+#include "mmesh/meshoptimizer.h"
 
 #include "./bot_edge.h"
 
@@ -476,51 +471,40 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
 }
 
 /**
- * decimate a BOT using the new GCT decimator.
+ * decimate a BOT using the new mmesh decimator.
  * `feature_size` is the smallest feature size to keep undecimated.
  * returns the number of edges removed.
  */
 size_t
-#if !defined(BRLCAD_MMESH)
-rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
-    const int opt_level = 3; /* maximum */
-    mdOperation mdop;
-
-    RT_BOT_CK_MAGIC(bot);
-
-    if (feature_size < 0.0)
-	bu_bomb("invalid feature_size");
-
-    mdOperationInit(&mdop);
-    mdOperationData(&mdop, bot->num_vertices, bot->vertices,
-		    sizeof(bot->vertices[0]), 3 * sizeof(bot->vertices[0]), bot->num_faces,
-		    bot->faces, sizeof(bot->faces[0]), 3 * sizeof(bot->faces[0]));
-    mdOperationStrength(&mdop, feature_size);
-    mdOperationAddAttrib(&mdop, bot->face_normals, sizeof(bot->face_normals[0]), 3,
-			 3 * sizeof(bot->face_normals[0]), MD_ATTRIB_FLAGS_COMPUTE_NORMALS);
-    mdMeshDecimation(&mdop, MD_FLAGS_NORMAL_VERTEX_SPLITTING | MD_FLAGS_TRIANGLE_WINDING_CCW);
-
-    bot->num_vertices = mdop.vertexcount;
-    bot->num_faces = mdop.tricount;
-
-    mesh_optimization(bot->num_vertices, bot->num_faces, bot->faces, sizeof(bot->faces[0]), opt_level);
-
-    return mdop.decimationcount;
-}
-#else
 rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
     RT_BOT_CK_MAGIC(bot);
 
-    if (feature_size < 0.0)
-	bu_bomb("invalid feature_size");
+    if (feature_size < 0.0) {
+	bu_log("invalid feature_size");
+	return 0;
+    }
+
+    /* NOTE:  The original gct code used a feature_size -> cost threshold
+     * calculation with a sensitivity of the fourth power - the new code uses a
+     * sixth power calculation, which means the same feature size will produce
+     * a finer mesh.  To keep closer to the original behavior, we'll try to
+     * adjust feature_size accordingly.
+     *
+     * Implementation remark - this really should be refactored to be a libbg
+     * function on trimesh data, since there is no actual dependence on
+     * rt_bot_internal information beyond the raw triangle info - probably want
+     * to use the new mmesh sixth power feature_size setting as-is in that
+     * version, since the upstream behavior change is unlikely to be arbitrary.
+     * Doing the adjustment here solely for consistency. */
+    fastf_t fsize = pow(feature_size, 2.0 / 3.0) * pow(2.0, 4.0 / 3.0);
 
     mdOperation mdop;
     mdOperationInit(&mdop);
     mdOperationData(&mdop, bot->num_vertices, bot->vertices,
-		    MD_FORMAT_DOUBLE, 3, bot->num_faces,
-		    bot->faces, MD_FORMAT_INT, 3);
-    mdOperationStrength(&mdop, feature_size);
-    mdOperationComputeNormals(&mdop, bot->face_normals, MD_FORMAT_DOUBLE, 3);
+		    MD_FORMAT_DOUBLE, 3*sizeof(double), bot->num_faces,
+		    bot->faces, MD_FORMAT_INT, 3*sizeof(int));
+    mdOperationStrength(&mdop, fsize);
+    mdOperationComputeNormals(&mdop, bot->face_normals, MD_FORMAT_DOUBLE, 3*sizeof(double));
     mdMeshDecimation(&mdop, (int)bu_avail_cpus(), MD_FLAGS_NORMAL_VERTEX_SPLITTING | MD_FLAGS_TRIANGLE_WINDING_CCW);
 
     bot->num_vertices = mdop.vertexcount;
@@ -528,14 +512,13 @@ rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
 
     moOptimizeMesh(
 	    bot->num_vertices, bot->num_faces, bot->faces,
-	    MD_FORMAT_INT, 3,
+	    sizeof(int), 3*sizeof(int),
 	    NULL, NULL,
 	    0, (int)bu_avail_cpus(), 0
 	    );
 
     return mdop.decimationcount;
 }
-#endif
 
 /**
  * routine to reduce the number of triangles in a BOT by edges

@@ -1,23 +1,16 @@
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-brlcad_find_package(MANIFOLD REQUIRED)
+brlcad_find_package(manifold REQUIRED)
+brlcad_find_package(mmesh REQUIRED)
 brlcad_find_package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
 brlcad_find_package(REGEX REQUIRED)
 brlcad_find_package(Geogram REQUIRED SYSPATTERN geogram)
 find_package_gte(REQUIRED)
 add_definitions(-DUSE_GEOGRAM)
 
-if(NOT BRLCAD_ENABLE_GCT)
-  brlcad_find_package(MMESH REQUIRED)
-  if(MMESH_LIBRARY)
-    add_definitions(-DBRLCAD_MMESH)
-  endif(MMESH_LIBRARY)
-endif(NOT BRLCAD_ENABLE_GCT)
-
 if(BRLCAD_ENABLE_OPENCL)
   add_definitions(-DUSE_OPENCL)
 endif(BRLCAD_ENABLE_OPENCL)
-
 
 set(
   LIBRT_PRIMEDIT_SOURCES
@@ -57,14 +50,14 @@ set(
 set(RT_ECMD_SCANNER ${CMAKE_BINARY_DIR}/CMakeTmp/rt_ecmd_scanner${CMAKE_EXECUTABLE_SUFFIX})
 set(RT_ECMD_SCANNER_SRC "${CMAKE_CURRENT_SOURCE_DIR}/primitives/rt_ecmd_scanner.cpp")
 try_compile(
-  ged_hdr_scanner
+  rt_ecmd_scanner
   "${CMAKE_BINARY_DIR}/CMakeTmp"
   SOURCES "${RT_ECMD_SCANNER_SRC}"
   OUTPUT_VARIABLE RT_SCANNER_BLD_OUT
   COPY_FILE "${RT_ECMD_SCANNER}"
 )
 if (NOT EXISTS ${RT_ECMD_SCANNER})
-  message(FATAL_ERROR "Unable to build ged command scanner: ${RT_SCANNER_BLD_OUT}")
+  message(FATAL_ERROR "Unable to build edit command scanner: ${RT_SCANNER_BLD_OUT}")
 endif()
 distclean(${RT_ECMD_SCANNER})
 
@@ -103,6 +96,7 @@ set(
   bool_tess.c
   bundle.c
   cache.c
+  cache_lod.c
   cache_lz4.c
   cmd.c
   cyclic.c
@@ -165,6 +159,7 @@ set(
   primitives/bot/bot_edge.c
   primitives/bot/bot_mirror.c
   primitives/bot/bot_oriented_bbox.cpp
+  primitives/bot/bot_plot.cpp
   primitives/bot/btg.c
   primitives/bot/btgf.c
   primitives/bot/decimate.c
@@ -181,6 +176,7 @@ set(
   primitives/dsp/dsp.c
   primitives/dsp/dsp_brep.cpp
   primitives/dsp/dsp_mirror.c
+  primitives/dsp/dsp_tess.cpp
   primitives/ebm/ebm.c
   primitives/ebm/ebm_brep.cpp
   primitives/ebm/ebm_mirror.c
@@ -265,6 +261,8 @@ set(
   primitives/rpc/rpc.c
   primitives/rpc/rpc_brep.cpp
   primitives/rpc/rpc_mirror.c
+  primitives/sample.c
+  primitives/sample_pnts.cpp
   primitives/script/script.c
   primitives/sketch/polygons.c
   primitives/sketch/sketch.c
@@ -309,23 +307,6 @@ set(
 )
 
 set(
-  GCT_SRCS
-  primitives/bot/gct_decimation/auxiliary/mmbinsort.c
-  primitives/bot/gct_decimation/auxiliary/mmbitmap.c
-  primitives/bot/gct_decimation/auxiliary/mm.c
-  primitives/bot/gct_decimation/auxiliary/mmhash.c
-  primitives/bot/gct_decimation/meshoptimization.c
-  primitives/bot/gct_decimation/meshoptimizer.c
-  primitives/bot/gct_decimation/meshdecimation.c
-  primitives/bot/gct_decimation/meshdecimationSSE2.c
-  primitives/bot/gct_decimation/meshdecimationSSE3.c
-  primitives/bot/gct_decimation/meshdecimationSSE4p1.c
-)
-if(BRLCAD_ENABLE_GCT AND NOT MMESH_FOUND)
-  set(LIBRT_SOURCES ${LIBRT_SOURCES} ${GCT_SRCS})
-endif(BRLCAD_ENABLE_GCT AND NOT MMESH_FOUND)
-
-set(
   librt_ignored_files
   cache.h
   librt_private.h
@@ -335,17 +316,6 @@ set(
   prcomb.c
   primitives/bot/bot_edge.h
   primitives/bot/bot_wireframe.cpp
-  ${GCT_SRCS}
-  primitives/bot/gct_decimation/auxiliary/cc.h
-  primitives/bot/gct_decimation/auxiliary/mm.h
-  primitives/bot/gct_decimation/auxiliary/mmatomic.h
-  primitives/bot/gct_decimation/auxiliary/mmbinsort.h
-  primitives/bot/gct_decimation/auxiliary/mmbitmap.h
-  primitives/bot/gct_decimation/auxiliary/mmhash.h
-  primitives/bot/gct_decimation/auxiliary/mmthread.h
-  primitives/bot/gct_decimation/meshdecimation.h
-  primitives/bot/gct_decimation/meshoptimization.h
-  primitives/bot/gct_decimation/meshoptimizer.h
   primitives/bot/tie.c
   primitives/bot/tie_kdtree.c
   primitives/bot/tieprivate.h
@@ -353,6 +323,7 @@ set(
   primitives/brep/brep_local.h
   primitives/datum/datum.h
   primitives/dsp/dsp.h
+  primitives/dsp/TerraScape.hpp
   primitives/edit_private.h
   primitives/fixpt.h
   primitives/metaball/metaball.h
@@ -438,13 +409,13 @@ set(
   ${OPENCL_LIBS}
   ${librt_deps}
   ${OPENNURBS_LIBRARIES}
-  ${MANIFOLD_LIBRARIES}
   ${Geogram_LIBRARY}
-  ${MMESH_LIBRARY}
+  mmesh::mmesh
   ${REGEX_LIBRARIES}
   ${WINSOCK_LIB}
   ${RPCRT_LIB}
   ${STDCXX_LIBRARIES}
+  manifold::manifold
 )
 
 # Include directories needed by librt users
@@ -457,8 +428,6 @@ set(
   ${CMAKE_CURRENT_SOURCE_DIR}/vds
   ${REGEX_INCLUDE_DIRS}
   ${Geogram_INCLUDE_DIR}
-  ${MANIFOLD_INCLUDE_DIRS}
-  ${MMESH_INCLUDE_DIR}
 )
 # FIXME: needs materialX
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source

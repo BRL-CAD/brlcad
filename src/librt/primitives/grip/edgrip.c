@@ -35,11 +35,11 @@
 #include "../edit_private.h"
 
 const char *
-rt_solid_edit_grp_keypoint(
+rt_edit_grp_keypoint(
 	point_t *pt,
 	const char *keystr,
 	const mat_t mat,
-	struct rt_solid_edit *s,
+	struct rt_edit *s,
 	const struct bn_tol *tol)
 {
     struct rt_db_internal *ip = &s->es_int;
@@ -54,7 +54,7 @@ rt_solid_edit_grp_keypoint(
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
 void
-rt_solid_edit_grp_write_params(
+rt_edit_grp_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
        	const struct bn_tol *UNUSED(tol),
@@ -79,7 +79,7 @@ rt_solid_edit_grp_write_params(
     while (lc && strchr(lc, ':')) lc++
 
 int
-rt_solid_edit_grp_read_params(
+rt_edit_grp_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
 	const struct bn_tol *UNUSED(tol),

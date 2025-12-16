@@ -41,6 +41,7 @@
 
 #include "ged/view.h"
 #include "../ged_private.h"
+#include "../dbi.h"
 
 static int
 draw_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *data)
@@ -129,11 +130,9 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* User settings may override various options - set up to collect them.
-     * Option defaults come from the current view, but may be overridden for
-     * the purposes of the current draw command by command line options. */
+     * Option defaults may be overridden for the purposes of the current draw
+     * command by command line options. */
     struct bv_obj_settings vs = BV_OBJ_SETTINGS_INIT;
-    if (cv)
-	bv_obj_settings_sync(&vs, &cv->gv_s->obj_s);
 
     int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
     struct bu_opt_desc d[18];
@@ -220,7 +219,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     // different settings. The simplest case is when the current or specified
     // view is an independent view - we just update it and return.
     if (cv->independent) {
-	BViewState *bvs = gedp->dbi_state->get_view_state(cv);
+	DbiState *dbis = (DbiState *)gedp->dbi_state;
+	BViewState *bvs = dbis->get_view_state(cv);
 	for (size_t i = 0; i < (size_t)argc; ++i)
 	    bvs->add_path(argv[i]);
 	std::unordered_set<struct bview *> vset;
@@ -239,7 +239,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
 	if (v->independent)
 	    continue;
-	BViewState *bvs = gedp->dbi_state->get_view_state(cv);
+	DbiState *dbis = (DbiState *)gedp->dbi_state;
+	BViewState *bvs = dbis->get_view_state(cv);
 	if (!bvs)
 	    continue;
 	vmap[bvs].insert(v);
@@ -260,7 +261,8 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char **argv)
     if (!gedp || !gedp->dbi_state || !v)
 	return BRLCAD_ERROR;
     std::unordered_set<struct bview *> vset;
-    BViewState *bvs = gedp->dbi_state->get_view_state(v);
+    DbiState *dbis = (DbiState *)gedp->dbi_state;
+    BViewState *bvs = dbis->get_view_state(v);
     if (!bvs)
 	return BRLCAD_ERROR;
     bvs->refresh(v, argc, argv);

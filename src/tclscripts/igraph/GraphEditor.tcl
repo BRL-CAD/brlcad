@@ -176,7 +176,7 @@ body GraphEditor::constructor {} {
     bind $_bgMenu <ButtonRelease> {::tk::MenuInvoke %W 1}
 
     # get objects' names, types and positions within the graph
-    set graphViewCommand "graph show"
+    set graphViewCommand "graph --igraph show"
 
     if { [ catch $graphViewCommand positions error] } {
 	# check if there is an error saying that Adaptagrams isn't available
@@ -210,65 +210,62 @@ body GraphEditor::constructor {} {
     set i 0
     set look_for_edges 0
     foreach element $positions {
-	if { [string equal $element edge] } {
-	    if { $look_for_edges == 1} {
-		# construct the polyline that defines the connection between two nodes
-		$itk_interior.cv create line $points \
-		-width 0.05 \
-		-arrow first
-	    }
-	    set points []
-	    set look_for_edges 1
-	    set i 0
-	    continue
-	}
+        if { [string equal $element edge] } {
+            if { $look_for_edges == 1} {
+                # construct the polyline that defines the connection between two nodes
+                $itk_interior.cv create line $points \
+                    -width 0.05 \
+                    -arrow first
+            }
+            set points []
+            set look_for_edges 1
+            set i 0
+            continue
+        }
 
-	if { $look_for_edges == 1 } {
-	    lappend points $element
-	    incr i
-	} else {
-	    if { $i == 0 } {
-		# set the name of the object
-		set name $element
-		incr i
-	    } elseif { $i == 1 } {
-		# set the color depending on the type of object: primitive / combination / something else
-		if { [string equal $element $primitive] } {
-		    set color red
-		} elseif { [string equal $element $combination] } {
-		    set color green
-		} else {
-		    set color yellow
-		}
-		incr i
-	    } elseif { $i == 2 } {
-		# set the x coordinate for the lower left corner
-		set x1 $element
-		incr i
-	    } elseif { $i == 3 } {
-		# set the y coordinate for the lower left corner
-		set y1 $element
-		incr i
-	    } elseif { $i == 4 } {
-		# set the x coordinate for the upper right corner
-		set x2 $element
-		incr i
-	    } else {
-		# set the y coordinate for the upper right corner
-		set y2 $element
-		set i 0
+        if { $look_for_edges == 1 } {
+            lappend points $element
+            incr i
+        } else {
+            if { $i == 0 } {
+                set name $element
+                incr i
+            } elseif { $i == 1 } {
+                if { [string equal $element $primitive] } {
+                    set color red
+                } elseif { [string equal $element $combination] } {
+                    set color green
+                } else {
+                    set color yellow
+                }
+                incr i
+            } elseif { $i == 2 } {
+                set x1 $element
+                incr i
+            } elseif { $i == 3 } {
+                set y1 $element
+                incr i
+            } elseif { $i == 4 } {
+                set x2 $element
+                incr i
+            } else {
+                set y2 $element
+                set i 0
+                $itk_interior.cv create rectangle $x1 $y1 $x2 $y2 \
+                    -fill $color \
+                    -tags rectangle
+                $itk_interior.cv create text $x1 $y1 \
+                    -anchor nw \
+                    -text $name
+            }
+        }
+    }
 
-		# draw a rectangle for this object within the graph
-		$itk_interior.cv create rectangle $x1 $y1 $x2 $y2 \
-		-fill $color \
-		-tags rectangle
-
-		# write the object's name inside the rectangle
-		$itk_interior.cv create text $x1 $y1 \
-		-anchor nw \
-		-text $name
-	    }
-	}
+    # Flush the final pending edge polyline (last edge block)
+    if { $look_for_edges == 1 && [llength $points] >= 4 } {
+        $itk_interior.cv create line $points \
+            -width 0.05 \
+            -arrow first
     }
 }
 

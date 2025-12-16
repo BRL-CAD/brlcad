@@ -21,25 +21,28 @@
  *
  * Sample some BRL-CAD geometry, reporting overlaps and potential
  * problems with air regions.
- *
  */
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include <limits.h> /* home of INT_MAX aka MAXINT */
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
+#include <limits>
+#include <cstdio>
+#include <map>
+#include <set>
+#include <utility>
+#include <vector>
+#include <algorithm>
 
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
-#include "bu/redblack.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "bv/plot3.h"
 #include "bn/str.h"
-
 
 #define made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__);
 
@@ -48,7 +51,6 @@
 #define RAND_OFFSET	((1 - cell_center) * 	\
 	(RAND_NUM * celsiz - celsiz / 2))
 #define TITLE_LEN	80
-
 
 /**
  * Specification of what and how to report results
@@ -62,7 +64,6 @@ struct g_lint_ctrl {
     FILE *glc_fp;			/* The output stream */
     unsigned char *glc_color;		/* RGB for plot3(5) output */
 };
-#define G_LINT_CTRL_NULL	((struct g_lint_ctrl *) 0)
 #define G_LINT_CTRL_MAGIC 0x676c6374
 
 /*
@@ -86,7 +87,6 @@ struct g_lint_ctrl {
 #define G_LINT_ASCII_WITH_ORIGIN 1
 #define G_LINT_PLOT3             2
 
-
 /**
  * The critical information about a particular overlap found on one
  * ray.
@@ -97,11 +97,9 @@ struct g_lint_seg {
     point_t gls_origin;
     point_t gls_entry;
     point_t gls_exit;
-    struct g_lint_seg *gls_next;
+    g_lint_seg *gls_next;
 };
-#define G_LINT_SEG_NULL  ((struct g_lint_seg *) 0)
 #define G_LINT_SEG_MAGIC 0x676c7367
-
 
 /**
  * A pair of overlapping regions and a list of all the offending ray
@@ -109,13 +107,12 @@ struct g_lint_seg {
  */
 struct g_lint_ovlp {
     uint32_t glo_magic; /* Magic no. for integrity check */
-    struct region *glo_r1;
-    struct region *glo_r2;
-    struct g_lint_seg *glo_segs;
-    struct g_lint_seg *glo_seg_last;
+    region *glo_r1;
+    region *glo_r2;
+    g_lint_seg *glo_segs;
+    g_lint_seg *glo_seg_last;
     double glo_cum_length;
 };
-#define G_LINT_OVLP_NULL	((struct g_lint_ovlp *) 0)
 #define G_LINT_OVLP_MAGIC 0x676c6f76
 
 static unsigned char dflt_plot_rgb[] = {
@@ -127,18 +124,41 @@ static unsigned char dflt_plot_rgb[] = {
     128, 128, 128	/* vacuum */
 };
 
-struct bu_rb_tree *ovlp_log = 0;	/* Log of previous overlaps */
-struct bu_rb_tree *ovlps_by_vol;	/* For sorting by volume */
+// --- C++ containers for overlap log ---
+struct OvlpKey {
+    region* r1;
+    region* r2;
+    OvlpKey(region* a, region* b) {
+	if (a < b) { r1 = a; r2 = b; }
+	else { r1 = b; r2 = a; }
+    }
+    bool operator<(const OvlpKey &other) const {
+	return std::tie(r1, r2) < std::tie(other.r1, other.r2);
+    }
+};
+
+std::map<OvlpKey, g_lint_ovlp*> ovlp_log;
+struct CompareByVol {
+    bool operator()(const g_lint_ovlp* a, const g_lint_ovlp* b) const {
+	if (a->glo_cum_length > b->glo_cum_length)
+	    return true;
+	if (a->glo_cum_length < b->glo_cum_length)
+	    return false;
+	if (a->glo_r1 != b->glo_r1) return a->glo_r1 < b->glo_r1;
+	return a->glo_r2 < b->glo_r2;
+    }
+};
+std::set<g_lint_ovlp*, CompareByVol> ovlps_by_vol;
 
 int log_2(unsigned long x)
 {
-    int result;
-
-    for (result = 0; x > 1; ++result)
+    int result = 0;
+    while (x > 1) {
 	x >>= 1;
+	++result;
+    }
     return result;
 }
-
 
 /**
  * The usage message -- it's a long 'un.
@@ -166,28 +186,21 @@ static const char *usage[] = {
     0
 };
 
-
 /**
  * Reports a usage message on stderr.
  */
 void printusage(void)
 {
-    const char **u;
-
-    for (u = usage; *u != 0; ++u)
+    for (const char **u = usage; *u != nullptr; ++u)
 	bu_log("%s", *u);
 }
 
-
-struct g_lint_seg *create_segment(void)
+g_lint_seg *create_segment(void)
 {
-    struct g_lint_seg *sp;
-
-    BU_ALLOC(sp, struct g_lint_seg);
+    auto *sp = new g_lint_seg;
     sp->gls_magic = G_LINT_SEG_MAGIC;
     sp->gls_length = -1.0;
-    sp->gls_next = G_LINT_SEG_NULL;
-
+    sp->gls_next = nullptr;
     return sp;
 }
 
@@ -202,21 +215,17 @@ void print_segment(const char *r1name, const char *r2name, double seg_length, po
     if (origin)
 	printf("%g %g %g ", V3ARGS(origin));
     printf("%s %s %g    %g %g %g    %g %g %g\n",
-	   r1name, r2name, seg_length, V3ARGS(entrypt), V3ARGS(exitpt));
+	    r1name, r2name, seg_length, V3ARGS(entrypt), V3ARGS(exitpt));
 }
 
-
-struct g_lint_ovlp *create_overlap(struct region *r1, struct region *r2)
+g_lint_ovlp *create_overlap(region *r1, region *r2)
 {
-    struct g_lint_ovlp *op;
-
     BU_CKMAG(r1, RT_REGION_MAGIC, "region structure");
     BU_CKMAG(r2, RT_REGION_MAGIC, "region structure");
-
-    BU_ALLOC(op, struct g_lint_ovlp);
+    auto *op = new g_lint_ovlp;
     op->glo_magic = G_LINT_OVLP_MAGIC;
     op->glo_cum_length = 0.0;
-    op->glo_segs = op->glo_seg_last = G_LINT_SEG_NULL;
+    op->glo_segs = op->glo_seg_last = nullptr;
 
     if (r1 < r2) {
 	op->glo_r1 = r1;
@@ -226,50 +235,43 @@ struct g_lint_ovlp *create_overlap(struct region *r1, struct region *r2)
 	op->glo_r2 = r1;
     } else {
 	bu_log("%s:%d: Self-overlap of region '%s' (%p)\n",
-	       __FILE__, __LINE__, r1->reg_name, (void *)r1);
+		__FILE__, __LINE__, r1->reg_name, (void *)r1);
 	bu_exit(1, "This shouldn't happen\n");
     }
-
     return op;
 }
 
-
-void free_overlap(struct g_lint_ovlp *op)
+void free_overlap(g_lint_ovlp *op)
 {
     BU_CKMAG(op, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
-
-    /* XXX - Oughta do something cleaner than what follows... */
-    if (op->glo_segs != G_LINT_SEG_NULL)
-	bu_log("%s:%d: Memory Leak!\n", __FILE__, __LINE__);
-
-    memset((void *) op, 0, sizeof(struct g_lint_ovlp));
-    bu_free((void *) op, "g_lint overlap structure");
+    // Free all segments
+    g_lint_seg *sp = op->glo_segs;
+    while (sp) {
+	g_lint_seg *next = sp->gls_next;
+	delete sp;
+	sp = next;
+    }
+    delete op;
 }
-
 
 /**
  * The call-back for finally outputting data for all the overlap
  * segments between any two regions.
  */
-void _print_overlap(void *v, int show_origin)
+void _print_overlap(g_lint_ovlp *op, int show_origin)
 {
-    const char *r1name, *r2name;
-    struct g_lint_ovlp *op = (struct g_lint_ovlp *) v;
-    struct g_lint_seg *sp;
-
     BU_CKMAG(op, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
     BU_CKMAG(op->glo_r1, RT_REGION_MAGIC, "region structure");
     BU_CKMAG(op->glo_r2, RT_REGION_MAGIC, "region structure");
 
-    r1name = op->glo_r1->reg_name;
-    r2name = op->glo_r2->reg_name;
-    for (sp = op->glo_segs; sp != G_LINT_SEG_NULL; sp = sp->gls_next)
+    const char *r1name = op->glo_r1->reg_name;
+    const char *r2name = op->glo_r2->reg_name;
+    for (g_lint_seg *sp = op->glo_segs; sp; sp = sp->gls_next)
 	print_segment(r1name, r2name,
-		      sp->gls_length,
-		      show_origin ?  sp->gls_origin : 0,
-		      sp->gls_entry, sp->gls_exit);
+		sp->gls_length,
+		show_origin ? sp->gls_origin : nullptr,
+		sp->gls_entry, sp->gls_exit);
 }
-
 
 /**
  * A wrapper for _print_overlap() for use when you don't want to print
@@ -277,9 +279,8 @@ void _print_overlap(void *v, int show_origin)
  */
 void print_overlap(void *v, int UNUSED(depth))
 {
-    _print_overlap(v, 0);
+    _print_overlap(static_cast<g_lint_ovlp *>(v), 0);
 }
-
 
 /**
  * A wrapper for _print_overlap() for use when you do want to print
@@ -287,69 +288,17 @@ void print_overlap(void *v, int UNUSED(depth))
  */
 void print_overlap_o(void *v, int UNUSED(depth))
 {
-    _print_overlap(v, 1);
+    _print_overlap(static_cast<g_lint_ovlp *>(v), 1);
 }
-
-
-/**
- * The red-black-tree comparison callback for the overlap log.
- */
-int compare_overlaps(const void *v1, const void *v2)
-{
-    const struct g_lint_ovlp *o1 = (const struct g_lint_ovlp *) v1;
-    const struct g_lint_ovlp *o2 = (const struct g_lint_ovlp *) v2;
-
-    BU_CKMAG(o1, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
-    BU_CKMAG(o2, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
-
-    if (o1->glo_r1 < o2->glo_r1)
-	return -1;
-    else if (o1->glo_r1 > o2->glo_r1)
-	return 1;
-    else if (o1->glo_r2 < o2->glo_r2)
-	return -1;
-    else if (o1->glo_r2 > o2->glo_r2)
-	return 1;
-    else
-	return 0;
-}
-
-
-/**
- * The red-black-tree comparison callback for the final re-sorting of
- * the overlaps by volume.
- */
-int compare_by_vol(const void *v1, const void *v2)
-{
-    const struct g_lint_ovlp *o1 = (const struct g_lint_ovlp *) v1;
-    const struct g_lint_ovlp *o2 = (const struct g_lint_ovlp *) v2;
-
-    BU_CKMAG(o1, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
-    BU_CKMAG(o2, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
-
-    if (o1->glo_cum_length < o2->glo_cum_length)
-	return 1;
-    else if (o1->glo_cum_length > o2->glo_cum_length)
-	return -1;
-    else
-	return 0;
-}
-
 
 /**
  * The call-back, used in traversing the overlap log, to insert
  * overlaps into the sorted-by-volume tree.
  */
-void insert_by_vol(void *v, int UNUSED(depth))
+void insert_by_vol(g_lint_ovlp *op)
 {
-    int rc;	/* Return code from bu_rb_insert() */
-    struct g_lint_ovlp *op = (struct g_lint_ovlp *) v;
-
-    if ((rc = bu_rb_insert(ovlps_by_vol, (void *) op)))
-	bu_exit(1, "%s:%d: bu_rb_insert() returns %d:  This should not happen\n",
-		__FILE__, __LINE__, rc);
+    ovlps_by_vol.insert(op);
 }
-
 
 /**
  * Log an overlap found along a ray.
@@ -358,36 +307,23 @@ void insert_by_vol(void *v, int UNUSED(depth))
  * routine creates a new entry in the overlap log.  Either way, it
  * then modifies their entry to record this particular find.
  */
-void update_ovlp_log(struct region *r1, struct region *r2, double seg_length, fastf_t *origin, fastf_t *entrypt, fastf_t *exitpt)
+void update_ovlp_log(region *r1, region *r2, double seg_length, fastf_t *origin, fastf_t *entrypt, fastf_t *exitpt)
 {
-    int rc;	/* Return code from bu_rb_insert() */
-    struct g_lint_ovlp *op;
-    struct g_lint_seg *sp;
-
-    /* Prepare an overlap query */
-    op = create_overlap(r1, r2);
-
-    /*
-     * Add this overlap, if necessary.
-     * Either way, op will end up pointing to the unique
-     * (struct g_lint_ovlp) for regions r1 and r2.
-     */
-    if ((rc = bu_rb_insert(ovlp_log, (void *) op)) < 0) {
-	free_overlap(op);
-	op = (struct g_lint_ovlp *) bu_rb_curr1(ovlp_log);
-    } else if (rc > 0)
-	bu_exit(1, "%s:%d: bu_rb_insert() returns %d:  This should not happen\n",
-		__FILE__, __LINE__, rc);
-
-    /*
-     * Fill in a new segment structure and add it to the overlap
-     */
-    sp = create_segment();
+    OvlpKey key(r1, r2);
+    g_lint_ovlp *op = nullptr;
+    auto it = ovlp_log.find(key);
+    if (it == ovlp_log.end()) {
+	op = create_overlap(r1, r2);
+	ovlp_log[key] = op;
+    } else {
+	op = it->second;
+    }
+    g_lint_seg *sp = create_segment();
     op->glo_cum_length += (sp->gls_length = seg_length);
     VMOVE(sp->gls_origin, origin);
     VMOVE(sp->gls_entry, entrypt);
     VMOVE(sp->gls_exit, exitpt);
-    if (op->glo_segs == G_LINT_SEG_NULL)
+    if (!op->glo_segs)
 	op->glo_segs = sp;
     else
 	op->glo_seg_last->gls_next = sp;
@@ -396,14 +332,13 @@ void update_ovlp_log(struct region *r1, struct region *r2, double seg_length, fa
 
 unsigned char *get_color(unsigned char *ucp, unsigned long x)
 {
-    int idx;
-
-    for (idx = 0; x > 1; ++idx)
+    int idx = 0;
+    while (x > 1) {
 	x >>= 1;
-
+	++idx;
+    }
     return ucp + (idx * 3);
 }
-
 
 /**
  * Ray-hit handler for use by rt_shootray().
@@ -429,16 +364,17 @@ static int rpt_hit(struct application *ap, struct partition *ph, struct seg *UNU
     fastf_t mag_del;
     int problems = 0;
     int last_air = 0;
-    struct g_lint_ctrl *cp = (struct g_lint_ctrl *) ap->a_uptr;
+    g_lint_ctrl *cp = static_cast<g_lint_ctrl *>(ap->a_uptr);
     int show_origin;
     int do_plot3;
     fastf_t tolerance;
     unsigned long what_to_report;
     unsigned long debug;
-    unsigned char *color;
+    unsigned char *color = nullptr;
 
     RT_AP_CHECK(ap);
     BU_CKMAG(ph, PT_HD_MAGIC, "partition-list head");
+
     BU_CKMAG(cp, G_LINT_CTRL_MAGIC, "g_lint control structure");
 
     show_origin = (cp->glc_how_to_report == G_LINT_ASCII_WITH_ORIGIN);
@@ -453,11 +389,8 @@ static int rpt_hit(struct application *ap, struct partition *ph, struct seg *UNU
      */
     for (pp = ph->pt_forw; pp != ph; pp = pp->pt_forw) {
 	BU_CKMAG(pp, PT_MAGIC, "partition structure");
-
-	RT_HIT_NORMAL(NULL, pp->pt_inhit, pp->pt_inseg->seg_stp,
-		      &ap->a_ray, 0);
-	RT_HIT_NORMAL(NULL, pp->pt_outhit, pp->pt_outseg->seg_stp,
-		      &ap->a_ray, 0);
+	RT_HIT_NORMAL(NULL, pp->pt_inhit, pp->pt_inseg->seg_stp, &ap->a_ray, 0);
+	RT_HIT_NORMAL(NULL, pp->pt_outhit, pp->pt_outseg->seg_stp, &ap->a_ray, 0);
     }
 
     /*
@@ -468,28 +401,25 @@ static int rpt_hit(struct application *ap, struct partition *ph, struct seg *UNU
 	if (what_to_report & G_LINT_A_ANY) {
 	    if (pp->pt_regionp->reg_regionid <= 0) {
 		if ((what_to_report & G_LINT_A_CONT) && last_air && (pp->pt_regionp->reg_aircode != last_air)) {
-		    VSUB2(delta, pp->pt_inhit->hit_point,
-			  pp->pt_back->pt_outhit->hit_point);
+		    VSUB2(delta, pp->pt_inhit->hit_point, pp->pt_back->pt_outhit->hit_point);
 		    mag_del = MAGNITUDE(delta);
 		    if (mag_del < tolerance) {
 			if (do_plot3) {
 			    color = get_color(cp->glc_color, G_LINT_A_CONT);
 			    pl_color(cp->glc_fp, V3ARGS(color));
-			    pdv_3point(cp->glc_fp,
-				       pp->pt_inhit->hit_point);
+			    pdv_3point(cp->glc_fp, pp->pt_inhit->hit_point);
 			} else {
 			    printf("air_contiguous ");
 			    if (show_origin)
-				printf("%g %g %g ",
-				       V3ARGS(ap->a_ray.r_pt));
+				printf("%g %g %g ", V3ARGS(ap->a_ray.r_pt));
 			    printf("%s %d %s %d %g %g %g\n",
-				   pp->pt_back->pt_regionp->reg_name,
-				   last_air,
-				   pp->pt_regionp->reg_name,
-				   pp->pt_regionp->reg_aircode,
-				   pp->pt_inhit->hit_point[X],
-				   pp->pt_inhit->hit_point[Y],
-				   pp->pt_inhit->hit_point[Z]);
+				    pp->pt_back->pt_regionp->reg_name,
+				    last_air,
+				    pp->pt_regionp->reg_name,
+				    pp->pt_regionp->reg_aircode,
+				    pp->pt_inhit->hit_point[X],
+				    pp->pt_inhit->hit_point[Y],
+				    pp->pt_inhit->hit_point[Z]);
 			}
 			++problems;
 		    }
@@ -500,54 +430,52 @@ static int rpt_hit(struct application *ap, struct partition *ph, struct seg *UNU
 			if (do_plot3) {
 			    color = get_color(cp->glc_color, G_LINT_A_1ST);
 			    pl_color(cp->glc_fp, V3ARGS(color));
-			    pdv_3point(cp->glc_fp,
-				       pp->pt_inhit->hit_point);
+			    pdv_3point(cp->glc_fp, pp->pt_inhit->hit_point);
 			} else {
 			    printf("air_first ");
 			    if (show_origin)
 				printf("%g %g %g ", V3ARGS(ap->a_ray.r_pt));
 			    printf("%s %d %g %g %g\n",
-				   pp->pt_regionp->reg_name,
-				   pp->pt_regionp->reg_aircode,
-				   pp->pt_inhit->hit_point[X],
-				   pp->pt_inhit->hit_point[Y],
-				   pp->pt_inhit->hit_point[Z]);
+				    pp->pt_regionp->reg_name,
+				    pp->pt_regionp->reg_aircode,
+				    pp->pt_inhit->hit_point[X],
+				    pp->pt_inhit->hit_point[Y],
+				    pp->pt_inhit->hit_point[Z]);
 			}
 			++problems;
 		    }
 		} else if (what_to_report & G_LINT_A_UNCONF) {
-		    VSUB2(delta, pp->pt_inhit->hit_point,
-			  pp->pt_back->pt_outhit->hit_point);
+		    VSUB2(delta, pp->pt_inhit->hit_point, pp->pt_back->pt_outhit->hit_point);
 		    if (debug & G_LINT_A_UNCONF) {
 			bu_log("inhit (%g, %g, %g) - back outhit (%g, %g, %g) ",
-			       V3ARGS(pp->pt_inhit->hit_point),
-			       V3ARGS(pp->pt_back->pt_outhit->hit_point));
+				V3ARGS(pp->pt_inhit->hit_point),
+				V3ARGS(pp->pt_back->pt_outhit->hit_point));
 			bu_log(" = (%g, %g, %g), mag=%g\n",
-			       V3ARGS(delta), MAGNITUDE(delta));
+				V3ARGS(delta), MAGNITUDE(delta));
 		    }
 		    if ((mag_del = MAGNITUDE(delta)) > tolerance) {
 			if (do_plot3) {
 			    color = get_color(cp->glc_color, G_LINT_A_UNCONF);
 			    pl_color(cp->glc_fp, V3ARGS(color));
 			    pdv_3line(cp->glc_fp,
-				      pp->pt_back->pt_outhit->hit_point,
-				      pp->pt_inhit->hit_point);
+				    pp->pt_back->pt_outhit->hit_point,
+				    pp->pt_inhit->hit_point);
 			} else {
 			    printf("air_unconfined ");
 			    if (show_origin)
 				printf("%g %g %g ", V3ARGS(ap->a_ray.r_pt));
 			    printf("%s (%s) %s (%s) %g    %g %g %g    %g %g %g\n",
-				   pp->pt_back->pt_regionp->reg_name,
-				   pp->pt_back->pt_outseg->seg_stp->st_name,
-				   pp->pt_regionp->reg_name,
-				   pp->pt_inseg->seg_stp->st_name,
-				   mag_del,
-				   pp->pt_back->pt_outhit->hit_point[X],
-				   pp->pt_back->pt_outhit->hit_point[Y],
-				   pp->pt_back->pt_outhit->hit_point[Z],
-				   pp->pt_inhit->hit_point[X],
-				   pp->pt_inhit->hit_point[Y],
-				   pp->pt_inhit->hit_point[Z]);
+				    pp->pt_back->pt_regionp->reg_name,
+				    pp->pt_back->pt_outseg->seg_stp->st_name,
+				    pp->pt_regionp->reg_name,
+				    pp->pt_inseg->seg_stp->st_name,
+				    mag_del,
+				    pp->pt_back->pt_outhit->hit_point[X],
+				    pp->pt_back->pt_outhit->hit_point[Y],
+				    pp->pt_back->pt_outhit->hit_point[Z],
+				    pp->pt_inhit->hit_point[X],
+				    pp->pt_inhit->hit_point[Y],
+				    pp->pt_inhit->hit_point[Z]);
 			}
 			++problems;
 		    }
@@ -558,54 +486,53 @@ static int rpt_hit(struct application *ap, struct partition *ph, struct seg *UNU
 			if (do_plot3) {
 			    color = get_color(cp->glc_color, G_LINT_A_LAST);
 			    pl_color(cp->glc_fp, V3ARGS(color));
-			    pdv_3point(cp->glc_fp,
-				       pp->pt_outhit->hit_point);
+			    pdv_3point(cp->glc_fp, pp->pt_outhit->hit_point);
 			} else {
 			    printf("air_last ");
 			    if (show_origin)
 				printf("%g %g %g ", V3ARGS(ap->a_ray.r_pt));
 			    printf("%s %d %g %g %g\n",
-				   pp->pt_regionp->reg_name,
-				   pp->pt_regionp->reg_aircode,
-				   pp->pt_outhit->hit_point[X],
-				   pp->pt_outhit->hit_point[Y],
-				   pp->pt_outhit->hit_point[Z]);
+				    pp->pt_regionp->reg_name,
+				    pp->pt_regionp->reg_aircode,
+				    pp->pt_outhit->hit_point[X],
+				    pp->pt_outhit->hit_point[Y],
+				    pp->pt_outhit->hit_point[Z]);
 			}
 			++problems;
 		    }
 		} else if (what_to_report & G_LINT_A_UNCONF) {
 		    VSUB2(delta, pp->pt_forw->pt_inhit->hit_point,
-			  pp->pt_outhit->hit_point);
+			    pp->pt_outhit->hit_point);
 		    if (debug & G_LINT_A_UNCONF) {
 			bu_log("forw inhit (%g, %g, %g) - outhit (%g, %g, %g) ",
-			       V3ARGS(pp->pt_forw->pt_inhit->hit_point),
-			       V3ARGS(pp->pt_outhit->hit_point));
+				V3ARGS(pp->pt_forw->pt_inhit->hit_point),
+				V3ARGS(pp->pt_outhit->hit_point));
 			bu_log(" = (%g, %g, %g), mag=%g\n",
-			       V3ARGS(delta), MAGNITUDE(delta));
+				V3ARGS(delta), MAGNITUDE(delta));
 		    }
 		    if ((mag_del = MAGNITUDE(delta)) > tolerance) {
 			if (do_plot3) {
 			    color = get_color(cp->glc_color, G_LINT_A_UNCONF);
 			    pl_color(cp->glc_fp, V3ARGS(color));
 			    pdv_3line(cp->glc_fp,
-				      pp->pt_outhit->hit_point,
-				      pp->pt_forw->pt_inhit->hit_point);
+				    pp->pt_outhit->hit_point,
+				    pp->pt_forw->pt_inhit->hit_point);
 			} else {
 			    printf("air_unconfined ");
 			    if (show_origin)
 				printf("%g %g %g ", V3ARGS(ap->a_ray.r_pt));
 			    printf("%s (%s) %s (%s) %g    %g %g %g    %g %g %g\n",
-				   pp->pt_regionp->reg_name,
-				   pp->pt_outseg->seg_stp->st_name,
-				   pp->pt_forw->pt_regionp->reg_name,
-				   pp->pt_forw->pt_inseg->seg_stp->st_name,
-				   mag_del,
-				   pp->pt_outhit->hit_point[X],
-				   pp->pt_outhit->hit_point[Y],
-				   pp->pt_outhit->hit_point[Z],
-				   pp->pt_forw->pt_inhit->hit_point[X],
-				   pp->pt_forw->pt_inhit->hit_point[Y],
-				   pp->pt_forw->pt_inhit->hit_point[Z]);
+				    pp->pt_regionp->reg_name,
+				    pp->pt_outseg->seg_stp->st_name,
+				    pp->pt_forw->pt_regionp->reg_name,
+				    pp->pt_forw->pt_inseg->seg_stp->st_name,
+				    mag_del,
+				    pp->pt_outhit->hit_point[X],
+				    pp->pt_outhit->hit_point[Y],
+				    pp->pt_outhit->hit_point[Z],
+				    pp->pt_forw->pt_inhit->hit_point[X],
+				    pp->pt_forw->pt_inhit->hit_point[Y],
+				    pp->pt_forw->pt_inhit->hit_point[Z]);
 			}
 			++problems;
 		    }
@@ -617,38 +544,37 @@ static int rpt_hit(struct application *ap, struct partition *ph, struct seg *UNU
 
 	/* Look for vacuum */
 	if ((what_to_report & G_LINT_VAC) && (pp->pt_back != ph)) {
-	    VSUB2(delta, pp->pt_inhit->hit_point,
-		  pp->pt_back->pt_outhit->hit_point);
+	    VSUB2(delta, pp->pt_inhit->hit_point, pp->pt_back->pt_outhit->hit_point);
 	    if (debug & G_LINT_VAC) {
 		bu_log("inhit (%g, %g, %g) - back outhit (%g, %g, %g) ",
-		       V3ARGS(pp->pt_inhit->hit_point),
-		       V3ARGS(pp->pt_back->pt_outhit->hit_point));
+			V3ARGS(pp->pt_inhit->hit_point),
+			V3ARGS(pp->pt_back->pt_outhit->hit_point));
 		bu_log(" = (%g, %g, %g), mag=%g\n",
-		       V3ARGS(delta), MAGNITUDE(delta));
+			V3ARGS(delta), MAGNITUDE(delta));
 	    }
 	    if ((mag_del = MAGNITUDE(delta)) > tolerance) {
 		if (do_plot3) {
 		    color = get_color(cp->glc_color, G_LINT_VAC);
 		    pl_color(cp->glc_fp, V3ARGS(color));
 		    pdv_3line(cp->glc_fp,
-			      pp->pt_back->pt_outhit->hit_point,
-			      pp->pt_inhit->hit_point);
+			    pp->pt_back->pt_outhit->hit_point,
+			    pp->pt_inhit->hit_point);
 		} else {
 		    printf("vacuum ");
 		    if (show_origin)
 			printf("%g %g %g ", V3ARGS(ap->a_ray.r_pt));
 		    printf("%s (%s) %s (%s) %g    %g %g %g    %g %g %g\n",
-			   pp->pt_back->pt_regionp->reg_name,
-			   pp->pt_back->pt_outseg->seg_stp->st_name,
-			   pp->pt_regionp->reg_name,
-			   pp->pt_inseg->seg_stp->st_name,
-			   mag_del,
-			   pp->pt_back->pt_outhit->hit_point[X],
-			   pp->pt_back->pt_outhit->hit_point[Y],
-			   pp->pt_back->pt_outhit->hit_point[Z],
-			   pp->pt_inhit->hit_point[X],
-			   pp->pt_inhit->hit_point[Y],
-			   pp->pt_inhit->hit_point[Z]);
+			    pp->pt_back->pt_regionp->reg_name,
+			    pp->pt_back->pt_outseg->seg_stp->st_name,
+			    pp->pt_regionp->reg_name,
+			    pp->pt_inseg->seg_stp->st_name,
+			    mag_del,
+			    pp->pt_back->pt_outhit->hit_point[X],
+			    pp->pt_back->pt_outhit->hit_point[Y],
+			    pp->pt_back->pt_outhit->hit_point[Z],
+			    pp->pt_inhit->hit_point[X],
+			    pp->pt_inhit->hit_point[Y],
+			    pp->pt_inhit->hit_point[Z]);
 		}
 		++problems;
 	    }
@@ -684,7 +610,6 @@ static int no_op_miss(struct application *UNUSED(ap))
     return 1;
 }
 
-
 /**
  * Overlap handler for use by rt_shootray().
  *
@@ -696,7 +621,7 @@ static int rpt_ovlp(struct application *ap, struct partition *pp, struct region 
 {
     vect_t delta;
     fastf_t mag_del;
-    struct g_lint_ctrl *cp;
+    g_lint_ctrl *cp;
     int show_origin;
     int do_plot3;
     fastf_t tolerance;
@@ -705,7 +630,7 @@ static int rpt_ovlp(struct application *ap, struct partition *pp, struct region 
     BU_CKMAG(pp, PT_MAGIC, "partition structure");
     BU_CKMAG(r1, RT_REGION_MAGIC, "region structure");
     BU_CKMAG(r2, RT_REGION_MAGIC, "region structure");
-    cp = (struct g_lint_ctrl *) ap->a_uptr;
+    cp = (g_lint_ctrl *) ap->a_uptr;
     BU_CKMAG(cp, G_LINT_CTRL_MAGIC, "g_lint control structure");
 
     show_origin = (cp->glc_how_to_report == G_LINT_ASCII_WITH_ORIGIN);
@@ -717,22 +642,19 @@ static int rpt_ovlp(struct application *ap, struct partition *pp, struct region 
     RT_HIT_NORMAL(NULL, pp->pt_outhit, pp->pt_outseg->seg_stp, &ap->a_ray, 0);
     VSUB2(delta, pp->pt_inhit->hit_point, pp->pt_outhit->hit_point);
 
-    if ((mag_del = MAGNITUDE(delta)) > tolerance) {
+    mag_del = MAGNITUDE(delta);
+    if (mag_del > tolerance) {
 	if (do_plot3) {
-	    pl_color(cp->glc_fp,
-		     V3ARGS(&(cp->glc_color[log_2(G_LINT_OVLP)])));
-	    pdv_3line(cp->glc_fp, pp->pt_inhit->hit_point,
-		      pp->pt_outhit->hit_point);
-	} else if (ovlp_log)
-	    update_ovlp_log(r1, r2, mag_del,
-			    ap->a_ray.r_pt,
-			    pp->pt_inhit->hit_point,
-			    pp->pt_outhit->hit_point);
-	else
+	    pl_color(cp->glc_fp, V3ARGS(&(cp->glc_color[log_2(G_LINT_OVLP)])));
+	    pdv_3line(cp->glc_fp, pp->pt_inhit->hit_point, pp->pt_outhit->hit_point);
+	} else if (!ovlp_log.empty()) {
+	    update_ovlp_log(r1, r2, mag_del, ap->a_ray.r_pt, pp->pt_inhit->hit_point, pp->pt_outhit->hit_point);
+	} else {
 	    print_segment(r1->reg_name, r2->reg_name, mag_del,
-			  show_origin ? ap->a_ray.r_pt : 0,
-			  pp->pt_inhit->hit_point,
-			  pp->pt_outhit->hit_point);
+		    show_origin ? ap->a_ray.r_pt : nullptr,
+		    pp->pt_inhit->hit_point,
+		    pp->pt_outhit->hit_point);
+	}
     }
     return mag_del > tolerance;
 }
@@ -740,17 +662,16 @@ static int rpt_ovlp(struct application *ap, struct partition *pp, struct region 
 void init_plot3(struct application *ap)
 {
     struct rt_i *rtip;
-    struct g_lint_ctrl *cp;
+    g_lint_ctrl *cp;
 
     RT_AP_CHECK(ap);
     rtip = ap->a_rt_i;
     RT_CHECK_RTI(rtip);
-    cp = (struct g_lint_ctrl *) ap->a_uptr;
+    cp = (g_lint_ctrl *) ap->a_uptr;
     BU_CKMAG(cp, G_LINT_CTRL_MAGIC, "g_lint control structure");
 
     pdv_3space(cp->glc_fp, rtip->rti_pmin, rtip->rti_pmax);
 }
-
 
 int
 main(int argc, char **argv)
@@ -779,8 +700,6 @@ main(int argc, char **argv)
     vect_t unit_D;		/* View basis vectors */
     vect_t unit_H;
     vect_t unit_V;
-    bu_rb_cmp_t cbva[1];
-    bu_rb_cmp_t coa[1];
 
     /* intentionally double for scan */
     double azimuth = 0.0;
@@ -788,10 +707,6 @@ main(int argc, char **argv)
     double elevation = 0.0;
 
     bu_setprogname(argv[0]);
-
-    cbva[0] = &compare_by_vol;
-    coa[0] = &compare_overlaps;
-
     bu_log("%s\n", rt_version());
 
     control.glc_magic = G_LINT_CTRL_MAGIC;
@@ -803,10 +718,10 @@ main(int argc, char **argv)
     control.glc_color = (unsigned char *) dflt_plot_rgb;
 
     /* Handle command-line options */
-    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
+    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1) {
 	switch (ch) {
 	    case 'a':
-		if (bn_decode_angle(&azimuth,bu_optarg) == 0) {
+		if (bn_decode_angle(&azimuth, bu_optarg) == 0) {
 		    bu_log("Invalid azimuth specification: '%s'\n", bu_optarg);
 		    printusage();
 		    bu_exit(1, NULL);
@@ -816,7 +731,7 @@ main(int argc, char **argv)
 		cell_center = 1;
 		break;
 	    case 'e':
-		if (bn_decode_angle(&elevation,bu_optarg) == 0) {
+		if (bn_decode_angle(&elevation, bu_optarg) == 0) {
 		    bu_log("Invalid elevation specification: '%s'\n", bu_optarg);
 		    printusage();
 		    bu_exit(1, NULL);
@@ -838,10 +753,7 @@ main(int argc, char **argv)
 		break;
 	    case 'p':
 		control.glc_how_to_report = G_LINT_PLOT3;
-		if (ovlp_log) {
-		    bu_rb_free1(ovlp_log, BU_RB_RETAIN_DATA);
-		    ovlp_log = 0;
-		}
+		ovlp_log.clear();
 		break;
 	    case 'r':
 		if (*bu_optarg == '-') {
@@ -863,15 +775,12 @@ main(int argc, char **argv)
 		use_air = ((control.glc_what_to_report & G_LINT_A_ANY) != 0);
 		break;
 	    case 's':
-		ovlp_log = bu_rb_create("overlap log", 1, coa);
-		if (control.glc_how_to_report == G_LINT_PLOT3)
-		    control.glc_how_to_report = G_LINT_ASCII;
-		bu_rb_uniq_on1(ovlp_log);
+		ovlp_log.clear();
+		control.glc_how_to_report = (control.glc_how_to_report == G_LINT_PLOT3) ? G_LINT_ASCII : control.glc_how_to_report;
 		break;
 	    case 't':
 		if (sscanf(bu_optarg, "%lf", &(control.glc_tol)) != 1) {
-		    bu_log("Invalid tolerance specification: '%s'\n",
-			   bu_optarg);
+		    bu_log("Invalid tolerance specification: '%s'\n", bu_optarg);
 		    printusage();
 		    bu_exit(1, NULL);
 		}
@@ -893,6 +802,7 @@ main(int argc, char **argv)
 		printusage();
 		bu_exit(1, NULL);
 	}
+    }
 
     if (argc - bu_optind < 2) {
 	printusage();
@@ -921,15 +831,11 @@ main(int argc, char **argv)
      * Initialize the application structure
      */
     RT_APPLICATION_INIT(&ap);
-    ap.a_hit =
-	(control.glc_what_to_report & ~G_LINT_OVLP) ? rpt_hit
-	: no_op_hit;
+    ap.a_hit = (control.glc_what_to_report & ~G_LINT_OVLP) ? rpt_hit : no_op_hit;
     ap.a_miss = no_op_miss;
     ap.a_resource = RESOURCE_NULL;
-    ap.a_overlap =
-	(control.glc_what_to_report & G_LINT_OVLP) ? rpt_ovlp
-	: no_op_overlap;
-    ap.a_onehit = 0;		/* Don't stop at first partition */
+    ap.a_overlap = (control.glc_what_to_report & G_LINT_OVLP) ? rpt_ovlp : no_op_overlap;
+    ap.a_onehit = 0;	/* Don't stop at first partition */
     ap.a_uptr = (char *) &control;
     ap.a_rt_i = rtip;
     ap.a_purpose = "Look for possible problems in geometry";
@@ -959,9 +865,9 @@ main(int argc, char **argv)
     VMOVE(g_max, g_min);
     for (i = 0; i < 8; ++i) {
 	VSET(mdl_bb_vertex,
-	     mdl_extrema[(i & 0x4) > 0][X],
-	     mdl_extrema[(i & 0x2) > 0][Y],
-	     mdl_extrema[(i & 0x1) > 0][Z]);
+		mdl_extrema[(i & 0x4) > 0][X],
+		mdl_extrema[(i & 0x2) > 0][Y],
+		mdl_extrema[(i & 0x1) > 0][Z]);
 	MAT4X3PNT(v_bb_vertex, model2view, mdl_bb_vertex);
 	VMINMAX(g_min, g_max, v_bb_vertex);
     }
@@ -985,9 +891,9 @@ main(int argc, char **argv)
 	for (cell[0] = g_min[1]; cell[0] <= g_max[1]; cell[0] += celsiz) {
 	    VJOIN1(mdl_cell, mdl_row_orig, cell[0], unit_H);
 	    VJOIN2(ap.a_ray.r_pt,
-		   mdl_cell,
-		   RAND_OFFSET, unit_H,
-		   RAND_OFFSET, unit_V);
+		    mdl_cell,
+		    RAND_OFFSET, unit_H,
+		    RAND_OFFSET, unit_V);
 	    VMOVE(ap.a_uvec, cell);
 	    (void) rt_shootray(&ap);
 	}
@@ -997,16 +903,25 @@ main(int argc, char **argv)
      * If overlaps have been collected for sorting,
      * sort them now and then print them out.
      */
-    if (ovlp_log) {
-	ovlps_by_vol = bu_rb_create("overlaps by volume", 1, cbva);
-	bu_rb_uniq_on1(ovlps_by_vol);
-	bu_rb_walk1(ovlp_log, (void (*)(void))insert_by_vol, BU_RB_WALK_INORDER);
+    if (!ovlp_log.empty()) {
+	ovlps_by_vol.clear();
+	for (auto &kv : ovlp_log)
+	    insert_by_vol(kv.second);
 
-	if (control.glc_how_to_report == G_LINT_ASCII_WITH_ORIGIN)
-	    bu_rb_walk1(ovlps_by_vol, (void (*)(void))print_overlap_o, BU_RB_WALK_INORDER);
-	else
-	    bu_rb_walk1(ovlps_by_vol, (void (*)(void))print_overlap, BU_RB_WALK_INORDER);
+	if (control.glc_how_to_report == G_LINT_ASCII_WITH_ORIGIN) {
+	    for (auto *op : ovlps_by_vol)
+		_print_overlap(op, 1);
+	} else {
+	    for (auto *op : ovlps_by_vol)
+		_print_overlap(op, 0);
+	}
     }
+
+    // Free overlaps and segments
+    for (auto &kv : ovlp_log)
+	free_overlap(kv.second);
+    ovlp_log.clear();
+    ovlps_by_vol.clear();
 
     return 0;
 }
@@ -1020,4 +935,4 @@ main(int argc, char **argv)
 // indent-tabs-mode: t
 // c-file-style: "stroustrup"
 // End:
-// ex: shiftwidth=4 tabstop=8
+// ex: shiftwidth=4 tabstop=8 cino=N-s

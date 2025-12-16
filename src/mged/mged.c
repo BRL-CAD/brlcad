@@ -103,6 +103,8 @@ extern struct bu_vls *history_prev(const char *);
 extern struct bu_vls *history_cur(const char *);
 extern struct bu_vls *history_next(const char *);
 
+// FIXME: Globals
+
 /* defined in dozoom.c */
 extern unsigned char geometry_default_color[];
 
@@ -121,12 +123,15 @@ extern struct _axes_state default_axes_state;
 /* defined in rect.c */
 extern struct _rubber_band default_rubber_band;
 
+#ifndef USE_TCL_CHAN
 /* these two file descriptors are where we store fileno(stdout) and
  * fileno(stderr) during graphical startup so that we may restore them
  * when we're done (which is needed so atexit() calls to bu_log() will
  * still work).
  */
+// FIXME: Global
 static int stdfd[2] = {1, 2};
+#endif
 
 /* Container for passing I/O data through Tcl callbacks */
 struct stdio_data {
@@ -137,22 +142,21 @@ struct stdio_data {
 
 struct mged_state *MGED_STATE = NULL;
 
-/* called by numerous functions to indicate truthfully whether the
- * views need to be redrawn.
- */
-int update_views = 0;
-
 jmp_buf jmp_env;	/* For non-local gotos */
+// FIXME: Global
 double frametime;	/* time needed to draw last frame */
 
+// FIXME: Global
 struct rt_wdb rtg_headwdb;  /* head of database object list */
 
 void (*cur_sigint)(int);	/* Current SIGINT status */
 
+// FIXME: Global
 int cbreak_mode = 0;    /* >0 means in cbreak_mode */
 
 
 /* The old mged gui is temporarily the default. */
+// FIXME: Global
 int old_mged_gui=1;
 
 static int
@@ -307,8 +311,12 @@ new_edit_mats(struct mged_state *s)
 	    continue;
 
 	set_curr_dm(s, p);
-	bn_mat_mul(view_state->vs_model2objview, view_state->vs_gvp->gv_model2view, modelchanges);
+	bn_mat_mul(view_state->vs_model2objview, view_state->vs_gvp->gv_model2view, MEDIT(s)->model_changes);
 	bn_mat_inv(view_state->vs_objview2model, view_state->vs_model2objview);
+
+	/* Keep rt_edit’s own cached matrix in sync for external users */
+	MAT_COPY(MEDIT(s)->model2objview, view_state->vs_model2objview);
+
 	view_state->vs_flag = 1;
     }
 
@@ -326,8 +334,8 @@ mged_view_callback(struct bview *gvp,
     if (!gvp)
 	return;
 
-    if (GEOM_EDIT_STATE != ST_VIEW) {
-	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, modelchanges);
+    if (s->global_editing_state != ST_VIEW) {
+	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, MEDIT(s)->model_changes);
 	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
     }
     vsp->vs_flag = 1;
@@ -1008,18 +1016,18 @@ event_check(struct mged_state *s, int non_blocking)
      * Handle rate-based processing *
      *********************************/
     save_dm_list = s->mged_curr_dm;
-    if (s->edit_state.edit_rateflag_model_rotate) {
+    if (MEDIT(s)->k.rot_m_flag) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	set_curr_dm(s, s->edit_state.edit_rate_mr_dm);
-	save_coords = view_state->vs_gvp->gv_coord;
-	view_state->vs_gvp->gv_coord = 'm';
+	set_curr_dm(s, s->s_edit->edit_rate_mr_dm);
+	save_coords = mged_variables->mv_coords;
+	mged_variables->mv_coords = 'm';
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
-	    save_edflag = es_edflag;
+	if (s->global_editing_state == ST_S_EDIT) {
+	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		es_edflag = SROT;
+		MEDIT(s)->edit_flag = SROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1027,33 +1035,33 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		      s->edit_state.edit_rate_model_origin,
-		      s->edit_state.edit_rate_model_rotate[X],
-		      s->edit_state.edit_rate_model_rotate[Y],
-		      s->edit_state.edit_rate_model_rotate[Z]);
+		      MEDIT(s)->k.origin_m,
+		      MEDIT(s)->k.rot_m[X],
+		      MEDIT(s)->k.rot_m[Y],
+		      MEDIT(s)->k.rot_m[Z]);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	view_state->vs_gvp->gv_coord = save_coords;
+	mged_variables->mv_coords = save_coords;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
-	    es_edflag = save_edflag;
+	if (s->global_editing_state == ST_S_EDIT)
+	    MEDIT(s)->edit_flag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
-    if (s->edit_state.edit_rateflag_object_rotate) {
+    if (MEDIT(s)->k.rot_o_flag) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	set_curr_dm(s, s->edit_state.edit_rate_or_dm);
-	save_coords = view_state->vs_gvp->gv_coord;
-	view_state->vs_gvp->gv_coord = 'o';
+	set_curr_dm(s, s->s_edit->edit_rate_or_dm);
+	save_coords = mged_variables->mv_coords;
+	mged_variables->mv_coords = 'o';
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
-	    save_edflag = es_edflag;
+	if (s->global_editing_state == ST_S_EDIT) {
+	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		es_edflag = SROT;
+		MEDIT(s)->edit_flag = SROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1061,33 +1069,33 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		      s->edit_state.edit_rate_object_origin,
-		      s->edit_state.edit_rate_object_rotate[X],
-		      s->edit_state.edit_rate_object_rotate[Y],
-		      s->edit_state.edit_rate_object_rotate[Z]);
+		      MEDIT(s)->k.origin_o,
+		      MEDIT(s)->k.rot_o[X],
+		      MEDIT(s)->k.rot_o[Y],
+		      MEDIT(s)->k.rot_o[Z]);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	view_state->vs_gvp->gv_coord = save_coords;
+	mged_variables->mv_coords = save_coords;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
-	    es_edflag = save_edflag;
+	if (s->global_editing_state == ST_S_EDIT)
+	    MEDIT(s)->edit_flag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
-    if (s->edit_state.edit_rateflag_view_rotate) {
+    if (MEDIT(s)->k.rot_v_flag) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	char save_coords;
 
-	set_curr_dm(s, s->edit_state.edit_rate_vr_dm);
-	save_coords = view_state->vs_gvp->gv_coord;
-	view_state->vs_gvp->gv_coord = 'v';
+	set_curr_dm(s, s->s_edit->edit_rate_vr_dm);
+	save_coords = mged_variables->mv_coords;
+	mged_variables->mv_coords = 'v';
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
-	    save_edflag = es_edflag;
+	if (s->global_editing_state == ST_S_EDIT) {
+	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		es_edflag = SROT;
+		MEDIT(s)->edit_flag = SROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1095,33 +1103,33 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
-		      s->edit_state.edit_rate_view_origin,
-		      s->edit_state.edit_rate_view_rotate[X],
-		      s->edit_state.edit_rate_view_rotate[Y],
-		      s->edit_state.edit_rate_view_rotate[Z]);
+		      MEDIT(s)->k.origin_v,
+		      MEDIT(s)->k.rot_v[X],
+		      MEDIT(s)->k.rot_v[Y],
+		      MEDIT(s)->k.rot_v[Z]);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	view_state->vs_gvp->gv_coord = save_coords;
+	mged_variables->mv_coords = save_coords;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
-	    es_edflag = save_edflag;
+	if (s->global_editing_state == ST_S_EDIT)
+	    MEDIT(s)->edit_flag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
-    if (s->edit_state.edit_rateflag_model_tran) {
+    if (MEDIT(s)->k.tra_m_flag) {
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	set_curr_dm(s, s->edit_state.edit_rate_mt_dm);
-	save_coords = view_state->vs_gvp->gv_coord;
-	view_state->vs_gvp->gv_coord = 'm';
+	set_curr_dm(s, s->s_edit->edit_rate_mt_dm);
+	save_coords = mged_variables->mv_coords;
+	mged_variables->mv_coords = 'm';
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
-	    save_edflag = es_edflag;
+	if (s->global_editing_state == ST_S_EDIT) {
+	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_TRAN)
-		es_edflag = STRANS;
+		MEDIT(s)->edit_flag = STRANS;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1129,32 +1137,32 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		      s->edit_state.edit_rate_model_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      s->edit_state.edit_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      s->edit_state.edit_rate_model_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+		      MEDIT(s)->k.tra_m[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      MEDIT(s)->k.tra_m[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      MEDIT(s)->k.tra_m[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	view_state->vs_gvp->gv_coord = save_coords;
+	mged_variables->mv_coords = save_coords;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
-	    es_edflag = save_edflag;
+	if (s->global_editing_state == ST_S_EDIT)
+	    MEDIT(s)->edit_flag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
-    if (s->edit_state.edit_rateflag_view_tran) {
+    if (MEDIT(s)->k.tra_v_flag) {
 	char save_coords;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	set_curr_dm(s, s->edit_state.edit_rate_vt_dm);
-	save_coords = view_state->vs_gvp->gv_coord;
-	view_state->vs_gvp->gv_coord = 'v';
+	set_curr_dm(s, s->s_edit->edit_rate_vt_dm);
+	save_coords = mged_variables->mv_coords;
+	mged_variables->mv_coords = 'v';
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
-	    save_edflag = es_edflag;
+	if (s->global_editing_state == ST_S_EDIT) {
+	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_TRAN)
-		es_edflag = STRANS;
+		MEDIT(s)->edit_flag = STRANS;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1162,27 +1170,27 @@ event_check(struct mged_state *s, int non_blocking)
 
 	non_blocking++;
 	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		      s->edit_state.edit_rate_view_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      s->edit_state.edit_rate_view_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-		      s->edit_state.edit_rate_view_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+		      MEDIT(s)->k.tra_v[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      MEDIT(s)->k.tra_v[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+		      MEDIT(s)->k.tra_v[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	view_state->vs_gvp->gv_coord = save_coords;
+	mged_variables->mv_coords = save_coords;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
-	    es_edflag = save_edflag;
+	if (s->global_editing_state == ST_S_EDIT)
+	    MEDIT(s)->edit_flag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
-    if (s->edit_state.edit_rateflag_scale) {
+    if (MEDIT(s)->k.sca_flag) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT) {
-	    save_edflag = es_edflag;
+	if (s->global_editing_state == ST_S_EDIT) {
+	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_SCALE)
-		es_edflag = SSCALE;
+		MEDIT(s)->edit_flag = SSCALE;
 	} else {
 	    save_edflag = edobj;
 	    if (!OEDIT_SCALE)
@@ -1190,13 +1198,13 @@ event_check(struct mged_state *s, int non_blocking)
 	}
 
 	non_blocking++;
-	bu_vls_printf(&vls, "knob -i -e aS %f\n", s->edit_state.edit_rate_scale * 0.01);
+	bu_vls_printf(&vls, "knob -i -e aS %f\n", MEDIT(s)->k.sca * 0.01);
 
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	if (GEOM_EDIT_STATE == ST_S_EDIT)
-	    es_edflag = save_edflag;
+	if (s->global_editing_state == ST_S_EDIT)
+	    MEDIT(s)->edit_flag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
@@ -1208,62 +1216,62 @@ event_check(struct mged_state *s, int non_blocking)
 
 	set_curr_dm(s, p);
 
-	if (view_state->vs_rateflag_model_rotate) {
+	if (view_state->k.rot_m_flag) {
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
 	    bu_vls_printf(&vls, "knob -o %c -i -m ax %f ay %f az %f\n",
-			  view_state->vs_rate_model_origin,
-			  view_state->vs_rate_model_rotate[X],
-			  view_state->vs_rate_model_rotate[Y],
-			  view_state->vs_rate_model_rotate[Z]);
+			  view_state->k.origin_m,
+			  view_state->k.rot_m[X],
+			  view_state->k.rot_m[Y],
+			  view_state->k.rot_m[Z]);
 
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
-	if (view_state->vs_rateflag_model_tran) {
+	if (view_state->k.tra_m_flag) {
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
 	    bu_vls_printf(&vls, "knob -i -m aX %f aY %f aZ %f\n",
-			  view_state->vs_rate_model_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-			  view_state->vs_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-			  view_state->vs_rate_model_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+			  view_state->k.tra_m[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  view_state->k.tra_m[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  view_state->k.tra_m[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
-	if (view_state->vs_rateflag_rotate) {
+	if (view_state->k.rot_v_flag) {
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
 	    bu_vls_printf(&vls, "knob -o %c -i -v ax %f ay %f az %f\n",
-			  view_state->vs_rate_origin,
-			  view_state->vs_rate_rotate[X],
-			  view_state->vs_rate_rotate[Y],
-			  view_state->vs_rate_rotate[Z]);
+			  view_state->k.origin_v,
+			  view_state->k.rot_v[X],
+			  view_state->k.rot_v[Y],
+			  view_state->k.rot_v[Z]);
 
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
-	if (view_state->vs_rateflag_tran) {
+	if (view_state->k.tra_v_flag) {
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
 	    bu_vls_printf(&vls, "knob -i -v aX %f aY %f aZ %f",
-			  view_state->vs_rate_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-			  view_state->vs_rate_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
-			  view_state->vs_rate_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
+			  view_state->k.tra_v[X] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  view_state->k.tra_v[Y] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local,
+			  view_state->k.tra_v[Z] * 0.05 * view_state->vs_gvp->gv_scale * s->dbip->dbi_base2local);
 
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
-	if (view_state->vs_rateflag_scale) {
+	if (view_state->k.sca_flag) {
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	    non_blocking++;
 	    bu_vls_printf(&vls, "zoom %f",
-			  1.0 / (1.0 - (view_state->vs_rate_scale / 10.0)));
+			  1.0 / (1.0 - (view_state->k.sca / 10.0)));
 	    Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
@@ -1508,7 +1516,7 @@ refresh(struct mged_state *s)
 	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (!p->dm_view_state)
 	    continue;
-	if (update_views || p->dm_view_state->vs_flag)
+	if (s->update_views || p->dm_view_state->vs_flag)
 	    p->dm_dirty = 1;
     }
 
@@ -1523,7 +1531,7 @@ refresh(struct mged_state *s)
 	p->dm_view_state->vs_flag = 0;
     }
 
-    update_views = 0;
+    s->update_views = 0;
 
     save_dm_list = s->mged_curr_dm;
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
@@ -1633,7 +1641,7 @@ refresh(struct mged_state *s)
 			    draw_m_axes(s);
 
 			if (axes_state->ax_edit_draw &&
-				(GEOM_EDIT_STATE == ST_S_EDIT || GEOM_EDIT_STATE == ST_O_EDIT))
+				(s->global_editing_state == ST_S_EDIT || s->global_editing_state == ST_O_EDIT))
 			    draw_e_axes(s);
 
 			/* Display titles, etc., if desired */
@@ -1737,6 +1745,7 @@ mged_finish(struct mged_state *s, int exitcode)
     /* no longer send bu_log() output to Tcl */
     bu_log_delete_hook(gui_output, (void *)s);
 
+#ifndef USE_TCL_CHAN
     /* restore stdout/stderr just in case anyone tries to write before
      * we finally exit (e.g., an atexit() callback).
      */
@@ -1746,6 +1755,7 @@ mged_finish(struct mged_state *s, int exitcode)
     ret = dup2(stdfd[1], fileno(stderr));
     if (ret == -1)
 	perror("dup2");
+#endif
 
     /* Be certain to close the database cleanly before exiting */
     Tcl_Preserve((ClientData)s->interp);
@@ -1771,6 +1781,8 @@ mged_finish(struct mged_state *s, int exitcode)
     bu_vls_free(&s->input_str_prefix);
     bu_vls_free(&s->scratchline);
     bu_vls_free(&s-> mged_prompt);
+    rt_edit_destroy(s->s_edit->e);
+    BU_PUT(s->s_edit, struct mged_edit_state);
     BU_PUT(s, struct mged_state);
     MGED_STATE = NULL; // sanity
 
@@ -1821,6 +1833,8 @@ main(int argc, char *argv[])
 #endif
 
     BU_GET(MGED_STATE, struct mged_state);
+    BU_GET(MGED_STATE->s_edit, struct mged_edit_state);
+    MGED_STATE->s_edit->e = rt_edit_create(NULL, NULL, NULL, NULL);
     struct mged_state *s = MGED_STATE;
     s->magic = MGED_STATE_MAGIC;
     s->classic_mged = 1;
@@ -1839,10 +1853,8 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&rtg_headwdb.l);
 
     // Start out in an initialization state
+    MGED_OPENDB_CTX_INIT(&mged_global_db_ctx);
     mged_global_db_ctx.init_flag = 1;
-    mged_global_db_ctx.db_upgrade = 0; // no upgrade
-    mged_global_db_ctx.db_warn = 0; // no warn
-    mged_global_db_ctx.db_version = BRLCAD_DB_FORMAT_LATEST;
 
     char *attach = (char *)NULL;
     BU_ALLOC(s->mged_curr_dm, struct mged_dm);
@@ -2072,13 +2084,13 @@ main(int argc, char *argv[])
     owner = 1;
     frametime = 1;
 
-    MAT_IDN(modelchanges);
-    MAT_IDN(acc_rot_sol);
+    MAT_IDN(MEDIT(s)->model_changes);
+    MAT_IDN(MEDIT(s)->acc_rot_sol);
 
-    GEOM_EDIT_STATE = ST_VIEW;
-    es_edflag = -1;
-    es_edclass = EDIT_CLASS_NULL;
-    inpara = newedge = 0;
+    s->global_editing_state = ST_VIEW;
+    MEDIT(s)->edit_flag = -1;
+    s->s_edit->es_edclass = EDIT_CLASS_NULL;
+    MEDIT(s)->e_inpara = newedge = 0;
 
     /* These values match old GED.  Use 'tol' command to change them. */
     s->tol.tol.magic = BN_TOL_MAGIC;
@@ -2087,9 +2099,14 @@ main(int argc, char *argv[])
     s->tol.tol.perp = 1e-6;
     s->tol.tol.para = 1 - s->tol.tol.perp;
 
+    /* NOTE - at the moment, primitives such as rpc/rhc need this set to plot
+     * properly after editing - otherwise post-edit wireframe restoration
+     * looks coarse.  Probably needs more investigation. */
+    s->tol.rel_tol = 0.01;             /* 1%, by default */
+
     rt_prep_timer();		/* Initialize timer */
 
-    es_edflag = -1;		/* no solid editing just now */
+    MEDIT(s)->edit_flag = -1;		/* no solid editing just now */
 
     /* prepare mged, adjust our path, get set up to use Tcl */
 
@@ -2368,6 +2385,7 @@ main(int argc, char *argv[])
 	int sout = fileno(stdout);
 	int serr = fileno(stderr);
 
+#ifndef USE_TCL_CHAN
 	/* stash stdout */
 	stdfd[0] = dup(sout);
 	if (stdfd[0] == -1)
@@ -2377,6 +2395,7 @@ main(int argc, char *argv[])
 	stdfd[1] = dup(serr);
 	if (stdfd[1] == -1)
 	    perror("dup");
+#endif
 
 	bu_vls_printf(&vls, "output_hook output_callback");
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));

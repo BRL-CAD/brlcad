@@ -255,15 +255,6 @@ BU_EXPORT extern int bu_shmget(int *shmid, char **shared_memory, int key, size_t
 
 /** @} */
 
-/* DEPRECATED */
-BU_EXPORT extern void bu_prmem(const char *str);
-
-/* DEPRECATED: use valgrind/memcheck, SGcheck */
-BU_EXPORT extern void bu_ck_malloc_ptr(void *ptr, const char *str);
-
-/* DEPRECATED: use valgrind/memcheck, SGcheck */
-BU_EXPORT extern int bu_mem_barriercheck(void);
-
 __END_DECLS
 
 #endif  /* BU_MALLOC_H */

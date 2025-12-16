@@ -15,6 +15,25 @@ on-going issues.
 Recent Bugs
 -----------
 
+* fbserv as well as -F option handling (e.g., -F0 or -F/dev/wgls) that
+  is supported across myriad other tools appears to be broken on
+  Windows in a git bash shell (problem is not seen in Command Prompt.)
+  Something is concatenating EXEPATH and/or fbserv silently fails with
+  return codes (e.g., when not specifying -F, only giving the port.)
+
+* rt -H hypersample, -J jitter, and -j# for sub-grid-mode assumes a
+  framebuffer, causing pix data to get written to the -o file (e.g.,
+  even with -o file.png).  See view_pixel() near src/rt/view.c:472 for
+  problem area with -j but there are likely call sites..  Need to
+  scrub all fb_write() and ideally make this a non-issue via icv API.
+
+* obj-g and gcv converters choke and crash on obj with unnamed g line.
+  spec wording on whether that's valid is unclear, but encountered in
+  wild.
+
+* recursive bu_parallel() failure, tbd whether cpp11 or pthread impl,
+  likely because IDs are exceeding MAX_PSW, causing mayhem and chaos.
+
 * Archer was observed to mangle the structure of a comb tree when assigning
   a color from the dialog panel.  MGED is able to assign the color fine,
   so there appears to be something specific to Archer's comb tree handling

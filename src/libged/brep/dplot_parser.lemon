@@ -4,7 +4,7 @@
  * documented by https://clang-analyzer.llvm.org/faq.html to disable running
  * the analyzer on the generated code.
  *
- * This is not ideal (clang devs discourages use of ifndef __clang_analyzer__)
+ * This is not ideal (clang devs discourage use of ifndef __clang_analyzer__)
  * but even using bundled tools it's not clear to me that fixing dead store
  * issues is doable - even in theory - without very sophisticated support from
  * the tool itself.
@@ -16,27 +16,38 @@
 #include "dplot_reader.h"
 }
 
+/* Declare token type and extra argument early so Lemon uses them correctly */
+%token_type {token_t}
+%extra_argument {struct dplot_data *data}
+%token_prefix {TOKEN_}
+
+/* Optional: choose stack behavior. 0 = dynamic (uses realloc/free), >0 = fixed */
+/* %stack_size 0 */
+
 %destructor statement_list {
-    $$.n = data->ssx_count;
+    /* Safe even if data is NULL in failure unwind paths */
+    $$.n = data ? data->ssx_count : 0;
 }
 
 %stack_overflow {
-    fprintf(stderr, "Parser stack overflow. Last token was %d\n", yypMinor->yy0.n);
+    /* In modern Lemon, use the top-of-stack minor value */
+    fprintf(stderr, "Parser stack overflow. Last token was %d\n",
+            yypParser->yytos->minor.yy0.n);
 }
 
 %syntax_error {
+    /* Avoid unused parameter warnings in strict builds */
+    (void)yymajor;
+    (void)yyminor;
+
     fprintf(stderr, "Syntax error. Last token (type %d) was %d. Ignoring "
-	    "input tokens until valid input is found.\n", yymajor, yyminor.yy0.n);
+            "input tokens until valid input is found.\n",
+            yymajor, yypParser->yytos->minor.yy0.n);
 }
 
 %parse_failure {
     fprintf(stderr, "Parsing failed. Parser has reset.\n");
 }
-
-%token_type {token_t}
-%extra_argument {struct dplot_data *data}
-
-%token_prefix {TOKEN_}
 
 %type count {int}
 %type index {int}
@@ -70,9 +81,7 @@ ssx_info ::= SSX index(SURF_IDX1) index(SURF_IDX2) count(EVENTS) count(CRV_COUNT
     ssx->intersecting_isocurves = ISO;
     BU_LIST_INIT(&ssx->isocsx_list);
 
-    /* move the list of event counts from the tmp location to this ssx
-     * instance
-     */
+    /* move the list of event counts from the tmp location to this ssx instance */
     BU_LIST_APPEND_LIST(&ssx->isocsx_list, &data->isocsx_list);
 
     BU_LIST_PUSH(&data->ssx_list, &ssx->l);
@@ -98,7 +107,7 @@ linked_curve_count ::= LINKED_CURVES count(COUNT). {
 split_face_count ::= SPLIT_FACES count(SPLIT_FACES). {
     data->split_face_count = SPLIT_FACES;
     data->face = (struct split_face *)bu_malloc(SPLIT_FACES *
-	sizeof(struct split_face), "split face array");
+        sizeof(struct split_face), "split face array");
 }
 
 split_face_info ::= SPLIT_FACE index(I) count(OUTER_COUNT) count(INNER_COUNT). {

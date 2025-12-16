@@ -120,6 +120,8 @@ main(int ac, char *av[])
     char input_file[MAXPATHLEN] = {0};
     char output_file[MAXPATHLEN] = {0};
 
+    bu_setprogname(av[0]);
+
     if (ac != 2)
 	bu_exit(EXIT_FAILURE, "%s <directory>", av[0]);
 
@@ -153,7 +155,7 @@ main(int ac, char *av[])
     bu_dir(input_file, MAXPATHLEN, av[1], "arb4.dxf", NULL);
     if (!txt_same(input_file, output_file))
 	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
-    std::remove(output_file);
+    bu_file_delete(output_file);
 
     // OBJ
     bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_out.obj", NULL);
@@ -173,7 +175,7 @@ main(int ac, char *av[])
     bu_dir(input_file, MAXPATHLEN, av[1], "arb4.obj", NULL);
     if (!txt_same(input_file, output_file))
 	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
-    std::remove(output_file);
+    bu_file_delete(output_file);
 
 
     // OBJ - with normals
@@ -195,7 +197,7 @@ main(int ac, char *av[])
     bu_dir(input_file, MAXPATHLEN, av[1], "arb4_norm.obj", NULL);
     if (!txt_same(input_file, output_file))
 	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
-    std::remove(output_file);
+    bu_file_delete(output_file);
 
 
     // SAT
@@ -216,7 +218,7 @@ main(int ac, char *av[])
     bu_dir(input_file, MAXPATHLEN, av[1], "arb4.sat", NULL);
     if (!txt_same(input_file, output_file))
 	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
-    std::remove(output_file);
+    bu_file_delete(output_file);
 
     // STL - ASCII
     bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_out.stl", NULL);
@@ -236,7 +238,7 @@ main(int ac, char *av[])
     bu_dir(input_file, MAXPATHLEN, av[1], "arb4.stl", NULL);
     if (!txt_same(input_file, output_file))
 	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
-    std::remove(output_file);
+    bu_file_delete(output_file);
 
     // STL - units
     bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, "arb4_units_out.stl", NULL);
@@ -258,7 +260,7 @@ main(int ac, char *av[])
     bu_dir(input_file, MAXPATHLEN, av[1], "arb4_units.stl", NULL);
     if (!txt_same(input_file, output_file))
 	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
-    std::remove(output_file);
+    bu_file_delete(output_file);
 
 
     // STL - binary
@@ -280,7 +282,7 @@ main(int ac, char *av[])
     bu_dir(input_file, MAXPATHLEN, av[1], "arb4_binary.stl", NULL);
     if (!txt_same(input_file, output_file))
 	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
-    std::remove(output_file);
+    bu_file_delete(output_file);
 
     /* Next tests look at output in a directory.  The directory must already be
      * present, so create it up front. */
@@ -305,7 +307,7 @@ main(int ac, char *av[])
     bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, odir, "arb4_bot.stl", NULL);
     if (!txt_same(input_file, output_file))
 	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
-    std::remove(output_file);
+    bu_file_delete(output_file);
 
     // STL - pushed comb
     s_av[0] = "bot";
@@ -325,22 +327,22 @@ main(int ac, char *av[])
     bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, odir, "arb4_bot_01.stl", NULL);
     if (!txt_same(input_file, output_file))
 	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
-    std::remove(output_file);
+    bu_file_delete(output_file);
 
     bu_dir(input_file, MAXPATHLEN, av[1], "arbs_stl",  "arb4_bot_02.stl", NULL);
     bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, odir, "arb4_bot_02.stl", NULL);
     if (!txt_same(input_file, output_file))
 	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
-    std::remove(output_file);
+    bu_file_delete(output_file);
 
     bu_dir(input_file, MAXPATHLEN, av[1], "arbs_stl",  "arb4_bot_03.stl", NULL);
     bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, odir, "arb4_bot_03.stl", NULL);
     if (!txt_same(input_file, output_file))
 	bu_exit(EXIT_FAILURE, "Difference found between %s and %s", input_file, output_file);
-    std::remove(output_file);
+    bu_file_delete(output_file);
 
     // Remove output directory
-    std::remove(odir);
+    bu_dirclear(odir);
 
     ged_close(gedp);
 

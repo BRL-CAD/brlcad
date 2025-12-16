@@ -173,6 +173,7 @@ set(
   operators.asc
   pic.asc
   pinewood.asc
+  primitives.asc
   prim.asc
   radialgrid.asc
   rounds.asc
@@ -200,7 +201,10 @@ foreach(g_input ${G_SAMPLE_MODELS})
 endforeach(g_input ${G_SAMPLE_MODELS})
 
 if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY AND TARGET gcv)
+  brlcad_adddata(1647260.dsp db)
+  brlcad_adddata(ebm_logo.bw db)
   brlcad_adddata(terra.bin db)
+  brlcad_adddata(vol_data.bw db)
 endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY AND TARGET gcv)
 
 if(SH_EXEC)
@@ -275,16 +279,19 @@ endif(SH_EXEC)
 cmakefiles(
   ${G_BENCHMARK_MODELS}
   ${G_SAMPLE_MODELS}
+  1647260.dsp
   CMakeLists.txt
   aet.rt
   cornell.rt
   cube.rt
-  traffic_light.rt
   db.php
+  ebm_logo.bw
   include/ctype.inc
   include/debug.inc
   terra.bin
   to_g.cmake.in
+  traffic_light.rt
+  vol_data.bw
 )
 
 # Local Variables:

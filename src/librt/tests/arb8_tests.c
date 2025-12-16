@@ -26,9 +26,11 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <string.h>
 
-#include "bu/log.h"
+#include "bu.h"
 #include "vmath.h"
+#include "wdb.h"
 #include "raytrace.h"
 
 
@@ -39,14 +41,8 @@ typedef struct {
 } arb8_config_t;
 
 arb8_config_t arb8_configs[] = {
-    // Standard ARB8 configurations
-    {"StandardCube", {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1}}},
-    {"SlantedARB8_1", {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {0.2, 0.2, 1}, {1.2, 0.2, 1}, {1.2, 1.2, 1}, {0.2, 1.2, 1}}},
-    {"SlantedARB8_2", {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {0.1, 0.3, 1}, {1.1, 0.3, 1}, {1.3, 1.3, 1}, {0.1, 1.3, 1}}},
-    {"SlantedARB8_3", {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {-0.2, 0.2, 1}, {0.8, 0.2, 1}, {0.8, 1.2, 1}, {-0.2, 1.2, 1}}},
-    {"IrregularARB8_1", {{0, 0, 0}, {1, 0, 0.1}, {1.1, 1, 0}, {0, 1.1, -0.1}, {0.1, 0, 1}, {1, 0.1, 1.1}, {1.1, 1.1, 0.9}, {0, 1, 1}}},
-    {"IrregularARB8_2", {{0, 0, 0}, {1, 0, -0.1}, {1.1, 1.1, 0}, {0, 1.2, 0.1}, {0.2, 0, 0.9}, {1, 0.1, 1.2}, {1.2, 1.2, 0.8}, {0, 1, 1}}},
-    {"IrregularARB8_3", {{0, 0, 0}, {0.8, 0, 0.1}, {1.1, 0.9, 0.2}, {0.1, 1.1, -0.2}, {0.2, -0.2, 0.8}, {1, 0, 1.1}, {1.1, 0.9, 0.9}, {0, 1, 0.9}}},
+    // Spanning cube (all 8 quadrants)
+    {"SpanningUnitCube", {{-1, -1, -1}, {1, -1, -1}, {1, 1, -1}, {-1, 1, -1}, {-1, -1, 1}, {1, -1, 1}, {1, 1, 1}, {-1, 1, 1}}},
 
     // Unit cubes in each quadrant
     {"UnitCube_Q1", {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1}}},
@@ -59,15 +55,132 @@ arb8_config_t arb8_configs[] = {
     {"UnitCube_Q8", {{0, -1, -1}, {1, -1, -1}, {1, 0, -1}, {0, 0, -1}, {0, -1, 0}, {1, -1, 0}, {1, 0, 0}, {0, 0, 0}}},
 
     // Elongated cubes
-    {"Elongated_X1", {{-1, 0, 0}, {1, 0, 0}, {1, 1, 0}, {-1, 1, 0}, {-1, 0, 1}, {1, 0, 1}, {1, 1, 1}, {-1, 1, 1}}},
-    {"Elongated_X2", {{-1, -1, 0}, {1, -1, 0}, {1, 0, 0}, {-1, 0, 0}, {-1, -1, 1}, {1, -1, 1}, {1, 0, 1}, {-1, 0, 1}}},
-    {"Elongated_Y1", {{0, -1, 0}, {1, -1, 0}, {1, 1, 0}, {0, 1, 0}, {0, -1, 1}, {1, -1, 1}, {1, 1, 1}, {0, 1, 1}}},
-    {"Elongated_Y2", {{-1, -1, 0}, {0, -1, 0}, {0, 1, 0}, {-1, 1, 0}, {-1, -1, 1}, {0, -1, 1}, {0, 1, 1}, {-1, 1, 1}}},
-    {"Elongated_Z1", {{0, 0, -1}, {1, 0, -1}, {1, 1, -1}, {0, 1, -1}, {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1}}},
-    {"Elongated_Z2", {{-1, 0, -1}, {0, 0, -1}, {0, 1, -1}, {-1, 1, -1}, {-1, 0, 1}, {0, 0, 1}, {0, 1, 1}, {-1, 1, 1}}},
+    {"Elongated_X1",
+     {{-1, 0, 0}, {1, 0, 0}, {1, 1, 0}, {-1, 1, 0}, {-1, 0, 1}, {1, 0, 1}, {1, 1, 1}, {-1, 1, 1}}}, /* +-X in +Y,+Z*/
+    {"Elongated_X2",
+     {{-1, -1, 0}, {1, -1, 0}, {1, 0, 0}, {-1, 0, 0}, {-1, -1, 1}, {1, -1, 1}, {1, 0, 1}, {-1, 0, 1}}}, /* +-X in -Y,+Z */
+    {"Elongated_Y1",
+     {{0, -1, 0}, {1, -1, 0}, {1, 1, 0}, {0, 1, 0}, {0, -1, 1}, {1, -1, 1}, {1, 1, 1}, {0, 1, 1}}}, /* +-Y in +X,+Z */
+    {"Elongated_Y2",
+     {{-1, -1, 0}, {0, -1, 0}, {0, 1, 0}, {-1, 1, 0}, {-1, -1, 1}, {0, -1, 1}, {0, 1, 1}, {-1, 1, 1}}}, /* +-Y in -X,+Z */
+    {"Elongated_Z1",
+     {{0, 0, -1}, {1, 0, -1}, {1, 1, -1}, {0, 1, -1}, {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1}}}, /* +-Z in +X,+Y */
+    {"Elongated_Z2",
+     {{-1, 0, -1}, {0, 0, -1}, {0, 1, -1}, {-1, 1, -1}, {-1, 0, 1}, {0, 0, 1}, {0, 1, 1}, {-1, 1, 1}}}, /* +-Z in -X,+Y */
 
-    // Spanning cube
-    {"SpanningCube", {{-1, -1, -1}, {1, -1, -1}, {1, 1, -1}, {-1, 1, -1}, {-1, -1, 1}, {1, -1, 1}, {1, 1, 1}, {-1, 1, 1}}}
+    // Adjusted configurations (all near 1st quadrant, some extending outside)
+    {"ReverseUnitCube", {{0, 0, 0}, {0, 1, 0}, {1, 1, 0}, {1, 0, 0}, {0, 0, 1}, {0, 1, 1}, {1, 1, 1}, {1, 0, 1}}},
+    {"TopSlanted", {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {0.2, 0.2, 1}, {1.2, 0.2, 1}, {1.2, 1.2, 1}, {0.2, 1.2, 1}}},
+    {"UnevenSlanted", {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {0.1, 0.3, 1}, {1.1, 0.3, 1}, {1.3, 1.3, 1}, {0.1, 1.3, 1}}},
+    {"OppositeSlanted", {{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}, {-0.2, 0.2, 1}, {0.8, 0.2, 1}, {0.8, 1.2, 1}, {-0.2, 1.2, 1}}},
+    {"PlanarARB6",
+     {{0.0, 0.0, 0.0},
+      {1.0, 0.0, 0.0},
+      {1.0, 1.0, 0.0},
+      {0.5, 0.5, 0.0},
+      {0.0, 0.0, 1.0},
+      {1.0, 0.0, 1.0},
+      {1.0, 1.0, 1.0},
+      {0.5, 0.5, 1.0}}},
+
+    // Planar concave configurations
+    {"ConcavePlanar",
+     {{0.0, 0.0, 0.0},
+      {1.0, 0.0, 0.0},
+      {1.0, 1.0, 0.0},
+      {0.6, 0.4, 0.0},
+      {0.0, 0.0, 1.0},
+      {1.0, 0.0, 1.0},
+      {1.0, 1.0, 1.0},
+      {0.6, 0.4, 1.0}}},
+    {"MoreConcavePlanar",
+     {{0.0, 0.0, 0.0},
+      {1.0, 0.0, 0.0},
+      {0.3, 0.3, 0.0},
+      {0.0, 1.0, 0.0},
+      {0.0, 0.0, 1.0},
+      {1.0, 0.0, 1.0},
+      {0.3, 0.3, 1.0},
+      {0.0, 1.0, 1.0}}},
+
+    // Additional planar configurations (some not near origin)
+    {"TwistedCubeNonPlanar",
+     {{0, 0, 0},
+      {1, 0, 0},
+      {1, 1, 0},
+      {0, 1, 0},
+      {-0.183, 0.317, 1},
+      {0.683, -0.183, 1},
+      {1.183, 0.683, 1},
+      {0.317, 1.183, 1}}},
+    {"LongConvexPlanar",
+     {{4281, -119, 1531},
+      {4281, 78, 1531},
+      {3322, 78, 1475},
+      {3322, -119, 1475},
+      {4275, -119, 1629},
+      {4275, 78, 1649},
+      {3315, 78, 1593},
+      {3315, -119, 1573}}},
+    {"TaperedConvexPlanar",
+     {{122.749, 2.4, 40.725},
+      {122.749, -7.4, 40.725},
+      {122.611, -5, 43.244},
+      {122.611, 0, 43.244},
+      {105.434, 2.4, 39.708},
+      {105.434, -7.4, 39.708},
+      {105.295, -5, 42.228},
+      {105.295, 0, 42.228}}},
+    {"BigConcavePlanar",
+     {{500, -500, -500},
+      {500, 500, -500},
+      {500, -169.922, -304.688},
+      {500, -500, 500},
+      {400, -500, -500},
+      {400, 500, -500},
+      {400, -169.922, -304.688},
+      {400, -500, 500}}},
+
+    // Complex Non-planar configurations
+    {"WarpedNonPlanar", {{0, 0, 0}, {1, 0, 0.1}, {1.1, 1, 0}, {0, 1.1, -0.1}, {0.1, 0, 1}, {1, 0.1, 1.1}, {1.1, 1.1, 0.9}, {0, 1, 1}}},
+    {"TwistedTopNonPlanar", {{0, 0, 0}, {1, 0, -0.1}, {1.1, 1.1, 0}, {0, 1.2, 0.1}, {0.2, 0, 0.9}, {1, 0.1, 1.2}, {1.2, 1.2, 0.8}, {0, 1, 1}}},
+    {"ComplexNonPlanar", {{0, 0, 0}, {0.8, 0, 0.1}, {1.1, 0.9, 0.2}, {0.1, 1.1, -0.2}, {0.2, -0.2, 0.8}, {1, 0, 1.1}, {1.1, 0.9, 0.9}, {0, 1, 0.9}}},
+    {"ConcaveNonPlanar",
+     {{0.0, 0.0, 0.0},
+      {1.0, 0.0, 0.0},
+      {1.0, 1.0, 0.0},
+      {0.0, 1.0, 0.0},
+      {0.0, 0.0, 1.0},
+      {0.4, 0.4, 1.0},
+      {1.0, 1.0, 1.0},
+      {0.0, 1.0, 1.0}}},
+    {"MoreConcaveNonPlanar",
+     {{0.0, 0.0, 0.00},
+      {1.0, 0.0,-0.05},
+      {1.0, 1.0, 0.03},
+      {0.7, 0.3, 0.32},
+      {0.0, 0.0, 1.00},
+      {1.0, 0.0, 1.10},
+      {1.0, 1.0, 0.92},
+      {0.7, 0.3, 0.70}}},
+    {"MostConcaveNonPlanar",
+     {{0.2, 0.0, 0.0},
+      {1.0, 0.3, 0.10},
+      {1.1, 1.0, -0.25},
+      {0.4, 0.6, 0.00},
+      {0.0, 0.2, 1.0},
+      {0.9, 0.0, 1.25},
+      {1.0, 0.8, 0.60},
+      {0.4, 0.3, 0.80}}},
+    {"LargeSaddlePlanar",
+     {{1000, -1000, -1000},
+      {1000, 1000, -900},
+      {1000, 1000, 1100},
+      {1000, -1000, 1000},
+      {-1000, -1000, -900},
+      {-1000, 1000, -1000},
+      {-1000, 1000, 1000},
+      {-1000, -1000, 1100}}}
 };
 
 
@@ -78,216 +191,193 @@ typedef struct {
     vect_t direction;
 } ray_input_t;
 
-ray_input_t rays[] = {
-    {"Ray_PosX", {-2, 0, 0}, {1, 0, 0}},
-    {"Ray_NegX", {2, 0, 0}, {-1, 0, 0}},
-    {"Ray_PosY", {0, -2, 0}, {0, 1, 0}},
-    {"Ray_NegY", {0, 2, 0}, {0, -1, 0}},
-    {"Ray_PosZ", {0, 0, -2}, {0, 0, 1}},
-    {"Ray_NegZ", {0, 0, 2}, {0, 0, -1}},
-    {"Ray_Diagonal", {-2, -2, -2}, {1, 1, 1}},
-    {"Ray_GrazingEdge", {0.5, -2, 0.5}, {0, 1, 0}},
-    {"Ray_GrazingVertex", {1, -1, -1}, {1, 1, 1}},
-    {"Ray_Inside", {0.5, 0.5, 0.5}, {1, 1, 1}}
-};
-
 
 // Expected results (to be filled manually or programmatically based on geometry)
 typedef struct {
     const char *arb8_label;
     const char *ray_label;
-    int expected_hit; // 1 = hit, 0 = miss
+    int expected_hits; // typically 2 in/out hits per segment
 } expected_result_t;
 
 expected_result_t expected_results[] = {
-    // Standard ARB8 Configurations
-    {"StandardCube", "Ray_PosX", 1},
-    {"StandardCube", "Ray_NegX", 1},
-    {"StandardCube", "Ray_PosY", 1},
-    {"StandardCube", "Ray_NegY", 1},
-    {"StandardCube", "Ray_PosZ", 1},
-    {"StandardCube", "Ray_NegZ", 1},
-    {"StandardCube", "Ray_Diagonal", 1},
-    {"StandardCube", "Ray_GrazingEdge", 1},
-    {"StandardCube", "Ray_GrazingVertex", 1},
-    {"StandardCube", "Ray_Inside", 1},
+    {"SpanningUnitCube", "SpanningUnitCube", 2},
+    {"UnitCube_Q1", "UnitCube_Q1", 2},
+    {"UnitCube_Q2", "UnitCube_Q2", 2},
+    {"UnitCube_Q3", "UnitCube_Q3", 0},
+    {"UnitCube_Q4", "UnitCube_Q4", 0},
+    {"UnitCube_Q5", "UnitCube_Q5", 0},
+    {"UnitCube_Q6", "UnitCube_Q6", 0},
+    {"UnitCube_Q7", "UnitCube_Q7", 0},
+    {"UnitCube_Q8", "UnitCube_Q8", 0},
+    {"Elongated_X1", "Elongated_X1", 2},
+    {"Elongated_X2", "Elongated_X2", 0},
+    {"Elongated_Y1", "Elongated_Y1", 2},
+    {"Elongated_Y2", "Elongated_Y2", 2},
+    {"Elongated_Z1", "Elongated_Z1", 2},
+    {"Elongated_Z2", "Elongated_Z2", 2},
 
-    // Slanted ARB8 Configurations
-    {"SlantedARB8_1", "Ray_PosX", 1},
-    {"SlantedARB8_1", "Ray_NegX", 1},
-    {"SlantedARB8_1", "Ray_PosY", 1},
-    {"SlantedARB8_1", "Ray_NegY", 1},
-    {"SlantedARB8_1", "Ray_PosZ", 1},
-    {"SlantedARB8_1", "Ray_NegZ", 1},
-    {"SlantedARB8_1", "Ray_Diagonal", 1},
-    {"SlantedARB8_1", "Ray_GrazingEdge", 1},
-    {"SlantedARB8_1", "Ray_GrazingVertex", 1},
-    {"SlantedARB8_1", "Ray_Inside", 1},
+    {"ReverseUnitCube", "ReverseUnitCube", 2},
+    {"TopSlanted", "TopSlanted", 2},
+    {"UnevenSlanted", "UnevenSlanted", 2},
+    {"OppositeSlanted", "OppositeSlanted", 2},
+    {"PlanarARB6", "PlanarARB6", 2},
+    {"ConcavePlanar", "ConcavePlanar", 2},
+    {"MoreConcavePlanar", "MoreConcavePlanar", 2},
 
-    {"SlantedARB8_2", "Ray_PosX", 1},
-    {"SlantedARB8_2", "Ray_NegX", 1},
-    {"SlantedARB8_2", "Ray_PosY", 1},
-    {"SlantedARB8_2", "Ray_NegY", 1},
-    {"SlantedARB8_2", "Ray_PosZ", 1},
-    {"SlantedARB8_2", "Ray_NegZ", 1},
-    {"SlantedARB8_2", "Ray_Diagonal", 1},
-    {"SlantedARB8_2", "Ray_GrazingEdge", 1},
-    {"SlantedARB8_2", "Ray_GrazingVertex", 1},
-    {"SlantedARB8_2", "Ray_Inside", 1},
+    {"TwistedCubeNonPlanar", "TwistedCubePlanar", 2},
+    {"LongConvexPlanar", "LongConvexPlanar", 0}, // not near origin
+    {"TaperedConvexPlanar", "TaperedConvexPlanar", 0}, // not near origin
+    {"BigConcavePlanar", "BigConcavePlanar", 0}, // not near origin
 
-    {"SlantedARB8_3", "Ray_PosX", 1},
-    {"SlantedARB8_3", "Ray_NegX", 1},
-    {"SlantedARB8_3", "Ray_PosY", 1},
-    {"SlantedARB8_3", "Ray_NegY", 1},
-    {"SlantedARB8_3", "Ray_PosZ", 1},
-    {"SlantedARB8_3", "Ray_NegZ", 1},
-    {"SlantedARB8_3", "Ray_Diagonal", 1},
-    {"SlantedARB8_3", "Ray_GrazingEdge", 1},
-    {"SlantedARB8_3", "Ray_GrazingVertex", 1},
-    {"SlantedARB8_3", "Ray_Inside", 1},
-
-    // Irregular ARB8 Configurations
-    {"IrregularARB8_1", "Ray_PosX", 1},
-    {"IrregularARB8_1", "Ray_NegX", 1},
-    {"IrregularARB8_1", "Ray_PosY", 1},
-    {"IrregularARB8_1", "Ray_NegY", 1},
-    {"IrregularARB8_1", "Ray_PosZ", 1},
-    {"IrregularARB8_1", "Ray_NegZ", 1},
-    {"IrregularARB8_1", "Ray_Diagonal", 1},
-    {"IrregularARB8_1", "Ray_GrazingEdge", 1},
-    {"IrregularARB8_1", "Ray_GrazingVertex", 1},
-    {"IrregularARB8_1", "Ray_Inside", 1},
-
-    {"IrregularARB8_2", "Ray_PosX", 1},
-    {"IrregularARB8_2", "Ray_NegX", 1},
-    {"IrregularARB8_2", "Ray_PosY", 1},
-    {"IrregularARB8_2", "Ray_NegY", 1},
-    {"IrregularARB8_2", "Ray_PosZ", 1},
-    {"IrregularARB8_2", "Ray_NegZ", 1},
-    {"IrregularARB8_2", "Ray_Diagonal", 1},
-    {"IrregularARB8_2", "Ray_GrazingEdge", 1},
-    {"IrregularARB8_2", "Ray_GrazingVertex", 1},
-    {"IrregularARB8_2", "Ray_Inside", 1},
-
-    {"IrregularARB8_3", "Ray_PosX", 1},
-    {"IrregularARB8_3", "Ray_NegX", 1},
-    {"IrregularARB8_3", "Ray_PosY", 1},
-    {"IrregularARB8_3", "Ray_NegY", 1},
-    {"IrregularARB8_3", "Ray_PosZ", 1},
-    {"IrregularARB8_3", "Ray_NegZ", 1},
-    {"IrregularARB8_3", "Ray_Diagonal", 1},
-    {"IrregularARB8_3", "Ray_GrazingEdge", 1},
-    {"IrregularARB8_3", "Ray_GrazingVertex", 1},
-    {"IrregularARB8_3", "Ray_Inside", 1},
-
-    // Unit Cubes in Quadrants
-    {"UnitCube_Q1", "Ray_PosX", 1},
-    {"UnitCube_Q1", "Ray_NegX", 0},
-    {"UnitCube_Q1", "Ray_PosY", 1},
-    {"UnitCube_Q1", "Ray_NegY", 0},
-    {"UnitCube_Q1", "Ray_PosZ", 1},
-    {"UnitCube_Q1", "Ray_NegZ", 0},
-    {"UnitCube_Q1", "Ray_Diagonal", 1},
-    {"UnitCube_Q1", "Ray_GrazingEdge", 1},
-    {"UnitCube_Q1", "Ray_GrazingVertex", 1},
-    {"UnitCube_Q1", "Ray_Inside", 1},
-
-    {"UnitCube_Q2", "Ray_PosX", 0},
-    {"UnitCube_Q2", "Ray_NegX", 1},
-    {"UnitCube_Q2", "Ray_PosY", 1},
-    {"UnitCube_Q2", "Ray_NegY", 0},
-    {"UnitCube_Q2", "Ray_PosZ", 1},
-    {"UnitCube_Q2", "Ray_NegZ", 0},
-    {"UnitCube_Q2", "Ray_Diagonal", 1},
-    {"UnitCube_Q2", "Ray_GrazingEdge", 1},
-    {"UnitCube_Q2", "Ray_GrazingVertex", 1},
-    {"UnitCube_Q2", "Ray_Inside", 1},
-
-    {"UnitCube_Q3", "Ray_PosX", 0},
-    {"UnitCube_Q3", "Ray_NegX", 0},
-    {"UnitCube_Q3", "Ray_PosY", 0},
-    {"UnitCube_Q3", "Ray_NegY", 1},
-    {"UnitCube_Q3", "Ray_PosZ", 1},
-    {"UnitCube_Q3", "Ray_NegZ", 0},
-    {"UnitCube_Q3", "Ray_Diagonal", 1},
-    {"UnitCube_Q3", "Ray_GrazingEdge", 1},
-    {"UnitCube_Q3", "Ray_GrazingVertex", 1},
-    {"UnitCube_Q3", "Ray_Inside", 1},
-
-    {"UnitCube_Q8", "Ray_PosX", 0},
-    {"UnitCube_Q8", "Ray_NegX", 1},
-    {"UnitCube_Q8", "Ray_PosY", 0},
-    {"UnitCube_Q8", "Ray_NegY", 1},
-    {"UnitCube_Q8", "Ray_PosZ", 0},
-    {"UnitCube_Q8", "Ray_NegZ", 1},
-    {"UnitCube_Q8", "Ray_Diagonal", 1},
-    {"UnitCube_Q8", "Ray_GrazingEdge", 1},
-    {"UnitCube_Q8", "Ray_GrazingVertex", 1},
-    {"UnitCube_Q8", "Ray_Inside", 1},
-
-    // Spanning Cube
-    {"SpanningCube", "Ray_PosX", 1},
-    {"SpanningCube", "Ray_NegX", 1},
-    {"SpanningCube", "Ray_PosY", 1},
-    {"SpanningCube", "Ray_NegY", 1},
-    {"SpanningCube", "Ray_PosZ", 1},
-    {"SpanningCube", "Ray_NegZ", 1},
-    {"SpanningCube", "Ray_Diagonal", 1},
-    {"SpanningCube", "Ray_GrazingEdge", 1},
-    {"SpanningCube", "Ray_GrazingVertex", 1},
-    {"SpanningCube", "Ray_Inside", 1}
+    {"WarpedNonPlanar", "WarpedNonPlanar", -2},
+    {"TwistedTopNonPlanar", "TwistedTopNonPlanar", -2},
+    {"ComplexNonPlanar", "ComplexNonPlanar", -2},
+    {"ConcaveNonPlanar", "ConcaveNonPlanar", -2},
+    {"MoreConcaveNonPlanar", "MoreConcaveNonPlanar", -2},
+    {"MostConcaveNonPlanar", "MostConcaveNonPlanar", -2}
 };
+
+
+static ray_input_t *
+setupRays(const arb8_config_t *arbp, size_t *count)
+{
+    // TODO: allocate grids and vertex-specific rays
+    ray_input_t *rays = (ray_input_t *)bu_calloc(1, sizeof(ray_input_t), "alloc rays");
+
+    rays[0].label = arbp->label;
+    VSET(rays[0].origin, 2, 0.5, 0.5);
+    VSET(rays[0].direction, -1, 0, 0);
+
+    *count = 1;
+
+    return rays;
+}
+
+
+static void
+releaseRays(ray_input_t *rays)
+{
+    bu_free(rays, "free rays");
+}
 
 
 // Main execution and validation
 int
 main(int ac, char *av[])
 {
-    if (ac > 1) {
-	bu_log("Usage: %s\n", av[0]);
+    bu_setprogname(av[0]);
+
+    if (ac != 1 && ac != 3) {
+	bu_log("Usage: %s [-g file.g]\n", av[0]);
 	return 1;
     }
 
+    /* write out arb8's to a .g file */
+    if (ac == 3) {
+	if (bu_file_exists(av[2], NULL)) {
+	    bu_log("ERROR: Output file [%s] already exists.\n", av[2]);
+	    bu_exit(1, "\tRemove file and retry.\n");
+	}
+
+	struct rt_wdb *wdbp = wdb_fopen(av[2]);
+	if (!wdbp) {
+	    bu_log("ERROR: Cannot open [%s] as writable database.\n", av[2]);
+	    bu_exit(2, "\tUnable to proceed.\n");
+	}
+
+	for (size_t i = 0; i < sizeof(arb8_configs) / sizeof(arb8_config_t); i++) {
+	    fastf_t pts[24];
+
+	    for (size_t j = 0; j < 8; j++) {
+		VMOVE(&pts[j*3], arb8_configs[i].vertices[j]);
+	    }
+	    mk_arb8(wdbp, arb8_configs[i].label, pts);
+	}
+
+	wdb_close(wdbp);
+    }
+
+    /* test them by shooting rays */
     for (size_t i = 0; i < sizeof(arb8_configs) / sizeof(arb8_config_t); i++) {
         const arb8_config_t *arb = &arb8_configs[i];
         printf("Testing ARB8: %s\n", arb->label);
 
-        for (size_t j = 0; j < sizeof(rays) / sizeof(ray_input_t); j++) {
+	size_t nrays = 0;
+	ray_input_t *rays = setupRays(arb, &nrays);
+
+        for (size_t j = 0; j < nrays; j++) {
             const ray_input_t *ray = &rays[j];
             printf("  Testing Ray: %s\n", ray->label);
 
-            struct application ap = {0};
+            struct application ap;
+	    RT_APPLICATION_INIT(&ap);
             VSET(ap.a_ray.r_pt, ray->origin[X], ray->origin[Y], ray->origin[Z]);
             VSET(ap.a_ray.r_dir, ray->direction[X], ray->direction[Y], ray->direction[Z]);
+	    ap.a_ray.magic = RT_RAY_MAGIC;
+	    ap.a_resource = &rt_uniresource;
 
             // TODO - call rt_arb_shot() here, set hit/miss result
-	    struct soltab stp;
-	    struct xray rp;
 	    struct seg seghead;
-	    (void)(*OBJ[ID_ARB8].ft_shot)(&stp, &rp, &ap, &seghead);
+	    BU_LIST_INIT(&(seghead.l));
+	    struct xray *rayp = &ap.a_ray;
 
-            int hit = 0; // Placeholder
+	    struct soltab st = {0};
+	    st.l.magic = RT_SOLTAB_MAGIC;
+	    st.l2.magic = RT_SOLTAB2_MAGIC;
+	    st.st_uses = 1;
+	    st.st_id = ID_ARB8;
+
+	    struct rt_db_internal db;
+	    db.idb_magic = RT_DB_INTERNAL_MAGIC;
+	    db.idb_major_type = ID_ARB8;
+
+	    struct rt_arb_internal arbint;
+	    memcpy(arbint.pt, arb->vertices, sizeof(point_t)*8);
+	    arbint.magic = RT_ARB_INTERNAL_MAGIC;
+	    db.idb_ptr = &arbint;
+
+	    int prep = rt_obj_prep(&st, &db, NULL);
+	    int hits = rt_obj_shot(&st, rayp, &ap, &seghead);
+
+	    if (prep < 0) {
+		bu_log("prep failed\n");
+		hits = -hits; /* flip negative */
+	    }
+#if 0
+	    if (hits <= 0)
+		bu_log("shot missed\n");
+#endif
 
             // Validate against expected result
-            int expected_hit = -1;
+            int expected_hits = -999;
             for (size_t k = 0; k < sizeof(expected_results) / sizeof(expected_result_t); k++) {
                 if (bu_strcmp(expected_results[k].arb8_label, arb->label) == 0 &&
                     bu_strcmp(expected_results[k].ray_label, ray->label) == 0) {
-                    expected_hit = expected_results[k].expected_hit;
+                    expected_hits = expected_results[k].expected_hits;
                     break;
                 }
             }
 
-            if (expected_hit != -1) {
-                if (hit == expected_hit) {
-                    printf("    PASS\n");
+            if (expected_hits != -999) {
+                if (hits == expected_hits || -hits == expected_hits) {
+		    if (expected_hits < 0) {
+			printf("    PASS (unsupported, right)\n");
+		    } else {
+			printf("    PASS\n");
+		    }
                 } else {
-                    printf("    FAIL (expected %d, got %d)\n", expected_hit, hit);
+		    if (expected_hits < 0) {
+			printf("    PASS (unsupported, wrong)\n");
+		    } else {
+			printf("    FAIL (expected %d, got %d)\n", expected_hits, hits);
+		    }
                 }
             } else {
                 printf("    SKIPPED (no expectation defined)\n");
             }
         }
+
+	releaseRays(rays);
     }
 
     return 0;

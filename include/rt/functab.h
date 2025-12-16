@@ -43,6 +43,7 @@
 #include "rt/application.h"
 #include "rt/db_internal.h"
 #include "rt/db_instance.h"
+#include "rt/directory.h"
 #include "rt/edit.h"
 #include "rt/hit.h"
 #include "rt/misc.h"
@@ -298,6 +299,33 @@ struct rt_functab {
      * ARB8 perturbations will return an ARBN primitive. */
     int (*ft_perturb)(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t factor);
 #define RTFUNCTAB_FUNC_PERTURB_CAST(_func) ((int (*)(struct rt_db_internal **, const struct rt_db_internal *, int, fastf_t))((void (*)(void))_func))
+
+    /* Populate a scene object with the appropriate visualization data.  Unlike
+     * ft_plot, this routine handles multiple drawing modes (e.g. shaded) and
+     * adaptive plotting based on a view. If NULL parameters are passed for
+     * tolerance, defaults will be used.  If no view info is available, adaptive
+     * settings are ignored and the standard visuals will be generated.
+     *
+     * Unlike most functab methods, we deliberately use a directory pointer and
+     * the database instance pointer as inputs rather than the rt_db_internal.
+     * This is for performance reasons - some primitives cache drawing data
+     * in a way that lets them draw more quickly than they could trying to process
+     * the full rt_db_internal primitive data, and in those cases we want to avoid
+     * the memory overhead of populating an rt_db_internal unless it is actually
+     * needed.
+     *
+     * TODO - for combs, we either need the evaluated tree output or an agglomeration
+     * of all the leaf wireframes.  Normally the latter won't be what apps want,
+     * since it wouldn't reuse solid leaf wireframes, but from an API perspective
+     * it's what this function would return... */
+    int (*ft_scene_obj)(struct bv_scene_obj * /*s*/,
+		   struct directory * /*dp*/,
+		   struct db_i * /*dbip*/,
+		   const struct bg_tess_tol * /*ttol*/,
+		   const struct bn_tol * /*tol*/,
+		   const struct bview * /*v*/);
+#define RTFUNCTAB_FUNC_SCENE_OBJ_CAST(_func) ((int (*)(struct bv_scene_obj *, struct directory *, struct db_i *, const struct bg_tess_tol *, const struct bn_tol *, const struct bview *))((void (*)(void))_func))
+
 };
 
 /**
@@ -316,7 +344,7 @@ RT_EXPORT extern const struct rt_functab *rt_get_functab_by_label(const char *la
 /* Second table specific to editing functionality.  Eventually this may simply fold
  * into the main librt table, but currently (in 2025) we're in early testing so
  * keeping things separate for now. */
-struct rt_solid_edit_functab {
+struct rt_edit_functab {
     uint32_t magic;
     char ft_name[17]; /* current longest name is 16 chars, need one element for terminating NULL */
     char ft_label[9]; /* current longest label is 8 chars, need one element for terminating NULL */
@@ -326,22 +354,22 @@ struct rt_solid_edit_functab {
             struct rt_point_labels *pl,
             int max_pl,
             const mat_t xform,
-            struct rt_solid_edit *s,
+            struct rt_edit *s,
             struct bn_tol *tol);
-#define EDFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(int *, point_t *, struct rt_point_labels *, int, const mat_t, struct rt_solid_edit *, struct bn_tol *))((void (*)(void))_func))
+#define EDFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(int *, point_t *, struct rt_point_labels *, int, const mat_t, struct rt_edit *, struct bn_tol *))((void (*)(void))_func))
 
     const char *(*ft_keypoint)(point_t *pt,
             const char *keystr,
             const mat_t mat,
-            struct rt_solid_edit *s,
+            struct rt_edit *s,
             const struct bn_tol *tol);
-#define EDFUNCTAB_FUNC_KEYPOINT_CAST(_func) ((const char *(*)(point_t *, const char *, const mat_t, struct rt_solid_edit *, const struct bn_tol *))((void (*)(void))_func))
+#define EDFUNCTAB_FUNC_KEYPOINT_CAST(_func) ((const char *(*)(point_t *, const char *, const mat_t, struct rt_edit *, const struct bn_tol *))((void (*)(void))_func))
 
     void(*ft_e_axes_pos)(
-            struct rt_solid_edit *s,
+            struct rt_edit *s,
             const struct rt_db_internal *ip,
             const struct bn_tol *tol);
-#define EDFUNCTAB_FUNC_E_AXES_POS_CAST(_func) ((void(*)(struct rt_solid_edit *s, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
+#define EDFUNCTAB_FUNC_E_AXES_POS_CAST(_func) ((void(*)(struct rt_edit *s, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
 
     // Written format is intended to be human editable text that will be parsed
     // by ft_read_params.  There are no guarantees of formatting consistency by
@@ -364,8 +392,8 @@ struct rt_solid_edit_functab {
             fastf_t local2base);
 #define EDFUNCTAB_FUNC_READ_PARAMS_CAST(_func) ((int(*)(struct rt_db_internal *, const char *, const struct bn_tol *, fastf_t))((void (*)(void))_func))
 
-    int(*ft_edit)(struct rt_solid_edit *s);
-#define EDFUNCTAB_FUNC_EDIT_CAST(_func) ((int(*)(struct rt_solid_edit *))((void (*)(void))_func))
+    int(*ft_edit)(struct rt_edit *s);
+#define EDFUNCTAB_FUNC_EDIT_CAST(_func) ((int(*)(struct rt_edit *))((void (*)(void))_func))
 
     /* Translate mouse info into edit ready info.  mousevec [X] and [Y] are in
      * the range -1.0...+1.0, corresponding to viewspace.
@@ -373,35 +401,35 @@ struct rt_solid_edit_functab {
      * In order to allow command line commands to do the same things that a
      * mouse movements can, the preferred strategy is to store values and allow
      * ft_edit to actually do the work. */
-    int(*ft_edit_xy)(struct rt_solid_edit *s, const vect_t mousevec);
-#define EDFUNCTAB_FUNC_EDITXY_CAST(_func) ((int(*)(struct rt_solid_edit *, const vect_t))((void (*)(void))_func))
+    int(*ft_edit_xy)(struct rt_edit *s, const vect_t mousevec);
+#define EDFUNCTAB_FUNC_EDITXY_CAST(_func) ((int(*)(struct rt_edit *, const vect_t))((void (*)(void))_func))
 
     /* Create primitive specific editing struct */
-    void *(*ft_prim_edit_create)(struct rt_solid_edit *s);
-#define EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(_func) ((void *(*)(struct rt_solid_edit *))((void (*)(void))_func))
+    void *(*ft_prim_edit_create)(struct rt_edit *s);
+#define EDFUNCTAB_FUNC_PRIMEDIT_CREATE_CAST(_func) ((void *(*)(struct rt_edit *))((void (*)(void))_func))
 
     /* Destroy primitive specific editing struct */
     void (*ft_prim_edit_destroy)(void *);
 #define EDFUNCTAB_FUNC_PRIMEDIT_DESTROY_CAST(_func) ((void(*)(void *))((void (*)(void))_func))
 
     /* Create primitive specific editing struct */
-    void (*ft_prim_edit_reset)(struct rt_solid_edit *s);
-#define EDFUNCTAB_FUNC_PRIMEDIT_RESET_CAST(_func) ((void(*)(struct rt_solid_edit *))((void (*)(void))_func))
+    void (*ft_prim_edit_reset)(struct rt_edit *s);
+#define EDFUNCTAB_FUNC_PRIMEDIT_RESET_CAST(_func) ((void(*)(struct rt_edit *))((void (*)(void))_func))
 
     int (*ft_menu_str)(struct bu_vls *m, const struct rt_db_internal *ip, const struct bn_tol *tol);
 #define EDFUNCTAB_FUNC_MENU_STR_CAST(_func) ((int(*)(struct bu_vls *, const struct rt_db_internal *, const struct bn_tol *))((void (*)(void))_func))
 
     /* Set up a particular solid editing mode.  Does any internal setup needed
      * to prepare for the specified editing operation. */
-    void (*ft_set_edit_mode)(struct rt_solid_edit *s, int mode);
-#define EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(_func) ((void(*)(struct rt_solid_edit *, int))((void (*)(void))_func))
+    void (*ft_set_edit_mode)(struct rt_edit *s, int mode);
+#define EDFUNCTAB_FUNC_SET_EDIT_MODE_CAST(_func) ((void(*)(struct rt_edit *, int))((void (*)(void))_func))
 
-    struct rt_solid_edit_menu_item *(*ft_menu_item)(const struct bn_tol *tol);
-#define EDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct rt_solid_edit_menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))
+    struct rt_edit_menu_item *(*ft_menu_item)(const struct bn_tol *tol);
+#define EDFUNCTAB_FUNC_MENU_ITEM_CAST(_func) ((struct rt_edit_menu_item *(*)(const struct bn_tol *))((void (*)(void))_func))
 
 };
 
-RT_EXPORT extern const struct rt_solid_edit_functab EDOBJ[];
+RT_EXPORT extern const struct rt_edit_functab EDOBJ[];
 
 
 __END_DECLS

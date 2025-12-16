@@ -174,9 +174,9 @@ predictor_frame(struct mged_state *s)
     vect_t right, up;
     vect_t norm;
 
-    if (view_state->vs_rateflag_rotate == 0 &&
-	view_state->vs_rateflag_tran == 0 &&
-	view_state->vs_rateflag_scale == 0) {
+    if (view_state->k.rot_v_flag == 0 &&
+	view_state->k.tra_v_flag == 0 &&
+	view_state->k.sca_flag == 0) {
 	predictor_kill(s);
 	return;
     }

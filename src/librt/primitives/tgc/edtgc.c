@@ -53,12 +53,12 @@
 #define ECMD_TGC_SCALE_H_V_AB	2112
 
 void
-rt_solid_edit_tgc_set_edit_mode(struct rt_solid_edit *s, int mode)
+rt_edit_tgc_set_edit_mode(struct rt_edit *s, int mode)
 {
     // Most of the commands are scale, so set those flags by default.  That
     // will handle most of the flag resetting as well, so we just need to zero
     // and set specific flags of interest in the other cases.
-    rt_solid_edit_set_edflag(s, RT_SOLID_EDIT_SCALE);
+    rt_edit_set_edflag(s, RT_PARAMS_EDIT_SCALE);
 
     s->edit_flag = mode;
 
@@ -67,13 +67,11 @@ rt_solid_edit_tgc_set_edit_mode(struct rt_solid_edit *s, int mode)
 	case ECMD_TGC_MV_HH:
 	case ECMD_TGC_MV_H_CD:
 	case ECMD_TGC_MV_H_V_AB:
-	    s->solid_edit_scale = 0;
-	    s->solid_edit_translate = 1;
+	    s->edit_mode = RT_PARAMS_EDIT_TRANS;
 	    break;
 	case ECMD_TGC_ROT_AB:
 	case ECMD_TGC_ROT_H:
-	    s->solid_edit_scale = 0;
-	    s->solid_edit_rotate = 1;
+	    s->edit_mode = RT_PARAMS_EDIT_ROT;
 	    break;
 
     };
@@ -82,19 +80,19 @@ rt_solid_edit_tgc_set_edit_mode(struct rt_solid_edit *s, int mode)
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 
 }
 
 static void
-tgc_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+tgc_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    rt_solid_edit_tgc_set_edit_mode(s, arg);
+    rt_edit_tgc_set_edit_mode(s, arg);
 }
 
-struct rt_solid_edit_menu_item tgc_menu[] = {
+struct rt_edit_menu_item tgc_menu[] = {
     { "TGC MENU", NULL, 0 },
     { "Set H",	tgc_ed, ECMD_TGC_SCALE_H },
     { "Set H (move V)", tgc_ed, ECMD_TGC_SCALE_H_V },
@@ -114,15 +112,15 @@ struct rt_solid_edit_menu_item tgc_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_solid_edit_menu_item *
-rt_solid_edit_tgc_menu_item(const struct bn_tol *UNUSED(tol))
+struct rt_edit_menu_item *
+rt_edit_tgc_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return tgc_menu;
 }
 
 void
-rt_solid_edit_tgc_e_axes_pos(
-	struct rt_solid_edit *s,
+rt_edit_tgc_e_axes_pos(
+	struct rt_edit *s,
 	const struct rt_db_internal *ip,
 	const struct bn_tol *UNUSED(tol))
 {
@@ -143,7 +141,7 @@ rt_solid_edit_tgc_e_axes_pos(
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
 void
-rt_solid_edit_tgc_write_params(
+rt_edit_tgc_write_params(
 	struct bu_vls *p,
        	const struct rt_db_internal *ip,
        	const struct bn_tol *UNUSED(tol),
@@ -171,7 +169,7 @@ rt_solid_edit_tgc_write_params(
     while (lc && strchr(lc, ':')) lc++
 
 int
-rt_solid_edit_tgc_read_params(
+rt_edit_tgc_read_params(
 	struct rt_db_internal *ip,
 	const char *fc,
 	const struct bn_tol *UNUSED(tol),
@@ -254,7 +252,7 @@ rt_solid_edit_tgc_read_params(
 
 /* scale height vector */
 void
-ecmd_tgc_scale_h(struct rt_solid_edit *s)
+ecmd_tgc_scale_h(struct rt_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -269,7 +267,7 @@ ecmd_tgc_scale_h(struct rt_solid_edit *s)
 
 /* scale height vector (but move V) */
 void
-ecmd_tgc_scale_h_v(struct rt_solid_edit *s)
+ecmd_tgc_scale_h_v(struct rt_edit *s)
 {
     point_t old_top;
 
@@ -287,7 +285,7 @@ ecmd_tgc_scale_h_v(struct rt_solid_edit *s)
 }
 
 void
-ecmd_tgc_scale_h_cd(struct rt_solid_edit *s)
+ecmd_tgc_scale_h_cd(struct rt_edit *s)
 {
     vect_t vec1, vec2;
     vect_t c, d;
@@ -324,7 +322,7 @@ ecmd_tgc_scale_h_cd(struct rt_solid_edit *s)
 }
 
 void
-ecmd_tgc_scale_h_v_ab(struct rt_solid_edit *s)
+ecmd_tgc_scale_h_v_ab(struct rt_edit *s)
 {
     vect_t vec1, vec2;
     vect_t a, b;
@@ -365,7 +363,7 @@ ecmd_tgc_scale_h_v_ab(struct rt_solid_edit *s)
 
 /* scale vector A */
 void
-ecmd_tgc_scale_a(struct rt_solid_edit *s)
+ecmd_tgc_scale_a(struct rt_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -381,7 +379,7 @@ ecmd_tgc_scale_a(struct rt_solid_edit *s)
 
 /* scale vector B */
 void
-ecmd_tgc_scale_b(struct rt_solid_edit *s)
+ecmd_tgc_scale_b(struct rt_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -397,7 +395,7 @@ ecmd_tgc_scale_b(struct rt_solid_edit *s)
 
 /* TGC: scale ratio "c" */
 void
-ecmd_tgc_scale_c(struct rt_solid_edit *s)
+ecmd_tgc_scale_c(struct rt_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -413,7 +411,7 @@ ecmd_tgc_scale_c(struct rt_solid_edit *s)
 
 /* scale d for tgc */
 void
-ecmd_tgc_scale_d(struct rt_solid_edit *s)
+ecmd_tgc_scale_d(struct rt_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -428,7 +426,7 @@ ecmd_tgc_scale_d(struct rt_solid_edit *s)
 }
 
 void
-ecmd_tgc_scale_ab(struct rt_solid_edit *s)
+ecmd_tgc_scale_ab(struct rt_edit *s)
 {
     fastf_t ma, mb;
     struct rt_tgc_internal *tgc =
@@ -448,7 +446,7 @@ ecmd_tgc_scale_ab(struct rt_solid_edit *s)
 
 /* scale C and D of tgc */
 void
-ecmd_tgc_scale_cd(struct rt_solid_edit *s)
+ecmd_tgc_scale_cd(struct rt_edit *s)
 {
     fastf_t ma, mb;
     struct rt_tgc_internal *tgc =
@@ -468,7 +466,7 @@ ecmd_tgc_scale_cd(struct rt_solid_edit *s)
 
 /* scale A, B, C, and D of tgc */
 void
-ecmd_tgc_scale_abcd(struct rt_solid_edit *s)
+ecmd_tgc_scale_abcd(struct rt_edit *s)
 {
     fastf_t ma, mb;
     struct rt_tgc_internal *tgc =
@@ -495,7 +493,7 @@ ecmd_tgc_scale_abcd(struct rt_solid_edit *s)
  * to H vector.
  */
 int
-ecmd_tgc_mv_h(struct rt_solid_edit *s)
+ecmd_tgc_mv_h(struct rt_edit *s)
 {
     float la, lb, lc, ld;	/* TGC: length of vectors */
     vect_t work;
@@ -529,7 +527,7 @@ ecmd_tgc_mv_h(struct rt_solid_edit *s)
     /* check for zero H vector */
     if (MAGNITUDE(tgc->h) <= SQRT_SMALL_FASTF) {
 	bu_vls_printf(s->log_str, "Zero H vector not allowed, resetting to +Z\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	VSET(tgc->h, 0.0, 0.0, 1.0);
@@ -561,7 +559,7 @@ ecmd_tgc_mv_h(struct rt_solid_edit *s)
 
 /* Move end of H of tgc - leave ends alone */
 int
-ecmd_tgc_mv_hh(struct rt_solid_edit *s)
+ecmd_tgc_mv_hh(struct rt_edit *s)
 {
     vect_t work;
     struct rt_tgc_internal *tgc =
@@ -594,7 +592,7 @@ ecmd_tgc_mv_hh(struct rt_solid_edit *s)
     /* check for zero H vector */
     if (MAGNITUDE(tgc->h) <= SQRT_SMALL_FASTF) {
 	bu_vls_printf(s->log_str, "Zero H vector not allowed, resetting to +Z\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	VSET(tgc->h, 0.0, 0.0, 1.0);
@@ -606,7 +604,7 @@ ecmd_tgc_mv_hh(struct rt_solid_edit *s)
 
 /* rotate height vector */
 int
-ecmd_tgc_rot_h(struct rt_solid_edit *s)
+ecmd_tgc_rot_h(struct rt_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -671,7 +669,7 @@ ecmd_tgc_rot_h(struct rt_solid_edit *s)
 
 /* rotate surfaces AxB and CxD (tgc) */
 int
-ecmd_tgc_rot_ab(struct rt_solid_edit *s)
+ecmd_tgc_rot_ab(struct rt_edit *s)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -741,7 +739,7 @@ ecmd_tgc_rot_ab(struct rt_solid_edit *s)
 
 /* Use mouse to change location of point V+H */
 void
-ecmd_tgc_mv_h_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
+ecmd_tgc_mv_h_mousevec(struct rt_edit *s, const vect_t mousevec)
 {
     struct rt_tgc_internal *tgc =
 	(struct rt_tgc_internal *)s->es_int.idb_ptr;
@@ -760,7 +758,7 @@ ecmd_tgc_mv_h_mousevec(struct rt_solid_edit *s, const vect_t mousevec)
 }
 
 static int
-rt_solid_edit_tgc_pscale(struct rt_solid_edit *s)
+rt_edit_tgc_pscale(struct rt_edit *s)
 {
     if (s->e_inpara) {
 	if (s->e_inpara > 1) {
@@ -821,22 +819,22 @@ rt_solid_edit_tgc_pscale(struct rt_solid_edit *s)
 }
 
 int
-rt_solid_edit_tgc_edit(struct rt_solid_edit *s)
+rt_edit_tgc_edit(struct rt_edit *s)
 {
     int ret = 0;
 
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    ret = rt_solid_edit_generic_sscale(s, &s->es_int);
+	    ret = edit_sscale(s);
 	    break;
-	case RT_SOLID_EDIT_TRANS:
+	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
-	    rt_solid_edit_generic_strans(s, &s->es_int);
+	    edit_stra(s);
 	    break;
-	case RT_SOLID_EDIT_ROT:
+	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
-	    rt_solid_edit_generic_srot(s, &s->es_int);
+	    edit_srot(s);
 	    break;
 	case ECMD_TGC_MV_H:
 	    ret = ecmd_tgc_mv_h(s);
@@ -851,12 +849,12 @@ rt_solid_edit_tgc_edit(struct rt_solid_edit *s)
 	    ret = ecmd_tgc_rot_ab(s);
 	    break;
 	default:
-	    ret = rt_solid_edit_tgc_pscale(s);
+	    ret = rt_edit_tgc_pscale(s);
     }
 
     bu_clbk_t f = NULL;
     void *d = NULL;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_REPLOT_EDITING_SOLID, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_REPLOT_EDITING_SOLID, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
 
@@ -864,8 +862,8 @@ rt_solid_edit_tgc_edit(struct rt_solid_edit *s)
 }
 
 int
-rt_solid_edit_tgc_edit_xy(
-	struct rt_solid_edit *s,
+rt_edit_tgc_edit_xy(
+	struct rt_edit *s,
 	const vect_t mousevec
 	)
 {
@@ -875,7 +873,7 @@ rt_solid_edit_tgc_edit_xy(
     void *d = NULL;
 
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	case ECMD_TGC_SCALE_AB:
 	case ECMD_TGC_SCALE_ABCD:  
 	case ECMD_TGC_SCALE_B:
@@ -886,10 +884,10 @@ rt_solid_edit_tgc_edit_xy(
 	case ECMD_TGC_SCALE_H_CD:
 	case ECMD_TGC_SCALE_H_V:
 	case ECMD_TGC_SCALE_H_V_AB:
-	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    edit_sscale_xy(s, mousevec);
 	    return 0;
-	case RT_SOLID_EDIT_TRANS:
-	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
+	case RT_PARAMS_EDIT_TRANS:
+	    edit_stra_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_TGC_MV_H:
 	case ECMD_TGC_MV_HH:
@@ -900,17 +898,23 @@ rt_solid_edit_tgc_edit_xy(
 	case ECMD_TGC_ROT_H:
 	case ECMD_TGC_ROT_AB:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
+        case RT_PARAMS_EDIT_ROT:
+            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
+            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+            if (f)
+                (*f)(0, NULL, d, NULL);
+            return BRLCAD_ERROR;
 	default:
 	    // Everything else should be a scale
-	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    edit_sscale_xy(s, mousevec);
 	    return 0;
     }
 
-    rt_update_edit_absolute_tran(s, pos_view);
+    edit_abs_tra(s, pos_view);
 
     return 0;
 }

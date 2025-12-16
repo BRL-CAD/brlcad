@@ -44,7 +44,7 @@ enum class KState {
     //Element_Blanking,
     //Element_Direct_Matrix_Input,
     //Element_Discrete,
-    //Element_Discrete_Sphere,
+    Element_Discrete_Sphere,
     //Element_Generalized_Shell,
     //Element_Generalized_Solid,
     //Element_Inertia,
@@ -55,7 +55,7 @@ enum class KState {
     //Element_Mass_Matrix,
     //Element_Mass_Part,
     //Element_Plotel,
-    //Element_Seatbelt,
+    Element_Seatbelt,
     //Element_Seatbelt_Accelerometer,
     //Element_Seatbelt_Pretensioner,
     //Element_Seatbelt_Retractor,
@@ -80,7 +80,7 @@ enum class KState {
     //Section_Fpd,
     //Section_Point_Source,
     //Section_Point_source_Mixture,
-    //Section_Seatbelt,
+    Section_Seatbelt,
     Section_Shell,
     Section_Solid,
     //Section_Solid_Peri,
@@ -563,7 +563,7 @@ bool parse_k
 			    }
 			    else if ((command.size() > 1) && (command[1] == "DISCRETE")) {
 				if ((command.size() > 2) && (command[2] == "SPHERE")) {
-				    //state = KState::Element_Discrete_Sphere;
+				    state = KState::Element_Discrete_Sphere;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
@@ -656,9 +656,8 @@ bool parse_k
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 3, command.end());
 				}
 				else {
-				    //state = KState::Element_Seatbelt;
-
-				    optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
+				    state = KState::Element_Seatbelt;
+				    //Element_Seatbelt has no options
 				}
 			    }
 			    else if ((command.size() > 1) && (command[1] == "SHELL")) {
@@ -673,7 +672,7 @@ bool parse_k
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 4, command.end());
 				}
 				else {
-				    //state = KState::Element_Shell;
+				    state = KState::Element_Shell;
 
 				    optionsContainer.insert(optionsContainer.end(), command.begin() + 2, command.end());
 				}
@@ -784,6 +783,18 @@ bool parse_k
 			    }
 			    else if (command[1] == "SOLID") {
 				state        = KState::Section_Solid;
+				sectionTitle = "";
+				sectionId    = -1;
+
+				if (command.size() == 3) {
+				    if (command[2] == "TITLE")
+					sectionLinesRead = 0;
+				    else
+					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
+				}
+			    }
+			    else if (command[1] == "SEATBELT") {
+				state        = KState::Section_Seatbelt;
 				sectionTitle = "";
 				sectionId    = -1;
 
@@ -1122,6 +1133,37 @@ bool parse_k
 			}
 
 			data.sectionsBeam[sectionId] = sectionBeam;
+			++sectionLinesRead;
+			break;
+		    }
+
+		    case KState::Section_Seatbelt: {
+			switch (sectionLinesRead) {
+			    case 0: {
+				sectionTitle = line;
+				break;
+			    }
+
+			    case 1: {
+				if (tokens.size() < 3) {
+				    std::cout << "Too short SECTION_SeatBelt in k-file " << fileName << std::endl;
+				    break;
+				}
+
+				sectionId = stoi(tokens[0]);
+
+				if (sectionId < 0) {
+				    std::cout << "Bad SECTION in k-file " << fileName << std::endl;
+				    break;
+				}
+
+				data.sectionsSeatBelt[sectionId].title     = sectionTitle;
+				data.sectionsSeatBelt[sectionId].area      = stof(tokens[1]);
+				data.sectionsSeatBelt[sectionId].thickness = stof(tokens[2]);
+				break;
+			    }
+			}
+
 			++sectionLinesRead;
 			break;
 		    }
@@ -1525,6 +1567,76 @@ bool parse_k
 
 			data.elementBearing[eid] = bearing;
 			++elementLinesRead;
+			break;
+		    }
+
+		    case KState::Element_Seatbelt: {
+			KElementSeatBelt seatBelt;
+			int eid = 1;
+			int pid = 1;
+
+			if (tokens.size() < 6) {
+			    std::cout << "Too short ELEMENT_SEAT_BELT in k-file" << fileName << std::endl;
+			    break;
+			}
+
+			eid = stoi(tokens[0]);
+			pid = stoi(tokens[1]);
+
+			seatBelt.nodes.push_back(stoi(tokens[2]));
+			seatBelt.nodes.push_back(stoi(tokens[3]));
+
+			seatBelt.retractorId = stoi(tokens[4]);
+			seatBelt.initialSlackLength = stof(tokens[5]);
+
+			if (tokens.size() > 6) {
+			    seatBelt.nodes.push_back(stoi(tokens[6]));
+			    seatBelt.nodes.push_back(stoi(tokens[7]));
+			}
+
+			data.elementSeatBelt[eid] = seatBelt;
+			data.parts[pid].elements.insert(eid);
+			break;
+		    }
+
+		    case KState::Element_Discrete_Sphere: {
+			if (tokens.size() < 6) {
+			    std::cout << "Too short ELEMENT_DISCRETE_SPHERE in k-file: " << fileName << std::endl;
+			    break;
+			}
+
+			int nid = std::stoi(tokens[0]);
+			int pid = std::stoi(tokens[1]);
+			//float mass = std::stof(tokens[2]);
+			//float inertia = std::stof(tokens[3]);
+			float radius = std::stof(tokens[4]);
+
+			int nid2 = 0;
+			if (tokens.size() >= 7) {
+			    nid2 = std::stoi(tokens[5]); // Optional
+			}
+
+			if (nid2 == 0 || nid2 <= nid) {
+
+			    KElementDiscreteSphere sphere;
+			    sphere.nodeId = nid;
+			    sphere.partId = pid;
+			    sphere.radius = radius;
+			    data.elementDiscreteSphere[nid] = sphere;
+			    data.parts[pid].elements.insert(nid);
+			}
+			else {
+
+			    for (int i = nid; i <= nid2; ++i) {
+				KElementDiscreteSphere sphere;
+				sphere.nodeId = i;
+				sphere.partId = pid;
+				sphere.radius = radius;
+				data.elementDiscreteSphere[nid] = sphere;
+				data.parts[pid].elements.insert(nid);
+			    }
+			}
+
 			break;
 		    }
 		}

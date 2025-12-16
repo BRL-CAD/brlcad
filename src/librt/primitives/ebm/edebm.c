@@ -40,30 +40,30 @@
 #define ECMD_EBM_HEIGHT		12055	/* set EBM extrusion depth */
 
 void
-rt_solid_edit_ebm_set_edit_mode(struct rt_solid_edit *s, int mode)
+rt_edit_ebm_set_edit_mode(struct rt_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, mode);
+    rt_edit_set_edflag(s, mode);
 
     if (mode == ECMD_EBM_HEIGHT)
-	s->solid_edit_scale = 1;
+	s->edit_mode = RT_PARAMS_EDIT_SCALE;
 
-    rt_solid_edit_process(s);
+    rt_edit_process(s);
 
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
 
 static void
-ebm_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+ebm_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    rt_solid_edit_ebm_set_edit_mode(s, arg);
+    rt_edit_ebm_set_edit_mode(s, arg);
 }
 
-struct rt_solid_edit_menu_item ebm_menu[] = {
+struct rt_edit_menu_item ebm_menu[] = {
     {"EBM MENU", NULL, 0 },
     {"File Name", ebm_ed, ECMD_EBM_FNAME },
     {"File Size (W N)", ebm_ed, ECMD_EBM_FSIZE },
@@ -71,14 +71,14 @@ struct rt_solid_edit_menu_item ebm_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_solid_edit_menu_item *
-rt_solid_edit_ebm_menu_item(const struct bn_tol *UNUSED(tol))
+struct rt_edit_menu_item *
+rt_edit_ebm_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return ebm_menu;
 }
 
 int
-ecmd_ebm_fsize(struct rt_solid_edit *s)
+ecmd_ebm_fsize(struct rt_edit *s)
 {
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -108,7 +108,7 @@ ecmd_ebm_fsize(struct rt_solid_edit *s)
     if (s->e_inpara == 2) {
 	if (stat(ebm->name, &stat_buf)) {
 	    bu_vls_printf(s->log_str, "Cannot get status of ebm data source %s", ebm->name);
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
@@ -116,7 +116,7 @@ ecmd_ebm_fsize(struct rt_solid_edit *s)
 	need_size = s->e_para[0] * s->e_para[1] * sizeof(unsigned char);
 	if (stat_buf.st_size < need_size) {
 	    bu_vls_printf(s->log_str, "File (%s) is too small, set data source name first", ebm->name);
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
@@ -125,7 +125,7 @@ ecmd_ebm_fsize(struct rt_solid_edit *s)
 	ebm->ydim = s->e_para[1];
     } else if (s->e_inpara > 0) {
 	bu_vls_printf(s->log_str, "width and length of data source are required\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
@@ -135,7 +135,7 @@ ecmd_ebm_fsize(struct rt_solid_edit *s)
 }
 
 int
-ecmd_ebm_fname(struct rt_solid_edit *s)
+ecmd_ebm_fname(struct rt_edit *s)
 {
     struct rt_ebm_internal *ebm = (struct rt_ebm_internal *)s->es_int.idb_ptr;
     const char *fname = NULL;
@@ -148,7 +148,7 @@ ecmd_ebm_fname(struct rt_solid_edit *s)
 
     const char *av[2] = {NULL};
     av[0] = ebm->name;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_GET_FILENAME, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_GET_FILENAME, BU_CLBK_DURING);
     if (f)
 	(*f)(1, (const char **)av, d, &fname);
 
@@ -158,7 +158,7 @@ ecmd_ebm_fname(struct rt_solid_edit *s)
 	    bu_vls_trunc(s->log_str, 0);
 	    bu_vls_printf(s->log_str, "Cannot get status of file %s\n", fname);
 	    f = NULL; d = NULL;
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
@@ -169,7 +169,7 @@ ecmd_ebm_fname(struct rt_solid_edit *s)
 	    bu_vls_trunc(s->log_str, 0);
 	    bu_vls_printf(s->log_str, "File (%s) is too small, adjust the file size parameters first", fname);
 	    f = NULL; d = NULL;
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
@@ -181,7 +181,7 @@ ecmd_ebm_fname(struct rt_solid_edit *s)
 }
 
 int
-ecmd_ebm_height(struct rt_solid_edit *s)
+ecmd_ebm_height(struct rt_edit *s)
 {
     bu_clbk_t f = NULL;
     void *d = NULL;
@@ -210,7 +210,7 @@ ecmd_ebm_height(struct rt_solid_edit *s)
 	ebm->tallness = s->e_para[0];
     else if (s->e_inpara > 0) {
 	bu_vls_printf(s->log_str, "extrusion depth required\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
@@ -223,19 +223,19 @@ ecmd_ebm_height(struct rt_solid_edit *s)
 }
 
 int
-rt_solid_edit_ebm_edit(struct rt_solid_edit *s)
+rt_edit_ebm_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
-	    return rt_solid_edit_generic_sscale(s, &s->es_int);
-	case RT_SOLID_EDIT_TRANS:
+	    return edit_sscale(s);
+	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
-	    rt_solid_edit_generic_strans(s, &s->es_int);
+	    edit_stra(s);
 	    break;
-	case RT_SOLID_EDIT_ROT:
+	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
-	    rt_solid_edit_generic_srot(s, &s->es_int);
+	    edit_srot(s);
 	    break;
 	case ECMD_EBM_FSIZE:    /* set file size */
 	    if (ecmd_ebm_fsize(s) != BRLCAD_OK)
@@ -256,8 +256,8 @@ rt_solid_edit_ebm_edit(struct rt_solid_edit *s)
 }
 
 int
-rt_solid_edit_ebm_edit_xy(
-	struct rt_solid_edit *s,
+rt_edit_ebm_edit_xy(
+	struct rt_edit *s,
 	const vect_t mousevec
 	)
 {
@@ -267,24 +267,30 @@ rt_solid_edit_ebm_edit_xy(
     void *d = NULL;
 
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	case ECMD_EBM_FNAME:
 	case ECMD_EBM_FSIZE:
 	case ECMD_EBM_HEIGHT:
-	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    edit_sscale_xy(s, mousevec);
 	    return 0;
-	case RT_SOLID_EDIT_TRANS:
-	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
+	case RT_PARAMS_EDIT_TRANS:
+	    edit_stra_xy(&pos_view, s, mousevec);
 	    break;
+        case RT_PARAMS_EDIT_ROT:
+            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
+            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+            if (f)
+                (*f)(0, NULL, d, NULL);
+            return BRLCAD_ERROR;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
     }
 
-    rt_update_edit_absolute_tran(s, pos_view);
+    edit_abs_tra(s, pos_view);
 
     return 0;
 }

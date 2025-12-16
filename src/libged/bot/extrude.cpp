@@ -49,12 +49,22 @@
 
 extern "C" {
 #include "vmath.h"
+#include "bu/time.h"
+#include "bg/trimesh.h"
 #include "brep.h"
 #include "rt/primitives/bot.h"
 #include "wdb.h"
 }
 #include "ged.h"
 #include "./ged_bot.h"
+
+// Default to a maximum of 1% surface area change allowed - if we get more
+// change than that, don't simplify
+#define MAX_AREA_DELTA_PERCENT 0.01
+
+// Default to 20% of triangles removed as a minimum threshold - i.e. if we
+// can't remove at least that many, don't simplify the mesh.
+#define MIN_TRICNT_REMOVAL_THRESHOLD 0.2
 
 static bool
 bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
@@ -107,15 +117,19 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     int comb_tree = 0;
     int quiet_mode = 0;
     int force_mode = 0;
+    fastf_t max_area_delta = -1.0;
+    fastf_t min_tri_delta = -1.0;
 
-    struct bu_opt_desc d[7];
-    BU_OPT(d[0], "h",        "help",     "",            NULL, &print_help,       "Print help");
-    BU_OPT(d[1], "q",       "quiet",     "",            NULL, &quiet_mode,       "Suppress output messages");
-    BU_OPT(d[2], "i",    "in-place",     "",            NULL, &extrude_in_place, "Overwrite input BoT");
-    BU_OPT(d[3], "R", "round-edges",     "",            NULL, &round_edges,      "Apply rounding to outer BoT edges");
-    BU_OPT(d[4], "C",        "comb",     "",            NULL, &comb_tree,        "Write out a CSG tree rather than a volumetric BoT");
-    BU_OPT(d[5], "F",       "force",     "",            NULL, &force_mode,       "Generate output even if source bot is view dependent.");
-    BU_OPT_NULL(d[6]);
+    struct bu_opt_desc d[9];
+    BU_OPT(d[0], "h",           "help",     "",            NULL, &print_help,       "Print help");
+    BU_OPT(d[1], "q",          "quiet",     "",            NULL, &quiet_mode,       "Suppress output messages");
+    BU_OPT(d[2], "i",       "in-place",     "",            NULL, &extrude_in_place, "Overwrite input BoT");
+    BU_OPT(d[3], "R",    "round-edges",     "",            NULL, &round_edges,      "Apply rounding to outer BoT edges");
+    BU_OPT(d[4], "C",           "comb",     "",            NULL, &comb_tree,        "Write out a CSG tree rather than a volumetric BoT");
+    BU_OPT(d[5], "F",          "force",     "",            NULL, &force_mode,       "Generate output even if source bot is view dependent.");
+    BU_OPT(d[6], "",  "max-area-delta",     "", &bu_opt_fastf_t, &max_area_delta,   "Maximum surface area percent change allowed when simplifying (scale 0 to 1).  0 == no change allowed, 1 = any change allowed");
+    BU_OPT(d[7], "",   "min-tri-delta",     "", &bu_opt_fastf_t, &min_tri_delta,    "Minimum percentage of triangles that need to be removed (scale 0 to 1) before simplified mesh is used. 0 = any triangle count change is accepted, 1 = no change allowed");
+    BU_OPT_NULL(d[8]);
 
     int ac = bu_opt_parse(NULL, argc, argv, d);
     argc = ac;
@@ -195,13 +209,29 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     }
 
     if (!comb_tree) {
-	struct rt_bot_internal *obot;
-	int ret = rt_bot_plate_to_vol(&obot, bot, round_edges, quiet_mode);
-	if (ret != BRLCAD_OK) {
+	if (!quiet_mode)
+	    bu_log("Processing %s\n", gb->solid_name.c_str());
+
+	int64_t start = bu_gettime();
+
+	struct rt_bot_internal *obot = NULL;
+	// Default to maximum area change of 1% of the bot surface area
+	if (max_area_delta < 0 || max_area_delta > 1) {
+	    fastf_t bot_area = bg_trimesh_area(bot->faces, bot->num_faces, (const point_t *)bot->vertices, bot->num_vertices);
+	    max_area_delta = MAX_AREA_DELTA_PERCENT*bot_area;
+	}
+	if (min_tri_delta < 0 || min_tri_delta > 1)
+	    min_tri_delta = MIN_TRICNT_REMOVAL_THRESHOLD;
+
+	int ret = rt_bot_plate_to_vol(&obot, bot, round_edges, quiet_mode, max_area_delta, min_tri_delta);
+	if (ret != BRLCAD_OK || !obot) {
 	    if (!quiet_mode)
 		bu_vls_printf(gb->gedp->ged_result_str, "Volumetric conversion failed");
 	    return BRLCAD_ERROR;
 	}
+
+	fastf_t elapsed = ((fastf_t)(bu_gettime() - start)) / 1000000.0;
+	bu_log("BoT %s extruded in %g seconds\n", gb->solid_name.c_str(), elapsed);
 
 	struct rt_db_internal intern;
 	RT_DB_INTERNAL_INIT(&intern);

@@ -31,13 +31,14 @@
 #include "bv/lod.h"
 
 #include "../ged_private.h"
+#include "../dbi.h"
 
 
 extern "C" int
 ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 {
     // If we don't have an open database, this is a no-op
-    if (!gedp->dbip)
+    if (!gedp || !gedp->dbip)
 	return BRLCAD_OK;
 
     /* set result while we still have the info */
@@ -58,25 +59,28 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 
     /* Clean up any old acceleration states, if present */
     if (gedp->dbi_state)
-	delete gedp->dbi_state;
+	delete (DbiState *)gedp->dbi_state;
     gedp->dbi_state = NULL;
     if (gedp->ged_lod)
 	bv_mesh_lod_context_destroy(gedp->ged_lod);
     gedp->ged_lod = NULL;
 
     /* Terminate any ged subprocesses */
-    if (gedp != GED_NULL) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
-	    struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
-	    if (!rrp->aborted) {
-		bu_pid_terminate(bu_process_pid(rrp->p));
-		rrp->aborted = 1;
-	    }
-	    bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);
-	    BU_PUT(rrp, struct ged_subprocess);
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
+	struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
+	if (gedp->ged_delete_io_handler) {
+	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDIN);
+	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDOUT);
+	    (*gedp->ged_delete_io_handler)(rrp, BU_PROCESS_STDERR);
 	}
-	bu_ptbl_reset(&gedp->ged_subp);
+	if (!rrp->aborted) {
+	    bu_pid_terminate(bu_process_pid(rrp->p));
+	    rrp->aborted = 1;
+	}
+	bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);
+	    BU_PUT(rrp, struct ged_subprocess);
     }
+    bu_ptbl_reset(&gedp->ged_subp);
 
     return BRLCAD_OK;
 }

@@ -98,9 +98,6 @@ if(BRLCAD_ENABLE_OSL)
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${OSL_INCLUDES}
     ${OPENIMAGEIO_INCLUDES}
-    # This is required for brep.h to find opennurbs.h
-    # (TODO: better way to include this dir?)
-    ../other/openNURBS/
   )
 
   brlcad_addlib(liboslrend "${OSLRT_SOURCES}" "${OSLRT_LIBS}" "" "${OSL_LOCAL_INCLUDE_DIRS}")

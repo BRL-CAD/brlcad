@@ -28,9 +28,8 @@
 #define CONV_STEP_STEP_G_MEASUREWITHUNIT_H
 
 #include "STEPEntity.h"
-
-class MeasureValue;
-class Unit;
+#include "MeasureValue.h"
+#include "Unit.h"
 
 class MeasureWithUnit : virtual public STEPEntity
 {

@@ -319,6 +319,8 @@ struct rt_brep_internal {
 /** @{ */
 /*
  * ID_EBM
+ *
+ * TODO - similar questions here as for extrude
  */
 #define RT_EBM_NAME_LEN 256
 struct rt_ebm_internal {
@@ -345,6 +347,8 @@ struct rt_ebm_internal {
 /** @{ */
 /*
  * ID_VOL
+ *
+ * TODO - similar questions here as for extrude
  */
 #define RT_VOL_NAME_LEN 128
 struct rt_vol_internal {
@@ -556,6 +560,8 @@ struct rt_eto_internal {
 /** @{ */
 /*
  * ID_DSP
+ *
+ * TODO - similar questions here as for extrude
  */
 #define DSP_NAME_LEN 128
 struct rt_dsp_internal{
@@ -701,6 +707,12 @@ struct rt_submodel_internal {
 /** @{ */
 /*
  * ID_EXTRUDE
+ *
+ * TODO - storing an rt_sketch_internal this way, from a data standpoint we would seem to be
+ * divorcing the in-memory copy of the extrude from the database's sketch object - i.e. it
+ * isn't clear whether an edit to the sketch would automatically propagate to the extrude.
+ * If not, the in-memory extrude might become invalid if the database sketch gets edited
+ * after it is defined?  Need to investigate...
  */
 
 struct rt_extrude_internal
@@ -727,6 +739,8 @@ struct rt_extrude_internal
 /** @{ */
 /*
  * ID_REVOLVE
+ *
+ * TODO - same questions as extrude...
  */
 struct rt_revolve_internal {
     uint32_t magic;

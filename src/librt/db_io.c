@@ -37,6 +37,8 @@
 #include "bu/interrupt.h"
 #include "vmath.h"
 #include "rt/db4.h"
+#include "rt/db_internal.h"
+#include "rt/db_io.h"
 #include "raytrace.h"
 #include "librt_private.h"
 

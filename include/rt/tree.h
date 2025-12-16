@@ -223,28 +223,6 @@ union tree {
     }
 
 /**
- * RT_GET_TREE returns a union tree pointer with the magic number is
- * set to RT_TREE_MAGIC.
- *
- * DEPRECATED, use BU_GET()+RT_TREE_INIT()
- */
-#define RT_GET_TREE(_tp, _res) { \
-	BU_GET((_tp), union tree); \
-	RT_TREE_INIT((_tp));                             \
-    }
-
-
-/**
- * RT_FREE_TREE deinitializes a tree union pointer.
- *
- * DEPRECATED, use BU_PUT()
- */
-#define RT_FREE_TREE(_tp, _res) { \
-	BU_PUT((_tp), union tree); \
-    }
-
-
-/**
  * flattened version of the union tree
  */
 struct rt_tree_array

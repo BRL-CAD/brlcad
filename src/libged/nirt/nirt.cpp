@@ -499,11 +499,16 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     // for all processing unless overridden by user options, so we only need to
     // set them up once at the beginning.
     //**************************************************************************
+    struct bu_vls nirt_cmd = BU_VLS_INIT_ZERO;
+
+    // Base our backout setting on the current_center value
+    bu_vls_sprintf(&nirt_cmd, "backout %d", (nv.current_center) ? 0 : 1);
+    fprintf(np.fp_in, "%s\n", bu_vls_cstr(&nirt_cmd));
 
     // xyz center - either from the view or by user setting
-    struct bu_vls nirt_cmd = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&nirt_cmd, "xyz %0.17f %0.17f %0.17f", V3ARGS(nv.center_model));
     fprintf(np.fp_in, "%s\n", bu_vls_cstr(&nirt_cmd));
+
     // calculate the ray direction from the view.
     vect_t dir = VINIT_ZERO;
     VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);

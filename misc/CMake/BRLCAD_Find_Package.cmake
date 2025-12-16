@@ -52,7 +52,7 @@
 # find_package call.
 
 macro(BRLCAD_Find_Package pkg_name)
-  cmake_parse_arguments(F "REQUIRED;NOINSTALL" "SYSPATTERN" "" ${ARGN})
+  cmake_parse_arguments(F "REQUIRED;NOINSTALL" "SYSPATTERN" "COMPONENTS" ${ARGN})
 
   # If we have a bundled copy of this package, always use that.  Packages we
   # are not going to install are not copied to CMAKE_BINARY_DIR, so set the
@@ -78,11 +78,20 @@ macro(BRLCAD_Find_Package pkg_name)
   set(CMAKE_FIND_FRAMEWORK LAST)
 
   # Execute the actual find_package call
+  # Forward COMPONENTS if supplied
   if(F_REQUIRED)
-    find_package(${pkg_name} REQUIRED)
-  else(F_REQUIRED)
-    find_package(${pkg_name})
-  endif(F_REQUIRED)
+    if(F_COMPONENTS)
+      find_package(${pkg_name} REQUIRED COMPONENTS ${F_COMPONENTS})
+    else()
+      find_package(${pkg_name} REQUIRED)
+    endif()
+  else()
+    if(F_COMPONENTS)
+      find_package(${pkg_name} COMPONENTS ${F_COMPONENTS})
+    else()
+      find_package(${pkg_name})
+    endif()
+  endif()
 
   # Read the cache variables again after find_package is finished
   get_property(cv_new DIRECTORY PROPERTY CACHE_VARIABLES)

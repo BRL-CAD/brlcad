@@ -49,7 +49,7 @@
 #define ECMD_BOT_FLAGS		30072	/* set BOT flags */
 
 void *
-rt_solid_edit_bot_prim_edit_create(struct rt_solid_edit *UNUSED(s))
+rt_edit_bot_prim_edit_create(struct rt_edit *UNUSED(s))
 {
     struct rt_bot_edit *b;
     BU_GET(b, struct rt_bot_edit);
@@ -62,7 +62,7 @@ rt_solid_edit_bot_prim_edit_create(struct rt_solid_edit *UNUSED(s))
 }
 
 void
-rt_solid_edit_bot_prim_edit_destroy(struct rt_bot_edit *b)
+rt_edit_bot_prim_edit_destroy(struct rt_bot_edit *b)
 {
     if (!b)
 	return;
@@ -75,7 +75,7 @@ rt_solid_edit_bot_prim_edit_destroy(struct rt_bot_edit *b)
 }
 
 void
-rt_solid_edit_bot_prim_edit_reset(struct rt_solid_edit *s)
+rt_edit_bot_prim_edit_reset(struct rt_edit *s)
 {
     struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
     b->bot_verts[0] = -1;
@@ -84,20 +84,20 @@ rt_solid_edit_bot_prim_edit_reset(struct rt_solid_edit *s)
 }
 
 void
-rt_solid_edit_bot_set_edit_mode(struct rt_solid_edit *s, int mode)
+rt_edit_bot_set_edit_mode(struct rt_edit *s, int mode)
 {
-    rt_solid_edit_set_edflag(s, mode);
+    rt_edit_set_edflag(s, mode);
 
     switch (mode) {
 	case ECMD_BOT_MOVEV:
 	case ECMD_BOT_MOVEE:
 	case ECMD_BOT_MOVET:
-	    s->solid_edit_translate = 1;
+	    s->edit_mode = RT_PARAMS_EDIT_TRANS;
 	    break;
 	case ECMD_BOT_PICKV:
 	case ECMD_BOT_PICKE:
 	case ECMD_BOT_PICKT:
-	    s->solid_edit_pick = 1;
+	    s->edit_mode = RT_PARAMS_EDIT_PICK;
 	    break;
 	default:
 	    break;
@@ -106,42 +106,42 @@ rt_solid_edit_bot_set_edit_mode(struct rt_solid_edit *s, int mode)
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
 
 static void
-bot_ed(struct rt_solid_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
+bot_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    rt_solid_edit_set_edflag(s, arg);
+    rt_edit_set_edflag(s, arg);
 
     switch (arg) {
 	case ECMD_BOT_MOVEV:
 	case ECMD_BOT_MOVEE:
 	case ECMD_BOT_MOVET:
-	    s->solid_edit_translate = 1;
+	    s->edit_mode = RT_PARAMS_EDIT_TRANS;
 	    break;
 	case ECMD_BOT_PICKV:
 	case ECMD_BOT_PICKE:
 	case ECMD_BOT_PICKT:
-	    s->solid_edit_pick = 1;
+	    s->edit_mode = RT_PARAMS_EDIT_PICK;
 	    break;
 	default:
 	    break;
     };
 
     // TODO - should we be calling this here?
-    rt_solid_edit_process(s);
+    rt_edit_process(s);
 
     bu_clbk_t f = NULL;
     void *d = NULL;
     int flag = 1;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_EAXES_POS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, &flag);
 }
-struct rt_solid_edit_menu_item bot_menu[] = {
+struct rt_edit_menu_item bot_menu[] = {
     { "BOT MENU", NULL, 0 },
     { "Pick Vertex", bot_ed, ECMD_BOT_PICKV },
     { "Pick Edge", bot_ed, ECMD_BOT_PICKE },
@@ -158,20 +158,20 @@ struct rt_solid_edit_menu_item bot_menu[] = {
     { "", NULL, 0 }
 };
 
-struct rt_solid_edit_menu_item *
-rt_solid_edit_bot_menu_item(const struct bn_tol *UNUSED(tol))
+struct rt_edit_menu_item *
+rt_edit_bot_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return bot_menu;
 }
 
 void
-rt_solid_edit_bot_labels(
+rt_edit_bot_labels(
 	int *num_lines,
 	point_t *lines,
 	struct rt_point_labels *pl,
 	int UNUSED(max_pl),
 	const mat_t xform,
-	struct rt_solid_edit *s,
+	struct rt_edit *s,
 	struct bn_tol *UNUSED(tol))
 {
     struct rt_db_internal *ip = &s->es_int;
@@ -241,11 +241,11 @@ rt_solid_edit_bot_labels(
 }
 
 const char *
-rt_solid_edit_bot_keypoint(
+rt_edit_bot_keypoint(
 	point_t *pt,
 	const char *keystr,
 	const mat_t mat,
-	struct rt_solid_edit *s,
+	struct rt_edit *s,
 	const struct bn_tol *tol)
 {
     struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
@@ -263,7 +263,7 @@ rt_solid_edit_bot_keypoint(
 }
 
 void
-ecmd_bot_mode(struct rt_solid_edit *s)
+ecmd_bot_mode(struct rt_edit *s)
 {
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
 
@@ -273,7 +273,7 @@ ecmd_bot_mode(struct rt_solid_edit *s)
     // Set bot->mode using the callback
     bu_clbk_t f = NULL;
     void *d = NULL;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_BOT_MODE, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_BOT_MODE, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, s);
 
@@ -295,18 +295,18 @@ ecmd_bot_mode(struct rt_solid_edit *s)
 }
 
 void
-ecmd_bot_orient(struct rt_solid_edit *s)
+ecmd_bot_orient(struct rt_edit *s)
 {
     // Set bot->orientation using the callback
     bu_clbk_t f = NULL;
     void *d = NULL;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_BOT_ORIENT, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_BOT_ORIENT, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, s);
 }
 
 int
-ecmd_bot_thick(struct rt_solid_edit *s)
+ecmd_bot_thick(struct rt_edit *s)
 {
 
     if (s->e_inpara != 1) {
@@ -327,7 +327,7 @@ ecmd_bot_thick(struct rt_solid_edit *s)
     // Set bot->thickness array using the callback
     bu_clbk_t f = NULL;
     void *d = NULL;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_BOT_THICK, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_BOT_THICK, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, s);
 
@@ -335,29 +335,29 @@ ecmd_bot_thick(struct rt_solid_edit *s)
 }
 
 void
-ecmd_bot_flags(struct rt_solid_edit *s)
+ecmd_bot_flags(struct rt_edit *s)
 {
     // Set bot->thickness array using the callback
     bu_clbk_t f = NULL;
     void *d = NULL;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_BOT_FLAGS, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_BOT_FLAGS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, s);
 }
 
 void
-ecmd_bot_fmode(struct rt_solid_edit *s)
+ecmd_bot_fmode(struct rt_edit *s)
 {
     // Set bot->face_mode using the callback
     bu_clbk_t f = NULL;
     void *d = NULL;
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_BOT_FMODE, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_BOT_FMODE, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, s);
 }
 
 int
-ecmd_bot_fdel(struct rt_solid_edit *s)
+ecmd_bot_fdel(struct rt_edit *s)
 {
     struct rt_bot_internal *bot =
 	(struct rt_bot_internal *)s->es_int.idb_ptr;
@@ -420,7 +420,7 @@ ecmd_bot_fdel(struct rt_solid_edit *s)
 }
 
 void
-ecmd_bot_movev(struct rt_solid_edit *s)
+ecmd_bot_movev(struct rt_edit *s)
 {
     struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
@@ -463,7 +463,7 @@ ecmd_bot_movev(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -475,7 +475,7 @@ ecmd_bot_movev(struct rt_solid_edit *s)
 }
 
 void
-ecmd_bot_movee(struct rt_solid_edit *s)
+ecmd_bot_movee(struct rt_edit *s)
 {
     struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
@@ -489,7 +489,7 @@ ecmd_bot_movee(struct rt_solid_edit *s)
 
     if (b->bot_verts[0] < 0 || b->bot_verts[1] < 0) {
 	bu_vls_printf(s->log_str, "No BOT edge selected\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -517,7 +517,7 @@ ecmd_bot_movee(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -532,7 +532,7 @@ ecmd_bot_movee(struct rt_solid_edit *s)
 }
 
 void
-ecmd_bot_movet(struct rt_solid_edit *s)
+ecmd_bot_movet(struct rt_edit *s)
 {
     struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
@@ -546,7 +546,7 @@ ecmd_bot_movet(struct rt_solid_edit *s)
 
     if (b->bot_verts[0] < 0 || b->bot_verts[1] < 0 || b->bot_verts[2] < 0) {
 	bu_vls_printf(s->log_str, "No BOT triangle selected\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -571,7 +571,7 @@ ecmd_bot_movet(struct rt_solid_edit *s)
 	}
     } else if (s->e_inpara && s->e_inpara != 3) {
 	bu_vls_printf(s->log_str, "x y z coordinates required for point movement\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return;
@@ -586,7 +586,7 @@ ecmd_bot_movet(struct rt_solid_edit *s)
 }
 
 int
-ecmd_bot_pickv(struct rt_solid_edit *s, const vect_t mousevec)
+ecmd_bot_pickv(struct rt_edit *s, const vect_t mousevec)
 {
     struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
@@ -606,7 +606,7 @@ ecmd_bot_pickv(struct rt_solid_edit *s, const vect_t mousevec)
     tmp_vert = rt_bot_find_v_nearest_pt2(bot, pos_view, s->vp->gv_model2view);
     if (tmp_vert < 0) {
 	bu_vls_printf(s->log_str, "ECMD_BOT_PICKV: unable to find a vertex!\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
@@ -618,7 +618,7 @@ ecmd_bot_pickv(struct rt_solid_edit *s, const vect_t mousevec)
     VSCALE(selected_pt, &bot->vertices[tmp_vert*3], s->base2local);
     sprintf(tmp_msg, "picked point at (%g %g %g), vertex #%d\n", V3ARGS(selected_pt), tmp_vert);
     bu_vls_printf(s->log_str, "%s", tmp_msg);
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
 
@@ -626,7 +626,7 @@ ecmd_bot_pickv(struct rt_solid_edit *s, const vect_t mousevec)
 }
 
 int
-ecmd_bot_picke(struct rt_solid_edit *s, const vect_t mousevec)
+ecmd_bot_picke(struct rt_edit *s, const vect_t mousevec)
 {
     struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
     vect_t pos_view = VINIT_ZERO;	/* Unrotated view space pos */
@@ -645,7 +645,7 @@ ecmd_bot_picke(struct rt_solid_edit *s, const vect_t mousevec)
 
     if (rt_bot_find_e_nearest_pt2(&vert1, &vert2, bot, pos_view, s->vp->gv_model2view)) {
 	bu_vls_printf(s->log_str, "ECMD_BOT_PICKE: unable to find an edge!\n");
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, NULL);
 	return BRLCAD_ERROR;
@@ -658,7 +658,7 @@ ecmd_bot_picke(struct rt_solid_edit *s, const vect_t mousevec)
     VSCALE(to_pt, &bot->vertices[vert2*3], s->base2local);
     sprintf(tmp_msg, "picked edge from (%g %g %g) to (%g %g %g)\n", V3ARGS(from_pt), V3ARGS(to_pt));
     bu_vls_printf(s->log_str, "%s", tmp_msg);
-    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
     if (f)
 	(*f)(0, NULL, d, NULL);
 
@@ -666,7 +666,7 @@ ecmd_bot_picke(struct rt_solid_edit *s, const vect_t mousevec)
 }
 
 void
-ecmd_bot_pickt(struct rt_solid_edit *s, const vect_t mousevec)
+ecmd_bot_pickt(struct rt_edit *s, const vect_t mousevec)
 {
     struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
     struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
@@ -718,7 +718,7 @@ ecmd_bot_pickt(struct rt_solid_edit *s, const vect_t mousevec)
 
 	bu_clbk_t f = NULL;
 	void *d = NULL;
-	rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_BOT_PICKT, BU_CLBK_DURING);
+	rt_edit_map_clbk_get(&f, &d, s->m, ECMD_BOT_PICKT, BU_CLBK_DURING);
 	if (f)
 	    (*f)(0, NULL, d, s);
 
@@ -728,29 +728,29 @@ ecmd_bot_pickt(struct rt_solid_edit *s, const vect_t mousevec)
 }
 
 int
-rt_solid_edit_bot_edit(struct rt_solid_edit *s)
+rt_edit_bot_edit(struct rt_edit *s)
 {
     struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	    /* scale the solid uniformly about its vertex point */
 	    b->bot_verts[0] = -1;
 	    b->bot_verts[1] = -1;
 	    b->bot_verts[2] = -1;
-	    return rt_solid_edit_generic_sscale(s, &s->es_int);
-	case RT_SOLID_EDIT_TRANS:
+	    return edit_sscale(s);
+	case RT_PARAMS_EDIT_TRANS:
 	    /* translate solid */
 	    b->bot_verts[0] = -1;
 	    b->bot_verts[1] = -1;
 	    b->bot_verts[2] = -1;
-	    rt_solid_edit_generic_strans(s, &s->es_int);
+	    edit_stra(s);
 	    break;
-	case RT_SOLID_EDIT_ROT:
+	case RT_PARAMS_EDIT_ROT:
 	    /* rot solid about vertex */
 	    b->bot_verts[0] = -1;
 	    b->bot_verts[1] = -1;
 	    b->bot_verts[2] = -1;
-	    rt_solid_edit_generic_srot(s, &s->es_int);
+	    edit_srot(s);
 	    break;
 	case ECMD_BOT_MODE:
 	    ecmd_bot_mode(s);
@@ -789,8 +789,8 @@ rt_solid_edit_bot_edit(struct rt_solid_edit *s)
 }
 
 int
-rt_solid_edit_bot_edit_xy(
-	struct rt_solid_edit *s,
+rt_edit_bot_edit_xy(
+	struct rt_edit *s,
 	const vect_t mousevec
 	)
 {
@@ -801,17 +801,17 @@ rt_solid_edit_bot_edit_xy(
     void *d = NULL;
 
     switch (s->edit_flag) {
-	case RT_SOLID_EDIT_SCALE:
+	case RT_PARAMS_EDIT_SCALE:
 	case ECMD_BOT_MODE :
 	case ECMD_BOT_ORIENT:
 	case ECMD_BOT_THICK:
 	case ECMD_BOT_FMODE:
 	case ECMD_BOT_FDEL :
 	case ECMD_BOT_FLAGS:
-	    rt_solid_edit_generic_sscale_xy(s, mousevec);
+	    edit_sscale_xy(s, mousevec);
 	    return 0;
-	case RT_SOLID_EDIT_TRANS:
-	    rt_solid_edit_generic_strans_xy(&pos_view, s, mousevec);
+	case RT_PARAMS_EDIT_TRANS:
+	    edit_stra_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_BOT_PICKV:
 	    if (ecmd_bot_pickv(s, mousevec) != BRLCAD_OK)
@@ -834,15 +834,21 @@ rt_solid_edit_bot_edit_xy(
 	    MAT4X3PNT(s->e_mparam, s->e_invmat, temp);
 	    s->e_mvalid = 1;
 	    break;
+        case RT_PARAMS_EDIT_ROT:
+            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
+            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+            if (f)
+                (*f)(0, NULL, d, NULL);
+            return BRLCAD_ERROR;
 	default:
 	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_solid_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
 	    if (f)
 		(*f)(0, NULL, d, NULL);
 	    return BRLCAD_ERROR;
     }
 
-    rt_update_edit_absolute_tran(s, pos_view);
+    edit_abs_tra(s, pos_view);
 
     return 0;
 }

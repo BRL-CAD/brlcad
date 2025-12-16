@@ -37,15 +37,23 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
     // Run RTArea to get surface area
     std::string rtarea = getCmdPath(opt->getExeDir(), "rtarea");
     std::string in_file(opt->getInFile());  // need local copy for av array copy
-    const char* rtarea_av[13] = {rtarea.c_str(),
-                                 "-R",
-                                 "-s", "1024",
-                                 "-u", unit.c_str(),
-                                 "-a", az.c_str(),
-                                 "-e", el.c_str(),
-                                 in_file.c_str(),
-                                 comp.c_str(),
-                                 NULL};
+    std::string ncpu(std::to_string(opt->getNCPU()));
+    const char* rtarea_av[15] = {
+	rtarea.c_str(),
+	"-R",
+	"-P",
+	ncpu.c_str(),
+	// TODO: should toggle high/low or
+	// dynamically size to the level of
+	// fidelity desired.
+	"-s", "512",
+	"-u", unit.c_str(),
+	"-a", az.c_str(),
+	"-e", el.c_str(),
+	in_file.c_str(),
+	comp.c_str(),
+	NULL
+    };
     struct bu_process* p;
     bu_process_create(&p, rtarea_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
@@ -120,6 +128,40 @@ parseMass(std::string res)
     return ret;
 }
 
+static std::string GqaGridSize(std::map<std::string, std::string> map, std::string lUnit) {
+    // create a reasonable but fast grid size based on our bounding box
+    double dimX = 1.0;
+    double dimY = 1.0;
+    double dimZ = 1.0;
+
+    if (map.find("dimX") != map.end())
+        dimX = std::stod(map["dimX"]);
+    if (map.find("dimY") != map.end())
+        dimY = std::stod(map["dimY"]);
+    if (map.find("dimZ") != map.end())
+        dimZ = std::stod(map["dimZ"]);
+
+
+    double shortest = std::min({dimX, dimY, dimZ});
+    // clamp
+    if (shortest < 1.0)
+        shortest = 1.0;
+
+    // TODO: this seems to be a 10x10 sampling -- we should verify
+    // whether this is adequate, how much error off precision answer.
+
+    // find the smallest magnitude in relation to our smallest size
+    // i.e. if we have smallest side 234 -> we want 10 for the grid size
+    double magnitude = std::pow(10.0, std::floor(std::log10(shortest)) - 1);
+    int grid_step = static_cast<int>(magnitude);    // drop the decimal
+    if (grid_step < 1.0)
+        grid_step = 1.0;
+
+    std::string grid = std::to_string(grid_step) + lUnit + "," + std::to_string(grid_step) + lUnit;
+
+    return grid;
+}
+
 
 void
 getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, bool &UNUSED(hasDensities), double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit)
@@ -135,21 +177,27 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     //Get Volume and Mass (using gqa)
     const std::string no_density_msg = "Could not find any density information";
     std::string gqa = getCmdPath(opt->getExeDir(), "gqa");
+    std::string grid = GqaGridSize(map, lUnit);
     std::string units = lUnit + ",cu " + lUnit + "," + mUnit;
     struct bu_process* p;
     int read_cnt = 0;
     char buffer[1024] = {0};
     std::string result = "";
+    std::string ncpu(std::to_string(opt->getNCPU()));
 
     // attempt to get volume and mass in same run
-    const char* gqa_av[10] = { gqa.c_str(),
-                                "-Avm",
-                                "-q",
-                                "-g", "2",
-                                "-u", units.c_str(),
-                                in_file.c_str(),
-                                top_comp.c_str(),
-                                NULL };
+    const char* gqa_av[12] = {
+	gqa.c_str(),
+	"-Avm", // first position is assumed elsewhere to be -A
+	"-P",
+	ncpu.c_str(),
+	"-q",
+	"-g", grid.c_str(),
+	"-u", units.c_str(),
+	in_file.c_str(),
+	top_comp.c_str(),
+	NULL
+    };
 
     bu_process_create(&p, gqa_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
@@ -158,7 +206,6 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     }
 
     result = "";
-    read_cnt = 0;
     while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buffer)) > 0) {
         buffer[read_cnt] = '\0';
         result += buffer;
@@ -177,7 +224,7 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
 
 
     // no density data found. need to re-run, only getting volume data
-    gqa_av[1] = "-Av";
+    gqa_av[1] = "-Av"; // FIXME: shouldn't assume -A is as position[1]
     bu_process_create(&p, gqa_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
     if (bu_process_pid(p) <= 0) {
@@ -185,7 +232,6 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     }
 
     result = "";
-    read_cnt = 0;
     while ((read_cnt = bu_process_read_n(p, BU_PROCESS_STDOUT, 1024-1, buffer)) > 0) {
         buffer[read_cnt] = '\0';
         result += buffer;
@@ -494,7 +540,7 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
         totalEntities += res_len;
     }
     db_search_free(&results);
-    res_len = 0;
+
     // gather primitive shapes
     sFilter = "-not -type region -and -not -type comb";
     if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL, NULL, NULL) >= 0) {
@@ -503,7 +549,7 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
         totalEntities += res_len;
     }
     db_search_free(&results);
-    res_len = 0;
+
     // gather primitive shapes
     sFilter = "-type region";
     if (db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET, sFilter, 1, &dp, g->dbip, NULL, NULL, NULL) >= 0) {

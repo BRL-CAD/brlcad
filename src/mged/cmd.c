@@ -49,6 +49,8 @@
 #include "bu/path.h"
 #include "bu/time.h"
 #include "bn.h"
+#include "bv/util.h"
+#include "rt/edit.h"
 #include "rt/geom.h"
 #include "ged.h"
 #include "tclcad.h"
@@ -62,13 +64,14 @@ extern void mged_finish(struct mged_state *s, int exitcode); /* in mged.c */
 extern void update_grids(struct mged_state *s, fastf_t sf);		/* in grid.c */
 extern void set_localunit_TclVar(struct mged_state *s);		/* in chgmodel.c */
 extern void init_qray(void);			/* in qray.c */
+
+
+// FIXME: Globals
 extern int mged_default_dlist;			/* in attach.c */
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
-
 static int glob_compat_mode = 1;
 static int output_as_return = 1;
-
 Tk_Window tkwin = NULL;
 
 
@@ -318,7 +321,7 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	(void)(*ctp->ged_func)(s->gedp, argc, (const char **)argv);
 	GED_OUTPUT;
     } else {
-	if ((argc == 1) && (GEOM_EDIT_STATE == ST_S_EDIT)) {
+	if ((argc == 1) && (s->global_editing_state == ST_S_EDIT)) {
 	    argc = 2;
 	    av = (const char **)bu_malloc(sizeof(char *)*(argc + 1), "f_list: av");
 	    av[0] = (const char *)argv[0];
@@ -360,7 +363,7 @@ cmd_ged_erase_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 	return TCL_ERROR;
 
     solid_list_callback(s);
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     return TCL_OK;
@@ -434,7 +437,7 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
     if (ret)
 	return TCL_ERROR;
 
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     return TCL_OK;
@@ -556,11 +559,11 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 
     RT_DB_INTERNAL_INIT(&intern);
 
-    if (GEOM_EDIT_STATE == ST_S_EDIT) {
+    if (s->global_editing_state == ST_S_EDIT) {
 	/* solid edit mode */
-	/* apply es_mat editing to parameters */
+	/* apply MEDIT(s)->e_mat editing to parameters */
 	struct directory *outdp = RT_DIR_NULL;
-	transform_editing_solid(s, &intern, es_mat, &s->edit_state.es_int, 0);
+	transform_editing_solid(s, &intern, MEDIT(s)->e_mat, &MEDIT(s)->es_int, 0);
 	if (illump && illump->s_u_data) {
 	    bdata = (struct ged_bv_data *)illump->s_u_data;
 	    outdp = LAST_SOLID(bdata);
@@ -578,7 +581,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	} else {
 	    ret = TCL_ERROR;
 	}
-    }  else if (GEOM_EDIT_STATE == ST_O_EDIT) {
+    }  else if (s->global_editing_state == ST_O_EDIT) {
 	mat_t newmat;
 	struct directory *outdp = RT_DIR_NULL;
 
@@ -590,9 +593,9 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	    return TCL_ERROR;
 	}
 	/* use the solid at bottom of path (key solid) */
-	/* apply es_mat and modelchanges editing to parameters */
-	bn_mat_mul(newmat, modelchanges, es_mat);
-	transform_editing_solid(s, &intern, newmat, &s->edit_state.es_int, 0);
+	/* apply MEDIT(s)->e_mat and MEDIT(s)->model_changes editing to parameters */
+	bn_mat_mul(newmat, MEDIT(s)->model_changes, MEDIT(s)->e_mat);
+	transform_editing_solid(s, &intern, newmat, &MEDIT(s)->es_int, 0);
 	if (illump && illump->s_u_data) {
 	    bdata = (struct ged_bv_data *)illump->s_u_data;
 	    outdp = LAST_SOLID(bdata);
@@ -1362,7 +1365,7 @@ f_quit(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
 	return TCL_ERROR;
     }
 
-    if (GEOM_EDIT_STATE != ST_VIEW)
+    if (s->global_editing_state != ST_VIEW)
 	button(s, BE_REJECT);
 
     quit(s);			/* Exiting time */
@@ -1630,8 +1633,8 @@ mged_global_variable_setup(struct mged_state *s)
     Tcl_LinkVar(s->interp, "mged_default(db_upgrade)", (char *)&mged_global_db_ctx.db_upgrade, TCL_LINK_INT);
     Tcl_LinkVar(s->interp, "mged_default(db_version)", (char *)&mged_global_db_ctx.db_version, TCL_LINK_INT);
 
-    Tcl_LinkVar(s->interp, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
-    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&es_edflag, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "edit_class", (char *)&s->s_edit->es_edclass, TCL_LINK_INT);
+    Tcl_LinkVar(s->interp, "edit_solid_flag", (char *)&MEDIT(s)->edit_flag, TCL_LINK_INT);
     Tcl_LinkVar(s->interp, "edit_object_flag", (char *)&edobj, TCL_LINK_INT);
 
     /* link some tcl variables to these corresponding globals */
@@ -1859,7 +1862,7 @@ cmd_units(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     set_localunit_TclVar(s);
     sf = s->dbip->dbi_base2local / sf;
     update_grids(s,sf);
-    update_views = 1;
+    s->update_views = 1;
     dm_set_dirty(DMP, 1);
 
     return TCL_OK;
@@ -2192,7 +2195,467 @@ cmd_stuff_str(ClientData clientData, Tcl_Interp *interpreter, int argc, const ch
     return TCL_OK;
 }
 
+/* ----------------- view command ------------------ */
+/* MGED maintains information in its view_state, but
+ * libged commands operate on the ged_gvp - we need
+ * to do some syncing if the view knob command changes
+ * things in the ged view.  We also don't want to do
+ * the typical full mged_svbase if view knob is used.
+ */
+static int
+_view_is_knob(int argc, const char * const *argv)
+{
+    return (argc >= 2 && BU_STR_EQUAL(argv[1], "knob")) ? 1 : 0;
+}
 
+static int
+_view_is_baseline_reset(int argc, const char * const *argv)
+{
+    if (argc < 2) return 0;
+    if (BU_STR_EQUAL(argv[1], "autoview")) return 1;
+    if (BU_STR_EQUAL(argv[1], "svbase")   ||
+	BU_STR_EQUAL(argv[1], "svb")) return 1;
+    return 0;
+}
+
+/* ----------------- Snapshot Support ------------------ */
+/* We snapshot only the fields we overwrite/stage.
+ * If future subcommands mutate additional fields (clipping,
+ * animation settings, etc.) extend these sets.
+ */
+
+struct _view_cache {
+    int   valid;
+
+    /* Scalars */
+    fastf_t gv_scale;
+    fastf_t gv_i_scale;
+    fastf_t gv_a_scale;
+    fastf_t gv_size;
+    fastf_t gv_isize;
+    fastf_t gv_perspective;
+    fastf_t gv_local2base;
+    fastf_t gv_base2local;
+    char    gv_coord;
+    char    gv_rotate_about;
+
+    /* Vectors */
+    vect_t gv_eye_pos;
+    vect_t gv_keypoint;
+    vect_t gv_aet;
+
+    /* Matrices */
+    mat_t gv_rotation;
+    mat_t gv_center;
+    mat_t gv_model2view;
+    mat_t gv_view2model;
+    mat_t gv_pmodel2view;
+    mat_t gv_pmat;
+
+    /* Knob state (optional) */
+    int have_knobs;
+    struct bview_knobs k;
+};
+
+static void
+_view_cache_save(struct _view_cache *c, struct bview *v, int include_knobs)
+{
+    if (!c || !v) return;
+    c->valid = 1;
+
+    c->gv_scale       = v->gv_scale;
+    c->gv_i_scale     = v->gv_i_scale;
+    c->gv_a_scale     = v->gv_a_scale;
+    c->gv_size        = v->gv_size;
+    c->gv_isize       = v->gv_isize;
+    c->gv_perspective = v->gv_perspective;
+    c->gv_local2base  = v->gv_local2base;
+    c->gv_base2local  = v->gv_base2local;
+    c->gv_coord       = v->gv_coord;
+    c->gv_rotate_about= v->gv_rotate_about;
+
+    VMOVE(c->gv_eye_pos,  v->gv_eye_pos);
+    VMOVE(c->gv_keypoint, v->gv_keypoint);
+    VMOVE(c->gv_aet,      v->gv_aet);
+
+    MAT_COPY(c->gv_rotation,    v->gv_rotation);
+    MAT_COPY(c->gv_center,      v->gv_center);
+    MAT_COPY(c->gv_model2view,  v->gv_model2view);
+    MAT_COPY(c->gv_view2model,  v->gv_view2model);
+    MAT_COPY(c->gv_pmodel2view, v->gv_pmodel2view);
+    MAT_COPY(c->gv_pmat,        v->gv_pmat);
+
+    c->have_knobs = include_knobs;
+    if (include_knobs) {
+	c->k = v->k;
+    }
+}
+
+static void
+_view_cache_restore(const struct _view_cache *c, struct bview *v)
+{
+    if (!c || !v || !c->valid) return;
+
+    v->gv_scale       = c->gv_scale;
+    v->gv_i_scale     = c->gv_i_scale;
+    v->gv_a_scale     = c->gv_a_scale;
+    v->gv_size        = c->gv_size;
+    v->gv_isize       = c->gv_isize;
+    v->gv_perspective = c->gv_perspective;
+    v->gv_local2base  = c->gv_local2base;
+    v->gv_base2local  = c->gv_base2local;
+    v->gv_coord       = c->gv_coord;
+    v->gv_rotate_about= c->gv_rotate_about;
+
+    VMOVE(v->gv_eye_pos,  c->gv_eye_pos);
+    VMOVE(v->gv_keypoint, c->gv_keypoint);
+    VMOVE(v->gv_aet,      c->gv_aet);
+
+    MAT_COPY(v->gv_rotation,    c->gv_rotation);
+    MAT_COPY(v->gv_center,      c->gv_center);
+    MAT_COPY(v->gv_model2view,  c->gv_model2view);
+    MAT_COPY(v->gv_view2model,  c->gv_view2model);
+    MAT_COPY(v->gv_pmodel2view, c->gv_pmodel2view);
+    MAT_COPY(v->gv_pmat,        c->gv_pmat);
+
+    if (c->have_knobs) {
+	v->k = c->k;
+    }
+}
+
+static void
+_view_copy_to_staging(struct bview *dst, struct bview *src, struct mged_state *s, int include_knobs)
+{
+    if (!dst || !src) return;
+
+    dst->gv_scale       = src->gv_scale;
+    dst->gv_i_scale     = src->gv_i_scale;
+    dst->gv_a_scale     = src->gv_a_scale;
+    dst->gv_size        = src->gv_size;
+    dst->gv_isize       = src->gv_isize;
+    dst->gv_coord       = src->gv_coord;
+    dst->gv_rotate_about= src->gv_rotate_about;
+    dst->gv_perspective = src->gv_perspective;
+
+    /* Update db unit conversions */
+    dst->gv_local2base = (s->dbip) ? s->dbip->dbi_local2base : 1.0;
+    dst->gv_base2local = (s->dbip) ? s->dbip->dbi_base2local : 1.0;
+
+    VMOVE(dst->gv_eye_pos,  src->gv_eye_pos);
+    VMOVE(dst->gv_keypoint, src->gv_keypoint);
+    VMOVE(dst->gv_aet,      src->gv_aet);
+
+    MAT_COPY(dst->gv_rotation,    src->gv_rotation);
+    MAT_COPY(dst->gv_center,      src->gv_center);
+    MAT_COPY(dst->gv_model2view,  src->gv_model2view);
+    MAT_COPY(dst->gv_view2model,  src->gv_view2model);
+    MAT_COPY(dst->gv_pmodel2view, src->gv_pmodel2view);
+    MAT_COPY(dst->gv_pmat,        src->gv_pmat);
+
+    if (include_knobs) {
+	dst->k = src->k;
+    }
+}
+
+static void
+_view_copy_from_staging(struct bview *dst, struct bview *src, int include_knobs)
+{
+    if (!dst || !src) return;
+
+    dst->gv_scale       = src->gv_scale;
+    dst->gv_i_scale     = src->gv_i_scale;
+    dst->gv_a_scale     = src->gv_a_scale;
+    dst->gv_size        = src->gv_size;
+    dst->gv_isize       = src->gv_isize;
+    dst->gv_coord       = src->gv_coord;
+    dst->gv_rotate_about= src->gv_rotate_about;
+    dst->gv_perspective = src->gv_perspective;
+
+    VMOVE(dst->gv_eye_pos,  src->gv_eye_pos);
+    VMOVE(dst->gv_keypoint, src->gv_keypoint);
+    VMOVE(dst->gv_aet,      src->gv_aet);
+
+    MAT_COPY(dst->gv_rotation,    src->gv_rotation);
+    MAT_COPY(dst->gv_center,      src->gv_center);
+    MAT_COPY(dst->gv_model2view,  src->gv_model2view);
+    MAT_COPY(dst->gv_view2model,  src->gv_view2model);
+    MAT_COPY(dst->gv_pmodel2view, src->gv_pmodel2view);
+    MAT_COPY(dst->gv_pmat,        src->gv_pmat);
+
+    if (include_knobs) {
+	dst->k = src->k;
+    }
+}
+
+static void
+_view_update_rate_flags_viewonly(struct mged_state *s)
+{
+    /* Mirror legacy flag semantics (view path) */
+    /* NOTE: Assumes view_state->k already contains the up-to-date knob
+     * values copied from vs_gvp->k (done in cmd_view after a knob
+     * subcommand succeeds.) */
+    view_state->k.rot_v_flag = (!ZERO(view_state->k.rot_v[X]) ||
+				!ZERO(view_state->k.rot_v[Y]) ||
+				!ZERO(view_state->k.rot_v[Z])) ? 1 : 0;
+    view_state->k.tra_v_flag = (!ZERO(view_state->k.tra_v[X]) ||
+				!ZERO(view_state->k.tra_v[Y]) ||
+				!ZERO(view_state->k.tra_v[Z])) ? 1 : 0;
+    view_state->k.rot_m_flag = (!ZERO(view_state->k.rot_m[X]) ||
+				!ZERO(view_state->k.rot_m[Y]) ||
+				!ZERO(view_state->k.rot_m[Z])) ? 1 : 0;
+    view_state->k.tra_m_flag = (!ZERO(view_state->k.tra_m[X]) ||
+				!ZERO(view_state->k.tra_m[Y]) ||
+				!ZERO(view_state->k.tra_m[Z])) ? 1 : 0;
+    view_state->k.sca_flag = (!ZERO(view_state->k.sca)) ? 1 : 0;
+    view_state->vs_flag = 1;
+}
+
+static void
+_view_maybe_baseline_reset(struct mged_state *s, int do_reset)
+{
+    if (!s || !do_reset) return;
+    (void)mged_svbase(s);
+    /* After mged_svbase the canonical (legacy) source of truth is
+     * view_state->k. Keep vs_gvp->k in sync so a subsequent
+     * "view knob" sees the reset values. */
+    if (view_state && view_state->vs_gvp)
+	view_state->vs_gvp->k = view_state->k;
+}
+
+/* Calculate focused hash of a subset of the view to detect mutation of view
+ * transform & knob state.  This deliberately ignores display list contents,
+ * settings pointers, and unrelated UI fields to minimize false positives. */
+static unsigned long long
+_view_mutation_hash(struct mged_state *ms, struct bview *v)
+{
+    if (!v) return 0ULL;
+
+    struct bu_data_hash_state *state = bu_data_hash_create();
+    if (!state) return 0ULL;
+
+    /* Core scalar transforms */
+    bu_data_hash_update(state, &v->gv_scale, sizeof(v->gv_scale));
+    bu_data_hash_update(state, &v->gv_i_scale, sizeof(v->gv_i_scale));
+    bu_data_hash_update(state, &v->gv_a_scale, sizeof(v->gv_a_scale));
+    bu_data_hash_update(state, &v->gv_size, sizeof(v->gv_size));
+    bu_data_hash_update(state, &v->gv_isize, sizeof(v->gv_isize));
+    bu_data_hash_update(state, &v->gv_perspective, sizeof(v->gv_perspective));
+
+    /* Orientation / position / projection related */
+    bu_data_hash_update(state, &v->gv_center, sizeof(mat_t));
+    bu_data_hash_update(state, &v->gv_rotation, sizeof(mat_t));
+    bu_data_hash_update(state, &v->gv_model2view, sizeof(mat_t));
+    bu_data_hash_update(state, &v->gv_view2model, sizeof(mat_t));
+    bu_data_hash_update(state, &v->gv_pmodel2view, sizeof(mat_t));
+    bu_data_hash_update(state, &v->gv_pmat, sizeof(mat_t));
+
+    /* Camera descriptive vectors */
+    bu_data_hash_update(state, &v->gv_eye_pos, sizeof(vect_t));
+    bu_data_hash_update(state, &v->gv_keypoint, sizeof(vect_t));
+    bu_data_hash_update(state, &v->gv_aet, sizeof(vect_t));
+
+    /* Coordinate & rotate about modes */
+    bu_data_hash_update(state, &v->gv_coord, sizeof(char));
+    bu_data_hash_update(state, &v->gv_rotate_about, sizeof(char));
+
+    /* Knob state (rates + absolute values + flags + origins) */
+    bv_knobs_hash(&v->k, state);
+
+    /*
+     * If we are in an edit mode (solid or object) include the active edit
+     * transform state so that mutations caused by -e (edit) knob operations
+     * or other edit-mode transform updates register as view mutations for
+     * staging/rollback decisions.  We deliberately hash only the geometric
+     * transform subset and associated accumulators, excluding user pointers
+     * and primitive-specific/internal editing data.
+     */
+    if (ms && ms->s_edit && ms->s_edit->e &&
+	    (ms->global_editing_state == ST_S_EDIT ||
+	     ms->global_editing_state == ST_O_EDIT)) {
+	struct rt_edit *e = ms->s_edit->e;
+	/* Core accumulated transform matrices */
+	bu_data_hash_update(state, &e->model_changes, sizeof(mat_t));
+	bu_data_hash_update(state, &e->acc_rot_sol, sizeof(mat_t));
+	bu_data_hash_update(state, &e->model2objview, sizeof(mat_t));
+	/* Scale accumulators */
+	bu_data_hash_update(state, &e->acc_sc_sol, sizeof(e->acc_sc_sol));
+	bu_data_hash_update(state, &e->acc_sc_obj, sizeof(e->acc_sc_obj));
+	bu_data_hash_update(state, &e->acc_sc, sizeof(e->acc_sc));
+	/* Edit knob state */
+	bv_knobs_hash(&e->k, state);
+    }
+
+    unsigned long long hv = bu_data_hash_val(state);
+    bu_data_hash_destroy(state);
+    return hv;
+}
+
+int
+cmd_view(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+{
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (s->gedp == GED_NULL) {
+	return TCL_OK;
+    }
+
+    if (argc < 2) {
+	if (!s->gedp->ged_gvp)
+	    s->gedp->ged_gvp = view_state->vs_gvp;
+	int ret = ged_exec_view(s->gedp, argc, (const char **)argv);
+	GED_OUTPUT;
+	return (ret == BRLCAD_OK || (ret & GED_HELP)) ? TCL_OK : TCL_ERROR;
+    }
+
+    const int is_knob = _view_is_knob(argc, argv);
+    const int baseline_reset = _view_is_baseline_reset(argc, argv);
+
+    struct bview *mged_view = view_state->vs_gvp;
+
+    /* Determine staging context */
+    int shared_view = 0;
+    int created_temp = 0;
+    struct bview *staging = NULL;
+
+    if (s->gedp->ged_gvp) {
+	if (s->gedp->ged_gvp == mged_view) {
+	    shared_view = 1;
+	    staging = s->gedp->ged_gvp;
+	} else {
+	    staging = s->gedp->ged_gvp;
+	}
+    } else {
+	/* No existing ged_gvp: create ephemeral staging view */
+	staging = (struct bview *)bu_calloc(1, sizeof(struct bview), "temporary staging bview");
+	bv_init(staging, NULL);
+	created_temp = 1;
+	/* Carry over dimensions for screen-dependent ops */
+	if (mged_view) {
+	    staging->gv_width  = mged_view->gv_width;
+	    staging->gv_height = mged_view->gv_height;
+	}
+    }
+
+    /* If distinct and pre-existing, snapshot what we'll overwrite */
+    struct _view_cache prev = {0};
+    if (!shared_view && !created_temp) {
+	_view_cache_save(&prev, staging, is_knob);
+    }
+
+    /* Snapshot knob state for rollback on error (shared or distinct) */
+    struct bview_knobs pre_knob;
+    int have_pre_knob = 0;
+    if (is_knob && mged_view) {
+	pre_knob = (shared_view ? mged_view->k : staging->k);
+	have_pre_knob = 1;
+    }
+
+    if (!shared_view) {
+	_view_copy_to_staging(staging, mged_view, s, is_knob);
+    } else {
+	/* Shared path: ensure conversions up to date */
+	staging->gv_local2base = (s->dbip) ? s->dbip->dbi_local2base : 1.0;
+	staging->gv_base2local = (s->dbip) ? s->dbip->dbi_base2local : 1.0;
+    }
+
+    /* For knob operations, ensure the staging (or shared) bview's knob struct
+     * reflects the current MGED knob state (view_state->k).  This preserves
+     * prior "knob ..." (MGED) adjustments when switching to "view knob ...".
+     * (We already sync view knob results back into view_state->k after each
+     * libged invocation, so this merge is one-way authoritative.) */
+    if (is_knob && view_state && view_state->vs_gvp) {
+	staging->k = view_state->k;
+    }
+
+    /* Point ged at staging (if we created a temp or if distinct) */
+    if (created_temp || !shared_view)
+	s->gedp->ged_gvp = staging;
+
+    /* Compute pre-mutation hash */
+    unsigned long long pre_hash = _view_mutation_hash(s, staging);
+
+    /* Execute libged dispatcher */
+    int ret = ged_exec_view(s->gedp, argc, (const char **)argv);
+    GED_OUTPUT;
+
+    if (ret & GED_HELP) {
+	/* Restore and cleanup but no propagation */
+	if (!shared_view) {
+	    if (!created_temp)
+		_view_cache_restore(&prev, staging);
+	    else {
+		bv_free(staging);
+		bu_free(staging, "free staging bview");
+		s->gedp->ged_gvp = NULL;
+	    }
+	}
+	return TCL_OK;
+    }
+
+    if (ret != BRLCAD_OK) {
+	/* Roll back knob state on error */
+	if (is_knob && have_pre_knob) {
+	    if (shared_view) {
+		mged_view->k = pre_knob;
+		view_state->k = mged_view->k;
+		_view_update_rate_flags_viewonly(s);
+	    } else {
+		staging->k = pre_knob;
+	    }
+	}
+	if (!shared_view) {
+	    if (!created_temp) {
+		_view_cache_restore(&prev, staging);
+	    } else {
+		bv_free(staging);
+		bu_free(staging, "free staging bview");
+		s->gedp->ged_gvp = NULL;
+	    }
+	}
+	return TCL_ERROR;
+    }
+
+    /* Success: propagate staging->MGED if distinct */
+    if (!shared_view) {
+	_view_copy_from_staging(mged_view, staging, is_knob);
+	view_state->vs_flag = 1;
+    }
+
+    /* Copy updated vs_gvp->k into view_state->k immediately after a confirmed
+     * successful knob mutation, before any later operations that might exit. */
+    if (is_knob) {
+	view_state->k = view_state->vs_gvp->k;
+	_view_update_rate_flags_viewonly(s);
+    }
+
+    /* Baseline reset only for reset subcommands */
+    if (baseline_reset) {
+	_view_maybe_baseline_reset(s, 1);
+	if (is_knob)
+	    _view_update_rate_flags_viewonly(s);
+    }
+
+    /* Post-mutation hash (take from staging before any potential restore decision) */
+    unsigned long long post_hash = _view_mutation_hash(s, staging);
+
+    if (!shared_view) {
+	if (!created_temp) {
+	    /* Automatic detection: if unchanged, restore snapshot; otherwise keep new state */
+	    if (post_hash == pre_hash) {
+		_view_cache_restore(&prev, staging);
+	    }
+	} else {
+	    /* Ephemeral staging freed; detach from ged */
+	    bv_free(staging);
+	    bu_free(staging, "free staging bview");
+	    s->gedp->ged_gvp = NULL;
+	}
+    }
+
+    return TCL_OK;
+}
 
 
 /*
