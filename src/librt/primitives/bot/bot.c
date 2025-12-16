@@ -1752,7 +1752,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		for (k = 0; k < 3; ++k) {
 		    if (bot_ip->faces[j*3+k] == (int)i) {
 			vect_t temp;
-			VSCALE(temp, face_normals[j], bot_ip->thickness[j]);
+			VSCALE(temp, face_normals[j], bot_ip->thickness[j] / 2.);
 			VADD2(vertex_normals[i], vertex_normals[i], temp);
 			face_count += 1.;
 		    }
