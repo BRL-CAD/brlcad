@@ -61,6 +61,17 @@
 #include <cstddef>
 #include <sys/types.h>
 
+/* It is very difficult to reliably suppress the unused parameter warning
+ * across different versions of lemon, so we locally suppress the flag here */
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push /* start new diagnostic pragma */
+#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#elif defined(__clang__)
+#  pragma clang diagnostic push /* start new diagnostic pragma */
+#  pragma clang diagnostic ignored "-Wunused-parameter"
+#  pragma clang diagnostic ignored "-Wunused-variable"
+#endif
+
 #define SET_SYNTAX_ERROR \
     static_cast<obj::objCombinedState*> \
 	(perplexGetExtra(scanner))->parser_state.syntaxError = true;
@@ -202,23 +213,15 @@ void printToken(YYSTYPE token)
 }
 
 %stack_overflow {
-    std::cerr << "Error: Parser experienced stack overflow. Last token was:\n";
-    printToken(yypParser->yytos->minor.yy0);
+    std::cerr << "Error: Parser experienced stack overflow.\n";
 }
 
 %token_type {YYSTYPE}
 
 %syntax_error {
-    /* prevent unused-parameter warning for yyminor when not referenced */
-    (void)yyminor;
-
     /* only report first error */
     if (!obj::get_state(scanner).syntaxError) {
-	SET_SYNTAX_ERROR;
-
 	std::cerr << "Error: Parser experienced a syntax error.\n";
-	std::cerr << "Last token (type " << yymajor << ") was:\n";
-	printToken(yypParser->yytos->minor.yy0);
     }
 }
 
@@ -1007,6 +1010,14 @@ toggle(A) ::= ON.
 toggle(A) ::= OFF.
 {
     A.toggle = false;
+}
+
+%code {
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif defined(__clang__)
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
 }
 
 /*
