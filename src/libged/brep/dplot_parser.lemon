@@ -42,19 +42,11 @@
 }
 
 %stack_overflow {
-    /* In modern Lemon, use the top-of-stack minor value */
-    fprintf(stderr, "Parser stack overflow. Last token was %d\n",
-            yypParser->yytos->minor.yy0.n);
+    fprintf(stderr, "Parser stack overflow\n");
 }
 
 %syntax_error {
-    /* Avoid unused parameter warnings in strict builds */
-    (void)yymajor;
-    (void)yyminor;
-
-    fprintf(stderr, "Syntax error. Last token (type %d) was %d. Ignoring "
-            "input tokens until valid input is found.\n",
-            yymajor, yypParser->yytos->minor.yy0.n);
+    fprintf(stderr, "Syntax error. Ignoring input tokens until valid input is found.\n");
 }
 
 %parse_failure {
