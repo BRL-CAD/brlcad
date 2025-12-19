@@ -61,17 +61,6 @@
 #include <cstddef>
 #include <sys/types.h>
 
-/* It is very difficult to reliably suppress the unused parameter warning
- * across different versions of lemon, so we locally suppress the flag here */
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push /* start new diagnostic pragma */
-#  pragma GCC diagnostic ignored "-Wunused-parameter"
-#elif defined(__clang__)
-#  pragma clang diagnostic push /* start new diagnostic pragma */
-#  pragma clang diagnostic ignored "-Wunused-parameter"
-#  pragma clang diagnostic ignored "-Wunused-variable"
-#endif
-
 #define SET_SYNTAX_ERROR \
     static_cast<obj::objCombinedState*> \
 	(perplexGetExtra(scanner))->parser_state.syntaxError = true;
@@ -1010,14 +999,6 @@ toggle(A) ::= ON.
 toggle(A) ::= OFF.
 {
     A.toggle = false;
-}
-
-%code {
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop /* end ignoring warnings */
-#elif defined(__clang__)
-#  pragma clang diagnostic pop /* end ignoring warnings */
-#endif
 }
 
 /*

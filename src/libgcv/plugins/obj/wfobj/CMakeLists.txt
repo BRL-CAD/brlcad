@@ -146,6 +146,13 @@ if(BUILD_STATIC_LIBS)
   )
 endif(BUILD_STATIC_LIBS)
 
+# Suppress warnings from the generated source code
+check_cxx_compiler_flag("-w" HAVE_CXX_FLAG_W)
+if (HAVE_CXX_FLAG_W)
+  set_property(SOURCE ${LEMON_WFOBJ_PARSER_SO_SRC} APPEND PROPERTY COMPILE_OPTIONS "-w")
+  set_property(SOURCE ${LEMON_WFOBJ_PARSER_STATIC_SRC} APPEND PROPERTY COMPILE_OPTIONS "-w")
+endif()
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

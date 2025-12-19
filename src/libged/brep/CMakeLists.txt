@@ -52,6 +52,12 @@ set(
 ged_plugin_library(ged-brep ${BREP_SRCS})
 target_link_libraries(ged-brep libged libbu)
 
+# Suppress warnings from the generated source code
+check_c_compiler_flag("-w"   HAVE_C_FLAG_W)
+if (HAVE_C_FLAG_W)
+  set_property(SOURCE ${LEMON_${DPLOT_READER}_parser_SRC} APPEND PROPERTY COMPILE_OPTIONS "-w")
+endif()
+
 cmakefiles(
   CMakeLists.txt
   ${BREP_SRCS}
