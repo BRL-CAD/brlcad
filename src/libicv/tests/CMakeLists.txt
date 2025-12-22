@@ -9,6 +9,9 @@ brlcad_addexec(icv_size_down size_down.c "libicv;libbu" TEST)
 brlcad_addexec(icv_saturate saturate.c "libicv;libbu" TEST)
 brlcad_addexec(icv_operations operations.c "libicv;libbu" TEST)
 
+brlcad_addexec(icv_rle rle.cpp "libicv;libbu" TEST)
+brlcad_add_test(NAME icv_rle  COMMAND icv_rle)
+
 cmakefiles(CMakeLists.txt)
 
 # Local Variables:
