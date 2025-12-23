@@ -134,30 +134,35 @@ static std::string GqaGridSize(std::map<std::string, std::string> map, std::stri
     double dimY = 1.0;
     double dimZ = 1.0;
 
+    // always work in mm
     if (map.find("dimX") != map.end())
-        dimX = std::stod(map["dimX"]);
+        dimX = bu_mm_value((map["dimX"] + lUnit).c_str());
     if (map.find("dimY") != map.end())
-        dimY = std::stod(map["dimY"]);
+        dimY = bu_mm_value((map["dimY"] + lUnit).c_str());
     if (map.find("dimZ") != map.end())
-        dimZ = std::stod(map["dimZ"]);
+        dimZ = bu_mm_value((map["dimZ"] + lUnit).c_str());
 
-
+    // find shortest side of bb
     double shortest = std::min({dimX, dimY, dimZ});
     // clamp
     if (shortest < 1.0)
         shortest = 1.0;
 
-    // TODO: this seems to be a 10x10 sampling -- we should verify
-    // whether this is adequate, how much error off precision answer.
+    // TODO: we should verify whether this is adequate, how much error off precision answer.
 
-    // find the smallest magnitude in relation to our smallest size
-    // i.e. if we have smallest side 234 -> we want 10 for the grid size
-    double magnitude = std::pow(10.0, std::floor(std::log10(shortest)) - 1);
-    int grid_step = static_cast<int>(magnitude);    // drop the decimal
-    if (grid_step < 1.0)
-        grid_step = 1.0;
+    // create our grid step in relation to our smallest side; and taken down to 1/10th that magnitude
+    // i.e. if we have a smallest bb side of 234  -> we want our largest grid to be 10 and smallest to be 1
+    //                or smallest bb side of 5678 -> we want our largest grid to be 100 and smallest to be 10
+    double logShortest = std::floor(std::log10(shortest));
+    double upperBound = std::max(std::pow(10.0, logShortest -1), 1.0);
+    double lowerBound = std::max(std::pow(10.0, logShortest -2), 1.0);
 
-    std::string grid = std::to_string(grid_step) + lUnit + "," + std::to_string(grid_step) + lUnit;
+    // drop the decimals
+    int lowerStep = static_cast<int>(lowerBound);
+    int upperStep = static_cast<int>(upperBound);
+
+    // build the actual 'grid' string for gqa
+    std::string grid = std::to_string(upperStep) + "mm," + std::to_string(lowerStep) + "mm";
 
     return grid;
 }
