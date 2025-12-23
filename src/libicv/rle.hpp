@@ -643,12 +643,56 @@ class Decoder {
 					   scan_x += to_skip;
 				       } break;
 		    case OPC_EOF:
+				       // Apply colormap if present
+				       if (h.ncmap > 0 && !h.colormap.empty()) {
+					   apply_colormap(img, h);
+				       }
 				       res.ok = true; res.error = Error::OK; res.endian = e; return res;
 		    default:
 				       res.error = Error::OPCODE_UNKNOWN; return res;
 		}
 	    }
+	    // Apply colormap if present (in case EOF wasn't reached normally)
+	    if (h.ncmap > 0 && !h.colormap.empty()) {
+		apply_colormap(img, h);
+	    }
 	    res.ok = true; res.error = Error::OK; res.endian = e; return res;
+	}
+
+    private:
+	static void apply_colormap(Image& img, const Header& h) {
+	    // Apply colormap transformation to pixel data
+	    // Colormap layout: [channel0_entries...][channel1_entries...][channel2_entries...]
+	    // where each channel has (1 << h.cmaplen) entries
+
+	    if (h.ncmap == 0 || h.colormap.empty()) return;
+
+	    const size_t map_length = size_t(1) << h.cmaplen;
+	    const size_t num_pixels = size_t(h.width()) * h.height();
+	    const uint8_t num_channels = h.channels();
+
+	    // For each pixel, apply colormap to color channels (not alpha)
+	    for (size_t i = 0; i < num_pixels; ++i) {
+		uint8_t* pixel = img.pixels.data() + i * num_channels;
+
+		if (h.ncmap == 1) {
+		    // Single colormap for grayscale: apply to first channel only
+		    uint8_t index = pixel[0];
+		    if (index < map_length && index < h.colormap.size()) {
+			pixel[0] = uint8_t(h.colormap[index] >> 8);
+		    }
+		} else if (h.ncmap >= 3 && h.ncolors >= 3) {
+		    // Separate colormaps for RGB channels
+		    for (uint8_t c = 0; c < 3 && c < h.ncolors; ++c) {
+			uint8_t index = pixel[c];
+			size_t cmap_offset = c * map_length;
+			if (index < map_length && (cmap_offset + index) < h.colormap.size()) {
+			    pixel[c] = uint8_t(h.colormap[cmap_offset + index] >> 8);
+			}
+		    }
+		}
+		// Alpha channel is never affected by colormap
+	    }
 	}
 };
 
