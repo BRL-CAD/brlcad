@@ -48,7 +48,7 @@
   </para>
   </example>
 
-      <example><title>Adjust the A, B, & C Values of a Sphere</title>
+      <example><title>Adjust the A, B, &amp; C Values of a Sphere</title>
   <para>
     Use the <command>adjust</command> command to make the A, B, and C values of a sphere.
   </para>
