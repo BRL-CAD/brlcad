@@ -57,7 +57,7 @@ set helplib_data(dm_getaspect)		{{} {Get window's aspect ratio }}
 set helplib_data(dm_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
 set helplib_data(dm_clearBufferAfter)	{{[flag]} {Get/set the clearBufferAfter flag}}
 
-set helplib_data(wdb_adjust)		{{object attr value ?attr value?} {adjust object's attribute(s)}}
+set helplib_data(wdb_adjust)		{{object param value ?attr value?} {adjust a solid's parameters(s)}}
 set helplib_data(wdb_attr)        {{ {set|get|show|rm|append} object [args]}
     {set, get, show, remove or append to attribute values for the specified object.
 	The arguments for "set" and "append" subcommands are attribute name/value pairs.
@@ -83,7 +83,7 @@ set helplib_data(wdb_dup)		{{file.g prefix} {check for duplicate names in file}}
 set helplib_data(wdb_expand)		{{expression}	{globs expression against database objects}}
 set helplib_data(wdb_find)		{{<objects>} {find combinations that reference objects}}
 set helplib_data(wdb_form)		{{type} {returns form for objects of type "type"}}
-set helplib_data(wdb_get)		{{object ?attr?} {get object attributes}}
+set helplib_data(wdb_get)		{{object ?param?} {get solid parameters or default region attributes}}
 set helplib_data(wdb_get_type)		{{object} {get the object's type}}
 set helplib_data(wdb_group)		{{gname object(s)} {create or append object(s) to a group}}
 set helplib_data(wdb_hide)              {{<objects>} {set the "hidden" flag for the specified objects so they do not appear in an "ls" command output}}
