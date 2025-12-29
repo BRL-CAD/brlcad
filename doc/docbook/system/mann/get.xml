@@ -8,7 +8,7 @@
 
   <refnamediv xml:id="name">
     <refname>get</refname>
-    <refpurpose> Used to retrieve parameter values of database objects.
+    <refpurpose> Retrieves parameter values of database objects.
     </refpurpose>
   </refnamediv>
 
