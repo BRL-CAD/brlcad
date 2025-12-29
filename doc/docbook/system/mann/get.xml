@@ -26,14 +26,15 @@
   <para>
     Low level command for extracting specific parameter information from geometry objects
     in a database.  Similar to "attr get" except that the focus of this command is on
-    geometric parameter values (vertices, for example) instead of attribute metadata.
+    geometric parameter values (vertices, for example) instead of attribute metadata. The <command>adjust</command>
+    can be used to change these values.
   </para>
 
   </refsection>
 
   <refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <example><title>Elliptical Torus 'r' parameter extraction</title>
+  <example><title>Elliptical Torus 'r' Parameter Extraction</title>
   <para>
     Use the <command>get</command> command to extract the
     r parameter value from an elliptical torus.
@@ -63,7 +64,7 @@ eto.s:  Elliptical Torus (ETO)
   </refsection>
 
   <refsection xml:id="see_also"><title>SEE ALSO</title>
-  <para><citerefentry><refentrytitle>attr</refentrytitle><manvolnum>n</manvolnum></citerefentry>.</para>
+  <para><citerefentry><refentrytitle>adjust</refentrytitle><manvolnum>n</manvolnum></citerefentry>, <citerefentry><refentrytitle>attr</refentrytitle><manvolnum>n</manvolnum></citerefentry></para>
   </refsection>
 
   <refsection xml:id="author"><title>AUTHOR</title>
