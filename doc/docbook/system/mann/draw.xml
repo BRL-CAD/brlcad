@@ -21,7 +21,7 @@
 
       <arg choice="opt" rep="norepeat">-A <replaceable>attribute name/value pairs</replaceable></arg>
       <arg choice="opt" rep="norepeat">-s</arg>
-      <arg choice="opt" rep="norepeat">-A -o<replaceable>attribute name/value pairs</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-A -o <replaceable>attribute name/value pairs</replaceable></arg>
       <arg choice="opt" rep="norepeat">-C#/#/#</arg>
       <arg choice="opt" rep="norepeat">-L #</arg>
       <arg choice="opt" rep="norepeat">-R</arg>
