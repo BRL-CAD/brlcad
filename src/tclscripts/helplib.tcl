@@ -58,7 +58,7 @@ set helplib_data(dm_observer)		{{cmd [args]} {Attach/detach observer to/from lis
 set helplib_data(dm_clearBufferAfter)	{{[flag]} {Get/set the clearBufferAfter flag}}
 
 set helplib_data(wdb_adjust)		{{object param value ?attr value?} {adjust a solid's parameters(s)}}
-set helplib_data(wdb_attr)        {{ {set|get|show|rm|append} object [args]}
+set helplib_data(wdb_attr)        {{ {set|get|show|rm|append|copy} object [args]}
     {set, get, show, remove or append to attribute values for the specified object.
 	The arguments for "set" and "append" subcommands are attribute name/value pairs.
 	The arguments for "get", "rm", and "show" subcommands are attribute names.
@@ -67,6 +67,7 @@ set helplib_data(wdb_attr)        {{ {set|get|show|rm|append} object [args]}
 	or creates a new attribute if it does not already exist.
 	The "get" subcommand retrieves and displays the specified attributes.
 	The "rm" subcommand deletes the specified attributes.
+	The "copy" subcommand copies the value of an existing attribute to a given attribute.
 	The "show" subcommand does a "get" and displays the results in a user readable format.}   }
 set helplib_data(wdb_bot_face_sort)     {{triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]} {sort the facelist of BOT solids to optimize ray trace performance for a particular number of triangles per raytrace piece }}
 set helplib_data(wdb_bot_decimate)      {{-f feature_size -c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name} {Uses edge decimation to reduce the number of triangles in the specified BOT while keeping within the specified constraints}}
