@@ -56,7 +56,8 @@
 	The <emphasis>-A</emphasis> option specifies that the arguments provided to this command are attribute
 	name/value pairs, and only objects having the specified attributes and values are
 	to be displayed. The default (without <emphasis>-o</emphasis>) is that only objects having all the
-	specified attribute name/value pairs will be displayed.
+	specified attribute name/value pairs will be displayed. With <emphasis>-o</emphasis>, objects that match
+    any of the specified attribute name/value pairs will be displayed.
       </para>
     </listitem>
     <listitem>
