@@ -55,7 +55,7 @@ char *_gd_densities_source;
 
 /* bu_getopt() options */
 const char *options = "A:a:de:f:g:Gn:N:p:P:qrS:s:t:U:u:vV:W:h?";
-const char *options_str = "[-A A|a|b|c|e|g|m|o|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper,lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p plotPrefix] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
+const char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper,lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p plotPrefix] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
 
 #define ANALYSIS_VOLUMES          1
 #define ANALYSIS_WEIGHTS          2
