@@ -68,7 +68,7 @@
     <example><title>Moving the center of the <emphasis>mged</emphasis> display to a specified point.</title>
 
       <para>
-	<prompt>mged&gt; </prompt><userinput>center 12.5 5.6 8.7&gt;</userinput>
+	<prompt>mged&gt; </prompt><userinput>center 12.5 5.6 8.7</userinput>
       </para>
       <para>The center of the <emphasis>mged</emphasis> display is moved to the point (12.5, 5.6, 8.7).</para>
     </example>
