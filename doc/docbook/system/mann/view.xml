@@ -150,14 +150,21 @@ subcommands:
   </varlistentry>
   <varlistentry>
     <term><emphasis remap="B" role="bold">save</emphasis>
-      [<emphasis>options</emphasis>]
+      [<emphasis>-e command</emphasis>]
+	  [<emphasis>-l scriptlogfile</emphasis>]
+	  [<emphasis>-o scriptoutputfile</emphasis>]
+	  [<emphasis>-i scriptinputfile</emphasis>]
        <emphasis>file</emphasis>
       [<emphasis>args</emphasis>]
     </term>
     <listitem>
       <para>
 	Saves the current viewing parameters in the specified <emphasis>file</emphasis> in the form of a shell script that
-	will run the BRL-CAD rt program.
+	will run the BRL-CAD rt program. The <emphasis>-e</emphasis> flag specifies a command for the script to run instead of the default rt.
+    The <emphasis>-l</emphasis> flag specifies a logfile for the script to write instead of the default inputfile.log. The <emphasis>-o</emphasis> flag
+	specifies the output filename for the script to create instead of the default inputfile.pix. The <emphasis>-i</emphasis> flag specifies the input filename
+	for the script to load instead of the current database (default). Various arguments can be added to the end, such as -s1024 (see the man
+	page for the <command>rt</command> command).
       </para>
     </listitem>
   </varlistentry>
@@ -241,6 +248,14 @@ subcommands:
     </para>
   </example> 
 
+	     <example><title>Save current viewing parameters in a specified file in the form of a shell script to run the BRL-CAD rtedge program</title>
+    <para>
+      <prompt>mged&gt; </prompt><userinput>view save -e rtedge run_rtedge_script.rt -s1024</userinput>
+    </para>
+    <para>Creates a script named run_rtedge_script.rt that will run rtedge and create a pix file of the current screen.
+    </para>
+  </example> 
+	
 </refsection>
 
 <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
