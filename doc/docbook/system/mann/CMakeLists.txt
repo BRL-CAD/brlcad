@@ -6,6 +6,7 @@ set(
   M.xml
   Z.xml
   adc.xml
+  adjust.xml
   ae.xml
   ae2dir.xml
   analyze.xml
