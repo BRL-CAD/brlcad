@@ -13,6 +13,15 @@ changes made.  See document footer for additional details.
 --- 2026-XX-XX  Release 7.42.2                                     ---
 ----------------------------------------------------------------------
 
+* improved get/adjust/attr help text - Josh Baker
+* created manpage for 'adjust' command - Josh Baker
+* improved 'B' manpage options and usage - Josh Baker
+* improved 'voxelize' manpage usage and examples - Josh Baker
+* improved 'draw' manpage options and usage - Josh Baker
+* improved 'get' manpage - Josh Baker
+* improved 'view' manpage options, usage, and examples - Josh Baker
+* improved 'gqa' command usage and help text - Josh Baker
+* corrected various manpage typos and spacing - Josh Baker
 * fixed open cmd reporting when database not open - Cliff Yapp
 * updated g2asc to exit if input file == output file - Cliff Yapp
 * updated asc2g to exit if input file == output file - Cliff Yapp
