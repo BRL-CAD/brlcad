@@ -29,6 +29,15 @@ changes made.  See document footer for additional details.
 * updated Manifold dependency to v3.2.1 - Cliff Yapp
 * updated SPSR dependency to v18.74 - Cliff Yapp
 * fixed bot subcmd help printing - Cliff Yapp
+* improved get/adjust/attr help text - Josh Baker
+* created manpage for 'adjust' command - Josh Baker
+* improved 'B' manpage options and usage - Josh Baker
+* improved 'voxelize' manpage usage and examples - Josh Baker
+* improved 'draw' manpage options and usage - Josh Baker
+* improved 'get' manpage - Josh Baker
+* improved 'view' manpage options, usage, and examples - Josh Baker
+* improved 'gqa' command usage and help text - Josh Baker
+* corrected various manpage typos and spacing - Josh Baker
 
 
 ----------------------------------------------------------------------
