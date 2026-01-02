@@ -61,7 +61,6 @@ set(
   FindSTEPCODE.cmake
   FindTBB.cmake
   FindTCL.cmake
-  FindUTAHRLE.cmake
   FindUUID.cmake
   FindWix.cmake
   FindXMLLINT.cmake
