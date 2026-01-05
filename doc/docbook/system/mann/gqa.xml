@@ -155,6 +155,14 @@
       manual page.
     </para>
 
+	<para>
+      Density information is sourced in the following order:
+	  1. Filename explicitly supplied to function
+      2. Density information stored in the .g database
+      3. A .density file in the same directory as the .g file
+      4. A .density file in the user's HOME directory
+    </para>
+	  
     <para>
       The geometry editor MGED automatically assigns an index value of
       <literal>1</literal> to a newly created region. While this
@@ -341,7 +349,7 @@
 	    <emphasis remap="B" role="bold">Weight (w):</emphasis>
 	    Computes the weight of the <emphasis
 	    remap="I">objects</emphasis> specified on the command
-	    line.
+	    line. See above for density information and order of sourcing.
 	  </para>
 	</listitem>
       </varlistentry>
