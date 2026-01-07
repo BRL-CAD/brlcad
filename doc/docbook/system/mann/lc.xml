@@ -60,7 +60,8 @@
       <term><option>-d</option></term>
       <listitem>
 	<para>
-	  Specifies to list only one region with each 'region_id'.
+	  Specifies to list only regions with shared 'region_id'
+	  values.
 	</para>
       </listitem>
     </varlistentry>
@@ -83,10 +84,7 @@
       <listitem>
 	<para>
 	  Specifies to list only one region with each combination of
-	  'region_id', 'material_id', 'los', and 'aircode'.  In
-	  addition to the output of '-d', it lists those cases where
-	  'region_id' is the same but 'material_id' and/or 'los'
-	  and/or 'aircode' are different.
+	  'region_id', 'material_id', 'los', and 'aircode'.  
 	</para>
       </listitem>
     </varlistentry>
