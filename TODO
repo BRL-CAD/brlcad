@@ -146,28 +146,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   what happens.  For things like pipes especially, getting the intended
   effect post-triangulation might be tricky.
 
-* Newer SPSR code apparently has a header-only mode that we might be
-  able to use to replace our current embedded customized version:
-
-  https://github.com/mkazhdan/PoissonRecon
-
-  (See the HEADER-ONLY LIBRARY section of their README.md)
-
-* replace translations of various Geometric Tools algorithms in BRL-CAD
-  with calls to a bundled Geometric Tools.  With bext coming online,
-  bundling Geometric Tools would be simpler.  They have a lot of
-  algorithms that are of potential interest, not to mention being
-  actively maintained - we should really be using them as a backend
-  directly rather than porting various individual pieces to vmath.h
-  Refactored code to replace with direct calls:
-
-  src/libbg/lseg_lseg.c
-  src/libbg/lseg_pt.c
-  src/libbg/obr.c
-  src/libbg/sat.c
-  src/libbg/tri_pt.c
-
-  There are probably a number of other algorithms in our code where
+* There are probably a number of algorithms in our code where
   we should check to see if the GTE implementation would be better
   than ours (line/point distance functionality, for example).
 
