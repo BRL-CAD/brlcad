@@ -1,0 +1,77 @@
+= BRL-CAD: Open Source Solid Modeling
+:toc: macro
+:toc-title:
+:icons: font
+:experimental:
+
+// Attributes for easy maintenance
+:project-url: https://brlcad.org
+:docs-url: https://brl-cad.github.io/docs
+:repo-url: https://github.com/BRL-CAD/brlcad
+:chat-url: https://brlcad.zulipchat.com
+
+image:https://img.shields.io/badge/license-BSD/LGPL-blue.svg["License"]
+image:https://img.shields.io/badge/status-active-brightgreen.svg["Status"]
+
+BRL-CAD is a powerful open-source cross-platform solid modeling system that includes interactive geometry editing, high-performance ray-tracing for rendering and geometric analysis, image and signal-processing tools, a system performance analysis benchmark suite, and libraries for robust geometric manipulation.
+
+For more than 40 years, BRL-CAD has been a primary solid modeling system used by the U.S. military to model weapons systems for vulnerability and lethality analyses.
+
+---
+
+toc::[]
+
+== Key Features
+
+* **CSG Modeling:** Constructive Solid Geometry (CSG) provides precise Boolean operations on primitives.
+* **High Performance:** Multi-threaded ray-tracing and a high-performance memory allocator.
+* **Hybrid Representation:** Supports both CSG and B-Rep (NURBS) geometry.
+* **Extensive Toolset:** Over 400 specialized command-line utilities for geometry processing.
+* **Legacy of Stability:** Proven in production environments since 1979.
+
+== Getting Started
+
+=== Prerequisites
+To build BRL-CAD from source, you will need:
+* **CMake** (3.14+)
+* **C/C++ Compiler** (GCC, Clang, or MSVC)
+* **Build Tools** (Make, Ninja, or Visual Studio)
+
+=== Quick Build (Unix/macOS)
+[source,bash]
+----
+mkdir build
+cd build
+cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+----
+
+[NOTE]
+====
+For detailed installation instructions across different platforms, please refer to our link:{docs-url}/install[Installation Guide].
+====
+
+== Documentation
+
+We are currently transitioning our extensive documentation (Docbook/XML + MediaWiki + troff + text + ...) to an **Antora-powered ecosystem**.
+
+* **Tutorials:** link:{docs-url}/tutorials[Browse the Manuals]
+* **Developer Guides:** link:{docs-url}/hacking and link:{repo-url}/blob/main/HACKING
+* **Wiki:** {project-url}/wiki[snapshot that is a little out of date]
+* **Etc:** link:{docs-url}[Not everything, but a lot]
+
+== Contributing
+
+BRL-CAD is a community-driven project. We welcome contributions in the form of bug reports, feature requests, code, and documentation.
+
+1. **Chat with Us:** Connect with us on Zulip link:{chat-url}.
+2. **Find Issues:** Check our link:{repo-url}/issues[Issue Tracker].
+3. **Submit a PR:** We follow a standard Fork-and-Pull Request workflow.
+
+[IMPORTANT]
+.Documentation Contributors
+We're prototyping the use of **AsciiDoc** for all project documentation in a separate "docs" repo.
+
+== License
+
+BRL-CAD is free and open-source software. Most components are licensed under the **BSD** or **LGPL** licenses. See the `COPYING` file for more details.
