@@ -215,6 +215,7 @@ endif(TARGET mged)
 
 cmakefiles(
   CMakeLists.txt
+  README.adoc
   STARTERS
   STRATEGY
   git/bisect.txt
