@@ -23,6 +23,9 @@
  *
  */
 
+#ifndef LIBGED_PLUGIN_H
+#define LIBGED_PLUGIN_H
+
 #include "../ged_private.h"
 #include "brlcad_version.h"
 
@@ -70,6 +73,8 @@ struct ged_cmd_impl {
 struct ged_cmd_process_impl {
     ged_process_ptr func;
 };
+
+#endif /* LIBGED_PLUGIN_H */
 
 /*
  * Local Variables:
