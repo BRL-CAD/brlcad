@@ -655,8 +655,6 @@ lookup check to ensure none are missing.
 * closing the graphics window brings down X11 on Mac due to a bad
   context.  fix or revert recent close window behavior.
 
-* replace bundled GCT decimation code with https://github.com/BRL-CAD/mmesh 
-
 * V&V bwcrop, pixembed are behaving correctly, as documented
 
 * implement unit tests for bu dirent / stat API
