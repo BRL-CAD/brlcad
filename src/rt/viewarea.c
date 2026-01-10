@@ -905,7 +905,7 @@ view_end(struct application *ap)
     register struct region *rp;
     struct rt_i *rtip = ap->a_rt_i;
     fastf_t total_area=0.0;
-    long cumulative = 0;
+    size_t cumulative = 0;
     register struct area *cell = (struct area *)NULL;
 
     size_t max_depth = 0;
@@ -961,7 +961,7 @@ view_end(struct application *ap)
 
     bu_log("\nSummary\n=======\n");
     total_area = cell_area * (fastf_t)hit_count;
-    bu_log("Cumulative Presented Areas (%ld hits) = %18.4lf square %s\t(%.4lf %s^2)\n",
+    bu_log("Cumulative Presented Areas (%zu hits) = %18.4lf square %s\t(%.4lf %s^2)\n",
 	   cumulative,
 	   cell_area * (fastf_t)cumulative / (units*units),
 	   bu_units_string(units),
@@ -985,10 +985,10 @@ view_end(struct application *ap)
 	       bu_units_string(units)
 	    );
     }
-    bu_log("Number of Presented Regions:    %8u\n", (unsigned)presented_region_count);
-    bu_log("Number of Presented Assemblies: %8u\n", (unsigned)presented_assembly_count);
-    bu_log("Number of Exposed Regions:    %8u\n", (unsigned)exposed_region_count);
-    bu_log("Number of Exposed Assemblies: %8u\n", (unsigned)exposed_assembly_count);
+    bu_log("Number of Presented Regions:    %8zu\n", presented_region_count);
+    bu_log("Number of Presented Assemblies: %8zu\n", presented_assembly_count);
+    bu_log("Number of Exposed Regions:    %8zu\n", exposed_region_count);
+    bu_log("Number of Exposed Assemblies: %8zu\n", exposed_assembly_count);
     bu_log("\n"
 	   "********************************************************************\n"
 	   "WARNING: The terminology and output format of 'rtarea' is deprecated\n"
