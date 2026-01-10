@@ -661,7 +661,8 @@ print_region_area_list(size_t *count, struct rt_i *rtip, area_type_t type)
 	listp = listHead;
 
 	if (cell) {
-	    if (cell->hits > 0) {
+	    int include = (type == PRESENTED_AREA) ? (cell->hits > 0) : (cell->exposures > 0);
+	    if (include) {
 		struct area_list *prev = (struct area_list *)NULL;
 		struct area_list *newNode;
 
@@ -685,7 +686,7 @@ print_region_area_list(size_t *count, struct rt_i *rtip, area_type_t type)
 		    prev->next = newNode;
 		}
 
-		cumulative += cell->hits;
+		cumulative += (type == PRESENTED_AREA) ? cell->hits : cell->exposures;
 		if (count) {
 		    (*count)++;
 		}
