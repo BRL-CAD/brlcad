@@ -191,6 +191,10 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
 	}
 	l--;
     }
+    if (l == 0) {
+	bu_free(buffer, "increment_assembly_counter buffer free");
+	return;
+    }
     buffer[l-1] = '\0';
 
     /* traverse region path name, character-by-character to
@@ -332,6 +336,8 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
 	    }
 	    buffer[l-1] = '\0';
 	    depth++;
+	    l = strlen(buffer);
+	    continue;
 	}
 	l--;
     }
