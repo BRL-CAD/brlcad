@@ -2171,11 +2171,12 @@ main(int argc, char *argv[])
     if (!s->interactive || s->classic_mged || old_mged_gui) {
 	/* Open the database */
 	if (argc >= 1) {
-	    const char *av[3];
+	    const char *av[4];
 
 	    av[0] = "opendb";
-	    av[1] = argv[0];
-	    av[2] = NULL;
+	    av[1] = "-c";
+	    av[2] = argv[0];
+	    av[3] = NULL;
 
 	    /* Command line may have more than 2 args, opendb only wants 2
 	     * expecting second to be the file name.
@@ -2184,7 +2185,7 @@ main(int argc, char *argv[])
 	     * to allow mged to process args after the db as a command
 	     */
 	    struct cmdtab ec = {MGED_CMD_MAGIC, NULL, NULL, NULL, s};
-	    if (f_opendb(&ec, s->interp, 2, av) == TCL_ERROR) {
+	    if (f_opendb(&ec, s->interp, 3, av) == TCL_ERROR) {
 		if (!run_in_foreground && use_pipe) {
 		    notify_parent_done(parent_pipe[1]);
 		}
