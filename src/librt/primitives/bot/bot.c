@@ -601,21 +601,40 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 	// check bounds if it's the first time in this node
 	if (!stack_child_index[stack_ind]) {
 	    // TODO: do we want to handle NaNs correctly?
-	    point_t lows_t, highs_t, low_ts, high_ts;
+	    // per-axis parametric t values for the min/max planes
+	    point_t t0, t1;
+	    // per-axis enter/exit t for the bounds
+	    point_t t_enter_axis, t_exit_axis;
 
-	    VSUB2( lows_t, &node->bounds[0], rp->r_pt);
-	    VSUB2(highs_t, &node->bounds[3], rp->r_pt);
+	    // vector from ray origin to min/max corners
+	    VSUB2(t0, &node->bounds[0], rp->r_pt);  // bMin - origin
+	    VSUB2(t1, &node->bounds[3], rp->r_pt);  // bMax - origin
 
-	    VELMUL( lows_t,  lows_t, inverse_r_dir);
-	    VELMUL(highs_t, highs_t, inverse_r_dir);
+	    // convert per-axis distances into parametric t using inv_dir (t = delta * 1/dir)
+	    /* NOTE:
+	     * inverse_r_dir may contain INF for near-zero direction components
+	     * This is intentional: for a ray parallel to an axis,
+	     *   - if the origin lies inside -> t becomes (-INF, +INF) and
+	     *     the axis imposes no constraint,
+	     *   - if the origin lies outside -> both t values have the same sign and
+	     *     the interval collapses, correctly rejecting the box
+	     */
+	    VELMUL(t0, t0, inverse_r_dir);
+	    VELMUL(t1, t1, inverse_r_dir);
 
-	    VMOVE( low_ts, lows_t);
-	    VMOVE(high_ts, lows_t);
-	    VMINMAX(low_ts, high_ts, highs_t);
+	    // t_enter_axis = min; t_exit_axis = max
+	    VMOVE(t_enter_axis, t0);
+	    VMOVE(t_exit_axis, t0);
+	    VMINMAX(t_enter_axis, t_exit_axis, t1);
+	    // boil down point to min/max values
+	    fastf_t t_exit  = FMIN(t_exit_axis[0], FMIN(t_exit_axis[1], t_exit_axis[2]));
+	    fastf_t t_enter = FMAX(t_enter_axis[0], FMAX(t_enter_axis[1], t_enter_axis[2]));
 
-	    fastf_t high_t = FMIN(high_ts[0], FMIN(high_ts[1], high_ts[2]));
-	    fastf_t  low_t = FMAX( low_ts[0], FMAX( low_ts[1],  low_ts[2]));
-	    if ((high_t < -1.0) || (low_t > high_t)) {
+	    // reject if:
+	    //	- box is "sufficiently" behind ray origin (exit < ??-1??)
+	    //	    TODO/FIXME: this value should be 0 (maybe with some tol) but not -1; why do we have -1
+	    //	- no overlap of the intervals (ray missed the box)
+	    if ((t_exit < -1.0) || (t_enter > t_exit)) {
 		stack_ind--;
 		continue;
 	    }
