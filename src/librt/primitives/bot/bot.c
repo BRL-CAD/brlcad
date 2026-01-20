@@ -575,7 +575,10 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
     stack_node[stack_ind] = root;
     stack_child_index[stack_ind] = 0;
     vect_t inverse_r_dir;
-    VINVDIR(inverse_r_dir, rp->r_dir);
+    // VINVDIR modifies the dir, make a copy so we preserve the original
+    vect_t mutable_rdir;
+    VMOVE(mutable_rdir, rp->r_dir);
+    VINVDIR(inverse_r_dir, mutable_rdir);
 
     while (stack_ind >= 0) {
 	if (UNLIKELY(stack_ind >= HLBVH_STACK_SIZE)) {
