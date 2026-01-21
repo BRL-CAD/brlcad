@@ -652,7 +652,7 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 	     *  - slab intervals do not overlap
 	     * Bitwise OR avoids branching.
 	     */
-	    if ((exit_t < -1.0) || (entry_t > exit_t)) {
+	    if ((exit_t < -SMALL_FASTF) || (entry_t > exit_t)) {
 		stack_ind--;
 		continue;
 	    }
