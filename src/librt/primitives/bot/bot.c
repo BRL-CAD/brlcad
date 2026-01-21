@@ -567,7 +567,7 @@ rt_bot_makesegs(hit_da *hits,
 
 
 void
-bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tris, size_t ntris, hit_da* hits, fastf_t toldist, struct soltab *stp)
+bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tris, size_t ntris, hit_da* hits, fastf_t toldist)
 {
     struct bvh_flat_node *stack_node[HLBVH_STACK_SIZE];
     unsigned char stack_child_index[HLBVH_STACK_SIZE];
@@ -586,8 +586,8 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
     // Because we are doing solid shotlining, we need to intersect all
     // triangles on the line of the ray, even when the r_pt is inside the mesh.
     // This means we DON'T want to cull hlbvh leaves behind our r_pt when the
-    // r_pt is inside the mesh.  To avoid this, we back our r_pt up the
-    // distance of the bounding sphere diameter.  This incurs a slight
+    // r_pt is inside the mesh.  To avoid this, we back our r_pt up to the
+    // bounding sphere if needed. This incurs a slight
     // performance penalty when r_pt is past the mesh but still within the
     // bounding sphere diameter distance, since backing up will cause false
     // bbox intersect matches in those cases.   This is necessary to ensure we
@@ -597,10 +597,11 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
     // NOTE:  We DO, however, need to use the real rp->r_pt when doing the
     // actual intersection solve math so our segments end up in the right
     // place.
-    vect_t backout_vect;
-    VSCALE(backout_vect, rp->r_dir, -2 * stp->st_bradius);
+    fastf_t backout = FMAX(0.0, -rp->r_min);
     point_t b_pt;
-    VADD2(b_pt, rp->r_pt, backout_vect);
+    b_pt[X] = rp->r_pt[X] - backout * rp->r_dir[X];
+    b_pt[Y] = rp->r_pt[Y] - backout * rp->r_dir[Y];
+    b_pt[Z] = rp->r_pt[Z] - backout * rp->r_dir[Z];
 
     while (stack_ind >= 0) {
 	if (UNLIKELY(stack_ind >= HLBVH_STACK_SIZE)) {
@@ -765,7 +766,7 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	toldist = (DBL_EPSILON * stp->st_aradius * 10);
     }
 
-    bot_shot_hlbvh_flat(sps->root, rp, sps->tris, bot->bot_ntri, &hits_per_cpu, toldist, stp);
+    bot_shot_hlbvh_flat(sps->root, rp, sps->tris, bot->bot_ntri, &hits_per_cpu, toldist);
 
     if (hits_per_cpu.count == 0) {
 	return 0;
