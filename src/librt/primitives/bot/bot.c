@@ -650,7 +650,6 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 	    /* Reject if:
 	     *  - intersection is entirely behind the ray origin
 	     *  - slab intervals do not overlap
-	     * Bitwise OR avoids branching.
 	     */
 	    if ((exit_t < -SMALL_FASTF) || (entry_t > exit_t)) {
 		stack_ind--;
