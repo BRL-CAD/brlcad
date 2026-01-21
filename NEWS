@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* updated asc2g to exit if input file == output file - Cliff Yapp
 * fixed default file-create behavior of open command - Cliff Yapp
 * corrected the exposed region count report in rtarea - Cliff Yapp
 * fixed icv support for RLE image format - Cliff Yapp
