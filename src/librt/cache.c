@@ -587,13 +587,6 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	bu_avs_free(&attributes);
     }
 
-    /* [FIXME: redundant] make sure we can write to the cache dir */
-    if (!bu_file_writable(cache->dir) || !bu_file_executable(cache->dir)) {
-	cache_warn(cache, cache->dir, "Directory is not writable.  Caching disabled.");
-	bu_free_external(&attributes_external);
-	bu_free_external(&data_external);
-	return 0;
-    }
     cache_get_objdir(cache, name, tmppath, MAXPATHLEN);
     if (bu_file_exists(tmppath, NULL) && (!bu_file_writable(tmppath) || !bu_file_executable(tmppath))) {
 	char objdir[MAXPATHLEN] = {0};
