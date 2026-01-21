@@ -35,6 +35,7 @@
 
 #include "bu/app.h"
 #include "bu/debug.h"
+#include "bu/file.h"
 #include "bu/opt.h"
 #include "bu/units.h"
 #include "vmath.h"
@@ -169,6 +170,10 @@ main(int argc, char **argv)
 	if (BU_STR_EQUAL(argv[1], "-")) {
 	    ofp = stdout;
 	} else {
+	    if (bu_file_same(iname, argv[1])) {
+		fclose(ifp);
+		bu_exit(1, "g2asc: input and output are the same file.");
+	    }
 	    ofp = fopen(argv[1], "wb");
 	}
 
