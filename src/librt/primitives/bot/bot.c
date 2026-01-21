@@ -567,18 +567,40 @@ rt_bot_makesegs(hit_da *hits,
 
 
 void
-bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tris, size_t ntris, hit_da* hits, fastf_t toldist)
+bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tris, size_t ntris, hit_da* hits, fastf_t toldist, struct soltab *stp)
 {
     struct bvh_flat_node *stack_node[HLBVH_STACK_SIZE];
     unsigned char stack_child_index[HLBVH_STACK_SIZE];
     int stack_ind = 0;
     stack_node[stack_ind] = root;
     stack_child_index[stack_ind] = 0;
+
+    // Use this method of ray inverse calc to avoid inf/NaN values.
+    // With r_dir unitized, MAX_FASTF should be sufficiently large.
+#define RAYDIR_INV(d) (1.0 / ((d) + copysign((1.0 / MAX_FASTF), (d))))
     vect_t inverse_r_dir;
-    // VINVDIR modifies the dir, make a copy so we preserve the original
-    vect_t mutable_rdir;
-    VMOVE(mutable_rdir, rp->r_dir);
-    VINVDIR(inverse_r_dir, mutable_rdir);
+    inverse_r_dir[0] = RAYDIR_INV(rp->r_dir[0]);
+    inverse_r_dir[1] = RAYDIR_INV(rp->r_dir[1]);
+    inverse_r_dir[2] = RAYDIR_INV(rp->r_dir[2]);
+
+    // Because we are doing solid shotlining, we need to intersect all
+    // triangles on the line of the ray, even when the r_pt is inside the mesh.
+    // This means we DON'T want to cull hlbvh leaves behind our r_pt when the
+    // r_pt is inside the mesh.  To avoid this, we back our r_pt up the
+    // distance of the bounding sphere diameter.  This incurs a slight
+    // performance penalty when r_pt is past the mesh but still within the
+    // bounding sphere diameter distance, since backing up will cause false
+    // bbox intersect matches in those cases.   This is necessary to ensure we
+    // get the intersections needed for solid segment creation - the subsequent
+    // full intersection solves will still produce the correct results.
+    //
+    // NOTE:  We DO, however, need to use the real rp->r_pt when doing the
+    // actual intersection solve math so our segments end up in the right
+    // place.
+    vect_t backout_vect;
+    VSCALE(backout_vect, rp->r_dir, -2 * stp->st_bradius);
+    point_t b_pt;
+    VADD2(b_pt, rp->r_pt, backout_vect);
 
     while (stack_ind >= 0) {
 	if (UNLIKELY(stack_ind >= HLBVH_STACK_SIZE)) {
@@ -600,44 +622,40 @@ bot_shot_hlbvh_flat(struct bvh_flat_node *root, struct xray* rp, triangle_s *tri
 	struct bvh_flat_node* node = stack_node[stack_ind];
 	// check bounds if it's the first time in this node
 	if (!stack_child_index[stack_ind]) {
-	    // TODO: do we want to handle NaNs correctly?
-	    // per-axis parametric t values for the min/max planes
-	    point_t t0, t1;
-	    // per-axis enter/exit t for the bounds
-	    point_t t_enter_axis, t_exit_axis;
+	    vect_t t_to_min;     /* (box_min - ray_origin) / ray_dir */
+	    vect_t t_to_max;     /* (box_max - ray_origin) / ray_dir */
+	    vect_t t_enter;      /* per-axis entry t */
+	    vect_t t_exit;       /* per-axis exit t */
 
-	    // vector from ray origin to min/max corners
-	    VSUB2(t0, &node->bounds[0], rp->r_pt);  // bMin - origin
-	    VSUB2(t1, &node->bounds[3], rp->r_pt);  // bMax - origin
+	    /* Translate bounding box into ray space: origin -> box planes dist */
+	    VSUB2(t_to_min, &node->bounds[0], b_pt);
+	    VSUB2(t_to_max, &node->bounds[3], b_pt);
 
-	    // convert per-axis distances into parametric t using inv_dir (t = delta * 1/dir)
-	    /* NOTE:
-	     * inverse_r_dir may contain INF for near-zero direction components
-	     * This is intentional: for a ray parallel to an axis,
-	     *   - if the origin lies inside -> t becomes (-INF, +INF) and
-	     *     the axis imposes no constraint,
-	     *   - if the origin lies outside -> both t values have the same sign and
-	     *     the interval collapses, correctly rejecting the box
+	    /* Convert distances to parametric ray t values */
+	    VELMUL(t_to_min, t_to_min, inverse_r_dir);
+	    VELMUL(t_to_max, t_to_max, inverse_r_dir);
+
+	    /* For each axis, determine entry and exit t values. */
+	    VMOVE(t_enter, t_to_min);
+	    VMOVE(t_exit,  t_to_min);
+	    VMINMAX(t_enter, t_exit, t_to_max);
+
+	    /* Compute intersection interval across all three axes:
+	     * entry_t = latest entry parameter
+	     * exit_t  = earliest exit parameter */
+	    fastf_t entry_t = FMAX(t_enter[0], FMAX(t_enter[1], t_enter[2]));
+	    fastf_t exit_t  = FMIN(t_exit[0],  FMIN(t_exit[1],  t_exit[2]));
+
+	    /* Reject if:
+	     *  - intersection is entirely behind the ray origin
+	     *  - slab intervals do not overlap
+	     * Bitwise OR avoids branching.
 	     */
-	    VELMUL(t0, t0, inverse_r_dir);
-	    VELMUL(t1, t1, inverse_r_dir);
-
-	    // t_enter_axis = min; t_exit_axis = max
-	    VMOVE(t_enter_axis, t0);
-	    VMOVE(t_exit_axis, t0);
-	    VMINMAX(t_enter_axis, t_exit_axis, t1);
-	    // boil down point to min/max values
-	    fastf_t t_exit  = FMIN(t_exit_axis[0], FMIN(t_exit_axis[1], t_exit_axis[2]));
-	    fastf_t t_enter = FMAX(t_enter_axis[0], FMAX(t_enter_axis[1], t_enter_axis[2]));
-
-	    // reject if:
-	    //	- box is "sufficiently" behind ray origin (exit < ??-1??)
-	    //	    TODO/FIXME: this value should be 0 (maybe with some tol) but not -1; why do we have -1
-	    //	- no overlap of the intervals (ray missed the box)
-	    if ((t_exit < -1.0) || (t_enter > t_exit)) {
+	    if ((exit_t < -1.0) || (entry_t > exit_t)) {
 		stack_ind--;
 		continue;
 	    }
+	    /* Pass - Ray intersects bounding box, proceed to full test */
 	}
 	if (node->n_primitives > 0) {
 	    size_t end = node->data.first_prim_offset + node->n_primitives;
@@ -747,7 +765,7 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	toldist = (DBL_EPSILON * stp->st_aradius * 10);
     }
 
-    bot_shot_hlbvh_flat(sps->root, rp, sps->tris, bot->bot_ntri, &hits_per_cpu, toldist);
+    bot_shot_hlbvh_flat(sps->root, rp, sps->tris, bot->bot_ntri, &hits_per_cpu, toldist, stp);
 
     if (hits_per_cpu.count == 0) {
 	return 0;
