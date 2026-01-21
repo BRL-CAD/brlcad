@@ -37,6 +37,7 @@
 #include "bu/app.h"
 #include "bu/cv.h"
 #include "bu/debug.h"
+#include "bu/file.h"
 #include "bu/vls.h"
 #include "bu/units.h"
 #include "bn.h"
@@ -1533,6 +1534,9 @@ main(int argc, char *argv[])
     bu_debug = BU_DEBUG_COREDUMP;
 
     Tcl_FindExecutable(argv[0]);
+
+    if (bu_file_same(argv[1], argv[2]))
+	bu_exit(1, "asc2g: input and output are the same file.");
 
     ifp = fopen(argv[1], "rb");
     if (!ifp) perror(argv[1]);
