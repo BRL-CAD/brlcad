@@ -52,7 +52,11 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 
     /* get database filename */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s", gedp->dbip->dbi_filename);
+	if (!gedp->dbip) {
+	    bu_vls_printf(gedp->ged_result_str, "No database currently open.");
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "%s", gedp->dbip->dbi_filename);
+	}
 	return BRLCAD_OK;
     }
 
