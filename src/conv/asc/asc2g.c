@@ -729,8 +729,31 @@ membbld(struct bu_list *headp)
 	memb->wm_mat[i] = atof(cp);
 	cp = nxt_spc(cp);
     }
-}
 
+    // TODO - would like to be able to sanity check the matrix
+    // here and skip it if it'll cause problems, but that might
+    // result in rejecting matrices that are "close" to correct.
+    // Maybe add an option to enable the behavior?
+#if 0
+    // Check the wm_mat
+    mat_t zmat;
+    MAT_ZERO(zmat);
+    struct bn_tol ztol;
+    BN_TOL_INIT_SET_TOL(&ztol);
+    ztol.dist = VUNITIZE_TOL;
+    ztol.dist_sq = ztol.dist * ztol.dist;
+    if (bn_mat_is_equal(zmat, memb->wm_mat, &ztol)) {
+	bu_log("membbld: comb member %s has zero matrix, skipping.\n", inst_name);
+	MAT_IDN(memb->wm_mat);
+    } else {
+	if (bn_mat_axis_perp(memb->wm_mat, BN_MAT_CK_TOL) < 0) {
+
+	    bu_log("membbld: WARNING, comb member %s matrix does not preserve axis perpendicularity:\n", inst_name);
+	    bn_mat_print("wm_mat", memb->wm_mat);
+	}
+    }
+#endif
+}
 
 /**
  * This routine builds combinations.  It does so by processing the "C"

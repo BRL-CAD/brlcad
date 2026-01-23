@@ -1162,25 +1162,22 @@ bn_mat_dup(const mat_t in)
     return (matp_t)out;
 }
 
-
 int
-bn_mat_ck(const char *title, const mat_t m)
+bn_mat_axis_perp(const mat_t m, fastf_t ptol)
 {
-    vect_t A, B, C;
-    fastf_t fx, fy, fz;
-
-    if (!m) {
-	return 0;    /* implies identity matrix */
-    }
+    if (!m)
+	return 1;    /* OK - implies identity matrix */
 
     /* Validate that matrix preserves perpendicularity of axis by
      * checking that A.B == 0, B.C == 0, A.C == 0 XXX these vectors
      * should just be grabbed out of the matrix
      */
+    vect_t A, B, C;
     VMOVE(A, &m[0]);
     VMOVE(B, &m[4]);
     VMOVE(C, &m[8]);
 
+    fastf_t fx, fy, fz;
     fx = VDOT(A, B);
     fy = VDOT(B, C);
     fz = VDOT(A, C);
@@ -1190,11 +1187,37 @@ bn_mat_ck(const char *title, const mat_t m)
      * exported to disk outside of tolerance will fail import if
      * set too restrictive.
      */
-    if (!NEAR_ZERO(fx, 0.00001)
-	|| !NEAR_ZERO(fy, 0.00001)
-	|| !NEAR_ZERO(fz, 0.00001)
+    if (!NEAR_ZERO(fx, ptol)
+	|| !NEAR_ZERO(fy, ptol)
+	|| !NEAR_ZERO(fz, ptol)
 	|| NEAR_ZERO(m[15], VDIVIDE_TOL)) {
+	return 0;	/* FAIL */
+    }
+
+    return 1;		/* OK - is perpendicular*/
+}
+
+int
+bn_mat_ck(const char *title, const mat_t m)
+{
+
+    /* NOTE: this tolerance cannot be any more tight than 0.00001 due
+     * to default calculation tolerancing used by models.  Matrices
+     * exported to disk outside of tolerance will fail import if
+     * set too restrictive.
+     */
+    if (!bn_mat_axis_perp(m, BN_MAT_CK_TOL)) {
 	if (bu_debug & BU_DEBUG_MATH) {
+	    vect_t A, B, C;
+	    VMOVE(A, &m[0]);
+	    VMOVE(B, &m[4]);
+	    VMOVE(C, &m[8]);
+
+	    fastf_t fx, fy, fz;
+	    fx = VDOT(A, B);
+	    fy = VDOT(B, C);
+	    fz = VDOT(A, C);
+
 	    bu_log("bn_mat_ck(%s):  bad matrix, does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g, s=%g\n", title, fx, fy, fz, m[15]);
 	    bn_mat_print("bn_mat_ck() bad matrix", m);
 	}

@@ -436,10 +436,28 @@ BN_EXPORT extern void bn_mat_arb_rot(mat_t m,
  */
 BN_EXPORT extern matp_t bn_mat_dup(const mat_t in);
 
+
+
+/* bn_mat_ck requires a ptol with this value due to default calculation
+ * tolerancing used by models.  Matrices exported to disk outside of tolerance
+ * will fail import if set too restrictive.  We make this explicit so callers
+ * of bn_mat_axis_perp wanting to match the behavior of bn_mat_ck can reliably
+ * use the same tolerance value. */
+#define BN_MAT_CK_TOL 0.00001
+
 /**
  * Check to ensure that a rotation matrix preserves axis
  * perpendicularity.  Note that not all matrices are rotation
  * matrices.
+ *
+ * @return  0 FAIL - not perpendicular
+ * @return  1 OK - perpendicular
+ */
+BN_EXPORT extern int bn_mat_axis_perp(const mat_t m, fastf_t ptol);
+
+/**
+ * Check to ensure that a rotation matrix preserves axis perpendicularity.
+ * Note that not all matrices are rotation matrices.
  *
  *
  * @return -1 FAIL
