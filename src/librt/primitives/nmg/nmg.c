@@ -375,7 +375,9 @@ unresolved(struct hitmiss *next_hit, struct bu_ptbl *a_tbl, struct bu_ptbl *next
 	bu_log("\t%ld %s\n", **l_p, bu_identify_magic(**l_p));
 
     bu_log("<---Unable to fix state transition\n");
-    pl_ray(rd);
+    if (nmg_debug & NMG_DEBUG_PLOTEM) {
+        pl_ray(rd);
+    }
     bu_log("Primitive: %s, pixel=%d %d,  lvl=%d %s\n",
 	   rd->stp->st_dp->d_namep,
 	   rd->ap->a_x, rd->ap->a_y, rd->ap->a_level,
