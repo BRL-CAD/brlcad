@@ -18,6 +18,9 @@ cmakefiles(
   tests/00_moss-control.asc
   tests/01_moss-diff.asc
   tests/02_moss-3diff.asc
+  tests/matprop.example
+  tests/material_roundtrip.tcl
+  tests/material_3way_conflict.tcl
 )
 
 # Local Variables:

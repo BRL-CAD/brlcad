@@ -35,6 +35,9 @@
 #include "../ged_private.h"
 #include "wdb.h"
 
+#include <stdio.h>
+#include "parser.h"
+
 typedef enum {
     MATERIAL_ASSIGN,
     MATERIAL_CREATE,
@@ -42,6 +45,7 @@ typedef enum {
     MATERIAL_GET,
     MATERIAL_HELP,
     MATERIAL_IMPORT,
+    MATERIAL_EXPORT,
     MATERIAL_REMOVE,
     MATERIAL_SET,
     ATTR_UNKNOWN
@@ -54,9 +58,11 @@ static const char *usage = " help \n\n"
     "material get {object} [propertyGroupName] {propertyName}\n\n"
     "material set {object} [propertyGroupName] {propertyName} [newPropertyValue]\n\n"
     "material remove {object} [propertyGroupName] {propertyName}\n\n"
-    "material import [--id | --name] {fileName}\n\n"
+    "material import [--id | --name | --type] {fileName}\n\n"
     "  --id       - Specifies the id the material will be imported with\n\n"
     "  --name     - Specifies the name the material will be imported with\n\n"
+    "  --type     - Specifies the file type to import\n\n"
+    "material export {fileName}\n\n"
     "Note: Object, property, and group names are case sensitive.";
 
 static const char *possibleProperties = "The following are properties of material objects that can be set/modified: \n"
@@ -90,6 +96,8 @@ get_material_cmd(const char* arg)
 	return MATERIAL_IMPORT;
     else if (BU_STR_EQUIV("remove", arg))
 	return MATERIAL_REMOVE;
+    else if (BU_STR_EQUIV("export", arg))
+    return MATERIAL_EXPORT;
     else
 	return ATTR_UNKNOWN;
 }
@@ -144,6 +152,7 @@ assign_material(struct ged *gedp, int argc, const char *argv[])
 static int
 import_materials(struct ged *gedp, int argc, const char *argv[])
 {
+    printf("material: import_materials");
     const char* fileName;
     const char* flag;
     char buffer[BUFSIZ] = {0};
@@ -312,6 +321,308 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
     return 0;
 }
 
+static int
+is_in_overwrite_list(const char *name, char **overwrite_list)
+{
+    int i;
+    if (!overwrite_list) return 0;
+
+    for (i = 0; overwrite_list[i] != NULL; i++) {
+        if (BU_STR_EQUIV(name, overwrite_list[i])) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// Export all materials in a file to the filename provided
+static int
+export_materials(struct ged *gedp, int argc, const char *argv[])
+{
+    printf("material: export_matprop_file");
+    const char* fileName;
+    FILE* file;
+
+    if (argc < 3) {
+        bu_vls_printf(gedp->ged_result_str, "ERROR: Not enough arguments.\nUsage: material export <filename>\n");
+        return BRLCAD_ERROR;
+    }
+    fileName = argv[2]; 
+
+    file = fopen(fileName, "w");
+    if (file == NULL) {
+        bu_vls_printf(gedp->ged_result_str, "ERROR: Could not open file '%s'\n", fileName);
+        return BRLCAD_ERROR;
+    }
+
+    for (int i = 0; i < RT_DBNHASH; i++) {
+		for (struct directory *dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+            // Skip non-BRLCAD objects
+            if (!(dp->d_major_type == DB5_MAJORTYPE_BRLCAD)) {
+                continue;
+            }
+            
+            struct rt_db_internal intern;
+            if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+                if (BU_STR_EQUIV(intern.idb_meth->ft_label, "material")) {
+                    fprintf(file, "%s\n{\n", dp->d_namep);
+                    struct rt_material_internal *material = (struct rt_material_internal *)intern.idb_ptr;
+
+                    struct bu_attribute_value_set* avs_list[] = {
+                        &material->opticalProperties,
+                        &material->thermalProperties,
+                        &material->physicalProperties,
+                        &material->mechanicalProperties,
+                    };
+
+                    for (int j = 0; j < 4; j++) {
+                        struct bu_attribute_value_set *avs = avs_list[j];
+                        for (size_t k = 0; k < avs->count; k++) {
+                            const char *key = avs->avp[k].name;
+                            const char *value = avs->avp[k].value;
+                            fprintf(file, "\t%s = %s\n", key, value);
+                        }
+                    }
+                    fprintf(file, "}\n\n");
+                }
+                rt_db_free_internal(&intern);
+            }
+        }
+    }
+    fclose(file);
+    bu_vls_printf(gedp->ged_result_str, "Exported materials to %s\n", fileName);
+    return BRLCAD_OK;
+}
+
+// Import matprop file
+// material import --type matprop  <filename>
+static int
+import_matprop_file(struct ged *gedp, int argc, const char *argv[], int force_all, const char *specific_overwrites_str)
+{
+    const char* fileName;
+    FILE* file;
+    ParseResult result;
+    int import_count = 0;
+    int skipped_count = 0;
+    int i, j;
+    struct db_i *UNUSED(db_i); // Declare db_i at the top of the function
+    // Setup overwrite list variables
+    char *overwrite_input_copy = NULL; // We need a copy because argv_from_string modifies the string
+    char *overwrite_argv[1024];        // Static buffer to hold the pointers (limit 1024 names)
+    int overwrite_argc = 0;            // To track how many names we parsed
+
+    // We just check that argc is 3, as expected.
+    if (argc != 3) {
+        bu_vls_printf(gedp->ged_result_str, "ERROR: Invalid arguments passed to import_matprop_file. Expected argc=3, got %d\n", argc);
+        return BRLCAD_ERROR;
+    }
+    
+    // The filename is always at index 2 after parsing
+    fileName = argv[2];
+
+    file = fopen(fileName, "r");
+    if (file == NULL) {
+        bu_vls_printf(gedp->ged_result_str, "ERROR: Could not open file '%s'\n", fileName);
+        return BRLCAD_ERROR;
+    }
+
+    // parser from parser.c
+    result = parse_matprop(file);
+    fclose(file);
+
+    if (result.error_message) {
+        bu_vls_printf(gedp->ged_result_str, "ERROR: Failed to parse '%s':\n%s\n", fileName, result.error_message);
+        free_parse_result(&result); // MUST free memory even on error
+        return BRLCAD_ERROR;
+    }
+
+    // Initialize the array to NULL to be safe
+    memset(overwrite_argv, 0, sizeof(overwrite_argv));
+
+    // Parse the list
+    if (specific_overwrites_str && strlen(specific_overwrites_str) > 0) {
+        // Duplicate the string so we can modify it
+        overwrite_input_copy = bu_strdup(specific_overwrites_str);
+        
+        // Call bu_argv_from_string with 3 arguments:
+        // 1. The array to fill
+        // 2. The limit (size of the array)
+        // 3. The string to chop up
+        overwrite_argc = bu_argv_from_string(overwrite_argv, 1024, overwrite_input_copy);
+    }
+
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    
+    for (i = 0; i < result.mat_count; i++) {
+        Material* mat = &result.materials[i];
+        struct directory *dp;
+        dp = db_lookup(gedp->dbip, mat->name, 0);
+
+        if (dp != RT_DIR_NULL) {
+            // It exists!
+            int should_overwrite = force_all;
+            
+            // If not forcing all, check if this specific name is in our parsed list
+            if (!should_overwrite && overwrite_argc > 0) {
+                should_overwrite = is_in_overwrite_list(mat->name, overwrite_argv);
+            }
+
+            if (!should_overwrite) {
+                bu_vls_printf(gedp->ged_result_str, "WARNING: Material '%s' already exists. Skipping. Use --force or -o '%s' to overwrite.\n", mat->name, mat->name);
+                skipped_count++;
+                continue; 
+            }
+            bu_vls_printf(gedp->ged_result_str, "INFO: Overwriting existing material '%s'.\n", mat->name);
+        }
+        // Initialize AVS containers for the current material
+        struct bu_attribute_value_set physicalProperties;
+        struct bu_attribute_value_set mechanicalProperties;
+        struct bu_attribute_value_set opticalProperties;
+        struct bu_attribute_value_set thermalProperties;
+
+        bu_avs_init_empty(&physicalProperties);
+        bu_avs_init_empty(&mechanicalProperties);
+        bu_avs_init_empty(&opticalProperties);
+        bu_avs_init_empty(&thermalProperties);
+
+        const char* known_optical_keys[] = {
+            "transparency",
+            "reflectivity",
+            "index_of_refraction",
+            "shine",
+            "emission"
+        };
+        const int known_optical_count = sizeof(known_optical_keys) / sizeof(known_optical_keys[0]);
+
+        const char* known_mechanical_keys[] = {
+            "youngs_modulus",
+            "poissons_ratio",
+            "hardness",
+            "tensile_strength",
+            "yield_strength",
+            "brinell_hardness",
+            "ultimate_strength",
+            "shear_strength",
+            "bulk_modulus"
+        };
+        const int known_mechanical_count = sizeof(known_mechanical_keys) / sizeof(known_mechanical_keys[0]);
+
+        const char* known_thermal_keys[] = {
+            "thermal_conductivity",
+            "specific_heat",
+            "melting_point",
+            "boiling_point",
+            "thermal_expansion"
+        };
+        const int known_thermal_count = sizeof(known_thermal_keys) / sizeof(known_thermal_keys[0]);
+
+        for (j = 0; j < mat->prop_count; j++) {
+            Property* prop = &mat->properties[j];
+
+            // Check if the property key is a known optical property
+            int is_known_optical = 0;
+            for (int k = 0; k < known_optical_count; k++) {
+                if (BU_STR_EQUIV(prop->key, known_optical_keys[k])) {
+                    is_known_optical = 1;
+                    break;
+                }
+            }
+            // Check if the property key is a known mechanical property
+            int is_known_mechanical = 0;
+            if (!is_known_optical) {
+                for (int k = 0; k < known_mechanical_count; k++) {
+                    if (BU_STR_EQUIV(prop->key, known_mechanical_keys[k])) {
+                        is_known_mechanical = 1;
+                        break;
+                    }
+                }
+            }
+        
+            // Check if the property key is a known thermal property
+            int is_known_thermal = 0;
+            if (!is_known_optical && !is_known_mechanical) {
+                for (int k = 0; k < known_thermal_count; k++) {
+                    if (BU_STR_EQUIV(prop->key, known_thermal_keys[k])) {
+                        is_known_thermal = 1;
+                        break;
+                    }
+                }
+            }
+
+            // Assign to the correct AVS container
+            if (is_known_optical) {
+                bu_avs_add(&opticalProperties, prop->key, prop->value);
+            } else if (is_known_mechanical) {
+                bu_avs_add(&mechanicalProperties, prop->key, prop->value);
+            } else if (is_known_thermal) {
+                bu_avs_add(&thermalProperties, prop->key, prop->value);
+            } else {
+                bu_avs_add(&physicalProperties, prop->key, prop->value);
+            }
+        }
+
+        int material_creation = mk_material(wdbp, 
+            mat->name, 
+            mat->name, 
+            "", 
+            "", 
+            &physicalProperties, 
+            &mechanicalProperties, 
+            &opticalProperties, 
+            &thermalProperties
+        );
+        
+        bu_avs_free(&physicalProperties);
+        bu_avs_free(&mechanicalProperties);
+        bu_avs_free(&opticalProperties);
+        bu_avs_free(&thermalProperties);
+
+        if (material_creation == 1) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR: Could not create material object '%s'\n", mat->name);
+            continue; // Skip and try next material
+        }
+
+        import_count++;
+    }
+
+    free_parse_result(&result);
+
+    bu_vls_printf(gedp->ged_result_str, "Successfully imported %d new materials from '%s'.\n", import_count, fileName);
+    bu_vls_printf(gedp->ged_result_str, "  Skipped (already exist): %d\n", skipped_count);
+
+    // Tell BRL-CAD's UI to update to show new materials
+    //ged_update_views(gedp, (long)0); 
+
+    return BRLCAD_OK;
+}
+
+static int
+import_file_type(struct ged *gedp, int argc, const char *argv[])
+{
+    struct bu_vls file_type = BU_VLS_INIT_ZERO;
+    struct bu_vls specific_overwrites = BU_VLS_INIT_ZERO;
+    int force_overwrite = 0; 
+    struct bu_opt_desc d[4]; 
+
+    BU_OPT(d[0],   "t", "type",        "file_type",       &bu_opt_vls,   &file_type, "Import file based on file type");
+    BU_OPT(d[1], "f", "force",       "bool",              &bu_opt_bool,  &force_overwrite, "Force overwrite of existing materials");
+    BU_OPT(d[2], "o", "overwrite", "names", &bu_opt_vls, &specific_overwrites, "Space-separated list of specific material names to overwrite");
+    BU_OPT_NULL(d[3]); 
+
+    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    argc = opt_ret;
+
+    if (BU_STR_EQUAL(bu_vls_cstr(&file_type), "matprop")) {
+        import_matprop_file(gedp, argc, argv, force_overwrite, bu_vls_cstr(&specific_overwrites));
+    } else {
+        import_materials(gedp, argc, argv);
+    }
+    
+    bu_vls_free(&file_type);
+    bu_vls_free(&specific_overwrites);
+
+    return 0; /* Assuming 0 is BRLCAD_OK, based on import_materials */
+}
 
 static void
 print_avs_value(struct ged *gedp, const struct bu_attribute_value_set * avp, const char * name, const char * avsName)
@@ -610,8 +921,12 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
         destroy_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_IMPORT) {
         // import routine
-        import_materials(gedp, argc, argv);
-    } else if (scmd == MATERIAL_GET) {
+        import_file_type(gedp, argc, argv);
+    } else if (scmd == MATERIAL_EXPORT){
+        //export routine
+        export_materials(gedp, argc, argv);
+    }
+    else if (scmd == MATERIAL_GET) {
         // get routine
         get_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_HELP) {
