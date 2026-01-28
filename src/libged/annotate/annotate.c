@@ -169,6 +169,9 @@ ged_annotate_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
+struct ged_cmd_impl annotate_impl = {"annotate", ged_annotate_core, GED_CMD_DEFAULT};
+REGISTER_GED_COMMAND(annotate);
+
 #ifdef GED_PLUGIN
 static bu_plugin_cmd pcommands[] = {
     { "annotate",            ged_annotate_core }

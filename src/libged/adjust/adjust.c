@@ -87,6 +87,9 @@ ged_adjust_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
+struct ged_cmd_impl adjust_impl = {"adjust", ged_adjust_core, GED_CMD_DEFAULT};
+REGISTER_GED_COMMAND(adjust);
+
 #ifdef GED_PLUGIN
 static bu_plugin_cmd pcommands[] = {
     { "adjust",            ged_adjust_core }

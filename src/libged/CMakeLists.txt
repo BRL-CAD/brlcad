@@ -132,6 +132,14 @@ endfunction()
 set(MIGRATED
   3ptarb
   adc
+  adjust
+  ae2dir
+  analyze
+  annotate
+  arb
+  arced
+  arot
+  attr
   bot
   help
   open

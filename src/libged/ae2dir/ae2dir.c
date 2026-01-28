@@ -83,6 +83,9 @@ ged_ae2dir_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
+struct ged_cmd_impl ae2dir_impl = {"ae2dir", ged_ae2dir_core, GED_CMD_DEFAULT};
+REGISTER_GED_COMMAND(ae2dir);
+
 #ifdef GED_PLUGIN
 static bu_plugin_cmd pcommands[] = {
     { "ae2dir",            ged_ae2dir_core }

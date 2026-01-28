@@ -134,6 +134,9 @@ fail:
 
 #include "../include/plugin.h"
 
+struct ged_cmd_impl arced_impl = {"arced", ged_arced_core, GED_CMD_DEFAULT};
+REGISTER_GED_COMMAND(arced);
+
 #ifdef GED_PLUGIN
 static bu_plugin_cmd pcommands[] = {
     { "arced",            ged_arced_core }

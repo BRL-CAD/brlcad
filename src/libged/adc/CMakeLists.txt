@@ -1,8 +1,8 @@
-set(ADC_LIBS libged libbu)
+set(PLUGIN_LIBS libged libbu)
 
 ged_plugin_library(ged-adc
   adc.c
-  LIBS ${ADC_LIBS}
+  LIBS ${PLUGIN_LIBS}
 )
 
 cmakefiles(

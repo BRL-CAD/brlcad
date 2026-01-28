@@ -130,10 +130,15 @@ ged_arb_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-#ifdef GED_PLUGIN
-
 extern int ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[]);
 
+struct ged_cmd_impl arb_impl = {"arb", ged_arb_core, GED_CMD_DEFAULT};
+REGISTER_GED_COMMAND(arb);
+
+struct ged_cmd_impl rotate_arb_face_impl = {"rotate_arb_face", ged_rotate_arb_face_core, GED_CMD_DEFAULT};
+REGISTER_GED_COMMAND(rotate_arb_face);
+
+#ifdef GED_PLUGIN
 static bu_plugin_cmd pcommands[] = {
     { "arb",              ged_arb_core },
     { "rotate_arb_face",  ged_rotate_arb_face_core }
