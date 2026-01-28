@@ -325,6 +325,9 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
+struct ged_cmd_impl bb_impl = {"bb", ged_bb_core, GED_CMD_DEFAULT};
+REGISTER_GED_COMMAND(bb);
+
 #ifdef GED_PLUGIN
 static bu_plugin_cmd pcommands[] = {
     { "bb",            ged_bb_core }

@@ -140,6 +140,7 @@ set(MIGRATED
   arced
   arot
   attr
+  bb
   bot
   help
   open
