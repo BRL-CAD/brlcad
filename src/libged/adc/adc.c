@@ -711,6 +711,9 @@ ged_calc_adc_dst(struct bview *gvp)
 
 #include "../include/plugin.h"
 
+struct ged_cmd_impl adc_impl = {"adc", ged_adc_core, GED_CMD_DEFAULT};
+REGISTER_GED_COMMAND(adc);
+
 #ifdef GED_PLUGIN
 static bu_plugin_cmd pcommands[] = {
     { "adc",            ged_adc_core }

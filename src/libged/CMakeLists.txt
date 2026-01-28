@@ -129,6 +129,14 @@ function(_libged_sanitize_and_link_libs target libs)
   endif()
 endfunction()
 
+set(MIGRATED
+  3ptarb
+  adc
+  bot
+  help
+  open
+  )
+
 # ================================================================
 # ged_plugin_library:
 #   Arguments:
@@ -163,9 +171,14 @@ function(ged_plugin_library name)
     set(DO_STATIC FALSE)
   endif()
 
-  if (NOT ${name} STREQUAL "ged-bot" AND NOT ${name} STREQUAL "ged-open" AND NOT ${name} STREQUAL "ged-3ptarb" AND NOT ${name} STREQUAL "ged-help")
-    set(DO_STATIC FALSE)
-  endif()
+  # Temporary migration override mechanism - once fully migrated,
+  # remove this and the MIGRATED list above
+  set(DO_STATIC FALSE)
+  foreach(mcmd ${MIGRATED})
+    if ("${name}" STREQUAL "ged-${mcmd}")
+      set(DO_STATIC TRUE)
+    endif()
+  endforeach()
 
   foreach(sf ${plugin_sources})
     set(wsf ${sf})
