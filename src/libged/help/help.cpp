@@ -270,13 +270,29 @@ ged_help_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
+#if defined(LIBGED_STATIC_CORE) && !defined(GED_PLUGIN_ONLY)
+// The question mark symbol doesn't work in the REGISTER_GED_COMMAND macros,
+// so we need to set this one up explicitly.
+struct ged_cmd_impl questionmark_cmd_impl = {"?", ged_help_core, GED_CMD_DEFAULT};
+GED_CMD_USED const struct ged_cmd questionmark = { &questionmark_cmd_impl };
+extern "C" GED_CMD_USED const struct ged_cmd * const __ged_cmd_ptr_questionmark = &questionmark;
+LABEL_GED_COMMAND(questionmark)
+#endif
+
+struct ged_cmd_impl apropos_impl = {"apropos", ged_help_core, GED_CMD_DEFAULT};
+REGISTER_GED_COMMAND(apropos);
+struct ged_cmd_impl help_impl = {"help", ged_help_core, GED_CMD_DEFAULT};
+REGISTER_GED_COMMAND(help);
+struct ged_cmd_impl info_impl = {"info", ged_help_core, GED_CMD_DEFAULT};
+REGISTER_GED_COMMAND(info);
+
 #ifdef GED_PLUGIN
 extern "C" {
     static bu_plugin_cmd pcommands[] = {
-	{ "help",            ged_help_core },
+	{ "?",               ged_help_core },
 	{ "apropos",         ged_help_core },
-	{ "info",            ged_help_core },
-	{ "?",               ged_help_core }
+	{ "help",            ged_help_core },
+	{ "info",            ged_help_core }
     };
     static bu_plugin_manifest pinfo = {
 	"libged_help",

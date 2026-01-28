@@ -163,9 +163,7 @@ function(ged_plugin_library name)
     set(DO_STATIC FALSE)
   endif()
 
-  message("${name}: DO_STATIC: ${DO_STATIC}")
-
-  if (NOT ${name} STREQUAL "ged-bot" AND NOT ${name} STREQUAL "ged-open")
+  if (NOT ${name} STREQUAL "ged-bot" AND NOT ${name} STREQUAL "ged-open" AND NOT ${name} STREQUAL "ged-3ptarb" AND NOT ${name} STREQUAL "ged-help")
     set(DO_STATIC FALSE)
   endif()
 

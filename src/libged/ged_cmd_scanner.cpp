@@ -126,6 +126,7 @@ int main(int argc, const char *argv[])
     // ========= Static registration extraction ==========
     std::set<std::string> static_cmd_symbols;
     std::regex reg_cmd_macro(R"(REGISTER_GED_COMMAND\s*\(\s*([A-Za-z0-9_]+)\s*\))");
+    std::regex reg_label_macro(R"(LABEL_GED_COMMAND\s*\(\s*([A-Za-z0-9_]+)\s*\))");
     /* Phase 3: detect generalized registration macro with string command names */
     std::set<std::string> cmd_names;
     std::regex reg_bu_cmd_macro(R"(REGISTER_BU_PLUGIN_COMMAND\s*\(\s*\"([^\"]+)\"\s*,)");
@@ -143,6 +144,10 @@ int main(int argc, const char *argv[])
 	    std::smatch mm;
 	    if (std::regex_search(sline, mm, reg_cmd_macro)) {
 		static_cmd_symbols.insert(mm[1]);
+	    }
+	    std::smatch lm;
+	    if (std::regex_search(sline, lm, reg_label_macro)) {
+		static_cmd_symbols.insert(lm[1]);
 	    }
 	    /* Phase 3: capture command names from REGISTER_BU_PLUGIN_COMMAND */
 	    std::smatch bm;

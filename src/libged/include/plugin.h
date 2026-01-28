@@ -95,6 +95,17 @@ extern "C" {
         __ged_cmd_ptr_##cmd_symbol = &cmd_symbol
 #endif
 
+/* If we have odd characters in command names (leading numbers, ?, etc.) we
+ * can't use REGISTER_GED_COMMAND.  In those cases we need to construct the
+ * REGISTER_GED_COMMAND structures manually using legal names.  However, we
+ * also still need the scanner to pick up the command - to achieve this, we add
+ * a no-op marker to identify commands for the scanner in such cases.
+ *
+ * Argument MUST be the sanitized C identifier (e.g., questionmark, threeptarb)
+ * rather than the cmd string.
+ */
+#define LABEL_GED_COMMAND(cmd_symbol)
+
 #else
 #define REGISTER_GED_COMMAND(cmd_symbol) /* static registration disabled */
 #endif /* LIBGED_STATIC_CORE && !GED_PLUGIN_ONLY */

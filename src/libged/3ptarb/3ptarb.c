@@ -255,9 +255,18 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
 
+#if defined(LIBGED_STATIC_CORE) && !defined(GED_PLUGIN_ONLY)
+// The numerical prefix 3 doesn't work for struct names, so we need to do this
+// explicitly rather than use the convenience REGISTER_GED_COMMAND macro.
+struct ged_cmd_impl threeptarb_cmd_impl = {"3ptarb", ged_3ptarb_core, GED_CMD_DEFAULT};
+GED_CMD_USED const struct ged_cmd threeptarb = { &threeptarb_cmd_impl };
+GED_CMD_USED const struct ged_cmd * const __ged_cmd_ptr_threeptarb = &threeptarb;
+LABEL_GED_COMMAND(threeptarb)
+#endif
+
+#ifdef GED_PLUGIN
 static bu_plugin_cmd pcommands[] = {
     { "3ptarb",         ged_3ptarb_core }
 };
