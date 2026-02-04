@@ -13,6 +13,8 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* corrected BoT shotline behavior when starting ray pt in mesh
+        - Sean Morrison Chris McGregor Cliff Yapp
 * updated g2asc to exit if input file == output file - Cliff Yapp
 * updated asc2g to exit if input file == output file - Cliff Yapp
 * fixed default file-create behavior of open command - Cliff Yapp
