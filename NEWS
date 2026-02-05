@@ -13,6 +13,15 @@ changes made.  See document footer for additional details.
 --- 2026-XX-XX  Release 7.42.2                                     ---
 ----------------------------------------------------------------------
 
+* updated OpenCV dependency to v4.13.0 - Cliff Yapp
+* updated PUGIXML dependency to v1.15 - Cliff Yapp
+* updated LMDB dependency to v0.9.35 - Cliff Yapp
+* updated libjpeg-turbo dependency to v3.1.3 - Cliff Yapp
+* updated sqlite dependency to v3.51.2 - Cliff Yapp
+* updated assimp dependency to v6.0.4 - Cliff Yapp
+* updated GDAL dependency to v3.12.1 - Cliff Yapp
+* updated PROJ dependency to v9.7.1 - Cliff Yapp
+* updated libpng dependency to v1.6.54 - Cliff Yapp
 * improved get/adjust/attr help text - Josh Baker
 * created manpage for 'adjust' command - Josh Baker
 * improved 'B' manpage options and usage - Josh Baker
