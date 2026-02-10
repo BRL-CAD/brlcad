@@ -60,7 +60,7 @@ jobs:
         run: |
           cmake -E make_directory build_winninja
           cd build_winninja
-          git clone https://github.com/BRL-CAD/bext.gita
+          git clone https://github.com/BRL-CAD/bext.git
           cd bext
           git checkout e06f748d61f2234ad0012a75342a3c76c8821510
           cd ..
