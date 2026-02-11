@@ -171,7 +171,8 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
 
     // Use the dark theme from https://github.com/Alexhuszagh/BreezeStyleSheets
     QFile file(":/dark.qss");
-    file.open(QFile::ReadOnly | QFile::Text);
+    if (!file.open(QFile::ReadOnly | QFile::Text))
+	bu_exit(EXIT_FAILURE, "Error - unable to find dark.qss embedded theme!\n");
     QTextStream stream(&file);
     setStyleSheet(stream.readAll());
 
