@@ -59,7 +59,7 @@ CADViewMeasure::CADViewMeasure(QWidget *)
 
     report_radians = new QCheckBox("Report angle in radians");
     wl->addWidget(report_radians);
-    QObject::connect(report_radians, &QCheckBox::stateChanged, this, &CADViewMeasure::adjust_text);
+    QObject::connect(report_radians, &QCheckBox::checkStateChanged, this, &CADViewMeasure::adjust_text);
 
     ma_label = new QLabel("Measured Angle (deg):");
     angle_report = new QLineEdit();
