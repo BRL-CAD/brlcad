@@ -50,167 +50,172 @@
 </listitem>
 <listitem>
  <para>
-  arb7 -- ARB (seven vertices).
+  arb7 -- ARB (seven vertices)
  </para>
 </listitem>
 <listitem>
  <para>
-  arb 6 -- ARB (six vertices).
+  arb 6 -- ARB (six vertices)
  </para>
 </listitem>
 <listitem>
  <para>
-  arb 5 -- ARB (five vertices).
+  arb 5 -- ARB (five vertices)
  </para>
 </listitem>
 <listitem>
  <para>
-  arb 4 -- ARB (four vertices).
+  arb 4 -- ARB (four vertices)
  </para>
 </listitem>
 <listitem>
  <para>
-  arbn -- Arbitrary polyhedron with arbitrary number of vertices (plane equations).
+  arbn -- Arbitrary polyhedron with arbitrary number of vertices (plane equations)
  </para>
 </listitem>
 <listitem>
  <para>
-  bot -- Bag of Triangles.
+  bot -- Bag of Triangles
  </para>
 </listitem>
 <listitem>
  <para>
-  dsp -- Displacement Map.
+  dsp -- Displacement Map
  </para>
 </listitem>
 <listitem>
  <para>
-  pipe -- Pipe (run of connected pipe or wire).
+  pipe -- Pipe (run of connected pipe or wire)
  </para>
 </listitem>
 <listitem>
  <para>
-  ebm -- Extruded Bit Map.
+  ebm -- Extruded Bit Map
  </para>
 </listitem>
 <listitem>
  <para>
-  vol -- Voxels.
+  vol -- Voxels
  </para>
 </listitem>
 <listitem>
  <para>
-  hf -- Height Field deprecated, see dsp.
+  hf -- Height Field deprecated, see dsp
  </para>
 </listitem>
 <listitem>
  <para>
-  ars -- Arbitrary Faceted Solid.
+  ars -- Arbitrary Faceted Solid
  </para>
 </listitem>
 <listitem>
  <para>
-  half -- Half Space.
+  half -- Half Space
  </para>
 </listitem>
 <listitem>
  <para>
-  sph -- Ellipsoid (center and radius).
+  sph -- Ellipsoid (center and radius)
  </para>
 </listitem>
 <listitem>
  <para>
-  ell -- Ellipsoid (center and three semi-axes).
+  ell -- Ellipsoid (center and three semi-axes)
  </para>
 </listitem>
 <listitem>
  <para>
-  ellg -- Ellipsoid (foci and chord length).
+  ellg -- Ellipsoid (foci and chord length)
  </para>
 </listitem>
 <listitem>
  <para>
-  ell1 -- Ellipsoid (center, one semi-axis, and a radius of revolution).
+  ell1 -- Ellipsoid (center, one semi-axis, and a radius of revolution)
  </para>
 </listitem>
 <listitem>
  <para>
-  tor -- Torus.
+  tor -- Torus
  </para>
 </listitem>
 <listitem>
  <para>
-  tgc -- Truncated General Cone (most general TGC).
+  tgc -- Truncated General Cone (most general TGC)
  </para>
 </listitem>
 <listitem>
  <para>
-  tec -- TGC (top radii are scaled from base radii).
+  tec -- TGC (top radii are scaled from base radii)
  </para>
 </listitem>
 <listitem>
  <para>
-  rec -- TGC (right elliptical cylinder).
+  rec -- TGC (right elliptical cylinder)
  </para>
 </listitem>
 <listitem>
  <para>
-  trc -- TGC (truncated right circular cone).
+  trc -- TGC (truncated right circular cone)
  </para>
 </listitem>
 <listitem>
  <para>
-  rcc -- TGC (right circular cylinder).
+  rcc -- TGC (right circular cylinder)
  </para>
 </listitem>
 <listitem>
  <para>
-  box -- ARB (vertex and three vectors).
+  box -- ARB (vertex and three vectors)
  </para>
 </listitem>
 <listitem>
  <para>
-  raw -- ARB (right angle wedge).
+  raw -- ARB (right angle wedge)
  </para>
 </listitem>
 <listitem>
  <para>
-  rpp -- ARB (axis aligned rectangular parallelepiped).
+  rpp -- ARB (axis aligned rectangular parallelepiped)
  </para>
 </listitem>
 <listitem>
  <para>
-  rpc -- Right Parabolic Cylinder.
+  rpc -- Right Parabolic Cylinder
  </para>
 </listitem>
 <listitem>
  <para>
-  rhc -- Right Hyperbolic Cylinder.
+  rhc -- Right Hyperbolic Cylinder
  </para>
 </listitem>
 <listitem>
  <para>
-  epa -- Elliptical Paraboloid.
+  epa -- Elliptical Paraboloid
  </para>
 </listitem>
 <listitem>
  <para>
-  ehy -- Elliptical Hyperboloid.
+  ehy -- Elliptical Hyperboloid
  </para>
 </listitem>
 <listitem>
  <para>
-  eto -- Elliptical Torus.
+  eto -- Elliptical Torus
  </para>
 </listitem>
 <listitem>
  <para>
-  part -- Particle.
+  part -- Particle
  </para>
 </listitem>
 <listitem>
  <para>
-  ebm -- Extruded bitmap
+  ebm -- Extruded Bitmap
+ </para>
+</listitem>
+	<listitem>
+ <para>
+  datum -- Datum Point, Line, Plane
  </para>
 </listitem>
 </itemizedlist>
