@@ -198,13 +198,14 @@ macro(brlcad_find_package pkg_name)
 
     # We don't know what vars were set, but check each one that was set
     # for a local path.  If we find one, we have a bundled package
-    is_subpath("${CMAKE_BINARY_DIR}" "${${nc}}" LOCAL_TEST)
-    if(LOCAL_TEST)
+    is_subpath("${CMAKE_BINARY_DIR}" "${${nc}}" LOCAL_TEST_VAR)
+    is_subpath("${CMAKE_BINARY_DIR}" "${nc}" LOCAL_TEST_PATH)
+    if(LOCAL_TEST_VAR OR LOCAL_TEST_PATH)
       if (BRLCAD_FIND_DEBUG_MODE)
 	message("  - Local path found")
       endif (BRLCAD_FIND_DEBUG_MODE)
       set(is_bundled TRUE)
-    endif(LOCAL_TEST)
+    endif()
 
     #message("find_package cache var (${nc}): ${${nc}}")
 
