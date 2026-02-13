@@ -28,9 +28,7 @@
 #include <map>
 #include <string>
 
-#define ALPHANUM_IMPL
 #include "./alphanum.h"
-
 #include "bu/path.h"
 #include "bu/sort.h"
 #include "bu/time.h"

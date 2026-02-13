@@ -1,13 +1,9 @@
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-)
+set(PLUGIN_LIBS libged libbu)
 
-ged_plugin_library(ged-kill kill.c)
-target_link_libraries(ged-kill libged libbu)
+ged_plugin_library(ged-kill
+  kill.c
+  LIBS ${PLUGIN_LIBS}
+)
 
 cmakefiles(
   CMakeLists.txt

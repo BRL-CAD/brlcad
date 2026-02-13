@@ -52,24 +52,13 @@ ged_sync_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl sync_cmd_impl = {
-    "sync",
-    ged_sync_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd sync_cmd = { &sync_cmd_impl };
-const struct ged_cmd *sync_cmds[] = { &sync_cmd, NULL };
+#define GED_SYNC_COMMANDS(X, XID) \
+    X(sync, ged_sync_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  sync_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_SYNC_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_sync", 1, GED_SYNC_COMMANDS)
 
 /*
  * Local Variables:

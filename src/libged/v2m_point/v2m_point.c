@@ -91,24 +91,13 @@ ged_v2m_point_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl v2m_point_cmd_impl = {
-    "v2m_point",
-    ged_v2m_point_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd v2m_point_cmd = { &v2m_point_cmd_impl };
-const struct ged_cmd *v2m_point_cmds[] = { &v2m_point_cmd, NULL };
+#define GED_V2M_POINT_COMMANDS(X, XID) \
+    X(v2m_point, ged_v2m_point_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  v2m_point_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_V2M_POINT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_v2m_point", 1, GED_V2M_POINT_COMMANDS)
 
 /*
  * Local Variables:

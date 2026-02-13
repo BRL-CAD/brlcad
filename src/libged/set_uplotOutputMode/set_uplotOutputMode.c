@@ -78,24 +78,13 @@ ged_set_uplotOutputMode_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl set_uplotOutputMode_cmd_impl = {
-    "set_uplotOutputMode",
-    ged_set_uplotOutputMode_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd set_uplotOutputMode_cmd = { &set_uplotOutputMode_cmd_impl };
-const struct ged_cmd *set_uplotOutputMode_cmds[] = { &set_uplotOutputMode_cmd, NULL };
+#define GED_SET_UPLOTOUTPUTMODE_COMMANDS(X, XID) \
+    X(set_uplotOutputMode, ged_set_uplotOutputMode_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  set_uplotOutputMode_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_SET_UPLOTOUTPUTMODE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_set_uplotOutputMode", 1, GED_SET_UPLOTOUTPUTMODE_COMMANDS)
 
 /*
  * Local Variables:

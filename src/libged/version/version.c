@@ -52,23 +52,14 @@ ged_db_version_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl version_cmd_impl = {"version", ged_db_version_core, GED_CMD_DEFAULT};
-const struct ged_cmd version_cmd = { &version_cmd_impl };
 
-struct ged_cmd_impl dbversion_cmd_impl = {"dbversion", ged_db_version_core, GED_CMD_DEFAULT};
-const struct ged_cmd dbversion_cmd = { &dbversion_cmd_impl };
+#define GED_VERSION_COMMANDS(X, XID) \
+    X(dbversion, ged_db_version_core, GED_CMD_DEFAULT) \
+    X(version, ged_db_version_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *version_cmds[] = { &version_cmd, &dbversion_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  version_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_VERSION_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_version", 1, GED_VERSION_COMMANDS)
 
 /*
  * Local Variables:

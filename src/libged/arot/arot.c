@@ -45,24 +45,13 @@ ged_arot_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl arot_cmd_impl = {
-    "arot",
-    ged_arot_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd arot_cmd = { &arot_cmd_impl };
-const struct ged_cmd *arot_cmds[] = { &arot_cmd, NULL };
+#define GED_AROT_COMMANDS(X, XID) \
+    X(arot, ged_arot_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  arot_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_AROT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_arot", 1, GED_AROT_COMMANDS)
 
 /*
  * Local Variables:

@@ -323,25 +323,13 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl bb_cmd_impl = {
-    "bb",
-    ged_bb_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd bb_cmd = { &bb_cmd_impl };
-const struct ged_cmd *bb_cmds[] = { &bb_cmd, NULL };
+#define GED_BB_COMMANDS(X, XID) \
+    X(bb, ged_bb_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  bb_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_BB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_bb", 1, GED_BB_COMMANDS)
 
 /*
  * Local Variables:

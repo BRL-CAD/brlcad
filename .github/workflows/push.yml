@@ -293,7 +293,7 @@ jobs:
         id: build_parallel
         shell: powershell
         run: |
-          ninja
+          ninja -v
         working-directory: ${{ github.workspace }}/build_winninja
         continue-on-error: true
 

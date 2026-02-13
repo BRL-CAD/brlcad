@@ -743,31 +743,20 @@ ged_dm_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_ERROR;
 }
 
-#ifdef GED_PLUGIN
+
 #include "../include/plugin.h"
 
 extern int ged_ert_core(struct ged *gedp, int argc, const char *argv[]);
-struct ged_cmd_impl ert_cmd_impl = {"ert", ged_ert_core, GED_CMD_DEFAULT};
-const struct ged_cmd ert_cmd = { &ert_cmd_impl };
-
 extern int ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[]);
-struct ged_cmd_impl screen_grab_cmd_impl = {"screen_grab", ged_screen_grab_core, GED_CMD_DEFAULT};
-const struct ged_cmd screen_grab_cmd = { &screen_grab_cmd_impl };
-struct ged_cmd_impl screengrab_cmd_impl = {"screengrab", ged_screen_grab_core, GED_CMD_DEFAULT};
-const struct ged_cmd screengrab_cmd = { &screengrab_cmd_impl };
 
-struct ged_cmd_impl dm_cmd_impl = {"dm", ged_dm_core, GED_CMD_DEFAULT};
-const struct ged_cmd dm_cmd = { &dm_cmd_impl };
+#define GED_DM_COMMANDS(X, XID) \
+    X(ert, ged_ert_core, GED_CMD_DEFAULT) \
+    X(dm, ged_dm_core, GED_CMD_DEFAULT) \
+    X(screen_grab, ged_screen_grab_core, GED_CMD_DEFAULT) \
+    X(screengrab, ged_screen_grab_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *dm_cmds[] = { &screen_grab_cmd, &screengrab_cmd, &dm_cmd, &ert_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  dm_cmds, 4 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_DM_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_dm", 1, GED_DM_COMMANDS)
 
 /*
  * Local Variables:

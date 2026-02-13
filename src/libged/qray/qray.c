@@ -415,24 +415,15 @@ ged_qray_core(struct ged *gedp,
 }
 
 /** @} */
-#ifdef GED_PLUGIN
+
+
 #include "../include/plugin.h"
-struct ged_cmd_impl qray_cmd_impl = {
-    "qray",
-    ged_qray_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd qray_cmd = { &qray_cmd_impl };
-const struct ged_cmd *qray_cmds[] = { &qray_cmd, NULL };
+#define GED_QRAY_COMMANDS(X, XID) \
+    X(qray, ged_qray_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  qray_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_QRAY_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_qray", 1, GED_QRAY_COMMANDS)
 
 /*
  * Local Variables:

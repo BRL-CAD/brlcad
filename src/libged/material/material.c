@@ -633,29 +633,13 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
     return 0;
 }
 
-
-#ifdef GED_PLUGIN
-
 #include "../include/plugin.h"
-struct ged_cmd_impl material_cmd_impl = {
-    "material",
-    ged_material_core,
-    GED_CMD_DEFAULT
-};
 
+#define GED_MATERIAL_COMMANDS(X, XID) \
+    X(material, ged_material_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd material_cmd = { &material_cmd_impl };
-const struct ged_cmd *material_cmds[] = { &material_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  material_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-
-
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_MATERIAL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_material", 1, GED_MATERIAL_COMMANDS)
 
 /*
  * Local Variables:

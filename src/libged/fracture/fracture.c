@@ -213,24 +213,13 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl fracture_cmd_impl = {
-    "fracture",
-    ged_fracture_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd fracture_cmd = { &fracture_cmd_impl };
-const struct ged_cmd *fracture_cmds[] = { &fracture_cmd, NULL };
+#define GED_FRACTURE_COMMANDS(X, XID) \
+    X(fracture, ged_fracture_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  fracture_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_FRACTURE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_fracture", 1, GED_FRACTURE_COMMANDS)
 
 /*
  * Local Variables:

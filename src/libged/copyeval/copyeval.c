@@ -171,24 +171,13 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl copyeval_cmd_impl = {
-    "copyeval",
-    ged_copyeval_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd copyeval_cmd = { &copyeval_cmd_impl };
-const struct ged_cmd *copyeval_cmds[] = { &copyeval_cmd, NULL };
+#define GED_COPYEVAL_COMMANDS(X, XID) \
+    X(copyeval, ged_copyeval_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  copyeval_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_COPYEVAL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_copyeval", 1, GED_COPYEVAL_COMMANDS)
 
 /*
  * Local Variables:

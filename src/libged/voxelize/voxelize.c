@@ -220,24 +220,13 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl voxelize_cmd_impl = {
-    "voxelize",
-    ged_voxelize_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd voxelize_cmd = { &voxelize_cmd_impl };
-const struct ged_cmd *voxelize_cmds[] = { &voxelize_cmd, NULL };
+#define GED_VOXELIZE_COMMANDS(X, XID) \
+    X(voxelize, ged_voxelize_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  voxelize_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_VOXELIZE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_voxelize", 1, GED_VOXELIZE_COMMANDS)
 
 /*
  * Local Variables:

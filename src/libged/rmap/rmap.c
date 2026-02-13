@@ -150,24 +150,13 @@ ged_rmap_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl rmap_cmd_impl = {
-    "rmap",
-    ged_rmap_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd rmap_cmd = { &rmap_cmd_impl };
-const struct ged_cmd *rmap_cmds[] = { &rmap_cmd, NULL };
+#define GED_RMAP_COMMANDS(X, XID) \
+    X(rmap, ged_rmap_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  rmap_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_RMAP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_rmap", 1, GED_RMAP_COMMANDS)
 
 /*
  * Local Variables:

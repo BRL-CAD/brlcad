@@ -19,13 +19,20 @@ lemon_target(
 add_perplex_lemon_dependency(${DPLOT_READER}_scanner ${DPLOT_READER}_parser)
 distclean(${CMAKE_CURRENT_BINARY_DIR}/${DPLOT_READER}_parser_${DPLOT_READER}_parser/${DPLOT_READER}_parser.lemon)
 
-include_directories(
+set(
+  BREP_LIBS
+  libged
+  libbu
+)
+
+set(
+  BREP_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/..
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
+)
+
+set(
+  BREP_LOCAL_INCLUDE_DIRS
   ${PERPLEX_${DPLOT_READER}_scanner_INCLUDE_DIR}
   ${LEMON_${DPLOT_READER}_parser_INCLUDE_DIR}
 )
@@ -49,8 +56,17 @@ set(
   valid.cpp
 )
 
-ged_plugin_library(ged-brep ${BREP_SRCS})
-target_link_libraries(ged-brep libged libbu)
+# Because ged-brep depends on the perplex/lemon generated sources for its content,
+# its not suitable to build as part of libged proper - we would need to have
+# the parent libged library depend on the local generated file targets.  Hence
+# we mark this one as PLUGIN_ONLY
+ged_plugin_library(ged-brep
+  ${BREP_SRCS}
+  INCLUDES ${BREP_INCLUDE_DIRS}
+  SYSTEM_INCLUDES ${BREP_LOCAL_INCLUDE_DIRS}
+  LIBS ${BREP_LIBS}
+  PLUGIN_ONLY
+)
 
 # Suppress warnings from the generated source code
 check_c_compiler_flag("-w"   HAVE_C_FLAG_W)

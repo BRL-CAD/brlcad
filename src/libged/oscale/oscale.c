@@ -130,24 +130,13 @@ ged_oscale_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl oscale_cmd_impl = {
-    "oscale",
-    ged_oscale_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd oscale_cmd = { &oscale_cmd_impl };
-const struct ged_cmd *oscale_cmds[] = { &oscale_cmd, NULL };
+#define GED_OSCALE_COMMANDS(X, XID) \
+    X(oscale, ged_oscale_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  oscale_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_OSCALE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_oscale", 1, GED_OSCALE_COMMANDS)
 
 /*
  * Local Variables:

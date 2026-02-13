@@ -46,7 +46,6 @@
 #include "rt/view.h"
 
 #include "ged/view.h"
-#include "./alphanum.h"
 #include "./ged_private.h"
 
 static int

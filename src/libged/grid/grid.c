@@ -299,25 +299,13 @@ ged_grid_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_ERROR;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl grid_cmd_impl = {
-    "grid",
-    ged_grid_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd grid_cmd = { &grid_cmd_impl };
-const struct ged_cmd *grid_cmds[] = { &grid_cmd, NULL };
+#define GED_GRID_COMMANDS(X, XID) \
+    X(grid, ged_grid_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  grid_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_GRID_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_grid", 1, GED_GRID_COMMANDS)
 
 /*
  * Local Variables:

@@ -2014,24 +2014,13 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl tire_cmd_impl = {
-    "tire",
-    ged_tire_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd tire_cmd = { &tire_cmd_impl };
-const struct ged_cmd *tire_cmds[] = { &tire_cmd, NULL };
+#define GED_TIRE_COMMANDS(X, XID) \
+    X(tire, ged_tire_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  tire_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_TIRE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_tire", 1, GED_TIRE_COMMANDS)
 
 /*
  * Local Variables:

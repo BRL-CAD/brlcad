@@ -172,24 +172,13 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl rtwizard_cmd_impl = {
-    "rtwizard",
-    ged_rtwizard_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd rtwizard_cmd = { &rtwizard_cmd_impl };
-const struct ged_cmd *rtwizard_cmds[] = { &rtwizard_cmd, NULL };
+#define GED_RTWIZARD_COMMANDS(X, XID) \
+    X(rtwizard, ged_rtwizard_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  rtwizard_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_RTWIZARD_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_rtwizard", 1, GED_RTWIZARD_COMMANDS)
 
 /*
  * Local Variables:

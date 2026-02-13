@@ -75,24 +75,13 @@ ged_vrot_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl vrot_cmd_impl = {
-    "vrot",
-    ged_vrot_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd vrot_cmd = { &vrot_cmd_impl };
-const struct ged_cmd *vrot_cmds[] = { &vrot_cmd, NULL };
+#define GED_VROT_COMMANDS(X, XID) \
+    X(vrot, ged_vrot_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  vrot_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_VROT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_vrot", 1, GED_VROT_COMMANDS)
 
 /*
  * Local Variables:

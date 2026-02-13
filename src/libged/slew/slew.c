@@ -98,26 +98,15 @@ ged_slew_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl slew_cmd_impl = {"slew", ged_slew_core, GED_CMD_DEFAULT};
-const struct ged_cmd slew_cmd = { &slew_cmd_impl };
 
-struct ged_cmd_impl sv_cmd_impl = {"sv", ged_slew_core, GED_CMD_DEFAULT};
-const struct ged_cmd sv_cmd = { &sv_cmd_impl };
+#define GED_SLEW_COMMANDS(X, XID) \
+    X(slew, ged_slew_core, GED_CMD_DEFAULT) \
+    X(sv, ged_slew_core, GED_CMD_DEFAULT) \
+    X(vslew, ged_slew_core, GED_CMD_DEFAULT) \
 
-struct ged_cmd_impl vslew_cmd_impl = {"vslew", ged_slew_core, GED_CMD_DEFAULT};
-const struct ged_cmd vslew_cmd = { &vslew_cmd_impl };
-
-const struct ged_cmd *slew_cmds[] = { &slew_cmd, &sv_cmd, &vslew_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  slew_cmds, 3 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_SLEW_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_slew", 1, GED_SLEW_COMMANDS)
 
 /*
  * Local Variables:

@@ -300,31 +300,14 @@ ged_find_arb_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl move_arb_edge_cmd_impl = {
-    "move_arb_edge",
-    ged_move_arb_edge_core,
-    GED_CMD_DEFAULT
-};
-const struct ged_cmd move_arb_edge_cmd = { &move_arb_edge_cmd_impl };
 
-struct ged_cmd_impl find_arb_edge_cmd_impl = {
-    "find_arb_edge",
-    ged_find_arb_edge_nearest_pnt_core,
-    GED_CMD_DEFAULT
-};
-const struct ged_cmd find_arb_edge_cmd = { &find_arb_edge_cmd_impl };
+#define GED_MOVE_ARB_EDGE_COMMANDS(X, XID) \
+    X(move_arb_edge, ged_move_arb_edge_core, GED_CMD_DEFAULT) \
+    X(find_arb_edge, ged_find_arb_edge_nearest_pnt_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *move_arb_edge_cmds[] = { &move_arb_edge_cmd, &find_arb_edge_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  move_arb_edge_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_MOVE_ARB_EDGE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_move_arb_edge", 1, GED_MOVE_ARB_EDGE_COMMANDS)
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 find_package_eigen(REQUIRED)
 brlcad_find_package(manifold REQUIRED)
 
-set(BOT_LIBS libbg libbu manifold::manifold)
+set(BOT_LIBS libged libbg libbu manifold::manifold)
 
 brlcad_find_package(Geogram REQUIRED SYSPATTERN geogram)
 set(BOT_LOCAL_INCLUDE_DIRS ${BOT_LOCAL_INCLUDE_DIRS} ${Geogram_INCLUDE_DIR})

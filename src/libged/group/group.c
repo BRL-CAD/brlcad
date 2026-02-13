@@ -59,24 +59,14 @@ ged_group_core(struct ged *gedp, int argc, const char *argv[])
     return _ged_combadd2(gedp, (char *)argv[1], argc-2, argv+2, 0, WMOP_UNION, 0, 0, NULL, 1);
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl group_cmd_impl = {"group", ged_group_core, GED_CMD_DEFAULT};
-const struct ged_cmd group_cmd = { &group_cmd_impl };
 
-struct ged_cmd_impl g_cmd_impl = {"g", ged_group_core, GED_CMD_DEFAULT};
-const struct ged_cmd g_cmd = { &g_cmd_impl };
+#define GED_GROUP_COMMANDS(X, XID) \
+    X(g, ged_group_core, GED_CMD_DEFAULT) \
+    X(group, ged_group_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *group_cmds[] = { &group_cmd, &g_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  group_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_GROUP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_group", 1, GED_GROUP_COMMANDS)
 
 /*
  * Local Variables:

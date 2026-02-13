@@ -112,7 +112,7 @@ color_zaprec(struct ged *gedp, struct mater *mp)
  * used by the 'color' command when provided the -e option
  */
 static int
-edcolor(struct ged *gedp, int argc, const char *argv[])
+_edcolor(struct ged *gedp, int argc, const char *argv[])
 {
     struct mater *mp;
     struct mater *zot;
@@ -263,7 +263,7 @@ ged_edcolor_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    return edcolor(gedp, argc, argv);
+    return _edcolor(gedp, argc, argv);
 }
 
 
@@ -296,7 +296,7 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
     /* edcolor */
     if (argc == 2) {
 	if (argv[1][0] == '-' && argv[1][1] == 'e' && argv[1][2] == '\0') {
-	    return edcolor(gedp, argc, argv);
+	    return _edcolor(gedp, argc, argv);
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return BRLCAD_ERROR;
@@ -359,24 +359,14 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl color_cmd_impl = {"color", ged_color_core, GED_CMD_DEFAULT};
-const struct ged_cmd color_cmd = { &color_cmd_impl };
 
-struct ged_cmd_impl edcolor_cmd_impl = {"edcolor", ged_edcolor_core, GED_CMD_DEFAULT};
-const struct ged_cmd edcolor_cmd = { &edcolor_cmd_impl };
+#define GED_COLOR_COMMANDS(X, XID) \
+    X(color, ged_color_core, GED_CMD_DEFAULT) \
+    X(edcolor, ged_edcolor_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *color_cmds[] = { &color_cmd, &edcolor_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  color_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_COLOR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_color", 1, GED_COLOR_COMMANDS)
 
 /*
  * Local Variables:

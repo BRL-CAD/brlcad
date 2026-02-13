@@ -64,24 +64,13 @@ ged_pmat_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl pmat_cmd_impl = {
-    "pmat",
-    ged_pmat_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd pmat_cmd = { &pmat_cmd_impl };
-const struct ged_cmd *pmat_cmds[] = { &pmat_cmd, NULL };
+#define GED_PMAT_COMMANDS(X, XID) \
+    X(pmat, ged_pmat_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  pmat_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_PMAT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_pmat", 1, GED_PMAT_COMMANDS)
 
 /*
  * Local Variables:

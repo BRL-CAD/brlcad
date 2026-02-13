@@ -46,24 +46,13 @@ ged_tra_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl tra_cmd_impl = {
-    "tra",
-    ged_tra_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd tra_cmd = { &tra_cmd_impl };
-const struct ged_cmd *tra_cmds[] = { &tra_cmd, NULL };
+#define GED_TRA_COMMANDS(X, XID) \
+    X(tra, ged_tra_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  tra_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_TRA_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_tra", 1, GED_TRA_COMMANDS)
 
 /*
  * Local Variables:

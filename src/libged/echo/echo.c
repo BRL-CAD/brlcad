@@ -52,24 +52,13 @@ ged_echo_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl echo_cmd_impl = {
-    "echo",
-    ged_echo_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd echo_cmd = { &echo_cmd_impl };
-const struct ged_cmd *echo_cmds[] = { &echo_cmd, NULL };
+#define GED_ECHO_COMMANDS(X, XID) \
+    X(echo, ged_echo_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  echo_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_ECHO_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_echo", 1, GED_ECHO_COMMANDS)
 
 /*
  * Local Variables:

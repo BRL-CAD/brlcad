@@ -576,24 +576,13 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl xpush_cmd_impl = {
-    "xpush",
-    ged_xpush_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd xpush_cmd = { &xpush_cmd_impl };
-const struct ged_cmd *xpush_cmds[] = { &xpush_cmd, NULL };
+#define GED_XPUSH_COMMANDS(X, XID) \
+    X(xpush, ged_xpush_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  xpush_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_XPUSH_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_xpush", 1, GED_XPUSH_COMMANDS)
 
 /*
  * Local Variables:

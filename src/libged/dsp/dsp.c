@@ -148,25 +148,13 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_ERROR;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl dsp_cmd_impl = {
-    "dsp",
-    ged_dsp_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd dsp_cmd = { &dsp_cmd_impl };
-const struct ged_cmd *dsp_cmds[] = { &dsp_cmd, NULL };
+#define GED_DSP_COMMANDS(X, XID) \
+    X(dsp, ged_dsp_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  dsp_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_DSP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_dsp", 1, GED_DSP_COMMANDS)
 
 /*
  * Local Variables:
@@ -177,3 +165,4 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

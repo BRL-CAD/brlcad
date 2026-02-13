@@ -105,23 +105,14 @@ ged_remove_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl remove_cmd_impl = {"remove", ged_remove_core, GED_CMD_DEFAULT};
-const struct ged_cmd remove_cmd = { &remove_cmd_impl };
 
-struct ged_cmd_impl rm_cmd_impl = {"rm", ged_remove_core, GED_CMD_DEFAULT};
-const struct ged_cmd rm_cmd = { &rm_cmd_impl };
+#define GED_REMOVE_COMMANDS(X, XID) \
+    X(remove, ged_remove_core, GED_CMD_DEFAULT) \
+    X(rm, ged_remove_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *remove_cmds[] = { &remove_cmd, &rm_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  remove_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_REMOVE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_remove", 1, GED_REMOVE_COMMANDS)
 
 /*
  * Local Variables:

@@ -125,24 +125,13 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl lod_cmd_impl = {
-    "lod",
-    ged_lod_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd lod_cmd = { &lod_cmd_impl };
-const struct ged_cmd *lod_cmds[] = { &lod_cmd, NULL };
+#define GED_LOD_COMMANDS(X, XID) \
+    X(lod, ged_lod_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  lod_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_LOD_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_lod", 1, GED_LOD_COMMANDS)
 
 /*
  * Local Variables:

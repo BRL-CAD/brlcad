@@ -134,24 +134,13 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl shells_cmd_impl = {
-    "shells",
-    ged_shells_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd shells_cmd = { &shells_cmd_impl };
-const struct ged_cmd *shells_cmds[] = { &shells_cmd, NULL };
+#define GED_SHELLS_COMMANDS(X, XID) \
+    X(shells, ged_shells_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  shells_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_SHELLS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_shells", 1, GED_SHELLS_COMMANDS)
 
 /*
  * Local Variables:

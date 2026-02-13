@@ -189,6 +189,7 @@ set(
   bu_ignore_files
   CMakeLists.txt
   bitv.h
+  bu_plugin.h
   charclass.h
   date.h
   fort.h

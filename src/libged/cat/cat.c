@@ -61,25 +61,13 @@ ged_cat_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl cat_cmd_impl = {
-    "cat",
-    ged_cat_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd cat_cmd = { &cat_cmd_impl };
-const struct ged_cmd *cat_cmds[] = { &cat_cmd, NULL };
+#define GED_CAT_COMMANDS(X, XID) \
+    X(cat, ged_cat_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  cat_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_CAT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_cat", 1, GED_CAT_COMMANDS)
 
 /*
  * Local Variables:

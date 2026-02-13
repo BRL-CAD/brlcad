@@ -499,27 +499,14 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-extern "C" {
-    struct ged_cmd_impl concat_cmd_impl = { "concat", ged_concat_core, GED_CMD_DEFAULT };
-    const struct ged_cmd concat_cmd = { &concat_cmd_impl };
 
-    struct ged_cmd_impl dbconcat_cmd_impl = { "dbconcat", ged_concat_core, GED_CMD_DEFAULT };
-    const struct ged_cmd dbconcat_cmd = { &dbconcat_cmd_impl };
+#define GED_CONCAT_COMMANDS(X, XID) \
+    X(concat, ged_concat_core, GED_CMD_DEFAULT) \
+    X(dbconcat, ged_concat_core, GED_CMD_DEFAULT) \
 
-
-    const struct ged_cmd *concat_cmds[] = { &concat_cmd,  &dbconcat_cmd, NULL };
-
-    static const struct ged_plugin pinfo = { GED_API,  concat_cmds, 2 };
-
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-    {
-	return &pinfo;
-    }
-}
-#endif
+GED_DECLARE_COMMAND_SET(GED_CONCAT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_concat", 1, GED_CONCAT_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -529,4 +516,3 @@ extern "C" {
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

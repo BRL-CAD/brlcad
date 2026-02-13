@@ -85,25 +85,13 @@ ged_adjust_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl adjust_cmd_impl = {
-    "adjust",
-    ged_adjust_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd adjust_cmd = { &adjust_cmd_impl };
-const struct ged_cmd *adjust_cmds[] = { &adjust_cmd, NULL };
+#define GED_ADJUST_COMMANDS(X, XID) \
+    X(adjust, ged_adjust_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  adjust_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_ADJUST_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_adjust", 1, GED_ADJUST_COMMANDS)
 
 /*
  * Local Variables:

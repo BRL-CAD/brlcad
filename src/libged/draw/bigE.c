@@ -45,7 +45,7 @@
 
 /* #define debug 1 */
 
-union E_tree *build_etree(union tree *tp, struct _ged_client_data *dgcdp);
+static union E_tree *e_build_etree(union tree *tp, struct _ged_client_data *dgcdp);
 
 /* segment types (stored in the "seg_stp" field of the (struct seg) */
 #define ON_SURF	(struct soltab *)0x1
@@ -136,7 +136,7 @@ add_solid(const struct directory *dp,
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
 
-	eptr = build_etree(comb->tree, dgcdp);
+	eptr = e_build_etree(comb->tree, dgcdp);
 	rt_db_free_internal(&intern);
 	return eptr;
     }
@@ -225,8 +225,8 @@ add_solid(const struct directory *dp,
 
 
 /* build an E_tree corresponding to the region tree (tp) */
-union E_tree *
-build_etree(union tree *tp,
+static union E_tree *
+e_build_etree(union tree *tp,
 	    struct _ged_client_data *dgcdp)
 {
     union E_tree *eptr = NULL;
@@ -242,8 +242,8 @@ build_etree(union tree *tp,
 	    BU_ALLOC(eptr, union E_tree);
 	    eptr->magic = E_TREE_MAGIC;
 	    eptr->n.op = tp->tr_op;
-	    eptr->n.left = build_etree(tp->tr_b.tb_left, dgcdp);
-	    eptr->n.right = build_etree(tp->tr_b.tb_right, dgcdp);
+	    eptr->n.left = e_build_etree(tp->tr_b.tb_left, dgcdp);
+	    eptr->n.right = e_build_etree(tp->tr_b.tb_right, dgcdp);
 	    break;
 	case OP_SOLID:
 	    stp = tp->tr_a.tu_stp;
@@ -267,15 +267,16 @@ build_etree(union tree *tp,
 	    eptr->l.m = (struct model *)NULL;
 	    break;
 	default:
-	    bu_bomb("build_etree() Unknown tr_op\n");
+	    bu_bomb("e_build_etree() Unknown tr_op\n");
     }
     return eptr;
 }
 
 
 /* a handy routine (for debugging) that prints asegment list */
-void
-show_seg(struct bu_list *seg, int str)
+#ifdef debug
+static void
+e_show_seg(struct bu_list *seg, int str)
 {
     struct seg *ptr;
 
@@ -301,7 +302,7 @@ show_seg(struct bu_list *seg, int str)
 	}
     }
 }
-
+#endif
 
 /* given a segment list, eliminate any overlaps in the segments */
 static void
@@ -443,7 +444,7 @@ promote_ints(struct bu_list *head,
 
 #ifdef debug
     bu_log("In promote_ints():\n");
-    show_seg(head, "SEGS");
+    e_show_seg(head, "SEGS");
     for (BU_LIST_FOR (a, seg, head)) {
 	b = BU_LIST_PNEXT(seg, &a->l);
 	if (BU_LIST_IS_HEAD(&b->l, head))
@@ -630,7 +631,7 @@ promote_ints(struct bu_list *head,
 
 #ifdef debug
     bu_log("Results of promote_ints()\n");
-    show_seg(head, "SEGS");
+    e_show_seg(head, "SEGS");
 #endif
 }
 
@@ -650,8 +651,8 @@ eval_op(struct bu_list *A,
 
 #ifdef debug
     bu_log("In eval_op:\n");
-    show_seg(A, "\tA:");
-    show_seg(B, "\tB:");
+    e_show_seg(A, "\tA:");
+    e_show_seg(B, "\tB:");
 #endif
 
     switch (op) {
@@ -666,7 +667,7 @@ eval_op(struct bu_list *A,
 		bu_free((char *)B, "bu_list");
 
 #ifdef debug
-		show_seg(A, "Returning");
+		e_show_seg(A, "Returning");
 #endif
 
 		return A;
@@ -674,7 +675,7 @@ eval_op(struct bu_list *A,
 		bu_free((char *)B, "bu_list");
 
 #ifdef debug
-		show_seg(A, "Returning");
+		e_show_seg(A, "Returning");
 #endif
 
 		return A;
@@ -704,7 +705,7 @@ eval_op(struct bu_list *A,
 	    BU_LIST_INSERT_LIST(A, &ret);
 
 #ifdef debug
-	    show_seg(A, "Returning");
+	    e_show_seg(A, "Returning");
 #endif
 
 	    return A;
@@ -720,7 +721,7 @@ eval_op(struct bu_list *A,
 		bu_free((char *)B, "bu_list");
 
 #ifdef debug
-		show_seg(A, "Returning");
+		e_show_seg(A, "Returning");
 #endif
 
 		return A;
@@ -747,7 +748,7 @@ eval_op(struct bu_list *A,
 	    BU_LIST_INSERT_LIST(A, &ret)
 
 #ifdef debug
-		show_seg(A, "Returning");
+		e_show_seg(A, "Returning");
 #endif
 
 	    return A;
@@ -761,7 +762,7 @@ eval_op(struct bu_list *A,
 		bu_free((char *)A, "bu_list");
 
 #ifdef debug
-		show_seg(B, "Returning B (A is empty)");
+		e_show_seg(B, "Returning B (A is empty)");
 #endif
 
 		return B;
@@ -770,7 +771,7 @@ eval_op(struct bu_list *A,
 		bu_free((char *)B, "bu_list");
 
 #ifdef debug
-		show_seg(A, "Returning A (B is empty)");
+		e_show_seg(A, "Returning A (B is empty)");
 #endif
 
 		return A;
@@ -840,8 +841,8 @@ eval_op(struct bu_list *A,
 	    eliminate_overlaps(&ons, dgcdp);
 
 #ifdef debug
-	    show_seg(&ons, "ONS");
-	    show_seg(&ins, "INS");
+	    e_show_seg(&ons, "ONS");
+	    e_show_seg(&ins, "INS");
 #endif
 
 	    /* subtract INS from ONS */
@@ -936,7 +937,7 @@ eval_op(struct bu_list *A,
 	    BU_LIST_INSERT_LIST(A, &ret)
 
 #ifdef debug
-		show_seg(A, "Returning");
+		e_show_seg(A, "Returning");
 #endif
 
 	    return A;
@@ -948,7 +949,7 @@ eval_op(struct bu_list *A,
     bu_free((char *)B, "bu_list");
 
 #ifdef debug
-    show_seg(A, "Returning (default)");
+    e_show_seg(A, "Returning (default)");
 #endif
 
     return A;
@@ -978,7 +979,7 @@ eval_etree(union E_tree *eptr,
 	    BU_LIST_INSERT_LIST(A, &eptr->l.seghead);
 
 #ifdef debug
-	    show_seg(A, "LEAF:");
+	    e_show_seg(A, "LEAF:");
 #endif
 
 	    return A;
@@ -1259,7 +1260,7 @@ shoot_and_plot(point_t start_pt,
     final_segs = eval_etree(eptr, dgcdp);
 
 #ifdef debug
-    show_seg(final_segs, "DRAWING");
+    e_show_seg(final_segs, "DRAWING");
 #endif
 
     if (final_segs) {
@@ -2097,7 +2098,7 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
 
 	    for (BU_LIST_FOR (rp, region, &(dgcdp->rtip->HeadRegion))) {
 		dgcdp->num_halfs = 0;
-		eptr = build_etree(rp->reg_treetop, dgcdp);
+		eptr = e_build_etree(rp->reg_treetop, dgcdp);
 
 		if (dgcdp->num_halfs)
 		    fix_halfs(dgcdp);

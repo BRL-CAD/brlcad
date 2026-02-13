@@ -131,32 +131,17 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl rt_cmd_impl = {"rt", ged_rt_core, GED_CMD_DEFAULT};
-const struct ged_cmd rt_cmd = { &rt_cmd_impl };
 
-struct ged_cmd_impl rtarea_cmd_impl = {"rtarea", ged_rt_core, GED_CMD_DEFAULT};
-const struct ged_cmd rtarea_cmd = { &rtarea_cmd_impl };
+#define GED_RT_COMMANDS(X, XID) \
+    X(rt, ged_rt_core, GED_CMD_DEFAULT) \
+    X(rtarea, ged_rt_core, GED_CMD_DEFAULT) \
+    X(rtedge, ged_rt_core, GED_CMD_DEFAULT) \
+    X(rtweight, ged_rt_core, GED_CMD_DEFAULT) \
+    X(art, ged_rt_core, GED_CMD_DEFAULT) \
 
-struct ged_cmd_impl rtedge_cmd_impl = {"rtedge", ged_rt_core, GED_CMD_DEFAULT};
-const struct ged_cmd rtedge_cmd = { &rtedge_cmd_impl };
-
-struct ged_cmd_impl rtweight_cmd_impl = {"rtweight", ged_rt_core, GED_CMD_DEFAULT};
-const struct ged_cmd rtweight_cmd = { &rtweight_cmd_impl };
-
-struct ged_cmd_impl art_cmd_impl = { "art", ged_rt_core, GED_CMD_DEFAULT };
-const struct ged_cmd art_cmd = { &art_cmd_impl };
-
-const struct ged_cmd *rt_cmds[] = { &rt_cmd, &rtarea_cmd, &rtedge_cmd, &rtweight_cmd, &art_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  rt_cmds, 5 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_RT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_rt", 1, GED_RT_COMMANDS)
 
 /*
  * Local Variables:

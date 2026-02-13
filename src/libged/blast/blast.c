@@ -60,25 +60,14 @@ ged_blast_core(struct ged *gedp, int argc, const char *argv[])
     return ged_exec_draw(gedp, argc, argv);
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl blast_cmd_impl = {"blast", ged_blast_core, GED_CMD_DEFAULT};
-const struct ged_cmd blast_cmd = { &blast_cmd_impl };
 
-struct ged_cmd_impl B_cmd_impl = {"B", ged_blast_core, GED_CMD_DEFAULT};
-const struct ged_cmd B_cmd = { &B_cmd_impl };
+#define GED_BLAST_COMMANDS(X, XID) \
+    X(B,     ged_blast_core, GED_CMD_DEFAULT) \
+    X(blast, ged_blast_core, GED_CMD_DEFAULT)
 
-
-const struct ged_cmd *blast_cmds[] = { &blast_cmd, &B_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  blast_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_BLAST_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_blast", 1, GED_BLAST_COMMANDS)
 
 /*
  * Local Variables:

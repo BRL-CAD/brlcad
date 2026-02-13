@@ -156,24 +156,13 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl rcodes_cmd_impl = {
-    "rcodes",
-    ged_rcodes_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd rcodes_cmd = { &rcodes_cmd_impl };
-const struct ged_cmd *rcodes_cmds[] = { &rcodes_cmd, NULL };
+#define GED_RCODES_COMMANDS(X, XID) \
+    X(rcodes, ged_rcodes_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  rcodes_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_RCODES_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_rcodes", 1, GED_RCODES_COMMANDS)
 
 /*
  * Local Variables:

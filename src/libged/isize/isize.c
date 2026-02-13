@@ -52,25 +52,13 @@ ged_isize_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_ERROR;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl isize_cmd_impl = {
-    "isize",
-    ged_isize_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd isize_cmd = { &isize_cmd_impl };
-const struct ged_cmd *isize_cmds[] = { &isize_cmd, NULL };
+#define GED_ISIZE_COMMANDS(X, XID) \
+    X(isize, ged_isize_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  isize_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_ISIZE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_isize", 1, GED_ISIZE_COMMANDS)
 
 /*
  * Local Variables:

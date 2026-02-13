@@ -81,25 +81,13 @@ ged_ae2dir_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl ae2dir_cmd_impl = {
-    "ae2dir",
-    ged_ae2dir_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd ae2dir_cmd = { &ae2dir_cmd_impl };
-const struct ged_cmd *ae2dir_cmds[] = { &ae2dir_cmd, NULL };
+#define GED_AE2DIR_COMMANDS(X, XID) \
+    X(ae2dir, ged_ae2dir_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  ae2dir_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_AE2DIR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_ae2dir", 1, GED_AE2DIR_COMMANDS)
 
 /*
  * Local Variables:

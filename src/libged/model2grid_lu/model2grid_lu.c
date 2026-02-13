@@ -76,25 +76,13 @@ bad:
     return BRLCAD_ERROR;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl model2grid_lu_cmd_impl = {
-    "model2grid_lu",
-    ged_model2grid_lu_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd model2grid_lu_cmd = { &model2grid_lu_cmd_impl };
-const struct ged_cmd *model2grid_lu_cmds[] = { &model2grid_lu_cmd, NULL };
+#define GED_MODEL2GRID_LU_COMMANDS(X, XID) \
+    X(model2grid_lu, ged_model2grid_lu_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  model2grid_lu_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_MODEL2GRID_LU_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_model2grid_lu", 1, GED_MODEL2GRID_LU_COMMANDS)
 
 /*
  * Local Variables:

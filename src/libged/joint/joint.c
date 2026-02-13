@@ -3578,25 +3578,13 @@ struct funtab joint_tab[] = {
      NULL, 0, 0, FALSE}
 };
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl joint_cmd_impl = {
-    "joint",
-    ged_joint_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd joint_pcmd = { &joint_cmd_impl };
-const struct ged_cmd *joint_cmds[] = { &joint_pcmd, NULL };
+#define GED_JOINT_COMMANDS(X, XID) \
+    X(joint, ged_joint_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  joint_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_JOINT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_joint", 1, GED_JOINT_COMMANDS)
 
 /*
  * Local Variables:

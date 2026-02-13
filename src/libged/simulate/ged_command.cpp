@@ -142,22 +142,13 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 
 #endif
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-extern "C" {
-struct ged_cmd_impl simulate_cmd_impl = { "simulate", ged_simulate_core, GED_CMD_DEFAULT };
-const struct ged_cmd simulate_cmd = { &simulate_cmd_impl };
-const struct ged_cmd *simulate_cmds[] = { &simulate_cmd,  NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  simulate_cmds, 1 };
+#define GED_SIMULATE_COMMANDS(X, XID) \
+    X(simulate,  ged_simulate_core,   GED_CMD_DEFAULT)
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-}
-#endif
-
+GED_DECLARE_COMMAND_SET(GED_SIMULATE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_simulate", 1, GED_SIMULATE_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

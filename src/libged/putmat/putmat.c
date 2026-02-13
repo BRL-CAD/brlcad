@@ -248,24 +248,13 @@ ged_putmat_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl putmat_cmd_impl = {
-    "putmat",
-    ged_putmat_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd putmat_cmd = { &putmat_cmd_impl };
-const struct ged_cmd *putmat_cmds[] = { &putmat_cmd, NULL };
+#define GED_PUTMAT_COMMANDS(X, XID) \
+    X(putmat, ged_putmat_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  putmat_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_PUTMAT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_putmat", 1, GED_PUTMAT_COMMANDS)
 
 /*
  * Local Variables:

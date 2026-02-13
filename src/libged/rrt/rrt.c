@@ -68,24 +68,13 @@ ged_rrt_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl rrt_cmd_impl = {
-    "rrt",
-    ged_rrt_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd rrt_cmd = { &rrt_cmd_impl };
-const struct ged_cmd *rrt_cmds[] = { &rrt_cmd, NULL };
+#define GED_RRT_COMMANDS(X, XID) \
+    X(rrt, ged_rrt_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  rrt_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_RRT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_rrt", 1, GED_RRT_COMMANDS)
 
 /*
  * Local Variables:

@@ -163,28 +163,13 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-extern "C" {
-#ifdef GED_PLUGIN
-struct ged_cmd_impl reopen_cmd_impl = {"reopen", ged_opendb_core, GED_CMD_DEFAULT};
-const struct ged_cmd reopen_cmd = { &reopen_cmd_impl };
+#define GED_OPEN_COMMANDS(X, XID) \
+    X(reopen, ged_opendb_core, GED_CMD_DEFAULT) \
+    X(opendb, ged_opendb_core, GED_CMD_DEFAULT) \
+    X(open, ged_opendb_core, GED_CMD_DEFAULT) \
 
-struct ged_cmd_impl opendb_cmd_impl = {"opendb", ged_opendb_core, GED_CMD_DEFAULT};
-const struct ged_cmd opendb_cmd = { &opendb_cmd_impl };
-
-struct ged_cmd_impl open_cmd_impl = {"open", ged_opendb_core, GED_CMD_DEFAULT};
-const struct ged_cmd open_cmd = { &open_cmd_impl };
-
-const struct ged_cmd *open_cmds[] = { &reopen_cmd, &opendb_cmd, &open_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  open_cmds, 3 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
-}
-
+GED_DECLARE_COMMAND_SET(GED_OPEN_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_open", 1, GED_OPEN_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -194,4 +179,3 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

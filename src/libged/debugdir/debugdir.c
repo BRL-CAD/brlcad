@@ -51,25 +51,13 @@ ged_debugdir_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl debugdir_cmd_impl = {
-    "debugdir",
-    ged_debugdir_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd debugdir_cmd = { &debugdir_cmd_impl };
-const struct ged_cmd *debugdir_cmds[] = { &debugdir_cmd, NULL };
+#define GED_DEBUGDIR_COMMANDS(X, XID) \
+    X(debugdir, ged_debugdir_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  debugdir_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_DEBUGDIR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_debugdir", 1, GED_DEBUGDIR_COMMANDS)
 
 /*
  * Local Variables:

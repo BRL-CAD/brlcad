@@ -107,25 +107,13 @@ ged_hide_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl hide_cmd_impl = {
-    "hide",
-    ged_hide_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd hide_cmd = { &hide_cmd_impl };
-const struct ged_cmd *hide_cmds[] = { &hide_cmd, NULL };
+#define GED_HIDE_COMMANDS(X, XID) \
+    X(hide, ged_hide_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  hide_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_HIDE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_hide", 1, GED_HIDE_COMMANDS)
 
 /*
  * Local Variables:

@@ -76,25 +76,14 @@ ged_instance_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl instance_cmd_impl = {"instance", ged_instance_core, GED_CMD_DEFAULT};
-const struct ged_cmd instance_cmd = { &instance_cmd_impl };
 
-struct ged_cmd_impl i_cmd_impl = {"i", ged_instance_core, GED_CMD_DEFAULT};
-const struct ged_cmd i_cmd = { &i_cmd_impl };
+#define GED_INSTANCE_COMMANDS(X, XID) \
+    X(i, ged_instance_core, GED_CMD_DEFAULT) \
+    X(instance, ged_instance_core, GED_CMD_DEFAULT) \
 
-
-const struct ged_cmd *instance_cmds[] = { &instance_cmd, &i_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  instance_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_INSTANCE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_instance", 1, GED_INSTANCE_COMMANDS)
 
 /*
  * Local Variables:

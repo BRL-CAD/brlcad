@@ -1,13 +1,9 @@
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-)
+set(PLUGIN_LIBS libged libdm libbu)
 
-ged_plugin_library(ged-get_autoview get_autoview.c)
-target_link_libraries(ged-get_autoview libged libdm libbu)
+ged_plugin_library(ged-get_autoview
+  get_autoview.c
+  LIBS ${PLUGIN_LIBS}
+)
 
 cmakefiles(
   CMakeLists.txt

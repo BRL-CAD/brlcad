@@ -132,25 +132,13 @@ fail:
     return BRLCAD_ERROR;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl arced_cmd_impl = {
-    "arced",
-    ged_arced_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd arced_cmd = { &arced_cmd_impl };
-const struct ged_cmd *arced_cmds[] = { &arced_cmd, NULL };
+#define GED_ARCED_COMMANDS(X, XID) \
+    X(arced, ged_arced_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  arced_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_ARCED_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_arced", 1, GED_ARCED_COMMANDS)
 
 /*
  * Local Variables:

@@ -1,18 +1,18 @@
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
+set(PLUGIN_LIBS libged libbu)
+
+set(ZAP_SRCS
+  zap.c
+  zap2.cpp
 )
 
-ged_plugin_library(ged-zap zap.c zap2.cpp)
-target_link_libraries(ged-zap libged libbu)
+ged_plugin_library(ged-zap
+  ${ZAP_SRCS}
+  LIBS ${PLUGIN_LIBS}
+)
 
 cmakefiles(
   CMakeLists.txt
-  zap.c
-  zap2.cpp
+  ${ZAP_SRCS}
 )
 
 # Local Variables:

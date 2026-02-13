@@ -146,24 +146,14 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl list_cmd_impl = {"list", ged_list_core, GED_CMD_DEFAULT};
-const struct ged_cmd list_cmd = { &list_cmd_impl };
 
-struct ged_cmd_impl l_cmd_impl = {"l", ged_list_core, GED_CMD_DEFAULT};
-const struct ged_cmd l_cmd = { &l_cmd_impl };
+#define GED_LIST_COMMANDS(X, XID) \
+    X(list, ged_list_core, GED_CMD_DEFAULT) \
+    X(l, ged_list_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *list_cmds[] = { &list_cmd, &l_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  list_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_LIST_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_list", 1, GED_LIST_COMMANDS)
 
 /*
  * Local Variables:

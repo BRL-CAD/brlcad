@@ -610,7 +610,6 @@ _ged_pnts_tri_cmd_spsr(void *bs, int argc, const char **argv)
 }
 
 
-
 static const struct bu_cmdtab _pnts_tri_cmds[] = {
     { "unit",      _ged_pnts_tri_cmd_unit },
     { "ballpivot", _ged_pnts_tri_cmd_ballpivot },
@@ -696,7 +695,6 @@ _ged_pnts_cmd_tri(void *bs, int argc, const char **argv)
     _pnts_tri_show_help(gedp);
     return BRLCAD_ERROR;
 }
-
 
 
 static int
@@ -1023,7 +1021,7 @@ _ged_pnts_cmd_read(void *bs, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	_pnt_read(pnts, numcnt, (const char **)nums, bu_vls_addr(&fmt), conv_factor); 
+	_pnt_read(pnts, numcnt, (const char **)nums, bu_vls_addr(&fmt), conv_factor);
 	pnts_cnt++;
 	bu_vls_trunc(&fl, 0);
 	bu_free(input, "input cpy");
@@ -1461,7 +1459,7 @@ ged_pnts_core(struct ged *gedp, int argc, const char *argv[])
  * argv[5] default size of each point
  */
 int
-ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[]) 
+ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
 {
     double conv_factor = -1.0;
     double psize = -1.0;
@@ -1561,26 +1559,14 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     return ged_exec_pnts(gedp, 10, (const char **)nargv);
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-extern "C" {
-struct ged_cmd_impl pnts_cmd_impl = { "pnts", ged_pnts_core, GED_CMD_DEFAULT };
-const struct ged_cmd pnts_cmd = { &pnts_cmd_impl };
 
-struct ged_cmd_impl make_pnts_cmd_impl = { "make_pnts", ged_make_pnts_core, GED_CMD_DEFAULT };
-const struct ged_cmd make_pnts_cmd = { &make_pnts_cmd_impl };
+#define GED_PNTS_COMMANDS(X, XID) \
+    X(make_pnts, ged_make_pnts_core, GED_CMD_DEFAULT) \
+    X(pnts, ged_pnts_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *pnts_cmds[] = { &make_pnts_cmd,  &pnts_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  pnts_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-}
-#endif
+GED_DECLARE_COMMAND_SET(GED_PNTS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_pnts", 1, GED_PNTS_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -1590,4 +1576,3 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

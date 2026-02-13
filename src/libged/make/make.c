@@ -939,24 +939,13 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl make_cmd_impl = {
-    "make",
-    ged_make_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd make_cmd = { &make_cmd_impl };
-const struct ged_cmd *make_cmds[] = { &make_cmd, NULL };
+#define GED_MAKE_COMMANDS(X, XID) \
+    X(make, ged_make_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  make_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_MAKE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_make", 1, GED_MAKE_COMMANDS)
 
 /*
  * Local Variables:

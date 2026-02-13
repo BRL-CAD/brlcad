@@ -66,25 +66,13 @@ ged_get_eyemodel_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl get_eyemodel_cmd_impl = {
-    "get_eyemodel",
-    ged_get_eyemodel_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd get_eyemodel_cmd = { &get_eyemodel_cmd_impl };
-const struct ged_cmd *get_eyemodel_cmds[] = { &get_eyemodel_cmd, NULL };
+#define GED_GET_EYEMODEL_COMMANDS(X, XID) \
+    X(get_eyemodel, ged_get_eyemodel_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  get_eyemodel_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_GET_EYEMODEL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_get_eyemodel", 1, GED_GET_EYEMODEL_COMMANDS)
 
 /*
  * Local Variables:

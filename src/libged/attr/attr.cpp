@@ -67,23 +67,13 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
     return ret;
 }
 
-
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-extern "C" {
-struct ged_cmd_impl attr_cmd_impl = { "attr", ged_attr_core, GED_CMD_DEFAULT };
-const struct ged_cmd attr_pcmd = { &attr_cmd_impl };
-const struct ged_cmd *attr_cmds[] = { &attr_pcmd,  NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  attr_cmds, 1 };
+#define GED_ATTR_COMMANDS(X, XID) \
+    X(attr, ged_attr_core, GED_CMD_DEFAULT) \
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-}
-#endif
+GED_DECLARE_COMMAND_SET(GED_ATTR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_attr", 1, GED_ATTR_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -93,4 +83,3 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
