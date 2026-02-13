@@ -1,7 +1,7 @@
 /*                        P L U G I N . H
  * BRL-CAD
  *
- * Copyright (c) 2020-2025 United States Government as represented by
+ * Copyright (c) 2025 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,8 +19,6 @@
  */
 /** @file plugin.h
  *
- * Brief description
- *
  */
 
 #ifndef LIBGED_PLUGIN_H
@@ -31,38 +29,13 @@
 
 #define GED_API (2*1000000 + (BRLCAD_VERSION_MAJOR*10000) + (BRLCAD_VERSION_MINOR*100) + BRLCAD_VERSION_PATCH)
 
-extern void *ged_cmds;
-
-/* Default command behaviors when it comes to impacts on calling applications.
- * Need callback hooks in gedp so the application can tell the command what it
- * needs in these scenarios.  For some it might be possible to have default
- * libdm based callbacks if none are supplied... */
-
-/* Flags are set and checked with bitwise operations:
- * (see, for example, https://www.learncpp.com/cpp-tutorial/bit-manipulation-with-bitwise-operators-and-bit-masks/)
- *
- * int flags = 0;
- *
- * // Enable one flag:
- * flags |= flag1
- * // Enable multiple flags at once:
- * flags |= ( flag2 | flag3 );
- * // Disable one flag:
- * flags &= ~flag1
- * // Disable multiple flags at once:
- * flags &= &( flag2 | flag3 );
- */
-
-/* Unsigned long long (which we get from C99) must be at least 64 bits, so we
- * may define up to 64 flags here. (although we probably don't want that many,
- * using that type for future proofing...) */
 #define GED_CMD_DEFAULT       0
-#define GED_CMD_INTERACTIVE   1ULL << 0
-#define GED_CMD_UPDATE_SCENE  1ULL << 1
-#define GED_CMD_UPDATE_VIEW   1ULL << 2
-#define GED_CMD_AUTOVIEW      1ULL << 3
-#define GED_CMD_ALL_VIEWS     1ULL << 4
-#define GED_CMD_VIEW_CALLBACK 1ULL << 5
+#define GED_CMD_INTERACTIVE   (1ULL << 0)
+#define GED_CMD_UPDATE_SCENE  (1ULL << 1)
+#define GED_CMD_UPDATE_VIEW   (1ULL << 2)
+#define GED_CMD_AUTOVIEW      (1ULL << 3)
+#define GED_CMD_ALL_VIEWS     (1ULL << 4)
+#define GED_CMD_VIEW_CALLBACK (1ULL << 5)
 
 struct ged_cmd_impl {
     const char *cname;
@@ -74,6 +47,105 @@ struct ged_cmd_process_impl {
     ged_process_ptr func;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+    /* Registry API: ensure all callers have prototypes in scope */
+    int ged_register_command(const struct ged_cmd *cmd);
+    int ged_command_exists(const char *name);
+    const struct ged_cmd *ged_get_command(const char *name);
+    size_t ged_registered_count(void);
+    void ged_list_command_names(struct bu_vls *out_csv);
+    void ged_list_command_array(const char * const **cl, size_t *cnt);
+    void ged_scan_plugins(void);
+    void libged_init(void);
+    void libged_shutdown(void);
+    const char *ged_init_msgs(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#if defined(LIBGED_STATIC_CORE) && !defined(GED_PLUGIN_ONLY)
+
+/* ======================= C++ Path ======================= */
+#if defined(__cplusplus)
+
+/* ELF/Mach-O compilers – section attribute for linker set manifestation */
+#if defined(__APPLE__)
+#define GED_CMD_SET_ATTR __attribute__((used))
+#elif defined(__GNUC__) || defined(__clang__) || defined(__INTEL_COMPILER)
+#define GED_CMD_SET_ATTR __attribute__((used, section("ged_cmd_set")))
+#else
+#define GED_CMD_SET_ATTR /* Non-ELF fallback – pointer still serves as an anchor */
+#endif
+
+template <typename CmdPtrType>
+struct ged_cmd_autoreg {
+    ged_cmd_autoreg(const CmdPtrType *c) {
+	(void)ged_register_command(c);
+    }
+};
+
+#define REGISTER_GED_COMMAND(cmd_symbol)                                                    \
+    GED_CMD_SET_ATTR const struct ged_cmd * __ged_cmd_ptr_##cmd_symbol = &cmd_symbol;       \
+    static const struct ged_cmd * cmd_symbol##_keep_ptr = &cmd_symbol;                      \
+    static ged_cmd_autoreg<const struct ged_cmd>                                            \
+    cmd_symbol##_autoreg_instance(cmd_symbol##_keep_ptr)
+
+#else
+
+/* ======================= Pure C: GCC / Clang ======================= */
+#if defined(__APPLE__)
+#define REGISTER_GED_COMMAND(cmd_symbol)                                                \
+    __attribute__((used)) const struct ged_cmd *                                        \
+        __ged_cmd_ptr_##cmd_symbol = &cmd_symbol;                                       \
+    static const struct ged_cmd * cmd_symbol##_keep __attribute__((used)) = &cmd_symbol;\
+    static void register_##cmd_symbol(void) __attribute__((constructor));               \
+    static void register_##cmd_symbol(void) { (void)ged_register_command(&cmd_symbol); }
+#elif defined(__GNUC__) || defined(__clang__)
+#define REGISTER_GED_COMMAND(cmd_symbol)                                                    \
+    __attribute__((used, section("ged_cmd_set"))) const struct ged_cmd *                    \
+    __ged_cmd_ptr_##cmd_symbol = &cmd_symbol;                                           \
+    static const struct ged_cmd * cmd_symbol##_keep __attribute__((used)) = &cmd_symbol;    \
+    static void register_##cmd_symbol(void) __attribute__((constructor));                   \
+    static void register_##cmd_symbol(void) { (void)ged_register_command(&cmd_symbol); }
+
+/* ======================= MSVC ======================= */
+#elif defined(_MSC_VER)
+/*
+ * MSVC best practices:
+ * - Place a stable retention pointer in .rdata so the TU is referenced.
+ * - Emit a constructor entry in .CRT$XCU to call ged_register_command at load.
+ * Notes:
+ * - The force-retention TU generated by ged_cmd_scanner must reference
+ *   __ged_cmd_ptr_<cmd> for each command; that prevents dead-stripping with
+ *   /OPT:REF, ICF, and LTO.
+ * - We do NOT attempt to enumerate a custom section at runtime; CRT XCU is
+ *   reliable and sufficient.
+ */
+#pragma section(".CRT$XCU", read)
+#define REGISTER_GED_COMMAND(cmd_symbol)                                                    \
+    __declspec(allocate(".rdata")) const struct ged_cmd * volatile                          \
+    __ged_cmd_ptr_##cmd_symbol = &cmd_symbol;                                           \
+    static void __cdecl register_##cmd_symbol(void) {                                       \
+	(void)ged_register_command(&cmd_symbol);                                            \
+    }                                                                                       \
+    __declspec(allocate(".CRT$XCU")) void (__cdecl * volatile                               \
+	    cmd_symbol##_ctor)(void) = register_##cmd_symbol
+
+/* ======================= Unsupported Pure C Compiler ======================= */
+#else
+#error "Static libged core: unsupported pure C compiler. Compile command sources as C++ (.cpp)."
+#endif
+
+#endif
+
+#else
+#define REGISTER_GED_COMMAND(cmd_symbol) /* static registration disabled */
+#endif /* LIBGED_STATIC_CORE && !GED_PLUGIN_ONLY */
+
 #endif /* LIBGED_PLUGIN_H */
 
 /*
@@ -83,5 +155,5 @@ struct ged_cmd_process_impl {
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:
- * ex: shiftwidth=4 tabstop=8
+ * ex: shiftwidth=4 tabstop=8 cino=N-s
  */

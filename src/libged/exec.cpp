@@ -20,8 +20,8 @@
 
 #include "common.h"
 
-#include <map>
 #include <string>
+#include <mutex>
 
 #include "bu/time.h"
 #include "bu/path.h"
@@ -30,7 +30,7 @@
 #include "./include/plugin.h"
 
 extern "C" void libged_init(void);
-
+extern "C" void ged_force_static_registration();
 
 extern "C" int
 ged_exec(struct ged *gedp, int argc, const char *argv[])
@@ -54,48 +54,39 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    /* Ensure registry is initialized exactly once (thread-safe). */
+    static std::once_flag _ged_registry_once;
+    std::call_once(_ged_registry_once, []() {
+        #ifdef LIBGED_STATIC_CORE
+            ged_force_static_registration();
+        #endif
+        libged_init();
+    });
+
+    if (ged_registered_count() == 0) {
+        // Fallback path if something went wrong with one-time init:
+        libged_init();
+    }
+
     double start = 0.0;
     const char *tstr = getenv("GED_EXEC_TIME");
     if (tstr) {
 	start = bu_gettime();
     }
 
-    // TODO - right now this is the map from the libged load - should probably
-    // use this to initialize a struct ged copy when ged_init is called, so
-    // client codes can add their own commands to their gedp...
-    //
-    // The ged_cmds map should always reflect the original, vanilla state of
-    // libged's command set so we have a clean fallback available if we ever
-    // need it to fall back on/recover with.
-    std::map<std::string, const struct ged_cmd *> *cmap = (std::map<std::string, const struct ged_cmd *> *)ged_cmds;
-
-    // On OpenBSD, if the executable was launched in a way that requires
-    // bu_setprogname to find the BRL-CAD root directory the initial libged
-    // initialization would have failed.  If we have no ged_cmds at all this is
-    // probably what happened, so call libged_init again here.  By the time we
-    // are calling ged_exec bu_setprogname should be set and we should be ready
-    // to actually find the commands.
-    if (!cmap->size())
-	libged_init();
-
-    /* libged is only concerned with the basename in order for command-line
-     * applications to pass an argv[0]. */
+    /* Normalize command name to basename */
     struct bu_vls cmdvls = BU_VLS_INIT_ZERO;
     bu_path_component(&cmdvls, argv[0], BU_PATH_BASENAME);
     std::string cmdname = bu_vls_cstr(&cmdvls);
     bu_vls_free(&cmdvls);
 
-    // Validate the command name.  If we don't know what this is, we can't run
-    // it successfully and need to bail.
-    std::map<std::string, const struct ged_cmd *>::iterator c_it = cmap->find(cmdname);
-    if (c_it == cmap->end()) {
-	bu_vls_printf(gedp->ged_result_str, "unknown command: %s", cmdname.c_str());
-	return (BRLCAD_ERROR | GED_UNKNOWN);
+    /* Lookup command */
+    const struct ged_cmd *cmd = ged_get_command(cmdname.c_str());
+    if (!cmd) {
+        bu_vls_printf(gedp->ged_result_str, "unknown command: %s", cmdname.c_str());
+        return (BRLCAD_ERROR | GED_UNKNOWN);
     }
-    const struct ged_cmd *cmd = c_it->second;
 
-
-    // We have a command now - push it onto the stack
     GED_CK_MAGIC(gedp);
     Ged_Internal *gedip = gedp->i->i;
     gedip->exec_stack.push(cmdname);
