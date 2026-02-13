@@ -483,7 +483,7 @@ function(
     validate_style("${libname}" "${srcslist};${L_SHARED_SRCS}")
     # If we have libraries to link for a shared library, link them.
     if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
-      target_link_libraries(${libname} ${libslist})
+      target_link_libraries(${libname} PUBLIC ${libslist})
     endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
     if(NOT L_NO_INSTALL)
       install(

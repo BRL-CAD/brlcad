@@ -1,15 +1,15 @@
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
+set(PLUGIN_LIBS libged libdm libbu)
+
+set(DM_SRCS
+  dm.c
+  ert.cpp
+  screengrab.c
 )
 
-set(DM_SRCS dm.c ert.cpp screengrab.c)
-
-ged_plugin_library(ged-dm ${DM_SRCS})
-target_link_libraries(ged-dm libged libdm libbu)
+ged_plugin_library(ged-dm
+  ${DM_SRCS}
+  LIBS ${PLUGIN_LIBS}
+)
 
 cmakefiles(
   CMakeLists.txt

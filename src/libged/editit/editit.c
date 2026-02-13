@@ -98,25 +98,13 @@ ged_editit_core(struct ged *gedp, int argc, const char *argv[])
     return ret;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl editit_cmd_impl = {
-    "editit",
-    ged_editit_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd editit_cmd = { &editit_cmd_impl };
-const struct ged_cmd *editit_cmds[] = { &editit_cmd, NULL };
+#define GED_EDITIT_COMMANDS(X, XID) \
+    X(editit, ged_editit_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  editit_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_EDITIT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_editit", 1, GED_EDITIT_COMMANDS)
 
 /*
  * Local Variables:

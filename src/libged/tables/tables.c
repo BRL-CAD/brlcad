@@ -617,30 +617,16 @@ end:
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
 
-struct ged_cmd_impl tables_cmd_impl = {"tables", ged_tables_core, GED_CMD_DEFAULT};
-const struct ged_cmd tables_cmd = { &tables_cmd_impl };
+#define GED_TABLES_COMMANDS(X, XID) \
+    X(idents, ged_tables_core, GED_CMD_DEFAULT) \
+    X(regions, ged_tables_core, GED_CMD_DEFAULT) \
+    X(solids, ged_tables_core, GED_CMD_DEFAULT) \
+    X(tables, ged_tables_core, GED_CMD_DEFAULT) \
 
-struct ged_cmd_impl idents_cmd_impl = {"idents", ged_tables_core, GED_CMD_DEFAULT};
-const struct ged_cmd idents_cmd = { &idents_cmd_impl };
-
-struct ged_cmd_impl regions_cmd_impl = {"regions", ged_tables_core, GED_CMD_DEFAULT};
-const struct ged_cmd regions_cmd = { &regions_cmd_impl };
-
-struct ged_cmd_impl solids_cmd_impl = {"solids", ged_tables_core, GED_CMD_DEFAULT};
-const struct ged_cmd solids_cmd = { &solids_cmd_impl };
-
-const struct ged_cmd *tables_cmds[] = { &tables_cmd, &idents_cmd, &regions_cmd, &solids_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  tables_cmds, 4 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_TABLES_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_tables", 1, GED_TABLES_COMMANDS)
 
 /*
  * Local Variables:

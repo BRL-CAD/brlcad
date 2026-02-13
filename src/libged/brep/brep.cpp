@@ -1583,24 +1583,14 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_ERROR;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-extern "C" {
-struct ged_cmd_impl brep_cmd_impl = { "brep", ged_brep_core, GED_CMD_DEFAULT };
-const struct ged_cmd brep_cmd = { &brep_cmd_impl };
-struct ged_cmd_impl dplot_cmd_impl = { "dplot", ged_dplot_core, GED_CMD_DEFAULT };
-const struct ged_cmd dplot_cmd = { &dplot_cmd_impl };
-const struct ged_cmd *brep_cmds[] = { &brep_cmd, &dplot_cmd, NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  brep_cmds, 2 };
+#define GED_BREP_COMMANDS(X, XID) \
+    X(brep,   ged_brep_core,   GED_CMD_DEFAULT) \
+    X(dplot,  ged_dplot_core,  GED_CMD_DEFAULT)
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-}
-#endif
+GED_DECLARE_COMMAND_SET(GED_BREP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_brep", 1, GED_BREP_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

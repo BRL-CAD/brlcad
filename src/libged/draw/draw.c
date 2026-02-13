@@ -78,7 +78,6 @@ solid_set_color_info(
 }
 
 
-
 void
 dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, struct _ged_client_data *dgcdp)
 {
@@ -332,7 +331,7 @@ append_solid_to_display_list(
 	struct bv_vlist *bvv = (struct bv_vlist *)&vhead;
 	sp->s_vlen += bv_vlist_cmd_cnt(bvv);
 	BU_LIST_APPEND_LIST(&(sp->s_vlist), &(bvv->l));
-	
+
 	bv_scene_obj_bound(sp, bv_data->v);
 
         while (BU_LIST_WHILE(vp, bv_vlist, &(sp->s_vlist))) {
@@ -1722,41 +1721,19 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
 
-struct ged_cmd_impl draw_cmd_impl = {"draw", ged_draw_core, GED_CMD_DEFAULT};
-const struct ged_cmd draw_cmd = { &draw_cmd_impl };
+#define GED_DRAW_COMMANDS(X, XID) \
+    X(draw, ged_draw_core, GED_CMD_DEFAULT) \
+    X(E, ged_E_core, GED_CMD_DEFAULT) \
+    X(e, ged_draw_core, GED_CMD_DEFAULT) \
+    X(ev, ged_ev_core, GED_CMD_DEFAULT) \
+    X(redraw, ged_redraw_core, GED_CMD_DEFAULT) \
+    X(loadview, ged_loadview_core, GED_CMD_DEFAULT) \
+    X(preview, ged_preview_core, GED_CMD_DEFAULT)
 
-struct ged_cmd_impl bigE_cmd_impl = {"E", ged_E_core, GED_CMD_DEFAULT};
-const struct ged_cmd bigE_cmd = { &bigE_cmd_impl };
-
-struct ged_cmd_impl e_cmd_impl = {"e", ged_draw_core, GED_CMD_DEFAULT};
-const struct ged_cmd e_cmd = { &e_cmd_impl };
-
-struct ged_cmd_impl ev_cmd_impl = {"ev", ged_ev_core, GED_CMD_DEFAULT};
-const struct ged_cmd ev_cmd = { &ev_cmd_impl };
-
-struct ged_cmd_impl redraw_cmd_impl = {"redraw", ged_redraw_core, GED_CMD_DEFAULT};
-const struct ged_cmd redraw_cmd = { &redraw_cmd_impl };
-
-extern int ged_loadview_core(struct ged *gedp, int argc, const char *argv[]);
-struct ged_cmd_impl loadview_cmd_impl = {"loadview", ged_loadview_core, GED_CMD_DEFAULT};
-const struct ged_cmd loadview_cmd = { &loadview_cmd_impl };
-
-extern int ged_preview_core(struct ged *gedp, int argc, const char *argv[]);
-struct ged_cmd_impl preview_cmd_impl = {"preview", ged_preview_core, GED_CMD_DEFAULT};
-const struct ged_cmd preview_cmd = { &preview_cmd_impl };
-
-const struct ged_cmd *draw_cmds[] = { &draw_cmd, &bigE_cmd, &e_cmd, &ev_cmd, &redraw_cmd, &loadview_cmd, &preview_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  draw_cmds, 7 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_DRAW_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_draw", 1, GED_DRAW_COMMANDS)
 
 /*
  * Local Variables:
@@ -1767,3 +1744,4 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

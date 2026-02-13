@@ -70,24 +70,13 @@ ged_set_output_script_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl set_output_script_cmd_impl = {
-    "set_output_script",
-    ged_set_output_script_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd set_output_script_cmd = { &set_output_script_cmd_impl };
-const struct ged_cmd *set_output_script_cmds[] = { &set_output_script_cmd, NULL };
+#define GED_SET_OUTPUT_SCRIPT_COMMANDS(X, XID) \
+    X(set_output_script, ged_set_output_script_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  set_output_script_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_SET_OUTPUT_SCRIPT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_set_output_script", 1, GED_SET_OUTPUT_SCRIPT_COMMANDS)
 
 /*
  * Local Variables:

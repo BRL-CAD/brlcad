@@ -332,23 +332,14 @@ ged_move_all_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl move_all_cmd_impl = {"move_all", ged_move_all_core, GED_CMD_DEFAULT};
-const struct ged_cmd move_all_cmd = { &move_all_cmd_impl };
 
-struct ged_cmd_impl mvall_cmd_impl = {"mvall", ged_move_all_core, GED_CMD_DEFAULT};
-const struct ged_cmd mvall_cmd = { &mvall_cmd_impl };
+#define GED_MOVE_ALL_COMMANDS(X, XID) \
+    X(move_all, ged_move_all_core, GED_CMD_DEFAULT) \
+    X(mvall, ged_move_all_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *move_all_cmds[] = { &move_all_cmd, &mvall_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  move_all_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_MOVE_ALL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_move_all", 1, GED_MOVE_ALL_COMMANDS)
 
 /*
  * Local Variables:

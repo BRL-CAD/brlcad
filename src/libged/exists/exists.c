@@ -489,24 +489,13 @@ ged_exists_core(struct ged *gedp, int argc, const char *argv_orig[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl exists_cmd_impl = {
-    "exists",
-    ged_exists_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd exists_cmd = { &exists_cmd_impl };
-const struct ged_cmd *exists_cmds[] = { &exists_cmd, NULL };
+#define GED_EXISTS_COMMANDS(X, XID) \
+    X(exists, ged_exists_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  exists_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_EXISTS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_exists", 1, GED_EXISTS_COMMANDS)
 
 /*
  * Local Variables:

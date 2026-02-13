@@ -52,24 +52,13 @@ ged_view2model_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl view2model_cmd_impl = {
-    "view2model",
-    ged_view2model_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd view2model_cmd = { &view2model_cmd_impl };
-const struct ged_cmd *view2model_cmds[] = { &view2model_cmd, NULL };
+#define GED_VIEW2MODEL_COMMANDS(X, XID) \
+    X(view2model, ged_view2model_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  view2model_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_VIEW2MODEL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_view2model", 1, GED_VIEW2MODEL_COMMANDS)
 
 /*
  * Local Variables:

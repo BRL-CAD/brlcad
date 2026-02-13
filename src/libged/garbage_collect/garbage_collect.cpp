@@ -373,23 +373,13 @@ gc_cleanup:
     return ret;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-extern "C" {
-    struct ged_cmd_impl garbage_collect_cmd_impl = { "garbage_collect", ged_garbage_collect_core, GED_CMD_DEFAULT };
-    const struct ged_cmd garbage_collect_cmd = { &garbage_collect_cmd_impl };
 
-    const struct ged_cmd *garbage_collect_cmds[] = { &garbage_collect_cmd,  NULL };
+#define GED_GARBAGE_COLLECT_COMMANDS(X, XID) \
+    X(garbage_collect, ged_garbage_collect_core, GED_CMD_DEFAULT) \
 
-    static const struct ged_plugin pinfo = { GED_API,  garbage_collect_cmds, 1 };
-
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-    {
-	return &pinfo;
-    }
-}
-#endif
+GED_DECLARE_COMMAND_SET(GED_GARBAGE_COLLECT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_garbage_collect", 1, GED_GARBAGE_COLLECT_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -399,4 +389,3 @@ extern "C" {
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -38,23 +38,11 @@ ged_clear_core(struct ged *UNUSED(gedp), int UNUSED(argc), const char **UNUSED(a
 
 #include "../include/plugin.h"
 
-extern "C" {
-#ifdef GED_PLUGIN
+#define GED_CLEAR_COMMANDS(X, XID) \
+    X(clear, ged_clear_core, GED_CMD_DEFAULT) \
 
-struct ged_cmd_impl clear_cmd_impl = {"clear", ged_clear_core, GED_CMD_DEFAULT};
-const struct ged_cmd clear_cmd = { &clear_cmd_impl };
-
-const struct ged_cmd *clear_cmds[] = { &clear_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  clear_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
-}
-
+GED_DECLARE_COMMAND_SET(GED_CLEAR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_clear", 1, GED_CLEAR_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -64,4 +52,3 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -92,24 +92,13 @@ ged_log_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl log_cmd_impl = {
-    "log",
-    ged_log_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd log_cmd = { &log_cmd_impl };
-const struct ged_cmd *log_cmds[] = { &log_cmd, NULL };
+#define GED_LOG_COMMANDS(X, XID) \
+    X(log, ged_log_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  log_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_LOG_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_log", 1, GED_LOG_COMMANDS)
 
 /*
  * Local Variables:

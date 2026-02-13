@@ -87,25 +87,13 @@ ged_killall_core(struct ged *gedp, int argc, const char *argv[])
     return ged_exec_kill(gedp, argc, argv);
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl killall_cmd_impl = {
-    "killall",
-    ged_killall_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd killall_cmd = { &killall_cmd_impl };
-const struct ged_cmd *killall_cmds[] = { &killall_cmd, NULL };
+#define GED_KILLALL_COMMANDS(X, XID) \
+    X(killall, ged_killall_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  killall_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_KILLALL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_killall", 1, GED_KILLALL_COMMANDS)
 
 /*
  * Local Variables:

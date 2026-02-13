@@ -98,25 +98,13 @@ ged_make_name_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl make_name_cmd_impl = {
-    "make_name",
-    ged_make_name_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd make_name_cmd = { &make_name_cmd_impl };
-const struct ged_cmd *make_name_cmds[] = { &make_name_cmd, NULL };
+#define GED_MAKE_NAME_COMMANDS(X, XID) \
+    X(make_name, ged_make_name_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  make_name_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_MAKE_NAME_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_make_name", 1, GED_MAKE_NAME_COMMANDS)
 
 /*
  * Local Variables:

@@ -126,25 +126,13 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl kill_cmd_impl = {
-    "kill",
-    ged_kill_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd kill_cmd = { &kill_cmd_impl };
-const struct ged_cmd *kill_cmds[] = { &kill_cmd, NULL };
+#define GED_KILL_COMMANDS(X, XID) \
+    X(kill, ged_kill_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  kill_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_KILL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_kill", 1, GED_KILL_COMMANDS)
 
 /*
  * Local Variables:

@@ -101,24 +101,13 @@ ged_regdef_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl regdef_cmd_impl = {
-    "regdef",
-    ged_regdef_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd regdef_cmd = { &regdef_cmd_impl };
-const struct ged_cmd *regdef_cmds[] = { &regdef_cmd, NULL };
+#define GED_REGDEF_COMMANDS(X, XID) \
+    X(regdef, ged_regdef_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  regdef_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_REGDEF_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_regdef", 1, GED_REGDEF_COMMANDS)
 
 /*
  * Local Variables:

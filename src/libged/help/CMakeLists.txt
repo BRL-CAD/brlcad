@@ -1,13 +1,10 @@
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-)
+set(HELP_LIBS libged libbu)
 
-ged_plugin_library(ged-help help.cpp)
-target_link_libraries(ged-help libged libbu)
+ged_plugin_library(ged-help
+  help.cpp
+  INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}
+  LIBS ${HELP_LIBS}
+)
 
 cmakefiles(
   CMakeLists.txt

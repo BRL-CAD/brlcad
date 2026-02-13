@@ -54,10 +54,7 @@ This copy has been simplified down to the essential sorting comparison of C stri
   @param r NULL-terminated C-style string
   @return negative if l<r, 0 if l equals r, positive if l>r
   */
-int alphanum_impl(const char *l, const char *r, void *arg);
-
-#ifdef ALPHANUM_IMPL
-int alphanum_impl(const char *l, const char *r, void *UNUSED(arg))
+static int alphanum_impl(const char *l, const char *r, void *UNUSED(arg))
 {
     enum alphanum_mode_t { STRING, NUMBER } mode=STRING;
 
@@ -130,8 +127,6 @@ int alphanum_impl(const char *l, const char *r, void *UNUSED(arg))
     if(*l) return +1;
     return 0;
 }
-#endif //ALPHANUM_IMPL
-
 #endif //ALPHANUM_H
 
 /*

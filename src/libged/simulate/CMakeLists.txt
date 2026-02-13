@@ -44,10 +44,14 @@ set(
 )
 
 set(SIM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
+set(SIM_LIBS libged libbu ${BULLET_LIBRARIES})
 
-ged_plugin_library(ged-simulate ${bullet_srcs})
-target_include_directories(ged-simulate BEFORE PRIVATE ${SIM_INCLUDE_DIRS})
-target_link_libraries(ged-simulate libged libbu ${BULLET_LIBRARIES})
+ged_plugin_library(ged-simulate
+  ${bullet_srcs}
+  INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}
+  LIBS ${SIM_LIBS}
+  PLUGIN_ONLY
+)
 
 cmakefiles(
   CMakeLists.txt

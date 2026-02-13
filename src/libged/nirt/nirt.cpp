@@ -136,7 +136,6 @@ nirt_cmd_print(struct ged *gedp, struct nirt_info *np)
 }
 
 
-
 /**
  * Invoke nirt, optionally using the current view info to drive
  * shot center and direction.
@@ -734,32 +733,14 @@ ged_vnirt_core(struct ged *gedp, int argc, const char *argv[])
 
 #include "../include/plugin.h"
 
-extern "C" {
-#ifdef GED_PLUGIN
-struct ged_cmd_impl nirt_cmd_impl = {"nirt", ged_nirt_core, GED_CMD_DEFAULT};
-const struct ged_cmd nirt_cmd = { &nirt_cmd_impl };
+#define GED_NIRT_COMMANDS(X, XID) \
+    X(nirt, ged_nirt_core, GED_CMD_DEFAULT) \
+    X(query_ray, ged_nirt_core, GED_CMD_DEFAULT) \
+    X(vnirt, ged_vnirt_core, GED_CMD_DEFAULT) \
+    X(vquery_ray, ged_vnirt_core, GED_CMD_DEFAULT) \
 
-struct ged_cmd_impl query_ray_cmd_impl = {"query_ray", ged_nirt_core, GED_CMD_DEFAULT};
-const struct ged_cmd query_ray_cmd = { &query_ray_cmd_impl };
-
-struct ged_cmd_impl vnirt_cmd_impl = {"vnirt", ged_vnirt_core, GED_CMD_DEFAULT};
-const struct ged_cmd vnirt_cmd = { &vnirt_cmd_impl };
-
-struct ged_cmd_impl vquery_ray_cmd_impl = {"vquery_ray", ged_vnirt_core, GED_CMD_DEFAULT};
-const struct ged_cmd vquery_ray_cmd = { &vquery_ray_cmd_impl };
-
-const struct ged_cmd *nirt_cmds[] = { &nirt_cmd, &vnirt_cmd, &query_ray_cmd, &vquery_ray_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  nirt_cmds, 4 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-}
-#endif /* GED_PLUGIN */
-
-
+GED_DECLARE_COMMAND_SET(GED_NIRT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_nirt", 1, GED_NIRT_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

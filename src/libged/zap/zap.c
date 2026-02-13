@@ -119,24 +119,14 @@ ged_zap_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
 
-struct ged_cmd_impl zap_cmd_impl = {"zap", ged_zap_core, GED_CMD_DEFAULT};
-const struct ged_cmd zap_cmd = { &zap_cmd_impl };
+#define GED_ZAP_COMMANDS(X, XID) \
+    X(Z, ged_zap_core, GED_CMD_DEFAULT) \
+    X(zap, ged_zap_core, GED_CMD_DEFAULT) \
 
-struct ged_cmd_impl Z_cmd_impl = {"Z", ged_zap_core, GED_CMD_DEFAULT};
-const struct ged_cmd Z_cmd = { &Z_cmd_impl };
-
-const struct ged_cmd *zap_cmds[] = { &zap_cmd, &Z_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  zap_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_ZAP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_zap", 1, GED_ZAP_COMMANDS)
 
 /*
  * Local Variables:

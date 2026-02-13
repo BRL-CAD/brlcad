@@ -189,25 +189,13 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl get_comb_cmd_impl = {
-    "get_comb",
-    ged_get_comb_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd get_comb_cmd = { &get_comb_cmd_impl };
-const struct ged_cmd *get_comb_cmds[] = { &get_comb_cmd, NULL };
+#define GED_GET_COMB_COMMANDS(X, XID) \
+    X(get_comb, ged_get_comb_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  get_comb_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_GET_COMB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_get_comb", 1, GED_GET_COMB_COMMANDS)
 
 /*
  * Local Variables:

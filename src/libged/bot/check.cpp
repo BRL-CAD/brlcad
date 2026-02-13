@@ -806,8 +806,6 @@ _bot_cmd_check(void *bs, int argc, const char **argv)
     return BRLCAD_ERROR;
 }
 
-
-
 // Local Variables:
 // tab-width: 8
 // mode: C++

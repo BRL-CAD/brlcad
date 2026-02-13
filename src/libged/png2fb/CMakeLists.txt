@@ -1,13 +1,9 @@
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-)
+set(PLUGIN_LIBS libged libdm libbu)
 
-ged_plugin_library(ged-png2fb png2fb.c)
-target_link_libraries(ged-png2fb libged libdm libbu)
+ged_plugin_library(ged-png2fb
+  png2fb.c
+  LIBS ${PLUGIN_LIBS}
+)
 
 cmakefiles(
   CMakeLists.txt

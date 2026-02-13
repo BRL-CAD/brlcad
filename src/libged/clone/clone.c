@@ -1020,25 +1020,13 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl clone_cmd_impl = {
-    "clone",
-    ged_clone_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd clone_cmd = { &clone_cmd_impl };
-const struct ged_cmd *clone_cmds[] = { &clone_cmd, NULL };
+#define GED_CLONE_COMMANDS(X, XID) \
+    X(clone, ged_clone_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  clone_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_CLONE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_clone", 1, GED_CLONE_COMMANDS)
 
 /*
  * Local Variables:

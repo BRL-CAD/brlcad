@@ -123,24 +123,13 @@ ged_set_transparency_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl set_transparency_cmd_impl = {
-    "set_transparency",
-    ged_set_transparency_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd set_transparency_cmd = { &set_transparency_cmd_impl };
-const struct ged_cmd *set_transparency_cmds[] = { &set_transparency_cmd, NULL };
+#define GED_SET_TRANSPARENCY_COMMANDS(X, XID) \
+    X(set_transparency, ged_set_transparency_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  set_transparency_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_SET_TRANSPARENCY_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_set_transparency", 1, GED_SET_TRANSPARENCY_COMMANDS)
 
 /*
  * Local Variables:

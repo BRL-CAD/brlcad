@@ -126,7 +126,102 @@ int main(int argc, const char *argv[])
     // ========= Static registration extraction ==========
     std::set<std::string> static_cmd_symbols;
     std::regex reg_cmd_macro(R"(REGISTER_GED_COMMAND\s*\(\s*([A-Za-z0-9_]+)\s*\))");
+    std::regex reg_label_macro(R"(LABEL_GED_COMMAND\s*\(\s*([A-Za-z0-9_]+)\s*\))");
 
+    /* Phase 3: detect generalized registration macro with string command names */
+    std::set<std::string> cmd_names;
+    std::regex reg_bu_cmd_macro(R"(REGISTER_BU_PLUGIN_COMMAND\s*\(\s*\"([^\"]+)\"\s*,)");
+
+    /* Phase 4: detect bu_plugin_cmd arrays used by the new plugin manifest pattern */
+    std::regex reg_pcmd_name(R"(\{\s*\"([A-Za-z0-9?_]+)\"\s*,)");
+
+    /* Phase 5: detect canonical TU-local command lists (token-based X-macro form)
+     *
+     * Expected form:
+     *   #define GED_SOMETHING_COMMANDS(X, XID) \
+     *     X(token, fn, opts) \
+     *     XID(symbol, "cmdname", fn, opts)
+     *
+     * Notes:
+     * - We intentionally parse *raw source*, not preprocessed output.
+     * - Therefore, the list must be written literally in the TU.
+     */
+    std::regex reg_list_begin(R"(^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(\s*X\s*,\s*XID\s*\)\s*\\\s*$)");
+    std::regex reg_list_x_entry(R"(\bX\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*([^\)]*)\)\s*\\?\s*$)");
+    std::regex reg_list_xid_entry(R"(\bXID\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*\"((?:\\.|[^\"\\])*)\"\s*,\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*([^\)]*)\)\s*\\?\s*$)");
+
+    /* Phase 5 parsing pass */
+    for (const auto &fname : input_files) {
+	std::ifstream fs(fname);
+	if (!fs.is_open()) {
+	    // Keep consistent with other passes: warn and continue
+	    std::cerr << "Unable to open file " << fname << "\n";
+	    continue;
+	}
+
+	std::string sline;
+	bool in_list = false;
+
+	while (std::getline(fs, sline)) {
+
+	    if (!in_list) {
+		std::smatch lm;
+		if (std::regex_match(sline, lm, reg_list_begin)) {
+		    in_list = true;
+		    continue;
+		}
+		// not in list; keep scanning
+		continue;
+	    }
+
+	    // If we are in a list body:
+	    // Parse X(...) and XID(...) entries. Ignore everything else.
+	    {
+		std::smatch xm;
+		if (std::regex_search(sline, xm, reg_list_x_entry)) {
+		    const std::string token = xm[1];
+		    // static registration symbol is token##_cmd
+		    static_cmd_symbols.insert(token + "_cmd");
+		    // wrapper names are token strings by default
+		    cmd_names.insert(token);
+		}
+	    }
+	    {
+		std::smatch xim;
+		if (std::regex_search(sline, xim, reg_list_xid_entry)) {
+		    const std::string sym = xim[1];
+		    const std::string cmd = xim[2];
+		    static_cmd_symbols.insert(sym);
+		    // Maintain existing behavior: skip weird wrappers (e.g. "?")
+		    if (!cmd.empty() && cmd.find('?') == std::string::npos) {
+			cmd_names.insert(cmd);
+		    }
+		}
+	    }
+
+	    // End of macro list body detection:
+	    // In a typical X-macro definition, each continued line ends with '\'.
+	    // The last line *may* end without '\' (or could still have it).
+	    // We treat a line that does NOT end with '\' as the end of the list.
+	    //
+	    // Also, empty lines typically would not be used in macro bodies, but
+	    // if they appear they will end the list unless they also end with '\'.
+	    bool ends_with_backslash = false;
+	    {
+		// strip trailing whitespace for test
+		size_t end = sline.find_last_not_of(" \t\r\n");
+		if (end != std::string::npos && sline[end] == '\\') {
+		    ends_with_backslash = true;
+		}
+	    }
+	    if (!ends_with_backslash) {
+		in_list = false;
+	    }
+	}
+	fs.close();
+    }
+
+    /* Existing Phase 1–4 parsing pass (legacy heuristics; kept for backwards compatibility) */
     for (const auto &fname : input_files) {
 	std::ifstream fs(fname);
 	if (!fs.is_open()) {
@@ -139,12 +234,31 @@ int main(int argc, const char *argv[])
 	    if (std::regex_search(sline, mm, reg_cmd_macro)) {
 		static_cmd_symbols.insert(mm[1]);
 	    }
+	    std::smatch lm;
+	    if (std::regex_search(sline, lm, reg_label_macro)) {
+		static_cmd_symbols.insert(lm[1]);
+	    }
+	    /* Phase 3: capture command names from REGISTER_BU_PLUGIN_COMMAND */
+	    std::smatch bm;
+	    if (std::regex_search(sline, bm, reg_bu_cmd_macro)) {
+		std::string cname = bm[1];
+		if (!cname.empty() && cname.find('?') == std::string::npos)
+		    cmd_names.insert(cname);
+	    }
+	    /* Phase 4: capture command names from bu_plugin_cmd initializers */
+	    std::smatch pm;
+	    if (std::regex_search(sline, pm, reg_pcmd_name)) {
+		std::string cname = pm[1];
+		if (!cname.empty() && cname.find('?') == std::string::npos)
+		    cmd_names.insert(cname);
+	    }
 	}
 	fs.close();
     }
 
     // ========= Wrapper API command name extraction =========
-    std::set<std::string> cmd_names;
+    // NOTE: cmd_names may already contain entries found via REGISTER_BU_PLUGIN_COMMAND or Phase 5.
+    // We now supplement it with names found via ged_cmd_impl initializers.
 
     // Multi-line struct initializer support (`ged_cmd_impl` detection)
     std::regex reg_impl_begin(R"(struct\s+ged_cmd_impl\s+([A-Za-z0-9_]+)\s*=\s*\{)");
@@ -215,7 +329,7 @@ int main(int argc, const char *argv[])
     }
 
     // Supplement from macro+impl lookup for edge cases
-    // Map macro_arg_cmd -> macro_arg_cmd_impl, then extract first string from impl (if exists).
+    // Map ged_cmd_impl struct names to their command name strings, for robust lookup
     ImplNameToCmdMap impl_to_cmd;
     for (const auto &fname : input_files) {
 	std::ifstream fs(fname);
@@ -285,14 +399,13 @@ int main(int argc, const char *argv[])
 	ofs << GEN_MARKER << "\n";
 	ofs << "#include \"plugin.h\"\n\n";
 	for (const auto &cmd_macro : static_cmd_sorted) {
-	    ofs << "extern const struct ged_cmd * __ged_cmd_ptr_" << cmd_macro << ";\n";
+	    ofs << "extern \"C\" const struct ged_cmd * const __ged_cmd_ptr_" << cmd_macro << ";\n";
 	}
 	ofs << "\nextern \"C\" void ged_force_static_registration(void)\n{\n";
-	ofs << "    const void *volatile dummy[] = {\n";
 	for (const auto &cmd_macro : static_cmd_sorted) {
-	    ofs << "        &__ged_cmd_ptr_" << cmd_macro << ",\n";
+	    ofs << "    (void)ged_register_command(__ged_cmd_ptr_" << cmd_macro << ");\n";
 	}
-	ofs << "    };\n    (void)dummy;\n}\n";
+	ofs << "}\n";
 	ofs.close();
 	return EXIT_SUCCESS;
     }

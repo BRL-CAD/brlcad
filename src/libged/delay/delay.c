@@ -64,24 +64,13 @@ ged_delay_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl delay_cmd_impl = {
-    "delay",
-    ged_delay_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd delay_cmd = { &delay_cmd_impl };
-const struct ged_cmd *delay_cmds[] = { &delay_cmd, NULL };
+#define GED_DELAY_COMMANDS(X, XID) \
+    X(delay, ged_delay_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  delay_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_DELAY_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_delay", 1, GED_DELAY_COMMANDS)
 
 /*
  * Local Variables:

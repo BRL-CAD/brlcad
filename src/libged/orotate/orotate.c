@@ -140,24 +140,13 @@ ged_orotate_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl orotate_cmd_impl = {
-    "orotate",
-    ged_orotate_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd orotate_cmd = { &orotate_cmd_impl };
-const struct ged_cmd *orotate_cmds[] = { &orotate_cmd, NULL };
+#define GED_OROTATE_COMMANDS(X, XID) \
+    X(orotate, ged_orotate_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  orotate_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_OROTATE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_orotate", 1, GED_OROTATE_COMMANDS)
 
 /*
  * Local Variables:

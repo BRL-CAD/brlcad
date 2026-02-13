@@ -65,24 +65,13 @@ ged_env_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl env_cmd_impl = {
-    "env",
-    ged_env_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd env_pcmd = { &env_cmd_impl };
-const struct ged_cmd *env_cmds[] = { &env_pcmd, NULL };
+#define GED_ENV_COMMANDS(X, XID) \
+    X(env,              ged_env_core,                      GED_CMD_DEFAULT)
 
-static const struct ged_plugin pinfo = { GED_API,  env_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_ENV_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_env", 1, GED_ENV_COMMANDS)
 
 /*
  * Local Variables:

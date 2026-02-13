@@ -33,7 +33,7 @@
  *
  */
 int
-ged_label(struct ged *gedp, int argc, const char *argv[])
+ged_label_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "object(s)";
 
@@ -47,25 +47,13 @@ ged_label(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl label_cmd_impl = {
-    "label",
-    ged_label,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd label_cmd = { &label_cmd_impl };
-const struct ged_cmd *label_cmds[] = { &label_cmd, NULL };
+#define GED_LABEL_COMMANDS(X, XID) \
+    X(label, ged_label_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  label_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_LABEL_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_label", 1, GED_LABEL_COMMANDS)
 
 /*
  * Local Variables:

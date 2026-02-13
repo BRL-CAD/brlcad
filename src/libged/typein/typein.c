@@ -3731,24 +3731,13 @@ do_new_update:
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl typein_cmd_impl = {
-    "in",
-    ged_in_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd typein_cmd = { &typein_cmd_impl };
-const struct ged_cmd *typein_cmds[] = { &typein_cmd, NULL };
+#define GED_TYPEIN_COMMANDS(X, XID) \
+    X(in, ged_in_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  typein_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_TYPEIN_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_typein", 1, GED_TYPEIN_COMMANDS)
 
 /*
  * Local Variables:

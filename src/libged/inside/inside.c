@@ -74,25 +74,13 @@ ged_inside_core(struct ged *gedp, int argc, const char *argv[])
     return ged_inside_internal(gedp, &intern, argc, argv, arg, outdp->d_namep);
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl inside_cmd_impl = {
-    "inside",
-    ged_inside_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd inside_cmd = { &inside_cmd_impl };
-const struct ged_cmd *inside_cmds[] = { &inside_cmd, NULL };
+#define GED_INSIDE_COMMANDS(X, XID) \
+    X(inside, ged_inside_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  inside_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_INSIDE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_inside", 1, GED_INSIDE_COMMANDS)
 
 /*
  * Local Variables:

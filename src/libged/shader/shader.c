@@ -79,24 +79,13 @@ ged_shader_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl shader_cmd_impl = {
-    "shader",
-    ged_shader_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd shader_cmd = { &shader_cmd_impl };
-const struct ged_cmd *shader_cmds[] = { &shader_cmd, NULL };
+#define GED_SHADER_COMMANDS(X, XID) \
+    X(shader, ged_shader_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  shader_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_SHADER_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_shader", 1, GED_SHADER_COMMANDS)
 
 /*
  * Local Variables:

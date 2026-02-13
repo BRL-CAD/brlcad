@@ -29,7 +29,6 @@
 
 #include "bu/app.h"
 #include "bu/log.h"
-#include "../../libged/alphanum.h"
 #include  <QApplication>
 #include "qtcad/QgModel.h"
 #include "qtcad/QgTreeView.h"

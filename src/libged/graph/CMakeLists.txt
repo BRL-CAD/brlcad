@@ -1,23 +1,8 @@
+set(GRAPH_LIBS libged libbu)
 brlcad_find_package(Adaptagrams COMPONENTS avoid cola dialect topology)
 if(Adaptagrams_FOUND)
-  add_definitions(-DHAVE_ADAPTAGRAMS=1)
-endif()
-
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-  ${Adaptagrams_INCLUDE_DIRS}
-)
-
-set(GED_GRAPH_LIBS
-  libged
-  libbu
-)
-if(Adaptagrams_FOUND)
-  set(GED_GRAPH_LIBS ${GED_GRAPH_LIBS}
+  set(ADAPT_DEF "HAVE_ADAPTAGRAMS")
+  set(GRAPH_LIBS ${GED_GRAPH_LIBS}
     adaptagrams::dialect
     adaptagrams::topology
     adaptagrams::cola
@@ -26,8 +11,19 @@ if(Adaptagrams_FOUND)
   )
 endif()
 
-ged_plugin_library(ged-graph graph.cpp)
-target_link_libraries(ged-graph ${GED_GRAPH_LIBS})
+# The graph plugin uses Adaptagrams, which is an LGPL library, so we
+# always build it as a plugin by specifying the PLUGIN_ONLY option.
+#
+# This also makes sure the plugin version of the libged command loading
+# mechanism is always tested.
+ged_plugin_library(ged-graph
+  graph.cpp
+  INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}
+  SYSTEM_INCLUDES ${Adaptagrams_INCLUDE_DIRS}
+  LIBS ${GRAPH_LIBS}
+  DEFINITIONS "${ADAPT_DEF}"
+  PLUGIN_ONLY
+)
 
 cmakefiles(
   CMakeLists.txt

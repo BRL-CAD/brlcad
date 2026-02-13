@@ -73,25 +73,13 @@ ged_dump_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl dump_cmd_impl = {
-    "dump",
-    ged_dump_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd dump_cmd = { &dump_cmd_impl };
-const struct ged_cmd *dump_cmds[] = { &dump_cmd, NULL };
+#define GED_DUMP_COMMANDS(X, XID) \
+    X(dump, ged_dump_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  dump_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_DUMP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_dump", 1, GED_DUMP_COMMANDS)
 
 /*
  * Local Variables:

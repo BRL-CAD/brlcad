@@ -87,25 +87,12 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 
 #include "../include/plugin.h"
 
-extern "C" {
-#ifdef GED_PLUGIN
+#define GED_CLOSE_COMMANDS(X, XID) \
+    X(closedb, ged_close_core, GED_CMD_DEFAULT) \
+    X(close, ged_close_core, GED_CMD_DEFAULT) \
 
-struct ged_cmd_impl closedb_cmd_impl = {"closedb", ged_close_core, GED_CMD_DEFAULT};
-const struct ged_cmd closedb_cmd = { &closedb_cmd_impl };
-
-struct ged_cmd_impl close_cmd_impl = {"close", ged_close_core, GED_CMD_DEFAULT};
-const struct ged_cmd close_cmd = { &close_cmd_impl };
-
-const struct ged_cmd *close_cmds[] = { &closedb_cmd, &close_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  close_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
-}
+GED_DECLARE_COMMAND_SET(GED_CLOSE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_close", 1, GED_CLOSE_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -115,4 +102,3 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

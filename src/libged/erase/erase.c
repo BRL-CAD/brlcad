@@ -184,24 +184,14 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl erase_cmd_impl = {"erase", ged_erase_core, GED_CMD_DEFAULT};
-const struct ged_cmd erase_cmd = { &erase_cmd_impl };
 
-struct ged_cmd_impl d_cmd_impl = {"d", ged_erase_core, GED_CMD_DEFAULT};
-const struct ged_cmd d_cmd = { &d_cmd_impl };
+#define GED_ERASE_COMMANDS(X, XID) \
+    X(erase, ged_erase_core, GED_CMD_DEFAULT) \
+    X(d, ged_erase_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *erase_cmds[] = { &erase_cmd, &d_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  erase_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_ERASE_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_erase", 1, GED_ERASE_COMMANDS)
 
 /*
  * Local Variables:

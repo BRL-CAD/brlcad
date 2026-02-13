@@ -123,24 +123,13 @@ ged_prcolor_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl prcolor_cmd_impl = {
-    "prcolor",
-    ged_prcolor_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd prcolor_cmd = { &prcolor_cmd_impl };
-const struct ged_cmd *prcolor_cmds[] = { &prcolor_cmd, NULL };
+#define GED_PRCOLOR_COMMANDS(X, XID) \
+    X(prcolor, ged_prcolor_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  prcolor_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_PRCOLOR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_prcolor", 1, GED_PRCOLOR_COMMANDS)
 
 /*
  * Local Variables:

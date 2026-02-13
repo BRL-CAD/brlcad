@@ -368,8 +368,8 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 	    int jm = im + 1;
 	    int mismatch = 0;
 	    while (!found_all_matches) {
-		if (jm == (int)BU_PTBL_LEN(&results2) || 
-		    bu_strcmp(regions[im].region_id, regions[jm].region_id) || 
+		if (jm == (int)BU_PTBL_LEN(&results2) ||
+		    bu_strcmp(regions[im].region_id, regions[jm].region_id) ||
 		    !bu_strcmp(regions[im].region_id, "--")) {
 		    /* Found all matches - set ignore flags */
 		    int km = 0;
@@ -508,24 +508,14 @@ print_results:
     return BRLCAD_OK;
 }
 
-#ifdef GED_PLUGIN
+
 #include "../include/plugin.h"
-struct ged_cmd_impl lc_cmd_impl = {
-    "lc",
-    ged_lc_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd lc_cmd = { &lc_cmd_impl };
-const struct ged_cmd *lc_cmds[] = { &lc_cmd, NULL };
+#define GED_LC_COMMANDS(X, XID) \
+    X(lc, ged_lc_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  lc_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_LC_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_lc", 1, GED_LC_COMMANDS)
 
 /*
  * Local Variables:

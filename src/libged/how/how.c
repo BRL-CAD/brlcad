@@ -142,25 +142,13 @@ good_label:
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl how_cmd_impl = {
-    "how",
-    ged_how_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd how_cmd = { &how_cmd_impl };
-const struct ged_cmd *how_cmds[] = { &how_cmd, NULL };
+#define GED_HOW_COMMANDS(X, XID) \
+    X(how, ged_how_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  how_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_HOW_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_how", 1, GED_HOW_COMMANDS)
 
 /*
  * Local Variables:

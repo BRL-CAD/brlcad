@@ -1,10 +1,4 @@
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-)
+set(PLUGIN_LIBS libged libbu)
 
 set(
   CHECK_SRCS
@@ -21,8 +15,10 @@ set(
   check_volume.c
 )
 
-ged_plugin_library(ged-check ${CHECK_SRCS})
-target_link_libraries(ged-check libged libbu)
+ged_plugin_library(ged-check
+  ${CHECK_SRCS}
+  LIBS ${PLUGIN_LIBS}
+)
 
 cmakefiles(
   CMakeLists.txt

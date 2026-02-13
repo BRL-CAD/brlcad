@@ -1713,22 +1713,13 @@ ged_mater_core(struct ged *gedp, int argc, const char *argv[])
     return mater_shader(gedp, argc, argv);
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-extern "C" {
-struct ged_cmd_impl mater_cmd_impl = { "mater", ged_mater_core, GED_CMD_DEFAULT };
-const struct ged_cmd mater_cmd = { &mater_cmd_impl };
-const struct ged_cmd *mater_cmds[] = { &mater_cmd,  NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  mater_cmds, 1 };
+#define GED_MATER_COMMANDS(X, XID) \
+    X(mater, ged_mater_core, GED_CMD_DEFAULT) \
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-}
-#endif
+GED_DECLARE_COMMAND_SET(GED_MATER_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_mater", 1, GED_MATER_COMMANDS)
 
 // Local Variables:
 // tab-width: 8

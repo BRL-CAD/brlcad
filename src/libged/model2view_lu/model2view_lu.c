@@ -33,7 +33,7 @@
 
 
 int
-ged_model2view_core_lu(struct ged *gedp, int argc, const char *argv[])
+ged_model2view_lu_core(struct ged *gedp, int argc, const char *argv[])
 {
     fastf_t f;
     point_t view_pt;
@@ -70,25 +70,13 @@ bad:
     return BRLCAD_ERROR;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl model2view_lu_cmd_impl = {
-    "model2view_lu",
-    ged_model2view_core_lu,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd model2view_lu_cmd = { &model2view_lu_cmd_impl };
-const struct ged_cmd *model2view_lu_cmds[] = { &model2view_lu_cmd, NULL };
+#define GED_MODEL2VIEW_LU_COMMANDS(X, XID) \
+    X(model2view_lu, ged_model2view_lu_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  model2view_lu_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_MODEL2VIEW_LU_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_model2view_lu", 1, GED_MODEL2VIEW_LU_COMMANDS)
 
 /*
  * Local Variables:

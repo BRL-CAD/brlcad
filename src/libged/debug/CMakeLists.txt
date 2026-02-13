@@ -1,3 +1,7 @@
+set(PLUGIN_LIBS libged libbu)
+
+
+
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -23,8 +27,11 @@ add_custom_command(
 distclean(${DEBUG_CMD_CPP})
 set_source_files_properties(debug.cpp PROPERTIES OBJECT_DEPENDS ${DEBUG_CMD_CPP})
 
-ged_plugin_library(ged-debug debug.cpp)
-target_link_libraries(ged-debug libged libbu)
+ged_plugin_library(ged-debug
+  debug.cpp
+  LIBS ${PLUGIN_LIBS}
+  PLUGIN_ONLY
+)
 
 cmakefiles(
   CMakeLists.txt

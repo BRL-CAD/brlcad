@@ -238,24 +238,14 @@ ged_glob_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl glob_cmd_impl = {"glob", ged_glob_core, GED_CMD_DEFAULT};
-const struct ged_cmd glob_cmd = { &glob_cmd_impl };
 
-struct ged_cmd_impl db_glob_cmd_impl = {"db_glob", ged_glob_core, GED_CMD_DEFAULT};
-const struct ged_cmd db_glob_cmd = { &db_glob_cmd_impl };
+#define GED_GLOB_COMMANDS(X, XID) \
+    X(db_glob, ged_glob_core, GED_CMD_DEFAULT) \
+    X(glob, ged_glob_core, GED_CMD_DEFAULT) \
 
-const struct ged_cmd *glob_cmds[] = { &glob_cmd, &db_glob_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  glob_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_GLOB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_glob", 1, GED_GLOB_COMMANDS)
 
 /*
  * Local Variables:

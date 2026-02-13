@@ -1,12 +1,3 @@
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-)
-
 # env2c - Scanner to generate a list of environment variables used by
 # source code
 add_subdirectory(env2c)
@@ -23,8 +14,14 @@ add_custom_command(
 distclean(${ENV_CMD_C})
 set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_CMD_C})
 
-ged_plugin_library(ged-env env.c)
-target_link_libraries(ged-env libged libbu)
+set(PLUGIN_LIBS libged libbu)
+
+ged_plugin_library(ged-env
+  env.c
+  INCLUDES ${CMAKE_CURRENT_BINARY_DIR}
+  LIBS ${PLUGIN_LIBS}
+  PLUGIN_ONLY
+)
 
 cmakefiles(
   CMakeLists.txt

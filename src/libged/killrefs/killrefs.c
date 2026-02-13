@@ -118,25 +118,13 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
     return ret;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl killrefs_cmd_impl = {
-    "killrefs",
-    ged_killrefs_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd killrefs_cmd = { &killrefs_cmd_impl };
-const struct ged_cmd *killrefs_cmds[] = { &killrefs_cmd, NULL };
+#define GED_KILLREFS_COMMANDS(X, XID) \
+    X(killrefs, ged_killrefs_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  killrefs_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_KILLREFS_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_killrefs", 1, GED_KILLREFS_COMMANDS)
 
 /*
  * Local Variables:

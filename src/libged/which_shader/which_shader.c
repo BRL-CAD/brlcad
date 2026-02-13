@@ -33,7 +33,7 @@
 
 
 int
-ged_which_core_shader(struct ged *gedp, int argc, const char *argv[])
+ged_which_shader_core(struct ged *gedp, int argc, const char *argv[])
 {
     int j;
     struct directory *dp;
@@ -101,24 +101,13 @@ ged_which_core_shader(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl which_shader_cmd_impl = {
-    "which_shader",
-    ged_which_core_shader,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd which_shader_cmd = { &which_shader_cmd_impl };
-const struct ged_cmd *which_shader_cmds[] = { &which_shader_cmd, NULL };
+#define GED_WHICH_SHADER_COMMANDS(X, XID) \
+    X(which_shader, ged_which_shader_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  which_shader_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_WHICH_SHADER_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_which_shader", 1, GED_WHICH_SHADER_COMMANDS)
 
 /*
  * Local Variables:

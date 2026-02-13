@@ -46,53 +46,12 @@
 #include "bu/vls.h"
 #include "ged.h"
 
+#define BU_PLUGIN_IMPLEMENTATION
 #include "./include/plugin.h"
-
-/* -------------------------------------------------------------------------- */
-/* Registry Data                                                              */
-/* -------------------------------------------------------------------------- */
-
-struct ged_registry {
-    std::unordered_map<std::string, const struct ged_cmd *> by_name;
-    std::vector<std::string> ordered_names; /* rebuilt lazily if invalidated */
-    bool ordered_valid = false;
-    std::set<void *> plugin_handles;        /* track loaded plugin dl handles */
-    bool plugins_scanned = false;
-    bool shutdown = false;
-};
-
-// Meyers singleton
-static ged_registry &get_registry() {
-    static ged_registry G;
-    return G;
-}
 
 static struct bu_vls init_msgs = BU_VLS_INIT_ZERO;
 
 /* Optional: thread safety (add bu_mutex if needed in future) */
-
-/* -------------------------------------------------------------------------- */
-/* Internal Helpers                                                           */
-/* -------------------------------------------------------------------------- */
-
-static void registry_invalidate_ordered()
-{
-    ged_registry &G = get_registry();
-    G.ordered_valid = false;
-}
-
-static void registry_rebuild_ordered()
-{
-    ged_registry &G = get_registry();
-    if (G.ordered_valid) return;
-    G.ordered_names.clear();
-    G.ordered_names.reserve(G.by_name.size());
-    for (auto &p : G.by_name) {
-	G.ordered_names.push_back(p.first);
-    }
-    std::sort(G.ordered_names.begin(), G.ordered_names.end());
-    G.ordered_valid = true;
-}
 
 /* -------------------------------------------------------------------------- */
 /* Public Registry API                                                        */
@@ -103,23 +62,18 @@ ged_register_command(const struct ged_cmd *cmd)
 {
     if (!cmd || !cmd->i || !cmd->i->cname || !cmd->i->cmd) return -1;
 
-    ged_registry &G = get_registry();
-
-    if (G.shutdown) return -2;
-
     std::string key(cmd->i->cname);
-    if (G.by_name.find(key) != G.by_name.end()) {
-	/* First-wins: ignore duplicate */
+
+    /* First-wins: ignore duplicate */
+    if (bu_plugin_cmd_exists(key.c_str())) {
 	return 1;
     }
 
-    G.by_name[key] = cmd;
-
-    /* MGED historical _mged_ prefix support */
+    /* Register name and historical _mged_ alias in generalized registry */
+    (void)bu_plugin_cmd_register(key.c_str(), cmd->i->cmd);
     std::string mged_key = std::string("_mged_") + key;
-    G.by_name[mged_key] = cmd;
+    (void)bu_plugin_cmd_register(mged_key.c_str(), cmd->i->cmd);
 
-    registry_invalidate_ordered();
     return 0;
 }
 
@@ -129,56 +83,54 @@ ged_command_exists(const char *name)
     if (!name)
 	return 0;
 
-    ged_registry &G = get_registry();
-
-    return (G.by_name.find(std::string(name)) != G.by_name.end()) ? 1 : 0;
-}
-
-extern "C" const struct ged_cmd *
-ged_get_command(const char *name)
-{
-    if (!name) return NULL;
-
-    ged_registry &G = get_registry();
-
-    auto it = G.by_name.find(std::string(name));
-    if (it == G.by_name.end()) return NULL;
-    return it->second;
+    ged_ensure_initialized();
+    return bu_plugin_cmd_exists(name);
 }
 
 extern "C" size_t
 ged_registered_count(void)
 {
-    ged_registry &G = get_registry();
-    return G.by_name.size();
+    ged_ensure_initialized();
+    return bu_plugin_cmd_count();
 }
 
 extern "C" void
 ged_list_command_names(struct bu_vls *out_csv)
 {
+    ged_ensure_initialized();
     if (!out_csv) return;
-    registry_rebuild_ordered();
     bu_vls_trunc(out_csv, 0);
-    bool first = true;
-    ged_registry &G = get_registry();
-    for (auto &n : G.ordered_names) {
-	if (n.rfind("_mged_", 0) == 0) continue; /* skip synthetic aliases */
-	if (!first) bu_vls_printf(out_csv, ",");
-	bu_vls_printf(out_csv, "%s", n.c_str());
-	first = false;
-    }
+    auto cb = [](const char *name, bu_plugin_cmd_impl impl, void *ud) -> int {
+	(void)impl;
+	struct bu_vls *v = (struct bu_vls *)ud;
+	if (!name) return 0;
+	if (bu_strncmp(name, "_mged_", 6) == 0) return 0; /* skip synthetic aliases */
+	if (bu_vls_strlen(v) > 0) bu_vls_printf(v, ",");
+	bu_vls_printf(v, "%s", name);
+	return 0;
+    };
+    /* Iterate sorted names via generalized registry */
+    bu_plugin_cmd_foreach(cb, (void *)out_csv);
 }
 
 extern "C" void
 ged_list_command_array(const char * const **cl, size_t *cnt)
 {
+    ged_ensure_initialized();
     if (!cl || !cnt) return;
-    registry_rebuild_ordered();
-    ged_registry &G = get_registry();
-    char **alist = (char **)bu_calloc(G.ordered_names.size(), sizeof(char *), "ged cmd argv");
+    std::vector<std::string> names;
+    auto cb = [](const char *name, bu_plugin_cmd_impl impl, void *ud) -> int {
+	(void)impl;
+	if (!name) return 0;
+	if (bu_strncmp(name, "_mged_", 6) == 0) return 0;
+	std::vector<std::string> *v = (std::vector<std::string> *)ud;
+	v->push_back(std::string(name));
+	return 0;
+    };
+    bu_plugin_cmd_foreach(cb, (void *)&names);
+    char **alist = (char **)bu_calloc(names.size(), sizeof(char *), "ged cmd argv");
     size_t len = 0;
-    for (auto &n : G.ordered_names) {
-	if (n.rfind("_mged_", 0) == 0) continue;
+    for (auto &n : names) {
 	alist[len++] = bu_strdup(n.c_str());
     }
     *cl = (const char * const *)alist;
@@ -189,97 +141,16 @@ ged_list_command_array(const char * const **cl, size_t *cnt)
 /* Plugin Loading                                                             */
 /* -------------------------------------------------------------------------- */
 
-static int load_plugin_handle(void *dl_handle, const char *pfile)
+static void
+scan_plugins(void)
 {
-    const char *psymbol = "ged_plugin_info";
-    void *info_val = bu_dlsym(dl_handle, psymbol);
-    const struct ged_plugin *(*plugin_info)() = (const struct ged_plugin *(*)())(intptr_t)info_val;
-    if (!plugin_info) {
-	const char *error_msg = bu_dlerror();
-	if (error_msg) bu_vls_printf(&init_msgs, "%s\n", error_msg);
-	bu_vls_printf(&init_msgs, "Unable to load symbols from '%s' (skipping: missing %s)\n", pfile, psymbol);
-	return -1;
-    }
-
-    const struct ged_plugin *plugin = plugin_info();
-    if (!plugin || !plugin->cmds || !plugin->cmd_cnt) {
-	bu_vls_printf(&init_msgs, "Invalid or empty plugin '%s' (skipping)\n", pfile);
-	return -2;
-    }
-
-    if (*((const uint32_t *)(plugin)) != (uint32_t)(GED_API)) {
-	bu_vls_printf(&init_msgs, "Plugin version mismatch for '%s' (skipping)\n", pfile);
-	return -3;
-    }
-
-    const struct ged_cmd **cmds = plugin->cmds;
-    for (int c = 0; c < plugin->cmd_cnt; c++) {
-	const struct ged_cmd *cmd = cmds[c];
-	if (!cmd) break;
-	(void)ged_register_command(cmd);
-    }
-
-    return 0;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Static (bundled) registration enumeration                                  */
-/* -------------------------------------------------------------------------- */
-#if defined(LIBGED_STATIC_CORE)
-  /* GCC/Clang: iterate linker set on ELF only. On macOS (Mach-O), rely on constructors. */
-  #if defined(__GNUC__) || defined(__clang__)
-    #if defined(__APPLE__)
-      /* macOS does not provide __start/__stop for custom sections. Registration happens
-       * via constructor calls emitted by REGISTER_GED_COMMAND and the force-retention TU. */
-      static void ged_static_register_linkerset()
-      {
-          /* no-op on macOS */
-      }
-    #else
-      extern "C" {
-          extern const struct ged_cmd *__start_ged_cmd_set[];
-          extern const struct ged_cmd *__stop_ged_cmd_set[];
-      }
-      static void ged_static_register_linkerset()
-      {
-          const struct ged_cmd **p = __start_ged_cmd_set;
-          while (p < __stop_ged_cmd_set) {
-              const struct ged_cmd *c = *p;
-              if (c) ged_register_command(c);
-              ++p;
-          }
-      }
-    #endif
-  /* MSVC: no enumeration; rely on CRT XCU constructors + force-retention TU */
-  #elif defined(_MSC_VER)
-    static void ged_static_register_linkerset()
-    {
-        /* No-op on MSVC:
-         * - REGISTER_GED_COMMAND emits CRT XCU constructor entries that already call ged_register_command.
-         * - ged_cmd_scanner generates a TU that references __ged_cmd_ptr_<cmd> to defeat dead-stripping.
-         */
-    }
-  #else
-    static void ged_static_register_linkerset() { /* fallback no-op */ }
-  #endif
-#endif
-
-
-extern "C" void
-ged_scan_plugins(void)
-{
-    ged_registry &G = get_registry();
-    if (G.shutdown) return;
-    if (G.plugins_scanned) return;
     const char *env_block = getenv("GED_NO_PLUGIN_SCAN");
     if (env_block && BU_STR_EQUAL(env_block, "1")) {
-	G.plugins_scanned = true;
 	return;
     }
 
     const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "ged", NULL);
     if (!ppath) {
-	G.plugins_scanned = true;
 	return;
     }
 
@@ -291,69 +162,69 @@ ged_scan_plugins(void)
     for (size_t i = 0; i < ged_nfiles; i++) {
 	char pfile[MAXPATHLEN] = {0};
 	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "ged", ged_filenames[i], NULL);
-	void *dl_handle = bu_dlopen(pfile, BU_RTLD_NOW);
-	if (!dl_handle) {
-	    const char *error_msg = bu_dlerror();
-	    if (error_msg) bu_vls_printf(&init_msgs, "%s\n", error_msg);
-	    bu_vls_printf(&init_msgs, "Unable to dynamically load '%s' (skipping)\n", pfile);
-	    continue;
-	}
 
-	if (load_plugin_handle(dl_handle, pfile) != 0) {
-	    bu_dlclose(dl_handle);
-	    continue;
-	}
-
-	G.plugin_handles.insert(dl_handle);
+	/* Phase 4: load plugins exclusively via generalized loader */
+	(void)bu_plugin_load(pfile);
     }
 
     bu_vls_free(&pattern);
     bu_argv_free(ged_nfiles, ged_filenames);
-    G.plugins_scanned = true;
 }
 
 /* -------------------------------------------------------------------------- */
 /* Initialization & Shutdown                                                  */
 /* -------------------------------------------------------------------------- */
 extern "C" void ged_force_static_registration(void);
-extern "C" void
+
+/* Phase 0: logger to funnel bu_plugin messages into init_msgs (avoid stdout/stderr) */
+static void _ged_plugin_logger(int level, const char *msg)
+{
+    (void)level;
+    if (msg) bu_vls_printf(&init_msgs, "%s\n", msg);
+}
+
+static void
 libged_init(void)
 {
-    ged_registry &G = get_registry();
-    if (G.shutdown) return;
+    /* Bootstrap generalized registry and set logger */
+    bu_plugin_set_logger(_ged_plugin_logger);
+    (void)bu_plugin_init();
 
 #if defined(LIBGED_STATIC_CORE)
     ged_force_static_registration();
-    ged_static_register_linkerset();  // Enumerate and register all statically linked commands
 #endif
 
     /* At this point, static constructors may or may not have run for all TUs.
-     * Any that have will have already populated G.by_name via ged_register_command.
+     * Any that have will have already populated the registry through ged_register_command.
      * We proceed to scan plugins once to add plugin-only and user-provided commands.
      */
-    ged_scan_plugins();
+    scan_plugins();
+}
+
+static std::once_flag g_init_once;
+
+extern "C" void ged_ensure_initialized()
+{
+    std::call_once(g_init_once, [](){
+        // Safe early init + full init path
+        libged_init();  // sets logger, initializes plugin core, does static reg (if enabled) and scans plugins once
+    });
 }
 
 extern "C" void
 libged_shutdown(void)
 {
-    ged_registry &G = get_registry();
-    if (G.shutdown) return;
-    /* Unload plugins in reverse order */
-    for (auto it = G.plugin_handles.rbegin(); it != G.plugin_handles.rend(); ++it) {
-	bu_dlclose(*it);
-    }
-    G.plugin_handles.clear();
-    G.by_name.clear();
-    G.ordered_names.clear();
+    /* Generalized registry teardown */
+    bu_plugin_shutdown();
+
     bu_vls_free(&init_msgs);
-    G.shutdown = true;
 }
 
 /* Provide existing init message accessor */
 extern "C" const char *
 ged_init_msgs()
 {
+    ged_ensure_initialized();
     return bu_vls_cstr(&init_msgs);
 }
 
@@ -362,16 +233,18 @@ ged_init_msgs()
 extern "C" int
 ged_cmd_exists(const char *cmd)
 {
-    return ged_command_exists(cmd);
+    ged_ensure_initialized();
+    return bu_plugin_cmd_exists(cmd);
 }
 
 extern "C" int
 ged_cmd_same(const char *cmd1, const char *cmd2)
 {
-    const struct ged_cmd *c1 = ged_get_command(cmd1);
-    const struct ged_cmd *c2 = ged_get_command(cmd2);
+    ged_ensure_initialized();
+    bu_plugin_cmd_impl c1 = bu_plugin_cmd_get(cmd1);
+    bu_plugin_cmd_impl c2 = bu_plugin_cmd_get(cmd2);
     if (!c1 || !c2) return 0;
-    return (c1->i->cmd == c2->i->cmd) ? 1 : 0;
+    return (c1 == c2) ? 1 : 0;
 }
 
 /* Edit distance lookup retained for help suggestions */
@@ -379,17 +252,26 @@ extern "C" int
 ged_cmd_lookup(const char **ncmd, const char *cmd)
 {
     if (!ncmd || !cmd) return -1;
-    registry_rebuild_ordered();
+    ged_ensure_initialized();
     size_t min_dist = (size_t)LONG_MAX;
     const char *closest = NULL;
-    ged_registry &G = get_registry();
-    for (auto &n : G.ordered_names) {
-	size_t edist = bu_editdist(cmd, n.c_str());
-	if (edist < min_dist) {
-	    min_dist = edist;
-	    closest = n.c_str();
+    auto cb = [](const char *name, bu_plugin_cmd_impl impl, void *ud) -> int {
+	(void)impl;
+	struct {
+	    const char *target;
+	    size_t *min_dist;
+	    const char **closest;
+	} *ctx = (decltype(ctx))ud;
+	if (!name) return 0;
+	size_t edist = bu_editdist(ctx->target, name);
+	if (edist < *(ctx->min_dist)) {
+	    *(ctx->min_dist) = edist;
+	    *(ctx->closest) = name;
 	}
-    }
+	return 0;
+    };
+    struct { const char *target; size_t *min_dist; const char **closest; } ctx = { cmd, &min_dist, &closest };
+    bu_plugin_cmd_foreach(cb, (void *)&ctx);
     *ncmd = closest;
     return (int)min_dist;
 }
@@ -397,19 +279,11 @@ ged_cmd_lookup(const char **ncmd, const char *cmd)
 extern "C" size_t
 ged_cmd_list(const char * const **cl)
 {
+    ged_ensure_initialized();
     size_t cnt = 0;
     ged_list_command_array(cl, &cnt);
     return cnt;
 }
-
-/* Legacy initializer object retained for compatibility */
-struct libged_initializer {
-    libged_initializer()  { libged_init(); }
-    ~libged_initializer() { /* Do NOT auto-shutdown – keep commands alive for app lifetime */ }
-};
-
-/* Instantiate global initializer (startup scan still runs once) */
-static libged_initializer LIBGED;
 
 // Local Variables:
 // tab-width: 8

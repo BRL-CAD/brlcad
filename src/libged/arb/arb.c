@@ -128,25 +128,16 @@ ged_arb_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl arb_cmd_impl = {"arb", ged_arb_core, GED_CMD_DEFAULT};
-const struct ged_cmd arb_cmd = { &arb_cmd_impl };
 
 extern int ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[]);
-struct ged_cmd_impl rotate_arb_face_cmd_impl = {"rotate_arb_face", ged_rotate_arb_face_core, GED_CMD_DEFAULT};
-const struct ged_cmd rotate_arb_face_cmd = { &rotate_arb_face_cmd_impl };
 
-const struct ged_cmd *arb_cmds[] = { &arb_cmd, &rotate_arb_face_cmd, NULL };
+#define GED_ARB_COMMANDS(X, XID) \
+    X(arb, ged_arb_core, GED_CMD_DEFAULT) \
+    X(rotate_arb_face, ged_rotate_arb_face_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  arb_cmds, 2 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_ARB_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_arb", 1, GED_ARB_COMMANDS)
 
 /*
  * Local Variables:

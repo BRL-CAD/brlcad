@@ -213,25 +213,13 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl mirror_cmd_impl = {
-    "mirror",
-    ged_mirror_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd mirror_cmd = { &mirror_cmd_impl };
-const struct ged_cmd *mirror_cmds[] = { &mirror_cmd, NULL };
+#define GED_MIRROR_COMMANDS(X, XID) \
+    X(mirror, ged_mirror_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  mirror_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_MIRROR_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_mirror", 1, GED_MIRROR_COMMANDS)
 
 /*
  * Local Variables:

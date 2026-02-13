@@ -38,29 +38,13 @@ ged_quit_core(struct ged *UNUSED(gedp), int UNUSED(argc), const char **UNUSED(ar
 
 #include "../include/plugin.h"
 
-extern "C" {
-#ifdef GED_PLUGIN
+#define GED_QUIT_COMMANDS(X, XID) \
+    X(exit, ged_quit_core, GED_CMD_DEFAULT) \
+    X(q, ged_quit_core, GED_CMD_DEFAULT) \
+    X(quit, ged_quit_core, GED_CMD_DEFAULT) \
 
-struct ged_cmd_impl exit_cmd_impl = {"exit", ged_quit_core, GED_CMD_DEFAULT};
-const struct ged_cmd exit_cmd = { &exit_cmd_impl };
-
-struct ged_cmd_impl q_cmd_impl = {"q", ged_quit_core, GED_CMD_DEFAULT};
-const struct ged_cmd q_cmd = { &q_cmd_impl };
-
-struct ged_cmd_impl quit_cmd_impl = {"quit", ged_quit_core, GED_CMD_DEFAULT};
-const struct ged_cmd quit_cmd = { &quit_cmd_impl };
-
-const struct ged_cmd *quit_cmds[] = { &exit_cmd, &q_cmd, &quit_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  quit_cmds, 3 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
-}
-
+GED_DECLARE_COMMAND_SET(GED_QUIT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_quit", 1, GED_QUIT_COMMANDS)
 
 // Local Variables:
 // tab-width: 8
@@ -70,4 +54,3 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

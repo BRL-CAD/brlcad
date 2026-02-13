@@ -1,14 +1,15 @@
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-  ${BRLCAD_SOURCE_DIR}/src/libbu # for fort.h
-)
+set(PLUGIN_LIBS libged libbu)
 
-ged_plugin_library(ged-stat stat.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../../libbu/fort.c)
-target_link_libraries(ged-stat libged libbu)
+set(STAT_SRCS
+  stat.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../libbu/fort.c
+  )
+
+ged_plugin_library(ged-stat
+  ${STAT_SRCS}
+  INCLUDES ${BRLCAD_SOURCE_DIR}/src/libbu # for fort.h
+  LIBS ${PLUGIN_LIBS}
+)
 
 cmakefiles(
   CMakeLists.txt

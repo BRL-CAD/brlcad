@@ -41,6 +41,7 @@
 #include "bv/defines.h"
 #include "bv/util.h"
 #include "ged.h"
+#include "include/plugin.h"
 
 #ifdef __cplusplus
 

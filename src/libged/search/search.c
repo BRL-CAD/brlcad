@@ -40,7 +40,6 @@
 #include "bu/sort.h"
 #include "bu/defines.h"
 
-#define ALPHANUM_IMPL
 #include "../alphanum.h"
 #include "../ged_private.h"
 
@@ -719,24 +718,13 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl search_cmd_impl = {
-    "search",
-    ged_search_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd search_cmd = { &search_cmd_impl };
-const struct ged_cmd *search_cmds[] = { &search_cmd, NULL };
+#define GED_SEARCH_COMMANDS(X, XID) \
+    X(search, ged_search_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  search_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_SEARCH_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_search", 1, GED_SEARCH_COMMANDS)
 
 /*
  * Local Variables:

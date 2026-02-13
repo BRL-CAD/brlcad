@@ -111,25 +111,13 @@ ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
     return status;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl edmater_cmd_impl = {
-    "edmater",
-    ged_edmater_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd edmater_cmd = { &edmater_cmd_impl };
-const struct ged_cmd *edmater_cmds[] = { &edmater_cmd, NULL };
+#define GED_EDMATER_COMMANDS(X, XID) \
+    X(edmater, ged_edmater_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  edmater_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_EDMATER_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_edmater", 1, GED_EDMATER_COMMANDS)
 
 /*
  * Local Variables:

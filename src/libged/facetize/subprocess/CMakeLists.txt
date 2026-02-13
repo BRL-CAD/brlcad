@@ -1,3 +1,8 @@
+brlcad_find_package(manifold REQUIRED)
+brlcad_find_package(Geogram REQUIRED SYSPATTERN geogram)
+set(TESS_INCLUDE_DIRS ${Geogram_INCLUDE_DIR})
+set(TESS_LIBS libged manifold::manifold ${Geogram_LIBRARY})
+
 set(
   GED_TESS_SRCS
   brep_csg.cpp
@@ -10,16 +15,11 @@ set(
   util.cpp
 )
 
-brlcad_find_package(manifold REQUIRED)
-brlcad_find_package(Geogram REQUIRED SYSPATTERN geogram)
-set(INCLUDE_DIRS ${Geogram_INCLUDE_DIR})
-
-ged_subprocess_library(facetize_process SHARED ${GED_TESS_SRCS})
-target_include_directories(facetize_process SYSTEM PRIVATE ${INCLUDE_DIRS})
-target_link_libraries(facetize_process libged;manifold::manifold;${Geogram_LIBRARY})
-set_property(TARGET facetize_process APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H MANIFOLD_DLL_IMPORTS)
-validate_style(facetize_process ${GED_TESS_SRCS})
-plugin_setup(facetize_process ged_exec)
+ged_subprocess_library(facetize_process
+  ${GED_TESS_SRCS}
+  SYSTEM_INCLUDES ${TESS_INCLUDE_DIRS}
+  LIBS ${TESS_LIBS}
+)
 
 cmakefiles(
   CMakeLists.txt

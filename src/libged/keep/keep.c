@@ -232,25 +232,13 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl keep_cmd_impl = {
-    "keep",
-    ged_keep_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd keep_cmd = { &keep_cmd_impl };
-const struct ged_cmd *keep_cmds[] = { &keep_cmd, NULL };
+#define GED_KEEP_COMMANDS(X, XID) \
+    X(keep, ged_keep_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  keep_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_KEEP_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_keep", 1, GED_KEEP_COMMANDS)
 
 /*
  * Local Variables:

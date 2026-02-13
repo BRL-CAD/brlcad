@@ -75,25 +75,13 @@ ged_match_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl match_cmd_impl = {
-    "match",
-    ged_match_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd match_cmd = { &match_cmd_impl };
-const struct ged_cmd *match_cmds[] = { &match_cmd, NULL };
+#define GED_MATCH_COMMANDS(X, XID) \
+    X(match, ged_match_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  match_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_MATCH_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_match", 1, GED_MATCH_COMMANDS)
 
 /*
  * Local Variables:

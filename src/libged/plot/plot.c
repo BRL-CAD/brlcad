@@ -191,7 +191,6 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
 }
 
 
-
 /*
  * plot file [opts]
  * potential options might include:
@@ -293,24 +292,13 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl plot_cmd_impl = {
-    "plot",
-    ged_plot_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd plot_cmd = { &plot_cmd_impl };
-const struct ged_cmd *plot_cmds[] = { &plot_cmd, NULL };
+#define GED_PLOT_COMMANDS(X, XID) \
+    X(plot, ged_plot_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  plot_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_PLOT_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_plot", 1, GED_PLOT_COMMANDS)
 
 /*
  * Local Variables:

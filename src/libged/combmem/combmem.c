@@ -1085,25 +1085,13 @@ bad:
     return BRLCAD_ERROR;
 }
 
-
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl combmem_cmd_impl = {
-    "combmem",
-    ged_combmem_core,
-    GED_CMD_DEFAULT
-};
 
-const struct ged_cmd combmem_cmd = { &combmem_cmd_impl };
-const struct ged_cmd *combmem_cmds[] = { &combmem_cmd, NULL };
+#define GED_COMBMEM_COMMANDS(X, XID) \
+    X(combmem, ged_combmem_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  combmem_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_COMBMEM_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_combmem", 1, GED_COMBMEM_COMMANDS)
 
 /*
  * Local Variables:

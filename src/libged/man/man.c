@@ -49,7 +49,6 @@
 #include "../ged_private.h"
 
 
-
 /**
  * Invoke brlman with the current environmental options, or
  * (if supplied) user defined options
@@ -219,20 +218,13 @@ ged_man_core(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-#ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl man_cmd_impl = {"man", ged_man_core, GED_CMD_DEFAULT};
-const struct ged_cmd man_cmd = { &man_cmd_impl };
 
-const struct ged_cmd *man_cmds[] = { &man_cmd, NULL };
+#define GED_MAN_COMMANDS(X, XID) \
+    X(man, ged_man_core, GED_CMD_DEFAULT) \
 
-static const struct ged_plugin pinfo = { GED_API,  man_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
+GED_DECLARE_COMMAND_SET(GED_MAN_COMMANDS)
+GED_DECLARE_PLUGIN_MANIFEST("libged_man", 1, GED_MAN_COMMANDS)
 
 /*
  * Local Variables:
