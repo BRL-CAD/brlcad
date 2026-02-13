@@ -134,7 +134,7 @@ d2.r
 	    </row>
 	    <row>
 	      <entry align="center" valign='middle'>.</entry>
-	      <entry>Search using top level objects in database as starting points, return list of all matching objects.</entry>
+	      <entry>Search using top level objects in database as starting points, return list of all matching objects (defualt).</entry>
 	    </row>
 	    <row>
 	      <entry align="center" valign='middle'>|</entry>
