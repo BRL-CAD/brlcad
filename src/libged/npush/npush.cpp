@@ -32,11 +32,55 @@
 #include <string>
 #include <vector>
 #include <iterator>
+#include <limits>
 
 #include "bu/cmd.h"
 #include "bu/opt.h"
 
 #include "../ged_private.h"
+
+/* Canonical matrix container to create stable keys for comparisons */
+struct mat_canon {
+    mat_t mat;
+    bool is_idn = false;
+};
+
+/* Canonicalize a matrix during initial walk; add if not found. */
+static size_t
+canon_matrix_add(const mat_t in, const struct bn_tol *tol, std::vector<mat_canon> &mats, mat_t out_mat, bool *is_idn)
+{
+    for (size_t i = 0; i < mats.size(); i++) {
+	if (bn_mat_is_equal(in, mats[i].mat, tol)) {
+	    MAT_COPY(out_mat, mats[i].mat);
+	    if (is_idn) *is_idn = mats[i].is_idn;
+	    return i;
+	}
+    }
+
+    mat_canon mc;
+    MAT_COPY(mc.mat, in);
+    mc.is_idn = bn_mat_is_equal(in, bn_mat_identity, tol);
+    mats.push_back(mc);
+
+    MAT_COPY(out_mat, mc.mat);
+    if (is_idn) *is_idn = mc.is_idn;
+    return mats.size() - 1;
+}
+
+/* Lookup a canonical matrix during update walk; do not add new entries. */
+static bool
+canon_matrix_find(const mat_t in, const struct bn_tol *tol, const std::vector<mat_canon> &mats, size_t *key, mat_t out_mat, bool *is_idn)
+{
+    for (size_t i = 0; i < mats.size(); i++) {
+	if (bn_mat_is_equal(in, mats[i].mat, tol)) {
+	    if (key) *key = i;
+	    MAT_COPY(out_mat, mats[i].mat);
+	    if (is_idn) *is_idn = mats[i].is_idn;
+	    return true;
+	}
+    }
+    return false;
+}
 
 /* Database objects (struct directory) are unique in a database, but those
  * unique objects may be reused by multiple distinct comb tree instances.
@@ -61,10 +105,13 @@ class dp_i {
 public:
     struct directory *dp;              // Instance database object
     struct directory *parent_dp;       // Parent object
-    mat_t mat;                         // Instance matrix
+    mat_t mat;                         // Instance matrix (canonical value)
+    size_t mat_key = std::numeric_limits<size_t>::max(); // Canonical matrix key
+    bool mat_is_idn = false;           // Canonical identity flag
+    bool apply_key = false;            // Effective apply-to-solid key
     size_t ind;                        // Used for debugging
     std::string iname = std::string(); // Container to hold instance name, if needed
-    const struct bn_tol *tol;       // Tolerance to use for matrix comparisons
+    const struct bn_tol *tol;          // Tolerance to use for matrix comparisons
 
     bool push_obj = true;  // Flag to determine if this instance is being pushed
     bool is_leaf = false;  // Flag to determine if this instance is a push leaf
@@ -76,132 +123,39 @@ public:
     // matrix applications from the comb tree instance.
     bool apply_to_solid = false;
 
-    // The key to the dp_i class is the less than operator, which is what
-    // allows C++ sets to distinguish between separate instances with the
-    // same dp pointer.  The first check is that dp pointer - if the current
-    // and other dp do not match, the sorting criteria is obvious.  Likewise,
-    // if one instance is instructed in the push to apply the matrix to a
-    // solid and another is not, even if they would otherwise be identical
-    // instances, it is necessary to distinguish them since those two
-    // definitions require different comb tree instances to represent.
-    //
-    // If instance definitions DO match in other respects, the uniqueness
-    // rests on the similarity of their matrices.  If they are equal within
-    // tolerance, the instances are equal as well.
-    //
-    // One additional refinement is made to the sorting for processing
-    // convenience - we make sure that any IDN instance is less than any
-    // non-IDN matrix in sorting behavior, even if the numerics of the
-    // matrices wouldn't otherwise reach that determination.
+    void finalize_apply_key() {
+	apply_key = apply_to_solid;
+	if (mat_is_idn)
+	    apply_key = false;
+	if (dp && (dp->d_flags & RT_DIR_COMB))
+	    apply_key = false;
+    }
+
+    // Strict weak ordering based on stable canonical keys
     bool operator<(const dp_i &o) const {
 
 	// First, check dp
 	if (dp < o.dp) return true;
 	if (o.dp < dp) return false;
 
-	// Important for multiple tests to know if matrices are IDN
-	int tidn = bn_mat_is_equal(mat, bn_mat_identity, tol);
-	int oidn = bn_mat_is_equal(o.mat, bn_mat_identity, tol);
+	// Stable matrix key ordering
+	if (mat_key < o.mat_key) return true;
+	if (o.mat_key < mat_key) return false;
 
-	/* If the dp didn't resolve the question, check the matrix. */
-	if (!bn_mat_is_equal(mat, o.mat, tol)) {
-	    // We want IDN matrices to be less than any others, regardless
-	    // of the numerics.
-	    if (tidn && !oidn) return true;
-	    if (oidn && !tidn) return false;
+	// Apply-to-solid distinguishes instances only when meaningful
+	if (apply_key && !o.apply_key) return true;
+	if (!apply_key && o.apply_key) return false;
 
-	    // If we don't have an IDN matrix involved, fall back on
-	    // numerical sorting to order the instances.  We want this to
-	    // be consistent, so avoid comparing numbers that are closer
-	    // than SMALL_FASTF in size
-	    for (int i = 0; i < 16; i++) {
-		if (NEAR_EQUAL(mat[i], o.mat[i], SMALL_FASTF))
-		    continue;
-		if (mat[i] < o.mat[i]) {
-		    return true;
-		}
-		if (mat[i] > o.mat[i]) {
-		    return false;
-		}
-	    }
-	}
-
-	// The application of the matrix to the solid may matter
-	// when distinguishing dp_i instances, but only if one
-	// of the matrices involved is non-IDN - otherwise, the
-	// matrix applications are no-ops and we don't want them
-	// to prompt multiple instances of objects.
-	if (!(dp->d_flags & RT_DIR_COMB)) {
-	    if ((!tidn || !oidn) && (apply_to_solid && !o.apply_to_solid))
-		return true;
-	}
-
-	/* All attempt to find non-equalities failed */
 	return false;
     }
 
     /* For convenience, we also define an equality operator */
     bool operator==(const dp_i &o) const {
 	if (dp != o.dp) return false;
-	if (apply_to_solid != o.apply_to_solid) {
-	    if (!bn_mat_is_equal(mat, bn_mat_identity, tol) ||
-		!bn_mat_is_equal(o.mat, bn_mat_identity, tol))
-		return false;
-	}
-	return bn_mat_is_equal(mat, o.mat, tol);
-    }
-};
-
-// Slightly "looser" search operator, for use IFF a direct find lookup fails
-// using SMALL_FASTF tolerances - in that case, since the original tree walk
-// should have produced something we are supposed to use, try VUNITIZE_TOL
-// instead.  This can potentially happen with deep matrix application chains
-// and gnarly floating point math values.  std::find_if based approach learned
-// from https://stackoverflow.com/a/8054223/2037687
-struct mat_lfind
-{
-    mat_lfind( class dp_i *tdpi ) : test_dpi(tdpi) {}
-    bool operator()( const class dp_i& c ) const
-    {
-	// First, check dp
-	if (c.dp != test_dpi->dp) return false;
-
-	// Important for multiple tests to know if matrices are IDN
-	int oidn = bn_mat_is_equal(c.mat, bn_mat_identity, c.tol);
-	int tidn = bn_mat_is_equal(test_dpi->mat, bn_mat_identity, test_dpi->tol);
-	if (oidn && tidn)
-	    return true;
-
-	/* If the dp didn't resolve the question, check the matrix. */
-	if (!bn_mat_is_equal(test_dpi->mat, c.mat, test_dpi->tol)) {
-	    // We want IDN matrices to be less than any others, regardless
-	    // of the numerics.
-	    if (tidn && !oidn) return true;
-	    if (oidn && !tidn) return false;
-
-	    // If we don't have an IDN matrix involved, fall back on
-	    // numerical comparisons
-	    for (int i = 0; i < 16; i++) {
-		if (!NEAR_EQUAL(test_dpi->mat[i], c.mat[i], VUNITIZE_TOL))
-		    return false;
-	    }
-	}
-
-	// The application of the matrix to the solid may matter
-	// when distinguishing dp_i instances, but only if one
-	// of the matrices involved is non-IDN - otherwise, the
-	// matrix applications are no-ops and we don't want them
-	// to prompt multiple instances of objects.
-	if (!(c.dp->d_flags & RT_DIR_COMB)) {
-	    if (test_dpi->apply_to_solid && !c.apply_to_solid)
-		return false;
-	}
-
-	// All tests pass, looks equal
+	if (mat_key != o.mat_key) return false;
+	if (apply_key != o.apply_key) return false;
 	return true;
     }
-private:
-    class dp_i *test_dpi;
 };
 
 
@@ -233,6 +187,9 @@ struct push_state {
      * uniquely identifies a volume in space.  The C++ set container is used
      * to ensure we end up with one unique dp_i per instance. */
     std::set<dp_i> instances;
+
+    /* Canonical matrix table (stable keys for comparisons) */
+    std::vector<mat_canon> canon_mats;
 
     /* Tolerance to be used for matrix comparisons.  Typically comes from the
      * database tolerances. */
@@ -449,7 +406,7 @@ push_walk_subtree(
     bool survey,
     void *client_data)
 {
-    mat_t om, nm;
+    mat_t om, nm, cm;
     struct push_state *s = (struct push_state *)client_data;
     struct directory *dp;
 
@@ -515,11 +472,13 @@ push_walk_subtree(
 	    dnew.dp = dp;
 	    dnew.tol = s->tol;
 	    dnew.push_obj = !(survey);
+
 	    if (!survey) {
-		MAT_COPY(dnew.mat, *curr_mat);
+		dnew.mat_key = canon_matrix_add(*curr_mat, s->tol, s->canon_mats, cm, &dnew.mat_is_idn);
 	    } else {
-		MAT_COPY(dnew.mat, nm);
+		dnew.mat_key = canon_matrix_add(nm, s->tol, s->canon_mats, cm, &dnew.mat_is_idn);
 	    }
+	    MAT_COPY(dnew.mat, cm);
 
 	    // A "push leaf" is the termination point below which we will not
 	    // propagate changes encoded in matrices.
@@ -545,6 +504,8 @@ push_walk_subtree(
 		    }
 		    dnew.apply_to_solid = true;
 		}
+
+		dnew.finalize_apply_key();
 
 		// If we haven't already inserted an identical instance, record
 		// this new entry.  (Note that we're not concerned with the
@@ -603,6 +564,8 @@ push_walk_subtree(
 		bu_vls_printf(s->msgs, "W2[%s]: survey comb instance %s\n", ps, dp->d_namep);
 		bu_free(ps, "path string");
 	    }
+
+	    dnew.finalize_apply_key();
 
 	    if (s->instances.find(dnew) == s->instances.end()) {
 		s->instances.insert(dnew);
@@ -697,8 +660,9 @@ tree_update_walk_subtree(
     struct directory *dp;
     struct push_state *s = (struct push_state *)client_data;
     std::set<dp_i>::iterator dpii, i_it;
-    mat_t om, nm;
+    mat_t om, nm, cm;
     dp_i ldpi;
+    bool found = false;
 
     if (!tp)
 	return;
@@ -751,45 +715,29 @@ tree_update_walk_subtree(
 
 	    // Look up the dpi for this comb+curr_mat combination.
 	    ldpi.dp = dp;
-	    MAT_COPY(ldpi.mat, *curr_mat);
 	    ldpi.tol = s->tol;
 	    if (!(dp->d_flags & RT_DIR_COMB) && (!s->max_depth || depth+1 <= s->max_depth) && !s->stop_at_shapes) {
 		ldpi.apply_to_solid = true;
 	    }
-	    dpii = s->instances.find(ldpi);
-	    // If the lookup fails (possible if accumulated floating point uncertainties
-	    // in matrix accumulations in the two tree walks produce slightly different
-	    // matrix values) see if a looser fallback search using
-	    // https://stackoverflow.com/a/8054223/2037687 can find anything.
-	    //
-	    // TODO - this can be refined by storing the instances in a map of
-	    // sets - we could then confine this more expensive lookup to just
-	    // the set of instances with matching dps.  Not clear yet if it is
-	    // warranted, since the if equality test should fail very quickly
-	    // on anything with a non-matching dp anyway... if we need this to
-	    // be logn order rather than n because it is more common in the
-	    // wild has been observed in early testing, we can redo the
-	    // instances container.
-	    //
-	    // A more sophisticated possibility might be to investigate
-	    // Locality Sensitive Hashing (https://github.com/trendmicro/tlsh)
-	    // to see if we could bin similar matrices using their hashes.
-	    // That might even have potential to identify "similar" geometry
-	    // objects, depending on the details of their internal storage...
-	    if (dpii == s->instances.end()) {
-		dpii = std::find_if(s->instances.begin(), s->instances.end(), mat_lfind(&ldpi));
-		if (dpii != s->instances.end() && s->verbosity > 3) {
-		    if (s->msgs) {
-			struct bu_vls title = BU_VLS_INIT_ZERO;
-			bu_vls_sprintf(&title, "Have loose match %s matrix", dpii->dp->d_namep);
-			bn_mat_print_vls(bu_vls_cstr(&title), dpii->mat, s->msgs);
-			bu_vls_free(&title);
-		    } else {
-			bu_log("Loose matrix match:\n");
-			bn_mat_print(tp->tr_l.tl_name, dpii->mat);
-		    }
+
+	    found = canon_matrix_find(*curr_mat, s->tol, s->canon_mats, &ldpi.mat_key, cm, &ldpi.mat_is_idn);
+	    if (!found) {
+		char *ps = db_path_to_string(dfp);
+		if (s->msgs) {
+		    bu_vls_printf(s->msgs, "[%s]: Error - no canonical instance found: %s->%s!\n", ps, parent_dpi.dp->d_namep, dp->d_namep);
+		    bn_mat_print_vls("Missing matrix", *curr_mat, s->msgs);
+		} else {
+		    bu_log("[%s]: Error - no canonical instance found: %s->%s!\n", ps, parent_dpi.dp->d_namep, dp->d_namep);
+		    bn_mat_print("curr_mat", *curr_mat);
 		}
+		bu_free(ps, "path string");
+		s->walk_error = true;
+		return;
 	    }
+	    MAT_COPY(ldpi.mat, cm);
+	    ldpi.finalize_apply_key();
+
+	    dpii = s->instances.find(ldpi);
 
 	    if (dpii == s->instances.end()) {
 		char *ps = db_path_to_string(dfp);
@@ -842,7 +790,7 @@ tree_update_walk_subtree(
 			(*tree_altered) = true;
 		    }
 		} else {
-		    if (!bn_mat_is_identity(dpii->mat)) {
+		    if (!dpii->mat_is_idn) {
 			wtp->tr_l.tl_mat = bn_mat_dup(dpii->mat);
 			(*tree_altered) = true;
 		    }
@@ -993,7 +941,7 @@ tree_update_walk(
     } else {
 
 	// If we're not copying the solid and not applying a matrix, we're done
-	if (!dpi.iname.length() && bn_mat_is_identity(dpi.mat))
+	if (!dpi.iname.length() && dpi.mat_is_idn)
 	    return;
 
 	if (s->verbosity > 3 && s->msgs) {
@@ -1043,7 +991,7 @@ tree_update_walk(
 	    }
 
 
-	    if (s->verbosity > 3 && !bn_mat_is_identity(dpi.mat) && s->msgs) {
+	    if (s->verbosity > 3 && !dpi.mat_is_idn && s->msgs) {
 		bn_mat_print_vls(dpi.dp->d_namep, dpi.mat, s->msgs);
 		bn_mat_print_vls("curr_mat", *curr_mat, s->msgs);
 	    }
@@ -1183,6 +1131,11 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	s.target_objs.insert(std::string(argv[i]));
     }
 
+    // Ensure identity matrix exists in canonical table.
+    mat_t idn;
+    MAT_IDN(idn);
+    bool idn_is_idn = true;
+    (void)canon_matrix_add(idn, s.tol, s.canon_mats, idn, &idn_is_idn);
 
     // Validate that no target_obj is underneath another target obj. Otherwise,
     // multiple push operations may collide.
@@ -1449,7 +1402,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 		if (!dpi.is_leaf && (dpi.dp->d_flags & RT_DIR_COMB)) {
 		    bu_vls_printf(s.msgs, "%s tree edited && matrix to IDN\n", dpi.iname.c_str());
 		}
-		if (dpi.is_leaf && !bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
+		if (dpi.is_leaf && !dpi.mat_is_idn) {
 		    bu_vls_printf(s.msgs, "%s\n", dpi.iname.c_str());
 		    bn_mat_print_vls("applied", dpi.mat, s.msgs);
 		}
@@ -1457,7 +1410,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 		if (!dpi.is_leaf && (dpi.dp->d_flags & RT_DIR_COMB)) {
 		    bu_vls_printf(s.msgs, "%s matrix to IDN\n", dpi.dp->d_namep);
 		}
-		if (dpi.is_leaf && !bn_mat_is_equal(dpi.mat, bn_mat_identity, s.tol)) {
+		if (dpi.is_leaf && !dpi.mat_is_idn) {
 		    bu_vls_printf(s.msgs, "%s\n", dpi.dp->d_namep);
 		    bn_mat_print_vls("applied", dpi.mat, s.msgs);
 		}
@@ -1479,8 +1432,13 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    // form of the object to "seed" the tree walk.
 	    dp_i ldpi;
 	    ldpi.dp = dp;
-	    MAT_IDN(ldpi.mat);
 	    ldpi.tol = s.tol;
+	    bool found = canon_matrix_find(m, s.tol, s.canon_mats, &ldpi.mat_key, ldpi.mat, &ldpi.mat_is_idn);
+	    if (!found) {
+		bu_vls_printf(gedp->ged_result_str, "Error - unable to locate canonical identity matrix for tree walk.\n");
+		return BRLCAD_ERROR;
+	    }
+	    ldpi.finalize_apply_key();
 
 	    struct db_full_path *dfp;
 	    BU_GET(dfp, struct db_full_path);
