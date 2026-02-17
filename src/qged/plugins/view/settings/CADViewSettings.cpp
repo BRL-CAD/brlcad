@@ -50,6 +50,32 @@ CADViewSettings::CADViewSettings(QWidget *)
     params_ckbx = new QCheckBox("Parameters");
     scale_ckbx = new QCheckBox("Scale");
     viewaxes_ckbx = new QCheckBox("View Axes");
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    wl->addWidget(acsg_ckbx);
+    QObject::connect(acsg_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
+    wl->addWidget(amesh_ckbx);
+    QObject::connect(amesh_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
+    wl->addWidget(adc_ckbx);
+    QObject::connect(adc_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
+    wl->addWidget(cdot_ckbx);
+    QObject::connect(cdot_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
+    wl->addWidget(fb_ckbx);
+    QObject::connect(fb_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
+    wl->addWidget(fbo_ckbx);
+    QObject::connect(fbo_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
+    wl->addWidget(fps_ckbx);
+    QObject::connect(fps_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
+    wl->addWidget(grid_ckbx);
+    QObject::connect(grid_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
+    wl->addWidget(mdlaxes_ckbx);
+    QObject::connect(mdlaxes_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
+    wl->addWidget(params_ckbx);
+    QObject::connect(params_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
+    wl->addWidget(scale_ckbx);
+    QObject::connect(scale_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
+    wl->addWidget(viewaxes_ckbx);
+    QObject::connect(viewaxes_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
+#else
     wl->addWidget(acsg_ckbx);
     QObject::connect(acsg_ckbx, &QCheckBox::checkStateChanged, this, &CADViewSettings::view_update_int);
     wl->addWidget(amesh_ckbx);
@@ -74,6 +100,7 @@ CADViewSettings::CADViewSettings(QWidget *)
     QObject::connect(scale_ckbx, &QCheckBox::checkStateChanged, this, &CADViewSettings::view_update_int);
     wl->addWidget(viewaxes_ckbx);
     QObject::connect(viewaxes_ckbx, &QCheckBox::checkStateChanged, this, &CADViewSettings::view_update_int);
+#endif
 
     this->setLayout(wl);
 }
