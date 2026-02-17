@@ -722,6 +722,24 @@ d2.r
     </para>
   </refsection>
 
+  <refsection xml:id="a_note_on_special_characters"><title>A Note on Special Characters</title>
+
+    <para>
+		Depending upon your environment, special characters such as wildcards or brackets may
+		require an escape character (\). Double quotes can also be used to surround the expression
+		negating the need for multiple escape characters. The following three examples show a search for names
+		containing the string "tire" using two wildcards.
+    </para>
+	<para><userinput>search -name *tire*</userinput></para>
+	<para><userinput>search -name \*tire\*</userinput></para>
+	<para><userinput>search -name "*tire*"</userinput></para>
+	<para>	
+      If an escape character is required but not used, an "unknown option passed to find_create"
+	  error will be displayed.
+    </para>
+
+  </refsection>	
+
   <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
