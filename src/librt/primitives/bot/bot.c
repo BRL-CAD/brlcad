@@ -416,10 +416,48 @@ validate_bot_face(fastf_t centroid_out[3], fastf_t bounds_out[6], const struct r
 }
 
 static void
-cleanup_prep_mallocs(size_t* faces, fastf_t* centroids, fastf_t* bounds) {
-    bu_free(faces,     "bot valid faces");
-    bu_free(centroids, "bot centroids");
-    bu_free(bounds,    "bot bounds");
+copy_bot_tri(triangle_s* tris, fastf_t* tri_norms, const struct rt_bot_internal *bot_ip, 
+	     const struct soltab* stp, size_t i, size_t bot_ip_index)
+{
+    fastf_t *v0, *v1, *v2;
+    v0 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+0]);
+    if (bot_ip->orientation == RT_BOT_CW) {
+	v2 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+1]);
+	v1 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+2]);
+    } else {
+	v1 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+1]);
+	v2 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+2]);
+    }
+    VMOVE(tris[i].A, v0);
+    VSUB2(tris[i].AB, v1, v0);
+    VSUB2(tris[i].AC, v2, v0);
+    vect_t wn, work;
+    VCROSS(wn, tris[i].AB, tris[i].AC);
+    tris[i].face_norm_scalar = MAGNITUDE(wn);
+
+    /* NOTE: error checking is done in face validation */
+
+    VUNITIZE(wn);
+    VMOVE(tris[i].face_norm, wn);
+    tris[i].norms = NULL;
+
+    if (tri_norms && bot_ip->num_face_normals > bot_ip_index) {
+	long idx[3];
+	VMOVE(idx, &bot_ip->face_normals[bot_ip_index*3]);
+	if (idx[0] >= 0 && idx[0] < (long)bot_ip->num_normals &&
+	    idx[1] >= 0 && idx[1] < (long)bot_ip->num_normals &&
+	    idx[2] >= 0 && idx[2] < (long)bot_ip->num_normals)
+	{
+	    tris[i].norms = &tri_norms[i*9];
+	    VMOVE(&tris[i].norms[0*3], &bot_ip->normals[idx[0]*3]);
+	    VMOVE(&tris[i].norms[1*3], &bot_ip->normals[idx[1]*3]);
+	    VMOVE(&tris[i].norms[2*3], &bot_ip->normals[idx[2]*3]);
+	} else if (RT_G_DEBUG & RT_DEBUG_SHOOT) {
+	    bu_log("%s: facet #%zu tried to have normals, but gave incorrect indexes\n", stp->st_dp?stp->st_name:"_unnamed_", bot_ip_index);
+	    bu_log("\t%ld %ld %ld a max number of %zu\n", V3ARGS(idx), bot_ip->num_normals);
+	}
+    }
+    tris[i].face_id = bot_ip_index;
 }
 
 /**
@@ -462,7 +500,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bot->bot_mode = bot_ip->mode;
     bot->bot_orientation = bot_ip->orientation;
     bot->bot_flags = bot_ip->bot_flags;
-    bot->bot_ntri = 0;	    // set after filtering faces
+    bot->bot_ntri = 0;	    // set after validating faces
 
     // set up thickness if requested
     if (bot_ip->thickness) {
@@ -488,43 +526,89 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	bot_max_prims_in_node = atoi(bmintie);
 
     // set up for hlbvh call
-    size_t  *valid_faces = (size_t* )bu_malloc(bot_ip->num_faces * sizeof(size_t )  , "bot valid faces");
     fastf_t *centroids   = (fastf_t*)bu_malloc(bot_ip->num_faces * sizeof(fastf_t)*3, "bot centroids");
     fastf_t *bounds      = (fastf_t*)bu_malloc(bot_ip->num_faces * sizeof(fastf_t)*6, "bot bounds");
 
-    // iterate faces: filter bad faces, only good faces used for centroid/bounds
-    size_t nvalid = 0, nskipped = 0;
+    // iterate faces calculating centroid and bounds
+    //	    if we find a bad face: break
+    size_t first_bad = bot_ip->num_faces;
     for (size_t i = 0; i < bot_ip->num_faces; i++) {
-	fastf_t *curr_c = &centroids[nvalid * 3];
-	fastf_t *curr_b = &bounds[nvalid * 6];
-
+	fastf_t *curr_c = &centroids[i * 3];
+	fastf_t *curr_b = &bounds[i * 6];
 
 	int ok = validate_bot_face(curr_c, curr_b, bot_ip, i, tolp);
-	if (UNLIKELY(ok < 0)) {
-	    // something's wrong. hard fail
-	    bu_log("face number %zu of bot(%s) references a non-existent vertex\n",
-		   i, stp->st_dp ? stp->st_name : "_unnamed_");
+	if (UNLIKELY(ok <= 0)) {
+	    // something's wrong
+	    if (ok < 0) {
+		// hard fail, the bot is invalid
+		bu_log("face number %zu of bot(%s) references a non-existent vertex\n",
+		    i, stp->st_dp ? stp->st_name : "_unnamed_");
 
-	    // cleanup
-	    cleanup_prep_mallocs(valid_faces, centroids, bounds);
-            return -1;
+		// cleanup and return
+		bu_free(centroids, "bot centroids");
+		bu_free(bounds,    "bot bounds");
+		return -1;
+	    }
+	    /* else (ok == 0) -> we have a bad, but skippable, face */
+	    first_bad = i;
+	    break;
 	}
-	if (ok == 0) {
-	    nskipped++;
-	    continue;
-	}
+    }
+    // NOTE: at this point we have valid centroids + bounds for [0 .. first_bad-1]
+    //	     if there are bad faces, we'll handle them in the next loop
 
-	// face is good
-	valid_faces[nvalid++] = i;
+    // did we break on any bad faces?
+    uint32_t *valid_faces = NULL;
+    size_t nvalid = first_bad;
+    if (nvalid != bot_ip->num_faces) {
+	// allocate a valid_faces index-tracking array
+	// NOTE: we use uint32 to save 4 bytes (int32 vs 64), while having a reasonable cap of
+	//	 over 4 billion faces
+	valid_faces = (uint32_t*)bu_malloc(bot_ip->num_faces * sizeof(uint32_t), "bot valid faces");
+
+	// quick backfill
+	//	we already have bounds + centroids calculated, we just need to copy our indices
+	for (size_t j = 0; j < first_bad; j++) {	// 0 -> first_bad index
+	    valid_faces[j] = (uint32_t)j;
+	    // centroids[j] = centroids[j * 3]	    (already computed in first loop)
+	    // bounds[j] = bounds[j * 6]	    (already computed in first loop)
+	}
+	nvalid = first_bad;
+
+	// finish validating and filling for the rest of the faces
+	for (size_t i = first_bad; i < bot_ip->num_faces; i++) {	// first_bad index -> num_faces
+	    fastf_t *curr_c = &centroids[nvalid * 3];
+	    fastf_t *curr_b = &bounds[nvalid * 6];
+
+	    int ok = validate_bot_face(curr_c, curr_b, bot_ip, i, tolp);
+	    if (ok < 0) {
+		// hard fail, the bot is invalid
+		bu_log("face number %zu of bot(%s) references a non-existent vertex\n",
+		    i, stp->st_dp ? stp->st_name : "_unnamed_");
+
+		// cleanup and return
+		bu_free(valid_faces, "bot valid faces");
+		bu_free(centroids,   "bot centroids");
+		bu_free(bounds,      "bot bounds");
+		return -1;
+	    }
+	    if (ok == 0)    /* skipping */
+		continue;
+
+	    // face is good
+	    valid_faces[nvalid++] = i;
+	}
     }
 
     // make sure we have something
     if (nvalid == 0) {
 	if (RT_G_DEBUG & RT_DEBUG_SHOOT)
-            bu_log("%s: no valid faces (skipped %zu)\n", stp->st_dp ? stp->st_name : "_unnamed_", nskipped);
+            bu_log("%s: no valid faces (skipped %zu)\n", stp->st_dp ? stp->st_name : "_unnamed_", bot_ip->num_faces - nvalid);
 
-	cleanup_prep_mallocs(valid_faces, centroids, bounds);
-        return -1;
+	bu_free(valid_faces, "bot valid faces");
+	bu_free(centroids,   "bot centroids");
+	bu_free(bounds,      "bot bounds");
+	return -1;
     }
     // we have valid triangles, update our bot struct count
     bot->bot_ntri = nvalid;
@@ -552,50 +636,20 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	tri_norms = (fastf_t*) bu_malloc(nvalid * 9 * sizeof(fastf_t), "bot norms");
     }
     // copy triangles into order specified by ordered_faces
-    for (size_t i = 0; i < nvalid; i++) {
-	// need to unroll ordered face index -> validated face index
-	size_t ordered_index = ordered_faces[i];
-	size_t bot_ip_index = valid_faces[ordered_index];
+    if (valid_faces != NULL) {
+	// we have a valid faces array: need to unroll ordered face index -> validated face index
+	for (size_t i = 0; i < nvalid; i++) {
+	    size_t ordered_index = (size_t)ordered_faces[i];
+	    size_t bot_ip_index = valid_faces[ordered_index];
 
-	fastf_t *v0, *v1, *v2;
-	v0 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+0]);
-	if (bot_ip->orientation == RT_BOT_CW) {
-	    v2 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+1]);
-	    v1 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+2]);
-	} else {
-	    v1 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+1]);
-	    v2 = (bot_ip->vertices+3*bot_ip->faces[bot_ip_index*3+2]);
+	    copy_bot_tri(tris, tri_norms, bot_ip, stp, i, bot_ip_index);
 	}
-	VMOVE(tris[i].A, v0);
-	VSUB2(tris[i].AB, v1, v0);
-	VSUB2(tris[i].AC, v2, v0);
-	vect_t wn, work;
-	VCROSS(wn, tris[i].AB, tris[i].AC);
-	tris[i].face_norm_scalar = MAGNITUDE(wn);
+    } else {
+	for (size_t i = 0; i < nvalid; i++) {
+	    size_t bot_ip_index = (size_t)ordered_faces[i];
 
-	/* NOTE: error checking already done in face validation */
-
-	VUNITIZE(wn);
-	VMOVE(tris[i].face_norm, wn);
-	tris[i].norms = NULL;
-
-	if (do_normals && bot_ip->num_face_normals > bot_ip_index) {
-	    long idx[3];
-	    VMOVE(idx, &bot_ip->face_normals[bot_ip_index*3]);
-	    if (idx[0] >= 0 && idx[0] < (long)bot_ip->num_normals &&
-		idx[1] >= 0 && idx[1] < (long)bot_ip->num_normals &&
-		idx[2] >= 0 && idx[2] < (long)bot_ip->num_normals)
-	    {
-		tris[i].norms = &tri_norms[i*9];
-		VMOVE(&tris[i].norms[0*3], &bot_ip->normals[idx[0]*3]);
-		VMOVE(&tris[i].norms[1*3], &bot_ip->normals[idx[1]*3]);
-		VMOVE(&tris[i].norms[2*3], &bot_ip->normals[idx[2]*3]);
-	    } else if (RT_G_DEBUG & RT_DEBUG_SHOOT) {
-		bu_log("%s: facet #%zu tried to have normals, but gave incorrect indexes\n", stp->st_dp?stp->st_name:"_unnamed_", bot_ip_index);
-		bu_log("\t%zu %zu %zu a max number of %zu\n", V3ARGS(idx), bot_ip->num_normals);
-	    }
+	    copy_bot_tri(tris, tri_norms, bot_ip, stp, i, bot_ip_index);
 	}
-	tris[i].face_id = bot_ip_index;
     }
 
     bu_free(ordered_faces, "ordered faces");
