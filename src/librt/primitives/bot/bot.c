@@ -639,6 +639,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (valid_faces != NULL) {
 	// we have a valid faces array: need to unroll ordered face index -> validated face index
 	for (size_t i = 0; i < nvalid; i++) {
+	    BU_ASSERT(ordered_faces[i] >= 0 && (size_t)ordered_faces[i] < nvalid);
 	    size_t ordered_index = (size_t)ordered_faces[i];
 	    size_t bot_ip_index = valid_faces[ordered_index];
 
@@ -646,6 +647,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	}
     } else {
 	for (size_t i = 0; i < nvalid; i++) {
+	    BU_ASSERT(ordered_faces[i] >= 0 && (size_t)ordered_faces[i] < nvalid);
 	    size_t bot_ip_index = (size_t)ordered_faces[i];
 
 	    copy_bot_tri(tris, tri_norms, bot_ip, stp, i, bot_ip_index);
