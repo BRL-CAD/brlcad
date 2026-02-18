@@ -392,7 +392,7 @@ validate_bot_face(fastf_t centroid_out[3], fastf_t bounds_out[6], const struct r
     fastf_t m3 = MAGSQ(work);
     fastf_t m4 = MAGSQ(wn);
 
-    BU_ASSERT(INVALID(m1) || INVALID(m2) || INVALID(m3) || INVALID(m4));
+    BU_ASSERT(!(INVALID(m1) || INVALID(m2) || INVALID(m3) || INVALID(m4)));
 
     if (m1 < tolp->dist_sq || m2 < tolp->dist_sq ||
         m3 < tolp->dist_sq || m4 < tolp->dist_sq)
@@ -407,7 +407,7 @@ validate_bot_face(fastf_t centroid_out[3], fastf_t bounds_out[6], const struct r
     VMINMAX(&bounds_out[0], &bounds_out[3], v1);
     VMINMAX(&bounds_out[0], &bounds_out[3], v2);
 
-    BU_ASSERT(VINVALID(centroid_out) || VINVALID(&bounds_out[0]) || VINVALID(&bounds_out[3]));
+    BU_ASSERT(!(VINVALID(centroid_out) || VINVALID(&bounds_out[0]) || VINVALID(&bounds_out[3])));
 
     return 1;
 }
