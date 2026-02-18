@@ -428,7 +428,7 @@ copy_bot_tri(triangle_s* tris, fastf_t* tri_norms, const struct rt_bot_internal 
     VMOVE(tris[i].A, v0);
     VSUB2(tris[i].AB, v1, v0);
     VSUB2(tris[i].AC, v2, v0);
-    vect_t wn, work;
+    vect_t wn;
     VCROSS(wn, tris[i].AB, tris[i].AC);
     tris[i].face_norm_scalar = MAGNITUDE(wn);
 
