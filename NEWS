@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2026-XX-XX  Release 7.42.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed BoT crash when invalid data present - Chris McGregor
 * updated stepcode to upstream SHA1 74b6fe4 - Cliff Yapp
 * replaced yedit with brledit as libbu fallback editor - Cliff Yapp
 * updated libtiff dependency to v4.7.1 - Cliff Yapp
