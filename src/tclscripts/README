@@ -12,3 +12,8 @@ mged			directory of mged specific tcl scripts
 pl-dm			directory of pl-dm specific tcl scripts
 tclIndex		Tcl autoload index file
 vmath.tcl		tcl routines for doing vmath stuff
+
+To get a list of all commands registered with the Tcl interpreter:
+
+set glob_compat_mode 0
+puts [join [lsort [lsearch -all -inline -not -regexp [info commands] {^(_mged|\.|tcl|tk|[A-Z])}]] "\n"]
