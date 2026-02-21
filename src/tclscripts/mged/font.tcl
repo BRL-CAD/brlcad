@@ -183,14 +183,18 @@ proc mged_font_persistence_test {{id ""}} {
     }
 
     if {$id != ""} {
-        lappend font_names fs_all_font($id)
+        lappend font_names all_font
     }
 
     set has_fail 0
 
     foreach fname $font_names {
-        if {[catch {set actual [font actual $fname]}]} {
-            puts "FAIL: $fname (named font missing)"
+        set live_name $fname
+        if {$fname eq "all_font" && $id != ""} {
+            set live_name fs_all_font($id)
+        }
+        if {[catch {set actual [font actual $live_name]}]} {
+            puts "FAIL: $live_name (named font missing)"
             set has_fail 1
             continue
         }
@@ -219,18 +223,22 @@ proc mged_font_persistence_test {{id ""}} {
         }
 
         if {$mismatch} {
-            puts "FAIL: $fname (before sync)"
+            puts "FAIL: $live_name (before sync)"
             set has_fail 1
         } else {
-            puts "PASS: $fname (before sync)"
+            puts "PASS: $live_name (before sync)"
         }
     }
 
     mged_font_sync_to_defaults $id
 
     foreach fname $font_names {
-        if {[catch {set actual [font actual $fname]}]} {
-            puts "FAIL: $fname (named font missing after sync)"
+        set live_name $fname
+        if {$fname eq "all_font" && $id != ""} {
+            set live_name fs_all_font($id)
+        }
+        if {[catch {set actual [font actual $live_name]}]} {
+            puts "FAIL: $live_name (named font missing after sync)"
             set has_fail 1
             continue
         }
@@ -259,10 +267,10 @@ proc mged_font_persistence_test {{id ""}} {
         }
 
         if {$mismatch} {
-            puts "FAIL: $fname (after sync)"
+            puts "FAIL: $live_name (after sync)"
             set has_fail 1
         } else {
-            puts "PASS: $fname (after sync)"
+            puts "PASS: $live_name (after sync)"
         }
     }
 

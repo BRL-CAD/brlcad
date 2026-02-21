@@ -78,7 +78,7 @@ proc update_mgedrc {} {
 	    puts -nonewline $fd [string range $data 0 $index]
 	}
 
-	if {[info procs mged_font_sync_to_defaults] != ""} {
+	if [info procs mged_font_sync_to_defaults] != "" {
 	    mged_font_sync_to_defaults
 	}
 
@@ -97,7 +97,7 @@ proc update_mgedrc {} {
 	    error $msg
 	}
 
-	if {[info procs mged_font_sync_to_defaults] != ""} {
+	if [info procs mged_font_sync_to_defaults] != "" {
 	    mged_font_sync_to_defaults
 	}
 
