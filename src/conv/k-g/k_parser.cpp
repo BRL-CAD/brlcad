@@ -76,7 +76,7 @@ enum class KState {
     Section_Ale2d,
     Section_Beam,
     //Section_Beam_AISC,
-    //Section_Discrete,
+    Section_Discrete,
     //Section_Fpd,
     //Section_Point_Source,
     //Section_Point_source_Mixture,
@@ -434,11 +434,12 @@ bool parse_k
 	ret = false;
     }
     else {
-	KState                   state            = KState::Ignore;
-	size_t                   partLinesRead    = 0;
+	KState                   state                  = KState::Ignore;
+	size_t                   partLinesRead          = 0;
 	std::string              partTitle;
-	size_t                   sectionLinesRead = 0;
-	size_t                   elementLinesRead = 0;
+	size_t                   sectionLinesRead       = 0;
+	size_t                   elementLinesRead       = 0;
+	size_t                   numberOfCards = 0;
 	//size_t                   cardCounter = 0;// this will replace sectionLinesRead elementLinesRead, and partLinesRead
 	size_t                   optionsCounter = 0;
 	std::string              sectionTitle;
@@ -713,7 +714,7 @@ bool parse_k
 				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
 			}
 			else if (command[0] == "PART") {
-			    if ((command.size() == 1) || (command[1] == "INERTIA") || (command[1] == "AVERAGED")) {
+			    if ((command.size() == 1) || (command[1] == "INERTIA") || (command[1] == "AVERAGED") || (command[1] == "CONTACT")) {
 				state = KState::Part;
 				partLinesRead = 0;
 				partTitle = "";
@@ -768,30 +769,67 @@ bool parse_k
 				    sectionLinesRead = 1;
 			    }
 			    else if (command[1] == "SHELL") {
-				state        = KState::Section_Shell;
+				state = KState::Section_Shell;
+				sectionTitle     = "";
+				sectionId        = -1;
+				numberOfCards    = 2; // default obligatory cards
+				sectionLinesRead = 1;
+
+				if (command.size() >= 3) {
+
+				    bool hasTitle = (std::find(command.begin(), command.end(), "TITLE") != command.end());
+
+				    static const std::vector<std::string> options = {
+					"EFG", "THERMAL", "XFEM", "MISC"
+				    };
+
+				    bool hasOption = false;
+				    for (const auto& opt : options) {
+					if (std::find(command.begin(), command.end(), opt) != command.end()) {
+					    hasOption = true;
+					    break;
+					}
+				    }
+
+				    if (hasOption) {
+					numberOfCards = 3;
+					sectionLinesRead = 1;
+
+					if (hasTitle) {
+					    numberOfCards = 2; 
+					    sectionLinesRead = 0;
+					}
+				    }
+				    else if (hasTitle) {
+					sectionLinesRead = 0;
+					numberOfCards = 2;
+				    }
+				    else {
+					std::cout << "Unexpected command " << tokens[0]
+					    << " in k-file " << fileName << std::endl;
+				    }
+				}
+			    }
+
+			    else if (command[1] == "SOLID") {
+				state        = KState::Section_Solid;
 				sectionTitle = "";
 				sectionId    = -1;
+				numberOfCards = 1; // Number of obligatory cards
 
 				if (command.size() == 3) {
-				    if (command[2] == "TITLE")
+				    if (command[2] == "TITLE") {
 					sectionLinesRead = 0;
+					numberOfCards = 2;
+				    }
+				    else if ((command[2] == "EFG") || (command[2] == "SPG")) {
+					numberOfCards = 2;
+				    }
 				    else
 					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
 				}
 				else
 				    sectionLinesRead = 1;
-			    }
-			    else if (command[1] == "SOLID") {
-				state        = KState::Section_Solid;
-				sectionTitle = "";
-				sectionId    = -1;
-
-				if (command.size() == 3) {
-				    if (command[2] == "TITLE")
-					sectionLinesRead = 0;
-				    else
-					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
-				}
 			    }
 			    else if (command[1] == "SEATBELT") {
 				state        = KState::Section_Seatbelt;
@@ -804,6 +842,9 @@ bool parse_k
 				    else
 					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
 				}
+			    }
+			    else if (command[1] == "DISCRETE") {
+				state = KState::Ignore;
 			    }
 			    else
 				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
@@ -963,6 +1004,9 @@ bool parse_k
 
 				break;
 			    }
+			    case 2: {
+				break;// Part_contact Nothing related To geometry
+			    }
 
 			    default:
 				std::cout << "Unexpected PART length in k-file " << fileName << std::endl;
@@ -1044,7 +1088,7 @@ bool parse_k
 			    }
 
 			    case 1: {
-				if (tokens.size() < 8) {
+				if (tokens.size() < 5) {
 				    std::cout << "Too short SECTION_BEAM in k-file " << fileName << std::endl;
 				    break;
 				}
@@ -1169,48 +1213,64 @@ bool parse_k
 		    }
 
 		    case KState::Section_Shell: {
+			static bool ELFORM;
+			static bool ICOMP;
+
 			switch (sectionLinesRead) {
-			    case 0:
-				sectionTitle = line;
-				break;
+			case 0:
+			    sectionTitle = line;
+			    break;
 
-			    case 1: {
-				if (tokens.size() == 0) {
-				    std::cout << "Too short SECTION in k-file " << fileName << std::endl;
-				    break;
-				}
-
-				sectionId                      = stoi(tokens[0]);
-				data.sections[sectionId].title = sectionTitle;
+			case 1: {
+			    if (tokens.empty()) {
+				std::cout << "Too short SECTION in k-file " << fileName << std::endl;
 				break;
 			    }
+			    ICOMP  = false;
+			    ELFORM = false;
+			    sectionId                      = stoi(tokens[0]);
+			    data.sections[sectionId].title = sectionTitle;
 
-			    case 2: {
-				if (sectionId < 0) {
-				    std::cout << "Bad SECTION in k-file " << fileName << std::endl;
-				    break;
+			    if (tokens.size() >= 7) {
+				ELFORM = (stoi(tokens[1]) >= 101 && stoi(tokens[1]) <= 105);
+				ICOMP = (stoi(tokens[6]) == 1);
+
+				if (ICOMP)
+				{
+				    numberOfCards += 1;
 				}
-
-				if (tokens.size() < 4) {
-				    std::cout << "Too short SECTION in k-file " << fileName << std::endl;
-				    break;
+				if (ELFORM) {
+				    numberOfCards += 2;
 				}
-
-				data.sections[sectionId].thickness1 = stod(tokens[0]);
-				data.sections[sectionId].thickness2 = stod(tokens[1]);
-				data.sections[sectionId].thickness3 = stod(tokens[2]);
-				data.sections[sectionId].thickness4 = stod(tokens[3]);
-
-				break;
 			    }
-
-			    default:
-				std::cout << "Unexpected SECTION length in k-file " << fileName << std::endl;
+			    break;
 			}
 
-			++sectionLinesRead;
+			case 2: {
+			    if (sectionId < 0 || tokens.size() < 4) {
+				std::cout << "Too short SECTION in k-file " << fileName << std::endl;
+				break;
+			    }
+
+			    data.sections[sectionId].thickness1 = stod(tokens[0]);
+			    data.sections[sectionId].thickness2 = stod(tokens[1]);
+			    data.sections[sectionId].thickness3 = stod(tokens[2]);
+			    data.sections[sectionId].thickness4 = stod(tokens[3]);
+			    break;
+			}
+
+			default:
+			    break;
+			}
+
+			if (sectionLinesRead < numberOfCards)
+			    ++sectionLinesRead;
+			else
+			    sectionLinesRead = (sectionTitle.empty() ? 1 : 0);
+
 			break;
 		    }
+
 
 		    case KState::Section_Solid: {
 			switch (sectionLinesRead) {
@@ -1233,7 +1293,16 @@ bool parse_k
 				std::cout << "Unexpected SECTION length in k-file " << fileName << std::endl;
 			}
 
-			++sectionLinesRead;
+			if (sectionLinesRead < numberOfCards) {
+			    ++sectionLinesRead;
+			}
+			else {
+			    if (sectionTitle.size() > 0) {
+				sectionLinesRead = 0;
+			    }
+			    else
+				sectionLinesRead = 1;
+			}
 			break;
 		    }
 
