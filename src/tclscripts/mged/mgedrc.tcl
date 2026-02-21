@@ -78,6 +78,10 @@ proc update_mgedrc {} {
 	    puts -nonewline $fd [string range $data 0 $index]
 	}
 
+	if {[info procs mged_font_sync_to_defaults] != ""} {
+	    mged_font_sync_to_defaults
+	}
+
 	if [catch {dump_mged_state $fd} msg] {
 	    close $fd
 	    file copy -force $tmpmgedrc $mgedrc
@@ -91,6 +95,10 @@ proc update_mgedrc {} {
 	# Create a new .mgedrc
 	if [catch {set fd [open $mgedrc w]} msg] {
 	    error $msg
+	}
+
+	if {[info procs mged_font_sync_to_defaults] != ""} {
+	    mged_font_sync_to_defaults
 	}
 
 	if [catch {dump_mged_state $fd} msg] {
