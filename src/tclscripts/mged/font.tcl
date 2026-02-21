@@ -207,10 +207,14 @@ proc mged_font_persistence_test {{id ""}} {
         array set default_map $mged_default($fname)
 
         set mismatch 0
-        foreach key [array names actual_map] {
-            if {![info exists default_map($key)] || $default_map($key) ne $actual_map($key)} {
-                set mismatch 1
-                break
+        if {[array size actual_map] != [array size default_map]} {
+            set mismatch 1
+        } else {
+            foreach key [array names actual_map] {
+                if {![info exists default_map($key)] || $default_map($key) ne $actual_map($key)} {
+                    set mismatch 1
+                    break
+                }
             }
         }
 
@@ -243,10 +247,14 @@ proc mged_font_persistence_test {{id ""}} {
         array set default_map $mged_default($fname)
 
         set mismatch 0
-        foreach key [array names actual_map] {
-            if {![info exists default_map($key)] || $default_map($key) ne $actual_map($key)} {
-                set mismatch 1
-                break
+        if {[array size actual_map] != [array size default_map]} {
+            set mismatch 1
+        } else {
+            foreach key [array names actual_map] {
+                if {![info exists default_map($key)] || $default_map($key) ne $actual_map($key)} {
+                    set mismatch 1
+                    break
+                }
             }
         }
 
