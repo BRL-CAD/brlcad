@@ -113,3 +113,37 @@ slave_load(struct tie_s *tie, void *data)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
+
+
+static void
+nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int material_id, float color[3], void *UNUSED(client_data))
+{
+    struct model *m;
+    struct adrt_mesh_s *mesh;
+
+    NMG_CK_REGION(r);
+    RT_CK_FULL_PATH(pathp);
+
+    m = r->m_p;
+    NMG_CK_MODEL(m);
+
+    /* triangulate model */
+    nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
+
+    /* FIXME: where is this released? */
+    BU_ALLOC(mesh, struct adrt_mesh_s);
+
+    BU_LIST_PUSH(&((*gcvwriter.meshes)->l), &(mesh->l));
+
+    mesh->texture = NULL;
+    mesh->flags = 0;
+
+    BU_ALLOC(mesh->attributes, struct adrt_mesh_attributes_s);
+    mesh->matid = material_id;
+
+    VMOVE(mesh->attributes->color.v, color);
+    bu_strlcpy(mesh->name, db_path_to_string(pathp), sizeof(mesh->name));
+
+    nmg_to_adrt_internal(mesh, r);
+}
