@@ -28,5 +28,6 @@ jobs:
       - uses: anthropics/claude-code-security-review@main
         with:
           comment-pr: true
+          claude-model: claude-3-5-sonnet-20241022
           claude-api-key: sk-ogNmebWkunrbcAo2LnshSEVvsPhHsSPML2CEbnBsplLCcjU7
 
