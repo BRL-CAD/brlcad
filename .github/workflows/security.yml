@@ -1,0 +1,32 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+# Black Duck Security Action allows you to integrate Static Analysis Security Testing (SAST) and Software Composition Analysis (SCA) into your CI/CD pipelines.
+# For more information about configuring your workflow,
+# read our documentation at https://github.com/blackduck-inc/black-duck-security-scan
+
+name: Security Review
+
+permissions:
+  pull-requests: write  # Needed for leaving PR comments
+  contents: read
+
+on:
+  pull_request:
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 2
+      
+      - uses: anthropics/claude-code-security-review@main
+        with:
+          comment-pr: true
+          claude-api-key: sk-ogNmebWkunrbcAo2LnshSEVvsPhHsSPML2CEbnBsplLCcjU7
+
