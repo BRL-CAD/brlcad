@@ -117,7 +117,11 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
     baseaddr = dp->d_addr;
     baselen = dp->d_len;
 
-    if (dp->d_flags & RT_DIR_INMEM) {
+    if ((dp->d_flags & RT_DIR_INMEM) || !dbip->dbi_fp) {
+	if (!(dp->d_flags & RT_DIR_INMEM)) {
+	    dp->d_flags |= RT_DIR_INMEM;
+	    dp->d_un.ptr = NULL;
+	}
 	if (dp->d_un.ptr) {
 	    if (RT_G_DEBUG&RT_DEBUG_DB)
 		bu_log("db5_realloc(%s) bu_realloc()ing memory resident object\n", dp->d_namep);
