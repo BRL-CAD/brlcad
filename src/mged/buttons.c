@@ -1282,14 +1282,14 @@ f_be_s_trans(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 int
 f_bv_35_25(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_s_trans(clientData, interp, argc, argv);
+    return bv_35_25(clientData, interp, argc, argv);
 }
 
 
 int
 f_bv_45_45(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_s_trans(clientData, interp, argc, argv);
+    return bv_45_45(clientData, interp, argc, argv);
 }
 
 
