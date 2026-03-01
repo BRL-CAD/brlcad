@@ -313,7 +313,7 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
 
 
 static void
-usage(struct ged *gedp)
+coil_usage(struct ged *gedp)
 {
     bu_vls_printf(gedp->ged_result_str, "Usage: coil [-d mean_outer_diameter] [-w wire_diameter] [-H helix_angle] [-p pitch]\n");
     bu_vls_printf(gedp->ged_result_str, "            [-n number_of_turns] [-s start_cap_type] [-e end_cap_type]\n");
@@ -391,7 +391,7 @@ ReadArgs(struct ged *gedp, int argc, const char *argv[], struct bu_vls *name, st
 		BU_LIST_INSERT(&(*sections), &((*coil_data).l));
 		break;
 	    default:
-		usage(gedp);
+		coil_usage(gedp);
 		return BRLCAD_ERROR;
 	}
     }

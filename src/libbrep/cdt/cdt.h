@@ -25,6 +25,9 @@
  *
  */
 
+#ifndef LIBBREP_CDT_H
+#define LIBBREP_CDT_H
+
 #include "common.h"
 
 #include <vector>
@@ -180,4 +183,6 @@ bool TRICHECK(triangle_t &tri);
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
+
+#endif /* LIBBREP_CDT_H */
 

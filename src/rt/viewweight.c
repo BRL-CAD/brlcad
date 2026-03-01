@@ -83,7 +83,7 @@ extern fastf_t cell_width;      /* model space grid cell width */
 extern fastf_t cell_height;     /* model space grid cell height */
 extern FILE *outfp;          	/* optional output file */
 extern char *outputfile;     	/* name of base of output file */
-extern char *densityfile;     	/* name of density file */
+extern const char *densityfile;
 extern int output_is_binary;	/* !0 means output is binary */
 
 
@@ -525,8 +525,8 @@ view_end(struct application *ap)
     struct db_i *dbp = ap->a_rt_i->rti_dbip;
     fastf_t conversion = 1.0;	/* Conversion factor for mass */
     fastf_t volume = 0;
-    char units[128] = {0};
-    char unit2[128] = {0};
+    char wt_units[128] = {0};
+    char wt_unit2[128] = {0};
     int max_item = 0;
     time_t clockval;
     struct tm *locltime;
@@ -540,8 +540,8 @@ view_end(struct application *ap)
     int ridx; /* for region array */
 
     /* default units */
-    bu_strlcpy(units, "grams", sizeof(units));
-    bu_strlcpy(unit2, bu_units_string(dbp->dbi_local2base), sizeof(unit2));
+    bu_strlcpy(wt_units, "grams", sizeof(wt_units));
+    bu_strlcpy(wt_unit2, bu_units_string(dbp->dbi_local2base), sizeof(wt_unit2));
 
     (void)time(&clockval);
     locltime = localtime(&clockval);
@@ -554,25 +554,25 @@ view_end(struct application *ap)
 
     if (ZERO(dbp->dbi_local2base - 304.8)) {
 	/* Feet */
-	bu_strlcpy(units, "grams", sizeof(units));
+	bu_strlcpy(wt_units, "grams", sizeof(wt_units));
     } else if (ZERO(dbp->dbi_local2base - 25.4)) {
 	/* inches */
 	conversion = 0.002204623;  /* lbs./gram */
-	bu_strlcpy(units, "lbs.", sizeof(units));
+	bu_strlcpy(wt_units, "lbs.", sizeof(wt_units));
     } else if (ZERO(dbp->dbi_local2base - 1.0)) {
 	/* mm */
 	conversion = 0.001;  /* kg/gram */
-	bu_strlcpy(units, "kg", sizeof(units));
+	bu_strlcpy(wt_units, "kg", sizeof(wt_units));
     } else if (ZERO(dbp->dbi_local2base - 1000.0)) {
 	/* km */
 	conversion = 0.001;  /* kg/gram */
-	bu_strlcpy(units, "kg", sizeof(units));
+	bu_strlcpy(wt_units, "kg", sizeof(wt_units));
     } else if (ZERO(dbp->dbi_local2base - 0.1)) {
 	/* cm */
-	bu_strlcpy(units, "grams", sizeof(units));
+	bu_strlcpy(wt_units, "grams", sizeof(wt_units));
     } else {
 	bu_log("WARNING: base2mm=%g, using default of %s--%s\n",
-	       dbp->dbi_base2local, units, unit2);
+	       dbp->dbi_base2local, wt_units, wt_unit2);
     }
 
     if (noverlaps)
@@ -666,7 +666,7 @@ view_end(struct application *ap)
 
 	/* WEIGHT BY REGION NAME =============== */
 	/* ^L is char code for FormFeed/NewPage */
-	fprintf(outfp, "Weight by region name (in %s, density given in g/cm^3):\n\n", units);
+	fprintf(outfp, "Weight by region name (in %s, density given in g/cm^3):\n\n", wt_units);
 	fprintf(outfp, " Weight   Matl  LOS  Material Name  Density Name\n");
 	fprintf(outfp, "-------- ------ --- --------------- ------- -------------\n");
 
@@ -704,7 +704,7 @@ view_end(struct application *ap)
 	}
 
 	/* WEIGHT BY REGION ID =============== */
-	fprintf(outfp, "Weight by region ID (in %s):\n\n", units);
+	fprintf(outfp, "Weight by region ID (in %s):\n\n", wt_units);
 	fprintf(outfp, "  ID   Weight  Region Names\n");
 	fprintf(outfp, "----- -------- --------------------\n");
 
@@ -754,11 +754,11 @@ view_end(struct application *ap)
     fprintf(outfp, "RT Weight Program Output:\n");
     fprintf(outfp, "\nDatabase Title: \"%s\"\n", dbp->dbi_title);
     fprintf(outfp, "Time Stamp: %s\n\n", timeptr);
-    fprintf(outfp, "Total volume = %g %s^3\n\n", volume, unit2);
-    fprintf(outfp, "Centroid: X = %g %s\n", sum_x, unit2);
-    fprintf(outfp, "          Y = %g %s\n", sum_y, unit2);
-    fprintf(outfp, "          Z = %g %s\n", sum_z, unit2);
-    fprintf(outfp, "\nTotal mass = %g %s\n\n", total_weight, units);
+    fprintf(outfp, "Total volume = %g %s^3\n\n", volume, wt_unit2);
+    fprintf(outfp, "Centroid: X = %g %s\n", sum_x, wt_unit2);
+    fprintf(outfp, "          Y = %g %s\n", sum_y, wt_unit2);
+    fprintf(outfp, "          Z = %g %s\n", sum_z, wt_unit2);
+    fprintf(outfp, "\nTotal mass = %g %s\n\n", total_weight, wt_units);
 
     /* this frame is done, next could be different densities */
     analyze_densities_destroy(density);

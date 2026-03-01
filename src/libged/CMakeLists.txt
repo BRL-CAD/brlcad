@@ -353,7 +353,22 @@ set(
   ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-brlcad_addlib(libged "${LIBGED_SOURCES}" "${GED_LIBS}" "" "${GED_LOCAL_INCLUDE_DIRS}")
+brlcad_addlib(libged "${LIBGED_SOURCES}" "${GED_LIBS}" "" "${GED_LOCAL_INCLUDE_DIRS}"
+  # The core LIBGED_SOURCES (compiled via libged-obj) have too many conflicting
+  # file-scope static symbols to batch safely; suppress unity build on the
+  # object library.  Plugin sources appended later via target_sources() land
+  # on the shared libged target and do benefit from batching, which is why
+  # UNITY_BUILD is still enabled on that target.
+  NO_OBJ_UNITY
+  # The three image-I/O plugins below are copies of the same ancestor and share
+  # many file-scope static variable names (multiple_lines, file_name, inverse,
+  # zoom, clear, file_x/yoff, scr_x/yoff, usage, …).  Exclude them from unity
+  # batching to avoid conflicting-declaration errors.
+  UNITY_BUILD_SKIP
+    fb2pix/fb2pix.c
+    pix2fb/pix2fb.c
+    png2fb/png2fb.c
+)
 set_target_properties(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if (LIBGED_STATIC_CORE)
   target_link_libraries(libged PRIVATE libged_plugin_deps)

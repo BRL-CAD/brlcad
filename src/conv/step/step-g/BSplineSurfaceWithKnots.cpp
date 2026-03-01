@@ -34,7 +34,7 @@
 #define ENTITYNAME "B_Spline_Surface_With_Knots"
 string BSplineSurfaceWithKnots::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)BSplineSurfaceWithKnots::Create);
 
-static const char *Knot_type_string[] = {
+static const char *BSplineSurface_Knot_type_string[] = {
     "uniform_knots",
     "unspecified",
     "quasi_uniform_knots",
@@ -190,7 +190,7 @@ BSplineSurfaceWithKnots::Print(int level)
     std::cout << std::endl;
 
     TAB(level + 1);
-    std::cout << "knot_spec:" << Knot_type_string[knot_spec] << std::endl;
+    std::cout << "knot_spec:" << BSplineSurface_Knot_type_string[knot_spec] << std::endl;
 
     TAB(level);
     std::cout << "Inherited Attributes:" << std::endl;

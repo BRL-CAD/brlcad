@@ -54,7 +54,7 @@
 #define NTSC_BLEND(v)	(0.30*(v)[X] + 0.59*(v)[Y] + 0.11*(v)[Z])
 
 extern fastf_t** timeTable_init(int x, int y);
-extern int timeTable_input(int x, int y, fastf_t t, fastf_t **timeTable);
+extern void timeTable_input(int x, int y, fastf_t t, fastf_t **timeTable);
 
 extern int query_x;
 extern int query_y;

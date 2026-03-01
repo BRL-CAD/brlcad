@@ -161,7 +161,7 @@ init_list(struct nametbl *l, int s)
  * add a new name to the name list
  */
 static int
-add_to_list(struct nametbl *l, char *name)
+clone_add_to_list(struct nametbl *l, char *name)
 {
     int i, j;
 
@@ -472,7 +472,7 @@ copy_solid(struct db_i *dbip, struct directory *proto, void *clientData)
 	return;
     }
 
-    idx = add_to_list(&obj_list, proto->d_namep);
+    idx = clone_add_to_list(&obj_list, proto->d_namep);
 
     /* sanity check that the item was really added */
     if ((idx < 0) || !is_in_list(obj_list, proto->d_namep)) {
@@ -691,7 +691,7 @@ copy_comb(struct db_i *dbip, struct directory *proto, void *clientData)
 	return;
     }
 
-    idx = add_to_list(&obj_list, proto->d_namep);
+    idx = clone_add_to_list(&obj_list, proto->d_namep);
 
     /* sanity check that the item was really added to our bookkeeping */
     if ((idx < 0) || !is_in_list(obj_list, proto->d_namep)) {
@@ -883,7 +883,7 @@ print_usage(struct bu_vls *str)
  * our state structure.
  */
 static int
-get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
+clone_get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 {
     int k;
 
@@ -1006,7 +1006,7 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* validate user options */
-    if (get_args(gedp, argc, (char **)argv, &state) & BRLCAD_ERROR)
+    if (clone_get_args(gedp, argc, (char **)argv, &state) & BRLCAD_ERROR)
 	return BRLCAD_ERROR;
 
     bu_vls_init(&state.olist);

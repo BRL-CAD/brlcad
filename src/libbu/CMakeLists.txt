@@ -142,7 +142,9 @@ set(BU_INCLUDE_DIRS ${BRLCAD_BINARY_DIR}/include ${BRLCAD_SOURCE_DIR}/include)
 # locally used but not needed by users of the library
 set(BU_LOCAL_INCLUDE_DIRS ${BSON_INCLUDE_DIR} ${LMDB_INCLUDE_DIR} ${UUID_INCLUDE_DIR})
 
-brlcad_addlib(libbu "${LIBBU_SOURCES}" "${BU_LIBS}" "${BU_INCLUDE_DIRS}" "${BU_LOCAL_INCLUDE_DIRS}")
+brlcad_addlib(libbu "${LIBBU_SOURCES}" "${BU_LIBS}" "${BU_INCLUDE_DIRS}" "${BU_LOCAL_INCLUDE_DIRS}"
+  UNITY_BUILD_SKIP backtrace.c crashreport.c
+)
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(bu_atgts)

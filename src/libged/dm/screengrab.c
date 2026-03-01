@@ -34,7 +34,7 @@
 #include "../ged_private.h"
 
 static int
-image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
+screengrab_image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 {
     int type_int;
     bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
@@ -77,7 +77,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[0], "h", "help",           "",     NULL,             &print_help,       "Print help and exit");
     BU_OPT(d[1], "F", "fb",             "",     NULL,             &grab_fb,          "screengrab framebuffer instead of scene display");
     BU_OPT(d[2], "D", "dm",             "name", &bu_opt_vls,      &dm_name,          "name of DM to screengrab");
-    BU_OPT(d[3], "",  "format",         "fmt",  &image_mime,      &type,             "output image file format");
+    BU_OPT(d[3], "",  "format",         "fmt",  &screengrab_image_mime,      &type,             "output image file format");
     BU_OPT_NULL(d[4]);
 
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);

@@ -432,7 +432,47 @@ set(
 # FIXME: needs materialX
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source
 
-brlcad_addlib(librt "${LIBRT_SOURCES}" "${LIBRT_LIBS}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_DIRS}")
+brlcad_addlib(librt "${LIBRT_SOURCES}" "${LIBRT_LIBS}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_DIRS}"
+  # Files that cannot be safely batched into unity translation units:
+  # - search.cpp and search_old.cpp both define enumerators N_ABOVE, N_AND, etc.
+  #   in their respective (differently-named) enums; those clashing enumerator
+  #   names cannot be batched together.
+  # - primitives/table.cpp forward-declares rt_vol_tess as returning int; the
+  #   actual definition in primitives/vol/vol_brep.cpp returns void and relies
+  #   on the cast macro.  Batching them in the same unity TU triggers a
+  #   conflicting-declaration error.
+  # - primitives/dsp/dsp.c, primitives/ebm/ebm.c, primitives/vol/vol.c each
+  #   define static get_file_data / get_obj_data helpers with identical names
+  #   but different parameter types.
+  # - The entire bot subdirectory is excluded because btg.c and btgf.c
+  #   directly #include "tie.c" and "tie_kdtree.c"; when any of those files
+  #   land in the same unity batch the TIE_VAL-generated symbols are defined
+  #   twice.  The many other direct-.c-include patterns in bot make the whole
+  #   subdirectory unsafe to batch.
+  UNITY_BUILD_SKIP
+    search.cpp
+    search_old.cpp
+    primitives/vol/vol_brep.cpp
+    primitives/dsp/dsp.c
+    primitives/ebm/ebm.c
+    primitives/vol/vol.c
+    primitives/bot/edbot.c
+    primitives/bot/bot.c
+    primitives/bot/bot_brep.cpp
+    primitives/bot/bot_edge.c
+    primitives/bot/bot_mirror.c
+    primitives/bot/bot_oriented_bbox.cpp
+    primitives/bot/bot_plot.cpp
+    primitives/bot/btg.c
+    primitives/bot/btgf.c
+    primitives/bot/decimate.c
+    primitives/bot/plate.cpp
+    primitives/bot/repair.cpp
+    primitives/bot/sampling_checks.cpp
+    primitives/bot/bot_wireframe.cpp
+    primitives/bot/tie.c
+    primitives/bot/tie_kdtree.c
+)
 
 # set(MATERIALX_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXCore.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXFormat.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenOsl.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenShader.lib)
 # BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${MATERIALX_LIBS};${OPENCL_LIBS};libbrep;libnmg;libbg;libbv;libbn;libbu;${OPENNURBS_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")

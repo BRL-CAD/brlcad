@@ -383,6 +383,21 @@ endif(BRLCAD_ENABLE_DTRACE)
 # Take advantage of parallel processors if available - highly recommended
 option(BRLCAD_SMP "Enable SMP architecture parallel computation support" ON)
 mark_as_advanced(BRLCAD_SMP)
+
+# Enable CMake unity (jumbo) build batching.  When ON, BRLCAD_ADDLIB and
+# BRLCAD_ADDEXEC batch multiple source files into single compilation units,
+# eliminating redundant header parsing and reducing build times.  Individual
+# source files that cannot be batched safely (e.g. due to conflicting
+# file-scope symbols) are excluded via per-target UNITY_BUILD_SKIP lists
+# passed to those macros.  Requires CMake >= 3.16.
+#
+# NOTE: not all BRL-CAD targets have been audited for unity-build
+# compatibility; some may have file-scope symbol conflicts or
+# direct-#include patterns that require UNITY_BUILD_SKIP exclusions.
+# Enable this option and address any resulting compiler errors before
+# distributing a unity-built tree.
+option(BRLCAD_ENABLE_UNITY_BUILD "Enable CMake unity/jumbo build batching" OFF)
+mark_as_advanced(BRLCAD_ENABLE_UNITY_BUILD)
 if(BRLCAD_SMP)
   config_h_append(BRLCAD "#define PARALLEL 1\n")
 endif(BRLCAD_SMP)

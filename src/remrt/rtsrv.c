@@ -103,8 +103,6 @@ static int seen_matrix = 0;
 static char *title_file = NULL;
 static char *title_obj = NULL;	/* name of file and first object */
 
-#define MAX_WIDTH (16*1024)
-
 static size_t avail_cpus = 0;	/* # of cpus avail on this system */
 
 /* store program parameters in case of restart */

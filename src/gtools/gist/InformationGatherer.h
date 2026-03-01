@@ -33,6 +33,8 @@
 // TODO: Arrange the class for this.
 // this class below is a placeholder; it may not be the optimal layout
 
+std::string getCmdPath(std::string exeDir, const char* cmd);
+
 class Options;
 
 struct boundingBox {

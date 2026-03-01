@@ -49,7 +49,7 @@ int screen_width;			/* input width */
 
 
 static int
-get_args(int argc, char **argv)
+fb2pix_get_args(int argc, char **argv)
 {
     int c;
 
@@ -140,7 +140,7 @@ ged_fb2pix_core(struct ged *gedp, int argc, const char *argv[])
 
     screen_height = screen_width = 512;		/* Defaults */
 
-    if (!get_args(argc, (char **)argv)) {
+    if (!fb2pix_get_args(argc, (char **)argv)) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }

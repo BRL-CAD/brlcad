@@ -35,7 +35,7 @@
 #include "../ged_private.h"
 
 static int
-image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
+overlay_image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 {
     int type_int;
     bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
@@ -95,7 +95,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[10],  "w", "width",          "#",    &bu_opt_int,     &width,            "[Fb]   image width");
     BU_OPT(d[11], "n", "height",         "#",    &bu_opt_int,     &height,           "[Fb]   image height");
     BU_OPT(d[12], "S", "square",         "#",    &bu_opt_int,     &square,           "[Fb]   image width/height (for square image)");
-    BU_OPT(d[13], "",  "format",         "fmt",  &image_mime,     &type,             "[Fb]   image file format");
+    BU_OPT(d[13], "",  "format",         "fmt",  &overlay_image_mime,     &type,             "[Fb]   image file format");
     BU_OPT_NULL(d[14]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);

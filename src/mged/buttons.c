@@ -230,7 +230,7 @@ int
 f_press(ClientData clientData,
 	Tcl_Interp *interp,
 	int argc,
-	char *argv[])
+	const char *argv[])
 {
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     MGED_CK_CMD(ctp);
@@ -275,7 +275,7 @@ f_press(ClientData clientData,
 	    if (!BU_STR_EQUAL(str, bp->bu_name))
 		continue;
 
-	    (void)bp->bu_func(clientData, interp, 2, argv+1);
+	    (void)bp->bu_func(clientData, interp, 2, (char **)(argv+1));
 	    goto next;
 	}
 
@@ -1168,212 +1168,212 @@ chg_l2menu(struct mged_state *s, int i) {
 
 
 int
-f_be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_be_accept(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return be_accept(clientData, interp, argc, argv);
+    return be_accept(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_be_o_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_be_o_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return be_o_illuminate(clientData, interp, argc, argv);
+    return be_o_illuminate(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_be_o_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_be_o_rotate(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return be_o_rotate(clientData, interp, argc, argv);
+    return be_o_rotate(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_be_o_scale(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_be_o_scale(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return be_o_scale(clientData, interp, argc, argv);
+    return be_o_scale(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_be_o_x(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_be_o_x(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return be_o_x(clientData, interp, argc, argv);
+    return be_o_x(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_be_o_xscale(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_be_o_xscale(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return be_o_xscale(clientData, interp, argc, argv);
+    return be_o_xscale(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_be_o_xy(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_be_o_xy(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return be_o_xy(clientData, interp, argc, argv);
+    return be_o_xy(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_be_o_y(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_be_o_y(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return be_o_y(clientData, interp, argc, argv);
+    return be_o_y(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_be_o_yscale(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_be_o_yscale(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return be_o_yscale(clientData, interp, argc, argv);
+    return be_o_yscale(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_be_o_zscale(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_be_o_zscale(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return be_o_zscale(clientData, interp, argc, argv);
+    return be_o_zscale(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_be_reject(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return be_reject(clientData, interp, argc, argv);
+    return be_reject(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_be_s_edit(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_be_s_edit(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return be_s_edit(clientData, interp, argc, argv);
+    return be_s_edit(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_be_s_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_be_s_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return be_s_illuminate(clientData, interp, argc, argv);
+    return be_s_illuminate(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_be_s_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_be_s_rotate(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return be_s_rotate(clientData, interp, argc, argv);
+    return be_s_rotate(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_be_s_scale(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_be_s_scale(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return be_s_scale(clientData, interp, argc, argv);
+    return be_s_scale(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_be_s_trans(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_be_s_trans(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return be_s_trans(clientData, interp, argc, argv);
+    return be_s_trans(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_bv_35_25(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_bv_35_25(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return bv_35_25(clientData, interp, argc, argv);
+    return bv_35_25(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_bv_45_45(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_bv_45_45(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return bv_45_45(clientData, interp, argc, argv);
+    return bv_45_45(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_bv_bottom(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_bv_bottom(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return bv_bottom(clientData, interp, argc, argv);
+    return bv_bottom(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_bv_front(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_bv_front(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return bv_front(clientData, interp, argc, argv);
+    return bv_front(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_bv_left(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_bv_left(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return bv_left(clientData, interp, argc, argv);
+    return bv_left(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_bv_rate_toggle(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_bv_rate_toggle(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return bv_rate_toggle(clientData, interp, argc, argv);
+    return bv_rate_toggle(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_bv_rear(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_bv_rear(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return bv_rear(clientData, interp, argc, argv);
+    return bv_rear(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_bv_reset(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_bv_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return bv_reset(clientData, interp, argc, argv);
+    return bv_reset(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_bv_right(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_bv_right(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return bv_right(clientData, interp, argc, argv);
+    return bv_right(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_bv_top(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_bv_top(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return bv_top(clientData, interp, argc, argv);
+    return bv_top(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_bv_vrestore(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_bv_vrestore(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return bv_vrestore(clientData, interp, argc, argv);
+    return bv_vrestore(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_bv_vsave(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_bv_vsave(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return bv_vsave(clientData, interp, argc, argv);
+    return bv_vsave(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_bv_zoomin(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_bv_zoomin(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return bv_zoomin(clientData, interp, argc, argv);
+    return bv_zoomin(clientData, interp, argc, (char **)argv);
 }
 
 
 int
-f_bv_zoomout(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_bv_zoomout(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    return bv_zoomout(clientData, interp, argc, argv);
+    return bv_zoomout(clientData, interp, argc, (char **)argv);
 }
 
 

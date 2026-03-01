@@ -266,19 +266,13 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     if (!info || !info->gv_s->bot_threshold || (info->gv_s->bot_threshold > bot_ip->num_faces)) {
 	for (i = 0; i < bot_ip->num_faces; i++) {
-	    const int f0 = bot_ip->faces[i*3+0];
-	    const int f1 = bot_ip->faces[i*3+1];
-	    const int f2 = bot_ip->faces[i*3+2];
+	    if (bot_ip->faces[i*3+2] < 0 || (size_t)bot_ip->faces[i*3+2] > bot_ip->num_vertices)
+		continue; /* sanity */
 
-	    if (f0 < 0 || (size_t)f0 >= bot_ip->num_vertices ||
-		f1 < 0 || (size_t)f1 >= bot_ip->num_vertices ||
-		f2 < 0 || (size_t)f2 >= bot_ip->num_vertices)
-		continue;   /* sanity */
-
-	    BV_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[(size_t)f0*3], BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[(size_t)f1*3], BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[(size_t)f2*3], BV_VLIST_LINE_DRAW);
-	    BV_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[(size_t)f0*3], BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[bot_ip->faces[i*3+1]*3], BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[bot_ip->faces[i*3+2]*3], BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BV_VLIST_LINE_DRAW);
 	}
     } else {
 	/* too big - just draw the bbox */

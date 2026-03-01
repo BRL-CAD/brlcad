@@ -18,6 +18,9 @@
  * information.
  */
 
+#ifndef LIBRT_BOT_EDGE_H
+#define LIBRT_BOT_EDGE_H
+
 #include "common.h"
 
 /* interface headers */
@@ -51,3 +54,5 @@ bot_edge_table(struct rt_bot_internal *bot, struct bot_edge ***edges);
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
+#endif /* LIBRT_BOT_EDGE_H */

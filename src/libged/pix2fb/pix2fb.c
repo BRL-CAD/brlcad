@@ -76,7 +76,7 @@ Usage: pix-fb [-a -h -i -c -z -1] [-m #lines] [-F framebuffer]\n\
 	[file.pix]\n";
 
 static int
-get_args(int argc, char **argv)
+pix2fb_get_args(int argc, char **argv)
 {
     int c;
 
@@ -206,7 +206,7 @@ ged_pix2fb_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (!get_args(argc, (char **)argv)) {
+    if (!pix2fb_get_args(argc, (char **)argv)) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }

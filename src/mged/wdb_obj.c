@@ -56,10 +56,12 @@
 #include "tclcad.h"
 #include "./mged_wdb.h"
 
+#ifndef ERROR_RECOVERY_SUGGESTION
 #define ERROR_RECOVERY_SUGGESTION "\
   The in-memory table of contents may not match the status of the on-disk\n\
   database.  The on-disk database should still be intact.  For safety, \n\
   you should exit MGED now, and resolve the I/O problem, before continuing.\n"
+#endif
 
 #define WDB_TCL_CHECK_READ_ONLY \
     if ((Tcl_Interp *)wdbp->wdb_interp) { \

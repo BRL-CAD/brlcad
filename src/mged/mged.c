@@ -100,7 +100,7 @@ extern void set_localunit_TclVar(void);
 
 /* defined in history.c */
 extern struct bu_vls *history_prev(const char *);
-extern struct bu_vls *history_cur(const char *);
+extern struct bu_vls *history_cur(void);
 extern struct bu_vls *history_next(const char *);
 
 // FIXME: Globals
