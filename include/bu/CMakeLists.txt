@@ -34,7 +34,6 @@ set(
   path.h
   process.h
   ptbl.h
-  redblack.h
   simd.h
   snooze.h
   sort.h

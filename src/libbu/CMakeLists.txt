@@ -84,7 +84,6 @@ set(
   process.c
   progname.c
   ptbl.c
-  redblack.c
   realpath.c
   semaphore.c
   semaphore_register.cpp
