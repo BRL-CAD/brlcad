@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -76,7 +77,7 @@ enum class KState {
     Section_Ale2d,
     Section_Beam,
     //Section_Beam_AISC,
-    Section_Discrete,
+    //Section_Discrete,
     //Section_Fpd,
     //Section_Point_Source,
     //Section_Point_source_Mixture,
@@ -454,7 +455,7 @@ bool parse_k
 	std::vector<std::string> tokens;
 	const size_t FirstNode = 2;
 	std::vector<std::string> optionsContainer;
-	std::vector<Options> options;
+	std::vector<Options> beamOptions;
 
 	if (line.size() > 0)
 	    tokens = parse_line(line.c_str());
@@ -521,23 +522,23 @@ bool parse_k
 				    if (optionsContainer.size() > 0) {
 					for (size_t i_o = 0; i_o < optionsContainer.size(); ++i_o) {
 					    if (optionsContainer[i_o] == "THICKNESS")
-						options.push_back(Options::Thickness);
+						beamOptions.push_back(Options::Thickness);
 					    else if (optionsContainer[i_o] == "SCALAR")
-						options.push_back(Options::Scalar);
+						beamOptions.push_back(Options::Scalar);
 					    else if (optionsContainer[i_o] == "SCALR")
-						options.push_back(Options::Scalr);
+						beamOptions.push_back(Options::Scalr);
 					    else if (optionsContainer[i_o] == "SECTION")
-						options.push_back(Options::Section);
+						beamOptions.push_back(Options::Section);
 					    else if (optionsContainer[i_o] == "PID")
-						options.push_back(Options::Pid);
+						beamOptions.push_back(Options::Pid);
 					    else if (optionsContainer[i_o] == "OFFSET")
-						options.push_back(Options::Offset);
+						beamOptions.push_back(Options::Offset);
 					    else if (optionsContainer[i_o] == "ORIENTATION")
-						options.push_back(Options::Orientation);
+						beamOptions.push_back(Options::Orientation);
 					    else if (optionsContainer[i_o] == "WARPAGE")
-						options.push_back(Options::Warpage);
+						beamOptions.push_back(Options::Warpage);
 					    else if (optionsContainer[i_o] == "ELBOW")
-						options.push_back(Options::Elbow);
+						beamOptions.push_back(Options::Elbow);
 					    else
 						std::cout << "Unhandeled Element_Beam option" << optionsContainer[i_o] << "in k-file" << fileName << std::endl;
 					}
@@ -1423,7 +1424,7 @@ bool parse_k
 			int      pid = 1;
 			int      eid = 1;
 
-			if (options.size() == 0 || optionsCounter == 0) {
+			if (beamOptions.size() == 0 || optionsCounter == 0) {
 			    if (tokens.size() < 10) {
 				std::cout << "Too short ELEMENT_BEAM in k-file" << fileName << std::endl;
 				break;
@@ -1444,14 +1445,14 @@ bool parse_k
 			    data.parts[pid].elements.insert(eid);
 			    break;
 			}
-			else if ((options.size() > 0)) {
+			else if ((beamOptions.size() > 0)) {
 			    Options currentOption;
 
-			    if (optionsCounter < options.size())
-				currentOption = options[optionsCounter];
+			    if (optionsCounter < beamOptions.size())
+				currentOption = beamOptions[optionsCounter];
 			    else {
 				optionsCounter = 0;
-				currentOption = options[optionsCounter];
+				currentOption = beamOptions[optionsCounter];
 			    }
 
 			    switch (currentOption) {
