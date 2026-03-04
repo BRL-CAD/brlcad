@@ -382,7 +382,14 @@ db_dirbuild(struct db_i *dbip)
     RT_CK_DBI(dbip);
 
     if (!dbip->dbi_fp) {
-	return -1;
+	if (dbip->dbi_inmem) {
+	    return db_dirbuild_inmem(dbip, dbip->dbi_inmem, dbip->dbi_eof);
+	}
+	/* Fresh in-memory database, nothing to build */
+	if (dbip->dbi_eof == RT_DIR_PHONY_ADDR) {
+	    dbip->dbi_eof = 0;
+	}
+	return 0;
     }
 
     /* First, determine what version database this is */
