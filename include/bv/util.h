@@ -27,15 +27,15 @@
 #define BV_UTIL_H
 
 #include "common.h"
-#include "bu/hash.h"
+#include "bu/ptbl.h"
 #include "bn/tol.h"
-#include "dm/defines.h"
 #include "bv/defines.h"
+#include "dm/defines.h"
 
 __BEGIN_DECLS
 
 /* Set default values for a bv. */
-BV_EXPORT extern void bv_init(struct bview *v, struct bview_set *s);
+BV_EXPORT extern void bv_init(struct bview *v);
 BV_EXPORT extern void bv_free(struct bview *v);
 
 /**
@@ -52,15 +52,10 @@ BV_EXPORT extern void bv_settings_init(struct bview_settings *s);
 /**
  * Automatically set up the view to make the scene objects visible
  */
-BV_EXPORT extern void bv_autoview(struct bview *v, fastf_t scale, int all_view_objs);
+BV_EXPORT extern void bv_autoview(struct bview *v, const struct bu_ptbl *so, fastf_t scale);
 
 /* Copy the size and camera info (deliberately not a full copy of all view state) */
 BV_EXPORT extern void bv_sync(struct bview *dest, struct bview *src);
-
-/* Copy settings (potentially) common to the view and scene objects.
- * Return 0 if no changes were made to dest.  If dest did have one
- * or more settings updated from src, return 1. */
-BV_EXPORT extern int bv_obj_settings_sync(struct bv_obj_settings *dest, struct bv_obj_settings *src);
 
 /* Sync values within the bv, perform callbacks if any are defined */
 BV_EXPORT extern void bv_update(struct bview *gvp);
@@ -79,22 +74,6 @@ BV_EXPORT extern int bv_update_selected(struct bview *gvp);
 #define BV_KNOBS_RATE 1
 #define BV_KNOBS_ABS 2
 BV_EXPORT extern void bv_knobs_reset(struct bview_knobs *k, int category);
-
-/* Hash the semantic (non-pointer) contents of a bview_knobs struct.  This
- * intentionally excludes any *_udata pointers to avoid pointer address noise
- * and skips any padding that would be present if hashing the raw struct.
- *
- * If 'state' is non-NULL the supplied hash state is updated in-place and the
- * function returns 0 (the caller is expected to finalize the hash later.)
- * If 'state' is NULL an internal hash state is created, populated and
- * finalized and the resulting hash value is returned.
- *
- * Returns:
- *   0     if k is NULL or state supplied (non-owning mode)
- *   hash  if state is NULL (owning mode)
- */
-BV_EXPORT extern unsigned long long
-bv_knobs_hash(struct bview_knobs *k, struct bu_data_hash_state *state);
 
 /**
  * @brief
@@ -126,54 +105,20 @@ BV_EXPORT extern int bv_knobs_cmd_process(
         char origin, int model_flag, int incr_flag
 	);
 
-/**
- * @brief
- * Rotate the view based on an Euler angle triplet (degrees) specified
- * in one of several coordinate frames, about one of several origins.
+/* @brief
+ * Process a knob rotation vector.
  *
- * coords:  Rotation input frame
- *   'v' - rvec in view coordinates
- *   'm' - rvec in model coordinates (converted via Rv * Rm * Rv^{-1})
- *   'o' - rvec in object coordinates (use obj_rot to map object->model->view,
- *         fallback to 'v' semantics if obj_rot is NULL)
- *
- * origin:  Rotation pivot specifier
- *   'v' : view center (0,0,0 in view space)
- *   'm' : model origin
- *   'e' : eye point (0,0,1 in view space)
- *   'k' : model-space custom pivot supplied via pvt_pt
- *   Any unrecognized value falls back to 'v'.
- *
- * obj_rot:
- *   Accumulated object->model rotation matrix when coords=='o'. NULL otherwise.
- *
- * pvt_pt:
- *   Model-space pivot point when origin=='k'. Ignored otherwise.
- *   NULL == model origin.
- *
- * BEHAVIOR
- * 1. rvec is converted into a pure view-space rotation matrix according
- *    to 'coords' (and obj_rot for 'o').
- * 2. If origin != 'v', the view center (gv_center) is relocated so the
- *    specified pivot is invariant under the applied rotation.
- * 3. gv_rotation is post-multiplied by the view rotation matrix.
- * 4. bv_update(v) refreshes derived matrices. Absolute translation bookkeeping
- *    (tra_v_abs / tra_m_abs) is always recomputed
- *
- * @param[in,out] v      target bview structure
- * @param[in] rvec       rotation vector (Euler angles, degrees) expressed in the coordinate frame indicated by coords.
- * @param[in] origin     char indicating origin - may be 'e' (eye_pt), 'm' (model origin), 'v' (view origin - default) or 'k' (keypoint)
- * @param[in] coords     coordinate frame - may be 'm' (model), 'o' (obj coords via obj_rot), or 'v' (view)
- * @param[in] obj_rot    pointer to accumulated object rotation matrix (may be NULL)
- * @param[in] pvt_pt     model space pivot point
+ * @param[in] v          bview structure
+ * @param[in] rvec      Pointer to rotation vector
+ * @param[in] origin     char indicating origin - may be 'e' (eye_pt), 'm' (model origin) or 'v' (view origin - default)
+ * @param[in] model_flag Manipulate view using model coordinates rather than view coordinates
  */
 BV_EXPORT extern void
 bv_knobs_rot(struct bview *v,
-	const vect_t rvec,
+	vect_t *rvec,
 	char origin,
-	char coords,
-	const matp_t obj_rot,
-	const pointp_t pvt_pt);
+	int model_flag);
+
 
 /* @brief
  * Process a knob translation vector.
@@ -184,7 +129,7 @@ bv_knobs_rot(struct bview *v,
  */
 BV_EXPORT extern void
 bv_knobs_tran(struct bview *v,
-	const vect_t tvec,
+	vect_t *tvec,
 	int model_flag);
 
 
@@ -205,10 +150,6 @@ BV_EXPORT extern unsigned long long bv_hash(struct bview *v);
 
 /* Return a hash of the contents of a display list.  Returns 0 on failure. */
 BV_EXPORT extern unsigned long long bv_dl_hash(struct display_list *dl);
-
-/* Returns number of objects defined in any object container
- * known to this view (0 if completely cleared). */
-BV_EXPORT extern size_t bv_clear(struct bview *v, int flags);
 
 /* Note that some of these are mutually exclusive as far as producing any
  * changes - a simultaneous constraint in X and Y, for example, results in a
@@ -235,7 +176,7 @@ BV_EXPORT extern int bv_adjust(struct bview *v, int dx, int dy, point_t keypoint
 
 /* Return -1 if width and/or height are unset (and hence a meaningful
  * calculation is impossible), else 0. */
-BV_EXPORT extern int bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y);
+BV_EXPORT extern int bv_screen_to_view(const struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y);
 
 /* Return -1 if width and/or height are unset (and hence a meaningful
  * calculation is impossible), else 0.
@@ -245,111 +186,9 @@ BV_EXPORT extern int bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy
  */
 BV_EXPORT extern int bv_screen_pt(point_t *p, fastf_t x, fastf_t y, struct bview *v);
 
-
-
-/* Compute the min, max, and center points of the scene object.
- * Return 1 if a bound was computed, else 0 */
-BV_EXPORT extern int bv_scene_obj_bound(struct bv_scene_obj *s, struct bview *v);
-
 /* Find the nearest (mode == 0) or farthest (mode == 1) data_vZ value from
  * the vlist points in s in the context of view v */
 BV_EXPORT extern fastf_t bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode);
-
-/* Copy object attributes (but not geometry) from src to dest */
-BV_EXPORT extern void bv_obj_sync(struct bv_scene_obj *dest, struct bv_scene_obj *src);
-
-/* Mark object and any child objects as stale for the drawing routines */
-/* There are a few options for this situation - this one, which requires the client code
- * to explicitly notify the drawing routines they need to do work, an internal options
- * hash stored in the bv_scene_obj itself which is checked at render time, and setter
- * wrapper functions that do the bookkeeping for the caller (in lieu of directly setting
- * values in the bv_scene_obj struct.)  The first one isn't ideal because the visual will
- * be wrong if the caller doesn't supply the notification, the second has unknown
- * performance implications, and the third would be a major rework of how the bv_scene_obj
- * data is accessed (effectively, making the internal storage of bv_scene_obj fully hidden
- * a.l.a the libdm rework.)  Not sure what the best option is yet... leaning towards #2
- * if it is "fast enough"... */
-BV_EXPORT void bv_obj_stale(struct bv_scene_obj *s);
-
-/* Given a view, create an object of the specified type.  Like bv_obj_get, except it
- * leaves the addition of objects to the client.  Lower level. */
-BV_EXPORT struct bv_scene_obj *
-bv_obj_create(struct bview *v, int type);
-
-/* Given a view, create an object of the specified type and add it to the
- * appropriate container.  Issues such as memory management as a function of
- * view settings are handled internally, so client codes don't need to manage
- * it. */
-BV_EXPORT struct bv_scene_obj *
-bv_obj_get(struct bview *v, int type);
-
-/* Given an object, create an object that is a child of that object.  Issues
- * such as memory management as a function of view settings are handled
- * internally, so client codes don't need to manage it. */
-BV_EXPORT struct bv_scene_obj *
-bv_obj_get_child(struct bv_scene_obj *s);
-
-/* Clear the contents of an object (including releasing its children), but keep
- * it active in the view.  Generally used when redrawing an object */
-BV_EXPORT void
-bv_obj_reset(struct bv_scene_obj *s);
-
-/* Release an object to the internal pools. */
-BV_EXPORT void
-bv_obj_put(struct bv_scene_obj *o);
-
-/* Given a scene object and a name vname, glob match child names and uuids to
- * attempt to locate a child of s that matches vname */
-BV_EXPORT struct bv_scene_obj *
-bv_find_child(struct bv_scene_obj *s, const char *vname);
-
-/* Given a view and a name vname, glob match names and uuids to attempt to
- * locate a scene object in v that matches vname.
- *
- * NOTE - currently this is searching the top level objects, but does not walk
- * down into their children.  May want to support that in the future... */
-BV_EXPORT struct bv_scene_obj *
-bv_find_obj(struct bview *v, const char *vname);
-
-/* Given a seed name, generate a name that does not collide with any existing
- * object names in the top level.  If the seed name does not collide, it is
- * returned as the result - otherwise, a name based on the seed name will be
- * generated.
- */
-BV_EXPORT void
-bv_uniq_obj_name(struct bu_vls *oname, const char *seed, struct bview *v);
-
-/* For the specified object/view pairing, return the appropriate scene object
- * to use with that view.  Usually this will return s, but if a Level of Detail
- * scheme or some other view-aware rendering of the object is active, that object
- * will be returned instead. */
-BV_EXPORT struct bv_scene_obj *
-bv_obj_for_view(struct bv_scene_obj *s, struct bview *v);
-
-/* Get a view-specific object vobj for view v on object s.  */
-BV_EXPORT struct bv_scene_obj *
-bv_obj_get_vo(struct bv_scene_obj *s, struct bview *v);
-
-/* Check for the presence of view-specific objects */
-BV_EXPORT int
-bv_obj_have_vo(struct bv_scene_obj *s, struct bview *v);
-
-/* Clear view-specific objects */
-BV_EXPORT int
-bv_clear_view_obj(struct bv_scene_obj *s, struct bview *v);
-
-/* Set the illumination state on the object and its children to ill_state.
- * Returns 0 if no states were changed, and 1 if one or more states were
- * updated. */
-BV_EXPORT int
-bv_illum_obj(struct bv_scene_obj *s, char ill_state);
-
-/* For the given view, return a pointer to the bu_ptbl holding active scene
- * objects with the specified type.  Note that view-specific db objects are not
- * part of these sets - they should be retrieved from the scene objects in this
- * set with bv_obj_for_view. */
-BV_EXPORT struct bu_ptbl *
-bv_view_objs(struct bview *v, int type);
 
 /* Given a view, construct the view plane */
 BV_EXPORT int

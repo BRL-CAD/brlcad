@@ -38,8 +38,6 @@
 #include "raytrace.h"
 #include "ged.h"
 
-#include "../dbi.h"
-
 void print_help_msg(struct bu_vls *str)
 {
     bu_vls_printf(str, "Usage: garbage_collect [-c|--confirm] [-h|--help]\n");
@@ -63,6 +61,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     const char *av[10] = {NULL};
     fastf_t fs_percent = 0.0;
     int confirmed = 0;
+    int dbret = 0;
     int new_file_size = 0;
     int old_file_size = 0;
     int path_cnt = 0;
@@ -86,6 +85,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp = NULL;
     struct directory *new_global_dp = NULL;
     struct directory *old_global_dp = NULL;
+    struct ged_subprocess *rrp = NULL;
     struct rt_wdb *gc_wdbp = NULL;
     std::ifstream cfile;
     std::ofstream ofile;
@@ -150,23 +150,6 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     }
     bu_free(paths, "free db_ls output");
     paths = NULL;
-
-    /* In addition to the database data itself, we also want to restore any
-     * views to their original state when we open the garbage collected
-     * database.  Save the who list. (TODO - do we need to save views?  Or
-     * will drawing without resize work?) */
-    if (gedp->new_cmd_forms) {
-	DbiState *dbis = (DbiState *)gedp->dbi_state;
-	BViewState *bvs = dbis->get_view_state(gedp->ged_gvp);
-	std::vector<std::string> wpaths = bvs->list_drawn_paths(-1, false);
-	for (size_t i = 0; i < wpaths.size(); i++) {
-	    who_objs.push_back(wpaths[i]);
-	}
-    } else {
-	struct display_list *gdlp;
-	for (BU_LIST_FOR(gdlp, display_list, (struct bu_list *)ged_dl(gedp)))
-	    who_objs.push_back(std::string(bu_vls_cstr(&gdlp->dl_path)));
-    }
 
     /* Create "working" database. */
     bu_vls_sprintf(&working_file, "%s/%d_gc_%s", bu_vls_cstr(&fdir),

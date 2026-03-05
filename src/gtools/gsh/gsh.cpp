@@ -149,77 +149,6 @@ ProcessIOHandler::read()
     return lcpy;
 }
 
-class DisplayHash {
-    public:
-	bool hash(struct ged *, bool, bool);
-	void dirty(struct ged *, const DisplayHash &);
-	unsigned long long d = 0;
-	unsigned long long v = 0;
-	unsigned long long l = 0;
-	unsigned long long g = 0;
-};
-
-bool
-DisplayHash::hash(struct ged *gedp, bool dbi_state_check, bool new_cmd_forms)
-{
-    d = 0; v = 0; l = 0; g = 0;
-    struct bview *bv = gedp->ged_gvp;
-    if (!bv)
-	return false;
-
-    struct dm *dmp = (struct dm *)bv->dmp;
-    if (!dmp)
-	return false;
-
-    d = dm_hash(dmp);
-    v = bv_hash(bv);
-
-    if (new_cmd_forms && gedp->dbi_state) {
-	if (dbi_state_check) {
-	    DbiState *dbis = (DbiState *)gedp->dbi_state;
-	    unsigned long long updated = dbis->update();
-	    l = (updated) ? l + 1 : 0;
-	    if (bv->gv_s->gv_cleared) {
-		l = 1;
-		bv->gv_s->gv_cleared = 0;
-	    }
-	} else {
-	    l = 0;
-	}
-    } else {
-	l = dl_name_hash(gedp);
-    }
-
-    g = ged_dl_hash(ged_dl(gedp));
-
-    return true;
-}
-
-void
-DisplayHash::dirty(struct ged *gedp, const DisplayHash &o)
-{
-    struct bview *bv = gedp->ged_gvp;
-    if (!bv)
-	return;
-
-    struct dm *dmp = (struct dm *)bv->dmp;
-    if (!dmp)
-	return;
-
-    if (d != o.d) {
-	dm_set_dirty(dmp, 1);
-    }
-    if (v != o.v) {
-	dm_set_dirty(dmp, 1);
-    }
-    if (l != o.l) {
-	dm_set_dirty(dmp, 1);
-    }
-    if (g != o.g) {
-	dm_set_dirty(dmp, 1);
-    }
-}
-
 /* The overall state of the gsh application is encapsulated by a state class
  * called GshState.  It defines the method for executing libged commands and
  * manages the linenoise interactive thread, as well as the necessary state
@@ -246,9 +175,7 @@ class GshState {
 	size_t listeners_cnt();
 
 	// Display management
-	void view_checkpoint();
-	void view_update();
-	DisplayHash prev_hash;
+	void view_update(struct bview *v = NULL);
 
 	struct ged *gedp;
 	std::string gfile;  // Mostly used to test the post_opendb callback
@@ -380,8 +307,6 @@ GshState::GshState()
     BU_GET(gedp, struct ged);
     ged_init(gedp);
 
-    view_checkpoint();
-
     // Assign gsh specific open/close db handlers to the gedp
     ged_clbk_set(gedp, "opendb", BU_CLBK_PRE, &gsh_pre_opendb_clbk, (void *)this);
     ged_clbk_set(gedp, "opendb", BU_CLBK_POST, &gsh_post_opendb_clbk, (void *)this);
@@ -406,7 +331,7 @@ GshState::GshState()
 GshState::~GshState()
 {
 #ifdef USE_DM
-    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+    struct bu_ptbl *views = &gedp->ged_views;
     for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
 	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
 	if (v->dmp) {
@@ -431,14 +356,16 @@ GshState::eval(int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // We've got a valid GED command. Before any BRL-CAD logic is executed,
-    // stash the state of the view info so we can recognize changes.
-    view_checkpoint();
-
     int gret = ged_exec(gedp, argc, argv);
 
-    if (!(gret & BRLCAD_ERROR))
-	view_update();
+    if (!(gret & BRLCAD_ERROR)) {
+	// See if any of the views need updating
+	struct bu_ptbl *views = &gedp->ged_views;
+	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	    struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	    view_update(v);
+	}
+    }
 
     return gret;
 }
@@ -502,14 +429,6 @@ GshState::disconnect(struct ged_subprocess *p, bu_process_io_t t)
 }
 
 void
-GshState::view_checkpoint()
-{
-#ifdef USE_DM
-    prev_hash.hash(gedp, false, new_cmd_forms);
-#endif
-}
-
-void
 GshState::subprocess_output()
 {
     // We collect output from our handlers for reporting here, as well
@@ -569,46 +488,55 @@ GshState::listeners_cnt()
 }
 
 void
-GshState::view_update()
+GshState::view_update(struct bview *v)
 {
 #ifdef USE_DM
-    DisplayHash hashes;
-    if (!hashes.hash(gedp, true, new_cmd_forms))
+    if (!gedp || !gedp->dbi_state)
 	return;
 
-    hashes.dirty(gedp, prev_hash);
+    BViewState *vs = gedp->dbi_state->GetBViewState(v);
+    if (!vs)
+	return;
 
-    struct bview *v = gedp->ged_gvp;
+    // Calculate current hashes
+    vs->Hash();
+
+    // If nothing changed, we're good
+    if (!vs->Dirty())
+	return;
+
+    // Something changed - go to it.
     struct dm *dmp = (struct dm *)v->dmp;
-    if (dm_get_dirty(dmp)) {
-	if (new_cmd_forms) {
-	    unsigned char *dm_bg1;
-	    unsigned char *dm_bg2;
-	    dm_get_bg(&dm_bg1, &dm_bg2, dmp);
-	    dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
-	    dm_set_dirty(dmp, 0);
-	    dm_draw_objs(v, NULL, NULL);
-	    dm_draw_end(dmp);
-	} else {
-	    matp_t mat = gedp->ged_gvp->gv_model2view;
-	    dm_loadmatrix(dmp, mat, 0);
-	    unsigned char geometry_default_color[] = { 255, 0, 0 };
-	    dm_draw_begin(dmp);
-	    dm_draw_head_dl(dmp, (struct bu_list *)ged_dl(gedp),
-		    1.0, gedp->ged_gvp->gv_isize, -1, -1, -1, 1,
-		    0, 0, geometry_default_color, 1, 0);
+    dm_set_dirty(dmp, 1);
 
-	    // Faceplate drawing
-	    if (gedp->dbip) {
-		struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-		v->gv_base2local = gedp->dbip->dbi_base2local;
-		v->gv_local2base = gedp->dbip->dbi_local2base;
-		dm_draw_viewobjs(wdbp, v, NULL);
-	    } else {
-		dm_draw_viewobjs(NULL, v, NULL);
-	    }
-	    dm_draw_end(dmp);
+    if (new_cmd_forms) {
+	unsigned char *dm_bg1;
+	unsigned char *dm_bg2;
+	dm_get_bg(&dm_bg1, &dm_bg2, dmp);
+	dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
+	dm_draw_begin(dmp);
+	vs->Render();
+	dm_set_dirty(dmp, 0);
+	dm_draw_end(dmp);
+    } else {
+	matp_t mat = gedp->ged_gvp->gv_model2view;
+	dm_loadmatrix(dmp, mat, 0);
+	unsigned char geometry_default_color[] = { 255, 0, 0 };
+	dm_draw_begin(dmp);
+	dm_draw_head_dl(dmp, (struct bu_list *)ged_dl(gedp),
+		1.0, gedp->ged_gvp->gv_isize, -1, -1, -1, 1,
+		0, 0, geometry_default_color, 1, 0);
+
+	// Faceplate drawing
+	if (gedp->dbip) {
+	    //struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	    v->gv_base2local = gedp->dbip->dbi_base2local;
+	    v->gv_local2base = gedp->dbip->dbi_local2base;
+	    //dm_draw_viewobjs(wdbp, v, NULL);
+	} else {
+	    //dm_draw_viewobjs(NULL, v, NULL);
 	}
+	dm_draw_end(dmp);
     }
 #endif
 }

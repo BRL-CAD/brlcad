@@ -59,9 +59,9 @@ main(int argc, char *argv[])
     // Create the view
     struct bview *v;
     BU_GET(v, struct bview);
-    bv_init(v, NULL);
+    bv_init(v);
 
-    struct bv_scene_obj *pobj = db_sketch_to_scene_obj("poly", dbip, dp, v, 0);
+    struct bv_scene_obj *pobj = db_sketch_to_scene_obj("poly", dbip, dp, v);
 
     if (!pobj)
 	bu_exit(EXIT_FAILURE, "Failed to create scene object from poly.s\n");

@@ -1,4 +1,4 @@
-/*                         O V E R L A Y . C
+/*                      O V E R L A Y . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2025 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/overlay.c
+/** @file libged/overlay.cpp
  *
  * The overlay command.
  *
@@ -35,7 +35,7 @@
 #include "../ged_private.h"
 
 static int
-overlay_image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
+image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 {
     int type_int;
     bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
@@ -95,7 +95,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[10],  "w", "width",          "#",    &bu_opt_int,     &width,            "[Fb]   image width");
     BU_OPT(d[11], "n", "height",         "#",    &bu_opt_int,     &height,           "[Fb]   image height");
     BU_OPT(d[12], "S", "square",         "#",    &bu_opt_int,     &square,           "[Fb]   image width/height (for square image)");
-    BU_OPT(d[13], "",  "format",         "fmt",  &overlay_image_mime,     &type,             "[Fb]   image file format");
+    BU_OPT(d[13], "",  "format",         "fmt",  &image_mime,     &type,             "[Fb]   image file format");
     BU_OPT_NULL(d[14]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -333,12 +333,11 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 GED_DECLARE_COMMAND_SET(GED_OVERLAY_COMMANDS)
 GED_DECLARE_PLUGIN_MANIFEST("libged_overlay", 1, GED_OVERLAY_COMMANDS)
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s

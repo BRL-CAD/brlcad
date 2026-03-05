@@ -22,6 +22,7 @@ set(
   polygon_op.cpp
   polygon_triangulate.cpp
   polygon_point_in.c
+  pnts.cpp
   sat.cpp
   spsr.cpp
   tri_pt.cpp
@@ -30,6 +31,7 @@ set(
   trimesh.cpp
   trimesh_diff.cpp
   trimesh_isect.cpp
+  trimesh_bb.cpp
   trimesh_plot3.cpp
   trimesh_sync.cpp
   trimesh_split.cpp

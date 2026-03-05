@@ -80,8 +80,9 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     }
     gd->vobj = argv[0];
 
-    struct bv_scene_obj *s = bv_find_obj(gedp->ged_gvp, argv[1]);
-    if (s) {
+    BViewState *vs = gedp->dbi_state->GetBViewState(gedp->ged_gvp);
+    std::vector<struct bv_scene_obj *> sobjs = vs->FindSceneObjs(argv[1]);
+    if (sobjs.size()) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s already exists\n", argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -121,7 +122,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     }
 
     /* Set up the toplevel object */
-    struct bv_scene_group *g = bv_obj_get(v, BV_DB_OBJS);
+    struct bv_scene_group *g = bv_obj_get(gedp->free_scene_objs);
     if (!g)
 	return BRLCAD_ERROR;
     BU_GET(g->s_path, struct db_full_path);
@@ -133,8 +134,8 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
 
     // Set up drawing settings
     unsigned char wcolor[3] = {255,255,255};
-    struct bv_obj_settings vs = BV_OBJ_SETTINGS_INIT;
-    bv_obj_settings_sync(g->s_os, &vs);
+    struct bv_obj_settings vss = BV_OBJ_SETTINGS_INIT;
+    bv_obj_settings_sync(g->s_os, &vss);
 
     // We have a tree walk ahead to populate the wireframe - set up the client
     // data structure.
@@ -144,17 +145,16 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     dd.v = v;
     dd.tol = &wdbp->wdb_tol;
     dd.ttol = &wdbp->wdb_ttol;
-    dd.mesh_c = gedp->ged_lod;
     dd.color_inherit = 0;
     dd.bound_only = 0;
     dd.s_size = &s_size;
     dd.res = &rt_uniresource;
     bu_color_from_rgb_chars(&dd.c, wcolor);
-    dd.vs = &vs;
+    dd.vs = &vss;
     dd.g = g;
 
     // Create a wireframe from the current state of the specified object
-    draw_gather_paths(fp, &mat, (void *)&dd);
+    //draw_gather_paths(fp, &mat, (void *)&dd);
 
     // TODO - set the object callbacks
 
@@ -235,31 +235,28 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
     int ac = bu_opt_parse(NULL, acnt, argv, d);
 
     // If we're not wanting help and we have no subcommand, list current gobjs objects
-    struct bview *v = gd->cv;
     if (!ac && cmd_pos < 0 && !help) {
-	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
-	if (view_objs) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
-	    }
+	BViewState *vs = gedp->dbi_state->GetBViewState(gd->cv);
+	if (!vs)
+	    return BRLCAD_OK;
+
+	std::vector<struct bv_scene_obj *> vobjs = vs->FindSceneObjs(NULL, true, false);
+	std::set<std::string> vnames;
+	for (size_t i = 0; i < vobjs.size(); i++) {
+	    if (!bu_vls_strlen(&vobjs[i]->s_name))
+		continue;
+	    vnames.insert(std::string(bu_vls_cstr(&vobjs[i]->s_name)));
 	}
-	struct bu_ptbl *local_view_objs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
-	if (local_view_objs) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(local_view_objs); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(local_view_objs, i);
-		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
-	    }
-	}
+	std::set<std::string>::iterator vn_it;
+	for (vn_it = vnames.begin(); vn_it != vnames.end(); ++vn_it)
+	    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", (*vn_it).c_str());
 	return BRLCAD_OK;
     }
 
     gd->s = NULL;
 
-    if (!gd->s) {
-	// View object doesn't already exist.  subcommands will either need to create it
-	// or handle the error case
-    }
+    // View object doesn't already exist.  subcommands will either need to create it
+    // or handle the error case
 
     return _ged_subcmd_exec(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_gobjs_cmds,
 			    "view gobjs", "[options] subcommand [args]", gd, argc, argv, help, cmd_pos);

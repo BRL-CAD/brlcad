@@ -440,8 +440,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 
     if (draw_eye_path) {
 	if (gedp->new_cmd_forms) {
-	    struct bview *view = gedp->ged_gvp;
-	    bv_vlblock_obj(preview_vbp, view, "preview::eye_path");
+	    ged_vlblock_scene_obj(gedp, gedp->ged_gvp, "ged::preview::eye_path", preview_vbp);
 	} else {
 	    _ged_cvt_vlblock_to_solids(gedp, preview_vbp, "EYE_PATH", 0);
 	}

@@ -33,7 +33,19 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+#  include <atomic>
+#  include <chrono>
+#  include <mutex>
+#  include <queue>
+#  include <thread>
+#  include <unordered_map>
+#  include <unordered_set>
+#  include "concurrentqueue.h"
+#endif
+
 #include "vmath.h"
+#include "bu/cache.h"
 #include "bv.h"
 #include "rt/db4.h"
 #include "raytrace.h"
@@ -63,6 +75,72 @@
 
 __BEGIN_DECLS
 
+#ifdef __cplusplus
+
+class CacheItem {
+    public:
+	CacheItem();
+	CacheItem(const char *dkey, void *dval, size_t dlen);
+	~CacheItem();
+	CacheItem(const CacheItem &o);
+
+	CacheItem& operator=(const CacheItem& o);
+
+	char key[BU_CACHE_KEY_MAXLEN];
+	void *data = NULL;
+	size_t data_len = 0;
+
+	bool erase_op = false;
+};
+
+// TODO - I think I need to be using std::condition_variable
+// and a few other things here to do this correctly - raw
+// mutexes probably aren't going to cut it.
+//
+// https://en.cppreference.com/w/cpp/thread/condition_variable.html
+//
+// Even better might be to see if https://github.com/cameron314/concurrentqueue
+// would be a good fit for this.
+class ProcessDrawData {
+    public:
+        std::atomic<int> thread_cnt = 0;
+        std::atomic<bool> shutdown = false;
+
+	// A database object is processed in order - first q_attr, then
+	// q_aabb, q_obb and q_lod.  Each of the first four queues will
+	// send a CacheItem to the q_write queue, whose sole job is to
+	// write the CacheItems to the bu_cache database.
+	//
+	// Although ConcurrentQueue does not guarantee ordering across
+	// all producers (i.e. it is not guaranteed that a CacheItem
+	// added by q_aabb will be written out by q_write before an
+	// item added by q_lod) it DOES guarantee that items enqueued
+	// by a single producer thread are guaranteed to be dequeued in
+	// the same order they were enqueued by that thread.
+	//
+	// What this should mean, in practice, is that if a database
+	// object gets queued up in the first queue multiple times,
+	// each individual data element produced for that item should
+	// end up with a FIFO behavior.  For example, if object A gets
+	// queued into q_attr twice (A1 and A2) A2:lod should get written
+	// out after A1::lod even if A2:obb gets written out before
+	// A1:lod.  The worst that might happen is a caller getting a
+	// cache value that is out of date if the most current version
+	// of the database object is still in the "to process" queue.
+	//
+	// TODO - should have a way for user apps to query whether
+	// the caching system is in a "settled" state or not (i.e.,
+	// all the queues should report empty.)
+	moodycamel::ConcurrentQueue<std::string> q_attr;
+	moodycamel::ConcurrentQueue<struct rt_db_internal *> q_aabb;
+	moodycamel::ConcurrentQueue<struct rt_db_internal *> q_obb;
+	moodycamel::ConcurrentQueue<struct rt_db_internal *> q_lod;
+	moodycamel::ConcurrentQueue<CacheItem> q_write;
+
+        struct db_i *dbip;
+};
+#endif
+
 // TODO - eventually, all the "LIBRT ONLY" elements in db_i should move here.
 // The librt prep caching container should also go here.
 //
@@ -71,15 +149,18 @@ __BEGIN_DECLS
 struct db_i_internal {
     uint32_t dbi_magic;
 
-    /* BoT level of detail cached data for drawing */
-    struct bv_mesh_lod_context *mesh_c;
-    int mesh_c_completed;
-    int mesh_c_target;
+    /* Cached data */
+    struct bu_cache *c;
 
-    // TODO - really need to get the rt prep cache container
-    // in here and add a pointer slot to it for rt_db_internal
-    // so the librt point generation routines can take advantage
-    // of cached prep even if they're using an inmem db...
+#ifdef __cplusplus
+    std::shared_ptr<ProcessDrawData> p;
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> cache_geom_uses;
+#endif
+
+    // TODO - really need to get the rt prep cache container in here.  Also
+    // should add a pointer slot to rt_db_internal to hold cached data pointers
+    // so the librt point generation routines can take advantage of cached prep
+    // from a parent dbip even if they're using an inmem db locally...
 };
 
 struct db_i_internal * db_i_internal_create(void);

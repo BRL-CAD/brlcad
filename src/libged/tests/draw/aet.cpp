@@ -39,25 +39,20 @@
 void
 dm_refresh(struct ged *gedp, int vnum)
 {
-    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-    struct bview *v = (struct bview *)BU_PTBL_GET(views, vnum);
+    struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, vnum);
     if (!v)
 	return;
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BViewState *bvs = dbis->get_view_state(v);
-    dbis->update();
-    std::unordered_set<struct bview *> uset;
-    uset.insert(v);
-    bvs->redraw(NULL, uset, 1);
+    BViewState *bvs = gedp->dbi_state->GetBViewState(v);
+    gedp->dbi_state->Sync();
 
     struct dm *dmp = (struct dm *)v->dmp;
     unsigned char *dm_bg1;
     unsigned char *dm_bg2;
     dm_get_bg(&dm_bg1, &dm_bg2, dmp);
     dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
-    dm_set_dirty(dmp, 0);
-    dm_draw_objs(v, NULL, NULL);
-    dm_draw_end(dmp);
+
+    bvs->Redraw(false);
+    bvs->Render();
 }
 
 int
@@ -76,8 +71,7 @@ img_cmp(int vnum, int id, struct ged *gedp, const char *cdir, int soft_fail)
 
     dm_refresh(gedp, vnum);
 
-    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-    struct bview *v = (struct bview *)BU_PTBL_GET(views, vnum);
+    struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, vnum);
     if (!v)
 	bu_exit(EXIT_FAILURE, "Invalid view specifier: %d\n", vnum);
     struct dm *dmp = (struct dm *)v->dmp;
@@ -187,23 +181,22 @@ main(int ac, char *av[]) {
     gedp->new_cmd_forms = 1;
     bu_setenv("DM_SWRAST", "1", 1);
 
-    // We don't want the default GED views for this test
-    bv_set_rm_view(&gedp->ged_views, NULL);
-
     // Set up the views.  Unlike the other drawing tests, we are explicitly
     // out to test the behavior of multiple views and dms, so we need to
     // set up multiples.  We'll start out with four non-independent views,
     // to mimic the most common multi-dm/view display - a Quad view widget.
     // Each view will get its own attached swrast DM.
+    //
+    // TODO - properly add BViewStates to DbiState
     struct bview *views[4];
-    for (size_t i = 0; i < 4; i++) {
+    for (size_t i = 1; i < 4; i++) {
 	BU_GET(views[i], struct bview);
 	if (!i)
 	    gedp->ged_gvp = views[i];
 	struct bview *v = views[i];
-	bv_init(v, &gedp->ged_views);
+	bv_init(v);
 	bu_vls_sprintf(&v->gv_name, "V%zd", i);
-	bv_set_add_view(&gedp->ged_views, v);
+	bu_ptbl_ins(&gedp->ged_views, (long *)v);
 	bu_ptbl_ins(&gedp->ged_free_views, (long *)v);
 
 	/* To generate images that will allow us to check if the drawing

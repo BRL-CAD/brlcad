@@ -31,6 +31,7 @@
 #include "bu/list.h"
 #include "bu/log.h"
 #include "bu/str.h"
+#include "bv/objs.h"
 #define PLOT3_IMPLEMENTATION
 #include "bv/plot3.h"
 #include "bv/vlist.h"
@@ -521,96 +522,28 @@ bv_plot_vlblock(FILE *fp, const struct bv_vlblock *vbp)
     }
 }
 
-#define GET_BV_SCENE_OBJ(p, fp) { \
-    if (BU_LIST_IS_EMPTY(fp)) { \
-	BU_ALLOC((p), struct bv_scene_obj); \
-    } else { \
-	p = BU_LIST_NEXT(bv_scene_obj, fp); \
-	BU_LIST_DEQUEUE(&((p)->l)); \
-    } \
-    bu_vls_init(&(p)->s_name); \
-    (p)->s_path = NULL; \
-    BU_LIST_INIT( &((p)->s_vlist) ); }
-
-#define FREE_BV_SCENE_OBJ(p, fp, vlf) { \
-    BU_LIST_APPEND(fp, &((p)->l)); \
-    BV_FREE_VLIST(vlf, &((p)->s_vlist)); }
-
-void
-bv_vlblock_to_objs(struct bu_ptbl *out, const char *name_root, struct bv_vlblock *vbp, struct bview *v, struct bv_scene_obj *f, struct bu_list *vlfree)
+int
+bv_vlblock_obj(struct bv_scene_obj *s, struct bv_vlblock *vbp)
 {
-    if (!out || !vbp || !f)
-	return;
-
-    // Before we create new objects, check that the proposed names are
-    // not already used.  If they are, we first remove the old versions
-    struct bu_ptbl oobjs = BU_PTBL_INIT_ZERO;
-    for (size_t i = 0; i < vbp->nused; i++) {
-	if (!BU_LIST_IS_EMPTY(&(vbp->head[i]))) {
-	    struct bu_vls cname = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&cname, "%sobj%zd", name_root, i);
-	    for (size_t j = 0; j < BU_PTBL_LEN(out); j++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(out, j);
-		if (BU_STR_EQUAL(bu_vls_cstr(&cname), bu_vls_cstr(&s->s_name))) {
-		    bu_ptbl_ins_unique(&oobjs, (long *)s);
-		}
-	    }
-	}
-    }
-    for (size_t i = 0; i < BU_PTBL_LEN(&oobjs); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&oobjs, i);
-	bu_ptbl_rm(out, (long *)s);
-	FREE_BV_SCENE_OBJ(s, &f->l, vlfree);
-    }
-    for (size_t i = 0; i < vbp->nused; i++) {
-	if (!BU_LIST_IS_EMPTY(&(vbp->head[i]))) {
-	    struct bv_scene_obj *s;
-	    GET_BV_SCENE_OBJ(s, &f->l);
-	    s->s_type_flags = BV_VIEWONLY;
-	    s->s_v = v;
-	    bu_vls_sprintf(&s->s_name, "%sobj%zd", name_root, i);
-	    struct bv_vlist *bvl = (struct bv_vlist *)&vbp->head[i];
-	    long int rgb = vbp->rgb[i];
-	    s->s_vlen = bv_vlist_cmd_cnt(bvl);
-	    BU_LIST_APPEND_LIST(&(s->s_vlist), &(bvl->l));
-	    BU_LIST_INIT(&(bvl->l));
-	    s->s_color[0] = (rgb>>16);
-	    s->s_color[1] = (rgb>>8);
-	    s->s_color[2] = (rgb) & 0xFF;
-	    bu_ptbl_ins(out, (long *)s);
-	}
-    }
-}
-
-struct bv_scene_obj *
-bv_vlblock_obj(struct bv_vlblock *vbp, struct bview *v, const char *name)
-{
-    if (!vbp || !v)
-	return NULL;
-
-    struct bv_scene_obj *s = bv_find_obj(v, name);
-    if (s) {
-	bv_obj_reset(s);
-    } else {
-	s = bv_obj_get(v, BV_VIEW_OBJS);
-    }
+    if (!s|| !vbp)
+	return BRLCAD_ERROR;
 
     for (size_t i = 0; i < vbp->nused; i++) {
-	if (!BU_LIST_IS_EMPTY(&(vbp->head[i]))) {
-	    struct bv_scene_obj *sc = bv_obj_get_child(s);
-	    struct bv_vlist *bvl = (struct bv_vlist *)&vbp->head[i];
-	    long int rgb = vbp->rgb[i];
-	    sc->s_vlen = bv_vlist_cmd_cnt(bvl);
-	    BU_LIST_APPEND_LIST(&(sc->s_vlist), &(bvl->l));
-	    BU_LIST_INIT(&(bvl->l));
-	    sc->s_color[0] = (rgb>>16);
-	    sc->s_color[1] = (rgb>>8);
-	    sc->s_color[2] = (rgb) & 0xFF;
-	    bu_vls_sprintf(&sc->s_name, "%s_%d_%d_%d", name, V3ARGS(sc->s_color));
-	}
+	if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
+	    continue;
+	struct bv_scene_obj *sc = bv_obj_get_child(s);
+	struct bv_vlist *bvl = (struct bv_vlist *)&vbp->head[i];
+	long int rgb = vbp->rgb[i];
+	sc->s_vlen = bv_vlist_cmd_cnt(bvl);
+	BU_LIST_APPEND_LIST(&(sc->s_vlist), &(bvl->l));
+	BU_LIST_INIT(&(bvl->l));
+	sc->s_color[0] = (rgb>>16);
+	sc->s_color[1] = (rgb>>8);
+	sc->s_color[2] = (rgb) & 0xFF;
+	bu_vls_sprintf(&sc->s_name, "%s_%d_%d_%d", bu_vls_cstr(&s->s_name), V3ARGS(sc->s_color));
     }
 
-    return s;
+    return BRLCAD_OK;
 }
 
 void

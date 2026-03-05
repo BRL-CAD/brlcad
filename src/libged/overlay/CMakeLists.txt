@@ -1,13 +1,13 @@
 set(PLUGIN_LIBS libged libbu)
 
 ged_plugin_library(ged-overlay
-  overlay.c
+  overlay.cpp
   LIBS ${PLUGIN_LIBS}
 )
 
 cmakefiles(
   CMakeLists.txt
-  overlay.c
+  overlay.cpp
 )
 
 # Local Variables:

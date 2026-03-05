@@ -1,13 +1,13 @@
 set(PLUGIN_LIBS libged libbu)
 
 ged_plugin_library(ged-joint
-  joint.c
+  joint.cpp
   LIBS ${PLUGIN_LIBS}
 )
 
 cmakefiles(
   CMakeLists.txt
-  joint.c
+  joint.cpp
 )
 
 # Local Variables:

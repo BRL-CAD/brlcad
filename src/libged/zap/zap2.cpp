@@ -46,11 +46,9 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
     int clear_view_objs = 0;
     int clear_solid_objs = 0;
     int clear_all_views = 0;
-    int shared_only = 0;
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
     const char *usage = "zap [options]\n";
-    struct bview *v = NULL;
 
     argc-=(argc>0); argv+=(argc>0); /* done with command name argv[0] */
 
@@ -60,11 +58,10 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_opt_desc d[8];
     BU_OPT(d[0],  "h", "help",         "",        NULL,       &print_help, "Print help and exit");
     BU_OPT(d[1],  "?", "",             "",        NULL,       &print_help, "");
-    BU_OPT(d[2],  "V", "view",     "name", &bu_opt_vls,             &cvls, "clear data specific to this view");
-    BU_OPT(d[3],  "S", "shared",       "",        NULL,      &shared_only, "clear only data shared across views");
-    BU_OPT(d[4],  "v", "view-objs",    "",        NULL,  &clear_view_objs, "clear non-solid based view objects");
-    BU_OPT(d[5],  "g", "solid-objs",   "",        NULL, &clear_solid_objs, "clear solid based view objects");
-    BU_OPT(d[6],  "",  "all",          "",        NULL,  &clear_all_views, "clear shared and independent views");
+    BU_OPT(d[2],  "V", "view",     "name", &bu_opt_vls,             &cvls, "clear data in the specified view (will used default view if none specified)");
+    BU_OPT(d[4],  "v", "view-objs",    "",        NULL,  &clear_view_objs, "clear non-solid based view objects (on by default unless -g specified)");
+    BU_OPT(d[5],  "g", "solid-objs",   "",        NULL, &clear_solid_objs, "clear solid based view objects (on by default unless -v specified)");
+    BU_OPT(d[6],  "",  "all",          "",        NULL,  &clear_all_views, "clear data in ALL views");
     BU_OPT_NULL(d[7]);
 
     int opt_ret = bu_opt_parse(NULL, argc, argv, d);
@@ -85,73 +82,48 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 	clear_view_objs = 1;
     }
 
-    if (!clear_all_views && bu_vls_strlen(&cvls)) {
+    // If we're clearing everything, get down to it
+    if (clear_all_views) {
+	std::vector<BViewState *> views = gedp->dbi_state->FindBViewState();
+	for (size_t i = 0; i < views.size(); i++) {
+	    BViewState *vs = views[i];
+	    if (clear_solid_objs)
+		vs->Erase();
+	    if (clear_view_objs)
+		vs->Erase(-1, true);
+	}
+    }
 
-	if (shared_only) {
-	    bu_vls_printf(gedp->ged_result_str, "Zap scope defined as view %s - not clearing shared data\n", bu_vls_cstr(&cvls));
+    BViewState *vs = NULL;
+    if (bu_vls_strlen(&cvls)) {
+	std::vector<BViewState *> vstates = gedp->dbi_state->FindBViewState(bu_vls_cstr(&cvls));
+	if (vstates.size() > 1) {
+	    bu_vls_printf(gedp->ged_result_str, "Specifier %s matches more than one active view.\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
 	    return BRLCAD_ERROR;
 	}
-
-	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
-	if (!v) {
-	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
+	if (!vstates.size()) {
+	    bu_vls_printf(gedp->ged_result_str, "Specifier %s does not match any active view.\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
 	    return BRLCAD_ERROR;
 	}
-
-	int flags = BV_LOCAL_OBJS;
-	if (clear_solid_objs) {
-	    flags |= BV_DB_OBJS;
-	    if (gedp->dbi_state) {
-		DbiState *dbis = (DbiState *)gedp->dbi_state;
-		BViewState *bvs = dbis->get_view_state(v);
-		bvs->clear();
-	    }
-	}
-
-	if (clear_view_objs)
-	    flags |= BV_VIEW_OBJS;
-
-	if (!bv_clear(v, flags))
-	    v->gv_s->gv_cleared = 1;
-
-	bu_vls_free(&cvls);
-	return BRLCAD_OK;
+	vs = vstates[0];
     }
-
-    // Clear everything
-    int ret = BRLCAD_OK;
-    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
-    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
-	v = (struct bview *)BU_PTBL_GET(views, i);
-	if (v->independent && !clear_all_views)
-	    continue;
-	int flags = 0;
-	if (clear_solid_objs) {
-	    flags |= BV_DB_OBJS;
-	    if (gedp->dbi_state) {
-		DbiState *dbis = (DbiState *)gedp->dbi_state;
-		BViewState *bvs = dbis->get_view_state(v);
-		bvs->clear();
-	    }
-	}
-	if (clear_view_objs)
-	    flags |= BV_VIEW_OBJS;
-	int nret = bv_clear(v, flags);
-	int lret = 1;
-	if (!shared_only) {
-	    flags |= BV_LOCAL_OBJS;
-	    lret = bv_clear(v, flags);
-	}
-	if (!nret || !lret)
-	    v->gv_s->gv_cleared = 1;
-
-	ret = BRLCAD_OK;
-    }
-
     bu_vls_free(&cvls);
-    return ret;
+    vs = (!vs) ? gedp->dbi_state->GetBViewState() : vs;
+
+    if (!vs) {
+	bu_vls_printf(gedp->ged_result_str, "Unable to find a BViewState to act on.\n");
+	bu_vls_free(&cvls);
+	return BRLCAD_ERROR;
+    }
+
+    if (clear_solid_objs)
+	vs->Erase();
+    if (clear_view_objs)
+	vs->Erase(-1, true);
+
+    return BRLCAD_OK;
 }
 
 // Local Variables:

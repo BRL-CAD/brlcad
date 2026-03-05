@@ -100,9 +100,7 @@ main(int ac, char *av[]) {
 
     // Set up new cmd data (not yet done by default in ged_open
     gedp->dbi_state = new DbiState(gedp);
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
     gedp->new_cmd_forms = 1;
-    gedp->ged_lod = bv_mesh_lod_context_create(gedp->dbip->dbi_filename);
     bu_setenv("DM_SWRAST", "1", 1);
 
     // Set callback so database changes will update dbi_state
@@ -157,7 +155,7 @@ main(int ac, char *av[]) {
     s_av[3] = "all.bot";
     s_av[4] = NULL;
     ged_exec_facetize(gedp, 4, s_av);
-    dbis->update();
+    dbis->Sync();
 
     s_av[0] = "ae";
     s_av[1] = "35";
@@ -241,7 +239,7 @@ main(int ac, char *av[]) {
     s_av[3] = "all.brep";
     s_av[4] = NULL;
     ged_exec_brep(gedp, 4, s_av);
-    dbis->update();
+    dbis->Sync();
 
     bu_log("Sanity - testing shaded mode 1 (triangle only) drawing, Level-of-Detail disabled...\n");
     s_av[0] = "view";

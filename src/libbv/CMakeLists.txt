@@ -8,6 +8,7 @@ set(
   hash.c
   knobs.cpp
   lod.cpp
+  objs.cpp
   polygon.c
   polygon_op.cpp
   polygon_fill.cpp
@@ -22,7 +23,6 @@ set(
   tig/vector.c
   util.cpp
   vlist.c
-  view_sets.cpp
 )
 
 set(BV_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${LMDB_INCLUDE_DIR})

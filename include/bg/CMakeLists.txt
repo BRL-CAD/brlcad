@@ -11,6 +11,7 @@ set(
   plane.h
   polygon.h
   polygon_types.h
+  pnts.h
   sat.h
   spsr.h
   tri_pt.h
@@ -21,7 +22,6 @@ set(
 )
 brlcad_manage_files(bg_headers ${INCLUDE_DIR}/brlcad/bg REQUIRED libbg)
 
-cmakefiles(pointgen.h)
 cmakefiles(CMakeLists.txt)
 
 # Local Variables:

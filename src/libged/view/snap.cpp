@@ -1,4 +1,4 @@
-/*                         S N A P . C
+/*                       S N A P . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2025 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/snap.c
+/** @file libged/snap.cpp
  *
  * Logic for snapping points to visual elements.
  *
@@ -185,7 +185,11 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 	// It's OK if we have no lines close enough to snap to -
 	// in that case just pass back the view pt.  If we do
 	// have a snap, update the output
-	if (bv_snap_lines_3d(&out_pt, gedp->ged_gvp, &view_pt) == BRLCAD_OK) {
+	BViewState *vs = gedp->dbi_state->GetBViewState(gedp->ged_gvp);
+	if (!vs)
+	    return BRLCAD_ERROR;
+	const struct bu_ptbl *sobjs = ged_find_scene_objs(gedp, gedp->ged_gvp, NULL, 1, 1);
+	if (bv_snap_lines_3d(&out_pt, gedp->ged_gvp, sobjs, &view_pt) == BRLCAD_OK) {
 	    MAT4X3PNT(vp, gedp->ged_gvp->gv_model2view, out_pt);
 	    V2SET(view_pt_2d, vp[0], vp[1]);
 	    VMOVE(view_pt, out_pt);
@@ -203,12 +207,11 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8 cino=N-s

@@ -47,8 +47,6 @@ dl_zap(struct ged *gedp)
     struct bu_ptbl dls = BU_PTBL_INIT_ZERO;
     struct directory *dp = RT_DIR_NULL;
     size_t i = 0;
-    struct bv_scene_obj *free_scene_obj = bv_set_fsos(&gedp->ged_views);
-    struct bu_list *vlfree = &rt_vlfree;
 
     while (BU_LIST_WHILE(gdlp, display_list, hdlp)) {
 
@@ -68,9 +66,7 @@ dl_zap(struct ged *gedp)
 		    bu_log("ged_zap: db_dirdelete failed\n");
 		}
 	    }
-
-	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
+	    bv_obj_put(sp);
 	}
 
 	BU_LIST_DEQUEUE(&gdlp->l);

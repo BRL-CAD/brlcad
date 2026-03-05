@@ -251,7 +251,7 @@ _ged_subcmd2_help(struct ged *gedp, struct bu_opt_desc *gopts, std::map<std::str
  * respectively (we don't do it here so callers may run this routine
  * repeatedly over different tables to accumulate bounds. */
 static int
-scene_bounding_sph(struct bu_ptbl *so, vect_t *vmin, vect_t *vmax, int pflag)
+scene_bounding_sph(const struct bu_ptbl *so, vect_t *vmin, vect_t *vmax, int pflag)
 {
     struct bv_scene_obj *sp;
     vect_t minus, plus;
@@ -1068,10 +1068,9 @@ ged_who_argc(struct ged *gedp)
     if (gedp->new_cmd_forms) {
 	if (!gedp || !gedp->ged_gvp || !gedp->dbi_state)
 	    return 0;
-	DbiState *dbis = (DbiState *)gedp->dbi_state;
-	BViewState *bvs = dbis->get_view_state(gedp->ged_gvp);
+	BViewState *bvs = gedp->dbi_state->GetBViewState(gedp->ged_gvp);
 	if (bvs)
-	    return bvs->count_drawn_paths(-1, true);
+	    return bvs->DrawnPathCount();
 	return 0;
     }
 
@@ -1106,10 +1105,9 @@ ged_who_argv(struct ged *gedp, char **start, const char **end)
     if (gedp->new_cmd_forms) {
 	if (!gedp->ged_gvp || !gedp->dbi_state)
 	    return 0;
-	DbiState *dbis = (DbiState *)gedp->dbi_state;
-	BViewState *bvs = dbis->get_view_state(gedp->ged_gvp);
+	BViewState *bvs = gedp->dbi_state->GetBViewState(gedp->ged_gvp);
 	if (bvs) {
-	    std::vector<std::string> drawn_paths = bvs->list_drawn_paths(-1, true);
+	    std::vector<std::string> drawn_paths = bvs->DrawnPaths();
 	    for (size_t i = 0; i < drawn_paths.size(); i++) {
 		if ((vp != NULL) && ((const char **)vp < end)) {
 		    *vp++ = bu_strdup(drawn_paths[i].c_str());
@@ -1706,12 +1704,8 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	if (gedp->new_cmd_forms) {
 	    VSETALL(extremum[0],  INFINITY);
 	    VSETALL(extremum[1], -INFINITY);
-	    struct bu_ptbl *db_objs = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS);
-	    if (db_objs)
-		(void)scene_bounding_sph(db_objs, &(extremum[0]), &(extremum[1]), 1);
-	    struct bu_ptbl *local_db_objs = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS | BV_LOCAL_OBJS);
-	    if (local_db_objs)
-		(void)scene_bounding_sph(local_db_objs, &(extremum[0]), &(extremum[1]), 1);
+	    const struct bu_ptbl *db_objs = ged_find_scene_objs(gedp, NULL, NULL, 1, 1);
+	    (void)scene_bounding_sph(db_objs, &(extremum[0]), &(extremum[1]), 1);
 	} else {
 	    (void)dl_bounding_sph(gedp->i->ged_gdp->gd_headDisplay, &(extremum[0]), &(extremum[1]), 1);
 	}
@@ -1996,10 +1990,9 @@ _ged_rt_write(struct ged *gedp,
     if (argc >= 0) {
 	if (!argc) {
 	    if (gedp->new_cmd_forms) {
-		DbiState *dbis = (DbiState *)gedp->dbi_state;
-		BViewState *bvs = dbis->get_view_state(gedp->ged_gvp);
+		BViewState *bvs = gedp->dbi_state->GetBViewState(gedp->ged_gvp);
 		if (bvs) {
-		    std::vector<std::string> drawn_paths = bvs->list_drawn_paths(-1, true);
+		    std::vector<std::string> drawn_paths = bvs->DrawnPaths();
 		    for (size_t i = 0; i < drawn_paths.size(); i++) {
 			fprintf(fp, "draw %s;\n", drawn_paths[i].c_str());
 		    }

@@ -62,6 +62,10 @@ __BEGIN_DECLS
 // would get gnarly if we allowed something like that to be a valid key.)
 #define BU_CACHE_KEY_MAXLEN 511
 
+// If we need to be certain cache operations are complete before proceeding,
+// or nobody else will start a cache operation until we're done, use this
+// semaphore.
+BU_EXPORT extern int BU_SEM_CACHE;
 
 struct bu_cache_impl;
 struct bu_cache_txn;
@@ -96,13 +100,9 @@ struct bu_cache_item {
 BU_EXPORT extern struct bu_cache *bu_cache_open(const char *cache_db, int create, size_t max_cache_size);
 
 /**
- * Closes the bu_cache and frees all associated memory.  Will NOT close
- * if bu_cache_write still has an active txn - in that case, calling
- * code needs to call bu_cache_write_commit or bu_cache_write_abort before
- * bu_cache_close will succeed.  returns BRLCAD_ERROR if close was not
- * successful, else BRLCAD_OK.
+ * Closes the bu_cache and frees all associated memory.
  */
-BU_EXPORT extern int bu_cache_close(struct bu_cache *c);
+BU_EXPORT extern void bu_cache_close(struct bu_cache *c);
 
 /**
  * Erase the specified cache from disk.  Any open instances of the
@@ -131,61 +131,48 @@ BU_EXPORT size_t bu_cache_get(void **data, const char *key, struct bu_cache *c, 
 BU_EXPORT void bu_cache_get_done(struct bu_cache_txn **t);
 
 /**
- * Assign data to the cache using the specified key.
- *
- * If t is NULL, the write is handled immediately as a complete operation, and
- * bu_cache_write immediately validates that the written data can be
- * successfully read.
- *
- * If t is non-NULL, the txn is not finalized and the calling code can queue up
- * more write operations for eventual commit.  This mode is MUCH more
- * performant when lots of rapid writes are needed, but no per-write read-back
- * validation is performed (since the write is not yet finalized.) This mode
- * requires explicit management of when to finalize the operation for the
- * database, and if the user wants to validate that reads successfully return
- * the expected data they will need to do it themselves, but the speedup
- * will almost always be worth it for any non-trivial data input.  If an individual
- * write DOES report failure (return size 0) in this mode, parent code should
- * not try to continue writing - they should call bu_cache_write_abort
- * immediately and handle the failure case, since the commit operation will
- * also ultimately fail.
- *
- * A cache may only have one active write txn at a time - this is enforced
- * internally in the implementation, and a bu_cache_write will fail if it
- * attempts to create a new write when one is already active.
+ * Assign data to the cache using the specified key
  */
-BU_EXPORT size_t bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c, struct bu_cache_txn **t);
+BU_EXPORT size_t bu_cache_write(void *data, size_t dsize, const char *key, struct bu_cache *c);
 
 /**
- * Like bu_cache_get_done for data retrieval, a series of write operations may
- * be either committed or (if the parent code has changed its mind) aborted.
- * t is the bu_cache_txn returned by bu_cache write's t parameter.
- *
- * returns BRLCAD_OK on success and BRLCAD_ERROR on error.
+ * Clear data associated with the specified key from the cache
  */
-BU_EXPORT int bu_cache_write_commit(struct bu_cache *c, struct bu_cache_txn **t);
-
-/**
- * If the calling code decides not to commit a series of bu_cache_write calls staged
- * with a non-NULL t param to a bu_cache_write, call bu_cache_write_abort to clear
- * the decks. */
-BU_EXPORT void bu_cache_write_abort(struct bu_cache_txn **t);
-
-/**
- * Clear data associated with the specified key from the cache.  Because this is a
- * write operation as far as the database is concerned, it is treated the same way
- * bu_cache_write operations are as far as txn behavior is concerned.  If you have
- * a batch bu_cache_write in progress and want to do a clear, the write txn should
- * be provided to bu_cache_clear as well, and like other writes it will not be
- * finalized until commit is called.
- */
-BU_EXPORT void bu_cache_clear(const char *key, struct bu_cache *c, struct bu_cache_txn **t);
+BU_EXPORT void bu_cache_clear(const char *key, struct bu_cache *c);
 
 /**
  * Get an array of keys present in the cache.  Caller is responsible
  * for freeing the keysv output (recommend using bu_argv_free).
  */
 BU_EXPORT int bu_cache_keys(char ***keysv, struct bu_cache *c);
+
+
+
+// It is common convention within the BRL-CAD code to use a ":#[#...]" suffix
+// after a hash string to denote a particular type of data when creating a hash
+// key.  Most of these are internal, but in a few cases the type of hashed data
+// is common to many different libraries.  Therefore, for convenience, we define
+// a few of them here and document the expected storage to enable data reuse.
+
+/* Axis Aligned Bounding Box - stored as an array of two points:
+ * bbmin[0]bbmin[1][bbmin[2][bbmax[0]bbmax[1]bbmax[2] */
+#define CACHE_AABB "aabb"
+
+/* An inversion matrix is intended to take data defined at the origin after a
+ * Principle Component Analysis and restore it to its original position.
+ * Stored as an array of 16 fastf_t values per the vmath.h mat_t convention. */
+#define CACHE_INV_MAT "im"
+
+/* Oriented Bounding Box - stored as an array of a center point
+ * c and three extent vectors v1, v2, v3:
+ * c[0]c[1]c[2]v1[0]v1[1]v1[2]v2[0]v2[1]v2[2]v3[0]v3[1]v3[2] */
+#define CACHE_OBB "obb"
+
+/* Timestamp (microseconds since UNIX epoch) stored as a single int64_t */
+#define CACHE_TIMESTAMP "timestmp"
+
+
+
 
 
 __END_DECLS

@@ -45,21 +45,12 @@
 extern "C" void
 ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
 {
-    unsigned long long hash;
     struct ged *gedp = (struct ged *)u_data;
     DbiState *ctx = (DbiState *)gedp->dbi_state;
 
-    // Clear cached GED drawing data and update
-    ctx->clear_cache(dp);
-
     // Need to invalidate any LoD caches associated with this dp
-    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && ctx->gedp) {
-	unsigned long long key = bv_mesh_lod_key_get(ctx->gedp->ged_lod, dp->d_namep);
-	if (key) {
-	    bv_mesh_lod_clear_cache(ctx->gedp->ged_lod, key);
-	    bv_mesh_lod_key_put(ctx->gedp->ged_lod, dp->d_namep, 0);
-	}
-    }
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && ctx->gedp)
+	db_mesh_lod_update(ctx->gedp->dbip, dp->d_namep);
 
     switch(mode) {
 	case 0:
@@ -69,12 +60,7 @@ ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, 
 	    ctx->added.insert(dp);
 	    break;
 	case 2:
-	    // When this callback is made, dp is still valid, but in subsequent
-	    // processing it will not be.  We need to capture everything we
-	    // will need from this dp now, for later use when updating state
-	    hash = bu_data_hash(dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	    ctx->removed.insert(hash);
-	    ctx->old_names[hash] = std::string(dp->d_namep);
+	    ctx->removed.insert(dp);
 	    break;
 	default:
 	    bu_log("changed callback mode error: %d\n", mode);
@@ -85,21 +71,17 @@ extern "C" void
 dm_refresh(struct ged *gedp)
 {
     struct bview *v= gedp->ged_gvp;
-    DbiState *dbis = (DbiState *)gedp->dbi_state;
-    BViewState *bvs = dbis->get_view_state(v);
-    dbis->update();
-    std::unordered_set<struct bview *> uset;
-    uset.insert(v);
-    bvs->redraw(NULL, uset, 1);
+    BViewState *bvs = gedp->dbi_state->GetBViewState(v);
+    gedp->dbi_state->Sync();
 
     struct dm *dmp = (struct dm *)v->dmp;
     unsigned char *dm_bg1;
     unsigned char *dm_bg2;
     dm_get_bg(&dm_bg1, &dm_bg2, dmp);
     dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
-    dm_set_dirty(dmp, 0);
-    dm_draw_objs(v, NULL, NULL);
-    dm_draw_end(dmp);
+
+    bvs->Redraw(false);
+    bvs->Render();
 }
 
 extern "C" void
@@ -181,66 +163,53 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 	}
 
 	if (iret) {
-
-	    bu_log("%d %s diff failed.  %d matching, %d off by 1, %d off by many\n", id, img_root, matching_cnt, off_by_1_cnt, off_by_many_cnt);
-
-	    // Generate a diff image for debugging work
-	    icv_image_t *diff_img = icv_diffimg(ctrl, timg);
-	    if (diff_img) {
-		struct bu_vls diff_name = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&diff_name, "%s_%d_diff.png", img_root, id);
-		icv_write(diff_img, bu_vls_cstr(&diff_name), BU_MIME_IMAGE_PNG);
-		bu_vls_free(&diff_name);
-	    }
-
-	    // If we're in soft fail mode, we're not keeping the image unless
-	    // the user requested it. In hard fail, we leave the last image for
-	    // inspection.
-	    if (soft_fail && clear_image)
-		bu_file_delete(bu_vls_cstr(&tname));
-
-	    // Dump an ascii rendering of the difference image to the log.  In
-	    // scenarios such as CI systems, where we don't have a way to
-	    // readily inspect the difference images, this output can still
-	    // give us at least some idea of what is going on as long as the
-	    // user can get their terminal font small enough.  We deliberately
-	    // don't do any resizing of the image - we want to leave diff
-	    // pixels intact, so we accept the terminal aspect ratio distortion
-	    // as a trade-off for pixel rendering accuracy.
-	    if (diff_img) {
-		struct icv_ascii_art_params iparams = ICV_ASCII_ART_PARAMS_DEFAULT;
-		iparams.output_color = 1;
-		char *aart = icv_ascii_art(diff_img, &iparams);
-		bu_log("%s\n", aart);
-	    }
-
-	    // Done with images
-	    bu_vls_free(&tname);
-	    icv_destroy(ctrl);
-	    icv_destroy(timg);
-	    icv_destroy(diff_img);
-
-	    // If we're in soft fail, return
 	    if (soft_fail) {
+		bu_log("%d %s diff failed.  %d matching, %d off by 1, %d off by many\n", id, img_root, matching_cnt, off_by_1_cnt, off_by_many_cnt);
+
+		if (clear_image) {
+		    // We're in soft fail mode, so we're not keeping the image unless the user requested it
+		    // In hard fail, we leave the last image for inspection.
+		    bu_file_delete(bu_vls_cstr(&tname));
+		} else {
+		    // Keeping the image - also generate a diff image for debugging work
+		    struct bu_vls diff_name = BU_VLS_INIT_ZERO;
+		    icv_image_t *diff_img = icv_diffimg(ctrl, timg);
+		    if (diff_img) {
+			bu_vls_sprintf(&diff_name, "%s_%d_diff.png", img_root, id);
+			icv_write(diff_img, bu_vls_cstr(&diff_name), BU_MIME_IMAGE_PNG);
+		    }
+
+		}
+
+		icv_destroy(ctrl);
+		icv_destroy(timg);
+
 		if (clear_scene)
 		    scene_clear(gedp);
+
 		return BRLCAD_ERROR;
+	    } else {
+		// Hard fail - generate a diff image for debugging work
+		struct bu_vls diff_name = BU_VLS_INIT_ZERO;
+		icv_image_t *diff_img = icv_diffimg(ctrl, timg);
+		if (diff_img) {
+		    bu_vls_sprintf(&diff_name, "%s_%d_diff.png", img_root, id);
+		    icv_write(diff_img, bu_vls_cstr(&diff_name), BU_MIME_IMAGE_PNG);
+		}
+		icv_destroy(ctrl);
+		icv_destroy(timg);
 	    }
-
-	    // Hard fail
-	    bu_exit(EXIT_FAILURE, "Diff failure found, test aborted.\n");
-
+	    bu_exit(EXIT_FAILURE, "%d %s diff failed.  %d matching, %d off by 1, %d off by many\n", id, img_root, matching_cnt, off_by_1_cnt, off_by_many_cnt);
 	}
     }
 
-    // Clean up
     if (clear_image)
 	bu_file_delete(bu_vls_cstr(&tname));
+
     bu_vls_free(&tname);
     icv_destroy(ctrl);
     icv_destroy(timg);
 
-    // If we're supposed to clear the scene, do so now.
     if (clear_scene)
 	scene_clear(gedp);
 

@@ -164,6 +164,15 @@ QEll::write_to_db()
 }
 
 void
+edit_labels_free(struct bv_scene_obj *s)
+{
+    struct bv_label *la = (struct bv_label *)s->s_i_data;
+    bu_vls_free(&la->label);
+    BU_PUT(la, struct bv_label);
+    s->s_i_data = NULL;
+}
+
+void
 QEll::update_obj_wireframe()
 {
     QgModel *m = ((QgEdApp *)qApp)->mdl;
@@ -220,13 +229,13 @@ QEll::update_obj_wireframe()
 	struct bv_label *la;
 	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
+	s->s_free_callback = &edit_labels_free;
 
 	BU_LIST_INIT(&(s->s_vlist));
 	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BV_DBOBJ_BASED;
 	s->s_type_flags |= BV_LABELS;
-	BU_VLS_INIT(&la->label);
 
+	BU_VLS_INIT(&la->label);
 	bu_vls_sprintf(&la->label, "%s", pl[i].str);
 	VMOVE(la->p, pl[i].pt);
     }

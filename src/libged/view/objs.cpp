@@ -401,49 +401,17 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     // If we're not wanting help and we have no subcommand, list defined view objects
     struct bview *v = gd->cv;
     if (!ac && cmd_pos < 0 && !help) {
-	if (list_db) {
-	    struct bu_ptbl *db_objs = bv_view_objs(v, BV_DB_OBJS);
-	    if (db_objs) {
-		for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
-		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
-		    if (bu_list_len(&cg->s_vlist)) {
-			bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&cg->s_name));
-		    } else {
-			for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
-			    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
-			    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
-			}
-		    }
-		}
-	    }
-	    struct bu_ptbl *local_db_objs = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-	    if (local_db_objs) {
-		for (size_t i = 0; i < BU_PTBL_LEN(local_db_objs); i++) {
-		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(local_db_objs, i);
-		    if (bu_list_len(&cg->s_vlist)) {
-			bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&cg->s_name));
-		    } else {
-			for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
-			    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
-			    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
-			}
-		    }
-		}
-	    }
-	}
-	if (list_view) {
-	    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
-	    if (view_objs) {
-		for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
-		}
-	    }
-
-	    struct bu_ptbl *local_view_objs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
-	    if (local_view_objs) {
-		for (size_t i = 0; i < BU_PTBL_LEN(local_view_objs); i++) {
-		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(local_view_objs, i);
+	BViewState *vs = gedp->dbi_state->GetBViewState(v);
+	if (!vs)
+	    return BRLCAD_OK;
+	std::vector<struct bv_scene_obj *> objs = vs->FindSceneObjs(NULL, list_db, list_view);
+	for (size_t i = 0; i < objs.size(); i++) {
+	    struct bv_scene_obj *cg = objs[i];
+	    if (bu_list_len(&cg->s_vlist)) {
+		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&cg->s_name));
+	    } else {
+		for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
+		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
 		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
 		}
 	    }
@@ -464,71 +432,13 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 	argc--; argv++;
     }
 
-    // View-only objects take priority, unless we're explicitly excluding them by only specifying -G
-    if (list_view) {
-	if (!gd->local_obj) {
-	    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
-	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-		if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_name))) {
-		    gd->s = s;
-		    break;
-		}
-	    }
-	}
-	if (!gd->s) {
-	    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
-	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-		if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_name))) {
-		    gd->s = s;
-		    break;
-		}
-	    }
-	}
-    }
-
-    if (!gd->s) {
-	if (!gd->local_obj) {
-	    struct bu_ptbl *db_objs = bv_view_objs(v, BV_DB_OBJS);
-	    for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
-		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
-		if (bu_list_len(&cg->s_vlist)) {
-		    if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&cg->s_name))) {
-			gd->s = cg;
-			break;
-		    }
-		} else {
-		    for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
-			struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
-			if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_name))) {
-			    gd->s = s;
-			    break;
-			}
-		    }
-		}
-	    }
-	}
-	if (!gd->s) {
-	    struct bu_ptbl *db_objs = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-	    for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
-		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
-		if (bu_list_len(&cg->s_vlist)) {
-		    if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&cg->s_name))) {
-			gd->s = cg;
-			break;
-		    }
-		} else {
-		    for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
-			struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
-			if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_name))) {
-			    gd->s = s;
-			    break;
-			}
-		    }
-		}
-	    }
-	}
+    BViewState *vs = gedp->dbi_state->GetBViewState(v);
+    if (!vs)
+	return BRLCAD_OK;
+    std::vector<struct bv_scene_obj *> objs = vs->FindSceneObjs(gd->vobj, list_db, list_view);
+    if (objs.size() == 1) {
+	struct bv_scene_obj *s = objs[0];
+	gd->s = s;
     }
 
     return _ged_subcmd_exec(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_obj_cmds,

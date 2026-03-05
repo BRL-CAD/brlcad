@@ -255,7 +255,7 @@ line_tol_sq(struct bview *v, int lwidth)
 }
 
 int
-bv_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p)
+bv_snap_lines_3d(point_t *out_pt, struct bview *v, const struct bu_ptbl *sobjs, point_t *p)
 {
     int ret = 0;
     struct bview_settings *gv_s = (v->gv_s) ? v->gv_s : &v->gv_ls;
@@ -263,58 +263,21 @@ bv_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p)
 
     if (!p || !v) return 0;
 
-    // If we're not in Tcl mode only, we are looking at objects - either
-    // all of them, or a specified subset
+    // If we're not in Tcl mode only, we are looking at the list of supplied objects
     if (gv_s->gv_snap_flags != BV_SNAP_TCL) {
+	if (!sobjs)
+	    return 0;
 	struct bv_cp_info *s = &cpinfo.c;
 	s->ctol_sq = line_tol_sq(v, 1);
-	if (BU_PTBL_LEN(&gv_s->gv_snap_objs) > 0) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(&gv_s->gv_snap_objs); i++) {
-		struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(&gv_s->gv_snap_objs, i);
-		if (gv_s->gv_snap_flags) {
-		    if (gv_s->gv_snap_flags == BV_SNAP_DB && (!(so->s_type_flags & BV_DB_OBJS)))
-			continue;
-		    if (gv_s->gv_snap_flags == BV_SNAP_VIEW && (!(so->s_type_flags & BV_VIEW_OBJS)))
-			continue;
-		}
-		struct bv_obj_settings *s_os = (so->s_os) ? so->s_os : &so->s_local_os;
-		s->ctol_sq = line_tol_sq(v, (s_os->s_line_width) ? s_os->s_line_width : 1);
-		ret += _find_closest_obj_point(s, p, so);
-	    }
-	} else {
-	    if (!gv_s->gv_snap_flags || (gv_s->gv_snap_flags & BV_SNAP_DB)) {
-		if (!gv_s->gv_snap_flags || (gv_s->gv_snap_flags & BV_SNAP_SHARED)) {
-		    struct bu_ptbl *sobjs = bv_view_objs(v, BV_DB_OBJS);
-		    for (size_t i = 0; i < BU_PTBL_LEN(sobjs); i++) {
-			struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(sobjs, i);
-			ret += _find_closest_obj_point(s, p, so);
-		    }
-		}
-		if (!gv_s->gv_snap_flags || (gv_s->gv_snap_flags & BV_SNAP_LOCAL)) {
-		    struct bu_ptbl *sobjs = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-		    for (size_t i = 0; i < BU_PTBL_LEN(sobjs); i++) {
-			struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(sobjs, i);
-			ret += _find_closest_obj_point(s, p, so);
-		    }
-		}
-	    }
-	    if (!gv_s->gv_snap_flags || (gv_s->gv_snap_flags & BV_SNAP_VIEW)) {
-		if (!gv_s->gv_snap_flags || (gv_s->gv_snap_flags & BV_SNAP_SHARED)) {
-		    struct bu_ptbl *sobjs = bv_view_objs(v, BV_VIEW_OBJS);
-		    for (size_t i = 0; i < BU_PTBL_LEN(sobjs); i++) {
-			struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(sobjs, i);
-			ret += _find_closest_obj_point(s, p, so);
-		    }
-		}
-		if (!gv_s->gv_snap_flags || (gv_s->gv_snap_flags & BV_SNAP_LOCAL)) {
-		    struct bu_ptbl *sobjs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
-		    for (size_t i = 0; i < BU_PTBL_LEN(sobjs); i++) {
-			struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(sobjs, i);
-			ret += _find_closest_obj_point(s, p, so);
-		    }
-		}
-	    }
+	for (size_t i = 0; i < BU_PTBL_LEN(sobjs); i++) {
+	    struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(sobjs, i);
+	    struct bv_obj_settings *s_os = (so->s_os) ? so->s_os : &so->s_local_os;
+	    s->ctol_sq = line_tol_sq(v, (s_os->s_line_width) ? s_os->s_line_width : 1);
+	    ret += _find_closest_obj_point(s, p, so);
 	}
+
+	// TODO - need to figure out how to do intersection snapping with lines
+	// in scene objects...
     }
 
     // There are some issues with line snapping that don't come up with grid
@@ -322,7 +285,7 @@ bv_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p)
     // and how do we handle snapping when close enough to multiple lines?  We
     // probably want to prefer intersections between lines to closest line
     // point if we are close to multiple lines...
-    if (!gv_s->gv_snap_flags || gv_s->gv_snap_flags & BV_SNAP_TCL) {
+    if (gv_s->gv_snap_flags & BV_SNAP_TCL) {
 	int tret = 0;
 	int lwidth;
 	lwidth = (v->gv_tcl.gv_data_lines.gdls_line_width) ? v->gv_tcl.gv_data_lines.gdls_line_width : 1;
@@ -354,7 +317,7 @@ bv_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p)
 }
 
 int
-bv_snap_lines_2d(struct bview *v, fastf_t *vx, fastf_t *vy)
+bv_snap_lines_2d(struct bview *v, const struct bu_ptbl *sobjs, fastf_t *vx, fastf_t *vy)
 {
     if (!v || !vx || !vy) return 0;
 
@@ -365,7 +328,7 @@ bv_snap_lines_2d(struct bview *v, fastf_t *vx, fastf_t *vy)
     point_t p = VINIT_ZERO;
     MAT4X3PNT(p, v->gv_view2model, vp);
     point_t out_pt = VINIT_ZERO;
-    if (bv_snap_lines_3d(&out_pt, v, &p) == 1) {
+    if (bv_snap_lines_3d(&out_pt, v, sobjs, &p) == 1) {
 	MAT4X3PNT(vp, v->gv_model2view, out_pt);
 	(*vx) = vp[0];
 	(*vy) = vp[1];
@@ -376,14 +339,14 @@ bv_snap_lines_2d(struct bview *v, fastf_t *vx, fastf_t *vy)
 }
 
 void
-bv_view_center_linesnap(struct bview *v)
+bv_view_center_linesnap(struct bview *v, const struct bu_ptbl *sobjs)
 {
     point_t view_pt;
     point_t model_pt;
 
     MAT_DELTAS_GET_NEG(model_pt, v->gv_center);
     MAT4X3PNT(view_pt, v->gv_model2view, model_pt);
-    bv_snap_lines_2d(v, &view_pt[X], &view_pt[Y]);
+    bv_snap_lines_2d(v, sobjs, &view_pt[X], &view_pt[Y]);
     MAT4X3PNT(model_pt, v->gv_view2model, view_pt);
     MAT_DELTAS_VEC_NEG(v->gv_center, model_pt);
     bv_update(v);

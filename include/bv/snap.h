@@ -42,11 +42,11 @@ __BEGIN_DECLS
  * v->gv_s->gv_snap_flags also tells the routine which categories of objects to
  * consider - objs objects will also be evaluated against the flags before
  * being used. */
-BV_EXPORT extern int bv_snap_lines_2d(struct bview *v, fastf_t *fx, fastf_t *fy);
+BV_EXPORT extern int bv_snap_lines_2d(struct bview *v, const struct bu_ptbl *sobjs, fastf_t *fx, fastf_t *fy);
 
-BV_EXPORT extern void bv_view_center_linesnap(struct bview *v);
+BV_EXPORT extern void bv_view_center_linesnap(struct bview *v, const struct bu_ptbl *sobjs);
 
-BV_EXPORT extern int bv_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p);
+BV_EXPORT extern int bv_snap_lines_3d(point_t *out_pt, struct bview *v, const struct bu_ptbl *sobjs, point_t *p);
 BV_EXPORT extern int bv_snap_grid_2d(struct bview *v, fastf_t *fx, fastf_t *fy);
 
 __END_DECLS

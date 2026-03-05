@@ -132,12 +132,13 @@ struct bv_axes {
 // for value setting
 struct bv_obj_settings {
 
-    int s_dmode;         	/**< @brief  draw modes (TODO - are these accurate?):
+    int s_dmode;         	/**< @brief  draw modes:
 				 *            0 - wireframe
 				 *	      1 - shaded bots and polysolids only (booleans NOT evaluated)
 				 *	      2 - shaded (booleans NOT evaluated)
-				 *	      3 - shaded (booleans evaluated)
+				 *	      3 - wireframe (evaluated)
 				 *	      4 - hidden line
+				 *	      5 - point sampled triangles (evaluated)
 				 */
     int mixed_modes;            /**< @brief  when drawing, don't remove an objects view objects for other modes */
     fastf_t transparency;	/**< @brief  holds a transparency value in the range [0.0, 1.0] - 1 is opaque */
@@ -191,13 +192,8 @@ struct bview;
 #define BV_LOCAL_OBJS 0x04
 #define BV_CHILD_OBJS 0x08
 
-struct bv_scene_obj_internal;
-
 struct bv_scene_obj  {
     struct bu_list l;
-
-    /* Internal implementation storage */
-    struct bv_scene_obj_internal *i;
 
     /* View object name and type id */
     unsigned long long s_type_flags;
@@ -205,6 +201,10 @@ struct bv_scene_obj  {
     void *s_path;       	/**< @brief alternative (app specific) encoding of s_name */
     void *dp;       		/**< @brief app obj data */
     mat_t s_mat;		/**< @brief mat to use for internal lookup and mesh LoD drawing */
+
+    /* Timestamp of when the bv_scene_obj was last altered.  Should be
+     * set by user codes if they are the ones doing the altering. */
+    int64_t timestamp;
 
     /* Associated bv.  Note that scene objects are not assigned uniquely to
      * one view.  This value may be changed by the application in a multi-view
@@ -217,8 +217,14 @@ struct bv_scene_obj  {
     /* Knowledge of how to create/update s_vlist and the other 3D geometry data, as well as
      * manage any custom data specific to this object */
     void *s_i_data;  /**< @brief custom view data (bv_line_seg, bv_label, bv_polyon, etc) */
-    int (*s_update_callback)(struct bv_scene_obj *, struct bview *, int);  /**< @brief custom update/generator for s_vlist */
     void (*s_free_callback)(struct bv_scene_obj *);  /**< @brief free any info stored in s_i_data, s_path and draw_data */
+
+    // TODO - maybe this can be replaced with a "reset" flag which will be used by ft_scene_obj
+    // to determine whether to force a rebuild of the vlist info...  If the responsibility for
+    // ensuring current data shifts to the app rather than libdm, the scene obj shouldn't have
+    // to encode knowledge of how to update itself...
+    int reset;
+    int (*s_update_callback)(struct bv_scene_obj *, struct bview *, int);  /**< @brief custom update/generator for s_vlist */
 
     /* 3D vector list geometry data */
     struct bu_list s_vlist;	/**< @brief  Pointer to unclipped vector list */
@@ -277,12 +283,24 @@ struct bv_scene_obj  {
      * may be overridden locally */
     struct bv_obj_settings *s_os;
     struct bv_obj_settings s_local_os;
-    int s_inherit_settings;           /**< @brief  Use current obj settings when drawing children instead of their settings */
+    int s_override_obj_ref_settings;           /**< @brief  Use current obj settings when drawing obj_refs instead of their settings */
 
     /* Settings that may be less necessary... */
     struct bv_scene_obj_old_settings s_old;
 
-    /* Child objects of this object */
+
+    /* Objects to draw when drawing this object.  Like
+     * children in that they are drawn using this
+     * object's settings, but unlike them in that their
+     * memory management is not handled by this object.
+     * Used for things like "instance objects" to reference
+     * another object's geometry for drawing purposes. */
+    struct bu_ptbl obj_refs;
+
+    /* Child objects of this object.  Used for things like
+     * textual labels on geometric primitives, these will
+     * be deleted when this object is deleted (unlike object
+     * references above.) */
     struct bu_ptbl children;
 
     /* Parent object of this object */
@@ -296,7 +314,7 @@ struct bv_scene_obj  {
     struct bu_list *vlfree;
 
     /* Container for reusing bv_scene_obj allocations */
-    struct bv_scene_obj *free_scene_obj;
+    struct bv_obj_pool *obj_pool;
 
     /* View container containing this object */
     struct bu_ptbl *otbl;
@@ -373,45 +391,6 @@ struct bv_scene_obj  {
  * done there should make the idea of a bv_scene_group moot.
  */
 #define bv_scene_group bv_scene_obj
-
-
-/* The primary "working" data for mesh Level-of-Detail (LoD) drawing is stored
- * in a bv_mesh_lod container.
- *
- * Most LoD information is deliberately hidden in the internal, but the key
- * data needed for drawing routines and view setup are exposed. Although this
- * data structure is primarily managed in libbg, the public data in this struct
- * is needed at many levels of the software stack, including libbv. */
-struct bv_mesh_lod {
-
-    // The set of triangle faces to be used when drawing
-    int fcnt;
-    const int *faces;
-
-    // The vertices used by the faces array
-    int pcnt;
-    const point_t *points;      // If using snapped points, that's this array.  Else, points == points_orig.
-    int porig_cnt;
-    const point_t *points_orig;
-
-    // Optional: per-face-vertex normals (one normal per triangle vertex - NOT
-    // one normal per vertex.  I.e., a given point from points_orig may have
-    // multiple normals associated with it in different faces.)
-    const vect_t *normals;
-
-    // Bounding box of the original full-detail data
-    point_t bmin;
-    point_t bmax;
-
-    // The scene object using this LoD structure
-    struct bv_scene_obj *s;
-
-    // Pointer to the higher level LoD context associated with this LoD data
-    void *c;
-
-    // Pointer to internal LoD implementation information specific to this object
-    void *i;
-};
 
 /* Flags to identify categories of objects to snap */
 #define BV_SNAP_SHARED 0x1
@@ -555,7 +534,9 @@ struct bview_knobs {
 
 };
 
-struct bview_set;
+typedef int (*dm_obj_clbk_t)(void *, struct bv_scene_obj *);
+typedef int (*dm_view_clbk_t)(void *, struct bview *);
+typedef unsigned long long (*dm_hash_clbk_t)(void *);
 
 struct bview {
     uint32_t	  magic;             /**< @brief magic number */
@@ -613,22 +594,6 @@ struct bview {
     struct bview_settings *gv_s;     /**< @brief shared settings supplied by user */
     struct bview_settings gv_ls;     /**< @brief locally maintained settings specific to view (used if gv_s is null) */
 
-    /* If a view is marked as independent, its local containers are used even
-     * if pointers to shared tables are set. This allows for fully independent
-     * views with the same GED instance, at the cost of increased memory usage
-     * if multiple views draw the same objects. */
-    int independent;
-
-    /* Set containing this view.  Also holds pointers to resources shared
-     * across multiple views */
-    struct bview_set *vset;
-
-    /* Scene objects active in a view.  Managing these is a relatively complex
-     * topic and depends on whether a view is shared, independent or adaptive.
-     * Shared objects are common across views to make more efficient use of
-     * system memory. */
-    struct bview_objs gv_objs;
-
     /* We sometimes need to define the volume in space that is "active" for the
      * view.  For an orthogonal camera this is the oriented bounding box
      * extruded to contain active scene objects visible in the view  The app
@@ -659,17 +624,13 @@ struct bview {
     void          (*gv_callback)(struct bview *, void *);  /**< @brief  called in ged_view_update with gvp and gv_clientData */
     void           *gv_clientData;   /**< @brief  passed to gv_callback */
     struct bu_ptbl *callbacks;
-    void           *dmp;             /* Display manager pointer, if one is associated with this view */
-    void           *u_data;          /* Caller data associated with this view */
-};
 
-// Because bview instances frequently share objects in applications, they are
-// not always fully independent - we define a container and some basic
-// operations to manage this.
-struct bview_set_internal;
-struct bview_set {
-    struct bview_set_internal   *i;
-    struct bview_settings       settings;
+    void           *dmp;             /* Display manager pointer, if one is associated with this view */
+    dm_obj_clbk_t  *dm_draw_sobj;    /* Function pointer to a method to draw a scene object in the dmp display manager. */
+    dm_view_clbk_t *dm_draw_view;    /* Function pointer to a method to draw view only graphics such as faceplate. */
+    dm_hash_clbk_t *dm_hash;         /* Function pointer to a method to calculate a state hash of dmp. */
+
+    void           *u_data;          /* Caller data associated with this view */
 };
 
 __END_DECLS
