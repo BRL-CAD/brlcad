@@ -25,465 +25,160 @@
  * Usage: k-g input.k output.g
  */
 
-#include "common.h"
 
-#include <iostream>
 
-#include "rt/db_io.h"
-
-#include "k_parser.h"
-#include "region_list.h"
-#include "pipe.h"
-#include "sketch.h"
-
-
-static void AddArb
-(
-    int         n1,
-    int         n2,
-    int         n3,
-    int         n4,
-    int         n5,
-    int         n6,
-    int         n7,
-    int         n8,
-    KData&      kData,
-    std::string arbNumber,
-    Geometry&   geometry
-) {
-    point_t point1;
-    point_t point2;
-    point_t point3;
-    point_t point4;
-    point_t point5;
-    point_t point6;
-    point_t point7;
-    point_t point8;
-
-    const double factor = 10.0;
-
-    point1[X] = kData.nodes[n1].x * factor;
-    point1[Y] = kData.nodes[n1].y * factor;
-    point1[Z] = kData.nodes[n1].z * factor;
-
-    point2[X] = kData.nodes[n2].x * factor;
-    point2[Y] = kData.nodes[n2].y * factor;
-    point2[Z] = kData.nodes[n2].z * factor;
-
-    point3[X] = kData.nodes[n3].x * factor;
-    point3[Y] = kData.nodes[n3].y * factor;
-    point3[Z] = kData.nodes[n3].z * factor;
-
-    point4[X] = kData.nodes[n4].x * factor;
-    point4[Y] = kData.nodes[n4].y * factor;
-    point4[Z] = kData.nodes[n4].z * factor;
-
-    point5[X] = kData.nodes[n5].x * factor;
-    point5[Y] = kData.nodes[n5].y * factor;
-    point5[Z] = kData.nodes[n5].z * factor;
-
-    point6[X] = kData.nodes[n6].x * factor;
-    point6[Y] = kData.nodes[n6].y * factor;
-    point6[Z] = kData.nodes[n6].z * factor;
-
-    point7[X] = kData.nodes[n7].x * factor;
-    point7[Y] = kData.nodes[n7].y * factor;
-    point7[Z] = kData.nodes[n7].z * factor;
-
-    point8[X] = kData.nodes[n8].x * factor;
-    point8[Y] = kData.nodes[n8].y * factor;
-    point8[Z] = kData.nodes[n8].z * factor;
-
-    geometry.addArb(arbNumber.c_str(), point1, point2, point3, point4, point5, point6, point7, point8);
-}
-
-
-static void AddSeatBelt
-(
-	int          n1,
-	int          n2,
-	float		 area,
-	KData& kData,
-	Geometry& geometry,
-	std::string  arbNumber,
-	const double factor
-) {
-
-	point_t center1;
-	point_t center2;
-	point_t point1;
-	point_t point2;
-	point_t point3;
-	point_t point4;
-	point_t point5;
-	point_t point6;
-	point_t point7;
-	point_t point8;
-
-	float   beltWidth = 47;
-	float	beltThickness = area / beltWidth;
-
-	center1[X] = kData.nodes[n1].x * factor;
-	center1[Y] = kData.nodes[n1].y * factor;
-	center1[Z] = kData.nodes[n1].z * factor;
-
-	center2[X] = kData.nodes[n2].x * factor;
-	center2[Y] = kData.nodes[n2].y * factor;
-	center2[Z] = kData.nodes[n2].z * factor;
-
-	point1[X] = center1[X] - beltThickness * 0.5;
-	point1[Y] = center1[Y] - 10;
-	point1[Z] = center1[Z] - beltWidth * 0.5;
-
-	point2[X] = center1[X] + beltThickness * 0.5;
-	point2[Y] = center1[Y] - 10;
-	point2[Z] = center1[Z] - beltWidth * 0.5;
-
-	point3[X] = center1[X] + beltThickness * 0.5;
-	point3[Y] = center1[Y] + 10;
-	point3[Z] = center1[Z] + beltWidth * 0.5;
-
-	point4[X] = center1[X] - beltThickness * 0.5;
-	point4[Y] = center1[Y] + 10;
-	point4[Z] = center1[Z] + beltWidth * 0.5;
-
-	point5[X] = center2[X] - beltThickness * 0.5;
-	point5[Y] = center2[Y] - 10;
-	point5[Z] = center2[Z] - beltWidth * 0.5;
-
-	point6[X] = center2[X] + beltThickness * 0.5;
-	point6[Y] = center2[Y] - 10;
-	point6[Z] = center2[Z] - beltWidth * 0.5;
-
-	point7[X] = center2[X] + beltThickness * 0.5;
-	point7[Y] = center2[Y] + 10;
-	point7[Z] = center2[Z] + beltWidth * 0.5;
-
-	point8[X] = center2[X] - beltThickness * 0.5;
-	point8[Y] = center2[Y] + 10;
-	point8[Z] = center2[Z] + beltWidth * 0.5;
-
-	geometry.addArb(arbNumber.c_str(), point1, point2, point3, point4, point5, point6, point7, point8);
-}
-
-
-int main
-(
-    int   argc,
-    char* argv[]
-) {
-    int        ret = 0;
-    RegionList regions;
-
-    if (argc < 3) {
-	std::cerr << "Usage: " << argv[0] << " <keyword file> <BRL-CAD file>" << std::endl;
-	ret = 1;
-    }
-    else {
-	KData kData;
-
-	if (!parse_k(argv[1], kData))
-	    ret = 1;
-	else {
-	    rt_wdb* wdbp = wdb_fopen(argv[2]);
-
-	    if (wdbp != nullptr) {
-		std::string title = "Converted from ";
-		title += argv[1];
-
-		db_update_ident(wdbp->dbip, title.c_str(), wdbp->dbip->dbi_base2local);
-
-		const double factor = 10.0;
-
-		for (std::map<int, KPart>::iterator it = kData.parts.begin(); it != kData.parts.end(); it++) {
-		    if ((it->second).elements.size() > 0) {
-			std::string partName = std::to_string(it->first) + "_" + (it->second).title;
-
-			Geometry& geometry = regions.addRegion(partName);
-			int    section = (it->second).section;
-
-			if (section > 0) {
-			    double thick1 = kData.sections[section].thickness1;
-			    double thick2 = kData.sections[section].thickness1;
-			    double thick3 = kData.sections[section].thickness1;
-			    double thick4 = kData.sections[section].thickness1;
-
-			    if (!((fabs(thick1 - thick2) < SMALL_FASTF) && (fabs(thick2 - thick3) < SMALL_FASTF) && (fabs(thick3 - thick4) < SMALL_FASTF))) {
-				std::string sectionName = std::to_string(section) + ": " + kData.sections[section].title;
-				std::cout << "Different thicknesses in section " << sectionName.c_str() << std::endl;
-			    }
-
-			    double averageThick = (thick1 + thick2 + thick3 + thick4) / 4.0;
-			    geometry.setThickness(averageThick * factor);
-			}
-			else
-			    std::cout << "Missing section to part" << partName.c_str() << std::endl;
-
-			for (std::set<int>::iterator itr = (it->second).elements.begin(); itr != (it->second).elements.end(); itr++) {
-			    if ((kData.elements[*itr].nodes.size() == 3)) {
-				int n1 = kData.elements[*itr].nodes[0];
-				int n2 = kData.elements[*itr].nodes[1];
-				int n3 = kData.elements[*itr].nodes[2];
-
-				if (section > 0) {
-				    KSectionBeam beamSection = kData.sectionsBeam[section];
-
-				    if (beamSection.CST == 0) {
-				    }
-				    else if (beamSection.CST == 1 && beamSection.sectionType == "") {
-					pipePoint point1;
-					pipePoint point2;
-
-					point1.coords[X] = kData.nodes[n1].x * factor;
-					point1.coords[Y] = kData.nodes[n1].y * factor;
-					point1.coords[Z] = kData.nodes[n1].z * factor;
-					point1.outerDiameter = beamSection.TS1;
-					point1.innerDiameter = beamSection.TT1;
-
-					point2.coords[X] = kData.nodes[n2].x * factor;
-					point2.coords[Y] = kData.nodes[n2].y * factor;
-					point2.coords[Z] = kData.nodes[n2].z * factor;
-					point2.outerDiameter = beamSection.TS2;
-					point2.innerDiameter = beamSection.TT2;
-
-					geometry.addPipePnt(point1);
-					geometry.addPipePnt(point2);
-				    }
-				    else if (beamSection.CST == 2) {
-				    }
-				    else if ((beamSection.sectionType != "") && (beamSection.sectionType != "SECTION_08") && (beamSection.sectionType != "SECTION_09")) {
-					point_t point1;
-					point_t point2;
-					point_t point3;
-
-					point1[X] = kData.nodes[n1].x * factor;
-					point1[Y] = kData.nodes[n1].y * factor;
-					point1[Z] = kData.nodes[n1].z * factor;
-
-					point2[X] = kData.nodes[n2].x * factor;
-					point2[Y] = kData.nodes[n2].y * factor;
-					point2[Z] = kData.nodes[n2].z * factor;
-
-					point3[X] = kData.nodes[n3].x * factor;
-					point3[Y] = kData.nodes[n3].y * factor;
-					point3[Z] = kData.nodes[n3].z * factor;
-
-					std::string beamNumber= std::to_string(*itr);
-
-					geometry.addBeamResultant(beamNumber, beamSection.sectionType, point1, point2, point3, beamSection.D);
-				    }
-				    else if (beamSection.sectionType == "SECTION_08") {
-					pipePoint point1;
-					pipePoint point2;
-
-					point1.coords[X] = kData.nodes[n1].x * factor;
-					point1.coords[Y] = kData.nodes[n1].y * factor;
-					point1.coords[Z] = kData.nodes[n1].z * factor;
-					point1.outerDiameter = beamSection.D[0];
-					point1.innerDiameter = 0.0;
-
-					point2.coords[X] = kData.nodes[n2].x * factor;
-					point2.coords[Y] = kData.nodes[n2].y * factor;
-					point2.coords[Z] = kData.nodes[n2].z * factor;
-					point2.outerDiameter = beamSection.D[0];
-					point2.innerDiameter = 0.0;
-
-					geometry.addPipePnt(point1);
-					geometry.addPipePnt(point2);
-				    }
-				    else if (beamSection.sectionType == "SECTION_09") {
-					pipePoint point1;
-					pipePoint point2;
-
-					point1.coords[X] = kData.nodes[n1].x * factor;
-					point1.coords[Y] = kData.nodes[n1].y * factor;
-					point1.coords[Z] = kData.nodes[n1].z * factor;
-					point1.outerDiameter = beamSection.D[0];
-					point1.innerDiameter = beamSection.D[1];
-
-					point2.coords[X] = kData.nodes[n2].x * factor;
-					point2.coords[Y] = kData.nodes[n2].y * factor;
-					point2.coords[Z] = kData.nodes[n2].z * factor;
-					point2.outerDiameter = beamSection.D[0];
-					point2.innerDiameter = beamSection.D[1];
-
-					geometry.addPipePnt(point1);
-					geometry.addPipePnt(point2);
-				    }
-				}
-			    }
-			    else if (kData.elements[*itr].nodes.size() == 4) {
-				point_t point1;
-				point_t point2;
-				point_t point3;
-				point_t point4;
-
-				int     n1 = kData.elements[*itr].nodes[0];
-				int     n2 = kData.elements[*itr].nodes[1];
-				int     n3 = kData.elements[*itr].nodes[2];
-				int     n4 = kData.elements[*itr].nodes[3];
-
-				point1[X] = kData.nodes[n1].x * factor;
-				point1[Y] = kData.nodes[n1].y * factor;
-				point1[Z] = kData.nodes[n1].z * factor;
-
-				point2[X] = kData.nodes[n2].x * factor;
-				point2[Y] = kData.nodes[n2].y * factor;
-				point2[Z] = kData.nodes[n2].z * factor;
-
-				point3[X] = kData.nodes[n3].x * factor;
-				point3[Y] = kData.nodes[n3].y * factor;
-				point3[Z] = kData.nodes[n3].z * factor;
-
-				point4[X] = kData.nodes[n4].x * factor;
-				point4[Y] = kData.nodes[n4].y * factor;
-				point4[Z] = kData.nodes[n4].z * factor;
-
-				if (n3 == n4)
-				    geometry.addTriangle(point1, point2, point3);
-				else {
-				    geometry.addTriangle(point1, point2, point3);
-				    geometry.addTriangle(point1, point3, point4);
-				}
-			    }
-			    else if (kData.elements[*itr].nodes.size() == 8) {
-				int         n1        = kData.elements[*itr].nodes[0];
-				int         n2        = kData.elements[*itr].nodes[1];
-				int         n3        = kData.elements[*itr].nodes[2];
-				int         n4        = kData.elements[*itr].nodes[3];
-				int         n5        = kData.elements[*itr].nodes[4];
-				int         n6        = kData.elements[*itr].nodes[5];
-				int         n7        = kData.elements[*itr].nodes[6];
-				int         n8        = kData.elements[*itr].nodes[7];
-
-				std::string arbNumber = std::to_string(*itr);
-
-				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
-			    }
-			    else if (kData.elements[*itr].nodes.size() == 7) {
-				int         n1        = kData.elements[*itr].nodes[0];
-				int         n2        = kData.elements[*itr].nodes[1];
-				int         n3        = kData.elements[*itr].nodes[2];
-				int         n4        = kData.elements[*itr].nodes[3];
-				int         n5        = kData.elements[*itr].nodes[4];
-				int         n6        = kData.elements[*itr].nodes[5];
-				int         n7        = kData.elements[*itr].nodes[6];
-				int         n8        = kData.elements[*itr].nodes[4];
-
-				std::string arbNumber = std::to_string(*itr);
-
-				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
-			    }
-			    else if (kData.elements[*itr].nodes.size() == 6) {
-				int         n1        = kData.elements[*itr].nodes[0];
-				int         n2        = kData.elements[*itr].nodes[1];
-				int         n3        = kData.elements[*itr].nodes[2];
-				int         n4        = kData.elements[*itr].nodes[3];
-				int         n5        = kData.elements[*itr].nodes[4];
-				int         n6        = kData.elements[*itr].nodes[4];
-				int         n7        = kData.elements[*itr].nodes[5];
-				int         n8        = kData.elements[*itr].nodes[5];
-
-				std::string arbNumber = std::to_string(*itr);
-
-				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
-
-			    }
-			    else if (kData.elements[*itr].nodes.size() == 5) {
-				int         n1        = kData.elements[*itr].nodes[0];
-				int         n2        = kData.elements[*itr].nodes[1];
-				int         n3        = kData.elements[*itr].nodes[2];
-				int         n4        = kData.elements[*itr].nodes[3];
-				int         n5        = kData.elements[*itr].nodes[4];
-				int         n6        = kData.elements[*itr].nodes[4];
-				int         n7        = kData.elements[*itr].nodes[4];
-				int         n8        = kData.elements[*itr].nodes[4];
-
-				std::string arbNumber = std::to_string(*itr);
-
-				AddArb(n1, n2, n3, n4, n5, n6, n7, n8, kData, arbNumber, geometry);
-			    }
-			    else if (kData.elementSeatBelt[*itr].nodes.size() != 0) {
-				std::string arbNumber = std::to_string(*itr);
-				KSectionSeatBelt ksectionSeatBelt = kData.sectionsSeatBelt[section];
-
-				if (kData.elementSeatBelt[*itr].nodes.size() > 2) {
-				    if (kData.elementSeatBelt[*itr].nodes[2] > 0) {
-					point_t point1;
-					point_t point2;
-					point_t point3;
-					point_t point4;
-
-					int         n1 = kData.elementSeatBelt[*itr].nodes[0];
-					int         n2 = kData.elementSeatBelt[*itr].nodes[1];
-					int         n3 = kData.elementSeatBelt[*itr].nodes[2];
-					int         n4 = kData.elementSeatBelt[*itr].nodes[3];
-
-					point1[X] = kData.nodes[n1].x * factor;
-					point1[Y] = kData.nodes[n1].y * factor;
-					point1[Z] = kData.nodes[n1].z * factor;
-
-					point2[X] = kData.nodes[n2].x * factor;
-					point2[Y] = kData.nodes[n2].y * factor;
-					point2[Z] = kData.nodes[n2].z * factor;
-
-					point3[X] = kData.nodes[n3].x * factor;
-					point3[Y] = kData.nodes[n3].y * factor;
-					point3[Z] = kData.nodes[n3].z * factor;
-
-					point4[X] = kData.nodes[n4].x * factor;
-					point4[Y] = kData.nodes[n4].y * factor;
-					point4[Z] = kData.nodes[n4].z * factor;
-
-					geometry.addTriangle(point1, point2, point3);
-					geometry.addTriangle(point1, point3, point4);
-				    }
-				    else {
-					int         n1 = kData.elementSeatBelt[*itr].nodes[0];
-					int         n2 = kData.elementSeatBelt[*itr].nodes[1];
-
-					AddSeatBelt(n1, n2, ksectionSeatBelt.area, kData, geometry, arbNumber, factor);
-				    }
-				}
-				else {
-				    int         n1 = kData.elementSeatBelt[*itr].nodes[0];
-				    int         n2 = kData.elementSeatBelt[*itr].nodes[1];
-
-				    AddSeatBelt(n1, n2, ksectionSeatBelt.area, kData, geometry, arbNumber, factor);
-				}
-			    }
-			    else if (kData.elementDiscreteSphere[*itr].radius > 0) {
-				point_t center;
-				int     centerId = kData.elementDiscreteSphere[*itr].nodeId;
-
-				center[X] = kData.nodes[centerId].x * factor;
-				center[Y] = kData.nodes[centerId].y * factor;
-				center[Z] = kData.nodes[centerId].z * factor;
-
-				std::string sphName = std::to_string(*itr);
-				float       radius = kData.elementDiscreteSphere[*itr].radius * factor;
-
-				geometry.addSphere(sphName.c_str(), center, radius);
-			    }
-			    else
-				std::cout << "Un supported element in k-file " << argv[1] << std::endl;
-			}
-
-			regions.setAttributes(partName,(it->second).attributes);
-		    }
-		}
-
-		regions.create(wdbp);
-	    }
-	}
-    }
-
-    regions.printStat();
-
-    return ret;
-}
-
-
+ #include "common.h"
+ #include <iostream>
+ #include <vector>
+ #include "rt/db_io.h"
+ #include "k_parser.h"
+ #include "region_list.h"
+ #include "pipe.h"
+ #include "sketch.h"
+ 
+ // Helper: interpolate missing nodes for ARB (best approximation)
+ static void AddArbFlexible(
+	 const std::vector<int>& nodes,
+	 KData& kData,
+	 const std::string& arbNumber,
+	 Geometry& geometry,
+	 const double factor
+ ) {
+	 point_t pts[8];
+ 
+	 size_t nCount = nodes.size();
+	 for (size_t i = 0; i < nCount; i++) {
+		 pts[i][X] = kData.nodes[nodes[i]].x * factor;
+		 pts[i][Y] = kData.nodes[nodes[i]].y * factor;
+		 pts[i][Z] = kData.nodes[nodes[i]].z * factor;
+	 }
+ 
+	 // Interpolate missing nodes if less than 8
+	 if (nCount < 8) {
+		 for (size_t i = nCount; i < 8; i++) {
+			 size_t prev = i - 1;
+			 size_t first = 0;
+			 pts[i][X] = 0.5 * (pts[prev][X] + pts[first][X]);
+			 pts[i][Y] = 0.5 * (pts[prev][Y] + pts[first][Y]);
+			 pts[i][Z] = 0.5 * (pts[prev][Z] + pts[first][Z]);
+		 }
+	 }
+ 
+	 geometry.addArb(arbNumber.c_str(), pts[0], pts[1], pts[2], pts[3],
+					  pts[4], pts[5], pts[6], pts[7]);
+ }
+ 
+ // Seatbelt creation helper
+ static void AddSeatBelt(
+	 int n1, int n2, float area,
+	 KData& kData, Geometry& geometry,
+	 const std::string& arbNumber, const double factor
+ ) {
+	 point_t center1, center2, pts[8];
+	 float beltWidth = 47;
+	 float beltThickness = area / beltWidth;
+ 
+	 center1[X] = kData.nodes[n1].x * factor;
+	 center1[Y] = kData.nodes[n1].y * factor;
+	 center1[Z] = kData.nodes[n1].z * factor;
+ 
+	 center2[X] = kData.nodes[n2].x * factor;
+	 center2[Y] = kData.nodes[n2].y * factor;
+	 center2[Z] = kData.nodes[n2].z * factor;
+ 
+	 pts[0][X] = center1[X] - beltThickness * 0.5; pts[0][Y] = center1[Y] - 10; pts[0][Z] = center1[Z] - beltWidth * 0.5;
+	 pts[1][X] = center1[X] + beltThickness * 0.5; pts[1][Y] = center1[Y] - 10; pts[1][Z] = center1[Z] - beltWidth * 0.5;
+	 pts[2][X] = center1[X] + beltThickness * 0.5; pts[2][Y] = center1[Y] + 10; pts[2][Z] = center1[Z] + beltWidth * 0.5;
+	 pts[3][X] = center1[X] - beltThickness * 0.5; pts[3][Y] = center1[Y] + 10; pts[3][Z] = center1[Z] + beltWidth * 0.5;
+	 pts[4][X] = center2[X] - beltThickness * 0.5; pts[4][Y] = center2[Y] - 10; pts[4][Z] = center2[Z] - beltWidth * 0.5;
+	 pts[5][X] = center2[X] + beltThickness * 0.5; pts[5][Y] = center2[Y] - 10; pts[5][Z] = center2[Z] - beltWidth * 0.5;
+	 pts[6][X] = center2[X] + beltThickness * 0.5; pts[6][Y] = center2[Y] + 10; pts[6][Z] = center2[Z] + beltWidth * 0.5;
+	 pts[7][X] = center2[X] - beltThickness * 0.5; pts[7][Y] = center2[Y] + 10; pts[7][Z] = center2[Z] + beltWidth * 0.5;
+ 
+	 geometry.addArb(arbNumber.c_str(), pts[0], pts[1], pts[2], pts[3],
+					  pts[4], pts[5], pts[6], pts[7]);
+ }
+ 
+ // Main program
+ int main(int argc, char* argv[]) {
+	 if (argc < 3) {
+		 std::cerr << "Usage: " << argv[0] << " <keyword file> <BRL-CAD file>" << std::endl;
+		 return 1;
+	 }
+ 
+	 KData kData;
+	 if (!parse_k(argv[1], kData))
+		 return 1;
+ 
+	 rt_wdb* wdbp = wdb_fopen(argv[2]);
+	 if (!wdbp) return 1;
+ 
+	 RegionList regions;
+	 const double factor = 10.0;
+ 
+	 for (auto& [partId, part] : kData.parts) {
+		 if (part.elements.empty()) continue;
+ 
+		 std::string partName = std::to_string(partId) + "_" + part.title;
+		 Geometry& geometry = regions.addRegion(partName);
+ 
+		 int sectionId = part.section;
+		 if (sectionId > 0) {
+			 auto& sec = kData.sections[sectionId];
+			 double averageThick = (sec.thickness1 + sec.thickness1 + sec.thickness1 + sec.thickness1) / 4.0;
+			 geometry.setThickness(averageThick * factor);
+		 }
+ 
+		 for (int elemId : part.elements) {
+			 auto& elem = kData.elements[elemId];
+ 
+			 if (!elem.nodes.empty() && elem.nodes.size() >= 3 && elem.nodes.size() <= 8) {
+				 AddArbFlexible(elem.nodes, kData, std::to_string(elemId), geometry, factor);
+			 }
+			 else if (!kData.elementSeatBelt[elemId].nodes.empty()) {
+				 auto& sb = kData.sectionsSeatBelt[sectionId];
+				 auto& sbElem = kData.elementSeatBelt[elemId];
+ 
+				 if (sbElem.nodes.size() > 2 && sbElem.nodes[2] > 0) {
+					 // Quad seatbelt
+					 point_t p[4];
+					 for (int i = 0; i < 4; i++) {
+						 int n = sbElem.nodes[i];
+						 p[i][X] = kData.nodes[n].x * factor;
+						 p[i][Y] = kData.nodes[n].y * factor;
+						 p[i][Z] = kData.nodes[n].z * factor;
+					 }
+					 geometry.addTriangle(p[0], p[1], p[2]);
+					 geometry.addTriangle(p[0], p[2], p[3]);
+				 } else {
+					 AddSeatBelt(sbElem.nodes[0], sbElem.nodes[1], sb.area, kData, geometry,
+								 std::to_string(elemId), factor);
+				 }
+			 }
+			 else if (kData.elementDiscreteSphere[elemId].radius > 0) {
+				 auto& sphere = kData.elementDiscreteSphere[elemId];
+				 point_t center;
+				 int centerId = sphere.nodeId;
+				 center[X] = kData.nodes[centerId].x * factor;
+				 center[Y] = kData.nodes[centerId].y * factor;
+				 center[Z] = kData.nodes[centerId].z * factor;
+ 
+				 geometry.addSphere(std::to_string(elemId).c_str(), center, sphere.radius * factor);
+			 }
+			 else {
+				 std::cerr << "Unsupported element #" << elemId << " in k-file " << argv[1] << std::endl;
+			 }
+		 }
+ 
+		 regions.setAttributes(partName, part.attributes);
+	 }
+ 
+	 regions.create(wdbp);
+	 regions.printStat();
+ 
+	 return 0;
+ }
+ 
 // Local Variables:
 // tab-width: 8
 // mode: C++
