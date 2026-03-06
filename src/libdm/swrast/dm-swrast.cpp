@@ -69,6 +69,7 @@ static int swrast_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf
 static int swrast_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 static int swrast_configureWin(struct dm *dmp, int force);
 static int swrast_makeCurrent(struct dm *dmp);
+static int swrast_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha);
 
 
 static int
@@ -529,6 +530,81 @@ swrast_write_image(struct bu_vls *UNUSED(msgs), FILE *UNUSED(fp), struct dm *UNU
     return -1;
 }
 
+/**
+ * swrast_getDisplayImage - read pixels directly from the OSMesa off-screen
+ * buffer using OSMesaGetColorBuffer.  gl_getDisplayImage reads from
+ * GL_FRONT via glReadPixels, which is unreliable for off-screen OSMesa
+ * contexts (especially in batch/-c mode where the scene may not have gone
+ * through a normal event-loop refresh).  OSMesaGetColorBuffer always
+ * returns the actual rendered pixel data regardless of front/back state.
+ */
+static int
+swrast_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha)
+{
+    struct swrast_vars *pv = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
+    if (!pv || !pv->ctx || !pv->os_b)
+	return BRLCAD_ERROR;
+
+    /* Make the OSMesa context current so GL calls are valid. */
+    if (!OSMesaMakeCurrent(pv->ctx, pv->os_b, GL_UNSIGNED_BYTE,
+			   dmp->i->dm_width, dmp->i->dm_height)) {
+	bu_log("swrast_getDisplayImage: OSMesaMakeCurrent failed\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* Use separate variables for OSMesaGetColorBuffer output; it may
+     * report dimensions that differ from dmp->i in degenerate cases. */
+    int buf_width = 0;
+    int buf_height = 0;
+    void *buf = NULL;
+    GLint type = 0;
+    if (!OSMesaGetColorBuffer(pv->ctx, &buf_width, &buf_height, &type, &buf)
+	    || !buf || buf_width <= 0 || buf_height <= 0) {
+	/* Fallback: read via glReadPixels from GL_BACK */
+	int width = dmp->i->dm_width;
+	int height = dmp->i->dm_height;
+	unsigned char *idata;
+	if (!alpha) {
+	    idata = (unsigned char *)bu_calloc((size_t)(height * width * 3),
+					       sizeof(unsigned char), "rgb data");
+	    glReadBuffer(GL_BACK);
+	    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, idata);
+	} else {
+	    idata = (unsigned char *)bu_calloc((size_t)(height * width * 4),
+					       sizeof(unsigned char), "rgba data");
+	    glReadBuffer(GL_BACK);
+	    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, idata);
+	}
+	*image = idata;
+	if (flip)
+	    flip_display_image_vertically(*image, width, height, alpha);
+	return BRLCAD_OK;
+    }
+
+    /* Convert RGBA from os_b to RGB (or RGBA) output buffer. */
+    unsigned char *src = (unsigned char *)buf;
+    unsigned char *idata;
+    if (!alpha) {
+	idata = (unsigned char *)bu_calloc((size_t)(buf_height * buf_width * 3),
+					   sizeof(unsigned char), "rgb data");
+	for (int i = 0; i < buf_height * buf_width; i++) {
+	    idata[i * 3 + 0] = src[i * 4 + 0];
+	    idata[i * 3 + 1] = src[i * 4 + 1];
+	    idata[i * 3 + 2] = src[i * 4 + 2];
+	}
+    } else {
+	idata = (unsigned char *)bu_calloc((size_t)(buf_height * buf_width * 4),
+					   sizeof(unsigned char), "rgba data");
+	memcpy(idata, src, (size_t)(buf_height * buf_width * 4));
+    }
+    *image = idata;
+    if (flip)
+	flip_display_image_vertically(*image, buf_width, buf_height, alpha);
+    return BRLCAD_OK;
+}
+
 int
 swrast_event_cmp(struct dm *dmp, dm_event_t type, int event)
 {
@@ -599,7 +675,7 @@ struct dm_impl dm_swrast_impl = {
     gl_freeDLists,
     gl_genDLists,
     gl_draw_display_list,
-    gl_getDisplayImage, /* display to image function */
+    swrast_getDisplayImage, /* use OSMesaGetColorBuffer for reliable off-screen reads */
     gl_reshape,
     swrast_makeCurrent,
     null_SwapBuffers,

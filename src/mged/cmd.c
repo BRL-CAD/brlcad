@@ -238,7 +238,6 @@ mged_db_search_callback(int argc, const char *argv[], void *UNUSED(u1), void *u2
     return TCL_OK == ret;
 }
 
-
 int
 cmd_ged_edit_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
@@ -834,6 +833,50 @@ cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, con
 	(void)signal(SIGINT, sig3);  /* allow interrupts */
     else
 	return TCL_OK;
+
+    if (!s->gedp->ged_gvp)
+	s->gedp->ged_gvp = view_state->vs_gvp;
+    s->gedp->ged_gvp->dmp = (void *)s->mged_curr_dm->dm_dmp;
+
+    ret = (*ctp->ged_func)(s->gedp, argc, (const char **)argv);
+    GED_OUTPUT;
+
+    (void)signal(SIGINT, SIG_IGN);
+
+    if (ret & GED_HELP || ret == BRLCAD_OK)
+	return TCL_OK;
+
+    return TCL_ERROR;
+}
+
+
+/**
+ * Screengrab wrapper: forces a render via refresh(s) so that the
+ * display manager has current pixel data before we call the GED
+ * screengrab function.  This is necessary in -c (batch) mode where
+ * the Tcl event loop never fires and refresh() would otherwise not
+ * be called before getDisplayImage().
+ */
+int
+cmd_screengrab(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+{
+    int ret;
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    MGED_CK_CMD(ctp);
+    struct mged_state *s = ctp->s;
+
+    if (s->gedp == GED_NULL)
+	return TCL_OK;
+
+    if (setjmp(jmp_env) == 0)
+	(void)signal(SIGINT, sig3);  /* allow interrupts */
+    else
+	return TCL_OK;
+
+    /* Force the scene to be rendered before reading pixels. */
+    DMP_dirty = 1;
+    dm_set_dirty(DMP, 1);
+    refresh(s);
 
     if (!s->gedp->ged_gvp)
 	s->gedp->ged_gvp = view_state->vs_gvp;

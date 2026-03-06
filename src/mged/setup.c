@@ -337,7 +337,7 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "savekey", cmd_ged_plain_wrapper, ged_exec_savekey, NULL},
     {MGED_CMD_MAGIC, "saveview", cmd_ged_plain_wrapper, ged_exec_saveview, NULL},
     {MGED_CMD_MAGIC, "sca", cmd_sca, GED_FUNC_PTR_NULL, NULL},
-    {MGED_CMD_MAGIC, "screengrab", cmd_ged_dm_wrapper, ged_exec_screengrab, NULL},
+    {MGED_CMD_MAGIC, "screengrab", cmd_screengrab, ged_exec_screengrab, NULL},
     {MGED_CMD_MAGIC, "search", cmd_search, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "sed", f_sed, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "sed_apply", f_sedit_apply, GED_FUNC_PTR_NULL, NULL},
