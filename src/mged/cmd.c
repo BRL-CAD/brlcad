@@ -238,6 +238,40 @@ mged_db_search_callback(int argc, const char *argv[], void *UNUSED(u1), void *u2
     return TCL_OK == ret;
 }
 
+
+int
+mged_clone_during_callback(int UNUSED(argc), const char **UNUSED(argv),
+			   void *UNUSED(u1), void *u2)
+{
+    struct mged_state *s = (struct mged_state *)u2;
+    MGED_CK_STATE(s);
+    Tcl_Interp *interp = s->interp;
+
+    /* Evaluate the Tcl script stored in the interpreter global variable
+     * "clone_progress_callback", if any.  Tcl GUIs (e.g. pattern_gui)
+     * can set this variable to a per-clone step handler before invoking
+     * clone, and unset it afterwards:
+     *
+     *   set clone_progress_callback "$widget step"
+     *   clone ...
+     *   unset -nocomplain clone_progress_callback
+     */
+    const char *cmd = Tcl_GetVar(interp, "clone_progress_callback",
+				 TCL_GLOBAL_ONLY);
+    if (!cmd || !cmd[0])
+	return 1;
+
+    Tcl_DString script;
+    Tcl_DStringInit(&script);
+    Tcl_DStringAppend(&script, cmd, -1);
+    Tcl_Eval(interp, Tcl_DStringValue(&script));
+    Tcl_DStringFree(&script);
+    Tcl_ResetResult(interp);
+
+    return 1;
+}
+
+
 int
 cmd_ged_edit_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {

@@ -10,9 +10,9 @@
 <refnamediv xml:id="name">
   <refname>clone</refname>
   <refpurpose>
-    The clone command performs a deep copy of an object, optionally
-    duplicating in a geometric pattern.
-   </refpurpose>
+    Deep-copy an object (optionally in a geometric pattern) and place
+    the copies in the database with automatically generated names.
+  </refpurpose>
 </refnamediv>
 
 <!-- body begins here -->
@@ -20,138 +20,518 @@
   <cmdsynopsis sepchar=" ">
     <command>clone</command>
     <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
-    <arg choice="req" rep="norepeat">object_to_clone</arg>
+    <arg choice="req" rep="repeat"><replaceable>object</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsection xml:id="options"><title>OPTIONS</title>
 
+  <refsection xml:id="options_general"><title>General options</title>
+
   <variablelist remap="TP">
     <varlistentry>
       <term><option>-h</option></term>
-      <listitem>
-        <para>
-          Display help.
-        </para>
-      </listitem>
+      <listitem><para>Display help and exit.</para></listitem>
     </varlistentry>
-  </variablelist>
-
-  <variablelist remap="TP">
     <varlistentry>
-      <term><option>-n &lt;copies&gt;</option></term>
+      <term><option>-i <replaceable>increment</replaceable></option></term>
       <listitem>
         <para>
-          Specifies the number of copies to make.  Default is 1.
+          Starting increment used when generating copy names.  The
+          first numeric run found in each object name is incremented by
+          this value; if no number is present the increment is appended.
+          Default is 100.
         </para>
       </listitem>
     </varlistentry>
-  </variablelist>
-
-  <variablelist remap="TP">
-    <varlistentry>
-      <term><option>-t &lt;x&gt; &lt;y&gt; &lt;z&gt;</option></term>
-      <listitem>
-        <para>
-          Specifies an <option>x</option>, <option>y</option>, and <option>z</option> translation distance between each copy.  Default is 0.0, no translation.  This option conflicts with <option>-a</option> which specifies total translation distance.
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-
-  <variablelist remap="TP">
-    <varlistentry>
-      <term><option>-r &lt;x&gt; &lt;y&gt; &lt;z&gt;</option></term>
-      <listitem>
-        <para>
-          Specifies <option>x</option>, <option>y</option>, and <option>z</option> angles to rotate around the x, y, and z axes between each copy.  Default is 0.0, no rotation.  This option conflicts with <option>-b</option> which specifies total rotation angles.
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-
-  <variablelist remap="TP">
-    <varlistentry>
-      <term><option>-p &lt;x&gt; &lt;y&gt; &lt;z&gt;</option></term>
-      <listitem>
-        <para>
-          Specifies an <option>x</option>, <option>y</option>, and <option>z</option> point to rotate around for <option>-b</option> and <option>-r</option>.  Default is 0 0 0.
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-
-  <variablelist remap="TP">
-    <varlistentry>
-      <term><option>-a &lt;n&gt; &lt;x&gt; &lt;y&gt; &lt;z&gt;</option></term>
-      <listitem>
-        <para>
-          Specifies a total <option>x</option>, <option>y</option>, and <option>z</option> translation distance split across <option>n</option> copies.  This option conflicts with <option>-t</option> which specifies incremental distances.
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-
-  <variablelist remap="TP">
-    <varlistentry>
-      <term><option>-b &lt;n&gt; &lt;x&gt; &lt;y&gt; &lt;z&gt;</option></term>
-      <listitem>
-        <para>
-          Specifies a total rotation in degrees about the <option>x</option>, <option>y</option>, and <option>z</option> axes, split across <option>n</option> copies.  This option conflicts with <option>-r</option> which specifies incremental rotation angles.
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-
-  <variablelist remap="TP">
-    <varlistentry>
-      <term><option>-m &lt;axis&gt; &lt;distance&gt;</option></term>
-      <listitem>
-        <para>
-          Specifies an axis and distance along that axis about which to create a mirrored copy.  The <option>axis</option> must be 'x', 'y', or 'z'.  The distance may be a positive or negative distance along that axis.
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-
-  <variablelist remap="TP">
-    <varlistentry>
-      <term><option>-i &lt;increment&gt;</option></term>
-      <listitem>
-        <para>
-          This option pertains to the copy naming convention.  It specifies the increment to use when naming copies.  If a number is not found in the name, the increment number is appended to the end of the name (e.g., <command>clone box</command> creates a 'box100' object).  Default <option>increment</option> is 100.
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-
-  <variablelist remap="TP">
     <varlistentry>
       <term><option>-c</option></term>
       <listitem>
         <para>
-          This option pertains to the copy naming convention.  Increment the <emphasis>next</emphasis> number encountered in object names.  You can specify <option>-c</option> multiple times to increment the Nth number.  For example, <command>clone -c -c -c</command> will increment the 4th number in object namess.  Default is to increment the first number encountered.
+          Move the naming cursor to the <emphasis>next</emphasis> numeric
+          run in object names.  May be repeated: <option>-c -c</option>
+          targets the third number, <option>-c -c -c</option> the fourth,
+          etc.  Default targets the first number.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--depth top|regions|primitives</option></term>
+      <listitem>
+        <para>
+          Controls how deeply the copy hierarchy is constructed.
+        </para>
+        <para>
+          <option>top</option> (default for pattern modes) — creates a
+          lightweight wrapper combination whose single member is the
+          original object with the placement matrix embedded.  No deep
+          copy is performed; the source geometry is shared.
+        </para>
+        <para>
+          <option>regions</option> — copies every combination from the
+          top of the tree down to and including the first region
+          encountered on each path.  Primitives below the region boundary
+          are <emphasis>not</emphasis> copied — they are shared between
+          the original and the clone.  New region idents are assigned
+          automatically so that each copy is distinguishable during
+          raytracing.  The placement matrix is distributed into the leaf
+          arcs inside each region (rather than stored at the top-level
+          arc).  This is the C++ equivalent of the Tcl
+          <command>copy_obj</command> +
+          <command>apply_mat -regions</command> workflow.
+        </para>
+        <para>
+          <option>primitives</option> — performs a full recursive copy of
+          the entire hierarchy down to individual primitives and absorbs
+          each placement matrix directly into the copied primitive
+          parameters.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--xpush</option></term>
+      <listitem>
+        <para>
+          Before producing the final clone, internally flatten any
+          matrices that hang above the combination members of the source
+          object (equivalent to running <command>xpush</command> on a
+          temporary copy).  Useful when <option>-t</option> /
+          <option>-r</option> do not behave as expected because of
+          existing instance matrices in the hierarchy.  This replaces the
+          <command>xclone</command> workaround.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-g <replaceable>group_name</replaceable></option></term>
+      <listitem>
+        <para>
+          Collect all top-level clone results into a new combination
+          named <replaceable>group_name</replaceable>.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-s <replaceable>sstr</replaceable> <replaceable>rstr</replaceable></option></term>
+      <term><option>--subs <replaceable>sstr</replaceable> <replaceable>rstr</replaceable></option></term>
+      <listitem>
+        <para>
+          Apply a name substitution to every generated object name.  The
+          first occurrence of the string <replaceable>sstr</replaceable>
+          in each source object's name is replaced with
+          <replaceable>rstr</replaceable> before the numeric
+          uniquification step.  For example, <command>clone -s tank tread
+          tank.r01</command> produces a clone named
+          <emphasis>tread.r101</emphasis> (or the next available variant).
+          When no occurrence of <replaceable>sstr</replaceable> is found
+          in a particular name the name is used as-is.
         </para>
       </listitem>
     </varlistentry>
   </variablelist>
 
-</refsection>
+  </refsection>
+
+  <refsection xml:id="options_linear"><title>Linear / single-copy options</title>
+
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><option>-n <replaceable>copies</replaceable></option></term>
+      <listitem>
+        <para>Number of copies to make.  Default is 1.</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-t <replaceable>x y z</replaceable></option></term>
+      <listitem>
+        <para>
+          Per-copy translation delta (model units).  Conflicts with
+          <option>-a</option>.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-r <replaceable>x y z</replaceable></option></term>
+      <listitem>
+        <para>
+          Per-copy rotation in degrees about the X, Y, and Z axes.
+          Conflicts with <option>-b</option>.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-p <replaceable>x y z</replaceable></option></term>
+      <listitem>
+        <para>
+          Rotation pivot point for <option>-r</option> and
+          <option>-b</option>.  Default is 0 0 0.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-a <replaceable>n x y z</replaceable></option></term>
+      <listitem>
+        <para>
+          Total translation distance divided evenly across
+          <replaceable>n</replaceable> copies.  Conflicts with
+          <option>-t</option>.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-b <replaceable>n x y z</replaceable></option></term>
+      <listitem>
+        <para>
+          Total rotation in degrees divided evenly across
+          <replaceable>n</replaceable> copies.  Conflicts with
+          <option>-r</option>.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-m <replaceable>axis distance</replaceable></option></term>
+      <listitem>
+        <para>
+          Create a mirror copy reflected about the plane perpendicular to
+          <replaceable>axis</replaceable> ('x', 'y', or 'z') at
+          <replaceable>distance</replaceable> along that axis.
+        </para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+
+  </refsection>
+
+  <refsection xml:id="options_rect"><title>Rectangular-grid pattern (<option>--rect</option>)</title>
+
+  <para>
+    Place copies at every point of a 3-D grid aligned with three
+    user-supplied direction vectors.  This replaces the
+    <function>pattern_rect</function> Tcl procedure for all three
+    depth modes (<option>top</option>, <option>regions</option>, and
+    <option>primitives</option>).
+  </para>
+
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><option>--xdir <replaceable>x y z</replaceable></option></term>
+      <term><option>--ydir <replaceable>x y z</replaceable></option></term>
+      <term><option>--zdir <replaceable>x y z</replaceable></option></term>
+      <listitem>
+        <para>
+          Grid direction vectors (need not be unit vectors).  Defaults
+          are the X, Y, and Z axes.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--nx <replaceable>#</replaceable> --dx <replaceable>d</replaceable></option></term>
+      <listitem>
+        <para>
+          Number of steps and step size (model units) along
+          <option>--xdir</option>.  Alternatively supply an explicit list
+          with <option>--lx <replaceable>"v1 v2 ..."</replaceable></option>.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--ny <replaceable>#</replaceable> --dy <replaceable>d</replaceable></option></term>
+      <term><option>--nz <replaceable>#</replaceable> --dz <replaceable>d</replaceable></option></term>
+      <listitem>
+        <para>Equivalent parameters for Y and Z directions.</para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+
+  </refsection>
+
+  <refsection xml:id="options_sph"><title>Spherical pattern (<option>--sph</option>)</title>
+
+  <para>
+    Place copies at spherical-coordinate grid positions
+    (azimuth × elevation × radius).  This replaces the
+    <function>pattern_sph</function> Tcl procedure for all three
+    depth modes (<option>top</option>, <option>regions</option>, and
+    <option>primitives</option>).
+  </para>
+
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><option>--center-pat <replaceable>x y z</replaceable></option></term>
+      <listitem>
+        <para>
+          Origin of the spherical grid (model-space point where
+          radius = 0 maps to).  Default is 0 0 0.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--center-obj <replaceable>x y z</replaceable></option></term>
+      <listitem>
+        <para>
+          Local centre of the source object, used as the pivot when
+          <option>--rotaz</option> or <option>--rotel</option> are active.
+          Default is 0 0 0.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--rotaz</option></term>
+      <listitem>
+        <para>
+          Rotate each copy so that it faces the azimuth angle of its
+          position.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--rotel</option></term>
+      <listitem>
+        <para>Rotate each copy to face its elevation angle.</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--start-az <replaceable>deg</replaceable></option></term>
+      <term><option>--start-el <replaceable>deg</replaceable></option></term>
+      <term><option>--start-r <replaceable>d</replaceable></option></term>
+      <listitem>
+        <para>
+          Starting azimuth (degrees), elevation (degrees), and radius
+          (model units).  Defaults are 0, −90, and 0.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--naz <replaceable>#</replaceable> --daz <replaceable>deg</replaceable></option></term>
+      <listitem>
+        <para>
+          Number of azimuth steps and delta per step (degrees).
+          Alternatively: <option>--laz <replaceable>"v1 v2 ..."</replaceable></option>.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--nel <replaceable>#</replaceable> --del <replaceable>deg</replaceable></option></term>
+      <listitem>
+        <para>
+          Number of elevation steps and delta (degrees), or
+          <option>--lel <replaceable>"v1 v2 ..."</replaceable></option>.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--nr <replaceable>#</replaceable> --dr <replaceable>d</replaceable></option></term>
+      <listitem>
+        <para>
+          Number of radius steps and delta (model units), or
+          <option>--lr <replaceable>"v1 v2 ..."</replaceable></option>.
+        </para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+
+  </refsection>
+
+  <refsection xml:id="options_cyl"><title>Cylindrical pattern (<option>--cyl</option>)</title>
+
+  <para>
+    Place copies at positions on a cylinder defined by azimuth, radius,
+    and height.  This replaces the <function>pattern_cyl</function> Tcl
+    procedure for all three depth modes (<option>top</option>,
+    <option>regions</option>, and <option>primitives</option>).
+  </para>
+
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><option>--center-base <replaceable>x y z</replaceable></option></term>
+      <listitem>
+        <para>
+          Base-centre of the cylinder in model space.  Default is 0 0 0.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--height-dir <replaceable>x y z</replaceable></option></term>
+      <listitem>
+        <para>
+          Unit vector along the cylinder axis.  Default is 0 0 1 (Z axis).
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--start-az-dir <replaceable>x y z</replaceable></option></term>
+      <listitem>
+        <para>
+          Radial direction that corresponds to azimuth = 0.  Must be
+          perpendicular to <option>--height-dir</option>.
+          Default is 1 0 0.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--center-obj <replaceable>x y z</replaceable></option></term>
+      <listitem>
+        <para>
+          Local centre of the source object, used as pivot when
+          <option>--rot</option> is active.  Default is 0 0 0.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--rot</option></term>
+      <listitem>
+        <para>
+          Rotate each copy to face the tangential direction at its
+          azimuth position.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--start-az <replaceable>deg</replaceable></option></term>
+      <term><option>--start-r <replaceable>d</replaceable></option></term>
+      <term><option>--start-h <replaceable>d</replaceable></option></term>
+      <listitem>
+        <para>
+          Starting azimuth (degrees), radius (model units), and height
+          (model units) along the cylinder axis.  All default to 0.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--naz <replaceable>#</replaceable> --daz <replaceable>deg</replaceable></option></term>
+      <listitem>
+        <para>
+          Azimuth step count and delta (degrees), or
+          <option>--laz <replaceable>"v1 v2 ..."</replaceable></option>.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--nr <replaceable>#</replaceable> --dr <replaceable>d</replaceable></option></term>
+      <listitem>
+        <para>
+          Radius step count and delta (model units), or
+          <option>--lr <replaceable>"v1 v2 ..."</replaceable></option>.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>--nh <replaceable>#</replaceable> --dh <replaceable>d</replaceable></option></term>
+      <listitem>
+        <para>
+          Height step count and delta (model units), or
+          <option>--lh <replaceable>"v1 v2 ..."</replaceable></option>.
+        </para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+
+  </refsection>
+
+</refsection><!-- end OPTIONS -->
+
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>
-    Clone performs a deep copy, traversing the entire hierarchy of the object specified and creating a new independent hierarchy.  The <command>clone</command> command uses an automatic naming convention as it creates copies, incrementing and/or appending to numbers encountered in the object specified.  The number convention may be configured with the <option>-i</option> and <option>-c</option> options.
+    <command>clone</command> copies one or more database objects and
+    places the copies with automatically generated unique names.  Names
+    are generated by incrementing the first numeric run found in the
+    source object's name (configurable with <option>-c</option> and
+    <option>-i</option>); if no number is present the increment value is
+    appended.
   </para>
-  <para>If you specify different numbers of copies with the <option>-a</option>, <option>-b</option>, and/or <option>-n</option> options, the last value of <option>n</option> specified will be used for the number of copies.
+  <para>
+    In its default (linear) mode, <command>clone</command> produces
+    <option>-n</option> copies arranged by the supplied translation
+    (<option>-t</option> / <option>-a</option>) and/or rotation
+    (<option>-r</option> / <option>-b</option>) increments.  The
+    <option>-m</option> option produces a single mirrored copy instead.
+  </para>
+  <para>
+    Three <emphasis>pattern modes</emphasis> produce a regular
+    arrangement of copies without requiring manual calculation of
+    individual displacements:
+  </para>
+  <itemizedlist>
+    <listitem>
+      <para>
+        <option>--rect</option> — rectangular (Cartesian) grid.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <option>--sph</option> — spherical grid (azimuth × elevation ×
+        radius).
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <option>--cyl</option> — cylindrical grid (azimuth × radius ×
+        height).
+      </para>
+    </listitem>
+  </itemizedlist>
+  <para>
+    In all three pattern modes, each position in the grid yields one
+    clone of every source object listed on the command line.  The
+    <option>--depth</option> option controls the copy strategy:
+    <option>top</option> shares geometry via a wrapper combination,
+    <option>regions</option> copies the combination hierarchy down to
+    regions (sharing primitives) and distributes the placement matrix
+    into region leaf arcs, and <option>primitives</option> produces a
+    fully independent deep copy with the matrix baked into primitives.
+  </para>
+  <para>
+    The database must be in v5 format.  Use <command>dbupgrade</command>
+    to convert a v4 database before running <command>clone</command>.
+  </para>
+  <para>
+    If you specify conflicting copy-count options (<option>-a</option>,
+    <option>-b</option>, <option>-n</option>), the last
+    <replaceable>n</replaceable> value supplied wins.
   </para>
 </refsection>
+
+
+<refsection xml:id="examples"><title>EXAMPLES</title>
+
+  <para>
+    Make three copies of <emphasis>wheel</emphasis> translated 100 mm
+    apart along X, collecting them into a group:
+    <programlisting>clone -n 3 -t 100 0 0 -g wheels wheel</programlisting>
+  </para>
+
+  <para>
+    Clone a bolt pattern: 8 copies around a circle of radius 50 mm,
+    using the cylindrical pattern:
+    <programlisting>clone --cyl --naz 8 --daz 45 --nr 1 --dr 50 bolt</programlisting>
+  </para>
+
+  <para>
+    Full spherical shell of sensors at two radii with five elevation
+    bands of 12 azimuth positions each:
+    <programlisting>clone --sph --naz 12 --daz 30 --nel 5 --del 30 --nr 2 --dr 25 \
+      --start-el -60 --start-r 100 -g sensors sensor</programlisting>
+  </para>
+
+  <para>
+    3 × 3 rectangular grid of panels spaced 200 mm apart:
+    <programlisting>clone --rect --nx 3 --dx 200 --ny 3 --dy 200 -g panel_array panel</programlisting>
+  </para>
+
+  <para>
+    Clone with xpush to absorb pre-existing instance matrices:
+    <programlisting>clone --xpush -t 50 0 0 assembly</programlisting>
+  </para>
+
+</refsection>
+
 
 <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
 <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
-
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to <email>devs@brlcad.org</email>

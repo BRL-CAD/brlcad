@@ -1,21 +1,158 @@
 puts "*** Testing 'clone' command ***"
 
-in_eto clone _a
-clone -a 10 10 10 10 clone_eto_a.s
-cp clone_eto_a.s clone_eto_b.s
-clone -b 10 100 100 100 clone_eto_b.s
-g clone_eto_b.c clone_eto_b.s*
-cp clone_eto_b.s clone_eto_c.s
-clone -i 30 -m x 10 -n 1 clone_eto_c.s
-g clone_eto_c.c clone_eto_c.s*
-cp clone_eto_c.s clone_eto_d.s
-clone -i 5 -p 30 30 30 -r 10 10 15 -n 20 clone_eto_d.s
-g clone_eto_d.c clone_eto_d.s*
-cp clone_eto_d.s clone_eto_e.s
-clone -i 11 -t 1 1 1 -n 20 clone_eto_e.s
-g clone_eto_e.c clone_eto_e.s*
-cp clone_eto_e.c clone_a.c
-clone -i 2 -p 5 0 10 -r 10 20 30 -n 20 clone_a.c
-g clone_comb.c clone_a.c*
+# -----------------------------------------------------------------------
+# Setup: primitives and a two-level hierarchy used throughout
+# -----------------------------------------------------------------------
+in_sph  clone
+in_rpp  clone "" ".r"
+r       clone_top.r u clone_sph.s
+
+proc clone_chk {name} {
+    if {[exists $name] != 1} {
+        error "FAIL: expected object '$name' does not exist"
+    }
+}
+
+# -----------------------------------------------------------------------
+# BACKWARD COMPATIBILITY: old libged clone syntax (bu_getopt era)
+# All of -a -b -c -i -m -n -p -r -t must work identically.
+# -----------------------------------------------------------------------
+puts "BC-1: clone -i (increment)"
+clone -i 10 clone_sph.s
+clone_chk clone_sph.s10
+
+puts "BC-2: clone -n -t (translated copies)"
+clone -n 2 -t 100 0 0 clone_sph.s
+clone_chk clone_sph.s100
+clone_chk clone_sph.s200
+
+puts "BC-3: clone -n -r (rotated copies)"
+in_sph clone "_r"
+clone -n 2 -r 90 0 0 clone_sph_r.s
+clone_chk clone_sph_r.s100
+clone_chk clone_sph_r.s200
+
+puts "BC-4: clone -n -p -r (rotation about point)"
+clone -n 2 -p 500 0 0 -r 0 0 45 clone_sph.s
+clone_chk clone_sph.s300
+clone_chk clone_sph.s400
+
+puts "BC-5: clone -a n x y z (total translation)"
+clone -a 3 300 0 0 clone_sph.s
+clone_chk clone_sph.s500
+clone_chk clone_sph.s600
+clone_chk clone_sph.s700
+
+puts "BC-6: clone -b n x y z (total rotation)"
+clone -b 2 90 0 0 clone_sph.s
+clone_chk clone_sph.s800
+clone_chk clone_sph.s900
+
+puts "BC-7: clone -m x d (mirror)"
+clone -m x 0 clone_sph.s
+clone_chk clone_sph.s1000
+
+puts "BC-8: clone -i -m combined"
+clone -i 30 -m x 10 -n 1 clone_sph.s
+clone_chk clone_sph.s1030
+
+puts "BC-9: clone -c (second-number slot)"
+in_sph clone "" ".s01a02"
+clone -c clone_sph.s01a02
+clone_chk clone_sph.s01a03
+
+puts "BC-10: clone -cc (two -c flags)"
+clone -c -c clone_sph.s01a02
+clone_chk clone_sph.s01a04
+
+puts "BC-11: clone of combination (comb deep copy)"
+r clone_comb.r u clone_sph.s
+clone -n 2 -t 50 0 0 clone_comb.r
+clone_chk clone_comb.r100
+clone_chk clone_comb.r200
+
+puts "BC-12: clone -i -p -r -n (full old-style invocation)"
+clone -i 5 -p 30 30 30 -r 10 10 15 -n 3 clone_sph.s
+clone_chk clone_sph.s1100
+clone_chk clone_sph.s1105
+clone_chk clone_sph.s1110
+
+# -----------------------------------------------------------------------
+# NEW FEATURES
+# -----------------------------------------------------------------------
+puts "NF-1: clone -s (name substitution)"
+clone -s sph tread clone_sph.s
+clone_chk clone_tread.s1200
+
+puts "NF-2: clone -s -n combined"
+in_sph clone "_s2"
+clone -s sph result -n 2 -t 50 0 0 clone_sph_s2.s
+clone_chk clone_result_s2.s100
+clone_chk clone_result_s2.s200
+
+puts "NF-3: clone --depth top"
+clone --depth top clone_top.r
+clone_chk clone_top.r1
+
+puts "NF-4: clone --depth regions"
+clone --depth regions clone_top.r
+clone_chk clone_top.r2
+
+puts "NF-5: clone --depth primitives"
+clone --depth primitives clone_sph.s
+clone_chk clone_sph.s1300
+
+puts "NF-6: clone -g (group)"
+in_sph clone "_g1"
+in_sph clone "_g2"
+clone -g clone_group.c clone_sph_g1.s clone_sph_g2.s
+clone_chk clone_group.c
+
+puts "NF-7: clone --xpush"
+clone --xpush clone_top.r
+clone_chk clone_top.r3
+
+puts "NF-8: clone --rect (rectangular grid)"
+in_sph clone "_pr"
+clone --rect --nx 2 --dx 200 --ny 2 --dy 200 clone_sph_pr.s
+clone_chk clone_sph_pr.s1
+
+puts "NF-9: clone --rect -g (rect + group)"
+in_sph clone "_prg"
+clone --rect --nx 2 --dx 100 --ny 2 --dy 100 -g rect_group.c clone_sph_prg.s
+clone_chk rect_group.c
+
+puts "NF-10: clone --rect -s (rect + substitution)"
+in_sph clone "_prs"
+clone --rect --nx 2 --dx 100 -s sph part clone_sph_prs.s
+clone_chk clone_part_prs.s1
+
+puts "NF-11: clone --sph (spherical pattern)"
+in_sph clone "_ps"
+clone --sph --naz 3 --daz 120 --nr 1 --dr 500 clone_sph_ps.s
+clone_chk clone_sph_ps.s1
+
+puts "NF-12: clone --sph --rotaz"
+in_sph clone "_psr"
+clone --sph --naz 4 --daz 90 --nr 1 --dr 300 --rotaz clone_sph_psr.s
+clone_chk clone_sph_psr.s1
+
+puts "NF-13: clone --cyl (cylindrical pattern)"
+in_sph clone "_pc"
+clone --cyl --naz 4 --daz 90 --nr 1 --dr 300 --nh 1 --dh 200 clone_sph_pc.s
+clone_chk clone_sph_pc.s1
+
+puts "NF-14: clone --cyl --rot"
+in_sph clone "_pcr"
+clone --cyl --naz 4 --daz 90 --nr 1 --dr 300 --nh 1 --dh 200 --rot clone_sph_pcr.s
+clone_chk clone_sph_pcr.s1
+
+puts "NF-15: clone --rect --depth regions"
+clone --rect --nx 2 --dx 300 --depth regions clone_top.r
+clone_chk clone_top.r4
+
+puts "NF-16: clone --sph --depth primitives"
+clone --sph --naz 2 --daz 180 --nr 1 --dr 200 --depth primitives clone_sph.s
+clone_chk clone_sph.s1400
 
 puts "*** 'clone' testing completed ***"
