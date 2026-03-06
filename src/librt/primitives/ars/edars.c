@@ -48,6 +48,23 @@
 #define ECMD_ARS_MOVE_COL	5045	/* translate an ARS column */
 #define ECMD_ARS_PICK_MENU	5046	/* display the ARS pick menu */
 #define ECMD_ARS_EDIT_MENU	5047	/* display the ARS edit menu */
+/*
+ * Scale current curve about its centroid.
+ * e_para[0] = scale factor (1.0 = no change), e_inpara = 1.
+ */
+#define ECMD_ARS_SCALE_CRV	5048
+/*
+ * Scale current column about its centroid.
+ * e_para[0] = scale factor, e_inpara = 1.
+ */
+#define ECMD_ARS_SCALE_COL	5049
+/*
+ * Insert a new curve immediately after the currently selected curve.
+ * The new curve is a linear interpolation (t=0.5) between the selected
+ * curve and the next curve.  No e_para values are required.
+ * (If the selected curve is the last curve the new curve duplicates it.)
+ */
+#define ECMD_ARS_INSERT_CRV	5050
 
 struct rt_ars_edit {
     int es_ars_crv;	/* curve and column identifying selected ARS point */
@@ -128,6 +145,10 @@ rt_edit_ars_set_edit_mode(struct rt_edit *s, int mode)
 	case ECMD_ARS_MOVE_COL:
 	    s->edit_mode = RT_PARAMS_EDIT_TRANS;
 	    break;
+	case ECMD_ARS_SCALE_CRV:
+	case ECMD_ARS_SCALE_COL:
+	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
+	    break;
 	case ECMD_ARS_PICK:
 	    s->edit_mode = RT_PARAMS_EDIT_PICK;
 	    break;
@@ -165,6 +186,9 @@ struct rt_edit_menu_item ars_menu[] = {
     { "Delete Column", ars_ed, ECMD_ARS_DEL_COL },
     { "Dup Curve", ars_ed, ECMD_ARS_DUP_CRV },
     { "Dup Column", ars_ed, ECMD_ARS_DUP_COL },
+    { "Insert Curve", ars_ed, ECMD_ARS_INSERT_CRV },
+    { "Scale Curve", ars_ed, ECMD_ARS_SCALE_CRV },
+    { "Scale Column", ars_ed, ECMD_ARS_SCALE_COL },
     { "Move Curve", ars_ed, ECMD_ARS_MOVE_CRV },
     { "Move Column", ars_ed, ECMD_ARS_MOVE_COL },
     { "", NULL, 0 }
@@ -556,6 +580,155 @@ ecmd_ars_dup_col(struct rt_edit *s)
     ars->pts_per_curve++;
 }
 
+/* Scale current curve about its centroid.
+ * e_para[0] = scale factor (must be > 0), e_inpara = 1. */
+static void
+ecmd_ars_scale_crv(struct rt_edit *s)
+{
+    struct rt_ars_internal *ars =
+	(struct rt_ars_internal *)s->es_int.idb_ptr;
+    struct rt_ars_edit *a = (struct rt_ars_edit *)s->ipe_ptr;
+
+    RT_ARS_CK_MAGIC(ars);
+
+    if (a->es_ars_crv < 0) {
+	bu_log("No ARS curve selected\n");
+	return;
+    }
+    if (!s->e_inpara || s->e_inpara < 1) {
+	bu_log("ECMD_ARS_SCALE_CRV: scale factor required in e_para[0]\n");
+	return;
+    }
+
+    fastf_t scale = s->e_para[0];
+    if (scale <= 0.0) {
+	bu_log("ECMD_ARS_SCALE_CRV: scale factor must be > 0\n");
+	return;
+    }
+
+    size_t npts = ars->pts_per_curve;
+    fastf_t *crv = ars->curves[a->es_ars_crv];
+
+    /* Compute centroid */
+    point_t cen = VINIT_ZERO;
+    for (size_t j = 0; j < npts; j++)
+	VADD2(cen, cen, &crv[j*3]);
+    VSCALE(cen, cen, 1.0 / (fastf_t)npts);
+
+    /* Scale each point about centroid */
+    for (size_t j = 0; j < npts; j++) {
+	fastf_t *pt = &crv[j*3];
+	pt[0] = cen[0] + scale * (pt[0] - cen[0]);
+	pt[1] = cen[1] + scale * (pt[1] - cen[1]);
+	pt[2] = cen[2] + scale * (pt[2] - cen[2]);
+    }
+
+    s->e_inpara = 0;
+}
+
+/* Scale current column about its centroid.
+ * e_para[0] = scale factor (must be > 0), e_inpara = 1. */
+static void
+ecmd_ars_scale_col(struct rt_edit *s)
+{
+    struct rt_ars_internal *ars =
+	(struct rt_ars_internal *)s->es_int.idb_ptr;
+    struct rt_ars_edit *a = (struct rt_ars_edit *)s->ipe_ptr;
+
+    RT_ARS_CK_MAGIC(ars);
+
+    if (a->es_ars_col < 0) {
+	bu_log("No ARS column selected\n");
+	return;
+    }
+    if (!s->e_inpara || s->e_inpara < 1) {
+	bu_log("ECMD_ARS_SCALE_COL: scale factor required in e_para[0]\n");
+	return;
+    }
+
+    fastf_t scale = s->e_para[0];
+    if (scale <= 0.0) {
+	bu_log("ECMD_ARS_SCALE_COL: scale factor must be > 0\n");
+	return;
+    }
+
+    size_t ncrvs = ars->ncurves;
+    int col = a->es_ars_col;
+
+    /* Compute centroid across all curves at this column */
+    point_t cen = VINIT_ZERO;
+    for (size_t i = 0; i < ncrvs; i++)
+	VADD2(cen, cen, &ars->curves[i][col*3]);
+    VSCALE(cen, cen, 1.0 / (fastf_t)ncrvs);
+
+    /* Scale each point about centroid */
+    for (size_t i = 0; i < ncrvs; i++) {
+	fastf_t *pt = &ars->curves[i][col*3];
+	pt[0] = cen[0] + scale * (pt[0] - cen[0]);
+	pt[1] = cen[1] + scale * (pt[1] - cen[1]);
+	pt[2] = cen[2] + scale * (pt[2] - cen[2]);
+    }
+
+    s->e_inpara = 0;
+}
+
+/* Insert a new curve after the currently selected curve.
+ * The new curve is a linear interpolation (t=0.5) between the selected
+ * curve and the next curve.  If the selected curve is the last, the new
+ * curve duplicates it. */
+static void
+ecmd_ars_insert_crv(struct rt_edit *s)
+{
+    struct rt_ars_internal *ars =
+	(struct rt_ars_internal *)s->es_int.idb_ptr;
+    struct rt_ars_edit *a = (struct rt_ars_edit *)s->ipe_ptr;
+
+    RT_ARS_CK_MAGIC(ars);
+
+    if (a->es_ars_crv < 0 || a->es_ars_col < 0) {
+	bu_log("No ARS point selected\n");
+	return;
+    }
+
+    int ins_after = a->es_ars_crv;  /* insert after this curve */
+    /* If ins_after is the last curve, next_crv == ins_after → new curve duplicates it */
+    int next_crv  = (ins_after + 1 < (int)ars->ncurves) ? ins_after + 1 : ins_after;
+
+    fastf_t **curves = (fastf_t **)bu_malloc(
+	    (ars->ncurves + 1) * sizeof(fastf_t *), "ars insert curves");
+
+    for (size_t i = 0; i < ars->ncurves + 1; i++) {
+	curves[i] = (fastf_t *)bu_malloc(
+		ars->pts_per_curve * 3 * sizeof(fastf_t),
+		"ars insert curves[i]");
+
+	if ((int)i <= ins_after) {
+	    /* before or at insertion point: copy as-is */
+	    for (size_t j = 0; j < ars->pts_per_curve * 3; j++)
+		curves[i][j] = ars->curves[i][j];
+	} else if ((int)i == ins_after + 1) {
+	    /* the new interpolated curve */
+	    fastf_t *c0 = ars->curves[ins_after];
+	    fastf_t *c1 = ars->curves[next_crv];
+	    for (size_t j = 0; j < ars->pts_per_curve * 3; j++)
+		curves[i][j] = 0.5 * (c0[j] + c1[j]);
+	} else {
+	    /* after insertion point: copy from i-1 */
+	    for (size_t j = 0; j < ars->pts_per_curve * 3; j++)
+		curves[i][j] = ars->curves[i - 1][j];
+	}
+    }
+
+    for (size_t i = 0; i < ars->ncurves; i++)
+	bu_free((void *)ars->curves[i], "ars->curves[i]");
+    bu_free((void *)ars->curves, "ars->curves");
+
+    ars->curves = curves;
+    ars->ncurves++;
+    /* advance selection to the new curve */
+    a->es_ars_crv = ins_after + 1;
+}
+
 void
 ecmd_ars_del_crv(struct rt_edit *s)
 {
@@ -907,6 +1080,15 @@ rt_edit_ars_edit(struct rt_edit *s)
 	case ECMD_ARS_DUP_COL:
 	    ecmd_ars_dup_col(s);
 	    break;
+	case ECMD_ARS_INSERT_CRV:
+	    ecmd_ars_insert_crv(s);
+	    break;
+	case ECMD_ARS_SCALE_CRV:
+	    ecmd_ars_scale_crv(s);
+	    break;
+	case ECMD_ARS_SCALE_COL:
+	    ecmd_ars_scale_col(s);
+	    break;
 	case ECMD_ARS_DEL_CRV:
 	    ecmd_ars_del_crv(s);
 	    break;
@@ -922,6 +1104,8 @@ rt_edit_ars_edit(struct rt_edit *s)
 	case ECMD_ARS_MOVE_PT:
 	    ecmd_ars_move_pt(s);
 	    break;
+	default:
+	    return edit_generic(s);
     }
 
     return 0;
@@ -935,9 +1119,6 @@ rt_edit_ars_edit_xy(
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
-    struct rt_db_internal *ip = &s->es_int;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     switch (s->edit_flag) {
 	case RT_PARAMS_EDIT_SCALE:
@@ -949,6 +1130,9 @@ rt_edit_ars_edit_xy(
 	case ECMD_ARS_DEL_COL:
 	case ECMD_ARS_DUP_CRV:
 	case ECMD_ARS_DUP_COL:
+	case ECMD_ARS_INSERT_CRV:
+	case ECMD_ARS_SCALE_CRV:
+	case ECMD_ARS_SCALE_COL:
 	case ECMD_ARS_PICK_MENU:
 	case ECMD_ARS_EDIT_MENU:
 	    edit_sscale_xy(s, mousevec);
@@ -967,18 +1151,8 @@ rt_edit_ars_edit_xy(
 	    MAT4X3PNT(s->e_mparam, s->e_invmat, temp);
 	    s->e_mvalid = 1;
 	    break;
-	case RT_PARAMS_EDIT_ROT:
-	    bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return BRLCAD_ERROR;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return BRLCAD_ERROR;
+	    return edit_generic_xy(s, mousevec);
     }
 
     edit_abs_tra(s, pos_view);

@@ -29,8 +29,10 @@
 #define RT_EDIT_H
 
 #include "common.h"
+#include <float.h>
 #include "vmath.h"
 #include "bn/mat.h"
+#include "bu/parse.h"
 #include "bv/defines.h"
 #include "rt/defines.h"
 #include "rt/db_internal.h"
@@ -41,6 +43,22 @@ __BEGIN_DECLS
 // Settings used for both solid and matrix edits
 #define RT_EDIT_DEFAULT   -1
 #define RT_EDIT_IDLE       0
+
+/**
+ * Maximum number of parameters that can be supplied via e_para in a single
+ * rt_edit operation.  This must be large enough to hold all parameters for
+ * the most complex single command (currently ECMD_SKETCH_APPEND_BEZIER, which
+ * needs one slot per control-point index; degree 15 → 16 indices).
+ */
+/* Maximum number of keyboard-input parameters for a single edit command.
+ * SET_MATRIX requires 1 index + 16 matrix elements = 17 values; use 20
+ * to give headroom for future operations. */
+#define RT_EDIT_MAXPARA   20
+
+/* Maximum number of simultaneous string parameters (companion to e_para for
+ * RT_EDIT_PARAM_STRING commands) and the maximum byte length of each. */
+#define RT_EDIT_MAXSTR      5
+#define RT_EDIT_MAXSTR_LEN  512
 
 
 // Solid editing (done via sed in MGED) alters primitive parameters to produce
@@ -70,26 +88,36 @@ __BEGIN_DECLS
 // to disk, and if a solid is being edited rather than a comb the matrix
 // changes are translated by the per-primitive routines to new solid parameters
 // at that time.)
+//
+// Matrix rotation: absolute Euler angles (X,Y,Z in degrees) supplied via
+// e_para[0..2].  The existing rotation stored in model_changes is replaced
+// by the new absolute rotation while the keypoint's world position and the
+// accumulated scale factor are preserved.  This mirrors MGED's "orot X Y Z"
+// (f_rot_obj / mged_rot_obj) behaviour.  Incremental rotation via knob or
+// mouse input uses rt_knob_edit_rot() with matrix_edit=1 instead.
 #define RT_MATRIX_EDIT_ROT       6
 
-// Matrix translate operations are specified relative to the VIEW XY, NOT the
-// model space coordinate system.  I.e. the resulting translations are view
-// dependent.
+// Matrix translate operations specified relative to VIEW XY are view-dependent.
+// They project the object keypoint into view space, replace the requested
+// XY component(s) with the supplied mouse/parameter value, and project back
+// to model space.  This matches MGED's oed mouse-drag (RARROW/UARROW) behaviour
+// and is the correct mapping for interactive viewport dragging.
 //
-// Not sure what the history is here - I suppose the thinking might be that
-// the view can be set to axis align to get constrained movement in model
-// coordinate space, and this allows for other constraints as well when the
-// view is adjusted, but it has a definite drawback if the user wants to
-// watch the movement of the solid along a model space X,Y or Z axis from
-// another view while editing.  Also has the drawback that it is inconsistent
-// with the matrix scale edit ops, which appear to be scaling relative to the
-// model coordinate system.
-//
-// TODO - Should additional edit operations be defined for constrained
-// translating on the model axis directions?
+// For non-interactive (command-line) absolute placement in model coordinates,
+// use RT_MATRIX_EDIT_TRANS_MODEL_XYZ which places the keypoint at the given
+// model-space X,Y,Z position directly.  This mirrors MGED's "translate X Y Z"
+// (f_tr_obj) behaviour when in object-edit mode.
 #define RT_MATRIX_EDIT_TRANS_VIEW_XY  7
 #define RT_MATRIX_EDIT_TRANS_VIEW_X   8
 #define RT_MATRIX_EDIT_TRANS_VIEW_Y   9
+
+// Absolute model-space translation: move object so that e_keypoint lands at
+// the specified model-space position.  e_para[0..2] supply the target X,Y,Z
+// coordinates in local (display) units; the edit function converts to base
+// units internally.  Equivalent to MGED's "translate X Y Z" command when in
+// object-edit (oed) mode.  Unlike the VIEW variants above this operation is
+// view-independent and maps directly to model coordinates.
+#define RT_MATRIX_EDIT_TRANS_MODEL_XYZ 14
 
 // Non-uniform scale operations scale relative to the MODEL coordinate system,
 // NOT the view plane.
@@ -239,8 +267,14 @@ struct rt_edit {
     int e_mvalid;               /* e_mparam valid.  e_inpara must = 0 */
     vect_t e_mparam;            /* mouse input param.  Only when es_mvalid set */
 
-    int e_inpara;               /* parameter input from keyboard flag.  1 == e_para valid.  e_mvalid must = 0 */
-    vect_t e_para;              /* keyboard input parameter changes */
+    int e_inpara;               /* number of valid entries in e_para (set by caller before rt_edit_process) */
+    fastf_t e_para[RT_EDIT_MAXPARA]; /* keyboard input parameters; e_para[0..e_inpara-1] are valid */
+
+    /* Parallel string-parameter array for RT_EDIT_PARAM_STRING commands.
+     * Use rt_edit_set_str() to write; primitive edit handlers retrieve the
+     * value via the ECMD_GET_FILENAME callback mechanism. */
+    int  e_nstr;                                     /* number of valid entries in e_str */
+    char e_str[RT_EDIT_MAXSTR][RT_EDIT_MAXSTR_LEN];  /* string params; e_str[0..e_nstr-1] are valid */
 
     mat_t e_invmat;             /* inverse of e_mat KAA */
     mat_t e_mat;                /* accumulated matrix of path */
@@ -264,6 +298,19 @@ struct rt_edit {
     /* Internal primitive editing information specific to primitive types. */
     void *ipe_ptr;
 
+    /* Snap-to-grid: when snap.enabled is non-zero, ft_edit_xy implementations
+     * should call rt_edit_snap_point() on the computed UV/model position before
+     * applying it.  spacing is in model (base) units. */
+    struct {
+	int     enabled;   /**< non-zero → snap active */
+	fastf_t spacing;   /**< grid spacing in mm (base units) */
+    } snap;
+
+    /* Single-level checkpoint/revert.  rt_edit_checkpoint() serialises
+     * es_int here; rt_edit_revert() restores it.  bu_external.ext_buf is
+     * NULL when no snapshot has been saved. */
+    struct bu_external es_ckpt;
+
     /* User pointer */
     void *u_ptr;
 };
@@ -275,6 +322,18 @@ rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *, str
 /** Free a rt_edit struct */
 RT_EXPORT extern void
 rt_edit_destroy(struct rt_edit *s);
+
+/**
+ * Set a string parameter in the edit struct's e_str[] array.
+ *
+ * @param s      The edit struct to update.
+ * @param index  Slot index (0 .. RT_EDIT_MAXSTR-1); must equal
+ *               rt_edit_param_desc::index for the STRING parameter.
+ * @param str    NUL-terminated string to copy (truncated to
+ *               RT_EDIT_MAXSTR_LEN-1 bytes).
+ */
+RT_EXPORT extern void
+rt_edit_set_str(struct rt_edit *s, int index, const char *str);
 
 /* Logic for working with editing callback maps.
  *
@@ -343,6 +402,43 @@ rt_knob_edit_sca(
 RT_EXPORT extern void
 rt_edit_process(struct rt_edit *s);
 
+/**
+ * Snap a 2-D UV point to the grid defined in s->snap.
+ *
+ * If s->snap.enabled is zero the point is returned unchanged.
+ * Otherwise each component is rounded to the nearest multiple of
+ * s->snap.spacing.
+ *
+ * @param[in,out] pt  2-D UV coordinate to snap (in model/base units).
+ * @param[in]     s   rt_edit struct carrying snap configuration.
+ */
+RT_EXPORT extern void
+rt_edit_snap_point(point2d_t pt, const struct rt_edit *s);
+
+/**
+ * Save a snapshot of the current primitive parameters so they can be
+ * restored later with rt_edit_revert().
+ *
+ * The snapshot is stored inside the rt_edit struct.  Calling this
+ * function again overwrites any previous snapshot (single-level undo).
+ *
+ * @return BRLCAD_OK on success, BRLCAD_ERROR if the export failed.
+ */
+RT_EXPORT extern int
+rt_edit_checkpoint(struct rt_edit *s);
+
+/**
+ * Restore primitive parameters from the snapshot saved by
+ * rt_edit_checkpoint().
+ *
+ * If no snapshot has been saved (or the last snapshot was already
+ * consumed) this function logs a message and returns BRLCAD_ERROR.
+ *
+ * @return BRLCAD_OK on success, BRLCAD_ERROR otherwise.
+ */
+RT_EXPORT extern int
+rt_edit_revert(struct rt_edit *s);
+
 
 /* Edit menu items encode information about specific edit operations, as well
  * as info documenting them.  Edit functab methods use this data type. */
@@ -351,6 +447,111 @@ struct rt_edit_menu_item {
     void (*menu_func)(struct rt_edit *, int, int, int, void *);
     int menu_arg;
 };
+
+
+/*
+ * ============================================================
+ * ft_edit_desc() parameter-descriptor API
+ *
+ * These types allow a primitive's ft_edit_desc() slot to return
+ * machine-readable metadata describing every edit operation it
+ * supports.  A GUI (e.g. qged) can use this metadata to
+ * auto-generate appropriate edit widgets without needing any
+ * primitive-specific code.
+ * ============================================================
+ */
+
+/** Parameter type codes for struct rt_edit_param_desc */
+#define RT_EDIT_PARAM_SCALAR   1  /**< single fastf_t; QDoubleSpinBox / QSlider     */
+#define RT_EDIT_PARAM_INTEGER  2  /**< truncated fastf_t; QSpinBox                  */
+#define RT_EDIT_PARAM_BOOLEAN  3  /**< !NEAR_ZERO(val); QCheckBox                   */
+#define RT_EDIT_PARAM_POINT    4  /**< point_t (3 fastf_t); 3x QDoubleSpinBox       */
+#define RT_EDIT_PARAM_VECTOR   5  /**< vect_t  (3 fastf_t); 3x QDoubleSpinBox       */
+#define RT_EDIT_PARAM_STRING   6  /**< NUL-terminated; QLineEdit                    */
+#define RT_EDIT_PARAM_ENUM     7  /**< integer choice; QComboBox                    */
+#define RT_EDIT_PARAM_COLOR    8  /**< RGB triple as three fastf_t (0-255) in
+                                   *   e_para[index..index+2]; QColorDialog button  */
+#define RT_EDIT_PARAM_MATRIX   9  /**< 4x4 row-major in e_para[0..15]; matrix widget*/
+
+/** Sentinel for "no range constraint" on a parameter. */
+#define RT_EDIT_PARAM_NO_LIMIT  (-DBL_MAX)
+
+/**
+ * Describes a single input parameter for one edit command.
+ *
+ * For scalar/integer/boolean/enum parameters the value is stored in
+ * s->e_para[index].  For POINT/VECTOR, three consecutive slots starting
+ * at e_para[index] are used.  For MATRIX, e_para[0..15] are used.
+ * For STRING the value is in the primitive-specific edit struct; prim_field
+ * documents which field that is.
+ * For COLOR three fastf_t integer values (0-255) are stored in
+ * e_para[index], e_para[index+1], e_para[index+2].
+ */
+struct rt_edit_param_desc {
+    const char  *name;         /**< machine-readable id, e.g. "r1"                  */
+    const char  *label;        /**< human-readable widget label, e.g. "Major Radius" */
+    int          type;         /**< RT_EDIT_PARAM_* type code                        */
+    int          index;        /**< offset into s->e_para[] (unused for STRING)      */
+    fastf_t      range_min;    /**< RT_EDIT_PARAM_NO_LIMIT = no lower bound          */
+    fastf_t      range_max;    /**< RT_EDIT_PARAM_NO_LIMIT = no upper bound          */
+    const char  *units;        /**< "length", "angle_deg", "angle_rad",
+                                *   "fraction", "count", "none", or NULL             */
+    /* RT_EDIT_PARAM_ENUM only */
+    int          nenum;                   /**< number of choices                     */
+    const char * const *enum_labels;      /**< human-readable option strings         */
+    const int   *enum_ids;                /**< integer value stored in e_para[index] */
+    /* RT_EDIT_PARAM_STRING only */
+    const char  *prim_field;   /**< name of the primitive struct field, e.g.
+                                *   "es_shader" or "dsp_name"                        */
+};
+
+/**
+ * Describes a single edit command (one ECMD_* constant) together with
+ * the parameters it requires.
+ */
+struct rt_edit_cmd_desc {
+    int          cmd_id;        /**< ECMD_* constant                                 */
+    const char  *label;         /**< human-readable operation label                  */
+    const char  *category;      /**< grouping hint: "radius", "geometry",
+                                 *   "rotation", "material", "tree", "misc"          */
+    int          nparam;        /**< number of entries in params[]                   */
+    const struct rt_edit_param_desc *params; /**< NULL when nparam == 0              */
+    /** Non-zero: GUI should re-call rt_edit_process() on every widget change
+     *  (live wireframe update).  Zero: only apply on explicit Apply button. */
+    int          interactive;
+    /** Suggested display order within the category group.  Lower values
+     *  appear first.  Ties are broken by array order. */
+    int          display_order;
+};
+
+/**
+ * Top-level descriptor for a single primitive type.
+ * Returned by ft_edit_desc().
+ */
+struct rt_edit_prim_desc {
+    const char                    *prim_type;  /**< "tor", "ell", "tgc", ...         */
+    const char                    *prim_label; /**< "Torus", "Ellipsoid", ...         */
+    int                            ncmd;
+    const struct rt_edit_cmd_desc *cmds;       /**< array of ncmd entries             */
+};
+
+/**
+ * Serialise a primitive edit descriptor to a JSON string appended to @p out.
+ * The caller is responsible for bu_vls_init / bu_vls_free.
+ * Returns BRLCAD_OK on success, BRLCAD_ERROR on error.
+ */
+RT_EXPORT extern int
+rt_edit_prim_desc_to_json(struct bu_vls *out,
+                          const struct rt_edit_prim_desc *desc);
+
+/**
+ * Convenience wrapper: look up the EDOBJ entry for @p prim_type_id and
+ * call rt_edit_prim_desc_to_json() on its ft_edit_desc() result.
+ * Returns BRLCAD_OK on success, BRLCAD_ERROR if the primitive has no
+ * descriptor or the type id is out of range.
+ */
+RT_EXPORT extern int
+rt_edit_type_to_json(struct bu_vls *out, int prim_type_id);
 
 
 __END_DECLS

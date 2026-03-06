@@ -1464,6 +1464,31 @@ rt_revolve_tess(struct nmgregion **UNUSED(r), struct model *UNUSED(m), struct rt
     return -1;
 }
 
+const char *
+rt_revolve_keypoint(point_t *pt, const char *keystr, const mat_t mat,
+		    const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    struct rt_revolve_internal *rip = (struct rt_revolve_internal *)ip->idb_ptr;
+    RT_REVOLVE_CK_MAGIC(rip);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    /* The vertex in 3-D space is the natural keypoint */
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	point_t mpt;
+	VMOVE(mpt, rip->v3d);
+	MAT4X3PNT(*pt, mat, mpt);
+	return k;
+    }
+
+    return NULL;
+}
+
+
 int
 rt_revolve_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {

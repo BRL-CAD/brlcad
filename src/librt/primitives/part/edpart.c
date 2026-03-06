@@ -35,8 +35,8 @@
 #include "../edit_private.h"
 
 #define ECMD_PART_H		16088
-#define ECMD_PART_v		16089
-#define ECMD_PART_h		16090
+#define ECMD_PART_VRAD		16089
+#define ECMD_PART_HRAD		16090
 
 void
 rt_edit_part_set_edit_mode(struct rt_edit *s, int mode)
@@ -45,8 +45,8 @@ rt_edit_part_set_edit_mode(struct rt_edit *s, int mode)
 
     switch (mode) {
 	case ECMD_PART_H:
-	case ECMD_PART_v:
-	case ECMD_PART_h:
+	case ECMD_PART_VRAD:
+	case ECMD_PART_HRAD:
 	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
 	    break;
 	default:
@@ -70,8 +70,8 @@ part_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(d
 struct rt_edit_menu_item part_menu[] = {
     { "Particle MENU", NULL, 0 },
     { "Set H", part_ed, ECMD_PART_H },
-    { "Set v", part_ed, ECMD_PART_v },
-    { "Set h", part_ed, ECMD_PART_h },
+    { "Set v", part_ed, ECMD_PART_VRAD },
+    { "Set h", part_ed, ECMD_PART_HRAD },
     { "", NULL, 0 }
 };
 
@@ -79,6 +79,94 @@ struct rt_edit_menu_item *
 rt_edit_part_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return part_menu;
+}
+
+/* ft_edit_desc descriptor for the Particle primitive                */
+/* ------------------------------------------------------------------ */
+
+static const struct rt_edit_param_desc part_h_params[] = {
+    {
+	"h",                  /* name         */
+	"Height (magnitude)", /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc part_vrad_params[] = {
+    {
+	"vrad",               /* name         */
+	"V-End Radius",       /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc part_hrad_params[] = {
+    {
+	"hrad",               /* name         */
+	"H-End Radius",       /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_cmd_desc part_cmds[] = {
+    {
+	ECMD_PART_H,          /* cmd_id       */
+	"Set H",              /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	part_h_params,        /* params       */
+	1,                    /* interactive  */
+	10                    /* display_order */
+    },
+    {
+	ECMD_PART_VRAD,       /* cmd_id       */
+	"Set v radius",       /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	part_vrad_params,     /* params       */
+	1,                    /* interactive  */
+	20                    /* display_order */
+    },
+    {
+	ECMD_PART_HRAD,       /* cmd_id       */
+	"Set h radius",       /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	part_hrad_params,     /* params       */
+	1,                    /* interactive  */
+	30                    /* display_order */
+    }
+};
+
+static const struct rt_edit_prim_desc part_prim_desc = {
+    "part",               /* prim_type    */
+    "Particle",           /* prim_label   */
+    3,                    /* ncmd         */
+    part_cmds             /* cmds         */
+};
+
+const struct rt_edit_prim_desc *
+rt_edit_part_edit_desc(void)
+{
+    return &part_prim_desc;
 }
 
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
@@ -253,10 +341,10 @@ rt_edit_part_pscale(struct rt_edit *s)
 	case ECMD_PART_H:
 	    ecmd_part_h(s);
 	    break;
-	case ECMD_PART_v:
+	case ECMD_PART_VRAD:
 	    ecmd_part_v(s);
 	    break;
-	case ECMD_PART_h:
+	case ECMD_PART_HRAD:
 	    ecmd_part_h_end_r(s);
 	    break;
     };
@@ -268,22 +356,13 @@ int
 rt_edit_part_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
-	case RT_PARAMS_EDIT_SCALE:
-	    /* scale the solid uniformly about its vertex point */
-	    return edit_sscale(s);
-	case RT_PARAMS_EDIT_TRANS:
-	    /* translate solid */
-	    edit_stra(s);
-	    break;
-	case RT_PARAMS_EDIT_ROT:
-	    /* rot solid about vertex */
-	    edit_srot(s);
-	    break;
-	default:
+	case ECMD_PART_H:
+	case ECMD_PART_VRAD:
+	case ECMD_PART_HRAD:
 	    return rt_edit_part_pscale(s);
+	default:
+	    return edit_generic(s);
     }
-
-    return 0;
 }
 
 int
@@ -293,33 +372,20 @@ rt_edit_part_edit_xy(
         )
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
-    struct rt_db_internal *ip = &s->es_int;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     switch (s->edit_flag) {
         case RT_PARAMS_EDIT_SCALE:
 	case ECMD_PART_H:
-	case ECMD_PART_v:
-	case ECMD_PART_h:
+	case ECMD_PART_VRAD:
+	case ECMD_PART_HRAD:
 	    edit_sscale_xy(s, mousevec);
             return 0;
         case RT_PARAMS_EDIT_TRANS:
             edit_stra_xy(&pos_view, s, mousevec);
             edit_abs_tra(s, pos_view);
             return 0;
-        case RT_PARAMS_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
         default:
-            bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
+            return edit_generic_xy(s, mousevec);
     }
 }
 

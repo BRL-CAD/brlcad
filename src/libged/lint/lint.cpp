@@ -29,7 +29,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
-#include "json.hpp"
+#include "../libbu/json.hpp"
 
 extern "C" {
 #include "bu/opt.h"

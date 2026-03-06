@@ -27,7 +27,7 @@
 #include <set>
 #include <map>
 #include <string>
-#include "json.hpp"
+#include "../libbu/json.hpp"
 
 extern "C" {
 #include "bu/opt.h"

@@ -30,7 +30,7 @@
 #include <sstream>
 #include <thread>
 #include <unordered_set>
-#include "json.hpp"
+#include "../libbu/json.hpp"
 
 #include "vmath.h"
 #include "rt/application.h"

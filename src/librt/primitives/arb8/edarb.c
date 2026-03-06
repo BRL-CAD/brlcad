@@ -989,8 +989,19 @@ ecmd_arb_setup_rotface(struct rt_edit *s)
     RT_ARB_CK_MAGIC(arb);
 
     rt_edit_map_clbk_get(&f, &d, s->m, ECMD_ARB_SETUP_ROTFACE, BU_CLBK_DURING);
-    if (f)
+    if (f) {
 	a->fixv = (*f)(0, NULL, d, s);
+    } else if (s->e_inpara >= 1) {
+	/* Non-interactive path: caller supplies the 1-based vertex index
+	 * directly in e_para[0].  This allows programmatic / test use
+	 * without registering an interactive callback. */
+	a->fixv = (int)s->e_para[0];
+	s->e_inpara = 0;
+    } else {
+	bu_vls_printf(s->log_str,
+		"ERROR: ECMD_ARB_SETUP_ROTFACE: no callback and no e_para fixv\n");
+	return;
+    }
 
     a->fixv--;
     rt_edit_set_edflag(s, ECMD_ARB_ROTATE_FACE);
@@ -1271,6 +1282,8 @@ rt_edit_arb_edit(struct rt_edit *s)
 	case PTARB:     /* move an ARB point */
 	case EARB:      /* edit an ARB edge */
 	    return edit_arb_element(s);
+	default:
+	    return edit_generic(s);
     }
 
 arb_planecalc:
@@ -1291,9 +1304,6 @@ rt_edit_arb_edit_xy(
 	)
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
-    struct rt_db_internal *ip = &s->es_int;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     switch (s->edit_flag) {
 	case RT_PARAMS_EDIT_SCALE:
@@ -1313,18 +1323,8 @@ rt_edit_arb_edit_xy(
 	case ECMD_ARB_MOVE_FACE:
 	    edarb_move_face_mousevec(s, mousevec);
 	    break;
-        case RT_PARAMS_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return BRLCAD_ERROR;
+	    return edit_generic_xy(s, mousevec);
     }
 
     edit_abs_tra(s, pos_view);

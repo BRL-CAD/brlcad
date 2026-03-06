@@ -81,6 +81,94 @@ rt_edit_rpc_menu_item(const struct bn_tol *UNUSED(tol))
     return rpc_menu;
 }
 
+/* ft_edit_desc descriptor for the Right Parabolic Cylinder primitive */
+/* ------------------------------------------------------------------ */
+
+static const struct rt_edit_param_desc rpc_b_params[] = {
+    {
+	"b",                  /* name         */
+	"Half-Width B",       /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc rpc_h_params[] = {
+    {
+	"h",                  /* name         */
+	"Height (magnitude)", /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc rpc_r_params[] = {
+    {
+	"r",                  /* name         */
+	"Rectangular Half-Width", /* label    */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_cmd_desc rpc_cmds[] = {
+    {
+	ECMD_RPC_B,           /* cmd_id       */
+	"Set B",              /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	rpc_b_params,         /* params       */
+	1,                    /* interactive  */
+	10                    /* display_order */
+    },
+    {
+	ECMD_RPC_H,           /* cmd_id       */
+	"Set H",              /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	rpc_h_params,         /* params       */
+	1,                    /* interactive  */
+	20                    /* display_order */
+    },
+    {
+	ECMD_RPC_R,           /* cmd_id       */
+	"Set r",              /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	rpc_r_params,         /* params       */
+	1,                    /* interactive  */
+	30                    /* display_order */
+    }
+};
+
+static const struct rt_edit_prim_desc rpc_prim_desc = {
+    "rpc",                /* prim_type    */
+    "Right Parabolic Cylinder", /* prim_label */
+    3,                    /* ncmd         */
+    rpc_cmds              /* cmds         */
+};
+
+const struct rt_edit_prim_desc *
+rt_edit_rpc_edit_desc(void)
+{
+    return &rpc_prim_desc;
+}
+
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
 void
@@ -266,21 +354,13 @@ int
 rt_edit_rpc_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
-	case RT_PARAMS_EDIT_SCALE:
-	    /* scale the solid uniformly about its vertex point */
-	    return edit_sscale(s);
-	case RT_PARAMS_EDIT_TRANS:
-	    /* translate solid */
-	    edit_stra(s);
-	    break;
-	case RT_PARAMS_EDIT_ROT:
-	    /* rot solid about vertex */
-	    edit_srot(s);
-	    break;
-	default:
+	case ECMD_RPC_B:
+	case ECMD_RPC_H:
+	case ECMD_RPC_R:
 	    return rt_edit_rpc_pscale(s);
+	default:
+	    return edit_generic(s);
     }
-    return 0;
 }
 
 int
@@ -290,9 +370,6 @@ rt_edit_rpc_edit_xy(
         )
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
-    struct rt_db_internal *ip = &s->es_int;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     switch (s->edit_flag) {
         case RT_PARAMS_EDIT_SCALE:
@@ -305,18 +382,8 @@ rt_edit_rpc_edit_xy(
             edit_stra_xy(&pos_view, s, mousevec);
             edit_abs_tra(s, pos_view);
             return 0;
-        case RT_PARAMS_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
         default:
-            bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
+            return edit_generic_xy(s, mousevec);
     }
 }
 

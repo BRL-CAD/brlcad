@@ -32,7 +32,7 @@
 #include <string>
 #include <map>
 #include <time.h>
-#include "json.hpp"
+#include "../libbu/json.hpp"
 
 extern "C" {
 #include "bu/ptbl.h"

@@ -29,12 +29,15 @@
 #include "common.h"
 
 #include <map>
+#include <cstring>
 
 extern "C" {
 #include "vmath.h"
 #include "bu/malloc.h"
+#include "bu/str.h"
 #include "bu/vls.h"
 #include "rt/edit.h"
+#include "rt/func.h"
 #include "rt/functab.h"
 }
 
@@ -94,7 +97,8 @@ rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, 
     VSETALL(s->e_axes_pos , 0);
     VSETALL(s->e_keypoint, 0);
     VSETALL(s->e_mparam, 0);
-    VSETALL(s->e_para, 0);
+    memset(s->e_para, 0, sizeof(s->e_para));
+    memset(s->e_str,  0, sizeof(s->e_str));
 
     bv_knobs_reset(&s->k, 0);
     s->k.origin_m = '\0';
@@ -112,6 +116,7 @@ rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, 
     VSETALL(s->acc_sc, 1.0);
     s->base2local = 1.0;
     s->e_inpara = 0;
+    s->e_nstr = 0;
     s->e_keyfixed = 0;
     s->e_keytag = NULL;
     s->e_mvalid = 0;
@@ -120,6 +125,9 @@ rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, 
     s->ipe_ptr = NULL;
     s->local2base = 1.0;
     s->mv_context = 0;
+    s->snap.enabled = 0;
+    s->snap.spacing = 1.0;
+    BU_EXTERNAL_INIT(&s->es_ckpt);
     s->edit_mode = RT_EDIT_DEFAULT;
     s->tol = tol;
     s->u_ptr = NULL;
@@ -183,6 +191,8 @@ rt_edit_destroy(struct rt_edit *s)
     bu_ptbl_free(&s->comb_insts);
 
     rt_db_free_internal(&s->es_int);
+    bu_free_external(&s->es_ckpt);
+    BU_EXTERNAL_INIT(&s->es_ckpt);
 
     bu_vls_free(s->log_str);
     BU_PUT(s->log_str, struct bu_vls);
@@ -190,6 +200,17 @@ rt_edit_destroy(struct rt_edit *s)
     delete s->m->i;
     BU_PUT(s->m, struct rt_edit_map);
     BU_PUT(s, struct rt_edit);
+}
+
+void
+rt_edit_set_str(struct rt_edit *s, int index, const char *str)
+{
+    if (!s || index < 0 || index >= RT_EDIT_MAXSTR || !str)
+	return;
+
+    bu_strlcpy(s->e_str[index], str, RT_EDIT_MAXSTR_LEN);
+    if (index >= s->e_nstr)
+	s->e_nstr = index + 1;
 }
 
 int
@@ -390,6 +411,14 @@ rt_edit_set_edflag(struct rt_edit *s, int edflag)
 	case RT_PARAMS_EDIT_TRANS:
 	case RT_PARAMS_EDIT_SCALE:
 	case RT_PARAMS_EDIT_PICK:
+	case RT_MATRIX_EDIT_ROT:
+	case RT_MATRIX_EDIT_TRANS_VIEW_XY:
+	case RT_MATRIX_EDIT_TRANS_VIEW_X:
+	case RT_MATRIX_EDIT_TRANS_VIEW_Y:
+	case RT_MATRIX_EDIT_SCALE:
+	case RT_MATRIX_EDIT_SCALE_X:
+	case RT_MATRIX_EDIT_SCALE_Y:
+	case RT_MATRIX_EDIT_SCALE_Z:
 	    s->edit_mode = edflag;
 	    break;
 	default:
@@ -834,9 +863,14 @@ rt_knob_edit_sca(struct rt_edit *s, int matrix_edit)
        mat_t incr_mat;
        MAT_IDN(incr_mat);
 
-       // TODO - objedit_mouse SARROW case has different logic for handling mousevec
-       // inputs - looking like we may need a mousevec entry for the rt_edit
-       // struct so we can have both processing methods here....
+       /* Note: interactive mouse-based matrix scaling (objedit_mouse SARROW)
+        * computes scale differently - it uses the raw mousevec[Y] value
+        * directly to get an incremental scale (scale = 1 + |mousevec[Y]|).
+        * That path goes through edit_mscale_xy() which accepts a mousevec
+        * directly.  This function handles the knob-based path where scale is
+        * expressed via the k.sca_abs abstraction (0 = no scale, +/- 1 = max
+        * scale up/down).  The two paths produce consistent model_changes
+        * updates and are both correct for their respective input sources. */
 
        if (-SMALL_FASTF < s->k.sca_abs && s->k.sca_abs < SMALL_FASTF)
 	   scale = 1;
@@ -991,8 +1025,261 @@ rt_edit_process(struct rt_edit *s)
     s->e_mvalid = 0;
 }
 
+void
+rt_edit_snap_point(point2d_t pt, const struct rt_edit *s)
+{
+    if (!s || !s->snap.enabled || s->snap.spacing <= 0.0)
+	return;
+    fastf_t inv_sp = 1.0 / s->snap.spacing;
+    pt[0] = floor(pt[0] * inv_sp + 0.5) * s->snap.spacing;
+    pt[1] = floor(pt[1] * inv_sp + 0.5) * s->snap.spacing;
+}
 
-// Local Variables:
+
+int
+rt_edit_checkpoint(struct rt_edit *s)
+{
+    if (!s)
+	return BRLCAD_ERROR;
+
+    RT_CK_DB_INTERNAL(&s->es_int);
+
+    /* Release any previous snapshot */
+    bu_free_external(&s->es_ckpt);
+    BU_EXTERNAL_INIT(&s->es_ckpt);
+
+    if (rt_obj_export(&s->es_ckpt, &s->es_int, 1.0, NULL, &rt_uniresource) < 0) {
+	bu_vls_printf(s->log_str, "rt_edit_checkpoint: export failed\n");
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
+
+int
+rt_edit_revert(struct rt_edit *s)
+{
+    if (!s)
+	return BRLCAD_ERROR;
+
+    if (!s->es_ckpt.ext_buf) {
+	bu_vls_printf(s->log_str, "rt_edit_revert: no checkpoint saved\n");
+	return BRLCAD_ERROR;
+    }
+
+    int type = s->es_int.idb_type;
+
+    /* Release current contents */
+    rt_db_free_internal(&s->es_int);
+    RT_DB_INTERNAL_INIT(&s->es_int);
+
+    mat_t identity;
+    MAT_IDN(identity);
+    if (rt_obj_import(&s->es_int, &s->es_ckpt, identity, NULL, &rt_uniresource) < 0) {
+	bu_vls_printf(s->log_str, "rt_edit_revert: import failed\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* If the type changed for some reason (shouldn't happen), keep the original */
+    if (s->es_int.idb_type != type)
+	s->es_int.idb_type = type;
+
+    return BRLCAD_OK;
+}
+
+
+/* ======================================================================
+ * rt_edit_prim_desc_to_json / rt_edit_type_to_json
+ *
+ * Serialise the ft_edit_desc() descriptor to JSON using bu_vls so that
+ * GUI layers (qged etc.) can consume edit metadata at runtime.
+ * ======================================================================
+ */
+
+/* Type-code string table */
+static const char *
+edit_param_type_str(int type)
+{
+    switch (type) {
+	case RT_EDIT_PARAM_SCALAR:  return "scalar";
+	case RT_EDIT_PARAM_INTEGER: return "integer";
+	case RT_EDIT_PARAM_BOOLEAN: return "boolean";
+	case RT_EDIT_PARAM_POINT:   return "point";
+	case RT_EDIT_PARAM_VECTOR:  return "vector";
+	case RT_EDIT_PARAM_STRING:  return "string";
+	case RT_EDIT_PARAM_ENUM:    return "enum";
+	case RT_EDIT_PARAM_COLOR:   return "color";
+	case RT_EDIT_PARAM_MATRIX:  return "matrix";
+	default:                    return "unknown";
+    }
+}
+
+/* Emit a fastf_t value as JSON number or "null" for NO_LIMIT */
+static void
+emit_limit(struct bu_vls *out, fastf_t val)
+{
+    /* Use bit-level comparison to avoid -Wfloat-equal.  RT_EDIT_PARAM_NO_LIMIT
+     * is defined as (-DBL_MAX), a well-defined sentinel bit-pattern.
+     * fastf_t is always double in BRL-CAD (vmath.h), so sizeof(fastf_t) and
+     * sizeof(double) are identical; we assert that here for safety. */
+    /* fastf_t is always double in BRL-CAD (vmath.h); assert for safety. */
+    static_assert(sizeof(fastf_t) == sizeof(double),
+                  "fastf_t must be double for RT_EDIT_PARAM_NO_LIMIT sentinel comparison");
+    static const double sentinel = RT_EDIT_PARAM_NO_LIMIT;
+    double v = (double)val;
+    if (memcmp(&v, &sentinel, sizeof(double)) == 0)
+	bu_vls_strcat(out, "null");
+    else
+	bu_vls_printf(out, "%.17g", v);
+}
+
+/* Escape a C string for safe JSON embedding (handles " and \) */
+static void
+emit_json_str(struct bu_vls *out, const char *s)
+{
+    bu_vls_putc(out, '"');
+    if (s) {
+	for (; *s; s++) {
+	    if (*s == '"' || *s == '\\')
+		bu_vls_putc(out, '\\');
+	    bu_vls_putc(out, *s);
+	}
+    }
+    bu_vls_putc(out, '"');
+}
+
+int
+rt_edit_prim_desc_to_json(struct bu_vls *out,
+                          const struct rt_edit_prim_desc *desc)
+{
+    if (!out || !desc)
+	return BRLCAD_ERROR;
+
+    bu_vls_strcat(out, "{\n");
+    bu_vls_strcat(out, "  \"prim_type\": ");
+    emit_json_str(out, desc->prim_type);
+    bu_vls_strcat(out, ",\n");
+
+    bu_vls_strcat(out, "  \"prim_label\": ");
+    emit_json_str(out, desc->prim_label);
+    bu_vls_strcat(out, ",\n");
+
+    bu_vls_strcat(out, "  \"commands\": [\n");
+
+    for (int ci = 0; ci < desc->ncmd; ci++) {
+	const struct rt_edit_cmd_desc *cmd = &desc->cmds[ci];
+	bu_vls_strcat(out, "    {\n");
+	bu_vls_printf(out, "      \"cmd_id\": %d,\n", cmd->cmd_id);
+	bu_vls_strcat(out, "      \"label\": ");
+	emit_json_str(out, cmd->label);
+	bu_vls_strcat(out, ",\n");
+	bu_vls_strcat(out, "      \"category\": ");
+	emit_json_str(out, cmd->category);
+	bu_vls_strcat(out, ",\n");
+	bu_vls_printf(out, "      \"interactive\": %s,\n",
+		      cmd->interactive ? "true" : "false");
+	bu_vls_printf(out, "      \"display_order\": %d,\n",
+		      cmd->display_order);
+	bu_vls_strcat(out, "      \"params\": [\n");
+
+	for (int pi = 0; pi < cmd->nparam; pi++) {
+	    const struct rt_edit_param_desc *p = &cmd->params[pi];
+	    bu_vls_strcat(out, "        {\n");
+	    bu_vls_strcat(out, "          \"name\": ");
+	    emit_json_str(out, p->name);
+	    bu_vls_strcat(out, ",\n");
+	    bu_vls_strcat(out, "          \"label\": ");
+	    emit_json_str(out, p->label);
+	    bu_vls_strcat(out, ",\n");
+	    bu_vls_printf(out, "          \"type\": \"%s\"",
+			 edit_param_type_str(p->type));
+
+	    /* index — omitted for STRING */
+	    if (p->type != RT_EDIT_PARAM_STRING)
+		bu_vls_printf(out, ",\n          \"index\": %d", p->index);
+
+	    /* range — only for numeric types */
+	    if (p->type == RT_EDIT_PARAM_SCALAR ||
+		p->type == RT_EDIT_PARAM_INTEGER ||
+		p->type == RT_EDIT_PARAM_ENUM   ||
+		p->type == RT_EDIT_PARAM_COLOR) {
+		bu_vls_strcat(out, ",\n          \"min\": ");
+		emit_limit(out, p->range_min);
+		bu_vls_strcat(out, ",\n          \"max\": ");
+		emit_limit(out, p->range_max);
+	    }
+
+	    /* units */
+	    bu_vls_strcat(out, ",\n          \"units\": ");
+	    if (p->units)
+		emit_json_str(out, p->units);
+	    else
+		bu_vls_strcat(out, "null");
+
+	    /* enum extras */
+	    if (p->type == RT_EDIT_PARAM_ENUM && p->nenum > 0) {
+		bu_vls_strcat(out, ",\n          \"enum_labels\": [");
+		for (int ei = 0; ei < p->nenum; ei++) {
+		    if (ei) bu_vls_putc(out, ',');
+		    emit_json_str(out, p->enum_labels[ei]);
+		}
+		bu_vls_strcat(out, "],\n          \"enum_ids\": [");
+		for (int ei = 0; ei < p->nenum; ei++) {
+		    if (ei) bu_vls_putc(out, ',');
+		    bu_vls_printf(out, "%d", p->enum_ids[ei]);
+		}
+		bu_vls_putc(out, ']');
+	    }
+
+	    /* prim_field for STRING */
+	    if (p->type == RT_EDIT_PARAM_STRING) {
+		bu_vls_strcat(out, ",\n          \"prim_field\": ");
+		emit_json_str(out, p->prim_field);
+	    }
+
+	    bu_vls_strcat(out, "\n        }");
+	    if (pi < cmd->nparam - 1)
+		bu_vls_putc(out, ',');
+	    bu_vls_putc(out, '\n');
+	}
+
+	bu_vls_strcat(out, "      ]\n");
+	bu_vls_strcat(out, "    }");
+	if (ci < desc->ncmd - 1)
+	    bu_vls_putc(out, ',');
+	bu_vls_putc(out, '\n');
+    }
+
+    bu_vls_strcat(out, "  ]\n");
+    bu_vls_strcat(out, "}\n");
+
+    return BRLCAD_OK;
+}
+
+
+int
+rt_edit_type_to_json(struct bu_vls *out, int prim_type_id)
+{
+    if (!out)
+	return BRLCAD_ERROR;
+
+    /* Range-check against the EDOBJ table size */
+    extern const struct rt_edit_functab EDOBJ[];
+    /* Walk until we find a matching type label or a sentinel entry */
+    for (int i = 0; EDOBJ[i].magic == RT_FUNCTAB_MAGIC; i++) {
+	if (i == prim_type_id) {
+	    if (!EDOBJ[i].ft_edit_desc)
+		return BRLCAD_ERROR;
+	    return rt_edit_prim_desc_to_json(out, (*EDOBJ[i].ft_edit_desc)());
+	}
+    }
+
+    return BRLCAD_ERROR;
+}
+
+
+
 // tab-width: 8
 // mode: C++
 // c-basic-offset: 4

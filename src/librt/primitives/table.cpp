@@ -1388,7 +1388,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(rt_joint_process_selection),
 	NULL, /* serialize */
 	NULL, /* label */
-	NULL, /* keypoint */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_joint_keypoint), /* keypoint */
 	RTFUNCTAB_FUNC_MAT_CAST(rt_joint_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
@@ -2259,7 +2259,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* process_selection */
 	NULL, /* serialize */
 	NULL, /* label */
-	NULL, /* keypoint */
+	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_revolve_keypoint), /* keypoint */
 	RTFUNCTAB_FUNC_MAT_CAST(rt_revolve_mat),
 	NULL, /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)

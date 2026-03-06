@@ -84,6 +84,117 @@ rt_edit_superell_menu_item(const struct bn_tol *UNUSED(tol))
     return superell_menu;
 }
 
+/* ft_edit_desc descriptor for the Super-Ellipsoid primitive         */
+/* ------------------------------------------------------------------ */
+
+static const struct rt_edit_param_desc superell_a_params[] = {
+    {
+	"a",                  /* name         */
+	"Semi-Axis A",        /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc superell_b_params[] = {
+    {
+	"b",                  /* name         */
+	"Semi-Axis B",        /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc superell_c_params[] = {
+    {
+	"c",                  /* name         */
+	"Semi-Axis C",        /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc superell_abc_params[] = {
+    {
+	"abc",                /* name         */
+	"Uniform Radius",     /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	1e-10,                /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_cmd_desc superell_cmds[] = {
+    {
+	ECMD_SUPERELL_SCALE_A, /* cmd_id      */
+	"Set A",              /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	superell_a_params,    /* params       */
+	1,                    /* interactive  */
+	10                    /* display_order */
+    },
+    {
+	ECMD_SUPERELL_SCALE_B, /* cmd_id      */
+	"Set B",              /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	superell_b_params,    /* params       */
+	1,                    /* interactive  */
+	20                    /* display_order */
+    },
+    {
+	ECMD_SUPERELL_SCALE_C, /* cmd_id      */
+	"Set C",              /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	superell_c_params,    /* params       */
+	1,                    /* interactive  */
+	30                    /* display_order */
+    },
+    {
+	ECMD_SUPERELL_SCALE_ABC, /* cmd_id    */
+	"Set A,B,C",          /* label        */
+	"geometry",           /* category     */
+	1,                    /* nparam       */
+	superell_abc_params,  /* params       */
+	1,                    /* interactive  */
+	40                    /* display_order */
+    }
+};
+
+static const struct rt_edit_prim_desc superell_prim_desc = {
+    "superell",           /* prim_type    */
+    "Super-Ellipsoid",    /* prim_label   */
+    4,                    /* ncmd         */
+    superell_cmds         /* cmds         */
+};
+
+const struct rt_edit_prim_desc *
+rt_edit_superell_edit_desc(void)
+{
+    return &superell_prim_desc;
+}
+
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
 void
@@ -296,21 +407,14 @@ int
 rt_edit_superell_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
-	case RT_PARAMS_EDIT_SCALE:
-	    /* scale the solid uniformly about its vertex point */
-	    return edit_sscale(s);
-	case RT_PARAMS_EDIT_TRANS:
-	    /* translate solid */
-	    edit_stra(s);
-	    break;
-	case RT_PARAMS_EDIT_ROT:
-	    /* rot solid about vertex */
-	    edit_srot(s);
-	    break;
-	default:
+	case ECMD_SUPERELL_SCALE_A:
+	case ECMD_SUPERELL_SCALE_B:
+	case ECMD_SUPERELL_SCALE_C:
+	case ECMD_SUPERELL_SCALE_ABC:
 	    return rt_edit_superell_pscale(s);
+	default:
+	    return edit_generic(s);
     }
-    return 0;
 }
 
 int
@@ -320,9 +424,6 @@ rt_edit_superell_edit_xy(
         )
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
-    struct rt_db_internal *ip = &s->es_int;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     switch (s->edit_flag) {
         case RT_PARAMS_EDIT_SCALE:
@@ -336,18 +437,8 @@ rt_edit_superell_edit_xy(
             edit_stra_xy(&pos_view, s, mousevec);
             edit_abs_tra(s, pos_view);
             return 0;
-	case RT_PARAMS_EDIT_ROT:
-	    bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return BRLCAD_ERROR;
-	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
+        default:
+            return edit_generic_xy(s, mousevec);
     }
 }
 

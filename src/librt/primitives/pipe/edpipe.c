@@ -204,11 +204,155 @@ rt_edit_pipe_menu_item(const struct bn_tol *UNUSED(tol))
     return pipe_menu;
 }
 
+/* ------------------------------------------------------------------ */
+/* ft_edit_desc descriptor for the Pipe primitive                     */
+/* ------------------------------------------------------------------ */
+
+static const struct rt_edit_param_desc pipe_pt_od_params[] = {
+    {
+	"od",                 /* name         */
+	"Outer Diameter",     /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	0.0,                  /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc pipe_pt_id_params[] = {
+    {
+	"id",                 /* name         */
+	"Inner Diameter",     /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	0.0,                  /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc pipe_pt_radius_params[] = {
+    {
+	"bend_radius",        /* name         */
+	"Bend Radius",        /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	0.0,                  /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_cmd_desc pipe_cmds[] = {
+    {
+	ECMD_PIPE_PT_OD,      /* cmd_id       */
+	"Set Point OD",       /* label        */
+	"point",              /* category     */
+	1,                    /* nparam       */
+	pipe_pt_od_params,    /* params       */
+	1,                    /* interactive  */
+	10                    /* display_order */
+    },
+    {
+	ECMD_PIPE_PT_ID,      /* cmd_id       */
+	"Set Point ID",       /* label        */
+	"point",              /* category     */
+	1,                    /* nparam       */
+	pipe_pt_id_params,    /* params       */
+	1,                    /* interactive  */
+	20                    /* display_order */
+    },
+    {
+	ECMD_PIPE_PT_RADIUS,  /* cmd_id       */
+	"Set Point Bend",     /* label        */
+	"point",              /* category     */
+	1,                    /* nparam       */
+	pipe_pt_radius_params, /* params      */
+	1,                    /* interactive  */
+	30                    /* display_order */
+    },
+    {
+	ECMD_PIPE_SCALE_OD,   /* cmd_id       */
+	"Set Pipe OD",        /* label        */
+	"pipe",               /* category     */
+	1,                    /* nparam       */
+	pipe_pt_od_params,    /* params       */
+	1,                    /* interactive  */
+	10                    /* display_order */
+    },
+    {
+	ECMD_PIPE_SCALE_ID,   /* cmd_id       */
+	"Set Pipe ID",        /* label        */
+	"pipe",               /* category     */
+	1,                    /* nparam       */
+	pipe_pt_id_params,    /* params       */
+	1,                    /* interactive  */
+	20                    /* display_order */
+    },
+    {
+	ECMD_PIPE_SCALE_RADIUS, /* cmd_id     */
+	"Set Pipe Bend",      /* label        */
+	"pipe",               /* category     */
+	1,                    /* nparam       */
+	pipe_pt_radius_params, /* params      */
+	1,                    /* interactive  */
+	30                    /* display_order */
+    }
+};
+
+static const struct rt_edit_prim_desc pipe_prim_desc = {
+    "pipe",               /* prim_type    */
+    "Pipe",               /* prim_label   */
+    6,                    /* ncmd         */
+    pipe_cmds             /* cmds         */
+};
+
+const struct rt_edit_prim_desc *
+rt_edit_pipe_edit_desc(void)
+{
+    return &pipe_prim_desc;
+}
+
 
 void
-pipe_split_pnt(struct bu_list *UNUSED(pipe_hd), struct wdb_pipe_pnt *UNUSED(ps), point_t UNUSED(new_pt))
+pipe_split_pnt(struct bu_list *pipe_hd, struct wdb_pipe_pnt *ps, point_t new_pt)
 {
-    bu_log("WARNING: pipe splitting unimplemented\n");
+    struct wdb_pipe_pnt *next;
+    struct wdb_pipe_pnt *new_ps;
+
+    BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "pipe point");
+
+    next = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
+    if (next->l.magic == BU_LIST_HEAD_MAGIC) {
+	bu_log("pipe_split_pnt: cannot split after the last point\n");
+	return;
+    }
+
+    /* Allocate and initialise a new point between ps and next. */
+    BU_ALLOC(new_ps, struct wdb_pipe_pnt);
+    new_ps->l.magic = WDB_PIPESEG_MAGIC;
+    VMOVE(new_ps->pp_coord, new_pt);
+    /* Interpolate cross-section parameters from the two neighbours */
+    new_ps->pp_od          = (ps->pp_od          + next->pp_od)          * 0.5;
+    new_ps->pp_id          = (ps->pp_id          + next->pp_id)          * 0.5;
+    new_ps->pp_bendradius  = (ps->pp_bendradius  + next->pp_bendradius)  * 0.5;
+
+    /* Insert the new point after ps (i.e. between ps and next) */
+    BU_LIST_APPEND(&ps->l, &new_ps->l);
+
+    /* Validate the modified pipe; remove the new point if it makes an
+     * invalid configuration. */
+    if (rt_pipe_ck(pipe_hd)) {
+	BU_LIST_DEQUEUE(&new_ps->l);
+	bu_free(new_ps, "pipe_split_pnt: new_ps");
+    }
 }
 
 
@@ -1196,8 +1340,15 @@ rt_edit_pipe_edit(struct rt_edit *s)
 	case ECMD_PIPE_PT_DEL:
 	    ecmd_pipe_pt_del(s);
 	    break;
-    	default:
+	case ECMD_PIPE_PT_OD:
+	case ECMD_PIPE_PT_ID:
+	case ECMD_PIPE_PT_RADIUS:
+	case ECMD_PIPE_SCALE_OD:
+	case ECMD_PIPE_SCALE_ID:
+	case ECMD_PIPE_SCALE_RADIUS:
 	    return rt_edit_pipe_pscale(s);
+	default:
+	    return edit_generic(s);
     }
 
     return 0;
@@ -1211,9 +1362,6 @@ rt_edit_pipe_edit_xy(
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
-    struct rt_db_internal *ip = &s->es_int;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     switch (s->edit_flag) {
 	case RT_PARAMS_EDIT_SCALE:
@@ -1243,18 +1391,8 @@ rt_edit_pipe_edit_xy(
 	    MAT4X3PNT(s->e_mparam, s->e_invmat, temp);
 	    s->e_mvalid = 1;
 	    break;
-        case RT_PARAMS_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return BRLCAD_ERROR;
+	    return edit_generic_xy(s, mousevec);
     }
 
     edit_abs_tra(s, pos_view);
