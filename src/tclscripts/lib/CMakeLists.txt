@@ -28,7 +28,6 @@ set(
   cursor.tcl
   apply_mat.tcl
   gui_conversion.tcl
-  pattern.tcl
   pattern_gui.tcl
 )
 if(BRLCAD_ENABLE_TCL)

@@ -29,6 +29,7 @@
 #include "mged.h"
 
 extern int mged_db_search_callback(int, const char **, void *, void*);
+extern int mged_clone_during_callback(int, const char **, void *, void*);
 
 
 /* Commands */

@@ -22,49 +22,22 @@
 # xclone
 #
 # Description -
-#       This clones an object and xpushes the clone.
+#       This clones an object and xpushes the clone so that any matrices
+#       hanging above combination members are absorbed into the primitives,
+#       giving a flat hierarchy suitable for further cloning or editing.
 #
-# Note -
-#       At the moment, clone does not work properly for some of its operations
-#       when there are matrices hanging above a combination's members. To get
-#       around this the object is cloned without transforms and xpushed. The
-#       result of this is clone again, if necessary, applying any specified
-#       transformations.
+# Usage -
+#       xclone [clone options] object
+#
+# The --xpush flag is forwarded to libged clone which performs the
+# clone-then-xpush sequence atomically and correctly.
 #
 
 proc xclone {args} {
-    # Begin hack section
-    set remaining [lrange $args 0 end-1]
-    set last [lindex $args end]
-
-    if {[catch {clone $last} iclone]} {
-	return $iclone
+    if {[catch {eval clone --xpush $args} result]} {
+	return $result
     }
-
-    if {[catch {xpush $iclone} msg]} {
-	killtree $iclone
-	return $msg
-    }
-
-    if {[llength $remaining] < 1} {
-	return $iclone
-    }
-
-    set args [lreplace $args end end $iclone]
-    catch {eval clone $args} clone
-    killtree $iclone
-    # End hack section
-
-
-    # Use the following commented-out lines when clone gets fixed
-    #if {[catch {eval clone $args} clone]} {
-    #	return $clone
-    #}
-    #
-    #catch {xpush $clone} msg
-    #puts $msg
-
-    return $clone
+    return $result
 }
 
 # Local Variables:

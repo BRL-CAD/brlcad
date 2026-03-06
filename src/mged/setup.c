@@ -533,6 +533,7 @@ mged_setup(struct mged_state *s)
 
     // Register during-execution callback function for search command
     ged_clbk_set(s->gedp, "search", BU_CLBK_DURING, &mged_db_search_callback, (void *)s);
+    ged_clbk_set(s->gedp, "clone",  BU_CLBK_DURING, &mged_clone_during_callback, (void *)s);
 
     struct tclcad_io_data *t_iod = tclcad_create_io_data();
     t_iod->io_mode = TCL_READABLE;
