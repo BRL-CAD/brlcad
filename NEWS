@@ -44,6 +44,8 @@ changes made.  See document footer for additional details.
 * fixed bot subcmd help printing - Cliff Yapp
 * corrected BoT shotline behavior when starting ray pt in mesh
         - Sean Morrison Chris McGregor Cliff Yapp
+* fixed gist never returning on some models - Chris McGregor
+* improved gist weight gathering speed and accuracy - Chris McGregor
 
 
 ----------------------------------------------------------------------
