@@ -83,6 +83,7 @@
 #include "common.h"
 
 #include <cstddef>
+#include <algorithm>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
