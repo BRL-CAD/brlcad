@@ -1,0 +1,45 @@
+= bwish(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bwish - Tcl/Tk-based interactive shell for BRL-CAD
+
+== SYNOPSIS
+
+[source]
+----
+bwish [script]...
+----
+
+
+== DESCRIPTION
+
+*bwish* is a Tcl/Tk-based interactive shell for BRL-CAD. It supports graphical user interface capabilities provided by Tk and includes command-line editing and history functionality. It is particularly suited for interactive scripting and development tasks in BRL-CAD.
+
+The shell initializes and integrates Tcl/Tk libraries along with BRL-CAD-specific commands and extensions, enabling users to execute scripts or interact with the system.
+
+
+== OPTIONS
+
+
+_script_::
+Executes the provided Tcl script file and exits.
+
+
+
+
+== SEE ALSO
+
+*btclsh*(1), *mged*(1)
+
+
+== AUTHOR
+
+BRL-CAD Team
+
+
+== COPYRIGHT
+
+This software is Copyright (c) 1998-2025 United States Government as represented by the U.S. Army Research Laboratory.

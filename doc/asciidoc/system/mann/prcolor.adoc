@@ -1,0 +1,32 @@
+= PRCOLOR(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+prcolor - Lists the entries in the ident-based color table.
+
+== SYNOPSIS
+
+[source]
+----
+prcolor
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Lists the entries in the ident-based color table. The ident number for a displayed region is used to find the appropriate color from the lookup table. The _low_ and _high_ values are the limits of region ident numbers to have the indicated _r g b_ color (0-255) applied. The color table entries may be modified using the *color* command, and the entire color table may be edited using the *edcolor* command. If a color lookup table exists, its entries will override any color assigned using the *mater* command.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

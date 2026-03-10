@@ -1,0 +1,82 @@
+= BWFILTER(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+bwfilter - apply a 3x3 filter to a black and white bw file
+
+== SYNOPSIS
+
+[source]
+----
+bwfilter [-f type] [-v] [-d div] [-O offset] [-s squaresize] [-w width] [-n height] [-o out_file] [file.bw] > newfile.bw
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bwfilter* applies one of several 3x3 kernel filters to a black and white *bw*(5) format file. It will take a file name or else read from standard input. The input file size will be assumed to be 512x512 pixels unless the *-s*, *-w*, or *-n* flags are used to tell it otherwise (see *brlcad*(1)). By default a low pass filter is used. The *-f* _type_ flag can be used to specify a different type of filter.
+
+The _type_ choices include:
+
+
+*lo*::
+low pass, the default.
+
+
+*hi*::
+high pass
+
+
+*vg*::
+vertical gradient
+
+
+*hg*::
+horizontal gradient
+
+
+*la*::
+laplacian
+
+
+*b*::
+boxcar low pass
+
+
+
+Most filters divide the result of the kernel multiplication by some value about in order to scale it back to a 0->255 range. For example, the boxcar divides by nine. The *-d* flag can be used to change this divisor. Some filters also add an offset to their results. The output of a laplacian for example is "centered" about zero, thus it adds 128 to the answer to yield a difference from neutral grey. The *-O* flag can be used to change this offset.
+
+The *-v* flag displays the max and minimum values and the kernel information on standard error.
+
+
+[[bugs]]
+== BUGS
+
+This should allow any 3x3 kernel to be specified.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *bwscale*(1), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

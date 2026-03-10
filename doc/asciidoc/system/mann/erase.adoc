@@ -1,0 +1,49 @@
+= ERASE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+erase - Deletes the specified list of objects from the MGED display.
+
+== SYNOPSIS
+
+[source]
+----
+erase {erase} []
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Deletes the specified list of objects from the MGED display.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *erase* command to delete two objects from the MGED display.
+
+.Delete specified objects from the MGED display
+[example]
+====
+
+mged> **erase region1 shapea**::
+Deletes _region1_ and _shapea_ from the MGED display.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

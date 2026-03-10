@@ -1,0 +1,60 @@
+= TOL(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+tol - Used with no arguments, *tol* lists the current tolerance settings.
+
+== SYNOPSIS
+
+[source]
+----
+tol [abs#] [rel#] [norm#] [dist#] [perp#]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *tol* command, with no arguments, lists the current tolerance settings. If the command line includes any of the keywords followed by a number, then that tolerance setting will be modified. The keywords are as follows:
+
+*Tessellation tolerances:* The tessellation tolerances are used to control the facetization of primitive shapes. If more than one tolerance value is specified, the tessellation is performed to meet the most stringent.
+
+
+* abs -- This _absolute_ tolerance is specified in mm and represents the maximum allowable error in the distance from the actual shape surface to the tessellated surface. An _absolute_ tolerance of 0 means that the _absolute_ tolerance should be ignored.
+* rel -- This _relative_ tolerance is specified in terms of a fraction of the shape size. The value is multiplied by the size of the shape to determine another bound on the maximum allowable error in the distance from the actual shape surface to the tessellated surface. A _relative_ tolerance of 0 means that the _relative_ tolerance should be ignored.
+* norm -- This _normal_ tolerance is specified in degrees and represents the maximum angle between the actual shape surface normal and the tessellated surface normal. A _normal_ tolerance of 0 means that the _normal_ tolerance should be ignored.
+
+*Calculational tolerances:* The calculational tolerances are used in evaluating the Boolean operations specified in a combination. This is used, for example, in the *ev, facetize,* and *bev* commands.
+
+
+* dist -- The _distance_ tolerance is specified in mm and represents the minimum distance required between two vertices to consider them distinct.
+* perp -- The _perpendicularity_ tolerance is specified as the cosine of an angle. Two objects will be considered perpendicular if the cosine of the angle between them is less than the _perpendicularity_ tolerance. Similarly, two objects will be considered parallel if the cosine of the angle between them is greater than 1.0, the _perpendicularity_ tolerance.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *tol* command to set the relative and perpendicularity tolerances.
+
+.Set the relative and perpendicularity tolerances.
+[example]
+====
+mged>**tol rel .05 perp 1e-6**
+
+Sets the _relative_ tolerance to 5% and the _perpendicularity_ tolerance to 1e-06 (cosine of 89.9999°).
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

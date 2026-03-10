@@ -1,0 +1,47 @@
+= PATHS(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+paths - Lists all existing paths that start from the specified __path_start__ and end at a primitive shape.
+
+== SYNOPSIS
+
+[source]
+----
+paths {path_start}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Lists all existing paths that start from the specified __path_start__ and end at a primitive shape. The __path_start__ may be specified by / separated components, or they may be separated by spaces (but not both).
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *paths* command to list all existing paths that start from the specified path start and end at a primitive shape.
+
+.List all paths that start from a specified path start and end at a primitive shape.
+[example]
+====
+mged>**paths group1 region2**
+
+Lists all existing paths that start from _group1/region2_ and end at a primitive shape.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,60 @@
+= MAC-PIX(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+mac-pix - convert Apple MacPaint bitmap into pix(5) or bw(5) raster image
+
+== SYNOPSIS
+
+[source]
+----
+mac-pix [-clb] [-s squareMacSize] [-w Mac_width] [-n Mac_height] [-x Mac_xoff] [-y Mac_yoff] [-X output_xoff] [-Y output_yoff] [-S squareOutputSize] [-W output_width] [-N output_height] [-C r/g/b] [file.mac]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*mac-pix* reads an Apple MacIntosh MacPaint bitmap file and generates a *pix*(5) or *bw*(5) raster image file. While the MacPaint file is 720x576 pixels, it is possible to specify an alternate size input file with the *-s* , *-w* , and *-n* flags; the usefulness of this is unknown. By default, the output *pix*(5) file is 1024x1024 pixels, with the input image located in the lower left corner of the output (nearest the origin). The default color for an "on" pixel is white (R=G=B=255); alternatively, the *-C r/g/b* flag can be used to specify intensities for each of the colors, in the range of [0..255]. The *-b* flag will output a *bw*(5) black and white file instead. If the *-c* flag is specified, the input image is centered in the middle of the output image.
+
+If the output width is set to 0 by the user, the input width is used for the output width; similarly, if the output height is set to 0 by the user, the input height is used for the output height. Those values of 0 can be set simultaneously by use of the *-l* flag, so that both width and height of the input are used. Alternatively, the *-S* flag can be used to specify the square output size, or *-W* and *-N* flags can be used to specify the output width and height.
+
+If no input file is specified, standard input is read instead.
+
+The *-x* and *-y* flags can be used to specify the input x and y offset. The *-X* and *-Y* flags can be used to specify the output x and y offset.
+
+
+[[examples]]
+== EXAMPLE
+
+Especially pleasing displays of MacPaint documents can be made by using *pixmerge*(1) to combine them with the output of *pixbackgnd*(1):
+
+pixbackgnd -H 160 200 > bg.pix
+
+mac-pix -c file.mac | pixmerge - bg.pix | pix-fb
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pixmerge*(1), *pix*(5), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

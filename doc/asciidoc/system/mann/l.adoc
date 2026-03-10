@@ -1,0 +1,85 @@
+= L(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+l - Displays a verbose description about the specified list of objects.
+
+== SYNOPSIS
+
+[source]
+----
+l [-t] [-v] [-r] {objects}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Displays a verbose description about the specified list of objects. If a specified _object_ is a path, then any transformation matrices along that _path_ are applied. If the final _path_ component is a combination, the command will list the Boolean formula for the _combination_ and will indicate any accumulated transformations (including any in that _combination_). If a shader and/or color has been assigned to the _combination_, the details will be listed. For a region, its ident, air code, material code, and LOS will also be listed. For primitive shapes, detailed _shape_ parameters will be displayed with the accumulated transformation applied.
+
+
+[[options]]
+== OPTIONS
+
+
+*-t*::
+The _-t_ (terse) option forces a shorter list of primitive shape parameters. This option is default for primitives with potentially long parameter lists, such as BoTs.
+
+
+*-v*::
+The _-v_ (verbose) option gives all data for explicit shapes (BoT, BREP, datum, NMG, pnts, sketch) which are terse by default.
+
+
+*-r*::
+If the _-r_ (recursive) option is used, then each _object_ on the command line will be treated as a _path_. If the _path_ does not end at a primitive _shape_, then all possible _paths_ from that point down to individual _shapes_ will be considered. The _shape_ at the end of each possible _path_ will be listed with its parameters adjusted by the accumulated transformation.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+The three examples show the use of the *l* command to display details about a region, shape parameters, and all possible paths starting with a particular designation.
+
+.Display details about a particular region.
+[example]
+====
+
+mged> **l region1**::
+Displays details about region1.
+
+
+
+====
+
+.Display shape parameters for a particular shape.
+[example]
+====
+mged>**l group1/group2/region1/shape3**
+
+Displays shape parameters for _shape3_ with matrices applied from the _path_.
+
+====
+
+.Display all paths that start with a particular designation and end in a primitive shape.
+[example]
+====
+mged>**l -r a/b**
+
+Displays all paths that start with a particular designation and end in a primitive shape. Also, the shape parameters with the accumulated transformation applied will be displayed.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

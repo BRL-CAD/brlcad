@@ -1,0 +1,86 @@
+= ADJUST(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+adjust - Adjusts parameters of a solid.
+
+== SYNOPSIS
+
+[source]
+----
+adjust {solid_name} {param_name} {value} [param_name] [value]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Adjusts the given parameter(s) of a solid to the new value(s).
+
+
+[[examples]]
+== EXAMPLES
+
+.Adjust the A Value of a Sphere
+[example]
+====
+Use the *adjust* command to make the A value of a sphere to 100, 0, 0
+
+
+
+
+....
+
+mged> adust solid.s A "100 0 0"
+
+    
+....
+
+
+
+====
+
+.Adjust the A, B, & C Values of a Sphere
+[example]
+====
+Use the *adjust* command to make the A, B, and C values of a sphere.
+
+
+
+
+....
+
+mged> adust solid.s A "100 0 0" B "0 100 0" C "0 0 100"
+
+    
+....
+
+
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*get*(n).
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2008-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

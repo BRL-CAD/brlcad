@@ -1,0 +1,46 @@
+= AREA(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+area - Calculates an approximate presented area of one region in the _mged_ display.
+
+== SYNOPSIS
+
+[source]
+----
+area [tolerance]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Calculates an approximate presented area of one region in the mged display. For this command to work properly, a single BRL-CAD region must be displayed using the *E* command. The _tolerance_ is the distance required between two vertices in order for them to be recognized as distinct vertices. This calculation considers only the minimum bounding polygon of the region and ignores holes.
+
+
+[[examples]]
+== EXAMPLES
+
+****need working example here***
+
+[example]
+====
+****
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

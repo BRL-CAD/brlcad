@@ -1,0 +1,100 @@
+= PIXMORPH(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixmorph - morph two pix(5) images
+
+== SYNOPSIS
+
+[source]
+----
+pixmorph [-w width] [-n height] picA.pix picB.pix linesfile warpfrac dissolvefrac > out.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixmorph* performs feature-based image metamorphosis between "picA.pix" and "picB.pix". The feature correspondences are specified in the file "linesfile", which can be created using a utility such as _morphedit.tcl_ (see _morphedit(1)_).
+
+The output image is computed in the following fashion. First, for each pixel in the output image, we choose a set _A_ of pixels (and associated weights) from "picA.pix" and another set _B_ of pixels from "picB.pix" (how these sets and weights are chosen will be described momentarily). The pixel values from _A_ are then averaged (using the associated weights) to determine the contribution _cA_ from the original image; the contribution _cB_ is computed similarly. Then, the values _cA_ and _cB_ are interpolated by the value _dissolvefrac_ to compute the final value of the output pixel.
+
+Now, the contribution _cA_ from the original image is intended to be the value from _picA.pix_ that gets "warped to" the location in question. It is this computation (more specifically, the computation of _A_ and associated weights) that is the heart of the morphing algorithm, and is described briefly here.
+
+First, the linesfile is processed. The linesfile is of the forma b p n lineseg1_initial lineseg1_final lineseg2_initial lineseg2_finallinesegn_initial linesegn_final, where _n_ equals the number of line segments, and _a_, _b_, and _p_ are constants that alter the nature of the morph. A line segment is represented as a list of four real numbers (and is interpreted as a directed line segment). For example, 0.1 2.0 0.2 2 0.714844 0.560547 0.988281 0.277344 0.347656 0.646484 0.654297 0.896484 0.341797 0.611328 0.757812 0.265625 0.628906 0.519531 0.925781 0.763672 is a valid lines file. Typically, the pairs __linesegi_initial linesegi_final__ have been placed by the user in the lines file to match up particular features of _picA.pix_ and _picB.pix_ (the feature at __linesegi_initial__ in _picA.pix_ corresponds to the feature at __linesegi_final__ in _picB.pix_). For instance, __lineseg1_initial__ might be a line segment running down the length of the nose of a person displayed in _picA.pix_; then __lineseg1_final__ would be a line segment running down the length of the nose of the person featured in _picB.pix_. See _morphedit(1)_ for more information about creating a lines file.
+
+Now, for each line segment pair _(s,t)_, we perform the following procedure: We interpolate between _s_ and _t_ by factor _warpfrac_ to yield the interpolated line segment _s'_. From the change in position, scale, and orientation of a line segment from its initial position _s_ to its interpolated counterpart _s'_ we may deduce a linear transformation in the image space. More specifically, if the line segment _s_ must undergo translation, stretching, and rotation to yield _s'_, we compute a linear transformation _T_ of the image space that performs the same translation, stretching, and rotation. (So _T_ applied to _s_ yields _s'_.) The inverse _T*_ of this transformation maps _s'_ to _s_; for instance, _T*_ will take an endpoint of _s'_ to the corresponding endpoint of _s_, and will preserve the relationship of every other point to the line segment. We apply this inverse _T*_ to the coordinates _(x,y)_ to find an appropriate pixel in the original image. Along with this, we compute a weight based on the length of the line segment _s_ along with its distance from _(x,y)_. This weight is equal to ( (length ** p) / (a + dist) ) ** b (where _**_ denotes exponentiation, _length_ is the length of _s_, _dist_ is the distance from _s_ to _(x,y)_, and _a_, _b_, _p_ are constants chosen by the user and stored in the lines file).
+
+The set _A_ of pixels is then collected by performing these computations for each line segment, and the resulting contribution _cA_ is then computed by averaging over _A_ with the appropriate weights.
+
+In practice, _a_ = 0.1, _b_ = 2.0, and _p_ = 0.2 seems to work well.
+
+In general, the user will wish to set _warpfrac_ = _dissolvefrac_. Typically, a morph animation will be produced by computing a sequence of images using _pixmorph_, each with slightly greater _warpfrac_ (and _dissolvefrac_) (see the example). For a clearer and more thorough explanation, see T. Beier and S. Neely, Feature-Based Image Metamorphosis, "SIGGRAPH 1992 Computer Graphics Proceedings (volume 26 number 2)", (Chicago, July 26-31, 1992), pp 35-42, which presents the algorithm used by _pixmorph_.
+
+
+[[options]]
+== OPTIONS
+
+
+*-w* _WIDTH_::
+Tells *pixmorph* that the input images have width WIDTH.
+
+
+
+
+*-n* _HEIGHT_::
+Tells *pixmorph* that the input images have height HEIGHT.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+pixmorph face1.pix face2.pix lf 0.0 0.0 > frame0.pix
+
+pixmorph face1.pix face2.pix lf 0.2 0.2 > frame1.pix
+
+pixmorph face1.pix face2.pix lf 0.4 0.4 > frame2.pix
+
+pixmorph face1.pix face2.pix lf 0.6 0.6 > frame3.pix
+
+pixmorph face1.pix face2.pix lf 0.8 0.8 > frame4.pix
+
+pixmorph face1.pix face2.pix lf 1.0 1.0 > frame5.pix
+
+Note that the example above will result in _frame0.pix_ = _face1.pix_ and _frame5.pix_ = _face2.pix_.
+
+pixmorph face1.pix face2.pix lf 0.5 0.0 > out.pix
+
+Note that in this example, _dissolvefrac_ = 0. This will warp _face1.pix_ and _face2.pix_ by the appropriate amount, but will ignore the contributions of _face2.pix_ at the cross-dissolve stage. So the final image _out.pix_ will consist entirely of values from _face1.pix_ warped 50% according to the linesfile _lf_.
+
+pixmorph face1.pix face2.pix lf 0.0 0.5 > out.pix
+
+In this example, _warpfrac_ = 0. This will perform a simple 50% cross-dissolve between _face1.pix_ and _face2.pix_.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *morphedit*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1996-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

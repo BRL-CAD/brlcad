@@ -1,0 +1,85 @@
+= LOOP(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+loop - generate numerical indices for shell loops, etc.
+
+== SYNOPSIS
+
+[source]
+----
+loop [-c] start finish [increment]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*loop* generates a sequence of numbers between _start_ and _finish_ inclusive, one per line, on stdout. This is mostly useful for driving loops when writing Shell programs *sh*(1). The default increment is +1 when _start_<_finish_, and -1 when _start_>_finish_. An optional _increment_ may be specified. If _increment_ is zero, then the _start_ value will be generated continuously.
+
+Both floating point and integer arguments can be used. On integer arguments, if leading zeros are specified, they will be preserved on output. This is useful for generating sequences of file names which are numbered with leading zeros.
+
+*-c* is used for character (char) looping.
+
+
+[[examples]]
+== EXAMPLES
+
+
+....
+
+for i in `loop 10 30 5`
+do
+  echo $i
+done
+....
+
+will display the values 10, 15, 20, 25, 30 .
+
+
+....
+
+for i in `loop 008 005`
+do
+  echo $i
+done
+....
+
+will display the values 008, 007, 006, 005 .
+
+
+....
+
+for i in `loop 0.1 2.9 0.5`
+do
+  echo $i
+done
+....
+
+will display the values 0.1, 0.6, 1.1, 1.6, 2.1, 2.6 .
+
+
+[[bugs]]
+== BUGS
+
+This program just scratches the surface. The shells could benefit from a greater ability to perform math. Limitless opportunities for extensions exist, but this simple version is adequate for most shell scripts dealing with sequences of images, etc.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1986-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

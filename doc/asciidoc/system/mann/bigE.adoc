@@ -1,0 +1,49 @@
+= bigE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bigE - Displays _objects_ in an evaluated form.
+
+== SYNOPSIS
+
+[source]
+----
+E {object} [-s]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Displays objects in an evaluated form. All the Boolean operations indicated in each object in _objects_ will be performed, and a resulting faceted approximation of the actual objects will be displayed. Note that this is usually much slower than using the usual *draw* command. The _-s_ option provides a more accurate, but slower, approximation. See also: the *ev* command.
+
+
+[[examples]]
+== EXAMPLES
+
+Display faceted approximation of an object.
+
+.Display _objects_ in an evaluated form
+[example]
+====
+
+mged> **E some_object**::
+Displays a faceted approximation of __some_object__.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

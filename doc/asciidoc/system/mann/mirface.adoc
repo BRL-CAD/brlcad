@@ -1,0 +1,47 @@
+= MIRFACE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+mirface - Modifies an ARB shape by mirroring the indicated face along the selected _x, y,_ or _z_ axis.
+
+== SYNOPSIS
+
+[source]
+----
+mirface {####} {[x] | [y] | [z]}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Modifies an ARB shape by mirroring the indicated face along the selected _x, y,_ or _z_ axis. An ARB shape must be selected for editing. Not all faces of all ARB types may be edited using this command.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *mirface* command to modify an edited ARB by mirroring the indicated face along the _x, y,_ or _z_ axis.
+
+.Modify an ARB shape by mirroring the indicated face along the x, y, or z axis.
+[example]
+====
+mged>**mirface 1234 x**
+
+Modifies currently edited ARB by moving the face opposite face 1234 such that it is the mirror image of face 1234 across the _yz_ plane.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

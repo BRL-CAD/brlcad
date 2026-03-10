@@ -1,0 +1,118 @@
+= TERRAIN(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+terrain - Generate terrain field from mathematical noise
+
+== SYNOPSIS
+
+[source]
+----
+terrain [-w x_postings] [-n y_postings] [-s xy_postings] [-L noise_Lacunarity] [-H noise_H_value] [-O noise_octaves] [-o noise_offset] [-S noise_scale] [-V noise_Vector_scale] [-D noise_Delta] [-f noise_function] [ -c host/net format conversion off] > file.dsp
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *terrain* program produces pseudo-terrain from procedural noise suitable for use with a BRL-CAD dsp primitive. Noise values are computed for the grid points of the lattice and the resultant values are output on the standard output as unsigned shorts in network byte order. The size of the grid is specified with the *-w* and *-n* options.
+
+
+[[options]]
+== OPTIONS
+
+
+*-w* _grid_x_postings_::
+Specifies the number of grid points in the X dimension. Default is 256.
+
+
+*-n* _grid_y_postings_::
+Specifies the number of grid points in the Y dimension. Default is 256.
+
+
+*-c*::
+Turns of the conversion of the data from host to network format. This only has an effect on little-endian machines.
+
+
+*-v*::
+Turns on verbose mode. Information about which filter is running is printed.
+
+
+*-f* _noise_type_::
+Selects the type of noise field to be used. Options include
+
+
+*L*::
+A lunar-like surface.
+
+
+*f*::
+Fractional Brownian motion (fBm).
+
+
+*t*::
+Turbulence.
+
+
+*T*::
+Turbulence inverted: 1.0 - turb(pt).
+
+
+*m*::
+A Multi-fractal.
+
+
+*r*::
+A Ridged multi-fractal.
+
+
+
+[[noise_options]]
+=== Noise Options
+
+
+*-O* _noise_octaves_::
+Specifies the number of octaves of noise to layer. Typical values are 2 through 8.
+
+
+*-L* _noise_Lacunarity_::
+Specifies the scaling factor between successive octaves of noise. Practical values are non-integer numbers between 1.7 and 4.0.
+
+
+*-H* _noise_H_val_::
+Specifies the value of H in the noise equation. Usually 1.0
+
+
+*-S* _noise_scale_::
+Scales the noise uniformly in X, Y and Z dimensions by the value __noise_scale.__ Values below 1.0 cause the noise pattern to become smaller. Values above 1.0 cause it to get bigger
+
+
+*-V* _scale_x,scale_y,scale_z_::
+Allows non-uniform scaling of the X, Y and Z dimensions. See *-S* above.
+
+
+*-D* _delta_x,delta_y,delta_z_::
+Specifies a translation in noise space.
+
+
+
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2000-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

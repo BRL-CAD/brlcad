@@ -1,0 +1,57 @@
+= IMGDIMS(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+imgdims - guess the width and height of an image file
+
+== SYNOPSIS
+
+[source]
+----
+imgdims [-ns] [-# bytes_per_pixel] file_name
+----
+
+or
+
+
+[source]
+----
+imgdims [-# bytes_per_pixel] num_bytes \
+    
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*imgdims* uses the autosizing capability of *libbn*(5) to guess the dimensions (in pixels) of an image. The image size may be expressed either implicitly, by specifying the name of the file; or explicitly, by specifying a number of bytes.
+
+The *-n* option specifies that the dimensions should be extracted directly from __file_name__, in the form of any of the standard BRL-CAD command-line options. Given the *-s* option, *imgdims* ignores any dimensions encoded in __file_name__ and uses the size of the file in bytes to compute the number of pixels in the image and then guess the image's width and height. The *-#* option specifies the size of each pixel (in bytes).
+
+If __file_name__ is specified with neither of the *-s* and *-n* options, *imgdims* tries to extract the dimensions from __file_name__, and if that fails it computes the image size and guesses the width and height. If the *-#* option is not specified, *imgdims* determines the pixel size based on the extension on __file_name__. If, additionally, __num_bytes__ was specified or __file_name__ contains none of the recognized extensions, *imgdims* assumes that there are 3-byte-wide pixels.
+
+
+[[see_also]]
+== SEE ALSO
+
+*libbn*(3)
+
+
+[[author]]
+== AUTHOR
+
+Paul Tanenbaum
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1997-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

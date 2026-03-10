@@ -1,0 +1,47 @@
+= RFARB(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rfarb - Creates a new ARB8 shape based on rotation and fallback angles.
+
+== SYNOPSIS
+
+[source]
+----
+rfarb
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Creates a new ARB8 shape based on rotation and fallback angles. The command prompts the user for all the required information. In addition to the name for the new shape and the rotation and fallback angles, the user is prompted for the coordinates of one corner of the ARB8 and for two of the three coordinates of the other three vertices of one face of the ARB8. The other coordinate of each of these vertices is calculated in order to ensure that the face is planar. The user is then prompted for a thickness, and the first face is extruded normally by the specified thickness to complete the ARB8.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *rfarb* command to create a new ARB8 shape.
+
+.Create a new ARB8 shape.
+[example]
+====
+mged>**rfarb**
+
+Creates a new ARB8 shape according to arguments supplied in responses to prompts.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

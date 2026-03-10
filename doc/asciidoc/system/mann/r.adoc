@@ -1,0 +1,47 @@
+= R(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+r - Creates a region with the specified __region_name__.
+
+== SYNOPSIS
+
+[source]
+----
+r {region_name} {operation object}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Creates a region with the specified __region_name__. The _region_ is constructed using the list of Boolean _operations_ and _object_ pairs. The operators are represented by the single characters +, -, and u for intersection, subtraction, and union, respectively. The _object_ associated with each operator may be a combination or a primitive shape. No parentheses or any grouping indication is allowed in the *r* command. The operator hierarchy for the *r* command has been established through the ancestry of BRL-CAD and does not conform to accepted standards (see the *c* command for a more standard implementation). Intersection and subtraction operations are performed first, proceeding left to right; then union operations are performed. BRL-CAD regions are special cases of BRL-CAD _combinations_ and include special attributes. Default values for these attributes may be set using the *regdef* command. As new _regions_ are built, the default ident number gets incremented. If __region_name__ already exists, then the _operation/object_ pairs get appended to its end.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *r* command to create a region consisting of two parts unioned together.
+
+.Create a region using operations and object pairs.
+[example]
+====
+mged>**r new_region u shape1 - shape2 u shape3 + group4**
+
+Creates a region named __new_region__ that consists of two parts unioned together. The first part is _shape1_ with _shape2_ subtracted. The second part is the intersection of _shape3_ and the combination _group4_.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

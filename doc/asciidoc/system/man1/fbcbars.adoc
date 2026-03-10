@@ -1,0 +1,62 @@
+= FBCBARS(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbcbars - display standard color bars on a framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+fbcbars [-e] [-f] [-s] [-F framebuffer] [-S squarescrsize] [-W scr_width] [-N scr_height]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbcbars* displays a color bar scale on the currently selected framebuffer. The default pattern is the standard SMPTE color bars.
+
+With the *-f* flag, FCC/EBU color bars are made. The entire screen will contain 8 colors: 100% white, 75% yellow, 75% cyan, 75% green, 75% magenta, 75% red, 75% blue, and black.
+
+By specifying the *-e* flag, the standard EIA color bars are displayed, arranged horizontally on screen. The bottom quarter of the screen will be -I, 100% white, Q, black. The upper portion of the screen will be seven colors at 75% intensity: grey, yellow, cyan, green, magenta, red, blue.
+
+By specifying the *-s* flag, SMPTE color bars are displayed. This is the EIA pattern with the upper quarter of the bottom quarter of the screen containing a reversed and shifted version of the upper pattern, which is very useful for aligning color demodulators in monitors. Using a dichroic blue filter, observe the magenta and cyan bars on the NTSC monitor. Adjust the phase of the chroma demodulator until they have visually equal intensity. At this point, all the other color bars will display the correct chroma.
+
+The environment variable FB_FILE specifies the current framebuffer; see *brlcad*(1). Alternatively, the framebuffer may be explicitly specified by using the *-F* flag.
+
+Ordinarily, the requested framebuffer size is the device default.
+
+The *-W* _scr_width_ option specifies the width of each output scanline, in pixels.
+
+The *-N* _scr_height_ option specifies the desired height in scanlines of the display device.
+
+*-S* _squarescrsize_ sets both the height and width to the size given.
+
+
+[[inspirations]]
+== INSPIRATIONS
+
+Mike Pique, University of North Carolina
+
+Doris Kochanek, National Film Board of Canada
+
+
+[[author]]
+== AUTHOR
+
+*BRL-CAD Team*
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1988-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

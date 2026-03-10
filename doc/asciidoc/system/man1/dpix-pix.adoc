@@ -1,0 +1,44 @@
+= DPIX-PIX(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+dpix-pix - convert a double precision dpix file to a pix file
+
+== SYNOPSIS
+
+[source]
+----
+dpix-pix file.dpix > file.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Outputs a dpix file to pix (see *pix*(5)) format. Standard input is read if a file name is not supplied.
+
+
+[[see_also]]
+== SEE ALSO
+
+*plot3-plot3*(1), *plot3rot*(1), *plot3-fb*(1), *libplot3*(3), *plot3*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1991-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,49 @@
+= M(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+M - Send an _mged_ mouse event
+
+== SYNOPSIS
+
+[source]
+----
+M {1/0} {xpos ypos}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Sends an _mged_ mouse (i.e., defaults to a middle mouse button) event. The first argument indicates whether the event should be a button press _(1)_ or release _(0)_. The _xpos_ and _ypos_ arguments specify the mouse position in _mged_ screen coordinates between -2047 and +2047. With the default bindings, an _mged_ mouse event while in the viewing mode moves the view so that the point currently at screen position (_xpos,ypos_) is repositioned to the center of the _mged_ display (compare to the center command). The *M* command may also be used in other editing modes to simulate an _mged_ mouse event.
+
+
+[[examples]]
+== EXAMPLES
+
+Translate the point at specified screen coordinates to the center of the display.
+
+.Translate the point at screen coordinates (100,100) to the center of the _mged_ display.
+[example]
+====
+
+mged> **M 1 100 100**::
+The point at screen coordinates (100,100)is repositioned to the center of the display.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

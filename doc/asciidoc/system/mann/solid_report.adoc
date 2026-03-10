@@ -1,0 +1,47 @@
+= solid_report(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+solid_report - Lists all the primitive shapes currently drawn in the MGED display.
+
+== SYNOPSIS
+
+[source]
+----
+solid_report [level]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Lists all the primitive shapes currently drawn in the MGED display. The _level_ determines how much detail should be included in the list. For _level_ zero (the default), only a list of paths to shapes in the display list is produced. If _level_ is greater than zero, the center, size, ident number, RGB color assigned to the region, and the actual color used to draw the shape are also listed. If _level_ is greater than one, the number of vlist structures and the number of points in each vlist structure are also listed for each shape. If _level_ is greater than two, then the actual lines drawn for each shape are also listed. The *who* command performs a similar function, but lists only the top-level objects that are displayed.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *solid_report* command with no arguments to list the paths to the displayed shapes.
+
+.List the paths to the displayed shapes.
+[example]
+====
+mged>**solid_report**
+
+Lists the paths to the displayed shapes.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

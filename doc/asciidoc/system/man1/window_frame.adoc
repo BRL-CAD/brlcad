@@ -1,0 +1,129 @@
+= WINDOW_FRAME(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+window_frame - Creates a BRL-CAD .g file containing window frames.
+
+== SYNOPSIS
+
+[source]
+----
+window_frame [options]...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*window_frame* is a program to create a BRL-CAD database of window frames with rounded corners. Up to twenty-six windows of the same size may be created. The windows are made with rounded corners. *window_frame* uses libwdb to create a BRL-CAD database. The window frames are composed of four arb8s and eight cylinders. This program may be run interactively or the user may specify options on a command line. If the user chooses to run the program interactively, he answers the questions as the program prompts him. Below are the options that can be used on the command line.
+
+
+[[options]]
+== OPTIONS
+
+
+*-f* _name.g_::
+BRL-CAD file name.
+
+
+*-n #*::
+The number of window frames to be created (must be less than or equal to 26).
+
+
+*-H #*::
+Height of window frame in millimeters.
+
+
+*-w #*::
+Width of window frame in millimeters.
+
+
+*-d #*::
+Depth of window frame in millimeters.
+
+
+*-r #*::
+Radius of the corner in millimeters.
+
+
+*-i #*::
+Actual width of the frame in millimeters.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+.Interactive *window_frame* Session
+[example]
+====
+
+
+
+....
+
+The window frames are composed of 4 arb8s and 8
+cylinders.  The front of the window frame is centered
+at (0, 0, 0) and extends in the negative x-direction
+the depth of the window frame.
+
+Enter the mged file to be created (25 char max).
+	win.frm.g
+Enter the number of window frames to create (26 max).
+	3
+Enter the height, width, and depth of the window frame.
+	200 300 20
+Enter the radius of the corner.
+	30
+Enter the actual width of the window frame.
+	10
+
+mged file:  win.frm.g
+height of window frame:  200.000000 mm
+width of window frame:  300.000000 mm
+depth of window frame:  20.000000 mm
+radius of corner:  30.000000 mm
+width of frame:  10.000000 mm
+number of window frames:  3
+    
+....
+
+
+
+====
+
+.Single-Line *window_frame* Command
+[example]
+====
+**window_frame -fwin.frm.g -n3 -H200 -w300 -d20 -r30 -i10**
+
+====
+
+Both of these examples create a database named win.frm.g containing three window frames with a height of 200mm, width of 300mm, depth of 20mm, and corner radius of 30mm. The actual width of the frame itself is 10mm.
+
+
+[[author]]
+== AUTHOR
+
+Susan A. Coates
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2005-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[see_also]]
+== SEE ALSO
+
+bolt(1), handle(1), window(1), gastank(1)
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

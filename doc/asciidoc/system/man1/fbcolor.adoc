@@ -1,0 +1,63 @@
+= FBCOLOR(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbcolor - interactively pick colors
+
+== SYNOPSIS
+
+[source]
+----
+fbcolor [-F framebuffer] [ -s|S screen_squaresize] [ -w|W screen_width] [ -n|N screen_height] \
+    
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbcolor* is an interactive color picking facility. It allows you to pick and display colors, by varying parameters in either RGB (red, green, blue) or HSI (hue, saturation, intensity) space.
+
+
+*-F* _framebuffer_::
+This option specifies which framebuffer the image is to be saved from. If not given, the environment variable *FB_FILE* is used to select the display device (see *brlcad*(1)). If *FB_FILE* has not been set, the default device for your system will be used.
+
+
+
+The *-SWN* (or *-swn*) options can all be used in the normal way to specify the size of the screen (see *brlcad*(1)).
+
+*fbcolor* draws a set of color bars in the lower left corner of the display, sets the remainder of the display to the current color, then starts reading standard input for color editing commands. As you change the various parameters which specify the color, the color bars grow and shrink to show the relative red, green and blue intensities.
+
+At the same time, *fbcolor* displays the current RGB and HSI values on your terminal. This allows you to record the RGB or HSI values of the colors you select for later use.
+
+*fbcolor* recognizes two main sets of commands; those which select which parameter to edit, and those which vary the value of the selected parameter. ``*r*'', ``*g*'', and ``*b*'' selects the red, green, or blue color for editing, while ``*h*'', ``*s*'', and ``*i*'', (or ``*v*'') selects the hue, saturation, or intensity for editing. There is one other parameter selection character, the ``*/*'', which steps through the list of color parameters in the order given above.
+
+``*+*'' and ```.`'' both increment the currently selected parameter by one; ``*-*'' and ``*,*'' both decrement by one, and ``*>*'' and ``*<*'' increments and decrements by 16. The value of each of the parameters can range from 0 to 255 and all parameters wrap in both directions.
+
+A ``*?*'' prints a short command summary, and typing ``*q*'', ``*Q*'', ``*<CR>*'', or ``*<LF>*'' exits the program.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbclear*(1), *fbcmap*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

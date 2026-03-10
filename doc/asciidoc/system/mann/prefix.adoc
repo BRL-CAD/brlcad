@@ -1,0 +1,47 @@
+= PREFIX(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+prefix - Changes the name of all the _objects_ listed by adding the specified __new_ prefix__.
+
+== SYNOPSIS
+
+[source]
+----
+prefix {new_prefix objects>}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Changes the name of all the _objects_ listed by adding the specified __new_ prefix__. All references to the _objects_ will also be changed. The *mvall* command performs a similar function.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *prefix* command to change the names of specified objects and all references to them.
+
+.Change the names of specified objects and references to them.
+[example]
+====
+mged>**prefix test_ group1 regiona shapeb**
+
+Changes the names of objects _group1, regiona,_ and _shapeb_ to test_group1, test_regiona, and test_shapeb. All references to these objects will reflect the new names.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

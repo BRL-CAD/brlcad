@@ -1,0 +1,49 @@
+= EDMATER(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+edmater - Places the user in an editor ready to edit a file filled with shader arguments for the combinations listed on the command line.
+
+== SYNOPSIS
+
+[source]
+----
+edmater {combinations} []
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Places the user in an editor ready to edit a file filled with shader arguments for the combinations listed on the command line. The arguments placed in the file for editing are the _shader_ name and its own arguments, RGB color,__RGB_valid__ flag, and the inheritance flag. The editor used is whatever the user has set in the environment variable _EDITOR_. If _EDITOR_ is not set, then _/bin/ed_ is used.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *edmater* command to edit _shader_ parameters for two combinations.
+
+.Editing _shader_ parameters for two combinations.
+[example]
+====
+
+mged> **edmater comb1 comb2**::
+The _shader_ parameters can now be edited for _comb1_ and _comb2_.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

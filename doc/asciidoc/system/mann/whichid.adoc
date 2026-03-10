@@ -1,0 +1,155 @@
+= WHICHID(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+whichid - Reports information relating to usage of the region_id property on regions.
+
+== SYNOPSIS
+
+[source]
+----
+whichid [options ...] {ident[-ident]}...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Reports information about the usage of the __region_id__ property by regions in a .g file. Its default mode is to report which regions in a .g file are using one or a range of region_id values. If a root object is specified, it will report that result only for the regions in the tree of the root object. If the *U* is specified, the reporting is inverted and the command will report the ranges of _unused_ ids rather than the regions using various ids.
+
+
+[[search_options]]
+== OPTIONS
+
+
+*-U*::
+Report unused id ranges.
+
+
+*--root objname*::
+Limit reporting to regions in the CSG tree below _objname_.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+For these examples the geometry file used is the standard _ktank.g_ included with BRL-CAD.
+
+.Report all regions using region ids between 4000 and 7000.
+[example]
+====
+mged>**whichid 4000-7000**
+
+
+....
+
+Region[s] with ident 4001:
+   r23
+   r25
+Region[s] with ident 4050:
+   r24
+   r26
+Region[s] with ident 6001:
+   r210
+Region[s] with ident 6002:
+   r212
+    
+....
+
+
+
+====
+
+.Report all regions using region ids between 1000-2000 and 4000-5000.
+[example]
+====
+mged>**whichid 1000-2000 4000-5000**
+
+
+....
+
+Region[s] with ident 1010:
+   r213
+Region[s] with ident 1011:
+   r214
+Region[s] with ident 4001:
+   r23
+   r25
+Region[s] with ident 4050:
+   r24
+   r26
+    
+....
+
+
+
+====
+
+.Report all regions using region ids between 1000-2000 and 4000-5000, limiting results to regions in the _tank_ geomtry tree.
+[example]
+====
+mged>**whichid --root tank 1000-2000 4000-5000**
+
+
+....
+
+Region[s] with ident 4001:
+   r23
+   r25
+Region[s] with ident 4050:
+   r24
+   r26
+    
+....
+
+
+
+====
+
+.Report all unused region_id ranges in the database between 1 and 1000.
+[example]
+====
+mged>**whichid -U 1-1000**
+
+
+....
+
+Unused idents:
+   1
+   4
+   6-99
+   105-109
+   112-114
+   116-119
+   122-159
+   161-164
+   166-204
+   210-224
+   226-504
+   519-609
+   620-719
+   730-829
+   840-939
+   950-1000
+    
+....
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

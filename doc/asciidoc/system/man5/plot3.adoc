@@ -1,0 +1,195 @@
+= PLOT3(5)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+plot3 - 3-D and color graphic plotting interface
+
+[[description]]
+== DESCRIPTION
+
+Files of this format are produced by programs such as *pixhist3d-plot3*(1), using the routines described in *libplot3*(3) and are interpreted for various devices by standard programs described in *plot*(1G), as well as additional programs such as *plot3-fb*(1). The format of output from _libplot3_ differs from that of _libplot_ only in the addition of 3-D primitives and color. A graphics file is a stream of plotting instructions. Each instruction consists of an ASCII letter usually followed by bytes of binary information. The instructions are executed in order. A point is designated by four bytes representing the *x* and *y* values; each value is a signed 16-bit integer. These integers are written with the most significant byte first. Three-dimensional data have an additional *z* value, which is assumed to be zero for two-dimensional instructions. The last designated point in an *l*, *m*, *n*, *p*, *L*, *M*, *N*, or *P* instruction becomes the "current point" for the next instruction.
+
+Each of the following descriptions begins with the name of the corresponding routine in *libplot3*(3).
+
+
+*m*::
+move: The next four bytes give a new current point.
+
+
+*n*::
+cont: Draw a line from the current point to the point given by the next four bytes. See *plot*(1G).
+
+
+*p*::
+point: Plot the point given by the next four bytes.
+
+
+*l*::
+line: Draw a line from the point given by the next four bytes to the point given by the following four bytes.
+
+
+*t*::
+label: Place the following ASCII string so that its first character falls on the current point. The string is terminated by a new-line.
+
+
+*a*::
+arc: The first four bytes give the center, the next four give the starting point, and the last four give the end point of a circular arc. The least significant coordinate of the end point is used only to determine the quadrant. The arc is drawn counter-clockwise.
+
+
+*c*::
+circle: The first four bytes give the center of the circle, the next two the radius. Circles and arcs are not supported on all devices.
+
+
+*e*::
+erase: Start another frame of output.
+
+
+*f*::
+linmod: Take the following string, up to a new-line, as the style for drawing further lines. The styles are "dotted", "solid", "longdashed", "shortdashed", and "dotdashed". Effective only for the *-T4014* and *-Tver* options of *plot*(1G) (TEKTRONIX 4014 terminal and Versatec plotter).
+
+
+*s*::
+space: The next four bytes give the lower left corner of the plotting area; the following four give the upper right corner. The plot will be magnified or reduced to fit the device as closely as possible.
+
+
+
+The following were added at BRL. Three-dimensional primitives have their *z* values ignored when displayed on two-dimensional devices.
+
+
+*C*::
+color: The next three bytes give respectively the intensities (0..255) of the three color components (additive colors red, green, and blue if a terminal; subtractive colors cyan, magenta, and yellow if hardcopy) to be used for subsequent plotting. The initial color is assumed to be (255,255,255), which is white on a terminal and black on hardcopy. Color specifications are ignored for black-and-white devices.
+
+
+*M*::
+3move: The next six bytes give a new current point.
+
+
+*N*::
+3cont: Draw a line from the current point to the point given by the next six bytes. See *plot*(1G).
+
+
+*P*::
+3point: Plot the point given by the next six bytes.
+
+
+*L*::
+3line: Draw a line from the point given by the next six bytes to the point given by the following six bytes.
+
+
+*S*::
+3space: The next six bytes give the minimum corner of the plotting area; the following six give the maximum corner. The plot will be magnified or reduced to fit the device as closely as possible.
+
+
+*F*::
+3flush:
+
+
+*x*::
+double_point: The double-precision version of point.
+
+
+*v*::
+double_line: The double-precision version of line.
+
+
+*o*::
+double_move: The double-precision version of move.
+
+
+*q*::
+double_cont: The double-precision version of cont.
+
+
+*w*::
+double_space: The double-precision version of space.
+
+
+*i*::
+double_circle: The double-precision version of circle.
+
+
+*r*::
+double_arc: The double-precision version of arc.
+
+
+*W*::
+double_3space: The double-precision, 3_D version of space.
+
+
+*X*::
+double_3point: The double-precision, 3_D version of point.
+
+
+*O*::
+double_3move: The double-precision, 3_D version of move.
+
+
+*Q*::
+double_3cont: The double-precision, 3_D version of cont.
+
+
+*V*::
+double_3line: The double-precision, 3_D version of line.
+
+
+
+Space settings that exactly fill the plotting area with unity scaling appear below for devices supported by the filters of *plot*(1G). The upper limit is just outside the plotting area, except for the Megatek which displays the entire range of possible coordinates. In every case the plotting area is taken to be square; points outside may be displayable on devices whose face is not square.
+
+
+[quote]
+____
+
+_DASI 300_::
+space(0, 0, 4096, 4096);
+
+
+_DASI 300s_::
+space(0, 0, 4096, 4096);
+
+
+_DASI 450_::
+space(0, 0, 4096, 4096);
+
+
+TEKTRONIX 4014::
+space(0, 0, 3120, 3120);
+
+
+Versatec plotter::
+space(0, 0, 2048, 2048);
+
+
+Megatek display::
+space(-32768, -32768, 32767, 32767);
+
+
+
+____
+
+
+[[see_also]]
+== SEE ALSO
+
+*libplot3*(3), *plot*(n).
+
+*graph*(1G), *plot*(1G) in the _UNIX System User Reference Manual_.
+
+
+[[author]]
+== AUTHOR
+
+Douglas A. Gwyn made the 3-D and color extensions to UNIX-plot.
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

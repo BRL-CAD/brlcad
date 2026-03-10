@@ -1,0 +1,58 @@
+= BWTHRESH(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+bwthresh - threshold a black-and-white bw file
+
+== SYNOPSIS
+
+[source]
+----
+bwthresh val... < file.bw
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bwthresh* reads from standard input a stream of black-and-white data in *bw*(5) format and thresholds it among the _val_ s, writing the resulting *bw*(5) data to standard output. The _val_ s must appear on the command line in strictly increasing order.
+
+The grey scale 0..255 is divided evenly into _n_+1 bins, and each pixel of input is compared to the _val_ s, to determine which of the _n_+1 grey levels should be output.
+
+
+[[example]]
+== EXAMPLE
+
+The command
+
+bwthresh 37 143 < _file.bw_ > _file2.bw_
+
+performs the following mapping:
+
+if (pixel_in < 37)pixel_out = 0else if (pixel_in < 143)pixel_out = 128elsepixel_out = 255
+
+
+[[see_also]]
+== SEE ALSO
+
+*bwmod*(1), *bwstat*(1), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1991-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

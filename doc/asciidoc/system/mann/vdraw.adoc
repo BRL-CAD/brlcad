@@ -1,0 +1,178 @@
+= VDRAW(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+vdraw - Allows drawing of lines and polygons (optionally with per vertex normals) in the MGED graphics display. It is used to build a named list of drawing commands for MGED, send the list to the MGED display, modify the list, or delete all or part of the list.
+
+== SYNOPSIS
+
+[source]
+----
+vdraw {command} [args]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Allows drawing of lines and polygons (optionally with per vertex normals) in the MGED graphics display. It is used to build a named list of drawing commands for MGED, send the list to the MGED display, modify the list, or delete all or part of the list. All vertices in the _vdraw_ command are in millimeters. The MGED drawing commands are represented by integers in the _vdraw_ command. The MGED drawing commands and the integers that _vdraw_ uses for them are:
+
+.Drawing Commands
+[cols="3*"]
+|===
+|MGED Drawing Command
+|Vdraw integer
+|MGED Action
+
+|RT_VLIST_LINE_MOVE
+|0
+|Begin a new line at this point
+|RT_VLIST_LINE_DRAW
+|1
+|Draw line from previous point to this point
+|RT_VLIST_POLY_START
+|2
+|Start polygon (argument is surface normal)
+|RT_VLIST_POLY_MOVE
+|3
+|move to first polygon vertex
+|RT_VLIST_POLY_DRAW
+|4
+|Subsequent polygon vertices
+|RT_VLIST_POLY_END
+|5
+|Last polygon vertex (should be same as first)
+|RT_VLIST_POLY_VERTNORM
+|6
+|Vertex normal (for shading interpolation)
+|===
+
+The *vdraw* commands are as follows:
+
+
+* open -- with no arguments, this returns 1 if there is a open list; 0 otherwise. If an argument is supplied, a command list is opened with the provided name.
+* write-- with arguments of _i c x y z_, the MGED drawing command *#c* is placed in the _ith_ position of the command list with the vertex as ( _x y z_).
++
+-- with arguments of _next c x y z_, the command is placed at the end of the list.
+
+* insert -- with arguments of _i c x y z_, the MGED drawing command _#c_ is inserted just before the _ith_ position of the command list.
+* delete -- with an integer argument of i, the _ith_ command is deleted.
++
+-- with an argument of "last," the last command on the list is deleted.
+
++
+-- with an argument of "all," all the commands on the list are deleted.
+
+* params -- with an argument of _color rrggbb_, the color of all objects on this list is set. The _rrggbb_ is a hex number representing the color, "ffffff" is white, "ff0000" is red, "00ff00" is green, etc.
++
+-- with a single string argument, the name of the current list is changed.
+
+* read -- with an integer argument of _i_, the _ith_ command is returned.
++
+-- with an argument of "color," the current color is returned.
+
++
+-- with an argument of "length," the number of commands in the current list is returned.
+
++
+-- with an argument of "name," the name of the current command list is returned.
+
+* send -- send the current command list to the MGED display manager.
+* vlist -- with an argument of "list," return a list of the names of all existing command lists.
++
+-- with an argument of __delete list_name__, delete the specified command list.
+
+
+All textual arguments may be abbreviated by their first letter.
+
+
+[[examples]]
+== EXAMPLES
+
+The eight examples show the use of the *vdraw* command with four different commands and various arguments to build a list of commands to draw a square.
+
+.Open a specified list.
+[example]
+====
+mged>**vdraw open square**
+
+Opens a list named _square_.
+
+====
+
+.Set the color.
+[example]
+====
+mged>**vdraw params color ff00**
+
+Sets the color to green.
+
+====
+
+.Start a line at the origin.
+[example]
+====
+mged>**vdraw write next 0 0 0 0**
+
+Starts a line at the origin.
+
+====
+
+.Draw a line from the previous point to a specified point.
+[example]
+====
+mged>**vdraw write next 1 100 0 0**
+
+Draws a line from the origin to (100 0 0).
+
+====
+
+.Draw a line from the previous point to a specified point.
+[example]
+====
+mged>**vdraw write next 1 100 100 0**
+
+Draws a line from the previous point to (100 100 0).
+
+====
+
+.Draw a line from the previous point to a specified point.
+[example]
+====
+mged>**vdraw write next 1 0 100 0**
+
+Draws a line from the previous point to (0 100 0).
+
+====
+
+.Draw a line from the previous point to the origin.
+[example]
+====
+mged>**vdraw write next 1 0 0 0**
+
+Draws a line from the previous point to the origin.
+
+====
+
+.Send the command list to the display manager.
+[example]
+====
+mged>**vdraw send**
+
+Draws the square in the MGED display.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,130 @@
+= FBSTRETCH(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbstretch - stretch a frame buffer image
+
+== SYNOPSIS
+
+[source]
+----
+fbstretch [ -f input_image_name] [ -s input_square_size] [ -w input_width] \
+     [ -n input_height] [-a] [ -x horizontal_scale factor] [ -y vertical_scale factor] \
+     [-v] [ -S output_square_size] [ -W output_width] [ -N output_height] \
+     [ [-F] output_frame_buffer name]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbstretch* expands or compresses a frame buffer image, in either or both the horizontal and vertical directions. The image scaling origin (fixed point) is the lower left-hand corner of the display. When expanding (scale factor greater than 1), pixels are simply replicated; when compressing (scale factor less than 1), pixel averaging is performed unless sampling is explicitly requested by the _-a_ option.
+
+The default input image size is 512 by 512. Explicitly specified sizes override the default, and if actual input image size is smaller than requested, the actual size will be used. If not specified, requested output frame buffer size will be the stretched revised input size. If there are margins within the requested output beyond the stretched image, they will be cleared to background; if the stretched image would extend beyond the requested output size, it will be clipped to fit, even if there is room for it in the actual frame buffer. Actual sizes depend on details of specific frame buffers.
+
+[[options]]
+=== Options
+
+
+-f __input_image_name__::
+Inputs the image to be displayed from the specified frame buffer or *pix*(5) file, instead of modifying the output frame buffer in place. This option may not work if input and output frame buffers are the same device.
+
+
+-s __input_square_size__::
+Specifies input image width and height.
+
+
+-w __input_ width__::
+Specifies input image width.
+
+
+-n __input_height__::
+Specifies input image height.
+
+
+-a::
+(no averaging) Specifies that output pixels will be sampled from the input, instead of being computed by averaging RGB values.
+
+
+-v::
+(verbose) Causes actual sizes and scale factors used to be printed on the standard error output.
+
+
+-x __horizontal_scale_factor__::
+Scales the image by the specified factor in the horizontal direction; the default is the ratio of requested output to input widths, if specified, otherwise 1.
+
+
+-y __vertical_scale_factor__::
+Scales the image by the specified factor in the vertical direction; the default is the ratio of requested output to input heights, if specified, otherwise 1.
+
+
+-S __output_square_size__::
+Specifies output frame buffer width and height.
+
+
+-W __output_width__::
+Specifies output frame buffer width.
+
+
+-N __output_height__::
+Specifies output frame buffer height.
+
+
+-F __output_frame_buffer_name__::
+Outputs to the specified frame buffer instead of the one specified by the _FB_FILE_ environment variable (or the default, if _FB_FILE_ is not set). If this is the last option specified, the _-F_ is optional.
+
+
+
+
+
+[[discussion]]
+== DISCUSSION
+
+Pixel averaging may be meaningless for some images or color maps, in which case sampling should be specified. Images of the Mandelbrot set (see *mandel*(1)) are a good example of this.
+
+
+[[example]]
+== EXAMPLE
+
+The following procedure enlarges an image, obtained from a personal computer via the *gif-fb* utility, to fill a 1280-by-1024 frame buffer.
+
+
+[quote]
+____
+$ gif-fb _image.gif_ # displays the 320x200 PC image
+
+$ fbstretch -w 320 -n 200 -W 1280 -N 1024
+
+____
+
+
+[[see_also]]
+== SEE ALSO
+
+*gif-fb*(1), *mandel*(1), *pixscale*(1), *libfb*(3), *pix*(5)
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Error messages are intended to be self-explanatory.
+
+
+[[author]]
+== AUTHOR
+
+Douglas A. Gwyn, BRL/VLD-VMB
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

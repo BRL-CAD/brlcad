@@ -1,0 +1,68 @@
+= OVERLAY(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+overlay - Plots the specified UNIX __plot_file__ in the MGED display.
+
+== SYNOPSIS
+
+[source]
+----
+overlay [-s #] [-N viewobj_name] {plot_file} [viewobj_name]
+----
+
+
+[source]
+----
+overlay -F [-i] [-c] [-z] [-X #] [-Y #] [-w #] [-n #] [-S #] [--format fmt] {img_file}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Plots the specified UNIX __plot_file__ in the current application display or the specified _image file_ in the current application embedded framebuffer. When displaying plot files, multiple files may be specified using a pattern match (e.g., *overlay* _*.plot_).
+
+When displaying plot files, phony object names are created for each part of the plot file(s) with a unique color. The names are created by adding a color to the specified __viewobj_name__, or to _PLOT_OVERLAY_ if no name is provided. The color suffix is built by converting the RGB color to a six-digit hex number. Each color corresponds to 2 hex digits, so that white becomes "ffffff," red becomes "ff0000," green is "00ff00," etc.
+
+Image files will be display in the currently active framebuffer. Currently multiple images cannot be specified by a single *overlay* command (but as the images would overrwrite each other this feature would not be terribly useful in any case.) However, mulitiple images can be written in succession to the same framebuffer using the *-X* and *-Y* offset specification options to offset their positions for simultaneous display. Alternately, if the user wishes to reset the framebuffer before drawing the new image the *-c* option may be specified.
+
+The *-w*, *-n*, and *-S* options are used to specify image size for formats such as PIX that do not encode the image size in their own data. Similarly, *--format* may be used to explicitly specify an image format if the filename does not make the format clear.
+
+By default, images are displayed in the framebuffer using their original size. If the users wishes to use all available space in the image window to display an image, the *-z* may be specified to focus the framebuffer on the image. The *-i* option may be used to invert an image's display in the y (vertical) direction.
+
+
+[[examples]]
+== EXAMPLES
+
+.Plot a UNIX plot file in the MGED display.
+[example]
+====
+mged>**overlay plot.upl tmp**
+
+Plots the UNIX plot file _plot.upl_ in the MGED display, using _tmp_ as the base for the phony object names.
+
+====
+
+.Plot a PNG file in the MGED framebuffer.
+[example]
+====
+mged>**overlay -c -F image.png**
+
+Plots the image file _image.png_ in the MGED framebuffer, first clearing any pre-existing images in the framebuffer.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

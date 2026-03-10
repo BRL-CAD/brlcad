@@ -1,0 +1,90 @@
+= PIXBLEND(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixblend - blend two pix(5) or bw(5) images
+
+== SYNOPSIS
+
+[source]
+----
+pixblend [ - [r | i] value] [-s seedval] [-S] [-g gvalue] file1.pix file2.pix > out.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixblend*, given two streams of data, typically *pix*(5) or *bw*(5) images, generates a "blended" output stream of the same size. This routine operates on a pixel-by-pixel basis, and thus is independent of the resolution of the image. The type of blending performed is determined by the following options:
+
+
+[[options]]
+== OPTIONS
+
+
+*-r* _VALUE_::
+This specifies random blending; for each pixel of the output stream, a number will be chosen uniformly from the interval [0, 1]. If this number exceeds VALUE, then the pixel from the first image will be output; otherwise, the pixel from the second image will be output. Note that if VALUE is 0, then the output will equal the first image; if VALUE is 1, then the output will equal the second image.
+
+
+
+
+*-i* _VALUE_::
+This specifies linear interpolation; for each pixel of the output stream, the interpolated pixel ((1.0 - VALUE) * pixel1 + VALUE * pixel2) will be output (where pixel1 and pixel2 are the corresponding pixels from file1 and file2, respectively). Note that if VALUE is 0, then the output will equal the first image; if VALUE is 1, then the output will equal the second image.
+
+
+
+
+*-s* _SEEDVAL_::
+Sets the random number seed to SEEDVAL (default is 0).
+
+
+
+
+*-S*::
+Instructs *pixblend* to use bits from the clock as a random number seed.
+
+
+
+
+*-g* _GVALUE_::
+Tells *pixblend* to "glitterize" the image; if the random draw for a pixel is below GVALUE, then the pixel output is white; otherwise, the pixel used is determined by the ratio set with the *-r* option (see above).
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+pixblend -i .25 source.pix destination.pix > out.pix
+
+pixblend -r .75 source.pix destination.pix > out.pix
+
+pixblend -r .5 -s source.pix destination.pix > out.pix
+
+pixblend -r .5 -s 23 source.pix destination.pix > out.pix
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *gencolor*(1), *pix*(5), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1995-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

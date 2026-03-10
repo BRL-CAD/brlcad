@@ -1,0 +1,49 @@
+= BOT_FACE_SORT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bot_face_sort - Sorts the list of triangles that constitutes the BOT primitive to optimize it for raytracing with the specified number of triangles per piece.
+
+== SYNOPSIS
+
+[source]
+----
+bot_face_sort {triangles_per_piece} {bot_primitive1} [bot_primitive2 bot_primitive3]...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Used to sort the list of triangles that constitutes the BOT primitive to optimize it for raytracing with the specified number of triangles per piece. Most BRL-CAD primitives are treated as a single object when a model is being prepared for raytracing, but BOT primitives are normally broken into "pieces" to improve performance. The raytracer normally uses four triangles per piece.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *bot_face_sort* command to sort the list of triangles that constitutes the BOT primitive to optimize it for raytracing.
+
+.Sorting the faces of two primitives (each having four triangles per piece) to optimize them for raytracing
+[example]
+====
+
+mged> **bot_face_sort 4 bot1 bot2**::
+The faces of _bot1_ and _bot2_ to optimize them for raytracing with four triangles per piece.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

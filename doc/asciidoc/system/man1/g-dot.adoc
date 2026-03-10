@@ -1,0 +1,56 @@
+= G-DOT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: User Commands
+
+== NAME
+g-dot - BRL-CAD to DOT language converter
+
+== SYNOPSIS
+
+[source]
+----
+g-dot [-o output.dot] database.g object(s)
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*g-dot* converts the specified _object(s)_ from a BRL-CAD _database.g_ file to the _DOT_ language format. The *-o* option specifies an output .dot file (writes to stdout by default).
+
+The DOT language format is a plain text format for describing graphs. Programs like Graphviz, Tulip, OmniGraffle, and others can render .dot files (such as those produced by *g-dot*) as images.
+
+
+[[example]]
+== EXAMPLE
+
+
+----
+
+$ g-dot -o sample.dot sample.g sample_object
+----
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Error messages are intended to be self-explanatory.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1997-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

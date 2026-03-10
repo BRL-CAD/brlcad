@@ -1,0 +1,81 @@
+= BO(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bo - Creates or retrieves binary opaque objects.
+
+== SYNOPSIS
+
+[source]
+----
+bo {[-i u {type}] | [-o]} {destination} {source}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Used to create or export binary opaque objects. One of _-i_ or _-o_ must be specified to input or output data respectively. The _-i_ option will create a binary object, and the _-o_ option will write out a binary object's data. Currently, only uniform binary objects (arrays of values) are supported on input. On input, the _destination_ is the name of the object to be created, and the source is the path to a file to read. On output, _destination_ is the path to a file to write out with the contents of the binary object specified as the _source_. The _type_ may be one of:
+
+
+* f -> float
+* d -> double
+* c -> char (8 bit)
+* s -> short (16 bit)
+* i -> int (32 bit)
+* l -> long (64 bit)
+* C -> unsigned char (8 bit)
+* S -> unsigned short (16 bit)
+* I -> unsigned int (32 bit)
+* L -> unsigned long (64 bit)
+
+
+
+Note: this command was previously named "dbbinary".
+
+
+[[examples]]
+== EXAMPLES
+
+The examples show the use of the *bo* command to both create (_-i_ option) and to retrieve a binary object (_-o_ option).
+
+.Create an opaque uniform binary object of characters with a specified name containing the contents of a particular file.
+[example]
+====
+mged>**bo -i u c cmds /usr/brlcad/html/manuals/mged/mged_cmds.html**
+
+Creates an opaque uniform binary object of characters with the name _cmds_ that contains the contents of the file __/usr/brlcad/html/manuals/mged/mged_cmds.html__.
+
+====
+
+.Import data for a displacement map (DSP) object
+[example]
+====
+mged>**bo -i u S dsp.data /path/to/file.dsp**
+
+This imports a file named _file.dsp_ that contains DSP data, i.e., raw data in unsigned short (16-bit) format. The data is saved in the .g database into an object named _dsp.data_. When creating a DSP, this _dsp.data_ object can be specified as the data source.
+
+====
+
+.Copy the contents of a particular binary object into a specified file.
+[example]
+====
+mged>**bo -o /home/jim/cmds.html cmds**
+
+Copies the contents of the binary object named _cmds_ into the file named _/home/jim/cmds.html_.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

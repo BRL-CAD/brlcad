@@ -374,7 +374,7 @@ function(BRLCAD_Summary)
   set(BRLCAD_WARNINGS_LABEL "Print verbose compilation warnings ")
   set(BRLCAD_VERBOSE_LABEL "Print verbose compilation progress ")
   set(BRLCAD_INSTALL_EXAMPLE_GEOMETRY_LABEL "Install example geometry models ")
-  set(BRLCAD_DOCBOOK_BUILD_LABEL "Generate extra docs ")
+  set(BRLCAD_EXTRADOCS_BUILD_LABEL "Generate AsciiDoc docs ")
   set(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_LABEL "Build with strict ISO C compliance checking ")
   set(ENABLE_POSIX_COMPLIANCE_LABEL "Build with strict POSIX compliance checking ")
   set(ENABLE_ALL_CXX_COMPILE_LABEL "Build all C and C++ files with a C++ compiler ")
@@ -391,7 +391,7 @@ function(BRLCAD_Summary)
     BUILD_STATIC_LIBS
     BUILD_SHARED_LIBS
     BRLCAD_INSTALL_EXAMPLE_GEOMETRY
-    BRLCAD_DOCBOOK_BUILD
+    BRLCAD_EXTRADOCS_BUILD
   )
 
   if(BRLCAD_SUMMARIZE_DEV_SETTINGS)
@@ -467,33 +467,11 @@ function(BRLCAD_Summary)
   #                                                 #
   ###################################################
 
-  # Flesh out the extradocs reporting with format information
-  set(DOCBOOK_FORMATS "")
+  # Set the displayed value for BRLCAD_EXTRADOCS_BUILD
   if(BRLCAD_EXTRADOCS)
-    if(BRLCAD_EXTRADOCS_HTML)
-      set(DOCBOOK_FORMATS ${DOCBOOK_FORMATS} html)
-    endif(BRLCAD_EXTRADOCS_HTML)
-    if(BRLCAD_EXTRADOCS_PHP)
-      set(DOCBOOK_FORMATS ${DOCBOOK_FORMATS} php)
-    endif(BRLCAD_EXTRADOCS_PHP)
-    if(BRLCAD_EXTRADOCS_PPT)
-      set(DOCBOOK_FORMATS ${DOCBOOK_FORMATS} html)
-    endif(BRLCAD_EXTRADOCS_PPT)
-    if(BRLCAD_EXTRADOCS_MAN)
-      set(DOCBOOK_FORMATS ${DOCBOOK_FORMATS} man)
-    endif(BRLCAD_EXTRADOCS_MAN)
-    if(BRLCAD_EXTRADOCS_PDF)
-      set(DOCBOOK_FORMATS ${DOCBOOK_FORMATS} pdf)
-    endif(BRLCAD_EXTRADOCS_PDF)
-    if(DOCBOOK_FORMATS)
-      list(REMOVE_DUPLICATES DOCBOOK_FORMATS)
-      string(REPLACE ";" "/" DOCBOOK_FORMATS "${DOCBOOK_FORMATS}")
-      set(BRLCAD_DOCBOOK_BUILD "ON (${DOCBOOK_FORMATS})")
-    else(DOCBOOK_FORMATS)
-      set(BRLCAD_DOCBOOK_BUILD "ON (All formats disabled)")
-    endif(DOCBOOK_FORMATS)
+    set(BRLCAD_EXTRADOCS_BUILD "ON")
   else(BRLCAD_EXTRADOCS)
-    set(BRLCAD_DOCBOOK_BUILD "OFF")
+    set(BRLCAD_EXTRADOCS_BUILD "OFF")
   endif(BRLCAD_EXTRADOCS)
 
   foreach(item ${OTHER_REPORT_ITEMS})

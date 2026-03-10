@@ -1,0 +1,54 @@
+= G-EGG(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+g-egg - Panda3D Translator (BRL-CAD to EGG)
+
+== SYNOPSIS
+
+[source]
+----
+g-egg [-v89] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-D calculation_tolerance] [-o EGG_file] [-P number_of_CPUs] database.g object(s)
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*g-egg* converts the specified _object(s)_ from a BRL-CAD _database.g_ file to the _panda3d_ file format. The *-x* option specifies an RT debug flag and the *-X* option specifies an NMG debug flag. The *-a*, *-r*, and *-n* options specify tessellation tolerances. The *-D* option specifies a calculational distance tolerance (mm). Any two vertices that are less than this distance apart will be treated as the same vertex. The *-v* option requests verbose output, which goes to standard error. The *-o* option specifies the name of the file to receive the output (stdout is the default). *-8* option tells the facetizer to use the marching cubes algorithm. *-9* option tells the facetizer to use the "bottess" algorithm. The *-P* option specifies the number of CPU's to be used.
+
+
+[[example]]
+== EXAMPLE
+
+
+----
+
+$ g-egg -o sample.egg sample.g sample_object
+----
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Error messages are intended to be self-explanatory.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2009-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

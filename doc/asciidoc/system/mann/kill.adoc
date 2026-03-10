@@ -1,0 +1,51 @@
+= KILL(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+kill - Deletes specified _objects_ from the current database.
+
+== SYNOPSIS
+
+[source]
+----
+kill [-f] {objects}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Deletes the specified _objects_ from the current database. This command affects only the _objects_ actually listed on the command line. If a combination is killed, its members are not affected. If the _-f_ option is specified, then kill will not complain if some, or all, of the _objects_ specified do not actually exist in the database. Note that the _objects_ are killed immediately. There is no need for a *write file* command in MGED, and there is no *undo* command. *Use this command with caution.* Other commands that remove objects from the database are *killall* and *killtree*.
+
+The *-q* option may be added to suppress database object lookup messages reporting failure, which will otherwise let the user know an invalid object was specified.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *kill* command to delete specified objects from the database.
+
+.Delete objects from the database.
+[example]
+====
+
+mged> **kill group1 region2 shapeb**::
+Deletes _group1, region2_, and _shapeb_ from the database.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

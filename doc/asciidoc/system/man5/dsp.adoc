@@ -1,0 +1,46 @@
+= DSP(5)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: User Commands
+
+== NAME
+dsp - DSP binary file format
+
+[[format]]
+== FORMAT
+
+A _dsp_ (displacement map) file contains sequences of cells (points) comprising a rectangular grid of network unsigned short ints defined in the X-Y plane with each cell's value defining the cell's height above Z = 0. Each cell value ranges from 0 to 65535. The first cell in a _dsp_ file is the lower left corner of the grid of cells. The cells proceed from left to right across each row, with rows being written from the bottom to the top of the grid. Grid dimensions are width (number of cells in the X direction) and length (number of cells in the Y direction).
+
+_Dsp_ grids are rectangular but the dimensions cannot be determined by the file size. A common practice is to include grid dimensions in the filename (e.g., dsp-1-20W30L.dsp).
+
+At some time in the future _dsp_ files may get self-typing headers so that parameters such as their dimensions can be automatically determined by using programs.
+
+
+[[files]]
+== FILES
+
+file.dsp
+
+
+[[see_also]]
+== SEE ALSO
+
+*asc2dsp*(1), *pix*(5), and above named programs.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2012-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

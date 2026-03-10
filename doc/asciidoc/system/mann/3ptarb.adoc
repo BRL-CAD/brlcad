@@ -1,0 +1,86 @@
+= 3PTARB(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+3ptarb - Build an ARB8 shape by extruding a quadrilateral through a given thickness.
+
+== SYNOPSIS
+
+[source]
+----
+3ptarb [arb_name] [x1] [y1] [z1] [x2] [y2] [z2] [x3] [y3] [z3] [x/y/z] [coord1] [coord2] [thickness]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Build an ARB8 shape by extruding a quadrilateral through a given thickness. The arguments may be provided on the command line; if they are not, they will be prompted for. The x1, y1, and z1 are the coordinates of one corner of the quadrilateral. x2, y2, z2, and x3, y3, z3 are the coordinates of two other corners. Only two coordinates of the fourth point are specified, and the code calculates the third coordinate to ensure all four points are coplanar. The x|y|z parameter indicates which coordinate of the fourth point will be calculated by the code. The coord1 and coord2 parameters supply the other two coordinates. The direction of extrusion for the quadrilateral is determined from the order of the four resulting points by the right-hand rule; the quadrilateral is extruded toward a viewer for whom the points appear in counter-clockwise order.
+
+
+[[examples]]
+== EXAMPLES
+
+The following are run from the MGED command prompt:
+
+.3ptarb example with BRL-CAD prompting for information
+[example]
+====
+
+mged> **3ptarb**::
+Start the *3ptarb* command.
+
+
+Enter name for this arb: **thing**::
+The new ARB8 will be named _thing_.
+
+
+Enter X, Y, Z for point 1: **0 0 0**::
+Point one is at the origin.
+
+
+Enter X, Y, Z for point 2: **1 0 0**::
+Point two is at (1, 0, 0).
+
+
+Enter X, Y, Z for point 3: **1 1 0**::
+Point three is at (1, 1, 0).
+
+
+Enter coordinate to solve for (x, y, or z): **z**::
+The code will calculate the z coordinate of the fourth point.
+
+
+Enter the X, Y coordinate values: **0 1**::
+The x and y coordinates of the fourth point are 0 and 1.
+
+
+Enter thickness for this arb: **3**::
+The new ARB8 will be 3 units thick.
+
+
+
+====
+
+.3ptarb command as single line input
+[example]
+====
+mged>**3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3**
+
+Same as above example, but with all arguments supplied on the command line.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

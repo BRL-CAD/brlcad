@@ -1,0 +1,60 @@
+= PLOT3-PS(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+plot3-ps - convert UnixPlot to PostScript file
+
+== SYNOPSIS
+
+[source]
+----
+plot3-ps [-ec] [-s|S square_output_size] [-w|W output_width] [-n|N output_height] [<] unix_plot
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*plot3-ps* converts an extended UnixPlot file to a PostScript file suitable for embedding in a larger PostScript document. This is especially useful for creating figures for inclusion in TeX documents. The *-e* option will produce an encapsulated PostScript file. The *-c* option causes the output to be centered on an 8.5 x 11 inch page. The *-s* , *-w* , and *-n* options (alternatively *-S* , *-W* , and *-N*) specify the size of the output image in inches (ignored when used with the *-e* option).
+
+All UnixPlot line types are supported.
+
+If no UnixPlot *space* directive is seen, the default space ranges from (0, 0, 0) to (4096, 4096, 4096).
+
+
+[[bugs]]
+== BUGS
+
+This is just the bare bones of a program at the time of this writing.
+
+
+[[see_also]]
+== SEE ALSO
+
+*plot3-fb*(1), *plot3-plot3*(1), *plot3-X*(1), *plot3*(5)
+
+
+[[trademarks]]
+== TRADEMARKS
+
+PostScript is a trademark of Adobe Systems Incorporated.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

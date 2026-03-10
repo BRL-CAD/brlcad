@@ -1,0 +1,50 @@
+= FBFRAME(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbframe - place a colored frame around a framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+fbframe [-F framebuffer] [-w|W frame_width] [-n|N frame_height] [-s|S squareframesize]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbframe* places a colored frame around the edge pixels of a framebuffer. It is mostly for purposes of framebuffer alignment. The *-F* option can be used to specify the framebuffer. If this option is omitted, the environment variable `FB_FILE` is used to select the display device (see *brlcad*(1)). If the variable is not set, the default device for your system will be used.
+
+The frame starts in the lower left with a red line running to the right to the next to last pixel. Next, a green line from there up to the next to top scan line is drawn. Then blue across the top scan line to the next to first column. Finally a white line down the left edge stopping just above the red line.
+
+By default, the dimensions of the frame will be taken from the framebuffer used. Alternatively, one or more of the options *-s*, *-w*, *-n* (or *-S*, *-W*, *-N*) may be used to set the dimensions of the frame drawn.
+
+The options *-w* (or *-W*) _frame_width_ and *-n* (or *-N*) _frame_height_ are used to specify the width (in pixels) and height (in scanlines) of the frame on the framebuffer respectively. The *-s* (or *-S*) _squareframesize_ option specifies both the height and width of the frame to be drawn.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbgrid*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

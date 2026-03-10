@@ -1,0 +1,56 @@
+= POSTSCRIPT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+postscript - Temporarily attaches the _Postscript_ display manager and outputs the current MGED display to the specified __output_file__ in _PostScript_ format.
+
+== SYNOPSIS
+
+[source]
+----
+postscript [-f font] [-t title] [-c creator] [-s size_in_inches] [-l line_width] {output_file}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Temporarily attaches the _Postscript_ display manager and outputs the current MGED display to the specified __output_file__ in _PostScript_ format. The _-f_ option allows the _font_ to be user- specified. The _-t_ option allows the user to provide a title (the default is No Title). The _-c_ option allows the user to specify the creator of the file (the default is LIBDM dm-ps). The _s_ specifies the size of the drawing in inches. The _l_ specifies the width of the lines drawn.
+
+
+[[examples]]
+== EXAMPLES
+
+The first example shows the use of the *postscript* command to place a _PostScript_ version of the current MGED display in a specified file and give it a particular title. The second example is much like the first except that a line width is specified and the title and output file names are different.
+
+.Place a _PostScript_ version of the current MGED display in a specified file.
+[example]
+====
+mged>**postscript -t "Test Title" test.ps**
+
+Places a _PostScript_ version of the current MGED display in a file named _test.ps_ and titles it Test Title.
+
+====
+
+.Specify the line width of a _PostScript_ version of the current MGED display in a specified file.
+[example]
+====
+mged>**postscript -l 10 -t "Test Fat Lines" fat_lines.ps**
+
+Places a _PostScript_ version of the current MGED display with fat lines in a file named __fat_lines.ps__ and titles it Test Fat Lines.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

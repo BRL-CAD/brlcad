@@ -1,0 +1,57 @@
+= BRL-CAD AsciiDoc Documentation
+:toc: left
+:toclevels: 2
+
+== Overview
+
+This directory contains BRL-CAD documentation in AsciiDoc format.  The `.adoc`
+files are committed to version control as authoritative sources.  They are
+built into HTML and man-page outputs at compile time using **asciiquack**,
+BRL-CAD's self-contained AsciiDoc processor.
+
+== Directory Structure
+
+[source]
+----
+doc/asciidoc/
+├── articles/          General articles
+├── books/             Long-form books
+├── devguides/         Developer guides
+├── lessons/           Tutorial lessons
+├── presentations/     Presentation slides
+├── specifications/    Format specifications
+└── system/
+    ├── man1/          Section 1 man pages  (command-line tools)
+    ├── man3/          Section 3 man pages  (C library functions)
+    ├── man5/          Section 5 man pages  (file formats)
+    └── mann/          Section n man pages  (MGED commands)
+----
+
+== Build Outputs
+
+At CMake configuration time, the asciiquack processor is located automatically
+(from the `bext_output/` pre-built tree or the system PATH).  When found:
+
+* Man pages (`system/man*/`) are built by asciiquack with `-b manpage` and
+  installed under `${MAN_DIR}/man*/`.
+* Articles, books, and other prose (`articles/`, `books/`, etc.) are built
+  with `-b html5` and installed under `${DOC_DIR}/html/asciidoc/`.
+
+The build logic is in `brlcad/misc/CMake/AsciiDoc.cmake`.
+
+== asciiquack Processor
+
+The asciiquack source lives in the top-level `asciiquack/` directory.  A
+pre-built binary is committed at `bext_output/noinstall/bin/asciiquack`.
+
+To rebuild asciiquack from source:
+
+[source,bash]
+----
+REPO_ROOT=/path/to/repo
+mkdir -p /tmp/aq_build
+cmake -S $REPO_ROOT/asciiquack -B /tmp/aq_build
+cmake --build /tmp/aq_build -j$(nproc)
+# Run tests
+/tmp/aq_build/asciiquack_tests
+----

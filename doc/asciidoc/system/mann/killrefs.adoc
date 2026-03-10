@@ -1,0 +1,70 @@
+= KILLREFS(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+killrefs - Removes all references to the specified _objects_ from all combinations in the database.
+
+== SYNOPSIS
+
+[source]
+----
+killrefs [-n] {objects}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Removes all references to the specified _objects_ from all combinations in the database. Note that the references are removed immediately unless the *-n* flag is passed. The *-n* flag causes the command to return a string of the objects that would be affected in a scriptable list format without actually editing them. See also the *killall* command.
+
+*Use this command with caution.* Killed objects cannot be recovered so *keep* a backup.
+
+
+[[examples]]
+== EXAMPLES
+
+This example shows the use of the *killrefs* command to remove all references to the specified _objects_ from the database.
+
+.Remove all references to the specified objects from the database.
+[example]
+====
+
+mged> **killref group1**::
+Removes all references to _group1_ from the database.
+
+
+
+====
+
+This example shows the use of the *killrefs* command to list all references to the specified _objects_ in the database.
+
+.List all references to the specified objects in the database.
+[example]
+====
+
+mged> **killref -n group1**::
+Lists all references to _group1_ in the database.
+
+
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*kill*(nged) *killtree*(nged)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,107 @@
+= LS(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+ls - The command with no _object_ argument lists the name of every object in the database (in alphabetical order) except for those marked as hidden with the *hide* command. If the object argument is supplied, only those objects are listed.
+
+== SYNOPSIS
+
+[source]
+----
+ls [-A -o -a -c -r -s -p -l -q -H -S] [objects]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The command with no _object_ argument lists the name of every object in the database (in alphabetical order) except for those marked as hidden with the *hide* command. If the _object_ argument is supplied, only those _objects_ are listed. The _object_ argument may include regular expressions. If the _-A_ option is used, then the arguments are expected to be a list of attribute name/value pairs, and objects having attributes that match the provided list are listed. By default, an object must match all the specified attributes in order to be listed; however, the _-o_ flag indicates that an object matching at least one attribute name/value pair should be listed. See the *attr* command for information on how to set or get attributes. Regular expressions are not supported for attributes. The following options are also allowed:
+
+
+* a -- List all objects in the database.
+* c -- List all non-hidden combinations in the database.
+* r -- List all non-hidden regions in the database.
+* s -- List all non-hidden primitives in the database.
+* p -- List all non-hidden primitives in the database.
+* l -- Use long format showing object name, object type, major type, minor type, and length.
+* H -- When printing using long format, use human readable sizes for object size.
+* S -- Sort using object size rather than object name.
+* q -- Suppress informational output messages during database lookup process
+
+The *ls* command is a synonym for the *t* command. Note that when any of the above options are used, the output is not formatted.
+
+
+[[examples]]
+== EXAMPLES
+
+The examples show the use of the *ls* command and its options to list objects, primitives, regions, or combinations having a specific object.
+
+.List all objects beginning with a particular name.
+[example]
+====
+
+mged> **ls shape***::
+Lists all objects with names beginning with "shape" (output is formatted).
+
+
+
+====
+
+.List all objects beginning with a particular name.
+[example]
+====
+mged>**ls -a shape***
+
+Lists all objects with names beginning with "shape."
+
+====
+
+.List all primitives beginning with a particular name.
+[example]
+====
+mged>**ls -p wheel***
+
+Lists all primitives with names beginning with "wheel."
+
+====
+
+.List all regions beginning with a particular name.
+[example]
+====
+mged>**ls -r wheel***
+
+Lists all regions with names beginning with "wheel."
+
+====
+
+.List all combinations beginning with a particular name.
+[example]
+====
+mged>**ls -c suspension***
+
+Lists all combinations with names beginning with "suspension."
+
+====
+
+.List all regions having particular attributes.
+[example]
+====
+mged>**ls -A -o -r Comment{First comment} Comment{Second comment}**
+
+Lists all regions that have a "Comment" attribute that is set to either "First comment" or "Second comment."
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

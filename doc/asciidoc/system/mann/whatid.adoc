@@ -1,0 +1,47 @@
+= WHATID(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+whatid - Lists the ident number of the specified _region_.
+
+== SYNOPSIS
+
+[source]
+----
+whatid {region_name}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Lists the ident number of the specified _region_.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *whatid* command to list the ident number of a specified region.
+
+.List the ident number of a specified region.
+[example]
+====
+mged>**whatid regiona**
+
+Gets the ident number for regiona.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

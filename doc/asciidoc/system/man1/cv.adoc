@@ -1,0 +1,52 @@
+= CV(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+cv - convert binary data files between representation formats
+
+== SYNOPSIS
+
+[source]
+----
+cv in_pat out_pat [ [infile] outfile]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Convert a binary data file from one representation (format) to another. The particular representation desired is expressed as a set of choices from the pattern: [h|n][s|u] c|s|i|l|d|8|16|32|64. For example, "hui" is host unsigned int, "nl" is network (signed) long. The default is NETWORK format.
+
+Host specific format is the native internal number representation used inside the computer that *cv* is running on. There is great variation between vendors in the host-specific formats that they use. Especially for double-precision floating point, DEC, Cray, and IBM have peculiar formats and byte orderings. The network-independent byte orderings used within BRL-CAD is big-endian (most significant bit first, on the left side of the word), twos complement. The network-independent double-precision floating point format used within BRL-CAD is 64-bit IEEE 754, transmitted in big-endian order.
+
+Signed or unsigned integer formats can be selected. This has no effect on the double-precision format.
+
+"char", "short", "int", "long", and "double" provide their C language equivalent on this processor when used in "h" host-specific mode. "8", "16", "32", and "64" allow more precise specification of datum sizes for "n" network-independent mode.
+
+For example, to change a file of host-specific (machine-specific) signed shorts to a file of network-independent 32-bit integers, the input format would be "hss", and the output format would be "n32".
+
+
+[[see_also]]
+== SEE ALSO
+
+*pix-bw*(1), *dpix-pix*(1), *bw-pix*(1); M. J. Muuss, ``_Workstations, Networking, Distributed Graphics, and Parallel Processing_`` in Computer Graphics Techniques: Theory and Practice, edited by D. F. Rogers, R. A. Earnshaw, Springer-Verlag, 1990
+
+
+[[author]]
+== AUTHOR
+
+*BRL-CAD Team*
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1991-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

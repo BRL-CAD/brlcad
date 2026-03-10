@@ -1,0 +1,47 @@
+= TRA(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+tra - Translates the view or an object.
+
+== SYNOPSIS
+
+[source]
+----
+tra {dx} {dy} {dz}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Translates the view or an object. Exactly what is done is determined by MGEDs state as well as the state of the current display manager. The parameters _dx, dy,_ and _dz_ are in local units.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *tra* command to translate a view.
+
+.Translate a view along the _x_-axis.
+[example]
+====
+mged>**tra 10 0 0**
+
+Translates by 10 units along the _x_ axis.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

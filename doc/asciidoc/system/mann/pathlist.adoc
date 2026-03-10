@@ -1,0 +1,47 @@
+= PATHLIST(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+pathlist - Lists all existing paths that start from the specified combinations and end at a primitive shape.
+
+== SYNOPSIS
+
+[source]
+----
+pathlist {combinations}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Lists all existing paths that start from the specified combinations and end at a primitive shape.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *pathlist* command to list all paths that start from the given combinations and end at a primitive shape.
+
+.List all paths that start from given combinations and end at a primitive shape.
+[example]
+====
+mged>**pathlist group1 region2**
+
+Lists all existing paths that start from the _combinations group1_ and _region2_ and end at primitive shapes.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

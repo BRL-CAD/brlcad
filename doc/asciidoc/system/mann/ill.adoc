@@ -1,0 +1,49 @@
+= ILL(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+ill - Performs the function of selecting an object after entering _solid_ (i.e., primitive)_illuminate_ or _object illuminate_ mode.
+
+== SYNOPSIS
+
+[source]
+----
+ill {obj_name}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Performs the function of selecting an object after entering _solid_ (i.e., primitive) _illuminate_ or _object illuminate_ mode. In _solid illuminate_ mode, this command selects the specific shape for editing. In _object illuminate_ mode, this command selects the leaf object for the object path, then the user may use the mouse to select where along the object path the editing should be applied. In both modes,the _ill_ command will only succeed if the specified __obj_name__ is only referenced once in the displayed objects; otherwise a _multiply referenced_ message will be displayed. If the *ill* command fails, the user must resort to either using the mouse to make the selection, or using aip and M 1 0 0.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *ill* command to select a specified object for editing.
+
+.Select an object for editing.
+[example]
+====
+
+mged> **ill shapea**::
+_Shapea_ is selected for editing.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

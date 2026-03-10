@@ -1,0 +1,64 @@
+= PIXMERGE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixmerge - merge two pix(5) or bw(5) images by a formula
+
+== SYNOPSIS
+
+[source]
+----
+pixmerge [-glen] [-w bytes_wide] [-C r/g/b] foreground.pix [background.pix] > out.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixmerge*, given two streams of data, typically *pix*(5) or *bw*(5) images, generates an output stream of the same size, where the value of the output is determined by a formula involving the first (foreground) stream and the second (background) stream, with the option of using a constant in place of the background stream. This routine operates on a pixel-by-pixel basis, and thus is independent of the resolution of the image. More sophisticated processing can be performed by *pixmatte* .
+
+If a constant is to be used in place of the background stream, it is supplied via the *-C r/g/b* option, with the constant color specified by r/g/b . (Exception: see below for default zeroes being used with default *-g* .) It is expected that there will be up to _bytes_wide_ slash-separated constants given as a single parameter here. If *-C* is used, the _background.pix_ argument is omitted.
+
+The formula can be any combination of *-g* (fg greater than bg), *-l* (fg less than bg), *-e* (fg equal to bg), *-n* (fg not equal to bg). For example, *-le* selects the foreground pixel when it is lexically less than or equal to the background pixel, that is, when each byte of the foreground pixel is less than or equal to the corresponding byte of the background pixel; if said relationship is found to be false, the background pixel is selected.
+
+The *-w#* flag specifies the width (in bytes) of each "pixel"; the default is 3, _i.e._ *pix*(5) file format. A width of 1 is used for processing *bw*(5) files. It is unclear if other widths are useful.
+
+If no formula is specified, the default is to use *-g*, taking all foreground pixels greater than a constant (*-C* parameter if that option is used, otherwise defaulting to black, which is specified with all bytes zero). If the default formula and constant are used (and *-a* was NOT used), this is the same as:
+
+pixmerge -g -C 0/0/0 fg.pix
+
+
+[[examples]]
+== EXAMPLES
+
+gencolor 200 0 200 | pixmerge -g fg.pix - > out.pix
+
+pixbackgnd -t0 160 200 | pixmerge -n fg.pix - | pix-fb
+
+The second example is used to composite an *rt*(1) generated image on top of a shaded background.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *gencolor*(1), *pixbackgnd*(1), *pixmatte*(1), *pix*(5), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,49 @@
+= BOT_FACE_FUSE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bot_face_fuse - Eliminates duplicate faces from a BOT solid.
+
+== SYNOPSIS
+
+[source]
+----
+bot_face_fuse {new_bot_primitive} {old_bot_primitive}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Eliminates duplicate faces from a BOT solid. It returns the number of faces eliminated.
+
+
+[[examples]]
+== EXAMPLES
+
+The example demonstrates the use of the *bot_face_fuse* command to eliminate duplicate faces from a BOT primitive.
+
+.Removing duplicate faces from one BOT and storing the results in a new BOT primitive.
+[example]
+====
+
+mged> **bot_face_fuse bot1_fused bot1_original**::
+Eliminates any duplicate faces from the primitive named __bot1_original__ and stores the result in the new BOT primitive named __bot1_fused__.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

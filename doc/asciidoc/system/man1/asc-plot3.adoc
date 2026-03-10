@@ -1,0 +1,54 @@
+= ASC-PLOT3(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+asc-plot3 - produce Plot3 instructions from ASCII representation
+
+== SYNOPSIS
+
+[source]
+----
+asc-plot3 [ file.asc [unix_plot]]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Reads a stream of ASCII data representing Plot3 instructions and converts it to *plot3*(5) format. *asc-plot3* reads from standard input and writes to standard output if file names are not supplied.
+
+The input should consist of lines of the form
+
+
+....
+
+c arg arg ...
+....
+
+where _c_ is one of the single-character Plot3 command names, and it is followed by white-space-separated arguments of appropriate number and types for that command. Optional white space and lines beginning with the comment character `#' are ignored.
+
+
+[[see_also]]
+== SEE ALSO
+
+*plot3-asc*(1), *plot3-plot3*(1), *plot3rot*(1), *plot3-fb*(1), *libplot3*(3), *plot3*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1991-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

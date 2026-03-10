@@ -1,0 +1,54 @@
+= PIXHIST(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixhist - display a histogram of a color pix file on a framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+pixhist [-v] [file.pix]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixhist* displays a histogram of the pixel values of the given *pix*(5) format file, or, if no file is specified, will read from standard input. The environment variable `FB_FILE` is used to select the display device (see *brlcad*(1)). If this variable is not set, the default device for your system will be used.
+
+The relative frequency is displayed on the x axis scaled so that the maximum is full screen. The value 0 is at the bottom of the screen, 255 is at the top. All three colors will be drawn on each scan line, and all are scaled by the same factor.The output is overlaid on whatever is currently on the display.
+
+The *-v* flag will output the histogram values on the terminal (standard error).
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pixhist3d*(1), *pixstat*(1), *pix*(5)
+
+
+[[bugs]]
+== BUGS
+
+This program assumes it has at least 512 lines in y to work with.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

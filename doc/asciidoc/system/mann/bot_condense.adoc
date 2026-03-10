@@ -1,0 +1,51 @@
+= BOT_CONDENSE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bot_condense - Used to eliminate unused vertices from a BOT primitive.
+
+== SYNOPSIS
+
+[source]
+----
+bot_condense {new_bot_primitive} {old_bot_primitive}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Used to eliminate unused vertices from a BOT primitive. It returns the number of vertices eliminated.
+
+
+[[examples]]
+== EXAMPLES
+
+The examples shows the use of the *bot_condense* command to eliminate unused vertices from a BOT primitive and store the result in a new BOT primitive.
+
+.Basic Condensing
+[example]
+====
+Eliminating unused vertices from a primitive named __bot1_original__ and storing the result in a new primitive named __bot1_condensed__.
+
+
+mged> **bot_condense bot1_condensed bot1_original**::
+The unused vertices were deleted from bot1_original and the result was saved in bot1_condensed.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

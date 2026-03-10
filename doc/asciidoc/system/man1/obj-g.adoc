@@ -1,0 +1,144 @@
+= OBJ-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+obj-g - Convert a Wavefront Object (obj) file to a BRL-CAD .g database.
+
+== SYNOPSIS
+
+[source]
+----
+obj-g [-c] [-d] [-f] [-g grouping_option] [-H plate_thickness] [-i] [-m mode] [-o open_bot_type] [-p] [-r bot_orientation] [-t distance_tolerance] [-u units_str] [-v]... [-x rt_debug_flag] [-X NMG_debug_flag] input.obj output.g
+----
+
+
+[[objg_description]]
+== DESCRIPTION
+
+*obj-g* converts a Wavefront Object file to BRL-CAD's .g format.
+
+Only face elements are supported. Materials and textures associated with face elements are unsupported. Faces associated with materials and/or textures will convert but material properties and textures are ignored. Face groupings convert to BRL-CAD primitives. Any hierarchical structure (i.e. assembly structure) defined in the obj file is not maintained in the conversion. If a face is a member of more than one 'group' grouping, a copy of the face will exist in each group in the resulting model. Primitives are named based on the grouping names and have appended to each name a string which guarantees uniqueness. This unique string includes the obj file grouping index number, face type number (1-4), internal conversion mode (b=native-bot|n=nmg|v=bot-via-nmg) and surface closure status (o=open|c=closed|u=untested). Characters in the original grouping name which may cause problems are replaced with the underscore character.
+
+
+[[objg_options]]
+== OPTIONS
+
+
+*-c*::
+Continue processing on nmg-bomb. If this option is set and an nmg-bomb occurs (i.e., fatal error during processing nmg or bot-via-nmg) conversion will fall back to outputting the grouping to 'native-bot' and then continue processing the next grouping. If this option is not set and an nmg-bomb occurs then all processing will stop and the converter will exit.
+
+
+*-d*::
+Output debug information to standard error. Because *-d* results in an extremely large amount of information, it is strongly suggested that standard error be redirected to a file.
+
+
+*-f*::
+Fuse vertices that are within _distance_tolerance_ of each other. This can make the solidity detection more reliable, but may significantly increase processing time during conversion.
+
+
+*-g _grouping_option_*::
+Choose which face grouping, as defined in the obj file, to use to create the BRL-CAD primitives. The grouping_option may be one of (g|o|m|t|n) where g = group (default), o = object, m = material, t = texture, n = none. Choose a grouping option which will produce the appropriate primitives for the intended use of the resulting model. Typically not all groupings exist in every obj file. Do not choose 'none' as the grouping option unless you have a specific need for no grouping. Choosing 'none' for a large conversion will significantly increase the time and system memory required for a conversion to complete. Choosing a grouping which does not exist in the obj file has the same effect as choosing 'none'. Note: It is possible for a single grouping to produce up to four primitives due to the four possible face types that can exist in an obj file. The values of the index numbers appended to the end of the primitive names will give an indication if this has occurred.
+
+
+*-H _plate_thickness_*::
+Plate thickness in mm units of plate or plate-nocos bots created when the bot is not a closed volume. This option is ignored unless the open_bot_type is set to 'plate' or 'plate nocos' (see -o option).
+
+
+*-i*::
+Ignore normals defined in the obj file when the conversion mode is 'native-bots'. This option has no effect when the conversion mode is set to 'nmg' or 'bot-via-nmg', where provided normals are always ignored (see -m option).
+
+
+*-m _mode_option_*::
+Choose the conversion mode. The mode_option may be one of (b|n|v) where b = native-bot (default), n = nmg, v = bot-via-nmg. The 'native-bot' mode is best for a relatively quick conversion where creating solids is not the highest priority. It attempts to identify surface closure (solids) but is not as robust as 'bot-via-nmg'. It is the only mode that supports use of the obj file normals. The 'bot-via-nmg' mode is the best option for creating solids (i.e. volume-mode-bots).
+
+
+*-o _open_bot_type_*::
+Type of bot to create when the primitive is not a closed volume. open_bot_type can be (s|p|n) where s = surface bot (default), p = plate bot, n = plate-nocos bot. Generally use 'surface bot' if open surface thickness is irrelevant or the purpose of the resulting model is strictly visualization. Use 'plate bot' or 'plate-nocos bot' when open surfaces must have a defined thickness. Note: An incorrect plate thickness can create geometry overlaps. Use the '-H' option to define plate thickness.
+
+
+*-p*::
+Plot open edges when creating bots which are not a closed volume. A plot/overlay (.plot3) file will be created with the same name as the bot primitive and be placed in the current directory. If a plot file already exists, it will be overwritten. Closed edges are closed but open edges are not necessarily open. This is due to limitations of the algorithm for identifying open edges.
+
+
+*-r _bot_orientation_*::
+Orientation type to use for bot primitives. bot_orientation can be (1|2|3), where 1 = unoriented, 2 = ccw, and 3 = cw; 1 is default.
+
+
+*-t _distance_tolerance_*::
+Maximum distance, in mm units, where two vertices are considered the same. The default is 0.0005mm, which matches the default raytracer distance tolerance. Do not change this value unless you also change the raytracer distance tolerance.
+
+
+*-u _units_str_*::
+Units of obj file, where units_str can be any valid BRL-CAD unit such as (m|cm|mm|ft|in) or a custom conversion factor from obj file units to mm.
+
+
+*-v*::
+Output verbose user information to standard error (stderr) stream. There are different levels of verbose output where higher levels increase the amount of output information. Each occurrence of this option in the parameter list increases the verbosity level (two levels currently). A large amount of information will be output so redirecting stderr to a file is highly recommended. Verbose messages add warning and detailed conversion status messages to the default status and error messages. *-v* must be enabled for warning messages to be reported.
+
+
+*-x _rt_debug_flag_*::
+Specifies debug bits (see raytrace.h).
+
+
+*-X _NMG_debug_flag_*::
+Specifies debug bits for NMG's (see nmg.h).
+
+
+*_input.obj_*::
+The path and file name of the input WaveFront Object file.
+
+
+*_output.g_*::
+The path and file name of the output BRL-CAD database file. If this file already exists, it will be overwritten.
+
+
+
+
+[[objg_examples]]
+== EXAMPLES
+
+The following will convert the obj file _input.obj_ to the BRL-CAD database _output.g_.
+
+.BOT Conversion
+[example]
+====
+**obj-g -u mm -i input.obj output.g**
+
+Convert obj file 'input.obj' to BRL-CAD database file 'output.g' using native-bot conversion mode. Non-closed surfaces will be output as surface-mode bots; closed surfaces will be output as volume-mode bots. BRL-CAD primitives will be created based on the obj file 'group' grouping. The obj file units are set to millimeters (implies conversion factor of 1.0). Any normals specified in the obj file are ignored. All messages will be sent to the display.
+
+====
+
+.BOT via NMG Conversion
+[example]
+====
+**obj-g -m v -o p -H 5 -g o -v -v input.obj output.g 2> output.log**
+
+Convert obj file 'input.obj' to BRL-CAD database file 'output.g' using bot-via-nmg conversion mode. Non-closed surfaces will be output as plate-mode bots, with plate thickness of 5mm. Closed surfaces will be output as volume-mode bots. BRL-CAD primitives will be created based on the obj file 'object' grouping. The obj file units are assumed to be meters (implies conversion factor of 1000.0). Level two verbose messages are enabled. All standard-error messages are sent to the log file 'output.log'.
+
+====
+
+
+[[objg_diagnostics]]
+== DIAGNOSTICS
+
+Numerous warning and error conditions are possible, usually due to invalid source geometry. Descriptive messages are printed on standard error (file descriptor 2). *-v* must be enabled for warning messages to be printed.
+
+
+[[author]]
+== AUTHOR
+
+Richard Weiss
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2010-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

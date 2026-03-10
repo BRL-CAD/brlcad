@@ -1,0 +1,206 @@
+= MGED(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+mged - multi-display interactive combinatorial solid geometry editor
+
+== SYNOPSIS
+
+[source]
+----
+mged [-a attach] [-b] [-c] [-d display] [-h|?] [-r] [-x#] [-X#] [-v] [database.g] [mged_command]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+_MGED_, a.k.a. the "Multi-Device Geometry Editor", is the central interaction environment for the BRL-CAD package. It offers both command line and menu driven interactions, as well as wireframe displays and integrated raytracing capabilities. It is the primary tool for BRL-CAD geometry creation and interactive manipulation.
+
+_MGED_'s history traces back to the earlier "GED" (a.k.a. "Geometry Editor"), and much of GED's functionality is preserved in _MGED_. A full description of MGED's abilities is beyond the scope of this document - the reader is referred to Volumes II and III of the BRL-CAD Tutorial Series, available at http://brlcad.org, for a more comprehensive introduction. This document will deal with the various options available when it comes to starting MGED.
+
+The primary mode for modern _MGED_ usage is the Tcl/Tk based environment, which offers menu support and a number of Tcl based tools. It is also possible to run more minimalist environments of terminal + framebuffer and a terminal without any display window. _MGED_ also allows users to execute single commands from the command line without starting any environment, allowing for activities such as scripting. Some examples of such usage are present in the Examples section of this document.
+
+Technically, _MGED_ can be opened without a database file being supplied, but until one _is_ supplied it will not be terribly useful. This can be done either by supplying a file name on the command line or by opening a database from within _MGED_ using the File->Open... menu or the *opendb* command.
+
+
+*-a attach*::
+The *-a* option specifies a display manager to automatically attach to when starting _MGED_.
++
+Without specifying the *-a* attach option, _MGED_ will prompt which display manager to attach during startup: attach (nu|X|ogl)[nu]?
++
+The list of available display managers varies from platform to platform and across releases. However, some commonly available options are the _nu_ (NULL) display manager, which will start _MGED_ without any display manager attached; the _X_ display manager, which provides an X11 graphical wireframe display; and the _ogl_ display manager, which is similar to _X_ but starts up a display manager that uses the OpenGL protocol for drawing wireframes.
+
+
+*-b*::
+Supplying the *-b* to *mged* will result in _MGED_ being started as a background process. This is handy if the users still wishes to make use of the terminal from which _MGED_ is being started.
+
+
+*-c*::
+Instructs _MGED_ to start using classic mode instead of the default Tcl/Tk-based GUI. The *-c* option is often used when specifying an *mged_command* to indicate that _MGED_ is being run in a command-mode without a default GUI. Example: *mged* *-c* db/moss.g tops
+
+
+*-d display*::
+The *-d* option to _MGED_ specifies which X server to connect to for platforms that have a running X11 server available. This option is an analogous alternative to setting the DISPLAY environment variable. You can specify a local or remote display in X11 HOST:PORT format (e.g., "-d :0" or "-d host:0") and _MGED_ should draw windows to that display.
+
+
+*-h* or *-?*::
+Prints out a brief help statement showing the options available when starting _MGED_.
+
+
+*-r*::
+Opens the database.g file in read-only mode.
+
+
+*-x #*::
+Specify the debug level of librt.
+
+
+*-X #*::
+Specify the debug level of libbu.
+
+
+*-v*::
+Display the version and exit.
+
+
+
+
+[[scripting]]
+== SCRIPTING (BATCHING) MGED
+
+Often it is convenient to generate a series of _MGED_ commands outside _MGED_ and then submit the command list to _MGED_, which will react as if each command were being manually entered within it. Simply create a file (say, "cmds.txt") with each line being a desired command, and then have _MGED_ execute the list. At the normal shell prompt, execute
+
+
+----
+
+$ mged -c tgm.g < cmds.txt
+      
+----
+
+Note that the procedure described above is very useful in rapid prototyping or automated TGM processing without resorting to low-level library programming in C or C++.
+
+
+[[hints]]
+== HINTS
+
+_MGED_ database names conventionally end with `.g` .
+
+SIGINT aborts the current command.
+
+"q" or EOF exits the program.
+
+The ".mgedrc" file is searched for in three places. The first one found is used, and any others are ignored.
+
+
+. If the environment variable MGED_RCFILE is set, it is used as a path name for the file to be used.
+. If the environment variable HOME is set, then HOME/.mgedrc is used.
+. If the file ".mgedrc" exists in the current directory, it is used.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+The following are run from the operating system command prompt:
+
+.Running the _MGED_ *l* from the operating system command line.
+[example]
+====
+user:~**mged /usr/brlcad/share/brlcad/7.12.2/db/m35.g l component**
+
+
+....
+
+Opened in READ ONLY mode
+component:  --
+   u bed
+   u frame
+   u cab
+   u suspension
+   u misc
+   u power.train
+	
+....
+
+
+
+====
+
+.Running _MGED_ without a display manager.
+[example]
+====
+user:~**mged -c**
+
+
+....
+
+BRL-CAD Release 7.13.0  Geometry Editor (MGED)
+    Thu, 09 Oct 2008 22:31:41 -0400, Compilation 1
+    user@localhost:/usr/brlcad/
+
+attach (nu|X|ogl)[nu]? nu
+mged>
+	
+....
+
+
+
+====
+
+.Running _MGED_ and bypassing the attach prompt by specifying the X11 display manager.
+[example]
+====
+user:~**mged -a X -c**
+
+
+....
+
+BRL-CAD Release 7.15.0  Geometry Editor (MGED)
+    Tue, 22 Sep 2009 12:40:01 -0400, Compilation 1
+    user@localhost:/usr/brlcad/
+
+ATTACHING X (X Window System (X11))
+
+mged>
+	
+....
+
+
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+_Computer Graphics for Target Descriptions_, BRL Technical Report ARBRL-TR-02480, _GED: An Interactive Solid Modeling System for Vulnerability Assessments_
+
+*brlcad*(1), *rt*(1), *comgeom-g*(1), *vdeck*(1), *librt*(3)
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Error messages are intended to be self-explanatory.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1984-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

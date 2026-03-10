@@ -1,0 +1,47 @@
+= QVROT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+qvrot - Adjusts the current MGED viewing direction such that the eye is positioned along the direction vector (_dx dy dz_) from the view center and is looking towards the view center.
+
+== SYNOPSIS
+
+[source]
+----
+qvrot {dx dy dz angle}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Adjusts the current MGED viewing direction such that the eye is positioned along the direction vector (_dx dy dz_) from the view center and is looking towards the view center. The _angle_ (in degrees) allows for a twist about the viewing direction. The *ae* command provides a similar capability. See also the *ae2dir* and *viewdir* commands.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *qvrot* command to change the current view.
+
+.Change the current view.
+[example]
+====
+mged>**qvrot 0 0 1 90**
+
+Sets the current view to the same as achieved by the *press top* command.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

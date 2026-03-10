@@ -1,0 +1,47 @@
+= SED(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+sed - Places MGED directly into the primitive edit mode.
+
+== SYNOPSIS
+
+[source]
+----
+sed {path}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Places MGED directly into the primitive edit mode. The path must uniquely identify a primitive shape. If the shape is only referenced once in the objects being displayed, then the _path_ may simply be the shape name. If the shape is multiply referenced, then the _path_ should be the full _path_ from a top-level displayed object to the primitive shape to be edited. The *who* command will return a list of the top-level objects currently being displayed.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *sed* command to place MGED into the primitive edit mode for a specified shape.
+
+.Enter the primitive edit mode for a particular shape.
+[example]
+====
+mged>**sed shape1**
+
+Enters the primitive edit state for shape1.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

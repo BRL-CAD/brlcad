@@ -1,0 +1,49 @@
+= LISTEVAL(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+listeval - Displays primitive shape parameters after applying the accumulated transformations from the indicated _path_.
+
+== SYNOPSIS
+
+[source]
+----
+listeval [-t] {path}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Combinations may include transformation matrices to be applied to their members. A _path_ through a series of _combinations_ and ending with a primitive shape represents that _primitive shape_ with the transformations accumulated through the path applied to it. The *listeval* command displays primitive shape parameters after applying the accumulated transformations from the indicated _path_. If the specified _path_ does not end at a _primitive shape_, then all possible paths from the indicated _path_ to any _primitive shape_ will be evaluated and displayed. The -t option forces a shorter (i.e. terse) list of primitive shape parameters. This option is useful for primitives with potentially long parameter lists, such as BOTs.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *listeval* command to display the parameters for a specified shape after applying the transformations from the given path.
+
+.Display parameters for a given shape after applying transformations from a given path.
+[example]
+====
+
+mged> **listeval group1/region1/shapeb**::
+Displays the parameters for _shapeb_ after applying the transformation matrix from _group1_ for _region1_ and the transformation matrix from _region1_ for _shapeb_.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

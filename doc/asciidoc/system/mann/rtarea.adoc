@@ -1,0 +1,271 @@
+= RTAREA(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rtarea - Calculate exposed, presented and centers of surface areas (MGED Command)
+
+== SYNOPSIS
+
+[source]
+----
+rtarea [options]...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+For displayed objects, the _rtarea_ command calculates the exposed, presented and centers of surface areas. The summary output includes details for individual regions, assemblies (combinations that contain regions), and summarized totals. By default current display azimuth and elevation are used for computations. Summary units are current MGED editing units.
+
+The *exposed* area corresponds to what a human observer would see looking at the object(s) in question, if all the objects were non-transparent. For example, say rays were cast towards two cubes, each one of which is a region, one in front of the other, grouped into an assembly, with the ray direction pointed into the page:
+
+
+....
+
+|----------------| Rear Cube
+|                |
+|                |
+|        |--------------| Front Cube
+|        |       |      |
+|        |       |      |
+|--------|-------|      |
+	 |              |
+	 |              |
+	 |--------------|
+      
+....
+
+The exposed area of the Front Cube corresponds to the total area of the sheet, since it is not occluded by any other object:
+
+
+....
+
+|----------------| Rear Cube
+|                |
+|                |
+|        |--------------| Front Cube
+|        |**************|
+|        |**************|
+|--------|**************|
+	 |**************|
+	 |**************|
+	 |--------------|
+      
+....
+
+The Rear Cube, on the other hand, IS occluded by the Front Cube and would thus report only a fraction of its area as exposed:
+
+
+....
+
+|----------------| Rear Cube
+|****************|
+|****************|
+|********|--------------| Front Cube
+|********|       |      |
+|********|       |      |
+|--------|-------|      |
+	 |              |
+	 |              |
+	 |--------------|
+      
+....
+
+An object that combines both of these sheets would thus report as its exposed area the sum of the exposed areas of the individual sheets:
+
+
+....
+
+|----------------| Rear Cube
+|****************|
+|****************|
+|****************|------| Front Cube
+|***********************|
+|***********************|
+|--------|**************|
+	 |**************|
+	 |**************|
+	 |--------------|
+      
+....
+
+
+
+*Presented* area, unlike exposed area, does not take occlusion into account. It is the equivalent of taking each object and considering it in isolation. So for the previous case of two sheets of metal, the Front Cube would report the same area:
+
+
+....
+
+|----------------| Rear Cube
+|                |
+|                |
+|        |--------------| Front Cube
+|        |**************|
+|        |**************|
+|--------|**************|
+	 |**************|
+	 |**************|
+	 |--------------|
+      
+....
+
+The Rear Cube, on the other hand, ALSO reports its full area:
+
+
+....
+
+|----------------| Rear Cube
+|****************|
+|****************|
+|****************-------| Front Cube
+|****************|      |
+|****************|      |
+|--------|-------|      |
+	 |              |
+	 |              |
+	 |--------------|
+      
+....
+
+When reporting the presented area of the group, there is a subtle point - rtarea does not count area covered by multiple regions multiple times when totaling the presented area. So for the group containing both cubes, the presented area is NOT the cumulative area of both regions' presented areas but the area of the union of those two areas. In this case, that works out to be the same as the exposed area.
+
+
+....
+
+|----------------| Rear Cube
+|****************|
+|****************|
+|****************|------| Front Cube
+|***********************|
+|***********************|
+|--------|**************|
+	 |**************|
+	 |**************|
+	 |--------------|
+      
+....
+
+
+
+It should be noted that rtarea only counts surfaces with a surface normal that has a component looking back in the direction of the ray. So, for example, a cube with only one face looking "back toward" the ray will not report area from other faces as "presented", since their surface normals will indicate they are not surfaces being presented to the ray.
+
+WARNING: _Rtarea_ may not correctly report area or center when instancing is done at the group level. Using *xpush* can be a workaround for this problem.
+
+
+[[options]]
+== OPTIONS
+
+
+*-s#*::
+Specifies the number of rays to fire in the X and Y directions on a square grid. The default size is 512 pixels.
+
+
+*-a#*::
+Selects auto-sizing, and gives the view azimuth in degrees. Used with -e option. The default is the current display azimuth.
+
+
+*-e#*::
+Selects auto-sizing, and gives the view elevation in degrees. Used with -a option. The default is the current display elevation.
+
+
+*-g#*::
+Is used to set the grid cell width, in millimeters. Ordinarily, the cell width is computed by dividing the view size by the number of pixels of width, so this option need not be used. To obtain exactly 1 inch ray spacing, specify -g25.4. If the grid cell width is specified and the grid cell height is not specified, the grid cell height defaults to be the same as the width.
+
+
+*-G#*::
+Sets the grid cell height, in millimeters.
+
+
+*-J#*::
+The "jitter" flag is a bit vector. If one (-J1), it randomizes the point from which each ray is fired by +/- one half of the pixel size. If two (-J2), it shifts the origin of the output frame once for each frame. The shift is along a circular path in the plane of the frame, with a period of ten seconds, and a radius of +/- 1/4 pixel width. If three (-J3), it performs both operations.
+
+
+*-U#*::
+Sets the "use_air" value. The default is 1, meaning "air" solids (i.e. regions with a non-zero aircode attribute value) will be retained. If this value is zero, "air" solids in the model will be ignored.
+
+
+*-c "set cc=1"*::
+Compute and report area centers. The default is off.
+
+
+*-X#*::
+Turns on the rt(1) program debugging flags. See raytrace.h for the meaning of these bits.
+
+
+*-x#*::
+Sets the librt(3) debug flags to the given hexadecimal bit vector. See raytrace.h for the bit definitions.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+.Calculate exposed and presented surface areas
+[example]
+====
+mged>**rtarea**
+
+Calculate exposed and presented surface areas of the displayed objects using current azimuth, elevation and size. Results are reported in current editing units.
+
+====
+
+.Calculate exposed, presented and centers of surface areas
+[example]
+====
+mged>**rtarea -c "set cc=1"**
+
+Calculate exposed, presented and centers of surface areas of the displayed objects using current azimuth, elevation and size. Results are reported in current editing units.
+
+====
+
+.Calculate exposed and presented surface areas (results in inches)
+[example]
+====
+mged>**units in**
+
+Set current editing units to inches.
+
+mged>**rtarea**
+
+Calculate exposed and presented surface areas of the displayed objects using current azimuth, elevation and size. Results reported in inches.
+
+====
+
+.Calculate exposed and presented surface areas (az=35, el=25, auto-size)
+[example]
+====
+mged>**rtarea -a35 -e25**
+
+Calculate exposed and presented surface areas of the displayed objects using azimuth 35, elevation 25 and size auto-set for best fit. Results reported in current editing units.
+
+====
+
+.Calculate exposed and presented surface areas (1x1 inch grid cells)
+[example]
+====
+mged>**rtarea -g25.4**
+
+Calculate exposed and presented surface areas of the displayed objects using current azimuth, elevation and size. The grid cell width and height is 25.4 millimeters (i.e. 1 inch). Results reported in current editing units.
+
+====
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1987-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to <bugs@brlcad.org>.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team

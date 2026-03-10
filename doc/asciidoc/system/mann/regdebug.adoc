@@ -1,0 +1,47 @@
+= REGDEBUG(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+regdebug - Toggles the display manager debug flag or sets the debug flag to a specified value.
+
+== SYNOPSIS
+
+[source]
+----
+regdebug [debug_level]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+With no options, the *regdebug* command toggles the display manager debug flag. If a __debug_level__ is supplied, then the display manager debug flag is set to that value.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *regdebug* command to toggle the display manager debug flag.
+
+.Toggle display manager debug flag.
+[example]
+====
+mged>**regdebug**
+
+Toggles the display manager debug flag.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,47 @@
+= QUERY_RAY(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+query_ray - Runs the NIRT program that is distributed with BRL-CAD to intersect a single ray with the displayed objects.
+
+== SYNOPSIS
+
+[source]
+----
+query_ray [nirt_args]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Runs the NIRT program that is distributed with BRL-CAD to intersect a single ray with the displayed objects. By default, NIRT is run using the current database and the currently displayed objects and uses the current eye point as the ray start point and the current viewing direction as the ray direction. This effectively fires a ray at the center of the MGED display. The resulting list of intersections between the ray and the objects is given. Additional arguments may be supplied on the NIRT command line. See the _man_ page of *nirt* for more details.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *query_ray* command to fire a single ray through the center of the MGED display.
+
+.Fire a ray through the center of the MGED display.
+[example]
+====
+mged>**query_ray**
+
+Fires a single ray through the center of the MGED display.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

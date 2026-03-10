@@ -1,0 +1,195 @@
+= BREP PLOT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED User Commands
+
+== NAME
+brep plot - Plot specific components of brep objects in a 3D scene.
+
+== SYNOPSIS
+
+[source]
+----
+brep {obj}plot [C2|C3|E|F|F2d|FSBB|FSBB2d|FTBB|FTBB2d|FTD|I|L|L2d|S|SCV|SK|SK2d|SN|SUV|SUVP|T|T2d|V|CDT|CDT2d|CDTw] [arguments]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+If _obj_ is not a brep object, then report that fact and exit. Otherwise, generate 3D scene visuals of the specified _obj_ brep data. Note that the user may need to use *autoview* to center the view on the plotted data; the command does not automatically do so, in order to allow for debugging scenarios where it is desirable to maintain a fixed view.
+
+This command has quite a few subcommands, as it is the primary means in BRL-CAD for visually inspecting properties of BRep objects:
+
+
+Plot one or more 2D parametric space geometric curves.
+
+
+
+
+Plot one or more 3D geometric curves.
+
+
+
+
+Plot one or more topological 3D edges.
+
+
+
+
+Plot one or more topological faces.
+
+
+
+
+Plot one or more topological faces in 2D parametric space.
+
+
+
+
+Plot one or more face's surface bounding boxes (used for ray intersection testing).
+
+
+
+
+Plot one or more face's surface bounding boxes in 2D (used for ray intersection testing).
+
+
+
+
+Plot one or more face trim's bounding boxes in 3D.
+
+
+
+
+Plot one or more face trim's bounding boxes in 2D parametric space.
+
+
+
+
+Plot one or more face trim's direction - geometric curves will have one direction as part of their definition, but such curves may be re-used by trims and those trims may indicate their own direction independent of the curve.
+
+
+
+
+Plot one or more surface's isosurface curves.
+
+
+
+
+Plot one or more topological trimming loops in 3D.
+
+
+
+
+Plot one or more topological trimming loops in 2D parametric space.
+
+
+
+
+Plot one or more untrimmed surfaces.
+
+
+
+
+Plot one or more surface's control vertex mesh.
+
+
+
+
+Plot one or more surface's knots in 3D.
+
+
+
+
+Plot one or more surface's knots in 2D parametric space.
+
+
+
+
+Plot one or more surface's normal vectors.
+
+
+
+
+Plot one or more surface's UV bounds.
+
+
+
+
+Plot a surface's 3D point at the specified 2D parametric space UV coordinates.
+
+
+
+
+Plot one or more topological trims in 3D.
+
+
+
+
+Plot one or more topological trims in 2D parametric space.
+
+
+
+
+Plot one or more 3D vertices.
+
+
+
+
+Plot the shaded view of a constrained Delaunay triangulation of one or more BRep faces.
+
+
+
+
+Plot the constrained Delaunay triangulation of one or more BRep faces in 2D parametric space.
+
+
+
+
+Plot the wireframe view of a constrained Delaunay triangulation of one or more BRep faces.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+.Plot single face
+[example]
+====
+mged>**brep Brep_1.s plot F 1**
+
+Plots the various loops making up the definition of Face 1 in Brep_1.s
+
+====
+
+.Plot a range of faces
+[example]
+====
+mged>**brep Brep_1.s plot F 1-10**
+
+Plots the various loops making up the definition of faces 1 to 10 in Brep_1.s
+
+====
+
+.Plot a list of faces
+[example]
+====
+mged>**brep Brep_1.s plot F 1,3,5,10**
+
+Plots the various loops making up the definition of faces 1, 3, 5 and 10 in Brep_1.s
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRLCAD-TEAM
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

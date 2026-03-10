@@ -1,0 +1,54 @@
+= BWHIST(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+bwhist - display a histogram of a black and white bw file on a framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+bwhist [-v] [file.bw]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bwhist* displays a histogram of the pixel values in a *bw*(5) format file. If a file is not given, standard input is read. The output will be displayed on the frambuffer selected via the `FB_FILE` environment variable (see *libfb*(3)).
+
+The relative frequency is displayed on the x axis scaled so that the maximum is full screen. The value 0 is at the bottom of the screen, 255 is at the top.The output is overlaid on whatever is currently on the display.
+
+The *-v* flag will output the histogram values on the terminal.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *bwhisteq*(1), *bwstat*(1), *bw*(5)
+
+
+[[bugs]]
+== BUGS
+
+This program assumes it has at least 512 lines in y to work with.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

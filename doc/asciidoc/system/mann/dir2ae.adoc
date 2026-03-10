@@ -1,0 +1,47 @@
+= DIR2AE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+dir2ae - Returns the azimuth and elevation (AE) using the provided direction vector.
+
+== SYNOPSIS
+
+[source]
+----
+dir2ae [-i] {dx dy dz}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Returns the azimuth and elevation (AE) using the provided direction vector as input. If the _-i_ option is used the commmand will return the inverse AE. See also the *ae2dir* and *qvrot* commands.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *dir2ae* command to get the AE.
+
+.Find the AE using the provided direction vector.
+[example]
+====
+mged>**dir2ae 0.707107 0.707107 0**
+
+Returns the AE using a direction vector of 0.707107 0.707107 0.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

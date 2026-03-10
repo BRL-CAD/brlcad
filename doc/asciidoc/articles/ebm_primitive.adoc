@@ -1,0 +1,57 @@
+= Using the Extruded Bitmap Primitive
+Lee A Butler; Eric W Edwards; Dwayne L Kregel
+:doctype: article
+:toc:
+:toclevels: 3
+
+The extruded bitmap (ebm) primitive allows the user to make a three-dimensional (3-D) shape from a two-dimensional black-and-white image. This feature can be helpful when dealing with complex outlines, text, or other complicated shapes captured as images.
+
+For example, the ebm could be used if one wanted to model 3-D letters, such as in a company name, onto the side of a simulated wall or building. Note also that the same image used for the projection can, with some extra processing, form the basis for the ebm (see Figures C-1-C-3).
+
+[[ebm3]]
+.Example of the .bw image used for ebm.
+image::../articles/images/ebm_primitive_fig01.png[]
+
+[[ebm4]]
+.Example of ebm.
+image::../articles/images/ebm_primitive_fig02.png[]
+
+[[ebm5]]
+.Example of the ebm with projection shader added.
+image::../articles/images/ebm_primitive_fig03.png[]
+
+To make an ebm, the image file must be a black and white (.bw) file. A .bw image is a grayscale raw image file with only one channel. Each pixel can be turned on or off, but it has no color data. As shown in Figures C-2 and C-3, the white part of the image may be extruded in a straight line in the +Z direction to whatever length the user specifies. Regardless of the complexity of the geometry, all of the extruded shapes form a single ebm primitive.
+
+To enter an ebm in a database, the in command must be used. The arguments are as shown in the following example:
+
+[[ebm8]]
+[cols="7*"]
+[%noheader]
+|===
+|in
+|sample.ebm
+|ebm
+|image.bw
+|600
+|800
+|1
+|Make a shape.
+|Name it sample.
+|Make it an ebm.
+|Use the image.bw image file.
+|The image is 600 pixels wide.
+|The image is 800 pixels high.
+|Extrude the shape 1 inch (or whatever working units are in effect at the time) in the +Z direction.
+|===
+
+
+[NOTE]
+====
+Points to Remember About the ebm
+* The ebm cannot be created with the make, create, or inside commands.
+* The desired width and height of the ebm are input as pixel values, but the extrusion distance can be expressed in any working units.
+* Extrusions are made in the +Z direction, although after an ebm is made, the shape can be rotated, translated, or scaled.
+* When extruded, all shapes form a single ebm primitive.
+
+====
+

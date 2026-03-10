@@ -1,0 +1,96 @@
+= RESHOOT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+reshoot - re-shoot rays and compare results
+
+== SYNOPSIS
+
+[source]
+----
+reshoot model.g objects... < raylist
+----
+
+
+[[description]]
+== DESCRIPTION
+
+This program is designed to shoot a set of rays and compare the results with previous results. The program exits with a non-zero status if any rays are different from the previous run, and a 0 status if no differences were found.
+
+Typically, an application (probably other than *reshoot*) is run with the RT_G_DEBUG flag DEBUG_ALLHITS set. This will cause librt to log all calls to the application _hit_ routine to the standard error. The logged output can be processed by an _awk_ program to produce input to *reshoot*. Consider the file p.awk with the following contents:
+
+
+....
+
+/Pnt/ { START=index($0,"(") + 1
+       STR=substr($0, START, index($0,")") - START)
+       gsub(  ", "  , "," , STR)
+       printf "Pnt=%s\n",STR
+       }
+/Dir/ { START=index($0,"(") + 1
+       STR=substr($0, START, index($0,")") - START)
+       gsub(  ", "  , "," , STR)
+       printf "Dir=%s\n",STR
+       }
+/PT/  { PIN=$3; POUT=$5 }
+/InHIT/ { INHIT=$2 }
+/OutHIT/ { OUTHIT=$2 }
+/Region/ { printf "	region=%s in=%s in%s out=%s out%s\n",
+	$2,PIN,INHIT,POUT,OUTHIT
+	}
+....
+
+Given this _awk_ program The log file from the application can be processed as follows:
+
+awk -f p.awk < logfile > shotlist
+
+to produce input for *reshoot*. An example of the input file format for *reshoot* is:
+
+
+....
+
+Pnt=0,0,1
+Dir=0,0,-1
+	region=r1.r in=p1.s indist=10016.8 out=p2.s outdist=10017.8
+	region=r2.r in=p3.s indist=10018.8 out=p4.s outdist=10019.8
+	... (arbitrary many region lines)
+Pnt=0,0,10
+Dir=0,0,-1
+	region=r1.r in=p1.s indist=10016.8 out=p2.s outdist=10017.8
+	region=r2.r in=p3.s indist=10018.8 out=p4.s outdist=10019.8
+	... (arbitrary many region lines)
+....
+
+There can be an arbitrary number of rays specified in the file. There must not be whitespace between the values of Pnt and between the values of Dir; it is best to comma-separate the three coordinate values. The keywords "Pnt" and "Dir" must occur at the beginning of a line. There can be an arbitrary number of regions along the ray path. Each region must be described on a single line. A new ray is started by a "Pnt" value. Then *reshoot* can be run as follows:
+
+reshoot geom.g obj ... < shotlist
+
+Differences are reported for each ray as they are found:
+
+Ray Pt 0,0,1 Dir 0,0,-1 inhit mismatch 17.8177 16.8 outhit mismatch 24.7685 23.8 region name mismatch /oops.r sb r1.r in primitive name mismatch p8.s sb p1.s
+
+
+[[bugs]]
+== BUGS
+
+The floating point values logged when the DEBUG_ALLHITS flag is set in RT_G_DEBUG are printed with a %g format. This causes some truncation of precision. This is accounted for by *reshoot* by re-formatting the numbers computed into ascii and re-parsing them back in. This causes the same amount of precision loss as the original values have undergone. However, small actual differences are also overlooked as a result.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2006-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

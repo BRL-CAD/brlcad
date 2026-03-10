@@ -1,0 +1,84 @@
+= PLOT3ROT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+plot3rot - rotate, translate, or scale a UnixPlot file
+
+== SYNOPSIS
+
+[source]
+----
+plot3rot [ -x# -y# -z#] [ -X# -Y# -Z#] [-s#] [ -a# -e#] [-g#] [-M] [-m#] [-v] [-S#] < unix_plot > unix_plot
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*plot3rot* will rotate translate or scale a UnixPlot file (see *plot3*(5)). Any number of the above options can be given. Each operation is performed left to right in the order in which they appear on the command line, and the operations are concatenated. It is important to note that rotations are not commutative, so the order they are specified in is important. Typing the command without any arguments gives a useful summary.
+
+The lower case *-x# -y# -z#* flags perform a rotation about the X, Y, and Z axes respectively by the given number of degrees. A positive value indicates a right handed rotation. Upper case *-X# -Y# -Z#* are translations along these axes in whatever units the plot file is in. The *-s#* flag applies a scale factor up (> 1) or down (< 1) to the plot.
+
+The *-a# -e#* flags are for azimuth and elevation about the center point. They are really shorthands for positive Z axis and negative X axis rotations respectively, and should be used in the order shown for the proper combined effect to occur. These flags also cause the plot to auto-center based on the "space" command in the plot file, and the new "space" command will be shrunk to fit the rotated plot as tightly as possible.
+
+The *-M* flag causes the plot to auto-center based on the "space" command in the plot file in much the same way that the *rt*(1) ray tracer does to a model bounding box. I.e. a sphere is fit to this space and the diameter and center of this sphere are used as the center and width of the plot in all three dimensions. This has the advantage of keeping the entire model in view from any angle, and is invariant with respect to viewing direction. It has the disadvantage that the "space" will be enlarged on every cascaded pass through *plot3rot*(1) where the *-M* flag is used.
+
+The *-S#* flag takes a quoted string of 6 floating point numbers ("min_x min_y min_z max_x max_y max_z"), which are immediately output as a "space" command, and which override any spaces specified by "space" commands found in the input file, as well as any spaces which are computed by translating, rotating, or scaling from those input spaces as directed by other flags.
+
+The *-v* flag signals that verbose mode is requested. When set, the initial transformation matrix is printed. In addition, every time a _space_ command is encountered in the input file, the old and new bounding RPP is printed.
+
+The *-m#* flag takes a quoted string of 16 floating point numbers as its parameter. This string is a 4x4 rotation matrix (see h/vmath.h for details). Note that when using this flag, do not use *-a#, -e#,* or *-g.*
+
+UnixPlot is traditionally a first quadrant 2D plotting space with X increasing to the right of the plot, and Y increasing up the plot. The "front" of a solid model in the BRL-CAD Package is traditionally defined by the right handed system of X coming out of the screen toward you, Y increasing to the right, and Z increasing up the display (elevation above the XY ground plane). The *-g* flag is a convenient shorthand to transform azimuths and elevations described in *gift* notation (as degrees off the front or -X view) into the UnixPlot coordinate system for display. If used, this option should usually appear as the last argument, because it acts by modifying the rotation already established. The *-g* command has exactly the same effect as giving *-z-90 -x-90* in the same place.
+
+
+[[examples]]
+== EXAMPLES
+
+The command
+
+
+....
+
+plot3rot -z30 -x20 < file.plot3 > file2.plot3
+....
+
+performs a 30 degree positive rotation about the Z axis (counter clockwise as viewed from the top), and then translates by 20 units *along this rotated axis.* If the order of these arguments was reversed the effect would not be the same.
+
+To view a plot of a model the way one would see it from a ray trace command, you could use:
+
+
+....
+
+rthide -a35 -e25 -o file.plot3
+
+plot3rot -a35 -e25 -g < file.plot3 | plot3-fb
+....
+
+The final *-g* converts the *gift* style azimuth and elevations into the conventional UnixPlot (screen) X,Y coordinate system.
+
+
+[[see_also]]
+== SEE ALSO
+
+*plot3-plot3*(1), *plot3debug*(1), *plot3-fb*(1), *libplot3*(3), *plot3*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1988-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

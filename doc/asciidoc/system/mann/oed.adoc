@@ -1,0 +1,49 @@
+= OED(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+oed - Places MGED directly into the matrix edit mode.
+
+== SYNOPSIS
+
+[source]
+----
+oed {path_lhs path_rhs}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Places MGED directly into the matrix edit mode. The __path_rhs__ must be a path to a primitive shape, and __path_lhs__ must be a path to a combination that includes the first component of __path_rhs__ as one of its members. The edited matrix will be the matrix in the final component of __path_lhs__ that corresponds to the first component of __path_rhs__. The last component in __path_rhs__ is used as the reference shape during object editing.
+
+Note that for scripting the object to be edited must be in view so a *B* or *draw* must be used on the object before using the *oed* command.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *oed* command to place MGED into matrix edit mode. The matrix in the final component of __path_lhs__ that corresponds to the first component of __path_rhs__ will be edited.
+
+.Place MGED in matrix edit mode.
+[example]
+====
+mged>**oed group1/group2 region1/shapea**
+
+Places MGED into matrix edit mode, editing the matrix in _group2_ that corresponds to _region1_, using _shapea_ as the reference shape.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

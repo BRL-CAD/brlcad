@@ -1,0 +1,103 @@
+= Camouflage shader
+:doctype: article
+:toc:
+:toclevels: 3
+
+[[Introduction]]
+== Introduction
+
+The "camo" shader creates a pseudo-random tri-color camouflage pattern on the object using a fractal noise pattern. This is a procedural shader based upon a fractal noise function known as fractional brownian motion or fBm.
+
+The fractal noise function produces a pseudo- random number in the range [-1.0 ... 1.0] from the 3-space coordinates of a point in the bounding volume of the region. This noise value is used to determine the color of the object at the given location.
+
+
+
+.Table 1
+[cols="2*"]
+|===
+|Noise Value
+|Object Color
+
+|nv < thresh1
+|color 1
+|nv < thresh1 and nv < thresh2
+|color 2
+|nv > thresh2
+|color 3
+|===
+
+
+
+The fractal pattern has infinite resolution. As a result, the borders of the color splashes never become pixelated, no mater how close the eyepoint is to the surface.
+
+
+
+.Table 2
+[cols="3*"]
+|===
+|parameter
+|Abbreviation
+|Default Value
+3+|Noise Parameters
+
+|lacunarity
+|l
+|2.1753974
+|H
+|H
+|1.0
+|octaves
+|o
+|4.0
+|size
+|s
+|1.0
+|vscale
+|v
+|1.0/1.0/1.0
+|delta
+|d
+|1000/1000/1000
+3+|*Shader Specific Parameters*
+|thresh1
+|t1
+|-0.25
+|thresh2
+|t2
+|0.25
+|color1
+|c1
+|97/74/41
+|color2
+|c2
+|26/77/10
+|color3
+|c3
+|38/38/38
+|===
+
+
+
+*Lacunarity*
+
+The grid on which the noise function is built is scaled by this value for each successive octave of noise which will be combined to produce the final result.
+
+*Octaves*
+
+The number of times the noise grid will be scaled and recombined to produce the final noise function
+
+*Size, Vscale*
+
+If *size* is set it is used as a scalar which defines the size of the noise grid on the object. So if t2=0.5 and size=5mm then splotches of color3 would tend to be no larger than 5-10mm. If non-uniform scaling is required, Vscale can specify the grid size in X, Y and Z.
+
+*Delta*
+
+This specifies a translation in noise space for the origin of region space. Since the origin of noise space is reflected 8 ways, it is undesirable to have that portion of noise space overlap with region space.
+
+
+[[Limitations]]
+== Limitations
+
+Because of the continuous nature of the fractal noise space, it is impossible to get a splash of color1 directly adjacent to a splash of color3.
+
+

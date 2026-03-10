@@ -1,0 +1,162 @@
+= LIBWDB(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+libwdb - library for procedural generation of MGED databases
+
+== SYNOPSIS
+
+[source,c]
+----
+
+#include "vmath.h"
+#include "wdb.h"
+
+mk_id(FILE * fp, char * title);
+mk_half(FILE * fp, char * name, double d, point_t norm);
+mk_rpp(FILE * fp, char * name, point_t min , max, mk_wedge ( fp , name , vert , xdir , zdir , xlen , ylen , zlen , x_top_len ) );
+
+FILE	*fp;
+char	*name;
+point_t	vert;
+vect_t	xdir;
+vect_t	zdir;
+fastf_t	xlen;
+fastf_t	ylen;
+fastf_t	zlen;
+fastf_t	x_top_len;
+
+mk_arb4(FILE * fp, char * name, point_t pts[]);
+mk_arb5(FILE * fp, char * name, point_t pts[]);
+mk_arb6(FILE * fp, char * name, point_t pts[]);
+mk_arb7(FILE * fp, char * name, point_t pts[]);
+mk_arb8(FILE * fp, char * name, point_t pts[]);
+mk_sph(FILE * fp, char * name, point_t center, fastf_t radius);
+mk_ell(FILE * fp, char * name, point_t center, vect_t a , b , c, mk_tgc ( fp , name , center , a , b , c , d ) FILE * fp, char * name);
+
+point_t	center;
+vect_t	a, b, c, d;
+
+mk_tor(FILE * fp, char * name, point_t center, vect_t n, double r1 , r2, mk_cone ( fp , name , base , dir , height , rad1 , rad2 ) FILE * fp);
+
+char	*name;
+point_t	base;
+vect_t	dir;
+fastf_t	height;
+fastf_t	rad1;
+fastf_t	rad2;
+
+
+mk_rcc(FILE * fp, char * name, point_t base, vect_t height, fastf_t radius);
+mk_pipe(FILE * fp, char * name);
+
+struct wdb_pipept *headp;
+
+mk_pipe_free(struct wdb_pipept * headp);
+mk_pipe_init(struct wdb_pipept * headp, point_t coord, fastf_t od , id , bendradius, mk_add_pipe_pt ( headp , coord , od , id , bendradius ) struct wdb_pipept * headp, point_t coord);
+
+fastf_t od, id, bendradius;
+
+mk_comb(FILE * fp, char * name, char * matname, char * matparm, char * rgb, mk_fcomb ( fp , name , len , region ) FILE * fp, char * name, mk_memb ( fp , name , mat , op ) FILE * fp);
+
+char	*name;
+mat_t	mat;
+int	op;
+
+mk_addmember(char * name, struct wmember * headp, mat_t mat, int op);
+mk_lcomb(FILE * fp, char * name, struct wmember * headp, char * matname, char * matparm, char * rgb, mk_lfcomb ( fp , name , headp , region ) FILE * fp, char * name);
+
+struct	wmember *headp;
+
+mk_bsolid(FILE * fp, char * name, int nsurf, double res);
+mk_bsurf(FILE * filep, struct b_spline * bp);
+
+----
+
+
+[[description]]
+== DESCRIPTION
+
+This library exists to permit writing MGED databases from arbitrary procedures. Some of the high-level structure of MGED databases (e.g., that they start with an ID record, and that COMB records must be followed immediately by MEMBER records) is currently implicit in the calling routines. This library is by no means complete, and routines for writing every type of solid do not yet exist. While it is expected that this library will grow and change as experience is gained, it is not clear what direction that evolution will take. Be prepared for changes in the interface to some of these routines in future releases. All routines take as their first argument the stdio FILE pointer (e.g., stdout) on which the generated MGED database record(s) will be written with fwrite().
+
+__mk_id__ fwrites an IDENT record on the indicated stdio file, with the string _title_ associated. Note that to have a valid database, the the first record written must have been an IDENT record such as written by this routine.
+
+__mk_half__ makes a halfspace with name "name". It is specified by the distance "d" from the origin, and the outward pointing normal vector "norm".
+
+__mk_rpp__ makes an ARB8 called "name" specified as a right rectangular parallelepiped in terms of a minimum point "min" and a maximum point "max".
+
+__mk_wedge__ makes a right angular wedge called "name" specified by a starting vertex located in the lower left corner of the solid, an x-direction vector, a z-direction vector, an x-length, a y-length, a z-length, and a top x-length. The y-direction vector is the result of x-direction vector cross z-direction vector. All vertices are make in the counterclockwise direction, bottom face first. The top face is made by extruding the bottom face in the z direction.
+
+__mk_arb4__ makes an ARB8 called "name" described as an ARB4, i.e., by 4 points, the first 3 of which lie on a plane, and the fourth is the "peak".
+
+__mk_arb8__ makes an ARB8 called "name" described by an array of 8 points in "pts". All plates with 4 points must be co-planar. If there are degeneracies (i.e., all 8 vertices are not distinct), then certain requirements must be met. If we think of the ARB8 as having a top and a bottom plate, the first four points listed must lie on one plate, and the second four points listed must lie on the other plate.
+
+__mk_sph__ makes a spherical ellipsoid called "name" centered at point "center" with radius "radius". __mk_ell__ makes an ellipsoid called "name" centered at point "center" with three perpendicular radius vectors. The eccentricity of the ellipsoid is controlled by the relative lengths of the three radius vectors.
+
+__mk_tgc__ makes a truncated general cone called "name" with the base plate centered at "center" and a height vector "height", which is perpendicular to the two end plates. The length of the height vector defines the location of the top plate. The vectors "a" and "b" are the base radius vectors, and the vectors "c" and "d" are the nose vectors.
+
+__mk_tor__ makes a torus called "name" centered at point "center", with the torus lying in a plane with normal "n". Radius "r1" is the distance from the center point of the torus to the center of the solid part, and radius "f2" is the radius of the solid part.
+
+__mk_cone__ makes a right circular cone called "name" specified by the center point of the base, a direction or height vector, a height scalar, and a radius for each end of the cone. The direction vector is unitized and serves to derive a vector "a", which is orthogonal to the direction vector and itself. This vector is scaled by both radii to obtain two of four vectors required to make a cone. It is then crossed with the unitized direction vector, and the result thereof is scaled by both radii as well to obtain the last of four vectors needed to make a cone.
+
+__mk_rcc__ makes a truncated general cone (TGC) with name "name" specified as a right circular cylinder. The base plate of the cylinder is centered at "base", with height vector "height" which is perpendicular to the two end plates, the length of which defines the location of the top plate. The radius given as "radius" defines the size of the end plates.
+
+`mk_pipe()` creates a "pipe" solid with the specified "name" and writes it to the file "fp". The user must provide a linked list of "pipe" segments headed by "headp". Each pipe segment includes fields indicating a "control" point for the pipe, an inner diameter, an outer diameter and a bend radius. The inner diameter must be less than the outer diameter, and a zero inner diameter creates a solid wire rather than a hollow pipe. The pipe is constructed along straight lines through successive points, with circular bends (of the indicated radius) connecting the straight sections. The bend radius must be greater than the outer radius. The user is responsible for freeing the memory used by the list of pipe segments (see `mk_pipe_free()` below.
+
+`mk_pipe_free()` will free the memory used by a linked list of pipe segments. This does not free the list head.
+
+`mk_pipe_init()` initializes a linked list of pipe segments with the initial point, inside diameter, outside diameter, and bend radius.
+
+__mk_add_pipe_pt__ adds another pipe segment to the list with the indicated point, outside radius, inside radius, and bend radius.
+
+__mk_comb__ defines a combination of name "name", with material properties information included. "len" indicated the number of __mk_memb__ calls (MEMB records) that will immediately follow. "region" is a boolean that is set to mark this combination as a region. "matname" is either a NULL pointer, or a pointer to a string containing the material property name. "matparm" is either a NULL pointer, or a pointer to a string containing the material property parameter information specific to that material. Color is passed as an array of three unsigned chars in "rgb". Color "inherit" is a boolean, and if true, the color and material properties will be passed from upper-level objects to lower-level objects. __mk_fcomb__ makes a simple combination header, with name "name", length "len", and the boolean "region". It functions just like __mk_comb__. "len" __mk_memb__ calls must immediately follow the call to __mk_comb__ or __mk_fcomb__. Each call to __mk_memb__ adds a reference to object "name" to the combination. It is transformed by the 4x4 matrix "mat", and is combined by boolean operation "op", chosen from the list of: UNION, INTERSECT, SUBTRACT, from <brlcad/db.h>.
+
+__mk_addmember__ is used to obtain dynamic storage for a new wmember structure (see _wdb.h_ ). Then __mk_lcomb__ can be used in the same way as __mk_comb__ to make a combination of a linked list of wmember structures. This is the only recommended way to create combinations, because it collects up the details in memory, and produces the combination and member records all at once, rather than in multiple calls, as in __mk_comb__ and __mk_memb.__ The "op" argument must be one of WMOP_UNION, WMOP_SUBTRACT, or WMOP_INTERSECT. In the future, __mk_comb__ and __mk_memb__ will no longer be supported. __mk_lfcomb__ is the linked list equivalent of __mk_fcomb.__ Note that the linked list heads must be initialized by an invocation of BU_LIST_INIT( &head.l );
+
+The routine __mk_bsolid__ writes the header for a b-spline solid "name", with "nsurf" surfaces, at "res" resolution. This call must be followed by "nsurf" calls to __mk_bsurf__ which enters the respective surfaces into the combination. This pair work much like the __mk_comb__ and __mk_memb__ pair.
+
+The global variable __mk_version__ may be set to 4 or 5, depending on which format BRL-CAD database you wish to write. By default, the most recent version is always created.
+
+
+[[examples]]
+== EXAMPLE(S)
+
+Several examples of how to use this library can be found in the proc-db directory of the BRL-CAD source distribution.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1B), *mged*(1B), *rt*(1B)
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+None
+
+
+[[bugs]]
+== BUGS
+
+The library is incomplete. The need for the application to know higher-level details is unfortunate, but necessary to keep the library simple. We may pay for this later.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1987-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

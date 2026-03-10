@@ -1,0 +1,47 @@
+= SOLIDS(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+solids - Lists a summary of all the primitive shapes used in regions referenced by the list of _objects_.
+
+== SYNOPSIS
+
+[source]
+----
+solids {file} {objects}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Lists a summary of all the primitive shapes used in regions referenced by the list of _objects_. The summary is written to the specified _file_. The summary is similar to that produced by the *regions* command, but with the addition of primitive shape parameters. The shape parameters listed will have the accumulated transformation matrices along the path from the listed _objects_ to the primitive shape applied (as would be listed by the *listeval* command). The *showmats* command may be used to see the actual transformation matrices.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *solids* command to list a summary of all the primitive shapes used in regions referenced by a list of objects.
+
+.List a summary of all the regions in a group.
+[example]
+====
+mged>**solids shapes_summary group1 regiona**
+
+Writes a summary of all the regions in _group1_ and includes the region named _regiona_. The summary includes detailed shape parameters for the shapes used in the regions.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,78 @@
+= RTDEPTH(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+rtdepth - compute a depth map of a model.
+
+== SYNOPSIS
+
+[source]
+----
+rtdepth [options]... model.g objects...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*rtdepth* operates on the indicated _objects_ in the input _model.g_ and produces a depth map. The distance of each ray to the first solid is computed and the result is divided by the "viewsize" (the length of the diagonal of the bounding box of the model, which represents the longest possible path). This relative distance is then converted to gray scale where black (1) is the greatest possible distance, through white (255) which represents a very close region. The color 0 is reserved for rays which pass through no material at all. This provides good contrast for the object (which would not usually be the case if 255 were chosen) and allows the background to be easily replaced.
+
+The orientation of the rays to be fired may be specified by the *-a* and *-e* options, in which case the model will be autosized, and the grid will be centered on the centroid of the model, with ray spacing chosen to span the entire set of _objects_. Alternatively, with the *-M* option, a transformation matrix may be provided on standard input which maps model-space to view-space. In this case, the grid ranges from -1.0 <= X,Y <= +1.0 in view space, with the size of the grid (number of rays fired) specified with *-s*. This option is most useful when *rtdepth* is being invoked from a shell script created by an *mged*(1) _saveview_ command.
+
+The following options are recognized.
+
+
+*-s#*::
+Number of rays to fire in X and Y directions (square grid). Default is 512 (512x512).
+
+
+*-a#*::
+Select azimuth in degrees. Used with *-e* and conflicts with *-M*
+
+
+*-e#*::
+Select elevation in degrees. Used with *-a* and conflicts with *-M*
+
+
+*-M*::
+Read model2view matrix from standard input. Conflicts with *-a* and *-e*
+
+
+*-o*::
+*output.bw* specifies a named BW(5) file for output. By default, the output is displayed on a frame buffer.
+
+
+
+See the *rt* manual page for additional arguments that can be used with this program.
+
+
+[[see_also]]
+== SEE ALSO
+
+*rt*(1), *rtray*(1)
+
+
+[[bugs]]
+== BUGS
+
+None known
+
+
+[[author]]
+== AUTHOR
+
+Phillip Dykstra, Erik Greenwald
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1990-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

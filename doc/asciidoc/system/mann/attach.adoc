@@ -1,0 +1,87 @@
+= ATTACH(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+attach - Opens a display window.
+
+== SYNOPSIS
+
+[source]
+----
+attach [-d display_string] [-i init_script] [-n name] [-t is_toplevel] [-W width] [-N height] [-S square_size] [win_type]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+This command is used to open a display window. The set of supported window types includes X and ogl. It should be noted that *attach* no longer releases previously attached display windows (i.e., multiple attaches are supported). To destroy a display window, use the *release* command.
+
+
+[[examples]]
+== EXAMPLES
+
+These examples demonstrate the use of the *attach* command to open ogl and X display windows.
+
+.Opening an ogl display window
+[example]
+====
+
+mged> **attach ogl**::
+Opens an ogl display window named .dm_ogl0 (assuming this is the first ogl display window opened using the default naming scheme)
+
+
+mged> **attach ogl**::
+Opens an ogl display window named .dm_ogl1.
+
+
+mged> **attach -n myOgl -W 720 -N 486 ogl**::
+Opens a 720 x 486 OpenGL display window named myOgl.
+
+
+mged> **attach -n myX -d remote_host:0 -i myInitX**::
+Open an X display window named myX on remote_host that is initialized by myInit.
++
+myInit might contain user-specified bindings like those found in the default bindings.
+
+
+mged> **toplevel.t**::
+A top-level window named .t was created.
+
+
+mged> **attach -t 0 -S 800 -n .t.ogl ogl**::
+Opens a 800 x 800 OpenGL display window named .t.ogl that is not a top-level window.
+
+
+mged> **button .t.dismiss -text Dismiss -command "release .t.ogl; destroy .t"**::
+Creates a button that dismisses the display manager, etc.
+
+
+mged> **pack .t.ogl -expand 1 -fill both**::
+Packs the display manager inside .t.
+
+
+mged> **pack .t.dismiss**::
+Packs the Dismiss button inside .t.
+
+
+mged> **attach**::
+Lists the help message that includes the valid display types.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

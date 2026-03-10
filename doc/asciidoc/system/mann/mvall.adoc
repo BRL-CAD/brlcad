@@ -1,0 +1,66 @@
+= MVALL(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+mvall - Changes the name of __old_name__ to __new_name__ wherever it occurs in the database.
+
+== SYNOPSIS
+
+[source]
+----
+mvall [-n] [(-f mapping_file) | (old_name new_name)]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Changes the name of __old_name__ to __new_name__. This will also change any references to __old_name__ that may occur in other combinations in the database. If the _-f_ variation of the command is used, all __old_name__ __new_name__ pairings are read from the __mapping_file__ and processed as previously stated. The _-n_ flag returns all groups that will be affected if the command were run but without changing the name, essentially running a *dbfind* on the __old_name__.
+
+
+[[examples]]
+== EXAMPLES
+
+.Change the name of an object everywhere it occurs in the database.
+[example]
+====
+mged>**mvall shapea shapeb**
+
+Changes the name of _shapea_ to _shapeb_ everywhere it occurs in the database.
+
+====
+
+.This example shows a simple mapping file.
+[example]
+====
+
+....
+
+# this line is a comment
+old_name new_name
+foo bar # another comment, replacing foo with bar
+bad_name good_name
+      
+....
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+mv prefix
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

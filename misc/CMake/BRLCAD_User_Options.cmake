@@ -412,43 +412,13 @@ endif(BRLCAD_HEADERS_OLD_COMPAT)
 # build targets.  We want to use them if they are there.
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-#-----------------------------------------------------------------------------
-# There are extra documentation files available requiring DocBook They are
-# quite useful in graphical interfaces, but also add considerably to the
-# overall build time.  Via xsltproc from bext (if needed) html and man page
-# outputs are always potentially available.  PDF output, on the other hand,
-# needs Apache FOP.  FOP is part of bext for a number of reasons, so we simply
-# check to see if it is present and set the options accordingly.
-
-# Do we have the environment variable set locally?
-if(NOT "$ENV{APACHE_FOP}" STREQUAL "")
-  set(APACHE_FOP "$ENV{APACHE_FOP}")
-endif(NOT "$ENV{APACHE_FOP}" STREQUAL "")
-if(NOT APACHE_FOP)
-  find_program(APACHE_FOP fop DOC "path to the exec script for Apache FOP")
-endif(NOT APACHE_FOP)
-mark_as_advanced(APACHE_FOP)
-# We care about the FOP version, unfortunately - find out what we have.
-if(APACHE_FOP)
-  execute_process(COMMAND ${APACHE_FOP} -v OUTPUT_VARIABLE APACHE_FOP_INFO ERROR_QUIET)
-  string(REGEX REPLACE "FOP Version ([0-9\\.]*)" "\\1" APACHE_FOP_VERSION_REGEX "${APACHE_FOP_INFO}")
-  if(APACHE_FOP_VERSION_REGEX)
-    string(STRIP ${APACHE_FOP_VERSION_REGEX} APACHE_FOP_VERSION_REGEX)
-  endif(APACHE_FOP_VERSION_REGEX)
-  if(NOT "${APACHE_FOP_VERSION}" STREQUAL "${APACHE_FOP_VERSION_REGEX}")
-    message("-- Found Apache FOP: version ${APACHE_FOP_VERSION_REGEX}")
-    set(APACHE_FOP_VERSION ${APACHE_FOP_VERSION_REGEX} CACHE STRING "Apache FOP version" FORCE)
-    mark_as_advanced(APACHE_FOP_VERSION)
-  endif(NOT "${APACHE_FOP_VERSION}" STREQUAL "${APACHE_FOP_VERSION_REGEX}")
-endif(APACHE_FOP)
-
-# Option controlling the installation of the non-Docbook based documentation
+# Option controlling the installation of documentation.
 # Doesn't impact the installation of the licenses
 option(BRLCAD_INSTALL_DOCS "Install core BRL-CAD documentation" ON)
 mark_as_advanced(BRLCAD_INSTALL_DOCS)
 
-# Toplevel variable that controls all DocBook based documentation.  Key it off
-# of what target level is enabled.
+# Toplevel variable that controls AsciiDoc-based documentation generation.
+# Key it off of what target level is enabled.
 if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
   set(EXTRADOCS_DEFAULT "ON")
 else(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
@@ -456,80 +426,8 @@ else(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
 endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
 brlcad_option(BRLCAD_EXTRADOCS ${EXTRADOCS_DEFAULT}
   TYPE BOOL
-  ALIASES ENABLE_DOCS ENABLE_EXTRA_DOCS ENABLE_DOCBOOK
+  ALIASES ENABLE_DOCS ENABLE_EXTRA_DOCS
 )
-
-# The HTML output is used in the graphical help browsers in MGED and Archer, as
-# well as being the most likely candidate for external viewers. Turn this on
-# unless explicitly instructed otherwise by the user or all extra documentation
-# is disabled.
-cmake_dependent_option(
-  BRLCAD_EXTRADOCS_HTML
-  "Build MAN page output from DocBook documentation"
-  ON
-  "BRLCAD_EXTRADOCS"
-  OFF
-)
-mark_as_advanced(BRLCAD_EXTRADOCS_HTML)
-
-cmake_dependent_option(
-  BRLCAD_EXTRADOCS_PHP
-  "Build MAN page output from DocBook documentation"
-  OFF
-  "BRLCAD_EXTRADOCS"
-  OFF
-)
-mark_as_advanced(BRLCAD_EXTRADOCS_PHP)
-
-cmake_dependent_option(
-  BRLCAD_EXTRADOCS_PPT
-  "Build MAN page output from DocBook documentation"
-  ON
-  "BRLCAD_EXTRADOCS"
-  OFF
-)
-mark_as_advanced(BRLCAD_EXTRADOCS_PPT)
-
-# Normally, we'll turn on man page output by default, but there is no point in
-# doing man page output for a Visual Studio build - the files aren't useful and
-# it *seriously* increases the target build count/build time.  Conditionalize
-# on the CMake MSVC variable NOT being set.
-cmake_dependent_option(
-  BRLCAD_EXTRADOCS_MAN
-  "Build MAN page output from DocBook documentation"
-  ON
-  "BRLCAD_EXTRADOCS;NOT MSVC"
-  OFF
-)
-mark_as_advanced(BRLCAD_EXTRADOCS_MAN)
-
-# Don't do PDF by default because it's pretty expensive, and hide the option
-# unless the tools to do it are present.
-cmake_dependent_option(
-  BRLCAD_EXTRADOCS_PDF
-  "Build PDF output from DocBook documentation"
-  OFF
-  "BRLCAD_EXTRADOCS;APACHE_FOP"
-  OFF
-)
-mark_as_advanced(BRLCAD_EXTRADOCS_PDF)
-
-# Provide an option to enable/disable XML validation as part of the DocBook
-# build - sort of a "strict flags" mode for DocBook.  By default, this will be
-# enabled when extra docs are built and the toplevel BRLCAD_ENABLE_STRICT
-# setting is enabled.  Unfortunately, Visual Studio 2010 seems to have issues
-# when we enable validation on top of everything else... not clear why, unless
-# build target counts >1800 are beyond MSVC's practical limit.  Until we either
-# find a resolution or a way to reduce the target count on MSVC, disable
-# validation there.
-cmake_dependent_option(
-  BRLCAD_EXTRADOCS_VALIDATE
-  "Perform validation for DocBook documentation"
-  ON
-  "BRLCAD_EXTRADOCS;BRLCAD_ENABLE_STRICT"
-  OFF
-)
-mark_as_advanced(BRLCAD_EXTRADOCS_VALIDATE)
 
 # Local Variables:
 # tab-width: 8

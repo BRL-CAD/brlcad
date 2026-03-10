@@ -1,0 +1,45 @@
+= btclsh(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+btclsh - Tcl-based interactive shell for BRL-CAD
+
+== SYNOPSIS
+
+[source]
+----
+btclsh [script]...
+----
+
+
+== DESCRIPTION
+
+*btclsh* is a Tcl-based interactive shell for BRL-CAD. It provides command-line editing, command history, and scripting capabilities. It is particularly suited for text-based interactive scripting and automation in BRL-CAD environments.
+
+Unlike *bwish*, *btclsh* does not require a graphical interface and can be used in environments without a display server.
+
+
+== OPTIONS
+
+
+_script_::
+Executes the provided Tcl script file and exits.
+
+
+
+
+== SEE ALSO
+
+*bwish*(1), *mged*(1)
+
+
+== AUTHOR
+
+BRL-CAD Team
+
+
+== COPYRIGHT
+
+This software is Copyright (c) 1998-2025 United States Government as represented by the U.S. Army Research Laboratory.

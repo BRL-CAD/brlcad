@@ -1,0 +1,98 @@
+= CLONE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+clone - The clone command performs a deep copy of an object, optionally duplicating in a geometric pattern.
+
+== SYNOPSIS
+
+[source]
+----
+clone [options]... {object_to_clone}
+----
+
+
+[[options]]
+== OPTIONS
+
+
+*-h*::
+Display help.
+
+
+
+
+*-n <copies>*::
+Specifies the number of copies to make. Default is 1.
+
+
+
+
+*-t <x> <y> <z>*::
+Specifies an *x*, *y*, and *z* translation distance between each copy. Default is 0.0, no translation. This option conflicts with *-a* which specifies total translation distance.
+
+
+
+
+*-r <x> <y> <z>*::
+Specifies *x*, *y*, and *z* angles to rotate around the x, y, and z axes between each copy. Default is 0.0, no rotation. This option conflicts with *-b* which specifies total rotation angles.
+
+
+
+
+*-p <x> <y> <z>*::
+Specifies an *x*, *y*, and *z* point to rotate around for *-b* and *-r*. Default is 0 0 0.
+
+
+
+
+*-a <n> <x> <y> <z>*::
+Specifies a total *x*, *y*, and *z* translation distance split across *n* copies. This option conflicts with *-t* which specifies incremental distances.
+
+
+
+
+*-b <n> <x> <y> <z>*::
+Specifies a total rotation in degrees about the *x*, *y*, and *z* axes, split across *n* copies. This option conflicts with *-r* which specifies incremental rotation angles.
+
+
+
+
+*-m <axis> <distance>*::
+Specifies an axis and distance along that axis about which to create a mirrored copy. The *axis* must be 'x', 'y', or 'z'. The distance may be a positive or negative distance along that axis.
+
+
+
+
+*-i <increment>*::
+This option pertains to the copy naming convention. It specifies the increment to use when naming copies. If a number is not found in the name, the increment number is appended to the end of the name (e.g., *clone box* creates a 'box100' object). Default *increment* is 100.
+
+
+
+
+*-c*::
+This option pertains to the copy naming convention. Increment the _next_ number encountered in object names. You can specify *-c* multiple times to increment the Nth number. For example, *clone -c -c -c* will increment the 4th number in object namess. Default is to increment the first number encountered.
+
+
+
+
+[[description]]
+== DESCRIPTION
+
+Clone performs a deep copy, traversing the entire hierarchy of the object specified and creating a new independent hierarchy. The *clone* command uses an automatic naming convention as it creates copies, incrementing and/or appending to numbers encountered in the object specified. The number convention may be configured with the *-i* and *-c* options.
+
+If you specify different numbers of copies with the *-a*, *-b*, and/or *-n* options, the last value of *n* specified will be used for the number of copies.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

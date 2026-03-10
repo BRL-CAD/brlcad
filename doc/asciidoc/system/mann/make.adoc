@@ -1,0 +1,87 @@
+= MAKE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+make - Creates a __new_shape__ of the indicated type.
+
+== SYNOPSIS
+
+[source]
+----
+make [-t] [new_shape type]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Creates a __new_shape__ of the indicated type. The __new_shape__ is sized according to the current view size and is dependent on the _type_. The possible values for _type_ are:
+
+
+* arb8 -- ARB (eight vertices)
+* arb7 -- ARB (seven vertices).
+* arb 6 -- ARB (six vertices).
+* arb 5 -- ARB (five vertices).
+* arb 4 -- ARB (four vertices).
+* bot -- Bag of Triangles.
+* sph -- Ellipsoid (sphere).
+* ell -- Ellipsoid (ellipsoid of revolution).
+* ellg -- Ellipsoid (general ellipsoid).
+* tor -- Torus.
+* tgc -- Truncated General Cone (most general TGC).
+* tec -- Truncated General Cone (truncated elliptical cone).
+* rec -- Truncated General Cone (right elliptical cylinder).
+* trc -- Truncated General Cone (truncated right circular cone).
+* rcc -- Truncated General Cone (right circular cylinder).
+* half -- Half Space.
+* rpc -- Right Parabolic Cylinder.
+* rhc -- Right Hyperbolic Cylinder.
+* epa -- Elliptical Paraboloid.
+* ehy -- Elliptical Hyperboloid.
+* eto -- Elliptical Torus.
+* part -- Particle.
+* nmg -- Non-Manifold Geometry (an NMG consisting of a single vertex is built).
+* pipe -- Pipe (run of connected pipe or wire).
+* grip -- Support for joints.
+* extrude -- Experimental.
+* sketch -- Experimental.
+
+
+[[examples]]
+== EXAMPLES
+
+The first example shows the use of the *make* command to create a sphere with a specified name. The second example shows the use of the *make* command with the _-t_ argument to generate a list of shape types handled by *make*.
+
+.Create a sphere having a specified name.
+[example]
+====
+
+mged> **make shapea sph**::
+Creates a sphere named _shapea_.
+
+
+
+====
+
+.Generate a list of shape types handled by *make*.
+[example]
+====
+mged>**make -t**
+
+Lists the shape types handled by *make*.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

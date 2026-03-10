@@ -1,0 +1,46 @@
+= PIXDIFF(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixdiff - highlight pixel colors which differ between two files
+
+== SYNOPSIS
+
+[source]
+----
+pixdiff file1.pix file2.pix > out.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixdiff* highlights the pixels which differ between two color *pix*(5) format files. The input files are read pixel by pixel and if any of the color planes red, green, or blue differ, those colors are specially marked. Bytes that differ by +/-1 are drawn with intensity 192; bytes that differ more are displayed at full intensity of 255. If none of the color values differ, an NTSC converted black and white equivalent at one half the original intensity is displayed. This is to aid in seeing where in the image the different pixels lie. Upon completion, *pixdiff* reports the number of bytes matching, the number off by 1, and the number off by many.
+
+Also see *bwdiff*(1), which can still be used on _pix_ files, yet can produce different kinds of output.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *bwdiff*(1), *pix-fb*(1), *pixstat*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

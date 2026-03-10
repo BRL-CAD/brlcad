@@ -1,0 +1,75 @@
+= NIRT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+nirt - Runs the NIRT program that is distributed with BRL-CAD to intersect a single ray with the displayed objects.
+
+== SYNOPSIS
+
+[source]
+----
+nirt [nirt_args]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Runs the *nirt(1)* command line program that is distributed with BRL-CAD to intersect a single ray with the objects currently being displayed in the active view. By default, when *nirt(n)* (the GED level command) is run the current database is used and the objects currently displayed in the scene are the active object set. The default starting point for the ray is the current center point in the view, however - as with *nirt(1)* - by default the ray origin point is backed out until it is outside the geometry. The current viewing direction is used as the ray direction.
+
+Intuitively, what this means is the NIRT ray is fired "into" the center of the display. The resulting collection of intersections between the ray and the objects is returned as textual output, and by default the hit segments and gaps are plotted in the view.
+
+When in the graphics window, the hot key _N_ will run *nirt* command with no arguments at the center of the screen.
+
+Additional arguments may be supplied on the command line. See the *nirt(1)* man page for documentation of available options - with the exception of specifying a different .g file, options available on the nirt(1) command line should also be available to the *nirt(n)* version.
+
+
+[[options]]
+== Options
+
+See the _nirt(1)_ man page for options documentation.
+
+
+[[examples]]
+== EXAMPLES
+
+.Run the NIRT program to fire a ray through the GED display.
+[example]
+====
+mged>**nirt**
+
+Fires a single ray through the center of the GED display.
+
+====
+
+.Run the NIRT program to fire a ray through the GED display and report air.
+[example]
+====
+mged>**nirt -u 1**
+
+Fires a single ray through the center of the GED display and report air regions.
+
+====
+
+.Run the NIRT program to fire a ray through the GED display and include LOS and material ID per region.
+[example]
+====
+mged>**nirt -A LOS -A material_id**
+
+Fires a single ray through the center of the GED display and includes LOS and material ID per region.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

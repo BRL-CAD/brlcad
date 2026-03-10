@@ -1,0 +1,49 @@
+= ECHO(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+echo - Echos whatever text is provided as an argument on the command line. This is intended for use in _MGED_ scripts.
+
+== SYNOPSIS
+
+[source]
+----
+echo {text} []
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Echos whatever text is provided as an argument on the command line. This is intended for use in _MGED_ scripts.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *echo* command in displaying text.
+
+.Using the echo command to display text.
+[example]
+====
+
+mged> **echo some text goes here**::
+Displays the text, some text goes here.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,121 @@
+= FBFADE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbfade - fade a frame buffer image in or out
+
+== SYNOPSIS
+
+[source]
+----
+fbfade [-H] [ -f input_image_name] [ -s input_square_size] [ -w input_width] \
+     [ -n input_height] [ -S output_square_size] [ -W output_width] [ -N output_height] \
+     [ [-F] output_frame_buffer_name]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbfade* gradually displays an image on a frame buffer, one randomly chosen pixel at a time.
+
+[[options]]
+=== Options
+
+
+-H::
+(high resolution) Assumes 1024 by 1024 pixels for default input image size instead of 512 by 512. Explicitly-specified sizes override the default, and if actual input image size is smaller than requested, the actual size will be used. If output frame buffer size is not specified, the revised input size will be requested for output. If actual output frame buffer size is greater than requested, only the lower-left portion of the frame buffer will be used. Actual sizes depend on details of specific frame buffers.
+
+
+-f __input_image_name__::
+Inputs the image to be displayed from the specified frame buffer or *pix*(5) file, instead of using pure background (which fades out the image already on the output frame buffer).
+
+
+-s __input_square_size__::
+Specifies input image width and height.
+
+
+-w __input_width__::
+Specifies input image width.
+
+
+-n __input_height__::
+Specifies input image height.
+
+
+-S __output_square_size__::
+Specifies output frame buffer width and height.
+
+
+-W __output_width__::
+Specifies output frame buffer width.
+
+
+-N __output_height__::
+Specifies output frame buffer height.
+
+
+-F __output_frame_buffer_name__::
+Outputs to the specified frame buffer instead of the one specified by the __FB_FILE__ environment variable (or the default, if __FB_FILE__ is not set). If this is the last option specified, the _-F_ is optional.
+
+
+
+
+
+[[caveat]]
+== CAVEAT
+
+*fbfade* works best in conjunction with a frame buffer having very fast access to pixels.
+
+
+[[example]]
+== EXAMPLE
+
+The following shell script can be used to produce a slick slide show:
+
+
+[quote]
+____
+fbclear
+
+for i in *.pix
+
+do fbfade -f $i
+
+sleep 15
+
+done fbfade
+
+____
+
+
+[[see_also]]
+== SEE ALSO
+
+*libfb*(3), *pix*(5).
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Error messages are intended to be self-explanatory.
+
+
+[[authors]]
+== AUTHORS
+
+Douglas A. Gwyn, BRL/VLD-VMB;Gary S. Moss, BRL/VLD-VMB
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

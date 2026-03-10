@@ -1,0 +1,54 @@
+= DBUPGRADE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+dbupgrade - a program to upgrade BRL-CAD mged geometry databases files to the current version.
+
+== SYNOPSIS
+
+[source]
+----
+dbupgrade input.g output.g
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*dbupgrade* operates on the indicated input geometry database _input.g_, recognizing the version of the BRL-CAD database provided as input and then converting it to the current database version. Output is then saved to the specified _output.g_ file.
+
+Note that this tool will attempt to automatically 'fix' an existing (v4 format) binary database that was transferred from a binary-incompatible platform. However, this process may be imperfect - the best approach (if the original platform on which the file was created is available) is to run *dbupgrade* on the file before transferring from the originating platform. Once upgraded the output file will be platform-independent regardless of the platform on which the upgrade was done.
+
+Running *dbupgrade* removes the need to run *g2asc*(1) and *asc2g*(1) on a database to move it between computers (historically this was a way to work around the platform-specific nature of v4 files). The latest BRL-CAD geometry database format is platform-independent.
+
+
+[[see_also]]
+== SEE ALSO
+
+*mged*(1), *g2asc*(1), *asc2g*(1)
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Numerous error conditions are possible, usually due to errors in the geometry database. Descriptive messages are printed on standard error (file descriptor 2).
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2006-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

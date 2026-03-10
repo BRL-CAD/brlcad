@@ -1,0 +1,64 @@
+= FBPOINT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbpoint - point at and identify screen coordinates
+
+== SYNOPSIS
+
+[source]
+----
+fbpoint [-F framebuffer] [-w width] [-n height] [-s squaresize] [ -x [prefix]] [ -y [prefix]] [ initialx initialy]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbpoint* allows you to move a non-destructive cursor around on the display. As the cursor is moved around, *fbpoint* writes the coordinates of the pixel pointed at by the cursor, and the red, green, and blue values of that pixel, on standard error *fbpoint* also writes the last set of coordinates pointed to on standard out on exit. The starting position is center-screen unless optional _initialx initialy_ is given.
+
+The ``*h*'', ``*j*'', ``*k*'', and ``*l*'' commands step the cursor one pixel left, down, up, or right respectively, and the ``*H*'', ``*J*'', ``*K*'', and ``*L*'' commands step the cursor in the corresponding directions in big increments. The ``*B*'', ``*N*'', ``*P*'', and ``*L*'', and ``*^B*'' (control-B), ``*^N*'', ``*^P*'', and ``*^F*'', are also little and big (respectively) cursor movement commands.
+
+A ``*?*'' prints a short command summary, and typing ``*q*'' or ``*Q*'' exits the program.
+
+Using this program with grave accents in a shell script in order to interactively grab a pair of coordinates is one of its main intentions. This is the reason for the feedback on standard error and the final coordinate pair on standard out. By default, both the x and y coordinates are written. If the *-x* or *-y* flags are given only those coordinates will be written. In these cases an optional _prefix_ can follow the flag which will be appended to the output coordinate. This is to facilitate passing the output of this program as arguments to another.
+
+
+[[example]]
+== EXAMPLES
+
+*fbpoint* by itself is used to pick coordinates or pixel values from a display.
+
+fbscanplot `fbpoint -y`
+
+allows you to choose the scanline to plot using fbpoint.
+
+pix-fb `fbpoint -x-X -y-Y` _file.pix_
+
+allows you to select an x, y screen coordinate location and then place the lower left corner of the image _file.pix_ there.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbgrid*(1), *fbzoom*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1986-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

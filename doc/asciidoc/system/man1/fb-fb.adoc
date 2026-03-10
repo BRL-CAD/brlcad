@@ -1,0 +1,47 @@
+= FB-FB(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fb-fb - copy an image on one frame buffer to another
+
+== SYNOPSIS
+
+[source]
+----
+fb-fb [-v] [-F output_framebuffer] \
+     [-v] input_framebuffer [output_framebuffer]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fb-fb* copies an image from the input frame buffer onto the output frame buffer. The framebuffer may also be explicitly specified by using the *-F* flag.
+
+The *-v* flag sets verbose mode.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fb-bw*(1), *fb-pix*(1), *fb-rle*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1991-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,110 @@
+= SIMULATE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+simulate - a Bullet-based physics simulator for MGED
+
+== SYNOPSIS
+
+[source]
+----
+simulate [options]... path duration
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*simulate* performs rigid-body physics evaluation. The Bullet physics engine is used with a collision algorithm that utilizes the librt ray tracer.
+
+The _path_ parameter specifies the path to the objects within the simulation. All primitives under this path are regarded as separate physical objects by default. If a combination has the attribute `simulate::type=region`, all primitives below it in the hierarchy are regarded as one physical object.
+
+The _duration_ parameter specifies the duration of the physics simulation (each use of the *simulate* command operates within a new physics environment).
+
+All values are specified in units of meters, kilograms, and seconds. Note that Bullet is primarily designed for objects of sizes between approximately 0.05 and 10.0 meters, with a collision tolerance of 0.004 meters; hence, using *simulate* on a model that is significantly different from this scale may give worse results.
+
+
+[[simulate_options]]
+== OPTIONS
+
+
+*--debug=_MODE_*::
+Set the debugging mode. Multiple mode flags can be separated using commas.
+
+
+_aabb_::
+Draw Bullet's axis-aligned bounding boxes after the simulation step. These can usually be regarded as indicating the "true" position of geometry. Any discrepancies may indicate that the *simulate* command is incorrectly applying the Bullet transformations.
+
+
+_contact_::
+Draw all of Bullet's collision contact points during the simulation.
+
+
+_ray_::
+Draw all of the rays fired by the internal collision detection algorithm.
+
+
+
+
+
+
+
+
+[[simulate_attributes]]
+== OBJECT ATTRIBUTES
+
+The simulation can be configured by setting certain attributes on objects within the specified path.
+
+
+*simulate::type=_TYPE_*::
+Specify the type of the associated object.
+
+
+_region_::
+Regard all solids under this combination as belonging to one rigid body.
+
+
+
+
+
+
+*simulate::mass=_SCALAR_*::
+Specify the mass of the associated object. Objects with a mass of `0.0` are immobile.
+
+
+*simulate::linear_velocity=<_x_, _y_, _z_>*::
+Specify the linear velocity of the associated object as a vector.
+
+
+*simulate::angular_velocity=<_x_, _y_, _z_>*::
+Specify the angular velocity of the associated object as a vector.
+
+
+*simulate::gravity=<_x_, _y_, _z_>*::
+Specify the acceleration due to gravity as a vector. This attribute can only be applied to the topmost object under _path_. The default gravity vector is `<0.0, 0.0, -9.80665>`, specifying an accleration of -9.8 mm/s/s along the z-axis.
+
+
+*simulate::grid_radius=x*::
+Specify the number of rays along the radii of the circular grids of rays fired during collision detection. This attribute can only be applied to the topmost object under _path_. The default value is `10`.
+
+
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2017-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
