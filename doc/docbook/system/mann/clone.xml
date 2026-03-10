@@ -498,35 +498,292 @@
 <refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>
-    Make three copies of <emphasis>wheel</emphasis> translated 100 mm
-    apart along X, collecting them into a group:
-    <programlisting>clone -n 3 -t 100 0 0 -g wheels wheel</programlisting>
+    The following examples use the <emphasis>component</emphasis> object
+    from <filename>m35.g</filename> (the M35 2&#x00BD;-ton cargo truck).  Its
+    bounding box is approximately 7000 mm long (X), 4000 mm wide (Y),
+    and 5500 mm tall (Z).  Spacing values in all examples are chosen to
+    exceed these dimensions so that every instance is visually distinct
+    and does not overlap its neighbours.
+  </para>
+
+  <!-- ============================================================ -->
+  <refsection xml:id="examples_circle"><title>Circle of trucks on a plane</title>
+
+  <para>
+    <emphasis role="bold">Semicircle (5 trucks, 45&#xB0; apart, 0&#xB0; to 180&#xB0;).</emphasis>
+    The <option>--cyl</option> pattern at a fixed height and radius
+    naturally places copies on a plane.  With <option>--nh 1 --dh 0</option>
+    the height never changes, so all trucks land on Z = 0.  Five copies
+    at 45&#xB0; steps span a front half-circle.  A radius of 7000 mm gives
+    about 5350 mm between adjacent truck centres &#x2014; well clear of
+    the 4000 mm truck width:
+    <programlisting>clone --cyl --naz 5 --daz 45 --start-az 0 \
+      --nr 1 --dr 7000 \
+      --nh 1 --dh 0 \
+      -g semicircle_trucks component</programlisting>
   </para>
 
   <para>
-    Clone a bolt pattern: 8 copies around a circle of radius 50 mm,
-    using the cylindrical pattern:
-    <programlisting>clone --cyl --naz 8 --daz 45 --nr 1 --dr 50 bolt</programlisting>
+    <emphasis role="bold">Full circle (8 trucks, 45&#xB0; apart, 360&#xB0;).</emphasis>
+    Increase to 8 azimuth steps so the angular span reaches exactly
+    360&#xB0;.  The same radius keeps the inter-truck gap above 5000 mm:
+    <programlisting>clone --cyl --naz 8 --daz 45 \
+      --nr 1 --dr 7000 \
+      --nh 1 --dh 0 \
+      -g circle_trucks component</programlisting>
   </para>
 
   <para>
-    Full spherical shell of sensors at two radii with five elevation
-    bands of 12 azimuth positions each:
-    <programlisting>clone --sph --naz 12 --daz 30 --nel 5 --del 30 --nr 2 --dr 25 \
-      --start-el -60 --start-r 100 -g sensors sensor</programlisting>
+    <emphasis role="bold">Full circle with trucks facing outward.</emphasis>
+    Add <option>--rot</option> to rotate each copy so its front faces
+    away from the pattern centre (outward along the radial direction).
+    Provide <option>--center-obj</option> at the truck's bounding-box
+    centre so that the rotation pivot is the truck centre rather than
+    the model origin:
+    <programlisting>clone --cyl --naz 8 --daz 45 \
+      --nr 1 --dr 7000 \
+      --nh 1 --dh 0 \
+      --rot --center-obj 1533 -496 2617 \
+      -g circle_facing_out component</programlisting>
+  </para>
+
+  </refsection>
+
+  <!-- ============================================================ -->
+  <refsection xml:id="examples_rect"><title>Rectangular grids</title>
+
+  <para>
+    <emphasis role="bold">4 &#xD7; 3 flat grid on a plane.</emphasis>
+    Place 12 trucks in 4 columns and 3 rows, all at Z = 0.  The X
+    step (9000 mm) exceeds the truck length; the Y step (6000 mm)
+    exceeds the truck width:
+    <programlisting>clone --rect \
+      --nx 4 --dx 9000 \
+      --ny 3 --dy 6000 \
+      -g grid_2d component</programlisting>
   </para>
 
   <para>
-    3 × 3 rectangular grid of panels spaced 200 mm apart:
-    <programlisting>clone --rect --nx 3 --dx 200 --ny 3 --dy 200 -g panel_array panel</programlisting>
+    <emphasis role="bold">3 &#xD7; 3 &#xD7; 3 stacked grid in 3-D.</emphasis>
+    Add a Z dimension to stack three layers of the 3 &#xD7; 3 ground grid.
+    The Z step (7000 mm) exceeds the truck height so the layers are
+    clearly separated:
+    <programlisting>clone --rect \
+      --nx 3 --dx 9000 \
+      --ny 3 --dy 6000 \
+      --nz 3 --dz 7000 \
+      -g grid_3d component</programlisting>
   </para>
 
   <para>
-    Clone with xpush to absorb pre-existing instance matrices:
-    <programlisting>clone --xpush -t 50 0 0 assembly</programlisting>
+    <emphasis role="bold">Non-axis-aligned diagonal grid.</emphasis>
+    Rotate the grid 45&#xB0; in the XY-plane by supplying custom direction
+    vectors.  The vector magnitudes set the step size along each axis.
+    Here the rows and columns run at 45&#xB0; to world X and Y:
+    <programlisting>clone --rect \
+      --xdir 6364 6364 0 \
+      --ydir -4243 4243 0 \
+      --nx 4 --ny 3 \
+      -g grid_diagonal component</programlisting>
   </para>
+
+  </refsection>
+
+  <!-- ============================================================ -->
+  <refsection xml:id="examples_sph"><title>Spherical patterns</title>
+
+  <para>
+    <emphasis role="bold">Full spherical shell (8 az &#xD7; 5 el, single radius).</emphasis>
+    Distribute 40 trucks over a sphere of radius 9000 mm.  Five
+    elevation bands run from &#x2212;60&#xB0; to +60&#xB0; in 30&#xB0; steps;
+    each band holds 8 trucks separated by 45&#xB0;.  At this radius the
+    chord distance between adjacent truck centres in the equatorial band
+    is about 6870 mm (arc length ~7070 mm), both exceeding the
+    truck's longest dimension:
+    <programlisting>clone --sph \
+      --naz 8 --daz 45 --start-az 0 \
+      --nel 5 --del 30 --start-el -60 \
+      --nr  1 --dr  9000 --start-r 9000 \
+      -g sphere_shell component</programlisting>
+  </para>
+
+  <para>
+    <emphasis role="bold">Partial spherical cap (northern hemisphere dome).</emphasis>
+    Use only positive elevations (0&#xB0; to +60&#xB0;) with 3 bands of 8
+    trucks each, creating a dome-shaped arrangement:
+    <programlisting>clone --sph \
+      --naz 8 --daz 45 \
+      --nel 3 --del 30 --start-el 0 \
+      --nr  1 --dr  9000 --start-r 9000 \
+      -g sphere_cap component</programlisting>
+  </para>
+
+  <para>
+    <emphasis role="bold">Nested spherical shells (two radii).</emphasis>
+    Produce an inner shell at 9000 mm and an outer shell at 15000 mm,
+    both using the same 8 &#xD7; 3 azimuth/elevation grid.  A single
+    command generates all (az, el, r) combinations &#x2014; 48 trucks total:
+    <programlisting>clone --sph \
+      --naz 8  --daz 45 \
+      --nel 3  --del 60 --start-el -60 \
+      --nr  2  --dr  6000 --start-r 9000 \
+      -g sphere_nested component</programlisting>
+  </para>
+
+  <para>
+    <emphasis role="bold">Advanced: trucks facing outward from the sphere centre.</emphasis>
+    By default each copy keeps the source object's orientation.
+    Adding <option>--rotaz</option> rotates each copy to face the
+    azimuth of its position; adding <option>--rotel</option> tilts it
+    to match its elevation angle.  Together, every truck points
+    nose-outward from the sphere's origin.  Providing
+    <option>--center-obj</option> ensures the rotation pivot is the
+    truck's own bounding-box centre rather than the model origin:
+    <programlisting>clone --sph \
+      --naz 8  --daz 45 \
+      --nel 3  --del 60 --start-el -60 \
+      --nr  1  --dr  9000 --start-r 9000 \
+      --rotaz --rotel \
+      --center-obj 1533 -496 2617 \
+      -g sphere_facing_out component</programlisting>
+  </para>
+
+  <para>
+    <emphasis role="bold">Advanced: azimuth-only rotation (equatorial ring, trucks facing outward).</emphasis>
+    Omitting <option>--rotel</option> rotates each truck only in
+    azimuth, so all trucks remain level but each faces outward in the
+    horizontal plane.  This is useful for a ring of trucks at a single
+    elevation angle where tilting is not desired:
+    <programlisting>clone --sph \
+      --naz 8  --daz 45 \
+      --nel 1  --del 0 --start-el 0 \
+      --nr  1  --dr  9000 --start-r 9000 \
+      --rotaz \
+      --center-obj 1533 -496 2617 \
+      -g sphere_ring_az component</programlisting>
+  </para>
+
+  </refsection>
+
+  <!-- ============================================================ -->
+  <refsection xml:id="examples_cyl"><title>Cylindrical patterns</title>
+
+  <para>
+    <emphasis role="bold">Partial cylindrical arc (6 trucks, 270&#xB0;, single height).</emphasis>
+    Six azimuth steps at 45&#xB0; each span a 270&#xB0; arc (three-quarter ring).
+    Radius 7000 mm keeps neighbouring trucks more than 5000 mm apart.
+    <option>--nh 1 --dh 0</option> keeps all trucks on the ground plane:
+    <programlisting>clone --cyl \
+      --naz 6 --daz 45 --start-az 0 \
+      --nr  1 --dr  7000 \
+      --nh  1 --dh  0 \
+      -g cyl_arc component</programlisting>
+  </para>
+
+  <para>
+    <emphasis role="bold">Full cylindrical ring (8 trucks, 360&#xB0;, single height).</emphasis>
+    Eight trucks equally spaced at 45&#xB0; intervals complete a full ring
+    around the origin:
+    <programlisting>clone --cyl \
+      --naz 8 --daz 45 \
+      --nr  1 --dr  7000 \
+      --nh  1 --dh  0 \
+      -g cyl_ring component</programlisting>
+  </para>
+
+  <para>
+    <emphasis role="bold">Cylindrical stack (full ring &#xD7; 3 levels).</emphasis>
+    Combine a full 8-truck ring with 3 height levels, each 7000 mm
+    apart, producing 24 trucks arranged as three stacked rings.
+    <option>--center-base</option> anchors the bottom ring's base to
+    the origin:
+    <programlisting>clone --cyl \
+      --naz 8 --daz 45 \
+      --nr  1 --dr  7000 \
+      --nh  3 --dh  7000 --start-h 0 \
+      --center-base 0 0 0 \
+      -g cyl_stack component</programlisting>
+  </para>
+
+  <para>
+    <emphasis role="bold">Multi-radius cylindrical shell (2 rings, 3 levels).</emphasis>
+    Add a second radial step to populate both an inner ring (7000 mm
+    radius) and an outer ring (14000 mm radius) at each height level
+    &#x2014; 48 trucks total:
+    <programlisting>clone --cyl \
+      --naz 8 --daz 45 \
+      --nr  2 --dr  7000 --start-r 7000 \
+      --nh  3 --dh  7000 \
+      -g cyl_multi component</programlisting>
+  </para>
+
+  <para>
+    <emphasis role="bold">Advanced: trucks facing tangentially around the cylinder.</emphasis>
+    The <option>--rot</option> flag rotates each truck so that it faces
+    the tangential (circumferential) direction at its azimuth position,
+    as if every truck were driving around the ring.  Supply
+    <option>--center-obj</option> at the truck's bounding-box centre:
+    <programlisting>clone --cyl \
+      --naz 8 --daz 45 \
+      --nr  1 --dr  7000 \
+      --nh  1 --dh  0 \
+      --rot --center-obj 1533 -496 2617 \
+      -g cyl_tangential component</programlisting>
+  </para>
+
+  <para>
+    <emphasis role="bold">Advanced: trucks facing radially outward on a stacked cylinder.</emphasis>
+    Combining <option>--rot</option> with multiple height levels gives a
+    tower of rings where every truck faces outward.  All trucks at every
+    level maintain the same outward-facing orientation:
+    <programlisting>clone --cyl \
+      --naz 8 --daz 45 \
+      --nr  1 --dr  7000 \
+      --nh  3 --dh  7000 \
+      --rot --center-obj 1533 -496 2617 \
+      -g cyl_stack_facing_out component</programlisting>
+  </para>
+
+  </refsection>
+
+  <!-- ============================================================ -->
+  <refsection xml:id="examples_misc"><title>Linear, mirror, and advanced options</title>
+
+  <para>
+    <emphasis role="bold">Linear row of trucks.</emphasis>
+    Make four copies of <emphasis>component</emphasis> spaced 9000 mm
+    apart along X, collecting them into a single combination:
+    <programlisting>clone -n 4 -t 9000 0 0 -g truck_row component</programlisting>
+  </para>
+
+  <para>
+    <emphasis role="bold">Mirror copy.</emphasis>
+    Create a single mirror image of the truck reflected through the
+    XZ plane at Y = 0:
+    <programlisting>clone -m y 0 component</programlisting>
+  </para>
+
+  <para>
+    <emphasis role="bold">Clone with xpush to absorb pre-existing matrices.</emphasis>
+    When the source hierarchy already contains instance matrices that
+    would interfere with the placement transformation, use
+    <option>--xpush</option> to flatten them before cloning:
+    <programlisting>clone --xpush -t 9000 0 0 component</programlisting>
+  </para>
+
+  <para>
+    <emphasis role="bold">Regions-depth clone with automatic region ident assignment.</emphasis>
+    Use <option>--depth regions</option> to copy the full combination
+    hierarchy down to region boundaries while sharing primitives.  Each
+    copy receives a distinct region ident, making all copies
+    distinguishable during raytracing:
+    <programlisting>clone -n 3 -t 9000 0 0 --depth regions -g truck_row_regions component</programlisting>
+  </para>
+
+  </refsection>
 
 </refsection>
+
 
 
 <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
