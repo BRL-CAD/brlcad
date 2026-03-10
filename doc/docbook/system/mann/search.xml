@@ -668,11 +668,13 @@ d2.r
 	<listitem>
 	  <para>
 	    The above operator applies the expression to every
-	    object above the current full path to that object,
+	    object below the current path in the tree hierarchy,
 	    and returns TRUE if one or more of them satisfies
-	    the expression.  E.g., searching with -above -name
-	    s\* on /component/region.r/start_comb.c/prim1.s
-	    would return TRUE for /component and
+	    the expression.  An object passes -above when it is
+	    above (has in its subtree) at least one object that
+	    matches.  E.g., searching with -above -name s\* on
+	    /component/region.r/start_comb.c/prim1.s would
+	    return TRUE for /component and
 	    /component/region.r as start_comb.c is below both of
 	    them, but would return FALSE for any deeper objects
 	    (i.e., prim1.s in this example).
@@ -681,6 +683,15 @@ d2.r
 	    Optionally, inequality and equality constraints on
 	    depth can be appended to the operator to limit what
 	    relative depths are accepted as matches.
+	  </para>
+	  <para>
+	    Note: using <emphasis>-above</emphasis> as the expression
+	    within another <emphasis>-above</emphasis> (e.g.,
+	    <userinput>-above -above -name X</userinput>) is valid but
+	    will be slower than the normal case because the internal
+	    optimization for -above cannot be applied to the inner
+	    -above expression.  Such constructs are rare in practice
+	    and will still produce correct results.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -841,10 +852,10 @@ d2.r
 	<userinput>search / -type region -below -type region</userinput>
       </para>
       <para>
-	Find all instances of objects of type region that contain a
-	region.  This searches for regions being used within the
-	subtrees of other regions, which is considered bad practice
-	in BRL-CAD.
+	Find all instances of objects of type region that are nested
+	within another region.  This searches for regions being used
+	within the subtrees of other regions, which is considered bad
+	practice in BRL-CAD.
       </para>
     </example>
 
@@ -866,7 +877,7 @@ d2.r
       </para>
       <para>
 	Find all instances of combinations that are not regions and
-	do not contain regions.
+	are located within a region (below a region in the hierarchy).
       </para>
     </example>
 
