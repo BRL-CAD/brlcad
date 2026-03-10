@@ -78,6 +78,10 @@ brlcad_addexec(rt_bv_poly_sketch bv_poly_sketch.c "librt;libbv" TEST)
 brlcad_addexec(rt_arb8 arb8_tests.c "librt;libwdb;libbg;libbu" TEST)
 #brlcad_add_test(NAME rt_arb8_tests COMMAND rt_arb8)
 
+# search stress and correctness testing
+brlcad_addexec(rt_search_stress search_stress.c "librt;libwdb;libbu" TEST)
+brlcad_add_test(NAME rt_search_stress COMMAND rt_search_stress)
+
 brlcad_addexec(bot_match bot_match.cpp "librt;libbg" TEST)
 
 # boolweave testing
@@ -98,6 +102,7 @@ set(
   nurbs_surfaces.g
   rt_datum.c
   rt_perturb.c
+  search_stress.c
   sketch.g
 )
 
