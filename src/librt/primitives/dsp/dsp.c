@@ -2182,11 +2182,17 @@ recurse_dsp_bb(struct isect_stuff *isect,
     cX = (minpt[X] - bbmin[X]) / cs;
     cY = (minpt[Y] - bbmin[Y]) / cs;
 
-    /* a little bounds checking because a hit on XMAX or YMAX looks
-     * like it should be in the next cell outside the box
+
+    /* bounds checking: a hit on XMAX or YMAX looks like it should be
+     * in the next cell outside the box; similarly a floating-point
+     * entry point very slightly outside the bounding box (due to
+     * precision) can produce a negative cell index.  Clamp both ends
+     * to prevent out-of-bounds access into dspb_children[].
      */
     if (cX >= dsp_bb->dspb_ch_dim[X]) cX = dsp_bb->dspb_ch_dim[X] - 1;
     if (cY >= dsp_bb->dspb_ch_dim[Y]) cY = dsp_bb->dspb_ch_dim[Y] - 1;
+    if (cX < 0) cX = 0;
+    if (cY < 0) cY = 0;
 
 #ifdef FULL_DSP_DEBUGGING
     dlog("recurse_dsp_bb  cell size: %d  current cell: %d %d\n",
