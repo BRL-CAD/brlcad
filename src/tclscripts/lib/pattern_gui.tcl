@@ -51,6 +51,22 @@ proc _clone_invoke { args } {
     }
 }
 
+# _clone_progress_update: universal per-step progress handler.
+# Called by MGED's BU_CLBK_DURING mechanism with the current clone count
+# and total expected count supplied by the C clone implementation.
+# On the first step (current == 1) the feedback widget is reset and
+# configured with the correct total; every call advances it by one step.
+#   widget  - iwidgets::feedback widget path
+#   current - 1-based index of the clone just created
+#   total   - total number of clones expected for the whole operation
+proc _clone_progress_update { widget current total } {
+    if { $current == 1 } {
+	$widget reset
+	$widget configure -steps $total
+    }
+    $widget step
+}
+
 proc exists_wrapper {args} {
     if {$::cadwidgets::mgedFlag} {
 	eval exists $args
@@ -162,9 +178,7 @@ proc pattern_rect { args } {
     }
     foreach obj $objs { lappend clone_cmd $obj }
 
-    if { $feed_name ne "" } { catch { $feed_name configure -steps 1 } }
     set result [eval _clone_invoke $clone_cmd]
-    if { $feed_name ne "" } { catch { $feed_name step }; update idletasks }
 
     if { $group_name ne "" } {
 	if { $::cadwidgets::mgedFlag } {
@@ -283,9 +297,7 @@ proc pattern_sph { args } {
     }
     foreach obj $objs { lappend clone_cmd $obj }
 
-    if { $feed_name ne "" } { catch { $feed_name configure -steps 1 } }
     set result [eval _clone_invoke $clone_cmd]
-    if { $feed_name ne "" } { catch { $feed_name step }; update idletasks }
 
     if { $group_name ne "" } {
 	if { $::cadwidgets::mgedFlag } {
@@ -406,9 +418,7 @@ proc pattern_cyl { args } {
     }
     foreach obj $objs { lappend clone_cmd $obj }
 
-    if { $feed_name ne "" } { catch { $feed_name configure -steps 1 } }
     set result [eval _clone_invoke $clone_cmd]
-    if { $feed_name ne "" } { catch { $feed_name step }; update idletasks }
 
     if { $group_name ne "" } {
 	if { $::cadwidgets::mgedFlag } {
@@ -1844,43 +1854,11 @@ body pattern_control::update_depth { box level } {
 }
 
 body pattern_control::apply_rect {} {
-    set total 1
-    if { $dirtype_r == 1 } {
-
-	if { $nxdir_r != 0 } {
-	    set total [expr $total * $nxdir_r]
-	}
-
-	if { $nydir_r != 0 } {
-	    set total [expr $total * $nydir_r]
-	}
-
-	if { $nzdir_r != 0 } {
-	    set total [expr $total * $nzdir_r]
-	}
-    } else {
-	set xlen [llength $xlist_r]
-	if { $xlen != 0 } {
-	    set total [expr $total * $xlen]
-	}
-
-	set ylen [llength $ylist_r]
-	if { $ylen != 0 } {
-	    set total [expr $total * $ylen]
-	}
-
-	set zlen [llength $zlist_r]
-	if { $zlen != 0 } {
-	    set total [expr $total * $zlen]
-	}
-    }
+    # The C clone implementation supplies current count and total to the
+    # callback, so no Tcl-side total calculation is needed.
     $itk_component(fb_progress) reset
-    $itk_component(fb_progress) configure -steps $total
-
-    # Register a per-clone progress step for MGED's BU_CLBK_DURING mechanism.
-    # In MGED the C callback evaluates this variable once per clone created,
-    # giving true incremental progress.  Other hosts silently ignore it.
-    set ::clone_progress_callback "$itk_component(fb_progress) step"
+    set ::clone_progress_callback \
+	[list _clone_progress_update $itk_component(fb_progress)]
 
     set cmd [list pattern_rect -$combovar_r]
 
@@ -1902,8 +1880,6 @@ body pattern_control::apply_rect {} {
 	lappend cmd -i [string trim $increment_r]
     }
 
-    lappend cmd -feed_name $itk_component(fb_progress)
-
     foreach obj $obj_r {
 	lappend cmd $obj
     }
@@ -1913,8 +1889,11 @@ body pattern_control::apply_rect {} {
 }
 
 body pattern_control::apply_sph {} {
-    set total 0
+    # The C clone implementation supplies current count and total to the
+    # callback, so no Tcl-side total calculation is needed.
     $itk_component(fb_progress) reset
+    set ::clone_progress_callback \
+	[list _clone_progress_update $itk_component(fb_progress)]
 
     set cmd [list pattern_sph -$combovar_s]
     lappend cmd -g [string trim $group_s]
@@ -1940,27 +1919,17 @@ body pattern_control::apply_sph {} {
 
     if { $azel_s == 1 } {
 	lappend cmd -naz [string trim $numaz_s] -daz [string trim $delaz_s] -nel [string trim $numel_s] -del [string trim $delel_s]
-	set total [expr $numaz_s * $numel_s]
     } else {
-	set total [expr [llength $lsaz_s] * [llength $lsel_s]]
 	lappend cmd -laz [string trim $lsaz_s] -lel [string trim $lsel_s]
     }
 
     if { $radii_s == 1 } {
-	set total [expr $total * $radnum_s]
 	lappend cmd -nr [string trim $radnum_s] -dr [string trim $raddel_s]
     } else {
-	set total [expr $total * [llength $radlist_s]]
 	lappend cmd -lr [string trim $radlist_s]
     }
 
-    $itk_component(fb_progress) configure -steps $total
-
-    # Register per-clone progress for MGED's BU_CLBK_DURING mechanism.
-    set ::clone_progress_callback "$itk_component(fb_progress) step"
-
     lappend cmd -start_az [string trim $startaz_s] -start_el [string trim $startel_s] -start_r [string trim $startr_s]
-    lappend cmd -feed_name $itk_component(fb_progress)
     foreach obj $obj_s {
 	lappend cmd $obj
     }
@@ -1970,7 +1939,12 @@ body pattern_control::apply_sph {} {
 }
 
 body pattern_control::apply_cyl {} {
+    # The C clone implementation supplies current count and total to the
+    # callback, so no Tcl-side total calculation is needed.
     $itk_component(fb_progress) reset
+    set ::clone_progress_callback \
+	[list _clone_progress_update $itk_component(fb_progress)]
+
     set cmd [list pattern_cyl -$combovar_c]
     lappend cmd -g [string trim $group_c]
 
@@ -1993,38 +1967,25 @@ body pattern_control::apply_cyl {} {
 
     if { $azel_c == 1 } {
 	lappend cmd -naz [string trim $numaz_c] -daz [string trim $delaz_c]
-	set total $numaz_c
     } else {
 	lappend cmd -laz [string trim $lsaz_c]
-	set total [llength $lsaz_c]
     }
 
     lappend cmd -sr [string trim $e_startr_c]
 
     if { $radii_c == 1 } {
-	set total [expr $total * $radnum_c]
 	lappend cmd -nr [string trim $radnum_c] -dr [string trim $raddel_c]
     } else {
-	set total [expr $total * [llength $radlist_c]]
 	lappend cmd -lr [string trim $radlist_c]
     }
 
     lappend cmd -sh [string trim $starth_c]
 
     if { $height_c == 1 } {
-	set total [expr $total * $hnum_c]
 	lappend cmd -nh [string trim $hnum_c] -dh [string trim $dnum_c]
     } else {
-	set total [expr $total * [llength $lnum_c]]
 	lappend cmd -lh [string trim $lnum_c]
     }
-
-    $itk_component(fb_progress) configure -steps $total
-
-    # Register per-clone progress for MGED's BU_CLBK_DURING mechanism.
-    set ::clone_progress_callback "$itk_component(fb_progress) step"
-
-    lappend cmd -feed_name $itk_component(fb_progress)
 
     foreach obj $obj_c {
 	lappend cmd $obj

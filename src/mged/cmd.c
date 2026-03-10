@@ -240,30 +240,40 @@ mged_db_search_callback(int argc, const char *argv[], void *UNUSED(u1), void *u2
 
 
 int
-mged_clone_during_callback(int UNUSED(argc), const char **UNUSED(argv),
+mged_clone_during_callback(int argc, const char **argv,
 			   void *UNUSED(u1), void *u2)
 {
     struct mged_state *s = (struct mged_state *)u2;
     MGED_CK_STATE(s);
     Tcl_Interp *interp = s->interp;
 
-    /* Evaluate the Tcl script stored in the interpreter global variable
+    /* Evaluate the Tcl command stored in the interpreter global variable
      * "clone_progress_callback", if any.  Tcl GUIs (e.g. pattern_gui)
-     * can set this variable to a per-clone step handler before invoking
-     * clone, and unset it afterwards:
+     * can set this variable to a command prefix before invoking clone,
+     * and unset it afterwards:
      *
-     *   set clone_progress_callback "$widget step"
+     *   set clone_progress_callback [list my_proc $widget]
      *   clone ...
      *   unset -nocomplain clone_progress_callback
+     *
+     * The C callback appends the current clone count (argv[2]) and the
+     * total expected clone count (argv[3]) as additional arguments, so
+     * the Tcl proc receives: my_proc $widget $current $total
      */
     const char *cmd = Tcl_GetVar(interp, "clone_progress_callback",
 				 TCL_GLOBAL_ONLY);
     if (!cmd || !cmd[0])
 	return 1;
 
+    /* argv: {"step", name, current_str, total_str} */
+    const char *current_str = (argc >= 3) ? argv[2] : "0";
+    const char *total_str   = (argc >= 4) ? argv[3] : "0";
+
     Tcl_DString script;
     Tcl_DStringInit(&script);
     Tcl_DStringAppend(&script, cmd, -1);
+    Tcl_DStringAppendElement(&script, current_str);
+    Tcl_DStringAppendElement(&script, total_str);
     Tcl_Eval(interp, Tcl_DStringValue(&script));
     Tcl_DStringFree(&script);
     Tcl_ResetResult(interp);
