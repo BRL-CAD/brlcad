@@ -12,7 +12,7 @@ file(REMOVE_RECURSE "${LIBRT_CACHE}")
 file(MAKE_DIRECTORY "${BU_DIR_CACHE}")
 file(MAKE_DIRECTORY "${LIBRT_CACHE}")
 
-set(OUTPUT_FILES "${CBDIR}/ged_push.g" "${CBDIR}/ged_xpush.g" "${CBDIR}/ged_local_xpush.g")
+set(OUTPUT_FILES "${CBDIR}/ged_push.g" "${CBDIR}/ged_xpush.g" "${CBDIR}/ged_local_xpush.g" "${CBDIR}/ged_dpush.g" "${CBDIR}/ged_d2push.g" "${CBDIR}/ged_dxpush.g" "${CBDIR}/ged_rpush.g")
 
 file(WRITE "${LOGFILE}" "Starting push test run\n")
 
@@ -40,6 +40,100 @@ execute_process(
 )
 execute_process(
   COMMAND "${PUSH_EXEC}" "${CSDIR}/ppush_tests.g" "${CBDIR}/ged_push.g"
+  RESULT_VARIABLE ged_push_result
+  OUTPUT_VARIABLE ged_push_log
+  ERROR_VARIABLE ged_push_log
+  WORKING_DIRECTORY ${CBDIR}
+)
+file(APPEND "${LOGFILE}" "${ged_push_log}")
+set(get_push_log)
+if(ged_push_result)
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[regress-ged_push] Failure: ${ged_push_result}. See ${LOGFILE} for more info.\n${LOG}")
+endif(ged_push_result)
+
+# Run depth-limited push test (-d 3, no force).  This verifies that depth-
+# limited push correctly accumulates matrices through comb levels up to depth 3
+# and leaves deeper structure unmodified.  Objects with conflicting multi-path
+# instances are left unchanged (as expected without -f).
+file(APPEND "${LOGFILE}" "Running ${PUSH_EXEC} -d 3 ${CSDIR}/dpush_tests.g ${CBDIR}/ged_dpush.g\n")
+execute_process(
+  COMMAND "${CMAKE_COMMAND}" -E copy "${CSDIR}/push_tests.g" "${CBDIR}/ged_dpush.g"
+)
+execute_process(
+  COMMAND "${PUSH_EXEC}" -d 3 "${CSDIR}/dpush_tests.g" "${CBDIR}/ged_dpush.g"
+  RESULT_VARIABLE ged_push_result
+  OUTPUT_VARIABLE ged_push_log
+  ERROR_VARIABLE ged_push_log
+  WORKING_DIRECTORY ${CBDIR}
+)
+file(APPEND "${LOGFILE}" "${ged_push_log}")
+set(get_push_log)
+if(ged_push_result)
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[regress-ged_push] Failure: ${ged_push_result}. See ${LOGFILE} for more info.\n${LOG}")
+endif(ged_push_result)
+
+# Run depth-limited push test (-d 2, no force).  This specifically exercises
+# the comb-at-max-depth case: a comb appearing at exactly max_depth=2 through
+# multiple paths with different accumulated matrices is NOT a conflict.  The
+# comb's internal content is never modified by the push (it is a leaf), so
+# multiple parents can each reference it with different matrices.  The key test
+# object is sph_011, where sph11_g appears at depth 2 via both sph11_f (with
+# T10) and sph11_h (with T20).  Without the noleaf_push_dps guard this would
+# have falsely reported a conflict; with the guard it succeeds.
+file(APPEND "${LOGFILE}" "Running ${PUSH_EXEC} -d 2 ${CSDIR}/d2push_tests.g ${CBDIR}/ged_d2push.g\n")
+execute_process(
+  COMMAND "${CMAKE_COMMAND}" -E copy "${CSDIR}/push_tests.g" "${CBDIR}/ged_d2push.g"
+)
+execute_process(
+  COMMAND "${PUSH_EXEC}" -d 2 "${CSDIR}/d2push_tests.g" "${CBDIR}/ged_d2push.g"
+  RESULT_VARIABLE ged_push_result
+  OUTPUT_VARIABLE ged_push_log
+  ERROR_VARIABLE ged_push_log
+  WORKING_DIRECTORY ${CBDIR}
+)
+file(APPEND "${LOGFILE}" "${ged_push_log}")
+set(get_push_log)
+if(ged_push_result)
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[regress-ged_push] Failure: ${ged_push_result}. See ${LOGFILE} for more info.\n${LOG}")
+endif(ged_push_result)
+
+# Run depth-limited xpush test (-d 3 -f).  This verifies that depth-limited
+# push combined with force correctly creates new copies of both intermediate
+# combs and solids when the same object appears at multiple depths that span
+# the push-depth boundary, requiring different post-push tree content.
+file(APPEND "${LOGFILE}" "Running ${PUSH_EXEC} -d 3 -f ${CSDIR}/dxpush_tests.g ${CBDIR}/ged_dxpush.g\n")
+execute_process(
+  COMMAND "${CMAKE_COMMAND}" -E copy "${CSDIR}/push_tests.g" "${CBDIR}/ged_dxpush.g"
+)
+execute_process(
+  COMMAND "${PUSH_EXEC}" -d 3 -f "${CSDIR}/dxpush_tests.g" "${CBDIR}/ged_dxpush.g"
+  RESULT_VARIABLE ged_push_result
+  OUTPUT_VARIABLE ged_push_log
+  ERROR_VARIABLE ged_push_log
+  WORKING_DIRECTORY ${CBDIR}
+)
+file(APPEND "${LOGFILE}" "${ged_push_log}")
+set(get_push_log)
+if(ged_push_result)
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[regress-ged_push] Failure: ${ged_push_result}. See ${LOGFILE} for more info.\n${LOG}")
+endif(ged_push_result)
+
+# Run region-halted push test (-r).  This verifies that stop_at_regions push
+# correctly accumulates matrices down to region references without modifying
+# region or solid content.  A region appearing with multiple different
+# accumulated matrices in the tree is not a conflict (no copy is needed, since
+# the region's internal content is unchanged); only genuine per-solid conflicts
+# (objects with no region boundary above them) require force.
+file(APPEND "${LOGFILE}" "Running ${PUSH_EXEC} -r ${CSDIR}/rpush_tests.g ${CBDIR}/ged_rpush.g\n")
+execute_process(
+  COMMAND "${CMAKE_COMMAND}" -E copy "${CSDIR}/push_tests.g" "${CBDIR}/ged_rpush.g"
+)
+execute_process(
+  COMMAND "${PUSH_EXEC}" -r "${CSDIR}/rpush_tests.g" "${CBDIR}/ged_rpush.g"
   RESULT_VARIABLE ged_push_result
   OUTPUT_VARIABLE ged_push_log
   ERROR_VARIABLE ged_push_log
