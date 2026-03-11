@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* address race condition with bu_nsemaphores in libbu - Cliff Yapp
 * fixed potential DSP corner case rendering crash - Cliff Yapp
 * fixed multithreaded crashing with noise-using shaders - Cliff Yapp
 * corrected BoT shotline behavior when starting ray pt in mesh
