@@ -13,6 +13,10 @@ changes made.  See document footer for additional details.
 --- 2026-03-12  Release 7.42.2                                     ---
 ----------------------------------------------------------------------
 
+Follow-on patch release to 7.42.0 correcting a couple of corner case
+BoT raytracing behaviors, incorporating behaviorial fixes for a number
+of commands, updating dependencies, and various documentation updates.
+
 * fixed BoT crash when invalid data present - Chris McGregor
 * updated stepcode to upstream SHA1 74b6fe4 - Cliff Yapp
 * replaced yedit with brledit as libbu fallback editor - Cliff Yapp
