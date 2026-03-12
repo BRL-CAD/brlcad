@@ -4,6 +4,7 @@ brlcad_manage_files(art.txt                    ${DOC_DIR}/legal/embedded TRIGGER
 brlcad_manage_files(ayam.txt                   ${DOC_DIR}/legal/embedded TRIGGER brep_cobb)
 brlcad_manage_files(b64.txt                    ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(breeze_style.txt           ${DOC_DIR}/legal/embedded TRIGGER qged)
+brlcad_manage_files(brledit.txt                ${DOC_DIR}/legal/embedded TRIGGER brledit)
 brlcad_manage_files(bullet.txt                 ${DOC_DIR}/legal/embedded TRIGGER mged)
 brlcad_manage_files(chull2d.txt                ${DOC_DIR}/legal/embedded TRIGGER libbg)
 brlcad_manage_files(clipper.txt                ${DOC_DIR}/legal/embedded TRIGGER libbg)
