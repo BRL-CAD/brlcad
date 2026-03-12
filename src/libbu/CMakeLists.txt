@@ -20,6 +20,15 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
 set_source_files_properties("${BU_MIME_TYPES_H_FILE}" PROPERTIES GENERATED TRUE)
 build_cfg_hdr("${BU_MIME_TYPES_H_FILE}" ${INCLUDE_DIR}/brlcad/bu)
 
+# brledit - console editor that works on various platforms  - intended to be
+# used as a last-resort fallback if there are no other console options present
+# in the OS environment.
+#
+# bu_editor depends on this being present to reliably work, so it has to be a
+# dependency of libbu or bu_editor callers may be surprised by an editor
+# failure if it hasn't been built yet.
+add_subdirectory(brledit)
+
 set(
   LIBBU_SOURCES
   affinity.c
@@ -151,6 +160,8 @@ set(bu_targets libbu-obj libbu libbu-static)
 foreach(bt ${bu_targets})
   if(TARGET ${bt})
     list(APPEND bu_atgts ${bt})
+    # libbu depends on brledit
+    add_dependencies(${bt} brledit)
   endif()
 endforeach()
 

@@ -29,5 +29,5 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 For more information, please refer to <http://unlicense.org/>
 
-file:/src/util/brledit/brledit.cpp
+file:/src/libbu/brledit/brledit.cpp
 

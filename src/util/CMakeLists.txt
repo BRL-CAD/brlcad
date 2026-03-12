@@ -4,11 +4,6 @@ if(MSVC)
   add_definitions(-D_CONSOLE -DIF_WGL)
 endif(MSVC)
 
-# brledit - console editor that works on various platforms  - intended to be
-# used as a last-resort fallback if there are no other console options present
-# in the OS environment
-add_subdirectory(brledit)
-
 if(BRLCAD_ENABLE_TK)
   brlcad_addexec(bombardier bombardier.c "libtclcad;libbu;${TK_LIBRARY};${TCL_LIBRARY}")
   brlcad_addexec(plot3-dm plot3-dm.c "libtclcad;libdm;libbv;libbu;${TK_LIBRARY};${TCL_LIBRARY};${M_LIBRARY}")
