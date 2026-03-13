@@ -190,6 +190,29 @@ clt_ell_pack(struct bu_pool *pool, struct soltab *stp)
 
 #endif /* USE_OPENCL */
 
+/**
+ * Consider an ell a sph if magnitude A, B and C are equal
+ */
+int
+rt_ell_is_sph(const struct rt_db_internal* ip) {
+    const struct rt_ell_internal *eip;
+    fastf_t magsq_a, magsq_b, magsq_c;
+
+    RT_CK_DB_INTERNAL(ip);
+    if (ip->idb_type != ID_ELL) {
+	/* not an ell */
+	return 0;
+    }
+
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    magsq_a = MAGSQ(eip->a);
+    magsq_b = MAGSQ(eip->b);
+    magsq_c = MAGSQ(eip->c);
+
+    return (EQUAL(magsq_a, magsq_b) && EQUAL(magsq_b, magsq_c));
+}
 
 /**
  * Compute the bounding RPP for an ellipsoid

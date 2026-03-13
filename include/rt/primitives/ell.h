@@ -30,6 +30,8 @@
 
 __BEGIN_DECLS
 
+RT_EXPORT extern int rt_ell_is_sph(const struct rt_db_internal* ip);
+
 /* TODO - can this move elsewhere? */
 RT_EXPORT extern void rt_ell_16pnts(fastf_t *ov,
 				   fastf_t *V,
