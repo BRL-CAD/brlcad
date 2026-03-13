@@ -1,3 +1,25 @@
+commit fc905ca063dd18d98c94269351b1a0872a1c7299
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Mar 12 16:49:14 2026 -0400
+
+    Move brledit to libbu - for bu_editor to work reliably, it has to be there for anything that might call bu_editor - which means it has to be there for libbu.
+    
+    (cherry picked from commit dc2cca5853d24d9dea90f2cecb61529e04b42fb7)
+
+commit 1a86cbd7acc40ec7affff2d046e6a0fa49ef0b21
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Mar 12 15:16:57 2026 -0400
+
+    Move brledit to src/util, set up its license file - it needs to be installed as the last resort editor
+    
+    (cherry picked from commit 433722851eb94d7cd0f1c24808191e32e3e742cd)
+
+commit f2afb65a8e1a1fe4ee0962eb1986e227cec76184
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Mar 12 12:55:48 2026 -0400
+
+    Update ChangeLog with commits being incorporated into rel-7-42-2
+
 commit c1fc1ee1d8d70e8653c52122519c42ad666ac55b
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
 Date:   Thu Mar 12 12:42:58 2026 -0400
