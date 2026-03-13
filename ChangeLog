@@ -1,3 +1,15 @@
+commit 7a9b8958614d7af947e43a0e3bb18db6587d05d8
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 13 09:09:29 2026 -0400
+
+    brledit is stand-alone intentionally - adjust
+
+commit 0bc0943116408f7990cb95f5b106585e45706c47
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 13 08:36:39 2026 -0400
+
+    Update ChangeLog and release date
+
 commit fc905ca063dd18d98c94269351b1a0872a1c7299
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
 Date:   Thu Mar 12 16:49:14 2026 -0400
