@@ -142,6 +142,125 @@ proc font_init {} {
     option add *Entry.font entry_font
 }
 
+## - mged_font_sync_to_defaults
+#
+# Sync live Tk named fonts into mged_default(...) for persistence.
+#
+proc mged_font_sync_to_defaults {{id ""}} {
+	global mged_default
+
+	set font_names {
+		text_font menu_font button_font menubutton_font list_font
+		label_font entry_font bold_font italic_font underline_font overstrike_font
+	}
+
+	foreach fname $font_names {
+		if [catch {set fconfig [font actual $fname]}] {
+			continue
+		}
+		set mged_default($fname) $fconfig
+	}
+
+	if {$id != ""} {
+		set fsname fs_all_font($id)
+		if [catch {set fconfig [font actual $fsname]}] == 0 {
+			set mged_default(all_font) $fconfig
+		}
+	}
+}
+
+## - mged_font_check_match
+#
+# Helper for persistence test. Checks if a named font matches mged_default.
+# Returns 1 on mismatch or error, 0 on match.
+#
+proc mged_font_check_match {live_name fname context} {
+	global mged_default
+
+	if [catch {set actual [font actual $live_name]}] {
+		puts "FAIL: $live_name (named font missing $context)"
+		return 1
+	}
+
+	if ![info exists mged_default($fname)] {
+		puts "FAIL: $fname (mged_default missing $context)"
+		return 1
+	}
+
+	array unset actual_map
+	array unset default_map
+	array set actual_map $actual
+	array set default_map $mged_default($fname)
+
+	set mismatch 0
+	if {[array size actual_map] != [array size default_map]} {
+		set mismatch 1
+	} else {
+		foreach key [array names actual_map] {
+			if {![info exists default_map($key)] || $default_map($key) ne $actual_map($key)} {
+				set mismatch 1
+				break
+			}
+		}
+	}
+
+	if {$mismatch} {
+		puts "FAIL: $live_name ($context)"
+		return 1
+	}
+
+	puts "PASS: $live_name ($context)"
+	return 0
+}
+
+## - mged_font_persistence_test
+#
+# Verify named fonts and mged_default font configs match before/after sync.
+# Prints PASS/FAIL per font.
+#
+proc mged_font_persistence_test {{id ""}} {
+	global mged_default
+
+	set font_names {
+		text_font menu_font button_font menubutton_font list_font
+		label_font entry_font bold_font italic_font underline_font overstrike_font
+	}
+
+	if {$id != ""} {
+		lappend font_names all_font
+	}
+
+	set has_fail 0
+
+	foreach fname $font_names {
+		set live_name $fname
+		if {$fname eq "all_font" && $id != ""} {
+			set live_name fs_all_font($id)
+		}
+		if [mged_font_check_match $live_name $fname "before sync"] {
+			set has_fail 1
+		}
+	}
+
+	mged_font_sync_to_defaults $id
+
+	foreach fname $font_names {
+		set live_name $fname
+		if {$fname eq "all_font" && $id != ""} {
+			set live_name fs_all_font($id)
+		}
+		if [mged_font_check_match $live_name $fname "after sync"] {
+			set has_fail 1
+		}
+	}
+
+	if {$has_fail} {
+		return 1
+	}
+
+	return 0
+}
+
 ## - font_scheme_init
 #
 # A control panel for viewing/modifying MGED's font scheme.
@@ -680,6 +799,8 @@ proc font_apply { id } {
     if {$font_gui($id,callback) != {}} {
 	eval $font_gui($id,callback) {$font_params}
     }
+
+    mged_font_sync_to_defaults
 }
 
 ## - font_reset
@@ -761,6 +882,8 @@ proc font_scheme_apply { id } {
 	    eval font configure $fname $fsconfig
 	}
     }
+
+    mged_font_sync_to_defaults $id
 }
 
 proc font_scheme_reset { id top } {
