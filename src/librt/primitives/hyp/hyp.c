@@ -1417,16 +1417,13 @@ rt_hyp_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 void
 rt_hyp_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
-    if (cent != NULL && ip != NULL) {
-	struct rt_hyp_internal *hip;
+    struct rt_hyp_internal *hip;
 
-	RT_CK_DB_INTERNAL(ip);
-	hip = (struct rt_hyp_internal *)ip->idb_ptr;
-	RT_HYP_CK_MAGIC(hip);
+    RT_CK_DB_INTERNAL(ip);
+    hip = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(hip);
 
-	VSCALE(*cent, hip->hyp_Hi, 0.5);
-	VADD2(*cent, hip->hyp_Vi, *cent);
-    }
+    VJOIN1(*cent, hip->hyp_Vi, 0.5, hip->hyp_Hi);
 }
 
 
