@@ -1441,20 +1441,22 @@ rt_hyp_surf_area(fastf_t *UNUSED(area), const struct rt_db_internal *UNUSED(ip))
 void
 rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
-    if (volume != NULL && ip != NULL) {
-	struct rt_hyp_internal *hip;
-	struct hyp_specific *hyp;
+    struct rt_hyp_internal *hip;
+    struct hyp_specific *hyp;
+    fastf_t c;
 
-	RT_CK_DB_INTERNAL(ip);
-	hip = (struct rt_hyp_internal *)ip->idb_ptr;
-	RT_HYP_CK_MAGIC(hip);
+    RT_CK_DB_INTERNAL(ip);
+    hip = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(hip);
 
-	hyp = hyp_internal_to_specific(hip);
-	*volume = M_2PI * hyp->hyp_r1 * hyp->hyp_r2 * hyp->hyp_Hmag *
-	    (1 + hyp->hyp_Hmag * hyp->hyp_Hmag * hyp->hyp_c * hyp->hyp_c / (12 * hyp->hyp_r1 * hyp->hyp_r1));
-	bu_free(hyp, "hyp volume");
-    }
+    hyp = hyp_internal_to_specific(hip);
+
+    c = hyp->hyp_r1 / hyp->hyp_c;
+
+    *volume = M_2PI * hyp->hyp_r1 * hyp->hyp_r2 * hyp->hyp_Hmag * (1 + hyp->hyp_Hmag * hyp->hyp_Hmag / (3 * c * c));
+    BU_PUT(hyp, struct hyp_specific);
 }
+
 
 int
 rt_hyp_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
