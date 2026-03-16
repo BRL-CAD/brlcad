@@ -16,10 +16,14 @@ cmakefiles(
   CMakeLists.txt
   mater.c
   push.cpp
+  d2push_tests.g
+  dpush_tests.g
+  dxpush_tests.g
   ppush_tests.g
   push_tests.g
   regress-ged_mater.cmake.in
   regress-ged_push.cmake.in
+  rpush_tests.g
   xpush_tests.g
 )
 

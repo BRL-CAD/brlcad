@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* added -d depth limit to npush cmd, improved robustness - Cliff Yapp
 * address race condition with bu_nsemaphores in libbu - Cliff Yapp
 * fixed potential DSP corner case rendering crash - Cliff Yapp
 * fixed multithreaded crashing with noise-using shaders - Cliff Yapp
