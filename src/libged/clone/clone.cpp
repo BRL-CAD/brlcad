@@ -154,11 +154,16 @@ struct CloneState {
 
     /* BU_CLBK_DURING progress callback: called once per top-level clone
      * position created (pattern modes) or per copy (linear mode).
-     * argv passed to the callback: {"step", new_obj_name}.
+     * argv passed to the callback:
+     *   {"step", new_obj_name, current_str, total_str}
+     * where current_str is the 1-based index of this clone and total_str
+     * is the total number of clones expected for the whole operation.
      * Populated from ged_clbk_get at the start of ged_clone_core. */
     bu_clbk_t   clbk    = nullptr;
     void       *clbk_u1 = nullptr;
     void       *clbk_u2 = nullptr;
+    size_t      clones_done  = 0;  /**< running count, incremented per fire */
+    size_t      clones_total = 0;  /**< total expected for this operation   */
 
     /* Output */
     struct bu_vls olist = BU_VLS_INIT_ZERO;
@@ -1031,13 +1036,23 @@ make_positions(int n, fastf_t start, fastf_t delta,
  * Pattern runners
  * ----------------------------------------------------------------------- */
 
+/** Elevation within this distance (radians) of ±π/2 is treated as a pole. */
+static const double SPH_POLE_TOL = 0.001;
+
+/** Buffer size for rendering a clone counter as a decimal string. */
+static const int CLONE_COUNTER_STR_SIZE = 32;
+
 /** Fire the BU_CLBK_DURING progress callback for one clone event. */
 static void
-clone_fire_progress(const CloneState *state, const std::string& new_name)
+clone_fire_progress(CloneState *state, const std::string& new_name)
 {
     if (!state->clbk) return;
-    const char *av[2] = {"step", new_name.c_str()};
-    (*state->clbk)(2, av, state->clbk_u1, state->clbk_u2);
+    state->clones_done++;
+    char done_str[CLONE_COUNTER_STR_SIZE], total_str[CLONE_COUNTER_STR_SIZE];
+    snprintf(done_str,  CLONE_COUNTER_STR_SIZE, "%zu", state->clones_done);
+    snprintf(total_str, CLONE_COUNTER_STR_SIZE, "%zu", state->clones_total);
+    const char *av[4] = {"step", new_name.c_str(), done_str, total_str};
+    (*state->clbk)(4, av, state->clbk_u1, state->clbk_u2);
 }
 
 
@@ -1057,6 +1072,9 @@ run_pattern_rect(CloneState *state)
     VMOVE(xd, state->xdir); VUNITIZE(xd);
     VMOVE(yd, state->ydir); VUNITIZE(yd);
     VMOVE(zd, state->zdir); VUNITIZE(zd);
+
+    state->clones_total = px.size() * py.size() * pz.size() * state->srcs.size();
+    state->clones_done  = 0;
 
     std::vector<std::string> names;
     for (fastf_t z : pz)
@@ -1109,10 +1127,21 @@ run_pattern_sph(CloneState *state)
     VSCALE(cpat, state->center_pat, l2b);
     VSCALE(cobj, state->center_obj, l2b);
 
+    /* Pre-compute total accounting for pole collapse (at_pole → only 1 az). */
+    {
+	size_t az_total = 0;
+	for (fastf_t el : ell) {
+	    bool at_pole = (fabs(M_PI_2 - fabs(el)) < SPH_POLE_TOL);
+	    az_total += at_pole ? 1 : azl.size();
+	}
+	state->clones_total = az_total * rl.size() * state->srcs.size();
+    }
+    state->clones_done = 0;
+
     std::vector<std::string> names;
     for (fastf_t r : rl) {
 	for (fastf_t el : ell) {
-	    bool at_pole = (fabs(M_PI_2 - fabs(el)) < 0.001);
+	    bool at_pole = (fabs(M_PI_2 - fabs(el)) < SPH_POLE_TOL);
 	    for (fastf_t az : azl) {
 		mat_t m;
 		mat_sph(m, az, el, r, cpat, cobj, state->rotaz, state->rotel);
@@ -1174,6 +1203,9 @@ run_pattern_cyl(CloneState *state)
     vect_t cbase, cobj;
     VSCALE(cbase, state->center_base, l2b);
     VSCALE(cobj,  state->center_obj,  l2b);
+
+    state->clones_total = azl.size() * rl.size() * hl.size() * state->srcs.size();
+    state->clones_done  = 0;
 
     std::vector<std::string> names;
     for (fastf_t r : rl)
@@ -1833,6 +1865,8 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
 		    }
 		    MAT_COPY(mat, t);
 		}
+		state.clones_total = state.srcs.size();
+		state.clones_done  = 0;
 		for (auto *src : state.srcs) {
 		    std::string n = apply_one_position_regions(&state, src, mat);
 		    if (!n.empty()) {
@@ -1844,6 +1878,8 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str,
 			     " {%s}", bu_vls_cstr(&state.olist));
 	    } else {
+		state.clones_total = 1;
+		state.clones_done  = 0;
 		struct directory *copy = deep_copy_object(&rt_uniresource, &state);
 		if (copy) {
 		    top_names.push_back(copy->d_namep);
