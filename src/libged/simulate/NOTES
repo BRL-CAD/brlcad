@@ -9,6 +9,72 @@ producing various runtime errors.
 I am uncertain as to whether Bullet is guaranteed to produce identical
 results across platforms.
 
+## Incremental Stepping and State Resume ##
+
+The `simulate` command supports incremental simulation steps and state persistence
+so that intermediate geometry states can be visualized and simulations can be
+paused and resumed.
+
+### `--steps N` ###
+
+The `--steps N` option divides the requested duration into N equal sub-steps.
+After each sub-step, the geometry in the database is updated to reflect the
+intermediate state, and the current body velocities are saved to the database
+so the simulation can be resumed later.
+
+Example – run 10 steps of 0.1 s each (total 1.0 s) on `scene.c`:
+```
+simulate --steps 10 scene.c 1.0
+```
+
+Each step must be at least 1/60 s (the Bullet fixed time-step); if the resulting
+per-step duration is too small, `simulate` will report an error ("duration is
+less than fixed timestep").  As a rule of thumb, `seconds / steps >= 0.017`.
+
+### `--plot prefix` ###
+
+The `--plot prefix` option writes a `.pl` wireframe UNIX-plot file after each
+simulation step.  Files are named `prefix_0001.pl`, `prefix_0002.pl`, etc.
+They contain the axis-aligned bounding boxes of all simulation bodies drawn as
+wireframes: green for dynamic bodies, red for static bodies.  These files can
+be read by any tool that understands the UNIX plot format (e.g. `plot3-plot3`
+or the `rplot` command inside MGED/archer).
+
+Example – run 5 steps and capture a plot at each step:
+```
+simulate --steps 5 --plot /tmp/sim_step scene.c 2.5
+```
+
+### `--resume` ###
+
+After any `simulate` run (with or without `--steps`), the final velocities of
+all dynamic bodies are saved as `simulate::state_linear_velocity` and
+`simulate::state_angular_velocity` attributes on each dynamic-body region
+object.  The `--resume` flag causes the next `simulate` invocation to read
+these saved velocities instead of the original `simulate::linear_velocity` /
+`simulate::angular_velocity` attributes, continuing the simulation from where
+it left off.
+
+Example – run 1 s, then resume for another 1 s:
+```
+simulate scene.c 1.0
+simulate --resume scene.c 1.0
+```
+
+To restart fresh from the original initial conditions, the user must delete the
+`simulate::state_*` attributes from the relevant region objects (e.g. with
+`attr rm`), or reset the geometry to the initial configuration.
+
+### Saved-State Attribute Names ###
+
+| Attribute                          | Written by    | Read when           |
+|------------------------------------|---------------|---------------------|
+| `simulate::state_linear_velocity`  | every run     | `--resume` is given |
+| `simulate::state_angular_velocity` | every run     | `--resume` is given |
+
+These attributes use the same `<x,y,z>` vector format as the initial-state
+`simulate::linear_velocity` and `simulate::angular_velocity` attributes.
+
 BRL-CAD defines `fastf_t` as double-precision floating point, while Bullet
 by default defines `btScalar` as single-precision. We should define the macro
 `BT_USE_DOUBLE_PRECISION` in our build system so that both types are
@@ -46,3 +112,90 @@ instead, the center of objects' axis-aligned bounding boxes are used. It may
 be best to provide an API within libanalyze for evaluating the center of mass
 and moment of inertia of arbitrary geometry. In most cases the moment
 of inertia of an object can be approximated by that of its bounding box.
+
+## Region-of-Interest (ROI) Proxy for Static Bodies ##
+
+The simulate subsystem now supports an optional Region-of-Interest (ROI) proxy
+feature for static bodies (objects with `simulate::mass=0`). This feature
+addresses a known limitation where very small dynamic objects interacting with
+very large static objects (e.g., a small solid dropped on huge terrain) can
+exhibit poor broadphase performance in Bullet.
+
+### How It Works ###
+
+Instead of using the full global AABB of a static object for broadphase collision
+detection, the ROI proxy maintains a smaller, moving AABB that tracks nearby
+dynamic bodies. Each simulation step:
+
+1. Dynamic bodies' positions are predicted based on their velocities over a short
+   time horizon (default: 0.5 seconds or the step duration, whichever is smaller).
+
+2. Swept AABBs are computed for each dynamic body (union of current and predicted
+   positions, plus padding for rotation).
+
+3. For each static body with ROI enabled, the ROI is updated to encompass all
+   dynamic bodies' swept AABBs that overlap the static body's global AABB.
+
+4. If no dynamic bodies are nearby, the ROI shrinks to a minimal size around
+   the static body's current position.
+
+5. The rigid body's world transform is updated to position the ROI box at the
+   new ROI center, and Bullet's broadphase is notified via `updateSingleAabb()`.
+
+### Configuration ###
+
+**Default Behavior:**
+- ROI proxy is **enabled by default** for all static bodies (`simulate::mass=0`).
+- Dynamic bodies (`simulate::mass>0`) always use standard collision shapes.
+
+**Opt-Out:**
+To disable ROI proxy for a specific static object, set the attribute:
+```
+simulate::roi_proxy = 0
+```
+or
+```
+simulate::roi_proxy = false
+```
+
+To explicitly enable (though this is the default for static bodies):
+```
+simulate::roi_proxy = 1
+```
+or
+```
+simulate::roi_proxy = true
+```
+
+### Tunable Constants ###
+
+The following constants can be adjusted in `simulation.cpp` / `simulation.hpp`
+(defined as static const members of the Simulation class):
+
+- `ROI_MAX_PREDICTION_TIME` (default: 0.5 seconds) - Maximum time horizon for
+  predicting dynamic body positions.
+
+- `ROI_PADDING` (default: 0.5 meters) - Additional padding around dynamic
+  bodies' swept AABBs to account for rotation and numerical safety.
+
+- `ROI_MIN_SIZE` (default: 0.2 meters) - Minimum ROI extent to prevent
+  degenerate collision shapes when no dynamic bodies are nearby.
+
+- `ROI_CHANGE_THRESHOLD` (default: 0.01 meters) - Minimum ROI change required
+  to trigger a broadphase update, avoiding unnecessary updates for tiny changes.
+
+### Implementation Notes ###
+
+- The `RtRoiCollisionShape` class (in `rt_roi_collision_shape.hpp/cpp`) extends
+  `btCollisionShape` and internally uses a `btBoxShape` representing the current
+  ROI extents.
+
+- The rigid body's world transform origin is set to the ROI center (not the
+  object's center of mass), so the transform moves as the ROI updates.
+
+- ROI bounds are clamped to the object's global AABB and enforce minimum extents
+  to prevent collision shape degeneration.
+
+- For static bodies with ROI disabled, the standard `RtCollisionShape` is used,
+  maintaining backward compatibility.
+

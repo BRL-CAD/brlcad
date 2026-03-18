@@ -199,11 +199,10 @@ calculate_contact_points(btManifoldResult &result,
     rt_instance.get_overlaps(body_a_path, body_b_path, *rays.ptr);
     const btVector3 normal_world_on_b(V3ARGS(rays.ptr->ray.r_dir));
 
-    for (std::vector<std::pair<btVector3, btVector3> >::const_iterator it =
-	 overlaps.begin(); it != overlaps.end(); ++it) {
-	const btScalar depth = -(it->first - it->second).length();
+    for (const std::pair<btVector3, btVector3> &overlap : overlaps) {
+	const btScalar depth = -(overlap.first - overlap.second).length();
 	result.addContactPoint(normal_world_on_b,
-			       it->second / simulate::world_to_application,
+			       overlap.second / simulate::world_to_application,
 			       depth / simulate::world_to_application);
     }
 

@@ -16,10 +16,16 @@ if(BRLCAD_ENABLE_BULLET)
   #
   # To avoid finding versions that won't work for our build, we use a variation
   # on this trick:  https://www.scivision.dev/cmake-force-link-static-libs/
-  set(CFLS_TMP ${CMAKE_FIND_LIBRARY_SUFFIXES})
-  set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_STATIC_LIBRARY_SUFFIX})
+  # However, when using system libraries (BRLCAD_BUNDLED_LIBS=SYSTEM), we allow
+  # shared libraries to enable faster builds.
+  if(NOT BRLCAD_BUNDLED_LIBS STREQUAL "SYSTEM")
+    set(CFLS_TMP ${CMAKE_FIND_LIBRARY_SUFFIXES})
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_STATIC_LIBRARY_SUFFIX})
+  endif()
   find_package(Bullet REQUIRED)
-  set(CMAKE_FIND_LIBRARY_SUFFIXES ${CFLS_TMP})
+  if(NOT BRLCAD_BUNDLED_LIBS STREQUAL "SYSTEM")
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ${CFLS_TMP})
+  endif()
 endif(BRLCAD_ENABLE_BULLET)
 
 if(BRLCAD_ENABLE_BULLET AND BULLET_LIBRARIES)
@@ -27,8 +33,11 @@ if(BRLCAD_ENABLE_BULLET AND BULLET_LIBRARIES)
 
   # If bullet was built with USE_DOUBLE_PRECISION, we need this (see
   # https://pybullet.org/Bullet/phpBB3/viewtopic.php?t=9670 for more discussion.)
-  # Hopefully we can find a way to detect this correctly at some point...
-  add_definitions(-DBT_USE_DOUBLE_PRECISION=1)
+  # System Bullet libraries typically use single precision, so only enable double
+  # precision when NOT using system libraries.
+  if(NOT BRLCAD_BUNDLED_LIBS STREQUAL "SYSTEM")
+    add_definitions(-DBT_USE_DOUBLE_PRECISION=1)
+  endif()
 endif(BRLCAD_ENABLE_BULLET AND BULLET_LIBRARIES)
 
 set(
@@ -39,33 +48,41 @@ set(
   rt_debug_draw.cpp
   rt_instance.cpp
   rt_motion_state.cpp
+  rt_roi_collision_shape.cpp
   simulation.cpp
   utility.cpp
 )
 
-set(SIM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
-set(SIM_LIBS libged libbu ${BULLET_LIBRARIES})
+set(SIM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/simulate)
+set(SIM_SYSTEM_INCLUDE_DIRS ${BULLET_INCLUDE_DIR})
+set(SIM_LIBS libged libbu libbv ${BULLET_LIBRARIES})
 
 ged_plugin_library(ged-simulate
   ${bullet_srcs}
-  INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}
+  INCLUDES ${SIM_INCLUDE_DIRS}
+  SYSTEM_INCLUDES ${SIM_SYSTEM_INCLUDE_DIRS}
   LIBS ${SIM_LIBS}
+  COMPILE_OPTIONS -Wno-nonnull-compare
   PLUGIN_ONLY
 )
 
 cmakefiles(
   CMakeLists.txt
   ${bullet_srcs}
+  SIMULATION_VERIFICATION.md
+  TESTING_SUMMARY.md
   rt_collision_algorithm.hpp
   rt_collision_shape.hpp
   rt_debug_draw.hpp
   rt_instance.hpp
   rt_motion_state.hpp
+  rt_roi_collision_shape.hpp
   simulation.hpp
   tests/CMakeLists.txt
   tests/simulate_test.cpp
+  tests/verify_simulation.c
   utility.hpp
-)
+  )
 
 # Local Variables:
 # tab-width: 8
