@@ -1,5 +1,6 @@
 if(BRLCAD_ENABLE_BULLET)
-  brlcad_find_package(Bullet CONFIG REQUIRED)
+  set(BULLET_ROOT ${PROJECT_BINARY_DIR})
+  brlcad_find_package(Bullet REQUIRED)
 
   if(BULLET_LIBRARIES)
     add_definitions(-DHAVE_BULLET=1)
@@ -24,6 +25,7 @@ if(BRLCAD_ENABLE_BULLET)
     endif()
     set(BULLET_INCLUDE_DIRS "${BULLET_INCLUDE_DIRS}")
   endif()
+  message("BULLET_LIBRARIES: ${BULLET_LIBRARIES}")
 endif()
 
 add_subdirectory(tests)
