@@ -4,8 +4,9 @@ if(BRLCAD_ENABLE_BULLET)
 
   if(BULLET_LIBRARIES)
     add_definitions(-DHAVE_BULLET=1)
-    if(BULLET_DEFINITIONS)
-      add_definitions(${BULLET_DEFINITIONS})
+    # We build double precision
+    if (BULLET_INCLUDE_DIR MATCHES "${PROJECT_BINARY_DIR}/.*")
+      add_definitions(-DBT_USE_DOUBLE_PRECISION=1)
     endif()
 
     get_filename_component(BULLET_INCLUDE_DIR_FULL "${BULLET_INCLUDE_DIR}" ABSOLUTE)
