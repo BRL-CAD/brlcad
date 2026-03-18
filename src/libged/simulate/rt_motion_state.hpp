@@ -32,7 +32,37 @@
 
 #include "utility.hpp"
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  if (__GNUC__ < 13)
+     // There seems to be a problem with multiple pragma diagnostic
+     // calls in GCC 12... try https://stackoverflow.com/a/56887760
+#    if GCC_PREREQ(8,0)
+#      pragma GCC system_header
+#    endif
+#  else
+#    pragma GCC diagnostic ignored "-Wfloat-equal"
+#    pragma GCC diagnostic ignored "-Wundef"
+#  endif
+#endif
+#if defined(__clang__)
+#    pragma clang diagnostic ignored "-Wfloat-equal"
+#    pragma clang diagnostic ignored "-Wundef"
+#endif
+
 #include <btBulletDynamicsCommon.h>
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 
 
 namespace simulate

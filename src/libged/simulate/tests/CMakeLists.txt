@@ -44,8 +44,10 @@ if(BRLCAD_ENABLE_BULLET)
   brlcad_add_test(NAME simulate_test COMMAND simulate_test)
 endif(BRLCAD_ENABLE_BULLET)
 
-cmakefiles(simulate_test.cpp)
-cmakefiles(CMakeLists.txt)
+cmakefiles(
+  CMakeLists.txt
+  simulate_test.cpp
+)
 
 # Local Variables:
 # tab-width: 8
