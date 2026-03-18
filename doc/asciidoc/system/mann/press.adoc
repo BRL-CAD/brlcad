@@ -1,0 +1,82 @@
+= PRESS(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+press - Simulates the pressing of a button.
+
+== SYNOPSIS
+
+[source]
+----
+press {button_label}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Simulates the pressing of a button. All of these button actions can be run directly as a command. The __button_label__ indicates which button to simulate. The available buttons are as follows:
+
+
+* help -- Provides a list of the available __button_labels__.
+* 35,25 -- Switches to a view from an azimuth of 35° and an elevation of 25°.
+* 45,45 -- Switches to a view from an azimuth of 45° and an elevation of 45°.
+* accept -- Simulates the _accept_ button (accepts edits and writes the edited object to the database).
+* reject -- Simulates the _reject_ button (discards edits).
+* reset -- Resets view to _top_ and resizes such that all displayed objects are within the view.
+* save -- Remembers the current view aspect and size.
+* restore -- Restores the most recently saved view.
+* adc -- Toggles display of the adc.
+* front -- Switches to view from the front (synonym for ae 0 0).
+* left -- Switches to view from the left (synonym for ae 90 0).
+* rear -- Switches to view from the rear (synonym for ae 180 0).
+* right -- Switches to view from the right (synonym for ae 270 0).
+* bottom -- Switches to view from the bottom (synonym for ae -90 -90).
+* top -- Switches to view from the top (synonym for ae -90 90).
+* oill -- Enters object illuminate mode.
+* orot -- Enters object rotate mode (must already be in matrix edit mode).
+* oscale -- Enters object scale mode (must already be in matrix edit mode).
+* oxscale -- Enters object scale (x-direction only) mode (must already be in matrix edit mode).
+* oyscale -- Enters object scale (y-direction only) mode (must already be in matrix edit mode).
+* ozscale -- Enters object scale (z-direction only) mode (must already be in matrix edit mode).
+* oxy -- Enters object translate mode (must already be in matrix edit mode).
+* ox -- Enters object translate (horizontal only) mode (must already be in matrix edit mode).
+* oy -- Enters object translate (vertical only) mode (must already be in matrix edit mode).
+* sill -- Enters solid (i.e., primitive) illuminate mode.
+* sedit -- (deprecated) Enters primitive edit mode.
+* srot -- Enters solid (i.e., primitive) rotate mode (must be in primitive edit mode).
+* sscale -- Enters solid (i.e., primitive) scale mode (must be in primitive edit mode).
+* sxy -- Enters solid (i.e., primitive) translate mode (must be in primitive edit mode).
+* zoomin -- Zooms in, synonym for zoom 2.
+* zoomout -- Zooms out, synonym for zoom 0.5.
+* rate -- Toggles between rate and absolute mode for knobs and sliders.
+* edit -- (deprecated) Toggles between edit and view modes for knobs and sliders (useful during editing to allow the knobs and sliders to be used for either editing operations (in edit mode) or to adjust the view without affecting the edited object (in view mode).
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *press* command to view the object from the top direction.
+
+.View from the top direction.
+[example]
+====
+mged>**press top**
+
+Switches to view from the top direction.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

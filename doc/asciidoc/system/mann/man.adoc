@@ -1,0 +1,38 @@
+= MAN(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+man - Opens the graphical man page viewer.
+
+== SYNOPSIS
+
+[source]
+----
+man [cmdname]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Launches the *brlman* graphical man page viewer with the man page documenting the specified MGED command name. If no command name is provided, The graphical man page viewer will open the entry for the first command (or the last command looked at if the manual was previously opened in the current MGED session).
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2016-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

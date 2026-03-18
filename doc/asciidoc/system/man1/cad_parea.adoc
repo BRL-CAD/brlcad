@@ -1,0 +1,71 @@
+= CAD_PAREA(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+cad_parea - compute area of polygon
+
+== SYNOPSIS
+
+[source]
+----
+cad_parea [ -i input] [ -o output]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*cad_parea* reads from _input_ (standard input if not given) a series of polygon vertex (_x_,_y_) coordinate values and writes to _output_ (standard output if not given) the polygon's area. Lines not beginning with a number are silently skipped. Vertices are assumed to be given in counter-clockwise cyclic order.
+
+
+[[hints]]
+== HINTS
+
+A hole can be accommodated as a clockwise section connected to the periphery by a line segment traced in both directions.
+
+Disjoint pieces may be connected by a line segment traced in both directions.
+
+
+[[example]]
+== EXAMPLE
+
+
+[quote]
+____
+$ cad_parea# _comment_ 1 0 2 0 2 1 3 1 3 2 2 2 1 2 0 2 0 1 1 1 _^D_ 4
+
+____
+
+
+[[see_also]]
+== SEE ALSO
+
+*cad_boundp*(1)
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Improperly formatted input produces an error message and terminates *cad_parea* with non-zero exit status.
+
+*cad_parea* outputs "0" for the area of a degenerate polygon.
+
+
+[[author]]
+== AUTHOR
+
+Douglas A. Gwyn, BRL/VLD-VMB
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1991-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

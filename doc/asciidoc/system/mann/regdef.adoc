@@ -1,0 +1,47 @@
+= REGDEF(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+regdef - Sets the default region attributes used by the *r* and *c* commands when building a BRL-CAD region.
+
+== SYNOPSIS
+
+[source]
+----
+regdef {regionID} [airID [los% [materialID]]]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Sets the default region attributes used by the *r* and *c* commands when building a BRL-CAD region. The default _ident_ number is incremented each time a new region is created with the *r* or *c* commands.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *regdef* command to set the default region attributes used by the *r* and *c* commands when building a BRL-CAD region.
+
+.Set region default attributes.
+[example]
+====
+mged>**regdef 1003 0 100 8**
+
+Sets the region default attributes to an ident of 1003, an air code of 0, an los of 100%, and a material code of 8.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

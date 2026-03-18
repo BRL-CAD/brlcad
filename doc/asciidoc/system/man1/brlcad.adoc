@@ -1,0 +1,148 @@
+= BRLCAD(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+brlcad - BRL-CAD programs for solid modeling, raytracing, graphics, and image processing
+
+[[description]]
+== DESCRIPTION
+
+The BRL-CAD Distribution contains many directories of materials (programs, man pages, documents, libraries, etc.). The major categories of programs are:
+
+
+*mged*::
+A multi-device interactive editor for constructing and updating combinatorial solid geometry (CSG) models. See *mged*(1), and see also _Understanding the Preparation and Analysis of Solid Models_ by Michael John Muuss (enclosed, in the "paper" directory).
+
+
+*librt*::
+A library of functions suitable for interrogation of a CSG solid model, utilizing ray-tracing techniques. See *librt*(3).
+
+
+*rt*::
+A ray-tracing lighting model, for rendering pictures of *mged*(1) CSG models. See *rt*(1), *rtray*(1), *rtpp*(1).
+
+
+*conv*::
+Programs to convert *mged*(1) and *pix*(3) format binary files to a portable ASCII form, and back again. See *asc2g*(1), *asc2pix*(1), *conv-vg2g*(1), *g2asc*(1), *pix2asc*(1).
+
+
+*libpkg*::
+A "message-passing" interface layered on top of TCP network links, to ease construction of network-distributed applications.
+
+
+*libfb*::
+A generic frame-buffer library which includes support for a number of display devices, as well as file, network, and debugging interfaces. Most programs which use this library have the letters "fb" in their names. To override your system default frame-buffer, the environment variable `FB_FILE` can be set. In addition, some commands also support a *-F* _framebuffer_ option. Note that the disk file format of _libfb_ is that of *pix*(5), allowing "framebuffer" files to be later processed by any of the "pix" family of programs. See *libfb*(3), *pix-fb*(3), *pix*(5), etc.
+
+
+*fbserv*::
+TCP-based network server which implements remote frame-buffer services.
+
+
+*libplot3*::
+A public-domain version of the UNIX-Plot library which differs from that of the standard *libplot*(3), by the addition of 3-D primitives, color, floating point coordinate routines, and the use of a file pointer parameter. See *libplot3*(3), *plot3*(5).
+
+
+*librle*::
+A Run-Length-Encoding (RLE) library, providing functions originally from the University of Utah in a library package. Note that the current version of this library reads Edition-3 RLE files. See *rle-fb*(1), *fb-rle*(1), *rle-pix*(1), *pix-rle*(1), *librle*(3).
+
+
+*util*::
+A collection of image-handling utilities, each constructed as individual tools intended to be used in combination. See *ap-pix*(1), *bw-fb*(1), *bw-imp*(1), *bw-pix*(1), *bw3-pix*(1), *bwcrop*(1), *bwdiff*(1), *bwfilter*(1), *bwhist*(1), *bwmod*(1), *bwrect*(1), *bwrot*(1), *bwscale*(1), *bwstat*(1), *dunncolor*(1), *dunnsnap*(1), *fb-bw*(1), *fb-pix*(1), *fb-rle*(1), *fbanim*(1), *fbclear*(1), *fbcmap*(1), *fbcmrot*(1), *fbcolor*(1), *fbframe*(1), *fbgrid*(1), *fbpoint*(1), *fbzoom*(1), *gencolor*(1), *loop*(1), *pix-bw*(1), *pix-bw3*(1), *pix-fb*(1), *pixbackgnd*(1), *pixbustup*(1), *pixdiff*(1), *pixfilter*(1), *pixhist*(1), *pixhist3d-plot3*(1), *pixhist3d*(1), *pixinterp2x*(1), *pixrect*(1), *pixrot*(1), *pixscale*(1), *pixstat*(1), *pixtile*(1), *plot3-fb*(1), *rle-fb*(1), *rle-pix*(1), *wavelet*(1), *bw*(5), *pix*(5), *plot3*(5).
+
+
+*vdeck*::
+A program to convert _mged(1)_ models to _gift(1)_ format card deck files. See *vdeck*(1).
+
+
+
+
+[[fb_file]]
+== FB_FILE
+
+Whenever a framebuffer is needed, and the *-F* option has not been specified, the environment variable `FB_FILE` is checked for the device to use. The format of this variable is either _[hostname:]_`/dev/` __device_name[num]__ or __UNIX_path__ , the pathname of a disk file to be used as a "virtual framebuffer". _Hostname_ is the name of a remote machine if the remote framebuffer interface is being used. When a local display device is being specified, the _hostname_ should not be specified, for performance reasons; just the special string __device_name__ is used to select a particular type of framebuffer. _Num_ is type dependent and can either mean a display number or select some options for that type. Note that for security reasons, it is not permitted to access a disk file via the remote interface.
+
+If `FB_FILE` is not set, the default for your system will be used.
+
+The use of `/dev/` before the __device_name__ is simply to distinguish them from filenames. See the end of the *libfb*(3) manual page for a list of the device names and the meanings of any _num_ parameters they may take, and for a more detailed discussion.
+
+
+[[options]]
+== OPTIONS
+
+A convention exists for the options used on most of the utilities provided. Random options are usually lower case. Options which could specify either a screen or file size are, by convention, lower case for file information, and upper case for screen information. Here's a list of some of the common options you may encounter:
+
+
+*-i*::
+Inverse flag. Pretend origin is in upper left corner of screen, for that good old-fashioned fourth-quadrant behavior.
+
+
+*-c*::
+Various. Typically means clear the screen first.
+
+
+*-z*::
+Various. Typically means zoom-in on current area of display.
+
+
+*-s* _square_file_size_::
+*WARNING:* Behavior is undefined when the *-s* flag is used in conjunction with the *-w* or *-n* flags.
+
+
+*-w* _file_width_
+*-n* _file_height_
+*-S* _square_screen_size_::
+*WARNING:* Behavior is undefined when the *-S* flag is used in conjunction with the *-W* or *-N* flags.
+
+
+*-W* _screen_width_
+*-N* _screen_height_
+*-x* _file_x_offset_
+*-y* _file_y_offset_
+*-X* _screen_x_offset_
+*-Y* _screen_y_offset_
+*-#* _bytes_per_sample_::
+specifies the number of bytes per sample, where the flag, where the *#* character is a literal "pound" or "sharp" sign character, typically found over the numeral "3" on ANSI keyboards. Several programs (like pixrect) can operate on data samples of arbitrary width. For example, a *pix*(5) format file can often be treated like a *bw*(5) format file with a width of three bytes per sample.
+
+
+
+
+[[tape_format]]
+== TAPE FORMAT
+
+When dealing with large collections of images, as might be needed for making a movie, it frequently becomes desirable to deal with magnetic tapes. Some of the early *pix*(5) tools contained built-in knowledge of the tape format. While this aberrant early design has been corrected in favor of using tape-oriented programs such as *dd*(1) in pipelines with the image tools, our "standard" image format remains.
+
+Regardless of image resolution, all tape records are 24k bytes long. If an image does not occupy an integral number of tape records, the last record is padded out. For example, NTSC images in 640x480 format use 37.5 records per image. The *files-tape*(1) utility is helpful in performing this function.
+
+The capacity of an average 2400 foot reel of tape at 6250 is 6144 records of 24k bytes each. For the various combinations of density and image resolution, a convention for the number of frames/reel exists:
+
+Density Resolution Frames/reel
+
+6250 1k 48
+
+6250 640x480 160
+
+6250 512 192
+
+1600 1k 12
+
+1600 512 48
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

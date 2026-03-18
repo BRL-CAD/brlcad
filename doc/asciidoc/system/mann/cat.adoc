@@ -1,0 +1,49 @@
+= CAT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+cat - Displays a brief description of each item in the list of _objects_.
+
+== SYNOPSIS
+
+[source]
+----
+cat {objects}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Displays a brief description of each item in the list of _objects_. If the item is a primitive shape, the type of shape and its vertex are displayed. If the item is a combination, the Boolean formula for that combination - including operands, operators, and parentheses - is displayed. If the combination is flagged as a region, then that fact is also displayed along with the region's ident code, air code, los, and GIFT material code.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *cat* command to display Boolean formulas for two regions.
+
+.Displaying Boolean formulas for two regions.
+[example]
+====
+
+mged> **cat region_1 region_2**::
+Displays the Boolean formulas for region_1 and region_2.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

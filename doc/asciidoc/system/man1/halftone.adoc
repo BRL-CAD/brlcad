@@ -1,0 +1,76 @@
+= HALFTONE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+halftone - Translate a bw file to a halftoned bw file
+
+== SYNOPSIS
+
+[source]
+----
+halftone [-RSa] [-s squarefilesize] [-w file_width] [-n file_height] [-B contrast] [-I Number_Intensity_Levels] [-M Method] [-T Tone_Scale_Curve_Points] [-D debug_level] < file.bw
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*halftone* reads a *bw*(5) format file from the named file, or from standard input if no file is specified, and reduces the number of intensity levels from 256 to a default of 2. *halftone* tries to preserve as much information as possible by applying dither.
+
+By default, the _bw_ file is assumed to be 512x512 pixels.
+
+If the *-R* flag is specified, random noise is added to the dither, and this can sometimes improve the results.
+
+The *-S* flag causes a surpentine raster to be used rather than a left to right scan.
+
+The *-a* flag is used when automatic file sizing is wanted. This does not work on pipes.
+
+The *-w* _file_width_ flag specifies the width of each scanline in the input file, in pixels.
+
+The *-n* _file_height_ flag specifies the height in scanlines of the input file.
+
+*-s* _squarefilesize_ sets both the height and width to the size given.
+
+*-B* _contrast_ will define a floating point value to be used as the Beta portion of a edge sharpening algorithm. The default is 0.0, which is no sharpening.
+
+*-I* _Levels_ defines the number of different intensity levels to use on output. The default is 2 (1 bit) and the max is 256 (8 bits).
+
+*-M* _method_ allows a choice of dither methods. The default is 0 a Floyd-Steinberg diffused error dither, 1 is a 45 degree classical clustered halftone screen, 2 is a simple threshold dither, 3 is a 0 degree dispersed halftone screen.
+
+The *-T* _x1 y1 x2 y2 ..._ parameter is used to define a curve to be used as a tone scale. The resulting curve is used to map input pixels to output pixels. The default curve is -T 0 0 128 128 255 255; a curve suggested by Robert Ulichney in Digital Halftoning is -T 0 0 15 0 128 100 200 200 240 255 255 255.
+
+*-D* _debug_level_ supplies the debug level; setting the argument to 9 provides all debugging.
+
+
+[[format]]
+== FORMAT
+
+A *bw*(5) file contains sequences of pixels. Each pixel is stored as one *unsigned char.* The first pixel in a _bw_ file is the lower left corner of the image. The pixels proceed from left-to-right across each scanline, with scanlines being written from the bottom to the top of the image.
+
+The output from *halftone* is scaled so that each intensity level is output as 255/Levels*value.
+
+
+[[see_also]]
+== SEE ALSO
+
+*rt*(1), *pix-bw*(1), *bw*(5), *bw-fb*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1990-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

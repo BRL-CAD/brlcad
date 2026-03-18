@@ -1,0 +1,47 @@
+= WHO(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+who - Lists the top-level objects that are currently displayed.
+
+== SYNOPSIS
+
+[source]
+----
+who [[real] | [phony] | [both]]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Lists the top-level objects that are currently displayed. The _phony_ flag asks for just _phony_ objects. _Phony_ objects are typically objects that are drawn in the MGED display, but are not actual database objects. Some _phony_ objects are drawings from the *vdraw* command and the edgeuses drawn by the *ev -u* command. The _real_ flag asks for just _real_ objects, and the _both_ flag asks for both _real_ and _phony_ objects. The default is just _real_ objects. Any of the flags may be abbreviated by its first letter. The *x* command also lists displayed shapes, but in more detail.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *who* command to list the top-level phony objects that are currently displayed.
+
+.List the top-level phony objects that are currently displayed.
+[example]
+====
+mged>**who p**
+
+Lists all top-level _phony_ objects currently displayed.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,123 @@
+= TIRE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+tire - Generate a tire model, given standard tire dimensional information
+
+== SYNOPSIS
+
+[source]
+----
+tire [options ...]... [name]
+----
+
+
+[[tire_description]]
+== DESCRIPTION
+
+*tire* creates a curved sidewall tire in either the current open database (when run from within MGED) or in _tire.g_ when run from the command line. If no dimensions are supplied defaults are used. The default is to _not_ model tread (due to performance issues), but tread modeling is implemented and available as a user option with the *-p* flag and the *-t* flag.
+
+*-a #* instructs *tire* to automatically add dimensional information to the toplevel object name used in the generated BRL-CAD database tree. Works with the *-n* option or as stand-alone. Output format uses '-' instead of '/' because the latter has significance in BRL-CAD object trees.
+
+
+[[tire_options]]
+== OPTIONS
+
+
+*-c count*::
+sets the number of tread _patterns_ used when adding tread to a tire. A tread pattern is the repeated shape or combination of shapes used in tire tread definitions.
+
+
+*-d width/ratio/wheeldiam #*::
+This option accepts tire dimensions in the form of width of the tire (in mm), ratio of sidewall height to tire width, and the diameter of the wheel the tire is designed to fit over (in inches). This is a fairly standard method for specifying automotive tire dimensions, and BRL-CAD can use these dimensions to create a model with approximately those dimensions. The '/' character will work but other options are also allowed provided they don't have numeric significance - for example the common notation width/ratioRwheeldiam will work as-is.
+
+
+*-W width #*::
+Specify the maximum sidewall width of the tire in mm. This option overrides the -d option if used together, or the default if used alone. Can be used with the -R and -D flags. Unlike the -d flag, this flag allows floating point input - use this flag if you need to specify width more precisely than 1mm.
+
+
+*-R ratio #*::
+Specify the ratio of the sidewall height to the maximum tire width. This option overrides the -d option if used together, or the default if used alone. Can be used with the -W and -D flags. Unlike the -d flag, allows floating point input for more precise definition of ratio.
+
+
+*-D rim diameter #*::
+Specify the diameter of the rim (a.k.a. the steel wheel) in inches. This option overrides the -d option if used together, or the default if used alone. Can be used with the -W and -R flags. Unlike the -d flag, allows floating point input for more precise definition of rim diameter.
+
+
+*-g depth #*::
+Specify the tread depth in 32nds of an inch. So, for example, -g 13 would create a tread depth of 13/32in.
+
+
+*-j width #*::
+Specify the rim width in inches.
+
+
+*-n name #*::
+allows the user to specify a name other than 'tire' for the root name of the toplevel database object. Works with the *-a* option or as stand-alone.
+
+
+*-p type#*::
+Select tread pattern to model. Note: tread modeling can SIGNIFICANTLY lengthen raytracing times, depending on the tread.
+
+
+*-s radius#*::
+Set the radius from the tire center of the maximum width point on the sidewall.
+
+
+*-t type#*::
+Select tread shape to model. Note: tread modeling can SIGNIFICANTLY lengthen raytracing times, depending on the tread.
+
+
+*-u thickness#*::
+Specify tire thickness in mm.
+
+
+*-w #*::
+Specify wheel/rim type. If 0, include no wheel. As of 7.12.6 only one wheel type is included by default.
+
+
+
+
+[[tire_examples]]
+== EXAMPLE
+
+The following will create a tire with width=185mm, ratio=65mm, and wheel diameter = 15in. The *-t* flag will instruct the procedure to model using tread type one, the *-n* flag will set the root name to 'autowheel' instead of tire, and the *-a* flag will append '-185-65R15' to 'autowheel' to create the final toplevel name 'autowheel-185-65R15' in the database rather than 'tire'.
+
+.Creating a 185/65R15 tire with wheel
+[example]
+====
+**tire -d 185/65R15 -t 1 -a -n autowheel**
+
+====
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Not much error checking yet - need to add.
+
+
+[[author]]
+== AUTHOR
+
+Clifford Yapp
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2008-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bugs]]
+== BUGS
+
+There is a known problem where specifying very thin tires with a large inner wheel will cause incorrect geometry to be produced - this has to do with how the elliptical torus primitive is handled. Other extreme cases such as extremely thin tire walls would also be expected to cause problems.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

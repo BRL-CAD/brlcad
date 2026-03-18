@@ -1,0 +1,47 @@
+= CP(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+cp - 
+
+== SYNOPSIS
+
+[source]
+----
+cp {from_object to_object}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Makes a duplicate of an object (shape or combination). If __from_object__ is a shape, then it is simply copied to a new shape named __to_object__. If __from_object__ is a combination, then a new combination is created that contains exactly the same members, transformation matrices, etc., and it is named __to_object__.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the command *cp* to duplicate a combination.
+
+.Duplicate a combination.
+[example]
+====
+mged>**cp comb1 comb2**
+
+Duplicate combination comb1 and call it comb2.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

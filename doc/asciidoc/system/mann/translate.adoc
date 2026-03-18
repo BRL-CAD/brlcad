@@ -1,0 +1,45 @@
+= TRANSLATE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+translate - Used to precisely control the translation of an object in both primitive edit and matrix edit modes.
+
+== SYNOPSIS
+
+[source]
+----
+translate {x y z}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Used to precisely control the translation of an object in both primitive edit and matrix edit modes. The keypoint of the edited object or shape is translated by the specified vector.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *translate* command to move a currently edited object +10 units in the x direction, +20 units in the y direction, and +30 units in the z direction.
+
+.Move a currently edited object.
+[example]
+====
+mged>**translate 10 20 30**
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

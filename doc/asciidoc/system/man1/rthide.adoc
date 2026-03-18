@@ -1,0 +1,171 @@
+= RTHIDE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+rthide - ray-traces a model and writes a hidden line removed UNIX-Plot file.
+
+== SYNOPSIS
+
+[source]
+----
+rthide [options]... model.g objects... > model.plot3
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*rthide* operates on the indicated _objects_ in the input _model.g_ and produces a hidden line removed UNIX-Plot file with bas-relief features. *rthide* produces plots by drawing a boundary whenever a change in region_id is detected. It also recognizes and portrays abrupt changes in surface curvature and changes in surface height. This permits the recognition of pits, protrusions, and changes in surface curvature.
+
+The orientation of the rays to be fired may be specified by the *-a* and *-e* options, in which case the model will be autosized, and the grid will be centered on the centroid of the model, with ray spacing chosen to span the entire set of _objects_. Alternatively, with the *-M* option, a transformation matrix may be provided on standard input which maps model-space to view-space. In this case, the grid ranges from -1.0 <= X, Y <= +1.0 in view space, with the size of the grid (number of rays fired) specified with *-s* This option is most useful when *rthide* is being invoked from a shell script created by an *mged*(1) _saveview_ command.
+
+The following options are recognized.
+
+
+*-s#*::
+Number of rays to fire in X and Y directions (square grid). Default is 512 (512x512).
+
+
+*-a#*::
+Select azimuth in degrees. Used with *-e* and conflicts with *-M*
+
+
+*-A#*::
+Select angle for shading. Default is 5.0 degrees. 89.0 will produce a plot where only steep drops and rises are shaded.
+
+
+*-e#*::
+Select elevation in degrees. Used with *-a* and conflicts with *-M*
+
+
+*-M*::
+Read model2view matrix from standard input. Conflicts with *-a* and *-e*
+
+
+*-g#*::
+Select grid cell width.
+
+
+*-G#*::
+Select grid cell height. If _not_ specified, cell height equals cell width.
+
+
+*-U #*::
+sets the Boolean variable __use_air__ to the given value.
+
+
+*-o*::
+*output.plot3* specifies a named file for output. By default, the plot is written to hide.plot3.
+
+
+*-x#*::
+Set librt debug flags to (hexadecimal) number.
+
+
+
+The *rthide* program is a simple front-end to *librt*(3) which is most useful when used with *mged*(1).
+
+
+[[example]]
+== EXAMPLE
+
+This section shows the ordinary usage of *rthide* . For example,
+
+
+....
+
+      rthide -a# -e# -s32 model.g all.g > file.plot3
+    
+....
+
+results in a 32 by 32 UNIXplot file of the named model at the specified azimuth and elevation. There will be some cross-hatching of the plot based on surface curvature. In order to minimize this cross-hatching, an angle can be specified:
+
+
+....
+
+      rthide -a# -e# -s32 -A89.0  model.g all.g > file.plot3
+    
+....
+
+eliminates cross-hatching due to curvature. However, cross-hatching resulting from sharp changes in gradient cannot be eliminated.
+
+The plotfile resulting from an *rthide* run can be viewed directly via _plot3-fb_ and may be rotated with *plot3rot* at the user's option:
+
+
+....
+
+      plot3-fb hide.plot3
+    
+....
+
+or
+
+
+....
+
+      plot3rot -a# -e# -g hide.plot3 | plot3-fb
+    
+....
+
+or it can be overlaid onto a solid model in _mged_:
+
+
+....
+
+      mged> overlay hide.plot3
+    
+....
+
+This technique can be used to position and plot *rthide* output.
+
+The output of *rthide* can be overlaid on top of a *rt* shaded image, for "edge enhancement". Here is a complete example, which assumes that FB_FILE points to a valid framebuffer:
+
+
+....
+
+      AZ=35
+      EL=25
+      # Directly to the framebuffer
+      rt -s512 -a$AZ -e$EL moss.g all.g 2> rt.log
+      rthide -A89.9 -s256 -a$AZ -e$EL -o rthide.plot3 moss.g all.g 2> rthide.log
+      eval `rtregis rthide.log rt.log` < rthide.plot3 | plot3-fb -o -s512
+    
+....
+
+
+[[see_also]]
+== SEE ALSO
+
+*cell-fb*(1), *mged*(1), *plot3-fb*(1), *plot3rot*(1), *rt*(1), *rtray*(1), *rtregis*(1), *rtscale*(1), *librt*(3), *libplot3*(3), *plot3*(5), *ray*(5V).
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Numerous error conditions are possible, usually due to errors in the geometry database. Descriptive messages are printed on standard error (file descriptor 2).
+
+
+[[bugs]]
+== BUGS
+
+Most deficiencies observed while using the *rthide* program are usually with the *librt*(3) package instead.
+
+
+[[authors]]
+== AUTHORS
+
+*BRL-CAD Team*
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1990-2022 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,87 @@
+= UNITS(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+units - Sets the units being used in _mged_. Without arguments, returns the current units being used in _mged_.
+
+== SYNOPSIS
+
+[source]
+----
+units [units_type]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Without arguments, returns the current type of units that _mged_ is using. If a __units_type__ is specified, _mged_ switches to editing in the indicated units. The actual database is always stored in millimeters, and the display is adjusted to the user's choice of units. If the __units_type__ specified on the command line is one of the types allowed, it will be written to the database file as the preferred units and succeeding invocations will use those units. The __units_type__ strings that will be remembered as the preferred editing unit are as follows:
+
+
+* mm -- millimeters
+* millimeter -- millimeters
+* cm -- centimeters
+* centimeter -- centimeters
+* m -- meters
+* meter -- meters
+* in -- inches
+* inch -- inches
+* ft -- feet
+* foot -- feet
+* feet -- feet
+* um -- micrometers
+
+__Units_type__ strings that may be used, but will not be remembered as the preferred editing units, are as follows:
+
+
+* angstrom
+* decinanometer
+* nanometer
+* nm
+* micron
+* micrometer
+* km
+* kilometer
+* cubit
+* yd
+* yard
+* rd
+* rod
+* mi
+* mile
+* nmile
+* nautical mile
+* au
+* astronomical unit
+* lightyear
+* pc
+* parsec
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *units* command with a __units_type__ argument to switch the editing units.
+
+.Switch the editing units to inches.
+[example]
+====
+mged>**units in**
+
+Switch to editing in inches and remember this as the preferred editing units for this database.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

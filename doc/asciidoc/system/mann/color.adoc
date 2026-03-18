@@ -1,0 +1,56 @@
+= COLOR(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+color - Creates an entry in the database that functions as part of a color lookup table for displayed regions.
+
+== SYNOPSIS
+
+[source]
+----
+color [-e] [low high r g b]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Creates an entry in the database that functions as part of a color lookup table for displayed regions. The ident number for the region is used to find the appropriate color from the lookup table. The _low_ and _high_ values are the limits of region ident numbers to have the indicated _rgb_ color (0-255) applied. The current list of color table entries may be displayed with the *prcolor* command, and the entire color table may be edited using the _-e_ option and/or using the *edcolor* command. If a color lookup table exists, its entries will override any color assigned using the *mater* command.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *color* command to make an entry in the color lookup table for regions within a specified range of idents.
+
+.Making an entry in the color lookup table for regions within a specified range of idents using the color red.
+[example]
+====
+mged>**color 1100 1200 255 0 0**
+
+Makes an entry in the color lookup table for regions with idents from 1100-1200 using the color red.
+
+====
+
+.Open the color table editor
+[example]
+====
+mged>**color -e**
+
+Opens a text editor which displays and allows editing for the current color table
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

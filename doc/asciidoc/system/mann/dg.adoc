@@ -1,0 +1,32 @@
+= DG(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dg -  exits gr grouper mode.  See gr man page for more info.
+
+== SYNOPSIS
+
+[source]
+----
+dg
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Exits gr grouper mode.  See gr man page.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

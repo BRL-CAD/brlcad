@@ -1,0 +1,76 @@
+= GDIFF(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+gdiff - a BRL-CAD differential geometry comparator
+
+== SYNOPSIS
+
+[source]
+----
+gdiff [options]... left_object right_object
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*gdiff* compares BRL-CAD geometry objects using LIBRT's solid raytracing capabilities and visualizes differences in the display manager.
+
+Red segments are those generated only from intersections with the __left_obj__ object while blue segments represent intersections unique to the __right_obj__ object. White segments represent intersections common to both objects. By default, only segments unique to the left and/or right objects are displayed.
+
+Users will want to pay careful attention to grid size. By default gdiff will try to guess a reasonable grid spacing using the bounding boxes of the objects in question, but depending on the visual quality of the result users may want to adjust the spacing up or down. Be careful of specifying tolerances that are too fine - performance will drop off rapidly as grid spacing becomes very small.
+
+
+[[gdiff_mged_options]]
+== OPTIONS
+
+
+*-h*::
+Prints help.
+
+
+*-g #*::
+Controls grid spacing. Units are mm.
+
+
+*-l*::
+Visualize solid segments occurring only in the left object.
+
+
+*-r*::
+Visualize solid segments occurring only in the right object.
+
+
+*-b*::
+Visualize solid segments occurring in both the left and right object (i.e. common or shared volume).
+
+
+*-G*::
+Report differences in grazing hits. By default, differences are reported only when they can be verified by shooting parallel rays offset around the original shotline reporting a difference. This options disables that filter.
+
+
+*-S*::
+The "S" option enables a completely different difference testing mode - rather than using rays to interrogate geometries, it checks tree structures, boolean operations, matrices and leaf objects. It deliberately does _not_ check object names, in order to compare the actual volumetric definitions of the trees. Since there is no ray sampling, this option will not currently produce any visual output.
+
+
+
+
+[[author]]
+== AUTHOR
+
+Clifford Yapp
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2016-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

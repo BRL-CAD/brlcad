@@ -1,0 +1,102 @@
+= RTCHECK(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rtcheck - Make UNIX-Plot of overlaps in an mged model, using raytracing
+
+== SYNOPSIS
+
+[source]
+----
+rtcheck [options]... model.g objects... > overlaps.plot3
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*rtcheck* operates on the indicated _objects_ in the input _model.g_ and produces a floating point 3-D BRL-style *plot3*(5) format file on standard output, in millimeters.
+
+The orientation of the rays to be fired may be specified by the *-a* and *-e* options, in which case the model will be autosized, and the grid will be centered on the centroid of the model, with ray spacing chosen to span the entire set of _objects._ Alternatively, with the *-M* option, a transformation matrix may be provided on standard input which maps model-space to view-space. In this case, the grid ranges from -1.0 < = X,Y < = +1.0 in view space, with the size of the grid (number of rays fired) specified with the *-s* option. The *-M* option is most useful when *rtcheck* is being automatically invoked from within *mged*(1) using the *rtcheck* command in _mged_.
+
+The following options are recognized.
+
+
+*-g#*::
+The grid cell width, in millimeters. Ordinarily, the cell width is computed by dividing the view size by the number of pixels of width. This option provides an alternate direct means to set the grid cell width.
+
+
+*-s#*::
+Number of rays to fire in X and Y directions (square grid). Default is 512 (512 x 512).
+
+
+*-r*::
+Report unique overlaps. At the end of a view, a list of unique pairs of overlapping regions is printed, along with a count of the number of detected overlaps for each pair. Not all detected overlap combinations are necessarily listed, as the overlap partition may mask a second overlap that is a continuation of an already detected overlap.
+
+
+*-a#*::
+Select azimuth in degrees. Used with *-e* and conflicts with *-M*
+
+
+*-e#*::
+Select elevation in degrees. Used with *-a* and conflicts with *-M*
+
+
+*-G*::
+Sets the grid cell height, in millimeters.
+
+
+*-M*::
+Read model2view matrix from standard input. Conflicts with *-a* and *-e*
+
+
+*-P#*::
+Specify the maximum number of processor cores to be used on multicore systems. The default is the maximum number of cores available for the machine. Negative numbers indicate using all except for the count specified.
+
+
+*-+ t*::
+Specify that rtcheck should output plot file data in text format. Default is binary plot data.
+
+
+
+*rtcheck* also accepts all other options that the *rt*(1) program implements, such as for non-square views, perspective, etc.
+
+The *rtcheck* program is a simple front-end to *librt*(3) which is most useful when used from *mged*(1). The output can be independently viewed using the UNIX-plot viewers like *plot3-fb*(1), *tplot*(1), etc.
+
+
+[[see_also]]
+== SEE ALSO
+
+*mged*(1), *rt*(1), *rtray*(1), *rtpp*(1), *plot3-fb*(1), *tplot*(1), *libplot3*(3), *librt*(3), *plot3*(5)
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Numerous error conditions are possible. Descriptive messages are printed on stderr (file descriptor 2).
+
+
+[[author]]
+== AUTHORS
+
+*BRL-CAD Team*
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1988-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bugs]]
+== BUGS
+
+Most deficiencies observed while using the *rtcheck* program are a consequence of problems in *librt.*(3)
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

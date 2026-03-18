@@ -1,0 +1,272 @@
+= ANALYZE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+analyze - Report and/or compute analytical information about the listed objects.
+
+== SYNOPSIS
+
+[source]
+----
+analyze [options]... [subcommand]
+----
+
+
+
+[source]
+----
+summarize {obj}...
+----
+
+
+
+[source]
+----
+intersect [options]... {obj1 obj2 [...]}...
+----
+
+
+
+[source]
+----
+subtract [options]... {obj1 obj2 [...]}...
+----
+
+
+
+
+[[description]]
+== DESCRIPTION
+
+The *analyze* command provides an array of reporting and shape generation capabilities. The classic behavior (and the behavior users will see if calling without specifying a subcommand) is a report summarizing geometric information about the specified solid(s). This behavior may also be explicitly invoked by the *summarize* subcommand.
+
+The *inside* will take an object and the x y z coordinates of a point, and report whether the point is inside or outside the object in question (returning 1 if inside and 0 otherwise.)
+
+The *intersect* will take the first object specified and intersect it with any subsequently specified objects - in effect, building up a new object with the geoemtry common to all objects specified.
+
+The *subtract* will take the first object specified and subtract from it any subsequently specified objects.
+
+
+[[examples]]
+== EXAMPLES
+
+.Analyze a particular _ARB_
+[example]
+====
+mged>**analyze box.s**
+
+
+....
+
+box.s:  ARB8
+	1 (30.0283, -5.21153, -16.3791)
+	2 (30.0283, 21.5812, -16.3791)
+	3 (30.0283, 21.5812, 10.4137)
+	4 (30.0283, -5.21153, 10.4137)
+	5 (3.23558, -5.21153, -16.3791)
+	6 (3.23558, 21.5812, -16.3791)
+	7 (3.23558, 21.5812, 10.4137)
+	8 (3.23558, -5.21153, 10.4137)
+
++------+---------------------------+-------------------------------------------------+--------------+
+| FACE |     ROT          FB       |                 PLANE EQUATION                  | SURFACE AREA |
++------+---------------------------+-------------------------------------------------+--------------+
+| 1234 |   0.00000000   0.00000000 |  1.00000000  0.00000000  0.00000000 30.02833557 | 717.85172729 |
+| 5678 | 180.00000000  -0.00000000 | -1.00000000 -0.00000000 -0.00000000 -3.23558044 | 717.85172729 |
+| 1584 | 270.00000000  -0.00000000 | -0.00000000 -1.00000000 -0.00000000  5.21152973 | 717.85172729 |
+| 2376 |  90.00000000  -0.00000000 | -0.00000000  1.00000000 -0.00000000 21.58122540 | 717.85172729 |
+| 1265 |   0.00000000 -90.00000000 | -0.00000000  0.00000000 -1.00000000 16.37908936 | 717.85172729 |
+| 4378 |   0.00000000  90.00000000 |  0.00000000 -0.00000000  1.00000000 10.41366577 | 717.85172729 |
++------+---------------------------+-------------------------------------------------+--------------+
+
+  +--------------------+--------------------+--------------------+--------------------+
+  | EDGE        LENGTH | EDGE        LENGTH | EDGE        LENGTH | EDGE        LENGTH |
+  +--------------------+--------------------+--------------------+--------------------+
+  | 12     26.79275513 | 23     26.79275513 | 34     26.79275513 | 14     26.79275513 |
+  | 15     26.79275513 | 56     26.79275513 | 26     26.79275513 | 67     26.79275513 |
+  | 78     26.79275513 | 58     26.79275513 | 48     26.79275513 | 37     26.79275513 |
+  +--------------------+--------------------+--------------------+--------------------+
+
+    +-------------------------------+
+    | Volume       = 19233.22554681 |
+    | Surface Area =  4307.11036376 |
+    | Gallons      =     0.00508088 |
+    +-------------------------------+
+      
+....
+
+====
+
+.Analyze a particular _TOR_
+[example]
+====
+mged>**analyze tor**
+
+
+....
+
+tor:  torus (TOR)
+	V (4.91624, -32.8022, 31.7118), r1=25.4 (A), r2=5.08 (H)
+	N=(0, 1, 0)
+	A=(0, -0, 1)
+	B=(1, 0, -0)
+	vector to inner edge = (0, -0, 20.32)
+	vector to outer edge = (0, -0, 30.48)
+
+    Centroid: (4.91624, -32.8022, 31.7118)
+
+    +-------------------------------+
+    | Volume       = 12938.70529707 |
+    | Surface Area =  5093.97853992 |
+    | Gallons      =     0.00341804 |
+    +-------------------------------+
+      
+....
+
+====
+
+.Points inside a sphere
+[example]
+====
+mged>**l sph.s**
+
+
+....
+
+sph.s:  ellipsoid (ELL)
+	V (0, 0, 0)
+	A (10, 0, 0) mag=10
+	B (0, 10, 0) mag=10
+	C (0, 0, 10) mag=10
+	A direction cosines=(0, 90, 90)
+	A rotation angle=0, fallback angle=0
+	B direction cosines=(90, 0, 90)
+	B rotation angle=90, fallback angle=0
+	C direction cosines=(90, 90, 0)
+	C rotation angle=0, fallback angle=90
+      
+....
+
+mged>**l pnts.s**
+
+
+....
+
+pnts.s:  Point Cloud (PNTS)
+Total number of points: 6
+Default scale: 0.000000
+point#, (point)
+1, 	 (2.000000 2.000000 2.000000)
+2, 	 (0.000000 0.000000 -5.000000)
+3, 	 (0.000000 0.000000 10.000000)
+4, 	 (0.000000 0.000000 20.000000)
+5, 	 (10.000000 0.000000 10.000000)
+6, 	 (0.000000 10.000000 20.000000)
+      
+....
+
+mged>**analyze intersect -o inside.s pnts.s sph.s**
+
+
+....
+
+3
+      
+....
+
+mged>**l inside.s**
+
+
+....
+
+inside.s:  Point Cloud (PNTS)
+Total number of points: 3
+Default scale: 0.000000
+point#, (point)
+1, 	 (0.000000 0.000000 10.000000)
+2, 	 (0.000000 0.000000 -5.000000)
+3, 	 (2.000000 2.000000 2.000000)
+      
+....
+
+====
+
+.Points outside a sphere
+[example]
+====
+mged>**l sph.s**
+
+
+....
+
+sph.s:  ellipsoid (ELL)
+	V (0, 0, 0)
+	A (10, 0, 0) mag=10
+	B (0, 10, 0) mag=10
+	C (0, 0, 10) mag=10
+	A direction cosines=(0, 90, 90)
+	A rotation angle=0, fallback angle=0
+	B direction cosines=(90, 0, 90)
+	B rotation angle=90, fallback angle=0
+	C direction cosines=(90, 90, 0)
+	C rotation angle=0, fallback angle=90
+      
+....
+
+mged>**l pnts.s**
+
+
+....
+
+pnts.s:  Point Cloud (PNTS)
+Total number of points: 6
+Default scale: 0.000000
+point#, (point)
+1, 	 (2.000000 2.000000 2.000000)
+2, 	 (0.000000 0.000000 -5.000000)
+3, 	 (0.000000 0.000000 10.000000)
+4, 	 (0.000000 0.000000 20.000000)
+5, 	 (10.000000 0.000000 10.000000)
+6, 	 (0.000000 10.000000 20.000000)
+      
+....
+
+mged>**analyze subtract -o outside.s pnts.s sph**
+
+
+....
+
+3
+      
+....
+
+mged>**l outside.s**
+
+
+....
+
+outside.s:  Point Cloud (PNTS)
+Total number of points: 3
+Default scale: 0.000000
+point#, (point)
+1, 	 (0.000000 10.000000 20.000000)
+2, 	 (10.000000 0.000000 10.000000)
+3, 	 (0.000000 0.000000 20.000000)
+      
+....
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

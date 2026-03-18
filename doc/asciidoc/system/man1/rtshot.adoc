@@ -1,0 +1,108 @@
+= RTSHOT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+rtshot - fire one ray at an mged model, for debugging
+
+== SYNOPSIS
+
+[source]
+----
+rtshot [options]... model.g objects...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*rtshot* fires a single ray at the indicated _objects_ in the input _model.g_ and produces a printed summary of the geometry that the ray passes through. The orientation of the ray to be fired is specified by giving any two of the three options *-a* *-d* and *-p.*
+
+
+The::
+*-d* option is followed by three numbers specifying the direction vector.
+
+
+The::
+*-p* option is followed by three numbers specifying the start point.
+
+
+The::
+*-a* option is followed by three numbers specifying a point to be fired "at".
+
+
+*-t #*::
+specifies the number of triangles per piece for facetted primitives (currently only the BOT). The default value is 4.
+
+
+*-b #*::
+specifies the threshold for breaking facetted primitives into pieces. The default is 32.
+
+
+*-x #*::
+Set debug flags to (hexadecimal) number.
+
+
+*-U #*::
+Set use_air flag.
+
+
+*-v attribute_name1 [attribute_name2 ...]*::
+This option specifies a list of attribute names to be listed (along with the appropriate values) for each region hit.
+
+
+*-O # or keyword*::
+This option indicates how overlaps should be handled. The _resolve_ or `0` argument is the default (normal BRL-CAD mode, all overlaps are resolved and no overlaps appear in the output). The __rebuild_fastgen__ or `1` argument mimics FASTGEN4 raytracing (plate-mode overlaps appear in the output). The __rebuild_all__ or `2` argument rebuilds all overlaps that occurred along the ray (all overlaps appear in the output). The _retain_ or `3` argument does not resolve any overlaps (each unique combination of intersection extent and list of claiming regions produces a single partition).
+
+
+*-n #*::
+This option specifies the number of rings to use in a ray bundle (does not include the central ray).
+
+
+*-c #*::
+This option specifies the number of rays in each ring. The rays in each ring are not aligned with the rays in the previous ring, they make an outward spiral pattern. A central ray is included.
+
+
+*-R #*::
+This option specifies the radius of the ray bundle. Each ring is evenly spaced with the outermost ring at this radius.
+
+
+
+The *rtshot* program is a simple front-end to *librt*(3) which can be invoked directly by the user. If a ray bundle is desired, all of the *-n* , *-c* , and *-R* options must be specified. The output from a ray bundle is handled as a single ray. Any overlaps between rays in the bundle are resolved by favoring rays closer to the central ray. The default is to fire a single ray.
+
+
+[[see_also]]
+== SEE ALSO
+
+*mged*(1), *rt*(1), *pix-fb*(1), *rtray*(1), *rtpp*(1), *librt*(3), *ray*(5V), *pix*(5)
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Numerous error conditions are possible. Descriptive messages are printed on standard error.
+
+
+[[bugs]]
+== BUGS
+
+Most deficiencies observed while using the *rtshot* program are usually with the *librt*(3) package instead.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1987-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

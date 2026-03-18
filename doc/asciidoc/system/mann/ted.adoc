@@ -1,0 +1,47 @@
+= TED(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+ted - Places the parameters of the currently edited primitive shape into a file, then starts a text editor for the user to modify the parameters.
+
+== SYNOPSIS
+
+[source]
+----
+ted [] []
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *ted* command places the parameters of the currently edited primitive shape into a file, then starts a text editor for the user to modify the parameters. The editor used is whatever the user has set in the environment variable EDITOR. If EDITOR is not set, then _/bin/ed_ is used. MGED must be in the primitive edit mode prior to using this command. The *red* command performs a similar function for combinations.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *ted* command to place the parameters of a currently edited primitive shape into a file and start a text editor to modify the parameters.
+
+.Use a text editor to modify a currently edited shape.
+[example]
+====
+mged>**ted**
+
+Starts a text editor to modify a currently edited shape.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

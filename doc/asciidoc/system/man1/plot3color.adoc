@@ -1,0 +1,48 @@
+= PLOT3COLOR(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+plot3color - output a UnixPlot color command
+
+== SYNOPSIS
+
+[source]
+----
+plot3color r g b [ <] unix_plot > unix_plot
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*plot3color* outputs a UnixPlot command to set the current drawing color to the given _r g_ and _b_ values. These values should be numbers from 0 to 255 and represent black to full up Red, Green, and Blue values respectively.
+
+To allow this command to be used in pipelines, an optional input file can be given. All of the input will be passed through until end of file, and then the color command will be appended to the end.
+
+This command exists mostly as an aid for making graphs and things from shell commands.
+
+
+[[see_also]]
+== SEE ALSO
+
+*plot3line2*(1), *plot3-plot3*(1), *plot3*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1988-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,54 @@
+= G-DXF(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+g-dxf - AutoCad DXF Translator (BRL-CAD to DXF)
+
+== SYNOPSIS
+
+[source]
+----
+g-dxf [-v] [-i] [-p] [-xX lvl] [-D calculation_tolerance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P dummy_arg] [-o DXF_file] database.g object(s)
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*g-dxf* converts the specified _object(s)_ from a BRL-CAD _database.g_ file to the _AutoCad DXF_ file format. The *-x* option specifies an RT debug flag and the *-X* option specifies an NMG debug flag. The *-a* option may be used to specify an absolute tessellation tolerance (in millimeters). This requires that the maximum absolute error from the tessellated surface to the actual surface must not be greater than __abs_tol__. The *-n* option specifies a surface normal error tolerance (in degrees) for the tessellation. The *-r* option may be used to set a relative error tolerance. This effectively sets an absolute tolerance for each primitive solid by multiplying the overall size of the solid by __rel_tol__. The *-D* option specifies a calculational distance tolerance (mm). Any two vertices that are less than this distance apart will be treated as the same vertex. The *-v* option requests verbose output. The *-i* option requests the output file units to be inches (the default is mm). The *-p* option requests that the output consist entirely of POLYFACE MESH entities. (The default is all 3DFACE entities.) The *-P* option is to enable core dumps (dummy argument is for number of processors, currently disabled). The *-o* option specifies the name of the file to receive the output (stdout is the default).
+
+
+[[example]]
+== EXAMPLE
+
+
+----
+
+$ g-dxf -o sample.dxf sample.g sample_object
+----
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Error messages are intended to be self-explanatory.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2003-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

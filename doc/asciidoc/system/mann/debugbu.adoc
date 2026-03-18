@@ -1,0 +1,56 @@
+= DEBUGBU(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+debugbu - Allows the user to set or check the debug flags used by _libbu_.
+
+== SYNOPSIS
+
+[source]
+----
+debugbu [hex_code]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Allows the user to set or check the debug flags used by _libbu_. With no arguments, the *debugbu* command displays all the possible settings for the __bu_debug__ flag and the current value. When a __hex_code__ is supplied, that value is used as the new value for __bu_debug__. Similar debug commands for other _BRL-CAD_ libraries are *debuglib* for _librt_ and *debugnmg* for the NMG portion of _librt_.
+
+
+[[examples]]
+== EXAMPLES
+
+The first example shows the use of the *debugbu* command (without an argument) to display all possible settings for the __bu_debug__ flag and the current value. The second example shows the use of the *debugbu* command with a hex code, which is used as the new value for __bu_debug__.
+
+.Display a list of available __bu_debug__ values and the current value.
+[example]
+====
+mged>**debugbu**
+
+Lists available __bu_debug__ values and the current value.
+
+====
+
+.Set a new value for __bu_debug__.
+[example]
+====
+mged>**debugbu 2**
+
+Sets __bu_debug__ to <MEM_CHECK>.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

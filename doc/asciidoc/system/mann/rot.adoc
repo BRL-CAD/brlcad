@@ -1,0 +1,56 @@
+= ROT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rot - Rotates the view or an object by _xyz_ degrees.
+
+== SYNOPSIS
+
+[source]
+----
+rot {x y z}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Rotates the view or an object by _xyz_ degrees. Exactly what and how it is rotated are dependent on MGEDs state as well as the state of the display manager. See *arot* for a similar capability.
+
+
+[[examples]]
+== EXAMPLES
+
+The two examples show the use of the *rot* command to rotate the view or object by a specified number of degrees about the _x, y,_ or _z_ axis.
+
+.Rotate the view or object a specified number of degrees about the _z_ axis.
+[example]
+====
+mged>**rot 0 0 45**
+
+Rotates the view or object 45° about the _z_ axis.
+
+====
+
+.Rotate the view or object a specified number of degrees about the _y_ and _x_ axes.
+[example]
+====
+mged>**rot 45 45 0**
+
+Rotates the view or object 45° about the _y_ axis, then rotates 45° about the _x_ axis.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

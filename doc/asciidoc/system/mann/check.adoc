@@ -1,0 +1,439 @@
+= CHECK(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+check - Check is a geometry analysis tool.
+
+== SYNOPSIS
+
+[source]
+----
+check sub-command [options] [objects]...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *check* program computes and reports a variety of characteristics of the _objects_ specified from the opened database. The characteristics which can be computed include *mass, centroid, moments of inertia, volume, overlaps, surface area, exposed air, gaps/voids, unconfined air* and *adjacent air.* Only the _objects_ from the database specified on the command line are analyzed.
+
+It works by shooting grids of rays from the three axis-aligned directions (sometimes called _views_) or a single view when azimuth/elevation angles are mentioned.
+
+For volume/mass/surface area calculations the resulting calculations for each view are compared to each other. The grid of rays is progressively refined until the results from all three views agree within a user-specifiable tolerance, or a limit on grid refinement is reached.
+
+For mass/centroid/moments of inertia calculations it is suggested for better accuracy to opt for three axis-aligned grid by not mentioning azimuth/elevation angles.
+
+For surface area calculations, the rays are fired from three grids at random azimuth/elevation angles and then taken mean of the values reported by the three grids at the end.
+
+
+[[subcommands]]
+== SUBCOMMANDS
+
+
+*adj_air*::
+Detects air volumes which are next to each other but have different air_code values applied to the region. This would typically indicate that the regions are different types of air, such as crew_air (which fills the crew compartment of a vehicle) and engine_air (which surrounds the engine). When these different types of air adjoin each other, it is generally considered a modeling error.
+
+
+*centroid*::
+Computes the centroid of the objects specified.
+
+
+*exp_air*::
+This causes checks to be made to see if the ray encounters air regions before (or after all) solid objects. Typically, only the air inside a building or vehicle is modeled if the purpose of the model is to support analysis of that single structure/vehicle. There are exceptions, such as when modeling larger environments for more extended analysis purposes.
+
+
+*gap*::
+This reports when there is more than overlap_tol_dist (see the -t option below) between objects on the ray path. Note that not all gaps are errors. For example, gaps between a wheel and a fender are expected (unless external air is modeled). Typically, users should perform gap analysis on contained subsets of a model (such as passenger compartments) rather than on whole vehicles.
+
+
+*mass*::
+Computes the mass of the objects specified.
+
+
+*moments*::
+Computes the moments and products of inertia of the objects specified.
+
+
+*overlaps*::
+This reports overlaps, when two regions occupy the same space. In the real world, two objects may not occupy the same space. This check is sometimes also known as interference checking. Two objects must overlap by at least overlap_tol_dist (see the -t option below) to be considered to overlap.
+
+
+*surf_area*::
+Computes the surface area of the objects specified.
+
+
+*unconf_air*::
+This reports when a partition with nonzero air code follows or precedes another partition and the space between them is more than overlap_tol_dist (see the -t option). The data reported are the names of the two regions (and solids) involved, the length of the gap along the ray, and the model coordinates of the ray's exiting the first partition and entering the second
+
+
+*volume*::
+Computes the volume of the objects specified.
+
+
+
+
+[[mass_calculation]]
+== MASS CALCULATION
+
+If mass calculation is selected, a value is calculated and reported for each _object_ specified on the command line. *Note that if there are overlaps or other errors in the geometry, the values reported will be invalid.*
+
+For mass computation, the density of every region must be specified. Densities are specified as an index in a table of density values. This index is stored in the _GIFTmater_ attribute of each region (typically set with the _edcodes_ or _adjust_ commands in MGED).
+
+The density table consists of three columns:
+
+
+_An integer index value_.::
+This is the value to which the _GIFTmater_ attribute will be set to select this material for the region.
+
+
+_A floating point density value_.::
+This is the density for the material, and is specified in *grams/cc*.
+
+
+_A name string_.::
+This is a name or description the material.
+
+
+
+An example file might look like the following:
+
+
+....
+
+#******************************************************************************
+#  sample .density file for check, gqa and rtweight
+#******************************************************************************
+#
+#     *** IMPORTANT: This file may change over time and should not be
+#     *** relied upon for production analysis work.
+#
+#     All densities are in units of g/cm^3.
+#
+#******************************************************************************
+#
+# To use the file with rtweight, copy the file to your working directory:
+#   cp GQA_SAMPLE_DENSITIES .density
+#
+# To use the file with check/gqa, import the file data as a binary object:
+#   mged file.g bo -i u c _DENSITIES GQA_SAMPLE_DENSITIES
+#
+#******************************************************************************
+
+2    7.82      Carbon Tool Steel
+3    2.7       Aluminum, 6061-T6
+4    2.74      Aluminum, 7079-T6
+5    8.9       Copper, pure
+6    19.32     Gold, pure
+7    8.03      Stainless, 18Cr-8Ni
+8    7.47      Stainless 27Cr
+9    7.715     Steel, tool
+10   7.84      Carbon Steel
+12   3.00      Gunner
+14   10.00     Fuel
+
+    
+....
+
+The table is typically created in an external file using a text editor.
+
+The geometry editor MGED automatically assigns an index value of `1` to a newly created region. While this default can be handy when a vast majority of objects are made from the same material, it can lead to surprising errors when objects which are supposed to have a certain mass are computed to have different mass because one or two regions were not set to the correct, non-default index value. As a result, it is advised that the index value `1` never be used. If this practice is followed, then an error message will be generated for any regions which have not had their material index set to something other than the default.
+
+The user will typically want to run *gqa* and verify the results using the *-f* option (see below) before importing the table into the database. For example, if a material index is left out of the table, it is easier to rectify the situation using the external file. Once the table has been verified as correct and complete, it is imported to the database as the binary object *_DENSITIES* . To import the text file into the database, the following command is used:
+
+
+
+
+....
+
+mged> bo -i u c _DENSITIES filename
+      
+....
+
+
+
+
+[[geometry_error_detection]]
+== GEOMETRY ERROR DETECTION
+
+All of these calculations run until the grid refinement limit is reached.
+
+For each pair of regions that cause an error, the tool reports the two erroneous regions, the maximum line-of-sight thickness of the error, and the in-hit location of the ray that caused that maximum error thickness.
+
+
+[[options]]
+== OPTIONS
+
+
+*-a* __azimuth_deg [deg|rad]__::
+Sets a rotation (in degrees) of the coordinate system by a given amount about the Z axis. When mentioned, check shoots only one grid of rays along the azimuth/elevation angle. The default is 35. See also *-e* .
+
+
+*-e* __elevation_deg [deg|rad]__::
+Sets a rotation (in degrees) of the coordinate system by a given elevation from the XY plane (rotation about X axis?). When mentioned, check shoots only one grid of rays along the azimuth/elevation angle. The default is 25. See also *-a* .
+
+
+*-d*::
+Enables debugging (off by default).
+
+
+*-f* _filename_::
+Specifies that density values should be taken from an external file instead of from the *_DENSITIES* object in the database. This option can be useful when developing the density table with a text editor, prior to importing it to the geometric database.
+
+
+*-g* [__initial_grid_spacing__-]__grid_spacing_limit__ or [__initial_grid_spacing__,]__grid_spacing_limit__::
+Specifies a limit on how far the grid can be refined and optionally the initial spacing between rays in the grids. The first value (if present) indicates the initial spacing between grid rays. The mandatory argument, __grid_spacing_limit__, indicates a lower bound on how fine the grid spacing may get before computation is terminated. In general, the __initial_grid_spacing__ value should be an integer power of the __grid_spacing_limit__. So for example, if __grid_spacing_limit__ has the value 1, then any __initial_grid_spacing__ specified should be in the sequence 2, 4, 8, 16, 32... so that the grid will refine to precisely the lower limit. The grid spacing may be specified with units. For example: *5 mm* or *10 in* . If units are not provided, millimeters are presumed to be the units.
++
+The default values are 50.0 mm and 0.5 mm, which is equivalent to specifying: *-g 50.0mm-0.5mm* or *-g 50.0mm,0.5mm* on the command line. This is a hard limit. If other analysis constraints are not met, the grid spacing will never be refined smaller than the minimum grid size to satisfy another constraint. The initial grid spacing is divided in half at each refinement step. As a result, if you desire a lower limit to actually be tested, then the initial grid size must be a power of 2 greater. For example, specifying -g10mm,1mm would result in grid spacings of 10, 5, 2.5, 1.25 being used. If the goal was to exactly end at a 1mm grid, then values such as 8 or 16 should have been chosen for the initial values. This would result in testing 16, 8, 4, 2, 1 grid spacing values.
+
+
+*-G* [__grid_width__,]__grid_height__::
+sets the grid size, if only grid width is mentioned then a _square_ grid size is set.
+
+
+*-i*::
+Gets 'view information' from the view to setup the eye position of the single grid. Used only for _overlaps_ calculations.
+
+
+*-M* __mass_tolerance[units]__::
+This is like the volume tolerance, *-V*, but is applied to the mass computation results, not the volume computation results.
++
+The mass computation tolerance is probably more appropriate when doing whole-vehicle analysis. If mass computation is selected, it is set to a value equal to the mass of an object 1/100 the size of the model, which is made of the most dense material in the table.
+
+
+*-n* __num_hits__::
+Specifies that the grid be refined until each region has at least __num_hits__ ray intersections. It applies only when mass or volume calculations are being performed. This limit is not applied per-view, but rather per-analysis. So, for example, it is accepted that a thin object might not be hit at all from one view, but might be hit when it is shot from other views.
++
+The default is 1. Hence, each region must be intersected by a ray at least once during the analysis.
+
+
+*-N* __num_views__::
+Specifies that only the first __num_views__ should be computed. This is principally a debugging option.
+
+
+*-o*::
+Specifies to display the _overlaps_ as overlays.
+
+
+*-p*::
+Specifies that *check* should produce plot files for each of the analyses it performs. These can be overlaid on the geometry in _mged_ with the _overlay_ command to help visualize the analysis results. Each of the different analysis types write to a separate plot file and use different colors for drawing.
+
+
+*-P* _ncpu_::
+Specifies that _ncpu_ CPUs should be used for performing the calculation. By default, all local CPUs are utilized. This option exists primarily to reduce the number of computation threads from the machine maximum. Note that specifying more CPUs than are present on the machine does not increase the number of computation threads.
+
+
+*-q*::
+Quiets (suppresses) the "was not hit" reporting.
+
+
+*-r*::
+Indicates that *check* should print per-region statistics for mass, volume and surface area as well as the values for the objects specified on the command line.
+
+
+*-R*::
+Disables the reporting of overlaps. Used only for _overlaps_ sub-command.
+
+
+*-s* __surf_area_tolerance__::
+Specifies a _surface area tolerance_ value that the three view computations must be within for computation to complete. If surface area calculation is selected and this option is not set, then the tolerance is set to 1/1,000 of the estimated surface area of the model bounding box.
+
+
+*-S* __samples_per_model_axis__::
+Specifies that the grid spacing will be initially refined so that at least __samples_per_axis_min__ will be shot along each axis of the bounding box of the model. For example, if the objects specified have a bounding box of 0 0 0 -> 4 3 2 and the grid spacing is 1.0, specifying the option *-S 4* will cause the initial grid spacing to be adjusted to 0.5 so that 4 samples will be shot across the Z dimension of the bounding box. The default is to ensure 1 ray per model grid axis.
+
+
+*-t* __overlap_tolerance__::
+Sets the tolerance for computing overlaps. The __overlap_tolerance__ must be a positive number equal to or greater than 0.0. Any overlap smaller than the value specified will be ignored. The default value is 0.0, which causes any overlap to be reported/processed. The value may be specified with a unit specifier such as: *-t 1.0mm* or *-t 0.25in.*
+
+
+*-U* __use_air__::
+Specifies the Boolean value (0 or 1) for __use_air__ which indicates whether regions which are marked as "air" should be retained and included in the raytrace. *Unlike other BRL-CAD raytracing applications, the default is to retain air in the raytracing.* The *-U 0* option causes air regions to be discarded prior to raytracing. If you turn off use_air, and request any analysis that requires it (see *-A* above), then the program will exit with an error message.
+
+
+*-u* __distance_units,volume_units,mass_units__::
+Specify the units used when reporting values. Values must be comma delimited and provided in the order __distance_units__,__volume_units__, __mass_units__. For example: *-u "cm,cu ft,kg"* or *-u ,,kg* (The latter example sets only the mass units.) Note that unit values with spaces in their names such as _cu ft_ must be contained in quotes for the shell to keep the values together.
++
+The default units are millimeters, cubic millimeters, and grams.
+
+
+*-v*::
+Turns on verbose reporting of computation progress. This is useful for learning how the computation is progressing, and what tolerances are causing further computation to be necessary.
+
+
+*-V* __volume_tolerance[units]__::
+Specifies a volumetric tolerance value that the three view computations must be within for computation to complete. If volume calculation is selected and this option is not set, then the tolerance is set to 1/1,000 of the volume of the model bounding box. For large, complex objects (such as entire vehicles), this value might need to be set larger to achieve reasonable runtime (or even completion). Given the approximate sampling nature of the algorithm, the three separate view computations will not usually produce identical results.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+.Specifying Grid and Target Objects
+[example]
+====
+The following will check objects hull, turret, and suspension for overlaps. The grid starts at 1 cm and is refined to 1 mm.
+
+
+....
+
+mged> check overlaps -g 1cm-1mm hull turret suspension
+	
+....
+
+
+
+====
+
+.Specifying Using Non-Default Units
+[example]
+====
+The following computes volume of hull, turret, and suspension. Results are reported in cubic centimeters (cc). The grid spacing starts at 5 in. and will not be refined below 0.3 mm spacing.
+
+
+....
+
+mged> check volume -g5in-0.3mm -u ft,cc,oz hull turret suspension
+	
+....
+
+
+
+====
+
+.Different Analysis Types
+[example]
+====
+For examples of some independent analysis types, consider the following:
+
+
+....
+
+mged> check overlaps -g50,50 -u m,m^3,kg overlaps
+Units:
+length: m volume: m^3 weight: kg
+grid spacing 50mm  199 x 199 x 199
+OVERLAP PAIRS
+------------------------------------------
+/overlaps/overlap_obj.r and /overlaps/closed_box.r
+	</overlaps/overlap_obj.r , /overlaps/closed_box.r>: 32039 overlaps detected, maximum depth is 8m
+==========================================
+SUMMARY
+	32039 overlaps detected
+	1 unique overlapping pair (1 ordered pair)
+	Overlapping objects: /overlaps/overlap_obj.r /overlaps/closed_box.r
+	2 unique overlapping objects detected
+      
+....
+
+
+
+
+....
+
+mged> check exp_air -u m,m^3,kg exposed_air.g
+Units:
+length: m volume: m^3 weight: kg
+grid spacing 50mm  199 x 199 x 199
+list Exposed Air:
+/exposed_air.g/exposed_air.r count:25921 dist:9m @ (10000 1000 1000)
+      
+....
+
+
+
+
+....
+
+mged> check unconf_air -u m,m^3,kg unconf_air.g
+Units:
+length: m volume: m^3 weight: kg
+grid spacing 50mm  199 x 199 x 199
+list Unconfined Air:
+/unconf_air.g/air1.r /unconf_air.g/air2.r count:23921 dist:7m @ (10000 1000 1000)
+      
+....
+
+
+
+
+....
+
+mged> check gap -u m,m^3,kg gap.g
+Units:
+length: m volume: m^3 weight: kg
+grid spacing 50mm  199 x 199 x 199
+list Gaps:
+/gap.g/closed_box.r /gap.g/closed_box.r count:26082 dist:8m @ (9000 1000 1000)
+/gap.g/adj_air2.r /gap.g/closed_box.r count:25921 dist:4m @ (1000 5000 1000)
+      
+....
+
+
+
+
+....
+
+mged> check volume -u m,m^3,kg closed_box.r
+Units:
+length: m volume: m^3 weight: kg
+setting volume tolerance to 1 m^3
+grid spacing 50mm  199 x 199 x 199
+grid spacing 25mm  399 x 399 x 399
+grid spacing 12.5mm  799 x 799 x 799
+    closed_box.r  484.195 m^3
+    Average total volume: 488.327 m^3
+      
+....
+
+
+
+
+....
+
+mged> check surf_area -u m,m^3,kg closed_box.r
+Units:  length: m volume: m^3 mass: kg
+Using estimated surface area tolerance 640000 mm^2
+grid: (50, 50) mm, (278, 278) pixels
+grid: (50, 50) mm, (278, 278) pixels
+grid: (50, 50) mm, (278, 278) pixels
+Surface Area:
+	closed_box.r 384.485 m^2
+
+  Average total surface area: 384.485 m^2
+      
+....
+
+
+
+
+....
+
+mged> check weight -u m,m^3,kg closed_box.r
+Units:
+length: m volume: m^3 weight: kg
+setting weight tolerance to 768000 kg
+grid spacing 50mm  199 x 199 x 199
+Weight:
+    closed_box.r  3.6375e+06 kg
+    Average total weight: 3.67541e+06 kg
+      
+....
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

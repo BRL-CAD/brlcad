@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* converted DocBook documentation files to AsciiDoc - Cliff Yapp
 * added MGED Pattern GUI patterns to clone command - Cliff Yapp
 * improved performance of search cmd's -above option - Cliff Yapp
 * added -d depth limit to npush cmd, improved robustness - Cliff Yapp

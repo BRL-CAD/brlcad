@@ -1,0 +1,73 @@
+= COMGEOM-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+comgeom-g - convert GIFT COMGEOM model into MGED database
+
+== SYNOPSIS
+
+[source]
+----
+comgeom-g [-d debug_lvl] [-v version_num] [-s name_suffix] file.cg file.g \
+    
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Read a COMGEOM version 4 or version 5 format model from a GIFT-style input file, convert the geometry into the internal form used by the BRL-CAD package, and write an MGED-style binary database.
+
+Each solid is given the name s###, retaining the COMGEOM solid number. Each region is given the name r###, retaining the COMGEOM region number. Regions are grouped together into various groups g### based on the region-id numbers. Group g00 gets all regions with region-id of zero, g0 gets ids one through 99, g1 gets ids 100 through 199, etc.
+
+The default input is COMGEOM version 5. Version 4 can be converted by specifying the *-v4* flag. For the time being, the DoE MORSE/RAFFLE format (believed to be the original MAGIC format) can be converted by specifying the *-v1* flag.
+
+By default, the program *comgeom-g* operates silently. Because the program may require a minute or two to convert a large database, some users prefer to have various status reports that indicate the progress of the conversion. This can be selected by specifying the *-d1* flag (debug level 1).
+
+In the resulting .g file, high-level group all.g is created. If the *-s* option is used, its argument (without automatic supplying of leading period) is tacked onto the end of the names of all other items in the .g file.
+
+The units used in a COMGEOM file are specified on a header record. The units of an MGED database are always millimeters. *comgeom-g* performs automatic units conversion using the built-in units conversion feature of *libwdb*(3).
+
+
+[[example]]
+== EXAMPLE
+
+comgeom-g -d1 -v4 _file.cg file.g_
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+The diagnostics are intended to be self-explanatory. Familiarity with GIFT COMGEOM terminology will be helpful.
+
+
+[[bugs]]
+== BUGS
+
+It is expected that the input file should be a valid COMGEOM model. While quite a bit of input checking is performed, wildly incorrect input may produce amusing results.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *libwdb*(3)
+
+
+[[author]]
+== AUTHOR
+
+*BRL-CAD Team*
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

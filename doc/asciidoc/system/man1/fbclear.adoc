@@ -1,0 +1,51 @@
+= FBCLEAR(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbclear - clear a frame buffer image
+
+== SYNOPSIS
+
+[source]
+----
+fbclear [ -c] [-F framebuffer] [ red green blue] \
+     [ -c] [-F framebuffer] [gray_value]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbclear* is used to erase a frame buffer using whatever method is efficient for the device being accessed. By default, the selected color will be flooded into the color planes. If the *-c* option is used, a standard linear colormap will be loaded and the pan and zoom values will be reset.
+
+If the optional color values are given, *fbclear* writes the specified color over the entire image. The color values must be in the range 0 to 255. In the second form shown above, the single gray_value is written into all three color channels.
+
+The frame buffer to be cleared is determined from the *-F* option if given. Otherwise the environment variable `FB_FILE` is used to select the display device (see *brlcad*(1)). If this variable is not set, the default device for your system will be used.
+
+In addition to those flags shown above, the *-W* (or *-w*) _width_, *-N* (or *-n*) _height_, and *-S* (or *-s*) _square_size_ options can be used to set the size of the output frame buffer.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbcmap*(1), *fbhelp*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1986-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,124 @@
+= db(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+db - Provides an interface to a number of database manipulation routines.
+
+== SYNOPSIS
+
+[source]
+----
+db {command} [arguments]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Provides an interface to a number of database manipulation routines. Note that this command always operates in units of millimeters. The _command_ must be one of the following with appropriate arguments:
+
+
+__match [regular_exp]__::
+Returns a list of all objects in that database that match the list of regular expressions.
+
+
+__get shape_or_path [attribute]__::
+Returns information about the primitive shape at the end of the __shape_or_path__. If a path is specified, the transformation matrices encountered along that path will be accumulated and applied to the leaf shape before displaying the information. If no _attribute_ is specified, all the details about the shape are returned. If a specific _attribute_ is listed, then only that information is returned.
+
+
+__put shape_name shape_type attributes__::
+Creates shape named __shape_name__ of type __shape_type__ with attributes as listed in _attributes_. The arguments to the _put_ command are the same as those returned by the _get_ command.
+
+
+__adjust shape_name attribute new_value1 [new_value2 new_value3...]__::
+Modifies the shape named __shape_name__ by adjusting the value of its _attribute_ to the __new_values__.
+
+
+__form object_type__::
+Displays the format used to display objects of type __object_type__.
+
+
+_tops_::
+Returns all top-level objects.
+
+
+_close_::
+Closes the previously opened database and deletes the associated command.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+The following examples show the uses of the *db* command to list various objects and attributes from the database, as well as to create new TGC shapes, adjust a vertex attribute, and display command formats.
+
+.List all objects in the database that end with ".s"
+[example]
+====
+
+mged> **db match *.s**::
+Gets a list of all objects in the database that end with .s.
+
+
+
+====
+
+.List all attributes and their values for _cone.s_
+[example]
+====
+mged>**db get cone.s**
+
+Gets a list of all the attributes and their values for shape _cone.s_.
+
+====
+
+.Get the value of the vertex attribute of _cone.s_
+[example]
+====
+mged>**db get cone.s V**
+
+Gets the value of the _V_ (vertex) attribute of shape _cone.s_
+
+====
+
+.Create a new TGC shape named __new_cone.s__ with specified attributes.
+[example]
+====
+mged>**db put new_cone.s tgc V {0 0 0} H {0 0 1} A {1 0 0} B {0 1 0} C {5 0 0} D {0 5 0}**
+
+Creates a new TGC shape named __new_cone.s__ with the specified attributes.
+
+====
+
+.Adjust the vertex attribute of __new_cone.s__ to a given value.
+[example]
+====
+mged>**db adjust new_cone.s V {0 0 10}**
+
+Adjusts the _V_ (vertex) attribute of __new_cone.s__ to the value {0 0 10}.
+
+====
+
+.Display the format used by the *get* and *put* commands for the TGC shape type.
+[example]
+====
+mged>**db form tgc**
+
+Displays the format used by the *get* and *put* commands for the TGC shape type.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

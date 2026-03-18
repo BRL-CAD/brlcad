@@ -1,0 +1,58 @@
+= EDCOMB(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+edcomb - Allows the user to modify the attributes of a combination.
+
+== SYNOPSIS
+
+[source]
+----
+edcomb {combname} [regionflag regionID airID los% materialID]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Allows the user to modify the attributes of a combination. The _combname_ is the name of the combination to be modified. The _regionflag_ controls whether the combination is identified as a region - supplying either _R_ or _1_ for the _regionflag_ indicates that the combination is a region; to indicate the combination is NOT a region simply supply any other character (_C_ or _0_ are useful conventions here.) If the region flag is not being set, then the remainder of the attributes are ignored. However, the *edcomb* command requires that something is supplied for those arguments in order to work - so if using *edcomb* to turn off the region flag on a combination simply supply 0 for each of the remaining arguments to *edcomb*. If the region flag is being set, then the __region_id, aircode, los,__ and __material_code__ are set according to the arguments supplied.
+
+
+[[examples]]
+== EXAMPLES
+
+The first example shows the use of the *edcomb* command with the _R_ flag (region) added along with the __region_id, air_code, los__ and __material_code__. The second example shows how to unset the region flag for a particular combination.
+
+.Make a combination a region having specific attributes.
+[example]
+====
+
+mged> **edcomb comb1 R 1001 0 50 8**::
+Makes _comb1_ a _region_ and set its _ident_ to 1001, its _air code_ to 0, its _los_ to 50, and its _material code_ to 8.
+
+
+
+====
+
+.Unset a _region_ flag for a particular combination.
+[example]
+====
+mged>**edcomb comb1 C 0 0 0 0**
+
+Unsets the _region_ flag for combination _comb1_.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,4 +1,4 @@
-verbose_add_subdirectory(doc docbook)
+verbose_add_subdirectory(doc asciidoc)
 verbose_add_subdirectory(doc html)
 verbose_add_subdirectory(doc legal)
 

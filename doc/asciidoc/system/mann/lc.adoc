@@ -1,0 +1,72 @@
+= LC(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+lc - Lists codes (i.e. region attributes) 'region_id', 'material_id', 'los', 'aircode', 'region name', 'region parent' within a group or combination.
+
+== SYNOPSIS
+
+[source]
+----
+lc [-d | -m | -s] [-r] [-z] [-0 | -1 | -2 | -3 | -4 | -5 | -6] [-f | {FileName}] {GroupName}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The 'lc' command lists a set of codes (i.e. attributes) of regions within a group/combination. Listed in columns are the following: 'region_id', 'material_id', 'los', 'aircode', 'region name', 'region parent'. If a value is unset, it is reported as '--'.
+
+
+[[options]]
+== OPTIONS
+
+
+*-d*::
+Specifies to list only regions with shared 'region_id' values.
+
+
+*-m*::
+Specifies to list only regions with shared 'region_id' values where one or more of the objects in the set of objects defined by shared 'region_id' value reports a different 'material_id', 'aircode' and/or 'los' values. Essentially, this allows users to quickly find and resolve inconsistent codes (i.e, id settings) within a 'region_id' group.
+
+
+*-s*::
+Specifies to list only one region with each combination of 'region_id', 'material_id', 'los', and 'aircode'.
+
+
+*-r*::
+Remove regions from the list in which their parent is a region and the region is subtracted within the parent. The '-r' option can be combined with any other option.
+
+
+*-z*::
+Specifies descending (z-a) sort order.
+
+
+*-0*
+*-1*
+*-2*
+*-3*
+*-4*
+*-5*
+*-6*::
+Specifies sort column 1, 2, 3, 4, 5, or 6 (referring to columns listed in the description of this command); 1 is default. If 0 is specified, the regions are listed in the order in which they are stored, but this will be overridden if *-d*, *-m*, or *-s* options are used, because of the sorting which needs to be done when either of those options is used.
+
+
+*-f FileName*::
+Identifies output should be to a file and specifies the file name. If the path is not included as part of the 'FileName' the path will be the 'current directory'.
+
+
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,58 @@
+= B(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+B - Clears the _mged_ display of any currently displayed objects, then displays the list of objects provided in the parameter list.
+
+== SYNOPSIS
+
+[source]
+----
+B [-A attribute name/value pairs] [-s] [-A -o attribute name/value pairs] [-C#/#/#] [-L #] [-R] [-S] [-m1] {objects}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Clears the mged display of any currently displayed objects, then displays the list of objects provided in the parameter list. Equivalent to the *Z* command followed by the command *draw* _<objects>_. The _-C_ option provides the user a way to specify a color that overrides all other color specifications including combination colors and region id-based colors. The _-A_ and _-o_ options allow the user to select objects by attribute. The _-s_ option specifies that subtracted and intersected objects should be drawn with solid lines rather than dot-dash lines. The _-R_ option means do not automatically resize the view if no other objects are displayed. The _-S_ option specifies that subtracted and intersected objects should not be drawn. The _-m1_ option specifies that BOT solids should be drawn in shaded mode. See the *draw* command for a detailed description of the options.
+
+
+[[examples]]
+== EXAMPLES
+
+The following are run from the MGED command prompt.
+
+.Display a named object
+[example]
+====
+
+mged> **B some_object**::
+The display clears, and the object named __some_object__ is displayed.
+
+
+
+====
+
+.Draw objects having an attribute with a value
+[example]
+====
+mged>**B -A -o Comment {First comment} Comment {Second comment}**
+
+The display clears, then draws objects that have a "Comment" attribute with a value of either "First comment" or "Second comment."
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,91 @@
+= T(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+t - Lists the names of specified objects in the database in alphabetical order depending on the argument given.
+
+== SYNOPSIS
+
+[source]
+----
+t [-a] [-c] [-r] [-s] [objects]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *t* command with no _object_ argument lists the name of every object in the database (in alphabetical order) except those marked as hidden with the hide command. If the _object_ argument is supplied, only those _objects_ are listed. The _object_ argument may include regular expressions for matching. The following options are also allowed:
+
+
+* a - list all objects in the database.
+* c - list all nonhidden combinations in the database.
+* r - list all nonhidden regions in the database.
+* s - list all nonhidden shapes in the database.
+
+The *t* command is a synonym for the *ls* command. Note that when any of the above options are used, the output is not formatted.
+
+
+[[examples]]
+== EXAMPLES
+
+The five examples show the use of the *t* command with different arguments to list names of objects, combinations, regions, or shapes.
+
+.List all objects with names beginning with "shape."
+[example]
+====
+mged>**t shape***
+
+Lists all objects with names beginning with shape. (output is formatted)
+
+====
+
+.List all objects with names beginning with "shape."
+[example]
+====
+mged>**t -a shape***
+
+Lists all objects with names beginning with shape.
+
+====
+
+.List all shapes with names beginning with wheel.
+[example]
+====
+mged>**t -s wheel***
+
+Lists all shapes with names beginning with wheel.
+
+====
+
+.List all regions with names beginning with wheel.
+[example]
+====
+mged>**t -r wheel***
+
+Lists all regions with names beginning with wheel.
+
+====
+
+.List all combinations with names beginning with suspension.
+[example]
+====
+mged>**t -c suspension***
+
+Lists all combinations with names beginning with suspension.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

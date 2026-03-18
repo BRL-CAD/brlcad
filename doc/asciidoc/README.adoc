@@ -1,0 +1,70 @@
+= BRL-CAD AsciiDoc Documentation
+:toc: left
+:toclevels: 2
+
+== Overview
+
+This directory contains BRL-CAD documentation in AsciiDoc format, converted
+from the original DocBook 5 XML sources in `../docbook/`.  The conversion was
+performed once using
+link:../../misc/tools/db2adoc/db2adoc.xsl[db2adoc.xsl] (an XSLT stylesheet)
+applied via `xsltproc`.
+
+The `.adoc` files here are committed to version control as authoritative
+sources.  They are built into HTML and man-page outputs at compile time using
+**asciiquack**, BRL-CAD's self-contained AsciiDoc processor.
+
+== Directory Structure
+
+[source]
+----
+doc/asciidoc/
+├── articles/          General articles
+├── books/             Long-form books
+├── devguides/         Developer guides
+├── lessons/           Tutorial lessons
+├── presentations/     Presentation slides
+├── specifications/    Format specifications
+└── system/
+    ├── man1/          Section 1 man pages  (command-line tools)
+    ├── man3/          Section 3 man pages  (C library functions)
+    ├── man5/          Section 5 man pages  (file formats)
+    └── mann/          Section n man pages  (MGED commands)
+----
+
+== Build Outputs
+
+When `BRLCAD_EXTRADOCS=ON` is set at CMake configuration time:
+
+* Man pages (`system/man*/`) are built by asciiquack with `-b manpage` and
+  installed under `${MAN_DIR}/man*/`.
+* Articles, books, and other prose (`articles/`, `books/`, etc.) are built
+  with `-b html5` and installed under `${DOC_DIR}/html/asciidoc/`.
+
+The build logic is in `brlcad/misc/CMake/AsciiDoc.cmake`.
+
+== Re-running the Conversion
+
+If the upstream DocBook sources change and you need to re-generate the AsciiDoc
+files, run the XSLT stylesheet from the repository root:
+
+[source,bash]
+----
+BEXT=/path/to/bext_output
+
+for f in $(find doc/docbook -name "*.xml" -not -path "*/resources/*"); do
+  rel=${f#doc/docbook/}
+  out=doc/asciidoc/${rel%.xml}.adoc
+  mkdir -p "$(dirname "$out")"
+  $BEXT/noinstall/bin/xsltproc -xinclude \
+      misc/tools/db2adoc/db2adoc.xsl "$f" > "$out"
+done
+----
+
+Alternatively, use `db2adoc.py` (requires pandoc ≥ 2.0) for a Python-driven
+approach with better round-trip fidelity for complex markup:
+
+[source,bash]
+----
+python3 misc/tools/db2adoc/db2adoc.py
+----

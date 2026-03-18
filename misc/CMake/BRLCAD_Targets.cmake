@@ -315,12 +315,12 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
 
   if(BRLCAD_EXTRADOCS)
     if(NOT E_TEST AND NOT E_TEST_USESDATA AND NOT E_NO_INSTALL AND NOT E_NO_MAN)
-      if(EXISTS ${CMAKE_SOURCE_DIR}/doc/docbook/system/man1/${execname}.xml)
-        add_docbook("HTML;PHP;MAN1;PDF" ${CMAKE_SOURCE_DIR}/doc/docbook/system/man1/${execname}.xml man1 "")
-      else(EXISTS ${CMAKE_SOURCE_DIR}/doc/docbook/system/man1/${execname}.xml)
+      if(EXISTS ${CMAKE_SOURCE_DIR}/doc/asciidoc/system/man1/${execname}.adoc)
+	add_asciidoc("MAN1" ${CMAKE_SOURCE_DIR}/doc/asciidoc/system/man1/${execname}.adoc man1 "")
+      else()
         message("No man page defined for ${execname}")
-      endif(EXISTS ${CMAKE_SOURCE_DIR}/doc/docbook/system/man1/${execname}.xml)
-    endif(NOT E_TEST AND NOT E_TEST_USESDATA AND NOT E_NO_INSTALL AND NOT E_NO_MAN)
+      endif()
+    endif()
   endif(BRLCAD_EXTRADOCS)
 
   # Apply unity (jumbo) build batching when the global option is enabled.

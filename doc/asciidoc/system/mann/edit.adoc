@@ -1,0 +1,138 @@
+= EDIT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+edit - Edits objects, using _subcommand_ s.
+
+== SYNOPSIS
+
+[source]
+----
+edit [<subcommand> [<args>] object...] \
+     \
+    
+ [help | translate | rotate | scale | ]...
+ [] <to> [<more_args>]...
+ [-n] -k {<from_object> | <from_position>}
+ [-n] [-a | -r] {<to_object> | <to_position>}
+ [{<coords>} | { [ -x {x | <x-obj>}] [ -y {y | <y-obj>}] [ -z {z | <z-obj>}]}]
+  [path/] object [<offset_distance>]
+ x [ y [z]]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Operates on objects in the database, solely through the use of _subcommand_ s. The flexibility of the *edit* _subcommand_ s lies in their utilization of a common style of syntax. Coordinates in model space, offsets, and objects are all accepted interchangeably as reference points. A single reference point is equivalent to an absolute point in model space. A pair of reference points specifies a distance or an angle, and is supplied as a set of _from_ - _to_ arguments (a _from_ argument is similar to the concept of a keypoint). Reference points may be incomplete, and specify only one or two coordinates.
+
+The format of the standard options accepted by subcommands, *-n*, *-k*, *-a*/*-r*, and *-x*/ *-y*/*-z*, is defined here. The interpretation of these options, however, is left up to the implementation of a given subcommand.
+
+All edit commands interpret a lone point ( *.* ) as a special operator, called the batch operator. The batch operator is accepted as an argument to the options *-k*, *-a*, and *-r*. In a batch operation, each individual _object_ is operated on using the bounding box center of itself in place of the batch operator. While all _object_'s move together in a non-batch operation, in batch operations, each _object_ may move independently of all other _object_'s.
+
+If any _from_ coordinates are omitted, they default to the bounding box center of the first _object_ is used as _from_. To use the natural origin of the first _object_ as _from_, __from_object__ must be manually set to whatever _object_ is set to. If any _to_ coordinates are omitted, they default to the values set in _from_.
+
+The quantity and arrangement of standard *edit* arguments as well as their interpretation depends upon the subcommand. See the manual page for a given subcommand for more information on its usage:
+
+
+....
+mged> man edit_subcommandName
+....
+
+
+
+
+[[options]]
+== OPTIONS
+
+
+*-n*::
+Use the natural origin of the object specified as an argument to *-k*, *-a*, or *-r* rather than its bounding box center.
+
+
+*-k*::
+Sets the keypoint _from_ to either __from_object__'s bounding box center or __from_position__.
+
+
+*-a*::
+Sets the destination point _to_ to either __to_object__'s bounding box center or __to_position__.
+
+
+*-r*::
+Sets the destination point _to_ to a point offset by __to_position__ from the _from_ point.
+
+
+*-x* *-y* *-z*::
+Sets the coordinate of a particular axis.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+.Get the authoritative list of available subcommands.
+[example]
+====
+
+mged> **edit**::
+
+
+
+mged> **edit help**::
+Prints usage and a list of available subcommands.
+
+
+
+====
+
+.Get the usage of a subcommand.
+[example]
+====
+
+mged> **edit translate**::
+Print usage of the translate subcommand
+
+
+
+====
+
+.Use the help subcommand to print extended usage of subcommands.
+[example]
+====
+
+mged> **edit translate help**::
+
+
+
+mged> **edit help translate**::
+Print extended usage of the translate subcommand. Each subcommand also accepts _help_ as an argument, so that the extended usage is still available if *edit translate* is aliased to something else.
+
+
+
+====
+
+.A fake subcommand is used to show how standard *edit* arguments and nonstandard *edit* arguments are used.
+[example]
+====
+
+mged> **edit fake_subcmd -B 12 -k sph.s 1.5 7 -a 0 0 0 cube.s**::
+The nonstandard *-B* option is unique to *fake_subcmd*. An explanation of how it is used would be found in the manual for fake_subcmd, if there were one. The remaining options and arguments are standardized. The *-k* and *-a* options are used to specify a _from_ - _to_ pair, as defined in this manual for *edit*. The interpretation of the vector created by these points would be defined in the *fake_subcmd* manual.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

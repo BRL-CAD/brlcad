@@ -1,0 +1,49 @@
+= DBFINDTREE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dbfindtree - Displays the full path of all combinations that have any of the _objects_ specified as a member.
+
+== SYNOPSIS
+
+[source]
+----
+dbfindtree {objects}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Displays the full path of all combinations that have any of the _objects_ specified as a member.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *dbfindtree* command to display the full path of all combinations that refer to the specified object.
+
+.Display the full path of all combinations that refer to a specified object.
+[example]
+====
+
+mged> **dbfindtree shapea**::
+Lists the full path of all combinations that refer to _shapea_.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

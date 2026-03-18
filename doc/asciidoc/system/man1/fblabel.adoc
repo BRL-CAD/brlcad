@@ -1,0 +1,70 @@
+= FBLABEL(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fblabel - display a text string on a framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+fblabel [-dca] [-F framebuffer] [-f fontname] [-{sS} squaresize] [-{wW} width] [-{nN} height] [-C r/g/b] x_position y_position text_string
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fblabel* writes a text string to the image on the currently selected framebuffer. The text string will be filtered to the image currently displayed. Use *fbpoint*(1) to determine where to position the text string. The lower left corner of the text string starts displaying at the x and y position given. The environment variable FB_FILE specifies the current framebuffer; see *brlcad*(1). Alternatively, the framebuffer may be explicitly specified by using the *-F* flag.
+
+By default, the requested framebuffer size is assumed to be 512x512 pixels.
+
+The *-d* flag is for debugging.
+
+The *-c* flag causes the screen to be cleared before the text string is displayed. The default behavior is to label the current image without clearing the screen.
+
+The *-a* flag causes the text not to be filtered against the frame buffer image.
+
+The *-C* _r/g/b_ option specifies red, green, and blue (r/g/b) values [0..255] for the text. The default color is white.
+
+The *-f* _fontname_ option will change the current default font from nonie.r.12 to "/usr/lib/vfont/fontname".
+
+The *-S* (or *-s*) flag sets the width and the height to the same value; the *-W* (or *-w*) and *-N* (or *-n*) flags are used for setting them individually.
+
+
+[[fonts]]
+== FONTS
+
+*fblabel* expects the Berkeley fonts in the directory /usr/lib/vfont. The fonts are expected to be in Vax byte order, even if that is not the natural byte order of the machine, to avoid having to create a font converter.
+
+
+[[example]]
+== EXAMPLE
+
+fblabel -f "oldenglish.14" `fbpoint -H` "Hello"
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbpoint*(1), *libfb*(3), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

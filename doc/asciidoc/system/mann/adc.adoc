@@ -1,0 +1,176 @@
+= adc(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+adc - This command controls the angle/distance cursor.
+
+== SYNOPSIS
+
+[source]
+----
+adc [-i] subcommand
+----
+
+
+[[description]]
+== DESCRIPTION
+
+This command controls the angle/distance cursor. The *adc* command with no arguments toggles the display of the angle/distance cursor (ADC). The _-i_ option, if specified, causes the given value(s) to be treated as increments. Note that the _-i_ option is ignored when getting values or when used with subcommands where this option makes no sense. You can also control the position, angles, and radius of the ADC using a knob or the knob command. This command accepts the following subcommands:
+
+
+*vars*::
+Returns a list of all ADC variables and their values (i.e., var = val).
+
+
+*draw [0|1]*::
+Set or get the draw parameter.
+
+
+*a1 [angle]*::
+Set or get angle1 in degrees.
+
+
+*a2 [angle]*::
+Set or get angle2 in degrees.
+
+
+*dist [distance]*::
+Set or get radius (distance) of tick in local units.
+
+
+*odist [distance]*::
+Set or get radius (distance) of tick (+-2047).
+
+
+*hv [position]*::
+Set or get position (grid coordinates and local units).
+
+
+*xyz [position]*::
+Set or get position (model coordinates and local units).
+
+
+*x [xpos]*::
+Set or get horizontal position (+-2047).
+
+
+*y [ypos]*::
+Set or get vertical position (+-2047).
+
+
+*dh _distance_*::
+Add to horizontal position (grid coordinates and local units).
+
+
+*dv _distance_*::
+Add to vertical position (grid coordinates and local units).
+
+
+*dx _distance_*::
+Add to _x_ position (model coordinates and local units).
+
+
+*dy _distance_*::
+Add to _y_ position (model coordinates and local units).
+
+
+*dz _distance_*::
+Add to _z_ position (model coordinates and local units).
+
+
+*anchor_pos [0|1]*::
+Anchor ADC to current position in model coordinates.
+
+
+*anchor_a1 [0|1]*::
+Anchor angle1 to go through anchorpoint_a1.
+
+
+*anchor_a2 [0|1]*::
+Anchor angle2 to go through anchorpoint_a2.
+
+
+*anchor_dst [0|1]*::
+Anchor tick distance to go through anchorpoint_dst.
+
+
+*anchorpoint_a1[x y z]*::
+Set or get anchor point for angle1 (model coordinates and local units).
+
+
+*anchorpoint_a2 [x y z]*::
+Set or get anchor point for angle2 (model coordinates and local units).
+
+
+*anchorpoint_dst [x y z]*::
+Set or get anchor point for tick distance (model coordinates and local units).
+
+
+*reset*::
+Reset all values to their defaults.
+
+
+*help*::
+Print the help message.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+The examples show the use of the *adc* command with no arguments, with _i_, and with subcommands.
+
+[example]
+====
+
+mged> **adc**::
+Toggle display of angle/distance cursor.
+
+
+
+====
+
+[example]
+====
+
+mged> **adc a1 37.5**::
+Sets angle1 to 37.5 degrees.
+
+
+
+====
+
+[example]
+====
+
+mged> **adc a1 37.5**::
+Gets angle1.
+
+
+
+====
+
+[example]
+====
+
+mged> **adc xyz 100 0 0**::
+Moves ADC position to (100,0,0), model coordinates and local units.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

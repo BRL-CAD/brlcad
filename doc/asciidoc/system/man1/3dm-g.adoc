@@ -1,0 +1,77 @@
+= 3DM-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: User Commands
+
+== NAME
+3dm-g - Rhinoceros 3D Translator (3dm to BRL-CAD)
+
+== SYNOPSIS
+
+[source]
+----
+3dm-g [-r] [-v] [-h] {-o out.g} {file.3dm}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*3dm-g* converts the _file.3dm_ Rhino3D file to a BRL-CAD _file.g_ file.
+
+BRL-CAD utilizes the OpenNURBS library for reading and processing 3dm files. Since BRL-CAD also uses this library internally for NURBS support, 3dm-g import is generally a very direct and relatively problem free conversion path.
+
+
+[[options]]
+== OPTIONS
+
+
+*-o*::
+Specify the output name of the .g file.
+
+
+*-r*::
+Randomize colors assigned to imported objects.
+
+
+*-v*::
+Verbose reporting of conversion progress.
+
+
+
+
+[[example]]
+== EXAMPLE
+
+.Verbose Reporting of Search Information
+[example]
+====
+mged>**3dm-g -r -o nist.g NIST_MBE_PMI_7-10.3dm**
+
+This example imports the BRL-CAD copy of NIST's MBE PMI models 7-10 to nist.g while randomizing the colors assigned to objects.
+
+====
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+User will see OpenNURBS diagnostic reporting as the 3dm file is read.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1999-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

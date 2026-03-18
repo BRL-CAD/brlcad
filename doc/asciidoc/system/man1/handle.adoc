@@ -1,0 +1,124 @@
+= HANDLE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+handle - Creates a BRL-CAD .g file containing handles.
+
+== SYNOPSIS
+
+[source]
+----
+handle [options]...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*handle* is a program to create a BRL-CAD database of handles. Up to twenty-six handles of the same dimensions may be created. *handle* uses libwdb to create a BRL-CAD database file. The handles are composed of three cylinders, two tori, and two arb8s. This program may be run interactively or the user may specify options on a command line. If the user chooses to run the program interactively, he answers the questions as the program prompts him. Below are the options that can be used on the command line.
+
+
+[[options]]
+== OPTIONS
+
+
+*-f* _name.g_::
+BRL-CAD file name.
+
+
+*-n #*::
+The number of handles to be creates (must be less than or equal to 26).
+
+
+*-l #*::
+Length of handle in millimeters.
+
+
+*-H #*::
+Height of handle in millimeters.
+
+
+*-r1 #*::
+Radius, r1, of the tori in millimeters.
+
+
+*-r2 #*::
+Radius, r2, of the tori in millimeters.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+.Interactive *handle* Session
+[example]
+====
+
+
+
+....
+
+This program constructs a handle with the base centered
+at (0, 0, 0) and the height extending in the positive z-
+direction.  The handle will be composed of 3 cylinders,
+2 tori, and 2 arb8s.
+
+Enter the name of the mged file to be created (25 char max).
+	handle.g
+Enter number of handles to create (26 max).
+	3
+Enter the length and height of handle in mm.
+	200 100
+Enter the radius of the tori in mm.
+	20
+Enter the radius of the cylinders in mm.
+	10
+
+mged file name:  handle.g
+length:  200.000000 mm
+height:  100.000000 mm
+radius of tori:  20.000000 mm
+radius of cylinders:  10.000000 mm
+number of handles:  3
+   
+....
+
+
+
+====
+
+.Single-Line *handle* Command
+[example]
+====
+**handle -fhandle.g -n3 -l200 -H100 -r120 -r210**
+
+====
+
+Both of these examples produce the same result - a database called handle.g containing three handles of length 200mm, height 100mm, radius 20mm for the rounding, and radius 10mm for the cylinders.
+
+
+[[author]]
+== AUTHOR
+
+Susan A. Coates
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2005-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[see_also]]
+== SEE ALSO
+
+bolt(1), window(1), window_frame(1), gastank(1)
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,109 @@
+= STEP(5)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD Format Documentation
+
+== NAME
+STEP - ISO 10303 Standard for the Exchange of Product model data
+
+[[background]]
+== BACKGROUND
+
+In 1984, the International Organization for Standardization (ISO) began working to create a standard to allow for the electronic exchange of product data between computer-based product life-cycle systems. This scope was intentionally much broader than just geometry information, and the resulting standard (ISO 10303: Industrial automation systems and integration -- Product data representation and exchange) is extremely large. Consequently, the standard is subdivided into _parts_, which are referred to individually as ISO 10303-xxx where xxx is the part number. Because of the large scope, there is a numbering convention used to represent more focused sub-scopes in order to make locating specific types of information simpler:
+
+.ISO 10303 Part Numbering Scopes
+[cols="2*"]
+|===
+|Series
+|Scope Of Series
+
+|00x
+|Overview, fundamental principles
+|01x
+|Definitional resources
+|02x
+|Implementation methods
+|03x
+|Validation of translators for standard conformance
+|04x
+|Integrated Generic Resources (basic building blocks)
+|1xx
+|Integrated Application Resources (higher level than 04x)
+|2xx
+|Application Protocols
+|5xx
+|Application Interpreted Constructs - reusable components of Application Protocols
+|===
+
+The lowest level parts that define STEP in a practical sense are http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=38047[ISO 10303-011], http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=33713[ISO 10303-21], and http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=25097[ISO 10303-022]. 10303-011 defines the EXPRESS language, which is in turn the language in which application protocol schemas are written. 10303-21 defines a clear text encoding of the STEP exchange structure - files using this schema are referred to as "STEP" or "Part 21" files. 10303-022 defines a Standard Data Access Interface (SDAI) which is used to automatically generate practical computer code from the EXPRESS schema protocol descriptions. Collectively, these define the "container" aspects of the STEP file format and a method to access the information from the file. (This is similar to using XML with a schema file to store information, and newer schemas are also available in an XML form in addition to EXPRESS.)
+
+A number of https://en.wikipedia.org/wiki/List_of_STEP_%28ISO_10303%29_parts#AIC_-_Application_interpreted_constructs[other] low level parts and higher level Application Interpreted Constructs (AICs) form the foundation on which the more complete "high level" parts are defined. This separation is performed mainly to allow maximal sharing and compatibility between different high level parts that need the same lower level foundations.
+
+Within that context, the primary components of interest for practical data import and export are the Application Protocols (AP) that focus on shape models and assembly structure (among other things.) The first such protocol was AP203 - "Configuration-controlled design". As experience using the standard in real world applications accumulated, new revisions and new application protocols were developed. Today, the following protocols exist:
+
+.Application Protocols relating to Shape Modeling and Assembly Structure
+[cols="3*"]
+|===
+|Application Protocol
+|Title
+|Notes
+
+|AP203
+|https://www.iso.org/standard/20597.html[Configuration controlled 3D designs of mechanical parts and assemblies]
+|Most recent version is 10303-203:1994 with additions and corrections as follows: the original document was subsequently revised by one amendment https://www.iso.org/standard/34177.html[10303-203:1994/Amd 1:2000] and three corrections: https://www.iso.org/standard/26904.html[10303-203:1994/Cor 1:1996], https://www.iso.org/standard/30943.html[10303-203:1994/Cor 2:1998], and https://www.iso.org/standard/40190.html[10303-203:1994/Cor 3:2004]. https://www.iso.org/standard/39522.html[10303-203:2005] is considered a revision to this standard.
+|AP203e2
+|https://www.iso.org/standard/44305.html[Configuration controlled 3D designs of mechanical parts and assemblies]
+|Most recent version is 10303-203:2011. Revises https://www.iso.org/standard/39522.html[10303-203:2005], which is listed as a modular version that is harmonized with ISO 10303-214. https://www.iso.org/standard/57620.html[10303-242:2014] is considered a revision to this standard.
+|AP214
+|https://www.iso.org/standard/43669.html[Core data for automotive mechanical design processes]
+|Most recent version is 10303-214:2010 (a.k.a AP214e3). Two earlier versions exist: https://www.iso.org/standard/38727.html[10303-214:2003] and https://www.iso.org/standard/23643.html[10303-214:2001]. https://www.iso.org/standard/57620.html[10303-242:2014] is considered a revision to this standard.
+|AP242
+|https://www.iso.org/standard/57620.html[Managed model-based 3D engineering]
+|Most recent version is 10303-242:2014. This standard is intended to consolidate and replace AP203e2 and AP214. One correction has been published: https://www.iso.org/standard/72059.html[10303-242:2014/Cor 1:2016].
+|===
+
+
+
+AP203e2 is sufficiently different from AP203 that practically speaking it merits being called out as its own distinct protocol, but in the nomenclature of the ISO standards it is still considered a revision to AP203.
+
+These protocols are the portion of ISO 10303 that address the problem domain previously handled by the Initial Graphics Exchange Specification (*IGES*(5)). In a computer aided design context where transfer of "STEP files" is being discussed, those files will most likely correspond to one of the previous protocols.
+
+TODO - Determine what MIM, AIM and AAM are and document them...
+
+
+[[schema_resources]]
+== SCHEMAS AND IMPLEMENTATION RESOURCES
+
+To obtain the latest schema files (which, unlike the ISO standards themselves, are freely available) check the http://stepmod.sourceforge.net/[STEP Module Repository Project] - in particular, the http://stepmod.cvs.sourceforge.net/viewvc/stepmod/stepmod/data/modules/[modules] directory.
+
+The standards define the structure of the schemas, but in general when it comes to the nuts and bolts of implementing a practical importer and exporter more resources are needed. Below are links to some implementation resources:
+
+PDES, Inc. Industry consortium http://www.oasis-open.org/committees/download.php/11728/recprac8.pdf[Recommended Practices for AP203], April 1998
+
+PDM Implementer Forum, http://www.cax-if.org/documents/pdmug_release4_3.pdf[Usage Guide for the STEP PDM Schema V1.2 Release 4.3], January 2002.
+
+CAx Implementer Forum Recommended Practices: https://www.cax-if.org/joint_testing_info.html#recpracs
+
+
+[[see_also]]
+== SEE ALSO
+
+Pratt, Michael J.; http://www.mel.nist.gov/msidlibrary/doc/jcise1.pdf[Introduction to ISO 10303 - the STEP Standard for Product Data Exchange]; NIST; 2001.
+
+
+[[author]]
+== AUTHOR
+
+Clifford Yapp
+
+
+[[copyright]]
+== COPYRIGHT
+
+Copyright (c) 2015-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of inaccuracies should be submitted via electronic mail to devs@brlcad.org

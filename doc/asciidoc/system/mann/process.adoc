@@ -1,0 +1,106 @@
+= PROCESS(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+process - List and manage currently running subprocesses.
+
+== SYNOPSIS
+
+[source]
+----
+process
+----
+
+
+[source]
+----
+process list
+----
+
+
+[source]
+----
+process pabort {pid}
+----
+
+
+[source]
+----
+process gabort {glob}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *process* offers a program-agnostic means of managing subprocesses launched by a GED application. The most common instances of this phenomena are long running *rt* commands on large models, but there are other commands such as *rtcheck* that also operate in this asynchronous manner. If one of these processes is running too long or consuming too many resources, *process* allows users to identify and stop these processes from the GED command line.
+
+
+[[examples]]
+== EXAMPLES
+
+The below examples walk through a sample *process* workflow:
+
+.Process Help
+[example]
+====
+mged>**process**
+
+
+....
+
+Usage: process [subcommand]
+
+Subcommands:
+
+  list          - List all currently running subprocesses.
+  pabort <pid>  - Abort the specified subprocess.
+
+  gabort <glob> - Abort all subprocesses whose command matches the glob expression.
+      
+....
+
+
+
+====
+
+.List Currently Running Processes
+[example]
+====
+mged>**process list**
+
+
+....
+
+    PID CMD
+5524692 rt -M -u model /home/user/test.g
+6515118 rtcheck -M /home/user/test.g obj
+      
+....
+
+
+
+====
+
+.Eliminate a Running Subprocess
+[example]
+====
+mged>**process pabort 6515118**
+
+Using the reported PID from *process list*, the above line terminates the *rtcheck* subprocess.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

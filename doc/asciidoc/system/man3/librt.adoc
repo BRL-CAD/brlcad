@@ -1,0 +1,223 @@
+= LIBRT(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+librt - library for raytracing an MGED database
+
+== SYNOPSIS
+This file seems to be out of date with the sources. Consult the headers for up-to-date information. Use the below interface documentation at your own discretion.
+
+
+[source,c]
+----
+
+#include "vmath.h"
+#include "raytrace.h"
+
+extern struct rt_functab OBJ[];
+extern struct rt_g rt_g;
+
+struct rt_i *rt_dirbuild(char * mged_file_name, char * buf, int len);
+int rt_gettree(struct rt_i * rtip, char * object_name);
+void rt_prep(struct rt_i * rtip);
+int rt_shootray(struct application * ap);
+void rt_prep_timer(void);
+doublert_read_timer(char *buf, int len);
+void rt_pr_partitions(struct rt_i *rtip struct partition *phead, char *title);
+void rt_pr_seg(struct seg *segp);
+
+segp;
+
+struct soltab *rt_find_solid(void);
+
+----
+
+
+[[description]]
+== DESCRIPTION
+
+__rt_dirbuild__ opens `mged_file_name` and builds a directory for quick lookup of objects. __rt_dirbuild__ returns a pointer to a __struct rt_i__ on success (often called ```rtip`''), or __RTI_NULL__ on failure (such as being unable to open the named database). This pointer must be saved, as it is a required parameter to `rt_gettree()`. The user-supplied buffer _buf_ is filled with up to `len` characters of information from the first title record in the database. If it is desired for "air" objects to be reported as "hits" during ray-tracing, then the _useair_ member of the __struct rt_i__ must be set before the first call to `rt_gettree()`.
+
+All objects (groups and regions) which are to be included in the description to be raytraced must be preprocessed with `rt_gettree()`, which returns -1 for failure and 0 for success. This function can be called as many times as required. Be certain to pass the __struct rt_i__ pointer from __rt_dirbuild__ each time.
+
+After the last `rt_gettree()` call, `rt_prep()` can be called to complete the preparation of internal data structures. If `rt_prep()` is not explicitly called, it will be indirectly invoked by the first use of `rt_shootray()`.
+
+To fire a ray at the model, an _application_ structure must be prepared and its address passed to `rt_shootray()`. Note that it is mandatory that you provide values for __a_ray.r_pt__ (the starting point of the ray to be fired), __a_ray.r_dir__ (a unit-length direction vector), __a_hit__ (address of user-supplied hit routine), __a_miss__ (address of user-supplied miss routine), __a_overlap__ (address of user-supplied overlap routine; may be null), __a_rt_i__ (__struct rt_i__ pointer, from __rt_dirbuild__), __a_onehit__ (flag controlling stop after first hit), __a_level__ (recursion level, just for diagnostic printing), and __a_resource__ (address of _resource_ structure; may be null).
+
+To obtain a report of CPU usage for a portion or portions of your program, frame the statements with calls to `rt_prep_timer()` and `rt_read_timer()`. Each call to `rt_prep_timer()` resets the timing process, after which `rt_read_timer()` can be called to get a double which is the elapsed CPU time in seconds since `rt_prep_timer()` was last called. In addition, up to `len` bytes of system-specific detailing of resource consumption is placed in the user-supplied buffer `buf`.
+
+__bu_bomb__ can be used to exit your program with _msg_ printed on the standard error output.
+
+
+[[warning]]
+== WARNING
+
+_Librt_ is designed to run in parallel on some multiprocessor machines. On some such machines system calls must be semaphore protected.
+
+Dynamic memory handling in applications using _librt_ should use the functions provided by _libbu_ instead of the usual system runtime library routines. The _libbu_ versions do not return to the caller unless they succeed. If they fail, they call __bu_bomb__ with their last argument (str) as the parameter. The string parameter usually indicates the purpose of the memory being allocated.
+
+
+[[exit_code]]
+== EXIT CODE
+
+All truly fatal errors detected by the library use __bu_bomb__ to exit with a status of 12.
+
+
+[[definition]]
+== DEFINITION
+
+RPP - Rectangular ParallelePiped. A region of space defined by minimum and maximum values in X, Y, and Z. RPPs are used by _librt_ as bounding volumes for solids.
+
+
+[[discussion]]
+== DISCUSSION
+
+You should study the structures in _raytrace.h_, in particular, the _application_ structure, the _partition_ structure and its component structures to get an idea of what information is handed to/from `rt_shootray()`. `rt_shootray()` may be called recursively from your __a_hit__ routine (good for doing bounced rays). If you only care about the first object hit along the path of the ray, set the __a_onehit__ flag in the application structure before calling `rt_shootray()`. `rt_shootray()` returns the return value of the user-supplied hit or miss function that it called.
+
+If the ray intersects the model, the __a_hit__ routine is called with a pointer to the application structure and a pointer to a linked list of ray partitions (_struct partition_). Within each partition are _seg_ (solid segment) and _hit_ (intersection with evaluated region) structure pointers for the places where the ray enters and leaves this partition of space. __pt_inhit.hit_dist__ is the parametric distance at which the ray enters the partition, and __pt_outhit.hit_dist__ is the parametric distance at which the ray leaves. Note that while the _hit_ structure contains __hit_point__ and __hit_norm__ elements, they are not computed by `rt_shootray()`. If these are needed, they can be filled in by using the __RT_HIT_NORMAL__ macro; if surface curvature information is needed, it can be obtained by using the __RT_CURVE__ macro after __RT_HIT_NORMAL__; if only the __hit_point__ is needed, it can be filled in by using the _VJOIN1_ macro (see the following example).
+
+If the ray contains any overlaps (partitions claimed by two or more regions) the __a_overlap__ routine is called for each such partition with pointers to the application structure, the overlap partition, two regions, and the remaining partitions along the ray. If the __a_overlap__ member is null, _librt_ uses a default overlap handler. Additionally, _librt_ provides the routine
+
+If the ray does not intersect the model, the __a_miss__ routine is called with a pointer to the application structure.
+
+Helpful in generating a grid of ray origins, the bounding RPP of the model is computed by `rt_gettree()` and is stored in __rtip->mdl_min__ and __rtip->mdl_max__.
+
+
+[[example]]
+== EXAMPLE
+
+A program can be loaded as follows:
+
+$ _cc -I/usr/brlcad/include main.c /usr/brlcad/lib/librt.a -l<system-specific> -lm_
+
+where _<system-specific>_ indicates libraries required on a particular architecture. The table below indicates which system specific libraries are necessary on a particular architecture.
+
+Architecture Librarie(s) Alliant FX/8 -lcvec -lcommon Alliant FX/2800 -lcommon SGI 4D -lmpc Cray(X/Y) -L/lib/multi -lu -lio Cray2 -lmt Encore Multi-Max -lpp
+
+Here is a portion of a hypothetical program which uses the library:
+
+
+[quote]
+____
+
+....
+
+#include <vmath.h>
+#include <raytrace.h>
+int
+main(int argc, char argv[])
+{
+  static int do_if_hit(), do_if_miss(); /* Application routines */
+  register int h, v;
+  int grid_sz;
+  struct application ap; /* Set up for rt_shootray() */
+  struct rt_i *rtip;
+  /* ... */
+
+  /* Build the directory.	*/
+  rtip = rt_dirbuild( argv[bu_optind++] );
+
+  /* Load the desired portion of the model. */
+  while (argv[bu_optind] != NULL)
+    rt_gettree(rtip, argv[bu_optind++]);
+
+  ap.a_hit = do_if_hit;     /* Routine for hit */
+  ap.a_miss = do_if_missed; /* Routine for miss */
+  ap.a_overlap = 0;
+  ap.a_rt_i = rtip;
+  ap.a_level = 0;
+  ap.a_onehit = 0;          /* Return all objects along ray */
+  ap.a_resource = 0;
+
+  for (v = 0; v < grid_sz; ++v) /* For each scanline */
+    for (h = 0; h < grid_sz; ++h) {
+      /* Set up ray origin. */
+      VMOVE( ap.a_ray.r_pt, get_grid(h, v));
+      /* Compute ray direction. */
+      VMOVE( ap.a_ray.r_dir, get_dir(h, v));
+      /* Must be unit vector. */
+      VUNITIZE(ap.a_ray.r_dir);
+      (void)rt_shootray(&ap);
+    }
+   /* ... */
+}
+
+static int
+do_if_hit(register struct application *ap,
+          struct partition *PartHeadp)
+{
+  extern void put_component();
+  struct curvature incurv;
+  register struct partition *pp;
+
+  for (pp = PartHeadp->pt_forw; pp != PartHeadp;
+       pp = pp->pt_forw)  {
+
+  /* Fill in all inhit info, but just the exit location for outhit. */
+  RT_HIT_NORMAL(pp->pt_inhit->hit_normal, pp->pt_inhit,
+                pp->pt_inseg->seg_stp, &ap->a_ray,
+                pp->pt_inflip);
+  RT_CURVE(&incurv, pp->pt_inhit, pp->pt_inseg->seg_stp);
+  VJOIN1(pp->pt_outhit->hit_point, ap->a_ray.r_pt,
+         pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
+
+  /* Do something based on information in partition structure
+   *	such as output a shotline component data record.
+   */
+  put_component( pp->pt_inhit, &incurv, pp->pt_outhit );
+  /* ... */
+  }
+  return 1; /* Report hit to main routine */
+}
+
+static int
+do_if_missed(register struct application *ap)
+{
+  return 0; /* Report miss to main routine */
+}
+  
+....
+
+____
+
+
+[[see_also]]
+== SEE ALSO
+
+*mged*(1B), *rt*(1B).
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+"rt_malloc: malloc failure", if _librt_ is unable to allocate memory with _malloc_. ``rt_ _???_: read error'', if an error or EOF occurs while reading from the model database. "unexpected SIGFPE!" when a floating point error occurs. (The rootfinder traps SIGFPE, but SIGFPE elsewhere is unexpected.) "rt_shootray: zero length dir vector" when the __a_ray.r_dir__ vector is not unit length. "rt_gettree called again after rt_prep!" when an attempt is made to add more sub-trees to the active model after calling `rt_prep()` (or after firing the first ray). "rt_prep: re-invocation" when `rt_prep()` is called more than once. "rt_prep: no solids to prep" when there are no valid solids in the model.
+
+The LIBRT_DEBUG environment variable may be set to the hexadecimal bit vector as described by the DEBUG_* flags listed in the raytrace.h header. Similarly, many LIBRT applications provide a "-x #" command-line option which will take precedence over the environment variable.
+
+The LIBRT_V4FLIP environment variable may be set to a true or false value to respectively force or disable endianness interpretation of v4 geometry database files. The default behavior is to automatically detect whether flipping the endian interpretation will help LIBRT read a binary-incompatible v4 geometry database file. Setting LIBRT_V4FLIP will override automatic detection.
+
+
+[[bugs]]
+== BUGS
+
+On a VAX, the rootfinder detects "hard" cases by taking a SIGFPE and retrying with a slower but more stable algorithm. This is unfortunate.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1986-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

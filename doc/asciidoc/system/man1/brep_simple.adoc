@@ -1,0 +1,69 @@
+= brep_simple(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+brep_simple - constructs a simple boundary representation (b-rep) twisted cube
+
+== SYNOPSIS
+
+[source]
+----
+brep_simple
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*brep_simple* constructs a simple b-rep twisted cube directly using the openNURBS API. The constructed twisted cube is written to a geometry database (brep_simple.g) using the wdb interface. The cube is constructed by first defining and creating the vertices, then the twisted edges (using trimming curves), and finally the faces to get a final topology like the following:
+
+
+....
+
+
+                       H-------e6-------G
+                      /                /|
+                     / |              / |
+                    /  e7            /  e5
+                   /   |            /   |
+                  /                e10  |
+                 /     |          /     |
+                e11    E- - e4- -/- - - F
+               /                /      /
+              /      /         /      /
+             D---------e2-----C      e9
+             |     /          |     /
+             |    e8          |    /
+             e3  /            e1  /
+             |                |  /
+             | /              | /
+             |                |/
+             A-------e0-------B
+        
+....
+
+
+[[see_also]]
+== SEE ALSO
+
+*mged*(1), *libwdb*(3)
+
+
+[[author]]
+== AUTHORS
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

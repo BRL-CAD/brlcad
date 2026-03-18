@@ -1,5 +1,6 @@
 set(
   cmake_ignore_files
+  AsciiDoc.cmake
   BRLCAD_API_Flag.cmake
   BRLCAD_Build_Types.cmake
   BRLCAD_CPack.cmake
@@ -23,7 +24,6 @@ set(
   CheckStructHasMember.cmake
   CompilerFlags.cmake
   Distcheck.cmake
-  DocBook.cmake
   Doxygen.cmake
   FindASTYLE.cmake
   FindAdaptagrams.cmake
@@ -64,7 +64,6 @@ set(
   FindUUID.cmake
   FindWix.cmake
   FindXMLLINT.cmake
-  FindXSLTPROC.cmake
   FindZLIB.cmake
   NSIS.template.in
   NSIS_silent.template.in
@@ -103,7 +102,6 @@ set(
   distcheck_repo_verify.cmake.in
   distcheck_target.cmake.in
   distclean.cmake.in
-  docbook.cmake.in
   source_archive_setup.cmake.in
   tcltest.tcl.in
   scripts/printtime.cmake

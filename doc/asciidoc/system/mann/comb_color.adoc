@@ -1,0 +1,47 @@
+= COMB_COLOR(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+comb_color - Changes the color of a combination.
+
+== SYNOPSIS
+
+[source]
+----
+comb_color {combination_name r g b}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Assigns the color using the provided _rgb_ values to the existing combination named __combination_name__. Valid values for each variable are between 0 and 255. See also the *mater* command.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the command *comb_color* to assign a specific color to a specific region.
+
+.Assign a color to a specific region.
+[example]
+====
+mged>**comb_color region.r 0 255 0**
+
+Assigns the color green to _region.r_.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

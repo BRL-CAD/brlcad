@@ -1,0 +1,76 @@
+= WAVELET(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+wavelet - perform a haar wavelet decomposition/reconstruction
+
+== SYNOPSIS
+
+[source]
+----
+wavelet [-1] [-2] [-d] [-r] [-# channels] [ -t [c | d | f | i | l | s]] [-w width] [-n scanlines] [-s squaresize] [-S square_out_size] [-W width_out] < file > wavelet
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *wavelet* command will perform Haar wavelet decomposition or reconstruction transforms on the input dataset. The command line options are:
+
+*-d* perform decomposition.
+
+*-r* perform reconstruction.
+
+*-1* perform a 1-dimensional (horizontal) transform.
+
+*-2* perform a 1-dimensional (interleaved horizontal and vertical) transform.
+
+*-# channels* Indicates the number of values in each sample point. For example, to perform a transform on a *pix*(5) file properly, specify "-# 3". This causes the red, green and blue channels to be transformed individually.
+
+*-t {cdfils}* specifies the data type of the input, and hence the data type in which the wavelet calculations will be performed. The letters each stand for the first character of the C programming language data type: *c* haracter, *d* ouble, *f* loat, *i* nt, *l* ong, *s* hort. Note that if lossless decomposition and reconstruction are desired, then data sets should be converted to the next larger data type before being processed.
+
+*-w width* Specify the number of samples per scanline.
+
+*-n scanline* Specify the number of scanlines in the dataset
+
+*-s squaresize* Specify both width and scanlines simultaneously (square image).
+
+*-W width_out* Specifies the width of the output image. Normally this is 1 for a full decomposition/reconstruction. You may specify a width at which decomposition or reconstruction should stop. This number should be a power of 2. The result will be an "average" image of the specified size, with the remainder of the original data width converted to "detail" coefficients. See also: -R
+
+*-R avg_size* Resumes a transform that left off with an average image of avg_size.
+
+*-S square_out_size* This is the same as the *-W* option. It implies the square size for a 2D decomposition limit.
+
+
+[[examples]]
+== EXAMPLES
+
+The command**decompose -# 3 < img.pix | pix-fb** will display the horizontal decomposition of the file img.pix.
+
+The command**decompose -# 3 -s 1024 -l 64 < img.pix >** will decompose a 1024x1024 image. The decomposition will stop when the image has been decomposed to 64x64. The output image will thus have a 64x64 version of the original in the lower left corner of the image, with detail terms in the remainder.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix*(5), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1999-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

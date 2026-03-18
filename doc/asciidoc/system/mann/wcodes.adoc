@@ -1,0 +1,47 @@
+= WCODES(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+wcodes - Writes ident, air code, material code, LOS, and name of all the regions in the list of _objects_ to the specified _file._
+
+== SYNOPSIS
+
+[source]
+----
+wcodes {file} {objects}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Writes ident, air code, material code, LOS, and name of all the regions in the list of _objects_ to the specified _file._ The format used is compatible with the *rcodes* command.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *wcodes* command to write region data for all the regions in specified objects to a specified file.
+
+.Write region data of objects to a file.
+[example]
+====
+mged>**wcodes code_file group1 group2**
+
+Writes region data for all the regions in _group1_ and _group2_ to __code_file.__
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

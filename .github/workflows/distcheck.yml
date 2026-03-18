@@ -35,7 +35,7 @@ jobs:
           # Install X/OpenGL dev pkgs
           sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
           # Install tools
-          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install astyle re2c
           # Install dependency dev pkgs
           sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev
           # Install XCB/OpenGL dev pkgs for Qt - see:
@@ -97,7 +97,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
-          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install astyle re2c
           sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
 
       - name: Setup - bext
@@ -150,7 +150,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
-          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install astyle re2c
           sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
 
       - name: Setup - bext
@@ -203,7 +203,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
-          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install astyle re2c
           sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
 
       - name: Setup - bext
@@ -256,7 +256,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
-          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install astyle re2c
           sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
 
       - name: Setup - bext
@@ -309,7 +309,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
-          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install astyle re2c
           sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
 
       - name: Setup - bext
@@ -362,7 +362,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
-          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install astyle re2c
           sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
 
       - name: Setup - bext
@@ -415,7 +415,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
-          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install astyle re2c
           sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
 
       - name: Setup - bext
@@ -468,7 +468,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
-          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install astyle re2c
           sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
 
       - name: Setup - bext
@@ -521,7 +521,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
-          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install astyle re2c
           sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev libgl-dev libinput-dev
 
       - name: Setup - bext
@@ -574,7 +574,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
-          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install astyle re2c
           sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
 
       - name: Setup - bext
@@ -627,7 +627,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
-          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install astyle re2c
           sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
 
       - name: Setup - bext
@@ -680,7 +680,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
-          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install astyle re2c
           sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
 
       - name: Setup - bext
@@ -733,7 +733,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev
-          sudo apt-get install astyle re2c xsltproc libxml2-utils
+          sudo apt-get install astyle re2c
           sudo apt-get install zlib1g-dev libpng-dev libjpeg-dev libtiff-dev libeigen3-dev libgdal-dev libassimp-dev libopencv-dev tcl-dev tk-dev libgl-dev libinput-dev
 
       - name: Setup - bext

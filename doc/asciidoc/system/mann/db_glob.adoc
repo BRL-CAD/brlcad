@@ -1,0 +1,47 @@
+= DB_GLOB(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+db_glob - Globs __cmd_string__ against the MGED database resulting in an expanded command string.
+
+== SYNOPSIS
+
+[source]
+----
+db_glob {cmd_string}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Globs __cmd_string__ against the MGED database resulting in an expanded command string.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *db_glob* command to return an expanded command string.
+
+.Return an expanded command string to list specified objects.
+[example]
+====
+mged>**db_glob "l r23\[0-9\]"**
+
+Returns a command string to list objects r230 through r239.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

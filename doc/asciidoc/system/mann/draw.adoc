@@ -1,0 +1,76 @@
+= DRAW(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+draw - Adds _objects_> to the display list so that they will appear on the _MGED_ display. The *e* command is a synonym for *draw*.
+
+== SYNOPSIS
+
+[source]
+----
+draw [-A attribute name/value pairs] [-s] [-A -o attribute name/value pairs] [-C#/#/#] [-L #] [-R] [-S] [-m1] {objects}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Adds _objects_ to the display list so that they will appear on the MGED display. The *e* command is a synonym for draw.
+
+
+* The _-C_ option provides the user a way to specify a color that overrides all other color specifications including combination colors and region-id-based colors.
+* The _-s_ option specifies that subtracted and intersected objects should be drawn with shape lines rather than dot-dash lines.
+* The _-A_ option specifies that the arguments provided to this command are attribute name/value pairs, and only objects having the specified attributes and values are to be displayed. The default (without _-o_) is that only objects having all the specified attribute name/value pairs will be displayed. With _-o_, objects that match any of the specified attribute name/value pairs will be displayed.
+* The _-m1_ option will display BOTs shaded if the display manager is OpenGL and the zbuffer and lighting is enabled. To enable these settings, from the MGED GUI, choose "Modes/Display Manager/OpenGL", "Misc/Z-buffer" and "Misc/Lighting". If the zbuffer and lighting is already enabled, toggle them off then back on to ensure they are enabled.
+* The _-L_ option allows the user to specify a face count. BoT primitives with more faces than the user set threshold will be represented in wireframe drawing by their bounding boxes rather than the full BoT wireframe.
+* The _-R_ option tells draw to not change the view size when drawing new objects. Without this flag, *draw* will automatically size the view to make the new object(s) visible when the view was previously empty.
+* The _-S_ option tells draw to be "simplified" by skipping subtraction objects when drawing, not drawing NMG interior surfaces, and potentially more. Skipping subtractions is useful in situations where an object has many large objects subtracted from it but those objects have relatively minimal impact on the shape. This results in the default wireframe bearing little resemablance to the evaluated shape.
+
+
+[[examples]]
+== EXAMPLES
+
+The following examples show the use of the *draw* command to draw particular objects, to specify color, to draw with shape lines rather than dot-dash lines, and to limit the objects to be drawn to those having specific attribute names and value pairs.
+
+.Draw specific objects in the _MGED_ display.
+[example]
+====
+
+mged> **draw object1 object2**::
+_Object1_ and _object2_ are drawn in the _MGED_ display.
+
+
+
+====
+
+.Specify the color used to draw the object.
+[example]
+====
+mged>**draw -C 255/255/255 object2**
+
+Object2 is drawn in white.
+
+====
+
+.Limit the objects to be drawn to those having specific attribute names and value pairs.
+[example]
+====
+mged>**draw -A -o Comment {First comment} Comment {Second comment}**
+
+Objects having a Comment attribute with a value of either "First comment" or "Second comment" are drawn.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,52 @@
+= wdb_example(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+wdb_example - creates a BRL-CAD geometry database from C code
+
+== SYNOPSIS
+
+[source]
+----
+wdb_example db_file.g
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*wdb_example* creates a BRL-CAD geometry database from C code. This database contains a sphere centered at 0,0,0; an rpp under it; and a union of both objects.
+
+Note that this is for writing a database and not modifying it. Currently, there is no API for modifying the database. Also note that the values in the database are stored in millimeters.
+
+
+[[examples]]
+== EXAMPLES
+
+*wdb_example* _db.g_
+
+
+[[see_also]]
+== SEE ALSO
+
+*mged*(1)
+
+
+[[author]]
+== AUTHORS
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

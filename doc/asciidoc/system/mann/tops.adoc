@@ -1,0 +1,56 @@
+= TOPS(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+tops - Displays a list of all the _top-level_ objects in the current database.
+
+== SYNOPSIS
+
+[source]
+----
+tops [-a]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Displays a list of all the _top-level_ objects in the current database. The top-level objects are all those objects that are not referenced by some other combination. The hierarchical structure of BRL-CAD databases usually means that there will be a top-level object that includes all (or at least most) of the objects in the database. The _-a_ option will show hidden objects.
+
+
+[[examples]]
+== EXAMPLES
+
+These examples show the use of the *tops* command to list all the top-level objects in the current database.
+
+.List all the top-level objects in the current database.
+[example]
+====
+mged>**tops**
+
+Lists all the top-level objects in the current database.
+
+====
+
+.List all the top-level objects in the current database, including hidden objects.
+[example]
+====
+mged>**tops -a**
+
+Lists all the top-level objects in the current database, including hiddent objects.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

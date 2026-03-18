@@ -1,0 +1,60 @@
+= ART(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+art - Executes the BRL-CAD _art_ program.
+
+== SYNOPSIS
+
+[source]
+----
+art [options] [--objects]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The _art_ command is a new, in-progress command that performs similar rendering as in *rt*, using the open-source _Appleseed_ physically based rendering engine. The integration of Appleseed into BRL-CAD is an ongoing effort to make art production-ready through enabling as many rt features as possible so that art is a drop-in replacement. The current status of the project has incorporated several, but not all, features of rt, as well as fixing issues with the Appleseed integration with BRL-CAD, such as z-up orientation and the orthographic view. To run art as one would run rt, simply run bin/art from the command line or, from the MGED raytrace control panel, select "Art" instead of "Raytrace".
+
+There are some limitations with the current implementation of art. One is that it does not yet match the MGED graphics window, and that not all rt options are supported. Additionally, art does not support .pix output, rt's default; art does not handle non-region, muliply referenced, or halfspace objects; and art multiframe rendering is untested, which means that memory leaks are currently likely.
+
+The following example commands are performed in mged, but since art is en evolving command, some issues with running the commands may be observed.
+
+
+[[examples]]
+== EXAMPLES
+
+The first example shows the use of the *art* command to run the art program to produce a color-shaded image. The second example shows the use of the *art* command to run the art program to produce a brightened image. Both commands use a sample object.
+
+.Run the _art_ program to produce a color-shaded image.
+[example]
+====
+mged>**art -C 255,255,255 -s 1024 share/db/moss.g all.g**
+
+Runs the _art_ program to produce a color-shaded image of a sample object. The image will be 1024 pixels square and will be displayed on a lingering _X_ framebuffer.
+
+====
+
+.Run the _art_ program to produce a brightened image of an object.
+[example]
+====
+mged>**art -A 2 share/db/moss.g all.g**
+
+Runs the _art_ program to produce a brightened image of the sample object. The image will be brightened by a factor of 2.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

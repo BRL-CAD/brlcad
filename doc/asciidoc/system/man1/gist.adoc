@@ -1,0 +1,140 @@
+= GIST(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+gist - Generate a one page summary of the geometry present in a database.
+
+== SYNOPSIS
+
+[source]
+----
+gist [options ...]... {(-F model/dir | model.g)}
+----
+
+
+[[gist_description]]
+== DESCRIPTION
+
+The Geometric Information Summary Tool - *gist* - is used to create a high level summary conveying visually and textually what geometry is defined with one or a set of .g geometry databases. It can output a PNG image containing renders and information summarizing area, volume and other standard properties as well as the top level structure of the geometry present.
+
+
+[[gist_options]]
+== OPTIONS
+
+
+*-i filename.g*::
+Specify a .g database file to use as *gist* input.
+
+
+*-o output.png*::
+The output PNG filename to use when generating a report image.
+
+
+*-F directory*::
+A directory holding .g database files to use as inputs.
+
+
+*-e directory*::
+Specify directory to hold exported images.
+
+
+*-g*::
+Display report in pop-up window.
+
+
+*-f*::
+Overwrite a pre-existing report (if any is present).
+
+
+*-Z*::
+Reuse renders if [model].working directory is present. Can significantly shorten processing time if producing multiple versions of a report.
+
+
+*-t object_name*::
+Specify an object in the database to report on.
+
+
+*-m path/to/image*::
+Specify a logo image to be used in the report.
+
+
+*-p #*::
+Control density of report image (default 300ppi).
+
+
+*-n "Preparer Name"*::
+Name of person preparing the report (used in report output).
+
+
+*-r "Owner Name"*::
+Name of the owner of the .g database.
+
+
+*-T path/to/rt*::
+Specify directory containing the rt and rtwizard executables to use when generating images.
+
+
+*-c classification*::
+Classification displayed on top/bottom banner.
+
+
+*-N "extra notes"*::
+Add extra information to the report.
+
+
+*-L*::
+Use left handed coordinate system.
+
+
+*-A*::
+Use +Y-up geometry axis (default is +Z-up)
+
+
+*-l len_units*::
+Specify length units.
+
+
+*-w wt_units*::
+Specify weight units.
+
+
+*-v*::
+Verbose printing.
+
+
+*-h*::
+Print help and exit.
+
+
+
+
+[[gist_examples]]
+== EXAMPLE
+
+.M35 Truck
+[example]
+====
+**gist -o m35.png m35.g -t component**
+
+====
+
+.KTANK reuse existing working directory
+[example]
+====
+**gist ktank.g -Z -o ktank.png**
+
+====
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2008-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

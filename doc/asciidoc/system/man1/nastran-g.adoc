@@ -1,0 +1,56 @@
+= NASTRAN-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: User Commands
+
+== NAME
+nastran-g - NASTRAN Translator (NASTRAN to BRL-CAD)
+
+== SYNOPSIS
+
+[source]
+----
+nastran-g [-xX lvl] [-t tolerance_distance] [-n] [-m] -i nastran_input_file -o database.g
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*nastran-g* converts the specified __nastran_input_file__ to a BRL-CAD _database.g_ file. The __tolerance_distance__ provided is the maximum distance (in mm) between two vertices at which they will be considered to be the same vertex. The *-n* option requests that the output solids created from _NASTRAN CQUAD4_ or _CTRIA3_ elements be stored in the BRL-CAD file as NMG solids rather than as the default BOT solids. The *-m* option indicates that the units of the NASTRAN file are millimeters, rather than the default inches. The converter currently only handles the _CROD, CBAR, CTRIA3,_ and _CQUAD4_ elements.
+
+The *-x* and *-X* options are for debug levels.
+
+
+[[example]]
+== EXAMPLE
+
+
+----
+
+$ nastran-g -i nastran.file -o sample.g
+----
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Error messages are intended to be self-explanatory.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1998-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

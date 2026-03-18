@@ -1,0 +1,54 @@
+= PIXBORDER(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixborder - add a 1-pixel-wide border to regions of a specified color
+
+== SYNOPSIS
+
+[source]
+----
+pixborder [ -b 'R G B'] [ -e 'R G B'] [ -i 'R G B'] [ -t 'R G B'] [ -B 'H S V'] [ -E 'H S V'] [ -I 'H S V'] [ -T 'H S V'] [-x left_edge] [-y bottom_edge] [-X right_edge] [-Y top_edge] [-a] [-n file_height] [-s squaresize] [-w file_width] [file.pix]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixborder* reads an input stream of _pix_ data, looking for maximal contiguous regions of a specified interior color, and writes out the _pix_ data with all pixels on the boundaries of these regions changed to a specified border color.
+
+The way *pixborder* decides if a given pixel is on the boundary depends on how the user specified the interior and exterior. The *-i* option causes *pixborder* to replace the default interior color of 255 255 255 by _R G B_, while the *-I* option replaces it by _H S V_, which are reals, with _H_ in [0, 360) and _S_, _V_ in [0, 1]. Similarly, the *-e* and *-E* options replace the default exterior color of 1 1 1. If the user specified colors for both or neither of the interior and exterior, then a pixel is on the boundary provided that it has the interior color and at least one of its four neighbors (left, right, above, and below) has the exterior color. If, on the other hand, the user specified only the interior (exterior) color, then a pixel is on the boundary provided that it has the interior color (does not have the exterior color) and at least one of its neighbors does not have the interior color (has the exterior color).
+
+The *-b* and *-B* options are for the specification of what will be used for the border.
+
+Variability in the interior and exterior colors may be accommodated by the *-t* and *-T* options, with which one specifies a symmetric tolerance for each of the red, green, and blue channels or hue, saturation, and value. Any color within the specified tolerance of the nominal interior (exterior) color is treated as though it were the nominal color.
+
+The *-a* option is for autosizing. The *-w* option is for file width, the *-n* option is for file height, and the *-s* option sets file width and height to the same value. (Values are in pixels.)
+
+Changes are restricted to a specified rectangular portion of the image (by default this is the entire image). The *-x* option sets the left edge of that rectangle: no pixels to the left of this edge are changed. The *-X*, *-y*, and *-Y* options respectively set the right, bottom, and top edges in the same manner.
+
+
+[[hint]]
+== HINT
+
+To obtain borders more than one pixel wide, one can run several copies of *pixborder* in a pipeline. In doing this to get, for instance, a border made up of constant-thickness segments of different colors, one should produce all the segments of a given layer before beginning any segments of the next inner layer.
+
+
+[[author]]
+== AUTHOR
+
+Paul Tanenbaum
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1996-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

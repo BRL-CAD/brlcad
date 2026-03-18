@@ -1,0 +1,37 @@
+= ANIMMATE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+animmate - Starts the Tcl/Tk-based animation tool.
+
+== SYNOPSIS
+
+[source]
+----
+animmate
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *animmate* command starts the Tcl/Tk-based animation tool. ***Need to find and integrate documentation for this tool***
+
+
+[[examples]]
+== EXAMPLES
+
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,47 @@
+= RM(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rm - Deletes all occurrences of the listed members from the specified combination.
+
+== SYNOPSIS
+
+[source]
+----
+rm {combination} {members}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Deletes all occurrences of the listed members from the specified _combination_. The *red, r, comb, c,* and *g* commands provide other _combination_ editing capabilities.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *rm* command to delete all occurrences of specified members of a given combination.
+
+.Delete members of a given combination.
+[example]
+====
+mged>**rm group1 regiona**
+
+Deletes _regiona_ from _group1_.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

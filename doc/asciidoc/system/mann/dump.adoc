@@ -1,0 +1,49 @@
+= DUMP(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dump - Copies the entire database to the __keep_file__.
+
+== SYNOPSIS
+
+[source]
+----
+dump {keep_file}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Copies the entire dababase to the __keep_file__. The __keep_file__ is a _BRL-CAD_ database file and will be located in the current working direction (use the *pwd* command to show the current working directory). Note the new file might have a smaller filesize than the current file as dumping the file has the same effect that the *garbage_collect* command has. See also the *keep* command.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *dump* command to copy the entire database to a designated file.
+
+.Copy the database to a designated file.
+[example]
+====
+
+mged> **dump sample.g**::
+Creates _sample.g_ file which is a copy of the current database.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

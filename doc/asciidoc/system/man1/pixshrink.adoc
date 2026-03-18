@@ -1,0 +1,54 @@
+= PIXSHRINK(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixshrink - shrink a color pix file
+
+== SYNOPSIS
+
+[source]
+----
+pixshrink [-s squareinsize] [-w in_width] [-n in_height] [-f shrink_factor] [-u] [infile.pix] > outfile.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixshrink* will take a color *pix*(5) format file of given dimensions and produce a smaller scaled version. The *-w* and *-n* flags specify the input file width and number of scan lines in pixels. They can both be set to the same value via *-s.* Defaults of 512 are assumed for unspecified dimensions. The integer scaling factor (_shrink_factor_) is set with the *-f* flag. By default, the factor is 2. Thus, pixshrink forms the logical opposite of the *pixinterp2x (1)* program.
+
+The program reads the entire image into memory, and then scales the image down to 1/_shrink_factor_ the original size in both dimensions.
+
+By default, pixshrink uses boxcar averaging to produce the output pixels from the input. The *-u* option causes pixshrink to use image undersampling instead.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pixcrop*(1), *pixrect*(1), *pixinterp2x*(1), *pixscale*(1), *pix*(5)
+
+
+[[bugs]]
+== BUGS
+
+If the dimensions of the input image are not evenly divisible by the shrink factor, incorrect and bizarre output is generated.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1990-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

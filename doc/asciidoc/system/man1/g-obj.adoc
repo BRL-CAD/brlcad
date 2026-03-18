@@ -1,0 +1,54 @@
+= G-OBJ(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: User Commands
+
+== NAME
+g-obj - BRL-CAD to Wavefront Object File converter
+
+== SYNOPSIS
+
+[source]
+----
+g-obj [-mviu] [-xX lvl] [-e error_file] [-D calculation_tolerance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P number_of_CPUs] [-o output.obj] database.g object(s)
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*g-obj* converts the specified _object(s)_ from a BRL-CAD _database.g_ file to the _Wavefront_ _OBJ_ file format. The *-x* option specifies an RT debug flag and the *-X* option specifies an NMG debug flag. The *-a* , *-r* , and *-n* options specify tessellation tolerances. The *-P* option specifies the number of CPUs. The *-D* option specifies a calculational distance tolerance (mm). Any two vertices that are less than this distance apart will be treated as the same vertex. The *-u* option specifies that vertex normals are desired. The *-v* option requests verbose output. The *-i* option requests the output file units to be inches (the default is mm). The *-o* option specifies the name of the file to receive the output (stdout is the default). The *-m* option will result in 'usemtl' statements in the output file. These statements are fictional (they do not refer to any material database). The materials named provide information about the material codes assigned to the objects in the BRL-CAD database. The material names will be of the form 'aircode_los_material', where _aircode_ is the code number for the air represented by that region, if it does represent air, otherwise this will be zero. The _los_ is the Line Of Sight thickness (0-100) assigned to the region, and the _material_ is the material code number assigned. The *-e* option specifies a file for receiving the error messages.
+
+
+[[example]]
+== EXAMPLE
+
+
+----
+
+$ g-obj -o sample.obj sample.g sample_object
+----
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Error messages are intended to be self-explanatory.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1997-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

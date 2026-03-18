@@ -1,0 +1,46 @@
+= PIXHALVE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixhalve - halve a color pix file
+
+== SYNOPSIS
+
+[source]
+----
+pixhalve [-a] [-s squareinsize] [-w in_width] [-n in_height] [<] [infile.pix] > outfile.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixhalve* will take a color *pix*(5) format file of given dimensions and reduce the resolution of the file by one half in each direction using a 5x5 pyramid filter. If a file name is not given, standard input will be used. The *-w* and *-n* flags specify the input file width and number of scan lines in pixels; they can be set to the same value via *-s*. Defaults of 512 are assumed for unspecified dimensions.
+
+The *-a* flag indicates autosizing (off by default).
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pixcrop*(1), *pixrect*(1), *pixinterp2x*(1), *pixscale*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1991-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

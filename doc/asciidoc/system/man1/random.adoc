@@ -1,0 +1,55 @@
+= RANDOM(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+random - generates a random number between two specified values
+
+== SYNOPSIS
+
+[source]
+----
+random [-s seed] [ -g [-c center]] [-u] [-v] low high
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*random* generates a random number between the two values given by _low_ and _high_, which are required arguments. The number can be uniform across the entire range or it can be a gaussian distribution around the center of the range (or a named center).
+
+The *-s* option specifies what integer seed to use to prime the random number generator.
+
+The *-u* option specifies that the random number distribution should be uniform across the low-to-high range. The *-g* option specifies that the random number distribution should be a gaussian distribution around a default or named center, specified with the *-c* option. If neither *-u* nor *-g* is specified, *-u* will be used.
+
+The *-v* option specifies verbose diagnostic output.
+
+
+[[examples]]
+== EXAMPLES
+
+
+....
+
+random 0 100
+random -g 40 2000
+....
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2010-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

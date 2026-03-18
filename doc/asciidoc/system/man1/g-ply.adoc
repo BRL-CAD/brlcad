@@ -1,0 +1,99 @@
+= G-PLY(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: User Commands
+
+== NAME
+g-ply - Stanford PLY exporter (BRL-CAD to PLY)
+
+== SYNOPSIS
+
+[source]
+----
+g-ply [-v] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-t type] [-s] [-D dist_calc_tol] -o output_file_name database.g object(s)...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*g-ply* converts the specified _object(s)_ from a BRL-CAD _database.g_ file to the _Stanfort PLY_ file format.
+
+The following options are recognized.
+
+
+*-o filename*::
+Specify output file name.
+
+
+*-s*::
+Write out one object per file, instead of merging individual objects into a single ply file.
+
+
+*-t* type (asc: ascii), (le: little endian), (be: big endian)::
+Specify the type of PLY file to write.
+
+
+*-D#*::
+Specify a calculational distance tolerance (mm). Any two vertices that are less than this distance apart will be treated as the same vertex.
+
+
+*-a#*::
+Specify the absolute tesselation tolerance.
+
+
+*-r#*::
+Specify the relative tesselation tolerance.
+
+
+*-n#*::
+Specify the surface-normal tesselation tolerance.
+
+
+*-x#*::
+Specify an RT debug flag.
+
+
+*-X#*::
+Specify an NMG debug flag.
+
+
+*-v*::
+Enable verbose output.
+
+
+
+
+[[example]]
+== EXAMPLE
+
+
+----
+
+      $ g-ply -o sample.ply sample.g sample_object
+    
+----
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Error messages are intended to be self-explanatory.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2003-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,76 @@
+= PIX-PNG(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pix-png - convert a BRL-CAD PIX format image to a PNG (Portable Network Graphics) format image
+
+== SYNOPSIS
+
+[source]
+----
+pix-png [-a] [-g gamma] [-n file_height] [-w file_width] [-s squaresize] [-o PNG_file] [PIX_file] [> PNG_file]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pix-png* converts a _BRL PIX(5)_ format file to a _PNG_ format file on the standard output. The PNG file created will be an RGB file with a bit-depth of 8 and a file gamma of 1.0.
+
+PIX image files do not contain information about their size. The size of the input PIX image file must be specified if the dimensions are not the default 512x512 size.
+
+
+[[options]]
+== OPTIONS
+
+
+*-a*::
+autosize the input file to determine file image height and width
+
+
+*-g gamma*::
+sets the specified gamma correction value into the created PNG file. A value of 0.6 is a close approximation of PC display monitors. A negative gamma value disables writing a gAMA chunk out entirely (and is the default).
+
+
+*-n file_height*::
+tells *pix-png* that the input is __file_height__ scanlines tall
+
+
+*-w file_width*::
+tells *pix-png* that the input is __file_width__ pixels wide
+
+
+*-s squaresize*::
+sets both the width and the height for the input to be _squaresize_
+
+
+*-o PNG_file*::
+tells *pix-png* to write image data to the specified __PNG_file__ output file. The *pix-png* command will not write out binary image data directly to a terminal device as a safeguard.
+
+
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *png-pix*(1), *pix-fb*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1998-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

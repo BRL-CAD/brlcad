@@ -1,0 +1,47 @@
+= DELAY(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+delay - Provides a delay of the specified time before the next command will be processed.
+
+== SYNOPSIS
+
+[source]
+----
+delay {seconds microseconds}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Provides a delay of the specified time before the next command will be processed.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *delay* command to delay the next command by the specified time.
+
+.Delay the next command by a specified amount of time.
+[example]
+====
+mged>**delay 5 0**
+
+Delays the next command for 5 seconds.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

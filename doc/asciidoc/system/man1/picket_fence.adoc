@@ -1,0 +1,60 @@
+= PICKET_FENCE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+picket_fence - Creates a BRL-CAD .g file containing picket fences.
+
+== SYNOPSIS
+
+[source]
+----
+picket_fence [filename] [prefix] [height] [spacing] [x0] [y0] [z0] []... [xn] [yn] [zn] [-r]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*picket_fence* creates a geometry file in _filename_ of a picket fence. All parameters for the fence are in mm. If more than two points are specified, it will generate a fence with multiple sections connecting the points. Parts of the fence are created starting at the origin. The two backing boards are created in the negative x halfspace. The pickets are created in the positive x halfspace and translated down the y-axis to their proper positions. The entire segment is then rotated and translated to the position specified by the user. To create a box of fence with the pickets on the outside, the points must be specified in a counter-clockwise order. Parts of the model are named according to the format
+
+
+....
+
+<prefix><partname><sec_name><[>part_num<].<obj_type>
+    
+....
+
+The _<prefix>_ above is the second argument to the program. The _spacing_ parameter specifies the amount of space (in mm) between pickets. The *-r* option specifies round fronts for the pickets.
+
+
+[[examples]]
+== EXAMPLES
+
+.*picket_fence* Example
+[example]
+====
+**picket_fence fence.g Imy 2000 15 0 0 0 100 6000 0**
+
+====
+
+Creates an example fence two meters high and six meters long with fifteen millimeter spaces between the pickets. "Imy" will be used as a name prefix for the *mged* objects. The fence will be started at the origin and be stretched out to (100,6000,0).
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2005-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,47 @@
+= QUIT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+quit - Ends the MGED process.
+
+== SYNOPSIS
+
+[source]
+----
+quit
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Ends the MGED process. Note that there is no write database command in MGED. All changes are made to the database as the user performs them. Therefore, a *quit* command will not restore the database to its pre-edited state. This is a synonym for the *q* command.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *quit* command to end the current MGED session.
+
+.End the current MGED session.
+[example]
+====
+mged>**quit**
+
+Quits the current MGED session.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

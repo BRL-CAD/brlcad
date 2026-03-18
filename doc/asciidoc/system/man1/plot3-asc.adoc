@@ -1,0 +1,44 @@
+= PLOT3-ASC(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+plot3-asc - convert a Plot3 stream to ASCII
+
+== SYNOPSIS
+
+[source]
+----
+plot3-asc [-v] [unix_plot]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Reads a stream in *plot3*(5) format and converts it to an ASCII representation. Standard input is read if a file name is not supplied. If the *-v* option is given, the single-character command names are replaced with mnemonic strings and a summary of plot command usage is written to standard error.
+
+
+[[see_also]]
+== SEE ALSO
+
+*asc-plot3*(1), *plot3-plot3*(1), *plot3rot*(1), *plot3-fb*(1), *libplot3*(3), *plot3*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1991-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,83 @@
+= Article Title
+Firstname Middlename Lastname <devs@brlcad.org>
+:doctype: article
+:toc:
+:toclevels: 3
+
+[[some-descriptive-tag]]
+First paragraph goes here.
+
+
+....
+
+      benchmark TIMEFRAME=1 run
+    
+....
+
+
+[NOTE]
+====
+The preceding _benchmark_ command example can get a lot more complex.
+
+====
+
+When you run the *benchmark* with the *help* option, you might see this output:
+
+
+....
+sean@gcc1-power7 bin]$benchmark help
+          Usage: ./benchmark [command(s)] [OPTION=value] [RT_OPTIONS]
+
+          Available commands:
+          clean
+          ...
+        
+....
+
+
+
+Another paragraph with embedded list is shown here. Each paragraph gets its own para and should be wrapped for readability and localized context diff comparisons. A list of items:
+
+
+* Bullet item 1.
+* Bullet item 2.
+
+
+
+
+[[another-tag-for-main-body]]
+== Breaking up the flow into sections
+
+You can use sections to group sections of your document together, but they are not necessary.
+
+.Example embedded image text.
+image::http://brlcad.org/images/logo/BRL-CAD_gear_logo_w_name_256.png[width=256]
+
+Another image, but rendered inline image:http://brlcad.org/images/logo/BRL-CAD_gear_logo_64x64.png[width=64] with the paragraph text.
+
+More paragraphs...
+
+[cols="2*"]
+|===
+|Type
+|Description
+
+|ell
+|Generalized Ellipsoid
+|arb8
+|Arbitrary Regular Polyhedron with up to 8 vertices
+|===
+
+
+[CAUTION]
+====
+There's a lot more you can do with Docbook/XML. Search the web for references and examples:
+
+
+* http://www.docbook.org/tdg5/en/html/article.html[http://www.docbook.org/tdg5/en/html/article.html]
+* http://www.openoffice.org/xml/xmerge/docbook/UserGuide.html[http://www.openoffice.org/xml/xmerge/docbook/UserGuide.html]
+
+====
+
+
+

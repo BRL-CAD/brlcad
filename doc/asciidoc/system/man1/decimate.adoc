@@ -1,0 +1,46 @@
+= DECIMATE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+decimate - Reduce image or data file of MxN tuples to one of size IxJ
+
+== SYNOPSIS
+
+[source]
+----
+decimate nbytes/pixel width height [ outwidth outheight]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*decimate* reads a file of *width* by *height* data items (each of which may be of arbitrary size as given by *nbytes/pixel* ), and discards enough of them to result in an output file of *outwidth* by *outheight* items, both of which default to 512. If the input image size is not an integer multiple of the output image size, then the decimated result will be padded with zero elements (pixels) on the right and top to achieve an output image of exactly the specified size.
+
+To process a *bw*(5) format file, use a value of 1 for *nbytes/pixel*. To process a *pix*(5) format file, use a value of 3 for *nbytes/pixel*.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix*(5), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1992-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,47 @@
+= RCODES(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rcodes - Reads the specified file and assigns the region attributes to the regions listed.
+
+== SYNOPSIS
+
+[source]
+----
+rcodes {file_name}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Reads the specified file and assigns the region attributes to the regions listed. The file is expected to be in the format produced by the *wcodes* command.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *rcodes* command to set the region-specific attributes according to the values found in the specified file.
+
+.Assign region-specific attributes to listed regions.
+[example]
+====
+mged>**rcodes region_codes**
+
+Reads the file named __region_codes__ and sets the region-specific attributes according to the values found in the file.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

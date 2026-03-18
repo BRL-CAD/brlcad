@@ -1,0 +1,130 @@
+= PATCH-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+patch-g - convert FASTGEN ASCII databases into binary MGED databases.
+
+== SYNOPSIS
+
+[source]
+----
+patch-g [options] output.g
+----
+
+
+[[description]]
+== DESCRIPTION
+
+This program converts FASTGEN geometry into BRL-CAD *mged*(1) formats. FASTGEN is a modeling system used by the Air Force and Navy to create military target descriptions. FASTGEN databases consist of the following primitives which can be converted by *patch-g* : polygons, plates, boxes, wedges, cylinders, spheres, and rods. It is recommended that *patch-g* be run with the *-p* option for most uses.
+
+*patch-g* requires that the FASTGEN file be run through the pre-processor *rpatch* . This is achieved by executing rpatch<__fastgen_file__>_file.rpatch_. Once this step is executed, *patch-g* can be used to convert the intermediate file into a binary *brlcad*(1) ".g" file.
+
+*patch-g* will provide messages when encountering problems in the conversion of FASTGEN geometry. For further debugging information, the -d flag with levels 1-3 of debugging can be provided.
+
+The available options are:
+
+
+*-T tolerance_distance*::
+The __tolerance_distance__ is specified in inches. Any two vertices within this distance from each other will be considered the same vertex.
+
+
+*-A perp_tolerance*::
+The __perp_tolerance__ is specified as the cosine of an angle (0.0 through 1.0). If the cosine of the angle between two vectors is less than the specified tolerance, then the vectors are considered perpendicular.
+
+
+*-u number_of_unions*::
+The __number_of_unions__ is the number of union operations per region, and has a pre-specified default value.
+
+
+*-x librt_debug_flag*::
+Specifies a flag for debugging the _librt_ package.
+
+
+*-X NMG_debug_flag*::
+Specifies a flag for NMG routine debugging.
+
+
+*-p*::
+Produce polysolid output rather than the default NMG solids.
+
+
+*-6*::
+Convert plate-mode triangles using ARB6 solids.
+
+
+*-f preprocessed_input_file*::
+Use the specified file as the input for conversion.
+
+
+*-i labels_file*::
+Specifies desired group names to override defaults.
+
+
+*-m materials_file*::
+Specifies material properties to be assigned to components.
+
+
+*-n*::
+Process volume mode as plate mode.
+
+
+*-t title*::
+Specifies a title for the output model (default is "patch-g conversion").
+
+
+*-o top_level_name*::
+Specifies a name for the top level object (default is "all").
+
+
+*-r*::
+Reverse normals for plate mode triangles.
+
+
+*-c "X Y Z"*::
+Specifies centroid, in inches, for some plate mode surface normal calculations. Quotation marks are needed to provide for the embedded blanks.
+
+
+*-d debug_level*::
+Specifies a debug level (1-3).
+
+
+
+
+[[example]]
+== EXAMPLE
+
+rpatch < __fastgen_file__ > _file.rpatch_
+
+patch-g -p -f _file.rpatch file.g_
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+The diagnostics are intended to be self-explanatory.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1)
+
+
+[[author]]
+== AUTHOR
+
+Bill Mermagen, Jr.
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1991-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

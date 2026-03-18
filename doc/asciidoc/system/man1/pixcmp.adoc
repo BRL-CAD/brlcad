@@ -1,0 +1,100 @@
+= PIXCMP(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixcmp - compare two PIX(5) format files pixel by pixel
+
+== SYNOPSIS
+
+[source]
+----
+pixcmp [-b] [-s] [-d] [-q] [-i SKIP] [-i SKIP1:SKIP2] [-n COUNT] FILE1 [FILE2]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixcmp* computes and reports differences between two *PIX*(5) format files on a pixel-by-pixel basis. The utility can operate either on individual pixels (default) or on bytes (with *-b*).
+
+The tool allows users to specify a number of pixels (or bytes) to skip in each input file, a limit on the number of pixels (or bytes) to compare, and options for detailed or suppressed output. It detects matching pixels, pixels off by one channel, pixels off by multiple channels, and missing pixels when the files differ in size.
+
+If either _FILE_ is specified as `-`, input is read from standard input. If both inputs are standard input, interleaved data is expected.
+
+
+[[options]]
+== OPTIONS
+
+
+*-b*::
+Operate on bytes instead of pixels.
+
+
+*-s*::
+Print all pixels (or bytes) with matching values.
+
+
+*-d*::
+Print all pixels (or bytes) with differing values.
+
+
+*-q*::
+Quiet mode; suppresses header and summary output.
+
+
+*-i _SKIP_*::
+Skip the first _SKIP_ pixels (or bytes with *-b*) in both files.
+
+
+*-i _SKIP1:SKIP2_*::
+Skip the first _SKIP1_ pixels (or bytes with *-b*) in _FILE1_ and _SKIP2_ in _FILE2_.
+
+
+*-n _COUNT_*::
+Compare up to _COUNT_ pixels (or bytes with *-b*).
+
+
+
+
+[[exit_status]]
+== EXIT STATUS
+
+
+`0`::
+No differences were found.
+
+
+`1`::
+Differences of one channel were found.
+
+
+`2`::
+Differences of multiple channels or missing pixels were found.
+
+
+
+
+[[see_also]]
+== SEE ALSO
+
+*pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2024 by the United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
