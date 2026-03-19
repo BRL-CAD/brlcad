@@ -2081,6 +2081,23 @@ rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
+void
+rt_ehy_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    struct rt_ehy_internal *eip;
+    fastf_t c, h, scale;
+
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(eip);
+
+    c = eip->ehy_c;
+    h = MAGNITUDE(eip->ehy_H);
+    scale = c / sqrt(h * (2 * c + h));
+    *volume = M_PI * eip->ehy_r1 * scale * eip->ehy_r2 * scale * h * h / (3 * c * c) * (3 * c + h);
+}
+
+
 /**
  * The centroid lies along ehy_H due to symmetry.
  * Initially the distance of the centroid from the apex is found. The
