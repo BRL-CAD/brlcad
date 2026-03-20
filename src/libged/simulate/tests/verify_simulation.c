@@ -135,7 +135,7 @@ int check_presim(const char *db_path, const char *truck_name, const char *terrai
 int check_postsim(const char *db_path, const char *truck_name, const char *terrain_name) {
     struct ged *gedp;
     point_t truck_min, truck_max, terrain_min, terrain_max;
-    double separation, truck_height, wheel_clearance;
+    double separation, truck_height;
     int result = 1;
     
     printf("\n");

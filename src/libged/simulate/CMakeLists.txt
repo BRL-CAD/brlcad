@@ -40,13 +40,14 @@ set(
   rt_instance.cpp
   rt_motion_state.cpp
   rt_roi_collision_shape.cpp
+  sim_animate.cpp
   simulation.cpp
   utility.cpp
 )
 
 set(SIM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/simulate)
 set(SIM_SYSTEM_INCLUDE_DIRS ${BULLET_INCLUDE_DIRS})
-set(SIM_LIBS libged libbu libbv ${BULLET_LIBRARIES})
+set(SIM_LIBS libged libicv libbv libbu ${BULLET_LIBRARIES})
 
 check_cxx_compiler_flag(-Wno-nonnull-compare NO_NONNULL_COMPARE)
 
@@ -71,8 +72,8 @@ cmakefiles(
   rt_instance.hpp
   rt_motion_state.hpp
   rt_roi_collision_shape.hpp
+  sim_animate.hpp
   simulation.hpp
-  tests/verify_simulation.c
   utility.hpp
 )
 

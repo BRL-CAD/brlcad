@@ -312,7 +312,10 @@ cmd_ged_edit_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 
 
 /**
- * Wrapper for the Mged simulate command : draws argv[argc-1] after execution
+ * Wrapper for the Mged simulate command : draws argv[argc-1] after execution.
+ * When an output file is specified (--output/-o) and no explicit view
+ * orientation has been given, the current MGED view is injected so that
+ * the rendered animation reflects what the user sees on screen.
  *
  */
 int
@@ -327,9 +330,75 @@ cmd_ged_simulate_wrapper(ClientData clientData, Tcl_Interp *interpreter, int arg
     if (s->gedp == GED_NULL)
 	return TCL_OK;
 
+    /* ---------------------------------------------------------------- */
+    /* Inject current MGED view when animation is requested but the     */
+    /* user has not already supplied a view orientation.                 */
+    /* ---------------------------------------------------------------- */
+    int   has_output  = 0; /* --output/-o present in argv */
+    int   has_view    = 0; /* --view-quat, --view-ae, or --view-eye present */
+    int   new_argc    = argc;
+    const char **new_argv = argv;
+    char **injected_argv = NULL;   /* heap-allocated extended argv */
+    /* Extra string buffers for injected arguments */
+    char  quat_buf[128]   = {'\0'};
+    char  eye_buf[128]    = {'\0'};
+    char  size_buf[64]    = {'\0'};
 
-    ret = (*ctp->ged_func)(s->gedp, argc, (const char **)argv);
+    for (int i = 1; i < argc; ++i) {
+	if (BU_STR_EQUIV(argv[i], "--output") || BU_STR_EQUIV(argv[i], "-o")
+	    || (!bu_strncmp(argv[i], "--output=", 9))
+	    || (!bu_strncmp(argv[i], "-o", 2) && argv[i][2] != '\0'))
+	    has_output = 1;
+	if (BU_STR_EQUIV(argv[i], "--view-quat")
+	    || BU_STR_EQUIV(argv[i], "--view-ae")
+	    || BU_STR_EQUIV(argv[i], "--view-eye")
+	    || (!bu_strncmp(argv[i], "--view-quat=", 12))
+	    || (!bu_strncmp(argv[i], "--view-ae=",  10))
+	    || (!bu_strncmp(argv[i], "--view-eye=", 11)))
+	    has_view = 1;
+    }
+
+    if (has_output && !has_view && s->gedp && s->gedp->ged_gvp) {
+	struct bview *bv = s->gedp->ged_gvp;
+	quat_t quat;
+	quat_mat2quat(quat, bv->gv_rotation);
+
+	/* Build "--view-quat=x,y,z,w" argument */
+	snprintf(quat_buf, sizeof(quat_buf),
+		 "--view-quat=%.10g,%.10g,%.10g,%.10g",
+		 quat[0], quat[1], quat[2], quat[3]);
+
+	/* Build "--view-eye=x,y,z" argument from gv_eye_pos */
+	snprintf(eye_buf, sizeof(eye_buf),
+		 "--view-eye=%.6g,%.6g,%.6g",
+		 bv->gv_eye_pos[0], bv->gv_eye_pos[1], bv->gv_eye_pos[2]);
+
+	/* Build "--view-size=S" argument */
+	snprintf(size_buf, sizeof(size_buf), "--view-size=%.6g", bv->gv_size);
+
+	new_argc = argc + 3; /* three extra arguments */
+	injected_argv = (char **)bu_calloc((size_t)(new_argc + 1),
+					   sizeof(char *), "sim injected argv");
+	/* argv[0] = command name */
+	injected_argv[0] = (char *)argv[0];
+	/* Insert the three view arguments after argv[0] */
+	injected_argv[1] = quat_buf;
+	injected_argv[2] = eye_buf;
+	injected_argv[3] = size_buf;
+	for (int i = 1; i < argc; ++i)
+	    injected_argv[i + 3] = (char *)argv[i];
+	injected_argv[new_argc] = NULL;
+
+	new_argv = (const char **)injected_argv;
+    }
+
+    ret = (*ctp->ged_func)(s->gedp, new_argc, new_argv);
     GED_OUTPUT;
+
+    if (injected_argv) {
+	bu_free(injected_argv, "sim injected argv");
+	injected_argv = NULL;
+    }
 
     if (ret & GED_HELP)
 	return TCL_OK;
