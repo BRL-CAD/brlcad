@@ -2167,11 +2167,8 @@ C_DECL void
 rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_rhc_internal *rip;
-    fastf_t A, arclen, integralArea, a, b, magB, sqrt_ra, height;
-
-    fastf_t h;
-    fastf_t sumodds = 0, sumevens = 0, x = 0;
-    int i, j;
+    fastf_t a, b, magB, sqrt_bb, A, height, arclen, h, x, a2, b2;
+    int i;
 
     /**
      * n is the number of divisions to use when using Simpson's
@@ -2191,10 +2188,6 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
      */
     int n = 1000000;
 
-    if (area == NULL || ip == NULL) {
-	return;
-    }
-
     RT_CK_DB_INTERNAL(ip);
     rip = (struct rt_rhc_internal *)ip->idb_ptr;
     RT_RHC_CK_MAGIC(rip);
@@ -2203,22 +2196,26 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     magB = MAGNITUDE(rip->rhc_B);
     height = MAGNITUDE(rip->rhc_H);
     a = (rip->rhc_r * b) / sqrt(magB * (2.0 * rip->rhc_c + magB));
-    sqrt_ra = sqrt(rip->rhc_r * rip->rhc_r + a * a);
-    integralArea = (b / a) * ((2.0 * rip->rhc_r * sqrt_ra) / 2.0 + ((a * a) / 2.0) * (log(sqrt_ra + rip->rhc_r) - log(sqrt_ra - rip->rhc_r)));
-    A = 2.0 * rip->rhc_r * (rip->rhc_c + magB) - integralArea;
 
-    h = (2.0 * rip->rhc_r) / n;
+    sqrt_bb = sqrt(magB * (2 * b + magB));
+    A = a * ((b + magB) / b * sqrt_bb - b * log(sqrt_bb + b + magB) + b * log(b));
+
+    h = (2 * rip->rhc_r) / n;
+    a2 = a * a;
+    b2 = b * b;
+    arclen = 2 * sqrt((b2 * rip->rhc_r * rip->rhc_r) / (a2 * rip->rhc_r * rip->rhc_r + pow(a, 4)) + 1);
     for (i = 1; i <= (n / 2) - 1; i++) {
-	x = -rip->rhc_r + 2.0 * i * h;
-	sumodds += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4.0)) + 1.0);
+	x = -rip->rhc_r + 2 * i * h;
+	arclen += 2 * sqrt((b2 * x * x) / (a2 * x * x + a2 * a2) + 1);
     }
-    for (j = 1; j <= (n / 2); j++) {
-	x = -rip->rhc_r + (2.0 * j - 1.0) * h;
-	sumevens += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4.0)) + 1.0);
+    for (i = 1; i <= (n / 2); i++) {
+	x = -rip->rhc_r + (2 * i - 1) * h;
+	arclen += 4 * sqrt((b2 * x * x) / (a2 * x * x + a2 * a2) + 1);
     }
-    arclen = (h / 3.0) * (sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4.0)) + 1.0) + 2.0 * sumodds + 4.0 * sumevens + sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4.0)) + 1.0));
+    arclen *= h / 3;
 
-    *area = 2.0 * A + 2.0 * rip->rhc_r * height + arclen * height;
+    /* Two hyperbola areas + rectangular face + extruded hyperbola */
+    *area = 2 * A + 2 * rip->rhc_r * height + arclen * height;
 }
 
 
