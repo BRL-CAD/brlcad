@@ -1931,56 +1931,26 @@ rt_rhc_volume(fastf_t *volume, const struct rt_db_internal *ip)
 }
 
 
-/**
- * Computes centroid of a right hyperbolic cylinder
- */
 void
 rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
-    if (cent != NULL && ip != NULL) {
-	struct rt_rhc_internal *rip;
-	fastf_t totalArea, guessArea, a, b, magB, sqrt_xa, sqrt_ga, xf, epsilon, high, low, scale_factor;
-	fastf_t guess = 0.0;
-	vect_t shift_h;
+    struct rt_rhc_internal *rip;
+    fastf_t b, magB, sqrt_bb, num, den, scale_factor;
 
-	RT_CK_DB_INTERNAL(ip);
-	rip = (struct rt_rhc_internal *)ip->idb_ptr;
-	RT_RHC_CK_MAGIC(rip);
+    RT_CK_DB_INTERNAL(ip);
+    rip = (struct rt_rhc_internal *)ip->idb_ptr;
+    RT_RHC_CK_MAGIC(rip);
 
-	magB = MAGNITUDE(rip->rhc_B);
-	b = rip->rhc_c;
-	a = (rip->rhc_r * b) / sqrt(magB * (2 * rip->rhc_c + magB));
-	xf = magB + a;
+    b = rip->rhc_c;
+    magB = MAGNITUDE(rip->rhc_B);
 
-	/* epsilon is an upperbound on the error */
-
-	epsilon = 0.0001;
-
-	sqrt_xa = sqrt((xf * xf) - (a * a));
-	totalArea = (b / a) * ((xf * sqrt_xa) - ((a * a) * log(sqrt_xa + xf)) - ((a * a) * log(xf)));
-
-	low = a;
-	high = xf;
-
-	while (fabs(high - low) > epsilon) {
-	    guess = (high + low) / 2.0;
-	    sqrt_ga = sqrt((guess * guess) - (a * a));
-	    guessArea = (b / a) * ((guess * sqrt_ga) - ((a * a) * log(sqrt_ga + guess)) - ((a * a) * log(guess)));
-
-	    if (guessArea > totalArea / 2.0) {
-		high = guess;
-	    } else {
-		low = guess;
-	    }
-	}
-
-	scale_factor = 1.0 - ((guess - a) / magB);
-
-	VSCALE(shift_h, rip->rhc_H, 0.5);
-	VSCALE(*cent, rip->rhc_B, scale_factor);
-	VADD2(*cent, shift_h, *cent);
-    }
+    sqrt_bb = sqrt(magB * (2 * b + magB));
+    num = 2.0 / 3.0 * pow(sqrt_bb, 3);
+    den = (b + magB) * sqrt_bb - b * b * log(sqrt_bb + b + magB) + b * b * log(b);
+    scale_factor = (magB + b - num / den) / magB;
+    VJOIN2(*cent, rip->rhc_V, 0.5, rip->rhc_H, scale_factor, rip->rhc_B);
 }
+
 
 int
 rt_rhc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
