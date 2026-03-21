@@ -1,4 +1,4 @@
-/*                     A R T P L U G I N . C P P
+/*               B R L C A D P L U G I N . C P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2025 United States Government as represented by
@@ -407,7 +407,7 @@ BrlcadObject::get_objects() const
     std::vector<std::string> objects;
     int count = get_object_count();
 
-    for (char i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++) {
 	std::string obj_num = "object." + std::to_string(i + 1);
 	objects.push_back(m_params.get_path_required<std::string>(obj_num.c_str(), ""));
     }
