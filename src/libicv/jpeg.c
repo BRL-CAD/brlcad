@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <setjmp.h>
+#include <stdio.h>
 #include <jpeglib.h>
 
 #include "bio.h"
