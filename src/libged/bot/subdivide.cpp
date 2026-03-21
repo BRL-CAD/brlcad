@@ -19,15 +19,13 @@
  */
  /** @file libged/bot/subdivide.cpp
   *
-  * Subdivide a BoT using OpenMesh
-  * based on remesh.cpp
+  * Subdivide a BoT using GTE-style subdivision algorithms.
   *
   */
 
 #include "common.h"
 
 #include <vector>
-#include <unordered_map>
 
 #include "vmath.h"
 #include "bu/str.h"
@@ -37,39 +35,20 @@
 #include "rt/geom.h"
 #include "rt/wdb.h"
 
-#ifdef BUILD_OPENMESH_TOOLS
-// Getting this definition from opennurbs_subd.h
-#ifdef EdgeAttributes
-#  undef EdgeAttributes
-#endif
-
 #if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push /* start new diagnostic pragma */
-#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #elif defined(__clang__)
-#  pragma clang diagnostic push /* start new diagnostic pragma */
-#  pragma clang diagnostic ignored "-Wunused-parameter"
+#  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wfloat-equal"
-#  pragma clang diagnostic ignored "-Wdocumentation"
-#  pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-#include "OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh"
-#include "OpenMesh/Core/Utils/Property.hh"
-#include "OpenMesh/Tools/Subdivider/Uniform/CatmullClarkT.hh"  // I believe this algorithm needs Quads?
-#include "OpenMesh/Tools/Subdivider/Uniform/LoopT.hh"
-#include "OpenMesh/Tools/Subdivider/Uniform/MidpointT.hh"
-#include "OpenMesh/Tools/Subdivider/Uniform/ModifiedButterFlyT.hh"
-#include "OpenMesh/Tools/Subdivider/Uniform/Sqrt3InterpolatingSubdividerLabsikGreinerT.hh"
-#include "OpenMesh/Tools/Subdivider/Uniform/Sqrt3T.hh"
-#include "OpenMesh/Tools/Subdivider/Uniform/SubdividerT.hh"
+#include "../../libbg/GTE/Mathematics/BotSubdivide.h"
 #if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop /* end ignoring warnings */
+#  pragma GCC diagnostic pop
 #elif defined(__clang__)
-#  pragma clang diagnostic pop /* end ignoring warnings */
+#  pragma clang diagnostic pop
 #endif
-
-#endif /* BUILD_OPENMESH_TOOLS */
 
 #include "ged/commands.h"
 #include "ged/database.h"
@@ -77,171 +56,57 @@
 #include "./ged_bot.h"
 
 
-#ifdef BUILD_OPENMESH_TOOLS
-
-typedef OpenMesh::TriMesh_ArrayKernelT<>  TriMesh;
-
 static struct rt_bot_internal *
 bot_subd(struct ged *gedp, struct rt_bot_internal *input_bot, int alg, int level)
 {
     if (!gedp || !input_bot)
 	return NULL;
 
-    OpenMesh::TriMeshT<TriMesh> trimesh;
-    std::unordered_map<size_t, OpenMesh::VertexHandle> vMap;
-
-    /* vertices */
-    const size_t num_v = input_bot->num_vertices;
-    for (size_t i = 0; i < num_v; i++) {
-	OpenMesh::Vec3f v(input_bot->vertices[3*i], input_bot->vertices[3*i + 1], input_bot->vertices[3*i + 2]);
-	OpenMesh::VertexHandle handle = trimesh.add_vertex(v);
-	vMap[i] = handle;
+    /* Build float vertex array */
+    std::vector<float> inV(input_bot->num_vertices * 3);
+    for (size_t i = 0; i < input_bot->num_vertices; i++) {
+	inV[3*i+0] = (float)input_bot->vertices[3*i+0];
+	inV[3*i+1] = (float)input_bot->vertices[3*i+1];
+	inV[3*i+2] = (float)input_bot->vertices[3*i+2];
     }
 
-    /* faces */
-    const size_t num_f = input_bot->num_faces;
-    for (size_t i = 0; i < num_f; i++) {
-	std::vector<OpenMesh::VertexHandle> indices;
-	for (int j = 0; j < 3; j++) {
-	    OpenMesh::VertexHandle &handle = vMap[input_bot->faces[3*i + j]];
-            indices.push_back(handle);
-	}
-	trimesh.add_face(indices);
+    /* Build int face array */
+    std::vector<int> inF(input_bot->num_faces * 3);
+    for (size_t i = 0; i < input_bot->num_faces * 3; i++)
+	inF[i] = input_bot->faces[i];
+
+    std::vector<float> outV;
+    std::vector<int>   outF;
+
+    if (!gte::gte_bot_subdivide(
+	    input_bot->num_vertices, inV.data(),
+	    input_bot->num_faces,    inF.data(),
+	    alg, level, outV, outF)) {
+	bu_vls_printf(gedp->ged_result_str, "WARNING: BoT subdivision failed.\n");
+	return NULL;
     }
 
-    /* initialize subdivider */
-    switch (alg) {
-	case 1:
-	    {
-		OpenMesh::Subdivider::Uniform::LoopT<TriMesh> divider;
-		divider.attach(trimesh);
-		divider(level);
-		divider.detach();
-		break;
-	    }
-	case 2:
-	    {
-		OpenMesh::Subdivider::Uniform::Sqrt3T<TriMesh> divider;
-		divider.attach(trimesh);
-		divider(level);
-		divider.detach();
-		break;
-	    }
-	case 3:
-	    {
-		OpenMesh::Subdivider::Uniform::InterpolatingSqrt3LGT<TriMesh> divider;
-		divider.attach(trimesh);
-		divider(level);
-		divider.detach();
-		break;
-	    }
-	case 4:
-	    {
-		OpenMesh::Subdivider::Uniform::ModifiedButterflyT<TriMesh> divider;
-		divider.attach(trimesh);
-		divider(level);
-		divider.detach();
-		break;
-	    }
-	case 5:
-	    {
-		OpenMesh::Subdivider::Uniform::MidpointT<TriMesh> divider;
-		divider.attach(trimesh);
-		divider(level);
-		divider.detach();
-		break;
-	    }
-
-	default:
-	    {
-		OpenMesh::Subdivider::Uniform::LoopT<TriMesh> divider;
-		divider.attach(trimesh);
-		divider(level);
-		divider.detach();
-		break;
-	    }
-    }
-
-    /* convert mesh back to bot */
+    /* Convert back to rt_bot_internal */
     struct rt_bot_internal *obot = NULL;
     BU_ALLOC(obot, struct rt_bot_internal);
-    obot->magic = RT_BOT_INTERNAL_MAGIC;
-    obot->mode = RT_BOT_SOLID;
-    obot->orientation = RT_BOT_UNORIENTED; // TODO
-    obot->thickness = (fastf_t *)NULL;
-    obot->face_mode = (struct bu_bitv *)NULL;
+    obot->magic      = RT_BOT_INTERNAL_MAGIC;
+    obot->mode       = RT_BOT_SOLID;
+    obot->orientation = RT_BOT_UNORIENTED;
+    obot->thickness  = (fastf_t *)NULL;
+    obot->face_mode  = (struct bu_bitv *)NULL;
 
-
-    /* Count active vertices and build a map from handles to vertex indices */
-    size_t i = 0;
-    int fcnt = 0;
-    std::map<int, size_t> rMap;
-
-    // Use a face iterator to iterate over all the faces and build a point map
-    for (TriMesh::ConstFaceIter f_it = trimesh.faces_begin(); f_it != trimesh.faces_end(); ++f_it) {
-	const OpenMesh::FaceHandle fh = *f_it;
-	fcnt++;
-	for (TriMesh::ConstFaceVertexIter v_it = trimesh.cfv_begin(fh); v_it.is_valid(); ++v_it) {
-	    const OpenMesh::VertexHandle &handle = *v_it;
-	    if (rMap.find(handle.idx()) == rMap.end()) {
-		rMap[handle.idx()] = i;
-		i++;
-	    }
-	}
-    }
-
-    /* Allocate vertex index array */
-    obot->num_vertices = i;
+    obot->num_vertices = outV.size() / 3;
     obot->vertices = (fastf_t*)bu_malloc(obot->num_vertices * 3 * sizeof(fastf_t), "vertices");
-    obot->num_faces = fcnt;
+    for (size_t i = 0; i < obot->num_vertices * 3; i++)
+	obot->vertices[i] = (fastf_t)outV[i];
+
+    obot->num_faces = outF.size() / 3;
     obot->faces = (int*)bu_malloc((obot->num_faces + 1) * 3 * sizeof(int), "triangles");
-
-    /* Retrieve coordinate values */
-    for (TriMesh::ConstFaceIter f_it = trimesh.faces_begin(); f_it != trimesh.faces_end(); ++f_it) {
-	const OpenMesh::FaceHandle fh = *f_it;
-	for (TriMesh::ConstFaceVertexIter v_it = trimesh.cfv_begin(fh); v_it.is_valid(); ++v_it) {
-	    const OpenMesh::VertexHandle &handle = *v_it;
-	    if (rMap.find(handle.idx()) != rMap.end()) {
-		i = rMap[handle.idx()];
-		TriMesh::Point p = trimesh.point(handle);
-		obot->vertices[3*i+0] = p[0];
-		obot->vertices[3*i+1] = p[1];
-		obot->vertices[3*i+2] = p[2];
-	    }
-	}
-    }
-
-    /* Retrieve face vertex index references */
-    fcnt = 0;
-    for (TriMesh::ConstFaceIter f_it = trimesh.faces_begin(); f_it != trimesh.faces_end(); ++f_it) {
-	const OpenMesh::FaceHandle fh = *f_it;
-	int j = 0;
-	for (TriMesh::ConstFaceVertexIter v_it = trimesh.cfv_begin(fh); v_it.is_valid(); ++v_it) {
-	    const OpenMesh::VertexHandle &handle = *v_it;
-	    int ind = (int)rMap[handle.idx()];
-	    obot->faces[fcnt*3 + j] = ind;
-	    j++;
-	}
-	fcnt++;
-    }
+    for (size_t i = 0; i < obot->num_faces * 3; i++)
+	obot->faces[i] = outF[i];
 
     return obot;
 }
-
-#else /* BUILD_OPENMESH_TOOLS */
-
-static struct rt_bot_internal *
-bot_subd(struct ged *gedp, struct rt_bot_internal *UNUSED(input_bot), int UNUSED(alg), int UNUSED(level))
-
-{
-    bu_vls_printf(gedp->ged_result_str,
-	"WARNING: BoT OpenMesh subcommands are unavailable.\n"
-	"BRL-CAD needs to be compiled with OpenMesh support.\n"
-	"(cmake -DBRLCAD_ENABLE_OPENVDB=ON or set -DOPENMESH_ROOT=/path/to/openmesh)\n");
-    return NULL;
-}
-
-#endif /* BUILD_OPENMESH_TOOLS */
 
 static void
 subd_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {

@@ -100,7 +100,10 @@ set(
   nanoflann.hpp
   pointgen.c
   predicates.h
-  )
+  GTE/Mathematics/BotSmooth.h
+  GTE/Mathematics/BotSubdivide.h
+  GTE/Mathematics/TriMesh.h
+)
 
 cmakefiles(${bg_ignore})
 cmakefiles(CMakeLists.txt)

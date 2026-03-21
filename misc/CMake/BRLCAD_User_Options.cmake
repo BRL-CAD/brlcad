@@ -195,10 +195,6 @@ mark_as_advanced(BRLCAD_ENABLE_GDAL)
 option(BRLCAD_ENABLE_ASSETIMPORT "Enable features requiring the Open Asset Import Library" ON)
 mark_as_advanced(BRLCAD_ENABLE_ASSETIMPORT)
 
-# Enable features requiring OpenMesh library
-option(BRLCAD_ENABLE_OPENMESH "Enable features requiring the OpenMesh Library" ON)
-mark_as_advanced(BRLCAD_ENABLE_OPENMESH)
-
 # Enable features requiring STEPcode library
 option(BRLCAD_ENABLE_STEP "Enable features requiring the STEP support libraries" ON)
 mark_as_advanced(BRLCAD_ENABLE_STEP)

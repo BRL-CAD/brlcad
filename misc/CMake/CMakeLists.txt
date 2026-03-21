@@ -40,7 +40,6 @@ set(
   FindLibUV.cmake
   FindNETPBM.cmake
   FindNSIS.cmake
-  FindOpenMesh.cmake
   FindOPENNURBS.cmake
   FindOSL.cmake
   FindOSMESA.cmake

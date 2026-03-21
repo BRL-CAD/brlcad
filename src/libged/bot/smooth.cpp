@@ -19,15 +19,13 @@
  */
  /** @file libged/bot/smooth.cpp
   *
-  * Smooth a BoT using OpenMesh
-  * based on remesh.cpp
+  * Smooth a BoT using Jacobi-Laplace smoother.
   *
   */
 
 #include "common.h"
 
 #include <vector>
-#include <unordered_map>
 
 #include "vmath.h"
 #include "bu/str.h"
@@ -38,32 +36,19 @@
 #include "rt/geom.h"
 #include "rt/wdb.h"
 
-#ifdef BUILD_OPENMESH_TOOLS
-// Getting this definition from opennurbs_subd.h
-#ifdef EdgeAttributes
-#  undef EdgeAttributes
-#endif
-
 #if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push /* start new diagnostic pragma */
-#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
 #elif defined(__clang__)
-#  pragma clang diagnostic push /* start new diagnostic pragma */
-#  pragma clang diagnostic ignored "-Wunused-parameter"
+#  pragma clang diagnostic push
 #  pragma clang diagnostic ignored "-Wfloat-equal"
-#  pragma clang diagnostic ignored "-Wdocumentation"
 #endif
-#include "OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh"
-#include "OpenMesh/Core/Utils/Property.hh"
-#include "OpenMesh/Tools/Smoother/JacobiLaplaceSmootherT.hh"
+#include "../../libbg/GTE/Mathematics/BotSmooth.h"
 #if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop /* end ignoring warnings */
+#  pragma GCC diagnostic pop
 #elif defined(__clang__)
-#  pragma clang diagnostic pop /* end ignoring warnings */
+#  pragma clang diagnostic pop
 #endif
-
-#endif /* BUILD_OPENMESH_TOOLS */
 
 #include "ged/commands.h"
 #include "ged/database.h"
@@ -71,150 +56,55 @@
 #include "./ged_bot.h"
 
 
-#ifdef BUILD_OPENMESH_TOOLS
-
-typedef OpenMesh::TriMesh_ArrayKernelT<>  TriMesh;
-
 static struct rt_bot_internal *
-bot_smooth(struct ged *gedp, struct rt_bot_internal *input_bot, int component, int continuity, double max_lerr, double max_aerr, int iterations)
+bot_smooth(struct ged *gedp, struct rt_bot_internal *input_bot,
+	   int component, int continuity,
+	   double max_lerr, double max_aerr, int iterations)
 {
     if (!gedp || !input_bot)
 	return NULL;
 
-    OpenMesh::TriMeshT<TriMesh> trimesh;
-    std::unordered_map<size_t, OpenMesh::VertexHandle> vMap;
+    std::vector<float> inV(input_bot->num_vertices * 3);
+    for (size_t i = 0; i < input_bot->num_vertices * 3; i++)
+	inV[i] = (float)input_bot->vertices[i];
 
-    /* vertices */
-    const size_t num_v = input_bot->num_vertices;
-    for (size_t i = 0; i < num_v; i++) {
-	OpenMesh::Vec3f v(input_bot->vertices[3*i], input_bot->vertices[3*i + 1], input_bot->vertices[3*i + 2]);
-	OpenMesh::VertexHandle handle = trimesh.add_vertex(v);
-	vMap[i] = handle;
+    std::vector<int> inF(input_bot->num_faces * 3);
+    for (size_t i = 0; i < input_bot->num_faces * 3; i++)
+	inF[i] = input_bot->faces[i];
+
+    std::vector<float> outV;
+    std::vector<int>   outF;
+
+    if (!gte::gte_bot_smooth(
+	    input_bot->num_vertices, inV.data(),
+	    input_bot->num_faces,    inF.data(),
+	    component, continuity,
+	    max_lerr, max_aerr, iterations,
+	    outV, outF)) {
+	bu_vls_printf(gedp->ged_result_str, "WARNING: BoT smoothing failed.\n");
+	return NULL;
     }
 
-    /* faces */
-    const size_t num_f = input_bot->num_faces;
-    for (size_t i = 0; i < num_f; i++) {
-	std::vector<OpenMesh::VertexHandle> indices;
-	for (int j = 0; j < 3; j++) {
-	    OpenMesh::VertexHandle &handle = vMap[input_bot->faces[3*i + j]];
-            indices.push_back(handle);
-	}
-	trimesh.add_face(indices);
-    }
-
-    OpenMesh::Smoother::SmootherT<TriMesh>::Component scpt;
-    switch (component) {
-	case 1:
-	    scpt = OpenMesh::Smoother::SmootherT<TriMesh>::Component::Normal;
-	    break;
-	case 2:
-	    scpt = OpenMesh::Smoother::SmootherT<TriMesh>::Component::Tangential_and_Normal;
-	    break;
-	default:
-	    scpt = OpenMesh::Smoother::SmootherT<TriMesh>::Component::Tangential;
-    }
-
-    OpenMesh::Smoother::SmootherT<TriMesh>::Continuity scont;
-    switch (continuity) {
-	case 1:
-	    scont = OpenMesh::Smoother::SmootherT<TriMesh>::Continuity::C1;
-	    break;
-	case 2:
-	    scont = OpenMesh::Smoother::SmootherT<TriMesh>::Continuity::C2;
-	    break;
-	default:
-	    scont = OpenMesh::Smoother::SmootherT<TriMesh>::Continuity::C0;
-    }
-
-    /* smooth */
-    OpenMesh::Smoother::JacobiLaplaceSmootherT<TriMesh> smoother(trimesh);
-    smoother.initialize(scpt, scont);
-    if (max_lerr > 0)
-	smoother.set_relative_local_error(max_lerr);
-    if (max_aerr > 0)
-	smoother.set_absolute_local_error(max_aerr);
-    smoother.smooth(iterations);
-
-    /* convert mesh back to bot */
     struct rt_bot_internal *obot = NULL;
     BU_ALLOC(obot, struct rt_bot_internal);
-    obot->magic = RT_BOT_INTERNAL_MAGIC;
-    obot->mode = RT_BOT_SOLID;
-    obot->orientation = RT_BOT_UNORIENTED; // TODO
-    obot->thickness = (fastf_t *)NULL;
-    obot->face_mode = (struct bu_bitv *)NULL;
+    obot->magic      = RT_BOT_INTERNAL_MAGIC;
+    obot->mode       = RT_BOT_SOLID;
+    obot->orientation = RT_BOT_UNORIENTED;
+    obot->thickness  = (fastf_t *)NULL;
+    obot->face_mode  = (struct bu_bitv *)NULL;
 
-
-    /* Count active vertices and build a map from handles to vertex indices */
-    size_t i = 0;
-    int fcnt = 0;
-    std::map<int, size_t> rMap;
-
-    // Use a face iterator to iterate over all the faces and build a point map
-    for (TriMesh::ConstFaceIter f_it = trimesh.faces_begin(); f_it != trimesh.faces_end(); ++f_it) {
-	const OpenMesh::FaceHandle fh = *f_it;
-	fcnt++;
-	for (TriMesh::ConstFaceVertexIter v_it = trimesh.cfv_begin(fh); v_it.is_valid(); ++v_it) {
-	    const OpenMesh::VertexHandle &handle = *v_it;
-	    if (rMap.find(handle.idx()) == rMap.end()) {
-		rMap[handle.idx()] = i;
-		i++;
-	    }
-	}
-    }
-
-    /* Allocate vertex index array */
-    obot->num_vertices = i;
+    obot->num_vertices = outV.size() / 3;
     obot->vertices = (fastf_t*)bu_malloc(obot->num_vertices * 3 * sizeof(fastf_t), "vertices");
-    obot->num_faces = fcnt;
+    for (size_t i = 0; i < obot->num_vertices * 3; i++)
+	obot->vertices[i] = (fastf_t)outV[i];
+
+    obot->num_faces = outF.size() / 3;
     obot->faces = (int*)bu_malloc((obot->num_faces + 1) * 3 * sizeof(int), "triangles");
-
-    /* Retrieve coordinate values */
-    for (TriMesh::ConstFaceIter f_it = trimesh.faces_begin(); f_it != trimesh.faces_end(); ++f_it) {
-	const OpenMesh::FaceHandle fh = *f_it;
-	for (TriMesh::ConstFaceVertexIter v_it = trimesh.cfv_begin(fh); v_it.is_valid(); ++v_it) {
-	    const OpenMesh::VertexHandle &handle = *v_it;
-	    if (rMap.find(handle.idx()) != rMap.end()) {
-		i = rMap[handle.idx()];
-		TriMesh::Point p = trimesh.point(handle);
-		obot->vertices[3*i+0] = p[0];
-		obot->vertices[3*i+1] = p[1];
-		obot->vertices[3*i+2] = p[2];
-	    }
-	}
-    }
-
-    /* Retrieve face vertex index references */
-    fcnt = 0;
-    for (TriMesh::ConstFaceIter f_it = trimesh.faces_begin(); f_it != trimesh.faces_end(); ++f_it) {
-	const OpenMesh::FaceHandle fh = *f_it;
-	int j = 0;
-	for (TriMesh::ConstFaceVertexIter v_it = trimesh.cfv_begin(fh); v_it.is_valid(); ++v_it) {
-	    const OpenMesh::VertexHandle &handle = *v_it;
-	    int ind = (int)rMap[handle.idx()];
-	    obot->faces[fcnt*3 + j] = ind;
-	    j++;
-	}
-	fcnt++;
-    }
+    for (size_t i = 0; i < obot->num_faces * 3; i++)
+	obot->faces[i] = outF[i];
 
     return obot;
 }
-
-#else /* BUILD_OPENMESH_TOOLS */
-
-static struct rt_bot_internal *
-bot_smooth(struct ged *gedp, struct rt_bot_internal *UNUSED(input_bot), int UNUSED(component), int UNUSED(continuity), double UNUSED(max_lerr), double UNUSED(max_aerr), int UNUSED(iterations))
-{
-    bu_vls_printf(gedp->ged_result_str,
-	"WARNING: BoT OpenMesh subcommands are unavailable.\n"
-	"BRL-CAD needs to be compiled with OpenMesh support.\n"
-	"(cmake -DBRLCAD_ENABLE_OPENVDB=ON or set -DOPENMESH_ROOT=/path/to/openmesh)\n");
-    return NULL;
-}
-
-#endif /* BUILD_OPENMESH_TOOLS */
 
 static void
 smooth_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
@@ -226,9 +116,8 @@ smooth_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
     }
 
     bu_vls_printf(str, "Available continuity options are:\n");
-    bu_vls_printf(str, "    0 (C0: shape is continuous, but not the tangent - default)\n");
-    bu_vls_printf(str, "    1 (C1: shape and tangent are continuous)\n");
-    bu_vls_printf(str, "    2 (C2: preserve curvature)\n\n");
+    bu_vls_printf(str, "    0 (C0: shape is continuous, but not the tangent)\n");
+    bu_vls_printf(str, "    1 (C1: shape and tangent are continuous - default)\n\n");
 
     bu_vls_printf(str, "Available component direction options are:\n");
     bu_vls_printf(str, "    0 (smooth in tangential direction - default)\n");
@@ -244,13 +133,13 @@ _bot_cmd_smooth(void* bs, int argc, const char** argv)
     struct db_i *dbip = gedp->dbip;
 
     const char* usage_string = "bot [options] smooth [smooth_options] <objname> [output_name]";
-    const char* purpose_string = "Smooth the BoT using OpenMesh's Jacobi Laplace smoother";
+    const char* purpose_string = "Smooth the BoT using Jacobi Laplace smoothing";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }
 
     int print_help = 0;
-    int continuity = 2;
+    int continuity = 1;
     int direction = 0;
     double max_lerror = 0;
     double max_aerror = 0;
@@ -258,7 +147,7 @@ _bot_cmd_smooth(void* bs, int argc, const char** argv)
 
     struct bu_opt_desc d[7];
     BU_OPT(d[0], "h", "help",              "",         NULL,      &print_help, "Print help");
-    BU_OPT(d[1], "c", "continuity",       "#",  &bu_opt_int,      &continuity, "C0 (0), C1 (1) or C2 (2) continuity");
+    BU_OPT(d[1], "c", "continuity",       "#",  &bu_opt_int,      &continuity, "C0 (0) or C1 (1) continuity (default C1)");
     BU_OPT(d[2], "d", "direction",        "#",  &bu_opt_int,      &direction,  "Tangential (0), Normal (1) or both (2)");
     BU_OPT(d[3], "e", "max-local-error",  "#",  &bu_opt_fastf_t,  &max_lerror, "Maximum local error");
     BU_OPT(d[4], "E", "max-abs-error",    "#",  &bu_opt_fastf_t,  &max_aerror, "Maximum absolute error");
@@ -297,7 +186,7 @@ _bot_cmd_smooth(void* bs, int argc, const char** argv)
 
     bu_log("INPUT BoT has %zu vertices and %zu faces\n", input_bot->num_vertices, input_bot->num_faces);
 
-    struct rt_bot_internal *output_bot = bot_smooth(gedp, input_bot, continuity, direction, max_lerror, max_aerror, iterations);
+    struct rt_bot_internal *output_bot = bot_smooth(gedp, input_bot, direction, continuity, max_lerror, max_aerror, iterations);
     if (!output_bot) {
 	bu_vls_free(&output_bot_name);
 	return BRLCAD_ERROR;
