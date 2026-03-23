@@ -518,6 +518,10 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
 
     // load bb dimensions in infoMap and unitsMap
     double convFactor = bu_units_conversion(infoMap["units"].c_str()) / bu_units_conversion(lUnit.c_str());
+    if (INVALID(convFactor)) {
+        bu_log("Could not convert units. Got: units (%s), convFactor (%f), aborting.\n", lUnit.c_str(), convFactor);
+        return false;
+    }
     Unit u1 = {lUnit, 1};
     Unit u3 = {lUnit, 3};
     infoMap["dimX"] = formatDouble(convFactor * largestComponents[0].bb.x);
