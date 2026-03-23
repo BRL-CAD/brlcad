@@ -34,6 +34,7 @@ changes made.  See document footer for additional details.
 * added simplification control options to bot extrude - Cliff Yapp
 * updated Manifold dependency to v3.2.1 - Cliff Yapp
 * updated SPSR dependency to v18.74 - Cliff Yapp
+* fixed 'search -type sph' not returning sph's - Chris McGregor
 
 
 ----------------------------------------------------------------------

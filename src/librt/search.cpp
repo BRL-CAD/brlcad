@@ -1541,6 +1541,14 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 		    break;
 	    }
 	    break;
+	case DB5_MINORTYPE_BRLCAD_ELL:
+	    /* are we looking for a sph? */
+	    if ((!bu_path_match(plan->p_un._type_data, "sph", 0) ||
+		 !bu_path_match(plan->p_un._type_data, "sphere", 0)) && rt_ell_is_sph(&intern)) {
+		type_match = 1;
+		break;
+	    }
+	    /* intentional fallthrough - we weren't looking for a sphere */
 	default:
 	    type_match = !bu_path_match(plan->p_un._type_data, intern.idb_meth->ft_label, 0);
 	    break;
