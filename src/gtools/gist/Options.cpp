@@ -118,8 +118,17 @@ bool Options::readParameters(int argc, const char **argv) {
     }
 
     /* usage help */
-    if (ret_ac != 0) {
-	bu_log("%s\n", bu_vls_cstr(&msg));
+    if (ret_ac < 0) {		// error in parsing
+	bu_log("ERROR: option parsing failed\n");
+	if (msg.vls_len > 0)
+	    bu_log("%s\n", bu_vls_cstr(&msg));
+
+	bu_vls_free(&msg);
+	return false;
+    } else if (ret_ac != 0) {	// extra / bad options
+	bu_log("ERROR: bad / unknown option (%s). Use -h for all options\n", argv[0]);
+	if (msg.vls_len > 0)
+	    bu_log("%s\n", bu_vls_cstr(&msg));
 
 	bu_vls_free(&msg);
 	return false;
