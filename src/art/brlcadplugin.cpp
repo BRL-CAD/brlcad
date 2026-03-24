@@ -115,7 +115,11 @@
 namespace asf = foundation;
 namespace asr = renderer;
 
-thread_local struct BRLCAD_to_ASR brlcad_ray_info;
+/* NOTE: brlcad_ray_info was previously a thread_local global.
+ * It has been replaced by a per-call stack variable passed through
+ * app.a_uptr to avoid thread-safety issues when Appleseed fires rays
+ * from multiple worker threads concurrently. See intersect() below.
+ */
 
 
 /* brlcad raytrace hit callback */
@@ -138,11 +142,13 @@ brlcad_hit(struct application* UNUSED(ap), struct partition* PartHeadp, struct s
     /* entry hit point, so we type less */
     hitp = pp->pt_inhit;
 
-    /* construct the actual (entry) hit-point from the ray and the
-     * distance to the intersection point (i.e., the 't' value).
+    /* Write results into the per-call struct passed via a_uptr.
+     * This avoids the previous thread_local global and is safe for
+     * concurrent multi-threaded calls from Appleseed worker threads.
      */
-    //VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
-    brlcad_ray_info.distance = hitp->hit_dist;
+    struct BRLCAD_to_ASR* ray_info = (struct BRLCAD_to_ASR*)ap->a_uptr;
+
+    ray_info->distance = hitp->hit_dist;
 
     /* primitive we encountered on entry */
     stp = pp->pt_inseg->seg_stp;
@@ -152,9 +158,9 @@ brlcad_hit(struct application* UNUSED(ap), struct partition* PartHeadp, struct s
      */
     RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
 
-    brlcad_ray_info.normal[0] = inormal[0];
-    brlcad_ray_info.normal[1] = inormal[1];
-    brlcad_ray_info.normal[2] = inormal[2];
+    ray_info->normal[0] = inormal[0];
+    ray_info->normal[1] = inormal[1];
+    ray_info->normal[2] = inormal[2];
 
     return 1;
 }
@@ -314,28 +320,25 @@ BrlcadObject::intersect(
     VSET(app.a_ray.r_dir, dir[0], dir[1], dir[2]);
     VSET(app.a_ray.r_pt, ray.m_org[0], ray.m_org[1], ray.m_org[2]);
 
-    app.a_uptr = (void*)this->name->c_str();
+    /* Per-call result storage on the stack — thread-safe.
+     * brlcad_hit() writes into this struct via ap->a_uptr.
+     * No global or thread_local state is used.
+     */
+    struct BRLCAD_to_ASR local_ray_info = {};
+    app.a_uptr = (void*)&local_ray_info;
 
     if (rt_shootray(&app) == 0) {
 	result.m_hit = false;
 	return;
     } else {
 	result.m_hit = true;
-	result.m_distance = brlcad_ray_info.distance;
+	result.m_distance = local_ray_info.distance;
 
-	const asf::Vector3d n = asf::normalize(brlcad_ray_info.normal);
+	const asf::Vector3d n = asf::normalize(local_ray_info.normal);
 	result.m_geometric_normal = n;
 
-	// const asf::Vector3d n_flip (n[0], n[2], n[1]);
-	// double temp;
-	// temp = n_flip[2];
-	// n_flip.set(2) = n_flip[1];
-	// n_flip.set(1) = temp;
 	result.m_shading_normal = n;
 
-	// const asf::Vector3f p(brlcad_ray_info.normal * m_rcp_radius);
-	// result.m_uv[0] = std::acos(p.y) * asf::RcpPi<float>();
-	// result.m_uv[1] = std::atan2(-p.z, p.x) * asf::RcpTwoPi<float>();
 	result.m_uv[0] = 1.0;
 	result.m_uv[1] = 1.0;
 
