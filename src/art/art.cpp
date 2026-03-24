@@ -341,12 +341,17 @@ register_region(struct db_tree_state* tsp,
     name_full = conversion_temp.c_str();
     bu_log("name: %s\n", conversion_temp.c_str());
 
-    // get objects bounding box
+    /* Get object bounding box.
+     * NOTE: ged_close() must be called after use to release the file
+     * descriptor and associated memory. Previously this was missing,
+     * causing a GED handle leak on every region registered.
+     */
     struct ged* gedp;
     gedp = ged_open("db", tsp->ts_dbip->dbi_filename, 1);
     point_t min;
     point_t max;
     int ret = rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char**)&name_full, 1, min, max);
+    ged_close(gedp);
 
     bu_log("ged: %i | min: %f %f %f | max: %f %f %f\n", ret, V3ARGS(min), V3ARGS(max));
 

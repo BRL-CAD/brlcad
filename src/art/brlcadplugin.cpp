@@ -236,8 +236,13 @@ BrlcadObject:: BrlcadObject(
 void
 BrlcadObject::release()
 {
-    // bu_free(resources, "appleseed");
-    // bu_free(ap, "appleseed");
+    /* Free the per-thread resource array allocated in
+     * configure_raytrace_application() or the 3-arg constructor.
+     * Previously this was commented out, causing a memory leak on
+     * every BrlcadObject destruction.
+     */
+    if (resources)
+	bu_free(resources, "appleseed");
     delete this->name;
     delete this;
 }
