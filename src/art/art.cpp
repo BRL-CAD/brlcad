@@ -836,6 +836,7 @@ build_project(const char* file, const char* UNUSED(objects))
 	        .insert("film_dimensions", bu_vls_cstr(&dimensions))
 	        .insert("horizontal_fov", bu_vls_cstr(&fov))
 		));
+        bu_vls_free(&fov);
         camera = pinhole;
     } else {
         // Create an orthographic camera with film dimensions
@@ -905,6 +906,8 @@ build_project(const char* file, const char* UNUSED(objects))
 
     // Bind the scene to the project.
     project->set_scene(scene);
+
+    bu_vls_free(&dimensions);
 
     return project;
 }
@@ -1097,7 +1100,7 @@ art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
     renderer.reset();
 
     // clean up resources
-
+    bu_vls_free(&str);
 
     return 0;
 }
@@ -1306,6 +1309,11 @@ main(int argc, char **argv)
     }
     // clean up resources
     bu_free(resources, "appleseed");
+    bu_vls_free(&str);
+
+    /* Remove and delete the log target before exiting. */
+    asr::global_logger().remove_target(log_target);
+    delete log_target;
 
     return 0;
 }
