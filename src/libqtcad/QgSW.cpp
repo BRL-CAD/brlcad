@@ -45,6 +45,9 @@ extern "C" {
 // this... maybe basing it on the currently visible object bounds?
 #define QTSW_ZMIN -100
 #define QTSW_ZMAX 100
+/* Background grey level used when capturing the viewport as an image.
+ * Dark but not black, so the yellow wireframe is clearly visible. */
+#define QTSW_SCREENSHOT_BG_GREY 40
 
 QgSW::QgSW(QWidget *parent, struct fb *fbp)
     : QWidget(parent), ifp(fbp)
@@ -375,6 +378,78 @@ void QgSW::save_image() {
     QImage image(dm_image, dm_get_width(dmp), dm_get_height(dmp), QImage::Format_RGBA8888);
     QImage img32 = image.convertToFormat(QImage::Format_RGB32);
     img32.save("file.png");
+}
+
+/* Render the current view to a file without relying on Qt paint events.
+ * This is safe to call in headless / off-screen mode. */
+void QgSW::render_to_file(const QString &filename)
+{
+    QImage img;
+    get_viewport_image(img);
+    if (!img.isNull())
+	img.convertToFormat(QImage::Format_RGB32).save(filename);
+}
+
+/* Render the current view and return the raw DM image.
+ * img will be a null QImage if rendering fails. */
+void QgSW::get_viewport_image(QImage &img)
+{
+    img = QImage();  /* null sentinel */
+    if (!v) return;
+
+    /* Ensure DM is initialised (reuse render_to_file init logic) */
+    if (!m_init) {
+	if (!dmp) {
+	    int rw = (width()  > 50) ? width()  : 800;
+	    int rh = (height() > 50) ? height() : 600;
+	    v->gv_width  = rw;
+	    v->gv_height = rh;
+	    const char *acmd = "attach";
+	    dmp = dm_open((void *)v, NULL, "swrast", 1, &acmd);
+	    if (!dmp) return;
+	    dm_set_udata(dmp, this);
+	}
+	dm_configure_win(dmp, 0);
+	dm_set_pathname(dmp, "SWDM");
+	dm_set_zbuffer(dmp, 1);
+	fastf_t windowbounds[6] = { -1, 1, -1, 1, QTSW_ZMIN, QTSW_ZMAX };
+	dm_set_win_bounds(dmp, windowbounds);
+	dm_set_vp(dmp, &v->gv_scale);
+	v->dmp = dmp;
+	v->gv_width  = dm_get_width(dmp);
+	v->gv_height = dm_get_height(dmp);
+	if (dm_set)
+	    bu_ptbl_ins_unique(dm_set, (long int *)dmp);
+	m_init = true;
+    }
+    if (!dmp) return;
+
+    /* Render */
+    unsigned char *dm_bg1;
+    unsigned char *dm_bg2;
+    dm_get_bg(&dm_bg1, &dm_bg2, dmp);
+    /* Use a dark-grey background for better visibility in screenshots;
+     * fall through to the stored background if it is already non-black. */
+    unsigned char bg1r = dm_bg1[0], bg1g = dm_bg1[1], bg1b = dm_bg1[2];
+    unsigned char bg2r = dm_bg2[0], bg2g = dm_bg2[1], bg2b = dm_bg2[2];
+    if (bg1r == 0 && bg1g == 0 && bg1b == 0 &&
+	bg2r == 0 && bg2g == 0 && bg2b == 0) {
+	/* Default black: override with a neutral dark background */
+	bg1r = bg1g = bg1b = QTSW_SCREENSHOT_BG_GREY;
+	bg2r = bg2g = bg2b = QTSW_SCREENSHOT_BG_GREY;
+    }
+    dm_set_bg(dmp, bg1r, bg1g, bg1b, bg2r, bg2g, bg2b);
+    dm_loadmatrix(dmp, v->gv_model2view, 0);
+    dm_draw_begin(dmp);
+    dm_draw_objs(v, draw_custom, draw_udata);
+    dm_draw_end(dmp);
+
+    unsigned char *vp_image = NULL;
+    if (dm_get_display_image(dmp, &vp_image, 1, 1) || !vp_image) return;
+    /* Copy pixel data into a QImage (QImage doesn't own vp_image) */
+    img = QImage(vp_image, dm_get_width(dmp), dm_get_height(dmp),
+		 QImage::Format_RGBA8888).copy();
+    bu_free(vp_image, "copy of backend image");
 }
 
 void QgSW::aet(double a, double e, double t)

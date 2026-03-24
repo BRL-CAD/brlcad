@@ -63,6 +63,10 @@ class QTCAD_EXPORT QgSW : public QWidget
 	bool diff_hashes();  // Set dmp dirty flag if current hashes != stashed hashes.  (Does not update   stored hash values - use stash_hashes for that operation.)
 
 	void save_image();
+	void render_to_file(const QString &filename);
+	/* Render the current view and return the raw DM pixel data.
+	 * Returns a null QImage (check with isNull()) on failure. */
+	void get_viewport_image(QImage &img);
 
 	void aet(double a, double e, double t);
 
