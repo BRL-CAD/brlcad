@@ -392,8 +392,9 @@ mark_as_advanced(BRLCAD_SMP)
 # direct-#include patterns that require UNITY_BUILD_SKIP exclusions.
 # Enable this option and address any resulting compiler errors before
 # distributing a unity-built tree.
-option(BRLCAD_ENABLE_UNITY_BUILD "Enable CMake unity/jumbo build batching" OFF)
+option(BRLCAD_ENABLE_UNITY_BUILD "Enable CMake unity/jumbo build batching" ON)
 mark_as_advanced(BRLCAD_ENABLE_UNITY_BUILD)
+
 if(BRLCAD_SMP)
   config_h_append(BRLCAD "#define PARALLEL 1\n")
 endif(BRLCAD_SMP)
