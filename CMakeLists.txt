@@ -1335,6 +1335,15 @@ else()
   add_link_options(/DEBUG)
 endif(NOT MSVC)
 
+# If we can, use a faster linker
+include(CheckLinkerFlag)
+check_linker_flag(CXX "-fuse-ld=lld" HAS_LLD)
+if(HAS_LLD)
+  add_link_options(
+    "$<$<NOT:$<PLATFORM_ID:Darwin>>:-fuse-ld=lld>"
+  )
+endif()
+
 # *******************************************************************
 if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
