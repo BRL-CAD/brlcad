@@ -42,6 +42,7 @@
 #define ECMD_METABALL_PT_MOV		36086	/* move a metaball control point */
 #define ECMD_METABALL_PT_PICK		36085	/* pick a metaball control point */
 #define ECMD_METABALL_PT_SET_GOO	30119
+#define ECMD_METABALL_PT_SWEAT		30120	/* set sweat value on selected control point */
 #define ECMD_METABALL_RMET		36090	/* set the metaball render method */
 #define ECMD_METABALL_SET_METHOD	36084	/* set the rendering method */
 #define ECMD_METABALL_SET_THRESHOLD	36083	/* overall metaball threshold value */
@@ -140,6 +141,14 @@ rt_edit_metaball_set_edit_mode(struct rt_edit *s, int mode)
 		return;
 	    }
 	    break;
+	case ECMD_METABALL_PT_SWEAT:
+	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
+	    if (!m->es_metaball_pnt) {
+		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
+		rt_edit_set_edflag(s, RT_EDIT_IDLE);
+		return;
+	    }
+	    break;
 	case ECMD_METABALL_PT_DEL:
 	case ECMD_METABALL_PT_ADD:
 	    break;
@@ -183,7 +192,7 @@ metaball_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUS
 	    m->es_metaball_pnt = next;
 	    rt_metaball_pnt_print(m->es_metaball_pnt, s->base2local);
 	    rt_edit_set_edflag(s, RT_EDIT_IDLE);
-	    // TODO - should we really be calling this here?
+	    /* Advance to the next control point; trigger immediate display update. */
 	    rt_edit_process(s);
 	    break;
 	case ECMD_METABALL_PT_PREV:
@@ -199,7 +208,7 @@ metaball_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUS
 	    m->es_metaball_pnt = prev;
 	    rt_metaball_pnt_print(m->es_metaball_pnt, s->base2local);
 	    rt_edit_set_edflag(s, RT_EDIT_IDLE);
-	    // TODO - should we really be calling this here?
+	    /* Step to the previous control point; trigger immediate display update. */
 	    rt_edit_process(s);
 	    break;
 	case ECMD_METABALL_PT_MOV:
@@ -208,7 +217,7 @@ metaball_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUS
 		rt_edit_set_edflag(s, RT_EDIT_IDLE);
 		return;
 	    }
-	    // TODO - should we really be calling this here?
+	    /* Mode is set; update axes to selected point before waiting for mouse. */
 	    rt_edit_process(s);
 	    break;
 	case ECMD_METABALL_PT_FLDSTR:
@@ -219,8 +228,16 @@ metaball_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUS
 		return;
 	    }
 	    break;
+	case ECMD_METABALL_PT_SWEAT:
+	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
+	    if (!m->es_metaball_pnt) {
+		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
+		rt_edit_set_edflag(s, RT_EDIT_IDLE);
+		return;
+	    }
+	    break;
 	case ECMD_METABALL_PT_DEL:
-	    // TODO - should we really be calling this here?
+	    /* Deletion is handled inside ft_edit; trigger it immediately. */
 	    rt_edit_process(s);
 	    break;
 	case ECMD_METABALL_PT_ADD:
@@ -245,6 +262,7 @@ struct rt_edit_menu_item metaball_menu[] = {
     { "Move Point", metaball_ed, ECMD_METABALL_PT_MOV },
     { "Scale Point fldstr", metaball_ed, ECMD_METABALL_PT_FLDSTR },
     { "Scale Point \"goo\" value", metaball_ed, ECMD_METABALL_PT_SET_GOO },
+    { "Set Point sweat value", metaball_ed, ECMD_METABALL_PT_SWEAT },
     { "Delete Point", metaball_ed, ECMD_METABALL_PT_DEL },
     { "Add Point", metaball_ed, ECMD_METABALL_PT_ADD },
     { "", NULL, 0 }
@@ -377,6 +395,24 @@ ecmd_metaball_pt_set_goo(struct rt_edit *s)
 }
 
 int
+ecmd_metaball_pt_sweat(struct rt_edit *s)
+{
+    struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
+
+    if (!m->es_metaball_pnt || !s->e_inpara) {
+	bu_vls_printf(s->log_str, "no metaball point selected for setting sweat\n");
+	return BRLCAD_ERROR;
+    }
+    if (s->e_para[0] < 0.0) {
+	bu_vls_printf(s->log_str, "ERROR: sweat value must be >= 0\n");
+	s->e_inpara = 0;
+	return BRLCAD_ERROR;
+    }
+    m->es_metaball_pnt->sweat = s->e_para[0];
+    return 0;
+}
+
+int
 ecmd_metaball_pt_fldstr(struct rt_edit *s)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
@@ -490,7 +526,7 @@ ecmd_metaball_pt_del(struct rt_edit *s)
     } else
 	m->es_metaball_pnt = p;
     BU_LIST_DQ(&tmp->l);
-    free(tmp);
+    BU_PUT(tmp, struct wdb_metaball_pnt);
     if (!m->es_metaball_pnt)
 	bu_log("WARNING: Last point of this metaball has been deleted.");
 }
@@ -500,11 +536,12 @@ ecmd_metaball_pt_add(struct rt_edit *s)
 {
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
     struct rt_metaball_internal *metaball= (struct rt_metaball_internal *)s->es_int.idb_ptr;
-    struct wdb_metaball_pnt *n = (struct wdb_metaball_pnt *)malloc(sizeof(struct wdb_metaball_pnt));
+    struct wdb_metaball_pnt *n;
+    BU_GET(n, struct wdb_metaball_pnt);
 
     if (s->e_inpara != 3) {
 	bu_log("Must provide x y z");
-	bu_free(n, "wdb_metaball_pnt n");
+	BU_PUT(n, struct wdb_metaball_pnt);
 	return;
     }
 
@@ -550,6 +587,8 @@ rt_edit_metaball_pscale(struct rt_edit *s)
 	    return ecmd_metaball_set_method(s);
 	case ECMD_METABALL_PT_SET_GOO:
 	    return ecmd_metaball_pt_set_goo(s);
+	case ECMD_METABALL_PT_SWEAT:
+	    return ecmd_metaball_pt_sweat(s);
 	case ECMD_METABALL_PT_FLDSTR:
 	    return ecmd_metaball_pt_fldstr(s);
     };
@@ -588,8 +627,14 @@ rt_edit_metaball_edit(struct rt_edit *s)
 	case ECMD_METABALL_PT_ADD:
 	    ecmd_metaball_pt_add(s);
 	    break;
-	default:
+	case ECMD_METABALL_SET_THRESHOLD:
+	case ECMD_METABALL_SET_METHOD:
+	case ECMD_METABALL_PT_SET_GOO:
+	case ECMD_METABALL_PT_SWEAT:
+	case ECMD_METABALL_PT_FLDSTR:
 	    return rt_edit_metaball_pscale(s);
+	default:
+	    return edit_generic(s);
     }
 
     return 0;
@@ -603,9 +648,6 @@ rt_edit_metaball_edit_xy(
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
-    struct rt_db_internal *ip = &s->es_int;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     switch (s->edit_flag) {
 	case RT_PARAMS_EDIT_SCALE:
@@ -614,6 +656,7 @@ rt_edit_metaball_edit_xy(
 	case ECMD_METABALL_PT_DEL:
 	case ECMD_METABALL_PT_FLDSTR:
 	case ECMD_METABALL_PT_SET_GOO:
+	case ECMD_METABALL_PT_SWEAT:
 	case ECMD_METABALL_RMET:
 	case ECMD_METABALL_SET_METHOD:
 	case ECMD_METABALL_SET_THRESHOLD:
@@ -632,18 +675,8 @@ rt_edit_metaball_edit_xy(
 	    MAT4X3PNT(s->e_mparam, s->e_invmat, temp);
 	    s->e_mvalid = 1;
 	    break;
-        case RT_PARAMS_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return BRLCAD_ERROR;
+	    return edit_generic_xy(s, mousevec);
     }
 
     edit_abs_tra(s, pos_view);

@@ -36,6 +36,7 @@ set(
   primitives/pipe/edpipe.c
   primitives/rhc/edrhc.c
   primitives/rpc/edrpc.c
+  primitives/sketch/edsketch.c
   primitives/superell/edsuperell.c
   primitives/tgc/edtgc.c
   primitives/tor/edtor.c
@@ -75,7 +76,7 @@ add_custom_command(
   OUTPUT ${RT_ECMD_HDR}
   COMMAND ${RT_ECMD_SCANNER} ${RT_PFILE_OUT} ${RT_ECMD_HDR}
   COMMENT "[RT_ECMD_SCANNER] Scanning for RT editing mode flags"
-  DEPENDS "${RT_ECMD_SCANNER_SRC}"
+  DEPENDS "${RT_ECMD_SCANNER_SRC}" ${RT_PFILE_IN}
 )
 distclean(${RT_ECMD_HDR})
 foreach(esf ${LIBRT_PRIMEDIT_SOURCES})
@@ -104,6 +105,7 @@ set(
   comb/comb_brep.cpp
   comb/comb_mirror.c
   comb/db_comb.c
+  comb/edcomb.c
   material/material.c
   constraint.c
   cut.c

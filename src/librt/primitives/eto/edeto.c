@@ -85,6 +85,37 @@ rt_edit_eto_menu_item(const struct bn_tol *UNUSED(tol))
     return eto_menu;
 }
 
+/* ft_edit_desc descriptor for the Elliptical Torus primitive */
+
+static const struct rt_edit_param_desc eto_r_params[] = {
+    { "r", "Major Radius", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "length", 0, NULL, NULL, NULL }
+};
+static const struct rt_edit_param_desc eto_rd_params[] = {
+    { "rd", "Tube Radius D", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "length", 0, NULL, NULL, NULL }
+};
+static const struct rt_edit_param_desc eto_c_params[] = {
+    { "c", "Semi-Minor Axis C", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "length", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_cmd_desc eto_cmds[] = {
+    { ECMD_ETO_R,       "Set r",       "geometry", 1, eto_r_params,  1, 10 },
+    { ECMD_ETO_RD,      "Set D",       "geometry", 1, eto_rd_params, 1, 20 },
+    { ECMD_ETO_SCALE_C, "Set C",       "geometry", 1, eto_c_params,  1, 30 },
+};
+
+static const struct rt_edit_prim_desc eto_prim_desc = {
+    "eto", "Elliptical Torus", 3, eto_cmds
+};
+
+const struct rt_edit_prim_desc *
+rt_edit_eto_edit_desc(void)
+{
+    return &eto_prim_desc;
+}
+
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
 void
@@ -328,9 +359,13 @@ ecmd_eto_rot_c(struct rt_edit *s)
 	bn_mat_mul(mat1, edit, s->e_mat);
 	bn_mat_mul(mat, s->e_invmat, mat1);
 
-	MAT4X3VEC(eto->eto_C, mat, eto->eto_C);
+	vect_t C_tmp;
+	VMOVE(C_tmp, eto->eto_C);
+	MAT4X3VEC(eto->eto_C, mat, C_tmp);
     } else {
-	MAT4X3VEC(eto->eto_C, s->incr_change, eto->eto_C);
+	vect_t C_tmp;
+	VMOVE(C_tmp, eto->eto_C);
+	MAT4X3VEC(eto->eto_C, s->incr_change, C_tmp);
     }
 
     MAT_IDN(s->incr_change);
@@ -379,23 +414,15 @@ int
 rt_edit_eto_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
-	case RT_PARAMS_EDIT_SCALE:
-	    /* scale the solid uniformly about its vertex point */
-	    return edit_sscale(s);
-	case RT_PARAMS_EDIT_TRANS:
-	    /* translate solid */
-	    edit_stra(s);
-	    break;
-	case RT_PARAMS_EDIT_ROT:
-	    /* rot solid about vertex */
-	    edit_srot(s);
-	    break;
+	case ECMD_ETO_R:
+	case ECMD_ETO_RD:
+	case ECMD_ETO_SCALE_C:
+	    return rt_edit_eto_pscale(s);
 	case ECMD_ETO_ROT_C:
 	    return ecmd_eto_rot_c(s);
 	default:
-	    return rt_edit_eto_pscale(s);
+	    return edit_generic(s);
     }
-    return 0;
 }
 
 int
@@ -405,9 +432,6 @@ rt_edit_eto_edit_xy(
         )
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
-    struct rt_db_internal *ip = &s->es_int;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     switch (s->edit_flag) {
         case RT_PARAMS_EDIT_SCALE:
@@ -421,18 +445,8 @@ rt_edit_eto_edit_xy(
 	    edit_stra_xy(&pos_view, s, mousevec);
 	    edit_abs_tra(s, pos_view);
             return 0;
-        case RT_PARAMS_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
         default:
-            bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
+            return edit_generic_xy(s, mousevec);
     }
 }
 

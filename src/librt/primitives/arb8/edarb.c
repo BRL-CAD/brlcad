@@ -64,9 +64,11 @@ rt_edit_arb_prim_edit_destroy(struct rt_arb8_edit *a)
 void
 rt_edit_arb_set_edit_mode(struct rt_edit *UNUSED(s), int UNUSED(mode))
 {
-    // TODO - the multiple menu structure of ARB8 will make this callback
-    // tricky.  May actually want to set up ECMDs for all individual faces
-    // and edges so we can adjust how the logic flows for this...
+    /* ARB8 uses its own per-type sub-menus (arb8_edge, arb8_mv_face, etc.)
+     * that directly set edit_flag and edit_menu via their own handlers.
+     * The generic ft_set_edit_mode entry point is intentionally empty here:
+     * mode selection for ARB8 goes through the nested menu hierarchy rather
+     * than through this single callback. */
 }
 
 static void
@@ -742,11 +744,12 @@ rt_edit_arb_write_params(
        	const struct bn_tol *tol,
 	fastf_t base2local)
 {
-    // TODO - these really should be stashed in a private arb editing struct so
-    // they can persist until the read_params call...
-    static int uvec[8];
-    static int svec[11];
-    static int cgtype = 8;
+    /* uvec, svec and cgtype are purely local scratch; write_params is only
+     * ever called during a tedit session that immediately reads the file back
+     * via read_params, so there is no need for these to persist across calls. */
+    int uvec[8];
+    int svec[11];
+    int cgtype = 8;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
@@ -989,8 +992,19 @@ ecmd_arb_setup_rotface(struct rt_edit *s)
     RT_ARB_CK_MAGIC(arb);
 
     rt_edit_map_clbk_get(&f, &d, s->m, ECMD_ARB_SETUP_ROTFACE, BU_CLBK_DURING);
-    if (f)
+    if (f) {
 	a->fixv = (*f)(0, NULL, d, s);
+    } else if (s->e_inpara >= 1) {
+	/* Non-interactive path: caller supplies the 1-based vertex index
+	 * directly in e_para[0].  This allows programmatic / test use
+	 * without registering an interactive callback. */
+	a->fixv = (int)s->e_para[0];
+	s->e_inpara = 0;
+    } else {
+	bu_vls_printf(s->log_str,
+		"ERROR: ECMD_ARB_SETUP_ROTFACE: no callback and no e_para fixv\n");
+	return;
+    }
 
     a->fixv--;
     rt_edit_set_edflag(s, ECMD_ARB_ROTATE_FACE);
@@ -1267,10 +1281,15 @@ rt_edit_arb_edit(struct rt_edit *s)
 	    ret = ecmd_arb_rotate_face(s);
 	    if (ret)
 		return ret;
-	    return 1; // TODO - why is this a return rather than a break (skips rt_edit_process finalization)
+	    /* ecmd_arb_rotate_face handles plane calc and replot directly;
+	     * return 1 to signal rt_edit_process to skip its post-dispatch
+	     * switch (avoiding a redundant arb_planecalc and replot). */
+	    return 1;
 	case PTARB:     /* move an ARB point */
 	case EARB:      /* edit an ARB edge */
 	    return edit_arb_element(s);
+	default:
+	    return edit_generic(s);
     }
 
 arb_planecalc:
@@ -1291,9 +1310,6 @@ rt_edit_arb_edit_xy(
 	)
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
-    struct rt_db_internal *ip = &s->es_int;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     switch (s->edit_flag) {
 	case RT_PARAMS_EDIT_SCALE:
@@ -1313,18 +1329,8 @@ rt_edit_arb_edit_xy(
 	case ECMD_ARB_MOVE_FACE:
 	    edarb_move_face_mousevec(s, mousevec);
 	    break;
-        case RT_PARAMS_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return BRLCAD_ERROR;
+	    return edit_generic_xy(s, mousevec);
     }
 
     edit_abs_tra(s, pos_view);
@@ -1562,7 +1568,10 @@ arb_extrude(struct rt_arb_internal *arb,
     a4toa6:
 	    ext4to6(pt[0], pt[1], pt[2], &larb, peqn);
 	    type = ARB6;
-	    /* TODO - solid edit menu was called here in MGED - why? */
+	    /* When ARB4→ARB6 extrusion changes the solid type the caller is
+	     * responsible for firing ECMD_MENU_REFRESH so the application can
+	     * reinstall the appropriate editing menu (e.g. via sedit_menu in
+	     * MGED).  The callback is registered and invoked in f_extrude. */
 	    break;
 
 	case 1680:   /* protrude face 5678 */

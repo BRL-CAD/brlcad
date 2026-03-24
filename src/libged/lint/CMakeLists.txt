@@ -19,7 +19,6 @@ cmakefiles(
   CMakeLists.txt
   ${LINT_SRCS}
   ged_lint.h
-  json.hpp
 )
 
 # Local Variables:

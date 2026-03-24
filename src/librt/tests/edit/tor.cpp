@@ -85,6 +85,30 @@ tor_diff(const char *cmd, struct rt_tor_internal *ctrl, struct rt_tor_internal *
     return ret;
 }
 
+static void
+tor_reset(struct rt_edit *s, struct rt_tor_internal *edit_tor,
+	  struct rt_tor_internal *cmp_tor, const struct rt_tor_internal *orig)
+{
+    VMOVE(edit_tor->v, orig->v);
+    VMOVE(edit_tor->h, orig->h);
+    edit_tor->r_a = orig->r_a;
+    edit_tor->r_h = orig->r_h;
+
+    VMOVE(cmp_tor->v, orig->v);
+    VMOVE(cmp_tor->h, orig->h);
+    cmp_tor->r_a = orig->r_a;
+    cmp_tor->r_h = orig->r_h;
+
+    VMOVE(s->e_keypoint, orig->v); /* tor keypoint is always v; bn_mat_scale_about_pnt uses this */
+    MAT_IDN(s->acc_rot_sol);
+    MAT_IDN(s->incr_change);
+    MAT_IDN(s->model_changes);
+    s->acc_sc_sol = 1.0;
+    s->e_inpara   = 0;
+    s->es_scale   = 0.0;
+    s->mv_context = 1;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -225,9 +249,7 @@ main(int argc, char *argv[])
 
     // Test e_inpara mode by restoring the original r_a value
 
-    // Reset
-    edit_tor->r_a = orig_tor->r_a;
-    edit_tor->r_h = orig_tor->r_h;
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
 
     s->e_inpara = 1;
     s->e_para[0] = 4;
@@ -250,14 +272,7 @@ main(int argc, char *argv[])
      **********************/
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, RT_PARAMS_EDIT_TRANS);
 
-    // Reset
-    s->es_scale = 1.0;
-    s->e_inpara = 0;
-    VSETALL(s->e_para, 0);
-    edit_tor->r_a = orig_tor->r_a;
-    edit_tor->r_h = orig_tor->r_h;
-    cmp_tor->r_a = orig_tor->r_a;
-    cmp_tor->r_h = orig_tor->r_h;
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
 
     // Set translation values
     s->e_inpara = 1;
@@ -275,10 +290,8 @@ main(int argc, char *argv[])
 
 
     // Test a translate without mv_context set
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
     s->mv_context = 0;
-    MAT_IDN(s->acc_rot_sol);
-    VMOVE(edit_tor->v, orig_tor->v);
-    VMOVE(cmp_tor->v, orig_tor->v);
     VSET(s->e_keypoint, 0, 0, 0);
     s->e_inpara = 1;
     VSET(s->e_para, 20, 55, 40);
@@ -299,13 +312,7 @@ main(int argc, char *argv[])
      **********************/
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, RT_PARAMS_EDIT_ROT);
 
-    // Reset
-    s->mv_context = 1;
-    s->es_scale = 1.0;
-    s->e_inpara = 0;
-    MAT_IDN(s->acc_rot_sol);
-    VMOVE(edit_tor->v, orig_tor->v);
-    VMOVE(cmp_tor->v, orig_tor->v);
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
 
     // Set rotation values - rotate about view center
     s->e_inpara = 1;
@@ -326,9 +333,7 @@ main(int argc, char *argv[])
 
 
     // Set rotation values - rotate about eye
-    VMOVE(edit_tor->v, orig_tor->v);
-    VMOVE(edit_tor->h, orig_tor->h);
-    MAT_IDN(s->acc_rot_sol);
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
     s->e_inpara = 1;
     VSET(s->e_para, 5, 5, 5);
     s->vp->gv_rotate_about = 'e';
@@ -347,9 +352,7 @@ main(int argc, char *argv[])
 
 
     // Set rotation values - rotate about model center
-    VMOVE(edit_tor->v, orig_tor->v);
-    VMOVE(edit_tor->h, orig_tor->h);
-    MAT_IDN(s->acc_rot_sol);
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
     s->e_inpara = 1;
     VSET(s->e_para, 5, 5, 5);
     s->vp->gv_rotate_about = 'm';
@@ -368,9 +371,7 @@ main(int argc, char *argv[])
 
 
     // Set rotation values - rotate about keypoint
-    VMOVE(edit_tor->v, orig_tor->v);
-    VMOVE(edit_tor->h, orig_tor->h);
-    MAT_IDN(s->acc_rot_sol);
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
     s->e_inpara = 1;
     VSET(s->e_para, 5, 5, 5);
     s->vp->gv_rotate_about = 'k';
@@ -389,11 +390,8 @@ main(int argc, char *argv[])
 
 
     // Test a rotation without mv_context
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
     s->mv_context = 0;
-
-    VMOVE(edit_tor->v, orig_tor->v);
-    VMOVE(edit_tor->h, orig_tor->h);
-    MAT_IDN(s->acc_rot_sol);
     s->e_inpara = 1;
     VSET(s->e_para, 5, 5, 5);
     s->vp->gv_rotate_about = 'k';
@@ -416,14 +414,7 @@ main(int argc, char *argv[])
      ****************************/
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_TOR_R1);
 
-    // Reset
-    VMOVE(edit_tor->v, orig_tor->v);
-    VMOVE(edit_tor->h, orig_tor->h);
-    MAT_IDN(s->acc_rot_sol);
-    s->acc_sc_sol = 1.0;
-    s->e_inpara = 0;
-    s->es_scale = 0;
-    s->mv_context = 1;
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
 
     // Prepare mousevec.  xpos and ypos coordinates should be in the range of
     // BV_MIN <= val <= BV_MAX, which defines the outer limits of the pixel
@@ -462,14 +453,7 @@ main(int argc, char *argv[])
      ****************************/
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, RT_PARAMS_EDIT_TRANS);
 
-    // Reset
-    VMOVE(edit_tor->v, orig_tor->v);
-    VMOVE(edit_tor->h, orig_tor->h);
-    edit_tor->r_a = orig_tor->r_a;
-    MAT_IDN(s->acc_rot_sol);
-    s->acc_sc_sol = 1.0;
-    s->e_inpara = 0;
-    s->es_scale = 0;
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
 
     // XY transform cares about curr_e_axes_pos
     VMOVE(s->curr_e_axes_pos, orig_tor->v);
@@ -503,17 +487,8 @@ main(int argc, char *argv[])
      ****************************/
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, RT_PARAMS_EDIT_ROT);
 
-    // Reset
-    VMOVE(edit_tor->v, orig_tor->v);
-    VMOVE(edit_tor->h, orig_tor->h);
-    edit_tor->r_a = orig_tor->r_a;
-    MAT_IDN(s->acc_rot_sol);
-    MAT_IDN(s->incr_change);
-    s->acc_sc_sol = 1.0;
-    s->e_inpara = 0;
-    s->es_scale = 0;
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
     VSET(s->e_keypoint, 0, 0, 0);
-    s->mv_context = 1;
 
     // Not sure if we need to set these, strictly speaking, but just to be sure...
     s->vp->gv_coord = 'v';
@@ -576,6 +551,64 @@ main(int argc, char *argv[])
     bu_log("RT_PARAMS_EDIT_ROT(xy) SUCCESS: original v value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->v), V3ARGS(edit_tor->v));
     bu_log("RT_PARAMS_EDIT_ROT(xy) SUCCESS: original h value %g,%g,%g modified to %g,%g,%g\n", V3ARGS(orig_tor->h), V3ARGS(edit_tor->h));
 
+
+
+    /* ================================================================
+     * RT_MATRIX_EDIT_ROT: absolute matrix rotation from keyboard angles
+     *
+     * Set model_changes to a 30-deg rotation about X. Keypoint is at
+     * the primitive's vertex (varies per primitive).
+     * After the edit model_changes must differ from identity.
+     * ================================================================*/
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
+    rt_edit_set_edflag(s, RT_MATRIX_EDIT_ROT);
+    s->e_inpara = 1;
+    VSET(s->e_para, 30, 0, 0);   /* 30-deg rotation about X axis */
+    VSET(s->e_keypoint, 0, 0, 0);
+
+    rt_edit_process(s);
+    {
+mat_t ident;
+MAT_IDN(ident);
+if (bn_mat_is_equal(s->model_changes, ident, &tol))
+    bu_exit(1, "ERROR: RT_MATRIX_EDIT_ROT did not rotate model_changes\n");
+mat_t expected_rot;
+MAT_IDN(expected_rot);
+bn_mat_angles(expected_rot, 30, 0, 0);
+if (!bn_mat_is_equal(s->acc_rot_sol, expected_rot, &tol))
+    bu_exit(1, "ERROR: RT_MATRIX_EDIT_ROT: acc_rot_sol not updated\n");
+bu_log("RT_MATRIX_EDIT_ROT SUCCESS: model_changes rotated, acc_rot_sol updated\n");
+    }
+
+    /* ================================================================
+     * RT_MATRIX_EDIT_TRANS_MODEL_XYZ: absolute model-space translation
+     *
+     * Start with identity model_changes, keypoint at origin.
+     * After translating to (10,20,30): model_changes * (0,0,0) == (10,20,30).
+     * ================================================================*/
+    tor_reset(s, edit_tor, cmp_tor, orig_tor);
+    rt_edit_set_edflag(s, RT_MATRIX_EDIT_TRANS_MODEL_XYZ);
+    s->e_inpara = 1;
+    VSET(s->e_para, 10, 20, 30);
+    VSET(s->e_keypoint, 0, 0, 0);
+    s->local2base = 1.0;
+
+    {
+point_t kp_saved;
+VMOVE(kp_saved, s->e_keypoint);
+
+rt_edit_process(s);
+
+point_t kp_world;
+MAT4X3PNT(kp_world, s->model_changes, kp_saved);
+vect_t expected = {10, 20, 30};
+if (!VNEAR_EQUAL(kp_world, expected, VUNITIZE_TOL))
+    bu_exit(1, "ERROR: RT_MATRIX_EDIT_TRANS_MODEL_XYZ failed: "
+    "keypoint maps to (%g,%g,%g), expected (10,20,30)\n",
+    V3ARGS(kp_world));
+bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
+       "keypoint maps to (%g,%g,%g)\n", V3ARGS(kp_world));
+    }
 
     rt_edit_destroy(s);
 

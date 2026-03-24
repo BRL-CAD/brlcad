@@ -295,6 +295,31 @@ rt_joint_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
     return -1;
 }
 
+const char *
+rt_joint_keypoint(point_t *pt, const char *keystr, const mat_t mat,
+		  const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+{
+    if (!pt || !ip)
+	return NULL;
+
+    struct rt_joint_internal *jip = (struct rt_joint_internal *)ip->idb_ptr;
+    RT_JOINT_CK_MAGIC(jip);
+
+    static const char *default_keystr = "V";
+    const char *k = (keystr) ? keystr : default_keystr;
+
+    /* The joint location is the natural keypoint */
+    if (BU_STR_EQUAL(k, default_keystr)) {
+	point_t mpt;
+	VMOVE(mpt, jip->location);
+	MAT4X3PNT(*pt, mat, mpt);
+	return k;
+    }
+
+    return NULL;
+}
+
+
 int
 rt_joint_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_internal *ip)
 {

@@ -47,6 +47,39 @@
 #define ECMD_BOT_FMODE		30070	/* set face mode (one or all) */
 #define ECMD_BOT_FDEL		30071	/* delete current face */
 #define ECMD_BOT_FLAGS		30072	/* set BOT flags */
+/*
+ * Move a list of vertices by a common XYZ delta.
+ *
+ * e_para[0..2]            = ΔX ΔY ΔZ (local units)
+ * e_para[3..3+N-1]        = N vertex indices  (N = e_inpara - 3)
+ * e_inpara >= 4            (at least one vertex index)
+ */
+#define ECMD_BOT_MOVEV_LIST	30073
+/*
+ * Split a selected edge by inserting its midpoint as a new vertex and
+ * replacing the two adjacent triangles with four triangles.
+ * Uses bot_verts[0] (start) and bot_verts[1] (end) set by a prior
+ * ECMD_BOT_PICKE; no e_para needed.
+ */
+#define ECMD_BOT_ESPLIT		30074
+/*
+ * Split a selected face into three triangles by inserting the face centroid
+ * as a new vertex.
+ * Uses bot_verts[0..2] set by a prior ECMD_BOT_PICKT; no e_para needed.
+ */
+#define ECMD_BOT_FSPLIT		30075
+/*
+ * Fuse duplicate vertices (within the model tolerance).
+ * Calls rt_bot_vertex_fuse(); no e_para values needed.
+ * Returns the number of vertices removed (logged to log_str).
+ */
+#define ECMD_BOT_VERTEX_FUSE	30076
+/*
+ * Remove duplicate faces.
+ * Calls rt_bot_face_fuse(); no e_para values needed.
+ * Returns the number of faces removed (logged to log_str).
+ */
+#define ECMD_BOT_FACE_FUSE	30077
 
 void *
 rt_edit_bot_prim_edit_create(struct rt_edit *UNUSED(s))
@@ -92,6 +125,7 @@ rt_edit_bot_set_edit_mode(struct rt_edit *s, int mode)
 	case ECMD_BOT_MOVEV:
 	case ECMD_BOT_MOVEE:
 	case ECMD_BOT_MOVET:
+	case ECMD_BOT_MOVEV_LIST:
 	    s->edit_mode = RT_PARAMS_EDIT_TRANS;
 	    break;
 	case ECMD_BOT_PICKV:
@@ -114,24 +148,12 @@ rt_edit_bot_set_edit_mode(struct rt_edit *s, int mode)
 static void
 bot_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(data))
 {
-    rt_edit_set_edflag(s, arg);
+    rt_edit_bot_set_edit_mode(s, arg);
 
-    switch (arg) {
-	case ECMD_BOT_MOVEV:
-	case ECMD_BOT_MOVEE:
-	case ECMD_BOT_MOVET:
-	    s->edit_mode = RT_PARAMS_EDIT_TRANS;
-	    break;
-	case ECMD_BOT_PICKV:
-	case ECMD_BOT_PICKE:
-	case ECMD_BOT_PICKT:
-	    s->edit_mode = RT_PARAMS_EDIT_PICK;
-	    break;
-	default:
-	    break;
-    };
-
-    // TODO - should we be calling this here?
+    /* Calling rt_edit_process here ensures the editing axes update
+     * immediately after a menu selection.  For pick/move modes waiting
+     * for mouse input, ft_edit is a no-op, but the keypoint and axes
+     * display still advance to the correct position. */
     rt_edit_process(s);
 
     bu_clbk_t f = NULL;
@@ -149,6 +171,11 @@ struct rt_edit_menu_item bot_menu[] = {
     { "Move Vertex", bot_ed, ECMD_BOT_MOVEV },
     { "Move Edge", bot_ed, ECMD_BOT_MOVEE },
     { "Move Triangle", bot_ed, ECMD_BOT_MOVET },
+    { "Move Vertex List", bot_ed, ECMD_BOT_MOVEV_LIST },
+    { "Split Edge", bot_ed, ECMD_BOT_ESPLIT },
+    { "Split Face", bot_ed, ECMD_BOT_FSPLIT },
+    { "Fuse Vertices", bot_ed, ECMD_BOT_VERTEX_FUSE },
+    { "Fuse Faces", bot_ed, ECMD_BOT_FACE_FUSE },
     { "Delete Triangle", bot_ed, ECMD_BOT_FDEL },
     { "Select Mode", bot_ed, ECMD_BOT_MODE },
     { "Select Orientation", bot_ed, ECMD_BOT_ORIENT },
@@ -416,6 +443,281 @@ ecmd_bot_fdel(struct rt_edit *s)
     b->bot_verts[1] = -1;
     b->bot_verts[2] = -1;
 
+    return BRLCAD_OK;
+}
+
+/*
+ * Move a list of vertices by a common XYZ delta.
+ *
+ * e_para[0..2]       = ΔX ΔY ΔZ (local units, converted to base)
+ * e_para[3..N+2]     = N vertex indices (N = e_inpara - 3)
+ * e_inpara >= 4
+ */
+static int
+ecmd_bot_movev_list(struct rt_edit *s)
+{
+    struct rt_bot_internal *bot =
+	(struct rt_bot_internal *)s->es_int.idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    if (s->e_inpara < 4) {
+	bu_vls_printf(s->log_str,
+		"ERROR: ECMD_BOT_MOVEV_LIST needs ΔX ΔY ΔZ and at least one vertex index (e_inpara >= 4)\n");
+	s->e_inpara = 0;
+	return BRLCAD_ERROR;
+    }
+
+    vect_t delta;
+    delta[0] = s->e_para[0] * s->local2base;
+    delta[1] = s->e_para[1] * s->local2base;
+    delta[2] = s->e_para[2] * s->local2base;
+
+    int n_verts = s->e_inpara - 3;
+    for (int i = 0; i < n_verts; i++) {
+	int vi = (int)s->e_para[3 + i];
+	if (vi < 0 || (size_t)vi >= bot->num_vertices) {
+	    bu_vls_printf(s->log_str,
+		    "ERROR: vertex index %d out of range [0, %zu)\n",
+		    vi, bot->num_vertices);
+	    s->e_inpara = 0;
+	    return BRLCAD_ERROR;
+	}
+	VADD2(&bot->vertices[vi * 3], &bot->vertices[vi * 3], delta);
+    }
+
+    s->e_inpara = 0;
+    return BRLCAD_OK;
+}
+
+/*
+ * Split the currently selected edge (bot_verts[0], bot_verts[1]) by:
+ *   1. Computing the midpoint M of the edge.
+ *   2. Adding M as a new vertex (index = num_vertices).
+ *   3. For each triangle that shares the edge, replacing it with two
+ *      triangles that share the new vertex.
+ * No e_para needed.
+ */
+static int
+ecmd_bot_esplit(struct rt_edit *s)
+{
+    struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
+    struct rt_bot_internal *bot =
+	(struct rt_bot_internal *)s->es_int.idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    int v0 = b->bot_verts[0];
+    int v1 = b->bot_verts[1];
+    if (v0 < 0 || v1 < 0 || b->bot_verts[2] >= 0) {
+	bu_vls_printf(s->log_str,
+		"ERROR: ECMD_BOT_ESPLIT requires a single edge selection "
+		"(ECMD_BOT_PICKE first)\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* Compute midpoint */
+    point_t mid;
+    VADD2SCALE(mid, &bot->vertices[v0*3], &bot->vertices[v1*3], 0.5);
+
+    /* Add midpoint vertex */
+    int new_vi = (int)bot->num_vertices;
+    bot->num_vertices++;
+    bot->vertices = (fastf_t *)bu_realloc(bot->vertices,
+	    bot->num_vertices * 3 * sizeof(fastf_t), "bot vertices");
+    VMOVE(&bot->vertices[new_vi * 3], mid);
+
+    /* Find and replace every face containing the edge v0–v1 */
+    size_t orig_nf = bot->num_faces;
+    for (size_t fi = 0; fi < orig_nf; fi++) {
+	int f0 = bot->faces[fi*3];
+	int f1 = bot->faces[fi*3+1];
+	int f2 = bot->faces[fi*3+2];
+
+	/* Check whether this face contains the directed or reverse edge */
+	int other = -1;
+	int ea = -1, eb = -1;   /* the two edge verts in this face */
+	if ((f0 == v0 && f1 == v1) || (f0 == v1 && f1 == v0)) {
+	    ea = f0; eb = f1; other = f2;
+	} else if ((f1 == v0 && f2 == v1) || (f1 == v1 && f2 == v0)) {
+	    ea = f1; eb = f2; other = f0;
+	} else if ((f2 == v0 && f0 == v1) || (f2 == v1 && f0 == v0)) {
+	    ea = f2; eb = f0; other = f1;
+	}
+	if (other < 0)
+	    continue;   /* edge not in this face */
+	(void)ea; (void)eb;
+
+	/* Replace this face with face (v0, new_vi, other) */
+	bot->faces[fi*3]   = v0;
+	bot->faces[fi*3+1] = new_vi;
+	bot->faces[fi*3+2] = other;
+
+	/* Append new face (new_vi, v1, other) */
+	bot->num_faces++;
+	bot->faces = (int *)bu_realloc(bot->faces,
+		bot->num_faces * 3 * sizeof(int), "bot faces");
+	bot->faces[(bot->num_faces-1)*3]   = new_vi;
+	bot->faces[(bot->num_faces-1)*3+1] = v1;
+	bot->faces[(bot->num_faces-1)*3+2] = other;
+
+	if (bot->thickness) {
+	    bot->thickness = (fastf_t *)bu_realloc(bot->thickness,
+		    bot->num_faces * sizeof(fastf_t), "bot thickness");
+	    bot->thickness[bot->num_faces-1] = bot->thickness[fi];
+	}
+    }
+
+    b->bot_verts[0] = -1;
+    b->bot_verts[1] = -1;
+    return BRLCAD_OK;
+}
+
+/*
+ * Split the currently selected face (bot_verts[0..2]) into three triangles
+ * by inserting the face centroid as a new vertex.
+ * No e_para needed.
+ */
+static int
+ecmd_bot_fsplit(struct rt_edit *s)
+{
+    struct rt_bot_edit *b = (struct rt_bot_edit *)s->ipe_ptr;
+    struct rt_bot_internal *bot =
+	(struct rt_bot_internal *)s->es_int.idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    int v0 = b->bot_verts[0];
+    int v1 = b->bot_verts[1];
+    int v2 = b->bot_verts[2];
+    if (v0 < 0 || v1 < 0 || v2 < 0) {
+	bu_vls_printf(s->log_str,
+		"ERROR: ECMD_BOT_FSPLIT requires a face selection "
+		"(ECMD_BOT_PICKT first)\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* Find the face index */
+    int face_no = -1;
+    for (size_t fi = 0; fi < bot->num_faces; fi++) {
+	if (bot->faces[fi*3] == v0 && bot->faces[fi*3+1] == v1 &&
+		bot->faces[fi*3+2] == v2) {
+	    face_no = (int)fi;
+	    break;
+	}
+    }
+    if (face_no < 0) {
+	bu_vls_printf(s->log_str,
+		"ERROR: ECMD_BOT_FSPLIT: selected face not found\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* Compute centroid */
+    point_t cen;
+    VADD3(cen, &bot->vertices[v0*3],
+	  &bot->vertices[v1*3],
+	  &bot->vertices[v2*3]);
+    VSCALE(cen, cen, 1.0/3.0);
+
+    /* Add centroid as new vertex */
+    int new_vi = (int)bot->num_vertices;
+    bot->num_vertices++;
+    bot->vertices = (fastf_t *)bu_realloc(bot->vertices,
+	    bot->num_vertices * 3 * sizeof(fastf_t), "bot vertices");
+    VMOVE(&bot->vertices[new_vi * 3], cen);
+
+    /* Get original face thickness (if any) */
+    fastf_t orig_thick = bot->thickness ? bot->thickness[face_no] : 0.0;
+
+    /* Replace the selected face with triangle (v0, v1, new_vi) */
+    bot->faces[face_no*3]   = v0;
+    bot->faces[face_no*3+1] = v1;
+    bot->faces[face_no*3+2] = new_vi;
+
+    /* Append (v1, v2, new_vi) */
+    bot->num_faces++;
+    bot->faces = (int *)bu_realloc(bot->faces,
+	    bot->num_faces * 3 * sizeof(int), "bot faces");
+    bot->faces[(bot->num_faces-1)*3]   = v1;
+    bot->faces[(bot->num_faces-1)*3+1] = v2;
+    bot->faces[(bot->num_faces-1)*3+2] = new_vi;
+    if (bot->thickness) {
+	bot->thickness = (fastf_t *)bu_realloc(bot->thickness,
+		bot->num_faces * sizeof(fastf_t), "bot thickness");
+	bot->thickness[bot->num_faces-1] = orig_thick;
+    }
+
+    /* Append (v2, v0, new_vi) */
+    bot->num_faces++;
+    bot->faces = (int *)bu_realloc(bot->faces,
+	    bot->num_faces * 3 * sizeof(int), "bot faces");
+    bot->faces[(bot->num_faces-1)*3]   = v2;
+    bot->faces[(bot->num_faces-1)*3+1] = v0;
+    bot->faces[(bot->num_faces-1)*3+2] = new_vi;
+    if (bot->thickness) {
+	bot->thickness = (fastf_t *)bu_realloc(bot->thickness,
+		bot->num_faces * sizeof(fastf_t), "bot thickness");
+	bot->thickness[bot->num_faces-1] = orig_thick;
+    }
+
+    /* Handle face_mode bitfield */
+    if (bot->face_mode) {
+	int orig_set = BU_BITTEST(bot->face_mode, face_no) ? 1 : 0;
+	struct bu_bitv *new_bv = bu_bitv_new(bot->num_faces);
+	/* copy all bits up to bot->num_faces-2 (the two new faces) */
+	for (size_t i = 0; i < (size_t)(bot->num_faces - 2); i++) {
+	    if (BU_BITTEST(bot->face_mode, i))
+		BU_BITSET(new_bv, i);
+	}
+	if (orig_set) {
+	    BU_BITSET(new_bv, bot->num_faces - 2);
+	    BU_BITSET(new_bv, bot->num_faces - 1);
+	}
+	bu_bitv_free(bot->face_mode);
+	bot->face_mode = new_bv;
+    }
+
+    b->bot_verts[0] = -1;
+    b->bot_verts[1] = -1;
+    b->bot_verts[2] = -1;
+    return BRLCAD_OK;
+}
+
+/* Fuse duplicate vertices within model tolerance.
+ * Calls rt_bot_vertex_fuse() which compacts the vertex array and updates
+ * face indices.  No e_para values are needed. */
+static int
+ecmd_bot_vertex_fuse(struct rt_edit *s)
+{
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    int n = rt_bot_vertex_fuse(bot, s->tol);
+    if (n < 0) {
+	bu_vls_printf(s->log_str,
+		"ERROR: ECMD_BOT_VERTEX_FUSE: rt_bot_vertex_fuse failed\n");
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(s->log_str,
+	    "ECMD_BOT_VERTEX_FUSE: removed %d duplicate vertices "
+	    "(%zu remain)\n", n, bot->num_vertices);
+    return BRLCAD_OK;
+}
+
+/* Remove duplicate faces.
+ * Calls rt_bot_face_fuse(); no e_para values are needed. */
+static int
+ecmd_bot_face_fuse(struct rt_edit *s)
+{
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)s->es_int.idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    int n = rt_bot_face_fuse(bot);
+    if (n < 0) {
+	bu_vls_printf(s->log_str,
+		"ERROR: ECMD_BOT_FACE_FUSE: rt_bot_face_fuse failed\n");
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(s->log_str,
+	    "ECMD_BOT_FACE_FUSE: removed %d duplicate faces "
+	    "(%zu remain)\n", n, bot->num_faces);
     return BRLCAD_OK;
 }
 
@@ -770,6 +1072,16 @@ rt_edit_bot_edit(struct rt_edit *s)
 	    if (ecmd_bot_fdel(s) != BRLCAD_OK)
 		return -1;
 	    break;
+	case ECMD_BOT_MOVEV_LIST:
+	    return ecmd_bot_movev_list(s);
+	case ECMD_BOT_ESPLIT:
+	    return ecmd_bot_esplit(s);
+	case ECMD_BOT_FSPLIT:
+	    return ecmd_bot_fsplit(s);
+	case ECMD_BOT_VERTEX_FUSE:
+	    return ecmd_bot_vertex_fuse(s);
+	case ECMD_BOT_FACE_FUSE:
+	    return ecmd_bot_face_fuse(s);
 	case ECMD_BOT_MOVEV:
 	    ecmd_bot_movev(s);
 	    break;
@@ -783,6 +1095,8 @@ rt_edit_bot_edit(struct rt_edit *s)
 	case ECMD_BOT_PICKE:
 	case ECMD_BOT_PICKT:
 	    break;
+	default:
+	    return edit_generic(s);
     }
 
     return 0;
@@ -796,9 +1110,6 @@ rt_edit_bot_edit_xy(
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
-    struct rt_db_internal *ip = &s->es_int;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     switch (s->edit_flag) {
 	case RT_PARAMS_EDIT_SCALE:
@@ -808,6 +1119,8 @@ rt_edit_bot_edit_xy(
 	case ECMD_BOT_FMODE:
 	case ECMD_BOT_FDEL :
 	case ECMD_BOT_FLAGS:
+	case ECMD_BOT_VERTEX_FUSE:
+	case ECMD_BOT_FACE_FUSE:
 	    edit_sscale_xy(s, mousevec);
 	    return 0;
 	case RT_PARAMS_EDIT_TRANS:
@@ -834,18 +1147,8 @@ rt_edit_bot_edit_xy(
 	    MAT4X3PNT(s->e_mparam, s->e_invmat, temp);
 	    s->e_mvalid = 1;
 	    break;
-        case RT_PARAMS_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return BRLCAD_ERROR;
+	    return edit_generic_xy(s, mousevec);
     }
 
     edit_abs_tra(s, pos_view);
