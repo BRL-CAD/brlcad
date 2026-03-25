@@ -189,22 +189,30 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     char buffer[1024] = {0};
     std::string result = "";
     std::string ncpu(std::to_string(opt->getNCPU()));
+    std::string dFile(opt->getDensityFile());
 
+    // build our gqa argv - use a vector so we can easily set required ordering
+    std::vector<const char*> gqa_av_vec;
+    gqa_av_vec.reserve(14);
+    gqa_av_vec.push_back(gqa.c_str());
     // attempt to get volume and mass in same run
-    const char* gqa_av[12] = {
-	gqa.c_str(),
-	"-Avm", // first position is assumed elsewhere to be -A
-	"-P",
-	ncpu.c_str(),
-	"-q",
-	"-g", grid.c_str(),
-	"-u", units.c_str(),
-	in_file.c_str(),
-	top_comp.c_str(),
-	NULL
-    };
+    gqa_av_vec.push_back("-Avm");       // first position is assumed elsewhere to be -A
+    gqa_av_vec.push_back("-P");
+    gqa_av_vec.push_back(ncpu.c_str());
+    gqa_av_vec.push_back("-q");
+    gqa_av_vec.push_back("-g");
+    gqa_av_vec.push_back(grid.c_str());
+    gqa_av_vec.push_back("-u");
+    gqa_av_vec.push_back(units.c_str());
+    if (!dFile.empty()) {
+        gqa_av_vec.push_back("-f");
+        gqa_av_vec.push_back(dFile.c_str());
+    }
+    gqa_av_vec.push_back(in_file.c_str());
+    gqa_av_vec.push_back(top_comp.c_str());
+    gqa_av_vec.push_back(nullptr);
 
-    bu_process_create(&p, gqa_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
+    bu_process_create(&p, const_cast<const char**>(gqa_av_vec.data()), BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
     if (bu_process_pid(p) <= 0) {
         bu_exit(BRLCAD_ERROR, "Problem in getVerificationData gqa process creation, aborting\n");
@@ -229,8 +237,8 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
 
 
     // no density data found. need to re-run, only getting volume data
-    gqa_av[1] = "-Av"; // FIXME: shouldn't assume -A is as position[1]
-    bu_process_create(&p, gqa_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
+    gqa_av_vec[1] = "-Av"; // FIXME: shouldn't assume -A is as position[1]
+    bu_process_create(&p, const_cast<const char**>(gqa_av_vec.data()), BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
     if (bu_process_pid(p) <= 0) {
         bu_exit(BRLCAD_ERROR, "Problem in getVerificationData gqa process creation, aborting\n");

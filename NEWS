@@ -36,6 +36,7 @@ changes made.  See document footer for additional details.
 * updated SPSR dependency to v18.74 - Cliff Yapp
 * fixed 'search -type sph' not returning sph's - Chris McGregor
 * fixed gist crashing with bad/unknown units - Chris McGregor
+* add gist '-d' to allow user-specified density file - Chris McGregor
 
 
 ----------------------------------------------------------------------

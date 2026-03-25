@@ -74,9 +74,10 @@ bool Options::readParameters(int argc, const char **argv) {
     std::string param_Ulength = "";	// user requested length units
     std::string param_Umass = "";	// user requested mass units
     std::string param_oFile = "";	// user supplied output file
+    std::string param_densityFile = "";	// user requested density file
     int param_ncpu = 0;			// user requested num CPUs to use
 
-    struct bu_opt_desc options[25] = {
+    struct bu_opt_desc options[26] = {
 	{"i", "",     "filename.g",        &_param_set_std_str,     &this->inFile,         "input .g"					    },
 	{"o", "",     "filename.png",      &_param_set_std_str,     &param_oFile,          "output file name"				    },
 	{"F", "",     "folder",            &_param_set_std_str,     &this->inFolderName,   "folder of .g models to generate"		    },
@@ -94,6 +95,7 @@ bool Options::readParameters(int argc, const char **argv) {
 	{"N", "",     "\"extra notes\"",   &_param_set_std_str,     &this->notes,          "add additional notes to report"		    },
 	{"L", "",     "",                  NULL,                    &param_Lhand,          "use left-handed coordinate system"		    },
 	{"A", "",     "",                  NULL,                    &param_Yup,            "use +Y-up geometry axis (default is +Z-up)"	    },
+	{"d", "",     "densityFile",	   &_param_set_std_str,	    &param_densityFile,	   "specify external density file for materials"    },
 	{"l", "",     "len_units",         &_param_set_std_str,     &param_Ulength,        "specify length units"			    },
 	{"w", "",     "wt_units",          &_param_set_std_str,     &param_Umass,          "specify weight units"			    },
 	{"a", "",     "path/to/dir",	   &_param_set_std_str,     &this->workingDir,     "specify dir to write c(a)ched work to"	    },
@@ -169,6 +171,8 @@ bool Options::readParameters(int argc, const char **argv) {
     if (!this->exeDir.empty())
 	setExeDir(this->exeDir);
     setNCPU(param_ncpu);
+    if (!param_densityFile.empty())
+	setDensityFile(param_densityFile);
 
     /* make sure valid input .g or folder is supplied */
     if ((getIsFolder() && !bu_file_directory(this->inFolderName.c_str())) ||
@@ -384,6 +388,19 @@ void Options::setNCPU(int cpus) {
     ncpu = cpus;
 }
 
+void Options::setDensityFile(std::string file) {
+    // verify this is a path and it exists
+    std::filesystem::path path = file;
+    if (!std::filesystem::exists(path)) {
+	bu_log("WARNING: density file (%s) not found.\n", file.c_str());
+	return;
+    }
+
+    // TODO: should the setter validate the density file before setting?
+
+    densityFile = path.lexically_normal().string();
+}
+
 
 std::string Options::getInFile() {
     return inFile;
@@ -525,6 +542,10 @@ size_t Options::getNCPU() {
     if (cpus < 1)
 	return 1;
     return cpus;
+}
+
+std::string Options::getDensityFile() {
+    return densityFile;
 }
 
 
