@@ -151,7 +151,8 @@ set(BU_INCLUDE_DIRS ${BRLCAD_BINARY_DIR}/include ${BRLCAD_SOURCE_DIR}/include)
 set(BU_LOCAL_INCLUDE_DIRS ${BSON_INCLUDE_DIR} ${LMDB_INCLUDE_DIR} ${UUID_INCLUDE_DIR})
 
 brlcad_addlib(libbu "${LIBBU_SOURCES}" "${BU_LIBS}" "${BU_INCLUDE_DIRS}" "${BU_LOCAL_INCLUDE_DIRS}"
-  UNITY_BUILD_SKIP backtrace.c crashreport.c
+  NO_UNITY
+  UNITY_BUILD_SKIP backtrace.c crashreport.c bu_init.cpp
 )
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 

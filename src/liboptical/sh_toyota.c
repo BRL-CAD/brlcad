@@ -68,7 +68,6 @@ struct toyota_specific {
     int refl_lines;	/* Lines read from 'material' file.	*/
     int glass;		/* Boolean, is it glass?		*/
 };
-#define CK_NULL ((struct toyota_specific *)0)
 #define CL_O(m) bu_offsetof(struct toyota_specific, m)
 
 struct bu_structparse toyota_parse[] = {

@@ -69,21 +69,20 @@ struct tcl_specific tcl_defaults = {
 };
 
 
-#define SHDR_NULL ((struct tcl_specific *)0)
-#define SHDR_O(m) bu_offsetof(struct tcl_specific, m)
+#define TCL_SHDR_O(m) bu_offsetof(struct tcl_specific, m)
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
  * structure above
  */
 struct bu_structparse tcl_print_tab[] = {
-    {"%V",  1, "file", SHDR_O(tcl_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%V",  1, "file", TCL_SHDR_O(tcl_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 
 };
 struct bu_structparse tcl_parse_tab[] = {
     {"%p", 1, "tcl_print_tab", bu_byteoffset(tcl_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%V", 1, "f", SHDR_O(tcl_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%V", 1, "f", TCL_SHDR_O(tcl_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

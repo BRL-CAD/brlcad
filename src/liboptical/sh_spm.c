@@ -42,7 +42,6 @@ struct spm_specific {
     int sp_w;		/* Width: number of pixels around equator */
     bn_spm_map_t *sp_map;	/* stuff */
 };
-#define SP_NULL ((struct spm_specific *)0)
 #define SP_O(m) bu_offsetof(struct spm_specific, m)
 
 struct bu_structparse spm_parse[] = {

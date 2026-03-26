@@ -51,7 +51,6 @@ struct stk_specific {
     struct mfuncs *mfuncs[16];
     void *udata[16];
 };
-#define STK_NULL ((struct stk_specific *)0)
 #define STK_O(m) bu_offsetof(struct stk_specific, m)
 
 struct bu_structparse stk_parse[] = {

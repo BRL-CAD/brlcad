@@ -74,7 +74,7 @@ namespace ClipperLib {
 
 #define HORIZONTAL (-1.0E+40)
 #define TOLERANCE (1.0e-20)
-#define NEAR_ZERO(val) (((val) > -TOLERANCE) && ((val) < TOLERANCE))
+#define CLIPPER_NEAR_ZERO(val) (((val) > -TOLERANCE) && ((val) < TOLERANCE))
 
     struct TEdge {
 	IntPoint Bot;
@@ -3982,7 +3982,7 @@ namespace ClipperLib {
 	m_delta = delta;
 
 	//if Zero offset, just copy any CLOSED polygons to m_p and return ...
-	if (NEAR_ZERO(delta))
+	if (CLIPPER_NEAR_ZERO(delta))
 	{
 	    m_destPolys.reserve(m_polyNodes.ChildCount());
 	    for (int i = 0; i < m_polyNodes.ChildCount(); i++)

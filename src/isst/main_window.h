@@ -29,6 +29,9 @@
 
 #include "common.h"
 
+// Mac has deprecated OpenGL since 10.14
+#define GL_SILENCE_DEPRECATION 1
+
 #include <QMainWindow>
 #include <QtGlobal>
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)

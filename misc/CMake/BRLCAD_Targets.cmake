@@ -359,7 +359,7 @@ function(
     include_dirs
     local_include_dirs
   )
-  cmake_parse_arguments(L "SHARED;STATIC;NO_INSTALL;NO_STRICT;NO_STRICT_CXX;NO_OBJ_UNITY" "FOLDER" "SHARED_SRCS;STATIC_SRCS;UNITY_BUILD_SKIP" ${ARGN})
+  cmake_parse_arguments(L "SHARED;STATIC;NO_INSTALL;NO_STRICT;NO_STRICT_CXX;NO_UNITY" "FOLDER" "SHARED_SRCS;STATIC_SRCS;UNITY_BUILD_SKIP" ${ARGN})
 
   # Let CMAKEFILES know what's going on
   cmakefiles(${srcslist} ${L_SHARED_SRCS} ${L_STATIC_SRCS})
@@ -430,12 +430,9 @@ function(
     # Apply unity (jumbo) build batching to the object library when the global
     # option is enabled.  Any source files listed in UNITY_BUILD_SKIP are
     # compiled individually so that file-scope symbol conflicts do not arise.
-    # NO_OBJ_UNITY suppresses unity batching on the -obj target when only the
-    # downstream shared/static lib should batch (e.g. sources appended via
-    # target_sources after this function returns).
     # Targets with fewer than 8 source files are skipped: the overhead of
     # unity batching is not worth it for small source sets.
-    if(BRLCAD_ENABLE_UNITY_BUILD AND NOT L_NO_OBJ_UNITY)
+    if(BRLCAD_ENABLE_UNITY_BUILD AND NOT L_NO_UNITY)
       set(_all_srcs ${srcslist} ${L_SHARED_SRCS} ${L_STATIC_SRCS})
       list(LENGTH _all_srcs _srcs_count)
       if(_srcs_count GREATER_EQUAL 8)
@@ -444,7 +441,7 @@ function(
           set_source_files_properties(${L_UNITY_BUILD_SKIP} PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
         endif(L_UNITY_BUILD_SKIP)
       endif(_srcs_count GREATER_EQUAL 8)
-    endif(BRLCAD_ENABLE_UNITY_BUILD AND NOT L_NO_OBJ_UNITY)
+    endif()
   endif(USE_OBJECT_LIBS)
 
   # Handle the shared library
@@ -471,7 +468,7 @@ function(
     # shared target is also enabled so that any sources added later via
     # target_sources() (e.g. plugin objects) are also batched.
     # Targets with fewer than 8 source files are skipped.
-    if(BRLCAD_ENABLE_UNITY_BUILD)
+    if(BRLCAD_ENABLE_UNITY_BUILD AND NOT L_NO_UNITY)
       set(_all_srcs ${srcslist} ${L_SHARED_SRCS} ${L_STATIC_SRCS})
       list(LENGTH _all_srcs _srcs_count)
       if(_srcs_count GREATER_EQUAL 8)
@@ -480,7 +477,8 @@ function(
           set_source_files_properties(${L_UNITY_BUILD_SKIP} PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
         endif(L_UNITY_BUILD_SKIP)
       endif(_srcs_count GREATER_EQUAL 8)
-    endif(BRLCAD_ENABLE_UNITY_BUILD)
+    endif()
+
   endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
 
   if(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
@@ -506,9 +504,9 @@ function(
     endif(NOT MSVC)
 
     # Enable unity build on the static library target when not going through
-    # an object library (in which case -obj already carries UNITY_BUILD ON).
+    # an object library.
     # Targets with fewer than 8 source files are skipped.
-    if(BRLCAD_ENABLE_UNITY_BUILD AND NOT USE_OBJECT_LIBS)
+    if(BRLCAD_ENABLE_UNITY_BUILD AND NOT L_NO_UNITY)
       set(_all_srcs ${srcslist} ${L_SHARED_SRCS} ${L_STATIC_SRCS})
       list(LENGTH _all_srcs _srcs_count)
       if(_srcs_count GREATER_EQUAL 8)
@@ -517,7 +515,8 @@ function(
           set_source_files_properties(${L_UNITY_BUILD_SKIP} PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
         endif(L_UNITY_BUILD_SKIP)
       endif(_srcs_count GREATER_EQUAL 8)
-    endif(BRLCAD_ENABLE_UNITY_BUILD AND NOT USE_OBJECT_LIBS)
+    endif()
+
   endif(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
 
   # Make sure we don't end up with outputs named liblib...

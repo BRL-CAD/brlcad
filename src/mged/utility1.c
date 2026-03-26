@@ -27,7 +27,6 @@
 #ifdef HAVE_PWD_H
 #  include <pwd.h>
 #endif
-#include <signal.h>
 #include <math.h>
 #include <time.h>
 #include <string.h>

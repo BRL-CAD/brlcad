@@ -116,8 +116,7 @@ struct fire_specific fire_defaults = {
 };
 
 
-#define SHDR_NULL ((struct fire_specific *)0)
-#define SHDR_O(m) bu_offsetof(struct fire_specific, m)
+#define FIRE_SHDR_O(m) bu_offsetof(struct fire_specific, m)
 
 
 /* description of how to parse/print the arguments to the shader
@@ -125,31 +124,31 @@ struct fire_specific fire_defaults = {
  * structure above
  */
 struct bu_structparse fire_print_tab[] = {
-    {"%d", 1, "debug",		SHDR_O(fire_debug),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "flicker",	SHDR_O(fire_flicker),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "stretch",	SHDR_O(fire_stretch),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "lacunarity",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "H", 		SHDR_O(noise_h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "octaves", 	SHDR_O(noise_octaves),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 3, "scale",		SHDR_O(noise_size),		bu_mm_cvt, NULL, NULL },
-    {"%f", 3, "vscale",		SHDR_O(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "delta",		SHDR_O(noise_delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3,  "max",		SHDR_O(fire_max),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3,  "min",		SHDR_O(fire_min),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "debug",		FIRE_SHDR_O(fire_debug),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "flicker",	FIRE_SHDR_O(fire_flicker),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "stretch",	FIRE_SHDR_O(fire_stretch),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "lacunarity",	FIRE_SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "H", 		FIRE_SHDR_O(noise_h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "octaves", 	FIRE_SHDR_O(noise_octaves),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 3, "scale",		FIRE_SHDR_O(noise_size),		bu_mm_cvt, NULL, NULL },
+    {"%f", 3, "vscale",		FIRE_SHDR_O(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "delta",		FIRE_SHDR_O(noise_delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3,  "max",		FIRE_SHDR_O(fire_max),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3,  "min",		FIRE_SHDR_O(fire_min),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 
 };
 struct bu_structparse fire_parse_tab[] = {
     {"%p", 1, "fire_print_tab", bu_byteoffset(fire_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "f",	SHDR_O(fire_flicker),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "st",	SHDR_O(fire_stretch),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "l",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "H", 	SHDR_O(noise_h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "o", 	SHDR_O(noise_octaves),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "s",	SHDR_O(noise_size),		bu_mm_cvt, NULL, NULL },
-    {"%f", 3, "v",	SHDR_O(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "vs",	SHDR_O(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "d",	SHDR_O(noise_delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "f",	FIRE_SHDR_O(fire_flicker),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "st",	FIRE_SHDR_O(fire_stretch),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "l",	FIRE_SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "H", 	FIRE_SHDR_O(noise_h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "o", 	FIRE_SHDR_O(noise_octaves),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "s",	FIRE_SHDR_O(noise_size),		bu_mm_cvt, NULL, NULL },
+    {"%f", 3, "v",	FIRE_SHDR_O(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "vs",	FIRE_SHDR_O(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "d",	FIRE_SHDR_O(noise_delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

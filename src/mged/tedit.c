@@ -24,7 +24,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <signal.h>
 #include <string.h>
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>

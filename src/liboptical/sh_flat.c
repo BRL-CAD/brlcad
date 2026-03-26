@@ -83,7 +83,7 @@ struct flat_specific flat_defaults = {
 
 
 #define SHDR_FLAT ((struct flat_specific *)0)
-#define SHDR_O(m) bu_offsetof(struct flat_specific, m)
+#define FLAT_SHDR_O(m) bu_offsetof(struct flat_specific, m)
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
@@ -101,11 +101,11 @@ struct flat_specific flat_defaults = {
  * is alpha==.4 which is equiv to transparency=={.4 .4 .4}).
  */
 struct bu_structparse flat_parse_tab[] = {
-    { "%f", 3, "color",        SHDR_O(color),        normalizedInput_hook, NULL, NULL }, /* for 0->1 color values */
-    { "%f", 3, "rgb",          SHDR_O(color),        normalizedInput_hook, NULL, NULL }, /* for 0->255 color values */
-    { "%f", 1, "bright",       SHDR_O(color),        singleNormalizedInput_hook, NULL, NULL }, /* for luminosity gray value */
-    { "%f", 3, "transparency", SHDR_O(transparency), normalizedInput_hook, NULL, NULL }, /* for rgb 0->1 transparency */
-    { "%f", 1, "alpha",        SHDR_O(transparency), singleNormalizedInput_hook, NULL, NULL }, /* for single channel alpha transparency */
+    { "%f", 3, "color",        FLAT_SHDR_O(color),        normalizedInput_hook, NULL, NULL }, /* for 0->1 color values */
+    { "%f", 3, "rgb",          FLAT_SHDR_O(color),        normalizedInput_hook, NULL, NULL }, /* for 0->255 color values */
+    { "%f", 1, "bright",       FLAT_SHDR_O(color),        singleNormalizedInput_hook, NULL, NULL }, /* for luminosity gray value */
+    { "%f", 3, "transparency", FLAT_SHDR_O(transparency), normalizedInput_hook, NULL, NULL }, /* for rgb 0->1 transparency */
+    { "%f", 1, "alpha",        FLAT_SHDR_O(transparency), singleNormalizedInput_hook, NULL, NULL }, /* for single channel alpha transparency */
     { "",   0, (char *)0,      0,		     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

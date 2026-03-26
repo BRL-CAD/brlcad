@@ -24,7 +24,6 @@
 #include "common.h"
 
 #include <math.h>
-#include <signal.h>
 
 #include "vmath.h"
 #include "raytrace.h"

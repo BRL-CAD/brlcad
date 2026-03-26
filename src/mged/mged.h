@@ -62,6 +62,13 @@
 #endif
 #include <time.h>
 
+// Workaround broken macOS/Xcode signal.h that
+// uses but doesn't define NSIG
+#if defined(__APPLE__) && !defined(NSIG)
+#define NSIG 32
+#endif
+#include <signal.h>
+
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"

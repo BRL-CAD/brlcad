@@ -52,16 +52,9 @@ brlcad_addlib(libbg "${LIBBG_SOURCES}" "${BG_LIBS}" "" "${BG_INCLUDE_DIRS}"
   # - polygon.c, polygon_triangulate.cpp, trimesh_isect.cpp, trimesh_plot3.cpp:
   #   all define PLOT_PREFIX_STR to remap plot3 function names, causing
   #   -Werror redefinition errors and unresolved bg_plot3_* symbols.
-  # - clipper.cpp: redefines NEAR_ZERO from vmath.h with a different signature.
-  # - tri_ray.c and clip.c: both define EPSILON with different values.
-  # - aabb_ray.c: redefines 'sv' as a macro alias for 'st'.
   UNITY_BUILD_SKIP
-    aabb_ray.c
-    clip.c
-    clipper.cpp
     polygon.c
     polygon_triangulate.cpp
-    tri_ray.c
     trimesh_isect.cpp
     trimesh_plot3.cpp
 )

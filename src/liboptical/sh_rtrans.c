@@ -52,12 +52,11 @@ static struct rtrans_specific rtrans_defaults = {
 };
 
 
-#define SHDR_NULL ((struct rtrans_specific *)0)
-#define SHDR_O(m) bu_offsetof(struct rtrans_specific, m)
+#define RTRANS_SHDR_O(m) bu_offsetof(struct rtrans_specific, m)
 
 struct bu_structparse rtrans_parse[] = {
-    {"%g",  1, "threshold",		SHDR_O(threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g",  1, "t",			SHDR_O(threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",  1, "threshold",		RTRANS_SHDR_O(threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",  1, "t",			RTRANS_SHDR_O(threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

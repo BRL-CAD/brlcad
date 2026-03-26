@@ -30,7 +30,6 @@
 #include <string.h>
 #include <locale.h>
 #include <ctype.h>
-#include <signal.h>
 #include <time.h>
 #include <limits.h>
 #ifdef HAVE_SYS_TYPES_H

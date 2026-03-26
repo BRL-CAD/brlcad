@@ -435,6 +435,7 @@ set(
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source
 
 brlcad_addlib(librt "${LIBRT_SOURCES}" "${LIBRT_LIBS}" "${RT_INCLUDE_DIRS}" "${RT_LOCAL_INCLUDE_DIRS}"
+  NO_UNITY
   # Files that cannot be safely batched into unity translation units:
   # - search.cpp and search_old.cpp both define enumerators N_ABOVE, N_AND, etc.
   #   in their respective (differently-named) enums; those clashing enumerator
@@ -452,6 +453,7 @@ brlcad_addlib(librt "${LIBRT_SOURCES}" "${LIBRT_LIBS}" "${RT_INCLUDE_DIRS}" "${R
   #   twice.  The many other direct-.c-include patterns in bot make the whole
   #   subdirectory unsafe to batch.
   UNITY_BUILD_SKIP
+    rt_init.cpp
     search.cpp
     search_old.cpp
     primitives/vol/vol_brep.cpp

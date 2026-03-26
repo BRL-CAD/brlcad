@@ -52,7 +52,6 @@ struct txt_specific {
     struct rt_binunif_internal *tx_binunifp;  /* db internal object when TXT_SRC_OBJECT */
     struct bu_mapped_file *tx_mp;    /* mapped file when TXT_SRC_FILE */
 };
-#define TX_NULL ((struct txt_specific *)0)
 #define TX_O(m) bu_offsetof(struct txt_specific, m)
 
 /* local sp_hook functions */
@@ -676,7 +675,6 @@ struct ckr_specific {
     int ckr_b[3];	/* second RGB */
     double ckr_scale;
 };
-#define CKR_NULL ((struct ckr_specific *)0)
 #define CKR_O(m) bu_offsetof(struct ckr_specific, m)
 
 struct bu_structparse ckr_parse[] = {
