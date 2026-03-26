@@ -46,7 +46,6 @@ set(DM_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${PNG_INCLUDE_DIRS} ${BRLC
 
 # Note - libdm_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 brlcad_addlib(libdm "${LIBDM_SRCS}" "${libdm_deps};${PNG_LIBRARIES}" "${DM_INCLUDE_DIRS}" "${DM_LOCAL_INCLUDE_DIRS}"
-  NO_UNITY
   UNITY_BUILD_SKIP dm_init.cpp
   )
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
