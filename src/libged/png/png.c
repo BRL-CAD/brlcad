@@ -392,7 +392,7 @@ ged_png_core(struct ged *gedp, int argc, const char *argv[])
     int k;
     int ret;
     int r, g, b;
-    static const char *usage = "[-c r/g/b] [-s size] file";
+    static const char *png_usage = "[-c r/g/b] [-s size] file";
 
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -403,7 +403,7 @@ ged_png_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], png_usage);
 	return GED_HELP;
     }
 
@@ -460,7 +460,7 @@ ged_png_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if ((argc - bu_optind) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], png_usage);
 	return BRLCAD_ERROR;
     }
 

@@ -46,29 +46,31 @@
 #include "pkg.h"
 #include "ged.h"
 
+struct pix2fb_state {
+    size_t file_width;	/* default input width */
+    size_t file_height;	/* default input height */
+    char *file_name;
+    int multiple_lines;	/* Streamlined operation */
+    int infd;
+    int fileinput;		/* file or pipe on input? */
+    int autosize;		/* !0 to autosize input */
+    int scr_width;		/* screen tracks file if not given */
+    int scr_height;
+    int file_xoff;
+    int file_yoff;
+    int scr_xoff;
+    int scr_yoff;
+    int clear;
+    int zoom;
+    int inverse;		/* Draw upside-down */
+    int one_line_only;	/* insist on 1-line writes */
+    int pause_sec; 	/* Pause that many seconds before
+			   closing the FB and exiting */
+};
 
-static int multiple_lines = 0;	/* Streamlined operation */
+#define PIX2FB_STATE_INIT_ZERO {512, 512, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
-static char *file_name;
-static int infd;
-
-static int fileinput = 0;	/* file or pipe on input? */
-static int autosize = 0;	/* !0 to autosize input */
-
-static size_t file_width = 512;	/* default input width */
-static size_t file_height = 512;/* default input height */
-static int scr_width = 0;	/* screen tracks file if not given */
-static int scr_height = 0;
-static int file_xoff, file_yoff;
-static int scr_xoff, scr_yoff;
-static int clear = 0;
-static int zoom = 0;
-static int inverse = 0;		/* Draw upside-down */
-static int one_line_only = 0;	/* insist on 1-line writes */
-static int pause_sec = 0; 	/* Pause that many seconds before
-				   closing the FB and exiting */
-
-static char usage[] = "\
+static char pix2fb_usage[] = "\
 Usage: pix-fb [-a -h -i -c -z -1] [-m #lines] [-F framebuffer]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
@@ -76,67 +78,70 @@ Usage: pix-fb [-a -h -i -c -z -1] [-m #lines] [-F framebuffer]\n\
 	[file.pix]\n";
 
 static int
-pix2fb_get_args(int argc, char **argv)
+pix2fb_get_args(struct pix2fb_state *s, int argc, char **argv)
 {
     int c;
+
+    if (!s)
+	return 0;
 
     bu_optind = 1;
     while ((c = bu_getopt(argc, argv, "1m:aiczF:p:s:w:n:x:y:X:Y:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case '1':
-		one_line_only = 1;
+		s->one_line_only = 1;
 		break;
 	    case 'm':
-		multiple_lines = atoi(bu_optarg);
+		s->multiple_lines = atoi(bu_optarg);
 		break;
 	    case 'a':
-		autosize = 1;
+		s->autosize = 1;
 		break;
 	    case 'i':
-		inverse = 1;
+		s->inverse = 1;
 		break;
 	    case 'c':
-		clear = 1;
+		s->clear = 1;
 		break;
 	    case 'z':
-		zoom = 1;
+		s->zoom = 1;
 		break;
 	    case 's':
 		/* square file size */
-		file_height = file_width = atoi(bu_optarg);
-		autosize = 0;
+		s->file_height = s->file_width = atoi(bu_optarg);
+		s->autosize = 0;
 		break;
 	    case 'w':
-		file_width = atoi(bu_optarg);
-		autosize = 0;
+		s->file_width = atoi(bu_optarg);
+		s->autosize = 0;
 		break;
 	    case 'n':
-		file_height = atoi(bu_optarg);
-		autosize = 0;
+		s->file_height = atoi(bu_optarg);
+		s->autosize = 0;
 		break;
 	    case 'x':
-		file_xoff = atoi(bu_optarg);
+		s->file_xoff = atoi(bu_optarg);
 		break;
 	    case 'y':
-		file_yoff = atoi(bu_optarg);
+		s->file_yoff = atoi(bu_optarg);
 		break;
 	    case 'X':
-		scr_xoff = atoi(bu_optarg);
+		s->scr_xoff = atoi(bu_optarg);
 		break;
 	    case 'Y':
-		scr_yoff = atoi(bu_optarg);
+		s->scr_yoff = atoi(bu_optarg);
 		break;
 	    case 'S':
-		scr_height = scr_width = atoi(bu_optarg);
+		s->scr_height = s->scr_width = atoi(bu_optarg);
 		break;
 	    case 'W':
-		scr_width = atoi(bu_optarg);
+		s->scr_width = atoi(bu_optarg);
 		break;
 	    case 'N':
-		scr_height = atoi(bu_optarg);
+		s->scr_height = atoi(bu_optarg);
 		break;
 	    case 'p':
-		pause_sec = atoi(bu_optarg);
+		s->pause_sec = atoi(bu_optarg);
 		break;
 
 	    default:		/* 'h' '?' */
@@ -147,21 +152,21 @@ pix2fb_get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
-	infd = 0;
-	setmode(infd, O_BINARY);
+	s->file_name = "-";
+	s->infd = 0;
+	setmode(s->infd, O_BINARY);
     } else {
-	file_name = argv[bu_optind];
-	infd = open(file_name, 0);
-	if (infd < 0) {
-	    perror(file_name);
+	s->file_name = argv[bu_optind];
+	s->infd = open(s->file_name, 0);
+	if (s->infd < 0) {
+	    perror(s->file_name);
 	    fprintf(stderr,
 			  "pix-fb: cannot open \"%s\" for reading\n",
-			  file_name);
+			  s->file_name);
 	    bu_exit(1, NULL);
 	}
-	setmode(infd, O_BINARY);
-	fileinput++;
+	setmode(s->infd, O_BINARY);
+	s->fileinput++;
     }
 
     if (argc > ++bu_optind)
@@ -175,6 +180,8 @@ int
 ged_pix2fb_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
+
+    struct pix2fb_state p2fbs = PIX2FB_STATE_INIT_ZERO;
 
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
@@ -202,28 +209,28 @@ ged_pix2fb_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], pix2fb_usage);
 	return GED_HELP;
     }
 
-    if (!pix2fb_get_args(argc, (char **)argv)) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    if (!pix2fb_get_args(&p2fbs, argc, (char **)argv)) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], pix2fb_usage);
 	return GED_HELP;
     }
 
-    ret = fb_read_fd(fbp, infd,
-		     file_width, file_height,
-		     file_xoff, file_yoff,
-		     scr_width, scr_height,
-		     scr_xoff, scr_yoff,
-		     fileinput, file_name, one_line_only, multiple_lines,
-		     autosize, inverse, clear, zoom,
+    ret = fb_read_fd(fbp, p2fbs.infd,
+		     p2fbs.file_width, p2fbs.file_height,
+		     p2fbs.file_xoff, p2fbs.file_yoff,
+		     p2fbs.scr_width, p2fbs.scr_height,
+		     p2fbs.scr_xoff, p2fbs.scr_yoff,
+		     p2fbs.fileinput, p2fbs.file_name, p2fbs.one_line_only, p2fbs.multiple_lines,
+		     p2fbs.autosize, p2fbs.inverse, p2fbs.clear, p2fbs.zoom,
 		     gedp->ged_result_str);
 
-    if (infd != 0)
-	close(infd);
+    if (p2fbs.infd != 0)
+	close(p2fbs.infd);
 
-    bu_snooze(BU_SEC2USEC(pause_sec));
+    bu_snooze(BU_SEC2USEC(p2fbs.pause_sec));
 
 
     if (ret == BRLCAD_OK) {
