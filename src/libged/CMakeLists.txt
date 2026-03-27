@@ -305,10 +305,11 @@ set(
   display_list.c
   draw.cpp
   ged.cpp
+  ged_inside.c
+  ged_track.c
   ged_util.cpp
   get_obj_bounds.c
   get_solid_kp.c
-  inside.c
   path.c
   pnts_util.c
   points_eval.c
@@ -316,7 +317,6 @@ set(
   qray.cpp
   tab_complete.cpp
   trace.c
-  track.c
   vers.c
   vutil.c
   view/data_lines.c
