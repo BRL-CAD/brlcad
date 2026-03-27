@@ -2158,13 +2158,6 @@ verbose_add_subdirectory("" src)
 # library targets are active.
 verbose_add_subdirectory("" include)
 
-# scripts that primarily require rendering
-if(TARGET rt)
-  verbose_add_subdirectory("" sh)
-  verbose_add_subdirectory("" regress)
-  verbose_add_subdirectory("" bench)
-endif(TARGET rt)
-
 # require geometry conversion tools
 verbose_add_subdirectory("" db)
 
@@ -2172,6 +2165,13 @@ verbose_add_subdirectory("" db)
 # NOTE: doc/docbook/resources is added separately (earlier)
 # NOTE: doc/doxygenis added separately (earlier)
 verbose_add_subdirectory("" doc)
+
+# scripts that primarily require rendering
+if(TARGET rt)
+  verbose_add_subdirectory("" sh)
+  verbose_add_subdirectory("" bench)
+  verbose_add_subdirectory("" regress)
+endif(TARGET rt)
 
 # add misc last
 # NOTE: misc/tools is added separately (earlier)
