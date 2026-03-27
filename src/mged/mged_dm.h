@@ -103,10 +103,8 @@ struct trail {
 
 struct client {
     int			c_fd;
-#ifdef USE_TCL_CHAN
     Tcl_Channel         c_chan;
     Tcl_FileProc        *c_handler;
-#endif
     struct pkg_conn	*c_pkg;
 };
 
@@ -349,9 +347,7 @@ struct mged_dm {
     struct dm		*dm_dmp;
     struct fb		*dm_fbp;
     int			dm_netfd;			/* socket used to listen for connections */
-#ifdef USE_TCL_CHAN
     Tcl_Channel		dm_netchan;
-#endif
     struct client	dm_clients[MAX_CLIENTS];
     int			dm_dirty;			/* true if received an expose or configuration event */
     int			dm_mapped;

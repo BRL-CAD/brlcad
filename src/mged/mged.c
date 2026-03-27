@@ -66,10 +66,8 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#ifndef HAVE_WINDOWS_H
-#  define LIBTERMIO_IMPLEMENTATION
-#  include "libtermio.h"
-#endif
+#define LIBTERMIO_IMPLEMENTATION
+#include "libtermio.h"
 #include "bv/util.h"
 #include "ged.h"
 #include "tclcad.h"
@@ -122,7 +120,7 @@ extern struct _axes_state default_axes_state;
 /* defined in rect.c */
 extern struct _rubber_band default_rubber_band;
 
-#ifndef USE_TCL_CHAN
+#ifdef HAVE_PIPE
 /* these two file descriptors are where we store fileno(stdout) and
  * fileno(stderr) during graphical startup so that we may restore them
  * when we're done (which is needed so atexit() calls to bu_log() will
@@ -134,7 +132,6 @@ static int stdfd[2] = {1, 2};
 
 /* Container for passing I/O data through Tcl callbacks */
 struct stdio_data {
-    long fd;
     Tcl_Channel chan;
     struct mged_state *s;
 };
@@ -590,10 +587,6 @@ mged_process_char(struct mged_state *s, char ch)
 	     * parser is concerned) then execute it.
 	     */
 
-#ifdef USE_TCL_CHAN
-	    /*XXX Nothing yet */
-	    bu_log("WARNING: not running cmdline(%s)\n", bu_vls_cstr(&s->input_str_prefix));
-#else
 	    if (Tcl_CommandComplete(bu_vls_addr(&s->input_str_prefix))) {
 		curr_cmd_list = &head_cmd_list;
 		if (curr_cmd_list->cl_tie)
@@ -626,7 +619,6 @@ mged_process_char(struct mged_state *s, char ch)
 		/* Allow the user to hit ^C */
 		(void)signal(SIGINT, sig2);
 	    }
-#endif
 	    pr_prompt(s); /* Print prompt for more input */
 	    s->input_str_index = 0;
 	    freshline = 1;
@@ -1285,10 +1277,11 @@ event_check(struct mged_state *s, int non_blocking)
  * standard input handling
  *
  * When the Tk event handler sees input on standard input, it calls
- * the routine "stdin_input" (registered with the
- * Tcl_CreateFileHandler call).  This routine simply appends the new
+ * the routine "stdin_input" (registered via Tcl_CreateChannelHandler
+ * on the stdin channel returned by Tcl_GetStdChannel(TCL_STDIN)).
+ * This routine simply appends the new
  * input to a growing string until the command is complete (it is
- * assumed that the routine gets a fill line.)
+ * assumed that the routine gets a full line.)
  *
  * If the command is incomplete, then allow the user to hit ^C to
  * start over, by setting up the multi_line_sig routine as the SIGINT
@@ -1306,7 +1299,6 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 {
     int count;
     char ch;
-    struct bu_vls temp = BU_VLS_INIT_ZERO;
     struct stdio_data *sd = (struct stdio_data *)clientData;
     struct mged_state *s = sd->s;
 
@@ -1316,7 +1308,10 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 
     if (!cbreak_mode) {
 
-#ifdef USE_TCL_CHAN
+	/* Read a line from stdin via the Tcl channel — this is the correct
+	 * approach when inside a Tcl_CreateChannelHandler callback, and works
+	 * on all platforms (POSIX and Windows).
+	 */
 	Tcl_DString ds;
 	Tcl_DStringInit(&ds);
 	count = Tcl_Gets(sd->chan, &ds);
@@ -1328,14 +1323,6 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 
 	bu_vls_strcat(&s->input_str, Tcl_DStringValue(&ds));
 	Tcl_DStringFree(&ds);
-#else
-	/* Get line from stdin */
-	if (bu_vls_gets(&temp, stdin) < 0) {
-	    BU_PUT(sd, struct stdio_data);
-	    quit(s);				/* does not return */
-	}
-	bu_vls_vlscat(&s->input_str, &temp);
-#endif
 
 	/* If there are any characters already in the command string
 	 * (left over from a CMD_MORE), then prepend them to the new
@@ -1381,7 +1368,6 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	    (void)signal(SIGINT, sig2);
 	}
 
-	bu_vls_free(&temp);
 	return;
     }
 
@@ -1392,21 +1378,19 @@ stdin_input(ClientData clientData, int UNUSED(mask))
     {
 	char buf[BU_PAGE_SIZE];
 	int idx;
-#  ifdef USE_TCL_CHAN
+	/* Use Tcl_Read on the channel — consistent with how the channel handler
+	 * was registered and works cross-platform (POSIX and Windows). */
 	count = Tcl_Read(sd->chan, buf, BU_PAGE_SIZE);
-#  else
-	count = read((int)sd->fd, (void *)buf, BU_PAGE_SIZE);
-#  endif
 
 #else
 	/* Grab single character from stdin */
-	count = read((int)sd->fd, (void *)&ch, 1);
+	count = Tcl_Read(sd->chan, &ch, 1);
 #endif
 
 	if (count < 0)
 	    perror("READ ERROR");
 
-	if (count <= 0 && feof(stdin))
+	if (count <= 0 && Tcl_Eof(sd->chan))
 	    Tcl_Eval(s->interp, "q");
 
 	if (buf[0] == '\0')
@@ -1433,37 +1417,22 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 void
 std_out_or_err(ClientData clientData, int UNUSED(mask))
 {
-    // TODO - we're already using clientData for something else, and experience
-    // with fbserv makes me wary of trying to change what is being passed
-    // through clientData with an fd - for now, just punt and use the overall
-    // state global.
     struct mged_state *s = MGED_STATE;
 
-#ifdef USE_TCL_CHAN
+    /* clientData is the Tcl_Channel wrapping the pipe read end.  We read via
+     * the Tcl channel API so this works correctly on all platforms.  On
+     * Windows, Tcl_MakeFileChannel creates a channel backed by a native
+     * HANDLE with its own internal reader thread; data arrives in Tcl's
+     * channel buffer and must be consumed with Tcl_Read, not read(). */
     Tcl_Channel chan = (Tcl_Channel)clientData;
-    Tcl_DString ds;
-#else
-    int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
-#endif
     int count;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     char line[RT_MAXLINE+1] = {0};
     Tcl_Obj *save_result;
 
-    /* Get data from stdout or stderr */
-
-#ifdef USE_TCL_CHAN
-    Tcl_DStringInit(&ds);
-    count = Tcl_Gets(chan, &ds);
-    bu_strlcpy(line, Tcl_DStringValue(&ds), RT_MAXLINE);
-#else
-    count = read((int)fd, line, RT_MAXLINE);
-#endif
+    count = Tcl_Read(chan, line, RT_MAXLINE);
 
     if (count <= 0) {
-	if (count < 0) {
-	    perror("READ ERROR");
-	}
 	return;
     }
 
@@ -1744,7 +1713,7 @@ mged_finish(struct mged_state *s, int exitcode)
     /* no longer send bu_log() output to Tcl */
     bu_log_delete_hook(gui_output, (void *)s);
 
-#ifndef USE_TCL_CHAN
+#ifdef HAVE_PIPE
     /* restore stdout/stderr just in case anyone tries to write before
      * we finally exit (e.g., an atexit() callback).
      */
@@ -1788,7 +1757,7 @@ mged_finish(struct mged_state *s, int exitcode)
     /* 8.5 seems to have some bugs in their reference counting */
     /* Tcl_DeleteInterp(INTERP); */
 
-#ifndef USE_TCL_CHAN
+#ifndef HAVE_WINDOWS_H
     if (cbreak_mode > 0) {
 	reset_Tty(fileno(stdin));
     }
@@ -1826,9 +1795,13 @@ main(int argc, char *argv[])
     int use_pipe = 0;
     int run_in_foreground=1;
 
-#ifndef USE_TCL_CHAN
-    fd_set read_set;
+#ifdef HAVE_PIPE
     int result;
+#  ifndef HAVE_WINDOWS_H
+    /* fd_set is used by select() in the fork-based backgrounding path,
+     * which is POSIX-only (fork() and select()-on-pipes unavailable on Windows). */
+    fd_set read_set;
+#  endif
 #endif
 
     BU_GET(MGED_STATE, struct mged_state);
@@ -1971,7 +1944,9 @@ main(int argc, char *argv[])
     (void)signal(SIGINT, cur_sigint);		/* restore */
 #endif /* SIGPIPE && SIGINT */
 
-#ifdef HAVE_PIPE
+#if defined(HAVE_PIPE) && !defined(HAVE_WINDOWS_H)
+    /* fork()-based background detach: POSIX only. fork() and select() on
+     * pipe file descriptors are not available on Windows. */
     if (!s->classic_mged && !run_in_foreground) {
 	pid_t pid;
 
@@ -2018,7 +1993,7 @@ main(int argc, char *argv[])
 	    bu_exit(0, NULL);
 	}
     }
-#endif /* HAVE_PIPE */
+#endif /* HAVE_PIPE && !HAVE_WINDOWS_H */
 
     memset((void *)&head_cmd_list, 0, sizeof(struct cmd_list));
     BU_LIST_INIT(&head_cmd_list.l);
@@ -2132,7 +2107,7 @@ main(int argc, char *argv[])
 
 	    bu_log("%s\n", brlcad_ident("Geometry Editor (MGED)"));
 
-#ifndef USE_TCL_CHAN
+#ifndef HAVE_WINDOWS_H
 	    if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 		/* Set up for character-at-a-time terminal IO. */
 		cbreak_mode = COMMAND_LINE_EDITING;
@@ -2277,7 +2252,7 @@ main(int argc, char *argv[])
 		bu_log("%s\nMGED unable to initialize gui, reverting to classic mode.\n", Tcl_GetStringResult(s->interp));
 		s->classic_mged = 1;
 
-#ifndef USE_TCL_CHAN
+#ifndef HAVE_WINDOWS_H
 		cbreak_mode = COMMAND_LINE_EDITING;
 		save_Tty(fileno(stdin));
 #endif
@@ -2358,14 +2333,16 @@ main(int argc, char *argv[])
 	BU_GET(sd, struct stdio_data);
 	sd->s = s;
 
-#ifdef USE_TCL_CHAN
-	sd->chan = Tcl_MakeFileChannel(GetStdHandle(STD_INPUT_HANDLE), TCL_READABLE);
+	/* Use Tcl's canonical stdin channel — Tcl_GetStdChannel works on all
+	 * platforms (POSIX and Windows) and avoids mixing Tcl's channel
+	 * buffering with a separately-created file channel. */
+	sd->chan = Tcl_GetStdChannel(TCL_STDIN);
+	if (sd->chan == NULL) {
+	    bu_log("mged: unable to get stdin channel\n");
+	    BU_PUT(sd, struct stdio_data);
+	    mged_finish(s, 1);
+	}
 	Tcl_CreateChannelHandler(sd->chan, TCL_READABLE, stdin_input, sd);
-#else
-	sd->fd = STDIN_FILENO;
-	sd->chan = Tcl_MakeFileChannel(STDIN_FILENO, TCL_READABLE);
-	Tcl_CreateChannelHandler(sd->chan, TCL_READABLE, stdin_input, sd);
-#endif
 
 #ifdef SIGINT
 	(void)signal(SIGINT, SIG_IGN);
@@ -2374,7 +2351,7 @@ main(int argc, char *argv[])
 	bu_vls_strcpy(&s->mged_prompt, MGED_PROMPT);
 	pr_prompt(s);
 
-#ifndef USE_TCL_CHAN
+#ifndef HAVE_WINDOWS_H
 	if (cbreak_mode) {
 	    set_Cbreak(fileno(stdin));
 	    clr_Echo(fileno(stdin));
@@ -2385,13 +2362,12 @@ main(int argc, char *argv[])
 	int sout = fileno(stdout);
 	int serr = fileno(stderr);
 
-#ifndef USE_TCL_CHAN
-	/* stash stdout */
+#ifdef HAVE_PIPE
+	/* stash stdout and stderr so we can restore them at exit */
 	stdfd[0] = dup(sout);
 	if (stdfd[0] == -1)
 	    perror("dup");
 
-	/* stash stderr */
 	stdfd[1] = dup(serr);
 	if (stdfd[1] == -1)
 	    perror("dup");
@@ -2401,11 +2377,14 @@ main(int argc, char *argv[])
 	Tcl_Eval(s->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-/* FIXME: windows has dup() and dup2(), so this should work there too */
-#ifndef USE_TCL_CHAN
+	/* Redirect stdout/stderr into POSIX pipes so that any C-level output
+	 * (printf, write(1,...), bu_log, etc.) is captured by the GUI.
+	 * Windows supports pipe()/dup()/dup2() through its CRT, so this
+	 * approach works on all platforms when HAVE_PIPE is available.
+	 * OTE: Tcl_MakeFileChannel on Windows requires a native HANDLE (via
+	 * _get_osfhandle), not the raw CRT fd — see the fix below. */
+#ifdef HAVE_PIPE
 	{
-	    ClientData outpipe, errpipe;
-
 	    (void)close(fileno(stdout));
 
 	    /* since we just closed stdout, fd 1 is what dup() should return */
@@ -2422,61 +2401,31 @@ main(int argc, char *argv[])
 		perror("dup");
 	    (void)close(pipe_err[1]); /* only a write pipe */
 
-	    Tcl_Channel chan;
+	    Tcl_Channel out_chan, err_chan;
 
-	    outpipe = (ClientData)(size_t)pipe_out[0];
-	    chan = Tcl_MakeFileChannel(outpipe, TCL_READABLE);
-	    Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, outpipe);
-
-	    errpipe = (ClientData)(size_t)pipe_err[0];
-	    chan = Tcl_MakeFileChannel(errpipe, TCL_READABLE);
-	    Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, errpipe);
-	}
+	    /* On Windows, Tcl_MakeFileChannel expects a native Windows HANDLE,
+	     * not a CRT integer file descriptor.  Passing a raw CRT fd as a
+	     * HANDLE produces an invalid channel whose error state causes Tcl's
+	     * event loop to spin continuously, freezing the GUI.  Use
+	     * _get_osfhandle() to obtain the correct Windows HANDLE from the
+	     * CRT fd.  On POSIX the fd is cast directly, as before. */
+#ifdef HAVE_WINDOWS_H
+	    out_chan = Tcl_MakeFileChannel((ClientData)_get_osfhandle(pipe_out[0]), TCL_READABLE);
+	    err_chan = Tcl_MakeFileChannel((ClientData)_get_osfhandle(pipe_err[0]), TCL_READABLE);
 #else
-	{
-	    HANDLE handle[2];
-	    SECURITY_ATTRIBUTES saAttr;
-
-	    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-	    saAttr.bInheritHandle = 0;
-	    saAttr.lpSecurityDescriptor = NULL;
-
-	    Tcl_Channel chan;
-
-	    if (CreatePipe(&handle[0], &handle[1], &saAttr, 0)) {
-		chan = Tcl_GetStdChannel(TCL_STDOUT);
-		Tcl_UnregisterChannel(s->interp, chan);
-		chan = Tcl_MakeFileChannel(handle[1], TCL_WRITABLE);
-		Tcl_RegisterChannel(s->interp, chan);
-		Tcl_SetChannelOption(s->interp, chan, "-blocking", "false");
-		Tcl_SetChannelOption(s->interp, chan, "-buffering", "line");
-		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
-		/* intermittently, the process of Tcl_UnregisterChannel does not
-		 * finish cleaning up the write threads before we spawn new
-		 * ones with Tcl_MakeFileChannel. This error prematurely invokes the
-		 * new threads when the old ones finally signal which breaks all 'puts'
-		 * from the channel. Calling puts with an empty string here
-		 * *appears* to force a sync and resolve the issue.
-		 */
-		if (Tcl_Eval(s->interp, "puts \"\"") != TCL_OK)
-		    perror("STDOUT chan broken");
-		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
-	    }
-
-	    if (CreatePipe(&handle[0], &handle[1], &saAttr, 0)) {
-		chan = Tcl_GetStdChannel(TCL_STDERR);
-		Tcl_UnregisterChannel(s->interp, chan);
-		chan = Tcl_MakeFileChannel(handle[1], TCL_WRITABLE);
-		Tcl_RegisterChannel(s->interp, chan);
-		Tcl_SetChannelOption(s->interp, chan, "-blocking", "false");
-		Tcl_SetChannelOption(s->interp, chan, "-buffering", "line");
-		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
-		if (Tcl_Eval(s->interp, "puts stderr \"\"") != TCL_OK)
-		    perror("STDERR chan broken");
-		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
-	    }
-	}
+	    out_chan = Tcl_MakeFileChannel((ClientData)(size_t)pipe_out[0], TCL_READABLE);
+	    err_chan = Tcl_MakeFileChannel((ClientData)(size_t)pipe_err[0], TCL_READABLE);
 #endif
+
+	    /* Register channels with the interpreter so they are tracked and
+	     * kept alive until the interpreter is deleted. */
+	    Tcl_RegisterChannel(s->interp, out_chan);
+	    Tcl_CreateChannelHandler(out_chan, TCL_READABLE, std_out_or_err, out_chan);
+
+	    Tcl_RegisterChannel(s->interp, err_chan);
+	    Tcl_CreateChannelHandler(err_chan, TCL_READABLE, std_out_or_err, err_chan);
+	}
+#endif /* HAVE_PIPE */
     }
 
     mged_global_db_ctx.init_flag = 0; /* all done with initialization */

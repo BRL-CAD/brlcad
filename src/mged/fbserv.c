@@ -27,6 +27,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 
 #include "bio.h"
@@ -95,18 +96,14 @@ fbserv_drop_client(int sub)
     struct mged_state *s = MGED_STATE;
     if (clients[sub].c_pkg != PKC_NULL) {
 	pkg_close(clients[sub].c_pkg);
-#ifdef USE_TCL_CHAN
 	Tcl_DeleteChannelHandler(clients[sub].c_chan,
 		clients[sub].c_handler,
-		(ClientData)clients[sub].c_fd);
+		(ClientData)(size_t)clients[sub].c_fd);
 
 	if (dm_interp(DMP) != NULL) {
 	    Tcl_Close((Tcl_Interp *)dm_interp(DMP), clients[sub].c_chan);
 	}
 	clients[sub].c_chan = NULL;
-#else
-	Tcl_DeleteFileHandler(clients[sub].c_fd);
-#endif
 	clients[sub].c_pkg = PKC_NULL;
 	clients[sub].c_fd = 0;
     }
@@ -180,7 +177,6 @@ found:
 }
 
 
-#ifdef USE_TCL_CHAN
 static struct pkg_conn *
 fbserv_makeconn(int fd, const struct pkg_switch *switchp)
 {
@@ -216,15 +212,9 @@ fbserv_makeconn(int fd, const struct pkg_switch *switchp)
 
     return pc;
 }
-#endif
 
-#ifdef USE_TCL_CHAN
 static void
 fbserv_new_client(struct pkg_conn *pcp, Tcl_Channel chan)
-#else
-static void
-fbserv_new_client(struct pkg_conn *pcp)
-#endif
 {
     struct mged_state *s = MGED_STATE;
     int i;
@@ -241,14 +231,9 @@ fbserv_new_client(struct pkg_conn *pcp)
 	clients[i].c_fd = pcp->pkc_fd;
 	fbserv_setup_socket(pcp->pkc_fd);
 
-#ifdef USE_TCL_CHAN
 	clients[i].c_chan = chan;
 	clients[i].c_handler = fbserv_existing_client_handler;
-	Tcl_CreateChannelHandler(clients[i].c_chan, TCL_READABLE, clients[i].c_handler, (ClientData)clients[i].c_fd);
-#else
-	Tcl_CreateFileHandler(clients[i].c_fd, TCL_READABLE,
-		fbserv_existing_client_handler, (ClientData)(size_t)clients[i].c_fd);
-#endif
+	Tcl_CreateChannelHandler(clients[i].c_chan, TCL_READABLE, clients[i].c_handler, (ClientData)(size_t)clients[i].c_fd);
 	return;
     }
 
@@ -257,36 +242,20 @@ fbserv_new_client(struct pkg_conn *pcp)
 }
 
 /*
- * Accept any new client connections.
+ * Accept any new client connections.  Callback signature matches
+ * Tcl_TcpServerAcceptProc as required by Tcl_OpenTcpServer.
  */
-#ifdef USE_TCL_CHAN
 static void
 fbserv_new_client_handler(ClientData clientData,
 	Tcl_Channel chan,
-	char *host,
-	int port)
-#else
-static void
-fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
-#endif
+	char *UNUSED(host),
+	int UNUSED(port))
 {
     struct mged_state *s = MGED_STATE;
     struct mged_dm *scdlp;  /* save current dm_list pointer */
 
-#ifdef USE_TCL_CHAN
+    /* clientData is the mged_dm pointer passed to Tcl_OpenTcpServer */
     struct mged_dm *dlp = (struct mged_dm *)clientData;
-#else
-    uintptr_t datafd = (uintptr_t)clientData;
-    int fd = (int)((int32_t)datafd & 0xFFFF);   /* fd's will be small */
-    struct mged_dm *dlp = NULL;
-    for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
-	struct mged_dm *m_dmp = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
-	if (fd == m_dmp->dm_netfd) {
-	    dlp = m_dmp;
-	    break;
-	}
-    }
-#endif
     if (dlp == NULL)
 	return;
 
@@ -295,13 +264,11 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 
     set_curr_dm(MGED_STATE, dlp);
 
-#ifdef USE_TCL_CHAN
+    /* Extract the native OS handle from the connected channel and wrap it
+     * in a pkg_conn so the rest of the fbserv machinery can use it. */
     uintptr_t fd;
     if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
 	fbserv_new_client(fbserv_makeconn((int)fd, pkg_switch), chan);
-#else
-    fbserv_new_client(pkg_getclient(fd, pkg_switch, communications_error, 0));
-#endif
 
     /* restore */
     set_curr_dm(MGED_STATE, scdlp);
@@ -317,34 +284,19 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 #define MAX_PORT_TRIES 100
 
     /* Check to see if previously active --- if so then deactivate */
-#ifdef USE_TCL_CHAN
     if (s->mged_curr_dm->dm_netchan != NULL) {
 	/* first drop all clients */
 	for (i = 0; i < MAX_CLIENTS; ++i)
 	    fbserv_drop_client(i);
 
-	ClientData fd = (ClientData)s->mged_curr_dm->dm_netfd;
-	Tcl_DeleteChannelHandler(s->mged_curr_dm->dm_netchan, (Tcl_ChannelProc *)fbserv_new_client_handler, fd);
-
+	/* Close the server channel; this unregisters the accept callback and
+	 * closes the underlying listen socket. */
 	if (dm_interp(DMP) != NULL)
 	    Tcl_Close((Tcl_Interp *)dm_interp(DMP), s->mged_curr_dm->dm_netchan);
 
 	s->mged_curr_dm->dm_netchan = NULL;
-
-	closesocket(s->mged_curr_dm->dm_netfd);
 	s->mged_curr_dm->dm_netfd = -1;
     }
-#else
-    if (s->mged_curr_dm->dm_netfd >= 0) {
-	/* first drop all clients */
-	for (i = 0; i < MAX_CLIENTS; ++i)
-	    fbserv_drop_client(i);
-
-	Tcl_DeleteFileHandler(s->mged_curr_dm->dm_netfd);
-	close(s->mged_curr_dm->dm_netfd);
-	s->mged_curr_dm->dm_netfd = -1;
-    }
-#endif
 
     if (!mged_variables->mv_listen)
 	return;
@@ -356,7 +308,7 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 
     save_port = mged_variables->mv_port;
 
-#ifdef USE_TCL_CHAN
+    /* Compute the actual port number to try first */
     int port;
     if (mged_variables->mv_port < 0)
 	port = 5559;
@@ -364,70 +316,39 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 	port = mged_variables->mv_port + 5559;
     else
 	port = mged_variables->mv_port;
-#else
-    if (mged_variables->mv_port < 0)
-	mged_variables->mv_port = 0;
-#endif
 
-
-
-
-    /* Try a reasonable number of times to hang a listen */
+    /* Try a reasonable number of times to hang a listen.
+     * Tcl_OpenTcpServer is fully cross-platform and replaces the previous
+     * POSIX-only pkg_permserver + Tcl_CreateFileHandler approach. */
     for (i = 0; i < MAX_PORT_TRIES; ++i) {
-	/*
-	 * Hang an unending listen for PKG connections
-	 */
-
-#ifdef USE_TCL_CHAN
-	/*XXX hardwired for now */
-	char hostname[32];
-	sprintf(hostname, "localhost");
-
-	if (dm_interp(DMP) != NULL)
-	    s->mged_curr_dm->dm_netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(DMP), port, hostname, fbserv_new_client_handler, (ClientData)s->mged_curr_dm);
+	s->mged_curr_dm->dm_netchan = NULL;
+	if (dm_interp(DMP) != NULL) {
+	    /* NULL host means listen on all interfaces (INADDR_ANY) */
+	    s->mged_curr_dm->dm_netchan = Tcl_OpenTcpServer(
+		    (Tcl_Interp *)dm_interp(DMP), port, NULL,
+		    fbserv_new_client_handler, (ClientData)s->mged_curr_dm);
+	}
 
 	if (s->mged_curr_dm->dm_netchan == NULL)
 	    ++port;
 	else
 	    break;
-#else
-	char portname[32];
-	if (mged_variables->mv_port < 1024)
-	    sprintf(portname, "%d", mged_variables->mv_port + 5559);
-	else
-	    sprintf(portname, "%d", mged_variables->mv_port);
-
-	if ((s->mged_curr_dm->dm_netfd = pkg_permserver(portname, 0, 0, communications_error)) < 0)
-	    ++mged_variables->mv_port;
-	else
-	    break;
-#endif
     }
 
-#ifdef USE_TCL_CHAN
     if (s->mged_curr_dm->dm_netchan == NULL) {
 	mged_variables->mv_port = save_port;
 	mged_variables->mv_listen = 0;
 	bu_log("fbserv_set_port: failed to hang a listen on ports %d - %d\n",
-		mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
+		save_port, save_port + MAX_PORT_TRIES - 1);
     } else {
 	mged_variables->mv_port = port;
-	Tcl_GetChannelHandle(s->mged_curr_dm->dm_netchan, TCL_READABLE, (ClientData *)&s->mged_curr_dm->dm_netfd);
+	/* Stash the underlying fd for diagnostics; not used for I/O. */
+	{
+	    uintptr_t fd = 0;
+	    Tcl_GetChannelHandle(s->mged_curr_dm->dm_netchan, TCL_READABLE, (ClientData *)&fd);
+	    s->mged_curr_dm->dm_netfd = (int)fd;
+	}
     }
-#else
-    if (s->mged_curr_dm->dm_netfd < 0) {
-	mged_variables->mv_port = save_port;
-	mged_variables->mv_listen = 0;
-	bu_log("fbserv_set_port: failed to hang a listen on ports %d - %d\n",
-		mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
-    } else {
-	// Need to pass a few things to fbserv_new_client_handler. ncdata's
-	// lifetime is governed by the needs of the Tcl file handlers, so it
-	// has to be freed once fbserv_new_client_handler is done.
-	Tcl_CreateFileHandler(s->mged_curr_dm->dm_netfd, TCL_READABLE,
-		fbserv_new_client_handler, (ClientData)(size_t)s->mged_curr_dm->dm_netfd);
-    }
-#endif
 }
 
 /*

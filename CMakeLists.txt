@@ -1762,6 +1762,17 @@ brlcad_function_exists(nextafter REQUIRED_LIBS ${M_LIBRARY})
 brlcad_function_exists(nextafterf REQUIRED_LIBS ${M_LIBRARY})
 brlcad_function_exists(ntohll)
 brlcad_function_exists(pipe)
+brlcad_function_exists(_pipe)
+# On Windows, pipe() is not a real CRT symbol; it is a macro in config_win.h
+# that wraps _pipe().  check_function_exists tests for a linkable symbol and
+# therefore misses the macro.  If _pipe was found but pipe was not, treat
+# pipe as available because the config_win.h wrapper makes it usable.
+if(NOT HAVE_PIPE AND HAVE__PIPE)
+  set(HAVE_PIPE 1 CACHE INTERNAL "pipe available via config_win.h macro wrapper")
+  if(CONFIG_H_FILE)
+    config_h_append(BRLCAD "#define HAVE_PIPE 1\n")
+  endif()
+endif()
 brlcad_function_exists(popen) # implies pclose
 brlcad_function_exists(posix_memalign) # IEEE Std 1003.1-2001
 brlcad_function_exists(proc_pidpath) # Mac OS X
