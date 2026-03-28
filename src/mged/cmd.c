@@ -112,6 +112,19 @@ static struct bu_vls tcl_log_str = BU_VLS_INIT_ZERO;
  * results being accumulated into the tcl_log_str buffer can be flushed
  * to the Tcl command prompt by refresh() while the GED command is still
  * running.  Not clear yet how much effort that will take to implement.
+ *
+ * Note there is also a serious complication when it comes to thing like
+ * search -exec, which in MGED may exec Tcl commands on the results - that
+ * will cause problems with repeated Tcl_Eval calls even if we handle
+ * ged_exec.  In the worst cases -exec could be instructing the GUI to
+ * do updates or other things we can't reliably ask to happen while
+ * we're doing a Tcl_Eval on the original command, so what we'll probably
+ * have to do in the end is limit search -exec to ged commands rather than
+ * arbitrary Tcl script execution.  That's technically more restrictive
+ * than what it lets happen (or tries to at any rate) now, but it's hard
+ * to see how we could successfully execute arbitrary Tcl/Tk scripts
+ * with Tcl_Eval when we're already trying to do a Tcl_Eval of the original
+ * command.
  */
 int
 gui_output(void *clientData, void *str)
