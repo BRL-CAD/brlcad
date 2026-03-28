@@ -6,7 +6,6 @@ brlcad_find_package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
 brlcad_find_package(REGEX REQUIRED)
 brlcad_find_package(Geogram REQUIRED SYSPATTERN geogram)
 find_package_gte(REQUIRED)
-add_definitions(-DUSE_GEOGRAM)
 
 if(BRLCAD_ENABLE_OPENCL)
   add_definitions(-DUSE_OPENCL)
@@ -421,7 +420,13 @@ set(
 )
 
 # Include directories needed by librt users
-set(RT_INCLUDE_DIRS ${OPENNURBS_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS} ${GTE_INCLUDE_DIR})
+# ${BRLCAD_SOURCE_DIR}/src/libbg/GTE is listed so that BRL-CAD's in-tree GTE
+# extension headers (e.g. Mathematics/MeshRepair.h, MeshHoleFilling.h, etc.)
+# are found before the external GTE headers in GTE_INCLUDE_DIR, giving them
+# priority when included via <Mathematics/...>.
+set(RT_INCLUDE_DIRS ${OPENNURBS_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS}
+  ${BRLCAD_SOURCE_DIR}/src/libbg/GTE
+  ${GTE_INCLUDE_DIR})
 
 # locally used but not needed by users of the library
 set(

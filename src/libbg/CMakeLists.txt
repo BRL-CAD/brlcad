@@ -96,6 +96,12 @@ set(
   GTE/Mathematics/BotSmooth.h
   GTE/Mathematics/BotSubdivide.h
   GTE/Mathematics/TriMesh.h
+  GTE/Mathematics/LSCMParameterization.h
+  GTE/Mathematics/MeshHoleFilling.h
+  GTE/Mathematics/MeshPreprocessing.h
+  GTE/Mathematics/MeshQuality.h
+  GTE/Mathematics/MeshRepair.h
+  GTE/Mathematics/MeshValidation.h
 )
 
 cmakefiles(${bg_ignore})
