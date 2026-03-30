@@ -176,6 +176,7 @@ ged_init(struct ged *gedp)
     /* ? */
     gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;
+    gedp->ged_skip_clbks = 0;
 
     gedp->dbi_state = NULL;
 

@@ -15,7 +15,7 @@ set(
   chgtree.c
   chgview.c
   clone.c
-  cmd.c
+  cmd.cpp
   color_scheme.c
   columns.c
   dm-generic.c

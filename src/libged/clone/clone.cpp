@@ -1800,11 +1800,14 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Retrieve the BU_CLBK_DURING progress callback, if registered.
      * This fires once per top-level clone created so callers can drive
-     * progress bars or other per-step feedback. */
+     * progress bars or other per-step feedback.
+     * Skip if ged_skip_clbks is set (e.g. we are executing inside a
+     * search -exec run) to avoid unsafe GUI side-effects on worker threads. */
     {
 	bu_clbk_t clbk = nullptr;
 	void *clbk_u2 = nullptr;
-	if (ged_clbk_get(&clbk, &clbk_u2, gedp, "clone", BU_CLBK_DURING)
+	if (!gedp->ged_skip_clbks &&
+	    ged_clbk_get(&clbk, &clbk_u2, gedp, "clone", BU_CLBK_DURING)
 	    == BRLCAD_OK) {
 	    state.clbk    = clbk;
 	    state.clbk_u2 = clbk_u2;

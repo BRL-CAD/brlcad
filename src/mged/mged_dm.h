@@ -402,7 +402,9 @@ struct mged_dm {
 
 /* If we're changing the active DM, use this function so
  * libged also gets the word. */
+__BEGIN_DECLS
 extern void set_curr_dm(struct mged_state *s, struct mged_dm *nl);
+__END_DECLS
 
 #define MGED_DM_NULL ((struct mged_dm *)NULL)
 #define DMP s->mged_curr_dm->dm_dmp

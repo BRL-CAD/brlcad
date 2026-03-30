@@ -492,6 +492,11 @@ mged_setup(struct mged_state *s)
     struct bu_vls tlog = BU_VLS_INIT_ZERO;
     const char *name = bu_dir(NULL, 0, BU_DIR_BIN, bu_getprogname(), BU_DIR_EXT, NULL);
 
+    /* Register the MGED log-buffer semaphore before any parallel code can
+     * run.  mged_sem_log_init() is idempotent so calling it here (inside
+     * mged_setup which may be called more than once) is safe. */
+    mged_sem_log_init();
+
     /* locate our run-time binary (must be called before Tcl_CreateInterp()) */
     if (name) {
 	Tcl_FindExecutable(name);
@@ -573,6 +578,13 @@ mged_setup(struct mged_state *s)
     history_setup();
     mged_global_variable_setup(s);
     mged_variable_setup(s);
+
+    /* Start the recurring log-drain timer.  The timer fires every
+     * 50 ms on the Tcl event loop and calls mged_pr_output(), which flushes
+     * any bu_log output accumulated in the thread-safe buffer to the command
+     * prompt.  This enables live streaming of intermediate output during long
+     * GED commands that run in a worker thread. */
+    mged_start_log_drain_timer(s);
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);

@@ -242,9 +242,18 @@ struct mged_state {
     /* called by numerous functions to indicate truthfully whether the
      * views need to be redrawn. */
     int update_views;
+
+    /* Asynchronous ged_exec state (cmd.cpp).
+     * cmd_running is set to 1 while ged_exec runs in a worker thread so
+     * that re-entrant command dispatch (e.g. from stdin_input) is blocked.
+     * log_drain_timer is the recurring Tcl timer token used to flush
+     * accumulated bu_log output to the Tcl command prompt. */
+    int cmd_running;
+    Tcl_TimerToken log_drain_timer;
 };
 extern struct mged_state *MGED_STATE;
 
+__BEGIN_DECLS
 
 
 /* defined in mged.c */
@@ -403,11 +412,15 @@ void solid_list_callback(struct mged_state *s);
 extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
 extern void view_ring_destroy(struct mged_dm *dlp);
 
-/* cmd.c */
+/* cmd.c / cmd.cpp */
 int cmdline(struct mged_state *s, struct bu_vls *vp, int record);
 void mged_print_result(struct mged_state *s, int status);
 int gui_output(void *clientData, void *str);
 void mged_pr_output(Tcl_Interp *interp);
+void mged_sem_log_init(void);
+void mged_start_log_drain_timer(struct mged_state *s);
+void mged_stop_log_drain_timer(struct mged_state *s);
+int mged_ged_exec_async(struct mged_state *s, int argc, const char *argv[]);
 
 /* columns.c */
 void vls_col_item(struct bu_vls *str, const char *cp);
@@ -568,6 +581,8 @@ void mged_color_soltab(struct mged_state *s);
 int Wdb_Init(Tcl_Interp *interp);
 int wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);
 void wdb_deleteProc(ClientData clientData);
+
+__END_DECLS
 
 #endif  /* MGED_MGED_H */
 
