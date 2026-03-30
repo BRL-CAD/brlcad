@@ -1443,6 +1443,10 @@ bool parse_k
 
 			    pid = stoi(tokens[1]);
 			    data.parts[pid].elements.insert(eid);
+
+			    if (beamOptions.size() > 0)
+				++optionsCounter;
+
 			    break;
 			}
 			else if ((beamOptions.size() > 0)) {
@@ -1623,6 +1627,9 @@ bool parse_k
 				default:
 				    break;
 			    }
+
+			    if (optionsCounter >= beamOptions.size())
+				optionsCounter = 0;
 			}
 
 			break;
