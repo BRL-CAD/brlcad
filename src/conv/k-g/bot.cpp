@@ -66,9 +66,9 @@ static int add_normal
 
     // normal already there?
     for (; ret < static_cast<int>(bot.num_normals); ++ret) {
-	tmp[0] = bot.normals[ret];
-	tmp[1] = bot.normals[ret + 1];
-	tmp[2] = bot.normals[ret + 2];
+	tmp[0] = bot.normals[ret * 3];
+    tmp[1] = bot.normals[ret * 3 + 1];
+	tmp[2] = bot.normals[ret * 3 + 2];
 
 	if (VNEAR_EQUAL(normal, tmp, VUNITIZE_TOL))
 	    break;
@@ -78,9 +78,9 @@ static int add_normal
 	// add a new normal
 	++bot.num_normals;
 	bot.normals = static_cast<fastf_t*>(bu_realloc(bot.normals, bot.num_normals * 3 * sizeof(fastf_t), "add_normal: normal"));
-	bot.normals[ret]     = normal[0];
-	bot.normals[ret + 1] = normal[1];
-	bot.normals[ret + 2] = normal[2];
+	bot.normals[ret * 3]     = normal[0];
+	bot.normals[ret * 3 + 1] = normal[1];
+	bot.normals[ret * 3 + 2] = normal[2];
     }
 
     return ret;
