@@ -1565,9 +1565,9 @@ options_prep(struct ged *gedp, struct rt_i *UNUSED(rtip), vect_t span)
 	    }
 	}
 	// iterate through the db and find all materials
-	for (int i = 0; i < RT_DBNHASH; i++) {
-	    struct directory *dp = gedp->dbip->dbi_Head[i];
-	    if (dp != NULL) {
+	{
+	    struct directory *dp;
+	    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
 		struct rt_db_internal intern;
 		struct rt_material_internal *material_ip;
 		if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) >= 0) {
@@ -1599,7 +1599,7 @@ options_prep(struct ged *gedp, struct rt_i *UNUSED(rtip), vect_t span)
 			bu_vls_free(&result_str);
 		    }
 		}
-	    }
+	    FOR_ALL_DIRECTORY_END;
 	}
     }
     /* refine the grid spacing if the user has set a lower bound on
@@ -1753,9 +1753,9 @@ densities_prep(struct ged *gedp, struct rt_i *rtip)
 
 	// iterate through the db and find all materials
 	int next_available_id = MAX_MATERIAL_ID - 1;
-	for (int i = 0; i < RT_DBNHASH; i++) {
-	    struct directory *dp = rtip->rti_dbip->dbi_Head[i];
-	    if (dp != NULL) {
+	{
+	    struct directory *dp;
+	    FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
 		struct rt_db_internal intern;
 		struct rt_material_internal *material_ip;
 		if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
@@ -1796,7 +1796,7 @@ densities_prep(struct ged *gedp, struct rt_i *rtip)
 			}
 		    }
 		}
-	    }
+	    FOR_ALL_DIRECTORY_END;
 	}
 
 	if (!found_densities) {
@@ -1807,9 +1807,9 @@ densities_prep(struct ged *gedp, struct rt_i *rtip)
 
 	// look for objects with material_name set and set the material_id
 	// analyze_densities_get
-	for (int i = 0; i < RT_DBNHASH; i++) {
-	    struct directory *dp = rtip->rti_dbip->dbi_Head[i];
-	    if (dp != NULL) {
+	{
+	    struct directory *dp;
+	    FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
 		if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
 		    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
 
@@ -1859,7 +1859,7 @@ densities_prep(struct ged *gedp, struct rt_i *rtip)
 			return BRLCAD_ERROR;
 		    }
 		}
-	    }
+	    FOR_ALL_DIRECTORY_END;
 	}
     }
 
