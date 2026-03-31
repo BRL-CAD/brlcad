@@ -2453,6 +2453,69 @@ main(int argc, char *argv[])
 		perror("dup");
 	    (void)close(pipe_err[1]); /* only a write pipe */
 
+#ifdef HAVE_WINDOWS_H
+	    /* On Windows, Tcl's stdout/stderr channels are backed by the native
+	     * Windows HANDLEs that Tcl captured at startup.  In a GUI-only
+	     * process those are typically INVALID_HANDLE_VALUE (no console), so
+	     * any attempt by Tcl to write to them — including `puts test` — fails
+	     * with "error writing 'stdout': invalid argument".
+	     *
+	     * After the dup() calls above, CRT fd 1/fd 2 now point to the write
+	     * ends of our pipes.  Create new Tcl writable channels from those
+	     * HANDLEs and install them as Tcl's stdout/stderr so that `puts`
+	     * writes into the pipe (and thus reaches std_out_or_err below).
+	     *
+	     * Order matters: register the new channel and set it as the std
+	     * channel BEFORE unregistering the old one.  Tcl_GetChannel(interp,
+	     * "stdout", ...) — used by `puts stdout ...` — checks the
+	     * interpreter's channel hash table first; the old channel is
+	     * registered there as "stdout" and would be returned instead of the
+	     * new pipe channel.  Unregistering it causes the lookup to fall
+	     * through to Tcl_GetStdChannel, which by then returns the new
+	     * channel.
+	     *
+	     * This ordering also avoids the write-thread race that existed in
+	     * the old Windows-only code path: that code called
+	     * Tcl_UnregisterChannel BEFORE Tcl_MakeFileChannel, so the old
+	     * channel's I/O completion-port threads could still be running when
+	     * new ones were spawned, causing intermittent corruption.  A
+	     * `puts ""` sync-point was needed as a workaround.  Here the new
+	     * channel is fully created and its threads are running BEFORE the
+	     * old channel begins tearing down, so no such sync is required.
+	     * The old channel was also backed by INVALID_HANDLE_VALUE (no
+	     * console), so no I/O threads were ever successfully dispatched on
+	     * it. */
+	    {
+		Tcl_Channel old_out = Tcl_GetStdChannel(TCL_STDOUT);
+		Tcl_Channel wout = Tcl_MakeFileChannel(
+		    (ClientData)_get_osfhandle(fileno(stdout)), TCL_WRITABLE);
+		if (wout) {
+		    Tcl_SetChannelOption(s->interp, wout, "-blocking", "false");
+		    Tcl_SetChannelOption(s->interp, wout, "-buffering", "line");
+		    Tcl_RegisterChannel(s->interp, wout);
+		    Tcl_SetStdChannel(wout, TCL_STDOUT);
+		    if (old_out)
+			Tcl_UnregisterChannel(s->interp, old_out);
+		} else {
+		    bu_log("mged: failed to create Tcl channel for stdout pipe\n");
+		}
+
+		Tcl_Channel old_err = Tcl_GetStdChannel(TCL_STDERR);
+		Tcl_Channel werr = Tcl_MakeFileChannel(
+		    (ClientData)_get_osfhandle(fileno(stderr)), TCL_WRITABLE);
+		if (werr) {
+		    Tcl_SetChannelOption(s->interp, werr, "-blocking", "false");
+		    Tcl_SetChannelOption(s->interp, werr, "-buffering", "line");
+		    Tcl_RegisterChannel(s->interp, werr);
+		    Tcl_SetStdChannel(werr, TCL_STDERR);
+		    if (old_err)
+			Tcl_UnregisterChannel(s->interp, old_err);
+		} else {
+		    bu_log("mged: failed to create Tcl channel for stderr pipe\n");
+		}
+	    }
+#endif /* HAVE_WINDOWS_H */
+
 	    Tcl_Channel out_chan, err_chan;
 
 	    /* On Windows, Tcl_MakeFileChannel expects a native Windows HANDLE,
