@@ -56,12 +56,13 @@ extern struct tclcad_obj HeadTclcadObj;
 extern struct tclcad_obj *current_top;
 
 /**
- * function returns truthfully whether the library has been
- * initialized.  calling this routine with setit true considers the
- * library henceforth initialized.  there is presently no way to unset
- * or reset initialization.
+ * function returns truthfully whether the library has been initialized
+ * for the given interpreter.  calling this routine with setit true
+ * considers the interpreter henceforth initialized.  the flag is stored
+ * as interpreter-associated data so that each Tcl_Interp instance
+ * carries its own initialization state.
  */
-extern int library_initialized(int setit);
+extern int library_initialized(Tcl_Interp *interp, int setit);
 
 
 /**

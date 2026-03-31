@@ -312,23 +312,39 @@ extern "C" {
 /**
  * NOTE:  Per Tcl (https://www.tcl.tk/doc/howto/thread_model.html) "errors will
  * occur if you let more than one thread call into the same interpreter (e.g.,
- * with Tcl_Eval)."  We have adapted our bu_log handling to strive to handle
- * this limitation, but search -exec introduces another level of complication.
+ * with Tcl_Eval)."  In MGED's run_ged_async threading model the main thread
+ * pumps the Tcl event loop while a worker thread runs the search command.
+ * Using the main GUI interpreter (s->interp) from the worker thread is
+ * therefore unsafe.
  *
- * In MGED, search -exec historically supported running Tcl commands on the
- * results of the search.  However, that will cause problems with nested
- * Tcl_Eval calls - in the worst cases -exec could even be instructing the GUI
- * to do updates or other things we can't reliably ask to happen while we're
- * doing a Tcl_Eval on the original command.
+ * Instead this callback delegates entirely to s->search_interp — a secondary,
+ * fully independent Tcl interpreter stored in mged_state alongside the main
+ * interp.  It is initialized at startup with the full BRL-CAD Tcl package set
+ * (via tclcad_init) and is the ONLY interpreter accessed from the search worker
+ * thread.  The main thread never touches search_interp while a search is
+ * running, so there is no concurrent interpreter access and Tcl's
+ * single-thread-per-interp requirement is satisfied.
  *
- * Consequently, we must limit what search -exec can run - rather than
- * arbitrary Tcl script execution, we limit it to ged exec.  That's technically
- * more restrictive than what it let happen historically (or tried to at any
- * rate), but it's hard to see how we could successfully execute arbitrary
- * Tcl/Tk scripts with Tcl_Eval when we're already trying to do a Tcl_Eval of
- * the original command.  Even with ged_exec, we have to worry about callback
- * hooks linked in to ged commands triggering problematic behavior - that will
- * need more thought/research.
+ * A custom 'unknown' proc inside search_interp bridges any command that Tcl
+ * does not recognise to ged_exec via _mged_ged_exec, so all GED commands
+ * (draw, ls, attr, ...) are callable directly by name from Tcl scripts.  The
+ * _mged_ged_exec handler suppresses ged_skip_clbks so GUI-refresh and other
+ * side-effect hooks are silenced for the duration of each sub-command, the
+ * same way they would be if ged_exec were called directly here.
+ *
+ * GUI and display commands will fail inside search_interp, which is expected —
+ * those operations are not reliable from a search -exec context in any case.
+ *
+ * GLOBALS NOTE: libtclcad has two relevant process-wide globals:
+ *  - current_top: set only by to_cmd(), which is only dispatched for tclcad
+ *    GED objects created via go_open.  search_interp has no such objects, so
+ *    current_top is never written from the worker thread.
+ *  - HeadTclcadObj: modified only by to_open_tcl() / to_deleteProc().
+ *    search_interp never calls go_open, so this list is untouched.
+ * Both globals are therefore safe with a secondary interpreter active.
+ *
+ * If search_interp was not successfully initialized (e.g. tclcad_init failed),
+ * the callback falls back to a plain ged_exec so GED commands still work.
  */
 int
 mged_db_search_callback(int argc, const char *argv[], void *UNUSED(u1), void *u2)
@@ -336,32 +352,45 @@ mged_db_search_callback(int argc, const char *argv[], void *UNUSED(u1), void *u2
     struct mged_state *s = (struct mged_state *)u2;
     MGED_CK_STATE(s);
 
-    // We're already in a search async running context if we
-    // are calling this, so don't thread out again - just do
-    // a basic ged_exec.
-    //
-    // Suppress per-command PRE/POST callbacks for this ged_exec call:
-    // any callbacks registered for the sub-command could trigger GUI
-    // refresh or other side effects that are unsafe while the search is
-    // running on a worker thread.  Use the ged_skip_clbks counter so
-    // that nested invocations (e.g. search -exec calling search -exec)
-    // work correctly.
+    if (s->search_interp) {
+	// Normal path: evaluate as a Tcl command in the dedicated search
+	// interpreter.  GED commands are forwarded via the 'unknown' proc
+	// bridge (_mged_ged_exec), which manages ged_skip_clbks internally.
+	Tcl_Obj **objv = (Tcl_Obj **)bu_calloc(argc, sizeof(Tcl_Obj *), "search tcl objv");
+	for (int i = 0; i < argc; i++) {
+	    objv[i] = Tcl_NewStringObj(argv[i], -1);
+	    Tcl_IncrRefCount(objv[i]);
+	}
+	int tcl_ret = Tcl_EvalObjv(s->search_interp, argc, objv, 0);
+	for (int i = 0; i < argc; i++)
+	    Tcl_DecrRefCount(objv[i]);
+	bu_free(objv, "search tcl objv");
+
+	const char *tcl_result = Tcl_GetStringResult(s->search_interp);
+	if (tcl_result && *tcl_result) {
+	    size_t rlen = strlen(tcl_result);
+	    bu_log("%s%s", tcl_result, tcl_result[rlen-1] == '\n' ? "" : "\n");
+	}
+	Tcl_ResetResult(s->search_interp);
+
+	return tcl_ret == TCL_OK;
+    }
+
+    // Fallback: search_interp not available (tclcad_init failed at startup).
+    // Execute directly as a GED command.  Suppress PRE/POST callbacks for the
+    // same reasons as above.
     s->gedp->ged_skip_clbks++;
     int ret = ged_exec(s->gedp, argc, argv);
     s->gedp->ged_skip_clbks--;
+
     const char *result = bu_vls_cstr(s->gedp->ged_result_str);
-    int len = bu_vls_strlen(s->gedp->ged_result_str);
+    int len = (int)bu_vls_strlen(s->gedp->ged_result_str);
     if (len > 0)
 	bu_log("%s%s", result, result[len-1] == '\n' ? "" : "\n");
-
-    /* Since we've already bu_logged the results, we need to clear the
-     * ged_result_str for the next iteration.
-    */
     bu_vls_trunc(s->gedp->ged_result_str, 0);
 
-    return TCL_OK == ret;
+    return ret == BRLCAD_OK;
 }
-
 
 int
 mged_clone_during_callback(int argc, const char **argv,

@@ -49,13 +49,19 @@
 
 
 int
-library_initialized(int setit)
+library_initialized(Tcl_Interp *interp, int setit)
 {
-    static int initialized = 0;
-    if (setit)
-	initialized = 1;
+    /* Key used to mark an interpreter as initialized in its association table. */
+    static const char * const TCLCAD_INIT_KEY = "tclcad_initialized";
 
-    return initialized;
+    if (!interp)
+	return 0;	/* interp is required; treat as uninitialized */
+
+    if (setit) {
+	Tcl_SetAssocData(interp, TCLCAD_INIT_KEY, NULL, (ClientData)1);
+	return 1;
+    }
+    return (Tcl_GetAssocData(interp, TCLCAD_INIT_KEY, NULL) != NULL) ? 1 : 0;
 }
 
 
@@ -88,7 +94,7 @@ extern int Itk_Init(Tcl_Interp *);
 int
 tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
 {
-    if (library_initialized(0))
+    if (library_initialized(interp, 0))
 	return TCL_OK;
 
     /* Tcl_Init needs init.tcl.  It can be tricky to find init.tcl - help out,
@@ -196,7 +202,7 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
 
     Tcl_PkgProvide(interp, "Tclcad", brlcad_version());
 
-    (void)library_initialized(1);
+    (void)library_initialized(interp, 1);
 
     /* Import Itcl/Itk and iwidgets into global namespace
      *
