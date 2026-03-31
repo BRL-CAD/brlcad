@@ -1317,6 +1317,13 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	count = Tcl_Gets(sd->chan, &ds);
 
 	if (count < 0) {
+	    /* On a non-blocking channel, Tcl_Gets returns -1 with no EOF
+	     * flag when no complete line is yet available (EAGAIN).  Only
+	     * treat a negative return as fatal when it signals true EOF. */
+	    if (!Tcl_Eof(sd->chan)) {
+		Tcl_DStringFree(&ds);
+		return;
+	    }
 	    BU_PUT(sd, struct stdio_data);
 	    quit(s); /* does not return */
 	}
@@ -1419,6 +1426,11 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 
 	if (count <= 0 && Tcl_Eof(sd->chan))
 	    Tcl_Eval(s->interp, "q");
+
+	/* On a non-blocking channel Tcl_Read returns 0 for EAGAIN (no data
+	 * available right now).  Guard here so we don't crash on buf[0]. */
+	if (count <= 0)
+	    return;
 
 	if (buf[0] == '\0')
 	    bu_bomb("Read a buf with a 0 starting it?\n");
@@ -2372,6 +2384,16 @@ main(int argc, char *argv[])
 	    BU_PUT(sd, struct stdio_data);
 	    mged_finish(s, 1);
 	}
+
+	/* Set non-blocking mode so that Tcl_Read/Tcl_Gets inside the channel
+	 * handler returns whatever bytes are immediately available rather than
+	 * looping until the full requested count is accumulated.  Without this,
+	 * Tcl_Read(chan, buf, BU_PAGE_SIZE) on a blocking channel calls read()
+	 * repeatedly in cbreak mode — each call returning just one character —
+	 * until 4096 characters have been accumulated, permanently stalling the
+	 * event loop. */
+	Tcl_SetChannelOption(NULL, sd->chan, "-blocking", "0");
+
 	Tcl_CreateChannelHandler(sd->chan, TCL_READABLE, stdin_input, sd);
 
 #ifdef SIGINT
@@ -2449,9 +2471,17 @@ main(int argc, char *argv[])
 
 	    /* Register channels with the interpreter so they are tracked and
 	     * kept alive until the interpreter is deleted. */
+	    /* Non-blocking mode is essential: Tcl_Read on a blocking channel
+	     * uses DoRead(allowShortReads=0), which loops calling read() until
+	     * the full requested byte count is accumulated.  For a pipe that
+	     * delivers only a few bytes ("test\n"), this causes read() to block
+	     * on the empty pipe waiting for more data.  Non-blocking mode makes
+	     * Tcl_Read return whatever bytes are currently available. */
+	    Tcl_SetChannelOption(s->interp, out_chan, "-blocking", "0");
 	    Tcl_RegisterChannel(s->interp, out_chan);
 	    Tcl_CreateChannelHandler(out_chan, TCL_READABLE, std_out_or_err, out_chan);
 
+	    Tcl_SetChannelOption(s->interp, err_chan, "-blocking", "0");
 	    Tcl_RegisterChannel(s->interp, err_chan);
 	    Tcl_CreateChannelHandler(err_chan, TCL_READABLE, std_out_or_err, err_chan);
 	}
