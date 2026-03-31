@@ -30,6 +30,7 @@
 #include "bu/cmd.h"
 #include "bu/opt.h"
 #include "bv/lod.h"
+#include "../../librt/librt_private.h"
 
 #include "../ged_private.h"
 
@@ -117,13 +118,13 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 	if (db_version(new_dbip) != 4) {
 	    bu_vls_printf(gedp->ged_result_str, "WARNING: [%s] is not a v4 database.  The -f option will be ignored.\n", argv[0]);
 	} else {
-	    if (new_dbip->dbi_version < 0) {
+	    if (new_dbip->i->dbi_version < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Database [%s] was already (perhaps automatically) flipped, -f is redundant.\n", argv[0]);
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "Treating [%s] as a binary-incompatible v4 geometry database.\n", argv[0]);
 		bu_vls_printf(gedp->ged_result_str, "Endianness flipped.  Converting to READ ONLY.\n");
 		/* flip the version number to indicate a flipped database. */
-		new_dbip->dbi_version *= -1;
+		new_dbip->i->dbi_version *= -1;
 		/* do NOT write to a flipped database */
 		new_dbip->dbi_read_only = 1;
 	    }

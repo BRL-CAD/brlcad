@@ -309,8 +309,7 @@ method_scan(std::map<std::string, std::set<std::string>> *method_sets, struct db
 	return BRLCAD_ERROR;
 
     struct directory *dp;
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+    FOR_ALL_DIRECTORY_START(dp, dbip)
 	    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
 	    if (db5_get_attributes(dbip, &avs, dp))
 		continue;
@@ -321,8 +320,7 @@ method_scan(std::map<std::string, std::set<std::string>> *method_sets, struct db
 	    }
 	    (*method_sets)[std::string(method)].insert(std::string(dp->d_namep));
 	    bu_avs_free(&avs);
-	}
-    }
+    FOR_ALL_DIRECTORY_END;
 
     return BRLCAD_OK;
 }

@@ -70,23 +70,23 @@ db_read(const struct db_i *dbip, void *addr, size_t count, b_off_t offset)
     if (count == 0) {
 	return -1;
     }
-    if (offset+count > (size_t)dbip->dbi_eof) {
+    if (offset+count > (size_t)dbip->i->dbi_eof) {
 	/* Attempt to read off the end of the file */
 	bu_log("db_read(%s) ERROR offset=%jd, count=%zu, dbi_eof=%jd\n",
 	       dbip->dbi_filename,
-	       (intmax_t)offset, count, (intmax_t)dbip->dbi_eof);
+	       (intmax_t)offset, count, (intmax_t)dbip->i->dbi_eof);
 	return -1;
     }
-    if (dbip->dbi_inmem) {
-	memcpy(addr, ((char *)dbip->dbi_inmem) + offset, count);
+    if (dbip->i->dbi_inmem) {
+	memcpy(addr, ((char *)dbip->i->dbi_inmem) + offset, count);
 	return 0;
     }
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 
-    ret = bu_fseek(dbip->dbi_fp, offset, 0);
+    ret = bu_fseek(dbip->i->dbi_fp, offset, 0);
     if (ret)
 	bu_bomb("db_read: fseek error\n");
-    got = (size_t)fread(addr, 1, count, dbip->dbi_fp);
+    got = (size_t)fread(addr, 1, count, dbip->i->dbi_fp);
 
     bu_semaphore_release(BU_SEM_SYSCALL);
 
@@ -194,16 +194,16 @@ db_write(struct db_i *dbip, const void *addr, size_t count, b_off_t offset)
     if (count == 0) {
 	return -1;
     }
-    if (dbip->dbi_inmem) {
+    if (dbip->i->dbi_inmem) {
 	bu_log("db_write() in memory?\n");
 	return -1;
     }
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     bu_interrupt_suspend();
 
-    (void)bu_fseek(dbip->dbi_fp, offset, 0);
-    got = fwrite(addr, 1, count, dbip->dbi_fp);
-    fflush(dbip->dbi_fp);
+    (void)bu_fseek(dbip->i->dbi_fp, offset, 0);
+    got = fwrite(addr, 1, count, dbip->i->dbi_fp);
+    fflush(dbip->i->dbi_fp);
 
     bu_interrupt_restore();
     bu_semaphore_release(BU_SEM_SYSCALL);
@@ -312,9 +312,9 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 	size_t ngran;
 
 	// db_put_external5 can't do it, so do the callbacks here
-	if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
-		struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+	if (BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_changed_clbks)) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->i->dbi_changed_clbks); i++) {
+		struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->i->dbi_changed_clbks, i);
 		(*cb->f)(dbip, dp, 0, cb->u_data);
 	    }
 	}
@@ -374,7 +374,7 @@ db_add_changed_clbk(struct db_i *dbip, dbi_changed_t c, void *u_data)
     BU_GET(cb, struct dbi_changed_clbk);
     cb->f = c;
     cb->u_data = u_data;
-    bu_ptbl_ins(&dbip->dbi_changed_clbks, (long *)cb);
+    bu_ptbl_ins(&dbip->i->dbi_changed_clbks, (long *)cb);
     return 0;
 }
 
@@ -384,8 +384,8 @@ db_rm_changed_clbk(struct db_i *dbip, dbi_changed_t c, void *u_data)
     if (!dbip || !c)
 	return -1;
     struct bu_ptbl rm_clbks = BU_PTBL_INIT_ZERO;
-    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
-	struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->i->dbi_changed_clbks); i++) {
+	struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->i->dbi_changed_clbks, i);
 	if (cb->f == c) {
 	    if (u_data == NULL || u_data == cb->u_data) {
 		bu_ptbl_ins(&rm_clbks, (long *)cb);
@@ -395,7 +395,7 @@ db_rm_changed_clbk(struct db_i *dbip, dbi_changed_t c, void *u_data)
     int rm_cnt = 0;
     for (size_t i = 0; i < BU_PTBL_LEN(&rm_clbks); i++) {
 	struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&rm_clbks, i);
-	bu_ptbl_rm(&dbip->dbi_changed_clbks, (long *)cb);
+	bu_ptbl_rm(&dbip->i->dbi_changed_clbks, (long *)cb);
 	BU_PUT(cb, struct dbi_changed_clbk);
 	rm_cnt++;
     }
@@ -412,7 +412,7 @@ db_add_update_nref_clbk(struct db_i *dbip, dbi_update_nref_t c, void *u_data)
     BU_GET(cb, struct dbi_update_nref_clbk);
     cb->f = c;
     cb->u_data = u_data;
-    bu_ptbl_ins(&dbip->dbi_update_nref_clbks, (long *)cb);
+    bu_ptbl_ins(&dbip->i->dbi_update_nref_clbks, (long *)cb);
     return 0;
 }
 
@@ -422,8 +422,8 @@ db_rm_update_nref_clbk(struct db_i *dbip, dbi_update_nref_t c, void *u_data)
     if (!dbip || !c)
 	return -1;
     struct bu_ptbl rm_clbks = BU_PTBL_INIT_ZERO;
-    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); i++) {
-	struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->i->dbi_update_nref_clbks); i++) {
+	struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->i->dbi_update_nref_clbks, i);
 	if (cb->f == c) {
 	    if (u_data == NULL || u_data == cb->u_data) {
 		bu_ptbl_ins(&rm_clbks, (long *)cb);
@@ -433,7 +433,7 @@ db_rm_update_nref_clbk(struct db_i *dbip, dbi_update_nref_t c, void *u_data)
     int rm_cnt = 0;
     for (size_t i = 0; i < BU_PTBL_LEN(&rm_clbks); i++) {
 	struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&rm_clbks, i);
-	bu_ptbl_rm(&dbip->dbi_update_nref_clbks, (long *)cb);
+	bu_ptbl_rm(&dbip->i->dbi_update_nref_clbks, (long *)cb);
 	BU_PUT(cb, struct dbi_update_nref_clbk);
 	rm_cnt++;
     }

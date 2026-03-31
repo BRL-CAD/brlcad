@@ -38,6 +38,7 @@
 #include "../ged_private.h"
 
 #include <string.h>
+#include "../../librt/librt_private.h"
 
 
 static const char *mater_usage = "Usage: mater [-s] object_name shader r [g b] inherit\n"
@@ -1177,7 +1178,7 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     bu_free_external(&body);
 
     /* make sure the database directory is initialized */
-    if (gedp->dbip->dbi_eof == RT_DIR_PHONY_ADDR) {
+    if (gedp->dbip->i->dbi_eof == RT_DIR_PHONY_ADDR) {
 	if (db_dirbuild(gedp->dbip)) {
 	    return BRLCAD_ERROR;
 	}

@@ -188,7 +188,6 @@ list_geometry(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_O
 {
     static struct db_i *dbip;
     struct directory *dp;
-    int i;
     struct bu_vls tclstr = BU_VLS_INIT_ZERO;
 
     if (objc < 3) {
@@ -201,13 +200,11 @@ list_geometry(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_O
 	return TCL_ERROR;
     }
     db_dirbuild(dbip);
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_flags & RT_DIR_HIDDEN) continue;
-	    bu_vls_sprintf(&tclstr, "set %s [concat $%s [list %s]]", Tcl_GetString(objv[2]), Tcl_GetString(objv[2]), dp->d_namep);
-	    Tcl_Eval(interp, bu_vls_addr(&tclstr));
-	}
-    }
+    FOR_ALL_DIRECTORY_START(dp, dbip)
+	if (dp->d_flags & RT_DIR_HIDDEN) continue;
+	bu_vls_sprintf(&tclstr, "set %s [concat $%s [list %s]]", Tcl_GetString(objv[2]), Tcl_GetString(objv[2]), dp->d_namep);
+	Tcl_Eval(interp, bu_vls_addr(&tclstr));
+    FOR_ALL_DIRECTORY_END;
     db_close(dbip);
     bu_vls_free(&tclstr);
     return TCL_OK;

@@ -70,6 +70,7 @@
 #include "qtcad/QgModel.h"
 #include "qtcad/QgUtil.h"
 #include "qtcad/QgSignalFlags.h"
+#include "../librt/librt_private.h"
 
 struct QgItem_cmp {
     inline bool operator() (const QgItem *i1, const QgItem *i2)
@@ -441,7 +442,7 @@ QgModel::g_update(struct db_i *n_dbip)
 {
 
     // In case we have opened a completely new .g file, set the callbacks
-    if (n_dbip && !BU_PTBL_LEN(&n_dbip->dbi_changed_clbks)) {
+    if (n_dbip && !BU_PTBL_LEN(&n_dbip->i->dbi_changed_clbks)) {
 	// Primary driver of model updates is when individual objects are changed
 	db_add_changed_clbk(n_dbip, &qgmodel_changed_callback, (void *)this);
 

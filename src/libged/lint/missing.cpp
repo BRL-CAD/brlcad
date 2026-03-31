@@ -173,19 +173,18 @@ _ged_missing_check(lint_data *mdata)
 	}
 	bu_ptbl_free(&pc);
     } else {
-	for (int i = 0; i < RT_DBNHASH; i++) {
-	    for (struct directory *dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (dp->d_flags & RT_DIR_COMB) {
-		    struct rt_db_internal in;
-		    struct rt_comb_internal *comb;
-		    if (rt_db_get_internal(&in, dp, gedp->dbip, NULL, &rt_uniresource) < 0) continue;
-		    comb = (struct rt_comb_internal *)in.idb_ptr;
-		    comb_find_missing(mdata, dp->d_namep, gedp->dbip, comb->tree);
-		} else {
-		    shape_find_missing(mdata, gedp->dbip, dp);
-		}
+	struct directory *dp;
+	FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+	    if (dp->d_flags & RT_DIR_COMB) {
+		struct rt_db_internal in;
+		struct rt_comb_internal *comb;
+		if (rt_db_get_internal(&in, dp, gedp->dbip, NULL, &rt_uniresource) < 0) continue;
+		comb = (struct rt_comb_internal *)in.idb_ptr;
+		comb_find_missing(mdata, dp->d_namep, gedp->dbip, comb->tree);
+	    } else {
+		shape_find_missing(mdata, gedp->dbip, dp);
 	    }
-	}
+	FOR_ALL_DIRECTORY_END;
     }
 
     return ret;

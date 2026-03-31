@@ -145,13 +145,11 @@ _ged_cyclic_check(lint_data *cdata)
 	/* We can't do db_ls to get a set of tops objects here, because a cyclic
 	 * path can produce a situation where there are no tops objects and/or
 	 * hide the paths we need to report. */
-	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = cdata->gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		db_add_node_to_full_path(start_path, dp);
-		cyclic_search(start_path, (void *)cdata);
-		DB_FULL_PATH_POP(start_path);
-	    }
-	}
+	FOR_ALL_DIRECTORY_START(dp, cdata->gedp->dbip)
+	    db_add_node_to_full_path(start_path, dp);
+	    cyclic_search(start_path, (void *)cdata);
+	    DB_FULL_PATH_POP(start_path);
+	FOR_ALL_DIRECTORY_END;
     }
 
     db_free_full_path(start_path);

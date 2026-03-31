@@ -514,7 +514,7 @@ traverse_paths(struct traversal_ctx_t *ctx, struct directory **paths, int path_c
 		    db_add_node_to_full_path(child_path, child_dp);
 		    DB_FULL_PATH_SET_CUR_BOOL(child_path, leaves[li].bool_op);
 
-		    if (UNLIKELY(ctx->dbip->dbi_use_comb_instance_ids)) {
+		    if (UNLIKELY(ctx->dbip->i->dbi_use_comb_instance_ids)) {
 			c_inst_map[std::string(lname)]++;
 			DB_FULL_PATH_SET_CUR_COMB_INST(child_path, c_inst_map[std::string(lname)] - 1);
 		    }
@@ -582,7 +582,7 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 	    db_fullpath_list_subtree(path, bool_val, tp->tr_b.tb_right, traverse_func, cmap, client_data);
 	    break;
 	case OP_DB_LEAF:
-	    if (UNLIKELY(lcd->dbip->dbi_use_comb_instance_ids && c_inst_map))
+	    if (UNLIKELY(lcd->dbip->i->dbi_use_comb_instance_ids && c_inst_map))
 		(*c_inst_map)[std::string(tp->tr_l.tl_name)]++;
 	    if ((dp=db_lookup(lcd->dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		return;
@@ -593,7 +593,7 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 		    struct db_full_path *newpath = NULL;
 		    db_add_node_to_full_path(path, dp);
 		    DB_FULL_PATH_SET_CUR_BOOL(path, bool_val);
-		    if (UNLIKELY(lcd->dbip->dbi_use_comb_instance_ids && c_inst_map))
+		    if (UNLIKELY(lcd->dbip->i->dbi_use_comb_instance_ids && c_inst_map))
 			DB_FULL_PATH_SET_CUR_COMB_INST(path, (*c_inst_map)[std::string(tp->tr_l.tl_name)]-1);
 		    if (lcd->full_paths) {
 			BU_ALLOC(newpath, struct db_full_path);

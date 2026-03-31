@@ -28,6 +28,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include "../../librt/librt_private.h"
 
 #include "./nirt.h"
 
@@ -442,8 +443,8 @@ _nirt_get_rtip(struct nirt_state *nss)
     if (nss->i->use_air) {
 	if (nss->i->rtip_air == RTI_NULL) {
 	    nss->i->rtip_air = rt_new_rti(nss->i->dbip); /* clones dbip, so we can operate on the copy */
-	    nss->i->rtip_air->rti_dbip->dbi_fp = fopen(nss->i->dbip->dbi_filename, "rb"); /* get read-only fp */
-	    if (nss->i->rtip_air->rti_dbip->dbi_fp == NULL) {
+	    nss->i->rtip_air->rti_dbip->i->dbi_fp = fopen(nss->i->dbip->dbi_filename, "rb"); /* get read-only fp */
+	    if (nss->i->rtip_air->rti_dbip->i->dbi_fp == NULL) {
 		rt_free_rti(nss->i->rtip_air);
 		nss->i->rtip_air = RTI_NULL;
 		return RTI_NULL;
@@ -457,8 +458,8 @@ _nirt_get_rtip(struct nirt_state *nss)
 
     if (nss->i->rtip == RTI_NULL) {
 	nss->i->rtip = rt_new_rti(nss->i->dbip); /* clones dbip, so we can operate on the copy */
-	nss->i->rtip->rti_dbip->dbi_fp = fopen(nss->i->dbip->dbi_filename, "rb"); /* get read-only fp */
-	if (nss->i->rtip->rti_dbip->dbi_fp == NULL) {
+	nss->i->rtip->rti_dbip->i->dbi_fp = fopen(nss->i->dbip->dbi_filename, "rb"); /* get read-only fp */
+	if (nss->i->rtip->rti_dbip->i->dbi_fp == NULL) {
 	    rt_free_rti(nss->i->rtip);
 	    nss->i->rtip = RTI_NULL;
 	    return RTI_NULL;

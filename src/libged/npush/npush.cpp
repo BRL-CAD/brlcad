@@ -1448,14 +1448,14 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // names to not collide with any existing database names (or each other) we build up a set
     // of the current names:
     std::set<std::string> dbnames;
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
-	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_namep) {
-		std::string dpn(dp->d_namep);
-		dbnames.insert(dpn);
-	    }
+    {
+    struct directory *dp;
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+	if (dp->d_namep) {
+	    std::string dpn(dp->d_namep);
+	    dbnames.insert(dpn);
 	}
+    FOR_ALL_DIRECTORY_END;
     }
 
     // New names for copies are only required if we have non-unique mappings between directory

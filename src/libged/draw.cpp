@@ -46,6 +46,7 @@
 #include "rt/view.h"
 
 #include "ged/view.h"
+#include "../librt/librt_private.h"
 #include "./ged_private.h"
 
 static int
@@ -897,7 +898,7 @@ draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
 	    draw_walk_tree(path, tp->tr_b.tb_right, curr_mat, traverse_func, client_data, comb_inst_map);
 	    break;
 	case OP_DB_LEAF:
-	    if (UNLIKELY(dd->dbip->dbi_use_comb_instance_ids && cinst_map))
+	    if (UNLIKELY(dd->dbip->i->dbi_use_comb_instance_ids && cinst_map))
 		(*cinst_map)[std::string(tp->tr_l.tl_name)]++;
 	    if ((dp=db_lookup(dd->dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		return;
@@ -929,7 +930,7 @@ draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
 		if (!(dp->d_flags & RT_DIR_HIDDEN)) {
 		    db_add_node_to_full_path(path, dp);
 		    DB_FULL_PATH_SET_CUR_BOOL(path, tp->tr_op);
-		    if (UNLIKELY(dd->dbip->dbi_use_comb_instance_ids && cinst_map))
+		    if (UNLIKELY(dd->dbip->i->dbi_use_comb_instance_ids && cinst_map))
 			DB_FULL_PATH_SET_CUR_COMB_INST(path, (*cinst_map)[std::string(tp->tr_l.tl_name)]-1);
 		    if (!db_full_path_cyclic(path, NULL, 0)) {
 			/* Keep going */
@@ -989,7 +990,7 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
-	if (UNLIKELY(dd->dbip->dbi_use_comb_instance_ids)) {
+	if (UNLIKELY(dd->dbip->i->dbi_use_comb_instance_ids)) {
 	    std::unordered_map<std::string, int> cinst_map;
 	    draw_walk_tree(path, comb->tree, curr_mat, draw_gather_paths, client_data, (void *)&cinst_map);
 	} else {

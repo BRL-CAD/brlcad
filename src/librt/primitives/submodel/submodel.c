@@ -44,6 +44,7 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
+#include "librt_private.h"
 
 #define RT_SUBMODEL_O(m) bu_offsetof(struct rt_submodel_internal, m)
 
@@ -125,7 +126,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
      * Search dbi_client list for a reuse of an rt_i.
      * rtip's are registered there by db_clone_dbi().
      */
-    for (BU_PTBL_FOR(rtipp, (struct rt_i **), &sub_dbip->dbi_clients)) {
+    for (BU_PTBL_FOR(rtipp, (struct rt_i **), &sub_dbip->i->dbi_clients)) {
 	char *ttp;
 	RT_CK_RTI(*rtipp);
 	ttp = (*rtipp)->rti_treetop;

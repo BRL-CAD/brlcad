@@ -1500,7 +1500,7 @@ rt_arb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    int cflag = (dbip && dbip->dbi_version < 0) ? 1 : 0;
+    int cflag = (dbip && dbip->i->dbi_version < 0) ? 1 : 0;
     flip_fastf_float(vec, rp->s.s_values, 8, cflag);
 
     /*

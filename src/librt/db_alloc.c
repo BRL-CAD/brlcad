@@ -33,6 +33,7 @@
 #include "vmath.h"
 #include "rt/db4.h"
 #include "raytrace.h"
+#include "librt_private.h"
 
 
 /**
@@ -73,16 +74,16 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 	return -1;
     }
     while (1) {
-	len = rt_memalloc(&(dbip->dbi_freep), (unsigned)count);
+	len = rt_memalloc(&(dbip->i->dbi_freep), (unsigned)count);
 	if (len == 0L) {
 	    /* No contiguous free block, append to file */
-	    if ((dp->d_addr = dbip->dbi_eof) == RT_DIR_PHONY_ADDR) {
+	    if ((dp->d_addr = dbip->i->dbi_eof) == RT_DIR_PHONY_ADDR) {
 		bu_log("db_alloc: bad EOF\n");
 		return -1;
 	    }
 	    dp->d_len = count;
-	    dbip->dbi_eof += (b_off_t)(count * sizeof(union record));
-	    dbip->dbi_nrec += count;
+	    dbip->i->dbi_eof += (b_off_t)(count * sizeof(union record));
+	    dbip->i->dbi_nrec += count;
 	    break;
 	}
 	dp->d_addr = (b_off_t)(len * sizeof(union record));
@@ -147,10 +148,10 @@ db_delete(struct db_i *dbip, struct directory *dp)
 
     if (db_version(dbip) == 4) {
 	i = db_zapper(dbip, dp, 0);
-	rt_memfree(&(dbip->dbi_freep), (unsigned)dp->d_len, dp->d_addr/(sizeof(union record)));
+	rt_memfree(&(dbip->i->dbi_freep), (unsigned)dp->d_len, dp->d_addr/(sizeof(union record)));
     } else if (db_version(dbip) == 5) {
 	i = db5_write_free(dbip, dp, dp->d_len);
-	rt_memfree(&(dbip->dbi_freep), dp->d_len, dp->d_addr);
+	rt_memfree(&(dbip->i->dbi_freep), dp->d_len, dp->d_addr);
     } else {
 	bu_bomb("db_delete() unsupported database version\n");
     }

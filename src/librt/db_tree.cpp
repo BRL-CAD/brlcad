@@ -324,7 +324,7 @@ db_apply_state_from_memb2(struct db_tree_state *tsp, struct db_full_path *pathp,
     }
 
     db_add_node_to_full_path(pathp, mdp);
-    if (UNLIKELY(tsp->ts_dbip->dbi_use_comb_instance_ids && c_inst_map))
+    if (UNLIKELY(tsp->ts_dbip->i->dbi_use_comb_instance_ids && c_inst_map))
 	DB_FULL_PATH_SET_CUR_COMB_INST(pathp, (*c_inst_map)[std::string(tp->tr_l.tl_name)]-1);
 
     MAT_COPY(old_xlate, tsp->ts_mat);
@@ -371,11 +371,11 @@ db_apply_state_from_one_member2(
     switch (tp->tr_op) {
 
 	case OP_DB_LEAF:
-	    if (UNLIKELY(tsp->ts_dbip->dbi_use_comb_instance_ids && c_inst_map))
+	    if (UNLIKELY(tsp->ts_dbip->i->dbi_use_comb_instance_ids && c_inst_map))
 		(*c_inst_map)[std::string(tp->tr_l.tl_name)]++;
 	    if (!BU_STR_EQUAL(cp, tp->tr_l.tl_name))
 		return 0;		/* NO-OP */
-	    if (UNLIKELY(tsp->ts_dbip->dbi_use_comb_instance_ids && c_inst_map)) {
+	    if (UNLIKELY(tsp->ts_dbip->i->dbi_use_comb_instance_ids && c_inst_map)) {
 		if ((*c_inst_map)[std::string(tp->tr_l.tl_name)]-1 != target_inst)
 		    return 0;
 	    }
@@ -754,11 +754,11 @@ db_follow_path(
 	dp = new_path->fp_names[0];
 	RT_CK_DIR(dp);
 
-	if (tsp->ts_dbip->dbi_anroot) {
+	if (tsp->ts_dbip->i->dbi_anroot) {
 	    struct animate *anp;
 	    mat_t old_xlate, xmat;
 
-	    for (anp=tsp->ts_dbip->dbi_anroot; anp != ANIM_NULL; anp = anp->an_forw) {
+	    for (anp=tsp->ts_dbip->i->dbi_anroot; anp != ANIM_NULL; anp = anp->an_forw) {
 		RT_CK_ANIMATE(anp);
 		if (dp != anp->an_path.fp_names[0])
 		    continue;
@@ -787,7 +787,7 @@ db_follow_path(
 	/* j == depth is the last one, presumably a leaf */
 	if (j > (size_t)depth) break;
 	dp = new_path->fp_names[j];
-	if (UNLIKELY(tsp->ts_dbip->dbi_use_comb_instance_ids))
+	if (UNLIKELY(tsp->ts_dbip->i->dbi_use_comb_instance_ids))
 	    itarget = new_path->fp_cinst[j];
 	RT_CK_DIR(dp);
 
@@ -814,7 +814,7 @@ db_follow_path(
 	    goto fail;
 
 	/* Crawl tree searching for specified leaf */
-	if (UNLIKELY(tsp->ts_dbip->dbi_use_comb_instance_ids))
+	if (UNLIKELY(tsp->ts_dbip->i->dbi_use_comb_instance_ids))
 	    c_inst_map.clear();
 	if (db_apply_state_from_one_member2(tsp, total_path, dp->d_namep, 0, comb->tree, itarget, (void *)&c_inst_map) <= 0) {
 	    bu_log("db_follow_path() ERROR: unable to apply member %s state\n", dp->d_namep);
@@ -913,7 +913,7 @@ _db_recurse_subtree2(union tree *tp, struct db_tree_state *msp, struct db_full_p
     switch (tp->tr_op) {
 
 	case OP_DB_LEAF:
-	    if (UNLIKELY(msp->ts_dbip->dbi_use_comb_instance_ids && c_inst_map))
+	    if (UNLIKELY(msp->ts_dbip->i->dbi_use_comb_instance_ids && c_inst_map))
 		(*c_inst_map)[std::string(tp->tr_l.tl_name)]++;
 	    if (db_apply_state_from_memb2(&memb_state, pathp, tp, cmap) < 0) {
 		/* Lookup of this leaf failed, NOP it out. */
@@ -1926,7 +1926,7 @@ _db_walk_subtree(
 		ctsp->cts_s.ts_sofar |= TS_SOFAR_REGION;
 	    else
 		ctsp->cts_s.ts_sofar &= ~TS_SOFAR_REGION;
-	    if (UNLIKELY(ctsp->cts_s.ts_dbip->dbi_use_comb_instance_ids)) {
+	    if (UNLIKELY(ctsp->cts_s.ts_dbip->i->dbi_use_comb_instance_ids)) {
 		curtree = db_recurse2(&ctsp->cts_s, &ctsp->cts_p, region_start_statepp, client_data, cmap);
 	    } else {
 		curtree = db_recurse(&ctsp->cts_s, &ctsp->cts_p, region_start_statepp, client_data);
@@ -2027,7 +2027,7 @@ _db_walk_dispatcher(int cpu, void *arg)
 	/* Walk the full subtree now */
 	region_start_statep = (struct combined_tree_state *)0;
 
-	if (UNLIKELY(dbip && dbip->dbi_use_comb_instance_ids)) {
+	if (UNLIKELY(dbip && dbip->i->dbi_use_comb_instance_ids)) {
 	    std::unordered_map<std::string, int> c_inst_map;
 	    _db_walk_subtree(curtree, &region_start_statep, wps->reg_leaf_func, wps->client_data, resp, (void *)&c_inst_map);
 	} else {
@@ -2136,7 +2136,7 @@ db_walk_tree(struct db_i *dbip,
 	ts.ts_leaf_func = _db_gettree_leaf;
 
 	region_start_statep = (struct combined_tree_state *)0;
-	if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
+	if (UNLIKELY(dbip->i->dbi_use_comb_instance_ids)) {
 	    std::unordered_map<std::string, int> c_inst_map;
 	    curtree = db_recurse2(&ts, &path, &region_start_statep, client_data, (void *)&c_inst_map);
 	} else {

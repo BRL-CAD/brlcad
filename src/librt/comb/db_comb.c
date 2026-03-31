@@ -683,7 +683,7 @@ rt_comb_import4(
 
 	    tp->tr_l.tl_name = bu_strdup(namebuf);
 
-	    flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, (dbip && dbip->dbi_version < 0) ? 1 : 0);
+	    flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, (dbip && dbip->i->dbi_version < 0) ? 1 : 0);
 
 	    /* Verify that rotation part is pure rotation */
 	    if (fabs(diskmat[0]) > 1 || fabs(diskmat[1]) > 1 ||
@@ -765,7 +765,7 @@ rt_comb_import4(
     }
 
     if (comb->region_flag) {
-	if (!dbip || dbip->dbi_version < 0) {
+	if (!dbip || dbip->i->dbi_version < 0) {
 	    comb->region_id = flip_short(rp[0].c.c_regionid);
 	    comb->aircode = flip_short(rp[0].c.c_aircode);
 	    comb->GIFTmater = flip_short(rp[0].c.c_material);

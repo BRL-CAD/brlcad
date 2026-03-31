@@ -102,6 +102,7 @@
 #include <libdialect/routing.h>
 #include <libdialect/ortho.h>
 #include <libdialect/opts.h>
+#include "../../librt/librt_private.h"
 
 using namespace dialect;
 
@@ -230,29 +231,27 @@ static void build_id_maps(struct ged *gedp, graph_data *dag)
     if (!dag->ids)        dag->ids        = bu_hash_create(1);
 
     int next_id = 0;
-    for (int i = 0; i < RT_DBNHASH; ++i) {
-        for (struct directory *dp = gedp->dbip->dbi_Head[i];
-             dp != RT_DIR_NULL; dp = dp->d_forw) {
-            if (!bu_hash_get(dag->name_to_id,
-                             (uint8_t *)dp->d_namep,
-                             strlen(dp->d_namep)+1)) {
-                next_id++;
-		char ibuf[32];
-                snprintf(ibuf, sizeof(ibuf), "%d", next_id);
-                size_t slen = strlen(ibuf);
-                char *idstr = (char *)bu_malloc(slen + 1, "legacy id");
-                memcpy(idstr, ibuf, slen + 1); // includes '\0'
-                bu_hash_set(dag->name_to_id,
-                            (uint8_t *)dp->d_namep,
-                            strlen(dp->d_namep)+1, idstr);
-                bu_hash_set(dag->ids,
-                            (uint8_t *)idstr,
-                            strlen(idstr)+1,
-                            (void *)dp->d_namep);
-                }
-        }
-    }
-    dag->last_connref_id = gedp->dbip->dbi_nrec;
+    struct directory *dp;
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+        if (!bu_hash_get(dag->name_to_id,
+                         (uint8_t *)dp->d_namep,
+                         strlen(dp->d_namep)+1)) {
+            next_id++;
+	char ibuf[32];
+            snprintf(ibuf, sizeof(ibuf), "%d", next_id);
+            size_t slen = strlen(ibuf);
+            char *idstr = (char *)bu_malloc(slen + 1, "legacy id");
+            memcpy(idstr, ibuf, slen + 1); // includes '\0'
+            bu_hash_set(dag->name_to_id,
+                        (uint8_t *)dp->d_namep,
+                        strlen(dp->d_namep)+1, idstr);
+            bu_hash_set(dag->ids,
+                        (uint8_t *)idstr,
+                        strlen(idstr)+1,
+                        (void *)dp->d_namep);
+            }
+    FOR_ALL_DIRECTORY_END;
+    dag->last_connref_id = gedp->dbip->i->dbi_nrec;
 }
 
 /* Process a combination: ensure parent shape exists, flatten leaves, create child shapes + connectors immediately */
@@ -360,34 +359,32 @@ static int build_graph(struct ged *gedp, graph_data *dag)
     }
 
     /* Pass 1: create shapes for primitives (solids) and decorate all objects */
-    for (int i = 0; i < RT_DBNHASH; ++i) {
-        for (struct directory *dp = gedp->dbip->dbi_Head[i];
-             dp != RT_DIR_NULL; dp = dp->d_forw) {
+    struct directory *dp;
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
 
-            const char *id_str = (const char *)bu_hash_get(dag->name_to_id,
-                                 (uint8_t *)dp->d_namep,
-                                 strlen(dp->d_namep)+1);
-            if (!id_str) continue;
-            unsigned sid = (unsigned)atoi(id_str);
+        const char *id_str = (const char *)bu_hash_get(dag->name_to_id,
+                             (uint8_t *)dp->d_namep,
+                             strlen(dp->d_namep)+1);
+        if (!id_str) continue;
+        unsigned sid = (unsigned)atoi(id_str);
 
-            decorate(dag, dp->d_namep, dp->d_flags);
+        decorate(dag, dp->d_namep, dp->d_flags);
 
-            if (dp->d_flags & RT_DIR_SOLID) {
-                (void)create_shape_if_absent(dag, sid);
-            }
+        if (dp->d_flags & RT_DIR_SOLID) {
+            (void)create_shape_if_absent(dag, sid);
         }
-    }
+    FOR_ALL_DIRECTORY_END;
 
     dag->router->processTransaction(); /* shapes committed */
 
     /* Pass 2: process combinations, creating edges immediately */
-    for (int i = 0; i < RT_DBNHASH; ++i) {
-        for (struct directory *dp = gedp->dbip->dbi_Head[i];
-             dp != RT_DIR_NULL; dp = dp->d_forw) {
-            if (dp->d_flags & RT_DIR_COMB) {
-                process_comb(gedp, dp, dag);
-            }
+    {
+    struct directory *dp;
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+        if (dp->d_flags & RT_DIR_COMB) {
+            process_comb(gedp, dp, dag);
         }
+    FOR_ALL_DIRECTORY_END;
     }
 
     dag->router->processTransaction(); /* connectors committed */
@@ -632,45 +629,44 @@ hl_assign(HLContext &ctx, const std::string &n)
 static void
 hl_scan_db(struct ged *gedp, HLContext &ctx)
 {
-    for (int i = 0; i < RT_DBNHASH; ++i) {
-	for (struct directory *dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+    struct directory *dp;
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
 
-	    ctx.type_flags[dp->d_namep] = dp->d_flags;
-	    hl_assign(ctx, dp->d_namep);
+	ctx.type_flags[dp->d_namep] = dp->d_flags;
+	hl_assign(ctx, dp->d_namep);
 
-	    if (dp->d_flags & RT_DIR_COMB) {
-		struct rt_db_internal intern;
-		if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
-		    continue;
-		struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
-		if (comb->tree) {
+	if (dp->d_flags & RT_DIR_COMB) {
+	    struct rt_db_internal intern;
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+		continue;
+	    struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
+	    if (comb->tree) {
+		if (db_ck_v4gift_tree(comb->tree) < 0) {
+		    db_non_union_push(comb->tree, &rt_uniresource);
 		    if (db_ck_v4gift_tree(comb->tree) < 0) {
-			db_non_union_push(comb->tree, &rt_uniresource);
-			if (db_ck_v4gift_tree(comb->tree) < 0) {
-			    rt_db_free_internal(&intern);
-			    continue;
-			}
-		    }
-		    size_t leaf_cnt = db_tree_nleaves(comb->tree);
-		    if (leaf_cnt > 0) {
-			struct rt_tree_array *rta = (struct rt_tree_array *)bu_calloc(
-				leaf_cnt, sizeof(struct rt_tree_array), "hl rta");
-			size_t actual = (struct rt_tree_array *)db_flatten_tree(rta,
-				comb->tree, OP_UNION, 1, &rt_uniresource) - rta;
-			BU_ASSERT(actual == leaf_cnt);
-			comb->tree = TREE_NULL;
-			auto &vec = ctx.children[dp->d_namep];
-			for (size_t k = 0; k < actual; ++k) {
-			    vec.push_back(rta[k].tl_tree->tr_l.tl_name);
-			    db_free_tree(rta[k].tl_tree, &rt_uniresource);
-			}
-			bu_free(rta, "hl rta free");
+			rt_db_free_internal(&intern);
+			continue;
 		    }
 		}
-		rt_db_free_internal(&intern);
+		size_t leaf_cnt = db_tree_nleaves(comb->tree);
+		if (leaf_cnt > 0) {
+		    struct rt_tree_array *rta = (struct rt_tree_array *)bu_calloc(
+			    leaf_cnt, sizeof(struct rt_tree_array), "hl rta");
+		    size_t actual = (struct rt_tree_array *)db_flatten_tree(rta,
+			    comb->tree, OP_UNION, 1, &rt_uniresource) - rta;
+		    BU_ASSERT(actual == leaf_cnt);
+		    comb->tree = TREE_NULL;
+		    auto &vec = ctx.children[dp->d_namep];
+		    for (size_t k = 0; k < actual; ++k) {
+			vec.push_back(rta[k].tl_tree->tr_l.tl_name);
+			db_free_tree(rta[k].tl_tree, &rt_uniresource);
+		    }
+		    bu_free(rta, "hl rta free");
+		}
 	    }
+	    rt_db_free_internal(&intern);
 	}
-    }
+    FOR_ALL_DIRECTORY_END;
 }
 
 static void

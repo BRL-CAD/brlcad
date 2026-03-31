@@ -53,10 +53,10 @@ db_open_inmem(void)
     register int i;
 
     BU_ALLOC(dbip, struct db_i);
-    dbip->dbi_eof = (b_off_t)-1L;
-    dbip->dbi_fp = NULL;
-    dbip->dbi_mf = NULL;
-    dbip->i = NULL;
+    dbip->i = db_i_internal_create();
+    dbip->i->dbi_eof = (b_off_t)-1L;
+    dbip->i->dbi_fp = NULL;
+    dbip->i->dbi_mf = NULL;
 
     /* XXX it "should" be safe and recommended to set this to 1 as it
      * merely toggles whether the data can be written to _disk_.  the
@@ -67,38 +67,43 @@ db_open_inmem(void)
 
     /* Initialize fields */
     for (i = 0; i < RT_DBNHASH; i++) {
-	dbip->dbi_Head[i] = RT_DIR_NULL;
+	dbip->i->dbi_Head[i] = RT_DIR_NULL;
     }
 
     dbip->dbi_local2base = 1.0;		/* mm */
     dbip->dbi_base2local = 1.0;
     dbip->dbi_title = bu_strdup(DEFAULT_DB_TITLE);
-    dbip->dbi_uses = 1;
+    dbip->i->dbi_uses = 1;
     dbip->dbi_filename = NULL;
     dbip->dbi_filepath = NULL;
-    dbip->dbi_version = 5;
+    dbip->i->dbi_version = 5;
 
     /* XXX might want/need to stash an ident record so it's valid.
      * see db_fwrite_ident();
      */
 
-    bu_ptbl_init(&dbip->dbi_clients, 128, "dbi_clients[]");
-    bu_ptbl_init(&dbip->dbi_changed_clbks , 8, "dbi_changed_clbks]");
-    bu_ptbl_init(&dbip->dbi_update_nref_clbks, 8, "dbi_update_nref_clbks");
+    bu_ptbl_init(&dbip->i->dbi_clients, 128, "dbi_clients[]");
+    bu_ptbl_init(&dbip->i->dbi_changed_clbks , 8, "dbi_changed_clbks]");
+    bu_ptbl_init(&dbip->i->dbi_update_nref_clbks, 8, "dbi_update_nref_clbks");
 
-    dbip->dbi_use_comb_instance_ids = 0;
+    dbip->i->dbi_use_comb_instance_ids = 0;
+    const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
+    if (BU_STR_EQUAL(need_comb_inst, "1")) {
+	dbip->i->dbi_use_comb_instance_ids = 1;
+    }
+
     dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
 
     /* These wdb modes aren't valid for an in-mem db */
-    dbip->dbi_wdbp = NULL;
-    dbip->dbi_wdbp_a = NULL;
+    dbip->i->dbi_wdbp = NULL;
+    dbip->i->dbi_wdbp_a = NULL;
 
     /* Set up the valid in-mem wdb modes */
-    BU_ALLOC(dbip->dbi_wdbp_inmem, struct rt_wdb);
-    wdb_init(dbip->dbi_wdbp_inmem, dbip, RT_WDB_TYPE_DB_INMEM);
+    BU_ALLOC(dbip->i->dbi_wdbp_inmem, struct rt_wdb);
+    wdb_init(dbip->i->dbi_wdbp_inmem, dbip, RT_WDB_TYPE_DB_INMEM);
 
-    BU_ALLOC(dbip->dbi_wdbp_inmem_a, struct rt_wdb);
-    wdb_init(dbip->dbi_wdbp_inmem_a, dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
+    BU_ALLOC(dbip->i->dbi_wdbp_inmem_a, struct rt_wdb);
+    wdb_init(dbip->i->dbi_wdbp_inmem_a, dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
 
     return dbip;
 }

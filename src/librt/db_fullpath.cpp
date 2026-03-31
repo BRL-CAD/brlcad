@@ -386,7 +386,7 @@ _db_comb_instance(matp_t m, int *icnt, int *bval, int bool_val, const struct db_
 	case OP_DB_LEAF:
 	    if (!BU_STR_EQUAL(cp, tp->tr_l.tl_name))
 		return 0;               /* NO-OP */
-	    if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
+	    if (UNLIKELY(dbip->i->dbi_use_comb_instance_ids)) {
 		// Have a name match, is this the right instance
 		if (itarget == *icnt) {
 		    (*bval) = bool_val;
@@ -527,7 +527,7 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 	int bool_op = 2; // default to union
 	int comb_instance_index = 0;
 	dp = db_lookup(dbip, cp, LOOKUP_QUIET);
-	if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
+	if (UNLIKELY(dbip->i->dbi_use_comb_instance_ids)) {
 	    if (dp == RT_DIR_NULL)
 		dp = dp_instance(&comb_instance_index, dbip, cp);
 	}
@@ -593,7 +593,7 @@ db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char
 	int bool_op = 2; // default to union
 	int comb_instance_index = 0;
 	dp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
-	if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
+	if (UNLIKELY(dbip->i->dbi_use_comb_instance_ids)) {
 	    if (dp == RT_DIR_NULL)
 		dp = dp_instance(&comb_instance_index, dbip, argv[i]);
 	}
@@ -925,7 +925,7 @@ db_fp_op(const struct db_full_path *pp,
 	if (!cdp || !dp)
 	    return OP_NOP;
 	int c_op = OP_NOP;
-	if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
+	if (UNLIKELY(dbip->i->dbi_use_comb_instance_ids)) {
 	    if (!_comb_instance_bool_op(&c_op, dbip, cdp, dp, resp, pp->fp_cinst[i]))
 		return OP_NOP;
 	}

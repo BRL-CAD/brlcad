@@ -46,6 +46,7 @@
 
 #include "optical.h"
 #include "optical/plastic.h"
+#include "librt_private.h"
 
 
 extern void rt_ck(struct rt_i *rtip);
@@ -135,12 +136,11 @@ rt_new_rti(struct db_i *dbip)
      * called on another rtip of the same dbip before this rtip is
      * done with all its treewalking.
      */
-    for (i=0; i < RT_DBNHASH; i++) {
+    {
 	struct directory *dp;
-
-	dp = rtip->rti_dbip->dbi_Head[i];
-	for (; dp != RT_DIR_NULL; dp = dp->d_forw)
+	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
 	    dp->d_uses = 0;
+	FOR_ALL_DIRECTORY_END;
     }
 
     return rtip;
@@ -212,7 +212,7 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
 
     if (RT_G_DEBUG&RT_DEBUG_REGIONS) bu_log("rt_prep_parallel(%s, %d, ncpu=%d) START\n",
 					 rtip->rti_dbip->dbi_filename,
-					 rtip->rti_dbip->dbi_uses, ncpu);
+					 rtip->rti_dbip->i->dbi_uses, ncpu);
 
     bu_semaphore_acquire(RT_SEM_RESULTS);	/* start critical section */
 
@@ -233,7 +233,7 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
     if (!rtip->needprep) {
 	bu_log("WARNING: rt_prep_parallel(%s, %d) invoked a second time, ignored",
 	       rtip->rti_dbip->dbi_filename,
-	       rtip->rti_dbip->dbi_uses);
+	       rtip->rti_dbip->i->dbi_uses);
 	bu_semaphore_release(RT_SEM_RESULTS);
 	return;
     }
@@ -242,7 +242,7 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
 	if (rtip->rti_air_discards > 0) {
 	    bu_log("rt_prep_parallel(%s, %d): %zu primitives discarded due to air regions\n",
 		   rtip->rti_dbip->dbi_filename,
-		   rtip->rti_dbip->dbi_uses,
+		   rtip->rti_dbip->i->dbi_uses,
 		   rtip->rti_air_discards);
 	}
 	bu_log("rt_prep_parallel:  no primitives left to prep\n");
@@ -295,7 +295,7 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
     if (RT_G_DEBUG&RT_DEBUG_REGIONS)
 	bu_log("rt_prep_parallel(%s, %d) about to optimize regions\n",
 	       rtip->rti_dbip->dbi_filename,
-	       rtip->rti_dbip->dbi_uses);
+	       rtip->rti_dbip->i->dbi_uses);
 
     for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
 	/* Ensure bit numbers are unique */
@@ -369,7 +369,7 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
     if (RT_G_DEBUG & (RT_DEBUG_DB|RT_DEBUG_SOLIDS)) {
 	bu_log("rt_prep_parallel(%s, %d) printing number of primitives by type\n",
 	       rtip->rti_dbip->dbi_filename,
-	       rtip->rti_dbip->dbi_uses);
+	       rtip->rti_dbip->i->dbi_uses);
 	for (i=1; i <= ID_MAX_SOLID; i++) {
 	    bu_log("%5zu %s (%d)\n", rtip->rti_nsol_by_type[i], OBJ[i].ft_name, i);
 	}
@@ -450,7 +450,7 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
     if (RT_G_DEBUG&RT_DEBUG_REGIONS) {
 	bu_log("rt_prep_parallel(%s, %d, ncpu=%d) FINISH\n",
 	       rtip->rti_dbip->dbi_filename,
-	       rtip->rti_dbip->dbi_uses, ncpu);
+	       rtip->rti_dbip->i->dbi_uses, ncpu);
     }
 }
 
@@ -1272,13 +1272,10 @@ rt_clean(struct rt_i *rtip)
 	 * rt_find_identical_solid() working properly as d_uses goes
 	 * up.
 	 */
-	for (i=0; i < RT_DBNHASH; i++) {
-	    struct directory *dp;
-
-	    dp = rtip->rti_dbip->dbi_Head[i];
-	    for (; dp != RT_DIR_NULL; dp = dp->d_forw)
-		dp->d_uses = 0;
-	}
+	struct directory *dp;
+	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
+	    dp->d_uses = 0;
+	FOR_ALL_DIRECTORY_END;
     }
 
     bu_ptbl_reset(&rtip->delete_regs);
@@ -1425,7 +1422,7 @@ rt_find_path(struct db_i *dbip,
 
     switch (tp->tr_op) {
 	case OP_DB_LEAF:
-	    if (UNLIKELY(dbip->dbi_use_comb_instance_ids && c_inst_map))
+	    if (UNLIKELY(dbip->i->dbi_use_comb_instance_ids && c_inst_map))
 		(*c_inst_map)[std::string(tp->tr_l.tl_name)]++;
 	    dp = db_lookup(dbip, tp->tr_l.tl_name, 1);
 	    if (dp == RT_DIR_NULL) {
@@ -1433,7 +1430,7 @@ rt_find_path(struct db_i *dbip,
 		return;
 	    }
 	    db_add_node_to_full_path(*curr_path, dp);
-	    if (UNLIKELY(dbip->dbi_use_comb_instance_ids && c_inst_map))
+	    if (UNLIKELY(dbip->i->dbi_use_comb_instance_ids && c_inst_map))
 		DB_FULL_PATH_SET_CUR_COMB_INST(*curr_path, (*c_inst_map)[std::string(tp->tr_l.tl_name)]-1);
 	    if (dp == end) {
 		bu_ptbl_ins(paths, (long *)(*curr_path));

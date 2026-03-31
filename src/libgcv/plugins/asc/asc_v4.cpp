@@ -34,6 +34,7 @@
 #include "wdb.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
+#include "../../../librt/librt_private.h"
 
 
 #define LSEG 'L'
@@ -2573,7 +2574,7 @@ asc_write_v4(
 
     struct ascv4_wstate *s = ascv4_wcreate();
 
-    s->ifp = c->dbip->dbi_fp;
+    s->ifp = c->dbip->i->dbi_fp;
 
     if (!s->ifp) {
 	bu_log("Could not open %s for reading.\n", c->dbip->dbi_filename);

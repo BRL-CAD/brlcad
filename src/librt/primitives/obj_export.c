@@ -22,6 +22,7 @@
 
 #include "bn.h"
 #include "raytrace.h"
+#include "librt_private.h"
 
 
 int
@@ -47,7 +48,7 @@ rt_obj_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     if (!ft)
 	return -3;
 
-    if (dbip->dbi_version < 5) {
+    if (dbip->i->dbi_version < 5) {
 	export_func = ft->ft_export4;
     } else {
 	export_func = ft->ft_export5;

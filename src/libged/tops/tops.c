@@ -37,7 +37,6 @@ int
 ged_tops_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    int i;
     struct directory **dirp;
     struct directory **dirp0 = (struct directory **)NULL;
     int c;
@@ -87,16 +86,12 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
     dirp0 = dirp;
 
     if (db_version(gedp->dbip) < 5) {
-	for (i = 0; i < RT_DBNHASH; i++)
-	    for (dp = gedp->dbip->dbi_Head[i];
-		 dp != RT_DIR_NULL;
-		 dp = dp->d_forw) {
-		if (dp->d_nref == 0)
-		    *dirp++ = dp;
-	    }
+	FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+	    if (dp->d_nref == 0)
+		*dirp++ = dp;
+	FOR_ALL_DIRECTORY_END;
     } else {
-	for (i = 0; i < RT_DBNHASH; i++)
-	    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
 
 		if (dp->d_nref != 0) {
 		    continue;
@@ -117,7 +112,7 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
 		    *dirp++ = dp;
 
 		}
-	    }
+	    FOR_ALL_DIRECTORY_END;
     }
 
     _ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dirp - dirp0), no_decorate, 0);

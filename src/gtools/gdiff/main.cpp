@@ -99,28 +99,7 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 	struct bu_ptbl diff3_results;
 	struct db_i *inmem_dbip;
 	BU_PTBL_INIT(&diff3_results);
-	BU_GET(inmem_dbip, struct db_i);
-	inmem_dbip->dbi_eof = (b_off_t)-1L;
-	inmem_dbip->dbi_fp = NULL;
-	inmem_dbip->dbi_mf = NULL;
-	inmem_dbip->dbi_read_only = 0;
-	inmem_dbip->dbi_use_comb_instance_ids = 0;
-
-	/* Initialize fields */
-	for (i = 0; i <RT_DBNHASH; i++) {
-	    inmem_dbip->dbi_Head[i] = RT_DIR_NULL;
-	}
-
-	inmem_dbip->dbi_local2base = 1.0;         /* mm */
-	inmem_dbip->dbi_base2local = 1.0;
-	inmem_dbip->dbi_title = bu_strdup("Untitled BRL-CAD Database");
-	inmem_dbip->dbi_uses = 1;
-	inmem_dbip->dbi_filename = NULL;
-	inmem_dbip->dbi_filepath = NULL;
-	inmem_dbip->dbi_version = 5;
-
-	bu_ptbl_init(&inmem_dbip->dbi_clients, 128, "dbi_clients[]");
-	inmem_dbip->dbi_magic = DBI_MAGIC;                /* Now it's valid */
+	inmem_dbip = db_open_inmem();
 
 	(void)db_diff3(left_dbip, inmem_dbip, right_dbip, state->diff_tol, DB_COMPARE_ALL, &diff3_results);
 
@@ -160,14 +139,7 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 
 	(void)diff3_merge(left_dbip, inmem_dbip, right_dbip, state, &diff3_results);
 
-	bu_ptbl_free(&inmem_dbip->dbi_clients);
-	for (i = 0; i < (int)BU_PTBL_LEN(&diff3_results); i++) {
-	    struct diff_result *dr = (struct diff_result *)BU_PTBL_GET(&diff3_results, i);
-	    diff_free_result(dr);
-	    BU_PUT(dr, struct diff_result);
-	}
-	bu_ptbl_free(&diff3_results);
-	BU_PUT(inmem_dbip, struct db_i);
+	db_close(inmem_dbip);
     }
 
     for (i = 0; i < (int)BU_PTBL_LEN(&results); i++) {

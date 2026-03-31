@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "../../librt/librt_private.h"
 
 #include "../ged_private.h"
 
@@ -68,7 +69,7 @@ Free_uses(struct db_i *dbip)
 	struct directory *dp, *nextdp;
 	struct object_use *use;
 
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL;) {
+	for (dp = dbip->i->dbi_Head[i]; dp != RT_DIR_NULL;) {
 	    nextdp = dp->d_forw;
 
 	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB))) {
@@ -463,71 +464,67 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Initialize use and reference counts of all directory entries */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
+    {
+    struct directory *dp;
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+	if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
+	    continue;
 
-	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
-		continue;
-
-	    dp->d_uses = 0;
-	    dp->d_nref = 0;
-	}
+	dp->d_uses = 0;
+	dp->d_nref = 0;
+    FOR_ALL_DIRECTORY_END;
     }
 
     /* Count uses in the tree being pushed (updates dp->d_uses) */
     db_functree(gedp->dbip, old_dp, increment_uses, increment_uses, &rt_uniresource, NULL);
 
     /* Do a simple reference count to find top level objects */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
+    {
+    struct directory *dp;
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+	if (dp->d_flags & RT_DIR_SOLID)
+	    continue;
 
-	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_flags & RT_DIR_SOLID)
-		continue;
+	if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
+	    continue;
 
-	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
-		continue;
-
-	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting.\n");
-		return BRLCAD_ERROR;
-	    }
-	    comb = (struct rt_comb_internal *)intern.idb_ptr;
-	    if (comb->tree)
-		db_tree_funcleaf(gedp->dbip, comb, comb->tree, Do_ref_incr,
-				 (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL);
-	    rt_db_free_internal(&intern);
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting.\n");
+	    return BRLCAD_ERROR;
 	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	if (comb->tree)
+	    db_tree_funcleaf(gedp->dbip, comb, comb->tree, Do_ref_incr,
+			     (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL);
+	rt_db_free_internal(&intern);
+    FOR_ALL_DIRECTORY_END;
     }
 
     /* anything with zero references is a tree top */
     bu_ptbl_init(&tops, 0, "tops for xpush");
-    for (i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
+    {
+    struct directory *dp;
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+	if (dp->d_flags & RT_DIR_SOLID)
+	    continue;
 
-	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_flags & RT_DIR_SOLID)
-		continue;
+	if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
+	    continue;
 
-	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
-		continue;
-
-	    if (dp->d_nref == 0)
-		bu_ptbl_ins(&tops, (long *)dp);
-	}
+	if (dp->d_nref == 0)
+	    bu_ptbl_ins(&tops, (long *)dp);
+    FOR_ALL_DIRECTORY_END;
     }
 
     /* now re-zero the reference counts */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
+    {
+    struct directory *dp;
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+	if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
+	    continue;
 
-	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
-		continue;
-
-	    dp->d_nref = 0;
-	}
+	dp->d_nref = 0;
+    FOR_ALL_DIRECTORY_END;
     }
 
     /* accurately count references in entire model */

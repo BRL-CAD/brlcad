@@ -22,6 +22,7 @@
 
 #include "bn.h"
 #include "raytrace.h"
+#include "librt_private.h"
 
 
 int
@@ -47,7 +48,7 @@ rt_obj_import(struct rt_db_internal *ip, const struct bu_external *ep, const mat
     if (!ft)
 	return -3;
 
-    if (dbip->dbi_version < 5) {
+    if (dbip->i->dbi_version < 5) {
 	import = ft->ft_import4;
     } else {
 	import = ft->ft_import5;

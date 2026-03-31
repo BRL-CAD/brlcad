@@ -190,7 +190,7 @@ wdb_find_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     const char *argv[])
 {
-    int i, k;
+    int k;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb=(struct rt_comb_internal *)NULL;
@@ -224,35 +224,33 @@ wdb_find_cmd(struct rt_wdb *wdbp,
     argv += (bu_optind - 1);
 
     /* Examine all COMB nodes */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & RT_DIR_COMB) ||
-		(!aflag && (dp->d_flags & RT_DIR_HIDDEN)))
-		continue;
+    FOR_ALL_DIRECTORY_START(dp, wdbp->dbip)
+	if (!(dp->d_flags & RT_DIR_COMB) ||
+	    (!aflag && (dp->d_flags & RT_DIR_HIDDEN)))
+	    continue;
 
-	    if (rt_db_get_internal(&intern,
-				   dp,
-				   wdbp->dbip,
-				   (fastf_t *)NULL,
-				   &rt_uniresource) < 0) {
-		Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database read error, aborting", (char *)NULL);
-		return TCL_ERROR;
-	    }
-
-	    comb = (struct rt_comb_internal *)intern.idb_ptr;
-	    for (k = 1; k < argc; k++)
-		db_tree_funcleaf(wdbp->dbip,
-				 comb,
-				 comb->tree,
-				 wdb_find_ref,
-				 (void *)argv[k],
-				 (void *)dp->d_namep,
-				 (void *)wdbp->wdb_interp,
-				 (void *)NULL);
-
-	    rt_db_free_internal(&intern);
+	if (rt_db_get_internal(&intern,
+			       dp,
+			       wdbp->dbip,
+			       (fastf_t *)NULL,
+			       &rt_uniresource) < 0) {
+	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database read error, aborting", (char *)NULL);
+	    return TCL_ERROR;
 	}
-    }
+
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	for (k = 1; k < argc; k++)
+	    db_tree_funcleaf(wdbp->dbip,
+			     comb,
+			     comb->tree,
+			     wdb_find_ref,
+			     (void *)argv[k],
+			     (void *)dp->d_namep,
+			     (void *)wdbp->wdb_interp,
+			     (void *)NULL);
+
+	rt_db_free_internal(&intern);
+    FOR_ALL_DIRECTORY_END;
 
     return TCL_OK;
 }
@@ -965,7 +963,6 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     const char *argv[])
 {
-    int i;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -993,57 +990,55 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
     BU_LIST_INIT(&headIdName.l);
 
     /* For all regions not hidden */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    int found = 0;
+    FOR_ALL_DIRECTORY_START(dp, wdbp->dbip)
+	int found = 0;
 
-	    if (!(dp->d_flags & RT_DIR_REGION) ||
-		(dp->d_flags & RT_DIR_HIDDEN))
-		continue;
+	if (!(dp->d_flags & RT_DIR_REGION) ||
+	    (dp->d_flags & RT_DIR_HIDDEN))
+	    continue;
 
-	    if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-		bu_vls_init(&vls);
-		bu_vls_strcat(&vls, "Database read error, aborting");
-		Tcl_SetResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls), TCL_VOLATILE);
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	    }
+	if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    bu_vls_init(&vls);
+	    bu_vls_strcat(&vls, "Database read error, aborting");
+	    Tcl_SetResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls), TCL_VOLATILE);
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	}
 
-	    comb = (struct rt_comb_internal *)intern.idb_ptr;
-	    /* check to see if the region id or air code matches one in our list */
-	    for (BU_LIST_FOR (itnp, wdb_id_to_names, &headIdName.l)) {
-		if ((comb->region_id == itnp->id) ||
-		    (comb->aircode != 0 && -comb->aircode == itnp->id)) {
-		    /* add region name to our name list for this region */
-		    BU_ALLOC(inp, struct wdb_id_names);
-		    bu_vls_init(&inp->name);
-		    bu_vls_strcpy(&inp->name, dp->d_namep);
-		    BU_LIST_INSERT(&itnp->headName.l, &inp->l);
-		    found = 1;
-		    break;
-		}
-	    }
-
-	    if (!found) {
-		/* create new id_to_names node */
-		BU_ALLOC(itnp, struct wdb_id_to_names);
-		if (0 < comb->region_id)
-		    itnp->id = comb->region_id;
-		else
-		    itnp->id = -comb->aircode;
-		BU_LIST_INSERT(&headIdName.l, &itnp->l);
-		BU_LIST_INIT(&itnp->headName.l);
-
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	/* check to see if the region id or air code matches one in our list */
+	for (BU_LIST_FOR (itnp, wdb_id_to_names, &headIdName.l)) {
+	    if ((comb->region_id == itnp->id) ||
+		(comb->aircode != 0 && -comb->aircode == itnp->id)) {
 		/* add region name to our name list for this region */
 		BU_ALLOC(inp, struct wdb_id_names);
 		bu_vls_init(&inp->name);
 		bu_vls_strcpy(&inp->name, dp->d_namep);
 		BU_LIST_INSERT(&itnp->headName.l, &inp->l);
+		found = 1;
+		break;
 	    }
-
-	    rt_db_free_internal(&intern);
 	}
-    }
+
+	if (!found) {
+	    /* create new id_to_names node */
+	    BU_ALLOC(itnp, struct wdb_id_to_names);
+	    if (0 < comb->region_id)
+		itnp->id = comb->region_id;
+	    else
+		itnp->id = -comb->aircode;
+	    BU_LIST_INSERT(&headIdName.l, &itnp->l);
+	    BU_LIST_INIT(&itnp->headName.l);
+
+	    /* add region name to our name list for this region */
+	    BU_ALLOC(inp, struct wdb_id_names);
+	    bu_vls_init(&inp->name);
+	    bu_vls_strcpy(&inp->name, dp->d_namep);
+	    BU_LIST_INSERT(&itnp->headName.l, &inp->l);
+	}
+
+	rt_db_free_internal(&intern);
+    FOR_ALL_DIRECTORY_END;
 
     bu_vls_init(&vls);
 

@@ -45,56 +45,52 @@ db_mesh_lod_init(struct db_i *dbip, int verbose) {
     dbip->i->mesh_c_completed = 0;
     dbip->i->mesh_c_target = 0;
     struct directory *dp;
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
-		continue;
-	    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT)
-		dbip->i->mesh_c_target++;
-	}
-    }
+    FOR_ALL_DIRECTORY_START(dp, dbip)
+	if (dp->d_addr == RT_DIR_PHONY_ADDR)
+	    continue;
+	if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT)
+	    dbip->i->mesh_c_target++;
+    FOR_ALL_DIRECTORY_END;
 
     // Total target count is known, proceed
     start = bu_gettime();
     overall_start = start;
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
-		continue;
-	    if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
-		continue;
+    FOR_ALL_DIRECTORY_START(dp, dbip)
+	if (dp->d_addr == RT_DIR_PHONY_ADDR)
+	    continue;
+	if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
+	    continue;
 
-	    // If we already have a match, assume it is valid.  Resetting
-	    // invalid data in the cache is outside the scope of cache init.
-	    unsigned long long key = bv_mesh_lod_key_get(dbip->i->mesh_c, dp->d_namep);
-	    if (key)
-		continue;
+	// If we already have a match, assume it is valid.  Resetting
+	// invalid data in the cache is outside the scope of cache init.
+	unsigned long long key = bv_mesh_lod_key_get(dbip->i->mesh_c, dp->d_namep);
+	if (key)
+	    continue;
 
-	    if (verbose > 1)
-		bu_log("Processing(%d):  %s\n", dbip->i->mesh_c_completed+1, dp->d_namep);
+	if (verbose > 1)
+	    bu_log("Processing(%d):  %s\n", dbip->i->mesh_c_completed+1, dp->d_namep);
 
-	    // Process object
-	    db_mesh_lod_update(dbip, dp->d_namep);
+	// Process object
+	db_mesh_lod_update(dbip, dp->d_namep);
 
-	    // Increment completed count
-	    dbip->i->mesh_c_completed++;
+	// Increment completed count
+	dbip->i->mesh_c_completed++;
 
-	    elapsed = bu_gettime() - start;
-	    seconds = elapsed / 1000000.0;
+	elapsed = bu_gettime() - start;
+	seconds = elapsed / 1000000.0;
 
-	    if (verbose > 1)
-		bu_log("Completed. (%g seconds)", seconds);
+	if (verbose > 1)
+	    bu_log("Completed. (%g seconds)", seconds);
 
-	    if (seconds > 5.0) {
-		if (verbose) {
-		    elapsed = bu_gettime() - overall_start;
-		    seconds = elapsed / 1000000.0;
-		    bu_log("LoD cache processing (%g seconds): completed %d of %d BoTs\n", seconds, dbip->i->mesh_c_completed, dbip->i->mesh_c_target);
-		}
-		start = bu_gettime();
+	if (seconds > 5.0) {
+	    if (verbose) {
+		elapsed = bu_gettime() - overall_start;
+		seconds = elapsed / 1000000.0;
+		bu_log("LoD cache processing (%g seconds): completed %d of %d BoTs\n", seconds, dbip->i->mesh_c_completed, dbip->i->mesh_c_target);
 	    }
+	    start = bu_gettime();
 	}
-    }
+    FOR_ALL_DIRECTORY_END;
 
     elapsed = bu_gettime() - overall_start;
     int rseconds = elapsed / 1000000;

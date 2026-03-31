@@ -311,7 +311,7 @@ main(int argc, char *argv[])
 #else
     for (int i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = db_dirptr(dbip, i); dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_addr == RT_DIR_PHONY_ADDR)
 		continue;
 	    if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
