@@ -31,6 +31,8 @@
 __BEGIN_DECLS
 
 extern int mged_db_search_callback(int, const char **, void *, void*);
+extern int mged_search_pre_clbk(int, const char **, void *, void*);
+extern int mged_search_post_clbk(int, const char **, void *, void*);
 extern int mged_clone_during_callback(int, const char **, void *, void*);
 
 

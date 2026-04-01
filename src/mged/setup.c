@@ -54,6 +54,10 @@ extern int mged_post_opendb_clbk(int ac, const char **av, void *gedp, void *ctx)
 extern int mged_pre_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
 extern int mged_post_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
 
+/* Defined in cmd.cpp */
+extern int mged_search_pre_clbk(int ac, const char **av, void *gedp, void *s);
+extern int mged_search_post_clbk(int ac, const char **av, void *gedp, void *s);
+
 // FIXME: Global
 extern Tk_Window tkwin; /* in cmd.c */
 
@@ -481,7 +485,6 @@ mged_refresh_handler(void *clientdata)
     refresh(s);
 }
 
-
 /*
  * Initialize mged, configure the path, set up the tcl interpreter.
  */
@@ -506,6 +509,10 @@ mged_setup(struct mged_state *s)
 
     if (s->interp != NULL)
 	Tcl_DeleteInterp(s->interp);
+
+    /* Initialise search_interp to NULL; it will be created/destroyed around
+     * each search command by mged_search_pre_clbk / mged_search_post_clbk. */
+    s->search_interp = NULL;
 
     /* Create the interpreter */
     s->interp = Tcl_CreateInterp();
@@ -537,7 +544,9 @@ mged_setup(struct mged_state *s)
     ged_clbk_set(s->gedp, "closedb", BU_CLBK_POST, &mged_post_closedb_clbk, (void *)&mged_global_db_ctx);
 
     // Register during-execution callback function for search command
-    ged_clbk_set(s->gedp, "search", BU_CLBK_DURING, &mged_db_search_callback, (void *)s);
+    ged_clbk_set(s->gedp, "search", BU_CLBK_PRE,    &mged_search_pre_clbk,      (void *)s);
+    ged_clbk_set(s->gedp, "search", BU_CLBK_DURING, &mged_db_search_callback,   (void *)s);
+    ged_clbk_set(s->gedp, "search", BU_CLBK_POST,   &mged_search_post_clbk,     (void *)s);
     ged_clbk_set(s->gedp, "clone",  BU_CLBK_DURING, &mged_clone_during_callback, (void *)s);
 
     struct tclcad_io_data *t_iod = tclcad_create_io_data();

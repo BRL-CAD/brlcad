@@ -44,6 +44,7 @@ set(
   set.c
   setup.c
   share.c
+  tclsync.c
   tedit.c
   titles.c
   track.c

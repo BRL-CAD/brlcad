@@ -250,6 +250,14 @@ struct mged_state {
      * accumulated bu_log output to the Tcl command prompt. */
     int cmd_running;
     Tcl_TimerToken log_drain_timer;
+
+    /* Secondary Tcl interpreter used exclusively for search -exec evaluation.
+     * Created by mged_search_pre_clbk at the start of each search command,
+     * reused for all -exec callbacks during that search, and destroyed by
+     * mged_search_post_clbk when the search finishes.  NULL at all other
+     * times.  Must not be persisted across search invocations because the
+     * user environment (procs, variables) may change between searches. */
+    Tcl_Interp *search_interp;
 };
 extern struct mged_state *MGED_STATE;
 
