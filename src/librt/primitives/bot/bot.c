@@ -2251,8 +2251,6 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	bip->num_face_uvs = 0;
     }
 
-    bip->tie = NULL;
-
     /* Apply transform */
     if (mat == NULL) mat = bn_mat_identity;
     return rt_bot_mat(ip, mat, ip);
@@ -2599,7 +2597,6 @@ rt_bot_internal_free(struct rt_bot_internal *bot_ip)
 
     RT_BOT_CK_MAGIC(bot_ip);
     bot_ip->magic = 0;			/* sanity */
-    bot_ip->tie = NULL;
     bot_ip->mode = '\0';
     bot_ip->orientation = '\0';
     bot_ip->bot_flags = '\0';

@@ -18,13 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* Do some binary incompatible changes to the librt API (will
-  need a minor version bump):
-
-  - remove void *tie from rt_bot_intenral - TIE is no more.
-
-  - make the non-public elements of db_i actually private.
-
 * settle on sane gist quality defaults and/or implement quality knob
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS

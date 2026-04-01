@@ -14,7 +14,9 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 Private members of the db_i struct that were exposed in the
-include/rt/db_instance.h header have now been made properly private.
+include/rt/db_instance.h header have now been made properly private,
+and an obsolete entry was removed from the rt_bot_internal struct -
+these are ABI breaking changes.
 
 * fixed bug in gqa material object lookup - Cliff Yapp
 * fixed bug in rtweight material object lookup - Cliff Yapp
