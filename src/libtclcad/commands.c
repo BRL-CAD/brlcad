@@ -958,11 +958,8 @@ struct to_cmdtab to_cmds[] = {
 int
 Ged_Init(Tcl_Interp *interp)
 {
-    /* BU_LIST_INIT on HeadTclcadObj is truly global – only needs to run once
-     * regardless of how many interpreters are created. */
-    static int ged_global_init_done = 0;
 
-    if (library_initialized(interp, 0))
+    if (library_initialized(0))
 	return TCL_OK;
 
     {
@@ -970,18 +967,14 @@ Ged_Init(Tcl_Interp *interp)
 	tclcad_eval_noresult(interp, "set brlcad_version", 1, &version_str);
     }
 
-    if (!ged_global_init_done) {
-	BU_LIST_INIT(&HeadTclcadObj.l);
-	ged_global_init_done = 1;
-    }
-
+    BU_LIST_INIT(&HeadTclcadObj.l);
     (void)Tcl_CreateCommand(interp, (const char *)"go_open", to_open_tcl,
 	    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
     (void)Tcl_CreateCommand(interp, (const char *)"dm_list", dm_list_tcl,
 	    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
-    (void)library_initialized(interp, 1);
+    (void)library_initialized(1);
 
     return TCL_OK;
 }

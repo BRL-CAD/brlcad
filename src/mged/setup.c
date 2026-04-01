@@ -482,83 +482,6 @@ mged_refresh_handler(void *clientdata)
 }
 
 
-/* Tcl command "_mged_ged_exec" registered inside search_interp.
- * Bridges Tcl scripts running in the search interpreter to the GED command
- * system so that GED commands (draw, ls, attr, ...) are reachable from
- * within Tcl scripts executed by search -exec. */
-static int
-mged_search_ged_exec(ClientData cd, Tcl_Interp *interp, int argc, const char **argv)
-{
-    struct mged_state *s = (struct mged_state *)cd;
-    MGED_CK_STATE(s);
-
-    if (argc < 2) {
-	Tcl_AppendResult(interp, "Usage: _mged_ged_exec cmd [args...]", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    s->gedp->ged_skip_clbks++;
-    int ret = ged_exec(s->gedp, argc - 1, argv + 1);
-    s->gedp->ged_skip_clbks--;
-
-    const char *result = bu_vls_cstr(s->gedp->ged_result_str);
-    if (bu_vls_strlen(s->gedp->ged_result_str) > 0)
-	Tcl_SetResult(interp, (char *)result, TCL_VOLATILE);
-    bu_vls_trunc(s->gedp->ged_result_str, 0);
-
-    if (ret & GED_UNKNOWN)
-	return TCL_ERROR;
-    return (ret == BRLCAD_OK) ? TCL_OK : TCL_ERROR;
-}
-
-
-/* Create (or re-create) the secondary Tcl interpreter used exclusively for
- * search -exec script evaluation.  It is separate from the main GUI interp
- * so that Tcl_Eval can be called from the search worker thread without
- * conflicting with the main thread's interpreter.
- *
- * The interpreter is initialized with the full BRL-CAD Tcl package set (via
- * tclcad_init) and has a custom 'unknown' proc that forwards any unrecognized
- * command to ged_exec through _mged_ged_exec.  GUI/display commands will fail,
- * which is expected and fine for a search -exec context. */
-static void
-mged_create_search_interp(struct mged_state *s)
-{
-    if (s->search_interp) {
-	Tcl_DeleteInterp(s->search_interp);
-	s->search_interp = NULL;
-    }
-
-    s->search_interp = Tcl_CreateInterp();
-
-    struct bu_vls tlog = BU_VLS_INIT_ZERO;
-    if (tclcad_init(s->search_interp, 0, &tlog) == TCL_ERROR) {
-	bu_log("search interp: tclcad_init error:\n%s\n", bu_vls_addr(&tlog));
-	bu_vls_free(&tlog);
-	Tcl_DeleteInterp(s->search_interp);
-	s->search_interp = NULL;
-	return;
-    }
-    bu_vls_free(&tlog);
-
-    /* Register the GED bridge command. */
-    (void)Tcl_CreateCommand(s->search_interp, "_mged_ged_exec",
-	    mged_search_ged_exec, (ClientData)s,
-	    (Tcl_CmdDeleteProc *)NULL);
-
-    /* Override the Tcl 'unknown' handler so that any command not found in this
-     * interpreter's command table is forwarded to GED.  This makes all GED
-     * commands transparently callable by name from Tcl scripts. */
-    if (Tcl_Eval(s->search_interp,
-		 "proc unknown {cmd args} {\n"
-		 "    _mged_ged_exec $cmd {*}$args\n"
-		 "}") != TCL_OK) {
-	bu_log("search interp: failed to install unknown proc: %s\n",
-	       Tcl_GetStringResult(s->search_interp));
-    }
-}
-
-
 /*
  * Initialize mged, configure the path, set up the tcl interpreter.
  */
@@ -583,11 +506,6 @@ mged_setup(struct mged_state *s)
 
     if (s->interp != NULL)
 	Tcl_DeleteInterp(s->interp);
-
-    if (s->search_interp != NULL) {
-	Tcl_DeleteInterp(s->search_interp);
-	s->search_interp = NULL;
-    }
 
     /* Create the interpreter */
     s->interp = Tcl_CreateInterp();
@@ -621,10 +539,6 @@ mged_setup(struct mged_state *s)
     // Register during-execution callback function for search command
     ged_clbk_set(s->gedp, "search", BU_CLBK_DURING, &mged_db_search_callback, (void *)s);
     ged_clbk_set(s->gedp, "clone",  BU_CLBK_DURING, &mged_clone_during_callback, (void *)s);
-
-    /* Stand up the secondary interpreter for search -exec Tcl evaluation.
-     * Must be called after gedp is created so the GED bridge can reference it. */
-    mged_create_search_interp(s);
 
     struct tclcad_io_data *t_iod = tclcad_create_io_data();
     t_iod->io_mode = TCL_READABLE;

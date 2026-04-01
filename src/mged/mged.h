@@ -250,17 +250,6 @@ struct mged_state {
      * accumulated bu_log output to the Tcl command prompt. */
     int cmd_running;
     Tcl_TimerToken log_drain_timer;
-
-    /* Secondary Tcl interpreter dedicated to search -exec script evaluation.
-     * It is fully independent of the main GUI interp and is the ONLY
-     * interpreter accessed from the search worker thread during -exec
-     * callbacks.  The main thread never touches it while a search is running,
-     * so there is no concurrent interpreter access.
-     * Initialized with the full BRL-CAD Tcl package set; a custom 'unknown'
-     * proc bridges any unrecognized Tcl command to ged_exec so that GED
-     * commands (draw, ls, attr, ...) are callable directly from Tcl scripts.
-     * GUI/display commands will silently fail, which is expected. */
-    Tcl_Interp *search_interp;
 };
 extern struct mged_state *MGED_STATE;
 
