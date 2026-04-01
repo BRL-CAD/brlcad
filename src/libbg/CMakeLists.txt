@@ -55,6 +55,7 @@ brlcad_addlib(libbg "${LIBBG_SOURCES}" "${BG_LIBS}" "" "${BG_INCLUDE_DIRS}"
   UNITY_BUILD_SKIP
     polygon.c
     polygon_triangulate.cpp
+    spsr.cpp
     trimesh_isect.cpp
     trimesh_plot3.cpp
 )
