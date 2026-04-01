@@ -70,21 +70,15 @@ rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struc
     struct rt_cline_internal *cline_ip;
     vect_t rad, work;
     point_t top;
-    fastf_t max_tr;
 
     RT_CK_DB_INTERNAL(ip);
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cline_ip);
 
-    if (rt_cline_radius > 0.0)
-	max_tr = rt_cline_radius;
-    else
-	max_tr = 0.0;
-
     VSETALL((*min), INFINITY);
     VSETALL((*max), -INFINITY);
 
-    VSETALL(rad, cline_ip->radius + max_tr);
+    VSETALL(rad, cline_ip->radius);
     VADD2(work, cline_ip->v, rad);
     VMINMAX((*min), (*max), work);
     VSUB2(work, cline_ip->v, rad);
@@ -132,8 +126,8 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VUNITIZE(cline->h);
     stp->st_specific = (void *)cline;
 
-    if (rt_cline_radius > 0.0)
-	max_tr = rt_cline_radius;
+    if (rtip && rtip->rti_max_beam_radius > 0.0)
+	max_tr = rtip->rti_max_beam_radius;
     else
 	max_tr = 0.0;
     tmp = MAGNITUDE(cline_ip->h) * 0.5;
@@ -141,6 +135,14 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_bradius = stp->st_aradius + max_tr;
 
     if (rt_cline_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
+
+    /* expand the bounding box to include the additional beam radius */
+    if (max_tr > 0.0) {
+	vect_t extra;
+	VSETALL(extra, max_tr);
+	VSUB2(stp->st_min, stp->st_min, extra);
+	VADD2(stp->st_max, stp->st_max, extra);
+    }
 
     return 0;
 }
@@ -193,8 +195,8 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
     RT_CK_APPLICATION(ap);
 
     /* This is a CLINE FASTGEN element */
-    if (rt_cline_radius > 0.0) {
-	add_radius = rt_cline_radius;
+    if (ap->a_rt_i && ap->a_rt_i->rti_max_beam_radius > 0.0) {
+	add_radius = ap->a_rt_i->rti_max_beam_radius;
 	reff = cline->radius + add_radius;
     } else {
 	add_radius = 0.0;

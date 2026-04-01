@@ -30,14 +30,6 @@
 
 __BEGIN_DECLS
 
-/**
- * radius of a FASTGEN cline element.
- *
- * shared with rt/do.c
- */
-RT_EXPORT extern fastf_t rt_cline_radius;
-
-
 __END_DECLS
 
 #endif /* RT_PRIMITIVES_CLINE_H */

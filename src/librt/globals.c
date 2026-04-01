@@ -39,16 +39,6 @@
 /* see table.c for primitive object function table definition */
 extern const struct rt_functab OBJ[];
 
-/* TODO: eliminate this global.
- *
- * This global is used by rtg3 and librt accordingly to set an
- * additional radius on CLINE solids at runtime.  This is
- * approximately akin to dynamic geometry where behavior is
- * extrinsically controlled by users.
- */
-fastf_t rt_cline_radius = (fastf_t)-1.0;
-
-
 /*
  * Local Variables:
  * mode: C
