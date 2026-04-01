@@ -305,7 +305,7 @@ RT_EXPORT extern void decode_binary_attribute(const size_t len,
 RT_EXPORT extern int db5_select_length_encoding(size_t len);
 
 
-RT_EXPORT extern void db5_import_color_table(char *cp);
+RT_EXPORT extern void db5_import_color_table(struct db_i *dbip, char *cp);
 
 /**
  * Given a value and a variable-width format spec, store it in network

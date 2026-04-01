@@ -98,7 +98,7 @@ RT_EXPORT extern int rt_comb_describe(struct bu_vls     *str,
  * that is set on some higher-level parent combination.
  *
  */
-RT_EXPORT extern int rt_comb_get_color(unsigned char rgb[3], const struct rt_comb_internal *comb);
+RT_EXPORT extern int rt_comb_get_color(struct db_i *dbip, unsigned char rgb[3], const struct rt_comb_internal *comb);
 
 
 /**

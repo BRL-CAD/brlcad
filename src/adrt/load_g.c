@@ -174,7 +174,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     BU_ALLOC(mesh->attributes, struct adrt_mesh_attributes_s);
     mesh->matid = ts->ts_gmater;
 
-    rt_comb_get_color(rgb, rci);
+    rt_comb_get_color(dbip, rgb, rci);
     VSCALE(mesh->attributes->color.v, rgb, 1.0/256.0);
 
     bu_strlcpy(mesh->name, db_path_to_string(path), sizeof(mesh->name));

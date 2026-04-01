@@ -191,6 +191,18 @@ nirt
         -B option and bot_minpieces command
         Obsoleted by new BoT ray tracing. [deprecated 7.42]
 
+include/rt/mater.h librt
+	Global-state rt_* material API replaced by per-database db_mater_* API:
+	rt_material_head()      -> db_mater_head(dbip)
+	rt_new_material_head()  -> db_mater_set_head(dbip, newmat)
+	rt_dup_material_head()  -> db_mater_dup(dbip)
+	rt_color_free()         -> db_mater_free(dbip)
+	rt_insert_color()       -> db_mater_insert(dbip, newp)
+	rt_color_addrec()       -> db_mater_add(dbip, low, hi, r, g, b, addr)
+	rt_vls_color_map()      -> db_mater_to_vls(str, dbip)
+	rt_region_color_map()   -> db_mater_color_region(dbip, regp)
+	[deprecated 7.42]
+
 
 7.40
 ----

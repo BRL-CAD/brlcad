@@ -67,7 +67,7 @@ struct ged_bv_data {
 
 /* defined in display_list.c */
 GED_EXPORT void dl_set_iflag(struct bu_list *hdlp, int iflag);
-GED_EXPORT extern void dl_color_soltab(struct bu_list *hdlp);
+GED_EXPORT extern void dl_color_soltab(struct bu_list *hdlp, struct db_i *dbip);
 GED_EXPORT extern void dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split);
 GED_EXPORT extern struct display_list *dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip, const char *name);
 

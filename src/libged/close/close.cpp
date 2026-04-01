@@ -44,8 +44,6 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
     /* set result while we still have the info */
     bu_vls_sprintf(gedp->ged_result_str, "closed %s", gedp->dbip->dbi_filename);
 
-    rt_new_material_head(MATER_NULL);
-
     /* Clear any geometry displayed in application views.
      * TODO - properly speaking, we should only be zapping geometry data here
      * and not clearing all scene objects... */

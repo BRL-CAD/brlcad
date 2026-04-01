@@ -806,7 +806,7 @@ tree_color(struct directory *dp, struct draw_data_t *dd)
     db5_get_attributes(dd->dbip, &c_avs, dp);
 
     // No inherit.  Do we have a region material table?
-    if (rt_material_head() != MATER_NULL) {
+    if (db_mater_head(dd->dbip) != MATER_NULL) {
 	// If we do, do we have a region id?
 	int region_id = -1;
 	const char *region_id_val = bu_avs_get(&c_avs, "region_id");
@@ -820,7 +820,7 @@ tree_color(struct directory *dp, struct draw_data_t *dd)
 	if (region_id >= 0) {
 	    const struct mater *mp;
 	    int material_color = 0;
-	    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+	    for (mp = db_mater_head(dd->dbip); mp != MATER_NULL; mp = mp->mt_forw) {
 		if (region_id > mp->mt_high || region_id < mp->mt_low) {
 		    continue;
 		}

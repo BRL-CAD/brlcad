@@ -566,7 +566,7 @@ _dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
 
 
 void
-color_soltab(struct bv_scene_obj *sp)
+color_soltab(struct db_i *dbip, struct bv_scene_obj *sp)
 {
     const struct mater *mp;
 
@@ -581,14 +581,16 @@ color_soltab(struct bv_scene_obj *sp)
 	return;
     }
 
-    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
-	if (sp->s_old.s_regionid <= mp->mt_high &&
-	    sp->s_old.s_regionid >= mp->mt_low) {
-	    sp->s_color[0] = mp->mt_r;
-	    sp->s_color[1] = mp->mt_g;
-	    sp->s_color[2] = mp->mt_b;
+    if (dbip) {
+	for (mp = db_mater_head(dbip); mp != MATER_NULL; mp = mp->mt_forw) {
+	    if (sp->s_old.s_regionid <= mp->mt_high &&
+		sp->s_old.s_regionid >= mp->mt_low) {
+		sp->s_color[0] = mp->mt_r;
+		sp->s_color[1] = mp->mt_g;
+		sp->s_color[2] = mp->mt_b;
 
-	    return;
+		return;
+	    }
 	}
     }
 
@@ -616,7 +618,7 @@ color_soltab(struct bv_scene_obj *sp)
  * mater structure.
  */
 void
-dl_color_soltab(struct bu_list *hdlp)
+dl_color_soltab(struct bu_list *hdlp, struct db_i *dbip)
 {
     if (!hdlp)
 	return;
@@ -630,7 +632,7 @@ dl_color_soltab(struct bu_list *hdlp)
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    color_soltab(sp);
+	    color_soltab(dbip, sp);
 	}
 
 	gdlp = next_gdlp;
@@ -737,7 +739,7 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
     BU_LIST_APPEND(gdlp->dl_head_scene_obj.back, &sp->l);
 
     if (csoltab)
-	color_soltab(sp);
+	color_soltab(gedp->dbip, sp);
 
     ged_create_vlist_solid_cb(gedp, sp);
 

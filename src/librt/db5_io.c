@@ -1014,20 +1014,21 @@ db5_export_color_table(struct bu_vls *ostr, struct db_i *dbip)
 {
     BU_CK_VLS(ostr);
     RT_CK_DBI(dbip);
-    rt_vls_color_map(ostr);
+    db_mater_to_vls(ostr, dbip);
 }
 
 
 void
-db5_import_color_table(char *cp)
+db5_import_color_table(struct db_i *dbip, char *cp)
 {
     char *sp = cp;
     int low, high, r, g, b;
 
+    RT_CK_DBI(dbip);
     while ((sp = strchr(sp, '{')) != NULL) {
 	sp++;
 	if (sscanf(sp, "%d %d %d %d %d", &low, &high, &r, &g, &b) != 5) break;
-	rt_color_addrec(low, high, r, g, b, MATER_NO_ADDR);
+	db_mater_add(dbip, low, high, r, g, b, MATER_NO_ADDR);
     }
 }
 

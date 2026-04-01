@@ -76,6 +76,9 @@ struct db_i_internal {
     // so the librt point generation routines can take advantage
     // of cached prep even if they're using an inmem db...
 
+    /* Per-database region-id color table (replaces former material_head global) */
+    struct mater *material_head;
+
     /* PRIVATE fields previously in struct db_i (LIBRT ONLY, MAY CHANGE) */
     struct directory * dbi_Head[RT_DBNHASH]; /**< @brief object hash table */
     FILE * dbi_fp;                      /**< @brief standard file pointer */

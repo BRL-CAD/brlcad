@@ -1505,7 +1505,7 @@ db_mkgift_tree(struct rt_tree_array *trees, size_t subtreecount, struct resource
 
 
 int
-rt_comb_get_color(unsigned char rgb[3], const struct rt_comb_internal *comb)
+rt_comb_get_color(struct db_i *dbip, unsigned char rgb[3], const struct rt_comb_internal *comb)
 {
     struct mater *mp = MATER_NULL;
 
@@ -1521,7 +1521,11 @@ rt_comb_get_color(unsigned char rgb[3], const struct rt_comb_internal *comb)
 	return 1;
     }
 
-    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+    if (!dbip)
+	return 0;
+
+    RT_CK_DBI(dbip);
+    for (mp = db_mater_head(dbip); mp != MATER_NULL; mp = mp->mt_forw) {
 	if (comb->region_id <= mp->mt_high && comb->region_id >= mp->mt_low) {
 	    rgb[0] = mp->mt_r;
 	    rgb[1] = mp->mt_g;

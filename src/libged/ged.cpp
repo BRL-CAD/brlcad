@@ -284,21 +284,14 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 {
     struct ged *gedp = NULL;
     struct rt_wdb *wdbp = NULL;
-    struct mater *save_materp = MATER_NULL;
 
     if (filename == NULL)
       return GED_NULL;
-
-    save_materp = rt_material_head();
-    rt_new_material_head(MATER_NULL);
 
     if (BU_STR_EQUAL(dbtype, "db")) {
 	struct db_i *dbip;
 
 	if ((dbip = _ged_open_dbip(filename, existing_only)) == DBI_NULL) {
-	    /* Restore RT's material head */
-	    rt_new_material_head(save_materp);
-
 	    return GED_NULL;
 	}
 
@@ -314,9 +307,6 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	 * strings indicates a failure in design and lazy coding.
 	 */
 	if (sscanf(filename, "%p", (void **)&dbip) != 1) {
-	    /* Restore RT's material head */
-	    rt_new_material_head(save_materp);
-
 	    return GED_NULL;
 	}
 
@@ -336,9 +326,6 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	else if (BU_STR_EQUAL(dbtype, "inmem_append"))
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
 	else {
-	    /* Restore RT's material head */
-	    rt_new_material_head(save_materp);
-
 	    bu_log("wdb_open %s target type not recognized", dbtype);
 	    return GED_NULL;
 	}

@@ -207,7 +207,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     rp->reg_mfuncs = (char *)0;
     rp->reg_udata = (char *)0;
     if (rp->reg_mater.ma_color_valid == 0)
-	rt_region_color_map(rp);
+	db_mater_color_region(tsp->ts_dbip, rp);
 
     /* enter critical section */
     bu_semaphore_acquire(RT_SEM_RESULTS);

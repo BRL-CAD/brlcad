@@ -89,12 +89,8 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
     /* Before proceeding with the full open logic, see if
      * we can actually open what the caller provided */
     struct db_i *new_dbip = NULL;
-    struct mater *old_materp = rt_material_head();
     int existing_only = (!force_create && open_only);
     if ((new_dbip = _ged_open_dbip(argv[0], existing_only)) == DBI_NULL) {
-
-	/* Restore RT's material head */
-	rt_new_material_head(old_materp);
 
 	bu_vls_printf(gedp->ged_result_str, "ged_opendb_core: failed to open %s\n", argv[0]);
 
@@ -139,7 +135,6 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Set up the new database info in gedp */
     gedp->dbip = new_dbip;
-    rt_new_material_head(rt_material_head());
 
     /* New database open, need to initialize reference counts */
     db_update_nref(gedp->dbip, &rt_uniresource);
