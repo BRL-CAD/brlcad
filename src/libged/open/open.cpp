@@ -136,9 +136,6 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
     /* Set up the new database info in gedp */
     gedp->dbip = new_dbip;
 
-    /* New database open, need to initialize reference counts */
-    db_update_nref(gedp->dbip, &rt_uniresource);
-
     // LoD context creation (DbiState initialization can use info
     // stored here, so do this first)
     if (gedp->new_cmd_forms)

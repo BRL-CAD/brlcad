@@ -84,6 +84,7 @@ struct db_i_internal {
     FILE * dbi_fp;                      /**< @brief standard file pointer */
     b_off_t dbi_eof;                    /**< @brief End+1 pos after db_scan() */
     size_t dbi_nrec;                    /**< @brief # records after db_scan() */
+    int dbi_dir_built;                  /**< @brief set to 1 when db_dirbuild() has completed */
     int dbi_uses;                       /**< @brief # of uses of this struct */
     struct mem_map * dbi_freep;         /**< @brief map of free granules */
     void *dbi_inmem;                    /**< @brief ptr to in-memory copy */
