@@ -1,4 +1,4 @@
-/*          R T _ C O L L I S I O N _ S H A P E . H P P
+/*          R T _ R O I _ C O L L I S I O N _ S H A P E . H P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2025 United States Government as represented by
@@ -17,15 +17,20 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt_collision_shape.hpp
+/** @file rt_roi_collision_shape.hpp
  *
- * A librt-based collision shape.
+ * A librt-based collision shape with a Region-of-Interest (ROI) proxy.
+ *
+ * This collision shape represents static objects using a moving local AABB
+ * (the ROI) inside the object's global AABB. The ROI shrinks the broadphase
+ * proxy to a region around dynamic bodies, improving Bullet's robustness
+ * when small dynamic objects interact with very large static objects.
  *
  */
 
 
-#ifndef SIMULATE_RT_COLLISION_SHAPE_H
-#define SIMULATE_RT_COLLISION_SHAPE_H
+#ifndef SIMULATE_RT_ROI_COLLISION_SHAPE_H
+#define SIMULATE_RT_ROI_COLLISION_SHAPE_H
 
 
 #include "common.h"
@@ -70,16 +75,19 @@ namespace simulate
 {
 
 
-class RtCollisionShape : public btCollisionShape
+class RtRoiCollisionShape : public btCollisionShape
 {
 public:
-    static const int RT_COLLISION_SHAPE_TYPE = CUSTOM_POLYHEDRAL_SHAPE_TYPE;
+    static const int RT_ROI_COLLISION_SHAPE_TYPE = CUSTOM_POLYHEDRAL_SHAPE_TYPE + 1;
 
-    // `aabb_center_height` is the vector from the center of mass to
-    // the center of the AABB
-    explicit RtCollisionShape(const btVector3 &aabb_extents,
-			      const btVector3 &aabb_center_height,
-			      const std::string &name);
+    // Construct ROI collision shape for a static object
+    // global_aabb_min/max: world-space AABB bounds (Bullet units)
+    // name: object name for debugging
+    explicit RtRoiCollisionShape(const btVector3 &global_aabb_min,
+				 const btVector3 &global_aabb_max,
+				 const std::string &name);
+
+    virtual ~RtRoiCollisionShape();
 
     virtual const char *getName() const;
     virtual void getAabb(const btTransform &transform, btVector3 &dest_aabb_min,
@@ -92,11 +100,29 @@ public:
     virtual void setLocalScaling(const btVector3 &local_scaling);
     virtual void setMargin(btScalar collision_margin);
 
+    // Update the ROI AABB, clamped to global bounds
+    // The ROI center becomes the new transform origin for the rigid body
+    // Minimum extents safeguards are applied to prevent degenerate boxes
+    void setRoiAabb(const btVector3 &roi_min, const btVector3 &roi_max);
+
+    // Get the current ROI AABB bounds
+    btVector3 getRoiMin() const { return m_roi_min; }
+    btVector3 getRoiMax() const { return m_roi_max; }
+
+    // Get the global AABB bounds
+    btVector3 getGlobalMin() const { return m_global_aabb_min; }
+    btVector3 getGlobalMax() const { return m_global_aabb_max; }
+
 
 private:
-    const btVector3 m_aabb_center_height;
+    const btVector3 m_global_aabb_min;
+    const btVector3 m_global_aabb_max;
     const std::string m_name;
-    btBoxShape m_box_shape;
+    btVector3 m_roi_min;
+    btVector3 m_roi_max;
+    btBoxShape *m_box_shape;
+
+    void updateBoxShape();
 };
 
 
