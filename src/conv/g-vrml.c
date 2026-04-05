@@ -94,10 +94,6 @@ const struct bu_structparse vrml_mat_parse[]={
 };
 
 
-extern union tree *do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-extern union tree *do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-
 static const char *usage =
     "[-b] [-e] [-v] [-xX lvl] [-d tolerance_distance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n"
     "(units default to mm)\n";
@@ -595,6 +591,162 @@ static void path_2_vrml_id(struct bu_vls *id, const char *path) {
 }
 
 
+/*
+ * Called from db_walk_tree().
+ * This routine must be prepared to run in parallel.
+ */
+static union tree *
+do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
+{
+    struct plate_mode *pmp = (struct plate_mode *)client_data;
+    char *name;
+
+    if (pmp->num_bots > 0 && pmp->num_nonbots > 0) {
+	bu_log("pmp->num_bots = %d pmp->num_nonbots = %d\n", pmp->num_bots, pmp->num_nonbots);
+	bu_bomb("region was both bot and non-bot objects\n");
+    }
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
+	bu_log("\nConverted %d%% so far (%d of %d)\n",
+	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
+	       regions_converted, regions_tried);
+    }
+
+    if (pmp->num_bots > 0) {
+	regions_tried++;
+	name = db_path_to_string(pathp);
+	bu_log("Attempting %s\n", name);
+	bu_free(name, "db_path_to_string");
+	bot2vrml(pmp, pathp, tsp->ts_regionid);
+	clean_pmp(pmp);
+	regions_converted++;
+	return (union tree *)NULL;
+    } else {
+	return vrml_nmg_region_end(tsp, pathp, curtree, pmp->vlfree);
+    }
+}
+
+
+/*
+ * Called from db_walk_tree().
+ * This routine must be prepared to run in parallel.
+ *
+ * Only send bots from structure outside tree to vrml file.
+ */
+static union tree *
+do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *UNUSED(curtree), void *client_data)
+{
+    struct plate_mode *pmp = (struct plate_mode *)client_data;
+    char *name;
+
+    if ((pmp->num_bots > 0) && (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose)) {
+	bu_log("\nConverted %d%% so far (%d of %d)\n",
+	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
+	       regions_converted, regions_tried);
+    }
+
+    if (pmp->num_bots > 0) {
+	regions_tried++;
+	name = db_path_to_string(pathp);
+	bu_log("Attempting %s\n", name);
+	bu_free(name, "db_path_to_string");
+	bot2vrml(pmp, pathp, tsp->ts_regionid);
+	clean_pmp(pmp);
+	regions_converted++;
+    }
+
+    return (union tree *)NULL;
+}
+
+
+static union tree *
+vrml_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
+{
+    struct nmgregion *r;
+    struct bu_list vhead;
+    union tree *ret_tree;
+    char *name;
+    struct bu_list *vlfree = (struct bu_list *)client_data;
+
+    BG_CK_TESS_TOL(tsp->ts_ttol);
+    BN_CK_TOL(tsp->ts_tol);
+    NMG_CK_MODEL(*tsp->ts_m);
+
+    BU_LIST_INIT(&vhead);
+
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
+	bu_log("\nConverted %d%% so far (%d of %d)\n",
+	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
+	       regions_converted, regions_tried);
+    }
+
+    if (curtree->tr_op == OP_NOP) {
+	return curtree;
+    }
+
+    name = db_path_to_string(pathp);
+    bu_log("Attempting %s\n", name);
+
+    regions_tried++;
+    ret_tree = process_boolean(curtree, tsp, pathp, vlfree);
+
+    if (ret_tree) {
+	r = ret_tree->tr_d.td_r;
+    } else {
+	r = (struct nmgregion *)NULL;
+    }
+
+    bu_free(name, "db_path_to_string");
+    if (r != (struct nmgregion *)NULL) {
+	struct shell *s;
+	int empty_region = 0;
+
+	/* kill zero length edgeuse and cracks */
+	s = BU_LIST_FIRST(shell, &r->s_hd);
+	while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
+	    struct shell *next_s;
+	    next_s = BU_LIST_PNEXT(shell, &s->l);
+	    (void)nmg_keu_zl(s, tsp->ts_tol); /* kill zero length edgeuse */
+	    if (nmg_kill_cracks(s)) {
+		/* true when shell is empty */
+		if (nmg_ks(s)) {
+		    /* true when nmg region is empty */
+		    empty_region = 1;
+		    break;
+		}
+	    }
+	    s = next_s;
+	}
+
+	if (!empty_region) {
+	    /* Write the nmgregion to the output file */
+	    nmg_2_vrml(tsp, pathp, r->m_p, vlfree);
+	    regions_converted++;
+	} else {
+	    bu_log("WARNING: Nothing left after Boolean evaluation of %s (due to cleanup)\n",
+		   db_path_to_string(pathp));
+	}
+
+    } else {
+	bu_log("WARNING: Nothing left after Boolean evaluation of %s (due to error or null result)\n",
+	       db_path_to_string(pathp));
+    }
+
+    NMG_CK_MODEL(*tsp->ts_m);
+
+    /* Dispose of original tree, so that all associated dynamic
+     * memory is released now, not at the end of all regions.
+     * A return of TREE_NULL from this routine signals an error,
+     * so we need to cons up an OP_NOP node to return.
+     */
+    db_free_tree(curtree, &rt_uniresource); /* does a nmg_kr (i.e. kill nmg region) */
+
+    BU_ALLOC(curtree, union tree);
+    RT_TREE_INIT(curtree);
+    curtree->tr_op = OP_NOP;
+    return curtree;
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -750,7 +902,7 @@ main(int argc, char **argv)
 			   1,		/* ncpu */
 			   &tree_state,
 			   0,
-			   nmg_region_end,
+			   vrml_nmg_region_end,
 			   rt_booltree_leaf_tess,
 			   (void *)pm.vlfree);	/* in librt/nmg_bool.c */
 	goto out;
@@ -1215,73 +1367,6 @@ bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id
 }
 
 
-/*
- * Called from db_walk_tree().
- * This routine must be prepared to run in parallel.
- */
-union tree *
-do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
-{
-    struct plate_mode *pmp = (struct plate_mode *)client_data;
-    char *name;
-
-    if (pmp->num_bots > 0 && pmp->num_nonbots > 0) {
-	bu_log("pmp->num_bots = %d pmp->num_nonbots = %d\n", pmp->num_bots, pmp->num_nonbots);
-	bu_bomb("region was both bot and non-bot objects\n");
-    }
-    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
-	bu_log("\nConverted %d%% so far (%d of %d)\n",
-	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
-	       regions_converted, regions_tried);
-    }
-
-    if (pmp->num_bots > 0) {
-	regions_tried++;
-	name = db_path_to_string(pathp);
-	bu_log("Attempting %s\n", name);
-	bu_free(name, "db_path_to_string");
-	bot2vrml(pmp, pathp, tsp->ts_regionid);
-	clean_pmp(pmp);
-	regions_converted++;
-	return (union tree *)NULL;
-    } else {
-	return nmg_region_end(tsp, pathp, curtree, pmp->vlfree);
-    }
-}
-
-
-/*
- * Called from db_walk_tree().
- * This routine must be prepared to run in parallel.
- *
- * Only send bots from structure outside tree to vrml file.
- */
-union tree *
-do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *UNUSED(curtree), void *client_data)
-{
-    struct plate_mode *pmp = (struct plate_mode *)client_data;
-    char *name;
-
-    if ((pmp->num_bots > 0) && (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose)) {
-	bu_log("\nConverted %d%% so far (%d of %d)\n",
-	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
-	       regions_converted, regions_tried);
-    }
-
-    if (pmp->num_bots > 0) {
-	regions_tried++;
-	name = db_path_to_string(pathp);
-	bu_log("Attempting %s\n", name);
-	bu_free(name, "db_path_to_string");
-	bot2vrml(pmp, pathp, tsp->ts_regionid);
-	clean_pmp(pmp);
-	regions_converted++;
-    }
-
-    return (union tree *)NULL;
-}
-
-
 static union tree *
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct bu_list *vlfree)
 {
@@ -1311,95 +1396,6 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     } BU_UNSETJUMP; /* Relinquish the protection */
 
     return ret_tree;
-}
-
-
-union tree *
-nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
-{
-    struct nmgregion *r;
-    struct bu_list vhead;
-    union tree *ret_tree;
-    char *name;
-    struct bu_list *vlfree = (struct bu_list *)client_data;
-
-    BG_CK_TESS_TOL(tsp->ts_ttol);
-    BN_CK_TOL(tsp->ts_tol);
-    NMG_CK_MODEL(*tsp->ts_m);
-
-    BU_LIST_INIT(&vhead);
-
-    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
-	bu_log("\nConverted %d%% so far (%d of %d)\n",
-	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
-	       regions_converted, regions_tried);
-    }
-
-    if (curtree->tr_op == OP_NOP) {
-	return curtree;
-    }
-
-    name = db_path_to_string(pathp);
-    bu_log("Attempting %s\n", name);
-
-    regions_tried++;
-    ret_tree = process_boolean(curtree, tsp, pathp, vlfree);
-
-    if (ret_tree) {
-	r = ret_tree->tr_d.td_r;
-    } else {
-	r = (struct nmgregion *)NULL;
-    }
-
-    bu_free(name, "db_path_to_string");
-    if (r != (struct nmgregion *)NULL) {
-	struct shell *s;
-	int empty_region = 0;
-
-	/* kill zero length edgeuse and cracks */
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-	while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
-	    struct shell *next_s;
-	    next_s = BU_LIST_PNEXT(shell, &s->l);
-	    (void)nmg_keu_zl(s, tsp->ts_tol); /* kill zero length edgeuse */
-	    if (nmg_kill_cracks(s)) {
-		/* true when shell is empty */
-		if (nmg_ks(s)) {
-		    /* true when nmg region is empty */
-		    empty_region = 1;
-		    break;
-		}
-	    }
-	    s = next_s;
-	}
-
-	if (!empty_region) {
-	    /* Write the nmgregion to the output file */
-	    nmg_2_vrml(tsp, pathp, r->m_p, vlfree);
-	    regions_converted++;
-	} else {
-	    bu_log("WARNING: Nothing left after Boolean evaluation of %s (due to cleanup)\n",
-		   db_path_to_string(pathp));
-	}
-
-    } else {
-	bu_log("WARNING: Nothing left after Boolean evaluation of %s (due to error or null result)\n",
-	       db_path_to_string(pathp));
-    }
-
-    NMG_CK_MODEL(*tsp->ts_m);
-
-    /* Dispose of original tree, so that all associated dynamic
-     * memory is released now, not at the end of all regions.
-     * A return of TREE_NULL from this routine signals an error,
-     * so we need to cons up an OP_NOP node to return.
-     */
-    db_free_tree(curtree, &rt_uniresource); /* does a nmg_kr (i.e. kill nmg region) */
-
-    BU_ALLOC(curtree, union tree);
-    RT_TREE_INIT(curtree);
-    curtree->tr_op = OP_NOP;
-    return curtree;
 }
 
 
