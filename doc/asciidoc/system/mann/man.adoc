@@ -17,7 +17,7 @@ man [cmdname]
 [[description]]
 == DESCRIPTION
 
-Launches the *brlman* graphical man page viewer with the man page documenting the specified MGED command name. If no command name is provided, The graphical man page viewer will open the entry for the first command (or the last command looked at if the manual was previously opened in the current MGED session).
+Launches a graphical manual page viewer with a page documenting the specified command name.
 
 
 [[author]]

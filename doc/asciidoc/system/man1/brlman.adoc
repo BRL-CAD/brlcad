@@ -36,20 +36,18 @@ Instructs *brlman* to use its graphical man page viewer.
 Specify a language to use when selecting man pages.
 
 
-*-S [1 3 5 n]*::
-Specify a particular section to use when searching for a man page. Useful when there are programs and MGED commands with the same names - the default man page returned will be that of the program, so *-S* can be used to specify the MGED page instead. Allowed sections are 1 (programs), 3 (libraries), 5 (conventions), and n (MGED).
+*-S [1|3|5|n]*::
+Specify a particular section to use when searching for a man page. Useful when there are programs and MGED commands with the same names - the default man page returned will be that of the program (i.e., section 1), so *-S* can be used to specify the GED command (i.e., section n) page instead.  Allowed sections are 1 (programs), 3 (libraries), 5 (conventions/formats), and n (GED commands).
 
 
 *--no-gui*::
 Instructs *brlman* _not_ to use its graphical man page viewer, even in situations where there is no command line option. Primarily useful in scripting situations.
 
 
-
-
 [[author]]
 == AUTHOR
 
-Clifford Yapp
+BRL-CAD Team
 
 
 [[copyright]]
