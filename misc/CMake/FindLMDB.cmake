@@ -48,6 +48,10 @@ if(LMDB_ROOT)
   list(APPEND _LMDB_SEARCHES _LMDB_SEARCH_ROOT)
 endif()
 
+# Fall back to default system paths
+set(_LMDB_SEARCH_NORMAL)
+list(APPEND _LMDB_SEARCHES _LMDB_SEARCH_NORMAL)
+
 set(LMDB_NAMES lmdb lmdbd)
 
 # Try each search configuration.
