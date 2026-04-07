@@ -683,6 +683,251 @@ emit_object(const char *name)
 		    break;
 		}
 
+	    case ID_PARTICLE:
+		{
+		    /*
+		     * Particle: lozenge/capsule shape defined by two
+		     * endpoints with radii.  Map to hull of two spheres.
+		     */
+		    struct rt_part_internal *part = (struct rt_part_internal *)intern.idb_ptr;
+		    point_t end_pt;
+
+		    VADD2(end_pt, part->part_V, part->part_H);
+
+		    print_indent();
+		    fprintf(fd_out, "hull() {\n");
+		    indent_level++;
+		    print_indent();
+		    fprintf(fd_out, "translate([%g, %g, %g])\n", V3ARGS(part->part_V));
+		    indent_level++;
+		    print_indent();
+		    fprintf(fd_out, "sphere(r = %g);\n", part->part_vrad);
+		    indent_level--;
+		    print_indent();
+		    fprintf(fd_out, "translate([%g, %g, %g])\n", V3ARGS(end_pt));
+		    indent_level++;
+		    print_indent();
+		    fprintf(fd_out, "sphere(r = %g);\n", part->part_hrad);
+		    indent_level--;
+		    indent_level--;
+		    print_indent();
+		    fprintf(fd_out, "}\n");
+		    solid_count++;
+		    break;
+		}
+
+	    case ID_PIPE:
+		{
+		    /*
+		     * Pipe: linked list of waypoints with outer/inner
+		     * diameters and bend radii.  Emit cylinders for
+		     * straight segments and tori for bends.
+		     */
+		    struct rt_pipe_internal *pipe_ip = (struct rt_pipe_internal *)intern.idb_ptr;
+		    struct wdb_pipe_pnt *pp, *prev;
+
+		    print_indent();
+		    fprintf(fd_out, "union() {\n");
+		    indent_level++;
+
+		    prev = NULL;
+		    for (BU_LIST_FOR(pp, wdb_pipe_pnt, &pipe_ip->pipe_segs_head)) {
+			if (prev) {
+			    vect_t seg_h;
+			    double seg_len;
+			    double r1 = prev->pp_od / 2.0;
+			    double r2 = pp->pp_od / 2.0;
+
+			    VSUB2(seg_h, pp->pp_coord, prev->pp_coord);
+			    seg_len = MAGNITUDE(seg_h);
+
+			    if (seg_len > tol.dist) {
+				vect_t h_unit, a_unit, b_unit;
+				mat_t m;
+
+				VSCALE(h_unit, seg_h, 1.0 / seg_len);
+				bn_vec_ortho(a_unit, h_unit);
+				VCROSS(b_unit, h_unit, a_unit);
+
+				MAT_ZERO(m);
+				m[0]  = a_unit[0]; m[4]  = b_unit[0]; m[8]  = h_unit[0]; m[12] = prev->pp_coord[0];
+				m[1]  = a_unit[1]; m[5]  = b_unit[1]; m[9]  = h_unit[1]; m[13] = prev->pp_coord[1];
+				m[2]  = a_unit[2]; m[6]  = b_unit[2]; m[10] = h_unit[2]; m[14] = prev->pp_coord[2];
+				m[15] = 1.0;
+
+				emit_matrix_open(m);
+				print_indent();
+				fprintf(fd_out, "cylinder(h = %g, r1 = %g, r2 = %g);\n",
+					seg_len, r1, r2);
+				emit_matrix_close(m);
+			    }
+
+			    /* Sphere at joint for smooth connection */
+			    print_indent();
+			    fprintf(fd_out, "translate([%g, %g, %g])\n",
+				    V3ARGS(prev->pp_coord));
+			    indent_level++;
+			    print_indent();
+			    fprintf(fd_out, "sphere(r = %g);\n", r1);
+			    indent_level--;
+
+			}
+			prev = pp;
+		    }
+
+		    /* End cap sphere */
+		    if (prev) {
+			print_indent();
+			fprintf(fd_out, "translate([%g, %g, %g])\n",
+				V3ARGS(prev->pp_coord));
+			indent_level++;
+			print_indent();
+			fprintf(fd_out, "sphere(r = %g);\n", prev->pp_od / 2.0);
+			indent_level--;
+		    }
+
+		    indent_level--;
+		    print_indent();
+		    fprintf(fd_out, "}\n");
+		    solid_count++;
+		    break;
+		}
+
+	    case ID_REVOLVE:
+		{
+		    /*
+		     * Revolve: a sketch revolved around an axis.
+		     * Maps to rotate_extrude(angle) polygon().
+		     */
+		    struct rt_revolve_internal *rev = (struct rt_revolve_internal *)intern.idb_ptr;
+		    struct rt_sketch_internal *skt = NULL;
+		    struct directory *skt_dp;
+		    struct rt_db_internal skt_intern;
+		    mat_t m;
+		    vect_t axis_unit, r_unit, cross;
+		    double ang_deg;
+
+		    skt_dp = db_lookup(dbip, bu_vls_cstr(&rev->sketch_name), LOOKUP_QUIET);
+		    if (skt_dp == RT_DIR_NULL) {
+			bu_log("WARNING: sketch '%s' not found for revolve %s\n",
+			       bu_vls_cstr(&rev->sketch_name), name);
+			emit_tessellated(name, &intern);
+			break;
+		    }
+		    if (rt_db_get_internal(&skt_intern, skt_dp, dbip, NULL, &rt_uniresource) < 0) {
+			bu_log("WARNING: failed to read sketch '%s'\n",
+			       bu_vls_cstr(&rev->sketch_name));
+			emit_tessellated(name, &intern);
+			break;
+		    }
+		    skt = (struct rt_sketch_internal *)skt_intern.idb_ptr;
+
+		    ang_deg = rev->ang * 180.0 / M_PI;
+		    if (ang_deg < 0.01)
+			ang_deg = 360.0;
+
+		    /* Build local frame: r = X, axis = Z */
+		    VMOVE(r_unit, rev->r);
+		    VUNITIZE(r_unit);
+		    VMOVE(axis_unit, rev->axis3d);
+		    VUNITIZE(axis_unit);
+		    VCROSS(cross, axis_unit, r_unit);
+		    VUNITIZE(cross);
+
+		    MAT_ZERO(m);
+		    m[0]  = r_unit[0];    m[4]  = cross[0];    m[8]  = axis_unit[0]; m[12] = rev->v3d[0];
+		    m[1]  = r_unit[1];    m[5]  = cross[1];    m[9]  = axis_unit[1]; m[13] = rev->v3d[1];
+		    m[2]  = r_unit[2];    m[6]  = cross[2];    m[10] = axis_unit[2]; m[14] = rev->v3d[2];
+		    m[15] = 1.0;
+
+		    emit_matrix_open(m);
+
+		    print_indent();
+		    if (NEAR_EQUAL(ang_deg, 360.0, 0.01))
+			fprintf(fd_out, "rotate_extrude() {\n");
+		    else
+			fprintf(fd_out, "rotate_extrude(angle = %g) {\n", ang_deg);
+		    indent_level++;
+
+		    /* Emit polygon from sketch */
+		    {
+			size_t vi, si;
+			int has_lines = 0;
+
+			print_indent();
+			fprintf(fd_out, "polygon(\n");
+			indent_level++;
+
+			print_indent();
+			fprintf(fd_out, "points = [\n");
+			indent_level++;
+			for (vi = 0; vi < skt->vert_count; vi++) {
+			    print_indent();
+			    fprintf(fd_out, "[%g, %g]%s\n",
+				    skt->verts[vi][0], skt->verts[vi][1],
+				    (vi < skt->vert_count - 1) ? "," : "");
+			}
+			indent_level--;
+			print_indent();
+			fprintf(fd_out, "],\n");
+
+			print_indent();
+			fprintf(fd_out, "paths = [\n");
+			indent_level++;
+
+			for (si = 0; si < skt->curve.count; si++) {
+			    uint32_t *magic_p = (uint32_t *)skt->curve.segment[si];
+			    if (*magic_p == CURVE_LSEG_MAGIC) {
+				has_lines = 1;
+				break;
+			    }
+			}
+
+			if (has_lines) {
+			    print_indent();
+			    fprintf(fd_out, "[");
+			    {
+				int first = 1;
+				for (si = 0; si < skt->curve.count; si++) {
+				    uint32_t *magic_p = (uint32_t *)skt->curve.segment[si];
+				    if (*magic_p == CURVE_LSEG_MAGIC) {
+					struct line_seg *lseg = (struct line_seg *)skt->curve.segment[si];
+					if (!first) fprintf(fd_out, ", ");
+					fprintf(fd_out, "%d", lseg->start);
+					first = 0;
+				    }
+				}
+			    }
+			    fprintf(fd_out, "]\n");
+			} else {
+			    print_indent();
+			    fprintf(fd_out, "[");
+			    for (vi = 0; vi < skt->vert_count; vi++) {
+				fprintf(fd_out, "%zu%s", vi,
+					(vi < skt->vert_count - 1) ? ", " : "");
+			    }
+			    fprintf(fd_out, "]\n");
+			}
+
+			indent_level--;
+			print_indent();
+			fprintf(fd_out, "]\n");
+
+			indent_level--;
+			print_indent();
+			fprintf(fd_out, ");\n");
+		    }
+
+		    indent_level--;
+		    print_indent();
+		    fprintf(fd_out, "}\n");
+
+		    emit_matrix_close(m);
+		    rt_db_free_internal(&skt_intern);
+		    solid_count++;
+		    break;
+		}
+
 	    case ID_HALF:
 		{
 		    /*
