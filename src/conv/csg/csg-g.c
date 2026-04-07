@@ -1545,6 +1545,213 @@ parse_linear_extrude(struct bu_vls *out_name, mat_t xform)
 	bu_vls_vlscat(out_name, &sname);
 	bu_vls_free(&sname);
 	return 1;
+
+    } else if (looking_at("polygon")) {
+	/*
+	 * polygon(points=[[x,y],...], paths=[[i,j,...]])
+	 * Build a sketch from the polygon vertices and line segments,
+	 * then extrude it along Z.
+	 */
+	double poly_pts[MAX_POLY_VERTS][2];
+	int poly_paths[MAX_POLY_FACES][MAX_FACE_VERTS];
+	int path_sizes[MAX_POLY_FACES];
+	int npv = 0, npa = 0;
+	size_t poly_save;
+
+	consume("polygon");
+	skip_ws();
+	if (!expect_char('('))
+	    goto fallback;
+
+	poly_save = pos;
+
+	/* Parse points = [[x,y], ...] */
+	while (pos < buf_len && buf[pos] != ')') {
+	    skip_ws();
+	    if (pos + 6 < buf_len && bu_strncmp(&buf[pos], "points", 6) == 0) {
+		size_t p = pos + 6;
+		while (p < buf_len && isspace((int)buf[p])) p++;
+		if (p < buf_len && buf[p] == '=') {
+		    p++;
+		    while (p < buf_len && isspace((int)buf[p])) p++;
+		    if (p < buf_len && buf[p] == '[') {
+			pos = p + 1;
+			while (npv < MAX_POLY_VERTS) {
+			    skip_ws();
+			    if (pos < buf_len && buf[pos] == ']') break;
+			    if (npv > 0) { skip_ws(); if (pos < buf_len && buf[pos] == ',') pos++; }
+			    skip_ws();
+			    if (!expect_char('[')) break;
+			    poly_pts[npv][0] = parse_double(); skip_ws(); expect_char(',');
+			    poly_pts[npv][1] = parse_double(); skip_ws();
+			    if (!expect_char(']')) break;
+			    npv++;
+			}
+			skip_ws();
+			if (pos < buf_len && buf[pos] == ']') pos++;
+		    }
+		}
+		break;
+	    }
+	    pos++;
+	}
+
+	/* Parse paths = [[i,j,...], ...] (optional) */
+	pos = poly_save;
+	while (pos < buf_len && buf[pos] != ')') {
+	    skip_ws();
+	    if (pos + 5 < buf_len && bu_strncmp(&buf[pos], "paths", 5) == 0) {
+		size_t p = pos + 5;
+		while (p < buf_len && isspace((int)buf[p])) p++;
+		if (p < buf_len && buf[p] == '=') {
+		    p++;
+		    while (p < buf_len && isspace((int)buf[p])) p++;
+		    if (p < buf_len && buf[p] == '[') {
+			pos = p + 1;
+			while (npa < MAX_POLY_FACES) {
+			    int pv = 0;
+			    skip_ws();
+			    if (pos < buf_len && buf[pos] == ']') break;
+			    if (npa > 0) { skip_ws(); if (pos < buf_len && buf[pos] == ',') pos++; }
+			    skip_ws();
+			    if (!expect_char('[')) break;
+			    while (pv < MAX_FACE_VERTS) {
+				double fval;
+				skip_ws();
+				if (pos < buf_len && buf[pos] == ']') break;
+				if (pv > 0) { skip_ws(); if (pos < buf_len && buf[pos] == ',') pos++; }
+				fval = parse_double();
+				poly_paths[npa][pv] = (int)fval;
+				pv++;
+			    }
+			    path_sizes[npa] = pv;
+			    skip_ws();
+			    if (pos < buf_len && buf[pos] == ']') pos++;
+			    npa++;
+			}
+			skip_ws();
+			if (pos < buf_len && buf[pos] == ']') pos++;
+		    }
+		}
+		break;
+	    }
+	    pos++;
+	}
+
+	/* Skip to end of polygon params */
+	while (pos < buf_len && buf[pos] != ')')
+	    pos++;
+	if (pos < buf_len) pos++;
+	skip_ws();
+	if (pos < buf_len && buf[pos] == ';') pos++;
+
+	skip_ws();
+	expect_char('}'); /* close linear_extrude block */
+
+	if (npv < 3) {
+	    bu_log("WARNING: polygon with < 3 vertices, skipping\n");
+	    bu_vls_free(&sname);
+	    return 0;
+	}
+
+	/* If no paths provided, default path is all vertices in order */
+	if (npa == 0) {
+	    int vi;
+	    npa = 1;
+	    path_sizes[0] = npv;
+	    for (vi = 0; vi < npv; vi++)
+		poly_paths[0][vi] = vi;
+	}
+
+	/* Build sketch + extrusion */
+	{
+	    struct rt_sketch_internal skt;
+	    struct bu_vls skt_name = BU_VLS_INIT_ZERO;
+	    struct line_seg *lsegs;
+	    int *reverses;
+	    void **segs;
+	    point2d_t *verts2d;
+	    int nseg = 0;
+	    int pi, si;
+	    point_t ext_V;
+	    vect_t ext_h, ext_u, ext_v;
+
+	    /* Count total segments across all paths */
+	    for (pi = 0; pi < npa; pi++)
+		nseg += path_sizes[pi];
+
+	    verts2d = (point2d_t *)bu_calloc(npv, sizeof(point2d_t), "sketch verts");
+	    lsegs = (struct line_seg *)bu_calloc(nseg, sizeof(struct line_seg), "sketch segs");
+	    reverses = (int *)bu_calloc(nseg, sizeof(int), "sketch reverse");
+	    segs = (void **)bu_calloc(nseg, sizeof(void *), "sketch seg ptrs");
+
+	    for (si = 0; si < npv; si++) {
+		verts2d[si][0] = poly_pts[si][0];
+		verts2d[si][1] = poly_pts[si][1];
+	    }
+
+	    si = 0;
+	    for (pi = 0; pi < npa; pi++) {
+		int vi;
+		for (vi = 0; vi < path_sizes[pi]; vi++) {
+		    lsegs[si].magic = CURVE_LSEG_MAGIC;
+		    lsegs[si].start = poly_paths[pi][vi];
+		    lsegs[si].end = poly_paths[pi][(vi + 1) % path_sizes[pi]];
+		    reverses[si] = 0;
+		    segs[si] = (void *)&lsegs[si];
+		    si++;
+		}
+	    }
+
+	    skt.magic = RT_SKETCH_INTERNAL_MAGIC;
+	    VSET(ext_V, 0.0, 0.0, centered ? -height/2.0 : 0.0);
+	    VSET(ext_u, 1.0, 0.0, 0.0);
+	    VSET(ext_v, 0.0, 1.0, 0.0);
+	    VMOVE(skt.V, ext_V);
+	    VMOVE(skt.u_vec, ext_u);
+	    VMOVE(skt.v_vec, ext_v);
+	    skt.vert_count = npv;
+	    skt.verts = verts2d;
+	    skt.curve.count = nseg;
+	    skt.curve.reverse = reverses;
+	    skt.curve.segment = segs;
+
+	    make_solid_name(&sname);
+	    bu_vls_sprintf(&skt_name, "%s.sketch", bu_vls_cstr(&sname));
+
+	    mk_sketch(fd_out, bu_vls_cstr(&skt_name), &skt);
+
+	    VSET(ext_h, 0.0, 0.0, height);
+	    mk_extrusion(fd_out, bu_vls_cstr(&sname),
+			 bu_vls_cstr(&skt_name), ext_V, ext_h,
+			 ext_u, ext_v, 0);
+
+	    if (!bn_mat_is_identity(xform)) {
+		struct bu_vls wrapper = BU_VLS_INIT_ZERO;
+		struct wmember head_w;
+		bu_vls_sprintf(&wrapper, "%s.x", bu_vls_cstr(&sname));
+		BU_LIST_INIT(&head_w.l);
+		mk_addmember(bu_vls_cstr(&sname), &head_w.l, xform, WMOP_UNION);
+		mk_lcomb(fd_out, bu_vls_cstr(&wrapper), &head_w, 0,
+			 (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+		bu_vls_vlscat(out_name, &wrapper);
+		bu_vls_free(&wrapper);
+	    } else {
+		bu_vls_vlscat(out_name, &sname);
+	    }
+
+	    if (debug)
+		bu_log("  linear_extrude(polygon): %s (%d verts, %d paths, h=%g)\n",
+		       bu_vls_cstr(&sname), npv, npa, height);
+
+	    bu_free(verts2d, "sketch verts");
+	    bu_free(lsegs, "sketch segs");
+	    bu_free(reverses, "sketch reverse");
+	    bu_free(segs, "sketch seg ptrs");
+	    bu_vls_free(&skt_name);
+	    bu_vls_free(&sname);
+	    return 1;
+	}
     }
 
 fallback:
