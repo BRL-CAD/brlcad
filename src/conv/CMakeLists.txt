@@ -31,6 +31,8 @@ brlcad_addexec(comgeom-g "${comgeom-g_SRCS}" "libwdb;libbn;libbu;${M_LIBRARY}" F
 
 brlcad_addexec(conv-vg2g conv-vg2g.c "libbu" FOLDER Conv)
 
+brlcad_addexec(csg-g csg/csg-g.c "libwdb;librt;libbu" FOLDER Conv)
+
 brlcad_addexec(dbupgrade dbupgrade.c "libwdb;librt;libbu" FOLDER Conv)
 
 brlcad_addexec(dxf-g dxf/dxf-g.c "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
