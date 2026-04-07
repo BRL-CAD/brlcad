@@ -673,6 +673,468 @@ parse_cylinder(struct bu_vls *out_name, mat_t xform)
 
 
 /*
+ * Maximum polyhedron size we handle for ARB detection.  Polyhedra
+ * with more vertices or faces go straight to BOT.
+ */
+#define MAX_POLY_VERTS 256
+#define MAX_POLY_FACES 256
+#define MAX_FACE_VERTS 8
+
+
+/*
+ * Try to match a polyhedron to an ARB8.  The polyhedron must have
+ * exactly 8 vertices and 6 quadrilateral faces.  We find two
+ * opposing quad faces and order the vertices so that face 0
+ * (bottom) has vertices 0-3 and face 1 (top) has vertices 4-7,
+ * with edges connecting 0-4, 1-5, 2-6, 3-7.
+ *
+ * Returns 1 on success with pts filled (8 points * 3 coords).
+ */
+static int
+try_arb8(double verts[][3], int nv,
+	 int faces[][MAX_FACE_VERTS], int face_sizes[], int nf,
+	 fastf_t *pts)
+{
+    int i, j, k;
+    int bot_face = -1, top_face = -1;
+    int bot_idx[4], top_idx[4];
+    int used_verts[8];
+
+    if (nv != 8 || nf != 6)
+	return 0;
+
+    /* All faces must be quads */
+    for (i = 0; i < 6; i++) {
+	if (face_sizes[i] != 4)
+	    return 0;
+    }
+
+    /*
+     * Find two opposing faces.  Two quad faces are "opposing" if
+     * they share no vertices.  Pick the first such pair.
+     */
+    for (i = 0; i < 6 && bot_face < 0; i++) {
+	for (j = i + 1; j < 6; j++) {
+	    int shared = 0;
+	    for (k = 0; k < 4 && !shared; k++) {
+		int m;
+		for (m = 0; m < 4; m++) {
+		    if (faces[i][k] == faces[j][m]) {
+			shared = 1;
+			break;
+		    }
+		}
+	    }
+	    if (!shared) {
+		bot_face = i;
+		top_face = j;
+		break;
+	    }
+	}
+    }
+
+    if (bot_face < 0)
+	return 0;
+
+    /* Copy bottom face vertex indices */
+    for (i = 0; i < 4; i++)
+	bot_idx[i] = faces[bot_face][i];
+
+    /*
+     * For each bottom vertex, find the connected top vertex.
+     * Two vertices are connected if they share an edge — i.e.,
+     * they appear together on one of the 4 side faces.
+     */
+    memset(used_verts, 0, sizeof(used_verts));
+    for (i = 0; i < 4; i++) {
+	int found = 0;
+	for (j = 0; j < 6 && !found; j++) {
+	    if (j == bot_face || j == top_face)
+		continue;
+	    /* Check if this side face contains bot_idx[i] */
+	    int has_bot = 0, bot_pos = -1;
+	    for (k = 0; k < face_sizes[j]; k++) {
+		if (faces[j][k] == bot_idx[i]) {
+		    has_bot = 1;
+		    bot_pos = k;
+		    break;
+		}
+	    }
+	    if (!has_bot)
+		continue;
+	    /* Find adjacent vertex on this face that is a top vertex */
+	    int prev = (bot_pos + face_sizes[j] - 1) % face_sizes[j];
+	    int next = (bot_pos + 1) % face_sizes[j];
+	    int candidates[2] = { faces[j][prev], faces[j][next] };
+	    int c;
+	    for (c = 0; c < 2; c++) {
+		int m;
+		for (m = 0; m < 4; m++) {
+		    if (candidates[c] == faces[top_face][m] && !used_verts[candidates[c]]) {
+			top_idx[i] = candidates[c];
+			used_verts[candidates[c]] = 1;
+			found = 1;
+			break;
+		    }
+		}
+		if (found) break;
+	    }
+	}
+	if (!found)
+	    return 0;
+    }
+
+    /* Fill pts array: bottom 0-3, top 4-7 */
+    for (i = 0; i < 4; i++) {
+	VMOVE(&pts[i*3], verts[bot_idx[i]]);
+    }
+    for (i = 0; i < 4; i++) {
+	VMOVE(&pts[(i+4)*3], verts[top_idx[i]]);
+    }
+
+    return 1;
+}
+
+
+/*
+ * Try to match a polyhedron to an ARB4 (tetrahedron).
+ * Must have 4 vertices and 4 triangular faces.
+ */
+static int
+try_arb4(double verts[][3], int nv,
+	 int UNUSED(faces[][MAX_FACE_VERTS]), int face_sizes[], int nf,
+	 fastf_t *pts)
+{
+    int i;
+
+    if (nv != 4 || nf != 4)
+	return 0;
+
+    for (i = 0; i < 4; i++) {
+	if (face_sizes[i] != 3)
+	    return 0;
+    }
+
+    for (i = 0; i < 4; i++) {
+	VMOVE(&pts[i*3], verts[i]);
+    }
+
+    return 1;
+}
+
+
+/*
+ * Try to match a polyhedron to an ARB5 (pyramid with quad base).
+ * Must have 5 vertices and 5 faces: 1 quad + 4 triangles.
+ */
+static int
+try_arb5(double verts[][3], int nv,
+	 int faces[][MAX_FACE_VERTS], int face_sizes[], int nf,
+	 fastf_t *pts)
+{
+    int i;
+    int quad_face = -1;
+    int apex = -1;
+    int on_quad[5] = {0, 0, 0, 0, 0};
+
+    if (nv != 5 || nf != 5)
+	return 0;
+
+    /* Find the single quad face */
+    for (i = 0; i < 5; i++) {
+	if (face_sizes[i] == 4) {
+	    if (quad_face >= 0) return 0; /* two quads */
+	    quad_face = i;
+	} else if (face_sizes[i] != 3) {
+	    return 0;
+	}
+    }
+    if (quad_face < 0)
+	return 0;
+
+    /* Mark vertices on the quad face */
+    for (i = 0; i < 4; i++)
+	on_quad[faces[quad_face][i]] = 1;
+
+    /* The apex is the vertex not on the quad face */
+    for (i = 0; i < 5; i++) {
+	if (!on_quad[i]) {
+	    apex = i;
+	    break;
+	}
+    }
+    if (apex < 0) return 0;
+
+    /* pts: base quad (0-3), then apex (4) */
+    for (i = 0; i < 4; i++)
+	VMOVE(&pts[i*3], verts[faces[quad_face][i]]);
+    VMOVE(&pts[4*3], verts[apex]);
+
+    return 1;
+}
+
+
+/*
+ * Create a BOT (Bag of Triangles) from a polyhedron.
+ * Triangulates any non-triangular faces using a simple fan.
+ */
+static void
+make_bot_from_poly(const char *name,
+		   double verts[][3], int nv,
+		   int faces[][MAX_FACE_VERTS], int face_sizes[], int nf)
+{
+    int i, j;
+    int tri_count = 0;
+    int *bot_faces_arr;
+    fastf_t *bot_verts;
+    int fi;
+
+    /* Count triangles after fan triangulation */
+    for (i = 0; i < nf; i++)
+	tri_count += face_sizes[i] - 2;
+
+    bot_verts = (fastf_t *)bu_calloc(nv * 3, sizeof(fastf_t), "bot verts");
+    bot_faces_arr = (int *)bu_calloc(tri_count * 3, sizeof(int), "bot faces");
+
+    for (i = 0; i < nv; i++) {
+	bot_verts[i*3+0] = verts[i][0];
+	bot_verts[i*3+1] = verts[i][1];
+	bot_verts[i*3+2] = verts[i][2];
+    }
+
+    fi = 0;
+    for (i = 0; i < nf; i++) {
+	/* Fan triangulation from first vertex of each face */
+	for (j = 1; j < face_sizes[i] - 1; j++) {
+	    bot_faces_arr[fi*3+0] = faces[i][0];
+	    bot_faces_arr[fi*3+1] = faces[i][j];
+	    bot_faces_arr[fi*3+2] = faces[i][j+1];
+	    fi++;
+	}
+    }
+
+    mk_bot(fd_out, name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
+	   nv, tri_count, bot_verts, bot_faces_arr, NULL, NULL);
+
+    bu_free(bot_verts, "bot verts");
+    bu_free(bot_faces_arr, "bot faces");
+}
+
+
+/*
+ * Parse a polyhedron:
+ *   polyhedron(points = [[x,y,z], ...], faces = [[i,j,k,...], ...], convexity = N)
+ *
+ * First tries to match ARB4/5/8.  Falls back to BOT.
+ */
+static int
+parse_polyhedron(struct bu_vls *out_name, mat_t xform)
+{
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    double verts[MAX_POLY_VERTS][3];
+    int faces[MAX_POLY_FACES][MAX_FACE_VERTS];
+    int face_sizes[MAX_POLY_FACES];
+    int nv = 0, nf = 0;
+    size_t save_pos;
+    fastf_t arb_pts[8*3];
+
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    /* We need to parse points and faces manually since they are
+     * nested arrays.  Save position and scan for each parameter.
+     */
+    save_pos = pos;
+
+    /* Find "points = [[...]]" */
+    while (pos < buf_len && buf[pos] != ')') {
+	skip_ws();
+	if (pos + 6 < buf_len && bu_strncmp(&buf[pos], "points", 6) == 0) {
+	    pos += 6;
+	    skip_ws();
+	    if (pos < buf_len && buf[pos] == '=') {
+		pos++;
+		skip_ws();
+		if (!expect_char('['))
+		    break;
+		while (nv < MAX_POLY_VERTS) {
+		    skip_ws();
+		    if (pos < buf_len && buf[pos] == ']')
+			break;
+		    if (nv > 0) {
+			skip_ws();
+			if (pos < buf_len && buf[pos] == ',')
+			    pos++;
+		    }
+		    skip_ws();
+		    if (!expect_char('['))
+			break;
+		    verts[nv][0] = parse_double(); skip_ws(); expect_char(',');
+		    verts[nv][1] = parse_double(); skip_ws(); expect_char(',');
+		    verts[nv][2] = parse_double(); skip_ws();
+		    if (!expect_char(']'))
+			break;
+		    nv++;
+		}
+		skip_ws();
+		if (pos < buf_len && buf[pos] == ']')
+		    pos++;
+	    }
+	    break;
+	}
+	pos++;
+    }
+
+    /* Find "faces = [[...]]" */
+    pos = save_pos;
+    while (pos < buf_len && buf[pos] != ')') {
+	skip_ws();
+	if (pos + 5 < buf_len && bu_strncmp(&buf[pos], "faces", 5) == 0) {
+	    size_t p = pos + 5;
+	    while (p < buf_len && isspace((int)buf[p])) p++;
+	    if (p < buf_len && buf[p] == '=') {
+		pos = p + 1;
+		skip_ws();
+		if (!expect_char('['))
+		    break;
+		while (nf < MAX_POLY_FACES) {
+		    int fv = 0;
+		    skip_ws();
+		    if (pos < buf_len && buf[pos] == ']')
+			break;
+		    if (nf > 0) {
+			skip_ws();
+			if (pos < buf_len && buf[pos] == ',')
+			    pos++;
+		    }
+		    skip_ws();
+		    if (!expect_char('['))
+			break;
+		    while (fv < MAX_FACE_VERTS) {
+			skip_ws();
+			if (pos < buf_len && buf[pos] == ']')
+			    break;
+			if (fv > 0) {
+			    skip_ws();
+			    if (pos < buf_len && buf[pos] == ',')
+				pos++;
+			}
+			double fval = parse_double();
+			faces[nf][fv] = (int)fval;
+			fv++;
+		    }
+		    face_sizes[nf] = fv;
+		    skip_ws();
+		    if (pos < buf_len && buf[pos] == ']')
+			pos++;
+		    nf++;
+		}
+		skip_ws();
+		if (pos < buf_len && buf[pos] == ']')
+		    pos++;
+	    }
+	    break;
+	}
+	pos++;
+    }
+
+    /* Skip to end of params */
+    while (pos < buf_len && buf[pos] != ')')
+	pos++;
+    if (pos < buf_len) pos++;
+
+    if (nv == 0 || nf == 0) {
+	bu_log("WARNING: polyhedron with no points or faces, skipping\n");
+	return 0;
+    }
+
+    make_solid_name(&sname);
+
+    /* Try ARB types in order of preference */
+    if (try_arb8(verts, nv, faces, face_sizes, nf, arb_pts)) {
+	if (debug)
+	    bu_log("  polyhedron: %s matched arb8 (%d verts, %d faces)\n",
+		   bu_vls_cstr(&sname), nv, nf);
+	if (bn_mat_is_identity(xform)) {
+	    mk_arb8(fd_out, bu_vls_cstr(&sname), arb_pts);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_arb8(fd_out, bu_vls_cstr(&raw), arb_pts);
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+    } else if (try_arb5(verts, nv, faces, face_sizes, nf, arb_pts)) {
+	if (debug)
+	    bu_log("  polyhedron: %s matched arb5 (%d verts, %d faces)\n",
+		   bu_vls_cstr(&sname), nv, nf);
+	if (bn_mat_is_identity(xform)) {
+	    mk_arb5(fd_out, bu_vls_cstr(&sname), arb_pts);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_arb5(fd_out, bu_vls_cstr(&raw), arb_pts);
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+    } else if (try_arb4(verts, nv, faces, face_sizes, nf, arb_pts)) {
+	if (debug)
+	    bu_log("  polyhedron: %s matched arb4 (%d verts, %d faces)\n",
+		   bu_vls_cstr(&sname), nv, nf);
+	if (bn_mat_is_identity(xform)) {
+	    mk_arb4(fd_out, bu_vls_cstr(&sname), arb_pts);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_arb4(fd_out, bu_vls_cstr(&raw), arb_pts);
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+    } else {
+	/* Fall back to BOT */
+	if (debug)
+	    bu_log("  polyhedron: %s as bot (%d verts, %d faces)\n",
+		   bu_vls_cstr(&sname), nv, nf);
+	if (bn_mat_is_identity(xform)) {
+	    make_bot_from_poly(bu_vls_cstr(&sname), verts, nv, faces, face_sizes, nf);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    make_bot_from_poly(bu_vls_cstr(&raw), verts, nv, faces, face_sizes, nf);
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+    }
+
+    bu_vls_vlscat(out_name, &sname);
+    bu_vls_free(&sname);
+
+    skip_ws();
+    if (pos < buf_len && buf[pos] == ';')
+	pos++;
+
+    return 1;
+}
+
+
+/*
  * Skip an unrecognized node: consume identifier, params, and
  * optional { children } block.
  */
@@ -777,11 +1239,15 @@ parse_node(struct bu_vls *out_name, mat_t xform)
 	consume("cylinder");
 	return parse_cylinder(out_name, xform);
     }
+    if (looking_at("polyhedron")) {
+	consume("polyhedron");
+	return parse_polyhedron(out_name, xform);
+    }
 
     /* Unsupported nodes: warn and skip */
     if (looking_at("linear_extrude") || looking_at("rotate_extrude") ||
 	looking_at("hull") || looking_at("minkowski") ||
-	looking_at("polyhedron") || looking_at("polygon") ||
+	looking_at("polygon") ||
 	looking_at("square") || looking_at("circle") ||
 	looking_at("render") || looking_at("import")) {
 	size_t start = pos;
