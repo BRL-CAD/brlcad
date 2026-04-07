@@ -446,25 +446,46 @@ emit_bot(struct rt_bot_internal *bot)
  * Uses the primitive's ft_tessellate to get NMG, then nmg_bot() to
  * convert to triangles.
  */
+/*
+ * Tessellate a primitive by re-reading it from the database (to get
+ * a fresh copy that ft_tessellate can consume), converting to NMG,
+ * then to BOT.  We re-read because ft_tessellate can modify the
+ * internal structure, which would corrupt the caller's copy.
+ */
 static void
-emit_tessellated(const char *name, struct rt_db_internal *ip)
+emit_tessellated(const char *name, struct rt_db_internal *UNUSED(ip))
 {
     struct model *m;
     struct nmgregion *r;
     struct shell *s;
     struct rt_bot_internal *bot;
+    struct rt_db_internal tess_intern;
+    struct directory *dp;
     const struct rt_functab *ftp;
 
-    ftp = ip->idb_meth;
+    /* Re-read the primitive from the database for a fresh copy */
+    dp = db_lookup(dbip, name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
+	bu_log("WARNING: cannot re-read %s for tessellation\n", name);
+	return;
+    }
+    if (rt_db_get_internal(&tess_intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+	bu_log("WARNING: cannot re-read %s for tessellation\n", name);
+	return;
+    }
+
+    ftp = tess_intern.idb_meth;
     if (!ftp || !ftp->ft_tessellate) {
 	bu_log("WARNING: no tessellation method for %s, skipping\n", name);
+	rt_db_free_internal(&tess_intern);
 	return;
     }
 
     m = nmg_mm();
-    if (ftp->ft_tessellate(&r, m, ip, &ttol, &tol) < 0) {
+    if (ftp->ft_tessellate(&r, m, &tess_intern, &ttol, &tol) < 0) {
 	bu_log("WARNING: tessellation failed for %s, skipping\n", name);
 	nmg_km(m);
+	rt_db_free_internal(&tess_intern);
 	return;
     }
 
@@ -475,9 +496,12 @@ emit_tessellated(const char *name, struct rt_db_internal *ip)
 	BU_LIST_INIT(&vlfree);
 	bot = nmg_bot(s, &vlfree, &tol);
     }
+
+    nmg_km(m);
+    rt_db_free_internal(&tess_intern);
+
     if (!bot || bot->num_faces == 0) {
 	bu_log("WARNING: empty tessellation for %s, skipping\n", name);
-	nmg_km(m);
 	return;
     }
 
@@ -486,7 +510,6 @@ emit_tessellated(const char *name, struct rt_db_internal *ip)
 	       name, bot->num_vertices, bot->num_faces);
 
     emit_bot(bot);
-    nmg_km(m);
 }
 
 
