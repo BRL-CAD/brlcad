@@ -1212,6 +1212,358 @@ done:
 
 
 /*
+ * Parse a circle node: circle($fn=N, $fa=N, $fs=N, r=R)
+ * Only meaningful as a child of rotate_extrude or linear_extrude.
+ * Stores radius in *r_out and returns 1 if found.
+ */
+static int
+parse_circle_2d(double *r_out)
+{
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    find_param_double("r", r_out);
+
+    while (pos < buf_len && buf[pos] != ')')
+	pos++;
+    if (pos < buf_len) pos++;
+
+    skip_ws();
+    if (pos < buf_len && buf[pos] == ';')
+	pos++;
+
+    return 1;
+}
+
+
+/*
+ * Parse a square node: square(size=[x,y], center=false)
+ * Stores dimensions in size_out and centered flag.
+ */
+static int
+parse_square_2d(double size_out[2], int *centered)
+{
+    size_out[0] = 1.0;
+    size_out[1] = 1.0;
+    *centered = 0;
+
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    find_param_array("size", size_out, 2, NULL);
+    find_param_bool("center", centered);
+
+    while (pos < buf_len && buf[pos] != ')')
+	pos++;
+    if (pos < buf_len) pos++;
+
+    skip_ws();
+    if (pos < buf_len && buf[pos] == ';')
+	pos++;
+
+    return 1;
+}
+
+
+/*
+ * Parse rotate_extrude() { child }
+ *
+ * The common pattern from BRL-CAD torus export is:
+ *   rotate_extrude(angle=360, ...) {
+ *     multmatrix([[1,0,0,R_major],...]) {  // translate([R_major,0,0])
+ *       circle(r=R_minor);
+ *     }
+ *   }
+ *
+ * This maps directly to mk_tor().
+ */
+static int
+parse_rotate_extrude(struct bu_vls *out_name, mat_t xform)
+{
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    double angle = 360.0;
+    double circle_r = 0;
+    double major_r = 0;
+
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    find_param_double("angle", &angle);
+
+    while (pos < buf_len && buf[pos] != ')')
+	pos++;
+    if (pos < buf_len) pos++;
+
+    skip_ws();
+    if (!expect_char('{'))
+	return 0;
+
+    /*
+     * Try to match the torus pattern:
+     *   multmatrix(translate) { circle(r) }
+     * or just: circle(r) with major_r = 0
+     */
+    skip_ws();
+
+    if (looking_at("multmatrix")) {
+	/* Parse the multmatrix to get the translation (major radius) */
+	double vals[16];
+	int i;
+
+	consume("multmatrix");
+	skip_ws();
+	if (!expect_char('('))
+	    goto fallback;
+	skip_ws();
+	if (!expect_char('['))
+	    goto fallback;
+
+	for (i = 0; i < 4; i++) {
+	    skip_ws();
+	    if (i > 0) { skip_ws(); if (pos < buf_len && buf[pos] == ',') pos++; }
+	    skip_ws();
+	    if (!expect_char('['))
+		goto fallback;
+	    vals[i*4+0] = parse_double(); skip_ws(); expect_char(',');
+	    vals[i*4+1] = parse_double(); skip_ws(); expect_char(',');
+	    vals[i*4+2] = parse_double(); skip_ws(); expect_char(',');
+	    vals[i*4+3] = parse_double(); skip_ws();
+	    if (!expect_char(']'))
+		goto fallback;
+	}
+	skip_ws(); expect_char(']'); skip_ws(); expect_char(')');
+
+	/* The X translation is the major radius */
+	major_r = vals[3];  /* row 0, col 3 = tx */
+
+	skip_ws();
+	if (!expect_char('{'))
+	    goto fallback;
+
+	skip_ws();
+	if (looking_at("circle")) {
+	    consume("circle");
+	    if (!parse_circle_2d(&circle_r))
+		goto fallback;
+	}
+
+	skip_ws();
+	expect_char('}'); /* close multmatrix block */
+    } else if (looking_at("circle")) {
+	consume("circle");
+	if (!parse_circle_2d(&circle_r))
+	    goto fallback;
+    } else {
+	goto fallback;
+    }
+
+    skip_ws();
+    expect_char('}'); /* close rotate_extrude block */
+
+    if (circle_r <= 0 || (NEAR_EQUAL(angle, 360.0, 0.01) && major_r <= 0)) {
+	bu_log("WARNING: rotate_extrude with unsupported parameters, skipping\n");
+	return 0;
+    }
+
+    /* Create torus: center at origin, normal along Z, major_r, minor_r = circle_r */
+    {
+	point_t center;
+	vect_t normal;
+
+	VSET(center, 0.0, 0.0, 0.0);
+	VSET(normal, 0.0, 0.0, 1.0);
+
+	make_solid_name(&sname);
+
+	if (bn_mat_is_identity(xform)) {
+	    mk_tor(fd_out, bu_vls_cstr(&sname), center, normal, major_r, circle_r);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_tor(fd_out, bu_vls_cstr(&raw), center, normal, major_r, circle_r);
+
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+
+	if (debug)
+	    bu_log("  torus: %s R=%g r=%g\n", bu_vls_cstr(&sname), major_r, circle_r);
+
+	bu_vls_vlscat(out_name, &sname);
+	bu_vls_free(&sname);
+	return 1;
+    }
+
+fallback:
+    /* Can't match a known pattern — skip the rest */
+    bu_log("WARNING: rotate_extrude with unsupported child, skipping\n");
+    while (pos < buf_len && buf[pos] != '}')
+	pos++;
+    if (pos < buf_len) pos++;
+    bu_vls_free(&sname);
+    return 0;
+}
+
+
+/*
+ * Parse linear_extrude(height=H, ...) { child }
+ *
+ * Special cases:
+ *   linear_extrude { square(size=[x,y]) }  →  mk_rpp (box)
+ *   linear_extrude { circle(r=R) }         →  mk_tgc (cylinder)
+ *
+ * Other children are unsupported (warn and skip).
+ */
+static int
+parse_linear_extrude(struct bu_vls *out_name, mat_t xform)
+{
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    double height = 1.0;
+    int centered = 0;
+    double scale_arr[2] = {1.0, 1.0};
+
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    find_param_double("height", &height);
+    find_param_bool("center", &centered);
+    find_param_array("scale", scale_arr, 2, NULL);
+
+    while (pos < buf_len && buf[pos] != ')')
+	pos++;
+    if (pos < buf_len) pos++;
+
+    skip_ws();
+    if (!expect_char('{'))
+	return 0;
+
+    skip_ws();
+
+    if (looking_at("square")) {
+	double sq_size[2];
+	int sq_centered = 0;
+	point_t min_pt, max_pt;
+
+	consume("square");
+	if (!parse_square_2d(sq_size, &sq_centered))
+	    goto fallback;
+
+	skip_ws();
+	expect_char('}');
+
+	/* Build RPP */
+	if (sq_centered) {
+	    VSET(min_pt, -sq_size[0]/2.0, -sq_size[1]/2.0, centered ? -height/2.0 : 0.0);
+	    VSET(max_pt,  sq_size[0]/2.0,  sq_size[1]/2.0, centered ? height/2.0 : height);
+	} else {
+	    VSET(min_pt, 0.0, 0.0, centered ? -height/2.0 : 0.0);
+	    VSET(max_pt, sq_size[0], sq_size[1], centered ? height/2.0 : height);
+	}
+
+	make_solid_name(&sname);
+
+	if (bn_mat_is_identity(xform)) {
+	    mk_rpp(fd_out, bu_vls_cstr(&sname), min_pt, max_pt);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_rpp(fd_out, bu_vls_cstr(&raw), min_pt, max_pt);
+
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+
+	if (debug)
+	    bu_log("  linear_extrude(square): %s [%g, %g] h=%g\n",
+		   bu_vls_cstr(&sname), sq_size[0], sq_size[1], height);
+
+	bu_vls_vlscat(out_name, &sname);
+	bu_vls_free(&sname);
+	return 1;
+
+    } else if (looking_at("circle")) {
+	double r = 1.0;
+	point_t base;
+	vect_t hvec, avec, bvec, cvec, dvec;
+
+	consume("circle");
+	if (!parse_circle_2d(&r))
+	    goto fallback;
+
+	skip_ws();
+	expect_char('}');
+
+	double z0 = centered ? -height/2.0 : 0.0;
+
+	VSET(base, 0.0, 0.0, z0);
+	VSET(hvec, 0.0, 0.0, height);
+	VSET(avec, r, 0.0, 0.0);
+	VSET(bvec, 0.0, r, 0.0);
+	/* Scale affects top radius */
+	double r_top = r * scale_arr[0];
+	VSET(cvec, r_top, 0.0, 0.0);
+	VSET(dvec, 0.0, r_top, 0.0);
+
+	make_solid_name(&sname);
+
+	if (bn_mat_is_identity(xform)) {
+	    mk_tgc(fd_out, bu_vls_cstr(&sname), base, hvec,
+		    avec, bvec, cvec, dvec);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_tgc(fd_out, bu_vls_cstr(&raw), base, hvec,
+		    avec, bvec, cvec, dvec);
+
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+
+	if (debug)
+	    bu_log("  linear_extrude(circle): %s r=%g h=%g\n",
+		   bu_vls_cstr(&sname), r, height);
+
+	bu_vls_vlscat(out_name, &sname);
+	bu_vls_free(&sname);
+	return 1;
+    }
+
+fallback:
+    bu_log("WARNING: linear_extrude with unsupported child, skipping\n");
+    /* Skip to closing brace */
+    {
+	int depth = 1;
+	while (pos < buf_len && depth > 0) {
+	    if (buf[pos] == '{') depth++;
+	    else if (buf[pos] == '}') depth--;
+	    pos++;
+	}
+    }
+    bu_vls_free(&sname);
+    return 0;
+}
+
+
+/*
  * Skip an unrecognized node: consume identifier, params, and
  * optional { children } block.
  */
@@ -1382,12 +1734,18 @@ parse_node(struct bu_vls *out_name, mat_t xform)
 	consume("polyhedron");
 	return parse_polyhedron(out_name, xform);
     }
+    if (looking_at("rotate_extrude")) {
+	consume("rotate_extrude");
+	return parse_rotate_extrude(out_name, xform);
+    }
+    if (looking_at("linear_extrude")) {
+	consume("linear_extrude");
+	return parse_linear_extrude(out_name, xform);
+    }
 
     /* Unsupported nodes: warn and skip */
-    if (looking_at("linear_extrude") || looking_at("rotate_extrude") ||
-	looking_at("hull") || looking_at("minkowski") ||
+    if (looking_at("hull") || looking_at("minkowski") ||
 	looking_at("polygon") ||
-	looking_at("square") || looking_at("circle") ||
 	looking_at("render") || looking_at("import")) {
 	size_t start = pos;
 	size_t end = pos;
