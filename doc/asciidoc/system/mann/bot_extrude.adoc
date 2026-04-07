@@ -75,7 +75,7 @@ For a more advanced use, we combine *bot extrude* with *search -exec* to batch c
 .Batch conversion of plate mode BoTs.
 [example]
 ====
-mged>**search -type bot -type plate -exec "bot extrude -F --in-place {}" ";"**
+mged>**search -type bot -type plate -exec bot extrude -F --in-place "{}" ";"**
 
 Uses the *--in-place* to replace plate mode BoTs in the .g file with their volumetric approximations. The *-F* option instructs *bot extrude* to proceed even if the BoT is view dependent.
 

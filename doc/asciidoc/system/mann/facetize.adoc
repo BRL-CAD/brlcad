@@ -201,7 +201,7 @@ mged>**lint -I model.f**
 ====
 Use search -exec to extrude all plate mode bots before attempting a facetize operation.
 
-mged>**search model.f -type bot -type plate -exec "bot extrude -i {}" ";"**
+mged>**search model.f -type bot -type plate -exec bot extrude -i "{}" ";"**
 
 ====
 
