@@ -43,6 +43,7 @@
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/path.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "vmath.h"
@@ -1771,6 +1772,181 @@ fallback:
 
 
 /*
+ * Parse an import() node by reading the referenced file (STL/OFF)
+ * and creating a BOT.  The file is resolved relative to the input
+ * .csg file's directory.
+ *
+ * Format: import(file = "foo.stl", layer = "", ...)
+ */
+static int
+parse_import(struct bu_vls *out_name, mat_t xform)
+{
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    struct bu_vls filepath = BU_VLS_INIT_ZERO;
+    struct bu_vls filename = BU_VLS_INIT_ZERO;
+    size_t save_pos;
+    FILE *stl_fp;
+
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    /* Find file = "..." parameter */
+    save_pos = pos;
+    while (pos < buf_len && buf[pos] != ')') {
+	skip_ws();
+	if (pos + 4 < buf_len && bu_strncmp(&buf[pos], "file", 4) == 0) {
+	    size_t p = pos + 4;
+	    while (p < buf_len && isspace((int)buf[p])) p++;
+	    if (p < buf_len && buf[p] == '=') {
+		p++;
+		while (p < buf_len && isspace((int)buf[p])) p++;
+		if (p < buf_len && buf[p] == '"') {
+		    size_t start;
+		    p++;
+		    start = p;
+		    while (p < buf_len && buf[p] != '"')
+			p++;
+		    bu_vls_strncpy(&filename, &buf[start], p - start);
+		    break;
+		}
+	    }
+	}
+	pos++;
+    }
+
+    /* Skip to end of params */
+    pos = save_pos;
+    while (pos < buf_len && buf[pos] != ')')
+	pos++;
+    if (pos < buf_len) pos++;
+
+    skip_ws();
+    if (pos < buf_len && buf[pos] == ';')
+	pos++;
+
+    if (bu_vls_strlen(&filename) == 0) {
+	bu_log("WARNING: import() with no file parameter, skipping\n");
+	bu_vls_free(&filename);
+	bu_vls_free(&filepath);
+	return 0;
+    }
+
+    /* Resolve path relative to input file directory */
+    {
+	struct bu_vls input_dir = BU_VLS_INIT_ZERO;
+	char *slash = strrchr(input_file, '/');
+	if (slash) {
+	    bu_vls_strncpy(&input_dir, input_file, slash - input_file + 1);
+	}
+	bu_vls_vlscat(&filepath, &input_dir);
+	bu_vls_vlscat(&filepath, &filename);
+	bu_vls_free(&input_dir);
+    }
+
+    /* Try the resolved path, then the filename as-is */
+    stl_fp = fopen(bu_vls_cstr(&filepath), "r");
+    if (!stl_fp)
+	stl_fp = fopen(bu_vls_cstr(&filename), "r");
+    if (!stl_fp) {
+	bu_log("WARNING: import() cannot open '%s', skipping\n",
+	       bu_vls_cstr(&filepath));
+	bu_vls_free(&filename);
+	bu_vls_free(&filepath);
+	return 0;
+    }
+
+    /* Read ASCII STL */
+    {
+	char line[512];
+	fastf_t *verts = NULL;
+	int *faces = NULL;
+	int nv = 0, nf = 0;
+	int verts_alloc = 0, faces_alloc = 0;
+	int tri_vi = 0;
+
+	while (bu_fgets(line, sizeof(line), stl_fp)) {
+	    char *p = line;
+	    while (*p && isspace((int)*p)) p++;
+
+	    if (bu_strncmp(p, "vertex", 6) == 0) {
+		double x, y, z;
+		if (sscanf(p + 6, "%lf %lf %lf", &x, &y, &z) == 3) {
+		    if (nv >= verts_alloc) {
+			verts_alloc = verts_alloc ? verts_alloc * 2 : 256;
+			verts = (fastf_t *)bu_realloc(verts,
+				    verts_alloc * 3 * sizeof(fastf_t), "stl verts");
+		    }
+		    verts[nv*3+0] = x;
+		    verts[nv*3+1] = y;
+		    verts[nv*3+2] = z;
+		    tri_vi++;
+		    nv++;
+
+		    if (tri_vi == 3) {
+			if (nf >= faces_alloc) {
+			    faces_alloc = faces_alloc ? faces_alloc * 2 : 256;
+			    faces = (int *)bu_realloc(faces,
+					faces_alloc * 3 * sizeof(int), "stl faces");
+			}
+			faces[nf*3+0] = nv - 3;
+			faces[nf*3+1] = nv - 2;
+			faces[nf*3+2] = nv - 1;
+			nf++;
+			tri_vi = 0;
+		    }
+		}
+	    }
+	}
+	fclose(stl_fp);
+
+	if (nv == 0 || nf == 0) {
+	    bu_log("WARNING: import() read 0 triangles from '%s', skipping\n",
+		   bu_vls_cstr(&filename));
+	    if (verts) bu_free(verts, "stl verts");
+	    if (faces) bu_free(faces, "stl faces");
+	    bu_vls_free(&filename);
+	    bu_vls_free(&filepath);
+	    return 0;
+	}
+
+	make_solid_name(&sname);
+
+	if (bn_mat_is_identity(xform)) {
+	    mk_bot(fd_out, bu_vls_cstr(&sname), RT_BOT_SOLID,
+		   RT_BOT_UNORIENTED, 0, nv, nf, verts, faces, NULL, NULL);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_bot(fd_out, bu_vls_cstr(&raw), RT_BOT_SOLID,
+		   RT_BOT_UNORIENTED, 0, nv, nf, verts, faces, NULL, NULL);
+
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+
+	if (debug)
+	    bu_log("  import(%s): %s (%d verts, %d faces)\n",
+		   bu_vls_cstr(&filename), bu_vls_cstr(&sname), nv, nf);
+
+	bu_free(verts, "stl verts");
+	bu_free(faces, "stl faces");
+    }
+
+    bu_vls_vlscat(out_name, &sname);
+    bu_vls_free(&sname);
+    bu_vls_free(&filename);
+    bu_vls_free(&filepath);
+    return 1;
+}
+
+
+/*
  * Skip an unrecognized node: consume identifier, params, and
  * optional { children } block.
  */
@@ -1950,10 +2126,29 @@ parse_node(struct bu_vls *out_name, mat_t xform)
 	return parse_linear_extrude(out_name, xform);
     }
 
+    if (looking_at("import")) {
+	consume("import");
+	return parse_import(out_name, xform);
+    }
+    if (looking_at("render")) {
+	/* render() is just a wrapper — pass through to child */
+	consume("render");
+	skip_params();
+	skip_ws();
+	if (!expect_char('{'))
+	    return 0;
+	skip_ws();
+	if (!parse_node(out_name, xform)) {
+	    while (pos < buf_len && buf[pos] != '}')
+		pos++;
+	}
+	expect_char('}');
+	return (bu_vls_strlen(out_name) > 0) ? 1 : 0;
+    }
+
     /* Unsupported nodes: warn and skip */
     if (looking_at("hull") || looking_at("minkowski") ||
-	looking_at("polygon") ||
-	looking_at("render") || looking_at("import")) {
+	looking_at("polygon")) {
 	size_t start = pos;
 	size_t end = pos;
 	while (end < buf_len && buf[end] != '(' && !isspace((int)buf[end]))

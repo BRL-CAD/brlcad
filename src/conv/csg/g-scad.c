@@ -683,6 +683,53 @@ emit_object(const char *name)
 		    break;
 		}
 
+	    case ID_HALF:
+		{
+		    /*
+		     * Halfspace: infinite solid on one side of a plane.
+		     * OpenSCAD has no infinite solids, so we approximate
+		     * with a very large cube positioned on the correct
+		     * side of the plane.
+		     */
+		    struct rt_half_internal *half = (struct rt_half_internal *)intern.idb_ptr;
+		    double d = half->eqn[W]; /* distance from origin along normal */
+		    vect_t normal;
+		    mat_t m;
+		    vect_t a_vec, b_vec;
+		    double big = 1.0e10;
+
+		    VMOVE(normal, half->eqn);
+
+		    /* Build coordinate frame: normal = Z, a/b = X/Y */
+		    bn_vec_ortho(a_vec, normal);
+		    VCROSS(b_vec, normal, a_vec);
+		    VUNITIZE(a_vec);
+		    VUNITIZE(b_vec);
+
+		    /*
+		     * Place a huge cube so its +Z face is at the plane.
+		     * The cube extends from -big to 0 in the local Z
+		     * (normal) direction, and -big to +big in X/Y.
+		     * The origin of local space is at d * normal.
+		     */
+		    MAT_ZERO(m);
+		    m[0]  = a_vec[0]; m[4]  = b_vec[0]; m[8]  = normal[0]; m[12] = normal[0] * d;
+		    m[1]  = a_vec[1]; m[5]  = b_vec[1]; m[9]  = normal[1]; m[13] = normal[1] * d;
+		    m[2]  = a_vec[2]; m[6]  = b_vec[2]; m[10] = normal[2]; m[14] = normal[2] * d;
+		    m[15] = 1.0;
+
+		    emit_matrix_open(m);
+		    print_indent();
+		    fprintf(fd_out, "translate([%g, %g, %g])\n", -big, -big, -2.0 * big);
+		    indent_level++;
+		    print_indent();
+		    fprintf(fd_out, "cube([%g, %g, %g]);\n", 2.0 * big, 2.0 * big, 2.0 * big);
+		    indent_level--;
+		    emit_matrix_close(m);
+		    solid_count++;
+		    break;
+		}
+
 	    case ID_EXTRUDE:
 		{
 		    struct rt_extrude_internal *extr = (struct rt_extrude_internal *)intern.idb_ptr;
