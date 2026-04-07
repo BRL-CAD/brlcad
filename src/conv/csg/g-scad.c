@@ -660,6 +660,146 @@ emit_object(const char *name)
 		    break;
 		}
 
+	    case ID_EXTRUDE:
+		{
+		    struct rt_extrude_internal *extr = (struct rt_extrude_internal *)intern.idb_ptr;
+		    struct rt_sketch_internal *skt = NULL;
+		    struct directory *skt_dp;
+		    struct rt_db_internal skt_intern;
+		    mat_t m;
+		    vect_t h_unit;
+		    double h_len;
+
+		    /* Load the referenced sketch */
+		    skt_dp = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET);
+		    if (skt_dp == RT_DIR_NULL) {
+			bu_log("WARNING: sketch '%s' not found for extrude %s\n",
+			       extr->sketch_name, name);
+			emit_tessellated(name, &intern);
+			break;
+		    }
+		    if (rt_db_get_internal(&skt_intern, skt_dp, dbip, NULL, &rt_uniresource) < 0) {
+			bu_log("WARNING: failed to read sketch '%s'\n", extr->sketch_name);
+			emit_tessellated(name, &intern);
+			break;
+		    }
+		    skt = (struct rt_sketch_internal *)skt_intern.idb_ptr;
+
+		    h_len = MAGNITUDE(extr->h);
+
+		    /* Build transform from sketch plane to world */
+		    MAT_ZERO(m);
+		    m[0]  = extr->u_vec[0]; m[4]  = extr->v_vec[0]; m[12] = extr->V[0];
+		    m[1]  = extr->u_vec[1]; m[5]  = extr->v_vec[1]; m[13] = extr->V[1];
+		    m[2]  = extr->u_vec[2]; m[6]  = extr->v_vec[2]; m[14] = extr->V[2];
+		    /* H direction as Z of the local frame */
+		    if (h_len > tol.dist) {
+			VSCALE(h_unit, extr->h, 1.0 / h_len);
+			m[8]  = h_unit[0];
+			m[9]  = h_unit[1];
+			m[10] = h_unit[2];
+		    }
+		    m[15] = 1.0;
+
+		    emit_matrix_open(m);
+
+		    print_indent();
+		    fprintf(fd_out, "linear_extrude(height = %g) {\n", h_len);
+		    indent_level++;
+
+		    /* Emit polygon from sketch vertices and line segments */
+		    {
+			size_t vi;
+			size_t si;
+			int has_lines = 0;
+
+			print_indent();
+			fprintf(fd_out, "polygon(\n");
+			indent_level++;
+
+			/* Points */
+			print_indent();
+			fprintf(fd_out, "points = [\n");
+			indent_level++;
+			for (vi = 0; vi < skt->vert_count; vi++) {
+			    print_indent();
+			    fprintf(fd_out, "[%g, %g]%s\n",
+				    skt->verts[vi][0], skt->verts[vi][1],
+				    (vi < skt->vert_count - 1) ? "," : "");
+			}
+			indent_level--;
+			print_indent();
+			fprintf(fd_out, "],\n");
+
+			/* Paths — collect line segment chains */
+			/* For simplicity, emit one path per closed loop.
+			 * Walk line segments to find connected chains. */
+			print_indent();
+			fprintf(fd_out, "paths = [\n");
+			indent_level++;
+
+			/* Simple approach: emit vertex indices from line
+			 * segments in order. */
+			for (si = 0; si < skt->curve.count; si++) {
+			    uint32_t *magic_p = (uint32_t *)skt->curve.segment[si];
+			    if (*magic_p == CURVE_LSEG_MAGIC) {
+				has_lines = 1;
+				break;
+			    }
+			}
+
+			if (has_lines) {
+			    /* Collect all start vertices from line segments as a single path */
+			    print_indent();
+			    fprintf(fd_out, "[");
+			    {
+				int first = 1;
+				for (si = 0; si < skt->curve.count; si++) {
+				    uint32_t *magic_p = (uint32_t *)skt->curve.segment[si];
+				    if (*magic_p == CURVE_LSEG_MAGIC) {
+					struct line_seg *lseg = (struct line_seg *)skt->curve.segment[si];
+					if (!first) fprintf(fd_out, ", ");
+					fprintf(fd_out, "%d", lseg->start);
+					first = 0;
+				    }
+				}
+			    }
+			    fprintf(fd_out, "]\n");
+			} else {
+			    /* No line segments — emit default path */
+			    print_indent();
+			    fprintf(fd_out, "[");
+			    for (vi = 0; vi < skt->vert_count; vi++) {
+				fprintf(fd_out, "%zu%s", vi,
+					(vi < skt->vert_count - 1) ? ", " : "");
+			    }
+			    fprintf(fd_out, "]\n");
+			}
+
+			indent_level--;
+			print_indent();
+			fprintf(fd_out, "]\n");
+
+			indent_level--;
+			print_indent();
+			fprintf(fd_out, ");\n");
+		    }
+
+		    indent_level--;
+		    print_indent();
+		    fprintf(fd_out, "}\n");
+
+		    emit_matrix_close(m);
+		    rt_db_free_internal(&skt_intern);
+		    solid_count++;
+		    break;
+		}
+
+	    case ID_SKETCH:
+		/* Sketches are referenced by extrusions, not standalone geometry.
+		 * If encountered alone, skip silently. */
+		break;
+
 	    default:
 		/* Try tessellation for unsupported types */
 		emit_tessellated(name, &intern);
