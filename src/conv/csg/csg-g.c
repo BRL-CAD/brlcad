@@ -682,6 +682,70 @@ parse_cylinder(struct bu_vls *out_name, mat_t xform)
 
 
 /*
+ * Test whether a polyhedron is convex.  For each face, compute the
+ * plane normal from the first three vertices, then verify every
+ * other vertex lies on the same side of that plane.  The winding
+ * order (and thus normal direction) is not assumed — we just check
+ * that all non-face vertices agree on which side they are on.
+ *
+ * Returns 1 if convex, 0 if not.
+ */
+static int
+poly_is_convex(double verts[][3], int nv,
+	       int faces[][MAX_FACE_VERTS], int face_sizes[], int nf)
+{
+    int f, v;
+    double tol_dist = 1.0e-6;
+
+    for (f = 0; f < nf; f++) {
+	vect_t e1, e2, normal;
+	double d;
+	int v0, v1, v2;
+	int sign = 0; /* 0=unknown, 1=positive side, -1=negative side */
+
+	if (face_sizes[f] < 3)
+	    return 0;
+
+	v0 = faces[f][0];
+	v1 = faces[f][1];
+	v2 = faces[f][2];
+
+	VSUB2(e1, verts[v1], verts[v0]);
+	VSUB2(e2, verts[v2], verts[v0]);
+	VCROSS(normal, e1, e2);
+
+	/* Plane equation: normal . X = d */
+	d = VDOT(normal, verts[v0]);
+
+	/* All non-face vertices must be on the same side of this plane */
+	for (v = 0; v < nv; v++) {
+	    double dist;
+	    int on_face = 0;
+	    int k;
+	    for (k = 0; k < face_sizes[f]; k++) {
+		if (faces[f][k] == v) {
+		    on_face = 1;
+		    break;
+		}
+	    }
+	    if (on_face)
+		continue;
+
+	    dist = VDOT(normal, verts[v]) - d;
+	    if (dist > tol_dist) {
+		if (sign < 0) return 0;
+		sign = 1;
+	    } else if (dist < -tol_dist) {
+		if (sign > 0) return 0;
+		sign = -1;
+	    }
+	}
+    }
+    return 1;
+}
+
+
+/*
  * Try to match a polyhedron to an ARB8.  The polyhedron must have
  * exactly 8 vertices and 6 quadrilateral faces.  We find two
  * opposing quad faces and order the vertices so that face 0
@@ -1051,7 +1115,35 @@ parse_polyhedron(struct bu_vls *out_name, mat_t xform)
 
     make_solid_name(&sname);
 
-    /* Try ARB types in order of preference */
+    /* arb4 is always convex; try it first without a convexity check */
+    if (try_arb4(verts, nv, faces, face_sizes, nf, arb_pts)) {
+	if (debug)
+	    bu_log("  polyhedron: %s matched arb4 (%d verts, %d faces)\n",
+		   bu_vls_cstr(&sname), nv, nf);
+	if (bn_mat_is_identity(xform)) {
+	    mk_arb4(fd_out, bu_vls_cstr(&sname), arb_pts);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_arb4(fd_out, bu_vls_cstr(&raw), arb_pts);
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+	goto done;
+    }
+
+    /* Remaining ARB types require convexity */
+    if (!poly_is_convex(verts, nv, faces, face_sizes, nf)) {
+	if (debug)
+	    bu_log("  polyhedron: %s is non-convex, using bot (%d verts, %d faces)\n",
+		   bu_vls_cstr(&sname), nv, nf);
+	goto use_bot;
+    }
+
     if (try_arb8(verts, nv, faces, face_sizes, nf, arb_pts)) {
 	if (debug)
 	    bu_log("  polyhedron: %s matched arb8 (%d verts, %d faces)\n",
@@ -1086,24 +1178,8 @@ parse_polyhedron(struct bu_vls *out_name, mat_t xform)
 		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 	    bu_vls_free(&raw);
 	}
-    } else if (try_arb4(verts, nv, faces, face_sizes, nf, arb_pts)) {
-	if (debug)
-	    bu_log("  polyhedron: %s matched arb4 (%d verts, %d faces)\n",
-		   bu_vls_cstr(&sname), nv, nf);
-	if (bn_mat_is_identity(xform)) {
-	    mk_arb4(fd_out, bu_vls_cstr(&sname), arb_pts);
-	} else {
-	    struct bu_vls raw = BU_VLS_INIT_ZERO;
-	    struct wmember head;
-	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
-	    mk_arb4(fd_out, bu_vls_cstr(&raw), arb_pts);
-	    BU_LIST_INIT(&head.l);
-	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
-	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
-		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
-	    bu_vls_free(&raw);
-	}
     } else {
+    use_bot:
 	/* Fall back to BOT */
 	if (debug)
 	    bu_log("  polyhedron: %s as bot (%d verts, %d faces)\n",
@@ -1123,6 +1199,7 @@ parse_polyhedron(struct bu_vls *out_name, mat_t xform)
 	}
     }
 
+done:
     bu_vls_vlscat(out_name, &sname);
     bu_vls_free(&sname);
 
