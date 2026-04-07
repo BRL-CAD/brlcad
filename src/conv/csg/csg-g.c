@@ -1240,12 +1240,43 @@ skip_node(void)
 
 /*
  * Parse a color() wrapper: color([r, g, b, a]) { child }
- * We currently ignore the color and just parse the child.
+ * Applies the color as attributes on the child object.
  */
 static int
 parse_color(struct bu_vls *out_name, mat_t xform)
 {
-    skip_params();
+    double rgba[4] = {-1, -1, -1, 1.0};
+    int n = 0;
+
+    skip_ws();
+    if (!expect_char('('))
+	return 0;
+
+    /* color params are just ([r, g, b, a]) — a bare array */
+    skip_ws();
+    if (pos < buf_len && buf[pos] == '[') {
+	pos++;
+	while (n < 4) {
+	    skip_ws();
+	    if (pos < buf_len && buf[pos] == ']')
+		break;
+	    if (n > 0) {
+		skip_ws();
+		if (pos < buf_len && buf[pos] == ',')
+		    pos++;
+	    }
+	    rgba[n++] = parse_double();
+	}
+	skip_ws();
+	if (pos < buf_len && buf[pos] == ']')
+	    pos++;
+    }
+
+    /* Skip to closing ')' */
+    while (pos < buf_len && buf[pos] != ')')
+	pos++;
+    if (pos < buf_len) pos++;
+
     skip_ws();
     if (!expect_char('{'))
 	return 0;
@@ -1257,6 +1288,37 @@ parse_color(struct bu_vls *out_name, mat_t xform)
     }
 
     expect_char('}');
+
+    /* Apply color attributes to the child object */
+    if (bu_vls_strlen(out_name) > 0 && rgba[0] >= 0) {
+	struct bu_vls colorstr = BU_VLS_INIT_ZERO;
+	int r = (int)(rgba[0] * 255.0 + 0.5);
+	int g = (int)(rgba[1] * 255.0 + 0.5);
+	int b = (int)(rgba[2] * 255.0 + 0.5);
+
+	if (r > 255) r = 255;
+	if (g > 255) g = 255;
+	if (b > 255) b = 255;
+
+	bu_vls_sprintf(&colorstr, "%d/%d/%d", r, g, b);
+	db5_update_attribute(bu_vls_cstr(out_name), "color",
+			     bu_vls_cstr(&colorstr), fd_out->dbip);
+
+	if (n >= 4 && rgba[3] < 1.0) {
+	    struct bu_vls alphastr = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&alphastr, "%.3f", rgba[3]);
+	    db5_update_attribute(bu_vls_cstr(out_name), "alpha",
+				bu_vls_cstr(&alphastr), fd_out->dbip);
+	    bu_vls_free(&alphastr);
+	}
+
+	if (debug)
+	    bu_log("  color: %s = %d/%d/%d\n",
+		   bu_vls_cstr(out_name), r, g, b);
+
+	bu_vls_free(&colorstr);
+    }
+
     return (bu_vls_strlen(out_name) > 0) ? 1 : 0;
 }
 
