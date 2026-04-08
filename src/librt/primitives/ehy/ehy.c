@@ -1413,10 +1413,10 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     vells = (struct vertex ***)
 	bu_malloc(nell*sizeof(struct vertex **), "vertex [][]");
     j = nseg;
-    for (i = 0; i < nell; i++) {
-	vells[i] = (struct vertex **)bu_malloc(j*sizeof(struct vertex *), "vertex []");
-	if (i && pts_dbl[i])
-	    j /=2;
+    for (i = nell; i > 0; i--) {
+	vells[i-1] = (struct vertex **)bu_malloc(j*sizeof(struct vertex *), "vertex []");
+	if ((i-1) && pts_dbl[i-1])
+	    j /= 2;
     }
 
     /* top face of ehy */
