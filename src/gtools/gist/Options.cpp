@@ -95,7 +95,7 @@ bool Options::readParameters(int argc, const char **argv) {
 	{"N", "",     "\"extra notes\"",   &_param_set_std_str,     &this->notes,          "add additional notes to report"		    },
 	{"L", "",     "",                  NULL,                    &param_Lhand,          "use left-handed coordinate system"		    },
 	{"A", "",     "",                  NULL,                    &param_Yup,            "use +Y-up geometry axis (default is +Z-up)"	    },
-	{"d", "",     "densityFile",	   &_param_set_std_str,	    &param_densityFile,	   "specify external density file for materials"    },
+	{"d", "",     "densityFile",	   &_param_set_std_str,	    &param_densityFile,	   "specify density file for materials (or '0' to skip density calculations)"    },
 	{"l", "",     "len_units",         &_param_set_std_str,     &param_Ulength,        "specify length units"			    },
 	{"w", "",     "wt_units",          &_param_set_std_str,     &param_Umass,          "specify weight units"			    },
 	{"a", "",     "path/to/dir",	   &_param_set_std_str,     &this->workingDir,     "specify dir to write c(a)ched work to"	    },
@@ -389,6 +389,12 @@ void Options::setNCPU(int cpus) {
 }
 
 void Options::setDensityFile(std::string file) {
+    // special case - '0' means we want to skip density calculations (ie dont need to verify file exists)
+    if (file == "0") {
+	densityFile = "0";
+	return;
+    }
+
     // verify this is a path and it exists
     std::filesystem::path path = file;
     if (!std::filesystem::exists(path)) {

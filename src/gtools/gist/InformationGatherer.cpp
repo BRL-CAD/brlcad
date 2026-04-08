@@ -218,8 +218,13 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     gqa_av_vec.push_back("-u");
     gqa_av_vec.push_back(units.c_str());
     if (!dFile.empty()) {
-        gqa_av_vec.push_back("-f");
-        gqa_av_vec.push_back(dFile.c_str());
+        if (dFile == "0")
+            // special case - '0' means intenionally skip mass check
+            gqa_av_vec[1] = "-Av";
+        else {
+            gqa_av_vec.push_back("-f");
+            gqa_av_vec.push_back(dFile.c_str());
+        }
     }
     gqa_av_vec.push_back(in_file.c_str());
     gqa_av_vec.push_back(top_comp.c_str());
