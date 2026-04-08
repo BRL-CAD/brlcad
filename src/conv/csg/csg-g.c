@@ -940,6 +940,299 @@ try_arb5(double verts[][3], int nv,
 
 
 /*
+ * Try to match a polyhedron to an ARB6 (wedge / triangular prism).
+ * Must have 6 vertices, 5 faces: 2 triangles + 3 quads.
+ * The two triangle faces must share no vertices (they are the
+ * opposing ends of the prism).
+ *
+ * mk_arb6 layout: bottom quad (0,1,2,3), top edge (4,5)
+ * where pt8[4]=pt8[5] and pt8[6]=pt8[7].
+ *
+ * We find the two opposing triangles, pick one as bottom and
+ * pair its vertices with the top triangle's vertices via shared
+ * side faces.
+ */
+static int
+try_arb6(double verts[][3], int nv,
+	 int faces[][MAX_FACE_VERTS], int face_sizes[], int nf,
+	 fastf_t *pts)
+{
+    int i, j, k;
+    int tri_faces[2], tri_count = 0;
+    int quad_count = 0;
+    int bot_tri, top_tri;
+    int bot_verts[3], top_verts[3];
+    int paired[3]; /* top vertex paired with each bottom vertex */
+
+    if (nv != 6 || nf != 5)
+	return 0;
+
+    /* Must have exactly 2 triangles and 3 quads */
+    for (i = 0; i < 5; i++) {
+	if (face_sizes[i] == 3) {
+	    if (tri_count >= 2) return 0;
+	    tri_faces[tri_count++] = i;
+	} else if (face_sizes[i] == 4) {
+	    quad_count++;
+	} else {
+	    return 0;
+	}
+    }
+    if (tri_count != 2 || quad_count != 3)
+	return 0;
+
+    /* The two triangles must share no vertices */
+    for (j = 0; j < 3; j++)
+	for (k = 0; k < 3; k++)
+	    if (faces[tri_faces[0]][j] == faces[tri_faces[1]][k])
+		return 0;
+
+    bot_tri = tri_faces[0];
+    top_tri = tri_faces[1];
+
+    for (i = 0; i < 3; i++) {
+	bot_verts[i] = faces[bot_tri][i];
+	top_verts[i] = faces[top_tri][i];
+    }
+
+    /* Pair each bottom vertex with a top vertex via shared quad faces */
+    for (i = 0; i < 3; i++) {
+	int found = 0;
+	for (j = 0; j < 5 && !found; j++) {
+	    if (j == bot_tri || j == top_tri)
+		continue;
+	    if (face_sizes[j] != 4)
+		continue;
+	    /* Does this quad contain bot_verts[i]? */
+	    int has_bot = 0;
+	    for (k = 0; k < 4; k++) {
+		if (faces[j][k] == bot_verts[i]) {
+		    has_bot = 1;
+		    break;
+		}
+	    }
+	    if (!has_bot)
+		continue;
+	    /* Find which top vertex is on this quad */
+	    int m;
+	    for (m = 0; m < 3; m++) {
+		int n;
+		for (n = 0; n < 4; n++) {
+		    if (faces[j][n] == top_verts[m]) {
+			paired[i] = top_verts[m];
+			found = 1;
+			break;
+		    }
+		}
+		if (found) break;
+	    }
+	}
+	if (!found)
+	    return 0;
+    }
+
+    /*
+     * mk_arb6 expects 6 points:
+     * 0,1,2,3 = bottom quad (but we have a triangle, so one pair
+     * of adjacent bottom verts maps to two arb6 slots).
+     * 4,5 = top edge (two of the three top verts that form the
+     * collapsed top quad).
+     *
+     * Actually, arb6 is: pt8[0-3] = one quad face,
+     * pt8[4]=pt8[5] = one top point, pt8[6]=pt8[7] = other top point.
+     * So the "bottom" is a quad and "top" is an edge.
+     *
+     * For a triangular prism, we need to identify which pair of
+     * bottom triangle edges aligns with which top vertex to form
+     * the quad face.  The quad faces each connect one bottom edge
+     * to one top edge.
+     *
+     * Simpler: the bottom triangle has 3 verts (B0, B1, B2) and
+     * the top triangle has 3 (T0, T1, T2) with pairing
+     * B0-T(paired[0]), B1-T(paired[1]), B2-T(paired[2]).
+     *
+     * arb6 pts: 0=B0, 1=B1, 2=B2, 3=B2 (degenerate), 4=T(paired[0]), 5=T(paired[1])
+     * Wait, that's not right. Let me look at the arb8 face layout again.
+     *
+     * arb6 as arb8: pt[0-3] = bottom, pt[4]=pt[5], pt[6]=pt[7]
+     * Faces: 0123 (bottom quad), 4567 (top - degenerate edge),
+     * 0347, 1265, 0154, 2376
+     *
+     * For a tri prism: bottom=B0,B1,B2 top=T0,T1,T2
+     * Map: pt0=B0, pt1=B1, pt2=B2, pt3=B0 (degenerate)
+     *       pt4=T(p0), pt5=T(p0) (degenerate), pt6=T(p2), pt7=T(p2) (degenerate)
+     *
+     * Hmm, that doesn't work for a general prism. Let me just use
+     * the face connectivity to build the mapping properly.
+     */
+
+    /* For arb6: two of the three top vertices become the top edge,
+     * the third top vertex gets paired with two bottom vertices to
+     * form a triangular "end" that maps to a degenerate quad.
+     *
+     * Actually the simplest correct mapping:
+     * pts[0] = B0, pts[1] = B1, pts[2] = paired_top_of_B1,
+     * pts[3] = paired_top_of_B0, pts[4] = B2, pts[5] = paired_top_of_B2
+     */
+    VMOVE(&pts[0*3], verts[bot_verts[0]]);
+    VMOVE(&pts[1*3], verts[bot_verts[1]]);
+    VMOVE(&pts[2*3], verts[paired[1]]);
+    VMOVE(&pts[3*3], verts[paired[0]]);
+    VMOVE(&pts[4*3], verts[bot_verts[2]]);
+    VMOVE(&pts[5*3], verts[paired[2]]);
+
+    return 1;
+}
+
+
+/*
+ * Try to match a polyhedron to an ARB7.
+ * Must have 7 vertices, 6 faces: at least one triangle
+ * (the degenerate quad from the collapsed vertex).
+ *
+ * ARB7 is an ARB8 with pt[4]=pt[7] — one corner of the top
+ * face collapsed.  This gives 6 faces: the bottom quad, a
+ * triangle (where the collapse happened), and 4 quads.
+ *
+ * We find the single triangle face, identify which vertex is
+ * NOT on it (the opposite "bottom" face vertex), then order
+ * everything to match the arb8 layout.
+ */
+static int
+try_arb7(double verts[][3], int nv,
+	 int faces[][MAX_FACE_VERTS], int face_sizes[], int nf,
+	 fastf_t *pts)
+{
+    int i, j, k;
+    int tri_count = 0;
+    int quad_count = 0;
+
+    if (nv != 7 || nf != 6)
+	return 0;
+
+    /* Count face types: expect exactly 1 triangle and 5 quads,
+     * OR 2 triangles and 4 quads (if a quad degenerates) */
+    for (i = 0; i < 6; i++) {
+	if (face_sizes[i] == 3) {
+	    tri_count++;
+	} else if (face_sizes[i] == 4) {
+	    quad_count++;
+	} else {
+	    return 0;
+	}
+    }
+
+    /* Expect 2 triangles + 4 quads (collapsing one arb8 vertex
+     * degenerates two adjacent quad faces into triangles) */
+    if (tri_count != 2 || quad_count != 4)
+	return 0;
+
+    /*
+     * The two triangles share exactly one vertex — the collapsed
+     * corner.  One triangle has 3 top vertices (degenerate top quad),
+     * the other has 2 bottom + 1 top (degenerate side quad).
+     *
+     * Find the bottom quad face (the only quad that opposes one of
+     * the triangles — shares no vertices with it).
+     */
+    {
+	int tri_a = -1, tri_b = -1;
+	int bot_face = -1;
+	int bot_idx[4];
+	int on_bot[7];
+	int tc = 0;
+
+	for (i = 0; i < 6; i++) {
+	    if (face_sizes[i] == 3) {
+		if (tc == 0) tri_a = i;
+		else tri_b = i;
+		tc++;
+	    }
+	}
+
+	/* Try each quad to see if it opposes one of the triangles */
+	for (i = 0; i < 6; i++) {
+	    if (face_sizes[i] != 4)
+		continue;
+	    /* Check against tri_a */
+	    int shared = 0;
+	    for (j = 0; j < 4 && !shared; j++)
+		for (k = 0; k < 3; k++)
+		    if (faces[i][j] == faces[tri_a][k]) { shared = 1; break; }
+	    if (!shared) { bot_face = i; break; }
+	    /* Check against tri_b */
+	    shared = 0;
+	    for (j = 0; j < 4 && !shared; j++)
+		for (k = 0; k < 3; k++)
+		    if (faces[i][j] == faces[tri_b][k]) { shared = 1; break; }
+	    if (!shared) { bot_face = i; break; }
+	}
+	if (bot_face < 0)
+	    return 0;
+
+	for (i = 0; i < 4; i++)
+	    bot_idx[i] = faces[bot_face][i];
+
+	/* Identify top vs bottom vertices */
+	memset(on_bot, 0, sizeof(on_bot));
+	for (i = 0; i < 4; i++)
+	    on_bot[bot_idx[i]] = 1;
+
+	/* Pair each bottom vertex with a top vertex via side faces */
+	int top_for_bot[4];
+	for (i = 0; i < 4; i++)
+	    top_for_bot[i] = -1;
+
+	for (i = 0; i < 4; i++) {
+	    for (j = 0; j < 6; j++) {
+		if (j == bot_face)
+		    continue;
+		/* Does this face contain bot_idx[i]? */
+		int has_bot = 0, bot_pos = -1;
+		int fs = face_sizes[j];
+		for (k = 0; k < fs; k++) {
+		    if (faces[j][k] == bot_idx[i]) {
+			has_bot = 1;
+			bot_pos = k;
+			break;
+		    }
+		}
+		if (!has_bot)
+		    continue;
+		/* Find adjacent vertex that is a top vertex */
+		int prev = (bot_pos + fs - 1) % fs;
+		int next = (bot_pos + 1) % fs;
+		int candidates[2];
+		candidates[0] = faces[j][prev];
+		candidates[1] = faces[j][next];
+		int c;
+		for (c = 0; c < 2; c++) {
+		    if (!on_bot[candidates[c]]) {
+			top_for_bot[i] = candidates[c];
+			break;
+		    }
+		}
+		if (top_for_bot[i] >= 0)
+		    break;
+	    }
+	    if (top_for_bot[i] < 0)
+		return 0;
+	}
+
+	/* mk_arb7: 7 points, pt8[7]=pt8[4] internally */
+	VMOVE(&pts[0*3], verts[bot_idx[0]]);
+	VMOVE(&pts[1*3], verts[bot_idx[1]]);
+	VMOVE(&pts[2*3], verts[bot_idx[2]]);
+	VMOVE(&pts[3*3], verts[bot_idx[3]]);
+	VMOVE(&pts[4*3], verts[top_for_bot[0]]);
+	VMOVE(&pts[5*3], verts[top_for_bot[1]]);
+	VMOVE(&pts[6*3], verts[top_for_bot[2]]);
+    }
+    return 1;
+}
+
+
+/*
  * Create a BOT (Bag of Triangles) from a polyhedron.
  * Triangulates any non-triangular faces using a simple fan.
  */
@@ -1173,6 +1466,40 @@ parse_polyhedron(struct bu_vls *out_name, mat_t xform)
 	    struct wmember head;
 	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
 	    mk_arb5(fd_out, bu_vls_cstr(&raw), arb_pts);
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+    } else if (try_arb6(verts, nv, faces, face_sizes, nf, arb_pts)) {
+	if (debug)
+	    bu_log("  polyhedron: %s matched arb6 (%d verts, %d faces)\n",
+		   bu_vls_cstr(&sname), nv, nf);
+	if (bn_mat_is_identity(xform)) {
+	    mk_arb6(fd_out, bu_vls_cstr(&sname), arb_pts);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_arb6(fd_out, bu_vls_cstr(&raw), arb_pts);
+	    BU_LIST_INIT(&head.l);
+	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
+	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
+		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	    bu_vls_free(&raw);
+	}
+    } else if (try_arb7(verts, nv, faces, face_sizes, nf, arb_pts)) {
+	if (debug)
+	    bu_log("  polyhedron: %s matched arb7 (%d verts, %d faces)\n",
+		   bu_vls_cstr(&sname), nv, nf);
+	if (bn_mat_is_identity(xform)) {
+	    mk_arb7(fd_out, bu_vls_cstr(&sname), arb_pts);
+	} else {
+	    struct bu_vls raw = BU_VLS_INIT_ZERO;
+	    struct wmember head;
+	    bu_vls_sprintf(&raw, "s.raw.%d", solid_count);
+	    mk_arb7(fd_out, bu_vls_cstr(&raw), arb_pts);
 	    BU_LIST_INIT(&head.l);
 	    mk_addmember(bu_vls_cstr(&raw), &head.l, xform, WMOP_UNION);
 	    mk_lcomb(fd_out, bu_vls_cstr(&sname), &head, 0,
