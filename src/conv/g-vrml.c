@@ -523,7 +523,7 @@ static void path_2_vrml_id(struct bu_vls *id, const char *path) {
 	    case 0x9:
 	    case 0x10:
 	    case 0x11:
-	    case 0x12:
+
 	    case 0x13:
 	    case 0x14:
 	    case 0x15:
@@ -646,105 +646,6 @@ bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id
     fprintf(fp_out, "\t\t\t\tcreaseAngle 0.5\n");
     fprintf(fp_out, "\t\t\t\tsolid FALSE\n");
     fprintf(fp_out, "\t\t\t}\n\t\t}\n");
-}
-
-
-/*
- * Called from db_walk_tree().
- * This routine must be prepared to run in parallel.
- */
-static union tree *
-do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
-{
-    struct plate_mode *pmp = (struct plate_mode *)client_data;
-    char *name;
-
-    if (pmp->num_bots > 0 && pmp->num_nonbots > 0) {
-	bu_log("pmp->num_bots = %d pmp->num_nonbots = %d\n", pmp->num_bots, pmp->num_nonbots);
-	bu_bomb("region was both bot and non-bot objects\n");
-    }
-    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
-	bu_log("\nConverted %d%% so far (%d of %d)\n",
-	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
-	       regions_converted, regions_tried);
-    }
-
-    if (pmp->num_bots > 0) {
-	regions_tried++;
-	name = db_path_to_string(pathp);
-	bu_log("Attempting %s\n", name);
-	bu_free(name, "db_path_to_string");
-	bot2vrml(pmp, pathp, tsp->ts_regionid);
-	clean_pmp(pmp);
-	regions_converted++;
-	return (union tree *)NULL;
-    } else {
-	return vrml_nmg_region_end(tsp, pathp, curtree, pmp->vlfree);
-    }
-}
-
-
-/*
- * Called from db_walk_tree().
- * This routine must be prepared to run in parallel.
- *
- * Only send bots from structure outside tree to vrml file.
- */
-static union tree *
-do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *UNUSED(curtree), void *client_data)
-{
-    struct plate_mode *pmp = (struct plate_mode *)client_data;
-    char *name;
-
-    if ((pmp->num_bots > 0) && (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose)) {
-	bu_log("\nConverted %d%% so far (%d of %d)\n",
-	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
-	       regions_converted, regions_tried);
-    }
-
-    if (pmp->num_bots > 0) {
-	regions_tried++;
-	name = db_path_to_string(pathp);
-	bu_log("Attempting %s\n", name);
-	bu_free(name, "db_path_to_string");
-	bot2vrml(pmp, pathp, tsp->ts_regionid);
-	clean_pmp(pmp);
-	regions_converted++;
-    }
-
-    return (union tree *)NULL;
-}
-
-
-static union tree *
-process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct bu_list *vlfree)
-{
-    static union tree *ret_tree = TREE_NULL;
-
-    /* Begin bomb protection */
-    if (!BU_SETJUMP) {
-	/* try */
-	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
-    } else {
-	/* catch */
-	char *name = db_path_to_string(pathp);
-
-	bu_log("Conversion of %s FAILED due to error!!!\n", name);
-
-	bomb_cnt++;
-
-	/* Sometimes the NMG library adds debugging bits when
-	 * it detects an internal error, before before bombing out.
-	 */
-	nmg_debug = NMG_debug; /* restore mode */
-
-	/* Release any intersector 2d tables */
-	nmg_isect2d_final_cleanup();
-
-	bu_free(name, "db_path_to_string");
-    } BU_UNSETJUMP; /* Relinquish the protection */
-
-    return ret_tree;
 }
 
 
@@ -1076,6 +977,38 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 
 
 static union tree *
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct bu_list *vlfree)
+{
+    static union tree *ret_tree = TREE_NULL;
+
+    /* Begin bomb protection */
+    if (!BU_SETJUMP) {
+       /* try */
+       ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
+    } else {
+       /* catch */
+       char *name = db_path_to_string(pathp);
+
+       bu_log("Conversion of %s FAILED due to error!!!\n", name);
+
+       bomb_cnt++;
+
+       /* Sometimes the NMG library adds debugging bits when
+        * it detects an internal error, before before bombing out.
+        */
+       nmg_debug = NMG_debug; /* restore mode */
+
+       /* Release any intersector 2d tables */
+       nmg_isect2d_final_cleanup();
+
+       bu_free(name, "db_path_to_string");
+    } BU_UNSETJUMP; /* Relinquish the protection */
+
+    return ret_tree;
+}
+
+
+static union tree *
 vrml_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     struct nmgregion *r;
@@ -1161,6 +1094,73 @@ vrml_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;
+}
+
+
+/*
+ * Called from db_walk_tree().
+ * This routine must be prepared to run in parallel.
+ */
+static union tree *
+do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
+{
+    struct plate_mode *pmp = (struct plate_mode *)client_data;
+    char *name;
+
+    if (pmp->num_bots > 0 && pmp->num_nonbots > 0) {
+	bu_log("pmp->num_bots = %d pmp->num_nonbots = %d\n", pmp->num_bots, pmp->num_nonbots);
+	bu_bomb("region was both bot and non-bot objects\n");
+    }
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
+	bu_log("\nConverted %d%% so far (%d of %d)\n",
+	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
+	       regions_converted, regions_tried);
+    }
+
+    if (pmp->num_bots > 0) {
+	regions_tried++;
+	name = db_path_to_string(pathp);
+	bu_log("Attempting %s\n", name);
+	bu_free(name, "db_path_to_string");
+	bot2vrml(pmp, pathp, tsp->ts_regionid);
+	clean_pmp(pmp);
+	regions_converted++;
+	return (union tree *)NULL;
+    } else {
+	return vrml_nmg_region_end(tsp, pathp, curtree, pmp->vlfree);
+    }
+}
+
+
+/*
+ * Called from db_walk_tree().
+ * This routine must be prepared to run in parallel.
+ *
+ * Only send bots from structure outside tree to vrml file.
+ */
+static union tree *
+do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *UNUSED(curtree), void *client_data)
+{
+    struct plate_mode *pmp = (struct plate_mode *)client_data;
+    char *name;
+
+    if ((pmp->num_bots > 0) && (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose)) {
+	bu_log("\nConverted %d%% so far (%d of %d)\n",
+	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
+	       regions_converted, regions_tried);
+    }
+
+    if (pmp->num_bots > 0) {
+	regions_tried++;
+	name = db_path_to_string(pathp);
+	bu_log("Attempting %s\n", name);
+	bu_free(name, "db_path_to_string");
+	bot2vrml(pmp, pathp, tsp->ts_regionid);
+	clean_pmp(pmp);
+	regions_converted++;
+    }
+
+    return (union tree *)NULL;
 }
 
 
