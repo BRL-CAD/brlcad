@@ -1605,7 +1605,7 @@ rt_rhc_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inter
     VMOVE(rB, tip->rhc_B);
     double rhc_r = tip->rhc_r / mat[15];
     double rhc_c = tip->rhc_c / mat[15];
- 
+
     if (rhc_r <= SMALL_FASTF || rhc_c <= SMALL_FASTF) {
 	bu_log("rt_rhc_mat: r or c are zero\n");
 	return BRLCAD_ERROR;
@@ -1655,7 +1655,7 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (mat == NULL)
 	mat = bn_mat_identity;
 
-    /* Sanity check */ 
+    /* Sanity check */
     double rhc_r = vec[3 * 3] / mat[15];
     double rhc_c = vec[3 * 3 + 1] / mat[15];
      if (rhc_r <= SMALL_FASTF || rhc_c <= SMALL_FASTF) {
@@ -1854,11 +1854,8 @@ void
 rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_rhc_internal *rip;
-    fastf_t A, arclen, integralArea, a, b, magB, sqrt_ra, height;
-
-    fastf_t h;
-    fastf_t sumodds = 0, sumevens = 0, x = 0;
-    int i, j;
+    fastf_t a, b, magB, sqrt_bb, A, height, arclen, h, x, a2, b2;
+    int i;
 
     /**
      * n is the number of divisions to use when using Simpson's
@@ -1878,10 +1875,6 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
      */
     int n = 1000000;
 
-    if (area == NULL || ip == NULL) {
-	return;
-    }
-
     RT_CK_DB_INTERNAL(ip);
     rip = (struct rt_rhc_internal *)ip->idb_ptr;
     RT_RHC_CK_MAGIC(rip);
@@ -1890,36 +1883,34 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     magB = MAGNITUDE(rip->rhc_B);
     height = MAGNITUDE(rip->rhc_H);
     a = (rip->rhc_r * b) / sqrt(magB * (2.0 * rip->rhc_c + magB));
-    sqrt_ra = sqrt(rip->rhc_r * rip->rhc_r + a * a);
-    integralArea = (b / a) * ((2.0 * rip->rhc_r * sqrt_ra) / 2.0 + ((a * a) / 2.0) * (log(sqrt_ra + rip->rhc_r) - log(sqrt_ra - rip->rhc_r)));
-    A = 2.0 * rip->rhc_r * (rip->rhc_c + magB) - integralArea;
 
-    h = (2.0 * rip->rhc_r) / n;
+    sqrt_bb = sqrt(magB * (2 * b + magB));
+    A = a * ((b + magB) / b * sqrt_bb - b * log(sqrt_bb + b + magB) + b * log(b));
+
+    h = (2 * rip->rhc_r) / n;
+    a2 = a * a;
+    b2 = b * b;
+    arclen = 2 * sqrt((b2 * rip->rhc_r * rip->rhc_r) / (a2 * rip->rhc_r * rip->rhc_r + pow(a, 4)) + 1);
     for (i = 1; i <= (n / 2) - 1; i++) {
-	x = -rip->rhc_r + 2.0 * i * h;
-	sumodds += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4.0)) + 1.0);
+	x = -rip->rhc_r + 2 * i * h;
+	arclen += 2 * sqrt((b2 * x * x) / (a2 * x * x + a2 * a2) + 1);
     }
-    for (j = 1; j <= (n / 2); j++) {
-	x = -rip->rhc_r + (2.0 * j - 1.0) * h;
-	sumevens += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4.0)) + 1.0);
+    for (i = 1; i <= (n / 2); i++) {
+	x = -rip->rhc_r + (2 * i - 1) * h;
+	arclen += 4 * sqrt((b2 * x * x) / (a2 * x * x + a2 * a2) + 1);
     }
-    arclen = (h / 3.0) * (sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4.0)) + 1.0) + 2.0 * sumodds + 4.0 * sumevens + sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4.0)) + 1.0));
+    arclen *= h / 3;
 
-    *area = 2.0 * A + 2.0 * rip->rhc_r * height + arclen * height;
+    /* Two hyperbola areas + rectangular face + extruded hyperbola */
+    *area = 2 * A + 2 * rip->rhc_r * height + arclen * height;
 }
 
 
-/**
- * Computer volume of a right hyperbolic cylinder
- */
 void
 rt_rhc_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
     struct rt_rhc_internal *rip;
-    fastf_t A, integralArea, a, b, magB, sqrt_ra, height;
-    if (volume == NULL || ip == NULL) {
-	return;
-    }
+    fastf_t a, b, magB, sqrt_bb, A, height;
 
     RT_CK_DB_INTERNAL(ip);
     rip = (struct rt_rhc_internal *)ip->idb_ptr;
@@ -1929,64 +1920,34 @@ rt_rhc_volume(fastf_t *volume, const struct rt_db_internal *ip)
     magB = MAGNITUDE(rip->rhc_B);
     height = MAGNITUDE(rip->rhc_H);
     a = (rip->rhc_r * b) / sqrt(magB * (2.0 * rip->rhc_c + magB));
-    sqrt_ra = sqrt(rip->rhc_r * rip->rhc_r + a * a);
-    integralArea = (b / a) * ((2.0 * rip->rhc_r * sqrt_ra) / 2.0 + ((a * a) / 2.0) * (log(sqrt_ra + rip->rhc_r) - log(sqrt_ra - rip->rhc_r)));
-    A = 2.0 * rip->rhc_r * (rip->rhc_c + magB) - integralArea;
+
+    sqrt_bb = sqrt(magB * (2 * b + magB));
+    A = a * ((b + magB) / b * sqrt_bb - b * log(sqrt_bb + b + magB) + b * log(b));
 
     *volume = A * height;
 }
 
 
-/**
- * Computes centroid of a right hyperbolic cylinder
- */
 void
 rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
-    if (cent != NULL && ip != NULL) {
-	struct rt_rhc_internal *rip;
-	fastf_t totalArea, guessArea, a, b, magB, sqrt_xa, sqrt_ga, xf, epsilon, high, low, scale_factor;
-	fastf_t guess = 0.0;
-	vect_t shift_h;
+    struct rt_rhc_internal *rip;
+    fastf_t b, magB, sqrt_bb, num, den, scale_factor;
 
-	RT_CK_DB_INTERNAL(ip);
-	rip = (struct rt_rhc_internal *)ip->idb_ptr;
-	RT_RHC_CK_MAGIC(rip);
+    RT_CK_DB_INTERNAL(ip);
+    rip = (struct rt_rhc_internal *)ip->idb_ptr;
+    RT_RHC_CK_MAGIC(rip);
 
-	magB = MAGNITUDE(rip->rhc_B);
-	b = rip->rhc_c;
-	a = (rip->rhc_r * b) / sqrt(magB * (2 * rip->rhc_c + magB));
-	xf = magB + a;
+    b = rip->rhc_c;
+    magB = MAGNITUDE(rip->rhc_B);
 
-	/* epsilon is an upperbound on the error */
-
-	epsilon = 0.0001;
-
-	sqrt_xa = sqrt((xf * xf) - (a * a));
-	totalArea = (b / a) * ((xf * sqrt_xa) - ((a * a) * log(sqrt_xa + xf)) - ((a * a) * log(xf)));
-
-	low = a;
-	high = xf;
-
-	while (fabs(high - low) > epsilon) {
-	    guess = (high + low) / 2.0;
-	    sqrt_ga = sqrt((guess * guess) - (a * a));
-	    guessArea = (b / a) * ((guess * sqrt_ga) - ((a * a) * log(sqrt_ga + guess)) - ((a * a) * log(guess)));
-
-	    if (guessArea > totalArea / 2.0) {
-		high = guess;
-	    } else {
-		low = guess;
-	    }
-	}
-
-	scale_factor = 1.0 - ((guess - a) / magB);
-
-	VSCALE(shift_h, rip->rhc_H, 0.5);
-	VSCALE(*cent, rip->rhc_B, scale_factor);
-	VADD2(*cent, shift_h, *cent);
-    }
+    sqrt_bb = sqrt(magB * (2 * b + magB));
+    num = 2.0 / 3.0 * pow(sqrt_bb, 3);
+    den = (b + magB) * sqrt_bb - b * b * log(sqrt_bb + b + magB) + b * b * log(b);
+    scale_factor = (magB + b - num / den) / magB;
+    VJOIN2(*cent, rip->rhc_V, 0.5, rip->rhc_H, scale_factor, rip->rhc_B);
 }
+
 
 int
 rt_rhc_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))

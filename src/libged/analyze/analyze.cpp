@@ -267,6 +267,10 @@ analyze_do_summary(struct ged *gedp, const struct rt_db_internal *ip)
 	    analyze_sketch(gedp, ip);
 	    break;
 
+	case ID_EHY:
+	    analyze_general(gedp, ip);
+	    break;
+
 	case ID_HYP:
 	    analyze_general(gedp, ip);
 	    break;

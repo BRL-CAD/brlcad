@@ -1226,7 +1226,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_ehy_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_ehy_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_ehy_bbox),
-	NULL, /* volume */
+	RTFUNCTAB_FUNC_VOLUME_CAST(rt_ehy_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_ehy_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_ehy_centroid),
 	NULL, /* oriented_bbox */
@@ -2501,11 +2501,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* parse */
 	sizeof(struct rt_script_internal),
 	RT_SCRIPT_INTERNAL_MAGIC,
-	RTFUNCTAB_FUNC_GET_CAST(rt_script_get), 
-	RTFUNCTAB_FUNC_ADJUST_CAST(rt_script_adjust), 
-	RTFUNCTAB_FUNC_FORM_CAST(rt_script_form), 
+	RTFUNCTAB_FUNC_GET_CAST(rt_script_get),
+	RTFUNCTAB_FUNC_ADJUST_CAST(rt_script_adjust),
+	RTFUNCTAB_FUNC_FORM_CAST(rt_script_form),
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_script_make),
-	RTFUNCTAB_FUNC_PARAMS_CAST(rt_script_params), 
+	RTFUNCTAB_FUNC_PARAMS_CAST(rt_script_params),
 	NULL, /* bbox */
 	NULL, /* volume */
 	NULL, /* surf_area */
@@ -2743,7 +2743,7 @@ rt_id_solid(struct bu_external *ep)
 	    break;
 	case DBID_SCRIPT:
 	    id = ID_SCRIPT;
-	    break; 
+	    break;
 	default:
 	    bu_log("rt_id_solid:  u_id=x%x unknown\n", rec->u_id);
 	    id = ID_NULL;		/* BAD */
@@ -2784,4 +2784,3 @@ rt_get_functab_by_label(const char *label)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -2063,59 +2063,72 @@ void
 rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_ehy_internal *eip;
-    fastf_t a, b, h, integralArea, sqrt_rb;
+    fastf_t c, h, scale, a, b, a2, b2, c2, v0, mc, sv, st;
+    int n;
+
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(eip);
 
-    a = eip->ehy_c;
+    c = eip->ehy_c;
     h = MAGNITUDE(eip->ehy_H);
-    b = (eip->ehy_r1 * a) / sqrt(h * (h - 2 * a));
+    scale = c / sqrt(h * (2 * c + h));
+    a = eip->ehy_r1 * scale;
+    b = eip->ehy_r2 * scale;
 
-    /** Formula taken from : https://docs.google.com/file/d/0BydeQ6BPlVejRWt6NlJLVDl0d28/edit
-     * Area can be calculated by subtracting integral of hyperbola from the area of the bounding rectangle
-     */
-    sqrt_rb = sqrt(eip->ehy_r1 * eip->ehy_r1 + b * b);
-    integralArea = (a / b) * ((eip->ehy_r1 * sqrt_rb) + ((b * b / 2) * (log(sqrt_rb + eip->ehy_r1) - log(sqrt_rb - eip->ehy_r1))));
-    *area = 2 * eip->ehy_r1 * (a + h) - integralArea;
+    v0 = acosh(1 + h / c);
+    a2 = a * a;
+    b2 = b * b;
+    c2 = c * c;
+
+    /* Monte Carlo integration */
+    for (mc = 0, n = 0; n < 1000000; ++n) {
+	sv = (((fastf_t) bn_randmt())) * v0;
+	st = ((fastf_t) bn_randmt()) * M_2PI;
+	mc += sqrt((b2 * c2 * cos(st) * cos(st) * pow(sinh(sv), 4))
+		    + (a2 * c2 * sin(st) * sin(st) * pow(sinh(sv), 4))
+		    + (a2 * b2 * cosh(sv) * cosh(sv) * sinh(sv) * sinh(sv)));
+    }
+    mc *= M_2PI * v0 / n;
+
+    /* Hyperboloid surface + ellipse */
+    *area = mc + M_PI * eip->ehy_r1 * eip->ehy_r2;
 }
 
 
-/**
- * The centroid lies along ehy_H due to symmetry.
- * Initially the distance of the centroid from the apex is found. The
- * coordinates of the points at this distance along the unit vector
- * gives the centroid of the elliptical hyperboloid of two sheets.
- * Formula taken from: https://docs.google.com/file/d/0BydeQ6BPlVejRWt6NlJLVDl0d28/edit
- */
+void
+rt_ehy_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    struct rt_ehy_internal *eip;
+    fastf_t c, h, scale;
+
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(eip);
+
+    c = eip->ehy_c;
+    h = MAGNITUDE(eip->ehy_H);
+    scale = c / sqrt(h * (2 * c + h));
+    *volume = M_PI * eip->ehy_r1 * scale * eip->ehy_r2 * scale * h * h / (3 * c * c) * (3 * c + h);
+}
+
+
 void
 rt_ehy_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_ehy_internal *eip;
-    fastf_t a, b, h, area, dist, pwr, dist_C;
-    vect_t h_vec, unit_vec;
-    point_t apex;
+    fastf_t c, h, c_z;
+
     RT_CK_DB_INTERNAL(ip);
-    eip =  (struct rt_ehy_internal *)ip->idb_ptr;
+    eip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(eip);
 
-    a = eip->ehy_c;
+    c = eip->ehy_c;
     h = MAGNITUDE(eip->ehy_H);
-    b = (eip->ehy_r1 * a) / sqrt(h * h - 2 * a * h);
-
-    VMOVE(h_vec, eip->ehy_H);
-    VMOVE(apex, eip->ehy_V);
-    VSCALE(unit_vec, h_vec, (1 / h));
-
-    rt_ehy_surf_area( &area, ip);
-    pwr = pow(h * h + 2 * a * h, 3);
-    if(pwr < 0)
-	bu_log("invalid parameters.\n");
-    dist = ((2 * b) * sqrt(pwr)) / (3 * area * a);
-    dist_C = dist - a;
-
-    VJOIN1(*cent, apex, dist_C, unit_vec);
+    c_z = 0.75 * (2 * c + h) * (2 * c + h) / (3 * c + h);
+    VJOIN1(*cent, eip->ehy_V, (h + c - c_z) / h, eip->ehy_H);
 }
+
 
 int
 rt_ehy_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))

@@ -1417,44 +1417,75 @@ rt_hyp_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 void
 rt_hyp_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
-    if (cent != NULL && ip != NULL) {
-	struct rt_hyp_internal *hip;
+    struct rt_hyp_internal *hip;
 
-	RT_CK_DB_INTERNAL(ip);
-	hip = (struct rt_hyp_internal *)ip->idb_ptr;
-	RT_HYP_CK_MAGIC(hip);
+    RT_CK_DB_INTERNAL(ip);
+    hip = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(hip);
 
-	VSCALE(*cent, hip->hyp_Hi, 0.5);
-	VADD2(*cent, hip->hyp_Vi, *cent);
-    }
+    VJOIN1(*cent, hip->hyp_Vi, 0.5, hip->hyp_Hi);
 }
 
 
-/**
- * only the stub to make analyze happy
- * TODO: needs an implementation
- */
 void
-rt_hyp_surf_area(fastf_t *UNUSED(area), const struct rt_db_internal *UNUSED(ip)) {}
+rt_hyp_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct rt_hyp_internal* hip;
+    struct hyp_specific* hyp;
+    fastf_t c, h, a, b, a2, b2, c2, v0, mc, sv, st;
+    int n;
+
+    RT_CK_DB_INTERNAL(ip);
+    hip = (struct rt_hyp_internal*)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(hip);
+
+    hyp = hyp_internal_to_specific(hip);
+
+    c = hyp->hyp_r1 / hyp->hyp_c;
+    h = hyp->hyp_Hmag;
+    a = hyp->hyp_r1 < hyp->hyp_r2 ? hyp->hyp_r2 : hyp->hyp_r1;
+    b = hyp->hyp_r1 < hyp->hyp_r2 ? hyp->hyp_r1 : hyp->hyp_r2;
+
+    v0 = asinh(h / c);
+    a2 = a * a;
+    b2 = b * b;
+    c2 = c * c;
+
+    /* Monte Carlo integration */
+    for (mc = 0, n = 0; n < 1000000; ++n) {
+	sv = (((fastf_t) bn_randmt())) * v0;
+	st = ((fastf_t) bn_randmt()) * M_2PI;
+	mc += sqrt((b2 * c2 * cos(st) * cos(st) * pow(cosh(sv), 4))
+		    + (a2 * c2 * sin(st) * sin(st) * pow(cosh(sv), 4))
+		    + (a2 * b2 * cosh(sv) * cosh(sv) * sinh(sv) * sinh(sv)));
+    }
+    mc *= 2 * M_2PI * v0 / n;
+
+    /* Hyperboloid surface + two ellipses */
+    *area = mc + M_2PI * MAGNITUDE(hip->hyp_A) * hip->hyp_b;
+    BU_PUT(hyp, struct hyp_specific);
+}
 
 
 void
 rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
-    if (volume != NULL && ip != NULL) {
-	struct rt_hyp_internal *hip;
-	struct hyp_specific *hyp;
+    struct rt_hyp_internal *hip;
+    struct hyp_specific *hyp;
+    fastf_t c;
 
-	RT_CK_DB_INTERNAL(ip);
-	hip = (struct rt_hyp_internal *)ip->idb_ptr;
-	RT_HYP_CK_MAGIC(hip);
+    RT_CK_DB_INTERNAL(ip);
+    hip = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(hip);
 
-	hyp = hyp_internal_to_specific(hip);
-	*volume = M_2PI * hyp->hyp_r1 * hyp->hyp_r2 * hyp->hyp_Hmag *
-	    (1 + hyp->hyp_Hmag * hyp->hyp_Hmag * hyp->hyp_c * hyp->hyp_c / (12 * hyp->hyp_r1 * hyp->hyp_r1));
-	bu_free(hyp, "hyp volume");
-    }
+    hyp = hyp_internal_to_specific(hip);
+
+    c = hyp->hyp_r1 / hyp->hyp_c;
+
+    *volume = M_2PI * hyp->hyp_r1 * hyp->hyp_r2 * hyp->hyp_Hmag * (1 + hyp->hyp_Hmag * hyp->hyp_Hmag / (3 * c * c));
+    BU_PUT(hyp, struct hyp_specific);
 }
+
 
 int
 rt_hyp_labels(struct rt_point_labels *pl, int pl_max, const mat_t xform, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
