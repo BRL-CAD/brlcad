@@ -591,6 +591,64 @@ static void path_2_vrml_id(struct bu_vls *id, const char *path) {
 }
 
 
+void
+bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id)
+{
+    struct bu_vls shape_name = BU_VLS_INIT_ZERO;
+    char *path_str;
+    int appearance;
+    struct rt_bot_internal *bot;
+    int bot_num;
+    size_t i;
+    size_t vert_count=0;
+
+    path_str = db_path_to_string(pathp);
+
+    path_2_vrml_id(&shape_name, path_str);
+
+    fprintf(fp_out, "\t\tDEF %s Shape {\n\t\t\t# Component_ID: %d   %s\n",
+	    bu_vls_addr(&shape_name), region_id, path_str);
+
+    bu_free(path_str, "result of db_path_to_string");
+    bu_vls_free(&shape_name);
+
+    appearance = region_id / 1000;
+    appearance = appearance * 1000 + 999;
+    fprintf(fp_out, "\t\t\tappearance Appearance {\n\t\t\tmaterial USE Material_%d\n\t\t\t}\n", appearance);
+    fprintf(fp_out, "\t\t\tgeometry IndexedFaceSet {\n\t\t\t\tcoord Coordinate {\n\t\t\t\tpoint [\n");
+
+    for (bot_num = 0; bot_num < pmp->num_bots; bot_num++) {
+	bot = pmp->bots[bot_num];
+	RT_BOT_CK_MAGIC(bot);
+	for (i = 0; i < bot->num_vertices; i++) {
+	    point_t pt;
+
+	    VSCALE(pt, &bot->vertices[i*3], scale_factor);
+	    fprintf(fp_out, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %lu\n", V3ARGS(pt), (long unsigned int)vert_count);
+	    vert_count++;
+	}
+    }
+    fprintf(fp_out, "\t\t\t\t\t]\n\t\t\t\t}\n\t\t\t\tcoordIndex [\n");
+    vert_count = 0;
+    for (bot_num = 0; bot_num < pmp->num_bots; bot_num++) {
+	bot = pmp->bots[bot_num];
+	RT_BOT_CK_MAGIC(bot);
+	for (i = 0; i < bot->num_faces; i++) {
+	    fprintf(fp_out, "\t\t\t\t\t%lu, %lu, %lu, -1, \n",
+		    (long unsigned int)vert_count+bot->faces[i*3],
+		    (long unsigned int)vert_count+bot->faces[i*3+1],
+		    (long unsigned int)vert_count+bot->faces[i*3+2]);
+	}
+	vert_count += bot->num_vertices;
+    }
+    fprintf(fp_out, "\t\t\t\t]\n\t\t\t\tnormalPerVertex FALSE\n");
+    fprintf(fp_out, "\t\t\t\tconvex TRUE\n");
+    fprintf(fp_out, "\t\t\t\tcreaseAngle 0.5\n");
+    fprintf(fp_out, "\t\t\t\tsolid FALSE\n");
+    fprintf(fp_out, "\t\t\t}\n\t\t}\n");
+}
+
+
 /*
  * Called from db_walk_tree().
  * This routine must be prepared to run in parallel.
@@ -655,6 +713,38 @@ do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     }
 
     return (union tree *)NULL;
+}
+
+
+static union tree *
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct bu_list *vlfree)
+{
+    static union tree *ret_tree = TREE_NULL;
+
+    /* Begin bomb protection */
+    if (!BU_SETJUMP) {
+	/* try */
+	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
+    } else {
+	/* catch */
+	char *name = db_path_to_string(pathp);
+
+	bu_log("Conversion of %s FAILED due to error!!!\n", name);
+
+	bomb_cnt++;
+
+	/* Sometimes the NMG library adds debugging bits when
+	 * it detects an internal error, before before bombing out.
+	 */
+	nmg_debug = NMG_debug; /* restore mode */
+
+	/* Release any intersector 2d tables */
+	nmg_isect2d_final_cleanup();
+
+	bu_free(name, "db_path_to_string");
+    } BU_UNSETJUMP; /* Relinquish the protection */
+
+    return ret_tree;
 }
 
 
@@ -1306,96 +1396,6 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 
     bu_vls_free(&vls);
     bu_vls_free(&shape_name);
-}
-
-
-void
-bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id)
-{
-    struct bu_vls shape_name = BU_VLS_INIT_ZERO;
-    char *path_str;
-    int appearance;
-    struct rt_bot_internal *bot;
-    int bot_num;
-    size_t i;
-    size_t vert_count=0;
-
-    path_str = db_path_to_string(pathp);
-
-    path_2_vrml_id(&shape_name, path_str);
-
-    fprintf(fp_out, "\t\tDEF %s Shape {\n\t\t\t# Component_ID: %d   %s\n",
-	    bu_vls_addr(&shape_name), region_id, path_str);
-
-    bu_free(path_str, "result of db_path_to_string");
-    bu_vls_free(&shape_name);
-
-    appearance = region_id / 1000;
-    appearance = appearance * 1000 + 999;
-    fprintf(fp_out, "\t\t\tappearance Appearance {\n\t\t\tmaterial USE Material_%d\n\t\t\t}\n", appearance);
-    fprintf(fp_out, "\t\t\tgeometry IndexedFaceSet {\n\t\t\t\tcoord Coordinate {\n\t\t\t\tpoint [\n");
-
-    for (bot_num = 0; bot_num < pmp->num_bots; bot_num++) {
-	bot = pmp->bots[bot_num];
-	RT_BOT_CK_MAGIC(bot);
-	for (i = 0; i < bot->num_vertices; i++) {
-	    point_t pt;
-
-	    VSCALE(pt, &bot->vertices[i*3], scale_factor);
-	    fprintf(fp_out, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %lu\n", V3ARGS(pt), (long unsigned int)vert_count);
-	    vert_count++;
-	}
-    }
-    fprintf(fp_out, "\t\t\t\t\t]\n\t\t\t\t}\n\t\t\t\tcoordIndex [\n");
-    vert_count = 0;
-    for (bot_num = 0; bot_num < pmp->num_bots; bot_num++) {
-	bot = pmp->bots[bot_num];
-	RT_BOT_CK_MAGIC(bot);
-	for (i = 0; i < bot->num_faces; i++) {
-	    fprintf(fp_out, "\t\t\t\t\t%lu, %lu, %lu, -1, \n",
-		    (long unsigned int)vert_count+bot->faces[i*3],
-		    (long unsigned int)vert_count+bot->faces[i*3+1],
-		    (long unsigned int)vert_count+bot->faces[i*3+2]);
-	}
-	vert_count += bot->num_vertices;
-    }
-    fprintf(fp_out, "\t\t\t\t]\n\t\t\t\tnormalPerVertex FALSE\n");
-    fprintf(fp_out, "\t\t\t\tconvex TRUE\n");
-    fprintf(fp_out, "\t\t\t\tcreaseAngle 0.5\n");
-    fprintf(fp_out, "\t\t\t\tsolid FALSE\n");
-    fprintf(fp_out, "\t\t\t}\n\t\t}\n");
-}
-
-
-static union tree *
-process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct bu_list *vlfree)
-{
-    static union tree *ret_tree = TREE_NULL;
-
-    /* Begin bomb protection */
-    if (!BU_SETJUMP) {
-	/* try */
-	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
-    } else {
-	/* catch */
-	char *name = db_path_to_string(pathp);
-
-	bu_log("Conversion of %s FAILED due to error!!!\n", name);
-
-	bomb_cnt++;
-
-	/* Sometimes the NMG library adds debugging bits when
-	 * it detects an internal error, before before bombing out.
-	 */
-	nmg_debug = NMG_debug; /* restore mode */
-
-	/* Release any intersector 2d tables */
-	nmg_isect2d_final_cleanup();
-
-	bu_free(name, "db_path_to_string");
-    } BU_UNSETJUMP; /* Relinquish the protection */
-
-    return ret_tree;
 }
 
 
