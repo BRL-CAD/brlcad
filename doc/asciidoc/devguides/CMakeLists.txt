@@ -1,6 +1,7 @@
 set(
   devguides_EN
   bool_eval_development.adoc
+  iterate_geometry.adoc
 )
 
 set(
