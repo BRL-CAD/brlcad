@@ -10,7 +10,7 @@ mged - multi-display interactive combinatorial solid geometry editor
 
 [source]
 ----
-mged [-a attach] [-b] [-c] [-d display] [-h|?] [-r] [-x#] [-X#] [-v] [database.g] [mged_command]
+mged [options] [database.g] [mged_command]
 ----
 
 
@@ -25,47 +25,198 @@ The primary mode for modern _MGED_ usage is the Tcl/Tk based environment, which 
 
 Technically, _MGED_ can be opened without a database file being supplied, but until one _is_ supplied it will not be terribly useful. This can be done either by supplying a file name on the command line or by opening a database from within _MGED_ using the File->Open... menu or the *opendb* command.
 
+Options that affect per-session appearance (variables, grid, colour) are applied _after_ any `.mgedrc` file is processed, so command-line flags always take precedence over saved settings.
 
-*-a attach*::
-The *-a* option specifies a display manager to automatically attach to when starting _MGED_.
+
+[[options]]
+== OPTIONS
+
+=== Display and Mode
+
+*-a* _type_, *--attach* _type_::
+Specifies a display manager to automatically attach to when starting _MGED_.
 +
-Without specifying the *-a* attach option, _MGED_ will prompt which display manager to attach during startup: attach (nu|X|ogl)[nu]?
+Without specifying this option, _MGED_ will prompt which display manager to attach during startup: `attach (nu|X|ogl)[nu]?`
 +
-The list of available display managers varies from platform to platform and across releases. However, some commonly available options are the _nu_ (NULL) display manager, which will start _MGED_ without any display manager attached; the _X_ display manager, which provides an X11 graphical wireframe display; and the _ogl_ display manager, which is similar to _X_ but starts up a display manager that uses the OpenGL protocol for drawing wireframes.
+The list of available display managers varies from platform to platform and across releases. Commonly available options include the _nu_ (NULL) display manager (starts without any graphical display), the _X_ display manager (X11 wireframe display), and the _ogl_ display manager (OpenGL wireframe display).
+
+*-d* _display_, *--display* _display_::
+Specifies which X server to connect to on platforms that have a running X11 server available. This option is an alternative to setting the `DISPLAY` environment variable. You can specify a local or remote display in X11 HOST:PORT format (e.g., `-d :0` or `-d host:0`).
+
+*--dm-type* _type_::
+Sets the display manager type to use (e.g., `ogl`, `X`, `swrast`). This corresponds to the `mged_default(dm_type)` Tcl variable used during GUI initialisation.
+
+*--geom* _WxH+X+Y_::
+Sets the command window geometry (position and size) in standard X geometry format (e.g., `--geom 800x600+0+0`).
+
+*--ggeom* _WxH+X+Y_::
+Sets the graphics/geometry window geometry in standard X geometry format.
+
+=== Run Mode
+
+*-b*, *--background*::
+Runs _MGED_ as a background process, freeing the terminal from which it was started.
+
+*-c*, *--classic*::
+Instructs _MGED_ to start using classic mode instead of the default Tcl/Tk-based GUI. The *-c* option is often used when specifying an *mged_command* to indicate that _MGED_ is being run in a command-mode without a default GUI.
+
+*-C*, *--gui*::
+Instructs _MGED_ to start in GUI (non-classic) mode. This is the default on platforms that support graphics.
+
+*-p*, *--pipe*::
+Enables pipe mode. In this mode _MGED_ emits a `MGED_CMD_DONE <status>` sentinel to stdout after every command completes on stdin, making it suitable for use as a subprocess driven by an automated tool.
+
+*-r*, *--read-only*::
+Opens the `database.g` file in read-only mode.
+
+=== rc File Control
+
+*--rcfile* _file_::
+Loads _file_ instead of the default `.mgedrc` during startup. This overrides the `MGED_RCFILE` environment variable.
+
+*--no-rc*::
+Skips loading any `.mgedrc` file entirely, providing a clean-slate session unaffected by personal settings. Useful for automated testing and scripted invocations.
+
+=== Variable Override Escape Hatches
+
+*--set* _VAR=VALUE_::
+Sets an MGED variable by name after `.mgedrc` is processed (e.g., `--set use_air=1`). This provides access to all 31 `mged_vparse[]` variables not exposed as individual long options. May be repeated.
+
+*--rset* _ARGS_::
+Passes arguments directly to the MGED `rset` command after `.mgedrc` is processed (e.g., `--rset "ax draw 1"`). Provides access to axes, full colour scheme, rubber-band, and any other `rset` resource. May be repeated.
+
+=== Wireframe Appearance
+
+*--linewidth* _#_::
+Sets the wireframe line width in pixels (must be >= 1).
+
+*--linestyle* _s|d_::
+Sets the line style: `s` for solid, `d` for dashed.
+
+*--faceplate*, *--no-faceplate*::
+Shows or hides the faceplate overlay.
+
+*--dlist*, *--no-dlist*::
+Enables or disables display lists for wireframe rendering.
+
+=== View and Interaction
+
+*--perspective* _#_::
+Sets the perspective angle in degrees. Use `-1` to disable perspective (orthographic view).
+
+*--eye-sep-dist* _#_::
+Sets the stereo eye separation distance in millimeters. Use `0` for monoscopic (non-stereo) rendering.
+
+*--coords* _m|v_::
+Sets the constraint coordinate system: `m` for model space, `v` for view space.
+
+*--rotate-about* _m|v|e_::
+Sets the center of rotation: `m` for model origin, `v` for view center, `e` for eye point.
+
+*--transform* _v|a|e_::
+Sets the mouse transform mode: `v` for view, `a` for adc (angle/distance cursor), `e` for edit.
+
+*--mouse-behavior* _v|a|e_::
+Sets the mouse behavior mode.
+
+*--perspective-mode* _0|1_::
+Enables (`1`) or disables (`0`) perspective mode.
+
+*--sliders* _0|1_::
+Shows (`1`) or hides (`0`) the slider bars.
+
+*--context* _0|1_::
+Enables (`1`) or disables (`0`) context-sensitive editing mode.
+
+=== Air and Geometry Settings
+
+*--use-air*, *--no-use-air*::
+Enables or disables the use_air flag (controls whether air regions are included in ray-trace intersection lists).
+
+*--nmg-eu-dist* _#_::
+Sets the NMG edge-use distance tolerance.
+
+=== Framebuffer
+
+*--fb*, *--no-fb* (via --set)::
+Use `--set fb=1` or `--set fb=0` to enable or disable framebuffer overlay.
+
+*--fb-overlay* _0|1|2_::
+Sets the framebuffer overlay mode: `0` (framebuffer under geometry), `1` (interleaved), `2` (framebuffer over geometry).
+
+*--port* _#_::
+Sets the port number for the framebuffer server (0-65535).
+
+=== View Predictor
+
+*--predictor*, *--no-predictor*::
+Enables or disables the view predictor (ghost image of predicted view during rotation).
+
+*--predictor-advance* _#_::
+Sets the predictor advance time in seconds.
+
+*--predictor-length* _#_::
+Sets the predictor trail length in seconds.
+
+=== Grid
+
+*--grid-draw* _0|1_::
+Shows (`1`) or hides (`0`) the grid overlay.
+
+*--grid-snap* _0|1_::
+Enables (`1`) or disables (`0`) snap-to-grid.
+
+*--grid-rh* _#_::
+Sets the horizontal grid resolution (model units).
+
+*--grid-rv* _#_::
+Sets the vertical grid resolution (model units).
+
+*--grid-mrh* _#_::
+Sets the number of minor grid intervals per major horizontal grid line.
+
+*--grid-mrv* _#_::
+Sets the number of minor grid intervals per major vertical grid line.
+
+=== Colour
+
+Colour values may be specified as three space-separated integers 0–255 (`R G B`), as a slash-separated triplet (`R/G/B`), or as an HTML hex colour (`#RRGGBB`).
+
+*--bg* _R G B_::
+Sets the background colour.
+
+*--geo-color* _R G B_::
+Sets the default geometry wireframe colour.
+
+=== Debugging
+
+*-x* _#_, *--rt-debug* _#_::
+Sets the debug level for _librt_ (hexadecimal integer).
+
+*-X* _#_, *--bu-debug* _#_::
+Sets the debug level for _libbu_ (hexadecimal integer).
+
+=== Information
+
+*-v*, *--version*::
+Displays version information and exits.
+
+*-h*, *-?*, *--help*::
+Prints a brief help statement showing available options and exits.
 
 
-*-b*::
-Supplying the *-b* to *mged* will result in _MGED_ being started as a background process. This is handy if the users still wishes to make use of the terminal from which _MGED_ is being started.
+[[rc_file]]
+== RC FILE
 
+_MGED_ searches for a startup configuration file (`.mgedrc`) in three locations, in order:
 
-*-c*::
-Instructs _MGED_ to start using classic mode instead of the default Tcl/Tk-based GUI. The *-c* option is often used when specifying an *mged_command* to indicate that _MGED_ is being run in a command-mode without a default GUI. Example: *mged* *-c* db/moss.g tops
+. If the environment variable `MGED_RCFILE` is set, that path is used.
+. If the environment variable `HOME` is set, `$HOME/.mgedrc` is used.
+. If `.mgedrc` exists in the current working directory, it is used.
 
+The first file found is used and the others are ignored. Use *--rcfile* to specify an explicit path, or *--no-rc* to skip rc file processing entirely.
 
-*-d display*::
-The *-d* option to _MGED_ specifies which X server to connect to for platforms that have a running X11 server available. This option is an analogous alternative to setting the DISPLAY environment variable. You can specify a local or remote display in X11 HOST:PORT format (e.g., "-d :0" or "-d host:0") and _MGED_ should draw windows to that display.
-
-
-*-h* or *-?*::
-Prints out a brief help statement showing the options available when starting _MGED_.
-
-
-*-r*::
-Opens the database.g file in read-only mode.
-
-
-*-x #*::
-Specify the debug level of librt.
-
-
-*-X #*::
-Specify the debug level of libbu.
-
-
-*-v*::
-Display the version and exit.
-
-
+Command-line options that affect MGED variables (all the long options listed above) are applied _after_ the rc file is processed, so they always take precedence.
 
 
 [[scripting]]
@@ -82,6 +233,14 @@ $ mged -c tgm.g < cmds.txt
 
 Note that the procedure described above is very useful in rapid prototyping or automated TGM processing without resorting to low-level library programming in C or C++.
 
+For fully non-interactive scripted use, the *--no-rc* flag avoids loading any personal `.mgedrc` that could affect the session:
+
+----
+
+$ mged --no-rc -c --use-air --linewidth 2 model.g 'some_command arg'
+
+----
+
 
 [[hints]]
 == HINTS
@@ -91,15 +250,6 @@ _MGED_ database names conventionally end with `.g` .
 SIGINT aborts the current command.
 
 "q" or EOF exits the program.
-
-The ".mgedrc" file is searched for in three places. The first one found is used, and any others are ignored.
-
-
-. If the environment variable MGED_RCFILE is set, it is used as a path name for the file to be used.
-. If the environment variable HOME is set, then HOME/.mgedrc is used.
-. If the file ".mgedrc" exists in the current directory, it is used.
-
-
 
 
 [[examples]]
@@ -171,6 +321,24 @@ mged>
 
 
 
+====
+
+.Running _MGED_ with a custom background colour and no personal rc file (scripted use).
+[example]
+====
+user:~**mged --no-rc --bg 0 0 64 --use-air -c model.g**
+====
+
+.Setting an MGED variable not exposed as a dedicated option.
+[example]
+====
+user:~**mged --set eye_sep_dist=65 model.g**
+====
+
+.Setting a grid resource via the rset escape hatch.
+[example]
+====
+user:~**mged --rset "g snap 1" --rset "g rh 10" model.g**
 ====
 
 

@@ -57,7 +57,8 @@
 #endif
 
 #include "bu/app.h"
-#include "bu/getopt.h"
+#include "bu/color.h"
+#include "bu/opt.h"
 #include "bu/debug.h"
 #include "bu/units.h"
 #include "bu/version.h"
@@ -350,6 +351,209 @@ new_mats(struct mged_state *s)
 }
 
 
+/*
+ * Sentinel values used by struct mged_cli_overrides to distinguish "not
+ * specified on command line" from a legitimate zero or negative value.
+ * INT_MIN is safe for all int settings (no setting takes that value).
+ * The DBL sentinel is a large negative number no geometric value would use.
+ */
+#define MGED_CLI_UNSET_INT  INT_MIN
+#define MGED_CLI_UNSET_DBL  (-1.0e+38)
+
+
+/*
+ * Helper struct for colour options that use bu_opt_color.  The .set flag
+ * distinguishes "not supplied on command line" from an explicit black (0 0 0).
+ * Defined here so it can be embedded in struct mged_cli_overrides below.
+ */
+struct mged_color_opt {
+    struct bu_color color;  /* populated by bu_opt_color */
+    int set;                /* 1 once the option has been parsed */
+};
+
+
+/*
+ * Holds every value parsed from the MGED command line.  Fields that were not
+ * supplied by the user keep their sentinel initial values so that
+ * apply_cli_overrides() can distinguish "not set" from an explicit zero.
+ *
+ * Two usage phases:
+ *   (a) Early options (attach, classic_mged, …) are applied immediately
+ *       after bu_opt_parse returns, before Tcl/DM initialisation.
+ *   (b) Deferred options (mged_variables, grid, colours, …) are applied by
+ *       apply_cli_overrides() after do_rc() so that CLI flags always win
+ *       over any .mgedrc settings.
+ */
+struct mged_cli_overrides {
+    /* --- Phase (a): applied immediately after bu_opt_parse() --- */
+    const char *attach;         /* -a / --attach */
+    const char *dpy_string;     /* -d / --display */
+    int classic_mode;           /* -c / --classic  (set to 1 when given) */
+    int gui_mode;               /* -C / --gui      (set to 1 when given) */
+    int read_only;              /* -r / --read-only */
+    int pipe_mode;              /* -p / --pipe */
+    int background;             /* -b / --background (run in background) */
+    int print_version;          /* -v / --version */
+    int print_help;             /* -h / --help / -? */
+    int old_gui_flag;           /* -o developer option */
+    unsigned int rt_debug_val;  /* -x / --rt-debug (hex uint) */
+    int rt_debug_set;           /* 1 if -x was given */
+    unsigned int bu_debug_val;  /* -X / --bu-debug (hex uint) */
+    int bu_debug_set;           /* 1 if -X was given */
+
+    /* --- rc file control (applied before phase-b) --- */
+    const char *rcfile;         /* --rcfile: use this file instead of .mgedrc */
+    int skip_rc;                /* --no-rc: skip all rc processing */
+
+    /* --- Phase (b): applied by apply_cli_overrides() after do_rc() ---
+     *
+     * All int fields: MGED_CLI_UNSET_INT  means "not given".
+     * For boolean on/off pairs (--use-air / --no-use-air) the int is
+     * initialised to MGED_CLI_UNSET_INT; --X sets it to 1, --no-X sets it to 0.
+     *
+     * All double fields: MGED_CLI_UNSET_DBL means "not given".
+     *
+     * All char fields: '\0' means "not given".
+     *
+     * All pointer fields: NULL means "not given".
+     */
+
+    /* mged_variables (rset var / set <name>) */
+    int use_air;            /* --use-air / --no-use-air */
+    int dlist;              /* --dlist   / --no-dlist   */
+    int faceplate;          /* --faceplate / --no-faceplate */
+    int orig_gui;           /* MGED_CLI_UNSET_INT / 0 / 1 */
+    int linewidth;          /* --linewidth #  (pixels, >=1) */
+    int port;               /* --port #       (0-65535) */
+    int listen;             /* MGED_CLI_UNSET_INT / 0 / 1 */
+    int fb;                 /* MGED_CLI_UNSET_INT / 0 / 1 */
+    int fb_all;             /* MGED_CLI_UNSET_INT / 0 / 1 */
+    int fb_overlay;         /* --fb-overlay 0|1|2 */
+    int predictor;          /* --predictor / --no-predictor */
+    int hot_key;            /* MGED_CLI_UNSET_INT / keycode */
+    int context;            /* MGED_CLI_UNSET_INT / 0 / 1 */
+    int sliders;            /* MGED_CLI_UNSET_INT / 0 / 1 */
+    int perspective_mode;   /* MGED_CLI_UNSET_INT / 0 / 1 */
+    char linestyle;         /* --linestyle s|d  ('\0' = not set) */
+    char mouse_behavior;    /* --mouse-behavior v|a|e */
+    char coords;            /* --coords m|v */
+    char rotate_about;      /* --rotate-about m|v|e */
+    char transform;         /* --transform v|a|e */
+    double perspective;     /* --perspective #  (degrees, MGED_CLI_UNSET_DBL = not set) */
+    double predictor_advance;   /* --predictor-advance # */
+    double predictor_length;    /* --predictor-length # */
+    double nmg_eu_dist;         /* --nmg-eu-dist # */
+    double eye_sep_dist;        /* --eye-sep-dist # (mm, 0 = mono) */
+
+    /* Tcl mged_default array entries */
+    const char *dm_type;    /* --dm-type type */
+    const char *geom;       /* --geom WxH+X+Y (command window) */
+    const char *ggeom;      /* --ggeom WxH+X+Y (graphics window) */
+
+    /* grid (rset g …) */
+    int grid_draw;          /* --grid-draw 0|1 */
+    int grid_snap;          /* --grid-snap 0|1 */
+    int grid_mrh;           /* --grid-mrh # */
+    int grid_mrv;           /* --grid-mrv # */
+    double grid_rh;         /* --grid-rh # */
+    double grid_rv;         /* --grid-rv # */
+
+    /* colour scheme subset (rset cs …) */
+    struct mged_color_opt bg_color;      /* --bg  (bg_color.set = 0 means not given) */
+    struct mged_color_opt geo_def_color; /* --geo-color */
+
+    /* general escape hatches */
+    struct bu_ptbl set_pairs;   /* --set VAR=VALUE  (strings in argv) */
+    struct bu_ptbl rset_pairs;  /* --rset ARGS      (strings in argv) */
+};
+
+
+/* ---------------------------------------------------------------------------
+ * bu_opt helper: set the pointed-to int to 0 (used by --no-X boolean flags).
+ * Returns 0 (no argv element consumed).
+ * -------------------------------------------------------------------------- */
+static int
+flag_set_zero(struct bu_vls *UNUSED(msg), size_t UNUSED(argc),
+	      const char **UNUSED(argv), void *set_var)
+{
+    *(int *)set_var = 0;
+    return 0;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * bu_opt helper: parse a hex unsigned int (for -x / -X debug flags).
+ * Consumes one argv element.
+ * -------------------------------------------------------------------------- */
+static int
+parse_debug_uint(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    unsigned int *val = (unsigned int *)set_var;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "hex value");
+    if (sscanf(argv[0], "%x", val) != 1) {
+	if (msg)
+	    bu_vls_printf(msg, "ERROR: expected hex integer, got \"%s\"\n", argv[0]);
+	return -1;
+    }
+    return 1;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * bu_opt_color wrapper: stores the parsed colour in a struct that also holds
+ * a "was this option given?" flag.  Used for --bg and --geo-color so that
+ * apply_cli_overrides() can reliably distinguish "not supplied" from an
+ * explicit black (0 0 0).
+ * struct mged_color_opt is defined above (before mged_cli_overrides).
+ * -------------------------------------------------------------------------- */
+static int
+parse_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    struct mged_color_opt *co = (struct mged_color_opt *)set_var;
+    int ret = bu_opt_color(msg, argc, argv, &co->color);
+    if (ret > 0)
+	co->set = 1;
+    return ret;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * bu_opt helper: collect a --set VAR=VALUE string into a bu_ptbl.
+ * Validates the '=' separator; stores the original argv pointer (valid for
+ * the duration of main()).  Consumes one argv element.
+ * -------------------------------------------------------------------------- */
+static int
+parse_mged_set(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    struct bu_ptbl *t = (struct bu_ptbl *)set_var;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "VAR=VALUE");
+    if (!strchr(argv[0], '=')) {
+	if (msg)
+	    bu_vls_printf(msg, "ERROR: --set requires VAR=VALUE format (no '=' in \"%s\")\n",
+			  argv[0]);
+	return -1;
+    }
+    bu_ptbl_ins(t, (long *)argv[0]);
+    return 1;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * bu_opt helper: collect a --rset ARGS string into a bu_ptbl.
+ * The ARGS string should contain everything that would follow "rset " on the
+ * MGED command line, e.g. "g snap 1" or "ax model_draw 1".
+ * Consumes one argv element.
+ * -------------------------------------------------------------------------- */
+static int
+parse_rset(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    struct bu_ptbl *t = (struct bu_ptbl *)set_var;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "ARGS");
+    bu_ptbl_ins(t, (long *)argv[0]);
+    return 1;
+}
+
+
 /**
  * If an mgedrc file exists, open it and process the commands within.
  * Look first for a Shell environment variable, then for a file in the
@@ -360,7 +564,7 @@ new_mats(struct mged_state *s)
  *  0 OK
  */
 static int
-do_rc(struct mged_state *s)
+do_rc(struct mged_state *s, int skip_rc, const char *rcfile_override)
 {
     FILE *fp = NULL;
     char *path;
@@ -370,33 +574,47 @@ do_rc(struct mged_state *s)
 #define ENVRC	"MGED_RCFILE"
 #define RCFILE	".mgedrc"
 
-    if ((path = getenv(ENVRC)) != (char *)NULL) {
-	if ((fp = fopen(path, "r")) != NULL) {
-	    bu_vls_strcpy(&str, path);
+    /* --no-rc: skip all rc processing */
+    if (skip_rc)
+	return 0;
+
+    /* --rcfile FILE: use the specified file directly */
+    if (rcfile_override) {
+	if ((fp = fopen(rcfile_override, "r")) == NULL) {
+	    bu_log("mged: cannot open --rcfile \"%s\": %s\n",
+		   rcfile_override, strerror(errno));
+	    return -1;
 	}
-    }
-
-    if (!fp) {
-	if ((path = getenv("HOME")) != (char *)NULL) {
-	    bu_vls_strcpy(&str, path);
-	    bu_vls_strcat(&str, "/");
-	    bu_vls_strcat(&str, RCFILE);
-
-	    fp = fopen(bu_vls_addr(&str), "r");
+	bu_vls_strcpy(&str, rcfile_override);
+    } else {
+	/* Standard search: MGED_RCFILE env, then $HOME/.mgedrc, then ./.mgedrc */
+	if ((path = getenv(ENVRC)) != (char *)NULL) {
+	    if ((fp = fopen(path, "r")) != NULL) {
+		bu_vls_strcpy(&str, path);
+	    }
 	}
-    }
 
-    if (!fp) {
-	if ((fp = fopen(RCFILE, "r")) != NULL) {
-	    bu_vls_strcpy(&str, RCFILE);
+	if (!fp) {
+	    if ((path = getenv("HOME")) != (char *)NULL) {
+		bu_vls_strcpy(&str, path);
+		bu_vls_strcat(&str, "/");
+		bu_vls_strcat(&str, RCFILE);
+
+		fp = fopen(bu_vls_addr(&str), "r");
+	    }
 	}
-    }
 
-    /* At this point, if none of the above attempts panned out, give up. */
+	if (!fp) {
+	    if ((fp = fopen(RCFILE, "r")) != NULL) {
+		bu_vls_strcpy(&str, RCFILE);
+	    }
+	}
 
-    if (!fp) {
-	bu_vls_free(&str);
-	return -1;
+	/* At this point, if none of the above attempts panned out, give up. */
+	if (!fp) {
+	    bu_vls_free(&str);
+	    return -1;
+	}
     }
 
     bogus = 0;
@@ -421,7 +639,7 @@ do_rc(struct mged_state *s)
 	bu_log("need to change those\ncommands.\n\n");
     }
     if (Tcl_EvalFile(s->interp, bu_vls_addr(&str)) != TCL_OK) {
-	bu_log("Error reading %s:\n%s\n", RCFILE,
+	bu_log("Error reading %s:\n%s\n", bu_vls_cstr(&str),
 	       Tcl_GetVar(s->interp, "errorInfo", TCL_GLOBAL_ONLY));
     }
 
@@ -1830,6 +2048,183 @@ quit(struct mged_state *s)
     /* NOTREACHED */
 }
 
+/*
+ * apply_cli_overrides -- called after do_rc() so that command-line flags
+ * always take precedence over .mgedrc settings.
+ *
+ * For mged_variables the Tcl variable write-traces installed by
+ * mged_variable_setup() fire automatically when Tcl_SetVar() is called,
+ * ensuring the same hooks (set_dirty_flag, set_perspective, etc.) execute
+ * as if the user had typed the equivalent "set" command interactively.
+ *
+ * For rset resources (grid, colour scheme, etc.) a "rset …" Tcl command
+ * string is constructed and evaluated directly.
+ *
+ * Double fields in mged_cli_overrides use MGED_CLI_UNSET_DBL as a "not
+ * given" sentinel.  We compare with memcmp to avoid -Werror=float-equal.
+ */
+
+/* File-scope sentinel value used by cli_dbl_is_set() — initialised once
+ * rather than per call, to avoid repeated redundant initialisation. */
+static const double mged_cli_dbl_sentinel = MGED_CLI_UNSET_DBL;
+
+static int
+cli_dbl_is_set(double v)
+{
+    /* Compare bit-for-bit against the sentinel value to avoid
+     * floating-point equality comparison (-Werror=float-equal). */
+    return memcmp(&v, &mged_cli_dbl_sentinel, sizeof(double)) != 0;
+}
+
+
+static void
+apply_cli_overrides(struct mged_state *s, struct mged_cli_overrides *cl)
+{
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
+
+    /* Helper macro: set a Tcl global variable to an integer value string. */
+#define CLI_SETVAR_INT(name, val) do { \
+    char _vbuf[32]; \
+    snprintf(_vbuf, sizeof(_vbuf), "%d", (int)(val)); \
+    Tcl_SetVar(s->interp, (name), _vbuf, TCL_GLOBAL_ONLY); \
+} while (0)
+
+    /* Helper macro: set a Tcl global variable to a double value string. */
+#define CLI_SETVAR_DBL(name, val) do { \
+    char _vbuf[64]; \
+    snprintf(_vbuf, sizeof(_vbuf), "%g", (double)(val)); \
+    Tcl_SetVar(s->interp, (name), _vbuf, TCL_GLOBAL_ONLY); \
+} while (0)
+
+    /* Helper macro: set a Tcl global variable to a single-char string. */
+#define CLI_SETVAR_CHAR(name, ch) do { \
+    char _vbuf[2]; _vbuf[0] = (ch); _vbuf[1] = '\0'; \
+    Tcl_SetVar(s->interp, (name), _vbuf, TCL_GLOBAL_ONLY); \
+} while (0)
+
+    /* --- mged_variables -------------------------------------------------- */
+    if (cl->use_air        != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("use_air",        cl->use_air);
+    if (cl->dlist          != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("dlist",          cl->dlist);
+    if (cl->faceplate      != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("faceplate",      cl->faceplate);
+    if (cl->orig_gui       != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("orig_gui",       cl->orig_gui);
+    if (cl->linewidth      != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("linewidth",      cl->linewidth);
+    if (cl->port           != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("port",           cl->port);
+    if (cl->listen         != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("listen",         cl->listen);
+    if (cl->fb             != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("fb",             cl->fb);
+    if (cl->fb_all         != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("fb_all",         cl->fb_all);
+    if (cl->fb_overlay     != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("fb_overlay",     cl->fb_overlay);
+    if (cl->predictor      != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("predictor",      cl->predictor);
+    if (cl->hot_key        != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("hot_key",        cl->hot_key);
+    if (cl->context        != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("context",        cl->context);
+    if (cl->sliders        != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("sliders",        cl->sliders);
+    if (cl->perspective_mode != MGED_CLI_UNSET_INT) CLI_SETVAR_INT("perspective_mode", cl->perspective_mode);
+    if (cl->linestyle      != '\0')               CLI_SETVAR_CHAR("linestyle",     cl->linestyle);
+    if (cl->mouse_behavior != '\0')               CLI_SETVAR_CHAR("mouse_behavior", cl->mouse_behavior);
+    if (cl->coords         != '\0')               CLI_SETVAR_CHAR("coords",        cl->coords);
+    if (cl->rotate_about   != '\0')               CLI_SETVAR_CHAR("rotate_about",  cl->rotate_about);
+    if (cl->transform      != '\0')               CLI_SETVAR_CHAR("transform",     cl->transform);
+    if (cli_dbl_is_set(cl->perspective))         CLI_SETVAR_DBL("perspective",    cl->perspective);
+    if (cli_dbl_is_set(cl->predictor_advance))   CLI_SETVAR_DBL("predictor_advance", cl->predictor_advance);
+    if (cli_dbl_is_set(cl->predictor_length))    CLI_SETVAR_DBL("predictor_length",  cl->predictor_length);
+    if (cli_dbl_is_set(cl->nmg_eu_dist))         CLI_SETVAR_DBL("nmg_eu_dist",    cl->nmg_eu_dist);
+    if (cli_dbl_is_set(cl->eye_sep_dist))        CLI_SETVAR_DBL("eye_sep_dist",   cl->eye_sep_dist);
+
+    /* --- Tcl mged_default array entries ---------------------------------- */
+    if (cl->dm_type)
+	Tcl_SetVar2(s->interp, "mged_default", "dm_type", cl->dm_type,  TCL_GLOBAL_ONLY);
+    if (cl->geom)
+	Tcl_SetVar2(s->interp, "mged_default", "geom",    cl->geom,     TCL_GLOBAL_ONLY);
+    if (cl->ggeom)
+	Tcl_SetVar2(s->interp, "mged_default", "ggeom",   cl->ggeom,    TCL_GLOBAL_ONLY);
+
+    /* --- grid (rset g …) ------------------------------------------------- */
+    if (cl->grid_draw != MGED_CLI_UNSET_INT) {
+	bu_vls_printf(&cmd, "rset g draw %d", cl->grid_draw);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --grid-draw: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+    if (cl->grid_snap != MGED_CLI_UNSET_INT) {
+	bu_vls_printf(&cmd, "rset g snap %d", cl->grid_snap);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --grid-snap: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+    if (cli_dbl_is_set(cl->grid_rh)) {
+	bu_vls_printf(&cmd, "rset g rh %g", cl->grid_rh);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --grid-rh: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+    if (cli_dbl_is_set(cl->grid_rv)) {
+	bu_vls_printf(&cmd, "rset g rv %g", cl->grid_rv);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --grid-rv: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+    if (cl->grid_mrh != MGED_CLI_UNSET_INT) {
+	bu_vls_printf(&cmd, "rset g mrh %d", cl->grid_mrh);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --grid-mrh: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+    if (cl->grid_mrv != MGED_CLI_UNSET_INT) {
+	bu_vls_printf(&cmd, "rset g mrv %d", cl->grid_mrv);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --grid-mrv: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+
+    /* --- colour scheme subset (rset cs …) -------------------------------- */
+    if (cl->bg_color.set) {
+	int r = 0, g = 0, b = 0;
+	bu_color_to_rgb_ints(&cl->bg_color.color, &r, &g, &b);
+	bu_vls_printf(&cmd, "rset cs bg %d %d %d", r, g, b);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --bg: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+    if (cl->geo_def_color.set) {
+	int r = 0, g = 0, b = 0;
+	bu_color_to_rgb_ints(&cl->geo_def_color.color, &r, &g, &b);
+	bu_vls_printf(&cmd, "rset cs geo_def %d %d %d", r, g, b);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --geo-color: %s\n", Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+
+    /* --- --set VAR=VALUE escape hatch ------------------------------------ */
+    for (size_t si = 0; si < BU_PTBL_LEN(&cl->set_pairs); si++) {
+	const char *pair = (const char *)BU_PTBL_GET(&cl->set_pairs, si);
+	const char *eq = strchr(pair, '=');
+	if (!eq) continue;  /* validated in parse_mged_set; shouldn't happen */
+	/* Split on the first '=' and set the Tcl variable.  The write-trace
+	 * installed by mged_variable_setup() will call bu_struct_parse and
+	 * fire any associated hook functions. */
+	size_t klen = (size_t)(eq - pair);
+	char *key = (char *)bu_malloc(klen + 1, "cli_set_key");
+	bu_strlcpy(key, pair, klen + 1);
+	Tcl_SetVar(s->interp, key, eq + 1, TCL_GLOBAL_ONLY);
+	bu_free(key, "cli_set_key");
+    }
+
+    /* --- --rset ARGS escape hatch ---------------------------------------- */
+    for (size_t ri = 0; ri < BU_PTBL_LEN(&cl->rset_pairs); ri++) {
+	const char *args = (const char *)BU_PTBL_GET(&cl->rset_pairs, ri);
+	bu_vls_printf(&cmd, "rset %s", args);
+	if (Tcl_Eval(s->interp, bu_vls_cstr(&cmd)) != TCL_OK)
+	    bu_log("mged: --rset \"%s\": %s\n", args, Tcl_GetStringResult(s->interp));
+	bu_vls_trunc(&cmd, 0);
+    }
+
+#undef CLI_SETVAR_INT
+#undef CLI_SETVAR_DBL
+#undef CLI_SETVAR_CHAR
+
+    bu_vls_free(&cmd);
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -1842,7 +2237,6 @@ main(int argc, char *argv[])
 #endif
 
     int rateflag = 0;
-    int c;
     int read_only_flag=0;
 
     int parent_pipe[2] = {0, 0};
@@ -1906,76 +2300,227 @@ main(int argc, char *argv[])
     }
 #endif
 
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "a:d:hbcCorpx:X:v?")) != -1) {
-	if (bu_optopt == '?') c='h';
-	switch (c) {
-	    case 'a':
-		attach = bu_optarg;
-		break;
-	    case 'd':
-		s->dpy_string = bu_optarg;
-		break;
-	    case 'r':
-		read_only_flag = 1;
-		break;
-	    case 'p':
-		s->pipe_mode = 1;
-		break;
-	    case 'c':
-		s->classic_mged = 2; // >1 to indicate requested
-		break;
-	    case 'C':
-		s->classic_mged = 0;
-		s->interactive = 2; // >1 to indicate requested
-		break;
-	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
-		break;
-	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&bu_debug);
-		break;
-	    case 'b':
-		run_in_foreground = 0;  /* run in background */
-		break;
-	    case 'v':	/* print a lot of version information */
-		printf("%s%s%s%s%s%s\n",
-		       brlcad_ident("MGED Geometry Editor"),
-		       dm_version(),
-		       fb_version(),
-		       rt_version(),
-		       bn_version(),
-		       bu_version());
-		return EXIT_SUCCESS;
-		break;
-	    case 'o':
-		/* Eventually this will be used for the old mged gui.
-		 * I'm temporarily hijacking it for the new gui until
-		 * it becomes the default.
-		 */
-		bu_log("WARNING: -o is a developer option and subject to change.  Do not use.\n");
-		old_mged_gui = 0;
-		break;
-	    default:
-		bu_log("Unrecognized option (%c)\n", bu_optopt);
-		/* fall through */
-	    case 'h':
-		bu_exit(1, "Usage:  %s [-a attach] [-b] [-c|-C] [-f] [-d display] [-h|?] [-p] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
-	}
+    /*
+     * Parse command-line options using bu_opt.  All values are collected into
+     * the mged_cli_overrides struct; "early" options (that affect behaviour
+     * before Tcl/DM initialisation) are applied immediately below, while
+     * "deferred" options (mged_variables, grid, colour) are applied after
+     * do_rc() via apply_cli_overrides() so that CLI flags always win.
+     */
+
+    struct mged_cli_overrides cl;
+    memset(&cl, 0, sizeof(cl));
+
+    /* Initialise all int fields to MGED_CLI_UNSET_INT ("not given") */
+    cl.use_air          = MGED_CLI_UNSET_INT;
+    cl.dlist            = MGED_CLI_UNSET_INT;
+    cl.faceplate        = MGED_CLI_UNSET_INT;
+    cl.orig_gui         = MGED_CLI_UNSET_INT;
+    cl.linewidth        = MGED_CLI_UNSET_INT;
+    cl.port             = MGED_CLI_UNSET_INT;
+    cl.listen           = MGED_CLI_UNSET_INT;
+    cl.fb               = MGED_CLI_UNSET_INT;
+    cl.fb_all           = MGED_CLI_UNSET_INT;
+    cl.fb_overlay       = MGED_CLI_UNSET_INT;
+    cl.predictor        = MGED_CLI_UNSET_INT;
+    cl.hot_key          = MGED_CLI_UNSET_INT;
+    cl.context          = MGED_CLI_UNSET_INT;
+    cl.sliders          = MGED_CLI_UNSET_INT;
+    cl.perspective_mode = MGED_CLI_UNSET_INT;
+    cl.grid_draw        = MGED_CLI_UNSET_INT;
+    cl.grid_snap        = MGED_CLI_UNSET_INT;
+    cl.grid_mrh         = MGED_CLI_UNSET_INT;
+    cl.grid_mrv         = MGED_CLI_UNSET_INT;
+    /* bg_color and geo_def_color: memset-zero means .set == 0, which is
+     * the correct "not given" initial state — no extra init needed. */
+
+    /* Initialise double fields to MGED_CLI_UNSET_DBL ("not given") */
+    cl.perspective        = MGED_CLI_UNSET_DBL;
+    cl.predictor_advance  = MGED_CLI_UNSET_DBL;
+    cl.predictor_length   = MGED_CLI_UNSET_DBL;
+    cl.nmg_eu_dist        = MGED_CLI_UNSET_DBL;
+    cl.eye_sep_dist       = MGED_CLI_UNSET_DBL;
+    cl.grid_rh            = MGED_CLI_UNSET_DBL;
+    cl.grid_rv            = MGED_CLI_UNSET_DBL;
+
+    /* Initialise debug fields to the current global values so that an
+     * unconditional copy back after parsing is a no-op when the user
+     * does not supply -x/-X on the command line. */
+    cl.rt_debug_val = (unsigned int)rt_debug;
+    cl.bu_debug_val = (unsigned int)bu_debug;
+
+    bu_ptbl_init(&cl.set_pairs,  8, "mged_cli_set_pairs");
+    bu_ptbl_init(&cl.rset_pairs, 8, "mged_cli_rset_pairs");
+
+    struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
+
+    /* Option table: the BU_OPT macro takes (slot, shortopt, longopt, arghelp,
+     * argprocess, set_var, help) — 7 arguments.  Long-only options use NULL for
+     * shortopt.  No-argument options use "" for arghelp and NULL for argprocess. */
+    struct bu_opt_desc opt_defs[54];
+    /* ---- Existing short options, now with long aliases ---- */
+    BU_OPT(opt_defs[0],  "a", "attach",           "type",    bu_opt_str,      &cl.attach,           "display manager attach target");
+    BU_OPT(opt_defs[1],  "d", "display",           "string",  bu_opt_str,      &cl.dpy_string,       "X display string");
+    BU_OPT(opt_defs[2],  "r", "read-only",         "",        NULL,            &cl.read_only,        "open database read-only");
+    BU_OPT(opt_defs[3],  "p", "pipe",              "",        NULL,            &cl.pipe_mode,        "pipe mode (emit CMD_DONE sentinels)");
+    BU_OPT(opt_defs[4],  "c", "classic",           "",        NULL,            &cl.classic_mode,     "classic text-only mode");
+    BU_OPT(opt_defs[5],  "C", "gui",               "",        NULL,            &cl.gui_mode,         "GUI (non-classic) mode");
+    BU_OPT(opt_defs[6],  "b", "background",        "",        NULL,            &cl.background,       "run in background (fork)");
+    BU_OPT(opt_defs[7],  "x", "rt-debug",          "hex",     parse_debug_uint,&cl.rt_debug_val,     "set librt debug flags (hex)");
+    BU_OPT(opt_defs[8],  "X", "bu-debug",          "hex",     parse_debug_uint,&cl.bu_debug_val,     "set libbu debug flags (hex)");
+    BU_OPT(opt_defs[9],  "v", "version",           "",        NULL,            &cl.print_version,    "print version info and exit");
+    BU_OPT(opt_defs[10], "h", "help",              "",        NULL,            &cl.print_help,       "print help and exit");
+    BU_OPT(opt_defs[11], "?", NULL,                "",        NULL,            &cl.print_help,       "print help and exit");
+    /* -o is a developer option: preserved but not promoted with a long alias */
+    BU_OPT(opt_defs[12], "o", NULL,                "",        NULL,            &cl.old_gui_flag,     "[developer] use old GUI");
+    /* ---- rc file control ---- */
+    BU_OPT(opt_defs[13], NULL, "rcfile",           "file",    bu_opt_str,      &cl.rcfile,           "use FILE instead of .mgedrc");
+    BU_OPT(opt_defs[14], NULL, "no-rc",            "",        NULL,            &cl.skip_rc,          "skip loading any .mgedrc file");
+    /* ---- general escape hatches ---- */
+    BU_OPT(opt_defs[15], NULL, "set",              "VAR=VALUE",parse_mged_set, &cl.set_pairs,
+	   "set an mged variable (e.g. --set use_air=1); applied after .mgedrc");
+    BU_OPT(opt_defs[16], NULL, "rset",             "ARGS",    parse_rset,      &cl.rset_pairs,
+	   "set an rset resource (e.g. --rset \"g snap 1\"); applied after .mgedrc");
+    /* ---- mged_variables: boolean on/off pairs ---- */
+    BU_OPT(opt_defs[17], NULL, "use-air",          "",        NULL,            &cl.use_air,          "enable use_air");
+    BU_OPT(opt_defs[18], NULL, "no-use-air",       "",        flag_set_zero,   &cl.use_air,          "disable use_air");
+    BU_OPT(opt_defs[19], NULL, "dlist",            "",        NULL,            &cl.dlist,            "enable display lists");
+    BU_OPT(opt_defs[20], NULL, "no-dlist",         "",        flag_set_zero,   &cl.dlist,            "disable display lists");
+    BU_OPT(opt_defs[21], NULL, "faceplate",        "",        NULL,            &cl.faceplate,        "show faceplate overlay");
+    BU_OPT(opt_defs[22], NULL, "no-faceplate",     "",        flag_set_zero,   &cl.faceplate,        "hide faceplate overlay");
+    BU_OPT(opt_defs[23], NULL, "predictor",        "",        NULL,            &cl.predictor,        "enable view predictor");
+    BU_OPT(opt_defs[24], NULL, "no-predictor",     "",        flag_set_zero,   &cl.predictor,        "disable view predictor");
+    /* ---- mged_variables: valued options ---- */
+    BU_OPT(opt_defs[25], NULL, "linewidth",        "#",       bu_opt_int,      &cl.linewidth,        "wireframe line width (pixels, >=1)");
+    BU_OPT(opt_defs[26], NULL, "linestyle",        "s|d",     bu_opt_char,     &cl.linestyle,        "line style: s=solid, d=dashed");
+    BU_OPT(opt_defs[27], NULL, "perspective",      "#",       bu_opt_fastf_t,  &cl.perspective,      "perspective angle in degrees (-1=off)");
+    BU_OPT(opt_defs[28], NULL, "eye-sep-dist",     "#",       bu_opt_fastf_t,  &cl.eye_sep_dist,     "stereo eye separation (mm, 0=mono)");
+    BU_OPT(opt_defs[29], NULL, "port",             "#",       bu_opt_int,      &cl.port,             "framebuffer server listen port (0-65535)");
+    BU_OPT(opt_defs[30], NULL, "coords",           "m|v",     bu_opt_char,     &cl.coords,           "constraint coords: m=model v=view");
+    BU_OPT(opt_defs[31], NULL, "rotate-about",     "m|v|e",   bu_opt_char,     &cl.rotate_about,     "rotate center: m=model v=view e=eye");
+    BU_OPT(opt_defs[32], NULL, "transform",        "v|a|e",   bu_opt_char,     &cl.transform,        "mouse transform: v=view a=adc e=edit");
+    BU_OPT(opt_defs[33], NULL, "nmg-eu-dist",      "#",       bu_opt_fastf_t,  &cl.nmg_eu_dist,      "NMG edge-use distance tolerance");
+    BU_OPT(opt_defs[34], NULL, "mouse-behavior",   "v|a|e",   bu_opt_char,     &cl.mouse_behavior,   "mouse behavior mode");
+    BU_OPT(opt_defs[35], NULL, "predictor-advance","#",       bu_opt_fastf_t,  &cl.predictor_advance,"predictor advance time (s)");
+    BU_OPT(opt_defs[36], NULL, "predictor-length", "#",       bu_opt_fastf_t,  &cl.predictor_length, "predictor trail length (s)");
+    BU_OPT(opt_defs[37], NULL, "perspective-mode", "0|1",     bu_opt_int,      &cl.perspective_mode, "enable/disable perspective mode");
+    BU_OPT(opt_defs[38], NULL, "context",          "0|1",     bu_opt_int,      &cl.context,          "context mode (0=off)");
+    BU_OPT(opt_defs[39], NULL, "sliders",          "0|1",     bu_opt_int,      &cl.sliders,          "show sliders");
+    BU_OPT(opt_defs[40], NULL, "hot-key",          "#",       bu_opt_int,      &cl.hot_key,          "hot key character code");
+    BU_OPT(opt_defs[41], NULL, "fb-overlay",       "0|1|2",   bu_opt_int,      &cl.fb_overlay,       "framebuffer overlay: 0=under 1=inter 2=over");
+    /* ---- window/display (Tcl mged_default array) ---- */
+    BU_OPT(opt_defs[42], NULL, "dm-type",          "type",    bu_opt_str,      &cl.dm_type,          "display manager type (e.g. ogl, swrast)");
+    BU_OPT(opt_defs[43], NULL, "geom",             "WxH+X+Y", bu_opt_str,      &cl.geom,             "command window geometry");
+    BU_OPT(opt_defs[44], NULL, "ggeom",            "WxH+X+Y", bu_opt_str,      &cl.ggeom,            "graphics window geometry");
+    /* ---- grid (rset g …) ---- */
+    BU_OPT(opt_defs[45], NULL, "grid-draw",        "0|1",     bu_opt_int,      &cl.grid_draw,        "show/hide grid");
+    BU_OPT(opt_defs[46], NULL, "grid-snap",        "0|1",     bu_opt_int,      &cl.grid_snap,        "enable/disable grid snap");
+    BU_OPT(opt_defs[47], NULL, "grid-rh",          "#",       bu_opt_fastf_t,  &cl.grid_rh,          "horizontal grid resolution");
+    BU_OPT(opt_defs[48], NULL, "grid-rv",          "#",       bu_opt_fastf_t,  &cl.grid_rv,          "vertical grid resolution");
+    BU_OPT(opt_defs[49], NULL, "grid-mrh",         "#",       bu_opt_int,      &cl.grid_mrh,         "horizontal major grid interval");
+    BU_OPT(opt_defs[50], NULL, "grid-mrv",         "#",       bu_opt_int,      &cl.grid_mrv,         "vertical major grid interval");
+    /* ---- colour scheme subset (rset cs …) ---- */
+    BU_OPT(opt_defs[51], NULL, "bg",               "R G B",   parse_opt_color, &cl.bg_color,         "background colour (0-255 per component, or #RRGGBB)");
+    BU_OPT(opt_defs[52], NULL, "geo-color",        "R G B",   parse_opt_color, &cl.geo_def_color,    "default geometry wireframe colour");
+    BU_OPT_NULL(opt_defs[53]);
+
+    /* bu_opt_parse does not consume argv[0] (the program name).
+     * Skip it manually so that the remaining args match what the
+     * original bu_getopt-based code expected after optind adjustment. */
+    int orig_argc = argc;
+    argc--;
+    argv++;
+    argc = bu_opt_parse(&parse_msgs, (size_t)argc, (const char **)argv, opt_defs);
+
+    if (bu_vls_strlen(&parse_msgs) > 0) {
+	/* Print any warnings/errors from the parser */
+	bu_log("%s", bu_vls_cstr(&parse_msgs));
+    }
+    bu_vls_free(&parse_msgs);
+
+    if (argc < 0) {
+	/* Fatal parse error */
+	bu_exit(1, "Usage:  mged [options] [database [command]]\n"
+		   "Run 'mged --help' for a full option list.\n");
     }
 
-    /* Change the working directory to BU_DIR_HOME if we are invoking
-     * without any arguments. */
-    if (argc == 1) {
+    /* ---- Apply early options immediately --------------------------------- */
+
+    /* -v / --version */
+    if (cl.print_version) {
+	printf("%s%s%s%s%s%s\n",
+	       brlcad_ident("MGED Geometry Editor"),
+	       dm_version(),
+	       fb_version(),
+	       rt_version(),
+	       bn_version(),
+	       bu_version());
+	return EXIT_SUCCESS;
+    }
+
+    /* -h / --help / -? */
+    if (cl.print_help) {
+	struct bu_vls usage = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&usage, "Usage:  mged [options] [database [command]]\n\n");
+	char *help_str = bu_opt_describe(opt_defs, NULL);
+	if (help_str) {
+	    bu_vls_printf(&usage, "Options:\n%s", help_str);
+	    bu_free(help_str, "bu_opt_describe");
+	}
+	bu_exit(1, "%s\n", bu_vls_cstr(&usage));
+    }
+
+    /* -o (developer option: use old GUI) */
+    if (cl.old_gui_flag) {
+	bu_log("WARNING: -o is a developer option and subject to change.  Do not use.\n");
+	old_mged_gui = 0;
+    }
+
+    /* -x / --rt-debug  and  -X / --bu-debug: parse_debug_uint() stores the
+     * parsed hex value in cl.rt_debug_val / cl.bu_debug_val.  Both fields
+     * were initialised to the current values of rt_debug / bu_debug (see
+     * below) so an unconditional copy here is safe: if the user did not
+     * supply -x/-X the value is unchanged. */
+    rt_debug = (int)cl.rt_debug_val;
+    bu_debug = (unsigned int)cl.bu_debug_val;
+
+    /* -a / --attach */
+    if (cl.attach)
+	attach = (char *)cl.attach;
+
+    /* -d / --display */
+    if (cl.dpy_string)
+	s->dpy_string = (char *)cl.dpy_string;
+
+    /* -r / --read-only */
+    if (cl.read_only)
+	read_only_flag = 1;
+
+    /* -p / --pipe */
+    if (cl.pipe_mode)
+	s->pipe_mode = 1;
+
+    /* -b / --background */
+    if (cl.background)
+	run_in_foreground = 0;
+
+    /* -c / --classic and -C / --gui (mutually exclusive; last one wins) */
+    if (cl.classic_mode) {
+	s->classic_mged = 2; /* >1 to indicate explicitly requested */
+    }
+    if (cl.gui_mode) {
+	s->classic_mged = 0;
+	s->interactive = 2;  /* >1 to indicate explicitly requested */
+    }
+
+    /* Change the working directory to BU_DIR_HOME if invoked with no
+     * arguments at all (not even options). */
+    if (orig_argc == 1) {
 	const char *homed = bu_dir(NULL, 0, BU_DIR_HOME, NULL);
 	if (homed && chdir(homed)) {
 	    bu_exit(1, "Failed to change working directory to \"%s\" ", homed);
 	}
     }
-
-    /* skip the args and invocation name */
-    argc -= bu_optind;
-    argv += bu_optind;
 
     if (argc > 1) {
 	/* if there is more than a file name remaining, mged is not interactive */
@@ -2251,8 +2796,12 @@ main(int argc, char *argv[])
     /* --- Now safe to process commands. --- */
     if (s->interactive) {
 
-	/* This is an interactive mged, process .mgedrc */
-	do_rc(s);
+	/* This is an interactive mged, process .mgedrc (unless --no-rc or
+	 * --rcfile overrides the default search logic). */
+	do_rc(s, cl.skip_rc, cl.rcfile);
+
+	/* Apply CLI overrides AFTER .mgedrc so command-line flags always win. */
+	apply_cli_overrides(s, &cl);
 
 	/*
 	 * Initialize variables here in case the user specified changes
@@ -2339,7 +2888,8 @@ main(int argc, char *argv[])
 	} /* classic */
 
     } else {
-	/* !interactive */
+	/* !interactive: no .mgedrc is processed, but CLI overrides still apply */
+	apply_cli_overrides(s, &cl);
 
 	if (!run_in_foreground && use_pipe) {
 	    notify_parent_done(parent_pipe[1]);
