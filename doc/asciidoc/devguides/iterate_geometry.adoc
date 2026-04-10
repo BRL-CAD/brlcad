@@ -1,0 +1,544 @@
+= BRL-CAD Geometry Database Traversal APIs
+:doctype: article
+:toc: left
+:toclevels: 3
+:sectlinks:
+:sectanchors:
+
+This guide summarizes the main BRL-CAD APIs used to iterate over geometry database contents, search for objects, traverse object hierarchies, and inspect combination trees.
+
+It is intentionally organized around two questions:
+
+. What *kind* of thing do you need to traverse?
+. What BRL-CAD *data structure* do you already have?
+
+This page does not try to reproduce full function signatures.  For prototypes and callback details, consult the headers.
+
+== Scope
+
+This guide covers:
+
+* `db_walk_tree(...)`
+* `db_functree(...)`
+* `db_preorder_traverse(...)`
+* `db_search(...)`
+* `db_ls(...)`
+* `db_cyclic_paths(...)`
+* `db_tree_funcleaf(...)`
+* `db_follow_path(...)`
+* raw directory iteration via `db_dirptr(...)` and `FOR_ALL_DIRECTORY_START/END`
+
+It does not attempt to document every tree utility in `tree.h`.  Helpers such as named-leaf lookup, tree deletion, subtree duplication, or tree balancing are related, but they are not primary traversal entry points.
+
+== Mental model
+
+The easiest way to choose the right API is to first identify the BRL-CAD structure you are working with.
+
+[cols="1,3",options="header"]
+|===
+| Structure
+| Meaning
+
+| `struct db_i *`
+| An open database instance.  Use this when your starting point is "the database" rather than a specific imported object.
+
+| `struct directory *`
+| One named database object in the directory.  Use this when you have already looked up an object and want to recurse below it.
+
+| `struct db_full_path *`
+| One specific instance path through the DAG.  Use this when instance ancestry matters.
+
+| `struct db_tree_state *`
+| Inherited traversal state: matrix, attributes, region/material state, tolerances, and callbacks.
+
+| `struct rt_comb_internal *` / `union tree *`
+| One imported combination and its boolean expression tree.  Use this when you want to inspect the tree of a single comb rather than the database hierarchy.
+|===
+
+== Summary table
+
+[[summary-table]]
+[cols="2,2,2,3,1,1,3",options="header"]
+|===
+| API
+| Start from
+| Traverses
+| Returns / style
+| Path-aware
+| State-aware
+| Use when
+
+| `db_walk_tree`
+| `db_i *` plus root names
+| Database hierarchy below one or more named roots
+| Callback-driven DAG walk
+| Yes
+| Yes
+| You need inherited transforms, attributes, region/material state, or leaf import logic.
+
+| `db_functree`
+| `directory *`
+| Subtree below one resolved object
+| Callback-driven recursive walk
+| No
+| No
+| You want a simple recurse-below-this-object walker.
+
+| `db_preorder_traverse`
+| `directory *`
+| Subtree below one resolved object
+| Callback-driven enter/exit/leaf walk
+| No
+| No
+| You specifically need combination enter and exit callbacks.
+
+| `db_search`
+| `db_i *`
+| Search results over the database or selected roots
+| `bu_ptbl` of results
+| Yes by default
+| No
+| The problem is "find matching objects or paths", not "visit everything".
+
+| `db_ls`
+| `db_i *`
+| Flat directory listing
+| Array of `directory *`
+| No
+| No
+| You want object enumeration by class: tops, prims, combs, regions, hidden, cyclic, and so on.
+
+| `db_cyclic_paths`
+| `db_i *`, optionally `directory *`
+| Cycle validation over all objects or one subtree
+| Count plus optional returned paths
+| Yes
+| No
+| You need to detect cyclic references.
+
+| `db_tree_funcleaf`
+| imported comb / `union tree *`
+| One combination tree only
+| Callback on `OP_DB_LEAF` nodes
+| No
+| No
+| You already have one comb in internal form and want to inspect its boolean leaves.
+
+| `db_follow_path`
+| `db_full_path *`
+| One known path
+| Updates state and accumulated path
+| Yes
+| Yes
+| You already know the path and want cumulative inherited state.
+
+| `FOR_ALL_DIRECTORY_START`
+| `db_i *`
+| Entire raw directory hash table
+| Macro iteration over `directory *`
+| No
+| No
+| You need low-level flat enumeration of every directory entry.
+|===
+
+== Which API should I use?
+
+[[cheat-sheet]]
+If you only consult one section, consult this one.
+
+[cols="3,2",options="header"]
+|===
+| Task
+| Best starting point
+
+| Walk one or more top objects and accumulate inherited matrices, region state, and attributes
+| `db_walk_tree`
+
+| Recurse below a known object with minimal machinery
+| `db_functree`
+
+| Recurse below a known object and get explicit "enter comb" / "exit comb" callbacks
+| `db_preorder_traverse`
+
+| Find all regions below a subtree, or all objects matching a filter expression
+| `db_search`
+
+| List all tops, all regions, all combs, or all primitives in the database
+| `db_ls`
+
+| Detect cyclic references in the whole database or below one object
+| `db_cyclic_paths`
+
+| Walk the leaf nodes of one imported combination tree
+| `db_tree_funcleaf`
+
+| Compute inherited state along one known instance path
+| `db_follow_path`
+
+| Iterate every raw directory entry regardless of hierarchy
+| `FOR_ALL_DIRECTORY_START`
+|===
+
+== Choosing by starting data structure
+
+=== Start with `db_i *`
+
+Use this group when your natural starting point is the whole database.
+
+[cols="2,4",options="header"]
+|===
+| API
+| Best fit
+
+| `db_walk_tree`
+| Start from object names and walk hierarchy with inherited state.
+
+| `db_search`
+| Start from the database and search using filters; optionally hierarchy-aware.
+
+| `db_ls`
+| Start from the database and enumerate objects flatly by class.
+
+| `db_cyclic_paths`
+| Validate the whole database for cycles.
+
+| `FOR_ALL_DIRECTORY_START`
+| Flat low-level scan of all directory entries.
+|===
+
+=== Start with `directory *`
+
+Use this group when you already resolved a named object and want to recurse below it.
+
+[cols="2,4",options="header"]
+|===
+| API
+| Best fit
+
+| `db_functree`
+| Simple recursive subtree walk.
+
+| `db_preorder_traverse`
+| Recursive subtree walk with enter/exit callbacks.
+
+| `db_cyclic_paths`
+| Check whether this object's subtree contains a cycle back to itself.
+|===
+
+=== Start with `rt_comb_internal *` or `union tree *`
+
+Use this group when the combination is already imported into internal form.
+
+[cols="2,4",options="header"]
+|===
+| API
+| Best fit
+
+| `db_tree_funcleaf`
+| Iterate the `OP_DB_LEAF` nodes of one boolean tree.
+
+| other tree utilities in `tree.h`
+| Inspect or rewrite the tree itself, rather than traverse the database.
+|===
+
+=== Start with `db_full_path *`
+
+Use this group when instance ancestry is already known and matters.
+
+[cols="2,4",options="header"]
+|===
+| API
+| Best fit
+
+| `db_follow_path`
+| Update cumulative path and inherited state along a known path.
+|===
+
+== API reference
+
+Each subsection below adds only the details that are most likely to matter when choosing or using the API.  For the big-picture comparison, see <<summary-table>>.
+
+=== `db_walk_tree`
+
+Use `db_walk_tree` when you want BRL-CAD's main high-level hierarchy walker.
+
+What makes it different from the others:
+
+* it starts from one or more named roots
+* it carries a `db_tree_state`
+* it passes a `db_full_path`
+* it is the right tool when inherited transforms, attributes, region/material state, tolerances, or leaf import behavior matter
+
+Typical uses:
+
+* preparing or importing geometry below one or more tops
+* collecting leaf instance paths rather than just unique objects
+* region-aware traversal
+* applying inherited state as you descend the DAG
+
+Not ideal when:
+
+* you already have a single `directory *` and only want a lightweight recursive visit
+* you only need flat object enumeration
+* you only need one combination's internal boolean tree
+
+See also: <<db-functree>>, <<db-follow-path>>.
+
+[[db-functree]]
+=== `db_functree`
+
+Use `db_functree` when you want a simple recursive walk below one resolved object.
+
+Key characteristics:
+
+* start from a `directory *`
+* recurse below combinations
+* call `leaf_func` on leaves
+* call `comb_func` on combinations
+
+In current behavior, `db_functree` visits descendants before calling the combination callback on the combination itself.  That makes it effectively a postorder-style visit for combinations.
+
+Typical uses:
+
+* counting combinations or leaves below one object
+* collecting names
+* simple reporting or validation passes
+* recurse-below-this-object tools that do not need full path/state machinery
+
+Prefer `db_walk_tree` instead when inherited state or instance paths matter.
+
+=== `db_preorder_traverse`
+
+Use `db_preorder_traverse` when you want explicit combination entry and exit callbacks.
+
+Key characteristics:
+
+* start from a `directory *`
+* call one callback when entering a combination
+* recurse below it
+* call another callback when exiting it
+* call a leaf callback at leaves
+
+Typical uses:
+
+* stack-based analyses
+* building your own explicit traversal context
+* cases where enter/exit events are more natural than a postorder comb callback
+
+For most external code, `db_walk_tree` or `db_functree` will usually be the better first choice.  Reach for `db_preorder_traverse` when enter/exit semantics are the main requirement.
+
+=== `db_search`
+
+Use `db_search` when the problem is search, not traversal for its own sake.
+
+Key characteristics:
+
+* accepts a search filter plan
+* can search the whole database or selected roots
+* returns results in a `bu_ptbl`
+* can return hierarchy-aware results
+* can also do flat search
+
+Typical uses:
+
+* find all regions below one or more roots
+* find objects matching name, type, or other filter criteria
+* return full paths rather than unique objects
+* filter an existing set of roots
+
+Prefer `db_walk_tree` instead when you want callback-driven descent with inherited state.
+
+Prefer `db_ls` instead when all you want is a flat class-based listing.
+
+=== `db_ls`
+
+Use `db_ls` when you want a flat directory listing.
+
+Key characteristics:
+
+* no hierarchy walk
+* filter by flags and optional glob pattern
+* returns an allocated `directory **` array
+
+Typical uses:
+
+* list all tops
+* list all regions
+* list all combinations
+* list all primitives
+* include hidden or non-geometry objects when desired
+
+This is often the best starting point for tools that need object inventory rather than subtree recursion.
+
+=== `db_cyclic_paths`
+
+Use `db_cyclic_paths` when you need cycle validation.
+
+Key characteristics:
+
+* can validate the whole database
+* can validate a subtree below one `directory *`
+* can optionally return the cyclic paths found
+
+Typical uses:
+
+* validation tools
+* sanity checks before traversal or export
+* diagnosing unexpected recursion in object references
+
+Prefer `db_ls` if you only want objects flagged as cyclic.
+Prefer `db_search` or traversal walkers if you need broader analysis beyond cycle detection.
+
+=== `db_tree_funcleaf`
+
+Use `db_tree_funcleaf` when you are already inside one imported combination.
+
+Key characteristics:
+
+* operates on one `rt_comb_internal` and its `union tree`
+* visits `OP_DB_LEAF` nodes in that tree
+* does not recurse out into the wider database hierarchy
+
+Typical uses:
+
+* inspect or rewrite one combination tree
+* gather the leaf references used by one comb
+* analyze matrices attached to `OP_DB_LEAF` nodes
+
+Do not use this when the real problem is "walk everything below this object in the database".  In that case, use `db_functree` or `db_walk_tree`.
+
+=== `db_follow_path`
+
+Use `db_follow_path` when you already have a specific `db_full_path` and want accumulated inherited state.
+
+Key characteristics:
+
+* updates a `db_tree_state`
+* updates an accumulated path
+* follows a known instance path rather than exploring a subtree
+
+Typical uses:
+
+* computing cumulative transforms for one instance
+* reconstructing inherited state for a path gathered elsewhere
+* turning a known path into a fully interpreted state
+
+Prefer `db_walk_tree` if you do not yet know the path.
+
+=== Raw directory iteration: `db_dirptr` and `FOR_ALL_DIRECTORY_START`
+
+Use this when you need low-level flat access to every directory entry.
+
+Key characteristics:
+
+* iterates the raw directory hash lists
+* does not interpret hierarchy
+* does not provide paths or inherited state
+* best suited to low-level tooling
+
+Typical uses:
+
+* raw object inventory
+* internal or performance-sensitive scans
+* infrastructure code that already works in terms of `directory *`
+
+Avoid this for tasks that are naturally hierarchy-aware.  When instance ancestry matters, a walker or search API is usually the better abstraction.
+
+== Common decision points
+
+=== `db_walk_tree` vs `db_functree`
+
+Use `db_walk_tree` when:
+
+* instance paths matter
+* inherited state matters
+* region boundaries matter
+* you are doing prep/import-style traversal
+
+Use `db_functree` when:
+
+* you already have a `directory *`
+* you want a simpler callback shape
+* you only need object recursion, not inherited state
+
+=== `db_search` vs `db_ls`
+
+Use `db_search` when:
+
+* you want matches defined by filter expressions
+* hierarchy-aware results matter
+* you may want full paths
+
+Use `db_ls` when:
+
+* you want object inventory by class
+* flat enumeration is enough
+* tops / prims / combs / regions are the question
+
+=== `db_functree` vs `db_tree_funcleaf`
+
+Use `db_functree` when:
+
+* you are traversing the database hierarchy below an object
+
+Use `db_tree_funcleaf` when:
+
+* you already imported a single combination and want to inspect its `union tree`
+
+=== `db_walk_tree` vs `db_follow_path`
+
+Use `db_walk_tree` when:
+
+* you want to discover paths by traversal
+
+Use `db_follow_path` when:
+
+* the path is already known and you want its accumulated state
+
+== Recipes
+
+=== List all top-level objects
+
+Use `db_ls` with the tops filter.
+
+=== List all regions in the database
+
+Use `db_ls` with the region filter.
+
+=== Find all regions below one or more roots
+
+Use `db_search` when the problem is naturally expressed as search.
+Use `db_walk_tree` when you also need inherited state or leaf processing.
+
+=== Count all leaves below a combination
+
+Use `db_functree` if you start from a `directory *`.
+Use `db_walk_tree` if leaf instance paths or inherited state matter.
+
+=== Inspect the boolean leaves referenced by one imported comb
+
+Use `db_tree_funcleaf`.
+
+=== Detect cyclic references in a model
+
+Use `db_cyclic_paths`.
+
+=== Compute the full inherited transform for a known instance path
+
+Use `db_follow_path`.
+
+=== Iterate every object in the directory regardless of hierarchy
+
+Use `FOR_ALL_DIRECTORY_START`.
+
+== Dev Notes
+
+This guide intentionally separates three concepts that are easy to intermingle (and switch between):
+
+* flat object enumeration
+* hierarchy traversal
+* single-combination tree inspection
+
+Those three concerns often involve different APIs and different data structures, though, so keeping them separate makes the API choice easier to figure out.
+
+When adding future traversal APIs to this page, prefer updating <<summary-table>> and <<cheat-sheet>> first.  Keep the per-API sections short and 'DRY'.
