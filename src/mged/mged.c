@@ -2345,6 +2345,30 @@ main(int argc, char *argv[])
 	} else {
 	    attach_display_manager(s->interp, attach, s->dpy_string);
 	}
+
+	/* In GUI mode, openw.tcl's init_mged_gui applies mged_default(ggeom)
+	 * to set the DM window size and position.  Classic mode bypasses that
+	 * code path entirely, so honour the same preference here.  A user sets
+	 * this in their .mgedrc before the attach happens, e.g.:
+	 *   set mged_default(ggeom) 512x512+0+0
+	 */
+	if (DMP && dm_graphical(DMP)) {
+	    struct bu_vls *pn = dm_get_pathname(DMP);
+	    const char *ggeom = Tcl_GetVar(s->interp, "mged_default(ggeom)", TCL_GLOBAL_ONLY);
+	    if (pn && bu_vls_strlen(pn) && ggeom && strlen(ggeom)) {
+		struct bu_vls geom_cmd = BU_VLS_INIT_ZERO;
+		/* Brace the geometry string so Tcl does not interpret any
+		 * special characters that might appear in a user's .mgedrc. */
+		bu_vls_printf(&geom_cmd, "wm geometry %s {%s}", bu_vls_cstr(pn), ggeom);
+		if (Tcl_Eval(s->interp, bu_vls_cstr(&geom_cmd)) != TCL_OK)
+		    bu_log("mged: failed to apply mged_default(ggeom) \"%s\": %s\n",
+			   ggeom, Tcl_GetStringResult(s->interp));
+		bu_vls_free(&geom_cmd);
+		/* Flush pending Tk events so the resize takes effect before
+		 * the main event loop starts. */
+		(void)Tcl_Eval(s->interp, "update");
+	    }
+	}
     }
 
     /* --- Now safe to process geometry. --- */
