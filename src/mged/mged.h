@@ -251,6 +251,14 @@ struct mged_state {
     int cmd_running;
     Tcl_TimerToken log_drain_timer;
 
+    /* When non-zero, a machine-readable "MGED_CMD_DONE <status>" sentinel
+     * line is written to stdout after every command completes in the
+     * non-interactive (piped) stdin path.  Enabled by the -p flag so that
+     * a parent process driving MGED via stdin/stdout can detect command
+     * completion even for commands that produce no output.
+     * Status codes: CMD_OK (919), CMD_BAD (920), CMD_MORE (921). */
+    int pipe_mode;
+
     /* Secondary Tcl interpreter used exclusively for search -exec evaluation.
      * Created by mged_search_pre_clbk at the start of each search command,
      * reused for all -exec callbacks during that search, and destroyed by

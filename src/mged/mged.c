@@ -1378,11 +1378,13 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	/* If a complete line was entered, attempt to execute command. */
 
 	if (Tcl_CommandComplete(bu_vls_addr(&s->input_str_prefix))) {
+	    int cmd_status;
 	    curr_cmd_list = &head_cmd_list;
 	    if (curr_cmd_list->cl_tie)
 		set_curr_dm(s, curr_cmd_list->cl_tie);
 
-	    if (cmdline(s, &s->input_str_prefix, 1) == CMD_MORE) {
+	    cmd_status = cmdline(s, &s->input_str_prefix, 1);
+	    if (cmd_status == CMD_MORE) {
 		/* Remove newline */
 		bu_vls_trunc(&s->input_str_prefix,
 			     bu_vls_strlen(&s->input_str_prefix)-1);
@@ -1396,6 +1398,18 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	    }
 	    pr_prompt(s);
 	    s->input_str_index = 0;
+
+	    /* In pipe mode, emit a machine-readable completion sentinel so
+	     * that a parent process driving MGED via stdin/stdout can detect
+	     * when a command has finished, even if the command produced no
+	     * output.  The sentinel is written directly to stdout (not via
+	     * bu_log) so it is never swallowed by the Tcl log-redirect
+	     * machinery.  The numeric status lets the parent distinguish
+	     * CMD_OK (919), CMD_BAD (920), and CMD_MORE (921). */
+	    if (s->pipe_mode) {
+		fprintf(stdout, "MGED_CMD_DONE %d\n", cmd_status);
+		fflush(stdout);
+	    }
 	} else {
 	    bu_vls_trunc(&s->input_str, 0);
 	    /* Allow the user to hit ^C. */
@@ -1861,6 +1875,7 @@ main(int argc, char *argv[])
     s->dpy_string = NULL;
     s->cmd_running = 0;
     s->log_drain_timer = NULL;
+    s->pipe_mode = 0;
 
     /* Set up linked lists */
     s->vlfree = &rt_vlfree;
@@ -1892,7 +1907,7 @@ main(int argc, char *argv[])
 #endif
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "a:d:hbcCorx:X:v?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:d:hbcCorpx:X:v?")) != -1) {
 	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'a':
@@ -1903,6 +1918,9 @@ main(int argc, char *argv[])
 		break;
 	    case 'r':
 		read_only_flag = 1;
+		break;
+	    case 'p':
+		s->pipe_mode = 1;
 		break;
 	    case 'c':
 		s->classic_mged = 2; // >1 to indicate requested
@@ -1942,7 +1960,7 @@ main(int argc, char *argv[])
 		bu_log("Unrecognized option (%c)\n", bu_optopt);
 		/* fall through */
 	    case 'h':
-		bu_exit(1, "Usage:  %s [-a attach] [-b] [-c|-C] [-f] [-d display] [-h|?] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
+		bu_exit(1, "Usage:  %s [-a attach] [-b] [-c|-C] [-f] [-d display] [-h|?] [-p] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
 	}
     }
 
