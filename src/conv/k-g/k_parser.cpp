@@ -446,6 +446,7 @@ bool parse_k
 	std::string              sectionTitle;
 	bool                     sectionHasOption = false;
 	int                      sectionId        = -1;
+	int                      elementId        = -1;
 	int                      sectionElForm    = 0;
 	//int                      CST              = 0;
 	std::string              line             = read_line(is);
@@ -1422,27 +1423,30 @@ bool parse_k
 		    case KState::Element_Beam: {
 			KElement element;
 			int      pid = 1;
-			int      eid = 1;
 
 			if (beamOptions.size() == 0 || optionsCounter == 0) {
 			    if (tokens.size() < 10) {
 				std::cout << "Too short ELEMENT_BEAM in k-file" << fileName << std::endl;
 				break;
 			    }
-			    eid = stoi(tokens[0]);
+			    elementId = stoi(tokens[0]);
 
-			    if (data.elements.find(eid) != data.elements.end()) {
-				std::cout << "Duplicat Element ID" << eid << " in k-file" << fileName << std::endl;
+			    if (data.elements.find(elementId) != data.elements.end()) {
+				std::cout << "Duplicat Element ID" << elementId << " in k-file" << fileName << std::endl;
 				break;
 			    }
 
 			    for (int i_n = 0; i_n < 3; ++i_n)
 				element.nodes.push_back(stoi(tokens[i_n + FirstNode]));
 
-			    data.elements[eid] = element;
+			    data.elements[elementId] = element;
 
 			    pid = stoi(tokens[1]);
-			    data.parts[pid].elements.insert(eid);
+			    data.parts[pid].elements.insert(elementId);
+
+			    if (beamOptions.size() > 0)
+				++optionsCounter;
+
 			    break;
 			}
 			else if ((beamOptions.size() > 0)) {
@@ -1464,10 +1468,8 @@ bool parse_k
 
 				    for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
 					double param = stod(tokens[i_p]);
-					element.options["THICKNESS"].push_back(param);
+					data.elements[elementId].options["THICKNESS"].push_back(param);
 				    }
-
-				    data.elements[eid] = element;
 
 				    ++optionsCounter;
 				    break;
@@ -1537,14 +1539,12 @@ bool parse_k
 				    else if (tokens[0] == "SECTION_22")
 					temp = 22.0;
 
-				    element.options["SECTION"].push_back(temp);
+				    data.elements[elementId].options["SECTION"].push_back(temp);
 
 				    for (size_t i_p = 1; i_p < tokens.size(); ++i_p) {
 					temp = stod(tokens[1]);
-					element.options["SECTION"].push_back(temp);
+					data.elements[elementId].options["SECTION"].push_back(temp);
 				    }
-
-				    data.elements[eid] = element;
 				    ++optionsCounter;
 				    break;
 				}
@@ -1563,10 +1563,8 @@ bool parse_k
 
 				    for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
 					double temp = stod(tokens[i_p]);
-					element.options["OFFSET"].push_back(temp);
+					data.elements[elementId].options["OFFSET"].push_back(temp);
 				    }
-
-				    data.elements[eid] = element;
 
 				    ++optionsCounter;
 				    break;
@@ -1580,10 +1578,8 @@ bool parse_k
 
 				    for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
 					double temp = stod(tokens[i_p]);
-					element.options["ORIENTATION"].push_back(temp);
+					data.elements[elementId].options["ORIENTATION"].push_back(temp);
 				    }
-
-				    data.elements[eid] = element;
 
 				    ++optionsCounter;
 				    break;
@@ -1597,10 +1593,8 @@ bool parse_k
 
 				    for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
 					double temp = stod(tokens[i_p]);
-					element.options["WARPAGE"].push_back(temp);
+					data.elements[elementId].options["WARPAGE"].push_back(temp);
 				    }
-
-				    data.elements[eid] = element;
 
 				    ++optionsCounter;
 				    break;
@@ -1612,9 +1606,7 @@ bool parse_k
 					break;
 				    }
 				    double temp = stod(tokens[0]);
-				    element.options["ELBOW"].push_back(temp);
-
-				    data.elements[eid] = element;
+				    data.elements[elementId].options["ELBOW"].push_back(temp);
 
 				    ++optionsCounter;
 				    break;
@@ -1623,6 +1615,9 @@ bool parse_k
 				default:
 				    break;
 			    }
+
+			    if (optionsCounter >= beamOptions.size())
+				optionsCounter = 0;
 			}
 
 			break;
