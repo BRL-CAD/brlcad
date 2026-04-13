@@ -38,10 +38,12 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 
-/* approximation formula for the circumference of an ellipse */
+/* Ramanujan approximation for the circumference of an ellipse with semi-axes a, b.
+ * Formula: pi*(a+b) * [1 + 3*h / (10 + sqrt(4 - 3*h))]  where h = ((a-b)/(a+b))^2
+ * Note: only the 3*h term is divided by (10+sqrt(...)), NOT the whole (1+3*h). */
 #define ELL_CIRCUMFERENCE(a, b) M_PI * ((a) + (b)) * \
-    (1.0 + (3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b))))) \
-    / (10.0 + sqrt(4.0 - 3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b)))))
+    (1.0 + (3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b)))) \
+    / (10.0 + sqrt(4.0 - 3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b))))))
 
 /* logic to ensure bboxes are not degenerate in any dimension - zero thickness
  * bounding boxes will get missed by the raytracer */
