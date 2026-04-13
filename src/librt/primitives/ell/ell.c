@@ -1962,25 +1962,25 @@ rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     if (EQUAL(mag_a, mag_b)) {
 	if (mag_a > mag_c) {
-	    /* case: prolate spheroid */
-	    ell_type = PROLATE;
+	    /* case: oblate spheroid (equatorial radius a=b, polar radius c < a) */
+	    ell_type = OBLATE;
 	    major = mag_a;
 	    minor = mag_c;
 	} else {
-	    /* case: oblate spheroid */
-	    ell_type = OBLATE;
+	    /* case: prolate spheroid (major axis c, minor radius a=b < c) */
+	    ell_type = PROLATE;
 	    major = mag_c;
 	    minor = mag_a;
 	}
     } else if (EQUAL(mag_a, mag_c)) {
 	if (mag_a > mag_b) {
-	    /* case: prolate spheroid */
-	    ell_type = PROLATE;
+	    /* case: oblate spheroid (equatorial radius a=c, polar radius b < a) */
+	    ell_type = OBLATE;
 	    major = mag_a;
 	    minor = mag_b;
 	} else {
-	    /* case: oblate spheroid */
-	    ell_type = OBLATE;
+	    /* case: prolate spheroid (major axis b, minor radius a=c < b) */
+	    ell_type = PROLATE;
 	    major = mag_b;
 	    minor = mag_a;
 	}
