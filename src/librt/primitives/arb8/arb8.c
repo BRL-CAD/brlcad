@@ -2446,6 +2446,65 @@ rt_arb_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
+struct arb_poly_face
+{
+    size_t npts;
+    point_t *pts;
+    plane_t plane_eqn;
+    fastf_t area;
+};
+#define ARB_POLY_FACE_INIT_ZERO { 0, NULL, HINIT_ZERO, 0.0 }
+#define ARB_AREA_ADD_PT(face, pt) do { VMOVE((face).pts[(face).npts], (pt)); (face).npts++; } while (0)
+
+/**
+ * finds direction cosines and rotation, fallback angles of a unit vector
+ * angles = pointer to 5 fastf_t's to store angles
+ * unitv = pointer to the unit vector (previously computed)
+ */
+static void
+findang(fastf_t *angles, fastf_t *unitv)
+{
+    int i;
+    fastf_t f;
+
+    /* convert direction cosines into axis angles */
+    for (i = X; i <= Z; i++) {
+        if (unitv[i] <= -1.0)
+            angles[i] = -90.0;
+        else if (unitv[i] >= 1.0)
+            angles[i] = 90.0;
+        else
+            angles[i] = acos(unitv[i]) * RAD2DEG;
+    }
+
+    /* fallback angle */
+    if (unitv[Z] <= -1.0)
+        unitv[Z] = -1.0;
+    else if (unitv[Z] >= 1.0)
+        unitv[Z] = 1.0;
+    angles[4] = asin(unitv[Z]);
+
+    /* rotation angle */
+    /* For the tolerance below, on an SGI 4D/70, cos(asin(1.0)) != 0.0
+     * with an epsilon of +/- 1.0e-17, so the tolerance below was
+     * substituted for the original +/- 1.0e-20.
+     */
+    if ((f = cos(angles[4])) > 1.0e-16 || f < -1.0e-16) {
+        f = unitv[X]/f;
+        if (f <= -1.0)
+            angles[3] = 180.0;
+        else if (f >= 1.0)
+            angles[3] = 0.0;
+        else
+            angles[3] = RAD2DEG * acos(f);
+    } else
+        angles[3] = 0.0;
+
+    if (unitv[Y] < 0)
+        angles[3] = 360.0 - angles[3];
+
+    angles[4] *= RAD2DEG;
+}
 
 /**
  * compute surface area of an arb8 by dividing it into
@@ -2454,55 +2513,74 @@ rt_arb_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 void
 rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
-    const int arb_faces[5][24] = rt_arb_faces;
-    int i, a, b, c;
-    int type = 0;
-    vect_t b_a, c_a, area_;
-    plane_t plane;
-    struct bn_tol tmp_tol, tol;
-    struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
-    RT_ARB_CK_MAGIC(aip);
+    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
 
-    /* set up tolerance for rt_arb_std_type */
+    /* set up tolerance */
+    struct bn_tol tol;
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0001; /* to get old behavior of rt_arb_std_type() */
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-5;
     tol.para = 1 - tol.perp;
 
-    type = rt_arb_std_type(ip, &tol);
-    if (type < 4)
+    /* need center point of arb for reference */
+    point_t center_pt = VINIT_ZERO;
+    rt_arb_centroid(&center_pt, ip);
+
+    int cgtype, type;
+    /* find the specific arb type, in GIFT order. */
+    if ((cgtype = rt_arb_std_type(ip, &tol)) == 0)
 	return;
-    type = type - 4;
 
-    /* tol struct needed for bg_make_plane_3pnts,
-     * can't be passed to the function since it
-     * must fit into the rt_functab interface */
-    tmp_tol.magic = BN_TOL_MAGIC;
-    tmp_tol.dist = RT_LEN_TOL;
-    tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+    type = cgtype - 4;
 
-    for (i = 0; i < 6; i++) {
-	if (arb_faces[type][i*4] == -1)
-	    break;	/* faces are done */
+    /* allocate pts array, maximum 4 verts per arb8 face */
+    struct arb_poly_face face = ARB_POLY_FACE_INIT_ZERO;
+    face.pts = (point_t *)bu_calloc(4, sizeof(point_t), "rt_arb8: pts");
 
-	/* a, b, c = face of the GENARB8 */
-	a = arb_faces[type][i*4];
-	b = arb_faces[type][i*4+1];
-	c = arb_faces[type][i*4+2];
+    fastf_t tot_area = 0.0;
+    int i;
+    const int arb_faces[5][24] = rt_arb_faces;
+    for (face.npts = 0, i = 0; i < 6; face.npts = 0, i++) {
+        int a, b, c, d; /* 4 indices to face vertices */
 
-	/* create a plane from a, b, c */
-	if (bg_make_plane_3pnts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
-	    continue;
-	}
+        a = arb_faces[type][i*4+0];
+        b = arb_faces[type][i*4+1];
+        c = arb_faces[type][i*4+2];
+        d = arb_faces[type][i*4+3];
+        if (a == -1)
+            continue;
 
-	/* calculate area of the face */
-	VSUB2(b_a, aip->pt[b], aip->pt[a]);
-	VSUB2(c_a, aip->pt[c], aip->pt[a]);
-	VCROSS(area_, b_a, c_a);
+        /* find plane eqn for this face */
+        if (bg_make_plane_3pnts(face.plane_eqn, arb->pt[a], arb->pt[b], arb->pt[c], &tol) < 0)
+            continue;
 
-	*area += MAGNITUDE(area_);
+        ARB_AREA_ADD_PT(face, arb->pt[a]);
+        ARB_AREA_ADD_PT(face, arb->pt[b]);
+        ARB_AREA_ADD_PT(face, arb->pt[c]);
+        ARB_AREA_ADD_PT(face, arb->pt[d]);
+
+        /* The plane equations returned by bg_make_plane_3pnts above do
+         * not necessarily point outward. Use the reference center
+         * point for the arb and reverse direction for any errant planes.
+         * This corrects the output rotation, fallback angles so that
+         * they always give the outward pointing normal vector. */
+        if (DIST_PNT_PLANE(center_pt, face.plane_eqn) > 0.0)
+            HREVERSE(face.plane_eqn, face.plane_eqn);
+
+
+	fastf_t angles[5];
+	findang(angles, face.plane_eqn);
+	/* sort points */
+	bg_3d_polygon_sort_ccw(face.npts, face.pts, face.plane_eqn);
+	bg_3d_polygon_area(&face.area, face.npts, (const point_t *)face.pts);
+
+        tot_area += face.area;
     }
+
+    bu_free(face.pts, "face.pts");
+    *area += fabs(tot_area);
 }
 
 
