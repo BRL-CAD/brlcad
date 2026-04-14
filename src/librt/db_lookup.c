@@ -289,7 +289,7 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
     dp->d_addr = laddr;
 
     /* If there's no database file, then this MUST be an in-memory object. */
-    if (dbip->dbi_fp == NULL) {
+    if (dbip->i->dbi_fp == NULL) {
 	dp->d_flags = flags | RT_DIR_INMEM;
     } else {
 	dp->d_flags = flags & ~(RT_DIR_INMEM);
