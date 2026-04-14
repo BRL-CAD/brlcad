@@ -47,6 +47,19 @@
 #define MSG_GETTREES		17	/* request rt_gettrees() be called */
 #define MSG_GETTREES_REPLY	18	/* response to MSG_GETTREES */
 
+/*
+ * MSG_VERSION payload format when session authentication is in use:
+ *
+ *   PROTOCOL_VERSION REMRT_AUTH_TOKEN_PREFIX <hex-token>
+ *
+ * e.g. "BRL-CAD REMRT Protocol v2.0 token=3fa2...c81b"
+ *
+ * Workers started without a token omit the suffix.  remrt accepts
+ * both forms; it only rejects a connection when the worker sends a
+ * token that does not match the current session token.
+ */
+#define REMRT_AUTH_TOKEN_PREFIX " token="
+
 /* FIXME: if this number is smaller than the amount remrt enqued,
  * rtsrv will send back only this many and get dropped because of a
  * pixel assignment mismatch.  implies an inconsistency bug, but
@@ -69,7 +82,9 @@ struct line_info  {
 
 #define LINE_O(x)	bu_offsetof(struct  line_info, x)
 
-struct bu_structparse desc_line_info[] =  {
+/* Static to avoid ODR issues — both remrt and rtsrv include this header
+ * but are compiled into separate executables, so each gets its own copy. */
+static struct bu_structparse desc_line_info[] =  {
     {"%d", 1, "li_startpix",	LINE_O(li_startpix),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "li_endpix",	LINE_O(li_endpix),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "li_frame",	LINE_O(li_frame),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

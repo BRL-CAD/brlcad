@@ -33,6 +33,7 @@
 
 #include "common.h"
 
+#include "bu/ipc.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/vls.h"
@@ -242,6 +243,105 @@ qdm_close_client_handler(struct fbserv_obj *fbsp, int i)
     QFBSocket *s = (QFBSocket *)fbsp->fbs_clients[i].fbsc_chan;
     delete s;
 }
+
+
+/* -----------------------------------------------------------------------
+ * Phase 5: IPC client handler for qged (pipe/socketpair instead of TCP).
+ *
+ * QFBIPCSocket registers the pre-connected raw file descriptor from bu_ipc
+ * with Qt's event loop via QSocketNotifier.  When the fd is readable,
+ * ipc_handler() reads one message frame from the pkg_conn and dispatches it
+ * via pkg_process().
+ *
+ * This avoids QTcpSocket entirely for the local rt→framebuffer data path.
+ * ----------------------------------------------------------------------- */
+
+void
+QFBIPCSocket::ipc_handler()
+{
+    QTCAD_SLOT("QFBIPCSocket::ipc_handler", 1);
+
+    struct fbserv_client *fbsc = &fbsp->fbs_clients[ind];
+    struct pkg_conn *pkc = fbsc->fbsc_pkg;
+    if (!pkc)
+	return;
+
+    pkc->pkc_server_data = (void *)fbsc;
+
+    if (pkg_suckin(pkc) <= 0) {
+	/* EOF or error — request deferred drop */
+	fbsc->fbsc_pending_drop = 1;
+	return;
+    }
+
+    if (pkg_process(pkc) < 0)
+	bu_log("QFBIPCSocket::ipc_handler: pkg_process error\n");
+
+    /* Notify the display widget that pixels may have changed */
+    emit updated();
+
+    if (fbsp->fbs_callback != (void (*)(void *))FBS_CALLBACK_NULL) {
+	void (*cfp)(void *) = (void (*)(void *))fbsp->fbs_callback;
+	cfp(fbsp->fbs_clientData);
+    }
+}
+
+
+#ifdef BRLCAD_OPENGL
+void
+qdm_open_ipc_client_handler(struct fbserv_obj *fbsp, int i, void *UNUSED(data))
+{
+    bu_log("open_ipc_client_handler (GL)\n");
+
+    QFBIPCSocket *s = new QFBIPCSocket;
+    s->ind  = i;
+    s->fbsp = fbsp;
+    s->notifier = new QSocketNotifier(fbsp->fbs_clients[i].fbsc_fd,
+				      QSocketNotifier::Read, s);
+    fbsp->fbs_clients[i].fbsc_chan = (void *)s;
+
+    QObject::connect(s->notifier, &QSocketNotifier::activated,
+		     s, &QFBIPCSocket::ipc_handler, Qt::QueuedConnection);
+
+    QgGL *ctx = (QgGL *)dm_get_ctx(fb_get_dm(fbsp->fbs_fbp));
+    if (ctx) {
+	QObject::connect(s, &QFBIPCSocket::updated,
+			 ctx, &QgGL::need_update, Qt::QueuedConnection);
+    }
+}
+#endif
+
+void
+qdm_open_ipc_sw_client_handler(struct fbserv_obj *fbsp, int i, void *UNUSED(data))
+{
+    bu_log("open_ipc_client_handler (SW)\n");
+
+    QFBIPCSocket *s = new QFBIPCSocket;
+    s->ind  = i;
+    s->fbsp = fbsp;
+    s->notifier = new QSocketNotifier(fbsp->fbs_clients[i].fbsc_fd,
+				      QSocketNotifier::Read, s);
+    fbsp->fbs_clients[i].fbsc_chan = (void *)s;
+
+    QObject::connect(s->notifier, &QSocketNotifier::activated,
+		     s, &QFBIPCSocket::ipc_handler, Qt::QueuedConnection);
+
+    QgSW *ctx = (QgSW *)dm_get_udata(fb_get_dm(fbsp->fbs_fbp));
+    if (ctx) {
+	QObject::connect(s, &QFBIPCSocket::updated,
+			 ctx, &QgSW::need_update, Qt::QueuedConnection);
+    }
+}
+
+void
+qdm_close_ipc_client_handler(struct fbserv_obj *fbsp, int i)
+{
+    bu_log("close_ipc_client_handler\n");
+    QFBIPCSocket *s = (QFBIPCSocket *)fbsp->fbs_clients[i].fbsc_chan;
+    delete s;
+    fbsp->fbs_clients[i].fbsc_chan = NULL;
+}
+
 
 // Local Variables:
 // tab-width: 8

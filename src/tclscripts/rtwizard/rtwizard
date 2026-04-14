@@ -68,6 +68,35 @@ if {![info exists ::RtWizard::wizard_state(scanlines)]} { set ::RtWizard::wizard
 # Load the package that lets us output images
 package require cadwidgets::RtImage
 
+# Generate a unique 64-hex-character session token for this rtwizard
+# instance.  Seeding Tcl's PRNG with the process ID XOR'd with a high-
+# resolution clock reading gives different tokens across parallel builds
+# (different PIDs) and across rapid sequential runs on the same host.
+proc rtwiz_gen_token {} {
+    expr {srand([pid] ^ [clock clicks])}
+    set tok ""
+    for {set i 0} {$i < 16} {incr i} {
+	append tok [format "%04x" [expr {int(rand() * 65536)}]]
+    }
+    return $tok
+}
+
+# Return 1 if the given logical fbserv port number already has a listener,
+# 0 if it is free.  A simple TCP connect is used — this is non-destructive,
+# unlike fbclear which would clear another instance's framebuffer.
+# fbserv maps logical port numbers < 1024 to (5559 + port).
+proc rtwiz_port_occupied {logical_port} {
+    set tcp_port $logical_port
+    if {$tcp_port < 1024} {
+	set tcp_port [expr {$tcp_port + 5559}]
+    }
+    if {[catch {socket 127.0.0.1 $tcp_port} s]} {
+	return 0
+    }
+    catch {close $s}
+    return 1
+}
+
 # Set verbosity if not already set
 if {![info exists ::RtWizard::wizard_state(verbose)]} {
     set ::RtWizard::wizard_state(verbose) 0
@@ -116,31 +145,101 @@ if {[info exists ::use_gui]} {
    } else {
       set port_number_specified 1
    }
+
+   # Generate a unique session token and propagate it to all child
+   # processes via the FBSERV_TOKEN environment variable.  This prevents
+   # parallel rtwizard instances (e.g. simultaneous distcheck builds) from
+   # accidentally connecting to each other's fbserv: every tool (rt,
+   # fbclear, fb-pix, fb-png, fblabel, etc.) that honours FBSERV_TOKEN
+   # will only talk to the fbserv that was started with the matching token.
+   set ::env(FBSERV_TOKEN) [rtwiz_gen_token]
+
    # Check whether the framebuffer already exists.  If it does, and if
    # it was specified on the command line, go with it.
    if { [catch {exec [file join [bu_dir bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error ] && $error == 12} {
-      catch {exec [file join [bu_dir bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device) &} pid
+      catch {exec [file join [bu_dir bin] fbserv] -A -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device) &} pid
       if {[info exists pid]} {
 	set fbserv_pid $pid
-	# Wait a few milliseconds to make sure fbserv has completed its work and is available
-	while { [catch {exec [file join [bu_dir bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error] && $error == 12} {after 300}
+	# Wait for fbserv to become ready.  Poll fblabel: if it fails because fbserv
+	# has not yet bound to its port ("can't connect"), keep waiting (up to ~9 s).
+	# Stop early if the failure reason changes to something other than connection-
+	# refused (e.g. a token mismatch means another instance already owns the port).
+	set _fb_wait 0
+	while { [catch {exec [file join [bu_dir bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} _fb_err] && $_fb_wait < 30 && [string match {*can't connect*} $_fb_err] } {
+	    after 300
+	    incr _fb_wait
+	}
+	unset -nocomplain _fb_wait _fb_err
       } else {
 	if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) failed!"}
 	incr ::RtWizard::wizard_state(fbserv_port)
       }
    }
 
-   # If we didn't have a pre-specified port number and the default didn't work, start counting up
+   # If we didn't have a pre-specified port number and the default didn't work, start counting up.
+   # Wrapped in an outer retry loop to recover from the race condition where two parallel
+   # rtwizard instances both pass the TCP port probe before either fbserv actually binds.
+   # Since fbserv is launched with -A (strict auth), fblabel will fail with a token mismatch
+   # when it connects to another instance's fbserv.  That failure is our signal to advance
+   # to the next candidate port and try again — preventing a silent session failure.
    if { ! $port_number_specified && ! [info exists fbserv_pid] } {
        incr ::RtWizard::wizard_state(fbserv_port)
-       while { ! [catch {exec [file join [bu_dir bin] fbclear] -F $::RtWizard::wizard_state(fbserv_port) } error ] } {
-	     if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) is already in use."}
-	     incr ::RtWizard::wizard_state(fbserv_port)
+       set fbserv_owned 0
+       set _fbserv_retries 0
+       set _fbserv_max_retries 50
+       while { !$fbserv_owned && $_fbserv_retries < $_fbserv_max_retries } {
+	   incr _fbserv_retries
+	   # Non-destructive TCP port probe to find a candidate free port.  The old
+	   # approach (fbclear -F $port) was destructive — it would clear another
+	   # running rtwizard's framebuffer as a side effect of the probe.
+	   while { [rtwiz_port_occupied $::RtWizard::wizard_state(fbserv_port)] } {
+		if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) is already in use."}
+		incr ::RtWizard::wizard_state(fbserv_port)
+	   }
+	   if {[catch {exec [file join [bu_dir bin] fbserv] -A -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device) &} pid] == 0} {
+	       set fbserv_pid $pid
+	   } else {
+	       if {$::RtWizard::wizard_state(verbose)} {puts "fbserv launch on port $::RtWizard::wizard_state(fbserv_port) failed: $pid"}
+	   }
+	   # Wait for fbserv to become ready.  Poll fblabel: if it fails because fbserv
+	   # has not yet bound to its port ("can't connect"), keep waiting (up to ~9 s).
+	   # Stop early if the failure reason changes to something other than connection-
+	   # refused — e.g. a token mismatch means another instance already owns the port
+	   # and we should advance to the next candidate immediately.
+	   set _fb_wait 0
+	   while { [catch {exec [file join [bu_dir bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} _fb_err] && $_fb_wait < 30 && [string match {*can't connect*} $_fb_err] } {
+	       after 300
+	       incr _fb_wait
+	   }
+	   unset -nocomplain _fb_wait _fb_err
+	   # Verify that we actually own this fbserv: fblabel must succeed with our
+	   # FBSERV_TOKEN.  If it fails, another rtwizard won the race for this port
+	   # and our token was rejected — advance to the next candidate port and retry.
+	   if { [catch {exec [file join [bu_dir bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "}] == 0 } {
+	       set fbserv_owned 1
+	   } else {
+	       if {$::RtWizard::wizard_state(verbose)} {
+		   puts "fbserv port $::RtWizard::wizard_state(fbserv_port): port collision detected, retrying on next port."
+	       }
+	       # Kill the fbserv we launched on this port — we lost the race and
+	       # cannot own it.  Without this kill the orphaned process lingers,
+	       # consuming the port and causing subsequent retries to spin.
+	       if {[info exists fbserv_pid]} {
+		   if {$::tcl_platform(platform) == "windows"} {
+		       catch {exec taskkill /F /PID $fbserv_pid}
+		   } else {
+		       catch {exec kill $fbserv_pid}
+		   }
+	       }
+	       unset -nocomplain fbserv_pid
+	       incr ::RtWizard::wizard_state(fbserv_port)
+	   }
        }
-      catch {exec [file join [bu_dir bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device) &} pid
-      set fbserv_pid $pid
-      # Wait a few milliseconds to make sure fbserv has completed its work and is available
-      while { [catch {exec [file join [bu_dir bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error] && $error == 12 } {after 300}
+       unset -nocomplain _fbserv_retries
+       if { !$fbserv_owned } {
+	   error "rtwizard: could not acquire a framebuffer port after $_fbserv_max_retries attempts"
+       }
+       unset -nocomplain _fbserv_max_retries
    }
 
    # Either we're using a specified view model, or we're deducing one based on user options

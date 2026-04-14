@@ -110,8 +110,28 @@ extern struct hostent *gethostbyname(const char *);
  * compatibility macros should take care of this.
  */
 #ifdef HAVE_WINSOCK_H
-#  define PKG_READ(d, buf, nbytes) recv((d), (buf), (int)(nbytes), 0)
-#  define PKG_SEND(d, buf, nbytes) send((d), (buf), (int)(nbytes), 0)
+static int _pkg_read_win(int d, void *buf, int nbytes) {
+    HANDLE h = (HANDLE)_get_osfhandle(d);
+    if (h != INVALID_HANDLE_VALUE && GetFileType(h) == FILE_TYPE_PIPE) {
+        DWORD nr = 0;
+        if (!ReadFile(h, buf, (DWORD)nbytes, &nr, NULL))
+            return (GetLastError() == ERROR_BROKEN_PIPE) ? 0 : -1;
+        return (int)nr;
+    }
+    return recv((SOCKET)(uintptr_t)d, (char *)buf, nbytes, 0);
+}
+static int _pkg_send_win(int d, const void *buf, int nbytes) {
+    HANDLE h = (HANDLE)_get_osfhandle(d);
+    if (h != INVALID_HANDLE_VALUE && GetFileType(h) == FILE_TYPE_PIPE) {
+        DWORD nw = 0;
+        if (!WriteFile(h, buf, (DWORD)nbytes, &nw, NULL))
+            return -1;
+        return (int)nw;
+    }
+    return send((SOCKET)(uintptr_t)d, (const char *)buf, nbytes, 0);
+}
+#  define PKG_READ(d, buf, nbytes) _pkg_read_win((d), (buf), (int)(nbytes))
+#  define PKG_SEND(d, buf, nbytes) _pkg_send_win((d), (buf), (int)(nbytes))
 #else
 #  define PKG_READ(d, buf, nbytes) read((d), (buf), (nbytes))
 #  define PKG_SEND(d, buf, nbytes) write((d), (buf), (nbytes))
@@ -262,6 +282,66 @@ _pkg_perror(void (*errlog)(const char *msg), const char *s)
 
 
 /**
+ * Low-level read wrapper.  Routes through pkc_tls_read when set,
+ * otherwise falls back to the raw fd.  Used in place of PKG_READ()
+ * at call sites that have a struct pkg_conn * available.
+ *
+ * This is a private implementation function.
+ */
+static ssize_t
+_pkg_io_read(struct pkg_conn *pc, void *buf, size_t n)
+{
+    if (pc->pkc_tls_read)
+	return (ssize_t)pc->pkc_tls_read(pc->pkc_tls_ctx, buf, n);
+    if (pc->pkc_fd == PKG_STDIO_MODE)
+	return PKG_READ(pc->pkc_in_fd, buf, n);
+#ifdef HAVE_WINSOCK_H
+    /* pkc_fd is a WinSock SOCKET stored as int.  _get_osfhandle() must NOT
+     * be called with a raw SOCKET value — on modern Windows it invokes
+     * _invalid_parameter_noinfo_noreturn() which calls __fastfail() and
+     * terminates the process with STATUS_FAST_FAIL_EXCEPTION (0xC0000409).
+     * recv() accepts the SOCKET directly and is the correct call here.     */
+    {
+	int nb = (n > (size_t)INT_MAX) ? INT_MAX : (int)n;
+	return (ssize_t)recv((SOCKET)(uintptr_t)pc->pkc_fd, (char *)buf, nb, 0);
+    }
+#else
+    return PKG_READ(pc->pkc_fd, buf, n);
+#endif
+}
+
+
+/**
+ * Low-level write wrapper.  Routes through pkc_tls_write when set,
+ * otherwise falls back to the raw fd.  Used in place of PKG_SEND()
+ * and write() at call sites that have a struct pkg_conn * available.
+ *
+ * TLS does not support scatter-gather (writev) I/O; callers using
+ * writev must linearise their buffers before calling this helper.
+ *
+ * This is a private implementation function.
+ */
+static ssize_t
+_pkg_io_write(struct pkg_conn *pc, const void *buf, size_t n)
+{
+    if (pc->pkc_tls_write)
+	return (ssize_t)pc->pkc_tls_write(pc->pkc_tls_ctx, buf, n);
+    if (pc->pkc_fd == PKG_STDIO_MODE)
+	return PKG_SEND(pc->pkc_out_fd, buf, n);
+#ifdef HAVE_WINSOCK_H
+    /* Same reasoning as _pkg_io_read: pkc_fd is a WinSock SOCKET; must use
+     * send() directly rather than PKG_SEND/_get_osfhandle().               */
+    {
+	int nb = (n > (size_t)INT_MAX) ? INT_MAX : (int)n;
+	return (ssize_t)send((SOCKET)(uintptr_t)pc->pkc_fd, (const char *)buf, nb, 0);
+    }
+#else
+    return PKG_SEND(pc->pkc_fd, buf, n);
+#endif
+}
+
+
+/**
  * Malloc and initialize a pkg_conn structure.  We have already
  * connected to a client or server on the given file descriptor.
  *
@@ -338,6 +418,32 @@ _pkg_ck_debug(void)
     /* Log version number of this code */
     _pkg_timestamp();
     fprintf(_pkg_debug, "_pkg_ck_debug %s\n", pkg_version());
+}
+
+
+struct pkg_conn *
+pkg_open_fds(int rfd, int wfd, const struct pkg_switch *switchp, void (*errlog)(const char *msg))
+{
+    struct pkg_conn *pc;
+
+    if (rfd < 0)
+	return PKC_ERROR;
+    if (wfd < 0)
+	wfd = rfd;
+
+    if (rfd == wfd) {
+	/* Bidirectional socket (socketpair, accepted TCP fd, etc.).
+	 * Behaves identically to a connection made by pkg_open().      */
+	return _pkg_makeconn(rfd, switchp, errlog);
+    }
+
+    /* Unidirectional pipe pair: use PKG_STDIO_MODE with separate fds. */
+    pc = _pkg_makeconn(PKG_STDIO_MODE, switchp, errlog);
+    if (pc == PKC_ERROR || pc == PKC_NULL)
+	return pc;
+    pc->pkc_in_fd  = rfd;
+    pc->pkc_out_fd = wfd;
+    return pc;
 }
 
 
@@ -843,6 +949,12 @@ pkg_close(struct pkg_conn *pc)
     }
 
     if (pc->pkc_fd != PKG_STDIO_MODE) {
+	/* Give TLS a chance to send close_notify and free its state
+	 * before the underlying socket is closed. */
+	if (pc->pkc_tls_free && pc->pkc_tls_ctx)
+	    pc->pkc_tls_free(pc->pkc_tls_ctx);
+	pc->pkc_tls_ctx = NULL;
+
 #ifdef HAVE_WINSOCK_H
 	(void)closesocket(pc->pkc_fd);
 #else
@@ -1017,12 +1129,42 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
      * in select() waiting for capacity to go out, and reading input
      * as well.  Prevents deadlocking.
      */
-    if (pc->pkc_fd == PKG_STDIO_MODE) {
+    if (pc->pkc_tls_write) {
+	/* TLS does not support scatter-gather I/O.  Build a linear
+	 * buffer containing [header][data] and pass it to the TLS
+	 * write callback in one shot.
+	 * For small payloads reuse pkc_stream to avoid a malloc. */
+	char *tbuf;
+	int need_free = 0;
+	size_t total = sizeof(hdr) + len;
+	if (total <= PKG_STREAMLEN) {
+	    tbuf = pc->pkc_stream;
+	} else {
+	    tbuf = (char *)malloc(total);
+	    if (!tbuf) {
+		_pkg_perror(pc->pkc_errlog, "pkg_send: malloc for TLS buffer");
+		return -1;
+	    }
+	    need_free = 1;
+	}
+	memcpy(tbuf, (char *)&hdr, sizeof(hdr));
+	if (len > 0)
+	    memcpy(tbuf + sizeof(hdr), buf, len);
+	i = (ssize_t)pc->pkc_tls_write(pc->pkc_tls_ctx, tbuf, total);
+	if (need_free) free(tbuf);
+	if (i != (ssize_t)total) {
+	    if (i < 0) {
+		_pkg_perror(pc->pkc_errlog, "pkg_send: TLS write");
+		return -1;
+	    }
+	    return (int)(i > (ssize_t)sizeof(hdr) ? i - sizeof(hdr) : 0);
+	}
+    } else if (pc->pkc_fd == PKG_STDIO_MODE) {
 	i = writev(pc->pkc_out_fd, cmdvec, (len>0)?2:1);
     } else {
 	i = writev(pc->pkc_fd, cmdvec, (len>0)?2:1);
     }
-    if (i != (ssize_t)(len+sizeof(hdr))) {
+    if (!pc->pkc_tls_write && i != (ssize_t)(len+sizeof(hdr))) {
 	if (i < 0) {
 	    _pkg_perror(pc->pkc_errlog, "pkg_send: writev");
 	    return -1;
@@ -1047,11 +1189,7 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
 	    memcpy(tbuf+sizeof(hdr), buf, len);
 
 	errno = 0;
-	if (pc->pkc_fd == PKG_STDIO_MODE) {
-	    i = PKG_SEND(pc->pkc_out_fd, tbuf, len+sizeof(hdr));
-	} else {
-	    i = PKG_SEND(pc->pkc_fd, tbuf, len+sizeof(hdr));
-	}
+	i = (ssize_t)_pkg_io_write(pc, tbuf, len+sizeof(hdr));
 	if ((size_t)i != len+sizeof(hdr)) {
 	    if (i < 0) {
 		if (errno == EBADF)
@@ -1068,11 +1206,7 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
     }
     /* Send them separately */
     errno = 0;
-    if (pc->pkc_fd == PKG_STDIO_MODE) {
-	i = PKG_SEND(pc->pkc_out_fd, (char *)&hdr, sizeof(hdr));
-    } else {
-	i = PKG_SEND(pc->pkc_fd, (char *)&hdr, sizeof(hdr));
-    }
+    i = (ssize_t)_pkg_io_write(pc, (char *)&hdr, sizeof(hdr));
     if (i != sizeof(hdr)) {
 	if (i < 0) {
 	    if (errno == EBADF)
@@ -1088,11 +1222,7 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
     if (len <= 0)
 	return 0;
     errno = 0;
-    if (pc->pkc_fd == PKG_STDIO_MODE) {
-	i = PKG_SEND(pc->pkc_out_fd, buf, len);
-    } else {
-	i = PKG_SEND(pc->pkc_fd, buf, len);
-    }
+    i = (ssize_t)_pkg_io_write(pc, buf, len);
     if ((size_t)i != len) {
 	if (i < 0) {
 	    if (errno == EBADF)
@@ -1155,12 +1285,43 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
      * in select() waiting for capacity to go out, and reading input
      * as well.  Prevents deadlocking.
      */
-    if (pc->pkc_fd == PKG_STDIO_MODE) {
+    if (pc->pkc_tls_write) {
+	/* TLS does not support scatter-gather.  Build a single linear
+	 * buffer [header][buf1][buf2] and send it with one call.
+	 * For small payloads reuse pkc_stream to avoid a malloc. */
+	char *tbuf;
+	int need_free = 0;
+	size_t total = sizeof(hdr) + len1 + len2;
+	if (total <= PKG_STREAMLEN) {
+	    tbuf = pc->pkc_stream;
+	} else {
+	    tbuf = (char *)malloc(total);
+	    if (!tbuf) {
+		_pkg_perror(pc->pkc_errlog, "pkg_2send: malloc for TLS buffer");
+		return -1;
+	    }
+	    need_free = 1;
+	}
+	memcpy(tbuf, (char *)&hdr, sizeof(hdr));
+	if (len1 > 0)
+	    memcpy(tbuf + sizeof(hdr), buf1, len1);
+	if (len2 > 0)
+	    memcpy(tbuf + sizeof(hdr) + len1, buf2, len2);
+	i = (ssize_t)pc->pkc_tls_write(pc->pkc_tls_ctx, tbuf, total);
+	if (need_free) free(tbuf);
+	if (i != (ssize_t)total) {
+	    if (i < 0) {
+		_pkg_perror(pc->pkc_errlog, "pkg_2send: TLS write");
+		return -1;
+	    }
+	    return (int)(i > (ssize_t)sizeof(hdr) ? i - sizeof(hdr) : 0);
+	}
+    } else if (pc->pkc_fd == PKG_STDIO_MODE) {
 	i = writev(pc->pkc_out_fd, cmdvec, 3);
     } else {
 	i = writev(pc->pkc_fd, cmdvec, 3);
     }
-    if (i != (ssize_t)(len1+len2+sizeof(hdr))) {
+    if (!pc->pkc_tls_write && i != (ssize_t)(len1+len2+sizeof(hdr))) {
 	if (i < 0) {
 	    _pkg_perror(pc->pkc_errlog, "pkg_2send: writev");
 	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
@@ -1191,11 +1352,7 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	if (len2 > 0)
 	    memcpy(tbuf+sizeof(hdr)+len1, buf2, len2);
 	errno = 0;
-	if (pc->pkc_fd == PKG_STDIO_MODE) {
-	    i = PKG_SEND(pc->pkc_out_fd, tbuf, len1+len2+sizeof(hdr));
-	} else {
-	    i = PKG_SEND(pc->pkc_fd, tbuf, len1+len2+sizeof(hdr));
-	}
+	i = (ssize_t)_pkg_io_write(pc, tbuf, len1+len2+sizeof(hdr));
 	if ((size_t)i != len1+len2+sizeof(hdr)) {
 	    if (i < 0) {
 		if (errno == EBADF)
@@ -1212,11 +1369,7 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
     }
     /* Send it in three pieces */
     errno = 0;
-    if (pc->pkc_fd == PKG_STDIO_MODE) {
-	i = (ssize_t)PKG_SEND(pc->pkc_out_fd, (char *)&hdr, sizeof(hdr));
-    } else {
-	i = (ssize_t)PKG_SEND(pc->pkc_fd, (char *)&hdr, sizeof(hdr));
-    }
+    i = (ssize_t)_pkg_io_write(pc, (char *)&hdr, sizeof(hdr));
     if (i != sizeof(hdr)) {
 	if (i < 0) {
 	    if (errno == EBADF)
@@ -1234,11 +1387,7 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
     }
 
     errno = 0;
-    if (pc->pkc_fd == PKG_STDIO_MODE) {
-	i = PKG_SEND(pc->pkc_out_fd, buf1, len1);
-    } else {
-	i = PKG_SEND(pc->pkc_fd, buf1, len1);
-    }
+    i = (ssize_t)_pkg_io_write(pc, buf1, len1);
     if ((size_t)i != len1) {
 	if (i < 0) {
 	    if (errno == EBADF)
@@ -1258,11 +1407,7 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	return i;
 
     errno = 0;
-    if (pc->pkc_fd == PKG_STDIO_MODE) {
-	i = PKG_SEND(pc->pkc_out_fd, buf2, len2);
-    } else {
-	i = PKG_SEND(pc->pkc_fd, buf2, len2);
-    }
+    i = (ssize_t)_pkg_io_write(pc, buf2, len2);
     if (i != (ssize_t)len2) {
 	if (i < 0) {
 	    if (errno == EBADF)
@@ -1335,11 +1480,7 @@ pkg_flush(struct pkg_conn *pc)
     }
 
     errno = 0;
-    if (pc->pkc_fd == PKG_STDIO_MODE) {
-	i = write(pc->pkc_out_fd, pc->pkc_stream, (size_t)pc->pkc_strpos);
-    } else {
-	i = write(pc->pkc_fd, pc->pkc_stream, (size_t)pc->pkc_strpos);
-    }
+    i = (int)_pkg_io_write(pc, pc->pkc_stream, (size_t)pc->pkc_strpos);
     if (i != pc->pkc_strpos) {
 	if (i < 0) {
 	    if (errno == EBADF)
@@ -1880,11 +2021,7 @@ pkg_suckin(struct pkg_conn *pc)
     }
 
     /* Take as much as the system will give us, up to buffer size */
-    if (pc->pkc_fd == PKG_STDIO_MODE) {
-	got = PKG_READ(pc->pkc_in_fd, &pc->pkc_inbuf[pc->pkc_inend], avail);
-    } else {
-	got = PKG_READ(pc->pkc_fd, &pc->pkc_inbuf[pc->pkc_inend], avail);
-    }
+    got = (int)_pkg_io_read(pc, &pc->pkc_inbuf[pc->pkc_inend], avail);
     if (got <= 0) {
 	if (got == 0) {
 	    if (_pkg_debug) {

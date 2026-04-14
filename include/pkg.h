@@ -118,6 +118,29 @@ struct pkg_conn {
     char *pkc_buf;				/**< @brief start of dynamic buf */
     char *pkc_curpos;				/**< @brief current position in pkg_buf */
     void *pkc_server_data;			/**< @brief used to hold server data for callbacks */
+
+    /**
+     * Pluggable I/O layer for TLS (or any other stream cipher / framing).
+     *
+     * When pkc_tls_read / pkc_tls_write are non-NULL they completely
+     * replace the raw fd reads/writes inside pkg_suckin(), pkg_send(),
+     * pkg_2send(), and pkg_flush().  pkc_tls_ctx is the opaque context
+     * pointer forwarded as the first argument to both callbacks.
+     *
+     * pkc_tls_free (if non-NULL) is called by pkg_close() before
+     * closing the socket, giving the TLS layer a chance to send a
+     * clean close_notify and free its own state.
+     *
+     * All four fields are zero-initialized by _pkg_makeconn().
+     *
+     * The callback signatures use ptrdiff_t (always defined via
+     * <stddef.h>) rather than ssize_t to avoid POSIX-only header
+     * dependencies in this public header.
+     */
+    void *pkc_tls_ctx;							/**< @brief opaque TLS state (e.g. SSL *) */
+    ptrdiff_t (*pkc_tls_read)(void *ctx, void *buf, size_t n);		/**< @brief TLS read callback; NULL = use raw fd */
+    ptrdiff_t (*pkc_tls_write)(void *ctx, const void *buf, size_t n);	/**< @brief TLS write callback; NULL = use raw fd */
+    void (*pkc_tls_free)(void *ctx);					/**< @brief called by pkg_close() to free TLS state */
 };
 #define PKC_NULL	((struct pkg_conn *)0)
 #define PKC_ERROR	((struct pkg_conn *)(-1L))
@@ -136,6 +159,34 @@ struct pkg_conn {
  * Returns PKC_ERROR on error.
  */
 PKG_EXPORT extern struct pkg_conn *pkg_open(const char *host, const char *service, const char *protocol, const char *username, const char *passwd, const struct pkg_switch* switchp, pkg_errlog errlog);
+
+/**
+ * Create a pkg_conn from a pair of pre-connected file descriptors.
+ *
+ * Wraps an already-connected fd pair (e.g. from socketpair(2) or pipe(2))
+ * into a pkg_conn without performing any network connect/accept.
+ *
+ * When @p rfd == @p wfd (bidirectional socket), the resulting pkg_conn
+ * behaves exactly like one returned by pkg_open(): pkc_fd is set to that
+ * fd.  When @p rfd != @p wfd (unidirectional pipe pair), the connection
+ * uses PKG_STDIO_MODE internally with pkc_in_fd = rfd, pkc_out_fd = wfd.
+ *
+ * Typical use: after creating a bu_ipc channel pair with bu_ipc_pair(),
+ * wrap the parent end for use with the rest of the pkg machinery:
+ *
+ * @code
+ *   bu_ipc_chan_t *pe, *ce;
+ *   bu_ipc_pair(&pe, &ce);
+ *   // spawn child with ce's address in its env
+ *   struct pkg_conn *pc = pkg_open_fds(bu_ipc_fileno(pe),
+ *                                       bu_ipc_fileno_write(pe),
+ *                                       pkgswitch, errlog);
+ *   bu_ipc_close(ce);   // parent closes child end after spawn
+ * @endcode
+ *
+ * Returns a pkg_conn handle on success, PKC_ERROR on failure.
+ */
+PKG_EXPORT extern struct pkg_conn *pkg_open_fds(int rfd, int wfd, const struct pkg_switch *switchp, pkg_errlog errlog);
 
 /**
  * Close a network connection.

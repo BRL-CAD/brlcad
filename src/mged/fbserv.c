@@ -34,6 +34,7 @@
 #include "bnetwork.h"
 #include "bsocket.h"
 
+#include "bu/str.h"
 #include "tcl.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -41,10 +42,14 @@
 #include "./mged.h"
 #include "./mged_dm.h"
 
+/* Enable token verification for MGED's embedded fbserv */
+#define FBSERV_AUTH_IMPL
+#include "../fbserv/auth.h"
+
 #define NET_LONG_LEN 4 /* # bytes to network long */
 
 // FIXME: Global
-extern const struct pkg_switch pkg_switch[];
+extern struct pkg_switch pkg_switch[];
 
 /*
  * Communication error.  An error occurred on the PKG link.
@@ -106,6 +111,8 @@ fbserv_drop_client(int sub)
 	clients[sub].c_chan = NULL;
 	clients[sub].c_pkg = PKC_NULL;
 	clients[sub].c_fd = 0;
+	clients[sub].c_auth_ok = 0;
+	clients[sub].c_pending_drop = 0;
     }
 }
 
@@ -148,6 +155,13 @@ found:
 	if ((npp = pkg_process(clients[i].c_pkg)) < 0)
 	    bu_log("pkg_process error encountered (1)\n");
 
+	/* Act on any deferred drop requested by a handler (e.g. token mismatch).
+	 * We must not call pkg_close() from inside pkg_process's dispatch loop. */
+	if (clients[i].c_pending_drop) {
+	    fbserv_drop_client(i);
+	    continue;
+	}
+
 	if (npp > 0) {
 	    DMP_dirty = 1;
 	    dm_set_dirty(DMP, 1);
@@ -165,6 +179,12 @@ found:
 
 	if ((npp = pkg_process(clients[i].c_pkg)) < 0)
 	    bu_log("pkg_process error encountered (2)\n");
+
+	/* Deferred drop from second-pass handler */
+	if (clients[i].c_pending_drop) {
+	    fbserv_drop_client(i);
+	    continue;
+	}
 
 	if (npp > 0) {
 	    DMP_dirty = 1;
@@ -229,6 +249,8 @@ fbserv_new_client(struct pkg_conn *pcp, Tcl_Channel chan)
 	/* Found an available slot */
 	clients[i].c_pkg = pcp;
 	clients[i].c_fd = pcp->pkc_fd;
+	clients[i].c_auth_ok = 0;
+	clients[i].c_pending_drop = 0;
 	fbserv_setup_socket(pcp->pkc_fd);
 
 	clients[i].c_chan = chan;
@@ -369,6 +391,116 @@ fb_server_fb_unknown(struct pkg_conn *pcp, char *buf)
 
 /******** Here's where the hooks lead *********/
 
+/**
+ * Find the dm_clients[] slot index for the given pkg_conn.
+ * Returns -1 if not found.
+ */
+static int
+mged_conn_idx(struct pkg_conn *pcp)
+{
+    struct mged_state *s = MGED_STATE;
+    int i;
+    for (i = MAX_CLIENTS - 1; i >= 0; i--) {
+	if (clients[i].c_pkg == pcp)
+	    return i;
+    }
+    return -1;
+}
+
+
+/**
+ * Guard for mged data-op handlers: check auth + non-NULL fbp.
+ * Returns 0 on success.  On failure sends a -1 reply, schedules a
+ * deferred drop, frees buf, and returns -1.
+ */
+static int
+mged_data_guard(struct pkg_conn *pcp, char *buf)
+{
+    struct mged_state *s = MGED_STATE;
+    char erbuf[NET_LONG_LEN+1];
+
+    if (pcp == PKC_NULL) {
+	if (buf) (void)free(buf);
+	return -1;
+    }
+
+    if (s->mged_curr_dm->dm_require_auth) {
+	int idx = mged_conn_idx(pcp);
+	if (idx < 0 || !clients[idx].c_auth_ok) {
+	    bu_log("mged fbserv: unauthenticated data request rejected\n");
+	    (void)pkg_plong(erbuf, -1);
+	    pkg_send(MSG_RETURN, erbuf, NET_LONG_LEN, pcp);
+	    if (idx >= 0)
+		clients[idx].c_pending_drop = 1;
+	    else
+		pkg_close(pcp);
+	    if (buf) (void)free(buf);
+	    return -1;
+	}
+    }
+
+    if (fbp == FB_NULL) {
+	bu_log("mged fbserv: data request with null framebuffer\n");
+	(void)pkg_plong(erbuf, -1);
+	pkg_send(MSG_RETURN, erbuf, NET_LONG_LEN, pcp);
+	if (buf) (void)free(buf);
+	return -1;
+    }
+
+    return 0;
+}
+
+
+/**
+ * MSG_FBAUTH — session token authentication for MGED's embedded fbserv.
+ *
+ * Client sends a FBSERV_AUTH_TOKEN_LEN-byte hex string.  If it matches
+ * dm_session_token the connection is marked authenticated.
+ */
+static void
+fb_server_fb_auth(struct pkg_conn *pcp, char *buf)
+{
+    struct mged_state *s = MGED_STATE;
+    char provided[FBSERV_AUTH_TOKEN_LEN + 1] = {0};
+    int idx;
+    const char *expected;
+
+    if (pcp == PKC_NULL) {
+	if (buf) (void)free(buf);
+	return;
+    }
+
+    idx = mged_conn_idx(pcp);
+    expected = s->mged_curr_dm->dm_session_token;
+
+    if (!expected || expected[0] == '\0') {
+	/* No token configured; mark connection as authenticated */
+	if (idx >= 0)
+	    clients[idx].c_auth_ok = 1;
+	if (buf) (void)free(buf);
+	return;
+    }
+
+    if (buf && pcp->pkc_len >= FBSERV_AUTH_TOKEN_LEN)
+	bu_strlcpy(provided, buf, sizeof(provided));
+
+    if (fbserv_verify_token(provided, expected)) {
+	if (idx >= 0)
+	    clients[idx].c_auth_ok = 1;
+    } else {
+	bu_log("mged fbserv: MSG_FBAUTH token mismatch — dropping client\n");
+	/* Use deferred drop: pkg_process still holds a reference to pcp.
+	 * Freeing it here causes a use-after-free in pkg_process's loop. */
+	if (idx >= 0)
+	    clients[idx].c_pending_drop = 1;
+	else
+	    pkg_close(pcp); /* not tracked — close immediately (safe here) */
+    }
+
+    if (buf) (void)free(buf);
+}
+
+
 static void
 fb_server_fb_open(struct pkg_conn *pcp, char *buf)
 {
@@ -379,6 +511,27 @@ fb_server_fb_open(struct pkg_conn *pcp, char *buf)
     if (buf == NULL) {
 	bu_log("fb_server_fb_open: null buffer\n");
 	return;
+    }
+
+    /* Auth check: if dm_require_auth is set, reject unauthenticated clients */
+    if (s->mged_curr_dm->dm_require_auth) {
+	int idx = mged_conn_idx(pcp);
+	if (idx < 0 || !clients[idx].c_auth_ok) {
+	    bu_log("mged fbserv: unauthenticated MSG_FBOPEN rejected (strict mode)\n");
+	    (void)pkg_plong(&rbuf[0*NET_LONG_LEN], -1);
+	    (void)pkg_plong(&rbuf[1*NET_LONG_LEN], 0);
+	    (void)pkg_plong(&rbuf[2*NET_LONG_LEN], 0);
+	    (void)pkg_plong(&rbuf[3*NET_LONG_LEN], 0);
+	    (void)pkg_plong(&rbuf[4*NET_LONG_LEN], 0);
+	    pkg_send(MSG_RETURN, rbuf, 5*NET_LONG_LEN, pcp);
+	    /* Deferred drop: pkg_process still holds pcp; close after it returns */
+	    if (idx >= 0)
+		clients[idx].c_pending_drop = 1;
+	    else
+		pkg_close(pcp);
+	    (void)free(buf);
+	    return;
+	}
     }
 
     /* Don't really open a new framebuffer --- use existing one */
@@ -402,6 +555,7 @@ fb_server_fb_close(struct pkg_conn *pcp, char *buf)
     struct mged_state *s = MGED_STATE;
     char rbuf[NET_LONG_LEN+1] = {0};
 
+    if (mged_data_guard(pcp, buf) < 0) return;
     /*
      * We are playing FB server so we don't really close the frame
      * buffer.  We should flush output however.
@@ -424,6 +578,7 @@ fb_server_fb_free(struct pkg_conn *pcp, char *buf)
 {
     char rbuf[NET_LONG_LEN+1] = {0};
 
+    if (mged_data_guard(pcp, buf) < 0) return;
     /* Don't really free framebuffer */
     if (pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp) != NET_LONG_LEN)
 	communications_error("pkg_send fb_free reply\n");
@@ -444,6 +599,7 @@ fb_server_fb_clear(struct pkg_conn *pcp, char *buf)
 	bu_log("fb_server_fb_window: null buffer\n");
 	return;
     }
+    if (mged_data_guard(pcp, buf) < 0) return;
 
     bg[RED] = buf[0];
     bg[GRN] = buf[1];
@@ -471,6 +627,7 @@ fb_server_fb_read(struct pkg_conn *pcp, char *buf)
 	bu_log("fb_server_fb_readrect: null buffer\n");
 	return;
     }
+    if (mged_data_guard(pcp, buf) < 0) return;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -513,6 +670,7 @@ fb_server_fb_write(struct pkg_conn *pcp, char *buf)
 	bu_log("fb_server_fb_readrect: null buffer\n");
 	return;
     }
+    if (mged_data_guard(pcp, buf) < 0) return;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -544,6 +702,7 @@ fb_server_fb_readrect(struct pkg_conn *pcp, char *buf)
 	bu_log("fb_server_fb_readrect: null buffer\n");
 	return;
     }
+    if (mged_data_guard(pcp, buf) < 0) return;
 
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
     ymin = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -589,6 +748,7 @@ fb_server_fb_writerect(struct pkg_conn *pcp, char *buf)
 	bu_log("fb_server_fb_readrect: null buffer\n");
 	return;
     }
+    if (mged_data_guard(pcp, buf) < 0) return;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -623,7 +783,7 @@ fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf)
 	bu_log("fb_server_fb_bwreadrect: null buffer\n");
 	return;
     }
-
+    if (mged_data_guard(pcp, buf) < 0) return;
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
     ymin = pkg_glong(&buf[1*NET_LONG_LEN]);
     width = pkg_glong(&buf[2*NET_LONG_LEN]);
@@ -669,7 +829,7 @@ fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf)
 	bu_log("rfbbwwriterect: null buffer\n");
 	return;
     }
-
+    if (mged_data_guard(pcp, buf) < 0) return;
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
     width = pkg_glong(&buf[2*NET_LONG_LEN]);
@@ -699,6 +859,7 @@ fb_server_fb_cursor(struct pkg_conn *pcp, char *buf)
 	bu_log("fb_server_fb_window: null buffer\n");
 	return;
     }
+    if (mged_data_guard(pcp, buf) < 0) return;
 
     mode = pkg_glong(&buf[0*NET_LONG_LEN]);
     x = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -719,6 +880,7 @@ fb_server_fb_getcursor(struct pkg_conn *pcp, char *buf)
     int mode, x, y;
     char rbuf[4*NET_LONG_LEN+1];
 
+    if (mged_data_guard(pcp, buf) < 0) return;
     ret = fb_getcursor(fbp, &mode, &x, &y);
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
     (void)pkg_plong(&rbuf[1*NET_LONG_LEN], mode);
@@ -743,6 +905,7 @@ fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
 	bu_log("fb_server_fb_readrect: null buffer\n");
 	return;
     }
+    if (mged_data_guard(pcp, buf) < 0) return;
 
     xbits = pkg_glong(&buf[0*NET_LONG_LEN]);
     ybits = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -775,6 +938,7 @@ fb_server_fb_scursor(struct pkg_conn *pcp, char *buf)
 	bu_log("fb_server_fb_open: null buffer\n");
 	return;
     }
+    if (mged_data_guard(pcp, buf) < 0) return;
 
     mode = pkg_glong(&buf[0*NET_LONG_LEN]);
     x = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -800,6 +964,7 @@ fb_server_fb_window(struct pkg_conn *pcp, char *buf)
 	bu_log("fb_server_fb_window: null buffer\n");
 	return;
     }
+    if (mged_data_guard(pcp, buf) < 0) return;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -825,6 +990,7 @@ fb_server_fb_zoom(struct pkg_conn *pcp, char *buf)
 	bu_log("fb_server_fb_readrect: null buffer\n");
 	return;
     }
+    if (mged_data_guard(pcp, buf) < 0) return;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -848,6 +1014,7 @@ fb_server_fb_view(struct pkg_conn *pcp, char *buf)
 	bu_log("fb_server_fb_readrect: null buffer\n");
 	return;
     }
+    if (mged_data_guard(pcp, buf) < 0) return;
 
     xcenter = pkg_glong(&buf[0*NET_LONG_LEN]);
     ycenter = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -870,6 +1037,7 @@ fb_server_fb_getview(struct pkg_conn *pcp, char *buf)
     int xcenter, ycenter, xzoom, yzoom;
     char rbuf[5*NET_LONG_LEN+1];
 
+    if (mged_data_guard(pcp, buf) < 0) return;
     ret = fb_getview(fbp, &xcenter, &ycenter, &xzoom, &yzoom);
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
     (void)pkg_plong(&rbuf[1*NET_LONG_LEN], xcenter);
@@ -891,6 +1059,7 @@ fb_server_fb_rmap(struct pkg_conn *pcp, char *buf)
     ColorMap map;
     unsigned char cm[256*2*3];
 
+    if (mged_data_guard(pcp, buf) < 0) return;
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], fb_rmap(fbp, &map));
     for (i = 0; i < 256; i++) {
 	(void)pkg_pshort((char *)(cm+2*(0+i)), map.cm_red[i]);
@@ -923,6 +1092,7 @@ fb_server_fb_wmap(struct pkg_conn *pcp, char *buf)
 	bu_log("fb_server_fb_wmap: null buffer\n");
 	return;
     }
+    if (mged_data_guard(pcp, buf) < 0) return;
 
     if (pcp->pkc_len == 0)
 	ret = fb_wmap(fbp, COLORMAP_NULL);
@@ -948,6 +1118,7 @@ fb_server_fb_flush(struct pkg_conn *pcp, char *buf)
     int ret;
     char rbuf[NET_LONG_LEN+1] = {0};
 
+    if (mged_data_guard(pcp, buf) < 0) return;
     ret = fb_flush(fbp);
 
     if (pcp->pkc_type < MSG_NORETURN) {
@@ -964,7 +1135,7 @@ static void
 fb_server_fb_poll(struct pkg_conn *pcp, char *buf)
 {
     struct mged_state *s = MGED_STATE;
-    if (!pcp) return;
+    if (mged_data_guard(pcp, buf) < 0) return;
     (void)fb_poll(fbp);
     if (buf) (void)free(buf);
 }
@@ -985,6 +1156,7 @@ fb_server_fb_help(struct pkg_conn *pcp, char *buf)
 	bu_log("fb_server_fb_window: null buffer\n");
 	return;
     }
+    if (mged_data_guard(pcp, buf) < 0) return;
 
     (void)pkg_glong(&buf[0*NET_LONG_LEN]);
 
@@ -995,7 +1167,8 @@ fb_server_fb_help(struct pkg_conn *pcp, char *buf)
 	(void)free(buf);
 }
 
-const struct pkg_switch pkg_switch[] = {
+struct pkg_switch pkg_switch[] = {
+    { MSG_FBAUTH,                       fb_server_fb_auth,        "Session Authentication", NULL },
     { MSG_FBOPEN,                       fb_server_fb_open,        "Open Framebuffer", NULL },
     { MSG_FBCLOSE,                      fb_server_fb_close,       "Close Framebuffer", NULL },
     { MSG_FBCLEAR,                      fb_server_fb_clear,       "Clear Framebuffer", NULL },

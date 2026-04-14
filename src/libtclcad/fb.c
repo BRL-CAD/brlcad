@@ -359,6 +359,11 @@ fbo_listen_tcl(void *clientData, int argc, const char **argv)
 	    fbop->fbo_fbs.fbs_close_server_handler = &tclcad_close_server_handler;
 	    fbop->fbo_fbs.fbs_open_client_handler = &tclcad_open_client_handler;
 	    fbop->fbo_fbs.fbs_close_client_handler = &tclcad_close_client_handler;
+#ifndef USE_TCL_CHAN
+	    /* IPC client handlers reuse the same fd-based callbacks on POSIX */
+	    fbop->fbo_fbs.fbs_open_ipc_client_handler  = &tclcad_open_client_handler;
+	    fbop->fbo_fbs.fbs_close_ipc_client_handler = &tclcad_close_client_handler;
+#endif
 	    fbs_open(&fbop->fbo_fbs, port);
 	} else {
 	    fbs_close(&fbop->fbo_fbs);
@@ -1077,6 +1082,11 @@ to_listen(struct ged *gedp,
 	    tvd->gdv_fbs.fbs_close_server_handler = &tclcad_close_server_handler;
 	    tvd->gdv_fbs.fbs_open_client_handler = &tclcad_open_client_handler;
 	    tvd->gdv_fbs.fbs_close_client_handler = &tclcad_close_client_handler;
+#ifndef USE_TCL_CHAN
+	    /* IPC client handlers reuse the same fd-based callbacks on POSIX */
+	    tvd->gdv_fbs.fbs_open_ipc_client_handler  = &tclcad_open_client_handler;
+	    tvd->gdv_fbs.fbs_close_ipc_client_handler = &tclcad_close_client_handler;
+#endif
 	    fbs_open(&tvd->gdv_fbs, port);
 	} else {
 	    fbs_close(&tvd->gdv_fbs);

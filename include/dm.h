@@ -540,6 +540,7 @@ typedef struct fb_internal FBIO;
 #define MSG_FBSETCURSOR   31            /**< @brief NEW in Release 4.4 */
 #define MSG_FBBWREADRECT  32            /**< @brief NEW in Release 4.6 */
 #define MSG_FBBWWRITERECT 33            /**< @brief NEW in Release 4.6 */
+#define MSG_FBAUTH        34            /**< @brief Session token authentication */
 
 #define MSG_DATA          20
 #define MSG_RETURN        21

@@ -1296,7 +1296,12 @@ do_ae(double azim, double elev)
 	VSETALL(rtip->mdl_min, -1);
     }
     if (rtip->mdl_max[X] <= -INFINITY) {
-	bu_log("do_ae: infinite model bounds? setting a unit maximum\n");
+	/* Model not yet loaded (librt initial state: mdl_min=+INF, mdl_max=-INF).
+	 * Reset both bounds to a unit box so that autoviewsize() does not
+	 * propagate +INFINITY through mdl_min into cell_width (which causes a
+	 * bu_bomb("bad cell size") crash when work is dispatched). */
+	bu_log("do_ae: infinite model bounds? setting unit bounds\n");
+	VSETALL(rtip->mdl_min, -1);
 	VSETALL(rtip->mdl_max, 1);
     }
 
