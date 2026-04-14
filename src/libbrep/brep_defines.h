@@ -23,6 +23,9 @@
  *
  */
 
+#ifndef LIBBREP_BREP_DEFINES_H
+#define LIBBREP_BREP_DEFINES_H
+
 // The maximal depth for subdivision - trade-off between accuracy and
 // performance.
 #define NR_MAX_DEPTH 8
@@ -69,3 +72,5 @@
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
+#endif /* LIBBREP_BREP_DEFINES_H */

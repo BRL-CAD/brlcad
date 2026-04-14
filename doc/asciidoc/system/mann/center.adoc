@@ -1,0 +1,101 @@
+= CENTER(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+center - Positions the center of the _mged_ viewing cube at the specified model coordinates. Without arguments, returns the current center.
+
+== SYNOPSIS
+
+[source]
+----
+center [x y z]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Positions the center of the _mged_ viewing cube at the specified model coordinates. This is accomplished by moving the eye position while not changing the viewing direction. (The *lookat* command performs a related function by changing the viewing direction, but not moving the eye location.) The coordinates are expected in the current editing units. In case the coordinates are the result of evaluating a formula, they are echoed back. If no coordinates are provided, the current center coordinates (in current editing units, not mm) are printed and can be used in subsequent calculations. See also the *view* command.
+
+It is often convenient to use the center of the view when visually selecting key locations in the model for construction or animation because of (1) the visible centering dot on the screen, (2) the fact that zoom and rotation are performed with respect to the view center, (3) the default center-mouse behavior is to move the indicated point to the view center, and (4) the angle/distance cursors are centered by default. This command provides the means to set and retrieve those values numerically.
+
+
+[[examples]]
+== EXAMPLES
+
+The examples show the use of the *center* command to print coordinates of the center of the mged display, move the center of the _mged_ display to a given point, set a Tcl variable to the display center coordinates, move the center point a given distance in a given direction, and update a vertex in the database to be located at the current center of view.
+
+.Printing the coordinates of the center of the _mged_ display.
+[example]
+====
+mged>**center**
+
+Prints out the coordinates of the center of the mged display.
+
+====
+
+.Moving the center of the _mged_ display to a specified point.
+[example]
+====
+mged>**center 12.5 5.6 8.7**
+
+The center of the _mged_ display is moved to the point (12.5, 5.6, 8.7).
+
+====
+
+.Set Tcl variable $oldcent to the display center coordinates.
+[example]
+====
+mged>**set oldcent [center]**
+
+Sets the Tcl variable $oldcent to the display center coordinates.
+
+====
+
+.Move the center point a given distance in a given direction.
+[example]
+====
+
+mged> **set glob_compat_mode 0**::
+
+
+
+mged> **units mm**::
+
+
+
+mged> **eval center [vadd2[center] {2 0 0}]**::
+Moves the center point 2 mm in the model + x direction.
+
+
+
+====
+
+.Update the vertex of a shape in the database to be located at the current view center.
+[example]
+====
+
+mged> **units mm**::
+
+
+
+mged> **db adjust sphere.s V [center]**::
+
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -34,6 +34,7 @@
 #include "wdb.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
+#include "../../../librt/librt_private.h"
 
 
 #define LSEG 'L'
@@ -1173,7 +1174,7 @@ materbld(struct ascv4_rstate *s)
     b = (unsigned char)atoi(cp);
 
     /* Put it on a linked list for output later */
-    rt_color_addrec(low, hi, r, g, b, -1L);
+    db_mater_add(s->ofp->dbip, low, hi, r, g, b, -1L);
 }
 
 
@@ -2573,7 +2574,7 @@ asc_write_v4(
 
     struct ascv4_wstate *s = ascv4_wcreate();
 
-    s->ifp = c->dbip->dbi_fp;
+    s->ifp = c->dbip->i->dbi_fp;
 
     if (!s->ifp) {
 	bu_log("Could not open %s for reading.\n", c->dbip->dbi_filename);

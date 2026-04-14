@@ -9,9 +9,9 @@ set(
   axes.c
   center.cpp
   eye.c
-  faceplate/axes.c
   faceplate/faceplate.c
-  faceplate/grid.c
+  faceplate/faceplate_axes.c
+  faceplate/faceplate_grid.c
   faceplate/interactive_rect.c
   gobjs.cpp
   knob.c

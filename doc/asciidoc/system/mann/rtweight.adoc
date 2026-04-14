@@ -1,0 +1,112 @@
+= RTWEIGHT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+rtweight - Calculate mass, centroid, and volume of geometry using raytracing
+
+== SYNOPSIS
+
+[source]
+----
+rtweight [options]...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *rtweight* command calculates the volume, weight, and centroid of the currently drawn object(s). Output will include values per region as well as an overall calculation. These values are calculated by shooting rays at the current azimuth and elevation. By default, *rtweight* will shoot a 512x512 grid at the screen. The -s flag can be used to specify a different grid and the -g flag can be used to specify a gridsize in millimeters.
+
+The *rtweight* command requires density information to run. It can use density information stored directly in a .g database, read a .density file in the home directory, or read a density file specified by the *-d* flag. A specified file with the -d command takes precedence, then embedded density information, and finally the .density file is used. If using an external density file the file must contain lines with the material number, density in g/cc, and material name, each separated by some white space. See the *gqa* and *mater* manual pages for more information about defining and managing density information.
+
+The following options are recognized.
+
+
+*-s#*::
+Number of rays to fire in X and Y directions (square grid). Default is 512 (512x512). Conflicts with *-g*
+
+
+*-g#*::
+Distance between rays in the X and Y directions in millimeters. Conflicts with *-s*
+
+
+*-d file*::
+Read density information from the specified file.
+
+
+*-R*::
+Disable overlap reporting.
+
+
+*-r*::
+Enable overlap reporting (on by default).
+
+
+*-o file*::
+Send the output to a specified file.
+
+
+*-P#*::
+Specify the maximum number of processor cores to be used on multicore systems. The default is the maximum number of cores available for the machine. Negative numbers indicate using all except for the count specified.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+.Use _rtweight_ to calculate the total volume and weight of the currently drawn group using a specified number of rays
+[example]
+====
+mged>**rtweight -s1024**
+
+Runs _rtweight_ using 1024x1024 rays.
+
+====
+
+.Use _rtweight_ to calculate the total volume and weight of the currently drawn group using a specified gridsize
+[example]
+====
+mged>**rtweight -g10**
+
+Runs _rtweight_ at a gridsize of 10 millimeters (regardless of model units).
+
+====
+
+.Use _rtweight_ to calculate the total volume and weight of the currently drawn group and specify a density file
+[example]
+====
+mged>**rtweight -d density.txt**
+
+Runs _rtweight_ and uses the density.txt file located in the current directory.
+
+====
+
+.Use _rtweight_ to calculate the total volume and weight of the currently drawn group and specify an output file
+[example]
+====
+mged>**rtweight -o weightfile.txt**
+
+Runs _rtweight_ and outputs the results to weightfile.txt
+
+====
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1987-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to <bugs@brlcad.org>.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team

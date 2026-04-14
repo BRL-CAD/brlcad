@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -439,10 +440,13 @@ bool parse_k
 	std::string              partTitle;
 	size_t                   sectionLinesRead = 0;
 	size_t                   elementLinesRead = 0;
+	size_t                   numberOfCards = 0;
 	//size_t                   cardCounter = 0;// this will replace sectionLinesRead elementLinesRead, and partLinesRead
 	size_t                   optionsCounter = 0;
 	std::string              sectionTitle;
+	bool                     sectionHasOption = false;
 	int                      sectionId        = -1;
+	int                      elementId        = -1;
 	int                      sectionElForm    = 0;
 	//int                      CST              = 0;
 	std::string              line             = read_line(is);
@@ -452,7 +456,7 @@ bool parse_k
 	std::vector<std::string> tokens;
 	const size_t FirstNode = 2;
 	std::vector<std::string> optionsContainer;
-	std::vector<Options> options;
+	std::vector<Options> beamOptions;
 
 	if (line.size() > 0)
 	    tokens = parse_line(line.c_str());
@@ -519,23 +523,23 @@ bool parse_k
 				    if (optionsContainer.size() > 0) {
 					for (size_t i_o = 0; i_o < optionsContainer.size(); ++i_o) {
 					    if (optionsContainer[i_o] == "THICKNESS")
-						options.push_back(Options::Thickness);
+						beamOptions.push_back(Options::Thickness);
 					    else if (optionsContainer[i_o] == "SCALAR")
-						options.push_back(Options::Scalar);
+						beamOptions.push_back(Options::Scalar);
 					    else if (optionsContainer[i_o] == "SCALR")
-						options.push_back(Options::Scalr);
+						beamOptions.push_back(Options::Scalr);
 					    else if (optionsContainer[i_o] == "SECTION")
-						options.push_back(Options::Section);
+						beamOptions.push_back(Options::Section);
 					    else if (optionsContainer[i_o] == "PID")
-						options.push_back(Options::Pid);
+						beamOptions.push_back(Options::Pid);
 					    else if (optionsContainer[i_o] == "OFFSET")
-						options.push_back(Options::Offset);
+						beamOptions.push_back(Options::Offset);
 					    else if (optionsContainer[i_o] == "ORIENTATION")
-						options.push_back(Options::Orientation);
+						beamOptions.push_back(Options::Orientation);
 					    else if (optionsContainer[i_o] == "WARPAGE")
-						options.push_back(Options::Warpage);
+						beamOptions.push_back(Options::Warpage);
 					    else if (optionsContainer[i_o] == "ELBOW")
-						options.push_back(Options::Elbow);
+						beamOptions.push_back(Options::Elbow);
 					    else
 						std::cout << "Unhandeled Element_Beam option" << optionsContainer[i_o] << "in k-file" << fileName << std::endl;
 					}
@@ -713,7 +717,7 @@ bool parse_k
 				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
 			}
 			else if (command[0] == "PART") {
-			    if ((command.size() == 1) || (command[1] == "INERTIA") || (command[1] == "AVERAGED")) {
+			    if ((command.size() == 1) || (command[1] == "INERTIA") || (command[1] == "AVERAGED") || (command[1] == "CONTACT")) {
 				state = KState::Part;
 				partLinesRead = 0;
 				partTitle = "";
@@ -771,26 +775,61 @@ bool parse_k
 				state        = KState::Section_Shell;
 				sectionTitle = "";
 				sectionId    = -1;
+				numberOfCards = 2; // Default obligatory cards 
+				sectionLinesRead = 1;
 
-				if (command.size() == 3) {
-				    if (command[2] == "TITLE")
+				if (command.size() >= 3) {
+
+				    bool hasTitle = (std::find(command.begin(), command.end(), "TITLE") != command.end());
+
+				    static const std::vector<std::string> options = {
+					"EFG", "THERMAL", "XFEM", "MISC"
+				    };
+
+				    for (const auto& opt : options) {
+					if (std::find(command.begin(), command.end(), opt) != command.end()) {
+					    sectionHasOption = true;
+					    break;
+					}
+				    }
+
+				    if (hasTitle) {
 					sectionLinesRead = 0;
-				    else
-					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
+				    }
+
+				    if (sectionHasOption) {
+					numberOfCards++;
+				    }
 				}
-				else
-				    sectionLinesRead = 1;
 			    }
 			    else if (command[1] == "SOLID") {
-				state        = KState::Section_Solid;
-				sectionTitle = "";
-				sectionId    = -1;
+				state            = KState::Section_Solid;
+				sectionTitle     = "";
+				sectionId        = -1;
+				numberOfCards    = 1;
+				sectionLinesRead = 1;
 
-				if (command.size() == 3) {
-				    if (command[2] == "TITLE")
+				if (command.size() >= 3) {
+				    bool hasTitle = (std::find(command.begin(), command.end(), "TITLE") != command.end());
+
+				    static const std::vector<std::string> options = {
+					"EFG", "MISC", "PERI", "SPG"
+				    };
+
+				    for (const auto& opt : options) {
+					if (std::find(command.begin(), command.end(), opt) != command.end()) {
+					    sectionHasOption = true;
+					    break;
+					}
+				    }
+
+				    if (hasTitle) {
 					sectionLinesRead = 0;
-				    else
-					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
+				    }
+
+				    if (sectionHasOption) {
+					numberOfCards += 2;
+				    }
 				}
 			    }
 			    else if (command[1] == "SEATBELT") {
@@ -804,6 +843,9 @@ bool parse_k
 				    else
 					std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
 				}
+			    }
+			    else if (command[1] == "DISCRETE") {
+				state = KState::Ignore;
 			    }
 			    else
 				std::cout << "Unexpected command " << tokens[0] << " in k-file " << fileName << std::endl;
@@ -963,6 +1005,9 @@ bool parse_k
 
 				break;
 			    }
+			    case 2: {
+				break;// Part_contact Nothing related To geometry
+			    }
 
 			    default:
 				std::cout << "Unexpected PART length in k-file " << fileName << std::endl;
@@ -1044,7 +1089,7 @@ bool parse_k
 			    }
 
 			    case 1: {
-				if (tokens.size() < 8) {
+				if (tokens.size() < 5) {
 				    std::cout << "Too short SECTION_BEAM in k-file " << fileName << std::endl;
 				    break;
 				}
@@ -1169,50 +1214,96 @@ bool parse_k
 		    }
 
 		    case KState::Section_Shell: {
+			static bool ELFORM = false;
+			static bool ICOMP  = false;
+			int nip;
+			int lmc;
+			int nipp;
+
 			switch (sectionLinesRead) {
-			    case 0:
-				sectionTitle = line;
-				break;
+			case 0:
+			    sectionTitle = line;
+			    break;
 
-			    case 1: {
-				if (tokens.size() == 0) {
-				    std::cout << "Too short SECTION in k-file " << fileName << std::endl;
-				    break;
-				}
-
-				sectionId                      = stoi(tokens[0]);
-				data.sections[sectionId].title = sectionTitle;
+			case 1: {
+			    if (tokens.empty()) {
+				std::cout << "Too short SECTION in k-file " << fileName << std::endl;
 				break;
 			    }
+			    sectionId = stoi(tokens[0]);
+			    data.sections[sectionId].title = sectionTitle;
 
-			    case 2: {
-				if (sectionId < 0) {
-				    std::cout << "Bad SECTION in k-file " << fileName << std::endl;
-				    break;
+			    if (tokens.size() >= 7) {
+				ELFORM = (stoi(tokens[1]) >= 101 && stoi(tokens[1]) <= 105);
+				ICOMP = (stoi(tokens[6]) == 1);
+
+				if (ICOMP) {
+				    nip = stoi(tokens[3]);
+				    numberOfCards += (nip + 7) / 8;
 				}
 
-				if (tokens.size() < 4) {
-				    std::cout << "Too short SECTION in k-file " << fileName << std::endl;
-				    break;
+				if (ELFORM) {
+				    numberOfCards += 2;
 				}
-
-				data.sections[sectionId].thickness1 = stod(tokens[0]);
-				data.sections[sectionId].thickness2 = stod(tokens[1]);
-				data.sections[sectionId].thickness3 = stod(tokens[2]);
-				data.sections[sectionId].thickness4 = stod(tokens[3]);
-
-				break;
 			    }
-
-			    default:
-				std::cout << "Unexpected SECTION length in k-file " << fileName << std::endl;
+			    break;
 			}
 
-			++sectionLinesRead;
+			case 2: {
+			    if (sectionId < 0 || tokens.size() < 4) {
+				std::cout << "Too short SECTION in k-file " << fileName << std::endl;
+				break;
+			    }
+
+			    data.sections[sectionId].thickness1 = stod(tokens[0]);
+			    data.sections[sectionId].thickness2 = stod(tokens[1]);
+			    data.sections[sectionId].thickness3 = stod(tokens[2]);
+			    data.sections[sectionId].thickness4 = stod(tokens[3]);
+			    break;
+			}
+
+			case 3: {
+			    if ((ELFORM) && (!sectionHasOption)) {
+				nipp = stoi(tokens[0]);
+				numberOfCards += nipp;
+				if (tokens.size() >= 6) {
+				    lmc = stoi(tokens[5]);
+				    numberOfCards += (lmc + 7) / 8;
+				}
+			    }
+			    break;
+			}
+
+			case 4: {
+			    if ((ELFORM) && (sectionHasOption)) {
+				nipp = stoi(tokens[0]);
+				numberOfCards += nipp;
+				if (tokens.size() >= 6) {
+				    lmc = stoi(tokens[5]);
+				    numberOfCards += (lmc + 7) / 8;
+				}
+			    }
+			    break;
+			}
+
+			default:
+			    break;
+			}
+
+			if (sectionLinesRead < numberOfCards)
+			    ++sectionLinesRead;
+			else
+			    sectionLinesRead = (sectionTitle.empty() ? 1 : 0);
+
 			break;
 		    }
-
 		    case KState::Section_Solid: {
+			static bool ELFORM        = false;
+			static bool sawOptional   = false;
+			static bool cardThreeRead = false;
+			int nip;
+			int lmc;
+
 			switch (sectionLinesRead) {
 			    case 0:
 				sectionTitle = line;
@@ -1226,14 +1317,90 @@ bool parse_k
 
 				sectionId = stoi(tokens[0]);
 				data.sections[sectionId].title = sectionTitle;
+
+				ELFORM = (stoi(tokens[1]) >= 101 && stoi(tokens[1]) <= 105);
+
+				if (ELFORM) {
+				    numberOfCards++;
+				}
+				break;
+			    }
+
+			    case 2: {
+				if (!sectionHasOption && ELFORM) {
+				    if (tokens.size() >= 1) {
+					nip = stoi(tokens[0]);
+					numberOfCards += nip;
+				    }
+
+				    if (tokens.size() >= 5) {
+					lmc = stoi(tokens[4]);
+					numberOfCards += (lmc + 7) / 8;
+				    }
+
+				    cardThreeRead = true;
+				}
+				break;
+			    }
+
+			    case 3: {
+				if (cardThreeRead) {
+				    break;
+				}
+
+				if (tokens.size() >= 2) {
+				    char* end = nullptr;
+				    std::strtol(tokens[1].c_str(), &end,10);
+				    if (end && *end == '\0') {
+					numberOfCards--;
+				    }
+				    else
+				    {
+					sawOptional = true;
+					break; // Optional card not card 3
+				    }
+				}
+				if (tokens.size() >= 1) {
+				    nip = stoi(tokens[0]);
+				    numberOfCards += nip;
+				}
+
+				if (tokens.size() >= 5) {
+				    lmc = stoi(tokens[4]);
+				    numberOfCards += (lmc + 7) / 8;
+				}
+
+				break;
+			    }
+			    case 4: {
+				if (cardThreeRead) {
+				    break;
+				}
+
+				if (sawOptional) {
+				    if (tokens.size() >= 1) {
+					nip = stoi(tokens[0]);
+					numberOfCards += nip;
+				    }
+
+				    if (tokens.size() >= 5) {
+					lmc = stoi(tokens[4]);
+					numberOfCards += (lmc + 7) / 8;
+				    }
+				}
+
 				break;
 			    }
 
 			    default:
-				std::cout << "Unexpected SECTION length in k-file " << fileName << std::endl;
+				break;
 			}
 
-			++sectionLinesRead;
+			if (sectionLinesRead < numberOfCards)
+			    ++sectionLinesRead;
+			else
+			    sectionLinesRead = (sectionTitle.empty() ? 1 : 0);
+
 			break;
 		    }
 
@@ -1256,37 +1423,40 @@ bool parse_k
 		    case KState::Element_Beam: {
 			KElement element;
 			int      pid = 1;
-			int      eid = 1;
 
-			if (options.size() == 0 || optionsCounter == 0) {
+			if (beamOptions.size() == 0 || optionsCounter == 0) {
 			    if (tokens.size() < 10) {
 				std::cout << "Too short ELEMENT_BEAM in k-file" << fileName << std::endl;
 				break;
 			    }
-			    eid = stoi(tokens[0]);
+			    elementId = stoi(tokens[0]);
 
-			    if (data.elements.find(eid) != data.elements.end()) {
-				std::cout << "Duplicat Element ID" << eid << " in k-file" << fileName << std::endl;
+			    if (data.elements.find(elementId) != data.elements.end()) {
+				std::cout << "Duplicat Element ID" << elementId << " in k-file" << fileName << std::endl;
 				break;
 			    }
 
 			    for (int i_n = 0; i_n < 3; ++i_n)
 				element.nodes.push_back(stoi(tokens[i_n + FirstNode]));
 
-			    data.elements[eid] = element;
+			    data.elements[elementId] = element;
 
 			    pid = stoi(tokens[1]);
-			    data.parts[pid].elements.insert(eid);
+			    data.parts[pid].elements.insert(elementId);
+
+			    if (beamOptions.size() > 0)
+				++optionsCounter;
+
 			    break;
 			}
-			else if ((options.size() > 0)) {
+			else if ((beamOptions.size() > 0)) {
 			    Options currentOption;
 
-			    if (optionsCounter < options.size())
-				currentOption = options[optionsCounter];
+			    if (optionsCounter < beamOptions.size())
+				currentOption = beamOptions[optionsCounter];
 			    else {
 				optionsCounter = 0;
-				currentOption = options[optionsCounter];
+				currentOption = beamOptions[optionsCounter];
 			    }
 
 			    switch (currentOption) {
@@ -1298,10 +1468,8 @@ bool parse_k
 
 				    for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
 					double param = stod(tokens[i_p]);
-					element.options["THICKNESS"].push_back(param);
+					data.elements[elementId].options["THICKNESS"].push_back(param);
 				    }
-
-				    data.elements[eid] = element;
 
 				    ++optionsCounter;
 				    break;
@@ -1371,14 +1539,12 @@ bool parse_k
 				    else if (tokens[0] == "SECTION_22")
 					temp = 22.0;
 
-				    element.options["SECTION"].push_back(temp);
+				    data.elements[elementId].options["SECTION"].push_back(temp);
 
 				    for (size_t i_p = 1; i_p < tokens.size(); ++i_p) {
 					temp = stod(tokens[1]);
-					element.options["SECTION"].push_back(temp);
+					data.elements[elementId].options["SECTION"].push_back(temp);
 				    }
-
-				    data.elements[eid] = element;
 				    ++optionsCounter;
 				    break;
 				}
@@ -1397,10 +1563,8 @@ bool parse_k
 
 				    for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
 					double temp = stod(tokens[i_p]);
-					element.options["OFFSET"].push_back(temp);
+					data.elements[elementId].options["OFFSET"].push_back(temp);
 				    }
-
-				    data.elements[eid] = element;
 
 				    ++optionsCounter;
 				    break;
@@ -1414,10 +1578,8 @@ bool parse_k
 
 				    for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
 					double temp = stod(tokens[i_p]);
-					element.options["ORIENTATION"].push_back(temp);
+					data.elements[elementId].options["ORIENTATION"].push_back(temp);
 				    }
-
-				    data.elements[eid] = element;
 
 				    ++optionsCounter;
 				    break;
@@ -1431,10 +1593,8 @@ bool parse_k
 
 				    for (size_t i_p = 0; i_p < tokens.size(); ++i_p) {
 					double temp = stod(tokens[i_p]);
-					element.options["WARPAGE"].push_back(temp);
+					data.elements[elementId].options["WARPAGE"].push_back(temp);
 				    }
-
-				    data.elements[eid] = element;
 
 				    ++optionsCounter;
 				    break;
@@ -1446,9 +1606,7 @@ bool parse_k
 					break;
 				    }
 				    double temp = stod(tokens[0]);
-				    element.options["ELBOW"].push_back(temp);
-
-				    data.elements[eid] = element;
+				    data.elements[elementId].options["ELBOW"].push_back(temp);
 
 				    ++optionsCounter;
 				    break;
@@ -1457,6 +1615,9 @@ bool parse_k
 				default:
 				    break;
 			    }
+
+			    if (optionsCounter >= beamOptions.size())
+				optionsCounter = 0;
 			}
 
 			break;

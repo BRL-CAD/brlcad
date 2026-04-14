@@ -1,0 +1,107 @@
+= DBCONCAT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dbconcat - Concatenates an existing BRL-CAD database to the database currently being edited.
+
+== SYNOPSIS
+
+[source]
+----
+dbconcat [-t] [-u] [-c] [-s|-p] [-L] [-O] {database_file} [affix]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Concatenates an existing _BRL-CAD_ database to the database currently being edited. Note that each _BRL-CAD_ object must have a unique name, so naming rules are defined that will automatically rename conflicting objects as they are merged in to a databse.
+
+If conflicting names are encountered, by default computer-generated prefixes or suffixes will be added to the object names coming from the incoming __database_file__. If the user wishes to simply overwrite the current objects, the *-O* option may be supplied and behavior is changed to all incoming objects overwriting an original object with it conflicts. Note that using this option _is_ destructive - old geometry is not preserved when being overwritten. Consequently this should only be used when the intent is to NOT preserve the original data.
+
+Alternatively, if an _affix_ string is supplied, then objects from the incoming __database_file__ will have the _affix_ added to their names as a prefix (by default or if the *-p* option is specified), or as a suffix (if the *-s* option is specified). By default this string is added to ALL incoming object names, but if *-L* is specified in either mode the _affix_ string is used only when resolving name conflicts.
+
+Other options are used to indicate whether or not to preserve incoming metadata such as title, units and region color table.
+
+
+[[dbconcat_options]]
+== OPTIONS
+
+
+*-L*::
+Apply the affix (either as a prefix or suffix) only when trying to resolve name conflicts.
+
+
+*-O*::
+Overwrite objects in the current .g file in cases where incoming object names conflict. (WARNING: this option is destructive - old data is replaced by new.)
+
+
+*-c*::
+Indicates that the region color table of the currently edited database should be replaced with that of __database_file__.
+
+
+*-p*::
+Use the supplied _affix_ string as a prefix when reading in object names. (Default.)
+
+
+*-s*::
+Use the supplied _affix_ string as a suffix when reading in object names.
+
+
+*-t*::
+Indicates that the title of the currently edited database should be replaced with that of __database_file__.
+
+
+*-u*::
+Indicates that the units of the incoming __database_file__ should become the units of the currently edited database.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+This example shows the use of the *dbconcat* command to copy all objects in a particular database to the current database. It also shows how to add a particular prefix to every object copied.
+
+.Copy objects in a specified database to the current one and lazily apply a prefix to the copied objects.
+[example]
+====
+mged>**dbconcat -L model_two.g two_**
+
+Copies all the objects in __model_two.g__ to the current database, using the specified prefix __two___ to attempt to resolve name conflicts. If there is a still a conflict even with the prefix applied standard rules will continue to be applied for additional name generation.
+
+====
+
+Another example shows a usage to import the title, units, color table, and all the objects of a database file into the current database. This is particularly useful if the current database is empty or just created by mged.
+
+.Copy an entire database, including title, units, and color table, to the current database without any affix
+[example]
+====
+mged>**dbconcat -t -u -c model_two.g**
+
+Copies all the objects in __model_two.g__ to the current database, including the title, units, and color table. No suffix or prefix is added to the object names.
+
+====
+
+.Copy a database, overwriting objects in the current databse
+[example]
+====
+mged>**dbconcat -O model_two.g**
+
+Copies all the objects in __model_two.g__ to the current database. No object names are changed while conflicts in the current database are overwritten with objects from __model_two.g__
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

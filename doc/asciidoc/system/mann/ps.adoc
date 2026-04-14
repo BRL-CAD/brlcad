@@ -1,0 +1,54 @@
+= PS(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+ps - List currently running subprocesses.
+
+== SYNOPSIS
+
+[source]
+----
+ps
+----
+
+
+[[description]]
+== DESCRIPTION
+
+List currently running sub-processes (typically these will be some form of asynchronously launched *rt* render.)
+
+
+[[examples]]
+== EXAMPLES
+
+.List Currently Running Processes
+[example]
+====
+mged>**ps**
+
+
+....
+
+    PID CMD
+5524692 rt -M -u model /home/user/test.g
+6515118 rtcheck -M /home/user/test.g obj
+      
+....
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

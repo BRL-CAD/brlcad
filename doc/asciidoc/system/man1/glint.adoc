@@ -1,0 +1,130 @@
+= G_LINT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+glint - a BRL-CAD geometry checker
+
+== SYNOPSIS
+
+[source]
+----
+glint [options] model.g objects...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*glint* uses *librt*(3) to fire an array of parallel rays at the specified _objects_ in the database _model.g_ and reports overlaps, vacuums, and potential problems with air regions. By default, the output consists of single-line reports, each of which contains a tag identifying the report type and then other data as appropriate for that type report. Unless the *-p* option is specified, the exact formats are:
+
+
+*overlap* __r1 r2 length x_in y_in z_in x_out y_out z_out__::
+Consecutive partitions overlap by more than _tol_ (see the *-t* option). The data reported are the names of the two regions involved, the length of the overlap along the ray, and the model coordinates of the ray's entry into and exit from the overlap.
+
+
+*air_contiguous* _r1 a1 r2 a2 x y z_::
+Consecutive partitions have unlike (nonzero) air codes and the space between them is less than _tol_ (see the *-t* option). The data reported are the names and air codes of the two regions involved and the model coordinates of the point of contiguity.
+
+
+*air_unconfined* _r1 (s1) r2 (s2) length x1 y1 z1 x2 y2 z2_::
+A partition with nonzero air code follows or precedes another partition and the space between them is more than _tol_ (see the *-t* option). The data reported are the names of the two regions (and solids) involved, the length of the gap along the ray, and the model coordinates of the ray's exiting the first partition and entering the second.
+
+
+*air_first* _r a x y z_::
+The first partition has a nonzero air code. The data reported are the name and air code of the region involved and the model coordinates of the ray's entering the partition.
+
+
+*air_last* _r a x y z_::
+The last partition has a nonzero air code. The data reported are the name and air code of the region involved and the model coordinates of the ray's exiting the partition.
+
+
+*vacuum* _r1 (s1) r2 (s2) length x1 y1 z1 x2 y2 z2_::
+The space between consecutive partitions is more than _tol_ (see the *-t* option). The data reported are the names of the two regions (and solids) involved, the length of the gap along the ray, and the model coordinates of the ray's exiting the first partition and entering the second.
+
+
+
+[[commandline_options]]
+=== Command-line options
+
+
+*-a* _az_::
+Sets the azimuth from which to fire rays to _az_ degrees. The default is 0.
+
+
+*-c*::
+Specifies that one ray should be fired from the center of each grid cell. By default, *glint* fires a ray from one random point in each cell.
+
+
+*-e* _el_::
+Sets the elevation from which to fire rays to _el_ degrees. The default is 0.
+
+
+*-g* _gridsize_::
+Sets the width and height of each grid cell to _gridsize_ millimeters. The default is 100 mm.
+
+
+*-o*::
+Causes *glint* to include in each report the model coordinates of the ray origination point. These appear between the tag and the rest of the data.
+
+
+*-p*::
+Causes *glint* to produce its reports as _plot3(5)_ drawing commands instead of ASCII text. This is useful in conjunction with the "overlay" command of _mged_.
+
+
+*-r* _bits_::
+Specifies which types of reports to produce. If, after an optional minus sign, _bits_ begins with either "0x" or "0X", the remainder is interpreted in hexadecimal. Otherwise, if _bits_ begins with "0", the remainder is interpreted in octal. Otherwise, _bits_ is interpreted in decimal. The meaning of the individual bits is as follows: 1 overlaps 2 contiguous unlike airs 4 unconfined airs 8 air first on rays 16 air last on rays 32 vacuums. If there was no initial minus sign, then _bits_ specifies which report types to produce. The minus sign implies complementation: when it is present, _bits_ specifies which report types _not_ to produce. The default is 1.
+
+
+*-s*::
+Causes *glint* to collect all the overlap reports and sort them before printing them. The reports for a given pair of regions are printed contiguously, and the clusters of reports for the various pairs of regions appear in order of decreasing cumulative overlap length. By default, *glint* reports overlaps immediately and in the order of their discovery.
+
+
+*-t* _tol_::
+Sets the tolerance for overlaps, contiguous and unconfined airs, and vacuums to _tol_ millimeters. The default is 0.
+
+
+*-u*::
+Sets the _useair_ member of the __rt_i__ structure to 1, which causes _librt_ to report partitions containing air. It is also set implicitly if any air-related reports have been specified. By default, _librt_ ignores air regions.
+
+
+*-x* _bits_::
+Sets the *glint* debug flags to _bits_. See the *-r* option for more details. Note that some of the report types have no corresponding diagnostics.
+
+
+
+
+
+[[example]]
+== EXAMPLE
+
+The command
+
+glint -a 35 -e 25 -c -g 1 -r 31 -t 0.01 _kitchen.g appliances_
+
+fires a ray every millimeter and produces overlap reports and every type of air-related report, but no vacuum reports.
+
+
+[[see_also]]
+== SEE ALSO
+
+*mged*(1), *librt*(3), *strtoul*(3), *plot3*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1995-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

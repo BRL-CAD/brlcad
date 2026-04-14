@@ -116,12 +116,12 @@ db_open(const char *name, const char *mode)
 	    dbip = (struct db_i *)mfp->apbuf;
 	    RT_CK_DBI(dbip);
 	    bu_semaphore_acquire(sem_uses);
-	    dbip->dbi_uses++;
+	    dbip->i->dbi_uses++;
 	    bu_semaphore_release(sem_uses);
 
 	    /*
 	     * decrement the mapped file reference counter by 1,
-	     * references are already counted in dbip->dbi_uses
+	     * references are already counted in dbip->i->dbi_uses
 	     */
 	    bu_close_mapped_file(mfp);
 
@@ -133,26 +133,29 @@ db_open(const char *name, const char *mode)
 	}
 
 	BU_ALLOC(dbip, struct db_i);
-	dbip->dbi_mf = mfp;
-	dbip->dbi_eof = (b_off_t)mfp->buflen;
-	dbip->dbi_inmem = mfp->buf;
-	dbip->dbi_mf->apbuf = (void *)dbip;
+	dbip->i = db_i_internal_create();
+	dbip->i->dbi_mf = mfp;
+	dbip->i->dbi_eof = (b_off_t)mfp->buflen;
+	dbip->i->dbi_inmem = mfp->buf;
+	dbip->i->dbi_mf->apbuf = (void *)dbip;
 
 	/* Do this too, so we can seek around on the file */
-	if ((dbip->dbi_fp = fopen(name, "rb")) == NULL) {
+	if ((dbip->i->dbi_fp = fopen(name, "rb")) == NULL) {
 	    if (RT_G_DEBUG & RT_DEBUG_DB) {
 		bu_log("db_open(%s) FAILED, unable to open file for reading\n", name);
 	    }
+	    mfp->apbuf = NULL;
+	    dbip->i->dbi_mf = NULL;
+	    bu_close_mapped_file(mfp);
+	    db_i_internal_destroy(dbip->i);
 	    bu_free((char *)dbip, "struct db_i");
 	    return DBI_NULL;
 	}
 
-	dbip->i = db_i_internal_create();
-
-	dbip->dbi_use_comb_instance_ids = 0;
+	dbip->i->dbi_use_comb_instance_ids = 0;
 	const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
 	if (BU_STR_EQUAL(need_comb_inst, "1")) {
-	    dbip->dbi_use_comb_instance_ids = 1;
+	    dbip->i->dbi_use_comb_instance_ids = 1;
 	}
 
 	dbip->dbi_read_only = 1;
@@ -160,22 +163,22 @@ db_open(const char *name, const char *mode)
 	/* Read-write mode */
 
 	BU_ALLOC(dbip, struct db_i);
-	dbip->dbi_eof = (b_off_t)-1L;
+	dbip->i = db_i_internal_create();
+	dbip->i->dbi_eof = (b_off_t)-1L;
 
-	if ((dbip->dbi_fp = fopen(name, "r+b")) == NULL) {
+	if ((dbip->i->dbi_fp = fopen(name, "r+b")) == NULL) {
 	    if (RT_G_DEBUG & RT_DEBUG_DB) {
 		bu_log("db_open(%s) FAILED, unable to open file for reading/writing\n", name);
 	    }
+	    db_i_internal_destroy(dbip->i);
 	    bu_free((char *)dbip, "struct db_i");
 	    return DBI_NULL;
 	}
 
-	dbip->i = db_i_internal_create();
-
-	dbip->dbi_use_comb_instance_ids = 0;
+	dbip->i->dbi_use_comb_instance_ids = 0;
 	const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
 	if (BU_STR_EQUAL(need_comb_inst, "1")) {
-	    dbip->dbi_use_comb_instance_ids = 1;
+	    dbip->i->dbi_use_comb_instance_ids = 1;
 	}
 
 	dbip->dbi_read_only = 0;
@@ -183,12 +186,12 @@ db_open(const char *name, const char *mode)
 
     /* Initialize fields */
     for (i = 0; i < RT_DBNHASH; i++)
-	dbip->dbi_Head[i] = RT_DIR_NULL;
+	dbip->i->dbi_Head[i] = RT_DIR_NULL;
 
     dbip->dbi_local2base = 1.0;		/* mm */
     dbip->dbi_base2local = 1.0;
     dbip->dbi_title = (char *)0;
-    dbip->dbi_uses = 1;
+    dbip->i->dbi_uses = 1;
 
     /* FIXME: At some point, expand argv search paths with
      * getenv("BRLCAD_FILE_PATH") paths
@@ -217,12 +220,12 @@ db_open(const char *name, const char *mode)
 	/* Something went wrong and we didn't get the CWD. So,
 	 * free up any memory allocated here and return DBI_NULL */
 	if (BU_STR_EQUAL(argv[1], ".") || BU_STR_EMPTY(argv[1])) {
-	    bu_close_mapped_file(dbip->dbi_mf);
+	    bu_close_mapped_file(dbip->i->dbi_mf);
 	    bu_free_mapped_files(0);
-	    dbip->dbi_mf = (struct bu_mapped_file *)NULL;
+	    dbip->i->dbi_mf = (struct bu_mapped_file *)NULL;
 
-	    if (dbip->dbi_fp) {
-		fclose(dbip->dbi_fp);
+	    if (dbip->i->dbi_fp) {
+		fclose(dbip->i->dbi_fp);
 	    }
 
 	    bu_free((void *)argv[0], "db_open: argv[0]");
@@ -245,27 +248,21 @@ db_open(const char *name, const char *mode)
     dbip->dbi_filename = bu_strdup(name);
 #endif
 
-    bu_ptbl_init(&dbip->dbi_clients, 128, "dbi_clients[]");
-    bu_ptbl_init(&dbip->dbi_changed_clbks , 8, "dbi_changed_clbks]");
-    bu_ptbl_init(&dbip->dbi_update_nref_clbks, 8, "dbi_update_nref_clbks");
-
-    dbip->dbi_use_comb_instance_ids = 0;
-    const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
-    if (BU_STR_EQUAL(need_comb_inst, "1")) {
-	dbip->dbi_use_comb_instance_ids = 1;
-    }
+    bu_ptbl_init(&dbip->i->dbi_clients, 128, "dbi_clients[]");
+    bu_ptbl_init(&dbip->i->dbi_changed_clbks , 8, "dbi_changed_clbks]");
+    bu_ptbl_init(&dbip->i->dbi_update_nref_clbks, 8, "dbi_update_nref_clbks");
 
     dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
 
     /* determine version */
-    dbip->dbi_version = 0; /* make db_version() calculate */
-    dbip->dbi_version = db_version(dbip);
+    dbip->i->dbi_version = 0; /* make db_version() calculate */
+    dbip->i->dbi_version = db_version(dbip);
 
-    if (dbip->dbi_version < 5) {
+    if (dbip->i->dbi_version < 5) {
 	if (rt_db_flip_endian(dbip)) {
-	    if (dbip->dbi_version > 0) {
+	    if (dbip->i->dbi_version > 0) {
 		/* version is stored as -4 to denote the flip */
-		dbip->dbi_version *= -1;
+		dbip->i->dbi_version *= -1;
 	    }
 	    dbip->dbi_read_only = 1;
 	    bu_log("WARNING: Binary-incompatible v4 geometry database detected.\n");
@@ -274,34 +271,34 @@ db_open(const char *name, const char *mode)
     }
 
     if (RT_G_DEBUG & RT_DEBUG_DB) {
-	bu_log("db_open(%s) dbip=%p version=%d\n", dbip->dbi_filename, (void *)dbip, dbip->dbi_version);
+	bu_log("db_open(%s) dbip=%p version=%d\n", dbip->dbi_filename, (void *)dbip, dbip->i->dbi_version);
     }
 
     /* Initialize tolerances */
 
-    BU_ALLOC(dbip->dbi_wdbp, struct rt_wdb);
-    wdb_init(dbip->dbi_wdbp, dbip, RT_WDB_TYPE_DB_DISK);
-    dbip->dbi_wdbp->wdb_resp = &rt_uniresource;
-    BN_TOL_INIT_SET_TOL(&dbip->dbi_wdbp->wdb_tol);
-    BG_TESS_TOL_INIT_SET_TOL(&dbip->dbi_wdbp->wdb_ttol);
+    BU_ALLOC(dbip->i->dbi_wdbp, struct rt_wdb);
+    wdb_init(dbip->i->dbi_wdbp, dbip, RT_WDB_TYPE_DB_DISK);
+    dbip->i->dbi_wdbp->wdb_resp = &rt_uniresource;
+    BN_TOL_INIT_SET_TOL(&dbip->i->dbi_wdbp->wdb_tol);
+    BG_TESS_TOL_INIT_SET_TOL(&dbip->i->dbi_wdbp->wdb_ttol);
 
-    BU_ALLOC(dbip->dbi_wdbp_a, struct rt_wdb);
-    wdb_init(dbip->dbi_wdbp_a, dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
-    dbip->dbi_wdbp_a->wdb_resp = &rt_uniresource;
-    BN_TOL_INIT_SET_TOL(&dbip->dbi_wdbp_a->wdb_tol);
-    BG_TESS_TOL_INIT_SET_TOL(&dbip->dbi_wdbp_a->wdb_ttol);
+    BU_ALLOC(dbip->i->dbi_wdbp_a, struct rt_wdb);
+    wdb_init(dbip->i->dbi_wdbp_a, dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
+    dbip->i->dbi_wdbp_a->wdb_resp = &rt_uniresource;
+    BN_TOL_INIT_SET_TOL(&dbip->i->dbi_wdbp_a->wdb_tol);
+    BG_TESS_TOL_INIT_SET_TOL(&dbip->i->dbi_wdbp_a->wdb_ttol);
 
-    BU_ALLOC(dbip->dbi_wdbp_inmem, struct rt_wdb);
-    wdb_init(dbip->dbi_wdbp_inmem, dbip, RT_WDB_TYPE_DB_INMEM);
-    dbip->dbi_wdbp_inmem->wdb_resp = &rt_uniresource;
-    BN_TOL_INIT_SET_TOL(&dbip->dbi_wdbp_inmem->wdb_tol);
-    BG_TESS_TOL_INIT_SET_TOL(&dbip->dbi_wdbp_inmem->wdb_ttol);
+    BU_ALLOC(dbip->i->dbi_wdbp_inmem, struct rt_wdb);
+    wdb_init(dbip->i->dbi_wdbp_inmem, dbip, RT_WDB_TYPE_DB_INMEM);
+    dbip->i->dbi_wdbp_inmem->wdb_resp = &rt_uniresource;
+    BN_TOL_INIT_SET_TOL(&dbip->i->dbi_wdbp_inmem->wdb_tol);
+    BG_TESS_TOL_INIT_SET_TOL(&dbip->i->dbi_wdbp_inmem->wdb_ttol);
 
-    BU_ALLOC(dbip->dbi_wdbp_inmem_a, struct rt_wdb);
-    wdb_init(dbip->dbi_wdbp_inmem_a, dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
-    dbip->dbi_wdbp_inmem_a->wdb_resp = &rt_uniresource;
-    BN_TOL_INIT_SET_TOL(&dbip->dbi_wdbp_inmem_a->wdb_tol);
-    BG_TESS_TOL_INIT_SET_TOL(&dbip->dbi_wdbp_inmem_a->wdb_ttol);
+    BU_ALLOC(dbip->i->dbi_wdbp_inmem_a, struct rt_wdb);
+    wdb_init(dbip->i->dbi_wdbp_inmem_a, dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
+    dbip->i->dbi_wdbp_inmem_a->wdb_resp = &rt_uniresource;
+    BN_TOL_INIT_SET_TOL(&dbip->i->dbi_wdbp_inmem_a->wdb_tol);
+    BG_TESS_TOL_INIT_SET_TOL(&dbip->i->dbi_wdbp_inmem_a->wdb_ttol);
 
     return dbip;
 }
@@ -359,7 +356,7 @@ db_close_client(struct db_i *dbip, long int *client)
     RT_CK_DBI(dbip);
 
     if (client) {
-	(void)bu_ptbl_rm(&dbip->dbi_clients, client);
+	(void)bu_ptbl_rm(&dbip->i->dbi_clients, client);
     }
 
     db_close(dbip);
@@ -380,10 +377,10 @@ db_close(register struct db_i *dbip)
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_close(%s) %p uses=%d\n",
-				    dbip->dbi_filename, (void *)dbip, dbip->dbi_uses);
+				    dbip->dbi_filename, (void *)dbip, dbip->i->dbi_uses);
 
     bu_semaphore_acquire(sem_uses);
-    if ((--dbip->dbi_uses) > 0) {
+    if ((--dbip->i->dbi_uses) > 0) {
 	bu_semaphore_release(sem_uses);
 	/* others are still using this database */
 	return;
@@ -391,70 +388,70 @@ db_close(register struct db_i *dbip)
     bu_semaphore_release(sem_uses);
 
     /* Free wdbp containers */
-    if (dbip->dbi_wdbp) {
-	BU_LIST_DEQUEUE(&dbip->dbi_wdbp->l);
-	BU_LIST_MAGIC_SET(&dbip->dbi_wdbp->l, 0);
-	bu_vls_free(&dbip->dbi_wdbp->wdb_name);
-	bu_vls_free(&dbip->dbi_wdbp->wdb_prestr);
-	dbip->dbi_wdbp->type = 0;
-	dbip->dbi_wdbp->wdb_resp = NULL;
-	dbip->dbi_wdbp->wdb_interp = NULL;
-	bu_free((void *)dbip->dbi_wdbp, "struct rt_wdb");
-	dbip->dbi_wdbp = NULL;
+    if (dbip->i->dbi_wdbp) {
+	BU_LIST_DEQUEUE(&dbip->i->dbi_wdbp->l);
+	BU_LIST_MAGIC_SET(&dbip->i->dbi_wdbp->l, 0);
+	bu_vls_free(&dbip->i->dbi_wdbp->wdb_name);
+	bu_vls_free(&dbip->i->dbi_wdbp->wdb_prestr);
+	dbip->i->dbi_wdbp->type = 0;
+	dbip->i->dbi_wdbp->wdb_resp = NULL;
+	dbip->i->dbi_wdbp->wdb_interp = NULL;
+	bu_free((void *)dbip->i->dbi_wdbp, "struct rt_wdb");
+	dbip->i->dbi_wdbp = NULL;
     }
-    dbip->dbi_wdbp = NULL;
+    dbip->i->dbi_wdbp = NULL;
 
-    if (dbip->dbi_wdbp_a) {
-	BU_LIST_DEQUEUE(&dbip->dbi_wdbp_a->l);
-	BU_LIST_MAGIC_SET(&dbip->dbi_wdbp_a->l, 0);
-	bu_vls_free(&dbip->dbi_wdbp_a->wdb_name);
-	bu_vls_free(&dbip->dbi_wdbp_a->wdb_prestr);
-	dbip->dbi_wdbp_a->type = 0;
-	dbip->dbi_wdbp_a->wdb_resp = NULL;
-	dbip->dbi_wdbp_a->wdb_interp = NULL;
-	bu_free((void *)dbip->dbi_wdbp_a, "struct rt_wdb");
-	dbip->dbi_wdbp_a = NULL;
+    if (dbip->i->dbi_wdbp_a) {
+	BU_LIST_DEQUEUE(&dbip->i->dbi_wdbp_a->l);
+	BU_LIST_MAGIC_SET(&dbip->i->dbi_wdbp_a->l, 0);
+	bu_vls_free(&dbip->i->dbi_wdbp_a->wdb_name);
+	bu_vls_free(&dbip->i->dbi_wdbp_a->wdb_prestr);
+	dbip->i->dbi_wdbp_a->type = 0;
+	dbip->i->dbi_wdbp_a->wdb_resp = NULL;
+	dbip->i->dbi_wdbp_a->wdb_interp = NULL;
+	bu_free((void *)dbip->i->dbi_wdbp_a, "struct rt_wdb");
+	dbip->i->dbi_wdbp_a = NULL;
     }
-    dbip->dbi_wdbp_a = NULL;
+    dbip->i->dbi_wdbp_a = NULL;
 
-    if (dbip->dbi_wdbp_inmem) {
-	BU_LIST_DEQUEUE(&dbip->dbi_wdbp_inmem->l);
-	BU_LIST_MAGIC_SET(&dbip->dbi_wdbp_inmem->l, 0);
-	bu_vls_free(&dbip->dbi_wdbp_inmem->wdb_name);
-	bu_vls_free(&dbip->dbi_wdbp_inmem->wdb_prestr);
-	dbip->dbi_wdbp_inmem->type = 0;
-	dbip->dbi_wdbp_inmem->wdb_resp = NULL;
-	dbip->dbi_wdbp_inmem->wdb_interp = NULL;
-	bu_free((void *)dbip->dbi_wdbp_inmem, "struct rt_wdb");
-	dbip->dbi_wdbp_inmem = NULL;
+    if (dbip->i->dbi_wdbp_inmem) {
+	BU_LIST_DEQUEUE(&dbip->i->dbi_wdbp_inmem->l);
+	BU_LIST_MAGIC_SET(&dbip->i->dbi_wdbp_inmem->l, 0);
+	bu_vls_free(&dbip->i->dbi_wdbp_inmem->wdb_name);
+	bu_vls_free(&dbip->i->dbi_wdbp_inmem->wdb_prestr);
+	dbip->i->dbi_wdbp_inmem->type = 0;
+	dbip->i->dbi_wdbp_inmem->wdb_resp = NULL;
+	dbip->i->dbi_wdbp_inmem->wdb_interp = NULL;
+	bu_free((void *)dbip->i->dbi_wdbp_inmem, "struct rt_wdb");
+	dbip->i->dbi_wdbp_inmem = NULL;
     }
-    dbip->dbi_wdbp_inmem = NULL;
+    dbip->i->dbi_wdbp_inmem = NULL;
 
-    if (dbip->dbi_wdbp_inmem_a) {
-	BU_LIST_DEQUEUE(&dbip->dbi_wdbp_inmem_a->l);
-	BU_LIST_MAGIC_SET(&dbip->dbi_wdbp_inmem_a->l, 0);
-	bu_vls_free(&dbip->dbi_wdbp_inmem_a->wdb_name);
-	bu_vls_free(&dbip->dbi_wdbp_inmem_a->wdb_prestr);
-	dbip->dbi_wdbp_inmem_a->type = 0;
-	dbip->dbi_wdbp_inmem_a->wdb_resp = NULL;
-	dbip->dbi_wdbp_inmem_a->wdb_interp = NULL;
-	bu_free((void *)dbip->dbi_wdbp_inmem_a, "struct rt_wdb");
-	dbip->dbi_wdbp_inmem_a = NULL;
+    if (dbip->i->dbi_wdbp_inmem_a) {
+	BU_LIST_DEQUEUE(&dbip->i->dbi_wdbp_inmem_a->l);
+	BU_LIST_MAGIC_SET(&dbip->i->dbi_wdbp_inmem_a->l, 0);
+	bu_vls_free(&dbip->i->dbi_wdbp_inmem_a->wdb_name);
+	bu_vls_free(&dbip->i->dbi_wdbp_inmem_a->wdb_prestr);
+	dbip->i->dbi_wdbp_inmem_a->type = 0;
+	dbip->i->dbi_wdbp_inmem_a->wdb_resp = NULL;
+	dbip->i->dbi_wdbp_inmem_a->wdb_interp = NULL;
+	bu_free((void *)dbip->i->dbi_wdbp_inmem_a, "struct rt_wdb");
+	dbip->i->dbi_wdbp_inmem_a = NULL;
     }
-    dbip->dbi_wdbp_inmem_a = NULL;
+    dbip->i->dbi_wdbp_inmem_a = NULL;
 
     /* ready to free the database -- use count is now zero */
 
     /* free up any mapped files */
-    bu_close_mapped_file(dbip->dbi_mf);
+    bu_close_mapped_file(dbip->i->dbi_mf);
     bu_free_mapped_files(0);
-    dbip->dbi_mf = (struct bu_mapped_file *)NULL;
+    dbip->i->dbi_mf = (struct bu_mapped_file *)NULL;
 
     /* try to ensure/encourage that the file is written out */
     db_sync(dbip);
 
-    if (dbip->dbi_fp) {
-	fclose(dbip->dbi_fp);
+    if (dbip->i->dbi_fp) {
+	fclose(dbip->i->dbi_fp);
     }
 
     if (dbip->dbi_title)
@@ -463,23 +460,23 @@ db_close(register struct db_i *dbip)
 	bu_free(dbip->dbi_filename, "dbi_filename");
 
     db_free_anim(dbip);
-    rt_color_free();		/* Free MaterHead list */
+    db_mater_free(dbip);		/* Free per-db material/color table */
 
     /* Release map of database holes */
-    rt_mempurge(&(dbip->dbi_freep));
+    rt_mempurge(&(dbip->i->dbi_freep));
     rt_memclose();
 
-    dbip->dbi_inmem = NULL;		/* sanity */
+    dbip->i->dbi_inmem = NULL;		/* sanity */
 
-    bu_ptbl_free(&dbip->dbi_clients);
-    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks))
-	bu_ptbl_free(&dbip->dbi_changed_clbks);
-    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_update_nref_clbks))
-	bu_ptbl_free(&dbip->dbi_update_nref_clbks);
+    bu_ptbl_free(&dbip->i->dbi_clients);
+    if (BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_changed_clbks))
+	bu_ptbl_free(&dbip->i->dbi_changed_clbks);
+    if (BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_update_nref_clbks))
+	bu_ptbl_free(&dbip->i->dbi_update_nref_clbks);
 
     /* Free all directory entries */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL;) {
+	for (dp = dbip->i->dbi_Head[i]; dp != RT_DIR_NULL;) {
 	    RT_CK_DIR(dp);
 	    nextdp = dp->d_forw;
 	    RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
@@ -502,7 +499,7 @@ db_close(register struct db_i *dbip)
 
 	    dp = nextdp;
 	}
-	dbip->dbi_Head[i] = RT_DIR_NULL;	/* sanity*/
+	dbip->i->dbi_Head[i] = RT_DIR_NULL;	/* sanity*/
     }
 
     if (dbip->dbi_filepath != NULL) {
@@ -552,7 +549,6 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
 /* output */
 /* input */
 {
-    register int i;
     register struct directory *dp;
     struct bu_external ext;
 
@@ -568,26 +564,24 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
     //struct directory *out_global = db_lookup(wdbp->dbip, "_GLOBAL", LOOKUP_QUIET);
 
     /* Output all directory entries */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    RT_CK_DIR(dp);
-	    //if (out_global && BU_STR_EQUAL(dp->d_namep, "_GLOBAL")) {
-		//bu_log("db_dump() - in append-only mode, and target db already has a _GLOBAL object");
-		//continue;
-	    //}
-	    /* XXX Need to go to internal form, if database versions don't match */
-	    if (db_get_external(&ext, dp, dbip) < 0) {
-		bu_log("db_dump() read failed on %s, skipping\n", dp->d_namep);
-		continue;
-	    }
-	    if (wdb_export_external(wdbp, &ext, dp->d_namep, dp->d_flags & ~(RT_DIR_INMEM), dp->d_minor_type) < 0) {
-		bu_log("db_dump() write failed on %s, aborting\n", dp->d_namep);
-		bu_free_external(&ext);
-		return -1;
-	    }
-	    bu_free_external(&ext);
+    FOR_ALL_DIRECTORY_START(dp, dbip)
+	RT_CK_DIR(dp);
+	//if (out_global && BU_STR_EQUAL(dp->d_namep, "_GLOBAL")) {
+	    //bu_log("db_dump() - in append-only mode, and target db already has a _GLOBAL object");
+	    //continue;
+	//}
+	/* XXX Need to go to internal form, if database versions don't match */
+	if (db_get_external(&ext, dp, dbip) < 0) {
+	    bu_log("db_dump() read failed on %s, skipping\n", dp->d_namep);
+	    continue;
 	}
-    }
+	if (wdb_export_external(wdbp, &ext, dp->d_namep, dp->d_flags & ~(RT_DIR_INMEM), dp->d_minor_type) < 0) {
+	    bu_log("db_dump() write failed on %s, aborting\n", dp->d_namep);
+	    bu_free_external(&ext);
+	    return -1;
+	}
+	bu_free_external(&ext);
+    FOR_ALL_DIRECTORY_END;
     return 0;
 }
 
@@ -601,10 +595,10 @@ db_clone_dbi(struct db_i *dbip, long int *client)
     RT_CK_DBI(dbip);
 
     bu_semaphore_acquire(sem_uses);
-    dbip->dbi_uses++;
+    dbip->i->dbi_uses++;
     bu_semaphore_release(sem_uses);
     if (client) {
-	bu_ptbl_ins_unique(&dbip->dbi_clients, client);
+	bu_ptbl_ins_unique(&dbip->i->dbi_clients, client);
     }
     return dbip;
 }
@@ -617,17 +611,17 @@ db_sync(struct db_i *dbip)
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 
     /* make sure we have something to do */
-    if (!dbip->dbi_fp) {
+    if (!dbip->i->dbi_fp) {
 	bu_semaphore_release(BU_SEM_SYSCALL);
 	return;
     }
 
     /* flush the file */
-    (void)fflush(dbip->dbi_fp);
+    (void)fflush(dbip->i->dbi_fp);
 
 #if defined(HAVE_FSYNC)
     /* make sure it's written out */
-    (void)fsync(fileno(dbip->dbi_fp));
+    (void)fsync(fileno(dbip->i->dbi_fp));
 #else
 #  if defined(HAVE_SYNC)
     /* try the whole filesystem if sans fsync() */
@@ -644,6 +638,7 @@ db_i_internal_create(void)
     struct db_i_internal *i;
     BU_GET(i, struct db_i_internal);
     i->dbi_magic = DBI_MAGIC;
+    i->material_head = MATER_NULL;
 
     return i;
 }
@@ -656,6 +651,13 @@ db_i_internal_destroy(struct db_i_internal *i)
 
     if (i->mesh_c)
 	bv_mesh_lod_context_destroy(i->mesh_c);
+
+    /* Free any remaining material entries (normally freed by db_mater_free) */
+    while (i->material_head != MATER_NULL) {
+	struct mater *mp = i->material_head;
+	i->material_head = mp->mt_forw;
+	bu_free((char *)mp, "getstruct mater");
+    }
 
     BU_PUT(i, struct db_i_internal);
 }

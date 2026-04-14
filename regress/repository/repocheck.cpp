@@ -530,6 +530,7 @@ init_repo_config(RepoConfig &cfg)
     /* setprogname test */
     {
 	const char *sp_exempt[] = {
+	    "brledit.cpp",
 	    "debug2c.cpp",
 	    "env2c.cpp",
 	    "embedded_check.cpp",

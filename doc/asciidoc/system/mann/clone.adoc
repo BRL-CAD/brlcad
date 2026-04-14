@@ -1,0 +1,526 @@
+= CLONE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+clone - Deep-copy an object (optionally in a geometric pattern) and place the copies in the database with automatically generated names.
+
+== SYNOPSIS
+
+[source]
+----
+clone [options]... {object}...
+----
+
+
+[[options]]
+== OPTIONS
+
+[[options_general]]
+=== General options
+
+
+*-h*::
+Display help and exit.
+
+
+*-i _increment_*::
+Starting increment used when generating copy names. The first numeric run found in each object name is incremented by this value; if no number is present the increment is appended. Default is 100.
+
+
+*-c*::
+Move the naming cursor to the _next_ numeric run in object names. May be repeated: *-c -c* targets the third number, *-c -c -c* the fourth, etc. Default targets the first number.
+
+
+*--depth top|regions|primitives*::
+Controls how deeply the copy hierarchy is constructed.
++
+*top* (default for pattern modes) — creates a lightweight wrapper combination whose single member is the original object with the placement matrix embedded. No deep copy is performed; the source geometry is shared.
++
+*regions* — copies every combination from the top of the tree down to and including the first region encountered on each path. Primitives below the region boundary are _not_ copied — they are shared between the original and the clone. New region idents are assigned automatically so that each copy is distinguishable during raytracing. The placement matrix is distributed into the leaf arcs inside each region (rather than stored at the top-level arc). This is the C++ equivalent of the Tcl *copy_obj* + *apply_mat -regions* workflow.
++
+*primitives* — performs a full recursive copy of the entire hierarchy down to individual primitives and absorbs each placement matrix directly into the copied primitive parameters.
+
+
+*--xpush*::
+Before producing the final clone, internally flatten any matrices that hang above the combination members of the source object (equivalent to running *xpush* on a temporary copy). Useful when *-t* / *-r* do not behave as expected because of existing instance matrices in the hierarchy. This replaces the *xclone* workaround.
+
+
+*-g _group_name_*::
+Collect all top-level clone results into a new combination named _group_name_.
+
+
+*-s _sstr_ _rstr_*
+*--subs _sstr_ _rstr_*::
+Apply a name substitution to every generated object name. The first occurrence of the string _sstr_ in each source object's name is replaced with _rstr_ before the numeric uniquification step. For example, *clone -s tank tread tank.r01* produces a clone named _tread.r101_ (or the next available variant). When no occurrence of _sstr_ is found in a particular name the name is used as-is.
+
+
+
+
+[[options_linear]]
+=== Linear / single-copy options
+
+
+*-n _copies_*::
+Number of copies to make. Default is 1.
+
+
+*-t _x y z_*::
+Per-copy translation delta (model units). Conflicts with *-a*.
+
+
+*-r _x y z_*::
+Per-copy rotation in degrees about the X, Y, and Z axes. Conflicts with *-b*.
+
+
+*-p _x y z_*::
+Rotation pivot point for *-r* and *-b*. Default is 0 0 0.
+
+
+*-a _n x y z_*::
+Total translation distance divided evenly across _n_ copies. Conflicts with *-t*.
+
+
+*-b _n x y z_*::
+Total rotation in degrees divided evenly across _n_ copies. Conflicts with *-r*.
+
+
+*-m _axis distance_*::
+Create a mirror copy reflected about the plane perpendicular to _axis_ ('x', 'y', or 'z') at _distance_ along that axis.
+
+
+
+
+[[options_rect]]
+=== Rectangular-grid pattern (--rect)
+
+Place copies at every point of a 3-D grid aligned with three user-supplied direction vectors. This replaces the `pattern_rect()` Tcl procedure for all three depth modes (*top*, *regions*, and *primitives*).
+
+
+*--xdir _x y z_*
+*--ydir _x y z_*
+*--zdir _x y z_*::
+Grid direction vectors (need not be unit vectors). Defaults are the X, Y, and Z axes.
+
+
+*--nx _#_ --dx _d_*::
+Number of steps and step size (model units) along *--xdir*. Alternatively supply an explicit list with *--lx _"v1 v2 ..."_*.
+
+
+*--ny _#_ --dy _d_*
+*--nz _#_ --dz _d_*::
+Equivalent parameters for Y and Z directions.
+
+
+
+
+[[options_sph]]
+=== Spherical pattern (--sph)
+
+Place copies at spherical-coordinate grid positions (azimuth × elevation × radius). This replaces the `pattern_sph()` Tcl procedure for all three depth modes (*top*, *regions*, and *primitives*).
+
+
+*--center-pat _x y z_*::
+Origin of the spherical grid (model-space point where radius = 0 maps to). Default is 0 0 0.
+
+
+*--center-obj _x y z_*::
+Local centre of the source object, used as the pivot when *--rotaz* or *--rotel* are active. Default is 0 0 0.
+
+
+*--rotaz*::
+Rotate each copy so that it faces the azimuth angle of its position.
+
+
+*--rotel*::
+Rotate each copy to face its elevation angle.
+
+
+*--start-az _deg_*
+*--start-el _deg_*
+*--start-r _d_*::
+Starting azimuth (degrees), elevation (degrees), and radius (model units). Defaults are 0, −90, and 0.
+
+
+*--naz _#_ --daz _deg_*::
+Number of azimuth steps and delta per step (degrees). Alternatively: *--laz _"v1 v2 ..."_*.
+
+
+*--nel _#_ --del _deg_*::
+Number of elevation steps and delta (degrees), or *--lel _"v1 v2 ..."_*.
+
+
+*--nr _#_ --dr _d_*::
+Number of radius steps and delta (model units), or *--lr _"v1 v2 ..."_*.
+
+
+
+
+[[options_cyl]]
+=== Cylindrical pattern (--cyl)
+
+Place copies at positions on a cylinder defined by azimuth, radius, and height. This replaces the `pattern_cyl()` Tcl procedure for all three depth modes (*top*, *regions*, and *primitives*).
+
+
+*--center-base _x y z_*::
+Base-centre of the cylinder in model space. Default is 0 0 0.
+
+
+*--height-dir _x y z_*::
+Unit vector along the cylinder axis. Default is 0 0 1 (Z axis).
+
+
+*--start-az-dir _x y z_*::
+Radial direction that corresponds to azimuth = 0. Must be perpendicular to *--height-dir*. Default is 1 0 0.
+
+
+*--center-obj _x y z_*::
+Local centre of the source object, used as pivot when *--rot* is active. Default is 0 0 0.
+
+
+*--rot*::
+Rotate each copy to face the tangential direction at its azimuth position.
+
+
+*--start-az _deg_*
+*--start-r _d_*
+*--start-h _d_*::
+Starting azimuth (degrees), radius (model units), and height (model units) along the cylinder axis. All default to 0.
+
+
+*--naz _#_ --daz _deg_*::
+Azimuth step count and delta (degrees), or *--laz _"v1 v2 ..."_*.
+
+
+*--nr _#_ --dr _d_*::
+Radius step count and delta (model units), or *--lr _"v1 v2 ..."_*.
+
+
+*--nh _#_ --dh _d_*::
+Height step count and delta (model units), or *--lh _"v1 v2 ..."_*.
+
+
+
+
+
+[[description]]
+== DESCRIPTION
+
+*clone* copies one or more database objects and places the copies with automatically generated unique names. Names are generated by incrementing the first numeric run found in the source object's name (configurable with *-c* and *-i*); if no number is present the increment value is appended.
+
+In its default (linear) mode, *clone* produces *-n* copies arranged by the supplied translation (*-t* / *-a*) and/or rotation (*-r* / *-b*) increments. The *-m* option produces a single mirrored copy instead.
+
+Three _pattern modes_ produce a regular arrangement of copies without requiring manual calculation of individual displacements:
+
+
+* *--rect* — rectangular (Cartesian) grid.
+* *--sph* — spherical grid (azimuth × elevation × radius).
+* *--cyl* — cylindrical grid (azimuth × radius × height).
+
+In all three pattern modes, each position in the grid yields one clone of every source object listed on the command line. The *--depth* option controls the copy strategy: *top* shares geometry via a wrapper combination, *regions* copies the combination hierarchy down to regions (sharing primitives) and distributes the placement matrix into region leaf arcs, and *primitives* produces a fully independent deep copy with the matrix baked into primitives.
+
+The database must be in v5 format. Use *dbupgrade* to convert a v4 database before running *clone*.
+
+If you specify conflicting copy-count options (*-a*, *-b*, *-n*), the last _n_ value supplied wins.
+
+
+[[examples]]
+== EXAMPLES
+
+The following examples use the _component_ object from `m35.g` (the M35 2½-ton cargo truck). Its bounding box is approximately 7000 mm long (X), 4000 mm wide (Y), and 5500 mm tall (Z). Spacing values in all examples are chosen to exceed these dimensions so that every instance is visually distinct and does not overlap its neighbours.
+
+[[examples_circle]]
+=== Circle of trucks on a plane
+
+*Semicircle (5 trucks, 45° apart, 0° to 180°).* The *--cyl* pattern at a fixed height and radius naturally places copies on a plane. With *--nh 1 --dh 0* the height never changes, so all trucks land on Z = 0. Five copies at 45° steps span a front half-circle. A radius of 7000 mm gives about 5350 mm between adjacent truck centres — well clear of the 4000 mm truck width:
+
+
+----
+clone --cyl --naz 5 --daz 45 --start-az 0 \
+      --nr 1 --dr 7000 \
+      --nh 1 --dh 0 \
+      -g semicircle_trucks component
+----
+
+
+
+*Full circle (8 trucks, 45° apart, 360°).* Increase to 8 azimuth steps so the angular span reaches exactly 360°. The same radius keeps the inter-truck gap above 5000 mm:
+
+
+----
+clone --cyl --naz 8 --daz 45 \
+      --nr 1 --dr 7000 \
+      --nh 1 --dh 0 \
+      -g circle_trucks component
+----
+
+
+
+*Full circle with trucks facing outward.* Add *--rot* to rotate each copy so its front faces away from the pattern centre (outward along the radial direction). Provide *--center-obj* at the truck's bounding-box centre so that the rotation pivot is the truck centre rather than the model origin:
+
+
+----
+clone --cyl --naz 8 --daz 45 \
+      --nr 1 --dr 7000 \
+      --nh 1 --dh 0 \
+      --rot --center-obj 1533 -496 2617 \
+      -g circle_facing_out component
+----
+
+
+
+
+[[examples_rect]]
+=== Rectangular grids
+
+*4 × 3 flat grid on a plane.* Place 12 trucks in 4 columns and 3 rows, all at Z = 0. The X step (9000 mm) exceeds the truck length; the Y step (6000 mm) exceeds the truck width:
+
+
+----
+clone --rect \
+      --nx 4 --dx 9000 \
+      --ny 3 --dy 6000 \
+      -g grid_2d component
+----
+
+
+
+*3 × 3 × 3 stacked grid in 3-D.* Add a Z dimension to stack three layers of the 3 × 3 ground grid. The Z step (7000 mm) exceeds the truck height so the layers are clearly separated:
+
+
+----
+clone --rect \
+      --nx 3 --dx 9000 \
+      --ny 3 --dy 6000 \
+      --nz 3 --dz 7000 \
+      -g grid_3d component
+----
+
+
+
+*Non-axis-aligned diagonal grid.* Rotate the grid 45° in the XY-plane by supplying custom direction vectors. The vector magnitudes set the step size along each axis. Here the rows and columns run at 45° to world X and Y:
+
+
+----
+clone --rect \
+      --xdir 6364 6364 0 \
+      --ydir -4243 4243 0 \
+      --nx 4 --ny 3 \
+      -g grid_diagonal component
+----
+
+
+
+
+[[examples_sph]]
+=== Spherical patterns
+
+*Full spherical shell (8 az × 5 el, single radius).* Distribute 40 trucks over a sphere of radius 9000 mm. Five elevation bands run from −60° to +60° in 30° steps; each band holds 8 trucks separated by 45°. At this radius the chord distance between adjacent truck centres in the equatorial band is about 6870 mm (arc length ~7070 mm), both exceeding the truck's longest dimension:
+
+
+----
+clone --sph \
+      --naz 8 --daz 45 --start-az 0 \
+      --nel 5 --del 30 --start-el -60 \
+      --nr  1 --dr  9000 --start-r 9000 \
+      -g sphere_shell component
+----
+
+
+
+*Partial spherical cap (northern hemisphere dome).* Use only positive elevations (0° to +60°) with 3 bands of 8 trucks each, creating a dome-shaped arrangement:
+
+
+----
+clone --sph \
+      --naz 8 --daz 45 \
+      --nel 3 --del 30 --start-el 0 \
+      --nr  1 --dr  9000 --start-r 9000 \
+      -g sphere_cap component
+----
+
+
+
+*Nested spherical shells (two radii).* Produce an inner shell at 9000 mm and an outer shell at 15000 mm, both using the same 8 × 3 azimuth/elevation grid. A single command generates all (az, el, r) combinations — 48 trucks total:
+
+
+----
+clone --sph \
+      --naz 8  --daz 45 \
+      --nel 3  --del 60 --start-el -60 \
+      --nr  2  --dr  6000 --start-r 9000 \
+      -g sphere_nested component
+----
+
+
+
+*Advanced: trucks facing outward from the sphere centre.* By default each copy keeps the source object's orientation. Adding *--rotaz* rotates each copy to face the azimuth of its position; adding *--rotel* tilts it to match its elevation angle. Together, every truck points nose-outward from the sphere's origin. Providing *--center-obj* ensures the rotation pivot is the truck's own bounding-box centre rather than the model origin:
+
+
+----
+clone --sph \
+      --naz 8  --daz 45 \
+      --nel 3  --del 60 --start-el -60 \
+      --nr  1  --dr  9000 --start-r 9000 \
+      --rotaz --rotel \
+      --center-obj 1533 -496 2617 \
+      -g sphere_facing_out component
+----
+
+
+
+*Advanced: azimuth-only rotation (equatorial ring, trucks facing outward).* Omitting *--rotel* rotates each truck only in azimuth, so all trucks remain level but each faces outward in the horizontal plane. This is useful for a ring of trucks at a single elevation angle where tilting is not desired:
+
+
+----
+clone --sph \
+      --naz 8  --daz 45 \
+      --nel 1  --del 0 --start-el 0 \
+      --nr  1  --dr  9000 --start-r 9000 \
+      --rotaz \
+      --center-obj 1533 -496 2617 \
+      -g sphere_ring_az component
+----
+
+
+
+
+[[examples_cyl]]
+=== Cylindrical patterns
+
+*Partial cylindrical arc (6 trucks, 270°, single height).* Six azimuth steps at 45° each span a 270° arc (three-quarter ring). Radius 7000 mm keeps neighbouring trucks more than 5000 mm apart. *--nh 1 --dh 0* keeps all trucks on the ground plane:
+
+
+----
+clone --cyl \
+      --naz 6 --daz 45 --start-az 0 \
+      --nr  1 --dr  7000 \
+      --nh  1 --dh  0 \
+      -g cyl_arc component
+----
+
+
+
+*Full cylindrical ring (8 trucks, 360°, single height).* Eight trucks equally spaced at 45° intervals complete a full ring around the origin:
+
+
+----
+clone --cyl \
+      --naz 8 --daz 45 \
+      --nr  1 --dr  7000 \
+      --nh  1 --dh  0 \
+      -g cyl_ring component
+----
+
+
+
+*Cylindrical stack (full ring × 3 levels).* Combine a full 8-truck ring with 3 height levels, each 7000 mm apart, producing 24 trucks arranged as three stacked rings. *--center-base* anchors the bottom ring's base to the origin:
+
+
+----
+clone --cyl \
+      --naz 8 --daz 45 \
+      --nr  1 --dr  7000 \
+      --nh  3 --dh  7000 --start-h 0 \
+      --center-base 0 0 0 \
+      -g cyl_stack component
+----
+
+
+
+*Multi-radius cylindrical shell (2 rings, 3 levels).* Add a second radial step to populate both an inner ring (7000 mm radius) and an outer ring (14000 mm radius) at each height level — 48 trucks total:
+
+
+----
+clone --cyl \
+      --naz 8 --daz 45 \
+      --nr  2 --dr  7000 --start-r 7000 \
+      --nh  3 --dh  7000 \
+      -g cyl_multi component
+----
+
+
+
+*Advanced: trucks facing tangentially around the cylinder.* The *--rot* flag rotates each truck so that it faces the tangential (circumferential) direction at its azimuth position, as if every truck were driving around the ring. Supply *--center-obj* at the truck's bounding-box centre:
+
+
+----
+clone --cyl \
+      --naz 8 --daz 45 \
+      --nr  1 --dr  7000 \
+      --nh  1 --dh  0 \
+      --rot --center-obj 1533 -496 2617 \
+      -g cyl_tangential component
+----
+
+
+
+*Advanced: trucks facing radially outward on a stacked cylinder.* Combining *--rot* with multiple height levels gives a tower of rings where every truck faces outward. All trucks at every level maintain the same outward-facing orientation:
+
+
+----
+clone --cyl \
+      --naz 8 --daz 45 \
+      --nr  1 --dr  7000 \
+      --nh  3 --dh  7000 \
+      --rot --center-obj 1533 -496 2617 \
+      -g cyl_stack_facing_out component
+----
+
+
+
+
+[[examples_misc]]
+=== Linear, mirror, and advanced options
+
+*Linear row of trucks.* Make four copies of _component_ spaced 9000 mm apart along X, collecting them into a single combination:
+
+
+----
+clone -n 4 -t 9000 0 0 -g truck_row component
+----
+
+
+
+*Mirror copy.* Create a single mirror image of the truck reflected through the XZ plane at Y = 0:
+
+
+----
+clone -m y 0 component
+----
+
+
+
+*Clone with xpush to absorb pre-existing matrices.* When the source hierarchy already contains instance matrices that would interfere with the placement transformation, use *--xpush* to flatten them before cloning:
+
+
+----
+clone --xpush -t 9000 0 0 component
+----
+
+
+
+*Regions-depth clone with automatic region ident assignment.* Use *--depth regions* to copy the full combination hierarchy down to region boundaries while sharing primitives. Each copy receives a distinct region ident, making all copies distinguishable during raytracing:
+
+
+----
+clone -n 3 -t 9000 0 0 --depth regions -g truck_row_regions component
+----
+
+
+
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
+
+

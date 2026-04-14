@@ -1079,13 +1079,15 @@ wgl_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
     }
 
     if (dmp->i->dm_top) {
-	/* Make xtkwin a toplevel window */
+	/* Make xtkwin a toplevel window.  Do NOT call wm deiconify here
+	 * because the native HWND does not exist yet — it is created later
+	 * by Tk_MakeWindowExist.  Calling wm deiconify before the HWND
+	 * exists is silently ignored on Windows, so the window would never
+	 * appear.  The deiconify is deferred until after Tk_MapWindow. */
 	Tcl_DString ds;
 
 	Tcl_DStringInit(&ds);
 	Tcl_DStringAppend(&ds, "toplevel ", -1);
-	Tcl_DStringAppend(&ds, bu_vls_addr(&dmp->i->dm_pathName), -1);
-	Tcl_DStringAppend(&ds, "; wm deiconify ", -1);
 	Tcl_DStringAppend(&ds, bu_vls_addr(&dmp->i->dm_pathName), -1);
 	if (Tcl_Eval(interp, Tcl_DStringValue(&ds)) != BRLCAD_OK) {
 	    Tcl_DStringFree(&ds);
@@ -1251,6 +1253,19 @@ wgl_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
     }
 
     Tk_MapWindow(pubvars->xtkwin);
+
+    /* Now that the native HWND exists (created above by Tk_MakeWindowExist)
+     * and the window has been mapped, explicitly deiconify so the window
+     * manager shows it.  This is the companion to removing the premature
+     * wm deiconify from the toplevel creation above. */
+    {
+	struct bu_vls deico = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&deico, "wm deiconify %s", bu_vls_addr(&dmp->i->dm_pathName));
+	if (Tcl_Eval(interp, bu_vls_cstr(&deico)) != BRLCAD_OK)
+	    bu_log("wgl_open: wm deiconify %s failed: %s\n",
+		   bu_vls_addr(&dmp->i->dm_pathName), Tcl_GetStringResult(interp));
+	bu_vls_free(&deico);
+    }
 
     Tk_CreateEventHandler(pubvars->xtkwin, VisibilityChangeMask, WGLEventProc, (ClientData)dmp);
 

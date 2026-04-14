@@ -144,7 +144,6 @@ static void wood_setup_2(struct wood_specific *);
  * Flags and useful offset declarations
  */
 
-#define WOOD_NULL ((struct wood_specific *)0)
 #define WOOD_O(m) bu_offsetof(struct wood_specific, m)
 
 #define EXPLICIT_VERTEX 1
@@ -154,7 +153,7 @@ static void wood_setup_2(struct wood_specific *);
  * Listhead for multi-region wood combinations
  */
 
-static struct wood_specific *Wood_Chain = WOOD_NULL;
+static struct wood_specific *Wood_Chain = NULL;
 
 /*
  * MATPARM parsing structure
@@ -273,7 +272,7 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
     wd->dk_rgb[2] =   0;
 
     wd->ident     = 0;
-    wd->forw      = WOOD_NULL;
+    wd->forw      = NULL;
     wd->rp	      = rp;
     wd->flags     = 0;
     wd->overlay   = 0;		/* Draw only one ring */
@@ -361,7 +360,7 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
 	VSETALL(c_min, 0);
 	VSETALL(c_max, 0);
 
-	for (wc = Wood_Chain; wc != WOOD_NULL; wc = wc->forw) {
+	for (wc = Wood_Chain; wc != NULL; wc = wc->forw) {
 	    if (wc->ident == wd->ident) {
 		VMIN(c_min, wc->b_min);
 		VMAX(c_max, wc->b_max);
@@ -373,7 +372,7 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
 	 * regions' min/max fields with the new values
 	 */
 
-	for (wc = Wood_Chain; wc != WOOD_NULL; wc = wc->forw) {
+	for (wc = Wood_Chain; wc != NULL; wc = wc->forw) {
 	    if (wc->ident == wd->ident) {
 		VMOVE(wc->b_min, c_min);
 		VMOVE(wc->b_max, c_max);
@@ -481,7 +480,7 @@ wood_free(void *cp)
 	return;
     }
 
-    for (wc = Wood_Chain; wc != WOOD_NULL; wc = wc->forw) {
+    for (wc = Wood_Chain; wc != NULL; wc = wc->forw) {
 	if (wc->forw == wd) {
 /* bu_log("wood_free(%s):  Releasing region.\n", wd->rp->reg_name); */
 	    wc->forw = wd->forw;

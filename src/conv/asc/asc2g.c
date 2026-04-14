@@ -1158,7 +1158,7 @@ materbld(void)
     b = (unsigned char)atoi(cp);
 
     /* Put it on a linked list for output later */
-    rt_color_addrec(low, hi, r, g, b, -1L);
+    db_mater_add(ofp->dbip, low, hi, r, g, b, -1L);
 }
 
 

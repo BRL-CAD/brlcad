@@ -56,6 +56,9 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 #include "bu/opt.h"
 #include "ged.h"
 
+#include <iomanip>
+#include <sstream>
+
 
 namespace
 {
@@ -100,15 +103,21 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     const char *debug_mode_string = "";
+    const char *plot_prefix_string = "";
+    int num_steps = 1;
+    long resume_flag = 0;
     const bu_opt_desc options_description[] = {
 	{NULL, "debug", "mode", bu_opt_str, &debug_mode_string, "set debug mode (example: --debug=aabb,contact,ray)"},
+	{NULL, "steps", "N", bu_opt_int, &num_steps, "run N incremental steps, updating geometry and saving state after each"},
+	{NULL, "plot", "prefix", bu_opt_str, &plot_prefix_string, "write .pl wireframe plot file(s) with the given filename prefix"},
+	{NULL, "resume", "", bu_opt_incr_long, &resume_flag, "resume from previously saved simulation state"},
 	BU_OPT_DESC_NULL
     };
 
     if (2 != bu_opt_parse(gedp->ged_result_str, argc - 1, &argv[1],
 			  options_description)) {
-	const simulate::AutoPtr<char> usage(const_cast<char *>(bu_opt_describe(
-								   const_cast<bu_opt_desc *>(options_description), NULL)));
+	const simulate::AutoPtr<char> usage(bu_opt_describe(
+						const_cast<bu_opt_desc *>(options_description), NULL));
 	bu_vls_printf(gedp->ged_result_str,
 		      "USAGE: %s [OPTIONS] path duration\nOptions:\n%s\n", argv[0], usage.ptr);
 	return BRLCAD_ERROR;
@@ -117,6 +126,10 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
     try {
 	const simulate::Simulation::DebugMode debug_mode =
 	get_debug_mode(debug_mode_string);
+
+	if (num_steps < 1)
+	    throw simulate::InvalidSimulationError("invalid value for 'steps': must be >= 1");
+
 	const fastf_t seconds = simulate::lexical_cast<fastf_t>(argv[2],
 								"invalid value for 'seconds'");
 
@@ -130,8 +143,22 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 	if (db_string_to_path(&path, gedp->dbip, argv[1]))
 	    throw simulate::InvalidSimulationError("invalid path");
 
-	simulate::Simulation simulation(*gedp->dbip, path);
-	simulation.step(seconds, debug_mode);
+	simulate::Simulation simulation(*gedp->dbip, path, resume_flag != 0);
+
+	const fastf_t step_seconds = seconds / num_steps;
+
+	for (int i = 0; i < num_steps; ++i) {
+	    simulation.step(step_seconds, debug_mode);
+	    simulation.saveState();
+
+	    if (*plot_prefix_string) {
+		std::ostringstream fname;
+		fname << plot_prefix_string << "_"
+		      << std::setfill('0') << std::setw(4) << (i + 1)
+		      << ".pl";
+		simulation.writePlotFile(fname.str());
+	    }
+	}
     } catch (const simulate::InvalidSimulationError &exception) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s", exception.what());
 	return BRLCAD_ERROR;

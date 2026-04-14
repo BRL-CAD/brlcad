@@ -1,0 +1,111 @@
+= STATUS(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+status - Without a subcommand, the *status* command returns the following information: current state, view size of the current display manager, the conversion factor from local model units to the base units (mm) stored in the database, and the view matrices of the current display manager.
+
+== SYNOPSIS
+
+[source]
+----
+status [subcommands]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Without a subcommand, the *status* command returns the following information: current state, view size of the current display manager, the conversion factor from local model units to the base units (mm) stored in the database, and the view matrices of the current display manager. *Status* accepts the following subcommands:
+
+
+*state*::
+Get the current state of MGED (i.e., VIEWING, SOL PICK, SOL EDIT, OBJ PICK, OBJ PATH, OBJ EDIT, or VERTPICK).
+
+
+*Viewscale*::
+Get the view scale.
+
+
+*base2local*::
+Get the conversion factor from base units (mm) to local units.
+
+
+*local2base*::
+Get the conversion factor from local units to base units (mm).
+
+
+*toViewcenter*::
+Get the matrix that describes the location of the view center.
+
+
+*Viewrot*::
+Get the matrix that describes the view orientation.
+
+
+*model2view*::
+Get the model to view conversion matrix.
+
+
+*view2model*::
+Get the view to model conversion matrix.
+
+
+*model2objview*::
+Get the model to view conversion matrix. This matrix also includes changes made during editing.
+
+
+*objview2model*::
+Get the view to model conversion matrix. This matrix also includes changes made during editing.
+
+
+*help*::
+Print the usage message.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+The three examples show the use of the *status* command with and without subcommands.
+
+.Get default information such as current state, view size of the current display manager, the conversion factor from local model units to the base units (mm) stored in the database, and the view matrices of the current display manager.
+[example]
+====
+mged>**status**
+
+Gets default information (i.e., state, view size, local2base, toViewcenter, Viewrot, model2view and view2model).
+
+====
+
+.Get the view rotation matrix.
+[example]
+====
+mged>**status Viewrot**
+
+Gets the view rotation matrix.
+
+====
+
+.Get the edit state.
+[example]
+====
+mged>**status state**
+
+Gets the edit state.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

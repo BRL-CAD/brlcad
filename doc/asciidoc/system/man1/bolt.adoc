@@ -1,0 +1,134 @@
+= BOLT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bolt - Creates a BRL-CAD .g file containing bolts.
+
+== SYNOPSIS
+
+[source]
+----
+bolt [options]...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bolt* is a program to create a BRL-CAD data base of one of four different kinds of bolts. Up to twenty-six bolts of one type and size may be created. *bolt* uses libwdb to create a database file. This program may be run interactively or the user may specify options on a command line. If the user chooses to run the program interactively he answers the questions as the program prompts him. Below are the options that can be used on the command line.
+
+
+[[options]]
+== OPTIONS
+
+
+*-o#*::
+Type of bolt to be created: 1=>bolt head; 2=>bolt head and washer; 3=>bolt head, washer, and bolt stem; and 4=>bolt head and bolt stem.
+
+
+*-f* _name.g_::
+BRL-CAD file name.
+
+
+*-n #*::
+The number of bolts to be created. This number must be less than or equal to 26 (or it will be set to 26).
+
+
+*-hd #*::
+Diameter of bolt head, flat edge to flat edge, in millimeters.
+
+
+*-hh #*::
+Height of bolt head in millimeters.
+
+
+*-wd #*::
+Diameter of washer in millimeters.
+
+
+*-wh #*::
+Height of washer in millimeters.
+
+
+*-sd #*::
+Diameter of bolt stem in millimeters.
+
+
+*-sh #*::
+Height of bolt stem in millimeters.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+.Interactive *bolt* Session
+[example]
+====
+
+
+
+....
+
+$ bolt
+Enter option:
+     1 - bolt head
+     2 - bolt head & washer
+     3 - bolt head, washer, & stem
+     4 - bolt head & stem
+1
+Enter name of mged file to be created (25 char max).
+     bolt.g
+Enter the number of bolts to be created (26 max).
+     3
+Enter diameter (flat edge to flat edge) & height of bolt head.
+     30 10
+
+option:  1 - bolt head
+file:  bolt.g
+head diameter:  30.000000, & height:  10.000000
+washer diameter:  0.000000, & height:  0.000000
+stem diameter:  0.000000, & height:  0.000000
+number of bolts:  3
+    
+....
+
+
+
+====
+
+.Single-Line *bolt* Command
+[example]
+====
+**bolt -o1 -fbolt.g -n3 -hd30 -hh10**
+
+====
+
+Both examples produce the same output - the bolt heads (option 1) are created with a diameter of 30mm and a height of 10mm in a database file called bolt.g.
+
+
+[[author]]
+== AUTHOR
+
+Susan A. Coates
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2005-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[see_also]]
+== SEE ALSO
+
+handle(1), window(1), window_frame(1), gastank(1)
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

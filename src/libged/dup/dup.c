@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "../../librt/librt_private.h"
 
 #include "../ged_private.h"
 
@@ -240,7 +241,7 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
     }
-    rt_mempurge(&(newdbp->dbi_freep));        /* didn't really build a directory */
+    rt_mempurge(&(newdbp->i->dbi_freep));        /* didn't really build a directory */
 
     _ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dcs.dup_dirp - dirp0), 0, 0);
     bu_vls_printf(gedp->ged_result_str, "\n -----  %d duplicate names found  -----", wdbp->wdb_num_dups);

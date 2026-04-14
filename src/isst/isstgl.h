@@ -31,6 +31,9 @@
 #ifndef ISSTGL_H
 #define ISSTGL_H
 
+// Mac has deprecated OpenGL since 10.14
+#define GL_SILENCE_DEPRECATION 1
+
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QPainter>

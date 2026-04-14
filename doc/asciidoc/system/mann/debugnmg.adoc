@@ -1,0 +1,47 @@
+= DEBUGNMG(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+debugnmg - Displays a list of all possible debug flags available for NMG processing.
+
+== SYNOPSIS
+
+[source]
+----
+debugnmg [hex_code]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *debugnmg* command with no options displays a list of all possible debug flags available for NMG processing. If the command is invoked with a hex number argument, that value is used as the new value for the _NMG_ debug flag. Similar debug commands for other _BRL-CAD_ libraries are *debuglib* for _librt_ and *debugbu* for _libbu_.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *debugnmg* with a hex code argument to set the NMG debug flag value.
+
+.Using the hex code argument to set the NMG debug flag value.
+[example]
+====
+mged>**debugnmg 100**
+
+Sets the _NMG_ debug flag to get details on the classification process.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

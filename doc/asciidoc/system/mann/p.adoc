@@ -1,0 +1,47 @@
+= P(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+p - Provides precise control over primitive editing operations that would normally be done using the mouse or knobs.
+
+== SYNOPSIS
+
+[source]
+----
+p {value1} [value2 value3]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Provides precise control over primitive editing operations that would normally be done using the mouse or knobs. For example, a shape rotate may be performed by selecting _rotate_ from the primitive edit menu, then providing the rotation angles with the *p* command. A command of *p 0 30 0* would rotate the edited shape through 30° about the _y_ axis. Similarly, many of the individual parameters of the edited shape may be set exactly using the *p* command. If the _scale H_ menu item is selected while editing a TGC, then the _value1_ supplied with a *p* command specifies the actual length of the height vector for that TGC. This method is the recommended technique to set precise values for shape parameters. The *translate* and *rotobj* commands provide a similar capability for object editing.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *p* command to precisely set the currently selected shape parameter of the currently edited shape.
+
+.Set the currently selected shape parameter of the currently edited shape.
+[example]
+====
+mged>**p 30**
+
+Sets the currently selected shape parameter of the currently edited shape to 30 units.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

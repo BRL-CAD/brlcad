@@ -1,0 +1,162 @@
+= DM(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+dm - Provides a means to interact with the display manager at a lower level.
+
+== SYNOPSIS
+
+[source]
+----
+dm {subcommand} [args]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Provides a means to interact with the display manager at a lower level. The *dm* command accepts the following subcommands:
+
+
+*set* _var_ _val_::
+The "set" subcommand provides a means to set or query display manager-specific variables. Invoked without any arguments, the _set_ subcommand will return a list of all available internal display manager variables. If only the _var_ argument is specified, the value of that variable is returned. If both _var_ and _val_ are given, then _var_ will be set to _val_.
+
+
+*size* _width height_::
+The "size" subcommand provides a means to set or query the window size. If no arguments are given, the display manager's window size is returned. If _width_ and _height_ are specified, the display manager makes a request to have its window resized. Note that a size request is just that, a request, so it may be ignored, especially if the user has resized the window using the mouse.
+
+
+*m* _button_ _x y_::
+The "m" subcommand is used to simulate an *M* command. The _button_ argument determines which mouse button is being used to trigger a call to this command. This value is used in the event handler to effect dragging the faceplate scrollbars. The _x_ and _y_ arguments are in X screen coordinates, which are converted to MGED screen coordinates before being passed to the *M* command.
+
+
+*am* [r] [t] [s] _xy_::
+The "am" subcommand effects _mged's_ alternate mouse mode. The alternate mouse mode gives the user a different way of manipulating the view or an object. For example, the user can drag an object or perhaps rotate the view while using the mouse. The first argument indicates the type of operation to perform (i.e., _r_ for rotation, _t_ for translation, and _s_ for scale). The _x_ and _y_ arguments are in X screen coordinates and are transformed appropriately before being passed to the knob command.
+
+
+*adc* [1] [2] [t] [d] _xy_::
+The "adc" subcommand provides a way of manipulating the angle distance cursor while using the mouse. The first argument indicates the type of operation to perform (i.e., _1_ for angle 1, _2_ for angle 2, _t_ for translate, and _d_ for tick distance). The _x_ and _y_ arguments are in X screen coordinates and are transformed appropriately before being passed to the *adc* command (i.e., not "dm adc").
+
+
+*con* [r] [t] [s] [x] [y] [z] _xpos ypos_::
+This form of the "con" subcommand provides a way to effect constrained manipulation of the view or an object while using the mouse. This simulates the behavior of sliders without taking up screen real estate. The first argument indicates the type of operation to perform (i.e., _r_ for rotation, _t_ for translation, and _s_ for scale). The <_x_|_y_|_z_> argument is the axis of rotation, translation, or scale. The _xpos_ and _ypos_ arguments are in X screen coordinates and are transformed appropriately before being passed to the knob command.
+
+
+*con* [a] [x] [y] [1] [2] [d] _xpos ypos_::
+This form of the "con" subcommand provides a way to effect constrained manipulation of the angle distance cursor while using the mouse. This simulates the behavior of sliders without taking up screen real estate. The first argument indicates that this is to be applied to the angle distance cursor. The next argument indicates the type of operation to perform (i.e., _x_ for translate in the _x_ direction, _y_ for translate in the _y_ direction, _1_ for angle 1, _2_ for angle 2, and _d_ for tick distance). The _xpos_ and _ypos_ arguments are in X screen coordinates and are transformed appropriately before being passed to the knob command.
+
+
+*valid* [ogl] [X] [wgl] [rtgl] [...]::
+The "valid" subcommand provides a way to determine if a particular type of display manager (X Windows, OpenGL, etc.) is available - if the display manager type is supported the string denoting that type (X, ogl, etc.) is returned back, otherwise nothing is returned.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+The examples show the use of the *dm* command with its various subcommands as presented in the Description section.
+
+.List the available display manager internal variables.
+[example]
+====
+mged>**dm set**
+
+Lists the available display manager internal variables.
+
+====
+
+.Turn on perspective projection in the display using _var_ and _val_ arguments.
+[example]
+====
+mged>**dm set perspective 1**
+
+Turns on perspective projection in the display.
+
+====
+
+.Query the display manager's window size.
+[example]
+====
+mged>**dm size**
+
+The display manager's window size is returned.
+
+====
+
+.Resize the display manager window.
+[example]
+====
+mged>**dm size 900 900**
+
+The display manager window is resized to 900 x 900.
+
+====
+
+.Simulate a button2 press at specific screen coordinates.
+[example]
+====
+mged>**dm m 2 100 200**
+
+Simulates a button2 press at (100, 200) in X screen coordinates.
+
+====
+
+.Use the alternate mouse mode to rotate an image.
+[example]
+====
+mged>**dm am r 400 100**
+
+Starts an alternate mouse mode rotation at (400, 100).
+
+====
+
+.Start a tick distance manipulation with the mouse.
+[example]
+====
+mged>**dm adc d 300 200**
+
+Starts a tick distance manipulation at (300, 200).
+
+====
+
+.Start a constrained translation down the Z axis using the mouse.
+[example]
+====
+mged>**dm con t z 200 200**
+
+Starts a constrained translation down the Z axis.
+
+====
+
+.Start a constrained tick distance manipulation using the mouse.
+[example]
+====
+mged>**dm con a d 200 100**
+
+Starts a constrained tick distance manipulation.
+
+====
+
+.End the mouse drag.
+[example]
+====
+mged>**dm idle**
+
+Ends the drag.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

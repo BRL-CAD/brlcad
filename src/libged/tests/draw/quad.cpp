@@ -96,6 +96,12 @@ dm_refresh(struct ged *gedp, int vnum)
     bvs->redraw(NULL, uset, 1);
 
     struct dm *dmp = (struct dm *)v->dmp;
+    /* Ensure rendering goes to this view's DM context, not the last-active one.
+     * With multiple DMs (e.g. quad views), each has its own OSMesa context.
+     * Without making the correct context current here, dm_set_bg and
+     * dm_draw_objs will operate on whichever context was last activated,
+     * leaving this view's buffer empty when swrast_getDisplayImage reads it. */
+    dm_make_current(dmp);
     unsigned char *dm_bg1;
     unsigned char *dm_bg2;
     dm_get_bg(&dm_bg1, &dm_bg2, dmp);

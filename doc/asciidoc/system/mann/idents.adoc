@@ -1,0 +1,55 @@
+= IDENTS(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+idents - Places a summary of the regions in the list of _objects_ specified in the file specified.
+
+== SYNOPSIS
+
+[source]
+----
+idents {file_name} {objects}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Places a summary of the regions in the list of _objects_ specified in the file specified. If any regions include other regions, then only the first encountered region in that tree will be listed. The resulting file will contain two lists of regions, one in the order encountered in the list of objects, and the other ordered by ident number. The data written for each region includes (in this order) a sequential region count, the ident number, the air code, the material code, the LOS, and the path to the region.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *idents* command to create a file that will list all regions in specified objects.
+
+.Create a file that lists all regions contained in specified objects.
+[example]
+====
+
+mged> **idents regions_file group1 group2 region3**::
+Creates a file named __regions_file__ and lists all the regions in _group1, group2,_ and _region3_ in the file.
+
+
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*idents*(5).
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

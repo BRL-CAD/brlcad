@@ -1,0 +1,151 @@
+= ATTR(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+material - Used to create, change, retrieve, assign, import, or view materials and their properties.
+
+== SYNOPSIS
+
+[source]
+----
+material assign {object_name_pattern} {material_name}
+----
+
+
+[source]
+----
+material create {object_name_pattern} {material_name}
+----
+
+
+[source]
+----
+material import [--id | --name] {file_name}
+----
+
+
+[source]
+----
+material get {object_name_pattern} [property_group_name] {property_name}
+----
+
+
+[source]
+----
+material remove {object_name_pattern} [property_group_name] {property_name}
+----
+
+
+[source]
+----
+material set {object_name_pattern} [property_group_name] {property_name} {property_value}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Used to create, change, retrieve, assign, import, or view materials and their properties. Note that properties and property materials are cases sensitive and should not contain whitespace.
+
+A newly formed material will have a minimum of the following data set on creation:
+
+
+
+
+* name
+
+
+
+Material objects are made up of a name (seperate from the object name), parent value, and source value. All of which are variable length strings.
+
+In addition to the three variable length string properties, material objects also contain four key-value lists used for storing additional material information:
+
+
+* physical
+* mechanical
+* optical
+* thermal
+
+
+
+
+[[attr_subcommands]]
+== SUB-COMMANDS
+
+
+*assign*::
+Set the material_name property of the specified object to the specified material. Operates similarly to attr set.
+
+
+*create*::
+Initalize a new material and sets the name property to the value specified.
+
+
+*destroy*::
+Destroy the material object.
+
+
+*get*::
+Retrieve a property of the material, optionally from one of the material's four material groups.
+
+
+*import*::
+Import a density file's entries into material objects. --id denotes the material object names will be the id of the entry in the density table, --name the name of the entry in the density file.
+
+
+*remove*::
+Remove a material property from the object. (In the case of name, parent, and source this merely sets those values to NULL).
+
+
+*set*::
+Set a material property on the object, optionally from one of the material's four material groups.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+The examples demonstrate the use of the *material* command and subcommands.
+
+.Import a density file to material objects.
+[example]
+====
+
+mged> **material import --id .density**::
+Imports the density file _.density_ to material objects and names the objects based on the file's ids.
+
+
+
+====
+
+.Get the density attribute of the material "copper" within the physical property group.
+[example]
+====
+
+mged> **material get copper physical density**::
+Outputs the value of density.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2008-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

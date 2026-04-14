@@ -92,6 +92,42 @@ rt_edit_hyp_menu_item(const struct bn_tol *UNUSED(tol))
     return hyp_menu;
 }
 
+/* ft_edit_desc descriptor for the Hyperboloid of One Sheet primitive */
+
+static const struct rt_edit_param_desc hyp_h_params[] = {
+    { "h", "Height (magnitude)", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "length", 0, NULL, NULL, NULL }
+};
+static const struct rt_edit_param_desc hyp_a_params[] = {
+    { "a", "Semi-Axis A", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "length", 0, NULL, NULL, NULL }
+};
+static const struct rt_edit_param_desc hyp_b_params[] = {
+    { "b", "Semi-Axis B", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
+      "length", 0, NULL, NULL, NULL }
+};
+static const struct rt_edit_param_desc hyp_c_params[] = {
+    { "c", "Neck Ratio c (0..1)", RT_EDIT_PARAM_SCALAR, 0, 1e-10, 1.0,
+      "fraction", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_cmd_desc hyp_cmds[] = {
+    { ECMD_HYP_H,       "Set H",  "geometry", 1, hyp_h_params, 1, 10 },
+    { ECMD_HYP_SCALE_A, "Set A",  "geometry", 1, hyp_a_params, 1, 20 },
+    { ECMD_HYP_SCALE_B, "Set B",  "geometry", 1, hyp_b_params, 1, 30 },
+    { ECMD_HYP_C,       "Set c",  "geometry", 1, hyp_c_params, 1, 40 },
+};
+
+static const struct rt_edit_prim_desc hyp_prim_desc = {
+    "hyp", "Hyperboloid of One Sheet", 4, hyp_cmds
+};
+
+const struct rt_edit_prim_desc *
+rt_edit_hyp_edit_desc(void)
+{
+    return &hyp_prim_desc;
+}
+
 #define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 
 void
@@ -316,9 +352,13 @@ ecmd_hyp_rot_h(struct rt_edit *s)
 	bn_mat_mul(mat1, edit, s->e_mat);
 	bn_mat_mul(mat, s->e_invmat, mat1);
 
-	MAT4X3VEC(hyp->hyp_Hi, mat, hyp->hyp_Hi);
+	vect_t Hi_tmp;
+	VMOVE(Hi_tmp, hyp->hyp_Hi);
+	MAT4X3VEC(hyp->hyp_Hi, mat, Hi_tmp);
     } else {
-	MAT4X3VEC(hyp->hyp_Hi, s->incr_change, hyp->hyp_Hi);
+	vect_t Hi_tmp;
+	VMOVE(Hi_tmp, hyp->hyp_Hi);
+	MAT4X3VEC(hyp->hyp_Hi, s->incr_change, Hi_tmp);
     }
 
     MAT_IDN(s->incr_change);
@@ -370,24 +410,16 @@ int
 rt_edit_hyp_edit(struct rt_edit *s)
 {
     switch (s->edit_flag) {
-	case RT_PARAMS_EDIT_SCALE:
-	    /* scale the solid uniformly about its vertex point */
-	    return edit_sscale(s);
-	case RT_PARAMS_EDIT_TRANS:
-	    /* translate solid */
-	    edit_stra(s);
-	    break;
-	case RT_PARAMS_EDIT_ROT:
-	    /* rot solid about vertex */
-	    edit_srot(s);
-	    break;
+	case ECMD_HYP_H:
+	case ECMD_HYP_SCALE_A:
+	case ECMD_HYP_SCALE_B:
+	case ECMD_HYP_C:
+	    return rt_edit_hyp_pscale(s);
 	case ECMD_HYP_ROT_H:
 	    return ecmd_hyp_rot_h(s);
 	default:
-	    return rt_edit_hyp_pscale(s);
+	    return edit_generic(s);
     }
-
-    return 0;
 }
 
 int
@@ -397,9 +429,6 @@ rt_edit_hyp_edit_xy(
         )
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
-    struct rt_db_internal *ip = &s->es_int;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     switch (s->edit_flag) {
         case RT_PARAMS_EDIT_SCALE:
@@ -415,18 +444,8 @@ rt_edit_hyp_edit_xy(
             edit_stra_xy(&pos_view, s, mousevec);
             edit_abs_tra(s, pos_view);
             return 0;
-        case RT_PARAMS_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
         default:
-            bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
+            return edit_generic_xy(s, mousevec);
     }
 }
 

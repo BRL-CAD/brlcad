@@ -74,7 +74,7 @@ solid_set_color_info(
     sp->s_old.s_basecolor[GRN] = bcolor[GRN];
     sp->s_old.s_basecolor[BLU] = bcolor[BLU];
 
-    color_soltab(sp);
+    color_soltab(tsp ? tsp->ts_dbip : NULL, sp);
 }
 
 

@@ -351,7 +351,14 @@ desc_1(const char *cgy, int test_num)
 	    case 5:
 		ac = 1;
 		av[0] = "-?4";
-		EXPECT_FAILURE("print_help", "extra arg");
+		/* "-?4": first char '?' is a known flag, '4' is not.
+		 * bu_opt_parse now treats such partially-known grouped
+		 * flag strings as unknown positional args (rather than
+		 * a fatal parse error) so that GED sub-command tokens
+		 * like "-print" pass through unmolested.  The flag
+		 * variable is NOT set because the whole token is
+		 * discarded without processing any flags from it. */
+		EXPECT_SUCCESS_INT_UNKNOWN("print_help", print_help, 0);
 		break;
 	    case 6:
 		ac = 2;
@@ -362,7 +369,11 @@ desc_1(const char *cgy, int test_num)
 	    case 7:
 		ac = 1;
 		av[0] = "-?=4";
-		EXPECT_FAILURE("print_help", "extra arg");
+		/* "-?=4": '?' is a known flag, '=' is not, so opt_process
+		 * returns -1 (grouped-flag with unrecognized char).  Same
+		 * as case 5, the whole token becomes an unknown positional
+		 * arg and the flag variable is left unset. */
+		EXPECT_SUCCESS_INT_UNKNOWN("print_help", print_help, 0);
 		break;
 	    case 8:
 		ac = 1;

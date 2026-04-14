@@ -1,0 +1,62 @@
+= BRLMAN(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+brlman - a manual page viewer for BRL-CAD
+
+== SYNOPSIS
+
+[source]
+----
+brlman [options]... [manpage]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*brlman* provides manual page viewing capabilities for BRL-CAD's programs, commands, libraries, and conventions (such as file formats and attribute standards.) On Unix-type systems, its default behavior is to wrap the system *man* command with the appropriate path information to allow man to find and display BRL-CAD's man pages. On systems without a *man* command, *brlman* will instead launch a Tcl/Tk based graphical view that displays html versions of the manual pages. Both versions are generated from the same DocBook source files and contain the same information.
+
+
+[[brlman_options]]
+== OPTIONS
+
+
+*-h*::
+Prints help.
+
+
+*-g*::
+Instructs *brlman* to use its graphical man page viewer.
+
+
+*-L*::
+Specify a language to use when selecting man pages.
+
+
+*-S [1|3|5|n]*::
+Specify a particular section to use when searching for a man page. Useful when there are programs and MGED commands with the same names - the default man page returned will be that of the program (i.e., section 1), so *-S* can be used to specify the GED command (i.e., section n) page instead.  Allowed sections are 1 (programs), 3 (libraries), 5 (conventions/formats), and n (GED commands).
+
+
+*--no-gui*::
+Instructs *brlman* _not_ to use its graphical man page viewer, even in situations where there is no command line option. Primarily useful in scripting situations.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2016-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

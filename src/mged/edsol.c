@@ -45,7 +45,7 @@
 #include "./mged_dm.h"
 #include "./menu.h"
 
-extern void pipe_split_pnt(struct bu_list *, struct wdb_pipe_pnt *, point_t);
+extern void pipe_split_pnt(struct bu_list *, struct wdb_pipe_pnt *, fastf_t *);
 extern struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
 
 static void init_sedit_vars(struct mged_state *), init_oedit_vars(struct mged_state *), init_oedit_guts(struct mged_state *);

@@ -1,0 +1,54 @@
+= PIXRECT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixrect - extract a rectangle from a color pix file
+
+== SYNOPSIS
+
+[source]
+----
+pixrect [-s squaresize] [-w width] [-n height] [-S out_squaresize] [-W out_width] [-N out_height] [-x xorig] [-y yorig] [-o out_file.pix] file.pix > [out_file.pix]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixrect* extracts a rectangular region from a colored *pix*(5) format file. The default input image size is 512x512. The x,y coordinates of the origin (the default xorig=0, yorig=0 corresponds to the lower left corner) are passed as command line arguments.
+
+The *-w* _file_width_ flag specifies the width of each scanline in the input file, in pixels. *-W* _scr_width_ does the same for the display device.
+
+The *-n* _file_height_ and *-N* _scr_height_ flags specifies the height in scanlines of the input file or display device respectively.
+
+*-s* _squarefilesize_ and *-S* _squarescrsize_ set both the height and width to the size given (for input file and display device respectively).
+
+*-o* _out_file.pix_ is a way of specifying output file name.
+
+This utility supports redirected input/output images.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *bwrect*(1), *pix*(5), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

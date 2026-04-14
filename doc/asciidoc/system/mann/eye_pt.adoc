@@ -1,0 +1,49 @@
+= EYE_PT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+eye_pt - Positions the _eye point_ to the given _x, y,_ and _z_ coordinates. Without arguments, returns the current eye point.
+
+== SYNOPSIS
+
+[source]
+----
+eye_pt [x y z]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Positions the _eye point_ to the given _x, y,_ and _z_ coordinates (in local units). If no options are provided, returns the current eye point. See also the *view* command.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *eye_pt* command to situate the eye point at a specified coordinate position.
+
+.Situate the eye point at a specified coordinate position.
+[example]
+====
+
+mged> **eye_pt 100 0 0**::
+The eye point is located at 100 mm along the _x_ axis.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

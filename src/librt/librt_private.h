@@ -38,10 +38,12 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 
-/* approximation formula for the circumference of an ellipse */
+/* Ramanujan approximation for the circumference of an ellipse with semi-axes a, b.
+ * Formula: pi*(a+b) * [1 + 3*h / (10 + sqrt(4 - 3*h))]  where h = ((a-b)/(a+b))^2
+ * Note: only the 3*h term is divided by (10+sqrt(...)), NOT the whole (1+3*h). */
 #define ELL_CIRCUMFERENCE(a, b) M_PI * ((a) + (b)) * \
-    (1.0 + (3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b))))) \
-    / (10.0 + sqrt(4.0 - 3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b)))))
+    (1.0 + (3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b)))) \
+    / (10.0 + sqrt(4.0 - 3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b))))))
 
 /* logic to ensure bboxes are not degenerate in any dimension - zero thickness
  * bounding boxes will get missed by the raytracer */
@@ -63,11 +65,6 @@
 
 __BEGIN_DECLS
 
-// TODO - eventually, all the "LIBRT ONLY" elements in db_i should move here.
-// The librt prep caching container should also go here.
-//
-// At the moment, it is just an experiment to put drawing related object data
-// caches in the db_i.
 struct db_i_internal {
     uint32_t dbi_magic;
 
@@ -80,6 +77,30 @@ struct db_i_internal {
     // in here and add a pointer slot to it for rt_db_internal
     // so the librt point generation routines can take advantage
     // of cached prep even if they're using an inmem db...
+
+    /* Per-database region-id color table (replaces former material_head global) */
+    struct mater *material_head;
+
+    /* PRIVATE fields previously in struct db_i (LIBRT ONLY, MAY CHANGE) */
+    struct directory * dbi_Head[RT_DBNHASH]; /**< @brief object hash table */
+    FILE * dbi_fp;                      /**< @brief standard file pointer */
+    b_off_t dbi_eof;                    /**< @brief End+1 pos after db_scan() */
+    size_t dbi_nrec;                    /**< @brief # records after db_scan() */
+    int dbi_dir_built;                  /**< @brief set to 1 when db_dirbuild() has completed */
+    int dbi_uses;                       /**< @brief # of uses of this struct */
+    struct mem_map * dbi_freep;         /**< @brief map of free granules */
+    void *dbi_inmem;                    /**< @brief ptr to in-memory copy */
+    struct animate * dbi_anroot;        /**< @brief heads list of anim at root lvl */
+    struct bu_mapped_file * dbi_mf;     /**< @brief Only in read-only mode */
+    struct bu_ptbl dbi_clients;         /**< @brief List of rtip's using this db_i */
+    int dbi_version;                    /**< @brief use db_version(); negative for flipped v4 */
+    struct rt_wdb * dbi_wdbp;           /**< @brief disk rt_wdb */
+    struct rt_wdb * dbi_wdbp_a;         /**< @brief disk append-only rt_wdb */
+    struct rt_wdb * dbi_wdbp_inmem;     /**< @brief inmem rt_wdb */
+    struct rt_wdb * dbi_wdbp_inmem_a;   /**< @brief inmem append-only rt_wdb */
+    struct bu_ptbl dbi_changed_clbks;     /**< @brief dbi_changed_t callbacks */
+    struct bu_ptbl dbi_update_nref_clbks; /**< @brief dbi_update_nref_t callbacks */
+    int dbi_use_comb_instance_ids;        /**< @brief flag for comb instance tracking */
 };
 
 struct db_i_internal * db_i_internal_create(void);

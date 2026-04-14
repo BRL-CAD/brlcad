@@ -1,0 +1,47 @@
+= COPYMAT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+copymat - Copies the transformation matrix from a member of one combination to the member of another.
+
+== SYNOPSIS
+
+[source]
+----
+copymat {comb1/memb1 comb2/memb2}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Copies the transformation matrix from a member of one combination to the member of another.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *copymat* command to set the matrix for a member in one combination equal to the matrix for another member in another combination.
+
+.Set the matrix for a member in one combination equal to the matrix for another member in another combination.
+[example]
+====
+mged>**copymat comb1/memb1 comb2/memb2**
+
+Sets the matrix for member _memb2_ in combination _comb2_ equal to the matrix for member _memb1_ in combination _comb1_.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,74 @@
+= PIXBACKGND(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixbackgnd - generate a pix(5) shaded background
+
+== SYNOPSIS
+
+[source]
+----
+pixbackgnd [-H] [-i] [-s squaresize] [-w width] [-n height] [-t title_height] [-a top_inten] [-b bottom_inten] hue saturation > file.pix
+----
+
+
+[source]
+----
+pixbackgnd [-H] [-i] [-s squaresize] [-w width] [-n height] [-t title_height] red green blue > file.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixbackgnd* generates a *pix*(5) format shaded background on stdout suitable for making slides for a presentation on. The upper portion of the screen is reserved for a title area, and is drawn at constant intensity 240, followed by a 4 scanline white bar, after which the intensity smoothly decreases from 240 to 50. The values of _hue_ and _saturation_ range from 0 to 255 inclusive and can be selected via *fbcolor*(1). A hue of 160 is a pleasing blue.
+
+The *-a* and *-b* options can be used to set the top and bottom intensity, in the range of 0 to 255. By default, the top intensity is 240, and the bottom is 50 (these values are used above).
+
+*-w* and *-n* options set the width and height, respectively; *-s* sets them to the same value. By default, the display is assumed to be 512x512 pixels; specifying the *-H* flag, in addition to changing the title height to 90 scanlines (see below), changes the output size to 1024x1024.
+
+By default, the title height is 80 scanlines, or 90 scanlines if the *-H* flag is set, but the *-t* _title_height_ option may be used to specify another value. If __title_height__ is set to zero, then the white bar is omitted as well, and the entire display is smoothly shaded.
+
+If the *-i* flag is specified, the scanlines will be written out in inverted order (i.e., top to bottom).
+
+
+[[examples]]
+== EXAMPLES
+
+pixbackgnd 160 200 | pixmerge fg.pix - | pix-fb
+
+pixbackgnd -t120 160 250
+
+pixbackgnd -i -t0 160 200 | pix-fb
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbcolor*(1), *pix-fb*(1), *pixmerge*(1)
+
+
+[[bugs]]
+== BUGS
+
+The starting and ending intensities should probably be an option.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

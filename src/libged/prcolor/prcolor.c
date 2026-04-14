@@ -111,12 +111,12 @@ ged_prcolor_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (rt_material_head() == MATER_NULL) {
+    if (db_mater_head(gedp->dbip) == MATER_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "none");
 	return BRLCAD_OK;
     }
 
-    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw)
+    for (mp = db_mater_head(gedp->dbip); mp != MATER_NULL; mp = mp->mt_forw)
 	pr_mater(gedp, mp, &col_count, &col_len);
 
     return BRLCAD_OK;

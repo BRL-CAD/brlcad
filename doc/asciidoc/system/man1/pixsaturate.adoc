@@ -1,0 +1,44 @@
+= PIXSATURATE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixsaturate - saturate a pix file
+
+== SYNOPSIS
+
+[source]
+----
+pixsaturate saturation < infile.pix > outfile.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixsaturate* saturates a color pix file using the *saturation* value. A value of 0 gives monochrome, 1.0 gives the original image, and values larger than 1.0 give a more saturated image.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix*(5), *pixfade*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1991-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -28,27 +28,27 @@
 #include "bu/malloc.h"
 
 void
-free_scanlines(int height, struct scanline* scanline)
+free_scanlines(int nlines, struct scanline* sl)
 {
     register int y;
 
-    for (y = 0; y < height; y++)  {
-	if (scanline[y].sl_buf)  {
-	    bu_free(scanline[y].sl_buf, "sl_buf scanline buffer");
-		scanline[y].sl_buf = (unsigned char *) 0;
+    for (y = 0; y < nlines; y++)  {
+	if (sl[y].sl_buf)  {
+	    bu_free(sl[y].sl_buf, "sl_buf scanline buffer");
+		sl[y].sl_buf = (unsigned char *) 0;
 	}
     }
-    bu_free((char*) scanline, "struct scanline[height]");
-    scanline = (struct scanline*) 0;
+    bu_free((char*) sl, "struct scanline[height]");
+    sl = (struct scanline*) 0;
 }
 
 struct scanline *
-alloc_scanlines(int height)
+alloc_scanlines(int nlines)
 {
     struct scanline *temp;
 
 	temp = (struct scanline *)bu_calloc(
-	    height, sizeof(struct scanline),
+	    nlines, sizeof(struct scanline),
 	    "struct scanline[height]" );
     return temp;
 }

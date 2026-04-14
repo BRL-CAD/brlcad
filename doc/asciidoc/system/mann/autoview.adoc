@@ -1,0 +1,47 @@
+= AUTOVIEW(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+autoview - Displays all objects within the view.
+
+== SYNOPSIS
+
+[source]
+----
+autoview
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Resets the view size and the view center such that all displayed objects are within the view.
+
+
+[[examples]]
+== EXAMPLES
+
+.Reset view size and center so that all displayed objects are within the view.
+[example]
+====
+
+mged> **autoview**::
+The view resets so that all objects displayed can be seen.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

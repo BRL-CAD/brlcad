@@ -47,7 +47,18 @@ set(BG_INCLUDE_DIRS
   ${SPSR_INCLUDE_DIR}
   )
 
-brlcad_addlib(libbg "${LIBBG_SOURCES}" "${BG_LIBS}" "" "${BG_INCLUDE_DIRS}")
+brlcad_addlib(libbg "${LIBBG_SOURCES}" "${BG_LIBS}" "" "${BG_INCLUDE_DIRS}"
+  # These files define macros that conflict when batched into the same unity TU:
+  # - polygon.c, polygon_triangulate.cpp, trimesh_isect.cpp, trimesh_plot3.cpp:
+  #   all define PLOT_PREFIX_STR to remap plot3 function names, causing
+  #   -Werror redefinition errors and unresolved bg_plot3_* symbols.
+  UNITY_BUILD_SKIP
+    polygon.c
+    polygon_triangulate.cpp
+    spsr.cpp
+    trimesh_isect.cpp
+    trimesh_plot3.cpp
+)
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 # enable /bigobj for spsr.cpp if we can
@@ -83,7 +94,10 @@ set(
   nanoflann.hpp
   pointgen.c
   predicates.h
-  )
+  GTE/Mathematics/BotSmooth.h
+  GTE/Mathematics/BotSubdivide.h
+  GTE/Mathematics/TriMesh.h
+)
 
 cmakefiles(${bg_ignore})
 cmakefiles(CMakeLists.txt)

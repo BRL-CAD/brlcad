@@ -1,0 +1,52 @@
+= G-VOXEL(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+g-voxel - generates a list of voxels from a BRL-CAD database
+
+== SYNOPSIS
+
+[source]
+----
+g-voxel [ -s "dx dy dz"] [-d n] [-t f] model.g objects...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *g-voxel* command generates a list of voxels from a .g file (BRL-CAD database) and writes them to a voxels.txt file.
+
+The command takes two compulsory arguments: a BRL-CAD database and at least one geometry object (though there can be as many of the latter as you like).
+
+
+[[options]]
+== OPTIONS
+
+
+*-s "dx dy dz"*::
+The voxel's size in the x, y and z axes.
+
+
+*-d n*::
+The level of detail used (influences the number of rays used).
+
+
+*-t f*::
+The threshold upon which the voxel is considered.
+
+
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2025 United States Government as represented by the U.S. Army Research Laboratory. Al rights reserved.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team

@@ -23,6 +23,420 @@
 #
 ##
 
+# ---------------------------------------------------------------------------
+# Helper procs migrated from pattern.tcl (which has been eliminated).
+# These were pattern.tcl's only public consumers.
+# ---------------------------------------------------------------------------
+
+namespace eval cadwidgets {
+    if {![info exists ged]} {
+	set ged db
+    }
+
+    if {![info exists mgedFlag]} {
+	set mgedFlag 1
+    }
+}
+
+if {![info exists local2base]} {
+    set local2base 1.0
+}
+
+# _clone_invoke: dispatch 'clone' to the right command based on context
+proc _clone_invoke { args } {
+    if {$::cadwidgets::mgedFlag} {
+	return [eval clone $args]
+    } else {
+	return [eval $::cadwidgets::ged clone $args]
+    }
+}
+
+# _clone_progress_update: universal per-step progress handler.
+# Called by MGED's BU_CLBK_DURING mechanism with the current clone count
+# and total expected count supplied by the C clone implementation.
+# On the first step (current == 1) the feedback widget is reset and
+# configured with the correct total; every call advances it by one step.
+#   widget  - iwidgets::feedback widget path
+#   current - 1-based index of the clone just created
+#   total   - total number of clones expected for the whole operation
+proc _clone_progress_update { widget current total } {
+    if { $current == 1 } {
+	$widget reset
+	$widget configure -steps $total
+    }
+    $widget step
+}
+
+proc exists_wrapper {args} {
+    if {$::cadwidgets::mgedFlag} {
+	eval exists $args
+    } else {
+	eval $::cadwidgets::ged exists $args
+    }
+}
+
+proc regdef_wrapper {args} {
+    if {$::cadwidgets::mgedFlag} {
+	eval regdef $args
+    } else {
+	eval $::cadwidgets::ged regdef $args
+    }
+}
+
+# pattern_rect: build a rectangular grid of clones.
+proc pattern_rect { args } {
+    set usage "Usage:\n\tpattern_rect \[-top|-regions|-primitives\] \[-g group_name\] \
+		 \[-xdir { x y z }\] \[-ydir { x y z }\] \[-zdir { x y z }\] \
+		\[-nx num_x -dx delta_x | -lx list_of_x_values\]\n\t\t \
+		\[-ny num_y -dy delta_y | -ly list_of_y_values\] \[-nz num_z -dz delta_z | -lz list_of_z_values\] \
+		\[-s source_string replacement_string\] \[-i increment\]  object1 \[object2 object3 ...\]"
+
+    set opt_str ""
+    set group_name ""
+    set index 0
+    set depth top
+    set xdir {1 0 0}
+    set ydir {0 1 0}
+    set zdir {0 0 1}
+    set num_x 0
+    set num_y 0
+    set num_z 0
+    set delta_x 0
+    set delta_y 0
+    set delta_z 0
+    set list_x {}
+    set list_y {}
+    set list_z {}
+    set sstr ""
+    set rstr ""
+    set increment 0
+    set objs {}
+    set feed_name ""
+    set argc [llength $args]
+    while { $index < $argc } {
+	set opt [lindex $args $index]
+	switch -- $opt {
+	    "-top"        { set depth top;        incr index }
+	    "-regions"    { set depth regions;    incr index }
+	    "-primitives" { set depth primitives; incr index }
+	    "-g" {
+		incr index; set group_name [lindex $args $index]; incr index
+	    }
+	    "-xdir" { incr index; set xdir [lindex $args $index]; incr index }
+	    "-ydir" { incr index; set ydir [lindex $args $index]; incr index }
+	    "-zdir" { incr index; set zdir [lindex $args $index]; incr index }
+	    "-nx"   { incr index; set num_x   [lindex $args $index]; incr index }
+	    "-ny"   { incr index; set num_y   [lindex $args $index]; incr index }
+	    "-nz"   { incr index; set num_z   [lindex $args $index]; incr index }
+	    "-dx"   { incr index; set delta_x [lindex $args $index]; incr index }
+	    "-dy"   { incr index; set delta_y [lindex $args $index]; incr index }
+	    "-dz"   { incr index; set delta_z [lindex $args $index]; incr index }
+	    "-lx"   { incr index; set list_x  [lindex $args $index]; incr index }
+	    "-ly"   { incr index; set list_y  [lindex $args $index]; incr index }
+	    "-lz"   { incr index; set list_z  [lindex $args $index]; incr index }
+	    "-s" {
+		incr index
+		set sstr [lindex $args $index]
+		incr index
+		set rstr [lindex $args $index]
+		incr index
+	    }
+	    "-i" { incr index; set increment [lindex $args $index]; incr index }
+	    "-feed_name" { incr index; set feed_name [lindex $args $index]; incr index }
+	    default { set objs [lrange $args $index end]; set index $argc }
+	}
+    }
+
+    if { [llength $objs] < 1 } { error "no objects specified!!!\n$usage" }
+    if { [llength $list_x] == 0 && $num_x == 0 &&
+	 [llength $list_y] == 0 && $num_y == 0 &&
+	 [llength $list_z] == 0 && $num_z == 0 } {
+	error "no X, Y, or Z values provided!!!!\n$usage"
+    }
+
+    set clone_cmd [list --rect --depth $depth]
+    if { $group_name ne "" } { lappend clone_cmd -g $group_name }
+    if { $increment != 0 }   { lappend clone_cmd -i $increment }
+    if { [string length $sstr] > 0 && [string length $rstr] > 0 } {
+	lappend clone_cmd -s $sstr $rstr
+    }
+    lappend clone_cmd --xdir $xdir --ydir $ydir --zdir $zdir
+    if { [llength $list_x] > 0 } {
+	lappend clone_cmd --lx [join $list_x " "]
+    } elseif { $num_x > 0 } {
+	lappend clone_cmd --nx $num_x --dx $delta_x
+    }
+    if { [llength $list_y] > 0 } {
+	lappend clone_cmd --ly [join $list_y " "]
+    } elseif { $num_y > 0 } {
+	lappend clone_cmd --ny $num_y --dy $delta_y
+    }
+    if { [llength $list_z] > 0 } {
+	lappend clone_cmd --lz [join $list_z " "]
+    } elseif { $num_z > 0 } {
+	lappend clone_cmd --nz $num_z --dz $delta_z
+    }
+    foreach obj $objs { lappend clone_cmd $obj }
+
+    set result [eval _clone_invoke $clone_cmd]
+
+    if { $group_name ne "" } {
+	if { $::cadwidgets::mgedFlag } {
+	    draw $group_name
+	    autoview
+	} else {
+	    $::cadwidgets::ged draw $group_name
+	    $::cadwidgets::ged autoview
+	    $::cadwidgets::ged freezeGUI 0
+	}
+    }
+    return $result
+}
+
+# pattern_sph: build a spherical pattern of clones.
+proc pattern_sph { args } {
+    set usage "pattern_sph \[-top | -regions | -primitives\] \[-g group_name\] \[-s source_string replacement_string\] \
+		\[-i tag_number_increment\] \[-center_pat {x y z}\] \[-center_obj {x y z}\] \[-rotaz\] \[-rotel\] \
+		\[-naz num_az -daz delta_az | -laz list_of_azimuths\] \
+		\[-nel num_el -del delta_el | -lel list_of_elevations\] \
+		\[-nr num_r -dr delta_r | -lr list_of_radii\] \
+		\[-start_az starting_azimuth \] \[-start_el starting_elevation\] \[-start_r starting_radius\] \
+		object1 \[object2 object3 ...\]"
+
+    set objs {}
+    set start_az_deg 0
+    set start_el_deg -90.0
+    set start_r 0
+    set rot_az 0
+    set rot_el 0
+    set depth "top"
+    set center_pat {0 0 0}
+    set center_obj {0 0 0}
+    set group_name ""
+    set sstr ""
+    set rstr ""
+    set increment 0
+    set num_az 0
+    set num_el 0
+    set num_r 0
+    set delta_az_deg 0
+    set delta_el_deg 0
+    set delta_r 0
+    set list_az_deg {}
+    set list_el_deg {}
+    set list_r {}
+    set feed_name ""
+    set argc [llength $args]
+    set index 0
+    while { $index < $argc } {
+	set opt [lindex $args $index]
+	switch -- $opt {
+	    "-start_r"    { incr index; set start_r       [lindex $args $index]; incr index }
+	    "-start_az"   { incr index; set start_az_deg  [lindex $args $index]; incr index }
+	    "-start_el"   { incr index; set start_el_deg  [lindex $args $index]; incr index }
+	    "-top"        { set depth top;        incr index }
+	    "-regions"    { set depth regions;    incr index }
+	    "-primitives" { set depth primitives; incr index }
+	    "-g" {
+		incr index; set group_name [lindex $args $index]; incr index
+	    }
+	    "-s" {
+		incr index; set sstr [lindex $args $index]
+		incr index; set rstr [lindex $args $index]; incr index
+	    }
+	    "-i"     { incr index; set increment     [lindex $args $index]; incr index }
+	    "-rotaz" { set rot_az 1; incr index }
+	    "-rotel" { set rot_el 1; incr index }
+	    "-center_pat" { incr index; set center_pat [lindex $args $index]; incr index }
+	    "-center_obj" { incr index; set center_obj [lindex $args $index]; incr index }
+	    "-naz"  { incr index; set num_az       [lindex $args $index]; incr index }
+	    "-daz"  { incr index; set delta_az_deg [lindex $args $index]; incr index }
+	    "-nel"  { incr index; set num_el       [lindex $args $index]; incr index }
+	    "-del"  { incr index; set delta_el_deg [lindex $args $index]; incr index }
+	    "-nr"   { incr index; set num_r        [lindex $args $index]; incr index }
+	    "-dr"   { incr index; set delta_r      [lindex $args $index]; incr index }
+	    "-laz"  { incr index; set list_az_deg  [lindex $args $index]; incr index }
+	    "-lel"  { incr index; set list_el_deg  [lindex $args $index]; incr index }
+	    "-lr"   { incr index; set list_r       [lindex $args $index]; incr index }
+	    "-feed_name" { incr index; set feed_name [lindex $args $index]; incr index }
+	    default { set objs [lrange $args $index end]; set index $argc }
+	}
+    }
+
+    if { [llength $objs] < 1 } { error "no objects specified\n$usage" }
+    if { [llength $list_az_deg] == 0 && $num_az == 0 &&
+	 [llength $list_el_deg] == 0 && $num_el == 0 &&
+	 [llength $list_r] == 0 && $num_r == 0 } {
+	error "No azimuth, elevation, or radii provided!!!\n$usage"
+    }
+
+    set clone_cmd [list --sph --depth $depth]
+    if { $group_name ne "" } { lappend clone_cmd -g $group_name }
+    if { $increment != 0 }   { lappend clone_cmd -i $increment }
+    if { [string length $sstr] > 0 && [string length $rstr] > 0 } {
+	lappend clone_cmd -s $sstr $rstr
+    }
+    lappend clone_cmd --center-pat $center_pat --center-obj $center_obj
+    if { $rot_az } { lappend clone_cmd --rotaz }
+    if { $rot_el } { lappend clone_cmd --rotel }
+    lappend clone_cmd --start-az $start_az_deg --start-el $start_el_deg --start-r $start_r
+    if { [llength $list_az_deg] > 0 } {
+	lappend clone_cmd --laz [join $list_az_deg " "]
+    } elseif { $num_az > 0 } {
+	lappend clone_cmd --naz $num_az --daz $delta_az_deg
+    }
+    if { [llength $list_el_deg] > 0 } {
+	lappend clone_cmd --lel [join $list_el_deg " "]
+    } elseif { $num_el > 0 } {
+	lappend clone_cmd --nel $num_el --del $delta_el_deg
+    }
+    if { [llength $list_r] > 0 } {
+	lappend clone_cmd --lr [join $list_r " "]
+    } elseif { $num_r > 0 } {
+	lappend clone_cmd --nr $num_r --dr $delta_r
+    }
+    foreach obj $objs { lappend clone_cmd $obj }
+
+    set result [eval _clone_invoke $clone_cmd]
+
+    if { $group_name ne "" } {
+	if { $::cadwidgets::mgedFlag } {
+	    draw $group_name
+	    autoview
+	} else {
+	    $::cadwidgets::ged draw $group_name
+	    $::cadwidgets::ged autoview
+	    $::cadwidgets::ged freezeGUI 0
+	}
+    }
+    return $result
+}
+
+# pattern_cyl: build a cylindrical pattern of clones.
+proc pattern_cyl { args } {
+    set usage "pattern_cyl \[-top | -regions | -primitives\] \[-g group_name\] \[-s source_string replacement_string\] \
+		\[-i tag_number_increment\] \[-rot\] \[-center_obj {x y z}\] \[-center_base {x y z}\] \[-height_dir {x y z}\] \
+		\[-start_az_dir {x y z}\] \
+		\[-naz num_az -daz delta_az | -laz list_of_azimuths\] \
+		\[-sr start_r\] \
+		\[-nr num_r -dr delta_r | -lr list_of_radii\] \
+		\[-sh start_h\] \
+		\[-nh num_h -dh delta_h | -lh list_of_heights\] \
+		object1 \[object2 object3 ...\]"
+
+    set objs {}
+    set do_rot 0
+    set depth "top"
+    set group_name ""
+    set sstr ""
+    set rstr ""
+    set increment 0
+    set start_az_deg 0
+    set start_az_dir {1 0 0}
+    set start_r 0
+    set start_h 0
+    set num_az 0
+    set num_r 0
+    set num_h 0
+    set delta_az_deg 0
+    set delta_r 0
+    set delta_h 0
+    set list_az_deg {}
+    set list_r {}
+    set list_h {}
+    set center_base {0 0 0}
+    set center_obj {0 0 0}
+    set height_dir {0 0 1}
+    set feed_name ""
+    set argc [llength $args]
+    set index 0
+    while { $index < $argc } {
+	set opt [lindex $args $index]
+	switch -- $opt {
+	    "-top"        { set depth top;        incr index }
+	    "-regions"    { set depth regions;    incr index }
+	    "-primitives" { set depth primitives; incr index }
+	    "-g"    { incr index; set group_name  [lindex $args $index]; incr index }
+	    "-s" {
+		incr index; set sstr [lindex $args $index]
+		incr index; set rstr [lindex $args $index]; incr index
+	    }
+	    "-i"    { incr index; set increment     [lindex $args $index]; incr index }
+	    "-rot"  { set do_rot 1; incr index }
+	    "-start_az"     { incr index; set start_az_deg  [lindex $args $index]; incr index }
+	    "-start_az_dir" { incr index; set start_az_dir  [lindex $args $index]; incr index }
+	    "-center_obj"   { incr index; set center_obj    [lindex $args $index]; incr index }
+	    "-center_base"  { incr index; set center_base   [lindex $args $index]; incr index }
+	    "-height_dir"   { incr index; set height_dir    [lindex $args $index]; incr index }
+	    "-naz"  { incr index; set num_az       [lindex $args $index]; incr index }
+	    "-daz"  { incr index; set delta_az_deg [lindex $args $index]; incr index }
+	    "-laz"  { incr index; set list_az_deg  [lindex $args $index]; incr index }
+	    "-nr"   { incr index; set num_r        [lindex $args $index]; incr index }
+	    "-dr"   { incr index; set delta_r      [lindex $args $index]; incr index }
+	    "-lr"   { incr index; set list_r       [lindex $args $index]; incr index }
+	    "-nh"   { incr index; set num_h        [lindex $args $index]; incr index }
+	    "-dh"   { incr index; set delta_h      [lindex $args $index]; incr index }
+	    "-lh"   { incr index; set list_h       [lindex $args $index]; incr index }
+	    "-sr"   { incr index; set start_r      [lindex $args $index]; incr index }
+	    "-sh"   { incr index; set start_h      [lindex $args $index]; incr index }
+	    "-feed_name" { incr index; set feed_name [lindex $args $index]; incr index }
+	    default { set objs [lrange $args $index end]; set index $argc }
+	}
+    }
+
+    if { [llength $objs] < 1 } { error "no objects specified\n$usage" }
+    if { [llength $list_az_deg] == 0 && $num_az == 0 &&
+	 [llength $list_r] == 0 && $num_r == 0 &&
+	 [llength $list_h] == 0 && $num_h == 0 } {
+	error "No azimuth, radii, or heights provided!!!!\n$usage"
+    }
+
+    set clone_cmd [list --cyl --depth $depth]
+    if { $group_name ne "" } { lappend clone_cmd -g $group_name }
+    if { $increment != 0 }   { lappend clone_cmd -i $increment }
+    if { [string length $sstr] > 0 && [string length $rstr] > 0 } {
+	lappend clone_cmd -s $sstr $rstr
+    }
+    if { $do_rot }           { lappend clone_cmd --rot }
+    lappend clone_cmd --center-obj $center_obj --center-base $center_base
+    lappend clone_cmd --height-dir $height_dir --start-az-dir $start_az_dir
+    lappend clone_cmd --start-az $start_az_deg --start-r $start_r --start-h $start_h
+    if { [llength $list_az_deg] > 0 } {
+	lappend clone_cmd --laz [join $list_az_deg " "]
+    } elseif { $num_az > 0 } {
+	lappend clone_cmd --naz $num_az --daz $delta_az_deg
+    }
+    if { [llength $list_r] > 0 } {
+	lappend clone_cmd --lr [join $list_r " "]
+    } elseif { $num_r > 0 } {
+	lappend clone_cmd --nr $num_r --dr $delta_r
+    }
+    if { [llength $list_h] > 0 } {
+	lappend clone_cmd --lh [join $list_h " "]
+    } elseif { $num_h > 0 } {
+	lappend clone_cmd --nh $num_h --dh $delta_h
+    }
+    foreach obj $objs { lappend clone_cmd $obj }
+
+    set result [eval _clone_invoke $clone_cmd]
+
+    if { $group_name ne "" } {
+	if { $::cadwidgets::mgedFlag } {
+	    draw $group_name
+	    autoview
+	} else {
+	    $::cadwidgets::ged draw $group_name
+	    $::cadwidgets::ged autoview
+	    $::cadwidgets::ged freezeGUI 0
+	}
+    }
+    return $result
+}
+
+# ---------------------------------------------------------------------------
+# End of migrated procs
+# ---------------------------------------------------------------------------
+
 class pattern_control {
     inherit itk::Toplevel
 
@@ -100,13 +514,13 @@ class pattern_control {
 	variable radnum_c 1
 	variable raddel_c 0
 	variable radlist_c
-	variable startaz_c { 1 0 0 }
+	variable startaz_c {1 0 0}
 	variable startel_c
 	variable obj_c
 	variable source_string_c
 	variable rep_string_c
 	variable increment_c
-	variable heightdir_c { 0 0 1 }
+	variable heightdir_c {0 0 1}
 	variable starth_c
 	variable e_startr_c
 	variable height_c 1
@@ -1440,38 +1854,11 @@ body pattern_control::update_depth { box level } {
 }
 
 body pattern_control::apply_rect {} {
-    set total 1
-    if { $dirtype_r == 1 } {
-
-	if { $nxdir_r != 0 } {
-	    set total [expr $total * $nxdir_r]
-	}
-
-	if { $nydir_r != 0 } {
-	    set total [expr $total * $nydir_r]
-	}
-
-	if { $nzdir_r != 0 } {
-	    set total [expr $total * $nzdir_r]
-	}
-    } else {
-	set xlen [llength $xlist_r]
-	if { $xlen != 0 } {
-	    set total [expr $total * $xlen]
-	}
-
-	set ylen [llength $ylist_r]
-	if { $ylen != 0 } {
-	    set total [expr $total * $ylen]
-	}
-
-	set zlen [llength $zlist_r]
-	if { $zlen != 0 } {
-	    set total [expr $total * $zlen]
-	}
-    }
+    # The C clone implementation supplies current count and total to the
+    # callback, so no Tcl-side total calculation is needed.
     $itk_component(fb_progress) reset
-    $itk_component(fb_progress) configure -steps $total
+    set ::clone_progress_callback \
+	[list _clone_progress_update $itk_component(fb_progress)]
 
     set cmd [list pattern_rect -$combovar_r]
 
@@ -1493,18 +1880,20 @@ body pattern_control::apply_rect {} {
 	lappend cmd -i [string trim $increment_r]
     }
 
-    lappend cmd -feed_name $itk_component(fb_progress)
-
     foreach obj $obj_r {
 	lappend cmd $obj
     }
 
     eval $cmd
+    unset -nocomplain ::clone_progress_callback
 }
 
 body pattern_control::apply_sph {} {
-    set total 0
+    # The C clone implementation supplies current count and total to the
+    # callback, so no Tcl-side total calculation is needed.
     $itk_component(fb_progress) reset
+    set ::clone_progress_callback \
+	[list _clone_progress_update $itk_component(fb_progress)]
 
     set cmd [list pattern_sph -$combovar_s]
     lappend cmd -g [string trim $group_s]
@@ -1530,33 +1919,32 @@ body pattern_control::apply_sph {} {
 
     if { $azel_s == 1 } {
 	lappend cmd -naz [string trim $numaz_s] -daz [string trim $delaz_s] -nel [string trim $numel_s] -del [string trim $delel_s]
-	set total [expr $numaz_s * $numel_s]
     } else {
-	set total [expr [llength $lsaz_s] * [llength $lsel_s]]
 	lappend cmd -laz [string trim $lsaz_s] -lel [string trim $lsel_s]
     }
 
     if { $radii_s == 1 } {
-	set total [expr $total * $radnum_s]
 	lappend cmd -nr [string trim $radnum_s] -dr [string trim $raddel_s]
     } else {
-	set total [expr $total * [llength $radlist_s]]
 	lappend cmd -lr [string trim $radlist_s]
     }
 
-    $itk_component(fb_progress) configure -steps $total
-
     lappend cmd -start_az [string trim $startaz_s] -start_el [string trim $startel_s] -start_r [string trim $startr_s]
-    lappend cmd -feed_name $itk_component(fb_progress)
     foreach obj $obj_s {
 	lappend cmd $obj
     }
 
     eval $cmd
+    unset -nocomplain ::clone_progress_callback
 }
 
 body pattern_control::apply_cyl {} {
+    # The C clone implementation supplies current count and total to the
+    # callback, so no Tcl-side total calculation is needed.
     $itk_component(fb_progress) reset
+    set ::clone_progress_callback \
+	[list _clone_progress_update $itk_component(fb_progress)]
+
     set cmd [list pattern_cyl -$combovar_c]
     lappend cmd -g [string trim $group_c]
 
@@ -1579,41 +1967,32 @@ body pattern_control::apply_cyl {} {
 
     if { $azel_c == 1 } {
 	lappend cmd -naz [string trim $numaz_c] -daz [string trim $delaz_c]
-	set total $numaz_c
     } else {
 	lappend cmd -laz [string trim $lsaz_c]
-	set total [llength $lsaz_c]
     }
 
     lappend cmd -sr [string trim $e_startr_c]
 
     if { $radii_c == 1 } {
-	set total [expr $total * $radnum_c]
 	lappend cmd -nr [string trim $radnum_c] -dr [string trim $raddel_c]
     } else {
-	set total [expr $total * [llength $radlist_c]]
 	lappend cmd -lr [string trim $radlist_c]
     }
 
     lappend cmd -sh [string trim $starth_c]
 
     if { $height_c == 1 } {
-	set total [expr $total * $hnum_c]
 	lappend cmd -nh [string trim $hnum_c] -dh [string trim $dnum_c]
     } else {
-	set total [expr $total * [llength $lnum_c]]
 	lappend cmd -lh [string trim $lnum_c]
     }
-
-    $itk_component(fb_progress) configure -steps $total
-
-    lappend cmd -feed_name $itk_component(fb_progress)
 
     foreach obj $obj_c {
 	lappend cmd $obj
     }
 
     eval $cmd
+    unset -nocomplain ::clone_progress_callback
 }
 
 body pattern_control::frame_disable { frame_name } {

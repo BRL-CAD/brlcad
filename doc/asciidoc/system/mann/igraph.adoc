@@ -1,0 +1,49 @@
+= IGRAPH(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+igraph - Used to interact with a graph based visualization of the structure of .g databases.
+
+== SYNOPSIS
+
+[source]
+----
+igraph
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Used to interact with a graph based visualization of the structure of .g databases.
+
+
+[[examples]]
+== EXAMPLES
+
+The examples demonstrate the use of the *igraph* command to view the corresponding graph of a .g database and access information about it.
+
+.Launches a new window that displays the graph that corresponds to a .g database.
+[example]
+====
+
+mged> **igraph**::
+Displays a graph that corresponds to the currently opened .g database.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

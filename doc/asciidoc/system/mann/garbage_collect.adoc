@@ -1,0 +1,49 @@
+= GARBAGE_COLLECT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+garbage_collect - Eliminates unused space in a BRL-CAD database file.
+
+== SYNOPSIS
+
+[source]
+----
+garbage_collect
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Eliminates unused space in a BRL-CAD database file.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *garbage_collect* command to delete unused space in a BRL-CAD database file.
+
+.Delete unused space in a BRL-CAD database file.
+[example]
+====
+
+mged> **garbage_collect**::
+Cleans out unused space in the database.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -36,7 +36,7 @@ static int qray_get_fmt_index(struct ged *gedp, char c);
 
 
 static void
-usage(struct ged *gedp, const char *argv0)
+qray_usage(struct ged *gedp, const char *argv0)
 {
     bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", argv0);
     bu_vls_printf(gedp->ged_result_str, " qray vars			print a list of all variables (i.e. var = val)\n");
@@ -111,7 +111,7 @@ ged_qray_core(struct ged *gedp,
 
     /* must be wanting help */
     if (argc == 1) {
-	usage(gedp, argv[0]);
+	qray_usage(gedp, argv[0]);
 	return GED_HELP;
     }
 
@@ -132,7 +132,7 @@ ged_qray_core(struct ged *gedp,
     }
 
     if (argc > 6) {
-	usage(gedp, argv[0]);
+	qray_usage(gedp, argv[0]);
 	return BRLCAD_ERROR;
     }
 
@@ -147,7 +147,7 @@ ged_qray_core(struct ged *gedp,
 	    /* get particular format string */
 	    if ((i = qray_get_fmt_index(gedp, *argv[2])) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "qray: unrecognized format type: '%s'\n", argv[2]);
-		usage(gedp, argv[0]);
+		qray_usage(gedp, argv[0]);
 
 		return BRLCAD_ERROR;
 	    }
@@ -158,7 +158,7 @@ ged_qray_core(struct ged *gedp,
 	    /* set value */
 	    if ((i = qray_get_fmt_index(gedp, *argv[2])) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "qray: unrecognized format type: '%s'\n", argv[2]);
-		usage(gedp, argv[0]);
+		qray_usage(gedp, argv[0]);
 
 		return BRLCAD_ERROR;
 	    }
@@ -404,12 +404,12 @@ ged_qray_core(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "help")) {
-	usage(gedp, argv[0]);
+	qray_usage(gedp, argv[0]);
 	return GED_HELP;
     }
 
     bu_vls_printf(gedp->ged_result_str, "qray: unrecognized command: '%s'\n", argv[1]);
-    usage(gedp, argv[0]);
+    qray_usage(gedp, argv[0]);
 
     return BRLCAD_ERROR;
 }

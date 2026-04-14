@@ -1,0 +1,113 @@
+= ICV(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+icv - Convert images to and from various formats
+
+== SYNOPSIS
+
+[source]
+----
+icv [-h] [-i file] [--input-format fmt] [-o file] [--output-format fmt] [-w width] [input_file] [output_file]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*icv* is a tool to convert images to and from a variety of image formats. Currently support formats include:
+
+.Supported ICV Image Formats
+[cols="2*"]
+|===
+|Format
+|Extension
+
+|PIX - pixel sequence of R/G/B values stored as unsigned chars.
+|pix
+|Double PIX - double precision pixel sequence
+|dpix
+|Portable Network Graphics
+|png
+|PPM - "lowest common denominator" Netbpm color iamge format
+|ppm
+|BW - black and white image data
+|bw
+|(TODO) Utah Raster Toolkit Run-Length Encoded (RLE)
+|rle
+|===
+
+
+
+
+[[options]]
+== OPTIONS
+
+File types will be deduced unless explicitly specfied with the *input-format* and/or *output-format* options. For file types like PIX that do not encode dimensional information, *icv* will attempt to guess the image size based on various assumptions (a square image, known sizes for image displays, paper sizes at various dots-per-inch, etc.). If the users does know the correct image width and height, they may be specified with the *w* and *n* options.
+
+
+*-h*, *--help*::
+Print help and exit.
+
+
+*-i* _file_, *--input* _file_::
+Specify an input file. If none is specified, the first non-option-related argument will be used as the input file name.
+
+
+*-o* _file_, *--output* _file_::
+Specify an input file. If none is specified, the second non-option-related argument will be used as the output file name.
+
+
+*-w* _#_, *--width* _#_::
+Specify the width of the input image. Useful for file types such as PIX that do not encode explicit size information.
+
+
+*-n* _#_, *--height* _#_::
+Specify the height of the input image. Useful for file types such as PIX that do not encode explicit size information.
+
+
+*--input-format* _fmt_::
+Explicitly specify input file format.
+
+
+*--output-format* _fmt_::
+Explicitly specify output file format.
+
+
+
+
+[[example]]
+== EXAMPLE
+
+
+....
+
+      icv -w 1024 -n 512 tank.pix tank.png
+    
+....
+
+
+[[see_also]]
+== SEE ALSO
+
+*pix*(5) *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+Clifford Yapp
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

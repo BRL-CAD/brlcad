@@ -30,6 +30,7 @@
 #include "bu/cmd.h"
 #include "bu/opt.h"
 #include "bv/lod.h"
+#include "../../librt/librt_private.h"
 
 #include "../ged_private.h"
 
@@ -88,12 +89,8 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
     /* Before proceeding with the full open logic, see if
      * we can actually open what the caller provided */
     struct db_i *new_dbip = NULL;
-    struct mater *old_materp = rt_material_head();
     int existing_only = (!force_create && open_only);
     if ((new_dbip = _ged_open_dbip(argv[0], existing_only)) == DBI_NULL) {
-
-	/* Restore RT's material head */
-	rt_new_material_head(old_materp);
 
 	bu_vls_printf(gedp->ged_result_str, "ged_opendb_core: failed to open %s\n", argv[0]);
 
@@ -117,13 +114,13 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 	if (db_version(new_dbip) != 4) {
 	    bu_vls_printf(gedp->ged_result_str, "WARNING: [%s] is not a v4 database.  The -f option will be ignored.\n", argv[0]);
 	} else {
-	    if (new_dbip->dbi_version < 0) {
+	    if (new_dbip->i->dbi_version < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Database [%s] was already (perhaps automatically) flipped, -f is redundant.\n", argv[0]);
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "Treating [%s] as a binary-incompatible v4 geometry database.\n", argv[0]);
 		bu_vls_printf(gedp->ged_result_str, "Endianness flipped.  Converting to READ ONLY.\n");
 		/* flip the version number to indicate a flipped database. */
-		new_dbip->dbi_version *= -1;
+		new_dbip->i->dbi_version *= -1;
 		/* do NOT write to a flipped database */
 		new_dbip->dbi_read_only = 1;
 	    }
@@ -138,10 +135,6 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Set up the new database info in gedp */
     gedp->dbip = new_dbip;
-    rt_new_material_head(rt_material_head());
-
-    /* New database open, need to initialize reference counts */
-    db_update_nref(gedp->dbip, &rt_uniresource);
 
     // LoD context creation (DbiState initialization can use info
     // stored here, so do this first)

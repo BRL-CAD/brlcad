@@ -142,7 +142,7 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ari = (struct rt_ars_internal *)ip->idb_ptr;
     ari->magic = RT_ARS_INTERNAL_MAGIC;
 
-    if (dbip && dbip->dbi_version < 0) {
+    if (dbip && dbip->i->dbi_version < 0) {
 	ari->ncurves = flip_short(rp[0].a.a_m);
 	ari->pts_per_curve = flip_short(rp[0].a.a_n);
     } else {
@@ -157,7 +157,7 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	(ari->ncurves+1) * sizeof(fastf_t *), "ars curve ptrs");
 
     currec = 1;
-    int cflag = (dbip && dbip->dbi_version < 0) ? 1 : 0;
+    int cflag = (dbip && dbip->i->dbi_version < 0) ? 1 : 0;
     for (i = 0; i < ari->ncurves; i++) {
 	ari->curves[i] = ars_rd_curve(&rp[currec], (ssize_t)ari->pts_per_curve, cflag);
 	currec += (ari->pts_per_curve+7)/8;

@@ -1,0 +1,86 @@
+= GET(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+get - Retrieves parameter values of database objects.
+
+== SYNOPSIS
+
+[source]
+----
+get {object_name_pattern} [param_name]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Low level command for extracting specific parameter information from geometry objects in a database. Similar to "attr get" except that the focus of this command is on geometric parameter values (vertices, for example) instead of attribute metadata. The *adjust* can be used to change these values.
+
+
+[[examples]]
+== EXAMPLES
+
+.Elliptical Torus 'r' Parameter Extraction
+[example]
+====
+Use the *get* command to extract the r parameter value from an elliptical torus.
+
+
+
+
+....
+
+mged> make eto.s eto
+mged> l eto.s
+eto.s:  Elliptical Torus (ETO)
+      V (0, 0, 0)
+      N=(0, 0, 1)
+      C=(200, 0, 200) mag=282.843
+      r=800
+      d=100
+
+    
+....
+
+
+
+
+
+
+....
+
+mged> get eto.s r
+800
+    
+....
+
+
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*adjust*(n), *attr*(n)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2008-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

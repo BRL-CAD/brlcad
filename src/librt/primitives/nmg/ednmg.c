@@ -48,6 +48,41 @@
 #define ECMD_NMG_ESPLIT		11025	/* split current edge */
 #define ECMD_NMG_EKILL		11026	/* kill current edge */
 #define ECMD_NMG_LEXTRU		11027	/* Extrude loop */
+/*
+ * Pick a vertex by explicit pointer (es_v) set from the model.
+ * e_para[0] encodes a vertex index (0-based scan of the model's vertex list)
+ * or the caller may set n->es_v directly before calling rt_edit_process.
+ * e_inpara must be 1 when using the index form.
+ */
+#define ECMD_NMG_VPICK		11028
+/*
+ * Move the currently selected vertex (n->es_v) to e_para[0..2] (XYZ, local units).
+ * e_inpara must be 3.  Also accepts mouse via e_mvalid / e_mparam.
+ */
+#define ECMD_NMG_VMOVE		11029
+/*
+ * Pick a faceuse by index (0-based scan of faceuses in the first region/shell).
+ * e_para[0] = face index, e_inpara must be 1.
+ * The caller may also set n->es_fu directly.
+ */
+#define ECMD_NMG_FPICK		11030
+/*
+ * Translate the currently selected face (n->es_fu) by the vector e_para[0..2].
+ * All vertices referenced by the face loop are moved by the same delta.
+ * e_inpara must be 3.
+ */
+#define ECMD_NMG_FMOVE		11031
+/*
+ * Extrude the current loop along an explicit direction vector.
+ *
+ * e_para[0..2] = direction vector (need not be unit length; will be normalised)
+ * e_para[3]   = extrusion distance in local units
+ * e_inpara    = 4
+ *
+ * Equivalent to computing target_pt = lu_keypoint + normalise(dir)*dist
+ * and then delegating to the existing ecmd_nmg_lextru() (e_inpara=3) path.
+ */
+#define ECMD_NMG_LEXTRU_DIR	11032
 
 void *
 rt_edit_nmg_prim_edit_create(struct rt_edit *UNUSED(s))
@@ -58,6 +93,8 @@ rt_edit_nmg_prim_edit_create(struct rt_edit *UNUSED(s))
     e->es_eu = NULL;
     e->lu_copy = NULL;
     e->es_s = NULL;
+    e->es_v = NULL;
+    e->es_fu = NULL;
 
     return (void *)e;
 }
@@ -85,6 +122,8 @@ rt_edit_nmg_prim_edit_reset(struct rt_edit *s)
     struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
     n->es_eu = NULL;
     n->es_s = NULL;
+    n->es_v = NULL;
+    n->es_fu = NULL;
 }
 
 
@@ -104,8 +143,14 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 	case ECMD_NMG_EPICK:
 	    s->edit_mode = RT_PARAMS_EDIT_PICK;
 	    break;
+	case ECMD_NMG_VPICK:
+	case ECMD_NMG_FPICK:
+	    s->edit_mode = RT_PARAMS_EDIT_PICK;
+	    break;
 	case ECMD_NMG_EMOVE:
 	case ECMD_NMG_ESPLIT:
+	case ECMD_NMG_VMOVE:
+	case ECMD_NMG_FMOVE:
 	    s->edit_mode = RT_PARAMS_EDIT_TRANS;
 	    break;
 	case ECMD_NMG_EKILL:
@@ -150,7 +195,8 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 		bu_vls_free(&tmp_vls);
 	    }
 
-	    // TODO - should we really be calling this here?
+	    // NMG_FORW: advance to the next edgeuse in the loop, then trigger
+	    // an immediate display update so the new selection is highlighted.
 	    rt_edit_process(s);
 	    return;
 	case ECMD_NMG_BACK:
@@ -171,7 +217,7 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 		bu_vls_free(&tmp_vls);
 	    }
 
-	    // TODO - should we really be calling this here?
+	    // NMG_BACK: step to the previous edgeuse in the loop, then update display.
 	    rt_edit_process(s);
 	    return;
 	case ECMD_NMG_RADIAL:
@@ -192,9 +238,11 @@ rt_edit_nmg_set_edit_mode(struct rt_edit *s, int mode)
 		bu_vls_free(&tmp_vls);
 	    }
 
-	    // TODO - should we really be calling this here?
+	    // NMG_RADIAL: jump to the radial edgeuse, then update display.
 	    rt_edit_process(s);
 	    return;
+	case ECMD_NMG_LEXTRU_DIR:
+	    /* fall through to ECMD_NMG_LEXTRU for loop-copy setup */
 	case ECMD_NMG_LEXTRU:
 	    {
 		struct model *m, *m_tmp;
@@ -358,7 +406,11 @@ nmg_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUSED(da
 {
     rt_edit_nmg_set_edit_mode(s, arg);
 
-    // TODO - should we really be calling this here?
+    /* Calling rt_edit_process here ensures the editing axes update
+     * immediately after any menu selection.  For traversal operations
+     * (FORW, BACK, RADIAL), rt_edit_nmg_set_edit_mode already calls
+     * rt_edit_process internally; the second call here is redundant
+     * but harmless for those cases. */
     rt_edit_process(s);
 }
 
@@ -372,7 +424,12 @@ struct rt_edit_menu_item nmg_menu[] = {
     { "Prev EU", nmg_ed, ECMD_NMG_BACK },
     { "Radial EU", nmg_ed, ECMD_NMG_RADIAL },
     { "Extrude Loop", nmg_ed, ECMD_NMG_LEXTRU },
+    { "Extrude Loop (dir+dist)", nmg_ed, ECMD_NMG_LEXTRU_DIR },
     { "Eebug Edge", nmg_ed, ECMD_NMG_EDEBUG },
+    { "Pick Vertex", nmg_ed, ECMD_NMG_VPICK },
+    { "Move Vertex", nmg_ed, ECMD_NMG_VMOVE },
+    { "Pick Face", nmg_ed, ECMD_NMG_FPICK },
+    { "Move Face", nmg_ed, ECMD_NMG_FMOVE },
     { "", NULL, 0 }
 };
 
@@ -407,13 +464,14 @@ rt_edit_nmg_keypoint(
     struct nmgregion *r;
     struct model *m = (struct model *) ip->idb_ptr;
     NMG_CK_MODEL(m);
-    /* XXX Fall through, for now (How about first vertex?? - JRA) */
+    /* No element-type-specific keypoint dispatch here; fall through to
+     * use the selected edge's first vertex (or origin as default). */
 
     /* set default first */
     VSETALL(mpt, 0.0);
     strp = "(origin)";
 
-    /* XXX Try to use the first point of the selected edge */
+    /* Use the first point of the selected edge if available */
     if (n->es_eu != (struct edgeuse *)NULL &&
 	    n->es_eu->vu_p != (struct vertexuse *)NULL &&
 	    n->es_eu->vu_p->v_p != (struct vertex *)NULL &&
@@ -912,8 +970,56 @@ void ecmd_nmg_lextru(struct rt_edit *s)
 	(*f)(0, NULL, d, &vs_flag);
 }
 
+/* Extrude current loop in an explicit direction + distance.
+ * e_para[0..2] = direction vector (any non-zero magnitude)
+ * e_para[3]    = extrusion distance (local units)
+ * e_inpara must be 4.
+ *
+ * Converts to target_pt = lu_keypoint + normalise(dir)*dist, then calls
+ * the standard ecmd_nmg_lextru() via the e_inpara=3 path. */
+static void
+ecmd_nmg_lextru_dir(struct rt_edit *s)
+{
+    struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
 
-/* XXX Should just leave desired location in s->e_mparam for rt_edit_process(s) */
+    if (!s->e_inpara || s->e_inpara < 4) {
+	bu_vls_printf(s->log_str,
+		"ERROR: ECMD_NMG_LEXTRU_DIR: need direction (3 components) "
+		"and distance (e_inpara=4)\n");
+	return;
+    }
+
+    vect_t dir;
+    VSET(dir, s->e_para[0], s->e_para[1], s->e_para[2]);
+    double mag = MAGNITUDE(dir);
+    if (mag < SQRT_SMALL_FASTF) {
+	bu_vls_printf(s->log_str,
+		"ERROR: ECMD_NMG_LEXTRU_DIR: zero-length direction vector\n");
+	return;
+    }
+    VSCALE(dir, dir, 1.0 / mag);
+
+    fastf_t dist = s->e_para[3] * s->local2base;
+
+    /* Build the target point and pass to the standard path */
+    point_t to_pt;
+    VJOIN1(to_pt, n->lu_keypoint, dist, dir);
+
+    /* Override e_para/e_inpara to use the x,y,z form */
+    VMOVE(s->e_para, to_pt);
+    s->e_inpara = 3;
+    s->local2base = 1.0;  /* already converted above */
+
+    ecmd_nmg_lextru(s);
+}
+
+
+/* ecmd_nmg_epick: locate the nearest edge to the mouse position and
+ * record it in n->es_eu.  The pick is done directly here rather than
+ * via e_mparam because the edge search logic (nmg_find_e_nearest_pt2)
+ * requires the full view transform, which is not available inside
+ * the generic ft_edit path.  Once an edge is selected, subsequent
+ * EMOVE/ESPLIT/EKILL operations read n->es_eu directly. */
 void ecmd_nmg_epick(struct rt_edit *s, const vect_t mousevec)
 {
     struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
@@ -964,6 +1070,188 @@ void ecmd_nmg_epick(struct rt_edit *s, const vect_t mousevec)
     }
 }
 
+/* ------------------------------------------------------------------
+ * ECMD_NMG_VPICK  -- pick vertex by index
+ * e_para[0] = 0-based vertex index (sequential scan of model vertex list)
+ * e_inpara must be 1.
+ * ------------------------------------------------------------------ */
+static int
+ecmd_nmg_vpick(struct rt_edit *s)
+{
+    struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
+    struct model *m = (struct model *)s->es_int.idb_ptr;
+    NMG_CK_MODEL(m);
+
+    if (!s->e_inpara || s->e_inpara < 1) {
+	bu_vls_printf(s->log_str, "ERROR: vertex index required\n");
+	s->e_inpara = 0;
+	return BRLCAD_ERROR;
+    }
+
+    int target = (int)s->e_para[0];
+    int idx = 0;
+    /* Walk all edgeuses; each unique vertex is encountered at least once */
+    struct nmgregion *r;
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	struct shell *sh;
+	for (BU_LIST_FOR(sh, shell, &r->s_hd)) {
+	    struct faceuse *fu;
+	    for (BU_LIST_FOR(fu, faceuse, &sh->fu_hd)) {
+		if (fu->orientation != OT_SAME)
+		    continue;
+		struct loopuse *lu;
+		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+			continue;
+		    struct edgeuse *eu;
+		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+			if (idx == target) {
+			    n->es_v = eu->vu_p->v_p;
+			    s->e_inpara = 0;
+			    return 0;
+			}
+			idx++;
+		    }
+		}
+	    }
+	}
+    }
+
+    bu_vls_printf(s->log_str,
+	    "ERROR: vertex index %d out of range (found %d vertex-use entries)\n",
+	    target, idx);
+    s->e_inpara = 0;
+    return BRLCAD_ERROR;
+}
+
+/* ------------------------------------------------------------------
+ * ECMD_NMG_VMOVE  -- move selected vertex to e_para[0..2]
+ * e_inpara must be 3, or e_mvalid / e_mparam can be used.
+ * ------------------------------------------------------------------ */
+static int
+ecmd_nmg_vmove(struct rt_edit *s)
+{
+    struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
+
+    if (!n->es_v) {
+	bu_vls_printf(s->log_str, "ERROR: no vertex selected (use ECMD_NMG_VPICK first)\n");
+	return BRLCAD_ERROR;
+    }
+    NMG_CK_VERTEX(n->es_v);
+
+    point_t new_pt = VINIT_ZERO;
+    if (s->e_mvalid) {
+	VMOVE(new_pt, s->e_mparam);
+    } else if (s->e_inpara == 3) {
+	s->e_para[0] *= s->local2base;
+	s->e_para[1] *= s->local2base;
+	s->e_para[2] *= s->local2base;
+	if (s->mv_context)
+	    MAT4X3PNT(new_pt, s->e_invmat, s->e_para);
+	else
+	    VMOVE(new_pt, s->e_para);
+    } else if (s->e_inpara && s->e_inpara != 3) {
+	bu_vls_printf(s->log_str, "X Y Z coordinates required for vertex move\n");
+	return BRLCAD_ERROR;
+    } else if (!s->e_mvalid && !s->e_inpara) {
+	return 0;
+    }
+
+    nmg_vertex_gv(n->es_v, new_pt);
+    s->e_inpara = 0;
+    return 0;
+}
+
+/* ------------------------------------------------------------------
+ * ECMD_NMG_FPICK  -- pick faceuse by index
+ * e_para[0] = 0-based faceuse index (faceuse OT_SAME only).
+ * e_inpara must be 1.
+ * ------------------------------------------------------------------ */
+static int
+ecmd_nmg_fpick(struct rt_edit *s)
+{
+    struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
+    struct model *m = (struct model *)s->es_int.idb_ptr;
+    NMG_CK_MODEL(m);
+
+    if (!s->e_inpara || s->e_inpara < 1) {
+	bu_vls_printf(s->log_str, "ERROR: face index required\n");
+	s->e_inpara = 0;
+	return BRLCAD_ERROR;
+    }
+
+    int target = (int)s->e_para[0];
+    int idx = 0;
+    struct nmgregion *r;
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	struct shell *sh;
+	for (BU_LIST_FOR(sh, shell, &r->s_hd)) {
+	    struct faceuse *fu;
+	    for (BU_LIST_FOR(fu, faceuse, &sh->fu_hd)) {
+		if (fu->orientation != OT_SAME)
+		    continue;
+		if (idx == target) {
+		    n->es_fu = fu;
+		    s->e_inpara = 0;
+		    return 0;
+		}
+		idx++;
+	    }
+	}
+    }
+
+    bu_vls_printf(s->log_str,
+	    "ERROR: face index %d out of range (found %d OT_SAME faceuses)\n",
+	    target, idx);
+    s->e_inpara = 0;
+    return BRLCAD_ERROR;
+}
+
+/* ------------------------------------------------------------------
+ * ECMD_NMG_FMOVE  -- translate all vertices of selected face by delta
+ * e_para[0..2] = ΔX ΔY ΔZ (local units).  e_inpara must be 3.
+ * ------------------------------------------------------------------ */
+static int
+ecmd_nmg_fmove(struct rt_edit *s)
+{
+    struct rt_nmg_edit *n = (struct rt_nmg_edit *)s->ipe_ptr;
+
+    if (!n->es_fu) {
+	bu_vls_printf(s->log_str, "ERROR: no face selected (use ECMD_NMG_FPICK first)\n");
+	return BRLCAD_ERROR;
+    }
+    NMG_CK_FACEUSE(n->es_fu);
+
+    if (!s->e_inpara || s->e_inpara != 3) {
+	bu_vls_printf(s->log_str, "ERROR: X Y Z coordinates required for face move\n");
+	return BRLCAD_ERROR;
+    }
+
+    vect_t delta;
+    delta[0] = s->e_para[0] * s->local2base;
+    delta[1] = s->e_para[1] * s->local2base;
+    delta[2] = s->e_para[2] * s->local2base;
+
+    /* Move every vertex referenced by this faceuse's loops */
+    struct loopuse *lu;
+    for (BU_LIST_FOR(lu, loopuse, &n->es_fu->lu_hd)) {
+	NMG_CK_LOOPUSE(lu);
+	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+	    continue;
+	struct edgeuse *eu;
+	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	    struct vertex *v = eu->vu_p->v_p;
+	    NMG_CK_VERTEX(v);
+	    point_t new_pt;
+	    VADD2(new_pt, v->vg_p->coord, delta);
+	    nmg_vertex_gv(v, new_pt);
+	}
+    }
+
+    s->e_inpara = 0;
+    return 0;
+}
+
 int
 rt_edit_nmg_edit(struct rt_edit *s)
 {
@@ -984,8 +1272,18 @@ rt_edit_nmg_edit(struct rt_edit *s)
 	    edit_srot(s);
 	    break;
 	case ECMD_NMG_EPICK:
-	    /* XXX Nothing to do here (yet), all done in mouse routine. */
+	    /* EPICK is handled entirely in the mouse/xy routine (ecmd_nmg_epick).
+	     * No action needed in ft_edit since no structural change occurs until
+	     * the user clicks in the viewport. */
 	    break;
+	case ECMD_NMG_VPICK:
+	    return ecmd_nmg_vpick(s);
+	case ECMD_NMG_VMOVE:
+	    return ecmd_nmg_vmove(s);
+	case ECMD_NMG_FPICK:
+	    return ecmd_nmg_fpick(s);
+	case ECMD_NMG_FMOVE:
+	    return ecmd_nmg_fmove(s);
 	case ECMD_NMG_EMOVE:
 	    ecmd_nmg_emove(s);
 	    break;
@@ -998,6 +1296,11 @@ rt_edit_nmg_edit(struct rt_edit *s)
 	case ECMD_NMG_LEXTRU:
 	    ecmd_nmg_lextru(s);
 	    break;
+	case ECMD_NMG_LEXTRU_DIR:
+	    ecmd_nmg_lextru_dir(s);
+	    break;
+	default:
+	    return edit_generic(s);
     }
 
     return 0;
@@ -1011,9 +1314,6 @@ rt_edit_nmg_edit_xy(
 {
     vect_t pos_view = VINIT_ZERO;       /* Unrotated view space pos */
     vect_t temp = VINIT_ZERO;
-    struct rt_db_internal *ip = &s->es_int;
-    bu_clbk_t f = NULL;
-    void *d = NULL;
 
     switch (s->edit_flag) {
 	case RT_PARAMS_EDIT_SCALE:
@@ -1028,12 +1328,16 @@ rt_edit_nmg_edit_xy(
 	    edit_stra_xy(&pos_view, s, mousevec);
 	    break;
 	case ECMD_NMG_EPICK:
-	    /* XXX Should just leave desired location in s->e_mparam for rt_edit_nmg_edit */
+	    /* Edge pick is done directly in ecmd_nmg_epick (uses view-space
+	     * search), not via the generic e_mparam path. */
 	    ecmd_nmg_epick(s, mousevec);
 	    break;
 	case ECMD_NMG_EMOVE:
 	case ECMD_NMG_ESPLIT:
+	case ECMD_NMG_VMOVE:
+	case ECMD_NMG_FMOVE:
 	case ECMD_NMG_LEXTRU:
+	case ECMD_NMG_LEXTRU_DIR:
               MAT4X3PNT(pos_view, s->vp->gv_model2view, s->curr_e_axes_pos);
               pos_view[X] = mousevec[X];
               pos_view[Y] = mousevec[Y];
@@ -1041,18 +1345,8 @@ rt_edit_nmg_edit_xy(
               MAT4X3PNT(s->e_mparam, s->e_invmat, temp);
               s->e_mvalid = 1;
 	      break;
-        case RT_PARAMS_EDIT_ROT:
-            bu_vls_printf(s->log_str, "RT_PARAMS_EDIT_ROT XY editing setup unimplemented in %s_edit_xy callback\n", EDOBJ[ip->idb_type].ft_label);
-            rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-            if (f)
-                (*f)(0, NULL, d, NULL);
-            return BRLCAD_ERROR;
 	default:
-	    bu_vls_printf(s->log_str, "%s: XY edit undefined in solid edit mode %d\n", EDOBJ[ip->idb_type].ft_label, s->edit_flag);
-	    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
-	    if (f)
-		(*f)(0, NULL, d, NULL);
-	    return BRLCAD_ERROR;
+	    return edit_generic_xy(s, mousevec);
     }
 
     edit_abs_tra(s, pos_view);

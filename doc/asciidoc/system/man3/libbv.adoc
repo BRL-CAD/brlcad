@@ -1,0 +1,90 @@
+= LIBBV(3)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+libbv - BRL-CAD view graphics interface subroutines
+
+== SYNOPSIS
+
+[source,c]
+----
+void pl_3box(FILE *fp, int x0, int y0, int z0, int x1, int y1, int z1);
+void pl_3cont(FILE *fp, int x, int y, int z);
+void pl_3line(FILE *fp, int x0, int y0, int z0, int x1, int y1, int z1);
+void pl_3move(FILE *fp, int x, int y, int z);
+void pl_3point(FILE *fp, int x, int y, int z);
+void pl_3space(FILE *fp, int x0, int y0, int z0, int x1, int y1, int z1);
+void pl_arc(FILE *fp, int xc, int yc, int x0, int y0, int x1, int y1);
+void pl_box(FILE *fp, int x0, int y0, int x1, int y1);
+pl_circle(FILE *fp, int x, int y, int r);
+void pl_color(FILE *fp, int r, int g, int b);
+void pl_cont(FILE *fp, int x, int y);
+void pl_erase(FILE *fp);
+void pl_label(FILE *fp, const char *s);
+void pl_line(FILE *fp, int x0, int y0, int x1, int y1);
+void pl_linmod(FILE *fp, const char *s);
+void pl_move(FILE *fp, int x, int y);
+void pl_point(FILE *fp, int x, int y);
+void pl_space(FILE *fp, int x0, int y0, int x1, int y1);
+
+----
+
+
+[[description]]
+== DESCRIPTION
+
+These subroutines generate graphic output commands for processing with the *plot(1)* plotting filters. They are slightly more general than those in *libplot* as these take a file pointer. They also include the BRL 3-D extensions to the plot intermediate code.
+
+__Pl_space__ or __pl_3space__ must be used before any of the graphic primitives to declare the amount of space necessary. See _plot3(5)_.
+
+__Pl_box__ or __pl_3box__ draws a box between the two given opposite points. The ''pen'' will be left at the second point.
+
+__Pl_circle__ draws a circle of radius _r_ with center at the point (_x_, `y`). Note that _circle_ and _arc_ cannot be transformed in three space if one is using a filter to do that.
+
+__Pl_arc__ draws an arc of a circle with center at the point (_x_, `y`) between the points (_x0_, _y0_) and (_x1_, `y1`).
+
+String arguments to __pl_label__ and __pl_linmod__ are terminated by nulls and do not contain new-lines.
+
+There are also 2-D and 3_D double-precision versions, with arguments identical to their counterparts above. The naming conventions are to change the prefix to "pd"; examples are thus __pd_point__ and __pd_3point.__ Vector versions for 3_D (also double-precision) are prefixed "pdv", as in __pdv_3point.__
+
+See _plot3(5)_ and _plot(5)_ for a description of the effect of the remaining functions.
+
+
+[[files]]
+== FILES
+
+/usr/brlcad/lib/libbv `.` a produces output for *plot*(1G) filters
+
+
+[[warnings]]
+== WARNINGS
+
+In order to compile a program containing these functions in _file.c_ it is necessary to use ``cc _file.c_ -lplot3''.
+
+_Color_ specification and three-dimensional primitives are BRL extensions to the "unix plot" language that are not generally found on other systems.
+
+
+[[see_also]]
+== SEE ALSO
+
+*plot*(1), *pl-fb*(1), *plot3*(5), *plot*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

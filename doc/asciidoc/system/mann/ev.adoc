@@ -1,0 +1,73 @@
+= EV(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+ev - Evaluates the _objects_ specified by tessellating all primitive shapes in the objects and then performing any Boolean operations specified in the _objects_. The result is then displayed in the MGED display according to specified options.
+
+== SYNOPSIS
+
+[source]
+----
+ev [-dfnrstuvwST] [-P #] [-C #/#/#] {objects} []
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Evaluates the _objects_ specified by tessellating all primitive shapes in the objects and then performing any Boolean operations specified in them. The result is then displayed in the MGED display according to specified options.
+
+
+* _d_--Do not perform Boolean operations or any checking; simply convert shapes to polygons and draw them. Useful for visualizing BOT and polysolid primitives.
+* _f_--Fast path for quickly visualizing polysolid primitives.
+* _w_--Draw wireframes (rather than polygons).
+* _n_--Draw surface normals as little hairs.
+* _s_--Draw shape lines only (no dot-dash for subtract and intersect).
+* _t_--Perform CSG-to-tNURBS conversion (still under development).
+* _v_--Shade using per-vertex normals, when present.
+* _u_--Draw NMG edgeuses (for debugging).
+* _S_--Draw tNURBS with trimming curves only, no surfaces.
+* _T_--Do not triangulate after evaluating the Boolean (may produce unexpected results if not used with the _w_ option).
+* _P#_--Use # processors in parallel. Default=1.
+* _r_--Draw all objects in red. Useful for examining objects colored black.
+* _C#/#/#_--Draw all objects in the specified rgb color.
+
+
+[[examples]]
+== EXAMPLES
+
+The first example shows the use of the *ev* command to display two evaluated objects as shaded polygons. The second example shows the use of the *ev* command to display an evaluated object as wireframe without triangulating.
+
+.Display evaluated objects as polygons.
+[example]
+====
+
+mged> **ev region1 shapea**::
+Displays evaluated _region1_ and _shapea_ as shaded polygons.
+
+
+
+====
+
+.Display an evaluated object as wireframe without triangulation.
+[example]
+====
+mged>**ev -wT region1**
+
+Displays an evaluated object, _region1_, as wireframe without triangulation.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

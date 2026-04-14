@@ -1,0 +1,54 @@
+= BWSHRINK(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+bwshrink - shrink a black and white bw file
+
+== SYNOPSIS
+
+[source]
+----
+bwshrink [-s squareinsize] [-w in_width] [-n in_height] [-f shrink_factor] [-u] [infile.bw] > outfile.bw
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bwshrink* will take a black and white *bw*(5) format file of given dimensions and produce a smaller scaled version. The *-w* and *-n* flags specify the input file width and number of scan lines in pixels. They can both be set to the same value via *-s.* Defaults of 512 are assumed for unspecified dimensions. The integer scaling factor is set with the *-f* flag. By default, the factor is 2.
+
+The program reads the entire image into memory, and then scales the image down to 1/factor the original size in both dimensions.
+
+By default, *bwshrink* uses boxcar averaging to produce the output pixels from the input. The *-u* option causes *bwshrink* to use image undersampling instead.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *bwcrop*(1), *bwrect*(1), *bwscale*(1), *bw*(5)
+
+
+[[bugs]]
+== BUGS
+
+If the dimensions of the input image are not evenly divisible by the shrink factor, incorrect and bizarre output is generated.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1991-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

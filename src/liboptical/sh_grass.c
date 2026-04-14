@@ -179,39 +179,38 @@ static const struct grass_specific grass_defaults = {
     MAT_INIT_IDN		/* sh_to_m */
 };
 
-#define SHDR_NULL ((struct grass_specific *)0)
-#define SHDR_O(m) bu_offsetof(struct grass_specific, m)
+#define GRASS_SHDR_O(m) bu_offsetof(struct grass_specific, m)
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
  * structure above
  */
 struct bu_structparse grass_print_tab[] = {
-    {"%g", 2, "cell",		SHDR_O(cell),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "ppc",		SHDR_O(ppc),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "ppcd",		SHDR_O(ppcd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "t",		SHDR_O(t),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "width",		SHDR_O(blade_width),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "octaves", 	SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "size",		SHDR_O(size),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d", 1, "nsegs",		SHDR_O(nsegs),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "seg_ratio",	SHDR_O(seg_ratio),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 2, "cell",		GRASS_SHDR_O(cell),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "ppc",		GRASS_SHDR_O(ppc),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "ppcd",		GRASS_SHDR_O(ppcd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "t",		GRASS_SHDR_O(t),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "width",		GRASS_SHDR_O(blade_width),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "lacunarity",	GRASS_SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "H", 		GRASS_SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "octaves", 	GRASS_SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "size",		GRASS_SHDR_O(size),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "nsegs",		GRASS_SHDR_O(nsegs),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "seg_ratio",	GRASS_SHDR_O(seg_ratio),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 struct bu_structparse grass_parse_tab[] = {
     {"%p", 1, "grass_print_tab", bu_byteoffset(grass_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 2, "c",			SHDR_O(cell),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "p",			SHDR_O(ppc),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "pd",			SHDR_O(ppcd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "l",			SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "o", 			SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "s",			SHDR_O(size),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "w",			SHDR_O(blade_width),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d", 1, "n",			SHDR_O(nsegs),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "r",			SHDR_O(seg_ratio),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d", 1, "d",			SHDR_O(debug),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 2, "c",			GRASS_SHDR_O(cell),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "p",			GRASS_SHDR_O(ppc),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "pd",			GRASS_SHDR_O(ppcd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "l",			GRASS_SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "o", 			GRASS_SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "s",			GRASS_SHDR_O(size),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "w",			GRASS_SHDR_O(blade_width),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "n",			GRASS_SHDR_O(nsegs),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "r",			GRASS_SHDR_O(seg_ratio),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "d",			GRASS_SHDR_O(debug),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

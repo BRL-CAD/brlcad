@@ -1,0 +1,49 @@
+= KEEP(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+keep - Copies the _objects_ specified to the __keep_file__.
+
+== SYNOPSIS
+
+[source]
+----
+keep {keep_file} {objects}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Copies the _objects_ specified to the __keep_file__. If __keep_file__ does not exist, it is created. If __keep_file__ does exist, the _objects_ are appended to it. The __keep_file__ is a _BRL-CAD_ database file. The _objects_ in the list must exist in the current database.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *keep* command to copy specified objects to a designated file.
+
+.Copy specified objects to a designated file.
+[example]
+====
+
+mged> **keep sample.g sample1 sample2**::
+Creates _sample.g_ file with objects _sample1_ and _sample2_ in it.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

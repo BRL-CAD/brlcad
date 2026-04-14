@@ -107,21 +107,20 @@ struct gauss_specific gauss_defaults = {
 };
 
 
-#define SHDR_NULL ((struct gauss_specific *)0)
-#define SHDR_O(m) bu_offsetof(struct gauss_specific, m)
+#define GAUSS_SHDR_O(m) bu_offsetof(struct gauss_specific, m)
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
  * structure above
  */
 struct bu_structparse gauss_print_tab[] = {
-    {"%g", 1, "sigma",		SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "sigma",		GAUSS_SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 
 };
 struct bu_structparse gauss_parse_tab[] = {
     {"%p", 1, "gauss_print_tab", bu_byteoffset(gauss_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%g", 1, "s",			SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "s",			GAUSS_SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

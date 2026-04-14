@@ -619,21 +619,20 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 
 	    if (search && (search->path_cnt > 0 || search->search_type == 2)) {
 		if (search->search_type == 2) {
-		    size_t k;
 		    struct bu_ptbl *search_results;
 
 		    flags |= DB_SEARCH_FLAT;
 		    BU_ALLOC(search_results, struct bu_ptbl);
 		    bu_ptbl_init(search_results, 8, "initialize search result table");
 
-		    for (k = 0; k < RT_DBNHASH; k++) {
-			struct directory *dp;
-			for (dp = gedp->dbip->dbi_Head[k]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-			    if (dp->d_addr != RT_DIR_PHONY_ADDR) {
-				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &dp, gedp->dbip, clbk, u1, u2);
-			    }
-			}
+		    {
+	    struct directory *dp;
+	    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+		    if (dp->d_addr != RT_DIR_PHONY_ADDR) {
+			(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &dp, gedp->dbip, clbk, u1, u2);
 		    }
+	    FOR_ALL_DIRECTORY_END;
+	    }
 
 		    search_cnt += search_print_objs_to_vls(search_results, gedp->ged_result_str);
 

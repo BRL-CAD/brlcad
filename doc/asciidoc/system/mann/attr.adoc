@@ -1,0 +1,196 @@
+= ATTR(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+attr - Used to create, change, retrieve, or view attributes of database objects.
+
+== SYNOPSIS
+
+[source]
+----
+attr [get] [set] [rm] [append] [list] [show] [sort] [standardize] [copy] {object_name_pattern} [arguments]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Used to create, change, retrieve, or view attributes of database objects. Note that the attribute names may not contain embedded white space, and if attribute values contain embedded white space, they must be surrounded by {} or double quotes.
+
+A newly formed region always has four attributes automatically assigned to it:
+
+
+
+
+* los
+* material_id
+* region
+* region_id
+
+
+
+The 'region' attribute is the 'region flag' mentioned in the edcomb command.
+
+
+[[attr_subcommands]]
+== SUB-COMMANDS
+
+
+*get*::
+Retrieve and display the specified attributes from the object or objects matched by the pattern. The arguments for the "get" sub-command are attribute names. If no arguments are provided all attributes are displayed.
+
+
+*set*::
+Assigned the value provided for the specified attribute to the object or objects matched by the pattern. The arguments for "set" sub-command are attribute name/value pairs.
+
+
+*rm*::
+Removes the specified attribute from the object or objects matched by the pattern. The arguments for the "rm" sub-command are attribute names.
+
+
+*append*::
+Adds the attribute and value provied for the specified attribute to the object or objects matched by the pattern, or sets the value if the attribute already exists. The arguments for the "append" sub-command are attribute name/value pairs.
+
+
+*list* object_name_pattern [key_filter_pattern [value_filter_pattern]]::
+Lists the attributes assigned to the object or objects matched by the pattern. If multiple objects are matched, the list returned is a consolidated list of all attribute types present on one or more of the matched objects. This option is useful when investigating what attributes are present in objects in a database.
++
+Optionally, the *list* subcommand will accept filters that are used to match key or key/value combinations and report only those matches. If both key and value filters are supplied, the output of the list subcommand will be not just the unique matching attribute keys but the unique matching key/value pairs. The latter is particularly useful as a way to get an overview of all actively used values associated with a particular attribute key.
+
+
+*show*::
+Pretty print the specified attributes for the object or objects matching the pattern. If no attributes are listed, all attributes are printed for each object. The arguments for the "rm" sub-command are attribute names.
+
+
+*sort*::
+Pretty prints all attributes on each object matched by the pattern. Attributes are sorted into alphabetical order before printing. The arguments for the "sort" sub-command set the sort type for the attributes: 'case' (default), 'nocase', 'value', and 'value-nocase'.
+
+
+*standardize*::
+Updates attributes defined on the object using older conventions to current "standard" attribute key strings (for example, giftmater -> material_id).
+
+
+*copy*::
+Takes the value of the first attribute from the specified object and set the second attribute on the object to that value. The sequence of "attr copy" and "attr rm" can be used to rename attributes on objects.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+The examples demonstrate the use of the *attr* command and subcommands to assign and list attributes of database objects.
+
+.Assigns an attribute to an object.
+[example]
+====
+
+mged> **attr set region_1 material_id 10**::
+Assigns an attribute name "material_id" to __region_1__. Its value is 10.
+
+
+
+====
+
+.Assigns an attribute (with embedded white space in its value) to an object.
+[example]
+====
+
+mged> **attr set region_1 comment {This is a comment for region_1}**::
+Assigns an attribute named "comment" to __region_1__. Its value is "This is a comment for region_1."
+
+
+
+====
+
+.List all the attributes for an object
+[example]
+====
+
+mged> **attr show region_1 comment**::
+Lists all the attributes for __region_1__.
+
+
+
+====
+
+.List all the attribute types present on one or more objects in a database
+[example]
+====
+mged>**attr list ***
+
+
+....
+
+aircode
+los
+material_id
+oshader
+region
+region_id
+regionid_colortable
+rgb
+shader
+title
+units
+        
+....
+
+
+
+Generate a list of all attribute keys found one one or more objects in the database. It may be necessary to place a '\' character before the asterisk to quote it on the MGED tcl prompt so that it reaches the attr command unexpanded. The above output is the attribute list from the m35.g sample database.
+
+====
+
+.List all the material_id attribute values in use in a database
+[example]
+====
+mged>**attr list * material_id ***
+
+
+....
+
+material_id=1
+material_id=2
+material_id=4
+material_id=7
+material_id=8
+material_id=14
+material_id=17
+material_id=18
+material_id=19
+material_id=20
+        
+....
+
+
+
+Produces a list of all material_id values found one or more times in the database on an object. It may be necessary to place a '\' character before the asterisks to quote them on the MGED tcl prompt so that they reaches the attr command correctly. The above output is the attribute list from the m35.g sample database.
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*attributes*(5).
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2008-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

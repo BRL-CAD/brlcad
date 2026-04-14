@@ -15,7 +15,7 @@ set(
   chgtree.c
   chgview.c
   clone.c
-  cmd.c
+  cmd.cpp
   color_scheme.c
   columns.c
   dm-generic.c
@@ -44,6 +44,7 @@ set(
   set.c
   setup.c
   share.c
+  tclsync.c
   tedit.c
   titles.c
   track.c

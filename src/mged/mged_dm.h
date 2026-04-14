@@ -103,10 +103,8 @@ struct trail {
 
 struct client {
     int			c_fd;
-#ifdef USE_TCL_CHAN
     Tcl_Channel         c_chan;
     Tcl_FileProc        *c_handler;
-#endif
     struct pkg_conn	*c_pkg;
 };
 
@@ -349,9 +347,7 @@ struct mged_dm {
     struct dm		*dm_dmp;
     struct fb		*dm_fbp;
     int			dm_netfd;			/* socket used to listen for connections */
-#ifdef USE_TCL_CHAN
     Tcl_Channel		dm_netchan;
-#endif
     struct client	dm_clients[MAX_CLIENTS];
     int			dm_dirty;			/* true if received an expose or configuration event */
     int			dm_mapped;
@@ -406,7 +402,9 @@ struct mged_dm {
 
 /* If we're changing the active DM, use this function so
  * libged also gets the word. */
+__BEGIN_DECLS
 extern void set_curr_dm(struct mged_state *s, struct mged_dm *nl);
+__END_DECLS
 
 #define MGED_DM_NULL ((struct mged_dm *)NULL)
 #define DMP s->mged_curr_dm->dm_dmp

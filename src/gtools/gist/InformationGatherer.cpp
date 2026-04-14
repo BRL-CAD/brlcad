@@ -23,7 +23,7 @@
 #include "InformationGatherer.h"
 #include "bu/log.h"
 
-static std::string getCmdPath(std::string exeDir, const char* cmd) {
+std::string getCmdPath(std::string exeDir, const char* cmd) {
     char buf[MAXPATHLEN] = {0};
     if (!bu_dir(buf, MAXPATHLEN, exeDir.c_str(), cmd, BU_DIR_EXT, NULL))
         bu_exit(BRLCAD_ERROR, "Couldn't find %s, aborting.\n", cmd);
@@ -85,47 +85,57 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
     }
 }
 
-static double
-parseVolume(std::string res)
-{
-    double ret = 0;
-    // Extract volume value
-    std::string vol_raw = res.substr(res.find("Average total volume:") + 22);
-    vol_raw = vol_raw.substr(0, vol_raw.find("cu") - 1);
-    if (vol_raw.find("inf") == std::string::npos) {
-        try {
-            ret = stod(vol_raw);
-        } catch (const std::invalid_argument& ia) {
-            bu_exit(BRLCAD_ERROR, "parseVolume got: (%s) %s, aborting.\n", vol_raw.c_str(), ia.what());
-        }
+/* extract a positve number to 'out', from 'text', immediately following 'label' (space-separated)
+ * returns false if label could not be found, or problem converting number
+ * NOTE: "inf" and negative numbers are not considered errors but will return 0.0
+ */
+static bool
+parseLabeledNumber(double &out, const std::string &text, const std::string &label) {
+    out = 0.0;
+
+    const std::size_t label_pos = text.find(label);
+    if (label_pos == std::string::npos) {
+        // couldn't find label
+        return false;
     }
 
-    return ret;
-}
+    std::size_t pos = label_pos + label.size();
+    // skip leading spaces
+    while (pos < text.size() && std::isspace(static_cast<unsigned char>(text[pos]))) {
+        ++pos;
+    }
 
-static double
-parseMass(std::string res)
-{
-    double ret = 0;
-    // Extract mass value
-    std::string weight_raw = res.substr(res.find("Average total weight:") + 22);
-    weight_raw = weight_raw.substr(0, weight_raw.find(" "));
+    // find next space (end of our number)
+    std::size_t end = pos;
+    while (end < text.size()) {
+        const char c = text[end];
+        if (std::isspace(static_cast<unsigned char>(c)))
+            break;
+
+        ++end;
+    }
+
+    // sanity - make sure we got something
+    if (end == pos)
+        return false;
+
+    const std::string token = text.substr(pos, end - pos);
+
+    // inf and negative values are not usable, skip
+    if (token.find("inf") != std::string::npos || token[0] == '-') {
+        // TODO: return true or false here
+        return true;
+    }
+
     try {
-        // weight cannot be inf or negative
-        if (weight_raw.find("inf") == std::string::npos) {
-            if (weight_raw[0] == '-') {
-                weight_raw = weight_raw.substr(1);
-                ret += stod(weight_raw);
-            }
-            else {
-                ret += stod(weight_raw);
-            }
-        }
-    } catch (const std::invalid_argument& ia) {
-        bu_exit(BRLCAD_ERROR, "parseMass got: (%s) %s, aborting.\n", weight_raw.c_str(), ia.what());
+        out = stod(token);
+    } catch (const std::exception& e) {
+        bu_log("WARNING: Failed to parse value for '%s': %s, skipping.\n",
+                label.c_str(), e.what());
+        return false;
     }
 
-    return ret;
+    return true;
 }
 
 static std::string GqaGridSize(std::map<std::string, std::string> map, std::string lUnit) {
@@ -181,6 +191,9 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
 
     //Get Volume and Mass (using gqa)
     const std::string no_density_msg = "Could not find any density information";
+    const std::string volume_label = "Average total volume:";
+    const std::string weight_label = "Average total weight:";
+    double tmp_val;
     std::string gqa = getCmdPath(opt->getExeDir(), "gqa");
     std::string grid = GqaGridSize(map, lUnit);
     std::string units = lUnit + ",cu " + lUnit + "," + mUnit;
@@ -189,22 +202,35 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
     char buffer[1024] = {0};
     std::string result = "";
     std::string ncpu(std::to_string(opt->getNCPU()));
+    std::string dFile(opt->getDensityFile());
 
+    // build our gqa argv - use a vector so we can easily set required ordering
+    std::vector<const char*> gqa_av_vec;
+    gqa_av_vec.reserve(14);
+    gqa_av_vec.push_back(gqa.c_str());
     // attempt to get volume and mass in same run
-    const char* gqa_av[12] = {
-	gqa.c_str(),
-	"-Avm", // first position is assumed elsewhere to be -A
-	"-P",
-	ncpu.c_str(),
-	"-q",
-	"-g", grid.c_str(),
-	"-u", units.c_str(),
-	in_file.c_str(),
-	top_comp.c_str(),
-	NULL
-    };
+    gqa_av_vec.push_back("-Avm");       // first position is assumed elsewhere to be -A
+    gqa_av_vec.push_back("-P");
+    gqa_av_vec.push_back(ncpu.c_str());
+    gqa_av_vec.push_back("-q");
+    gqa_av_vec.push_back("-g");
+    gqa_av_vec.push_back(grid.c_str());
+    gqa_av_vec.push_back("-u");
+    gqa_av_vec.push_back(units.c_str());
+    if (!dFile.empty()) {
+        if (dFile == "0")
+            // special case - '0' means intenionally skip mass check
+            gqa_av_vec[1] = "-Av";
+        else {
+            gqa_av_vec.push_back("-f");
+            gqa_av_vec.push_back(dFile.c_str());
+        }
+    }
+    gqa_av_vec.push_back(in_file.c_str());
+    gqa_av_vec.push_back(top_comp.c_str());
+    gqa_av_vec.push_back(nullptr);
 
-    bu_process_create(&p, gqa_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
+    bu_process_create(&p, const_cast<const char**>(gqa_av_vec.data()), BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
     if (bu_process_pid(p) <= 0) {
         bu_exit(BRLCAD_ERROR, "Problem in getVerificationData gqa process creation, aborting\n");
@@ -222,15 +248,19 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
 
     // make sure we did not get 'no density file' error message
     if (result.find(no_density_msg) == std::string::npos) {
-        volume += parseVolume(result);
-        mass += parseMass(result);
+        // NOTE: tmp_val is zeroed at each parseLabeledNumber call
+        if (parseLabeledNumber(tmp_val, result, volume_label))
+            volume += tmp_val;
+        if (parseLabeledNumber(tmp_val, result, weight_label))
+            mass += tmp_val;
+
         return;
     }
 
 
     // no density data found. need to re-run, only getting volume data
-    gqa_av[1] = "-Av"; // FIXME: shouldn't assume -A is as position[1]
-    bu_process_create(&p, gqa_av, BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
+    gqa_av_vec[1] = "-Av"; // FIXME: shouldn't assume -A is as position[1]
+    bu_process_create(&p, const_cast<const char**>(gqa_av_vec.data()), BU_PROCESS_HIDE_WINDOW | BU_PROCESS_OUT_EQ_ERR);
 
     if (bu_process_pid(p) <= 0) {
         bu_exit(BRLCAD_ERROR, "Problem in getVerificationData gqa process creation, aborting\n");
@@ -246,7 +276,8 @@ getVerificationData(struct ged* UNUSED(g), Options* opt, std::map<std::string, s
         bu_exit(BRLCAD_ERROR, "Problem collecting gqa volume, aborting\n");
     }
 
-    volume += parseVolume(result);
+    if (parseLabeledNumber(tmp_val, result, volume_label))
+        volume += tmp_val;
 }
 
 std::string
@@ -518,6 +549,10 @@ InformationGatherer::gatherInformation(std::string UNUSED(name))
 
     // load bb dimensions in infoMap and unitsMap
     double convFactor = bu_units_conversion(infoMap["units"].c_str()) / bu_units_conversion(lUnit.c_str());
+    if (INVALID(convFactor)) {
+        bu_log("Could not convert units. Got: units (%s), convFactor (%f), aborting.\n", lUnit.c_str(), convFactor);
+        return false;
+    }
     Unit u1 = {lUnit, 1};
     Unit u3 = {lUnit, 3};
     infoMap["dimX"] = formatDouble(convFactor * largestComponents[0].bb.x);

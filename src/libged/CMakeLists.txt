@@ -305,10 +305,11 @@ set(
   display_list.c
   draw.cpp
   ged.cpp
+  ged_inside.c
+  ged_track.c
   ged_util.cpp
   get_obj_bounds.c
   get_solid_kp.c
-  inside.c
   path.c
   pnts_util.c
   points_eval.c
@@ -316,7 +317,6 @@ set(
   qray.cpp
   tab_complete.cpp
   trace.c
-  track.c
   vers.c
   vutil.c
   view/data_lines.c
@@ -353,7 +353,9 @@ set(
   ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-brlcad_addlib(libged "${LIBGED_SOURCES}" "${GED_LIBS}" "" "${GED_LOCAL_INCLUDE_DIRS}")
+brlcad_addlib(libged "${LIBGED_SOURCES}" "${GED_LIBS}" "" "${GED_LOCAL_INCLUDE_DIRS}"
+  UNITY_BUILD_SKIP ged_init.cpp
+)
 set_target_properties(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if (LIBGED_STATIC_CORE)
   target_link_libraries(libged PRIVATE libged_plugin_deps)
@@ -371,7 +373,6 @@ endif()
 brlcad_addexec(ged_exec ged_exec.cpp libged NO_MAN)
 
 add_subdirectory(tests)
-add_subdirectory(simulate/tests)
 
 brlcad_addexec(test_help help/test_help.c libged TEST)
 
@@ -664,14 +665,6 @@ set(
   osg.cpp
   pnts_util.h
   qray.h
-  simulate/NOTES
-  simulate/rt_collision_algorithm.hpp
-  simulate/rt_collision_shape.hpp
-  simulate/rt_debug_draw.hpp
-  simulate/rt_instance.hpp
-  simulate/rt_motion_state.hpp
-  simulate/simulation.hpp
-  simulate/utility.hpp
 )
 cmakefiles(${ged_ignore_files})
 

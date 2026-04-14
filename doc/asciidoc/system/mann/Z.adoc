@@ -1,0 +1,49 @@
+= Z(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+Z - Clears the _mged_ display.
+
+== SYNOPSIS
+
+[source]
+----
+Z
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Zap (i.e., clear) the _mged_ display.
+
+
+[[examples]]
+== EXAMPLES
+
+Clear the _mged_ display.
+
+.Enter *Z* to clear the _mged_ display.
+[example]
+====
+
+mged> **Z**::
+The _mged_ display is clear.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

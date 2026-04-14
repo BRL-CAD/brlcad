@@ -11,7 +11,7 @@ set(
   cdt/cdt.cpp
   cdt/fast.cpp
   cdt/surf.cpp
-  cdt/util.cpp
+  cdt/cdt_util.cpp
   cdt/validate.cpp
   cdt/edge.cpp
   cdt/mesh.cpp
@@ -29,9 +29,9 @@ set(
   shape_recognition/pipeline.cpp
   shape_recognition/planar.cpp
   shape_recognition/sphere.cpp
-  shape_recognition/util.cpp
+  shape_recognition/sr_util.cpp
   ssx_event.cpp
-  tools/util.cpp
+  tools/tools_util.cpp
 )
 
 # Include directories needed by libbrep users

@@ -1,0 +1,47 @@
+= MROT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+mrot - Rotates the view using model _x y z_.
+
+== SYNOPSIS
+
+[source]
+----
+mrot {x y z}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Rotates the view using model _x y z_.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *mrot* command to rotate the view using model _x y z_.
+
+.Rotate the view using model _x y z_.
+[example]
+====
+mged>**mrot 0 0 10**
+
+Rotates the view about the model _z_ axis by 10°.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

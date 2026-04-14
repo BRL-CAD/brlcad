@@ -35,6 +35,7 @@
 #include "bu/opt.h"
 #include "bu/getopt.h"
 #include "rt/geom.h"
+#include "../../librt/librt_private.h"
 
 #include "../ged_private.h"
 
@@ -466,7 +467,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	    struct bu_attribute_value_set t_avs = BU_AVS_INIT_ZERO;
 	    db5_get_attributes(t_dbip, &t_avs, tglobal_dp);
 	    bu_avs_add(&t_avs, "regionid_colortable", colorTab);
-	    db5_import_color_table(colorTab);
+	    db5_import_color_table(gedp->dbip, colorTab);
 	    db5_update_attributes(tglobal_dp, &t_avs, gedp->dbip);
 	    bu_free(colorTab, "colorTab");
 	    bu_avs_free(&g_avs);
@@ -481,7 +482,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	copy_object(gedp, dp, &cc_data);
     } FOR_ALL_DIRECTORY_END;
 
-    rt_mempurge(&(cc_data.incoming_dbip->dbi_freep));
+    rt_mempurge(&(cc_data.incoming_dbip->i->dbi_freep));
 
     /* Free all the directory entries, and close the incoming database */
     db_close(cc_data.incoming_dbip);

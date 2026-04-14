@@ -810,8 +810,8 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
 	}
 
 	if ((val = bu_avs_get(&avs, "regionid_colortable")) != NULL) {
-	    rt_color_free();
-	    db5_import_color_table((char *)val);
+	    db_mater_free(to_gedp->dbip);
+	    db5_import_color_table(to_gedp->dbip, (char *)val);
 	}
 
 	bu_avs_free(&avs);
@@ -2425,15 +2425,14 @@ struct directory **
 _ged_dir_getspace(struct db_i *dbip,
 		  size_t num_entries)
 {
-    size_t i;
     struct directory **dir_basep;
     struct directory *dp;
 
     if (num_entries == 0) {
 	/* Set num_entries to the number of entries */
-	for (i = 0; i < RT_DBNHASH; i++)
-	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
-		num_entries++;
+	FOR_ALL_DIRECTORY_START(dp, dbip)
+	    num_entries++;
+	FOR_ALL_DIRECTORY_END;
     }
 
     /* Allocate and cast num_entries worth of pointers */

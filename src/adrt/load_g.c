@@ -51,18 +51,18 @@ static struct tie_s *cur_tie;
 static struct db_i *dbip;
 TIE_3 **tribuf;
 
-static void nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, void *client_data);
+static void load_nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, void *client_data);
 
 struct gcv_data {
     struct gcv_region_end_data region_end_data;
     struct adrt_mesh_s **meshes;
 };
-static struct gcv_data gcvwriter = {{nmg_to_adrt_gcvwrite, NULL, NULL}, NULL};
+static struct gcv_data gcvwriter = {{load_nmg_to_adrt_gcvwrite, NULL, NULL}, NULL};
 
 
 /* load the region into the tie image */
 static void
-nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
+load_nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 {
     struct model *m;
     struct shell *s;
@@ -130,7 +130,7 @@ nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 
 
 int
-nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, const struct rt_comb_internal *rci, void *UNUSED(client_data))
+load_nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, const struct rt_comb_internal *rci, void *UNUSED(client_data))
 {
     /*
      * if it's a simple single bot region, just eat the bots and return -1.
@@ -174,13 +174,13 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     BU_ALLOC(mesh->attributes, struct adrt_mesh_attributes_s);
     mesh->matid = ts->ts_gmater;
 
-    rt_comb_get_color(rgb, rci);
+    rt_comb_get_color(dbip, rgb, rci);
     VSCALE(mesh->attributes->color.v, rgb, 1.0/256.0);
 
     bu_strlcpy(mesh->name, db_path_to_string(path), sizeof(mesh->name));
 
     if (intern.idb_minor_type == ID_NMG) {
-	nmg_to_adrt_internal(mesh, (struct nmgregion *)intern.idb_ptr);
+	load_nmg_to_adrt_internal(mesh, (struct nmgregion *)intern.idb_ptr);
 	return -1;
     } else if (intern.idb_minor_type == ID_BOT) {
 	size_t i;
@@ -205,7 +205,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 
 
 static void
-nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, void *UNUSED(client_data))
+load_nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp, void *UNUSED(client_data))
 {
     struct model *m;
     struct adrt_mesh_s *mesh;
@@ -234,7 +234,7 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, stru
     VMOVE(mesh->attributes->color.v, tsp->ts_mater.ma_color);
     bu_strlcpy(mesh->name, db_path_to_string(pathp), sizeof(mesh->name));
 
-    nmg_to_adrt_internal(mesh, r);
+    load_nmg_to_adrt_internal(mesh, r);
 }
 
 
@@ -307,7 +307,7 @@ load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct ad
 			argv,			/* region names */
 			1,			/* ncpu */
 			&tree_state,		/* initial tree state */
-			nmg_to_adrt_regstart,	/* region start function */
+			load_nmg_to_adrt_regstart,	/* region start function */
 			gcv_region_end,		/* region end function */
 			rt_booltree_leaf_tess,	/* leaf func */
 			(void *)&gcvwriter);	/* client data */

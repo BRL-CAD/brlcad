@@ -1,0 +1,80 @@
+= BRLCAD-CONFIG(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+brlcad-config - script to get information about the installed version of BRL-CAD
+
+== SYNOPSIS
+
+[source]
+----
+brlcad-config [ --prefix [=DIR]] [--libs] [--cflags] [--version] [--help]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*brlcad-config* is a script that describes the compile and linker flags that should be used to compile and link programs that use _BRL-CAD_'s libraries.
+
+
+[[options]]
+== OPTIONS
+
+
+*brlcad-config*::
+accepts the following options:
+
+
+*--prefix=PREFIX*::
+If specified, use the provided installation PREFIX instead of the prefix that _BRL-CAD_ was compiled with when providing the output for the other *brlcad-config* script options.
+
+
+*--libs*::
+Prints out library linker flags that are generally needed when creating a program that links to _BRL-CAD_ libraries.
+
+
+*--cflags*::
+Prints out compilation flags that are generally needed when creating a program that refers to _BRL-CAD_ headers.
+
+
+*--version*::
+Prints out the version of _BRL-CAD_ that is installed.
+
+
+*--help*::
+Display usage.
+
+
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *libbu*(3), *libbn*(3), *librt*(3), *libwdb*(3)
+
+
+[[bugs]]
+== BUGS
+
+No bugs known for *brlcad-config* .
+
+
+[[author]]
+== AUTHOR
+
+Christopher Sean Morrison
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2007-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -128,17 +128,16 @@ struct tthrm_specific {
 
 
 /* The default values for the variables in the shader specific structure */
-#define SHDR_NULL ((struct tthrm_specific *)0)
-#define SHDR_O(m) bu_offsetof(struct tthrm_specific, m)
+#define TREETHERM_SHDR_O(m) bu_offsetof(struct tthrm_specific, m)
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
  * structure above
  */
 struct bu_structparse tthrm_parse[] = {
-    {"%f",	1, "l",			SHDR_O(tt_min_temp),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "h", 		SHDR_O(tt_max_temp),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%s",	64, "file",		SHDR_O(tt_name),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "l",			TREETHERM_SHDR_O(tt_min_temp),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "h", 		TREETHERM_SHDR_O(tt_max_temp),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s",	64, "file",		TREETHERM_SHDR_O(tt_name),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

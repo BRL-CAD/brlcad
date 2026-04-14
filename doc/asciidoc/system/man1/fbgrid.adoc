@@ -1,0 +1,46 @@
+= FBGRID(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbgrid - draw a grid on a frame buffer
+
+== SYNOPSIS
+
+[source]
+----
+fbgrid [-cbdo] [-F framebuffer] [-S squaresize] [-W width] [-N height]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbgrid* is used to generate a grid on a frame buffer. The environment variable `FB_FILE` is used to select the display device (see *brlcad*(1)). If this variable is not set, the default device for your system will be used. The *-SWN* options can all be used in the normal way to specify the size of the grid (see *brlcad*(1)). The default grid size is 512x512. The framebuffer can be declared with the *-F* flag. *-c* will clear the screen before drawing.
+
+The available patterns are:*-b* for binary spacing with lines at 8, 64, and 128 line intervals. *-d* for decimal spacing with lines at 10, 50, and 100 line intervals (the default). *-o* for the old cross grid pattern.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbpoint*(1), *fbzoom*(1), *fbframe*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1986-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -38,9 +38,10 @@
 #include "../ged_private.h"
 
 #include <string.h>
+#include "../../librt/librt_private.h"
 
 
-static const char *usage = "Usage: mater [-s] object_name shader r [g b] inherit\n"
+static const char *mater_usage = "Usage: mater [-s] object_name shader r [g b] inherit\n"
 "              -d  source\n"
 "              -d  clear\n"
 "              -d  import [-v] file.density\n"
@@ -75,7 +76,7 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
 	return GED_HELP;
     }
 
@@ -129,7 +130,7 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
 
     /* too much */
     if ((!offset && argc > 7) || (offset && argc > 5)) {
-	bu_vls_printf(gedp->ged_result_str, "Too many arguments.\n%s", usage);
+	bu_vls_printf(gedp->ged_result_str, "Too many arguments.\n%s", mater_usage);
 	return BRLCAD_ERROR;
     }
 
@@ -320,7 +321,7 @@ mater_validate(struct ged *gedp, size_t argc, const char *argv[])
     char *buf = NULL;
 
     if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
 	return BRLCAD_OK;
     }
 
@@ -657,7 +658,7 @@ mater_import(struct ged *gedp, size_t argc, const char *argv[])
 {
     int validate_input = 0;
     if (argc < 2 || argc > 3) {
-	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
 	return BRLCAD_OK;
     }
 
@@ -707,7 +708,7 @@ mater_export(struct ged *gedp, size_t argc, const char *argv[])
     struct directory *dp;
 
     if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
 	return BRLCAD_OK;
     }
 
@@ -916,7 +917,7 @@ mater_get(struct ged *gedp, size_t argc, const char *argv[])
     argc--; argv++;
 
     if (argc < 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
 	goto ged_mater_get_fail;
     }
 
@@ -1066,7 +1067,7 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (argc < 2) {
-	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
 	return BRLCAD_ERROR;
     }
 
@@ -1177,7 +1178,7 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     bu_free_external(&body);
 
     /* make sure the database directory is initialized */
-    if (gedp->dbip->dbi_eof == RT_DIR_PHONY_ADDR) {
+    if (gedp->dbip->i->dbi_eof == RT_DIR_PHONY_ADDR) {
 	if (db_dirbuild(gedp->dbip)) {
 	    return BRLCAD_ERROR;
 	}
@@ -1365,22 +1366,22 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
     }
 
     if (!names_from_ids && !ids_from_names) {
-	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
 	goto ged_mater_mat_id_fail;
     }
 
     if (ac > 3) {
-	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
 	goto ged_mater_mat_id_fail;
     }
 
     if (ac == 2 && (bu_vls_strlen(&dfilename) || bu_vls_strlen(&mfilename))) {
-	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
 	goto ged_mater_mat_id_fail;
     }
 
     if (ac == 1 && bu_vls_strlen(&dfilename) && names_from_ids) {
-	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
 	goto ged_mater_mat_id_fail;
     }
 
@@ -1622,7 +1623,7 @@ mater_density(struct ged *gedp, size_t argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
 	return GED_HELP;
     }
 
@@ -1691,7 +1692,7 @@ ged_mater_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
 	return GED_HELP;
     }
 

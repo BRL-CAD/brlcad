@@ -1,0 +1,144 @@
+= FBZOOM(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbzoom - modify zoom and window parameters of a frame buffer
+
+== SYNOPSIS
+
+[source]
+----
+fbzoom [-T] [-F frame_buffer] [-s|S image_sqrsize] [-w|W image_width] [-n|N image_height]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Using *vi*(1) and/or *emacs*(1) -like keystrokes, *fbzoom* allows interactive zooming and panning of a frame buffer. Using the optional command line arguments,
+
+
+*-T*::
+toggles the sense of the pan commands.
+
+
+*-F* _frame_buffer_::
+explicitly specifies the frame buffer. Otherwise, the environment variable _FB_FILE_ specifies the current framebuffer; see *brlcad*(1).
+
+
+*-s* (or *-S*) _image_sqrsize_::
+displays the image file as a square, _image_sqrsize_ pixels per side (default is 512x512).
+
+
+*-w* (or *-W*) _image_width_::
+displays the image _image_width_ pixels wide (default is 512).
+
+
+*-n* (or *-N*) _image_height_::
+displays the image _image_height_ pixels high (default is 512).
+
+
+
+*fbzoom* will display the image currently in the frame buffer and then act on commands entered by the user. Available commands are:
+
+
+*b ^V*::
+zoom Bigger (*2)
+
+
+*s*::
+zoom Smaller (*0.5)
+
+
+*+*::
+zoom Bigger (+1)
+
+
+*-*::
+zoom Smaller (-1)
+
+
+*h B*::
+pan Left (1)
+
+
+*j N*::
+pan Down (1)
+
+
+*k P*::
+pan Up (1)
+
+
+*l F*::
+pan Right (1)
+
+
+*H ^B*::
+pan Left (many)
+
+
+*J ^N*::
+pan Down (many)
+
+
+*K ^P*::
+pan Up (many)
+
+
+*L ^F*::
+pan Right (many)
+
+
+*T*::
+toggle sense of pan commands
+
+
+*c*::
+goto Center
+
+
+*z*::
+zoom 1 1
+
+
+*r*::
+Reset to normal
+
+
+*q*::
+Exit
+
+
+*RETURN*::
+Exit
+
+
+
+Note that these commands change the way the frame buffer is viewed but not the image in the frame buffer.
+
+
+[[see_also]]
+== SEE ALSO
+
+*bw-fb*(1), *gif-fb*(1), *pix-fb*(1), *plot3-fb*(1), *rle-fb*(1)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1986-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

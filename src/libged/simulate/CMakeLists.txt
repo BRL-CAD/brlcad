@@ -1,35 +1,35 @@
 if(BRLCAD_ENABLE_BULLET)
-  # There is a peculiarity about using Bullet libraries - by design, they are
-  # intended to be used ONLY as static libraries and are not reliably viable
-  # for use in a shared configuration:
-  #
-  # https://stackoverflow.com/a/37019528
-  #
-  # Additionally, when compiling Bullet to produce static libs on Ubuntu,
-  # it proved necessary to add -DCMAKE_POSITION_INDEPENDENT_CODE=ON to
-  # avoid linking errors.
-  #
-  # The need for static libs complicates searching for system installs, since
-  # Linux package managers do provide shared versions (at least on Ubuntu,
-  # there doesn't even seem to be an option for static libraries provided by
-  # the OS?)
-  #
-  # To avoid finding versions that won't work for our build, we use a variation
-  # on this trick:  https://www.scivision.dev/cmake-force-link-static-libs/
-  set(CFLS_TMP ${CMAKE_FIND_LIBRARY_SUFFIXES})
-  set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_STATIC_LIBRARY_SUFFIX})
-  find_package(Bullet REQUIRED)
-  set(CMAKE_FIND_LIBRARY_SUFFIXES ${CFLS_TMP})
-endif(BRLCAD_ENABLE_BULLET)
+  set(BULLET_ROOT ${PROJECT_BINARY_DIR})
+  brlcad_find_package(Bullet REQUIRED)
 
-if(BRLCAD_ENABLE_BULLET AND BULLET_LIBRARIES)
-  add_definitions(-DHAVE_BULLET=1)
+  if(BULLET_LIBRARIES)
+    add_definitions(-DHAVE_BULLET=1)
+    # We build double precision
+    if (BULLET_INCLUDE_DIR MATCHES "${PROJECT_BINARY_DIR}/.*")
+      add_definitions(-DBT_USE_DOUBLE_PRECISION=1)
+    endif()
 
-  # If bullet was built with USE_DOUBLE_PRECISION, we need this (see
-  # https://pybullet.org/Bullet/phpBB3/viewtopic.php?t=9670 for more discussion.)
-  # Hopefully we can find a way to detect this correctly at some point...
-  add_definitions(-DBT_USE_DOUBLE_PRECISION=1)
-endif(BRLCAD_ENABLE_BULLET AND BULLET_LIBRARIES)
+    get_filename_component(BULLET_INCLUDE_DIR_FULL "${BULLET_INCLUDE_DIR}" ABSOLUTE)
+
+    if (NOT EXISTS "${BULLET_INCLUDE_DIR_FULL}")
+      set(BULLET_INCLUDE_DIR "${PROJECT_BINARY_DIR}/${BULLET_INCLUDE_DIR}")
+      if (NOT EXISTS "${BULLET_INCLUDE_DIR}")
+	message(FATAL_ERROR "Invalid Bullet include directory: ${BULLET_INCLUDE_DIR}")
+      endif()
+    else()
+      set(BULLET_INCLUDE_DIR "${BULLET_INCLUDE_DIR_FULL}")
+      message("EXISTS:  BULLET_INCLUDE_DIR: ${BULLET_INCLUDE_DIR}")
+    endif()
+    set(BULLET_INCLUDE_DIRS "${BULLET_INCLUDE_DIR}")
+    if (NOT EXISTS "${BULLET_INCLUDE_DIRS}")
+      message(FATAL_ERROR "Invalid Bullet include directory: ${BULLET_INCLUDE_DIRS}")
+    endif()
+    set(BULLET_INCLUDE_DIRS "${BULLET_INCLUDE_DIRS}")
+  endif()
+  message("BULLET_LIBRARIES: ${BULLET_LIBRARIES}")
+endif()
+
+add_subdirectory(tests)
 
 set(
   bullet_srcs
@@ -39,31 +39,37 @@ set(
   rt_debug_draw.cpp
   rt_instance.cpp
   rt_motion_state.cpp
+  rt_roi_collision_shape.cpp
   simulation.cpp
   utility.cpp
 )
 
-set(SIM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
-set(SIM_LIBS libged libbu ${BULLET_LIBRARIES})
+set(SIM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/simulate)
+set(SIM_SYSTEM_INCLUDE_DIRS ${BULLET_INCLUDE_DIRS})
+set(SIM_LIBS libged libbu libbv ${BULLET_LIBRARIES})
+
+check_cxx_compiler_flag(-Wno-nonnull-compare NO_NONNULL_COMPARE)
 
 ged_plugin_library(ged-simulate
   ${bullet_srcs}
-  INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}
+  INCLUDES ${SIM_INCLUDE_DIRS}
+  SYSTEM_INCLUDES ${SIM_SYSTEM_INCLUDE_DIRS}
   LIBS ${SIM_LIBS}
+  COMPILE_OPTIONS $<$<BOOL:${NO_NONNULL_COMPARE}>:-Wno-nonnull-compare>
   PLUGIN_ONLY
 )
 
 cmakefiles(
   CMakeLists.txt
   ${bullet_srcs}
+  NOTES
   rt_collision_algorithm.hpp
   rt_collision_shape.hpp
   rt_debug_draw.hpp
   rt_instance.hpp
   rt_motion_state.hpp
+  rt_roi_collision_shape.hpp
   simulation.hpp
-  tests/CMakeLists.txt
-  tests/simulate_test.cpp
   utility.hpp
 )
 

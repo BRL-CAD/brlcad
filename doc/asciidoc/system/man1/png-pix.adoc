@@ -1,0 +1,64 @@
+= PNG-PIX(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+png-pix - convert Portable Network Graphics (PNG) encoded image to RGB pixel format
+
+== SYNOPSIS
+
+[source]
+----
+png-pix [-v] [file.png] > file.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*png-pix* decodes a Portable Network Graphics (PNG) format file (saved with *fb-png*(1), *pix-png*(1), or a similar program), converts it into *pix*(5) format, and writes it to standard out. If _file.png_ is not specified, standard input is read. The *-v* option provide verbose information about the PNG file.
+
+
+_file.png_::
+Name of file to decode, in PNG format.
+
+
+_file.pix_::
+Name of file to store PIX image in.
+
+
+
+
+[[example]]
+== EXAMPLE
+
+
+....
+
+png-pix tank.png > tank.pix
+....
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *png-fb*(1), *fb-png*(1), *pix-png*(1), *png-bw*(1), *bw-png*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+John R. Anderson
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1998-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

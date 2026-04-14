@@ -74,8 +74,7 @@ struct osl_specific osl_defaults = {
     OSL_MAGIC,
 };
 
-#define SHDR_NULL ((struct osl_specific *)0)
-#define SHDR_O(m) bu_offsetof(struct osl_specific, m)
+#define OSL_SHDR_O(m) bu_offsetof(struct osl_specific, m)
 
 /* description of how to parse/print the arguments to the shader */
 struct bu_structparse osl_print_tab[] = {

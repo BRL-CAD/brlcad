@@ -13,8 +13,46 @@ So far this has only been observed on FreeBSD.
 Adjustment of the bombing message code reveals that the fatal error is
 EPERM - The current thread does not own the mutex.
 
-Maybe relevant (not sure if we have any code that might be using automatic variables after thread_exit(), but the symptoms sound similar...)  Only other candidate I'm seeing is memory corruption of some sort...
-https://stackoverflow.com/a/7612070
+ROOT CAUSE ANALYSIS:
+The bug is a race condition in bu_semaphore_init() in src/libbu/semaphore.c.
+The function checks "nsemaphores <= bu_nsemaphores" as a fast-path early return
+WITHOUT holding the init lock.  After acquiring the init lock, the for loop
+correctly starts at bu_nsemaphores (reading the now up-to-date value under the
+lock), so it avoids re-initializing already-initialized mutexes.  However, the
+final assignment "bu_nsemaphores = nsemaphores" was unconditional, meaning a
+thread that entered the function seeing an old (stale) bu_nsemaphores could
+LOWER bu_nsemaphores after another thread had already raised it higher.
+
+Example race:
+  1. bu_nsemaphores == 0.  Thread A calls bu_semaphore_init(13), passes the
+     early-return check (13 > 0), then blocks waiting for the init lock.
+  2. Thread B calls bu_semaphore_init(21), also passes the check, acquires the
+     init lock, initializes mutexes 0-20, sets bu_nsemaphores = 21, releases.
+  3. Thread A acquires the init lock.  It reads bu_nsemaphores = 21 (the write
+     from step 2 is visible due to the lock acquire memory barrier).  The for
+     loop "for (i=21; i<13; i++)" does not execute -- correctly, no mutexes are
+     re-initialized.
+  4. Thread A then executes "bu_nsemaphores = nsemaphores" (= 13), LOWERING
+     bu_nsemaphores from 21 back to 13.
+  5. Mutexes 13-20 are correctly initialized at the OS level, but bu_nsemaphores
+     now claims they are not.
+  6. A subsequent call to bu_semaphore_acquire(15) calls bu_semaphore_init(16),
+     sees 16 > bu_nsemaphores(13), enters the init path, acquires the init lock,
+     and re-initializes mutexes 13-15 via memset + pthread_mutex_init.
+  7. If another thread currently holds mutex 15, that mutex's internal owner
+     field is wiped by the reinitialization.  When the original holder later
+     calls pthread_mutex_unlock(), it gets EPERM because the mutex no longer
+     records it as the owner.
+
+On Linux, PTHREAD_MUTEX_DEFAULT has undefined behavior when unlocking a mutex
+not owned by the caller -- it may silently succeed, hiding the bug.  On FreeBSD,
+the default mutex type returns EPERM in this situation, making the bug visible.
+
+FIX: In bu_semaphore_init(), change the unconditional "bu_nsemaphores = nsemaphores"
+to a conditional update: "if (nsemaphores > bu_nsemaphores) bu_nsemaphores = nsemaphores".
+This prevents a late-arriving thread (one that passed the early-return check with a
+stale bu_nsemaphores) from ever lowering the counter.  The same fix applies to all
+three platform-specific code paths (SunOS, pthreads, Win32).
 
 
 The first failure is from a GQA run:

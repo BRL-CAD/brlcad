@@ -39,17 +39,19 @@
 #include "ged.h"
 
 
-char *file_name;
-FILE *outfp;
+struct fb2pix_state {
+    char *file_name;
+    FILE *outfp;
+    int crunch;		/* Color map crunch? */
+    int inverse;	/* Draw upside-down */
+    int screen_height;	/* input height */
+    int screen_width;	/* input width */
+};
 
-static int crunch = 0;		/* Color map crunch? */
-static int inverse = 0;		/* Draw upside-down */
-int screen_height;			/* input height */
-int screen_width;			/* input width */
-
+#define FB2PIX_INIT {NULL, NULL, 0, 0, 512, 512}
 
 static int
-get_args(int argc, char **argv)
+fb2pix_get_args(struct fb2pix_state *s, int argc, char **argv)
 {
     int c;
 
@@ -57,20 +59,20 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "ciF:s:w:n:h?")) != -1) {
 	switch (c) {
 	    case 'c':
-		crunch = 1;
+		s->crunch = 1;
 		break;
 	    case 'i':
-		inverse = 1;
+		s->inverse = 1;
 		break;
 	    case 's':
 		/* square size */
-		screen_height = screen_width = atoi(bu_optarg);
+		s->screen_height = s->screen_width = atoi(bu_optarg);
 		break;
 	    case 'w':
-		screen_width = atoi(bu_optarg);
+		s->screen_width = atoi(bu_optarg);
 		break;
 	    case 'n':
-		screen_height = atoi(bu_optarg);
+		s->screen_height = atoi(bu_optarg);
 		break;
 
 	    default:		/* 'h' '?' */
@@ -81,18 +83,18 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdout)))
 	    return 0;
-	file_name = "-";
-	outfp = stdout;
+	s->file_name = "-";
+	s->outfp = stdout;
     } else {
-	file_name = argv[bu_optind];
-	outfp = fopen(file_name, "wb");
-	if (outfp == NULL) {
+	s->file_name = argv[bu_optind];
+	s->outfp = fopen(s->file_name, "wb");
+	if (s->outfp == NULL) {
 	    fprintf(stderr,
 			  "fb-pix: cannot open \"%s\" for writing\n",
-			  file_name);
+			  s->file_name);
 	    return 0;
 	}
-	(void)bu_fchmod(fileno(outfp), 0444);
+	(void)bu_fchmod(fileno(s->outfp), 0444);
     }
 
     if (argc > ++bu_optind)
@@ -138,21 +140,21 @@ ged_fb2pix_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    screen_height = screen_width = 512;		/* Defaults */
+    struct fb2pix_state f2ps = FB2PIX_INIT;
 
-    if (!get_args(argc, (char **)argv)) {
+    if (!fb2pix_get_args(&f2ps, argc, (char **)argv)) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     setmode(fileno(stdout), O_BINARY);
 
-    ret = fb_write_fp(fbp, outfp,
-		      screen_width, screen_height,
-		      crunch, inverse, gedp->ged_result_str);
+    ret = fb_write_fp(fbp, f2ps.outfp,
+		      f2ps.screen_width, f2ps.screen_height,
+		      f2ps.crunch, f2ps.inverse, gedp->ged_result_str);
 
-    if (outfp != stdout)
-	fclose(outfp);
+    if (f2ps.outfp != stdout)
+	fclose(f2ps.outfp);
 
     if (ret == BRLCAD_OK) {
 	(void)dm_draw_begin(dmp);

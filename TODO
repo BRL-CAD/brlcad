@@ -18,13 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* Do some binary incompatible changes to the librt API (will
-  need a minor version bump):
-
-  - remove void *tie from rt_bot_intenral - TIE is no more.
-
-  - make the non-public elements of db_i actually private.
-
 * settle on sane gist quality defaults and/or implement quality knob
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -255,9 +248,6 @@ lookup check to ensure none are missing.
 * create boolweave+boolfinal unit tests to validate weaving behavior
   and performance.
 
-* make sure we can run db_dirbuild() multiple times without creating
-  duplicate entries.
-
 * tree command shouldn't infinite loop when encountering a cyclic path
   - need to print a warning and stop walking.  Requires full path
   awareness in tree command walk.
@@ -447,9 +437,6 @@ lookup check to ensure none are missing.
 
 * add bot plot and bot pick subcommands to mirror brep subcommands
   and let us inspect individual aspects of a BoT's structure.
-
-* rtwizard's reopening of the database is causing db_dircheck
-  "Duplicate of..." errors when opening read-only .g files.
 
 * procedural studio box generation allowing for specification of size,
   shape, material, and lighting characteristics
@@ -752,8 +739,6 @@ lookup check to ensure none are missing.
   current display.  prep needs to return a catalog so summary
   reporting can be facilitated (of all objects, successful or not).
 
-* look into whether db_dirbuild should call db_update_nref
-
 * evaluate replacing libfft with the KISS FFT library
   (http://kissfft.sourceforge.net, BSD) or the OpenCL-based clFFT
   (https://github.com/clMathLibraries/clFFT, Apache2).  we need to
@@ -920,15 +905,8 @@ lookup check to ensure none are missing.
   st_path is not set, but if it has a comb unioned in the path is set
   - is this an optimization, and if so is it necessary?
 
-* investigate integrating Blender's (OSL-based) Cycles engine:
-  http://code.blender.org/index.php/2013/08/cycles-render-engine-released-with-permissive-license/
-
 * investigate integrating Pixar's OpenSubdiv for subdivision surfaces:
   http://graphics.pixar.com/opensubdiv/
-
-* investigate the possibility of using Appleseed
-  (http://appleseedhq.net/) to perform visual image rendering using
-  librt shotline data for input.
 
 * the scale structure in bn_cmd_noise_slice (bn_tcl.c) was never
   initialized. it looks like somebody has planned to extend the
@@ -972,11 +950,6 @@ lookup check to ensure none are missing.
   primitives, to stop after N levels, to stop before N levels. (This
   is at least partially accomplished in npush work - need to hammer
   out any remaining issues with depth stoppage limits...)
-
-* make rt_dirbuild()+rt_dirbuild() work without vomiting error
-  messages about duplicate geometry.  should be able to open the same
-  database multiple times without running into rt_uniresource
-  directory duplication
 
 * convert teapot to use nurbs surfaces instead of bspline
 

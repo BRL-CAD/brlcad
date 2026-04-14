@@ -1,0 +1,58 @@
+= SUN-PIX(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+sun-pix - convert Sun bitmaps from screendump(1) into pix(5) or bw(5) raster image
+
+== SYNOPSIS
+
+[source]
+----
+sun-pix [-b] [-H] [-i] [-P] [-v] [-C] [sun.bitmap]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*sun-pix* is a program to take Sun bitmap files created with Sun's *screendump*(1) command, and convert them to a *pix*(5) format file. If the *-b* flag is specified, a *bw*(5) format file is created instead. Note that *sun-pix* will refuse to write to a terminal; its output must be redirected unless it's invoked with the *-H* flag. The dimensions of the input file are the dimensions of the output file, and use of the *-H* flag will cause the image size to be printed without further processing of the input, or generation of any other output; the image size is output as a pair of command line options (_i.e._, *-w1152 -n900*) suitable for use with other *brlcad*(1) tools such as *pix-fb*(1). When the *-v* flag is specified, all the fields of the header are printed on stderr, to aid debugging. Note that the "encoded" format is not supported.
+
+Specifying the *-i* flag will invert the sense of a one-bit wide input image, _i.e._, exchanging black for white. The default Sun image is black print on white background; the *-i* flag will give a white image on black background, which is often better for purposes of creating overlays to be composited with *pixmerge*(1) on top of color images.
+
+The *-P* flag indicates that the input is a pure bitmap with no Sun-style header on it. The first bit to be processed will be the most significant bit (MSB), _i.e._, the left-most bit in the byte.
+
+The *-C* flag indicates that the color map is to be output.
+
+Note that the input file is expected to be in Sun ("network") byte order (_i.e._, "big-endian", with byte 0 on the left), regardless of the byte order of the machine running this program.
+
+
+[[bugs]]
+== BUGS
+
+24-bit images are not supported yet.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix-fb*(1), *pixmerge*(1), *pix*(5), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

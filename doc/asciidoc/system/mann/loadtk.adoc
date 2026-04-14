@@ -1,0 +1,49 @@
+= LOADTK(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+loadtk - Loads the initialization for the Tk window library.
+
+== SYNOPSIS
+
+[source]
+----
+loadtk
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Loads the initialization for the Tk window library. This is normally done automatically when the user attaches any display manager for MGED. If no display manager is attached, then the user must execute _loadtk_ prior to using any Tk facilities.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *loadtk* command to load the initialization for the Tk window library.
+
+.Load the initialization of the Tk library.
+[example]
+====
+
+mged> **loadtk**::
+Initializes the Tk window library.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

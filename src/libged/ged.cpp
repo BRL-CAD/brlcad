@@ -176,6 +176,7 @@ ged_init(struct ged *gedp)
     /* ? */
     gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;
+    gedp->ged_skip_clbks = 0;
 
     gedp->dbi_state = NULL;
 
@@ -283,21 +284,14 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 {
     struct ged *gedp = NULL;
     struct rt_wdb *wdbp = NULL;
-    struct mater *save_materp = MATER_NULL;
 
     if (filename == NULL)
       return GED_NULL;
-
-    save_materp = rt_material_head();
-    rt_new_material_head(MATER_NULL);
 
     if (BU_STR_EQUAL(dbtype, "db")) {
 	struct db_i *dbip;
 
 	if ((dbip = _ged_open_dbip(filename, existing_only)) == DBI_NULL) {
-	    /* Restore RT's material head */
-	    rt_new_material_head(save_materp);
-
 	    return GED_NULL;
 	}
 
@@ -313,44 +307,11 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	 * strings indicates a failure in design and lazy coding.
 	 */
 	if (sscanf(filename, "%p", (void **)&dbip) != 1) {
-	    /* Restore RT's material head */
-	    rt_new_material_head(save_materp);
-
 	    return GED_NULL;
 	}
 
 	if (dbip == DBI_NULL) {
-	    int i;
-
-	    BU_ALLOC(dbip, struct db_i);
-	    dbip->dbi_eof = (b_off_t)-1L;
-	    dbip->dbi_fp = NULL;
-	    dbip->dbi_mf = NULL;
-	    dbip->dbi_read_only = 0;
-
-	    /* Initialize fields */
-	    for (i = 0; i <RT_DBNHASH; i++) {
-		dbip->dbi_Head[i] = RT_DIR_NULL;
-	    }
-
-	    dbip->dbi_local2base = 1.0;		/* mm */
-	    dbip->dbi_base2local = 1.0;
-	    dbip->dbi_title = bu_strdup("Untitled BRL-CAD Database");
-	    dbip->dbi_uses = 1;
-	    dbip->dbi_filename = NULL;
-	    dbip->dbi_filepath = NULL;
-	    dbip->dbi_version = 5;
-
-	    bu_ptbl_init(&dbip->dbi_clients, 128, "dbi_clients[]");
-	    bu_ptbl_init(&dbip->dbi_changed_clbks , 8, "dbi_changed_clbks]");
-	    bu_ptbl_init(&dbip->dbi_update_nref_clbks, 8, "dbi_update_nref_clbks");
-
-	    dbip->dbi_use_comb_instance_ids = 0;
-	    const char *need_comb_inst = getenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS");
-	    if (BU_STR_EQUAL(need_comb_inst, "1")) {
-		dbip->dbi_use_comb_instance_ids = 1;
-	    }
-	    dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
+	    dbip = db_open_inmem();
 	}
 
 	/* Could core dump */
@@ -365,9 +326,6 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	else if (BU_STR_EQUAL(dbtype, "inmem_append"))
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
 	else {
-	    /* Restore RT's material head */
-	    rt_new_material_head(save_materp);
-
 	    bu_log("wdb_open %s target type not recognized", dbtype);
 	    return GED_NULL;
 	}

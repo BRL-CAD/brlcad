@@ -1,0 +1,69 @@
+= MIRROR(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+mirror - Mirrors a shape or combination across a given axis.
+
+== SYNOPSIS
+
+[source]
+----
+mirror [-p "point"] [-d "dir"] [-x|-y-|-z] [-o offset] {from_object to_object}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Mirrors an object (shape or combination) across a given axis (_x_ by default). If __from_object__ is a shape, then it is copied to a new shape named __to_object__ that is mirrored across the given axis. If __from_object__ is a combination, then a new combination is created that contains exactly the same members naned __to_object__. Transformation matrices are added to mirror it across the requested axis. The _-x, -y, & -z_ options tell the command which axis to mirror the object. The _-p_ can be used to specify a point to mirror about, and the _-d_ can be used to specify a direction vector to mirror about.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *mirror* command to mirror an object across the _y_ axis.
+
+.Mirror an object across an axis.
+[example]
+====
+mged>**mirror -y solid.s mir_solid.s**
+
+Creates a copy of solid.s that is mirrored across the _y_ axis and named mir_solid.s
+
+====
+
+The example shows the use of the *mirror* command to mirror an object across a plane of x=100.
+
+.Mirror an object across an plane parallel to an axis.
+[example]
+====
+mged>**mirror -x -o 100 solid.s mir_solid.s**
+
+Creates a copy of solid.s that is mirrored across a plane parallel to the _x_ axis at x=100 and named mir_solid.s
+
+====
+
+The example shows the use of the *mirror* command to mirror an object about a given point.
+
+.Mirror an object about a given point.
+[example]
+====
+mged>**mirror -p "0 1000 0" -y solid.s mir_solid.s**
+
+Creates a copy of solid.s that is mirrored across a plane parallel to the _y_ axis at the point 0, 1000, 0 and named mir_solid.s
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

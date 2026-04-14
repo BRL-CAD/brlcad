@@ -1,0 +1,384 @@
+= COMB(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+comb - Create and manipulate BRL-CAD combination with the name __combination_name__.
+
+== SYNOPSIS
+
+[source]
+----
+comb [[-c] | [-r]] [[-w] | [-f] | [-l]] [[-S]] {combination_name} [<operator object_name>]...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *comb* command creates and manipulates _BRL-CAD_ combination objects. For combination creation or appending, __operator/object_name__ pairs of boolean operators and object names are parsed into comb tree entries. (TODO - integrate full expression evaluation like that in *c*.)
+
+The following options are recognized:
+
+
+*-c*::
+Ensures that the combination does not have the region flag set. Conflicts with *-r*.
+
+
+*-r*::
+Ensures that the combination does have the region flag set. Conflicts with *-c*.
+
+
+*-w*::
+Moves the contents of a combination to a new combination and makes that combination the sole child of the original combination. See the "fixing nested regions" example below for an illustration of how this option is used. Conflicts with *-f* and *-l*.
+
+
+*-f*::
+Flattens a combination that contains only unions into a single top level combination with all of the solids unioned into it, and remove all combinations that were below the input combination that are not used elsewhere in the .g file. (In essence, the latter behavior prevents "orphaned" combinations that are no longer used from showing up as new top level objects in the database.) This feature will not work on any combination containing non-union boolean operations. The following *search* command can be used to find combs that are candidates for flattening:
+
+
+....
+
+		    
+mged> search -type comb ! -below ( -bool + -or -bool - )
+		    
+	    
+....
+
+
++
+Conflicts with *-w* and *-l*.
+
+
+*-l*::
+"Lift" a region flag to the top comb, and clear all region flags below the comb in the tree. Like the *f* option this option will work to respect the integrity of other geometry in the database, but it is more aggressive in the steps it will take and it will operate on trees that contain non-union booleans. The decision logic is as follows:
+. Check if regions below the current comb are used elsewhere in the .g file. If they are not, they will simply be converted to combs.
+. For regions that are used elsewhere in the .g file, determine if their parent comb (if that comb is not the original comb supplied to the command) is also used elsewhere in the .g file. If not, the *w* wrapping behavior is used to produce a non-region equivalent comb, and the parent comb is updated to use that new comb instead of the region. If one or more parent combs _are_ used elsewhere (i.e. the parent comb cannot be altered without altering other geometry) the command will fail - manual intervention is required to resolve the situation.
+
++
+Conflicts with *-w* and *-f*.
+
+
+*-S*::
+Stop if the combination object already exists.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+This example shows how to use the *comb* command to create a combination according to a given formula.
+
+.Creating a combination.
+[example]
+====
+
+mged> **comb abc u a u b - a + d**::
+Creates a combination named _abc_.
+
+
+
+====
+
+.Fixing a nested region.
+[example]
+====
+
+Nested regions (a region containing another region in its tree) are generally viewed as poor modelling practice. This example shows how to fix an instance of this nesting with minimal disruption to the model.::
+
++
+Suppose we have a situation where _region2.r_ is unioned into _region1.r_, and both _region1.r_ and _region2.r_ have the region flag set, as seen in the tree below.
++
+
+....
+
+      
+mged> tree region1.r
+region1.r/R
+        u region2.r/R
+                u sph.s
+        u comb.c/
+                u arb.s
+      
+      
+....
+
+This geometry has an error in that one region is not supposed to be combined into another using boolean operations. Further, suppose that one or more assemblies use _region2.r_ and expect it to be a region - i.e., _region2.r_ needs to remain a region with the same contents. To fix this problem without disturbing other geometry using _region2.r_, first make a combination below _region2.r_ using the *w* flag to *comb*:
++
+
+....
+
+      
+mged> comb -w region2.r
+mged> tree region2.r
+region2.r/R
+        u region2.r.c/
+                  u sph.s
+      
+      
+....
+
+The next step is to adjust the _region1.r_ tree definition to reference the non-region combination instead of _region2.r_:
++
+
+....
+
+      
+mged> set glob_compat_mode 0
+0
+mged> get region1.r tree
+u {l region2.r} {l comb.c}
+mged> adjust region1.r tree {u {l region2.r.c} {l comb.c}}
+mged> tree region1.r
+region1.r/R
+        u region2.r.c/
+                u sph.s
+        u comb.c/
+                u arb.s
+      
+      
+....
+
+Because the tree is manipulated as a Tcl list, we need glob compatibility mode to be off on the MGED command line. Once the tree is re-defined, _region1.r_ no longer has _region2.r_ below it, but still defines the same physical volume via _region2.r.c_.
++
+Optionally, the name _region2.r.c_ can be changed to the name _region2.c_ with the *mvall* command:
++
+
+....
+
+      
+mged> mvall region2.r.c region2.c
+mged> tree region1.r
+region1.r/R
+        u region2.c/
+                u sph.s
+        u comb.c/
+                u arb.s
+mged> tree region2.r
+region2.r/R
+        u region2.c/
+                u sph.s
+      
+      
+....
+
+
+
+====
+
+.Flattening a Combination.
+[example]
+====
+
+When a combination contains only unioned objects, it can be flattened with the *f* option.::
+
++
+First, create an appropriate example to properly illustrate the option's behavior:
++
+
+....
+
+			  
+mged> make sph1.s sph
+mged> make sph2.s sph
+mged> comb sph1.c u sph1.s
+mged> comb sph2.c u sph2.s
+mged> comb spheres.c u sph1.c u sph2.c
+mged> comb misc.c u sph2.c
+mged> tree spheres.c
+spheres.c/
+         u sph1.c/
+                 u sph1.s
+         u sph2.c/
+                 u sph2.s
+
+mged> tree misc.c
+misc.c/
+         u sph2.c/
+                 u sph2.s
+
+mged> tops
+misc.c/               spheres.c
+      
+      
+....
+
+Note that _sph2.c_ is used in both _spheres.c_ and _misc.c_, but _sph1.c_ is only used in _spheres.c_ In the *tops* command output, _misc.c_ and _spheres.c_ are the only top level objects. Targeting _spheres.c_ with the *f* option reworks the tree as follows:
++
+
+....
+
+      
+mged> comb -f spheres.c
+mged> tree spheres.c
+spheres.c/
+        u sph1.s
+        u sph2.s
+
+mged> tree misc.c
+misc.c/
+         u sph2.c/
+                 u sph2.s
+
+mged> tops
+misc.c/               spheres.c
+      
+      
+....
+
+Notice that while _spheres.c_ has indeed been flattened and no longer has the intermediate combinations over its solids, _misc.c_ is still intact. Notice also that while _sph2.c_ was preserved, since it is used by _misc.c_, _sph1.c_ was removed and does not show up in the *tops* command's output since it was no longer used by any object in the database.
+
+
+
+====
+
+.Example Of Comb Region Lifting.
+[example]
+====
+
+The *l* option is useful in cases where many *w* type operations are needed.::
+
++
+Suppose a geometry has the following structure:
++
+
+....
+
+			  
+mged> make sph1.s sph
+mged> make sph2.s sph
+mged> r r1 u sph1.s
+mged> r r2 u sph2.s
+mged> comb assembly u r1 u r2
+mged> r r3 u r1 - r2
+mged> tops
+assembly/           r3/R
+
+mged> tree assembly
+assembly/
+        u r1/R
+                u sph1.s
+        u r2/R
+                u sph2.s
+mged> tree r3
+r3/R
+        u r1/R
+                u sph1.s
+        - r2/R
+                u sph2.s
+      
+      
+....
+
+There are regions below region _r3_, which is not good modeling practice. The *l* option applied to _r3_ makes _r3_ a region that no longer has regions below it, while at the same time preserving the geometric volumes defined by all existing combs and preserving the meaning of the _assembly_ region definitions:
++
+
+....
+
+      
+mged> comb -l r3
+mged> tree assembly
+assembly/
+        u r1/R
+                u r1.c/
+                         u sph1.s
+        u r2/R
+                u r1.c/
+                         u sph1.s
+mged> tree r3
+r3/R
+        u r1.c/
+                u sph1.s
+        - r2.c/
+                u sph2.s
+
+      
+      
+....
+
+
+
+====
+
+.Example Tree Structure That Will Prevent Successful Region Lifting.
+[example]
+====
+
+While the *l* option can handle many tree configurations, there are some situations where manual intervention is required. This example illustrates one such case.::
+
++
+Suppose a geometry has the following structure:
++
+
+....
+
+			  
+mged> make sph1.s sph
+mged> make sph2.s sph
+mged> make sph3.s sph
+mged> r r1 u sph1.s
+mged> r r2 u sph2.s
+mged> comb subassembly u r1 u r2
+mged> r r3 u sph3.s - subassembly
+mged> comb assembly u subassembly
+mged> tops
+assembly/           r3/R
+
+mged> tree assembly
+assembly/
+        u subassembly/
+                u r1/R
+                        u sph1.s
+                u r2/R
+                        u sph2.s
+mged> tree r3
+r3/R
+        u sph3.s
+        - subassembly/
+                u r1/R
+                        u sph1.s
+                u r2/R
+                        u sph2.s
+
+      
+      
+....
+
+This geometry has regions below region _r3_, which is not ideal. However, attempting to use the *l* option on _r3_ will produce the following error:
++
+
+....
+
+      
+mged> comb -l r3
+Comb region lift failed - the following combs in the tree contain
+regions and are also used outside the tree of r3:
+
+subassembly, containing region r1
+subassembly, containing region r2
+
+The above combs must be reworked before region lifting the tree
+of r3 can succeed.
+      
+      
+....
+
+While _r3_ has problems, the geometry tree under _assembly_ is entirely correct. For _r3_ to become a toplevel region with no regions under it, the definition of _subassembly_ would have to change too. Because _subassembly_ is used in the definition of _assembly_, as well as the definition of _r3_, changing _subassembly_'s contents would destroy the meaning of the (valid) _assembly_ comb. Hence, the command fails and does not change the geometry.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

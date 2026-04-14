@@ -1,0 +1,54 @@
+= PIX2ASC/ASC2PIX(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pix2asc, asc2pix - encode and decode color pixel files
+
+== SYNOPSIS
+
+[source]
+----
+pix2asc < file.pix > file.asc
+----
+
+
+[source]
+----
+asc2pix < file.asc > file.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pix2asc* and *asc2pix* are simple filters which convert color _pix(5)_ files from their binary form to a portable ASCII form, and back. *pix2asc* reads the binary file on standard in and writes ASCII on standard out. *asc2pix* does the reverse.
+
+The binary file consists of a sequence of three-tuples of *unsigned chars* representing the red, green, and blue intensities for each pixel. The ASCII version of the file has one RGB pixel per newline-terminated line, with each pixel represented as six hexadecimal digits.
+
+When moving _pix(5)_ files between UNIX systems via tape (see _tar(1)_ and _cpio(1)_) or via network (see _rcp(1)_ and _ftp(1)_), this conversion to ASCII is unnecessary, as all UNIX files are byte streams, regardless of the underlying hardware. However, when transporting images to non-UNIX machines, these tools are invaluable. Note that *rt*(1) can directly generate the ASCII form of an image file using the *-O* flag, allowing it to be easily used on non-UNIX systems.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix*(5), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+*BRL-CAD Team*
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

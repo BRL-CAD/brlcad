@@ -1,0 +1,47 @@
+= REGIONS(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+regions - Creates a summary of all the regions in the specified list of _objects_. The summary is written in the specified __output_file__.
+
+== SYNOPSIS
+
+[source]
+----
+regions {output_file} {objects}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Creates a summary of all the regions in the specified list of _objects_. The summary is written in the specified __output_file__. The summary includes, for each region, a sequential region number, its ident, air code, material code, los, the path from one of the _objects_ to the region, and the Boolean formula for the region.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *regions* command to create a summary of the regions that are in the specified objects. The summary is written in a specified file.
+
+.Create a summary of regions contained in specified objects.
+[example]
+====
+mged>**regions regions_file group1 group2**
+
+Places a summary of all the regions from _group1_ and _group2_ in the file named __regions_file__.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

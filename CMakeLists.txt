@@ -231,7 +231,7 @@ set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 # Prepare to manage and build BRL-CAD's external dependencies. Specifies a
 # specific commit hash to use in the 'bext' repository.
 include(BRLCAD_ExternalDeps)
-brlcad_bext_init(cfdef3de771c38a7da7a4edea2b61541c029ae6a)
+brlcad_bext_init(b78aa614945bb0fd1188002cdbc11f55f6e7c871)
 
 #---------------------------------------------------------------------
 # Define various utilities.
@@ -1762,6 +1762,17 @@ brlcad_function_exists(nextafter REQUIRED_LIBS ${M_LIBRARY})
 brlcad_function_exists(nextafterf REQUIRED_LIBS ${M_LIBRARY})
 brlcad_function_exists(ntohll)
 brlcad_function_exists(pipe)
+brlcad_function_exists(_pipe)
+# On Windows, pipe() is not a real CRT symbol; it is a macro in config_win.h
+# that wraps _pipe().  check_function_exists tests for a linkable symbol and
+# therefore misses the macro.  If _pipe was found but pipe was not, treat
+# pipe as available because the config_win.h wrapper makes it usable.
+if(NOT HAVE_PIPE AND HAVE__PIPE)
+  set(HAVE_PIPE 1 CACHE INTERNAL "pipe available via config_win.h macro wrapper")
+  if(CONFIG_H_FILE)
+    config_h_append(BRLCAD "#define HAVE_PIPE 1\n")
+  endif()
+endif()
 brlcad_function_exists(popen) # implies pclose
 brlcad_function_exists(posix_memalign) # IEEE Std 1003.1-2001
 brlcad_function_exists(proc_pidpath) # Mac OS X
@@ -2131,86 +2142,10 @@ if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
 
-# If we're building Docbook documentation, we need to prepare
-# some settings before the BRLCAD_ADDEXEC targets are defined
+# If we're building AsciiDoc documentation, we need to define
+# some logic before the BRLCAD_ADDEXEC targets are defined
 if(BRLCAD_EXTRADOCS)
-  # Define a build target that builds a no-op executable, so we can ensure
-  # a target for generator expression use regardless of other changes elsewhere
-  # in the build system
-  add_executable(db_dir_info doc/docbook/db_dir_info.c)
-  set_target_properties(db_dir_info PROPERTIES FOLDER "DocBook")
-
-  # Most of the Docbook resources we need are defined here
-  add_subdirectory(doc/docbook/resources)
-
-  # Rework CMake binary and source paths for DocBook templates - if we
-  # have spaces in the paths, they will cause a problem.
-  string(REPLACE " " "%20" DOCBOOK_BINARY_DIR "${CMAKE_BINARY_DIR}")
-  string(REPLACE " " "%20" DOCBOOK_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
-
-  # Files for PDF products
-  if(BRLCAD_EXTRADOCS_PDF)
-    # Apache FOP needs a couple of config files set up
-    set(srcdir ${CMAKE_CURRENT_SOURCE_DIR}/doc/docbook)
-    configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/fop.xconf.in ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf)
-    distclean("${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf")
-  endif(BRLCAD_EXTRADOCS_PDF)
-
-  # For the html files, we need brlcad.css
-  add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/doc/docbook/brlcad_css-done
-    COMMAND
-      "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_SOURCE_DIR}/doc/docbook/css/brlcad.css
-      $<TARGET_FILE_DIR:db_dir_info>/${RBIN_DIR}/${DOC_DIR}/html/css/brlcad.css
-    COMMAND "${CMAKE_COMMAND}" -E touch ${CMAKE_BINARY_DIR}/doc/docbook/brlcad_css-done
-    DEPENDS ${CMAKE_SOURCE_DIR}/doc/docbook/css/brlcad.css
-  )
-  add_custom_target(brlcad_css DEPENDS ${CMAKE_BINARY_DIR}/doc/docbook/brlcad_css-done)
-  set_target_properties(brlcad_css PROPERTIES FOLDER "DocBook")
-  install(FILES ${CMAKE_SOURCE_DIR}/doc/docbook/css/brlcad.css DESTINATION ${DOC_DIR}/html/css)
-  distclean(${DOC_DIR}/html/css/brlcad.css)
-
-  # Include CMake macros for DocBook.
-  include(DocBook)
-
-  # The system man pages are the ones build targets might generate, so
-  # make sure to set their stylesheet resources up front
-
-  # Style sheet for XSLT transformation to HTML pages
-  set(D_RDIR ${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad)
-  set(D_BRDIR ${CMAKE_BINARY_DIR}/doc/docbook/resources/brlcad)
-  if(BRLCAD_EXTRADOCS_HTML)
-    configure_file(${D_RDIR}/brlcad-man-xhtml-stylesheet.xsl.in ${D_BRDIR}/brlcad-man-xhtml-stylesheet.xsl)
-    distclean("${D_BRDIR}/brlcad-man-xhtml-stylesheet.xsl")
-  endif(BRLCAD_EXTRADOCS_HTML)
-
-  if(BRLCAD_EXTRADOCS_PHP)
-    configure_file(${D_RDIR}/brlcad-man-xhtml-stylesheet.xsl.in ${D_BRDIR}/brlcad-man-xhtml-stylesheet.xsl)
-    distclean("${D_BRDIR}/brlcad-man-xhtml-stylesheet.xsl")
-  endif(BRLCAD_EXTRADOCS_PHP)
-
-  # Style sheet for XSLT transformation to manual pages
-  if(BRLCAD_EXTRADOCS_MAN)
-    configure_file(${D_RDIR}/brlcad-man-stylesheet.xsl.in ${D_BRDIR}/brlcad-man-stylesheet.xsl)
-    distclean("${D_BRDIR}/brlcad-man-stylesheet.xsl")
-  endif(BRLCAD_EXTRADOCS_MAN)
-
-  # Files for PDF
-  if(BRLCAD_EXTRADOCS_PDF)
-    configure_file(${D_RDIR}/brlcad-man-fo-stylesheet.xsl.in ${D_BRDIR}/brlcad-man-fo-stylesheet.xsl)
-    distclean("${D_BRDIR}/brlcad-man-fo-stylesheet.xsl")
-  endif(BRLCAD_EXTRADOCS_PDF)
-
-  # For HTML, MAN and FO (FO is an intermediate file used in the
-  # XML->PDF transformation) we use variables to hold the full
-  # stylesheet path. In the case we need to further
-  # customize FO stylesheets we can have separate CMake logic in
-  # appropriate directories to handle the customization (e.g., the
-  # BRL-CAD manuals in books/en/CMakeLists.txt).
-  set(XSL_PHP_STYLESHEET "${D_BRDIR}/wordpress.xsl")
-  set(XSL_HTML_STYLESHEET "${D_BRDIR}/brlcad-man-xhtml-stylesheet.xsl")
-  set(XSL_MAN_STYLESHEET "${D_BRDIR}/brlcad-man-stylesheet.xsl")
-  set(XSL_FO_STYLESHEET "${D_BRDIR}/brlcad-man-fo-stylesheet.xsl")
+  include(AsciiDoc)
 endif(BRLCAD_EXTRADOCS)
 
 # CTest Testing support (ON by default, may be controlled with BUILD_TESTING
@@ -2234,13 +2169,6 @@ verbose_add_subdirectory("" src)
 # library targets are active.
 verbose_add_subdirectory("" include)
 
-# scripts that primarily require rendering
-if(TARGET rt)
-  verbose_add_subdirectory("" sh)
-  verbose_add_subdirectory("" regress)
-  verbose_add_subdirectory("" bench)
-endif(TARGET rt)
-
 # require geometry conversion tools
 verbose_add_subdirectory("" db)
 
@@ -2248,6 +2176,13 @@ verbose_add_subdirectory("" db)
 # NOTE: doc/docbook/resources is added separately (earlier)
 # NOTE: doc/doxygenis added separately (earlier)
 verbose_add_subdirectory("" doc)
+
+# scripts that primarily require rendering
+if(TARGET rt)
+  verbose_add_subdirectory("" sh)
+  verbose_add_subdirectory("" bench)
+  verbose_add_subdirectory("" regress)
+endif(TARGET rt)
 
 # add misc last
 # NOTE: misc/tools is added separately (earlier)
@@ -2363,7 +2298,7 @@ endforeach(ad ${ALL_DIRS})
 foreach(ctarget ${ALL_TARGETS})
   if(NOT ${ctarget} MATCHES "timestamp")
     add_dependencies(${ctarget} timestamp)
-    if(NOT ${ctarget} MATCHES "managed_files" AND NOT ${ctarget} MATCHES ".*_cp$")
+    if(NOT ${ctarget} MATCHES "managed_files" AND NOT ${ctarget} MATCHES ".*_cp$" AND NOT ${ctarget} MATCHES "asciiquack" AND NOT ${ctarget} MATCHES ".*asciidoc.*")
       add_dependencies(${ctarget} managed_files)
     endif()
   endif(NOT ${ctarget} MATCHES "timestamp")

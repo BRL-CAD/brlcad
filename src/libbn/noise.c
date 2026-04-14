@@ -55,6 +55,10 @@
  */
 #define SMOOTHSTEP(x) ((x) * (x) * (3 - 2*(x)))
 
+/* must not vary in size cross-platform for repeatability.
+ * Defined before filter_args so that function can reference it directly. */
+#define TABLE_SIZE 4096
+
 
 /**
  * @brief
@@ -74,8 +78,26 @@
 static void
 filter_args(fastf_t *src, fastf_t *p, fastf_t *f, int *ip)
 {
-    static unsigned long max2x = ~((unsigned long)0);
-    static unsigned long max = (~((unsigned long)0)) >> 1;
+    /* The hash lookup in bn_noise_perlin uses ip[i] & 0xfff, which means
+     * the noise lattice has period TABLE_SIZE (4096) in each dimension.
+     * We fold coordinates into [0, TABLE_SIZE) so that:
+     *
+     *  1. (int)floor(p[i]) never overflows (TABLE_SIZE << INT_MAX).
+     *  2. The fractional part f[i] = p[i] - floor(p[i]) is always in [0,1)
+     *     even for very large inputs (fmod preserves fractional parts).
+     *  3. The computation is O(1) for any finite input value, including
+     *     coordinates > ~1.66e35 that caused an infinite loop in the
+     *     previous while-loop folding implementation.
+     *
+     * Mathematical correctness: for integer n, fmod(x, n) has the same
+     * fractional part as x, i.e. fmod(x,n) - floor(fmod(x,n)) == x-floor(x).
+     * And Hash3d(ip[i] & 0xfff, ...) is identical whether ip[i] comes from
+     * fmod(x, TABLE_SIZE) or the original folded value, because the hash
+     * lookup is already modulo TABLE_SIZE. */
+
+    /* FOLD_PERIOD must equal TABLE_SIZE (defined earlier in this file).
+     * Use TABLE_SIZE directly so they cannot drift apart. */
+    static const double FOLD_PERIOD = (double)TABLE_SIZE;
 
     int i;
     point_t dst = VINIT_ZERO;
@@ -84,18 +106,14 @@ filter_args(fastf_t *src, fastf_t *p, fastf_t *f, int *ip)
 	/* assure values are positive */
 	dst[i] = fabs(src[i]);
 
-	/* handle Inf/NaN by clamping */
+	/* handle Inf/NaN by zeroing - avoids propagating bad values */
 	if (!isfinite(dst[i]))
-	    dst[i] = max;
+	    dst[i] = 0.0;
 
-	/* fold space */
-	while (dst[i] > max || dst[i]<0) {
-	    if (dst[i] > max) {
-		dst[i] = max2x - dst[i];
-	    } else {
-		dst[i] = -dst[i];
-	    }
-	}
+	/* fold space into [0, FOLD_PERIOD) in O(1).
+	 * fmod is well-defined for all finite inputs and returns the exact
+	 * remainder, so the fractional part of src[i] is preserved. */
+	dst[i] = fmod(dst[i], FOLD_PERIOD);
     }
 
     /* calculate our destination point */
@@ -142,9 +160,6 @@ struct str_ht {
 };
 
 static struct str_ht ht;
-
-/* must not vary in size cross-platform for repeatibility */
-#define TABLE_SIZE 4096
 
 #define MAGIC_STRHT1 1771561
 #define MAGIC_STRHT2 1651771
@@ -482,7 +497,13 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
  * The first order of business is to see if we have pre-computed the
  * spectral weights table for these parameters in a previous
  * invocation.  If not, then we compute them and save them for possible
- * future use
+ * future use.
+ *
+ * All access to etbl and etbl_next is performed under sem_noise.  The
+ * previous "optimistic unsynchronized first scan" pattern was a data
+ * race: build_spec_tbl() can call bu_realloc() which moves etbl to a
+ * new address while another thread is scanning the old pointer, causing
+ * a use-after-free and potential multi-thread deadlock.
  */
 struct fbm_spec *
 find_spec_wgt(double h, double l, double o)
@@ -490,6 +511,8 @@ find_spec_wgt(double h, double l, double o)
     struct fbm_spec *ep = NULL;
     int i;
 
+    bu_semaphore_acquire(sem_noise);
+
     for (i=0; i < etbl_next; i++) {
 	ep = &etbl[i];
 	if (ep->magic != MAGIC_fbm_spec_wgt)
@@ -498,33 +521,12 @@ find_spec_wgt(double h, double l, double o)
 	    && EQUAL(ep->h_val, h)
 	    && (ep->octaves > o || EQUAL(ep->octaves, o)))
 	{
+	    bu_semaphore_release(sem_noise);
 	    return ep;
 	}
     }
 
-    /* we didn't find the table we wanted so we've got to semaphore on
-     * the list to wait our turn to add what we want to the table.
-     */
-
-    bu_semaphore_acquire(sem_noise);
-
-    /* We search the list one more time in case the last process to
-     * hold the semaphore just created the table we were about to add
-     */
-    for (i=0; i < etbl_next; i++) {
-	ep = &etbl[i];
-	if (ep->magic != MAGIC_fbm_spec_wgt)
-	    bu_bomb("find_spec_wgt");
-	if (EQUAL(ep->lacunarity, l)
-	    && EQUAL(ep->h_val, h)
-	    && (ep->octaves > o || EQUAL(ep->octaves, o)))
-	{
-	    break;
-	}
-    }
-
-    if (i >= etbl_next)
-	ep = build_spec_tbl(h, l, o);
+    ep = build_spec_tbl(h, l, o);
 
     bu_semaphore_release(sem_noise);
 

@@ -535,7 +535,7 @@ opt_is_flag(const char *opt, const struct bu_opt_desc *ds, const char *arg)
     int desc_ind = 0;
     const struct bu_opt_desc *desc = &(ds[desc_ind]);
     while (desc && !opt_desc_is_null(desc)) {
-	if (opt[0] == desc->shortopt[0]) {
+	if (desc->shortopt && opt[0] == desc->shortopt[0]) {
 	    if (!desc->arg_process) {
 		return 1;
 	    }
@@ -747,14 +747,22 @@ bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct b
 	 */
 	opt_cnt = opt_process(&opts, &eq_arg, argv[i], ds);
 	if (opt_cnt == -1) {
+	    /* opt_process returns -1 when grouped short flags contain an
+	     * unrecognized character (e.g. "-print" where 'p' and 'r' are
+	     * known flags but 'i' is not).  Treat the whole argument as an
+	     * unknown positional arg rather than a fatal parse error so that
+	     * command sub-arguments that happen to look like option strings
+	     * (as produced by tools such as the mged "search" command) pass
+	     * through unmolested.
+	     */
 	    for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
 		char *o = (char *)BU_PTBL_GET(&opts, j);
 		bu_free(o, "free arg cpy");
 	    }
-	    bu_ptbl_free(&unknown_args);
-	    bu_ptbl_free(&known_args);
 	    bu_ptbl_free(&opts);
-	    return -1;
+	    bu_ptbl_ins(&unknown_args, (long *)argv[i]);
+	    i++;
+	    continue;
 
 	} else if (opt_cnt == 0) {
 	    /* skip, fall through */
@@ -772,7 +780,7 @@ bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct b
 		desc_ind = 0;
 		desc = &(ds[0]);
 		while (desc && !opt_desc_is_null(desc)) {
-		    if (opt[0] == desc->shortopt[0]) {
+		    if (desc->shortopt && opt[0] == desc->shortopt[0]) {
 			break;
 		    }
 		    desc_ind++;

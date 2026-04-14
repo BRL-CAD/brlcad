@@ -25,7 +25,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include <math.h>
 
 #include "vmath.h"
@@ -843,7 +842,7 @@ edit_com(struct mged_state *s,
 	new_argv = (char **)bu_calloc(max_count + 1, sizeof(char *), "edit_com new_argv");
 	new_argc = bu_argv_from_string(new_argv, max_count, bu_vls_addr(&vls));
 
-	ret = ged_exec(s->gedp, new_argc, (const char **)new_argv);
+	ret = mged_ged_exec_async(s, new_argc, (const char **)new_argv);
 
 	if (ret & BRLCAD_ERROR) {
 	    bu_log("ERROR: %s\n", bu_vls_addr(s->gedp->ged_result_str));
@@ -862,7 +861,7 @@ edit_com(struct mged_state *s,
     } else {
 	bu_vls_free(&vls);
 
-	ret = ged_exec(s->gedp, argc, (const char **)argv);
+	ret = mged_ged_exec_async(s, argc, (const char **)argv);
 
 	if (ret == BRLCAD_ERROR) {
 	    bu_log("ERROR: %s\n", bu_vls_addr(s->gedp->ged_result_str));

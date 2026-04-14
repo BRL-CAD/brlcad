@@ -10,32 +10,63 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 20XX-XX-XX  Release 7.XX.X                                     ---
+--- 20XX-XX-XX  Release 7.44.0                                     ---
 ----------------------------------------------------------------------
 
-* corrected BoT shotline behavior when starting ray pt in mesh
-        - Sean Morrison Chris McGregor Cliff Yapp
-* updated g2asc to exit if input file == output file - Cliff Yapp
-* updated asc2g to exit if input file == output file - Cliff Yapp
-* fixed default file-create behavior of open command - Cliff Yapp
+Private members of the db_i struct that were exposed in the
+include/rt/db_instance.h header have now been made properly private,
+and an obsolete entry was removed from the rt_bot_internal struct -
+these are ABI breaking changes.
+
+* fixed bug in gqa material object lookup - Cliff Yapp
+* fixed bug in rtweight material object lookup - Cliff Yapp
+* added support for writing out .jpg files to libicv/rt - Cliff Yapp
+* converted DocBook documentation files to AsciiDoc - Cliff Yapp
+* added MGED Pattern GUI patterns to clone command - Cliff Yapp
+* improved performance of search cmd's -above option - Cliff Yapp
+* added -d depth limit to npush cmd, improved robustness - Cliff Yapp
+* address race condition with bu_nsemaphores in libbu - Cliff Yapp
+* fixed potential DSP corner case rendering crash - Cliff Yapp
+* fixed multithreaded crashing with noise-using shaders - Cliff Yapp
 * corrected the exposed region count report in rtarea - Cliff Yapp
 * fixed icv support for RLE image format - Cliff Yapp
-* fixed bot -h crash when database not open - Cliff Yapp
-* fixed libged nirt cmd -c backout option support - Cliff Yapp
 * added similarity grouping identification mode to gdiff - Cliff Yapp
 * improved gcv asc v5 reader to handle brep input - Cliff Yapp
 * improved DSP primitive's default facetize behavior - Cliff Yapp
 * improved NMG->bot conv speed for all triangle case - Cliff Yapp
 * added SPSR meshing support to the pnts command - Cliff Yapp
-* replaced yedit with brledit as libbu fallback editor - Cliff Yapp
 * improved nirt behavior in Windows bash consoles - Cliff Yapp
 * updated geogram dependency to v1.9.6 - Cliff Yapp
-* updated GDAL dependency to v3.11.3 - Cliff Yapp
 * updated gct mesh decimation dependency to mmesh - Cliff Yapp
 * added simplification control options to bot extrude - Cliff Yapp
 * updated Manifold dependency to v3.2.1 - Cliff Yapp
 * updated SPSR dependency to v18.74 - Cliff Yapp
-* fixed bot subcmd help printing - Cliff Yapp
+* fixed 'search -type sph' not returning sph's - Chris McGregor
+* fixed gist crashing with bad/unknown units - Chris McGregor
+* add gist '-d' to allow user-specified density file - Chris McGregor
+
+
+----------------------------------------------------------------------
+--- 2026-03-13  Release 7.42.2                                     ---
+----------------------------------------------------------------------
+
+Follow-on patch release to 7.42.0 correcting a couple of corner case
+BoT raytracing behaviors, incorporating behaviorial fixes for a number
+of commands, updating dependencies, and various documentation updates.
+
+* fixed BoT crash when invalid data present - Chris McGregor
+* updated stepcode to upstream SHA1 74b6fe4 - Cliff Yapp
+* replaced yedit with brledit as libbu fallback editor - Cliff Yapp
+* updated libtiff dependency to v4.7.1 - Cliff Yapp
+* updated OpenCV dependency to v4.13.0 - Cliff Yapp
+* updated PUGIXML dependency to v1.15 - Cliff Yapp
+* updated LMDB dependency to v0.9.35 - Cliff Yapp
+* updated libjpeg-turbo dependency to v3.1.3 - Cliff Yapp
+* updated sqlite dependency to v3.51.2 - Cliff Yapp
+* updated assimp dependency to v6.0.4 - Cliff Yapp
+* updated GDAL dependency to v3.12.1 - Cliff Yapp
+* updated PROJ dependency to v9.7.1 - Cliff Yapp
+* updated libpng dependency to v1.6.54 - Cliff Yapp
 * improved get/adjust/attr help text - Josh Baker
 * created manpage for 'adjust' command - Josh Baker
 * improved 'B' manpage options and usage - Josh Baker
@@ -45,6 +76,17 @@ changes made.  See document footer for additional details.
 * improved 'view' manpage options, usage, and examples - Josh Baker
 * improved 'gqa' command usage and help text - Josh Baker
 * corrected various manpage typos and spacing - Josh Baker
+* fixed open cmd reporting when database not open - Cliff Yapp
+* updated g2asc to exit if input file == output file - Cliff Yapp
+* updated asc2g to exit if input file == output file - Cliff Yapp
+* fixed default file-create behavior of open command - Cliff Yapp
+* fixed bot -h crash when database not open - Cliff Yapp
+* fixed libged nirt cmd -c backout option support - Cliff Yapp
+* fixed bot subcmd help printing - Cliff Yapp
+* corrected BoT shotline behavior when starting ray pt in mesh
+        - Sean Morrison Chris McGregor Cliff Yapp
+* fixed gist never returning on some models - Chris McGregor
+* improved gist weight gathering speed and accuracy - Chris McGregor
 
 
 ----------------------------------------------------------------------

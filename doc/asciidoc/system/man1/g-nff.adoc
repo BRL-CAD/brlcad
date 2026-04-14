@@ -1,0 +1,54 @@
+= G-NFF(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+g-nff - NFF Translator (BRL-CAD to NFF)
+
+== SYNOPSIS
+
+[source]
+----
+g-nff [-v] [-i] [-xX lvl] [-e error_file] [-D calculation_tolerance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o output.nff] database.g object(s)
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*g-nff* converts the specified _object(s)_ from a BRL-CAD _database.g_ file to the _NFF_ file format. The *-x* option specifies an RT debug flag and the *-X* option specifies an NMG debug flag. The *-a*, *-r*, and *-n* options specify tessellation tolerances. The *-D* option specifies a calculational distance tolerance (mm). Any two vertices that are less than this distance apart will be treated as the same vertex. The *-v* option requests verbose output. The *-i* option requests the output file units to be inches (the default is mm). The *-o* option specifies the name of the file to receive the output (stdout is the default). The *-e* option specifies a file for receiving the error messages.
+
+
+[[example]]
+== EXAMPLE
+
+
+----
+
+$ g-nff -o sample.nff sample.g sample_object
+----
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Error messages are intended to be self-explanatory.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2003-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

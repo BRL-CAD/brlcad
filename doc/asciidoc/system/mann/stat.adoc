@@ -1,0 +1,205 @@
+= STAT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+stat - report information about objects in a BRL-CAD database
+
+== SYNOPSIS
+
+[source]
+----
+stat [-h] [-?] [-r] [-F string] [-C type1[,type2]...] [-S type1[,type2]...] [-o filename] {glob pattern}
+----
+
+
+[[stat_overview]]
+== Overview
+
+The GED *stat* command reports information about objects in a BRL-CAD .g file. It produces a tabular output, with options for user configurability and sorting.
+
+Available types reflect geometry object data:
+
+.STAT Information Keys - Core Object Info
+[cols="2*"]
+[%noheader]
+|===
+|name
+|Object database name (for example, "primitive.s")
+|uses
+|Number of uses, from instancing
+|size
+|Size of database object
+|refs
+|Number of times object is referenced by COMBs
+|flags
+|Flags
+|major_type
+|Object major type
+|minor_type
+|Object minor type
+|type
+|Object type (short name)
+|===
+
+
+
+In addition to the above standard keys, attributes may also be specified. If the desired attribute happens to have the same name as one of the above standard keys, the prefix "attr:" may be added to denote an attribute.
+
+
+[[search_options]]
+== OPTIONS
+
+
+*-h or -?*::
+Print help and exit.
+
+
+*-r*::
+Print raw values, instead of human friendly strings (for example, 5195952 for a size instead of 5.0M).
+
+
+*-F*::
+Specify *search* style filters to trim down what is reported in *stat* output.
+
+
+*-C*::
+Supply a comma separated list of column specifiers or attribute keys to define the table layout for *stat*.
+
+
+*-S*::
+Supply a comma separated list of column specifiers or attribute keys to specify a sorting priority for *stat*. Priority is left to right - sorting will be performed first based on the leftmost specifier, and subsequent specifiers will be used to resolve any ties. To reverse the ordering decisions for a given column, prefix the specifier with a "!" character.
+
+
+*-o*::
+Write output to _filename_ instead of the command prompt.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+.Default Output
+[example]
+====
+**stat ***
+
+
+....
+
+ Object Name             uses   References   Flags   Type     Size 
+----------------------- ------ ------------ ------- -------- ------
+ Default                 0      1            2       comb     288B 
+ NIST_MBE_PMI_7-10.3dm   0      0            2       comb     264B 
+ Solid1.r                0      1            6       region   280B 
+ Solid1.r.s              0      1            1       brep     859K 
+ Solid1_2.r              0      1            6       region   280B 
+ Solid1_2.r.s            0      1            1       brep     672K 
+ Solid1_3.r              0      1            6       region   280B 
+ Solid1_3.r.s            0      1            1       brep     431K 
+ Solid1_4.r              0      1            6       region   280B 
+ Solid1_4.r.s            0      1            1       brep     771K 
+ _GLOBAL                 0      0            8                96B 
+      
+....
+
+====
+
+.Sorting by Size
+[example]
+====
+**stat -S "size" ***
+
+
+....
+
+ Object Name             uses   References   Flags   Type     Size 
+----------------------- ------ ------------ ------- -------- ------
+ _GLOBAL                 0      0            8                96B  
+ NIST_MBE_PMI_7-10.3dm   0      0            2       comb     264B 
+ Solid1_2.r              0      1            6       region   280B 
+ Solid1_3.r              0      1            6       region   280B 
+ Solid1.r                0      1            6       region   280B 
+ Solid1_4.r              0      1            6       region   280B 
+ Default                 0      1            2       comb     288B 
+ Solid1_3.r.s            0      1            1       brep     431K 
+ Solid1_2.r.s            0      1            1       brep     672K 
+ Solid1_4.r.s            0      1            1       brep     771K 
+ Solid1.r.s              0      1            1       brep     859K 
+      
+....
+
+====
+
+.Sorting by Size, Reversed Order
+[example]
+====
+**stat -S "!size" ***
+
+
+....
+
+ Object Name             uses   References   Flags   Type     Size 
+----------------------- ------ ------------ ------- -------- ------
+ Solid1.r.s              0      1            1       brep     859K 
+ Solid1_4.r.s            0      1            1       brep     771K 
+ Solid1_2.r.s            0      1            1       brep     672K 
+ Solid1_3.r.s            0      1            1       brep     431K 
+ Default                 0      1            2       comb     288B 
+ Solid1_3.r              0      1            6       region   280B 
+ Solid1.r                0      1            6       region   280B 
+ Solid1_2.r              0      1            6       region   280B 
+ Solid1_4.r              0      1            6       region   280B 
+ NIST_MBE_PMI_7-10.3dm   0      0            2       comb     264B 
+ _GLOBAL                 0      0            8                96B 
+      
+....
+
+====
+
+.Filtering by Type
+[example]
+====
+**stat -F "-type brep" ***
+
+
+....
+
+ Object Name    uses   References   Flags   Type   Size 
+-------------- ------ ------------ ------- ------ ------
+ Solid1.r.s     0      1            1       brep   859K 
+ Solid1_2.r.s   0      1            1       brep   672K 
+ Solid1_3.r.s   0      1            1       brep   431K 
+ Solid1_4.r.s   0      1            1       brep   771K
+      
+....
+
+====
+
+.Custom Columns
+[example]
+====
+**stat -C "name,type,size,color" ***
+
+
+....
+
+ Object Name             Type     Size   color       
+----------------------- -------- ------ -------------
+ Default                 comb     288B   0/0/0       
+ NIST_MBE_PMI_7-10.3dm   comb     264B   0/0/0       
+ Solid1.r                region   280B   153/231/254 
+ Solid1.r.s              brep     859K               
+ Solid1_2.r              region   280B   255/206/142 
+ Solid1_2.r.s            brep     672K               
+ Solid1_3.r              region   280B   237/255/168 
+ Solid1_3.r.s            brep     431K               
+ Solid1_4.r              region   280B   178/178/178 
+ Solid1_4.r.s            brep     771K               
+ _GLOBAL                          96B                
+      
+....
+
+====

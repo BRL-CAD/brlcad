@@ -56,8 +56,9 @@
 
 #include "delaunator.hpp"
 
-#define PLOT_PREFIX_STR bg_plot3_ // needed by RTree.h and plot3.h
-
+#ifndef PLOT_PREFIX_STR
+#  define PLOT_PREFIX_STR bg_plot3_ // needed by RTree.h and plot3.h
+#endif
 #include "RTree.h"
 
 #include "bu/malloc.h"

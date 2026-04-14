@@ -6,7 +6,6 @@ set(TESS_LIBS libged manifold::manifold ${Geogram_LIBRARY})
 set(
   GED_TESS_SRCS
   brep_csg.cpp
-  co3ne.cpp
   continuation.cpp
   sample.cpp
   spsr.cpp

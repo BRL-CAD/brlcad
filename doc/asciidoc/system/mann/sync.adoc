@@ -1,0 +1,47 @@
+= SYNC(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+sync - Causes all information in memory that should be on disk to be written out.
+
+== SYNOPSIS
+
+[source]
+----
+sync [] []
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Causes all information in memory that should be on disk to be written out.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *sync* command to show all information in memory that should be on disk.
+
+.Make sure disk files are up to date.
+[example]
+====
+mged>**sync**
+
+Shows disk files in memory.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

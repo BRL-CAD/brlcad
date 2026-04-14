@@ -1,0 +1,49 @@
+= CLEAR(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+clear - Clears the _mged_ command window.
+
+== SYNOPSIS
+
+[source]
+----
+clear
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Clear the _mged_ command window.
+
+
+[[examples]]
+== EXAMPLES
+
+Clear the _mged_ command window.
+
+.Enter *clear* to clear the _mged_ command window.
+[example]
+====
+
+mged> **clear**::
+The _mged_ command window is clear.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

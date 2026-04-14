@@ -1,0 +1,50 @@
+= FB-BW(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fb-bw - save a framebuffer image in a black and white bw file
+
+== SYNOPSIS
+
+[source]
+----
+fb-bw [-i] [-F framebuffer] [-X scr_xoff] [-Y scr_yoff] [-s squaresize] [-w width] [-n height] [file.bw]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fb-bw* will take a region of a framebuffer display and save it as a black and white *bw*(5) format file. The environment variable `FB_FILE` is used to select the display device (see *brlcad*(1)). If this variable is not set, the default device for your system will be used. Alternatively, the framebuffer may be explicitly specified by using the *-F* flag.
+
+By default, the output file will be size 512x512 pixels. The *-s* flag will set both the file height and width to be the given size, while *-w* and *-n* are used for setting them individually.
+
+A first quadrant coordinate system is used (origin in lower left of screen), and the area saved is normally from this origin. The *-X* and *-Y* flags can be used to move the origin to an offset position on the screen. The *-i* flag switches to a fourth quadrant system, both in the storage order as well as the origin offset coordinates (i.e. origin is now the upper left corner of the screen).
+
+An equal blending of red, green, and blue is done. For more complicated black and white conversion use *fb-pix*(1) and *pix-bw*(1).
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *bw-fb*(1), *fb-pix*(1), *pix-bw*(1), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

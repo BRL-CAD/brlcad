@@ -1,0 +1,62 @@
+= BWRECT(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+bwrect - extract a rectangle from a black and white bw file
+
+== SYNOPSIS
+
+[source]
+----
+bwrect [-s squaresize] [-w width] [-n height] [-S out_squaresize] [-W out_width] [-N out_height] [-x xorig] [-y yorig] [-o out_file.bw] file.bw > [out_file.bw]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bwrect* extracts a rectangular region from a black and white *bw*(5) format file. The default input image size is 512x512. The x,y coordinates of the origin (the default xorig=0, yorig=0 corresponds to the lower left corner) are passed as arguments for *-x* and *-y*.
+
+The *-w* _file_width_ flag specifies the width of each scanline in the input file, in pixels. *-W* _scr_width_ does the same for the display device.
+
+The *-n* _file_height_ and *-N* _scr_height_ flags specify the height in scanlines of the input file and display device respectively.
+
+*-s* _squarefilesize_ and *-S* _squarescrsize_ set both the height and width to the size given (for input file and display device respectively).
+
+(_scr_width_ and _scr_height_ must be set to positive values, either separately via *-W* and *-N*, or jointly via *-S*. This is because they start with default values of zero.)
+
+*-o* _out_file.bw_ is a way of specifying output file name.
+
+This utility supports pipes and can read/write from/to them.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *bwcrop*(1), *bwscale*(1), *pixrect*(1), *bw*(5)
+
+
+[[bugs]]
+== BUGS
+
+We ought to allow the questions to be answered on the command line so that shell scripts, etc., could use this.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

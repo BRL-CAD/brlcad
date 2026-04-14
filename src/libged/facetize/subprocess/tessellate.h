@@ -43,9 +43,6 @@ class tess_opts {
 	nmg_opts nmg_options;
 	cm_opts cm_options;
 	spsr_opts spsr_options;
-#ifdef USE_GEOGRAM
-	co3ne_opts co3ne_options;
-#endif
 
 	int overwrite_obj = 0;
 	sample_opts pnt_options; // Values used by sample.cpp
@@ -68,9 +65,6 @@ _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern, te
 
 extern int
 continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *objname, tess_opts *s, point_t seed);
-
-extern int
-co3ne_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, tess_opts *s);
 
 extern int
 spsr_mesh(struct rt_bot_internal **obot, struct db_i *dbip, struct rt_pnts_internal *pnts, tess_opts *s);

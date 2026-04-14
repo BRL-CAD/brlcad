@@ -244,7 +244,7 @@ if(NOT HAVE_WINDOWS_H)
     file(APPEND ${distcheck_yml_out} "        run: |\n")
     file(APPEND ${distcheck_yml_out} "          sudo apt-get update\n")
     file(APPEND ${distcheck_yml_out} "          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev libfontconfig-dev\n")
-    file(APPEND ${distcheck_yml_out} "          sudo apt-get install astyle re2c xsltproc libxml2-utils\n")
+    file(APPEND ${distcheck_yml_out} "          sudo apt-get install astyle re2c\n")
     if ("${JOBNAME}" STREQUAL "distcheck-no_tk")
       # For the no_tk case we deliberately avoid installing any system Tcl/Tk to
       # help avoid things accidentally working

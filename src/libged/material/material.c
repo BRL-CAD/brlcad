@@ -47,7 +47,7 @@ typedef enum {
     ATTR_UNKNOWN
 } material_cmd_t;
 
-static const char *usage = " help \n\n"
+static const char *material_usage = " help \n\n"
     "material create {objectName} {materialName}\n\n"
     "material destroy {object}\n\n"
     "material assign {object} {materialName}\n\n"
@@ -593,7 +593,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
 
     /* incorrect arguments */
     if (argc < 2) {
-        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], material_usage);
         return GED_HELP;
     }
 
@@ -615,7 +615,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
         // get routine
         get_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_HELP) {
-        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n\n\n", argv[0], usage);
+        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n\n\n", argv[0], material_usage);
         bu_vls_printf(gedp->ged_result_str, "%s", possibleProperties);
     }
     else if (scmd == MATERIAL_REMOVE) {
@@ -627,7 +627,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[])
         set_material(gedp, argc, argv);
     } else {
         bu_vls_printf(gedp->ged_result_str, "Error: %s is not a valid subcommand.\n", argv[1]);
-        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], material_usage);
     }
 
     return 0;

@@ -1,0 +1,267 @@
+= BOT(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bot - Perform operations on a Bag of Triangles (BoT) primitive.
+
+== SYNOPSIS
+
+[source]
+----
+bot [-v] [-V] [-C [0-255|0-255|0-255]] {subcommand} {subcommand arguments}
+----
+
+
+
+[source]
+----
+check {degen_faces | extra_edges | flipped_edges | open_edges | solid} {objname}
+----
+
+
+
+[source]
+----
+chull {input_bot} {output_bot}
+----
+
+
+
+[source]
+----
+decimate [-f #] [-e #] {input_bot} {output_bot}
+----
+
+
+
+[source]
+----
+extrude {input_bot} {output_bot}
+----
+
+
+
+[source]
+----
+flip {objname}
+----
+
+
+
+[source]
+----
+get {faces | minEdge | maxEdge | orientation | type | vertices} {objname}
+----
+
+
+
+[source]
+----
+isect {objname} {objname2}
+----
+
+
+
+[source]
+----
+remesh {input_bot} {output_bot}
+----
+
+
+
+[source]
+----
+set {orientation | type} {objname} {value}
+----
+
+
+
+[source]
+----
+smooth [-c [0|1|2]] [-d [0|1|2]] [-e #] [-E #] [-I #] {input_bot} {output_bot}
+----
+
+
+
+[source]
+----
+split {objname}
+----
+
+
+
+[source]
+----
+stat {objname}
+----
+
+
+
+[source]
+----
+subd [-A [1|2|3|4|5]] [-l #] {input_bot} {output_bot}
+----
+
+
+
+[source]
+----
+sync {objname}
+----
+
+
+
+
+[[description]]
+== DESCRIPTION
+
+The *bot* command allows the user to initiate and number of subcommands on BoT primitives. The -v command turns on verbose output. The -V command visualizes the results. The -C command sets the RGB plotting color.
+
+
+[[subcommands]]
+== SUBCOMMANDS
+
+
+*check*::
+Performs the requested check on the provided solid. Checks are __degen_faces__, __extra_edges__, __flipped_edges__, __open_edges__, or _solid_. The command will return a 1 (if the specified check finds an issue) or 0.
+
+
+*chull*::
+Generates the BoT's convex hull and store it in an object.
+
+
+*decimate*::
+Decimates the BoT. The default error metric is Quadric.
++
+
+*-f #*::
+Specifies the features size (implies use of GCT decimater)
+
+
+*-e #*::
+Specifies the maximum allowed error introduced by decimation (OpenMesh).
+
+
+
+
+*extrude*::
+Generates an ARB6 representation of the specified plate mode BoT object
+
+
+*flip*::
+Flips the BoT triangle normal directions (turns the BoT "inside out"). This will also change the handedness of of the BoT, if set. So a right-handed (counter-clockwise) BoT will become a left-handed (clockwise) BoT. An unoriented BoT's orientation will not change.
+
+
+*get*::
+Returns the requested parameter of the provided BoT solid. Valid parameters are _faces_, _minEdge_, _maxEdge_, _orientation_, _type_, or _vertices_.
+
+
+*isect*::
+Tests if the two provided BoTs intersect (work in progress).
+
+
+*remesh*::
+Creates a new meshed version of the provided object.
+
+
+*set*::
+Sets the specified property of the provided bot. Properties that can be set are _orientation_ and _type_. Potential values for _orientation_ are none (no), ccw (rh), or cw (lh). Potential values for _type_ are surface, solid, plate, or plate_nocos.
+
+
+*smooth*::
+Smooths the BoT using OpenMesh's Jacobi Laplace smoother.
++
+
+*-c [0|1|2]*::
+Specifies the continuity. The default value is 0, meaning shape is continuous, but not the tangent. A value of 1 means the shape and tangent are continuous, and a value of 2 preserves curvature.
+
+
+*-d [0|1|2]*::
+Specifies the direction. The default is 0,smoothing in tangential direction. A value of 1 smooths in normal direction, and a value of 2 smooths in both tangential and normal directions.
+
+
+*-e #*::
+Specifies the max local error.
+
+
+*-E #*::
+Specifies the max absolute error.
+
+
+*-I #*::
+Specifies the iterations for smoothing.
+
+
+
+
+*split*::
+Splits the provided BoT into separate BoTs made of disjointed sections.
+
+
+*stat*::
+Returns information about the provided BoT.
+
+
+*subd*::
+Subdivides the provided BoT.
++
+
+*-A [1|2|3|4|5]*::
+Specifies the algorithm used to subdivide the BoT. The default is 1 which specifies the loop algorithm. A value of 2 specfies the sqrt3 algorithm, a value of 3 specifies the sqrt3 interpolating algorithm, a value of 4 specifies modified the butterfly algorithm, and a value of 5 specifies the midpoint alorithm.
+
+
+*-l #*::
+Specifies the level of subdivision refinement iterations. Note that the number of triangles generated grows _very_ rapidly with increasing iteration counts - it is recommended that users start with small refinements on the target bot to get a feel for the tradeoff between triangle count and smoothness.
+
+
+
+
+*sync*::
+Synchronizes connected BoT triangle orientations.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+.Set the orientation of a BoT to right-hand
+[example]
+====
+mged>**bot set orientation bot_solid.s rh**
+
+Sets the orientation of solid bot_solid.s to right-handed (counter-clockwise).
+
+====
+
+.Return the orientation of a solid.
+[example]
+====
+mged>**bot get orientation bot_solid.s**
+
+Returns the orientation of bot_solid.s. Note that this will return ccw (right-handed), cw (left-handed) or none (unoriented).
+
+====
+
+.Return information of a solid.
+[example]
+====
+mged>**bot stat bot_solid.s**
+
+Returns information about bot_solid.s.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

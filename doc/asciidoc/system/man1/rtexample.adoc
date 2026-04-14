@@ -1,0 +1,70 @@
+= rtexample(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+rtexample - shoots a single ray at objects in a geometry database
+
+== SYNOPSIS
+
+[source]
+----
+rtexample model.g objects...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+
+....
+
+        This is an example of a program that uses librt to shoot a single ray at some
+        geometry in a geometry (.g) database.
+
+        librt is a big library with lots of code, but basically all that the programmer
+        needs to do is include `raytrace.h` and specify the following:
+          a_rt_i    a raytrace instance, from 'rt_dirbuild()'
+          a_ray     ray origin and direction
+          a_hit     function to be called if ray hits something
+          a_miss    function to be called if ray misses everything
+
+        rtexample defines simple functions for a_hit and a_miss which simply
+        output information about hit region (if hit) and log misses. Applications will
+        typically define more complex tasks to fo if the ray hits, such as describing a
+        reflected ray.
+        
+....
+
+
+[[examples]]
+== EXAMPLE
+
+*rtexample* _car.g_ wheel door
+
+Here, a single ray will be shot at the geometry database _car.g_ and hit reports generated if the ray hits the specified objects.
+
+
+[[see_also]]
+== SEE ALSO
+
+*mged*(1), *rt*(1), *librt*(3)
+
+
+[[author]]
+== AUTHORS
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2004-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,5 +1,6 @@
 brlcad_find_package(NETPBM REQUIRED)
 brlcad_find_package(PNG REQUIRED)
+brlcad_find_package(JPEG REQUIRED)
 
 set(
   LIBICV_SOURCES
@@ -12,6 +13,7 @@ set(
   encoding.c
   fileformat.c
   filter.c
+  jpeg.c
   operations.c
   pdiff.cpp
   pix.c
@@ -24,16 +26,16 @@ set(
 )
 
 # Note - libicv_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-set(ICV_LIBS ${libicv_deps} ${PNG_LIBRARIES} ${NETPBM_LIBRARY})
-set(LOCAL_ICV_INCLUDE_DIRS ${PNG_INCLUDE_DIRS} ${NETPBM_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+set(ICV_LIBS ${libicv_deps} ${PNG_LIBRARIES} ${NETPBM_LIBRARY} ${JPEG_LIBRARIES})
+set(LOCAL_ICV_INCLUDE_DIRS ${PNG_INCLUDE_DIRS} ${NETPBM_INCLUDE_DIR} ${JPEG_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 brlcad_addlib(libicv "${LIBICV_SOURCES}" "${ICV_LIBS}" "" "${LOCAL_ICV_INCLUDE_DIRS}")
 set_target_properties(libicv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(HIDE_INTERNAL_SYMBOLS)
-  set_property(TARGET libicv APPEND PROPERTY COMPILE_DEFINITIONS NETPBM_DLL_IMPORTS RLE_DLL_IMPORTS)
+  set_property(TARGET libicv APPEND PROPERTY COMPILE_DEFINITIONS NETPBM_DLL_IMPORTS)
   # Anyone who needs to import libicv will also need to import the library defines
-  set_property(TARGET libicv APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS NETPBM_DLL_IMPORTS RLE_DLL_IMPORTS)
+  set_property(TARGET libicv APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS NETPBM_DLL_IMPORTS)
 endif(HIDE_INTERNAL_SYMBOLS)
 
 add_subdirectory(tests)

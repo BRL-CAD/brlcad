@@ -59,7 +59,6 @@ struct brdf_specific {
     double extinction;
 };
 #define BRDF_MAGIC 0xbeef00d
-#define BRDF_NULL ((struct brdf_specific *)0)
 #define BRDF_O(m) bu_offsetof(struct brdf_specific, m)
 
 struct bu_structparse brdf_parse[] = {

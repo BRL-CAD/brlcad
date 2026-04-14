@@ -1,0 +1,179 @@
+= Standard Attributes(5)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD Standard Conventions
+
+== NAME
+attributes - standard attribute conventions in BRL-CAD databases
+
+[[gift_background]]
+== BACKGROUND
+
+Starting with BRL-CAD database format version 5, BRL-CAD supports the storage of arbitrary attribute/value data on any database object. Prior to the development of this generic ability, BRL-CAD supported a set of standard attributes used to hold key information about specific properties. These conventions predate not only the version 5 database format but BRL-CAD itself. The purpose of this man page is to identify the standard attributes, document situations where two or more attributes are used to identify the same property, and identify where appropriate what constitutes meaningful values for an attribute.
+
+The earliest ancestor of BRL-CAD was the MAGIC code, written by the Mathematical Applications Group, Inc. in 1967 to implement geometric modeling ideas developed by BRL and AMSAA from 1958-1967. That system, which was entirely non-graphical, was followed some years later by the GIFT program—Geometric Information From Targets. LIBRT, appearing around 1983, became the successor to GIFT. Today it is the core library of the BRL-CAD solid modeling package. (For more background see http://ftp.arl.army.mil/~mike/papers/96thebook/). LIBRT inherited both geometric primitives and attributes from GIFT--this heritage is occasionally apparent in attribute names.
+
+Note that with the introduction of support for arbitrary attribute/value pairs it becomes much simpler for both developers and users to formulate new standards of their own for storage of metadata in attributes. Attributes should only be documented in this file if one or more core BRL-CAD tools has implemented one or more features that require specific attributes to be present. Conventions for attribute names that do not involve tool support should be documented in appropriate user-level documentation. In documenting attributes, one additional distinction is made: attributes that exist only as post-v5 attribute/value pairs are referred to as non-core attributes; older attributes (which may also be represented in core data structures) are referred to as core attributes.
+
+
+[[core_attributes]]
+== STANDARD (CORE) AND REGISTERED ATTRIBUTES
+
+The following table lists all known standard (core) BRL-CAD attributes and aliases. Any code setting or reading the value of one of these attributes must handle all aliases to ensure all functions asking for the value in question get a consistent answer.
+
+
+
+.Standard (Core) Attributes List
+[cols="6*"]
+|===
+|Property
+|Attribute
+|Is Binary
+|Definition
+|Example
+|Aliases
+
+|Region Flag
+|region
+|0
+|boolean
+|Yes, R, 1, 0
+|
+|Region Identifier Number
+|region_id
+|0
+|an integer
+|0, -1, and positive integers
+|id
+|Material Identifier Number
+|material_id
+|0
+|zero or positive integer (user-defined)
+|
+|giftmater, mat
+|Material Name
+|material_name
+|0
+|empty or content-filled string (user-defined)
+|
+|material
+|Air Code
+|aircode
+|0
+|an integer (application defined)
+|'0', '1', or '-2'
+|air
+|Line of Sight Thickness Equivalence
+|los
+|0
+|an integer in the inclusive range: 0 to 100
+|'24' or '100'
+|
+|Color
+|color
+|0
+|a 3-tuple of RGB values
+|"0 255 255"
+|rgb
+|Shader Name
+|shader
+|0
+|a string of shader characteristics in a standard format
+|
+|oshader
+|Inherit Properties
+|inherit
+|0
+|boolean
+|Yes, 1, 0
+|
+|Time Stamp
+|mtime
+|1
+|a binary time stamp for an object's last mod time (the time is displayed in human-readable form with the 'attr' command)
+|
+|timestamp, time_stamp, modtime, mod_time, mtime
+|===
+
+
+
+
+....
+
+
+  
+....
+
+Given the importance of these attributes, it is appropriate to briefly outline the meaning and purpose of each of them:
+
+
+
+
+*region:*::
+The Region Flag identifies a particular geometric combination as being a solid material; in other words, any geometry below this combination in the tree can overlap without the overlap being regarded as a non-physical description, since it is the combination of all descriptions in the region object that defines the physical volume in space.
+
+
+*region_id:*::
+The Region Identifier Number identifies a particular region with a unique number. This allows multiple region objects to be regarded as being the same type of region, without requiring that they be included in the same combination object.
+
+
+*material_id:*::
+The Material ID Number corresponds to an entry in a DENSITIES table, usually contained in a text file. This table associates numbers with material names and density information used by analytical programs such as 'rtweight'.
+
+
+*material_name:*::
+The Material Name corresponds to an entry in a DENSITIES table or material objects, usually contained in a text file that are imported through the material command. This table associates numbers with material names and density information used by analytical programs such as 'rtweight'.
+
+
+*aircode:*::
+Any non-zero Air Code alerts the raytracer that the region in question is modeling air which is handled by specialized rules in LIBRT.
+
+
+*los:*::
+
+
+
+*color:*::
+
+
+
+*shader:*::
+LIBRT can use a variety of shaders when rendering. This attribute holds a text string which corresponds to the name and other details of the shader to be used.
+
+
+*inherit:*::
+The Inherit Properties value, if true, indicates all child objects inherit the attributes of this parent object.
+
+
+*mtime:*::
+
+
+
+
+
+
+
+[[see_also]]
+== SEE ALSO
+
+*attr*(n).
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2010-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
+
+

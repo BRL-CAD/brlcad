@@ -1,0 +1,49 @@
+= PWD(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+pwd - Prints the current working directory.
+
+== SYNOPSIS
+
+[source]
+----
+pwd
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Prints the current working directoy. See also the *cd* command.
+
+
+[[examples]]
+== EXAMPLES
+
+Print the current working directory.
+
+.Type *pwd* to display the current working directory.
+[example]
+====
+
+mged> **pwd**::
+Returns the current working directory.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

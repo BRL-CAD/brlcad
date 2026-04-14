@@ -1,0 +1,54 @@
+= ENF-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+enf-g - Elysium Neutral Format Translator (ENF to BRL-CAD)
+
+== SYNOPSIS
+
+[source]
+----
+enf-g [-t tolerance] [-i starting_ident_number] [-l name_length_limit] [-n part_number_to_name_mapping] [-v] input_enf_facet_file database.g
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*enf-g* converts the specified __input_enf_facet_file__ to a BRL-CAD _database.g_ file. This input file is expected to be the ASCII output from the Elysium enf2mxp tessellator. The _tolerance_ provided is the maximum distance (in mm) between two vertices at which they will be considered to be the same vertex. The __starting_ident_number__ is the ident number to use for the first region created, each succeeding region will have their ident numbers incremented by one. If a __name_length_limit__ is provided, then the resulting names in the BRL-CAD model will not be longer than that limit. If a __part_number_to_name_mapping__ file is provided, then that file will be read and used to convert part numbers in the __input_enf_facet_file__ to the corresponding names in the mapping, and is expected to consist of a series of lines of text with each line having a part number and a legal BRL-CAD object name separated by a tab. (_-v_ option is provided for verbose mode.)
+
+
+[[example]]
+== EXAMPLE
+
+
+----
+
+$ enf-g sample.enf sample.g
+----
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Error messages are intended to be self-explanatory.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2001-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

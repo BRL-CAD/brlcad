@@ -38,6 +38,10 @@ extern int pix_write(icv_image_t *bif, FILE *fp);
 extern icv_image_t *dpix_read(FILE *fp, size_t width, size_t height);
 extern int dpix_write(icv_image_t *bif, FILE *fp);
 
+/* defined in jpeg.c */
+extern icv_image_t *jpeg_read(FILE *fp);
+extern int jpeg_write(icv_image_t *bif, FILE *fp, int quality);
+
 /* defined in png.c */
 extern icv_image_t* png_read(FILE *fp);
 extern int png_write(icv_image_t *bif, FILE *fp);

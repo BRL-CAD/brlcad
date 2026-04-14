@@ -1,0 +1,54 @@
+= PIXHIST3D(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixhist3d - display RGB color space utilization
+
+== SYNOPSIS
+
+[source]
+----
+pixhist3d [file.pix]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixhist3d* builds up a count of color frequencies in the RGB color space and then displays three orthographic views of this color space. An RGB color cube with red, green, and blue values from 0 to 255 form a right handed coordinate system. Three faces of this cube are displayed where the intensity of the pixels shown for each face correspond to the integrated frequencies through the color cube perpendicular to that face. These frequencies are scaled so that the maximum value is full white, and any non-zero scaled count less than 30 is displayed at intensity 30 so as to be visible.
+
+The faces are:
+
+Lower left: red vertical, green horizontal
+
+Upper left: blue vertical, green horizontal
+
+Lower right: red vertical, blue horizontal
+
+The environment variable `FB_FILE` is used to select the display device (see *brlcad*(1)). If this variable is not set, the default device for your system will be used.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pixhist3d-plot3*(1), *pixhist*(1), *pixstat*(1) *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

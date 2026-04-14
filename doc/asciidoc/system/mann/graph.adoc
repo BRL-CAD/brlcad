@@ -1,0 +1,60 @@
+= GRAPH(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+graph - Used to query and manipulate properties of the graph that corresponds to the currently opened .g database.
+
+== SYNOPSIS
+
+[source]
+----
+graph [show] [positions]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Used to query and manipulate properties of the graph that corresponds to the currently opened .g database. The "show" subcommand displays a list of names and types of the objects from the database along with the positions within the graph of their corresponding nodes and their connection edges. The "positions" subcommand displays for each object in the geometric database its name, type, and node and positions within the graph.
+
+
+[[examples]]
+== EXAMPLES
+
+The examples demonstrate the use of the *graph* command and subcommands to access information about the representation of the objects of a database.
+
+.Displays a list with the name and type of the objects along with the nodes' and edges' positions.
+[example]
+====
+
+mged> **graph show**::
+Displays a list with the name and type of the objects along with the nodes' and edges' positions.
+
+
+
+====
+
+.Lists the names, types, positions of the corresponding nodes within the graph for the objects in the .g database.
+[example]
+====
+
+mged> **graph positions**::
+Lists the names, types, positions of the corresponding nodes within the graph for the objects in the currently opened .g database.
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

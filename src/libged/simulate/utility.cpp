@@ -113,9 +113,8 @@ TemporaryRegionHandle::~TemporaryRegionHandle()
     if (m_dir_modified)
 	set_region(m_db, m_dir, false);
 
-    for (std::vector<directory *>::const_iterator it = m_parent_regions.begin();
-	 it != m_parent_regions.end(); ++it)
-	set_region(m_db, **it, true);
+    for (directory * const parent_dir : m_parent_regions)
+	set_region(m_db, *parent_dir, true);
 }
 
 

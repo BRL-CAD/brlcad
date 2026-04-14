@@ -1,0 +1,104 @@
+= GIF-FB(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+gif-fb - display GIF file on frame buffer
+
+== SYNOPSIS
+
+[source]
+----
+gif-fb [ -F frame_buffer_file] [-c] [ -i image_number] [-o] [-v] [-z] [ GIF_file_name]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*gif-fb* displays on a frame buffer the images described by a CompuServe GIF (Graphics Interchange Format) file.
+
+[[options]]
+=== Options
+
+
+*-F* _frame_buffer_name_::
+Outputs to the specified frame buffer instead of the one specified by the *FB_FILE* environment variable (or the default frame buffer, if *FB_FILE* is not set). The frame buffer size requested will be the same as the input GIF screen size. The actual size obtained depends on details of the specific frame buffer.
+
+
+*-c*::
+Uses all 8 bits per channel for color maps supplied in the GIF file, overriding the color resolution specified in the GIF file. (While technically a violation of the GIF standard, apparently some GIF implementations assume this interpretation.)
+
+
+*-i*::
+Displays just the specified image (starting counting with 1), rather than displaying all images as the GIF specification requires.
+
+
+*-o*::
+(overlay) Skips the initial clearing of the frame buffer to the background color specified in the GIF file.
+
+
+*-v*::
+(verbose) Also prints information about the GIF images on the standard error output.
+
+
+*-z*::
+(zoom) Uses the zoom capability of the current framebuffer to make the image as large as possible on the screen while preserving a square aspect ratio to the pixels. This means that the zoom factor in X and Y will be equal to the smaller of the two possible zooms.
+
+
+__GIF_file_name__::
+Specifies the GIF input file to be translated, rather than reading the file from the standard input.
+
+
+
+
+
+[[discussion]]
+== DISCUSSION
+
+The GIF standard is far from an ideal specification for frame buffer images, but it has been widely accepted in the personal computer arena, and consequently there are a large number of images stored in GIF format on bulletin-board systems and other information services. Since most personal computer systems have GIF translators available for them, *gif-fb* provides a means of converting most images from such systems into a form suitable for processing with other BRL-CAD utilities.
+
+Notice that multiple images within a single GIF file can achieve animation effects.
+
+
+[[example]]
+== EXAMPLE
+
+The following is a typical invocation:
+
+
+....
+
+gif-fb image.gif
+....
+
+
+[[see_also]]
+== SEE ALSO
+
+A Standard Defining a Mechanism for the Storage and Transmission of Raster-Based Graphics Information, June 15, 1987 (CompuServe Incorporated).*libfb*(3)
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Error messages are intended to be self-explanatory.
+
+
+[[author]]
+== AUTHOR
+
+Douglas A. Gwyn, BRL/VLD-VMB
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

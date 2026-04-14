@@ -1,0 +1,54 @@
+= STL-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: User Commands
+
+== NAME
+stl-g - Stereolithography Translator (STL to BRL-CAD)
+
+== SYNOPSIS
+
+[source]
+----
+stl-g [-db] [-i initial_ident] [-I constant_ident] [-m material_code] [-N forced_name] [-c units] [-t tolerance] [-x RT_DEBUG_FLAG] file.stl file.g
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*stl-g* converts the specified _file.stl_ to a BRL-CAD _file.g_ file. Use the *-b* option if you have a binary STL file (the default is ASCII). The *-d* option prints debugging information. The *-c* option specifies the units that are used in the STL file. The _units_ string may be "mm", "in", "ft", ... (default is "mm"). The *-t* option specifies a tolerance distance (in mm) such that any two vertices within tolerance distance of each other are treated as the same vertex. The *-i* option sets the starting ident number for the regions created. As each new region is created, this number will be incremented before assigning the next ident number (conflicts with *-I* ). The *-I* option sets a constant ident number that will be assigned to all the regions created (conflicts with *-i* ). The *-m* option sets a material code that will be assigned to all the regions created (default is 1). The *-N* option sets a name for the resulting BRL-CAD object. STL files typically do not contain any object names. The *-x* option sets an RT debug flag (see raytrace.h). The _file.stl_ file is expected to be a stereolithography file.
+
+
+[[example]]
+== EXAMPLE
+
+
+----
+
+$ stl-g sample.stl sample.g
+----
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Error messages are intended to be self-explanatory.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1999-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <signal.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
 #endif

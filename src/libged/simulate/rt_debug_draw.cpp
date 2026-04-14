@@ -116,7 +116,6 @@ RtDebugDraw::reportErrorWarning(const char * const message)
 	bu_bomb("missing argument");
 
     bu_log("WARNING: Bullet: %s\n", message);
-    bu_bomb(message);
 }
 
 
@@ -138,12 +137,9 @@ RtDebugDraw::drawLine(const btVector3 &from, const btVector3 &to,
 
 void
 RtDebugDraw::draw3dText(const btVector3 &UNUSED(location),
-			const char * const text)
+			const char * const UNUSED(text))
 {
-    if (!text)
-	bu_bomb("missing argument");
-
-    bu_bomb("not implemented");
+    /* not implemented */
 }
 
 

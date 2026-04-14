@@ -1,0 +1,56 @@
+= PIX-ALIAS(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pix-alias - convert an image from pix format to Alias(tm) pix format
+
+== SYNOPSIS
+
+[source]
+----
+pix-alias [-s squaresize] [-w file_width] [-n file_height] < BRLpixfile > ALIASpixfile
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pix-alias* converts the (BRL) _pix(5)_ format file on the standard input to an _Alias pix_ format file on the standard output.
+
+
+[[options]]
+== OPTIONS
+
+
+*-n* _file_height_::
+tells *pix-alias* that the input is __file_height__ scanlines tall
+
+
+*-w* _file_width_::
+tells *pix-alias* that the input is __file_width__ pixels wide
+
+
+*-s* _squaresize_::
+sets both the width and the height for the input to be _squaresize_
+
+
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

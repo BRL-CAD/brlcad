@@ -1,0 +1,102 @@
+= G-RAW(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: User Commands
+
+== NAME
+g-raw - RAW Translator (BRL-CAD to RAW)
+
+== SYNOPSIS
+
+[source]
+----
+g-raw [-o output_file] [-m output_directory] [-i] [-8] [-D calculation_tolerance] [-a absolute_tol] [-r relative_tol] [-n normal_tol] [-xX level] [-v] database.g object(s)...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*g-raw* converts the specified _object(s)_ from a BRL-CAD _database.g_ file to the _stereolithography_ file format.
+
+The following options are recognized.
+
+
+*-o PATH*::
+Specify output file name (default is stdout).
+
+
+*-m DIR*::
+Specify a directory for output files. Each region converted is written to a separate file. File names are constructed from the full path names of each region (the path from the specified object to the region). Any "/" characters in the path name are replaced by "@" characters and "." and white space are replaced by "_" characters. If the -m option is not specified, all regions are written to the same file. The *-o* and *-m* options are mutually exclusive.
+
+
+*-i*::
+Use inches as the output format (the default is mm).
+
+
+*-8*::
+Facetize using the marching cubes algorithm.
+
+
+*-D#*::
+Specify a calculational distance tolerance (mm). Any two vertices that are less than this distance apart will be treated as the same vertex.
+
+
+*-a#*::
+Specify the absolute tesselation tolerance.
+
+
+*-r#*::
+Specify the relative tesselation tolerance.
+
+
+*-n#*::
+Specify the surface-normal tesselation tolerance.
+
+
+*-x#*::
+Specify an RT debug flag.
+
+
+*-X#*::
+Specify an NMG debug flag.
+
+
+*-v*::
+Enable verbose output.
+
+
+
+
+[[example]]
+== EXAMPLE
+
+
+----
+
+$ g-raw -o sample.raw sample.g sample_object
+----
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Error messages are intended to be self-explanatory.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2013-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

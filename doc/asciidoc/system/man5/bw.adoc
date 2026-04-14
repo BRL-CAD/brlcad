@@ -1,0 +1,80 @@
+= BW(5)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+bw - Black and White image file format and utilities
+
+[[format]]
+== FORMAT
+
+A _bw_ file contains sequences of pixels. Each pixel is stored as one *unsigned char*, and thus ranges in intensity from 0 (black) to 255 (white). The first pixel in a _bw_ file is the lower left corner of the image. The pixels proceed from left-to-right across each scanline, with scanlines being written from the bottom to the top of the image.
+
+By convention, _bw_ images are usually square, and thus their dimensions can be determined by the file size. If this is not the case, often only the file width need be known by a program reading the file. History has left us with two "standard" sizes, 512x512 and the "higher" 1024x1024. A common practice for other file sizes is to include the file width in the filename.
+
+At some time in the future _bw_ files will probably get self-typing headers so that parameters such as their size can be automatically determined by programs.
+
+
+[[utilities]]
+== UTILITIES
+
+*bw-fb* display a .bw format image on a framebuffer.
+
+*fb-bw* produce a .bw file from a framebuffer image.
+
+*bw-pix* convert a .bw file to a color .pix file.
+
+*pix-bw* convert a color .pix file to a .bw file.
+
+*bwstat* gives statistics concerning a .bw file.
+
+*bwhist* displays a histogram on a framebuffer.
+
+*bwmod* a filter to shift and scale pixel intensities.
+
+*bwdiff* yields the difference between two .bw files.
+
+*bwrect* extracts an arbitrary rectangle from a .bw file.
+
+*bwcrop* maps any quadrilateral in a .bw file into any rectangle.
+
+*bwrot* rotates, reverses, or inverts a .bw file.
+
+*bwscale* scales a .bw file larger or smaller.
+
+*bwfilter* a variety of 3x3 kernel filters for .bw images.
+
+*bw3-pix* merges three .bw files into one .pix file.
+
+*pix-bw3* separates .pix file RGB colors into three .bw files.
+
+
+[[files]]
+== FILES
+
+file.bw
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix*(5), and above named programs.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

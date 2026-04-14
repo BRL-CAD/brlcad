@@ -1,0 +1,46 @@
+= PLOT3GETFRAME(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+plot3getframe - extract one frame from a UNIX plot file
+
+== SYNOPSIS
+
+[source]
+----
+plot3getframe [-v] desired_frame < unix_plot
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*plot3getframe* extracts a single frame from a multi-frame UNIX plot file. Frames are separated by UNIX plot "erase" commands. Specifying the *-v* (verbose) flag causes the number of each frame being skipped to be printed on stderr.
+
+Note that BRL 3-D UNIX plot is a superset of the standard UNIX plot format, thus this program can process normal plot files as well.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *libplot3*(3)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1988-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

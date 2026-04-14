@@ -54,6 +54,10 @@ extern int mged_post_opendb_clbk(int ac, const char **av, void *gedp, void *ctx)
 extern int mged_pre_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
 extern int mged_post_closedb_clbk(int ac, const char **av, void *gedp, void *ctx);
 
+/* Defined in cmd.cpp */
+extern int mged_search_pre_clbk(int ac, const char **av, void *gedp, void *s);
+extern int mged_search_post_clbk(int ac, const char **av, void *gedp, void *s);
+
 // FIXME: Global
 extern Tk_Window tkwin; /* in cmd.c */
 
@@ -337,7 +341,7 @@ static struct cmdtab mged_cmdtab[] = {
     {MGED_CMD_MAGIC, "savekey", cmd_ged_plain_wrapper, ged_exec_savekey, NULL},
     {MGED_CMD_MAGIC, "saveview", cmd_ged_plain_wrapper, ged_exec_saveview, NULL},
     {MGED_CMD_MAGIC, "sca", cmd_sca, GED_FUNC_PTR_NULL, NULL},
-    {MGED_CMD_MAGIC, "screengrab", cmd_ged_dm_wrapper, ged_exec_screengrab, NULL},
+    {MGED_CMD_MAGIC, "screengrab", cmd_screengrab, ged_exec_screengrab, NULL},
     {MGED_CMD_MAGIC, "search", cmd_search, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "sed", f_sed, GED_FUNC_PTR_NULL, NULL},
     {MGED_CMD_MAGIC, "sed_apply", f_sedit_apply, GED_FUNC_PTR_NULL, NULL},
@@ -481,7 +485,6 @@ mged_refresh_handler(void *clientdata)
     refresh(s);
 }
 
-
 /*
  * Initialize mged, configure the path, set up the tcl interpreter.
  */
@@ -492,6 +495,11 @@ mged_setup(struct mged_state *s)
     struct bu_vls tlog = BU_VLS_INIT_ZERO;
     const char *name = bu_dir(NULL, 0, BU_DIR_BIN, bu_getprogname(), BU_DIR_EXT, NULL);
 
+    /* Register the MGED log-buffer semaphore before any parallel code can
+     * run.  mged_sem_log_init() is idempotent so calling it here (inside
+     * mged_setup which may be called more than once) is safe. */
+    mged_sem_log_init();
+
     /* locate our run-time binary (must be called before Tcl_CreateInterp()) */
     if (name) {
 	Tcl_FindExecutable(name);
@@ -501,6 +509,10 @@ mged_setup(struct mged_state *s)
 
     if (s->interp != NULL)
 	Tcl_DeleteInterp(s->interp);
+
+    /* Initialise search_interp to NULL; it will be created/destroyed around
+     * each search command by mged_search_pre_clbk / mged_search_post_clbk. */
+    s->search_interp = NULL;
 
     /* Create the interpreter */
     s->interp = Tcl_CreateInterp();
@@ -532,7 +544,10 @@ mged_setup(struct mged_state *s)
     ged_clbk_set(s->gedp, "closedb", BU_CLBK_POST, &mged_post_closedb_clbk, (void *)&mged_global_db_ctx);
 
     // Register during-execution callback function for search command
-    ged_clbk_set(s->gedp, "search", BU_CLBK_DURING, &mged_db_search_callback, (void *)s);
+    ged_clbk_set(s->gedp, "search", BU_CLBK_PRE,    &mged_search_pre_clbk,      (void *)s);
+    ged_clbk_set(s->gedp, "search", BU_CLBK_DURING, &mged_db_search_callback,   (void *)s);
+    ged_clbk_set(s->gedp, "search", BU_CLBK_POST,   &mged_search_post_clbk,     (void *)s);
+    ged_clbk_set(s->gedp, "clone",  BU_CLBK_DURING, &mged_clone_during_callback, (void *)s);
 
     struct tclcad_io_data *t_iod = tclcad_create_io_data();
     t_iod->io_mode = TCL_READABLE;
@@ -572,6 +587,13 @@ mged_setup(struct mged_state *s)
     history_setup();
     mged_global_variable_setup(s);
     mged_variable_setup(s);
+
+    /* Start the recurring log-drain timer.  The timer fires every
+     * 50 ms on the Tcl event loop and calls mged_pr_output(), which flushes
+     * any bu_log output accumulated in the thread-safe buffer to the command
+     * prompt.  This enables live streaming of intermediate output during long
+     * GED commands that run in a worker thread. */
+    mged_start_log_drain_timer(s);
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);

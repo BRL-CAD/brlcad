@@ -26,7 +26,6 @@
 
 #include "common.h"
 
-#include <signal.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>

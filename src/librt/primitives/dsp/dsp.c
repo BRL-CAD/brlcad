@@ -623,16 +623,25 @@ rt_dsp_print(register const struct soltab *stp)
 /**
  * compute bounding boxes for each cell, then compute bounding boxes
  * for collections of bounding boxes
+ *
+ * Performance notes:
+ * - bu_calloc is used so that leaf-cell children[] pointers start as
+ *   NULL without a per-cell initialization loop, saving significant
+ *   work for large DSPs (a 4096x4096 terrain has ~16.7M leaf cells).
+ * - The DIM_BB_CHILDREN^curr_layer multiplier (n) is computed once per
+ *   layer rather than once per cell, avoiding a pow() call in the
+ *   inner loop.
  */
 static void
 dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_max)
 {
-    int idx, curr_layer, xs, ys, xv, yv, tot;
-    unsigned int x, y, i, j, k;
+    int idx, curr_layer, xs, ys, xv, yv, tot, n;
+    unsigned int x, y, i, j;
     unsigned short dsp_min, dsp_max;
     unsigned short elev;
     struct dsp_bb *dsp_bb;
     struct dsp_rpp *t;
+	int tot2, xp, yp;
     struct dsp_bb_layer *curr, *prev;
     unsigned short subcell_size;
 
@@ -668,10 +677,14 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 	bu_log("%d layers total\n", dsp->layers);
 #endif
 
-    /* allocate the struct dsp_bb's we will need */
-    dsp->layer = (struct dsp_bb_layer *)bu_malloc(dsp->layers * sizeof(struct dsp_bb_layer),
+    /* allocate the struct dsp_bb's we will need.
+     * bu_calloc zeros all children[] pointers to NULL up front, avoiding
+     * the O(16*N) initialization loop that was previously in the leaf
+     * cell fill pass below.
+     */
+    dsp->layer = (struct dsp_bb_layer *)bu_calloc(dsp->layers, sizeof(struct dsp_bb_layer),
 			   "dsp_bb_layers array");
-    dsp->bb_array = (struct dsp_bb *)bu_malloc(tot * sizeof(struct dsp_bb), "dsp_bb array");
+    dsp->bb_array = (struct dsp_bb *)bu_calloc(tot, sizeof(struct dsp_bb), "dsp_bb array");
 
     /* now we fill in the "lowest" layer of struct dsp_bb's from the
      * raw data
@@ -715,15 +728,10 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 	    VSET(dsp_bb->dspb_rpp.dsp_min, x, y, cell_min);
 	    VSET(dsp_bb->dspb_rpp.dsp_max, x+1, y+1, cell_max);
 
-	    dsp_bb->dspb_subcell_size = 0;
-
-	    /* There are no "children" of a layer 0 element */
-	    dsp_bb->dspb_ch_dim[X] = 0;
-	    dsp_bb->dspb_ch_dim[Y] = 0;
-	    for (k = 0; k < NUM_BB_CHILDREN; k++) {
-		dsp_bb->dspb_children[k] =
-		    (struct dsp_bb *)NULL;
-	    }
+	    /* dspb_subcell_size, dspb_ch_dim[X/Y], and dspb_children[]
+	     * are already 0/NULL from the bu_calloc above.
+	     * There are no children of a layer 0 element.
+	     */
 	    dsp_bb->magic = MAGIC_dsp_bb;
 
 	    /* XXX should we compute the triangle orientation and
@@ -741,9 +749,17 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 
     subcell_size = 1;
 
-    /* now we compute successive layers from the initial layer */
+    /* now we compute successive layers from the initial layer.
+     * n (= DIM_BB_CHILDREN^curr_layer) is computed once per layer
+     * to avoid a pow() call inside the inner x/y loop.
+     */
     for (curr_layer = 1; curr_layer < dsp->layers; curr_layer++) {
 	/* compute the number of cells in each direction for this layer */
+
+	/* n = DIM_BB_CHILDREN^curr_layer, computed with integer arithmetic */
+	n = 1;
+	for (idx = 0; idx < curr_layer; idx++)
+	    n *= DIM_BB_CHILDREN;
 
 	xs = dsp->layer[curr_layer-1].dim[X];
 	if (xs % DIM_BB_CHILDREN)
@@ -774,7 +790,6 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 	/* walk the grid and fill in the values for this layer */
 	for (y = 0; y < curr->dim[Y]; y++) {
 	    for (x = 0; x < curr->dim[X]; x++) {
-		int n, xp, yp;
 		/* x, y are in the coordinates in the current
 		 * layer.  xp, yp are the coordinates of the
 		 * same area in the previous (lower) layer.
@@ -785,7 +800,6 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 		/* initialize the current dsp_bb cell */
 		dsp_bb = &curr->p[y*curr->dim[X]+x];
 		dsp_bb->magic = MAGIC_dsp_bb;
-		n = lrint(pow((double)DIM_BB_CHILDREN, (double)curr_layer));
 		VSET(dsp_bb->dspb_rpp.dsp_min,
 		     x * n, y * n, 0x0ffff);
 		VSET(dsp_bb->dspb_rpp.dsp_max,
@@ -794,8 +808,8 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 		/* record the dimensions of our children */
 		dsp_bb->dspb_subcell_size = subcell_size;
 
-
-		tot = 0;
+		/* dspb_children[] already NULL from bu_calloc */
+		tot2 = 0;
 		i = 0;
 		for (j = 0; j < DIM_BB_CHILDREN && (yp+j)<prev->dim[Y]; j++) {
 		    for (i = 0; i < DIM_BB_CHILDREN && (xp+i)<prev->dim[X]; i++) {
@@ -809,7 +823,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 			VMINMAX(dsp_bb->dspb_rpp.dsp_min,
 				dsp_bb->dspb_rpp.dsp_max, t->dsp_max);
 
-			dsp_bb->dspb_children[tot++] = &prev->p[ idx ];
+			dsp_bb->dspb_children[tot2++] = &prev->p[ idx ];
 
 		    }
 		}
@@ -836,8 +850,9 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 int
 rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_dsp_internal *dsp_ip;
-    struct dsp_specific ds;
     unsigned short dsp_min, dsp_max;
+    unsigned short elev;
+    unsigned int x, y;
     point_t pt, bbpt;
 
     RT_CK_DB_INTERNAL(ip);
@@ -852,13 +867,6 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 		bu_log("dsp(%s): no data file or data file empty\n", bu_vls_addr(&dsp_ip->dsp_name));
 		return 1; /* BAD */
 	    }
-
-	    /* we do this here and now because we will need it for the
-	     * dsp_specific structure in a few lines
-	     */
-	    bu_semaphore_acquire(RT_SEM_MODEL);
-	    ++dsp_ip->dsp_mp->uses;
-	    bu_semaphore_release(RT_SEM_MODEL);
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    if (!dsp_ip->dsp_bip) {
@@ -870,34 +878,23 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 	    break;
     }
 
-    memset(&ds, 0, sizeof(struct dsp_specific));
-
-    /* this works ok, because the mapped file keeps track of the
-     * number of uses.  However, the binunif interface does not.
-     * We'll have to copy the data for that one.
+    /* Compute the elevation min/max directly via a single O(n) scan.
+     * This avoids calling dsp_layers() (which builds the full BVH tree
+     * and is O(n) in time and memory) just to get two scalar values.
      */
-    ds.dsp_i = *dsp_ip;		/* struct copy */
-
-    /* this keeps the binary internal object from being freed */
-    dsp_ip->dsp_bip = (struct rt_db_internal *)NULL;
-
-
-    ds.xsiz = dsp_ip->dsp_xcnt-1;	/* size is # cells or values-1 */
-    ds.ysiz = dsp_ip->dsp_ycnt-1;	/* size is # cells or values-1 */
-
-
-    /* compute the multi-resolution bounding boxes */
-    dsp_layers(&ds, &dsp_min, &dsp_max);
-
-
-    /* record the distance to each of the bounding planes */
-    ds.dsp_pl_dist[XMIN] = 0.0;
-    ds.dsp_pl_dist[XMAX] = (fastf_t)ds.xsiz;
-    ds.dsp_pl_dist[YMIN] = 0.0;
-    ds.dsp_pl_dist[YMAX] = (fastf_t)ds.ysiz;
-    ds.dsp_pl_dist[ZMIN] = 0.0;
-    ds.dsp_pl_dist[ZMAX] = (fastf_t)dsp_max;
-    ds.dsp_pl_dist[ZMID] = (fastf_t)dsp_min;
+    {
+	unsigned int xcnt = (unsigned int)dsp_ip->dsp_xcnt;
+	unsigned int ycnt = (unsigned int)dsp_ip->dsp_ycnt;
+	dsp_min = 0xffff;
+	dsp_max = 0;
+	for (y = 0; y < ycnt; y++) {
+	    for (x = 0; x < xcnt; x++) {
+		elev = DSP(dsp_ip, x, y);
+		V_MIN(dsp_min, elev);
+		V_MAX(dsp_max, elev);
+	    }
+	}
+    }
 
     /* compute enlarged bounding box and sphere */
     VSETALL((*min), INFINITY);
@@ -918,15 +915,6 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     BBOX_PT(-.1,		 dsp_ip->dsp_ycnt+.1, dsp_max+.1);
 
 #undef BBOX_PT
-
-    switch (dsp_ip->dsp_datasrc) {
-	case RT_DSP_SRC_V4_FILE:
-	case RT_DSP_SRC_FILE:
-	    bu_semaphore_acquire(RT_SEM_MODEL);
-	    --dsp_ip->dsp_mp->uses;
-	    bu_semaphore_release(RT_SEM_MODEL);
-	    break;
-    }
 
     return 0;
 }
@@ -2182,11 +2170,17 @@ recurse_dsp_bb(struct isect_stuff *isect,
     cX = (minpt[X] - bbmin[X]) / cs;
     cY = (minpt[Y] - bbmin[Y]) / cs;
 
-    /* a little bounds checking because a hit on XMAX or YMAX looks
-     * like it should be in the next cell outside the box
+
+    /* bounds checking: a hit on XMAX or YMAX looks like it should be
+     * in the next cell outside the box; similarly a floating-point
+     * entry point very slightly outside the bounding box (due to
+     * precision) can produce a negative cell index.  Clamp both ends
+     * to prevent out-of-bounds access into dspb_children[].
      */
     if (cX >= dsp_bb->dspb_ch_dim[X]) cX = dsp_bb->dspb_ch_dim[X] - 1;
     if (cY >= dsp_bb->dspb_ch_dim[Y]) cY = dsp_bb->dspb_ch_dim[Y] - 1;
+    if (cX < 0) cX = 0;
+    if (cY < 0) cY = 0;
 
 #ifdef FULL_DSP_DEBUGGING
     dlog("recurse_dsp_bb  cell size: %d  current cell: %d %d\n",
@@ -3087,6 +3081,12 @@ rt_dsp_free(register struct soltab *stp)
 	case RT_DSP_SRC_OBJ:
 	    break;
     }
+
+    /* Free the BVH acceleration structure */
+    if (dsp->layer)
+	bu_free(dsp->layer, "dsp_bb_layers array");
+    if (dsp->bb_array)
+	bu_free(dsp->bb_array, "dsp_bb array");
 
     BU_PUT(dsp, struct dsp_specific);
 }

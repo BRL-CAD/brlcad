@@ -1,0 +1,184 @@
+= BB(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bb - Report dimensional information about objects using Bounding Boxes
+
+== SYNOPSIS
+
+[source]
+----
+bb [options]... objects...
+----
+
+
+[[description]]
+== DESCRIPTION
+
+_bb_ calculates a bounding box for an object or set of objects supplied as arguments, and reports information about bounding box dimensions at the MGED command prompt. It supports various options, most of which control the type of information reported. It can optionally create an ARB8 in a database corresponding to the bounding box of the object(s). By default, an axis-aligned bounding box (AABB) is created, but support for an oriented bounding box (OBB) is available as well.
+
+The _objects_ list consists of one or more geometry objects in the current database.
+
+
+*-c* bbox_object_name.s::
+Create an ARB8 primitive in the current database with the dimensions of the bounding box of the object(s) listed.
+
+
+*-d*::
+Report dimensional information (length, width and height.) On by default.
+
+
+*-e*::
+Report the extent of the bounding box using the min and max 3D points of the bounding box.
+
+
+*-m*::
+Report the midpoint / center (x y z) of the bounding box.
+
+
+*-o*::
+Calculate an oriented bounding box instead of an axis aligned bounding box. This will produce tighter bounding volumes if the geometry is not symmetric to the XYZ grid. Uses the algorithms and code from Barequet and Har-Peled - see the papers http://valis.cs.uiuc.edu/~sariel/papers/98/bbox.html[Efficiently Approximating the Minimum-Volume Bounding Box of a Point Set in Three Dimensions](SODA 99) and http://valis.cs.uiuc.edu/~sariel/research/papers/00/diam.html[A Practical Approach for Computing the Diameter of a Point-Set] for details.
+
+
+*-q*::
+Quiet mode - disable printing of the header, which is on by default. Useful when processing output from bb.
+
+
+*-u*::
+Ignore air volumes when calculating the bounding box.
+
+
+*-v*::
+Print the volume of the bounding box. On by default.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+.Determine the size of the bounding box for a Havoc helicopter
+[example]
+====
+
+
+
+....
+
+mged> bb havoc
+Bounding Box Dimensions, Object(s) havoc:
+X Length: 1988.4 cm
+Y Length: 1683.6 cm
+Z Length: 625.0 cm
+Bounding Box Volume: 2092246392.4 cm^3
+	
+....
+
+
+
+====
+
+.Report only the min and max points of a bounding box
+[example]
+====
+
+
+
+....
+
+mged> bb -q -e havoc
+min {-759.447479 -8437.866455 -890.000000} max {19124.621094 8397.693207 5360.000000}
+	
+....
+
+
+
+====
+
+.Bounding Box for multiple components
+[example]
+====
+
+
+
+....
+
+mged> bb havoc_front havoc_middle havoc_tail
+Bounding Box Dimensions, Object(s) havoc_front,  havoc_middle,  havoc_tail:
+X Length: 1775.9 cm
+Y Length: 358.0 cm
+Z Length: 536.0 cm
+Bounding Box Volume: 340782488.9 cm^3
+	
+....
+
+
+
+====
+
+.Create ARB8 Bounding Box
+[example]
+====
+
+
+
+....
+
+mged> bb -c havoc_parts_bbox.s havoc_front havoc_middle havoc_tail
+Bounding Box Dimensions, Object(s) havoc_front,  havoc_middle,  havoc_tail:
+X Length: 1775.9 cm
+Y Length: 358.0 cm
+Z Length: 536.0 cm
+Bounding Box Volume: 340782488.9 cm^3
+	
+....
+
+
+
+
+
+
+....
+
+mged> l havoc_parts_bbox.s
+havoc_parts_bbox.s:  ARB8
+	1 (-75.9447, -158, -4.86374e-06)
+	2 (-75.9447, -158, 536)
+	3 (-75.9447, 200, 536)
+	4 (-75.9447, 200, -4.86374e-06)
+	5 (1700, -158, -4.86374e-06)
+	6 (1700, -158, 536)
+	7 (1700, 200, 536)
+	8 (1700, 200, -4.86374e-06)
+	
+....
+
+
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*make_bb*(nged).
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2009-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to <bugs@brlcad.org>.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team

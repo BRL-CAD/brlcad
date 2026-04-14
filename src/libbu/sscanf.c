@@ -692,6 +692,45 @@ bu_sscanf(const char *src, const char *fmt, ...)
 }
 
 
+/* Undefine all local macros to prevent leakage into subsequent files in
+ * Unity/jumbo builds.  LONG, SHORT, and LONGLONG conflict with Windows SDK
+ * type names in winnt.h and must be cleaned up. */
+#undef LONG
+#undef LONGDBL
+#undef SHORT
+#undef SUPPRESS
+#undef POINTER
+#undef NOSKIP
+#undef LONGLONG
+#undef INTMAXT
+#undef PTRDIFFT
+#undef SIZET
+#undef SHORTSHORT
+#undef UNSIGNED
+#undef ALTERNATE
+#undef SIGNOK
+#undef NDIGITS
+#undef PFXOK
+#undef NZDIGITS
+#undef HAVESIGN
+#undef HAVEWIDTH
+#undef CT_CHAR
+#undef CT_CCL
+#undef CT_STRING
+#undef CT_INT
+#undef CT_FLOAT
+#undef CT_VLS
+#undef UPDATE_COUNTS
+#undef FREE_FORMAT_PART
+#undef GET_FORMAT_PART
+#undef EXIT_DUE_TO_INPUT_FAILURE
+#undef EXIT_DUE_TO_MATCH_FAILURE
+#undef EXIT_DUE_TO_MISC_ERROR
+#undef NUMERIC_CHAR_TO_INT
+#undef SSCANF_TYPE
+#undef SSCANF_SIGNED_UNSIGNED
+
+
 /*
  * Local Variables:
  * tab-width: 8

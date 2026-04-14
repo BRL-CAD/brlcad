@@ -1,0 +1,47 @@
+= WHICH_SHADER(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+which_shader - Lists all the regions that use one of the _shaders_ specified.
+
+== SYNOPSIS
+
+[source]
+----
+which_shader {shaders}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Lists all the regions that use one of the _shaders_ specified.
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *which_shader* command to list all the regions that use the specified shaders.
+
+.List the regions that use the specified shaders.
+[example]
+====
+mged>**which_shader plastic light**
+
+Lists all regions in the current database that use the _plastic_ or _light_ shaders.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

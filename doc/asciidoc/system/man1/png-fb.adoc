@@ -1,0 +1,68 @@
+= PNG-FB(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+png-fb - display a Portable Network Graphics (PNG) image file on a framebuffer
+
+== SYNOPSIS
+
+[source]
+----
+png-fb [-Hicvz1] [-gscreen_gamma] [-Fframebuffer] [-m#lines] [-Ssquarescrsize] [-Wscr_width] [-Nscr_height] [-xfile_xoff] [-yfile_yoff] [-Xscr_xoff] [-Yscr_yoff] [file.png]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*png-fb* reads a _PNG_ format file from the named file, or from standard in if no file is specified, and displays the image on the currently selected framebuffer. The environment variable FB_FILE may be used to specify the current framebuffer, see *brlcad*(1). Alternatively, the framebuffer may be explicitly specified by using the *-F* flag.
+
+By default, the requested framebuffer size is assumed to be 512x512 pixels.
+
+The *-g* option specifies the gamma value for the screen where the image is to be displayed. Larger values will produce lighter colored display.
+
+If the *-i* flag is specified, the image is inverted.
+
+The *-c* flag causes the screen to be cleared before the image is displayed. The default behavior is to overwrite the current image with the new image without clearing the screen.
+
+The *-v* option will print verbose information about the PNG file.
+
+The *-H* option will print a single line on standard output providing the dimensions of the image in a format readily usable in shell scripts, e.g. WIDTH=42 HEIGHT=17.
+
+The *-z* flag will zoom and center on the image being displayed to make it fill the display area, using the libfb fb_zoom() routine. fb_zoom only offers integer zoom factors, so displays with non-square screens (such as the SGI 3D machines) may find this option of limited usefulness.
+
+The *-W scr_width* flag specifies the width of each scanline in the display device, in pixels.
+
+The *-N scr_height* flag specifies the height in scanlines of the display device.
+
+*-S squarescrsize* set both the height and width to the size given.
+
+*-x file_xoff -y file_yoff* and *-X scr_xoff -Y scr_yoff* will offset into the file or onto the screen by the given amounts. The coordinate system for these offsets is first quadrant, with the origin at the lower left corner of the image.
+
+The *-1* flag causes the image to be written to the framebuffer one line at a time, using the *fb_write*(3) routine. This is the default behavior. The *-m #lines* flag can be used to specify the number of lines to be written to the framebuffer in rectangular blocks of scanlines, using the *fb_writerect*(3) routine. In some circumstances, this can result in significantly faster image display, at the expense of the image being written less smoothly. If both *-m* and *-1* are specified, *-1* wins.
+
+
+[[see_also]]
+== SEE ALSO
+
+*rt*(1), *fb-png*(1), *libfb*(3), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+John R. Anderson
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1998-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

@@ -1,0 +1,88 @@
+= FBCMAP(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+fbcmap - change the color map of a frame buffer
+
+== SYNOPSIS
+
+[source]
+----
+fbcmap [-F framebuffer] [ -w|W scr_width] [ -n|N scr_height] [ -s|S squarescrsize] [map_number]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*fbcmap* is used to change the color map of a frame buffer.
+
+
+*-F* _framebuffer_::
+This option specifies which framebuffer the image is to be saved from. If not given, the environment variable *FB_FILE* is used to select the display device (see *brlcad*(1)). If *FB_FILE* has not been set, the default device for your system will be used.
+
+
+
+The requested framebuffer size will be the default size for the selected device (often 512x512 pixels).
+
+The *-w* (or *-W*) _scr_width_ option specifies the width of each scanline for the display device, in pixels.
+
+The *-n* (or *-N*) _scr_height_ option specifies the height of each scanline for the display device.
+
+The *-s* (or *-S*) _squarescrsize_ option sets both the height and width to the size given. This size distinction is important only for devices like the Adage framebuffers which have different operating modes based on the display size.
+
+If an optional color __map_number__ is given, that map is used; the default is the standard linear map. There are currently six other maps supplied numbered 1 through 6 as follows:
+
+
+1::
+reverse-linear (negative) map.
+
+
+2::
+one corrected for Polaroid 809/891 film.
+
+
+3::
+a linear mapping in which the first 100 values are black.
+
+
+4::
+a linear map with values 1->191 incremented by 64 to boost dim pictures. The values at 191 and above are all full on. Zero remains at zero.
+
+
+5::
+a gamma correcting color map used by the University of Utah Alpha_1 project. A better source of gamma correction is the *fbgamma*(1) utility.
+
+
+6::
+a map with a series of color deltas. This map is mostly black with the following colors, appearing at multiples of 32, having values full on: white (0), magenta (32), red (64), yellow (96), green (128), cyan (160), blue (192). This map is most useful in conjunction with *fbcmrot*(1) and will show which pixels have the same intensities in one, two, or all three color planes.
+
+
+
+There are also three special maps used to quickly change the display to a solid color for adjusting a camera without losing image memory, numbered 10 through 12 for black, white, and 18% neutral grey, respectively.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *fbcmrot*(1), *fbgamma*(1), *cmap-fb*(1), *fb-cmap*(1), *cmap*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1986-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

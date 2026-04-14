@@ -35,6 +35,7 @@
 #include "vmath.h"
 #include "rt/db5.h"
 #include "raytrace.h"
+#include "librt_private.h"
 
 int
 db5_write_free(struct db_i *dbip, struct directory *dp, size_t length)
@@ -164,7 +165,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 	if (db5_write_free(dbip, dp, dp->d_len) < 0) return -1;
 
 	/* Finally, update tables */
-	rt_memfree(&(dbip->dbi_freep), dp->d_len, dp->d_addr);
+	rt_memfree(&(dbip->i->dbi_freep), dp->d_len, dp->d_addr);
 	dp->d_addr = baseaddr;
 	dp->d_len = ep->ext_nbytes;
 	return 0;
@@ -178,7 +179,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 	    bu_log("db5_realloc(%s) releasing storage at %jd, len=%zu\n",
 		   dp->d_namep, (intmax_t)dp->d_addr, dp->d_len);
 
-	rt_memfree(&(dbip->dbi_freep), dp->d_len, dp->d_addr);
+	rt_memfree(&(dbip->i->dbi_freep), dp->d_len, dp->d_addr);
 	if (db5_write_free(dbip, dp, dp->d_len) < 0) return -1;
 	dp->d_addr = RT_DIR_PHONY_ADDR;	/* sanity */
     }
@@ -191,7 +192,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 	struct mem_map *mmp;
 	b_off_t newaddr;
 
-	if ((mmp = rt_memalloc_nosplit(&(dbip->dbi_freep), ep->ext_nbytes)) != MAP_NULL) {
+	if ((mmp = rt_memalloc_nosplit(&(dbip->i->dbi_freep), ep->ext_nbytes)) != MAP_NULL) {
 	    if (RT_G_DEBUG&RT_DEBUG_DB)
 		bu_log("db5_realloc(%s) obtained free block at %jd, len=%zu\n",
 		       dp->d_namep, (intmax_t)mmp->m_addr, mmp->m_size);
@@ -211,7 +212,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 		    bu_log("db5_realloc(%s) returning surplus at %jd, len=%zu\n",
 			   dp->d_namep, (intmax_t)dp->d_addr, dp->d_len);
 		if (db5_write_free(dbip, dp, dp->d_len) < 0) return -1;
-		rt_memfree(&(dbip->dbi_freep), dp->d_len, dp->d_addr);
+		rt_memfree(&(dbip->i->dbi_freep), dp->d_len, dp->d_addr);
 		/* mmp is invalid beyond here! */
 	    }
 	    dp->d_addr = newaddr;
@@ -226,8 +227,8 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
     }
 
     /* No free storage of the desired size, extend the database */
-    dp->d_addr = dbip->dbi_eof;
-    dbip->dbi_eof += (b_off_t)ep->ext_nbytes;
+    dp->d_addr = dbip->i->dbi_eof;
+    dbip->i->dbi_eof += (b_off_t)ep->ext_nbytes;
     dp->d_len = ep->ext_nbytes;
     if (RT_G_DEBUG & RT_DEBUG_DB)
 	bu_log("db5_realloc(%s) extending database addr=%jd, len=%zu\n",

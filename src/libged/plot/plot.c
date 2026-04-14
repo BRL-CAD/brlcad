@@ -204,7 +204,7 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
     int Z_clip;			/* Z clipping */
     int floating;			/* 3-D floating point plot */
     int is_pipe = 0;
-    static const char *usage = "file [2|3] [f] [g] [z]";
+    static const char *plot_usage = "file [2|3] [f] [g] [z]";
 
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -215,7 +215,7 @@ ged_plot_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], plot_usage);
 	return GED_HELP;
     }
 

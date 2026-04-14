@@ -49,6 +49,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "librt_private.h"
 
 
 int
@@ -136,7 +137,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     bu_free_external(&body);
 
     /* make sure the database directory is initialized */
-    if (wdbp->dbip->dbi_eof == RT_DIR_PHONY_ADDR) {
+    if (wdbp->dbip->i->dbi_eof == RT_DIR_PHONY_ADDR) {
 	ret = db_dirbuild(wdbp->dbip);
 	if (ret) {
 	    return -1;

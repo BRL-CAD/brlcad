@@ -63,7 +63,13 @@ if(BRLCAD_ENABLE_TCL)
     set(TCLCAD_LIBS ${TCLCAD_LIBS} ${TK_LIBRARY})
   endif(TK_LIBRARY)
 
-  brlcad_addlib(libtclcad "${LIBTCLCAD_SRCS}" "${TCLCAD_LIBS}" "${TCLCAD_INCLUDE_DIRS}" "${TCLCAD_LOCAL_INCLUDE_DIRS}")
+  brlcad_addlib(libtclcad "${LIBTCLCAD_SRCS}" "${TCLCAD_LIBS}" "${TCLCAD_INCLUDE_DIRS}" "${TCLCAD_LOCAL_INCLUDE_DIRS}"
+    # refresh.c defines DM_WITH_RT before including dm/view.h to expose
+    # dm_draw_viewobjs; when batched after draw.c the DM_VIEW_H guard fires
+    # without DM_WITH_RT set and the declaration is lost.
+    # bu.c and dm.c both define a non-static register_cmds function.
+    UNITY_BUILD_SKIP view/refresh.c bu.c dm.c
+  )
   set(ptargets libtclcad)
   if(TARGET libtclcad-obj)
     list(APPEND ptargets libtclcad-obj)

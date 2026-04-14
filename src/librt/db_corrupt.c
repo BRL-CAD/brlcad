@@ -54,7 +54,7 @@ db_corrupt_handler(struct db_i *dbip, const char *name, b_off_t offset, size_t s
     RT_CK_DBI(dbip);
 
     /* get into position */
-    ret = bu_fseek(dbip->dbi_fp, offset, 0);
+    ret = bu_fseek(dbip->i->dbi_fp, offset, 0);
     if (ret) {
 	bu_log("Database seek failure, unable to seek [%s]\n", name);
 	return 0;
@@ -66,7 +66,7 @@ db_corrupt_handler(struct db_i *dbip, const char *name, b_off_t offset, size_t s
     ext.ext_buf = (uint8_t *)bu_calloc(ext.ext_nbytes, 1, "db_corrupt");
 
     /* read into the buffer */
-    j = (size_t)fread(ext.ext_buf, 1, ext.ext_nbytes, dbip->dbi_fp);
+    j = (size_t)fread(ext.ext_buf, 1, ext.ext_nbytes, dbip->i->dbi_fp);
     if (j != ext.ext_nbytes) {
 	bu_log("Database read failure, unable to read [%s]\n", name);
 	bu_free_external(&ext);

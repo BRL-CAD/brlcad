@@ -55,11 +55,11 @@ db5_scan(
     nrec = 0L;
 
     /* Fast-path when file is already memory-mapped */
-    if (dbip->dbi_mf) {
-	const unsigned char *cp = (const unsigned char *)dbip->dbi_inmem;
+    if (dbip->i->dbi_mf) {
+	const unsigned char *cp = (const unsigned char *)dbip->i->dbi_inmem;
 	b_off_t eof;
 
-	eof = (b_off_t)dbip->dbi_mf->buflen;
+	eof = (b_off_t)dbip->i->dbi_mf->buflen;
 
 	if (db5_header_is_valid(cp) == 0) {
 	    bu_log("db5_scan ERROR:  %s is lacking a proper BRL-CAD v5 database header\n", dbip->dbi_filename);
@@ -75,19 +75,19 @@ db5_scan(
 	    nrec++;
 	    addr += (b_off_t)raw.object_length;
 	}
-	dbip->dbi_eof = addr;
-	BU_ASSERT(dbip->dbi_eof == (b_off_t)dbip->dbi_mf->buflen);
+	dbip->i->dbi_eof = addr;
+	BU_ASSERT(dbip->i->dbi_eof == (b_off_t)dbip->i->dbi_mf->buflen);
     } else {
 	/* In a totally portable way, read the database with stdio */
-	rewind(dbip->dbi_fp);
-	if (fread(header, sizeof header, 1, dbip->dbi_fp) != 1  ||
+	rewind(dbip->i->dbi_fp);
+	if (fread(header, sizeof header, 1, dbip->i->dbi_fp) != 1  ||
 	    db5_header_is_valid(header) == 0) {
 	    bu_log("db5_scan ERROR:  %s is lacking a proper BRL-CAD v5 database header\n", dbip->dbi_filename);
 	    goto fatal;
 	}
 	for (;;) {
-	    addr = bu_ftell(dbip->dbi_fp);
-	    if ((got = db5_get_raw_internal_fp(&raw, dbip->dbi_fp)) < 0) {
+	    addr = bu_ftell(dbip->i->dbi_fp);
+	    if ((got = db5_get_raw_internal_fp(&raw, dbip->i->dbi_fp)) < 0) {
 		if (got == -1) break;		/* EOF */
 		goto fatal;
 	    }
@@ -98,11 +98,11 @@ db5_scan(
 		raw.buf = NULL;
 	    }
 	}
-	dbip->dbi_eof = bu_ftell(dbip->dbi_fp);
-	rewind(dbip->dbi_fp);
+	dbip->i->dbi_eof = bu_ftell(dbip->i->dbi_fp);
+	rewind(dbip->i->dbi_fp);
     }
 
-    dbip->dbi_nrec = nrec;		/* # obj in db, not inc. header */
+    dbip->i->dbi_nrec = nrec;		/* # obj in db, not inc. header */
     return 0;			/* success */
 
 fatal:
@@ -153,7 +153,7 @@ db5_scan_inmem(
 	addr += (b_off_t)raw.object_length;
     }
 
-    dbip->dbi_nrec = nrec;		/* # obj in db, not inc. header */
+    dbip->i->dbi_nrec = nrec;		/* # obj in db, not inc. header */
     return 0;			/* success */
 
 fatal:
@@ -228,9 +228,9 @@ db_diradd5(
     dp->d_forw = *headp;
     *headp = dp;
 
-    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
-	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+    if (BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_changed_clbks)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->i->dbi_changed_clbks); i++) {
+	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->i->dbi_changed_clbks, i);
 	    (*cb->f)(dbip, dp, 1, cb->u_data);
 	}
     }
@@ -318,9 +318,9 @@ db5_diradd(struct db_i *dbip,
     dp->d_forw = *headp;
     *headp = dp;
 
-    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
-	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+    if (BU_PTBL_IS_INITIALIZED(&dbip->i->dbi_changed_clbks)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->i->dbi_changed_clbks); i++) {
+	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->i->dbi_changed_clbks, i);
 	    (*cb->f)(dbip, dp, 1, cb->u_data);
 	}
     }
@@ -346,7 +346,7 @@ db5_diradd_handler(
     if (rip->h_dli == DB5HDR_HFLAGS_DLI_HEADER_OBJECT) return;
     if (rip->h_dli == DB5HDR_HFLAGS_DLI_FREE_STORAGE) {
 	/* Record available free storage */
-	rt_memfree(&(dbip->dbi_freep), rip->object_length, laddr);
+	rt_memfree(&(dbip->i->dbi_freep), rip->object_length, laddr);
 	return;
     }
 
@@ -390,7 +390,16 @@ db_dirbuild(struct db_i *dbip)
 	    dbip->i->dbi_eof = 0;
 	}
 	return 0;
+	return -1;
     }
+
+    /* If the directory has already been built on a prior call, skip rescanning.
+     * Note: we use a dedicated flag rather than dbi_nrec because db_scan() can
+     * be called internally by rt_db_flip_endian() during db_open() for v4
+     * databases (to detect byte-swapped files), which sets dbi_nrec as a side
+     * effect even though the directory has not been populated yet. */
+    if (dbip->i->dbi_dir_built)
+	return 0;
 
     /* First, determine what version database this is */
     version = db_version(dbip);
@@ -418,6 +427,8 @@ db_dirbuild(struct db_i *dbip)
 	    dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
 	    /* Missing _GLOBAL object so create it and set default title and units */
 	    db5_update_ident(dbip, "Untitled BRL-CAD Database", 1.0);
+	    db_update_nref(dbip, &rt_uniresource);
+	    dbip->i->dbi_dir_built = 1;
 	    return 0;	/* not a fatal error, user may have deleted it */
 	}
 	BU_EXTERNAL_INIT(&ext);
@@ -431,6 +442,8 @@ db_dirbuild(struct db_i *dbip)
 	    bu_log("db_dirbuild(%s): improper database, %s exists but is not an attribute-only object\n",
 		   dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME);
 	    dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
+	    db_update_nref(dbip, &rt_uniresource);
+	    dbip->i->dbi_dir_built = 1;
 	    return 0;	/* not a fatal error, need to let user proceed to fix it */
 	}
 
@@ -467,11 +480,13 @@ db_dirbuild(struct db_i *dbip)
 	/* 3/3: color table */
 	if ((cp = bu_avs_get(&avs, "regionid_colortable")) != NULL) {
 	    /* Import the region-id coloring table */
-	    db5_import_color_table((char *)cp);
+	    db5_import_color_table(dbip, (char *)cp);
 	}
 	bu_avs_free(&avs);
 	bu_free_external(&ext);	/* not until after done with avs! */
 
+	db_update_nref(dbip, &rt_uniresource);
+	dbip->i->dbi_dir_built = 1;
 	return 0;		/* ok */
     }
     case 4:
@@ -481,6 +496,8 @@ db_dirbuild(struct db_i *dbip)
 	    return -1;
 	}
 
+	db_update_nref(dbip, &rt_uniresource);
+	dbip->i->dbi_dir_built = 1;
 	return 0;		/* ok */
     }
 
@@ -500,6 +517,10 @@ db_dirbuild_inmem(struct db_i *dbip, const void *data, b_off_t data_size)
 	return -1;
 
     RT_CK_DBI(dbip);
+
+    /* If the directory has already been built on a prior call, skip rescanning */
+    if (dbip->i->dbi_dir_built)
+	return 0;
 
     /* First, determine what version database this is */
     version = db_version_inmem(dbip, data, data_size);
@@ -528,6 +549,7 @@ db_dirbuild_inmem(struct db_i *dbip, const void *data, b_off_t data_size)
 	    dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
 	    /* Missing _GLOBAL object so create it and set default title and units */
 	    db5_update_ident(dbip, "Untitled BRL-CAD Database", 1.0);
+	    dbip->i->dbi_dir_built = 1;
 	    return 0;	/* not a fatal error, user may have deleted it */
 	}
 
@@ -544,6 +566,7 @@ db_dirbuild_inmem(struct db_i *dbip, const void *data, b_off_t data_size)
 	    bu_log("db_dirbuild_inmem(): improper database, %s exists but is not an attribute-only object\n",
 		   DB5_GLOBAL_OBJECT_NAME);
 	    dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
+	    dbip->i->dbi_dir_built = 1;
 	    return 0;	/* not a fatal error, need to let user proceed to fix it */
 	}
 
@@ -579,11 +602,12 @@ db_dirbuild_inmem(struct db_i *dbip, const void *data, b_off_t data_size)
 	/* 3/3: color table */
 	if ((cp = bu_avs_get(&avs, "regionid_colortable")) != NULL)
 	    /* Import the region-id coloring table */
-	    db5_import_color_table((char *)cp);
+	    db5_import_color_table(dbip, (char *)cp);
 
 	bu_avs_free(&avs);
 	bu_free_external(&ext);	/* not until after done with avs! */
 
+	dbip->i->dbi_dir_built = 1;
 	return 0;		/* ok */
     }
     case 4:
@@ -591,6 +615,7 @@ db_dirbuild_inmem(struct db_i *dbip, const void *data, b_off_t data_size)
 	if (db_scan(dbip, db_diradd4, 1, NULL) < 0)
 	    return -1;
 
+	dbip->i->dbi_dir_built = 1;
 	return 0;		/* ok */
     }
 
@@ -612,15 +637,15 @@ db_version(const struct db_i *dbip)
     RT_CK_DBI(dbip);
 
     /* already calculated during db_open? */
-    if (dbip->dbi_version != 0)
-	return abs(dbip->dbi_version);
+    if (dbip->i->dbi_version != 0)
+	return abs(dbip->i->dbi_version);
 
-    if (!dbip->dbi_fp) {
+    if (!dbip->i->dbi_fp) {
 	return -1;
     }
 
-    rewind(dbip->dbi_fp);
-    if (fread(header, sizeof(header), 1, dbip->dbi_fp) != 1) {
+    rewind(dbip->i->dbi_fp);
+    if (fread(header, sizeof(header), 1, dbip->i->dbi_fp) != 1) {
 	bu_log("ERROR: file (%s) too short to be a BRL-CAD database\n", dbip->dbi_filename ? dbip->dbi_filename : "unknown");
 	return -1;
     }
@@ -646,10 +671,10 @@ db_version_inmem(const struct db_i *dbip, const void *data, b_off_t data_size)
     RT_CK_DBI(dbip);
 
     /* already calculated during db_open? */
-    if (dbip->dbi_version != 0)
-	return abs(dbip->dbi_version);
+    if (dbip->i->dbi_version != 0)
+	return abs(dbip->i->dbi_version);
 
-    rewind(dbip->dbi_fp);
+    rewind(dbip->i->dbi_fp);
     if (!data || (data_size < 8)) {
 	bu_log("ERROR: data chunk too short to be a BRL-CAD database\n");
 	return -1;

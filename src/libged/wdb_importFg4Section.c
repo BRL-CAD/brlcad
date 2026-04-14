@@ -55,7 +55,7 @@ static int group_id=(-1);	/* Group identification number from SECTION card */
 static int comp_id=(-1);	/* Component identification number from SECTION card */
 static int region_id=0;		/* Region id number (group id no X 1000 + component id no) */
 static char field[9];		/* Space for storing one field from an input line */
-static int bot=0;		/* Flag: >0 -> There are BOT's in current component */
+static int bot_id=0;		/* Flag: >0 -> There are BOT's in current component */
 static int debug=0;		/* Debug flag */
 
 static int *FACES=NULL;		/* one triplet per face indexing three grid points */
@@ -282,8 +282,8 @@ do_tri(char *line)
     bu_strlcpy(field,  &line[8], sizeof(field));
     element_id = atoi(field);
 
-    if (!bot)
-	bot = element_id;
+    if (!bot_id)
+	bot_id = element_id;
 
     if (FACES == NULL) {
 	FACES = (int *)bu_malloc(GRID_BLOCK*3*sizeof(int), "faces");
@@ -337,8 +337,8 @@ do_quad(const char *line)
     if (debug)
 	bu_log("do_quad: %s\n", line);
 
-    if (!bot)
-	bot = element_id;
+    if (!bot_id)
+	bot_id = element_id;
 
     if (FACES == NULL) {
 	FACES = (int *)bu_malloc(GRID_BLOCK*3*sizeof(int), "faces");

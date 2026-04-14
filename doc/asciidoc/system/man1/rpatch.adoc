@@ -1,0 +1,56 @@
+= RPATCH(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+rpatch - convert FASTGEN ASCII databases into a format suitable for
+
+== SYNOPSIS
+
+[source]
+----
+rpatch [-D] [-3] < FASTGEN_FILE > OUTPUT_FILE
+----
+
+
+[[description]]
+== DESCRIPTION
+
+This program reformats FASTGEN files to a form usable by *patch-g* . The *-D* option handles type 3 components as donuts rather than triangles. The *-3* option reads FASTGEN3 format files (coordinates are each 10 columns wide).
+
+
+[[example]]
+== EXAMPLE
+
+rpatch < __fastgen_file__ > _file.rpatch_
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+The diagnostics are intended to be self-explanatory.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *mged*(1), *patch-g*(1)
+
+
+[[author]]
+== AUTHOR
+
+John R. Anderson
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1994-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

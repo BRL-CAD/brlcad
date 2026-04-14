@@ -1,0 +1,50 @@
+= UG-G(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+ug-g - Unigraphics Translator (Unigraphics to BRL-CAD)
+
+== SYNOPSIS
+
+[source]
+----
+ug-g [-d level] [-i starting_ident_number] [-n part_no_to_part_name_mapping_file] [-t surface_tolerance] [-a surface_normal_tolerance] [-R use_refset_name] [-c min_chamfer] [-r min_round] [-f] [-s] [-u] -o database.g part_filename [ subpart1 subpart2...]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*ug-g* converts the specified __part_filename__ model to a BRL-CAD _database.g_ file. The __part_filename__ is expected to be a Unigraphics part file. The *-d* specifies a debug _level_. Currently this is either on or off for levels 0 or 1. The *-i* option specifies a starting ident number for the conversion. Each part converted will be assigned an ident number, starting with the one specified. The *-n* option provides a part number to name mapping file. This can be provided if the Unigraphics model uses part numbers instead of part names. If provided, the mapping file will be consulted for part names during the conversion, and the BRL-CAD model will use the names rather than the part numbers. The *-t* option specifies the surface error tolerance for tesellation (in mm). The *-a* option specifies an surface normal tolerance for tesellation (in degrees). The *-R* option specifies a Unigraphics reference set name. If supplied, only the specified reference set will be converted. The *-c* option specifies a minimum chamfer dimension. Any chamfers with dimensions of this minimum or less will be ignored. The *-r* option specifies a minimum round radius. Any rounds or blends with radii of curvature of this minimum or less will be ignored. The *-f* option requests that no CSG conversion be attempted, so that all BRL-CAD geometry will be Bot primitives. The *-s* option requests that all features get listed rather than only those successfully converted to CSG. This option has no effect if the *-f* option is specified. The *-u* option requests surface normals to be extracted from the Unigraphics model and assigned to Bot primitives. The *-o* option specifies a BRL-CAD output file for the conversion. If a list of optional _subparts_ is specified on the command line, only those subparts of the Unigraphics __part_filename__ are converted.
+
+Note that this converter requires the Unigraphics _ugopen_ module. This may be obtained from Unigraphics.
+
+
+[[example]]
+== EXAMPLE
+
+
+....
+
+$ \fuug-g -o sample.g sample.prt
+....
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1984-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

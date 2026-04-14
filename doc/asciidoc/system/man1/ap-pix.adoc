@@ -1,0 +1,46 @@
+= AP-PIX(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+ap-pix - convert Applicon files to pix files
+
+== SYNOPSIS
+
+[source]
+----
+ap-pix [-v] file.ap > file.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*ap-pix* converts an Applicon drum plotter image file into a *pix*(5) file.
+
+The Applicon file is assumed to consist of a number lines each 3456 bits long; the resulting _pix_ file thus has scanlines of 3456 pixels.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

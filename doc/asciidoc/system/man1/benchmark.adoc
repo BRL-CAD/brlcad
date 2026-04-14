@@ -1,0 +1,76 @@
+= BENCHMARK(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+benchmark - runs the BRL-CAD benchmark
+
+== SYNOPSIS
+*[OPTION=value] benchmark [command] [OPTION=value] [RT_OPTIONS]*
+
+
+[[description]]
+== DESCRIPTION
+
+The *benchmark* suite will test the performance of a given system by iteratively rendering several well-known datasets into 512x512 images where performance metrics are documented and fairly well understood. The local machine performance is compared to the base system (called VGR) and a numeric "VGR" multiplier of performance is computed. This number is a simplified metric from which one may qualitatively compare cpu and cache performance, versions of BRL-CAD, and different compiler characteristics.
+
+Run without any arguments or variables set, the benchmark suite will run a series of tests where it renders several image frames. By default, the benchmark suite will attempt to calibrate the intensity of the test frames with the performance characteristics of the machine running the tests.
+
+There are several *OPTION* environment variables that will modify how the BRL-CAD benchmark behaves so that it may be run in a stand-alone environment:
+
+*RT* - the ray-trace binary (e.g. ../src/rt/rt or /usr/brlcad/bin/rt) *DB* - the directory containing the reference geometry (e.g. ../db) *PIX* - the directory containing the reference images (e.g. ../pix) *LOG* - the directory containing the reference logs (e.g. ../pix) *CMP* - the name of a pixel comparison tool (e.g. ./pixcmp or cmp) *ELP* - the name of an elapsed time tool (e.g. ../sh/elapsed.sh) *TIMEFRAME* - minimum number of seconds each ray-trace frame should take *MAXTIME* - maximum number of seconds to spend on any test *DEVIATION* - minimum sufficient % deviation from the average *AVERAGE* - how many frames to average together *VERBOSE* - turn on extra debug output (set to yes) *QUIET* - turn off all output (set to yes)
+
+The _TIMEFRAME_, _MAXTIME_, _DEVIATION_, and _AVERAGE_ options control how the benchmark will proceed including how long it should take. Each individual benchmark run will consume at least a minimum _TIMEFRAME_ of wallclock time so that the results can stabilize. After consuming at least the minimum _TIMEFRAME_, additional frames may be computed until the standard deviation from the last _AVERAGE_ count of frames is below the specified _DEVIATION_. When a test is run and it completes in less than _TIMEFRAME_, the raytrace is restarted using double the number of rays from the previous run. If the machine is fast enough, the benchmark may accelerate the number or rays being fired. These additional rays are hypersampled but without any jitter, so it is effectively performing a multiplier amount of work over the initial frame.
+
+There are various *command* s that may be give to the BRL-CAD benchmark that cause it to perform various actions such as invoking the computation tests or filesystem clean-up:
+
+*clean* - remove the test-specific pix and log files *clobber* - same as clean, also benchmark.log files and user is prompted *help* - displays a brief usage statement *instructions* - displays more detailed usage instructions *quiet* - quell printing output (still logs) *verbose* - remove the test-specific pix and log files *clean* - remove the test-specific pix and log files *run* - initiate the benchmark analysis
+
+When the benchmark completes, output should be saved to several log files including a 'summary' file containing tabulated results, a 'benchmark.log' file containing the output from a given run, and multiple log files for each test frame. Use the _clean_ and _clobber_ commands during execution to remove the files generated during the benchmark.
+
+The _clean_ command removes the test pix and log files. The _clobber_ command removes those same files as well as any *benchmark.log files encountered, and prompting the user beforehand. The generated tabular _summary_ file will not be removed automatically regardless of invocation command. The _summary_ file must always be manually deleted.
+
+
+[[reporting_results]]
+== REPORTING RESULTS
+
+Please send your BRL-CAD Benchmark results to the developers along with detailed system information to devs@brlcad.org Include at least:
+
+0) Compiler name and version (e.g. gcc --version) 1) CPU configuration (e.g. cat /proc/cpuinfo or hinv or sysctl -a) 2) Cache (data and/or instruction) details for L1/L2/L3 and system (e.g. cat /proc/cpuinfo or hinv or sysctl -a) 3) All generated log files (i.e. *.log* after benchmark completes) 4) Anything else you think might be relevant to performance
+
+
+[[examples]]
+== EXAMPLES
+
+*benchmark run* default run of the suite, taking approximately 10 minutes
+
+*benchmark run TIMEFRAME=1* quick test run for testing functionality and performance ballpark
+
+*benchmark run DEVIATION=1 TIMEFRAME=60 MAXTIME=600* excessive analysis, attempt to stabilize within 1 percent deviation with each frame taking at least 60 seconds but no more than 10 minutes per test (the entire analysis will probably take 30 to 60 minutes) *benchmark run QUIET=1 -P1* perform a benchmark analysis only using one CPU and only logging results to a file
+
+*benchmark clean* delete all of the log and pix image files generated during a benchmark analysis, leaving only the summary file and any *benchmark.log files
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *rt*(1), *pix-fb*(1), *librt*(3), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+*BRL-CAD Team*
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 2006-2025 United States Government as represented by the U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

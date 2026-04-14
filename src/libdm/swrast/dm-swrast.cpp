@@ -41,6 +41,7 @@ extern "C" {
 #include "bn.h"
 #include "bv/defines.h"
 #include "dm.h"
+#include "dm/util.h"
 #include "../null/dm-Null.h"
 #include "../dm-gl.h"
 }
@@ -529,6 +530,89 @@ swrast_write_image(struct bu_vls *UNUSED(msgs), FILE *UNUSED(fp), struct dm *UNU
     return -1;
 }
 
+/* Override gl_getDisplayImage for OSMesa: gl_getDisplayImage reads GL_FRONT
+ * which is always black when doublebuffer=1 (swrast draws to GL_BACK but
+ * null_SwapBuffers never swaps).  Use OSMesaGetColorBuffer to read the render
+ * buffer (os_b) directly, bypassing the front/back confusion entirely. */
+int
+swrast_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha)
+{
+    struct swrast_vars *pv = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
+    if (!pv || !pv->ctx) {
+	bu_log("swrast_getDisplayImage: no context\n");
+	*image = NULL;
+	return BRLCAD_ERROR;
+    }
+
+    /* Save the currently active OSMesa context so we can restore it when done.
+     * This prevents swrast_getDisplayImage from leaving a different context
+     * current as a side-effect visible to the caller (e.g. multi-view setups
+     * where each DM has its own context). */
+    OSMesaContext saved_ctx = OSMesaGetCurrentContext();
+    GLint saved_width = 0, saved_height = 0, saved_format = 0;
+    void *saved_buf = NULL;
+    bool need_restore = false;
+    if (saved_ctx && saved_ctx != pv->ctx) {
+	if (OSMesaGetColorBuffer(saved_ctx, &saved_width, &saved_height, &saved_format, &saved_buf) && saved_buf)
+	    need_restore = true;
+	else
+	    bu_log("swrast_getDisplayImage: could not save current context buffer; context will not be restored\n");
+    }
+
+    /* Ensure this OSMesa context is current before reading its buffer */
+    if (dm_make_current(dmp) != BRLCAD_OK) {
+	bu_log("swrast_getDisplayImage: dm_make_current failed\n");
+	*image = NULL;
+	return BRLCAD_ERROR;
+    }
+
+    int width = dmp->i->dm_width;
+    int height = dmp->i->dm_height;
+    int bytes_per_pixel = alpha ? 4 : 3;
+
+    /* Get the raw RGBA render buffer directly from OSMesa.  This is the os_b
+     * buffer that OSMesaMakeCurrent was called with, which receives all drawing
+     * commands regardless of the GL_FRONT / GL_BACK distinction. */
+    GLint cbwidth, cbheight, bitsperchannel;
+    void *cbuf = NULL;
+    if (!OSMesaGetColorBuffer(pv->ctx, &cbwidth, &cbheight, &bitsperchannel, &cbuf) || !cbuf) {
+	bu_log("swrast_getDisplayImage: OSMesaGetColorBuffer failed\n");
+	*image = NULL;
+	if (need_restore)
+	    if (!OSMesaMakeCurrent(saved_ctx, saved_buf, GL_UNSIGNED_BYTE, saved_width, saved_height))
+		bu_log("swrast_getDisplayImage: context restore failed after read error\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* cbuf is RGBA unsigned byte, row-major from bottom-left */
+    unsigned char *src = (unsigned char *)cbuf;
+    unsigned char *idata = (unsigned char *)bu_calloc(height * width * bytes_per_pixel,
+						       sizeof(unsigned char), "swrast image");
+    if (alpha) {
+	/* copy RGBA directly */
+	memcpy(idata, src, (size_t)width * height * 4);
+    } else {
+	/* convert RGBA → RGB */
+	for (int i = 0; i < width * height; i++) {
+	    idata[i * 3 + 0] = src[i * 4 + 0];
+	    idata[i * 3 + 1] = src[i * 4 + 1];
+	    idata[i * 3 + 2] = src[i * 4 + 2];
+	}
+    }
+
+    *image = idata;
+
+    if (flip)
+	flip_display_image_vertically(*image, width, height, alpha);
+
+    /* Restore the previously active OSMesa context */
+    if (need_restore)
+	if (!OSMesaMakeCurrent(saved_ctx, saved_buf, GL_UNSIGNED_BYTE, saved_width, saved_height))
+	    bu_log("swrast_getDisplayImage: context restore failed\n");
+
+    return BRLCAD_OK;
+}
+
 int
 swrast_event_cmp(struct dm *dmp, dm_event_t type, int event)
 {
@@ -599,7 +683,7 @@ struct dm_impl dm_swrast_impl = {
     gl_freeDLists,
     gl_genDLists,
     gl_draw_display_list,
-    gl_getDisplayImage, /* display to image function */
+    swrast_getDisplayImage, /* display to image function */
     gl_reshape,
     swrast_makeCurrent,
     null_SwapBuffers,

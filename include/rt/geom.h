@@ -845,8 +845,6 @@ struct rt_bot_internal
     int *face_uvs;		/**< @brief array of indices into the
 				 * "uvs" array, one per face vertex
 				 * [num_uvs*3] */
-
-    void *tie;	/* FIXME: blind casting. TIE needs to move from TIE_FUNC to XGLUE before this can not suck. */
 };
 
 

@@ -162,8 +162,8 @@ main(int argc, char **argv)
     db_update_ident(fp->dbip, dbip->dbi_title, dbip->dbi_local2base);
 
     /* set regionid color table */
-    if (rt_material_head() != MATER_NULL) {
-	rt_vls_color_map(&colortab);
+    if (db_mater_head(dbip) != MATER_NULL) {
+	db_mater_to_vls(&colortab, dbip);
 
 	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colortab), fp->dbip);
 	bu_vls_free(&colortab);

@@ -190,6 +190,29 @@ clt_ell_pack(struct bu_pool *pool, struct soltab *stp)
 
 #endif /* USE_OPENCL */
 
+/**
+ * Consider an ell a sph if magnitude A, B and C are equal
+ */
+int
+rt_ell_is_sph(const struct rt_db_internal* ip) {
+    const struct rt_ell_internal *eip;
+    fastf_t magsq_a, magsq_b, magsq_c;
+
+    RT_CK_DB_INTERNAL(ip);
+    if (ip->idb_type != ID_ELL) {
+	/* not an ell */
+	return 0;
+    }
+
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    magsq_a = MAGSQ(eip->a);
+    magsq_b = MAGSQ(eip->b);
+    magsq_c = MAGSQ(eip->c);
+
+    return (EQUAL(magsq_a, magsq_b) && EQUAL(magsq_b, magsq_c));
+}
 
 /**
  * Compute the bounding RPP for an ellipsoid
@@ -1299,7 +1322,7 @@ rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     eip->magic = RT_ELL_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    flip_fastf_float(vec, rp->s.s_values, 4, (dbip && dbip->dbi_version < 0) ? 1 : 0);
+    flip_fastf_float(vec, rp->s.s_values, 4, (dbip && dbip->i->dbi_version < 0) ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1939,25 +1962,25 @@ rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     if (EQUAL(mag_a, mag_b)) {
 	if (mag_a > mag_c) {
-	    /* case: prolate spheroid */
-	    ell_type = PROLATE;
+	    /* case: oblate spheroid (equatorial radius a=b, polar radius c < a) */
+	    ell_type = OBLATE;
 	    major = mag_a;
 	    minor = mag_c;
 	} else {
-	    /* case: oblate spheroid */
-	    ell_type = OBLATE;
+	    /* case: prolate spheroid (major axis c, minor radius a=b < c) */
+	    ell_type = PROLATE;
 	    major = mag_c;
 	    minor = mag_a;
 	}
     } else if (EQUAL(mag_a, mag_c)) {
 	if (mag_a > mag_b) {
-	    /* case: prolate spheroid */
-	    ell_type = PROLATE;
+	    /* case: oblate spheroid (equatorial radius a=c, polar radius b < a) */
+	    ell_type = OBLATE;
 	    major = mag_a;
 	    minor = mag_b;
 	} else {
-	    /* case: oblate spheroid */
-	    ell_type = OBLATE;
+	    /* case: prolate spheroid (major axis b, minor radius a=c < b) */
+	    ell_type = PROLATE;
 	    major = mag_b;
 	    minor = mag_a;
 	}

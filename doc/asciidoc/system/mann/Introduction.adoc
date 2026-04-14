@@ -1,0 +1,9 @@
+= BRL-CAD Manual Pages
+:doctype: article
+:toc:
+:toclevels: 3
+
+This is BRL-CAD's tool for viewing manual pages for commands.  To bring up the manual page for a specific command, select it from the list to the left of this welcome message.
+
+These manual pages are written in Asciidoc format and displayed as HTML.
+

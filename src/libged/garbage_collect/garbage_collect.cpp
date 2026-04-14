@@ -203,8 +203,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     bu_avs_free(&avs);
 
     // Copy objects
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	for (dp = old_dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+    FOR_ALL_DIRECTORY_START(dp, old_dbip)
 	    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
 	    if (db_get_external(&ext, dp, old_dbip) < 0)
 		continue;
@@ -226,8 +225,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    int flags = (dp->d_flags & RT_DIR_COMB) ? ((dp->d_flags & RT_DIR_REGION) ? RT_DIR_COMB | RT_DIR_REGION : RT_DIR_COMB) : RT_DIR_SOLID;
 	    wdb_export_external(gc_wdbp, &ext, dp->d_namep, flags, id);
-	}
-    }
+    FOR_ALL_DIRECTORY_END;
     db_close(gc_wdbp->dbip);
 
 

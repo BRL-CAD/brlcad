@@ -386,7 +386,7 @@ _db_comb_instance(matp_t m, int *icnt, int *bval, int bool_val, const struct db_
 	case OP_DB_LEAF:
 	    if (!BU_STR_EQUAL(cp, tp->tr_l.tl_name))
 		return 0;               /* NO-OP */
-	    if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
+	    if (UNLIKELY(dbip->i->dbi_use_comb_instance_ids)) {
 		// Have a name match, is this the right instance
 		if (itarget == *icnt) {
 		    (*bval) = bool_val;
@@ -527,7 +527,7 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 	int bool_op = 2; // default to union
 	int comb_instance_index = 0;
 	dp = db_lookup(dbip, cp, LOOKUP_QUIET);
-	if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
+	if (UNLIKELY(dbip->i->dbi_use_comb_instance_ids)) {
 	    if (dp == RT_DIR_NULL)
 		dp = dp_instance(&comb_instance_index, dbip, cp);
 	}
@@ -593,7 +593,7 @@ db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char
 	int bool_op = 2; // default to union
 	int comb_instance_index = 0;
 	dp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
-	if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
+	if (UNLIKELY(dbip->i->dbi_use_comb_instance_ids)) {
 	    if (dp == RT_DIR_NULL)
 		dp = dp_instance(&comb_instance_index, dbip, argv[i]);
 	}
@@ -925,7 +925,7 @@ db_fp_op(const struct db_full_path *pp,
 	if (!cdp || !dp)
 	    return OP_NOP;
 	int c_op = OP_NOP;
-	if (UNLIKELY(dbip->dbi_use_comb_instance_ids)) {
+	if (UNLIKELY(dbip->i->dbi_use_comb_instance_ids)) {
 	    if (!_comb_instance_bool_op(&c_op, dbip, cdp, dp, resp, pp->fp_cinst[i]))
 		return OP_NOP;
 	}
@@ -965,7 +965,7 @@ db_full_path_color(
 
     // Things we have to check for:
     //
-    // 1. region_id attribute (only with region flag?) + rt_material_head table (see color_soltab)
+    // 1. region_id attribute (only with region flag?) + db_mater_head table (see color_soltab)
     // 2. color attribute
     // 3. rgb attribute
     // 4. inherit attribute - if set, children don't override parent
@@ -977,9 +977,9 @@ db_full_path_color(
 	// Inherit flag tells us whether this dp overrides its children
 	int inherit = (BU_STR_EQUAL(bu_avs_get(&c_avs, "inherit"), "1")) ? 1 : 0;
 
-	if (rt_material_head()) {
+	if (db_mater_head(dbip)) {
 	    // TODO - if region_id is set but region flag isn't, do we still
-	    // use rt_material_head to color?
+	    // use db_mater_head to color?
 	    int region_id = -1;
 	    const char *region_id_val = bu_avs_get(&c_avs, "region_id");
 	    if (region_id_val) {
@@ -990,10 +990,10 @@ db_full_path_color(
 		region_id = 0;
 	    }
 	    if (region_id >= 0) {
-		// If we have both a region_id and an rt_material_head table, that is (?) highest precedence
+		// If we have both a region_id and an db_mater_head table, that is (?) highest precedence
 		// for color?
 		const struct mater *mp;
-		for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+		for (mp = db_mater_head(dbip); mp != MATER_NULL; mp = mp->mt_forw) {
 		    if (region_id > mp->mt_high || region_id < mp->mt_low) {
 			continue;
 		    }

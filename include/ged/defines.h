@@ -210,6 +210,11 @@ struct ged {
      */
     int 			ged_internal_call;
 
+    /* When non-zero, ged_exec will skip running per-command PRE/POST callbacks.
+     * Increment before calling ged_exec in contexts where callbacks must not
+     * fire (e.g. inside a search -exec callback), then decrement afterwards. */
+    int			ged_skip_clbks;
+
 
     /* TODO: hide all callback related symbols, callback typedefs
      * (above), and eventually most if not all of the remaining fields

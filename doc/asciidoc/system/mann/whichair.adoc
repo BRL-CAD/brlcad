@@ -1,0 +1,99 @@
+= WHICHAIR(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+whichair - Reports information relating to usag of air codes on regions.
+
+== SYNOPSIS
+
+[source]
+----
+whichair [options ...] {air_codes}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Reports information about the usage of the __air_codes__ property by regions in a .g file. Its default mode is to report which regions in a .g file are using one or a range of region_id values. If a root object is specified, it will report that result only for the regions in the tree of the root object. If the *U* is specified, the reporting is inverted and the command will report the ranges of _unused_ aircodes rather than the regions using various aircodes.
+
+The *eac* command will perform a similar search, but will draw the qualifying regions in the MGED display rather than listing them.
+
+
+[[search_options]]
+== OPTIONS
+
+
+*-U*::
+Report unused aircode ranges.
+
+
+*--root objname*::
+Limit reporting to regions in the CSG tree below _objname_.
+
+
+
+
+[[examples]]
+== EXAMPLES
+
+For these examples the geometry file used is the standard _m35.g_ included with BRL-CAD.
+
+.Report all regions using air codes between 7 and 10.
+[example]
+====
+mged>**whichair 7-10**
+
+
+....
+
+Region[s] with air code 7:
+   r11
+   r13
+   r15
+Region[s] with air code 8:
+   r25
+   r27
+   r29
+   r31
+   r33
+   r35
+    
+....
+
+
+
+====
+
+.Report all unused aircode ranges in the database between 1 and 10.
+[example]
+====
+mged>**whichair -U 1-10**
+
+
+....
+
+Unused air codes:
+   1-3
+   5
+   9-10
+    
+....
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

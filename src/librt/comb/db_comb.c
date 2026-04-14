@@ -683,7 +683,7 @@ rt_comb_import4(
 
 	    tp->tr_l.tl_name = bu_strdup(namebuf);
 
-	    flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, (dbip && dbip->dbi_version < 0) ? 1 : 0);
+	    flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, (dbip && dbip->i->dbi_version < 0) ? 1 : 0);
 
 	    /* Verify that rotation part is pure rotation */
 	    if (fabs(diskmat[0]) > 1 || fabs(diskmat[1]) > 1 ||
@@ -765,7 +765,7 @@ rt_comb_import4(
     }
 
     if (comb->region_flag) {
-	if (!dbip || dbip->dbi_version < 0) {
+	if (!dbip || dbip->i->dbi_version < 0) {
 	    comb->region_id = flip_short(rp[0].c.c_regionid);
 	    comb->aircode = flip_short(rp[0].c.c_aircode);
 	    comb->GIFTmater = flip_short(rp[0].c.c_material);
@@ -1505,7 +1505,7 @@ db_mkgift_tree(struct rt_tree_array *trees, size_t subtreecount, struct resource
 
 
 int
-rt_comb_get_color(unsigned char rgb[3], const struct rt_comb_internal *comb)
+rt_comb_get_color(struct db_i *dbip, unsigned char rgb[3], const struct rt_comb_internal *comb)
 {
     struct mater *mp = MATER_NULL;
 
@@ -1521,7 +1521,11 @@ rt_comb_get_color(unsigned char rgb[3], const struct rt_comb_internal *comb)
 	return 1;
     }
 
-    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+    if (!dbip)
+	return 0;
+
+    RT_CK_DBI(dbip);
+    for (mp = db_mater_head(dbip); mp != MATER_NULL; mp = mp->mt_forw) {
 	if (comb->region_id <= mp->mt_high && comb->region_id >= mp->mt_low) {
 	    rgb[0] = mp->mt_r;
 	    rgb[1] = mp->mt_g;

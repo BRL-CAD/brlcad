@@ -35,7 +35,7 @@
 #define ENTITYNAME "Surface_Patch"
 string SurfacePatch::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)SurfacePatch::Create);
 
-static const char *Transition_code_string[] = {
+static const char *SurfacePatch_Transition_code_string[] = {
     "discontinuous",
     "continuous",
     "cont_same_gradient",
@@ -128,9 +128,9 @@ SurfacePatch::Print(int level)
     std::cout << "parent_surface:" << std::endl;
     parent_surface->Print(level + 1);
     TAB(level + 1);
-    std::cout << "u_transition:" << Transition_code_string[u_transition] << std::endl;
+    std::cout << "u_transition:" << SurfacePatch_Transition_code_string[u_transition] << std::endl;
     TAB(level + 1);
-    std::cout << "v_transition:" << Transition_code_string[v_transition] << std::endl;
+    std::cout << "v_transition:" << SurfacePatch_Transition_code_string[v_transition] << std::endl;
 
     if (step) {
 	TAB(level + 1);

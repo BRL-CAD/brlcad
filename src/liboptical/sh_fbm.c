@@ -56,7 +56,6 @@ static struct fbm_specific fbm_defaults = {
 };
 
 
-#define FBM_NULL ((struct fbm_specific *)0)
 #define FBM_O(m) bu_offsetof(struct fbm_specific, m)
 
 struct bu_structparse fbm_parse[] = {

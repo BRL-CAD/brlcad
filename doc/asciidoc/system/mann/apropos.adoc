@@ -1,0 +1,55 @@
+= APROPOS(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+apropos - Searches through the one-line usage messages for each _mged_ command and displays the name of each command where a match is found.
+
+== SYNOPSIS
+
+[source]
+----
+apropos {keyword}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+The *apropos* command searches through the one-line usage messages for specified _mged_ commands and displays the commands that match.
+
+
+[[examples]]
+== EXAMPLES
+
+.List all commands having "region" in their one-line usage messages.
+[example]
+====
+mged>**apropos region**
+
+
+
+
+....
+
+build_region eac edcodes edcomb em idents item lm r rcodes read_muves red
+regdef regions reid remat summary wcodes whatid whichair whichid
+	
+....
+
+
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

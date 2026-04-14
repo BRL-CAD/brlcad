@@ -675,7 +675,7 @@ WDB_EXPORT extern int mk_submodel(struct rt_wdb *fp, const char *name, const cha
 /**
  * Interface for writing region-id-based color tables to the database.
  * Given that the color table has been built up by successive calls to
- * rt_color_addrec(), write it into the database.
+ * db_mater_add(), write it into the database.
  *
  */
 WDB_EXPORT int mk_write_color_table(struct rt_wdb *ofp);

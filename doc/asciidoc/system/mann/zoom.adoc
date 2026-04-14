@@ -1,0 +1,47 @@
+= ZOOM(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD MGED Commands
+
+== NAME
+zoom - Changes the size of the viewing cube for the MGED display, resulting in a zoom in or zoom out effect.
+
+== SYNOPSIS
+
+[source]
+----
+zoom {scale_factor}
+----
+
+
+[[description]]
+== DESCRIPTION
+
+Changes the size of the viewing cube for the MGED display, resulting in a zoom in or zoom out effect. A __scale_factor__ greater than one reduces the size of the viewing cube (zoom in). A __scale_factor__ of less than one increases the size of the viewing cube (zoom out).
+
+
+[[examples]]
+== EXAMPLES
+
+The example shows the use of the *zoom* command to reduce the size of the viewing cube by half.
+
+.Reduce the size of the viewing cube by half.
+[example]
+====
+mged>**zoom 2**
+
+Reduces the size of the current viewing cube by half (effectively doubling the size of objects in the display).
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

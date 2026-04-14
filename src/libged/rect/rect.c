@@ -35,7 +35,7 @@
 
 
 static void
-usage(struct ged *gedp, const char *argv0)
+rect_usage(struct ged *gedp, const char *argv0)
 {
     bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", argv0);
     bu_vls_printf(gedp->ged_result_str, " rect vname bg [r g b]		set or get the background color\n");
@@ -293,7 +293,7 @@ ged_rect_core(struct ged *gedp,
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc < 2 || 5 < argc) {
-	usage(gedp, argv[0]);
+	rect_usage(gedp, argv[0]);
 	return BRLCAD_ERROR;
     }
 
@@ -318,7 +318,7 @@ ged_rect_core(struct ged *gedp,
 	double scan;
 
 	if (sscanf(argp[i], "%lf", &scan) != 1) {
-	    usage(gedp, argv[0]);
+	    rect_usage(gedp, argv[0]);
 	    return BRLCAD_ERROR;
 	}
 
@@ -500,12 +500,12 @@ ged_rect_core(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(parameter, "help")) {
-	usage(gedp, command);
+	rect_usage(gedp, command);
 	return GED_HELP;
     }
 
     bu_vls_printf(gedp->ged_result_str, "%s: unrecognized command '%s'\n", command, parameter);
-    usage(gedp, command);
+    rect_usage(gedp, command);
 
     return BRLCAD_ERROR;
 }

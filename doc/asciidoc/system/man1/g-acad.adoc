@@ -1,0 +1,54 @@
+= G-ACAD(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+g-acad - Convert from BRL-CAD format to Lockheed Martin's ACAD format
+
+== SYNOPSIS
+
+[source]
+----
+g-acad [-vi] [-xX lvl] [-e error_file] [-D calculation_tolerance] [-a abs_tol] [-r rel_tol] [-P number_of_CPUs] [-n norm_tol] [-o ACAD_file] database.g object(s)
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*g-acad* converts the specified _object(s)_ from a BRL-CAD _database.g_ file to the in-house Lockheed Martin's Advanced Computer-Aided Design _(ACAD)_ file format (formerly the General Dynamics ACAD file format). This converter has NOT connected with Autodesk Inc.'s AutoCAD file format. The *-x* option specifies an RT debug flag and the *-X* option specifies an NMG debug flag. The *-a* , *-r* , and *-n* options specify tessellation tolerances. The *-D* option specifies a calculational distance tolerance (mm). Any two vertices that are less than this distance apart will be treated as the same vertex. The *-v* option requests verbose output. The *-i* option requests the output file units to be inches (the default is mm). The *-o* option specifies the name of the file to receive the output (stdout is the default). The *-e* option specifies a file for receiving the error messages. The *-P* option specifies the number of CPU's to be used, and also turns on a flag to enable the receiving of core dumps.
+
+
+[[example]]
+== EXAMPLE
+
+
+----
+
+$ g-acad -o sample.ACAD sample.g sample_object
+----
+
+
+[[diagnostics]]
+== DIAGNOSTICS
+
+Error messages are intended to be self-explanatory.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1997-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

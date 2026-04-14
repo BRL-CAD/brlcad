@@ -62,17 +62,16 @@ struct stxt_specific {
     int trans_valid;	/* boolean: has stx_transp been set? */
 };
 #define STXT_MAGIC 0xfeedbaad
-#define SOL_NULL ((struct stxt_specific *)0)
-#define SOL_O(m) bu_offsetof(struct stxt_specific, m)
+#define STXT_O(m) bu_offsetof(struct stxt_specific, m)
 
 struct bu_structparse stxt_parse[] = {
-    {"%d",	1, "transp",	        SOL_O(stx_transp),	stxt_transp_hook, NULL, NULL },
-    {"%s",	STX_NAME_LEN, "file",	SOL_O(stx_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1, "w",			SOL_O(stx_w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1, "n",			SOL_O(stx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1, "d",			SOL_O(stx_d),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1, "fw",		SOL_O(stx_fw),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1, "trans_valid",	SOL_O(trans_valid),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "transp",	        STXT_O(stx_transp),	stxt_transp_hook, NULL, NULL },
+    {"%s",	STX_NAME_LEN, "file",	STXT_O(stx_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "w",			STXT_O(stx_w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "n",			STXT_O(stx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "d",			STXT_O(stx_d),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "fw",		STXT_O(stx_fw),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "trans_valid",	STXT_O(trans_valid),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

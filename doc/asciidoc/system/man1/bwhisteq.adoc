@@ -1,0 +1,46 @@
+= BWHISTEQ(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+bwhisteq - equalize the histogram of a black and white bw file
+
+== SYNOPSIS
+
+[source]
+----
+bwhisteq [-v] file.bw > file.equalized
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bwhisteq* automatically equalizes the histogram of a black and white *bw*(5) format file. It reads the file _file.bw_ and writes a "remapped" version of it on standard output. The method used is to distribute the values of the histogram, as best as possible, in order to produce a constant average "density", while maintaining monotonicity.
+
+The *-v* flag will output the old and new histogram values on the terminal.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *bwhist*(1), *bwstat*(1), *bw*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

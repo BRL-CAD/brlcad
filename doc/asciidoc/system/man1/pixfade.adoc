@@ -1,0 +1,52 @@
+= PIXFADE(1)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+pixfade - darken a pix file
+
+== SYNOPSIS
+
+[source]
+----
+pixfade [-f fraction] [-p percentage] [-m max] [-s squaresize] [-w width] [-n height] [-o out_file.pix] [infile.pix] > outfile.pix
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*pixfade* darkens a color pix file by fading the entire image a fractional amount or by using a pixel value as a maximum level.
+
+The *-f* option specifies a nonnegative fractional multiplier which is used to scale the red, green, and blue values of each pixel. In a similar way, the *-p* option is used to specify the multiplier as a nonnegative percentage. The default is *-f* 0.5 (*-p* 50.0).
+
+An alternative way to darken the image is to specify a ceiling pixel level (0 - 255) with the *-m* option. The pixel plotted is the minimum of the ceiling value and each of the red, green, and blue levels of the pixel. If this option is used, the *-f* and *-p* options are ignored.
+
+The *-w* and *-n* flags specify the input file width and number of scan lines in pixels; they can be set to the same value via *-s*. Default is 512x512.
+
+The *-o* option supplies output file name. If this option is omitted, standard output is used.
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), *pix*(5)
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1991-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

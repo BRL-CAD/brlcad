@@ -33,74 +33,80 @@
 #include "dm.h"
 #include "ged.h"
 
-static int multiple_lines = 0;	/* Streamlined operation */
+struct png2fb_state {
+    double def_screen_gamma;	/* Don't add more gamma, default = 1.0*/
+    /* Particularly because on SGI, the system provides gamma correction,
+     * so programs like this one don't have to.
+     */
+    char *file_name;
+    FILE *fp_in;
+    int multiple_lines;	/* Streamlined operation */
+    int file_xoff;
+    int file_yoff;
+    int scr_xoff;
+    int scr_yoff;
+    int clear;
+    int zoom;
+    int inverse;	/* Draw upside-down */
+    int one_line_only;	/* insist on 1-line writes */
+    int verbose;
+    int header_only;
+};
 
-static char *file_name;
-static FILE *fp_in;
+#define PNG2FB_STATE_INIT_ZERO {1.0, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
-static int file_xoff=0, file_yoff=0;
-static int scr_xoff=0, scr_yoff=0;
-static int clear = 0;
-static int zoom = 0;
-static int inverse = 0;		/* Draw upside-down */
-static int one_line_only = 0;	/* insist on 1-line writes */
-static int verbose = 0;
-static int header_only = 0;
-
-static double def_screen_gamma=1.0;	/* Don't add more gamma, by default */
-/* Particularly because on SGI, the system provides gamma correction,
- * so programs like this one don't have to.
- */
-
-static char usage[] = "\
+static char png2fb_usage[] = "\
 Usage: png2fb [-H -i -c -v -z -1] [-m #lines]\n\
 	[-g screen_gamma]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [file.png]\n";
 
 static int
-get_args(int argc, char **argv)
+png2fb_get_args(struct png2fb_state *s, int argc, char **argv)
 {
     int c;
+
+    if (!s)
+	return 0;
 
     bu_optind = 1;
     while ((c = bu_getopt(argc, argv, "1m:g:HicvzF:x:y:X:Y:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case '1':
-		one_line_only = 1;
+		s->one_line_only = 1;
 		break;
 	    case 'm':
-		multiple_lines = atoi(bu_optarg);
+		s->multiple_lines = atoi(bu_optarg);
 		break;
 	    case 'g':
-		def_screen_gamma = atof(bu_optarg);
+		s->def_screen_gamma = atof(bu_optarg);
 		break;
 	    case 'H':
-		header_only = 1;
+		s->header_only = 1;
 		break;
 	    case 'i':
-		inverse = 1;
+		s->inverse = 1;
 		break;
 	    case 'c':
-		clear = 1;
+		s->clear = 1;
 		break;
 	    case 'v':
-		verbose = 1;
+		s->verbose = 1;
 		break;
 	    case 'z':
-		zoom = 1;
+		s->zoom = 1;
 		break;
 	    case 'x':
-		file_xoff = atoi(bu_optarg);
+		s->file_xoff = atoi(bu_optarg);
 		break;
 	    case 'y':
-		file_yoff = atoi(bu_optarg);
+		s->file_yoff = atoi(bu_optarg);
 		break;
 	    case 'X':
-		scr_xoff = atoi(bu_optarg);
+		s->scr_xoff = atoi(bu_optarg);
 		break;
 	    case 'Y':
-		scr_yoff = atoi(bu_optarg);
+		s->scr_yoff = atoi(bu_optarg);
 		break;
 	    default:		/* '?''h' */
 		return 0;
@@ -110,17 +116,17 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
-	fp_in = stdin;
-	setmode(fileno(fp_in), O_BINARY);
+	s->file_name = "-";
+	s->fp_in = stdin;
+	setmode(fileno(s->fp_in), O_BINARY);
     } else {
-	file_name = argv[bu_optind];
-	fp_in = fopen(file_name, "rb");
-	if (fp_in == NULL) {
-	    perror(file_name);
+	s->file_name = argv[bu_optind];
+	s->fp_in = fopen(s->file_name, "rb");
+	if (s->fp_in == NULL) {
+	    perror(s->file_name);
 	    fprintf(stderr,
 		    "png-fb: cannot open \"%s\" for reading\n",
-		    file_name);
+		    s->file_name);
 	    return 0;
 	}
     }
@@ -139,6 +145,7 @@ ged_png2fb_core(struct ged *gedp, int argc, const char *argv[])
 
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
+    struct png2fb_state p2fbs = PNG2FB_STATE_INIT_ZERO;
 
     if (!gedp->ged_gvp) {
 	bu_vls_printf(gedp->ged_result_str, "no current view set\n");
@@ -163,26 +170,26 @@ ged_png2fb_core(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], png2fb_usage);
 	return GED_HELP;
     }
 
-    if (!get_args(argc, (char **)argv)) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    if (!png2fb_get_args(&p2fbs, argc, (char **)argv)) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], png2fb_usage);
 	return GED_HELP;
     }
 
-    ret = fb_read_png(fbp, fp_in,
-		      file_xoff, file_yoff,
-		      scr_xoff, scr_yoff,
-		      clear, zoom, inverse,
-		      one_line_only, multiple_lines,
-		      verbose, header_only,
-		      def_screen_gamma,
+    ret = fb_read_png(fbp, p2fbs.fp_in,
+		      p2fbs.file_xoff, p2fbs.file_yoff,
+		      p2fbs.scr_xoff, p2fbs.scr_yoff,
+		      p2fbs.clear, p2fbs.zoom, p2fbs.inverse,
+		      p2fbs.one_line_only, p2fbs.multiple_lines,
+		      p2fbs.verbose, p2fbs.header_only,
+		      p2fbs.def_screen_gamma,
 		      gedp->ged_result_str);
 
-    if (fp_in != stdin)
-	fclose(fp_in);
+    if (p2fbs.fp_in != stdin)
+	fclose(p2fbs.fp_in);
 
     (void)dm_draw_begin(dmp);
     fb_refresh(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));

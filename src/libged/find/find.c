@@ -63,7 +63,7 @@ find_ref(struct db_i *dbip,
 int
 ged_find_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int i, k;
+    int k;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb=(struct rt_comb_internal *)NULL;
@@ -98,23 +98,22 @@ ged_find_core(struct ged *gedp, int argc, const char *argv[])
     argv += (bu_optind - 1);
 
     /* Examine all COMB nodes */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & RT_DIR_COMB) ||
-		(!aflag && (dp->d_flags & RT_DIR_HIDDEN)))
-		continue;
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
+	if (!(dp->d_flags & RT_DIR_COMB) ||
+	    (!aflag && (dp->d_flags & RT_DIR_HIDDEN)))
+	    continue;
 
-	    if (rt_db_get_internal(&intern,
-				   dp,
-				   gedp->dbip,
-				   (fastf_t *)NULL,
-				   &rt_uniresource) < 0) {
-		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
-		return BRLCAD_ERROR;
-	    }
+	if (rt_db_get_internal(&intern,
+			       dp,
+			       gedp->dbip,
+			       (fastf_t *)NULL,
+			       &rt_uniresource) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
+	    return BRLCAD_ERROR;
+	}
 
-	    comb = (struct rt_comb_internal *)intern.idb_ptr;
-	    for (k = 1; k < argc; k++)
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	for (k = 1; k < argc; k++)
 		db_tree_funcleaf(gedp->dbip,
 				 comb,
 				 comb->tree,
@@ -124,9 +123,8 @@ ged_find_core(struct ged *gedp, int argc, const char *argv[])
 				 (void *)gedp,
 				 (void *)NULL);
 
-	    rt_db_free_internal(&intern);
-	}
-    }
+	rt_db_free_internal(&intern);
+    FOR_ALL_DIRECTORY_END;
 
     return BRLCAD_OK;
 }

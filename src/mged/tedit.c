@@ -24,7 +24,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <signal.h>
 #include <string.h>
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -53,7 +52,7 @@ static int numUnique = 0;
 static int cgtype = 8;
 static int uvec[8];
 static int svec[11];
-static int j;
+static int arb_j;
 
 
 int writesolid(struct mged_state *), readsolid(struct mged_state *);
@@ -222,15 +221,15 @@ writesolid(struct mged_state *s)
 	    fprintf(fp, "C: %.9f %.9f %.9f%s", V3BASE2LOCAL(ell->c), eol);
 	    break;
 	case ID_ARB8:
-	    for (j=0; j<8; j++) uvec[j] = -1;
+	    for (arb_j=0; arb_j<8; arb_j++) uvec[arb_j] = -1;
 	    arb = (struct rt_arb_internal *)MEDIT(s)->es_int.idb_ptr;
 	    numUnique = rt_arb_get_cgtype(&cgtype, arb, &s->tol.tol, uvec, svec);
-	    j = 0;
+	    arb_j = 0;
 	    for (i=0; i<8; i++) {
 		if (useThisVertex(i)) {
-		    j++;
+		    arb_j++;
 		    fprintf(fp, "pt[%d]: %.9f %.9f %.9f%s",
-				  j, V3BASE2LOCAL(arb->pt[i]), eol);
+				  arb_j, V3BASE2LOCAL(arb->pt[i]), eol);
 		}
 	    }
 	    break;

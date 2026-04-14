@@ -24,7 +24,7 @@
 #include "vmath.h"
 #include "bg/tri_ray.h"
 
-#define EPSILON 0.000001
+#define TRIRAY_EPSILON 0.000001
 
 int bg_isect_tri_ray(const point_t orig, const point_t dir,
 		     const point_t vert0, const point_t vert1, const point_t vert2,
@@ -43,7 +43,7 @@ int bg_isect_tri_ray(const point_t orig, const point_t dir,
     /* if determinant is near zero, ray lies in plane of triangle */
     det = VDOT(edge1, pvec);
 
-    if (det > -EPSILON && det < EPSILON)
+    if (det > -TRIRAY_EPSILON && det < TRIRAY_EPSILON)
 	return 0;
     inv_det = 1.0 / det;
 

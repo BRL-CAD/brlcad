@@ -244,8 +244,8 @@ class BallPivot
 	    kd.buildIndex();
 	    std::vector<double> dists(pts.size(), 0.0);
 	    for (size_t i = 0; i < pts.size(); ++i) {
-		size_t idx[2];
-		double d2[2];
+		size_t idx[2] = {0};
+		double d2[2] = {0.0};
 		nanoflann::KNNResultSet<double> rs(2);
 		rs.init(idx, d2);
 		kd.findNeighbors(rs, pts[i].data(), nanoflann::SearchParameters());

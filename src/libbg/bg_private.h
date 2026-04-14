@@ -86,10 +86,9 @@ coplanar_2d_to_3d(point_t **points_3d, const point_t *origin_pnt,
 		  const vect_t *u_axis, const vect_t *v_axis,
 		  const point2d_t *points_2d, int n);
 
+__END_DECLS
 
 #endif /* LIBGM_LIBGM_PRIVATE_H */
-
-__END_DECLS
 
 /** @} */
 /*

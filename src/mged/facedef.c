@@ -25,7 +25,6 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <signal.h>
 
 #include "vmath.h"
 #include "rt/geom.h"

@@ -1,0 +1,76 @@
+= CMAP(5)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD
+
+== NAME
+cmap - Framebuffer colormap file format and utilities
+
+[[format]]
+== FORMAT
+
+A _cmap_ file is a storage format for framebuffer colormaps. It is an ascii file with one line per colormap entry. In order to accommodate colormaps of any "depth" (number of bits per entry), 16 bit unsigned integers were selected (see *libfb*(3) for a discussion of the C program interface to colormaps). A value of zero corresponds to full off, or black, a value of 65535 decimal or ffff hexadecimal corresponds to full on, or white. A given device will use as many of the "leftmost" bits as it can support.
+
+Each line of the file has a decimal colormap index, followed by a tab character, and then three 4 digit hexadecimal values, separated by spaces, which correspond to the red, green, and blue, channels. Any blank lines or lines beginning with non-numeric characters are ignored, and can thus be used for comments.
+
+There is no requirement for all 256 entries to be specified. What is done with any unspecified entries is up to the individual programs using the colormap.
+
+
+[[example]]
+== EXAMPLE
+
+The beginning of an eight bit inverse video colormap might look as follows:
+
+
+....
+
+	# Inverse video colormap
+	0       ff00 ff00 ff00
+	1       fe00 fe00 fe00
+	2       fd00 fd00 fd00
+	3       fc00 fc00 fc00
+	4       fb00 fb00 fb00
+
+....
+
+
+[[utilities]]
+== UTILITIES
+
+*fb-cmap* save a colormap from a framebuffer.
+
+*cmap-fb* load a saved colormap into a framebuffer.
+
+*fbcmap* loads one of several "standard" colormaps.
+
+*fbgamma* loads gamma correcting colormaps.
+
+
+[[files]]
+== FILES
+
+file.cm
+
+
+[[see_also]]
+== SEE ALSO
+
+*brlcad*(1), and above named programs.
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[copyright]]
+== COPYRIGHT
+
+This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

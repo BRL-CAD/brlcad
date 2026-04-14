@@ -93,7 +93,7 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
     // Check for a pre-exec callback.
     bu_clbk_t f = NULL;
     void *d = NULL;
-    if ((ged_clbk_get(&f, &d, gedp, cmdname.c_str(), BU_CLBK_PRE) == BRLCAD_OK) && f) {
+    if (!gedp->ged_skip_clbks && (ged_clbk_get(&f, &d, gedp, cmdname.c_str(), BU_CLBK_PRE) == BRLCAD_OK) && f) {
 	cret = ged_clbk_exec(gedp->ged_result_str, gedp, GED_CMD_RECURSION_LIMIT, f, argc, argv, gedp, d);
 	if (cret != BRLCAD_OK)
 	    bu_log("error running %s pre-execution callback\n", cmdname.c_str());
@@ -118,7 +118,7 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
     }
 
     // Command execution complete - check for a post command callback.
-    if ((ged_clbk_get(&f, &d, gedp, cmdname.c_str(), BU_CLBK_POST) == BRLCAD_OK) && f) {
+    if (!gedp->ged_skip_clbks && (ged_clbk_get(&f, &d, gedp, cmdname.c_str(), BU_CLBK_POST) == BRLCAD_OK) && f) {
 	cret = ged_clbk_exec(gedp->ged_result_str, gedp, GED_CMD_RECURSION_LIMIT, f, argc, argv, gedp, d);
 	if (cret != BRLCAD_OK)
 	    bu_log("error running %s post-execution callback\n", cmdname.c_str());

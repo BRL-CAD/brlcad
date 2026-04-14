@@ -35,7 +35,7 @@
 #define ENTITYNAME "Composite_Curve_Segment"
 string CompositeCurveSegment::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)CompositeCurveSegment::Create);
 
-static const char *Transition_code_string[] = {
+static const char *CompositeCurveSegment_Transition_code_string[] = {
     "discontinuous",
     "continuous",
     "cont_same_gradient",
@@ -115,7 +115,7 @@ CompositeCurveSegment::Print(int level)
     std::cout << "parent_curve:" << std::endl;
     parent_curve->Print(level + 1);
     TAB(level + 1);
-    std::cout << "transition:" << Transition_code_string[transition] << std::endl;
+    std::cout << "transition:" << CompositeCurveSegment_Transition_code_string[transition] << std::endl;
     TAB(level + 1);
     std::cout << "same_sense:" << step->getBooleanString(same_sense) << std::endl;
 
