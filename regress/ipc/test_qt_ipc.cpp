@@ -52,7 +52,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <unistd.h>
+
+#include "bio.h"
 
 #include <QCoreApplication>
 #include <QSocketNotifier>
@@ -173,8 +174,8 @@ test_qsocketnotifier_delivery(void)
     if (ce_wfd < 0) { fbs_close(&fbs); return; }
 
     static const char payload[] = "QT_NOTIFIER_TEST";
-    ssize_t n = write(ce_wfd, payload, sizeof(payload)-1);
-    TEST("A7: write from child end succeeds", n == (ssize_t)(sizeof(payload)-1));
+    bu_ssize_t n = bu_ipc_write(ce, payload, sizeof(payload)-1);
+    TEST("A7: write from child end succeeds", n == (bu_ssize_t)(sizeof(payload)-1));
     if (n < 0) { fbs_close(&fbs); return; }
 
     /* ---- 6. Pump the Qt event loop until the notifier fires ---- */
@@ -303,8 +304,8 @@ test_qt_handler_pkgproc(void)
     frame[6] = (blen >>  8) & 0xff;
     frame[7] =  blen        & 0xff;
     /* body: 5 longs, all zero */
-    ssize_t nw = write(child_wfd, frame, sizeof(frame));
-    TEST("B6: child sends PKG frame", nw == (ssize_t)sizeof(frame));
+    bu_ssize_t nw = bu_ipc_write(ce, frame, sizeof(frame));
+    TEST("B6: child sends PKG frame", nw == (bu_ssize_t)sizeof(frame));
     if (nw < 0) { fbs_close(&fbs); return; }
 
     /* ---- 4. Pump Qt event loop → QSocketNotifier fires → pkg_suckin ---- */
@@ -348,6 +349,15 @@ main(int argc, char *argv[])
     if (g_verbose)
 	fprintf(stdout, "=== Qt IPC mechanism tests ===\n");
 
+#ifdef _WIN32
+    /* QSocketNotifier on Windows only supports WinSock sockets, not
+     * anonymous pipe handles.  The IPC transport uses Windows pipes
+     * (CreatePipe) whose CRT fds cannot be watched via QSocketNotifier.
+     * Skip the test body to avoid spurious failures on Windows builds. */
+    fprintf(stdout, "Qt IPC tests: skipped on Windows "
+	    "(QSocketNotifier does not support pipe fds)\n");
+    return 0;
+#else
     test_qsocketnotifier_delivery();
     test_qt_handler_pkgproc();
 
@@ -355,6 +365,7 @@ main(int argc, char *argv[])
 
     int failures = g_tests_run - g_tests_pass;
     return (failures == 0) ? 0 : 1;
+#endif
 }
 
 /*

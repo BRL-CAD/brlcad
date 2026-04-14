@@ -411,11 +411,12 @@ main(int argc, char **argv)
 
 #if defined(HAVE_SYS_IOCTL_H) && defined(TIOCNOTTY)
 	fp = freopen("/dev/tty", "a", stderr);
-	if (fp == NULL)
+	if (fp == NULL) {
 	    perror("freopen(/dev/tty) STDERR");
-
-	(void)ioctl(fileno(fp), TIOCNOTTY, 0);
-	(void)fclose(fp);
+	} else {
+	    (void)ioctl(fileno(fp), TIOCNOTTY, 0);
+	    (void)fclose(fp);
+	}
 #endif
 
 	fp = freopen(DEVNULL, "w", stderr);

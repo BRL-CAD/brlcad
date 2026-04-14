@@ -281,6 +281,11 @@ int print_on = 1;
  * These cannot be tracked in the clients fd_set (pkc_fd == PKG_STDIO_MODE == -3).
  * Used by the "done" checks to know when all workers have disconnected.        */
 static int n_pipe_servers = 0;
+/* Cumulative count: incremented each time a pipe server is added via
+ * addclient_ipc().  Never decremented.  Used by do_work() to detect
+ * "a pipe server was launched but already died before prev_serv was ever
+ * set positive" so the break-on-all-down logic can fire correctly.            */
+static int n_pipe_servers_ever = 0;
 
 
 /*
@@ -790,6 +795,7 @@ addclient_ipc(struct pkg_conn *pc, struct ihost *ihp)
 	/* Pipe-based connection: cannot use FD_SET with -3.
 	 * Track separately so done-checks remain accurate.  */
 	n_pipe_servers++;
+	n_pipe_servers_ever++;
     } else {
 	FD_SET(fd, &clients);
     }
@@ -3976,7 +3982,7 @@ do_work(int auto_start)
 	    if (sp->sr_pc == PKC_NULL) continue;
 	    cur_serv++;
 	}
-	if (cur_serv == 0 && prev_serv > cur_serv) {
+	if (cur_serv == 0 && (prev_serv > 0 || n_pipe_servers_ever > 0)) {
 	    bu_log("%s *** All servers down\n", stamp());
 	    fflush(stdout);
 	    /* In non-interactive mode remrt never auto-starts passive
