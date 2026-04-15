@@ -599,6 +599,10 @@ get_file_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
     struct bu_mapped_file *mp;
     int nbytes;
 
+    /* bu_open_mapped_file_with_path doesn't handle a NULL filepath gracefully - check */
+    if (!dbip || !dbip->dbi_filepath || !eip)
+	return -1;
+
     /* get file */
     mp = bu_open_mapped_file_with_path(dbip->dbi_filepath, eip->name, "ebm");
     if (!mp) {
