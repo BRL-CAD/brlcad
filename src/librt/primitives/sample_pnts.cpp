@@ -212,7 +212,7 @@ struct pnt_normal_thickness {
     fastf_t thickness;
 };
 
-struct pnt_normal_thickness *
+static struct pnt_normal_thickness *
 pnthickness_create() {
     struct pnt_normal_thickness *p;
     BU_GET(p, struct pnt_normal_thickness);
@@ -221,7 +221,7 @@ pnthickness_create() {
 }
 
 /* p->pt may be  used to construct the final pnts object */
-void
+static void
 pnthickness_free(struct pnt_normal_thickness *p, int free_pnt) {
     if (!p) return;
     if (free_pnt) {
@@ -379,7 +379,7 @@ prand_pnt_worker(int cpu, void *ptr)
     }
 }
 
-void
+static void
 get_random_rays(fastf_t *rays, long int craynum, point_t center, fastf_t radius)
 {
     long int i = 0;
@@ -400,7 +400,7 @@ get_random_rays(fastf_t *rays, long int craynum, point_t center, fastf_t radius)
     }
 }
 
-void
+static void
 get_sobol_rays(fastf_t *rays, long int craynum, point_t center, fastf_t radius, struct bn_soboldata *s)
 {
     long int i = 0;
