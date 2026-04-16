@@ -2363,6 +2363,17 @@ BViewState::scene_obj(
 	sp->s_soldash = (is_subtract) ? 1 : 0;
     }
 
+    // Align with vs draw_non_subtract_only settings
+    if (vs->s_dmode == curr_mode) {
+        if (sp->s_soldash && vs->draw_non_subtract_only) {
+            if (sp->s_flag != DOWN)
+                sp->s_flag = DOWN;
+        } else {
+            if (sp->s_flag != UP)
+                sp->s_flag = UP;
+        }
+    }
+
     // Set line width, if the user specified a non-default value
     if (vs && vs->s_line_width)
 	sp->s_os->s_line_width = vs->s_line_width;
