@@ -19,20 +19,16 @@
  */
 /** @file CADViewSettings.h
  *
- * TODO - update widget for bv/faceplate.h bv_params_state
- * mode of operation - FPS isn't separate, it's one of the
- * parameters.  Need to have an overall on-of box and a
- * set of specific flags for each individual drawing
- * element, similar to how General Polygon Modes box
- * works in QPolyMod.cpp
+ * Widget for controlling and reflecting the current state of view
+ * settings (faceplate elements).  Covers all fields in bview_settings
+ * and bv_params_state that have widget-level controls.
  *
  */
 
 #include <QWidget>
 #include <QGroupBox>
 #include <QCheckBox>
-#include <QLabel>
-#include <QLineEdit>
+#include <QComboBox>
 #include "bv/defines.h"
 
 class CADViewSettings : public QWidget
@@ -43,18 +39,28 @@ class CADViewSettings : public QWidget
 	CADViewSettings(QWidget *p = 0);
 	~CADViewSettings();
 
+	/* Top-level faceplate toggles */
 	QCheckBox *acsg_ckbx;
 	QCheckBox *amesh_ckbx;
 	QCheckBox *adc_ckbx;
 	QCheckBox *cdot_ckbx;
-	QCheckBox *fb_ckbx;
-	QCheckBox *fbo_ckbx;
-	QCheckBox *fps_ckbx;
 	QCheckBox *grid_ckbx;
 	QCheckBox *mdlaxes_ckbx;
-	QCheckBox *params_ckbx;
 	QCheckBox *scale_ckbx;
 	QCheckBox *viewaxes_ckbx;
+
+	/* Framebuffer mode: index 0=off, 1=overlay, 2=underlay */
+	QComboBox *fb_mode_combo;
+
+	/* View parameters group */
+	QGroupBox *params_grp;
+	QCheckBox *params_ckbx;
+	QCheckBox *params_size_ckbx;
+	QCheckBox *params_center_ckbx;
+	QCheckBox *params_az_ckbx;
+	QCheckBox *params_el_ckbx;
+	QCheckBox *params_tw_ckbx;
+	QCheckBox *params_fps_ckbx;
 
     signals:
 	void settings_changed(unsigned long long);
