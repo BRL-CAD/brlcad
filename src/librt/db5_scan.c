@@ -381,13 +381,13 @@ db_dirbuild(struct db_i *dbip)
 
     RT_CK_DBI(dbip);
 
-    if (!dbip->i->dbi_fp) {
-	if (dbip->i->dbi_inmem) {
-	    return db_dirbuild_inmem(dbip, dbip->i->dbi_inmem, dbip->i->dbi_eof);
+    if (!dbip->dbi_fp) {
+	if (dbip->dbi_inmem) {
+	    return db_dirbuild_inmem(dbip, dbip->dbi_inmem, dbip->dbi_eof);
 	}
 	/* Fresh in-memory database, nothing to build */
-	if (dbip->i->dbi_eof == RT_DIR_PHONY_ADDR) {
-	    dbip->i->dbi_eof = 0;
+	if (dbip->dbi_eof == RT_DIR_PHONY_ADDR) {
+	    dbip->dbi_eof = 0;
 	}
 	return 0;
 	return -1;
