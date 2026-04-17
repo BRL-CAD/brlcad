@@ -252,9 +252,31 @@ sort_ccw_3d(const void *x, const void *y, void *cmp)
 int
 bg_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
 {
+    size_t i;
+    point_t centroid;
+
     if (!pts || npts < 3)
 	return 1;
+
+    /* Compute the centroid of all points.  The sort_ccw_3d comparator
+     * measures angles using cross products of the raw position vectors,
+     * which is equivalent to sorting by angle around the *origin*.  For
+     * faces not centred at the origin the resulting order can be wrong
+     * (self-intersecting polygon), so translate all points to be centred
+     * at the origin before sorting and translate back afterwards.        */
+    VSETALL(centroid, 0.0);
+    for (i = 0; i < npts; i++)
+	VADD2(centroid, centroid, pts[i]);
+    VSCALE(centroid, centroid, 1.0 / (double)npts);
+
+    for (i = 0; i < npts; i++)
+	VSUB2(pts[i], pts[i], centroid);
+
     bu_sort(pts, npts, sizeof(point_t), sort_ccw_3d, &cmp);
+
+    for (i = 0; i < npts; i++)
+	VADD2(pts[i], pts[i], centroid);
+
     return 0;
 }
 
