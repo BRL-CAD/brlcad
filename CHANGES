@@ -129,6 +129,32 @@ generally listed for reference.
 Items marked with a "'" (single quote) are undocumented and may be
 removed at any time.
 
+7.44
+----
+include/rt/mater.h librt
+	global-state rt_* material api replaced by per-database db_mater_* api:
+	rt_material_head()      -> db_mater_head(dbip)
+	rt_new_material_head()  -> db_mater_set_head(dbip, newmat)
+	rt_dup_material_head()  -> db_mater_dup(dbip)
+	rt_color_free()         -> db_mater_free(dbip)
+	rt_insert_color()       -> db_mater_insert(dbip, newp)
+	rt_color_addrec()       -> db_mater_add(dbip, low, hi, r, g, b, addr)
+	rt_vls_color_map()      -> db_mater_to_vls(str, dbip)
+	rt_region_color_map()   -> db_mater_color_region(dbip, regp)
+	[deprecated 7.44]
+
+include/rt/primitives/rpc.h  librt
+	rt_mk_parabola(pts, r, b, dtol, ntol) - old 5-argument form
+	deprecated in favor of rt_mk_parabola(pts, r, b, dtol, ntol, min_abs).
+	The old form is still available as rt_mk_parabola_old() during the
+	deprecation period. [deprecated 7.44]
+
+include/rt/primitives/rhc.h  librt
+	rt_mk_hyperbola(pts, r, b, c, dtol, ntol) - old 6-argument form
+	deprecated in favor of rt_mk_hyperbola(pts, r, b, c, dtol, ntol, min_abs).
+	The old form is still available as rt_mk_hyperbola_old() during the
+	deprecation period. [deprecated 7.44]
+
 7.42
 ----
 libanalyze
@@ -190,19 +216,6 @@ rtshot
 nirt
         -B option and bot_minpieces command
         Obsoleted by new BoT ray tracing. [deprecated 7.42]
-
-include/rt/mater.h librt
-	Global-state rt_* material API replaced by per-database db_mater_* API:
-	rt_material_head()      -> db_mater_head(dbip)
-	rt_new_material_head()  -> db_mater_set_head(dbip, newmat)
-	rt_dup_material_head()  -> db_mater_dup(dbip)
-	rt_color_free()         -> db_mater_free(dbip)
-	rt_insert_color()       -> db_mater_insert(dbip, newp)
-	rt_color_addrec()       -> db_mater_add(dbip, low, hi, r, g, b, addr)
-	rt_vls_color_map()      -> db_mater_to_vls(str, dbip)
-	rt_region_color_map()   -> db_mater_color_region(dbip, regp)
-	[deprecated 7.42]
-
 
 7.40
 ----
@@ -1858,3 +1871,10 @@ s/GED_RANGE/BV_RANGE/g
 s/GED_MAX/BV_MAX/g
 s/GED_MIN/BV_MIN/g
 s/INV_GED/INV_BV/g
+
+7.44
+----
+s/rt_mk_parabola\(/rt_mk_parabola_old\(/g
+        rt_mk_parabola() signature changed - old 5-arg callers use rt_mk_parabola_old() [7.44]
+s/rt_mk_hyperbola\(/rt_mk_hyperbola_old\(/g
+        rt_mk_hyperbola() signature changed - old 6-arg callers use rt_mk_hyperbola_old() [7.44]

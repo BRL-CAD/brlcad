@@ -1325,7 +1325,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     /* 2 endpoints in 1st approximation */
     nb = 2;
     /* recursively break segment 'til within error tolerances */
-    nb += rt_mk_hyperbola(pts_b, mag_h/3, mag_h, c, dtol, ntol);
+    nb += rt_mk_hyperbola_old(pts_b, mag_h/3, mag_h, c, dtol, ntol);
     nell = nb - 1;	/* Number of ellipses needed */
 
     /*
@@ -1357,7 +1357,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     recalc_b = 0;
     pos_a = pts_a;
     while (pos_a->next) {
-	na = rt_mk_hyperbola(pos_a, r1, mag_h, c, dtol, ntol);
+	na = rt_mk_hyperbola_old(pos_a, r1, mag_h, c, dtol, ntol);
 	if (na != 0) {
 	    recalc_b = 1;
 	    nell += na;

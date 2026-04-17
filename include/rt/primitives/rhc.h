@@ -30,13 +30,55 @@
 
 __BEGIN_DECLS
 
-/* rhc.c */
+/**
+ * Approximate a hyperbola with line segments.
+ *
+ * @param pts     Linked list of points; must have at least two nodes on entry.
+ * @param r       Rectangular half-width of the hyperbola.
+ * @param b       Breadth (half-height) of the hyperbola.
+ * @param c       Distance from the apex to the asymptote origin.
+ * @param dtol    Maximum allowable chord-to-curve distance (mm).
+ * @param ntol    Maximum allowable normal-deviation angle (radians); pass
+ *                M_PI to ignore normal tolerance.
+ * @param min_abs Minimum absolute span (mm) below which subdivision stops,
+ *                preventing runaway recursion from extremely tight tolerances.
+ *
+ *                Recommended min_abs values:
+ *                - 0.05 is a conservative default suitable for most CAD
+ *                  geometry.  A full circle at this dtol requires ~300
+ *                  segments; finer values rarely produce visible improvement
+ *                  on typical display hardware.
+ *                - 0.005 produces noticeably smoother curves on very small
+ *                  features but can multiply polygon counts by 10x or more.
+ *                - Values below dtol have no additional effect until dtol
+ *                  itself pushes subdivision to segments shorter than min_abs.
+ *                - SMALL_FASTF (~1e-37) disables the floor entirely, matching
+ *                  the deprecated rt_mk_hyperbola() function signature's
+ *                  behavior; use only when the geometry is known to be free
+ *                  of degenerate cases that could trigger unbounded recursion.
+ *
+ * @return Number of additional points inserted into @p pts.
+ */
 RT_EXPORT extern int rt_mk_hyperbola(struct rt_pnt_node *pts,
 				     fastf_t r,
 				     fastf_t b,
 				     fastf_t c,
 				     fastf_t dtol,
-				     fastf_t ntol);
+				     fastf_t ntol,
+				     fastf_t min_abs);
+
+/**
+ * @deprecated use rt_mk_hyperbola() with an explicit min_abs argument.
+ * Preserves the original rt_mk_hyperbola behavior of trusting the caller's
+ * tolerances unconditionally (equivalent to min_abs = SMALL_FASTF).
+ */
+//DEPRECATED RT_EXPORT extern int rt_mk_hyperbola_old(struct rt_pnt_node *pts,
+RT_EXPORT extern int rt_mk_hyperbola_old(struct rt_pnt_node *pts,
+						    fastf_t r,
+						    fastf_t b,
+						    fastf_t c,
+						    fastf_t dtol,
+						    fastf_t ntol);
 
 /** @} */
 
