@@ -817,6 +817,40 @@ bg_trimesh_area(const int *faces, size_t num_faces, const point_t *p, size_t num
     return area;
 }
 
+
+fastf_t
+bg_trimesh_volume(const int *faces, size_t num_faces, const point_t *p, size_t num_pnts)
+{
+    if (!faces || !p)
+	return -1;
+    if (!num_faces || !num_pnts)
+	return 0.0;
+
+    /* Divergence-theorem / signed-tetrahedra formula:
+     *
+     *   V = (1/6) * |sum_i  v0_i . (v1_i x v2_i)|
+     *
+     * where v0, v1, v2 are the three vertices of face i.  The sign of
+     * each term depends on orientation; taking the absolute value of the
+     * total sum works correctly for any consistently-oriented closed mesh
+     * (all normals inward or all outward).
+     */
+    double signed_vol = 0.0;
+    for (size_t i = 0; i < num_faces; i++) {
+	const point_t *v0 = &p[faces[i*3+0]];
+	const point_t *v1 = &p[faces[i*3+1]];
+	const point_t *v2 = &p[faces[i*3+2]];
+
+	/* scalar triple product: v0 . (v1 x v2) */
+	vect_t cross;
+	VCROSS(cross, *v1, *v2);
+	signed_vol += VDOT(*v0, cross);
+    }
+
+    return (fastf_t)fabs(signed_vol / 6.0);
+}
+
+
 int
 bg_trimesh_aabb(point_t *min, point_t *max, const int *faces, size_t num_faces, const point_t *p, size_t num_pnts)
 {

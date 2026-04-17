@@ -156,6 +156,27 @@ BG_EXPORT extern fastf_t
 bg_trimesh_area(const int *faces, size_t num_faces, const point_t *p, size_t num_pnts);
 
 
+/**
+ * Calculate the volume enclosed by a closed, consistently-oriented triangle
+ * mesh using the divergence theorem (signed-tetrahedra method).
+ *
+ * The mesh must be closed and consistently oriented (all face normals pointing
+ * outward or all inward).  Consistent orientation is guaranteed for meshes
+ * that pass bg_trimesh_solid2() with zero unmatched edges.  The function
+ * returns the absolute value of the signed result, so it works correctly
+ * regardless of whether normals point inward or outward.
+ *
+ * @param[in] faces  flat array of triangle indices (3 ints per face)
+ * @param[in] num_faces  number of triangles
+ * @param[in] p  array of vertex positions
+ * @param[in] num_pnts  number of vertices
+ *
+ * @return -1 if inputs are invalid, else volume in cubic millimeters
+ */
+BG_EXPORT extern fastf_t
+bg_trimesh_volume(const int *faces, size_t num_faces, const point_t *p, size_t num_pnts);
+
+
 /* Structure holding user-adjustable decimation settings */
 struct bg_trimesh_decimation_settings {
     int method;            // Select decimation method to use
