@@ -90,11 +90,16 @@ brlcad_addexec(rt_boolweave rt_boolweave.c "librt" TEST)
 # Tests for primitive editing
 add_subdirectory(edit)
 
+# stand-alone Crofton estimator tests
+brlcad_addexec(rt_crofton crofton.c "librt;libwdb;libbu" TEST)
+#brlcad_add_test(NAME rt_crofton COMMAND rt_crofton)
+
 set(
   distcheck_files
   CMakeLists.txt
   arb_intersect.g
   binary_attribute.c
+  crofton.c
   brep_boolean_tests.g
   cyclic_tests.g
   extreme_ssi_test.g

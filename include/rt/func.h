@@ -182,6 +182,73 @@ RT_EXPORT extern int rt_obj_mirror(struct rt_db_internal *ip, const plane_t *pla
  */
 RT_EXPORT extern int rt_obj_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version);
 
+/**
+ * Stopping-criteria parameters for rt_crofton_shoot() and rt_crofton_sample().
+ *
+ * All fields default to zero.  Behaviour when all three are zero (or the
+ * pointer is NULL) is identical to the historical default: fire 2 000 rays
+ * and stop when two successive 1 %-threshold iterations agree.
+ *
+ * When one or more non-zero fields are provided, sampling continues until
+ * the FIRST criterion that is met:
+ *
+ *   n_rays > 0        Stop once this many rays have been fired in total.
+ *
+ *   stability_mm > 0  Stop once the estimate is "stable" to within the
+ *                     given linear dimension.  Stability is measured as the
+ *                     change in equivalent-sphere radius between successive
+ *                     iterations: r_sa = sqrt(SA / (4*pi)) for surface area
+ *                     and r_v = cbrt(3*V / (4*pi)) for volume.  Sampling
+ *                     stops when both |Δr_sa| and |Δr_v| (for whichever
+ *                     outputs are requested) are < stability_mm.
+ *
+ *   time_ms > 0       Stop once this many wall-clock milliseconds have
+ *                     elapsed, returning the best estimate accumulated so far.
+ *
+ * When multiple fields are non-zero the first criterion to fire wins,
+ * giving callers fine control over the accuracy / speed trade-off.
+ */
+struct rt_crofton_params {
+    size_t n_rays;       /**< max total rays; 0 = no limit via this criterion */
+    double stability_mm; /**< equivalent-radius stability target (mm); 0 = disabled */
+    double time_ms;      /**< wall-clock time budget (ms); 0 = disabled */
+};
+
+
+/**
+ * Run the Cauchy-Crofton ray-sampling estimator on an already-prepared
+ * raytrace instance.  The caller owns @p rtip and must call rt_free_rti
+ * after this function returns.
+ *
+ * @param rtip          Prepared raytrace instance (rt_prep_parallel must
+ *                      have been called first).
+ * @param params        Stopping criteria.  NULL or all-zero → 2 000-ray default.
+ * @param out_surf_area Receives the estimated surface area (mm^2).
+ * @param out_volume    Receives the estimated volume (mm^3).
+ * @return  0 on success, -1 on bad arguments.
+ */
+RT_EXPORT extern int rt_crofton_shoot(struct rt_i *rtip, const struct rt_crofton_params *params, double *out_surf_area, double *out_volume);
+
+
+/**
+ * Cauchy-Crofton surface-area and/or volume estimator for a primitive.
+ *
+ * Creates a temporary in-memory raytrace of @p ip and fires random chord
+ * rays until the stopping criteria in @p params are satisfied (or all
+ * criteria are zero / params is NULL, in which case the 2 000-ray default
+ * is used).  Stores the estimated surface area in @p *area (if non-NULL)
+ * and the estimated volume in @p *vol (if non-NULL).
+ *
+ * This is the primary high-level entry point.  Primitives that require
+ * controlled accuracy (e.g. TGC TEC case, triaxial ELL, EHY r1≠r2, HYP,
+ * superell, ETO/TOR spindle) should call this function directly with
+ * appropriate params.  Callers that already have a prepared rt_i should
+ * call rt_crofton_shoot() instead.
+ */
+RT_EXPORT extern void rt_crofton_sample(fastf_t *area, fastf_t *vol,
+					const struct rt_db_internal *ip,
+					const struct rt_crofton_params *params);
+
 __END_DECLS
 
 #endif  /* RT_FUNC_H */

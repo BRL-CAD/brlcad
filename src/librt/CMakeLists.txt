@@ -172,6 +172,7 @@ set(
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_brep.cpp
   primitives/bspline/bspline_mirror.c
+  primitives/crofton.cpp
   primitives/cline/cline.c
   primitives/cline/cline_brep.cpp
   primitives/datum/datum.c
