@@ -606,13 +606,20 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	outer_polyline.push_back(pts2det[poly[i]]);
     tri.addOutline(outer_polyline);
 
-    // Next are the holes
-    std::vector<std::vector<int>> inner_holes;
+    // Next are the holes.
+    // IMPORTANT: detria's addHole() stores a ReadonlySpan (raw pointer) into the
+    // provided vector.  The vector must outlive the tri.triangulate() call.
+    // Pre-populate inner_holes before registering any hole so that no
+    // reallocation invalidates previously stored data() pointers.
+    std::vector<std::vector<int>> inner_holes(nholes);
     for (size_t i = 0; i < nholes; i++) {
-	std::vector<int> hv;
+	std::vector<int> &hv = inner_holes[i];
+	hv.reserve(holes_npts[i]);
 	for (size_t j = 0; j < holes_npts[i]; j++)
-	    hv.push_back(holes_array[i][j]);
-	tri.addHole(hv);
+	    hv.push_back(pts2det[holes_array[i][j]]);
+    }
+    for (size_t i = 0; i < nholes; i++) {
+	tri.addHole(inner_holes[i]);
     }
 
     // Run the core triangulation routine
