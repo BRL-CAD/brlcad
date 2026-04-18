@@ -151,6 +151,7 @@ __BEGIN_DECLS
 #include "./rt/primitives/rpc.h"
 #include "./rt/primitives/pg.h"
 #include "./rt/primitives/hf.h"
+#include "./rt/primitives/bspline.h"
 #include "./rt/primitives/dsp.h"
 #include "./rt/primitives/ell.h"
 #include "./rt/primitives/tgc.h"

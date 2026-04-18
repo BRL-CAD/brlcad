@@ -229,6 +229,14 @@ main(int argc, char **argv)
 		continue;
 	    }
 	}
+	if (id == ID_BSPLINE) {
+	    if (rt_nurb_to_brep(&intern)) {
+		fprintf(stderr,
+			"%s: Conversion from BSPLINE to BREP failed for solid %s, keeping original\n",
+			argv[0], dp->d_namep);
+		/* Non-fatal: fall through and write the original BSPLINE */
+	    }
+	}
 
 	/* to insure null termination */
 	bu_strlcpy(name, dp->d_namep, sizeof(name));

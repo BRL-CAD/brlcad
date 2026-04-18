@@ -4,6 +4,7 @@ set(
   annot.h
   bot.h
   brep.h
+  bspline.h
   cline.h
   dsp.h
   ell.h

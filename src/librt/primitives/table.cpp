@@ -648,7 +648,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* vshot */
 	RTFUNCTAB_FUNC_TESS_CAST(rt_nurb_tess),
 	NULL, /* tnurb */
-	NULL, /* brep */
+	RTFUNCTAB_FUNC_BREP_CAST(rt_nurb_brep),
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_nurb_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_nurb_export5),
 	RTFUNCTAB_FUNC_IMPORT4_CAST(rt_nurb_import4),
