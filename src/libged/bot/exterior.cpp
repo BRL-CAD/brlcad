@@ -37,7 +37,7 @@
  *    eliminating the need for a separate global sampling phase.
  *
  *  Flood fill (--flood-fill, requires OpenVDB)
- *    The model is voxelised via rt_rtip_to_occupancy_grid, then a
+ *    The model is voxelised via rt_rtip_to_openvdb_occupancy, then a
  *    BFS flood-fill from the boundary finds all "water-reachable" voxels.
  *    A face is exterior when any of its six face-adjacent voxels is
  *    reachable.

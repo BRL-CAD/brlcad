@@ -171,6 +171,8 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 		settings.strict = 0;
 		bu_vls_sprintf(method_flag, "REPAIR");
 		ret = rt_bot_repair(obot, bot, &settings);
+		if (ret == BRLCAD_OK && settings.used_openvdb)
+		    bu_vls_sprintf(method_flag, "REPAIR_OPENVDB");
 	    } else {
 		// Already a valid BoT - tessellate is a no-op.
 		*obot = NULL;

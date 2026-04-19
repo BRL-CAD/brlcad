@@ -28,7 +28,7 @@
  *
  * Algorithm
  * ---------
- *  1. Build an occupancy grid (solid / air) via rt_rtip_to_occupancy_grid
+ *  1. Build an occupancy grid (solid / air) via rt_rtip_to_openvdb_occupancy
  *     (implemented in bot_openvdb.cpp).  Rays are shot in +X, +Y, +Z.
  *     A voxel is marked solid when any hit segment encloses its centre.
  *
@@ -143,7 +143,7 @@ bot_flood_exterior_classify(struct rt_i *rtip,
 
     /* Step 1: voxelise the model into a solid-occupancy grid. */
     bu_log("bot flood exterior: voxel_size=%.4g\n", voxel_size);
-    openvdb::BoolGrid::Ptr solid = rt_rtip_to_occupancy_grid(rtip, voxel_size, &nx, &ny, &nz);
+    openvdb::BoolGrid::Ptr solid = rt_rtip_to_openvdb_occupancy(rtip, voxel_size, &nx, &ny, &nz);
     bu_log("bot flood exterior: grid %dx%dx%d\n", nx, ny, nz);
 
     /* Step 2: BFS flood fill to find exterior (water-reachable) voxels. */

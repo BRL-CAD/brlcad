@@ -1,7 +1,7 @@
 /*                  B O T _ O P E N V D B . C P P
  * BRL-CAD
  *
- * Copyright (c) 2024-2025 United States Government as represented by
+ * Copyright (c) 2024-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,20 +17,23 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/bot/bot_openvdb.cpp
+/** @file librt/primitives/bot/bot_openvdb.cpp
  *
- * Shared OpenVDB utilities for the bot plugin.
+ * Shared OpenVDB utilities for BoT processing.
  *
- * Three building blocks are implemented here:
+ * Four building blocks are implemented here:
  *
- *  bot_to_sdf()                — BoT → OpenVDB signed-distance field
- *  sdf_to_bot()                — OpenVDB SDF → rt_bot_internal
- *  rt_rtip_to_occupancy_grid() — raytrace a prepped rt_i into a BoolGrid
+ *  rt_bot_to_openvdb_sdf()        — BoT → OpenVDB signed-distance field
+ *  rt_bot_from_openvdb_sdf()      — OpenVDB SDF → rt_bot_internal
+ *  rt_bot_openvdb_repair()        — OpenVDB level-set BoT repair
+ *  rt_rtip_to_openvdb_occupancy() — raytrace a prepped rt_i into a BoolGrid
  *
  * See bot_openvdb.h for the public API documentation.
  */
 
 #include "common.h"
+
+#include "bot_openvdb.h"
 
 #ifdef BRLCAD_OPENVDB
 
@@ -53,8 +56,11 @@
 #  include "rt/geom.h"
 #  include "raytrace.h"
 
-#  include "bot_openvdb.h"
-
+int
+rt_bot_openvdb_available(void)
+{
+    return 1;
+}
 
 /* -----------------------------------------------------------------------
  * botDataAdapter
@@ -84,10 +90,10 @@ struct botDataAdapter {
 
 
 /* -----------------------------------------------------------------------
- * bot_to_sdf
+ * rt_bot_to_openvdb_sdf
  * ---------------------------------------------------------------------- */
 openvdb::FloatGrid::Ptr
-bot_to_sdf(struct rt_bot_internal *bot, double voxel_size)
+rt_bot_to_openvdb_sdf(struct rt_bot_internal *bot, double voxel_size)
 {
     if (!bot || !bot->num_vertices || !bot->num_faces)
 	return openvdb::FloatGrid::Ptr();
@@ -128,7 +134,7 @@ bot_to_sdf(struct rt_bot_internal *bot, double voxel_size)
 
 
 /* -----------------------------------------------------------------------
- * sdf_to_bot
+ * rt_bot_from_openvdb_sdf
  *
  * Uses the class-based VolumeToMesh (rather than the volumeToMesh free
  * function) so that relaxDisorientedTriangles=true is in effect.  That
@@ -138,7 +144,7 @@ bot_to_sdf(struct rt_bot_internal *bot, double voxel_size)
  * the same isovalue/adaptivity settings.
  * ---------------------------------------------------------------------- */
 struct rt_bot_internal *
-sdf_to_bot(openvdb::FloatGrid::Ptr grid, double adaptivity)
+rt_bot_from_openvdb_sdf(openvdb::FloatGrid::Ptr grid, double adaptivity)
 {
     if (!grid)
 	return NULL;
@@ -183,7 +189,7 @@ sdf_to_bot(openvdb::FloatGrid::Ptr grid, double adaptivity)
 
     obot->num_vertices = n_points;
     obot->vertices = (fastf_t *)bu_malloc(n_points * 3 * sizeof(fastf_t),
-					  "sdf_to_bot vertices");
+					  "rt_bot_from_openvdb_sdf vertices");
     for (size_t i = 0; i < n_points; i++) {
 	obot->vertices[i * 3 + X] = points[i].x();
 	obot->vertices[i * 3 + Y] = points[i].y();
@@ -191,7 +197,7 @@ sdf_to_bot(openvdb::FloatGrid::Ptr grid, double adaptivity)
     }
 
     obot->num_faces = n_tris;
-    obot->faces = (int *)bu_malloc(n_tris * 3 * sizeof(int), "sdf_to_bot faces");
+    obot->faces = (int *)bu_malloc(n_tris * 3 * sizeof(int), "rt_bot_from_openvdb_sdf faces");
 
     /* Walk each polygon pool, emitting triangles then splitting quads. */
     size_t fidx = 0;
@@ -223,9 +229,19 @@ sdf_to_bot(openvdb::FloatGrid::Ptr grid, double adaptivity)
     return obot;
 }
 
+static void
+free_openvdb_bot(struct rt_bot_internal *bot)
+{
+    if (!bot)
+	return;
+
+    rt_bot_internal_free(bot);
+    BU_PUT(bot, struct rt_bot_internal);
+}
+
 
 /* -----------------------------------------------------------------------
- * bot_openvdb_repair
+ * rt_bot_openvdb_repair
  *
  * Attempt to repair a non-manifold solid BoT using the OpenVDB level-set
  * pipeline.  Converts the mesh to a signed-distance field and extracts a
@@ -238,19 +254,22 @@ sdf_to_bot(openvdb::FloatGrid::Ptr grid, double adaptivity)
  * Caller is responsible for freeing the returned bot.
  * ---------------------------------------------------------------------- */
 struct rt_bot_internal *
-bot_openvdb_repair(struct rt_bot_internal *bot, double voxel_size)
+rt_bot_openvdb_repair(struct rt_bot_internal *bot, double voxel_size, fastf_t *volume)
 {
-    openvdb::FloatGrid::Ptr grid = bot_to_sdf(bot, voxel_size);
+    if (!bot || bot->mode != RT_BOT_SOLID)
+	return NULL;
+
+    openvdb::FloatGrid::Ptr grid = rt_bot_to_openvdb_sdf(bot, voxel_size);
     if (!grid) {
-	bu_log("bot_openvdb_repair: meshToVolume failed\n");
+	bu_log("rt_bot_openvdb_repair: meshToVolume failed\n");
 	return NULL;
     }
 
     /* Full voxel resolution (adaptivity=0) preserves shape best for repair. */
-    struct rt_bot_internal *cand = sdf_to_bot(grid, 0.0);
+    struct rt_bot_internal *cand = rt_bot_from_openvdb_sdf(grid, 0.0);
     if (!cand || cand->num_faces == 0) {
-	bu_log("bot_openvdb_repair: volumeToMesh produced no faces\n");
-	if (cand) { bu_free(cand->vertices, "verts"); bu_free(cand->faces, "faces"); BU_PUT(cand, struct rt_bot_internal); }
+	bu_log("rt_bot_openvdb_repair: volumeToMesh produced no faces\n");
+	free_openvdb_bot(cand);
 	return NULL;
     }
 
@@ -271,9 +290,8 @@ bot_openvdb_repair(struct rt_bot_internal *bot, double voxel_size)
     }
     manifold::Manifold mcheck(vcheck);
     if (mcheck.Status() != manifold::Manifold::Error::NoError) {
-	bu_log("bot_openvdb_repair: result is not manifold (unexpected)\n");
-	bu_free(cand->vertices, "verts"); bu_free(cand->faces, "faces");
-	BU_PUT(cand, struct rt_bot_internal);
+	bu_log("rt_bot_openvdb_repair: result is not manifold (unexpected)\n");
+	free_openvdb_bot(cand);
 	return NULL;
     }
 
@@ -283,24 +301,34 @@ bot_openvdb_repair(struct rt_bot_internal *bot, double voxel_size)
      * and 2 of every triangle reverses the winding order globally and
      * turns it into a valid outward-facing solid without touching the
      * vertex data or rebuilding the mesh. */
-    if (mcheck.Volume() <= 0.0) {
-	bu_log("bot_openvdb_repair: result is inside-out; flipping winding order\n");
+    fastf_t repair_volume = mcheck.Volume();
+    if (repair_volume == 0.0) {
+	bu_log("rt_bot_openvdb_repair: result has zero volume\n");
+	free_openvdb_bot(cand);
+	return NULL;
+    }
+    if (repair_volume < 0.0) {
+	bu_log("rt_bot_openvdb_repair: result is inside-out; flipping winding order\n");
 	for (size_t i = 0; i < cand->num_faces; i++) {
 	    int tmp = cand->faces[i * 3 + 1];
 	    cand->faces[i * 3 + 1] = cand->faces[i * 3 + 2];
 	    cand->faces[i * 3 + 2] = tmp;
 	}
+	repair_volume = -repair_volume;
     }
+
+    if (volume)
+	*volume = repair_volume;
 
     return cand;
 }
 
 
 /* -----------------------------------------------------------------------
- * rt_rtip_to_occupancy_grid internals
+ * rt_rtip_to_openvdb_occupancy internals
  *
  * These hit/miss callbacks and the per-ray context are used only by
- * rt_rtip_to_occupancy_grid below.
+ * rt_rtip_to_openvdb_occupancy below.
  * ---------------------------------------------------------------------- */
 
 struct OccRayCtx {
@@ -357,11 +385,11 @@ occ_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(
 
 
 /* -----------------------------------------------------------------------
- * rt_rtip_to_occupancy_grid
+ * rt_rtip_to_openvdb_occupancy
  * ---------------------------------------------------------------------- */
 openvdb::BoolGrid::Ptr
-rt_rtip_to_occupancy_grid(struct rt_i *rtip, double voxel_size,
-			  int *nx, int *ny, int *nz)
+rt_rtip_to_openvdb_occupancy(struct rt_i *rtip, double voxel_size,
+			     int *nx, int *ny, int *nz)
 {
     int nx_m = (int)std::ceil((rtip->mdl_max[X] - rtip->mdl_min[X]) / voxel_size);
     int ny_m = (int)std::ceil((rtip->mdl_max[Y] - rtip->mdl_min[Y]) / voxel_size);
@@ -448,6 +476,20 @@ rt_rtip_to_occupancy_grid(struct rt_i *rtip, double voxel_size,
     }
 
     return solid;
+}
+
+#else /* BRLCAD_OPENVDB */
+
+int
+rt_bot_openvdb_available(void)
+{
+    return 0;
+}
+
+struct rt_bot_internal *
+rt_bot_openvdb_repair(struct rt_bot_internal *UNUSED(bot), double UNUSED(voxel_size), fastf_t *UNUSED(volume))
+{
+    return NULL;
 }
 
 #endif /* BRLCAD_OPENVDB */

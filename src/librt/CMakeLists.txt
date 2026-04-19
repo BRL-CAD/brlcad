@@ -6,6 +6,21 @@ brlcad_find_package(OPENNURBS REQUIRED SYSPATTERN openNURBS)
 brlcad_find_package(REGEX REQUIRED)
 find_package_gte(REQUIRED)
 
+set(LIBRT_OPENVDB_INCLUDE_DIRS)
+set(LIBRT_OPENVDB_LIBS)
+if(BRLCAD_ENABLE_OPENVDB)
+  set(LIBRT_OPENVDB_INCLUDE_DIRS ${OpenVDB_INCLUDE_DIRS} ${Tbb_INCLUDE_DIRS} ${IlmBase_INCLUDE_DIRS})
+  set(LIBRT_OPENVDB_LIBS ${OpenVDB_LIBRARIES} ${IlmBase_LIBRARIES} ${Tbb_LIBRARIES})
+  # Prevent warnings in OpenVDB/Boost headers and an LTO false positive
+  # involving OpenVDB's UINT64_MAX LeafManager sentinel.
+  set_source_files_properties(
+    primitives/bot/bot_openvdb.cpp
+    PROPERTIES
+      COMPILE_DEFINITIONS BRLCAD_OPENVDB
+      COMPILE_FLAGS "-w -fno-lto"
+  )
+endif(BRLCAD_ENABLE_OPENVDB)
+
 if(BRLCAD_ENABLE_OPENCL)
   add_definitions(-DUSE_OPENCL)
 endif(BRLCAD_ENABLE_OPENCL)
@@ -163,6 +178,7 @@ set(
   primitives/bot/bot_edge.c
   primitives/bot/bot_mirror.c
   primitives/bot/bot_oriented_bbox.cpp
+  primitives/bot/bot_openvdb.cpp
   primitives/bot/bot_plot.cpp
   primitives/bot/btg.c
   primitives/bot/btgf.c
@@ -431,6 +447,7 @@ set(
   ${RPCRT_LIB}
   ${STDCXX_LIBRARIES}
   manifold::manifold
+  ${LIBRT_OPENVDB_LIBS}
 )
 
 # Include directories needed by librt users
@@ -443,6 +460,7 @@ set(
   ${CMAKE_CURRENT_SOURCE_DIR}/vds
   ${BRLCAD_SOURCE_DIR}/src/libbu
   ${REGEX_INCLUDE_DIRS}
+  ${LIBRT_OPENVDB_INCLUDE_DIRS}
 )
 # FIXME: needs materialX
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source
@@ -561,6 +579,7 @@ cmakefiles(
   bot2nurbs.txt
   brep_csg_boolean.txt
   kigumi_todo.txt
+  primitives/bot/bot_openvdb.h
   vds/README
   vds/COPYING
   vds/vds.h
