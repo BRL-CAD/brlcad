@@ -162,6 +162,9 @@ function(ged_plugin_library name)
 
   if(DO_STATIC)
     target_sources(libged PRIVATE ${plugin_sources})
+    if (TARGET libged-static)
+      target_sources(libged-static PRIVATE ${plugin_sources})
+    endif()
 
     if(GEDPL_INCLUDES)
       target_include_directories(libged_plugin_deps INTERFACE ${GEDPL_INCLUDES})
@@ -359,10 +362,16 @@ brlcad_addlib(libged "${LIBGED_SOURCES}" "${GED_LIBS}" "" "${GED_LOCAL_INCLUDE_D
 set_target_properties(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if (LIBGED_STATIC_CORE)
   target_link_libraries(libged PRIVATE libged_plugin_deps)
+  if (TARGET libged-static)
+    target_link_libraries(libged-static PRIVATE libged_plugin_deps)
+  endif()
   # On Windows, prevent the linker from stripping "unused" static command
   # registration symbols
   if(HAVE_WINDOWS_H)
     target_link_options(libged PRIVATE "/OPT:NOREF")
+    if (TARGET libged-static)
+      target_link_options(libged-static PRIVATE "/OPT:NOREF")
+    endif()
   endif()
 endif()
 
