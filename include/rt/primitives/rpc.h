@@ -66,7 +66,7 @@ RT_EXPORT extern int rt_mk_parabola(struct rt_pnt_node *pts,
 				    fastf_t min_abs);
 
 /**
- * @deprecated use rt_mk_parabola() with an explicit min_abs argument.
+ * use rt_mk_parabola() with an explicit min_abs argument.
  * Preserves the original behavior of trusting the caller's tolerances
  * unconditionally (equivalent to min_abs = SMALL_FASTF).
  */
