@@ -1127,7 +1127,7 @@ _rt_mk_parabola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fas
  * unconditionally honoring whatever dtol/ntol the caller passes (no sanity
  * floor).  New code should call rt_mk_parabola() with an explicit min_abs.
  *
- * @deprecated use rt_mk_parabola() with an explicit min_abs argument.
+ * use rt_mk_parabola() with an explicit min_abs argument.
  */
 int
 rt_mk_parabola_old(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf_t ntol)

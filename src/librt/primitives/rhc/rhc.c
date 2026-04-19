@@ -1258,7 +1258,7 @@ _rt_mk_hyperbola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf
  * unconditionally honoring whatever dtol/ntol the caller passes (no sanity
  * floor).  New code should call rt_mk_hyperbola() with an explicit min_abs.
  *
- * @deprecated use rt_mk_hyperbola() with an explicit min_abs argument.
+ * use rt_mk_hyperbola() with an explicit min_abs argument.
  */
 int
 rt_mk_hyperbola_old(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t dtol, fastf_t ntol)
