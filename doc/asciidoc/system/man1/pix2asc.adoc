@@ -45,7 +45,7 @@ When moving _pix(5)_ files between UNIX systems via tape (see _tar(1)_ and _cpio
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

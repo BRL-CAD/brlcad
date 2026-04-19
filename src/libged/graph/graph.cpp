@@ -1,7 +1,7 @@
 /*                       G R A P H . C P P
  * BRL-CAD
  *
- * Copyright (c) 2012-2025 United States Government.
+ * Copyright (c) 2012-2026 United States Government.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License

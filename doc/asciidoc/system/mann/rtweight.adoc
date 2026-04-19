@@ -97,7 +97,7 @@ Runs _rtweight_ and outputs the results to weightfile.txt
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1987-2025 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1987-2026 United States Government as represented by the U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

@@ -484,7 +484,7 @@ Michael John Muuss
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2001-2025 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 2001-2026 United States Government as represented by the U.S. Army Research Laboratory.
 
 
 [[bugs]]

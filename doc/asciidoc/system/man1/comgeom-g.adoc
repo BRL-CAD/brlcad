@@ -64,7 +64,7 @@ It is expected that the input file should be a valid COMGEOM model. While quite 
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1989-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1989-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

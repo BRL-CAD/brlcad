@@ -63,7 +63,7 @@ Most deficiencies observed while using the *dbclean* program are usually with th
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1991-2025 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1991-2026 United States Government as represented by the U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

@@ -79,7 +79,7 @@ Phillip Dykstra
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1990-2025 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 1990-2026 United States Government as represented by the U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

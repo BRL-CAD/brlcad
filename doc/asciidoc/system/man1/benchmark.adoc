@@ -67,7 +67,7 @@ Please send your BRL-CAD Benchmark results to the developers along with detailed
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2006-2025 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 2006-2026 United States Government as represented by the U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

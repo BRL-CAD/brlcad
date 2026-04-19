@@ -1,7 +1,7 @@
 /*             G E D _ C M D _ S C A N N E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2024-2025 United States Government as represented by
+ * Copyright (c) 2024-2026 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -421,7 +421,7 @@ int main(int argc, const char *argv[])
 	hdr << "/*                      G E D _ C M D S . H\n"
 	    << " * BRL-CAD\n"
 	    << " *\n"
-	    << " * Copyright (c) 2024-2025 United States Government as represented by\n"
+	    << " * Copyright (c) 2024-2026 United States Government as represented by\n"
 	    << " * the U.S. Army Research Laboratory.\n"
 	    << " *\n"
 	    << " * This library is free software; you can redistribute it and/or\n"

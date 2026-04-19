@@ -101,7 +101,7 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2017-2025 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 2017-2026 United States Government as represented by the U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

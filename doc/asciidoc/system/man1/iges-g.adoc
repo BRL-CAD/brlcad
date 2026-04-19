@@ -51,7 +51,7 @@ Error messages are intended to be self-explanatory.
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1991-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1991-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

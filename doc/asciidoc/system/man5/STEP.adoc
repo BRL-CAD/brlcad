@@ -100,7 +100,7 @@ Clifford Yapp
 [[copyright]]
 == COPYRIGHT
 
-Copyright (c) 2015-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+Copyright (c) 2015-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

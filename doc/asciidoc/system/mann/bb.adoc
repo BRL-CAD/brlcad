@@ -169,7 +169,7 @@ havoc_parts_bbox.s:  ARB8
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2009-2025 United States Government as represented by the U.S. Army Research Laboratory.
+This software is Copyright (c) 2009-2026 United States Government as represented by the U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

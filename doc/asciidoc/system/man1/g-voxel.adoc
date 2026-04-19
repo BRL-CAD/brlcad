@@ -43,7 +43,7 @@ The threshold upon which the voxel is considered.
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2004-2025 United States Government as represented by the U.S. Army Research Laboratory. Al rights reserved.
+This software is Copyright (c) 2004-2026 United States Government as represented by the U.S. Army Research Laboratory. Al rights reserved.
 
 
 [[author]]

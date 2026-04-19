@@ -59,7 +59,7 @@ John R. Anderson
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1998-2025 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1998-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]

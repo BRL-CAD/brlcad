@@ -162,7 +162,7 @@ Most deficiencies observed while using the *rthide* program are usually with the
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 1990-2022 by the United States Government as represented by U.S. Army Research Laboratory.
+This software is Copyright (c) 1990-2026 by the United States Government as represented by U.S. Army Research Laboratory.
 
 
 [[bug_reports]]
