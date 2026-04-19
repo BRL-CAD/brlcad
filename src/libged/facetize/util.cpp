@@ -617,6 +617,8 @@ facetize_primitives_summary(struct _ged_facetize_state *s)
 	for (m_it = method_sets.begin(); m_it != method_sets.end(); ++m_it) {
 	    if (m_it->first == std::string("REPAIR")) {
 		facetize_log(s, 0, "    %-28s %8zu\n", "bot repair", m_it->second.size());
+	    } else if (m_it->first == std::string("REPAIR_OPENVDB")) {
+		facetize_log(s, 0, "    %-28s %8zu\n", "OpenVDB level-set repair", m_it->second.size());
 	    } else if (m_it->first == std::string("PLATE")) {
 		facetize_log(s, 0, "    %-28s %8zu\n", "plate extrusion", m_it->second.size());
 	    } else if (m_it->first == std::string("FAIL")) {

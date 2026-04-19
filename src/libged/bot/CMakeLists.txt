@@ -53,6 +53,7 @@ if(BRLCAD_ENABLE_OPENVDB)
   # PLUGIN_ONLY these flags are scoped to the plugin .so and do not
   # pollute the main libged target.
   set_source_files_properties(
+    remesh.cpp
     bot_flood_exterior.cpp
     bot_openvdb.cpp
     PROPERTIES COMPILE_FLAGS "-w -fno-lto"
@@ -85,6 +86,7 @@ ged_plugin_library(ged-bot
 
 cmakefiles(
   CMakeLists.txt
+  ${BOT_SRCS}
   bot_flood_exterior.cpp
   bot_openvdb.cpp
   bot_openvdb.h
