@@ -85,10 +85,11 @@ target_include_directories(obj-g PRIVATE ${BRLCAD_SOURCE_DIR}/src/libgcv/plugins
 brlcad_addexec(g-voxel g-voxel.c "librt;libbu;libwdb;libanalyze;" FOLDER Conv)
 
 if(BRLCAD_ENABLE_OPENVDB)
-  brlcad_addexec(g-vdb g-vdb.cpp "librt;libbu;libwdb;libanalyze;${OpenVDB_LIBRARIES};${IlmBase_LIBRARIES};${Tbb_LIBRARIES}" FOLDER Conv)
+  brlcad_addexec(g-vdb g-vdb.cpp "librt;libbu;libwdb;libanalyze;OpenVDB::openvdb;Imath::Imath;${Tbb_LIBRARIES}" FOLDER Conv)
   target_include_directories(g-vdb SYSTEM PRIVATE ${OpenVDB_INCLUDE_DIRS} ${Tbb_INCLUDE_DIRS} ${IlmBase_INCLUDE_DIRS})
   # warnings off due to unfixable errors in boost and Ilmbase/half headers
   set_property(SOURCE g-vdb.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
+  target_link_options(g-vdb PRIVATE -Wno-alloc-size-larger-than)
 else(BRLCAD_ENABLE_OPENVDB)
   cmakefiles(g-vdb.cpp)
 endif(BRLCAD_ENABLE_OPENVDB)

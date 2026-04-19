@@ -23,6 +23,7 @@
 #include <openvdb/tools/SignedFloodFill.h>
 #include <iostream>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "analyze.h"
 

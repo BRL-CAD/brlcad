@@ -489,6 +489,9 @@ facetize_primitives_summary(struct _ged_facetize_state *s)
 	    if (m_it->first == std::string("REPAIR")) {
 		bu_log("%zd BoT(s) closed to form manifolds using 'bot repair'%s\n",
 			m_it->second.size(), (s->verbosity > 0) ? ":" : ".");
+	    } else if (m_it->first == std::string("REPAIR_OPENVDB")) {
+		bu_log("%zd BoT(s) closed to form manifolds using OpenVDB level-set repair%s\n",
+			m_it->second.size(), (s->verbosity > 0) ? ":" : ".");
 	    } else if (m_it->first == std::string("PLATE")) {
 		bu_log("%zd plate mode BoT(s) extruded to form manifold volumes%s\n",
 			m_it->second.size(), (s->verbosity > 0) ? ":" : ".");

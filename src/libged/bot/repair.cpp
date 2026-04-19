@@ -53,8 +53,6 @@
 #include <string>
 #include <vector>
 
-#include "manifold/manifold.h"
-
 #include "bu/cmd.h"
 #include "bu/color.h"
 #include "bu/opt.h"
@@ -62,6 +60,10 @@
 #include "bg/trimesh.h"
 #include "rt/geom.h"
 #include "wdb.h"
+
+#ifdef BRLCAD_OPENVDB
+#  include "bot_openvdb.h"
+#endif
 
 #include "./ged_bot.h"
 #include "../ged_private.h"
@@ -83,6 +85,7 @@ bot_repair(struct rt_bot_internal *bot, struct rt_bot_repair_info *i)
     // Bot repair succeeded
     return obot;
 }
+
 
 static void
 repair_usage(struct bu_vls *str, const char *cmd, struct bu_opt_desc *d) {
@@ -110,26 +113,30 @@ _bot_cmd_repair(void *bs, int argc, const char **argv)
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
-    // We know we're the manifold command - start processing args
+    /* We know we're the repair command - start processing args */
     argc--; argv++;
 
     int print_help = 0;
     int in_place_repair = 1;
+    int use_openvdb = 0;
+    fastf_t openvdb_voxel_size = 0.0; /* 0 = auto */
     struct rt_bot_repair_info settings = RT_BOT_REPAIR_INFO_INIT;
     struct bu_vls obot_name = BU_VLS_INIT_ZERO;
 
-    struct bu_opt_desc d[5];
-    BU_OPT(d[0], "h",  "help",                "",             NULL,                     &print_help,  "Print help");
-    BU_OPT(d[1], "p",  "max-hole-percent",   "#",   bu_opt_fastf_t, &settings.max_hole_area_percent,  "Maximum hole area to repair (percentage of mesh surface area, range 0-100.) 0 and 100 mean always attempt filling operations. Overridden by -a option.");
-    BU_OPT(d[2], "a",  "max-hole-area",     " #",   bu_opt_fastf_t,         &settings.max_hole_area,  "Maximum hole area to repair in mm (Hard upper limit regardless of mesh size, overrides -p option.)");
-    BU_OPT(d[3], "o",  "output-name",   "<name>",       bu_opt_vls,                      &obot_name,  "Output object name (write repaired BoT to this name - avoids overwriting input BoT)");
-    BU_OPT_NULL(d[4]);
+    struct bu_opt_desc d[7];
+    BU_OPT(d[0], "h",  "help",                  "",             NULL,                     &print_help,  "Print help");
+    BU_OPT(d[1], "p",  "max-hole-percent",      "#",   bu_opt_fastf_t, &settings.max_hole_area_percent,  "Maximum hole area to repair (percentage of mesh surface area, range 0-100.) 0 and 100 mean always attempt filling operations. Overridden by -a option.");
+    BU_OPT(d[2], "a",  "max-hole-area",        " #",   bu_opt_fastf_t,         &settings.max_hole_area,  "Maximum hole area to repair in mm (Hard upper limit regardless of mesh size, overrides -p option.)");
+    BU_OPT(d[3], "o",  "output-name",       "<name>",       bu_opt_vls,                      &obot_name,  "Output object name (write repaired BoT to this name - avoids overwriting input BoT)");
+    BU_OPT(d[4],  "",  "openvdb",               "",             NULL,                     &use_openvdb, "Force OpenVDB level-set rebuild (skips Geogram repair; always produces manifold)");
+    BU_OPT(d[5],  "",  "openvdb-voxel-size",   "#",   bu_opt_fastf_t,           &openvdb_voxel_size,  "OpenVDB voxel size in model units for --openvdb (default: bbox_diagonal/100)");
+    BU_OPT_NULL(d[6]);
 
     int ac = bu_opt_parse(NULL, argc, argv, d);
     argc = ac;
 
     if (print_help || !argc) {
-	repair_usage(gb->gedp->ged_result_str, "bot manifold", d);
+	repair_usage(gb->gedp->ged_result_str, "bot repair", d);
 	bu_vls_free(&obot_name);
 	return GED_HELP;
     }
@@ -149,6 +156,16 @@ _bot_cmd_repair(void *bs, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
     }
+
+#ifndef BRLCAD_OPENVDB
+    if (use_openvdb) {
+	bu_vls_printf(gb->gedp->ged_result_str,
+		      "WARNING: --openvdb requested but BRL-CAD was not compiled with "
+		      "OpenVDB support (cmake -DBRLCAD_ENABLE_OPENVDB=ON).\n");
+	bu_vls_free(&obot_name);
+	return BRLCAD_ERROR;
+    }
+#endif
 
     /* Adjust settings */
     if (NEAR_EQUAL(settings.max_hole_area_percent, 100, VUNITIZE_TOL)) {
@@ -183,17 +200,44 @@ _bot_cmd_repair(void *bs, int argc, const char **argv)
 	    continue;
 	}
 
-	struct rt_bot_internal *mbot = bot_repair(bot, &settings);
+	struct rt_bot_internal *mbot = NULL;
 
-	// If we were already manifold, there's nothing to do
-	if (mbot && mbot == bot) {
-	    rt_db_free_internal(gb->intern);
-	    BU_PUT(gb->intern, struct rt_db_internal);
-	    gb->intern = NULL;
-	    continue;
+	if (!use_openvdb) {
+	    /* Primary path: Geogram repair. */
+	    mbot = bot_repair(bot, &settings);
+
+	    /* If already manifold, nothing to do. */
+	    if (mbot && mbot == bot) {
+		rt_db_free_internal(gb->intern);
+		BU_PUT(gb->intern, struct rt_db_internal);
+		gb->intern = NULL;
+		continue;
+	    }
 	}
 
-	// Trying repair and couldn't, it's an error
+#ifdef BRLCAD_OPENVDB
+	/* OpenVDB path: forced via --openvdb, or automatic fallback when
+	 * Geogram repair failed. */
+	if (use_openvdb || !mbot) {
+	    if (!use_openvdb)
+		bu_log("Geogram repair failed for %s, trying OpenVDB fallback\n",
+		       gb->dp->d_namep);
+	    else
+		bu_log("Using OpenVDB level-set rebuild for %s\n", gb->dp->d_namep);
+
+	    struct rt_bot_internal *vdb_bot = bot_openvdb_repair(bot, openvdb_voxel_size);
+	    if (vdb_bot) {
+		/* If Geogram also produced a result, free it first. */
+		if (mbot && mbot != bot)
+		    rt_bot_internal_free(mbot);
+		mbot = vdb_bot;
+	    } else {
+		bu_log("OpenVDB repair also failed for %s\n", gb->dp->d_namep);
+	    }
+	}
+#endif /* BRLCAD_OPENVDB */
+
+	/* All repair paths failed. */
 	if (!mbot) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "Unable to repair BoT %s\n", gb->dp->d_namep);
 	    rt_db_free_internal(gb->intern);
