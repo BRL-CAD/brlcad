@@ -233,11 +233,49 @@ extern const char *rt_binunif_type_to_string(int type);
 
 /* primitive_util.c */
 
+/**
+ * Minimum absolute tessellation tolerance (mm).  Tessellations finer than
+ * this provide no practical benefit: BRL-CAD's own intersection/collision
+ * tolerance floor is ~0.005 mm and display fidelity tops out at ~0.05 mm.
+ * We go one order below the tolerance floor.
+ * May be overridden with RT_PRIM_MIN_ABS_TOL env variable.
+ */
+#define PRIM_MIN_ABS_TOL 0.0005
+
+/**
+ * Minimum normal (angle) tessellation tolerance (radians).  π/360 ≈ 0.00873 rad
+ * (0.5°).  At this angle a full circle requires 720 segments — already very
+ * dense - we go one order below that.
+ * May be overridden with RT_PRIM_MIN_NORM_TOL env variable.
+ */
+#define PRIM_MIN_NORM_TOL (M_PI / 360.0) * 0.1
+
 extern void primitive_hitsort(struct hit h[], int nh);
+
+extern fastf_t prim_min_abs_tol(void);
+extern fastf_t prim_min_norm_tol(void);
+
+/* Parameterized internal versions of the public rt_mk_parabola /
+ * rt_mk_hyperbola helpers.  The extra min_abs argument lets the
+ * caller supply a tolerance floor that was read once per tessellation
+ * via prim_min_abs_tol(), avoiding repeated getenv() calls inside the
+ * recursive subdivision.  The public API (rt_mk_parabola / rt_mk_hyperbola
+ * in rpc.c / rhc.c) simply delegates to these with the caller's min_abs;
+ * the deprecated _old wrappers pass SMALL_FASTF to preserve original
+ * behavior. */
+extern int _rt_mk_parabola(struct rt_pnt_node *pts, fastf_t r, fastf_t b,
+	fastf_t dtol, fastf_t ntol, fastf_t min_abs);
+extern int _rt_mk_hyperbola(struct rt_pnt_node *pts, fastf_t r, fastf_t b,
+	fastf_t c, fastf_t dtol, fastf_t ntol, fastf_t min_abs);
 
 extern fastf_t primitive_get_absolute_tolerance(
 	const struct bg_tess_tol *ttol,
 	fastf_t rel_to_abs);
+
+extern void primitive_clamp_tess_tol(
+	fastf_t *dtol,
+	fastf_t *ntol,
+	fastf_t bbox_diag);
 
 extern fastf_t primitive_diagonal_samples(
 	struct rt_db_internal *ip,
