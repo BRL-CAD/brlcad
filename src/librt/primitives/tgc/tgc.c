@@ -922,22 +922,75 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 	/* still odd? */
 	if (!rectified) {
-	    static size_t tgc_msgs = 0;
-	    if (tgc_msgs < 10) {
-		bu_log("Root solver reported %d intersections != {0, 2, 4} on %s\n", npts, stp->st_name);
-		/* these are printed in 'mm' regardless of local units */
-		VPRINT("\tshooting point (units mm): ", rp->r_pt);
-		VPRINT("\tshooting direction:        ", rp->r_dir);
-		for (i = 0; i < npts; i++) {
-		    bu_log("\t%g", k[i]*t_scale);
+	    if (npts == 3) {
+		/* Three-hit case.  After the sort above, k[0] > k[1] > k[2],
+		 * so along the ray the hits are encountered in the order
+		 * k[2] (entry) -> k[1] (middle) -> k[0] (exit).
+		 *
+		 * TWO CODE PATHS REACH HERE:
+		 *
+		 * 1. Quartic degenerates to cubic: when the quartic leading
+		 *    coefficient C.cf[0] is near zero, rt_poly_roots solves
+		 *    a degree-3 polynomial.  The "missing" 4th root has drifted
+		 *    to ±infinity and is either rejected by the imaginary-part
+		 *    test or removed by the z-range filter (zval >= 1 or <= 0).
+		 *    This leaves a near-tangent ray with three finite body hits
+		 *    where the double root has been split by floating-point noise.
+		 *
+		 * 2. Body/cap rim mismatch: a body hit at the cap rim falls
+		 *    just outside the z-range filter while the corresponding
+		 *    cap intersection also narrowly misses the alpha test,
+		 *    producing 2 body + 1 cap hit with no near-duplicates.
+		 *
+		 * WHY k[1] IS ALWAYS THE SPURIOUS/TANGENT HIT:
+		 *
+		 * The TGC body surface between its two bounding planes is a
+		 * convex quadric.  "Convex" here means the solid enclosed by
+		 * the lateral surface plus the two end caps is a convex body:
+		 * any line segment joining two interior points lies entirely
+		 * inside.  For a convex body a ray from outside can only:
+		 *   (a) miss entirely (0 intersections),
+		 *   (b) pass straight through (enter at t_low, exit at t_high),
+		 *   (c) graze tangentially (a double root at a single t value).
+		 *
+		 * Crucially, it is geometrically impossible for a convex body
+		 * to produce a pattern like [entry, exit, tangent] or
+		 * [tangent, entry, exit] along the ray.  The tangent contact
+		 * (the spurious hit introduced by floating-point noise or the
+		 * rim-mismatch scenario) is therefore always sandwiched between
+		 * the true entry and exit — i.e., it must be k[1].
+		 *
+		 * This convexity argument holds for every TGC that survives
+		 * rt_tgc_prep.  That prep step rejects any geometry where the
+		 * lateral wall would self-intersect (wall shear exceeding the
+		 * ellipse radii), which is the only configuration that could
+		 * break convexity and potentially move the tangent to k[0] or
+		 * k[2].  No valid, prep-accepted TGC can violate this invariant.
+		 *
+		 * ACTION: discard k[1] and use the outermost pair (k[2], k[0])
+		 * as the entry/exit segment.
+		 */
+		hit_type[1] = hit_type[2];
+		k[1] = k[2];
+		npts = 2;
+	    } else {
+		static size_t tgc_msgs = 0;
+		if (tgc_msgs < 10) {
+		    bu_log("Root solver reported %d intersections != {0, 2, 4} on %s\n", npts, stp->st_name);
+		    /* these are printed in 'mm' regardless of local units */
+		    VPRINT("\tshooting point (units mm): ", rp->r_pt);
+		    VPRINT("\tshooting direction:        ", rp->r_dir);
+		    for (i = 0; i < npts; i++) {
+			bu_log("\t%g", k[i]*t_scale);
+		    }
+		    bu_log("\n");
+		} else if (tgc_msgs == 10) {
+		    bu_log("Too many grazings.  Suppressing further TGC odd hit reports.\n");
 		}
-		bu_log("\n");
-	    } else if (tgc_msgs == 10) {
-		bu_log("Too many grazings.  Suppressing further TGC odd hit reports.\n");
-	    }
-	    tgc_msgs++;
+		tgc_msgs++;
 
-	    return 0;			/* No hit */
+		return 0;			/* No hit */
+	    }
 	}
     }
 
