@@ -19,6 +19,7 @@ set(
   draw_e_erase_d_who.mged
   draw.mged
   erase.mged
+  exists.mged
   extrude.mged
   eye_pt.mged
   facedef.mged

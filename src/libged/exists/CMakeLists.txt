@@ -1,4 +1,4 @@
-set(PLUGIN_LIBS libged libbu)
+set(PLUGIN_LIBS libged librt libbu ${M_LIBRARY})
 
 ged_plugin_library(ged-exists
   exists.c

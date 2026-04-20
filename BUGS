@@ -358,8 +358,6 @@ Recent Bugs
 * src/librt/primitives/bot/g_bot_include.c:rt_bot_bbox() routine isn't
   calculating the bbox correctly
 
-* 'exists' command documentation claims more than has been implemented
-
 * rtxray crashes if you specify a -o *.bw output file due to
   assumptions in the rt front-end that all output files are .pix
 

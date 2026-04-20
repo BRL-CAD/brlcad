@@ -19,9 +19,9 @@
  */
 /** @file libged/exists.c
  *
- * The exist command.
+ * The exists command.
  *
- * Based on public domein code from:
+ * Based on public domain code from:
  * NetBSD: test.c, v 1.38 2011/08/29 14:51:19 joerg
  *
  * test(1); version 7-like -- author Erik Baalbergen
@@ -53,6 +53,11 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/malloc.h"
+#include "rt/calc.h"
+#include "rt/db5.h"
+#include "rt/db_io.h"
+#include "rt/directory.h"
 
 #include "../ged_private.h"
 
@@ -162,9 +167,6 @@ static int primary(enum token, struct exists_data *);
 static int binop(struct exists_data *);
 static int isoperand(struct exists_data *);
 
-int db_object_exists(struct exists_data *);
-int db_object_exists_and_non_null(struct exists_data *);
-
 #define VTOC(x) (const unsigned char *)((const struct t_op *)x)->op_text
 
 static int
@@ -227,7 +229,18 @@ t_lex(char *s, struct exists_data *ed)
 	    return (enum token)op->op_num;
 	}
     }
-    if (strlen(*(ed->t_wp)) > 0 && !op && !ed->t_wp_op) {
+    if (strlen(*(ed->t_wp)) > 0 && !op) {
+	/* bare operand: if the next token is a binary operator, treat
+	 * this as OPERAND so primary() can dispatch to binop() */
+	char *next = *((ed->t_wp)+1);
+	if (next != NULL) {
+	    const struct t_op *next_op = findop(next);
+	    if (next_op != NULL && next_op->op_type == BINOP) {
+		ed->t_wp_op = NULL;
+		return OPERAND;
+	    }
+	}
+	/* otherwise treat as implicit -N (non-null existence check) */
 	ed->t_wp_op = findop("-N");
 	ed->no_op = 1;
 	return (enum token)ed->t_wp_op->op_num;
@@ -298,8 +311,155 @@ isoperand(struct exists_data *ed)
 }
 
 
-/* The code below starts the part that still needs reworking for the
- * new geometry based tokens/logic */
+/* ------------------------------------------------------------------ */
+/* Object helper functions                                             */
+/* ------------------------------------------------------------------ */
+
+/* Look up an object by name.  Returns NULL if not found.             */
+static struct directory *
+exists_lookup(struct exists_data *ed, const char *name)
+{
+    return db_lookup(ed->gedp->dbip, name, LOOKUP_QUIET);
+}
+
+
+/* Get the raw external (on-disk) representation for an object.
+ * Caller must call bu_free_external(&ext) when done.
+ * Returns 0 on success, -1 on failure.                               */
+static int
+exists_get_external(struct exists_data *ed,
+		    const char *name,
+		    struct bu_external *ext)
+{
+    struct directory *dp = exists_lookup(ed, name);
+    if (!dp) return -1;
+    BU_EXTERNAL_INIT(ext);
+    if (db_get_external(ext, dp, ed->gedp->dbip) < 0) {
+	bu_free_external(ext);
+	return -1;
+    }
+    return 0;
+}
+
+
+/* Parse the body of an external v5 object record into a bu_external that
+ * wraps (does NOT own) the body bytes within the already-fetched ext.
+ * Returns 0 on success, -1 if parsing fails.
+ * The returned 'body' shares memory with 'ext'; do NOT bu_free_external(body).
+ */
+static int
+exists_get_body(const struct bu_external *ext, struct bu_external *body)
+{
+    struct db5_raw_internal raw;
+    if (db5_get_raw_internal_ptr(&raw, (const unsigned char *)ext->ext_buf) == NULL)
+	return -1;
+    /* raw.body is a bu_external that aliases into ext->ext_buf */
+    body->ext_nbytes = raw.body.ext_nbytes;
+    body->ext_buf    = raw.body.ext_buf;
+    return 0;
+}
+
+
+/* Compute the bounding-box volume for a named object using rt_obj_bounds.
+ * Returns 0 and sets *vol on success, -1 on failure.                 */
+static int
+exists_bbox_vol(struct exists_data *ed, const char *name, double *vol)
+{
+    point_t rpp_min, rpp_max;
+    struct bu_vls msgs = BU_VLS_INIT_ZERO;
+    const char *argv[2];
+
+    VSETALL(rpp_min, MAX_FASTF);
+    VREVERSE(rpp_max, rpp_min);
+
+    argv[0] = name;
+    argv[1] = NULL;
+
+    if (rt_obj_bounds(&msgs, ed->gedp->dbip, 1, argv, 0, rpp_min, rpp_max) < 0) {
+	bu_vls_free(&msgs);
+	return -1;
+    }
+    bu_vls_free(&msgs);
+
+    *vol = (rpp_max[0] - rpp_min[0])
+	 * (rpp_max[1] - rpp_min[1])
+	 * (rpp_max[2] - rpp_min[2]);
+    return 0;
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Unary primary implementations                                       */
+/* ------------------------------------------------------------------ */
+
+/* -e: exists via db_lookup (no null check) */
+static int
+exists_obj_exists(struct exists_data *ed)
+{
+    return (exists_lookup(ed, *(ed->t_wp)) != NULL) ? 1 : 0;
+}
+
+
+/* -N (bare name): exists and has on-disk data (not a phony placeholder) */
+static int
+exists_obj_non_null(struct exists_data *ed)
+{
+    struct directory *dp = exists_lookup(ed, *(ed->t_wp));
+    if (!dp) return 0;
+    /* A phony address means the entry was added to the directory but
+     * has not yet been written to disk - treat as null.              */
+    if (dp->d_addr == RT_DIR_PHONY_ADDR) return 0;
+    return 1;
+}
+
+
+/* -n: exists but IS a phony/null directory entry */
+static int
+exists_obj_null(struct exists_data *ed)
+{
+    struct directory *dp = exists_lookup(ed, *(ed->t_wp));
+    if (!dp) return 0;
+    return (dp->d_addr == RT_DIR_PHONY_ADDR) ? 1 : 0;
+}
+
+
+/* -c: exists and is a combination */
+static int
+exists_obj_comb(struct exists_data *ed)
+{
+    struct directory *dp = exists_lookup(ed, *(ed->t_wp));
+    if (!dp) return 0;
+    return (dp->d_flags & RT_DIR_COMB) ? 1 : 0;
+}
+
+
+/* -p: exists and is a geometric primitive (solid) */
+static int
+exists_obj_prim(struct exists_data *ed)
+{
+    struct directory *dp = exists_lookup(ed, *(ed->t_wp));
+    if (!dp) return 0;
+    if (!(dp->d_flags & RT_DIR_SOLID)) return 0;
+    if (dp->d_flags & RT_DIR_NON_GEOM) return 0;
+    return 1;
+}
+
+
+/* -v: exists and bounding box has non-zero volume */
+static int
+exists_obj_vol(struct exists_data *ed)
+{
+    double vol = 0.0;
+    if (exists_lookup(ed, *(ed->t_wp)) == NULL) return 0;
+    if (exists_bbox_vol(ed, *(ed->t_wp), &vol) < 0) return 0;
+    return !NEAR_ZERO(vol, SMALL_FASTF) ? 1 : 0;
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Grammar engine                                                      */
+/* ------------------------------------------------------------------ */
+
 static int
 primary(enum token n, struct exists_data *ed)
 {
@@ -310,11 +470,13 @@ primary(enum token n, struct exists_data *ed)
 	return 0;               /* missing expression */
     if (n == LPAREN) {
 	ed->t_wp_op = NULL;
-	if ((nn = t_lex(*++(ed->t_wp), ed)) == RPAREN)
-	    return 0;       /* missing expression */
+	if ((nn = t_lex(*++(ed->t_wp), ed)) == RPAREN) {
+	    bu_vls_printf(ed->message, "missing expression inside ()");
+	    return 0;
+	}
 	res = oexpr(nn, ed);
 	if (t_lex(*++(ed->t_wp), ed) != RPAREN) {
-	    bu_vls_printf(ed->message , "closing paren expected");
+	    bu_vls_printf(ed->message, "closing paren expected");
 	    return 0;
 	}
 	return res;
@@ -323,35 +485,24 @@ primary(enum token n, struct exists_data *ed)
 	/* unary expression */
 	if (!ed->no_op) {
 	    if (*++(ed->t_wp) == NULL) {
-		bu_vls_printf(ed->message , "argument expected");
+		bu_vls_printf(ed->message, "argument expected");
 		return 0;
 	    }
 	}
 	switch (n) {
-	    case OCOMB:
-		bu_log("comb case");
-		return 0;
-	    case OEXIST:
-		return db_object_exists(ed);
-		/*return db_lookup();*/
-	    case ONULL:
-		bu_log("null case");
-		return 0;
-	    case ONNULL:
-		/* default case */
-		return db_object_exists_and_non_null(ed);
-	    case OPRIM:
-		bu_log("primitive case");
-		return 0;
-	    case OBVOL:
-		bu_log("bounding volume case");
-		return 0;
+	    case OCOMB:  return exists_obj_comb(ed);
+	    case OEXIST: return exists_obj_exists(ed);
+	    case ONULL:  return exists_obj_null(ed);
+	    case ONNULL: return exists_obj_non_null(ed);
+	    case OPRIM:  return exists_obj_prim(ed);
+	    case OBVOL:  return exists_obj_vol(ed);
 	    default:
 		/* not reached */
 		return 0;
 	}
     }
 
+    /* bare operand: may be first arg of a binary expression */
     if (t_lex(ed->t_wp[1], ed), ed->t_wp_op && ed->t_wp_op->op_type == BINOP) {
 	return binop(ed);
     }
@@ -363,77 +514,104 @@ primary(enum token n, struct exists_data *ed)
 static int
 binop(struct exists_data *ed)
 {
-    const char /**opnd1, */*opnd2;
+    const char *opnd1;
+    const char *opnd2;
     struct t_op const *op;
 
-    /* opnd1 = *(ed->t_wp); */
+    opnd1 = *(ed->t_wp);
     (void) t_lex(*++(ed->t_wp), ed);
     op = ed->t_wp_op;
 
     opnd2 = *++(ed->t_wp);
     if (opnd2 == NULL) {
-	bu_vls_printf(ed->message , "argument expected");
+	bu_vls_printf(ed->message, "argument expected after '%s'", op->op_text);
 	return 0;
     }
 
     switch (op->op_num) {
 	case EXTEQ:
-	    bu_log("extern eq case");
-	    return 0;
 	case EXTNE:
-	    bu_log("extern neq case");
-	    return 0;
 	case EXTLT:
-	    bu_log("extern lt case");
-	    return 0;
-	case EXTGT:
-	    bu_log("extern gt case");
-	    return 0;
+	case EXTGT: {
+	    /* Compare the geometry-body of the serialised on-disk records.
+	     * Using the body (not the full external) means name differences
+	     * do not affect equality; two objects with the same geometry
+	     * but different names compare as equal.                        */
+	    struct bu_external ext1, ext2;
+	    struct bu_external body1, body2;
+	    int ok1, ok2, result = 0;
+
+	    ok1 = exists_get_external(ed, opnd1, &ext1);
+	    ok2 = exists_get_external(ed, opnd2, &ext2);
+
+	    if (ok1 < 0 || ok2 < 0) {
+		if (ok1 == 0) bu_free_external(&ext1);
+		if (ok2 == 0) bu_free_external(&ext2);
+		return 0;
+	    }
+
+	    if (exists_get_body(&ext1, &body1) < 0 ||
+		exists_get_body(&ext2, &body2) < 0)
+	    {
+		bu_free_external(&ext1);
+		bu_free_external(&ext2);
+		return 0;
+	    }
+
+	    switch (op->op_num) {
+		case EXTEQ:
+		    result = (body1.ext_nbytes == body2.ext_nbytes
+			     && memcmp(body1.ext_buf, body2.ext_buf,
+				       body1.ext_nbytes) == 0) ? 1 : 0;
+		    break;
+		case EXTNE:
+		    result = (body1.ext_nbytes != body2.ext_nbytes
+			     || memcmp(body1.ext_buf, body2.ext_buf,
+				       body1.ext_nbytes) != 0) ? 1 : 0;
+		    break;
+		case EXTLT:
+		    result = (body1.ext_nbytes < body2.ext_nbytes) ? 1 : 0;
+		    break;
+		case EXTGT:
+		    result = (body1.ext_nbytes > body2.ext_nbytes) ? 1 : 0;
+		    break;
+		default:
+		    break;
+	    }
+
+	    bu_free_external(&ext1);
+	    bu_free_external(&ext2);
+	    return result;
+	}
+
 	case BVOLEQ:
-	    bu_log("vol eq case");
-	    return 0;
 	case BVOLNE:
-	    bu_log("vol neq case");
-	    return 0;
 	case BVOLGE:
-	    bu_log("vol geq case");
-	    return 0;
 	case BVOLGT:
-	    bu_log("vol gt case");
-	    return 0;
 	case BVOLLE:
-	    bu_log("vol leq case");
-	    return 0;
-	case BVOLLT:
-	    bu_log("vol lt case");
-	    return 0;
+	case BVOLLT: {
+	    /* Compare bounding-box volumes */
+	    double vol1 = 0.0, vol2 = 0.0;
+
+	    if (exists_lookup(ed, opnd1) == NULL ||
+		exists_lookup(ed, opnd2) == NULL)
+		return 0;
+	    if (exists_bbox_vol(ed, opnd1, &vol1) < 0) return 0;
+	    if (exists_bbox_vol(ed, opnd2, &vol2) < 0) return 0;
+
+	    switch (op->op_num) {
+		case BVOLEQ: return NEAR_EQUAL(vol1, vol2, SMALL_FASTF) ? 1 : 0;
+		case BVOLNE: return !NEAR_EQUAL(vol1, vol2, SMALL_FASTF) ? 1 : 0;
+		case BVOLGT: return (vol1 > vol2 + SMALL_FASTF) ? 1 : 0;
+		case BVOLGE: return (vol1 >= vol2 - SMALL_FASTF) ? 1 : 0;
+		case BVOLLT: return (vol1 < vol2 - SMALL_FASTF) ? 1 : 0;
+		case BVOLLE: return (vol1 <= vol2 + SMALL_FASTF) ? 1 : 0;
+		default: return 0;
+	    }
+	}
+
 	default:
 	    return 0;
-	    /* NOTREACHED */
-    }
-}
-
-
-/* test functions */
-int db_object_exists(struct exists_data *ed)
-{
-    struct directory *dp = NULL;
-    dp = db_lookup(ed->gedp->dbip, *(ed->t_wp), LOOKUP_QUIET);
-    if (dp) return 1;
-    return 0;
-}
-
-
-int db_object_exists_and_non_null(struct exists_data *ed)
-{
-    int result;
-    result = db_object_exists(ed);
-    if (result) {
-	/* db_lookup passes: todo - check for null database object */
-	return result;
-    } else {
-	/* db_lookup fails - no go */
-	return result;
     }
 }
 
@@ -444,12 +622,11 @@ int db_object_exists_and_non_null(struct exists_data *ed)
 int
 ged_exists_core(struct ged *gedp, int argc, const char *argv_orig[])
 {
-    /* struct directory *dp;*/
-    static const char *usage = "object";
+    static const char *usage = "expression [expression]...";
     struct exists_data ed = EXISTS_DATA_INIT_ZERO;
     struct bu_vls message = BU_VLS_INIT_ZERO;
     int result;
-    char **argv = bu_argv_dup(argc, argv_orig);
+    char **argv;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -463,29 +640,32 @@ ged_exists_core(struct ged *gedp, int argc, const char *argv_orig[])
 	return GED_HELP;
     }
 
+    argv = bu_argv_dup(argc, argv_orig);
+
     ed.t_wp = &argv[1];
     ed.gedp = gedp;
     ed.t_wp_op = NULL;
     ed.message = &message;
     result = oexpr(t_lex(*(ed.t_wp), &ed), &ed);
 
-    if (result)
-	bu_vls_printf(gedp->ged_result_str, "1");
-    else
-	bu_vls_printf(gedp->ged_result_str, "0");
+    /* check for leftover tokens - indicates a malformed expression */
+    if (bu_vls_strlen(&message) == 0
+	&& *(ed.t_wp) != NULL && *++(ed.t_wp) != NULL)
+    {
+	bu_vls_printf(&message, "unexpected token '%s'", *(ed.t_wp));
+    }
 
-    if (bu_vls_strlen(ed.message) > 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(ed.message));
+    bu_argv_free(argc, argv);
+
+    if (bu_vls_strlen(&message) > 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&message));
 	bu_vls_free(&message);
 	return BRLCAD_ERROR;
     }
 
     bu_vls_free(&message);
-    if (*(ed.t_wp) != NULL && *++(ed.t_wp) != NULL) {
-	return BRLCAD_ERROR;
-    } else {
-	return BRLCAD_OK;
-    }
+    bu_vls_printf(gedp->ged_result_str, "%d", result);
+    return BRLCAD_OK;
 }
 
 

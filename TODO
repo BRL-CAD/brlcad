@@ -1708,14 +1708,6 @@ LIBGED
 * killall command reports db_lookup failures if the target object
   doesn't exist (maybe we only care about refs).  should keep quiet.
 
-* the new "exists" command is a beautiful corollary to the unix 'test'
-  command.  make the usage match, remove options that make no sense
-  after you've replaced instances of 'file' with 'object', and add
-  options specific to testing geometry (like whether two objects
-  overlap, whether an object's volume is greater than some value or
-  equal to zero, whether two objects are actually the same object
-  (geometrically), etc.).
-
 * replace sed and oed commands: functionality provided by new 'edit'
   command, but requires testing (unit tests) to make sure it's working
   correctly.

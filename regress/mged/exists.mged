@@ -1,0 +1,158 @@
+puts "*** Testing 'exists' command ***"
+
+# -------------------------------------------------------------------
+# Setup: create representative objects
+# -------------------------------------------------------------------
+# A volumetric solid (sphere)
+in_sph exists
+# A combination
+r exists_comb.r u exists_sph.s
+# A 2D sketch (should not be volumetric)
+in_sketch exists
+# A copy of the sphere (for binary comparisons)
+cp exists_sph.s exists_sph2.s
+
+proc chk_true {label expr} {
+    set val [uplevel 1 [list exists {*}$expr]]
+    if {$val != 1} {
+        error "FAIL $label: expected 1, got $val (expr: $expr)"
+    }
+    puts "  PASS $label"
+}
+
+proc chk_false {label expr} {
+    set val [uplevel 1 [list exists {*}$expr]]
+    if {$val != 0} {
+        error "FAIL $label: expected 0, got $val (expr: $expr)"
+    }
+    puts "  PASS $label"
+}
+
+proc chk_error {label expr} {
+    if {[catch {uplevel 1 [list exists {*}$expr]} msg] == 0} {
+        # command returned a value instead of raising an error
+        error "FAIL $label: expected error but got '$msg' (expr: $expr)"
+    }
+    puts "  PASS $label (error as expected)"
+}
+
+# -------------------------------------------------------------------
+# 1. Basic existence: bare name (implicit -N / non-null check)
+# -------------------------------------------------------------------
+puts "1. Bare name tests"
+chk_true  "1.1 existing solid"        {exists_sph.s}
+chk_false "1.2 nonexistent object"    {no_such_object_xyz}
+
+# -------------------------------------------------------------------
+# 2. -e (plain existence via db_lookup)
+# -------------------------------------------------------------------
+puts "2. -e (plain existence)"
+chk_true  "2.1 -e existing solid"     {-e exists_sph.s}
+chk_false "2.2 -e missing object"     {-e no_such_object_xyz}
+
+# -------------------------------------------------------------------
+# 3. -c (combination)
+# -------------------------------------------------------------------
+puts "3. -c (combination)"
+chk_true  "3.1 -c comb"              {-c exists_comb.r}
+chk_false "3.2 -c solid (not comb)"  {-c exists_sph.s}
+chk_false "3.3 -c missing"           {-c no_such_object_xyz}
+
+# -------------------------------------------------------------------
+# 4. -p (geometric primitive)
+# -------------------------------------------------------------------
+puts "4. -p (primitive)"
+chk_true  "4.1 -p solid"             {-p exists_sph.s}
+chk_false "4.2 -p comb (not prim)"   {-p exists_comb.r}
+chk_false "4.3 -p missing"           {-p no_such_object_xyz}
+
+# -------------------------------------------------------------------
+# 5. -v (non-zero bounding volume)
+# -------------------------------------------------------------------
+puts "5. -v (volumetric)"
+chk_true  "5.1 -v sphere"            {-v exists_sph.s}
+chk_false "5.2 -v sketch (2D)"       {-v exists_sketch}
+chk_false "5.3 -v missing"           {-v no_such_object_xyz}
+
+# -------------------------------------------------------------------
+# 6. -n (null/phony directory entry) - normal objects are NOT null
+# -------------------------------------------------------------------
+puts "6. -n (null object)"
+chk_false "6.1 -n solid (not null)"  {-n exists_sph.s}
+chk_false "6.2 -n missing"           {-n no_such_object_xyz}
+
+# -------------------------------------------------------------------
+# 7. Binary: = and != (external content equality)
+# -------------------------------------------------------------------
+puts "7. = and != (external equality)"
+chk_true  "7.1 sph = copy of sph"    {exists_sph.s = exists_sph2.s}
+chk_false "7.2 sph = comb"           {exists_sph.s = exists_comb.r}
+chk_false "7.3 != same objects"      {exists_sph.s != exists_sph2.s}
+chk_true  "7.4 != different objects" {exists_sph.s != exists_comb.r}
+chk_false "7.5 = with missing obj"   {exists_sph.s = no_such_object_xyz}
+
+# -------------------------------------------------------------------
+# 8. Binary: < and > (serialised size comparison)
+# -------------------------------------------------------------------
+puts "8. < and > (serialised size)"
+# A combination will be larger than a simple sphere in general, but
+# sizes are implementation-dependent; just verify they don't crash
+# and that self-comparison is never strictly < or >.
+chk_false "8.1 sph < sph (equal)"    {exists_sph.s < exists_sph.s}
+chk_false "8.2 sph > sph (equal)"    {exists_sph.s > exists_sph.s}
+chk_false "8.3 < with missing obj"   {exists_sph.s < no_such_object_xyz}
+
+# -------------------------------------------------------------------
+# 9. Binary bbox volume comparisons (-beq/-bne/-bgt/-bge/-blt/-ble)
+# -------------------------------------------------------------------
+puts "9. bbox volume comparisons"
+chk_true  "9.1 sph -beq copy-of-sph"  {exists_sph.s -beq exists_sph2.s}
+chk_false "9.2 sph -bne copy-of-sph"  {exists_sph.s -bne exists_sph2.s}
+chk_false "9.3 sph -bgt copy-of-sph"  {exists_sph.s -bgt exists_sph2.s}
+chk_false "9.4 sph -blt copy-of-sph"  {exists_sph.s -blt exists_sph2.s}
+chk_true  "9.5 sph -bge copy-of-sph"  {exists_sph.s -bge exists_sph2.s}
+chk_true  "9.6 sph -ble copy-of-sph"  {exists_sph.s -ble exists_sph2.s}
+chk_false "9.7 -beq with missing obj" {exists_sph.s -beq no_such_object_xyz}
+
+# -------------------------------------------------------------------
+# 10. Logical operators: ! -a -o
+# -------------------------------------------------------------------
+puts "10. Logical operators"
+chk_false "10.1 ! existing"           {! exists_sph.s}
+chk_true  "10.2 ! nonexistent"        {! no_such_object_xyz}
+chk_true  "10.3 -a both true"         {exists_sph.s -a exists_comb.r}
+chk_false "10.4 -a one false"         {exists_sph.s -a no_such_object_xyz}
+chk_true  "10.5 -o first true"        {exists_sph.s -o no_such_object_xyz}
+chk_true  "10.6 -o second true"       {no_such_object_xyz -o exists_sph.s}
+chk_false "10.7 -o both false"        {no_such_object_xyz -o no_such_object_xyz2}
+
+# -------------------------------------------------------------------
+# 11. Parentheses and mixed precedence
+# -------------------------------------------------------------------
+puts "11. Parentheses and precedence"
+chk_true  "11.1 (true)"   [list {(} exists_sph.s {)}]
+chk_false "11.2 (false)"  [list {(} no_such_object_xyz {)}]
+# -a binds tighter than -o: (false -a true) -o true => false -o true => true
+chk_true  "11.3 false -a true -o true" \
+    {no_such_object_xyz -a exists_sph.s -o exists_comb.r}
+# ( true -o false ) -a false => true -a false => false
+chk_false "11.4 ( true -o false ) -a false" \
+    [list {(} exists_sph.s -o no_such_object_xyz {)} -a no_such_object_xyz]
+chk_true  "11.5 -c -a -e combined" \
+    {-c exists_comb.r -a -e exists_sph.s}
+
+# -------------------------------------------------------------------
+# 12. Error / edge cases
+# -------------------------------------------------------------------
+puts "12. Error and edge cases"
+# Per POSIX test(1) semantics: a lone '-e' with no operand is treated
+# as a bare string operand ("is '-e' non-null in the database?"), which
+# returns 0 (no such object) without an error.
+chk_false "12.1 bare -e (no operand)"   [list -e]
+chk_false "12.2 bare -c (no operand)"   [list -c]
+# Unclosed paren IS a parse error
+chk_error "12.3 unclosed paren"         [list {(} exists_sph.s]
+# Extra token IS a parse error
+chk_error "12.4 extra token"            {exists_sph.s exists_comb.r}
+
+puts "*** 'exists' testing completed ***"

@@ -4,7 +4,7 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-exists - The *exists* command evaluates an expression and return 1 if true, zero if false. It serves roughly the same purpose for objects in a BRL-CAD database that the UNIX test command serves for files on a file system, with additional features specific to geometry and minus some of the filesystem specific options of test.
+exists - The *exists* command evaluates an expression and returns 1 if true, 0 if false. It serves roughly the same purpose for objects in a BRL-CAD database that the UNIX test command serves for files on a file system, with additional features specific to geometry.
 
 == SYNOPSIS
 
@@ -17,7 +17,11 @@ exists {expression} [expression]...
 [[description]]
 == DESCRIPTION
 
-*exists* works in a fashion similar to Unix-style test commands (internally it is based on NetBSD's test code) but tests _objects_ in the current open database rather than files in a file system. If an object matching a valid expression or expressions is found 1 is returned, otherwise 0 is returned. Expressions are formed using <<primaries,PRIMARIES>> and <<operators,OPERATORS>>. A simple object name with no primaries or operators will return true if db_lookup succeeds and the object is non-null (TODO).
+*exists* evaluates boolean expressions about objects in the currently open database, returning 1 (true) or 0 (false). It is modelled on Unix-style *test(1)* commands (internally based on NetBSD's test code), but tests _objects_ rather than files.
+
+Expressions are built from <<primaries,PRIMARIES>> and <<operators,OPERATORS>>. A bare object name with no primary or operator returns true if the object exists in the database and is not a phony placeholder (same as *-N*).
+
+On a parse error (e.g. missing operand, unmatched parenthesis) the command returns an error status and writes a diagnostic message rather than 0.
 
 
 [[primaries]]
@@ -25,63 +29,63 @@ exists {expression} [expression]...
 
 
 *-c* _object_::
-Returns TRUE if the object is a combination
+Returns TRUE if _object_ exists and is a combination.
 
 
 *-e* _object_::
-Returns TRUE if the object exists. This reports only the results of db_lookup without doing any further testing to check for null objects, and constitutes the most basic existence test available for a database object.
+Returns TRUE if _object_ exists. This reports only the result of `db_lookup` without further checking, and is the most basic existence test.
 
 
 *-n* _object_::
-Returns TRUE if the object exists and is a NULL database object. **TODO**
+Returns TRUE if _object_ exists in the directory but is a phony placeholder (its `d_addr` is `RT_DIR_PHONY_ADDR`, meaning it has been added to the directory but not yet written to disk). Ordinary objects are never null.
 
 
 *-p* _object_::
-Returns TRUE if the object exists and is a geometric primitive. (Empty geometric primitives and 2D primitives like sketch will pass.)
+Returns TRUE if _object_ exists and is a geometric primitive (i.e. it has the solid flag set and is not a non-geometry object). Empty geometric primitives and 2D primitives like *sketch* pass this test.
 
 
 *-v* _object_::
-Returns TRUE if the object exists and has a bounding box with non-zero volume. (A sketch primitive would not pass this test.)
+Returns TRUE if _object_ exists and its axis-aligned bounding box has non-zero volume. A sketch primitive (2D) does not pass this test; neither does a missing object.
 
 
 _object1_ *=* _object2_::
-Returns TRUE if the objects exist and their serialized binary contents are equal.
+Returns TRUE if both objects exist and the serialised geometry bodies of both objects are identical (same length and same bytes). The object name is excluded from the comparison, so a direct copy of an object using *cp* will compare as equal.
 
 
 _object1_ *!=* _object2_::
-Returns TRUE if the objects exist and their serialized binary contents are not equal.
+Returns TRUE if both objects exist and their serialised geometry bodies differ (different length or at least one differing byte).
 
 
 _object1_ *<* _object2_::
-Returns TRUE if the objects exist and the size of the serialized binary representation of object1 is less than the size of the serialized binary representation of object 2.
+Returns TRUE if both objects exist and the size (in bytes) of the serialised geometry body of _object1_ is less than that of _object2_.
 
 
 _object1_ *>* _object2_::
-Returns TRUE if the objects exist and the size of the serialized binary representation of object1 is greater than the size of the serialized binary representation of object 2.
+Returns TRUE if both objects exist and the size (in bytes) of the serialised geometry body of _object1_ is greater than that of _object2_.
 
 
-_object1_ *beq* _object2_::
-Returns TRUE if the objects exist and their bounding box volumes are equal. *TODO* - eventually, when the right APIs become available, an "-req" option will be added for a more-expensive-but-more-accurate raytrace based volumetric comparison as well.
+_object1_ *-beq* _object2_::
+Returns TRUE if both objects exist and the volumes of their bounding boxes are equal (within floating-point tolerance).
 
 
-_object1_ *bne* _object2_::
-Returns TRUE if the objects exist and their bounding box volumes are not equal. *TODO* - eventually, when the right APIs become available, a "-rne" option will be added for a more-expensive-but-more-accurate raytrace based volumetric comparison as well.
+_object1_ *-bne* _object2_::
+Returns TRUE if both objects exist and the volumes of their bounding boxes are not equal.
 
 
-_object1_ *bgt* _object2_::
-Returns TRUE if the objects exist and the volume of the bounding box of object1 is greater than the volume of the bounding box for object2. *TODO* - eventually, when the right APIs become available, an "-rgt" option will be added for a more-expensive-but-more-accurate raytrace based volumetric comparison as well.
+_object1_ *-bgt* _object2_::
+Returns TRUE if both objects exist and the bounding-box volume of _object1_ is strictly greater than that of _object2_.
 
 
-_object1_ *bge* _object2_::
-Returns TRUE if the objects exist and the volume of the bounding box of object1 is greater than or equal to the volume of the bounding box for object2. *TODO* - eventually, when the right APIs become available, an "-rge" option will be added for a more-expensive-but-more-accurate raytrace based volumetric comparison as well.
+_object1_ *-bge* _object2_::
+Returns TRUE if both objects exist and the bounding-box volume of _object1_ is greater than or equal to that of _object2_.
 
 
-_object1_ *blt* _object2_::
-Returns TRUE if the objects exist and the volume of the bounding box of object1 is less than the volume of the bounding box for object2. *TODO* - eventually, when the right APIs become available, an "-rlt" option will be added for a more-expensive-but-more-accurate raytrace based volumetric comparison as well.
+_object1_ *-blt* _object2_::
+Returns TRUE if both objects exist and the bounding-box volume of _object1_ is strictly less than that of _object2_.
 
 
-_object1_ *ble* _object2_::
-Returns TRUE if the objects exist and the volume of the bounding box of object1 is less than or equal to the volume of the bounding box for object2. *TODO* - eventually, when the right APIs become available, an "-rle" option will be added for a more-expensive-but-more-accurate raytrace based volumetric comparison as well.
+_object1_ *-ble* _object2_::
+Returns TRUE if both objects exist and the bounding-box volume of _object1_ is less than or equal to that of _object2_.
 
 
 
@@ -97,11 +101,11 @@ True if _expression_ is false.
 
 
 _expression_ *-a* _expression_::
-The and operator operates like the logical AND operator - TRUE only if both expressions are true.
+The and operator - TRUE only if both expressions are true.
 
 
 _expression_ *-o* _expression_::
-The logical OR operator - true if either expression is true.
+The or operator - true if either expression is true.
 
 
 *(* _expression_ *)*::
@@ -115,7 +119,7 @@ The *-a* operator has higher precedence than the *-o* operator.
 [[a_note_on_expressions]]
 == A Note on Expressions
 
-All primaries and operands must be expressed as separate arguments to exists. In practice, this means that there must be a space between each element in a exists expression. E.g. !(-c object1.s -a (object1.s -beq object2.s)) must be written as:
+All primaries and operands must be expressed as separate arguments to exists. In practice, this means that there must be a space between each element in an exists expression. E.g. !(-c object1.s -a (object1.s -beq object2.s)) must be written as:
 
 ! ( -c object1.s -a ( object1.s -beq object2.s ) )
 
@@ -127,27 +131,47 @@ While this may seem like a rather verbose way of writing the expression, it grea
 
 The following are run from the MGED command prompt:
 
-.Example1
+.Check whether an object exists
 [example]
 ====
-
-
-
 ....
-
 mged> exists object1.s
-    
+1
 ....
+====
 
+.Check if an object is a combination
+[example]
+====
+....
+mged> exists -c object1.r
+1
+....
+====
 
+.Use logical operators
+[example]
+====
+....
+mged> exists -c object1.r -a -e object1.s
+1
+....
+====
 
+.Compare bounding-box volumes
+[example]
+====
+....
+mged> exists big_sphere.s -bgt small_sphere.s
+1
+....
 ====
 
 
 [[diagnostics]]
 == DIAGNOSTICS
 
-Errors will be returned if parsing of the arguments fails, or one of the primaries' evaluation functions returns an error.
+Returns 1 (true) or 0 (false) on success, and writes a diagnostic message to the result string while returning an error status on parse failures (missing operands, unmatched parentheses, or unexpected tokens).
 
 
 [[author]]
@@ -159,16 +183,11 @@ BRL-CAD Team
 [[copyright]]
 == COPYRIGHT
 
-This software is Copyright (c) 2008-2026 United States Government as represented by the U.S. Army Research Laboratory. Portions Copyright 1990, 1993, 1994 The Regents of the University of California, per copyright and license information from OpenBSD and NetBSD. For more details see the copyright statements in exists.c and exists.h .
-
-
-[[bugs]]
-== BUGS
-
-TODO.
+This software is Copyright (c) 2008-2026 United States Government as represented by the U.S. Army Research Laboratory. Portions Copyright 1990, 1993, 1994 The Regents of the University of California, per copyright and license information from OpenBSD and NetBSD. For more details see the copyright statements in exists.c.
 
 
 [[bug_reports]]
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
+
