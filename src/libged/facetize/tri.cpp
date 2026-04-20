@@ -28,6 +28,7 @@
 #include <set>
 #include <vector>
 #include <algorithm>
+#include <cmath>
 #include <sstream>
 #include <iostream>
 #include <fstream>
@@ -37,6 +38,7 @@
 
 #include "manifold/manifold.h"
 
+#include "bg/trimesh.h"
 #include "bu/app.h"
 #include "bu/path.h"
 #include "bu/snooze.h"
@@ -45,6 +47,10 @@
 #include "./ged_facetize.h"
 #include "./tess_opts.h"
 #include "./subprocess.h"
+
+static const size_t FACETIZE_EMPTY_CHECK_CROFTON_RAYS = 800u;
+static const double FACETIZE_EMPTY_CHECK_REL_VOL_TOL = 1.0e-9;
+static const double FACETIZE_EMPTY_CHECK_ABS_VOL_TOL = 1.0e-12;
 
 static int
 bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip, int flip)
@@ -145,9 +151,61 @@ static int bot_flipped(mat_t *m)
     return 0;
 }
 
+static double
+bot_bbox_volume(const struct rt_bot_internal *bot)
+{
+    if (!bot || !bot->vertices || bot->num_vertices < 1)
+	return 0.0;
+
+    point_t bmin, bmax;
+    VSETALL(bmin, INFINITY);
+    VSETALL(bmax, -INFINITY);
+    for (size_t i = 0; i < bot->num_vertices; i++) {
+	const double *v = &bot->vertices[3*i];
+	if (v[0] < bmin[0]) bmin[0] = v[0];
+	if (v[1] < bmin[1]) bmin[1] = v[1];
+	if (v[2] < bmin[2]) bmin[2] = v[2];
+	if (v[0] > bmax[0]) bmax[0] = v[0];
+	if (v[1] > bmax[1]) bmax[1] = v[1];
+	if (v[2] > bmax[2]) bmax[2] = v[2];
+    }
+
+    vect_t d;
+    VSUB2(d, bmax, bmin);
+    if (d[0] <= 0.0 || d[1] <= 0.0 || d[2] <= 0.0)
+	return 0.0;
+    return d[0] * d[1] * d[2];
+}
+
+static int
+csg_crofton_volume(struct db_i *dbip, const char *obj_name, double *out_vol)
+{
+    if (!dbip || !obj_name || !out_vol)
+	return BRLCAD_ERROR;
+
+    *out_vol = -1.0;
+    struct rt_i *rtip = rt_new_rti(dbip);
+    if (!rtip)
+	return BRLCAD_ERROR;
+    if (rt_gettree(rtip, obj_name) != 0) {
+	rt_free_rti(rtip);
+	return BRLCAD_ERROR;
+    }
+    rt_prep_parallel(rtip, 1);
+
+    double sa = 0.0, vol = 0.0;
+    struct rt_crofton_params crp = {FACETIZE_EMPTY_CHECK_CROFTON_RAYS, 0.0, 0.0};
+    int rc = rt_crofton_shoot(rtip, &crp, &sa, &vol);
+    rt_free_rti(rtip);
+    if (rc < 0)
+	return BRLCAD_ERROR;
+    *out_vol = vol;
+    return BRLCAD_OK;
+}
+
 // Customized version of rt_booltree_leaf_tess for Manifold processing
 static union tree *
-_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(data))
+_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *data)
 {
     int ts_status = 0;
     union tree *curtree;
@@ -201,11 +259,61 @@ _booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp,
     // to the values in ts_mat, the BoT ends up inside-out when read in.
     int flip = bot_flipped(&tsp->ts_mat);
 
+    // Phase C: variant BoT override.
+    // If a perturbed variant was pre-tessellated for this leaf instance, use
+    // it instead of the original BoT to avoid coplanar face issues.
+    struct rt_db_internal var_intern;
+    RT_DB_INTERNAL_INIT(&var_intern);
+    bool var_loaded = false;
+    struct rt_db_internal *effective_ip = ip;
+    struct _ged_facetize_state *s = (struct _ged_facetize_state *)data;
+    if (s && s->use_variant_plan && s->variant_plan) {
+	FacetizeVariantPlan *vplan = (FacetizeVariantPlan *)s->variant_plan;
+	char *path_str = db_path_to_string(pathp);
+	/* Reconstruct the same role-keyed key used in plan.cpp Phase C:
+	 * TS_SOFAR_MINUS is set when the leaf is on the subtractive side of
+	 * any boolean node encountered above it in the current walk. */
+	bool is_sub_ctx = (tsp->ts_sofar & TS_SOFAR_MINUS) != 0;
+	std::string role_key = std::string(path_str) +
+	    (is_sub_ctx ? "#sub" : "#base");
+	bu_free(path_str, "path_str");
+	auto it = vplan->inst_to_variant.find(role_key);
+	if (it != vplan->inst_to_variant.end()) {
+	    struct directory *vdp =
+		db_lookup(tsp->ts_dbip, it->second.c_str(), LOOKUP_QUIET);
+	    if (vdp && vdp->d_minor_type == ID_BOT) {
+		if (rt_db_get_internal(&var_intern, vdp, tsp->ts_dbip,
+				       NULL, tsp->ts_resp) >= 0) {
+		    effective_ip = &var_intern;
+		    var_loaded = true;
+		}
+	    }
+	    /* If variant lookup failed (no BoT yet), fall through to original */
+	}
+    }
+
     void *odata = NULL;
-    ts_status = bot_to_manifold(&odata, tsp, ip, flip);
+    ts_status = bot_to_manifold(&odata, tsp, effective_ip, flip);
+
+    if (var_loaded)
+	rt_db_free_internal(&var_intern);
     if (ts_status < 0) {
 	// If we failed, return TREE_NULL
 	return TREE_NULL;
+    }
+
+    /* Diagnostic: log leaf name, role, and mesh SA */
+    {
+	bool is_sub_ctx = (tsp->ts_sofar & TS_SOFAR_MINUS) != 0;
+	double leaf_sa = 0.0;
+	if (odata) {
+	    manifold::Manifold *lm = (manifold::Manifold *)odata;
+	    leaf_sa = lm->SurfaceArea();
+	}
+	bu_log("[LEAF_TESS] name=%-30s  role=%s  mesh_SA=%.6f mm^2\n",
+	       dp->d_namep,
+	       is_sub_ctx ? "SUB " : "BASE",
+	       leaf_sa);
     }
 
     BU_GET(curtree, union tree);
@@ -341,6 +449,13 @@ manifold_do_bool(
 	// We should have valid inputs - proceed
 	facetize_log(s, 1, "Trying boolean op:  %s, %s\n", tl->tr_d.td_name, tr->tr_d.td_name);
 
+	static const char *op_names[] = {"ADD","INTERSECT","SUBTRACT","ADD"};
+	int opidx = (op == OP_INTERSECT) ? 1 : (op == OP_SUBTRACT) ? 2 : 0;
+	bu_log("[BOOL_OP] %-8s L=%-30s SA=%.4f  R=%-30s SA=%.4f\n",
+	       op_names[opidx],
+	       tl->tr_d.td_name, lm->SurfaceArea(),
+	       tr->tr_d.td_name, rm->SurfaceArea());
+
 	manifold::Manifold bool_out;
 	try {
 	    bool_out = lm->Boolean(*rm, manifold_op);
@@ -360,6 +475,14 @@ manifold_do_bool(
 	    failed = 1;
 	}
 
+	if (!failed) {
+	    bu_log("[BOOL_OP] %-8s L=%-30s  R=%-30s  result_SA=%.4f\n",
+		   op_names[opidx],
+		   tl->tr_d.td_name, tr->tr_d.td_name,
+		   bool_out.SurfaceArea());
+	    result = new manifold::Manifold(bool_out);
+	}
+
 	// If we're debugging and need to capture OBJ meshes for "successful" cases can use GED_MANIFOLD_DEBUG env var.
 	const char *evar = getenv("GED_MANIFOLD_DEBUG");
 	if (evar && strlen(evar)) {
@@ -370,9 +493,6 @@ manifold_do_bool(
 	    lm->WriteOBJ(lofile); rm->WriteOBJ(rofile); bool_out.WriteOBJ(oofile);
 	    lofile.close(); rofile.close(); oofile.close();
 	}
-
-	if (!failed)
-	    result = new manifold::Manifold(bool_out);
     }
 
     // Memory cleanup
@@ -578,6 +698,98 @@ tess_run(struct _ged_facetize_state *s, const char **tess_cmd, int tess_cmd_cnt,
     }
 
     return (w_rc ? BRLCAD_ERROR : BRLCAD_OK);
+}
+
+/*
+ * Tessellate variant primitives that were created by _ged_facetize_build_variant_plan().
+ * Processes all names using the NMG method (same fixed command structure as
+ * _ged_facetize_leaves_tri).  Tessellation failures are logged but do not
+ * abort: the booleval will silently fall back to the original (non-variant)
+ * mesh for any variant whose BoT is not available.
+ */
+int
+_ged_facetize_tessellate_variant_names(struct _ged_facetize_state *s,
+				       FacetizeVariantPlan *plan)
+{
+    if (!s || !plan || plan->variant_names.empty())
+	return BRLCAD_OK;
+
+    char tess_exec[MAXPATHLEN];
+    bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_exec", BU_DIR_EXT, NULL);
+
+    char lcache[MAXPATHLEN] = {0};
+    bu_dir(lcache, MAXPATHLEN, BU_DIR_CACHE, NULL);
+
+    method_options_t *mo = (method_options_t *)s->method_opts;
+    std::string mstrpp("NMG");
+    std::string nmg_opts;
+    fastf_t l_max_time = 30;
+    if (mo) {
+	nmg_opts = mo->method_optstr(mstrpp, s->dbip);
+	l_max_time = (fastf_t)mo->max_time[mstrpp];
+    }
+
+    const char *tess_cmd[MAXPATHLEN] = {NULL};
+    tess_cmd[0] = tess_exec;
+    tess_cmd[1] = "facetize_process";
+    tess_cmd[2] = "-O";
+    tess_cmd[3] = bu_vls_cstr(s->wfile);
+    tess_cmd[4] = "--methods";
+    tess_cmd[5] = "NMG";
+    tess_cmd[6] = "--method-opts";
+
+    struct bu_vls mopts_vls = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&mopts_vls, "%s", nmg_opts.c_str());
+    tess_cmd[7] = bu_vls_cstr(&mopts_vls);
+    tess_cmd[8] = "--cache-dir";
+    tess_cmd[9] = lcache;
+    int cmd_fixed_cnt = 10;
+
+    /* Process variants in 8000-char-bounded batches */
+    int fail_cnt = 0;
+    size_t vi = 0;
+    while (vi < plan->variant_names.size()) {
+	std::vector<const char *> batch_names;
+	struct bu_vls cmd_check = BU_VLS_INIT_ZERO;
+	for (int i = 0; i < cmd_fixed_cnt; i++)
+	    bu_vls_printf(&cmd_check, "%s ", tess_cmd[i]);
+
+	while (vi < plan->variant_names.size() &&
+	       cmd_fixed_cnt + (int)batch_names.size() < MAXPATHLEN) {
+	    const char *nm = plan->variant_names[vi].c_str();
+	    if ((bu_vls_strlen(&cmd_check) + strlen(nm)) > 8000)
+		break;
+	    bu_vls_printf(&cmd_check, "%s ", nm);
+	    batch_names.push_back(nm);
+	    vi++;
+	}
+	bu_vls_free(&cmd_check);
+
+	if (batch_names.empty())
+	    break;
+
+	for (size_t i = 0; i < batch_names.size(); i++)
+	    tess_cmd[cmd_fixed_cnt + i] = batch_names[i];
+	int total_cnt = cmd_fixed_cnt + (int)batch_names.size();
+
+	int ret = tess_run(s, tess_cmd, total_cnt,
+			   l_max_time * (fastf_t)batch_names.size(),
+			   (int)batch_names.size());
+	if (ret != BRLCAD_OK) {
+	    facetize_log(s, 0,
+			"FACETIZE: variant tessellation failed for %d object(s)\n",
+			(int)batch_names.size());
+	    fail_cnt += (int)batch_names.size();
+	}
+
+	/* Clear per-batch name slots */
+	for (size_t i = 0; i < batch_names.size(); i++)
+	    tess_cmd[cmd_fixed_cnt + i] = NULL;
+    }
+
+    bu_vls_free(&mopts_vls);
+    plan->n_variant_tess_failures = fail_cnt;
+    return (fail_cnt == 0) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 int
@@ -1057,6 +1269,13 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	    facetize_log(s, 0, "Boolean algorithm FAILED.\n");
 	    return BRLCAD_ERROR;
 	}
+
+	bu_log("[FINAL_BOOL] obj=%s  final_mesh_SA=%.6f mm^2  num_verts=%zu  num_faces=%zu\n",
+	       (argc > 0 && argv && argv[0]) ? argv[0] : "?",
+	       om->SurfaceArea(),
+	       (size_t)om->GetMeshGL64().vertProperties.size() / 3,
+	       (size_t)om->GetMeshGL64().triVerts.size() / 3);
+
 	manifold::MeshGL64 rmesh = om->GetMeshGL64();
 	struct rt_bot_internal *bot;
 	BU_GET(bot, struct rt_bot_internal);
@@ -1074,6 +1293,40 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
 	    bot->vertices[j] = rmesh.vertProperties[j];
 	for (size_t j = 0; j < rmesh.triVerts.size(); j++)
 	    bot->faces[j] = rmesh.triVerts[j];
+
+	/* Guard against near-zero perturb slivers: if the booleval mesh is tiny,
+	 * quickly Crofton-check the original CSG.  If CSG is effectively empty,
+	 * emit an empty BoT to match raytrace behavior. */
+	double bot_vol = 0.0;
+	if (bot->num_faces > 0 && bot->num_vertices > 0) {
+	    bot_vol = std::fabs(bg_trimesh_volume(bot->faces, bot->num_faces,
+						  (const point_t *)bot->vertices,
+						  bot->num_vertices));
+	}
+	double bbox_vol = bot_bbox_volume(bot);
+	bool tiny_bot = (bbox_vol > 0.0) ?
+	    (bot_vol <= bbox_vol * FACETIZE_EMPTY_CHECK_REL_VOL_TOL) :
+	    (bot_vol <= FACETIZE_EMPTY_CHECK_ABS_VOL_TOL);
+	bool is_single_input = (argc == 1 && argv && argv[0]);
+	bool has_csg_context = (s && s->dbip);
+	if (tiny_bot && is_single_input && has_csg_context) {
+	    double csg_vol = -1.0;
+	    if (csg_crofton_volume(s->dbip, argv[0], &csg_vol) == BRLCAD_OK) {
+		double csg_abs = std::fabs(csg_vol);
+		double csg_vtol = (bbox_vol > 0.0) ?
+		    (bbox_vol * FACETIZE_EMPTY_CHECK_REL_VOL_TOL) :
+		    FACETIZE_EMPTY_CHECK_ABS_VOL_TOL;
+		if (csg_abs <= csg_vtol) {
+		    rt_bot_internal_free(bot);
+		    bot->magic = RT_BOT_INTERNAL_MAGIC;
+		    bot->mode = RT_BOT_SOLID;
+		    bot->orientation = RT_BOT_CCW;
+		    bot->thickness = NULL;
+		    bot->face_mode = (struct bu_bitv *)NULL;
+		    bot->bot_flags = 0;
+		}
+	    }
+	}
 	delete om;
 	ftree->tr_d.td_d = NULL;
 
@@ -1158,8 +1411,26 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     if (_ged_facetize_working_file_setup(s, &leaf_dps) != BRLCAD_OK)
 	return BRLCAD_ERROR;
 
+    /* Keep perturb/no-perturb behavior independent of region mode:
+     * when enabled, always plan/tessellate coplanarity-avoidance variants
+     * for Manifold booleval paths (except explicit NMG booleval modes). */
+    if (s->variant_plan) {
+	delete (FacetizeVariantPlan *)s->variant_plan;
+	s->variant_plan = NULL;
+    }
+    if (!s->make_nmg && !s->nmg_booleval && !s->no_perturb) {
+	FacetizeVariantPlan *vplan = _ged_facetize_build_variant_plan(s, argc, dpa);
+	s->variant_plan = (void *)vplan;
+    }
+
     if (_ged_facetize_leaves_tri(s, dbip, &leaf_dps))
 	return BRLCAD_ERROR;
+
+    if (s->variant_plan) {
+	FacetizeVariantPlan *vplan = (FacetizeVariantPlan *)s->variant_plan;
+	if (!vplan->variant_names.empty())
+	    _ged_facetize_tessellate_variant_names(s, vplan);
+    }
 
     // Re-open working .g copy after BoTs have replaced CSG solids and perform
     // the tree walk to set up Manifold data.
@@ -1210,4 +1481,3 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -66,6 +66,12 @@
 /* private header */
 #include "./dsp.h"
 
+/* HLBVH acceleration structure (shared with bot.c via librt-internal header) */
+#include "../../cut_hlbvh.h"
+
+/* triangle_s type (public BRL-CAD header) */
+#include "rt/primitives/bot.h"
+
 
 #define FULL_DSP_DEBUGGING 1
 
@@ -150,6 +156,17 @@ extern int rt_retrieve_binunif(struct rt_db_internal *intern,
 
 
 /**
+ * Per-triangle metadata for the DSP BVH shot path.
+ * Stored in a parallel array alongside the triangle_s array.
+ */
+struct dsp_tri_info {
+    int   surfno;  /* ZTOP for terrain triangles, XMIN/XMAX/YMIN/YMAX/ZMIN for edges */
+    short cell_x;  /* grid cell column (0-based); meaningful only for ZTOP hits */
+    short cell_y;  /* grid cell row    (0-based); meaningful only for ZTOP hits */
+};
+
+
+/**
  * per-solid ray tracing form of solid, including precomputed terms
  *
  * The dsp_i element MUST BE FIRST so that we can cast a pointer to a
@@ -163,6 +180,15 @@ struct dsp_specific {
     int layers;
     struct dsp_bb_layer *layer;
     struct dsp_bb *bb_array;
+
+    /* BVH-based shot path (built at prep time).
+     * When bvh_root != NULL, rt_dsp_shot uses the BVH instead of the
+     * legacy HBB pyramid + 2D DDA path.
+     */
+    struct bvh_flat_node *bvh_root;   /* flattened HLBVH node array           */
+    triangle_s           *bvh_tris;   /* terrain + wall + bottom triangles     */
+    struct dsp_tri_info  *bvh_info;   /* per-triangle metadata (parallel array) */
+    size_t                bvh_ntris;  /* total number of triangles in bvh_tris */
 };
 
 
@@ -451,96 +477,6 @@ plot_layers(struct dsp_specific *dsp_sp)
 
 #endif
 
-
-/**
- * Plot the results of intersecting a ray with the top of a cell
- */
-static void
-plot_cell_top(struct isect_stuff *isect,
-	      struct dsp_bb *dsp_bb,
-	      point_t A,
-	      point_t B,
-	      point_t C,
-	      point_t D,
-	      struct hit hitlist[],
-	      int hitflags,
-	      int style)	/* plot diagonal */
-{
-    fastf_t *stom = &isect->dsp->dsp_i.dsp_stom[0];
-    char buf[64];
-    static int plotcnt = 0;
-    static int cnt = 0;
-    FILE *fp;
-    point_t p1, p2, p3, p4;
-    int i;
-    int in_seg;
-    static unsigned char colors[4][3] = {
-	{255, 255, 128},
-	{255, 128, 255},
-	{128, 255, 128},
-	{128, 255, 255},
-    };
-
-    DSP_BB_CK(dsp_bb);
-
-    bu_semaphore_acquire(BU_SEM_SYSCALL);
-    if (style)
-	sprintf(buf, "dsp_cell_isect%04d.plot3", cnt++);
-    else
-	sprintf(buf, "dsp_cell_top%04d.plot3", plotcnt++);
-
-    fp=fopen(buf, "wb");
-
-    bu_semaphore_release(BU_SEM_SYSCALL);
-
-    if (fp == (FILE *)NULL) {
-	bu_log("error opening \"%s\"\n", buf);
-	return;
-    } else {
-	bu_log("plotting %s flags 0x%x\n\t", buf, hitflags);
-    }
-
-    plot_dsp_bb(fp, dsp_bb, isect->dsp, 128, 128, 128, 1);
-
-    /* plot the triangulation */
-    pl_color(fp, 255, 255, 255);
-    MAT4X3PNT(p1, stom, A);
-    MAT4X3PNT(p2, stom, B);
-    MAT4X3PNT(p3, stom, C);
-    MAT4X3PNT(p4, stom, D);
-
-    pdv_3move(fp, p1);
-    if (style) {
-	pdv_3cont(fp, p2);
-	pdv_3cont(fp, p4);
-	pdv_3cont(fp, p1);
-	pdv_3cont(fp, p3);
-	pdv_3cont(fp, p4);
-    } else {
-	pdv_3cont(fp, p2);
-	pdv_3cont(fp, p4);
-	pdv_3cont(fp, p3);
-	pdv_3cont(fp, p1);
-    }
-
-    /* plot the hit points */
-
-    for (in_seg = 0, i = 0; i < 4; i++) {
-	if (hitflags & (1<<i)) {
-	    if (in_seg) {
-		in_seg = 0;
-		MAT4X3PNT(p1, stom, hitlist[i].hit_point);
-		pdv_3cont(fp, p1);
-	    } else {
-		in_seg = 1;
-		pl_color(fp, colors[i][0], colors[i][1], colors[i][2]);
-		MAT4X3PNT(p1, stom, hitlist[i].hit_point);
-		pdv_3move(fp, p1);
-	    }
-	}
-    }
-    fclose(fp);
-}
 
 
 static void
@@ -936,6 +872,9 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  * of the prep logic, the in-prep bbox calculations are left
  * in to avoid duplication rather than calling rt_dsp_bbox.
  */
+/* Forward declaration for dsp_build_bvh which is defined after rt_dsp_prep */
+static void dsp_build_bvh(struct dsp_specific *dsp);
+
 int
 rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
@@ -994,6 +933,12 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* this keeps the binary internal object from being freed */
     dsp_ip->dsp_bip = (struct rt_db_internal *)NULL;
 
+    /* initialize BVH fields (filled in later by dsp_build_bvh) */
+    dsp->bvh_root  = NULL;
+    dsp->bvh_tris  = NULL;
+    dsp->bvh_info  = NULL;
+    dsp->bvh_ntris = 0;
+
 
     dsp->xsiz = dsp_ip->dsp_xcnt-1;	/* size is # cells or values-1 */
     dsp->ysiz = dsp_ip->dsp_ycnt-1;	/* size is # cells or values-1 */
@@ -1045,7 +990,519 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	       V3ARGS(stp->st_max));
     }
 
+    /* Build the HLBVH for the primary shot path */
+    dsp_build_bvh(dsp);
+
     return 0;
+}
+
+
+/* -----------------------------------------------------------------------
+ * HLBVH-based DSP shot path
+ *
+ * At prep time dsp_build_bvh() tessellates the complete DSP solid surface
+ * (terrain top + four side walls + bottom face) into a triangle_s array,
+ * builds an HLBVH over those triangles, and stores the result in the
+ * dsp_specific.  At shot time dsp_shot_bvh() traverses the HLBVH, collects
+ * all surface-crossing hits, sorts them and pairs them into solid segments.
+ *
+ * This path entirely replaces the HBB-pyramid + 2D-DDA traversal for the
+ * primary shot function.  The legacy DDA code remains in place and is still
+ * used by the rt_crofton_shoot path (which fires very large numbers of short
+ * random rays and benefits from the fast 2D-DDA skip of empty cells).
+ * ----------------------------------------------------------------------- */
+
+#define DSP_BVH_MIN_DN           1.0e-9
+#define DSP_BVH_STACK_SIZE       256
+#define DSP_BVH_MAX_PRIMS_IN_NODE 8
+/* signed-distance tolerance for hit collection */
+#define DSP_BVH_TOL_DIST         1.0e-10
+
+/* Simple dynamic array of struct hit, used only inside dsp_shot_bvh */
+#define DSP_HIT_INIT_CAP 64
+struct dsp_hit_da {
+    struct hit *items;
+    size_t count;
+    size_t capacity;
+};
+
+#define DSP_HIT_APPEND(da, h) do { \
+    if ((da).count >= (da).capacity) { \
+	(da).capacity = (da).capacity ? (da).capacity * 2 : DSP_HIT_INIT_CAP; \
+	(da).items = (struct hit *)bu_realloc((da).items, \
+		     (da).capacity * sizeof(struct hit), "dsp hit da"); \
+    } \
+    (da).items[(da).count++] = (h); \
+} while (0)
+
+
+/**
+ * Fill one triangle_s record, its centroid, and its AABB.
+ * P0, P1, P2 are the three vertices in solid (grid) space.
+ * The AB edge goes P0→P1, AC edge goes P0→P2.
+ */
+static void
+dsp_bvh_add_tri(triangle_s *tris, struct dsp_tri_info *info,
+		fastf_t *centroids, fastf_t *bounds,
+		size_t ti,
+		const point_t P0, const point_t P1, const point_t P2,
+		int surfno, int cell_x, int cell_y)
+{
+    triangle_s *t = &tris[ti];
+    vect_t norm;
+    fastf_t area;
+
+    VMOVE(t->A,  P0);
+    VSUB2(t->AB, P1, P0);
+    VSUB2(t->AC, P2, P0);
+    VCROSS(norm, t->AB, t->AC);
+    area = MAGNITUDE(norm);
+    if (area > SMALL_FASTF) {
+	VSCALE(t->face_norm, norm, 1.0 / area);
+    } else {
+	VSET(t->face_norm, 0.0, 0.0, 1.0);
+    }
+    t->face_norm_scalar = area;
+    t->norms            = NULL;
+    t->face_id          = (long)ti;
+
+    /* centroid */
+    centroids[ti*3+X] = (P0[X] + P1[X] + P2[X]) / 3.0;
+    centroids[ti*3+Y] = (P0[Y] + P1[Y] + P2[Y]) / 3.0;
+    centroids[ti*3+Z] = (P0[Z] + P1[Z] + P2[Z]) / 3.0;
+
+    /* axis-aligned bounding box */
+    bounds[ti*6+0] = FMIN(FMIN(P0[X], P1[X]), P2[X]);
+    bounds[ti*6+1] = FMIN(FMIN(P0[Y], P1[Y]), P2[Y]);
+    bounds[ti*6+2] = FMIN(FMIN(P0[Z], P1[Z]), P2[Z]);
+    bounds[ti*6+3] = FMAX(FMAX(P0[X], P1[X]), P2[X]);
+    bounds[ti*6+4] = FMAX(FMAX(P0[Y], P1[Y]), P2[Y]);
+    bounds[ti*6+5] = FMAX(FMAX(P0[Z], P1[Z]), P2[Z]);
+
+    info[ti].surfno = surfno;
+    info[ti].cell_x = (short)cell_x;
+    info[ti].cell_y = (short)cell_y;
+}
+
+
+/**
+ * Build a complete closed-surface triangle mesh for the DSP solid and
+ * construct an HLBVH acceleration structure over it.
+ *
+ * The mesh has three parts:
+ *   Terrain top:  2*(W-1)*(H-1) triangles  (piecewise-planar terrain surface)
+ *   Side walls:   2 * [ (W-1) + (W-1) + (H-1) + (H-1) ] triangles
+ *   Bottom:       2 triangles   (z = 0 base face)
+ *
+ * All vertices and normals are in DSP solid space (grid units).
+ * The BVH is then stored in dsp->bvh_root / bvh_tris / bvh_info.
+ */
+static void
+dsp_build_bvh(struct dsp_specific *dsp)
+{
+    struct rt_dsp_internal *dsp_ip = &dsp->dsp_i;
+    unsigned int dsp_xcnt = dsp_ip->dsp_xcnt;  /* number of grid columns */
+    unsigned int dsp_ycnt = dsp_ip->dsp_ycnt;  /* number of grid rows    */
+    unsigned int nxcells  = dsp_xcnt - 1;       /* cells wide             */
+    unsigned int nycells  = dsp_ycnt - 1;       /* cells tall             */
+    unsigned int x, y;
+    size_t ti;
+
+    if (dsp_xcnt < 2 || dsp_ycnt < 2) {
+	/* degenerate DSP: nothing to build */
+	dsp->bvh_root  = NULL;
+	dsp->bvh_tris  = NULL;
+	dsp->bvh_info  = NULL;
+	dsp->bvh_ntris = 0;
+	return;
+    }
+
+    /* Triangle counts:
+     *   terrain: 2 * nxcells * nycells
+     *   XMIN/XMAX walls: 2 * nycells each
+     *   YMIN/YMAX walls: 2 * nxcells each
+     *   bottom: 2
+     */
+    size_t n_terrain = 2 * (size_t)nxcells * nycells;
+    size_t n_walls   = 2 * (2 * nycells + 2 * nxcells);
+    size_t n_bottom  = 2;
+    size_t ntris     = n_terrain + n_walls + n_bottom;
+
+    triangle_s       *raw_tris = (triangle_s *)bu_calloc(ntris, sizeof(triangle_s),
+							  "dsp bvh tris");
+    struct dsp_tri_info *raw_info = (struct dsp_tri_info *)bu_calloc(ntris,
+								      sizeof(struct dsp_tri_info),
+								      "dsp bvh info");
+    fastf_t *centroids = (fastf_t *)bu_malloc(ntris * 3 * sizeof(fastf_t),
+					       "dsp bvh centroids");
+    fastf_t *bounds    = (fastf_t *)bu_malloc(ntris * 6 * sizeof(fastf_t),
+					       "dsp bvh bounds");
+
+    ti = 0;
+
+    /* ---- terrain top surface ----------------------------------------- */
+    /* For each 1x1 cell the diagonal always goes A-D (llUR).
+     * Both triangles have outward normals pointing upward (+Z direction)
+     * so that hits from above (downward ray, N·dir < 0) are "entry" hits.
+     *
+     *  C----D
+     *  | \  |   Triangle 0: A B D  (lower-right half)
+     *  |  \ |   Triangle 1: A D C  (upper-left  half)
+     *  |   \|
+     *  A----B
+     */
+    for (y = 0; y < nycells; y++) {
+	for (x = 0; x < nxcells; x++) {
+	    point_t A, B, C, D;
+	    VSET(A, x,   y,   DSP(dsp_ip, x,   y));
+	    VSET(B, x+1, y,   DSP(dsp_ip, x+1, y));
+	    VSET(C, x,   y+1, DSP(dsp_ip, x,   y+1));
+	    VSET(D, x+1, y+1, DSP(dsp_ip, x+1, y+1));
+
+	    /* tri 0: A B D — CCW from above, normal (+Z-ish) */
+	    dsp_bvh_add_tri(raw_tris, raw_info, centroids, bounds,
+			    ti++, A, B, D, ZTOP, (int)x, (int)y);
+	    /* tri 1: A D C — CCW from above, normal (+Z-ish) */
+	    dsp_bvh_add_tri(raw_tris, raw_info, centroids, bounds,
+			    ti++, A, D, C, ZTOP, (int)x, (int)y);
+	}
+    }
+
+    /* ---- XMIN wall (x = 0): outward normal is {-1, 0, 0} ------------ */
+    /* Winding (CCW from -X side): P0 P3 P2 and P0 P2 P1 */
+    for (y = 0; y < nycells; y++) {
+	point_t P0, P1, P2, P3;
+	VSET(P0, 0, y,   0.0);
+	VSET(P1, 0, y+1, 0.0);
+	VSET(P2, 0, y+1, DSP(dsp_ip, 0, y+1));
+	VSET(P3, 0, y,   DSP(dsp_ip, 0, y));
+	dsp_bvh_add_tri(raw_tris, raw_info, centroids, bounds, ti++,
+			P0, P3, P2, XMIN, 0, (int)y);
+	dsp_bvh_add_tri(raw_tris, raw_info, centroids, bounds, ti++,
+			P0, P2, P1, XMIN, 0, (int)y);
+    }
+
+    /* ---- XMAX wall (x = nxcells): outward normal is {+1, 0, 0} ----------- */
+    /* Winding (CCW from +X side): P0 P2 P3 and P0 P1 P2 */
+    for (y = 0; y < nycells; y++) {
+	point_t P0, P1, P2, P3;
+	VSET(P0, nxcells, y,   0.0);
+	VSET(P1, nxcells, y+1, 0.0);
+	VSET(P2, nxcells, y+1, DSP(dsp_ip, nxcells, y+1));
+	VSET(P3, nxcells, y,   DSP(dsp_ip, nxcells, y));
+	dsp_bvh_add_tri(raw_tris, raw_info, centroids, bounds, ti++,
+			P0, P2, P3, XMAX, (int)nxcells, (int)y);
+	dsp_bvh_add_tri(raw_tris, raw_info, centroids, bounds, ti++,
+			P0, P1, P2, XMAX, (int)nxcells, (int)y);
+    }
+
+    /* ---- YMIN wall (y = 0): outward normal is {0, -1, 0} ------------ */
+    /* Winding (CCW from -Y side): P0 P2 P3 and P0 P1 P2 */
+    for (x = 0; x < nxcells; x++) {
+	point_t P0, P1, P2, P3;
+	VSET(P0, x,   0, 0.0);
+	VSET(P1, x+1, 0, 0.0);
+	VSET(P2, x+1, 0, DSP(dsp_ip, x+1, 0));
+	VSET(P3, x,   0, DSP(dsp_ip, x,   0));
+	dsp_bvh_add_tri(raw_tris, raw_info, centroids, bounds, ti++,
+			P0, P2, P3, YMIN, (int)x, 0);
+	dsp_bvh_add_tri(raw_tris, raw_info, centroids, bounds, ti++,
+			P0, P1, P2, YMIN, (int)x, 0);
+    }
+
+    /* ---- YMAX wall (y = nycells): outward normal is {0, +1, 0} ----------- */
+    /* Winding (CCW from +Y side): P0 P3 P2 and P0 P2 P1 */
+    for (x = 0; x < nxcells; x++) {
+	point_t P0, P1, P2, P3;
+	VSET(P0, x,   nycells, 0.0);
+	VSET(P1, x+1, nycells, 0.0);
+	VSET(P2, x+1, nycells, DSP(dsp_ip, x+1, nycells));
+	VSET(P3, x,   nycells, DSP(dsp_ip, x,   nycells));
+	dsp_bvh_add_tri(raw_tris, raw_info, centroids, bounds, ti++,
+			P0, P3, P2, YMAX, (int)x, (int)nycells);
+	dsp_bvh_add_tri(raw_tris, raw_info, centroids, bounds, ti++,
+			P0, P2, P1, YMAX, (int)x, (int)nycells);
+    }
+
+    /* ---- bottom face (z = 0): outward normal is {0, 0, -1} ---------- */
+    /* Winding (CCW from below, -Z side):
+     *   tri 0: (0,0,0) (nxcells,nycells,0) (nxcells,0,0)
+     *   tri 1: (0,0,0) (0,nycells,0)  (nxcells,nycells,0)
+     */
+    {
+	point_t P00, P10, P01, P11;
+	VSET(P00, 0,       0,       0.0);
+	VSET(P10, nxcells, 0,       0.0);
+	VSET(P01, 0,       nycells, 0.0);
+	VSET(P11, nxcells, nycells, 0.0);
+	dsp_bvh_add_tri(raw_tris, raw_info, centroids, bounds, ti++,
+			P00, P11, P10, ZMIN, 0, 0);
+	dsp_bvh_add_tri(raw_tris, raw_info, centroids, bounds, ti++,
+			P00, P01, P11, ZMIN, 0, 0);
+    }
+
+    BU_ASSERT(ti == ntris);
+
+    /* ---- Build the HLBVH -------------------------------------------- */
+    struct bu_pool *pool = hlbvh_init_pool(ntris);
+    long nodes_created = 0;
+    long *ordered_faces = NULL;
+    struct bvh_build_node *build_root =
+	hlbvh_create(DSP_BVH_MAX_PRIMS_IN_NODE, pool,
+		     centroids, bounds,
+		     &nodes_created, (long)ntris, &ordered_faces);
+
+    bu_free(centroids, "dsp bvh centroids");
+    bu_free(bounds,    "dsp bvh bounds");
+
+    struct bvh_flat_node *flat_root = hlbvh_flatten(build_root, nodes_created);
+    bu_pool_delete(pool);
+
+    /* Reorder triangle and info arrays according to ordered_faces */
+    triangle_s       *ord_tris = (triangle_s *)bu_malloc(
+	ntris * sizeof(triangle_s), "dsp ordered tris");
+    struct dsp_tri_info *ord_info = (struct dsp_tri_info *)bu_malloc(
+	ntris * sizeof(struct dsp_tri_info), "dsp ordered info");
+
+    for (size_t i = 0; i < ntris; i++) {
+	BU_ASSERT(ordered_faces[i] >= 0 && (size_t)ordered_faces[i] < ntris);
+	ord_tris[i] = raw_tris[ordered_faces[i]];
+	ord_info[i] = raw_info[ordered_faces[i]];
+	/* update face_id to match new position (used during traversal) */
+	ord_tris[i].face_id = (long)i;
+    }
+    bu_free(raw_tris,     "dsp raw tris");
+    bu_free(raw_info,     "dsp raw info");
+    bu_free(ordered_faces, "dsp ordered faces");
+
+    dsp->bvh_root  = flat_root;
+    dsp->bvh_tris  = ord_tris;
+    dsp->bvh_info  = ord_info;
+    dsp->bvh_ntris = ntris;
+}
+
+
+/* insertion sort for a small hit array */
+static void
+dsp_sort_hits(struct hit *hits, size_t n)
+{
+    size_t i, j;
+    for (i = 1; i < n; i++) {
+	struct hit key = hits[i];
+	j = i;
+	while (j > 0 && hits[j-1].hit_dist > key.hit_dist) {
+	    hits[j] = hits[j-1];
+	    j--;
+	}
+	hits[j] = key;
+    }
+}
+
+
+/**
+ * BVH-based DSP shot.
+ *
+ * The ray (rp) must already be in DSP solid space.  Solid-space distances
+ * are collected, sorted, and paired into solid segments.  Distances are
+ * then converted to model space before being placed on seghead.
+ *
+ * Returns: number of hit segments * 2 (same convention as rt_dsp_shot).
+ */
+static int
+dsp_shot_bvh(struct dsp_specific *dsp,
+	     const struct xray *solid_ray,
+	     struct application *ap,
+	     struct soltab *stp,
+	     struct seg *seghead)
+{
+    struct bvh_flat_node *stack_node[DSP_BVH_STACK_SIZE];
+    unsigned char         stack_child[DSP_BVH_STACK_SIZE];
+    int stack_ind = 0;
+
+    fastf_t toldist = ap->a_rt_i->rti_tol.dist;
+    int nseg = 0;
+
+    /* Collect surface-crossing hits in this dynamic array */
+    struct dsp_hit_da da;
+    da.items    = NULL;
+    da.count    = 0;
+    da.capacity = 0;
+
+    /* --- Traversal setup -------------------------------------------- */
+    /* Compute the per-component inverse of the ray direction for the
+     * BVH slab test.  copysign ensures the sign of the tiny epsilon is
+     * consistent with the direction component so that the resulting
+     * reciprocal is finite and signed correctly for an axis-aligned ray.
+     */
+    vect_t inv_dir;
+    inv_dir[X] = 1.0 / (solid_ray->r_dir[X] + copysign(1.0 / MAX_FASTF, solid_ray->r_dir[X]));
+    inv_dir[Y] = 1.0 / (solid_ray->r_dir[Y] + copysign(1.0 / MAX_FASTF, solid_ray->r_dir[Y]));
+    inv_dir[Z] = 1.0 / (solid_ray->r_dir[Z] + copysign(1.0 / MAX_FASTF, solid_ray->r_dir[Z]));
+
+    /* --- HLBVH iterative traversal ----------------------------------- */
+    stack_node[0]  = dsp->bvh_root;
+    stack_child[0] = 0;
+
+    while (stack_ind >= 0) {
+	if (UNLIKELY(stack_ind >= DSP_BVH_STACK_SIZE))
+	    bu_bomb("DSP BVH stack overflow");
+
+	if (stack_child[stack_ind] >= 2) {
+	    stack_ind--;
+	    continue;
+	}
+
+	struct bvh_flat_node *node = stack_node[stack_ind];
+
+	/* Slab test against AABB on first entry to this node */
+	if (!stack_child[stack_ind]) {
+	    vect_t t_to_min, t_to_max, t_enter, t_exit;
+	    VSUB2(t_to_min, &node->bounds[0], solid_ray->r_pt);
+	    VSUB2(t_to_max, &node->bounds[3], solid_ray->r_pt);
+	    VELMUL(t_to_min, t_to_min, inv_dir);
+	    VELMUL(t_to_max, t_to_max, inv_dir);
+	    VMOVE(t_enter, t_to_min);
+	    VMOVE(t_exit,  t_to_min);
+	    VMINMAX(t_enter, t_exit, t_to_max);
+	    fastf_t entry_t = FMAX(t_enter[X], FMAX(t_enter[Y], t_enter[Z]));
+	    fastf_t exit_t  = FMIN(t_exit[X],  FMIN(t_exit[Y],  t_exit[Z]));
+	    if ((exit_t < -SMALL_FASTF) || (entry_t > exit_t)) {
+		stack_ind--;
+		continue;
+	    }
+	}
+
+	if (node->n_primitives > 0) {
+	    /* Leaf: test triangles */
+	    size_t end = (size_t)(node->data.first_prim_offset + node->n_primitives);
+	    BU_ASSERT(end <= dsp->bvh_ntris);
+
+	    for (size_t i = (size_t)node->data.first_prim_offset; i < end; i++) {
+		triangle_s *tri = &dsp->bvh_tris[i];
+		vect_t wn, wxb, xp;
+		fastf_t dn_plus_tol;
+
+		/* Non-unit normal = AB × AC */
+		VSCALE(wn, tri->face_norm, tri->face_norm_scalar);
+
+		fastf_t dn = VDOT(wn, solid_ray->r_dir);
+		fastf_t abs_dn = (dn >= 0.0) ? dn : -dn;
+		if (abs_dn < DSP_BVH_MIN_DN)
+		    continue;   /* ray parallel to face */
+
+		fastf_t tol_mult = 1.0 / (1.0 + abs_dn);
+		dn_plus_tol = abs_dn + (toldist * tol_mult);
+
+		VSUB2(wxb, tri->A, solid_ray->r_pt);
+		VCROSS(xp, wxb, solid_ray->r_dir);
+		fastf_t beta  = VDOT(tri->AB, xp);
+		fastf_t gamma = VDOT(tri->AC, xp);
+		beta  = (dn > 0.0) ? -beta  :  beta;
+		gamma = (dn < 0.0) ? -gamma :  gamma;
+		if ((beta + gamma > dn_plus_tol) ||
+		    (beta  < -toldist) ||
+		    (gamma < -toldist))
+		    continue;   /* hit outside triangle */
+
+		fastf_t dist = VDOT(wxb, wn) / dn;
+
+		struct hit h;
+		memset(&h, 0, sizeof(struct hit));
+		h.hit_magic = RT_HIT_MAGIC;
+		h.hit_dist  = dist;
+		VMOVE(h.hit_normal, tri->face_norm);
+		h.hit_surfno    = dsp->bvh_info[i].surfno;
+		h.hit_vpriv[X]  = (fastf_t)dsp->bvh_info[i].cell_x;
+		h.hit_vpriv[Y]  = (fastf_t)dsp->bvh_info[i].cell_y;
+		h.hit_vpriv[Z]  = 0.0;
+		DSP_HIT_APPEND(da, h);
+	    }
+	    stack_ind--;
+	    continue;
+	}
+
+	/* Internal node: descend */
+	stack_node[stack_ind + 1] =
+	    (stack_child[stack_ind]) ? node->data.other_child : (node + 1);
+	stack_child[stack_ind] += 1;
+	stack_child[stack_ind + 1] = 0;
+	stack_ind++;
+    }
+
+    if (da.count == 0) {
+	if (da.items)
+	    bu_free(da.items, "dsp hit da");
+	return 0;
+    }
+
+    /* Sort hits by distance */
+    dsp_sort_hits(da.items, da.count);
+
+    /* Pair hits into solid segments.
+     * Start outside the solid.  Walk sorted hits; each hit with N·dir < 0
+     * is an entry (ray going into the solid) and each with N·dir > 0 is an
+     * exit.  Inconsistent hits (e.g., two consecutive entries) are skipped
+     * so that the physical boundary is preserved.
+     */
+    int cur_solid = 0;
+    struct hit *in_hitp = NULL;
+    fastf_t *stom = &dsp->dsp_i.dsp_stom[0];
+
+    for (size_t i = 0; i < da.count; i++) {
+	struct hit *h = &da.items[i];
+	fastf_t dot   = VDOT(solid_ray->r_dir, h->hit_normal);
+
+	if (cur_solid) {
+	    if (dot <= 0.0)
+		continue;    /* entry while in solid: skip */
+	    /* Exit: emit segment */
+	    if (in_hitp && h->hit_dist > in_hitp->hit_dist + DSP_BVH_TOL_DIST) {
+		struct seg *segp;
+		RT_GET_SEG(segp, ap->a_resource);
+		segp->seg_stp = stp;
+		segp->seg_in  = *in_hitp;
+		segp->seg_out = *h;
+
+		/* Convert solid-space distances to model-space distances */
+		vect_t v;
+		vect_t tmp;
+		VSCALE(tmp, solid_ray->r_dir, segp->seg_in.hit_dist);
+		MAT4X3VEC(v, stom, tmp);
+		segp->seg_in.hit_dist = MAGNITUDE(v);
+		if (VDOT(v, ap->a_ray.r_dir) < 0.0)
+		    segp->seg_in.hit_dist *= -1.0;
+
+		VSCALE(tmp, solid_ray->r_dir, segp->seg_out.hit_dist);
+		MAT4X3VEC(v, stom, tmp);
+		segp->seg_out.hit_dist = MAGNITUDE(v);
+		if (VDOT(v, ap->a_ray.r_dir) < 0.0)
+		    segp->seg_out.hit_dist *= -1.0;
+
+		if (segp->seg_out.hit_dist < segp->seg_in.hit_dist) {
+		    /* safety swap for inverted segment */
+		    struct hit tmp_hit = segp->seg_in;
+		    segp->seg_in  = segp->seg_out;
+		    segp->seg_out = tmp_hit;
+		}
+
+		BU_LIST_INSERT(&seghead->l, &segp->l);
+		nseg++;
+	    }
+	    in_hitp  = NULL;
+	    cur_solid = 0;
+	} else {
+	    if (dot >= 0.0)
+		continue;    /* exit while in air: skip */
+	    /* Entry */
+	    in_hitp  = h;
+	    cur_solid = 1;
+	}
+    }
+
+    if (da.items)
+	bu_free(da.items, "dsp hit da");
+
+    return nseg * 2;
 }
 
 
@@ -1259,7 +1716,12 @@ add_seg(struct isect_stuff *isect,
 
 
     if (seg->seg_in.hit_dist > 0.0 || seg->seg_out.hit_dist > 0.0) {
-	return ++isect->num_segs > isect->ap->a_onehit;
+	++isect->num_segs;
+	/* a_onehit == 0 means "find all hits" (Crofton, compositing);
+	 * only apply the limit when a_onehit is positive.
+	 */
+	if (isect->ap->a_onehit > 0 && isect->num_segs > isect->ap->a_onehit)
+	    return 1;
     }
     return 0;
 }
@@ -1731,25 +2193,29 @@ check_bbpt_hit_elev(int i,	/* indicates face of cell */
 static int
 isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 {
-    point_t A, B, C, D, P;
+    point_t A, B, C, D;
     int x, y;
-    vect2d_t ab_first = V2INIT_ZERO;
+    vect2d_t ab_first  = V2INIT_ZERO;
     vect2d_t ab_second = V2INIT_ZERO;
-    struct hit hits[4];	/* list of hits that are valid */
-    struct hit *hitp;
-    int hitf = 0;	/* bit flags for valid hits in hits */
-    int cond, i;
-    int hitcount = 0;
+    struct hit tri_hit[2];  /* at most one hit per triangle */
+    int n_tri = 0;          /* number of valid triangle hits */
+    struct hit bb_in, bb_out;
     point_t bbmin, bbmax;
-    fastf_t dot, dot2;
+    point_t minpt, maxpt;
+    int entry_solid;        /* 1 → BB entry point is inside the solid */
+    int cur_solid;
+    struct hit *in_htp;
+    fastf_t tol;
+    int i;
 
-    for (x = 0; x < 4; x++)
-	memset(hits+x, 0, sizeof(struct hit));
+    memset(tri_hit, 0, sizeof(tri_hit));
+    memset(&bb_in,  0, sizeof(struct hit));
+    memset(&bb_out, 0, sizeof(struct hit));
 
     dlog("isect_ray_cell_top\n");
     DSP_BB_CK(dsp_bb);
 
-    /* assign the values for the corner points
+    /* Assign corner elevations.
      *
      *  C----D
      *  |    |
@@ -1770,219 +2236,162 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     x = dsp_bb->dspb_rpp.dsp_min[X];
     VSET(C, x, y, DSP(&isect->dsp->dsp_i, x, y));
 
+    /* Compute entry/exit points in solid space */
+    VJOIN1(minpt, isect->r.r_pt, isect->r.r_min, isect->r.r_dir);
+    VJOIN1(maxpt, isect->r.r_pt, isect->r.r_max, isect->r.r_dir);
+    VMOVE(bbmin, dsp_bb->dspb_rpp.dsp_min);
+    VMOVE(bbmax, dsp_bb->dspb_rpp.dsp_max);
+    tol = isect->tol->dist;
 
-#ifdef RT_DEBUG_FULL
-    if (RT_G_DEBUG & RT_DEBUG_HF) {
-	point_t p1, p2;
-
-	VJOIN1(p1, isect->r.r_pt, isect->r.r_min, isect->r.r_dir);
-	VMOVE(hits[0].hit_point, p1);
-	hits[0].hit_dist = isect->r.r_min;
-
-	VJOIN1(p2, isect->r.r_pt, isect->r.r_max, isect->r.r_dir);
-	VMOVE(hits[1].hit_point, p2);
-	hits[1].hit_dist = isect->r.r_max;
-
-	plot_cell_top(isect, dsp_bb, A, B, C, D, hits, 3, 0);
-    }
-#endif
-
-
-    /* first order of business is to discard any "fake" hits on the
-     * bounding box, and fill in any "real" hits in our list
+    /* Determine whether the BB entry point is inside the DSP solid.
+     * check_bbpt_hit_elev is exact for leaf cells (1x1 grid unit):
+     *   ZMIN → always 1 (below minimum terrain height of this cell)
+     *   ZMAX → always 0 (above maximum terrain height)
+     *   Side faces → exact linear interpolation along the shared edge
+     *
+     * Must be called with the original (unpermuted) corner values.
      */
-    VJOIN1(P, isect->r.r_pt, isect->r.r_min, isect->r.r_dir);
-    if (check_bbpt_hit_elev(isect->dmin, A, B, C, D, P)) {
-	hits[0].hit_dist = isect->r.r_min;
-	VMOVE(hits[0].hit_point, P);
-	VMOVE(hits[0].hit_normal, dsp_pl[isect->dmin]);
-	/* vpriv */
-	hits[0].hit_vpriv[X] = dsp_bb->dspb_rpp.dsp_min[X];
-	hits[0].hit_vpriv[Y] = dsp_bb->dspb_rpp.dsp_min[Y];
-	/* private */
-	hits[0].hit_surfno = isect->dmin;
+    entry_solid = check_bbpt_hit_elev(isect->dmin, A, B, C, D, minpt);
 
-	hitcount++;
+    dlog("  entry_solid=%d dmin=%d dmax=%d\n",
+	 entry_solid, isect->dmin, isect->dmax);
 
-	hitf = 1;
-	if (RT_G_DEBUG & RT_DEBUG_HF) {
-	    dot = VDOT(hits[0].hit_normal, isect->r.r_dir);
-	    bu_log("hit ray/bb min  Normal: %g %g %g %s\n",
-		   V3ARGS(hits[0].hit_normal),
-		   ((dot > 0.0) ? "outbound" : "inbound"));
-	}
-    } else {
-	dlog("miss ray/bb min\n");
-    }
-
-
-    /* make sure the point P is below the cell top */
-    VJOIN1(P, isect->r.r_pt, isect->r.r_max, isect->r.r_dir);
-    if (check_bbpt_hit_elev(isect->dmax, A, B, C, D, P)) {
-	/* P is at or below the top surface */
-	hits[3].hit_dist = isect->r.r_max;
-	VMOVE(hits[3].hit_point, P);
-	VMOVE(hits[3].hit_normal, dsp_pl[isect->dmax]);
-	/* vpriv */
-	hits[3].hit_vpriv[X] = dsp_bb->dspb_rpp.dsp_min[X];
-	hits[3].hit_vpriv[Y] = dsp_bb->dspb_rpp.dsp_min[Y];
-	/* private */
-	hits[3].hit_surfno = isect->dmax;
-
-	hitcount++;
-
-	hitf |= 8;
-	if (RT_G_DEBUG & RT_DEBUG_HF) {
-	    dot = VDOT(hits[3].hit_normal, isect->r.r_dir);
-	    bu_log("hit ray/bb max  Normal: %g %g %g  %s\n",
-		   V3ARGS(hits[3].hit_normal),
-		   ((dot > 0.0) ? "outbound" : "inbound"));
-	}
-    } else {
-	dlog("miss ray/bb max\n");
-    }
-
-
+    /* Possibly reorder corners for the B–C diagonal cut */
     (void)permute_cell(A, B, C, D, isect->dsp, &dsp_bb->dspb_rpp);
 
-    if ((cond=isect_ray_triangle(isect, B, D, A, &hits[1], ab_first)) > 0.0) {
-	/* hit triangle */
-
-	/* record cell */
-	hits[1].hit_vpriv[X] = dsp_bb->dspb_rpp.dsp_min[X];
-	hits[1].hit_vpriv[Y] = dsp_bb->dspb_rpp.dsp_min[Y];
-	hits[1].hit_surfno = ZTOP; /* indicate we hit the top */
-
-	hitcount++;
-	hitf |= 2;
-	dlog("  hit triangle 1 (alpha: %g beta:%g alpha+beta: %g) vpriv %g %g\n",
-	     ab_first[0], ab_first[1], ab_first[0] + ab_first[1],
-	     hits[1].hit_vpriv[X], hits[1].hit_vpriv[Y]);
+    /* Test both cell triangles; collect hits inside the BB interval */
+    if (isect_ray_triangle(isect, B, D, A, &tri_hit[n_tri], ab_first) > 0.0) {
+	tri_hit[n_tri].hit_vpriv[X] = dsp_bb->dspb_rpp.dsp_min[X];
+	tri_hit[n_tri].hit_vpriv[Y] = dsp_bb->dspb_rpp.dsp_min[Y];
+	tri_hit[n_tri].hit_surfno   = ZTOP;
+	dlog("  hit tri1 dist=%g N·dir=%g\n",
+	     tri_hit[n_tri].hit_dist,
+	     VDOT(isect->r.r_dir, tri_hit[n_tri].hit_normal));
+	n_tri++;
     } else {
-	dlog("  miss triangle 1 (alpha: %g beta:%g a+b: %g) cond:%d\n",
-	     ab_first[0], ab_first[1], ab_first[0] + ab_first[1], cond);
+	dlog("  miss tri1\n");
     }
-    if ((cond=isect_ray_triangle(isect, C, A, D, &hits[2], ab_second)) > 0.0) {
-	/* hit triangle */
 
-	/* record cell */
-	hits[2].hit_vpriv[X] = dsp_bb->dspb_rpp.dsp_min[X];
-	hits[2].hit_vpriv[Y] = dsp_bb->dspb_rpp.dsp_min[Y];
-	hits[2].hit_surfno = ZTOP; /* indicate we hit the top */
-
-	hitcount++;
-
-	hitf |= 4;
-	dlog("  hit triangle 2 (alpha: %g beta:%g alpha+beta: %g) vpriv %g %g\n",
-	     ab_second[0], ab_second[1], ab_second[0] + ab_second[1],
-	     hits[2].hit_vpriv[X], hits[2].hit_vpriv[Y]);
-
-	if (hitf & 2) {
-	    /* if this hit occurs before the hit on the other triangle
-	     * swap the order
-	     */
-	    if (hits[1].hit_dist > hits[2].hit_dist) {
-		struct hit tmp;
-		tmp = hits[1]; /* struct copy */
-		hits[1] = hits[2]; /* struct copy */
-		hits[2] = tmp; /* struct copy */
-		dlog("re-ordered triangle hits\n");
-
-	    } else
-		dlog("triangle hits in order\n");
-	}
-
-
+    if (isect_ray_triangle(isect, C, A, D, &tri_hit[n_tri], ab_second) > 0.0) {
+	tri_hit[n_tri].hit_vpriv[X] = dsp_bb->dspb_rpp.dsp_min[X];
+	tri_hit[n_tri].hit_vpriv[Y] = dsp_bb->dspb_rpp.dsp_min[Y];
+	tri_hit[n_tri].hit_surfno   = ZTOP;
+	dlog("  hit tri2 dist=%g N·dir=%g\n",
+	     tri_hit[n_tri].hit_dist,
+	     VDOT(isect->r.r_dir, tri_hit[n_tri].hit_normal));
+	n_tri++;
     } else {
-	dlog("  miss triangle 2 (alpha: %g beta:%g alpha+beta: %g) cond:%d\n",
-	     ab_second[0], ab_second[1], ab_second[0] + ab_second[1], cond);
+	dlog("  miss tri2\n");
     }
+
+    /* Sort triangle hits by distance (insertion sort, ≤2 elements) */
+    if (n_tri == 2 && tri_hit[0].hit_dist > tri_hit[1].hit_dist) {
+	struct hit tmp = tri_hit[0]; tri_hit[0] = tri_hit[1]; tri_hit[1] = tmp;
+	dlog("  re-ordered triangle hits\n");
+    }
+
+    /* Build BB-entry and BB-exit hit records */
+    bb_in.hit_magic  = RT_HIT_MAGIC;
+    bb_in.hit_dist   = isect->r.r_min;
+    VMOVE(bb_in.hit_point,  minpt);
+    VMOVE(bb_in.hit_normal, dsp_pl[isect->dmin]);
+    bb_in.hit_surfno = isect->dmin;
+
+    bb_out.hit_magic  = RT_HIT_MAGIC;
+    bb_out.hit_dist   = isect->r.r_max;
+    VMOVE(bb_out.hit_point,  maxpt);
+    VMOVE(bb_out.hit_normal, dsp_pl[isect->dmax]);
+    bb_out.hit_surfno = isect->dmax;
+
+    /*
+     * Walk the sorted terrain-triangle hits in ray order and emit solid
+     * segments via a state machine.
+     *
+     * State: cur_solid = 1 (inside solid), 0 (in air).
+     * Initial state set by check_bbpt_hit_elev on the BB entry face.
+     *
+     * At each triangle hit, examine VDOT(N, r_dir):
+     *   < 0  →  ray entering solid (terrain hit from above)   →  in-hit
+     *   > 0  →  ray exiting  solid (terrain hit from below)   →  out-hit
+     *
+     * Only accept hits consistent with the current state:
+     *   in solid + exit-hit  → valid, emit segment [in_htp, tri]
+     *   in air   + entry-hit → valid, record new in_htp
+     *   inconsistent         → geometry artefact at the shared diagonal,
+     *                          skip so that the physical state is preserved
+     *
+     * This approach eliminates the old 4-slot state machine and the
+     * check_bbpt_hit_elev approximation for the exit face, and correctly
+     * handles 0, 1, or 2 triangle hits per cell.
+     */
+    cur_solid = entry_solid;
+    in_htp = cur_solid ? &bb_in : NULL;
 
     if (RT_G_DEBUG & RT_DEBUG_HF) {
-	bu_log("hitcount: %d flags: 0x%0x\n", hitcount, hitf);
-
-	plot_cell_top(isect, dsp_bb, A, B, C, D, hits, hitf, 1);
-	for (i = 0; i < 4; i++) {
-	    if (hitf & (1<<i)) {
-		fastf_t v = VDOT(isect->r.r_dir, hits[i].hit_normal);
-
-		bu_log("%d dist:%g N:%g %g %g ",
-		       i, hits[i].hit_dist, V3ARGS(hits[i].hit_normal));
-
-		if (v > 0.0) bu_log("outbound\n");
-		else if (v < 0.0) bu_log("inbound\n");
-		else bu_log("perp\n");
-	    }
+	bu_log("  n_tri=%d cur_solid=%d\n", n_tri, cur_solid);
+	for (i = 0; i < n_tri; i++) {
+	    fastf_t d = VDOT(isect->r.r_dir, tri_hit[i].hit_normal);
+	    bu_log("  tri[%d] dist=%g N·dir=%g (%s)\n", i,
+		   tri_hit[i].hit_dist, d,
+		   (d < 0.0) ? "entry" : ((d > 0.0) ? "exit" : "perp"));
 	}
-	bu_log("assembling segs\n");
     }
 
+    for (i = 0; i < n_tri; i++) {
+	fastf_t t   = tri_hit[i].hit_dist;
+	fastf_t dot = VDOT(isect->r.r_dir, tri_hit[i].hit_normal);
 
-    /* fill out the segment structures */
+	/* Skip hits outside the BB interval (numerical noise) */
+	if (t < isect->r.r_min - tol || t > isect->r.r_max + tol) {
+	    dlog("  skipping tri[%d] outside BB\n", i);
+	    continue;
+	}
 
-    hitp = 0;
-    for (i = 0; i < 4; i++) {
-	if (hitf & (1<<i)) {
-	    if (hitp) {
-
-		dot2 = VDOT(isect->r.r_dir, hits[i].hit_normal);
-
-		/* if we have two entry points then pick the first one */
-		if (dot2 < 0.0) {
-		    dlog("dot2(%g) < 0.0\n", dot2);
-		    if (hitp->hit_dist > hits[i].hit_dist) {
-			dlog("skipping duplicate entry point at dist %g\n",
-			     hitp->hit_dist);
-
-			hitp = &hits[i];
-		    } else {
-			dlog("skipping duplicate entry point at dist %g\n",
-			     hits[i].hit_dist);
-		    }
-
-		    continue;
-		}
-
-		/* int/float conv */
-		VMOVE(bbmin, dsp_bb->dspb_rpp.dsp_min);
-		VMOVE(bbmax, dsp_bb->dspb_rpp.dsp_max);
-
-		/* create seg with hits[i].hit_point as out point */
-		if (add_seg(isect, hitp, &hits[i], bbmin, bbmax, 255, 255, 255))
+	if (cur_solid) {
+	    /* Expect an exit hit (dot > 0).
+	     * If dot < 0 the ray hit the terrain from above while already
+	     * in solid — a geometry artefact at the diagonal discontinuity
+	     * (the two triangle planes diverge at the shared edge).  Ignore
+	     * the hit so the solid interval is not prematurely closed.
+	     */
+	    if (dot <= 0.0) {
+		dlog("  skipping entry-while-solid at t=%g\n", t);
+		continue;
+	    }
+	    /* Valid exit */
+	    if (in_htp != NULL && t > in_htp->hit_dist + tol) {
+		if (add_seg(isect, in_htp, &tri_hit[i], bbmin, bbmax,
+			    255, 255, 255))
 		    return 1;
-
-		hitp = 0;
-	    } else {
-		dot = VDOT(isect->r.r_dir, hits[i].hit_normal);
-		if (dot >= 0.0)
-		    continue;
-
-		/* remember hits[i].hit_point); as in point */
-		if (RT_G_DEBUG & RT_DEBUG_HF) {
-		    bu_log("in-hit at dist %g\n", hits[i].hit_dist);
-		}
-		hitp = &hits[i];
+		dlog("  emitted seg [%g, %g] via tri exit\n",
+		     in_htp->hit_dist, t);
 	    }
+	    in_htp = NULL;
+	    cur_solid = 0;
+	} else {
+	    /* Expect an entry hit (dot < 0).
+	     * If dot > 0 the ray hit the terrain from below while in air —
+	     * again a diagonal discontinuity artefact.  Ignore it.
+	     */
+	    if (dot >= 0.0) {
+		dlog("  skipping exit-while-air at t=%g\n", t);
+		continue;
+	    }
+	    /* Valid entry */
+	    in_htp = &tri_hit[i];
+	    cur_solid = 1;
+	    dlog("  entered solid at t=%g via tri\n", t);
 	}
     }
 
-    if (hitp && hitcount > 1) {
-	point_t p1, p2;
-
-	bu_log("----------------ERROR incomplete segment-------------\n");
-	bu_log("  pixel %d %d\n", isect->ap->a_x, isect->ap->a_y);
-
-	VJOIN1(p1, isect->r.r_pt, isect->r.r_min, isect->r.r_dir);
-	VMOVE(hits[0].hit_point, p1);
-	hits[0].hit_dist = isect->r.r_min;
-
-	VJOIN1(p2, isect->r.r_pt, isect->r.r_max, isect->r.r_dir);
-	VMOVE(hits[1].hit_point, p2);
-	hits[1].hit_dist = isect->r.r_max;
-
-	if (RT_G_DEBUG & RT_DEBUG_HF)
-	    plot_cell_top(isect, dsp_bb, A, B, C, D, hits, 3, 0);
+    /* If still in solid at the BB exit, emit the trailing segment */
+    if (cur_solid && in_htp != NULL &&
+	bb_out.hit_dist > in_htp->hit_dist + tol) {
+	dlog("  emitted seg [%g, %g] via BB exit\n",
+	     in_htp->hit_dist, bb_out.hit_dist);
+	(void)add_seg(isect, in_htp, &bb_out, bbmin, bbmax, 255, 255, 255);
     }
+
     return 0;
 }
 
@@ -2460,49 +2869,88 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
     /* intersect the DSP grid surface geometry */
 
-    /* Check for a hit on the triangulated zone on top.  This gives us
-     * intersections on the triangulated top, and the sides and bottom
-     * of the bounding box for the triangles.
-     *
-     * We do this first because we already know that the ray does NOT
-     * just pass through the "foundation " pillar underneath (see test
-     * above)
+    /* For a ray going upward (+Z component), the ray traverses the
+     * "foundation" pillar (z=0..min_z) BEFORE the triangulated terrain
+     * zone (z=min_z..max_z).  Processing them in the correct ray-travel
+     * order means add_seg's segment-stitching logic can automatically
+     * merge adjacent foundation and cell-top segments into one continuous
+     * solid segment instead of leaving them in a reversed list.
+     * For a downward ray the original order is correct.
      */
-    bbmin[Z] = dsp_bb->dspb_rpp.dsp_min[Z];
-    if (dsp_in_rpp(isect, bbmin, bbmax)) {
-	/* hit rpp */
+    if (r->r_dir[Z] >= 0.0) {
+	/* upward ray -- foundation first */
+	bbmax[Z] = dsp_bb->dspb_rpp.dsp_min[Z];
+	bbmin[Z] = 0.0;
+	if (dsp_in_rpp(isect, bbmin, bbmax)) {
+	    struct hit in_hit, out_hit;
+	    VSETALL(in_hit.hit_vpriv, 0.0);
+	    VSETALL(out_hit.hit_vpriv, 0.0);
 
-	isect_ray_cell_top(isect, dsp_bb);
-    }
+	    VJOIN1(minpt, r->r_pt, r->r_min, r->r_dir);
+	    VJOIN1(maxpt, r->r_pt, r->r_max, r->r_dir);
 
+	    in_hit.hit_dist   = r->r_min;
+	    in_hit.hit_surfno = isect->dmin;
+	    VMOVE(in_hit.hit_point,  minpt);
+	    VMOVE(in_hit.hit_normal, dsp_pl[isect->dmin]);
 
-    /* check for hits on the "foundation" pillar under the top.  The
-     * ray may have entered through the top of the pillar, possibly
-     * after having come down through the triangles above
-     */
-    bbmax[Z] = dsp_bb->dspb_rpp.dsp_min[Z];
-    bbmin[Z] = 0.0;
-    if (dsp_in_rpp(isect, bbmin, bbmax)) {
-	/* hit rpp */
-	struct hit in_hit, out_hit;
-	VSETALL(in_hit.hit_vpriv, 0.0);
-	VSETALL(out_hit.hit_vpriv, 0.0);
+	    out_hit.hit_dist   = r->r_max;
+	    out_hit.hit_surfno = isect->dmax;
+	    VMOVE(out_hit.hit_point,  maxpt);
+	    VMOVE(out_hit.hit_normal, dsp_pl[isect->dmax]);
 
-	VJOIN1(minpt, r->r_pt, r->r_min, r->r_dir);
-	VJOIN1(maxpt, r->r_pt, r->r_max, r->r_dir);
+	    if (add_seg(isect, &in_hit, &out_hit, bbmin, bbmax, 255, 255, 0))
+		return 1;
+	}
 
-	in_hit.hit_dist = r->r_min;
-	in_hit.hit_surfno = isect->dmin;
-	VMOVE(in_hit.hit_point, minpt);
-	VMOVE(in_hit.hit_normal, dsp_pl[isect->dmin]);
+	/* then cell-top triangulated zone */
+	bbmin[Z] = dsp_bb->dspb_rpp.dsp_min[Z];
+	bbmax[Z] = dsp_bb->dspb_rpp.dsp_max[Z];
+	if (dsp_in_rpp(isect, bbmin, bbmax)) {
+	    isect_ray_cell_top(isect, dsp_bb);
+	}
+    } else {
+	/* downward ray -- cell-top first */
 
-	out_hit.hit_dist = r->r_max;
-	out_hit.hit_surfno = isect->dmax;
-	VMOVE(out_hit.hit_point, maxpt);
-	VMOVE(out_hit.hit_normal, dsp_pl[isect->dmax]);
+	/* Check for a hit on the triangulated zone on top.  This gives us
+	 * intersections on the triangulated top, and the sides and bottom
+	 * of the bounding box for the triangles.
+	 *
+	 * We do this first because we already know that the ray does NOT
+	 * just pass through the "foundation" pillar underneath (see test
+	 * above)
+	 */
+	bbmin[Z] = dsp_bb->dspb_rpp.dsp_min[Z];
+	if (dsp_in_rpp(isect, bbmin, bbmax)) {
+	    isect_ray_cell_top(isect, dsp_bb);
+	}
 
-	/* add a segment to the list */
-	return add_seg(isect, &in_hit, &out_hit, bbmin, bbmax, 255, 255, 0);
+	/* check for hits on the "foundation" pillar under the top.  The
+	 * ray may have entered through the top of the pillar, possibly
+	 * after having come down through the triangles above
+	 */
+	bbmax[Z] = dsp_bb->dspb_rpp.dsp_min[Z];
+	bbmin[Z] = 0.0;
+	if (dsp_in_rpp(isect, bbmin, bbmax)) {
+	    struct hit in_hit, out_hit;
+	    VSETALL(in_hit.hit_vpriv, 0.0);
+	    VSETALL(out_hit.hit_vpriv, 0.0);
+
+	    VJOIN1(minpt, r->r_pt, r->r_min, r->r_dir);
+	    VJOIN1(maxpt, r->r_pt, r->r_max, r->r_dir);
+
+	    in_hit.hit_dist   = r->r_min;
+	    in_hit.hit_surfno = isect->dmin;
+	    VMOVE(in_hit.hit_point,  minpt);
+	    VMOVE(in_hit.hit_normal, dsp_pl[isect->dmin]);
+
+	    out_hit.hit_dist   = r->r_max;
+	    out_hit.hit_surfno = isect->dmax;
+	    VMOVE(out_hit.hit_point,  maxpt);
+	    VMOVE(out_hit.hit_normal, dsp_pl[isect->dmax]);
+
+	    return add_seg(isect, &in_hit, &out_hit, bbmin, bbmax, 255, 255, 0);
+	}
     }
 
     return 0;
@@ -2577,6 +3025,18 @@ rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	       V3ARGS(isect.r.r_dir));
     }
 
+    /* Use the BVH shot path when the BVH was successfully built.
+     * The legacy HBB-pyramid + 2D-DDA path is retained as a fallback for
+     * cases where the BVH could not be built (degenerate DSP, out-of-memory).
+     */
+    if (dsp->bvh_root) {
+	/* Pass the unit-direction solid-space ray to the BVH shot function. */
+	struct xray solid_ray;
+	VMOVE(solid_ray.r_pt,  isect.r.r_pt);
+	VMOVE(solid_ray.r_dir, isect.r.r_dir);
+	return dsp_shot_bvh(dsp, &solid_ray, ap, stp, seghead);
+    }
+
     /* We look at the topmost layer of the bounding-box tree and make
      * sure that it has dimension 1.  Otherwise, something is wrong
      */
@@ -2623,9 +3083,20 @@ rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	delta = segp->seg_out.hit_dist - segp->seg_in.hit_dist;
 
 	if (delta < 0.0 && !NEAR_ZERO(delta, ap->a_rt_i->rti_tol.dist)) {
-	    bu_log("Pixel %d %d seg inside out in:%g out:%g seg_len:%g\n",
-		   ap->a_x, ap->a_y, segp->seg_in.hit_dist, segp->seg_out.hit_dist,
-		   delta);
+	    /* Inside-out segment: swap in/out as a safety net.
+	     * The primary fixes are the incomplete-segment fallback in
+	     * isect_ray_cell_top and the upward-ray ordering fix in
+	     * isect_ray_dsp_bb.
+	     */
+	    struct hit tmp_hit;
+	    if (RT_G_DEBUG & RT_DEBUG_HF) {
+		bu_log("DSP: pixel %d %d swapping inside-out seg in:%g out:%g\n",
+		       ap->a_x, ap->a_y,
+		       segp->seg_in.hit_dist, segp->seg_out.hit_dist);
+	    }
+	    tmp_hit       = segp->seg_in;
+	    segp->seg_in  = segp->seg_out;
+	    segp->seg_out = tmp_hit;
 	}
 
 	if (RT_G_DEBUG & RT_DEBUG_HF) {
@@ -3082,15 +3553,86 @@ rt_dsp_free(register struct soltab *stp)
 	    break;
     }
 
-    /* Free the BVH acceleration structure */
+    /* Free the HBB pyramid acceleration structure */
     if (dsp->layer)
 	bu_free(dsp->layer, "dsp_bb_layers array");
     if (dsp->bb_array)
 	bu_free(dsp->bb_array, "dsp_bb array");
 
+    /* Free the HLBVH acceleration structure */
+    if (dsp->bvh_root)
+	bu_free(dsp->bvh_root, "dsp bvh flat nodes");
+    if (dsp->bvh_tris)
+	bu_free(dsp->bvh_tris, "dsp bvh tris");
+    if (dsp->bvh_info)
+	bu_free(dsp->bvh_info, "dsp bvh info");
+
     BU_PUT(dsp, struct dsp_specific);
 }
 
+
+/**
+ * Swap the BVH root pointer on a DSP soltab and return the old value.
+ *
+ * Used exclusively by regression tests to toggle between the BVH shot path
+ * (bvh_root != NULL) and the legacy HBB-pyramid/DDA path (bvh_root == NULL)
+ * without rebuilding the rt_i.  The caller is responsible for restoring the
+ * original value after the test.
+ *
+ * Returns NULL if @p stp is not a DSP solid.
+ */
+RT_EXPORT void *dsp_bvh_root_swap(struct soltab *stp, void *new_root);
+void *
+dsp_bvh_root_swap(struct soltab *stp, void *new_root)
+{
+    if (!stp || stp->st_id != ID_DSP)
+	return NULL;
+    struct dsp_specific *dsp = (struct dsp_specific *)stp->st_specific;
+    void *old = (void *)dsp->bvh_root;
+    dsp->bvh_root = (struct bvh_flat_node *)new_root;
+    return old;
+}
+
+
+/**
+ * Expose height buffer and transform metadata for a prepped DSP soltab.
+ *
+ * Used by regression tests to compute an exact triangle-mesh reference SA/vol
+ * from the same height data the BVH uses, without requiring access to the
+ * private dsp_specific struct definition.
+ *
+ * @param stp      DSP soltab (must have been prepped).
+ * @param pbuf     Receives pointer to uint16 height array (row-major,
+ *                 xcnt*ycnt elements), or NULL on failure.
+ * @param pxcnt    Receives grid column count (number of height columns).
+ * @param pycnt    Receives grid row count (number of height rows).
+ * @param stom16   If non-NULL, receives a copy of the 16-element solid-to-model
+ *                 matrix (fastf_t[16]) stored in the DSP.
+ */
+RT_EXPORT void dsp_query_terrain(struct soltab *stp,
+				 const unsigned short **pbuf,
+				 unsigned int *pxcnt,
+				 unsigned int *pycnt,
+				 fastf_t *stom16);
+void
+dsp_query_terrain(struct soltab *stp,
+		  const unsigned short **pbuf,
+		  unsigned int *pxcnt,
+		  unsigned int *pycnt,
+		  fastf_t *stom16)
+{
+    if (!stp || stp->st_id != ID_DSP) {
+	if (pbuf)  *pbuf  = NULL;
+	if (pxcnt) *pxcnt = 0;
+	if (pycnt) *pycnt = 0;
+	return;
+    }
+    struct dsp_specific *dsp = (struct dsp_specific *)stp->st_specific;
+    if (pbuf)  *pbuf  = dsp->dsp_i.dsp_buf;
+    if (pxcnt) *pxcnt = dsp->dsp_i.dsp_xcnt;
+    if (pycnt) *pycnt = dsp->dsp_i.dsp_ycnt;
+    if (stom16) MAT_COPY(stom16, dsp->dsp_i.dsp_stom);
+}
 
 int
 rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
@@ -3425,8 +3967,6 @@ static int
 get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 {
     struct rt_binunif_internal *bip;
-    int in_cookie, out_cookie;
-    size_t got;
     int ret;
 
     BU_ALLOC(dsp_ip->dsp_bip, struct rt_db_internal);
@@ -3475,24 +4015,14 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 	return -2;
     }
 
-    in_cookie = bu_cv_cookie("nus"); /* data is network unsigned short */
-    out_cookie = bu_cv_cookie("hus");
-
-    if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
-	/* if we're on a little-endian machine we convert the input
-	 * file from network to host format
-	 */
-
-	got = bu_cv_w_cookie(bip->u.uint16, out_cookie,
-			     bip->count * sizeof(unsigned short),
-			     bip->u.uint16, in_cookie, bip->count);
-
-	if (got != bip->count) {
-	    bu_log("got %zu != count %zu", got, bip->count);
-	    bu_bomb("\n");
-	}
-    }
-
+    /* rt_retrieve_binunif() calls rt_db_get_internal5() which in turn calls
+     * rt_binunif_import5().  That import function already performs the
+     * network-to-host byte-order conversion for 16-bit integer data.  The
+     * data in bip->u.uint16 is therefore already in host byte order by the
+     * time we reach this point; no second conversion is needed or correct.
+     * (A second swap would leave heights 256× too large on little-endian
+     * machines because 0x0064 → 0x6400 = 25600 instead of 100.)
+     */
     dsp_ip->dsp_buf = bip->u.uint16;
     return 0;
 }
@@ -3869,11 +4399,13 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     /* Since libwdb users may want to operate in units other than mm,
      * we offer the opportunity to scale the solid (to get it into mm)
-     * on the way out.
+     * on the way out.  Apply the scale to the local scanmat copy rather
+     * than to dsp_ip->dsp_stom directly; modifying the caller's struct
+     * would permanently corrupt the matrix if the same internal is
+     * exported more than once (e.g. with a different local2mm value).
      */
-    dsp_ip->dsp_stom[15] *= local2mm;
-
-    MAT_COPY(scanmat, dsp_ip->dsp_stom); /* convert fastf_t to double */
+    MAT_COPY(scanmat, dsp_ip->dsp_stom); /* copy fastf_t to double */
+    scanmat[15] *= local2mm;
     bu_cv_htond(cp, (unsigned char *)scanmat, ELEMENTS_PER_MAT);
 
     cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT;

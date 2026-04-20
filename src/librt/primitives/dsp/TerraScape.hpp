@@ -97,8 +97,50 @@
 #endif
 
 #include "../../../libbg/detria.hpp"
+#include "RTree.h"
 
 namespace TerraScape {
+
+/**
+ * SteinerIndex - O(log N) proximity index for Steiner point insertion.
+ *
+ * Wraps a 2-D RTree so that checking whether a candidate Steiner point
+ * is within min_distance of any already-accepted point costs O(log N)
+ * instead of the naive O(N) linear scan.  Each accepted point is
+ * inserted as a zero-area (point) bounding box; a candidate is rejected
+ * if the RTree returns any hit whose exact Euclidean distance is less
+ * than min_distance.
+ */
+struct SteinerIndex {
+    /* The stored data value is the index into `points`. */
+    RTree<int, double, 2, double> tree;
+    std::vector<std::pair<double, double>> points;
+
+    bool hasNear(double x, double y, double min_dist) const {
+	double lo[2] = { x - min_dist, y - min_dist };
+	double hi[2] = { x + min_dist, y + min_dist };
+	double md2 = min_dist * min_dist;
+	bool found = false;
+	/* Capture by reference is safe: lambda outlives the Search call. */
+	tree.Search(lo, hi, [&](const int& idx, void*) -> bool {
+	    double dx = x - points[idx].first;
+	    double dy = y - points[idx].second;
+	    if (dx*dx + dy*dy < md2) { found = true; return false; }
+	    return true;
+	}, nullptr);
+	return found;
+    }
+
+    void insert(double x, double y) {
+	int idx = (int)points.size();
+	points.push_back({x, y});
+	double pt[2] = { x, y };
+	tree.Insert(pt, pt, idx);
+    }
+
+    const std::vector<std::pair<double, double>>& getPoints() const { return points; }
+    bool empty() const { return points.empty(); }
+};
 
 // Forward declarations for types used in method signatures
 class TerrainFeature;
@@ -247,7 +289,7 @@ class TerrainData {
 		const std::set<std::pair<int, int>>& active_cells,
 		double min_distance,
 		const std::function<double(double, double)>& distanceToEdges,
-		std::vector<std::pair<double, double>>& steiner_points) const;
+		SteinerIndex& steiner_idx) const;
 
 	void processGuideLines(const std::vector<std::pair<double, double>>& edge_points,
 		double center_x, double center_y,
@@ -259,7 +301,7 @@ class TerrainData {
 		const std::set<std::pair<int, int>>& active_cells,
 		double min_distance,
 		const std::function<double(double, double)>& distanceToEdges,
-		std::vector<std::pair<double, double>>& steiner_points,
+		SteinerIndex& steiner_idx,
 		size_t sample_step,
 		double step_divisor) const;
 
@@ -652,44 +694,49 @@ std::vector<std::vector<bool>> TerrainData::generateSampleMask(const Simplificat
 	}
     }
 
-    // Analyze terrain features and mark important points
-    std::vector<std::pair<double, std::pair<int, int>>> importance_points;
+    // Compute importance for all interior points.  Collect ALL of them so we
+    // can apply the min_reduction target as a hard cap later.
+    std::vector<std::pair<double, std::pair<int, int>>> all_interior;
+    all_interior.reserve((size_t)(height-2) * (size_t)(width-2));
 
     for (int y = 1; y < height-1; ++y) {
 	for (int x = 1; x < width-1; ++x) {
 	    TerrainFeature feature = analyzePoint(x, y);
-
-	    // Include points with high importance or exceeding thresholds
-	    if (feature.getImportance() > params.getErrorTol() ||
-		    feature.getSlope() > params.getSlopeTol()) {
-		mask[y][x] = true;
-	    } else {
-		// Store for potential inclusion based on overall reduction target
-		importance_points.push_back({feature.getImportance(), {x, y}});
-	    }
+	    all_interior.push_back({feature.getImportance(), {x, y}});
 	}
     }
 
-    // Sort by importance and include additional points to meet minimum density
-    std::sort(importance_points.rbegin(), importance_points.rend());
-
-    int current_points = 0;
-    for (int y = 0; y < height; ++y) {
-	for (int x = 0; x < width; ++x) {
-	    if (mask[y][x]) current_points++;
-	}
-    }
+    // Sort descending by importance so we can include the most important
+    // points first up to the target density.
+    std::sort(all_interior.rbegin(), all_interior.rend());
 
     int total_points = width * height;
     int min_required = total_points * (100 - params.getMinReduction()) / 100;
 
-    // Add most important remaining points to reach minimum density
-    for (const auto& point : importance_points) {
+    // Count how many boundary points are already in the mask.
+    int current_points = 0;
+    for (int y = 0; y < height; ++y)
+	for (int x = 0; x < width; ++x)
+	    if (mask[y][x]) current_points++;
+
+    // Include interior points in importance order, stopping once we either
+    // reach the min_required cap or exhaust the list.  Points below the
+    // error/slope thresholds are still included if we haven't reached the
+    // cap yet, but points above the thresholds are included first.
+    for (const auto& point : all_interior) {
 	if (current_points >= min_required) break;
 
+	double importance = point.first;
 	int x = point.second.first;
 	int y = point.second.second;
+
+	// Always include the most important points; stop adding low-importance
+	// points once we have enough (i.e., current < min_required).
+	// The threshold guard here is intentionally loose (0 rather than
+	// params.getErrorTol()) so that when the budget allows, we fill up
+	// with any remaining points in importance order.
 	if (!mask[y][x]) {
+	    (void)importance; // used implicitly via sort order
 	    mask[y][x] = true;
 	    current_points++;
 	}
@@ -1049,30 +1096,49 @@ void TerrainMesh::triangulateVolumeSimplified(const TerrainData& terrain, const 
     // Use regular subsampling combined with feature-based importance
     int step_size = std::max(1, (int)std::sqrt(100.0 / (100.0 - params.getMinReduction())));
 
-    // First pass: structured subsampling to maintain topology
+    // First pass: structured subsampling to maintain topology.
+    // Explicitly include the last column and last row so step_size quads
+    // can always reach the grid boundary without clamping.
     for (int y = 0; y < terrain.height; y += step_size) {
 	for (int x = 0; x < terrain.width; x += step_size) {
 	    keep_vertex[y][x] = true;
 	}
+	keep_vertex[y][terrain.width - 1] = true;
     }
+    for (int x = 0; x < terrain.width; x += step_size) {
+	keep_vertex[terrain.height - 1][x] = true;
+    }
+    keep_vertex[terrain.height - 1][terrain.width - 1] = true;
 
-    // Second pass: add important feature points
-    for (int y = 0; y < terrain.height; ++y) {
-	for (int x = 0; x < terrain.width; ++x) {
+    // Second pass: add important feature points, but skip the 4 boundary
+    // rows/columns.  Boundary vertices are controlled exclusively by pass 1
+    // and pass 3 (step_size-aligned) so that wall and top-surface quads share
+    // exactly the same boundary-edge vertices.  Feature points on boundaries
+    // would create T-junctions (vertex in wall but no top-surface triangle
+    // referencing it) that produce open edges in the assembled mesh.
+    for (int y = 1; y < terrain.height - 1; ++y) {
+	for (int x = 1; x < terrain.width - 1; ++x) {
 	    if (sample_mask[y][x] && !keep_vertex[y][x]) {
 		keep_vertex[y][x] = true;
 	    }
 	}
     }
 
-    // Third pass: ensure boundary completeness
-    for (int y = 0; y < terrain.height; ++y) {
-	for (int x = 0; x < terrain.width; ++x) {
-	    if ((x == 0 || x == terrain.width-1 || y == 0 || y == terrain.height-1)) {
-		keep_vertex[y][x] = true;
-	    }
-	}
+    // Third pass: boundary completeness at step_size resolution.
+    // Using step_size intervals ensures the wall vertices match the top-surface
+    // grid spacing so every wall quad has all four corners in keep_vertex.
+    // Corners are always kept; the last column/row were already set in pass 1.
+    for (int x = 0; x < terrain.width; x += step_size) {
+	keep_vertex[0][x] = true;
+	keep_vertex[terrain.height - 1][x] = true;
     }
+    keep_vertex[0][terrain.width - 1] = true;
+    keep_vertex[terrain.height - 1][terrain.width - 1] = true;
+    for (int y = 0; y < terrain.height; y += step_size) {
+	keep_vertex[y][0] = true;
+	keep_vertex[y][terrain.width - 1] = true;
+    }
+    keep_vertex[terrain.height - 1][0] = true;
 
     // Add vertices for kept points
     for (int y = 0; y < terrain.height; ++y) {
@@ -1088,61 +1154,52 @@ void TerrainMesh::triangulateVolumeSimplified(const TerrainData& terrain, const 
 	}
     }
 
-    // Triangulate surface using a grid-walking approach to maintain manifold property
-    for (int y = 0; y < terrain.height - 1; ++y) {
-	for (int x = 0; x < terrain.width - 1; ++x) {
-	    // Find the next valid grid cell that can be triangulated
-	    std::vector<std::pair<int, int>> quad_corners;
-	    if (keep_vertex[y][x]) quad_corners.push_back({x, y});
-	    if (keep_vertex[y][x+1]) quad_corners.push_back({x+1, y});
-	    if (keep_vertex[y+1][x]) quad_corners.push_back({x, y+1});
-	    if (keep_vertex[y+1][x+1]) quad_corners.push_back({x+1, y+1});
+    // Triangulate top surface using step_size-aligned quads.
+    // Each quad spans from (x,y) to (x+step_size, y+step_size) with clamping
+    // at the grid boundary, so the grid spacing always matches keep_vertex.
+    for (int y = 0; y < terrain.height - 1; y += step_size) {
+	for (int x = 0; x < terrain.width - 1; x += step_size) {
+	    int nx = std::min(x + step_size, terrain.width  - 1);
+	    int ny = std::min(y + step_size, terrain.height - 1);
 
-	    // If we have all 4 corners, create the standard 2 triangles
-	    if (quad_corners.size() == 4) {
-		size_t v00_top = top_vertices[y][x];
-		size_t v10_top = top_vertices[y][x+1];
-		size_t v01_top = top_vertices[y+1][x];
-		size_t v11_top = top_vertices[y+1][x+1];
+	    if (!keep_vertex[y][x]  || !keep_vertex[y][nx] ||
+		!keep_vertex[ny][x] || !keep_vertex[ny][nx])
+		continue;
 
-		// Top surface triangles
-		addSurfaceTriangle(v00_top, v01_top, v10_top);
-		addSurfaceTriangle(v10_top, v01_top, v11_top);
-	    }
-	    // Handle cases where we have 3 vertices (create 1 triangle)
-	    else if (quad_corners.size() == 3) {
-		for (size_t i = 0; i < 3; ++i) {
-		    int px = quad_corners[i].first;
-		    int py = quad_corners[i].second;
+	    size_t v00 = top_vertices[y][x];
+	    size_t v10 = top_vertices[y][nx];
+	    size_t v01 = top_vertices[ny][x];
+	    size_t v11 = top_vertices[ny][nx];
 
-		    size_t v_top = top_vertices[py][px];
-		    //size_t v_bot = bottom_vertices[py][px];
-
-		    if (i == 0) {
-			size_t v1_top = top_vertices[quad_corners[1].second][quad_corners[1].first];
-			size_t v2_top = top_vertices[quad_corners[2].second][quad_corners[2].first];
-			//size_t v1_bot = bottom_vertices[quad_corners[1].second][quad_corners[1].first];
-			//size_t v2_bot = bottom_vertices[quad_corners[2].second][quad_corners[2].first];
-
-			addSurfaceTriangle(v_top, v1_top, v2_top);
-			break;
-		    }
-		}
-	    }
+	    addSurfaceTriangle(v00, v01, v10);
+	    addSurfaceTriangle(v10, v01, v11);
 	}
     }
 
-    // Add bottom surface triangles using earcut for more efficient triangulation
-    // Create filter set from keep_vertex array
-    std::set<std::pair<int, int>> keep_cells;
-    for (int y = 0; y < terrain.height; ++y) {
-	for (int x = 0; x < terrain.width; ++x) {
-	    if (keep_vertex[y][x]) {
-		keep_cells.insert({x, y});
-	    }
+    // Triangulate bottom face using the SAME step_size quads as the top surface.
+    // The z=0 base plane is flat, so no sub-cell detail is needed.  Using the
+    // identical quad pattern guarantees that every bottom boundary edge is
+    // shared by exactly one bottom triangle and one wall triangle (manifold).
+    // Winding is reversed vs the top surface so normals point outward (down).
+    for (int y = 0; y < terrain.height - 1; y += step_size) {
+	for (int x = 0; x < terrain.width - 1; x += step_size) {
+	    int nx = std::min(x + step_size, terrain.width  - 1);
+	    int ny = std::min(y + step_size, terrain.height - 1);
+
+	    if (!keep_vertex[y][x]  || !keep_vertex[y][nx] ||
+		!keep_vertex[ny][x] || !keep_vertex[ny][nx])
+		continue;
+
+	    size_t b00 = bottom_vertices[y][x];
+	    size_t b10 = bottom_vertices[y][nx];
+	    size_t b01 = bottom_vertices[ny][x];
+	    size_t b11 = bottom_vertices[ny][nx];
+
+	    /* reversed winding: outward normal points -Z */
+	    addTriangle(b00, b10, b01);
+	    addTriangle(b10, b11, b01);
 	}
     }
-    triangulateBottomFaceWithDetria(bottom_vertices, terrain, &keep_cells);
 
     // Left Wall (x = 0)
     {
@@ -1426,7 +1483,7 @@ bool TerrainData::addSteinerPointIfValid(double x, double y,
 	const std::set<std::pair<int, int>>& active_cells,
 	double min_distance,
 	const std::function<double(double, double)>& distanceToEdges,
-	std::vector<std::pair<double, double>>& steiner_points) const {
+	SteinerIndex& steiner_idx) const {
     // Check if point is valid (inside boundary, not in holes)
     if (!pointInPolygon(x, y, boundary)) {
 	return false;
@@ -1458,17 +1515,13 @@ bool TerrainData::addSteinerPointIfValid(double x, double y,
 	return false;
     }
 
-    // Check distance to existing points
-    for (const auto& existing : steiner_points) {
-	double dx_check = x - existing.first;
-	double dy_check = y - existing.second;
-	if (std::sqrt(dx_check * dx_check + dy_check * dy_check) < min_distance) {
-	    return false;
-	}
+    // Check distance to existing Steiner points using the RTree index (O(log N)).
+    if (steiner_idx.hasNear(x, y, min_distance)) {
+	return false;
     }
 
-    // Point is valid, add it
-    steiner_points.push_back({x, y});
+    // Point is valid - record it in the index and the point list.
+    steiner_idx.insert(x, y);
     return true;
 }
 
@@ -1484,7 +1537,7 @@ TerrainData::processGuideLines(const std::vector<std::pair<double, double>>& edg
 	const std::set<std::pair<int, int>>& active_cells,
 	double min_distance,
 	const std::function<double(double, double)>& distanceToEdges,
-	std::vector<std::pair<double, double>>& steiner_points,
+	SteinerIndex& steiner_idx,
 	size_t sample_step,
 	double step_divisor = 1.0) const {
     for (size_t i = 0; i < edge_points.size(); i += sample_step) {
@@ -1535,7 +1588,7 @@ TerrainData::processGuideLines(const std::vector<std::pair<double, double>>& edg
 		double y = edge_point.second + dy * step_distance;
 
 		addSteinerPointIfValid(x, y, boundary, holes, active_cells,
-			min_distance, distanceToEdges, steiner_points);
+			min_distance, distanceToEdges, steiner_idx);
 	    }
 	}
     }
@@ -1554,8 +1607,9 @@ TerrainData::generateSteinerPoints (
     double min_y = origin.y - max_y_in * cell_size;  // Corrected for y-flip
     double max_y = origin.y - min_y_in * cell_size;  // Corrected for y-flip
 
-
-    std::vector<std::pair<double, double>> steiner_points;
+    /* RTree-backed proximity index replaces the O(N) linear scan per
+     * candidate point with an O(log N) range query.                   */
+    SteinerIndex steiner_idx;
 
     // Calculate average center point of all bounding face edges
     double center_x = 0.0;
@@ -1654,7 +1708,7 @@ TerrainData::generateSteinerPoints (
     std::vector<double> boundary_probabilities = {0.95, 0.85, 0.65, 0.45, 0.25, 0.1}; // 6 steps
     processGuideLines(boundary, center_x, center_y, min_viable_len, boundary_probabilities,
 	    next_random, boundary, holes, active_cells, min_distance,
-	    distanceToEdges, steiner_points, boundary_sample_step);
+	    distanceToEdges, steiner_idx, boundary_sample_step);
 
     // Process hole guide lines with enhanced coverage
     for (const auto& hole : holes) {
@@ -1666,16 +1720,16 @@ TerrainData::generateSteinerPoints (
 	std::vector<double> hole_probabilities = {1.0, 0.8, 0.5, 0.2, 0.05}; // 5 steps
 	processGuideLines(hole, center_x, center_y, min_viable_len, hole_probabilities,
 		next_random, boundary, holes, active_cells, min_distance,
-		distanceToEdges, steiner_points, hole_sample_step, 5.0); // step_divisor = 5.0 for holes
+		distanceToEdges, steiner_idx, hole_sample_step, 5.0); // step_divisor = 5.0 for holes
     }
 
     // Add center point (only once, outside the loops)
     addSteinerPointIfValid(center_x, center_y, boundary, holes, active_cells,
-	    min_distance, distanceToEdges, steiner_points);
+	    min_distance, distanceToEdges, steiner_idx);
 
-    std::cout << "Generated " << steiner_points.size() << " Steiner points using guide lines to average center point" << std::endl;
+    std::cout << "Generated " << steiner_idx.getPoints().size() << " Steiner points using guide lines to average center point" << std::endl;
 
-    return steiner_points;
+    return steiner_idx.getPoints();
 }
 
 // Detria-based high-quality triangulation of coplanar bottom face
@@ -1683,13 +1737,26 @@ void
 TerrainMesh::triangulateBottomFaceWithDetria(const std::vector<std::vector<size_t>>& bottom_vertices,
 	const TerrainData& terrain, const std::set<std::pair<int, int>>* filter_cells = nullptr) {
 
-    // Build set of cells that should have bottom faces (same as earcut version)
+    // Build flat 2D bool array for O(1) active-cell lookups.
+    // Using a flat array instead of std::set avoids O(log N) per lookup in the
+    // flood-fill below, preventing O(N log N) behaviour on large grids.
+    std::vector<std::vector<bool>> is_active(terrain.height,
+	    std::vector<bool>(terrain.width, false));
+    // Also keep the set so we can pass it to generateSteinerPoints unchanged.
     std::set<std::pair<int, int>> active_cells;
+
+    int min_x = INT_MAX, max_x = INT_MIN, min_y = INT_MAX, max_y = INT_MIN;
+
     for (int y = 0; y < terrain.height; ++y) {
 	for (int x = 0; x < terrain.width; ++x) {
 	    if (bottom_vertices[y][x] != SIZE_MAX) {
 		if (filter_cells == nullptr || filter_cells->count({x, y})) {
+		    is_active[y][x] = true;
 		    active_cells.insert({x, y});
+		    min_x = std::min(min_x, x);
+		    max_x = std::max(max_x, x);
+		    min_y = std::min(min_y, y);
+		    max_y = std::max(max_y, y);
 		}
 	    }
 	}
@@ -1699,22 +1766,13 @@ TerrainMesh::triangulateBottomFaceWithDetria(const std::vector<std::vector<size_
 	return;
     }
 
-    // Find bounds of active region
-    int min_x = INT_MAX, max_x = INT_MIN, min_y = INT_MAX, max_y = INT_MIN;
-    for (const auto& cell : active_cells) {
-	min_x = std::min(min_x, cell.first);
-	max_x = std::max(max_x, cell.first);
-	min_y = std::min(min_y, cell.second);
-	max_y = std::max(max_y, cell.second);
-    }
-
     // Create outer boundary (counter-clockwise)
     std::vector<std::pair<double, double>> outer_boundary;
     std::vector<size_t> vertex_indices;
 
     // Bottom edge (left to right)
     for (int x = min_x; x <= max_x; ++x) {
-	if (active_cells.count({x, min_y})) {
+	if (is_active[min_y][x]) {
 	    const Point3D& vertex = vertices[bottom_vertices[min_y][x]];
 	    outer_boundary.push_back({vertex.x, vertex.y});
 	    vertex_indices.push_back(bottom_vertices[min_y][x]);
@@ -1723,7 +1781,7 @@ TerrainMesh::triangulateBottomFaceWithDetria(const std::vector<std::vector<size_
 
     // Right edge (bottom to top, skip corners)
     for (int y = min_y + 1; y <= max_y; ++y) {
-	if (active_cells.count({max_x, y})) {
+	if (is_active[y][max_x]) {
 	    const Point3D& vertex = vertices[bottom_vertices[y][max_x]];
 	    outer_boundary.push_back({vertex.x, vertex.y});
 	    vertex_indices.push_back(bottom_vertices[y][max_x]);
@@ -1732,7 +1790,7 @@ TerrainMesh::triangulateBottomFaceWithDetria(const std::vector<std::vector<size_
 
     // Top edge (right to left, skip corners)
     for (int x = max_x - 1; x >= min_x; --x) {
-	if (active_cells.count({x, max_y})) {
+	if (is_active[max_y][x]) {
 	    const Point3D& vertex = vertices[bottom_vertices[max_y][x]];
 	    outer_boundary.push_back({vertex.x, vertex.y});
 	    vertex_indices.push_back(bottom_vertices[max_y][x]);
@@ -1741,7 +1799,7 @@ TerrainMesh::triangulateBottomFaceWithDetria(const std::vector<std::vector<size_
 
     // Left edge (top to bottom, skip corners)
     for (int y = max_y - 1; y > min_y; --y) {
-	if (active_cells.count({min_x, y})) {
+	if (is_active[y][min_x]) {
 	    const Point3D& vertex = vertices[bottom_vertices[y][min_x]];
 	    outer_boundary.push_back({vertex.x, vertex.y});
 	    vertex_indices.push_back(bottom_vertices[y][min_x]);
@@ -1753,22 +1811,30 @@ TerrainMesh::triangulateBottomFaceWithDetria(const std::vector<std::vector<size_
 	return;
     }
 
-    // Find interior holes using flood fill (same logic as earcut version)
+    // Find interior holes using flood fill.
+    // Use flat 2D bool arrays for O(1) visited/processed lookups; std::set-based
+    // bookkeeping is O(log N) per operation and causes hangs on large grids when
+    // many inactive cells form a large connected component.
     std::vector<std::vector<std::pair<double, double>>> holes;
-    std::set<std::pair<int, int>> processed_holes;
+    std::vector<std::vector<bool>> processed(terrain.height,
+	    std::vector<bool>(terrain.width, false));
+    // Pre-allocate visited outside the BFS loop; reset only visited cells after
+    // each run to avoid O(N) full-array resets for many small components.
+    std::vector<std::vector<bool>> visited(terrain.height,
+	    std::vector<bool>(terrain.width, false));
 
     // Look for holes (inactive regions completely surrounded by active regions)
     for (int y = min_y + 1; y < max_y; ++y) {
 	for (int x = min_x + 1; x < max_x; ++x) {
-	    if (!active_cells.count({x, y}) && !processed_holes.count({x, y})) {
+	    if (!is_active[y][x] && !processed[y][x]) {
 
-		// Flood fill to find connected inactive region
+		// Flood fill to find connected inactive region using flat arrays
+		// for O(1) per-cell bookkeeping.
 		std::vector<std::pair<int, int>> hole_cells;
 		std::queue<std::pair<int, int>> to_visit;
-		std::set<std::pair<int, int>> visited;
 
 		to_visit.push({x, y});
-		visited.insert({x, y});
+		visited[y][x] = true;
 		bool touches_boundary = false;
 
 		while (!to_visit.empty()) {
@@ -1783,28 +1849,34 @@ TerrainMesh::triangulateBottomFaceWithDetria(const std::vector<std::vector<size_
 		    }
 
 		    // Explore 4-connected neighbors
-		    int dx[] = {-1, 1, 0, 0};
-		    int dy[] = {0, 0, -1, 1};
+		    const int dx[] = {-1, 1, 0, 0};
+		    const int dy[] = {0, 0, -1, 1};
 
 		    for (int i = 0; i < 4; ++i) {
 			int nx = current.first + dx[i];
 			int ny = current.second + dy[i];
 
 			if (nx >= 0 && nx < terrain.width && ny >= 0 && ny < terrain.height &&
-				!active_cells.count({nx, ny}) && !visited.count({nx, ny})) {
-			    visited.insert({nx, ny});
+				!is_active[ny][nx] && !visited[ny][nx]) {
+			    visited[ny][nx] = true;
 			    to_visit.push({nx, ny});
 			}
 		    }
 		}
 
-		// Mark all cells as processed
+		// Mark all cells as processed; reset visited entries (avoids O(N) full reset)
 		for (const auto& cell : hole_cells) {
-		    processed_holes.insert(cell);
+		    processed[cell.second][cell.first] = true;
+		    visited[cell.second][cell.first] = false;
 		}
 
-		// If this doesn't touch boundary, it's a true hole
-		if (!touches_boundary && hole_cells.size() > 0) {
+		// If this doesn't touch the outer boundary, it's a true geometric hole.
+		// Skip very large components: these arise from grid subsampling (e.g.
+		// every-other-cell patterns) and are not real geometry holes.  They
+		// would cause O(N^2) behaviour in generateSteinerPoints.
+		const size_t max_hole_cells = static_cast<size_t>(active_cells.size());
+		if (!touches_boundary && hole_cells.size() > 0 &&
+			hole_cells.size() < max_hole_cells / 4) {
 		    std::vector<std::pair<double, double>> hole_boundary;
 
 		    if (extractHoleBoundary(hole_cells, active_cells, bottom_vertices, hole_boundary, vertex_indices)) {
@@ -1861,9 +1933,13 @@ TerrainMesh::triangulateBottomFaceWithDetria(const std::vector<std::vector<size_
 	tri.addOutline(outline_indices);
 
 	// Add holes
+	// IMPORTANT: ReadonlySpan stores a raw pointer into the vector.
+	// Keep all hole index vectors alive until triangulate() returns.
+	std::vector<std::vector<uint32_t>> hole_indices_storage;
 	size_t hole_idx_offset = outer_boundary.size();
 	for (const auto& hole : holes) {
-	    std::vector<uint32_t> hole_indices;
+	    hole_indices_storage.emplace_back();
+	    std::vector<uint32_t>& hole_indices = hole_indices_storage.back();
 	    for (size_t i = 0; i < hole.size(); ++i) {
 		hole_indices.push_back(static_cast<uint32_t>(hole_idx_offset + i));
 	    }

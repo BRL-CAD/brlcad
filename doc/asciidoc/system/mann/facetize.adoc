@@ -10,7 +10,7 @@ facetize - Creates __new_object__ using __old_object__ as a guide, creating an e
 
 [source]
 ----
-facetize [-h] [-v] [-q] [-n] [-r] [-s suffix] [-p prefix] [--in-place] [--max-time #] [--max-pnts #] [--resume] [--methods m1,m2,...] [--method-opts METHOD opt1=val opt2=val...] [--no-empty] [--log-file filename] [--disable-fixup] {old_object new_object}
+facetize [-h] [-v] [-q] [-n] [-r] [-s suffix] [-p prefix] [--in-place] [--max-time #] [--max-pnts #] [--resume] [--methods m1,m2,...] [--method-opts METHOD opt1=val opt2=val...] [--no-empty] [--log-file filename] [--disable-fixup] [--no-perturb] [--perturb-sa-tol #] [--perturb-vol-tol #] {old_object new_object}
 ----
 
 
@@ -38,6 +38,18 @@ Users may be a bit startled to see empty (0 face, 0 vertices) BoTs produced by a
 It may happen that a conversion fails part way through the process. This can happen due to user intervention, resource exhaustion, or simply as a consequence of a bug in the conversion logic. If this happens, the intermediate state of the conversion will be stored by BRL-CAD in its cache directory, and the interrupted process may be resumed by re-running *facetize* with the *--resume* option. (If a conversion fails and the command is re-run without specifying *--resume*, previous work will be cleared and the process will start over from the beginning.
 
 In normal operation, when converting to BoT output there are post-processing routines that try to identify and automatically fix certain categories of geometric flaws that can crop up during Boolean evaluation. If a user finds that they are getting unexpected output for a particular input, and the log indicates the repair step was run, one option available is to repeat the conversion with these repair steps disabled via the *--disable-fixup* flag. Repair should only be disabled if there is a problem - coplanar subtractions frequently result in thin triangle artifacts lingering after Boolean evaluation due to the imitations of floating point math, and in at least some cases the fixup routines are able to deal with these without requiring manual intervention. (These routines will not _always_ work, so checking of outputs after a conversion with the *lint* command to identify BoTs with potentially problematic features is still recommended - see the *lint* man page for more details.)
+
+By default, the Manifold BoT path will also run a coplanarity-avoidance perturbation step for eligible primitives before tessellation. This helps avoid difficult Boolean edge cases where the same primitive participates in both additive and subtractive roles and coplanar/sliver configurations can lead to problematic near-tolerance triangles. If needed, this behavior can be disabled with *--no-perturb*.
+
+When the perturbation step is active, *facetize* validates the Boolean output against the original CSG geometry using a Crofton stochastic raytrace. The default tolerance thresholds that trigger a perturb retry are 10% for both surface area and volume; these can be adjusted with *--perturb-sa-tol* and *--perturb-vol-tol*. At the end of a per-region facetization run *facetize* prints a concise validation summary listing how many regions passed, triggered a perturb retry, or encountered one of the following noteworthy conditions:
+
+_Sub-mm / few-hit bypass (accepted with note)_: When the Crofton sampler finds only a very small number of ray-surface intersections (below an internal threshold of 50 crossings), the sampling noise alone would exceed 14% relative error, making any SA comparison meaningless. Geometry in this category is typically sub-millimetre in cross-section (e.g., a TGC with a radius under 0.2 mm) but the stochastic sampler has confirmed that some geometry is present. The BoT conversion is accepted and the region is counted separately in the summary. Users should verify that such extreme geometry reflects actual modeling intent rather than an accidental near-degenerate primitive.
+
+_Zero-hit replacement_: When the Crofton sampler fires rays but records zero intersections with the CSG geometry while the corresponding BoT is non-empty, *facetize* concludes that the Boolean evaluation most likely produces empty geometry (for example, a subtractor that fully engulfs the base object). In this case the non-empty BoT is discarded and replaced with an empty BoT to match the expected raytrace behavior. If this replacement appears unexpected for a given region, the *lint* command can be used to inspect the result.
+
+_Perturb topology shift (accepted with note)_: After a perturb retry, if the Crofton raytrace of the perturbed CSG returns zero while the perturbed BoT is non-empty, the perturbation itself may have shifted the geometry topology (for example, a subtractor that now fully engulfs the base in parametric space). The BoT output is still accepted; the *lint* command can be used to inspect the result.
+
+_Persistent validation mismatch_: When both the P1 and P2 Crofton comparisons exceed the tolerances for reasons other than sub-mm geometry (for example, union-coplanar shared faces or curved-surface volume sensitivity), a WARNING is reported. The BoT conversion is still written out and the *lint* command should be used to assess the output.
 
 Different tolerance settings will create finer or coarser meshes. See the *tol* man page for more details.
 
@@ -109,6 +121,15 @@ Specify a log file in which to store the full verbose output of a facetization p
 *--disable-fixup*::
 By default, BoT facetization will attempt to clear certain categories of undesirable triangles from outputs. Specifying this option will skip that repair attempt.
 
+*--no-perturb*::
+Disable the coplanarity-avoidance perturbation variant planning/tessellation step in BoT Manifold Boolean evaluation.
+
+*--perturb-sa-tol #*::
+Surface-area percentage threshold (0–100) that triggers the coplanarity-avoidance perturb retry when the Crofton-sampled CSG surface area differs from the facetized BoT surface area by more than this amount. Default is 10 (percent).
+
+*--perturb-vol-tol #*::
+Volume percentage threshold (0–100) that triggers the coplanarity-avoidance perturb retry when the Crofton-sampled CSG volume differs from the facetized BoT volume by more than this amount. Default is 10 (percent).
+
 
 
 
@@ -122,6 +143,8 @@ The process of individual primitive to mesh conversion can sometimes be problema
 It can be difficult to produce a mesh from a primitive shape. Simply waiting longer for results often isn't practical or even the right answer - indeed, infinite looping has been observed in some primitive conversion cases. To work around these limitations, BRL-CAD provides multiple methods that can be used to attempt mesh production in case other methods fail. We deliberately do not document those methods in detail here - they are subject to change as new alternatives are identified that can produce better results. What we _do_ document is how to use the facetize command to see what methods are currently available and control them. The *-h* option will list, at the end of its output, information about all currently available methods and what controls they offer. The facetize option *--methods* can be used to restrict the facetize command to a particular subset of the available methodologies, and the *--method-opts* option is used to pass specific parameters to a specific method.
 
 Because many of the facetization methods are sampling based (the raytracer is used to sample the volume) a top level control is available to specify the maximum number of points to use when generating inputs for such methods. (More points generally means a better conversion at the expense of memory and runtime.)
+
+Primitive tessellation also applies internal minimum tolerance floors to avoid pathological "triangle bombing" (very small tolerance requests producing extreme triangle counts with little practical benefit for modeling/raytrace fidelity). Advanced users who explicitly want to bypass those defaults may set environment variables *RT_PRIM_MIN_ABS_TOL* and/or *RT_PRIM_MIN_NORM_TOL* to positive floating-point values before running *facetize*. These overrides are an expert-use escape hatch: lower floors can substantially increase memory/runtime cost and may produce extremely high triangle counts.
 
 
 [[examples]]
