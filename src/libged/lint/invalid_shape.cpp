@@ -74,7 +74,19 @@ _ged_invalid_prim_check(lint_data *ldata, struct directory *dp)
 	case DB5_MINORTYPE_BRLCAD_ARB8:
 	    if (imt.size() && imt.find(std::string("arb")) == imt.end())
 		return;
-	    // TODO - check for twisted arbs.
+	    {
+		struct rt_arb_internal *arb = (struct rt_arb_internal *)intern.idb_ptr;
+		RT_ARB_CK_MAGIC(arb);
+		fastf_t td = ldata->ftol;
+		fastf_t td_sq = td * td;
+		if (rt_arb_nonstandard_encoding(arb, td_sq)) {
+		    nlohmann::json aerr;
+		    aerr["problem_type"] = "non_standard_ordering";
+		    aerr["object_type"] = "arb";
+		    aerr["object_name"] = dp->d_namep;
+		    ldata->j.push_back(aerr);
+		}
+	    }
 	    break;
 	case DB5_MINORTYPE_BRLCAD_DSP:
 	    if (imt.size() && imt.find(std::string("dsp")) == imt.end())

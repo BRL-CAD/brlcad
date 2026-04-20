@@ -38,6 +38,7 @@ extern "C" {
 #include "bu/ptbl.h"
 #include "bu/vls.h"
 #include "raytrace.h"
+#include "rt/primitives/arb8.h"
 #include "rt/primitives/bot.h"
 }
 #include "../ged_private.h"

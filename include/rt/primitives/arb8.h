@@ -547,6 +547,15 @@ RT_EXPORT extern int rt_arb_check_points(struct rt_arb_internal *arb,
 					 int cgtype,
 					 const struct bn_tol *tol);
 
+/**
+ * Return non-zero if an ARB uses a non-standard vertex ordering/encoding.
+ *
+ * @param arb ARB primitive internals
+ * @param tol_sq squared distance tolerance used when identifying duplicate points
+ */
+RT_EXPORT extern int rt_arb_nonstandard_encoding(const struct rt_arb_internal *arb,
+						 fastf_t tol_sq);
+
 
 /**
  * Finds the intersection point of three faces of an ARB.
