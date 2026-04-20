@@ -16,7 +16,7 @@
 /** @file inmem_tests.c
  *
  * Regression test for rt_db_put_internal() with in-memory databases.
- * Bug report: https://github.com/BRL-CAD/brlcad/issues/864
+ * Bug report: https://github.com/BRL-CAD/brlcad/issues/161
  */
 #include "common.h"
 #include <stdio.h>
