@@ -1117,25 +1117,23 @@ rt_superell_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip
 void
 rt_superell_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
-#ifdef HAVE_TGAMMA
-    struct rt_superell_internal *sip;
-    double mag_a, mag_b, mag_c;
-#endif
-
     if (volume == NULL || ip == NULL) {
 	return;
     }
 
 #ifdef HAVE_TGAMMA
     RT_CK_DB_INTERNAL(ip);
-    sip = (struct rt_superell_internal *)ip->idb_ptr;
+    struct rt_superell_internal *sip = (struct rt_superell_internal *)ip->idb_ptr;
     RT_SUPERELL_CK_MAGIC(sip);
 
-    mag_a = MAGNITUDE(sip->a);
-    mag_b = MAGNITUDE(sip->b);
-    mag_c = MAGNITUDE(sip->c);
+    double mag_a = MAGNITUDE(sip->a);
+    double mag_b = MAGNITUDE(sip->b);
+    double mag_c = MAGNITUDE(sip->c);
 
     *volume = 2.0 * mag_a * mag_b * mag_c * sip->e * sip->n * (tgamma(sip->n/2.0 + 1.0) * tgamma(sip->n) / tgamma(3.0 * sip->n/2.0 + 1.0)) * (tgamma(sip->e / 2.0) * tgamma(sip->e / 2.0) / tgamma(sip->e));
+#else
+    /* tgamma unavailable: fall back to Cauchy-Crofton estimation */
+    do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(NULL, volume, ip, &_p); } while (0);
 #endif
 }
 
@@ -1394,6 +1392,52 @@ superell_kpt_end:
     MAT4X3PNT(*pt, mat, mpt);
 
     return k;
+}
+
+
+int
+rt_superell_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(planar_only), fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_superell_internal *osuper = (struct rt_superell_internal *)ip->idb_ptr;
+    RT_SUPERELL_CK_MAGIC(osuper);
+
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_SUPERELL;
+    nip->idb_meth = &OBJ[ID_SUPERELL];
+    struct rt_superell_internal *super = NULL;
+    BU_ALLOC(super, struct rt_superell_internal);
+    nip->idb_ptr = super;
+    super->magic = RT_SUPERELL_INTERNAL_MAGIC;
+    VMOVE(super->v, osuper->v);
+    VMOVE(super->a, osuper->a);
+    VMOVE(super->b, osuper->b);
+    VMOVE(super->c, osuper->c);
+    super->n = osuper->n;
+    super->e = osuper->e;
+
+    /* Scale each semi-axis outward.  The exponents n and e are preserved;
+     * planar_only is not applicable since face planarity varies with n/e. */
+    vect_t mvec;
+    VMOVE(mvec, super->a); VUNITIZE(mvec); VSCALE(mvec, mvec, val);
+    VADD2(super->a, super->a, mvec);
+
+    VMOVE(mvec, super->b); VUNITIZE(mvec); VSCALE(mvec, mvec, val);
+    VADD2(super->b, super->b, mvec);
+
+    VMOVE(mvec, super->c); VUNITIZE(mvec); VSCALE(mvec, mvec, val);
+    VADD2(super->c, super->c, mvec);
+
+    *oip = nip;
+    return BRLCAD_OK;
 }
 
 

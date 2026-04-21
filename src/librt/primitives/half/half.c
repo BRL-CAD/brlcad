@@ -815,6 +815,39 @@ hlf_kpt_end:
 }
 
 
+int
+rt_hlf_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(planar_only), fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_half_internal *ohalf = (struct rt_half_internal *)ip->idb_ptr;
+    RT_HALF_CK_MAGIC(ohalf);
+
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_HALF;
+    nip->idb_meth = &OBJ[ID_HALF];
+    struct rt_half_internal *half = NULL;
+    BU_ALLOC(half, struct rt_half_internal);
+    nip->idb_ptr = half;
+    half->magic = RT_HALF_INTERNAL_MAGIC;
+    HMOVE(half->eqn, ohalf->eqn);
+
+    /* Shift the plane outward (increase d) so the halfspace boundary moves
+     * away from adjacent coplanar faces by val. */
+    half->eqn[W] += val;
+
+    *oip = nip;
+    return BRLCAD_OK;
+}
+
+
 /** @} */
 /*
  * Local Variables:

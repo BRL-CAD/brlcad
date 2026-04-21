@@ -139,6 +139,19 @@ extern void rt_generic_make(const struct rt_functab *, struct rt_db_internal *);
 extern int rt_generic_xform(struct rt_db_internal *, const mat_t, struct rt_db_internal *, int, struct db_i *);
 extern int rt_generic_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *dbip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *v);
 
+/* from primitives/crofton.cpp - Cauchy-Crofton SA/volume functab callbacks
+ * (internal to librt; not exported via the public header)              */
+extern "C" {
+extern void rt_crofton_surf_area(fastf_t *area, const struct rt_db_internal *ip);
+extern void rt_crofton_volume(fastf_t *vol, const struct rt_db_internal *ip);
+extern void rt_crofton_surf_area_implicit(fastf_t *area, const struct rt_db_internal *ip);
+extern void rt_crofton_volume_implicit(fastf_t *vol, const struct rt_db_internal *ip);
+}
+
+/* from primitives/poly/poly.c - analytic polysolid measure functions */
+extern void rt_pg_volume(fastf_t *volume, const struct rt_db_internal *ip);
+extern void rt_pg_surf_area(fastf_t *area, const struct rt_db_internal *ip);
+
 /* from db5_bin.c */
 extern int rt_binunif_import5(struct rt_db_internal * ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
 extern int rt_binunif_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp);
@@ -158,6 +171,8 @@ extern void rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *in
 extern void rt_comb_ifree(struct rt_db_internal *ip);
 extern int rt_comb_mat(struct rt_db_internal *op, const mat_t mat, const struct rt_db_internal *ip);
 extern int rt_comb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
+extern void rt_comb_surf_area(fastf_t *area, const struct rt_db_internal *ip);
+extern void rt_comb_volume(fastf_t *vol, const struct rt_db_internal *ip);
 
 extern int rt_annot_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_bot_form(struct bu_vls *logstr, const struct rt_functab *ftp);
@@ -268,7 +283,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_LABELS_CAST(rt_tor_labels), /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_tor_keypoint), /* keypoint */
 	RTFUNCTAB_FUNC_MAT_CAST(rt_tor_mat),
-	NULL, /* perturb */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_tor_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
@@ -370,7 +385,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_LABELS_CAST(rt_ell_labels), /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_ell_keypoint), /* keypoint */
 	RTFUNCTAB_FUNC_MAT_CAST(rt_ell_mat),
-	NULL, /* perturb */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_ell_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
@@ -461,8 +476,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_ars_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_ars_bbox),
-	NULL, /* volume */
-	NULL, /* surf_area */
+	RTFUNCTAB_FUNC_VOLUME_CAST(rt_crofton_volume_implicit),
+	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_crofton_surf_area_implicit),
 	NULL, /* centroid */
 	NULL, /* oriented_bbox */
 	NULL, /* find_selections */
@@ -523,7 +538,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_hlf_keypoint), /* keypoint */
 	RTFUNCTAB_FUNC_MAT_CAST(rt_hlf_mat),
-	NULL, /* perturb */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_hlf_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
@@ -574,7 +589,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_LABELS_CAST(rt_tgc_labels), /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_tgc_keypoint), /* keypoint */
 	RTFUNCTAB_FUNC_MAT_CAST(rt_tgc_mat),
-	NULL, /* perturb */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_tgc_perturb), /* perturb - REC shares rt_tgc_internal */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
@@ -614,8 +629,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_pg_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_pg_bbox),
-	NULL, /* volume */
-	NULL, /* surf_area */
+	RTFUNCTAB_FUNC_VOLUME_CAST(rt_pg_volume),
+	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_pg_surf_area),
 	NULL, /* centroid */
 	NULL, /* oriented_bbox */
 	NULL, /* find_selections */
@@ -665,8 +680,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_nurb_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_nurb_bbox),
-	NULL, /* volume */
-	NULL, /* surf_area */
+	RTFUNCTAB_FUNC_VOLUME_CAST(rt_crofton_volume),
+	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_crofton_surf_area),
 	NULL, /* centroid */
 	NULL, /* oriented_bbox */
 	NULL, /* find_selections */
@@ -727,7 +742,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_LABELS_CAST(rt_ell_labels), /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_ell_keypoint), /* keypoint */
 	RTFUNCTAB_FUNC_MAT_CAST(rt_ell_mat),
-	NULL, /* perturb */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_ell_perturb), /* perturb - SPH shares rt_ell_internal */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
@@ -818,7 +833,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_ebm_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_ebm_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_ebm_bbox),
-	NULL, /* volume */
+	RTFUNCTAB_FUNC_VOLUME_CAST(rt_crofton_volume_implicit),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_ebm_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_ebm_centroid),
 	NULL, /* oriented_bbox */
@@ -1033,7 +1048,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_LABELS_CAST(rt_part_labels), /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_part_keypoint), /* keypoint */
 	RTFUNCTAB_FUNC_MAT_CAST(rt_part_mat),
-	NULL, /* perturb */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_part_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
@@ -1084,7 +1099,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_LABELS_CAST(rt_rpc_labels), /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_rpc_keypoint), /* keypoint */
 	RTFUNCTAB_FUNC_MAT_CAST(rt_rpc_mat),
-	NULL, /* perturb */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_rpc_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
@@ -1135,7 +1150,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_LABELS_CAST(rt_rhc_labels), /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_rhc_keypoint), /* keypoint */
 	RTFUNCTAB_FUNC_MAT_CAST(rt_rhc_mat),
-	NULL, /* perturb */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_rhc_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
@@ -1186,7 +1201,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_LABELS_CAST(rt_epa_labels), /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_epa_keypoint), /* keypoint */
 	RTFUNCTAB_FUNC_MAT_CAST(rt_epa_mat),
-	NULL, /* perturb */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_epa_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
@@ -1226,7 +1241,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_ehy_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_ehy_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_ehy_bbox),
-	NULL, /* volume */
+	RTFUNCTAB_FUNC_VOLUME_CAST(rt_ehy_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_ehy_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_ehy_centroid),
 	NULL, /* oriented_bbox */
@@ -1237,7 +1252,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_LABELS_CAST(rt_ehy_labels), /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_ehy_keypoint), /* keypoint */
 	RTFUNCTAB_FUNC_MAT_CAST(rt_ehy_mat),
-	NULL, /* perturb */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_ehy_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
@@ -1288,7 +1303,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_LABELS_CAST(rt_eto_labels), /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_eto_keypoint), /* keypoint */
 	RTFUNCTAB_FUNC_MAT_CAST(rt_eto_mat),
-	NULL, /* perturb */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_eto_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
@@ -1430,8 +1445,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_hf_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_hf_bbox),
-	NULL, /* volume */
-	NULL, /* surf_area */
+	RTFUNCTAB_FUNC_VOLUME_CAST(rt_crofton_volume),
+	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_crofton_surf_area),
 	NULL, /* centroid */
 	NULL, /* oriented_bbox */
 	NULL, /* find_selections */
@@ -1481,8 +1496,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_dsp_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_dsp_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_dsp_bbox),
-	NULL, /* volume */
-	NULL, /* surf_area */
+	RTFUNCTAB_FUNC_VOLUME_CAST(rt_crofton_volume),
+	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_crofton_surf_area),
 	NULL, /* centroid */
 	NULL, /* oriented_bbox */
 	NULL, /* find_selections */
@@ -1584,7 +1599,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_extrude_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_extrude_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_extrude_volume),
-	NULL, /* surf_area */
+	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_crofton_surf_area_implicit),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_extrude_centroid),
 	NULL, /* oriented_bbox */
 	NULL, /* find_selections */
@@ -1787,8 +1802,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_comb_make),
 	NULL, /* params */
 	NULL, /* bbox */
-	NULL, /* volume */
-	NULL, /* surf_area */
+	RTFUNCTAB_FUNC_VOLUME_CAST(rt_comb_volume),
+	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_comb_surf_area),
 	NULL, /* centroid */
 	NULL, /* oriented_bbox */
 	NULL, /* find_selections */
@@ -2006,7 +2021,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_LABELS_CAST(rt_superell_labels), /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_superell_keypoint), /* keypoint */
 	RTFUNCTAB_FUNC_MAT_CAST(rt_superell_mat),
-	NULL, /* perturb */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_superell_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
@@ -2046,8 +2061,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_metaball_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_metaball_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_metaball_bbox),
-	NULL, /* volume */
-	NULL, /* surf_area */
+	RTFUNCTAB_FUNC_VOLUME_CAST(rt_crofton_volume_implicit),
+	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_crofton_surf_area_implicit),
 	NULL, /* centroid */
 	NULL, /* oriented_bbox */
 	NULL, /* find_selections */
@@ -2097,8 +2112,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_brep_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_brep_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_brep_bbox),
-	NULL, /* volume */
-	NULL, /* surf_area */
+	RTFUNCTAB_FUNC_VOLUME_CAST(rt_crofton_volume),
+	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_crofton_surf_area),
 	NULL, /* centroid */
 	NULL, /* oriented_bbox */
 	RTFUNCTAB_FUNC_FIND_SELECTIONS_CAST(rt_brep_find_selections),
@@ -2159,7 +2174,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_LABELS_CAST(rt_hyp_labels), /* label */
 	RTFUNCTAB_FUNC_KEYPOINT_CAST(rt_hyp_keypoint), /* keypoint */
 	RTFUNCTAB_FUNC_MAT_CAST(rt_hyp_mat),
-	NULL, /* perturb */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_hyp_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
@@ -2250,8 +2265,8 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_revolve_make),
 	NULL, /* params */
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_revolve_bbox),
-	NULL, /* volume */
-	NULL, /* surf_area */
+	RTFUNCTAB_FUNC_VOLUME_CAST(rt_crofton_volume_implicit),
+	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_crofton_surf_area_implicit),
 	NULL, /* centroid */
 	NULL, /* oriented_bbox */
 	NULL, /* find_selections */
@@ -2403,7 +2418,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_hrt_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_hrt_bbox),
-	NULL, /* volume */
+	RTFUNCTAB_FUNC_VOLUME_CAST(rt_crofton_volume_implicit),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_hrt_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_hrt_centroid),
 	NULL, /* oriented_bbox */
@@ -2414,7 +2429,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* label */
 	NULL, /* keypoint */
 	RTFUNCTAB_FUNC_MAT_CAST(rt_hrt_mat),
-	NULL, /* perturb */
+	RTFUNCTAB_FUNC_PERTURB_CAST(rt_hrt_perturb), /* perturb */
 	RTFUNCTAB_FUNC_SCENE_OBJ_CAST(rt_generic_scene_obj)
     },
 
@@ -2784,4 +2799,3 @@ rt_get_functab_by_label(const char *label)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

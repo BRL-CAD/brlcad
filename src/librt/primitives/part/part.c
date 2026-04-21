@@ -1126,12 +1126,23 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     fastf_t dtol;	/* Absolutized relative tolerance */
 
     RT_CK_DB_INTERNAL(ip);
+    BG_CK_TESS_TOL(ttol);
+    BN_CK_TOL(tol);
     pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
 
     if (pip->part_type == RT_PARTICLE_TYPE_SPHERE)
 	return -1;
     /* For now, concentrate on the most important kind. */
+
+    /* A cylinder-type PART whose height H is within the geometric tolerance
+     * degenerates to a sphere (the cylinder band collapses to a plane of
+     * zero thickness).  The equatorial vertex pairs become equal in the NMG,
+     * causing nmg_fu_planeeqn() to fail.  Detect this early and bail out.
+     * Callers that need a tessellation of a sphere-type PART should build an
+     * equivalent SPH primitive and call rt_ell_tess() directly. */
+    if (MAGNITUDE(pip->part_H) <= tol->dist)
+	return -1;
 
     VADD2(hcenter, pip->part_V, pip->part_H);
 
@@ -1178,6 +1189,12 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
     dtol = primitive_get_absolute_tolerance(ttol, radius);
 
+    /* Clamp to prevent excessively dense meshes; bbox diagonal ≈ 2*radius. */
+    {
+	fastf_t ntol_dummy = M_PI;
+	primitive_clamp_tess_tol(&dtol, &ntol_dummy, 2.0 * radius);
+    }
+
     if (dtol > radius) {
 	dtol = radius;
     }
@@ -1189,8 +1206,11 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     state.theta_tol = 2.0 * acos(1.0 - dtol / radius);
 
     /* To ensure normal tolerance, remain below this angle */
-    if (ttol->norm > 0.0 && ttol->norm < state.theta_tol) {
-	state.theta_tol = ttol->norm;
+    if (ttol->norm > 0.0) {
+	fastf_t min_ntol = prim_min_norm_tol();
+	fastf_t ntol_eff = (ttol->norm < min_ntol) ? min_ntol : ttol->norm;
+	if (ntol_eff < state.theta_tol)
+	    state.theta_tol = ntol_eff;
     }
 
     *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
@@ -1999,6 +2019,60 @@ part_kpt_end:
     MAT4X3PNT(*pt, mat, mpt);
 
     return k;
+}
+
+
+int
+rt_part_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_part_internal *opart = (struct rt_part_internal *)ip->idb_ptr;
+    RT_PART_CK_MAGIC(opart);
+
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_PARTICLE;
+    nip->idb_meth = &OBJ[ID_PARTICLE];
+    struct rt_part_internal *part = NULL;
+    BU_ALLOC(part, struct rt_part_internal);
+    nip->idb_ptr = part;
+    part->part_magic = RT_PART_INTERNAL_MAGIC;
+    VMOVE(part->part_V, opart->part_V);
+    VMOVE(part->part_H, opart->part_H);
+    part->part_vrad = opart->part_vrad;
+    part->part_hrad = opart->part_hrad;
+    part->part_type = opart->part_type;
+
+    /* Extend H to push the flat end caps apart; also move V back so the
+     * vertex-end cap expands symmetrically. */
+    vect_t mvec, mrvec;
+    VMOVE(mvec, part->part_H);
+    VUNITIZE(mvec);
+    VREVERSE(mrvec, mvec);
+    VSCALE(mrvec, mrvec, val);
+    VADD2(part->part_V, part->part_V, mrvec);
+    vect_t hext;
+    VSCALE(hext, mvec, 2.0 * val);
+    VADD2(part->part_H, part->part_H, hext);
+
+    if (planar_only) {
+	*oip = nip;
+	return BRLCAD_OK;
+    }
+
+    /* Also expand the spherical end-cap radii. */
+    part->part_vrad += val;
+    part->part_hrad += val;
+
+    *oip = nip;
+    return BRLCAD_OK;
 }
 
 
