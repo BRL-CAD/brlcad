@@ -92,7 +92,7 @@ add_subdirectory(edit)
 
 # stand-alone Crofton estimator tests
 brlcad_addexec(rt_crofton crofton.c "librt;libwdb;libbu" TEST)
-#brlcad_add_test(NAME rt_crofton COMMAND rt_crofton)
+brlcad_add_test(NAME rt_crofton COMMAND rt_crofton)
 
 set(
   distcheck_files

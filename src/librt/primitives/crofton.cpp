@@ -56,6 +56,7 @@
 
 #include "common.h"
 
+#include <climits>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -535,7 +536,11 @@ rt_crofton_shoot(struct rt_i                      *rtip,
     }
     bu_free(resources, "crofton resources");
 
-    return 0;
+    /* Return the total crossing count so callers can distinguish
+     * "zero hits" (return == 0) from "some hits" (return > 0).
+     * Clamp to INT_MAX to avoid signed-overflow on pathological inputs. */
+    return (shared.total_crossings <= INT_MAX)
+	? (int)shared.total_crossings : INT_MAX;
 }
 
 

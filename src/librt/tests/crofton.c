@@ -301,7 +301,7 @@ run_convergence_case(struct db_i *dbip,
 	if (elapsed_total_sec)
 	    *elapsed_total_sec += run_sec;
 
-	if (cr != 0) {
+	if (cr < 0) {
 	    printf("  %-24s  target=%.1f%%  crofton-fail (ret=%d)\n",
 		   label, target_pct, cr);
 	    failures++;

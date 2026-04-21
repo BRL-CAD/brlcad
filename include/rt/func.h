@@ -225,7 +225,9 @@ struct rt_crofton_params {
  * @param params        Stopping criteria.  NULL or all-zero → 2 000-ray default.
  * @param out_surf_area Receives the estimated surface area (mm^2).
  * @param out_volume    Receives the estimated volume (mm^3).
- * @return 0 on success, -1 on bad arguments.
+ * @return  The total number of ray-surface crossings accumulated during
+ *          sampling (>= 0) on success; -1 on bad arguments.  A return
+ *          value of 0 means no geometry was intersected by the sampler.
  *
  * @section crofton_near_tol Near-tolerance sliver geometry: CSG vs BoT divergence
  *
