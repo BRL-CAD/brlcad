@@ -10,12 +10,22 @@ if(TARGET libged)
   brlcad_regression_test(regress-ged_push "regress_push;ged-npush" EXEC regress_push)
   distclean("${CMAKE_CURRENT_BINARY_DIR}/regress-ged_push.log")
   distclean("${CMAKE_CURRENT_BINARY_DIR}/ged_push.g")
+
+  # lint --raytrace regression: Crofton vs analytic / BoT validation pass.
+  # Exercises the raytrace validation pipeline in lint/raytrace.cpp:
+  brlcad_addexec(regress_lint_raytrace regress_lint_raytrace.cpp "libged;libwdb;librt;libbu" TEST_USESDATA)
+  if(TARGET regress_lint_raytrace)
+    add_dependencies(regress_lint_raytrace ged_plugins)
+  endif(TARGET regress_lint_raytrace)
+  brlcad_regression_test(regress-ged_lint_raytrace "regress_lint_raytrace;ged_exec" EXEC regress_lint_raytrace)
+  distclean("${CMAKE_CURRENT_BINARY_DIR}/regress-ged_lint_raytrace.log")
 endif(TARGET libged)
 
 cmakefiles(
   CMakeLists.txt
   mater.c
   push.cpp
+  regress_lint_raytrace.cpp
   d2push_tests.g
   dpush_tests.g
   dxpush_tests.g
@@ -23,6 +33,7 @@ cmakefiles(
   push_tests.g
   regress-ged_mater.cmake.in
   regress-ged_push.cmake.in
+  regress-ged_lint_raytrace.cmake.in
   rpush_tests.g
   xpush_tests.g
 )

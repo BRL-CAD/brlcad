@@ -11,6 +11,7 @@ lint - Detect and report problems with subsets or all of a .g database.
 [source]
 ----
 lint [-h] [-C] [-M] [-I] [-F "filters"] [ObjectName]
+lint --raytrace [--perturb] [--raytrace-tol <frac>] [-j <jsonfile>] [ObjectName ...]
 ----
 
 
@@ -18,6 +19,8 @@ lint [-h] [-C] [-M] [-I] [-F "filters"] [ObjectName]
 == DESCRIPTION
 
 The 'lint' command analyzes the currently open geometry database (or a subset of that database if object names are supplied as arguments), searching for a variety of problems. By default all defect types are searched for - if one or more of the options enabling a search for a specific type of problem are supplied, only those searches will be performed.
+
+The *--raytrace* mode is a special, mutually exclusive operating mode that disables all other checks and instead runs a multi-level raytrace consistency validation against every reachable object.  See the *RAYTRACE MODE* section below for details.
 
 
 [[options]]
@@ -44,9 +47,440 @@ Check for shapes in the database that do not satisfy one or more properties requ
 Apply search command style filters to the set of objects to be tested. Allows, (for example) a user to test only brep objects and not BoT objects or only objects matching a particular name pattern. Does not impact the checks for missing or cylic geometry - the underlying search mechanism assumes inputs do not have those particular categories of problem and thus can't be reliably applied in those cases.
 
 
+*--raytrace*::
+Enable raytrace validation mode.  All standard lint checks are disabled; instead the command runs the raytrace consistency pipeline described in the *RAYTRACE MODE* section.  Cannot be combined with *-C*, *-M*, or *-I*.
 
 
-[[examples]]
+*--perturb*::
+Modifier for *--raytrace* mode.  When present, combs are facetized using the *facetize* default perturbation pass (the same perturbation that *facetize* normally applies to avoid coplanar-face boolean artifacts) rather than the *--no-perturb* mode that is the default for raytrace validation. +
+ +
+**Why two modes exist:** Without *--perturb*, the facetized BoT reference is geometrically consistent with the Crofton CSG measurement (both see the exact original geometry).  This makes it easy to detect any mismatch, but it can report coplanar-face artifacts as failures even though *facetize* handles them correctly in practice. +
+ +
+With *--perturb*, the reference BoT is the actual output that *facetize* would produce for a model.  Mismatches that clear under *--perturb* are coplanar-face artifacts that the perturbation pass resolves (the default *facetize* behavior is correct for these objects).  Mismatches that **persist** under *--perturb* are genuine modeling topology issues that perturbation cannot resolve — these require geometry correction.  See the *COPLANAR INTERFACE PATTERNS* section below for details.
+
+
+*--raytrace-tol* _frac_::
+Fractional tolerance for raytrace validation comparisons (default: *0.10* = 10%).  A value of 0.05 requires the two independent estimates to agree within 5%.  Lower values are stricter.  Only meaningful when *--raytrace* is also specified.
+
+
+[[raytrace_mode]]
+== RAYTRACE MODE
+
+Raytrace validation mode (*--raytrace*) cross-checks surface area and volume estimates from two independent methods against each other to detect problems in raytracing or boolean evaluation.  It is significantly more expensive than ordinary lint checks and is intended to be used on targeted subsets of a database rather than entire large assemblies.
+
+=== Algorithm
+
+1. **Universe collection.**  Starting from the explicitly named objects (or all top-level objects if none are named), every reachable object in the hierarchy is collected into the candidate set.
+
+2. **Samplability classification.**  Any object whose subtree contains a halfspace (or other unbounded primitive) is marked as non-samplable and excluded from metric evaluation.  Excluding these objects prevents the Cauchy-Crofton estimator from operating on infinite solids where it would diverge.
+
+3. **Leaf-to-root processing order.**  Objects are processed in dependency order so that leaf primitives are validated before the combs that contain them.  This ensures that any failure is always attributed to the *lowest* failing node in the tree rather than being masked by higher-level aggregate results.
+
+4. **Leaf primitive validation.**  For each samplable leaf primitive the following are compared within the fractional tolerance set by *--raytrace-tol*:
+   * **Crofton SA/volume** – Cauchy-Crofton estimate obtained by firing random chord rays against the CSG raytracer.
+   * **Analytic SA/volume** – Closed-form result from the primitive's function table (ft_surf_area / ft_volume), when available.
+   +
+   If analytic values are not available (e.g. BoT, BREP) the Crofton result is recorded informatively without a pass/fail verdict.
+
+5. **Comb validation.**  For each comb whose direct children all passed, two independent estimates are compared:
+   * **CSG Crofton SA/volume** – ray-sampled against the original CSG boolean tree.
+   * **BoT SA/volume** – the comb is facetized to a solid triangle mesh using the *facetize* command and the mesh SA/volume is measured exactly via the divergence theorem.
+   +
+   Without *--perturb*, facetize is called with *--no-perturb* so the BoT reference reflects the exact original geometry.  With *--perturb*, the default perturbation pass is used, producing the same BoT that would result from a normal *facetize* run.
+   +
+   A significant discrepancy (beyond *--raytrace-tol*) indicates either a problem with boolean evaluation or an anomalous raytrace result for that combination of geometry.
+
+6. **Failure propagation.**  If any child of a comb fails or is skipped in a way that makes its result untrustworthy, the parent comb is automatically skipped with the reason *child_validation_failed*.  This prevents a single bad leaf from producing misleading cascade results upward.
+
+=== Output
+
+Results are reported in three categories:
+
+* *Passed* – Both estimates agree within *--raytrace-tol*.
+* *Failed* (raytrace_mismatch) – The two estimates disagree beyond *--raytrace-tol*.  The output includes SA and volume error percentages and the reason for failure.
+* *Skipped* – The object could not be validated.  Reasons include:
+  - *contains_unbounded_primitive* – a halfspace is present in the subtree.
+  - *child_validation_failed* – a child object failed or was skipped.
+  - *crofton_prep_failed* – the raytrace instance could not be prepared.
+  - *raytrace_facetize_failed* – the facetize step failed for a comb.
+
+With *-v* (verbose), skipped objects and passing objects are also listed in full detail.  With *-j*, all results are written to a JSON file for programmatic analysis.
+
+=== Performance Considerations
+
+Raytrace validation uses 2 000 Crofton rays per object by default.  For a database with many objects this can be slow; it is recommended to name specific assembly trees as arguments rather than relying on the tops-object default scan.  Facetizing combs is inherently more expensive than sampling primitives.
+
+=== Interpretation of Results
+
+A *raytrace_mismatch* on a **leaf primitive** suggests a bug in the raytrace shot routine for that primitive type (the Crofton ray count is sufficient for basic primitives at 10% tolerance).
+
+A *raytrace_mismatch* on a **comb** when all children passed suggests either:
+  * A coplanar-face artifact (see *COPLANAR INTERFACE PATTERNS* below).
+  * A problem with boolean evaluation producing incorrect geometry.
+  * A raytrace behavior anomaly specific to that combination of primitives.
+
+**Using --perturb to triage comb mismatches:** Run the same check twice — once without *--perturb* (the default) and once with *--perturb*.  The following table summarizes what each combination of results means:
+
+[cols="1,1,3", options="header"]
+|===
+| Without --perturb | With --perturb | Interpretation
+| pass | pass | Clean object.
+| fail | pass | Coplanar-face artifact that the perturbation pass resolves.  The default *facetize* output is correct; no modeling change is needed.  Common patterns: adjacent sub end-caps sharing a plane (Example 1 below); sub with multiple faces flush with the base (Example 2 below).
+| fail | fail | Persistent mismatch — one of three known patterns:
+(1) *Sub-engulfs-base thin sliver* — a sub nearly or fully covers the base on one face; the correct result has a tiny exposed region whose volume is comparable to the perturbation amount.  SA may recover after *--perturb* but volume error remains >10%.  See Example 3 below.
+(2) *Fully-engulfed base (crofton=0)* — the correct CSG result is empty (the subs collectively remove all of the base); Crofton correctly reports SA=0, vol=0, but the BoT mesh has spurious faces both with and without *--perturb*.  See Example 4 below.
+(3) *Other boolean topology anomaly* — check the JSON output fields `crofton_sa`, `bot_sa`, `crofton_vol`, `bot_vol` to characterise which metric is wrong and by how much; re-examine the CSG tree for intended topology.  See *COPLANAR INTERFACE PATTERNS* below.
+| pass | fail | Unexpected: perturbation introduced a problem.  Likely a very marginal tolerance case; try re-running with a looser *--raytrace-tol* value, or examine the mesh with *nirt* for thin-volume artifacts near the tolerance boundary.
+|===
+
+Because the check propagates failure upward, the *lowest* failing node reported is always the most actionable finding.
+
+
+[[coplanar_patterns]]
+=== Coplanar Interface Patterns
+
+When *lint --raytrace* is run without *--perturb*, a *raytrace_mismatch* on a comb is often caused by coplanar faces between adjacent primitives that Manifold cannot resolve cleanly.  Running *lint --raytrace --perturb* then distinguishes two situations:
+
+* **Mismatch clears with --perturb:** The coplanar-face artifact is eliminated by expanding each primitive slightly.  The underlying model is correct; no geometry change is needed.
+* **Mismatch persists with --perturb:** The geometry contains a structural problem that perturbation cannot fix.  This requires correcting the source model.
+
+The four examples below use real regions from the BRL-CAD test model m35.g and show step-by-step how each type of mismatch is introduced and how it behaves.  Examples 1 and 2 are resolved by *--perturb*; Examples 3 and 4 persist regardless.
+
+==== Example 1: Sub-Sub Coplanar End-Cap (region r321, TGC cylinders)
+
+This region is a hollow annular cylinder built from three TGC (truncated general cone) primitives: a solid outer cylinder (s321) with two coaxial cylinders subtracted (s320 and s323).  The key defect is that s320's top cap and s323's bottom cap sit at the *exact same plane* with *the same radius*.
+
+**Step 1 — Source geometry**
+
+Shown as a radial cross-section (Y = position along the shared axis, r = radial distance from the axis):
+
+[source]
+----
+  r
+  |
+8.4 +===========================+   s321 outer wall
+    |        s321 (BASE)        |   Y = 26.1 .. 27.9 in, radius 8.4
+7.4 +─────────┬─────────────────+─────────────────────────────+
+    | s320    |    s323 (SUB)                                  |
+    | (SUB)   |    Y = 26.85 .. 33.2 in, radius 7.4           |
+7.4 +─────────┴─────────────────+─────────────────────────────+
+8.4 +===========================+
+    |         |
+  Y=26.1    Y=26.85                          Y=27.9       Y=33.2
+              ^
+    s320 top = s323 bottom
+    both at Y=26.85, both radius 7.4 (exact coincidence)
+----
+
+**Step 2 — Correct boolean result** (r321 = s321 - s320 - s323)
+
+Because s320 spans Y=26.1..26.85 and s323 spans Y=26.85..27.9 (within s321), together they fill the full inner cylinder r=0..7.4 across the entire height of s321.  The correct result is a simple annular shell (r=7.4..8.4):
+
+[source]
+----
+  r
+  |
+8.4 +===========================+
+    | hollow shell (r=7.4..8.4) |
+7.4 +===========================+
+    (void -- both subs span the full height of s321)
+    Y=26.1                     Y=27.9
+
+CSG Crofton SA = 177,481 mm²  (two annular caps + outer + inner wall)
+No disc face exists at Y=26.85: s320 and s323 meet seamlessly there.
+----
+
+**Step 3 — Without --perturb: how the extra faces appear**
+
+*facetize* tessellates each primitive independently.  After computing (s321 - s320), Manifold places a closing disc D1 (radius 7.4) at Y=26.85 — the open top of the s320 cavity.  When it then subtracts s323 (whose *own* bottom cap is also at Y=26.85, radius 7.4), those two discs are geometrically identical and exactly coplanar.  Manifold cannot determine whether D1 is interior (should be removed) or exterior (should be kept), so D1 survives as a spurious face in the output mesh.  The same problem occurs at Y=26.1, where s320's bottom cap is coplanar with s321's bottom cap.
+
+[source]
+----
+  After (s321 - s320), mesh contains disc D1 at Y=26.85, area = pi*7.4^2 = 172 in^2
+
+  When subtracting s323 (bottom cap also at Y=26.85, same radius):
+    D1 and s323 boundary are at the SAME PLANE  -->  D1 survives
+    Similar spurious disc D0 forms at Y=26.1 from sub-base coincidence
+
+  Two spurious discs * 172 in^2 * 645 mm^2/in^2 = ~222,000 mm^2 extra SA
+
+  Measured:  BoT SA = 397,840 mm^2
+  Correct:   CSG SA = 177,481 mm^2
+  Ratio:     2.24x inflation  -->  FAIL
+----
+
+**Step 4 — With --perturb: how perturbation fixes it**
+
+Each sub is expanded outward by a deterministic amount chosen from the primitive name and bounding-box scale.  s320 and s323 receive different expansion factors (0.065 mm and 0.070 mm respectively), so their cap planes no longer coincide:
+
+[source]
+----
+  s320' (factor 0.065 mm):
+    bottom cap moves to Y = 26.1 - 0.065 = 26.035  (below s321 bottom)
+    top    cap moves to Y = 26.85 + 0.065 = 26.915
+
+  s323' (factor 0.070 mm):
+    bottom cap moves to Y = 26.85 - 0.070 = 26.780
+    top    cap moves to Y = 33.2  + 0.070 = 33.270
+
+  After (s321 - s320'): closing disc D1 is now at Y=26.915
+  s323' spans Y=26.780..33.270, so Y=26.915 is inside s323' -->
+    Manifold correctly removes D1 when subtracting s323'.
+
+  Measured:  BoT SA = 178,262 mm^2
+  Correct:   CSG SA = 177,481 mm^2
+  Error:     0.4%  -->  PASS
+----
+
+**Remedy for sub-sub coplanar:** This is a diagnostic artifact — no geometry change is needed.  Running *lint --raytrace --perturb* confirms the model is clean.  If the region must facetize correctly without *--perturb* (e.g. for legacy pipelines), merge the adjacent sub-sections into a single primitive or introduce at least 0.01 mm clearance between end caps.
+
+
+==== Example 2: Sub-Base Flush Faces (region r794, ARB8 box-in-box)
+
+This region is an ARB8 box (s794) with a slightly smaller ARB8 subtracted (s795).  Three of s795's faces are *exactly flush* with three faces of s794.
+
+**Step 1 — Source geometry**
+
+Shown in cross-section in the XZ plane (looking along the Y axis):
+
+[source]
+----
+  Z
+  ^
+20.21 +============================+  <-- flush: s795 top = s794 top (Z=20.21)
+      |        s794 (BASE)         |
+      |  +────────────────────+   |  <- s795 X walls INSIDE s794
+      |  |   s795 (SUB)       |   |
+18.96 |  +────────────────────+   |  <- s794 bottom
+18.835   +────────────────────+      <- s795 bottom (BELOW s794!)
+      |                        |
+  X=79.66                  X=83.66   (s794 X range)
+     X=79.785            X=83.535    (s795 X range -- narrower)
+
+  Also flush along the full Y extent:
+    Y = -41.44  (both s794 and s795 front face)
+    Y = -17.125 (both s794 and s795 back face)
+
+  Three flush face planes total: Z=20.21, Y=-41.44, Y=-17.125
+----
+
+**Step 2 — Correct boolean result** (r794 = s794 - s795)
+
+The result is a thin frame: the base material on the left/right X sides and top/bottom Z strips that s795 does not reach.  The correct shape has 24 triangular faces.
+
+[source]
+----
+  Thin frame cross-section at any Y slice:
+
+  +--+────────────────────────+--+
+  |  |   void (s795 removed)  |  |
+  |  |                        |  |  thin X strips (0.125 in each)
+  |  +────────────────────────+  |
+  |         Z=18.96 bottom       |  thin Z strip at bottom
+  +──────────────────────────────+
+
+  CSG Crofton SA = 86,684 mm²  (24 triangles, 16 vertices)
+----
+
+**Step 3 — Without --perturb: extra triangles at flush face planes**
+
+[source]
+----
+  At Z=20.21: s794 top face and s795 top face are the same plane.
+  Manifold cannot resolve the coplanar pair --> 4 extra triangles inserted
+  at the three flush face planes.
+
+  Mesh: 28 triangles (correct: 24)  --> extra SA = 117,651 mm^2
+
+  Measured:  BoT SA = 204,335 mm^2
+  Correct:   CSG SA =  86,684 mm^2
+  Ratio:     2.36x inflation  -->  FAIL
+----
+
+**Step 4 — With --perturb: flush faces pushed outside the base**
+
+[source]
+----
+  s795' (factor 0.060 mm):
+    Z top   moves to Z = 20.21 + 0.060 = 20.270  (past s794 top at Z=20.21)
+    Y front moves to Y = -41.44 - 0.060 = -41.500 (past s794 front)
+    Y back  moves to Y = -17.125 + 0.060 = -17.065 (past s794 back)
+    Z bottom moves to Z = 18.835 - 0.060 = 18.775 (still below s794, irrelevant)
+    X walls  move to X = 79.725 and 83.595 (still inside s794 X range)
+
+  No coplanar face planes remain.
+
+  Mesh: 24 triangles (correct)
+  Measured:  BoT SA = 86,531 mm^2
+  Correct:   CSG SA = 86,684 mm^2
+  Error:     0.2%  -->  PASS
+----
+
+**Remedy for multi-face flush:** This is a diagnostic artifact — the model is correct and *--perturb* confirms it cleanly.  If flush-face artifacts are undesirable without *--perturb*, offset the flush faces of the sub at least 0.01 mm inward.
+
+
+==== Example 3: Sub Engulfs Base (region r604, ARB8 — PERSISTENT with --perturb)
+
+This region has a very thin ARB8 slab (s604, only 0.312 in thick in Y) from which a much larger ARB8 (s178) is subtracted.  s178 nearly completely covers s604; the correct result is a tiny exposed wedge only ~3 mm wide where s604 protrudes slightly past the edge of s178.
+
+**Step 1 — Source geometry**
+
+Shown as a cross-section in the XZ plane at Y=17 (looking along the Y axis toward Y=17.312):
+
+[source]
+----
+  Z
+  ^
+31.125 +─────────────────────────────────────────────+
+       |           s178 (SUB) cross-section          |
+       |   ┌─────────────────────────────────────┐   |
+       |   |  s604 (BASE) cross-section          |   |
+       |   |  (almost entirely inside s178)      |   |
+26.125 |   └─────────────────────────────────────┘ <-- s604 bottom
+       |         ↑ thin exposed wedge here           |
+       |   (at Z≈26.125, s604 X=±6.64"              |
+       |    but s178 only reaches X=±6.52")          |
+23.184 +─────────────────────────────────────────────+
+       |                                             |
+   X=-12.08                                     X=+12.08  (s178)
+      X=-12                                       X=+12   (s604 top)
+         X=-6.52  X=-6.64               X=+6.64 X=+6.52  (near Z=26.125)
+                      ↑ exposed wedge ↑
+
+  At Y=17.312 (flush face plane):
+    s178 face (X=±12.08, Z=23.184..31.125) completely CONTAINS
+    s604 face (X=±12,    Z=26.125..31.125)
+----
+
+**Step 2 — Correct boolean result** (r604 = s604 - s178)
+
+The correct result is only the thin wedge at the bottom corners of s604 that s178 does not reach: approximately 3 mm wide, running the full 0.312 in depth of s604 in Y.
+
+[source]
+----
+  CSG Crofton SA  =  3,991 mm^2
+  CSG Crofton vol =  1,821 mm^3
+  (a small but real sliver — the tiny exposed corner of s604)
+----
+
+**Step 3 — Without --perturb: massive spurious inflation**
+
+[source]
+----
+  s178's Y=17.312 face completely covers s604's Y=17.312 face.
+  Manifold cannot correctly subtract a sub whose face engulfs the base face
+  at that plane --> inserts 28 spurious triangles covering most of s604's area.
+
+  Measured:  BoT SA = 123,798 mm^2
+  Correct:   CSG SA =   3,991 mm^2
+  Ratio:     31x inflation  -->  FAIL
+----
+
+**Step 4 — With --perturb: improves but still fails (volume error)**
+
+[source]
+----
+  s178' (factor 0.080 mm) expands outward in all directions.
+  Y=17.312 face moves to Y=17.392 --> coplanar degeneracy resolved.
+  SA is now nearly correct (5% off -- passes).
+
+  BUT: s178' also expands in XZ, growing by ~0.08 mm at Z=26.125.
+  The exposed wedge was only ~3 mm wide; after perturbation
+  s178' covers an extra ~0.16 mm (both sides), leaving ~2.7 mm.
+  The result volume is 14% too small:
+
+  Measured:  BoT SA  = 3,790 mm^2  (5% off  -- passes)
+  Measured:  BoT vol = 1,564 mm^3  (14% off -- FAILS tolerance)
+  Correct:   CSG vol = 1,821 mm^3
+
+  Result: FAIL even with --perturb.
+  lint reports "persistent SA/volume mismatch under perturbation".
+----
+
+**Remedy for sub-engulfs-base:** This *does* require geometry correction.  The sub (s178) is larger than the base (s604) in nearly every direction.  If the intent is a thin exposed sliver, the model is correct as designed but facetize will always produce a volume error proportional to the perturbation magnitude relative to the sliver thickness.  Options:
+
+* Redesign so the sub leaves a clearly larger exposed region (at least 1 mm clearance on all sides), making the result insensitive to the perturbation amount.
+* If the sub is truly meant to completely remove the base, verify the CSG tree: if the region should be empty, restructure the boolean so that result is modeled directly.
+
+
+==== Example 4: Fully-Engulfed Base (regions r937, r522, r1114 — PERSISTENT with --perturb)
+
+In this pattern the subtractive primitives collectively remove all of the base solid.  The correct CSG boolean result is empty.  Crofton ray tracing correctly measures SA=0 and volume=0 for these regions.  However, facetize produces a nonzero BoT mesh with spurious faces in both the default and *--perturb* modes.
+
+**Step 1 — Source geometry (r937 example)**
+
+r937 uses a small TGC connector (s937) as the base, subtracted by a larger TGC tube (s939) that passes through it, a very large TGC structural member (s528), and a small fillet TGC (s989):
+
+[source]
+----
+  Longitudinal cross-section (simplified):
+
+         s939 (SUB) ─────────────────────────────>
+  ┌──────────────────────────────────────────────────────┐
+  │                  s528 (SUB, very large)               │
+  │    +──────────+                                       │
+  │    | s937 BASE|  (small TGC connector)                │
+  │    +──────────+                                       │
+  └──────────────────────────────────────────────────────┘
+
+  s939: SA = 74,026 mm²  (long tube, completely spans s937)
+  s528: SA = 293,293 mm² (large member, also spans s937)
+  s937: SA =   5,057 mm² (small base fully inside both subs)
+
+  At every point on s937's surface, either s939 or s528 occupies
+  that space --> the CSG intersection of s937 with NOT(s939 ∪ s528)
+  is the empty set.
+----
+
+**Step 2 — Correct boolean result** (r937 = s937 - s939 - s528 - s989)
+
+[source]
+----
+  CSG Crofton SA  = 0 mm²   (region is empty)
+  CSG Crofton vol = 0 mm³   (region is empty)
+
+  This is correct: s937 is a small fitting completely inside two
+  larger structural members that are subtracted from it.  The region
+  exists in the database to assign material/LOS attributes to that
+  volume; the geometry itself is properly void.
+----
+
+**Step 3 — Without --perturb: spurious BoT faces**
+
+[source]
+----
+  facetize tessellates s937 first.  When subtracting s939 and s528,
+  some faces of s937's mesh are exactly coplanar with interface planes
+  of the larger subs.  Manifold cannot resolve these zero-width
+  intersections and leaves residual closing triangles on the output.
+
+  Measured:  BoT SA  = 1,946 mm²  (spurious -- correct is 0)
+  Measured:  BoT vol = 3,366 mm³  (spurious -- correct is 0)
+  Correct:   CSG SA  = 0 mm²
+  Ratio:     infinity  -->  FAIL
+----
+
+**Step 4 — With --perturb: still fails (subs still engulf base)**
+
+[source]
+----
+  Expanding s939' and s528' by their perturbation factors does not
+  help: both subs were already much larger than s937.  The perturbed
+  subs still completely engulf the perturbed s937.  Manifold still
+  encounters coplanar closing faces and the BoT remains nonzero:
+
+  Measured:  BoT SA  = 1,937 mm²  (still spurious)
+  Measured:  BoT vol = 3,340 mm³  (still spurious)
+  Correct:   CSG SA  = 0 mm²
+  Ratio:     infinity  -->  FAIL (identical pattern to without --perturb)
+----
+
+**Interpreting the zero-crofton signal:** A `crofton_sa=0` result is not an error in the raytrace — it is the *correct* measurement for an empty CSG region.  The mismatch is that the facetized BoT is wrong (nonzero).  The region is effectively empty and the BoT mesh has no geometric meaning.
+
+**Remedy for fully-engulfed base:**
+
+* If the region is *intentionally empty* (e.g. used only for attribute assignment): the geometry is correct.  The *lint --raytrace* mismatch is a known limitation of the facetize path.  No model change is required.  Consider suppressing raytrace lint for this region using *-F* filters if the report is noisy.
+* If the region is *accidentally empty* (modeling error): inspect the CSG tree with *mged* `l` and adjust the sub extents so that at least a small portion of the base is exposed.
 == EXAMPLES
 
 .Examine entire database for all defect categories (using lint_tests.g from BRL-CAD repository)
@@ -70,7 +504,7 @@ Found references to missing objects or files:
 	missingentry.c/missing.s
 Found invalid objects:
 	nonsolid.bot [bot:not_solid]
-				
+		
 ....
 
 
@@ -88,7 +522,7 @@ mged>**lint -I nonsolid.bot**
 Checking for invalid objects...
 Found invalid objects:
 	nonsolid.bot [bot:not_solid]
-				
+		
 ....
 
 
@@ -114,7 +548,7 @@ brep.m_F[1180] face is not valid.
 ON_Brep.m_F[1180] is invalid.
 Found invalid objects:
 	D.s [brep:opennurbs_invalid]
-				
+		
 ....
 
 
@@ -136,10 +570,73 @@ Found invalid objects:
 	r.rot337.bot [bot:empty]
 	r.rot37.bot [bot:empty]
 	r.rot437.bot [bot:empty]
-				
+		
 ....
 
 
+
+====
+
+.Run raytrace validation on a specific assembly
+[example]
+====
+mged>**lint --raytrace wing_assembly**
+
+
+....
+
+Running raytrace validation checks...
+Raytrace validation: 12 passed, 1 failed, 3 skipped
+Raytrace mismatches (CSG raytracer disagrees with reference):
+	r.spar.c [comb]  SA_err=38.2%  VOL_err=0.4%  (CSG Crofton SA disagrees with BoT mesh; coplanar-face artifact possible - re-run with --perturb to distinguish artifact from modeling issue)
+....
+
+====
+
+.Triage a mismatch using --perturb to determine whether it is a facetize artifact or a modeling issue
+[example]
+====
+First run without --perturb (default):
+
+mged>**lint --raytrace r.pocket.c**
+
+....
+Raytrace validation: 0 passed, 1 failed, 0 skipped
+Raytrace mismatches (CSG raytracer disagrees with reference):
+	r.pocket.c [comb]  SA_err=130.2%  VOL_err=0.3%  (CSG Crofton SA disagrees with BoT mesh; coplanar-face artifact possible - re-run with --perturb to distinguish artifact from modeling issue)
+....
+
+Re-run with --perturb:
+
+mged>**lint --raytrace --perturb r.pocket.c**
+
+....
+Raytrace validation: 0 passed, 1 failed, 0 skipped
+Raytrace mismatches (CSG raytracer disagrees with reference):
+	r.pocket.c [comb]  SA_err=130.5%  VOL_err=0.3%  (persistent SA mismatch under perturbation; probable coplanar sub-sub or sub-base interface - geometry correction required (see lint man page))
+....
+
+The mismatch persists under --perturb, indicating a coplanar sub-base interface
+(Pattern 2 above).  The remedy is to offset the flush faces of the subtractive
+primitive inward by at least 0.001 mm.
+====
+
+.Run raytrace validation with strict 5% tolerance and JSON output
+[example]
+====
+mged>**lint --raytrace --raytrace-tol 0.05 -j results.json entire_model**
+
+....
+
+Running raytrace validation checks...
+Raytrace validation: 47 passed, 3 failed, 8 skipped
+Raytrace mismatches (CSG raytracer disagrees with reference):
+	r.frame.c [comb]  SA_err=74.5%  VOL_err=0.0%  (CSG Crofton SA disagrees with BoT mesh; coplanar-face artifact possible - re-run with --perturb to distinguish artifact from modeling issue)
+	sub_box.s [primitive]  SA_err=6.1%  VOL_err=0.8%  (Crofton SA disagrees with analytic formula)
+	r.window.c [comb]  SA_err=5.5%  VOL_err=0.1%  (CSG Crofton SA disagrees with BoT mesh; coplanar-face artifact possible - re-run with --perturb to distinguish artifact from modeling issue)
+Raytrace checks skipped (facetize failed):
+	r.complex.c [comb]
+....
 
 ====
 
@@ -163,6 +660,16 @@ For BoTs where BRL-CAD's internal tools are inadequate and it is worthwhile to a
 
 Facetize (when run with the -r option) already tries to clear thin volumes automatically - occasionally it is possible, but in many cases the mesh cannot be automatically repaired without manual intervention in a mesh editing tool. In situtations where coplanar faces are the cause of thin volumes or close faces, the recommended solution is to adjust the original source geometry to avoid coplanarity - slightly "bumping" faces in or out tiny amounts to avoid the mathematically problematic alignments. If a mesh does need to be exported, the *bot strip* command can remove some of the problematic faces as a preliminary step. (Note that there may still be problem triangles present - lint's current BoT testing samples only the center of each triangle, so triangles that are coplanar but not overlapping in the center will not be detected.)
 
+When *--raytrace* finds mismatches, the first step is to determine whether the source is a geometric model issue or a genuine raytrace bug:
+
+* **Large SA error with small volume error** is the classic signature of a sub-tolerance sliver (a face pair separated by less than BN_TOL_DIST).  The CSG boolweave discards the sliver for near-perpendicular rays but admits it for oblique angles, inflating the Crofton SA estimate while leaving volume nearly unchanged.  The fix is to adjust the source geometry so that coplanar or near-coplanar faces are clearly separated or clearly coincident.  Running *facetize* with its perturb pass (the default) will also eliminate the sliver artifact in the tessellated representation, *unless* the coplanar interfaces match one of the persistent patterns described in *COPLANAR INTERFACE PATTERNS* above.
+
+* **Large volume error** points to a more fundamental raytrace problem, such as an un-modeled interior volume or an incorrect boolean result.  Examining the object with *nirt* and comparing with hand calculations or analytic formulas is a good next step.
+
+* **Failures only at deep nodes, with parents skipped:** the chain of child-blocked parent skips shows you exactly where to focus investigation.  Fix the deepest failing node first; re-running *lint --raytrace* after each fix will confirm whether the repair resolved the issue and whether any additional failures are now visible.
+
+* **Persistent mismatch under --perturb:** if re-running with *--perturb* does not clear the mismatch, the geometry contains a coplanar sub-sub or sub-base interface pattern (see *COPLANAR INTERFACE PATTERNS*) that requires manual geometry correction.  Perturbation-based workarounds (varying the perturbation magnitude, post-boolean degenerate-triangle removal, etc.) are not reliable for these patterns because the artifact triangles are geometrically valid (non-degenerate) slivers, not numerically zero-area faces.
+
 
 [[author]]
 == AUTHOR
@@ -174,3 +681,4 @@ BRL-CAD Team
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
+

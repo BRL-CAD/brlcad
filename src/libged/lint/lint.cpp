@@ -60,6 +60,19 @@ lint_data::summary()
     std::map<std::string, std::set<std::string>> categories;
     std::map<std::string, std::set<std::string>> obj_problems;
 
+    /* Raytrace result collections */
+    struct rt_entry {
+	std::string name;
+	std::string type;
+	std::string reason;
+	double sa_err_pct  = -1.0;
+	double vol_err_pct = -1.0;
+    };
+    std::vector<rt_entry> rt_mismatches;
+    std::vector<rt_entry> rt_facetize_failed;
+    std::vector<rt_entry> rt_skips;
+    std::vector<rt_entry> rt_ok;
+
     for(nlohmann::json::const_iterator it = j.begin(); it != j.end(); ++it) {
 	const nlohmann::json &pdata = *it;
 	if (!pdata.contains("problem_type")) {
@@ -67,6 +80,32 @@ lint_data::summary()
 	    continue;
 	}
 	std::string ptype(pdata["problem_type"]);
+
+	/* ---- Raytrace result types ---- */
+	if (!ptype.compare(0, 9, std::string("raytrace_"))) {
+	    if (!pdata.contains("object_name")) continue;
+	    rt_entry e;
+	    e.name = std::string(pdata["object_name"]);
+	    e.type = pdata.contains("object_type") ?
+		std::string(pdata["object_type"]) : std::string("?");
+	    if (pdata.contains("reason"))
+		e.reason = std::string(pdata["reason"]);
+	    if (pdata.contains("sa_err_pct"))
+		e.sa_err_pct = pdata["sa_err_pct"].get<double>();
+	    if (pdata.contains("vol_err_pct"))
+		e.vol_err_pct = pdata["vol_err_pct"].get<double>();
+
+	    if (ptype == std::string("raytrace_ok")) {
+		rt_ok.push_back(e);
+	    } else if (ptype == std::string("raytrace_mismatch")) {
+		rt_mismatches.push_back(e);
+	    } else if (ptype == std::string("raytrace_facetize_failed")) {
+		rt_facetize_failed.push_back(e);
+	    } else if (ptype == std::string("raytrace_skip")) {
+		rt_skips.push_back(e);
+	    }
+	    continue;
+	}
 
 	if (ptype == std::string("cyclic_path")) {
 	    if (!pdata.contains("path")) {
@@ -109,6 +148,82 @@ lint_data::summary()
     std::string ostr;
     std::set<std::string>::iterator s_it, o_it;
     std::map<std::string, std::set<std::string>>::iterator c_it;
+
+    /* ---- Raytrace results section ---- */
+    size_t rt_n_ok   = rt_ok.size();
+    size_t rt_n_fail = rt_mismatches.size();
+    size_t rt_n_skip = rt_skips.size() + rt_facetize_failed.size();
+    if (rt_n_ok + rt_n_fail + rt_n_skip > 0) {
+	ostr.append(std::string("Raytrace validation: "));
+	ostr.append(std::to_string(rt_n_ok) + std::string(" passed, "));
+	ostr.append(std::to_string(rt_n_fail) + std::string(" failed, "));
+	ostr.append(std::to_string(rt_n_skip) + std::string(" skipped\n"));
+
+	if (!rt_mismatches.empty()) {
+	    ostr.append(std::string("Raytrace mismatches (CSG raytracer disagrees with reference):\n"));
+	    for (const auto &e : rt_mismatches) {
+		ostr.append(std::string("\t") + e.name);
+		ostr.append(std::string(" [") + e.type + std::string("]"));
+		if (e.sa_err_pct >= 0.0 || e.vol_err_pct >= 0.0) {
+		    ostr.append(std::string("  SA_err="));
+		    if (e.sa_err_pct >= 0.0) {
+			char buf[32];
+			snprintf(buf, sizeof(buf), "%.1f%%", e.sa_err_pct);
+			ostr.append(buf);
+		    } else {
+			ostr.append(std::string("N/A"));
+		    }
+		    ostr.append(std::string("  VOL_err="));
+		    if (e.vol_err_pct >= 0.0) {
+			char buf[32];
+			snprintf(buf, sizeof(buf), "%.1f%%", e.vol_err_pct);
+			ostr.append(buf);
+		    } else {
+			ostr.append(std::string("N/A"));
+		    }
+		}
+		if (!e.reason.empty())
+		    ostr.append(std::string("  (") + e.reason + std::string(")"));
+		ostr.append(std::string("\n"));
+	    }
+	}
+
+	if (!rt_facetize_failed.empty()) {
+	    ostr.append(std::string("Raytrace checks skipped (facetize failed):\n"));
+	    for (const auto &e : rt_facetize_failed)
+		ostr.append(std::string("\t") + e.name +
+			    std::string(" [") + e.type + std::string("]\n"));
+	}
+
+	/* Verbose: also show skipped objects and passing objects */
+	if (verbosity > 0) {
+	    if (!rt_skips.empty()) {
+		ostr.append(std::string("Raytrace skipped objects:\n"));
+		for (const auto &e : rt_skips) {
+		    ostr.append(std::string("\t") + e.name);
+		    if (!e.reason.empty())
+			ostr.append(std::string(" (") + e.reason + std::string(")"));
+		    ostr.append(std::string("\n"));
+		}
+	    }
+	    if (!rt_ok.empty()) {
+		ostr.append(std::string("Raytrace passing objects:\n"));
+		for (const auto &e : rt_ok) {
+		    ostr.append(std::string("\t") + e.name);
+		    ostr.append(std::string(" [") + e.type + std::string("]"));
+		    if (e.sa_err_pct >= 0.0) {
+			char buf[64];
+			snprintf(buf, sizeof(buf),
+				 "  SA_err=%.2f%%  VOL_err=%.2f%%",
+				 e.sa_err_pct, e.vol_err_pct);
+			ostr.append(buf);
+		    }
+		    ostr.append(std::string("\n"));
+		}
+	    }
+	}
+    }
+
     c_it = categories.find(std::string("cyclic_path"));
     if (c_it != categories.end()) {
 	const std::set<std::string> &cpaths = c_it->second;
@@ -208,14 +323,17 @@ extern "C" int
 ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret = BRLCAD_OK;
-    static const char *usage = "Usage: lint [-h] [-v[v...]] [ -CMS ] [-F <filter>] [obj1] [obj2] [...]\n";
+    static const char *usage = "Usage: lint [-h] [-v[v...]] [ -CMS ] [-F <filter>] [--raytrace [--perturb]] [obj1] [obj2] [...]\n";
     int print_help = 0;
-    int verbosity = 0;
+    long verbosity = 0;
     int cyclic_check = 0;
     int missing_check = 0;
     int visualize = 0;
+    int do_raytrace = 0;
+    int do_rt_perturb = 0;
     fastf_t ftol = VUNITIZE_TOL;
     fastf_t min_tri_area = 0.0;
+    fastf_t rt_tol_pct = 0.10;
     struct directory **dpa = NULL;
     struct bu_vls filter = BU_VLS_INIT_ZERO;
     struct bu_vls ofile = BU_VLS_INIT_ZERO;
@@ -231,9 +349,9 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     struct invalid_shape_methods imethods;
     imethods.im_techniques = &ldata.im_techniques;
 
-    struct bu_opt_desc d[12];
+    struct bu_opt_desc d[15];
     BU_OPT(d[ 0],  "h", "help",                              "",  NULL,              &print_help,           "Print help and exit");
-    BU_OPT(d[ 1],  "v", "verbose",                           "",  &_ged_vopt,        &verbosity,            "Verbose output (multiple flags increase verbosity)");
+    BU_OPT(d[ 1],  "v", "verbose",                           "",  &bu_opt_incr_long, &verbosity,            "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[ 2],  "C", "cyclic",                            "",  NULL,              &cyclic_check,         "Check for cyclic paths (combs whose children reference their parents - potential for infinite looping)");
     BU_OPT(d[ 3],  "M", "missing",                           "",  NULL,              &missing_check,        "Check for objects referenced by other objects that are not in the database");
     BU_OPT(d[ 4],  "I", "invalid-shape",  "[check [check ...]]",  &invalid_opt_read, &imethods,             "Check for objects that are intended to be valid shapes but do not satisfy validity criteria (examples include non-solid BoTs and twisted arbs)");
@@ -243,7 +361,10 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[ 8],  "t", "tol",                              "#",  &bu_opt_fastf_t,   &ftol,                 "Numerical value to use when testing involves tolerances (defaults to VUNITIZE_TOL)");
     BU_OPT(d[ 9],  "g", "group",                         "name",  &bu_opt_vls,       &gname,                "Name of comb object in which to group all shape objects that report issues (will not contain cyclic paths or missing references).");
     BU_OPT(d[10],   "", "min-tri-area",                     "#",  &bu_opt_fastf_t,   &min_tri_area,         "Units are mm^2.  If specified, lint will not report any sampling problems where the seed triangle has < min-tri-area surface area (default is to report all problems).  Note that a miss of a problematically small triangle elsewhere in the shotline may still result in a shotlining error report - this filters only based on the first hit triangles.");
-    BU_OPT_NULL(d[11]);
+    BU_OPT(d[11],   "", "raytrace",                          "",  NULL,              &do_raytrace,          "Raytrace validation mode: compare Crofton ray-sampling SA/volume estimates against analytic formulas (leaf primitives) and facetized BoT meshes (combs).  Disables all other lint checks.");
+    BU_OPT(d[12],   "", "raytrace-tol",                     "#",  &bu_opt_fastf_t,   &rt_tol_pct,           "Fractional tolerance for raytrace validation comparisons (default 0.10 = 10%).  Values closer to 0 are stricter.");
+    BU_OPT(d[13],   "", "perturb",                           "",  NULL,              &do_rt_perturb,        "When used with --raytrace, facetize combs using the default perturbation pass instead of --no-perturb.  Mismatches that clear under --perturb are coplanar-face artifacts; persistent mismatches indicate modeling topology issues requiring geometry correction.");
+    BU_OPT_NULL(d[14]);
 
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
@@ -313,38 +434,48 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 
     ldata.argc = argc;
     ldata.dpa = dpa;
-    ldata.verbosity = verbosity;
+    ldata.verbosity = (int)verbosity;
     ldata.ftol = ftol;
     ldata.min_tri_area = min_tri_area;
+    ldata.do_raytrace = (do_raytrace != 0);
+    ldata.rt_do_perturb = (do_rt_perturb != 0);
+    ldata.rt_tol_pct = (double)rt_tol_pct;
 
     int have_specific_test = cyclic_check+missing_check+imethods.do_invalid;
 
-    if (!have_specific_test || cyclic_check) {
-	bu_log("Checking for cyclic paths...\n");
-	if (_ged_cyclic_check(&ldata) != BRLCAD_OK)
+    /* --raytrace disables all other checks */
+    if (ldata.do_raytrace) {
+	bu_log("Running raytrace validation checks...\n");
+	if (_ged_raytrace_check(&ldata) != BRLCAD_OK)
 	    ret = BRLCAD_ERROR;
-    }
+    } else {
+	if (!have_specific_test || cyclic_check) {
+	    bu_log("Checking for cyclic paths...\n");
+	    if (_ged_cyclic_check(&ldata) != BRLCAD_OK)
+		ret = BRLCAD_ERROR;
+	}
 
-    if (!have_specific_test || missing_check) {
-	bu_log("Checking for references to non-extant objects...\n");
-	if (_ged_missing_check(&ldata) != BRLCAD_OK)
-	    ret = BRLCAD_ERROR;
-    }
+	if (!have_specific_test || missing_check) {
+	    bu_log("Checking for references to non-extant objects...\n");
+	    if (_ged_missing_check(&ldata) != BRLCAD_OK)
+		ret = BRLCAD_ERROR;
+	}
 
-    if (!have_specific_test || imethods.do_invalid) {
-	bu_log("Checking for invalid objects...\n");
+	if (!have_specific_test || imethods.do_invalid) {
+	    bu_log("Checking for invalid objects...\n");
 
-	// bu_log wipes out MGED when doing this - stash hooks
-	struct bu_hook_list ohooks;
-	bu_hook_list_init(&ohooks);
-	bu_log_hook_save_all(&ohooks);
-	bu_log_hook_delete_all();
+	    // bu_log wipes out MGED when doing this - stash hooks
+	    struct bu_hook_list ohooks;
+	    bu_hook_list_init(&ohooks);
+	    bu_log_hook_save_all(&ohooks);
+	    bu_log_hook_delete_all();
 
-	if (_ged_invalid_shape_check(&ldata) != BRLCAD_OK)
-	    ret = BRLCAD_ERROR;
+	    if (_ged_invalid_shape_check(&ldata) != BRLCAD_OK)
+		ret = BRLCAD_ERROR;
 
-	// Restore hooks
-	bu_log_hook_restore_all(&ohooks);
+	    // Restore hooks
+	    bu_log_hook_restore_all(&ohooks);
+	}
     }
 
     if (visualize) {
@@ -379,6 +510,12 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 		continue;
 	    if (!ptype.compare(0, 7, std::string("missing")))
 		continue;
+	    /* Only include raytrace failures, not passing or skipped objects */
+	    if (!ptype.compare(0, 9, std::string("raytrace_"))) {
+		if (ptype != std::string("raytrace_mismatch") &&
+		    ptype != std::string("raytrace_facetize_failed"))
+		    continue;
+	    }
 	    if (!pdata.contains("object_name"))
 		continue;
 

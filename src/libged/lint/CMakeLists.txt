@@ -7,6 +7,7 @@ set(
   lint.cpp
   lint_bot.cpp
   missing.cpp
+  raytrace.cpp
 )
 
 ged_plugin_library(ged-lint

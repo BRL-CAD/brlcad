@@ -138,4 +138,3 @@ _ged_invalid_shape_check(lint_data *ldata)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
