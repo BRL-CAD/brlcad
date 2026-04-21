@@ -1965,7 +1965,7 @@ void
 rt_ebm_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_ebm_internal *eip;
-    unsigned int x, y;
+    size_t x, y;
     point_t x0, x1, x2, x3, x4, x5, x6, x7;
     point_t _x0, _x1, _x2, _x3, _x4, _x5, _x6, _x7;
     vect_t d3_0, d2_1, d7_4, d6_5;

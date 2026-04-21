@@ -1273,14 +1273,63 @@ rt_vol_plate(point_t a, point_t b, point_t c, point_t d, register mat_t mat, str
 }
 
 
+/*
+ * vol_span_face - emit one NMG boundary face for a rectangular patch.
+ *
+ * The four corner coordinates (v[0..3]) are passed in ideal voxel space;
+ * they are scaled by cellsize and transformed by mat before being assigned
+ * to NMG vertex geometry.
+ *
+ * Returns 0 on success, non-zero on nmg_fu_planeeqn failure.
+ */
+static int
+vol_span_face(struct shell *s, const struct rt_vol_internal *vip,
+	      const struct bn_tol *tol,
+	      fastf_t v0x, fastf_t v0y, fastf_t v0z,
+	      fastf_t v1x, fastf_t v1y, fastf_t v1z,
+	      fastf_t v2x, fastf_t v2y, fastf_t v2z,
+	      fastf_t v3x, fastf_t v3y, fastf_t v3z)
+{
+    struct vertex *verts[4];
+    struct faceuse *fu;
+    point_t pt, pt1;
+    int i;
+
+    for (i = 0; i < 4; i++)
+	verts[i] = (struct vertex *)NULL;
+    fu = nmg_cface(s, verts, 4);
+
+    VSET(pt, v0x, v0y, v0z); VELMUL(pt1, vip->cellsize, pt); MAT4X3PNT(pt, vip->mat, pt1); nmg_vertex_gv(verts[0], pt);
+    VSET(pt, v1x, v1y, v1z); VELMUL(pt1, vip->cellsize, pt); MAT4X3PNT(pt, vip->mat, pt1); nmg_vertex_gv(verts[1], pt);
+    VSET(pt, v2x, v2y, v2z); VELMUL(pt1, vip->cellsize, pt); MAT4X3PNT(pt, vip->mat, pt1); nmg_vertex_gv(verts[2], pt);
+    VSET(pt, v3x, v3y, v3z); VELMUL(pt1, vip->cellsize, pt); MAT4X3PNT(pt, vip->mat, pt1); nmg_vertex_gv(verts[3], pt);
+
+    return nmg_fu_planeeqn(fu, tol);
+}
+
+
+/*
+ * vol_patch_rect - active rectangle for 2D coherent-patch merging.
+ *
+ * Tracks one contiguous rectangular region: spans [a0..b0] along the
+ * "inner span" axis, starting at row_start along the "row" axis.
+ * The rectangle is extended to each new row as long as the identical
+ * [a0, b0] boundaries reappear in consecutive rows.
+ */
+struct vol_patch_rect {
+    size_t a0;        /* span start (inclusive) */
+    size_t b0;        /* span end   (inclusive) */
+    size_t row_start; /* first row included in this rectangle */
+};
+
+
 int
 rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct rt_vol_internal *vip;
-    register size_t x, y, z;
-    int i;
+    size_t x, y, z;
+    int failed = 0;
     struct shell *s;
-    struct vertex *verts[4];
     struct faceuse *fu;
     struct model *m_tmp;
     struct nmgregion *r_tmp;
@@ -1299,194 +1348,224 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     r_tmp = nmg_mrsv(m_tmp);
     s = BU_LIST_FIRST(shell, &r_tmp->s_hd);
 
-    for (x = 0; x < vip->xdim; x++) {
-	for (y = 0; y < vip->ydim; y++) {
-	    for (z = 0; z < vip->zdim; z++) {
-		point_t pt, pt1;
+    /*
+     * Build boundary faces using 2D coherent-patch merging, extending the
+     * DSP/TerraScape technique from 1D row-spans to full 2D rectangles.
+     *
+     * For each face direction we iterate over outer slices.  Within each
+     * slice, a set of "active rectangles" is maintained across consecutive
+     * rows.  A 1D span [a0,b0] in the current row is matched against the
+     * active list:
+     *
+     *   - Exact match (same a0 AND b0): the rectangle is extended by one
+     *     row — no face is emitted yet.
+     *   - No match: the unmatched active rectangle is emitted as a single
+     *     NMG face covering its full [a0..b0] × [row_start..row-1] extent,
+     *     and the new span starts a fresh rectangle.
+     *
+     * A span from row r is extended to row r+1 ONLY when the exact same
+     * boundaries appear again: this is the "coherent flat patch" condition.
+     * Any boundary change (wider, narrower, shifted, or absent) breaks the
+     * rectangle, ensuring each emitted face is a maximal grid-aligned rect
+     * within a single connected flat region.
+     *
+     * For an N×M flat surface this reduces the initial face count from
+     * N×M unit quads (original) → M row-span quads (previous 1D approach)
+     * → 1 patch rectangle (2D approach), making nmg_shell_coplanar_face_merge
+     * trivial for that surface.
+     *
+     * After all faces are created, nmg_model_fuse calls nmg_break_all_es_on_v
+     * to resolve any T-junctions that can arise at patch boundaries for
+     * non-rectangular exposed regions, before the coplanar merge step.
+     *
+     * Boundary layout (max active rectangles per outer-slice pass):
+     *   z±, y± faces: span axis = X → at most xdim/2+1 active per row
+     *   x±     faces: span axis = Z → at most zdim/2+1 active per row
+     */
 
-		/* skip empty cells */
-		if (!OK(vip, VOL(vip, x, y, z)))
-		    continue;
-
-		/* check neighboring cells, make a face where needed */
-
-		/* check z+1 */
-		if (!OK(vip, VOL(vip, x, y, z+1))) {
-		    for (i = 0; i < 4; i++)
-			verts[i] = (struct vertex *)NULL;
-
-		    fu = nmg_cface(s, verts, 4);
-
-		    VSET(pt, x+.5, y-.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[0], pt);
-		    VSET(pt, x+.5, y+.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[1], pt);
-		    VSET(pt, x-.5, y+.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[2], pt);
-		    VSET(pt, x-.5, y-.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[3], pt);
-
-		    if (nmg_fu_planeeqn(fu, tol))
-			goto fail;
-		}
-
-		/* check z-1 */
-		if (!OK(vip, VOL(vip, x, y, z-1))) {
-		    for (i = 0; i < 4; i++)
-			verts[i] = (struct vertex *)NULL;
-
-		    fu = nmg_cface(s, verts, 4);
-
-		    VSET(pt, x+.5, y-.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[3], pt);
-		    VSET(pt, x+.5, y+.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[2], pt);
-		    VSET(pt, x-.5, y+.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[1], pt);
-		    VSET(pt, x-.5, y-.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[0], pt);
-
-		    if (nmg_fu_planeeqn(fu, tol))
-			goto fail;
-		}
-
-		/* check y+1 */
-		if (!OK(vip, VOL(vip, x, y+1, z))) {
-		    for (i = 0; i < 4; i++)
-			verts[i] = (struct vertex *)NULL;
-
-		    fu = nmg_cface(s, verts, 4);
-
-		    VSET(pt, x+.5, y+.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[0], pt);
-		    VSET(pt, x+.5, y+.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[1], pt);
-		    VSET(pt, x-.5, y+.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[2], pt);
-		    VSET(pt, x-.5, y+.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[3], pt);
-
-		    if (nmg_fu_planeeqn(fu, tol))
-			goto fail;
-		}
-
-		/* check y-1 */
-		if (!OK(vip, VOL(vip, x, y-1, z))) {
-		    for (i = 0; i < 4; i++)
-			verts[i] = (struct vertex *)NULL;
-
-		    fu = nmg_cface(s, verts, 4);
-
-		    VSET(pt, x+.5, y-.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[3], pt);
-		    VSET(pt, x+.5, y-.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[2], pt);
-		    VSET(pt, x-.5, y-.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[1], pt);
-		    VSET(pt, x-.5, y-.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[0], pt);
-
-		    if (nmg_fu_planeeqn(fu, tol))
-			goto fail;
-		}
-
-		/* check x+1 */
-		if (!OK(vip, VOL(vip, x+1, y, z))) {
-		    for (i = 0; i < 4; i++)
-			verts[i] = (struct vertex *)NULL;
-
-		    fu = nmg_cface(s, verts, 4);
-
-		    VSET(pt, x+.5, y-.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[0], pt);
-		    VSET(pt, x+.5, y+.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[1], pt);
-		    VSET(pt, x+.5, y+.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[2], pt);
-		    VSET(pt, x+.5, y-.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[3], pt);
-
-		    if (nmg_fu_planeeqn(fu, tol))
-			goto fail;
-		}
-
-		/* check x-1 */
-		if (!OK(vip, VOL(vip, x-1, y, z))) {
-		    for (i = 0; i < 4; i++)
-			verts[i] = (struct vertex *)NULL;
-
-		    fu = nmg_cface(s, verts, 4);
-
-		    VSET(pt, x-.5, y-.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[3], pt);
-		    VSET(pt, x-.5, y+.5, z-.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[2], pt);
-		    VSET(pt, x-.5, y+.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[1], pt);
-		    VSET(pt, x-.5, y-.5, z+.5);
-		    VELMUL(pt1, vip->cellsize, pt);
-		    MAT4X3PNT(pt, vip->mat, pt1);
-		    nmg_vertex_gv(verts[0], pt);
-
-		    if (nmg_fu_planeeqn(fu, tol))
-			goto fail;
-		}
-	    }
-	}
+/* -----------------------------------------------------------------------
+ * VOL_PATCH_LOOP: 2D coherent-patch face-emission macro.
+ *
+ * Parameters (must be #defined before invoking):
+ *   OUTER_VAR / OUTER_LIM       outer loop variable and limit
+ *   ROW_VAR   / ROW_LIM         row variable and limit (inclusive sentinel)
+ *   SPAN_VAR  / SPAN_LIM        span variable and limit
+ *   EXPOSED_COND                boolean expression: is cell exposed?
+ *   EMIT_FACE(a0,b0,rs,re)      emit one face for span [a0..b0], rows [rs..re]
+ *   MAX_PR_EXPR                 upper bound on concurrent active rects
+ *
+ * The macro manages heap-allocated active-rectangle arrays and sets
+ * `failed` on any nmg_fu_planeeqn error.
+ * ----------------------------------------------------------------------- */
+#define VOL_PATCH_LOOP(OUTER_VAR, OUTER_LIM,				\
+		       ROW_VAR, ROW_LIM,				\
+		       SPAN_VAR, SPAN_LIM,				\
+		       EXPOSED_COND,					\
+		       EMIT_FACE,					\
+		       MAX_PR_EXPR)					\
+    for (OUTER_VAR = 0; OUTER_VAR < (OUTER_LIM) && !failed; OUTER_VAR++) { \
+	size_t _max_pr = (MAX_PR_EXPR);					\
+	struct vol_patch_rect *_pr =					\
+	    (struct vol_patch_rect *)bu_calloc(_max_pr,			\
+		sizeof(struct vol_patch_rect), "vol_pr");		\
+	int *_pr_live = (int *)bu_calloc(_max_pr, sizeof(int), "vol_pr_live"); \
+	size_t _n_pr = 0;						\
+	for (ROW_VAR = 0; ROW_VAR <= (ROW_LIM) && !failed; ROW_VAR++) { \
+	    size_t _i;							\
+	    for (_i = 0; _i < _n_pr; _i++) _pr_live[_i] = 0;		\
+	    if (ROW_VAR < (ROW_LIM)) {					\
+		size_t _a0 = 0;						\
+		int _in = 0;						\
+		for (SPAN_VAR = 0; SPAN_VAR <= (SPAN_LIM); SPAN_VAR++) { \
+		    int _exp = (SPAN_VAR < (SPAN_LIM)) && (EXPOSED_COND); \
+		    if (_exp && !_in) { _a0 = SPAN_VAR; _in = 1; }	\
+		    else if (!_exp && _in) {				\
+			size_t _b0 = SPAN_VAR - 1; _in = 0;		\
+			int _matched = 0;				\
+			for (_i = 0; _i < _n_pr; _i++) {		\
+			    if (!_pr_live[_i]				\
+				&& _pr[_i].a0 == _a0			\
+				&& _pr[_i].b0 == _b0) {			\
+				_pr_live[_i] = 1; _matched = 1; break;	\
+			    }						\
+			}						\
+			if (!_matched && _n_pr < _max_pr) {		\
+			    _pr[_n_pr].a0 = _a0;			\
+			    _pr[_n_pr].b0 = _b0;			\
+			    _pr[_n_pr].row_start = ROW_VAR;		\
+			    _pr_live[_n_pr] = 1;			\
+			    _n_pr++;					\
+			}						\
+		    }							\
+		}							\
+	    }								\
+	    /* emit rects that did not continue and compact */		\
+	    size_t _j = 0;						\
+	    for (_i = 0; _i < _n_pr; _i++) {				\
+		if (!_pr_live[_i]) {					\
+		    size_t _a0e = _pr[_i].a0, _b0e = _pr[_i].b0;	\
+		    size_t _rse = _pr[_i].row_start;			\
+		    size_t _ree = ROW_VAR - 1;				\
+		    if (EMIT_FACE(_a0e, _b0e, _rse, _ree)) {		\
+			failed = 1; break;				\
+		    }							\
+		} else {						\
+		    _pr[_j] = _pr[_i];					\
+		    _pr_live[_j] = 1;					\
+		    _j++;						\
+		}							\
+	    }								\
+	    _n_pr = _j;							\
+	}								\
+	bu_free(_pr,      "vol_pr");					\
+	bu_free(_pr_live, "vol_pr_live");				\
     }
+
+    /* z+ faces (CCW from above, +z normal).
+     * outer=z, row=y, span=x.
+     * 2D rect: x=[a0..b0], y=[row_start..row_end] at z+0.5 */
+#define VOL_EMIT_ZP(a0, b0, rs, re)					\
+    vol_span_face(s, vip, tol,						\
+		  (fastf_t)(b0)+.5, (fastf_t)(rs)-.5, (fastf_t)z+.5,	\
+		  (fastf_t)(b0)+.5, (fastf_t)(re)+.5, (fastf_t)z+.5,	\
+		  (fastf_t)(a0)-.5, (fastf_t)(re)+.5, (fastf_t)z+.5,	\
+		  (fastf_t)(a0)-.5, (fastf_t)(rs)-.5, (fastf_t)z+.5)
+    VOL_PATCH_LOOP(z, vip->zdim, y, vip->ydim, x, vip->xdim,
+		   OK(vip, VOL(vip, x, y, z)) && !OK(vip, VOL(vip, x, y, z+1)),
+		   VOL_EMIT_ZP,
+		   vip->xdim / 2 + 2)
+#undef VOL_EMIT_ZP
+
+    /* z- faces (CCW from below, -z normal).
+     * outer=z, row=y, span=x.
+     * 2D rect: x=[a0..b0], y=[row_start..row_end] at z-0.5 */
+#define VOL_EMIT_ZM(a0, b0, rs, re)					\
+    vol_span_face(s, vip, tol,						\
+		  (fastf_t)(a0)-.5, (fastf_t)(rs)-.5, (fastf_t)z-.5,	\
+		  (fastf_t)(a0)-.5, (fastf_t)(re)+.5, (fastf_t)z-.5,	\
+		  (fastf_t)(b0)+.5, (fastf_t)(re)+.5, (fastf_t)z-.5,	\
+		  (fastf_t)(b0)+.5, (fastf_t)(rs)-.5, (fastf_t)z-.5)
+    VOL_PATCH_LOOP(z, vip->zdim, y, vip->ydim, x, vip->xdim,
+		   OK(vip, VOL(vip, x, y, z)) && !OK(vip, VOL(vip, x, y, z-1)),
+		   VOL_EMIT_ZM,
+		   vip->xdim / 2 + 2)
+#undef VOL_EMIT_ZM
+
+    /* y+ faces (CCW from outside, +y normal).
+     * outer=y, row=z, span=x.
+     * 2D rect: x=[a0..b0], z=[row_start..row_end] at y+0.5 */
+#define VOL_EMIT_YP(a0, b0, rs, re)					\
+    vol_span_face(s, vip, tol,						\
+		  (fastf_t)(b0)+.5, (fastf_t)y+.5, (fastf_t)(re)+.5,	\
+		  (fastf_t)(b0)+.5, (fastf_t)y+.5, (fastf_t)(rs)-.5,	\
+		  (fastf_t)(a0)-.5, (fastf_t)y+.5, (fastf_t)(rs)-.5,	\
+		  (fastf_t)(a0)-.5, (fastf_t)y+.5, (fastf_t)(re)+.5)
+    VOL_PATCH_LOOP(y, vip->ydim, z, vip->zdim, x, vip->xdim,
+		   OK(vip, VOL(vip, x, y, z)) && !OK(vip, VOL(vip, x, y+1, z)),
+		   VOL_EMIT_YP,
+		   vip->xdim / 2 + 2)
+#undef VOL_EMIT_YP
+
+    /* y- faces (CCW from outside, -y normal).
+     * outer=y, row=z, span=x.
+     * 2D rect: x=[a0..b0], z=[row_start..row_end] at y-0.5 */
+#define VOL_EMIT_YM(a0, b0, rs, re)					\
+    vol_span_face(s, vip, tol,						\
+		  (fastf_t)(a0)-.5, (fastf_t)y-.5, (fastf_t)(re)+.5,	\
+		  (fastf_t)(a0)-.5, (fastf_t)y-.5, (fastf_t)(rs)-.5,	\
+		  (fastf_t)(b0)+.5, (fastf_t)y-.5, (fastf_t)(rs)-.5,	\
+		  (fastf_t)(b0)+.5, (fastf_t)y-.5, (fastf_t)(re)+.5)
+    VOL_PATCH_LOOP(y, vip->ydim, z, vip->zdim, x, vip->xdim,
+		   OK(vip, VOL(vip, x, y, z)) && !OK(vip, VOL(vip, x, y-1, z)),
+		   VOL_EMIT_YM,
+		   vip->xdim / 2 + 2)
+#undef VOL_EMIT_YM
+
+    /* x+ faces (CCW from outside, +x normal).
+     * outer=x, row=y, span=z.
+     * 2D rect: z=[a0..b0], y=[row_start..row_end] at x+0.5 */
+#define VOL_EMIT_XP(a0, b0, rs, re)					\
+    vol_span_face(s, vip, tol,						\
+		  (fastf_t)x+.5, (fastf_t)(rs)-.5, (fastf_t)(a0)-.5,	\
+		  (fastf_t)x+.5, (fastf_t)(re)+.5, (fastf_t)(a0)-.5,	\
+		  (fastf_t)x+.5, (fastf_t)(re)+.5, (fastf_t)(b0)+.5,	\
+		  (fastf_t)x+.5, (fastf_t)(rs)-.5, (fastf_t)(b0)+.5)
+    VOL_PATCH_LOOP(x, vip->xdim, y, vip->ydim, z, vip->zdim,
+		   OK(vip, VOL(vip, x, y, z)) && !OK(vip, VOL(vip, x+1, y, z)),
+		   VOL_EMIT_XP,
+		   vip->zdim / 2 + 2)
+#undef VOL_EMIT_XP
+
+    /* x- faces (CCW from outside, -x normal).
+     * outer=x, row=y, span=z.
+     * 2D rect: z=[a0..b0], y=[row_start..row_end] at x-0.5 */
+#define VOL_EMIT_XM(a0, b0, rs, re)					\
+    vol_span_face(s, vip, tol,						\
+		  (fastf_t)x-.5, (fastf_t)(rs)-.5, (fastf_t)(b0)+.5,	\
+		  (fastf_t)x-.5, (fastf_t)(re)+.5, (fastf_t)(b0)+.5,	\
+		  (fastf_t)x-.5, (fastf_t)(re)+.5, (fastf_t)(a0)-.5,	\
+		  (fastf_t)x-.5, (fastf_t)(rs)-.5, (fastf_t)(a0)-.5)
+    VOL_PATCH_LOOP(x, vip->xdim, y, vip->ydim, z, vip->zdim,
+		   OK(vip, VOL(vip, x, y, z)) && !OK(vip, VOL(vip, x-1, y, z)),
+		   VOL_EMIT_XM,
+		   vip->zdim / 2 + 2)
+#undef VOL_EMIT_XM
+
+#undef VOL_PATCH_LOOP
+
+    if (failed)
+	goto fail;
 
     nmg_region_a(r_tmp, tol);
 
-    /* fuse model */
+    /* fuse model: nmg_model_fuse calls nmg_break_all_es_on_v which resolves
+     * any T-junctions that arise when patch boundaries from different face
+     * directions do not align (e.g. non-rectangular exposed regions). */
     nmg_model_fuse(m_tmp, vlfree, tol);
 
-    /* simplify shell */
+    /* simplify shell: merge any remaining coplanar patch quads that share
+     * boundaries (e.g. when a non-rectangular exposed region was split into
+     * two or more rectangles). */
     nmg_shell_coplanar_face_merge(s, tol, 1, vlfree);
 
     /* kill snakes */
