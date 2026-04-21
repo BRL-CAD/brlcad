@@ -39,10 +39,12 @@
 
 #include "bu/cv.h"
 #include "bg/polygon.h"
+#include "bg/trimesh.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/db4.h"
 #include "rt/geom.h"
+#include "rt/nmg_conv.h"
 #include "raytrace.h"
 #include "../../librt_private.h"
 
@@ -1400,22 +1402,86 @@ rt_arbn_faces_area(struct poly_face* faces, struct rt_arbn_internal* aip)
 void
 rt_arbn_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
-    struct poly_face *faces;
-    struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
-    size_t i;
+    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
+    struct bn_tol tol;
+    struct model *m;
+    struct nmgregion *r = NULL;
+    struct rt_bot_internal *bot;
+    struct bu_list vlfree;
 
-    /* allocate array of face structs */
-    faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "arbn_surf_area: faces");
-    for (i = 0; i < aip->neqn; i++) {
-	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
-	faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1, sizeof(point_t), "arbn_surf_area: pts");
+    /* Tessellate the ARBN (all faces are planar, so the BOT is exact) */
+    ttol.rel   = 0.01;
+    BN_TOL_INIT(&tol);
+    BU_LIST_INIT(&vlfree);
+
+    m = nmg_mm();
+    if (rt_arbn_tess(&r, m, (struct rt_db_internal *)(uintptr_t)ip, &ttol, &tol) != 0 || !r) {
+	nmg_km(m);
+	return;
     }
-    rt_arbn_faces_area(faces, aip);
-    for (i = 0; i < aip->neqn; i++) {
-	*area += faces[i].area;
-	bu_free((char *)faces[i].pts, "rt_arbn_surf_area: pts");
+
+    bot = nmg_mdl_to_bot(m, &vlfree, &tol);
+    nmg_km(m);
+    if (!bot || bot->num_faces == 0) {
+	if (bot) {
+	    bu_free(bot->faces, "arbn bot faces");
+	    bu_free(bot->vertices, "arbn bot verts");
+	    bu_free(bot, "arbn bot");
+	}
+	return;
     }
-    bu_free((char *)faces, "rt_arbn_surf_area: faces");
+
+    *area = bg_trimesh_area(
+	bot->faces, bot->num_faces,
+	(const point_t *)bot->vertices, bot->num_vertices);
+
+    bu_free(bot->faces, "arbn bot faces");
+    bu_free(bot->vertices, "arbn bot verts");
+    bu_free(bot, "arbn bot");
+}
+
+
+void
+rt_arbn_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
+    struct bn_tol tol;
+    struct model *m;
+    struct nmgregion *r = NULL;
+    struct rt_bot_internal *bot;
+    struct bu_list vlfree;
+
+    /* Tessellate the ARBN (all faces are planar, so the BOT is exact) */
+    ttol.rel   = 0.01;
+    BN_TOL_INIT(&tol);
+    BU_LIST_INIT(&vlfree);
+
+    *volume = 0.0;
+
+    m = nmg_mm();
+    if (rt_arbn_tess(&r, m, (struct rt_db_internal *)(uintptr_t)ip, &ttol, &tol) != 0 || !r) {
+	nmg_km(m);
+	return;
+    }
+
+    bot = nmg_mdl_to_bot(m, &vlfree, &tol);
+    nmg_km(m);
+    if (!bot || bot->num_faces == 0) {
+	if (bot) {
+	    bu_free(bot->faces, "arbn bot faces");
+	    bu_free(bot->vertices, "arbn bot verts");
+	    bu_free(bot, "arbn bot");
+	}
+	return;
+    }
+
+    *volume = bg_trimesh_volume(
+	bot->faces, bot->num_faces,
+	(const point_t *)bot->vertices, bot->num_vertices);
+
+    bu_free(bot->faces, "arbn bot faces");
+    bu_free(bot->vertices, "arbn bot verts");
+    bu_free(bot, "arbn bot");
 }
 
 
@@ -1476,34 +1542,6 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
     bu_free((char *)faces, "rt_arbn_centroid: faces");
 }
 
-
-void
-rt_arbn_volume(fastf_t *volume, const struct rt_db_internal *ip)
-{
-    struct poly_face *faces;
-    struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
-    size_t i;
-
-    *volume = 0.0;
-    /* allocate array of face structs */
-    faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "rt_arbn_volume: faces");
-    for (i = 0; i < aip->neqn; i++) {
-	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
-	faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1, sizeof(point_t), "rt_arbn_volume: pts");
-    }
-    rt_arbn_faces_area(faces, aip);
-    for (i = 0; i < aip->neqn; i++) {
-	vect_t tmp;
-
-	/* calculate volume of pyramid */
-	VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
-	*volume += VDOT(faces[i].pts[0], tmp)/3;
-    }
-    for (i = 0; i < aip->neqn; i++) {
-	bu_free((char *)faces[i].pts, "rt_arbn_volume: pts");
-    }
-    bu_free((char *)faces, "rt_arbn_volume: faces");
-}
 
 const char *
 rt_arbn_keypoint(point_t *pt, const char *keystr, const mat_t mat, const struct rt_db_internal *ip, const struct bn_tol *tol)
