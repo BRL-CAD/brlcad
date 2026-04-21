@@ -21,8 +21,6 @@
  *
  * Functions -
  *
- * pipe_split_pnt - split a pipe segment at a given point
- *
  * find_pipe_pnt_nearest_pnt - find which segment of a pipe is nearest
  * the ray from "pt" in the viewing direction (for segment selection
  * in MGED)
@@ -41,13 +39,6 @@
 
 #include "../ged_private.h"
 #include "./ged_edit.h"
-
-void
-pipe_split_pnt(struct bu_list *UNUSED(pipe_hd), struct wdb_pipe_pnt *UNUSED(ps), fastf_t *UNUSED(new_pt))
-{
-    bu_log("WARNING: pipe splitting unimplemented\n");
-}
-
 
 static fastf_t
 edpipe_scale(fastf_t d, fastf_t scale)

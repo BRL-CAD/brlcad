@@ -321,7 +321,7 @@ rt_edit_pipe_edit_desc(void)
 }
 
 
-void
+static void
 pipe_split_pnt(struct bu_list *pipe_hd, struct wdb_pipe_pnt *ps, point_t new_pt)
 {
     struct wdb_pipe_pnt *next;

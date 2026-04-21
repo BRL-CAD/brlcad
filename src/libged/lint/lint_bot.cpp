@@ -152,32 +152,34 @@ _overlap_noop(struct application *UNUSED(ap),
 }
 
 // Per thread data for lint testing
-class lint_worker_data {
-    public:
-	lint_worker_data(struct rt_i *rtip, struct resource *res);
-	~lint_worker_data();
-	void shoot(int ind, bool reverse);
-	void plot_bad_tris(struct bv_vlblock *vbp, struct bu_list *vhead, struct bu_list *vlfree);
+namespace {
+    class lint_worker_data {
+	public:
+	    lint_worker_data(struct rt_i *rtip, struct resource *res);
+	    ~lint_worker_data();
+	    void shoot(int ind, bool reverse);
+	    void plot_bad_tris(struct bv_vlblock *vbp, struct bu_list *vhead, struct bu_list *vlfree);
 
-	nlohmann::json tresults;
-	bool condition_flag = false;
-	fastf_t min_tri_area = 0.0;
-	int curr_tri = -1;
-	double ttol = 0.0;
+	    nlohmann::json tresults;
+	    bool condition_flag = false;
+	    fastf_t min_tri_area = 0.0;
+	    int curr_tri = -1;
+	    double ttol = 0.0;
 
-	lint_data *ldata = NULL;
-	struct application ap;
-	struct rt_bot_internal *bot = NULL;
-	const std::unordered_set<int> *bad_faces = NULL;
+	    lint_data *ldata = NULL;
+	    struct application ap;
+	    struct rt_bot_internal *bot = NULL;
+	    const std::unordered_set<int> *bad_faces = NULL;
 
-	std::string pname;
+	    std::string pname;
 
-	// Accumulated set of all faces flagged
-	// by any tests using this worker container.
-	// Used for plotting, where no distinction
-	// is made between various test types
-	std::unordered_set<int> flagged_tris;
-};
+	    // Accumulated set of all faces flagged
+	    // by any tests using this worker container.
+	    // Used for plotting, where no distinction
+	    // is made between various test types
+	    std::unordered_set<int> flagged_tris;
+    };
+}
 
 lint_worker_data::lint_worker_data(struct rt_i *rtip, struct resource *res)
 {
