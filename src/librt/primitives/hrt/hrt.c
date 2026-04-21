@@ -1049,7 +1049,8 @@ int
 rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct bu_list *vlfree = &rt_vlfree;
-    fastf_t c, dtol, mag_h, ntol = M_PI, r1, r2, **ellipses, theta_prev, theta_new;
+    fastf_t c, dtol, mag_h, ntol = M_PI, r1, r2, **ellipses;
+    fastf_t min_abs;
     int *pts_dbl;
     int nseg; /* The number of line segments in a particular ellipse */
     int j, k, jj, na, nb;
@@ -1057,7 +1058,6 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     int recalc_b, i, ellipse_below, ellipse_above;
     mat_t R;
     mat_t invR;
-    point_t p1;
     struct rt_pnt_node *pos_a, *pos_b, *pts_a, *pts_b;
     vect_t A, Au, B, Bu, Cu;
     vect_t V, Work;
@@ -1310,6 +1310,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     bn_mat_trn(invR, R);			/* inv of rot mat is trn */
 
     dtol = primitive_get_absolute_tolerance(ttol, r2 * 2.00);
+    min_abs = prim_min_abs_tol();
 
     /*
      * build ehy from 2 hyperbolas
@@ -1325,7 +1326,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     /* 2 endpoints in 1st approximation */
     nb = 2;
     /* recursively break segment 'til within error tolerances */
-    nb += rt_mk_hyperbola_old(pts_b, mag_h/3, mag_h, c, dtol, ntol);
+    nb += _rt_mk_hyperbola(pts_b, mag_h/3, mag_h, c, dtol, ntol, min_abs);
     nell = nb - 1;	/* Number of ellipses needed */
 
     /*
@@ -1357,7 +1358,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     recalc_b = 0;
     pos_a = pts_a;
     while (pos_a->next) {
-	na = rt_mk_hyperbola_old(pos_a, r1, mag_h, c, dtol, ntol);
+	na = _rt_mk_hyperbola(pos_a, r1, mag_h, c, dtol, ntol, min_abs);
 	if (na != 0) {
 	    recalc_b = 1;
 	    nell += na;
@@ -1405,10 +1406,19 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     /* keep track of whether pts in each ellipse are doubled or not */
     pts_dbl = (int *)bu_malloc(nell * sizeof(int), "dbl ints");
 
+    /* Compute circumferential segment count from the largest cross-section
+     * (r1) using the chord-error formula.  See rt_epa_plot() for the rationale
+     * (ell_angle + doubling causes infinite recursion and exponential nseg). */
+    nseg = rt_num_circular_segments(dtol, r1);
+    if (ntol < M_PI) {
+	int nseg_ntol = (int)(M_2PI / ntol) + 1;
+	if (nseg_ntol > nseg)
+	    nseg = nseg_ntol;
+    }
+    if (nseg < 6) nseg = 6;
+
     /* make ellipses at different levels in the +Z direction */
     i = 0;
-    nseg = 0;
-    theta_prev = M_2PI;
     pos_a = pts_a->next;	/* skip over lower cusp of heart ( at pts_a ) */
     pos_b = pts_b->next;
     while (pos_a) {
@@ -1416,17 +1426,8 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
 	VSCALE(B, Bu, pos_b->p[Y] * 0.80);	/* semiminor axis */
 	VJOIN1(V, hip->v, pos_a->p[Z], Cu);
 
-	VSET(p1, 0.00, pos_b->p[Y], 0.00);
-	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
-	if (nseg == 0) {
-	    nseg = (int)(M_2PI / theta_new) + 1;
-	    pts_dbl[i] = 0;
-	} else if (theta_new < theta_prev) {
-	    nseg *= 2;
-	    pts_dbl[i] = 1;
-	} else
-	    pts_dbl[i] = 0;
-	theta_prev = theta_new;
+	/* All rings use the same segment count (no per-ring doubling) */
+	pts_dbl[i] = 0;
 
 	ellipses[i] = (fastf_t *)bu_malloc(3*(nseg+1)*sizeof(fastf_t),"pts ell");
 	rt_ell(ellipses[i], V, A, B, nseg);
@@ -1735,6 +1736,53 @@ rt_hrt_centroid(point_t *cent, const struct rt_db_internal *ip)
     struct rt_hrt_internal *hip = (struct rt_hrt_internal *)ip->idb_ptr;
     RT_HRT_CK_MAGIC(hip);
     VSET(*cent, hip->xdir[X], hip->ydir[Y], hip->zdir[Z] * 0.125);
+}
+
+
+int
+rt_hrt_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(planar_only), fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_hrt_internal *ohrt = (struct rt_hrt_internal *)ip->idb_ptr;
+    RT_HRT_CK_MAGIC(ohrt);
+
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_HRT;
+    nip->idb_meth = &OBJ[ID_HRT];
+    struct rt_hrt_internal *hrt = NULL;
+    BU_ALLOC(hrt, struct rt_hrt_internal);
+    nip->idb_ptr = hrt;
+    hrt->hrt_magic = RT_HRT_INTERNAL_MAGIC;
+    VMOVE(hrt->v,    ohrt->v);
+    VMOVE(hrt->xdir, ohrt->xdir);
+    VMOVE(hrt->ydir, ohrt->ydir);
+    VMOVE(hrt->zdir, ohrt->zdir);
+    hrt->d = ohrt->d;
+
+    /* Scale each axis outward, and push the cusp distance by val.  The heart
+     * has no flat faces, so planar_only is not applicable. */
+    vect_t mvec;
+    VMOVE(mvec, hrt->xdir); VUNITIZE(mvec); VSCALE(mvec, mvec, val);
+    VADD2(hrt->xdir, hrt->xdir, mvec);
+
+    VMOVE(mvec, hrt->ydir); VUNITIZE(mvec); VSCALE(mvec, mvec, val);
+    VADD2(hrt->ydir, hrt->ydir, mvec);
+
+    VMOVE(mvec, hrt->zdir); VUNITIZE(mvec); VSCALE(mvec, mvec, val);
+    VADD2(hrt->zdir, hrt->zdir, mvec);
+
+    hrt->d += val;
+
+    *oip = nip;
+    return BRLCAD_OK;
 }
 
 
