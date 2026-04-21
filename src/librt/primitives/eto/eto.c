@@ -765,19 +765,42 @@ rt_eto_free(struct soltab *stp)
  * are passed recursively to this routine until each segment is within
  * tolerance.
  *
- * FIXME: this is recursive and subject to a stack overflow if it
- * recurses thousands of times.  also troublesome is that there's
- * almost certainly a bug in here as extensive recursion has been
- * observed when normal tol is set to 1 or 2.
+ * min_chord_sq is the square of the minimum permitted chord length.
+ * Subdivision stops when the chord shrinks below this floor regardless
+ * of the dist/normal conditions.
+ *
+ * NOTE on the normal (angle) check: the norm_ell formula
+ * (b²·p[Y], a²·p[X]) computes a vector that does NOT correspond to
+ * the outward ellipse normal (which would be (a²·p[X], b²·p[Y])).
+ * As a result, theta (the angle between norm_line and norm_ell) is
+ * geometrically close to π/2 or larger at nearly every point on the
+ * first quadrant, so the angle condition "theta > ntol" fires for
+ * ANY ntol < π/2.  In practice this means the angle condition alone
+ * would recurse to min_chord_sq everywhere — generating thousands of
+ * extra near-coincident points — regardless of the desired mesh density.
+ *
+ * The distance condition (dist > dtol) is therefore the SOLE
+ * subdivision criterion used here.  The ntol norm tolerance is already
+ * accounted for by the caller: rt_eto_tess computes dtol as the
+ * sagitta that corresponds to ntol on the largest cross-section
+ * semi-axis, so the distance check fires at exactly the right angular
+ * density without the broken angle formula.  The min_chord_sq floor
+ * (derived from the caller's tol->dist so that no two generated points
+ * can land within NMG's coincidence threshold of each other) is the
+ * final backstop against runaway near the axis tips.
  */
 static int
-make_ellipse4(struct rt_pnt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol, size_t recursions)
+make_ellipse4(struct rt_pnt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol, size_t recursions, fastf_t min_chord_sq)
 {
-    fastf_t dist, intr, m, theta0, theta1;
+    fastf_t dist, intr, m;
     int n;
     point_t mpt, p0, p1;
-    vect_t norm_line, norm_ell;
     struct rt_pnt_node *newpt;
+
+    /* ntol is kept in the signature for historical compatibility (the
+     * plot path passes it) but is NOT used to drive recursion — see the
+     * comment on the distance-only subdivision decision below. */
+    (void)ntol;
 
     /* arbitrary limit */
     static const size_t MAX_RECURSIONS = 2048;
@@ -785,6 +808,13 @@ make_ellipse4(struct rt_pnt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf
     /* endpoints of segment approximating ellipse */
     VMOVE(p0, pts->p);
     VMOVE(p1, pts->next->p);
+
+    /* Stop subdividing once the chord falls below the minimum length.
+     * This is the primary guard against runaway recursion near ellipse
+     * tips where the distance formula produces unreliable results. */
+    if (DIST_PNT_PNT_SQ(p0, p1) <= min_chord_sq)
+	return 0;
+
     /* slope and intercept of segment */
     m = (p1[X] - p0[X]) / (p1[Y] - p0[Y]);
     intr = p0[X] - m * p0[Y];
@@ -794,17 +824,18 @@ make_ellipse4(struct rt_pnt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf
     mpt[Z] = 0;
     /* max distance between that point and line */
     dist = fabs(m * mpt[Y] - mpt[X] + intr) / sqrt(m * m + 1);
-    /* angles between normal of line and of ellipse at line endpoints */
-    VSET(norm_line, m, -1., 0.);
-    VSET(norm_ell, b * b * p0[Y], a * a * p0[X], 0.);
-    VUNITIZE(norm_line);
-    VUNITIZE(norm_ell);
-    theta0 = fabs(acos(VDOT(norm_line, norm_ell)));
-    VSET(norm_ell, b * b * p1[Y], a * a * p1[X], 0.);
-    VUNITIZE(norm_ell);
-    theta1 = fabs(acos(VDOT(norm_line, norm_ell)));
-    /* split segment at widest point if not within error tolerances */
-    if ((dist > dtol || theta0 > ntol || theta1 > ntol) && recursions++ < MAX_RECURSIONS) {
+    /* Split segment at widest point if the chord-to-ellipse sagitta
+     * exceeds the distance tolerance.  The angle-based check
+     * (theta0/theta1 > ntol) has been intentionally removed: the
+     * norm_ell formula (b²Y, a²X) does not compute the outward ellipse
+     * normal — it computes something closer to the tangent — so the
+     * resulting theta is always ≥ π/2 for well-approximated segments
+     * and the condition fires everywhere, driving runaway recursion to
+     * min_chord_sq regardless of mesh quality.  The ntol tolerance is
+     * instead encoded in dtol by the caller (rt_eto_tess computes dtol
+     * as the sagitta corresponding to ntol on the largest semi-axis)
+     * so the distance check alone produces a norm-governed mesh. */
+    if (dist > dtol && recursions++ < MAX_RECURSIONS) {
 	/* split segment */
 	BU_ALLOC(newpt, struct rt_pnt_node);
 	VMOVE(newpt->p, mpt);
@@ -813,9 +844,9 @@ make_ellipse4(struct rt_pnt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf
 	/* keep track of number of pts added */
 	n = 1;
 	/* recurse on first new segment */
-	n += make_ellipse4(pts, a, b, dtol, ntol, recursions);
+	n += make_ellipse4(pts, a, b, dtol, ntol, recursions, min_chord_sq);
 	/* recurse on second new segment */
-	n += make_ellipse4(newpt, a, b, dtol, ntol, recursions);
+	n += make_ellipse4(newpt, a, b, dtol, ntol, recursions, min_chord_sq);
     } else
 	n  = 0;
     return n;
@@ -826,13 +857,49 @@ make_ellipse4(struct rt_pnt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf
  * Return pointer an array of points approximating an ellipse with
  * semi-major and semi-minor axes a and b.  The line segments fall
  * within the normal and distance tolerances of ntol and dtol.
+ *
+ * tol_dist is the caller's geometric coincidence threshold (tol->dist).
+ * It is used as an additional floor for the minimum chord length so
+ * that no two generated points can be closer than tol_dist in 3D and
+ * thereby appear coincident to NMG routines (e.g. nmg_fu_planeeqn).
  */
 static point_t *
-make_ellipse(int *n, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
+make_ellipse(int *n, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol,
+	     fastf_t tol_dist)
 {
     int i;
     point_t *ell;
     struct rt_pnt_node *ell_quad, *oldpos, *pos;
+    fastf_t min_chord, min_chord_sq;
+
+    /* Minimum chord: use prim_min_abs_tol() for normal-size shapes, or
+     * 1% of the bounding-box diagonal (2 * longer semi-axis) for very
+     * small shapes (bbox_diag < 1 mm).  This matches the logic used by
+     * primitive_clamp_tess_tol() so that the env-var override
+     * RT_PRIM_MIN_ABS_TOL is honoured here too.
+     *
+     * Critically, the floor is also raised to tol_dist (the caller's
+     * NMG coincidence threshold, i.e. tol->dist).  The angle check in
+     * make_ellipse4 has a known anomaly near the ellipse axis tips where
+     * the computed theta stays near π regardless of chord length, so
+     * recursion continues all the way to min_chord_sq.  Without this
+     * floor the generated points can pile up within tol->dist of each
+     * other and then fail nmg_fu_planeeqn with "Cannot find three
+     * distinct vertices".  Using max(prim_min_abs_tol(), tol_dist)
+     * guarantees that all generated cross-section points are at least
+     * tol_dist apart in 3D (since Dp and Cp are unit orthogonal vectors). */
+    {
+	fastf_t bbox_diag_cs = 2.0 * (a > b ? a : b);
+	if (bbox_diag_cs > SMALL_FASTF && bbox_diag_cs < 1.0)
+	    min_chord = bbox_diag_cs * 0.01;
+	else
+	    min_chord = prim_min_abs_tol();
+    }
+    if (min_chord < BN_TOL_DIST)
+	min_chord = BN_TOL_DIST;
+    if (tol_dist > min_chord)
+	min_chord = tol_dist;
+    min_chord_sq = min_chord * min_chord;
 
     BU_ALLOC(ell_quad, struct rt_pnt_node);
     VSET(ell_quad->p, b, 0., 0.);
@@ -841,7 +908,7 @@ make_ellipse(int *n, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
     VSET(ell_quad->next->p, 0., a, 0.);
     ell_quad->next->next = NULL;
 
-    *n = make_ellipse4(ell_quad, a, b, dtol, ntol, 0);
+    *n = make_ellipse4(ell_quad, a, b, dtol, ntol, 0, min_chord_sq);
     ell = (point_t *)bu_malloc(4*(*n+1)*sizeof(point_t), "make_ellipse pts");
 
     /* put 1st quad of ellipse into an array */
@@ -1077,15 +1144,29 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	dtol = primitive_get_absolute_tolerance(ttol, 2.0 * b);
     }
 
-    /* To ensure normal tolerance, remain below this angle */
-    if (ttol->norm > 0.0)
-	ntol = ttol->norm;
-    else
+    /* To ensure normal tolerance, remain below this angle.
+     * Clamp to the minimum norm tolerance to prevent excessively dense plots. */
+    if (ttol->norm > 0.0) {
+	fastf_t min_ntol = prim_min_norm_tol();
+	ntol = (ttol->norm < min_ntol) ? min_ntol : ttol->norm;
+	if (ttol->norm < min_ntol)
+	    bu_log("Warning: eto plot norm tolerance clamped from %g rad to %g rad "
+		   "to prevent excessively dense plot\n", ttol->norm, ntol);
+    } else
 	/* tolerate everything */
 	ntol = M_PI;
 
-    /* (x, y) coords for an ellipse */
-    ell = make_ellipse(&npts, a, b, dtol, ntol);
+    /* Clamp dtol for the cross-section ellipse using the ellipse bbox diagonal.
+     * This honours the prim_min_abs_tol() / RT_PRIM_MIN_ABS_TOL override and
+     * uses 1% of bbox diagonal for very small shapes (< 1 mm). */
+    {
+	fastf_t bbox_cs = 2.0 * (a > b ? a : b);
+	primitive_clamp_tess_tol(&dtol, &ntol, bbox_cs);
+    }
+
+    /* (x, y) coords for an ellipse.  For plot (wireframe) there is no
+     * bn_tol available; use BN_TOL_DIST as a conservative chord floor. */
+    ell = make_ellipse(&npts, a, b, dtol, ntol, BN_TOL_DIST);
     /* generate coordinate axes */
     VMOVE(Nu, tip->eto_N);
     VUNITIZE(Nu);			/* z axis of coord sys */
@@ -1093,7 +1174,13 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     VUNITIZE(Bu);
     VCROSS(Au, Nu, Bu);		/* y axis */
 
-    /* number of segments required in eto circles */
+    /* number of segments required in eto circles.
+     * Re-clamp dtol using the full eto bbox diagonal before computing ring count. */
+    {
+	fastf_t ntol_dummy = M_PI;
+	fastf_t bbox_diag = 2.0 * (tip->eto_r + a);
+	primitive_clamp_tess_tol(&dtol, &ntol_dummy, bbox_diag);
+    }
     nells = rt_num_circular_segments(dtol, tip->eto_r);
     theta = M_2PI / nells;	/* put ellipse every theta rads */
     /* get horizontal and vertical components of C and Rd */
@@ -1161,58 +1248,194 @@ int
 rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t a, b;	/* axis lengths of ellipse */
+    fastf_t eto_r_eff;	/* effective rotation radius (fabs of eto_r) */
     fastf_t ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
     fastf_t *eto_ells = NULL;
-    int i, j, nfaces, npts, nells;
+    int i, j, k, nfaces, npts, nells;
     point_t *ell = NULL;	/* array of ellipse points */
     point_t Ell_V;	/* vertex of an ellipse */
     struct rt_eto_internal *tip;
     struct shell *s;
     struct vertex **verts = NULL;
     struct faceuse **faces = NULL;
-    struct vertex **vertp[4];
+    struct vertex **vertp[3];
+    int *vid = NULL;	/* canonical vertex index map for self-intersecting case */
     vect_t Au, Bu, Nu, Cp, Dp, Xu;
     vect_t *norms = NULL;	/* normal vectors for each vertex */
     int fail = 0;
 
     RT_CK_DB_INTERNAL(ip);
+    BG_CK_TESS_TOL(ttol);
+    BN_CK_TOL(tol);
     tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);
 
     a = MAGNITUDE(tip->eto_C);
     b = tip->eto_rd;
 
-    if (NEAR_ZERO(tip->eto_r, 0.0001) || NEAR_ZERO(b, 0.0001)
+    /* Accept negative eto_r by using its absolute value: revolving the
+     * ellipse at radius |eto_r| vs -|eto_r| produces the same surface
+     * because the revolution covers a full 2*pi.                        */
+    if (tip->eto_r < 0.0) {
+	bu_log("rt_eto_tess: eto_r (%g) is negative; using |eto_r| = %g\n",
+	       tip->eto_r, -tip->eto_r);
+	eto_r_eff = -tip->eto_r;
+    } else {
+	eto_r_eff = tip->eto_r;
+    }
+
+    if (NEAR_ZERO(eto_r_eff, 0.0001) || NEAR_ZERO(b, 0.0001)
 	|| NEAR_ZERO(a, 0.0001)) {
 	bu_log("eto_tess: r, rd, or rc zero length\n");
 	fail = (-2);
 	goto failure;
     }
 
-    if (tip->eto_r < b) {
-	dtol = primitive_get_absolute_tolerance(ttol, 2.0 * tip->eto_r);
-    } else {
-	dtol = primitive_get_absolute_tolerance(ttol, 2.0 * b);
+    /* ---------------------------------------------------------------
+     * Tolerance classification and segment-count computation.
+     *
+     * Three modes:
+     *   abs_or_rel_set  – ttol->abs or ttol->rel is active.  Derive a
+     *                     distance tolerance (dtol) and use it as the
+     *                     primary driver; ntol bumps the count if needed.
+     *   norm_set only   – Only ttol->norm is active.  Skip the hidden
+     *                     10 % rel fallback from primitive_get_absolute_-
+     *                     tolerance().  Let ntol govern both the cross-
+     *                     section subdivision and the ring count.
+     *   neither set     – Truly "no tolerance": use the 10 % rel fallback
+     *                     for a backward-compatible coarse mesh.
+     *
+     * Explosion guard for tight norm settings
+     * ----------------------------------------
+     * Unboundedly tight norm values (e.g. 0.001 rad) would produce
+     * thousands of segments per circle.  Two independent guards prevent
+     * this in ALL modes:
+     *
+     *   (A) ntol is hard-clamped to prim_min_norm_tol() (default
+     *       π/3600 ≈ 0.05°) immediately after it is read from ttol.
+     *       This is the primary quantitative cap; it bounds nells to at
+     *       most ⌈π / prim_min_norm_tol()⌉ + 1 ≈ 3601 rings.
+     *
+     *   (B) primitive_clamp_tess_tol() is called on dtol (and ntol,
+     *       already guarded) in every path – including the norm-only
+     *       path where dtol is a large sentinel – providing defence-in-
+     *       depth and consistent logging if the env-var floor is violated.
+     *
+     *   (C) make_ellipse4 itself enforces a min_chord_sq floor that stops
+     *       recursion when the chord shrinks below a safe threshold near
+     *       the ellipse axis tips, regardless of ntol.
+     * --------------------------------------------------------------- */
+    {
+	int abs_or_rel_set = (ttol->abs > 0.0 ||
+			      (ttol->rel > 0.0 && ttol->rel < 1.0));
+	int norm_set = (ttol->norm > 0.0);
+
+	/* ------ (A) norm tolerance – primary explosion guard -------- */
+	if (norm_set) {
+	    fastf_t min_ntol = prim_min_norm_tol();
+	    ntol = (ttol->norm < min_ntol) ? min_ntol : ttol->norm;
+	    if (ttol->norm < min_ntol)
+		bu_log("Warning: eto tessellation norm tolerance clamped from %g rad to %g rad "
+		       "to prevent excessively dense mesh\n", ttol->norm, ntol);
+	} else {
+	    ntol = M_PI;	/* tolerate everything */
+	}
+
+	/* ------ cross-section dtol ---------------------------------- */
+	{
+	    fastf_t bbox_cs = 2.0 * (a > b ? a : b);
+
+	    if (abs_or_rel_set || !norm_set) {
+		/* abs/rel is set, or truly "no tolerance": derive dtol from
+		 * the standard helper (applies 10 % rel fallback when needed). */
+		if (eto_r_eff < b)
+		    dtol = primitive_get_absolute_tolerance(ttol, 2.0 * eto_r_eff);
+		else
+		    dtol = primitive_get_absolute_tolerance(ttol, 2.0 * b);
+	    } else {
+		/* norm-only: derive dtol from the sagitta that corresponds to
+		 * angular step ntol on the maximum ellipse semi-axis.
+		 *
+		 * For a circular arc of radius R and angular step θ the
+		 * chord-to-arc sagitta is R*(1-cos(θ/2)).  Using
+		 * R = max(a, b) and θ = ntol gives a dtol that is geometrically
+		 * consistent with the norm tolerance: the distance and angle
+		 * conditions in make_ellipse4 fire at the same angular resolution
+		 * on a circle of that radius, keeping the mesh resolution norm-
+		 * governed without allowing runaway recursion at ellipse tips.
+		 *
+		 * Contrast with the old sentinel (a+b+1): the sentinel left the
+		 * distance condition dormant, so near the axis tips where the
+		 * ellipse tangent swings sharply the angle condition fired
+		 * repeatedly all the way down to min_chord_sq, generating
+		 * thousands of near-coincident points and an NMG failure. */
+		fastf_t r_max = (a > b) ? a : b;
+		dtol = r_max * (1.0 - cos(ntol * 0.5));
+		if (dtol < BN_TOL_DIST)
+		    dtol = BN_TOL_DIST;
+	    }
+
+	    /* (B) Defence-in-depth: clamp dtol and ntol against the
+	     * cross-section bbox.  For the norm-only sagitta-derived dtol
+	     * this catches the case where ntol is so tight that the sagitta
+	     * undercuts the absolute minimum tessellation resolution.  For
+	     * ntol already at the prim_min_norm_tol() floor the clamp is a
+	     * no-op.  In both cases this call provides a consistent
+	     * second-pass guard and emits the standard warning if either
+	     * value is below its floor for any reason. */
+	    primitive_clamp_tess_tol(&dtol, &ntol, bbox_cs);
+	}
+
+	/* (x, y) coords for cross-section ellipse.
+	 * In abs/rel mode: dtol is the clamped distance tolerance; ntol
+	 *   bumps subdivision where the surface curves sharply.
+	 * In norm-only mode: dtol is the sagitta derived from ntol and
+	 *   max(a,b), so both conditions fire at the same angular resolution
+	 *   and the mesh is norm-governed without tip-runaway risk.
+	 *
+	 * tol->dist is passed so make_ellipse can set its min_chord floor
+	 * high enough that no two points end up within NMG's coincidence
+	 * threshold of each other (see make_ellipse comment for details). */
+	ell = make_ellipse(&npts, a, b, dtol, ntol, tol->dist);
+
+	/* generate coordinate axes */
+	VMOVE(Nu, tip->eto_N);
+	VUNITIZE(Nu);			/* z axis of coord sys */
+	bn_vec_ortho(Bu, Nu);		/* x axis */
+	VUNITIZE(Bu);
+	VCROSS(Au, Nu, Bu);		/* y axis */
+
+	/* ------ ring count (nells) ---------------------------------- */
+	/* Start from the minimum; each active tolerance bumps it upward. */
+	nells = 3;
+
+	if (abs_or_rel_set || !norm_set) {
+	    /* Derive a separate ring_dtol by re-clamping dtol (already
+	     * clamped for the cross-section) against the full revolution
+	     * bbox, then use it for the ring segment count.  The sentinel
+	     * is never the active dtol here (abs_or_rel_set || !norm_set). */
+	    fastf_t ring_dtol = dtol;
+	    {
+		fastf_t ntol_dummy = M_PI;
+		fastf_t bbox_diag = 2.0 * (eto_r_eff + MAGNITUDE(tip->eto_C));
+		primitive_clamp_tess_tol(&ring_dtol, &ntol_dummy, bbox_diag);
+	    }
+	    nells = rt_num_circular_segments(ring_dtol, eto_r_eff);
+	}
+
+	/* Bump ring count to satisfy norm tolerance (both abs/rel+norm and
+	 * pure norm-only paths land here).  ntol is already hard-clamped to
+	 * prim_min_norm_tol() (guard A), so nells is bounded above. */
+	if (ntol < M_PI) {
+	    int nells_ntol = (int)(M_PI / ntol) + 1;
+	    if (nells_ntol > nells) nells = nells_ntol;
+	}
+
+	if (RT_G_DEBUG & RT_DEBUG_MESHING)
+	    bu_log("rt_eto_tess: dtol=%.6g ntol=%.6g abs_or_rel=%d norm=%d "
+		   "npts=%d nells=%d min_chord=%.6g\n",
+		   dtol, ntol, abs_or_rel_set, norm_set, npts, nells, tol->dist);
     }
-
-    /* To ensure normal tolerance, remain below this angle */
-    if (ttol->norm > 0.0)
-	ntol = ttol->norm;
-    else
-	/* tolerate everything */
-	ntol = M_PI;
-
-    /* (x, y) coords for an ellipse */
-    ell = make_ellipse(&npts, a, b, dtol, ntol);
-    /* generate coordinate axes */
-    VMOVE(Nu, tip->eto_N);
-    VUNITIZE(Nu);			/* z axis of coord sys */
-    bn_vec_ortho(Bu, Nu);		/* x axis */
-    VUNITIZE(Bu);
-    VCROSS(Au, Nu, Bu);		/* y axis */
-
-    /* number of segments required in eto circles */
-    nells = rt_num_circular_segments(dtol, tip->eto_r);
     theta = M_2PI / nells;	/* put ellipse every theta rads */
     /* get horizontal and vertical components of C and Rd */
     cv = VDOT(tip->eto_C, Nu);
@@ -1222,11 +1445,30 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     dv = tip->eto_rd * sin(phi);
     dh = -tip->eto_rd * cos(phi);
 
-    /* make sure ellipse doesn't overlap itself when revolved */
-    if (ch > tip->eto_r || dh > tip->eto_r) {
-	bu_log("eto_tess: revolved ellipse overlaps itself\n");
-	fail = (-3);
-	goto failure;
+    /* When the cross-section ellipse overlaps the symmetry axis during
+     * revolution (self-intersecting case), generate only the outer surface
+     * rather than failing.  Inner points are clamped to the axis below;
+     * the canonical vertex map collapses all rings at a clamped j-index to
+     * a single pole vertex so the resulting fan triangles produce a closed
+     * manifold with no topological holes.
+     *
+     * The correct self-intersection test uses the exact minimum ring radius:
+     *   r_min = eto_r_eff - sqrt(dh^2 + ch^2)
+     *
+     * make_ellipse generates 2D points (X,Y) on the ellipse (X/b)^2+(Y/a)^2=1,
+     * with x semi-axis b (Dp direction) and y semi-axis a (Cp direction).
+     * Since Dp and Cp are unit vectors, the 3D cross-section point is:
+     *   P = Ell_V + X*Dp_hat + Y*Cp_hat
+     * The radial distance from the symmetry axis is:
+     *   r_j = eto_r + X*(dh/b) + Y*(ch/a)
+     * Substituting u=X/b, v=Y/a (unit circle parameterization, u^2+v^2=1):
+     *   r_j = eto_r + u*dh + v*ch
+     * By Cauchy-Schwarz, min(u*dh + v*ch) = -sqrt(dh^2+ch^2), so:
+     *   r_min = eto_r_eff - sqrt(dh^2 + ch^2) */
+    {
+	fastf_t r_min_reach = sqrt(dh*dh + ch*ch);
+	if (r_min_reach > eto_r_eff)
+	    bu_log("rt_eto_tess: revolved ellipse overlaps itself; generating outer surface only\n");
     }
 
     /* get memory for nells ellipses */
@@ -1239,7 +1481,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	VCOMB2(Xu, cos(ang), Bu, sin(ang), Au);
 	VUNITIZE(Xu);
 	/* vertex of ellipse */
-	VJOIN1(Ell_V, tip->eto_V, tip->eto_r, Xu);
+	VJOIN1(Ell_V, tip->eto_V, eto_r_eff, Xu);
 	/* coord system for ellipse: x, y directions are Dp, Cp */
 	VCOMB2(Cp, ch, Xu, cv, Nu);
 	VCOMB2(Dp, dh, Xu, dv, Nu);
@@ -1255,56 +1497,155 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
     }
 
+    /* Build the canonical vertex index map.
+     *
+     * For each cross-section j-index whose radial distance from the
+     * symmetry axis is below the distance tolerance, all nells rings
+     * collapse to a single pole vertex stored at ring 0.  For all other
+     * j-indices every ring keeps its own independent vertex.
+     *
+     * make_ellipse generates 2D points (X,Y) on the ellipse (X/b)^2+(Y/a)^2=1
+     * where x semi-axis b corresponds to the Dp direction and y semi-axis a
+     * corresponds to the Cp direction.  Since Dp and Cp are unit vectors, the
+     * radial distance and axial height of cross-section point j are:
+     *   r_j = eto_r_eff + ell[j][X]*(dh/b) + ell[j][Y]*(ch/a)
+     *   n_j = ell[j][X]*(dv/b) + ell[j][Y]*(cv/a)
+     * (Both quantities are independent of the revolution angle i.)
+     *
+     * Clamped j-values only arise in the self-intersecting case.  For
+     * a normal ETO every r_j > tol->dist and no clamping occurs. */
+    vid = (int *)bu_malloc(nells * npts * sizeof(int), "rt_eto_tess vid[]");
+    for (k = 0; k < nells * npts; k++) vid[k] = k;
+
+    for (j = 0; j < npts; j++) {
+	fastf_t r_j = eto_r_eff + ell[j][X]*dh/b + ell[j][Y]*ch/a;
+	if (r_j < tol->dist) {
+	    /* Compute the single axis point that all rings at this j share */
+	    fastf_t n_j = ell[j][X]*dv/b + ell[j][Y]*cv/a;
+	    point_t axis_pt;
+	    VJOIN1(axis_pt, tip->eto_V, n_j, Nu);
+	    /* Ring 0 is the canonical vertex; update its coordinate */
+	    VMOVE(ETO_PTA(0, j), axis_pt);
+	    /* Map all other rings to ring 0 */
+	    for (i = 1; i < nells; i++)
+		vid[ETO_PT(i, j)] = ETO_PT(0, j);
+	}
+    }
+
     *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
     verts = (struct vertex **)bu_calloc(npts*nells, sizeof(struct vertex *),
-					"rt_eto_tess *verts[]");
-    faces = (struct faceuse **)bu_calloc(npts*nells, sizeof(struct faceuse *),
-					 "rt_eto_tess *faces[]");
+				"rt_eto_tess *verts[]");
+    /* Two triangles per grid quad (upper bound; degenerate quads use fewer) */
+    faces = (struct faceuse **)bu_calloc(2*npts*nells, sizeof(struct faceuse *),
+				 "rt_eto_tess *faces[]");
 
-    /* Build the topology of the eto */
+    /* Build the topology of the ETO using triangles only.
+     *
+     * Each grid quad (i,j)->(i,j+1)->(i+1,j+1)->(i+1,j) is split along
+     * the B-D diagonal into two CCW triangles:
+     *   Tri-1:  A(i,j),    B(i,j+1),   D(i+1,j)
+     *   Tri-2:  B(i,j+1),  C(i+1,j+1), D(i+1,j)
+     *
+     * Canonical indices from vid[] are used so that coincident vertices
+     * (clamped axis poles in the self-intersecting case) share a single
+     * NMG vertex object.  A triangle is emitted only when all three of
+     * its canonical indices are distinct; equal indices mean the face
+     * degenerates to a line or point and must be dropped.
+     *
+     * Because the canonical map merges exactly the right sets of vertices
+     * (all rings at a given clamped j become one pole), the resulting
+     * mesh is a closed manifold: every non-degenerate edge is shared by
+     * exactly two faces. */
     nfaces = 0;
     for (i = 0; i < nells; i++) {
 	for (j = 0; j < npts; j++) {
-	    vertp[0] = &verts[ ETO_PT(i+0, j+0) ];
-	    vertp[1] = &verts[ ETO_PT(i+0, j+1) ];
-	    vertp[2] = &verts[ ETO_PT(i+1, j+1) ];
-	    vertp[3] = &verts[ ETO_PT(i+1, j+0) ];
-	    if ((faces[nfaces++] = nmg_cmface(s, vertp, 4)) == (struct faceuse *)0) {
-		bu_log("rt_eto_tess() nmg_cmface failed, i=%d/%d, j=%d/%d\n",
-		       i, nells, j, npts);
-		nfaces--;
+	    int va = vid[ETO_PT(i+0, j+0)];
+	    int vb = vid[ETO_PT(i+0, j+1)];
+	    int vc = vid[ETO_PT(i+1, j+1)];
+	    int vd = vid[ETO_PT(i+1, j+0)];
+
+	    /* Triangle 1: A, B, D */
+	    if (va != vb && vb != vd && vd != va) {
+		vertp[0] = &verts[va];
+		vertp[1] = &verts[vb];
+		vertp[2] = &verts[vd];
+		if ((faces[nfaces++] = nmg_cmface(s, vertp, 3)) == (struct faceuse *)0) {
+		    bu_log("rt_eto_tess() nmg_cmface failed, i=%d/%d, j=%d/%d (tri1)\n",
+			   i, nells, j, npts);
+		    nfaces--;
+		}
+	    }
+
+	    /* Triangle 2: B, C, D */
+	    if (vb != vc && vc != vd && vd != vb) {
+		vertp[0] = &verts[vb];
+		vertp[1] = &verts[vc];
+		vertp[2] = &verts[vd];
+		if ((faces[nfaces++] = nmg_cmface(s, vertp, 3)) == (struct faceuse *)0) {
+		    bu_log("rt_eto_tess() nmg_cmface failed, i=%d/%d, j=%d/%d (tri2)\n",
+			   i, nells, j, npts);
+		    nfaces--;
+		}
 	    }
 	}
     }
 
-    /* Associate vertex geometry */
+    /* Associate vertex geometry.  Only canonical vertices (vid[k]==k) that
+     * were actually used in at least one triangle (verts[k] != NULL) get
+     * coordinates assigned.  Non-canonical slots were never passed to
+     * nmg_cmface so their verts[] entry remains NULL. */
     for (i = 0; i < nells; i++) {
 	for (j = 0; j < npts; j++) {
-	    nmg_vertex_gv(verts[ETO_PT(i, j)], ETO_PTA(i, j));
+	    int idx = ETO_PT(i, j);
+	    if (vid[idx] == idx && verts[idx] != NULL)
+		nmg_vertex_gv(verts[idx], ETO_PTA(i, j));
 	}
     }
+
+    if (RT_G_DEBUG & RT_DEBUG_MESHING)
+	bu_log("rt_eto_tess: built nfaces=%d (nells=%d npts=%d grid=%d)\n",
+	       nfaces, nells, npts, nells * npts);
 
     /* Associate face geometry */
     for (i = 0; i < nfaces; i++) {
 	if (nmg_fu_planeeqn(faces[i], tol) < 0) {
+	    /* Dump vertex positions for the failed face so we can see
+	     * whether the issue is coincident or collinear vertices.
+	     * Always emit this — a planeeqn failure is always an error. */
+	    struct loopuse *lu = BU_LIST_FIRST(loopuse, &faces[i]->lu_hd);
+	    if (lu && BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+		struct edgeuse *eu;
+		int vi = 0;
+		bu_log("rt_eto_tess: planeeqn FAIL face[%d] vertices:\n", i);
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		    if (eu->vu_p && eu->vu_p->v_p && eu->vu_p->v_p->vg_p) {
+			fastf_t *c = eu->vu_p->v_p->vg_p->coord;
+			bu_log("  v[%d]=(%g %g %g)\n", vi++, c[0], c[1], c[2]);
+		    }
+		}
+	    }
 	    fail = (-1);
 	    goto failure;
 	}
     }
 
-    /* associate vertexuse normals */
+    /* Associate vertexuse normals.  Same canonical/null guards as above. */
     for (i = 0; i < nells; i++) {
 	for (j = 0; j < npts; j++) {
 	    struct vertexuse *vu;
 	    vect_t rev_norm;
+	    int idx = ETO_PT(i, j);
+
+	    if (vid[idx] != idx || verts[idx] == NULL)
+		continue;
 
 	    VREVERSE(rev_norm, ETO_NMA(i, j));
 
-	    NMG_CK_VERTEX(verts[ETO_PT(i, j)]);
+	    NMG_CK_VERTEX(verts[idx]);
 
-	    for (BU_LIST_FOR(vu, vertexuse, &verts[ETO_PT(i, j)]->vu_hd)) {
+	    for (BU_LIST_FOR(vu, vertexuse, &verts[idx]->vu_hd)) {
 		struct faceuse *fu;
 
 		NMG_CK_VERTEXUSE(vu);
@@ -1326,6 +1667,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  failure:
     bu_free((char *)ell, "make_ellipse pts");
     bu_free((char *)eto_ells, "ells[]");
+    bu_free((char *)vid, "rt_eto_tess vid[]");
     bu_free((char *)verts, "rt_eto_tess *verts[]");
     bu_free((char *)faces, "rt_eto_tess *faces[]");
     bu_free((char *)norms, "rt_eto_tess: norms[]");
@@ -1650,12 +1992,49 @@ rt_eto_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 }
 
 
+/* Helper: compute the maximum radial reach of the ETO cross-section ellipse.
+ * The cross-section ellipse has semi-major axis eto_C (magnitude mag_c) and
+ * semi-minor axis eto_rd.  The "reach" in the radial (horizontal) direction
+ * from the rotation axis is:
+ *   r_min_reach = sqrt(dh² + ch²)
+ * where ch = horizontal component of eto_C and dh = rd * |cos(phi)|,
+ * phi = angle of eto_C from the normal direction eto_N.
+ * Returns 1 if the ETO is self-intersecting (tube overlaps the axis).      */
+static int
+eto_is_self_intersecting(const struct rt_eto_internal *tip)
+{
+    fastf_t Nu[3], cv, ch_sq, ch, mag_c, cos_phi, dh, r_min_reach;
+
+    VMOVE(Nu, tip->eto_N);
+    VUNITIZE(Nu);
+    cv   = VDOT(tip->eto_C, Nu);
+    ch_sq = MAGSQ(tip->eto_C) - cv * cv;
+    ch   = (ch_sq > 0.0) ? sqrt(ch_sq) : 0.0;
+    mag_c = MAGNITUDE(tip->eto_C);
+    if (mag_c < SMALL_FASTF) return 0;
+    cos_phi = fabs(cv / mag_c);
+    dh = tip->eto_rd * cos_phi;
+    r_min_reach = sqrt(dh * dh + ch * ch);
+    return (r_min_reach > tip->eto_r) ? 1 : 0;
+}
+
+
 void
 rt_eto_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     fastf_t mag_c;
     struct rt_eto_internal *tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);
+
+    /* For self-intersecting ETO the tube overlaps the symmetry axis and the
+     * tessellator only produces the outer envelope.  The Pappus formula
+     * counts the full self-intersecting volume; use Crofton instead.        */
+    if (eto_is_self_intersecting(tip)) {
+	struct rt_db_internal ip_meth = *ip;
+	ip_meth.idb_meth = &OBJ[ID_ETO];
+	do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(NULL, vol, &ip_meth, &_p); } while (0);
+	return;
+    }
 
     mag_c = MAGNITUDE(tip->eto_C);
     *vol = 2.0 * M_PI * M_PI * tip->eto_r * tip->eto_rd * mag_c;
@@ -1677,6 +2056,16 @@ rt_eto_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     fastf_t circum, mag_c;
     struct rt_eto_internal *tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);
+
+    /* For self-intersecting ETO the tessellator only produces the outer
+     * envelope; the Pappus/ellipse-circumference formula counts the full
+     * self-intersecting surface.  Use Crofton to match the raytrace answer.*/
+    if (eto_is_self_intersecting(tip)) {
+	struct rt_db_internal ip_meth = *ip;
+	ip_meth.idb_meth = &OBJ[ID_ETO];
+	do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(area, NULL, &ip_meth, &_p); } while (0);
+	return;
+    }
 
     mag_c = MAGNITUDE(tip->eto_C);
     /* approximation */
@@ -1785,6 +2174,49 @@ eto_kpt_end:
     MAT4X3PNT(*pt, mat, mpt);
 
     return k;
+}
+
+
+int
+rt_eto_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int UNUSED(planar_only), fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_eto_internal *oeto = (struct rt_eto_internal *)ip->idb_ptr;
+    RT_ETO_CK_MAGIC(oeto);
+
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_ETO;
+    nip->idb_meth = &OBJ[ID_ETO];
+    struct rt_eto_internal *eto = NULL;
+    BU_ALLOC(eto, struct rt_eto_internal);
+    nip->idb_ptr = eto;
+    eto->eto_magic = RT_ETO_INTERNAL_MAGIC;
+    VMOVE(eto->eto_V, oeto->eto_V);
+    VMOVE(eto->eto_N, oeto->eto_N);
+    VMOVE(eto->eto_C, oeto->eto_C);
+    eto->eto_r  = oeto->eto_r;
+    eto->eto_rd = oeto->eto_rd;
+
+    /* Expand the revolution radius and the elliptical cross-section.  There
+     * are no planar faces, so planar_only is ignored. */
+    eto->eto_r  += val;
+    eto->eto_rd += val;
+    vect_t cvec;
+    VMOVE(cvec, eto->eto_C);
+    VUNITIZE(cvec);
+    VSCALE(cvec, cvec, val);
+    VADD2(eto->eto_C, eto->eto_C, cvec);
+
+    *oip = nip;
+    return BRLCAD_OK;
 }
 
 
