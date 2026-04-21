@@ -131,6 +131,14 @@ eu_is_free(const struct edgeuse *eu)
  * 3. All edge lookups use std::unordered_map for O(1) expected time,
  *    turning the glue step from O(n * valence) to O(n).
  */
+
+struct npoint2d_t {
+    double data[2];
+
+    double& operator[](std::size_t i) { return data[i]; }
+    const double& operator[](std::size_t i) const { return data[i]; }
+};
+
 extern "C" int
 nmg_tri_fu_bg(struct faceuse *fu, struct bu_list *UNUSED(vlfree),
 	      const struct bn_tol *tol)
@@ -285,7 +293,7 @@ nmg_tri_fu_bg(struct faceuse *fu, struct bu_list *UNUSED(vlfree),
 
     /* ---- 3. Build combined 2-D point array ---- */
     int npts = n_outer + n_inner_total;
-    std::vector<point2d_t>      pts(npts);
+    std::vector<npoint2d_t>      pts(npts);
     std::vector<struct vertex *> idx_to_vert(npts, nullptr);
     std::vector<int>             poly(n_outer);
 
@@ -405,7 +413,7 @@ nmg_tri_fu_bg(struct faceuse *fu, struct bu_list *UNUSED(vlfree),
 	nholes > 0 ? holes_npts_vec.data() : NULL,
 	(size_t)nholes,
 	NULL, 0,
-	pts.data(), (size_t)npts,
+	reinterpret_cast<const point2d_t *>(pts.data()), (size_t)npts,
 	TRI_CONSTRAINED_DELAUNAY);
 
     if (bg_ret != 0 || num_tri <= 0 || !tri_faces) {
