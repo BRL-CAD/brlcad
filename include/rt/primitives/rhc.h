@@ -68,12 +68,11 @@ RT_EXPORT extern int rt_mk_hyperbola(struct rt_pnt_node *pts,
 				     fastf_t min_abs);
 
 /**
- * use rt_mk_hyperbola() with an explicit min_abs argument.
+ * @deprecated use rt_mk_hyperbola() with an explicit min_abs argument.
  * Preserves the original rt_mk_hyperbola behavior of trusting the caller's
  * tolerances unconditionally (equivalent to min_abs = SMALL_FASTF).
  */
-//DEPRECATED RT_EXPORT extern int rt_mk_hyperbola_old(struct rt_pnt_node *pts,
-RT_EXPORT extern int rt_mk_hyperbola_old(struct rt_pnt_node *pts,
+DEPRECATED RT_EXPORT extern int rt_mk_hyperbola_old(struct rt_pnt_node *pts,
 						    fastf_t r,
 						    fastf_t b,
 						    fastf_t c,
