@@ -3301,7 +3301,12 @@ tesselate_pipe_bend(
 	}
     }
     if (ttol->norm > 0.0) {
-	tol_segs = ceil(bend_angle / (2.0 * ttol->norm));
+	fastf_t min_ntol = prim_min_norm_tol();
+	fastf_t ntol_eff = (ttol->norm < min_ntol) ? min_ntol : ttol->norm;
+	if (ttol->norm < min_ntol)
+	    bu_log("Warning: pipe bend tessellation norm tolerance clamped from %g rad to %g rad "
+		   "to prevent excessively dense mesh\n", ttol->norm, ntol_eff);
+	tol_segs = ceil(bend_angle / (2.0 * ntol_eff));
 	if (tol_segs > bend_segs) {
 	    bend_segs = tol_segs;
 	}
@@ -3684,13 +3689,23 @@ tesselate_pipe_end(
 	bu_log("tesselate_pipe_end(): nmg_cface failed\n");
 	return;
     }
-    fu = fu->fumate_p;
-    if (nmg_calc_face_g(fu, vlfree)) {
-	bu_log("tesselate_pipe_end: nmg_calc_face_g failed\n");
-	nmg_kfu(fu);
-	return;
+    /* The outer_loop vertices are wound CW when viewed from outside (the end
+     * cap's outward direction), so nmg_calc_face_g would store an inward-
+     * pointing face normal.  Store the outward normal instead: compute the
+     * Newell normal of the loop, reverse it, and assign that plane.
+     *
+     * Do NOT use fu->fumate_p here: nmg_face_g forces the passed faceuse to
+     * OT_SAME and its mate to OT_OPPOSITE regardless of the current label,
+     * so passing the mate would swap the loop orientations and leave CDT with
+     * no OT_SAME loop, causing immediate CDT failure on every end cap. */
+    {
+	plane_t pl;
+	(void)vlfree;
+	lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+	nmg_loop_plane_newell(lu, pl);
+	HREVERSE(pl, pl);   /* inward → outward */
+	nmg_face_g(fu, pl);
     }
-
     prev = BU_LIST_PREV(wdb_pipe_pnt, &pipe_pnt->l);
 
     if (pipe_pnt->pp_id > tol->dist) {
@@ -3754,14 +3769,10 @@ rt_pipe_tess(
     int arc_segs = 6;			/* minimum number of segments for a circle */
     int tol_segs;
     fastf_t max_diam = 0.0;
-    fastf_t pipe_size;
     fastf_t curr_od, curr_id;
     double delta_angle;
     double sin_del;
     double cos_del;
-    point_t min_pt;
-    point_t max_pt;
-    vect_t min_to_max;
     vect_t r1, r2;
     struct vertex **outer_loop;
     struct vertex **inner_loop;
@@ -3780,27 +3791,16 @@ rt_pipe_tess(
 	return 0;    /* nothing to tessellate */
     }
 
-    pp1 = BU_LIST_FIRST(wdb_pipe_pnt, &pip->pipe_segs_head);
-
-    VMOVE(min_pt, pp1->pp_coord);
-    VMOVE(max_pt, pp1->pp_coord);
-
     /* find max diameter */
     for (BU_LIST_FOR(pp1, wdb_pipe_pnt, &pip->pipe_segs_head)) {
 	if (pp1->pp_od > SMALL_FASTF && pp1->pp_od > max_diam) {
 	    max_diam = pp1->pp_od;
 	}
-
-	VMINMAX(min_pt, max_pt, pp1->pp_coord);
     }
 
     if (max_diam <= tol->dist) {
 	return 0;    /* nothing to tessellate */
     }
-
-    /* calculate pipe size for relative tolerance */
-    VSUB2(min_to_max, max_pt, min_pt);
-    pipe_size = MAGNITUDE(min_to_max);
 
     /* calculate number of segments for circles */
     if (ttol->abs > SMALL_FASTF && ttol->abs * 2.0 < max_diam) {
@@ -3809,14 +3809,26 @@ rt_pipe_tess(
 	    arc_segs = tol_segs;
 	}
     }
-    if (ttol->rel > SMALL_FASTF && 2.0 * ttol->rel * pipe_size < max_diam) {
-	tol_segs = ceil(M_PI / acos(1.0 - 2.0 * ttol->rel * pipe_size / max_diam));
+    if (ttol->rel > SMALL_FASTF) {
+	/* Use the cross-section radius (max_od/2) as the reference for rel,
+	 * not the bounding-box diagonal.  The old pipe_size reference made
+	 * arc_segs hit the 6-segment floor whenever span >> diameter, causing
+	 * up to 17% volume error even with tight-seeming rel values (e.g.
+	 * detail_rb.s3 in toyjeep.g: span=473mm, OD=25mm → 17% vol error at
+	 * rel=0.01).  Using the cross-section radius gives consistent quality
+	 * regardless of pipe length. */
+	tol_segs = rt_num_circular_segments(ttol->rel * max_diam / 2.0, max_diam / 2.0);
 	if (tol_segs > arc_segs) {
 	    arc_segs = tol_segs;
 	}
     }
     if (ttol->norm > SMALL_FASTF) {
-	tol_segs = ceil(M_PI / ttol->norm);
+	fastf_t min_ntol = prim_min_norm_tol();
+	fastf_t ntol_eff = (ttol->norm < min_ntol) ? min_ntol : ttol->norm;
+	if (ttol->norm < min_ntol)
+	    bu_log("Warning: pipe tessellation norm tolerance clamped from %g rad to %g rad "
+		   "to prevent excessively dense mesh\n", ttol->norm, ntol_eff);
+	tol_segs = ceil(M_PI / ntol_eff);
 	if (tol_segs > arc_segs) {
 	    arc_segs = tol_segs;
 	}
@@ -4734,11 +4746,15 @@ rt_pipe_surf_area(fastf_t *area, struct rt_db_internal *ip)
     for (BU_LIST_FOR(p, id_pipe, &head)) {
 	if (!p->pipe_is_bend) {
 	    lin = (struct lin_pipe *)p;
-	    /* Lateral Surface Area = PI * (r_base + r_top) * sqrt(pipe_len^2 + (r_base-r_top)^2) */
+	    /* Lateral Surface Area = PI * (r_base + r_top) * sqrt(pipe_len^2 + (r_base-r_top)^2)
+	     * Outer and inner surfaces have different r_base/r_top coefficients and must be
+	     * computed separately; using the outer radii for both would double-count the inner
+	     * surface area (giving ~2x SA on solid wires where the inner radius is zero). */
 	    len_sq = lin->pipe_len * lin->pipe_len;
 	    *area += M_PI * (lin->pipe_robase + lin->pipe_rotop)
-		* (sqrt(len_sq + lin->pipe_rodiff_sq)      /* outer surface */
-		   + sqrt(len_sq + lin->pipe_ridiff_sq));  /* inner surface */
+		* sqrt(len_sq + lin->pipe_rodiff_sq);      /* outer surface */
+	    *area += M_PI * (lin->pipe_ribase + lin->pipe_ritop)
+		* sqrt(len_sq + lin->pipe_ridiff_sq);      /* inner surface */
 	    start_or = lin->pipe_robase;
 	    start_ir = lin->pipe_ribase;
 	    end_or = lin->pipe_rotop;
@@ -4804,7 +4820,7 @@ rt_pipe_surf_area(fastf_t *area, struct rt_db_internal *ip)
 	    tmpval += (start_or + start_ir) * (start_or - start_ir);
 	}
 	/* previous end cross section */
-	if (!NEAR_EQUAL(start_or, start_ir, RT_LEN_TOL)) {
+	if (!NEAR_EQUAL(prev_or, prev_ir, RT_LEN_TOL)) {
 	    tmpval += (prev_or + prev_ir) * (prev_or - prev_ir);
 	}
 	*area += M_PI * tmpval;
