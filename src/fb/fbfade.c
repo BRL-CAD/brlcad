@@ -54,7 +54,6 @@
 
 #include "common.h"
 
-#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -63,6 +62,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/interrupt.h"
 #include "vmath.h"
 #include "dm.h"			/* BRL-CAD package libfb.a interface */
 #include "pkg.h"

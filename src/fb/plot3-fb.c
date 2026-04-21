@@ -73,7 +73,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <signal.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -83,6 +82,7 @@
 #include "bu/color.h"
 #include "bu/cv.h"
 #include "bu/getopt.h"
+#include "bu/interrupt.h"
 #include "bu/process.h"
 #include "bu/exit.h"
 #include "dm.h"

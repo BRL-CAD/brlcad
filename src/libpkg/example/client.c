@@ -28,11 +28,11 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <signal.h>
 #include <string.h>
 #include "bio.h"
 
 /* interface headers */
+#include "bu/interrupt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/getopt.h"

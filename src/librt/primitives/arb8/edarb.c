@@ -24,11 +24,11 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <signal.h>
 #include <math.h>
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/interrupt.h"
 #include "bu/str.h"
 #include "rt/geom.h"
 #include "rt/primitives/arb8.h"

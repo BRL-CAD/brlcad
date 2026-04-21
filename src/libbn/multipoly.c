@@ -30,8 +30,8 @@
 
 #include <stdio.h>
 #include <math.h>
-#include <signal.h>
 
+#include "bu/interrupt.h"
 #include "bu/malloc.h"
 #include "vmath.h"
 #include "bn/multipoly.h"

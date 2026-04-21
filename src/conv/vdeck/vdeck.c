@@ -57,7 +57,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <signal.h>
 #include <math.h>
 #include <string.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -66,6 +65,7 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/interrupt.h"
 #include "bu/parallel.h"
 #include "bu/sort.h"
 #include "bu/units.h"

@@ -73,7 +73,6 @@
 
 #include <stdlib.h>
 #include <assert.h>
-#include <signal.h>
 #include <string.h>
 #include <stdarg.h>
 
@@ -82,7 +81,7 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
-#include "bu/getopt.h"
+#include "bu/interrupt.h"
 #include "bu/log.h"
 #include "bu/str.h"
 #include "dm.h"			/* BRL-CAD package libfb.a interface */

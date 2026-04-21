@@ -190,14 +190,6 @@
 #cmakedefine fmax __max
 #define ioctl ioctlsocket
 
-#define SHARED_PTR_BOOST	1
-
-/*
- * Signal handling
- */
-
-typedef void (*sig_t)(int);
-
 /*
  * types
  */

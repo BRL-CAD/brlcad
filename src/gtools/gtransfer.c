@@ -35,13 +35,13 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <signal.h>
 #include <string.h>
 #include "bio.h"
 
 /* interface headers */
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/interrupt.h"
 #include "bu/units.h"
 #include "bu/snooze.h"
 #include "raytrace.h"

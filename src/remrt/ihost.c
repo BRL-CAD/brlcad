@@ -27,7 +27,6 @@
 
 #include <stdlib.h>
 #include <ctype.h>
-#include <signal.h>
 #include <errno.h>
 #include <math.h>
 #include <string.h>
@@ -48,6 +47,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/interrupt.h"
 #include "raytrace.h"
 
 #include "./ihost.h"

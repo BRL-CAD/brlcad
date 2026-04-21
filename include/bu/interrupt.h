@@ -23,6 +23,15 @@
 
 #include "common.h"
 
+/* signal.h is problematic on certain versions of Xcode.  It uses but doesn't
+ * define NSIG. We do the include here with the workaround and reuse this
+ * header in BRL-CAD code that needs signal.h */
+#if defined(__APPLE__) && !defined(NSIG)
+#  define NSIG 32
+#endif
+#include <signal.h>
+
+
 #include "bu/defines.h"
 
 

@@ -21,7 +21,6 @@
 #include "common.h"
 
 /* system headers */
-#include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <time.h>
@@ -47,6 +46,7 @@
 /* common headers */
 #include "bu/app.h"
 #include "bu/debug.h"
+#include "bu/interrupt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/process.h"

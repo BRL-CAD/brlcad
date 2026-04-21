@@ -190,6 +190,12 @@
 
 #include <stddef.h>
 #include <limits.h>
+
+// Workaround broken macOS/Xcode signal.h that
+// uses but doesn't define NSIG
+#if defined(__APPLE__) && !defined(NSIG)
+#define NSIG 32
+#endif
 #include <signal.h>
 
 /*

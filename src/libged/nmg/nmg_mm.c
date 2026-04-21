@@ -25,10 +25,10 @@
 
 #include "common.h"
 
-#include <signal.h>
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/interrupt.h"
 #include "rt/geom.h"
 
 #include "../ged_private.h"

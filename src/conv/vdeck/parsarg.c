@@ -23,11 +23,11 @@
 
 #include "common.h"
 
-#include <signal.h>
 #include <string.h>
 #include "bio.h"
 
 #include "bu/getopt.h"
+#include "bu/interrupt.h"
 #include "vmath.h"
 #include "raytrace.h"
 

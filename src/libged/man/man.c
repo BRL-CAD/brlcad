@@ -32,7 +32,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <signal.h>
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -43,6 +42,7 @@
 #include "bu/cmd.h"
 #include "bu/env.h"
 #include "bu/file.h"
+#include "bu/interrupt.h"
 #include "bu/process.h"
 #include "vmath.h"
 

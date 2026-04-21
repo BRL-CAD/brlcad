@@ -34,7 +34,6 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <ctype.h>
-#include <signal.h>
 #include <errno.h>
 #include <math.h>
 #include <string.h>
@@ -50,6 +49,7 @@
 #include "bresource.h"
 #include "bsocket.h"
 #include "bu/app.h"
+#include "bu/interrupt.h"
 
 /* decls for strict c90 */
 

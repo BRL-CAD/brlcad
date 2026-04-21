@@ -25,7 +25,6 @@
 #endif
 
 #include <stdlib.h> /* exit */
-#include <signal.h> /* terminate */
 #include <sys/types.h>
 #include <string.h>
 #include <errno.h>
@@ -33,6 +32,7 @@
 #include "bnetwork.h"
 #include "bu/debug.h"
 #include "bu/file.h"
+#include "bu/interrupt.h"
 #include "bu/list.h"
 #include "bu/malloc.h"
 #include "bu/process.h"

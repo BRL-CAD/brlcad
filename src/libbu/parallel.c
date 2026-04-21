@@ -24,7 +24,6 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
-#include <signal.h>
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -108,6 +107,7 @@
 #include "bio.h"
 
 #include "bu/debug.h"
+#include "bu/interrupt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"

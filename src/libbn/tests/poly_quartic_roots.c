@@ -25,7 +25,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <signal.h>
 
 #include "bu.h"
 #include "vmath.h"

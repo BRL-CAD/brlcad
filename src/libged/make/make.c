@@ -25,12 +25,12 @@
 
 #include "common.h"
 
-#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 
 
 #include "bu/getopt.h"
+#include "bu/interrupt.h"
 #include "rt/geom.h"
 #include "wdb.h"
 

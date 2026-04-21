@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <signal.h>
 #include <string.h>
 #include <ctype.h>
 

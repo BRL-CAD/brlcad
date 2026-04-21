@@ -38,7 +38,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <signal.h>
+
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -48,6 +48,7 @@
 #include "bu/app.h"
 #include "bu/cmd.h"
 #include "bu/file.h"
+#include "bu/interrupt.h"
 #include "bu/snooze.h"
 #include "bu/time.h"
 #include "bu/process.h"

@@ -44,10 +44,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/interrupt.h"
 #include "bu/malloc.h"
 #include "bv/plot3.h"
 #include "bv/vlist.h"

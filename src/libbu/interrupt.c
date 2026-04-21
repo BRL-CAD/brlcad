@@ -18,18 +18,7 @@
  * information.
  */
 
-#if defined(C99_POSIX_USE_BSD)
-/* defining _BSD_SOURCE should ensure BSD signal semantics as well
- * as sig_t for glibc on Linux according to 'man signal(2)'
- */
-#if !defined(_BSD_SOURCE)
-#define _BSD_SOURCE
-#endif
-#endif
-
 #include "common.h"
-
-#include <signal.h>
 
 #include "bu/file.h"
 #include "bu/interrupt.h"
@@ -37,13 +26,8 @@
 #include "bu/exit.h"
 #include "bu/assert.h"
 
-/* wrap for hack above */
-#if !defined(C99_POSIX_USE_BSD)
-/* orig code: */
-#ifndef HAVE_SIG_T
-typedef void (*sig_t)(int);
-#endif
-#endif
+// Declare the classic signal() handler type.
+typedef void (*bu_sig_t)(int);
 
 /* hard-coded maximum signal number we can defer due to array we're
  * using for quick O(1) access in a single container for all signals.
@@ -75,7 +59,7 @@ volatile sig_atomic_t interrupt_signal_pending[INTERRUPT_MAX_SIGNUM] = {
 };
 
 /* keeps track of the installed signal handler that is suspended */
-volatile sig_t interrupt_signal_func[INTERRUPT_MAX_SIGNUM] = {
+volatile bu_sig_t interrupt_signal_func[INTERRUPT_MAX_SIGNUM] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -125,7 +109,7 @@ interrupt_suspend_signal(int signum)
     interrupt_signal_func[signum] = signal(signum, interrupt_suspend_signal_handler);
 
     if (interrupt_signal_func[signum] == SIG_ERR) {
-	interrupt_signal_func[signum] = (sig_t)0;
+	interrupt_signal_func[signum] = (bu_sig_t)0;
 	return 2;
     }
     interrupt_signal_pending[signum] = 0;
@@ -158,7 +142,7 @@ interrupt_restore_signal(int signum)
     interrupt_defer_signal[signum]--;
 
     if (interrupt_defer_signal[signum] == 0 && interrupt_signal_pending[signum] != 0) {
-	sig_t ret;
+	bu_sig_t ret;
 
 	if (interrupt_signal_func[signum] != interrupt_suspend_signal_handler) {
 	    /* unexpected state, how did we get here? */
@@ -167,7 +151,7 @@ interrupt_restore_signal(int signum)
 
 	ret = signal(signum, interrupt_signal_func[signum]);
 
-	interrupt_signal_func[signum] = (sig_t)0;
+	interrupt_signal_func[signum] = (bu_sig_t)0;
 	interrupt_signal_pending[signum] = 0;
 
 	if (ret == SIG_ERR) {

@@ -35,7 +35,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <signal.h>
 #include <math.h>
 
 #ifdef MPI_ENABLED
@@ -49,6 +48,7 @@
 #include "bu/debug.h"
 #include "bu/endian.h"
 #include "bu/getopt.h"
+#include "bu/interrupt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"

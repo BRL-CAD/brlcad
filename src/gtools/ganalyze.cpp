@@ -28,12 +28,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <signal.h>
 #include <math.h>
 
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/interrupt.h"
 #include "bu/log.h"
 #include "bu/process.h"
 #include "bu/vls.h"

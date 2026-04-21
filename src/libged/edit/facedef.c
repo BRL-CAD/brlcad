@@ -25,10 +25,10 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <signal.h>
 
 
 #include "vmath.h"
+#include "bu/interrupt.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "../ged_private.h"

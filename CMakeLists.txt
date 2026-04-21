@@ -696,6 +696,7 @@ endif(APPLE AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND "$ENV{MACOSX_DEPLOY
 # the C inline issue - BRL-CAD needs a fine-grained approach.
 # C and C++ sources require different treatment for the same build
 # target, since C++11 doesn't allow inline to be re-defined.
+include(CheckCInline)
 check_c_inline(C_INLINE)
 if(NOT HAVE_INLINE_KEYWORD AND HAVE___INLINE_KEYWORD)
   config_h_append(BRLCAD "#ifndef __cplusplus\n")
@@ -1653,7 +1654,6 @@ brlcad_type_size("size_t" "")
 brlcad_type_size("ssize_t" "")
 brlcad_type_size("uint64_t" "")
 brlcad_type_size("uintptr_t" "")
-brlcad_type_size("sig_t" "signal.h")
 
 # see if compile settings disable historic unsigned bsd types.
 # typically disabled on posix conformant systems.

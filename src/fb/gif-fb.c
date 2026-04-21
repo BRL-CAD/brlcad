@@ -66,7 +66,6 @@
 #include "common.h"
 
 #include <assert.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -77,6 +76,7 @@
 #include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
+#include "bu/interrupt.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/exit.h"

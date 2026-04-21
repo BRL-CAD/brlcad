@@ -28,7 +28,6 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <signal.h>
 #include <string.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
@@ -42,6 +41,7 @@
 
 /* public api headers */
 #include "bu/app.h"
+#include "bu/interrupt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/debug.h"

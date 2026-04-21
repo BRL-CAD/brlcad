@@ -32,10 +32,7 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-#ifdef HAVE_ALARM
-#  include <signal.h>
-#endif
-
+#include "bu/interrupt.h"
 #include "bu/parallel.h"
 #include "photonmap.h"
 

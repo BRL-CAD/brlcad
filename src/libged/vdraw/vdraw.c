@@ -99,9 +99,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <signal.h>
 
 #include "bu/cmd.h"
+#include "bu/interrupt.h"
 #include "bn.h"
 #include "vmath.h"
 #include "raytrace.h"

@@ -54,7 +54,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
-#include <signal.h>
 #include <errno.h>
 #include <string.h>
 #include <time.h>
@@ -80,6 +79,7 @@
 #include "bu/color.h"
 #include "bu/exit.h"
 #include "bu/getopt.h"
+#include "bu/interrupt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/snooze.h"
