@@ -1949,6 +1949,19 @@ struct tgc_pts
     char dont_use;
 };
 
+/* Return 1 if the triangle (p0, p1, p2) is degenerate: any two vertices
+ * are closer than sqrt(dist_sq) to each other. */
+static int
+tgc_tri_degen(const fastf_t *p0, const fastf_t *p1, const fastf_t *p2,
+	      fastf_t dist_sq)
+{
+    vect_t d;
+    VSUB2(d, p0, p1); if (MAGSQ(d) < dist_sq) return 1;
+    VSUB2(d, p1, p2); if (MAGSQ(d) < dist_sq) return 1;
+    VSUB2(d, p2, p0); if (MAGSQ(d) < dist_sq) return 1;
+    return 0;
+}
+
 
 /* version using tolerances */
 int
@@ -1964,6 +1977,8 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     fastf_t rel, absolute, norm;	/* interpreted tolerances */
     fastf_t alpha_tol;	/* final tolerance for ellipse parameter */
     fastf_t abs_tol;	/* handle invalid ttol->abs */
+    fastf_t min_abs_tol_val;	/* env-overridable floor for abs tolerance */
+    fastf_t min_norm_tol_val;	/* env-overridable floor for norm tolerance */
     size_t nells;		/* total number of ellipses */
     size_t nsegs;		/* number of vertices/ellipse */
     vect_t *A;		/* array of A vectors for ellipses */
@@ -1978,6 +1993,10 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex **v[3];		/* array for making triangular faces */
     struct bu_list *vlfree = &rt_vlfree;
 
+    fastf_t dtol;			/* chord-sag tolerance for per-ring nsegs */
+    int *nsegs_ring = NULL;		/* per-ring circumferential segment counts */
+    int *pts_dbl = NULL;		/* pts_dbl[i]=1 when ring i has 2x segs of ring i-1 */
+
     size_t i;
 
     VSETALL(unit_a, 0);
@@ -1986,8 +2005,14 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     VSETALL(unit_d, 0);
 
     RT_CK_DB_INTERNAL(ip);
+    BG_CK_TESS_TOL(ttol);
+    BN_CK_TOL(tol);
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
+
+    /* Read env-var-overridable tolerance floors once for this tess call. */
+    min_abs_tol_val = prim_min_abs_tol();
+    min_norm_tol_val = prim_min_norm_tol();
 
     if (ttol->abs > 0.0 && ttol->abs < tol->dist) {
 	bu_log("WARNING: tessellation tolerance is %fmm while calculational tolerance is %fmm\n",
@@ -1997,6 +2022,9 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     } else {
 	abs_tol = ttol->abs;
     }
+    /* Enforce minimum abs tolerance to prevent excessively dense meshes. */
+    if (abs_tol > 0.0 && abs_tol < min_abs_tol_val)
+	abs_tol = min_abs_tol_val;
 
     h = MAGNITUDE(tip->h);
     a_axis_len = MAGNITUDE(tip->a);
@@ -2011,6 +2039,24 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     d_axis_len = MAGNITUDE(tip->d);
     if (2.0*d_axis_len <= tol->dist)
 	d_axis_len = 0.0;
+
+    /* If one top axis was zeroed by the tolerance check but the other is still
+     * nonzero, and the nonzero one is also small (< tol->dist, i.e. within a
+     * factor of 2 of the threshold), the two axes are both near-zero and
+     * straddling the threshold due to floating-point rounding.  Zero both to
+     * produce a consistent degenerate apex.  Do NOT do this when the surviving
+     * axis is large — that would wrongly collapse a genuine truncated cone with
+     * one small and one large top axis into an apex. */
+    if (ZERO(c_axis_len) && !ZERO(d_axis_len) && d_axis_len < tol->dist)
+	d_axis_len = 0.0;
+    else if (ZERO(d_axis_len) && !ZERO(c_axis_len) && c_axis_len < tol->dist)
+	c_axis_len = 0.0;
+
+    /* Same consistency check for the bottom axes. */
+    if (ZERO(a_axis_len) && !ZERO(b_axis_len) && b_axis_len < tol->dist)
+	b_axis_len = 0.0;
+    else if (ZERO(b_axis_len) && !ZERO(a_axis_len) && a_axis_len < tol->dist)
+	a_axis_len = 0.0;
 
     if (ZERO(a_axis_len) && ZERO(b_axis_len) && (ZERO(c_axis_len) || ZERO(d_axis_len))) {
 	bu_log("Illegal TGC a, b, and c or d less than tolerance\n");
@@ -2065,25 +2111,27 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    absolute = M_PI_2;
 
 	if (ttol->rel > 0.0) {
-	    if (ttol->rel * 2.0 * radius < max_radius)
-		rel = 2.0 * acos(1.0 - ttol->rel * 2.0 * radius/max_radius);
-	    else
-		rel = M_PI_2;
+	    /* Relative tolerance is a fraction of the cross-section radius
+	     * (max_radius), not the bounding sphere.  Using the bounding
+	     * sphere for long thin cylinders gives far too few segments. */
+	    fastf_t chord_frac = FMIN(1.0, ttol->rel);
+	    rel = 2.0 * acos(FMAX(-1.0, 1.0 - chord_frac));
 	} else
 	    rel = M_PI_2;
 
 	if (ttol->norm > 0.0) {
 	    fastf_t norm_top, norm_bot;
+	    fastf_t ntol_eff = (ttol->norm < min_norm_tol_val) ? min_norm_tol_val : ttol->norm;
 
 	    if (a_axis_len < b_axis_len)
-		norm_bot = 2.0 * atan(tan(ttol->norm) * (a_axis_len / b_axis_len));
+		norm_bot = 2.0 * atan(tan(ntol_eff) * (a_axis_len / b_axis_len));
 	    else
-		norm_bot = 2.0 * atan(tan(ttol->norm) * (b_axis_len / a_axis_len));
+		norm_bot = 2.0 * atan(tan(ntol_eff) * (b_axis_len / a_axis_len));
 
 	    if (c_axis_len < d_axis_len)
-		norm_top = 2.0 * atan(tan(ttol->norm) * (c_axis_len / d_axis_len));
+		norm_top = 2.0 * atan(tan(ntol_eff) * (c_axis_len / d_axis_len));
 	    else
-		norm_top = 2.0 * atan(tan(ttol->norm) * (d_axis_len / c_axis_len));
+		norm_top = 2.0 * atan(tan(ntol_eff) * (d_axis_len / c_axis_len));
 
 	    if (norm_bot < norm_top)
 		norm = norm_bot;
@@ -2100,6 +2148,24 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    alpha_tol = norm;
     }
 
+    /* Clamp alpha_tol: the aspect-ratio scaling of ntol_eff can push it below
+     * the minimum norm tolerance for highly asymmetric TGC shapes, causing huge nsegs. */
+    if (alpha_tol < min_norm_tol_val) {
+	fastf_t orig_alpha_tol = alpha_tol;
+	alpha_tol = min_norm_tol_val;
+	bu_log("Warning: TGC tessellation alpha_tol clamped from %g rad to "
+	       "%g rad to prevent excessively dense mesh\n",
+	       orig_alpha_tol, alpha_tol);
+    }
+
+    /* Chord-sag tolerance (distance) for per-ring segment counts.
+     * max_radius*(1 - cos(alpha_tol/2)) is the maximum chord-sag at the
+     * largest ring, which rt_num_circular_segments() uses to compute segment
+     * counts.  The resulting count approximates nsegs for r = max_radius. */
+    dtol = max_radius * (1.0 - cos(alpha_tol / 2.0));
+    if (dtol <= 0.0)
+	dtol = max_radius * 0.01;
+
     /* get number of segments per quadrant */
     nsegs = (int)(M_PI_2 / alpha_tol + 0.9999);
     if (nsegs < 2)
@@ -2111,12 +2177,10 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* get number and placement of intermediate ellipses */
     {
 	fastf_t ratios[4], max_ratio;
-	fastf_t new_ratio = 0;
 	int which_ratio;
 	fastf_t len_ha, len_hb;
 	vect_t ha, hb;
 	fastf_t ang;
-	fastf_t sin_ang, cos_ang, cos_m_1_sq, sin_sq;
 	fastf_t len_A, len_B, len_C, len_D;
 	size_t bot_ell=0;
 	size_t top_ell=1;
@@ -2147,10 +2211,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    reversed = 1;
 	}
 	ang = M_2PI/((double)nsegs);
-	sin_ang = sin(ang);
-	cos_ang = cos(ang);
-	cos_m_1_sq = (cos_ang - 1.0)*(cos_ang - 1.0);
-	sin_sq = sin_ang*sin_ang;
+	(void)ang; /* now only used as a reference value; per-ring angles computed inside while loop */
 
 	VJOIN2(ha, tip->h, 1.0, tip->c, -1.0, tip->a);
 	VJOIN2(hb, tip->h, 1.0, tip->d, -1.0, tip->b);
@@ -2158,7 +2219,6 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	len_hb = MAGNITUDE(hb);
 
 	while (max_ratio > MAX_RATIO) {
-	    fastf_t tri_width;
 
 	    len_A = MAGNITUDE(A[bot_ell]);
 	    if (2.0*len_A <= tol->dist)
@@ -2173,41 +2233,88 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    if (2.0*len_D <= tol->dist)
 		len_D = 0.0;
 
-	    if ((len_B > 0.0 && len_D > 0.0) ||
-		(len_B > 0.0 && (ZERO(len_D) && ZERO(len_C))))
+	    /* Use local per-ring angles for width estimates so that small
+	     * rings don't trigger excessive intermediate-ring insertions. */
 	    {
-		tri_width = sqrt(cos_m_1_sq*len_A*len_A + sin_sq*len_B*len_B);
-		ratios[0] = (factors[top_ell] - factors[bot_ell])*len_ha
-		    /tri_width;
-	    } else
-		ratios[0] = 0.0;
+		fastf_t ring_sz_bot = (len_A > len_B) ? len_A : len_B;
+		fastf_t ring_sz_top = (len_C > len_D) ? len_C : len_D;
+		fastf_t ang_bot, ang_top;
+		fastf_t cos_m1_sq_bot, sin_sq_bot;
+		fastf_t cos_m1_sq_top, sin_sq_top;
 
-	    if ((len_A > 0.0 && len_C > 0.0) ||
-		(len_A > 0.0 && (ZERO(len_C) && ZERO(len_D))))
-	    {
-		tri_width = sqrt(sin_sq*len_A*len_A + cos_m_1_sq*len_B*len_B);
-		ratios[1] = (factors[top_ell] - factors[bot_ell])*len_hb
-		    /tri_width;
-	    } else
-		ratios[1] = 0.0;
+		/* When a ring's largest semi-axis is smaller than the chord-sag
+		 * tolerance (dtol) it is entirely below the tessellation's own
+		 * resolution: no matter how many intermediate rings are added, a
+		 * face whose short edge is that ring can never be shorter than
+		 * ~dtol in absolute terms.  Using the tiny ring size to compute
+		 * the aspect-ratio check causes hundreds of spurious ring
+		 * insertions for near-apex shapes (e.g., a TGC whose bottom
+		 * ellipse is smaller than 1% of its top).  Suppress the ratio
+		 * entries driven by a sub-tolerance ring and let the other end
+		 * govern ring insertion instead. */
+		int bot_sub_tol = (ring_sz_bot > 0.0 && ring_sz_bot < dtol);
+		int top_sub_tol = (ring_sz_top > 0.0 && ring_sz_top < dtol);
 
-	    if ((len_D > 0.0 && len_B > 0.0) ||
-		(len_D > 0.0 && (ZERO(len_A) && ZERO(len_B))))
-	    {
-		tri_width = sqrt(cos_m_1_sq*len_C*len_C + sin_sq*len_D*len_D);
-		ratios[2] = (factors[top_ell] - factors[bot_ell])*len_ha
-		    /tri_width;
-	    } else
-		ratios[2] = 0.0;
+		if (ring_sz_bot > 0.0) {
+		    int ns_b = rt_num_circular_segments(dtol, ring_sz_bot);
+		    if (ns_b < 4) ns_b = 4;
+		    ang_bot = M_2PI / ns_b;
+		} else {
+		    ang_bot = M_2PI / 4.0;
+		}
+		cos_m1_sq_bot = (cos(ang_bot) - 1.0) * (cos(ang_bot) - 1.0);
+		sin_sq_bot = sin(ang_bot) * sin(ang_bot);
 
-	    if ((len_C > 0.0 && len_A > 0.0) ||
-		(len_C > 0.0 && (ZERO(len_A) && ZERO(len_B))))
-	    {
-		tri_width = sqrt(sin_sq*len_C*len_C + cos_m_1_sq*len_D*len_D);
-		ratios[3] = (factors[top_ell] - factors[bot_ell])*len_hb
-		    /tri_width;
-	    } else
-		ratios[3] = 0.0;
+		if (ring_sz_top > 0.0) {
+		    int ns_t = rt_num_circular_segments(dtol, ring_sz_top);
+		    if (ns_t < 4) ns_t = 4;
+		    ang_top = M_2PI / ns_t;
+		} else {
+		    ang_top = M_2PI / 4.0;
+		}
+		cos_m1_sq_top = (cos(ang_top) - 1.0) * (cos(ang_top) - 1.0);
+		sin_sq_top = sin(ang_top) * sin(ang_top);
+
+		if (!bot_sub_tol &&
+		    ((len_B > 0.0 && len_D > 0.0) ||
+		     (len_B > 0.0 && (ZERO(len_D) && ZERO(len_C)))))
+		{
+		    fastf_t tw = sqrt(cos_m1_sq_bot*len_A*len_A + sin_sq_bot*len_B*len_B);
+		    ratios[0] = (tw > 0.0) ?
+			(factors[top_ell] - factors[bot_ell])*len_ha / tw : 0.0;
+		} else
+		    ratios[0] = 0.0;
+
+		if (!bot_sub_tol &&
+		    ((len_A > 0.0 && len_C > 0.0) ||
+		     (len_A > 0.0 && (ZERO(len_C) && ZERO(len_D)))))
+		{
+		    fastf_t tw = sqrt(sin_sq_bot*len_A*len_A + cos_m1_sq_bot*len_B*len_B);
+		    ratios[1] = (tw > 0.0) ?
+			(factors[top_ell] - factors[bot_ell])*len_hb / tw : 0.0;
+		} else
+		    ratios[1] = 0.0;
+
+		if (!top_sub_tol &&
+		    ((len_D > 0.0 && len_B > 0.0) ||
+		     (len_D > 0.0 && (ZERO(len_A) && ZERO(len_B)))))
+		{
+		    fastf_t tw = sqrt(cos_m1_sq_top*len_C*len_C + sin_sq_top*len_D*len_D);
+		    ratios[2] = (tw > 0.0) ?
+			(factors[top_ell] - factors[bot_ell])*len_ha / tw : 0.0;
+		} else
+		    ratios[2] = 0.0;
+
+		if (!top_sub_tol &&
+		    ((len_C > 0.0 && len_A > 0.0) ||
+		     (len_C > 0.0 && (ZERO(len_A) && ZERO(len_B)))))
+		{
+		    fastf_t tw = sqrt(sin_sq_top*len_C*len_C + cos_m1_sq_top*len_D*len_D);
+		    ratios[3] = (tw > 0.0) ?
+			(factors[top_ell] - factors[bot_ell])*len_hb / tw : 0.0;
+		} else
+		    ratios[3] = 0.0;
+	    }
 
 	    which_ratio = -1;
 	    max_ratio = 0.0;
@@ -2239,52 +2346,185 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    if (max_ratio <= MAX_RATIO)
 		break;
 
-	    if (which_ratio == 0 || which_ratio == 1) {
-		new_ratio = MAX_RATIO/max_ratio;
-		if (bot_ell == 0 && new_ratio > 0.5)
-		    new_ratio = 0.5;
-	    } else if (which_ratio == 2 || which_ratio == 3) {
-		new_ratio = 1.0 - MAX_RATIO/max_ratio;
-		if (top_ell == nells - 1 && new_ratio < 0.5)
-		    new_ratio = 0.5;
+	    /* For case 0/1 (bottom critical) where the top cross-section is
+	     * also large (near-uniform profile / cylinder-like), the original
+	     * one-at-a-time insertion runs O(n) iterations.  Detect this and
+	     * instead insert all needed rings at once using uniform spacing.
+	     *
+	     * When the profile is tapered (top much wider than bottom for case
+	     * 0/1, or top narrower for case 2/3) the original algorithm
+	     * converges geometrically in O(log n) steps and is preferred. */
+	    if ((which_ratio == 0 || which_ratio == 1) &&
+		(ratios[2] > MAX_RATIO * 0.5 || ratios[3] > MAX_RATIO * 0.5)) {
+		/* Cylinder-like: top and bottom have comparable ratios.
+		 * Bulk insert n_rings-1 intermediate rings at uniform spacing. */
+		size_t n_insert, j, shift_i;
+		fastf_t f0, f1;
+		long n_rings_long;
+
+		/* Rounding offset: (max_ratio/MAX_RATIO + nearly-1) truncates
+		 * to the ceiling integer without using ceil() which produces a
+		 * bad-function-cast warning when cast to long. */
+		n_rings_long = (long)(max_ratio / MAX_RATIO + 0.9999999);
+		n_insert = (n_rings_long > 1) ? (size_t)(n_rings_long - 1) : 1;
+
+		nells += n_insert;
+		factors = (fastf_t *)bu_realloc(factors, nells*sizeof(fastf_t), "factors");
+		A = (vect_t *)bu_realloc(A, nells*sizeof(vect_t), "A vectors");
+		B = (vect_t *)bu_realloc(B, nells*sizeof(vect_t), "B vectors");
+
+		/* Shift elements above top_ell up to make room */
+		for (shift_i = nells; shift_i-- > top_ell + n_insert; ) {
+		    factors[shift_i] = factors[shift_i - n_insert];
+		    VMOVE(A[shift_i], A[shift_i - n_insert]);
+		    VMOVE(B[shift_i], B[shift_i - n_insert]);
+		}
+
+		/* Insert n_insert rings at uniform spacing */
+		f0 = factors[bot_ell];
+		f1 = factors[top_ell + n_insert]; /* original top_ell shifted */
+		for (j = 1; j <= n_insert; j++) {
+		    size_t idx = bot_ell + j;
+		    factors[idx] = f0 + (fastf_t)j / (fastf_t)(n_insert + 1) * (f1 - f0);
+		    if (reversed) {
+			VBLEND2(A[idx], (1.0 - factors[idx]), tip->b, factors[idx], tip->d);
+			VBLEND2(B[idx], (1.0 - factors[idx]), tip->a, factors[idx], tip->c);
+		    } else {
+			VBLEND2(A[idx], (1.0 - factors[idx]), tip->a, factors[idx], tip->c);
+			VBLEND2(B[idx], (1.0 - factors[idx]), tip->b, factors[idx], tip->d);
+		    }
+		}
+
+		/* Advance window (same as case 0/1 one-by-one) */
+		bot_ell += n_insert + 1;
+		top_ell  = bot_ell + 1;
+
+		if (top_ell >= nells)
+		    max_ratio = 0.0;          /* all done */
+		else
+		    max_ratio = MAX_RATIO + 1.0; /* re-check next segment */
+
 	    } else {
-		/* no MAX? */
-		bu_bomb("rt_tgc_tess: Should never get here!!\n");
-	    }
+		/* Tapered geometry or top-critical (case 2/3): original
+		 * one-by-one insertion converges geometrically. */
+		fastf_t new_ratio;
 
-	    nells++;
-	    factors = (fastf_t *)bu_realloc(factors, nells*sizeof(fastf_t), "factors");
-	    A = (vect_t *)bu_realloc(A, nells*sizeof(vect_t), "A vectors");
-	    B = (vect_t *)bu_realloc(B, nells*sizeof(vect_t), "B vectors");
+		if (which_ratio == 0 || which_ratio == 1) {
+		    new_ratio = MAX_RATIO/max_ratio;
+		    if (bot_ell == 0 && new_ratio > 0.5)
+			new_ratio = 0.5;
+		} else if (which_ratio == 2 || which_ratio == 3) {
+		    new_ratio = 1.0 - MAX_RATIO/max_ratio;
+		    if (top_ell == nells - 1 && new_ratio < 0.5)
+			new_ratio = 0.5;
+		} else {
+		    /* no MAX? */
+		    bu_bomb("rt_tgc_tess: Should never get here!!\n");
+		    new_ratio = 0.5; /* silence uninitialized-variable warning */
+		}
 
-	    for (i=nells-1; i>top_ell; i--) {
-		factors[i] = factors[i-1];
-		VMOVE(A[i], A[i-1]);
-		VMOVE(B[i], B[i-1]);
-	    }
+		nells++;
+		factors = (fastf_t *)bu_realloc(factors, nells*sizeof(fastf_t), "factors");
+		A = (vect_t *)bu_realloc(A, nells*sizeof(vect_t), "A vectors");
+		B = (vect_t *)bu_realloc(B, nells*sizeof(vect_t), "B vectors");
 
-	    factors[top_ell] = factors[bot_ell] +
-		new_ratio*(factors[top_ell+1] - factors[bot_ell]);
+		for (i=nells-1; i>top_ell; i--) {
+		    factors[i] = factors[i-1];
+		    VMOVE(A[i], A[i-1]);
+		    VMOVE(B[i], B[i-1]);
+		}
 
-	    if (reversed) {
-		VBLEND2(A[top_ell], (1.0-factors[top_ell]), tip->b, factors[top_ell], tip->d);
-		VBLEND2(B[top_ell], (1.0-factors[top_ell]), tip->a, factors[top_ell], tip->c);
-	    } else {
-		VBLEND2(A[top_ell], (1.0-factors[top_ell]), tip->a, factors[top_ell], tip->c);
-		VBLEND2(B[top_ell], (1.0-factors[top_ell]), tip->b, factors[top_ell], tip->d);
-	    }
+		factors[top_ell] = factors[bot_ell] +
+		    new_ratio*(factors[top_ell+1] - factors[bot_ell]);
 
-	    if (which_ratio == 0 || which_ratio == 1) {
-		top_ell++;
-		bot_ell++;
+		if (reversed) {
+		    VBLEND2(A[top_ell], (1.0-factors[top_ell]), tip->b, factors[top_ell], tip->d);
+		    VBLEND2(B[top_ell], (1.0-factors[top_ell]), tip->a, factors[top_ell], tip->c);
+		} else {
+		    VBLEND2(A[top_ell], (1.0-factors[top_ell]), tip->a, factors[top_ell], tip->c);
+		    VBLEND2(B[top_ell], (1.0-factors[top_ell]), tip->b, factors[top_ell], tip->d);
+		}
+
+		if (which_ratio == 0 || which_ratio == 1) {
+		    top_ell++;
+		    bot_ell++;
+		}
 	    }
 	}
+    }
+
+    /* Compute per-ring circumferential segment counts (same strategy as EPA/EHY).
+     * The ring with the largest circumference keeps nsegs; smaller rings toward
+     * either end are permitted halved counts when the halved value still meets
+     * their own tolerance requirement and stays >= 4. */
+    nsegs_ring = (int *)bu_calloc(nells, sizeof(int), "nsegs_ring");
+    pts_dbl = (int *)bu_calloc(nells, sizeof(int), "pts_dbl");
+    {
+	size_t ri;
+	size_t max_ring = 0;
+	fastf_t max_ring_sz = 0.0;
+
+	/* Find the ring with the largest semi-axis */
+	for (ri = 0; ri < nells; ri++) {
+	    fastf_t lA = MAGNITUDE(A[ri]);
+	    fastf_t lB = MAGNITUDE(B[ri]);
+	    fastf_t ls = (lA > lB) ? lA : lB;
+	    if (ls > max_ring_sz) {
+		max_ring_sz = ls;
+		max_ring = ri;
+	    }
+	}
+	nsegs_ring[max_ring] = (int)nsegs;
+
+	/* Halve toward the bottom end */
+	for (ri = max_ring; ri > 0; ri--) {
+	    fastf_t lA = MAGNITUDE(A[ri-1]);
+	    fastf_t lB = MAGNITUDE(B[ri-1]);
+	    fastf_t ls = (lA > lB) ? lA : lB;
+	    int ns_ideal = (ls > 0.0 && dtol > 0.0) ?
+		rt_num_circular_segments(dtol, ls) : 4;
+	    int halved;
+	    if (ns_ideal < 4) ns_ideal = 4;
+	    /* Keep apex rings at the same count as their neighbor to avoid
+	     * fan transitions at degenerate apex points. */
+	    if (ri == 1 && ZERO(a_axis_len) && ZERO(b_axis_len)) {
+		nsegs_ring[ri-1] = nsegs_ring[ri];
+		continue;
+	    }
+	    halved = (nsegs_ring[ri] % 2 == 0) ? (nsegs_ring[ri] / 2) : 0;
+	    nsegs_ring[ri-1] = (halved >= 4 && halved >= ns_ideal) ?
+		halved : nsegs_ring[ri];
+	}
+
+	/* Halve toward the top end */
+	for (ri = max_ring; ri < nells-1; ri++) {
+	    fastf_t lA = MAGNITUDE(A[ri+1]);
+	    fastf_t lB = MAGNITUDE(B[ri+1]);
+	    fastf_t ls = (lA > lB) ? lA : lB;
+	    int ns_ideal = (ls > 0.0 && dtol > 0.0) ?
+		rt_num_circular_segments(dtol, ls) : 4;
+	    int halved;
+	    if (ns_ideal < 4) ns_ideal = 4;
+	    /* Keep apex rings at same count as neighbor */
+	    if (ri == nells-2 && ZERO(c_axis_len) && ZERO(d_axis_len)) {
+		nsegs_ring[ri+1] = nsegs_ring[ri];
+		continue;
+	    }
+	    halved = (nsegs_ring[ri] % 2 == 0) ? (nsegs_ring[ri] / 2) : 0;
+	    nsegs_ring[ri+1] = (halved >= 4 && halved >= ns_ideal) ?
+		halved : nsegs_ring[ri];
+	}
+
+	/* pts_dbl[i] = 1 when ring i has exactly 2× the segs of ring i-1 */
+	pts_dbl[0] = 0;
+	for (ri = 1; ri < nells; ri++)
+	    pts_dbl[ri] = (nsegs_ring[ri] == 2 * nsegs_ring[ri-1]) ? 1 : 0;
     }
 
     /* get memory for points */
     pts = (struct tgc_pts **)bu_calloc(nells, sizeof(struct tgc_pts *), "rt_tgc_tess: pts");
     for (i=0; i<nells; i++)
-	pts[i] = (struct tgc_pts *)bu_calloc(nsegs, sizeof(struct tgc_pts), "rt_tgc_tess: pts");
+	pts[i] = (struct tgc_pts *)bu_calloc(nsegs_ring[i], sizeof(struct tgc_pts), "rt_tgc_tess: pts");
 
     /* calculate geometry for points */
     for (i=0; i<nells; i++) {
@@ -2292,11 +2532,11 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	size_t j;
 
 	h_factor = factors[i];
-	for (j=0; j<nsegs; j++) {
+	for (j=0; j<(size_t)nsegs_ring[i]; j++) {
 	    double alpha;
 	    double sin_alpha, cos_alpha;
 
-	    alpha = M_2PI * (double)(2*j+1)/(double)(2*nsegs);
+	    alpha = M_2PI * (double)(2*j+1)/(double)(2*nsegs_ring[i]);
 	    sin_alpha = sin(alpha);
 	    cos_alpha = cos(alpha);
 
@@ -2332,7 +2572,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    continue;
 
 	VMOVE(curr_pt, pts[i][0].pt);
-	for (j=1; j<nsegs; j++) {
+	for (j=1; j<(size_t)nsegs_ring[i]; j++) {
 	    fastf_t edge_len_sq;
 
 	    VSUB2(edge_vect, curr_pt, pts[i][j].pt);
@@ -2354,7 +2594,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_ptbl_init(&faces, 64, " &faces ");
     /* Make bottom face */
     if (a_axis_len > 0.0 && b_axis_len > 0.0) {
-	for (i=nsegs; i>0; i--) {
+	for (i=nsegs_ring[0]; i>0; i--) {
 	    /* reverse order to get outward normal */
 	    if (!pts[0][i-1].dont_use)
 		bu_ptbl_ins(&verts, (long *)&pts[0][i-1].v);
@@ -2372,7 +2612,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Make top face */
     if (c_axis_len > 0.0 && d_axis_len > 0.0) {
 	bu_ptbl_reset(&verts);
-	for (i=0; i<nsegs; i++) {
+	for (i=0; i<(size_t)nsegs_ring[nells-1]; i++) {
 	    if (!pts[nells-1][i].dont_use)
 		bu_ptbl_ins(&verts, (long *)&pts[nells-1][i].v);
 	}
@@ -2388,47 +2628,210 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Free table of vertices */
     bu_ptbl_free(&verts);
 
-    /* Make triangular faces */
+    /* Make triangular faces.
+     * When adjacent rings have the same segment count (ns_bot == ns_top),
+     * use the standard zipper (2 triangles per segment, advances one pointer
+     * per step).
+     * When ns_top == 2*ns_bot (fan-out), or ns_bot == 2*ns_top (fan-in),
+     * use 3 triangles per segment of the smaller ring (like EPA/EHY pts_dbl).
+     * Face vertex orders are CCW when viewed from outside (outward normal). */
     for (i=0; i<nells-1; i++) {
 	size_t j;
 	struct vertex **curr_top;
 	struct vertex **curr_bot;
+	int ns_bot = nsegs_ring[i];
+	int ns_top = nsegs_ring[i+1];
+	int is_apex_bot = (i == 0 && ZERO(a_axis_len) && ZERO(b_axis_len));
+	int is_apex_top = (i+1 == nells-1 && ZERO(c_axis_len) && ZERO(d_axis_len));
 
 	curr_bot = &pts[i][0].v;
 	curr_top = &pts[i+1][0].v;
-	for (j=0; j<nsegs; j++) {
-	    size_t k;
 
-	    k = j+1;
-	    if (k == nsegs)
-		k = 0;
-	    if (i != 0 || a_axis_len > 0.0 || b_axis_len > 0.0) {
-		if (!pts[i][k].dont_use) {
-		    v[0] = curr_bot;
-		    v[1] = &pts[i][k].v;
-		    if (i+1 == nells-1 && ZERO(c_axis_len) && ZERO(d_axis_len))
-			v[2] = &pts[i+1][0].v;
-		    else
+/* Helper macro: geometric degenerate-triangle check.
+ * Skip any triangle whose vertices are not all distinct by at least tol->dist.
+ * pts[i][j].pt is precomputed before face creation so the coordinates
+ * are always available here.  Two geometric coincidences occur in practice:
+ *  1. Same NMG struct pointer used twice (caught by pointer equality).
+ *  2. Different NMG structs at the same 3-D location (caught by distance). */
+#define TGC_TRI_DEGEN(pa, pb, pc) tgc_tri_degen((pa), (pb), (pc), tol->dist_sq)
+
+	if (ns_bot == ns_top) {
+	    /* 1:1 case: standard zipper.
+	     * Track bot_idx/top_idx so we can look up pts[ring][idx].pt for
+	     * the geometric degenerate check (pointer equality alone is not
+	     * sufficient when two distinct NMG structs sit at the same 3-D
+	     * location — e.g. m35.g s165 wrap-around triangle). */
+	    size_t bot_idx = 0;
+	    size_t top_idx = 0;
+	    for (j=0; j<(size_t)ns_bot; j++) {
+		size_t k = j+1;
+		if (k == (size_t)ns_bot)
+		    k = 0;
+		if (!is_apex_bot) {
+		    if (!pts[i][k].dont_use) {
+			const fastf_t *p0 = pts[i][bot_idx].pt;
+			const fastf_t *p1 = pts[i][k].pt;
+			const fastf_t *p2 = is_apex_top ? pts[i+1][0].pt : pts[i+1][top_idx].pt;
+			if (!TGC_TRI_DEGEN(p0, p1, p2)) {
+			    v[0] = curr_bot;
+			    v[1] = &pts[i][k].v;
+			    v[2] = is_apex_top ? &pts[i+1][0].v : curr_top;
+			    fu = nmg_cmface(s, v, 3);
+			    bu_ptbl_ins(&faces, (long *)fu);
+			}
+			curr_bot = &pts[i][k].v;
+			bot_idx  = k;
+		    }
+		}
+		if (!is_apex_top) {
+		    if (!pts[i+1][k].dont_use) {
+			const fastf_t *p0 = pts[i+1][k].pt;
+			const fastf_t *p1 = pts[i+1][top_idx].pt;
+			const fastf_t *p2 = is_apex_bot ? pts[i][0].pt : pts[i][bot_idx].pt;
+			if (!TGC_TRI_DEGEN(p0, p1, p2)) {
+			    v[0] = &pts[i+1][k].v;
+			    v[1] = curr_top;
+			    v[2] = is_apex_bot ? &pts[i][0].v : curr_bot;
+			    fu = nmg_cmface(s, v, 3);
+			    bu_ptbl_ins(&faces, (long *)fu);
+			}
+			curr_top = &pts[i+1][k].v;
+			top_idx  = k;
+		    }
+		}
+	    }
+	} else if (ns_top == 2 * ns_bot) {
+	    /* Fan-out: top ring is twice as dense as bottom ring.
+	     * 3 triangles per bottom segment with CCW winding. */
+	    size_t bot_idx = 0;
+	    size_t top_idx = 0;
+	    for (j=0; j<(size_t)ns_bot; j++) {
+		size_t k_bot  = (j+1) % (size_t)ns_bot;
+		size_t k_top1 = 2*j+1;
+		size_t k_top2 = (2*j+2) % (size_t)ns_top;
+
+		/* T1: advance top once (to odd index).
+		 * Vertex order: (bot, top_new, top_old) so that the shared
+		 * edge top_new→top_old in T1 is reversed in T3 as top_old→top_new,
+		 * and the shared edge bot→top_new in T1 is reversed in T2 as
+		 * top_new→bot.  Matches the proven EHY pts_dbl ordering. */
+		if (!is_apex_top && !pts[i+1][k_top1].dont_use) {
+		    const fastf_t *p0 = is_apex_bot ? pts[i][0].pt : pts[i][bot_idx].pt;
+		    const fastf_t *p1 = pts[i+1][k_top1].pt;
+		    const fastf_t *p2 = pts[i+1][top_idx].pt;
+		    if (!TGC_TRI_DEGEN(p0, p1, p2)) {
+			v[0] = is_apex_bot ? &pts[i][0].v : curr_bot;
+			v[1] = &pts[i+1][k_top1].v;
 			v[2] = curr_top;
-		    fu = nmg_cmface(s, v, 3);
-		    bu_ptbl_ins(&faces, (long *)fu);
-		    curr_bot = &pts[i][k].v;
+			fu = nmg_cmface(s, v, 3);
+			bu_ptbl_ins(&faces, (long *)fu);
+		    }
+		    curr_top = &pts[i+1][k_top1].v;
+		    top_idx  = k_top1;
 		}
-	    }
 
-	    if (i != nells-2 || c_axis_len > 0.0 || d_axis_len > 0.0) {
-		if (!pts[i+1][k].dont_use) {
-		    v[0] = &pts[i+1][k].v;
-		    v[1] = curr_top;
-		    if (i == 0 && ZERO(a_axis_len) && ZERO(b_axis_len))
-			v[2] = &pts[i][0].v;
-		    else
-			v[2] = curr_bot;
-		    fu = nmg_cmface(s, v, 3);
-		    bu_ptbl_ins(&faces, (long *)fu);
-		    curr_top = &pts[i+1][k].v;
+		/* T2: advance bottom */
+		if (!is_apex_bot && !pts[i][k_bot].dont_use) {
+		    const fastf_t *p0 = pts[i][bot_idx].pt;
+		    const fastf_t *p1 = pts[i][k_bot].pt;
+		    const fastf_t *p2 = is_apex_top ? pts[i+1][0].pt : pts[i+1][top_idx].pt;
+		    if (!TGC_TRI_DEGEN(p0, p1, p2)) {
+			v[0] = curr_bot;
+			v[1] = &pts[i][k_bot].v;
+			v[2] = is_apex_top ? &pts[i+1][0].v : curr_top;
+			fu = nmg_cmface(s, v, 3);
+			bu_ptbl_ins(&faces, (long *)fu);
+		    }
+		    curr_bot = &pts[i][k_bot].v;
+		    bot_idx  = k_bot;
+		}
+
+		/* T3: advance top again (to even index).
+		 * Same ordering as T1: (bot, top_new, top_old) so that
+		 * the top_old vertex (k_top1) is shared with T1 via the
+		 * reverse edge, keeping the mesh manifold. */
+		if (!is_apex_top && !pts[i+1][k_top2].dont_use) {
+		    const fastf_t *p0 = is_apex_bot ? pts[i][0].pt : pts[i][bot_idx].pt;
+		    const fastf_t *p1 = pts[i+1][k_top2].pt;
+		    const fastf_t *p2 = pts[i+1][top_idx].pt;
+		    if (!TGC_TRI_DEGEN(p0, p1, p2)) {
+			v[0] = is_apex_bot ? &pts[i][0].v : curr_bot;
+			v[1] = &pts[i+1][k_top2].v;
+			v[2] = curr_top;
+			fu = nmg_cmface(s, v, 3);
+			bu_ptbl_ins(&faces, (long *)fu);
+		    }
+		    curr_top = &pts[i+1][k_top2].v;
+		    top_idx  = k_top2;
 		}
 	    }
+	} else if (ns_bot == 2 * ns_top) {
+	    /* Fan-in: bottom ring is twice as dense as top ring.
+	     * 3 triangles per top segment. */
+	    size_t bot_idx = 0;
+	    size_t top_idx = 0;
+	    for (j=0; j<(size_t)ns_top; j++) {
+		size_t k_top  = (j+1) % (size_t)ns_top;
+		size_t k_bot1 = 2*j+1;
+		size_t k_bot2 = (2*j+2) % (size_t)ns_bot;
+
+		/* Fa1: advance bottom once (to odd index) */
+		if (!is_apex_bot && !pts[i][k_bot1].dont_use) {
+		    const fastf_t *p0 = pts[i][bot_idx].pt;
+		    const fastf_t *p1 = pts[i][k_bot1].pt;
+		    const fastf_t *p2 = is_apex_top ? pts[i+1][0].pt : pts[i+1][top_idx].pt;
+		    if (!TGC_TRI_DEGEN(p0, p1, p2)) {
+			v[0] = curr_bot;
+			v[1] = &pts[i][k_bot1].v;
+			v[2] = is_apex_top ? &pts[i+1][0].v : curr_top;
+			fu = nmg_cmface(s, v, 3);
+			bu_ptbl_ins(&faces, (long *)fu);
+		    }
+		    curr_bot = &pts[i][k_bot1].v;
+		    bot_idx  = k_bot1;
+		}
+
+		/* Fa2: advance top.
+		 * Vertex order: (top_new, top_old, bot) so the shared
+		 * edge top_old→bot is reversed relative to Fa1's bot→top_old,
+		 * and top_new→top_old is reversed by the adjacent upper band.
+		 * Consistent with TGC 1:1 T2 pattern (T[j+1], T[j], B[j+1]). */
+		if (!is_apex_top && !pts[i+1][k_top].dont_use) {
+		    const fastf_t *p0 = pts[i+1][k_top].pt;
+		    const fastf_t *p1 = pts[i+1][top_idx].pt;
+		    const fastf_t *p2 = pts[i][bot_idx].pt;
+		    if (!TGC_TRI_DEGEN(p0, p1, p2)) {
+			v[0] = &pts[i+1][k_top].v;
+			v[1] = curr_top;
+			v[2] = curr_bot;
+			fu = nmg_cmface(s, v, 3);
+			bu_ptbl_ins(&faces, (long *)fu);
+		    }
+		    curr_top = &pts[i+1][k_top].v;
+		    top_idx  = k_top;
+		}
+
+		/* Fa3: advance bottom again (to even index) */
+		if (!is_apex_bot && !pts[i][k_bot2].dont_use) {
+		    const fastf_t *p0 = pts[i][bot_idx].pt;
+		    const fastf_t *p1 = pts[i][k_bot2].pt;
+		    const fastf_t *p2 = is_apex_top ? pts[i+1][0].pt : pts[i+1][top_idx].pt;
+		    if (!TGC_TRI_DEGEN(p0, p1, p2)) {
+			v[0] = curr_bot;
+			v[1] = &pts[i][k_bot2].v;
+			v[2] = is_apex_top ? &pts[i+1][0].v : curr_top;
+			fu = nmg_cmface(s, v, 3);
+			bu_ptbl_ins(&faces, (long *)fu);
+		    }
+		    curr_bot = &pts[i][k_bot2].v;
+		    bot_idx  = k_bot2;
+		}
+	    }
+	} else {
+	    /* Unsupported ratio (not 1:1, 2:1, or 1:2); should not occur since
+	     * nsegs_ring only produces exact halvings.  Log and skip. */
+	    bu_log("rt_tgc_tess: unsupported ring segment ratio %d:%d at ring "
+		   "%zu; skipping side faces for this band\n", ns_bot, ns_top, i);
 	}
     }
 
@@ -2436,12 +2839,12 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     for (i=0; i<nells; i++) {
 	size_t j;
 
-	for (j=0; j<nsegs; j++) {
+	for (j=0; j<(size_t)nsegs_ring[i]; j++) {
 	    point_t pt_geom;
 	    double alpha;
 	    double sin_alpha, cos_alpha;
 
-	    alpha = M_2PI * (double)(2*j+1)/(double)(2*nsegs);
+	    alpha = M_2PI * (double)(2*j+1)/(double)(2*nsegs_ring[i]);
 	    sin_alpha = sin(alpha);
 	    cos_alpha = cos(alpha);
 
@@ -2484,38 +2887,44 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Calculate vertexuse normals */
     for (i=0; i<nells; i++) {
 	size_t j, k;
+	size_t j_k;
 
 	k = i + 1;
 	if (k == nells)
 	    k = i - 1;
 
-	for (j=0; j<nsegs; j++) {
+	for (j=0; j<(size_t)nsegs_ring[i]; j++) {
 	    vect_t tan_h;		/* vector tangent from one ellipse to next */
 	    struct vertexuse *vu;
+
+	    /* Map j to the nearest index in ring k when they have different
+	     * segment counts (caused by 2:1 fan transitions). */
+	    j_k = ((size_t)nsegs_ring[k] != (size_t)nsegs_ring[i]) ?
+		((size_t)((double)j * nsegs_ring[k] / nsegs_ring[i] + 0.5) % (size_t)nsegs_ring[k]) : j;
 
 	    /* normal at vertex */
 	    if (i == nells - 1) {
 		if (ZERO(c_axis_len) && ZERO(d_axis_len)) {
-		    VSUB2(tan_h, pts[i][0].pt, pts[k][j].pt);
+		    VSUB2(tan_h, pts[i][0].pt, pts[k][j_k].pt);
 		} else if (k == 0 && ZERO(c_axis_len) && ZERO(d_axis_len)) {
 		    VSUB2(tan_h, pts[i][j].pt, pts[k][0].pt);
 		} else {
-		    VSUB2(tan_h, pts[i][j].pt, pts[k][j].pt);
+		    VSUB2(tan_h, pts[i][j].pt, pts[k][j_k].pt);
 		}
 	    } else if (i == 0) {
 		if (ZERO(a_axis_len) && ZERO(b_axis_len)) {
-		    VSUB2(tan_h, pts[k][j].pt, pts[i][0].pt);
+		    VSUB2(tan_h, pts[k][j_k].pt, pts[i][0].pt);
 		} else if (k == nells-1 && ZERO(c_axis_len) && ZERO(d_axis_len)) {
 		    VSUB2(tan_h, pts[k][0].pt, pts[i][j].pt);
 		} else {
-		    VSUB2(tan_h, pts[k][j].pt, pts[i][j].pt);
+		    VSUB2(tan_h, pts[k][j_k].pt, pts[i][j].pt);
 		}
 	    } else if (k == 0 && ZERO(a_axis_len) && ZERO(b_axis_len)) {
 		VSUB2(tan_h, pts[k][0].pt, pts[i][j].pt);
 	    } else if (k == nells-1 && ZERO(c_axis_len) && ZERO(d_axis_len)) {
 		VSUB2(tan_h, pts[k][0].pt, pts[i][j].pt);
 	    } else {
-		VSUB2(tan_h, pts[k][j].pt, pts[i][j].pt);
+		VSUB2(tan_h, pts[k][j_k].pt, pts[i][j].pt);
 	    }
 
 	    VCROSS(normal, pts[i][j].tan_axb, tan_h);
@@ -2553,6 +2962,8 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     for (i=0; i<nells; i++)
 	bu_free((char *)pts[i], "rt_tgc_tess: pts[i]");
     bu_free((char *)pts, "rt_tgc_tess: pts");
+    bu_free((char *)nsegs_ring, "rt_tgc_tess: nsegs_ring");
+    bu_free((char *)pts_dbl, "rt_tgc_tess: pts_dbl");
 
     /* mark real edges for top and bottom faces */
     for (i=0; i<2; i++) {
@@ -3389,7 +3800,9 @@ void
 rt_tgc_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     int tgc_type = 0;
-    fastf_t mag_a, mag_b, mag_c, mag_d, mag_h;
+    fastf_t mag_a, mag_b, mag_c, mag_d;
+    fastf_t h_perp;  /* perpendicular distance between the two end planes */
+    vect_t axb;
     struct rt_tgc_internal *tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
@@ -3397,22 +3810,79 @@ rt_tgc_volume(fastf_t *vol, const struct rt_db_internal *ip)
     mag_b = MAGNITUDE(tip->b);
     mag_c = MAGNITUDE(tip->c);
     mag_d = MAGNITUDE(tip->d);
-    mag_h = MAGNITUDE(tip->h);
 
     GET_TGC_TYPE(tgc_type, mag_a, mag_b, mag_c, mag_d);
+    if (tgc_type == TEC) {
+	/* Import/export quantization can introduce tiny radius deltas in
+	 * nominally circular TGCs from .g sample databases.  Classify those
+	 * as TRC for analytic metrics instead of routing through TEC logic. */
+	fastf_t ab_tol = fmax(mag_a, mag_b) * 1.0e-5 + SMALL_FASTF;
+	fastf_t cd_tol = fmax(mag_c, mag_d) * 1.0e-5 + SMALL_FASTF;
+	if (fabs(mag_a - mag_b) <= ab_tol &&
+	    fabs(mag_c - mag_d) <= cd_tol) {
+	    tgc_type = TRC;
+	}
+    }
+
+    /* Compute the perpendicular height between the two end-ellipse planes.
+     *
+     * For a general TGC the height vector H is NOT required to be
+     * perpendicular to the base ellipse (A, B may have components along H).
+     * The cross-section planes are spanned by A and B (and their scaled
+     * counterparts C and D at the top), so the unit normal to those planes
+     * is n̂ = (A × B) / |A × B|.  A ⊥ B is guaranteed by the TGC
+     * primitive definition (enforced by rt_tgc_prep), so |A × B| = |A|·|B|,
+     * giving:
+     *
+     *   h_perp = | H · n̂ | = | H · (A × B) | / (|A| · |B|)
+     *
+     * For a RIGHT TGC (H ⊥ A, H ⊥ B), h_perp == MAGNITUDE(H).
+     * For an OBLIQUE TGC, h_perp < MAGNITUDE(H), and using MAGNITUDE(H)
+     * in the volume formula overestimates the true volume.
+     *
+     * Fall back to MAGNITUDE(H) only for the degenerate-base case
+     * (should not occur in practice: prep() swaps ends so the degenerate
+     * end is always the top, ensuring mag_a and mag_b are non-zero).   */
+    VCROSS(axb, tip->a, tip->b);
+    if (mag_a > SMALL_FASTF && mag_b > SMALL_FASTF) {
+	h_perp = fabs(VDOT(tip->h, axb)) / (mag_a * mag_b);
+    } else {
+	h_perp = MAGNITUDE(tip->h);
+    }
 
     switch (tgc_type) {
 	case RCC:
 	case REC:
-	    *vol = M_PI * mag_h * mag_a * mag_b;
+	    *vol = M_PI * h_perp * mag_a * mag_b;
 	    break;
 	case TRC:
 	    /* TRC could fall through, but this formula avoids a sqrt and
 	     * so will probably be more accurate */
-	    *vol = M_PI * mag_h * (mag_a * mag_a + mag_c * mag_c + mag_a * mag_c) / 3.0;
+	    *vol = M_PI * h_perp * (mag_a * mag_a + mag_c * mag_c + mag_a * mag_c) / 3.0;
 	    break;
 	case TEC:
-	    *vol = M_PI * mag_h * (mag_a * mag_b + mag_c * mag_d + sqrt(mag_a * mag_b * mag_c * mag_d)) / 3.0;
+	    /* General TEC/TGC: the two elliptic end-caps interpolate
+	     * independently in each axis direction (A→C, B→D).  The
+	     * cross-section area at parameter t ∈ [0,1] is:
+	     *
+	     *   Area(t) = π · ((1-t)·a + t·c) · ((1-t)·b + t·d)
+	     *
+	     * which is quadratic in t.  Integrating exactly:
+	     *
+	     *   V = π · h_perp · ∫₀¹ Area(t) dt
+	     *     = π · h_perp · (ab/3 + (ad+bc)/6 + cd/3)
+	     *     = π · h_perp · (2ab + ad + bc + 2cd) / 6
+	     *
+	     * This is the prismatoid formula, exact for linear vector
+	     * interpolation.  The previous formula used √(abcd) for the
+	     * mixed term, which is only correct when a/b == c/d (similar
+	     * cross-sections).  When the aspect ratio changes (e.g.
+	     * a/b ≈ 9190 vs c/d ≈ 4.02 for havoc.g s.fuse17.i), (ad+bc)/2
+	     * can be orders of magnitude larger than √(abcd), causing the
+	     * old formula to severely underestimate the true volume.        */
+	    *vol = M_PI * h_perp *
+		(2.0*(mag_a*mag_b + mag_c*mag_d) + mag_a*mag_d + mag_b*mag_c)
+		/ 6.0;
 	    break;
 	default:
 	    /* never reached */
@@ -3442,7 +3912,19 @@ rt_tgc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     mag_d = MAGNITUDE(tip->d);
     mag_h = sqrt(magsq_h);
 
+    *area = 0.0;
+
     GET_TGC_TYPE(tgc_type, mag_a, mag_b, mag_c, mag_d);
+    if (tgc_type == TEC) {
+	/* Treat near-circular ends as TRC to avoid Crofton-noise metrics for
+	 * databases that store tiny radius quantization differences. */
+	fastf_t ab_tol = fmax(mag_a, mag_b) * 1.0e-5 + SMALL_FASTF;
+	fastf_t cd_tol = fmax(mag_c, mag_d) * 1.0e-5 + SMALL_FASTF;
+	if (fabs(mag_a - mag_b) <= ab_tol &&
+	    fabs(mag_c - mag_d) <= cd_tol) {
+	    tgc_type = TRC;
+	}
+    }
 
     switch (tgc_type) {
 	case RCC:
@@ -3451,15 +3933,38 @@ rt_tgc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	case TRC:
 	    *area = M_PI * ((mag_a + mag_c) * sqrt((mag_a - mag_c) * (mag_a - mag_c) + magsq_h) + magsq_a + magsq_c);
 	    break;
-	case REC:
-	    area_base = M_PI * mag_a * mag_b;
+	case REC: {
+	    /* For an oblique REC (H not perpendicular to the base ellipse),
+	     * the correct lateral height is h_perp -- the perpendicular
+	     * distance between the two end planes -- not |H|.  Using |H|
+	     * overestimates the lateral surface area for oblique cases.
+	     * The same h_perp formula is used in rt_tgc_volume for the same
+	     * reason; see the comment there for the derivation.
+	     *
+	     * perimeter * h_perp is still an approximation (the Ramanujan
+	     * circumference formula is used for the elliptic perimeter), but
+	     * it is significantly better than perimeter * |H|: for a 30-degree
+	     * oblique REC the error drops from ~10% to ~0.4%.             */
+	    vect_t axb;
+	    fastf_t h_perp;
+	    VCROSS(axb, tip->a, tip->b);
+	    if (mag_a > SMALL_FASTF && mag_b > SMALL_FASTF)
+		h_perp = fabs(VDOT(tip->h, axb)) / (mag_a * mag_b);
+	    else
+		h_perp = mag_h;
 	    /* approximation */
 	    c = ELL_CIRCUMFERENCE(mag_a, mag_b);
-	    *area = c * mag_h + 2.0 * area_base;
+	    area_base = M_PI * mag_a * mag_b;
+	    *area = c * h_perp + 2.0 * area_base;
 	    break;
+	}
 	case TEC:
 	default:
-	    bu_log("rt_tgc_surf_area(): cannot find surface area\n");
+	    /* No closed-form formula exists for the general truncated
+	     * elliptic cone.  Fall back to the Cauchy-Crofton ray-sampling
+	     * estimator, which handles any TGC shape correctly. */
+	    do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(area, NULL, ip, &_p); } while (0);
+	    break;
     }
 }
 

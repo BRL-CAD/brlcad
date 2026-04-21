@@ -37,6 +37,7 @@
 #include "bu/parallel.h"
 #include "bn/mat.h"
 #include "bg/plane.h"
+#include "bg/polygon.h"
 #include "bv/plot3.h"
 #include "nmg.h"
 
@@ -3318,6 +3319,14 @@ nmg_build_loopuse_tree(struct faceuse *fu, struct loopuse_tree_node **root, stru
 }
 
 /*
+ * nmg_tri_fu_bg is defined in tri_bg.cpp (C++17) so that it can use
+ * std::unordered_map for O(1) edge-gluing lookups.
+ */
+extern int nmg_tri_fu_bg(struct faceuse *fu, struct bu_list *vlfree,
+			 const struct bn_tol *tol);
+
+
+/*
  * return 1 when faceuse is empty, otherwise return 0.
  *
  */
@@ -3418,6 +3427,17 @@ nmg_triangulate_fu(struct faceuse *fu, struct bu_list *vlfree, const struct bn_t
     if (nmg_debug & NMG_DEBUG_TRI) {
 	bu_log("nmg_triangulate_fu(): proceeding to triangulate face %g %g %g\n", V3ARGS(fu_normal));
     }
+
+    /* Try Constrained Delaunay triangulation via libbg first.
+     * On success, fu has been killed and replaced by triangle faceuses that
+     * are already glued back into the shell – we are done.
+     * On failure fu is untouched and we fall through to the ear-clip path.
+     *
+     * On success, fu has been killed and replaced by triangle faceuses that
+     * are already glued back into the shell – we are done.
+     * On failure fu is untouched and we fall through to the ear-clip path. */
+    if (nmg_tri_fu_bg(fu, vlfree, tol) == 0)
+	goto out2;
 
     /* convert 3D face to face in the X-Y plane */
     tbl2d = nmg_flatten_face(fu, TformMat, tol);

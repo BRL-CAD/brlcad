@@ -47,6 +47,7 @@ set(
   pt_fu.c
   isect.c
   tri.c
+  tri_bg.cpp
   visit.c
 )
 
