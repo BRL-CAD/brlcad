@@ -1020,7 +1020,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 {
     int i, n;
     fastf_t b, c, *back, *front, rh;
-    fastf_t dtol, ntol;
+    fastf_t dtol, ntol, min_abs;
     vect_t Bu, Hu, Ru;
     mat_t R;
     mat_t invR;
@@ -1062,12 +1062,18 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     }
 
     /* To ensure normal tolerance, remain below this angle */
-    if (ttol->norm > 0.0) {
+    if (ttol->norm > 0.0)
 	ntol = ttol->norm;
-    } else {
+    else
 	/* tolerate everything */
 	ntol = M_PI;
+
+    /* Clamp to prevent excessively dense meshes. */
+    {
+	fastf_t bbox_diag = 2.0 * (rh > b ? rh : b);
+	primitive_clamp_tess_tol(&dtol, &ntol, bbox_diag);
     }
+    min_abs = prim_min_abs_tol();
 
     /* initial hyperbola approximation is a single segment */
     BU_ALLOC(pts, struct rt_pnt_node);
@@ -1079,7 +1085,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     /* 2 endpoints in 1st approximation */
     n = 2;
     /* recursively break segment 'til within error tolerances */
-    n += rt_mk_hyperbola_old(pts, rh, b, c, dtol, ntol);
+    n += _rt_mk_hyperbola(pts, rh, b, c, dtol, ntol, min_abs);
 
     /* get mem for arrays */
     front = (fastf_t *)bu_malloc(3 * n * sizeof(fastf_t), "fast_t");
@@ -1258,7 +1264,7 @@ _rt_mk_hyperbola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf
  * unconditionally honoring whatever dtol/ntol the caller passes (no sanity
  * floor).  New code should call rt_mk_hyperbola() with an explicit min_abs.
  *
- * use rt_mk_hyperbola() with an explicit min_abs argument.
+ * @deprecated use rt_mk_hyperbola() with an explicit min_abs argument.
  */
 int
 rt_mk_hyperbola_old(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t dtol, fastf_t ntol)
@@ -1307,7 +1313,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 {
     int i, j, n;
     fastf_t b, c, *back, *front, rh;
-    fastf_t dtol, ntol;
+    fastf_t dtol, ntol, min_abs;
     vect_t Bu, Hu, Ru;
     mat_t R;
     mat_t invR;
@@ -1358,13 +1364,19 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* To ensure normal tolerance, remain below this angle */
-    if (ttol->norm > 0.0) {
+    if (ttol->norm > 0.0)
 	ntol = ttol->norm;
-    } else {
+    else
 	/* tolerate everything */
 	ntol = M_PI;
+
+    /* Clamp to prevent excessively dense meshes. */
+    {
+	fastf_t bbox_diag = 2.0 * (rh > b ? rh : b);
+	primitive_clamp_tess_tol(&dtol, &ntol, bbox_diag);
     }
 
+    min_abs = prim_min_abs_tol();
     /* initial hyperbola approximation is a single segment */
     BU_ALLOC(pts, struct rt_pnt_node);
     BU_ALLOC(pts->next, struct rt_pnt_node);
@@ -1375,7 +1387,33 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* 2 endpoints in 1st approximation */
     n = 2;
     /* recursively break segment 'til within error tolerances */
-    n += rt_mk_hyperbola_old(pts, rh, b, c, dtol, ntol);
+    n += _rt_mk_hyperbola(pts, rh, b, c, dtol, ntol, min_abs);
+
+    /* Post-process: remove profile points too close (in 3D) to their predecessor.
+     * With tight normal tolerances the hyperbola subdivision can produce many
+     * closely-spaced points near the apex (y=0) where dZ/dY → 0.  Adjacent
+     * profile points within 2*tol->dist of each other create degenerate
+     * rectangular side faces that cause nmg_fu_planeeqn to fail with
+     * "Cannot find three distinct vertices". */
+    {
+	fastf_t min_sep_sq = 4.0 * tol->dist * tol->dist;
+	struct rt_pnt_node *prev_kept = pts;
+	struct rt_pnt_node *cur = pts->next;
+	while (cur) {
+	    fastf_t dY = cur->p[Y] - prev_kept->p[Y];
+	    fastf_t dZ = cur->p[Z] - prev_kept->p[Z];
+	    if (dY*dY + dZ*dZ < min_sep_sq) {
+		struct rt_pnt_node *to_free = cur;
+		prev_kept->next = cur->next;
+		cur = cur->next;
+		bu_free(to_free, "rt_pnt_node");
+		n--;
+	    } else {
+		prev_kept = cur;
+		cur = cur->next;
+	    }
+	}
+    }
 
     /* get mem for arrays */
     front = (fastf_t *)bu_malloc(3 * n * sizeof(fastf_t), "fastf_t");
@@ -2142,6 +2180,64 @@ rhc_kpt_end:
     MAT4X3PNT(*pt, mat, mpt);
 
     return k;
+}
+
+
+int
+rt_rhc_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_rhc_internal *orhc = (struct rt_rhc_internal *)ip->idb_ptr;
+    RT_RHC_CK_MAGIC(orhc);
+
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_RHC;
+    nip->idb_meth = &OBJ[ID_RHC];
+    struct rt_rhc_internal *rhc = NULL;
+    BU_ALLOC(rhc, struct rt_rhc_internal);
+    nip->idb_ptr = rhc;
+    rhc->rhc_magic = RT_RHC_INTERNAL_MAGIC;
+    VMOVE(rhc->rhc_V, orhc->rhc_V);
+    VMOVE(rhc->rhc_H, orhc->rhc_H);
+    VMOVE(rhc->rhc_B, orhc->rhc_B);
+    rhc->rhc_r = orhc->rhc_r;
+    rhc->rhc_c = orhc->rhc_c;
+
+    /* Extend H (and move V back) to push the flat rectangular faces apart. */
+    vect_t hvec, hback;
+    VMOVE(hvec, rhc->rhc_H);
+    VUNITIZE(hvec);
+    VREVERSE(hback, hvec);
+    VSCALE(hback, hback, val);
+    VADD2(rhc->rhc_V, rhc->rhc_V, hback);
+    vect_t hext;
+    VSCALE(hext, hvec, 2.0 * val);
+    VADD2(rhc->rhc_H, rhc->rhc_H, hext);
+
+    if (planar_only) {
+	*oip = nip;
+	return BRLCAD_OK;
+    }
+
+    /* Also expand the breadth vector, half-width, and asymptote distance. */
+    vect_t bvec;
+    VMOVE(bvec, rhc->rhc_B);
+    VUNITIZE(bvec);
+    VSCALE(bvec, bvec, val);
+    VADD2(rhc->rhc_B, rhc->rhc_B, bvec);
+    rhc->rhc_r += val;
+    rhc->rhc_c += val;
+
+    *oip = nip;
+    return BRLCAD_OK;
 }
 
 

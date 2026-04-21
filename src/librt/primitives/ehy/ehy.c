@@ -953,13 +953,12 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 {
     struct bu_list *vlfree = &rt_vlfree;
     fastf_t c, dtol, mag_h, ntol, r1, r2;
-    fastf_t **ellipses, theta_prev, theta_new;
+    fastf_t min_abs;
+    fastf_t **ellipses;
     int *pts_dbl;
+    int *segs_per_ell;
     size_t i, j, nseg, nell;
     int jj, na, nb, recalc_b;
-    mat_t R;
-    mat_t invR;
-    point_t p1;
     struct rt_pnt_node *pos_a, *pos_b, *pts_a, *pts_b;
     struct rt_ehy_internal *xip;
     vect_t A, Au, B, Bu, Hu, V, Work;
@@ -983,13 +982,6 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     VMOVE(Au, xip->ehy_Au);
     VCROSS(Bu, Au, Hu);
 
-    /* Compute R and Rinv matrices */
-    MAT_IDN(R);
-    VREVERSE(&R[0], Bu);
-    VMOVE(&R[4], Au);
-    VREVERSE(&R[8], Hu);
-    bn_mat_trn(invR, R);			/* inv of rot mat is trn */
-
     dtol = primitive_get_absolute_tolerance(ttol, 2.0 * xip->ehy_r2);
 
     /* stay below ntol to ensure normal tolerance */
@@ -997,6 +989,13 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     if (ttol->norm > 0.0) {
 	ntol = ttol->norm;
     }
+
+    /* Clamp to prevent excessively dense plots. */
+    {
+	fastf_t bbox_diag = sqrt(4.0*r1*r1 + mag_h*mag_h);
+	primitive_clamp_tess_tol(&dtol, &ntol, bbox_diag);
+    }
+    min_abs = prim_min_abs_tol();
 
     /*
      * build ehy from 2 hyperbolas
@@ -1012,7 +1011,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     /* 2 endpoints in 1st approximation */
     nb = 2;
     /* recursively break segment 'til within error tolerances */
-    nb += rt_mk_hyperbola_old(pts_b, r2, mag_h, c, dtol, ntol);
+    nb += _rt_mk_hyperbola(pts_b, r2, mag_h, c, dtol, ntol, min_abs);
     nell = nb - 1;	/* # of ellipses needed */
 
     /* construct positive half of hyperbola along semi-major axis of
@@ -1044,7 +1043,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     recalc_b = 0;
     pos_a = pts_a;
     while (pos_a->next) {
-	na = rt_mk_hyperbola_old(pos_a, r1, mag_h, c, dtol, ntol);
+	na = _rt_mk_hyperbola(pos_a, r1, mag_h, c, dtol, ntol, min_abs);
 	if (na != 0) {
 	    recalc_b = 1;
 	    nell += na;
@@ -1093,11 +1092,53 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     ellipses = (fastf_t **)bu_malloc(nell * sizeof(fastf_t *), "fastf_t ell[]");
     /* keep track of whether pts in each ellipse are doubled or not */
     pts_dbl = (int *)bu_malloc(nell * sizeof(int), "dbl ints");
+    segs_per_ell = (int *)bu_calloc(nell, sizeof(int), "segs_per_ell");
+
+    /* Compute per-ring circumferential segment counts.  See rt_epa_plot()
+     * for the full rationale.  The base ring (r1) drives nseg_base; rings
+     * toward the apex receive halved counts when tolerance allows. */
+    {
+	int nseg_base = (int)rt_num_circular_segments(dtol, r1);
+	int k;
+	fastf_t *ring_r;
+	if (ntol < M_PI) {
+	    int nseg_ntol = (int)(M_PI / ntol) + 1;
+	    if (nseg_ntol > nseg_base) nseg_base = nseg_ntol;
+	}
+	if (nseg_base < 6) nseg_base = 6;
+	if (nseg_base % 2 != 0) nseg_base++;	/* ensure even for halvings */
+
+	ring_r = (fastf_t *)bu_malloc(nell * sizeof(fastf_t), "ring radii");
+	k = 0;
+	pos_a = pts_a->next;
+	while (pos_a) {
+	    ring_r[k++] = pos_a->p[Y];
+	    pos_a = pos_a->next;
+	}
+
+	segs_per_ell[nell - 1] = nseg_base;
+	for (k = (int)nell - 2; k >= 0; k--) {
+	    int ns_ideal = (int)rt_num_circular_segments(dtol, ring_r[k]);
+	    int halved;
+	    if (ntol < M_PI) {
+		int ns_ntol = (int)(M_PI / ntol) + 1;
+		if (ns_ntol > ns_ideal) ns_ideal = ns_ntol;
+	    }
+	    if (ns_ideal < 6) ns_ideal = 6;
+	    halved = (segs_per_ell[k + 1] % 2 == 0) ? (segs_per_ell[k + 1] / 2) : 0;
+	    segs_per_ell[k] = (halved >= 6 && halved >= ns_ideal) ? halved : segs_per_ell[k + 1];
+	}
+
+	pts_dbl[0] = 0;
+	for (k = 1; k < (int)nell; k++)
+	    pts_dbl[k] = (segs_per_ell[k] == 2 * segs_per_ell[k - 1]) ? 1 : 0;
+
+	nseg = (size_t)segs_per_ell[nell - 1];
+	bu_free(ring_r, "ring radii");
+    }
 
     /* make ellipses at each z level */
     i = 0;
-    nseg = 0;
-    theta_prev = M_2PI;
     pos_a = pts_a->next;	/* skip over apex of ehy */
     pos_b = pts_b->next;
     while (pos_a) {
@@ -1105,21 +1146,9 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	VSCALE(B, Bu, pos_b->p[Y]);	/* semiminor axis */
 	VJOIN1(V, xip->ehy_V, -pos_a->p[Z], Hu);
 
-	VSET(p1, 0., pos_b->p[Y], 0.);
-	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
-	if (nseg == 0) {
-	    nseg = (int)(M_2PI / theta_new) + 1;
-	    pts_dbl[i] = 0;
-	} else if (theta_new < theta_prev) {
-	    nseg *= 2;
-	    pts_dbl[i] = 1;
-	} else
-	    pts_dbl[i] = 0;
-	theta_prev = theta_new;
-
-	ellipses[i] = (fastf_t *)bu_malloc(3*(nseg+1)*sizeof(fastf_t),
+	ellipses[i] = (fastf_t *)bu_malloc(3*(segs_per_ell[i]+1)*sizeof(fastf_t),
 					   "pts ell");
-	rt_ell(ellipses[i], V, A, B, nseg);
+	rt_ell(ellipses[i], V, A, B, segs_per_ell[i]);
 
 	i++;
 	pos_a = pos_a->next;
@@ -1186,6 +1215,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     }
     bu_free((char *)ellipses, "fastf_t ell[]");
     bu_free((char *)pts_dbl, "dbl ints");
+    bu_free((char *)segs_per_ell, "segs_per_ell");
 
     return 0;
 }
@@ -1200,8 +1230,10 @@ int
 rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t c, dtol, mag_h, ntol, r1, r2, cprime;
-    fastf_t **ellipses, theta_prev, theta_new;
+    fastf_t min_abs;
+    fastf_t **ellipses;
     int *pts_dbl;
+    int *segs_per_ell;
     int idx;
     size_t face, i, j, nseg, nell;
     int jj, na, nb, recalc_b;
@@ -1211,7 +1243,6 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     mat_t S;
     mat_t SoR;
     struct rt_ehy_internal *xip;
-    point_t p1;
     struct rt_pnt_node *pos_a, *pos_b, *pts_a, *pts_b;
     struct shell *s;
     struct faceuse **outfaceuses = NULL;
@@ -1225,6 +1256,8 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct bu_list *vlfree = &rt_vlfree;
 
     RT_CK_DB_INTERNAL(ip);
+    BG_CK_TESS_TOL(ttol);
+    BN_CK_TOL(tol);
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
 
     if (!ehy_is_valid(xip)) {
@@ -1268,6 +1301,13 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	ntol = ttol->norm;
     }
 
+    /* Clamp tolerances to prevent excessively dense meshes. */
+    {
+	fastf_t bbox_diag = sqrt(4.0*r1*r1 + mag_h*mag_h);
+	primitive_clamp_tess_tol(&dtol, &ntol, bbox_diag);
+    }
+
+    min_abs = prim_min_abs_tol();
     /*
      * build ehy from 2 hyperbolas
      */
@@ -1282,7 +1322,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* 2 endpoints in 1st approximation */
     nb = 2;
     /* recursively break segment 'til within error tolerances */
-    nb += rt_mk_hyperbola_old(pts_b, r2, mag_h, c, dtol, ntol);
+    nb += _rt_mk_hyperbola(pts_b, r2, mag_h, c, dtol, ntol, min_abs);
     nell = nb - 1;	/* # of ellipses needed */
 
     /* construct positive half of hyperbola along semi-major axis of
@@ -1314,7 +1354,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     recalc_b = 0;
     pos_a = pts_a;
     while (pos_a->next) {
-	na = rt_mk_hyperbola_old(pos_a, r1, mag_h, c, dtol, ntol);
+	na = _rt_mk_hyperbola(pos_a, r1, mag_h, c, dtol, ntol, min_abs);
 	if (na != 0) {
 	    recalc_b = 1;
 	    nell += na;
@@ -1363,43 +1403,172 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* keep track of whether pts in each ellipse are doubled or not */
     pts_dbl = (int *)bu_malloc(nell * sizeof(int), "dbl ints");
+    segs_per_ell = (int *)bu_calloc(nell, sizeof(int), "rt_ehy_tess: segs_per_ell");
 
-    /* make ellipses at each z level */
-    i = 0;
-    nseg = 0;
-    theta_prev = M_2PI;
-    pos_a = pts_a->next;	/* skip over apex of ehy */
-    pos_b = pts_b->next;
-    while (pos_a) {
-	VSCALE(A, Au, pos_a->p[Y]);	/* semimajor axis */
-	VSCALE(B, Bu, pos_b->p[Y]);	/* semiminor axis */
-	VJOIN1(V, xip->ehy_V, -pos_a->p[Z], Hu);
-
-	VSET(p1, 0., pos_b->p[Y], 0.);
-	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
-	if (nseg == 0) {
-	    nseg = (size_t)(M_2PI / theta_new) + 1;
-	    pts_dbl[i] = 0;
-	    /* maximum number of faces needed for ehy */
-	    face = nseg*(1 + 3*((1 << (nell-1)) - 1));
-	    /* array for each triangular face */
-	    outfaceuses = (struct faceuse **)
-		bu_malloc((face+1) * sizeof(struct faceuse *), "ehy: *outfaceuses[]");
-	} else if (theta_new < theta_prev) {
-	    nseg *= 2;
-	    pts_dbl[i] = 1;
-	} else {
-	    pts_dbl[i] = 0;
+    /* Compute per-ring circumferential segment counts.  See rt_epa_tess()
+     * for the full rationale.  The base ring (r1) drives nseg_base; rings
+     * toward the apex receive halved counts when tolerance allows, and rings
+     * too small for distinct vertices are skipped.
+     *
+     * Additionally, rings whose 3D vertex distance from the previous accepted
+     * ring is less than 2*tol->dist are skipped.  With tight normal tolerances
+     * the hyperbola profile subdivision can produce many closely-spaced rings
+     * near the apex (where dZ/dY → 0), and the resulting inter-ring triangles
+     * would be geometrically degenerate (height < tol->dist), causing
+     * nmg_fu_planeeqn to fail with "Cannot find three distinct vertices". */
+    {
+	int nseg_base = (int)rt_num_circular_segments(dtol, r1);
+	int k, n_valid = 0;
+	fastf_t min_ring_r;
+	fastf_t min_ring_sep_sq;	/* minimum squared 3D ring-to-ring vertex distance */
+	fastf_t *ring_r;
+	if (ntol < M_PI) {
+	    int nseg_ntol = (int)(M_PI / ntol) + 1;
+	    if (nseg_ntol > nseg_base) nseg_base = nseg_ntol;
 	}
-	theta_prev = theta_new;
+	if (nseg_base < 6) nseg_base = 6;
+	if (nseg_base % 2 != 0) nseg_base++;	/* ensure even for halvings */
 
-	ellipses[i] = (fastf_t *)bu_malloc(3*(nseg+1)*sizeof(fastf_t),
-					   "pts ell");
-	rt_ell(ellipses[i], V, A, B, nseg);
+	min_ring_r = 3.0 * (double)nseg_base * tol->dist / M_2PI;
 
-	i++;
-	pos_a = pos_a->next;
-	pos_b = pos_b->next;
+	/* Inter-ring triangle height ≈ sqrt(ΔY_a² + ΔZ²).  Require this to
+	 * exceed tol->dist with a 2× safety factor (4 = 2²) so nmg_fu_planeeqn
+	 * always finds three geometrically distinct vertices.  The 2× factor
+	 * guards against floating-point rounding at the boundary. */
+	min_ring_sep_sq = 4.0 * tol->dist * tol->dist;
+
+	/* Pre-pass: count valid rings, applying both the radius guard and the
+	 * 3D separation guard.  Track the previous accepted ring's profile
+	 * position (Y_a, Y_b, Z) starting from the apex. */
+	{
+	    fastf_t prev_a_Y = 0.0, prev_b_Y = 0.0, prev_a_Z = pts_a->p[Z];
+	    pos_a = pts_a->next;
+	    pos_b = pts_b->next;
+	    while (pos_a) {
+		if (pos_a->p[Y] >= min_ring_r && pos_b->p[Y] >= min_ring_r) {
+		    fastf_t dY = pos_a->p[Y] - prev_a_Y;
+		    fastf_t dB = pos_b->p[Y] - prev_b_Y;
+		    fastf_t dZ = pos_a->p[Z] - prev_a_Z;
+		    fastf_t d_min = (dY < dB) ? dY : dB;
+		    if (d_min*d_min + dZ*dZ >= min_ring_sep_sq) {
+			n_valid++;
+			prev_a_Y = pos_a->p[Y];
+			prev_b_Y = pos_b->p[Y];
+			prev_a_Z = pos_a->p[Z];
+		    }
+		}
+		pos_a = pos_a->next;
+		pos_b = pos_b->next;
+	    }
+	}
+
+	if (n_valid > 0) {
+	    fastf_t prev_a_Y, prev_b_Y, prev_a_Z;
+	    ring_r = (fastf_t *)bu_malloc(n_valid * sizeof(fastf_t), "ring radii");
+	    k = 0;
+	    prev_a_Y = 0.0;
+	    prev_b_Y = 0.0;
+	    prev_a_Z = pts_a->p[Z];
+	    pos_a = pts_a->next;
+	    pos_b = pts_b->next;
+	    while (pos_a) {
+		if (pos_a->p[Y] >= min_ring_r && pos_b->p[Y] >= min_ring_r) {
+		    fastf_t dY = pos_a->p[Y] - prev_a_Y;
+		    fastf_t dB = pos_b->p[Y] - prev_b_Y;
+		    fastf_t dZ = pos_a->p[Z] - prev_a_Z;
+		    fastf_t d_min = (dY < dB) ? dY : dB;
+		    if (d_min*d_min + dZ*dZ >= min_ring_sep_sq) {
+			ring_r[k++] = pos_a->p[Y];
+			prev_a_Y = pos_a->p[Y];
+			prev_b_Y = pos_b->p[Y];
+			prev_a_Z = pos_a->p[Z];
+		    }
+		}
+		pos_a = pos_a->next;
+		pos_b = pos_b->next;
+	    }
+
+	    segs_per_ell[n_valid - 1] = nseg_base;
+	    for (k = n_valid - 2; k >= 0; k--) {
+		int ns_ideal = (int)rt_num_circular_segments(dtol, ring_r[k]);
+		int halved;
+		if (ntol < M_PI) {
+		    int ns_ntol = (int)(M_PI / ntol) + 1;
+		    if (ns_ntol > ns_ideal) ns_ideal = ns_ntol;
+		}
+		if (ns_ideal < 6) ns_ideal = 6;
+		halved = (segs_per_ell[k + 1] % 2 == 0) ? (segs_per_ell[k + 1] / 2) : 0;
+		segs_per_ell[k] = (halved >= 6 && halved >= ns_ideal) ? halved : segs_per_ell[k + 1];
+	    }
+	    pts_dbl[0] = 0;
+	    for (k = 1; k < n_valid; k++)
+		pts_dbl[k] = (segs_per_ell[k] == 2 * segs_per_ell[k - 1]) ? 1 : 0;
+
+	    bu_free(ring_r, "ring radii");
+	}
+
+	/* Build ring ellipses using per-ring segment counts.  Apply the same
+	 * two-guard filter as the pre-pass above to keep i == n_valid. */
+	{
+	    fastf_t prev_a_Y = 0.0, prev_b_Y = 0.0, prev_a_Z = pts_a->p[Z];
+	    i = 0;
+	    pos_a = pts_a->next;	/* skip over apex of ehy */
+	    pos_b = pts_b->next;
+	    while (pos_a) {
+		/* Skip rings that are too small to support distinct vertices */
+		if (pos_a->p[Y] < min_ring_r || pos_b->p[Y] < min_ring_r) {
+		    pos_a = pos_a->next;
+		    pos_b = pos_b->next;
+		    continue;
+		}
+		/* Skip rings too close to the previous accepted ring */
+		{
+		    fastf_t dY = pos_a->p[Y] - prev_a_Y;
+		    fastf_t dB = pos_b->p[Y] - prev_b_Y;
+		    fastf_t dZ = pos_a->p[Z] - prev_a_Z;
+		    fastf_t d_min = (dY < dB) ? dY : dB;
+		    if (d_min*d_min + dZ*dZ < min_ring_sep_sq) {
+			pos_a = pos_a->next;
+			pos_b = pos_b->next;
+			continue;
+		    }
+		}
+
+		VSCALE(A, Au, pos_a->p[Y]);	/* semimajor axis */
+		VSCALE(B, Bu, pos_b->p[Y]);	/* semiminor axis */
+		VJOIN1(V, xip->ehy_V, -pos_a->p[Z], Hu);
+
+		ellipses[i] = (fastf_t *)bu_malloc(3*(segs_per_ell[i]+1)*sizeof(fastf_t),
+						   "pts ell");
+		rt_ell(ellipses[i], V, A, B, segs_per_ell[i]);
+
+		prev_a_Y = pos_a->p[Y];
+		prev_b_Y = pos_b->p[Y];
+		prev_a_Z = pos_a->p[Z];
+		i++;
+		pos_a = pos_a->next;
+		pos_b = pos_b->next;
+	    }
+	}
+	/* i is the actual count of rings built */
+	nell = (size_t)i;
+	nseg = (nell > 0) ? (size_t)segs_per_ell[nell - 1] : 0;
+    }
+
+    if (nell < 1) {
+	bu_log("rt_ehy_tess: nell=%zu too small (all rings filtered)\n", nell);
+	goto fail;
+    }
+
+    /* Exact face count: 1 top-cap polygon + apex fan + per-ring-pair triangles.
+     * When pts_dbl[top]=1 (top ring has twice the segments of bottom ring),
+     * each bottom segment yields 3 triangles; otherwise 2. */
+    {
+	size_t f;
+	face = 1 + (size_t)segs_per_ell[0];
+	for (f = 0; f < nell - 1; f++)
+	    face += (size_t)segs_per_ell[f] * (size_t)(pts_dbl[f + 1] ? 3 : 2);
+	if (face < 16) face = 16;
     }
 
     /*
@@ -1409,17 +1578,19 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
-    /* vertices of ellipses of ehy */
+    /* array for each triangular face */
+    outfaceuses = (struct faceuse **)
+	bu_malloc((face+1) * sizeof(struct faceuse *), "ehy: *outfaceuses[]");
+
+    /* vertices of ellipses of ehy: per-ring allocation */
     vells = (struct vertex ***)
 	bu_malloc(nell*sizeof(struct vertex **), "vertex [][]");
-    j = nseg;
-    for (i = nell; i > 0; i--) {
-	vells[i-1] = (struct vertex **)bu_malloc(j*sizeof(struct vertex *), "vertex []");
-	if ((i-1) && pts_dbl[i-1])
-	    j /= 2;
+    for (i = 0; i < nell; i++) {
+	vells[i] = (struct vertex **)bu_malloc((size_t)segs_per_ell[i]*sizeof(struct vertex *), "vertex []");
     }
 
-    /* top face of ehy */
+    /* top face of ehy (base ring, largest) */
+    nseg = (size_t)segs_per_ell[nell-1];
     for (i = 0; i < nseg; i++)
 	vells[nell-1][i] = (struct vertex *)NULL;
     face = 0;
@@ -1452,6 +1623,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* connect ellipses with triangles */
+    nseg = (size_t)segs_per_ell[nell-1];	/* start with base ring count */
     for (idx = nell-2; idx >= 0; idx--) {
 	/* skip top ellipse */
 	int bottom, top;
@@ -1539,6 +1711,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* connect bottom of ellipse to apex of ehy */
     VADD2(V, xip->ehy_V, xip->ehy_H);
+    nseg = (size_t)segs_per_ell[0];		/* apex fan uses ring-0 count */
     vertp[0] = (struct vertex *)0;
     vertp[1] = vells[0][1];
     vertp[2] = vells[0][0];
@@ -1573,9 +1746,6 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
-
-    /* XXX just for testing, to make up for loads of triangles ... */
-    nmg_shell_coplanar_face_merge(s, tol, 1, vlfree);
 
     /* free mem */
     bu_free((char *)outfaceuses, "faceuse []");
@@ -1626,6 +1796,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     bu_ptbl_free(&vert_tab);
+    bu_free((char *)segs_per_ell, "segs_per_ell");
     return 0;
 
 fail:
@@ -1636,6 +1807,8 @@ fail:
 	bu_free((char *)vells[i], "vertex []");
     }
     bu_free((char *)ellipses, "fastf_t ell[]");
+    bu_free((char *)pts_dbl, "dbl ints");
+    bu_free((char *)segs_per_ell, "segs_per_ell");
     bu_free((char *)vells, "vertex [][]");
 
     return -1;
@@ -2063,58 +2236,132 @@ void
 rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_ehy_internal *eip;
-    fastf_t a, b, h, integralArea, sqrt_rb;
+    fastf_t h, r, c, P, alpha, B, sqrtAlpha;
+    fastf_t u_top, u_bot, v_top, v_bot, F_top, F_bot;
+
+    if (!area || !ip)
+	return;
+
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(eip);
 
-    a = eip->ehy_c;
-    h = MAGNITUDE(eip->ehy_H);
-    b = (eip->ehy_r1 * a) / sqrt(h * (h - 2 * a));
-
-    /** Formula taken from : https://docs.google.com/file/d/0BydeQ6BPlVejRWt6NlJLVDl0d28/edit
-     * Area can be calculated by subtracting integral of hyperbola from the area of the bounding rectangle
+    /* For the elliptical case (r1 != r2) the lateral surface area requires
+     * an elliptic integral with no elementary closed form -- use Crofton.
      */
-    sqrt_rb = sqrt(eip->ehy_r1 * eip->ehy_r1 + b * b);
-    integralArea = (a / b) * ((eip->ehy_r1 * sqrt_rb) + ((b * b / 2) * (log(sqrt_rb + eip->ehy_r1) - log(sqrt_rb - eip->ehy_r1))));
-    *area = 2 * eip->ehy_r1 * (a + h) - integralArea;
+    if (!NEAR_EQUAL(eip->ehy_r1, eip->ehy_r2, RT_LEN_TOL)) {
+	do { static const struct rt_crofton_params _p = {50000u, 0.0, 0.0}; rt_crofton_sample(area, NULL, ip, &_p); } while (0);
+	return;
+    }
+
+    /* Circular case (r1 == r2 == r): the EHY is a surface of revolution.
+     *
+     * The profile radius at height h_dist along H is:
+     *   y(h_dist) = r * sqrt(((H+c-h_dist)^2 - c^2) / (H*(H+2*c)))
+     *
+     * Substituting u = H+c-h_dist and letting P = H*(H+2*c), the lateral
+     * surface area integral becomes:
+     *   SA_lat = 2*pi*r/P * integral_c^{H+c} sqrt(alpha*u^2 - B) du
+     * where alpha = P + r^2 and B = c^2 * P.
+     *
+     * The integral has the standard antiderivative:
+     *   F(u) = u/2 * sqrt(alpha*u^2 - B)
+     *         - B/(2*sqrt(alpha)) * log(sqrt(alpha)*u + sqrt(alpha*u^2 - B))
+     *
+     * At the lower bound u = c: alpha*c^2 - B = c^2*(alpha-P) = c^2*r^2 > 0.
+     * At the upper bound u = H+c: alpha*(H+c)^2 - B > 0 for any valid EHY.
+     *
+     * The flat circular base contributes pi*r^2.
+     */
+    h = MAGNITUDE(eip->ehy_H);
+    r = eip->ehy_r1;
+    c = eip->ehy_c;
+
+    P = h * (h + 2.0*c);		/* H*(H+2c) */
+    alpha = P + r*r;
+    B = c*c * P;
+    sqrtAlpha = sqrt(alpha);
+
+    /* Antiderivative F(u) = u/2*sqrt(alpha*u^2-B)
+     *                       - B/(2*sqrt(alpha)) * log(sqrt(alpha)*u + sqrt(alpha*u^2-B))
+     * evaluated at the bounds of the substituted integral.
+     * At u=c: alpha*c^2-B = c^2*(alpha-P) = c^2*r^2, simplified below.
+     */
+    u_top = h + c;
+    u_bot = c;
+    v_top = alpha*u_top*u_top - B;
+    v_bot = c*c * r*r;  /* = alpha*c^2 - B = c^2*r^2 (exact, avoids cancellation) */
+
+    {
+	fastf_t half_B_over_sqrtAlpha = B / (2.0*sqrtAlpha);
+	F_top = u_top/2.0*sqrt(v_top) - half_B_over_sqrtAlpha*log(sqrtAlpha*u_top + sqrt(v_top));
+	F_bot = u_bot/2.0*sqrt(v_bot) - half_B_over_sqrtAlpha*log(sqrtAlpha*u_bot + sqrt(v_bot));
+    }
+
+    *area = 2.0*M_PI*r/P * (F_top - F_bot) + M_PI*r*r;
+}
+
+
+void
+rt_ehy_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    struct rt_ehy_internal *eip;
+    fastf_t h, c;
+
+    if (!volume || !ip)
+	return;
+
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(eip);
+
+    h = MAGNITUDE(eip->ehy_H);
+    c = eip->ehy_c;
+
+    /* Each cross-section at height h_dist has elliptical area
+     *   A(h_dist) = pi*r1*r2 * ((H+c-h_dist)^2 - c^2) / (H*(H+2*c))
+     * Integrating from 0 to H yields:
+     *   Vol = pi * r1 * r2 * H * (H + 3*c) / (3 * (H + 2*c))
+     */
+    *volume = M_PI * eip->ehy_r1 * eip->ehy_r2 * h * (h + 3.0*c) / (3.0*(h + 2.0*c));
 }
 
 
 /**
- * The centroid lies along ehy_H due to symmetry.
- * Initially the distance of the centroid from the apex is found. The
- * coordinates of the points at this distance along the unit vector
- * gives the centroid of the elliptical hyperboloid of two sheets.
- * Formula taken from: https://docs.google.com/file/d/0BydeQ6BPlVejRWt6NlJLVDl0d28/edit
+ * The centroid of the EHY lies along H due to its bilateral symmetry.
+ *
+ * Each cross-section at distance h_dist from V (the wide base) is an ellipse
+ * with area A(h_dist) = pi*r1*r2 * f(h_dist)^2 where
+ *   f(h_dist)^2 = ((H+c-h_dist)^2 - c^2) / (H*(H+2*c))
+ *
+ * Integrating h_dist*A(h_dist) and dividing by the total volume gives a
+ * centroid distance from V of:
+ *   z_c = H * (H + 4*c) / (4 * (H + 3*c))
+ *
+ * This is independent of r1 and r2, so it applies to all valid EHY shapes.
  */
 void
 rt_ehy_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct rt_ehy_internal *eip;
-    fastf_t a, b, h, area, dist, pwr, dist_C;
-    vect_t h_vec, unit_vec;
-    point_t apex;
+    fastf_t h, c, z_c;
+    vect_t Hu;
+
+    if (!cent || !ip)
+	return;
+
     RT_CK_DB_INTERNAL(ip);
-    eip =  (struct rt_ehy_internal *)ip->idb_ptr;
+    eip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(eip);
 
-    a = eip->ehy_c;
     h = MAGNITUDE(eip->ehy_H);
-    b = (eip->ehy_r1 * a) / sqrt(h * h - 2 * a * h);
+    c = eip->ehy_c;
 
-    VMOVE(h_vec, eip->ehy_H);
-    VMOVE(apex, eip->ehy_V);
-    VSCALE(unit_vec, h_vec, (1 / h));
+    /* Centroid is at distance z_c from V (the wide base) along H */
+    z_c = h * (h + 4.0*c) / (4.0*(h + 3.0*c));
 
-    rt_ehy_surf_area( &area, ip);
-    pwr = pow(h * h + 2 * a * h, 3);
-    if(pwr < 0)
-	bu_log("invalid parameters.\n");
-    dist = ((2 * b) * sqrt(pwr)) / (3 * area * a);
-    dist_C = dist - a;
-
-    VJOIN1(*cent, apex, dist_C, unit_vec);
+    VSCALE(Hu, eip->ehy_H, 1.0/h);
+    VJOIN1(*cent, eip->ehy_V, z_c, Hu);
 }
 
 int
@@ -2193,6 +2440,60 @@ ehy_kpt_end:
     MAT4X3PNT(*pt, mat, mpt);
 
     return k;
+}
+
+int
+rt_ehy_perturb(struct rt_db_internal **oip, const struct rt_db_internal *ip, int planar_only, fastf_t val)
+{
+    if (NEAR_ZERO(val, SMALL_FASTF))
+	return BRLCAD_OK;
+
+    if (!oip || !ip)
+	return BRLCAD_ERROR;
+
+    struct rt_ehy_internal *oehy = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(oehy);
+
+    struct rt_db_internal *nip;
+    BU_GET(nip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(nip);
+    nip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    nip->idb_type = ID_EHY;
+    nip->idb_meth = &OBJ[ID_EHY];
+    struct rt_ehy_internal *ehy = NULL;
+    BU_ALLOC(ehy, struct rt_ehy_internal);
+    nip->idb_ptr = ehy;
+    ehy->ehy_magic = RT_EHY_INTERNAL_MAGIC;
+    VMOVE(ehy->ehy_V, oehy->ehy_V);
+    VMOVE(ehy->ehy_H, oehy->ehy_H);
+    VMOVE(ehy->ehy_Au, oehy->ehy_Au);
+    ehy->ehy_r1 = oehy->ehy_r1;
+    ehy->ehy_r2 = oehy->ehy_r2;
+    ehy->ehy_c  = oehy->ehy_c;
+
+    /* Extend H (and move V back) to push the flat elliptic ends apart. */
+    vect_t hvec, hback;
+    VMOVE(hvec, ehy->ehy_H);
+    VUNITIZE(hvec);
+    VREVERSE(hback, hvec);
+    VSCALE(hback, hback, val);
+    VADD2(ehy->ehy_V, ehy->ehy_V, hback);
+    vect_t hext;
+    VSCALE(hext, hvec, 2.0 * val);
+    VADD2(ehy->ehy_H, ehy->ehy_H, hext);
+
+    if (planar_only) {
+	*oip = nip;
+	return BRLCAD_OK;
+    }
+
+    /* Also expand the base radii and asymptote distance. */
+    ehy->ehy_r1 += val;
+    ehy->ehy_r2 += val;
+    ehy->ehy_c  += val;
+
+    *oip = nip;
+    return BRLCAD_OK;
 }
 
 /** @} */
