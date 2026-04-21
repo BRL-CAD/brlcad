@@ -82,6 +82,9 @@ brlcad_addexec(rt_arb8 arb8_tests.c "librt;libwdb;libbg;libbu" TEST)
 brlcad_addexec(rt_search_stress search_stress.c "librt;libwdb;libbu" TEST)
 brlcad_add_test(NAME rt_search_stress COMMAND rt_search_stress)
 
+# Tessellation timing utility (no automated test, just a tool)
+brlcad_addexec(rt_tess_timing tess_timing.c "librt;libnmg;libwdb;libbu" NO_INSTALL)
+
 brlcad_addexec(bot_match bot_match.cpp "librt;libbg" TEST)
 
 # boolweave testing
@@ -89,6 +92,10 @@ brlcad_addexec(rt_boolweave rt_boolweave.c "librt" TEST)
 
 # Tests for primitive editing
 add_subdirectory(edit)
+
+# prim_tess: NMG tessellation quality tests
+brlcad_addexec(rt_prim_tess prim_tess.c "librt;libnmg;libwdb;libbg;libbu" TEST)
+brlcad_add_test(NAME rt_prim_tess COMMAND rt_prim_tess)
 
 # stand-alone Crofton estimator tests
 brlcad_addexec(rt_crofton crofton.c "librt;libwdb;libbu" TEST)
@@ -109,6 +116,8 @@ set(
   rt_perturb.c
   search_stress.c
   sketch.g
+  prim_tess.c
+  tess_timing.c
 )
 
 cmakefiles(${distcheck_files})
