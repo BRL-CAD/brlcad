@@ -63,8 +63,12 @@ struct coplanar_info {
     std::set<int> problem_indices;
 };
 
-// Tie the tc_hit checking tolerance to the backout distance
-#define RT_BOT_CHECK_TOL SQRT_SMALL_FASTF
+// Backout distance used to lift the ray origin off the face surface before
+// shooting inward.  Must be large enough that tcenter + n*TOL != tcenter in
+// double precision at any practical model-coordinate scale.  SQRT_SMALL_FASTF
+// (~1e-18) collapses to zero once vertex coordinates exceed ~1e4 mm; use
+// BN_TOL_DIST (0.0005 mm) instead so the offset is always representable.
+#define RT_BOT_CHECK_TOL BN_TOL_DIST
 
 static int
 _tc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
@@ -197,6 +201,146 @@ rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt
     }
 
     return found_thin;
+}
+
+/* -------------------------------------------------------------------------
+ * Near-tolerance CSG-miss check
+ *
+ * Detects faces whose inward ray produces a segment whose thickness falls in
+ * the range [VUNITIZE_TOL, BN_TOL_DIST).  Such segments are reported by the
+ * BoT raytracer but would be discarded by the CSG boolweave tolerance filter,
+ * creating a divergence between the BoT and the original CSG description.
+ *
+ * The typical cause is a subtractor primitive that protrudes just a sub-
+ * tolerance distance past a base face, creating a phantom thin cap in the
+ * Manifold result that is too thin to survive the CSG boolweave.
+ *
+ * Segments thinner than VUNITIZE_TOL are already caught by rt_bot_thin_check
+ * (degenerate mesh artifacts); this check targets the disjoint window above
+ * that but still below BN_TOL_DIST.
+ * -------------------------------------------------------------------------*/
+
+struct near_tol_info {
+    int is_near_tol;
+    int verbose;
+    int curr_tri;
+    std::set<int> problem_indices;
+};
+
+static int
+_ntc_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
+{
+    if (PartHeadp->pt_forw == PartHeadp)
+	return 1;
+
+    struct near_tol_info *ninfo = (struct near_tol_info *)ap->a_uptr;
+
+    struct seg *s = (struct seg *)segs->l.forw;
+    for (BU_LIST_FOR(s, seg, &(segs->l))) {
+	/* Only examine segments whose entrance is near the surface.
+	 * The ray starts at centroid + n*RT_BOT_CHECK_TOL (= BN_TOL_DIST), so
+	 * a genuine surface entrance lands at ~BN_TOL_DIST from origin.
+	 * 3× gives comfortable margin for floating-point spread without
+	 * letting deeper geometry interfere. */
+	if (s->seg_in.hit_dist > 3.0 * RT_BOT_CHECK_TOL)
+	    continue;
+
+	double thickness = s->seg_out.hit_dist - s->seg_in.hit_dist;
+
+	/* Flag segments in [VUNITIZE_TOL, BN_TOL_DIST).
+	 * - Below VUNITIZE_TOL: already reported by rt_bot_thin_check.
+	 * - At or above BN_TOL_DIST: normal geometry the CSG boolweave keeps.
+	 * - This window: real BoT hit that boolweave would discard as noise. */
+	if (thickness >= VUNITIZE_TOL && thickness < RT_BOT_CHECK_TOL) {
+	    ninfo->is_near_tol = 1;
+	    ninfo->problem_indices.insert(s->seg_in.hit_surfno);
+	    ninfo->problem_indices.insert(s->seg_out.hit_surfno);
+	}
+    }
+    return 0;
+}
+
+static int
+_ntc_miss(struct application *UNUSED(ap))
+{
+    /* A miss from the face-normal inward shot means the face is degenerate;
+     * that case is handled by rt_bot_thin_check, not here. */
+    return 0;
+}
+
+static int
+_ntc_overlap(struct application *UNUSED(ap),
+	struct partition *UNUSED(pp),
+	struct region *UNUSED(reg1),
+	struct region *UNUSED(reg2),
+	struct partition *UNUSED(hp))
+{
+    return 0;
+}
+
+int
+rt_bot_csg_miss_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, int verbose)
+{
+    if (!bot || bot->mode != RT_BOT_SOLID || !rtip || !bot->num_faces)
+	return 0;
+
+    int found_near_tol = 0;
+    struct near_tol_info ninfo;
+    ninfo.verbose = verbose;
+
+    struct application ap;
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i = rtip;
+    ap.a_hit = _ntc_hit;
+    ap.a_miss = _ntc_miss;
+    ap.a_overlap = _ntc_overlap;
+    ap.a_onehit = 0;
+    ap.a_resource = &rt_uniresource;
+    ap.a_uptr = (void *)&ninfo;
+
+    for (size_t i = 0; i < bot->num_faces; i++) {
+	ninfo.curr_tri = (int)i;
+	ninfo.is_near_tol = 0;
+
+	vect_t rnorm, n, backout;
+	if (!bot_face_normal(&n, bot, i))
+	    continue;
+
+	VMOVE(backout, n);
+	VSCALE(backout, backout, RT_BOT_CHECK_TOL);
+	VREVERSE(rnorm, n);
+
+	point_t rpnts[3];
+	point_t tcenter;
+	VMOVE(rpnts[0], &bot->vertices[bot->faces[i*3+0]*3]);
+	VMOVE(rpnts[1], &bot->vertices[bot->faces[i*3+1]*3]);
+	VMOVE(rpnts[2], &bot->vertices[bot->faces[i*3+2]*3]);
+	VADD3(tcenter, rpnts[0], rpnts[1], rpnts[2]);
+	VSCALE(tcenter, tcenter, 1.0/3.0);
+
+	VMOVE(ap.a_ray.r_dir, rnorm);
+	VADD2(ap.a_ray.r_pt, tcenter, backout);
+
+	(void)rt_shootray(&ap);
+
+	if (ninfo.is_near_tol) {
+	    found_near_tol = 1;
+	    ninfo.problem_indices.insert(i);
+	}
+
+	if (!ofaces && found_near_tol)
+	    break;
+    }
+
+    if (ofaces) {
+	std::set<int>::iterator p_it;
+	for (p_it = ninfo.problem_indices.begin(); p_it != ninfo.problem_indices.end(); ++p_it) {
+	    int ind = *p_it;
+	    bu_ptbl_ins(ofaces, (long *)(long)ind);
+	}
+    }
+
+    return found_near_tol;
 }
 
 // Local Variables:

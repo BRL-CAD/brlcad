@@ -228,6 +228,25 @@ RT_EXPORT extern int rt_bot_inside_out(struct rt_bot_internal *bot);
  * indices of the specific faces found to be problematic. */
 RT_EXPORT extern int rt_bot_thin_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, fastf_t tol, int verbose);
 
+/* Test whether a solid BoT has faces that produce raytrace segments with
+ * thickness in the range [VUNITIZE_TOL, BN_TOL_DIST).  Such segments are
+ * returned by the BoT raytracer but would be discarded by the CSG boolweave
+ * tolerance filter, indicating a potential divergence between the BoT and
+ * the original CSG description (the CSG raytracer would report MISS while
+ * the BoT solid reports HIT).
+ *
+ * The typical cause is a subtractor primitive that protrudes just a sub-
+ * tolerance distance past a base face, creating a phantom thin cap in the
+ * facetized mesh that is too thin to survive the CSG boolweave.
+ *
+ * Faces already flagged by rt_bot_thin_check (segment thickness < VUNITIZE_TOL,
+ * i.e. true mesh degeneracies) are in a disjoint thickness range and are not
+ * reported here.
+ *
+ * Returns 1 if a problem is found, else 0.  If ofaces is non-NULL, store the
+ * indices of the specific faces found to be problematic. */
+RT_EXPORT extern int rt_bot_csg_miss_check(struct bu_ptbl *ofaces, struct rt_bot_internal *bot, struct rt_i *rtip, int verbose);
+
 /* Function to remove a set of faces from a BoT and produce a new BoT */
 RT_EXPORT struct rt_bot_internal *
 rt_bot_remove_faces(struct bu_ptbl *rm_face_indices, const struct rt_bot_internal *obot);
