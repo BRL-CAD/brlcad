@@ -40,13 +40,10 @@
 #include <string>
 #include <vector>
 
-extern "C" {
-#include "fort.h"
-}
-
 #include "bu/cmd.h"
 #include "bu/color.h"
 #include "bu/opt.h"
+#include "bu/tbl.h"
 #include "bg/chull.h"
 #include "bg/pca.h"
 #include "bg/trimesh.h"
@@ -1003,7 +1000,7 @@ bot_strip_done:
 }
 
 static void
-bot_output(ft_table_t *table, struct db_i *dbip, struct directory *dp)
+bot_output(struct bu_tbl *table, struct db_i *dbip, struct directory *dp)
 {
     if (!table)
 	return;
@@ -1029,27 +1026,27 @@ bot_output(ft_table_t *table, struct db_i *dbip, struct directory *dp)
 
     // Object Path
     //db_path_to_vls(&str, fp);
-    ft_write(table, dp->d_namep);
+    bu_tbl_write(table, dp->d_namep);
 
     // Disk Size
     bu_vls_sprintf(&str, "%zd", dp->d_len);
-    ft_write(table, bu_vls_cstr(&str));
+    bu_tbl_write(table, bu_vls_cstr(&str));
 
     // Number of vertices
     bu_vls_sprintf(&str, "%zd", bot->num_vertices);
-    ft_write(table, bu_vls_cstr(&str));
+    bu_tbl_write(table, bu_vls_cstr(&str));
 
     // Number of faces
     bu_vls_sprintf(&str, "%zd", bot->num_faces);
-    ft_write(table, bu_vls_cstr(&str));
+    bu_tbl_write(table, bu_vls_cstr(&str));
 
     // Number of face normals
     bu_vls_sprintf(&str, "%zd", bot->num_face_normals);
-    ft_write(table, bu_vls_cstr(&str));
+    bu_tbl_write(table, bu_vls_cstr(&str));
 
     // Number of unit surface normals
     bu_vls_sprintf(&str, "%zd", bot->num_normals);
-    ft_write(table, bu_vls_cstr(&str));
+    bu_tbl_write(table, bu_vls_cstr(&str));
 
     // Orientation
     switch (bot->orientation) {
@@ -1062,7 +1059,7 @@ bot_output(ft_table_t *table, struct db_i *dbip, struct directory *dp)
 	default:
 	    bu_vls_sprintf(&str, "NONE");
     }
-    ft_write(table, bu_vls_cstr(&str));
+    bu_tbl_write(table, bu_vls_cstr(&str));
 
     // Mode
     switch (bot->mode) {
@@ -1081,15 +1078,15 @@ bot_output(ft_table_t *table, struct db_i *dbip, struct directory *dp)
 	default:
 	    bu_vls_trunc(&str, 0);
     }
-    ft_write(table, bu_vls_cstr(&str));
+    bu_tbl_write(table, bu_vls_cstr(&str));
 
     // UV Vert Cnt
     bu_vls_sprintf(&str, "%zd", bot->num_uvs);
-    ft_write(table, bu_vls_cstr(&str));
+    bu_tbl_write(table, bu_vls_cstr(&str));
 
     // UV Face Cnt
     bu_vls_sprintf(&str, "%zd", bot->num_face_uvs);
-    ft_write(table, bu_vls_cstr(&str));
+    bu_tbl_write(table, bu_vls_cstr(&str));
 
     // Attribute size
     struct db5_raw_internal raw;
@@ -1098,9 +1095,9 @@ bot_output(ft_table_t *table, struct db_i *dbip, struct directory *dp)
     } else {
 	bu_vls_trunc(&str, 0);
     }
-    ft_write(table, bu_vls_cstr(&str));
+    bu_tbl_write(table, bu_vls_cstr(&str));
 
-    ft_ln(table);
+    bu_tbl_style(table, BU_TBL_ROW_END);
 
     // Have what we need - clean up
     bu_free_external(&ext);
@@ -1130,29 +1127,32 @@ _bot_cmd_stat(void *bs, int argc, const char **argv)
     int path_cnt = db_ls(gb->gedp->dbip, DB_LS_HIDDEN, argv[0], &paths);
 
     // Set up table
-    ft_table_t *table = ft_create_table();
-    ft_set_border_style(table, FT_SIMPLE_STYLE);
+    struct bu_tbl *table = bu_tbl_create();
+    bu_tbl_style(table, BU_TBL_STYLE_LIST);
 
-    ft_write(table, "Object Path");
-    ft_write(table, "Disk Size");
-    ft_write(table, "Verts");
-    ft_write(table, "Faces");
-    ft_write(table, "Face Normals");
-    ft_write(table, "Surf Normals");
-    ft_write(table, "Orientation");
-    ft_write(table, "Mode");
-    ft_write(table, "UV Vert Cnt");
-    ft_write(table, "UV Face Cnt");
-    ft_write(table, "Attr Size");
-    ft_ln(table);
-    ft_add_separator(table);
+    bu_tbl_write(table, "Object Path");
+    bu_tbl_write(table, "Disk Size");
+    bu_tbl_write(table, "Verts");
+    bu_tbl_write(table, "Faces");
+    bu_tbl_write(table, "Face Normals");
+    bu_tbl_write(table, "Surf Normals");
+    bu_tbl_write(table, "Orientation");
+    bu_tbl_write(table, "Mode");
+    bu_tbl_write(table, "UV Vert Cnt");
+    bu_tbl_write(table, "UV Face Cnt");
+    bu_tbl_write(table, "Attr Size");
+    bu_tbl_style(table, BU_TBL_ROW_END);
+    bu_tbl_style(table, BU_TBL_ROW_SEPARATOR);
 
     for (int i = 0; i < path_cnt; i++) {
 	bot_output(table, gb->gedp->dbip, paths[i]);
     }
 
-    bu_vls_printf(gb->gedp->ged_result_str, "%s\n", ft_to_string(table));
-    ft_destroy_table(table);
+    struct bu_vls tstr = BU_VLS_INIT_ZERO;
+    bu_tbl_vls(&tstr, table);
+    bu_vls_printf(gb->gedp->ged_result_str, "%s\n", bu_vls_cstr(&tstr));
+    bu_vls_free(&tstr);
+    bu_tbl_destroy(table);
     bu_free(paths, "paths");
     return ret;
 }

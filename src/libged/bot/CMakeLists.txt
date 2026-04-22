@@ -47,13 +47,11 @@ set(
   repair.cpp
   smooth.cpp
   subdivide.cpp
-  ../../libbu/fort.c
 )
 
 set(
   BOT_LOCAL_INCLUDE_DIRS
   ${EIGEN3_INCLUDE_DIR}
-  ${BRLCAD_SOURCE_DIR}/src/libbu # for fort.h
   ${BOT_LOCAL_INCLUDE_DIRS}
 )
 

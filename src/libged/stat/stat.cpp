@@ -32,13 +32,13 @@
 #include <sstream>
 
 extern "C" {
-#include "fort.h"
 #include "../alphanum.h"
 }
 
 #include "bu/opt.h"
 #include "bu/ptbl.h"
 #include "bu/sort.h"
+#include "bu/tbl.h"
 #include "bu/units.h"
 #include "bu/vls.h"
 #include "rt/directory.h"
@@ -331,25 +331,25 @@ dpath_sort(void *paths, int path_cnt, const char *col_order, struct ged *gedp)
 }
 
 static void
-stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const char *key, int raw)
+stat_output(struct bu_tbl *table, struct ged *gedp, struct directory *dp, const char *key, int raw)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (BU_STR_EQUAL(key, "name")) {
-	ft_write(table, dp->d_namep);
+	bu_tbl_write(table, dp->d_namep);
 	return;
     }
 
     if (BU_STR_EQUAL(key, "uses")) {
 	bu_vls_sprintf(&str, "%ld", dp->d_uses);
-	ft_write(table, bu_vls_cstr(&str));
+	bu_tbl_write(table, bu_vls_cstr(&str));
 	bu_vls_free(&str);
 	return;
     }
 
     if (BU_STR_EQUAL(key, "refs")) {
 	bu_vls_sprintf(&str, "%ld", dp->d_nref);
-	ft_write(table, bu_vls_cstr(&str));
+	bu_tbl_write(table, bu_vls_cstr(&str));
 	bu_vls_free(&str);
 	return;
     }
@@ -357,7 +357,7 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
     if (BU_STR_EQUAL(key, "flags")) {
 	// TODO - some sort of human intuitive printing
 	bu_vls_sprintf(&str, "%d", dp->d_flags);
-	ft_write(table, bu_vls_cstr(&str));
+	bu_tbl_write(table, bu_vls_cstr(&str));
 	bu_vls_free(&str);
 	return;
     }
@@ -365,7 +365,7 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
     if (BU_STR_EQUAL(key, "major_type")) {
 	// TODO - some sort of human intuitive printing
 	bu_vls_sprintf(&str, "%d", dp->d_major_type);
-	ft_write(table, bu_vls_cstr(&str));
+	bu_tbl_write(table, bu_vls_cstr(&str));
 	bu_vls_free(&str);
 	return;
     }
@@ -373,7 +373,7 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
     if (BU_STR_EQUAL(key, "minor_type")) {
 	// TODO - some sort of human intuitive printing
 	bu_vls_sprintf(&str, "%d", dp->d_minor_type);
-	ft_write(table, bu_vls_cstr(&str));
+	bu_tbl_write(table, bu_vls_cstr(&str));
 	bu_vls_free(&str);
 	return;
     }
@@ -382,7 +382,7 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
     if (BU_STR_EQUAL(key, "type")) {
 	struct bu_vls tstr = BU_VLS_INIT_ZERO;
 	type_str(&tstr, dp, gedp->dbip);
-	ft_write(table, bu_vls_cstr(&tstr));
+	bu_tbl_write(table, bu_vls_cstr(&tstr));
 	bu_vls_free(&tstr);
 	return;
     }
@@ -397,7 +397,7 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
 				     BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
 	    bu_vls_printf(&str,  "%s", hlen);
 	}
-	ft_write(table, bu_vls_cstr(&str));
+	bu_tbl_write(table, bu_vls_cstr(&str));
 	bu_vls_free(&str);
 	return;
     }
@@ -418,9 +418,9 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
     }
 
     if (bu_avs_get(&avs, bu_vls_cstr(&str))) {
-	ft_write(table, bu_avs_get(&avs, bu_vls_cstr(&str)));
+	bu_tbl_write(table, bu_avs_get(&avs, bu_vls_cstr(&str)));
     } else {
-	ft_write(table, " ");
+	bu_tbl_write(table, " ");
     }
     bu_avs_free(&avs);
     bu_vls_free(&str);
@@ -565,16 +565,16 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     std::vector<std::string> keys = _stat_keys_split(std::string(bu_vls_cstr(&keys_str)));
 
     // Create table
-    ft_table_t *table = ft_create_table();
-    ft_set_border_style(table, FT_SIMPLE_STYLE);
+    struct bu_tbl *table = bu_tbl_create();
+    bu_tbl_style(table, BU_TBL_STYLE_LIST);
 
     // Set header (depends on verbosity)
     for (size_t i = 0; i < keys.size(); i++) {
 	// TODO - better pretty-printing of header strings - i.e. "Object Name" instead of "name"
-	ft_write(table, stat_key_prettyprint(keys[i].c_str()));
+	bu_tbl_write(table, stat_key_prettyprint(keys[i].c_str()));
     }
-    ft_ln(table);
-    ft_add_separator(table);
+    bu_tbl_style(table, BU_TBL_ROW_END);
+    bu_tbl_style(table, BU_TBL_ROW_SEPARATOR);
 
     // If we're going to filter, build the set of "allowed" objects
     if (bu_vls_strlen(&search_filter)) {
@@ -585,8 +585,11 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	// If we're not allowed *any* objects according to the filters, there's no point in
 	// doing any more work - just print the header and exit.
 	if (!BU_PTBL_LEN(&sobjs)) {
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", ft_to_string(table));
-	    ft_destroy_table(table);
+	    struct bu_vls tstr = BU_VLS_INIT_ZERO;
+	    bu_tbl_vls(&tstr, table);
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&tstr));
+	    bu_vls_free(&tstr);
+	    bu_tbl_destroy(table);
 	    bu_ptbl_free(&sobjs);
 	    bu_vls_free(&keys_str);
 	    bu_vls_free(&ofile);
@@ -637,17 +640,20 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	for (size_t k = 0; k < keys.size(); k++) {
 	    stat_output(table, gedp, dp, keys[k].c_str(), raw);
 	}
-	ft_ln(table);
+	bu_tbl_style(table, BU_TBL_ROW_END);
     }
     bu_ptbl_free(&objs);
 
+    struct bu_vls tstr = BU_VLS_INIT_ZERO;
+    bu_tbl_vls(&tstr, table);
     if (!fp) {
-	bu_vls_printf(gedp->ged_result_str, "%s\n", ft_to_string(table));
+	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&tstr));
     } else {
-	fprintf(fp, "%s\n", ft_to_string(table));
+	fprintf(fp, "%s\n", bu_vls_cstr(&tstr));
 	fclose(fp);
     }
-    ft_destroy_table(table);
+    bu_vls_free(&tstr);
+    bu_tbl_destroy(table);
     bu_ptbl_free(&sobjs);
     bu_vls_free(&keys_str);
     bu_vls_free(&ofile);

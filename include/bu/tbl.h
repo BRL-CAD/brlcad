@@ -214,6 +214,12 @@ bu_tbl_go_to(struct bu_tbl *, size_t row, size_t col);
 BU_EXPORT extern struct bu_tbl *
 bu_tbl_printf(struct bu_tbl *, const char *fmt, ...);
 
+/**
+ * write a single cell value at the current insertion point.
+ */
+BU_EXPORT extern struct bu_tbl *
+bu_tbl_write(struct bu_tbl *, const char *str);
+
 
 /**
  * print a table into a vls
