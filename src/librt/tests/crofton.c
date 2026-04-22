@@ -342,13 +342,13 @@ test_crofton_convergence_timing(void)
 	dbip, "cvg_sphere.s", "sphere r=25",
 	4.0 * M_PI * 25.0 * 25.0,
 	(4.0 / 3.0) * M_PI * 25.0 * 25.0 * 25.0,
-	300, targets, 3, &elapsed_total);
+	3000, targets, 3, &elapsed_total);
 
     failures += run_convergence_case(
 	dbip, "cvg_rcc.s", "rcc r=10 h=40",
 	2.0 * M_PI * 10.0 * (10.0 + 40.0),
 	M_PI * 10.0 * 10.0 * 40.0,
-	300, targets, 3, &elapsed_total);
+	3000, targets, 3, &elapsed_total);
 
     printf("  total convergence runtime: %.3fs\n", elapsed_total);
     if (elapsed_total > target_total) {
