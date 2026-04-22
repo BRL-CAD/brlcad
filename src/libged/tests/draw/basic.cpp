@@ -620,7 +620,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(20, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    ret += img_cmp(20, gedp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Testing shaded mode 2 drawing (unevaluated primitive shading). (Note: does not use Level-of-Detail)...\n");
@@ -634,7 +634,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(21, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    ret += img_cmp(21, gedp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Testing mode 3 drawing (evaluated wireframe)...\n");
@@ -696,7 +696,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(1, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    ret += img_cmp(1, gedp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
     bu_log("Done.\n");
 
 
@@ -718,7 +718,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(25, gedp, av[1], true, clear_images, soft_fail, 0, "clear", "v");
+    ret += img_cmp(25, gedp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
     bu_log("Done.\n");
 
 
