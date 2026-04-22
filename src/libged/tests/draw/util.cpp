@@ -198,7 +198,7 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 	    // inspection.
 	    if (soft_fail && clear_image)
 		bu_file_delete(bu_vls_cstr(&tname));
-
+#if 0
 	    // Dump an ascii rendering of the difference image to the log.  In
 	    // scenarios such as CI systems, where we don't have a way to
 	    // readily inspect the difference images, this output can still
@@ -213,7 +213,7 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 		char *aart = icv_ascii_art(diff_img, &iparams);
 		bu_log("%s\n", aart);
 	    }
-
+#endif
 	    // Done with images
 	    bu_vls_free(&tname);
 	    icv_destroy(ctrl);

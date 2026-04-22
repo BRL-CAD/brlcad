@@ -30,6 +30,8 @@
 #include <dm.h>
 #include <ged.h>
 
+#define ADIFF_THRES 20
+
 #include "../../dbi.h"
 
 extern "C" void ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data);
@@ -505,7 +507,7 @@ main(int ac, char *av[]) {
     s_av[12] = NULL;
     ged_exec_view(gedp, 12, s_av);
 
-    ret += img_cmp(12, gedp, av[1], false, clear_images, soft_fail, 30, "clear", "v");
+    ret += img_cmp(12, gedp, av[1], false, clear_images, soft_fail, ADIFF_THRES, "clear", "v");
 
     s_av[0] = "ae";
     s_av[1] = "10";
@@ -513,7 +515,7 @@ main(int ac, char *av[]) {
     s_av[3] = "11";
     s_av[4] = NULL;
     ged_exec_ae(gedp, 4, s_av);
-    ret += img_cmp(13, gedp, av[1], false, clear_images, soft_fail, 30, "clear", "v");
+    ret += img_cmp(13, gedp, av[1], false, clear_images, soft_fail, ADIFF_THRES, "clear", "v");
 
     s_av[0] = "ae";
     s_av[1] = "270";
@@ -521,7 +523,7 @@ main(int ac, char *av[]) {
     s_av[3] = "0";
     s_av[4] = NULL;
     ged_exec_ae(gedp, 4, s_av);
-    ret += img_cmp(14, gedp, av[1], false, clear_images, soft_fail, 30, "clear", "v");
+    ret += img_cmp(14, gedp, av[1], false, clear_images, soft_fail, ADIFF_THRES, "clear", "v");
 
     s_av[0] = "ae";
     s_av[1] = "48";
@@ -620,7 +622,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(20, gedp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
+    ret += img_cmp(20, gedp, av[1], true, clear_images, soft_fail, ADIFF_THRES, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Testing shaded mode 2 drawing (unevaluated primitive shading). (Note: does not use Level-of-Detail)...\n");
@@ -634,7 +636,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(21, gedp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
+    ret += img_cmp(21, gedp, av[1], true, clear_images, soft_fail, ADIFF_THRES, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Testing mode 3 drawing (evaluated wireframe)...\n");
@@ -648,7 +650,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(22, gedp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
+    ret += img_cmp(22, gedp, av[1], true, clear_images, soft_fail, ADIFF_THRES, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Testing mode 4 drawing (hidden lines)...\n");
@@ -676,7 +678,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(24, gedp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
+    ret += img_cmp(24, gedp, av[1], true, clear_images, soft_fail, ADIFF_THRES, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Test clearing of previous drawing mode (shaded and wireframe)...\n");
@@ -696,7 +698,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(1, gedp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
+    ret += img_cmp(1, gedp, av[1], true, clear_images, soft_fail, ADIFF_THRES, "clear", "v");
     bu_log("Done.\n");
 
 
@@ -718,7 +720,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(25, gedp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
+    ret += img_cmp(25, gedp, av[1], true, clear_images, soft_fail, ADIFF_THRES, "clear", "v");
     bu_log("Done.\n");
 
 
@@ -747,7 +749,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(26, gedp, av[1], true, clear_images, soft_fail, 30, "clear", "v");
+    ret += img_cmp(26, gedp, av[1], true, clear_images, soft_fail, ADIFF_THRES, "clear", "v");
     bu_log("Done.\n");
 
     ged_close(gedp);
