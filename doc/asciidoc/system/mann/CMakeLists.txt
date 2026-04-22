@@ -29,6 +29,7 @@ set(
   bot_check.adoc
   bot_condense.adoc
   bot_decimate.adoc
+  bot_exterior.adoc
   bot_extrude.adoc
   bot_face_fuse.adoc
   bot_face_sort.adoc

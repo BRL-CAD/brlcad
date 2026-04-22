@@ -1,0 +1,193 @@
+= BOT_EXTERIOR(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+bot_exterior - Reduce a BoT solid to only its exterior (outward-facing) faces.
+
+== SYNOPSIS
+
+[source]
+----
+bot exterior [options] {input_bot} [output_name]
+----
+
+
+[[description]]
+== DESCRIPTION
+
+*bot exterior* analyses a closed solid BoT (Bag of Triangles) mesh and removes every face that is not visible from outside the object, retaining only those triangles that belong to the exterior shell.
+
+=== Methods
+
+Two classification methods are available:
+
+*Cauchy-Crofton ray sampling (default)*::
+  Random chord rays are fired uniformly through a bounding sphere enclosing the model.
+  For each ray the first surface hit (entry) and the last surface hit (exit) are marked as
+  exterior faces.  Simultaneously, a surface-area estimate is computed using the
+  Cauchy-Crofton formula; when that estimate changes by less than 1 % across two successive
+  batches of rays the broad sweep is deemed to have converged.
++
+After the global sweep any faces still unclassified are subjected to a *second focused pass*
+where rays are fired from random points on the triangle itself in uniformly random directions.
+Per-face sampling continues until either the face is confirmed exterior, the Cauchy-Crofton
+estimate for that face's solid angle has converged (implying interior), or a per-face time
+budget derived from the first-pass duration is exhausted.
++
+Both passes run in parallel across all available CPU cores.
+
+*Flood-fill / water-filling (--flood-fill, requires OpenVDB)*::
+  The model is voxelised and a BFS flood-fill from the bounding-box boundary identifies
+  all voxels reachable from outside.  A face is exterior when any adjacent voxel is
+  reachable.  If OpenVDB support was not compiled in the command falls back to
+  Cauchy-Crofton ray sampling.
+
+=== Output
+
+If _output_name_ is not supplied the result is written to a new object named
+_input_bot_exterior_.  Use *-i* / *--in-place* to replace the input BoT directly.
+If _output_name_ already exists the command returns an error rather than overwriting
+existing data.
+
+The output mesh is condensed: vertices that are no longer referenced by any remaining
+face are removed.  The result is a solid-mode BoT with only exterior faces.
+
+
+[[options]]
+== OPTIONS
+
+*-h*, *--help*::
+  Print command help and exit.
+
+*-i*, *--in-place*::
+  Overwrite the input BoT in-place.  Exactly one object name must be given and
+  no _output_name_ should be specified.
+
+*-f*, *--flood-fill*::
+  Use the voxel flood-fill (water-filling) classification method instead of
+  Cauchy-Crofton ray sampling.  Requires OpenVDB support compiled in; if
+  unavailable the command falls back to ray sampling.
+
+*-v*, *--verbose*::
+  Print extra diagnostic metrics after each phase completes:
++
+  * Phase 1 summary (iteration count, wall-clock time, final SA estimate).
+  * Phase 2 flip-time statistics: the wall-clock time from the start of
+    per-face sampling until each face was first confirmed exterior.  Reported
+    as maximum and average over all confirmed-exterior faces.
+
+*--voxel-size* _size_::
+  Edge length in mm of each voxel for the flood-fill method.  When omitted
+  the size is computed automatically from the model's bounding box.
+
+*--visibility-threshold* _ratio_::
+  When set to a value greater than zero, enables *visibility-threshold mode*
+  for the second pass.  In this mode every unclassified face is sampled until
+  the per-face time budget is exhausted and is then included in the output
+  only if the fraction of fired rays that saw the face (as either an entry or
+  exit surface) equals or exceeds _ratio_.
++
+  _ratio_ must be in the range [0, 1].  A value of 0 (the default) disables
+  the feature entirely.  A value of 1 requires that every fired ray be able
+  to observe the face, which in practice will exclude almost all geometry
+  because rays can always miss due to random direction sampling.  Practical
+  values are typically in the range 0.01–0.5; for example,
+  *--visibility-threshold=0.1* requires that at least one ray in ten fired at
+  a face can observe it from outside before it is retained.  Setting the ratio
+  higher produces a more conservative result at the cost of more processing time.
++
+  Default: *0* (disabled).  This mode is considerably slower than the default
+  because it cannot stop sampling a face the instant a single exterior hit is
+  found; it must always exhaust the per-face budget to collect a representative
+  sample.
+
+*--visibility-strict*::
+  When *both* this flag and *--visibility-threshold* are set, the command also
+  re-examines every face that was accepted by the first-pass global sweep using
+  the same visibility threshold test.  Each such face is re-sampled with the
+  same per-face budget and rejected if the visibility ratio falls below the
+  threshold.
++
+  This provides the most conservative exterior extraction at the highest cost.
+  Because the first-pass sweep is a very coarse scan the fraction of phase-1
+  faces that would be rejected by the threshold is typically small, but the
+  additional sampling work can be substantial on complex models.  This option
+  has no effect unless *--visibility-threshold* > 0 is also specified.
+
+
+[[examples]]
+== EXAMPLES
+
+.Basic exterior extraction
+[example]
+====
+mged> **bot exterior havoc.bot**
+
+Extracts the exterior shell of _havoc.bot_ and writes the result to
+_havoc.bot_exterior_.
+
+====
+
+.In-place extraction
+[example]
+====
+mged> **bot exterior -i havoc.bot**
+
+Replaces _havoc.bot_ with its exterior shell.  The original full mesh is lost.
+
+====
+
+.Specify output name
+[example]
+====
+mged> **bot exterior havoc.bot havoc_shell**
+
+Writes the exterior shell to the new object _havoc_shell_.
+
+====
+
+.Visibility threshold (conservative exterior)
+[example]
+====
+mged> **bot exterior --visibility-threshold=0.1 havoc.bot havoc_vis**
+
+Includes a face in the second pass only if at least 10 % of rays fired at it
+can see it as an exterior surface.  Lightly visible faces (e.g. thin slivers
+in deep cavities) are excluded.  Slower than the default.
+
+====
+
+.Visibility strict mode (maximum conservatism)
+[example]
+====
+mged> **bot exterior --visibility-threshold=0.05 --visibility-strict havoc.bot havoc_strict**
+
+Both second-pass faces and first-pass faces must pass a 5 % visibility ratio
+check before being retained.  This is the most conservative and most expensive
+mode.
+
+====
+
+.Flood-fill method
+[example]
+====
+mged> **bot exterior --flood-fill havoc.bot havoc_flood**
+
+Uses the voxel water-filling method (requires OpenVDB).  Falls back to
+Cauchy-Crofton ray sampling if OpenVDB is unavailable.
+
+====
+
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

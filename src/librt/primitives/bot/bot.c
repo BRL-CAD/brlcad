@@ -4397,56 +4397,78 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 int
 rt_bot_condense(struct rt_bot_internal *bot)
 {
-    size_t i, j, k;
+    size_t i;
     size_t num_verts;
     size_t dead_verts = 0;
-    int *verts;
+    int *used;
+    int *remap;
 
     RT_BOT_CK_MAGIC(bot);
 
     num_verts = bot->num_vertices;
-    verts = (int *)bu_calloc(num_verts, sizeof(int), "rt_bot_condense: verts");
 
-    /* walk the list of vertices, and mark each one if it is used */
+    /* Mark each vertex that is referenced by at least one face. */
+    used = (int *)bu_calloc(num_verts, sizeof(int), "rt_bot_condense: used");
 
-    for (i = 0; i < bot->num_faces*3; i++) {
-	j = bot->faces[i];
-	if (j >= num_verts) {
-	    bu_log("Illegal vertex number %zu, should be 0 through %zu\n", j, num_verts-1);
+    for (i = 0; i < bot->num_faces * 3; i++) {
+	int fi = bot->faces[i];
+	if (fi < 0 || (size_t)fi >= num_verts) {
+	    bu_log("Illegal vertex number %d, should be 0 through %zu\n", fi, num_verts-1);
+	    bu_free(used, "rt_bot_condense: used");
 	    bu_bomb("Illegal vertex number\n");
 	}
-	verts[j] = 1;
+	used[(size_t)fi] = 1;
     }
 
-    /* Walk the list of vertices, eliminate each unused vertex by
-     * copying the rest of the array downwards
-     */
-    for (i = 0; i < num_verts-dead_verts; i++) {
-	while (!verts[i] && i < num_verts-dead_verts) {
+    /* Count unused vertices early so we can bail cheaply. */
+    for (i = 0; i < num_verts; i++) {
+	if (!used[i])
 	    dead_verts++;
-	    for (j = i; j < num_verts-dead_verts; j++) {
-		k = j+1;
-		VMOVE(&bot->vertices[j*3], &bot->vertices[k*3]);
-		verts[j] = verts[k];
-	    }
-	    for (j = 0; j < bot->num_faces * 3; j++) {
-		if ((size_t)bot->faces[j] >= i)
-		    bot->faces[j]--;
-	    }
+    }
+
+    if (!dead_verts) {
+	bu_free(used, "rt_bot_condense: used");
+	return 0;
+    }
+
+    /* Build a remap table: remap[old_index] = new_index (or -1 if unused).
+     * Because we assign new indices in ascending order, remap[i] <= i always,
+     * so the in-place vertex compaction below is safe from aliasing.
+     */
+    remap = (int *)bu_malloc(num_verts * sizeof(int), "rt_bot_condense: remap");
+    {
+	int new_idx = 0;
+	for (i = 0; i < num_verts; i++) {
+	    remap[i] = used[i] ? new_idx++ : -1;
+	}
+    }
+    bu_free(used, "rt_bot_condense: used");
+
+    /* Remap face indices in a single O(num_faces) pass.
+     * All face indices were already validated as [0, num_verts) in the
+     * marking loop above, so remap[bot->faces[i]] is always in bounds.
+     */
+    for (i = 0; i < bot->num_faces * 3; i++) {
+	bot->faces[i] = remap[bot->faces[i]];
+    }
+
+    /* Compact the vertex array in a single O(num_verts) pass.
+     * remap[i] <= i, so destinations never overlap sources not yet read.
+     */
+    for (i = 0; i < num_verts; i++) {
+	if (remap[i] >= 0) {
+	    VMOVE(&bot->vertices[remap[i] * 3], &bot->vertices[i * 3]);
 	}
     }
 
-    bu_free((char *)verts, "rt_bot_condense: verts");
+    bu_free(remap, "rt_bot_condense: remap");
 
-    if (!dead_verts) return 0;
-
-    /* Reallocate the vertex array (which should free the space we are
-     * no longer using)
-     */
     bot->num_vertices -= dead_verts;
-    bot->vertices = (fastf_t *)bu_realloc(bot->vertices, bot->num_vertices*3*sizeof(fastf_t), "rt_bot_condense: realloc vertices");
+    bot->vertices = (fastf_t *)bu_realloc(bot->vertices,
+					  bot->num_vertices * 3 * sizeof(fastf_t),
+					  "rt_bot_condense: realloc vertices");
 
-    return dead_verts;
+    return (int)dead_verts;
 }
 
 
