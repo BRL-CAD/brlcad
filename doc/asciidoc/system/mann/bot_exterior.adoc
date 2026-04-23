@@ -17,26 +17,27 @@ bot exterior [options] {input_bot} [output_name]
 [[description]]
 == DESCRIPTION
 
-*bot exterior* analyses a closed solid BoT (Bag of Triangles) mesh and removes every face that is not visible from outside the object, retaining only those triangles that belong to the exterior shell.
+*bot exterior* analyses a closed solid, non-plate-mode BoT (Bag of Triangles)
+mesh and removes every face that is not classified as exterior, retaining only
+those triangles that belong to the exterior shell.
 
 === Methods
 
 Two classification methods are available:
 
-*Cauchy-Crofton ray sampling (default)*::
-  Random chord rays are fired uniformly through a bounding sphere enclosing the model.
-  For each ray the first surface hit (entry) and the last surface hit (exit) are marked as
-  exterior faces.  Simultaneously, a surface-area estimate is computed using the
-  Cauchy-Crofton formula; when that estimate changes by less than 1 % across two successive
-  batches of rays the broad sweep is deemed to have converged.
+*Per-triangle Cauchy-Crofton ray sampling (default)*::
+  Rays are fired from random points on each triangle in uniformly random
+  directions.  A triangle is marked exterior when it appears as the first or
+  last surface hit of any ray.
 +
-After the global sweep any faces still unclassified are subjected to a *second focused pass*
-where rays are fired from random points on the triangle itself in uniformly random directions.
-Per-face sampling continues until either the face is confirmed exterior, the Cauchy-Crofton
-estimate for that face's solid angle has converged (implying interior), or a per-face time
-budget derived from the first-pass duration is exhausted.
+  The same rays also drive a Cauchy-Crofton surface-area estimate normalized by
+  the triangle's bounding-sphere area.  If the estimate stabilizes within the
+  configured convergence threshold over two successive ray batches, and no
+  exterior hit has been observed, the face is treated as interior.
 +
-Both passes run in parallel across all available CPU cores.
+  Sampling is parallelized across available CPU cores.  Rays aimed at one face
+  may opportunistically classify other first/last-hit faces, allowing the work
+  queue to prune itself without a separate global sweep.
 
 *Flood-fill / water-filling (--flood-fill, requires OpenVDB)*::
   The model is voxelised and a BFS flood-fill from the bounding-box boundary identifies
@@ -51,8 +52,8 @@ _input_bot_exterior_.  Use *-i* / *--in-place* to replace the input BoT directly
 If _output_name_ already exists the command returns an error rather than overwriting
 existing data.
 
-The output mesh is condensed: vertices that are no longer referenced by any remaining
-face are removed.  The result is a solid-mode BoT with only exterior faces.
+The output mesh is condensed: vertices that are no longer referenced by any
+remaining face are removed.  The result is a BoT containing only exterior faces.
 
 
 [[options]]
@@ -71,23 +72,22 @@ face are removed.  The result is a solid-mode BoT with only exterior faces.
   unavailable the command falls back to ray sampling.
 
 *-v*, *--verbose*::
-  Print extra diagnostic metrics after each phase completes:
+  Print extra diagnostic metrics:
 +
-  * Phase 1 summary (iteration count, wall-clock time, final SA estimate).
-  * Phase 2 flip-time statistics: the wall-clock time from the start of
-    per-face sampling until each face was first confirmed exterior.  Reported
-    as maximum and average over all confirmed-exterior faces.
+  * Total elapsed classification time and exterior-face count.
+  * Flip-time statistics: the wall-clock time from the start of per-face
+    sampling until each face was first confirmed exterior.  Reported as maximum
+    and average over all confirmed-exterior faces.
 
 *--voxel-size* _size_::
   Edge length in mm of each voxel for the flood-fill method.  When omitted
   the size is computed automatically from the model's bounding box.
 
 *--visibility-threshold* _ratio_::
-  When set to a value greater than zero, enables *visibility-threshold mode*
-  for the second pass.  In this mode every unclassified face is sampled until
-  the per-face time budget is exhausted and is then included in the output
-  only if the fraction of fired rays that saw the face (as either an entry or
-  exit surface) equals or exceeds _ratio_.
+  When set to a value greater than zero, enables *visibility-threshold mode*.
+  In this mode each face is sampled until the per-face time budget is exhausted
+  and is then included in the output only if the fraction of fired rays that
+  saw the face (as either an entry or exit surface) equals or exceeds _ratio_.
 +
   _ratio_ must be in the range [0, 1].  A value of 0 (the default) disables
   the feature entirely.  A value of 1 requires that every fired ray be able
@@ -101,20 +101,24 @@ face are removed.  The result is a solid-mode BoT with only exterior faces.
   Default: *0* (disabled).  This mode is considerably slower than the default
   because it cannot stop sampling a face the instant a single exterior hit is
   found; it must always exhaust the per-face budget to collect a representative
-  sample.
+  sample.  This option has no effect with *--flood-fill*.
 
-*--visibility-strict*::
-  When *both* this flag and *--visibility-threshold* are set, the command also
-  re-examines every face that was accepted by the first-pass global sweep using
-  the same visibility threshold test.  Each such face is re-sampled with the
-  same per-face budget and rejected if the visibility ratio falls below the
-  threshold.
+*-c*, *--convergence-threshold* _percent_::
+  In the default ray-sampling method, do not declare a face interior until the
+  per-face Cauchy-Crofton estimate is stable to within _percent_ over two
+  successive ray batches.
 +
-  This provides the most conservative exterior extraction at the highest cost.
-  Because the first-pass sweep is a very coarse scan the fraction of phase-1
-  faces that would be rejected by the threshold is typically small, but the
-  additional sampling work can be substantial on complex models.  This option
-  has no effect unless *--visibility-threshold* > 0 is also specified.
+  Default: *1.0*.  Lower values make the classifier try harder before deciding
+  a face is interior, usually at the cost of more rays.
+
+*--per-face-budget* _sec_::
+  Hard wall-clock time limit for sampling each face in the default ray-sampling
+  method.
++
+  Default: *0* (unlimited).  When set to zero, the command relies solely on
+  the convergence test to stop sampling interior faces.  In
+  visibility-threshold mode, a positive budget is typically needed for the
+  threshold to have practical effect.
 
 
 [[examples]]
@@ -151,22 +155,22 @@ Writes the exterior shell to the new object _havoc_shell_.
 .Visibility threshold (conservative exterior)
 [example]
 ====
-mged> **bot exterior --visibility-threshold=0.1 havoc.bot havoc_vis**
+mged> **bot exterior --visibility-threshold=0.1 --per-face-budget=0.5 havoc.bot havoc_vis**
 
-Includes a face in the second pass only if at least 10 % of rays fired at it
-can see it as an exterior surface.  Lightly visible faces (e.g. thin slivers
-in deep cavities) are excluded.  Slower than the default.
+Samples each face for up to half a second and retains it only if at least
+10 % of fired rays see it as an exterior surface.  Lightly visible faces
+(e.g. thin slivers in deep cavities) are excluded.  Slower than the default.
 
 ====
 
-.Visibility strict mode (maximum conservatism)
+.Custom convergence threshold
 [example]
 ====
-mged> **bot exterior --visibility-threshold=0.05 --visibility-strict havoc.bot havoc_strict**
+mged> **bot exterior -c 0.25 havoc.bot havoc_precise**
 
-Both second-pass faces and first-pass faces must pass a 5 % visibility ratio
-check before being retained.  This is the most conservative and most expensive
-mode.
+Requires the surface-area estimate to stabilize within 0.25 % before a face is
+declared interior, which generally increases sampling work relative to the
+default 1 % threshold.
 
 ====
 
