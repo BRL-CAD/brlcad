@@ -245,10 +245,13 @@ extern const char *rt_binunif_type_to_string(int type);
 /**
  * Minimum normal (angle) tessellation tolerance (radians).  π/360 ≈ 0.00873 rad
  * (0.5°).  At this angle a full circle requires 720 segments — already very
- * dense - we go one order below that.
+ * dense.  Going too much lower than this will quickly result in primitives like
+ * ELL generating enormous numbers of faces and pushing beyond NMG's limits,
+ * resulting in catastrophic user experiences and failed conversions.
+ *
  * May be overridden with RT_PRIM_MIN_NORM_TOL env variable.
  */
-#define PRIM_MIN_NORM_TOL (M_PI / 360.0) * 0.1
+#define PRIM_MIN_NORM_TOL (M_PI / 360.0)
 
 extern void primitive_hitsort(struct hit h[], int nh);
 
