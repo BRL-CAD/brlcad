@@ -137,7 +137,7 @@ get_aabb(db_i &db, const db_full_path &path)
     rt_prep_parallel(rti.ptr, 0);
     std::stack<const tree *> stack;
 
-    for (std::size_t i = 0; i < rti.ptr->nregions; ++i)
+    for (std::size_t i = 0; i < rti.ptr->stats.nregions; ++i)
 	stack.push(rti.ptr->Regions[i]->reg_treetop);
 
     std::pair<btVector3, btVector3> result(btVector3(0.0, 0.0, 0.0),

@@ -583,10 +583,10 @@ do_ae(double azim, double elev)
     if (rtip == NULL)
 	return;
 
-    if (rtip->nsolids <= 0)
+    if (rtip->stats.nsolids <= 0)
 	bu_exit(EXIT_FAILURE, "ERROR: no primitives active\n");
 
-    if (rtip->nregions <= 0)
+    if (rtip->stats.nregions <= 0)
 	bu_exit(EXIT_FAILURE, "ERROR: no regions active\n");
 
     if (rtip->mdl_max[X] >= INFINITY) {

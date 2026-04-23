@@ -1833,9 +1833,7 @@ draw_m3(struct bv_scene_obj *s)
     if (!path || rt_gettrees(dgcdp.rtip, 1, (const char **)&path, 1)) {
 	bu_ptbl_free(&dgcdp.leaf_list);
 
-	/* do not do an rt_free_rti() (closes the database!!!!) */
-	rt_clean(dgcdp.rtip);
-	bu_free((char *)dgcdp.rtip, "rt_i structure for 'E'");
+	rt_free_rti(dgcdp.rtip);
 	return BRLCAD_ERROR;
     }
 
@@ -1854,9 +1852,7 @@ draw_m3(struct bv_scene_obj *s)
 	bu_ptbl_reset(&dgcdp.leaf_list);
     }
 
-    /* do not do an rt_free_rti() (closes the database!!!!) */
-    rt_clean(dgcdp.rtip);
-    bu_free((char *)dgcdp.rtip, "rt_i structure for 'E'");
+    rt_free_rti(dgcdp.rtip);
 
     /* free leaf_list */
     bu_ptbl_free(&dgcdp.leaf_list);

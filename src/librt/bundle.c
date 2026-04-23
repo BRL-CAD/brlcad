@@ -156,7 +156,7 @@ rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays)
 	BU_ASSERT(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) != NULL);
     }
 
-    solidbits = rt_get_solidbitv(rtip->nsolids, resp);
+    solidbits = rt_get_solidbitv(rtip->stats.nsolids, resp);
 
     if (BU_LIST_IS_EMPTY(&resp->re_region_ptbl)) {
 	BU_ALLOC(regionbits, struct bu_ptbl);

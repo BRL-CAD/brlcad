@@ -664,7 +664,7 @@ prepare(void)
 
     do_prep(rtip);
 
-    if (rtip->nsolids <= 0)
+    if (rtip->stats.nsolids <= 0)
 	bu_exit(3, "ph_matrix: No solids remain after prep.\n");
 
     {
@@ -677,13 +677,13 @@ prepare(void)
     /* initialize lighting */
     view_2init(&APP, NULL);
 
-    rtip->nshots = 0;
-    rtip->nmiss_model = 0;
-    rtip->nmiss_tree = 0;
-    rtip->nmiss_solid = 0;
-    rtip->nmiss = 0;
-    rtip->nhits = 0;
-    rtip->rti_nrays = 0;
+    rtip->stats.nshots = 0;
+    rtip->stats.nmiss_model = 0;
+    rtip->stats.nmiss_tree = 0;
+    rtip->stats.nmiss_solid = 0;
+    rtip->stats.nmiss = 0;
+    rtip->stats.nhits = 0;
+    rtip->stats.rti_nrays = 0;
 
 }
 
@@ -730,14 +730,14 @@ ph_lines(struct pkg_conn *UNUSED(pc), char *buf)
     if (b-a+1 > srv_scanlen)
 	b = a + srv_scanlen - 1;
 
-    rtip->rti_nrays = 0;
+    rtip->stats.rti_nrays = 0;
     info.li_startpix = a;
     info.li_endpix = b;
     info.li_frame = fr;
 
     rt_prep_timer();
     do_run(a, b);
-    info.li_nrays = rtip->rti_nrays;
+    info.li_nrays = rtip->stats.rti_nrays;
     info.li_cpusec = rt_read_timer((char *)0, 0);
     info.li_percent = 42.0;	/* for now */
 

@@ -129,11 +129,11 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     for (BU_PTBL_FOR(rtipp, (struct rt_i **), &sub_dbip->i->dbi_clients)) {
 	char *ttp;
 	RT_CK_RTI(*rtipp);
-	ttp = (*rtipp)->rti_treetop;
+	ttp = (*rtipp)->i->rti_treetop;
 	if (ttp && BU_STR_EQUAL(ttp, bu_vls_addr(&sip->treetop))) {
 	    /* Re-cycle an already prepped rti */
 	    sub_rtip = *rtipp;
-	    sub_rtip->rti_uses++;
+	    sub_rtip->i->rti_uses++;
 
 	    bu_semaphore_release(RT_SEM_MODEL);
 
@@ -151,7 +151,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     RT_CK_RTI(sub_rtip);
 
     /* Set search term before leaving critical section */
-    sub_rtip->rti_treetop = bu_vls_strdup(&sip->treetop);
+    sub_rtip->i->rti_treetop = bu_vls_strdup(&sip->treetop);
 
     bu_semaphore_release(RT_SEM_MODEL);
 
@@ -194,7 +194,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	return -2;
     }
 
-    if (sub_rtip->nsolids <= 0) {
+    if (sub_rtip->stats.nsolids <= 0) {
 	bu_log("rt_submodel_prep(%s): %s No primitives found\n",
 	       stp->st_dp->d_namep, bu_vls_addr(&sip->file));
 	/* Can't call rt_free_rti(sub_rtip) because it may have

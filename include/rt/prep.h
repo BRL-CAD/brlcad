@@ -47,8 +47,8 @@ struct rt_reprep_obj_list {
     struct bu_ptbl paths;       /**< @brief  list of all paths from topobjs to unprepped objects */
     struct db_tree_state **tsp; /**< @brief  tree state used by tree walker in "reprep" routines */
     struct bu_ptbl unprep_regions;      /**< @brief  list of region structures that will be "unprepped" */
-    size_t old_nsolids;         /**< @brief  rtip->nsolids before unprep */
-    size_t old_nregions;        /**< @brief  rtip->nregions before unprep */
+    size_t old_nsolids;         /**< @brief  rtip->stats.nsolids before unprep */
+    size_t old_nregions;        /**< @brief  rtip->stats.nregions before unprep */
     size_t nsolids_unprepped;   /**< @brief  number of soltab structures eliminated by unprep */
     size_t nregions_unprepped;  /**< @brief  number of region structures eliminated by unprep */
 };

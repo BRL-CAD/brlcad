@@ -107,6 +107,51 @@ struct db_i_internal * db_i_internal_create(void);
 void db_i_internal_destroy(struct db_i_internal *i);
 
 
+/**
+ * Private internal state for struct rt_i.  All fields listed under
+ * "THESE ITEMS SHOULD BE CONSIDERED OPAQUE" in rt_instance.h that
+ * have no external consumers are stored here.  Only librt code should
+ * ever touch this struct directly.
+ */
+struct rt_i_internal {
+    /* Space-partitioning / BSP internals */
+    union cutter        rti_inf_box;            /**< @brief  List of infinite solids */
+    union cutter *      rti_CutFree;            /**< @brief  cut Freelist */
+    struct bu_ptbl      rti_busy_cutter_nodes;  /**< @brief  List of "cutter" mallocs */
+    struct bu_ptbl      rti_cuts_waiting;       /**< @brief  nodes awaiting partitioning */
+    size_t              rti_cutlen;             /**< @brief  goal for # solids per boxnode */
+    size_t              rti_cutdepth;           /**< @brief  goal for depth of NUBSPT cut tree */
+
+    /* Per-type solid tables (filled during prep) */
+    struct soltab **    rti_sol_by_type[ID_MAX_SOLID+1];
+    size_t              rti_nsol_by_type[ID_MAX_SOLID+1];
+    size_t              rti_maxsol_by_type;
+
+    /* Active solid hash table */
+    struct bu_list      rti_solidheads[RT_DBNHASH]; /**< @brief  active solid lists */
+
+    /* Diagnostic histograms */
+    struct bu_hist      rti_hist_cellsize;      /**< @brief  occupancy of cut cells */
+    struct bu_hist      rti_hist_cell_pieces;   /**< @brief  solid pieces per cell */
+    struct bu_hist      rti_hist_cutdepth;      /**< @brief  depth of cut tree */
+
+    /* Counters */
+    size_t              rti_air_discards;       /**< @brief  # of air regions discarded */
+    size_t              rti_nsolids_with_pieces; /**< @brief  # solids using pieces */
+
+    /* rt_submodel parameters */
+    char *              rti_treetop;            /**< @brief  bu_strduped, for rt_submodel rti's only */
+    size_t              rti_uses;               /**< @brief  for rt_submodel */
+
+    /* Dynamic geometry */
+    int                 rti_add_to_new_solids_list;
+    struct bu_ptbl      rti_new_solids;
+};
+
+struct rt_i_internal * rt_i_internal_create(void);
+void rt_i_internal_destroy(struct rt_i_internal *i);
+
+
 /* Used by sketch extrude revolve */
 extern int curve_to_vlist(struct bu_list              *vlfree,
                          struct bu_list              *vhead,
@@ -164,7 +209,7 @@ extern const union cutter *rt_advance_to_next_cell(struct rt_shootray_status *ss
  * used by rt_shootray_bundle()
  * FIXME: non-public API shouldn't be using rt_ prefix
  */
-extern void rt_plot_cell(const union cutter *cutp, struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);
+extern void rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);
 
 /* db_fullpath.c */
 
@@ -245,13 +290,10 @@ extern const char *rt_binunif_type_to_string(int type);
 /**
  * Minimum normal (angle) tessellation tolerance (radians).  π/360 ≈ 0.00873 rad
  * (0.5°).  At this angle a full circle requires 720 segments — already very
- * dense.  Going too much lower than this will quickly result in primitives like
- * ELL generating enormous numbers of faces and pushing beyond NMG's limits,
- * resulting in catastrophic user experiences and failed conversions.
- *
+ * dense - we go one order below that.
  * May be overridden with RT_PRIM_MIN_NORM_TOL env variable.
  */
-#define PRIM_MIN_NORM_TOL (M_PI / 360.0)
+#define PRIM_MIN_NORM_TOL (M_PI / 360.0) * 0.1
 
 extern void primitive_hitsort(struct hit h[], int nh);
 

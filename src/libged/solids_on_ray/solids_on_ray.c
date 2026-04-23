@@ -135,8 +135,7 @@ skewer_solids(struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, 
     rtip->rti_dont_instance = 1;	/* full paths to solids, too. */
     if (rt_gettrees(rtip, argc, argv, 1) == -1) {
 	bu_vls_printf(gedp->ged_result_str, "rt_gettrees() failed\n");
-	rt_clean(rtip);
-	bu_free((void *)rtip, "struct rt_i");
+	rt_free_rti(rtip);
 	return (char **) 0;
     }
 
@@ -167,8 +166,7 @@ skewer_solids(struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, 
 
     (void) rt_shootray(&ap);
 
-    rt_clean(rtip);
-    bu_free((void *)rtip, "struct rt_i");
+    rt_free_rti(rtip);
 
     return (char **) ap.a_uptr;
 }

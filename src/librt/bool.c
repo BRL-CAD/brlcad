@@ -196,7 +196,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	if (stp)
 	    RT_CK_SOLTAB(stp);
 
-	if (stp && (size_t)stp->st_bit >= rtip->nsolids)
+	if (stp && (size_t)stp->st_bit >= rtip->stats.nsolids)
 	    bu_bomb("rt_boolweave: st_bit greater than nsolids");
 
 	BU_LIST_DEQUEUE(&(segp->l));

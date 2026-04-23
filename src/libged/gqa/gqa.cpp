@@ -1456,7 +1456,7 @@ allocate_per_region_data(struct ged *gedp, struct cstate *state, int start, int 
 	return;
     }
 
-    if (rtip->nregions == 0) {
+    if (rtip->stats.nregions == 0) {
 	/* dammit! */
 	bu_log("WARNING: No regions remaining.\n");
 	return;
@@ -1487,7 +1487,7 @@ allocate_per_region_data(struct ged *gedp, struct cstate *state, int start, int 
     }
 
     /* build objects for each region */
-    reg_tbl = (struct per_region_data *)bu_calloc(rtip->nregions, sizeof(struct per_region_data), "per_region_data");
+    reg_tbl = (struct per_region_data *)bu_calloc(rtip->stats.nregions, sizeof(struct per_region_data), "per_region_data");
 
 
     for (i = 0, BU_LIST_FOR (regp, region, &(rtip->HeadRegion)), i++) {

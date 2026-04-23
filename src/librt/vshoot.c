@@ -32,6 +32,7 @@
 #include <math.h>
 #include "vmath.h"
 #include "raytrace.h"
+#include "librt_private.h"
 
 
 /**
@@ -151,12 +152,12 @@ rt_vshootray(struct application *ap)
 	VPRINT("Dir", ap->a_ray.r_dir);
     }
 
-    rtip->rti_nrays++;
+    rtip->stats.rti_nrays++;
     if (rtip->needprep)
 	rt_prep(rtip);
 
     /* Allocate dynamic memory */
-    vlen = nrays * rtip->rti_maxsol_by_type;
+    vlen = nrays * rtip->i->rti_maxsol_by_type;
     ary_stp = (struct soltab **)bu_calloc(vlen, sizeof(struct soltab *),
 					  "*ary_stp[]");
     ary_rp = (struct xray **)bu_calloc(vlen, sizeof(struct xray *),
@@ -171,7 +172,7 @@ rt_vshootray(struct application *ap)
 
     HeadSeg = RT_SEG_NULL;
 
-    solidbits = rt_get_solidbitv(rtip->nsolids, ap->a_resource);
+    solidbits = rt_get_solidbitv(rtip->stats.nsolids, ap->a_resource);
 
     if (BU_LIST_IS_EMPTY(&ap->a_resource->re_region_ptbl)) {
 	BU_ALLOC(regionbits, struct bu_ptbl);
@@ -212,7 +213,7 @@ rt_vshootray(struct application *ap)
      */
     if (!rt_in_rpp(&ap->a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max)  ||
 	ap->a_ray.r_max < 0.0) {
-	rtip->nmiss_model++;
+	rtip->stats.nmiss_model++;
 	if (ap->a_miss)
 	    ret = ap->a_miss(ap);
 	else
@@ -225,11 +226,11 @@ rt_vshootray(struct application *ap)
     for (id = 1; id <= ID_MAX_SOLID; id++) {
 	register int nsol;
 
-	if ((nsol = rtip->rti_nsol_by_type[id]) <= 0) continue;
+	if ((nsol = rtip->i->rti_nsol_by_type[id]) <= 0) continue;
 
 	/* For each instance of this solid type */
 	for (i = nsol-1; i >= 0; i--) {
-	    ary_stp[i] = rtip->rti_sol_by_type[id][i];
+	    ary_stp[i] = rtip->i->rti_sol_by_type[id][i];
 	    ary_rp[i] = &(ap->a_ray);	/* XXX, sb [ray] */
 	    ary_seg[i].seg_stp = SOLTAB_NULL;
 	    BU_LIST_INIT(&ary_seg[i].l);
@@ -237,7 +238,7 @@ rt_vshootray(struct application *ap)
 	/* bounding box check */
 	/* bit vector per ray check */
 	/* mark elements to be skipped with ary_stp[] = SOLTAB_NULL */
-	ap->a_rt_i->nshots += nsol;	/* later: skipped ones */
+	ap->a_rt_i->stats.nshots += nsol;	/* later: skipped ones */
 	if (OBJ[id].ft_vshot) {
 	    OBJ[id].ft_vshot(ary_stp, ary_rp, ary_seg, nsol, ap);
 	} else {
@@ -253,10 +254,10 @@ rt_vshootray(struct application *ap)
 
 	    if (ary_seg[i].seg_stp == SOLTAB_NULL) {
 		/* MISS */
-		ap->a_rt_i->nmiss++;
+		ap->a_rt_i->stats.nmiss++;
 		continue;
 	    }
-	    ap->a_rt_i->nhits++;
+	    ap->a_rt_i->stats.nhits++;
 
 	    /* For now, do it the slow way.  sb [ray] */
 	    /* MUST dup it -- all segs have to live till after a_hit() */

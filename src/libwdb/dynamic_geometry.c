@@ -211,11 +211,11 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     stp->l2.magic = RT_SOLTAB2_MAGIC;
     stp->st_uses = 1;
     stp->st_dp = dp;
-    stp->st_bit = rtip->nsolids++;
+    stp->st_bit = rtip->stats.nsolids++;
 
     /* Add the new soltab structure to the rt_i structure */
     rtip->rti_Solids = (struct soltab **)bu_realloc(rtip->rti_Solids,
-						    rtip->nsolids * sizeof(struct soltab *),
+						    rtip->stats.nsolids * sizeof(struct soltab *),
 						    "new rti_Solids");
     rtip->rti_Solids[stp->st_bit] = stp;
 

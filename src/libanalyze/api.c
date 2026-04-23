@@ -1021,7 +1021,7 @@ allocate_region_data(struct current_state *state, char *av[])
 	return;
     }
 
-    if (rtip->nregions == 0) {
+    if (rtip->stats.nregions == 0) {
 	/* dammit! */
 	bu_log("WARNING: No regions remaining.\n");
 	return;
@@ -1052,7 +1052,7 @@ allocate_region_data(struct current_state *state, char *av[])
     }
 
     /* build objects for each region */
-    state->reg_tbl = (struct per_region_data *)bu_calloc(rtip->nregions, sizeof(struct per_region_data), "per_region_data");
+    state->reg_tbl = (struct per_region_data *)bu_calloc(rtip->stats.nregions, sizeof(struct per_region_data), "per_region_data");
 
 
     for (i = 0, BU_LIST_FOR (regp, region, &(rtip->HeadRegion)), i++) {
@@ -1189,12 +1189,12 @@ analyze_setup_ae(struct current_state *state)
 	return ANALYZE_ERROR;
     }
 
-    if (rtip->nsolids <= 0) {
+    if (rtip->stats.nsolids <= 0) {
 	bu_log("ERROR: no primitives active\n");
 	return ANALYZE_ERROR;
     }
 
-    if (rtip->nregions <= 0) {
+    if (rtip->stats.nregions <= 0) {
 	bu_log("ERROR: no regions active\n");
 	return ANALYZE_ERROR;
     }
