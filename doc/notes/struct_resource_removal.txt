@@ -1,0 +1,277 @@
+struct resource Removal - Design Notes
+========================================
+
+Goal
+----
+
+Completely eliminate ``struct resource`` (include/rt/resource.h) and its
+global singleton ``rt_uniresource`` (include/rt/global.h) from the BRL-CAD
+public API.  The type is a grab-bag that accumulated over decades; its
+fields have seven distinct functional roles and none of them requires a
+shared "resource" object.  Each field-group has a more natural owner
+(``struct db_i``, ``struct rt_i``, ``struct application``, or a scoped
+local pool).
+
+This work is deliberately staged across many phases and must coordinate with
+dependent libraries (libanalyze, liboptical, libged, libqtcad, libgcv,
+libtclcad, mged, nirt, art, beset, gtools, conv, remrt).
+
+
+Field Inventory
+---------------
+
+``struct resource`` holds state in eight functional categories.  The
+plan addresses each one in its own phase.
+
+  A. Seg freelist           re_seg, re_seg_blocks, re_seglen,
+                            re_segget, re_segfree
+  B. Partition freelist     re_parthead, re_partlen,
+                            re_partget, re_partfree
+  C. Misc scratch freelists re_solid_bitv, re_region_ptbl,
+                            re_nmgfree, re_tree_hd, re_tree_get,
+                            re_tree_malloc, re_tree_free
+  D. Bool scratch stack     re_boolstack, re_boolslen
+  E. RNG pointer            re_randptr
+  F. Piece state            re_pieces[], re_piece_ndup,
+                            re_piece_shot_*, re_pieces_pending
+  G. Statistics             re_cpu, re_nshootray, re_nmiss_model,
+                            re_shots, re_shot_hit/miss,
+                            re_prune_solrpp, re_ndup,
+                            re_nempty_cells, piece stat fields
+  H. Directory cache        re_directory_hd, re_directory_blocks
+
+
+End-State
+---------
+
+  * Hot-path ray tracing uses locally-owned scratch storage (pool or
+    thread-local), hung off struct application which already carries
+    per-ray state.
+  * Statistics live on struct rt_i directly (C11 atomics) or on
+    struct application as per-thread counters reduced at end-of-run.
+  * DB/importer/exporter/tree-parse APIs do not mention threading at
+    all.  Callers that today pass &rt_uniresource simply drop the
+    argument.
+  * rt_uniresource and struct resource are both deleted; no headers
+    export them.
+
+
+Why Now
+-------
+
+1. struct resource conflates per-thread with per-instance concerns.
+   re_directory_* belongs on db_i.  re_pieces[] is sized by rt_i but
+   indexed by CPU.  Summed statistics already live in rt_i->stats.
+
+2. rt_uniresource leaks into call sites that don't care.  Roughly 937
+   references exist in the current tree; the overwhelming majority are
+   ``&rt_uniresource`` passed to APIs that do nothing with it.
+
+3. The public API advertises threading concerns to callers who have
+   no interest in them (e.g., ft_import4 reading bytes into a struct).
+
+4. rt_init_resource is fragile and has subtle ordering requirements
+   with rtip->rti_resources.
+
+5. Known re-entrancy bugs are tracked in comments today.  re_nmgfree
+   is already a file-scope global in prep.cpp to work around one such
+   bug.  re_pieces has a documented dangling-pointer issue
+   (see shoot.c around line 119, crofton.cpp:524-533).
+
+
+Phased Plan
+-----------
+
+Phase 1 - Remove struct resource from APIs where it is vestigial
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This phase delivers most of the user-visible benefit at the lowest
+risk.  The targets are APIs where the resource argument is passed in
+but either unused or used only as a parse-time tree-node cache that
+can be supplied as an explicit bu_mempool.
+
+  - functab: ft_import4, ft_import5, ft_export4, ft_export5, and the
+    RTFUNCTAB_FUNC_*_CAST casts in include/rt/functab.h drop the
+    ``struct resource *`` parameter.
+  - db_tree_parse, db_flatten_tree, db_free_tree, db_dup_subtree,
+    nmg_booltree_evaluate: drop the resource argument, or accept a
+    struct bu_mempool * when a tree-node cache is beneficial.
+  - rt_db_get_internal family: drop the resource argument.
+  - rt_matrix_transform: drop the resource argument.
+  - rt_obj_import, rt_obj_export: drop the resource argument.
+  - rt_plot_solid, rt_del_regtree: drop the resource argument.
+
+During deprecation, keep the old signatures as RT_DEPRECATED wrappers that
+forward to the new signatures while ignoring the resource argument.  Use regex
+policy for minimally impacting changes and create *_old suffixed versions of
+the original signatures - wrapper functions callers can temporarily reference.
+Delete them after CHANGES deprecation policy is complete.
+
+Also: begin collecting ray-tracing benchmark data on the seg/partition
+hot path on modern glibc and jemalloc so that Phase 7 (the last phase)
+has a data-driven decision about whether the freelists still pay for
+themselves.
+
+Phase 2 - Move directory storage (H) to db_i
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Move re_directory_hd and re_directory_blocks from struct resource onto
+struct db_i (placed in db_i_internal per the existing private-split
+pattern).
+
+  - RT_GET_DIRECTORY takes a db_i * instead of a resource *.
+  - db_open.c and db_lookup.c stop poking rt_uniresource.re_directory_hd.
+  - db_alloc_directory_block takes a db_i *.
+
+This removes the only reason most DB-path code references
+rt_uniresource at all.
+
+Phase 3 - Move statistics (G) off the resource
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Add per-thread stats either as a field on struct application
+(a_stats, reduced at the end of rt_shootray campaigns) or as C11
+_Atomic counters directly on rt_i->stats.  The fields are
+contention-insensitive (at most one increment per ray per shot), so
+atomics are workable.
+
+Rework rt_add_res_stats and rt_zero_res_stats as deprecated shims,
+then delete the re_* stat fields from struct resource.
+
+Phase 4 - Move RNG (E) and bool stack (D) onto application
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  - re_randptr -> a_randptr, initialized by RT_APPLICATION_INIT.
+  - re_boolstack / re_boolslen -> a_boolstack / a_boolslen, or a
+    private struct rt_boolstate referenced from the application.
+    rt_booleval is always invoked in the context of an application,
+    so this is a clean fit.
+
+Delete these fields from struct resource.
+
+Phase 5 - Replace tree/bitv/ptbl/NMG freelists (C)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Measure first: for each of re_tree_hd, re_solid_bitv, re_region_ptbl,
+run the benchmark suite with the freelist disabled (direct
+bu_malloc / bu_free) and compare.  If the measured delta is small
+(likely on modern allocators), delete the freelist and use
+bu_malloc / bu_free.  If not, convert it to an explicit bu_mempool-
+style allocator owned by the caller:
+
+  - tree nodes -> db_tree_state
+  - bitvectors, region ptbls -> struct application
+
+re_nmgfree is already a file-scope global in prep.cpp.  Move it into
+a proper libnmg per-model pool and remove the global.
+
+Phase 6 - Piece state (F) owned by the worker
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The re_pieces[], re_pieces_pending, and piece stat fields are only
+touched inside shoot.c and prep.cpp.  Wrap them in a new struct
+rt_piecestate_set allocated per-worker by the rt_shootray setup code
+and hung off struct application (or passed down the shoot recursion
+on the stack).  Fix the lifetime bugs referenced at shoot.c:119 and
+crofton.cpp:524-533 as part of this phase.
+
+Phase 7 - Seg/partition freelists (A, B)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Last and hardest.  At this point struct resource holds only these
+two freelists plus re_cpu.
+
+Re-measure: modern glibc and jemalloc already do per-thread arenas,
+so the pool may no longer pay for itself.  The benchmark corpus to
+use: sphflake, havoc, m35, castle, ktank, bldg391, moss, crod, cube,
+GenericTwin at s=512, 3-run average.
+
+  - If the pool still matters, move ownership to struct application
+    (one worker == one application == one pool).  RT_GET_SEG /
+    RT_FREE_SEG / RT_GET_PT / RT_FREE_PT take an application *.
+  - If the pool no longer matters, inline bu_malloc / bu_free and
+    delete the pool plumbing.
+
+Phase 8 - Type deletion
+~~~~~~~~~~~~~~~~~~~~~~~
+
+At this point struct resource contains only re_magic and re_cpu
+(and re_cpu is already duplicated on struct application as a_cpu).
+
+Delete:
+  - struct resource
+  - rt_uniresource
+  - rt_init_resource, rt_clean_resource*
+  - RESOURCE_MAGIC, RT_CK_RESOURCE, RT_RESOURCE_INIT_ZERO, RESOURCE_NULL
+  - a_resource from struct application
+  - rti_resources from rt_i / rt_i_internal
+  - include/rt/resource.h
+  - the forward declaration in include/rt/global.h
+
+Announce the removal in CHANGES, doc/docbook/system/man3/librt.xml,
+and the release notes.
+
+
+Risks and Considerations
+------------------------
+
+* **ABI breakage.**  Every phase after Phase 0 breaks the librt ABI.
+  Plan for a major-version bump and coordinate with every dependent
+  library.  Source-level deprecation shims ease the transition but do
+  not preserve ABI.
+
+* **Thread-local storage.**  C11 _Thread_local is portable enough for
+  current BRL-CAD platforms but has historically been avoided.  Prefer
+  passing state explicitly through application / db_i / caller structs,
+  but if there is good design reason to consider thread local usage
+  (performance, design cleanliness, etc.) and it is considered "safe"
+  (including on MSVC, which historically has been spotty about modern
+  C support) thread local is now on the table.
+
+* **Performance.**  The seg/partition freelists exist for measured
+  reasons.  Each removal in Phases 5-7 must be gated on the benchmark
+  suite showing no regression at 3-run average, s=512.
+
+* **Submodel primitive.**  primitives/submodel/submodel.c creates its
+  own resource per sub-model and per-CPU.  The redesign must preserve
+  the semantics where one physical CPU shoots multiple models, each
+  with its own scratch state.  The clean answer is that application
+  owns its own scratch, and when shooting a submodel you pass the
+  submodel's application.
+
+* **External callers.**  src/art, src/mged, libtclcad, libqtcad, nirt,
+  beset, gtools, gcv, analyze, optical, libged all touch
+  rt_uniresource directly today.  Budget churn in each per phase.
+
+* **Documentation.**  include/rt/resource.h docstrings,
+  and the MGED primer all reference rt_uniresource.  These must be
+  updated in lockstep.  Historical emails are not modern references
+  and should not be updated.
+
+* **Build discipline.**  Every phase must land as a series of small
+  commits that keep ``cmake --build brlcad_build`` green and the
+  CTest suite passing (especially bottess_test, ged_test_bot_dumping,
+  regress-bots, and the rt short-option tests).
+
+* **Bug-fix opportunities.**  Several open re-entrancy issues should
+  be fixed during the phase that touches the affected field group
+  rather than deferred.
+
+
+Bottom Line
+-----------
+
+struct resource can be completely eliminated.  None of its fields is
+fundamentally required to live in a shared "resource" object, and the
+payoff is real: hundreds of call sites passing &rt_uniresource become
+cleaner, the public librt API stops mentioning threading to code that
+does not care, and several latent lifetime bugs get fixed along the
+way.
+
+The cost is also real.  Roughly 106 source files touch struct resource
+today; an ABI break is unavoidable; benchmarking around the hot-path
+freelists (A, B, F) is probably 50% of total effort on its own.
+
+Recommended cadence: land Phases 1, and 2 first.  Those eliminate
+roughly 60-70% of rt_uniresource references and validate the overall
+approach before committing to Phases 3-8.
