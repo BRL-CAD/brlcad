@@ -1,5 +1,9 @@
 if(BRLCAD_ENABLE_STEP)
-  brlcad_find_package(STEPCODE REQUIRED)
+  brlcad_find_package(STEPCODE)
+  if (NOT STEPCODE_FOUND)
+    message("BRLCAD_ENABLE_STEP is on, but STEPCODE not found - disabling.")
+    set(BRLCAD_ENABLE_STEP OFF)
+  endif()
 endif(BRLCAD_ENABLE_STEP)
 
 # Because the exp2cxx outputs are used by both step-g and g-step,
@@ -17,8 +21,6 @@ check_cxx_flag("wd4800") # implicit conversions to bool
 
 # Also quell a GCC warning for similar reasons.
 check_cxx_flag("Wno-ignored-qualifiers")
-
-find_package(STEPCODE)
 
 macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   if(BRLCAD_ENABLE_STEP)
