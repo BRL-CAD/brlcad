@@ -36,13 +36,10 @@ class ArtTileCallback
 
 	// This method is called before a tile is rendered.
 	void on_tile_begin(
-		const renderer::Frame*,           //frame
-		const size_t,           //tile_x
-		const size_t,           //tile_y
-		const size_t,           //thread_index
-		const size_t            //thread_count
-		) {;}
-
+		const renderer::Frame* frame,
+		const size_t    tile_x,
+		const size_t    tile_y)
+	{;}
 	// This method is called after a tile is rendered.
 	void on_tile_end(
 		const renderer::Frame*,           //frame
@@ -51,15 +48,8 @@ class ArtTileCallback
 		);
 
 	// This method is called after the frame has been updated.
-	void on_progressive_frame_update(
-		const renderer::Frame&,           //frame
-		const double,           //time
-		const std::uint64_t,    //samples
-		const double,           //samples_per_pixel
-		const std::uint64_t     //samples_per_second
-		) {;}
-
-
+	void on_progressive_frame_update(const renderer::Frame* frame)
+	{;}
 	void release() {};
 };
 
