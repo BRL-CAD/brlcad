@@ -1,4 +1,4 @@
-/*                     A R T P L U G I N . C P P
+/*               B R L C A D P L U G I N . C P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2026 United States Government as represented by
@@ -115,7 +115,11 @@
 namespace asf = foundation;
 namespace asr = renderer;
 
-thread_local struct BRLCAD_to_ASR brlcad_ray_info;
+/* NOTE: brlcad_ray_info was previously a thread_local global.
+ * It has been replaced by a per-call stack variable passed through
+ * app.a_uptr to avoid thread-safety issues when Appleseed fires rays
+ * from multiple worker threads concurrently. See intersect() below.
+ */
 
 
 /* brlcad raytrace hit callback */
@@ -138,11 +142,13 @@ brlcad_hit(struct application* UNUSED(ap), struct partition* PartHeadp, struct s
     /* entry hit point, so we type less */
     hitp = pp->pt_inhit;
 
-    /* construct the actual (entry) hit-point from the ray and the
-     * distance to the intersection point (i.e., the 't' value).
+    /* Write results into the per-call struct passed via a_uptr.
+     * This avoids the previous thread_local global and is safe for
+     * concurrent multi-threaded calls from Appleseed worker threads.
      */
-    //VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
-    brlcad_ray_info.distance = hitp->hit_dist;
+    struct BRLCAD_to_ASR* ray_info = (struct BRLCAD_to_ASR*)ap->a_uptr;
+
+    ray_info->distance = hitp->hit_dist;
 
     /* primitive we encountered on entry */
     stp = pp->pt_inseg->seg_stp;
@@ -152,9 +158,9 @@ brlcad_hit(struct application* UNUSED(ap), struct partition* PartHeadp, struct s
      */
     RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
 
-    brlcad_ray_info.normal[0] = inormal[0];
-    brlcad_ray_info.normal[1] = inormal[1];
-    brlcad_ray_info.normal[2] = inormal[2];
+    ray_info->normal[0] = inormal[0];
+    ray_info->normal[1] = inormal[1];
+    ray_info->normal[2] = inormal[2];
 
     return 1;
 }
@@ -230,8 +236,13 @@ BrlcadObject:: BrlcadObject(
 void
 BrlcadObject::release()
 {
-    // bu_free(resources, "appleseed");
-    // bu_free(ap, "appleseed");
+    /* Free the per-thread resource array allocated in
+     * configure_raytrace_application() or the 3-arg constructor.
+     * Previously this was commented out, causing a memory leak on
+     * every BrlcadObject destruction.
+     */
+    if (resources)
+	bu_free(resources, "appleseed");
     delete this->name;
     delete this;
 }
@@ -314,28 +325,25 @@ BrlcadObject::intersect(
     VSET(app.a_ray.r_dir, dir[0], dir[1], dir[2]);
     VSET(app.a_ray.r_pt, ray.m_org[0], ray.m_org[1], ray.m_org[2]);
 
-    app.a_uptr = (void*)this->name->c_str();
+    /* Per-call result storage on the stack — thread-safe.
+     * brlcad_hit() writes into this struct via ap->a_uptr.
+     * No global or thread_local state is used.
+     */
+    struct BRLCAD_to_ASR local_ray_info = {};
+    app.a_uptr = (void*)&local_ray_info;
 
     if (rt_shootray(&app) == 0) {
 	result.m_hit = false;
 	return;
     } else {
 	result.m_hit = true;
-	result.m_distance = brlcad_ray_info.distance;
+	result.m_distance = local_ray_info.distance;
 
-	const asf::Vector3d n = asf::normalize(brlcad_ray_info.normal);
+	const asf::Vector3d n = asf::normalize(local_ray_info.normal);
 	result.m_geometric_normal = n;
 
-	// const asf::Vector3d n_flip (n[0], n[2], n[1]);
-	// double temp;
-	// temp = n_flip[2];
-	// n_flip.set(2) = n_flip[1];
-	// n_flip.set(1) = temp;
 	result.m_shading_normal = n;
 
-	// const asf::Vector3f p(brlcad_ray_info.normal * m_rcp_radius);
-	// result.m_uv[0] = std::acos(p.y) * asf::RcpPi<float>();
-	// result.m_uv[1] = std::atan2(-p.z, p.x) * asf::RcpTwoPi<float>();
 	result.m_uv[0] = 1.0;
 	result.m_uv[1] = 1.0;
 
@@ -383,7 +391,11 @@ int
 BrlcadObject::get_id()
 {
     thread_local int id = counter++;
-    return id;
+    /* Clamp to valid resource array range [0, MAX_PSW-1].
+     * If Appleseed spawns more worker threads than MAX_PSW, an unclamped
+     * id would index past the end of resources[], causing undefined behavior.
+     */
+    return id % MAX_PSW;
 }
 
 
@@ -407,7 +419,7 @@ BrlcadObject::get_objects() const
     std::vector<std::string> objects;
     int count = get_object_count();
 
-    for (char i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++) {
 	std::string obj_num = "object." + std::to_string(i + 1);
 	objects.push_back(m_params.get_path_required<std::string>(obj_num.c_str(), ""));
     }
@@ -416,26 +428,19 @@ BrlcadObject::get_objects() const
 }
 
 
-/* Set up raytrace application */
+/* Set up raytrace application for standalone plugin use.
+ * Called from the 2-argument constructor (BrlcadObjectFactory::create).
+ * The 3-argument constructor (called from art.cpp) initializes directly.
+ */
 void
 BrlcadObject::configure_raytrace_application(const char* path, int objc, std::vector<std::string> objects)
 {
-    // FIXME: This current implementation below is untested and likely out of sync. It needs to be reworked for plugin use.
-
-    RT_APPLICATION_INIT(&ap);
-
-    /* configure raytrace application */
-    ap.a_rt_i = this->rtip;
-    ap.a_onehit = 1;
-    ap.a_hit = brlcad_hit;
-    ap.a_miss = brlcad_miss;
-    //ap = static_cast<application*>(bu_calloc(1, sizeof(application), "appleseed"));
+    /* Allocate per-thread ray resources */
     resources = static_cast<resource*>(bu_calloc(1, sizeof(resource) * MAX_PSW, "appleseed"));
 
     char title[1024] = { 0 }; /* optional database title */
-    size_t npsw = 1; /* default number of worker PSWs*/
 
-    /* load the specified geometry database */
+    /* Load the specified geometry database */
     rtip = rt_dirbuild(path, title, sizeof(title));
     if (rtip == RTI_NULL) {
 	bu_log("Building the database directory for [%s] FAILED\n", path);
@@ -447,34 +452,32 @@ BrlcadObject::configure_raytrace_application(const char* path, int objc, std::ve
 	RT_CK_RESOURCE(&resources[i]);
     }
 
-    /* display optional database title */
-    if (title[0]) {
+    /* Display optional database title */
+    if (title[0])
 	bu_log("Database title: %s\n", title);
-    }
 
-    /* parse object arguments */
+    /* Parse object arguments and load geometry */
     const char** objv = (const char**)bu_calloc((size_t)objc + 1, sizeof(char*), "obj array");
-    for (int i = 0; i < objc; i++) {
+    for (int i = 0; i < objc; i++)
 	objv[i] = objects.at(i).c_str();
-    }
 
-    /* include objects from database */
-    if (rt_gettrees(rtip, objc, objv, (int)npsw) < 0) {
-	bu_log("Loading the geometry for [%s] FAILED\n", objects[0].c_str());
-    }
+    if (rt_gettrees(rtip, objc, objv, 1) < 0)
+	bu_log("Loading the geometry for [%s] FAILED\n", objects.empty() ? path : objects[0].c_str());
+
+    bu_free(objv, "obj array");
 
     /* Prepare database for raytracing */
     if (rtip->needprep)
 	rt_prep_parallel(rtip, 1);
 
-    /* Initialize values in application struct */
-    //RT_APPLICATION_INIT(ap);
-
-    /* configure raytrace application */
-    //ap->a_onehit = -1;
-    //ap->a_rt_i = rtip;
-    //ap->a_hit = brlcad_hit;
-    //ap->a_miss = brlcad_miss;
+    /* Initialize and configure the raytrace application struct.
+     * a_rt_i must be set after rtip is built above.
+     */
+    RT_APPLICATION_INIT(&ap);
+    ap.a_rt_i  = rtip;
+    ap.a_onehit = 1;
+    ap.a_hit  = brlcad_hit;
+    ap.a_miss = brlcad_miss;
 }
 
 

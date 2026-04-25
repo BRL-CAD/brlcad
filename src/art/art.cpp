@@ -167,7 +167,7 @@
 
 struct resource* resources;
 size_t samples = 25;
-size_t light_intensity = 200.0; // make ambient light match rt
+size_t light_intensity = 200; // make ambient light match rt
 //size_t light_intensity = 30.0;
 const char* global_title_file;
 asf::auto_release_ptr<asr::Project> project_ptr;
@@ -341,12 +341,17 @@ register_region(struct db_tree_state* tsp,
     name_full = conversion_temp.c_str();
     bu_log("name: %s\n", conversion_temp.c_str());
 
-    // get objects bounding box
+    /* Get object bounding box.
+     * NOTE: ged_close() must be called after use to release the file
+     * descriptor and associated memory. Previously this was missing,
+     * causing a GED handle leak on every region registered.
+     */
     struct ged* gedp;
     gedp = ged_open("db", tsp->ts_dbip->dbi_filename, 1);
     point_t min;
     point_t max;
     int ret = rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char**)&name_full, 1, min, max);
+    ged_close(gedp);
 
     bu_log("ged: %i | min: %f %f %f | max: %f %f %f\n", ret, V3ARGS(min), V3ARGS(max));
 
@@ -659,7 +664,10 @@ build_project(const char* file, const char* UNUSED(objects))
 
     // Create an empty project.
     asf::auto_release_ptr<asr::Project> project(asr::ProjectFactory::create("test project"));
-    project->search_paths().push_back_explicit_path("build/Debug");
+    /* NOTE: 'build/Debug' was previously added as an explicit search path here.
+     * This hardcoded path breaks non-debug builds and installed binaries.
+     * Shader paths are properly resolved via APPLESEED_ROOT below.
+     */
     // add precompiled shaders from appleseed
     char root[MAXPATHLEN];
     project->search_paths().push_back_explicit_path(bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/appleseed", NULL));
@@ -706,13 +714,14 @@ build_project(const char* file, const char* UNUSED(objects))
 	db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void*>(scene.get()));
     }
     if (cmd_objs) {
-
 	size_t cmdobjc = BU_PTBL_LEN(cmd_objs);
 	const char** cmdobjv = (const char**)cmd_objs->buffer;
 	if (cmdobjc) {
 	    db_walk_tree(APP.a_rt_i->rti_dbip, (int)cmdobjc, cmdobjv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void*>(scene.get()));
 	}
     }
+    /* Close the db handle opened above — previously leaked on every render. */
+    db_close(dbip);
 
     //------------------------------------------------------------------------
     // Light
@@ -720,8 +729,7 @@ build_project(const char* file, const char* UNUSED(objects))
 
     // Create a color called "light_intensity" and insert it into the assembly.
     static const float LightRadiance[] = { 1.0f, 1.0f, 1.0f };
-    light_intensity *= AmbientIntensity; // multiplying by factor
-    // FIXME
+    // FIXME: light hardcoded position, should use rt_perspective/azimuth settings
     assembly->colors().insert(
 	asr::ColorEntityFactory::create(
 	    "light_intensity",
@@ -828,9 +836,10 @@ build_project(const char* file, const char* UNUSED(objects))
 	        .insert("film_dimensions", bu_vls_cstr(&dimensions))
 	        .insert("horizontal_fov", bu_vls_cstr(&fov))
 		));
+        bu_vls_free(&fov);
         camera = pinhole;
     } else {
-        // Create a orthographic camera with film dimensions
+        // Create an orthographic camera with film dimensions
         bu_vls_sprintf(&dimensions, "%f %f", 2.0, 2.0);
         asf::auto_release_ptr<asr::Camera> ortho(
 	    asr::OrthographicCameraFactory().create(
@@ -898,6 +907,8 @@ build_project(const char* file, const char* UNUSED(objects))
     // Bind the scene to the project.
     project->set_scene(scene);
 
+    bu_vls_free(&dimensions);
+
     return project;
 }
 
@@ -950,34 +961,34 @@ fb_setup() {
 extern "C" void
 view_setup(struct rt_i* UNUSED(rtip))
 {
-    bu_bomb("In view setup, Dont call me!");
+    bu_bomb("In view setup, Don't call me!");
 }
 
 
 extern "C" void
 view_2init(struct application* UNUSED(ap), char* UNUSED(framename))
 {
-    bu_bomb("In 2init, Dont call me!");
+    bu_bomb("In 2init, Don't call me!");
 }
 
 
 extern "C" void
 view_end(struct application* UNUSED(ap)) {
-    bu_bomb("In end, Dont call me!");
+    bu_bomb("In end, Don't call me!");
 }
 
 
 extern "C" void
 view_cleanup(struct rt_i* UNUSED(rtip))
 {
-    bu_bomb("in cleanup, Dont call me!");
+    bu_bomb("in cleanup, Don't call me!");
 }
 
 
 extern "C" void
 do_run(int UNUSED(a), int UNUSED(b))
 {
-    bu_bomb("in run, Dont call me!");
+    bu_bomb("in run, Don't call me!");
 }
 
 
@@ -1089,7 +1100,7 @@ art_cm_end(const int UNUSED(argc), const char** UNUSED(argv))
     renderer.reset();
 
     // clean up resources
-
+    bu_vls_free(&str);
 
     return 0;
 }
@@ -1298,6 +1309,11 @@ main(int argc, char **argv)
     }
     // clean up resources
     bu_free(resources, "appleseed");
+    bu_vls_free(&str);
+
+    /* Remove and delete the log target before exiting. */
+    asr::global_logger().remove_target(log_target);
+    delete log_target;
 
     return 0;
 }
