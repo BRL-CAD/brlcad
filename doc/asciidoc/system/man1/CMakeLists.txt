@@ -34,6 +34,7 @@ set(
   coil.adoc
   comgeom-g.adoc
   conv-vg2g.adoc
+  csg-g.adoc
   cv.adoc
   dbupgrade.adoc
   decimate.adoc
@@ -70,6 +71,7 @@ set(
   g-obj.adoc
   g-ply.adoc
   g-raw.adoc
+  g-scad.adoc
   g-shell-rect.adoc
   g-step.adoc
   g-stl.adoc
