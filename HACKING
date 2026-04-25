@@ -59,8 +59,8 @@ GETTING STARTED
 ---------------
 
 As there are many ways to get started with BRL-CAD, one of the most
-important steps for new contributors to do is get involved in the
-discussions and communicate with the BRL-CAD developers.  There are
+important steps for new contributors is to  get involved in the
+discussions and communicate with the BRL-CAD developers early.There are
 mailing lists, on-line forums, and an IRC channel dedicated to BRL-CAD
 development and project communication.  All contributors are
 encouraged to participate in any of the available communication
@@ -80,7 +80,8 @@ channels:
   There are several mailing lists available for interaction, e.g. the
   http://sourceforge.net/mail/?group_id=105292 "brlcad-devel" mailing
   list.  More involved contributors may also be interested in joining
-  the "brlcad-commits" and "brlcad-tracker" mailing lists.
+  the "brlcad-commits" and "brlcad-tracker" mailing lists to stay 
+  informed about code changes and issue updates.
 
 * On-line Forums
 
