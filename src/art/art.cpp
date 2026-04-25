@@ -167,7 +167,7 @@
 
 struct resource* resources;
 size_t samples = 25;
-size_t light_intensity = 200.0; // make ambient light match rt
+size_t light_intensity = 200; // make ambient light match rt
 //size_t light_intensity = 30.0;
 const char* global_title_file;
 asf::auto_release_ptr<asr::Project> project_ptr;
@@ -830,7 +830,7 @@ build_project(const char* file, const char* UNUSED(objects))
 		));
         camera = pinhole;
     } else {
-        // Create a orthographic camera with film dimensions
+        // Create an orthographic camera with film dimensions
         bu_vls_sprintf(&dimensions, "%f %f", 2.0, 2.0);
         asf::auto_release_ptr<asr::Camera> ortho(
 	    asr::OrthographicCameraFactory().create(
@@ -950,34 +950,34 @@ fb_setup() {
 extern "C" void
 view_setup(struct rt_i* UNUSED(rtip))
 {
-    bu_bomb("In view setup, Dont call me!");
+    bu_bomb("In view setup, Don't call me!");
 }
 
 
 extern "C" void
 view_2init(struct application* UNUSED(ap), char* UNUSED(framename))
 {
-    bu_bomb("In 2init, Dont call me!");
+    bu_bomb("In 2init, Don't call me!");
 }
 
 
 extern "C" void
 view_end(struct application* UNUSED(ap)) {
-    bu_bomb("In end, Dont call me!");
+    bu_bomb("In end, Don't call me!");
 }
 
 
 extern "C" void
 view_cleanup(struct rt_i* UNUSED(rtip))
 {
-    bu_bomb("in cleanup, Dont call me!");
+    bu_bomb("in cleanup, Don't call me!");
 }
 
 
 extern "C" void
 do_run(int UNUSED(a), int UNUSED(b))
 {
-    bu_bomb("in run, Dont call me!");
+    bu_bomb("in run, Don't call me!");
 }
 
 
