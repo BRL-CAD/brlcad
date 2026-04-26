@@ -1,0 +1,1782 @@
+== BRL-CAD Deep Inventory: Features and Algorithms
+
+* *Inventory date:* April 2026
+* *Source files:* ~7k total(~800 headers, ~1,500 C files, ~750 C{plus}{plus} files)
+
+BRL-CAD is a cross-platform, open-source graphics system with origins in
+the U.S. Army Ballistic Research Laboratory. It has been under active
+development since 1979 and is the primary tri-service solid modeling CAD
+system used for vehicle vulnerability and lethality analyses. The
+codebase exceeds one million lines of source code spanning geometry
+modeling, ray tracing, image/signal processing, analysis, and format
+conversion.
+
+'''''
+
+=== 1. Solid Geometry Representation
+
+==== 1.1 Constructive Solid Geometry (CSG)
+
+BRL-CAD’s primary geometric paradigm is CSG. Objects are arranged in a
+hierarchical tree of _combinations_, where leaf nodes are named solid
+primitives and internal nodes are boolean operators. Three boolean
+set-theoretic operations are supported: *union*, *intersection*, and
+*difference (subtraction)*. Combinations themselves can be used as
+operands, producing deeply nested expression trees. Each arc in the tree
+carries a 4×4 homogeneous transformation matrix that positions or scales
+the primitive in model space. Any combination can be declared a
+_region_, which is the smallest unit carrying material identity (e.g.,
+material ID, region code, item code). Regions are the fundamental unit
+for analysis such as volume, mass, and overlap detection.
+
+A complete CSG ray-tracing engine with per-primitive analytical
+intersection for 30{plus} primitive types, parallel multi-core
+execution, a choice of BSP-tree or HLBVH spatial acceleration, and
+boolean segment weaving across arbitrarily deep boolean trees.
+
+==== 1.2 Implicit CSG Primitives
+
+The following analytically-defined (implicit) solid primitives are
+supported. Each carries a dedicated ray-solid intersection algorithm, a
+surface-normal computation, UV mapping, surface curvature computation,
+volume formula, surface area formula, centroid formula, tessellation to
+NMG mesh, and conversion to B-rep (NURBS):
+
+* *TOR* – Torus (ring torus defined by center, normal axis, major
+radius, minor radius)
+* *TGC* – Truncated General Cone (generalized cone with elliptical
+cross-sections at each end; subsumes right circular cylinder REC, right
+circular cone, and other degenerate forms)
+* *ELL / SPH* – Ellipsoid (general tri-axial) and Sphere (degenerate
+case)
+* *SUPERELL* – Superellipsoid (exponent-parameterized ellipsoid
+supporting squircle-like shapes)
+* *ARB8* – Arbitrary convex polyhedron defined by up to eight vertices
+(subsumes ARB7, ARB6, ARB5, ARB4 with degenerate/shared vertices);
+supports up to 5-sided planar faces
+* *ARBN* – Arbitrary convex solid defined by N half-space plane
+equations (the intersection of N half-spaces); supports any convex solid
+with planar faces
+* *ARS* – Arbitrary Regular Solid: surface of revolution defined as a
+sequence of 2D cross- section curves (each a closed polygon); the solid
+is the surface swept between them
+* *HALF* – Half-space: all points on one side of an infinite plane
+(defined by a single plane equation); useful as a cutting solid in
+boolean subtraction
+* *EBM* – Extruded Bit Map: a binary raster image (1-bit per pixel)
+extruded to a specified height, generating a 3D solid from a 2D
+black-and-white image or BRL-CAD object
+* *VOL* – 3D Voxel Volume: a three-dimensional array of voxels where a
+threshold range selects which cells are considered solid; enables CT/MRI
+scan geometry representation
+* *HF* – Height Field: a 2D grid of elevation samples forming a terrain
+surface, with configurable cell scale and Z-scaling; supports adaptive
+triangle-cut selection
+* *DSP* – Displacement Surface/Map: similar to HF but stored as an
+embedded database object or file, with smooth-surface normal
+interpolation and adaptive triangle-cut direction control
+* *PIPE* – Pipe solid with variable inner diameter, outer diameter, and
+bend radius along a piecewise-linear spine; models pipes, tubes, and
+wire with optional hollow cores
+* *PARTICLE* – Lenticular particle solid: a rounded cylinder (capsule)
+defined by two endpoint radii; degenerates to a sphere or cylinder; used
+for blast fragment modeling
+* *RPC* – Right Parabolic Cylinder: parabolic cross-section extruded;
+one of the conic-section extruded primitives
+* *RHC* – Right Hyperbolic Cylinder: hyperbolic cross-section extruded
+* *EPA* – Elliptical Paraboloid: paraboloid with elliptical
+cross-sections
+* *EHY* – Elliptical Hyperboloid: hyperboloid of one sheet with
+elliptical cross-sections
+* *HYP* – Hyperboloid of two sheets with elliptical cross-sections;
+parameterized by neck width ratio for modeling hyperboloid cooling-tower
+shapes
+* *ETO* – Elliptical Torus: a torus swept from an ellipse rather than a
+circle; generalizes the standard torus
+* *HRT* – Heart: a smooth, curved heart shape defined by a center,
+directional axes, and cusp distance parameter
+* *CLINE* – FASTGEN CLINE element: a finite-length cylindrical rod with
+a specified radius and wall thickness, used for structural rods in
+military vehicle FASTGEN models; supports both solid and hollow (tube)
+modes
+* *METABALL* – Metaball / Blobby Surface: an implicit isosurface defined
+by a set of weighted control points; three evaluation methods are
+supported:
+** _Isopotential_ (inverse-square field strength)
+** _Blinn Blobby_ (exponential field)
+** _Tokyo Metaball_ approximation
+* *EXTRUDE* – Profile Extrusion: a 2D sketch profile (see below)
+extruded along a vector, producing a prismatic solid; the extrusion
+vector need not be perpendicular to the sketch plane
+* *REVOLVE* – Surface of Revolution: a 2D sketch profile revolved around
+an axis by a specified angle, producing a solid of revolution; partial
+revolutions are supported
+
+==== 1.3 Explicit Geometry Representations
+
+* *BoT (Bag of Triangles)* – Triangle mesh with four operating modes:
+** _Surface mode_: triangles represent a 2D surface (no enclosed volume)
+** _Solid mode_: closed triangle mesh representing a solid volume;
+orientation-consistent
+** _Plate mode_ (FASTGEN): each triangle has an associated thickness;
+used for thin-walled structures in military FASTGEN models; plate normal
+direction is face-center-offset
+** _Plate-NoCoS_: plate mode variant where LOS equals face thickness
+rather than thickness divided by cosine of obliquity angle
+** Supports per-vertex surface normals, per-face UV texture coordinates,
+and a float-precision mode to reduce memory for very large meshes;
+stores face normals as index arrays
+** HLBVH (Hierarchical Linear Bounding Volume Hierarchy) acceleration
+for large meshes
+** Oriented bounding box (OBB) computation for BoT primitives
+** CSG-to-BoT Boolean tessellation pipeline (bot++_++bool++_++tess)
+* *NMG (Non-Manifold Geometry)* – Weiler radial-edge data structure (see
+Section 6) for topologically general polyhedral solids; supports wire
+edges, lone vertices, and non-manifold configurations
+* *BREP (Boundary Representation)* – NURBS-based B-rep using the
+openNURBS library (ON++_++Brep); supports trimmed NURBS surfaces,
+complex edge topology, and all B-rep operations (see Section 5)
+* *SKETCH* – 2D profile consisting of an arbitrary mix of line segments,
+circular arcs, NURB curve segments, and Bézier curve segments defined in
+a local 2D coordinate system; used as input to EXTRUDE and REVOLVE, and
+standalone as an annotation aid
+* *PNTS* – Point cloud: an unordered set of 3D points with optional
+per-point attributes (color, scale, surface normal), memory-optimized by
+storing only the attributes needed
+* *BSPLINE (legacy NURBS)* – Legacy NURBS surface storage; newer code
+uses BREP
+* *PG (Polygon)* – Legacy explicit polygon solid (multi-polygon faces,
+each with vertex normals); largely superseded by BoT
+
+==== 1.4 Non-Geometric / Structural Objects
+
+* *COMBINATION* – Boolean CSG tree node referencing other named objects;
+carries material assignment, color, and region-flag
+* *SUBMODEL* – Embeds another .g file (or sub-tree of the same file) as
+a reusable component that is ray-traced independently with its own space
+partitioning
+* *GRIP* – Display-only grip/handle object used by animation scripts
+* *JOINT* – Kinematic joint object connecting two geometry paths; used
+in animation to define articulated assemblies
+* *DATUM* – Reference geometry entity per ASME Y14.5M: stores points,
+lines, and planes as coordinate reference features; supports linked
+lists of multiple datum elements
+* *ANNOT (Annotation)* – 2D in-scene text label with leader line;
+references a sketch for geometry; supports nine anchor positions
+relative to a reference point
+* *SCRIPT* – Script-type object with a type string for future automation
+hooks
+* *BINUNIF* – Binary uniform data (generic typed data arrays embedded in
+the database)
+
+'''''
+
+=== 2. Ray-Solid Intersection Algorithms
+
+==== 2.1 Per-Primitive Intersection
+
+Every primitive type implements a `ft++_++shot()` function (via the
+`rt++_++functab` dispatch table) that computes parametric ray-entry/exit
+distances. Techniques used include:
+
+* *Quadric surface intersection* for ELL, TOR, SPH, TGC, RPC, RHC, EPA,
+EHY, HYP, ETO, HRT: substituting the ray parametric equation into the
+implicit algebraic equation produces a polynomial in the ray parameter.
+Polynomial roots (quadratic, cubic, quartic) are found analytically
+using closed-form formulas in `libbn`. Coefficients are pre-computed
+during `ft++_++prep()` from the primitive parameters.
+* *Half-space intersection* for HALF, ARB8, ARBN: ray vs. infinite
+plane, intersect and clip between pairs of entry/exit half-spaces.
+* *Height field / DSP intersection*: the ray is marched through a 2D
+grid of triangulated cells. Each height sample pair defines two right
+triangles; the ray is tested against each triangle the ray footprint
+covers. Adaptive triangle-cut direction (upper-right / lower-left, or
+adaptive) minimizes artifacts.
+* *EBM intersection*: marches the ray through the 2D bitmap cell grid,
+testing solid/empty voxel transitions using the extruded height as the Z
+extent.
+* *VOL intersection*: steps through a 3D voxel grid, testing threshold
+conditions.
+* *BoT intersection* via Möller–Trumbore ray-triangle intersection
+algorithm; large meshes use HLBVH (see Section 2.3) for sub-solid
+acceleration; a special single-precision float variant reduces memory
+for massive meshes.
+* *PIPE intersection*: decomposes the pipe into bent tube segments; each
+segment is handled as a truncated cone or sphere joining adjacent linear
+segments, with iterative numerical root finding when necessary.
+* *METABALL intersection*: marches along the ray at decreasing step
+sizes to find the isosurface crossing; `initstep` and `finalstep`
+parameters control step sizes.
+* *BREP intersection*: delegates to the openNURBS ray-NURBS intersection
+engine (Newton iteration in parameter space).
+* *EXTRUDE / REVOLVE*: intersection derived analytically from the 2D
+sketch geometry extruded or revolved.
+* *SKETCH*: not directly ray-traced; used to generate EXTRUDE/REVOLVE
+solids.
+* *SUBMODEL*: fires secondary ray-tracing instance into the referenced
+sub-tree.
+* *ARS*: the surface is tessellated into triangles for intersection.
+* *SUPERELL*: quartic polynomial intersection via analytical root
+finding.
+
+Each primitive also implements:
+
+* `ft++_++norm()` – surface normal at a hit point
+* `ft++_++uv()` – UV texture coordinates at a hit point
+* `ft++_++curve()` – principal curvature computation at a hit point
+* `ft++_++bbox()` – axis-aligned bounding box computation
+* `ft++_++volume()`, `ft++_++surf++_++area()`, `ft++_++centroid()` –
+physical property formulae
+* `ft++_++tessellate()` – tessellation to NMG mesh
+* `ft++_++brep()` – conversion to openNURBS B-rep
+* `ft++_++plot()` / `ft++_++adaptive++_++plot()` – wireframe plot
+generation
+
+==== 2.2 Boolean Evaluation (Boolweave)
+
+After each solid along a ray reports its in/out intersection segments,
+the `rt++_++boolweave()` function merges all segments into a sorted
+partition list (one linked-list entry per distinct depth interval). The
+`rt++_++boolfinal()` function then evaluates the CSG boolean expression
+tree against this partition list (walking the binary boolean tree to
+determine which partitions are "`in`" the final solid) and calls the
+application’s `a++_++hit()` callback for each valid surface hit. Edge
+cases handled include zero-thickness segments (wire edges, isolated
+vertices) and numerical tolerance handling for near-coincident surfaces.
+
+==== 2.3 Space Partitioning
+
+Two space partitioning strategies co-exist:
+
+*BSP (Binary Space Partition) tree with axis-aligned splitting planes*
+(`cut.c`):
+
+* Builds a binary kD-tree by recursively splitting the model bounding
+box along X, Y, Z axes
+* Split position is determined by `rt++_++ct++_++old++_++assess()` which
+measures the expected cost of a split (weighted by solid count in each
+child), iterating through candidate positions
+* `split++_++mostly++_++empty++_++cells()` post-processes the tree to
+eliminate cells that are more than 50% empty by splitting at the
+geometry’s actual boundary within the cell
+* Tree construction is parallelized using `bu++_++parallel()` with a
+work queue of subtrees
+* Supports dynamic insertion/removal of individual solids
+(`insert++_++in++_++bsp`, `remove++_++from++_++bsp`)
+
+*HLBVH (Hierarchical Linear Bounding Volume Hierarchy)*
+(`cut++_++hlbvh.c`):
+
+* Derived from the pbrt-v3 HLBVH algorithm by Garanzha, Pantaleoni, and
+McAllister (HPG 2011)
+* Computes Morton codes for primitive centroids by encoding 3D position
+into a 30-bit integer using the `left++_++shift3` bit-interleaving
+function (Z-order / Morton curve)
+* Radix sorts primitives by Morton code (6 bits per pass, 5 passes)
+* Builds LBVH treelets from Morton-ordered clusters using a fixed-bit
+splitting strategy
+* Upper tree levels use SAH (Surface Area Heuristic) for optimal
+splitting
+* Used as an alternative to the BSP tree; available for OpenCL
+acceleration path
+
+*Infinite solid handling*: solids with no bounding box (e.g., HALF) are
+collected in `rti++_++inf++_++box` and tested on every ray after the
+finite BSP tree is exhausted.
+
+*Large-solid piece decomposition*: some large primitives (particularly
+BoT) decompose into multiple spatial "`pieces,`" each with its own
+bounding box, allowing the space partition tree to skip pieces whose
+bounding boxes the ray misses.
+
+==== 2.4 Ray Bundle Shooting
+
+`rt++_++shootrays()` accepts a bundle of rays to fire simultaneously. A
+set of `rt++_++pattern++_++t` generators can produce structured bundles:
+
+* Rectangular orthographic and perspective grids
+* Circular orthographic and perspective grids
+* Circular spiral patterns
+* Elliptical orthographic/perspective grids
+* Cylindrical layer patterns
+* Spherical layer patterns
+* Quasi-random unbiased spherical volume sampling
+
+==== 2.5 Parallel SMP Ray Tracing
+
+The ray tracer is designed for symmetric multi-processing.
+`bu++_++parallel()` dispatches N worker threads, each with a private
+`struct resource` containing per-thread memory pools for hit records,
+partitions, segments, and free lists (avoiding lock contention). Global
+semaphores protect only shared structures (work assignment, framebuffer
+output). The thread count is configurable; recursive parallel calls
+(nested `bu++_++parallel()`) are supported up to a 64×64 thread limit.
+
+'''''
+
+=== 3. NURBS Boundary Representation (B-rep)
+
+BRL-CAD incorporates a full B-rep kernel via the openNURBS library (from
+McNeel/Rhino), wrapped and extended with application-specific
+algorithms.
+
+Full NURBS B-rep support including surface-surface intersection via
+Newton iteration in parameter space, B-rep boolean evaluation
+(union/intersection/difference), Constrained Delaunay Triangulation for
+visualization, and pullback curve computation.
+
+==== 3.1 Core B-rep Storage
+
+B-rep geometry is stored as `ON++_++Brep` objects wrapping trimmed NURBS
+surfaces. Each face is a NURBS surface (rational or non-rational, any
+degree, with arbitrary knot vectors) trimmed by 2D parameter-space
+boundary curves. Edges carry 3D curves. The complete topological
+structure (vertices, edges, edge curves, face surfaces, trims, loops)
+follows the openNURBS spec.
+
+==== 3.2 Surface-Surface Intersection (SSI)
+
+The `intersect.cpp` module implements NURBS surface-surface intersection
+for B-rep boolean evaluation. The algorithm:
+
+1. Subdivides surfaces using a Bézier clipping / knot insertion approach
+to isolate intersection regions
+2. Applies Newton-Raphson iteration in the 4D parameter space
+(u1,v1,u2,v2) to converge to intersection curve points
+3. Traces intersection curves by marching with adaptive step size
+4. Handles tangential intersections and closed intersection loops
+
+==== 3.3 B-rep Boolean Operations
+
+`boolean.cpp` evaluates union, intersection, and difference on
+`ON++_++Brep` objects:
+
+1. Computes surface-surface intersection curves between face pairs
+2. Classifies resulting face portions as "`inside`" or "`outside`" the
+opposing solid using point-membership tests (ray casting from a face
+point into the other solid)
+3. Splits trimming loops at intersection curve endpoints, creating new
+trimmed face regions
+4. Reconnects the surviving half-faces into a valid closed B-rep topology
+5. Intersection curves are represented as `LinkedCurve` chains linking
+`SSICurve` segments that share endpoints; directed graph connectivity
+determines trim loop assembly
+
+==== 3.4 Pullback Curve Computation
+
+`PullbackCurve.cpp` computes the 2D parameter-space representation of a
+3D intersection curve on a NURBS surface. Uses Newton iteration
+projected onto the surface, maintaining continuity with a
+predictor-corrector scheme.
+
+==== 3.5 Constrained Delaunay Triangulation (CDT) for B-rep
+
+`libbrep/cdt/` implements a full CDT pipeline for B-rep visualization
+and analysis:
+
+* Triangulates individual trimmed NURBS faces into flat triangle meshes
+* Enforces face trim loop edges as Delaunay constraints
+* Handles mesh topology at shared edges between adjacent faces; resolves
+vertex ordering conflicts at shared edges
+* Produces watertight triangle meshes from closed B-rep objects
+* Detects and reports mesh topology errors: unmatched edges, misoriented
+triangles, degenerate faces
+
+==== 3.6 B-rep Repair
+
+`edit.cpp` in libbrep supports repair of topologically invalid B-rep
+objects:
+
+* Detection and repair of bad 3D edge curves using Loft approximation
+from 2D parametric data
+* Identification of invalid trim loops and degenerate faces
+
+==== 3.7 Shape Recognition
+
+`libbrep/shape++_++recognition/` identifies geometric shape types
+(cylinder, cone, sphere, torus, planar surfaces, etc.) in B-rep face
+groupings, enabling approximate conversion from B-rep to CSG primitives.
+
+==== 3.8 Subcurve and Subsurface
+
+`Subcurve.cpp`, `Subsurface.cpp`: bounding-box tree hierarchies over
+NURBS curve/surface parameter domains, implementing fast spatial lookup
+for intersection candidate pairs.
+
+'''''
+
+=== 4. Non-Manifold Geometry (NMG)
+
+==== 4.1 Data Structure
+
+A complete Non-Manifold Geometry (NMG) kernel using Weiler’s radial-edge
+data structure, supporting fully general non-manifold topology with
+NMG-level boolean operations. NMG uses Kevin Weiler’s radial-edge data
+structure (from "`Non-Manifold Geometric Boundary Modeling,`" SIGGraph
+1989), extended and implemented for BRL-CAD by Michael Muuss and Lee
+Butler.
+
+The hierarchy is:
+
+*Model → Region → Shell → Face/Loop → Edge/Vertex*
+
+* *Model*: root container
+* *Region*: a set of shells (one connected body per shell)
+* *Shell*: a closed or open manifold surface
+* *Face* with a *faceuse* pair (two half-faces, one per orientation)
+* *Loop* (outer {plus} inner loops defining the face boundary)
+* *Edge* with two *edgeuse* entries (one per adjacent face); the
+_radial_ pointer links all edgeuses around the same geometric edge,
+enabling non-manifold connectivity
+* *Vertex* shared by all incident edges
+
+==== 4.2 NMG Operations
+
+* Topological validity checking (`nmg++_++check`)
+* Boolean operations on NMG solids (union, intersection, difference)
+using face-face intersection and the radial-edge topology to track
+in/out classification
+* Tessellation of NMG surfaces into flat triangular faces
+* Conversion to BoT mesh
+* Ray intersection with NMG solids (via face-plane and loop-boundary
+tests)
+* NURBS conversion (each planar face becomes a degenerate NURBS face)
+* Face plane normal flipping, loop reversal
+* Vertex fusion (merging geometrically coincident vertices within
+tolerance)
+* NMG model I/O (reading and writing)
+* Visualization (wireframe plot of edges)
+* Walking algorithms (visiting all model elements)
+* Index remapping for serialization
+
+'''''
+
+=== 5. Ray Tracing and Rendering
+
+==== 5.1 Primary SMP Ray Tracer
+
+The core ray tracer (`rt`) produces high-quality rendered images:
+
+* Shoots primary rays through each pixel (parallel, using the SMP
+infrastructure)
+* Calls application hit/miss callbacks; the default renders using the
+optical shader assigned to each region
+* Supports multi-frame animation sequences via the animation system
+* Configurable: resolution, antialiasing, number of CPUs, background
+color, ambient light, perspective, hyper-sampling
+* Output formats: raw pix (RGB), BW, PNG, and others via libicv
+* Benchmarking mode produces reference images for performance comparison
+
+==== 5.2 ADRT (Advanced Distributed Ray Tracer)
+
+Path tracing with Monte Carlo global illumination via the ADRT renderer:
+
+* *Path tracing* (`librender/path.c`): Monte Carlo path tracing with
+global illumination, supporting diffuse inter-reflection
+* *Phong shading* (`librender/phong.c`): classical Phong BRDF with
+ambient, diffuse, and specular components
+* *Depth renderer* (`librender/depth.c`): encodes ray depth as grayscale
+* *Normal renderer* (`librender/normal.c`): surface normal visualization
+* *Component renderer* (`librender/component.c`): highlights individual
+geometry components
+* *Hit renderer* (`librender/hit.c`): single-hit visualization
+* *Grid renderer* (`librender/grid.c`): grid overlay visualization
+* *Flat renderer* (`librender/flat.c`): unshaded flat color per region
+* *Surfel renderer* (`librender/surfel.c`): surfel-based rendering
+* *SPALL renderer* (`librender/spall.c`): spall fragment visualization
+* *FLOS renderer* (`librender/flos.c`): fragment line-of-sight
+visualization
+* *Texture system*: camo, checker, blend, clouds, gradient, image, mix,
+perlin noise, bump map, stack (layered texture composition)
+* Master/slave distributed rendering architecture (`master/`, `slave/`)
+for network- distributed ray tracing across multiple machines
+* Uses Tcl scripting for session control
+
+==== 5.3 ART (Application Ray Tracer)
+
+`art` provides an alternative rendering front-end with saved-view
+support and configurable rendering quality settings.
+
+==== 5.4 ISST (Interacting Solid Solids Tracer)
+
+`isst` is an interactive solid tracer used for real-time display of CSG
+geometry via the ADRT rendering engine, with a Tcl/Tk GUI.
+
+==== 5.5 Remote Distributed Ray Tracing
+
+`remrt` implements a network client-server architecture for distributing
+ray tracing work across multiple machines over TCP/IP, using `libpkg`
+for packet-based communication.
+
+==== 5.6 OpenCL Acceleration
+
+Selected primitives have OpenCL kernels: when compiled with OpenCL
+support, BoT ray-triangle intersection and the boolean weave step can
+offload to GPU. The HLBVH structure is converted to a linear flat array
+suitable for GPU traversal.
+
+'''''
+
+=== 6. Optical / Material Shading Models
+
+The optical library (`liboptical`) implements a shader plugin system.
+Shaders are assigned per-region and evaluated at ray-surface
+intersection points to determine color and light contribution. All
+shaders expose a shared interface (init, setup, render, free).
+
+* *Plastic* (`sh++_++plastic.c`): classical Phong reflection model with
+ambient, diffuse, and specular terms; supports mirror reflections via
+recursive ray casting
+* *Mirror* (degenerate plastic): perfect specular reflection
+* *Glass* (degenerate plastic): perfect specular transmission with
+Snell’s law refraction
+* *Phong BRDF* (`sh++_++brdf.c`): physically-based Phong with explicit
+BRDF formulation
+* *Cook-Torrance* (`sh++_++cook.c`): microfacet specular reflectance
+using the Beckmann distribution for physically-based metallic and
+dielectric materials
+* *Stack* (`sh++_++stack.c`): allows layering of multiple shaders whose
+results are composited
+* *Light* (`sh++_++light.c`): area and point light source shaders;
+support for colored lights, shadow testing, and soft shadows via
+distributed sampling
+* *Null* (`sh++_++null.c`): transparent shader (invisible geometry)
+* *Air* (`sh++_++air.c`): atmospheric medium with configurable
+density/transmittance; supports exponential falloff with height
+* *Cloud* (`sh++_++cloud.c`, `sh++_++scloud.c`): volumetric cloud
+appearance
+* *Fire* (`sh++_++fire.c`): procedural fire appearance
+* *Fog* / *Smoke*: density-based atmospheric scattering
+* *Grass* (`sh++_++grass.c`): procedural grass surface
+* *Wood* (`sh++_++wood.c`): procedural wood grain texture
+* *Camouflage* (`sh++_++camo.c`): multi-scale procedural camouflage
+pattern using fractal noise
+* *Texture mapping* (`sh++_++stxt.c`, `sh++_++text.c`, `sh++_++prj.c`):
+reads image files and applies them as surface textures; supports
+spherical and planar projection
+* *Billboard* (`sh++_++billboard.c`): billboard sprite texture applied
+to geometry
+* *Noise shaders* (`sh++_++noise.c`, `sh++_++fbm.c`, `sh++_++gauss.c`):
+various noise-based surface perturbations
+* *Points* (`sh++_++points.c`): point-sampled surface appearance
+* *Bump map* (`sh++_++rtrans.c`): perturbs surface normals using a
+texture map
+* *SPM (Spherical projection map)* (`sh++_++spm.c`): spherical
+environment map lookup
+* *Toon* (`sh++_++toon.c`): cel-shaded cartoon rendering
+* *Toyota* (`sh++_++toyota.c`): automotive paint shader with metallic
+flake modeling
+* *Treetherm* (`sh++_++treetherm.c`): temperature-based colorization for
+thermal analysis
+* *Flat* (`sh++_++flat.c`): constant flat color
+* *Extern / TCL* (`sh++_++tcl.c`): Tcl-scriptable shader for custom user
+shading functions
+* *OSL (Open Shading Language)* (`sh++_++osl.cpp`): OSL shader
+integration via liboslrend, enabling scripted physically-based materials
+
+==== 6.1 Photon Mapping
+
+A photon mapping global illumination renderer with kD-tree photon
+storage, nearest- neighbor gather, irradiance caching, and support for
+caustic and indirect light maps.
+
+`photonmap.c` implements a photon mapping global illumination algorithm:
+
+* Photon emission from light sources (Monte Carlo sampling of emission
+directions)
+* Photon transport via recursive ray tracing with Russian roulette for
+path termination
+* Photon storage in a *kD-tree* (built by median-split along the widest
+bounding-box axis)
+* Photon gathering using a *nearest-neighbor search* in the kD-tree with
+a maximum search radius (spherical query)
+* Irradiance estimation at hit points by summing gathered photon
+contributions weighted by a cone filter
+* *Irradiance caching* (`IC`): caches computed irradiance values on a
+grid to avoid re-computation; hypersampling at cache misses
+* Separate photon maps for: direct illumination, indirect illumination,
+specular/caustic photons, and volume caustics
+* Multi-threaded photon tracing using the SMP resource system
+
+==== 6.2 Refraction and Transparency
+
+`refract.c` implements Snell’s law refraction and the Fresnel equations
+for dielectric interfaces; used by the glass/plastic shader for
+physically correct transparency.
+
+==== 6.3 Spectral Data Support
+
+`libbn`’s tabular data system (`bn++_++tabdata` / `bn++_++table`)
+provides wavelength-indexed spectral curve storage and arithmetic (add,
+multiply, integrate, convolve). This is used by the optical library to
+represent spectral power distributions, albedo, and reflectance curves
+for physically-based spectral rendering.
+
+'''''
+
+=== 7. Geometric Analysis
+
+==== 7.1 Geometry Quality Analysis
+
+A comprehensive ray-based geometric analysis framework for volume, mass,
+centroid, moments of inertia, surface area, overlap detection, gap
+analysis, and voxelization — all derived from structured-grid ray
+casting with configurable adaptive refinement.
+
+A comprehensive geometry quality analyzer (`gqa`) fires grids of rays at
+user-specified objects to measure:
+
+* *Volume*: computed by integrating ray segment lengths over a grid of
+parallel rays; a three-direction cross-fire strategy improves accuracy;
+error bounds estimated from spacing
+* *Mass*: volume × material density (looked up from a density database)
+* *Centroid*: mass-weighted first moment via ray integration
+* *Moments of inertia*: mass-weighted second-moment tensor via ray
+integration
+* *Surface area*: via the `libanalyze` surface area API
+* *Overlaps*: detects regions of space where two different CSG regions
+coexist (interpenetrate), reporting maximum depth and coordinates; uses
+per-thread overlap tables and semaphores
+* *Gaps*: detects unmodeled empty space between adjacent regions that
+should be adjacent
+* *Adjacent air*: detects air regions directly adjacent to material
+regions without an intervening interface
+* *Exposed air*: air regions accessible from outside the model
+* *Unconfined air*: air regions that are not enclosed by material
+* Grid spacing is adaptively refined until convergence criteria are met
+
+==== 7.2 Ray-Based Volume and Mass Analysis (libanalyze API)
+
+`libanalyze` exposes a clean API (`analyze/info.h`) for:
+
+* `analyze++_++volume()`, `analyze++_++total++_++volume()` – volume per
+object or entire model
+* `analyze++_++mass()`, `analyze++_++total++_++mass()` – mass
+integration
+* `analyze++_++centroid()`, `analyze++_++total++_++centroid()` –
+centroid computation
+* `analyze++_++moments()`, `analyze++_++moments++_++total()` – inertia
+tensor
+* `analyze++_++surf++_++area()`, `analyze++_++total++_++surf++_++area()`
+– surface area
+
+All are driven by `perform++_++raytracing()` which fires a configurable
+grid from multiple azimuth/elevation directions, with configurable grid
+spacing and refinement limit.
+
+==== 7.3 NIRT (Natalie’s Interactive Ray Tracer)
+
+`libanalyze/nirt/` and the standalone `nirt` tool fire individual named
+rays at geometry and produce detailed intersection reports along the
+ray:
+
+* Region name, path, solid name at each hit
+* Hit point coordinates and surface normal
+* Region entry/exit distances, line-of-sight (LOS) thickness
+* Overlap reports with depth at each overlap
+* Gap reports with gap distance
+* Air region reports
+* Configurable output format strings (printf-style with named fields)
+* Multiple output format presets
+* Overlap handling modes: resolve (merge), rebuild FASTGEN, rebuild all,
+retain
+* Callback hooks for programmatic use (segment callbacks, gap callbacks,
+etc.)
+* Plot output with color-coded segment types
+
+==== 7.4 Voxelization
+
+`analyze/voxelize.h` and `voxels.c` convert CSG geometry to a 3D voxel
+grid by:
+
+* Firing three orthogonal sets of rays through the model
+* Accumulating region occupancy and fill fraction per voxel
+* Calling a user callback for each occupied voxel with its index and
+fill fraction
+* Level-of-detail parameter controls sub-voxel sampling
+
+==== 7.5 Implicit Surface Polygonizer (Marching Cubes / Tetrahedral)
+
+An implicit surface polygonizer (Bloomenthal tetrahedral marching) for
+converting any inside/outside function to a triangle mesh.
+
+`polygonizer.c` (based on Jules Bloomenthal’s "`An Implicit Surface
+Polygonizer,`" Graphics Gems IV, 1994) converts any implicit function
+(inside/outside test) to a triangle mesh:
+
+* Maintains a hash table of evaluated lattice corners and edges
+* Expanding front: starts at a seed point and spreads outward, testing
+adjacent cube faces
+* Each transitive cube is optionally decomposed into 6 tetrahedra for
+sub-cube accuracy
+* Edge-surface crossing is found by bisection (`converge`) then the
+vertex normal is estimated from finite differences
+* Used in `libanalyze` for converting CSG regions to faceted form
+
+==== 7.6 Geometry Differencing (raydiff)
+
+`raydiff.c` measures geometric differences between two versions of a
+model by:
+
+* Firing rays through both and comparing the partition lists
+* Reporting regions where geometry has been added, removed, or
+repositioned
+* Produces difference reports useful for tracking model changes
+
+==== 7.7 Geometry Checker (gchecker)
+
+`gchecker` performs static analysis of database objects:
+
+* Validates solids are non-degenerate
+* Checks for overlapping regions
+* Reports geometry that violates modeling constraints
+
+==== 7.8 Geometry Linting (glint)
+
+`glint` checks for non-manifold/degenerate primitives and warns about
+CSG tree structures (e.g., TOR with non-uniform scaling) that will not
+ray-trace correctly.
+
+==== 7.9 Mesh Healing
+
+Mesh healing via DCEL-based stitching, zippering, and topology repair
+for cleaning imported geometry.
+
+`libanalyze/MeshHealing/` provides mesh repair operations using a DCEL
+(Doubly Connected Edge List) representation:
+
+* *Stitching* (`Stitch.cpp`): closes gaps between mesh components by
+finding and connecting boundary edges within a tolerance
+* *Zipper* (`Zipper.cpp`): seams together open mesh boundaries
+* *Geometry repair* (`Geometry.cpp`): vertex deduplication, degenerate
+triangle removal, face orientation normalization
+* *Mesh conversion* (`MeshConversion.cpp`,
+`MeshConversion++_++brlcad.cpp`): converts between BRL-CAD BoT and DCEL
+mesh formats
+
+==== 7.10 Geometry Interrogation (gist)
+
+`gist` generates a comprehensive geometry information summary sheet
+(GIST) for a BRL-CAD model, including rendered views from multiple
+angles, metadata, and physical property summaries, output as a formatted
+image document.
+
+==== 7.11 Inside/Outside Test
+
+`inside.c` provides `analyze++_++obj++_++inside()`: tests whether one
+object is fully contained inside another using ray casting from multiple
+directions.
+
+==== 7.12 Subtracted Shape Detection
+
+`find++_++subtracted++_++shapes.cpp` detects which objects in a CSG
+combination are subtracted from the outer hull, useful for analyzing
+accessibility or identifying cavities.
+
+'''''
+
+=== 8. Numerical Mathematics (libbn)
+
+==== 8.1 Vector and Matrix Algebra (vmath.h)
+
+Comprehensive macro-based library for:
+
+* 2D/3D/4D point and vector arithmetic (add, subtract, scale, dot, cross
+product)
+* Unit-length normalization, magnitude
+* Homogeneous 4-vector operations
+* 4×4 matrix operations: multiply, invert, transpose, determinant, copy,
+identity, zero
+* Construct rotation matrices from axis/angle, from two vectors, from
+Euler angles
+* View matrix construction and model-to-view transforms
+* Pre-multiplication convention (column vectors, matrix on left)
+* Quaternion operations (as 4-vectors)
+* All constants to 36 significant digits: π, e, √2, √3, Euler’s
+constant, 1/π, 1/(2π), etc.
+* Tolerance macros: NEAR++_++ZERO, NEAR++_++EQUAL, ZERO,
+SMALL++_++FASTF, MAX++_++FASTF
+
+==== 8.2 Matrix Library (bn/mat.h)
+
+Beyond vmath macros, provides functions for:
+
+* `bn++_++mat++_++inverse()`: 4×4 matrix inversion
+* `bn++_++mat++_++mul()`, `bn++_++mat++_++mul3()`,
+`bn++_++mat++_++mul4()`: chained matrix products
+* `bn++_++mat++_++fromto()`: rotation matrix that maps one vector to
+another
+* `bn++_++mat++_++ae()`: azimuth/elevation rotation matrix
+* `bn++_++mat++_++angles()`: Euler angle decomposition
+* Perspective projection matrices
+* Viewing/model coordinate transforms
+* Arbitrary axis rotation matrices
+
+==== 8.3 Polynomial Root Finding (bn/poly.h)
+
+Analytical closed-form root finding for quadratic, cubic, and quartic
+polynomials, plus general deflation-based polynomial root finding — used
+at the core of all quadric and quartic surface ray intersections.
+
+* *Quadratic* (`bn++_++poly++_++quadratic++_++roots`): analytical
+closed-form solution; returns both real and complex roots
+* *Cubic* (`bn++_++poly++_++cubic++_++roots`): analytical solution via
+Cardano’s method; reduces to depressed cubic Y³{plus}aY{plus}b=0;
+discriminant determines root type (1 real {plus} 2 complex, 3 real with
+repeated, 3 distinct real)
+* *Quartic* (`bn++_++poly++_++quartic++_++roots`): analytical solution
+via Ferrari’s method (reducing to a resolvent cubic)
+* *General polynomial* (`bn++_++poly++_++roots`): finds all roots via
+deflation and Newton-Raphson (`bn++_++poly++_++findroot`); evaluates
+polynomial and its first two derivatives simultaneously
+(`bn++_++poly++_++eval++_++w++_++2derivatives`); validates roots by
+back-substitution
+* *Synthetic division* (`bn++_++poly++_++synthetic++_++division`):
+polynomial long division
+* Polynomial arithmetic: add, subtract, multiply, scale (all up to
+degree 6)
+
+These are used extensively by the primitive `ft++_++shot()` functions
+for quartic/cubic surface intersections.
+
+==== 8.4 Quaternion Mathematics (bn/qmath.h)
+
+* `quat++_++mat2quat()`: rotation matrix → quaternion
+* `quat++_++quat2mat()`: quaternion → rotation matrix
+* `quat++_++slerp()`: spherical linear interpolation between two
+quaternions (SLERP for animation)
+* `quat++_++exp()`, `quat++_++log()`: quaternion exponential and log for
+smooth interpolation
+* `quat++_++distance()`: angular distance between two quaternions
+* `quat++_++double()`: double-coverage quaternion
+
+==== 8.5 Procedural Noise (bn/noise.h)
+
+Multi-scale procedural noise (Perlin, fBm, turbulence, ridged
+multifractal) for procedural shaders, terrain, and material generation.
+
+Based on contributions from F. Kenton Musgrave and Robert Skinner:
+
+* *Perlin-style noise* (`bn++_++noise++_++perlin`): lattice-based
+gradient noise in the style of Perlin’s original 1985 paper; random at
+integer lattice points, interpolated between
+* *Vector noise* (`bn++_++noise++_++vec`): 3-component noise vector
+* *Fractional Brownian Motion (fBm)* (`bn++_++noise++_++fbm`): weighted
+sum of noise octaves with configurable H value (fractal increment),
+lacunarity, and octave count; pre-computed spectral weight table for
+efficiency
+* *Turbulence* (`bn++_++noise++_++turb`): sum of absolute-valued noise
+octaves; produces sharp trenches and ridge-like features
+* *Multifractal* (`bn++_++noise++_++mf`): from Musgrave’s "`Texturing
+and Modeling`"; combines fBm with non-linear offset weighting
+* *Ridged multifractal* (`bn++_++noise++_++ridged`): produces sharp
+ridges; uses a running ridge variable that modulates amplitude at each
+octave
+
+==== 8.6 Wavelet Transforms (bn/wavelet.h)
+
+Haar wavelet transforms (1D and 2D, all integer and floating-point
+types) for signal/image decomposition and reconstruction.
+
+Haar wavelet decompose/reconstruct for both 1D and 2D data:
+
+* In-place decomposition and reconstruction (average {plus} detail
+splitting)
+* Supports all fundamental C data types: double, float, char, short,
+int, long
+* 1D and 2D variants, with both square (power-of-2 dimension) and
+rectangular 2D variants
+* Partial decomposition to a specified sub-image size (limit parameter)
+* Multi-channel (e.g., RGB) support via the `depth` parameter
+* Used for image compression/processing and signal analysis
+
+==== 8.7 Random Number Generation
+
+* *MSR (Minimal Standard Random)* (`bn/msr.h`): Park-Miller linear
+congruential generator (ACM CACM 1988); provides both uniform long
+integers and uniform doubles in ++[++-0.5, 0.5++]++; also provides
+Gaussian distribution via the Box-Muller-like `BN++_++UNIF++_++CIRCLE`
+rejection method; pre-filled lookup tables for fast sequential access
+* *Mersenne Twister* (`bn/randmt.h`): MT19937 PRNG for high-quality
+pseudo-random numbers; period 2^19937-1
+* *Fixed shuffle table* (`bn/rand.h`): pre-computed table of
+pseudo-random values for deterministic sampling; supports stratified
+sampling patterns
+* *Sobol quasi-random sequence* (`bn/sobol.h`): Quasi-random
+low-discrepancy sampling (Sobol sequence, up to 1111 dimensions) for
+high-quality Monte Carlo integration. Supports the Acworth et al. skip
+strategy for better initial distribution; includes
+`bn++_++sobol++_++sph++_++sample()` for uniform sphere point picking
+using the Marsaglia (1972) method.
+
+==== 8.8 Animation Mathematics (bn/anim.h)
+
+* 3×3 and 4×4 matrix arithmetic macros for animation
+* `anim++_++mat2zyx()`: rotation matrix → ZYX Euler angles
+* `anim++_++mat2ypr()`: rotation matrix → yaw-pitch-roll angles
+* `anim++_++mat2quat()`: rotation matrix → quaternion
+* `anim++_++quat2mat()`: quaternion → rotation matrix
+* `anim++_++zyx2mat()`, `anim++_++ypr2mat()`: Euler angle/YPR → rotation
+matrix
+* `anim++_++steer++_++mat()`: steering matrix for path-following
+animation
+* `anim++_++v++_++permute()` / `anim++_++v++_++unpermute()`: converts
+between object-frame and view-frame matrix conventions (used in scripted
+animation)
+* Inertial matrix construction macros (`INERTIAL++_++MAT3`,
+`MAKE++_++TILDE`)
+
+==== 8.9 Spectral Table Data (bn/tabdata.h)
+
+`bn++_++table` / `bn++_++tabdata` structures support irregularly-sampled
+spectral curves:
+
+* Non-uniform wavelength sampling (variable-width intervals)
+* Operations: add, subtract, multiply (element-wise), multiply 3 tables,
+scale, integrate
+* Spectral convolution (illuminate × reflectance → radiance)
+* Used for physically-based spectral rendering with material databases
+
+==== 8.10 SPM (Spherical Part Map)
+
+`bn/spm.h`: maps a function over a sphere using equal-area
+latitude/longitude binning; used for environment mapping and spherical
+reflectance storage.
+
+==== 8.11 Numeric Utilities
+
+* `bn/ulp.h`: ULP (Units in the Last Place) arithmetic for
+floating-point tolerance
+* `bn/str.h`: numeric ↔ string formatting helpers
+* `bn/numgen.h`: general numeric value generation utilities
+* `bn/complex.h`: complex number type with arithmetic (add, subtract,
+multiply, divide, magnitude, phase)
+* `bn/tol.h`: `bn++_++tol` structure: paired absolute (dist) and
+relative (perp) tolerances used throughout the geometry algorithms to
+control coincidence and planarity tests
+* `bn/dvec.h`: SIMD-accelerated double-precision vector operations
+(SSE/AVX paths)
+
+'''''
+
+=== 9. Computational Geometry (libbg)
+
+==== 9.1 Convex Hull
+
+* *2D convex hull for simple polylines*
+(`bg++_++polyline++_++2d++_++chull`): Melkman’s O(n) online algorithm
+for polylines already in simple (non-self-intersecting) order
+* *2D convex hull for unordered points* (`bg++_++2d++_++chull`):
+Andrew’s monotone chain sort followed by Melkman for final hull
+assembly; O(n log n)
+* *3D coplanar point hull* (`bg++_++3d++_++coplanar++_++chull`):
+projects to local 2D plane, applies 2D hull, reprojects to 3D
+* *3D convex hull* (`bg++_++3d++_++chull`): Antti Kuukka’s QuickHull
+implementation; returns face indices and vertex arrays for the convex
+polyhedron
+
+==== 9.2 Oriented Bounding Rectangles (bn/obr.h)
+
+* *2D OBR* (`bg++_++2d++_++obr`): Rotating Calipers algorithm on the 2D
+convex hull; returns minimum-area bounding rectangle as center {plus}
+two half-extent vectors
+* *3D coplanar OBR* (`bg++_++3d++_++coplanar++_++obr`): projects to 2D,
+applies Rotating Calipers
+* *3D OBB* (`bg++_++3d++_++obb`): oriented bounding box for arbitrary 3D
+point sets (via PCA axis alignment followed by AABB in principal axes)
+
+==== 9.3 Polygon Operations (bg/polygon.h)
+
+* Area computation (shoelace formula)
+* Clockwise/counter-clockwise winding test
+* *Point-in-polygon* (`bg++_++pnt++_++in++_++polygon`): Franklin’s
+ray-casting algorithm
+* *Polygon clipping* via the Clipper library (Angus Johnson): union,
+intersection, difference, XOR of arbitrary 2D polygons with holes
+* Polygon overlap test
+* Polygon view bounding box
+
+==== 9.4 Polygon Triangulation (bg/polygon.h)
+
+A polygon triangulation suite offering six distinct algorithms from O(n
+log n) Delaunay to constrained CDT with holes and Steiner points.
+
+Multiple algorithms available via `triangulation++_++t` enum:
+
+* *Ear Clipping* (`TRI++_++EAR++_++CLIPPING`): O(n²) classical
+triangulation; robust for simple polygons; uses the earcut.hpp
+header-only library
+* *Constrained Delaunay Triangulation*
+(`TRI++_++CONSTRAINED++_++DELAUNAY`): uses the Detria library for CDT
+with hole support and Steiner point insertion
+* *Monotone decomposition* (`TRI++_++MONOTONE`): O(n log n) via monotone
+polygon decomposition
+* *Hertel-Mehlhorn* (`TRI++_++HERTEL++_++MEHLHORN`): near-convex
+partition triangulation
+* *Keil-Snoeyink* (`TRI++_++KEIL++_++SNOEYINK`): near-minimum convex
+partition
+* *Delaunay* (`TRI++_++DELAUNAY`): full unconstrained Delaunay
+triangulation
+
+Supports polygons with interior holes and Steiner points.
+
+==== 9.5 Triangle Mesh Operations (bg/trimesh.h)
+
+* *Manifold/closure test* (`bg++_++trimesh++_++manifold++_++closed`):
+verifies every edge has exactly one matching edge (half-edge
+consistency)
+* *Orientation test* (`bg++_++trimesh++_++oriented`): verifies
+opposite-winding half-edge pairs
+* *Solid validation* (`bg++_++trimesh++_++solid`): combined closure
+{plus} manifold {plus} orientation check with optional error output
+* *AABB* (`bg++_++trimesh++_++aabb`): axis-aligned bounding box over
+active mesh vertices
+* *Surface area* (`bg++_++trimesh++_++area`): sum of triangle areas
+* *Decimation* (`bg++_++trimesh++_++decimate`): mesh simplification with
+feature-size and maximum-runtime constraints
+* *Intersection* (`bg++_++trimesh++_++isect`): classifies mesh faces as
+inside/outside/intersecting with respect to another mesh (without full
+boolean evaluation)
+* *Topology error detection*: degenerate faces, unmatched edges, excess
+edges (more than two faces per edge), misoriented edges — all with
+callback-based error reporting
+* *Halfedge generation* and *topology diffing*
+* *Point cloud synchronization*
+
+==== 9.6 Ray-Triangle and Triangle-Triangle Intersection
+
+* `bg++_++tri++_++ray++_++intersect()` (bg/tri++_++ray.h):
+Möller–Trumbore ray-triangle intersection
+* `bg++_++tri++_++tri++_++isect()` (bg/tri++_++tri.h): triangle-triangle
+intersection test (Devillers and Guigue 2002 algorithm)
+* `bg++_++tri++_++pt++_++dist()` (bg/tri++_++pt.h): point-to-triangle
+closest distance
+
+==== 9.7 Plane Geometry (bg/plane.h)
+
+Comprehensive plane utilities:
+
+* Plane equation from three points
+* Point-to-plane signed distance
+* Point-on-plane test
+* Line-plane intersection
+* Plane-plane intersection (returns line)
+* Ray-plane intersection
+* Plane normalization and canonicalization
+* RPP (rectangular parallelepiped) vs. plane intersection test
+* Two planes {plus} point → third plane
+* Closest point on a line segment to another line segment
+
+==== 9.8 Line Segment Geometry (bg/lseg.h)
+
+* Closest approach between two line segments
+* Parametric intersection of 2D line segments
+
+==== 9.9 Separating Axis Theorem (bg/sat.h)
+
+* AABB-AABB overlap test via SAT
+* Triangle-AABB overlap test (Akenine-Moller’s method)
+* AABB-ray intersection test
+
+==== 9.10 Surface Reconstruction from Point Clouds
+
+* *Screened Poisson Surface Reconstruction* (`bg++_++3d++_++spsr`):
+Kazhdan’s algorithm (2006, updated 2015); solves the Poisson equation to
+fit an implicit function to an oriented point set, then extracts the
+isosurface as a triangle mesh; configurable depth, octree resolution,
+FEM degree, boundary conditions (free/Neumann/Dirichlet), multigrid
+solver parameters, and interpolation weight; uses nanoflann for fast
+nearest-neighbor queries
+* *Ball Pivoting Algorithm* (`bg++_++3d++_++ballpivot`): Bernardini et
+al. (1999); rolls a virtual ball of specified radius over a point set
+and creates triangles where the ball rests on three points without
+passing through any others; multiple radii can be specified for
+multi-scale reconstruction; fewer topology guarantees than SPSR
+
+==== 9.11 Principal Component Analysis (bg/pca.h)
+
+PCA of 3D point sets: computes eigenvectors (principal axes) and
+eigenvalues for shape analysis, oriented bounding box alignment, and
+point cloud feature extraction.
+
+==== 9.12 Point Cloud Generation (bg/pointgen.h)
+
+Deterministic generation of uniformly distributed points on surfaces or
+in volumes:
+
+* Sphere surface sampling
+* Used for Monte Carlo integration setups
+
+==== 9.13 Additional Vertex/Point Utilities
+
+* *vert++_++tree* (`bg/vert++_++tree.h`): fast spatial hashing structure
+for vertex merging within tolerance (used during tessellation)
+* *AABB-ray intersection* (`bg/aabb++_++ray.h`): slab method for fast
+axis-aligned box against ray testing
+
+'''''
+
+=== 10. Image Processing (libicv)
+
+==== 10.1 Image I/O
+
+Supports reading and writing the following image formats:
+
+* *PIX*: raw RGB pixel data (BRL-CAD native)
+* *BW*: raw grayscale (8-bit)
+* *PNG*: Portable Network Graphics (via libpng)
+* *PPM/PGM/PNM*: netpbm formats
+* *RLE*: run-length encoded (BRL-CAD Utah RLE format)
+* *DPIX*: double-precision floating-point pixel data
+* ASCII art output
+
+==== 10.2 Image Filtering
+
+Convolution-based spatial filters (`icv++_++filter`):
+
+* Low-pass (blurring) filter
+* Laplacian (edge detection, second derivative)
+* Horizontal gradient (first derivative in X)
+* Vertical gradient (first derivative in Y)
+* High-pass (sharpening)
+* Boxcar averaging
+
+Three-frame temporal filters (`icv++_++filter3`):
+
+* Temporal low-pass
+* Temporal high-pass
+* Temporal boxcar average
+* Animation smear (motion blur)
+
+==== 10.3 Image Operations
+
+* *Per-pixel scalar operations*: add constant, multiply constant, divide
+constant, power
+* *Per-pixel image operations*: add, subtract, multiply, divide two
+images
+* *Saturation adjustment*: changes color saturation while preserving
+luminance
+* *Fade*: darkens image by a fractional factor
+* *Sanitize*: clamps pixel values to ++[++0,1++]++
+
+==== 10.4 Image Resizing
+
+Four resize methods:
+
+* *Undersample*: pixel decimation by integer factor
+* *Shrink*: area-averaging downsample preserving total light energy
+* *Nearest neighbor interpolation*: fast upscale
+* *Bilinear interpolation*: smooth upscale
+
+==== 10.5 Image Transformation
+
+* *Rotation* (`icv++_++rot`): 90°, 180°, 270° and arbitrary-angle
+rotation with flip options
+* *Crop* (`icv++_++crop`): extract a rectangular sub-region
+* *Fit* (`icv++_++fit`): scale image to fit within requested dimensions
+
+==== 10.6 Color Space Conversion
+
+* Grayscale → RGB channel replication
+* RGB → grayscale with configurable channel weights:
+** NTSC primaries (0.30, 0.59, 0.11)
+** CRT phosphor D6500 primaries (0.26, 0.66, 0.08)
+** Arbitrary user-specified weights
+** Single-channel extraction (R, G, B, RG, RB, BG)
+
+==== 10.7 Image Comparison and Statistics
+
+* *Exact difference* (`icv++_++diff`): pixel-level comparison with
+counts of matching, off-by-one, and significantly different pixels
+* *Difference image* (`icv++_++diffimg`): visual difference image
+* *Perceptual hash* (`icv++_++pdiff`): dHash perceptual image hash,
+returns Hamming distance between two images for approximate perceptual
+similarity comparison
+* *Image statistics* (`icv/stat.h`): per-channel min, max, mean,
+histogram
+* *ASCII art image conversion* (`asciiart.cpp`): renders an image as
+ASCII text
+
+'''''
+
+=== 11. Signal Processing (libfft {plus} sig/)
+
+==== 11.1 FFT Library (libfft)
+
+Provides a classic Cooley-Tukey radix-2 FFT:
+
+* `rfft()` / `irfft()`: real-to-complex and complex-to-real transforms
+* `cfft()` / `icfft()`: complex-to-complex forward and inverse
+transforms
+* Split-radix DIT (Decimation In Time) and DIF (Decimation In Frequency)
+variants
+* `fftfast.c`: highly optimized fast-path FFT
+* Power-of-2 sizes; uses pre-computed twiddle factor tables
+
+==== 11.2 Signal Processing Utilities (sig/)
+
+A collection of standalone command-line signal processing tools
+operating on datafiles of binary floating-point samples (double, float)
+or integer types:
+
+*Format converters:*
+
+* `a-d`, `d-a`: ASCII ↔ double
+* `d-f`, `f-d`: double ↔ float
+* `d-i`, `i-d`: double ↔ int
+* `c-d`, `d-bw`, `bw-d`, `i-f`: various type conversions
+* `u-d`, `u-f`, `u-a`, `u-bw`: unsigned variants
+* `f-i`, `i-a`: additional conversions
+
+*Spectral analysis:*
+
+* `dfft.c`: discrete FFT of a signal file; produces amplitude/phase
+spectrum
+* `ifftc.c` / `fftc.c`: complex FFT for signal files
+
+*Window functions:*
+
+* `coswin.c`: cosine window (Hann window)
+* `hamwin.c`: Hamming window
+* `dwin.c`: general windowing application to a signal
+
+*Filter design:*
+
+* `butter.c`: Butterworth digital IIR filter design and application;
+configurable order, cutoff frequency, high-pass or low-pass mode
+
+*Statistics:*
+
+* `dstats.c`: mean, standard deviation, min, max, histogram of a signal
+* `istats.c`: statistics for integer data
+* `ustats.c`: statistics for unsigned data
+
+*Signal manipulation:*
+
+* `dmod.c`: modulation of a signal
+* `smod.c`: signal scaling
+* `umod.c`, `imod.c`: integer/unsigned variants
+* `dsel.c`: signal sample selection
+* `dconv.c`: signal convolution
+* `interp.c`: signal interpolation (linear, quadratic)
+* `dpeak.c`: peak detection in a signal
+* `dauto.c`, `dauto2.c`: autocorrelation
+* `damdf.c`: average magnitude difference function (used in pitch
+detection)
+
+'''''
+
+=== 12. File Format Import and Export
+
+==== 12.1 Native BRL-CAD Database Formats
+
+* *v5 binary format* (`.g`): default on-disk format; object records
+stored as typed, sized external binary representations with
+machine-independent byte ordering (network byte order for portability);
+supports arbitrary-length object names (up to 255 bytes), binary
+attributes, and object versioning; format supports incremental append
+* *v4 binary format*: legacy fixed-record format (NAMESIZE=16 byte
+names); read support maintained for backward compatibility; `g4-g5` and
+`g5-g4` converters available
+* *ASCII/Tcl text format* (`.asc`): human-readable ASCII representation
+of the database via Tcl-encoded key-value pairs; convertible to/from
+binary via `asc` plugin and `g2asc`
+* *BRL-CAD in-memory database*: databases can be created and populated
+entirely in memory without a backing file (used by converters and
+analysis tools)
+
+==== 12.2 CAD/CAM Interchange Formats
+
+* *STEP*: ISO 10303 STEP AP203/AP214 import and export; handles B-rep
+geometry, assembly structure, and product metadata via the
+openNURBS/STEPcode library
+* *IGES*: Initial Graphics Exchange Specification (IGES 5.3) import;
+handles B-rep surfaces, ruled surfaces, tabulated cylinders, and curve
+definitions
+* *3DM / Rhino*: Rhino 3D model format import/export via openNURBS;
+preserves NURBS geometry and layer structure
+* *DXF*: AutoCAD Drawing Exchange Format import/export; handles 2D/3D
+entities, polylines, faces, blocks
+* *OBJ*: Wavefront OBJ import/export; handles triangle/polygon faces,
+material groups, normals, UV coordinates
+* *STL*: STereoLithography ASCII and binary import/export; both solid
+and surface STL; automatic normal computation
+* *PLY*: Stanford PLY polygon format import/ export; handles vertex
+colors, normals, and arbitrary per-vertex/per-face properties
+* *glTF/GLB*: GL Transmission Format v2 import/export; supports meshes,
+nodes, scenes, materials
+* *OFF*: Object File Format (simple polygon mesh) import/export
+* *3DM*: standalone Rhino 3DM converter
+
+==== 12.3 Military and Analysis Formats
+
+* *FASTGEN4*: import of FASTGEN4 vehicle vulnerability model files
+(tri-service standard); handles CLINE, CTRI, CQUAD, CSPHERE, CONE, BOX,
+and other FASTGEN element types; produces BoT, CLINE, TGC, ARB8, SPH
+primitives; assigns region codes and material IDs from FASTGEN deck
+* *FASTGEN5 / MUVES* (g5-g4 bridge): converts between FASTGEN4 and
+FASTGEN5 formats
+* *TANKILL*: TANKILL vehicle model format import
+* *INTAVAL*: German INTAVAL vulnerability model format import
+* *PATCH*: PATCH vehicle geometry format import (used in legacy
+vulnerability modeling)
+* *COMGEOM / GIFT*: import of legacy COMGEOM geometric models
+(GIFT4/GIFT5 formats, predecessor to BRL-CAD)
+* *VDECK*: output in GIFT/VDECK format
+* *NFF*: output in Eric Haines’ Neutral File Format for ray tracers
+* *ACAD*: AutoCAD DXF/ACAD export
+
+==== 12.4 3D Mesh Formats
+
+* *Rhino 3DM* (see above, via openNURBS)
+* *EGG* (`src/conv/g-egg.c`): Panda3D EGG scene graph format export
+* *VRML* (`src/conv/g-vrml.c`): Virtual Reality Modeling Language v2
+export; generates geometry nodes with material bindings
+* *X3D* (`src/conv/g-x3d.c`): X3D (XML-based VRML successor) export
+* *ACII/ASC* (`src/conv/asc/`): BRL-CAD ASCII representation
+* *SHP* (`src/conv/shp/`): ESRI shapefile format for 2D/3D geographic
+geometry
+* *Raw triangles* (`src/conv/raw/`): raw XYZ triangle vertex output
+* *DOT* (`src/conv/g-dot.c`): Graphviz DOT file export of the CSG
+combination tree (for structural visualization)
+* *Jack* (`src/conv/jack/`): Jack human figure model format
+import/export
+* *Shell-rect* (`src/conv/g-shell-rect.c`): rectangular shell
+decomposition of BoT meshes
+* *NMG* (`src/conv/nmg/`): NMG to external format converters
+
+==== 12.5 Volume / Scientific Formats
+
+* *OpenVDB* (`src/conv/g-vdb.cpp`): export of BRL-CAD geometry as
+OpenVDB sparse volume grids (via the OpenVDB library); voxelizes the CSG
+geometry at configurable resolution
+* *VOL* (`src/libgcv/plugins/vol/`): import of 3D voxel volume files
+* *GDAL* (`src/libgcv/plugins/gdal/`): import of terrain/raster
+elevation data via the GDAL geospatial library; converts to DSP/HF
+height field primitives
+* *Molecular (PDB)* (`src/conv/pdb-g.cpp`, `src/proc-db/pdb-g.cpp`):
+Protein Data Bank format import; creates sphere/cylinder representations
+of molecular structures
+
+==== 12.6 AssetImport (libgcv plugin)
+
+`src/libgcv/plugins/assetimport/`: integration with the Open Asset
+Import Library (Assimp) for importing dozens of additional 3D formats
+including FBX, Collada (DAE), 3DS, AC3D, MD2, MD3, LWO, X (DirectX), and
+others.
+
+==== 12.7 Point Cloud Decimation (libgcv)
+
+`src/libgcv/plugins/decimate/`: mesh decimation as a GCV filter pass,
+using the `bg++_++trimesh++_++decimate()` engine.
+
+'''''
+
+=== 13. Geometry Database System
+
+==== 13.1 Database Architecture
+
+The BRL-CAD geometry database (`.g` files) is a record-oriented binary
+database with:
+
+* A free list for deleted records
+* Object directory stored as an in-memory hash table keyed by object
+name
+* Two record formats: v4 (fixed 128-byte records) and v5
+(variable-length records with external type/size prefix)
+* All I/O mediated through the `db++_++i` (database instance) structure
+* Concurrent read access; single-writer serialization via semaphores
+* Memory-mapped I/O (`bu++_++mapped++_++file`) for efficient large
+database access
+* Object-level corruption detection via checksum and magic-number
+validation
+
+==== 13.2 Object Attributes
+
+Every database object (including combinations and solid primitives)
+supports a key-value attribute store (`db5++_++attr`) for arbitrary
+user-defined metadata:
+
+* Material properties (density, thermal conductivity, etc.)
+* BRL-CAD attribute registry (`db5++_++attr++_++registry`): standard
+attribute names with associated types for interoperability
+* Attribute inheritance through combination trees
+* Attribute synchronization during material assignment
+
+==== 13.3 Database Diff and Version Control
+
+* `db++_++diff.c` / `gdiff` tool: compares two versions of a database
+object-by-object, reporting added, removed, and modified objects with
+per-attribute change detail
+* `reduce++_++db.cpp`: removes unused/unreferenced objects and
+simplifies database
+
+==== 13.4 Database Search and Query
+
+`librt/search.cpp` provides a rich object-search interface:
+
+* Filter by object name (glob or regex)
+* Filter by object type (solid kind, region flag, combination flag)
+* Filter by attribute key/value
+* Filter by boolean relationship in tree
+* Filter by primitive parameters (bounding box overlap, etc.)
+* Recursive tree walking with composable predicates
+
+==== 13.5 Animation System
+
+Per-arc matrix animation (`rt/anim.h`):
+
+* Each tree arc can carry an animate structure chain
+* Animation types: matrix replacement, matrix left/right multiply,
+material property, region color, solid parameter, temperature
+* Animation scripts (`db++_++parse++_++anim`) parsed from standard
+format files
+* Used during rendering to produce animated frame sequences
+
+==== 13.6 Object Naming and Paths
+
+Full hierarchical path notation (`rt/db++_++fullpath.h`) supports:
+
+* `/` separated path strings for nested combinations
+* Full-path comparison, encoding, and decoding
+* Path-relative matrix accumulation
+
+'''''
+
+=== 14. Geometry Editing (libged)
+
+`libged` exposes a command interface for interactive and scripted
+geometry editing. Key categories of functionality:
+
+==== 14.1 Primitive Creation and Editing
+
+Every primitive type has `make`, `in` (create from parameters), `edit`
+commands. The `rt++_++edit++_++functab` (EDOBJ table) provides
+per-primitive:
+
+* Parameter serialization to/from human-readable text
+* Interactive edit mode setup for mouse-driven parameter adjustment
+* Edit-XY: translates mouse drag coordinates into meaningful parameter
+updates
+* Keypoint lookup for drag anchoring
+* Axis position for constraint-based editing
+
+==== 14.2 Combination/Tree Operations
+
+* Build and modify CSG boolean trees (add/remove operands, change
+operators, change placement matrices)
+* Group, region, comb commands for tree construction
+* Matrix editing on individual arcs
+* Combination mirroring and transformation
+
+==== 14.3 Database Management
+
+* `copy`, `move`, `rename`, `kill`, `killall`, `killtree`
+* `dbconcat`: merges two databases with optional prefix to resolve name
+conflicts
+* `prefix`, `suffix`: bulk renaming operations on object hierarchies
+* `dbclean`: removes unused objects
+* `dbupgrade`: migrates v4 databases to v5 format
+* `ls`: directory listing with type filtering
+* `find`: tree search
+* `track`: search for where an object is used in the tree
+
+==== 14.4 Geometry Transformations
+
+* `translate`, `rotate`, `scale`: transformations on primitives or
+combinations
+* `xpush`: pushes transformation matrices from combinations down to
+primitives (removes transformation matrices from tree arcs by baking
+them into primitive parameters)
+* `mirror`: mirror geometry across a plane
+* `arced`: directly edit a specific arc’s transformation matrix
+* `lookat`: orient view toward a specific point
+
+==== 14.5 Boolean Tessellation
+
+* `facetize`: converts CSG geometry to a triangle mesh (BoT) via NMG
+Boolean evaluation followed by mesh extraction; supports manifold mode
+and fallback strategies; used to convert implicit CSG trees to explicit
+meshes for downstream export
+* `bev`: boolean evaluation outputting NMG solids
+
+==== 14.6 Analysis Commands
+
+* `analyze`: per-primitive physical property computation
+* `check`: overlap and gap analysis (wraps gqa)
+* `lint`: database quality checking
+* `solid++_++report`: solid/region statistics
+
+==== 14.7 Import/Export
+
+Extensive file format interoperability: import/export spanning STEP,
+IGES, STL, OBJ, PLY, glTF, DXF, VRML, X3D, FASTGEN4/5, Rhino 3DM,
+OpenVDB, GDAL terrain, Assimp, and BRL-CAD’s own ASCII and binary
+formats.
+
+* `import`: import geometry from supported format via libgcv plugins
+* `export`: export geometry to supported format via libgcv plugins
+* `g2asc` / `asc2g`: database to/from ASCII text
+
+'''''
+
+=== 15. Parallel Processing Infrastructure (libbu)
+
+==== 15.1 Thread Management
+
+`bu/parallel.h` and `parallel.c`:
+
+* `bu++_++parallel()`: launches N identical worker threads from a
+function pointer; thread-count capped at `MAX++_++PSW` (configurable,
+default up to 64×64 nested)
+* `bu++_++parallel++_++id()`: returns per-thread CPU index (used to
+select per-thread resource tables)
+* CPU affinity control via `affinity.c`
+
+==== 15.2 Semaphores
+
+* `bu++_++semaphore++_++acquire()` / `bu++_++semaphore++_++release()`:
+lightweight mutex/semaphore operations with a registered semaphore table
+* Semaphore IDs are named constants (e.g., `RT++_++SEM++_++WORKER`,
+`RT++_++SEM++_++RESULTS`)
+* On platforms without native semaphores, falls back to spin-lock
+
+==== 15.3 Thread-Safe Memory
+
+All `bu++_++malloc()`, `bu++_++calloc()`, `bu++_++realloc()` variants
+are thread-safe; fatal allocation failures call `bu++_++bomb()`.
+Per-thread resource structures avoid allocation contention.
+
+==== 15.4 Other libbu Capabilities
+
+* *Variable-length string* (`bu++_++vls`): dynamically resizing C string
+* *Hash table* (`bu++_++hash`): generic hash map with open addressing
+* *Bit vector* (`bu++_++bitv`): dynamic bit vector (used for piece
+tracking in ray tracing)
+* *Pointer table* (`bu++_++ptbl`): dynamic array of pointers (used
+throughout for lists)
+* *Attribute-value set* (`bu++_++avs`): string-keyed string-value store
+* *Observer pattern* (`bu++_++observer`): event notification system
+* *Dynamic library loading* (`bu++_++dylib`): platform-independent
+dlopen/dlsym wrapper
+* *Process management* (`bu++_++process`): subprocess creation and I/O
+* *Unit conversion* (`bu++_++units`): comprehensive unit system with
+human-readable parsing and formatting (mm, cm, m, km, in, ft, yd, miles,
+etc.)
+* *MIME type inference* (`bu++_++mime`): identifies file types by
+content and extension
+* *Path utilities* (`bu++_++path`): basename, dirname, extension,
+normalize, glob
+* *File I/O* (`bu++_++file`): exists, readable, writable, size, file
+locking
+* *Glob* (`bu++_++glob`): filename expansion
+* *Crash reporting* (`bu++_++backtrace`): stack trace on crash (using
+platform unwind)
+* *B64* encoding/decoding (`b64.c`)
+* *XXHash* (`xxhash.h`): fast non-cryptographic hash
+* *SHA1* (`sha1.c`): SHA-1 hash for content fingerprinting
+* *UUID* (`uuid.c`): UUID generation
+* *Endian conversion* (`bu/endian.h`, `htond.c`, `htonf.c`): network ↔
+host byte order for floating-point types
+* *XDR* (`xdr.c`): XDR external data representation conversion
+* *Opt* (`bu++_++opt`): GNU-style option parser with type-safe argument
+handling
+* *Cmd* (`bu++_++cmd`): Tcl-style command dispatch table
+
+'''''
+
+=== 16. Display, View, and Visualization (libdm / libbv)
+
+==== 16.1 Display Manager (libdm)
+
+Abstracts hardware/software rendering backends:
+
+* OpenGL display manager for hardware-accelerated display
+* Software (swrast) fallback
+* Null/dummy display for headless operation
+* Platform display managers (X11, Win32, macOS)
+* Consistent API: `dm++_++open`, `dm++_++close`,
+`dm++_++draw++_++vlist`, `dm++_++draw++_++begin`, `dm++_++draw++_++end`
+* Display list rendering using OpenGL VBOs
+* Font rendering (`vfont.c`, BRL-CAD vector font)
+
+==== 16.2 View Abstraction (libbv)
+
+`bview` structure encapsulates all view state:
+
+* Camera position, orientation, field of view, perspective
+* Model-to-view and view-to-model transform matrices
+* Screen dimensions
+* LOD (level-of-detail) settings for adaptive display
+* Scene object list (`bv++_++scene++_++obj`)
+
+==== 16.3 Plot3 Format (bv/plot3.h)
+
+BRL-CAD’s internal vector graphics format:
+
+* 2D/3D line segments, polygons, points in integer and floating-point
+variants
+* Color operations
+* Used extensively for debug output, wireframe visualization, and
+ground-truth overlays
+
+==== 16.4 Adaptive Level-of-Detail
+
+`ft++_++adaptive++_++plot()` and the `ft++_++scene++_++obj()` primitive
+callbacks generate view-dependent wireframe representations:
+
+* Curve tessellation density scales with view resolution (view size /
+distance to object)
+* BoT primitives cache per-LOD wireframe representations
+* Draw command (`libged`) asynchronous population being explored
+
+'''''
+
+=== 17. Procedural and Parametric Geometry Generation
+
+==== 17.1 Parametric Architectural Shapes
+
+`src/shapes/` provides procedural generators for common manufactured
+forms:
+
+* *Bolt* (`bolt.c`): hex-head bolt with configurable diameter, length,
+head dimensions
+* *Coil* (`coil.c`): helical coil spring with configurable pitch,
+inner/outer diameter, number of turns, end types
+* *Fence* (`fence.c`): chain-link or picket fence with posts, rails, and
+mesh geometry
+* *Gastank* (`gastank.c`): propane/gas tank with cylindrical body and
+hemispherical caps
+* *Handle* (`handle.c`): symmetric handle shape
+* *Human* (`human.c`): simplified anthropomorphic human figure from
+ellipsoids and cylinders, with configurable height and proportions
+* *Tire* (`tire.c`): automotive tire with tread geometry and sidewalls
+* *Window / Window Frame* (`window.c`, `window++_++frame.c`):
+architectural window primitives
+* *Wire* (`wire.c`): wire segment primitives
+
+==== 17.2 Procedural Database Geometry (proc-db)
+
+`src/proc-db/` contains programs for programmatic model generation:
+
+* *Molecular structures* (`molecule.c`, `pdb-g.cpp`): reads Protein Data
+Bank files and creates sphere-and-stick molecular models; caffeine and
+3NN4 example models included
+* *Masonry* (`masonry.c`): brick and stone wall pattern generation
+* *Building* (`mkbuilding.c`, `makebuilding/`): multi-story building
+generation from floor plans
+* *Metaballs* (`metaball.c`, `metaballs.pl`): metaball cluster
+generation
+* *Sphflake* (`sphflake.c`): fractal sphere-cluster tree (similar to
+Menger sponge principle but with sphere hierarchies)
+* *Menger sponge* (`menger.c`): recursive cube-based fractal geometry
+* *Ringworld* (`ringworld.c`): concentric ring terrain geometry
+* *Globe* (`globe.c`): spherical globe with geographic layers
+* *Lens* (`lens.c`): optical lens cross-section geometry
+* *Clutter* (`clutter.c`): random-placed object fields for performance
+testing
+* *B-rep primitives* (`brep++_++simple.cpp`, `brep++_++cube.cpp`,
+`brep++_++cobb.cpp`, `brep++_++surface.cpp`, `brep++_++trimmed.cpp`):
+example B-rep model generation
+* *NMG model* (`nmgmodel.c`): programmatic NMG solid construction
+example
+* *Sketch* (`sketch.c`): 2D sketch construction example
+* *CSG from B-rep* (`csgbrep.cpp`): B-rep to CSG decomposition example
+* *Pipe* (`pipe.c`, `pipetest.c`): pipe assembly generation
+* *Brickwall* (`brickwall.c`): stacked brick wall geometry
+* *Pyramid* (`pyramid.c`): pyramid with configurable sides
+* *Gtimes* (`gtimes.c`): geometry timing/performance test
+
+'''''
+
+=== 18. Performance Benchmark Suite
+
+`src/bench/` and the `bench` top-level directory contain BRL-CAD’s
+standardized ray-tracing benchmark:
+
+* Renders a set of fixed reference scenes at fixed resolution
+* Compares output pixel values against stored reference images
+(correct/incorrect)
+* Reports performance in *VGR units* (relative to a DEC VAX 11/780
+baseline)
+* Also reports *rays/second* for absolute throughput
+* Integrated into the CMake build system (`make benchmark`)
+* Benchmark scenes test a range of primitive types, combination
+complexity, and CSG depth
+* Used for regression testing, platform comparison, and hardware
+evaluation
+
+'''''
+
+=== 19. Scripting, Automation, and GUI Infrastructure
+
+==== 19.1 Tcl/Tk Scripting
+
+* *libtclcad*: library that exposes librt, libged, and display manager
+functionality as Tcl commands; provides the scripting interface for all
+BRL-CAD Tcl-based applications
+* *bwish*: BRL-CAD’s Tcl/Tk interpreter with all BRL-CAD commands built
+in
+* *tclscripts/*: extensive library of Tcl scripts implementing the
+classic MGED GUI, geometry wizards, analysis reporting, animation
+scripting, and model management utilities
+
+==== 19.2 MGED (Multiple Geometry EDitor)
+
+`src/mged/`: the classic interactive geometry editor and environment;
+provides:
+
+* Full command-line interface for all libged operations
+* Interactive 3D wireframe view with OpenGL display
+* Mouse-driven solid and combination editing with visual feedback
+* Illumination of selected solids
+* View control (rotate, translate, zoom, perspective)
+* Overlap visualization, gap visualization
+* A Tcl/Tk GUI layer on top of the display manager
+
+==== 19.3 Archer / QGED (Qt-based GUI)
+
+`src/archer/` and `src/qged/`: newer Qt-based GUI application providing:
+
+* Qt5/Qt6 widget-based interface
+* Hierarchical tree view of the database
+* Embedded 3D view with libdm rendering
+* Modern widget-based command interface
+
+==== 19.4 RTWizard
+
+`src/rtwizard/`: a Tcl/Tk wizard interface that simplifies production
+rendering from BRL-CAD geometry; configures ray tracer settings, view,
+lighting, and output format.
+
+'''''
+
+=== 20. External Library Integrations
+
+BRL-CAD bundles and integrates several third-party libraries:
+
+* *openNURBS* (McNeel & Associates): NURBS surface representation and
+B-rep kernel; central to all BREP primitive and STEP/IGES/3DM operations
+* *Assimp* (Open Asset Importer Library): multi-format 3D model import
+* *OpenVDB* (DreamWorks Animation): sparse volumetric data structure
+* *GDAL* (Geospatial Data Abstraction Library): terrain and raster data
+import
+* *STEPcode*: STEP file parsing
+* *Clipper* (Angus Johnson): 2D polygon boolean operations
+* *QuickHull* (Antti Kuukka): 3D convex hull
+* *nanoflann*: fast approximate nearest-neighbor search (used in SPSR)
+* *Detria*: constrained Delaunay triangulation
+* *earcut.hpp*: polygon ear-clipping triangulation
+* *delaunator.hpp*: fast 2D Delaunay triangulation
+* *OSL (Open Shading Language)*: physically-based shader language
+runtime
+* *MT19937*: Mersenne Twister PRNG
+* *pbrt-v3* (derived): HLBVH construction algorithm
+* *Bloomenthal polygonizer*: implicit surface polygonization
+* *Screened Poisson Reconstruction* (Michael Kazhdan): surface
+reconstruction from point clouds
+* *Ball Pivoting Algorithm*: surface reconstruction
+* *Creo/Pro-E, Unigraphics/NX, Cubit*: external CAD system geometry
+export interfaces (in `src/external/`)
+
+'''''
