@@ -215,6 +215,7 @@ struct rt_edit {
 
     // Tolerance for calculations
     const struct bn_tol *tol;
+    struct db_i *dbip;          /**< @brief database instance (for checkpoint/revert) */
 
     // Main view associated with the edit.  This may not be the only view in
     // which the edit is *visible*, but this should hold the pointer to the
