@@ -226,7 +226,7 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
     if (!(dp->d_flags & RT_DIR_COMB))
 	return;
 
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
 	return;
     }
@@ -235,7 +235,7 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
     RT_CK_COMB(comb);
 
     if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
-	db_non_union_push(comb->tree, &rt_uniresource);
+	db_non_union_push(comb->tree);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for editing\n");
 	    intern.idb_meth->ft_ifree(&intern);
@@ -255,7 +255,7 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
 
     /* flatten tree */
     actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list,
-							   comb->tree, OP_UNION, 0, &rt_uniresource) - tree_list;
+							   comb->tree, OP_UNION, 0) - tree_list;
     BU_ASSERT(actual_count == node_count);
 
     if (dp->d_flags & RT_DIR_REGION) {
@@ -334,7 +334,7 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
 		    } else {
 			MAT_COPY(temp_mat, old_mat);
 		    }
-		    if (rt_db_get_internal(&sol_intern, sol_dp, gedp->dbip, temp_mat, &rt_uniresource) < 0) {
+		    if (rt_db_get_internal(&sol_intern, sol_dp, gedp->dbip, temp_mat) < 0) {
 			bu_log("Could not import %s\n", tree_list[i].tl_tree->tr_l.tl_name);
 		    }
 		    nsoltemp = tables_sol_number((matp_t)temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);

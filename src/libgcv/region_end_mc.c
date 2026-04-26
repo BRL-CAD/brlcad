@@ -79,13 +79,13 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     /* get a copy to play with as the parameters might get clobbered
      * by a longjmp.  FIXME: db_dup_subtree() doesn't create real copies
      */
-    tp = db_dup_subtree(curtree, &rt_uniresource);
+    tp = db_dup_subtree(curtree);
 
     /* FIXME: we can't free curtree until we get a "real" copy form
      * db_dup_subtree().  right now we get a fake copy just so we can
      * keep the compiler quiet about clobbering curtree during longjmp
      */
-    /* db_free_tree(curtree, &rt_uniresource); */
+    /* db_free_tree(curtree); */
 
     /* Sometimes the NMG library adds debugging bits when it detects
      * an internal error, before bombing.  Stash.

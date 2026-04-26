@@ -1386,7 +1386,7 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	struct rt_db_internal intern;
 	struct rt_arb_internal *aip;
 
-	if (rt_db_get_internal(&intern, stp->st_dp, ap->a_rt_i->rti_dbip, stp->st_matp, ap->a_resource) < 0) {
+	if (rt_db_get_internal(&intern, stp->st_dp, ap->a_rt_i->rti_dbip, stp->st_matp) < 0) {
 	    bu_log("rt_arb_uv(%s) rt_db_get_internal failure\n",
 		   stp->st_name);
 	    return;

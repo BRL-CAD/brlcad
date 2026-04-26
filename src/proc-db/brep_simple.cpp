@@ -284,7 +284,7 @@ main(int argc, char** argv)
 	struct rt_db_internal ip;
 	mat_t mat;
 	MAT_IDN(mat);
-	if (rt_db_get_internal(&ip, dirp, dbip, mat, &rt_uniresource) >= 0) {
+	if (rt_db_get_internal(&ip, dirp, dbip, mat) >= 0) {
 	    printPoints((struct rt_brep_internal*)ip.idb_ptr);
 	} else {
 	    fprintf(stderr, "problem getting internal object rep\n");

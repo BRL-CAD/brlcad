@@ -210,7 +210,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 			struct rt_db_internal dbintern;
 			RT_DB_INTERNAL_INIT(&dbintern);
 			struct rt_db_internal *ip = &dbintern;
-			int ret = rt_db_get_internal(ip, dp, gedp->dbip, NULL, &rt_uniresource);
+			int ret = rt_db_get_internal(ip, dp, gedp->dbip, NULL);
 			if (ret < 0)
 			    continue;
 
@@ -242,7 +242,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 			struct rt_db_internal dbintern;
 			RT_DB_INTERNAL_INIT(&dbintern);
 			struct rt_db_internal *ip = &dbintern;
-			int ret = rt_db_get_internal(ip, dp, gedp->dbip, NULL, &rt_uniresource);
+			int ret = rt_db_get_internal(ip, dp, gedp->dbip, NULL);
 			if (ret < 0)
 			    continue;
 

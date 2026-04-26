@@ -233,7 +233,7 @@ copy_object(struct ged *gedp,
     struct directory* oride_dp = NULL;
     std::string owrite_backup;
 
-    if (rt_db_get_internal(&ip, input_dp, cc_data->incoming_dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&ip, input_dp, cc_data->incoming_dbip, NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str,
 		"Failed to get internal form of object (%s) - aborting!!!\n",
 		input_dp->d_namep);
@@ -315,7 +315,7 @@ copy_object(struct ged *gedp,
      * make sure they match. */
     new_dp->d_major_type = input_dp->d_major_type;
 
-    if (rt_db_put_internal(new_dp, cc_data->target_dbip, &ip, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(new_dp, cc_data->target_dbip, &ip) < 0) {
 	bu_vls_printf(gedp->ged_result_str,
 		"Failed to write new object (%s) to database - aborting!!\n",
 		new_name.c_str());

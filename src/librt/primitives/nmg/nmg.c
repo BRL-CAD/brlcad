@@ -2267,7 +2267,7 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
 
     if (db_version(fp->dbip) < 5) {
 	BU_EXTERNAL_INIT(&ext);
-	int ret = intern.idb_meth->ft_export4(&ext, &intern, 1.0, fp->dbip, &rt_uniresource);
+	int ret = intern.idb_meth->ft_export4(&ext, &intern, 1.0, fp->dbip);
 	if (ret < 0) {
 	    bu_log("rt_db_put_internal(%s):  solid export failure\n",
 		   name);
@@ -2424,9 +2424,9 @@ rt_nmg_do_bool(
 }
 
 union tree *
-nmg_booltree_evaluate(register union tree *tp, struct bu_list *vlfree, const struct bn_tol *tol, struct resource *resp)
+nmg_booltree_evaluate(register union tree *tp, struct bu_list *vlfree, const struct bn_tol *tol)
 {
-    return rt_booltree_evaluate(tp, vlfree, tol, resp, &rt_nmg_do_bool, nmg_bool_eval_silent, NULL);
+    return rt_booltree_evaluate(tp, vlfree, tol, NULL, &rt_nmg_do_bool, nmg_bool_eval_silent, NULL);
 }
 
 #if 0
@@ -2526,7 +2526,7 @@ nmg_perturb_tree(union tree *tp)
  * typically with db_free_tree(tp);
  */
 int
-nmg_boolean(union tree *tp, struct model *m, struct bu_list *vlfree, const struct bn_tol *tol, struct resource *resp)
+nmg_boolean(union tree *tp, struct model *m, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     union tree *result;
     int ret;
@@ -2534,7 +2534,6 @@ nmg_boolean(union tree *tp, struct model *m, struct bu_list *vlfree, const struc
     RT_CK_TREE(tp);
     NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
-    RT_CK_RESOURCE(resp);
 
     if (nmg_debug & (NMG_DEBUG_BOOL|NMG_DEBUG_BASIC)) {
 	bu_log("\n\nnmg_boolean(tp=%p, m=%p) START\n",
@@ -2545,7 +2544,7 @@ nmg_boolean(union tree *tp, struct model *m, struct bu_list *vlfree, const struc
      * Evaluate the nodes of the boolean tree one at a time, until
      * only a single region remains.
      */
-    result = rt_booltree_evaluate(tp, vlfree, tol, resp, &rt_nmg_do_bool, nmg_bool_eval_silent, NULL);
+    result = rt_booltree_evaluate(tp, vlfree, tol, NULL, &rt_nmg_do_bool, nmg_bool_eval_silent, NULL);
 
     if (result == TREE_NULL) {
 	bu_log("nmg_boolean(): result of nmg_booltree_evaluate() is NULL\n");

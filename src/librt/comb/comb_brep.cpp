@@ -112,7 +112,7 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 		dir = db_lookup(dbip, name, LOOKUP_QUIET);
 		if (dir != RT_DIR_NULL) {
 		    rt_db_internal intern;
-		    rt_db_get_internal(&intern, dir, dbip, bn_mat_identity, &rt_uniresource);
+		    rt_db_get_internal(&intern, dir, dbip, bn_mat_identity);
 		    RT_CK_DB_INTERNAL(&intern);
 		    ret = single_conversion(&intern, b, dbip);
 		    if (ret == 0 && *b != NULL) {

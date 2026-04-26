@@ -279,7 +279,7 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
     }
 
     /* 'name' not found in directory, add it */
-    RT_GET_DIRECTORY(dp, &rt_uniresource);
+    RT_GET_DIR(dp, dbip);
     RT_CK_DIR(dp);
     RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */
     dp->d_addr = laddr;
@@ -353,8 +353,8 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
 	*headp = dp->d_forw;
 
 	/* Put 'dp' back on the freelist */
-	dp->d_forw = rt_uniresource.re_directory_hd;
-	rt_uniresource.re_directory_hd = dp;
+	dp->d_forw = dbip->i->dbi_directory_hd;
+	dbip->i->dbi_directory_hd = dp;
 	return 0;
     }
     for (findp = *headp; findp != RT_DIR_NULL; findp = findp->d_forw) {
@@ -375,8 +375,8 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
 	findp->d_forw = dp->d_forw;
 
 	/* Put 'dp' back on the freelist */
-	dp->d_forw = rt_uniresource.re_directory_hd;
-	rt_uniresource.re_directory_hd = dp;
+	dp->d_forw = dbip->i->dbi_directory_hd;
+	dbip->i->dbi_directory_hd = dp;
 	return 0;
     }
     return -1;

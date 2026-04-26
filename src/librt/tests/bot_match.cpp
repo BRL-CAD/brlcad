@@ -93,7 +93,7 @@ test_hash(struct hash_results *h, struct db_i *dbip, std::vector<struct director
 
 	// Make a PCA version of the BoT
 	struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
-	rt_db_get_internal(&intern, wdp, dbip, NULL, &rt_uniresource);
+	rt_db_get_internal(&intern, wdp, dbip, NULL);
 	struct rt_bot_internal *orig_bot = (struct rt_bot_internal *)(intern.idb_ptr);
 	struct rt_bot_internal *pca_nbot = pca_bot(orig_bot);
 
@@ -162,7 +162,7 @@ test_diff(struct diff_results *d, struct db_i *dbip, std::vector<struct director
     for (d_it = bots.begin(); d_it != bots.end(); ++d_it) {
 	struct directory *dp = *d_it;
 	struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
-	rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource);
+	rt_db_get_internal(&intern, dp, dbip, NULL);
 	struct rt_bot_internal *bot = (struct rt_bot_internal *)(intern.idb_ptr);
 	bot_vert_cnts[dp] = bot->num_vertices;
 	bot_face_cnts[dp] = bot->num_faces;
@@ -190,7 +190,7 @@ test_diff(struct diff_results *d, struct db_i *dbip, std::vector<struct director
 
 	// Make a pca version of the BoT
 	struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
-	rt_db_get_internal(&intern, wdp, dbip, NULL, &rt_uniresource);
+	rt_db_get_internal(&intern, wdp, dbip, NULL);
 	struct rt_bot_internal *orig_bot = (struct rt_bot_internal *)(intern.idb_ptr);
 	struct rt_bot_internal *pca_orig_bot = pca_bot(orig_bot);
 	point_t *ovp = (point_t *)pca_orig_bot->vertices;
@@ -212,7 +212,7 @@ test_diff(struct diff_results *d, struct db_i *dbip, std::vector<struct director
 
 	    // Passes the trivial checks - time for PCA and bg_trimesh_diff
 	    struct rt_db_internal cintern = RT_DB_INTERNAL_INIT_ZERO;
-	    rt_db_get_internal(&cintern, cdp, dbip, NULL, &rt_uniresource);
+	    rt_db_get_internal(&cintern, cdp, dbip, NULL);
 	    struct rt_bot_internal *cbot = (struct rt_bot_internal *)(cintern.idb_ptr);
 	    struct rt_bot_internal *pca_cbot = pca_bot(cbot);
 	    point_t *cvp = (point_t *)pca_cbot->vertices;

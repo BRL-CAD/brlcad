@@ -817,7 +817,7 @@ rt_joint_process_selection(
 	union tree *comb_tree, *member;
 	mat_t combined_mat;
 
-	rt_db_get_internal(&path_ip, dp, dbip, NULL, NULL);
+	rt_db_get_internal(&path_ip, dp, dbip, NULL);
 	comb_ip = (struct rt_comb_internal *)path_ip.idb_ptr;
 	comb_tree = comb_ip->tree;
 
@@ -838,11 +838,11 @@ rt_joint_process_selection(
 	bn_mat_mul(combined_mat, member->tr_l.tl_mat, rmat);
 	MAT_COPY(member->tr_l.tl_mat, combined_mat);
     } else {
-	rt_db_get_internal(&path_ip, dp, dbip, rmat, NULL);
+	rt_db_get_internal(&path_ip, dp, dbip, rmat);
     }
 
     /* write changes */
-    rt_db_put_internal(dp, dbip, &path_ip, NULL);
+    rt_db_put_internal(dp, dbip, &path_ip);
 
     VMOVE(js->start, end);
     db_free_full_path(&fpath);

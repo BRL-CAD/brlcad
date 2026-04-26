@@ -149,7 +149,7 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     /* should call GED_DB_DIRADD() but need to deal with freeing the
      * internals on failure.
      */
-    if (rt_db_put_internal(dp, gedp->dbip, ip, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, ip) < 0) {
 	/* if (ip == &new_int) then new_int gets freed by the rt_db_put_internal above
 	 * regardless of whether it succeeds or not. At this point only internal needs
 	 * to be freed. On the other hand if (ip == &internal), the internal gets freed

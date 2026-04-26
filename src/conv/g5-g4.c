@@ -116,7 +116,7 @@ main(int argc, char **argv)
 	    continue;
 	}
 
-	id = rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource );
+	id = rt_db_get_internal( &intern, dp, dbip, NULL);
 	if ( id < 0 )  {
 	    bu_log(
 		"%s: rt_db_get_internal(%s) failure, skipping\n",
@@ -153,7 +153,7 @@ main(int argc, char **argv)
 	}
 	if ( id == ID_POLY)
 	{
-	    if ( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) )
+	    if ( rt_pg_to_bot( &intern, &tol ) )
 	    {
 		bu_log( "%s: Conversion from polysolid to BOT failed for solid %s\n",
 			argv[0], dp->d_namep );

@@ -358,7 +358,7 @@ asc_write_v5(
 	    continue;
 	}
 
-	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0) {
 	    bu_log("Unable to read '%s', skipping\n", dp->d_namep);
 	    continue;
 	}

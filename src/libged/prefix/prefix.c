@@ -135,13 +135,13 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	    return BRLCAD_ERROR;
 	}
 
 	/* Change object name on disk. */
-	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource)) {
+	if (rt_db_put_internal(dp, gedp->dbip, &intern)) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	    return BRLCAD_ERROR;
 	}
@@ -155,7 +155,7 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 	if (!(dp->d_flags & RT_DIR_COMB))
 	    continue;
 
-	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	    return BRLCAD_ERROR;
 	}
@@ -164,7 +164,7 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 	for (k = 2; k < argc; k++)
 	    db_tree_funcleaf(gedp->dbip, comb, comb->tree, prefix_do,
 			     (void *)argv[1], (void *)argv[k], (void *)NULL, (void *)NULL);
-	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource)) {
+	if (rt_db_put_internal(dp, gedp->dbip, &intern)) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	    return BRLCAD_ERROR;
 	}

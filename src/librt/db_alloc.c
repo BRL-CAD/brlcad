@@ -207,34 +207,37 @@ db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
     return ret;
 }
 
+void
+db_alloc_directory_block(struct resource *UNUSED(resp))
+{
+}
 
 void
-db_alloc_directory_block(struct resource *resp)
+db_alloc_dir_block(struct db_i *dbip)
 {
     struct directory *dp;
     size_t bytes;
 
-    RT_CK_RESOURCE(resp);
-    BU_CK_PTBL(&resp->re_directory_blocks);
+    RT_CK_DBI(dbip);
+    BU_CK_PTBL(&dbip->i->dbi_directory_blocks);
 
-    BU_ASSERT(resp->re_directory_hd == NULL);
+    BU_ASSERT(dbip->i->dbi_directory_hd == NULL);
 
     /* Get a BIG block */
     bytes = (size_t)bu_malloc_len_roundup(1024*sizeof(struct directory));
-    dp = (struct directory *)bu_calloc(1, bytes, "re_directory_blocks from db_alloc_directory_block() " CPP_FILELINE);
+    dp = (struct directory *)bu_calloc(1, bytes, "dbi_directory_blocks from db_alloc_dir_block() " CPP_FILELINE);
 
     /* Record storage for later */
-    bu_ptbl_ins(&resp->re_directory_blocks, (long *)dp);
+    bu_ptbl_ins(&dbip->i->dbi_directory_blocks, (long *)dp);
 
     while (bytes >= sizeof(struct directory)) {
 	dp->d_magic = RT_DIR_MAGIC;
-	dp->d_forw = resp->re_directory_hd;
-	resp->re_directory_hd = dp;
+	dp->d_forw = dbip->i->dbi_directory_hd;
+	dbip->i->dbi_directory_hd = dp;
 	dp++;
 	bytes -= sizeof(struct directory);
     }
 }
-
 
 void
 rt_alloc_seg_block(register struct resource *res)

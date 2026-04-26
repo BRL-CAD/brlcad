@@ -125,7 +125,7 @@ Comb_Get_Only_Child(struct directory *dp, struct rt_wdb *wdbp){
     struct directory *child_dp;
     int node_count = 0;
 
-    rt_db_get_internal(&comb_intern, dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
+    rt_db_get_internal(&comb_intern, dp, wdbp->dbip, bn_mat_identity);
     RT_CK_DB_INTERNAL(&comb_intern);
     if (comb_intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION) {
 	rt_db_free_internal(&comb_intern);
@@ -164,7 +164,7 @@ Comb_Is_Wrapper(struct directory *dp, struct rt_wdb *wdbp){
     struct directory *child_dp;
     int node_count = 0;
 
-    rt_db_get_internal(&comb_intern, dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
+    rt_db_get_internal(&comb_intern, dp, wdbp->dbip, bn_mat_identity);
     RT_CK_DB_INTERNAL(&comb_intern);
     if (comb_intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION) {
 	rt_db_free_internal(&comb_intern);
@@ -193,7 +193,7 @@ Comb_Is_Wrapper(struct directory *dp, struct rt_wdb *wdbp){
     }
 
     /* If the child is a comb, this isn't a wrapper */
-    rt_db_get_internal(&comb_child_intern, child_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
+    rt_db_get_internal(&comb_child_intern, child_dp, wdbp->dbip, bn_mat_identity);
     RT_CK_DB_INTERNAL(&comb_child_intern);
     if (comb_child_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION) {
 	rt_db_free_internal(&comb_intern);

@@ -119,6 +119,9 @@ struct directory {
 /**
  * allocate and link in a new directory entry to the resource
  * structure's freelist
+ *
+ * DEPRECATED in favor of RT_GET_DIR, which operates on the
+ * db_i container
  */
 #define RT_GET_DIRECTORY(_p, _res) { \
 	while (((_p) = (_res)->re_directory_hd) == NULL) \
@@ -126,6 +129,16 @@ struct directory {
 	(_res)->re_directory_hd = (_p)->d_forw; \
 	(_p)->d_forw = NULL; }
 
+
+/**
+ * allocate and link in a new directory entry to the resource
+ * structure's freelist
+ */
+#define RT_GET_DIR(_p, _dbip) { \
+	while (((_p) = (_dbip)->i->dbi_directory_hd) == NULL) \
+	    db_alloc_dir_block(_dbip); \
+	(_dbip)->i->dbi_directory_hd = (_p)->d_forw; \
+	(_p)->d_forw = NULL; }
 
 /**
  * convert an argv list of names to a directory pointer array.

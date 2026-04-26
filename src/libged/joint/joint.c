@@ -535,7 +535,7 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 		bu_vls_printf(gedp->ged_result_str, "hold_point_location: null pointer! '%s' not found!\n", "hp->path.fp_names");
 		bu_bomb("this shouldn't happen\n");
 	    }
-	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_len-1], gedp->dbip, NULL, &rt_uniresource) < 0)
+	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_len-1], gedp->dbip, NULL) < 0)
 		return 0;
 
 	    RT_CK_DB_INTERNAL(&intern);

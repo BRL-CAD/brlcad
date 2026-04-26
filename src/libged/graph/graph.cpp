@@ -269,7 +269,7 @@ static void process_comb(struct ged *gedp,
 
     struct rt_db_internal intern;
     if (rt_db_get_internal(&intern, dp, gedp->dbip,
-                           (fastf_t *)NULL, &rt_uniresource) < 0)
+                           (fastf_t *)NULL) < 0)
         return;
     struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -279,7 +279,7 @@ static void process_comb(struct ged *gedp,
     }
 
     if (db_ck_v4gift_tree(comb->tree) < 0) {
-        db_non_union_push(comb->tree, &rt_uniresource);
+        db_non_union_push(comb->tree);
         if (db_ck_v4gift_tree(comb->tree) < 0) {
             rt_db_free_internal(&intern);
             return;
@@ -295,7 +295,7 @@ static void process_comb(struct ged *gedp,
     struct rt_tree_array *rta = (struct rt_tree_array *)bu_calloc(
             leaf_cnt, sizeof(struct rt_tree_array), "legacy comb flatten");
     size_t actual = (struct rt_tree_array *)db_flatten_tree(rta, comb->tree,
-                        OP_UNION, 1, &rt_uniresource) - rta;
+                        OP_UNION, 1) - rta;
     BU_ASSERT(actual == leaf_cnt);
     comb->tree = TREE_NULL;
 
@@ -305,7 +305,7 @@ static void process_comb(struct ged *gedp,
                                (uint8_t *)child_name,
                                strlen(child_name)+1);
         if (!child_id_str) {
-            db_free_tree(rta[i].tl_tree, &rt_uniresource);
+            db_free_tree(rta[i].tl_tree);
             continue;
         }
         unsigned child_id = (unsigned)atoi(child_id_str);
@@ -332,7 +332,7 @@ static void process_comb(struct ged *gedp,
             ((Avoid::ConnRef *)ptr)->route();
         }, cr);
 
-        db_free_tree(rta[i].tl_tree, &rt_uniresource);
+        db_free_tree(rta[i].tl_tree);
     }
 
     bu_free(rta, "legacy comb rta free");
@@ -637,12 +637,12 @@ hl_scan_db(struct ged *gedp, HLContext &ctx)
 
 	if (dp->d_flags & RT_DIR_COMB) {
 	    struct rt_db_internal intern;
-	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0)
 		continue;
 	    struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    if (comb->tree) {
 		if (db_ck_v4gift_tree(comb->tree) < 0) {
-		    db_non_union_push(comb->tree, &rt_uniresource);
+		    db_non_union_push(comb->tree);
 		    if (db_ck_v4gift_tree(comb->tree) < 0) {
 			rt_db_free_internal(&intern);
 			continue;
@@ -653,13 +653,13 @@ hl_scan_db(struct ged *gedp, HLContext &ctx)
 		    struct rt_tree_array *rta = (struct rt_tree_array *)bu_calloc(
 			    leaf_cnt, sizeof(struct rt_tree_array), "hl rta");
 		    size_t actual = (struct rt_tree_array *)db_flatten_tree(rta,
-			    comb->tree, OP_UNION, 1, &rt_uniresource) - rta;
+			    comb->tree, OP_UNION, 1) - rta;
 		    BU_ASSERT(actual == leaf_cnt);
 		    comb->tree = TREE_NULL;
 		    auto &vec = ctx.children[dp->d_namep];
 		    for (size_t k = 0; k < actual; ++k) {
 			vec.push_back(rta[k].tl_tree->tr_l.tl_name);
-			db_free_tree(rta[k].tl_tree, &rt_uniresource);
+			db_free_tree(rta[k].tl_tree);
 		    }
 		    bu_free(rta, "hl rta free");
 		}

@@ -130,7 +130,7 @@ ged_rmater_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
 	    status = BRLCAD_ERROR;
 	}
@@ -150,7 +150,7 @@ ged_rmater_core(struct ged *gedp, int argc, const char *argv[])
 	comb->inherit = inherit;
 
 	/* Write new values to database */
-	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting\n");
 	    status = BRLCAD_ERROR;
 	}

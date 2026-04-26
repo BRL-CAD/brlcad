@@ -2552,7 +2552,7 @@ extrude_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&tmp_ip, dp, gedp->dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
+    if (rt_db_get_internal(&tmp_ip, dp, gedp->dbip, bn_mat_identity) != ID_SKETCH) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot import sketch (%s) for extrusion (%s)\n",
 		      eip->sketch_name, cmd_argvs[1]);
 	eip->skt = (struct rt_sketch_internal *)NULL;
@@ -2606,7 +2606,7 @@ revolve_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&tmp_ip, dp, gedp->dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
+    if (rt_db_get_internal(&tmp_ip, dp, gedp->dbip, bn_mat_identity) != ID_SKETCH) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot import sketch (%s) for revolve (%s)\n",
 		      bu_vls_addr(&rip->sketch_name), cmd_argvs[1]);
 	rip->skt = (struct rt_sketch_internal *)NULL;
@@ -3719,7 +3719,7 @@ do_new_update:
 	    bu_vls_printf(gedp->ged_result_str, "%s: Cannot add '%s' to directory\n", argv[0], name);
 	    return BRLCAD_ERROR;
 	}
-	if (rt_db_put_internal(dp, gedp->dbip, &internal, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(dp, gedp->dbip, &internal) < 0) {
 	    rt_db_free_internal(&internal);
 	    bu_vls_printf(gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
 	    return BRLCAD_ERROR;

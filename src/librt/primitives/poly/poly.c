@@ -983,7 +983,7 @@ rt_pg_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
  * 0 OK
  */
 int
-rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resource *resp)
+rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_pg_internal *ip_pg;
     struct rt_bot_internal *ip_bot;
@@ -994,7 +994,6 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 
     RT_CK_DB_INTERNAL(ip);
     BN_CK_TOL(tol);
-    RT_CK_RESOURCE(resp);
 
     if (ip->idb_type != ID_POLY) {
 	bu_log("ERROR: rt_pt_to_bot() called with a non-polysolid!!!\n");

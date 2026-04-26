@@ -226,7 +226,7 @@ bbd_setup(struct region *rp, struct bu_vls *matparm, void **dpp, const struct mf
     MAT_IDN(mat);
     RT_DB_INTERNAL_INIT(&intern);
     s = rt_db_get_internal(&intern, rp->reg_treetop->tr_a.tu_stp->st_dp, rtip->rti_dbip,
-			   mat, &rt_uniresource);
+			   mat);
 
     if (intern.idb_minor_type != ID_TGC &&
 	intern.idb_minor_type != ID_REC) {

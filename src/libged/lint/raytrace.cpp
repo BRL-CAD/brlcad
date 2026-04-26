@@ -157,7 +157,7 @@ subtree_has_halfspace(struct db_i *dbip, struct directory *dp,
     /* Comb: inspect children */
     struct rt_db_internal in;
     RT_DB_INTERNAL_INIT(&in);
-    if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&in, dp, dbip, NULL) < 0)
 	return false;
 
     struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
@@ -194,7 +194,7 @@ collect_subtree(struct db_i *dbip, struct directory *dp,
     if (info.is_comb) {
 	struct rt_db_internal in;
 	RT_DB_INTERNAL_INIT(&in);
-	int gret = rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource);
+	int gret = rt_db_get_internal(&in, dp, dbip, NULL);
 	if (gret >= 0) {
 	    struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
 	    if (comb->tree) {
@@ -379,7 +379,7 @@ facetize_and_measure(struct ged *gedp, const char *obj_name,
 	/* Try to find a BoT one level down */
 	struct rt_db_internal win;
 	RT_DB_INTERNAL_INIT(&win);
-	if (rt_db_get_internal(&win, tdp, gedp->dbip, NULL, &rt_uniresource) >= 0) {
+	if (rt_db_get_internal(&win, tdp, gedp->dbip, NULL) >= 0) {
 	    struct rt_comb_internal *wcomb = (struct rt_comb_internal *)win.idb_ptr;
 	    if (wcomb->tree && wcomb->tree->tr_op == OP_DB_LEAF) {
 		const char *child_name = wcomb->tree->tr_l.tl_name;
@@ -395,7 +395,7 @@ facetize_and_measure(struct ged *gedp, const char *obj_name,
     if (bot_dp && !(bot_dp->d_flags & RT_DIR_COMB)) {
 	struct rt_db_internal in;
 	RT_DB_INTERNAL_INIT(&in);
-	if (rt_db_get_internal(&in, bot_dp, gedp->dbip, NULL, &rt_uniresource) >= 0) {
+	if (rt_db_get_internal(&in, bot_dp, gedp->dbip, NULL) >= 0) {
 	    if (in.idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
 		struct rt_bot_internal *bot = (struct rt_bot_internal *)in.idb_ptr;
 		RT_BOT_CK_MAGIC(bot);
@@ -448,7 +448,7 @@ check_primitive(lint_data *ldata, struct directory *dp,
     {
 	struct rt_db_internal intern;
 	RT_DB_INTERNAL_INIT(&intern);
-	if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) >= 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL) >= 0) {
 	    if (intern.idb_minor_type >= 0 && intern.idb_minor_type < ID_MAXIMUM) {
 		const struct rt_functab *ft = &OBJ[intern.idb_minor_type];
 

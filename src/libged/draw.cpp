@@ -164,7 +164,7 @@ csg_wireframe_update(struct bv_scene_obj *vo, struct bview *v, int flag)
     struct rt_db_internal dbintern;
     RT_DB_INTERNAL_INIT(&dbintern);
     struct rt_db_internal *ip = &dbintern;
-    int ret = rt_db_get_internal(ip, dp, dbip, NULL, d->res);
+    int ret = rt_db_get_internal(ip, dp, dbip, NULL);
     if (ret < 0)
 	return 0;
 
@@ -198,7 +198,7 @@ bot_mesh_info_clbk(struct bv_mesh_lod *lod, void *cb_data)
     BU_GET(cd->intern, struct rt_db_internal);
     RT_DB_INTERNAL_INIT(cd->intern);
     struct rt_db_internal *ip = cd->intern;
-    int ret = rt_db_get_internal(ip, dp, dbip, NULL, cd->res);
+    int ret = rt_db_get_internal(ip, dp, dbip, NULL);
     if (ret < 0) {
 	BU_PUT(cd->intern, struct rt_db_internal);
 	return -1;
@@ -284,7 +284,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	    struct rt_db_internal dbintern;
 	    RT_DB_INTERNAL_INIT(&dbintern);
 	    struct rt_db_internal *ip = &dbintern;
-	    int ret = rt_db_get_internal(ip, dp, dbip, NULL, d->res);
+	    int ret = rt_db_get_internal(ip, dp, dbip, NULL);
 	    if (ret < 0)
 		return;
 	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
@@ -308,7 +308,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	    struct rt_db_internal dbintern;
 	    RT_DB_INTERNAL_INIT(&dbintern);
 	    struct rt_db_internal *ip = &dbintern;
-	    int ret = rt_db_get_internal(ip, dp, dbip, NULL, d->res);
+	    int ret = rt_db_get_internal(ip, dp, dbip, NULL);
 	    if (ret < 0)
 		return;
 	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
@@ -439,7 +439,7 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 		struct rt_db_internal dbintern;
 		RT_DB_INTERNAL_INIT(&dbintern);
 		struct rt_db_internal *ip = &dbintern;
-		int ret = rt_db_get_internal(ip, dp, dbip, NULL, d->res);
+		int ret = rt_db_get_internal(ip, dp, dbip, NULL);
 		if (ret < 0)
 		    return;
 		struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
@@ -690,7 +690,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
     struct rt_db_internal dbintern;
     RT_DB_INTERNAL_INIT(&dbintern);
     struct rt_db_internal *ip = &dbintern;
-    int ret = rt_db_get_internal(ip, dp, dbip, s->s_mat, d->res);
+    int ret = rt_db_get_internal(ip, dp, dbip, s->s_mat);
     if (ret < 0)
 	return;
 
@@ -986,7 +986,7 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal(&in, dp, dd->dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal(&in, dp, dd->dbip, NULL) < 0)
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;

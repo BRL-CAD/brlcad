@@ -220,7 +220,7 @@ cmd_perturb::dp_perturb(struct directory *dp)
     struct rt_db_internal intern;
     RT_DB_INTERNAL_INIT(&intern);
     struct db_i *dbip = einfo->gedp->dbip;
-    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0) {
 	bu_log("rt_db_get_internal failed for %s\n", dp->d_namep);
 	return BRLCAD_ERROR;
     }
@@ -250,7 +250,7 @@ cmd_perturb::dp_perturb(struct directory *dp)
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_put_internal(ndp, dbip, pintern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(ndp, dbip, pintern) < 0) {
 	bu_log("Failed to write %s to database\n", oname.c_str());
 	rt_db_free_internal(pintern);
 	return BRLCAD_ERROR;

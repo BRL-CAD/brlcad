@@ -967,7 +967,7 @@ init_sedit(struct mged_state *s)
 	return;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     if (rt_db_get_internal(&MEDIT(s)->es_int, LAST_SOLID(bdata),
-			   s->dbip, NULL, &rt_uniresource) < 0) {
+			   s->dbip, NULL) < 0) {
 	if (bdata->s_fullpath.fp_len > 0) {
 	    Tcl_AppendResult(s->interp, "init_sedit(",
 		    LAST_SOLID(bdata)->d_namep,
@@ -1130,7 +1130,7 @@ transform_editing_solid(
     struct rt_db_internal *is,		/* input solid */
     int freeflag)
 {
-    if (rt_matrix_transform(os, mat, is, freeflag, s->dbip, &rt_uniresource) < 0)
+    if (rt_matrix_transform(os, mat, is, freeflag, s->dbip) < 0)
 	bu_exit(EXIT_FAILURE, "transform_editing_solid failed to apply a matrix transform, aborting");
 }
 
@@ -3044,7 +3044,7 @@ sedit(struct mged_state *s)
 		} else {
 		    /* import the new sketch */
 
-		    if (rt_db_get_internal(&tmp_ip, dp, s->dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
+		    if (rt_db_get_internal(&tmp_ip, dp, s->dbip, bn_mat_identity) != ID_SKETCH) {
 			bu_log("rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion\n",
 			       sketch_name);
 			extr->skt = (struct rt_sketch_internal *)NULL;
@@ -5844,7 +5844,7 @@ init_oedit_guts(struct mged_state *s)
 	return;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     if (rt_db_get_internal(&MEDIT(s)->es_int, LAST_SOLID(bdata),
-			   s->dbip, NULL, &rt_uniresource) < 0) {
+			   s->dbip, NULL) < 0) {
 	if (bdata->s_fullpath.fp_len > 0) {
 	    Tcl_AppendResult(s->interp, "init_oedit(",
 		    LAST_SOLID(bdata)->d_namep,
@@ -6184,7 +6184,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
     }
 
     /* Scale change on export is 1.0 -- no change */
-    if (rt_db_put_internal(dp, s->dbip, &MEDIT(s)->es_int, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, s->dbip, &MEDIT(s)->es_int) < 0) {
 	Tcl_AppendResult(s->interp, "sedit_apply(", dp->d_namep,
 			 "):  solid export failure\n", (char *)NULL);
 	if (accept_flag) {
@@ -6204,7 +6204,7 @@ sedit_apply(struct mged_state *s, int accept_flag)
 	/* XXX hack to restore MEDIT(s)->es_int after rt_db_put_internal blows it away */
 	/* Read solid description into MEDIT(s)->es_int again! Gaak! */
 	if (rt_db_get_internal(&MEDIT(s)->es_int, LAST_SOLID(bdata),
-			       s->dbip, NULL, &rt_uniresource) < 0) {
+			       s->dbip, NULL) < 0) {
 	    Tcl_AppendResult(s->interp, "sedit_apply(",
 			     LAST_SOLID(bdata)->d_namep,
 			     "):  solid reimport failure\n", (char *)NULL);
@@ -7583,7 +7583,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, const char *U
 	return TCL_ERROR;
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     if (rt_db_get_internal(&MEDIT(s)->es_int, LAST_SOLID(bdata),
-			   s->dbip, NULL, &rt_uniresource) < 0) {
+			   s->dbip, NULL) < 0) {
 	if (bdata->s_fullpath.fp_len > 0) {
 	    Tcl_AppendResult(interp, "sedit_reset(",
 		    LAST_SOLID(bdata)->d_namep,

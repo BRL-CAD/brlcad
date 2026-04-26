@@ -144,7 +144,8 @@ rt_booltree_evaluate(
     RT_CK_TREE(tp);
     if (tol)
 	BN_CK_TOL(tol);
-    RT_CK_RESOURCE(resp);
+    if (resp)
+	RT_CK_RESOURCE(resp);
 
     switch (tp->tr_op) {
 	case OP_NOP:
@@ -188,8 +189,8 @@ rt_booltree_evaluate(
     if (!tl && !tr) {
 	/* left-r == null && right-r == null */
 	RT_CK_TREE(tp);
-	db_free_tree(tp->tr_b.tb_left, resp);
-	db_free_tree(tp->tr_b.tb_right, resp);
+	db_free_tree(tp->tr_b.tb_left);
+	db_free_tree(tp->tr_b.tb_right);
 	tp->tr_op = OP_NOP;
 	return TREE_NULL;
     }
@@ -197,11 +198,11 @@ rt_booltree_evaluate(
     if (tl && !tr) {
 	/* left-r != null && right-r == null */
 	RT_CK_TREE(tp);
-	db_free_tree(tp->tr_b.tb_right, resp);
+	db_free_tree(tp->tr_b.tb_right);
 	if (tp->tr_op == OP_INTERSECT) {
 	    /* OP_INTERSECT '+' */
 	    RT_CK_TREE(tp);
-	    db_free_tree(tl, resp);
+	    db_free_tree(tl);
 	    tp->tr_op = OP_NOP;
 	    return TREE_NULL;
 	} else {
@@ -218,7 +219,7 @@ rt_booltree_evaluate(
 	    tl->tr_b.tb_left = TREE_NULL;
 	    tl->tr_b.tb_right = TREE_NULL;
 
-	    db_free_tree(tl, resp);
+	    db_free_tree(tl);
 	    return tp;
 	}
     }
@@ -226,7 +227,7 @@ rt_booltree_evaluate(
     if (!tl && tr) {
 	/* left-r == null && right-r != null */
 	RT_CK_TREE(tp);
-	db_free_tree(tp->tr_b.tb_left, resp);
+	db_free_tree(tp->tr_b.tb_left);
 	if (tp->tr_op == OP_UNION) {
 	    /* OP_UNION 'u' */
 	    /* copy everything from tr to tp no matter which union type
@@ -242,13 +243,13 @@ rt_booltree_evaluate(
 	    tr->tr_b.tb_left = TREE_NULL;
 	    tr->tr_b.tb_right = TREE_NULL;
 
-	    db_free_tree(tr, resp);
+	    db_free_tree(tr);
 	    return tp;
 
 	} else if ((tp->tr_op == OP_SUBTRACT) || (tp->tr_op == OP_INTERSECT)) {
 	    /* for sub and intersect, if left-hand-side is null, result is null */
 	    RT_CK_TREE(tp);
-	    db_free_tree(tr, resp);
+	    db_free_tree(tr);
 	    tp->tr_op = OP_NOP;
 	    return TREE_NULL;
 
@@ -288,8 +289,8 @@ rt_booltree_evaluate(
     tr->tr_d.td_r = NULL;
     tl->tr_d.td_d = NULL;
     tr->tr_d.td_d = NULL;
-    db_free_tree(tl, resp);
-    db_free_tree(tr, resp);
+    db_free_tree(tl);
+    db_free_tree(tr);
 
     return tp;
 }

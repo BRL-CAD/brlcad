@@ -47,7 +47,7 @@ moveHobj(struct mged_state *s, struct directory *dp, matp_t xlate)
 	return;
 
     RT_DB_INTERNAL_INIT(&intern);
-    if (rt_db_get_internal(&intern, dp, s->dbip, xlate, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, s->dbip, xlate) < 0) {
 	Tcl_AppendResult(s->interp, "rt_db_get_internal() failed for ", dp->d_namep,
 			 (char *)NULL);
 	rt_db_free_internal(&intern);
@@ -55,7 +55,7 @@ moveHobj(struct mged_state *s, struct directory *dp, matp_t xlate)
 	return;
     }
 
-    if (rt_db_put_internal(dp, s->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, s->dbip, &intern) < 0) {
 	Tcl_AppendResult(s->interp, "moveHobj(", dp->d_namep,
 			 "):  solid export failure\n", (char *)NULL);
 	rt_db_free_internal(&intern);
@@ -81,7 +81,7 @@ moveHinstance(struct mged_state *s, struct directory *cdp, struct directory *dp,
     if (s->dbip == DBI_NULL)
 	return;
 
-    if (rt_db_get_internal(&intern, cdp, s->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, cdp, s->dbip, (fastf_t *)NULL) < 0) {
 	printf("Database read error, aborting\n");
 	return;
     }
@@ -98,7 +98,7 @@ moveHinstance(struct mged_state *s, struct directory *cdp, struct directory *dp,
 		tp->tr_l.tl_mat = (matp_t)bu_malloc(16 * sizeof(fastf_t), "tl_mat");
 		MAT_COPY(tp->tr_l.tl_mat, xlate);
 	    }
-	    if (rt_db_put_internal(cdp, s->dbip, &intern, &rt_uniresource) < 0) {
+	    if (rt_db_put_internal(cdp, s->dbip, &intern) < 0) {
 		Tcl_AppendResult(s->interp, "rt_db_put_internal failed for ",
 				 cdp->d_namep, "\n", (char *)NULL);
 		rt_db_free_internal(&intern);

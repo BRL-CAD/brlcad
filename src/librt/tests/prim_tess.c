@@ -4033,7 +4033,7 @@ scan_input_g(const char *g_path, const char *g_root)
 
 	struct rt_db_internal intern;
 	RT_DB_INTERNAL_INIT(&intern);
-	int id = rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource);
+	int id = rt_db_get_internal(&intern, dp, dbip, NULL);
 	if (id < 0) {
 	    fprintf(stderr, "  SKIP %-32s  (rt_db_get_internal failed)\n", dp->d_namep);
 	    n_skip++;

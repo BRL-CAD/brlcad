@@ -130,9 +130,9 @@ main(int argc, char *argv[])
     struct directory *dp = make_part(wdbp);
 
     struct rt_db_internal intern, cmpintern;
-    rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource);
+    rt_db_get_internal(&intern, dp, dbip, NULL);
     struct rt_part_internal *orig_part = (struct rt_part_internal *)intern.idb_ptr;
-    rt_db_get_internal(&cmpintern, dp, dbip, NULL, &rt_uniresource);
+    rt_db_get_internal(&cmpintern, dp, dbip, NULL);
     struct rt_part_internal *cmp_part = (struct rt_part_internal *)cmpintern.idb_ptr;
 
     struct bn_tol tol = BN_TOL_INIT_TOL;

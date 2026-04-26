@@ -88,7 +88,7 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to get internal form of %s!!!!\n", argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -142,7 +142,7 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 	return BRLCAD_ERROR;

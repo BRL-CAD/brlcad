@@ -239,7 +239,7 @@ main(int argc, char *argv[])
 	struct rt_db_internal intern;
 	RT_DB_INTERNAL_INIT(&intern);
 
-	int got = rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource);
+	int got = rt_db_get_internal(&intern, dp, dbip, NULL);
 	if (got < 0) {
 	    /* Cannot load; record as failed with 0 time */
 	    struct tess_result *tr = &results[nresults++];

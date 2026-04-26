@@ -436,7 +436,7 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_put_internal(gb->dp, gedp->dbip, gb->intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(gb->dp, gedp->dbip, gb->intern) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to update BoT");
 	return BRLCAD_ERROR;
     }
@@ -557,7 +557,7 @@ _bot_cmd_flip(void *bs, int argc, const char **argv)
 
     rt_bot_flip(bot);
 
-    if (rt_db_put_internal(gb->dp, gb->gedp->dbip, gb->intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(gb->dp, gb->gedp->dbip, gb->intern) < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Failed to update BoT");
 	return BRLCAD_ERROR;
     }
@@ -647,7 +647,7 @@ _bot_cmd_sync(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_put_internal(gb->dp, gb->gedp->dbip, gb->intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(gb->dp, gb->gedp->dbip, gb->intern) < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Failed to update BoT");
 	return BRLCAD_ERROR;
     }
@@ -812,7 +812,7 @@ _bot_cmd_pca(void *bs, int argc, const char **argv)
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }
-    if (rt_db_put_internal(dp, gb->gedp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gb->gedp->dbip, &intern) < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Failed to write %s to database\n", argv[0]);
 	rt_bot_internal_free(moved_bot);
 	BU_PUT(moved_bot, struct rt_bot_internal);
@@ -908,7 +908,7 @@ _bot_cmd_split(void *bs, int argc, const char **argv)
 	    goto bot_split_done;
 	}
 
-	if (rt_db_put_internal(dp, gb->gedp->dbip, &intern, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(dp, gb->gedp->dbip, &intern) < 0) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "Failed to write %s to database\n", bu_vls_cstr(&bname));
 	    rt_db_free_internal(&intern);
 	    ret = BRLCAD_ERROR;
@@ -986,7 +986,7 @@ _bot_cmd_strip(void *bs, int argc, const char **argv)
 	    goto bot_strip_done;
 	}
 
-	if (rt_db_put_internal(dp, gb->gedp->dbip, &intern, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(dp, gb->gedp->dbip, &intern) < 0) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "Failed to write %s to database\n", argv[1]);
 	    rt_db_free_internal(&intern);
 	    ret = BRLCAD_ERROR;
@@ -1012,7 +1012,7 @@ bot_output(struct bu_tbl *table, struct db_i *dbip, struct directory *dp)
     RT_CK_RESOURCE(&rt_uniresource);
     if (db_get_external(&ext, dp, dbip) < 0)
 	return;
-    if (rt_db_external5_to_internal5(&intern, &ext, dp->d_namep, dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_external5_to_internal5(&intern, &ext, dp->d_namep, dbip, NULL) < 0) {
 	bu_free_external(&ext);
 	return;
     }

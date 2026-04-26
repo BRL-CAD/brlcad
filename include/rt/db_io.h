@@ -202,8 +202,7 @@ rt_db_external5_to_internal5(
     const struct bu_external *ep,
     const char *name,
     const struct db_i *dbip,
-    const mat_t mat,
-    struct resource *resp);
+    const mat_t mat);
 
 /**
  * Get an object from the database, and convert it into its internal
@@ -219,8 +218,7 @@ rt_db_external5_to_internal5(
 RT_EXPORT extern int rt_db_get_internal5(struct rt_db_internal *ip,
 					 const struct directory *dp,
 					 const struct db_i *dbip,
-					 const mat_t mat,
-					 struct resource *resp);
+					 const mat_t mat);
 
 
 /**
@@ -236,11 +234,22 @@ RT_EXPORT extern int rt_db_get_internal5(struct rt_db_internal *ip,
  * Returns -
  * <0 error
  * 0 success
+ *
+ * NOTE - since resp isn't the last parameter, we're leaving this but
+ * putting deprecated on it - use rt_db_put_internal_v5 until the
+ * deprecation is complete.  At that point we'll rename back to
+ * rt_db_put_internal5 as a minimally impacting change.
  */
-RT_EXPORT extern int rt_db_put_internal5(struct directory *dp,
+DEPRECATED RT_EXPORT extern int rt_db_put_internal5(struct directory *dp,
 					 struct db_i *dbip,
 					 struct rt_db_internal *ip,
 					 struct resource *resp,
+					 const int major);
+
+
+RT_EXPORT extern int rt_db_put_internal_v5(struct directory *dp,
+					 struct db_i *dbip,
+					 struct rt_db_internal *ip,
 					 const int major);
 
 
@@ -882,12 +891,23 @@ RT_EXPORT extern int db_zapper(struct db_i *,
 			       struct directory *dp,
 			       size_t start);
 
+
 /**
  * This routine is called by the RT_GET_DIRECTORY macro when the
  * freelist is exhausted.  Rather than simply getting one additional
  * structure, we get a whole batch, saving overhead.
+ *
+ * DEPRECATED in favor of db_alloc_dir_block, which operates on the db_i
  */
-RT_EXPORT extern void db_alloc_directory_block(struct resource *resp);
+DEPRECATED RT_EXPORT extern void db_alloc_directory_block(struct resource *res);
+
+
+/**
+ * This routine is called by the RT_GET_DIR macro when the
+ * freelist is exhausted.  Rather than simply getting one additional
+ * structure, we get a whole batch, saving overhead.
+ */
+RT_EXPORT extern void db_alloc_dir_block(struct db_i *dbip);
 
 /**
  * This routine is called by the GET_SEG macro when the freelist is

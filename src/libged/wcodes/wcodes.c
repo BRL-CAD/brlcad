@@ -84,7 +84,7 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
     if (!(dp->d_flags & RT_DIR_COMB))
 	return BRLCAD_OK;
 
-    id = rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL);
     if (id < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot get records for %s\n", dp->d_namep);
 	return BRLCAD_ERROR;

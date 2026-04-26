@@ -194,7 +194,7 @@ replot_original_solid(struct mged_state *s, struct bv_scene_obj *sp)
     }
     (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 
-    if (rt_db_get_internal(&intern, dp, s->dbip, mat, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, s->dbip, mat) < 0) {
 	Tcl_AppendResult(s->interp, dp->d_namep, ":  solid import failure\n", (char *)NULL);
 	return -1;		/* ERROR */
     }

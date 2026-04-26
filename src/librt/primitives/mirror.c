@@ -98,8 +98,7 @@ struct rt_db_internal *
 rt_mirror(struct db_i *dbip,
 	  struct rt_db_internal *ip,
 	  point_t mirror_pt,
-	  vect_t mirror_dir,
-	  struct resource *UNUSED(resp))
+	  vect_t mirror_dir)
 {
     int id;
     int err;

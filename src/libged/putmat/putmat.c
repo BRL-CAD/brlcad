@@ -105,7 +105,7 @@ _getmat(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	bu_vls_free(&name1);
 	bu_vls_free(&name2);

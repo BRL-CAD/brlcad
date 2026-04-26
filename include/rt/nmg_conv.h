@@ -167,13 +167,11 @@ RT_EXPORT extern union tree *nmg_booltree_leaf_tnurb(struct db_tree_state *tsp,
 RT_EXPORT extern int nmg_bool_eval_silent;      /* quell output from nmg_booltree_evaluate */
 RT_EXPORT extern union tree *nmg_booltree_evaluate(union tree *tp,
 						   struct bu_list *vlfree,
-						   const struct bn_tol *tol,
-						   struct resource *resp);
+						   const struct bn_tol *tol);
 RT_EXPORT extern int nmg_boolean(union tree *tp,
 				 struct model *m,
 				 struct bu_list *vlfree,
-				 const struct bn_tol *tol,
-				 struct resource *resp);
+				 const struct bn_tol *tol);
 
 
 

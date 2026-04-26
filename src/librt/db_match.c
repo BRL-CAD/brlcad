@@ -98,7 +98,7 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 		if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
 		    struct rt_extrude_internal *extr;
 
-		    if (rt_db_get_internal(&intern, dp, dbip, NULL, resp) < 0)
+		    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0)
 			continue;
 		    extr = (struct rt_extrude_internal *)intern.idb_ptr;
 		    RT_EXTRUDE_CK_MAGIC(extr);
@@ -120,7 +120,7 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 		} else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_REVOLVE) {
 		    struct rt_revolve_internal *revolve;
 
-		    if (rt_db_get_internal(&intern, dp, dbip, NULL, resp) < 0)
+		    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0)
 			continue;
 		    revolve = (struct rt_revolve_internal *)intern.idb_ptr;
 		    RT_REVOLVE_CK_MAGIC(revolve);
@@ -142,7 +142,7 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 		} else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_DSP) {
 		    struct rt_dsp_internal *dsp;
 
-		    if (rt_db_get_internal(&intern, dp, dbip, NULL, resp) < 0)
+		    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0)
 			continue;
 		    dsp = (struct rt_dsp_internal *)intern.idb_ptr;
 		    RT_DSP_CK_MAGIC(dsp);
@@ -164,7 +164,7 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 	    }
 	    if (!(dp->d_flags & RT_DIR_COMB))
 		continue;
-	    if (rt_db_get_internal(&intern, dp, dbip, NULL, resp) < 0)
+	    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0)
 		continue;
 	    if (intern.idb_type != ID_COMBINATION) {
 		bu_log("NOTICE: %s was marked a combination, but isn't one?  Clearing flag\n",

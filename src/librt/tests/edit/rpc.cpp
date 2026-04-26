@@ -130,9 +130,9 @@ bu_exit(1, "ERROR: Unable to create database instance\n");
     struct directory *dp = make_rpc(wdbp);
 
     struct rt_db_internal intern, cmpintern;
-    rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource);
+    rt_db_get_internal(&intern, dp, dbip, NULL);
     struct rt_rpc_internal *orig_rpc = (struct rt_rpc_internal *)intern.idb_ptr;
-    rt_db_get_internal(&cmpintern, dp, dbip, NULL, &rt_uniresource);
+    rt_db_get_internal(&cmpintern, dp, dbip, NULL);
     struct rt_rpc_internal *cmp_rpc = (struct rt_rpc_internal *)cmpintern.idb_ptr;
 
     struct bn_tol tol = BN_TOL_INIT_TOL;

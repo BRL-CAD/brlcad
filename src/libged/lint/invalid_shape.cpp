@@ -45,7 +45,7 @@ _ged_invalid_prim_check(lint_data *ldata, struct directory *dp)
     if (dp->d_flags & RT_DIR_HIDDEN) return;
     if (dp->d_addr == RT_DIR_PHONY_ADDR) return;
 
-    if (rt_db_get_internal(&intern, dp, ldata->gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return;
+    if (rt_db_get_internal(&intern, dp, ldata->gedp->dbip, (fastf_t *)NULL) < 0) return;
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	rt_db_free_internal(&intern);
 	return;

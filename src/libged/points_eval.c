@@ -55,7 +55,7 @@ draw_points(struct bv_scene_obj *s)
 	return BRLCAD_OK; /* nothing to do is fine */
 
     struct rt_db_internal intern;
-    if (rt_db_get_internal(&intern, dp, d->dbip, NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&intern, dp, d->dbip, NULL) < 0)
 	return BRLCAD_ERROR;
 
     int ret = rt_sample_pnts(s, &intern);

@@ -220,7 +220,7 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
     if (!(dp->d_flags & RT_DIR_COMB))
 	return -1;
 
-    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL);
     if (id < 0) {
 	bu_log("Cannot internal form of %s\n", dp->d_namep);
 	return -1;
@@ -619,7 +619,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     if (!(dp->d_flags & RT_DIR_COMB))
 	return;
 
-    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL);
     if (id < 0) {
 	bu_log("Cannot internal form of %s\n", dp->d_namep);
 	return;
@@ -931,7 +931,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol);
 
     } else {
 	/* catch */
@@ -949,7 +949,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	nmg_isect2d_final_cleanup();
 
 	/* Release the tree memory & input regions */
-	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
+	db_free_tree(curtree);		/* Does an nmg_kr() */
 
 	/* Get rid of (m)any other intermediate structures */
 	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
@@ -1055,7 +1055,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
      * A return of TREE_NULL from this routine signals an error,
      * so we need to cons up an OP_NOP node to return.
      */
-    db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
+    db_free_tree(curtree);		/* Does an nmg_kr() */
 
     BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);

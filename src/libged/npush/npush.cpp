@@ -378,7 +378,7 @@ validate_walk(struct db_i *dbip,
 
 	// Load the comb.  In the validation stage, if we can't do this report
 	// an error.
-	if (rt_db_get_internal5(&in, dp, dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal5(&in, dp, dbip, NULL) < 0) {
 	    if (s->msgs) {
 		char *ps = db_path_to_string(dfp);
 		bu_vls_printf(s->msgs, "W1[%s]: rt_db_get_internal5 failure reading comb %s\n", ps, DB_FULL_PATH_CUR_DIR(dfp)->d_namep);
@@ -650,7 +650,7 @@ push_walk(struct db_full_path *dfp,
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal5(&in, dp, s->dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal5(&in, dp, s->dbip, NULL) < 0)
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
@@ -924,7 +924,7 @@ tree_update_walk(
 	    /* Create an identical copy under the new name */
 	    struct rt_db_internal *in;
 	    BU_GET(in, struct rt_db_internal);
-	    if (rt_db_get_internal5(in, dpi.dp, s->dbip, NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal5(in, dpi.dp, s->dbip, NULL) < 0) {
 		BU_PUT(in, struct rt_db_internal);
 		return;
 	    }
@@ -950,7 +950,7 @@ tree_update_walk(
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 	bool tree_altered = false;
-	if (rt_db_get_internal5(&intern, dpi.dp, s->dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal5(&intern, dpi.dp, s->dbip, NULL) < 0) {
 	    return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -959,7 +959,7 @@ tree_update_walk(
 	struct rt_db_internal *in;
 	struct rt_comb_internal *wcomb;
 	BU_GET(in, struct rt_db_internal);
-	if (rt_db_get_internal5(in, dpi.dp, s->dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal5(in, dpi.dp, s->dbip, NULL) < 0) {
 	    BU_PUT(in, struct rt_db_internal);
 	    return;
 	}
@@ -1079,7 +1079,7 @@ tree_update_walk(
 		bn_mat_print_vls(dpi.dp->d_namep, dpi.mat, s->msgs);
 		bn_mat_print_vls("curr_mat", *curr_mat, s->msgs);
 	    }
-	    if (rt_db_get_internal(in, dpi.dp, s->dbip, dpi.mat, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(in, dpi.dp, s->dbip, dpi.mat) < 0) {
 		if (s->msgs)
 		    bu_vls_printf(s->msgs, "Read error fetching '%s'\n", dpi.dp->d_namep);
 		BU_PUT(in, struct rt_db_internal);
@@ -1088,7 +1088,7 @@ tree_update_walk(
 	    }
 	} else {
 	    // If there is a non-IDN matrix, this is where we apply it
-	    if (rt_db_get_internal(in, dpi.dp, s->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(in, dpi.dp, s->dbip, bn_mat_identity) < 0) {
 		if (s->msgs)
 		    bu_vls_printf(s->msgs, "Read error fetching '%s'\n", dpi.dp->d_namep);
 		BU_PUT(in, struct rt_db_internal);
@@ -1629,7 +1629,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	struct rt_db_internal *in = u_it->second;
 	if (!s.dry_run) {
-	    if (rt_db_put_internal(dp, s.dbip, in, wdbp->wdb_resp) < 0) {
+	    if (rt_db_put_internal(dp, s.dbip, in) < 0) {
 		bu_log("Unable to store %s to the database", dp->d_namep);
 	    }
 	}
@@ -1643,7 +1643,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	struct rt_db_internal *in = u_it->second;
 	if (!s.dry_run) {
-	    if (rt_db_put_internal(dp, s.dbip, in, wdbp->wdb_resp) < 0) {
+	    if (rt_db_put_internal(dp, s.dbip, in) < 0) {
 		bu_log("Unable to store %s to the database", dp->d_namep);
 	    }
 	} else {

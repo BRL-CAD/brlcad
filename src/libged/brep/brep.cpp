@@ -585,7 +585,7 @@ _brep_cmd_dump(void *bs, int argc, const char **argv)
 	db_full_path_color(&c, fp, gedp->dbip, &rt_uniresource);
 	struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
 	struct rt_db_internal intern;
-	if (rt_db_get_internal(&intern, dp, gedp->dbip, m, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, m) < 0) {
 	    bu_log("Error - unable to get internal of %s\n", dp->d_namep);
 	    continue;
 	}

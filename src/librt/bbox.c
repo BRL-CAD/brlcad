@@ -355,8 +355,7 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 		     * correct bb as we are going through the proper
 		     * switch case in each step down the tree
 		     */
-		    if (!rt_db_lookup_internal(rtip->rti_dbip, tp->tr_l.tl_name, &dp, &intern, LOOKUP_NOISY,
-					       &rt_uniresource)) {
+		    if (!rt_db_lookup_internal(rtip->rti_dbip, tp->tr_l.tl_name, &dp, &intern, LOOKUP_NOISY)) {
 			bu_log("rt_traverse_tree: rt_db_lookup_internal(%s) failed to get the internal form",
 			       tp->tr_l.tl_name);
 			return -1;
@@ -430,7 +429,7 @@ rt_bound_instance(point_t *bmin, point_t *bmax,
     struct rt_db_internal dbintern;
     RT_DB_INTERNAL_INIT(&dbintern);
     struct rt_db_internal *ip = &dbintern;
-    int ret = rt_db_get_internal(ip, dp, dbip, *s_mat, res);
+    int ret = rt_db_get_internal(ip, dp, dbip, *s_mat);
     if (ret < 0)
 	return -1;
 
@@ -490,7 +489,7 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
     }
 
 
-    if (!rt_db_lookup_internal(dbip, dp->d_namep, &dp, &intern, LOOKUP_NOISY, &rt_uniresource)) {
+    if (!rt_db_lookup_internal(dbip, dp->d_namep, &dp, &intern, LOOKUP_NOISY)) {
 	bu_exit(1, "rt_bound_internal: rt_db_lookup_internal(%s) failed to get the internal form", dp->d_namep);
 	rt_free_rti(rtip);
 	return -1;

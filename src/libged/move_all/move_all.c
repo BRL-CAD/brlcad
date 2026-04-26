@@ -75,7 +75,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 		    continue;
 		}
 
-		if (rt_db_get_internal(&intern, dirp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		if (rt_db_get_internal(&intern, dirp, gedp->dbip, (fastf_t *)NULL) < 0) {
 		    bu_log("WARNING: Can't get extrude %s?\n", dirp->d_namep);
 		    continue;
 		}
@@ -97,7 +97,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 		bu_free(extrude->sketch_name, "sketch name");
 		extrude->sketch_name = bu_strdup(new_name);
 
-		if (rt_db_put_internal(dirp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+		if (rt_db_put_internal(dirp, gedp->dbip, &intern) < 0) {
 		    bu_log("INTERNAL ERROR: unable to write sketch [%s] during mvall\n", new_name);
 		} else {
 		    moved++;
@@ -114,12 +114,12 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 	}
 
 	/* Change object name on disk */
-	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	    return BRLCAD_ERROR;
 	}
 
-	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	    return BRLCAD_ERROR;
 	}
@@ -135,7 +135,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 
 		if (!(dp->d_flags & RT_DIR_COMB))
 		    continue;
-		if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+		if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0)
 		    continue;
 
 		comb = (struct rt_comb_internal *)intern.idb_ptr;

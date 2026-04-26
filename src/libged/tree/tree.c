@@ -154,7 +154,7 @@ _tree_print_node(struct ged *gedp,
      * Process all the arcs (e.g., directory members).
      */
 
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return;
     }
@@ -166,7 +166,7 @@ _tree_print_node(struct ged *gedp,
 	struct rt_tree_array *rt_tree_array;
 
 	if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
-	    db_non_union_push(comb->tree, &rt_uniresource);
+	    db_non_union_push(comb->tree);
 	    if (db_ck_v4gift_tree(comb->tree) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for listing");
 		return;
@@ -177,8 +177,7 @@ _tree_print_node(struct ged *gedp,
 	    rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count,
 							      sizeof(struct rt_tree_array), "tree list");
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
-		rt_tree_array, comb->tree, OP_UNION,
-		1, &rt_uniresource) - rt_tree_array;
+		rt_tree_array, comb->tree, OP_UNION, 1) - rt_tree_array;
 	    BU_ASSERT(actual_count == node_count);
 	    comb->tree = TREE_NULL;
 	} else {
@@ -225,7 +224,7 @@ _tree_print_node(struct ged *gedp,
 		    _tree_print_node(gedp, nextdp, pathpos+1, indentSize, op, flags, displayDepth, currdisplayDepth+1, verbosity, domprefix);
 		}
 	    }
-	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
+	    db_free_tree(rt_tree_array[i].tl_tree);
 	}
 	if (rt_tree_array) bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
     }

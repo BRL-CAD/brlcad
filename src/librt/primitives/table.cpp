@@ -153,8 +153,8 @@ extern void rt_pg_volume(fastf_t *volume, const struct rt_db_internal *ip);
 extern void rt_pg_surf_area(fastf_t *area, const struct rt_db_internal *ip);
 
 /* from db5_bin.c */
-extern int rt_binunif_import5(struct rt_db_internal * ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
-extern int rt_binunif_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp);
+extern int rt_binunif_import5(struct rt_db_internal * ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip);
+extern int rt_binunif_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
 extern void rt_binunif_ifree(struct rt_db_internal *ip);
 extern int rt_binunif_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
 extern void rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
@@ -162,8 +162,8 @@ extern int rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *in
 extern int rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv);
 
 /* from comb/comb.c and comb/db_comb.c */
-extern int rt_comb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp);
-extern int rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
+extern int rt_comb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
+extern int rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip);
 extern int rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *item);
 extern int rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv);
 extern int rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp);

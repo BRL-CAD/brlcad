@@ -102,7 +102,7 @@ dp_tessellate(struct rt_bot_internal **obot, struct bu_vls *method_flag, struct 
 
     struct rt_db_internal intern;
     RT_DB_INTERNAL_INIT(&intern);
-    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0) {
 	bu_log("rt_db_get_internal failed for %s\n", dp->d_namep);
 	return BRLCAD_ERROR;
     }

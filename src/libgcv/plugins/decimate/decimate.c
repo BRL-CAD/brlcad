@@ -52,7 +52,7 @@ decimate_filter(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	    db_free_full_path(&path);
 	}
 
-	if (rt_db_get_internal(&internal, dir, context->dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&internal, dir, context->dbip, NULL) < 0) {
 	    bu_log("rt_db_get_internal() failed: '%s'\n", dir->d_namep);
 	    return 0;
 	}
@@ -84,7 +84,7 @@ decimate_filter(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	    }
 	}
 
-	if (rt_db_put_internal(dir, context->dbip, &internal, &rt_uniresource)) {
+	if (rt_db_put_internal(dir, context->dbip, &internal)) {
 	    bu_log("rt_db_put_internal() failed: '%s'\n", dir->d_namep);
 	    rt_db_free_internal(&internal);
 	    return 0;

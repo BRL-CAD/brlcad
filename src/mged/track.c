@@ -641,7 +641,7 @@ wrobj(struct mged_state *s, char name[], int flags)
 	return -1;
     }
 
-    if (rt_db_put_internal(tdp, s->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(tdp, s->dbip, &intern) < 0) {
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(s->interp, "wrobj(", name, "):  write error\n", (char *)NULL);
 	Tcl_AppendResult(s->interp, ERROR_RECOVERY_SUGGESTION, (char *)NULL);

@@ -644,7 +644,7 @@ tclcad_rt_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const 
 	struct directory *dp_curr;
 	int ret;
 
-	db_init_db_tree_state(&ts, dbip, &rt_uniresource);
+	db_init_db_tree_state(&ts, dbip);
 	db_full_path_init(&old_path);
 	db_full_path_init(&new_path);
 

@@ -68,7 +68,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
     if ((old_dp = db_lookup(gedp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return BRLCAD_ERROR;
 
-    if (rt_db_get_internal(&old_intern, old_dp, gedp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&old_intern, old_dp, gedp->dbip, bn_mat_identity) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
 	return BRLCAD_ERROR;
     }
@@ -118,7 +118,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 	    /* make sure the geometry/bounding boxes are up to date */
 	    nmg_rebound(m_tmp, &wdbp->wdb_tol);
 
-	    if (rt_db_put_internal(new_dp, gedp->dbip, &new_intern, &rt_uniresource) < 0) {
+	    if (rt_db_put_internal(new_dp, gedp->dbip, &new_intern) < 0) {
 		/* Free memory */
 		nmg_km(m_tmp);
 		bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal() failure\n");

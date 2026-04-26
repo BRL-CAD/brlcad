@@ -166,8 +166,13 @@ RT_EXPORT extern int rt_boolfinal(struct partition *InputHdp,
  * when the size is increased.
  *
  * Return the new pointer for what was previously the last element.
+ *
+ * NOTE - this is DEPRECATED as a public facing header.  Resource
+ * management is librt's responsibility, and this level of detail
+ * exposure needs to go away.
  */
-RT_EXPORT extern void rt_bool_growstack(struct resource *res);
+DEPRECATED RT_EXPORT extern void rt_bool_growstack(struct resource *res);
+
 
 __END_DECLS
 

@@ -252,7 +252,7 @@ db_fullpath_list(struct db_full_path *path, void *client_data)
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal(&in, dp, lcd->dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal(&in, dp, lcd->dbip, NULL) < 0)
 	    return;
 
 	std::unordered_map<std::string, int> c_inst_map;
@@ -826,7 +826,7 @@ f_objparam(struct db_plan_old_t *plan, struct db_node_old_t *db_node, struct db_
     }
 
     RT_DB_INTERNAL_INIT(&in);
-    if (rt_db_get_internal(&in, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&in, dp, dbip, (fastf_t *)NULL) < 0) {
 	rt_db_free_internal(&in);
 	db_node->matched_filters = 0;
 	return 0;
@@ -1066,7 +1066,7 @@ f_type(struct db_plan_old_t *plan, struct db_node_old_t *db_node, struct db_i *d
 
     }
 
-    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0)
 	return 0;
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	rt_db_free_internal(&intern);
@@ -1654,7 +1654,7 @@ f_matrix(struct db_plan_old_t *plan, struct db_node_old_t *db_node, struct db_i 
 
 	if (dp->d_flags & RT_DIR_COMB) {
 	    struct rt_db_internal intern;
-	    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) > 0) {
+	    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) > 0) {
 		struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
 		if (comb->tree != NULL) {
 		    child_matrix(comb->tree, cdp->d_namep, &mat);
@@ -1751,7 +1751,7 @@ f_nnodes(struct db_plan_old_t *plan, struct db_node_old_t *db_node, struct db_i 
     }
 
     if (dp->d_flags & RT_DIR_COMB) {
-	rt_db_get_internal(&in, dp, dbip, (fastf_t *)NULL, &rt_uniresource);
+	rt_db_get_internal(&in, dp, dbip, (fastf_t *)NULL);
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 	if (comb->tree == NULL) {
 	    node_count = 0;

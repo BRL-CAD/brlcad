@@ -69,7 +69,7 @@ add_rcc(struct db_i *dbip, const char *name, point_t *v, vect_t *h, double r)
 	bu_log("Error: Cannot add %s to directory\n", name);
 	return 1;
     }
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	rt_db_free_internal(&intern);
 	bu_log("Error: Database write error, aborting\n");
 	return 1;
@@ -109,7 +109,7 @@ add_datum(struct db_i *dbip, const char *name, point_t *pnt, vect_t *dir, double
 	bu_log("Error: Cannot add %s to directory\n", name);
 	return 1;
     }
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	rt_db_free_internal(&intern);
 	bu_log("Error: Database write error, aborting\n");
 	return 1;
@@ -146,14 +146,14 @@ add_comb(struct db_i *dbip, const char *name, int obj_argc, const char **obj_arg
 	tp->tr_l.tl_mat = (matp_t)NULL;
 
     }
-    comb->tree = (union tree *)db_mkgift_tree(tree_list, obj_argc, &rt_uniresource);
+    comb->tree = (union tree *)db_mkgift_tree(tree_list, obj_argc);
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_COMB, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
 	bu_log("Error: Cannot add %s to directory\n", name);
 	return 1;
     }
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	rt_db_free_internal(&intern);
 	bu_log("Error: Database write error, aborting\n");
 	return 1;
@@ -174,12 +174,12 @@ apply_mat_obj(struct db_i *dbip, const char *obj_name, matp_t mat)
 	return 1;
     }
     RT_DB_INTERNAL_INIT(&intern);
-    if (rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, dbip, mat) < 0) {
 	bu_log("rt_db_get_internal error\n");
 	rt_db_free_internal(&intern);
 	return 1;
     }
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	bu_log("rt_db_put_internal error\n");
 	rt_db_free_internal(&intern);
 	return 1;
@@ -204,7 +204,7 @@ apply_mat_instance(struct db_i *dbip, const char *comb_name, const char *obj_nam
 	return 1;
     }
     RT_DB_INTERNAL_INIT(&intern);
-    if (rt_db_get_internal(&intern, cdp, dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, cdp, dbip, NULL) < 0) {
 	bu_log("rt_db_get_internal error\n");
 	rt_db_free_internal(&intern);
 	return 1;
@@ -224,7 +224,7 @@ apply_mat_instance(struct db_i *dbip, const char *comb_name, const char *obj_nam
 	    MAT_COPY(tp->tr_l.tl_mat, mat);
 	}
 	/* Write result */
-	if (rt_db_put_internal(cdp, dbip, &intern, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(cdp, dbip, &intern) < 0) {
 	    bu_log("rt_db_put_internal error\n");
 	    rt_db_free_internal(&intern);
 	}
@@ -259,7 +259,7 @@ report_object_params(struct db_i *dbip, const char *o)
 	return;
 
     RT_DB_INTERNAL_INIT(&intern);
-    if ((id = rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource)) < 0)
+    if ((id = rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL)) < 0)
 	return;
 
     if (!OBJ[id].ft_describe)
@@ -288,7 +288,7 @@ report_instance_params(struct db_i *dbip, const char *c, const char *o)
 	return;
 
     RT_DB_INTERNAL_INIT(&cintern);
-    if (rt_db_get_internal(&cintern, cdp, dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&cintern, cdp, dbip, NULL) < 0) {
 	rt_db_free_internal(&cintern);
 	return;
     }
@@ -309,7 +309,7 @@ report_instance_params(struct db_i *dbip, const char *c, const char *o)
     /* Load the actual object instance, applying the comb matrix to transform the
      * object parameter values into the instance values */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((id = rt_db_get_internal(&intern, dp, dbip, cmat, &rt_uniresource)) < 0)
+    if ((id = rt_db_get_internal(&intern, dp, dbip, cmat)) < 0)
 	return;
 
     if (!OBJ[id].ft_describe)

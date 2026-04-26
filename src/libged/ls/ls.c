@@ -80,7 +80,7 @@ vls_long_dpp(struct ged *gedp,
 	else if (dp->d_flags & RT_DIR_SOLID) {
 	    struct rt_db_internal intern;
 	    len = 9; /* "primitive" */
-	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) >= 0) {
 		len = strlen(intern.idb_meth->ft_label);
 		rt_db_free_internal(&intern);
 	    }
@@ -121,7 +121,7 @@ vls_long_dpp(struct ged *gedp,
 	} else if (dp->d_flags & RT_DIR_SOLID) {
 	    struct rt_db_internal intern;
 	    type = "primitive";
-	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) >= 0) {
 		type = intern.idb_meth->ft_label;
 		rt_db_free_internal(&intern);
 	    }

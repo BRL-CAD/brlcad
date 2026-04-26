@@ -26,19 +26,17 @@
 
 
 int
-rt_obj_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp)
+rt_obj_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     int id;
     const struct rt_functab *ft;
-    int (*export_func)(struct bu_external *, const struct rt_db_internal *, double, const struct db_i *, struct resource *);
+    int (*export_func)(struct bu_external *, const struct rt_db_internal *, double, const struct db_i *);
 
-    if (!ep || !ip || !dbip || local2mm < 0.0)
+    if (!ep || !ip || local2mm < 0.0)
 	return -1;
 
     BU_CK_EXTERNAL(ep);
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_DBI(dbip);
-    if (resp) RT_CK_RESOURCE(resp);
 
     id = ip->idb_minor_type;
     if (id < 0)
@@ -48,16 +46,14 @@ rt_obj_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     if (!ft)
 	return -3;
 
-    if (dbip->i->dbi_version < 5) {
+    export_func = ft->ft_export5;
+    if (!export_func)
 	export_func = ft->ft_export4;
-    } else {
-	export_func = ft->ft_export5;
-    }
 
     if (!export_func)
 	return -4;
 
-    return export_func(ep, ip, local2mm, dbip, resp);
+    return export_func(ep, ip, local2mm, dbip);
 }
 
 

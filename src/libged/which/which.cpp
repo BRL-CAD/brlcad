@@ -164,7 +164,7 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 	for(size_t i = 0; i < BU_PTBL_LEN(&comb_objs); i++) {
 	    dp = (struct directory *)BU_PTBL_GET(&comb_objs, i);
 
-	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 		bu_vls_free(&root);
 		return BRLCAD_ERROR;
@@ -184,7 +184,7 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 	    if (!(dp->d_flags & RT_DIR_REGION))
 		continue;
 
-	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 		bu_vls_free(&root);
 		return BRLCAD_ERROR;

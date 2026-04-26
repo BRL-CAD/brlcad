@@ -205,7 +205,7 @@ printcodes(FILE *fp, struct directory *dp, int pathpos)
     if (!(dp->d_flags & RT_DIR_COMB))
 	return 0;
 
-    if ((id=rt_db_get_internal(&intern, dp, s->dbip, (matp_t)NULL, &rt_uniresource)) < 0) {
+    if ((id=rt_db_get_internal(&intern, dp, s->dbip, (matp_t)NULL)) < 0) {
 	Tcl_AppendResult(s->interp, "printcodes: Cannot get records for ",
 			 dp->d_namep, "\n", (char *)NULL);
 	return TCL_ERROR;

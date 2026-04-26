@@ -139,7 +139,7 @@ add_solid(const struct directory *dp,
     BU_ALLOC(eptr, union E_tree);
     eptr->magic = E_TREE_MAGIC;
 
-    id = rt_db_get_internal(&intern, dp, dgcdp->dbip, mat, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, dgcdp->dbip, mat);
     if (id < 0) {
 	eptr->l.m = (struct model *)NULL;
 	return eptr;

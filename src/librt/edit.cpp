@@ -92,6 +92,7 @@ rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, 
     BU_GET(s->m, struct rt_edit_map);
     s->m->i = new RT_Edit_Map_Internal;
 
+    s->dbip = dbip;
     RT_DB_INTERNAL_INIT(&s->es_int);
 
     bu_ptbl_init(&s->comb_insts, 8, "comb inst tbl");
@@ -163,7 +164,7 @@ rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, 
     s->base2local = dbip->dbi_base2local;
     s->dbip = dbip;
 
-    if (rt_db_get_internal(&s->es_int, DB_FULL_PATH_CUR_DIR(dfp), dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&s->es_int, DB_FULL_PATH_CUR_DIR(dfp), dbip, NULL) < 0) {
 	rt_edit_destroy(s);
 	return NULL;                         /* FAIL */
     }
@@ -318,7 +319,7 @@ rt_edit_reinit(struct rt_edit *s, struct db_full_path *dfp, struct db_i *dbip,
     s->base2local = dbip->dbi_base2local;
     s->dbip = dbip;
 
-    if (rt_db_get_internal(&s->es_int, DB_FULL_PATH_CUR_DIR(dfp), dbip, NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&s->es_int, DB_FULL_PATH_CUR_DIR(dfp), dbip, NULL) < 0)
 	return BRLCAD_ERROR;
 
     RT_CK_DB_INTERNAL(&s->es_int);
@@ -1188,7 +1189,7 @@ rt_edit_checkpoint(struct rt_edit *s)
     bu_free_external(&s->es_ckpt);
     BU_EXTERNAL_INIT(&s->es_ckpt);
 
-    if (rt_obj_export(&s->es_ckpt, &s->es_int, 1.0, s->dbip, &rt_uniresource) < 0) {
+    if (rt_obj_export(&s->es_ckpt, &s->es_int, 1.0, s->dbip) < 0) {
 	bu_vls_printf(s->log_str, "rt_edit_checkpoint: export failed\n");
 	return BRLCAD_ERROR;
     }
@@ -1220,7 +1221,7 @@ rt_edit_revert(struct rt_edit *s)
 
     mat_t identity;
     MAT_IDN(identity);
-    if (rt_obj_import(&s->es_int, &s->es_ckpt, identity, s->dbip, &rt_uniresource) < 0) {
+    if (rt_obj_import(&s->es_int, &s->es_ckpt, identity, s->dbip) < 0) {
 	bu_vls_printf(s->log_str, "rt_edit_revert: import failed\n");
 	return BRLCAD_ERROR;
     }

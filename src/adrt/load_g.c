@@ -155,7 +155,7 @@ load_nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *p
     }
     if (dir->d_minor_type != ID_BOT && dir->d_minor_type != ID_NMG)
 	return 0;
-    if (rt_db_get_internal(&intern, dir, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dir, dbip, (fastf_t *)NULL) < 0) {
 	printf("Failed to load\n");
 	return 0;
     }

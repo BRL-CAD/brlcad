@@ -562,7 +562,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 
     _old_ged_facetize_log_nmg(o);
 
-    db_init_db_tree_state(&init_state, gedp->dbip, wdbp->wdb_resp);
+    db_init_db_tree_state(&init_state, gedp->dbip);
 
     /* Establish tolerances */
     init_state.ts_ttol = &wdbp->wdb_ttol;
@@ -600,7 +600,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     if (facetize_tree) {
 	if (!BU_SETJUMP) {
 	    /* try */
-	    failed = nmg_boolean(facetize_tree, nmg_model, vlfree, &wdbp->wdb_tol, &rt_uniresource);
+	    failed = nmg_boolean(facetize_tree, nmg_model, vlfree, &wdbp->wdb_tol);
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
@@ -618,7 +618,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     }
 
     if (facetize_tree) {
-	db_free_tree(facetize_tree, &rt_uniresource);
+	db_free_tree(facetize_tree);
     }
 
     _old_ged_facetize_log_default(o);
@@ -746,7 +746,7 @@ _write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name, stru
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	if (opts->verbosity) {
 	    bu_log("Failed to write %s to database\n", name);
 	}
@@ -780,7 +780,7 @@ _write_nmg(struct ged *gedp, struct model *nmg_model, const char *name, struct _
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	if (opts->verbosity) {
 	    bu_log("Failed to write %s to database\n", name);
 	}
@@ -824,7 +824,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
     /* From here on out, assume success until we fail */
     r->failure_mode = FACETIZE_SUCCESS;
 
-    if (rt_db_get_internal(&in_intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&in_intern, dp, dbip, (fastf_t *)NULL) < 0) {
 	if (opts->verbosity) {
 	    bu_log("Error: could not determine type of object %s, skipping\n", objname);
 	}
@@ -1134,7 +1134,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     /* From here on out, assume success until we fail */
     r->failure_mode = FACETIZE_SUCCESS;
 
-    if (rt_db_get_internal(&in_intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&in_intern, dp, dbip, (fastf_t *)NULL) < 0) {
 	if (opts->verbosity) {
 	    bu_log("Error: could not determine type of object %s, skipping\n", objname);
 	}
@@ -1787,7 +1787,7 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct bu_
 
     struct db_tree_state init_state;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    db_init_db_tree_state(&init_state, gedp->dbip, wdbp->wdb_resp);
+    db_init_db_tree_state(&init_state, gedp->dbip);
     /* Establish tolerances */
     init_state.ts_ttol = &wdbp->wdb_ttol;
     init_state.ts_tol = &wdbp->wdb_tol;
@@ -2103,7 +2103,7 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _old_ged_facetize_o
     if (dp == RT_DIR_NULL || !(dp->d_flags & RT_DIR_COMB)) return BRLCAD_ERROR;
     bu_avs_init_empty(&avs);
     if (db5_get_attributes(dbip, &avs, dp)) return BRLCAD_ERROR;
-    if (rt_db_get_internal(&ointern, dp, dbip, NULL, &rt_uniresource) < 0) return BRLCAD_ERROR;
+    if (rt_db_get_internal(&ointern, dp, dbip, NULL) < 0) return BRLCAD_ERROR;
     ocomb = (struct rt_comb_internal *)ointern.idb_ptr;
     RT_CK_COMB(ocomb);
     flags = dp->d_flags;
@@ -2615,7 +2615,7 @@ _ged_facetize_add_children(struct ged *gedp, struct directory *cdp, struct _old_
 
     RT_DB_INTERNAL_INIT(&intern);
     nparent = bu_avs_get(opts->c_map, cdp->d_namep);
-    if (rt_db_get_internal(&intern, cdp, dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, cdp, dbip, NULL) < 0) {
 	ret = BRLCAD_ERROR;
 	goto ged_facetize_add_children_memfree;
     }

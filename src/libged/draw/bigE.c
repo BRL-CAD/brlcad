@@ -120,7 +120,7 @@ add_solid(const struct directory *dp,
     BU_ALLOC(eptr, union E_tree);
     eptr->magic = E_TREE_MAGIC;
 
-    id = rt_db_get_internal(&intern, dp, dgcdp->gedp->dbip, mat, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, dgcdp->gedp->dbip, mat);
     if (id < 0) {
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "Failed to get internal form of %s\n", dp->d_namep);
 	eptr->l.m = (struct model *)NULL;

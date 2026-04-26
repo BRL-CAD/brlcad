@@ -336,7 +336,7 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 	    return BRLCAD_ERROR; \
 	} \
 	\
-	if (rt_db_get_internal(&(_intern), _dp, (_gedp)->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
+	if (rt_db_get_internal(&(_intern), _dp, (_gedp)->dbip, (matp_t)NULL) < 0) { \
 	    bu_vls_printf((_gedp)->ged_result_str, "Database read error, aborting"); \
 	    return BRLCAD_ERROR; \
 	} \
@@ -344,12 +344,12 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 	_comb = (struct rt_comb_internal *)(_intern).idb_ptr;	\
 	RT_CK_COMB(_comb); \
 	if (_comb->tree) {							\
-	    (_ntp) = db_dup_subtree(_comb->tree, &rt_uniresource);	\
+	    (_ntp) = db_dup_subtree(_comb->tree);	\
 	    RT_CK_TREE(_ntp);						\
 	    \
 	    /* Convert to "v4 / GIFT style", so that the flatten makes sense. */ \
 	    if (db_ck_v4gift_tree(_ntp) < 0)					\
-		db_non_union_push((_ntp), &rt_uniresource);			\
+		db_non_union_push((_ntp));			\
 	    RT_CK_TREE(_ntp);							\
 	    \
 	    (_node_count) = db_tree_nleaves(_ntp);				\
@@ -358,7 +358,7 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 	    /*							 \
 	     * free=0 means that the tree won't have any leaf nodes freed. \
 	     */								\
-	    (void)db_flatten_tree((_rt_tree_array), (_ntp), OP_UNION, 0, &rt_uniresource); \
+	    (void)db_flatten_tree((_rt_tree_array), (_ntp), OP_UNION, 0); \
 	} else { \
 	    (_ntp) = TREE_NULL; \
 	    (_node_count) = 0; \
@@ -412,13 +412,13 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 
     rt_db_free_internal(&intern);
     if (rt_tree_array) bu_free((void *)rt_tree_array, "rt_tree_array");
-    db_free_tree(ntp, &rt_uniresource);
+    db_free_tree(ntp);
     return BRLCAD_OK;
 }
 
 
 #define COMBMEM_SET_PART_I(_gedp, _argc, _cmd, _name, _num_params, _intern, _dp, _comb, _node_count, _rt_tree_array) { \
-	if (rt_db_get_internal(&(_intern), (_dp), (_gedp)->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
+	if (rt_db_get_internal(&(_intern), (_dp), (_gedp)->dbip, (matp_t)NULL) < 0) { \
 	    bu_vls_printf((_gedp)->ged_result_str, "Database read error, aborting"); \
 	    return BRLCAD_ERROR;							\
 	}									\
@@ -465,11 +465,11 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 
 
 #define COMBMEM_SET_PART_IV(_gedp, _comb, _tree_index, _intern, _final_tree, _node_count, _dp, _rt_tree_array, _old_intern, _old_rt_tree_array, _old_ntp) \
-    db_free_tree((_comb)->tree, &rt_uniresource); \
+    db_free_tree((_comb)->tree); \
     (_comb)->tree = NULL; \
     \
     if ((_tree_index)) \
-	(_final_tree) = (union tree *)db_mkgift_tree((_rt_tree_array), (_node_count), &rt_uniresource); \
+	(_final_tree) = (union tree *)db_mkgift_tree((_rt_tree_array), (_node_count)); \
     else \
 	(_final_tree) = TREE_NULL; \
     \
@@ -480,13 +480,13 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 		      (_intern).idb_ptr = (void *)(_comb); \
 		      (_comb)->tree = (_final_tree); \
 		      \
-		      if (rt_db_put_internal((_dp), (_gedp)->dbip, &(_intern), &rt_uniresource) < 0) { \
+		      if (rt_db_put_internal((_dp), (_gedp)->dbip, &(_intern)) < 0) { \
 			  bu_vls_printf((_gedp)->ged_result_str, "Unable to write new combination into database.\n"); \
 			  \
 			  rt_db_free_internal(&(_old_intern)); \
 			  if (_old_rt_tree_array) \
 			      bu_free((void *)(_old_rt_tree_array), "rt_tree_array"); \
-			  db_free_tree((_old_ntp), &rt_uniresource); \
+			  db_free_tree((_old_ntp)); \
 			  \
 			  return BRLCAD_ERROR; \
 		      } \
@@ -494,7 +494,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 		      rt_db_free_internal(&(_old_intern)); \
 		      if (_old_rt_tree_array) \
 			  bu_free((void *)(_old_rt_tree_array), "rt_tree_array"); \
-		      db_free_tree((_old_ntp), &rt_uniresource);
+		      db_free_tree((_old_ntp));
 
 
 #define COMBMEM_CHECK_MAT(_tp, _tree_index, _old_rt_tree_array, _mat, _aetvec, _tvec, _svec, _key_pt, _az, _el, _tw, _tx, _ty, _tz, _sa, _sx, _sy, _sz) \
@@ -961,17 +961,17 @@ combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }									\
 
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return BRLCAD_ERROR;
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
 
-    db_free_tree(comb->tree, &rt_uniresource);
+    db_free_tree(comb->tree);
     comb->tree = NULL;
 
-    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to write combination into database - %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }

@@ -72,7 +72,7 @@ ged_cpi_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if ((id = rt_db_get_internal(&internal, proto, gedp->dbip, (fastf_t *)NULL, &rt_uniresource)) < 0) {
+    if ((id = rt_db_get_internal(&internal, proto, gedp->dbip, (fastf_t *)NULL)) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Database read error, aborting\n", argv[0]);
 	return BRLCAD_ERROR;
     }
@@ -93,7 +93,7 @@ ged_cpi_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_put_internal(dp, gedp->dbip, &internal, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &internal) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
 	return BRLCAD_ERROR;
     }

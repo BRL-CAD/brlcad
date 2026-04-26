@@ -186,7 +186,7 @@ db_diradd5(
     }
 
     /* Duplicates the guts of db_diradd() */
-    RT_GET_DIRECTORY(dp, &rt_uniresource);
+    RT_GET_DIR(dp, dbip);
     RT_CK_DIR(dp);
     BU_LIST_INIT(&dp->d_use_hd);
     RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */
@@ -265,7 +265,7 @@ db5_diradd(struct db_i *dbip,
 	rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* Duplicates the guts of db_diradd() */
-    RT_GET_DIRECTORY(dp, &rt_uniresource); /* allocates a new dir */
+    RT_GET_DIR(dp, dbip); /* allocates a new dir */
     RT_CK_DIR(dp);
     BU_LIST_INIT(&dp->d_use_hd);
     RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */

@@ -232,7 +232,7 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
 	return 0;
     }
 
-    id = rt_db_get_internal(&intern, dp, data->pstate->dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, data->pstate->dbip, (matp_t)NULL);
     if (id < 0) {
 	/* error occurred retrieving object */
 	bu_log("Warning: Can not load internal form of %s\n", dp->d_namep);
@@ -272,7 +272,7 @@ select_non_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *
     RT_CK_FULL_PATH(pathp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-    id = rt_db_get_internal(&intern, dp, data->pstate->dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, data->pstate->dbip, (matp_t)NULL);
     if (id < 0) {
 	/* error occurred retrieving object */
 	bu_log("Warning: Can not load internal form of %s\n", dp->d_namep);
@@ -631,7 +631,7 @@ nmg_2_vrml(const struct conversion_state *pstate, struct db_tree_state *tsp, con
 	return;
     }
 
-    id = rt_db_get_internal(&intern, dp, pstate->dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, pstate->dbip, (matp_t)NULL);
     if (id < 0) {
 	bu_log("Cannot internal form of %s\n", dp->d_namep);
 	return;
@@ -1056,7 +1056,7 @@ vrml_write_process_boolean(struct conversion_state *pstate, union tree *curtree,
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
 	/* try */
-	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol);
     } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);
@@ -1160,7 +1160,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
      * A return of TREE_NULL from this routine signals an error,
      * so we need to cons up an OP_NOP node to return.
      */
-    db_free_tree(curtree, &rt_uniresource); /* does a nmg_kr (i.e. kill nmg region) */
+    db_free_tree(curtree); /* does a nmg_kr (i.e. kill nmg region) */
     bu_free(name, "db_path_to_string");
 
     BU_ALLOC(curtree, union tree);

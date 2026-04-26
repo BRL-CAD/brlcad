@@ -659,7 +659,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
 	if (ldp->d_minor_type == ID_BOT) {
 	    struct rt_db_internal intern;
 	    RT_DB_INTERNAL_INIT(&intern);
-	    if (rt_db_get_internal(&intern, ldp, dbip, NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, ldp, dbip, NULL) < 0) {
 		pq.push(ldp);
 		continue;
 	    }
@@ -988,7 +988,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
     if (ac) {
 	s->error_flag = 0;
 	struct db_tree_state init_state;
-	db_init_db_tree_state(&init_state, dbip, wdbp->wdb_resp);
+	db_init_db_tree_state(&init_state, dbip);
 	/* Establish tolerances */
 	init_state.ts_ttol = &wdbp->wdb_ttol;
 	init_state.ts_tol = &wdbp->wdb_tol;

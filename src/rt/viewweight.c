@@ -150,7 +150,7 @@ densities_prep(struct rt_i * rtip, int minus_o)
 	    struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
 	    struct rt_binunif_internal *bip = NULL;
 	    struct bu_vls msgs = BU_VLS_INIT_ZERO;
-	    if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL) < 0) {
 		bu_log("Could not import %s\n", dp->d_namep);
 		goto densities_prep_rtweight_fail;
 	    }
@@ -216,7 +216,7 @@ densities_prep(struct rt_i * rtip, int minus_o)
 	    struct rt_db_internal intern;
 	    struct rt_material_internal *material_ip;
 	    if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
-		if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
+		if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL) >= 0) {
 		    if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 			// if the material has a density, add it to
 			// the density table
@@ -279,7 +279,7 @@ densities_prep(struct rt_i * rtip, int minus_o)
 			if (material_dp != NULL) {
 			    struct rt_db_internal material_intern;
 			    struct rt_material_internal *material_ip;
-			    if (rt_db_get_internal(&material_intern, material_dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
+			    if (rt_db_get_internal(&material_intern, material_dp, rtip->rti_dbip, NULL) >= 0) {
 				if (material_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 				    // the material_ip->name field is
 				    // the name in the density table

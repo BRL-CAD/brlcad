@@ -119,7 +119,7 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 	    if (db_follow_path_for_state(&ts, &path, argv[arg], 1))
 		continue;
 
-	    if ((id = rt_db_get_internal(&intern, dp, gedp->dbip, ts.ts_mat, &rt_uniresource)) < 0) {
+	    if ((id = rt_db_get_internal(&intern, dp, gedp->dbip, ts.ts_mat)) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
 		continue;
 	    }

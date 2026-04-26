@@ -184,7 +184,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* try */
 
 	(void)nmg_model_fuse(*tsp->ts_m, vlfree, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
+	ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol);
 
     } else {
 	/* catch */
@@ -202,7 +202,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	nmg_isect2d_final_cleanup();
 
 	/* Release the tree memory & input regions */
-	db_free_tree(curtree, &rt_uniresource);/* Does an nmg_kr() */
+	db_free_tree(curtree);/* Does an nmg_kr() */
 
 	/* Get rid of (m)any other intermediate structures */
 	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
@@ -338,7 +338,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	       regions_tried, regions_converted, regions_written, npercent, tpercent);
     }
 
-    db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
+    db_free_tree(curtree);		/* Does an nmg_kr() */
 
     BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);

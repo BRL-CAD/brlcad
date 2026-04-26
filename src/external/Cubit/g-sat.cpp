@@ -1068,7 +1068,7 @@ booltree_evaluate(tree *tp, resource *resp)
 	if (tl == 0 || !tl->tr_d.td_r)
 	    return 0;
 	if (op == DB_OP_INTERSECT) {
-	    db_free_tree(tl, resp);
+	    db_free_tree(tl);
 	    tp->tr_b.tb_left = TREE_NULL;
 	    tp->tr_op = OP_NOP;
 	    return 0;
@@ -1091,8 +1091,8 @@ booltree_evaluate(tree *tp, resource *resp)
     snprintf(name, namelen, "(%s %c %s)", tl->tr_d.td_name, op, tr->tr_d.td_name);
 
     /* Clean up child tree nodes (and their names) */
-    db_free_tree(tl, resp);
-    db_free_tree(tr, resp);
+    db_free_tree(tl);
+    db_free_tree(tr);
 
     /* Convert argument binary node into a result node */
     tp->tr_op = OP_DB_LEAF;

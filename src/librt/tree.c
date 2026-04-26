@@ -809,7 +809,7 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
     for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
 	RT_CK_REGION(regp);
 	_rt_tree_kill_dead_solid_refs(regp->reg_treetop);
-	(void)rt_tree_elim_nops(regp->reg_treetop, &rt_uniresource);
+	(void)rt_tree_elim_nops(regp->reg_treetop);
     }
 again:
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
@@ -917,11 +917,10 @@ rt_gettrees(struct rt_i *rtip, int argc, const char **argv, int ncpus)
 
 
 int
-rt_tree_elim_nops(union tree *tp, struct resource *resp)
+rt_tree_elim_nops(union tree *tp)
 {
     union tree *left, *right;
 
-    RT_CK_RESOURCE(resp);
 top:
     RT_CK_TREE(tp);
 
@@ -940,13 +939,13 @@ top:
 	    /* BINARY type -- rewrite tp as surviving side */
 	    left = tp->tr_b.tb_left;
 	    right = tp->tr_b.tb_right;
-	    if (rt_tree_elim_nops(left, resp) < 0) {
+	    if (rt_tree_elim_nops(left) < 0) {
 		*tp = *right;	/* struct copy */
 		BU_PUT(left, union tree);
 		BU_PUT(right, union tree);
 		goto top;
 	    }
-	    if (rt_tree_elim_nops(right, resp) < 0) {
+	    if (rt_tree_elim_nops(right) < 0) {
 		*tp = *left;	/* struct copy */
 		BU_PUT(left, union tree);
 		BU_PUT(right, union tree);
@@ -957,10 +956,10 @@ top:
 	    /* BINARY type -- if either side fails, nuke subtree */
 	    left = tp->tr_b.tb_left;
 	    right = tp->tr_b.tb_right;
-	    if (rt_tree_elim_nops(left, resp) < 0 ||
-		rt_tree_elim_nops(right, resp) < 0) {
-		db_free_tree(left, resp);
-		db_free_tree(right, resp);
+	    if (rt_tree_elim_nops(left) < 0 ||
+		rt_tree_elim_nops(right) < 0) {
+		db_free_tree(left);
+		db_free_tree(right);
 		tp->tr_op = OP_NOP;
 		return -1;	/* eliminate reference to tp */
 	    }
@@ -971,13 +970,13 @@ top:
 	     */
 	    left = tp->tr_b.tb_left;
 	    right = tp->tr_b.tb_right;
-	    if (rt_tree_elim_nops(left, resp) < 0) {
-		db_free_tree(left, resp);
-		db_free_tree(right, resp);
+	    if (rt_tree_elim_nops(left) < 0) {
+		db_free_tree(left);
+		db_free_tree(right);
 		tp->tr_op = OP_NOP;
 		return -1;	/* eliminate reference to tp */
 	    }
-	    if (rt_tree_elim_nops(right, resp) < 0) {
+	    if (rt_tree_elim_nops(right) < 0) {
 		*tp = *left;	/* struct copy */
 		BU_PUT(left, union tree);
 		BU_PUT(right, union tree);
@@ -989,7 +988,7 @@ top:
 	case OP_XNOP:
 	    /* UNARY tree -- for completeness only, should never be seen */
 	    left = tp->tr_b.tb_left;
-	    if (rt_tree_elim_nops(left, resp) < 0) {
+	    if (rt_tree_elim_nops(left) < 0) {
 		BU_PUT(left, union tree);
 		tp->tr_op = OP_NOP;
 		return -1;	/* Kill ref to unary op, too */
@@ -1033,7 +1032,7 @@ rt_optim_tree(union tree *tp, struct resource *resp)
 
     RT_CK_TREE(tp);
     while ((sp = resp->re_boolstack) == (union tree **)0)
-	rt_bool_growstack(resp);
+	_bool_growstack(resp);
     stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
     *sp++ = TREE_NULL;
     *sp++ = tp;
@@ -1059,7 +1058,7 @@ rt_optim_tree(union tree *tp, struct resource *resp)
 		*sp++ = tp->tr_b.tb_left;
 		if (sp >= stackend) {
 		    int off = sp - resp->re_boolstack;
-		    rt_bool_growstack(resp);
+		    _bool_growstack(resp);
 		    sp = &(resp->re_boolstack[off]);
 		    stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
 		}
@@ -1073,7 +1072,7 @@ rt_optim_tree(union tree *tp, struct resource *resp)
 		*sp++ = tp->tr_b.tb_left;
 		if (sp >= stackend) {
 		    int off = sp - resp->re_boolstack;
-		    rt_bool_growstack(resp);
+		    _bool_growstack(resp);
 		    sp = &(resp->re_boolstack[off]);
 		    stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
 		}

@@ -156,10 +156,10 @@ main(int argc, char *argv[])
 
     /* Grab copies for reference and comparison */
     struct rt_db_internal intern;
-    rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource);
+    rt_db_get_internal(&intern, dp, dbip, NULL);
     struct rt_ehy_internal *orig_ehy = (struct rt_ehy_internal *)intern.idb_ptr;
     struct rt_db_internal cmpintern;
-    rt_db_get_internal(&cmpintern, dp, dbip, NULL, &rt_uniresource);
+    rt_db_get_internal(&cmpintern, dp, dbip, NULL);
     struct rt_ehy_internal *cmp_ehy = (struct rt_ehy_internal *)cmpintern.idb_ptr;
 
     struct bn_tol tol = BN_TOL_INIT_TOL;

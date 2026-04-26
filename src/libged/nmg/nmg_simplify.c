@@ -113,7 +113,7 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 	goto out3;
     }
 
-    if (rt_db_get_internal(&nmg_intern, dp, gedp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&nmg_intern, dp, gedp->dbip, bn_mat_identity) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
 	ret = BRLCAD_ERROR;
 	goto out3;
@@ -262,7 +262,7 @@ out1:
 	goto out2;
     }
 
-    if (rt_db_put_internal(dp, gedp->dbip, &new_intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &new_intern) < 0) {
 	rt_db_free_internal(&new_intern);
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 	success = 0;

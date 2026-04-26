@@ -57,7 +57,7 @@ add_brep_sph(struct db_i *dbip, const char *name, point_t *v, double r, long int
 	rt_db_free_internal(&intern);
 	bu_exit(1, "Test %ld: cannot add %s to directory\n", test_num, name);
     }
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	rt_db_free_internal(&intern);
 	bu_exit(1, "Test %ld: database write error, aborting\n", test_num);
     }
@@ -119,13 +119,13 @@ add_comb(struct db_i *dbip, const char *name, int obj_argc, const char **obj_arg
 	tp->tr_l.tl_mat = (matp_t)NULL;
 
     }
-    comb->tree = (union tree *)db_mkgift_tree(tree_list, obj_argc, &rt_uniresource);
+    comb->tree = (union tree *)db_mkgift_tree(tree_list, obj_argc);
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_COMB, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
 	bu_exit(1, "Test %ld: cannot add %s to directory\n", test_num, name);
     }
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	rt_db_free_internal(&intern);
 	bu_exit(1, "Test %ld: Database write error creating comb, aborting\n", test_num);
     }

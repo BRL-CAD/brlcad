@@ -329,7 +329,7 @@ main(int argc, char *argv[])
     /* Count object references */
 /* for (i = 1; i < argc; i++) {
    dp = db_lookup(DBIP, argv[i], 1);
-   db_functree(DBIP, dp, count_refs, 0, NULL);
+   db_treewalk_basic(DBIP, dp, count_refs, 0);
    }	*/
 
     /* tree tops must have independent status, so we need to remember them */
@@ -367,7 +367,7 @@ main(int argc, char *argv[])
 		    bu_log("WARNING: Unable to locate %s in %s\n, skipping\n", ptr, db_name);
 		    continue;
 		}
-		db_functree(DBIP, dp, csg_comb_func, 0, &rt_uniresource, NULL);
+		db_treewalk_basic(DBIP, dp, csg_comb_func, 0, NULL);
 	    }
 	}
     } else if (mode == CSG_MODE) {
@@ -381,7 +381,7 @@ main(int argc, char *argv[])
 		bu_log("WARNING: Unable to locate %s in %s\n, skipping\n", argv[i], db_name);
 		continue;
 	    }
-	    db_functree(DBIP, dp, csg_comb_func, csg_leaf_func, &rt_uniresource, NULL);
+	    db_treewalk_basic(DBIP, dp, csg_comb_func, csg_leaf_func, NULL);
 	}
     } else if (mode == TRIMMED_SURF_MODE) {
 	/* Walk the indicated tree(s). Each region is output as a collection
@@ -452,7 +452,7 @@ process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_
 	/* try */
 
 	(void)nmg_model_fuse(*tsp->ts_m, vlfree, tsp->ts_tol);
-	result = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
+	result = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol);
 
     } else {
 	/* catch */
@@ -471,7 +471,7 @@ process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_
 	nmg_debug = NMG_debug;	/* restore mode */
 
 	/* Release the tree memory & input regions */
-	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
+	db_free_tree(curtree);		/* Does an nmg_kr() */
 
 	/* Get rid of (m)any other intermediate structures */
 	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC)
@@ -644,7 +644,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
      * A return of TREE_NULL from this routine signals an error,
      * so we need to cons up an OP_NOP node to return.
      */
-    db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
+    db_free_tree(curtree);		/* Does an nmg_kr() */
 
     BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
@@ -735,7 +735,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 	}
     }
 
-    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL);
     if (id < 0)
 	return;
     if (id != ID_COMBINATION) {
@@ -806,7 +806,7 @@ csg_leaf_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
     if (verbose)
 	bu_log("solid - %s\n", dp->d_namep);
 
-    if (rt_db_get_internal(&ip, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&ip, dp, dbip, (fastf_t *)NULL) < 0)
 	bu_log("Error in import");
 
     solid_is_brep = 0;
@@ -852,7 +852,7 @@ count_refs(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
     if (!(dp->d_flags & RT_DIR_COMB))
 	return;
 
-    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL);
     if (id < 0) {
 	bu_log("Cannot get internal form of %s\n", dp->d_namep);
 	return;

@@ -297,7 +297,7 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 {
     struct rt_db_internal comb_intern;
     STEPentity *parent_shape = sc->comb_to_step_shape->find(dp)->second;
-    rt_db_get_internal(&comb_intern, dp, dbip, bn_mat_identity, &rt_uniresource);
+    rt_db_get_internal(&comb_intern, dp, dbip, bn_mat_identity);
     RT_CK_DB_INTERNAL(&comb_intern);
     struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
     for (int j = (int)BU_PTBL_LEN(children) - 1; j >= 0; j--) {

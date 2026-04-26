@@ -326,7 +326,7 @@ get_diff_components(struct diff_elements *el, const struct db_i *dbip, const str
     /* Now deal with more normal objects */
     BU_GET(el->intern, struct rt_db_internal);
     RT_DB_INTERNAL_INIT(el->intern);
-    if (rt_db_get_internal(el->intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(el->intern, dp, dbip, (fastf_t *)NULL) < 0) {
 	/* Arrgh - No internal representation */
 	rt_db_free_internal(el->intern);
 	BU_PUT(el->intern, struct rt_db_internal);

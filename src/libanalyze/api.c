@@ -542,7 +542,7 @@ densities_from_database(struct current_state *state, struct rt_i *rtip)
 	return ANALYZE_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL) < 0) {
 	bu_log("could not import %s\n", dp->d_namep);
 	return ANALYZE_ERROR;
     }

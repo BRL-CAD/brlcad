@@ -191,8 +191,7 @@ int
 rt_binunif_export5(struct bu_external		*ep,
 		    const struct rt_db_internal	*ip,
 		    double			UNUSED(local2mm), /* we ignore */
-		    const struct db_i		*dbip,
-		    struct resource		*resp)
+		    const struct db_i		*dbip)
 {
     struct rt_binunif_internal	*bip;
     size_t			i;
@@ -202,7 +201,6 @@ rt_binunif_export5(struct bu_external		*ep,
     size_t			gotten;
 
     if (dbip) RT_CK_DBI(dbip);
-    if (resp) RT_CK_RESOURCE(resp);
 
     RT_CK_DB_INTERNAL(ip);
     bip = (struct rt_binunif_internal *)ip->idb_ptr;
@@ -382,7 +380,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 	return -1;
 
     RT_DB_INTERNAL_INIT(intern);
-    if (rt_db_get_internal5(intern, dp, dbip, NULL, &rt_uniresource)
+    if (rt_db_get_internal5(intern, dp, dbip, NULL)
 	 != ID_BINUNIF     || db_get_external(&ext, dp, dbip) < 0)
 	return -1;
 
@@ -487,7 +485,7 @@ rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 
     if (attr == (char *)NULL) {
 	/* export the object to get machine independent form */
-	if (rt_binunif_export5(&ext, intern, 1.0, NULL, NULL)) {
+	if (rt_binunif_export5(&ext, intern, 1.0, NULL)) {
 	    bu_vls_strcpy(logstr, "Failed to export binary object!!\n");
 	    return BRLCAD_ERROR;
 	} else {
@@ -507,7 +505,7 @@ rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 	    bu_vls_printf(logstr, "%d", bip->type);
 	} else if (BU_STR_EQUAL(attr, "D")) {
 	    /* export the object to get machine independent form */
-	    if (rt_binunif_export5(&ext, intern, 1.0, NULL, NULL)) {
+	    if (rt_binunif_export5(&ext, intern, 1.0, NULL)) {
 		bu_vls_strcpy(logstr, "Failed to export binary object!!\n");
 		return BRLCAD_ERROR;
 	    } else {

@@ -122,7 +122,7 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 		    rt_bot_list_free(headRblp, 0);
 		    rt_db_free_internal(&intern);
 		} else {
-		  if (rt_db_put_internal(dp, gedp->dbip, &bot_intern, &rt_uniresource) < 0) {
+		  if (rt_db_put_internal(dp, gedp->dbip, &bot_intern) < 0) {
 		    bu_vls_printf(&error_str, " failed to be added to the database.\n");
 		    rt_bot_list_free(headRblp, 0);
 		    rt_db_free_internal(&intern);

@@ -123,7 +123,6 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
     }
 
     GED_CHECK_EXISTS(gedp, bu_vls_cstr(&output_bot_name), LOOKUP_QUIET, BRLCAD_ERROR);
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     struct rt_bot_internal *input_bot = (struct rt_bot_internal*)gb->intern->idb_ptr;
     RT_BOT_CK_MAGIC(input_bot);
@@ -151,7 +150,7 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	}
 	bu_vls_free(&output_bot_name);
 
-	if (rt_db_put_internal(dp, dbip, gb->intern, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(dp, dbip, gb->intern) < 0) {
 	    bu_log("Failed to write %s to database\n", bu_vls_cstr(&output_bot_name));
 	    return BRLCAD_ERROR;
 	}
@@ -230,7 +229,7 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
 	}
 	bu_vls_free(&output_bot_name);
 
-	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	    bu_free(gcfaces, "gcfaces");
 	    bu_free(opnts , "opnts");
 	    bu_log("Failed to write %s to database\n", bu_vls_cstr(&output_bot_name));
@@ -251,12 +250,12 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
     }
     bu_vls_free(&output_bot_name);
 
-    if (rt_db_put_internal(dp, dbip, gb->intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, gb->intern) < 0) {
 	return BRLCAD_ERROR;
     }
     struct rt_db_internal intern;
     RT_DB_INTERNAL_INIT(&intern);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, NULL, wdbp->wdb_resp, BRLCAD_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, NULL, NULL, BRLCAD_ERROR);
     struct rt_bot_internal *obot = (struct rt_bot_internal*)intern.idb_ptr;
 
     // Decimate with GCT
@@ -266,7 +265,7 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
     bu_log("[GCT] OUTPUT BoT has %zu vertices and %zu faces (%zu edges removed)\n", obot->num_vertices, obot->num_faces, edges_removed);
 
     // Write decimation to disk
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }

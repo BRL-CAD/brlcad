@@ -96,7 +96,7 @@ rt_texture_load(struct rt_texture *texture, const char *name, struct db_i *dbip)
 	    RT_CK_DIR(dirEntry);
 
 	    /* the object was in the directory, so go get it */
-	    if (rt_db_get_internal(dbip2, dirEntry, dbip, NULL, NULL) <= 0) {
+	    if (rt_db_get_internal(dbip2, dirEntry, dbip, NULL) <= 0) {
 		/* unable to load/create the texture database record object */
 		return -1;
 	    }

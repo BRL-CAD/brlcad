@@ -83,7 +83,7 @@ _gcv_facetize_cleanup(struct model *nmg_model, union tree *facetize_tree)
 
     if (facetize_tree) {
 	RT_CK_TREE(facetize_tree);
-	db_free_tree(facetize_tree, &rt_uniresource);
+	db_free_tree(facetize_tree);
     }
 
     return NULL;
@@ -182,7 +182,7 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
     /* Now, evaluate the boolean tree into ONE region */
     if (!BU_SETJUMP) {
 	/* try */
-	if (nmg_boolean(facetize_tree, nmg_model, vlfree, tol, &rt_uniresource)) {
+	if (nmg_boolean(facetize_tree, nmg_model, vlfree, tol)) {
 	    BU_UNSETJUMP;
 	    return _gcv_facetize_cleanup(nmg_model, facetize_tree);
 	}

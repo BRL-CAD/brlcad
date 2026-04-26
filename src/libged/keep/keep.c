@@ -55,7 +55,7 @@ node_write(struct db_i *dbip, struct directory *dp, void *ptr)
     if (dp->d_nref++ > 0)
 	return;		/* already written */
 
-    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0) {
 	bu_vls_printf(kndp->gedp->ged_result_str, "Database read error, aborting\n");
 	return;
     }
@@ -219,7 +219,7 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (!flag_R) {
 	    /* recursively keep objects */
-	    db_functree(gedp->dbip, dp, node_write, node_write, &rt_uniresource, (void *)&knd);
+	    db_treewalk_basic(gedp->dbip, dp, node_write, node_write, (void *)&knd);
 	} else {
 	    /* keep just this object */
 	    node_write(gedp->dbip, dp, (void *)&knd);

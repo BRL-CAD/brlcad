@@ -144,7 +144,7 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
 	}
 
 	/* load the existing database object */
-	if (rt_db_get_internal(&dir, dp, dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&dir, dp, dbip, NULL) < 0) {
 	    bu_log("Unable to load %s\n", av[i]);
 	    continue;
 	}

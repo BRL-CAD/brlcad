@@ -621,19 +621,19 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	    size_t node_count;
 	    size_t actual_count;
 	    size_t curr_count;
-	    if (rt_db_get_internal(&intern, cdp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, cdp, wdbp->dbip, NULL) < 0) {
 		bu_log("error getting subtraction internal\n");
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    RT_CK_COMB(comb);
 	    if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
-		db_non_union_push(comb->tree, &rt_uniresource);
+		db_non_union_push(comb->tree);
 	    }
 	    curr_count = db_tree_nleaves(comb->tree);
 	    node_count = curr_count + BU_PTBL_LEN(&to_subtract);
 	    tree_list = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
 	    if (comb->tree) {
-		actual_count = BU_PTBL_LEN(&to_subtract) + (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource) - tree_list;
+		actual_count = BU_PTBL_LEN(&to_subtract) + (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1) - tree_list;
 		BU_ASSERT(actual_count == node_count);
 		comb->tree = TREE_NULL;
 	    }
@@ -649,8 +649,8 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 
 		++curr_count;
 	    }
-	    comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count, &rt_uniresource);
-	    if (rt_db_put_internal(cdp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
+	    comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count);
+	    if (rt_db_put_internal(cdp, wdbp->dbip, &intern) < 0) {
 		bu_log("error writing out subtraction comb\n");
 	    }
 	}

@@ -582,7 +582,7 @@ dm_draw_prim_labels(struct dm *dmp,
 
     dp = DB_FULL_PATH_CUR_DIR(&path);
 
-    if (rt_db_get_internal(&intern, dp, wdbp->dbip, ts.ts_mat, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, ts.ts_mat) < 0) {
 	db_free_full_path(&path);
 	return BRLCAD_ERROR;
     }

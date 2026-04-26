@@ -283,8 +283,7 @@ rt_comb_export5(
     struct bu_external *ep,
     const struct rt_db_internal *ip,
     double UNUSED(local2mm),
-    const struct db_i *dbip,
-    struct resource *resp)
+    const struct db_i *dbip)
 {
     struct rt_comb_internal *comb;
     struct db_tree_counter_state tcs;
@@ -301,7 +300,6 @@ rt_comb_export5(
     /* check inputs */
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);
-    if (resp) RT_CK_RESOURCE(resp);
 
     /* validate it's a comb */
     if (ip->idb_type != ID_COMBINATION) bu_bomb("rt_comb_export5() type not ID_COMBINATION");
@@ -544,7 +542,7 @@ rt_comb_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_inte
 
 int
 rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
-		const mat_t mat, const struct db_i *dbip, struct resource *resp)
+		const mat_t mat, const struct db_i *dbip)
 {
     struct rt_comb_internal *comb = NULL;
     unsigned char *cp = NULL;
@@ -567,7 +565,6 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
     RT_CK_DBI(dbip);
-    RT_CK_RESOURCE(resp);
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_COMBINATION;
@@ -1119,15 +1116,15 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    union tree *newtree;
 
 	    if (*argv[1] == '\0' || BU_STR_EQUIV(argv[1], "none")) {
-		db_free_tree(comb->tree, &rt_uniresource);
+		db_free_tree(comb->tree);
 		comb->tree = TREE_NULL;
 	    } else {
-		newtree = db_tree_parse(logstr, argv[1], &rt_uniresource);
+		newtree = db_tree_parse(logstr, argv[1]);
 		if (newtree == TREE_NULL) {
 		    bu_vls_printf(logstr, "db adjust tree: bad tree '%s'\n", argv[1]);
 		    return BRLCAD_ERROR;
 		}
-		db_free_tree(comb->tree, &rt_uniresource);
+		db_free_tree(comb->tree);
 		comb->tree = newtree;
 	    }
 	} else {
@@ -1250,7 +1247,7 @@ rt_comb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     int failed = 0;
     union tree *facetize_tree = (union tree *)0;
     struct db_tree_state init_state;
-    db_init_db_tree_state(&init_state, (struct db_i *)comb->src_dbip, &rt_uniresource);
+    db_init_db_tree_state(&init_state, (struct db_i *)comb->src_dbip);
 
     /* Establish tolerances */
     init_state.ts_ttol = ttol;
@@ -1285,7 +1282,7 @@ rt_comb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     if (facetize_tree) {
         if (!BU_SETJUMP) {
             /* try */
-            failed = nmg_boolean(facetize_tree, m, vlfree, tol, &rt_uniresource);
+            failed = nmg_boolean(facetize_tree, m, vlfree, tol);
         } else {
             /* catch */
             BU_UNSETJUMP;
@@ -1302,7 +1299,7 @@ rt_comb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     }
 
     if (facetize_tree) {
-        db_free_tree(facetize_tree, &rt_uniresource);
+        db_free_tree(facetize_tree);
     }
 
     return (failed) ? BRLCAD_ERROR : BRLCAD_OK;

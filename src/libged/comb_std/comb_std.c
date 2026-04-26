@@ -60,7 +60,7 @@ free_tokens(struct bu_list *hp)
     while (BU_LIST_WHILE(tok, tokens, hp)) {
 	BU_LIST_DEQUEUE(&tok->l);
 	if (tok->type == TOK_TREE) {
-	    db_free_tree(tok->tp, &rt_uniresource);
+	    db_free_tree(tok->tp);
 	}
     }
 }

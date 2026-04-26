@@ -611,7 +611,7 @@ view_setup(struct rt_i *rtip)
 			bu_log("mlib_setup: drop region %s\n", regp->reg_name);
 
 		    /* zap reg_udata? beware of light structs */
-		    rt_del_regtree(rtip, regp, &rt_uniresource);
+		    rt_del_regtree(rtip, regp);
 		    regp = r;
 		    continue;
 		}
@@ -656,7 +656,7 @@ view_re_setup(struct rt_i *rtip)
 		    {
 			struct region *r = BU_LIST_NEXT(region, &rp->l);
 			/* zap reg_udata? beware of light structs */
-			rt_del_regtree(rtip, rp, &rt_uniresource);
+			rt_del_regtree(rtip, rp);
 			rp = r;
 			continue;
 		    }

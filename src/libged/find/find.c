@@ -106,8 +106,7 @@ ged_find_core(struct ged *gedp, int argc, const char *argv[])
 	if (rt_db_get_internal(&intern,
 			       dp,
 			       gedp->dbip,
-			       (fastf_t *)NULL,
-			       &rt_uniresource) < 0) {
+			       (fastf_t *)NULL) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	    return BRLCAD_ERROR;
 	}

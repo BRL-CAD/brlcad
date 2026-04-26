@@ -173,7 +173,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 		mp = (matp_t)bn_mat_identity;
 
 	    /* Get the internal form of this solid & add it to the list */
-	    ret = rt_db_get_internal(&dbint->ip, tp->tr_a.tu_stp->st_dp, tb->dbip, mp, resp);
+	    ret = rt_db_get_internal(&dbint->ip, tp->tr_a.tu_stp->st_dp, tb->dbip, mp);
 	    if (ret < 0) {
 		bu_log("Failure reading %s object from database.\n", OBJ[sol_id].ft_name);
 		return;

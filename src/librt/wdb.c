@@ -97,7 +97,7 @@ wdb_import(struct rt_wdb *wdbp,	struct rt_db_internal *internp,	const char *name
     if (dp  == RT_DIR_NULL)
 	return -4;
 
-    return rt_db_get_internal(internp, dp, wdbp->dbip, mat, &rt_uniresource);
+    return rt_db_get_internal(internp, dp, wdbp->dbip, mat);
 }
 
 
@@ -251,7 +251,7 @@ wdb_put_internal(
 
 	ret = -1;
 	if (ip->idb_meth && ip->idb_meth->ft_export4) {
-	    ret = ip->idb_meth->ft_export4(&ext, ip, local2mm, wdbp->dbip, &rt_uniresource);
+	    ret = ip->idb_meth->ft_export4(&ext, ip, local2mm, wdbp->dbip);
 	}
 	if (ret < 0) {
 	    bu_log("rt_db_put_internal(%s):  solid export failure\n",
@@ -365,7 +365,7 @@ wdb_import_from_path2(struct bu_vls *logstr, struct rt_db_internal *ip, const ch
 	struct directory *dp_curr;
 	int ret;
 
-	db_init_db_tree_state(&ts, dbip, &rt_uniresource);
+	db_init_db_tree_state(&ts, dbip);
 	db_full_path_init(&old_path);
 	db_full_path_init(&new_path);
 

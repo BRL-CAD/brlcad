@@ -165,7 +165,7 @@ LLVMFuzzerTestOneInput(const int8_t *data, size_t size)
     rt_shootray(&ap);
 
     rt_clean(rtip);
-    rt_clean_resource_complete(rtip, &rt_uniresource);
+    rt_clean_resource_basic(rtip, &rt_uniresource);
 
     return 0;
 }

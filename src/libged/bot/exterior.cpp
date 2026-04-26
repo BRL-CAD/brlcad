@@ -954,8 +954,7 @@ _bot_cmd_exterior(void *bs, int argc, const char **argv)
     int ret = BRLCAD_OK;
 
     if (in_place) {
-	if (rt_db_put_internal(gb->dp, gb->gedp->dbip, gb->intern,
-			       &rt_uniresource) < 0) {
+	if (rt_db_put_internal(gb->dp, gb->gedp->dbip, gb->intern) < 0) {
 	    bu_vls_printf(gb->gedp->ged_result_str,
 			  "Failed to write %s\n", input_name);
 	    ret = BRLCAD_ERROR;
@@ -969,8 +968,7 @@ _bot_cmd_exterior(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gb->gedp->ged_result_str,
 			  "Cannot add %s to directory\n", bu_vls_cstr(&output_name));
 	    ret = BRLCAD_ERROR;
-	} else if (rt_db_put_internal(outdp, gb->gedp->dbip, gb->intern,
-				      &rt_uniresource) < 0) {
+	} else if (rt_db_put_internal(outdp, gb->gedp->dbip, gb->intern) < 0) {
 	    bu_vls_printf(gb->gedp->ged_result_str,
 			  "Failed to write %s\n", bu_vls_cstr(&output_name));
 	    ret = BRLCAD_ERROR;

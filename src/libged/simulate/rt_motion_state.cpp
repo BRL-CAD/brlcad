@@ -114,8 +114,7 @@ apply_tree_matrix(db_i &db, const db_full_path &path,
 	&parent_internal);
     RT_DB_INTERNAL_INIT(&parent_internal);
 
-    if (0 > rt_db_get_internal(&parent_internal, &parent_dir, &db, bn_mat_identity,
-			      &rt_uniresource))
+    if (0 > rt_db_get_internal(&parent_internal, &parent_dir, &db, bn_mat_identity))
 	bu_bomb("rt_db_get_internal() failed");
 
     rt_comb_internal &comb = *static_cast<rt_comb_internal *>
@@ -135,7 +134,7 @@ apply_tree_matrix(db_i &db, const db_full_path &path,
 
     bn_mat_mul2(matrix, leaf->tr_l.tl_mat);
 
-    if (0 > rt_db_put_internal(&parent_dir, &db, &parent_internal, &rt_uniresource))
+    if (0 > rt_db_put_internal(&parent_dir, &db, &parent_internal))
 	bu_bomb("rt_db_put_internal() failed");
 }
 

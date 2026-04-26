@@ -66,7 +66,7 @@ ged_whatid_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0)
 	return BRLCAD_ERROR;
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 

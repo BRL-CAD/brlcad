@@ -108,7 +108,7 @@ QEll::read_from_db()
     }
 
     struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
-    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0)
 	return;
     struct rt_ell_internal *ellp = (struct rt_ell_internal *)intern.idb_ptr;
     RT_ELL_CK_MAGIC(ellp);
@@ -153,7 +153,7 @@ QEll::write_to_db()
 	return;
     }
 
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	rt_db_free_internal(&intern);
 	return;
     }

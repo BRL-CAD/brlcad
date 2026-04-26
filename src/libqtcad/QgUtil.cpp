@@ -31,7 +31,7 @@ get_arb_type(struct directory *dp, struct db_i *dbip)
     int type;
     const struct bn_tol arb_tol = BN_TOL_INIT_TOL;
     struct rt_db_internal intern;
-    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return 0;
+    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0) return 0;
     type = rt_arb_std_type(&intern, &arb_tol);
     rt_db_free_internal(&intern);
     return type;
@@ -99,7 +99,7 @@ db_find_region(int *ret, struct directory *search, struct db_i *dbip, int *depth
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal(&in, search, dbip, NULL, &rt_uniresource) < 0) return;
+	if (rt_db_get_internal(&in, search, dbip, NULL) < 0) return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 	db_find_subregion(ret, comb->tree, dbip, depth, max_depth, db_find_region);

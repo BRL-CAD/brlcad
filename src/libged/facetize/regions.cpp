@@ -350,10 +350,10 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	struct directory *wdp = db_lookup(wdbip, dpw[0]->d_namep, LOOKUP_QUIET);
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
-	rt_db_get_internal(&intern, wdp, wdbip, NULL, &rt_uniresource);
+	rt_db_get_internal(&intern, wdp, wdbip, NULL);
 	comb = (struct rt_comb_internal *)(&intern)->idb_ptr;
 	RT_CK_COMB(comb);
-	db_free_tree(comb->tree, &rt_uniresource);
+	db_free_tree(comb->tree);
 	union tree *tp;
 	struct rt_tree_array *tree_list;
 	BU_GET(tree_list, struct rt_tree_array);
@@ -364,7 +364,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	tp->tr_l.tl_op = OP_DB_LEAF;
 	tp->tr_l.tl_name = bu_strdup(bu_vls_cstr(&bname));
 	tp->tr_l.tl_mat = NULL;
-	comb->tree = (union tree *)db_mkgift_tree(tree_list, 1, &rt_uniresource);
+	comb->tree = (union tree *)db_mkgift_tree(tree_list, 1);
 	struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
 	wdb_put_internal(wwdbp, wdp->d_namep, &intern, 1.0);
 	db_update_nref(wdbip, &rt_uniresource);

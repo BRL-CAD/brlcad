@@ -344,7 +344,7 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
 	if (material_dp != RT_DIR_NULL) {
 	    struct rt_db_internal intern;
 	    struct rt_material_internal *material_ip;
-	    if (rt_db_get_internal(&intern, material_dp, dbip, NULL, NULL) >= 0) {
+	    if (rt_db_get_internal(&intern, material_dp, dbip, NULL) >= 0) {
 		if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 		    material_ip = (struct rt_material_internal *) intern.idb_ptr;
 		    const char *id_string = bu_avs_get(&material_ip->physicalProperties, "id");

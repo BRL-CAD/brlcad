@@ -373,7 +373,6 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
     struct directory *dp_output = RT_DIR_NULL;
 
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if ((bu_vls_strlen(&output_bot_name) && argc > 1) || argc > 2) {
 	bu_vls_printf(gedp->ged_result_str, "Unexpected arguments\n");
@@ -429,7 +428,7 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Failed to write out new BoT %s\n", rname);
 	    rt_db_free_internal(&intern);
 	    bu_vls_free(&output_bot_name);
@@ -449,7 +448,7 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 	GED_DB_DIRADD(gedp, dp_output, bu_vls_cstr(&output_bot_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&gb->intern->idb_type, BRLCAD_ERROR);
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp_output, gb->intern, wdbp->wdb_resp, BRLCAD_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp_output, gb->intern, NULL, BRLCAD_ERROR);
 
     bu_vls_free(&output_bot_name);
 

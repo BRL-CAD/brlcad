@@ -223,7 +223,7 @@ conv_tree(struct directory **d, int depth, int UNUSED(parent_branch), struct dir
                 dir = db_lookup(sc->dbip, name, LOOKUP_QUIET);
 		if (dir != RT_DIR_NULL) {
 		    struct rt_db_internal intern;
-		    rt_db_get_internal(&intern, dir, sc->dbip, bn_mat_identity, &rt_uniresource);
+		    rt_db_get_internal(&intern, dir, sc->dbip, bn_mat_identity);
 		    if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION) {
 			RT_CK_DB_INTERNAL(&intern);
 			struct rt_comb_internal *comb = (struct rt_comb_internal *)(intern.idb_ptr);
@@ -381,7 +381,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 		struct rt_db_internal comb_intern;
 		sc->dbip = wdbp->dbip;
 		sc->wdbp = wdbp;
-		rt_db_get_internal(&comb_intern, rdp, sc->dbip, bn_mat_identity, &rt_uniresource);
+		rt_db_get_internal(&comb_intern, rdp, sc->dbip, bn_mat_identity);
 		RT_CK_DB_INTERNAL(&comb_intern);
 		struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
 		RT_CK_COMB(comb);

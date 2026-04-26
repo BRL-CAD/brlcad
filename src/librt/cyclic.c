@@ -159,7 +159,7 @@ db_fullpath_cyclic(struct db_full_path *path, void *client_data)
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal(&in, dp, ccd->dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal(&in, dp, ccd->dbip, NULL) < 0)
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;

@@ -113,8 +113,7 @@ rt_db_get_internal(
     struct rt_db_internal *ip,
     const struct directory *dp,
     const struct db_i *dbip,
-    const mat_t mat,
-    struct resource *resp)
+    const mat_t mat)
 {
     struct bu_external ext;
     int id;
@@ -123,7 +122,7 @@ rt_db_get_internal(
     RT_DB_INTERNAL_INIT(ip);
 
     if (dbip->i->dbi_version > 4)
-	return rt_db_get_internal5(ip, dp, dbip, mat, resp);
+	return rt_db_get_internal5(ip, dp, dbip, mat);
 
     BU_EXTERNAL_INIT(&ext);
 
@@ -142,11 +141,10 @@ rt_db_get_internal(
     /* ip is already initialized and should not be re-initialized */
     ret = -1;
     if (OBJ[id].ft_import4) {
-	ret = OBJ[id].ft_import4(ip, &ext, mat, dbip, resp);
+	ret = OBJ[id].ft_import4(ip, &ext, mat, dbip);
     }
     if (ret < 0) {
-	bu_log("rt_db_get_internal(%s):  import failure\n",
-	       dp->d_namep);
+	bu_log("rt_db_get_internal(%s):  import failure\n", dp->d_namep);
 	rt_db_free_internal(ip);
 	bu_free_external(&ext);
 	return -1;		/* FAIL */
@@ -174,8 +172,7 @@ int
 rt_db_put_internal(
     struct directory *dp,
     struct db_i *dbip,
-    struct rt_db_internal *ip,
-    struct resource *resp)
+    struct rt_db_internal *ip)
 {
     struct bu_external ext;
     int ret;
@@ -183,7 +180,7 @@ rt_db_put_internal(
     RT_CK_DB_INTERNAL(ip);
 
     if (db_version(dbip) > 4)
-	return rt_db_put_internal5(dp, dbip, ip, resp,
+	return rt_db_put_internal_v5(dp, dbip, ip,
 				   ip->idb_major_type);
 
     BU_EXTERNAL_INIT(&ext);
@@ -191,11 +188,10 @@ rt_db_put_internal(
     /* Scale change on export is 1.0 -- no change */
     ret = -1;
     if (ip->idb_meth->ft_export4) {
-	ret = ip->idb_meth->ft_export4(&ext, ip, 1.0, dbip, resp);
+	ret = ip->idb_meth->ft_export4(&ext, ip, 1.0, dbip);
     }
     if (ret < 0) {
-	bu_log("rt_db_put_internal(%s):  solid export failure\n",
-	       dp->d_namep);
+	bu_log("rt_db_put_internal(%s):  solid export failure\n", dp->d_namep);
 	rt_db_free_internal(ip);
 	bu_free_external(&ext);
 	return -2;		/* FAIL */
@@ -229,11 +225,10 @@ rt_fwrite_internal(
 
     ret = -1;
     if (ip->idb_meth->ft_export4) {
-	ret = ip->idb_meth->ft_export4(&ext, ip, conv2mm, NULL /*dbip*/, &rt_uniresource);
+	ret = ip->idb_meth->ft_export4(&ext, ip, conv2mm, NULL /*dbip*/);
     }
     if (ret < 0) {
-	bu_log("rt_file_put_internal(%s): solid export failure\n",
-	       name);
+	bu_log("rt_file_put_internal(%s): solid export failure\n", name);
 	bu_free_external(&ext);
 	return -2;				/* FAIL */
     }
@@ -277,13 +272,12 @@ rt_db_free_internal(struct rt_db_internal *ip)
 
 
 int
-rt_db_lookup_internal (
+rt_db_lookup_internal(
     struct db_i *dbip,
     const char *obj_name,
     struct directory **dpp,
     struct rt_db_internal *ip,
-    int noisy,
-    struct resource *resp)
+    int noisy)
 {
     struct directory *dp;
 
@@ -294,7 +288,7 @@ rt_db_lookup_internal (
     }
     if ((dp = db_lookup(dbip, obj_name, noisy)) == RT_DIR_NULL)
 	return ID_NULL;
-    if (rt_db_get_internal(ip, dp, dbip, (matp_t) NULL, resp) < 0) {
+    if (rt_db_get_internal(ip, dp, dbip, NULL) < 0) {
 	if (noisy == LOOKUP_NOISY)
 	    bu_log("rt_db_lookup_internal() Failed to get internal form of object '%s'\n",
 		   dp->d_namep);

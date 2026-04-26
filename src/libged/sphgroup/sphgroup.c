@@ -62,7 +62,7 @@ ged_sphgroup_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Specified bounding sphere %s not found\n", argv[argc-1]);
 	return BRLCAD_ERROR;
     } else {
-	if (rt_db_get_internal(&sph_intern, sphdp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal(&sph_intern, sphdp, gedp->dbip, (fastf_t *)NULL) < 0)
 	  return BRLCAD_ERROR;
 	if ((sph_intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ELL) && (sph_intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SPH)) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified bounding object %s not a sphere\n", argv[argc-1]);

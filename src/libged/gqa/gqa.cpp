@@ -1570,7 +1570,7 @@ options_prep(struct ged *gedp, struct rt_i *UNUSED(rtip), vect_t span)
 	    FOR_ALL_DIRECTORY_START(dp, gedp->dbip)
 		struct rt_db_internal intern;
 		struct rt_material_internal *material_ip;
-		if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) >= 0) {
+		if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL) >= 0) {
 		    if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 			// if the material has an id and density, add it to the density table
 			material_ip = (struct rt_material_internal *)intern.idb_ptr;
@@ -1759,7 +1759,7 @@ densities_prep(struct ged *gedp, struct rt_i *rtip)
 		struct rt_db_internal intern;
 		struct rt_material_internal *material_ip;
 		if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
-		    if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
+		    if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL) >= 0) {
 			if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 			    // if the material has a density, add it to the density table
 			    material_ip = (struct rt_material_internal *) intern.idb_ptr;
@@ -1822,7 +1822,7 @@ densities_prep(struct ged *gedp, struct rt_i *rtip)
 			    if (material_dp != NULL) {
 				struct rt_db_internal material_intern;
 				struct rt_material_internal *material_ip;
-				if (rt_db_get_internal(&material_intern, material_dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
+				if (rt_db_get_internal(&material_intern, material_dp, rtip->rti_dbip, NULL) >= 0) {
 				    if (material_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 					// the material_ip->name field is the name in the density table
 					// not just the material_name (they could be different)

@@ -101,7 +101,7 @@ main(int argc, char **argv)
     dp = db_lookup(fp->dbip, solnam, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL)
 	return 2;
-    /*rt_db_get_internal(&intern, dp, fp->dbip, NULL, &rt_uniresource);*/
+    /*rt_db_get_internal(&intern, dp, fp->dbip, NULL);*/
 
 
     mk_constraint(fp, "Constraint", 0);

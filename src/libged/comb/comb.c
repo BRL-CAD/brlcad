@@ -105,7 +105,7 @@ comb_tree_clear(struct ged *gedp, struct directory *dp)
     RT_CK_DB_INTERNAL(&intern);
     comb = (struct rt_comb_internal *)(&intern)->idb_ptr;
     RT_CK_COMB(comb);
-    db_free_tree(comb->tree, &rt_uniresource);
+    db_free_tree(comb->tree);
     comb->tree = TREE_NULL;
     db5_sync_comb_to_attr(&((&intern)->idb_avs), comb);
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);

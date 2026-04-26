@@ -220,7 +220,7 @@ output_parts(struct creo_conv_info *cinfo)
                  */
                 struct directory **children = NULL;
                 struct rt_db_internal in;
-                if (rt_db_get_internal(&in, rdp, cinfo->wdbp->dbip, NULL, &rt_uniresource) >= 0) {
+                if (rt_db_get_internal(&in, rdp, cinfo->wdbp->dbip, NULL) >= 0) {
                     struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
                     int ccnt = db_comb_children(cinfo->wdbp->dbip, comb, &children, NULL, NULL);
                     if (ccnt > 0) {

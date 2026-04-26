@@ -100,8 +100,7 @@ remove_dead_references(db_i &db)
     for (std::size_t i = 0; i < num_combs; ++i) {
 	rt_db_internal internal;
 
-	if (0 > rt_db_get_internal(&internal, comb_dirs.ptr[i], &db, NULL,
-				   &rt_uniresource))
+	if (0 > rt_db_get_internal(&internal, comb_dirs.ptr[i], &db, NULL))
 	    bu_bomb("rt_db_get_internal() failed");
 
 	AutoPtr<rt_db_internal, rt_db_free_internal> autofree_internal(&internal);
@@ -115,8 +114,8 @@ remove_dead_references(db_i &db)
 
 	for (std::set<std::string>::const_iterator it = failed_members.begin();
 	     it != failed_members.end(); ++it)
-	    if (db_tree_del_dbleaf(&comb.tree, it->c_str(), &rt_uniresource, 0))
-		bu_bomb("db_tree_del_dbleaf() failed");
+	    if (db_tree_rm_dbleaf(&comb.tree, it->c_str(), 0))
+		bu_bomb("db_tree_rm_dbleaf() failed");
 
 	if (!comb.tree || !db_tree_nleaves(comb.tree)) {
 	    if (db_delete(&db, comb_dirs.ptr[i]) || db_dirdelete(&db, comb_dirs.ptr[i]))
@@ -125,7 +124,7 @@ remove_dead_references(db_i &db)
 	    remove_dead_references(db);
 	    return;
 	} else {
-	    if (rt_db_put_internal(comb_dirs.ptr[i], &db, &internal, &rt_uniresource))
+	    if (rt_db_put_internal(comb_dirs.ptr[i], &db, &internal))
 		bu_bomb("rt_db_put_internal() failed");
 	    else
 		autofree_internal.ptr = NULL;
@@ -298,7 +297,7 @@ Combination::Combination(db_i &db, directory &dir) :
 {
     rt_db_internal internal;
 
-    if (0 > rt_db_get_internal(&internal, m_dir, &db, NULL, &rt_uniresource))
+    if (0 > rt_db_get_internal(&internal, m_dir, &db, NULL))
 	bu_bomb("rt_db_get_internal() failed");
 
     AutoPtr<rt_db_internal, rt_db_free_internal> autofree_internal(&internal);
@@ -306,13 +305,13 @@ Combination::Combination(db_i &db, directory &dir) :
     rt_comb_internal &comb = *static_cast<rt_comb_internal *>(internal.idb_ptr);
     RT_CK_COMB(&comb);
 
-    db_non_union_push(comb.tree, &rt_uniresource);
+    db_non_union_push(comb.tree);
 
     const std::size_t node_count = db_tree_nleaves(comb.tree);
     AutoPtr<rt_tree_array> tree_list((struct rt_tree_array *)bu_calloc(node_count,
 				     sizeof(rt_tree_array), "tree list"));
     const std::size_t actual_count = (struct rt_tree_array *)db_flatten_tree(
-					 tree_list.ptr, comb.tree, OP_UNION, false, &rt_uniresource) - tree_list.ptr;
+					 tree_list.ptr, comb.tree, OP_UNION, false) - tree_list.ptr;
     BU_ASSERT(actual_count == node_count);
 
     for (std::size_t i = 0; i < node_count; ++i) {
@@ -457,7 +456,7 @@ Combination::write()
 
     rt_db_internal internal;
 
-    if (0 > rt_db_get_internal(&internal, m_dir, m_db, NULL, &rt_uniresource))
+    if (0 > rt_db_get_internal(&internal, m_dir, m_db, NULL))
 	bu_bomb("rt_db_get_internal() failed");
 
     AutoPtr<rt_db_internal, rt_db_free_internal> autofree_internal(&internal);
@@ -465,7 +464,7 @@ Combination::write()
     rt_comb_internal &comb = *static_cast<rt_comb_internal *>(internal.idb_ptr);
     RT_CK_COMB(&comb);
 
-    db_free_tree(comb.tree, &rt_uniresource);
+    db_free_tree(comb.tree);
     AutoPtr<rt_tree_array> nodes(static_cast<struct rt_tree_array *>(bu_calloc(
 				     m_members.size(), sizeof(rt_tree_array), "nodes")));
 
@@ -483,12 +482,12 @@ Combination::write()
 	ptree->tr_l.tl_name = bu_strdup(it->m_dir->d_namep);
     }
 
-    comb.tree = db_mkgift_tree(nodes.ptr, m_members.size(), &rt_uniresource);
+    comb.tree = db_mkgift_tree(nodes.ptr, m_members.size());
 
     if (!comb.tree)
 	bu_bomb("db_mkgift_tree() failed");
 
-    if (rt_db_put_internal(m_dir, m_db, &internal, &rt_uniresource))
+    if (rt_db_put_internal(m_dir, m_db, &internal))
 	bu_bomb("rt_db_put_internal() failed");
 
     bu_attribute_value_set avs;

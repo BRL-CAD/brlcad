@@ -238,7 +238,7 @@ DBInternal::load(const db_i &db, const directory &dir)
 	m_valid = false;
     }
 
-    if (0 > rt_db_get_internal(&m_internal, &dir, &db, NULL, &rt_uniresource))
+    if (0 > rt_db_get_internal(&m_internal, &dir, &db, NULL))
 	throw std::runtime_error("rt_db_get_internal() failed");
 
     m_valid = true;

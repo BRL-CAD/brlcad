@@ -67,7 +67,7 @@ rt_generic_xform(
     /* Scale change on export is 1.0 -- no change */
     switch (db_version(dbip)) {
 	case 4:
-	    if (OBJ[id].ft_export4(&ext, ip, 1.0, dbip, &rt_uniresource) < 0) {
+	    if (OBJ[id].ft_export4(&ext, ip, 1.0, dbip) < 0) {
 		bu_log("ERROR:  %s export failure\n",
 		       OBJ[id].ft_name);
 		return -1;			/* FAIL */
@@ -75,13 +75,13 @@ rt_generic_xform(
 	    if ((release || op == ip)) rt_db_free_internal(ip);
 
 	    RT_DB_INTERNAL_INIT(op);
-	    if (OBJ[id].ft_import4(op, &ext, mat, dbip, &rt_uniresource) < 0) {
+	    if (OBJ[id].ft_import4(op, &ext, mat, dbip) < 0) {
 		bu_log("ERROR:  solid import failure\n");
 		return -1;			/* FAIL */
 	    }
 	    break;
 	case 5:
-	    if (OBJ[id].ft_export5(&ext, ip, 1.0, dbip, &rt_uniresource) < 0) {
+	    if (OBJ[id].ft_export5(&ext, ip, 1.0, dbip) < 0) {
 		bu_log("ERROR:  %s export failure\n",
 		       OBJ[id].ft_name);
 		return -1;			/* FAIL */
@@ -113,7 +113,7 @@ rt_generic_xform(
 		bu_avs_free(&avs);
 	    }
 
-	    if (OBJ[id].ft_import5(op, &ext, mat, dbip, &rt_uniresource) < 0) {
+	    if (OBJ[id].ft_import5(op, &ext, mat, dbip) < 0) {
 		bu_log("ERROR:  solid import failure\n");
 		return -1;			/* FAIL */
 	    }
@@ -310,7 +310,7 @@ rt_generic_scene_obj(struct bv_scene_obj *s, struct directory *dp, struct db_i *
     // all cases, since cracking the internal on large BoTs can be be relatively slow,
     // but in most cases it's what we need to do.
     struct rt_db_internal intern;
-    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0)
 	return BRLCAD_ERROR;
     RT_CK_DB_INTERNAL(&intern);
 

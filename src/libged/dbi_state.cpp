@@ -477,7 +477,7 @@ DbiState::populate_maps(struct directory *dp, unsigned long long phash, int rese
 	    pv_it->second.clear();
 	}
 	struct rt_db_internal in;
-	if (rt_db_get_internal(&in, dp, dbip, NULL, res) < 0)
+	if (rt_db_get_internal(&in, dp, dbip, NULL) < 0)
 	    return;
 	struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
 	if (!comb->tree)

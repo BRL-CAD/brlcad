@@ -26,19 +26,17 @@
 
 
 int
-rt_obj_import(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)
+rt_obj_import(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip)
 {
     int id;
     const struct rt_functab *ft;
-    int (*import)(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *, struct resource *);
+    int (*import)(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *);
 
-    if (!ip || !ep || !dbip)
+    if (!ip || !ep)
 	return -1;
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
-    RT_CK_DBI(dbip);
-    if (resp) RT_CK_RESOURCE(resp);
 
     id = ip->idb_minor_type;
     if (id < 0)
@@ -48,16 +46,15 @@ rt_obj_import(struct rt_db_internal *ip, const struct bu_external *ep, const mat
     if (!ft)
 	return -3;
 
-    if (dbip->i->dbi_version < 5) {
+    /* Default to v5 import */
+    import = ft->ft_import5;
+    if (!import)
 	import = ft->ft_import4;
-    } else {
-	import = ft->ft_import5;
-    }
 
     if (!import)
 	return -4;
 
-    return import(ip, ep, mat, dbip, resp);
+    return import(ip, ep, mat, dbip);
 }
 
 

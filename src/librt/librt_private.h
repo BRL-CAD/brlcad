@@ -101,6 +101,9 @@ struct db_i_internal {
     struct bu_ptbl dbi_changed_clbks;     /**< @brief dbi_changed_t callbacks */
     struct bu_ptbl dbi_update_nref_clbks; /**< @brief dbi_update_nref_t callbacks */
     int dbi_use_comb_instance_ids;        /**< @brief flag for comb instance tracking */
+
+    struct directory *dbi_directory_hd;         /**< @brief directory entry freelist */
+    struct bu_ptbl   dbi_directory_blocks;      /**< @brief Table of malloc'ed blocks */
 };
 
 struct db_i_internal * db_i_internal_create(void);
@@ -399,6 +402,28 @@ CLT_DECLARE_INTERFACE(hyp);
 
 extern size_t clt_bot_pack(struct bu_pool *pool, struct soltab *stp);
 #endif
+
+/**
+ * Increase the size of re_boolstack to double the previous size.
+ * Depend on bu_realloc() to copy the previous data to the new area
+ * when the size is increased.
+ */
+RT_EXPORT extern void _bool_growstack(struct resource *res);
+
+/**
+ * Release the per-processor state variables needed to support
+ * rt_shootray()'s use of 'solid pieces'.
+ */
+RT_EXPORT extern void _res_pieces_clean(struct resource *resp,
+					  struct rt_i *rtip);
+
+/**
+ * Allocate the per-processor state variables needed to support
+ * rt_shootray()'s use of 'solid pieces'.
+ */
+RT_EXPORT extern void _res_pieces_init(struct resource *resp,
+					 struct rt_i *rtip);
+
 
 __END_DECLS
 

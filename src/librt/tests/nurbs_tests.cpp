@@ -49,7 +49,7 @@ get_surface(const char *name, struct db_i *dbip, struct rt_db_internal *intern, 
 	return -1;
     }
 
-    if (rt_db_get_internal(intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(intern, dp, dbip, NULL) < 0) {
 	bu_log("ERROR: Unable to get internal representation of %s\n", name);
 	return -1;
     }

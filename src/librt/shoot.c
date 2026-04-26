@@ -54,7 +54,7 @@ shoot_setup_status(struct rt_shootray_status *ss, struct application *ap)
 
 
 void
-rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
+_res_pieces_init(struct resource *resp, struct rt_i *rtip)
 {
     struct rt_piecestate *psptab;
     struct rt_piecestate *psp;
@@ -76,11 +76,16 @@ rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
 	rt_htbl_init(&psp->htab, 8, "psp->htab");
 	psp->cutp = CUTTER_NULL;
     } RT_VISIT_ALL_SOLTABS_END
-	  }
-
+}
 
 void
-rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
+rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
+{
+    _res_pieces_init(resp, rtip);
+}
+
+void
+_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 {
     struct rt_piecestate *psp;
     int i;
@@ -111,7 +116,7 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 	     *
 	     * Doing this until we figure out why all "struct
 	     * rt_piecestate" array members are NOT getting
-	     * initialized in rt_res_pieces_init() above.  Initial
+	     * initialized in _res_pieces_init() above.  Initial
 	     * glance looks like tree.c/rt_gettrees_muves() can be
 	     * called in such a way as to assign
 	     * stp->st_piecestate_num multiple times, each time with a
@@ -136,6 +141,11 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
     resp->re_pieces = NULL;
 }
 
+void
+rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
+{
+    _res_pieces_clean(resp, rtip);
+}
 
 _BU_ATTR_FLATTEN const union cutter *
 rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
@@ -607,7 +617,7 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
 	for (; stpp >= cutp->bn.bn_list; stpp--) {
 	  register struct soltab *stp = *stpp;
 
-	  rt_plot_solid(fp, rtip, stp, ap->a_resource);
+	  rt_plot_solid(fp, rtip, stp);
 	}
       }
 
@@ -746,7 +756,7 @@ rt_shootray(register struct application *ap)
 
     if (!resp->re_pieces && rtip->i->rti_nsolids_with_pieces > 0) {
 	/* Initialize this processors 'solid pieces' state */
-	rt_res_pieces_init(resp, rtip);
+	_res_pieces_init(resp, rtip);
     }
     if (UNLIKELY(!BU_LIST_MAGIC_EQUAL(&resp->re_pieces_pending.l, BU_PTBL_MAGIC))) {
 	/* only happens first time through */

@@ -467,7 +467,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	bu_free_external(&external);
 
 	/* get the original objects matrix */
-	if (rt_db_get_internal(&intern, dp, _dbip, matrix, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, _dbip, matrix) < 0) {
 	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
 	    bu_vls_free(name);
 	    return;
@@ -482,7 +482,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	}
 
 	/* write the new matrix to the new object */
-	if (rt_db_put_internal(dp, s->wdbp->dbip, &intern, &rt_uniresource) < 0)
+	if (rt_db_put_internal(dp, s->wdbp->dbip, &intern) < 0)
 	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
 	rt_db_free_internal(&intern);
     } /* end iteration over each copy */
@@ -672,7 +672,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		bu_vls_free(name);
 		continue;
 	    }
-	    if (rt_db_get_internal(&dbintern, dp, _dbip, bn_mat_identity, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&dbintern, dp, _dbip, bn_mat_identity) < 0) {
 		bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
 		return NULL;
 	    }
@@ -690,7 +690,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	    /* recursively update the tree */
 	    copy_v5_comb_tree(comb->tree, i);
 
-	    if (rt_db_put_internal(dp, s->wdbp->dbip, &dbintern, &rt_uniresource) < 0) {
+	    if (rt_db_put_internal(dp, s->wdbp->dbip, &dbintern) < 0) {
 		bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
 		bu_vls_free(name);
 		return NULL;
@@ -795,7 +795,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 	    copy_comb(_dbip, dp, (void *)state);
 	} else
 	    /* A v5 method of peeking into a combination */
-	    db_functree(_dbip, dp, copy_comb, copy_solid, resp, (void *)state);
+	    db_treewalk_basic(_dbip, dp, copy_comb, copy_solid, (void *)state);
     } else if (dp->d_flags & RT_DIR_SOLID)
 	/* leaf node -- make a copy the object */
 	copy_solid(_dbip, dp, (void *)state);

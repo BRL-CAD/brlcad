@@ -73,7 +73,7 @@ ged_wmater_core(struct ged *gedp, int argc, const char *argv[])
 	    status = BRLCAD_ERROR;
 	    continue;
 	}
-	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: Unable to read %s from database", argv[0], argv[i]);
 	    status = BRLCAD_ERROR;
 	    continue;

@@ -279,7 +279,7 @@ lookup_props(struct iges_properties *props,
     if (!(dp->d_flags & RT_DIR_COMB))
 	return 1;
 
-    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL);
 
     if (id < 0) {
 	rt_db_free_internal(&intern);

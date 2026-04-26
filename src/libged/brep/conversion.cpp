@@ -135,7 +135,7 @@ brep_conversion_tree(const struct db_i *dbip, const union tree *oldtree, union t
 		if (dir != RT_DIR_NULL) {
 		    rt_db_internal *intern;
 		    BU_ALLOC(intern, struct rt_db_internal);
-		    rt_db_get_internal(intern, dir, dbip, bn_mat_identity, &rt_uniresource);
+		    rt_db_get_internal(intern, dir, dbip, bn_mat_identity);
 		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_COMBINATION")) {
 			ret = brep_conversion_comb(intern, tmpname, suffix, wdbp, local2mm);
 			if (ret) {

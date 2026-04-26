@@ -729,7 +729,7 @@ mater_export(struct ged *gedp, size_t argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "error reading %s from database", dp->d_namep);
 	fclose(fp);
 	return BRLCAD_ERROR;
@@ -939,7 +939,7 @@ mater_get(struct ged *gedp, size_t argc, const char *argv[])
 	}
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "error reading %s from database", dp->d_namep);
 	goto ged_mater_get_fail;
     }
@@ -1064,7 +1064,6 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
 {
     struct directory *dp;
     struct analyze_densities *a = NULL;
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "%s", mater_usage);
@@ -1160,7 +1159,7 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     struct bu_external bin_ext;
     int ret = -1;
     if (intern.idb_meth->ft_export5) {
-	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, gedp->dbip, wdbp->wdb_resp);
+	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, gedp->dbip);
     }
     if (ret != 0) {
 	bu_vls_printf(gedp->ged_result_str, "Error while attempting to export %s\n", GED_DB_DENSITY_OBJECT);

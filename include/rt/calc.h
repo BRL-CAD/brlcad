@@ -48,7 +48,7 @@ __BEGIN_DECLS
  *
  * returns zero if matrix transform was applied, non-zero on failure.
  */
-RT_EXPORT extern int rt_matrix_transform(struct rt_db_internal *output, const mat_t matrix, struct rt_db_internal *input, int free_input, struct db_i *dbip, struct resource *resource);
+RT_EXPORT extern int rt_matrix_transform(struct rt_db_internal *output, const mat_t matrix, struct rt_db_internal *input, int free_input, struct db_i *dbip);
 
 /* find RPP of one region */
 
@@ -169,8 +169,7 @@ RT_EXPORT extern int rt_shader_mat(mat_t                        model_to_shader,
 RT_EXPORT extern struct rt_db_internal *rt_mirror(struct db_i *dpip,
 						  struct rt_db_internal *ip,
 						  point_t mirror_pt,
-						  vect_t mirror_dir,
-						  struct resource *resp);
+						  vect_t mirror_dir);
 
 
 RT_EXPORT extern void rt_plot_all_bboxes(FILE *fp,

@@ -159,7 +159,7 @@ comb_write_back(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_put_internal(dp, dbip, &s->es_int, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &s->es_int) < 0) {
 	bu_vls_printf(s->log_str,
 		"ERROR: comb_write_back: rt_db_put_internal failed for '%s'\n",
 		comb->src_objname);
@@ -186,7 +186,7 @@ comb_flatten(struct rt_comb_internal *comb, size_t *count_out,
 	    node_count, sizeof(struct rt_tree_array), "comb_flatten arr");
 
     size_t actual = (size_t)((struct rt_tree_array *)db_flatten_tree(
-		arr, comb->tree, OP_UNION, 0, &rt_uniresource) - arr);
+		arr, comb->tree, OP_UNION, 0) - arr);
 
     if (actual != node_count) {
 	bu_vls_printf(log_str,
@@ -214,7 +214,7 @@ comb_unflatten(struct rt_comb_internal *comb,
     }
 
     /* db_mkbool_tree consumes arr entries (sets their tl_tree to TREE_NULL) */
-    comb->tree = db_mkbool_tree(arr, count, &rt_uniresource);
+    comb->tree = db_mkbool_tree(arr, count);
 }
 
 /* ------------------------------------------------------------------ */
@@ -286,7 +286,7 @@ ecmd_comb_add_member(struct rt_edit *s)
 
     s->e_inpara = 0;
 
-    /* rt_db_put_internal (called inside comb_write_back) frees s->es_int.
+    /* rt_db_put_internal(called inside comb_write_back) frees s->es_int.
      * Use saved_name for logging AFTER the write-back. */
     int ret = comb_write_back(s);
     if (ret == BRLCAD_OK)
@@ -337,7 +337,7 @@ ecmd_comb_del_member(struct rt_edit *s)
     }
 
     /* Free the leaf node being removed */
-    db_free_tree(arr[target].tl_tree, &rt_uniresource);
+    db_free_tree(arr[target].tl_tree);
 
     /* Shift remaining entries down */
     for (size_t i = (size_t)target; i < count - 1; i++)

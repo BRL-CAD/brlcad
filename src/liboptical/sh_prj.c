@@ -148,7 +148,7 @@ img_load_datasource(struct img_specific *image, struct db_i *dbInstance, const s
 	    RT_CK_DIR(dirEntry);
 
 	    /* the object was in the directory, so go get it */
-	    if (rt_db_get_internal(dbip, dirEntry, dbInstance, NULL, NULL) <= 0) {
+	    if (rt_db_get_internal(dbip, dirEntry, dbInstance, NULL) <= 0) {
 		/* unable to load/create the image database record object */
 		return -1;
 	    }

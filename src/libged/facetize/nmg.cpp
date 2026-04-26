@@ -187,7 +187,7 @@ _try_nmg_facetize(struct _ged_facetize_state *s, struct bu_list *vlfree, int arg
 
     _facetize_log_nmg(s);
 
-    db_init_db_tree_state(&init_state, dbip, wdbp->wdb_resp);
+    db_init_db_tree_state(&init_state, dbip);
 
 
     /* Establish tolerances */
@@ -236,7 +236,7 @@ _try_nmg_facetize(struct _ged_facetize_state *s, struct bu_list *vlfree, int arg
     if (facetize_tree) {
 	if (!BU_SETJUMP) {
 	    /* try */
-	    failed = nmg_boolean(facetize_tree, nmg_model, vlfree, &wdbp->wdb_tol, &rt_uniresource);
+	    failed = nmg_boolean(facetize_tree, nmg_model, vlfree, &wdbp->wdb_tol);
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
@@ -260,7 +260,7 @@ _try_nmg_facetize(struct _ged_facetize_state *s, struct bu_list *vlfree, int arg
     }
 
     if (facetize_tree) {
-	db_free_tree(facetize_tree, &rt_uniresource);
+	db_free_tree(facetize_tree);
     }
 
     _facetize_log_default(s);
@@ -295,7 +295,7 @@ _write_nmg(struct _ged_facetize_state *s, struct model *nmg_model, const char *n
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	if (s->verbosity > 0) {
 	    bu_log("Failed to write %s to database\n", name);
 	}
@@ -328,7 +328,7 @@ _write_bot(struct _ged_facetize_state *s, struct rt_bot_internal *bot, const cha
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	if (s->verbosity > 0) {
 	    bu_log("Failed to write %s to database\n", name);
 	}

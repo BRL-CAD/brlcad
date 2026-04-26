@@ -231,7 +231,7 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
 	return 0;
     }
 
-    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL);
     if (id < 0) {
 	/* error occurred retrieving object */
 	bu_log("Warning: Can not load internal form of %s\n", dp->d_namep);
@@ -272,7 +272,7 @@ select_non_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *
     if (!dp)
 	return 0;
 
-    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL);
     if (id < 0) {
 	/* error occurred retrieving object */
 	bu_log("Warning: Can not load internal form of %s\n", dp->d_namep);
@@ -691,7 +691,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 	return;
     }
 
-    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL);
     if (id < 0) {
 	bu_log("Cannot internal form of %s\n", dp->d_namep);
 	return;
@@ -984,7 +984,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
        /* try */
-       ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol, &rt_uniresource);
+       ret_tree = nmg_booltree_evaluate(curtree, vlfree, tsp->ts_tol);
     } else {
        /* catch */
        char *name = db_path_to_string(pathp);
@@ -1088,7 +1088,7 @@ vrml_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
      * A return of TREE_NULL from this routine signals an error,
      * so we need to cons up an OP_NOP node to return.
      */
-    db_free_tree(curtree, &rt_uniresource); /* does a nmg_kr (i.e. kill nmg region) */
+    db_free_tree(curtree); /* does a nmg_kr (i.e. kill nmg region) */
 
     BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);

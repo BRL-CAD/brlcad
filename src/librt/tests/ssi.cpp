@@ -44,7 +44,7 @@ get_surface(const char *name, struct db_i *dbip, struct rt_db_internal *intern, 
 	return -1;
     }
 
-    if (rt_db_get_internal(intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(intern, dp, dbip, NULL) < 0) {
 	bu_log("ERROR: Unable to get internal representation of %s\n", name);
 	return -1;
     }
@@ -224,7 +224,7 @@ main(int argc, char** argv)
 
 	struct directory *dp;
 	dp = db_diradd(dbip, bu_vls_addr(&name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
-	ret = rt_db_put_internal(dp, dbip, &intern, &rt_uniresource);
+	ret = rt_db_put_internal(dp, dbip, &intern);
 	if (ret)
 	    bu_log("ERROR: failure writing [%s] to disk\n", dp->d_namep);
 	else
@@ -299,7 +299,7 @@ main(int argc, char** argv)
 
 	struct directory *dp;
 	dp = db_diradd(dbip, bu_vls_addr(&name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
-	ret = rt_db_put_internal(dp, dbip, &intern, &rt_uniresource);
+	ret = rt_db_put_internal(dp, dbip, &intern);
 	if (ret)
 	    bu_log("ERROR: failure writing [%s] to disk\n", dp->d_namep);
 	else

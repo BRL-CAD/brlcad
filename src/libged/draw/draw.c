@@ -172,7 +172,7 @@ draw_solid_wireframe(struct bv_scene_obj *sp, struct bview *gvp, struct db_i *db
     struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(&bdata->s_fullpath),
-			     dbip, sp->s_mat, &rt_uniresource);
+			     dbip, sp->s_mat);
 
     if (ret < 0) {
 	return -1;
@@ -609,11 +609,9 @@ plot_shaded_eval(
 	    struct directory *dp = DB_FULL_PATH_CUR_DIR(&brep_path);
 
 	    if (dp->d_flags & RT_DIR_COMB) {
-		ret = rt_db_get_internal(&brep_intern, dp, ts.ts_dbip, NULL,
-			ts.ts_resp);
+		ret = rt_db_get_internal(&brep_intern, dp, ts.ts_dbip, NULL);
 	    } else {
-		ret = rt_db_get_internal(&brep_intern, dp, ts.ts_dbip, ts.ts_mat,
-			ts.ts_resp);
+		ret = rt_db_get_internal(&brep_intern, dp, ts.ts_dbip, ts.ts_mat);
 	    }
 	    if (ret >= 0) {
 		brep_made = 1;
@@ -719,7 +717,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 	}
     }
 
-    if (rt_db_get_internal(&intern, dp, tsp->ts_dbip, matp, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&intern, dp, tsp->ts_dbip, matp) < 0)
 	return 0;	/* proceed as usual */
 
     switch (intern.idb_type) {
@@ -795,7 +793,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     if (!BU_SETJUMP) {
 	/* try */
 
-	result = nmg_boolean(curtree, *tsp->ts_m, vlfree, tsp->ts_tol, tsp->ts_resp);
+	result = nmg_boolean(curtree, *tsp->ts_m, vlfree, tsp->ts_tol);
 
     } else {
 	/* catch */
@@ -873,27 +871,27 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 
 	failed = process_boolean(curtree, tsp, pathp, dgcdp, vlfree);
 	if (failed) {
-	    db_free_tree(curtree, tsp->ts_resp);
+	    db_free_tree(curtree);
 	    return (union tree *)NULL;
 	}
 
     } else if (curtree->tr_op != OP_TESS) {
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "Cannot use '-d' option when Boolean evaluation is required\n");
-	db_free_tree(curtree, tsp->ts_resp);
+	db_free_tree(curtree);
 	return (union tree *)NULL;
     }
     r = curtree->tr_d.td_r;
     NMG_CK_REGION(r);
 
     if (dgcdp->do_not_draw_nmg_solids_during_debugging && r) {
-	db_free_tree(curtree, tsp->ts_resp);
+	db_free_tree(curtree);
 	return (union tree *)NULL;
     }
 
     if (dgcdp->nmg_triangulate) {
 	failed = process_triangulation(tsp, pathp, dgcdp, vlfree);
 	if (failed) {
-	    db_free_tree(curtree, tsp->ts_resp);
+	    db_free_tree(curtree);
 	    return (union tree *)NULL;
 	}
     }
@@ -927,7 +925,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	    nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1, vlfree);
 	}
 	/* NMG region is no longer necessary, only vlist remains */
-	db_free_tree(curtree, tsp->ts_resp);
+	db_free_tree(curtree);
 	return (union tree *)NULL;
     }
 

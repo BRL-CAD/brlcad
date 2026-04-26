@@ -57,7 +57,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&breps, j);
 	struct rt_db_internal solid_intern;
 
-	rt_db_get_internal(&solid_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
+	rt_db_get_internal(&solid_intern, curr_dp, wdbp->dbip, bn_mat_identity);
 	RT_CK_DB_INTERNAL(&solid_intern);
 	Object_To_STEP(curr_dp, &solid_intern, wdbp, sc);
 	rt_db_free_internal(&solid_intern);
@@ -94,7 +94,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 		struct directory *child;
 		union tree *curr_node;
 
-		rt_db_get_internal(&comb_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
+		rt_db_get_internal(&comb_intern, curr_dp, wdbp->dbip, bn_mat_identity);
 		RT_CK_DB_INTERNAL(&comb_intern);
 		comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
 		child = Comb_Get_Only_Child(curr_dp, wdbp);

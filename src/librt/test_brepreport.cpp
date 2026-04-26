@@ -200,7 +200,7 @@ main(int argc, char *argv[])
 	ON_Brep *brep;
 	RT_DB_INTERNAL_INIT(&intern);
 	dp = (struct directory *)BU_PTBL_GET(&unique_breps, i);
-	if (rt_db_get_internal(&intern, dp, dbip, bn_mat_identity, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, dbip, bn_mat_identity) < 0) {
 	    bu_log("Error getting internal: %s\n", dp->d_namep);
 	    continue;
 	}
@@ -252,7 +252,7 @@ main(int argc, char *argv[])
 
 
     RT_DB_INTERNAL_INIT(&intern)
-    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0) {
 	bu_exit(1, "ERROR: Unable to get internal representation of %s\n", argv[2]);
     }
 

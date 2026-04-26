@@ -214,7 +214,7 @@ main(int argc, char *argv[])
 	/* Now, add actual DATA */
 	struct directory *dp = paths[i];
 	struct rt_db_internal intern;
-	rt_db_get_internal(&intern, dp, dbip, bn_mat_identity, &rt_uniresource);
+	rt_db_get_internal(&intern, dp, dbip, bn_mat_identity);
 	RT_CK_DB_INTERNAL(&intern);
 	Object_To_STEP(dp, &intern, wdbp, sc);
 	rt_db_free_internal(&intern);

@@ -513,7 +513,7 @@ main(int argc, char *argv[])
     }
 
     RT_DB_INTERNAL_INIT(&intern)
-	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0) {
 	    bu_exit(1, "ERROR: Unable to get internal representation of %s\n", argv[2]);
 	}
 

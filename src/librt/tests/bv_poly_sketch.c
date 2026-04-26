@@ -80,8 +80,8 @@ main(int argc, char *argv[])
     int dret = db_diff_dp(dbip, wfp->dbip, dp, odp, &tol, DB_COMPARE_PARAM, NULL);
     if (dret) {
 	struct rt_db_internal ointern, nintern;
-	int old_id = rt_db_get_internal(&ointern, dp, dbip, NULL, &rt_uniresource);
-	int new_id = rt_db_get_internal(&nintern, odp, wfp->dbip, NULL, &rt_uniresource);
+	int old_id = rt_db_get_internal(&ointern, dp, dbip, NULL);
+	int new_id = rt_db_get_internal(&nintern, odp, wfp->dbip, NULL);
 	struct bu_vls msg = BU_VLS_INIT_ZERO;
 	if (OBJ[old_id].ft_describe)
 	    OBJ[old_id].ft_describe(&msg, &ointern, 100, dbip->dbi_base2local);

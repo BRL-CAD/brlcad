@@ -351,7 +351,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	     * new database. If we're mutating, mutate the object after loading
 	     * the internal object */
 
-	    if ( !rt_db_lookup_internal(dbi_p, tp->tr_l.tl_name, &dp, &in, LOOKUP_NOISY, resp))
+	    if ( !rt_db_lookup_internal(dbi_p, tp->tr_l.tl_name, &dp, &in, LOOKUP_NOISY))
 		bu_exit(EXIT_FAILURE, "Failed to read parent");
 
 	    /* rename leaf based on individual it belongs to */
@@ -368,7 +368,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	    /* write child to new database */
 	    if ((dp=db_diradd(dbi_c, shape, -1, 0, dp->d_flags, (void *)&dp->d_minor_type)) == RT_DIR_NULL)
 		bu_exit(EXIT_FAILURE, "Failed to add new object to the database");
-	    if (rt_db_put_internal(dp, dbi_c, &in, resp) < 0)
+	    if (rt_db_put_internal(dp, dbi_c, &in) < 0)
 		bu_exit(EXIT_FAILURE, "Failed to write new individual to database");
 	    rt_db_free_internal(&in);
 
@@ -421,7 +421,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
     crossover_parent = (union tree **)NULL;
     node = (struct node*)NULL;
 
-    if ( !rt_db_lookup_internal(dbi_p, parent1_id, &dp, &in1, LOOKUP_NOISY, &rt_uniresource))
+    if ( !rt_db_lookup_internal(dbi_p, parent1_id, &dp, &in1, LOOKUP_NOISY))
 	bu_exit(EXIT_FAILURE, "Failed to read parent1");
     shape_number =num_nodes= 0;
     parent1 = (struct rt_comb_internal *)in1.idb_ptr;
@@ -434,7 +434,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
 	    crossover = 1;
 	    /*load other parent */
-	    if ( !rt_db_lookup_internal(dbi_p, parent2_id, &dp, &in2, LOOKUP_NOISY, resp))
+	    if ( !rt_db_lookup_internal(dbi_p, parent2_id, &dp, &in2, LOOKUP_NOISY))
 		bu_exit(EXIT_FAILURE, "Failed to read parent2");
 	    parent2 = (struct rt_comb_internal *)in2.idb_ptr;
 
@@ -498,7 +498,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
 	    if ((dp = db_diradd(dbi_c, child2_id, -1, 0, dp->d_flags, (void *)&dp->d_minor_type)) == RT_DIR_NULL)
 		bu_exit(EXIT_FAILURE, "Failed to add new individual to child database");
-	    if (rt_db_put_internal(dp, dbi_c, &in2, resp) < 0)
+	    if (rt_db_put_internal(dp, dbi_c, &in2) < 0)
 		bu_exit(EXIT_FAILURE, "Database write failure");
 	    rt_db_free_internal(&in2);
 
@@ -530,7 +530,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
     if ((dp=db_diradd(dbi_c, child1_id, -1, 0, dp->d_flags, (void *)&dp->d_minor_type)) == RT_DIR_NULL) {
 	bu_exit(EXIT_FAILURE, "Failed to add new individual to child database");
     }
-    if (rt_db_put_internal(dp, dbi_c,  &in1, resp) < 0)
+    if (rt_db_put_internal(dp, dbi_c,  &in1) < 0)
       bu_exit(EXIT_FAILURE, "Database write failure");
     rt_db_free_internal(&in1);
 }

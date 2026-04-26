@@ -42,7 +42,7 @@ list_children(struct ged *gedp, struct directory *dp, int c_sep)
     if (!(dp->d_flags & RT_DIR_COMB))
 	return BRLCAD_OK;
 
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return BRLCAD_ERROR;
     }
@@ -55,7 +55,7 @@ list_children(struct ged *gedp, struct directory *dp, int c_sep)
 	struct rt_tree_array *rt_tree_array;
 
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
-	    db_non_union_push(comb->tree, &rt_uniresource);
+	    db_non_union_push(comb->tree);
 	    if (db_ck_v4gift_tree(comb->tree) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for listing");
 		return BRLCAD_ERROR;
@@ -66,8 +66,7 @@ list_children(struct ged *gedp, struct directory *dp, int c_sep)
 	    rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count,
 							      sizeof(struct rt_tree_array), "tree list");
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
-		rt_tree_array, comb->tree, OP_UNION,
-		1, &rt_uniresource) - rt_tree_array;
+		rt_tree_array, comb->tree, OP_UNION, 1) - rt_tree_array;
 	    BU_ASSERT(actual_count == node_count);
 	    comb->tree = TREE_NULL;
 	} else {
@@ -102,7 +101,7 @@ list_children(struct ged *gedp, struct directory *dp, int c_sep)
 		    bu_vls_printf(gedp->ged_result_str, "%c%s", (char)c_sep, rt_tree_array[i].tl_tree->tr_l.tl_name);
 	    }
 
-	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
+	    db_free_tree(rt_tree_array[i].tl_tree);
 	}
 	bu_vls_free(&vls);
 

@@ -82,7 +82,7 @@ dot_comb(struct db_i *dbip, struct directory *dp, void *out)
     if (!o->outfp)
 	return;
 
-    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0) {
 	bu_log("ERROR: Database read error, skipping %s\n", dp->d_namep);
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -110,7 +110,7 @@ dot_comb(struct db_i *dbip, struct directory *dp, void *out)
 	struct rt_tree_array *rt_tree_array = NULL;
 
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
-	    db_non_union_push(comb->tree, &rt_uniresource);
+	    db_non_union_push(comb->tree);
 	    if (db_ck_v4gift_tree(comb->tree) < 0) {
 		bu_log("INTERNAL_ERROR: Cannot flatten tree of [%s] for listing", dp->d_namep);
 		return;
@@ -120,7 +120,7 @@ dot_comb(struct db_i *dbip, struct directory *dp, void *out)
 	node_count = db_tree_nleaves(comb->tree);
 	if (node_count > 0) {
 	    rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
-	    actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 1, &rt_uniresource) - rt_tree_array;
+	    actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 1) - rt_tree_array;
 	    BU_ASSERT(actual_count == node_count);
 	    comb->tree = TREE_NULL;
 	} else {
@@ -147,7 +147,7 @@ dot_comb(struct db_i *dbip, struct directory *dp, void *out)
 	    }
 
 	    fprintf(o->outfp, "\t\"%s\" -> \"%s\" [ label=\"%c\" ];\n", dp->d_namep, rt_tree_array[i].tl_tree->tr_l.tl_name, op);
-	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
+	    db_free_tree(rt_tree_array[i].tl_tree);
 	}
 	bu_vls_free(&vls);
 
@@ -372,7 +372,7 @@ main(int ac, char *av[])
 	dp = db_lookup(gp->dbip, objs[c], 1);
 	if (dp) {
 	    bu_log("Exporting object [%s]\n", objs[c]);
-	    db_functree(gp->dbip, dp, dot_comb, dot_leaf, NULL, &o);
+	    db_treewalk_basic(gp->dbip, dp, dot_comb, dot_leaf, &o);
 	} else {
 	    bu_log("ERROR: Unable to locate [%s] within input database, skipping.\n", objs[c]);
 	}

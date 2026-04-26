@@ -506,7 +506,7 @@ region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tr
 	bu_vls_strcat(&flat, "");
     } else {
 	/* Rewrite tree so that all unions are at tree top */
-	db_non_union_push(curtree, &rt_uniresource);
+	db_non_union_push(curtree);
 	flatten_tree(&flat, curtree, "  ", 0);
     }
 

@@ -29,10 +29,10 @@ dp_copy(struct db_i *merged_dbip, struct db_i *source_dbip, const struct directo
 	if ((new_dp = db_diradd(merged_dbip, new_name, RT_DIR_PHONY_ADDR, 0, source_dp->d_flags, (void *)&source_dp->d_minor_type)) == RT_DIR_NULL) {
 	    return -1;
 	}
-	if (rt_db_get_internal(&ip, source_dp, source_dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&ip, source_dp, source_dbip, NULL) < 0) {
 	    return -1;
 	}
-	if (rt_db_put_internal(new_dp, merged_dbip, &ip, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(new_dp, merged_dbip, &ip) < 0) {
 	    return -1;
 	}
     }
@@ -116,11 +116,11 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 	    if ((new_dp = db_diradd(merged_dbip, dr->dp_ancestor->d_namep, RT_DIR_PHONY_ADDR, 0, dr->dp_ancestor->d_flags, (void *)&dr->dp_ancestor->d_minor_type)) == RT_DIR_NULL) {
 		return -1;
 	    }
-	    if (rt_db_get_internal(&ip, dr->dp_ancestor, ancestor_dbip, NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&ip, dr->dp_ancestor, ancestor_dbip, NULL) < 0) {
 		return -1;
 	    }
 	    bu_avs_merge(&ip.idb_avs, obj_avs);
-	    if (rt_db_put_internal(new_dp, merged_dbip, &ip, &rt_uniresource) < 0) {
+	    if (rt_db_put_internal(new_dp, merged_dbip, &ip) < 0) {
 		return -1;
 	    }
 	    /* fall through */
@@ -128,11 +128,11 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 	    if ((new_dp = db_diradd(merged_dbip, dr->dp_left->d_namep, RT_DIR_PHONY_ADDR, 0, dr->dp_left->d_flags, (void *)&dr->dp_left->d_minor_type)) == RT_DIR_NULL) {
 		return -1;
 	    }
-	    if (rt_db_get_internal(&ip, dr->dp_left, left_dbip, NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&ip, dr->dp_left, left_dbip, NULL) < 0) {
 		return -1;
 	    }
 	    bu_avs_merge(&ip.idb_avs, obj_avs);
-	    if (rt_db_put_internal(new_dp, merged_dbip, &ip, &rt_uniresource) < 0) {
+	    if (rt_db_put_internal(new_dp, merged_dbip, &ip) < 0) {
 		return -1;
 	    }
 	    break;
@@ -140,11 +140,11 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 	    if ((new_dp = db_diradd(merged_dbip, dr->dp_right->d_namep, RT_DIR_PHONY_ADDR, 0, dr->dp_right->d_flags, (void *)&dr->dp_right->d_minor_type)) == RT_DIR_NULL) {
 		return -1;
 	    }
-	    if (rt_db_get_internal(&ip, dr->dp_right, right_dbip, NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&ip, dr->dp_right, right_dbip, NULL) < 0) {
 		return -1;
 	    }
 	    bu_avs_merge(&ip.idb_avs, obj_avs);
-	    if (rt_db_put_internal(new_dp, merged_dbip, &ip, &rt_uniresource) < 0) {
+	    if (rt_db_put_internal(new_dp, merged_dbip, &ip) < 0) {
 		return -1;
 	    }
 	    break;
@@ -158,7 +158,7 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 		if ((new_dp_left = db_diradd(merged_dbip, bu_vls_addr(&left_name), RT_DIR_PHONY_ADDR, 0, dr->dp_left->d_flags, (void *)&dr->dp_left->d_minor_type)) == RT_DIR_NULL) {
 		    return -1;
 		}
-		if (rt_db_get_internal(&ip_left, dr->dp_left, left_dbip, NULL, &rt_uniresource) < 0) {
+		if (rt_db_get_internal(&ip_left, dr->dp_left, left_dbip, NULL) < 0) {
 		    return -1;
 		}
 		for (BU_AVS_FOR(avpp, obj_avs)) {
@@ -168,7 +168,7 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 			bu_avs_add(&ip_left.idb_avs, avpp->name, "(null)");
 		    }
 		}
-		if (rt_db_put_internal(new_dp_left, merged_dbip, &ip_left, &rt_uniresource) < 0) {
+		if (rt_db_put_internal(new_dp_left, merged_dbip, &ip_left) < 0) {
 		    return -1;
 		}
 	    }
@@ -181,7 +181,7 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 		if ((new_dp_right = db_diradd(merged_dbip, bu_vls_addr(&right_name), RT_DIR_PHONY_ADDR, 0, dr->dp_right->d_flags, (void *)&dr->dp_right->d_minor_type)) == RT_DIR_NULL) {
 		    return -1;
 		}
-		if (rt_db_get_internal(&ip_right, dr->dp_right, right_dbip, NULL, &rt_uniresource) < 0) {
+		if (rt_db_get_internal(&ip_right, dr->dp_right, right_dbip, NULL) < 0) {
 		    return -1;
 		}
 		for (BU_AVS_FOR(avpp, obj_avs)) {
@@ -191,7 +191,7 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 			bu_avs_add(&ip_right.idb_avs, avpp->name, "(null)");
 		    }
 		}
-		if (rt_db_put_internal(new_dp_right, merged_dbip, &ip_right, &rt_uniresource) < 0) {
+		if (rt_db_put_internal(new_dp_right, merged_dbip, &ip_right) < 0) {
 		    return -1;
 		}
 	    }
@@ -204,7 +204,7 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 		if ((new_dp_ancestor = db_diradd(merged_dbip, bu_vls_addr(&ancestor_name), RT_DIR_PHONY_ADDR, 0, dr->dp_ancestor->d_flags, (void *)&dr->dp_ancestor->d_minor_type)) == RT_DIR_NULL) {
 		    return -1;
 		}
-		if (rt_db_get_internal(&ip_ancestor, dr->dp_ancestor, ancestor_dbip, NULL, &rt_uniresource) < 0) {
+		if (rt_db_get_internal(&ip_ancestor, dr->dp_ancestor, ancestor_dbip, NULL) < 0) {
 		    return -1;
 		}
 		for (BU_AVS_FOR(avpp, obj_avs)) {
@@ -214,7 +214,7 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 			bu_avs_add(&ip_ancestor.idb_avs, avpp->name, "(null)");
 		    }
 		}
-		if (rt_db_put_internal(new_dp_ancestor, merged_dbip, &ip_ancestor, &rt_uniresource) < 0) {
+		if (rt_db_put_internal(new_dp_ancestor, merged_dbip, &ip_ancestor) < 0) {
 		    return -1;
 		}
 	    }

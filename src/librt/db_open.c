@@ -488,8 +488,8 @@ db_close(register struct db_i *dbip)
 	    }
 
 	    /* Put 'dp' back on the freelist */
-	    dp->d_forw = rt_uniresource.re_directory_hd;
-	    rt_uniresource.re_directory_hd = dp;
+	    dp->d_forw = dbip->i->dbi_directory_hd;
+	    dbip->i->dbi_directory_hd = dp;
 
 	    /* null'ing the forward pointer here is a huge
 	     * memory leak as it causes the loss of all
@@ -639,6 +639,8 @@ db_i_internal_create(void)
     BU_GET(i, struct db_i_internal);
     i->dbi_magic = DBI_MAGIC;
     i->material_head = MATER_NULL;
+    i->dbi_directory_hd = NULL;
+    bu_ptbl_init(&i->dbi_directory_blocks, 8, "dbi_directory_blocks");
 
     return i;
 }
@@ -651,6 +653,11 @@ db_i_internal_destroy(struct db_i_internal *i)
 
     if (i->mesh_c)
 	bv_mesh_lod_context_destroy(i->mesh_c);
+
+    /* Free any directory blocks */
+    for (size_t ii = 0; ii < BU_PTBL_LEN(&i->dbi_directory_blocks); ii++)
+	bu_free(BU_PTBL_GET(&i->dbi_directory_blocks, ii), "directory block");
+    bu_ptbl_free(&i->dbi_directory_blocks);
 
     /* Free any remaining material entries (normally freed by db_mater_free) */
     while (i->material_head != MATER_NULL) {

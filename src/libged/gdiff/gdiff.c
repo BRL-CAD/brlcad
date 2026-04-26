@@ -157,12 +157,12 @@ check_walk(int *diff,
 	struct rt_db_internal in1, in2;
 	struct rt_comb_internal *comb1, *comb2;
 
-	if (rt_db_get_internal5(&in1, dp1, dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal5(&in1, dp1, dbip, NULL) < 0) {
 	    *diff = 1;
 	    return;
 	}
 
-	if (rt_db_get_internal5(&in2, dp2, dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal5(&in2, dp2, dbip, NULL) < 0) {
 	    *diff = 1;
 	    return;
 	}

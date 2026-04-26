@@ -358,7 +358,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
      struct directory *dp
      struct rt_db_internal in;
      int n_leaves;
-     if (!rt_db_lookup_internal(db, obj, &dp, &in, LOOKUP_NOISY, &rt_uniresource))
+     if (!rt_db_lookup_internal(db, obj, &dp, &in, LOOKUP_NOISY))
      bu_exit(EXIT_FAILURE, "Failed to read object to raytrace");
      n_leaves = db_count_tree_nodes(((struct rt_comb_internal *)in.idb_ptr)->tree, 0);
      rt_db_free_internal(&in);

@@ -113,7 +113,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     struct rt_db_internal *ip;
     BU_GET(ip, struct rt_db_internal);
     RT_DB_INTERNAL_INIT(ip);
-    ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, mat, &rt_uniresource);
+    ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, mat);
     if (ret < 0) {
 	db_free_full_path(fp);
 	BU_PUT(fp, struct db_full_path);

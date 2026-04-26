@@ -79,7 +79,7 @@ ged_nmg_cmface_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (rt_db_get_internal(&internal, dp, gedp->dbip,
-       bn_mat_identity, &rt_uniresource) < 0) {
+       bn_mat_identity) < 0) {
        bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
        return BRLCAD_ERROR;
     }

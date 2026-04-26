@@ -404,7 +404,7 @@ register_region(struct db_tree_state* tsp,
     struct rt_db_internal intern;
     struct rt_material_internal* material_ip;
     if (dp1 != RT_DIR_NULL) {
-	if (rt_db_get_internal(&intern, dp1, tsp->ts_dbip, NULL, &rt_uniresource) >= 0) {
+	if (rt_db_get_internal(&intern, dp1, tsp->ts_dbip, NULL) >= 0) {
 	    if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 		material_ip = (struct rt_material_internal*)intern.idb_ptr;
 		bu_vls_printf(&m, "%s", bu_avs_get(&material_ip->opticalProperties, "OSL"));

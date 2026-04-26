@@ -203,7 +203,7 @@ _bot_cmd_subd(void* bs, int argc, const char** argv)
     }
     bu_vls_free(&output_bot_name);
 
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, dbip, &intern) < 0) {
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }

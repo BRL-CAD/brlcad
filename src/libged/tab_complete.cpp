@@ -110,7 +110,7 @@ path_match(const char ***completions, struct bu_vls *prefix, struct db_i *dbip, 
 	return BRLCAD_ERROR;
 
     struct rt_db_internal in;
-    if (rt_db_get_internal(&in, cdp, dbip, NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&in, cdp, dbip, NULL) < 0)
 	return BRLCAD_ERROR;
     struct rt_comb_internal *comb = (struct rt_comb_internal *)in.idb_ptr;
     if (!comb) {

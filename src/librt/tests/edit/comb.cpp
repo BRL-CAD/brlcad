@@ -100,7 +100,7 @@ reload_comb(struct rt_edit *s, const char *comb_name, struct db_i *dbip)
 
     rt_db_free_internal(&s->es_int);
     RT_DB_INTERNAL_INIT(&s->es_int);
-    if (rt_db_get_internal(&s->es_int, dp, dbip, NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&s->es_int, dp, dbip, NULL) < 0)
 	bu_exit(1, "ERROR: reload_comb: rt_db_get_internal failed\n");
 }
 

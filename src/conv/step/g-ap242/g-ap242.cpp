@@ -173,7 +173,7 @@ main(int argc, char *argv[])
 
     /* Now, add actual DATA */
     struct rt_db_internal intern;
-    rt_db_get_internal(&intern, dp, dbip, bn_mat_identity, &rt_uniresource);
+    rt_db_get_internal(&intern, dp, dbip, bn_mat_identity);
     RT_CK_DB_INTERNAL(&intern);
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
     if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION) {

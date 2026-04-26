@@ -69,7 +69,7 @@ ged_remove_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return BRLCAD_ERROR;
     }
@@ -80,7 +80,7 @@ ged_remove_core(struct ged *gedp, int argc, const char *argv[])
     /* Process each argument */
     ret = BRLCAD_OK;
     for (i = 2; i < argc; i++) {
-	if (db_tree_del_dbleaf(&(comb->tree), argv[i], &rt_uniresource, 0) < 0) {
+	if (db_tree_rm_dbleaf(&(comb->tree), argv[i], 0) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, argv[i]);
 	    ret = BRLCAD_ERROR;
 	} else {
@@ -93,7 +93,7 @@ ged_remove_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &intern) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	return BRLCAD_ERROR;
     }

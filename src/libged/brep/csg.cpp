@@ -486,7 +486,7 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
     struct rt_db_internal intern;
     struct rt_brep_internal *brep_ip = NULL;
     RT_DB_INTERNAL_INIT(&intern)
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL) < 0) {
 	return -1;
     }
     if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
@@ -703,7 +703,7 @@ comb_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set 
 
     RT_DB_INTERNAL_INIT(&intern)
 
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL) < 0) {
 	return -1;
     }
 

@@ -308,8 +308,7 @@ RT_EXPORT extern void db_free_db_tree_state(struct db_tree_state *tsp);
  * then set ts_dbip in your copy.
  */
 RT_EXPORT extern void db_init_db_tree_state(struct db_tree_state *tsp,
-					    struct db_i *dbip,
-					    struct resource *resp);
+					    struct db_i *dbip);
 RT_EXPORT extern struct combined_tree_state *db_new_combined_tree_state(const struct db_tree_state *tsp,
 									const struct db_full_path *pathp);
 RT_EXPORT extern struct combined_tree_state *db_dup_combined_tree_state(const struct combined_tree_state *old);
@@ -353,10 +352,8 @@ RT_EXPORT extern union tree *db_find_named_leaf(union tree *tp, const char *cp);
 RT_EXPORT extern union tree *db_find_named_leafs_parent(int *side,
 							union tree *tp,
 							const char *cp);
-RT_EXPORT extern void db_tree_del_lhs(union tree *tp,
-				      struct resource *resp);
-RT_EXPORT extern void db_tree_del_rhs(union tree *tp,
-				      struct resource *resp);
+RT_EXPORT extern void db_tree_del_lhs(union tree *tp);
+RT_EXPORT extern void db_tree_del_rhs(union tree *tp);
 
 /**
  * Given a name presumably referenced in a OP_DB_LEAF node, delete
@@ -378,10 +375,16 @@ RT_EXPORT extern void db_tree_del_rhs(union tree *tp,
  * -1 Unable to find OP_DB_LEAF node specified by 'cp'.
  * 0 OK
  */
-RT_EXPORT extern int db_tree_del_dbleaf(union tree **tp,
+RT_EXPORT extern int db_tree_rm_dbleaf(union tree **tp,
+					const char *cp,
+					int nflag);
+
+/* Old deprecated form that takes a struct resource */
+DEPRECATED RT_EXPORT extern int db_tree_del_dbleaf(union tree **tp,
 					const char *cp,
 					struct resource *resp,
 					int nflag);
+
 
 /**
  * Multiply on the left every matrix found in a DB_LEAF node in a
@@ -449,8 +452,7 @@ RT_EXPORT extern int db_follow_path_for_state(struct db_tree_state *tsp,
 					      struct db_full_path *pathp,
 					      const char *orig_str, int noisy);
 
-RT_EXPORT extern union tree *db_dup_subtree(const union tree *tp,
-					    struct resource *resp);
+RT_EXPORT extern union tree *db_dup_subtree(const union tree *tp);
 RT_EXPORT extern void db_ck_tree(const union tree *tp);
 
 
@@ -458,8 +460,7 @@ RT_EXPORT extern void db_ck_tree(const union tree *tp);
  * Release all storage associated with node 'tp', including children
  * nodes.
  */
-RT_EXPORT extern void db_free_tree(union tree *tp,
-				   struct resource *resp);
+RT_EXPORT extern void db_free_tree(union tree *tp);
 
 
 /**
@@ -476,8 +477,7 @@ RT_EXPORT extern void db_left_hvy_node(union tree *tp);
  * but union operations, and any non-union operations are clustered
  * down near the region nodes.
  */
-RT_EXPORT extern void db_non_union_push(union tree *tp,
-					struct resource *resp);
+RT_EXPORT extern void db_non_union_push(union tree *tp);
 
 /**
  * Return a count of the number of "union tree" nodes below "tp",
@@ -497,8 +497,7 @@ RT_EXPORT extern int db_count_subtree_regions(const union tree *tp);
 RT_EXPORT extern int db_tally_subtree_regions(union tree        *tp,
 					      union tree        **reg_trees,
 					      int               cur,
-					      int               lim,
-					      struct resource *resp);
+					      int               lim);
 
 /**
  * This is the top interface to the "tree walker."
@@ -601,7 +600,7 @@ RT_EXPORT extern int db_tree_list(struct bu_vls *vls, const union tree *tp);
  * Take a TCL-style string description of a binary tree, as produced
  * by db_tree_list(), and reconstruct the in-memory form of that tree.
  */
-RT_EXPORT extern union tree *db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp);
+RT_EXPORT extern union tree *db_tree_parse(struct bu_vls *vls, const char *str);
 
 /**
  * This subroutine is called for a no-frills tree-walk, with the
@@ -609,8 +608,13 @@ RT_EXPORT extern union tree *db_tree_parse(struct bu_vls *vls, const char *str, 
  * (solid) node, respectively.
  *
  * This routine is recursive, so no variables may be declared static.
+ *
+ * We're removing the resource pointer, but since it is not the last
+ * parameter we're using db_treewalk_basic where we would use db_functree.
+ * Once deprecation is complete, we'll probably rename db_treewalk_basic
+ * back to db_functree...
  */
-RT_EXPORT extern void db_functree(struct db_i *dbip,
+DEPRECATED RT_EXPORT extern void db_functree(struct db_i *dbip,
 				  struct directory *dp,
 				  void (*comb_func)(struct db_i *,
 						    struct directory *,
@@ -620,6 +624,17 @@ RT_EXPORT extern void db_functree(struct db_i *dbip,
 						    void *),
 				  struct resource *resp,
 				  void *client_data);
+
+RT_EXPORT extern void db_treewalk_basic(struct db_i *dbip,
+				  struct directory *dp,
+				  void (*comb_func)(struct db_i *,
+						    struct directory *,
+						    void *),
+				  void (*leaf_func)(struct db_i *,
+						    struct directory *,
+						    void *),
+				  void *client_data);
+
 /**
  * Ray Tracing library database tree walker.
  *
@@ -653,8 +668,7 @@ RT_EXPORT extern int rt_bound_tree(const union tree     *tp,
  * 0 this node is OK.
  * -1 request caller to kill this node
  */
-RT_EXPORT extern int rt_tree_elim_nops(union tree *,
-				       struct resource *resp);
+RT_EXPORT extern int rt_tree_elim_nops(union tree *);
 
 /**
  * Return count of number of leaf nodes in this tree.
@@ -668,14 +682,14 @@ RT_EXPORT extern size_t db_tree_nleaves(const union tree *tp);
  *
  * This is done using the db_non_union_push() routine.
  *
- * If argument 'free' is non-zero, then the non-leaf nodes are freed
+ * If argument 'freeflag' is non-zero, then the non-leaf nodes are freed
  * along the way, to prevent memory leaks.  In this case, the caller's
  * copy of 'tp' will be invalid upon return.
  *
  * When invoked at the very top of the tree, the op argument must be
  * OP_UNION.
  */
-RT_EXPORT extern struct rt_tree_array *db_flatten_tree(struct rt_tree_array *rt_tree_array, union tree *tp, int op, int avail, struct resource *resp);
+RT_EXPORT extern struct rt_tree_array *db_flatten_tree(struct rt_tree_array *rt_tree_array, union tree *tp, int op, int freeflag);
 
 
 /**
@@ -686,8 +700,7 @@ RT_EXPORT extern void db_tree_flatten_describe(struct bu_vls    *vls,
 					       const union tree *tp,
 					       int              indented,
 					       int              lvl,
-					       double           mm2local,
-					       struct resource  *resp);
+					       double           mm2local);
 
 RT_EXPORT extern void db_tree_describe(struct bu_vls    *vls,
 				       const union tree *tp,
@@ -731,12 +744,10 @@ RT_EXPORT extern int db_ck_v4gift_tree(const union tree *tp);
  * top of the tree.
  */
 RT_EXPORT extern union tree *db_mkbool_tree(struct rt_tree_array *rt_tree_array,
-					    size_t              howfar,
-					    struct resource     *resp);
+					    size_t              howfar);
 
 RT_EXPORT extern union tree *db_mkgift_tree(struct rt_tree_array *trees,
-					    size_t subtreecount,
-					    struct resource *resp);
+					    size_t subtreecount);
 
 
 RT_EXPORT extern void rt_optim_tree(union tree *tp,

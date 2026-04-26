@@ -496,7 +496,7 @@ nmgbld(struct ascv4_rstate *s)
 
     /* Next, import this disk record into memory */
     RT_DB_INTERNAL_INIT(&intern);
-    if (OBJ[ID_NMG].ft_import5(&intern, &ext, bn_mat_identity, s->ofp->dbip, &rt_uniresource) < 0)
+    if (OBJ[ID_NMG].ft_import5(&intern, &ext, bn_mat_identity, s->ofp->dbip) < 0)
 	bu_exit(-1, "ft_import5 failed on NMG %s\n", name);
     bu_free_external(&ext);
 
@@ -1135,7 +1135,7 @@ polyhbld(struct ascv4_rstate *s)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    if (rt_pg_to_bot(&intern, &tol, &rt_uniresource) < 0)
+    if (rt_pg_to_bot(&intern, &tol) < 0)
 	bu_exit(1, "Failed to convert [%s] polysolid object to triangle mesh\n", name);
     /* The polysolid is freed by the converter */
 
@@ -1888,7 +1888,7 @@ cline_dump(struct ascv4_wstate *s)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_CLINE].ft_import4(&intern, &ext, s->id_mat, DBI_NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_CLINE].ft_import4(&intern, &ext, s->id_mat, DBI_NULL)) != 0) {
 	fprintf(stderr, "g2asc: cline import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -1923,7 +1923,7 @@ bot_dump(struct ascv4_wstate *s)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_BOT].ft_import4(&intern, &ext, s->id_mat, DBI_NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_BOT].ft_import4(&intern, &ext, s->id_mat, DBI_NULL)) != 0) {
 	fprintf(stderr, "g2asc: bot import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -1976,7 +1976,7 @@ pipe_dump(struct ascv4_wstate *s)	/* Print out Pipe record information */
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_PIPE].ft_import4(&intern, &ext, s->id_mat, NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_PIPE].ft_import4(&intern, &ext, s->id_mat, NULL)) != 0) {
 	fprintf(stderr, "g2asc: pipe import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -2026,7 +2026,7 @@ particle_dump(struct ascv4_wstate *s)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_PARTICLE].ft_import4(&intern, &ext, s->id_mat, NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_PARTICLE].ft_import4(&intern, &ext, s->id_mat, NULL)) != 0) {
 	fprintf(stderr, "g2asc: particle import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -2083,7 +2083,7 @@ arbn_dump(struct ascv4_wstate *s)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_ARBN].ft_import4(&intern, &ext, s->id_mat, NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_ARBN].ft_import4(&intern, &ext, s->id_mat, NULL)) != 0) {
 	fprintf(stderr, "g2asc: arbn import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -2459,7 +2459,7 @@ extrdump(struct ascv4_wstate *s)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_EXTRUDE].ft_import4(&intern, &ext, s->id_mat, DBI_NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_EXTRUDE].ft_import4(&intern, &ext, s->id_mat, DBI_NULL)) != 0) {
 	fprintf(stderr, "g2asc: extrusion import failure\n");
 	bu_exit(-1, NULL);
     }
@@ -2497,7 +2497,7 @@ sketchdump(struct ascv4_wstate *s)
 
     /* Hand off to librt's import() routine */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((OBJ[ID_SKETCH].ft_import4(&intern, &ext, s->id_mat, DBI_NULL, &rt_uniresource)) != 0) {
+    if ((OBJ[ID_SKETCH].ft_import4(&intern, &ext, s->id_mat, DBI_NULL)) != 0) {
 	fprintf(stderr, "g2asc: sketch import failure\n");
 	bu_exit(-1, NULL);
     }

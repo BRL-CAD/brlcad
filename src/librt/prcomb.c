@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 	    continue;
 	}
 
-	if (rt_db_get_internal(&ip, dp, dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&ip, dp, dbip, NULL) < 0) {
 	    bu_log("import of %s failed\n", dp->d_namep);
 	    continue;
 	}

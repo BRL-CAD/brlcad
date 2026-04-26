@@ -101,7 +101,7 @@ ged_trace(struct directory *dp,
     }
 
     if (dp->d_flags & RT_DIR_COMB) {
-	if (rt_db_get_internal(&intern, dp, gtdp->gtd_gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gtdp->gtd_gedp->dbip, (fastf_t *)NULL) < 0) {
 	    bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "Database read error, aborting");
 	    return;
 	}
@@ -163,7 +163,7 @@ ged_trace(struct directory *dp,
 
     /* NOTE - only reach here if gtd_flag == _GED_LISTEVAL */
     bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "/");
-    id = rt_db_get_internal(&intern, dp, gtdp->gtd_gedp->dbip, gtdp->gtd_xform, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, gtdp->gtd_gedp->dbip, gtdp->gtd_xform);
     if (id < 0) {
 	bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
 	return;
