@@ -53,7 +53,7 @@ main(int UNUSED(argc), char *argv[])
 	VSET(v, -10, -10, 0);
 	VSET(h, 0, 5, 20);
 	mk_rcc(wdbp, "rcc_1.s", v, h, r);
-	db_update_nref(dbip, &rt_uniresource);
+	db_update_nref(dbip);
     }
 
     {
@@ -69,7 +69,7 @@ main(int UNUSED(argc), char *argv[])
 	    rt_db_put_internal(wdp, dbip, ointern);
 	    rt_db_free_internal(ointern);
 	    BU_PUT(ointern, struct rt_db_internal);
-	    db_update_nref(dbip, &rt_uniresource);
+	    db_update_nref(dbip);
 	}
     }
 
@@ -115,7 +115,7 @@ main(int UNUSED(argc), char *argv[])
 	VSET(pts8[7], -24.8507, -24.8507, 24.8507 );
 	mk_arb8(wdbp, "arb8_1.s", (const fastf_t *)pts8);
 #endif
-	db_update_nref(dbip, &rt_uniresource);
+	db_update_nref(dbip);
     }
     {
 	/* Make a perturbed version */
@@ -130,7 +130,7 @@ main(int UNUSED(argc), char *argv[])
 	    rt_db_put_internal(wdp, dbip, ointern);
 	    rt_db_free_internal(ointern);
 	    BU_PUT(ointern, struct rt_db_internal);
-	    db_update_nref(dbip, &rt_uniresource);
+	    db_update_nref(dbip);
 	}
     }
 

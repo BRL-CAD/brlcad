@@ -1057,9 +1057,8 @@ run_tess(const char *label,
 	    tmp_intern.idb_type       = ip->idb_minor_type;
 	    tmp_intern.idb_ptr        = ip->idb_ptr;
 	    tmp_intern.idb_meth       = &OBJ[ip->idb_minor_type];
-	    if (rt_db_cvt_to_external5(&ext, prim_name, &tmp_intern, 1.0,
-				       g_wdb->dbip, &rt_uniresource,
-				       ip->idb_major_type) == 0) {
+	    if (rt_db_cvt_to_ext5(&ext, prim_name, &tmp_intern, 1.0,
+				       g_wdb->dbip, ip->idb_major_type) == 0) {
 		int flags = db_flags_internal(&tmp_intern);
 		(void)wdb_export_external(g_wdb, &ext, prim_name,
 					  flags, ip->idb_type);

@@ -157,7 +157,7 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
      *
      * Shading is be done in "region coordinates":
      */
-    db_region_mat(tcl_sp->tcl_m_to_r, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
+    db_region_mat(tcl_sp->tcl_m_to_r, rtip->rti_dbip, rp->reg_name);
 
 
     if (optical_debug&OPTICAL_DEBUG_SHADE) {

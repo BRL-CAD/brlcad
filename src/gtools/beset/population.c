@@ -315,7 +315,6 @@ pop_mutate(int type, void *ptr)
 void
 pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	     union tree *tp,
-	     struct resource *resp,
 	     char *name
     )
 {
@@ -388,10 +387,10 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	     * to be modified to point to the new child node */
 	    if (crossover && node_idx == crossover_node)
 		crossover_parent = &tp->tr_b.tb_left;
-	    pop_functree( dbi_p, dbi_c, tp->tr_b.tb_left, resp, name);
+	    pop_functree( dbi_p, dbi_c, tp->tr_b.tb_left, name);
 	    if (crossover && node_idx == crossover_node)
 		crossover_parent = &tp->tr_b.tb_right;
-	    pop_functree( dbi_p, dbi_c, tp->tr_b.tb_right, resp, name);
+	    pop_functree( dbi_p, dbi_c, tp->tr_b.tb_right, name);
 	    break;
 
 	default:
@@ -400,7 +399,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 }
 
 void
-pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *child2_id, struct db_i *dbi_p, struct db_i *dbi_c, struct resource *resp)
+pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *child2_id, struct db_i *dbi_p, struct db_i *dbi_c)
 {
     struct rt_db_internal in1, in2;
     struct rt_comb_internal *parent1;
@@ -414,7 +413,6 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
     RT_CHECK_DBI( dbi_p );
     RT_CHECK_DBI( dbi_c );
-    RT_CK_RESOURCE( resp );
 
 
     crossover_point = (union tree *)NULL;
@@ -428,7 +426,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
     mutate = 0;
     switch (gop) {
 	case REPRODUCE:
-	    pop_functree(dbi_p, dbi_c, parent1->tree, resp, child1_id);
+	    pop_functree(dbi_p, dbi_c, parent1->tree, child1_id);
 	    break;
 	case CROSSOVER:
 
@@ -447,7 +445,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 		crossover_parent = &parent1->tree;
 		crossover_node = (int)(pop_rand() * db_count_tree_nodes(parent1->tree, 0));
 		node_idx = 0;
-		pop_functree(dbi_p, dbi_c, parent1->tree, resp, NULL);
+		pop_functree(dbi_p, dbi_c, parent1->tree, NULL);
 		cross_parent = crossover_parent;
 		cpoint = crossover_point;
 
@@ -491,9 +489,9 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    crossover = 0;
 
 	    /*duplicate shapes held in trees*/
-	    pop_functree(dbi_p, dbi_c, parent1->tree, resp, child1_id);
+	    pop_functree(dbi_p, dbi_c, parent1->tree, child1_id);
 	    shape_number = 0;
-	    pop_functree(dbi_p, dbi_c, parent2->tree, resp, child2_id);
+	    pop_functree(dbi_p, dbi_c, parent2->tree, child2_id);
 
 
 	    if ((dp = db_diradd(dbi_c, child2_id, -1, 0, dp->d_flags, (void *)&dp->d_minor_type)) == RT_DIR_NULL)
@@ -508,7 +506,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    crossover_node = (int)(pop_rand() * db_count_tree_nodes(parent1->tree, 0));
 	    node_idx = 0;
 	    mutate = 1;
-	    pop_functree(dbi_p, dbi_c, parent1->tree, resp, child1_id);
+	    pop_functree(dbi_p, dbi_c, parent1->tree, child1_id);
 	    mutate = 0;
 	    break;
 	    /*
@@ -518,7 +516,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    s_node = n;
 	    node = 0;
 	    //find node
-	    pop_functree(dbi_p, dbi_c, parent1->tree, resp, NULL);
+	    pop_functree(dbi_p, dbi_c, parent1->tree, NULL);
 	    */
 
 

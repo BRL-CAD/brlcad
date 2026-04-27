@@ -71,7 +71,7 @@ path_to_matrix(db_i &db, const db_full_path &path, fastf_t * const result)
     db_full_path_init(&temp);
     db_dup_full_path(&temp, &path);
 
-    if (1 != db_path_to_mat(&db, &temp, result, 0, &rt_uniresource))
+    if (1 != db_path_to_mat(&db, &temp, result, 0))
 	throw std::runtime_error("db_path_to_mat() failed");
 }
 

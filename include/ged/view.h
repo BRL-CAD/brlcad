@@ -213,7 +213,6 @@ struct draw_update_data_t {
     const struct bn_tol *tol;
     const struct bg_tess_tol *ttol;
     struct bv_mesh_lod_context *mesh_c;
-    struct resource *res;
 };
 
 GED_EXPORT extern unsigned long long dl_name_hash(struct ged *gedp);

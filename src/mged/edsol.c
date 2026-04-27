@@ -1014,7 +1014,7 @@ init_sedit(struct mged_state *s)
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, MEDIT(s)->e_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, MEDIT(s)->e_mat, bdata->s_fullpath.fp_len-1);
 
     /* get the inverse matrix */
     bn_mat_inv(MEDIT(s)->e_invmat, MEDIT(s)->e_mat);
@@ -1111,7 +1111,7 @@ replot_editing_solid(struct mged_state *s)
 	    if (sp->s_u_data) {
 		bdata = (struct ged_bv_data *)sp->s_u_data;
 		if (LAST_SOLID(bdata) == illdp) {
-		    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+		    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1);
 		    (void)replot_modified_solid(s, sp, &MEDIT(s)->es_int, mat);
 		}
 	    }
@@ -5869,7 +5869,7 @@ init_oedit_guts(struct mged_state *s)
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, MEDIT(s)->e_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, MEDIT(s)->e_mat, bdata->s_fullpath.fp_len-1);
 
     /* get the inverse matrix */
     bn_mat_inv(MEDIT(s)->e_invmat, MEDIT(s)->e_mat);
@@ -5963,7 +5963,7 @@ oedit_apply(struct mged_state *s, int continue_editing)
 	    MAT_IDN(deltam);
 	    MAT_IDN(tempm);
 
-	    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, topm, ipathpos-1, &rt_uniresource);
+	    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, topm, ipathpos-1);
 
 	    bn_mat_inv(inv_topm, topm);
 
@@ -7718,7 +7718,7 @@ f_oedit_apply(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), const
 
     /* Save aggregate path matrix */
     MAT_IDN(MEDIT(s)->e_mat);
-    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, MEDIT(s)->e_mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(s->dbip, &bdata->s_fullpath, MEDIT(s)->e_mat, bdata->s_fullpath.fp_len-1);
 
     /* get the inverse matrix */
     bn_mat_inv(MEDIT(s)->e_invmat, MEDIT(s)->e_mat);

@@ -99,7 +99,7 @@ ged_remove_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // Comb changed, need to update nref count
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     return ret;
 }

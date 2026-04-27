@@ -86,7 +86,6 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
     ts = wdbp->wdb_initial_tree_state;	/* struct copy */
 
     ts.ts_dbip = gedp->dbip;
-    ts.ts_resp = &rt_uniresource;
     MAT_IDN(ts.ts_mat);
     db_full_path_init(&anp.an_path);
     if (child == NULL

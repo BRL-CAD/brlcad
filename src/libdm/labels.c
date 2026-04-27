@@ -572,7 +572,6 @@ dm_draw_prim_labels(struct dm *dmp,
     db_full_path_init(&path);
     ts = wdbp->wdb_initial_tree_state;     /* struct copy */
     ts.ts_dbip = wdbp->dbip;
-    ts.ts_resp = &rt_uniresource;
     MAT_IDN(ts.ts_mat);
 
     if (db_follow_path_for_state(&ts, &path, name, 0)) {

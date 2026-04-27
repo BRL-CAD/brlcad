@@ -63,7 +63,7 @@ ged_adjust_core(struct ged *gedp, int argc, const char *argv[])
 
     GED_DB_LOOKUP(gedp, dp, name, LOOKUP_QUIET, BRLCAD_ERROR);
 
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, (matp_t)NULL, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&intern);
 
     /* Find out what type of object we are dealing with and tweak it. */

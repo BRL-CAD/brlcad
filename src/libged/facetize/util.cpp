@@ -483,7 +483,7 @@ facetize_primitives_summary(struct _ged_facetize_state *s)
     struct db_i *cdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READONLY);
     if (cdbip) {
 	db_dirbuild(cdbip);
-	db_update_nref(cdbip, &rt_uniresource);
+	db_update_nref(cdbip);
 	method_scan(&method_sets, cdbip);
 	for (m_it = method_sets.begin(); m_it != method_sets.end(); ++m_it) {
 	    if (m_it->first == std::string("REPAIR")) {

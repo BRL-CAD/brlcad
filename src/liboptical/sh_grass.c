@@ -523,7 +523,7 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
      * fixed on the region when the region is moved (as in animation).
      * We need to get a matrix to perform the appropriate transform(s).
      */
-    db_region_mat(grass_sp->m_to_sh, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
+    db_region_mat(grass_sp->m_to_sh, rtip->rti_dbip, rp->reg_name);
 
     bn_mat_inv(grass_sp->sh_to_m, grass_sp->m_to_sh);
 

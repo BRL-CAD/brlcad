@@ -32,19 +32,31 @@
 
 __BEGIN_DECLS
 
-RT_EXPORT extern union tree *rt_booltree_leaf_tess(struct db_tree_state *tsp,
-						    const struct db_full_path *pathp,
-						    struct rt_db_internal *ip,
-						    void *client_data);
+RT_EXPORT extern union tree *rt_booltree_leaf_tess(
+	struct db_tree_state *tsp,
+	const struct db_full_path *pathp,
+	struct rt_db_internal *ip,
+	void *client_data);
 
-RT_EXPORT extern union tree *rt_booltree_evaluate(union tree *tp,
-						   struct bu_list *vlfree,
-						   const struct bn_tol *tol,
-						   struct resource *resp,
-						   int (*do_bool)(union tree *, union tree *, union tree *, int op, struct bu_list *, const struct bn_tol *, void *),
-						   int verbose,
-						   void *data
-						   );
+DEPRECATED RT_EXPORT extern union tree *rt_booltree_evaluate(
+	union tree *tp,
+	struct bu_list *vlfree,
+	const struct bn_tol *tol,
+	struct resource *resp,
+	int (*do_bool)(union tree *, union tree *, union tree *, int op, struct bu_list *, const struct bn_tol *, void *),
+	int verbose,
+	void *data
+	);
+
+
+RT_EXPORT extern union tree *rt_booltree_eval(
+	union tree *tp,
+	struct bu_list *vlfree,
+	const struct bn_tol *tol,
+	int (*do_bool)(union tree *, union tree *, union tree *, int op, struct bu_list *, const struct bn_tol *, void *),
+	int verbose,
+	void *data
+	);
 
 __END_DECLS
 

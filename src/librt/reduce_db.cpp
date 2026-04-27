@@ -245,7 +245,7 @@ Hierarchy::write()
 	it->second.write();
     }
 
-    db_update_nref(&m_db, &rt_uniresource);
+    db_update_nref(&m_db);
 }
 
 
@@ -258,7 +258,7 @@ Hierarchy::Hierarchy(db_i &db,
     m_combinations(),
     m_removed()
 {
-    db_update_nref(&db, &rt_uniresource);
+    db_update_nref(&db);
 
     AutoPtr<directory *> comb_dirs;
     std::size_t num_combs = db_ls(&db, DB_LS_COMB, NULL, &comb_dirs.ptr);

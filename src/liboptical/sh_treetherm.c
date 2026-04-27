@@ -438,7 +438,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
      *
      * Shading is done in "region coordinates":
      */
-    db_region_mat(tthrm_sp->tthrm_m_to_sh, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
+    db_region_mat(tthrm_sp->tthrm_m_to_sh, rtip->rti_dbip, rp->reg_name);
 
     if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("min_temp: %17.14e  max_temp %17.14e temp_scale: %17.14e\n",

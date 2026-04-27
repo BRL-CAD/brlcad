@@ -743,7 +743,7 @@ copy_comb(struct db_i *_dbip, struct directory *proto, void *state)
  * recursively copy a tree of geometry
  */
 static struct directory *
-copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struct clone_state *state)
+copy_tree(struct db_i *_dbip, struct directory *dp, struct clone_state *state)
 {
     size_t i;
     union record *rp = (union record *)NULL;
@@ -780,7 +780,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 		    bu_log("WARNING: failed to locate \"%s\"\n", rp[i].M.m_instname);
 		    continue;
 		}
-		copy = copy_tree(_dbip, mdp, resp, state);
+		copy = copy_tree(_dbip, mdp, state);
 		if (!copy) {
 		    errors++;
 		    bu_log("WARNING: unable to fully clone \"%s\"\n", rp[i].M.m_instname);
@@ -827,7 +827,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
  * if it's a combination/region.
  */
 static struct directory *
-copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state)
+copy_object(struct db_i *_dbip, struct clone_state *state)
 {
     struct directory *copy = (struct directory *)NULL;
     size_t i, j, idx;
@@ -835,7 +835,7 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
     init_list(&obj_list, state->n_copies);
 
     /* do the actual copying */
-    copy = copy_tree(_dbip, state->src, resp, state);
+    copy = copy_tree(_dbip, state->src, state);
 
     /* make sure it made what we hope/think it made */
     if (!copy || !is_in_list(obj_list, state->src->d_namep))
@@ -1155,7 +1155,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 
 		state.src = dps[j];
 		/* global dbip */
-		dps[j] = copy_object(s->dbip, &rt_uniresource, &state);
+		dps[j] = copy_object(s->dbip, &state);
 
 		if (!no_draw || s->mged_curr_dm != mged_dm_init_state) {
 		    redraw_visible_objects(s);

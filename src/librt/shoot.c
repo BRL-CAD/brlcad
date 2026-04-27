@@ -695,7 +695,6 @@ rt_shootray(register struct application *ap)
     RT_CK_RTI(rtip);
     resp = ap->a_resource;
     RT_CK_RESOURCE(resp);
-    ss.resp = resp;
 
     if (RT_G_DEBUG) {
 	/* only test extensively if something in run-time debug is enabled */
@@ -1357,7 +1356,6 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     RT_CK_RTI(rtip);
     resp = ap->a_resource;
     RT_CK_RESOURCE(resp);
-    ss.resp = resp;
 
     if (RT_G_DEBUG&(RT_DEBUG_ALLRAYS|RT_DEBUG_SHOOT|RT_DEBUG_PARTITION|RT_DEBUG_ALLHITS)) {
 	bu_log_indent_delta(2);

@@ -587,7 +587,7 @@ std::string content_hash(struct db_i *dbip, bool use_names, bool use_geometry, i
     if (!dbip)
 	return std::string();
 
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(dbip);
     tlsh::Tlsh hasher;
 
     if (use_names) {

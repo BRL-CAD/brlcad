@@ -175,7 +175,7 @@ rt_edit_create(struct db_full_path *dfp, struct db_i *dbip, struct bn_tol *tol, 
 	s->ipe_ptr = (*EDOBJ[DB_FULL_PATH_CUR_DIR(dfp)->d_minor_type].ft_prim_edit_create)(s);
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(dbip, dfp, s->e_mat, dfp->fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(dbip, dfp, s->e_mat, dfp->fp_len-1);
 
     /* get the inverse matrix */
     bn_mat_inv(s->e_invmat, s->e_mat);
@@ -329,7 +329,7 @@ rt_edit_reinit(struct rt_edit *s, struct db_full_path *dfp, struct db_i *dbip,
 	s->ipe_ptr = (*EDOBJ[DB_FULL_PATH_CUR_DIR(dfp)->d_minor_type].ft_prim_edit_create)(s);
 
     /* Compute aggregate path matrix and its inverse */
-    (void)db_path_to_mat(dbip, dfp, s->e_mat, dfp->fp_len - 1, &rt_uniresource);
+    (void)db_path_to_mat(dbip, dfp, s->e_mat, dfp->fp_len - 1);
     bn_mat_inv(s->e_invmat, s->e_mat);
 
     /* Establish initial keypoint */

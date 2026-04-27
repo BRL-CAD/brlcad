@@ -242,7 +242,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     if (gedp->dbip == DBI_NULL)
 	return BRLCAD_ERROR;
 
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, (fastf_t *)NULL, BRLCAD_ERROR);
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     if (comb) {
@@ -810,7 +810,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, dp, (fastf_t *)NULL, BRLCAD_ERROR);
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     } else {
@@ -887,7 +887,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 
 	    intern.idb_ptr = (void *)comb;
 
-	    GED_DB_PUT_INTERNAL(gedp, tmp_dp, &intern, &rt_uniresource, 0);
+	    GED_DB_PUT_INTERN(gedp, tmp_dp, &intern, 0);
 	}
 
 	/* reconstitute the new combination */

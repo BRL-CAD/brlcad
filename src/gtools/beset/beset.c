@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
 	snprintf(dbname, 256, "gen%.3d", g);
 	pop.db_c = db_create(dbname, BRLCAD_DB_FORMAT_LATEST);
 
-	pop_gop(REPRODUCE, argv[ac+2], NULL, argv[ac+2], NULL, source_db, pop.db_c, &rt_uniresource);
+	pop_gop(REPRODUCE, argv[ac+2], NULL, argv[ac+2], NULL, source_db, pop.db_c);
 
 
 	/* calculate sum of all fitnesses and find
@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
 	    /* keep upper N */
 	    if (i >= pop.size - opts.keep_upper) {
 		pop_gop(REPRODUCE, NL(pop.parent[i].id), NULL, NL(pop.child[i].id), NULL,
-			pop.db_p, pop.db_c, &rt_uniresource);
+			pop.db_p, pop.db_c);
 		continue;
 	    }
 
@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) {
 #endif
 		/* perform the genetic operation and output the child to the child database */
 		pop_gop(gop, NL(pop.parent[parent1].id), NULL, NL(pop.child[i].id), NULL,
-			pop.db_p, pop.db_c, &rt_uniresource);
+			pop.db_p, pop.db_c);
 	    } else {
 		/* If we're performing crossover, we need a second parent */
 		parent2 = pop_wrand_ind(pop.parent, pop.size, total_fitness, opts.kill_lower);
@@ -215,7 +215,7 @@ int main(int argc, char *argv[]) {
 #endif
 		/* perform the genetic operation and output the children to the child database */
 		pop_gop(gop, NL(pop.parent[parent1].id), NL(pop.parent[parent2].id), NL(pop.child[i-1].id), NL(pop.child[i].id),
-			pop.db_p, pop.db_c, &rt_uniresource);
+			pop.db_p, pop.db_c);
 	    }
 
 	}

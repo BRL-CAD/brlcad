@@ -252,7 +252,7 @@ build_rtip(long int test_num, const char *gfile, const char *objname, int stage_
 	if (rt_gettrees(rtip, 1, (const char **)&objname, ncpus) < 0) {
 	    bu_exit(1, "Test %ld: rt_getrees in stage %d failed\n", test_num, stage_num);
 	}
-	/* We're doing parallel prep, so we can't use rt_uniresource */
+	/* We're doing parallel prep, need one resource per thread */
 	for (int i = 0; i < ncpus; i++) {
 	    rt_init_resource(&resp[i], i, rtip);
 	}

@@ -36,8 +36,6 @@
 
 __BEGIN_DECLS
 
-struct resource;  /* forward declaration */
-
 /* struct rt_wdb database types (for wdb_type struct entry).
  * The "default" types will return the wdbp associated with
  * the dbip - i.e., if the dbip is an inmem it will return
@@ -67,7 +65,6 @@ struct rt_wdb {
 
     struct bg_tess_tol  wdb_ttol;
     struct bn_tol       wdb_tol;
-    struct resource*    wdb_resp;
 
     /* variables for name prefixing */
     struct bu_vls       wdb_prestr;

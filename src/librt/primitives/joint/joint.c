@@ -711,7 +711,7 @@ db_path_to_inverse_mat(struct db_i *dbip, const struct db_full_path *fpath, mat_
 	mat_t sub_mat, new_mat, new_mat_inv, comp;
 
 	sub_path.fp_len = i;
-	db_path_to_mat(dbip, &sub_path, sub_mat, 0, NULL);
+	db_path_to_mat(dbip, &sub_path, sub_mat, 0);
 
 	/* isolate to just the mat of the leaf directory */
 	bn_mat_mul(new_mat, inverse_mat, sub_mat);

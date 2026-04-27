@@ -293,7 +293,7 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
     bev_nmg_model = (struct model *)NULL;
 
     GED_DB_DIRADD(gedp, dp, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
 
     tmp_tree->tr_d.td_r = (struct nmgregion *)NULL;
 

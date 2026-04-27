@@ -468,7 +468,7 @@ int main(int argc, char *argv[])
     }
 
     /* find requested object */
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(dbip);
 
     dp = db_lookup(dbip, object, 0);
     if (dp == RT_DIR_NULL)

@@ -77,7 +77,6 @@
 #include "bv/defines.h"
 #include "rt/defines.h"
 #include "rt/db_internal.h"
-#include "rt/resource.h"
 
 __BEGIN_DECLS
 

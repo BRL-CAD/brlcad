@@ -798,8 +798,8 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 	BU_ASSERT(d->d_flags & (RT_DIR_COMB | RT_DIR_REGION));
 
 	/* sum transformation matrices */
-	GED_DB_GET_INTERNAL(gedp, &intern, d, (fastf_t *)NULL,
-			    &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, d, (fastf_t *)NULL,
+			    BRLCAD_ERROR);
 	comb_i = (struct rt_comb_internal *)intern.idb_ptr;
 	leaf = db_find_named_leaf(comb_i->tree, d_next->d_namep);
 	BU_ASSERT(leaf != TREE_NULL); /* path is validated */
@@ -832,8 +832,8 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 	    return BRLCAD_ERROR;
 	}
 
-	GED_DB_GET_INTERNAL(gedp, &intern, d, (fastf_t *)NULL,
-			    &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, d, (fastf_t *)NULL,
+			    BRLCAD_ERROR);
 	if (_ged_get_solid_keypoint(gedp, leaf_deltas, &intern, (const fastf_t *)gtd.gtd_xform) == BRLCAD_ERROR) {
 	    bu_vls_printf(gedp->ged_result_str, "\nunable to get natural origin"
 			  " of \"%s\"", d->d_namep);
@@ -1378,8 +1378,8 @@ edit_translate(struct ged *gedp, const vect_t *from,
 	union tree *leaf_to_modify;
 
 	d_to_modify = DB_FULL_PATH_GET(path, path->fp_len - (size_t)2);
-	GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, (fastf_t *)NULL,
-			    &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, d_to_modify, (fastf_t *)NULL,
+			    BRLCAD_ERROR);
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	leaf_to_modify = db_find_named_leaf(comb->tree, d_obj->d_namep);
 
@@ -1419,12 +1419,12 @@ edit_translate(struct ged *gedp, const vect_t *from,
 	bn_mat_mul(tmpMat, invXform, dmat);
 	bn_mat_mul(emat, tmpMat, gtd.gtd_xform);
 
-	GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, emat,
-			    &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, d_to_modify, emat,
+			    BRLCAD_ERROR);
     }
 
     RT_CK_DB_INTERNAL(&intern);
-    GED_DB_PUT_INTERNAL(gedp, d_to_modify, &intern, &rt_uniresource,
+    GED_DB_PUT_INTERN(gedp, d_to_modify, &intern,
 			BRLCAD_ERROR);
     rt_db_free_internal(&intern);
     return BRLCAD_OK;

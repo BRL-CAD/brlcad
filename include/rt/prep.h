@@ -29,7 +29,6 @@
 #include "bu/ptbl.h"
 #include "rt/defines.h"
 #include "rt/tree.h"
-#include "rt/resource.h"
 #include "rt/rt_instance.h"
 
 __BEGIN_DECLS
@@ -55,15 +54,9 @@ struct rt_reprep_obj_list {
 
 /* prep.c */
 RT_EXPORT extern int rt_unprep(struct rt_i *rtip,
-			       struct rt_reprep_obj_list *objs,
-			       struct resource *resp);
+			       struct rt_reprep_obj_list *objs);
 RT_EXPORT extern int rt_reprep(struct rt_i *rtip,
-			       struct rt_reprep_obj_list *objs,
-			       struct resource *resp);
-RT_EXPORT extern int re_prep_solids(struct rt_i *rtip,
-				    int num_solids,
-				    char **solid_names,
-				    struct resource *resp);
+			       struct rt_reprep_obj_list *objs);
 
 /**
  * Add a pre-prepped soltab into the rt_i space-partitioning structures.

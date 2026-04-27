@@ -251,7 +251,7 @@ build_convergence_db(struct db_i **dbip_out)
 	return -1;
     }
 
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(dbip);
     *dbip_out = dbip;
     return 0;
 }

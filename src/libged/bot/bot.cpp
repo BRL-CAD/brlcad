@@ -155,7 +155,7 @@ _bot_obj_setup(struct _ged_bot_info *gb, const char *name)
 
     BU_GET(gb->intern, struct rt_db_internal);
 
-    GED_DB_GET_INTERNAL(gb->gedp, gb->intern, gb->dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gb->gedp, gb->intern, gb->dp, bn_mat_identity, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(gb->intern);
 
     if (gb->intern->idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
@@ -593,7 +593,7 @@ _bot_cmd_isect(void *bs, int argc, const char **argv)
     struct directory *bot_dp_2;
     struct rt_db_internal intern_2;
     GED_DB_LOOKUP(gb->gedp, bot_dp_2, argv[1], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
-    GED_DB_GET_INTERNAL(gb->gedp, &intern_2, bot_dp_2, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gb->gedp, &intern_2, bot_dp_2, bn_mat_identity, BRLCAD_ERROR);
     if (intern_2.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern_2.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type bot\n", argv[1]);
 	rt_db_free_internal(&intern_2);
@@ -1009,7 +1009,6 @@ bot_output(struct bu_tbl *table, struct db_i *dbip, struct directory *dp)
     struct rt_db_internal intern;
     struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
     RT_DB_INTERNAL_INIT(&intern);
-    RT_CK_RESOURCE(&rt_uniresource);
     if (db_get_external(&ext, dp, dbip) < 0)
 	return;
     if (rt_db_external5_to_internal5(&intern, &ext, dp->d_namep, dbip, NULL) < 0) {

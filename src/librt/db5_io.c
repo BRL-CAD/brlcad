@@ -624,15 +624,13 @@ db5_make_free_object(struct bu_external *ep, size_t length)
     *cp = DB5HDR_MAGIC2;
 }
 
-
 int
-rt_db_cvt_to_external5(
+rt_db_cvt_to_ext5(
     struct bu_external *ext,
     const char *name,
     const struct rt_db_internal *ip,
     double conv2mm,
     struct db_i *dbip,
-    struct resource *resp,
     const int major)
 {
     struct bu_external attributes;
@@ -647,13 +645,6 @@ rt_db_cvt_to_external5(
     }
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);	/* may be null */
-
-    if (resp) {
-	RT_CK_RESOURCE(resp);
-    } else {
-	/* needed for call into functab */
-	resp = &rt_uniresource;
-    }
 
     /* prepare output */
     BU_EXTERNAL_INIT(ext);
@@ -694,6 +685,18 @@ rt_db_cvt_to_external5(
     return 0;		/* OK */
 }
 
+int
+rt_db_cvt_to_external5(
+    struct bu_external *ext,
+    const char *name,
+    const struct rt_db_internal *ip,
+    double conv2mm,
+    struct db_i *dbip,
+    struct resource *UNUSED(resp),
+    const int major)
+{
+    return rt_db_cvt_to_ext5(ext, name, ip, conv2mm, dbip, major);
+}
 
 int
 db_wrap_v5_external(struct bu_external *ep, const char *name)
@@ -808,7 +811,7 @@ rt_db_put_internal_v5(
     BU_ASSERT(dbip->i->dbi_version == 5);
 
     BU_EXTERNAL_INIT(&ext);
-    if (rt_db_cvt_to_external5(&ext, dp->d_namep, ip, 1.0, dbip, NULL, major) < 0) {
+    if (rt_db_cvt_to_ext5(&ext, dp->d_namep, ip, 1.0, dbip, major) < 0) {
 	bu_log("rt_db_put_internal5(%s):  export failure\n",
 	       dp->d_namep);
 	goto fail;

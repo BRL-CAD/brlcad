@@ -2238,7 +2238,7 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
  * Store an NMG model as a separate .g file, for later examination.
  * Don't free the model, as the caller may still have uses for it.
  *
- * NON-PARALLEL because of rt_uniresource.
+ * NON-PARALLEL because of rt_uniresource. TODO - is this still true?
  */
 void
 nmg_stash_model_to_file(const char *filename, const struct model *m, const char *title)
@@ -2275,7 +2275,7 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
 	}
 	db_wrap_v4_external(&ext, name);
     } else {
-	if (rt_db_cvt_to_external5(&ext, name, &intern, 1.0, fp->dbip, &rt_uniresource, intern.idb_major_type) < 0) {
+	if (rt_db_cvt_to_ext5(&ext, name, &intern, 1.0, fp->dbip, intern.idb_major_type) < 0) {
 	    bu_log("wdb_export4(%s): solid export failure\n",
 		   name);
 	    goto out;
@@ -2322,7 +2322,6 @@ nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pa
     BN_CK_TOL(tsp->ts_tol);
     BG_CK_TESS_TOL(tsp->ts_ttol);
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(tsp->ts_resp);
 
     RT_CK_FULL_PATH(pathp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
@@ -2360,7 +2359,7 @@ int nmg_bool_eval_silent=0;
  *
  * Typical calls will be of this form:
  * (void)nmg_model_fuse(m, tol);
- * curtree = rt_booltree_evaluate(curtree, vlfree, tol, resp, &rt_nmg_do_bool, 0, NULL);
+ * curtree = rt_booltree_eval(curtree, vlfree, tol, &rt_nmg_do_bool, 0, NULL);
  */
 int
 rt_nmg_do_bool(
@@ -2426,7 +2425,7 @@ rt_nmg_do_bool(
 union tree *
 nmg_booltree_evaluate(register union tree *tp, struct bu_list *vlfree, const struct bn_tol *tol)
 {
-    return rt_booltree_evaluate(tp, vlfree, tol, NULL, &rt_nmg_do_bool, nmg_bool_eval_silent, NULL);
+    return rt_booltree_eval(tp, vlfree, tol, &rt_nmg_do_bool, nmg_bool_eval_silent, NULL);
 }
 
 #if 0
@@ -2544,7 +2543,7 @@ nmg_boolean(union tree *tp, struct model *m, struct bu_list *vlfree, const struc
      * Evaluate the nodes of the boolean tree one at a time, until
      * only a single region remains.
      */
-    result = rt_booltree_evaluate(tp, vlfree, tol, NULL, &rt_nmg_do_bool, nmg_bool_eval_silent, NULL);
+    result = rt_booltree_eval(tp, vlfree, tol, &rt_nmg_do_bool, nmg_bool_eval_silent, NULL);
 
     if (result == TREE_NULL) {
 	bu_log("nmg_boolean(): result of nmg_booltree_evaluate() is NULL\n");

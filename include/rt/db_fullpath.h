@@ -31,7 +31,6 @@
 
 __BEGIN_DECLS
 
-struct resource;  /* forward declaration */
 struct db_i;      /* forward declaration */
 struct directory; /* forward declaration */
 
@@ -245,11 +244,7 @@ RT_EXPORT extern int db_full_path_cyclic(const struct db_full_path *fp, const ch
  *
  * Called in librt/db_tree.c, mged/dodraw.c, and mged/animedit.c
  */
-RT_EXPORT extern int db_path_to_mat(struct db_i *dbip,
-				    struct db_full_path	*pathp,
-				    mat_t mat, /* result */
-				    int depth, /* number of arcs */
-				    struct resource *resp);
+RT_EXPORT extern int db_path_to_mat(struct db_i *dbip, struct db_full_path *pathp, mat_t mat, int depth); /* number of arcs */
 
 /**
  * For a given path, return the "net" boolean operation of the
@@ -258,10 +253,7 @@ RT_EXPORT extern int db_path_to_mat(struct db_i *dbip,
  * op is reported as an intersection.  Else, union is reported.
  */
 RT_EXPORT extern int
-db_fp_op(const struct db_full_path *pathp,
-	struct db_i *dbip,
-	int depth, /* number of arcs - 0 == all */
-	struct resource *resp);
+db_fp_op(const struct db_full_path *pathp, struct db_i *dbip, int depth); /* number of arcs - 0 == all */
 
 /**
  * Determine the color operative at the current directory pointer (the leaf
@@ -269,10 +261,7 @@ db_fp_op(const struct db_full_path *pathp,
  *
  * If nothing can be determined default color is set.
  */
-RT_EXPORT extern void db_full_path_color(struct bu_color *c,
-				         struct db_full_path *pathp,
-				         struct db_i *dbip,
-				         struct resource *resp);
+RT_EXPORT extern void db_full_path_color(struct bu_color *c, struct db_full_path *pathp, struct db_i *dbip);
 
 
 /** @} */

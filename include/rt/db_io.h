@@ -34,11 +34,15 @@
 #include "bu/avs.h"
 #include "rt/db5.h"
 #include "rt/defines.h"
+#include "rt/resource.h"
 
 __BEGIN_DECLS
 
 
 struct rt_db_internal; /* forward declaration */
+struct db_i;           /* forward declaration */
+struct directory;      /* forward declaration */
+struct rt_wdb;         /* forward declaration */
 
 
 /* db_open.c */
@@ -172,13 +176,20 @@ RT_EXPORT extern void db5_export_object3(struct bu_external *out,
  * 0 OK
  * -1 FAIL
  */
-RT_EXPORT extern int rt_db_cvt_to_external5(struct bu_external *ext,
+RT_EXPORT extern int rt_db_cvt_to_ext5(struct bu_external *ext,
 					    const char *name,
 					    const struct rt_db_internal *ip,
 					    double conv2mm,
 					    struct db_i *dbip,
-					    struct resource *resp,
 					    const int major);
+
+DEPRECATED RT_EXPORT extern int rt_db_cvt_to_external5(struct bu_external *ext,
+                                            const char *name,
+                                            const struct rt_db_internal *ip,
+                                            double conv2mm,
+                                            struct db_i *dbip,
+                                            struct resource *resp,
+                                            const int major);
 
 
 /*
@@ -852,8 +863,7 @@ RT_EXPORT extern int db_rename(struct db_i *,
  * entry is referenced by a COMBination in the database).
  *
  */
-RT_EXPORT extern void db_update_nref(struct db_i *dbip,
-				     struct resource *resp);
+RT_EXPORT extern void db_update_nref(struct db_i *dbip);
 
 
 /* db_flags.c */
@@ -917,7 +927,6 @@ RT_EXPORT extern void db_alloc_dir_block(struct db_i *dbip);
  * in bu_malloc.
  */
 RT_EXPORT extern void rt_alloc_seg_block(struct resource *res);
-
 
 /**
  * Read named MGED db, build toc.

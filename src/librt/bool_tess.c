@@ -79,7 +79,6 @@ rt_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *path
 	NMG_CK_MODEL(*tsp->ts_m);
     BN_CK_TOL(tsp->ts_tol);
     BG_CK_TESS_TOL(tsp->ts_ttol);
-    RT_CK_RESOURCE(tsp->ts_resp);
 
     m = nmg_mm();
 
@@ -120,11 +119,10 @@ rt_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *path
  * Returns TREE_NULL if there is no geometry to return.
  */
 union tree *
-rt_booltree_evaluate(
+rt_booltree_eval(
 	register union tree *tp,
 	struct bu_list *vlfree,
 	const struct bn_tol *tol,
-	struct resource *resp,
 	int (*do_bool)(union tree *, union tree *, union tree *, int op, struct bu_list *, const struct bn_tol *, void *),
 	int verbose,
 	void *data
@@ -144,8 +142,6 @@ rt_booltree_evaluate(
     RT_CK_TREE(tp);
     if (tol)
 	BN_CK_TOL(tol);
-    if (resp)
-	RT_CK_RESOURCE(resp);
 
     switch (tp->tr_op) {
 	case OP_NOP:
@@ -170,8 +166,8 @@ rt_booltree_evaluate(
     }
 
     /* Handle a boolean operation node.  First get its leaves. */
-    tl = rt_booltree_evaluate(tp->tr_b.tb_left, vlfree, tol, resp, do_bool, verbose, data);
-    tr = rt_booltree_evaluate(tp->tr_b.tb_right, vlfree, tol, resp, do_bool, verbose, data);
+    tl = rt_booltree_eval(tp->tr_b.tb_left, vlfree, tol, do_bool, verbose, data);
+    tr = rt_booltree_eval(tp->tr_b.tb_right, vlfree, tol, do_bool, verbose, data);
 
     if (tl) {
 	RT_CK_TREE(tl);
@@ -293,6 +289,20 @@ rt_booltree_evaluate(
     db_free_tree(tr);
 
     return tp;
+}
+
+union tree *
+rt_booltree_evaluate(
+	register union tree *tp,
+	struct bu_list *vlfree,
+	const struct bn_tol *tol,
+	struct resource *UNUSED(resp),
+	int (*do_bool)(union tree *, union tree *, union tree *, int op, struct bu_list *, const struct bn_tol *, void *),
+	int verbose,
+	void *data
+	)
+{
+    return rt_booltree_eval(tp, vlfree, tol, do_bool, verbose, data);
 }
 
 /*

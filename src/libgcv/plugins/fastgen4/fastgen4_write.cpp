@@ -1304,7 +1304,7 @@ path_to_mat(db_i &db, const db_full_path &path, mat_t &result)
     db_full_path_init(&temp);
     db_dup_full_path(&temp, &path);
 
-    if (!db_path_to_mat(&db, &temp, result, 0, &rt_uniresource))
+    if (!db_path_to_mat(&db, &temp, result, 0))
 	throw std::runtime_error("db_path_to_mat() failed");
 }
 
@@ -1360,7 +1360,6 @@ path_is_subtracted(db_i &db, const db_full_path &path)
 {
     db_tree_state tree_state;
     RT_DBTS_INIT(&tree_state);
-    tree_state.ts_resp = &rt_uniresource;
     tree_state.ts_dbip = &db;
 
     db_full_path end_path;

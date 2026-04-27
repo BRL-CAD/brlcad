@@ -1340,7 +1340,7 @@ insert_in_bsp(struct soltab *stp, union cutter *cutp)
 }
 
 void
-fill_out_bsp(struct rt_i *rtip, union cutter *cutp, struct resource *resp, fastf_t bb[6])
+nfill_out_bsp(struct rt_i *rtip, union cutter *cutp, fastf_t bb[6])
 {
     fastf_t bb2[6];
     int i, j;
@@ -1364,9 +1364,45 @@ fill_out_bsp(struct rt_i *rtip, union cutter *cutp, struct resource *resp, fastf
 	    VMOVE(bb2, bb);
 	    VMOVE(&bb2[3], &bb[3]);
 	    bb[cutp->cn.cn_axis] = cutp->cn.cn_point;
-	    fill_out_bsp(rtip, cutp->cn.cn_r, resp, bb);
+	    nfill_out_bsp(rtip, cutp->cn.cn_r, bb);
 	    bb2[cutp->cn.cn_axis + 3] = cutp->cn.cn_point;
-	    fill_out_bsp(rtip, cutp->cn.cn_l, resp, bb2);
+	    nfill_out_bsp(rtip, cutp->cn.cn_l, bb2);
+	    break;
+	default:
+	    bu_log("nfill_out_bsp(): unrecognized cut type (%d) in BSP!\n", cutp->cut_type);
+	    bu_bomb("nfill_out_bsp(): unrecognized cut type in BSP!\n");
+    }
+
+}
+
+void
+fill_out_bsp(struct rt_i *rtip, union cutter *cutp, struct resource *UNUSED(resp), fastf_t bb[6])
+{
+    fastf_t bb2[6];
+    int i, j;
+
+    switch (cutp->cut_type) {
+	case CUT_BOXNODE:
+	    j = 3;
+	    for (i=0; i<3; i++) {
+		if (bb[i] >= INFINITY) {
+		    /* this node is at the edge of the model BB, make it fill the BB */
+		    cutp->bn.bn_min[i] = rtip->mdl_min[i];
+		}
+		if (bb[j] <= -INFINITY) {
+		    /* this node is at the edge of the model BB, make it fill the BB */
+		    cutp->bn.bn_max[i] = rtip->mdl_max[i];
+		}
+		j++;
+	    }
+	    break;
+	case CUT_CUTNODE:
+	    VMOVE(bb2, bb);
+	    VMOVE(&bb2[3], &bb[3]);
+	    bb[cutp->cn.cn_axis] = cutp->cn.cn_point;
+	    nfill_out_bsp(rtip, cutp->cn.cn_r, bb);
+	    bb2[cutp->cn.cn_axis + 3] = cutp->cn.cn_point;
+	    nfill_out_bsp(rtip, cutp->cn.cn_l, bb2);
 	    break;
 	default:
 	    bu_log("fill_out_bsp(): unrecognized cut type (%d) in BSP!\n", cutp->cut_type);

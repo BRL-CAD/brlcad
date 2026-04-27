@@ -212,7 +212,7 @@ ged_joint2_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, ndp, bn_mat_identity, BRLCAD_ERROR);
 
 
     RT_CK_DB_INTERNAL(&intern);
@@ -229,7 +229,7 @@ ged_joint2_core(struct ged *gedp, int argc, const char *argv[])
     if (BU_STR_EQUAL(argv[2], "selection")) {
 	int ret = joint_selection(gedp, &intern, argc, argv);
 	if (BU_STR_EQUAL(argv[3], "translate") && ret == 0) {
-	    GED_DB_PUT_INTERNAL(gedp, ndp, &intern, &rt_uniresource, BRLCAD_ERROR);
+	    GED_DB_PUT_INTERN(gedp, ndp, &intern, BRLCAD_ERROR);
 	}
 	rt_db_free_internal(&intern);
 	return ret;

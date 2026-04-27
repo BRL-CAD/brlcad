@@ -869,7 +869,7 @@ QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     // the nref updates (can that happen?).
     if (gedp->dbip && need_update_nref) {
 	// bu_log("missing callback in librt?\n");
-	db_update_nref(gedp->dbip, &rt_uniresource);
+	db_update_nref(gedp->dbip);
     }
 
     // If we have a new .g file, set the changed flag

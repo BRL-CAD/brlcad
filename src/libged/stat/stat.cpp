@@ -556,7 +556,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 #endif
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(dbip);
 
     // Combine verbosity and quiet flags
     verbosity = verbosity - quiet;

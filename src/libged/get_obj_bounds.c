@@ -134,7 +134,7 @@ _ged_get_obj_bounds2(struct ged *gedp,
 	return BRLCAD_ERROR;
 
     dp = gtdp->gtd_obj[gtdp->gtd_objpos-1];
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, gtdp->gtd_xform, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, gtdp->gtd_xform, BRLCAD_ERROR);
 
     /* Make a new rt_i instance from the existing db_i structure */
     rtip = rt_new_rti(gedp->dbip);

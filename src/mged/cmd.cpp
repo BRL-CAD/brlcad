@@ -2194,7 +2194,7 @@ cmd_rt_gettrees(ClientData clientData, Tcl_Interp *UNUSED(interpreter), int argc
      * because the bit vector lengths depend on # of solids.
      * And the "overwrite" sequence in Tcl is to create the new
      * proc before running the Tcl_CmdDeleteProc on the old one,
-     * which in this case would trash rt_uniresource.
+     * which in this case would trash rt_uniresource. (TODO - is this still true?)
      * Once on the rti_resources list, rt_clean() will clean 'em up.
      */
     BU_ALLOC(resp, struct resource);

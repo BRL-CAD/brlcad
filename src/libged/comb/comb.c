@@ -101,7 +101,7 @@ comb_tree_clear(struct ged *gedp, struct directory *dp)
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     /* Clear the tree from the original object */
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, (matp_t)NULL, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&intern);
     comb = (struct rt_comb_internal *)(&intern)->idb_ptr;
     RT_CK_COMB(comb);
@@ -492,7 +492,7 @@ comb_decimate(struct ged *gedp, struct directory *dp)
 	fastf_t avg_thickness;
 	fastf_t fs;
 	struct directory *bot_dp = (struct directory *)BU_PTBL_GET(bot_dps, i);
-	GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, bot_dp, bn_mat_identity, BRLCAD_ERROR);
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
 	rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&bot_dp->d_namep, 0, obj_min, obj_max);
@@ -660,7 +660,7 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Update references once before we start all of this - db_search
      * needs nref to be current to work correctly. */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     /* Do decimation, if that's enabled */
     if (do_decimation) {
@@ -771,7 +771,7 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Done changing stuff - update nref. */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     return BRLCAD_OK;
 }

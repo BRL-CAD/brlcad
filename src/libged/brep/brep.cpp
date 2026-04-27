@@ -193,7 +193,7 @@ _brep_cmd_boolean(void *bs, int argc, const char **argv)
 	}
     }
     struct rt_db_internal intern2;
-    GED_DB_GET_INTERNAL(gedp, &intern2, dp2, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern2, dp2, bn_mat_identity, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&intern2);
 
     db_op_t op = DB_OP_NULL;
@@ -344,7 +344,7 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", obj_names[i]);
 	    return BRLCAD_ERROR;
 	}
-	GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, dp, bn_mat_identity, BRLCAD_ERROR);
 	RT_CK_DB_INTERNAL(&intern);
 	bi = (struct rt_brep_internal*)intern.idb_ptr;
 	if (!RT_BREP_TEST_MAGIC(bi)) {
@@ -465,7 +465,7 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 	// brep_conversion_comb frees the intern, so make a new copy specifically for it to avoid
 	// a double-free with the top level cleanup of gb->intern
 	struct rt_db_internal intern;
-	GED_DB_GET_INTERNAL(gedp, &intern, gb->dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, gb->dp, bn_mat_identity, BRLCAD_ERROR);
 	RT_CK_DB_INTERNAL(&intern);
 
 	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -574,15 +574,15 @@ _brep_cmd_dump(void *bs, int argc, const char **argv)
     // Find all brep paths
     struct bu_ptbl breps = BU_PTBL_INIT_ZERO;
     const char *brep_search = "-type brep";
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
     (void)db_search(&breps, DB_SEARCH_TREE, brep_search, 1, &gb->dp, gedp->dbip, NULL, NULL, NULL);
     for (size_t i = 0; i < BU_PTBL_LEN(&breps); i++) {
 	struct db_full_path *fp = (struct db_full_path *)BU_PTBL_GET(&breps, i);
 	mat_t m;
 	struct bu_color c;
 	MAT_IDN(m);
-	db_path_to_mat(gedp->dbip, fp, m, 0, &rt_uniresource);
-	db_full_path_color(&c, fp, gedp->dbip, &rt_uniresource);
+	db_path_to_mat(gedp->dbip, fp, m, 0);
+	db_full_path_color(&c, fp, gedp->dbip);
 	struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
 	struct rt_db_internal intern;
 	if (rt_db_get_internal(&intern, dp, gedp->dbip, m) < 0) {
@@ -758,7 +758,7 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
 	}
     }
     struct rt_db_internal intern2;
-    GED_DB_GET_INTERNAL(gedp, &intern2, dp2, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern2, dp2, bn_mat_identity, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&intern2);
 
 
@@ -1086,7 +1086,7 @@ _brep_cmd_selection(void *bs, int argc, const char **argv)
 		return BRLCAD_ERROR;
 	    }
 	}
-	GED_DB_PUT_INTERNAL(gedp, gb->dp, &gb->intern, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_PUT_INTERN(gedp, gb->dp, &gb->intern, BRLCAD_ERROR);
     }
     return BRLCAD_OK;
 }
@@ -1558,7 +1558,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    GED_DB_GET_INTERNAL(gedp, &gb.intern, gb.dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &gb.intern, gb.dp, bn_mat_identity, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&gb.intern);
 
     gb.vbp = bv_vlblock_init(vlfree, 32);

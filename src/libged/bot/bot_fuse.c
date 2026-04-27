@@ -218,7 +218,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     bu_log("%s: start\n", argv[0]);
 
     GED_DB_LOOKUP(gedp, old_dp, argv[i+1], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
-    GED_DB_GET_INTERNAL(gedp, &intern, old_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, old_dp, bn_mat_identity, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], argv[i+1]);
@@ -314,7 +314,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     intern2.idb_ptr = (void *)bot;
 
     GED_DB_DIRADD(gedp, new_dp, argv[i], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern2.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, new_dp, &intern2, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, new_dp, &intern2, BRLCAD_ERROR);
 
     bu_log("%s: Created new BOT (%s)\n", argv[0], argv[i]);
     bu_log("%s: Done.\n", argv[0]);

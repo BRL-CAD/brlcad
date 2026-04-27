@@ -95,7 +95,9 @@ __BEGIN_DECLS
 	return (_flags); \
     }
 
-/** Get internal representation */
+/**
+ * Get internal representation
+ * DEPRECATED */
 #define GED_DB_GET_INTERNAL(_gedp, _intern, _dp, _mat, _resource, _flags) \
     if (rt_db_get_internal((_intern), (_dp), (_gedp)->dbip, (_mat)) < 0) { \
 	int ged_db_get_internal_quiet = (_flags) & GED_QUIET; \
@@ -105,7 +107,10 @@ __BEGIN_DECLS
 	return (_flags); \
     }
 
-/** Put internal representation */
+/**
+ * Put internal representation
+ * DEPRECATED
+ */
 #define GED_DB_PUT_INTERNAL(_gedp, _dp, _intern, _resource, _flags) \
     if (rt_db_put_internal((_dp), (_gedp)->dbip, (_intern)) < 0) { \
        int ged_db_put_internal_quiet = (_flags) & GED_QUIET; \
@@ -114,6 +119,28 @@ __BEGIN_DECLS
        } \
        return (_flags); \
     }
+
+
+/** Get internal representation */
+#define GED_DB_GET_INTERN(_gedp, _intern, _dp, _mat, _flags) \
+    if (rt_db_get_internal((_intern), (_dp), (_gedp)->dbip, (_mat)) < 0) { \
+	int ged_db_get_internal_quiet = (_flags) & GED_QUIET; \
+	if (!ged_db_get_internal_quiet) { \
+	    bu_vls_printf((_gedp)->ged_result_str, "Database read failure."); \
+	} \
+	return (_flags); \
+    }
+
+/** Put internal representation */
+#define GED_DB_PUT_INTERN(_gedp, _dp, _intern, _flags) \
+    if (rt_db_put_internal((_dp), (_gedp)->dbip, (_intern)) < 0) { \
+       int ged_db_put_internal_quiet = (_flags) & GED_QUIET; \
+       if (!ged_db_put_internal_quiet) { \
+           bu_vls_printf((_gedp)->ged_result_str, "Database write failure."); \
+       } \
+       return (_flags); \
+    }
+
 
 __END_DECLS
 

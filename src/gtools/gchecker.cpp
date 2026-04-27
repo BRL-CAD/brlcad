@@ -176,7 +176,7 @@ main(int argc, const char **argv)
 
     // Make sure our reference counts are up to date, so we can tell
     // which objects are top level
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     std::vector<struct directory *> objs;
     if (argc > 1) {

@@ -180,7 +180,6 @@ csg_wireframe_update(struct bv_scene_obj *vo, struct bview *v, int flag)
 struct ged_full_detail_clbk_data {
     struct db_i *dbip;
     struct directory *dp;
-    struct resource *res;
     struct rt_db_internal *intern;
 };
 
@@ -358,7 +357,6 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	BU_GET(cbd, ged_full_detail_clbk_data);
 	cbd->dbip = dbip;
 	cbd->dp = dp;
-	cbd->res = &rt_uniresource;
 	cbd->intern = NULL;
 	bv_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
 	bv_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
@@ -509,7 +507,6 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	BU_GET(cbd, ged_full_detail_clbk_data);
 	cbd->dbip = dbip;
 	cbd->dp = dp;
-	cbd->res = &rt_uniresource;
 	cbd->intern = NULL;
 	bv_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
 	bv_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
@@ -571,7 +568,6 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	    ld->tol = d->tol;
 	    ld->ttol = d->ttol;
 	    ld->mesh_c = d->mesh_c;
-	    ld->res = d->res;
 	    vo->s_i_data= (void *)ld;
 
 	    // We're adaptive - have to plot when the view changes.  Set the
@@ -1033,7 +1029,6 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	ud->tol = dd->tol;
 	ud->ttol = dd->ttol;
 	ud->mesh_c = dd->mesh_c;
-	ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view.  dd->res is temporary, so we don't use it here
 	s->s_i_data = (void *)ud;
 	s->s_free_callback = &draw_free_data;
 

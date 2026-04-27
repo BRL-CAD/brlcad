@@ -165,7 +165,6 @@ _booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	NMG_CK_MODEL(*tsp->ts_m);
     BN_CK_TOL(tsp->ts_tol);
     BG_CK_TESS_TOL(tsp->ts_ttol);
-    RT_CK_RESOURCE(tsp->ts_resp);
 
     BU_GET(curtree, union tree);
     RT_TREE_INIT(curtree);
@@ -923,7 +922,7 @@ _ged_facetize_leaves_tri(struct _ged_facetize_state *s, struct db_i *dbip, struc
        struct db_i *cdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
        if (cdbip) {
            db_dirbuild(cdbip);
-           db_update_nref(cdbip, &rt_uniresource);
+           db_update_nref(cdbip);
            for (size_t i = 0; i < failed_dps.size(); i++) {
 	       struct directory *dp = db_lookup(cdbip, failed_dps[i].c_str(), LOOKUP_QUIET);
 	       if (!dp)
@@ -1046,7 +1045,7 @@ _ged_facetize_booleval_tri(struct _ged_facetize_state *s, struct db_i *dbip, str
     }
 
     // Third stage is to execute the boolean operations
-    ftree = rt_booltree_evaluate(s->facetize_tree, vlfree, &wdbp->wdb_tol, &rt_uniresource, &manifold_do_bool, 0, (void *)s);
+    ftree = rt_booltree_eval(s->facetize_tree, vlfree, &wdbp->wdb_tol, &manifold_do_bool, 0, (void *)s);
     if (!ftree) {
 	return BRLCAD_ERROR;
     }
@@ -1172,7 +1171,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory
     if (db_dirbuild(wdbip) < 0)
 	return BRLCAD_ERROR;
 
-    db_update_nref(wdbip, &rt_uniresource);
+    db_update_nref(wdbip);
 
     // Need wdbp in the next two stages for tolerances
     wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);

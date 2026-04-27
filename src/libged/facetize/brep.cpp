@@ -131,7 +131,7 @@ _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **arg
     for (d_it = brep_objs.begin(); d_it != brep_objs.end(); ++d_it) {
 	struct rt_db_internal intern;
 	struct rt_brep_internal* bi;
-	GED_DB_GET_INTERNAL(wgedp, &intern, *d_it, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(wgedp, &intern, *d_it, bn_mat_identity, BRLCAD_ERROR);
 	RT_CK_DB_INTERNAL(&intern);
 	bi = (struct rt_brep_internal*)intern.idb_ptr;
 	if (!RT_BREP_TEST_MAGIC(bi)) {

@@ -289,7 +289,7 @@ main(int argc, char *argv[])
     if (db_dirbuild(dbip) < 0)
 	bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
 
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(dbip);
 
     int64_t elapsed = bu_gettime() - start;
     fastf_t seconds = elapsed / 1000000.0;

@@ -50,7 +50,7 @@ main(int argc, char *argv[])
 	bu_exit(EXIT_FAILURE, "ERROR: Unable to read from %s\n", argv[1]);
     }
 
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(dbip);
 
     dp = db_lookup(dbip, "poly.s", LOOKUP_QUIET);
     if (dp == RT_DIR_NULL)

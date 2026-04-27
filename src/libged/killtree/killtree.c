@@ -204,7 +204,7 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Update references once before we start all of this - db_search
      * needs nref to be current to work correctly. */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     /* Objects that would be killed are in the first sublist */
     if (gktd.print)
@@ -251,7 +251,7 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
     gktd.av = NULL;
 
     /* Done removing stuff - update references. */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     return BRLCAD_OK;
 }

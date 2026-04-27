@@ -562,7 +562,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
      *
      * Non-PARALLEL, which is OK, because shaders are prepped serially.
      */
-    db_region_mat(prj_sp->prj_m_to_sh, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
+    db_region_mat(prj_sp->prj_m_to_sh, rtip->rti_dbip, rp->reg_name);
 
 
     if (optical_debug&OPTICAL_DEBUG_SHADE) {

@@ -580,7 +580,7 @@ crofton_from_ip_n(const struct rt_db_internal    *ip,
 
     /* ---- Serialize ip to bu_external without freeing the caller's data.
      *
-     * Build a shallow wrapper around ip so that rt_db_cvt_to_external5
+     * Build a shallow wrapper around ip so that rt_db_cvt_to_ext5
      * can serialize the primitive data without requiring a full deep copy.
      * We must NOT call rt_db_free_internal on this wrapper because idb_ptr
      * is owned by the caller.                                             */
@@ -600,9 +600,8 @@ crofton_from_ip_n(const struct rt_db_internal    *ip,
 	    struct rt_db_internal *bip = dsp_ip->dsp_bip;
 	    struct bu_external bip_ext;
 	    BU_EXTERNAL_INIT(&bip_ext);
-	    if (rt_db_cvt_to_external5(&bip_ext, data_name, bip, 1.0,
-				       dbip, &rt_uniresource,
-				       bip->idb_major_type) == 0) {
+	    if (rt_db_cvt_to_ext5(&bip_ext, data_name, bip, 1.0,
+				       dbip, bip->idb_major_type) == 0) {
 		int bip_flags = db_flags_internal(bip);
 		if (wdb_export_external(wdbp, &bip_ext, data_name,
 					bip_flags,
@@ -635,10 +634,9 @@ crofton_from_ip_n(const struct rt_db_internal    *ip,
     struct bu_external ext;
     BU_EXTERNAL_INIT(&ext);
 
-    if (rt_db_cvt_to_external5(&ext, scratch, &tmp_intern, 1.0,
-				dbip, &rt_uniresource,
-				ip->idb_major_type) < 0) {
-	bu_log("rt_crofton: rt_db_cvt_to_external5() failed\n");
+    if (rt_db_cvt_to_ext5(&ext, scratch, &tmp_intern, 1.0,
+				dbip, ip->idb_major_type) < 0) {
+	bu_log("rt_crofton: rt_db_cvt_to_ext5() failed\n");
 	bu_free_external(&ext);
 	db_close(dbip);
 	return -1;
@@ -657,7 +655,7 @@ crofton_from_ip_n(const struct rt_db_internal    *ip,
     /* In the INMEM path ext_buf is stolen; this is safe to call regardless */
     bu_free_external(&ext);
 
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(dbip);
 
     /* ---- Build raytrace instance ---- */
     struct rt_i *rtip = rt_new_rti(dbip);

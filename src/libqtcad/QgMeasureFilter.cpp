@@ -343,7 +343,7 @@ QMeasure3DFilter::get_point()
 	return false;
     }
 
-    bool need_prep = (!ap || !rtip || !resp) ? true : false;
+    bool need_prep = (!ap || !rtip) ? true : false;
     if (need_prep || prev_cnt != scnt || scnt != (int)BU_PTBL_LEN(&scene_obj_set)) {
 	// Something changed - need to reset the raytrace data
 	bu_ptbl_reset(&scene_obj_set);
@@ -380,10 +380,7 @@ QMeasure3DFilter::get_point()
 	    rtip = NULL;
 	}
 	rtip = rt_new_rti(dbip);
-	if (resp) {
-	    // TODO - do we need more here?
-	    BU_PUT(resp, struct resource);
-	}
+	struct resource *resp = NULL;
 	BU_GET(resp, struct resource);
 	rt_init_resource(resp, 0, rtip);
 	ap->a_resource = resp;
@@ -399,7 +396,6 @@ QMeasure3DFilter::get_point()
 	    rt_free_rti(rtip);
 	    rtip = NULL;
 	    BU_PUT(resp, struct resource);
-	    resp = NULL;
 	    bu_ptbl_free(&sset);
 	    return false;
 	}

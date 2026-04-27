@@ -271,7 +271,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 		char *obj_name = bu_strdup(idp->d_namep);
 		struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
 		db_dirbuild(wdbip);
-		db_update_nref(wdbip, &rt_uniresource);
+		db_update_nref(wdbip);
 		nmg_wstate.dbip = wdbip;
 		int nret = _ged_facetize_nmgeval(s, 1, (const char **)&obj_name, obj_name);
 		if (nret != BRLCAD_OK) {
@@ -311,7 +311,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	struct db_i *wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
 	wdbip->dbi_read_only = 1;
 	db_dirbuild(wdbip);
-	db_update_nref(wdbip, &rt_uniresource);
+	db_update_nref(wdbip);
 	struct directory *dcheck = db_lookup(wdbip, bu_vls_cstr(&bname), LOOKUP_QUIET);
 	if (dcheck != RT_DIR_NULL)
 	    bu_vls_incr(&bname, NULL, NULL, &_db_uniq_test, (void *)wdbip);
@@ -346,7 +346,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	// Replace the region's comb tree with the new solid
 	wdbip = db_open(bu_vls_cstr(s->wfile), DB_OPEN_READWRITE);
 	db_dirbuild(wdbip);
-	db_update_nref(wdbip, &rt_uniresource);
+	db_update_nref(wdbip);
 	struct directory *wdp = db_lookup(wdbip, dpw[0]->d_namep, LOOKUP_QUIET);
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
@@ -367,7 +367,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	comb->tree = (union tree *)db_mkgift_tree(tree_list, 1);
 	struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
 	wdb_put_internal(wwdbp, wdp->d_namep, &intern, 1.0);
-	db_update_nref(wdbip, &rt_uniresource);
+	db_update_nref(wdbip);
 	db_close(wdbip);
     }
     bu_vls_free(&bname);
@@ -442,7 +442,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     bu_vls_free(&suffix_str);
 
     /* Done importing stuff - update nref. */
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(dbip);
 
 
     /* Capture the new tops list. */
@@ -497,7 +497,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
     mk_lcomb(cwdbp, oname, &wcomb, 0, NULL, NULL, NULL, 0);
 
     /* Done importing stuff - update nref. */
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(dbip);
 
     bu_ptbl_free(ar);
     bu_free(ar, "ar table");

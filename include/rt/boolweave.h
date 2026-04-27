@@ -31,7 +31,6 @@
 #include "bu/bitv.h"
 #include "bu/ptbl.h"
 #include "rt/application.h"
-#include "rt/resource.h"
 #include "rt/seg.h"
 #include "rt/ray_partition.h"
 

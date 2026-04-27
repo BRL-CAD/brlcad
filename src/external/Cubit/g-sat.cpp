@@ -1184,7 +1184,6 @@ main(int argc, char *argv[])
     RT_DBTS_INIT(&init_state);
     init_state.ts_dbip = rtip->rti_dbip;
     init_state.ts_rtip = rtip;
-    init_state.ts_resp = NULL;
     init_state.ts_tol = &tol;
     init_state.ts_ttol = &ttol;
     bu_avs_init(&init_state.ts_attrs, 1, "avs in tree_state");

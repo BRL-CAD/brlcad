@@ -127,7 +127,6 @@ class QTCAD_EXPORT QMeasure3DFilter : public QgMeasureFilter
 	struct bu_ptbl scene_obj_set = BU_PTBL_INIT_ZERO;
 	struct application *ap = NULL;
 	struct rt_i *rtip = NULL;
-	struct resource *resp = NULL;
 };
 
 #endif /* QGMEASUREFILTER_H */

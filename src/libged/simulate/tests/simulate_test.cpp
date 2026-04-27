@@ -57,7 +57,7 @@ namespace
 
 	    mat_t matrix = MAT_INIT_IDN;
 
-	    if (1 != db_path_to_mat(const_cast<db_i *>(&db), &full_path, matrix, full_path.fp_len, &rt_uniresource))
+	    if (1 != db_path_to_mat(const_cast<db_i *>(&db), &full_path, matrix, full_path.fp_len))
 		bu_bomb("db_path_to_mat() failed");
 
 	    bn_tol tol = BN_TOL_INIT_ZERO;

@@ -250,7 +250,6 @@ append_solid_to_display_list(
     RT_CK_DB_INTERNAL(ip);
     BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
-    RT_CK_RESOURCE(tsp->ts_resp);
 
     VSETALL(min, INFINITY);
     VSETALL(max, -INFINITY);
@@ -563,7 +562,6 @@ get_path_and_state(
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     *tsp = wdbp->wdb_initial_tree_state;
     tsp->ts_dbip = gedp->dbip;
-    tsp->ts_resp = &rt_uniresource;
 
     return db_follow_path_for_state(tsp, pathp, path_name, LOOKUP_QUIET);
 }
@@ -683,7 +681,6 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
     }
 
     RT_CK_DBI(tsp->ts_dbip);
-    RT_CK_RESOURCE(tsp->ts_resp);
 
     BU_LIST_INIT(&vhead);
 
@@ -849,7 +846,6 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
     BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
-    RT_CK_RESOURCE(tsp->ts_resp);
 
     BU_LIST_INIT(&vhead);
 

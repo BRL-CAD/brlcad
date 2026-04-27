@@ -325,7 +325,7 @@ _analyze_cmd_summarize(void *bs, int argc, const char **argv)
 	if (ndp == RT_DIR_NULL)
 	    continue;
 
-	GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, ndp, bn_mat_identity, BRLCAD_ERROR);
 
 	_ged_do_list(gedp, ndp, 1);
 	analyze_do_summary(gedp, &intern);

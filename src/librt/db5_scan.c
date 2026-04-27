@@ -261,9 +261,6 @@ db5_diradd(struct db_i *dbip,
 	return RT_DIR_NULL;
     }
 
-    if (rt_uniresource.re_magic == 0)
-	rt_init_resource(&rt_uniresource, 0, NULL);
-
     /* Duplicates the guts of db_diradd() */
     RT_GET_DIR(dp, dbip); /* allocates a new dir */
     RT_CK_DIR(dp);
@@ -419,7 +416,7 @@ db_dirbuild(struct db_i *dbip)
 	    dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
 	    /* Missing _GLOBAL object so create it and set default title and units */
 	    db5_update_ident(dbip, "Untitled BRL-CAD Database", 1.0);
-	    db_update_nref(dbip, &rt_uniresource);
+	    db_update_nref(dbip);
 	    dbip->i->dbi_dir_built = 1;
 	    return 0;	/* not a fatal error, user may have deleted it */
 	}
@@ -434,7 +431,7 @@ db_dirbuild(struct db_i *dbip)
 	    bu_log("db_dirbuild(%s): improper database, %s exists but is not an attribute-only object\n",
 		   dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME);
 	    dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
-	    db_update_nref(dbip, &rt_uniresource);
+	    db_update_nref(dbip);
 	    dbip->i->dbi_dir_built = 1;
 	    return 0;	/* not a fatal error, need to let user proceed to fix it */
 	}
@@ -477,7 +474,7 @@ db_dirbuild(struct db_i *dbip)
 	bu_avs_free(&avs);
 	bu_free_external(&ext);	/* not until after done with avs! */
 
-	db_update_nref(dbip, &rt_uniresource);
+	db_update_nref(dbip);
 	dbip->i->dbi_dir_built = 1;
 	return 0;		/* ok */
     }
@@ -488,7 +485,7 @@ db_dirbuild(struct db_i *dbip)
 	    return -1;
 	}
 
-	db_update_nref(dbip, &rt_uniresource);
+	db_update_nref(dbip);
 	dbip->i->dbi_dir_built = 1;
 	return 0;		/* ok */
     }

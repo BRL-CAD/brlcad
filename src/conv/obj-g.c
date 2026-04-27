@@ -3842,7 +3842,6 @@ main(int argc, char **argv)
     }
 
     db_close(fd_out->dbip);
-    rt_clean_resource_basic(NULL, &rt_uniresource);
 
     (void)time(&overall_end_time);
     overall_elapsed_time = overall_end_time - overall_start_time;

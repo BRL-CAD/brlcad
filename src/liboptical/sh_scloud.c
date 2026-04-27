@@ -153,7 +153,7 @@ scloud_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, con
 	/* bad thing */
 	bu_bomb("db_string_to_path() error");
     }
-    if (! db_path_to_mat(rtip->rti_dbip, &full_path, region_to_model, 0, &rt_uniresource)) {
+    if (! db_path_to_mat(rtip->rti_dbip, &full_path, region_to_model, 0)) {
 	/* bad thing */
 	bu_bomb("db_path_to_mat() error");
     }

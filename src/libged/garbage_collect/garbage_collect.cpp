@@ -143,7 +143,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_sprintf(&fpath, "%s", gedp->dbip->dbi_filename);
 
     /* For validation purposes, save the list of tops object names */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
     path_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &paths);
     for (int i = 0; i < path_cnt; i++) {
 	old_top_objs.insert(std::string(paths[i]->d_namep));
@@ -244,7 +244,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // See what we've got for tops objects in the new file
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
     path_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &paths);
     for (int i = 0; i < path_cnt; i++) {
 	new_top_objs.insert(std::string(paths[i]->d_namep));

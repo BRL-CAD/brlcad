@@ -331,7 +331,7 @@ copy_object(struct ged *gedp,
 	    bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s\n", owrite_backup.c_str());
 	    return BRLCAD_ERROR;
 	}
-	db_update_nref(gedp->dbip, &rt_uniresource);
+	db_update_nref(gedp->dbip);
 	cc_data->overwritten++;
     }
 
@@ -495,7 +495,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
     db_sync(cc_data.target_dbip);
 
     /* Update references. */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     return BRLCAD_OK;
 }

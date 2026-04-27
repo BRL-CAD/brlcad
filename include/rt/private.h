@@ -29,7 +29,6 @@
 #include "common.h"
 #include "vmath.h"
 #include "rt/application.h"
-#include "rt/resource.h"
 #include "rt/space_partition.h" /* cutter */
 #include "rt/xray.h"
 
@@ -59,7 +58,6 @@ struct rt_shootray_status {
     fastf_t             model_end;
     struct xray         newray;         /**< @brief  closer ray start */
     struct application *ap;
-    struct resource *   resp;
     vect_t              inv_dir;      /**< @brief  inverses of ap->a_ray.r_dir */
     vect_t              abs_inv_dir;  /**< @brief  absolute values of inv_dir */
     int                 rstep[3];     /**< @brief  -/0/+ dir of ray in axis */

@@ -110,7 +110,6 @@ push_leaf(struct db_tree_state *tsp,
 
     BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
-    RT_CK_RESOURCE(tsp->ts_resp);
 
     dp = pathp->fp_names[pathp->fp_len-1];
 

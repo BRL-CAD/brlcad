@@ -172,7 +172,7 @@ _bot_cmd_repair(void *bs, int argc, const char **argv)
 	gb->solid_name = std::string(argv[i]);
 
 	BU_GET(gb->intern, struct rt_db_internal);
-	GED_DB_GET_INTERNAL(gb->gedp, gb->intern, gb->dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gb->gedp, gb->intern, gb->dp, bn_mat_identity, BRLCAD_ERROR);
 	RT_CK_DB_INTERNAL(gb->intern);
 
 	struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);

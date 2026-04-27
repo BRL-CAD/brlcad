@@ -2167,7 +2167,7 @@ main(int argc, char *argv[])
         bu_exit(1, "ERROR: Failed to build correctness test tree\n");
     }
 
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(dbip);
 
     bu_log("Running name-search ground-truth tests...\n");
     failures += test_name_search(dbip);
@@ -2224,7 +2224,7 @@ main(int argc, char *argv[])
                 continue;
             }
 
-            db_update_nref(dbip, &rt_uniresource);
+            db_update_nref(dbip);
             failures += test_stress_cross_validation(dbip, depth);
 
             wdb_close(wdbp);  /* also closes dbip */
@@ -2280,7 +2280,7 @@ main(int argc, char *argv[])
 		continue;
 	    }
 
-	    db_update_nref(dbip, &rt_uniresource);
+	    db_update_nref(dbip);
 	    failures += test_dag_cross_validation(dbip, L, M);
 
 	    wdb_close(wdbp);
@@ -2327,7 +2327,7 @@ main(int argc, char *argv[])
 		continue;
 	    }
 
-	    db_update_nref(dbip, &rt_uniresource);
+	    db_update_nref(dbip);
 	    failures += test_below_deep_chain(dbip, D);
 
 	    wdb_close(wdbp);
@@ -2387,7 +2387,7 @@ main(int argc, char *argv[])
 		continue;
 	    }
 
-	    db_update_nref(dbip, &rt_uniresource);
+	    db_update_nref(dbip);
 	    failures += test_csg_below_wide_deep(dbip, fan_w, fan_k);
 
 	    wdb_close(wdbp);
@@ -2430,7 +2430,7 @@ main(int argc, char *argv[])
 		    wdb_close(wdbp);
 		    failures++;
 		} else {
-		    db_update_nref(dbip, &rt_uniresource);
+		    db_update_nref(dbip);
 		    failures += test_csg_below_perf(dbip, fan_w, fan_k);
 		    wdb_close(wdbp);
 		}

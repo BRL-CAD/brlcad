@@ -37,6 +37,7 @@
 #include "rt/mater.h"
 #include "rt/op.h"
 #include "rt/region.h"
+#include "rt/resource.h"
 #include "rt/soltab.h"
 #include "rt/tol.h"
 #include "nmg.h"
@@ -44,7 +45,6 @@
 __BEGIN_DECLS
 
 union tree;       /* forward declaration */
-struct resource;  /* forward declaration */
 struct rt_i;      /* forward declaration */
 struct rt_comb_internal;      /* forward declaration */
 struct rt_db_internal;      /* forward declaration */
@@ -89,11 +89,10 @@ struct db_tree_state {
     const struct bn_tol *       ts_tol;         /**< @brief  Math tolerance */
     struct model **             ts_m;           /**< @brief  ptr to ptr to NMG "model" */
     struct rt_i *               ts_rtip;        /**< @brief  Helper for rt_gettrees() */
-    struct resource *           ts_resp;        /**< @brief  Per-CPU data */
 };
-#define RT_DBTS_INIT_ZERO { RT_DBTS_MAGIC, NULL, 0, 0, 0, 0, 0, RT_MATER_INFO_INIT_ZERO, MAT_INIT_ZERO, 0, BU_AVS_INIT_ZERO, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+#define RT_DBTS_INIT_ZERO { RT_DBTS_MAGIC, NULL, 0, 0, 0, 0, 0, RT_MATER_INFO_INIT_ZERO, MAT_INIT_ZERO, 0, BU_AVS_INIT_ZERO, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 /* from mged_initial_tree_state */
-#define RT_DBTS_INIT_IDN { RT_DBTS_MAGIC, NULL, 0, 0, 0, 0, 100, RT_MATER_INFO_INIT_IDN, MAT_INIT_IDN, 0, BU_AVS_INIT_ZERO, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+#define RT_DBTS_INIT_IDN { RT_DBTS_MAGIC, NULL, 0, 0, 0, 0, 100, RT_MATER_INFO_INIT_IDN, MAT_INIT_IDN, 0, BU_AVS_INIT_ZERO, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 
 /* Used to replace old rt_initial_tree_state global */
 #define RT_DBTS_INIT(_p) do {			\
@@ -121,7 +120,6 @@ struct db_tree_state {
     (_p)->ts_tol = NULL;			\
     (_p)->ts_m = NULL;				\
     (_p)->ts_rtip = NULL;			\
-    (_p)->ts_resp = NULL;			\
 } while (0)
 
 #define TS_SOFAR_MINUS  1       /**< @brief  Subtraction encountered above */
@@ -149,13 +147,12 @@ struct db_traverse
 	struct db_i *,
 	struct directory *,
 	void *);
-    struct resource *resp;
     void *client_data;
 };
 #define RT_DB_TRAVERSE_INIT(_p) {(_p)->magic = RT_DB_TRAVERSE_MAGIC;   \
 	(_p)->dbip = ((void *)0); (_p)->comb_enter_func = ((void *)0); \
 	(_p)->comb_exit_func = ((void *)0); (_p)->leaf_func = ((void *)0); \
-	(_p)->resp = ((void *)0); (_p)->client_data = ((void *)0);}
+	(_p)->client_data = ((void *)0);}
 #define RT_CK_DB_TRAVERSE(_p) BU_CKMAG(_p, RT_DB_TRAVERSE_MAGIC, "db_traverse")
 
 struct combined_tree_state {
@@ -750,8 +747,7 @@ RT_EXPORT extern union tree *db_mkgift_tree(struct rt_tree_array *trees,
 					    size_t subtreecount);
 
 
-RT_EXPORT extern void rt_optim_tree(union tree *tp,
-				    struct resource *resp);
+RT_EXPORT extern void rt_optim_tree(union tree *tp, struct resource *resp);
 
 
 

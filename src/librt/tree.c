@@ -110,7 +110,6 @@ _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *p
 {
     if (tsp) {
 	RT_CK_RTI(tsp->ts_rtip);
-	RT_CK_RESOURCE(tsp->ts_resp);
 	if (pathp) RT_CK_FULL_PATH(pathp);
 	if (combp) RT_CHECK_COMB(combp);
 
@@ -156,7 +155,6 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     RT_CK_TREE(curtree);
     rtip =  tsp->ts_rtip;
     RT_CK_RTI(rtip);
-    RT_CK_RESOURCE(tsp->ts_resp);
 
     if (curtree->tr_op == OP_NOP) {
 	/* Ignore empty regions */
@@ -443,7 +441,6 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
     RT_CK_DB_INTERNAL(ip);
     rtip = tsp->ts_rtip;
     RT_CK_RTI(rtip);
-    RT_CK_RESOURCE(tsp->ts_resp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
     data = (struct gettree_data *)client_data;
@@ -723,7 +720,6 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
 	RT_DBTS_INIT(&tree_state);
 	tree_state.ts_dbip = rtip->rti_dbip;
 	tree_state.ts_rtip = rtip;
-	tree_state.ts_resp = NULL;	/* sanity.  Needs to be updated */
 
 	if (attrs) {
 	    if (db_version(rtip->rti_dbip) < 5) {
@@ -762,7 +758,7 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
 		struct db_full_path ifp;
 		db_full_path_init(&ifp);
 		db_string_to_path(&ifp, rtip->rti_dbip, argv[i]);
-		if (db_fp_op(&ifp, rtip->rti_dbip, 0, &rt_uniresource) == OP_UNION) {
+		if (db_fp_op(&ifp, rtip->rti_dbip, 0) == OP_UNION) {
 		    bu_ptbl_ins(&pos_paths, (long *)argv[i]);
 		}
 		db_free_full_path(&ifp);

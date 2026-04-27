@@ -255,7 +255,7 @@ _bot_cmd_decimate(void* bs, int argc, const char** argv)
     }
     struct rt_db_internal intern;
     RT_DB_INTERNAL_INIT(&intern);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, NULL, NULL, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, NULL, BRLCAD_ERROR);
     struct rt_bot_internal *obot = (struct rt_bot_internal*)intern.idb_ptr;
 
     // Decimate with GCT

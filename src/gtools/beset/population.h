@@ -73,9 +73,8 @@ fastf_t pop_rand    (void);
 int pop_find_nodes(union tree *tp);
 
 void pop_gop(int gop, char *parent1, char *parent2, char * child1, char *child2,  struct db_i *dbi_p,
-	     struct db_i *dbi_c, struct resource *resp);
-int pop_put_internal(const char *n, struct directory *dp, struct db_i *dbip, struct rt_db_internal *ip,
-		     struct resource *resp);
+	     struct db_i *dbi_c);
+int pop_put_internal(const char *n, struct directory *dp, struct db_i *dbip, struct rt_db_internal *ip);
 
 
 #endif /* GTOOLS_BESET_POPULATION_H */

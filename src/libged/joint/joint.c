@@ -233,7 +233,6 @@ static struct db_tree_state mesh_initial_tree_state = {
     NULL,		/* ts_tol */
     NULL,		/* ts_m */
     NULL,		/* ts_rtip */
-    NULL		/* ts_resp */
 };
 
 
@@ -527,7 +526,7 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 	    return 1;
 	case ID_GRIP:
 	    if (hp->flag & HOLD_PT_GOOD) {
-		db_path_to_mat(gedp->dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
+		db_path_to_mat(gedp->dbip, &hp->path, mat, hp->path.fp_len-2);
 		MAT4X3PNT(loc, mat, hp->point);
 		return 1;
 	    }
@@ -546,11 +545,11 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 	    hp->flag |= HOLD_PT_GOOD;
 	    rt_db_free_internal(&intern);
 
-	    db_path_to_mat(gedp->dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
+	    db_path_to_mat(gedp->dbip, &hp->path, mat, hp->path.fp_len-2);
 	    MAT4X3PNT(loc, mat, hp->point);
 	    return 1;
 	case ID_JOINT:
-	    db_path_to_mat(gedp->dbip, &hp->path, mat, hp->path.fp_len-3, &rt_uniresource);
+	    db_path_to_mat(gedp->dbip, &hp->path, mat, hp->path.fp_len-3);
 	    if (hp->flag & HOLD_PT_GOOD) {
 		MAT4X3VEC(loc, mat, hp->point);
 		return 1;

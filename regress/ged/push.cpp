@@ -124,7 +124,7 @@ main(int argc, const char **argv)
     }
 
     // Make sure our reference counts are up to date
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     // Perform the specified push operation on all example objects
     for (size_t i = 0; i <= 19; i++) {

@@ -32,14 +32,9 @@
 
 __BEGIN_DECLS
 
-RT_EXPORT extern int rt_find_paths(struct db_i *dbip,
-				   struct directory *start,
-				   struct directory *end,
-				   struct bu_ptbl *paths,
-				   struct resource *resp);
+RT_EXPORT extern int rt_find_paths(struct db_i *dbip, struct directory *start, struct directory *end);
 
-RT_EXPORT extern struct bu_bitv *rt_get_solidbitv(size_t nbits,
-						  struct resource *resp);
+RT_EXPORT extern struct bu_bitv *rt_get_solidbitv(size_t nbits, struct resource *resp);
 
 /* table.c */
 RT_EXPORT extern int rt_id_solid(struct bu_external *ep);

@@ -853,10 +853,10 @@ db_path_to_mat(
 	struct db_i *dbip,
 	struct db_full_path *pathp,
 	mat_t mat,          /* result */
-	int depth,          /* number of arcs */
-	struct resource *resp)
+	int depth           /* number of arcs */
+	)
 {
-    if (!pathp || !dbip || depth < 0 || !resp)
+    if (!pathp || !dbip || depth < 0)
 	return 0;
 
     mat_t all_m = MAT_INIT_IDN;
@@ -883,7 +883,7 @@ db_path_to_mat(
  * to walk the comb tree to get to that specific matrix.  Reuse
  * the _db_comb_instance logic. */
 static int
-_comb_instance_bool_op(int *bval, const struct db_i *dbip, struct directory *cdp, struct directory *dp, struct resource *UNUSED(resp), int itarget)
+_comb_instance_bool_op(int *bval, const struct db_i *dbip, struct directory *cdp, struct directory *dp, int itarget)
 {
     RT_CK_DBI(dbip);
 
@@ -910,10 +910,9 @@ _comb_instance_bool_op(int *bval, const struct db_i *dbip, struct directory *cdp
 int
 db_fp_op(const struct db_full_path *pp,
 	struct db_i *dbip,
-	int depth,
-	struct resource *resp)
+	int depth)
 {
-    if (!pp || !dbip || depth < 0 || !resp)
+    if (!pp || !dbip || depth < 0)
 	return OP_NOP;
 
     int r_op = OP_UNION;
@@ -926,7 +925,7 @@ db_fp_op(const struct db_full_path *pp,
 	    return OP_NOP;
 	int c_op = OP_NOP;
 	if (UNLIKELY(dbip->i->dbi_use_comb_instance_ids)) {
-	    if (!_comb_instance_bool_op(&c_op, dbip, cdp, dp, resp, pp->fp_cinst[i]))
+	    if (!_comb_instance_bool_op(&c_op, dbip, cdp, dp, pp->fp_cinst[i]))
 		return OP_NOP;
 	}
 	if (c_op == OP_INTERSECT && r_op != OP_SUBTRACT)
@@ -950,8 +949,7 @@ void
 db_full_path_color(
 	struct bu_color *c,
 	struct db_full_path *pathp,
-	struct db_i *dbip,
-	struct resource *UNUSED(resp))
+	struct db_i *dbip)
 {
     RT_CHECK_DBI(dbip);
     RT_CK_FULL_PATH(pathp);

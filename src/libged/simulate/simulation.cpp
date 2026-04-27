@@ -447,7 +447,7 @@ Simulation::Region::get_regions(db_i &db, const db_full_path &path,
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
 
-    db_update_nref(&db, &rt_uniresource);
+    db_update_nref(&db);
 
     bu_ptbl found = BU_PTBL_INIT_ZERO;
     const AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);

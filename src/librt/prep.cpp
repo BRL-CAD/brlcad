@@ -470,7 +470,7 @@ rt_prep_parallel(struct rt_i *rtip, int ncpu)
 
 	plotfp = fopen("rtsolids.plot3", "wb");
 	if (plotfp != NULL) {
-	    rt_plot_all_solids(plotfp, rtip, resp);
+	    rt_plot_all_solids(plotfp, rtip);
 	    (void)fclose(plotfp);
 	}
     }
@@ -746,8 +746,7 @@ rt_plot_all_bboxes(FILE *fp, struct rt_i *rtip)
 void
 rt_plot_all_solids(
     FILE *fp,
-    struct rt_i *rtip,
-    struct resource *UNUSED(resp))
+    struct rt_i *rtip)
 {
     struct soltab *stp;
 
@@ -1573,7 +1572,6 @@ unprep_reg_start(struct db_tree_state *tsp,
 {
     if (tsp) {
 	RT_CK_RTI(tsp->ts_rtip);
-	RT_CK_RESOURCE(tsp->ts_resp);
     }
     if (pathp) RT_CK_FULL_PATH(pathp);
     if (comb) RT_CK_COMB(comb);
@@ -1597,7 +1595,6 @@ unprep_reg_end(struct db_tree_state *tsp,
 {
     if (tsp) {
 	RT_CK_RTI(tsp->ts_rtip);
-	RT_CK_RESOURCE(tsp->ts_resp);
     }
     if (pathp)
 	RT_CK_FULL_PATH(pathp);
@@ -1627,7 +1624,6 @@ unprep_leaf(struct db_tree_state *tsp,
     RT_CK_DB_INTERNAL(ip);
     rtip = tsp->ts_rtip;
     RT_CK_RTI(rtip);
-    RT_CK_RESOURCE(tsp->ts_resp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
     if (!dp)
@@ -1757,7 +1753,6 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 
 	RT_DBTS_INIT(tree_state);
 	tree_state->ts_dbip = rtip->rti_dbip;
-	tree_state->ts_resp = resp;
 	tree_state->ts_rtip = rtip;
 	tree_state->ts_tol = &rtip->rti_tol;
 	objs->tsp[i] = tree_state;
@@ -2001,7 +1996,7 @@ rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 
 	VSETALL(bb, INFINITY);
 	VSETALL(&bb[3], -INFINITY);
-	fill_out_bsp(rtip, &rtip->i->rti_CutHead, resp, bb);
+	nfill_out_bsp(rtip, &rtip->i->rti_CutHead, bb);
     }
 
     if (BU_PTBL_LEN(&rtip->rti_resources)) {

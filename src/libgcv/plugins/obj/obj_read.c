@@ -3586,8 +3586,6 @@ obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     obj_contents_destroy(ga.contents);
     obj_parser_destroy(ga.parser);
 
-    rt_clean_resource(NULL, &rt_uniresource);
-
     return 1;
 }
 

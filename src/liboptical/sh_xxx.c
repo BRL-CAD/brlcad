@@ -204,7 +204,7 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
      * Alternatively, shading may be done in "region coordinates"
      * if desired:
      *
-     * db_region_mat(xxx_sp->xxx_m_to_r, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
+     * db_region_mat(xxx_sp->xxx_m_to_r, rtip->rti_dbip, rp->reg_name);
      *
      */
 

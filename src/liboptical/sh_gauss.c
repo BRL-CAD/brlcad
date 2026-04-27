@@ -148,7 +148,7 @@ struct mfuncs gauss_mfuncs[] = {
 
 
 static void
-tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
+tree_solids(union tree *tp, struct tree_bark *tb, int op)
 {
     RT_CK_TREE(tp);
 
@@ -255,18 +255,18 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    break;
 	}
 	case OP_UNION:
-	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
-	    tree_solids(tp->tr_b.tb_right, tb, tp->tr_op, resp);
+	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
+	    tree_solids(tp->tr_b.tb_right, tb, tp->tr_op);
 	    break;
 
 	case OP_NOT: bu_log("Warning: 'Not' region operator in %s\n", tb->name);
-	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
+	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
 	    break;
 	case OP_GUARD:bu_log("Warning: 'Guard' region operator in %s\n", tb->name);
-	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
+	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
 	    break;
 	case OP_XNOP:bu_log("Warning: 'XNOP' region operator in %s\n", tb->name);
-	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
+	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
 	    break;
 
 	case OP_INTERSECT:
@@ -275,8 +275,8 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    /* XXX this can get us in trouble if 1 solid is subtracted
 	     * from less than all the "union" solids of the region.
 	     */
-	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
-	    tree_solids(tp->tr_b.tb_right, tb, tp->tr_op, resp);
+	    tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
+	    tree_solids(tp->tr_b.tb_right, tb, tp->tr_op);
 	    return;
 
 	default:
@@ -339,7 +339,7 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
     tb.name = rp->reg_name;
     tb.gs = gauss_sp;
 
-    tree_solids (rp->reg_treetop, &tb, OP_UNION, &rt_uniresource);
+    tree_solids(rp->reg_treetop, &tb, OP_UNION);
 
 
     /* XXX If this puppy isn't axis-aligned, we should come up with a

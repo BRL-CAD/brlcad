@@ -173,7 +173,7 @@ ged_bot_edge_split(struct ged *gedp, int argc, const char *argv[])
 	    break;
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
     rt_db_free_internal(&intern);
     return BRLCAD_OK;
 }
@@ -286,7 +286,7 @@ ged_bot_face_split(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_printf(gedp->ged_result_str, "%zu", last_vi);
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
     rt_db_free_internal(&intern);
     return BRLCAD_OK;
 }
@@ -458,7 +458,7 @@ ged_bot_move_pnt(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
     rt_db_free_internal(&intern);
 
     return BRLCAD_OK;
@@ -562,7 +562,7 @@ ged_bot_move_pnts(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
     rt_db_free_internal(&intern);
 
     return BRLCAD_OK;

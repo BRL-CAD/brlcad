@@ -95,7 +95,7 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
 
     gtd.gtd_objpos = endpos - 1;
 
-    GED_DB_GET_INTERNAL(gedp, &internal, gtd.gtd_obj[endpos - 1], bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &internal, gtd.gtd_obj[endpos - 1], bn_mat_identity, BRLCAD_ERROR);
 
     if (endpos > 1) {
 	/* Make sure that final component in path is a solid */

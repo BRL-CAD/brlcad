@@ -1194,7 +1194,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     struct db_i *dbip = gedp->dbip;
 
     /* Need nref current for db_ls to work */
-    db_update_nref(dbip, &rt_uniresource);
+    db_update_nref(dbip);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -1676,7 +1676,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	// Writing done - update nref again to reflect changes
-	db_update_nref(dbip, &rt_uniresource);
+	db_update_nref(dbip);
 
 	// Repeat the db_ls call and verify it is consistent.
 	struct directory **final_paths;

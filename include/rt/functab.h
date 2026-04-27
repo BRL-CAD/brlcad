@@ -47,7 +47,6 @@
 #include "rt/edit.h"
 #include "rt/hit.h"
 #include "rt/misc.h"
-#include "rt/resource.h"
 #include "rt/rt_instance.h"
 #include "rt/seg.h"
 #include "rt/soltab.h"
@@ -60,6 +59,8 @@
 
 
 __BEGIN_DECLS
+
+struct rt_piecestate; /* forward declaration for ft_piece_shot / ft_piece_hitsegs */
 
 /**
  * This needs to be at the end of the raytrace.h header file, so that

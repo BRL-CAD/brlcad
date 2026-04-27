@@ -101,7 +101,6 @@ db_init_db_tree_state(struct db_tree_state *tsp, struct db_i *dbip)
     memset((char *)tsp, 0, sizeof(*tsp));
     tsp->magic = RT_DBTS_MAGIC;
     tsp->ts_dbip = dbip;
-    tsp->ts_resp = &rt_uniresource;
     bu_avs_init_empty(&tsp->ts_attrs);
     MAT_IDN(tsp->ts_mat);	/* XXX should use null pointer convention! */
 }
@@ -178,7 +177,6 @@ db_pr_tree_state(const struct db_tree_state *tsp)
 	bu_log("\t%s = %s\n", tsp->ts_attrs.avp[i].name, tsp->ts_attrs.avp[i].value);
     }
     bn_mat_print("ts_mat", tsp->ts_mat);
-    bu_log(" ts_resp=%p\n", (void *)tsp->ts_resp);
 }
 
 
@@ -708,7 +706,6 @@ db_follow_path(
     RT_CHECK_DBI(tsp->ts_dbip);
     RT_CK_FULL_PATH(total_path);
     RT_CK_FULL_PATH(new_path);
-    RT_CK_RESOURCE(tsp->ts_resp);
 
     if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(total_path);
@@ -896,7 +893,6 @@ _db_recurse_subtree2(union tree *tp, struct db_tree_state *msp, struct db_full_p
     std::unordered_map<std::string, int> *c_inst_map = (std::unordered_map<std::string, int> *)cmap;
     RT_CK_TREE(tp);
     RT_CK_DBTS(msp);
-    RT_CK_RESOURCE(msp->ts_resp);
     db_dup_db_tree_state(&memb_state, msp);
 
     switch (tp->tr_op) {
@@ -999,7 +995,6 @@ db_recurse2(struct db_tree_state *tsp, struct db_full_path *pathp, struct combin
 
     RT_CK_DBTS(tsp);
     RT_CHECK_DBI(tsp->ts_dbip);
-    RT_CK_RESOURCE(tsp->ts_resp);
     RT_CK_FULL_PATH(pathp);
     RT_DB_INTERNAL_INIT(&intern);
 
@@ -1819,7 +1814,6 @@ _db_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     RT_CK_DBTS(tsp);
     RT_CK_DBI(tsp->ts_dbip);
     RT_CK_FULL_PATH(pathp);
-    RT_CK_RESOURCE(tsp->ts_resp);
 
     BU_GET(curtree, union tree);
     RT_TREE_INIT(curtree);
@@ -1890,7 +1884,6 @@ _db_walk_subtree(
 	    ctsp->cts_s.ts_region_end_func = 0;
 	    /* Use user's leaf function */
 	    ctsp->cts_s.ts_leaf_func = leaf_func;
-	    ctsp->cts_s.ts_resp = resp;
 
 	    /* If region already seen, force flag */
 	    if (*region_start_statepp)
@@ -2078,7 +2071,6 @@ db_walk_tree(struct db_i *dbip,
 
 	ts = *init_state;	/* struct copy */
 	ts.ts_dbip = dbip;
-	ts.ts_resp = resp;
 	db_full_path_init(&path);
 
 	/* First, establish context from given path */
@@ -2290,8 +2282,8 @@ int
 db_region_mat(
     mat_t m,		/* result */
     struct db_i *dbip,
-    const char *name,
-    struct resource *resp)
+    const char *name 
+    )
 {
     struct db_full_path full_path;
     mat_t region_to_model;
@@ -2302,7 +2294,7 @@ db_region_mat(
 	bu_log("db_region_mat: db_string_to_path(%s) error\n", name);
 	return -1;
     }
-    if (!db_path_to_mat(dbip, &full_path, region_to_model, 0, resp)) {
+    if (!db_path_to_mat(dbip, &full_path, region_to_model, 0)) {
 	/* bad thing */
 	bu_log("db_region_mat: db_fp_matrix(%s) error", name);
 	return -2;
@@ -2323,8 +2315,8 @@ rt_shader_mat(
     const struct rt_i *rtip,
     const struct region *rp,
     point_t p_min,	/* input/output: shader/region min point */
-    point_t p_max,	/* input/output: shader/region max point */
-    struct resource *resp)
+    point_t p_max 	/* input/output: shader/region max point */
+    )
 {
     mat_t model_to_region;
     mat_t m_xlate;
@@ -2339,7 +2331,7 @@ rt_shader_mat(
     reg_name = bu_path_basename(rp->reg_name, NULL);
 
     /* get model-to-region space mapping */
-    if (db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, resp) < 0) {
+    if (db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name) < 0) {
 	bu_free(reg_name, "reg_name free");
 	return -1;
     }
@@ -2848,7 +2840,6 @@ _db_recurse_subtree_old(union tree *tp, struct db_tree_state *msp, struct db_ful
 
     RT_CK_TREE(tp);
     RT_CK_DBTS(msp);
-    RT_CK_RESOURCE(msp->ts_resp);
     db_dup_db_tree_state(&memb_state, msp);
 
     switch (tp->tr_op) {
@@ -2948,7 +2939,6 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 
     RT_CK_DBTS(tsp);
     RT_CHECK_DBI(tsp->ts_dbip);
-    RT_CK_RESOURCE(tsp->ts_resp);
     RT_CK_FULL_PATH(pathp);
     RT_DB_INTERNAL_INIT(&intern);
 

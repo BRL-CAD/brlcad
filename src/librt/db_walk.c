@@ -51,9 +51,6 @@ db_traverse_subtree(union tree *tp,
     RT_CK_DB_TRAVERSE(dtp);
     RT_CHECK_DBI(dtp->dbip);
     RT_CK_TREE(tp);
-    if (dtp->resp) {
-	RT_CK_RESOURCE(dtp->resp);
-    }
 
     switch (tp->tr_op) {
 
@@ -92,9 +89,6 @@ db_preorder_traverse(struct directory *dp,
     register size_t i;
     RT_CK_DB_TRAVERSE(dtp);
     RT_CK_DBI(dtp->dbip);
-    if (dtp->resp) {
-	RT_CK_RESOURCE(dtp->resp);
-    }
 
     if (RT_G_DEBUG & RT_DEBUG_DB)
 	bu_log("db_preorder_traverse(%s) %p, %p, comb_enter=0x%lx, comb_exit=0x%lx, leaf=0x%lx, client_data=%p\n",

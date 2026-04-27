@@ -124,7 +124,7 @@ track_mk_freemembers(struct bu_list *headp)
  * Add some nodes to a new or existing combination's tree,
  * with GIFT precedence and semantics.
  *
- * NON-PARALLEL due to rt_uniresource
+ * NON-PARALLEL due to rt_uniresource (TODO - is this still true?)
  *
  * Returns -
  * -1 ERROR

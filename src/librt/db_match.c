@@ -65,14 +65,13 @@ db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb
 }
 
 void
-db_update_nref(struct db_i *dbip, struct resource *resp)
+db_update_nref(struct db_i *dbip)
 {
     register struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
     RT_CK_DBI(dbip);
-    RT_CK_RESOURCE(resp);
 
     /* First, clear any existing counts */
     FOR_ALL_DIRECTORY_START(dp, dbip)

@@ -82,7 +82,7 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
 
     GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, BRLCAD_ERROR);
     GED_CHECK_COMB(gedp, dp, BRLCAD_ERROR);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern, dp, (fastf_t *)NULL, BRLCAD_ERROR);
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
@@ -242,7 +242,7 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
     }
     db5_sync_comb_to_attr(&avs, comb);
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, BRLCAD_ERROR);
 
     if (db5_update_attributes(dp, &avs, gedp->dbip)) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: failed to update attributes\n");
@@ -304,7 +304,7 @@ mater_clear(struct ged *gedp)
 	    bu_vls_printf(gedp->ged_result_str, "Error removing density information from database.");
 	    return BRLCAD_ERROR;
 	}
-	db_update_nref(gedp->dbip, &rt_uniresource);
+	db_update_nref(gedp->dbip);
     }
     return BRLCAD_OK;
 }
@@ -416,7 +416,7 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
     struct bu_ptbl id_objs = BU_PTBL_INIT_ZERO;
     std::set<struct directory *> mns, ids;
     std::set<struct directory *>::iterator dp_it;
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
     const char *mname_search = "-attr material_name";
     const char *mid_search = "-attr material_id";
     (void)db_search(&mn_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->dbip, NULL, NULL, NULL);
@@ -1480,7 +1480,7 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
     }
 
     // Find the objects we need to work with (if any)
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
     (void)db_search(&mn_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->dbip, NULL, NULL, NULL);
     (void)db_search(&id_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->dbip, NULL, NULL, NULL);
     for(size_t i = 0; i < BU_PTBL_LEN(&mn_objs); i++) {

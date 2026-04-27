@@ -452,7 +452,7 @@ _ged_facetize_solid_objs(struct ged *gedp, int argc, struct directory **dpa, str
 	struct rt_bot_internal *bot;
 	int not_solid;
 	struct directory *bot_dp = (struct directory *)BU_PTBL_GET(bot_dps, i);
-	GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, bot_dp, bn_mat_identity, BRLCAD_ERROR);
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
 	if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
@@ -1073,7 +1073,7 @@ _ged_check_plate_mode(struct ged *gedp, struct directory *dp)
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;
 	struct directory *bot_dp = (struct directory *)BU_PTBL_GET(bot_dps, i);
-	GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, bot_dp, bn_mat_identity, BRLCAD_ERROR);
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
 	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
@@ -1818,7 +1818,7 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct bu_
     }
 
     if (facetize_tree) {
-	ftree = rt_booltree_evaluate(facetize_tree, vlfree, &wdbp->wdb_tol, &rt_uniresource, &_manifold_do_bool, 0, (void *)o);
+	ftree = rt_booltree_eval(facetize_tree, vlfree, &wdbp->wdb_tol, &_manifold_do_bool, 0, (void *)o);
 	if (!ftree) {
 	    _old_ged_facetize_log_default(o);
 	    return NULL;
@@ -2128,7 +2128,7 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _old_ged_facetize_o
     comb->GIFTmater = ocomb->GIFTmater;
     comb->los = ocomb->los;
     comb->inherit = ocomb->inherit;
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, 0);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, 0);
 
     /* apply attributes to new comb */
     db5_update_attributes(dp, &avs, dbip);
@@ -2564,7 +2564,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 ged_facetize_regions_resume_memfree:
 
     /* Done changing stuff - update nref. */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     if (bu_vls_strlen(opts->nmg_log) && opts->method_flags & FACETIZE_NMGBOOL && opts->verbosity > 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(opts->nmg_log));
@@ -3008,7 +3008,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct bu_l
 ged_facetize_regions_memfree:
 
     /* Done changing stuff - update nref. */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     if (bu_vls_strlen(opts->nmg_log) && opts->method_flags & FACETIZE_NMGBOOL && opts->verbosity > 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(opts->nmg_log));
@@ -3215,7 +3215,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ol
     for (d_it = brep_objs.begin(); d_it != brep_objs.end(); d_it++) {
 	struct rt_db_internal intern;
 	struct rt_brep_internal* bi;
-	GED_DB_GET_INTERNAL(gedp, &intern, *d_it, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERN(gedp, &intern, *d_it, bn_mat_identity, BRLCAD_ERROR);
 	RT_CK_DB_INTERNAL(&intern);
 	bi = (struct rt_brep_internal*)intern.idb_ptr;
 	if (!RT_BREP_TEST_MAGIC(bi)) {
@@ -3296,7 +3296,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ol
     }
 
     /* Done changing stuff - update nref. */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     for (size_t i = 0; i < ss_cdt.size(); i++) {
 	ON_Brep_CDT_Destroy(ss_cdt[i]);

@@ -334,7 +334,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     gedp = ged_create();
     gedp->dbip = wdbp->dbip;
 
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     gedp->ged_lod = NULL;
 

@@ -712,7 +712,7 @@ copy_comb(struct db_i *dbip, struct directory *proto, void *clientData)
  * recursively copy a tree of geometry
  */
 static struct directory *
-copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *state)
+copy_tree(struct directory *dp, struct ged_clone_state *state)
 {
     size_t i;
     union record *rp = (union record *)NULL;
@@ -748,7 +748,7 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
 		    bu_vls_printf(state->gedp->ged_result_str, "WARNING: failed to locate \"%s\"\n", rp[i].M.m_instname);
 		    continue;
 		}
-		copy = copy_tree(mdp, resp, state);
+		copy = copy_tree(mdp, state);
 		if (!copy) {
 		    errors++;
 		    bu_vls_printf(state->gedp->ged_result_str, "WARNING: unable to fully clone \"%s\"\n", rp[i].M.m_instname);
@@ -796,17 +796,17 @@ done_copy_tree:
  * it's a combination/region.
  */
 static struct directory *
-deep_copy_object(struct resource *resp, struct ged_clone_state *state)
+deep_copy_object(struct ged_clone_state *state)
 {
     struct directory *copy = (struct directory *)NULL;
     int i, j;
 
-    if (!resp || !state || !state->n_copies) return RT_DIR_NULL;
+    if (!state || !state->n_copies) return RT_DIR_NULL;
 
     init_list(&obj_list, state->n_copies);
 
     /* do the actual copying */
-    copy = copy_tree(state->src, resp, state);
+    copy = copy_tree(state->src, state);
 
     /* make sure it made what we hope/think it made */
     if (!copy || !is_in_list(obj_list, state->src->d_namep))
@@ -1011,7 +1011,7 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_init(&state.olist);
 
-    if ((copy = deep_copy_object(&rt_uniresource, &state)) != (struct directory *)NULL)
+    if ((copy = deep_copy_object(&state)) != (struct directory *)NULL)
 	bu_vls_printf(gedp->ged_result_str, "%s", copy->d_namep);
 
     bu_vls_printf(gedp->ged_result_str, " {%s}", bu_vls_addr(&state.olist));

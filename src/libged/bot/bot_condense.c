@@ -62,7 +62,7 @@ ged_bot_condense_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     GED_DB_LOOKUP(gedp, old_dp, argv[2], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
-    GED_DB_GET_INTERNAL(gedp, &intern,  old_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERN(gedp, &intern,  old_dp, bn_mat_identity, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], argv[2]);
@@ -76,7 +76,7 @@ ged_bot_condense_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "%s: %d dead vertices eliminated\n", argv[0], count2);
 
     GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, BRLCAD_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, new_dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERN(gedp, new_dp, &intern, BRLCAD_ERROR);
 
     return BRLCAD_OK;
 }

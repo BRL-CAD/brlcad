@@ -42,7 +42,6 @@
 #include "rt/functab.h"
 #include "rt/hit.h"
 #include "rt/piece.h"
-#include "rt/resource.h"
 #include "rt/seg.h"
 #include "rt/soltab.h"
 #include "rt/tol.h"

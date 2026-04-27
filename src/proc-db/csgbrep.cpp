@@ -48,7 +48,7 @@ write_out(struct rt_wdb* fp, struct rt_db_internal *ip, const char *name, struct
 
     /* write the object in implicit form */
     struct bu_external ext;
-    int ret = rt_db_cvt_to_external5(&ext, name, ip, 1.0, fp->dbip, &rt_uniresource, ip->idb_major_type);
+    int ret = rt_db_cvt_to_ext5(&ext, name, ip, 1.0, fp->dbip, ip->idb_major_type);
     if (ret) {
 	bu_log("ERROR: failure converting [%s] to external format\n", name);
 	return;

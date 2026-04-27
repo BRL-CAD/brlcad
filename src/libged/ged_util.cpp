@@ -2144,7 +2144,7 @@ _ged_combadd(struct ged *gedp,
 	return RT_DIR_NULL;
 
     /* Done changing stuff - update nref. */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     return db_lookup(gedp->dbip, combname, LOOKUP_QUIET);
 }
@@ -2230,7 +2230,7 @@ _ged_combadd2(struct ged *gedp,
     }
 
     /* combination exists, add a new member */
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, 0);
+    GED_DB_GET_INTERN(gedp, &intern, dp, (fastf_t *)NULL, 0);
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
@@ -2307,12 +2307,12 @@ addmembers:
     comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count);
 
     /* and finally, write it out */
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, 0);
+    GED_DB_PUT_INTERN(gedp, dp, &intern, 0);
 
     bu_free((char *)tree_list, "combadd: tree_list");
 
     /* Done changing stuff - update nref. */
-    db_update_nref(gedp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip);
 
     return BRLCAD_OK;
 }

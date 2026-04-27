@@ -93,7 +93,7 @@ path_match(const char ***completions, struct bu_vls *prefix, struct db_i *dbip, 
 	    bu_vls_sprintf(prefix, "%s", seed.c_str());
 	}
 	// Empty context - we need the tops list
-	db_update_nref(dbip, &rt_uniresource);
+	db_update_nref(dbip);
 	struct directory **all_paths;
 	int tops_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &all_paths);
 	bu_sort(all_paths, tops_cnt, sizeof(struct directory *), alphanum_cmp, NULL);
