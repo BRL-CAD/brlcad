@@ -33,7 +33,7 @@
 #include "bu/path.h"
 #include "vmath.h"
 #include "raytrace.h"
-
+#include "./librt_private.h"
 
 int
 rt_bound_tree(const union tree *tp, vect_t tree_min, vect_t tree_max)

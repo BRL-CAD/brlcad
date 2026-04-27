@@ -65,6 +65,20 @@ RT_EXPORT extern int re_prep_solids(struct rt_i *rtip,
 				    char **solid_names,
 				    struct resource *resp);
 
+/**
+ * Add a pre-prepped soltab into the rt_i space-partitioning structures.
+ *
+ * The caller must have already:
+ *   - allocated and initialised @p stp
+ *   - set stp->st_bit = rtip->stats.nsolids++ (before calling ft_prep)
+ *   - called ft_prep on @p stp
+ *
+ * This function updates rti_Solids and inserts @p stp into rti_CutHead,
+ * hiding those internal rt_i details from callers.
+ */
+RT_EXPORT extern void rt_dynamic_add_solid(struct rt_i *rtip,
+					   struct soltab *stp);
+
 
 __END_DECLS
 

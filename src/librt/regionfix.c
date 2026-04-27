@@ -36,7 +36,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-
+#include "./librt_private.h"
 
 void
 rt_regionfix(struct rt_i *rtip)

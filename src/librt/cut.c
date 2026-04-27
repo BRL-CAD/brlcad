@@ -266,10 +266,10 @@ rt_cut_it(register struct rt_i *rtip, int UNUSED(ncpu))
 
     switch (rtip->rti_space_partition) {
 	case RT_PART_NUBSPT: {
-	    rtip->rti_CutHead = *finp;	/* union copy */
-	    rt_ct_optim(rtip, &rtip->rti_CutHead, 0);
+	    rtip->i->rti_CutHead = *finp;	/* union copy */
+	    rt_ct_optim(rtip, &rtip->i->rti_CutHead, 0);
 	    /* one more pass to find cells that are mostly empty */
-	    num_splits = split_mostly_empty_cells(rtip,  &rtip->rti_CutHead);
+	    num_splits = split_mostly_empty_cells(rtip,  &rtip->i->rti_CutHead);
 
 	    if (RT_G_DEBUG&RT_DEBUG_CUT) {
 		bu_log("split_mostly_empty_cells(): split %zu cells\n", num_splits);
@@ -289,14 +289,14 @@ rt_cut_it(register struct rt_i *rtip, int UNUSED(ncpu))
     bu_hist_init(&rtip->i->rti_hist_cutdepth, 0.0,
 		 (fastf_t)rtip->i->rti_cutdepth+1, rtip->i->rti_cutdepth+1);
     memset(rtip->stats.rti_ncut_by_type, 0, sizeof(rtip->stats.rti_ncut_by_type));
-    rt_ct_measure(rtip, &rtip->rti_CutHead, 0);
+    rt_ct_measure(rtip, &rtip->i->rti_CutHead, 0);
     if (RT_G_DEBUG&RT_DEBUG_CUT) {
 	rt_pr_cut_info(rtip, "Cut");
     }
 
     if (RT_G_DEBUG&RT_DEBUG_CUTDETAIL) {
 	/* Produce a voluminous listing of the cut tree */
-	rt_pr_cut(&rtip->rti_CutHead, 0);
+	rt_pr_cut(&rtip->i->rti_CutHead, 0);
     }
 
     if (RT_G_DEBUG&RT_DEBUG_PL_BOX) {
@@ -304,7 +304,7 @@ rt_cut_it(register struct rt_i *rtip, int UNUSED(ncpu))
 	if ((plotfp=fopen("rtcut.plot3", "wb"))!=NULL) {
 	    pdv_3space(plotfp, rtip->rti_pmin, rtip->rti_pmax);
 	    /* Plot all the cutting boxes */
-	    rt_plot_cut(plotfp, rtip, &rtip->rti_CutHead, 0);
+	    rt_plot_cut(plotfp, rtip, &rtip->i->rti_CutHead, 0);
 	    (void)fclose(plotfp);
 	}
     }

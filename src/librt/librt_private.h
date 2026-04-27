@@ -119,6 +119,7 @@ void db_i_internal_destroy(struct db_i_internal *i);
 struct rt_i_internal {
     /* Space-partitioning / BSP internals */
     union cutter        rti_inf_box;            /**< @brief  List of infinite solids */
+    union cutter        rti_CutHead;    	/**< @brief  Head of cut tree */
     union cutter *      rti_CutFree;            /**< @brief  cut Freelist */
     struct bu_ptbl      rti_busy_cutter_nodes;  /**< @brief  List of "cutter" mallocs */
     struct bu_ptbl      rti_cuts_waiting;       /**< @brief  nodes awaiting partitioning */
@@ -129,6 +130,7 @@ struct rt_i_internal {
     struct soltab **    rti_sol_by_type[ID_MAX_SOLID+1];
     size_t              rti_nsol_by_type[ID_MAX_SOLID+1];
     size_t              rti_maxsol_by_type;
+    struct soltab **    rti_Solids;     	/**< @brief  ptrs to soltab [st_bit] */
 
     /* Active solid hash table */
     struct bu_list      rti_solidheads[RT_DBNHASH]; /**< @brief  active solid lists */
@@ -149,6 +151,11 @@ struct rt_i_internal {
     /* Dynamic geometry */
     int                 rti_add_to_new_solids_list;
     struct bu_ptbl      rti_new_solids;
+
+    /* Region info */
+    struct region **    Regions;        	/**< @brief  ptrs to regions [reg_bit] */
+    struct bu_ptbl      delete_regs;    /**< @brief  list of region pointers to delete after light_init() */
+
 };
 
 struct rt_i_internal * rt_i_internal_create(void);

@@ -34,7 +34,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-
+#include "./librt_private.h"
 
 static struct partition fr_global_head;
 

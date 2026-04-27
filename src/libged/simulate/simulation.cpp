@@ -42,6 +42,7 @@
 #include "bu/str.h"
 #include "rt/db_attr.h"
 #include "rt/db_io.h"
+#include "rt/rt_instance.h"
 #include "rt/search.h"
 
 #include <cerrno>
@@ -137,8 +138,13 @@ get_aabb(db_i &db, const db_full_path &path)
     rt_prep_parallel(rti.ptr, 0);
     std::stack<const tree *> stack;
 
-    for (std::size_t i = 0; i < rti.ptr->stats.nregions; ++i)
-	stack.push(rti.ptr->Regions[i]->reg_treetop);
+    rt_iterate_regions(rti.ptr,
+        [](struct region *regp, void *udata) -> int {
+            auto *s = static_cast<std::stack<const tree *> *>(udata);
+            s->push(regp->reg_treetop);
+            return 0;
+        },
+        &stack);
 
     std::pair<btVector3, btVector3> result(btVector3(0.0, 0.0, 0.0),
 					   btVector3(0.0, 0.0, 0.0));

@@ -213,12 +213,6 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     stp->st_dp = dp;
     stp->st_bit = rtip->stats.nsolids++;
 
-    /* Add the new soltab structure to the rt_i structure */
-    rtip->rti_Solids = (struct soltab **)bu_realloc(rtip->rti_Solids,
-						    rtip->stats.nsolids * sizeof(struct soltab *),
-						    "new rti_Solids");
-    rtip->rti_Solids[stp->st_bit] = stp;
-
     /* actually prep the new RCC */
     if (intern.idb_meth->ft_prep(stp, &intern, rtip)) {
 	bu_log("Failed to prep RCC (%s) just made by make_hole_in_prepped_regions()!!!\n",
@@ -266,8 +260,8 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 	bu_ptbl_ins(&stp->st_regions, (long *)rp);
     }
 
-    /* insert the new RCC soltab structure into the already existing space partitioning tree */
-    insert_in_bsp(stp, &rtip->rti_CutHead);
+    /* Add the new soltab into the rt_i space-partitioning structures. */
+    rt_dynamic_add_solid(rtip, stp);
 
     return 0;
 }

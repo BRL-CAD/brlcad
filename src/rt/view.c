@@ -627,7 +627,7 @@ view_setup(struct rt_i *rtip)
 	    case 2:
 		/* Full success, and this region should get dropped later */
 		/* Add to list of regions to drop */
-		bu_ptbl_ins(&rtip->delete_regs, (long *)regp);
+		rt_mark_region_deleted(rtip, regp);
 		break;
 	}
 	regp = BU_LIST_NEXT(region, &regp->l);
@@ -1755,16 +1755,18 @@ view_2init(struct application *ap, char *UNUSED(framename))
      * structures in the space partitioning tree
      */
     bu_ptbl_init(&stps, 8, "soltabs to delete");
-    if (OPTICAL_DEBUG & OPTICAL_DEBUG_LIGHT)
-	bu_log("deleting %zu invisible light regions\n", BU_PTBL_LEN(&ap->a_rt_i->delete_regs));
 
-    for (i=0; i<BU_PTBL_LEN(&ap->a_rt_i->delete_regs); i++) {
+    size_t reg_del_cnt = rt_deleted_regions_cnt(ap->a_rt_i);
+    if (OPTICAL_DEBUG & OPTICAL_DEBUG_LIGHT)
+	bu_log("deleting %zu invisible light regions\n", reg_del_cnt);
+
+    for (i=0; i<reg_del_cnt; i++) {
 	struct region *rp;
 	struct soltab *stp;
 	size_t j;
 
 
-	rp = (struct region *)BU_PTBL_GET(&ap->a_rt_i->delete_regs, i);
+	rp = rt_deleted_region_get(ap->a_rt_i, i);
 
 	/* make a list of soltabs containing primitives referenced by
 	 * invisible light regions

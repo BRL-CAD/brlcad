@@ -260,7 +260,7 @@ rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays)
 
     ss.lastcut = CUTTER_NULL;
     ss.old_status = (struct rt_shootray_status *)NULL;
-    ss.curcut = &ap->a_rt_i->rti_CutHead;
+    ss.curcut = &ap->a_rt_i->i->rti_CutHead;
 
     if (ss.curcut->cut_type == CUT_CUTNODE || ss.curcut->cut_type == CUT_BOXNODE) {
 	ss.lastcell = ss.curcut;
