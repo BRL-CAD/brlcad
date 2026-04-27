@@ -45,7 +45,6 @@ BRLCAD_ENABLE_STRICT
 BRLCAD_ENABLE_MINIMAL "Skip GUI support and docs. Faster builds." OFF
 BUILD_SHARED_LIBS "Build shared libraries" ON
 BUILD_STATIC_LIBS "Build static libraries" ON
-BRLCAD_ENABLE_BRLCAD_LIBRARY "Build the brlcad.dll" OFF
 
 BRLCAD_BUNDLED_LIBS := AUTO | BUNDLED | SYSTEM
  ENABLE_ALL

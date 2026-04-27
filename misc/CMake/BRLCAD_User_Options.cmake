@@ -47,11 +47,6 @@ mark_as_advanced(BUILD_SHARED_LIBS)
 # Build static libs by default.
 option(BUILD_STATIC_LIBS "Build static libraries" ON)
 
-# Turn off the brlcad.dll build.
-# It's an expert's setting at the moment.
-option(BRLCAD_ENABLE_BRLCAD_LIBRARY "Build the brlcad.dll" OFF)
-mark_as_advanced(BRLCAD_ENABLE_BRLCAD_LIBRARY)
-
 # Global third party controls - these options enable and disable ALL bext
 # copies of libraries.
 if(MSVC)
