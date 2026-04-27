@@ -322,6 +322,7 @@ create_variant_in_working_g(struct db_i       *wdbip,
 				const std::string &vname,
 				bool               is_sub,
 				int                idx,
+				int                verbosity,
 				fastf_t           *out_factor)
 {
 	struct directory *src_dp =
@@ -350,13 +351,15 @@ create_variant_in_working_g(struct db_i       *wdbip,
 	fastf_t factor = variant_perturb_factor(src_name, is_sub, idx, bbox_diag);
 	if (out_factor) *out_factor = factor;
 
-	bu_log("[PLAN_PERTURB] src=%s  role=%s  idx=%d  bbox_diag=%.4f  factor=%.6f mm  variant=%s\n",
-	       src_name.c_str(),
-	       is_sub ? "SUB" : "BASE",
-	       idx,
-	       (double)bbox_diag,
-	       (double)factor,
-	       vname.c_str());
+	if (verbosity > 1) {
+		bu_log("[PLAN_PERTURB] src=%s  role=%s  idx=%d  bbox_diag=%.4f  factor=%.6f mm  variant=%s\n",
+		       src_name.c_str(),
+		       is_sub ? "SUB" : "BASE",
+		       idx,
+		       (double)bbox_diag,
+		       (double)factor,
+		       vname.c_str());
+	}
 
 	struct rt_db_internal *var_intern = NULL;
 	int ret = OBJ[prim_type].ft_perturb(&var_intern, &src_intern, 0, factor);
@@ -532,6 +535,7 @@ _ged_facetize_build_variant_plan(struct _ged_facetize_state *s,
 						inst.vname,
 						inst.is_sub,
 						variant_idx,
+						s->verbosity,
 						&used_factor);
 		if (cret == BRLCAD_OK) {
 			plan->variant_names.push_back(inst.vname);

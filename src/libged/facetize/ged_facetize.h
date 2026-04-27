@@ -143,8 +143,10 @@ method_scan(std::map<std::string, std::set<std::string>> *method_sets, struct db
 /**
  * Per-instance variant assignment plan for coplanar face avoidance.
  *
- * Produced by _ged_facetize_build_variant_plan() before tessellation.
- * Consumed by _booltree_leaf_tess() during Manifold boolean evaluation.
+ * Produced by _ged_facetize_build_variant_plan() before booleval.
+ * Variant meshes may be tessellated eagerly (direct booleval path) or lazily
+ * on the first validation-triggered retry in region mode.  The lookup is then
+ * consumed by _booltree_leaf_tess() during Manifold boolean evaluation.
  */
 struct FacetizeVariantPlan {
     /**
@@ -157,7 +159,7 @@ struct FacetizeVariantPlan {
      */
     std::map<std::string, std::string> inst_to_variant;
 
-    /** Variant primitive names that still need NMG tessellation. */
+    /** Variant primitive names that still need NMG tessellation if a retry/eager path uses them. */
     std::vector<std::string> variant_names;
 
     /**
@@ -204,8 +206,10 @@ _ged_facetize_build_variant_plan(struct _ged_facetize_state *s,
 
 /**
  * Tessellate the variant primitives in the working .g using the NMG method.
- * Called after _ged_facetize_leaves_tri() so original leaves are already BoTs.
- * Updates plan->n_variant_tess_failures for any variants that could not be
+ * Called after _ged_facetize_leaves_tri() once original leaves are already
+ * BoTs, either eagerly for direct booleval or lazily on the first
+ * validation-triggered retry in region mode.  Updates
+ * plan->n_variant_tess_failures for any variants that could not be
  * tessellated (they will silently fall back to the original mesh at booleval).
  */
 extern int

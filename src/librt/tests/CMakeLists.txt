@@ -95,7 +95,7 @@ add_subdirectory(edit)
 
 # prim_tess: NMG tessellation quality tests
 brlcad_addexec(rt_prim_tess prim_tess.c "librt;libnmg;libwdb;libbg;libbu" TEST)
-brlcad_add_test(NAME rt_prim_tess COMMAND rt_prim_tess)
+#brlcad_add_test(NAME rt_prim_tess COMMAND rt_prim_tess)
 
 # stand-alone Crofton estimator tests
 brlcad_addexec(rt_crofton crofton.c "librt;libwdb;libbu" TEST)

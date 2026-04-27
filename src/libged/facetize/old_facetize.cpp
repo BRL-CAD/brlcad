@@ -3315,13 +3315,14 @@ ged_facetize_old_core(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int need_help = 0;
     int nonovlp_brep = 0;
+    long verbosity = 0;
     struct bu_list *vlfree = &rt_vlfree;
     struct _old_ged_facetize_opts *opts = _old_ged_facetize_opts_create();
     struct bu_opt_desc d[22];
     struct bu_opt_desc pd[4];
 
     BU_OPT(d[0],  "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
-    BU_OPT(d[1],  "v", "verbose",       "",  &_ged_vopt,  &(opts->verbosity),  "Verbose output (multiple flags increase verbosity)");
+    BU_OPT(d[1],  "v", "verbose",       "",  &bu_opt_incr_long,  &verbosity,  "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[2],  "q", "quiet",         "",  NULL,  &(opts->quiet),            "Suppress all output (overrides verbose flag)");
     BU_OPT(d[3],  "",  "NMG",           "",  NULL,  &(opts->nmgbool),          "Use the standard libnmg boolean mesh evaluation to create output (Default)");
     BU_OPT(d[4],  "",  "CM",            "",  NULL,  &(opts->continuation),     "Use the Continuation Method to sample the object and create output");
@@ -3369,6 +3370,8 @@ ged_facetize_old_core(struct ged *gedp, int argc, const char *argv[])
 	goto ged_facetize_memfree;
     }
     bu_vls_free(&omsg);
+
+    opts->verbosity = (int)verbosity;
 
     /* It is known that libnmg will (as of 2018 anyway) throw a lot of
      * bu_bomb calls during operation. Because we need facetize to run

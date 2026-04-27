@@ -39,9 +39,9 @@ It may happen that a conversion fails part way through the process. This can hap
 
 In normal operation, when converting to BoT output there are post-processing routines that try to identify and automatically fix certain categories of geometric flaws that can crop up during Boolean evaluation. If a user finds that they are getting unexpected output for a particular input, and the log indicates the repair step was run, one option available is to repeat the conversion with these repair steps disabled via the *--disable-fixup* flag. Repair should only be disabled if there is a problem - coplanar subtractions frequently result in thin triangle artifacts lingering after Boolean evaluation due to the imitations of floating point math, and in at least some cases the fixup routines are able to deal with these without requiring manual intervention. (These routines will not _always_ work, so checking of outputs after a conversion with the *lint* command to identify BoTs with potentially problematic features is still recommended - see the *lint* man page for more details.)
 
-By default, the Manifold BoT path will also run a coplanarity-avoidance perturbation step for eligible primitives before tessellation. This helps avoid difficult Boolean edge cases where the same primitive participates in both additive and subtractive roles and coplanar/sliver configurations can lead to problematic near-tolerance triangles. If needed, this behavior can be disabled with *--no-perturb*.
+By default, the Manifold BoT path can make use of a coplanarity-avoidance perturbation retry for eligible primitives. In per-region mode, _facetize_ first evaluates the unperturbed BoT and validates it against the source CSG with Crofton metrics; perturbed variant tessellation is only attempted if those metrics indicate the initial result is outside tolerance. This helps avoid difficult Boolean edge cases where the same primitive participates in both additive and subtractive roles and coplanar/sliver configurations can lead to problematic near-tolerance triangles. If needed, this behavior can be disabled with *--no-perturb*.
 
-When the perturbation step is active, *facetize* validates the Boolean output against the original CSG geometry using a Crofton stochastic raytrace. The default tolerance thresholds that trigger a perturb retry are 10% for both surface area and volume; these can be adjusted with *--perturb-sa-tol* and *--perturb-vol-tol*. At the end of a per-region facetization run *facetize* prints a concise validation summary listing how many regions passed, triggered a perturb retry, or encountered one of the following noteworthy conditions:
+When the perturbation step is active, per-region *facetize* validates the initial Boolean output against the original CSG geometry using a Crofton stochastic raytrace. The default tolerance thresholds that trigger a perturb retry are 10% for both surface area and volume; these can be adjusted with *--perturb-sa-tol* and *--perturb-vol-tol*. At the end of a per-region facetization run *facetize* prints a concise validation summary listing how many regions passed, triggered a perturb retry, or encountered one of the following noteworthy conditions:
 
 _Sub-mm / few-hit bypass (accepted with note)_: When the Crofton sampler finds only a very small number of ray-surface intersections (below an internal threshold of 50 crossings), the sampling noise alone would exceed 14% relative error, making any SA comparison meaningless. Geometry in this category is typically sub-millimetre in cross-section (e.g., a TGC with a radius under 0.2 mm) but the stochastic sampler has confirmed that some geometry is present. The BoT conversion is accepted and the region is counted separately in the summary. Users should verify that such extreme geometry reflects actual modeling intent rather than an accidental near-degenerate primitive.
 
@@ -122,13 +122,13 @@ Specify a log file in which to store the full verbose output of a facetization p
 By default, BoT facetization will attempt to clear certain categories of undesirable triangles from outputs. Specifying this option will skip that repair attempt.
 
 *--no-perturb*::
-Disable the coplanarity-avoidance perturbation variant planning/tessellation step in BoT Manifold Boolean evaluation.
+Disable the coplanarity-avoidance perturbation retry machinery in BoT Manifold Boolean evaluation.
 
 *--perturb-sa-tol #*::
-Surface-area percentage threshold (0–100) that triggers the coplanarity-avoidance perturb retry when the Crofton-sampled CSG surface area differs from the facetized BoT surface area by more than this amount. Default is 10 (percent).
+Surface-area percentage threshold (0–100) that triggers the coplanarity-avoidance perturb retry when the per-region Crofton-sampled CSG surface area differs from the initial facetized BoT surface area by more than this amount. Default is 10 (percent).
 
 *--perturb-vol-tol #*::
-Volume percentage threshold (0–100) that triggers the coplanarity-avoidance perturb retry when the Crofton-sampled CSG volume differs from the facetized BoT volume by more than this amount. Default is 10 (percent).
+Volume percentage threshold (0–100) that triggers the coplanarity-avoidance perturb retry when the per-region Crofton-sampled CSG volume differs from the initial facetized BoT volume by more than this amount. Default is 10 (percent).
 
 
 
