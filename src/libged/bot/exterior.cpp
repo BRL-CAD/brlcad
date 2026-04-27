@@ -949,6 +949,13 @@ _bot_cmd_exterior(void *bs, int argc, const char **argv)
 		  removed, vcount);
 
     /* ----------------------------------------------------------------
+     * There are no solidity guarantees about an exterior mesh extracted
+     * from a model.  Set SURFACE mode - if the user wants to turn it into
+     * a solid they must post process the bot exterior result.
+     * ---------------------------------------------------------------- */
+    bot->mode = RT_BOT_SURFACE;
+
+    /* ----------------------------------------------------------------
      * Write the result.
      * ---------------------------------------------------------------- */
     int ret = BRLCAD_OK;
