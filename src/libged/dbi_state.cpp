@@ -157,6 +157,10 @@ dbi_cache_open(const char *name)
 	if (disk_format_version != CACHE_CURRENT_FORMAT) {
 	    bu_log("Old GED drawing info cache (%zd) found - clearing\n", disk_format_version);
 	    dbi_cache_clear(c);
+	    /* Delete the stale format file before recursing.  Without this
+	     * the recursive call reads the same wrong version and recurses
+	     * indefinitely, causing a stack overflow / segfault. */
+	    bu_file_delete(dir);
 	    mdb_env_close(c->env);
 	    bu_vls_free(&fname);
 	    bu_vls_free(c->fname);
