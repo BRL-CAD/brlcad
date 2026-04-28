@@ -186,6 +186,66 @@ extern int ged_protate_core(struct ged *gedp, int argc, const char *argv[]);
 extern int ged_pscale_core(struct ged *gedp, int argc, const char *argv[]);
 extern int ged_ptranslate_core(struct ged *gedp, int argc, const char *argv[]);
 
+
+#define HELPFLAG "--print-help"
+#define PURPOSEFLAG "--print-purpose"
+
+
+#ifdef __cplusplus
+
+/**
+ * One resolved geometry specifier from the edit command line.
+ *
+ * Each token that resolves to a geometry object (or the batch marker ".") is
+ * parsed into this structure during Pass 2 of the three-pass parser.
+ */
+struct ged_edit_geom_spec {
+    std::string raw;       /**< @brief original argv token */
+    std::string path;      /**< @brief resolved path string (no URI components) */
+    std::string fragment;  /**< @brief URI fragment, e.g. "V1" from "obj.s#V1" */
+    std::string query;     /**< @brief URI query, e.g. "V*" from "obj.s?V*"   */
+    bool is_batch;         /**< @brief true when token was "." (each-object)   */
+    std::vector<unsigned long long> hashes; /**< @brief from DbiState::digest_path */
+    struct directory *dp;  /**< @brief head dp; RT_DIR_NULL for comb instances */
+};
+
+
+/**
+ * Top-level parsing context for the edit command.
+ *
+ * Created once per ged_edit_core() invocation and passed to subcommands.
+ *
+ * Pass 1 (global opts) fills the flag_* fields.
+ * Pass 2 (geometry specifiers) fills geom_specs and from_selection.
+ * Pass 3 (subcommand dispatch) uses geom_specs and the subcommand args.
+ */
+struct ged_edit_ctx {
+    struct ged *gedp;
+    int verbosity;
+    float *prand;
+
+    /* Conflict arbiter flags (set by Pass 1 global options) */
+    int flag_S;  /**< @brief -S: operate on selection, ignoring cmd-line specifier */
+    int flag_f;  /**< @brief -f: force: apply op, write to disk, clear conflict     */
+    int flag_F;  /**< @brief -F: abandon: discard intermediate state, use on-disk   */
+    int flag_i;  /**< @brief -i: intermediate: apply to temp buf only (no disk write)*/
+
+    /* Resolved geometry specifiers (populated by Pass 2) */
+    std::vector<ged_edit_geom_spec> geom_specs;
+    bool from_selection; /**< @brief true if geom_specs came from selection fallback */
+
+    /* Conflict state: set when an explicit specifier conflicts with the
+     * active selection and no arbiter flag was given. */
+    bool has_conflict;
+
+    /* Convenience: dp for the primary (first) object.
+     * RT_DIR_NULL when the primary spec is a multi-segment comb path. */
+    struct directory *dp;
+};
+
+#endif
+
+
 __END_DECLS
 
 #endif /* LIBGED_EDIT_GED_PRIVATE_H */

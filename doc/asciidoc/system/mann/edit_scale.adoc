@@ -1,0 +1,284 @@
+= EDIT SCALE(nged)
+:doctype: manpage
+:mansource: BRL-CAD
+:manmanual: BRL-CAD User Commands
+
+== NAME
+edit scale, edit sca - Resize one or more objects in the database by a scale factor.
+
+== SYNOPSIS
+
+[source]
+----
+edit [options] geometry scale FACTOR
+edit [options] geometry scale X_FACTOR Y_FACTOR Z_FACTOR
+edit [options] geometry scale -r FACTOR
+edit [options] geometry scale -r X_FACTOR Y_FACTOR Z_FACTOR
+edit [options] geometry scale [-k FROM_POS|FROM_OBJ] -a TO_POS|TO_OBJ
+edit [options] geometry scale [-k SCALE_FROM] -a SCALE_TO -r FACTOR
+edit [options] geometry scale [-k SCALE_FROM] -a SCALE_TO -r X_FACTOR Y_FACTOR Z_FACTOR
+edit [options] geometry scale [-c CENTER_POS|CENTER_OBJ] FACTOR
+edit [options] geometry scale [-c CENTER_POS|CENTER_OBJ]
+    X_FACTOR Y_FACTOR Z_FACTOR
+----
+
+where *FROM_POS*, *TO_POS*, *SCALE_FROM*, *SCALE_TO*, and *CENTER_POS*
+each accept one to three scalar values (broadcast to a 3-vector when
+fewer are given), and *FROM_OBJ*, *TO_OBJ*, *CENTER_OBJ* are names of
+existing database objects whose bounding-box centers are used.
+
+== DESCRIPTION
+
+Used to enlarge or reduce the size of one or more instances of
+primitive or combination objects by a scaling factor.
+
+A scale factor greater than 1 enlarges the object; a factor between
+0 and 1 shrinks it; a factor of exactly 0 or a negative factor is
+rejected as invalid.
+
+*Uniform scale* (all three factors equal) uses the primitive's native
+scale path and is supported by all primitives.  *Anisotropic
+(per-axis) scale* (X, Y, Z factors differ) applies a diagonal scale
+matrix via `ft_mat` and is only available for primitives that provide
+that function.
+
+The conceptual model behind *edit scale* uses two independent reference
+pairs — a SCALE ruler and a FACTOR ruler:
+
+....
+  SCALE  = vector from SCALE_FROM (-k) to SCALE_TO (-a|-r)
+           the reference "ruler" — measures a known distance in the scene
+  FACTOR = the desired result ruler — how large the result should be
+           expressed as the positional argument(s), or -r when combined
+           with a -k/-a pair
+  effective factor[i] = FACTOR[i] / |SCALE[i]|   per axis
+....
+
+The three supported calling patterns are:
+
+* *Positional (or explicit `-r` alone)* — supply 1 or 3 scalar factor
+  values directly.  The implicit SCALE ruler is the unit vector
+  `(1, 1, 1)`, so the effective factor equals FACTOR directly.
+  `scale 2` and `scale -r 2` both double the object.
+* *`-k FROM -a TO` only* — the effective factor vector is computed as
+  `TO - FROM`.  When FROM is the origin this is simply TO:
+  `scale -k 0 0 0 -a 2 2 2` yields factors `{2, 2, 2}`.
+* *`-k FROM -a SCALE_TO -r FACTOR` (two-pair form)* — the `-k`/`-a`
+  pair defines the SCALE reference ruler; `-r` is the FACTOR ruler.
+  The effective factor is `FACTOR / |SCALE|` per axis.  For example:
+  `scale -k 5 10 15 -a 7 11 -2 -r 4 2 34` computes SCALE=(2,1,17) and
+  FACTOR=(4,2,34), giving effective factors (2, 2, 2) — a uniform 2×
+  scale regardless of the absolute coordinates.  This form is the
+  primary motivation for supplying a SCALE ruler: the FROM/TO pair
+  captures a known real-world distance and the `-r` value expresses the
+  desired outcome in the same units.
+
+The pivot CENTER defaults to the bounding-box center of the target
+object when `-c` is not specified.  The batch-marker `.` is supported
+as a `-c` argument to use each target object's own keypoint as the
+pivot center.
+
+The alias *sca* is equivalent to *scale*.
+
+Global options (`-S`, `-f`, `-F`, `-i`) are described in
+*edit*(nged).
+
+== OPTIONS
+
+*-k* SCALE_FROM_POS | SCALE_FROM_OBJ::
+  Set SCALE_FROM, the tail of the SCALE reference ruler vector.
+  Accepts 1–3 scalar values (broadcast to a 3-vector when fewer than
+  three are given) or an object name whose bounding-box center is
+  used.  When combined with `-a SCALE_TO` only (no `-r`), the
+  effective scale factor is `SCALE_TO - SCALE_FROM`.  When combined
+  with both `-a SCALE_TO` and `-r FACTOR`, the `-k`/`-a` pair defines
+  the SCALE reference ruler and `-r` provides the FACTOR ruler; the
+  effective factor is `FACTOR / |SCALE|` per axis.  If absent, FROM
+  defaults to the origin `(0, 0, 0)`.
+
+*-a* SCALE_TO_POS | SCALE_TO_OBJ::
+  Set SCALE_TO as an absolute position, defining the head of the SCALE
+  reference ruler.  Required when SCALE_TO is specified as an object
+  name.  When used alone with `-k`, effective factors = `TO - FROM`.
+  When combined with `-r FACTOR`, triggers the two-pair ratio model.
+
+*-r* FACTOR | X_FACTOR Y_FACTOR Z_FACTOR::
+  Provide the FACTOR ruler explicitly.  When used without `-k`/`-a`,
+  this is the direct scale factor (broadcast or per-axis).  When
+  combined with a `-k`/`-a` SCALE pair, this becomes the FACTOR ruler
+  and the effective factor is `r_vec[i] / |SCALE[i]|` per axis.
+  Accepts 1 value (broadcast to all three axes) or 3 per-axis values.
+
+*-c* CENTER_POS | CENTER_OBJ | `.`::
+  Set the pivot center from which the scale expands or contracts.
+  Defaults to the bounding-box center of the target object.  Accepts
+  1–3 scalar values, an object name, or the batch marker `.` to use
+  each target object's own keypoint as the pivot center.
+
+*-n*::
+  Accepted for compatibility; intended to select natural origin over
+  bounding-box center for an object argument.  Has minimal effect in
+  the current implementation.
+
+== EXAMPLES
+
+.Double the size of cube from its center — simple forms
+[example]
+====
+A single scalar factor:
+
+  mged> **edit cube scale 2**
+
+Three equal factors (still uniform):
+
+  mged> **edit cube scale 2 2 2**
+
+Explicit relative flag:
+
+  mged> **edit cube scale -r 2**
+  mged> **edit cube scale -r 2 2 2**
+
+Using the FROM/TO reference pair (origin → 2 = factor of 2):
+
+  mged> **edit cube scale -k 0 0 0 -a 2 2 2**
+====
+
+.Halve the size of sph.s
+[example]
+====
+  mged> **edit sph.s scale 0.5**
+
+Using the FROM/TO reference pair:
+
+  mged> **edit sph.s scale -k 0 0 0 -a 0.5 0.5 0.5**
+
+Using explicit `-r`:
+
+  mged> **edit sph.s scale -r 0.5**
+====
+
+.Scale with a fixed pivot center
+[example]
+====
+Scale sph.s by 2 but keep its surface nearest the origin fixed
+(pivot at the origin):
+
+  mged> **edit sph.s scale -c 0 0 0 2**
+
+Scale cube from a named object's position as the pivot:
+
+  mged> **edit cube scale -c sphere1 2**
+
+Scale from the cube's own center (the default; written explicitly):
+
+  mged> **edit cube scale -c cube 2**
+====
+
+.Understanding the -k / -a vector model and the two-pair ratio form
+[example]
+====
+When FROM is the origin and TO is the desired factor, the model is
+intuitive: `scale -k 0 0 0 -a F F F` applies a uniform factor F.
+
+  mged> **edit cube scale -k 0 0 0 -a 3 3 3**
+
+The above triples the object.  The following halves it:
+
+  mged> **edit cube scale -k 0 0 0 -a 0.5 0.5 0.5**
+
+When FROM is *not* the origin, the effective factor is simply TO - FROM.
+`scale -k 1 1 1 -a 3 3 3` yields factors `{2, 2, 2}` — it doubles,
+not triples, because 3-1=2.  Plan your FROM/TO values accordingly.
+
+*Two-pair (ratio) form:* When `-k FROM -a SCALE_TO -r FACTOR` are all
+supplied together, the `-k`/`-a` pair is the SCALE reference ruler and
+`-r` is the FACTOR ruler.  The effective factor is computed as
+`FACTOR / |SCALE|` per axis.  For example:
+
+  mged> **edit cube scale -k 0 0 0 -a 1 1 1 -r 2**
+
+Here SCALE=(1,1,1) and FACTOR=(2,2,2), so effective factor = 2/1 = 2
+(doubles the cube).  A more complex example illustrating that the sign
+of SCALE components is ignored (only magnitude matters):
+
+  mged> **edit cube scale -k 5 10 15 -a 7 11 -2 -r 4 2 34**
+
+SCALE vector = (2, 1, -17), |per axis| = (2, 1, 17).
+FACTOR = (4, 2, 34).
+effective = (4/2, 2/1, 34/17) = (2, 2, 2) — a uniform 2× scale.
+
+This form is most useful when the SCALE ruler is derived from known
+scene measurements: specify FROM and TO as points that span a known
+reference distance, then use `-r` to state the desired result size.
+====
+
+.Non-uniform (anisotropic) scale: stretch X by 2, shrink Y by 0.5, leave Z unchanged
+[example]
+====
+Only primitives that implement `ft_mat` support per-axis scale.  For
+primitives without `ft_mat` (e.g. `arb8`, `bot`, `brep`) this will
+return an error:
+
+  mged> **edit ell.s scale 2 0.5 1**
+
+The three values map to X, Y, Z scale factors respectively.  A zero
+in any position is rejected:
+
+  mged> **edit ell.s scale 0 1 1**   ← error, zero factor
+
+Equal factors are treated as uniform (uses the native scale path):
+
+  mged> **edit ell.s scale 2 2 2**   ← uniform, equivalent to scale 2
+====
+
+.Scale with an explicit center and an explicit factor
+[example]
+====
+Apply a factor of 1.5 to cube, pivoting on sphere1's keypoint:
+
+  mged> **edit cube scale -c sphere1 1.5**
+
+Pivot on a world-space coordinate:
+
+  mged> **edit cube scale -c 10 0 0 1.5**
+====
+
+.Batch scale: each object scales from its own center using -c .
+[example]
+====
+Use `-c .` to pivot each object on its own keypoint (bounding-box center)
+in a single command per object:
+
+  mged> **edit sph.s scale -c . 2**
+  mged> **edit other.s scale -c . 2**
+
+The `.` causes each object's own current keypoint to serve as the
+pivot center, equivalent to naming each object explicitly:
+
+  mged> **edit sph.s scale -c sph.s 2**
+  mged> **edit other.s scale -c other.s 2**
+====
+
+.Use the intermediate buffer: scale tentatively, then revert if unsatisfied
+[example]
+====
+  mged> **edit cube checkpoint**
+  mged> **edit -i cube scale 2**
+  mged> **edit cube revert**
+====
+
+== SEE ALSO
+
+*edit*(nged), *edit rotate*(nged), *edit translate*(nged),
+*oscale*(nged), *pscale*(nged)
+
+[[author]]
+== AUTHOR
+
+BRL-CAD Team
+
+
+[[bug_reports]]
+== BUG REPORTS
+
+Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org

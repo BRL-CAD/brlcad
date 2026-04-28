@@ -48,6 +48,10 @@
 #include <map>
 #include <stack>
 #include <string>
+#include <unordered_map>
+
+#include "rt/edit.h"
+#include "rt/db_fullpath.h"
 
 #endif
 
@@ -97,6 +101,8 @@ struct ged_drawable {
 
 class Ged_Internal {
     public:
+	~Ged_Internal();
+
 	struct ged *gedp;
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_prerun_clbk;
 	std::map<ged_func_ptr, std::pair<bu_clbk_t, void *>> cmd_during_clbk;
@@ -114,6 +120,16 @@ class Ged_Internal {
 	// commands and subcommands.
 	vect_t ged_eye_model = VINIT_ZERO;
 	mat_t ged_viewrot = MAT_INIT_ZERO;
+
+	// Temporary edit buffer: maps a path string to an in-progress rt_edit.
+	// Survives across command invocations within a session.
+	// Entries are promoted (written to disk) on explicit flush or abandoned
+	// on session close.
+	struct ged_edit_buf_entry {
+	    struct db_full_path dfp;
+	    struct rt_edit *s;
+	};
+	std::unordered_map<std::string, ged_edit_buf_entry> edit_buf;
 };
 
 #else
@@ -480,6 +496,26 @@ GED_EXPORT extern int
 _ged_subcmd2_help(struct ged *gedp, struct bu_opt_desc *gopts, std::map<std::string, ged_subcmd *> &subcmds, const char *cmdname, const char *cmdargs, int argc, const char **argv);
 
 #endif
+
+/* Temporary edit buffer API (defined in edit_buf.cpp).
+ *
+ * Maintains a per-gedp map of db_full_path → rt_edit * that survives across
+ * command invocations within a session.  Use this for multi-step interactive
+ * CLI edits that should not write to disk at each step.
+ *
+ * All functions are no-ops when gedp, dfp, or s is NULL.
+ *
+ * ged_edit_buf_get    - look up entry by path; returns NULL if not found
+ * ged_edit_buf_set    - store/replace entry (takes ownership of s)
+ * ged_edit_buf_promote- serialise es_int to disk, remove entry; returns OK/ERROR
+ * ged_edit_buf_abandon- call rt_edit_destroy(), remove entry (no disk write)
+ * ged_edit_buf_flush  - promote ALL entries to disk (call before db close)
+ */
+GED_EXPORT extern struct rt_edit *ged_edit_buf_get(struct ged *gedp, const struct db_full_path *dfp);
+GED_EXPORT extern void            ged_edit_buf_set(struct ged *gedp, const struct db_full_path *dfp, struct rt_edit *s);
+GED_EXPORT extern int             ged_edit_buf_promote(struct ged *gedp, const struct db_full_path *dfp);
+GED_EXPORT extern void            ged_edit_buf_abandon(struct ged *gedp, const struct db_full_path *dfp);
+GED_EXPORT extern void            ged_edit_buf_flush(struct ged *gedp);
 
 __END_DECLS
 

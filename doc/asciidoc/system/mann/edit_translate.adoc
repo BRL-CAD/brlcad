@@ -4,180 +4,221 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-edit translate - Translates the positions of _object_ s, using coordinates, offsets, and objects as reference points.
+edit translate, edit tra - Translate (move) one or more objects in the database.
 
 == SYNOPSIS
 
 [source]
 ----
-edit translate [] <to> object... \
-     \
-    
- [-n] -k {<from_object> | <from_position>}
- [-n] [-a | -r] {<to_object> | <to_position>}
- [{<coords>} | { [ -x {x | <x-obj>}] [ -y {y | <y-obj>}] [ -z {z | <z-obj>}]}]
-  [path/] object [<offset_distance>]
- x [ y [z]]
+edit [options] geometry translate [-a|-r] [-x|-y|-z] [-k FROM] TO
+edit [options] geometry translate [-a|-r] [-x|-y|-z] [-k FROM]
+    {x [y [z]]} | {OBJECT}
+edit [options] geometry tra X Y Z
 ----
 
+where a *TO* or *FROM* argument has the form:
 
-[[description]]
+[source]
+----
+{x [y [z]]} | OBJECT_NAME | "."
+----
+
 == DESCRIPTION
 
-Used to move one or more instances of primitive or combination objects. The positions of _object_'s are translated from _from_ to _to_.
+Used to move one or more instances of primitive or combination
+objects to a new position.  OBJECTs are translated by a vector from
+FROM to TO.
 
-See the *edit* command's manual for more information.
+OFFSET_DIST is always a relative distance from the object's current
+position.  TO_POS may be either an absolute position (`-a`) or a
+relative distance (`-r`) from FROM.  When no `-k` FROM is given, the
+relative mode operates directly on the object's current keypoint
+(bounding-box center by default).
 
+Any `*_OBJECT` argument may be set to `.`, which causes each
+individual OBJECT to be used in its place (a batch operation if there
+is more than one OBJECT is supplied on the command line).
 
-[[examples]]
+The alias *tra* is a shorthand for `translate -r` and accepts exactly
+three coordinate values `X Y Z` with no flags.
+
+Global options (`-S`, `-f`, `-F`, `-i`) are described in
+*edit*(nged).
+
+== OPTIONS
+
+*-a*::
+  Interpret *TO* as an absolute position in model space.  Required if
+  *TO* is an object name rather than a coordinate vector.  This is the
+  default when `-k FROM_OBJECT` is given (i.e., the object is moved so
+  that its FROM keypoint coincides with the TO position).
+
+*-r*::
+  Interpret *TO* as a relative delta from the current keypoint or FROM
+  position.  This is the default when no `-k` is given.
+
+*-x*, *-y*, *-z*::
+  Restrict the translation to the specified axis only.  Only the
+  nominated axis coordinate of *TO* is applied; the remaining axes
+  stay at their current values.  Multiple axis flags may be combined.
+
+*-k* FROM_COORDS | FROM_OBJECT::
+  Set the reference keypoint (FROM position).  *FROM* accepts:
+
+  * A numeric coordinate triple `x y z` (1 or 2 values are broadcast
+    to a 3-vector).
+  * An object name — its bounding-box center is used.
+  * The batch marker `.` — causes each target object to use its own
+    current keypoint as FROM.  Useful for per-object relative moves:
+    `translate -k . -a target.s` aligns each object individually.
++
+  When `-k` is supplied together with a TO reference, the delta
+  FROM→TO is applied to the target object (rather than moving it to
+  an absolute position directly).
+
+*-n*::
+  Use the natural origin of `*_FROM_OBJECT` or `*_TO_OBJECT` rather
+  than the default bounding-box center.
+
+*TO*::
+  The destination.  May be:
++
+  * A coordinate triple `x y z` (absolute if `-a`, relative if `-r`).
+  * A single scalar combined with an axis flag (e.g., `-a -z 7.8`).
+  * An object name (moves to that object's keypoint; use `-a` for clarity).
+  * The batch marker `.` — each target object uses its own current
+    keypoint as TO.  Combined with `-k FROM_COORDS`, this computes a
+    per-object delta of (own_keypoint − FROM_COORDS), enabling an
+    explosion-from-point effect.
+
 == EXAMPLES
 
-.A not particularly useful demonstration of the command's capabilities.
+.Translate sph.s to absolute position (15, 0, 0)
 [example]
 ====
-
-mged> **edit translate -k 0 0 0 -a . obj1 obj2 obj3 obj4 obj5**::
-Moves every instance of each obj[1-5] in the same direction and by the same distance it is from the origin. The result is a (rather inflexible) "explosion" of the objects from the origin.
-
-
-
+  mged> **edit sph.s translate -a 15 0 0**
 ====
 
-.Move several objects together.
+.Move sph.s by a relative delta of (+5, 0, 0)
 [example]
 ====
+  mged> **edit sph.s translate -r 5 0 0**
 
-mged> **edit translate -a -z obj1 obj2 obj3 obj4 obj5**::
-The _from_ point defaults to the bounding box center of the first target _object_, which is obj2. Every instance of objects obj2 - obj5 is moved _from_ obj2 _to_ the z-axis of obj1. If the z-coordinate of _from_ was 7, and the z-coordinate of _to_ was 5, then each object would move -2 units in the z-axis.
+Using the *tra* alias (always relative):
 
-
-
+  mged> **edit sph.s tra 5 0 0**
 ====
 
-.Align several objects to the same point on an axis.
+.Move sph.s from its center to other.s's center (object-name form)
 [example]
 ====
+The `-k sph.s -a other.s` form computes the delta between the two
+keypoints and applies it:
 
-mged> **edit translate -k . -a -z obj1 obj2 obj3 obj4 obj5**::
-Sets the elevation of obj[2-5] to the elevation of obj1. Each object uses its own bounding box center as the _from_ point in an operation that moves _to_ the bounding box center of obj1.
+  mged> **edit sph.s translate -k sph.s -a other.s**
 
+The same delta can also be specified with coordinate positions for `-k`:
 
+  mged> **edit sph.s translate -k 10 0 0 -a other.s**
 
+Or with an explicit coordinate destination:
+
+  mged> **edit sph.s translate -k 10 0 0 -a 20 0 0**
 ====
 
-.Move several objects to the same point.
+.Align only the Z coordinate of obj to a target elevation of 7.8
 [example]
 ====
-
-mged> **edit translate -k . -a obj1 obj2 obj3 obj4 obj5**::
-Each object uses its own bounding box center as the _from_ point in an operation that moves _to_ the bounding box center of obj1. All _object_ s end up centered on obj2.
-
-
-
+  mged> **edit obj translate -a -z 7.8**
 ====
 
-.Explicitly set the z-axis of an obj.
+.Align several objects to the same Z elevation — using a reference object
 [example]
 ====
+Set the Z coordinate of obj1 and obj2 to ref.s's Z elevation while
+leaving X and Y unchanged:
 
-mged> **edit translate -a -z 7.8 obj**::
-Moves obj _from_ its bounding box center _to_ 7.8 on the z-axis.
+  mged> **edit obj1 translate -a -z ref.s**
+  mged> **edit obj2 translate -a -z ref.s**
 
+The `-a -z OBJ` form extracts the Z component of ref.s's keypoint
+(its bounding-box center) and applies it absolutely, keeping the
+target's own X and Y.  Multiple axis flags can be combined:
 
+  mged> **edit obj1 translate -a -x -z ref.s**
 
+This copies both the X and Z of ref.s into obj1, leaving Y unchanged.
 ====
 
-.Move several objects from their own natural origins to their own bounding box centers.
+.Move a pair of objects away from the origin (explosion effect)
 [example]
 ====
+Each object is moved by a delta equal to its own current position
+vector, doubling its distance from the origin.  Use the `.` batch
+marker as TO and `0 0 0` as FROM:
 
-mged> **edit translate -n -k . -a . obj1 obj2 obj3**::
-The _object_ s are moved from their own natural origins to their own bounding box centers.
+  mged> **edit sph.s translate -k 0 0 0 .**
+  mged> **edit other.s translate -k 0 0 0 .**
 
+For sph.s at (10,0,0): FROM=(0,0,0), TO=own_keypoint=(10,0,0),
+delta=(10,0,0), result=(20,0,0) — doubled distance from origin.
 
+Equivalently with explicit deltas (when positions are known):
 
+  mged> **edit sph.s translate -r 10 0 0**
+  mged> **edit other.s translate -r 20 0 0**
 ====
 
-.Set the z-axis of the center of one object to the z-axis of the natural origin of another object.
+.Move a set of objects so that the assembly origin aligns with target.s
 [example]
 ====
-
-mged> **edit translate -n -a -z obj2/obj3 obj1**::
-Moves obj1 up or down _from_ the elevation of its bounding box center _to_ the apparent elevation of the natural origin of the instance of obj3 in obj2.
-
-
-
+  mged> **edit assembly translate -k assembly -a target.s**
 ====
 
-.Same result as above, but moving _from_ the natural origin of obj1 rather than its bounding box center.
+.Translate along a path (move a subpart without disturbing the parent)
 [example]
 ====
+Using a slash-separated path to name the instance:
 
-mged> **edit translate -n -k obj1 -n -a -z obj2/obj3 obj1**::
-
-
-
-mged> **edit translate -n -k . -n -a -z obj2/obj3 obj1**::
-
-
-
-
+  mged> **edit assembly/subpart/sph.s translate -r 0 0 10**
 ====
 
-.The use of _object_ paths and individual coordinate specifiers.
+.Use the intermediate buffer: translate tentatively, then revert if unsatisfied
 [example]
 ====
+Create a checkpoint (snapshot to revert to):
 
-mged> **edit translate -a -x 8 -z 42 obj1/obj2/obj3**::
-Moves the instance of ob3 in obj2 _from_ the apparent bounding box center of obj3 _as offset by_ obj1/obj2, _to_ x=8, z=42, without moving in the y-axis. Note that this is not the same as *-a 8 0 42*. Also note that only the matrix of obj2 is modified. No matter the length of the path, only the combination containing the actual object being translated will be modified. If the only component of the path were obj3, then if obj3 were a primitive it would be modified or if obj3 were a combination the matrices of all objects it holds would be modified.
+  mged> **edit tor.s checkpoint**
 
+Apply a tentative translation (stays in buffer only):
 
+  mged> **edit -i tor.s translate -r 5 0 0**
 
+If satisfied, write to disk:
+
+  mged> **edit tor.s translate -r 0 0 0**
+
+If not satisfied, roll back to the checkpoint:
+
+  mged> **edit tor.s revert**
 ====
 
-.Translations using relative positions.
+.Operate on the active selection instead of naming objects explicitly
 [example]
 ====
+With objects already selected in the viewer:
 
-mged> **edit translate -k obj1 -r -z 5 obj2**::
+  mged> **edit translate -a 10 0 0**
 
+Force the command-line specifier to override the selection:
 
-
-mged> **edit translate -a -z obj1 0 0 5 obj2**::
-
-
-
-These commands perform the same function. The z-coordinate of the bounding box center of obj2 is moved to the z-coordinate of the bounding box center of obj1 _plus 5 units_.
-
-
-
+  mged> **edit -f sph.s translate -a 10 0 0**
 ====
 
-.This example breaks down a particularly complex translation.
-[example]
-====
+== SEE ALSO
 
-mged> **edit translate -k -x c/obj1 1.5 -y c/obj2 0 3 -z c/obj3 0 0 10 -a -x b/c/obj4 2 -y b/c/obj5 0 4 -z b/c/obj6 0 0 20 obj7 obj8**::
-Every use of *translate* involves a _from_ point and a _to_ point. One of the more flexible features of the edit commands is the capability to use an object and an offset to specify each axis of these points individually. The command in this example can be broken down to three simpler commands, in order to ease comprehension:
-
-
-mged> **edit translate -k -x c/obj1 1.5 -a -x b/c/obj4 2 obj7 obj8**::
-
-
-
-mged> **edit translate -k -y c/obj2 0 3 -a -y b/c/obj5 0 4 obj7 obj8**::
-
-
-
-mged> **edit translate -k -z c/obj3 0 0 10 -a -z b/c/obj6 0 0 20 obj7 obj8**::
-In the first shortened command, the _from_ point is set to the x-coordinate of the apparent point of the bounding box center of the instance of obj1 in combination c, _plus 1.5_. The _to_ point is set to the x-coordinate of the apparent point of the bounding box center of the specific instance of obj4 in combination c in combination b, _plus 2_. Both obj7 and obj8 move from _from_ to _to_, ending up the same relative distance from each other.The other shortened commands are similar.
-+
-By splitting the larger command, an interesting detail was revealed. In the larger command, every point was set explicitly, so none defaulted. In the first shortened command, the _y_ and _z_ _from_ values default to the bounding box center of obj7. Since the _y_ and _z_ _to_ values default to the values set by _from_, neither obj7 nor obj8 will move in the _y_ or _z_ axes.
-
-
-
-====
-
+*edit*(nged), *edit rotate*(nged), *edit scale*(nged),
+*translate*(nged), *ptranslate*(nged)
 
 [[author]]
 == AUTHOR
@@ -189,3 +230,4 @@ BRL-CAD Team
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
+

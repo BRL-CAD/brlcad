@@ -1,8 +1,7 @@
 set(PLUGIN_LIBS libged libbu)
 
 set(edit_srcs
-  edit.c
-  edit2.cpp
+  edit.cpp
   protate.c
   pscale.c
   ptranslate.c
@@ -32,7 +31,7 @@ set(edit_srcs
 )
 
 ged_plugin_library(ged-edit
-  ${edit_srcs} 
+  ${edit_srcs}
   LIBS ${PLUGIN_LIBS}
 )
 
@@ -40,7 +39,6 @@ cmakefiles(
   CMakeLists.txt
   ${edit_srcs}
   ged_edit.h
-  ged_edit2.h
   uri.hh
 )
 

@@ -55,6 +55,7 @@ brlcad_add_test(NAME ged_test_prim_cmds_exist COMMAND ged_check_prim_cmds)
 
 add_subdirectory(bot)
 add_subdirectory(draw)
+add_subdirectory(edit)
 
 # Note: it is particularly important that the lint tests in particular are kept
 # in a separate file, since its bad input examples stand an excellent chance of

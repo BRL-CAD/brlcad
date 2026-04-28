@@ -4,126 +4,351 @@
 :manmanual: BRL-CAD User Commands
 
 == NAME
-edit - Edits objects, using _subcommand_ s.
+edit - Edit objects in the database by translating, rotating, scaling, and other operations.
 
 == SYNOPSIS
 
 [source]
 ----
-edit [<subcommand> [<args>] object...] \
-     \
-    
- [help | translate | rotate | scale | ]...
- [] <to> [<more_args>]...
- [-n] -k {<from_object> | <from_position>}
- [-n] [-a | -r] {<to_object> | <to_position>}
- [{<coords>} | { [ -x {x | <x-obj>}] [ -y {y | <y-obj>}] [ -z {z | <z-obj>}]}]
-  [path/] object [<offset_distance>]
- x [ y [z]]
+edit [options] [geometry_specifier] subcommand [subcommand_args]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Operates on objects in the database, solely through the use of _subcommand_ s. The flexibility of the *edit* _subcommand_ s lies in their utilization of a common style of syntax. Coordinates in model space, offsets, and objects are all accepted interchangeably as reference points. A single reference point is equivalent to an absolute point in model space. A pair of reference points specifies a distance or an angle, and is supplied as a set of _from_ - _to_ arguments (a _from_ argument is similar to the concept of a keypoint). Reference points may be incomplete, and specify only one or two coordinates.
+The *edit* command transforms one or more objects in a BRL-CAD database.  It
+supports a composable set of subcommands (*translate*, *rotate*, *scale*, and
+others) and a flexible geometry specifier syntax that can name objects by bare
+name, slash-separated path, URI, or via the active selection state.
 
-The format of the standard options accepted by subcommands, *-n*, *-k*, *-a*/*-r*, and *-x*/ *-y*/*-z*, is defined here. The interpretation of these options, however, is left up to the implementation of a given subcommand.
+All geometry-altering subcommands share the same lifecycle:
 
-All edit commands interpret a lone point ( *.* ) as a special operator, called the batch operator. The batch operator is accepted as an argument to the options *-k*, *-a*, and *-r*. In a batch operation, each individual _object_ is operated on using the bounding box center of itself in place of the batch operator. While all _object_'s move together in a non-batch operation, in batch operations, each _object_ may move independently of all other _object_'s.
+. Identify the object(s) to edit via a geometry specifier or the active
+selection.
 
-If any _from_ coordinates are omitted, they default to the bounding box center of the first _object_ is used as _from_. To use the natural origin of the first _object_ as _from_, __from_object__ must be manually set to whatever _object_ is set to. If any _to_ coordinates are omitted, they default to the values set in _from_.
+. Load the object into a temporary edit buffer (or create a fresh buffer
+entry if none exists).
 
-The quantity and arrangement of standard *edit* arguments as well as their interpretation depends upon the subcommand. See the manual page for a given subcommand for more information on its usage:
+. Apply the requested transformation.
+
+. Commit the result to the database (unless *-i* is given, which leaves the
+buffer entry pending for further operations).
+
+The *checkpoint*, *revert*, *reset*, and *mat* subcommands provide lifecycle
+management for the temporary buffer.
 
 
-....
-mged> man edit_subcommandName
-....
+[[geometry_specifiers]]
+== GEOMETRY SPECIFIERS
 
+A geometry specifier identifies the object to act on.  Supported forms:
 
+*bare name*::
+  A top-level object name (e.g. `sph.s`, `assembly`).
+
+*slash-separated path*::
+  A hierarchical path whose rightmost component is the object to edit and
+  the preceding components supply the transformation matrix context (e.g.
+  `assembly/subpart/sph.s`).
+
+*URI with fragment*::
+  A name followed by `#` and a feature key (e.g. `sph.s#vertex0`) when
+  DbiState is available.
+
+*URI with query*::
+  A name followed by `?` and a query string (e.g. `sph.s?face=top`) when
+  DbiState is available.
+
+*`.` (batch marker)*::
+  Each object in the target list is used as its own reference point.
+  Useful for batch operations where each object moves independently.
+
+*selection fallback*::
+  If no geometry specifier is given on the command line, the current default
+  selection state (if any) is used automatically.
 
 
 [[options]]
 == OPTIONS
 
+*-h*, *--help*::
+  Print help.
 
-*-n*::
-Use the natural origin of the object specified as an argument to *-k*, *-a*, or *-r* rather than its bounding box center.
+*-v*, *--verbose*::
+  Increase verbosity.
+
+*-S*, *--selection*::
+  Ignore any explicit command-line geometry specifier and operate on the
+  active selection state instead.
+
+*-f*, *--force*::
+  Force: apply the operation, write the result to the database, and clear
+  any pending conflict state.
+
+*-F*, *--abandon*::
+  Abandon the intermediate buffer state and revert to the on-disk geometry.
+  Equivalent to *revert* followed by discarding the buffer entry.
+
+*-i*, *--intermediate*::
+  Intermediate mode: apply the transformation to the temporary buffer only;
+  do not write to the database.  Use *checkpoint* / *revert* / *reset* to
+  manage the buffer lifecycle.
+
+*Conflict arbiter*::
+  When an explicit geometry specifier is given and the same object also
+  appears in the active selection, *edit* reports a conflict and requires
+  one of the four arbiter flags (*-S*, *-f*, *-F*, or *-i*) to resolve it.
+  This prevents accidental divergence between a command-line edit and an
+  interactive selection.
 
 
-*-k*::
-Sets the keypoint _from_ to either __from_object__'s bounding box center or __from_position__.
+[[subcommands]]
+== SUBCOMMANDS
 
+=== translate (alias: tra)
+
+[source]
+----
+edit [options] geometry translate [-a|-r] [-x|-y|-z] [-k FROM] TO
+edit [options] geometry tra X Y Z
+----
+
+Translates the object's position.  See *edit translate*(nged) for the
+complete option reference and examples.
 
 *-a*::
-Sets the destination point _to_ to either __to_object__'s bounding box center or __to_position__.
-
+  Interpret *TO* as an absolute position in model space.
 
 *-r*::
-Sets the destination point _to_ to a point offset by __to_position__ from the _from_ point.
+  Interpret *TO* as a relative delta from the current keypoint (default).
+
+*-x*, *-y*, *-z*::
+  Restrict the translation to the specified axis only.
+
+*-k FROM*::
+  Set the reference keypoint.  *FROM* may be an object name or a
+  position `x y z`.
+
+.Quick examples
+====
+  mged> **edit sph.s translate -a 15 0 0**
+  mged> **edit sph.s translate -r 5 0 0**
+  mged> **edit sph.s translate -k sph.s -a other.s**
+  mged> **edit sph.s tra 5 0 0**
+====
 
 
-*-x* *-y* *-z*::
-Sets the coordinate of a particular axis.
+=== rotate (alias: rot)
+
+[source]
+----
+edit [options] geometry rotate [X_DEG [Y_DEG [Z_DEG]]]
+edit [options] geometry rotate [-x|-y|-z] DEGREES
+edit [options] geometry rotate [-R] [-k AXIS_FROM] [-a|-r AXIS_TO]
+    [-c CENTER] [-O ANGLE_ORIGIN] [-d DEGREES]
+----
+
+Rotates the object using Euler angles or an explicit axis of rotation.
+See *edit rotate*(nged) for the complete option reference, conceptual
+model, and examples.
+
+*-R*::
+  Interpret angle values as radians.
+
+*-x*, *-y*, *-z*::
+  Restrict the rotation to the specified axis (Euler mode).
+
+*-k AXIS_FROM*, *-a/-r AXIS_TO*::
+  Supply an explicit axis of rotation (axis mode).
+
+*-c CENTER*::
+  Set the pivot center (defaults to bounding-box center).
+
+*-O ANGLE_ORIGIN*, *-d DEGREES*::
+  Set the angle origin and explicit rotation angle.
+
+.Quick examples
+====
+  mged> **edit ell.s rotate 0 0 90**
+  mged> **edit ell.s rotate -z 90**
+  mged> **edit cube rotate -k sphere1 -a sphere2 -d 90**
+====
 
 
+=== scale (alias: sca)
+
+[source]
+----
+edit [options] geometry scale FACTOR
+edit [options] geometry scale X_FACTOR Y_FACTOR Z_FACTOR
+edit [options] geometry scale [-k FROM] [-a|-r TO] [-c CENTER]
+----
+
+Scales the object by a uniform or per-axis factor.  See
+*edit scale*(nged) for the complete option reference, the SCALE
+reference-frame model, and examples.
+
+*-k FROM*::
+  Reference "from" position.  Defaults to the object keypoint.
+
+*-a TO*, *-r TO*::
+  "To" position (absolute or relative).  Together with *-k*, defines
+  the reference scale vector.
+
+*-c CENTER*::
+  Center of the scaling operation.
+
+.Quick examples
+====
+  mged> **edit sph.s scale 2**
+  mged> **edit sph.s scale 2 2 2**
+  mged> **edit sph.s scale -k 0 0 0 -a 2 2 2**
+====
+
+
+=== checkpoint
+
+[source]
+----
+edit [options] geometry checkpoint
+----
+
+Loads the named geometry into the temporary edit buffer (creating a new
+buffer entry if one does not already exist) without applying any
+transformation.  A subsequent *-i* operation will then modify only the
+buffer without touching the database, and a *revert* can undo those changes.
+
+
+=== revert
+
+[source]
+----
+edit [options] geometry revert
+----
+
+Reverts the in-buffer state of the named geometry to its most recent
+*checkpoint* state and writes that state back to the database.  Returns an
+error if no buffer entry exists for the object.
+
+
+=== reset
+
+[source]
+----
+edit [options] geometry reset
+----
+
+Discards the temporary buffer entry for the named geometry without writing
+anything to the database.  Equivalent to abandoning an in-progress edit.
+
+
+=== mat
+
+[source]
+----
+edit [options] geometry mat M00 M01 ... M33
+----
+
+Applies an arbitrary 4×4 matrix (16 row-major values) to the geometry.  The
+matrix is passed directly to the underlying librt edit layer.
+
+.Example: Apply a 90° Z-rotation matrix to `ell.s`
+====
+
+  mged> **edit ell.s mat 0 -1 0 0  1 0 0 0  0 0 1 0  0 0 0 1**
+
+====
+
+
+=== perturb
+
+[source]
+----
+edit [options] geometry perturb FACTOR
+----
+
+Applies a random perturbation of magnitude *FACTOR* to the geometry.  Useful
+for sensitivity studies and mesh stress-testing.  The perturbation is applied
+once per invocation; the random seed is derived from the session state.
+
+Requires that the underlying primitive type support `ft_perturb`.
 
 
 [[examples]]
 == EXAMPLES
 
-.Get the authoritative list of available subcommands.
+The following examples illustrate the most common edit workflows.
+See *edit translate*(nged), *edit rotate*(nged), and
+*edit scale*(nged) for comprehensive examples of each subcommand.
+
+.Translate a sphere to an absolute position
 [example]
 ====
 
-mged> **edit**::
-
-
-
-mged> **edit help**::
-Prints usage and a list of available subcommands.
-
-
+  mged> **edit sph.s translate -a 15 0 0**
 
 ====
 
-.Get the usage of a subcommand.
+.Rotate a cube 45° around the Z-axis
 [example]
 ====
 
-mged> **edit translate**::
-Print usage of the translate subcommand
-
-
+  mged> **edit cube rotate -z 45**
 
 ====
 
-.Use the help subcommand to print extended usage of subcommands.
+.Double the size of a sphere
 [example]
 ====
 
-mged> **edit translate help**::
-
-
-
-mged> **edit help translate**::
-Print extended usage of the translate subcommand. Each subcommand also accepts _help_ as an argument, so that the extended usage is still available if *edit translate* is aliased to something else.
-
-
+  mged> **edit sph.s scale 2**
 
 ====
 
-.A fake subcommand is used to show how standard *edit* arguments and nonstandard *edit* arguments are used.
+.Intermediate edit workflow: checkpoint, modify, revert if needed
 [example]
 ====
 
-mged> **edit fake_subcmd -B 12 -k sph.s 1.5 7 -a 0 0 0 cube.s**::
-The nonstandard *-B* option is unique to *fake_subcmd*. An explanation of how it is used would be found in the manual for fake_subcmd, if there were one. The remaining options and arguments are standardized. The *-k* and *-a* options are used to specify a _from_ - _to_ pair, as defined in this manual for *edit*. The interpretation of the vector created by these points would be defined in the *fake_subcmd* manual.
+Create a checkpoint (snapshot to revert to):
 
+  mged> **edit tor.s checkpoint**
 
+Apply a tentative translation (stays in buffer):
+
+  mged> **edit -i tor.s translate -r 5 0 0**
+
+If satisfied, write to disk:
+
+  mged> **edit tor.s translate -r 0 0 0**
+
+If not satisfied, roll back to the checkpoint:
+
+  mged> **edit tor.s revert**
 
 ====
+
+.Edit based on the active selection
+[example]
+====
+
+With objects already selected in the viewer:
+
+  mged> **edit translate -a 10 0 0**
+
+Force the command-line specifier to override the selection:
+
+  mged> **edit -f sph.s translate -a 10 0 0**
+
+====
+
+
+[[see_also]]
+== SEE ALSO
+
+*edit translate*(nged), *edit rotate*(nged), *edit scale*(nged),
+*translate*(nged), *rotate*(nged), *scale*(nged), *protate*(nged),
+*pscale*(nged), *ptranslate*(nged), *edarb*(nged)
 
 
 [[author]]
@@ -136,3 +361,4 @@ BRL-CAD Team
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
+

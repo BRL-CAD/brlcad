@@ -87,6 +87,8 @@ set(
   edcomb.adoc
   edgedir.adoc
   edit.adoc
+  edit_rotate.adoc
+  edit_scale.adoc
   edit_translate.adoc
   edmater.adoc
   env.adoc

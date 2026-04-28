@@ -301,6 +301,7 @@ set(
   LIBGED_SOURCES
   ${GED_CMD_SRC}
   ${GED_STATIC_REGISTRATION_CPP}
+  edit_buf.cpp
   exec.cpp
   ged_init.cpp
   columns.c
