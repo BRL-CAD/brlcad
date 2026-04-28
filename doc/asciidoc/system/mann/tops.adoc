@@ -10,36 +10,74 @@ tops - Displays a list of all the _top-level_ objects in the current database.
 
 [source]
 ----
-tops [-a]
+tops [-a] [-h] [-n] [-p]
 ----
 
 
 [[description]]
 == DESCRIPTION
 
-Displays a list of all the _top-level_ objects in the current database. The top-level objects are all those objects that are not referenced by some other combination. The hierarchical structure of BRL-CAD databases usually means that there will be a top-level object that includes all (or at least most) of the objects in the database. The _-a_ option will show hidden objects.
+Displays the top-level objects in the current database. Top-level objects are objects not referenced by any other combination. In most BRL-CAD databases, this usually includes one or more assembly objects near the root of the model hierarchy.
+
+By default, *tops* lists only non-hidden top-level database objects. The output is sorted alphabetically and formatted in columns. Combination names are decorated with a trailing `/`, and region names are decorated with a trailing `R`; region combinations therefore typically appear with `/R`.
+
+The following options are supported:
+
+* *-a* - List all top-level objects, including hidden objects and phony directory entries.
+* *-h* - List only hidden top-level objects.
+* *-n* - Suppress the default `/` and `R` output decorations.
+* *-p* - List only phony top-level directory entries.
+
+The *-h* and *-p* filters may be combined to include both hidden and phony top-level entries. If *-a* is specified, it overrides those filters and reports all top-level entries.
 
 
 [[examples]]
 == EXAMPLES
 
-These examples show the use of the *tops* command to list all the top-level objects in the current database.
+These examples show the use of the *tops* command to list top-level objects in the current database.
 
 .List all the top-level objects in the current database.
 [example]
 ====
 mged>**tops**
 
-Lists all the top-level objects in the current database.
+Lists non-hidden top-level database objects. Combination and region entries are decorated in the output.
 
 ====
 
-.List all the top-level objects in the current database, including hidden objects.
+.List all top-level objects, including hidden and phony entries.
 [example]
 ====
 mged>**tops -a**
 
-Lists all the top-level objects in the current database, including hiddent objects.
+Lists all top-level objects, including hidden objects and phony directory entries.
+
+====
+
+.List only hidden top-level objects.
+[example]
+====
+mged>**tops -h**
+
+Lists only top-level objects that have been marked hidden.
+
+====
+
+.List only phony top-level directory entries.
+[example]
+====
+mged>**tops -p**
+
+Lists only top-level phony directory entries.
+
+====
+
+.List top-level object names without combination or region suffixes.
+[example]
+====
+mged>**tops -n**
+
+Lists top-level objects without the default `/` and `R` decorations.
 
 ====
 

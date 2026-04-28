@@ -2745,8 +2745,6 @@ DOCUMENTATION
 
 * document the saveview/loadview options.
 
-* document tops options in man page
-
 * gather v&v docs on configuration management process, user manuals,
   process documentation, software documentation, model descriptions.
 
