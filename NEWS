@@ -18,7 +18,8 @@ include/rt/db_instance.h header have now been made properly private,
 and an obsolete entry was removed from the rt_bot_internal struct -
 these are ABI breaking changes.
 
-* expanded tops command manual page with all options - Sean Morrison
+* added loadview manual page - Sean Morrison
+* expanded tops and saveview manpages with more detail - Sean Morrison
 * fixed bug in gqa material object lookup - Cliff Yapp
 * fixed bug in rtweight material object lookup - Cliff Yapp
 * added support for writing out .jpg files to libicv/rt - Cliff Yapp
