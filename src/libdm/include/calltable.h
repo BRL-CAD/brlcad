@@ -57,6 +57,19 @@ struct dm_vars {
  * variables behind the vparse.  The txt backend, for example, doesn't need
  * Tk information...
  */
+
+/**
+ * Singly-linked list node for the display-list sensor mechanism.
+ * Sensors are fired by dm_fire_dlist_sensors() when a display list is
+ * regenerated, providing a push-based alternative to polling s_dlist_stale.
+ */
+struct dm_dlist_sensor {
+    struct bv_scene_obj *s;                         /**< @brief associated scene object */
+    void (*callback)(struct bv_scene_obj *, void *); /**< @brief notification callback */
+    void *data;                                     /**< @brief caller-provided context */
+    struct dm_dlist_sensor *next;                   /**< @brief intrusive list linkage */
+};
+
 struct dm_impl {
     struct dm *(*dm_open)(void *ctx, void *interp, int argc, const char *argv[]);
     int (*dm_close)(struct dm *dmp);
@@ -162,6 +175,8 @@ struct dm_impl {
     void *dm_interp;		/**< @brief interpreter */
     void *dm_ctx;		/**< @brief drawing context */
     void *dm_udata;		/**< @brief associate general application data here */
+    /** @brief singly-linked list of dlist sensors; NULL when empty */
+    struct dm_dlist_sensor *dm_dlist_sensors;
 };
 
 struct fb_impl {

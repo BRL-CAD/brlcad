@@ -347,6 +347,9 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 		bv_mesh_lod_memshrink(s);
 	    }
 
+	    /* notify registered sensors that the dlist was regenerated */
+	    dm_fire_dlist_sensors(dmp);
+
 	    MAT_COPY(save_mat, s->s_v->gv_model2view);
 	    bn_mat_mul(draw_mat, s->s_v->gv_model2view, s->s_mat);
 	    dm_loadmatrix(dmp, draw_mat, 0);
@@ -518,6 +521,9 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
 		BU_FREE(pv, struct bv_vlist);
 	    }
 	}
+
+	/* notify registered sensors that the dlist was regenerated */
+	dm_fire_dlist_sensors(dmp);
 
 	MAT_COPY(save_mat, s->s_v->gv_model2view);
 	bn_mat_mul(draw_mat, s->s_v->gv_model2view, s->s_mat);

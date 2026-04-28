@@ -944,7 +944,8 @@ struct dm_impl dm_ps_impl = {
     FB_NULL,
     0,				/* Tcl interpreter */
     NULL,                       /* Drawing context */
-    NULL                        /* App data */
+    NULL,                       /* App data */
+    NULL                        /* dlist sensors */
 };
 
 

@@ -66,6 +66,53 @@ dm_set_udata(struct dm *dmp, void *udata)
 }
 
 
+/* --- Dlist sensor API --- */
+
+int
+dm_register_dlist_sensor(struct dm *dmp,
+			 struct bv_scene_obj *s,
+			 void (*callback)(struct bv_scene_obj *, void *),
+			 void *data)
+{
+    if (UNLIKELY(!dmp) || !callback) return -1;
+
+    struct dm_dlist_sensor *sensor;
+    BU_GET(sensor, struct dm_dlist_sensor);
+    sensor->s        = s;
+    sensor->callback = callback;
+    sensor->data     = data;
+    sensor->next     = dmp->i->dm_dlist_sensors;
+    dmp->i->dm_dlist_sensors = sensor;
+    return 0;
+}
+
+void
+dm_fire_dlist_sensors(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return;
+    struct dm_dlist_sensor *cur = dmp->i->dm_dlist_sensors;
+    while (cur) {
+	cur->callback(cur->s, cur->data);
+	cur = cur->next;
+    }
+}
+
+void
+dm_dlist_sensors_clear(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return;
+    struct dm_dlist_sensor *cur = dmp->i->dm_dlist_sensors;
+    while (cur) {
+	struct dm_dlist_sensor *next = cur->next;
+	BU_PUT(cur, struct dm_dlist_sensor);
+	cur = next;
+    }
+    dmp->i->dm_dlist_sensors = NULL;
+}
+
+/* --- end dlist sensor API --- */
+
+
 void
 dm_fogHint(struct dm *dmp, int fastfog)
 {
@@ -257,6 +304,8 @@ int
 dm_close(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
+    /* Free any registered dlist sensors before the backend tears down. */
+    dm_dlist_sensors_clear(dmp);
     return dmp->i->dm_close(dmp);
 }
 

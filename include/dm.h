@@ -271,6 +271,23 @@ DM_EXPORT extern void dm_set_bound_flag(struct dm *dmp, int bound);
 
 DM_EXPORT extern int dm_draw_obj(struct dm *dmp, struct bv_scene_obj *s);
 
+/* Dlist sensor API
+ *
+ * Sensors provide a push-based notification when a display list has been
+ * regenerated, replacing per-frame polling of bv_scene_obj::s_dlist_stale.
+ *
+ * dm_register_dlist_sensor  - attach a callback to be invoked whenever
+ *                             dm_fire_dlist_sensors() is called on this dm.
+ * dm_fire_dlist_sensors     - invoke all registered sensor callbacks; call
+ *                             this after regenerating any display list.
+ * dm_dlist_sensors_clear    - free all sensors registered on this dm. */
+DM_EXPORT extern int  dm_register_dlist_sensor(struct dm *dmp,
+					       struct bv_scene_obj *s,
+					       void (*callback)(struct bv_scene_obj *, void *),
+					       void *data);
+DM_EXPORT extern void dm_fire_dlist_sensors(struct dm *dmp);
+DM_EXPORT extern void dm_dlist_sensors_clear(struct dm *dmp);
+
 
 /* Rather low level exposure of display list concepts.  Needed for MGED
  * and libtclcad, but we want to get to a point where the use (or not)
