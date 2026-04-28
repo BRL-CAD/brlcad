@@ -689,6 +689,201 @@ _rt_tree_kill_dead_solid_refs(union tree *tp)
 }
 
 
+/**
+ * Prune a subtractor (right-hand side of OP_SUBTRACT) tree by
+ * eliminating branches whose AABB is entirely outside the constraint
+ * box [cmin, cmax].
+ *
+ * Descends into OP_UNION and OP_XOR nodes to prune individual members.
+ * All other operators (OP_SUBTRACT, OP_INTERSECT, etc.) are treated
+ * opaquely: if the whole subtree bbox is disjoint it is pruned in one
+ * shot, otherwise it is left unchanged (conservative).
+ *
+ * Returns the pruned tree pointer, or TREE_NULL when the entire
+ * subtree has been freed.  The caller MUST store the return value back
+ * into the parent's child slot.
+ *
+ * Memory contract: pruned nodes are freed via db_free_tree() which
+ * also decrements soltab use-counts; un-pruned nodes are returned
+ * unchanged.
+ */
+static union tree *
+rt_tree_prune_subtractor(union tree *tp,
+			 const vect_t cmin, const vect_t cmax)
+{
+    vect_t tp_min, tp_max;
+
+    if (!tp)
+	return TREE_NULL;
+    RT_CK_TREE(tp);
+
+    /* Compute the bounding box of this subtree.
+     * Initialise with reversed infinities – the standard BRL-CAD VMIN/VMAX
+     * accumulation pattern used by rt_bound_tree throughout bbox.c. */
+    VSETALL(tp_min, INFINITY);
+    VSETALL(tp_max, -INFINITY);
+    if (rt_bound_tree(tp, tp_min, tp_max) < 0)
+	return tp;		/* bound failed – be conservative */
+
+    /* Never prune subtrees with infinite bounds (halfspaces, etc.). */
+    if (tp_max[X] >= INFINITY || tp_max[Y] >= INFINITY || tp_max[Z] >= INFINITY)
+	return tp;
+
+    /* If this subtree bbox is entirely outside the constraint box,
+     * the subtractor cannot contribute anything here – prune it. */
+    if (tp_min[X] >= cmax[X] || tp_max[X] <= cmin[X] ||
+	tp_min[Y] >= cmax[Y] || tp_max[Y] <= cmin[Y] ||
+	tp_min[Z] >= cmax[Z] || tp_max[Z] <= cmin[Z]) {
+	if (RT_G_DEBUG & RT_DEBUG_TREEWALK)
+	    bu_log("rt_tree_prune_subtractor: pruned disjoint subtractor branch\n");
+	db_free_tree(tp);
+	return TREE_NULL;
+    }
+
+    /* Subtree bbox overlaps constraint; descend into UNION/XOR to find
+     * individual members that can still be pruned. */
+    switch (tp->tr_op) {
+
+	case OP_SOLID:
+	case OP_NOP:
+	    return tp;		/* leaf that overlaps – keep it */
+
+	case OP_UNION:
+	case OP_XOR: {
+	    union tree *left, *right;
+	    left  = rt_tree_prune_subtractor(tp->tr_b.tb_left,  cmin, cmax);
+	    right = rt_tree_prune_subtractor(tp->tr_b.tb_right, cmin, cmax);
+	    if (!left && !right) {
+		BU_PUT(tp, union tree);
+		return TREE_NULL;
+	    } else if (!left) {
+		BU_PUT(tp, union tree);
+		return right;
+	    } else if (!right) {
+		BU_PUT(tp, union tree);
+		return left;
+	    }
+	    tp->tr_b.tb_left  = left;
+	    tp->tr_b.tb_right = right;
+	    return tp;
+	}
+
+	default:
+	    /* OP_SUBTRACT, OP_INTERSECT, OP_NOT, etc. inside a subtractor:
+	     * the whole-subtree bbox check above already handles the
+	     * completely-disjoint case; leave complex sub-expressions alone. */
+	    return tp;
+    }
+}
+
+
+/**
+ * Prep-time CSG tree shaker.
+ *
+ * Walks the boolean tree and, for each OP_SUBTRACT node, computes the
+ * bounding box of the minuend (left child) and prunes subtractor (right
+ * child) branches that are provably outside that box via AABB disjointness.
+ *
+ * The pass is conservative:
+ *  - Minuend bboxes that are infinite or degenerate (min > max) are
+ *    skipped entirely.
+ *  - Only subtractor branches that are AABB-disjoint from the minuend
+ *    are removed; uncertain cases are left unchanged.
+ *  - When an entire subtractor is pruned, the OP_SUBTRACT node is
+ *    replaced in-place by its left child (SUBTRACT(L, 0) == L).
+ *
+ * Returns the (possibly simplified) tree pointer that the caller MUST
+ * store back into the parent's child slot or into regp->reg_treetop.
+ */
+static union tree *
+rt_tree_shake_subs(union tree *tp)
+{
+    vect_t left_min, left_max;
+    union tree *pruned;
+
+    if (!tp)
+	return TREE_NULL;
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+
+	case OP_SOLID:
+	case OP_NOP:
+	    return tp;
+
+	case OP_SUBTRACT:
+	    /* Recursively shake children first. */
+	    if (tp->tr_b.tb_left)
+		tp->tr_b.tb_left  = rt_tree_shake_subs(tp->tr_b.tb_left);
+	    if (tp->tr_b.tb_right)
+		tp->tr_b.tb_right = rt_tree_shake_subs(tp->tr_b.tb_right);
+
+	    if (!tp->tr_b.tb_left) {
+		/* Left side vanished – whole subtraction is empty. */
+		if (tp->tr_b.tb_right)
+		    db_free_tree(tp->tr_b.tb_right);
+		BU_PUT(tp, union tree);
+		return TREE_NULL;
+	    }
+	    if (!tp->tr_b.tb_right) {
+		/* Right side vanished: SUBTRACT(L, 0) = L. */
+		union tree *keep = tp->tr_b.tb_left;
+		BU_PUT(tp, union tree);
+		return keep;
+	    }
+
+	    /* Compute the minuend (left child) bounding box.
+	     * Reversed-infinity initialisation – standard BRL-CAD VMIN/VMAX
+	     * accumulation pattern; a return of (min > max) means empty. */
+	    VSETALL(left_min, INFINITY);
+	    VSETALL(left_max, -INFINITY);
+	    if (rt_bound_tree(tp->tr_b.tb_left, left_min, left_max) < 0)
+		return tp;	/* bound failed – be conservative */
+
+	    /* Skip if the minuend has infinite or degenerate bounds. */
+	    if (left_max[X] >= INFINITY || left_max[Y] >= INFINITY || left_max[Z] >= INFINITY)
+		return tp;
+	    if (left_min[X] > left_max[X])
+		return tp;	/* degenerate / empty minuend */
+
+	    /* Prune the subtractor using the minuend bbox as constraint. */
+	    pruned = rt_tree_prune_subtractor(
+		tp->tr_b.tb_right, left_min, left_max);
+
+	    if (!pruned) {
+		/* Entire subtractor eliminated: SUBTRACT(L, 0) = L. */
+		union tree *keep = tp->tr_b.tb_left;
+		BU_PUT(tp, union tree);
+		if (RT_G_DEBUG & RT_DEBUG_TREEWALK)
+		    bu_log("rt_tree_shake_subs: subtractor fully pruned\n");
+		return keep;
+	    }
+	    tp->tr_b.tb_right = pruned;
+	    return tp;
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_XOR:
+	    if (tp->tr_b.tb_left)
+		tp->tr_b.tb_left  = rt_tree_shake_subs(tp->tr_b.tb_left);
+	    if (tp->tr_b.tb_right)
+		tp->tr_b.tb_right = rt_tree_shake_subs(tp->tr_b.tb_right);
+	    return tp;
+
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    /* Unary operators. */
+	    if (tp->tr_b.tb_left)
+		tp->tr_b.tb_left  = rt_tree_shake_subs(tp->tr_b.tb_left);
+	    return tp;
+
+	default:
+	    return tp;
+    }
+}
+
+
 int
 rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const char **argv, int ncpus)
 {
@@ -837,11 +1032,34 @@ again:
 	    rt_pr_soltab(stp);
     } RT_VISIT_ALL_SOLTABS_END;
 
+    /*
+     * Tree shaker: for each region, eliminate OP_SUBTRACT branches
+     * whose subtractor bounding box is provably AABB-disjoint from
+     * the minuend bounding box.  Runs in the serial section after
+     * dead-solid cleanup (so all soltab bboxes are valid) and before
+     * the region-assign / bounds pass (so the reduced trees are used
+     * for computing model extents).
+     */
+    for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+	RT_CK_REGION(regp);
+	if (!regp->reg_treetop)
+	    continue;
+	/* Always store the result: if the shaker returns TREE_NULL
+	 * (entire tree pruned, which shouldn't happen for well-formed
+	 * regions but is handled defensively), we must update
+	 * reg_treetop rather than leaving a dangling pointer. */
+	regp->reg_treetop = rt_tree_shake_subs(regp->reg_treetop);
+    }
+
     /* Handle finishing touches on the trees that needed soltab
      * structs that the parallel code couldn't look at yet.
      */
     for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
 	RT_CK_REGION(regp);
+
+	/* Skip regions whose tree was entirely pruned (defensive). */
+	if (!regp->reg_treetop)
+	    continue;
 
 	/* The region and the entire tree are cross-referenced */
 	_rt_tree_region_assign(regp->reg_treetop, regp);
