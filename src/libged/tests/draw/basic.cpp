@@ -678,7 +678,10 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec_autoview(gedp, 1, s_av);
 
-    ret += img_cmp(24, gedp, av[1], true, clear_images, soft_fail, ADIFF_THRES, "clear", "v");
+    // The point based sampling can vary quite a bit visually, so this has a
+    // looser tolerance - we just want to be sure we're getting a rendering,
+    // not that the rendering is exactly the same.
+    ret += img_cmp(24, gedp, av[1], true, clear_images, soft_fail, 70, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Test clearing of previous drawing mode (shaded and wireframe)...\n");
