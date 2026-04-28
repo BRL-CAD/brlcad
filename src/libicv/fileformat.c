@@ -304,8 +304,64 @@ icv_destroy(icv_image_t *bif)
     ICV_IMAGE_VAL_INT(bif);
 
     bu_free(bif->data, "Image Data");
+    if (bif->render_info)
+	icv_render_info_free(bif->render_info);
     bu_free(bif, "ICV IMAGE Structure");
     return 0;
+}
+
+
+struct icv_render_info *
+icv_render_info_create(void)
+{
+    struct icv_render_info *info;
+    BU_ALLOC(info, struct icv_render_info);
+    info->db_filename = NULL;
+    info->objects = NULL;
+    /* zero all numeric fields */
+    {
+	int i;
+	for (i = 0; i < 16; i++)
+	    info->viewrotscale[i] = 0.0;
+    }
+    info->eye_model[0] = info->eye_model[1] = info->eye_model[2] = 0.0;
+    info->viewsize = 0.0;
+    info->aspect = 1.0;
+    info->perspective = 0.0;
+    return info;
+}
+
+
+void
+icv_render_info_free(struct icv_render_info *info)
+{
+    if (!info)
+	return;
+    if (info->db_filename)
+	bu_free(info->db_filename, "render_info db_filename");
+    if (info->objects)
+	bu_free(info->objects, "render_info objects");
+    bu_free(info, "icv_render_info");
+}
+
+
+void
+icv_image_set_render_info(icv_image_t *img, struct icv_render_info *info)
+{
+    if (!img)
+	return;
+    if (img->render_info)
+	icv_render_info_free(img->render_info);
+    img->render_info = info;
+}
+
+
+struct icv_render_info *
+icv_image_get_render_info(const icv_image_t *img)
+{
+    if (!img)
+	return NULL;
+    return img->render_info;
 }
 
 /*

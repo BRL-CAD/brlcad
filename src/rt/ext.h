@@ -103,6 +103,7 @@ extern int save_overlaps;		/* flag for setting rti_save_overlaps */
 extern struct application APP;
 extern struct icv_image *bif;
 extern int rtg_parallel;		/* flag for parallel raytracing */
+extern int embed_icv_metadata;		/* !0 = embed render metadata in output PNG */
 
 /***** variables shared with worker() ******/
 extern unsigned char *scanbuf;		/* pixels for REMRT */

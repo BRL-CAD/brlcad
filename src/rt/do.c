@@ -1172,6 +1172,49 @@ do_frame(int framenumber)
 	       wallclock, ((double)(rtip->stats.rti_nrays))/wallclock);
     }
     if (bif != NULL) {
+	/* Optionally embed render metadata into image output
+	 * (currently only effective for PNG output).
+	 * Enable with: -c 'set embed_icv_metadata=1'
+	 */
+	if (embed_icv_metadata) {
+	    struct icv_render_info *ri = icv_render_info_create();
+
+	    /* Database filename */
+	    if (rtip->rti_dbip && rtip->rti_dbip->dbi_filename)
+		ri->db_filename = bu_strdup(rtip->rti_dbip->dbi_filename);
+
+	    /* Object list: prefer cmd_objs (dynamic draw list), fall back to objv */
+	    {
+		struct bu_vls objs_str = BU_VLS_INIT_ZERO;
+		if (cmd_objs && BU_PTBL_LEN(cmd_objs) > 0) {
+		    size_t j;
+		    for (j = 0; j < BU_PTBL_LEN(cmd_objs); j++) {
+			const char *o = (const char *)BU_PTBL_GET(cmd_objs, j);
+			if (j) bu_vls_putc(&objs_str, ' ');
+			bu_vls_strcat(&objs_str, o);
+		    }
+		} else if (objv && objc > 0) {
+		    int j;
+		    for (j = 0; j < objc; j++) {
+			if (j) bu_vls_putc(&objs_str, ' ');
+			bu_vls_strcat(&objs_str, objv[j]);
+		    }
+		}
+		if (bu_vls_strlen(&objs_str))
+		    ri->objects = bu_strdup(bu_vls_cstr(&objs_str));
+		bu_vls_free(&objs_str);
+	    }
+
+	    /* Camera: grab from current rt globals */
+	    MAT_COPY(ri->viewrotscale, Viewrotscale);
+	    VMOVE(ri->eye_model, eye_model);
+	    ri->viewsize    = viewsize;
+	    ri->aspect      = aspect;
+	    ri->perspective = rt_perspective;
+
+	    icv_image_set_render_info(bif, ri);
+	}
+
 	icv_write(bif, framename, BU_MIME_IMAGE_AUTO);
 	icv_destroy(bif);
 	bif = NULL;

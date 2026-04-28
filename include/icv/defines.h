@@ -64,6 +64,27 @@ typedef enum {
 #define ICV_OPERATIONS_MODE 0x0004
 #define ICV_UNDEFINED_1 0x0008
 
+/**
+ * Optional rendering metadata that can be embedded in image files (e.g., PNG
+ * tEXt chunks).  When present, it records the scene and camera setup used to
+ * produce the image, enabling exact ray reconstruction for debugging with nirt.
+ *
+ * All floating-point values are stored as full-precision doubles so they can
+ * be serialised with std::numeric_limits<double>::max_digits10 significant
+ * digits and read back without loss.
+ */
+struct icv_render_info {
+    char *db_filename;     /**< @brief path to the .g geometry database */
+    char *objects;         /**< @brief space-separated list of top-level objects */
+
+    /* Camera / view parameters (same conventions as BRL-CAD rt/grid.c) */
+    double viewrotscale[16]; /**< @brief Viewrotscale 4x4 matrix (row-major); [15] = 0.5*viewsize */
+    double eye_model[3];     /**< @brief eye position in model space (mm) */
+    double viewsize;         /**< @brief view width in model units (mm) */
+    double aspect;           /**< @brief pixel aspect ratio (width/height) */
+    double perspective;      /**< @brief perspective half-angle in degrees; 0 = orthographic */
+};
+
 struct icv_image {
     uint32_t magic;
     ICV_COLOR_SPACE color_space;
@@ -71,6 +92,7 @@ struct icv_image {
     float gamma_corr;
     size_t width, height, channels, alpha_channel;
     uint16_t flags;
+    struct icv_render_info *render_info; /**< @brief optional render metadata; NULL if not set */
 };
 
 
@@ -90,6 +112,7 @@ typedef struct icv_image icv_image_t;
 	(_i)->width = (_i)->height = (_i)->channels = (_i)->alpha_channel = 0; \
 	(_i)->gamma_corr = 0.0; \
 	(_i)->data = NULL; \
+	(_i)->render_info = NULL; \
     }
 
 /**

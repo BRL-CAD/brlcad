@@ -209,6 +209,29 @@ struct icv_ascii_art_params {
  */
 ICV_EXPORT extern char *icv_ascii_art(icv_image_t *i, struct icv_ascii_art_params *p);
 
+/**
+ * Allocate and zero-initialise a new icv_render_info struct.
+ * Caller is responsible for filling in the fields and eventually
+ * calling icv_render_info_free().
+ */
+ICV_EXPORT extern struct icv_render_info *icv_render_info_create(void);
+
+/**
+ * Release all memory owned by an icv_render_info, including the struct itself.
+ */
+ICV_EXPORT extern void icv_render_info_free(struct icv_render_info *info);
+
+/**
+ * Attach render metadata to an image.  Any existing render_info on the
+ * image is first freed.  Passing NULL clears the metadata.
+ */
+ICV_EXPORT extern void icv_image_set_render_info(icv_image_t *img, struct icv_render_info *info);
+
+/**
+ * Return the render metadata attached to an image, or NULL if none.
+ */
+ICV_EXPORT extern struct icv_render_info *icv_image_get_render_info(const icv_image_t *img);
+
 /** @} */
 
 __END_DECLS

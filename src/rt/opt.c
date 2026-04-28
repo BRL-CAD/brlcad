@@ -64,6 +64,14 @@ int rpt_overlap = 1;        /* report overlapping region names */
 int default_background = 1; /* Default is black */
 int output_is_binary = 1;        /* !0 means output file is binary */
 
+/**
+ * When non-zero, embed scene + camera metadata into the output PNG as
+ * tEXt chunks so that icv_diff / imgdiff can later reconstruct the
+ * exact nirt shotlines for any differing pixel.
+ * Enable with:  rt ... -c 'set embed_icv_metadata=1'
+ */
+int embed_icv_metadata = 0;
+
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() ******/
