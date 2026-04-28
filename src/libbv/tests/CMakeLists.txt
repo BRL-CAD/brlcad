@@ -73,9 +73,27 @@ brlcad_add_test(NAME bview_vlist_cmd_cnt_15 COMMAND bview_test vlist 15)
 brlcad_add_test(NAME bview_vlist_cmd_cnt_45 COMMAND bview_test vlist 45)
 brlcad_add_test(NAME bview_vlist_cmd_cnt_500 COMMAND bview_test vlist 500)
 
+#
+#  *** bv_view_get/set_* camera accessor tests ***
+#
+brlcad_addexec(test_bv_camera test_camera.c "libbv;libbu" TEST)
+brlcad_add_test(NAME bv_camera_accessors COMMAND test_bv_camera)
+
+#
+#  *** LoD bu_cache + format-file invalidation tests ***
+#
+brlcad_addexec(test_bv_lod_cache test_lod_cache.cpp "libbv;libbu" TEST)
+brlcad_add_test(NAME bv_lod_cache COMMAND test_bv_lod_cache)
+if(TARGET test_bv_lod_cache)
+  set_property(TEST bv_lod_cache APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+endif()
+distclean(${CMAKE_CURRENT_BINARY_DIR}/test_lod_cache_dir)
+
 cmakefiles(
   CMakeLists.txt
   bview_test.c.in
+  test_camera.c
+  test_lod_cache.cpp
   valid.plot3
   invalid.plot3
 )

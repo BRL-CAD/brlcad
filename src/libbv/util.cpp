@@ -538,6 +538,99 @@ bv_mat_aet(struct bview *v)
     bn_mat_mul2(tmat, v->gv_rotation);
 }
 
+/* --- Camera accessor implementations --- */
+
+fastf_t
+bv_view_get_scale(const struct bview *v)
+{
+    if (!v) return 0.0;
+    return v->gv_scale;
+}
+
+void
+bv_view_set_scale(struct bview *v, fastf_t scale)
+{
+    if (!v) return;
+    v->gv_scale = scale;
+    v->gv_size  = scale * 2.0;
+    v->gv_isize = (v->gv_size > 0.0) ? 1.0 / v->gv_size : 0.0;
+}
+
+fastf_t
+bv_view_get_size(const struct bview *v)
+{
+    if (!v) return 0.0;
+    return v->gv_size;
+}
+
+void
+bv_view_set_size(struct bview *v, fastf_t size)
+{
+    if (!v) return;
+    v->gv_size  = size;
+    v->gv_scale = size * 0.5;
+    v->gv_isize = (size > 0.0) ? 1.0 / size : 0.0;
+}
+
+fastf_t
+bv_view_get_perspective(const struct bview *v)
+{
+    if (!v) return 0.0;
+    return v->gv_perspective;
+}
+
+void
+bv_view_set_perspective(struct bview *v, fastf_t perspective)
+{
+    if (!v) return;
+    v->gv_perspective = perspective;
+}
+
+void
+bv_view_get_aet(const struct bview *v, vect_t aet)
+{
+    if (!v) { VSETALL(aet, 0.0); return; }
+    VMOVE(aet, v->gv_aet);
+}
+
+void
+bv_view_set_aet(struct bview *v, const vect_t aet)
+{
+    if (!v) return;
+    VMOVE(v->gv_aet, aet);
+    bv_mat_aet(v);
+}
+
+void
+bv_view_get_rotation(const struct bview *v, mat_t rot)
+{
+    if (!v) { MAT_IDN(rot); return; }
+    MAT_COPY(rot, v->gv_rotation);
+}
+
+void
+bv_view_set_rotation(struct bview *v, const mat_t rot)
+{
+    if (!v) return;
+    MAT_COPY(v->gv_rotation, rot);
+}
+
+void
+bv_view_get_center_vec(const struct bview *v, point_t center)
+{
+    if (!v) { VSETALL(center, 0.0); return; }
+    MAT_DELTAS_GET_NEG(center, v->gv_center);
+}
+
+void
+bv_view_set_center_vec(struct bview *v, const point_t center)
+{
+    if (!v) return;
+    MAT_DELTAS_VEC_NEG(v->gv_center, center);
+}
+
+/* --- end camera accessors --- */
+
 void
 bv_settings_init(struct bview_settings *s)
 {
@@ -784,14 +877,6 @@ bv_update_selected(struct bview *gvp)
     int ret = 0;
     if (!gvp)
 	return 0;
-#if 0
-    for(size_t i = 0; i < BU_PTBL_LEN(gvp->gv_selected); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gvp->gv_selected, i);
-	if (s->s_update_callback) {
-	    ret += (*s->s_update_callback)(s);
-	}
-    }
-#endif
     return (ret > 0) ? 1 : 0;
 }
 

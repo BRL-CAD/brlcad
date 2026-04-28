@@ -211,12 +211,20 @@ struct bv_scene_obj  {
      * scenario as an object is edited from multiple different views, to supply
      * the necessary view context for editing. If the object needs to retain
      * knowledge of its original/creation view, it should save that info
-     * internally in its s_i_data container. */
+     * internally in its s_i_data container.
+     *
+     * BV_DEPRECATED: do not use s_v for view-policy control flow;
+     * scene data should not drive rendering decisions.  Use BViewState::redraw()
+     * or bv_view_get/set_* accessors instead. */
     struct bview *s_v;
 
     /* Knowledge of how to create/update s_vlist and the other 3D geometry data, as well as
      * manage any custom data specific to this object */
     void *s_i_data;  /**< @brief custom view data (bv_line_seg, bv_label, bv_polyon, etc) */
+
+    /* BV_DEPRECATED: LoD and CSG adaptive-wireframe update callbacks will be
+     * triggered by BViewState::redraw() rather than being registered here.
+     */
     int (*s_update_callback)(struct bv_scene_obj *, struct bview *, int);  /**< @brief custom update/generator for s_vlist */
     void (*s_free_callback)(struct bv_scene_obj *);  /**< @brief free any info stored in s_i_data, s_path and draw_data */
 
@@ -227,7 +235,11 @@ struct bv_scene_obj  {
     /* Display lists accelerate drawing when we can use them */
     unsigned int s_dlist;	/**< @brief  display list index */
     int s_dlist_mode;		/**< @brief  drawing mode in which display list was generated (if it doesn't match s_os.s_dmode, dlist is out of date.) */
+    /* BV_DEPRECATED: replaced by dm_register_dlist_sensor / dm_fire_dlist_sensors
+     * in libdm.  Remains for backward compatibility; will be removed after one release cycle. */
     int s_dlist_stale;		/**< @brief  set by client codes when dlist is out of date - dm must update. */
+    /* BV_DEPRECATED: dlist teardown is now handled via dm_register_dlist_sensor
+     * callbacks. */
     void (*s_dlist_free_callback)(struct bv_scene_obj *);  /**< @brief free any dlist specific data */
 
     /* 3D geometry metadata */
@@ -260,11 +272,12 @@ struct bv_scene_obj  {
      * settings.  These values SHOULD NOT be directly manipulated by any user
      * facing commands (such as view obj).
      *
-     * TODO - should the above be true?  Managing the loading of appropriate
-     * geometry for individual objects based on the local settings might make
-     * sense.  If we use these, perhaps the bview level settings can be removed
-     * altogether and the view won't need to care about anything except what is
-     * in the scene obj at draw time....  Maybe add these to bv_obj_settings?*/
+     * BV_DEPRECATED: adaptive_wireframe, view_scale, bot_threshold,
+     * curve_scale, and point_scale are snapshot values used to detect when a
+     * redraw is needed.  The owning decision logic is being moved to
+     * BViewState::redraw().
+     * These fields will be removed after one release cycle once BViewState
+     * owns the full redraw trigger. */
     int     adaptive_wireframe;
     int     csg_obj;
     int     mesh_obj;
