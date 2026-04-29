@@ -21,6 +21,60 @@ rt [options]... model.g objects...
 
 The following options are recognized:
 
+Long-option equivalents (new parser):
+
+* `--output file` = `-o file`
+* `--output-double file` = `-O file`
+* `--framebuffer fb` = `-F fb`
+* `--size #` = `-s #`
+* `--width #` = `-w #`
+* `--height #` = `-n #`
+* `--background #/#/#` = `-C #/#/#`
+* `--white-background` = `-W`
+* `--report-overlaps` = `-r`
+* `--no-overlap-report` = `-R`
+* `--azimuth deg` = `-a deg`
+* `--elevation deg` = `-e deg`
+* `--perspective deg` = `-p deg`
+* `--eye-backoff #` = `-E #`
+* `--view-aspect #[:#]` = `-V #[:#]`
+* `--read-matrix` = `-M`
+* `--cell-width mm` = `-g mm`
+* `--cell-height mm` = `-G mm`
+* `--subgrid xmin,ymin,xmax,ymax` = `-j xmin,ymin,xmax,ymax`
+* `--cut-plane xd,yd,zd,dist` = `-k xd,yd,zd,dist`
+* `--ambient #` = `-A #`
+* `--light-model #[,args]` = `-l #[,args]`
+* `--haze d,r,g,b` = `-m d,r,g,b`
+* `--incremental` = `-i`
+* `--top-down` = `-t`
+* `--stereo` = `-S`
+* `--hypersample #` = `-H #`
+* `--jitter #` = `-J #`
+* `--units units` = `-u units`
+* `--use-air #` = `-U #`
+* `--tolerance #[/#]` = `-T #[/#]`
+* `--opencl #` = `-z #`
+* `--command cmd` = `-c cmd`
+* `--density-file file` = `-d file`
+* `--start-frame #` = `-D #`
+* `--end-frame #` = `-K #`
+* `--single-pixel "x y"` = `-b "x y"`
+* `--query-pixel x,y` = `-Q x,y`
+* `--objects-file file` = `-I file`
+* `--text-output t` = `-+ t`
+* `--rand-table-size #` = `-q #`
+* `--verbose [#]` = `-v [#]`
+* `--rt-debug #` = `-x #`
+* `--optical-debug #` = `-X #`
+* `--nmg-debug #` = `-N #`
+* `--bu-debug #` = `-! #`
+* `--cpus #` = `-P #`
+* `--benchmark` = `-B`
+* `--help` = `-h`
+
+The `-?` help form is still accepted. Note that `--?` is not valid long-option syntax; use `--help` instead.
+
 
 *-. #*::
 selects the factor used in NUgrid algorithm. Default is 1.5 .
