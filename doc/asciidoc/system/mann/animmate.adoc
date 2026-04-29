@@ -23,7 +23,12 @@ The *animmate* command starts the Tcl/Tk-based animation tool. ***Need to find a
 [[examples]]
 == EXAMPLES
 
+.Invoke the *animmate* command.
+[example]
+====
+mged>**animmate**
 
+====
 
 [[author]]
 == AUTHOR
