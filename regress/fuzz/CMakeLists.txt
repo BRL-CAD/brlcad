@@ -12,6 +12,9 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 set(CMAKE_REQUIRED_FLAGS -fsanitize=fuzzer)
 check_cxx_source_compiles("${CHECK_FUZZER_FLAG_CODE}" HAVE_FSANITIZE_FUZZER_FLAG)
 cmake_pop_check_state()
+# cmake_pop_check_state() does not restore CMAKE_TRY_COMPILE_TARGET_TYPE, so
+# explicitly unset it here to avoid it leaking into the subsequent checks.
+unset(CMAKE_TRY_COMPILE_TARGET_TYPE)
 
 set(
   CHECK_FUZZER_CODE
