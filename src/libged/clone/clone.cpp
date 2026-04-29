@@ -1070,11 +1070,14 @@ run_pattern_rect(CloneState *state)
     state->clones_total = px.size() * py.size() * pz.size() * state->srcs.size();
     state->clones_done  = 0;
 
+    vect_t origin;
+    VSCALE(origin, state->center_pat, l2b);
+
     std::vector<std::string> names;
     for (fastf_t z : pz)
 	for (fastf_t y : py)
 	    for (fastf_t x : px) {
-		vect_t pos; VSETALL(pos, 0);
+		vect_t pos; VMOVE(pos, origin);
 		VJOIN1(pos, pos, x, xd);
 		VJOIN1(pos, pos, y, yd);
 		VJOIN1(pos, pos, z, zd);
@@ -1311,22 +1314,6 @@ opt_vec3(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
     return ret;
 }
 
-/**
- * opt_vect_t: like bu_opt_vect_t but uses parse_vec3_argv, which handles
- * both "x y z" as 3 separate tokens AND as a single "x y z" string
- * (e.g. from Tcl lappend '{ 1 0 0 }' which produces a string with spaces).
- * bu_opt_vect_t fails when the last token has a trailing space because
- * bu_argv_from_string does not null-terminate the trailing space, causing
- * bu_opt_fastf_t to reject "0 " via the endptr check.
- */
-static int
-opt_vect_t(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
-{
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "vect_t");
-    fastf_t *v = (fastf_t *)sv;   /* vect_t is fastf_t[3]; decays to fastf_t* */
-    return parse_vec3_argv(msg, argc, argv, v);
-}
-
 
 /** NVec3Opt: int + vect_t.  Used for -a / -b ("n x y z"). */
 struct NVec3Opt {
@@ -1456,25 +1443,181 @@ opt_depth(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
  * Accepts: "0 30 60 90"  or  "0,30,60,90".
  */
 static int
-opt_float_list(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
+parse_float_list_str(struct bu_vls *msg, const char *src,
+		     std::vector<fastf_t>& out)
 {
-    std::vector<fastf_t> *lst = (std::vector<fastf_t> *)sv;
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "float_list");
-
-    std::string s(argv[0]);
+    std::string s(src ? src : "");
     for (char& c : s) if (c == ',') c = ' ';
 
     std::istringstream iss(s);
     fastf_t x;
-    while (iss >> x) lst->push_back(x);
+    while (iss >> x) out.push_back(x);
 
-    if (lst->empty()) {
+    if (out.empty()) {
 	if (msg)
-	    bu_vls_printf(msg, "opt_float_list: no valid numbers in '%s'\n",
-			 argv[0]);
+	    bu_vls_printf(msg, "no valid numbers in '%s'\n", src ? src : "");
 	return -1;
     }
+    return 0;
+}
+
+
+/* -----------------------------------------------------------------------
+ * Axis-keyed option support
+ *
+ * The new vocabulary collapses 33 specialised options into 6 generic
+ * axis-keyed options that work in every pattern:
+ *
+ *   -n, -d, --start  : numeric, repeatable, axis-keyed (bare or AXIS=value)
+ *   --list           : list of floats, AXIS-keyed (AXIS=v1 v2 ...)
+ *   --dir            : direction vector, AXIS-keyed (AXIS x y z)
+ *   --align          : comma list of orientation keys
+ *
+ * Bare values become defaults for every axis whose attribute hasn't
+ * been bound explicitly; AXIS= values bind to that axis only.
+ * Resolution to the active pattern's canonical axis list happens in a
+ * post-parse validation pass.
+ * ----------------------------------------------------------------------- */
+
+struct AxisKV {
+    std::string axis;   /**< empty for bare/default */
+    fastf_t     value = 0;
+};
+
+struct AxisListKV {
+    std::string axis;   /**< MUST be set; --list requires AXIS= */
+    std::vector<fastf_t> values;
+};
+
+struct AxisDirKV {
+    std::string axis;   /**< MUST be set */
+    vect_t      dir   = {0, 0, 0};
+};
+
+struct AxisOpts {
+    std::vector<AxisKV>     n_kv;     /**< -n */
+    std::vector<AxisKV>     d_kv;     /**< -d */
+    std::vector<AxisKV>     start_kv; /**< --start */
+    std::vector<AxisListKV> list_kv;  /**< --list */
+    std::vector<AxisDirKV>  dir_kv;   /**< --dir */
+};
+
+
+/**
+ * Split an "AXIS=value" token into axis name and the unparsed remainder.
+ * Returns true if a non-empty axis prefix is present, false otherwise.
+ */
+static bool
+split_axis_kv(const char *tok, std::string& axis_out, std::string& rest_out)
+{
+    if (!tok) return false;
+    const char *eq = strchr(tok, '=');
+    if (!eq || eq == tok) {
+	axis_out.clear();
+	rest_out = tok;
+	return false;
+    }
+    axis_out.assign(tok, eq - tok);
+    rest_out.assign(eq + 1);
+    return true;
+}
+
+
+/** Parse "<n>" or "AXIS=<n>" into AxisKV. Consumes 1 argv entry. */
+static int
+opt_axis_int(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
+{
+    std::vector<AxisKV> *vec = (std::vector<AxisKV> *)sv;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "axis_int");
+
+    AxisKV kv;
+    std::string rest;
+    split_axis_kv(argv[0], kv.axis, rest);
+
+    char *ep = NULL;
+    long v = strtol(rest.c_str(), &ep, 10);
+    if (!ep || *ep || rest.empty()) {
+	if (msg)
+	    bu_vls_printf(msg, "expected integer (or AXIS=integer), got '%s'\n",
+			  argv[0]);
+	return -1;
+    }
+    kv.value = (fastf_t)v;
+    vec->push_back(kv);
     return 1;
+}
+
+/** Parse "<f>" or "AXIS=<f>" into AxisKV. Consumes 1 argv entry. */
+static int
+opt_axis_float(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
+{
+    std::vector<AxisKV> *vec = (std::vector<AxisKV> *)sv;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "axis_float");
+
+    AxisKV kv;
+    std::string rest;
+    split_axis_kv(argv[0], kv.axis, rest);
+
+    char *ep = NULL;
+    fastf_t v = strtod(rest.c_str(), &ep);
+    if (!ep || *ep || rest.empty()) {
+	if (msg)
+	    bu_vls_printf(msg, "expected number (or AXIS=number), got '%s'\n",
+			  argv[0]);
+	return -1;
+    }
+    kv.value = v;
+    vec->push_back(kv);
+    return 1;
+}
+
+/** Parse "AXIS=v1 v2 ..." into AxisListKV. Consumes 1 argv entry. */
+static int
+opt_axis_list(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
+{
+    std::vector<AxisListKV> *vec = (std::vector<AxisListKV> *)sv;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "axis_list");
+
+    AxisListKV kv;
+    std::string rest;
+    if (!split_axis_kv(argv[0], kv.axis, rest)) {
+	if (msg)
+	    bu_vls_printf(msg, "--list requires AXIS=v1 v2 ... (got '%s')\n",
+			  argv[0]);
+	return -1;
+    }
+    if (parse_float_list_str(msg, rest.c_str(), kv.values) < 0)
+	return -1;
+    vec->push_back(kv);
+    return 1;
+}
+
+/**
+ * Parse "AXIS x y z" into AxisDirKV. AXIS is a separate token.
+ * Consumes 4 (or 2 with "x y z" packed) argv entries.
+ */
+static int
+opt_axis_dir(struct bu_vls *msg, size_t argc, const char **argv, void *sv)
+{
+    std::vector<AxisDirKV> *vec = (std::vector<AxisDirKV> *)sv;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "axis_dir");
+
+    if (argc < 2) {
+	if (msg)
+	    bu_vls_printf(msg, "--dir requires AXIS and x y z\n");
+	return -1;
+    }
+    AxisDirKV kv;
+    kv.axis = argv[0];
+    if (kv.axis.empty()) {
+	if (msg)
+	    bu_vls_printf(msg, "--dir AXIS must not be empty\n");
+	return -1;
+    }
+    int vret = parse_vec3_argv(msg, argc - 1, argv + 1, kv.dir);
+    if (vret < 0) return -1;
+    vec->push_back(kv);
+    return 1 + vret;
 }
 
 
@@ -1487,66 +1630,179 @@ print_usage(struct bu_vls *str)
 {
     bu_vls_printf(str,
 "Usage:\n"
-"  clone [options] <object>           linear deep-copy\n"
-"  clone --rect [options] <object>... rectangular grid\n"
-"  clone --sph  [options] <object>... spherical pattern\n"
-"  clone --cyl  [options] <object>... cylindrical pattern\n"
+"  clone [pattern] [options]... <object>...\n"
 "\n"
-"Common:\n"
+"Pattern (positional, optional; default 'lin'):\n"
+"  lin      single-axis (linear) copies (default; the original CLI)\n"
+"  rect     rectangular grid              axes: x, y, z\n"
+"  sph      spherical pattern             axes: az, el, r\n"
+"  cyl      cylindrical pattern           axes: az, r,  h\n"
+"\n"
+"  The pattern keyword may appear anywhere on the command line; option\n"
+"  position relative to it does not matter.\n"
+"\n"
+"Axis options (work in every pattern; bare value = default for every axis,\n"
+"AXIS=value binds to one axis only.  Repeat as needed):\n"
+"  -n, --copies <N | AXIS=N>          copies along this axis\n"
+"  -d, --delta  <D | AXIS=D>          step size (deg for az/el, model units\n"
+"                                     otherwise)\n"
+"      --start  <V | AXIS=V>          starting value for this axis\n"
+"      --list   <AXIS=v1 v2 ...>      explicit list (overrides n/d/start)\n"
+"\n"
+"Spatial / orientation options (global, work in every pattern):\n"
+"  -O, --origin <x y z>               pattern origin in model space\n"
+"  -p, --pivot  <x y z>               pivot for rotation/-r/--align\n"
+"      --align  <KEYS>                comma list of orientation keys\n"
+"                                     sph: az,el   cyl: az\n"
+"      --dir    <AXIS x y z>          direction vector for an axis\n"
+"\n"
+"Housekeeping:\n"
 "  -h, --help\n"
-"  -i, --increment <n>          name number increment (default 100)\n"
-"  -c, --second-number          increment next embedded number (repeat for Nth)\n"
-"  --depth top|regions|primitives  copy depth (default: top for patterns,\n"
-"                                primitives for linear mode)\n"
-"                                  top:        wrapper comb {obj [mat]},\n"
-"                                              primitives shared\n"
-"                                  regions:    copy combs/regions, share\n"
-"                                              primitives, mat at leaf arcs\n"
-"                                  primitives: full deep copy, mat baked in\n"
-"  --xpush                      flatten instance matrices before cloning\n"
-"  -g, --group <name>           collect all clones into <name>\n"
-"  -s, --subs  <sstr> <rstr>   replace first occurrence of sstr with rstr\n"
-"                               in every generated object name\n"
+"  -i, --increment <#>                name number increment (default 100)\n"
+"  -c, --second-number                step next embedded number (repeat)\n"
+"      --depth top|regions|primitives copy depth\n"
+"      --xpush                        flatten instance matrices first\n"
+"  -g, --group <name>                 collect clones into named comb\n"
+"  -s, --subs  <sstr> <rstr>          substitute name fragment\n"
 "\n"
-"Linear copy:\n"
-"  -n, --copies <n>             number of copies\n"
-"  -t, --translate <x y z>     per-copy translation\n"
-"  -r, --rotate    <x y z>     per-copy rotation (deg) about x,y,z\n"
-"  -p, --rpoint    <x y z>     rotation centre\n"
-"  -a, --atrans  <n x y z>     total translation split over n copies\n"
-"  -b, --arot    <n x y z>     total rotation split over n copies\n"
-"  -m, --mirror  <axis d>      mirror: axis=x|y|z, d=plane distance\n"
-"\n"
-"Rectangular grid (--rect):\n"
-"  --nx <n>  --dx <d>  --lx \"v1 v2...\"   (x)\n"
-"  --ny <n>  --dy <d>  --ly \"v1 v2...\"   (y)\n"
-"  --nz <n>  --dz <d>  --lz \"v1 v2...\"   (z)\n"
-"  --xdir <x y z>  --ydir <x y z>  --zdir <x y z>\n"
-"\n"
-"Spherical (--sph):\n"
-"  --naz <n>  --daz <deg>  --laz \"v1...\"  --start-az <deg>\n"
-"  --nel <n>  --del <deg>  --lel \"v1...\"  --start-el <deg>\n"
-"  --nr  <n>  --dr  <d>    --lr  \"v1...\"  --start-r  <r>\n"
-"  --center-pat <x y z>  --center-obj <x y z>\n"
-"  --rotaz  --rotel\n"
-"\n"
-"Cylindrical (--cyl):\n"
-"  --naz <n>  --daz <deg>  --laz \"v1...\"  --start-az <deg>\n"
-"  --nr  <n>  --dr  <d>    --lr  \"v1...\"  --start-r  <r>\n"
-"  --nh  <n>  --dh  <d>    --lh  \"v1...\"  --start-h  <h>\n"
-"  --center-base <x y z>  --center-obj <x y z>\n"
-"  --height-dir <x y z>   --start-az-dir <x y z>\n"
-"  --rot\n");
+"Linear-only (frozen rel-7-42-2 compact forms):\n"
+"  -t, --translate <x y z>            per-copy translation\n"
+"  -r, --rotate    <x y z>            per-copy rotation (deg)\n"
+"  -a, --atrans  <n x y z>            total translation, split over n copies\n"
+"  -b, --arot    <n x y z>            total rotation, split over n copies\n"
+"  -m, --mirror  <axis d>             mirror about plane axis=x|y|z @ d\n");
 }
 
 
 /* -----------------------------------------------------------------------
  * Argument parsing
- *
- * BU_OPT is a do-while macro that ASSIGNS fields; it cannot appear inside
- * a compound initialiser.  We declare the array first and then fill it
- * with sequential BU_OPT() / BU_OPT_NULL() calls.
  * ----------------------------------------------------------------------- */
+
+/** Canonical axis list for each pattern.  NULL-terminated. */
+static const char *const lin_axes[]  = { "step", NULL };
+static const char *const rect_axes[] = { "x", "y", "z", NULL };
+static const char *const sph_axes[]  = { "az", "el", "r", NULL };
+static const char *const cyl_axes[]  = { "az", "r", "h", NULL };
+
+static const char *const *
+pattern_axes(PatternMode p)
+{
+    switch (p) {
+	case PatternMode::LINEAR:    return lin_axes;
+	case PatternMode::RECT:      return rect_axes;
+	case PatternMode::SPHERICAL: return sph_axes;
+	case PatternMode::CYL:       return cyl_axes;
+    }
+    return lin_axes;
+}
+
+static const char *
+pattern_name(PatternMode p)
+{
+    switch (p) {
+	case PatternMode::LINEAR:    return "lin";
+	case PatternMode::RECT:      return "rect";
+	case PatternMode::SPHERICAL: return "sph";
+	case PatternMode::CYL:       return "cyl";
+    }
+    return "lin";
+}
+
+static PatternMode
+parse_pattern_keyword(const char *tok)
+{
+    if (BU_STR_EQUAL(tok, "lin"))  return PatternMode::LINEAR;
+    if (BU_STR_EQUAL(tok, "rect")) return PatternMode::RECT;
+    if (BU_STR_EQUAL(tok, "sph"))  return PatternMode::SPHERICAL;
+    if (BU_STR_EQUAL(tok, "cyl"))  return PatternMode::CYL;
+    return (PatternMode)-1;
+}
+
+static bool
+is_pattern_keyword(const char *tok)
+{
+    return parse_pattern_keyword(tok) != (PatternMode)-1;
+}
+
+
+/**
+ * Resolved per-axis spec produced by the validation pass.
+ * Names are taken from the active pattern's canonical axis list.
+ */
+struct ResolvedAxis {
+    std::string name;
+    int     n               = 1;
+    fastf_t d               = 0.0;
+    fastf_t start           = 0.0;
+    std::vector<fastf_t> list;
+    vect_t  dir             = {0, 0, 0};
+    bool    has_dir         = false;
+    bool    n_explicit      = false;
+    bool    d_explicit      = false;
+    bool    start_explicit  = false;
+    bool    n_assigned      = false;  /**< true if -n affected this axis */
+    bool    d_assigned      = false;
+    bool    start_assigned  = false;
+};
+
+
+/**
+ * Apply axis-keyed key/value bindings (AxisKV vectors) to the resolved
+ * axis spec array.  Bare entries (axis empty) act as defaults for every
+ * axis whose attribute hasn't been bound yet (in keyed-explicit form).
+ *
+ * Returns BRLCAD_OK on success, BRLCAD_ERROR on unknown axis names.
+ */
+static int
+resolve_axis_kvs(struct bu_vls *msg, PatternMode pat,
+		 const std::vector<AxisKV>& kvs,
+		 std::vector<ResolvedAxis>& axes,
+		 const char *opt_name,
+		 bool   (*explicit_get)(const ResolvedAxis&),
+		 void   (*setter)(ResolvedAxis&, fastf_t, bool /*explicit_kw*/))
+{
+    /* Two passes: first explicit bindings (AXIS= form), then defaults. */
+    for (const auto& kv : kvs) {
+	if (kv.axis.empty()) continue;
+	bool found = false;
+	for (auto& ax : axes) {
+	    if (ax.name == kv.axis) {
+		setter(ax, kv.value, true);
+		found = true;
+		break;
+	    }
+	}
+	if (!found) {
+	    if (msg)
+		bu_vls_printf(msg, "clone %s: %s axis '%s' not valid for "
+			      "pattern '%s'\n",
+			      pattern_name(pat), opt_name, kv.axis.c_str(),
+			      pattern_name(pat));
+	    return BRLCAD_ERROR;
+	}
+    }
+    /* Then defaults from bare entries — only if not yet explicitly set. */
+    for (const auto& kv : kvs) {
+	if (!kv.axis.empty()) continue;
+	for (auto& ax : axes) {
+	    if (!explicit_get(ax))
+		setter(ax, kv.value, false);
+	}
+    }
+    return BRLCAD_OK;
+}
+
+/* Helpers for the resolve_axis_kvs templates above. */
+static bool exp_n(const ResolvedAxis& a)     { return a.n_explicit; }
+static bool exp_d(const ResolvedAxis& a)     { return a.d_explicit; }
+static bool exp_start(const ResolvedAxis& a) { return a.start_explicit; }
+static void set_n(ResolvedAxis& a, fastf_t v, bool e)
+{ a.n = (int)v; a.n_assigned = true; if (e) a.n_explicit = true; }
+static void set_d(ResolvedAxis& a, fastf_t v, bool e)
+{ a.d = v; a.d_assigned = true; if (e) a.d_explicit = true; }
+static void set_start(ResolvedAxis& a, fastf_t v, bool e)
+{ a.start = v; a.start_assigned = true; if (e) a.start_explicit = true; }
+
 
 static int
 clone_parse_args(struct ged *gedp, int argc, const char **argv,
@@ -1555,99 +1811,57 @@ clone_parse_args(struct ged *gedp, int argc, const char **argv,
     /* Skip argv[0] (command name) */
     argc--; argv++;
 
-    /* Scalar option targets */
+    /* ---- Scalar option targets ------------------------------------- */
     int print_help    = 0;
-    int mode_rect     = 0, mode_sph = 0, mode_cyl = 0;
     int depth_flag    = -1;   /* -1 = not set; 2=top; 1=regions; 0=primitives */
-    int n_copies_opt  = 0;
     int incr_opt      = 0;
-    int nx_opt=0, ny_opt=0, nz_opt=0;
-    int naz_opt=0, nel_opt=0, nr_opt=0, nh_opt=0;
-    fastf_t dx_opt=0, dy_opt=0, dz_opt=0;
-    fastf_t daz_opt=0, del_opt=0, dr_opt=0, dh_opt=0;
-    fastf_t start_az_opt=0, start_el_opt=-90.0;
-    fastf_t start_r_opt=-1.0, start_h_opt=-1.0;  /* -1 = not explicitly set */
-    int rotaz_flag=0, rotel_flag=0, rot_flag=0;
-    int xpush_flag=0;
+    int xpush_flag    = 0;
     const char *group_cstr = nullptr;
+    const char *align_cstr = nullptr;
 
     /* Custom-callback option targets */
-    Vec3Opt   trans_opt, rot_opt, rpnt_opt;
+    Vec3Opt   trans_opt, rot_opt, origin_opt, pivot_opt;
     NVec3Opt  atrans_opt, arot_opt;
     MirrorOpt mirror_opt;
     SubsOpt   subs_opt;
+    AxisOpts  axopts;
 
-    /* Build the option table.  The array needs 54 slots (53 options + NULL). */
-    struct bu_opt_desc d[54];
+    /* Build the option table.  Entry layout follows the surface-area plan:
+     *   1 help + 6 housekeeping + 4 axis + 4 spatial/orientation/dir
+     *   + 5 frozen linear-only + NULL = 21 slots. */
+    struct bu_opt_desc d[22];
 
-    /* Common */
-    BU_OPT(d[0],  "h", "help",         "",         NULL,           &print_help,         "Print help");
-    BU_OPT(d[1],  "i", "increment",    "#",        bu_opt_int,     &incr_opt,           "Name increment");
-    BU_OPT(d[2],  "c", "second-number","",         bu_opt_incr_long,&state->updpos,     "Increment next number");
-    BU_OPT(d[3],  "",  "depth",        "top|reg|prim", opt_depth,      &depth_flag,         "Copy depth");
-    BU_OPT(d[4],  "",  "xpush",        "",         NULL,           &xpush_flag,         "Flatten matrices");
-    BU_OPT(d[5],  "g", "group",        "name",     bu_opt_str,     &group_cstr,         "Group clones");
-    BU_OPT(d[6],  "s", "subs",         "sstr rstr",opt_subs,       &subs_opt,           "Name substitution");
+    /* Housekeeping */
+    BU_OPT(d[0],  "h", "help",         "",         NULL,            &print_help,         "Print help");
+    BU_OPT(d[1],  "i", "increment",    "#",        bu_opt_int,      &incr_opt,           "Name increment");
+    BU_OPT(d[2],  "c", "second-number","",         bu_opt_incr_long,&state->updpos,      "Increment next number");
+    BU_OPT(d[3],  "",  "depth",        "top|reg|prim", opt_depth,   &depth_flag,         "Copy depth");
+    BU_OPT(d[4],  "",  "xpush",        "",         NULL,            &xpush_flag,         "Flatten matrices");
+    BU_OPT(d[5],  "g", "group",        "name",     bu_opt_str,      &group_cstr,         "Group clones");
+    BU_OPT(d[6],  "s", "subs",         "sstr rstr",opt_subs,        &subs_opt,           "Name substitution");
 
-    /* Linear copy */
-    BU_OPT(d[7],  "n", "copies",       "#",        bu_opt_int,     &n_copies_opt,       "Number of copies");
-    BU_OPT(d[8],  "t", "translate",    "x y z",    opt_vec3,       &trans_opt,          "Per-copy translation");
-    BU_OPT(d[9],  "r", "rotate",       "x y z",    opt_vec3,       &rot_opt,            "Per-copy rotation");
-    BU_OPT(d[10], "p", "rpoint",       "x y z",    opt_vec3,       &rpnt_opt,           "Rotation centre");
-    BU_OPT(d[11], "a", "atrans",       "n x y z",  opt_n_vec3,     &atrans_opt,         "Total translation");
-    BU_OPT(d[12], "b", "arot",         "n x y z",  opt_n_vec3,     &arot_opt,           "Total rotation");
-    BU_OPT(d[13], "m", "mirror",       "axis d",   opt_mirror,     &mirror_opt,         "Mirror copy");
+    /* Axis options (global, axis-keyed) */
+    BU_OPT(d[7],  "n", "copies",       "N|AXIS=N",      opt_axis_int,   &axopts.n_kv,     "Per-axis copy count");
+    BU_OPT(d[8],  "d", "delta",        "D|AXIS=D",      opt_axis_float, &axopts.d_kv,     "Per-axis step (deg or units)");
+    BU_OPT(d[9],  "",  "start",        "V|AXIS=V",      opt_axis_float, &axopts.start_kv, "Per-axis start value");
+    BU_OPT(d[10], "",  "list",         "AXIS=v1 v2 ...",opt_axis_list,  &axopts.list_kv,  "Per-axis explicit list");
 
-    /* Pattern mode selectors */
-    BU_OPT(d[14], "", "rect", "", NULL, &mode_rect, "Rectangular grid");
-    BU_OPT(d[15], "", "sph",  "", NULL, &mode_sph,  "Spherical pattern");
-    BU_OPT(d[16], "", "cyl",  "", NULL, &mode_cyl,  "Cylindrical pattern");
+    /* Spatial / orientation (global) */
+    BU_OPT(d[11], "O", "origin",       "x y z",    opt_vec3,        &origin_opt,         "Pattern origin");
+    BU_OPT(d[12], "p", "pivot",        "x y z",    opt_vec3,        &pivot_opt,          "Rotation pivot");
+    BU_OPT(d[13], "",  "align",        "KEYS",     bu_opt_str,      &align_cstr,         "Orientation keys");
+    BU_OPT(d[14], "",  "dir",          "AXIS x y z",opt_axis_dir,   &axopts.dir_kv,      "Per-axis direction");
 
-    /* Rectangular grid */
-    BU_OPT(d[17], "", "nx", "#",        bu_opt_int,     &nx_opt,      "Grid nx");
-    BU_OPT(d[18], "", "ny", "#",        bu_opt_int,     &ny_opt,      "Grid ny");
-    BU_OPT(d[19], "", "nz", "#",        bu_opt_int,     &nz_opt,      "Grid nz");
-    BU_OPT(d[20], "", "dx", "#",        bu_opt_fastf_t, &dx_opt,      "Grid dx");
-    BU_OPT(d[21], "", "dy", "#",        bu_opt_fastf_t, &dy_opt,      "Grid dy");
-    BU_OPT(d[22], "", "dz", "#",        bu_opt_fastf_t, &dz_opt,      "Grid dz");
-    BU_OPT(d[23], "", "lx", "\"...\"",  opt_float_list, &state->lx,  "x list");
-    BU_OPT(d[24], "", "ly", "\"...\"",  opt_float_list, &state->ly,  "y list");
-    BU_OPT(d[25], "", "lz", "\"...\"",  opt_float_list, &state->lz,  "z list");
-    BU_OPT(d[26], "", "xdir", "x y z",  opt_vect_t,  state->xdir, "x direction");
-    BU_OPT(d[27], "", "ydir", "x y z",  opt_vect_t,  state->ydir, "y direction");
-    BU_OPT(d[28], "", "zdir", "x y z",  opt_vect_t,  state->zdir, "z direction");
+    /* Frozen linear compact forms */
+    BU_OPT(d[15], "t", "translate",    "x y z",    opt_vec3,        &trans_opt,          "Per-copy translation");
+    BU_OPT(d[16], "r", "rotate",       "x y z",    opt_vec3,        &rot_opt,            "Per-copy rotation");
+    BU_OPT(d[17], "a", "atrans",       "n x y z",  opt_n_vec3,      &atrans_opt,         "Total translation");
+    BU_OPT(d[18], "b", "arot",         "n x y z",  opt_n_vec3,      &arot_opt,           "Total rotation");
+    BU_OPT(d[19], "m", "mirror",       "axis d",   opt_mirror,      &mirror_opt,         "Mirror copy");
+    BU_OPT_NULL(d[20]);
 
-    /* Spherical / cylindrical shared */
-    BU_OPT(d[29], "", "naz",       "#",       bu_opt_int,      &naz_opt,           "Az count");
-    BU_OPT(d[30], "", "nel",       "#",       bu_opt_int,      &nel_opt,           "El count (sph)");
-    BU_OPT(d[31], "", "nr",        "#",       bu_opt_int,      &nr_opt,            "Radius count");
-    BU_OPT(d[32], "", "nh",        "#",       bu_opt_int,      &nh_opt,            "Height count (cyl)");
-    BU_OPT(d[33], "", "daz",       "#",       bu_opt_fastf_t,  &daz_opt,           "Az delta (deg)");
-    BU_OPT(d[34], "", "del",       "#",       bu_opt_fastf_t,  &del_opt,           "El delta (deg, sph)");
-    BU_OPT(d[35], "", "dr",        "#",       bu_opt_fastf_t,  &dr_opt,            "Radius delta");
-    BU_OPT(d[36], "", "dh",        "#",       bu_opt_fastf_t,  &dh_opt,            "Height delta (cyl)");
-    BU_OPT(d[37], "", "laz",       "\"...\"", opt_float_list,  &state->laz,        "Azimuth list (deg)");
-    BU_OPT(d[38], "", "lel",       "\"...\"", opt_float_list,  &state->lel,        "Elevation list (deg)");
-    BU_OPT(d[39], "", "lr",        "\"...\"", opt_float_list,  &state->lr,         "Radius list");
-    BU_OPT(d[40], "", "lh",        "\"...\"", opt_float_list,  &state->lh,         "Height list (cyl)");
-    BU_OPT(d[41], "", "start-az",  "#",       bu_opt_fastf_t,  &start_az_opt,      "Start azimuth (deg)");
-    BU_OPT(d[42], "", "start-el",  "#",       bu_opt_fastf_t,  &start_el_opt,      "Start elevation (deg)");
-    BU_OPT(d[43], "", "start-r",   "#",       bu_opt_fastf_t,  &start_r_opt,       "Start radius");
-    BU_OPT(d[44], "", "start-h",   "#",       bu_opt_fastf_t,  &start_h_opt,       "Start height (cyl)");
-    BU_OPT(d[45], "", "rotaz",     "",        NULL,            &rotaz_flag,         "Rotate with az");
-    BU_OPT(d[46], "", "rotel",     "",        NULL,            &rotel_flag,         "Rotate with el");
-    BU_OPT(d[47], "", "rot",       "",        NULL,            &rot_flag,           "Rotate with az (cyl)");
-    BU_OPT(d[48], "", "center-pat",    "x y z", opt_vect_t, state->center_pat,  "Pattern origin (sph)");
-    BU_OPT(d[49], "", "center-obj",    "x y z", opt_vect_t, state->center_obj,  "Object local centre");
-    BU_OPT(d[50], "", "center-base",   "x y z", opt_vect_t, state->center_base, "Cylinder base (cyl)");
-    BU_OPT(d[51], "", "height-dir",    "x y z", opt_vect_t, state->height_dir,  "Cylinder axis (cyl)");
-    BU_OPT(d[52], "", "start-az-dir",  "x y z", opt_vect_t, state->start_az_dir,"Radial start dir");
-    BU_OPT_NULL(d[53]);
-
-    /* bu_opt_parse rewrites argv[] in-place, which would corrupt the
-     * caller's (cmd_ged_edit_wrapper's) argv — the wrapper uses
-     * argv[argc-1] after we return to decide what to redraw.  Work on a
-     * private copy so the original is left intact. */
+    /* bu_opt_parse rewrites argv[] in-place — work on a private copy so
+     * the caller's argv (used by cmd_ged_edit_wrapper) is left intact. */
     std::vector<const char *> argv_local(argv, argv + argc);
     const char **av = argv_local.data();
 
@@ -1662,9 +1876,32 @@ clone_parse_args(struct ged *gedp, int argc, const char **argv,
 	return BRLCAD_ERROR;
     }
 
-    /* Positional arguments → source objects.
-     * bu_opt_parse returns the count of unrecognised (positional) tokens
-     * and places them at av[0..opt_ret-1]. */
+    /* ---- Pattern keyword extraction --------------------------------
+     * After bu_opt_parse, av[0..opt_ret-1] holds positional tokens.
+     * The pattern keyword (lin/rect/sph/cyl) — if present — appears
+     * among them.  The remaining positionals are object names. */
+    state->pattern = PatternMode::LINEAR;
+    int pat_idx = -1;
+    for (int j = 0; j < opt_ret; j++) {
+	if (is_pattern_keyword(av[j])) {
+	    if (pat_idx >= 0) {
+		bu_vls_printf(gedp->ged_result_str,
+			     "clone: multiple pattern keywords given "
+			     "('%s' and '%s')\n", av[pat_idx], av[j]);
+		return BRLCAD_ERROR;
+	    }
+	    pat_idx = j;
+	}
+    }
+    if (pat_idx >= 0) {
+	state->pattern = parse_pattern_keyword(av[pat_idx]);
+	/* Remove the pattern token from positionals. */
+	for (int j = pat_idx; j < opt_ret - 1; j++)
+	    av[j] = av[j + 1];
+	opt_ret--;
+    }
+
+    /* Positional arguments → source objects */
     for (int j = 0; j < opt_ret; j++) {
 	struct directory *dp;
 	GED_DB_LOOKUP(gedp, dp, av[j], LOOKUP_NOISY, BRLCAD_ERROR);
@@ -1676,54 +1913,285 @@ clone_parse_args(struct ged *gedp, int argc, const char **argv,
 	return BRLCAD_ERROR;
     }
 
-    /* Transfer scalar options */
-    if (n_copies_opt > 0) state->n_copies = (size_t)n_copies_opt;
+    /* ---- Reject linear-only options when in a pattern mode --------- */
+    if (state->pattern != PatternMode::LINEAR) {
+	const char *bad = nullptr;
+	if (rot_opt.set)     bad = "-r";
+	else if (atrans_opt.set) bad = "-a";
+	else if (arot_opt.set)   bad = "-b";
+	else if (mirror_opt.axis != W) bad = "-m";
+	if (bad) {
+	    bu_vls_printf(gedp->ged_result_str,
+			 "clone %s: option %s is linear-only\n",
+			 pattern_name(state->pattern), bad);
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    /* ---- Build resolved axis specs from AxisOpts ------------------- */
+    const char *const *cax = pattern_axes(state->pattern);
+    std::vector<ResolvedAxis> axes;
+    for (int i = 0; cax[i]; i++) {
+	ResolvedAxis ax;
+	ax.name = cax[i];
+	axes.push_back(ax);
+    }
+
+    /* Apply -n/-d/--start key/value bindings. */
+    if (resolve_axis_kvs(gedp->ged_result_str, state->pattern, axopts.n_kv,
+			 axes, "-n", exp_n, set_n) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    if (resolve_axis_kvs(gedp->ged_result_str, state->pattern, axopts.d_kv,
+			 axes, "-d", exp_d, set_d) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+    if (resolve_axis_kvs(gedp->ged_result_str, state->pattern, axopts.start_kv,
+			 axes, "--start", exp_start, set_start) != BRLCAD_OK)
+	return BRLCAD_ERROR;
+
+    /* Apply --list (AXIS= form only). */
+    for (const auto& lkv : axopts.list_kv) {
+	bool found = false;
+	for (auto& ax : axes) {
+	    if (ax.name == lkv.axis) {
+		ax.list = lkv.values;
+		found = true;
+		break;
+	    }
+	}
+	if (!found) {
+	    bu_vls_printf(gedp->ged_result_str,
+			 "clone %s: --list axis '%s' not valid for "
+			 "pattern '%s'\n",
+			 pattern_name(state->pattern), lkv.axis.c_str(),
+			 pattern_name(state->pattern));
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    /* Apply --dir (AXIS form only).  Direction is meaningful for:
+     *   rect: x, y, z;  sph: az;  cyl: az, h;  lin: step
+     * Other axes (sph: el, r;  cyl: r) reject --dir. */
+    auto axis_takes_dir = [&](const std::string& nm) {
+	if (state->pattern == PatternMode::SPHERICAL)
+	    return nm == "az";
+	if (state->pattern == PatternMode::CYL)
+	    return nm == "az" || nm == "h";
+	return true;  /* lin: step; rect: x,y,z all settable */
+    };
+    for (const auto& dkv : axopts.dir_kv) {
+	bool found = false;
+	for (auto& ax : axes) {
+	    if (ax.name == dkv.axis) {
+		if (!axis_takes_dir(ax.name)) {
+		    bu_vls_printf(gedp->ged_result_str,
+				 "clone %s: --dir not applicable to axis "
+				 "'%s' for pattern '%s'\n",
+				 pattern_name(state->pattern),
+				 dkv.axis.c_str(),
+				 pattern_name(state->pattern));
+		    return BRLCAD_ERROR;
+		}
+		VMOVE(ax.dir, dkv.dir);
+		ax.has_dir = true;
+		found = true;
+		break;
+	    }
+	}
+	if (!found) {
+	    bu_vls_printf(gedp->ged_result_str,
+			 "clone %s: --dir axis '%s' not valid for "
+			 "pattern '%s'\n",
+			 pattern_name(state->pattern), dkv.axis.c_str(),
+			 pattern_name(state->pattern));
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    /* ---- Validate per-axis list/n consistency ---------------------- */
+    for (const auto& ax : axes) {
+	if (!ax.list.empty() && ax.n_explicit
+	    && (size_t)ax.n != ax.list.size()) {
+	    bu_vls_printf(gedp->ged_result_str,
+			 "clone %s: axis '%s' list length (%zu) disagrees "
+			 "with -n=%d\n",
+			 pattern_name(state->pattern), ax.name.c_str(),
+			 ax.list.size(), ax.n);
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    /* ---- Resolve --align ------------------------------------------- */
+    bool rotaz = false, rotel = false, rot_cyl = false;
+    if (align_cstr && *align_cstr) {
+	std::string s(align_cstr);
+	for (char& c : s) if (c == ',') c = ' ';
+	std::istringstream iss(s);
+	std::string key;
+	while (iss >> key) {
+	    if (state->pattern == PatternMode::SPHERICAL) {
+		if      (key == "az") rotaz = true;
+		else if (key == "el") rotel = true;
+		else {
+		    bu_vls_printf(gedp->ged_result_str,
+				 "clone sph: --align key '%s' not valid; "
+				 "expected az or el\n", key.c_str());
+		    return BRLCAD_ERROR;
+		}
+	    } else if (state->pattern == PatternMode::CYL) {
+		if (key == "az" || key == "tan") rot_cyl = true;
+		else {
+		    bu_vls_printf(gedp->ged_result_str,
+				 "clone cyl: --align key '%s' not valid; "
+				 "expected az (tangential)\n", key.c_str());
+		    return BRLCAD_ERROR;
+		}
+	    } else {
+		bu_vls_printf(gedp->ged_result_str,
+			     "clone %s: --align is not applicable\n",
+			     pattern_name(state->pattern));
+		return BRLCAD_ERROR;
+	    }
+	}
+    }
+
+    /* ---- Common scalar transfers ----------------------------------- */
     if (incr_opt > 0) state->incr = incr_opt;
     if (subs_opt.set) {
 	state->subs_src = subs_opt.src;
 	state->subs_dst = subs_opt.dst;
     }
-    if (nx_opt > 0) state->nx = nx_opt;
-    if (ny_opt > 0) state->ny = ny_opt;
-    if (nz_opt > 0) state->nz = nz_opt;
-    state->dx = dx_opt; state->dy = dy_opt; state->dz = dz_opt;
-    if (naz_opt > 0) state->naz = naz_opt;
-    if (nel_opt > 0) state->nel = nel_opt;
-    if (nr_opt  > 0) state->nr  = nr_opt;
-    if (nh_opt  > 0) state->nh  = nh_opt;
-    state->daz    = daz_opt * DEG2RAD;
-    state->del_v  = del_opt * DEG2RAD;
-    state->dr     = dr_opt;
-    state->dh     = dh_opt;
-    state->start_az = start_az_opt * DEG2RAD;
-    state->start_el = start_el_opt * DEG2RAD;
-    /* For radii/heights: if not explicitly set, default to dr/dh so that
-     * the first shell/ring is at dr (matching --rect which starts copies
-     * at dx, not 0).  An explicit --start-r 0 or --start-h 0 still works. */
-    state->start_r  = (start_r_opt >= 0.0) ? start_r_opt : dr_opt;
-    state->start_h  = (start_h_opt >= 0.0) ? start_h_opt : dh_opt;
-    state->rotaz    = (rotaz_flag != 0);
-    state->rotel    = (rotel_flag != 0);
-    state->do_rot   = (rot_flag   != 0);
     state->do_xpush = (xpush_flag != 0);
     if (group_cstr) state->group_name = group_cstr;
 
-    /* Pattern mode */
-    if      (mode_rect) state->pattern = PatternMode::RECT;
-    else if (mode_sph)  state->pattern = PatternMode::SPHERICAL;
-    else if (mode_cyl)  state->pattern = PatternMode::CYL;
-
-    /* Depth mode */
+    /* Depth */
     if (depth_flag >= 0) {
 	if (depth_flag == 2)      state->depth = DepthMode::TOP;
 	else if (depth_flag == 1) state->depth = DepthMode::REGIONS;
 	else                      state->depth = DepthMode::PRIMITIVES;
     } else if (state->pattern != PatternMode::LINEAR) {
-	state->depth = DepthMode::TOP;  /* default for all pattern modes */
+	state->depth = DepthMode::TOP;
     }
 
-    /* Unit conversions and resolve -a / -b */
     fastf_t l2b = gedp->dbip->dbi_local2base;
+
+    /* ---- Map ResolvedAxis array onto legacy CloneState fields ------
+     * The runner functions still consume nx/ny/nz/dx/dy/dz/lx/ly/lz/...
+     * so we project the new vocabulary into them here. */
+    auto find_ax = [&](const char *nm) -> const ResolvedAxis * {
+	for (const auto& a : axes) if (a.name == nm) return &a;
+	return nullptr;
+    };
+
+    if (state->pattern == PatternMode::RECT) {
+	const ResolvedAxis *ax = find_ax("x");
+	const ResolvedAxis *ay = find_ax("y");
+	const ResolvedAxis *az = find_ax("z");
+	if (ax) {
+	    state->nx = ax->list.empty() ? ax->n : (int)ax->list.size();
+	    state->dx = ax->d;
+	    state->lx = ax->list;
+	    if (ax->has_dir) VMOVE(state->xdir, ax->dir);
+	}
+	if (ay) {
+	    state->ny = ay->list.empty() ? ay->n : (int)ay->list.size();
+	    state->dy = ay->d;
+	    state->ly = ay->list;
+	    if (ay->has_dir) VMOVE(state->ydir, ay->dir);
+	}
+	if (az) {
+	    state->nz = az->list.empty() ? az->n : (int)az->list.size();
+	    state->dz = az->d;
+	    state->lz = az->list;
+	    if (az->has_dir) VMOVE(state->zdir, az->dir);
+	}
+	if (origin_opt.set) {
+	    VSCALE(state->center_pat, origin_opt.v, l2b);
+	}
+    } else if (state->pattern == PatternMode::SPHERICAL) {
+	const ResolvedAxis *aaz = find_ax("az");
+	const ResolvedAxis *ael = find_ax("el");
+	const ResolvedAxis *ar  = find_ax("r");
+	if (aaz) {
+	    if (aaz->n_assigned) state->naz = aaz->n;
+	    if (aaz->d_assigned) state->daz = aaz->d * DEG2RAD;
+	    if (aaz->start_assigned) state->start_az = aaz->start * DEG2RAD;
+	    state->laz = aaz->list;
+	}
+	if (ael) {
+	    if (ael->n_assigned) state->nel = ael->n;
+	    if (ael->d_assigned) state->del_v = ael->d * DEG2RAD;
+	    if (ael->start_assigned) state->start_el = ael->start * DEG2RAD;
+	    state->lel = ael->list;
+	}
+	if (ar) {
+	    if (ar->n_assigned) state->nr = ar->n;
+	    if (ar->d_assigned) state->dr = ar->d;
+	    /* Preserve legacy default: if no explicit start_r, default to dr. */
+	    if (ar->start_assigned)      state->start_r = ar->start;
+	    else if (ar->d_assigned)     state->start_r = ar->d;
+	    state->lr = ar->list;
+	}
+	state->rotaz = rotaz;
+	state->rotel = rotel;
+	if (origin_opt.set) {
+	    VMOVE(state->center_pat, origin_opt.v);
+	}
+	if (pivot_opt.set) {
+	    VMOVE(state->center_obj, pivot_opt.v);
+	}
+    } else if (state->pattern == PatternMode::CYL) {
+	const ResolvedAxis *aaz = find_ax("az");
+	const ResolvedAxis *ar  = find_ax("r");
+	const ResolvedAxis *ah  = find_ax("h");
+	if (aaz) {
+	    if (aaz->n_assigned) state->naz = aaz->n;
+	    if (aaz->d_assigned) state->daz = aaz->d * DEG2RAD;
+	    if (aaz->start_assigned) state->start_az = aaz->start * DEG2RAD;
+	    state->laz = aaz->list;
+	    if (aaz->has_dir) VMOVE(state->start_az_dir, aaz->dir);
+	}
+	if (ar) {
+	    if (ar->n_assigned) state->nr = ar->n;
+	    if (ar->d_assigned) state->dr = ar->d;
+	    if (ar->start_assigned)      state->start_r = ar->start;
+	    else if (ar->d_assigned)     state->start_r = ar->d;
+	    state->lr = ar->list;
+	}
+	if (ah) {
+	    if (ah->n_assigned) state->nh = ah->n;
+	    if (ah->d_assigned) state->dh = ah->d;
+	    if (ah->start_assigned)      state->start_h = ah->start;
+	    else if (ah->d_assigned)     state->start_h = ah->d;
+	    state->lh = ah->list;
+	    if (ah->has_dir) VMOVE(state->height_dir, ah->dir);
+	}
+	state->do_rot = rot_cyl;
+	if (origin_opt.set) {
+	    VMOVE(state->center_base, origin_opt.v);
+	}
+	if (pivot_opt.set) {
+	    VMOVE(state->center_obj, pivot_opt.v);
+	}
+    } else {
+	/* LINEAR */
+	const ResolvedAxis *as = find_ax("step");
+	if (as && as->n_assigned) state->n_copies = (size_t)as->n;
+	/* If only -d step=<val> and --dir step=<vec> were given, synthesize
+	 * the equivalent -t when no explicit -t was supplied. */
+	if (as && !trans_opt.set && as->d_assigned) {
+	    vect_t dir;
+	    if (as->has_dir) VMOVE(dir, as->dir);
+	    else VSET(dir, 1, 0, 0);
+	    fastf_t mag = MAGNITUDE(dir);
+	    if (mag > SMALL_FASTF) {
+		VSCALE(dir, dir, as->d / mag);
+		VMOVE(trans_opt.v, dir);
+		trans_opt.set = true;
+	    }
+	}
+    }
+
+    /* ---- Frozen linear compact forms (-t/-r/-a/-b/-m/-p) ----------- */
 
     if (atrans_opt.set) {
 	if (atrans_opt.n > 0) {
@@ -1751,14 +2219,20 @@ clone_parse_args(struct ged *gedp, int argc, const char **argv,
 	VMOVE(state->rot, rot_opt.v);
 	state->rot[W] = 1;
     }
-    if (rpnt_opt.set) {
-	VSCALE(rpnt_opt.v, rpnt_opt.v, l2b);
-	VMOVE(state->rpnt, rpnt_opt.v);
+    /* -p (pivot) doubles as the linear rotation centre (legacy --rpoint). */
+    if (pivot_opt.set && state->pattern == PatternMode::LINEAR) {
+	VSCALE(pivot_opt.v, pivot_opt.v, l2b);
+	VMOVE(state->rpnt, pivot_opt.v);
 	state->rpnt[W] = 1;
     }
 
     state->miraxis = mirror_opt.axis;
     state->mirpos  = mirror_opt.dist * l2b;
+
+    /* Note: center_pat / center_obj / center_base are scaled to model
+     * units later by the runners (they multiply by l2b internally for
+     * sph/cyl).  The rect grid origin is plumbed through center_pat
+     * earlier in the RECT projection above. */
 
     return BRLCAD_OK;
 }

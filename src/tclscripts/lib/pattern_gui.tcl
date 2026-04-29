@@ -154,27 +154,27 @@ proc pattern_rect { args } {
 	error "no X, Y, or Z values provided!!!!\n$usage"
     }
 
-    set clone_cmd [list --rect --depth $depth]
+    set clone_cmd [list rect --depth $depth]
     if { $group_name ne "" } { lappend clone_cmd -g $group_name }
     if { $increment != 0 }   { lappend clone_cmd -i $increment }
     if { [string length $sstr] > 0 && [string length $rstr] > 0 } {
 	lappend clone_cmd -s $sstr $rstr
     }
-    lappend clone_cmd --xdir $xdir --ydir $ydir --zdir $zdir
+    lappend clone_cmd --dir x $xdir --dir y $ydir --dir z $zdir
     if { [llength $list_x] > 0 } {
-	lappend clone_cmd --lx [join $list_x " "]
+	lappend clone_cmd --list "x=[join $list_x { }]"
     } elseif { $num_x > 0 } {
-	lappend clone_cmd --nx $num_x --dx $delta_x
+	lappend clone_cmd -n x=$num_x -d x=$delta_x
     }
     if { [llength $list_y] > 0 } {
-	lappend clone_cmd --ly [join $list_y " "]
+	lappend clone_cmd --list "y=[join $list_y { }]"
     } elseif { $num_y > 0 } {
-	lappend clone_cmd --ny $num_y --dy $delta_y
+	lappend clone_cmd -n y=$num_y -d y=$delta_y
     }
     if { [llength $list_z] > 0 } {
-	lappend clone_cmd --lz [join $list_z " "]
+	lappend clone_cmd --list "z=[join $list_z { }]"
     } elseif { $num_z > 0 } {
-	lappend clone_cmd --nz $num_z --dz $delta_z
+	lappend clone_cmd -n z=$num_z -d z=$delta_z
     }
     foreach obj $objs { lappend clone_cmd $obj }
 
@@ -270,30 +270,34 @@ proc pattern_sph { args } {
 	error "No azimuth, elevation, or radii provided!!!\n$usage"
     }
 
-    set clone_cmd [list --sph --depth $depth]
+    set clone_cmd [list sph --depth $depth]
     if { $group_name ne "" } { lappend clone_cmd -g $group_name }
     if { $increment != 0 }   { lappend clone_cmd -i $increment }
     if { [string length $sstr] > 0 && [string length $rstr] > 0 } {
 	lappend clone_cmd -s $sstr $rstr
     }
-    lappend clone_cmd --center-pat $center_pat --center-obj $center_obj
-    if { $rot_az } { lappend clone_cmd --rotaz }
-    if { $rot_el } { lappend clone_cmd --rotel }
-    lappend clone_cmd --start-az $start_az_deg --start-el $start_el_deg --start-r $start_r
+    lappend clone_cmd -O $center_pat -p $center_obj
+    set align_keys {}
+    if { $rot_az } { lappend align_keys "az" }
+    if { $rot_el } { lappend align_keys "el" }
+    if { [llength $align_keys] > 0 } {
+	lappend clone_cmd --align [join $align_keys ","]
+    }
+    lappend clone_cmd --start az=$start_az_deg --start el=$start_el_deg --start r=$start_r
     if { [llength $list_az_deg] > 0 } {
-	lappend clone_cmd --laz [join $list_az_deg " "]
+	lappend clone_cmd --list "az=[join $list_az_deg { }]"
     } elseif { $num_az > 0 } {
-	lappend clone_cmd --naz $num_az --daz $delta_az_deg
+	lappend clone_cmd -n az=$num_az -d az=$delta_az_deg
     }
     if { [llength $list_el_deg] > 0 } {
-	lappend clone_cmd --lel [join $list_el_deg " "]
+	lappend clone_cmd --list "el=[join $list_el_deg { }]"
     } elseif { $num_el > 0 } {
-	lappend clone_cmd --nel $num_el --del $delta_el_deg
+	lappend clone_cmd -n el=$num_el -d el=$delta_el_deg
     }
     if { [llength $list_r] > 0 } {
-	lappend clone_cmd --lr [join $list_r " "]
+	lappend clone_cmd --list "r=[join $list_r { }]"
     } elseif { $num_r > 0 } {
-	lappend clone_cmd --nr $num_r --dr $delta_r
+	lappend clone_cmd -n r=$num_r -d r=$delta_r
     }
     foreach obj $objs { lappend clone_cmd $obj }
 
@@ -391,30 +395,30 @@ proc pattern_cyl { args } {
 	error "No azimuth, radii, or heights provided!!!!\n$usage"
     }
 
-    set clone_cmd [list --cyl --depth $depth]
+    set clone_cmd [list cyl --depth $depth]
     if { $group_name ne "" } { lappend clone_cmd -g $group_name }
     if { $increment != 0 }   { lappend clone_cmd -i $increment }
     if { [string length $sstr] > 0 && [string length $rstr] > 0 } {
 	lappend clone_cmd -s $sstr $rstr
     }
-    if { $do_rot }           { lappend clone_cmd --rot }
-    lappend clone_cmd --center-obj $center_obj --center-base $center_base
-    lappend clone_cmd --height-dir $height_dir --start-az-dir $start_az_dir
-    lappend clone_cmd --start-az $start_az_deg --start-r $start_r --start-h $start_h
+    if { $do_rot }           { lappend clone_cmd --align az }
+    lappend clone_cmd -p $center_obj -O $center_base
+    lappend clone_cmd --dir h $height_dir --dir az $start_az_dir
+    lappend clone_cmd --start az=$start_az_deg --start r=$start_r --start h=$start_h
     if { [llength $list_az_deg] > 0 } {
-	lappend clone_cmd --laz [join $list_az_deg " "]
+	lappend clone_cmd --list "az=[join $list_az_deg { }]"
     } elseif { $num_az > 0 } {
-	lappend clone_cmd --naz $num_az --daz $delta_az_deg
+	lappend clone_cmd -n az=$num_az -d az=$delta_az_deg
     }
     if { [llength $list_r] > 0 } {
-	lappend clone_cmd --lr [join $list_r " "]
+	lappend clone_cmd --list "r=[join $list_r { }]"
     } elseif { $num_r > 0 } {
-	lappend clone_cmd --nr $num_r --dr $delta_r
+	lappend clone_cmd -n r=$num_r -d r=$delta_r
     }
     if { [llength $list_h] > 0 } {
-	lappend clone_cmd --lh [join $list_h " "]
+	lappend clone_cmd --list "h=[join $list_h { }]"
     } elseif { $num_h > 0 } {
-	lappend clone_cmd --nh $num_h --dh $delta_h
+	lappend clone_cmd -n h=$num_h -d h=$delta_h
     }
     foreach obj $objs { lappend clone_cmd $obj }
 

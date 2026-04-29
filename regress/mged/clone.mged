@@ -112,47 +112,63 @@ puts "NF-7: clone --xpush"
 clone --xpush clone_top.r
 clone_chk clone_top.r3
 
-puts "NF-8: clone --rect (rectangular grid)"
+puts "NF-8: clone rect (rectangular grid)"
 in_sph clone "_pr"
-clone --rect --nx 2 --dx 200 --ny 2 --dy 200 clone_sph_pr.s
+clone rect -n x=2 -d x=200 -n y=2 -d y=200 clone_sph_pr.s
 clone_chk clone_sph_pr.s1
 
-puts "NF-9: clone --rect -g (rect + group)"
+puts "NF-9: clone rect -g (rect + group)"
 in_sph clone "_prg"
-clone --rect --nx 2 --dx 100 --ny 2 --dy 100 -g rect_group.c clone_sph_prg.s
+clone rect -n x=2 -d x=100 -n y=2 -d y=100 -g rect_group.c clone_sph_prg.s
 clone_chk rect_group.c
 
-puts "NF-10: clone --rect -s (rect + substitution)"
+puts "NF-10: clone rect -s (rect + substitution)"
 in_sph clone "_prs"
-clone --rect --nx 2 --dx 100 -s sph part clone_sph_prs.s
+clone rect -n x=2 -d x=100 -s sph part clone_sph_prs.s
 clone_chk clone_part_prs.s1
 
-puts "NF-11: clone --sph (spherical pattern)"
+puts "NF-11: clone sph (spherical pattern)"
 in_sph clone "_ps"
-clone --sph --naz 3 --daz 120 --nr 1 --dr 500 clone_sph_ps.s
+clone sph -n az=3 -d az=120 -n r=1 -d r=500 clone_sph_ps.s
 clone_chk clone_sph_ps.s1
 
-puts "NF-12: clone --sph --rotaz"
+puts "NF-12: clone sph --align az"
 in_sph clone "_psr"
-clone --sph --naz 4 --daz 90 --nr 1 --dr 300 --rotaz clone_sph_psr.s
+clone sph -n az=4 -d az=90 -n r=1 -d r=300 --align az clone_sph_psr.s
 clone_chk clone_sph_psr.s1
 
-puts "NF-13: clone --cyl (cylindrical pattern)"
+puts "NF-13: clone cyl (cylindrical pattern)"
 in_sph clone "_pc"
-clone --cyl --naz 4 --daz 90 --nr 1 --dr 300 --nh 1 --dh 200 clone_sph_pc.s
+clone cyl -n az=4 -d az=90 -n r=1 -d r=300 -n h=1 -d h=200 clone_sph_pc.s
 clone_chk clone_sph_pc.s1
 
-puts "NF-14: clone --cyl --rot"
+puts "NF-14: clone cyl --align az"
 in_sph clone "_pcr"
-clone --cyl --naz 4 --daz 90 --nr 1 --dr 300 --nh 1 --dh 200 --rot clone_sph_pcr.s
+clone cyl -n az=4 -d az=90 -n r=1 -d r=300 -n h=1 -d h=200 --align az clone_sph_pcr.s
 clone_chk clone_sph_pcr.s1
 
-puts "NF-15: clone --rect --depth regions"
-clone --rect --nx 2 --dx 300 --depth regions clone_top.r
+puts "NF-15: clone rect --depth regions"
+clone rect -n x=2 -d x=300 --depth regions clone_top.r
 clone_chk clone_top.r4
 
-puts "NF-16: clone --sph --depth primitives"
-clone --sph --naz 2 --daz 180 --nr 1 --dr 200 --depth primitives clone_sph.s
+puts "NF-16: clone sph --depth primitives"
+clone sph -n az=2 -d az=180 -n r=1 -d r=200 --depth primitives clone_sph.s
 clone_chk clone_sph.s1400
+
+puts "NF-17: pattern keyword position-independent"
+in_sph clone "_pi"
+clone -n x=2 rect -d x=150 clone_sph_pi.s
+clone_chk clone_sph_pi.s1
+
+puts "NF-18: bare -n applies as default to every axis"
+in_sph clone "_bd"
+clone rect -n 2 -d 200 clone_sph_bd.s
+clone_chk clone_sph_bd.s1
+
+puts "NF-19: lin keyword accepted for symmetry"
+in_sph clone "_ls"
+clone lin -n 2 -t 50 0 0 clone_sph_ls.s
+clone_chk clone_sph_ls.s100
+clone_chk clone_sph_ls.s200
 
 puts "*** 'clone' testing completed ***"
