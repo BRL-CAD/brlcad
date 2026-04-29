@@ -48,8 +48,8 @@ endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 brlcad_addexec(db5_size db5_size.c "librt" TEST)
 
 # datum testing
-#BRLCAD_ADDEXEC(rt_datum rt_datum.c "librt" TEST)
-#BRLCAD_ADD_TEST(NAME rt_datum_basic COMMAND rt_datum)
+brlcad_addexec(rt_datum rt_datum.c "librt" TEST)
+brlcad_add_test(NAME rt_datum_basic COMMAND rt_datum)
 
 # perturb testing
 #BRLCAD_ADDEXEC(rt_perturb rt_perturb.c "librt;libwdb" TEST)

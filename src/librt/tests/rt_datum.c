@@ -333,19 +333,21 @@ main(int UNUSED(argc), char *argv[])
 
     bu_setprogname(argv[0]);
 
-    /* Get a guaranteed-valid temp file */
-    FILE *fp = bu_temp_file(rt_tmpfile, MAXPATHLEN);
-    if (fp == NULL) {
-	bu_log("%s error: unable to create temporary .g file\n", argv[0]);
-	return 1;
-    } else {
-	bu_log("%s\n", rt_tmpfile);
+    /* Get a guaranteed-valid temp file path */
+    {
+	FILE *fp = bu_temp_file(rt_tmpfile, MAXPATHLEN);
+	if (fp == NULL) {
+	    bu_log("%s error: unable to create temporary .g file\n", argv[0]);
+	    return 1;
+	}
+	fclose(fp);
     }
+    bu_log("%s\n", rt_tmpfile);
 
-    /* Manually turn the temp file into a .g */
-    dbip = db_setup(fp, rt_tmpfile, 5);
+    /* Turn the temp file path into a .g database */
+    dbip = db_create(rt_tmpfile, 5);
     if (dbip == DBI_NULL) {
-	bu_log("%s error: db_open of %s failed\n", argv[0], rt_tmpfile);
+	bu_log("%s error: db_create of %s failed\n", argv[0], rt_tmpfile);
 	return 1;
     }
     RT_CK_DBI(dbip);
