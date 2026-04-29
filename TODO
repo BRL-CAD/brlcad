@@ -39,6 +39,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   find_package style.  If possible, try to also support older style
   variables in FindBRLCAD.cmake
 
+* Wire arb lint check into edit as a preliminary step - if we have
+  non-standard point ordering, it's all too likely strange things
+  could happen editing the arb.
+
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
