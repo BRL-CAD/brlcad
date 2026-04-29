@@ -2172,17 +2172,17 @@ verbose_add_subdirectory("" include)
 # require geometry conversion tools
 verbose_add_subdirectory("" db)
 
-# docs after we're all done with build tasks
-# NOTE: doc/docbook/resources is added separately (earlier)
-# NOTE: doc/doxygenis added separately (earlier)
-verbose_add_subdirectory("" doc)
-
 # scripts that primarily require rendering
 if(TARGET rt)
   verbose_add_subdirectory("" sh)
   verbose_add_subdirectory("" bench)
   verbose_add_subdirectory("" regress)
 endif(TARGET rt)
+
+# docs after we're all done with build tasks
+# NOTE: doc/docbook/resources is added separately (earlier)
+# NOTE: doc/doxygenis added separately (earlier)
+verbose_add_subdirectory("" doc)
 
 # add misc last
 # NOTE: misc/tools is added separately (earlier)
