@@ -74,7 +74,7 @@ if(TARGET libged)
     # provide simple main() so they at least compile and run
     set(FUZZ_GED_SRCS ${FUZZ_GED_SRCS} fuzz_stub.cpp)
     set(FUZZ_SHOOTRAY_SRCS ${FUZZ_SHOOTRAY_SRCS} fuzz_stub.cpp)
-  endif(NOT HAVE_FSANITIZE_FUZZER AND NOT HAVE_LLVMFUZZER)
+  endif()
 
   brlcad_addexec(fuzz_ged_test "${FUZZ_GED_SRCS}" "libbu;librt;libged;${FUZZER_LIBRARY}" TEST)
   brlcad_addexec(fuzz_shootray_test "${FUZZ_SHOOTRAY_SRCS}" "libbu;librt;libged;${FUZZER_LIBRARY}" TEST)
@@ -84,22 +84,22 @@ if(TARGET libged)
   #BRLCAD_ADD_TEST(NAME fuzz_ged COMMAND fuzz_ged_test)
   #BRLCAD_ADD_TEST(NAME fuzz_shootray COMMAND fuzz_shootray_test)
 
-  if(HAVE_FSANITIZE_FUZZER OR HAVE_LLVMFUZZER)
+  if(HAVE_FSANITIZE_FUZZER)
     if(TARGET fuzz_ged_test)
       target_compile_options(fuzz_ged_test PRIVATE -fsanitize=fuzzer)
     endif()
     if(TARGET fuzz_shootray_test)
       target_compile_options(fuzz_shootray_test PRIVATE -fsanitize=fuzzer)
     endif()
-  endif(HAVE_FSANITIZE_FUZZER OR HAVE_LLVMFUZZER)
+  endif()
 
-  if(TARGET fuzz_ged_test AND HAVE_FSANITIZE_FUZZER)
+  if(TARGET fuzz_ged_test AND HAVE_LLVMFUZZER)
     target_link_options(fuzz_ged_test PRIVATE -fsanitize=fuzzer)
-  endif(TARGET fuzz_ged_test AND HAVE_FSANITIZE_FUZZER)
+  endif()
 
-  if(TARGET fuzz_shootray_test AND HAVE_FSANITIZE_FUZZER)
+  if(TARGET fuzz_shootray_test AND HAVE_LLVMFUZZER)
     target_link_options(fuzz_shootray_test PRIVATE -fsanitize=fuzzer)
-  endif(TARGET fuzz_shootray_test AND HAVE_FSANITIZE_FUZZER)
+  endif()
 endif(TARGET libged)
 
 cmakefiles(
