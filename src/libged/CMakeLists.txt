@@ -154,9 +154,9 @@ function(ged_plugin_library name)
       # the purposes of static inclusion or API definition.  Anything
       # dynamically generated will be limited to dynamic loading.
       if(DO_STATIC)
-	_libged_accumulate_global(GED_COMMAND_STATIC_SRCS ${plugin_sources})
+	_libged_accumulate_global(GED_COMMAND_STATIC_SRCS "${wsf}")
       endif()
-      _libged_accumulate_global(GED_COMMAND_ALL_SRCS ${plugin_sources})
+      _libged_accumulate_global(GED_COMMAND_ALL_SRCS "${wsf}")
     endif()
   endforeach()
 
