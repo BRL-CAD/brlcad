@@ -202,7 +202,7 @@ return BRLCAD_ERROR;
     if (UNLIKELY(!fp))
 return BRLCAD_ERROR;
 
-    static int png_color_type;
+    int png_color_type;
     std::string scene_json;
 
     switch (bif->color_space) {
@@ -223,7 +223,7 @@ return BRLCAD_ERROR;
 
     png_infop info_ptr = png_create_info_struct(png_ptr);
     if (info_ptr == NULL || setjmp(png_jmpbuf(png_ptr))) {
-png_destroy_read_struct(&png_ptr, info_ptr ? &info_ptr : NULL, NULL);
+png_destroy_write_struct(&png_ptr, info_ptr ? &info_ptr : NULL);
 bu_log("ERROR: Unable to create png header\n");
 bu_free(data, "png write uchar data");
 return BRLCAD_ERROR;
@@ -243,7 +243,9 @@ memset(&text_chunk, 0, sizeof(text_chunk));
 text_chunk.compression = PNG_TEXT_COMPRESSION_NONE;
 text_chunk.key  = (png_charp)ICV_PNG_KEY_SCENE;
 text_chunk.text = (png_charp)scene_json.c_str();
-text_chunk.text_length = scene_json.size();
+/* For PNG_TEXT_COMPRESSION_NONE, text_length must be zero;
+ * libpng computes the length from the NUL-terminated text. */
+text_chunk.text_length = 0;
 
 /* scene_json must remain valid until after png_write_info() because
 	 * libpng may store a pointer to the text rather than copying it. */
@@ -252,10 +254,12 @@ png_set_text(png_ptr, info_ptr, &text_chunk, 1);
 
     png_write_info(png_ptr, info_ptr);
 
-    for (size_t i = bif->height-1; i > 0; --i) {
+    if (bif->height > 0) {
+for (size_t i = bif->height-1; i > 0; --i) {
 png_write_row(png_ptr, (png_bytep) (data + bif->width*bif->channels*i));
+}
+png_write_row(png_ptr, (png_bytep) (data + 0));
     }
-    png_write_row(png_ptr, (png_bytep) (data + 0));
     png_write_end(png_ptr, info_ptr);
 
     png_destroy_write_struct(&png_ptr, &info_ptr);

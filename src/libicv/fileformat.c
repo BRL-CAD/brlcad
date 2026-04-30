@@ -208,7 +208,7 @@ icv_writeline(icv_image_t *bif, size_t y, void *data, ICV_DATA type)
 
     ICV_IMAGE_VAL_INT(bif);
 
-    if (y > bif->height)
+    if (y >= bif->height)
         return -1;
 
     width_size = (size_t) bif->width*bif->channels;
@@ -236,10 +236,10 @@ icv_writepixel(icv_image_t *bif, size_t x, size_t y, double *data)
 
     ICV_IMAGE_VAL_INT(bif);
 
-    if (x > bif->width)
+    if (x >= bif->width)
         return -1;
 
-    if (y > bif->height)
+    if (y >= bif->height)
         return -1;
 
     if (data == NULL)
