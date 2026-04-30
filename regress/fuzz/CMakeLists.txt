@@ -1,8 +1,11 @@
 include(CheckCXXSourceCompiles)
 include(CMakePushCheckState)
+include(CheckLinkerFlag)
 
 set(FUZZER_COMPILE_OPTIONS)
+set(FUZZER_EXE_COMPILE_OPTIONS)
 set(FUZZER_LINK_OPTIONS)
+set(FUZZER_SUPPORTED OFF)
 
 set(CHECK_FUZZER_CODE "
 #include <stdint.h>
@@ -30,11 +33,21 @@ cmake_pop_check_state()
 
 # 3. Apply variables if supported
 if(HAVE_FSANITIZE_FUZZER AND HAVE_FSANITIZE_FUZZER_NO_LINK)
-  set(FUZZER_COMPILE_OPTIONS -fsanitize=fuzzer-no-link)
-  set(FUZZER_LINK_OPTIONS -fsanitize=fuzzer)
+  set(FUZZER_SUPPORTED ON)
+  
+  # -no-link is kept for instrumenting the underlying libraries under test
+  set(FUZZER_COMPILE_OPTIONS -fsanitize=fuzzer-no-link) 
+  # Executables MUST be compiled with full fuzzer flags to inject main() on MSVC
+  set(FUZZER_EXE_COMPILE_OPTIONS -fsanitize=fuzzer)
+
+  # Check if linker actually accepts the flag without warnings
+  check_linker_flag(CXX "-fsanitize=fuzzer" HAVE_LINKER_FSANITIZE_FUZZER)
+  if(HAVE_LINKER_FSANITIZE_FUZZER)
+    set(FUZZER_LINK_OPTIONS -fsanitize=fuzzer)
+  endif()
 endif()
 
-if(FUZZER_LINK_OPTIONS)
+if(FUZZER_SUPPORTED)
   message(STATUS "libFuzzer driver is available.")
 else()
   message(STATUS "libFuzzer driver is not available; building fuzz targets with stub main().")
@@ -46,7 +59,7 @@ if(TARGET libged)
   set(FUZZ_SHOOTRAY_SRCS fuzz_shootray.cpp)
 
   # Append stub if libFuzzer is missing
-  if(NOT FUZZER_LINK_OPTIONS)
+  if(NOT FUZZER_SUPPORTED)
     list(APPEND FUZZ_GED_SRCS fuzz_stub.cpp)
     list(APPEND FUZZ_SHOOTRAY_SRCS fuzz_stub.cpp)
   endif()
@@ -54,10 +67,14 @@ if(TARGET libged)
   brlcad_addexec(fuzz_ged_test "${FUZZ_GED_SRCS}" "libbu;librt;libged" TEST)
   brlcad_addexec(fuzz_shootray_test "${FUZZ_SHOOTRAY_SRCS}" "libbu;librt;libged" TEST)
 
-  if(FUZZER_LINK_OPTIONS)
+  if(FUZZER_SUPPORTED)
     foreach(tgt fuzz_ged_test fuzz_shootray_test)
-      target_compile_options(${tgt} PRIVATE ${FUZZER_COMPILE_OPTIONS})
-      target_link_options(${tgt} PRIVATE ${FUZZER_LINK_OPTIONS})
+      target_compile_options(${tgt} PRIVATE ${FUZZER_EXE_COMPILE_OPTIONS})
+
+      # make sure safe to add linker flag
+      if(FUZZER_LINK_OPTIONS)
+	target_link_options(${tgt} PRIVATE ${FUZZER_LINK_OPTIONS})
+      endif()
     endforeach()
 
     # Add limited-run smoke tests
