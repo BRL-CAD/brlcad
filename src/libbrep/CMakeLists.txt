@@ -37,8 +37,16 @@ set(
 # Include directories needed by libbrep users
 set(BREP_INCLUDE_DIRS ${OPENNURBS_INCLUDE_DIRS})
 
+# GTE headers (in-tree custom extensions + external base) are needed by
+# cdt/mesh.cpp for the LSCM patch parameterization path.
+find_package_gte(REQUIRED)
+
 # locally used but not needed by users of the library
-set(BREP_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${REGEX_INCLUDE_DIRS})
+set(BREP_LOCAL_INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${REGEX_INCLUDE_DIRS}
+  ${BRLCAD_SOURCE_DIR}/src/libbg/GTE
+  ${GTE_INCLUDE_DIR})
 
 # Note - libbrep_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
 set(

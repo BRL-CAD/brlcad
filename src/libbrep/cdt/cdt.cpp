@@ -171,6 +171,7 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
     fmesh->m_bRev = face.m_bRev;
 
     if (!fmesh->cdt()) {
+	bu_log("Face %d: initial CDT (fmesh->cdt) FAILED\n", face.m_face_index);
 	return false;
     }
 

@@ -1,0 +1,22 @@
+Original Fortran code that was used for the parent C port
+
+  This directory contains the
+  limited memory code for solving
+  large unconstrained optimization
+  problems.
+
+   sdrive.f -  is a simple driver
+   lbfgs.f  -  contains all the supporting
+               routines
+   makefile -  a makefile for Unix users
+
+Per http://users.iems.northwestern.edu/~nocedal/lbfgs.html
+
+Condition for Use: This software is freely available for educational or commercial purposes. We expect that all publications describing work using this software quote at least one of the references given below. This software is released under the BSD License
+
+Authors
+Jorge Nocedal
+References
+J. Nocedal. Updating Quasi-Newton Matrices with Limited Storage (1980), Mathematics of Computation 35, pp. 773-782.
+D.C. Liu and J. Nocedal. On the Limited Memory Method for Large Scale Optimization (1989), Mathematical Programming B, 45, 3, pp. 503-528.
+

@@ -153,8 +153,8 @@ bg_trimesh_sync(int *of, int *f, int fcnt)
     for (int i = 0; i < fcnt; ++i) {
 	tm_sync_sface &cface = synced_faces[i];
 	tm_sync_uedge ue1(cface.v1, cface.v2);
-	tm_sync_uedge ue2(cface.v1, cface.v2);
-	tm_sync_uedge ue3(cface.v1, cface.v2);
+	tm_sync_uedge ue2(cface.v2, cface.v3);
+	tm_sync_uedge ue3(cface.v3, cface.v1);
 	if (ue_fmap[ue1].size() > 2)
 	    continue;
 	if (ue_fmap[ue2].size() > 2)
@@ -204,6 +204,10 @@ bg_trimesh_sync(int *of, int *f, int fcnt)
 		wavefront_edges.erase(wavefront_edges.begin());
 		continue;
 	    }
+
+	    // Mark the face as visited so it won't be re-processed by
+	    // subsequent wavefront edges within this BFS iteration.
+	    active_tris.erase(f_ind);
 
 	    tm_sync_sface &bface = synced_faces[f_ind];
 	    tm_sync_uedge ue[3] = {tm_sync_uedge(bface.v1, bface.v2), tm_sync_uedge(bface.v2, bface.v3), tm_sync_uedge(bface.v3, bface.v1)};

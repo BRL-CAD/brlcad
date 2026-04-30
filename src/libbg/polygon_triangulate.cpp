@@ -635,6 +635,7 @@ bg_detria(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 
     // Did we succeed?
     if (!tri_success) {
+	bu_log("bg_detria: triangulation failed: %s\n", tri.getErrorMessage().c_str());
 	return 1;
     }
 

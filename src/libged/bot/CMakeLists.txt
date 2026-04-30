@@ -3,10 +3,6 @@ brlcad_find_package(manifold REQUIRED)
 
 set(BOT_LIBS libged libbg libbu manifold::manifold)
 
-brlcad_find_package(Geogram REQUIRED SYSPATTERN geogram)
-set(BOT_LOCAL_INCLUDE_DIRS ${BOT_LOCAL_INCLUDE_DIRS} ${Geogram_INCLUDE_DIR})
-set(BOT_LIBS ${BOT_LIBS} ${Geogram_LIBRARY})
-
 
 if(BRLCAD_ENABLE_OPENVDB)
   set(BOT_LIBS ${BOT_LIBS} ${OpenVDB_LIBRARIES} ${IlmBase_LIBRARIES} ${Tbb_LIBRARIES})
@@ -42,6 +38,8 @@ set(
   decimate.cpp
   exterior.cpp
   extrude.cpp
+  info.cpp
+  pick.cpp
   remesh.cpp
   repair.cpp
   smooth.cpp
