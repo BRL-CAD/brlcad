@@ -1621,6 +1621,11 @@ ant_copy(struct rt_ant *ant_out, const struct rt_ant *ant_in)
 		BU_ALLOC(tsg_out, struct txt_seg);
 		ant_out->segments[j] = (void *)tsg_out;
 		*tsg_out = *tsg_in;
+		/* The struct-copy above is a shallow copy; re-init the VLS
+		 * so tsg_out owns its own label string and does not alias
+		 * tsg_in->label.vls_str. */
+		bu_vls_init(&tsg_out->label);
+		bu_vls_strcpy(&tsg_out->label, bu_vls_cstr(&tsg_in->label));
 		break;
 	    case CURVE_CARC_MAGIC:
 		csg_in = (struct carc_seg *)lng;
