@@ -53,9 +53,7 @@
 #include <atomic>
 #include <functional>
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
+#include "bio.h"
 
 #ifdef HAVE_MM_PAUSE
 #include <immintrin.h>

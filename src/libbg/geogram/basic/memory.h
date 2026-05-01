@@ -48,21 +48,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef _WIN32
-
-#include <windows.h>
-#ifdef min
-#undef min
-#endif
-#ifdef max
-#undef max
-#endif
-
-#else
-
-#include <unistd.h>
-
-#endif
+#include "bio.h"
 
 // Stack size depending on OS:
 // Linux: 8-10 MB default thread stack
