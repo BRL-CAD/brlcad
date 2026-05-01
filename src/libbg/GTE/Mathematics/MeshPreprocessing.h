@@ -1,10 +1,3 @@
-// David Eberly, Geometric Tools, Redmond WA 98052
-// Copyright (c) 1998-2026
-// Distributed under the Boost Software License, Version 1.0.
-// https://www.boost.org/LICENSE_1_0.txt
-// https://www.geometrictools.com/License/Boost/LICENSE_1_0.txt
-// File Version: 8.0.2026.02.10
-//
 // Ported from Geogram: https://github.com/BrunoLevy/geogram
 // Original files: src/lib/geogram/mesh/mesh_preprocessing.cpp, mesh_preprocessing.h
 // Original license: BSD 3-Clause (see below)

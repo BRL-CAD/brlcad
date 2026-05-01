@@ -1,10 +1,10 @@
-// David Eberly, Geometric Tools, Redmond WA 98052
-// Copyright (c) 1998-2026
-// Distributed under the Boost Software License, Version 1.0.
-// https://www.boost.org/LICENSE_1_0.txt
-// https://www.geometrictools.com/License/Boost/LICENSE_1_0.txt
-// File Version: 8.0.2026.03.05
-//
+/*          L S C M P A R A M E T E R I Z A T I O N . H
+ * BRL-CAD
+ *
+ * Published in 2026 by the United States Government.
+ * This work is in the public domain.
+ */
+
 // Mesh parameterization: arc-length boundary mapping + mean-value Laplacian.
 //
 // Provides two distinct operations:

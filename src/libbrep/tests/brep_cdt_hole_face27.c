@@ -1,5 +1,14 @@
+/*          B R E P _ C D T _ H O L E _ F A C E 2 7 . C
+ * BRL-CAD
+ *
+ * Published in 2026 by the United States Government.
+ * This work is in the public domain.
+ *
+ */
+
 #include <stdio.h>
 #include <math.h>
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bg/polygon.h"
 
@@ -10,7 +19,11 @@ static double tri_area_2d(const point2d_t *pts, int a, int b, int c) {
     return fabs((bx-ax)*(cy-ay)-(cx-ax)*(by-ay))*0.5;
 }
 
-int main(void) {
+
+int main(int UNUSED(ac), const char **argv) {
+
+    bu_setprogname(argv[0]);
+
     /* 2D UV points (2067 total) */
     point2d_t *pnts_2d = (point2d_t *)bu_calloc(2068, sizeof(point2d_t), "pnts_2d");
     pnts_2d[0][X] = 800.00000000000000000;
@@ -6331,3 +6344,13 @@ int main(void) {
     printf("PASS: %d output triangles, no hole intrusions\n", num_faces);
     return 0;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8 cino=N-s
+ */
