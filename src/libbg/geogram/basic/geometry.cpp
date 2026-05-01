@@ -46,22 +46,6 @@ namespace {
     using namespace Geom;
 
     /**
-     * \brief Computes a vector orthogonal to a segment
-     *  and the barycenter of the segment
-     * \param[in] p1 first extremity of the segment
-     * \param[in] p2 second extremity of the segment
-     * \param[out] p barycenter of [ \p p1, \p p2 ].
-     * \param[out] v a vector orthogonal to [ \p p1, \p p2 ].
-     */
-    inline void perp(
-        const vec2& p1, const vec2& p2, vec2& p, vec2& v
-    ) {
-        v = p2 - p1;
-        v = vec2{-v[1], v[0]};
-        p = barycenter(p1, p2);
-    }
-
-    /**
      * \brief Computes a parameter that determines the intersection
      *  between two 2d lines.
      * \param[in] p1 origin of the first line
@@ -79,60 +63,6 @@ namespace {
         double t1 = (v2[1] * (p2[0] - p1[0]) - v2[0] * (p2[1] - p1[1])) / delta;
         return t1;
     }
-
-    /**
-     * \brief Computes the intersection between two 2d lines
-     *  specified by origin and vector.
-     * \param[in] p1 origin of the first line
-     * \param[in] v1 direction of the first line
-     * \param[in] p2 origin of the second line
-     * \param[in] v2 direction of the second line
-     * \return the intersection between the two 2d lines (p1, v1) and (p2, v2)
-     */
-    inline vec2 segments_intersection_pv(
-        const vec2& p1, const vec2& v1,
-        const vec2& p2, const vec2& v2
-    ) {
-        double t1 = segments_intersection_parameter(p1, v1, p2, v2);
-        return p1 + t1 * v1;
-    }
-
-#ifdef REMOVE_ME
-    /**
-     * \brief Computes the intersection between the supporting lines
-     *  of 2d segments specified by their extremities.
-     * \param[in] p1 first extremity of the first segment
-     * \param[in] p2 second extremity of the first segment
-     * \param[in] p3 first extremity of the second segment
-     * \param[in] p4 second extremity of the second segment
-     * \return the intersection between the two supporting lines of
-     *  segments [ \p p1, \p p2] and [ \p p3, \p p4].
-     * \note The intersection may be outside of the two segments.
-     */
-    inline vec2 segments_intersection_pp(
-        const vec2& p1, const vec2& p2,
-        const vec2& p3, const vec2& p4
-    ) {
-        return segments_intersection_pv(
-            p1, (p2 - p1), p3, (p4 - p3)
-        );
-    }
-
-    /**
-     * \brief Computes the determinant of a 3x3 matrix given
-     *  by coefficients.
-     */
-    inline double det3x3(
-        double a00, double a01, double a02,
-        double a10, double a11, double a12,
-        double a20, double a21, double a22
-    ) {
-        double m01 = a00 * a11 - a10 * a01;
-        double m02 = a00 * a21 - a20 * a01;
-        double m12 = a10 * a21 - a20 * a11;
-        return m01 * a22 - m02 * a12 + m12 * a02;
-    }
-#endif
 
 }
 
