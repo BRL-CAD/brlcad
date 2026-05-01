@@ -75,8 +75,9 @@ namespace GEOBRL {
         cached_base_addr_(nullptr),
         cached_size_(0),
         cached_capacity_(0),
-        lock_(GEOBRLCAD_SPINLOCK_INIT)
+        lock_()
     {
+	    lock_.clear();
     }
 
     void AttributeStore::notify(

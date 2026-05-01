@@ -52,6 +52,27 @@
 #include <type_traits>
 #include <memory>
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  if (__GNUC__ < 13)
+     // There seems to be a problem with multiple pragma diagnostic
+     // calls in GCC 12... try https://stackoverflow.com/a/56887760
+#    if GCC_PREREQ(8,0)
+#      pragma GCC system_header
+#    endif
+#  else
+#    pragma GCC diagnostic ignored "-Wfloat-equal"
+#  endif
+#endif
+#if defined(__clang__)
+#    pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
+
 /**
  * \file geogram/basic/attributes.h
  * \brief Generic mechanism for attributes.
@@ -719,10 +740,7 @@ namespace GEOBRL {
         }
 
         static void scale_value(uint8_t& to, double s) {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
             to = uint8_t(double(to)*s != 0.0);
-#pragma GCC diagnostic pop
         }
 
         static void scale_value(int32_t& to, double s) {
@@ -748,10 +766,7 @@ namespace GEOBRL {
         }
 
         static void madd_value(uint8_t& to, double s, uint8_t& from) {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
             to = uint8_t(double(to) + s*double(from) != 0.0);
-#pragma GCC diagnostic pop
         }
 
         static void madd_value(int32_t& to, double s, int32_t& from) {
@@ -2136,5 +2151,14 @@ namespace GEOBRL {
 
 
 }
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+
+
 
 #endif
