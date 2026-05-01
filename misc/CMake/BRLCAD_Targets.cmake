@@ -348,6 +348,69 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
 endfunction(BRLCAD_ADDEXEC execname srcslist libslist)
 
 
+# Resolve a dependency token to a static-variant target when available.
+function(BRLCAD_STATIC_VARIANT out_var dep)
+  set(_dep "${dep}")
+  if(TARGET "${dep}")
+    get_target_property(_svt "${dep}" BRLCAD_STATIC_VARIANT_TARGET)
+    if(_svt AND TARGET "${_svt}")
+      set(_dep "${_svt}")
+    elseif(TARGET "${dep}-static")
+      set(_dep "${dep}-static")
+    elseif(TARGET "${dep}_static")
+      set(_dep "${dep}_static")
+    endif()
+  endif(TARGET "${dep}")
+  set(${out_var} "${_dep}" PARENT_SCOPE)
+endfunction(BRLCAD_STATIC_VARIANT)
+
+
+# Given a list of dependency tokens, resolve static variants when requested.
+function(BRLCAD_RESOLVE_LIBDEPS out_var link_mode)
+  set(_resolved)
+  foreach(_dep ${ARGN})
+    if("${_dep}" STREQUAL "" OR "${_dep}" STREQUAL "NONE")
+      continue()
+    endif()
+    if("${link_mode}" STREQUAL "STATIC")
+      brlcad_static_variant(_resolved_dep "${_dep}")
+    else()
+      set(_resolved_dep "${_dep}")
+    endif()
+    list(APPEND _resolved "${_resolved_dep}")
+  endforeach()
+  set(${out_var} ${_resolved} PARENT_SCOPE)
+endfunction(BRLCAD_RESOLVE_LIBDEPS)
+
+
+# Collect include directories from dependency targets.  Also check one level
+# of interface-linked targets to account for transitive public headers.
+function(BRLCAD_COLLECT_DEP_INCLUDES out_var)
+  set(_incs)
+  foreach(_ll ${ARGN})
+    if(TARGET ${_ll})
+      get_target_property(IDIRS ${_ll} INTERFACE_INCLUDE_DIRECTORIES)
+      if(IDIRS)
+        list(APPEND _incs ${IDIRS})
+      endif(IDIRS)
+      get_target_property(_child_links ${_ll} INTERFACE_LINK_LIBRARIES)
+      if(_child_links)
+        foreach(_cl ${_child_links})
+          if(TARGET ${_cl})
+            get_target_property(_child_idirs ${_cl} INTERFACE_INCLUDE_DIRECTORIES)
+            if(_child_idirs)
+              list(APPEND _incs ${_child_idirs})
+            endif(_child_idirs)
+          endif(TARGET ${_cl})
+        endforeach(_cl ${_child_links})
+      endif(_child_links)
+    endif(TARGET ${_ll})
+  endforeach(_ll ${ARGN})
+  list(REMOVE_DUPLICATES _incs)
+  set(${out_var} ${_incs} PARENT_SCOPE)
+endfunction(BRLCAD_COLLECT_DEP_INCLUDES)
+
+
 #---------------------------------------------------------------------
 # Library function handles both shared and static libs, so one
 # "BRLCAD_ADDLIB" statement will cover both automatically
@@ -359,7 +422,7 @@ function(
     include_dirs
     local_include_dirs
   )
-  cmake_parse_arguments(L "SHARED;STATIC;NO_INSTALL;NO_STRICT;NO_STRICT_CXX;NO_UNITY" "FOLDER" "SHARED_SRCS;STATIC_SRCS;UNITY_BUILD_SKIP" ${ARGN})
+  cmake_parse_arguments(L "SHARED;STATIC;NO_INSTALL;NO_STRICT;NO_STRICT_CXX;NO_UNITY" "FOLDER" "SHARED_SRCS;STATIC_SRCS;UNITY_BUILD_SKIP;PUBLIC_LIBS;PRIVATE_LIBS;INTERFACE_LIBS" ${ARGN})
 
   # Let CMAKEFILES know what's going on
   cmakefiles(${srcslist} ${L_SHARED_SRCS} ${L_STATIC_SRCS})
@@ -381,17 +444,32 @@ function(
     set(SUBFOLDER "/${L_FOLDER}")
   endif(L_FOLDER)
 
+  # Determine library dependency visibility.  If no explicit list is
+  # supplied, use the legacy argument behavior where libslist is public.
+  set(_public_libs ${L_PUBLIC_LIBS})
+  set(_private_libs ${L_PRIVATE_LIBS})
+  set(_interface_libs ${L_INTERFACE_LIBS})
+  if(NOT _public_libs AND NOT _private_libs AND NOT _interface_libs)
+    if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+      set(_public_libs ${libslist})
+    endif()
+  endif()
+
+  # Resolve dependencies for shared and static variants.
+  brlcad_resolve_libdeps(SHARED_PUBLIC_LIBS SHARED ${_public_libs})
+  brlcad_resolve_libdeps(SHARED_PRIVATE_LIBS SHARED ${_private_libs})
+  brlcad_resolve_libdeps(SHARED_INTERFACE_LIBS SHARED ${_interface_libs})
+  brlcad_resolve_libdeps(STATIC_PUBLIC_LIBS STATIC ${_public_libs})
+  brlcad_resolve_libdeps(STATIC_PRIVATE_LIBS STATIC ${_private_libs})
+  brlcad_resolve_libdeps(STATIC_INTERFACE_LIBS STATIC ${_interface_libs})
+
   # Set up includes
   set(PUBLIC_HDRS ${include_dirs})
-  foreach(ll ${libslist})
-    if(TARGET ${ll})
-      get_target_property(IDIRS ${ll} INTERFACE_INCLUDE_DIRECTORIES)
-      if(IDIRS)
-        list(APPEND PUBLIC_HDRS ${IDIRS})
-      endif(IDIRS)
-    endif(TARGET ${ll})
-  endforeach(ll ${libslist})
+  brlcad_collect_dep_includes(_pub_dep_includes ${SHARED_PUBLIC_LIBS} ${SHARED_INTERFACE_LIBS})
+  list(APPEND PUBLIC_HDRS ${_pub_dep_includes})
   set(PRIVATE_HDRS ${local_include_dirs})
+  brlcad_collect_dep_includes(_priv_dep_includes ${SHARED_PRIVATE_LIBS})
+  list(APPEND PRIVATE_HDRS ${_priv_dep_includes})
 
   # If we need it, set up the OBJECT library build
   if(USE_OBJECT_LIBS)
@@ -419,13 +497,14 @@ function(
     # cause very hard-to-debut intermittent build failures, especially
     # with parallel builds, as build order is not guaranteed without
     # explicit deps.
-    if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
-      foreach(ll ${libslist})
+    set(_obj_deps ${SHARED_PUBLIC_LIBS} ${SHARED_PRIVATE_LIBS} ${SHARED_INTERFACE_LIBS})
+    if(_obj_deps)
+      foreach(ll ${_obj_deps})
         if(TARGET ${ll})
           add_dependencies(${libname}-obj ${ll})
         endif(TARGET ${ll})
-      endforeach(ll ${libslist})
-    endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+      endforeach(ll ${_obj_deps})
+    endif(_obj_deps)
 
     # Apply unity (jumbo) build batching to the object library when the global
     # option is enabled.  Any source files listed in UNITY_BUILD_SKIP are
@@ -529,12 +608,23 @@ function(
 
   # Extra static lib specific work
   if(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
-    # Make sure the target depends on any targets in the libslist
-    foreach(ll ${libslist})
+    # Make sure the target depends on any targets in the dependency lists
+    foreach(ll ${STATIC_PUBLIC_LIBS} ${STATIC_PRIVATE_LIBS} ${STATIC_INTERFACE_LIBS})
       if(TARGET ${ll})
         add_dependencies(${libstatic} ${ll})
       endif(TARGET ${ll})
-    endforeach(ll ${libslist})
+    endforeach(ll ${STATIC_PUBLIC_LIBS} ${STATIC_PRIVATE_LIBS} ${STATIC_INTERFACE_LIBS})
+
+    if(STATIC_PUBLIC_LIBS)
+      target_link_libraries(${libstatic} PUBLIC ${STATIC_PUBLIC_LIBS})
+    endif(STATIC_PUBLIC_LIBS)
+    if(STATIC_PRIVATE_LIBS)
+      target_link_libraries(${libstatic} PRIVATE ${STATIC_PRIVATE_LIBS})
+    endif(STATIC_PRIVATE_LIBS)
+    if(STATIC_INTERFACE_LIBS)
+      target_link_libraries(${libstatic} INTERFACE ${STATIC_INTERFACE_LIBS})
+    endif(STATIC_INTERFACE_LIBS)
+
     set_target_properties(${libstatic} PROPERTIES FOLDER "BRL-CAD Static Libraries${SUBFOLDER}")
     validate_style("${libstatic}" "${srcslist};${L_STATIC_SRCS}")
 
@@ -552,10 +642,15 @@ function(
   if(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
     set_target_properties(${libname} PROPERTIES FOLDER "BRL-CAD Shared Libraries${SUBFOLDER}")
     validate_style("${libname}" "${srcslist};${L_SHARED_SRCS}")
-    # If we have libraries to link for a shared library, link them.
-    if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
-      target_link_libraries(${libname} PUBLIC ${libslist})
-    endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+    if(SHARED_PUBLIC_LIBS)
+      target_link_libraries(${libname} PUBLIC ${SHARED_PUBLIC_LIBS})
+    endif(SHARED_PUBLIC_LIBS)
+    if(SHARED_PRIVATE_LIBS)
+      target_link_libraries(${libname} PRIVATE ${SHARED_PRIVATE_LIBS})
+    endif(SHARED_PRIVATE_LIBS)
+    if(SHARED_INTERFACE_LIBS)
+      target_link_libraries(${libname} INTERFACE ${SHARED_INTERFACE_LIBS})
+    endif(SHARED_INTERFACE_LIBS)
     if(NOT L_NO_INSTALL)
       install(
         TARGETS ${libname}
