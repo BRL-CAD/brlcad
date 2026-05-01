@@ -34,8 +34,8 @@ set(
   tools/tools_util.cpp
 )
 
-# Include directories needed by libbrep users
-set(BREP_INCLUDE_DIRS ${OPENNURBS_INCLUDE_DIRS})
+# OPENNURBS include dirs are carried by the OPENNURBS::OPENNURBS imported target.
+set(BREP_INCLUDE_DIRS)
 
 # locally used but not needed by users of the library
 set(BREP_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${REGEX_INCLUDE_DIRS})
@@ -44,7 +44,7 @@ set(BREP_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${REGEX_INCLUDE_DIRS})
 set(
   BREP_LIBS
   ${libbrep_deps}
-  ${OPENNURBS_LIBRARIES}
+  OPENNURBS::OPENNURBS
   ${WINSOCK_LIB}
   ${RPCRT_LIB}
   ${STDCXX_LIBRARIES}

@@ -411,26 +411,28 @@ set(
   LIBRT_LIBS
   ${OPENCL_LIBS}
   ${librt_deps}
-  ${OPENNURBS_LIBRARIES}
-  ${Geogram_LIBRARY}
+  OPENNURBS::OPENNURBS
+  Geogram::geogram
   mmesh::mmesh
-  ${REGEX_LIBRARIES}
+  REGEX::REGEX
   ${WINSOCK_LIB}
   ${RPCRT_LIB}
   ${STDCXX_LIBRARIES}
   manifold::manifold
 )
 
-# Include directories needed by librt users
-set(RT_INCLUDE_DIRS ${OPENNURBS_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS} ${GTE_INCLUDE_DIR})
+# Include directories needed by librt users; OPENNURBS include dirs are
+# carried transitively by the OPENNURBS::OPENNURBS imported target.
+set(RT_INCLUDE_DIRS ${OPENCL_INCLUDE_DIRS})
 
-# locally used but not needed by users of the library
+# locally used but not needed by users of the library; Geogram include
+# dirs are carried by the Geogram::geogram imported target.
 set(
   RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/vds
   ${REGEX_INCLUDE_DIRS}
-  ${Geogram_INCLUDE_DIR}
+  ${GTE_INCLUDE_DIR}
 )
 # FIXME: needs materialX
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source

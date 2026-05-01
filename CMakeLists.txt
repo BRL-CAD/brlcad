@@ -231,7 +231,7 @@ set(CMAKE_FIND_USE_PACKAGE_REGISTRY FALSE)
 # Prepare to manage and build BRL-CAD's external dependencies. Specifies a
 # specific commit hash to use in the 'bext' repository.
 include(BRLCAD_ExternalDeps)
-brlcad_bext_init(b78aa614945bb0fd1188002cdbc11f55f6e7c871)
+brlcad_bext_init(f8e0be4212aae912abb8a03a3becb121a2fc21fd)
 
 #---------------------------------------------------------------------
 # Define various utilities.
@@ -2224,6 +2224,196 @@ if(NOT BRLCAD_DISABLE_SUMMARY)
   include(BRLCAD_Summary)
   brlcad_summary()
 endif(NOT BRLCAD_DISABLE_SUMMARY)
+
+# *******************************************************************
+# ***              Modern find_package(BRLCAD) support            ***
+# *******************************************************************
+# Generate BRLCADConfig.cmake, BRLCADConfigVersion.cmake and install
+# the exported target files so that downstream projects can do:
+#
+#   find_package(BRLCAD 7.40 REQUIRED COMPONENTS rt wdb ged)
+#   target_link_libraries(myapp PRIVATE BRLCAD::rt BRLCAD::wdb BRLCAD::ged)
+#
+include(CMakePackageConfigHelpers)
+
+# The destination directory for all cmake package files
+set(BRLCAD_CMAKE_PKG_DIR "${LIB_DIR}/cmake/BRLCAD")
+
+# ---- Build-time feature booleans (substituted into the config template) ----
+if(BRLCAD_ENABLE_TCL)
+  set(BRLCAD_HAVE_TCL TRUE)
+else()
+  set(BRLCAD_HAVE_TCL FALSE)
+endif()
+if(BRLCAD_ENABLE_QT)
+  set(BRLCAD_HAVE_QT TRUE)
+else()
+  set(BRLCAD_HAVE_QT FALSE)
+endif()
+if(BRLCAD_ENABLE_OPENGL)
+  set(BRLCAD_HAVE_OPENGL TRUE)
+else()
+  set(BRLCAD_HAVE_OPENGL FALSE)
+endif()
+if(BRLCAD_ENABLE_GDAL)
+  set(BRLCAD_HAVE_GDAL TRUE)
+else()
+  set(BRLCAD_HAVE_GDAL FALSE)
+endif()
+if(BRLCAD_ENABLE_STEP)
+  set(BRLCAD_HAVE_STEP TRUE)
+else()
+  set(BRLCAD_HAVE_STEP FALSE)
+endif()
+if(BRLCAD_ENABLE_OPENCL)
+  set(BRLCAD_HAVE_OPENCL TRUE)
+else()
+  set(BRLCAD_HAVE_OPENCL FALSE)
+endif()
+# OSMesa: check for the target being present
+if(TARGET OSMesa)
+  set(BRLCAD_HAVE_OSMESA TRUE)
+else()
+  set(BRLCAD_HAVE_OSMESA FALSE)
+endif()
+
+# ---- find_dependency() fragments (only emitted when the dep was used) -------
+# Each variable expands to a find_dependency() call in the config template.
+# For bundled deps (installed under our own prefix) we rely on the modules/
+# directory that is shipped alongside BRLCADConfig.cmake.
+if(ZLIB_FOUND OR TARGET ZLIB::ZLIB)
+  set(BRLCAD_FIND_DEP_ZLIB "find_dependency(ZLIB)")
+else()
+  set(BRLCAD_FIND_DEP_ZLIB "# ZLIB not used in this build")
+endif()
+if(LMDB_FOUND OR TARGET LMDB::LMDB)
+  set(BRLCAD_FIND_DEP_LMDB "find_dependency(LMDB)")
+else()
+  set(BRLCAD_FIND_DEP_LMDB "# LMDB not used in this build")
+endif()
+if(REGEX_FOUND OR TARGET REGEX::REGEX)
+  set(BRLCAD_FIND_DEP_REGEX "find_dependency(REGEX)")
+else()
+  set(BRLCAD_FIND_DEP_REGEX "# REGEX not used in this build")
+endif()
+if(PNG_FOUND OR TARGET PNG::PNG)
+  set(BRLCAD_FIND_DEP_PNG "find_dependency(PNG)")
+else()
+  set(BRLCAD_FIND_DEP_PNG "# PNG not used in this build")
+endif()
+if(OPENNURBS_FOUND OR TARGET OPENNURBS::OPENNURBS)
+  set(BRLCAD_FIND_DEP_OPENNURBS "find_dependency(OPENNURBS)")
+else()
+  set(BRLCAD_FIND_DEP_OPENNURBS "# OPENNURBS not used in this build")
+endif()
+if(Geogram_FOUND OR TARGET Geogram::geogram)
+  set(BRLCAD_FIND_DEP_GEOGRAM "find_dependency(Geogram)")
+else()
+  set(BRLCAD_FIND_DEP_GEOGRAM "# Geogram not used in this build")
+endif()
+if(NETPBM_FOUND OR TARGET NETPBM::NETPBM)
+  set(BRLCAD_FIND_DEP_NETPBM "find_dependency(NETPBM)")
+else()
+  set(BRLCAD_FIND_DEP_NETPBM "# NETPBM not used in this build")
+endif()
+if(JPEG_FOUND OR TARGET JPEG::JPEG)
+  set(BRLCAD_FIND_DEP_JPEG "find_dependency(JPEG)")
+else()
+  set(BRLCAD_FIND_DEP_JPEG "# JPEG not used in this build")
+endif()
+
+# ---- Install-tree BRLCADConfig.cmake ----------------------------------------
+# This file is installed to <prefix>/lib/cmake/BRLCAD/BRLCADConfig.cmake.
+# The path variables are relative to the install prefix so the package
+# relocates correctly.
+set(BRLCAD_INCLUDE_INSTALL_DIR   "${INCLUDE_DIR}")
+set(BRLCAD_LIB_INSTALL_DIR       "${LIB_DIR}")
+set(BRLCAD_DATA_INSTALL_DIR      "${DATA_DIR}/brlcad/${BRLCAD_VERSION}")
+
+configure_package_config_file(
+  "${BRLCAD_CMAKE_DIR}/BRLCADConfig.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/BRLCADConfig-install.cmake"
+  INSTALL_DESTINATION "${BRLCAD_CMAKE_PKG_DIR}"
+  PATH_VARS
+    BRLCAD_INCLUDE_INSTALL_DIR
+    BRLCAD_LIB_INSTALL_DIR
+    BRLCAD_DATA_INSTALL_DIR
+)
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/BRLCADConfigVersion.cmake"
+  VERSION ${BRLCAD_VERSION}
+  COMPATIBILITY SameMinorVersion
+)
+
+# Install the package config files (rename -install variant to the canonical name)
+install(
+  FILES "${CMAKE_CURRENT_BINARY_DIR}/BRLCADConfig-install.cmake"
+  DESTINATION "${BRLCAD_CMAKE_PKG_DIR}"
+  RENAME BRLCADConfig.cmake
+)
+install(
+  FILES "${CMAKE_CURRENT_BINARY_DIR}/BRLCADConfigVersion.cmake"
+  DESTINATION "${BRLCAD_CMAKE_PKG_DIR}"
+)
+
+# Install the generated targets file (populated by BRLCAD_ADDLIB calls above)
+install(
+  EXPORT BRLCADTargets
+  NAMESPACE BRLCAD::
+  DESTINATION "${BRLCAD_CMAKE_PKG_DIR}"
+  FILE BRLCADTargets.cmake
+)
+
+# Install the static targets file when BUILD_STATIC_LIBS is enabled.
+# BRLCADStaticTargets.cmake is populated by BRLCAD_ADDLIB for every library
+# that is built alongside its shared twin (i.e. when BUILD_STATIC_LIBS=ON).
+if(BUILD_STATIC_LIBS)
+  install(
+    EXPORT BRLCADStaticTargets
+    NAMESPACE BRLCAD::
+    DESTINATION "${BRLCAD_CMAKE_PKG_DIR}"
+    FILE BRLCADStaticTargets.cmake
+  )
+endif(BUILD_STATIC_LIBS)
+
+# Install the private find-modules that bundled deps may need
+install(
+  DIRECTORY "${BRLCAD_CMAKE_DIR}/"
+  DESTINATION "${BRLCAD_CMAKE_PKG_DIR}/modules"
+  FILES_MATCHING PATTERN "Find*.cmake"
+  # Exclude the top-level FindBRLCAD.cmake itself (that's shipped separately)
+  PATTERN "FindBRLCAD.cmake" EXCLUDE
+)
+
+# ---- Build-tree BRLCADConfig.cmake ------------------------------------------
+# Allows sibling projects to do:
+#   find_package(BRLCAD CONFIG REQUIRED PATHS /path/to/brlcad_build NO_DEFAULT_PATH)
+# without installing first (useful for quickiterate-style workflows).
+# BRLCADConfig.cmake in the build directory points at the build-tree includes
+# and libraries so all paths resolve without a prior install.
+
+set(BRLCAD_INCLUDE_INSTALL_DIR  "${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}")
+set(BRLCAD_LIB_INSTALL_DIR      "${BRLCAD_BINARY_DIR}/${LIB_DIR}")
+set(BRLCAD_DATA_INSTALL_DIR     "${BRLCAD_BINARY_DIR}/${DATA_DIR}/brlcad/${BRLCAD_VERSION}")
+
+configure_package_config_file(
+  "${BRLCAD_CMAKE_DIR}/BRLCADConfig.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/BRLCADConfig.cmake"
+  INSTALL_DESTINATION "${CMAKE_CURRENT_BINARY_DIR}"
+  PATH_VARS
+    BRLCAD_INCLUDE_INSTALL_DIR
+    BRLCAD_LIB_INSTALL_DIR
+    BRLCAD_DATA_INSTALL_DIR
+)
+
+# Export the build-tree targets file (shared only; static targets have
+# internal build-time deps that cannot be resolved without an install).
+export(
+  EXPORT BRLCADTargets
+  NAMESPACE BRLCAD::
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/BRLCADTargets.cmake"
+)
 
 # *******************************************************************
 # ***                      Timestamp Rules                        ***

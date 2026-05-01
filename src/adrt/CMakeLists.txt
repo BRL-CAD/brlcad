@@ -42,7 +42,7 @@ set(
   ${BRLCAD_SOURCE_DIR}/src/adrt/librender
 )
 
-brlcad_addlib(librender "${LIBRENDER_SRCS}" "libgcv;${ZLIB_LIBRARIES}" "" "${ADRT_LOCAL_INCLUDE_DIRS}")
+brlcad_addlib(librender "${LIBRENDER_SRCS}" "libgcv;ZLIB::ZLIB" "" "${ADRT_LOCAL_INCLUDE_DIRS}")
 set_target_properties(librender PROPERTIES VERSION 20.0.1 SOVERSION 20)
 add_dependencies(librender gcv_plugins)
 

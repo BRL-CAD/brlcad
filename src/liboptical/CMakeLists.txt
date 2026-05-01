@@ -116,7 +116,7 @@ if(TARGET liboslrend)
   set(olibs "${olibs};liboslrend")
 endif(TARGET liboslrend)
 if(BRLCAD_ENABLE_TCL)
-  set(olibs "${olibs};${TCL_LIBRARY}")
+  set(olibs "${olibs};TCL::TCL")
 endif(BRLCAD_ENABLE_TCL)
 
 brlcad_addlib(liboptical "${LIBOPTICAL_SOURCES}" "${olibs}" "" "${LOCAL_OPTICAL_INCLUDE_DIRS}")

@@ -70,7 +70,7 @@ If (Geogram_FOUND)
         set(Geogram_INSTALL_PREFIX ${Geogram_INCLUDE_DIR}/../..)
   
         if (NOT TARGET Geogram::geogram)
-                add_library (Geogram::geogram UNKNOWN IMPORTED)
+                add_library (Geogram::geogram UNKNOWN IMPORTED GLOBAL)
 
                 # Interface include directory
                 set_target_Properties(Geogram::geogram PROPERTIES
@@ -85,7 +85,7 @@ If (Geogram_FOUND)
         endif ()
 
         if (NOT TARGET Geogram::geogram_gfx)
-                add_library (Geogram::geogram_gfx UNKNOWN IMPORTED)
+                add_library (Geogram::geogram_gfx UNKNOWN IMPORTED GLOBAL)
 
                 set_target_properties(Geogram::geogram_gfx PROPERTIES
                   INTERFACE_LINK_LIBRARIES ${Geogram_GLFW3_LIBRARY}

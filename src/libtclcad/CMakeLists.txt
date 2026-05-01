@@ -57,11 +57,15 @@ if(BRLCAD_ENABLE_TCL)
     set(TCLCAD_XLIBS ${TCLCAD_XLIBS} ${X11_LIBRARIES})
   endif(BRLCAD_ENABLE_X11)
 
+  # Use the TCL::TCL imported target so the installed BRLCADTargets.cmake
+  # records a target name rather than an absolute library path.
   # Note - libtclcad_deps is defined by ${BRLCAD_SOURCE_DIR}/src/source_dirs.cmake
-  set(TCLCAD_LIBS ${libtclcad_deps} ${TCL_LIBRARY} ${TCLCAD_XLIBS})
-  if(TK_LIBRARY)
+  set(TCLCAD_LIBS ${libtclcad_deps} TCL::TCL ${TCLCAD_XLIBS})
+  if(TARGET TK::TK)
+    set(TCLCAD_LIBS ${TCLCAD_LIBS} TK::TK)
+  elseif(TK_LIBRARY)
     set(TCLCAD_LIBS ${TCLCAD_LIBS} ${TK_LIBRARY})
-  endif(TK_LIBRARY)
+  endif()
 
   brlcad_addlib(libtclcad "${LIBTCLCAD_SRCS}" "${TCLCAD_LIBS}" "${TCLCAD_INCLUDE_DIRS}" "${TCLCAD_LOCAL_INCLUDE_DIRS}"
     # refresh.c defines DM_WITH_RT before including dm/view.h to expose

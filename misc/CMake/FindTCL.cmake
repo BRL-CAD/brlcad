@@ -546,6 +546,45 @@ mark_as_advanced(
   TTK_STUB_LIBRARY
 )
 
+# Create imported targets so downstream CMakeLists.txt can use
+# target-based link syntax (which produces relocatable exports).
+# Use SHARED IMPORTED with IMPORTED_SONAME so CMake links with the
+# soname (-ltcl8.6) rather than the full build-tree path; this
+# prevents a relative DT_NEEDED entry that the runtime loader can't
+# resolve via RUNPATH.
+if(TCL_FOUND AND NOT TARGET TCL::TCL)
+  add_library(TCL::TCL SHARED IMPORTED GLOBAL)
+  get_filename_component(_tcl_soname "${TCL_LIBRARY}" NAME)
+  set_target_properties(TCL::TCL PROPERTIES
+    IMPORTED_LOCATION "${TCL_LIBRARY}"
+    IMPORTED_SONAME   "${_tcl_soname}"
+    INTERFACE_INCLUDE_DIRECTORIES "${TCL_INCLUDE_PATH}"
+  )
+  unset(_tcl_soname)
+endif()
+
+if(TCL_FOUND AND TCL_STUB_LIBRARY AND NOT TARGET TCL::Stub)
+  add_library(TCL::Stub STATIC IMPORTED GLOBAL)
+  set_target_properties(TCL::Stub PROPERTIES
+    IMPORTED_LOCATION "${TCL_STUB_LIBRARY}"
+    INTERFACE_INCLUDE_DIRECTORIES "${TCL_INCLUDE_PATH}"
+  )
+endif()
+
+if(TCL_ENABLE_TK AND TK_FOUND AND NOT TARGET TK::TK)
+  add_library(TK::TK SHARED IMPORTED GLOBAL)
+  get_filename_component(_tk_soname "${TK_LIBRARY}" NAME)
+  set_target_properties(TK::TK PROPERTIES
+    IMPORTED_LOCATION "${TK_LIBRARY}"
+    IMPORTED_SONAME   "${_tk_soname}"
+    INTERFACE_INCLUDE_DIRECTORIES "${TK_INCLUDE_PATH}"
+  )
+  unset(_tk_soname)
+  if(TARGET TCL::TCL)
+    set_property(TARGET TK::TK APPEND PROPERTY INTERFACE_LINK_LIBRARIES TCL::TCL)
+  endif()
+endif()
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

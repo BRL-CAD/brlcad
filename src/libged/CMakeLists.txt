@@ -338,9 +338,9 @@ set_property(
 set(
   GED_LIBS
   ${libged_deps}
-  ${PNG_LIBRARIES}
-  ${LMDB_LIBRARIES}
-  ${REGEX_LIBRARIES}
+  PNG::PNG
+  LMDB::LMDB
+  REGEX::REGEX
   ${WINSOCK_LIB}
   ${M_LIBRARY}
 )
@@ -364,7 +364,11 @@ set_target_properties(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if (LIBGED_STATIC_CORE)
   target_link_libraries(libged PRIVATE libged_plugin_deps)
   if (TARGET libged-static)
-    target_link_libraries(libged-static PRIVATE libged_plugin_deps)
+    # libged_plugin_deps is an internal build-time interface target that
+    # carries plugin include dirs and compile defs needed only to compile
+    # libged itself.  Wrap it in $<BUILD_INTERFACE:...> so that it is
+    # not required in the installed BRLCADStaticTargets.cmake export.
+    target_link_libraries(libged-static PRIVATE $<BUILD_INTERFACE:libged_plugin_deps>)
   endif()
   # On Windows, prevent the linker from stripping "unused" static command
   # registration symbols

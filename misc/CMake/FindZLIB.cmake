@@ -120,10 +120,15 @@ if(ZLIB_FOUND)
   set(ZLIB_LIBRARIES ${ZLIB_LIBRARY})
 
   if(NOT TARGET ZLIB::ZLIB)
-    add_library(ZLIB::ZLIB UNKNOWN IMPORTED)
+    add_library(ZLIB::ZLIB SHARED IMPORTED GLOBAL)
+    get_filename_component(_zlib_soname "${ZLIB_LIBRARY}" NAME)
     set_target_properties(
       ZLIB::ZLIB
-      PROPERTIES IMPORTED_LOCATION "${ZLIB_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES "${ZLIB_INCLUDE_DIRS}"
+      PROPERTIES
+        IMPORTED_LOCATION "${ZLIB_LIBRARY}"
+        IMPORTED_SONAME   "${_zlib_soname}"
+        INTERFACE_INCLUDE_DIRECTORIES "${ZLIB_INCLUDE_DIRS}"
     )
+    unset(_zlib_soname)
   endif()
 endif()
