@@ -146,6 +146,50 @@ namespace {
         return result;
     }
 
+    bool mesh_tet_contains_point(
+        const Mesh& M, index_t t, const vec3& p
+    ) {
+        const vec3& p0 = as_gte<3>(M.cells.point(t,0));
+        const vec3& p1 = as_gte<3>(M.cells.point(t,1));
+        const vec3& p2 = as_gte<3>(M.cells.point(t,2));
+        const vec3& p3 = as_gte<3>(M.cells.point(t,3));
+
+        Sign s[4];
+        s[0] = PCK::orient_3d(p, p1, p2, p3);
+        s[1] = PCK::orient_3d(p0, p, p2, p3);
+        s[2] = PCK::orient_3d(p0, p1, p, p3);
+        s[3] = PCK::orient_3d(p0, p1, p2, p);
+
+        return (
+            (s[0] >= 0 && s[1] >= 0 && s[2] >= 0 && s[3] >= 0) ||
+            (s[0] <= 0 && s[1] <= 0 && s[2] <= 0 && s[3] <= 0)
+        );
+    }
+
+    bool mesh_triangle_contains_point(
+        const Mesh& M, index_t t, const vec2& p
+    ) {
+        index_t i = M.facets.vertex(t,0);
+        index_t j = M.facets.vertex(t,1);
+        index_t k = M.facets.vertex(t,2);
+        const auto& gp0 = M.vertices.point(i);
+        const auto& gp1 = M.vertices.point(j);
+        const auto& gp2 = M.vertices.point(k);
+        vec2 p0{gp0[0], gp0[1]};
+        vec2 p1{gp1[0], gp1[1]};
+        vec2 p2{gp2[0], gp2[1]};
+
+        Sign s[3];
+        s[0] = PCK::orient_2d(p,  p1, p2);
+        s[1] = PCK::orient_2d(p0, p,  p2);
+        s[2] = PCK::orient_2d(p0, p1, p );
+
+        return (
+            (s[0] >= 0 && s[1] >= 0 && s[2] >= 0 ) ||
+            (s[0] <= 0 && s[1] <= 0 && s[2] <= 0 )
+        );
+    }
+
     /**
      * \brief Computes the intersection between a ray and a triangle.
      * \param[in] O origin of the ray.
@@ -551,6 +595,84 @@ namespace GEOBRL {
         return false;
     }
 
+    bool MeshFacetsAABB::ray_intersection(
+        const Ray& R, double tmax, index_t ignore_f
+    ) const {
+        vec3 dirinv{
+            1.0/R.direction[0],
+            1.0/R.direction[1],
+            1.0/R.direction[2]
+        };
+        return ray_intersection_recursive(
+            R, dirinv, tmax, ignore_f, 1, 0, mesh_->facets.nb()
+        );
+    }
+
+    void MeshFacetsAABB::ray_all_intersections(
+        const Ray& R,
+        std::function<void(const Intersection&)> action
+    ) const {
+        vec3 dirinv{
+            1.0/R.direction[0],
+            1.0/R.direction[1],
+            1.0/R.direction[2]
+        };
+        ray_all_intersections_recursive(
+            R, dirinv, action,
+            1, 0, mesh_->facets.nb()
+        );
+    }
+
+    bool MeshFacetsAABB::ray_intersection_recursive(
+        const Ray& R, const vec3& dirinv, double tmax, index_t ignore_f,
+        index_t n, index_t b, index_t e
+    ) const {
+        if(!ray_box_intersection(R.origin, dirinv, bboxes_[n], tmax)) {
+            return false;
+        }
+        if(b + 1 == e) {
+            index_t f = element_in_leaf(b);
+            if(f == ignore_f) {
+                return false;
+            }
+            for(auto [ p1, p2, p3 ] : mesh_->facets.triangle_points(f)) {
+                const vec3& tp1 = as_gte<3>(p1);
+                const vec3& tp2 = as_gte<3>(p2);
+                const vec3& tp3 = as_gte<3>(p3);
+                vec3 N;
+                double t,u,v;
+                if(
+                    ray_triangle_intersection(
+                        R.origin, R.direction, tp1, tp2, tp3, t, u, v, N
+                    ) && t < tmax
+                ) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        index_t m = b + (e - b) / 2;
+        index_t childl = 2 * n;
+        index_t childr = 2 * n + 1;
+        return (
+            ray_intersection_recursive(R,dirinv,tmax,ignore_f, childl,b,m) ||
+            ray_intersection_recursive(R,dirinv,tmax,ignore_f, childr,m,e)
+        );
+    }
+
+    bool MeshFacetsAABB::contains(const vec3& p) const {
+        vec3 D{1.0, 1.1, 1.2};
+        D = normalize(D);
+        index_t nb_intersections = 0;
+        ray_all_intersections(
+            Ray(p, 1e6*D),
+            [&nb_intersections](const MeshFacetsAABB::Intersection&) {
+                ++nb_intersections;
+            }
+        );
+        return (nb_intersections & 1) != 0;
+    }
+
 
     void MeshFacetsAABB::ray_nearest_intersection_recursive(
         const Ray& R, const vec3& dirinv, Intersection& I, index_t ignore_f,
@@ -605,6 +727,164 @@ namespace GEOBRL {
                 R, dirinv, I, ignore_f, childr, m, e, (coord+1)%3
             );
         }
+    }
+
+    void MeshFacetsAABB::ray_all_intersections_recursive(
+        const Ray& R, const vec3& dirinv,
+        std::function<void(const Intersection&)> action,
+        index_t n, index_t b, index_t e
+    ) const {
+        Intersection I;
+        if(!ray_box_intersection(R.origin, dirinv, bboxes_[n], I.t)) {
+            return;
+        }
+        if(b + 1 == e) {
+            index_t f = element_in_leaf(b);
+            for(auto [ v1, v2, v3 ] : mesh_->facets.triangles(f)) {
+                const vec3& p1 = as_gte<3>(mesh_->vertices.point(v1));
+                const vec3& p2 = as_gte<3>(mesh_->vertices.point(v2));
+                const vec3& p3 = as_gte<3>(mesh_->vertices.point(v3));
+                if(
+                    ray_triangle_intersection(
+                        R.origin,R.direction,p1,p2,p3,I.t,I.u,I.v,I.N
+                    )
+                ) {
+                    I.i = v1;
+                    I.j = v2;
+                    I.k = v3;
+                    I.f = f;
+                    action(I);
+                }
+            }
+            return;
+        }
+        index_t m = b + (e - b) / 2;
+        index_t childl = 2 * n;
+        index_t childr = 2 * n + 1;
+        ray_all_intersections_recursive(R, dirinv, action, childr, m, e);
+        ray_all_intersections_recursive(R, dirinv, action, childl, b, m);
+    }
+
+    void MeshCellsAABB::initialize(Mesh& M, AABBReorderMode reorder_mode) {
+        mesh_ = &M;
+        switch(reorder_mode) {
+        case AABB_NOREORDER:
+            break;
+        case AABB_INPLACE:
+            reorder_.clear();
+            mesh_reorder(*mesh_, MESH_ORDER_MORTON);
+            break;
+        case AABB_INDIRECT:
+            compute_mesh_elements_spatial_order(
+                *mesh_, MESH_CELLS, reorder_, MESH_ORDER_MORTON
+            );
+            break;
+        }
+        AABB::initialize(
+            mesh_->cells.nb(),
+            [this](Box& B, index_t c) {
+                for(coord_index_t coord = 0; coord < 3; ++coord) {
+                    B.min[coord] = Numeric::max_float64();
+                    B.max[coord] = -Numeric::max_float64();
+                }
+                for(const auto& p : mesh_->cells.points(c)) {
+                    for(coord_index_t coord = 0; coord < 3; ++coord) {
+                        B.min[coord] = std::min(B.min[coord], p[coord]);
+                        B.max[coord] = std::max(B.max[coord], p[coord]);
+                    }
+                }
+            }
+        );
+    }
+
+    index_t MeshCellsAABB::containing_tet_recursive(
+        const vec3& p,
+        index_t n, index_t b, index_t e
+    ) const {
+        if(!contains(bboxes_[n], p)) {
+            return NO_TET;
+        }
+
+        if(e == b + 1) {
+            index_t t = element_in_leaf(b);
+            if(mesh_tet_contains_point(*mesh_, t, p)) {
+                return t;
+            }
+            return NO_TET;
+        }
+
+        index_t m = b + (e - b) / 2;
+        index_t childl = 2 * n;
+        index_t childr = 2 * n + 1;
+
+        index_t result = containing_tet_recursive(p, childl, b, m);
+        if(result == NO_TET) {
+            result = containing_tet_recursive(p, childr, m, e);
+        }
+        return result;
+    }
+
+    MeshFacetsAABB2d::MeshFacetsAABB2d() {
+    }
+
+    MeshFacetsAABB2d::MeshFacetsAABB2d(Mesh& M, bool reorder) {
+        initialize(M, reorder);
+    }
+
+    void MeshFacetsAABB2d::initialize(Mesh& M, bool reorder) {
+        bool was_2d = (M.vertices.dimension() == 2);
+        if(was_2d) {
+            M.vertices.set_dimension(3);
+        }
+        mesh_ = &M;
+        if(reorder) {
+            mesh_reorder(*mesh_, MESH_ORDER_MORTON);
+        }
+        AABB::initialize(
+            mesh_->facets.nb(),
+            [this](Box2d& B, index_t f) {
+                for(coord_index_t coord = 0; coord < 2; ++coord) {
+                    B.min[coord] = Numeric::max_float64();
+                    B.max[coord] = -Numeric::max_float64();
+                }
+                for(const auto& p : mesh_->facets.points<2>(f)) {
+                    for(coord_index_t coord = 0; coord < 2; ++coord) {
+                        B.min[coord] = std::min(B.min[coord], p[coord]);
+                        B.max[coord] = std::max(B.max[coord], p[coord]);
+                    }
+                }
+            }
+        );
+        if(was_2d) {
+            M.vertices.set_dimension(2);
+        }
+    }
+
+    index_t MeshFacetsAABB2d::containing_triangle_recursive(
+        const vec2& p,
+        index_t n, index_t b, index_t e
+    ) const {
+        if(!contains(bboxes_[n], p)) {
+            return NO_TRIANGLE;
+        }
+
+        if(e == b + 1) {
+            index_t f = element_in_leaf(b);
+            if(mesh_triangle_contains_point(*mesh_, f, p)) {
+                return f;
+            }
+            return NO_TRIANGLE;
+        }
+
+        index_t m = b + (e - b) / 2;
+        index_t childl = 2 * n;
+        index_t childr = 2 * n + 1;
+
+        index_t result = containing_triangle_recursive(p, childl, b, m);
+        if(result == NO_TRIANGLE) {
+            result = containing_triangle_recursive(p, childr, m, e);
+        }
+        return result;
     }
 
 

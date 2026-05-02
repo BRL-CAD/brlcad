@@ -661,7 +661,7 @@ namespace GEOBRL {
          * \retval true if there was an intersection.
          * \retval false otherwise.
          */
-        bool GEOBRLCAD_API ray_nearest_intersection(const Ray& R, Intersection& I) const;
+        bool ray_nearest_intersection(const Ray& R, Intersection& I) const;
 
         /**
          * \brief Tests whether this surface mesh has an intersection
