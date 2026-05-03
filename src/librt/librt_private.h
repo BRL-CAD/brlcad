@@ -254,8 +254,6 @@ struct dbi_update_nref_clbk {
     void *u_data;
 };
 
-extern int db_read(const struct db_i *dbip, void *addr, size_t count, b_off_t offset);
-
 /* db5_io.c */
 #define DB_SIZE_OBJ 0x1
 #define DB_SIZE_TREE_INSTANCED 0x2
