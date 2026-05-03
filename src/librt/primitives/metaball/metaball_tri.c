@@ -88,7 +88,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     /* since this geometry isn't necessarily prepped, we have to figure out the
      * finalstep and bounding box manually. */
     for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, &mb->metaball_ctrl_head))
-	V_MIN(finalstep, mbpt->fldstr);
+	V_MIN(finalstep, mbpt->field_strength);
     finalstep /= (fastf_t)1e5;
 
     radius = rt_metaball_get_bounding_sphere(&center, mb->threshold, mb);

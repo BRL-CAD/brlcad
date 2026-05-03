@@ -433,6 +433,55 @@ struct rt_edit_menu_item nmg_menu[] = {
     { "", NULL, 0 }
 };
 
+static const struct rt_edit_param_desc nmg_index_param[] = {
+    { "index", "Index", RT_EDIT_PARAM_INTEGER, 0,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_param_desc nmg_point_param[] = {
+    { "point", "Point", RT_EDIT_PARAM_POINT, 0,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "length", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_param_desc nmg_extrude_param[] = {
+    { "distance", "Distance", RT_EDIT_PARAM_SCALAR, 0,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "length", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_param_desc nmg_extrude_dir_param[] = {
+    { "direction", "Direction", RT_EDIT_PARAM_VECTOR, 0,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "none", 0, NULL, NULL, NULL },
+    { "distance", "Distance", RT_EDIT_PARAM_SCALAR, 3,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "length", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_cmd_desc nmg_cmds[] = {
+    { ECMD_NMG_EPICK,      "Pick Edge",                "selection", 1, nmg_index_param,       1, 10 },
+    { ECMD_NMG_EMOVE,      "Move Edge",                "movement",  1, nmg_point_param,       1, 20 },
+    { ECMD_NMG_ESPLIT,     "Split Edge",               "topology",  0, NULL,                  0, 30 },
+    { ECMD_NMG_EKILL,      "Delete Edge",              "topology",  0, NULL,                  0, 40 },
+    { ECMD_NMG_FORW,       "Next EU",                  "selection", 0, NULL,                  0, 50 },
+    { ECMD_NMG_BACK,       "Prev EU",                  "selection", 0, NULL,                  0, 60 },
+    { ECMD_NMG_RADIAL,     "Radial EU",                "selection", 0, NULL,                  0, 70 },
+    { ECMD_NMG_LEXTRU,     "Extrude Loop",             "topology",  1, nmg_extrude_param,     1, 80 },
+    { ECMD_NMG_LEXTRU_DIR, "Extrude Loop (dir+dist)",  "topology",  2, nmg_extrude_dir_param, 1, 90 },
+    { ECMD_NMG_EDEBUG,     "Debug Edge",               "debug",     0, NULL,                  0, 100 },
+    { ECMD_NMG_VPICK,      "Pick Vertex",              "selection", 1, nmg_index_param,       1, 110 },
+    { ECMD_NMG_VMOVE,      "Move Vertex",              "movement",  1, nmg_point_param,       1, 120 },
+    { ECMD_NMG_FPICK,      "Pick Face",                "selection", 1, nmg_index_param,       1, 130 },
+    { ECMD_NMG_FMOVE,      "Move Face",                "movement",  1, nmg_point_param,       1, 140 }
+};
+
+static const struct rt_edit_prim_desc nmg_prim_desc = {
+    "nmg", "NMG", 14, nmg_cmds
+};
+
+const struct rt_edit_prim_desc *
+rt_edit_nmg_edit_desc(void)
+{
+    return &nmg_prim_desc;
+}
+
 struct rt_edit_menu_item *
 rt_edit_nmg_menu_item(const struct bn_tol *UNUSED(tol))
 {

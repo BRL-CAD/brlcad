@@ -184,8 +184,8 @@ _ged_metaball_add_pnt(struct rt_metaball_internal *mbip, struct wdb_metaball_pnt
 	if (last->l.magic == BU_LIST_HEAD_MAGIC) {
 	    BU_GET(newmbp, struct wdb_metaball_pnt);
 	    newmbp->l.magic = WDB_METABALLPT_MAGIC;
-	    newmbp->fldstr = 1.0;
-	    newmbp->sweat = 1.0;
+	    newmbp->field_strength = 1.0;
+	    newmbp->blobbiness = 1.0;
 	    VMOVE(newmbp->coord, new_pt);
 	    BU_LIST_INSERT(&mbip->metaball_ctrl_head, &newmbp->l);
 	    return newmbp;
@@ -195,8 +195,8 @@ _ged_metaball_add_pnt(struct rt_metaball_internal *mbip, struct wdb_metaball_pnt
     /* build new point */
     BU_GET(newmbp, struct wdb_metaball_pnt);
     newmbp->l.magic = WDB_METABALLPT_MAGIC;
-    newmbp->fldstr = 1.0;
-    newmbp->sweat = 1.0;
+    newmbp->field_strength = 1.0;
+    newmbp->blobbiness = 1.0;
     VMOVE(newmbp->coord, new_pt);
 
     if (mbp) {

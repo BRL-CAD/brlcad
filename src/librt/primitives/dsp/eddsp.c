@@ -196,6 +196,31 @@ static const struct rt_edit_param_desc dsp_datasrc_params[] = {
     }
 };
 
+static const struct rt_edit_param_desc dsp_fsize_params[] = {
+    {
+	"xcnt",               /* name         */
+	"Width (samples)",    /* label        */
+	RT_EDIT_PARAM_INTEGER, /* type        */
+	0,                    /* index        */
+	1.0,                  /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	NULL,                 /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	"dsp_xcnt"            /* prim_field   */
+    },
+    {
+	"ycnt",               /* name         */
+	"Height (samples)",   /* label        */
+	RT_EDIT_PARAM_INTEGER, /* type        */
+	1,                    /* index        */
+	1.0,                  /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	NULL,                 /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	"dsp_ycnt"            /* prim_field   */
+    }
+};
+
 static const struct rt_edit_cmd_desc dsp_cmds[] = {
     {
 	ECMD_DSP_FNAME,       /* cmd_id       */
@@ -243,6 +268,15 @@ static const struct rt_edit_cmd_desc dsp_cmds[] = {
 	50                    /* display_order */
     },
     {
+	ECMD_DSP_FSIZE,       /* cmd_id       */
+	"Set File Size",      /* label        */
+	"data",               /* category     */
+	2,                    /* nparam       */
+	dsp_fsize_params,     /* params       */
+	0,                    /* interactive  */
+	15                    /* display_order */
+    },
+    {
 	ECMD_DSP_SET_DATASRC, /* cmd_id       */
 	"Set Data Source",    /* label        */
 	"data",               /* category     */
@@ -256,7 +290,7 @@ static const struct rt_edit_cmd_desc dsp_cmds[] = {
 static const struct rt_edit_prim_desc dsp_prim_desc = {
     "dsp",                /* prim_type    */
     "Displacement Map",   /* prim_label   */
-    6,                    /* ncmd         */
+    7,                    /* ncmd         */
     dsp_cmds              /* cmds         */
 };
 
@@ -418,6 +452,34 @@ ecmd_dsp_fname(struct rt_edit *s)
  * e_para[0] = 0 → disable, non-zero → enable; e_inpara = 1.
  * With e_inpara == 0, the current value is toggled. */
 static int
+ecmd_dsp_fsize(struct rt_edit *s)
+{
+    struct rt_dsp_internal *dsp =
+	(struct rt_dsp_internal *)s->es_int.idb_ptr;
+    RT_DSP_CK_MAGIC(dsp);
+
+    /* Two integer parameters: xcnt and ycnt */
+    if (s->e_inpara != 2) {
+	bu_vls_printf(s->log_str,
+		      "ERROR: two arguments needed (width height)\n");
+	s->e_inpara = 0;
+	return BRLCAD_ERROR;
+    }
+    if (s->e_para[0] < 1.0 || s->e_para[1] < 1.0) {
+	bu_vls_printf(s->log_str,
+		      "ERROR: width and height must be >= 1\n");
+	s->e_inpara = 0;
+	return BRLCAD_ERROR;
+    }
+
+    dsp->dsp_xcnt = (uint32_t)s->e_para[0];
+    dsp->dsp_ycnt = (uint32_t)s->e_para[1];
+
+    s->e_inpara = 0;
+    return BRLCAD_OK;
+}
+
+int
 ecmd_dsp_set_smooth(struct rt_edit *s)
 {
     struct rt_dsp_internal *dsp =
@@ -497,6 +559,8 @@ rt_edit_dsp_edit(struct rt_edit *s)
 	    if (ecmd_dsp_fname(s) != BRLCAD_OK)
 		return -1;
 	    break;
+	case ECMD_DSP_FSIZE:
+	    return ecmd_dsp_fsize(s);
 	case ECMD_DSP_SET_SMOOTH:
 	    return ecmd_dsp_set_smooth(s);
 	case ECMD_DSP_SET_DATASRC:

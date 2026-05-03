@@ -78,6 +78,95 @@ rt_edit_hlf_read_params(
     return BRLCAD_OK;
 }
 
+/* ------------------------------------------------------------------ */
+/* ft_edit_desc descriptor for the Halfspace primitive                  */
+/* ------------------------------------------------------------------ */
+
+#define ECMD_HALF_SET_D  6001  /* Set plane distance (D coefficient)  */
+
+static const struct rt_edit_param_desc half_d_params[] = {
+    {
+	"d",                    /* name */
+	"Plane Distance",       /* label */
+	RT_EDIT_PARAM_SCALAR,   /* type */
+	0,                      /* index */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_min */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max */
+	"length",               /* units */
+	0, NULL, NULL,          /* enum */
+	NULL                    /* prim_field */
+    }
+};
+
+static const struct rt_edit_cmd_desc half_cmds[] = {
+    {
+	ECMD_HALF_SET_D,        /* cmd_id */
+	"Set D",                /* label */
+	"geometry",             /* category */
+	1,                      /* nparam */
+	half_d_params,          /* params */
+	0,                      /* interactive */
+	10                      /* display_order */
+    }
+};
+
+static const struct rt_edit_prim_desc half_prim_desc = {
+    "half",                     /* prim_type */
+    "Halfspace",                /* prim_label */
+    1,                          /* ncmd */
+    half_cmds                   /* cmds */
+};
+
+const struct rt_edit_prim_desc *
+rt_edit_hlf_edit_desc(void)
+{
+    return &half_prim_desc;
+}
+
+void
+rt_edit_hlf_set_edit_mode(struct rt_edit *s, int mode)
+{
+    rt_edit_set_edflag(s, mode);
+}
+
+int
+rt_edit_hlf_edit(struct rt_edit *s)
+{
+    struct rt_half_internal *haf;
+    switch (s->edit_flag) {
+	case ECMD_HALF_SET_D:
+	    haf = (struct rt_half_internal *)s->es_int.idb_ptr;
+	    RT_HALF_CK_MAGIC(haf);
+	    if (s->e_inpara == 1)
+		haf->eqn[W] = s->e_para[0] * s->local2base;
+	    return BRLCAD_OK;
+	default:
+	    break;
+    }
+    return edit_generic(s);
+}
+
+int
+rt_edit_hlf_edit_xy(struct rt_edit *s, const vect_t mousevec)
+{
+    return edit_generic_xy(s, mousevec);
+}
+
+int
+rt_edit_hlf_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
+{
+    struct rt_half_internal *haf;
+    if (!s || !vals)
+	return BRLCAD_ERROR;
+    haf = (struct rt_half_internal *)s->es_int.idb_ptr;
+    RT_HALF_CK_MAGIC(haf);
+    if (cmd_id == ECMD_HALF_SET_D) {
+	vals[0] = haf->eqn[W] * s->base2local;
+	return BRLCAD_OK;
+    }
+    return BRLCAD_ERROR;
+}
+
 /*
  * Local Variables:
  * mode: C

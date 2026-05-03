@@ -2762,8 +2762,8 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 	metaball_pnt->coord[0] = atof(argv[i]) * gedp->dbip->dbi_local2base;
 	metaball_pnt->coord[1] = atof(argv[i+1]) * gedp->dbip->dbi_local2base;
 	metaball_pnt->coord[2] = atof(argv[i+2]) * gedp->dbip->dbi_local2base;
-	metaball_pnt->fldstr = atof(argv[i+3]) * gedp->dbip->dbi_local2base;
-	metaball_pnt->sweat = 1.0;
+	metaball_pnt->field_strength = atof(argv[i+3]) * gedp->dbip->dbi_local2base;
+	metaball_pnt->blobbiness = 1.0;
 
 	BU_LIST_INSERT(&metaball->metaball_ctrl_head, &metaball_pnt->l);
     }

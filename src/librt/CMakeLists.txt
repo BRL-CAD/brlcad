@@ -14,12 +14,17 @@ endif(BRLCAD_ENABLE_OPENCL)
 
 set(
   LIBRT_PRIMEDIT_SOURCES
+  primitives/annot/edannot.c
   primitives/arb8/edarb.c
+  primitives/arbn/edarbn.c
   primitives/ars/edars.c
   primitives/bot/edbot.c
+  primitives/brep/edbrep.cpp
   primitives/bspline/edbspline.c
   primitives/cline/edcline.c
   primitives/datum/eddatum.c
+  primitives/datum/eddatum2.c
+  primitives/revolve/edrevolve.c
   primitives/dsp/eddsp.c
   primitives/ebm/edebm.c
   primitives/ehy/edehy.c
@@ -29,6 +34,7 @@ set(
   primitives/extrude/edextrude.c
   primitives/grip/edgrip.c
   primitives/half/edhalf.c
+  primitives/hrt/edhrt.c
   primitives/hyp/edhyp.c
   primitives/metaball/edmetaball.c
   primitives/nmg/ednmg.c
@@ -255,6 +261,7 @@ set(
   primitives/poly/poly_brep.cpp
   primitives/poly/poly_mirror.c
   primitives/primitive_util.c
+  primitives/rec/edrec.c
   primitives/rec/rec.c
   primitives/revolve/revolve.c
   primitives/revolve/revolve_brep.cpp
@@ -271,6 +278,7 @@ set(
   primitives/sketch/sketch.c
   primitives/sketch/sketch_brep.cpp
   primitives/sketch/sketch_tess.cpp
+  primitives/sph/edsph.c
   primitives/sph/sph.c
   primitives/sph/sph_brep.cpp
   primitives/submodel/submodel.c

@@ -339,6 +339,49 @@ rt_edit_sketch_menu_item(const struct bn_tol *UNUSED(tol))
     return sketch_menu;
 }
 
+static const struct rt_edit_param_desc sketch_idx_param[] = {
+    { "index", "Index", RT_EDIT_PARAM_INTEGER, 0,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_param_desc sketch_point_param[] = {
+    { "point", "Point", RT_EDIT_PARAM_POINT, 0,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "length", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_cmd_desc sketch_cmds[] = {
+    { ECMD_SKETCH_PICK_VERTEX,           "Pick Vertex",          "selection", 1, sketch_idx_param,   1, 10 },
+    { ECMD_SKETCH_MOVE_VERTEX,           "Move Vertex",          "movement",  1, sketch_point_param, 1, 20 },
+    { ECMD_SKETCH_PICK_SEGMENT,          "Pick Segment",         "selection", 1, sketch_idx_param,   1, 30 },
+    { ECMD_SKETCH_MOVE_SEGMENT,          "Move Segment",         "movement",  1, sketch_point_param, 1, 40 },
+    { ECMD_SKETCH_APPEND_LINE,           "Append Line",          "topology",  0, NULL,               1, 50 },
+    { ECMD_SKETCH_APPEND_ARC,            "Append Arc",           "topology",  0, NULL,               1, 60 },
+    { ECMD_SKETCH_APPEND_BEZIER,         "Append Bezier",        "topology",  0, NULL,               1, 70 },
+    { ECMD_SKETCH_DELETE_VERTEX,         "Delete Vertex",        "topology",  1, sketch_idx_param,   1, 80 },
+    { ECMD_SKETCH_DELETE_SEGMENT,        "Delete Segment",       "topology",  1, sketch_idx_param,   1, 90 },
+    { ECMD_SKETCH_MOVE_VERTEX_LIST,      "Move Vertex List",     "movement",  1, sketch_point_param, 1, 100 },
+    { ECMD_SKETCH_SPLIT_SEGMENT,         "Split Segment",        "topology",  1, sketch_idx_param,   1, 110 },
+    { ECMD_SKETCH_APPEND_NURB,           "Append NURB",          "topology",  0, NULL,               1, 120 },
+    { ECMD_SKETCH_NURB_EDIT_KV,          "NURB Edit KV",         "topology",  0, NULL,               1, 130 },
+    { ECMD_SKETCH_NURB_EDIT_WEIGHTS,     "NURB Edit Weights",    "topology",  0, NULL,               1, 140 },
+    { ECMD_SKETCH_ADD_VERTEX,            "Add Vertex",           "topology",  1, sketch_point_param, 1, 150 },
+    { ECMD_SKETCH_TOGGLE_ARC_ORIENT,     "Toggle Arc Orient",    "topology",  1, sketch_idx_param,   1, 160 },
+    { ECMD_SKETCH_SET_ARC_RADIUS,        "Set Arc Radius",       "topology",  1, sketch_idx_param,   1, 170 },
+    { ECMD_SKETCH_SET_TANGENCY,          "Set Arc Tangency",     "topology",  0, NULL,               1, 180 },
+    { ECMD_SKETCH_SET_PLANE,             "Set Sketch Plane",     "geometry",  0, NULL,               1, 190 },
+    { ECMD_SKETCH_TOGGLE_SEGMENT_REVERSE,"Toggle Seg Reverse",   "topology",  1, sketch_idx_param,   1, 200 }
+};
+
+static const struct rt_edit_prim_desc sketch_prim_desc = {
+    "sketch", "Sketch", 20, sketch_cmds
+};
+
+const struct rt_edit_prim_desc *
+rt_edit_sketch_edit_desc(void)
+{
+    return &sketch_prim_desc;
+}
+
 
 /* ------------------------------------------------------------------ */
 /* Helper: check if a vertex is referenced by any segment             */

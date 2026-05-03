@@ -95,15 +95,21 @@ static const struct rt_edit_param_desc cline_t_params[] = {
     { "t", "Plate Thickness", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
       "length", 0, NULL, NULL, NULL }
 };
+static const struct rt_edit_param_desc cline_mv_h_params[] = {
+    { "endpoint", "New Endpoint (X Y Z)", RT_EDIT_PARAM_POINT, 0,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT,
+      "length", 0, NULL, NULL, NULL }
+};
 
 static const struct rt_edit_cmd_desc cline_cmds[] = {
-    { ECMD_CLINE_SCALE_H, "Set H",               "geometry", 1, cline_h_params, 1, 10 },
-    { ECMD_CLINE_SCALE_R, "Set R",               "geometry", 1, cline_r_params, 1, 20 },
-    { ECMD_CLINE_SCALE_T, "Set plate thickness", "geometry", 1, cline_t_params, 1, 30 },
+    { ECMD_CLINE_SCALE_H, "Set H",               "geometry", 1, cline_h_params,    1, 10 },
+    { ECMD_CLINE_SCALE_R, "Set R",               "geometry", 1, cline_r_params,    1, 20 },
+    { ECMD_CLINE_SCALE_T, "Set plate thickness", "geometry", 1, cline_t_params,    1, 30 },
+    { ECMD_CLINE_MOVE_H,  "Move End H",          "move",     1, cline_mv_h_params, 1, 40 },
 };
 
 static const struct rt_edit_prim_desc cline_prim_desc = {
-    "cline", "CLINE", 3, cline_cmds
+    "cline", "CLINE", 4, cline_cmds
 };
 
 const struct rt_edit_prim_desc *

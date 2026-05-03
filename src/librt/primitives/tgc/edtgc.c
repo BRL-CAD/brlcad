@@ -234,6 +234,36 @@ static const struct rt_edit_param_desc tgc_abcd_params[] = {
     }
 };
 
+/* New endpoint position (absolute, in local units) — used by all MV_H* ops */
+static const struct rt_edit_param_desc tgc_endpoint_params[] = {
+    {
+	"endpoint",           /* name         */
+	"New Endpoint (X Y Z)", /* label      */
+	RT_EDIT_PARAM_POINT,  /* type         */
+	0,                    /* index (uses e_para[0..2]) */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_min  */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+/* Absolute rotation in degrees about X, Y, Z — used by ROT_H and ROT_AB */
+static const struct rt_edit_param_desc tgc_rot_deg_params[] = {
+    {
+	"rot_xyz",            /* name         */
+	"Rotation X Y Z (deg)", /* label      */
+	RT_EDIT_PARAM_VECTOR, /* type         */
+	0,                    /* index (uses e_para[0..2]) */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_min  */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"degrees",            /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
 static const struct rt_edit_cmd_desc tgc_cmds[] = {
     {
 	ECMD_TGC_SCALE_H,     /* cmd_id       */
@@ -333,13 +363,67 @@ static const struct rt_edit_cmd_desc tgc_cmds[] = {
 	tgc_abcd_params,      /* params       */
 	1,                    /* interactive  */
 	110                   /* display_order */
+    },
+    {
+	ECMD_TGC_MV_H,        /* cmd_id       */
+	"Move End H(rt)",     /* label        */
+	"move",               /* category     */
+	1,                    /* nparam       */
+	tgc_endpoint_params,  /* params       */
+	1,                    /* interactive  */
+	120                   /* display_order */
+    },
+    {
+	ECMD_TGC_MV_HH,       /* cmd_id       */
+	"Move End H",         /* label        */
+	"move",               /* category     */
+	1,                    /* nparam       */
+	tgc_endpoint_params,  /* params       */
+	1,                    /* interactive  */
+	130                   /* display_order */
+    },
+    {
+	ECMD_TGC_MV_H_CD,     /* cmd_id       */
+	"Move End H (adj C,D)", /* label      */
+	"move",               /* category     */
+	1,                    /* nparam       */
+	tgc_endpoint_params,  /* params       */
+	1,                    /* interactive  */
+	140                   /* display_order */
+    },
+    {
+	ECMD_TGC_MV_H_V_AB,   /* cmd_id       */
+	"Move End H (move V, adj A,B)", /* label */
+	"move",               /* category     */
+	1,                    /* nparam       */
+	tgc_endpoint_params,  /* params       */
+	1,                    /* interactive  */
+	150                   /* display_order */
+    },
+    {
+	ECMD_TGC_ROT_H,       /* cmd_id       */
+	"Rotate H",           /* label        */
+	"rotation",           /* category     */
+	1,                    /* nparam       */
+	tgc_rot_deg_params,   /* params       */
+	1,                    /* interactive  */
+	160                   /* display_order */
+    },
+    {
+	ECMD_TGC_ROT_AB,      /* cmd_id       */
+	"Rotate AxB",         /* label        */
+	"rotation",           /* category     */
+	1,                    /* nparam       */
+	tgc_rot_deg_params,   /* params       */
+	1,                    /* interactive  */
+	170                   /* display_order */
     }
 };
 
 static const struct rt_edit_prim_desc tgc_prim_desc = {
     "tgc",                /* prim_type    */
     "Truncated General Cone", /* prim_label */
-    11,                   /* ncmd         */
+    17,                   /* ncmd         */
     tgc_cmds              /* cmds         */
 };
 

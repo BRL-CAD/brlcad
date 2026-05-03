@@ -328,7 +328,7 @@ WDB_EXPORT int mk_metaball(
     const size_t nctlpt,	/* number of control points */
     const int method,		/* metaball rendering method */
     const fastf_t threshold,
-    const fastf_t *verts[5]);	/* X, Y, Z, fldstr, goo/Beta */
+    const fastf_t *verts[5]);	/* X, Y, Z, field_strength, blobbiness */
 
 /**
  * Caller is responsible for freeing eqn[]

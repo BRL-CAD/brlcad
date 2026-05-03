@@ -127,8 +127,9 @@ struct rt_superell_internal {
  *
  * The "metaball" primitive contains a method ID, threshold value, and
  * an unordered set of control points. Each control point contains a
- * 3d location, a "field strength", and possibly a "blobbiness" value
- * (called "goo" in rt_metaball_add_point).
+ * 3d location, a "field_strength" (weight of the point's contribution),
+ * and a "blobbiness" parameter (the beta/negative-exponent coefficient
+ * used in the Blinn blobby-surface formula).
  *
  * There are three method ID's defined:
  *
@@ -142,15 +143,14 @@ struct rt_superell_internal {
  * physics course.  Blending function in latex notation is:
  *
  @code
- \Sum_{i}\frac{f_{i}}{d^{2}}
+ \Sum_{i}\frac{field\_strength_{i}}{d^{2}}
  @endcode
  *
  * The surface of the primitive exists where the summation of the
- * points contribution is equal to the threshold, with the general
- * fldstr/distance^2 pattern.
+ * points' contributions equals the threshold.
  *
  * The blobbiness value is only used in the blob method, and modifies
- * the gusseting effect.
+ * the gusseting effect (Blinn's beta coefficient).
  *
  */
 struct rt_metaball_internal {
@@ -169,8 +169,8 @@ struct rt_metaball_internal {
 struct wdb_metaball_pnt {
     struct bu_list l;
     int type;
-    fastf_t fldstr; /**< @brief field strength */
-    fastf_t sweat;  /**< @brief beta value used for metaball and blob evaluation */
+    fastf_t field_strength; /**< @brief field strength (weight of this point's contribution) */
+    fastf_t blobbiness;     /**< @brief blobbiness: Blinn's beta coefficient (blob method only) */
     point_t coord;
     point_t coord2;
 };

@@ -835,14 +835,14 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	BU_LIST_INIT(&metaball_ip->metaball_ctrl_head);
 
 	mbpt = (struct wdb_metaball_pnt *)malloc(sizeof(struct wdb_metaball_pnt));
-	mbpt->fldstr = 1.0;
-	mbpt->sweat = 1.0;
+	mbpt->field_strength = 1.0;
+	mbpt->blobbiness = 1.0;
 	VSET(mbpt->coord, origin[X] - 1.0, origin[Y], origin[Z]);
 	BU_LIST_INSERT(&metaball_ip->metaball_ctrl_head, &mbpt->l);
 
 	mbpt = (struct wdb_metaball_pnt *)malloc(sizeof(struct wdb_metaball_pnt));
-	mbpt->fldstr = 1.0;
-	mbpt->sweat = 1.0;
+	mbpt->field_strength = 1.0;
+	mbpt->blobbiness = 1.0;
 	VSET(mbpt->coord, origin[X] + 1.0, origin[Y], origin[Z]);
 	BU_LIST_INSERT(&metaball_ip->metaball_ctrl_head, &mbpt->l);
 

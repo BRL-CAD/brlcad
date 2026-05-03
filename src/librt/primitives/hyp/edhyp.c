@@ -110,16 +110,22 @@ static const struct rt_edit_param_desc hyp_c_params[] = {
     { "c", "Neck Ratio c (0..1)", RT_EDIT_PARAM_SCALAR, 0, 1e-10, 1.0,
       "fraction", 0, NULL, NULL, NULL }
 };
+static const struct rt_edit_param_desc hyp_rot_deg_params[] = {
+    { "rot_xyz", "Rotation X Y Z (deg)", RT_EDIT_PARAM_VECTOR, 0,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT,
+      "degrees", 0, NULL, NULL, NULL }
+};
 
 static const struct rt_edit_cmd_desc hyp_cmds[] = {
-    { ECMD_HYP_H,       "Set H",  "geometry", 1, hyp_h_params, 1, 10 },
-    { ECMD_HYP_SCALE_A, "Set A",  "geometry", 1, hyp_a_params, 1, 20 },
-    { ECMD_HYP_SCALE_B, "Set B",  "geometry", 1, hyp_b_params, 1, 30 },
-    { ECMD_HYP_C,       "Set c",  "geometry", 1, hyp_c_params, 1, 40 },
+    { ECMD_HYP_H,       "Set H",    "geometry", 1, hyp_h_params,       1, 10 },
+    { ECMD_HYP_SCALE_A, "Set A",    "geometry", 1, hyp_a_params,       1, 20 },
+    { ECMD_HYP_SCALE_B, "Set B",    "geometry", 1, hyp_b_params,       1, 30 },
+    { ECMD_HYP_C,       "Set c",    "geometry", 1, hyp_c_params,       1, 40 },
+    { ECMD_HYP_ROT_H,   "Rotate H", "rotation", 1, hyp_rot_deg_params, 1, 50 },
 };
 
 static const struct rt_edit_prim_desc hyp_prim_desc = {
-    "hyp", "Hyperboloid of One Sheet", 4, hyp_cmds
+    "hyp", "Hyperboloid of One Sheet", 5, hyp_cmds
 };
 
 const struct rt_edit_prim_desc *

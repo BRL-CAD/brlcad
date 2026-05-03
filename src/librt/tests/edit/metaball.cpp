@@ -22,16 +22,16 @@
  * Test editing of METABALL primitive parameters.
  *
  * Reference METABALL: method=0 (METABALL_METABALL), threshold=0.5
- *   pt1 = (1, 0, 0), fldstr=1.0, sweat=0.2
- *   pt2 = (-1, 0, 0), fldstr=2.0, sweat=0.3
+ *   pt1 = (1, 0, 0), field_strength=1.0, blobbiness=0.2
+ *   pt2 = (-1, 0, 0), field_strength=2.0, blobbiness=0.3
  *
  * Expected values derived from MGED edsol.c (MENU_METABALL_*) and
  * analytical tracing.  rt_metaball_mat is alias-safe (copies coord
  * to a temporary before MAT4X3PNT).
  *
  * rt_metaball_mat: applies MAT4X3PNT to each control point coord, and
- * scales fldstr by 1/mat[15].  For scale=s: mat[15]=1/s, so
- * fldstr → fldstr * s.  For rotation: mat[15]=1, fldstr unchanged.
+ * scales field_strength by 1/mat[15].  For scale=s: mat[15]=1/s, so
+ * field_strength → field_strength * s.  For rotation: mat[15]=1, field_strength unchanged.
  *
  * Keypoint when no point selected: (0,0,0)  (rt_edit_metaball_keypoint
  * returns VSETALL(0) when es_metaball_pnt is NULL).
@@ -75,22 +75,22 @@ make_metaball(struct rt_wdb *wdbp)
     mb->finalstep = 0.0;
     BU_LIST_INIT(&mb->metaball_ctrl_head);
 
-    /* pt1: (1, 0, 0), fldstr=1.0, sweat=0.2 */
+    /* pt1: (1, 0, 0), field_strength=1.0, blobbiness=0.2 */
     struct wdb_metaball_pnt *p1;
     BU_GET(p1, struct wdb_metaball_pnt);
     p1->l.magic = WDB_METABALLPT_MAGIC;
     VSET(p1->coord,  1, 0, 0);
-    p1->fldstr = 1.0;
-    p1->sweat  = 0.2;
+    p1->field_strength = 1.0;
+    p1->blobbiness  = 0.2;
     BU_LIST_INSERT(&mb->metaball_ctrl_head, &p1->l);
 
-    /* pt2: (-1, 0, 0), fldstr=2.0, sweat=0.3 */
+    /* pt2: (-1, 0, 0), field_strength=2.0, blobbiness=0.3 */
     struct wdb_metaball_pnt *p2;
     BU_GET(p2, struct wdb_metaball_pnt);
     p2->l.magic = WDB_METABALLPT_MAGIC;
     VSET(p2->coord, -1, 0, 0);
-    p2->fldstr = 2.0;
-    p2->sweat  = 0.3;
+    p2->field_strength = 2.0;
+    p2->blobbiness  = 0.3;
     BU_LIST_INSERT(&mb->metaball_ctrl_head, &p2->l);
 
     /* wdb_export owns mb and frees it via rt_metaball_ifree after export */
@@ -148,8 +148,8 @@ mb_reset(struct rt_edit *s, struct rt_metaball_internal *edit_mb)
     BU_GET(n1, struct wdb_metaball_pnt);
     n1->l.magic = WDB_METABALLPT_MAGIC;
     VSET(n1->coord,  1, 0, 0);
-    n1->fldstr = 1.0;
-    n1->sweat  = 0.2;
+    n1->field_strength = 1.0;
+    n1->blobbiness  = 0.2;
     BU_LIST_INSERT(&edit_mb->metaball_ctrl_head, &n1->l);
 
     /* Add pt2 */
@@ -157,8 +157,8 @@ mb_reset(struct rt_edit *s, struct rt_metaball_internal *edit_mb)
     BU_GET(n2, struct wdb_metaball_pnt);
     n2->l.magic = WDB_METABALLPT_MAGIC;
     VSET(n2->coord, -1, 0, 0);
-    n2->fldstr = 2.0;
-    n2->sweat  = 0.3;
+    n2->field_strength = 2.0;
+    n2->blobbiness  = 0.3;
     BU_LIST_INSERT(&edit_mb->metaball_ctrl_head, &n2->l);
 
     /* Reset threshold/method */
@@ -322,9 +322,9 @@ main(int argc, char *argv[])
      *
      * rt_metaball_mat with scale=2 (mat[15]=1/2):
      *   coord → coord * 2  (MAT4X3PNT divides by mat[15])
-     *   fldstr → fldstr / mat[15] = fldstr * 2
-     * pt1: (1,0,0)→(2,0,0), fldstr 1.0→2.0
-     * pt2: (-1,0,0)→(-2,0,0), fldstr 2.0→4.0
+     *   field_strength → field_strength / mat[15] = field_strength * 2
+     * pt1: (1,0,0)→(2,0,0), field_strength 1.0→2.0
+     * pt2: (-1,0,0)→(-2,0,0), field_strength 2.0→4.0
      * ================================================================*/
     mb_reset(s, edit_mb);
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, RT_PARAMS_EDIT_SCALE);
@@ -337,17 +337,17 @@ main(int argc, char *argv[])
 	struct wdb_metaball_pnt *pt2 = mb_second_pt(s);
 	point_t exp1 = {2, 0, 0}, exp2 = {-2, 0, 0};
 	if (!VNEAR_EQUAL(pt1->coord, exp1, VUNITIZE_TOL) ||
-	    !NEAR_EQUAL(pt1->fldstr, 2.0, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(pt1->field_strength, 2.0, VUNITIZE_TOL) ||
 	    !VNEAR_EQUAL(pt2->coord, exp2, VUNITIZE_TOL) ||
-	    !NEAR_EQUAL(pt2->fldstr, 4.0, VUNITIZE_TOL))
+	    !NEAR_EQUAL(pt2->field_strength, 4.0, VUNITIZE_TOL))
 	    bu_exit(1, "ERROR: RT_PARAMS_EDIT_SCALE failed\n"
-		    "  pt1: coord=%g,%g,%g fldstr=%g\n"
-		    "  pt2: coord=%g,%g,%g fldstr=%g\n",
-		    V3ARGS(pt1->coord), pt1->fldstr,
-		    V3ARGS(pt2->coord), pt2->fldstr);
-	bu_log("RT_PARAMS_EDIT_SCALE SUCCESS: pt1=%g,%g,%g fldstr=%g  pt2=%g,%g,%g fldstr=%g\n",
-	       V3ARGS(pt1->coord), pt1->fldstr,
-	       V3ARGS(pt2->coord), pt2->fldstr);
+		    "  pt1: coord=%g,%g,%g field_strength=%g\n"
+		    "  pt2: coord=%g,%g,%g field_strength=%g\n",
+		    V3ARGS(pt1->coord), pt1->field_strength,
+		    V3ARGS(pt2->coord), pt2->field_strength);
+	bu_log("RT_PARAMS_EDIT_SCALE SUCCESS: pt1=%g,%g,%g field_strength=%g  pt2=%g,%g,%g field_strength=%g\n",
+	       V3ARGS(pt1->coord), pt1->field_strength,
+	       V3ARGS(pt2->coord), pt2->field_strength);
     }
 
     /* ================================================================
@@ -359,7 +359,7 @@ main(int argc, char *argv[])
      *   rt_metaball_mat MAT4X3PNT: coord += (10,20,30)
      * pt1: (1,0,0) → (11,20,30)
      * pt2: (-1,0,0) → (9,20,30)
-     * fldstr unchanged (mat[15]=1 for translation matrix)
+     * field_strength unchanged (mat[15]=1 for translation matrix)
      * ================================================================*/
     mb_reset(s, edit_mb);
     EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, RT_PARAMS_EDIT_TRANS);
@@ -390,7 +390,7 @@ main(int argc, char *argv[])
      *   = (0.99240387650610407, 0.09439130678413448, -0.07889757346864876)
      * pt2 (-1,0,0) → -R[:,0]
      *   = (-0.99240387650610407, -0.09439130678413448, 0.07889757346864876)
-     * fldstr unchanged.
+     * field_strength unchanged.
      * ================================================================*/
     mb_reset(s, edit_mb);
     MAT_IDN(s->acc_rot_sol);
@@ -408,13 +408,13 @@ main(int argc, char *argv[])
 	point_t exp2 = {-0.99240387650610407, -0.09439130678413448,  0.07889757346864876};
 	if (!VNEAR_EQUAL(pt1->coord, exp1, VUNITIZE_TOL) ||
 	    !VNEAR_EQUAL(pt2->coord, exp2, VUNITIZE_TOL) ||
-	    !NEAR_EQUAL(pt1->fldstr, 1.0, VUNITIZE_TOL) ||
-	    !NEAR_EQUAL(pt2->fldstr, 2.0, VUNITIZE_TOL))
+	    !NEAR_EQUAL(pt1->field_strength, 1.0, VUNITIZE_TOL) ||
+	    !NEAR_EQUAL(pt2->field_strength, 2.0, VUNITIZE_TOL))
 	    bu_exit(1, "ERROR: RT_PARAMS_EDIT_ROT failed\n"
-		    "  pt1: coord=%0.17f,%0.17f,%0.17f fldstr=%g\n"
-		    "  pt2: coord=%0.17f,%0.17f,%0.17f fldstr=%g\n",
-		    V3ARGS(pt1->coord), pt1->fldstr,
-		    V3ARGS(pt2->coord), pt2->fldstr);
+		    "  pt1: coord=%0.17f,%0.17f,%0.17f field_strength=%g\n"
+		    "  pt2: coord=%0.17f,%0.17f,%0.17f field_strength=%g\n",
+		    V3ARGS(pt1->coord), pt1->field_strength,
+		    V3ARGS(pt2->coord), pt2->field_strength);
 	bu_log("RT_PARAMS_EDIT_ROT(k) SUCCESS: pt1=%g,%g,%g  pt2=%g,%g,%g\n",
 	       V3ARGS(pt1->coord), V3ARGS(pt2->coord));
     }
@@ -522,36 +522,112 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
     }
 
     /* ================================================================
-     * ECMD_METABALL_PT_SWEAT  (set sweat to absolute value)
+     * ECMD_METABALL_PT_SET_BLOBBINESS  (set blobbiness to absolute value)
      *
-     * Pre-select pt1.  Set sweat to 0.75.
-     * pt1.sweat → 0.75 (regardless of prior value)
+     * Pre-select pt1.  Set blobbiness to 0.75.
+     * pt1.blobbiness → 0.75 (regardless of prior value)
      * ================================================================*/
     mb_reset(s, edit_mb);
     m->es_metaball_pnt = mb_first_pt(s);
-    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_SWEAT);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_SET_BLOBBINESS);
     s->e_inpara = 1;
     s->e_para[0] = 0.75;
 
     rt_edit_process(s);
     {
 	struct wdb_metaball_pnt *pt1 = mb_first_pt(s);
-	if (!NEAR_EQUAL(pt1->sweat, 0.75, VUNITIZE_TOL))
-	    bu_exit(1, "ERROR: ECMD_METABALL_PT_SWEAT failed: sweat=%g\n",
-		    pt1->sweat);
-	bu_log("ECMD_METABALL_PT_SWEAT SUCCESS: sweat=%g\n", pt1->sweat);
+	if (!NEAR_EQUAL(pt1->blobbiness, 0.75, VUNITIZE_TOL))
+	    bu_exit(1, "ERROR: ECMD_METABALL_PT_SET_BLOBBINESS failed: blobbiness=%g\n",
+		    pt1->blobbiness);
+	bu_log("ECMD_METABALL_PT_SET_BLOBBINESS SUCCESS: blobbiness=%g\n", pt1->blobbiness);
     }
 
-    /* ECMD_METABALL_PT_SWEAT error: no point selected.
+    /* ECMD_METABALL_PT_SET_BLOBBINESS error: no point selected.
      * The error is caught in ft_set_edit_mode (before rt_edit_process).
      * Check the log right after ft_set_edit_mode. */
     mb_reset(s, edit_mb);
     /* m->es_metaball_pnt is NULL after mb_reset */
     bu_vls_trunc(s->log_str, 0);
-    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_SWEAT);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_METABALL_PT_SET_BLOBBINESS);
     if (bu_vls_strlen(s->log_str) == 0)
-	bu_exit(1, "ERROR: ECMD_METABALL_PT_SWEAT with no point: expected error in log from set_edit_mode\n");
-    bu_log("ECMD_METABALL_PT_SWEAT no-point correctly refused\n");
+	bu_exit(1, "ERROR: ECMD_METABALL_PT_SET_BLOBBINESS with no point: expected error in log from set_edit_mode\n");
+    bu_log("ECMD_METABALL_PT_SET_BLOBBINESS no-point correctly refused\n");
+
+    /* ================================================================
+     * write_params / read_params round-trip
+     *
+     * Write the current metaball state (2 points) to a string, then
+     * import a fresh copy and read the params back into it. Verify
+     * that threshold, method, and both control points survive.
+     * ================================================================*/
+    mb_reset(s, edit_mb);
+
+    struct bu_vls param_str = BU_VLS_INIT_ZERO;
+    EDOBJ[dp->d_minor_type].ft_write_params(&param_str, &s->es_int, NULL, s->base2local);
+    if (bu_vls_strlen(&param_str) == 0)
+	bu_exit(1, "ERROR: write_params returned empty string\n");
+    bu_log("write_params output:\n%s", bu_vls_cstr(&param_str));
+
+    /* Build a fresh rt_db_internal with a blank metaball, then read params into it. */
+    struct rt_db_internal fresh_ip;
+    RT_DB_INTERNAL_INIT(&fresh_ip);
+    struct rt_metaball_internal *fresh_mb;
+    BU_ALLOC(fresh_mb, struct rt_metaball_internal);
+    fresh_mb->magic     = RT_METABALL_INTERNAL_MAGIC;
+    fresh_mb->threshold = 0.0;
+    fresh_mb->method    = -1;
+    BU_LIST_INIT(&fresh_mb->metaball_ctrl_head);
+    fresh_ip.idb_ptr      = (void *)fresh_mb;
+    fresh_ip.idb_minor_type = ID_METABALL;
+    fresh_ip.idb_meth     = &OBJ[ID_METABALL];
+
+    int rp_ret = EDOBJ[dp->d_minor_type].ft_read_params(
+	    &fresh_ip, bu_vls_cstr(&param_str), NULL, s->local2base);
+    if (rp_ret != BRLCAD_OK)
+	bu_exit(1, "ERROR: read_params failed (ret=%d)\n", rp_ret);
+
+    /* Verify threshold and method */
+    if (!NEAR_EQUAL(fresh_mb->threshold, 0.5, VUNITIZE_TOL))
+	bu_exit(1, "ERROR: read_params threshold mismatch: %g (expected 0.5)\n",
+		fresh_mb->threshold);
+    if (fresh_mb->method != METABALL_METABALL)
+	bu_exit(1, "ERROR: read_params method mismatch: %d\n", fresh_mb->method);
+
+    /* Verify point count */
+    int npts = 0;
+    struct wdb_metaball_pnt *mpt;
+    for (BU_LIST_FOR(mpt, wdb_metaball_pnt, &fresh_mb->metaball_ctrl_head))
+	npts++;
+    if (npts != 2)
+	bu_exit(1, "ERROR: read_params point count mismatch: %d (expected 2)\n", npts);
+
+    bu_log("write_params/read_params round-trip SUCCESS: threshold=%g method=%d npts=%d\n",
+	   fresh_mb->threshold, fresh_mb->method, npts);
+
+    /* Cleanup fresh copy */
+    bu_vls_free(&param_str);
+    while (BU_LIST_NON_EMPTY(&fresh_mb->metaball_ctrl_head)) {
+	struct wdb_metaball_pnt *pt2 =
+	    BU_LIST_FIRST(wdb_metaball_pnt, &fresh_mb->metaball_ctrl_head);
+	BU_LIST_DQ(&pt2->l);
+	BU_PUT(pt2, struct wdb_metaball_pnt);
+    }
+    bu_free(fresh_mb, "fresh_mb");
+
+    /* ================================================================
+     * ft_edit_desc: verify descriptor is registered and has expected
+     * command count.
+     * ================================================================*/
+    {
+	const struct rt_edit_prim_desc *desc =
+	    EDOBJ[dp->d_minor_type].ft_edit_desc();
+	if (!desc)
+	    bu_exit(1, "ERROR: ft_edit_desc is NULL for metaball\n");
+	if (desc->ncmd != 11)
+	    bu_exit(1, "ERROR: ft_edit_desc ncmd=%d (expected 11)\n", desc->ncmd);
+	bu_log("ft_edit_desc SUCCESS: prim_type=%s ncmd=%d\n",
+	       desc->prim_type, desc->ncmd);
+    }
 
     rt_edit_destroy(s);
     db_close(dbip);

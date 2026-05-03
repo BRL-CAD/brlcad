@@ -4,7 +4,7 @@
 # DbiState null-safety (section A), axis-mode rotate / scale -c (section C).
 brlcad_addexec(ged_test_edit
   test_edit.cpp
-  "libged;libwdb"
+  "libged;libwdb;libbrep"
   TEST
 )
 if(TARGET ged_test_edit)

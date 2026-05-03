@@ -166,6 +166,15 @@ main(int argc, char *argv[])
     /* COMB: ECMD_COMB_ADD_MEMBER = 12001 */
     fail += check_prim("COMB", ID_COMBINATION, "\"comb\"",  12001);
 
+    /* HALF: ECMD_HALF_SET_D = 6001 */
+    fail += check_prim("HALF", ID_HALF,     "\"half\"",     6001);
+
+    /* SPH: ECMD_SPH_SET_V = 10001 */
+    fail += check_prim("SPH",  ID_SPH,      "\"sph\"",      10001);
+
+    /* REC: ECMD_REC_SET_V = 7001 */
+    fail += check_prim("REC",  ID_REC,      "\"rec\"",      7001);
+
     /* ------------------------------------------------------------------
      * Verify that primitives without ft_edit_desc return BRLCAD_ERROR.
      * ------------------------------------------------------------------ */

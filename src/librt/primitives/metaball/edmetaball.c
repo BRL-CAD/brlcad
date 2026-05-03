@@ -38,11 +38,11 @@
 #define ECMD_METABALL_PT_PREV		30122
 #define ECMD_METABALL_PT_ADD		36089	/* add a metaball control point */
 #define ECMD_METABALL_PT_DEL		36088	/* delete a metaball control point */
-#define ECMD_METABALL_PT_FLDSTR		36087	/* set a metaball control point field strength */
+#define ECMD_METABALL_PT_FLDSTR		36087	/* scale a metaball control point's field strength */
 #define ECMD_METABALL_PT_MOV		36086	/* move a metaball control point */
 #define ECMD_METABALL_PT_PICK		36085	/* pick a metaball control point */
-#define ECMD_METABALL_PT_SET_GOO	30119
-#define ECMD_METABALL_PT_SWEAT		30120	/* set sweat value on selected control point */
+#define ECMD_METABALL_PT_SCALE_BLOBBINESS	30119	/* scale blobbiness of selected control point */
+#define ECMD_METABALL_PT_SET_BLOBBINESS		30120	/* set blobbiness of selected control point */
 #define ECMD_METABALL_RMET		36090	/* set the metaball render method */
 #define ECMD_METABALL_SET_METHOD	36084	/* set the rendering method */
 #define ECMD_METABALL_SET_THRESHOLD	36083	/* overall metaball threshold value */
@@ -92,7 +92,7 @@ rt_edit_metaball_set_edit_mode(struct rt_edit *s, int mode)
     switch (mode) {
 	case ECMD_METABALL_SET_THRESHOLD:
 	case ECMD_METABALL_SET_METHOD:
-	case ECMD_METABALL_PT_SET_GOO:
+	case ECMD_METABALL_PT_SCALE_BLOBBINESS:
 	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
 	    break;
 	case ECMD_METABALL_PT_PICK:
@@ -141,7 +141,7 @@ rt_edit_metaball_set_edit_mode(struct rt_edit *s, int mode)
 		return;
 	    }
 	    break;
-	case ECMD_METABALL_PT_SWEAT:
+	case ECMD_METABALL_PT_SET_BLOBBINESS:
 	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
 	    if (!m->es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
@@ -173,7 +173,7 @@ metaball_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUS
     switch (arg) {
 	case ECMD_METABALL_SET_THRESHOLD:
 	case ECMD_METABALL_SET_METHOD:
-	case ECMD_METABALL_PT_SET_GOO:
+	case ECMD_METABALL_PT_SCALE_BLOBBINESS:
 	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
 	    break;
 	case ECMD_METABALL_PT_PICK:
@@ -228,7 +228,7 @@ metaball_ed(struct rt_edit *s, int arg, int UNUSED(a), int UNUSED(b), void *UNUS
 		return;
 	    }
 	    break;
-	case ECMD_METABALL_PT_SWEAT:
+	case ECMD_METABALL_PT_SET_BLOBBINESS:
 	    s->edit_mode = RT_PARAMS_EDIT_SCALE;
 	    if (!m->es_metaball_pnt) {
 		bu_vls_printf(s->log_str, "No Metaball Point selected\n");
@@ -260,9 +260,9 @@ struct rt_edit_menu_item metaball_menu[] = {
     { "Next Point", metaball_ed, ECMD_METABALL_PT_NEXT },
     { "Previous Point", metaball_ed, ECMD_METABALL_PT_PREV },
     { "Move Point", metaball_ed, ECMD_METABALL_PT_MOV },
-    { "Scale Point fldstr", metaball_ed, ECMD_METABALL_PT_FLDSTR },
-    { "Scale Point \"goo\" value", metaball_ed, ECMD_METABALL_PT_SET_GOO },
-    { "Set Point sweat value", metaball_ed, ECMD_METABALL_PT_SWEAT },
+    { "Scale Point Field Strength", metaball_ed, ECMD_METABALL_PT_FLDSTR },
+    { "Scale Point Blobbiness", metaball_ed, ECMD_METABALL_PT_SCALE_BLOBBINESS },
+    { "Set Point Blobbiness", metaball_ed, ECMD_METABALL_PT_SET_BLOBBINESS },
     { "Delete Point", metaball_ed, ECMD_METABALL_PT_DEL },
     { "Add Point", metaball_ed, ECMD_METABALL_PT_ADD },
     { "", NULL, 0 }
@@ -272,6 +272,370 @@ struct rt_edit_menu_item *
 rt_edit_metaball_menu_item(const struct bn_tol *UNUSED(tol))
 {
     return metaball_menu;
+}
+
+
+/* ------------------------------------------------------------------ */
+/* ft_edit_desc descriptor for the Metaball primitive                 */
+/* ------------------------------------------------------------------ */
+
+/* Scalar param used by SET_THRESHOLD and SET_METHOD */
+static const struct rt_edit_param_desc metaball_threshold_params[] = {
+    {
+	"threshold",          /* name         */
+	"Threshold",          /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	0.0,                  /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"",                   /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_param_desc metaball_method_params[] = {
+    {
+	"method",             /* name         */
+	"Render Method",      /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	0.0,                  /* range_min    */
+	2.0,                  /* range_max (0=Metaball,1=Isopotential,2=Blob) */
+	"",                   /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+/* POINT param for pt_pick, pt_mov, pt_add */
+static const struct rt_edit_param_desc metaball_point_params[] = {
+    {
+	"pt",                 /* name         */
+	"Point X Y Z",        /* label        */
+	RT_EDIT_PARAM_POINT,  /* type         */
+	0,                    /* index        */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_min  */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+/* SCALAR param for field_strength (per-point) */
+static const struct rt_edit_param_desc metaball_field_strength_params[] = {
+    {
+	"field_strength",     /* name         */
+	"Field Strength",     /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	0.0,                  /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"",                   /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+/* SCALAR param for blobbiness (per-point, blob method) */
+static const struct rt_edit_param_desc metaball_blobbiness_params[] = {
+    {
+	"blobbiness",         /* name         */
+	"Blobbiness",         /* label        */
+	RT_EDIT_PARAM_SCALAR, /* type         */
+	0,                    /* index        */
+	0.0,                  /* range_min    */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"",                   /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
+static const struct rt_edit_cmd_desc metaball_cmds[] = {
+    /* --- global metaball parameters --------------------------------- */
+    {
+	ECMD_METABALL_SET_THRESHOLD, /* cmd_id  */
+	"Set Threshold",      /* label        */
+	"metaball",           /* category     */
+	1,                    /* nparam       */
+	metaball_threshold_params, /* params  */
+	1,                    /* interactive  */
+	10                    /* display_order */
+    },
+    {
+	ECMD_METABALL_SET_METHOD,    /* cmd_id  */
+	"Set Render Method",  /* label        */
+	"metaball",           /* category     */
+	1,                    /* nparam       */
+	metaball_method_params, /* params     */
+	1,                    /* interactive  */
+	20                    /* display_order */
+    },
+    /* --- point selection / navigation -------------------------------- */
+    {
+	ECMD_METABALL_PT_PICK,       /* cmd_id  */
+	"Select Point",       /* label        */
+	"select",             /* category     */
+	1,                    /* nparam       */
+	metaball_point_params, /* params      */
+	1,                    /* interactive  */
+	30                    /* display_order */
+    },
+    {
+	ECMD_METABALL_PT_NEXT,       /* cmd_id  */
+	"Next Point",         /* label        */
+	"select",             /* category     */
+	0,                    /* nparam       */
+	NULL,                 /* params       */
+	0,                    /* interactive  */
+	31                    /* display_order */
+    },
+    {
+	ECMD_METABALL_PT_PREV,       /* cmd_id  */
+	"Previous Point",     /* label        */
+	"select",             /* category     */
+	0,                    /* nparam       */
+	NULL,                 /* params       */
+	0,                    /* interactive  */
+	32                    /* display_order */
+    },
+    /* --- point geometry manipulation --------------------------------- */
+    {
+	ECMD_METABALL_PT_MOV,        /* cmd_id  */
+	"Move Point",         /* label        */
+	"point",              /* category     */
+	1,                    /* nparam       */
+	metaball_point_params, /* params      */
+	1,                    /* interactive  */
+	40                    /* display_order */
+    },
+    {
+	ECMD_METABALL_PT_ADD,        /* cmd_id  */
+	"Add Point",          /* label        */
+	"point",              /* category     */
+	1,                    /* nparam       */
+	metaball_point_params, /* params      */
+	1,                    /* interactive  */
+	50                    /* display_order */
+    },
+    {
+	ECMD_METABALL_PT_DEL,        /* cmd_id  */
+	"Delete Point",       /* label        */
+	"point",              /* category     */
+	0,                    /* nparam       */
+	NULL,                 /* params       */
+	0,                    /* interactive  */
+	60                    /* display_order */
+    },
+    /* --- per-point scalar parameters --------------------------------- */
+    {
+	ECMD_METABALL_PT_FLDSTR,     /* cmd_id  */
+	"Scale Point Field Strength", /* label  */
+	"point",              /* category     */
+	1,                    /* nparam       */
+	metaball_field_strength_params, /* params */
+	1,                    /* interactive  */
+	70                    /* display_order */
+    },
+    {
+	ECMD_METABALL_PT_SCALE_BLOBBINESS, /* cmd_id */
+	"Scale Point Blobbiness", /* label    */
+	"point",              /* category     */
+	1,                    /* nparam       */
+	metaball_blobbiness_params, /* params */
+	1,                    /* interactive  */
+	80                    /* display_order */
+    },
+    {
+	ECMD_METABALL_PT_SET_BLOBBINESS, /* cmd_id */
+	"Set Point Blobbiness", /* label      */
+	"point",              /* category     */
+	1,                    /* nparam       */
+	metaball_blobbiness_params, /* params */
+	1,                    /* interactive  */
+	90                    /* display_order */
+    }
+};
+
+static const struct rt_edit_prim_desc metaball_prim_desc = {
+    "metaball",           /* prim_type    */
+    "Metaball",           /* prim_label   */
+    11,                   /* ncmd         */
+    metaball_cmds         /* cmds         */
+};
+
+const struct rt_edit_prim_desc *
+rt_edit_metaball_edit_desc(void)
+{
+    return &metaball_prim_desc;
+}
+
+
+/* get_params: return current value(s) for the given cmd_id */
+int
+rt_edit_metaball_get_params(struct rt_edit *s, int cmd_id, fastf_t *vals)
+{
+    struct rt_metaball_internal *ball;
+    struct rt_metaball_edit *m;
+
+    if (!s || !vals)
+	return -1;
+
+    ball = (struct rt_metaball_internal *)s->es_int.idb_ptr;
+    RT_METABALL_CK_MAGIC(ball);
+    m = (struct rt_metaball_edit *)s->ipe_ptr;
+
+    switch (cmd_id) {
+	case ECMD_METABALL_SET_THRESHOLD:
+	    vals[0] = ball->threshold;
+	    return 1;
+	case ECMD_METABALL_SET_METHOD:
+	    vals[0] = (fastf_t)ball->method;
+	    return 1;
+	case ECMD_METABALL_PT_FLDSTR:
+	    if (!m->es_metaball_pnt)
+		return 0;
+	    vals[0] = m->es_metaball_pnt->field_strength;
+	    return 1;
+	case ECMD_METABALL_PT_SCALE_BLOBBINESS:
+	case ECMD_METABALL_PT_SET_BLOBBINESS:
+	    if (!m->es_metaball_pnt)
+		return 0;
+	    vals[0] = m->es_metaball_pnt->blobbiness;
+	    return 1;
+	case ECMD_METABALL_PT_PICK:
+	case ECMD_METABALL_PT_MOV:
+	case ECMD_METABALL_PT_ADD:
+	    if (!m->es_metaball_pnt)
+		return 0;
+	    VMOVE(vals, m->es_metaball_pnt->coord);
+	    return 3;
+	default:
+	    return 0;
+    }
+}
+
+#define V3BASE2LOCAL(_pt) (_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
+
+void
+rt_edit_metaball_write_params(
+	struct bu_vls *p,
+	const struct rt_db_internal *ip,
+	const struct bn_tol *UNUSED(tol),
+	fastf_t base2local)
+{
+    struct rt_metaball_internal *ball =
+	(struct rt_metaball_internal *)ip->idb_ptr;
+    RT_METABALL_CK_MAGIC(ball);
+    struct wdb_metaball_pnt *mbpt;
+    int n = 0;
+
+    bu_vls_printf(p, "method: %d\n", ball->method);
+    bu_vls_printf(p, "threshold: %.9f\n", ball->threshold);
+
+    for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, &ball->metaball_ctrl_head)) {
+	bu_vls_printf(p, "point[%d]: %.9f %.9f %.9f field_strength=%.9f blobbiness=%.9f\n",
+		      n,
+		      V3BASE2LOCAL(mbpt->coord),
+		      mbpt->field_strength,
+		      mbpt->blobbiness);
+	n++;
+    }
+}
+
+#define read_params_line_incr \
+    lc = (ln) ? (ln + lcj) : NULL; \
+    if (!lc) { \
+	bu_free(wc, "wc"); \
+	return BRLCAD_ERROR; \
+    } \
+    ln = strchr(lc, tc); \
+    if (ln) *ln = '\0'; \
+    while (lc && strchr(lc, ':')) lc++
+
+int
+rt_edit_metaball_read_params(
+	struct rt_db_internal *ip,
+	const char *fc,
+	const struct bn_tol *UNUSED(tol),
+	fastf_t local2base
+	)
+{
+    struct rt_metaball_internal *ball =
+	(struct rt_metaball_internal *)ip->idb_ptr;
+    RT_METABALL_CK_MAGIC(ball);
+
+    if (!fc)
+	return BRLCAD_ERROR;
+
+    const char *crpos = strchr(fc, '\r');
+    int crlf = (crpos && crpos[1] == '\n') ? 1 : 0;
+    char tc = (crlf) ? '\r' : '\n';
+    int lcj = (crlf) ? 2 : 1;
+
+    char *ln = NULL;
+    char *wc = bu_strdup(fc);
+    char *lc = wc;
+
+    /* method line */
+    ln = strchr(lc, tc);
+    if (ln) *ln = '\0';
+    while (lc && strchr(lc, ':')) lc++;
+    {
+	int method = 0;
+	sscanf(lc, "%d", &method);
+	ball->method = method;
+    }
+
+    /* threshold line */
+    read_params_line_incr;
+    {
+	double threshold = 0.0;
+	sscanf(lc, "%lf", &threshold);
+	ball->threshold = threshold;
+    }
+
+    /* clear existing points */
+    while (BU_LIST_NON_EMPTY(&ball->metaball_ctrl_head)) {
+	struct wdb_metaball_pnt *pt =
+	    BU_LIST_FIRST(wdb_metaball_pnt, &ball->metaball_ctrl_head);
+	BU_LIST_DQ(&pt->l);
+	BU_PUT(pt, struct wdb_metaball_pnt);
+    }
+
+    /* read point lines: "point[N]: x y z field_strength=fs blobbiness=bl" */
+    while (1) {
+	lc = (ln) ? (ln + lcj) : NULL;
+	if (!lc || *lc == '\0') break;
+	ln = strchr(lc, tc);
+	if (ln) *ln = '\0';
+
+	/* Only process lines that start with "point[" */
+	if (!bu_strncmp(lc, "point[", 6)) {
+	    /* skip to closing bracket, then past the colon separator */
+	    const char *after = strchr(lc, ']');
+	    if (!after) break;
+	    const char *coords = strchr(after, ':');
+	    if (!coords) break;
+	    coords++; /* step past ':' */
+	    double x = 0.0, y = 0.0, z = 0.0, fs = 1.0, bl = 1.0;
+	    int nread = sscanf(coords,
+			      " %lf %lf %lf field_strength=%lf blobbiness=%lf",
+			      &x, &y, &z, &fs, &bl);
+	    if (nread < 3) {
+		bu_log("rt_edit_metaball_read_params: malformed point line, skipping\n");
+		continue;
+	    }
+	    point_t loc;
+	    VSET(loc, x * local2base, y * local2base, z * local2base);
+	    rt_metaball_add_point(ball, (const point_t *)&loc, (fastf_t)fs, (fastf_t)bl);
+	}
+    }
+
+    bu_free(wc, "wc");
+    return BRLCAD_OK;
 }
 
 
@@ -334,7 +698,7 @@ rt_edit_metaball_keypoint(
 	snprintf(buf, BUFSIZ, "no point selected");
     } else {
 	VMOVE(mpt, m->es_metaball_pnt->coord);
-	snprintf(buf, BUFSIZ, "V %f", m->es_metaball_pnt->fldstr);
+	snprintf(buf, BUFSIZ, "V %f", m->es_metaball_pnt->field_strength);
     }
 
     MAT4X3PNT(*pt, mat, mpt);
@@ -386,10 +750,10 @@ ecmd_metaball_pt_set_goo(struct rt_edit *s)
     }
 
     if (!m->es_metaball_pnt || !s->e_inpara) {
-	bu_vls_printf(s->log_str, "pscale: no metaball point selected for scaling goo\n");
+	bu_vls_printf(s->log_str, "pscale: no metaball point selected for scaling blobbiness\n");
 	return BRLCAD_ERROR;
     }
-    m->es_metaball_pnt->sweat *= *s->e_para * ((s->es_scale > -SMALL_FASTF) ? s->es_scale : 1.0);
+    m->es_metaball_pnt->blobbiness *= *s->e_para * ((s->es_scale > -SMALL_FASTF) ? s->es_scale : 1.0);
 
     return 0;
 }
@@ -400,15 +764,15 @@ ecmd_metaball_pt_sweat(struct rt_edit *s)
     struct rt_metaball_edit *m = (struct rt_metaball_edit *)s->ipe_ptr;
 
     if (!m->es_metaball_pnt || !s->e_inpara) {
-	bu_vls_printf(s->log_str, "no metaball point selected for setting sweat\n");
+	bu_vls_printf(s->log_str, "no metaball point selected for setting blobbiness\n");
 	return BRLCAD_ERROR;
     }
     if (s->e_para[0] < 0.0) {
-	bu_vls_printf(s->log_str, "ERROR: sweat value must be >= 0\n");
+	bu_vls_printf(s->log_str, "ERROR: blobbiness value must be >= 0\n");
 	s->e_inpara = 0;
 	return BRLCAD_ERROR;
     }
-    m->es_metaball_pnt->sweat = s->e_para[0];
+    m->es_metaball_pnt->blobbiness = s->e_para[0];
     return 0;
 }
 
@@ -427,7 +791,7 @@ ecmd_metaball_pt_fldstr(struct rt_edit *s)
 	return BRLCAD_ERROR;
     }
 
-    m->es_metaball_pnt->fldstr *= *s->e_para * ((s->es_scale > -SMALL_FASTF) ? s->es_scale : 1.0);
+    m->es_metaball_pnt->field_strength *= *s->e_para * ((s->es_scale > -SMALL_FASTF) ? s->es_scale : 1.0);
 
     return 0;
 }
@@ -553,7 +917,7 @@ ecmd_metaball_pt_add(struct rt_edit *s)
     m->es_metaball_pnt = BU_LIST_FIRST(wdb_metaball_pnt, &metaball->metaball_ctrl_head);
     VMOVE(n->coord, s->e_para);
     n->l.magic = WDB_METABALLPT_MAGIC;
-    n->fldstr = 1.0;
+    n->field_strength = 1.0;
     BU_LIST_APPEND(&m->es_metaball_pnt->l, &n->l);
     m->es_metaball_pnt = n;
 }
@@ -585,9 +949,9 @@ rt_edit_metaball_pscale(struct rt_edit *s)
 	    return ecmd_metaball_set_threshold(s);
 	case ECMD_METABALL_SET_METHOD:
 	    return ecmd_metaball_set_method(s);
-	case ECMD_METABALL_PT_SET_GOO:
+	case ECMD_METABALL_PT_SCALE_BLOBBINESS:
 	    return ecmd_metaball_pt_set_goo(s);
-	case ECMD_METABALL_PT_SWEAT:
+	case ECMD_METABALL_PT_SET_BLOBBINESS:
 	    return ecmd_metaball_pt_sweat(s);
 	case ECMD_METABALL_PT_FLDSTR:
 	    return ecmd_metaball_pt_fldstr(s);
@@ -629,8 +993,8 @@ rt_edit_metaball_edit(struct rt_edit *s)
 	    break;
 	case ECMD_METABALL_SET_THRESHOLD:
 	case ECMD_METABALL_SET_METHOD:
-	case ECMD_METABALL_PT_SET_GOO:
-	case ECMD_METABALL_PT_SWEAT:
+	case ECMD_METABALL_PT_SCALE_BLOBBINESS:
+	case ECMD_METABALL_PT_SET_BLOBBINESS:
 	case ECMD_METABALL_PT_FLDSTR:
 	    return rt_edit_metaball_pscale(s);
 	default:
@@ -655,8 +1019,8 @@ rt_edit_metaball_edit_xy(
 	case ECMD_METABALL_PT_PREV:
 	case ECMD_METABALL_PT_DEL:
 	case ECMD_METABALL_PT_FLDSTR:
-	case ECMD_METABALL_PT_SET_GOO:
-	case ECMD_METABALL_PT_SWEAT:
+	case ECMD_METABALL_PT_SCALE_BLOBBINESS:
+	case ECMD_METABALL_PT_SET_BLOBBINESS:
 	case ECMD_METABALL_RMET:
 	case ECMD_METABALL_SET_METHOD:
 	case ECMD_METABALL_SET_THRESHOLD:

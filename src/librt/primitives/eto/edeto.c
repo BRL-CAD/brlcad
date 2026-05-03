@@ -99,15 +99,21 @@ static const struct rt_edit_param_desc eto_c_params[] = {
     { "c", "Semi-Minor Axis C", RT_EDIT_PARAM_SCALAR, 0, 1e-10, RT_EDIT_PARAM_NO_LIMIT,
       "length", 0, NULL, NULL, NULL }
 };
+static const struct rt_edit_param_desc eto_rot_deg_params[] = {
+    { "rot_xyz", "Rotation X Y Z (deg)", RT_EDIT_PARAM_VECTOR, 0,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT,
+      "degrees", 0, NULL, NULL, NULL }
+};
 
 static const struct rt_edit_cmd_desc eto_cmds[] = {
-    { ECMD_ETO_R,       "Set r",       "geometry", 1, eto_r_params,  1, 10 },
-    { ECMD_ETO_RD,      "Set D",       "geometry", 1, eto_rd_params, 1, 20 },
-    { ECMD_ETO_SCALE_C, "Set C",       "geometry", 1, eto_c_params,  1, 30 },
+    { ECMD_ETO_R,       "Set r",       "geometry", 1, eto_r_params,       1, 10 },
+    { ECMD_ETO_RD,      "Set D",       "geometry", 1, eto_rd_params,      1, 20 },
+    { ECMD_ETO_SCALE_C, "Set C",       "geometry", 1, eto_c_params,       1, 30 },
+    { ECMD_ETO_ROT_C,   "Rotate C",    "rotation", 1, eto_rot_deg_params, 1, 40 },
 };
 
 static const struct rt_edit_prim_desc eto_prim_desc = {
-    "eto", "Elliptical Torus", 3, eto_cmds
+    "eto", "Elliptical Torus", 4, eto_cmds
 };
 
 const struct rt_edit_prim_desc *

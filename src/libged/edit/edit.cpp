@@ -24,6 +24,7 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <climits>
 #include <cmath>
 #include <functional>
@@ -220,13 +221,26 @@ _edit_xform_apply(struct ged *gedp,
     struct rt_edit *s = ged_edit_buf_get(gedp, &dfp);
     bool is_new = (s == NULL);
 
+    /*
+     * tol must have function scope: rt_edit_create stores &tol in s->tol,
+     * so if tol were declared inside the if(is_new) block it would become a
+     * dangling pointer the moment that block's } was reached — causing any
+     * handler that calls BN_CK_TOL(s->tol) (e.g. arb8's rt_arb_std_type)
+     * to abort.  For reused buffer entries we refresh s->tol here so it
+     * always points to a valid object for the duration of do_edit(s).
+     */
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+
     if (is_new) {
-	struct bn_tol tol = BN_TOL_INIT_TOL;
 	s = rt_edit_create(&dfp, gedp->dbip, &tol, NULL);
 	if (!s) {
 	    db_free_full_path(&dfp);
 	    return BRLCAD_ERROR;
 	}
+    } else {
+	/* Refresh the tolerance pointer on reused entries so that any
+	 * handler that dereferences s->tol gets a valid object.       */
+	s->tol = &tol;
     }
 
     /* Temporarily install a minimal CLI bview (stack-allocated) */
@@ -1567,6 +1581,425 @@ cmd_perturb::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 
 
 /* ================================================================== *
+ * Phase 3 helpers: descriptor-driven per-primitive editing
+ * ================================================================== */
+
+/**
+ * Derive a CLI command slug from a descriptor label.
+ * Example: "Set Radius 1" → "set_radius_1"
+ *          "Set A,B,C"    → "set_a_b_c"
+ */
+static std::string
+_prim_cmd_slug(const char *label)
+{
+    std::string slug;
+    for (const char *p = label; p && *p; p++) {
+	if (isalnum((unsigned char)*p))
+	    slug += (char)tolower((unsigned char)*p);
+	else {
+	    if (!slug.empty() && slug.back() != '_')
+		slug += '_';
+	}
+    }
+    while (!slug.empty() && slug.back() == '_')
+	slug.pop_back();
+    return slug;
+}
+
+
+/**
+ * Get the DB5 minor type ID for a directory entry by briefly reading the
+ * object header.  Returns the minor type ID (>= 0) on success, -1 on failure.
+ */
+static int
+_get_prim_type_for_dp(struct directory *dp, struct db_i *dbip)
+{
+    if (!dp || !dbip)
+	return -1;
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    if (rt_db_get_internal(&intern, dp, dbip, NULL) < 0)
+	return -1;
+    int type_id = intern.idb_minor_type;
+    rt_db_free_internal(&intern);
+    return type_id;
+}
+
+
+/**
+ * Find a command descriptor in desc->cmds[] by CLI name.  Tries, in order:
+ *   1. Label slug: _prim_cmd_slug(cmd->label)
+ *   2. First param name for single-param commands (e.g. "r1" for "Set Radius 1")
+ *   3. Label itself (case-insensitive, for forward-compatibility)
+ * Returns the matching rt_edit_cmd_desc pointer, or NULL if not found.
+ */
+static const struct rt_edit_cmd_desc *
+_find_desc_cmd(const struct rt_edit_prim_desc *desc, const char *name)
+{
+    if (!desc || !name)
+	return NULL;
+    for (int i = 0; i < desc->ncmd; i++) {
+	const struct rt_edit_cmd_desc *cmd = &desc->cmds[i];
+	/* 1. Label slug */
+	if (_prim_cmd_slug(cmd->label) == name)
+	    return cmd;
+	/* 2. First param name (single-param shorthand) */
+	if (cmd->nparam == 1 && cmd->params && cmd->params[0].name &&
+	    BU_STR_EQUAL(cmd->params[0].name, name))
+	    return cmd;
+	/* 3. Label itself (case-insensitive) */
+	if (bu_strcasecmp(cmd->label, name) == 0)
+	    return cmd;
+    }
+    return NULL;
+}
+
+
+/**
+ * Look up a primitive type ID by its prim_type string (e.g. "tor", "ell").
+ * Scans EDOBJ[] for a matching ft_edit_desc()->prim_type.
+ * Returns the type ID (>= 0) on success, -1 if not found or no descriptor.
+ */
+static int
+_prim_type_id_from_str(const char *type_str)
+{
+    if (!type_str)
+	return -1;
+    extern const struct rt_edit_functab EDOBJ[];
+    for (int i = 0; EDOBJ[i].magic == RT_FUNCTAB_MAGIC; i++) {
+	if (!EDOBJ[i].ft_edit_desc)
+	    continue;
+	const struct rt_edit_prim_desc *desc = (*EDOBJ[i].ft_edit_desc)();
+	if (desc && desc->prim_type && BU_STR_EQUAL(desc->prim_type, type_str))
+	    return i;
+    }
+    return -1;
+}
+
+
+/**
+ * Print category-grouped help for a primitive descriptor to ged_result_str.
+ */
+static void
+_print_prim_help(struct ged *gedp, const struct rt_edit_prim_desc *desc)
+{
+    if (!gedp || !desc)
+	return;
+
+    bu_vls_printf(gedp->ged_result_str,
+	"Per-primitive operations for %s (%s):\n\n",
+	desc->prim_label, desc->prim_type);
+
+    /* Collect unique categories in first-appearance order */
+    std::vector<std::string> cats;
+    std::set<std::string>    seen_cats;
+    for (int i = 0; i < desc->ncmd; i++) {
+	const char *cat = desc->cmds[i].category ? desc->cmds[i].category : "misc";
+	if (seen_cats.find(cat) == seen_cats.end()) {
+	    seen_cats.insert(cat);
+	    cats.push_back(cat);
+	}
+    }
+
+    for (const std::string &cat : cats) {
+	bu_vls_printf(gedp->ged_result_str, "  [%s]\n", cat.c_str());
+
+	/* Collect cmds in this category; sort by display_order */
+	std::vector<const struct rt_edit_cmd_desc *> cmds_in_cat;
+	for (int i = 0; i < desc->ncmd; i++) {
+	    const char *c = desc->cmds[i].category ? desc->cmds[i].category : "misc";
+	    if (cat == c)
+		cmds_in_cat.push_back(&desc->cmds[i]);
+	}
+	std::sort(cmds_in_cat.begin(), cmds_in_cat.end(),
+	    [](const struct rt_edit_cmd_desc *a, const struct rt_edit_cmd_desc *b) {
+		return a->display_order < b->display_order;
+	    });
+
+	for (const struct rt_edit_cmd_desc *cmd : cmds_in_cat) {
+	    std::string slug = _prim_cmd_slug(cmd->label);
+	    bu_vls_printf(gedp->ged_result_str, "    %-24s %s",
+		slug.c_str(), cmd->label);
+	    if (cmd->nparam > 0) {
+		bu_vls_strcat(gedp->ged_result_str, " <");
+		for (int pi = 0; pi < cmd->nparam; pi++) {
+		    if (pi) bu_vls_strcat(gedp->ged_result_str, "> <");
+		    const struct rt_edit_param_desc *p = &cmd->params[pi];
+		    bu_vls_strcat(gedp->ged_result_str,
+			p->name ? p->name : "value");
+		}
+		bu_vls_putc(gedp->ged_result_str, '>');
+		if (cmd->nparam == 1 && cmd->params[0].units)
+		    bu_vls_printf(gedp->ged_result_str, " [%s]",
+			cmd->params[0].units);
+	    }
+	    bu_vls_putc(gedp->ged_result_str, '\n');
+	    if (cmd->nparam == 1 && cmd->params && cmd->params[0].name &&
+		!BU_STR_EQUAL(cmd->params[0].name, slug.c_str())) {
+		bu_vls_printf(gedp->ged_result_str, "    %-24s %s",
+		    cmd->params[0].name, "(alias)");
+		if (cmd->nparam > 0) {
+		    bu_vls_strcat(gedp->ged_result_str, " <");
+		    const struct rt_edit_param_desc *p = &cmd->params[0];
+		    bu_vls_strcat(gedp->ged_result_str, p->name ? p->name : "value");
+		    bu_vls_putc(gedp->ged_result_str, '>');
+		    if (p->units)
+			bu_vls_printf(gedp->ged_result_str, " [%s]", p->units);
+		}
+		bu_vls_putc(gedp->ged_result_str, '\n');
+	    }
+	}
+	bu_vls_putc(gedp->ged_result_str, '\n');
+    }
+
+}
+
+static int
+_print_all_prim_ops(struct ged *gedp, int json_mode)
+{
+    if (!gedp)
+	return BRLCAD_ERROR;
+
+    extern const struct rt_edit_functab EDOBJ[];
+    if (json_mode) {
+	bu_vls_strcat(gedp->ged_result_str, "[\n");
+	bool first_entry = true;
+	for (int i = 0; EDOBJ[i].magic == RT_FUNCTAB_MAGIC; i++) {
+	    if (!EDOBJ[i].ft_edit_desc)
+		continue;
+	    if (!first_entry)
+		bu_vls_strcat(gedp->ged_result_str, ",\n");
+	    struct bu_vls json = BU_VLS_INIT_ZERO;
+	    if (rt_edit_type_to_json(&json, i) == BRLCAD_OK)
+		bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&json));
+	    bu_vls_free(&json);
+	    first_entry = false;
+	}
+	bu_vls_strcat(gedp->ged_result_str, "]\n");
+	return BRLCAD_OK;
+    }
+
+    for (int i = 0; EDOBJ[i].magic == RT_FUNCTAB_MAGIC; i++) {
+	if (!EDOBJ[i].ft_edit_desc)
+	    continue;
+	const struct rt_edit_prim_desc *desc = (*EDOBJ[i].ft_edit_desc)();
+	_print_prim_help(gedp, desc);
+	bu_vls_putc(gedp->ged_result_str, '\n');
+    }
+
+    return BRLCAD_OK;
+}
+
+
+/**
+ * Compute the number of e_para[] slots consumed by a descriptor command —
+ * the highest (index + stride) over all non-STRING params.
+ * stride = 3 for POINT/VECTOR/COLOR, 16 for MATRIX, 1 otherwise.
+ */
+static int
+_desc_cmd_inpara(const struct rt_edit_cmd_desc *cmd)
+{
+    int max_idx = 0;
+    for (int pi = 0; pi < cmd->nparam; pi++) {
+	const struct rt_edit_param_desc *p = &cmd->params[pi];
+	if (p->type == RT_EDIT_PARAM_STRING)
+	    continue;
+	int stride = 1;
+	if (p->type == RT_EDIT_PARAM_POINT ||
+	    p->type == RT_EDIT_PARAM_VECTOR ||
+	    p->type == RT_EDIT_PARAM_COLOR)
+	    stride = 3;
+	else if (p->type == RT_EDIT_PARAM_MATRIX)
+	    stride = 16;
+	int end = p->index + stride;
+	if (end > max_idx)
+	    max_idx = end;
+    }
+    return max_idx;
+}
+
+
+/**
+ * Parse the CLI arguments for a descriptor-driven command and run it on
+ * the already-initialised rt_edit struct @a s.
+ *
+ * argv[0] is the subcommand name (consumed here); parsing begins at argv[1].
+ * Returns BRLCAD_OK on success, BRLCAD_ERROR on parse or execution failure.
+ */
+static int
+_exec_desc_cmd_on_edit(struct rt_edit *s, struct ged *gedp,
+		       const struct rt_edit_cmd_desc *cmd_desc,
+		       int argc, const char **argv)
+{
+    /* skip the subcommand name */
+    argc--; argv++;
+
+    int argi = 0;
+    for (int pi = 0; pi < cmd_desc->nparam; pi++) {
+	const struct rt_edit_param_desc *p = &cmd_desc->params[pi];
+
+	switch (p->type) {
+	    case RT_EDIT_PARAM_SCALAR:
+	    case RT_EDIT_PARAM_INTEGER:
+	    case RT_EDIT_PARAM_BOOLEAN:
+	    case RT_EDIT_PARAM_ENUM:
+	    {
+		if (argi >= argc) {
+		    if (gedp)
+			bu_vls_printf(gedp->ged_result_str,
+			    "edit: '%s' requires parameter '%s'\n",
+			    cmd_desc->label,
+			    p->name ? p->name : "value");
+		    return BRLCAD_ERROR;
+		}
+		fastf_t val;
+		if (bu_opt_fastf_t(NULL, 1, argv + argi, &val) < 0) {
+		    if (gedp)
+			bu_vls_printf(gedp->ged_result_str,
+			    "edit: cannot parse '%s' as a number for '%s'\n",
+			    argv[argi], p->name ? p->name : "value");
+		    return BRLCAD_ERROR;
+		}
+		s->e_para[p->index] = val;
+		argi++;
+		break;
+	    }
+
+	    case RT_EDIT_PARAM_POINT:
+	    case RT_EDIT_PARAM_VECTOR:
+	    {
+		if (argi + 2 >= argc) {
+		    if (gedp)
+			bu_vls_printf(gedp->ged_result_str,
+			    "edit: '%s' requires X Y Z for parameter '%s'\n",
+			    cmd_desc->label,
+			    p->name ? p->name : "vector");
+		    return BRLCAD_ERROR;
+		}
+		for (int ci = 0; ci < 3; ci++) {
+		    fastf_t val;
+		    if (bu_opt_fastf_t(NULL, 1, argv + argi, &val) < 0) {
+			if (gedp)
+			    bu_vls_printf(gedp->ged_result_str,
+				"edit: cannot parse '%s' as a number\n",
+				argv[argi]);
+			return BRLCAD_ERROR;
+		    }
+		    s->e_para[p->index + ci] = val;
+		    argi++;
+		}
+		break;
+	    }
+
+	    case RT_EDIT_PARAM_COLOR:
+	    {
+		/* RGB triple as three 0-255 values */
+		if (argi + 2 >= argc) {
+		    if (gedp)
+			bu_vls_printf(gedp->ged_result_str,
+			    "edit: '%s' requires R G B for parameter '%s'\n",
+			    cmd_desc->label,
+			    p->name ? p->name : "color");
+		    return BRLCAD_ERROR;
+		}
+		for (int ci = 0; ci < 3; ci++) {
+		    fastf_t val;
+		    if (bu_opt_fastf_t(NULL, 1, argv + argi, &val) < 0) {
+			if (gedp)
+			    bu_vls_printf(gedp->ged_result_str,
+				"edit: cannot parse color component '%s'\n",
+				argv[argi]);
+			return BRLCAD_ERROR;
+		    }
+		    s->e_para[p->index + ci] = val;
+		    argi++;
+		}
+		break;
+	    }
+
+	    case RT_EDIT_PARAM_MATRIX:
+	    {
+		/* 16 row-major values */
+		if (argi + 15 >= argc) {
+		    if (gedp)
+			bu_vls_printf(gedp->ged_result_str,
+			    "edit: '%s' requires 16 matrix elements\n",
+			    cmd_desc->label);
+		    return BRLCAD_ERROR;
+		}
+		for (int ci = 0; ci < 16; ci++) {
+		    fastf_t val;
+		    if (bu_opt_fastf_t(NULL, 1, argv + argi, &val) < 0) {
+			if (gedp)
+			    bu_vls_printf(gedp->ged_result_str,
+				"edit: cannot parse matrix element '%s'\n",
+				argv[argi]);
+			return BRLCAD_ERROR;
+		    }
+		    s->e_para[p->index + ci] = val;
+		    argi++;
+		}
+		break;
+	    }
+
+	    case RT_EDIT_PARAM_STRING:
+	    {
+		if (argi >= argc) {
+		    if (gedp)
+			bu_vls_printf(gedp->ged_result_str,
+			    "edit: '%s' requires a string for parameter '%s'\n",
+			    cmd_desc->label,
+			    p->name ? p->name : "string");
+		    return BRLCAD_ERROR;
+		}
+		rt_edit_set_str(s, p->index, argv[argi]);
+		s->e_nstr = p->index + 1;
+		argi++;
+		break;
+	    }
+
+	    default:
+		break;
+	}
+    }
+
+    s->e_inpara = _desc_cmd_inpara(cmd_desc);
+    rt_edit_set_edflag(s, cmd_desc->cmd_id);
+    rt_edit_process(s);
+
+    /* Forward any error message logged by the edit handler */
+    if (s->log_str && bu_vls_strlen(s->log_str) > 0) {
+	if (gedp)
+	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(s->log_str));
+	bu_vls_trunc(s->log_str, 0);
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
+
+/**
+ * Descriptor-driven subcommand dispatch: look up the primitive type of
+ * ctx->dp, find the matching rt_edit_cmd_desc, and execute it via
+ * _edit_xform_apply (which manages the temp edit buffer and disk promotion).
+ */
+static int
+_exec_desc_cmd(struct ged *gedp, struct ged_edit_ctx *ctx,
+	       const struct rt_edit_cmd_desc *cmd_desc,
+	       int argc, const char **argv)
+{
+    if (!gedp || !ctx || !cmd_desc || ctx->dp == RT_DIR_NULL)
+	return BRLCAD_ERROR;
+
+    return _edit_xform_apply(gedp, ctx->dp, ctx->flag_i,
+	[&](struct rt_edit *s) -> int {
+	    return _exec_desc_cmd_on_edit(s, gedp, cmd_desc, argc, argv);
+	});
+}
+
+
+/* ================================================================== *
  * Main entry point — three-pass parser
  * ================================================================== */
 
@@ -1574,6 +2007,8 @@ extern "C" int
 ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 {
     int help = 0;
+    int list_all_prim_ops = 0;
+    int list_all_prim_ops_json = 0;
 
     /* ---- Initialise context ---------------------------------------- */
     struct ged_edit_ctx ctx;
@@ -1612,20 +2047,75 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     edit_cmds["mat"]        = &edit_mat_cmd;
 
     /* ---- Global option descriptors --------------------------------- */
-    struct bu_opt_desc d[8];
+    struct bu_opt_desc d[10];
     BU_OPT(d[0], "h", "help",         "",  NULL, &help,        "Print help");
     BU_OPT(d[1], "v", "verbose",      "",  NULL, &ctx.verbosity,"Verbose output");
     BU_OPT(d[2], "S", "selection",    "",  NULL, &ctx.flag_S,  "Operate on selection (ignore cmd-line specifier)");
     BU_OPT(d[3], "f", "force",        "",  NULL, &ctx.flag_f,  "Force: apply op, write to disk, clear conflict");
     BU_OPT(d[4], "F", "abandon",      "",  NULL, &ctx.flag_F,  "Abandon: discard intermediate state, use on-disk");
     BU_OPT(d[5], "i", "intermediate", "",  NULL, &ctx.flag_i,  "Intermediate: apply to temp buffer only (no disk write)");
-    BU_OPT_NULL(d[6]);
+    BU_OPT(d[6], "", "list-all-prim-ops", "", NULL, &list_all_prim_ops, "List all available primitive edit operations");
+    BU_OPT(d[7], "", "list-all-prim-ops=json", "", NULL, &list_all_prim_ops_json, "List all primitive edit operations as JSON");
+    BU_OPT_NULL(d[8]);
 
     const char *bargs_help = "[options] <geometry_specifier> subcommand [args]";
 
     if (!argc) {
 	_ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds, "edit", bargs_help, 0, NULL);
 	return BRLCAD_OK;
+    }
+
+    /* Bare primitive type query: show type help even if a DB object has the
+     * same name (e.g., object named "tor"). */
+    if (argc == 1) {
+	int type_id = _prim_type_id_from_str(argv[0]);
+	if (type_id >= 0) {
+	    extern const struct rt_edit_functab EDOBJ[];
+	    if (!EDOBJ[type_id].ft_edit_desc) {
+		bu_vls_printf(gedp->ged_result_str,
+		    "edit: no descriptor available for primitive type '%s'\n", argv[0]);
+		return BRLCAD_ERROR;
+	    }
+	    const struct rt_edit_prim_desc *desc = (*EDOBJ[type_id].ft_edit_desc)();
+	    _print_prim_help(gedp, desc);
+	    return BRLCAD_OK;
+	}
+    }
+
+    /* Type-help/list queries take precedence over object-name resolution,
+     * so names like "tor" in a database don't shadow primitive-type queries. */
+    if (argc >= 2) {
+	bool type_query = BU_STR_EQUAL(argv[1], "--list-ops") ||
+	    BU_STR_EQUAL(argv[1], "--list-ops=json") ||
+	    BU_STR_EQUAL(argv[1], "-h") ||
+	    BU_STR_EQUAL(argv[1], "--help") ||
+	    BU_STR_EQUAL(argv[1], "?");
+	if (type_query) {
+	    int type_id = _prim_type_id_from_str(argv[0]);
+	    if (type_id >= 0) {
+		extern const struct rt_edit_functab EDOBJ[];
+		if (!EDOBJ[type_id].ft_edit_desc) {
+		    bu_vls_printf(gedp->ged_result_str,
+			"edit: no descriptor available for primitive type '%s'\n", argv[0]);
+		    return BRLCAD_ERROR;
+		}
+		const struct rt_edit_prim_desc *desc = (*EDOBJ[type_id].ft_edit_desc)();
+		if (BU_STR_EQUAL(argv[1], "--list-ops=json")) {
+		    struct bu_vls json = BU_VLS_INIT_ZERO;
+		    if (rt_edit_type_to_json(&json, type_id) == BRLCAD_OK) {
+			bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&json));
+			bu_vls_free(&json);
+			return BRLCAD_OK;
+		    }
+		    bu_vls_free(&json);
+		    bu_vls_printf(gedp->ged_result_str,
+			"edit: no JSON descriptor for type '%s'\n", argv[0]);
+		    return BRLCAD_ERROR;
+		}
+		_print_prim_help(gedp, desc);
+		return BRLCAD_OK;
+	    }
+	}
     }
 
     /* Note whether the first token looks like an option.  If so we
@@ -1662,9 +2152,69 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 
     /* With no geometry or command found yet — all remaining tokens are
      * candidates for options.  Parse them all: if -h is among them, print
-     * help and return OK; otherwise report the first token as invalid. */
+     * help and return OK; otherwise report the first token as invalid.
+     *
+     * Phase 3 intercepts:
+     *   edit <type>              → human-readable per-type help
+     *   edit <type> --list-ops   → human-readable per-type help (same as above)
+     *   edit <type> --list-ops=json → full JSON descriptor
+     *   edit --list-all-prim-ops      → human-readable listing for all types
+     *   edit --list-all-prim-ops=json → JSON array for all types
+     */
     if (geom_pos == INT_MAX && cmd_pos == INT_MAX) {
+	if (!maybe_opts && argc >= 1) {
+	    int type_id = _prim_type_id_from_str(argv[0]);
+	    if (type_id >= 0) {
+		extern const struct rt_edit_functab EDOBJ[];
+		if (!EDOBJ[type_id].ft_edit_desc) {
+		    bu_vls_printf(gedp->ged_result_str,
+			"edit: no descriptor available for primitive type '%s'\n", argv[0]);
+		    return BRLCAD_ERROR;
+		}
+		const struct rt_edit_prim_desc *desc =
+		    (*EDOBJ[type_id].ft_edit_desc)();
+
+		/* Determine whether a --list-ops[=json] flag was given */
+		bool list_ops      = false;
+		bool list_ops_json = false;
+		if (argc >= 2) {
+		    if (BU_STR_EQUAL(argv[1], "--list-ops"))
+			list_ops = true;
+		    else if (BU_STR_EQUAL(argv[1], "--list-ops=json"))
+			list_ops = list_ops_json = true;
+		    else if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "--help") || BU_STR_EQUAL(argv[1], "?"))
+			list_ops = true;
+		}
+
+		if (list_ops && list_ops_json) {
+		    /* --list-ops=json → emit full JSON descriptor */
+		    struct bu_vls json = BU_VLS_INIT_ZERO;
+		    if (rt_edit_type_to_json(&json, type_id) == BRLCAD_OK) {
+			bu_vls_printf(gedp->ged_result_str,
+			    "%s", bu_vls_cstr(&json));
+			bu_vls_free(&json);
+			return BRLCAD_OK;
+		    }
+		    bu_vls_free(&json);
+		    bu_vls_printf(gedp->ged_result_str,
+			"edit: no JSON descriptor for type '%s'\n", argv[0]);
+		    return BRLCAD_ERROR;
+		}
+
+		/* --list-ops (human-readable) or bare type name → same output */
+		_print_prim_help(gedp, desc);
+		return BRLCAD_OK;
+	    }
+	}
 	if (maybe_opts) {
+	    /* --list-all-prim-ops[=json]: handled before regular opt parse */
+	    if (argc >= 1) {
+		bool lap      = BU_STR_EQUAL(argv[0], "--list-all-prim-ops");
+		bool lap_json = BU_STR_EQUAL(argv[0], "--list-all-prim-ops=json");
+		if (lap || lap_json) {
+		    return _print_all_prim_ops(gedp, lap_json ? 1 : 0);
+		}
+	    }
 	    struct bu_vls opterrs = BU_VLS_INIT_ZERO;
 	    bu_opt_parse(&opterrs, argc, argv, d);
 	    bu_vls_free(&opterrs);
@@ -1672,6 +2222,9 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 		_ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds,
 		    "edit", bargs_help, 0, NULL);
 		return BRLCAD_OK;
+	    }
+	    if (list_all_prim_ops || list_all_prim_ops_json) {
+		return _print_all_prim_ops(gedp, list_all_prim_ops_json ? 1 : 0);
 	    }
 	    _ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds,
 		"edit", bargs_help, 0, NULL);
@@ -1715,6 +2268,10 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 	_ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds,
 	    cmd_name_for_help, bargs_help, 0, NULL);
 	return BRLCAD_OK;
+    }
+
+    if (list_all_prim_ops || list_all_prim_ops_json) {
+	return _print_all_prim_ops(gedp, list_all_prim_ops_json ? 1 : 0);
     }
 
     /* Sanity: geometry must come before command if both present */
@@ -1824,6 +2381,42 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     std::string cmd_str(argv[0]);
     auto e_it = edit_cmds.find(cmd_str);
     if (e_it == edit_cmds.end()) {
+	if (ctx.dp != RT_DIR_NULL &&
+	    (BU_STR_EQUAL(argv[0], "-h") || BU_STR_EQUAL(argv[0], "--help") || BU_STR_EQUAL(argv[0], "?"))) {
+	    extern const struct rt_edit_functab EDOBJ[];
+	    int type_id = _get_prim_type_for_dp(ctx.dp, gedp->dbip);
+	    if (type_id >= 0 && EDOBJ[type_id].ft_edit_desc) {
+		const struct rt_edit_prim_desc *desc = (*EDOBJ[type_id].ft_edit_desc)();
+		_print_prim_help(gedp, desc);
+		return BRLCAD_OK;
+	    }
+	    bu_vls_printf(gedp->ged_result_str,
+		"No descriptor help available for this primitive type.\n");
+	    return BRLCAD_ERROR;
+	}
+
+	/* Phase 3: try descriptor-driven dispatch when the generic map
+	 * doesn't know the subcommand.  Look up the primitive type of the
+	 * target object and search its ft_edit_desc() descriptor. */
+	if (ctx.dp != RT_DIR_NULL) {
+	    extern const struct rt_edit_functab EDOBJ[];
+	    int type_id = _get_prim_type_for_dp(ctx.dp, gedp->dbip);
+	    if (type_id >= 0 && EDOBJ[type_id].ft_edit_desc) {
+		const struct rt_edit_prim_desc *desc =
+		    (*EDOBJ[type_id].ft_edit_desc)();
+		const struct rt_edit_cmd_desc *cmd_desc =
+		    _find_desc_cmd(desc, cmd_str.c_str());
+		if (cmd_desc)
+		    return _exec_desc_cmd(gedp, &ctx, cmd_desc, argc, argv);
+
+		/* Descriptor found but op not in it — print type help */
+		bu_vls_printf(gedp->ged_result_str,
+		    "Unknown operation '%s' for %s.\n",
+		    argv[0], desc->prim_label);
+		_print_prim_help(gedp, desc);
+		return BRLCAD_ERROR;
+	    }
+	}
 	bu_vls_printf(gedp->ged_result_str,
 	    "Unknown subcommand: %s\n", argv[0]);
 	_ged_subcmd2_help(gedp, (struct bu_opt_desc *)d, edit_cmds,
@@ -1871,5 +2464,3 @@ GED_DECLARE_PLUGIN_MANIFEST("libged_edit", 1, GED_EDIT_COMMANDS)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
-

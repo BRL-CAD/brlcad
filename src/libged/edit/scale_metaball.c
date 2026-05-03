@@ -61,7 +61,7 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
 		return BRLCAD_ERROR;
 
 	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
-	    GED_METABALL_SCALE(mbpp->fldstr, sf);
+	    GED_METABALL_SCALE(mbpp->field_strength, sf);
 
 	    break;
 	case 's':
@@ -73,7 +73,7 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
 		return BRLCAD_ERROR;
 
 	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
-	    GED_METABALL_SCALE(mbpp->sweat, sf);
+	    GED_METABALL_SCALE(mbpp->blobbiness, sf);
 
 	    break;
 	default:

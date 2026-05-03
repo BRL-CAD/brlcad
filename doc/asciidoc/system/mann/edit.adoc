@@ -102,6 +102,46 @@ A geometry specifier identifies the object to act on.  Supported forms:
   This prevents accidental divergence between a command-line edit and an
   interactive selection.
 
+*--list-all-prim-ops*::
+  Print a human-readable list of available descriptor-defined edit
+  operations for all primitive types.
+
+*--list-all-prim-ops=json*::
+  Print the same information as a JSON array.
+
+
+[[primitive_operation_listing]]
+== PRIMITIVE OPERATION LISTING
+
+The *edit* command supports both human-readable and JSON forms for
+descriptor-driven primitive operation discovery.
+
+.Top-level listing (all primitive types)
+[source]
+----
+edit --list-all-prim-ops
+edit --list-all-prim-ops=json
+----
+
+.Per-primitive listing by type name
+[source]
+----
+edit tor
+edit tor --list-ops
+edit tor --list-ops=json
+----
+
+.Per-primitive listing by object name
+[source]
+----
+edit tor.s -h
+----
+
+The general pattern is:
+
+* human-readable: `edit <primitive_type> --list-ops`
+* JSON: `edit <primitive_type> --list-ops=json`
+
 
 [[subcommands]]
 == SUBCOMMANDS
@@ -361,4 +401,3 @@ BRL-CAD Team
 == BUG REPORTS
 
 Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
-

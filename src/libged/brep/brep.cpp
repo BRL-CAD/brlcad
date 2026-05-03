@@ -662,6 +662,16 @@ _brep_cmd_geo(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
+    /* Deprecation notice: NURBS surface CV editing is now available via the
+     * 'edit' command (e.g. "edit <obj> select_surface_cv <face> <i> <j>" and
+     * "edit <obj> move_surface_cv <dx> <dy> <dz>").  The 'brep geo' sub-command
+     * is preserved for backward compatibility but may be removed in a future
+     * release.  Please migrate to 'edit' for CV manipulation. */
+    bu_vls_printf(gb->gedp->ged_result_str,
+	    "NOTE: 'brep geo' is deprecated for CV editing. "
+	    "Use 'edit <obj> select_surface_cv / move_surface_cv / "
+	    "set_surface_cv_position' instead.\n");
+
     argc--; argv++;
 
     return brep_geo(gb, argc, argv);

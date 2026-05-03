@@ -46,8 +46,8 @@ RT_EXPORT extern int rt_metaball_lookup_type_id(const char *name);
 RT_EXPORT extern const char *rt_metaball_lookup_type_name(const int id);
 RT_EXPORT extern int rt_metaball_add_point(struct rt_metaball_internal *,
 					   const point_t *loc,
-					   const fastf_t fldstr,
-					   const fastf_t goo);
+					   const fastf_t field_strength,
+					   const fastf_t blobbiness);
 RT_EXPORT extern struct wdb_metaball_pnt * rt_metaball_get_pt_i(
 	struct rt_metaball_internal *mbip, int mbp_i);
 

@@ -250,7 +250,98 @@ static const struct rt_edit_param_desc pipe_pt_radius_params[] = {
     }
 };
 
+/* POINT parameter used by ops that take a 3D location: SELECT, PT_MOVE,
+ * PT_ADD, PT_INS, and SPLIT all supply the target world-space coordinate. */
+static const struct rt_edit_param_desc pipe_point_params[] = {
+    {
+	"pt",                 /* name         */
+	"Point X Y Z",        /* label        */
+	RT_EDIT_PARAM_POINT,  /* type         */
+	0,                    /* index        */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_min  */
+	RT_EDIT_PARAM_NO_LIMIT, /* range_max  */
+	"length",             /* units        */
+	0, NULL, NULL,        /* enum (unused) */
+	NULL                  /* prim_field   */
+    }
+};
+
 static const struct rt_edit_cmd_desc pipe_cmds[] = {
+    /* --- point selection / navigation -------------------------------- */
+    {
+	ECMD_PIPE_SELECT,     /* cmd_id       */
+	"Select Point",       /* label        */
+	"select",             /* category     */
+	1,                    /* nparam       */
+	pipe_point_params,    /* params       */
+	1,                    /* interactive  */
+	5                     /* display_order */
+    },
+    {
+	ECMD_PIPE_NEXT_PT,    /* cmd_id       */
+	"Next Point",         /* label        */
+	"select",             /* category     */
+	0,                    /* nparam       */
+	NULL,                 /* params       */
+	0,                    /* interactive  */
+	6                     /* display_order */
+    },
+    {
+	ECMD_PIPE_PREV_PT,    /* cmd_id       */
+	"Previous Point",     /* label        */
+	"select",             /* category     */
+	0,                    /* nparam       */
+	NULL,                 /* params       */
+	0,                    /* interactive  */
+	7                     /* display_order */
+    },
+    /* --- point geometry manipulation --------------------------------- */
+    {
+	ECMD_PIPE_PT_MOVE,    /* cmd_id       */
+	"Move Point",         /* label        */
+	"point",              /* category     */
+	1,                    /* nparam       */
+	pipe_point_params,    /* params       */
+	1,                    /* interactive  */
+	8                     /* display_order */
+    },
+    {
+	ECMD_PIPE_PT_DEL,     /* cmd_id       */
+	"Delete Point",       /* label        */
+	"point",              /* category     */
+	0,                    /* nparam       */
+	NULL,                 /* params       */
+	0,                    /* interactive  */
+	9                     /* display_order */
+    },
+    {
+	ECMD_PIPE_PT_ADD,     /* cmd_id       */
+	"Append Point",       /* label        */
+	"point",              /* category     */
+	1,                    /* nparam       */
+	pipe_point_params,    /* params       */
+	1,                    /* interactive  */
+	10                    /* display_order */
+    },
+    {
+	ECMD_PIPE_PT_INS,     /* cmd_id       */
+	"Prepend Point",      /* label        */
+	"point",              /* category     */
+	1,                    /* nparam       */
+	pipe_point_params,    /* params       */
+	1,                    /* interactive  */
+	11                    /* display_order */
+    },
+    {
+	ECMD_PIPE_SPLIT,      /* cmd_id       */
+	"Split Segment",      /* label        */
+	"point",              /* category     */
+	1,                    /* nparam       */
+	pipe_point_params,    /* params       */
+	1,                    /* interactive  */
+	12                    /* display_order */
+    },
+    /* --- per-point cross-section dimensions -------------------------- */
     {
 	ECMD_PIPE_PT_OD,      /* cmd_id       */
 	"Set Point OD",       /* label        */
@@ -258,7 +349,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	1,                    /* nparam       */
 	pipe_pt_od_params,    /* params       */
 	1,                    /* interactive  */
-	10                    /* display_order */
+	20                    /* display_order */
     },
     {
 	ECMD_PIPE_PT_ID,      /* cmd_id       */
@@ -267,7 +358,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	1,                    /* nparam       */
 	pipe_pt_id_params,    /* params       */
 	1,                    /* interactive  */
-	20                    /* display_order */
+	30                    /* display_order */
     },
     {
 	ECMD_PIPE_PT_RADIUS,  /* cmd_id       */
@@ -276,8 +367,9 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	1,                    /* nparam       */
 	pipe_pt_radius_params, /* params      */
 	1,                    /* interactive  */
-	30                    /* display_order */
+	40                    /* display_order */
     },
+    /* --- whole-pipe cross-section dimensions ------------------------- */
     {
 	ECMD_PIPE_SCALE_OD,   /* cmd_id       */
 	"Set Pipe OD",        /* label        */
@@ -285,7 +377,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	1,                    /* nparam       */
 	pipe_pt_od_params,    /* params       */
 	1,                    /* interactive  */
-	10                    /* display_order */
+	50                    /* display_order */
     },
     {
 	ECMD_PIPE_SCALE_ID,   /* cmd_id       */
@@ -294,7 +386,7 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	1,                    /* nparam       */
 	pipe_pt_id_params,    /* params       */
 	1,                    /* interactive  */
-	20                    /* display_order */
+	60                    /* display_order */
     },
     {
 	ECMD_PIPE_SCALE_RADIUS, /* cmd_id     */
@@ -303,14 +395,14 @@ static const struct rt_edit_cmd_desc pipe_cmds[] = {
 	1,                    /* nparam       */
 	pipe_pt_radius_params, /* params      */
 	1,                    /* interactive  */
-	30                    /* display_order */
+	70                    /* display_order */
     }
 };
 
 static const struct rt_edit_prim_desc pipe_prim_desc = {
     "pipe",               /* prim_type    */
     "Pipe",               /* prim_label   */
-    6,                    /* ncmd         */
+    14,                   /* ncmd         */
     pipe_cmds             /* cmds         */
 };
 
@@ -1325,6 +1417,50 @@ rt_edit_pipe_edit(struct rt_edit *s)
 	case ECMD_PIPE_SELECT:
 	    ecmd_pipe_pick(s);
 	    break;
+	case ECMD_PIPE_NEXT_PT:
+	{
+	    bu_clbk_t f = NULL;
+	    void *d = NULL;
+	    if (!p->es_pipe_pnt) {
+		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
+		rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+		if (f) (*f)(0, NULL, d, NULL);
+		return BRLCAD_ERROR;
+	    }
+	    {
+		struct wdb_pipe_pnt *next = BU_LIST_NEXT(wdb_pipe_pnt, &p->es_pipe_pnt->l);
+		if (next->l.magic == BU_LIST_HEAD_MAGIC) {
+		    bu_vls_printf(s->log_str, "Current segment is the last\n");
+		    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+		    if (f) (*f)(0, NULL, d, NULL);
+		    return BRLCAD_ERROR;
+		}
+		p->es_pipe_pnt = next;
+	    }
+	    break;
+	}
+	case ECMD_PIPE_PREV_PT:
+	{
+	    bu_clbk_t f = NULL;
+	    void *d = NULL;
+	    if (!p->es_pipe_pnt) {
+		bu_vls_printf(s->log_str, "No Pipe Segment selected\n");
+		rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+		if (f) (*f)(0, NULL, d, NULL);
+		return BRLCAD_ERROR;
+	    }
+	    {
+		struct wdb_pipe_pnt *prev = BU_LIST_PREV(wdb_pipe_pnt, &p->es_pipe_pnt->l);
+		if (prev->l.magic == BU_LIST_HEAD_MAGIC) {
+		    bu_vls_printf(s->log_str, "Current segment is the first\n");
+		    rt_edit_map_clbk_get(&f, &d, s->m, ECMD_PRINT_RESULTS, BU_CLBK_DURING);
+		    if (f) (*f)(0, NULL, d, NULL);
+		    return BRLCAD_ERROR;
+		}
+		p->es_pipe_pnt = prev;
+	    }
+	    break;
+	}
 	case ECMD_PIPE_SPLIT:
 	    ecmd_pipe_split(s);
 	    break;

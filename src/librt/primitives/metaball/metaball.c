@@ -127,9 +127,9 @@ rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_me
     /* start looking for the radius... */
     for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, points)) {
 	VSUB2(d, mbpt->coord, *center);
-	/* since the surface is where threshold=fldstr/mag,
-	   mag=fldstr/threshold, so make that the initial value */
-	dist = MAGNITUDE(d) + mbpt->fldstr/threshold;
+	/* since the surface is where threshold=field_strength/mag,
+	   mag=field_strength/threshold, so make that the initial value */
+	dist = MAGNITUDE(d) + mbpt->field_strength/threshold;
 	/* and add all the contribution */
 	for (BU_LIST_FOR(mbpt2, wdb_metaball_pnt, points))
 	    if (mbpt2 != mbpt) {
@@ -141,10 +141,10 @@ rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_me
 		    case METABALL_METABALL:
 			break;
 		    case METABALL_ISOPOTENTIAL:
-			additive = fabs(mbpt2->fldstr) * mbpt2->fldstr / mag;
+			additive = fabs(mbpt2->field_strength) * mbpt2->field_strength / mag;
 			break;
 		    case METABALL_BLOB:
-			additive = 1.0/exp((mbpt2->sweat / (mbpt2->fldstr * mbpt2->fldstr)) * mag * mag - mbpt2->sweat);
+			additive = 1.0/exp((mbpt2->blobbiness / (mbpt2->field_strength * mbpt2->field_strength)) * mag * mag - mbpt2->blobbiness);
 			break;
 		}
 
@@ -205,10 +205,10 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     /* and copy the list of control points */
     for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, &mb->metaball_ctrl_head)) {
 	BU_ALLOC(nmbpt, struct wdb_metaball_pnt);
-	nmbpt->fldstr = mbpt->fldstr;
-	if (mbpt->fldstr < minfstr)
-	    minfstr = mbpt->fldstr;
-	nmbpt->sweat = mbpt->sweat;
+	nmbpt->field_strength = mbpt->field_strength;
+	if (mbpt->field_strength < minfstr)
+	    minfstr = mbpt->field_strength;
+	nmbpt->blobbiness = mbpt->blobbiness;
 	VMOVE(nmbpt->coord, mbpt->coord);
 	BU_LIST_INSERT(&nmb->metaball_ctrl_head, &nmbpt->l);
     }
@@ -246,7 +246,7 @@ rt_metaball_print(register const struct soltab *stp)
     bu_log("Metaball with %d points and a threshold of %g (%s rendering)\n", metaball_count, mb->threshold, rt_metaball_lookup_type_name(mb->method));
     metaball_count = 0;
     for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, &mb->metaball_ctrl_head))
-	bu_log("\t%d: %g field strength at (%g, %g, %g) and 'goo' of %g\n", ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord), mbpt->sweat);
+	bu_log("\t%d: %g field strength at (%g, %g, %g) and blobbiness of %g\n", ++metaball_count, mbpt->field_strength, V3ARGS(mbpt->coord), mbpt->blobbiness);
     return;
 }
 
@@ -259,7 +259,7 @@ rt_metaball_pnt_print(const struct wdb_metaball_pnt *metaball, double mm2local)
     bu_log("Metaball Point:\n");
     VSCALE(p1, metaball->coord, mm2local);
     bu_log("\tat (%g %g %g)\n", V3ARGS(p1));
-    bu_log("\tfield strength = %g\n", metaball->fldstr*mm2local);
+    bu_log("\tfield strength = %g\n", metaball->field_strength*mm2local);
     return;
 }
 
@@ -285,7 +285,7 @@ rt_metaball_point_value_iso(const point_t *p, const struct bu_list *points)
 
     for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, points)) {
 	VSUB2(v, mbpt->coord, *p);
-	ret += fabs(mbpt->fldstr) * mbpt->fldstr / MAGSQ(v);	/* f/r^2 */
+	ret += fabs(mbpt->field_strength) * mbpt->field_strength / MAGSQ(v);	/* f/r^2 */
     }
     return ret;
 }
@@ -299,10 +299,10 @@ rt_metaball_point_value_blob(const point_t *p, const struct bu_list *points)
     point_t v;
 
     for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, points)) {
-	/* TODO: test if sweat is sufficient enough that r=0 returns a positive value? */
+	/* TODO: test if blobbiness is sufficient enough that r=0 returns a positive value? */
 	/* TODO: test to see if negative contribution needs to be wiped out? */
 	VSUB2(v, mbpt->coord, *p);
-	ret += 1.0 / exp((mbpt->sweat/(mbpt->fldstr*mbpt->fldstr)) * MAGSQ(v) - mbpt->sweat);
+	ret += 1.0 / exp((mbpt->blobbiness/(mbpt->field_strength*mbpt->field_strength)) * MAGSQ(v) - mbpt->blobbiness);
     }
     return ret;
 }
@@ -517,14 +517,14 @@ rt_metaball_norm_internal(vect_t *n, point_t *p, struct rt_metaball_internal *mb
 	    for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, &mb->metaball_ctrl_head)) {
 		VSUB2(v, *p, mbpt->coord);
 		a = MAGSQ(v);
-		VJOIN1(*n, *n, fabs(mbpt->fldstr)*mbpt->fldstr / (SQ(a)), v);	/* f/r^4 */
+		VJOIN1(*n, *n, fabs(mbpt->field_strength)*mbpt->field_strength / (SQ(a)), v);	/* f/r^4 */
 	    }
 	    break;
 	case METABALL_BLOB:
 	    for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, &mb->metaball_ctrl_head)) {
 		VSUB2(v, *p, mbpt->coord);
 		a = MAGSQ(v);
-		VJOIN1(*n, *n, 2.0*mbpt->sweat/SQ(mbpt->fldstr)*exp(mbpt->sweat*(1-(a/SQ(mbpt->fldstr)))) , v);
+		VJOIN1(*n, *n, 2.0*mbpt->blobbiness/SQ(mbpt->field_strength)*exp(mbpt->blobbiness*(1-(a/SQ(mbpt->field_strength)))) , v);
 	    }
 	    break;
 	default:
@@ -663,7 +663,7 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     rt_metaball_plot_sph(vlfree, vhead, &bsc, rad);
 #endif
     for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, &mb->metaball_ctrl_head))
-	rt_metaball_plot_sph(vlfree, vhead, &mbpt->coord, mbpt->fldstr / mb->threshold);
+	rt_metaball_plot_sph(vlfree, vhead, &mbpt->coord, mbpt->field_strength / mb->threshold);
     return 0;
 }
 
@@ -688,7 +688,7 @@ rt_metaball_mat(struct rt_db_internal *rop, const mat_t mat, const struct rt_db_
 	vect_t ctmp;
 	VMOVE(ctmp, mbpt->coord);
 	MAT4X3PNT(mbpt->coord, mat, ctmp);
-	mbpt->fldstr = mbpt->fldstr / mat[15];
+	mbpt->field_strength = mbpt->field_strength / mat[15];
     }
 
     return BRLCAD_OK;
@@ -733,8 +733,8 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 	BU_GET(mbpt, struct wdb_metaball_pnt);
 	mbpt->l.magic = WDB_METABALLPT_MAGIC;
 	VMOVE(mbpt->coord, &buf[i]);
-	mbpt->fldstr = buf[i+3];
-	mbpt->sweat = buf[i+4];
+	mbpt->field_strength = buf[i+3];
+	mbpt->blobbiness = buf[i+4];
 	BU_LIST_INSERT(&mb->metaball_ctrl_head, &mbpt->l);
     }
     bu_free((void *)buf, "rt_metaball_import5: buf");
@@ -752,8 +752,8 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
  * fastf_t X1 (start point)
  * fastf_t Y1
  * fastf_t Z1
- * fastf_t fldstr1
- * fastf_t sweat1 (end point)
+ * fastf_t field_strength1
+ * fastf_t blobbiness1 (end point)
  * fastf_t X2 (start point)
  * ...
  */
@@ -791,8 +791,8 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     buf[0] = mb->threshold;
     for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, &mb->metaball_ctrl_head), i+=5) {
 	VSCALE(&buf[i], mbpt->coord, local2mm);
-	buf[i+3] = mbpt->fldstr * local2mm;
-	buf[i+4] = mbpt->sweat;
+	buf[i+3] = mbpt->field_strength * local2mm;
+	buf[i+4] = mbpt->blobbiness;
     }
     bu_cv_htond((unsigned char *)ep->ext_buf + 2*SIZEOF_NETWORK_LONG, (unsigned char *)buf, 1 + 5 * metaball_count);
     bu_free(buf, "rt_metaball_export5: buf");
@@ -829,12 +829,12 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 	switch (mb->method) {
 	    case METABALL_ISOPOTENTIAL:
 		snprintf(buf, BUFSIZ, "\t%d: %g field strength at (%g, %g, %g)\n",
-			 ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord));
+			 ++metaball_count, mbpt->field_strength, V3ARGS(mbpt->coord));
 		break;
 	    case METABALL_METABALL:
 	    case METABALL_BLOB:
 		snprintf(buf, BUFSIZ, "\t%d: %g field strength at (%g, %g, %g) and blobbiness factor of %g\n",
-			 ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord), mbpt->sweat);
+			 ++metaball_count, mbpt->field_strength, V3ARGS(mbpt->coord), mbpt->blobbiness);
 		break;
 	    default:
 		bu_bomb("Bad metaball method");	/* asplode */
@@ -874,15 +874,15 @@ rt_metaball_ifree(struct rt_db_internal *ip)
  * Add a single point to an existing metaball.
  */
 int
-rt_metaball_add_point(struct rt_metaball_internal *mb, const point_t *loc, const fastf_t fldstr, const fastf_t goo)
+rt_metaball_add_point(struct rt_metaball_internal *mb, const point_t *loc, const fastf_t field_strength, const fastf_t blobbiness)
 {
     struct wdb_metaball_pnt *mbpt;
 
     BU_GET(mbpt, struct wdb_metaball_pnt);
     mbpt->l.magic = WDB_METABALLPT_MAGIC;
     VMOVE(mbpt->coord, *loc);
-    mbpt->fldstr = fldstr;
-    mbpt->sweat = goo;
+    mbpt->field_strength = field_strength;
+    mbpt->blobbiness = blobbiness;
     BU_LIST_INSERT(&mb->metaball_ctrl_head, &mbpt->l);
 
     return 0;
@@ -929,7 +929,7 @@ rt_metaball_get(struct bu_vls *logstr, const struct rt_db_internal *intern, cons
 
     bu_vls_printf(logstr, "metaball method %d thresh %.25G PL {", mb->method, mb->threshold);
     for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, &mb->metaball_ctrl_head)) {
-	bu_vls_printf(logstr, " {%.25G %.25G %.25G %.25G %.25G}", V3ARGS(mbpt->coord), mbpt->fldstr, mbpt->sweat);
+	bu_vls_printf(logstr, " {%.25G %.25G %.25G %.25G %.25G}", V3ARGS(mbpt->coord), mbpt->field_strength, mbpt->blobbiness);
     }
     bu_vls_printf(logstr, " }");
 
@@ -981,13 +981,13 @@ rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
 	    while (1) {
 		int len;
 		double xyz[3];
-		double fldstr, goo;
+		double field_strength, blobbiness;
 		point_t loc;
 		const point_t *locp = (const point_t *)&loc;
 
 		while (pts < pend && *pts != '{') ++pts;
 		if (pts >= pend) break;
-		len = sscanf(pts, "{%lG %lG %lG %lG %lG}", &xyz[0], &xyz[1], &xyz[2], &fldstr, &goo);
+		len = sscanf(pts, "{%lG %lG %lG %lG %lG}", &xyz[0], &xyz[1], &xyz[2], &field_strength, &blobbiness);
 		VMOVE(loc, xyz);
 
 		if (len == EOF) break;
@@ -996,8 +996,8 @@ rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
 		    return BRLCAD_ERROR;
 		}
 		pts++;
-		if (rt_metaball_add_point (mb, locp, fldstr, goo)) {
-		    bu_vls_printf(logstr, "Failure adding point: {%f %f %f %f %f}", V3ARGS(loc), fldstr, goo);
+		if (rt_metaball_add_point (mb, locp, field_strength, blobbiness)) {
+		    bu_vls_printf(logstr, "Failure adding point: {%f %f %f %f %f}", V3ARGS(loc), field_strength, blobbiness);
 		    return BRLCAD_ERROR;
 		}
 	    }

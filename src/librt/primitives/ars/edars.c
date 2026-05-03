@@ -197,6 +197,49 @@ struct rt_edit_menu_item ars_menu[] = {
     { "", NULL, 0 }
 };
 
+static const struct rt_edit_param_desc ars_point_param[] = {
+    { "point", "Point", RT_EDIT_PARAM_POINT, 0,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "length", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_param_desc ars_delta_param[] = {
+    { "delta", "Delta", RT_EDIT_PARAM_VECTOR, 0,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "length", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_param_desc ars_scale_param[] = {
+    { "scale", "Scale", RT_EDIT_PARAM_SCALAR, 0,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "none", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_cmd_desc ars_cmds[] = {
+    { ECMD_ARS_PICK,       "Pick Vertex",   "selection", 1, ars_point_param, 1, 10 },
+    { ECMD_ARS_NEXT_PT,    "Next Vertex",   "selection", 0, NULL,            0, 20 },
+    { ECMD_ARS_PREV_PT,    "Prev Vertex",   "selection", 0, NULL,            0, 30 },
+    { ECMD_ARS_NEXT_CRV,   "Next Curve",    "selection", 0, NULL,            0, 40 },
+    { ECMD_ARS_PREV_CRV,   "Prev Curve",    "selection", 0, NULL,            0, 50 },
+    { ECMD_ARS_MOVE_PT,    "Move Point",    "movement",  1, ars_delta_param, 1, 60 },
+    { ECMD_ARS_MOVE_CRV,   "Move Curve",    "movement",  1, ars_delta_param, 1, 70 },
+    { ECMD_ARS_MOVE_COL,   "Move Column",   "movement",  1, ars_delta_param, 1, 80 },
+    { ECMD_ARS_SCALE_CRV,  "Scale Curve",   "topology",  1, ars_scale_param, 1, 90 },
+    { ECMD_ARS_SCALE_COL,  "Scale Column",  "topology",  1, ars_scale_param, 1, 100 },
+    { ECMD_ARS_INSERT_CRV, "Insert Curve",  "topology",  0, NULL,            0, 110 },
+    { ECMD_ARS_DEL_CRV,    "Delete Curve",  "topology",  0, NULL,            0, 120 },
+    { ECMD_ARS_DEL_COL,    "Delete Column", "topology",  0, NULL,            0, 130 },
+    { ECMD_ARS_DUP_CRV,    "Dup Curve",     "topology",  0, NULL,            0, 140 },
+    { ECMD_ARS_DUP_COL,    "Dup Column",    "topology",  0, NULL,            0, 150 }
+};
+
+static const struct rt_edit_prim_desc ars_prim_desc = {
+    "ars", "ARS", 15, ars_cmds
+};
+
+const struct rt_edit_prim_desc *
+rt_edit_ars_edit_desc(void)
+{
+    return &ars_prim_desc;
+}
+
 void
 rt_edit_ars_labels(
 	int *UNUSED(num_lines),

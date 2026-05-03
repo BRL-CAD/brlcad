@@ -530,6 +530,124 @@ bu_log("RT_MATRIX_EDIT_TRANS_MODEL_XYZ SUCCESS: "
 	bu_vls_trunc(s->log_str, 0);
     }
 
+    /* ================================================================
+     * Descriptor: 17 commands available
+     * ================================================================*/
+    {
+	const struct rt_edit_prim_desc *desc =
+	    (*EDOBJ[dp->d_minor_type].ft_edit_desc)();
+	if (!desc)
+	    bu_exit(1, "ERROR: bot edit_desc is NULL\n");
+	if (desc->ncmd != 17)
+	    bu_exit(1, "ERROR: bot descriptor should have 17 cmds, got %d\n",
+		    desc->ncmd);
+	bu_log("DESCRIPTOR SUCCESS: bot descriptor has %d commands\n", desc->ncmd);
+    }
+
+    /* ================================================================
+     * ECMD_BOT_PICKV (descriptor path): select vertex 3 by index
+     * ================================================================*/
+    bot_reset(s, (struct rt_bot_internal *)s->es_int.idb_ptr,
+	      (struct rt_bot_edit *)s->ipe_ptr);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_BOT_PICKV);
+    s->e_inpara = 1;
+    s->e_para[0] = 3.0;
+    rt_edit_process(s);
+    {
+	struct rt_bot_edit *be = (struct rt_bot_edit *)s->ipe_ptr;
+	if (be->bot_verts[0] != 3 || be->bot_verts[1] != -1 || be->bot_verts[2] != -1)
+	    bu_exit(1, "ERROR: ECMD_BOT_PICKV(desc): verts=(%d,%d,%d) expected (3,-1,-1)\n",
+		    be->bot_verts[0], be->bot_verts[1], be->bot_verts[2]);
+	bu_log("ECMD_BOT_PICKV(desc) SUCCESS: selected vertex %d\n", be->bot_verts[0]);
+    }
+
+    /* ================================================================
+     * ECMD_BOT_PICKE (descriptor path): select edge (0,2)
+     * ================================================================*/
+    bot_reset(s, (struct rt_bot_internal *)s->es_int.idb_ptr,
+	      (struct rt_bot_edit *)s->ipe_ptr);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_BOT_PICKE);
+    s->e_inpara = 2;
+    s->e_para[0] = 0.0;
+    s->e_para[1] = 2.0;
+    rt_edit_process(s);
+    {
+	struct rt_bot_edit *be = (struct rt_bot_edit *)s->ipe_ptr;
+	if (be->bot_verts[0] != 0 || be->bot_verts[1] != 2 || be->bot_verts[2] != -1)
+	    bu_exit(1, "ERROR: ECMD_BOT_PICKE(desc): verts=(%d,%d,%d) expected (0,2,-1)\n",
+		    be->bot_verts[0], be->bot_verts[1], be->bot_verts[2]);
+	bu_log("ECMD_BOT_PICKE(desc) SUCCESS: selected edge (%d,%d)\n",
+	       be->bot_verts[0], be->bot_verts[1]);
+    }
+
+    /* ================================================================
+     * ECMD_BOT_PICKT (descriptor path): select face (1,2,3)
+     * ================================================================*/
+    bot_reset(s, (struct rt_bot_internal *)s->es_int.idb_ptr,
+	      (struct rt_bot_edit *)s->ipe_ptr);
+    EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_BOT_PICKT);
+    s->e_inpara = 3;
+    s->e_para[0] = 1.0;
+    s->e_para[1] = 2.0;
+    s->e_para[2] = 3.0;
+    rt_edit_process(s);
+    {
+	struct rt_bot_edit *be = (struct rt_bot_edit *)s->ipe_ptr;
+	if (be->bot_verts[0] != 1 || be->bot_verts[1] != 2 || be->bot_verts[2] != 3)
+	    bu_exit(1, "ERROR: ECMD_BOT_PICKT(desc): verts=(%d,%d,%d) expected (1,2,3)\n",
+		    be->bot_verts[0], be->bot_verts[1], be->bot_verts[2]);
+	bu_log("ECMD_BOT_PICKT(desc) SUCCESS: selected face (%d,%d,%d)\n",
+	       be->bot_verts[0], be->bot_verts[1], be->bot_verts[2]);
+    }
+
+    /* ================================================================
+     * ECMD_BOT_MODE (descriptor path): set mode to RT_BOT_SOLID (2)
+     * ================================================================*/
+    {
+	struct rt_bot_internal *bmod =
+	    (struct rt_bot_internal *)s->es_int.idb_ptr;
+	bmod->mode = RT_BOT_SURFACE;   /* start as surface */
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_BOT_MODE);
+	s->e_inpara = 1;
+	s->e_para[0] = (fastf_t)RT_BOT_SOLID;
+	rt_edit_process(s);
+	if (bmod->mode != RT_BOT_SOLID)
+	    bu_exit(1, "ERROR: ECMD_BOT_MODE(desc): mode=%d expected %d\n",
+		    (int)bmod->mode, RT_BOT_SOLID);
+	bu_log("ECMD_BOT_MODE(desc) SUCCESS: mode=%d (RT_BOT_SOLID)\n",
+	       (int)bmod->mode);
+    }
+
+    /* ================================================================
+     * rt_edit_bot_get_params: check vertex index and mode
+     * ================================================================*/
+    {
+	/* Re-select vertex 3 */
+	bot_reset(s, (struct rt_bot_internal *)s->es_int.idb_ptr,
+		  (struct rt_bot_edit *)s->ipe_ptr);
+	EDOBJ[dp->d_minor_type].ft_set_edit_mode(s, ECMD_BOT_PICKV);
+	s->e_inpara = 1;
+	s->e_para[0] = 3.0;
+	rt_edit_process(s);
+
+	fastf_t vals[4] = {0};
+	int nv = (*EDOBJ[dp->d_minor_type].ft_edit_get_params)(
+		s, ECMD_BOT_PICKV, vals);
+	if (nv != 1 || (int)vals[0] != 3)
+	    bu_exit(1, "ERROR: get_params(PICKV): nv=%d vals[0]=%g expected vertex 3\n",
+		    nv, vals[0]);
+	bu_log("get_params(PICKV) SUCCESS: vertex_index=%g\n", vals[0]);
+
+	/* Check MODE */
+	nv = (*EDOBJ[dp->d_minor_type].ft_edit_get_params)(
+		s, ECMD_BOT_MODE, vals);
+	if (nv != 1)
+	    bu_exit(1, "ERROR: get_params(MODE): nv=%d\n", nv);
+	bu_log("get_params(MODE) SUCCESS: mode=%g\n", vals[0]);
+    }
+
+    bu_log("All BOT descriptor tests PASSED\n");
+
     rt_edit_destroy(s);
     db_close(dbip);
     return 0;

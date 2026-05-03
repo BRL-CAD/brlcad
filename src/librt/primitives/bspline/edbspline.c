@@ -195,6 +195,39 @@ rt_edit_bspline_menu_item(const struct bn_tol *UNUSED(tol))
     return spline_menu;
 }
 
+static const struct rt_edit_param_desc bspline_idx_param[] = {
+    { "index", "Index", RT_EDIT_PARAM_INTEGER, 0,
+      0.0, RT_EDIT_PARAM_NO_LIMIT, "count", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_param_desc bspline_point_param[] = {
+    { "point", "Point", RT_EDIT_PARAM_POINT, 0,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "length", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_param_desc bspline_knot_param[] = {
+    { "knot", "Knot", RT_EDIT_PARAM_SCALAR, 0,
+      RT_EDIT_PARAM_NO_LIMIT, RT_EDIT_PARAM_NO_LIMIT, "none", 0, NULL, NULL, NULL }
+};
+
+static const struct rt_edit_cmd_desc bspline_cmds[] = {
+    { ECMD_SPLINE_VPICK,      "Pick Vertex",      "selection", 1, bspline_idx_param,   1, 10 },
+    { ECMD_BSPLINE_PICK_CP,   "Pick CP by Index", "selection", 1, bspline_idx_param,   1, 20 },
+    { ECMD_VTRANS,            "Move Vertex",      "movement",  1, bspline_point_param, 1, 30 },
+    { ECMD_BSPLINE_PICK_KNOT, "Pick Knot",        "selection", 1, bspline_idx_param,   1, 40 },
+    { ECMD_BSPLINE_SET_KNOT,  "Set Knot Value",   "topology",  1, bspline_knot_param,  1, 50 }
+};
+
+static const struct rt_edit_prim_desc bspline_prim_desc = {
+    "bspline", "B-Spline", 5, bspline_cmds
+};
+
+const struct rt_edit_prim_desc *
+rt_edit_bspline_edit_desc(void)
+{
+    return &bspline_prim_desc;
+}
+
 
 /* Local 2D and 3D distance macros.  These are equivalent to
  * sqrt(DIST_PNT2_SQ()) and sqrt(DIST_PNT_SQ()) from vmath.h respectively,
