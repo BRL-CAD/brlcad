@@ -6,10 +6,10 @@ brlcad_add_test(NAME brep_ppx COMMAND test_brep_ppx)
 # Standalone CDT hole-triangulation tests: verify that bg_nested_poly_triangulate
 # produces no triangles whose centroid falls inside a hole polygon, for two
 # faces from the NIST MBE PMI sample that are known to have multiple holes.
-brlcad_addexec(test_brep_cdt_hole_face17 brep_cdt_hole_face17.c "libbg;libbu;m" TEST)
+brlcad_addexec(test_brep_cdt_hole_face17 brep_cdt_hole_face17.c "libbg;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME brep_cdt_hole_face17 COMMAND test_brep_cdt_hole_face17)
 
-brlcad_addexec(test_brep_cdt_hole_face27 brep_cdt_hole_face27.c "libbg;libbu;m" TEST)
+brlcad_addexec(test_brep_cdt_hole_face27 brep_cdt_hole_face27.c "libbg;libbu;${M_LIBRARY}" TEST)
 brlcad_add_test(NAME brep_cdt_hole_face27 COMMAND test_brep_cdt_hole_face27)
 
 cmakefiles(
