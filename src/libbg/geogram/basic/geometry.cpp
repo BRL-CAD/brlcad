@@ -40,31 +40,6 @@
 #include "common.h"
 #include <geogram/basic/geometry.h>
 
-namespace {
-
-    using namespace GEOBRL;
-    using namespace Geom;
-
-    /**
-     * \brief Computes a parameter that determines the intersection
-     *  between two 2d lines.
-     * \param[in] p1 origin of the first line
-     * \param[in] v1 direction of the first line
-     * \param[in] p2 origin of the second line
-     * \param[in] v2 direction of the second line
-     * \return the parameter t such that p1 + t * v1 is the intersection
-     * between the two 2d lines (p1, v1) and (p2, v2).
-     */
-    inline double segments_intersection_parameter(
-        const vec2& p1, const vec2& v1,
-        const vec2& p2, const vec2& v2
-    ) {
-        double delta = v1[0] * v2[1] - v1[1] * v2[0];
-        double t1 = (v2[1] * (p2[0] - p1[0]) - v2[0] * (p2[1] - p1[1])) / delta;
-        return t1;
-    }
-
-}
 
 /****************************************************************************/
 
