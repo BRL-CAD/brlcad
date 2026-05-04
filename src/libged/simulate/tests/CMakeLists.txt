@@ -89,6 +89,7 @@ cmakefiles(
   simulate_test.cpp
   verify_simulation.c
   example/README.md
+  example/render_frames.py
   example/render_sample.png
   example/run_sim.sh
   example/setup_sim.tcl
