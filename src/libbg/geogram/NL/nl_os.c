@@ -38,6 +38,7 @@
  */
 
 #include "common.h"
+#include "bu/exit.h"
 #include "nl_private.h"
 
 #if (defined (WIN32) || defined(_WIN64))
@@ -57,7 +58,7 @@ void nl_assertion_failed(const char* cond, const char* file, int line) {
         "OpenNL assertion failed: %s, file:%s, line:%d\n",
         cond,file,line
     ) ;
-    abort() ;
+    bu_bomb("OpenNL assertion failed") ;
 }
 
 void nl_range_assertion_failed(
@@ -69,7 +70,7 @@ void nl_range_assertion_failed(
         "%f in [ %f ... %f ], file:%s, line:%d\n",
         x, min_val, max_val, file,line
     ) ;
-    abort() ;
+    bu_bomb("OpenNL range assertion failed") ;
 }
 
 void nl_should_not_have_reached(const char* file, int line) {
@@ -78,7 +79,7 @@ void nl_should_not_have_reached(const char* file, int line) {
         "OpenNL should not have reached this point: file:%s, line:%d\n",
         file,line
     ) ;
-    abort() ;
+    bu_bomb("OpenNL should not have reached this point") ;
 }
 
 

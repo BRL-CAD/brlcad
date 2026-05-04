@@ -96,53 +96,6 @@ NLMatrix nlGetCurrentMatrix(void) {
 
 /*****************************************************************************/
 
-NLboolean nlInitExtension(const char* extension) {
-    if(!strcmp(extension, "AMGCL")) {
-#ifdef NL_WITH_AMGCL
-        return NL_TRUE;
-#else
-        return NL_FALSE;
-#endif
-    }
-    return NL_FALSE;
-}
-
-NLboolean nlExtensionIsInitialized(const char* extension) {
-    if(!strcmp(extension, "AMGCL")) {
-#ifdef NL_WITH_AMGCL
-        return NL_TRUE;
-#else
-        return NL_FALSE;
-#endif
-    }
-    return NL_FALSE;
-}
-
-void nlInitialize(int argc, char** argv) {
-    int i=0;
-    char* ptr=NULL;
-    char extension[255];
-    /* Find all the arguments with the form:
-     * nl:<extension>=true|false
-     * and try to activate the corresponding extensions.
-     */
-    for(i=1; i<argc; ++i) {
-        ptr = strstr(argv[i],"=true");
-        if(!strncmp(argv[i], "nl:", 3) &&
-           (strlen(argv[i]) > 3) &&
-           (ptr != NULL)) {
-            strncpy(extension, argv[i]+3, (size_t)(ptr-argv[i]-3));
-            extension[(size_t)(ptr-argv[i]-3)] = '\0';
-            if(nlInitExtension(extension)) {
-                nl_fprintf(stdout,"OpenNL %s: initialized\n", extension);
-            } else {
-                nl_fprintf(
-                    stderr,"OpenNL %s: could not initialize\n", extension
-                );
-            }
-        }
-    }
-}
 
 /*****************************************************************************/
 /* Get/Set parameters */

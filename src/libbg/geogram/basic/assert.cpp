@@ -38,6 +38,7 @@
  */
 
 #include "common.h"
+#include "bu/exit.h"
 #include <geogram/basic/assert.h>
 #include <stdlib.h>
 #include <iostream>
@@ -70,10 +71,10 @@ namespace GEOBRL {
     void geo_abort() {
         // Avoid assert in assert !!
         if(aborting) {
-            abort();
+            bu_bomb("geo_abort");
         }
         aborting = true;
-        abort();
+	bu_bomb("geo_abort");
     }
 
     void geo_breakpoint() {

@@ -1,0 +1,47 @@
+The MIT License
+===============
+
+Copyright (c) 2012-2022 Denis Demidov <dennis.demidov@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+file:/src/libbg/geogram/third_party/amgcl/amgcl/adapter/zero_copy.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/amg.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/backend/builtin.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/backend/detail/matrix_ops.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/backend/interface.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/coarsening/detail/galerkin.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/coarsening/plain_aggregates.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/coarsening/pointwise_aggregates.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/coarsening/smoothed_aggr_emin.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/coarsening/smoothed_aggregation.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/coarsening/tentative_prolongation.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/detail/inverse.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/detail/qr.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/detail/sort_row.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/detail/spgemm.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/make_solver.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/preconditioner/dummy.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/relaxation/spai0.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/reorder/cuthill_mckee.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/solver/cg.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/solver/detail/default_inner_product.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/solver/skyline_lu.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/util.hpp
+file:/src/libbg/geogram/third_party/amgcl/amgcl/value_type/interface.hpp

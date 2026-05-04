@@ -1,4 +1,5 @@
 brlcad_manage_files(alphanum.txt               ${DOC_DIR}/legal/embedded TRIGGER libged)
+brlcad_manage_files(amgcl.txt                  ${DOC_DIR}/legal/embedded TRIGGER libbg)
 brlcad_manage_files(apple.txt                  ${DOC_DIR}/legal/embedded TRIGGER mged)
 brlcad_manage_files(art.txt                    ${DOC_DIR}/legal/embedded TRIGGER art)
 brlcad_manage_files(ayam.txt                   ${DOC_DIR}/legal/embedded TRIGGER brep_cobb)
@@ -32,6 +33,7 @@ brlcad_manage_files(hv3_snit.txt               ${DOC_DIR}/legal/embedded TRIGGER
 brlcad_manage_files(Inconsolata.txt            ${DOC_DIR}/legal/embedded TRIGGER libbu)
 brlcad_manage_files(image-hash.txt             ${DOC_DIR}/legal/embedded TRIGGER libicv)
 brlcad_manage_files(json.txt                   ${DOC_DIR}/legal/embedded TRIGGER libgcv libged)
+brlcad_manage_files(liblbfgs.txt               ${DOC_DIR}/legal/embedded TRIGGER libbg)
 brlcad_manage_files(linenoise.txt              ${DOC_DIR}/legal/embedded TRIGGER ganalyze gsh nirt)
 brlcad_manage_files(lod.txt                    ${DOC_DIR}/legal/embedded TRIGGER libbv)
 brlcad_manage_files(lz4.txt                    ${DOC_DIR}/legal/embedded TRIGGER librt)

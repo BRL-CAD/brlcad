@@ -38,6 +38,7 @@
  */
 
 #include "common.h"
+#include "bu/sort.h"
 #include "nl_matrix.h"
 #include "nl_context.h"
 #include "nl_blas.h"
@@ -128,12 +129,12 @@ void nlRowColumnClear(NLRowColumn* c) {
     NL_DELETE_ARRAY(c->coeff);
 }
 
-static int nlCoeffCompare(const void* p1, const void* p2) {
+static int nlCoeffCompare(const void* p1, const void* p2, void *UNUSED(data)) {
     return (((NLCoeff*)(p2))->index < ((NLCoeff*)(p1))->index);
 }
 
 void nlRowColumnSort(NLRowColumn* c) {
-    qsort(c->coeff, c->size, sizeof(NLCoeff), nlCoeffCompare);
+    bu_sort(c->coeff, c->size, sizeof(NLCoeff), nlCoeffCompare, NULL);
 }
 
 /******************************************************************************/

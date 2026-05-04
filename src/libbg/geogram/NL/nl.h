@@ -747,32 +747,6 @@ extern "C" {
     NLAPI NLContext NLAPIENTRY nlGetCurrent(void);
 
 /**
- * \brief Initializes an OpenNL extension
- * \details OpenNL may be compiled with several extensions, that provide
- *  alternative solvers, such as SuperLU (sparse direct solver) and CNC
- *  (iterative solver on the GPU). This function tests whether an extension
- *  is supported, and initializes what needs to be initialized in the extention.
- * \retval NL_TRUE if the extension is supported and could be successfully
- *   initialized
- * \retval NL_FALSE otherwise
- */
-    NLAPI NLboolean NLAPIENTRY nlInitExtension(const char* extension);
-
-/**
- * \brief Tests whether an OpenNL extension is initialized.
- * \retval NL_TRUE if the extension is initialized.
- * \retval NL_FALSE otherwise
- */
-    NLAPI NLboolean NLAPIENTRY nlExtensionIsInitialized(const char* extension);
-
-/**
- * \brief Initializes OpenNL using command line arguments.
- * \details Command line arguments of the form nl:<extension>=true|false are parsed
- *  and taken into account. Calling this function is not mandatory.
- */
-    NLAPI void NLAPIENTRY nlInitialize(int argc, char** argv);
-
-/**
  * @}
  * \name State Get/Set
  * @{
