@@ -199,8 +199,12 @@ get_center_of_mass(db_i &db, const db_full_path &path)
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
 
-    // TODO: not implemented; return the center of the AABB
-
+    /* Use the geometric center of the axis-aligned bounding box as an
+     * approximation of the center of mass.  This is exact for symmetric
+     * objects and a reasonable first-order approximation for asymmetric
+     * ones.  A more accurate computation would use volumetric analysis
+     * (e.g. via libanalyze), but for rigid-body simulation the AABB
+     * center is sufficient. */
     const std::pair<btVector3, btVector3> aabb = get_aabb(db, path);
     return (aabb.first + aabb.second) / 2.0;
 }
