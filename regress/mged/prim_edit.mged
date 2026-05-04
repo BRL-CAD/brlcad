@@ -1,0 +1,137 @@
+puts "*** Testing primitive parameter editing via rt_edit_process() callbacks ***"
+# Tests that the MGED sed/press/p/accept workflow correctly delegates
+# parameter edits to librt's rt_edit_process() for migrated primitives.
+# Two test paths are exercised for each primitive:
+#   p-path:     sed -> press -> p <value> -> accept  (numeric input)
+#   mouse-path: sed -> press -> M 1 0 2047 -> accept (graphical sedit_mouse)
+# Both paths exercise: sedit() -> rt_edit_process() -> MGED DM callbacks
+# (drawVList wireframe, hud_begin faceplate menus, drawString2D in-scene labels)
+# Uses prim_edit_check / prim_edit_mouse_check from regression_resources.tcl
+# Note: mouse init_val must match the current parameter value at time of mouse test.
+
+puts "--- TOR (torus: r1, r2) ---"
+in tor_pe.s tor 0 0 0  0 0 1  20 2
+prim_edit_check      tor_pe.s "Set Radius 1" 30 r_a 30 -1
+prim_edit_check      tor_pe.s "Set Radius 2"  5 r_h  5 -1
+prim_edit_mouse_check tor_pe.s "Set Radius 1" r_a 30 -1
+kill tor_pe.s
+
+puts "--- ELL (ellipsoid: A, B, C) ---"
+in ell_pe.s ell 0 0 0  4 0 0  0 3 0  0 0 2
+prim_edit_check      ell_pe.s "Set A" 8 A 8 0
+prim_edit_check      ell_pe.s "Set B" 6 B 6 1
+prim_edit_check      ell_pe.s "Set C" 4 C 4 2
+prim_edit_mouse_check ell_pe.s "Set A" A 8 0
+kill ell_pe.s
+
+puts "--- RPC (right parabolic cylinder: H, r) ---"
+in rpc_pe.s rpc 0 0 0  0 0 10  0 5 0  3
+prim_edit_check      rpc_pe.s "Set H" 20 H 20 2
+prim_edit_check      rpc_pe.s "Set r"  6 r  6 -1
+prim_edit_mouse_check rpc_pe.s "Set H" H 20 2
+kill rpc_pe.s
+
+puts "--- RHC (right hyperbolic cylinder: H, r, c) ---"
+in rhc_pe.s rhc 0 0 0  0 0 10  0 5 0  3 1
+prim_edit_check      rhc_pe.s "Set H" 20 H 20 2
+prim_edit_check      rhc_pe.s "Set r"  6 r  6 -1
+prim_edit_check      rhc_pe.s "Set c"  3 c  3 -1
+prim_edit_mouse_check rhc_pe.s "Set r" r 6 -1
+kill rhc_pe.s
+
+puts "--- EPA (elliptical paraboloid: H, r_1, r_2) ---"
+in epa_pe.s epa 0 0 0  0 0 10  5 0 0  2
+prim_edit_check      epa_pe.s "Set H" 20 H   20 2
+prim_edit_check      epa_pe.s "Set A"  8 r_1  8 -1
+prim_edit_check      epa_pe.s "Set B"  4 r_2  4 -1
+prim_edit_mouse_check epa_pe.s "Set H" H 20 2
+kill epa_pe.s
+
+puts "--- EHY (elliptical hyperboloid: H, r_1, c) ---"
+in ehy_pe.s ehy 0 0 0  0 0 10  5 0 0  2 1
+prim_edit_check      ehy_pe.s "Set H" 20 H   20 2
+prim_edit_check      ehy_pe.s "Set A"  8 r_1  8 -1
+prim_edit_check      ehy_pe.s "Set c"  3 c    3 -1
+prim_edit_mouse_check ehy_pe.s "Set A" r_1 8 -1
+kill ehy_pe.s
+
+puts "--- PART (particle: H, r_v, r_h) ---"
+in part_pe.s part 0 0 0  0 0 10  2 1.5
+prim_edit_check      part_pe.s "Set H" 20 H   20 2
+prim_edit_check      part_pe.s "Set v"  4 r_v  4 -1
+prim_edit_check      part_pe.s "Set h"  3 r_h  3 -1
+prim_edit_mouse_check part_pe.s "Set v" r_v 4 -1
+kill part_pe.s
+
+puts "--- TGC (truncated general cone: H, A, B, C, D) ---"
+# Create an RCC (which is stored as a TGC internally) then adjust vectors to
+# align with cardinal axes so prim_edit_check can test each component by index.
+in tgc_pe.s rcc 0 0 0  0 0 10  5
+adjust tgc_pe.s A {5 0 0} B {0 5 0} C {5 0 0} D {0 5 0}
+prim_edit_check      tgc_pe.s "Set H"  8 H   8 2
+prim_edit_check      tgc_pe.s "Set A"  4 A   4 0
+prim_edit_check      tgc_pe.s "Set B"  3 B   3 1
+prim_edit_check      tgc_pe.s "Set C"  3 C   3 0
+prim_edit_check      tgc_pe.s "Set D"  4 D   4 1
+prim_edit_mouse_check tgc_pe.s "Set H"  H 8 2
+kill tgc_pe.s
+
+puts "--- ETO (elliptical torus: r, C, D) ---"
+# ETO in args: V(3) N(3) r C(3) rd
+in eto_pe.s eto 0 0 0  0 0 1  10  5 0 0  2
+prim_edit_check      eto_pe.s "Set r"  8   r   8   -1
+prim_edit_check      eto_pe.s "Set D"  1.5 r_d 1.5 -1
+prim_edit_mouse_check eto_pe.s "Set r"  r   8   -1
+prim_edit_mouse_check eto_pe.s "Set C"  C   5   0
+kill eto_pe.s
+
+puts "--- HYP (one-sheet hyperboloid: H, A, B, c) ---"
+# HYP p command sets a SCALE FACTOR (not absolute length): new = old * p_val.
+# Initial: H.z=10, A.y=5, b=2, bnr=0.5
+in hyp_pe.s hyp 0 0 0  0 0 10  0 5 0  2 0.5
+prim_edit_check      hyp_pe.s "Set H"  2   H   20   2
+prim_edit_check      hyp_pe.s "Set A"  2   A   10   1
+prim_edit_check      hyp_pe.s "Set B"  2   b    4   -1
+prim_edit_check      hyp_pe.s "Set c"  0.5 bnr  0.25 -1
+prim_edit_mouse_check hyp_pe.s "Set H"  H  20   2
+kill hyp_pe.s
+
+puts "--- SUPERELL (superellipsoid: A, B, C) ---"
+in superell_pe.s superell 0 0 0  4 0 0  0 3 0  0 0 2  1 1
+prim_edit_check      superell_pe.s "Set A" 5 A 5 0
+prim_edit_check      superell_pe.s "Set B" 4 B 4 1
+prim_edit_check      superell_pe.s "Set C" 3 C 3 2
+prim_edit_mouse_check superell_pe.s "Set A" A 5 0
+kill superell_pe.s
+
+puts "--- CLINE (cylinder line: H, R, plate thickness) ---"
+make cline_pe.s cline
+adjust cline_pe.s H {0 0 10} R 5 T 0.5
+prim_edit_check      cline_pe.s "Set H"              8   H 8   2
+prim_edit_check      cline_pe.s "Set R"              4   R 4   -1
+prim_edit_check      cline_pe.s "Set plate thickness" 0.4 T 0.4 -1
+prim_edit_mouse_check cline_pe.s "Set H" H 8   2
+prim_edit_mouse_check cline_pe.s "Set R" R 4   -1
+kill cline_pe.s
+
+puts "--- NMG (non-manifold geometry: Pick Edge, Move Edge, Next EU) ---"
+# NMG uses topological editing rather than scalar parameter scaling.
+# A box is facetized into an NMG shell; M 1 0 0 picks the nearest edge at the
+# screen centre (consistently (10 0 10)<->(10 10 10) for this view), then
+# Move Edge translates that edge to pass through the given 3-D point.
+# prim_edit_nmg_check (defined in regression_resources.tcl) handles verification
+# because [db get nmg V] returns a multi-token result that requires a sourced proc.
+in nmg_box.s rpp 0 10 0 10 0 10
+facetize -n nmg_pe.s nmg_box.s
+prim_edit_nmg_check nmg_pe.s 20 5 10 20
+kill nmg_box.s
+kill nmg_pe.s
+
+puts "--- BSPLINE (b-spline surface: deprecated primitive) ---"
+# The bspline (nurb) primitive is deprecated.  The `in` and `make` commands do
+# not support creating one, sedit_vpick() is disabled (#if 0 in edbspline.c), and
+# the whole editing path has a TODO noting it should be replaced by brep NURBS.
+# No meaningful parameter editing is testable in the current framework; use brep.
+puts "  NOTE: bspline primitive is deprecated - skipped (see edbspline.c TODO)"
+
+puts "*** Primitive parameter editing testing completed ***"

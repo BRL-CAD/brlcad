@@ -27,7 +27,9 @@
 #include "common.h"
 #include "vmath.h"
 #include "bu/list.h"
+#include "bu/ptbl.h"
 #include "bu/vls.h"
+#include "rt/edit_constraint.h"
 #include "rt/defines.h"
 
 __BEGIN_DECLS
@@ -37,6 +39,15 @@ struct rt_pipe_edit {
     struct wdb_pipe_pnt *es_pipe_pnt; /* Currently selected PIPE segment */
 };
 
+enum rt_pipe_vcode {
+    RT_PIPE_V_ID_GE_OD = 1000,
+    RT_PIPE_V_BEND_LT_OR,
+    RT_PIPE_V_BEND_OVERLAP_SEGMENT,
+    RT_PIPE_V_LAST_SEGMENT_TOO_SHORT,
+    RT_PIPE_V_DEGENERATE_SEGMENT,
+    RT_PIPE_V_NUM_POINTS_LT_2
+};
+
 
 RT_EXPORT extern void rt_vls_pipe_pnt(struct bu_vls *vp,
 				    int seg_no,
@@ -44,6 +55,8 @@ RT_EXPORT extern void rt_vls_pipe_pnt(struct bu_vls *vp,
 				    double mm2local);
 RT_EXPORT extern void rt_pipe_pnt_print(const struct wdb_pipe_pnt *pipe_pnt, double mm2local);
 RT_EXPORT extern int rt_pipe_ck(const struct bu_list *headp);
+RT_EXPORT extern int rt_pipe_validate(struct bu_ptbl *violations, const struct rt_pipe_internal *pip, int flags);
+RT_EXPORT extern int rt_pipe_project_apply(struct rt_constraint_edit_result *out, struct rt_db_internal *ip, const struct rt_constraint_edit_op *op, const struct rt_constraint_edit_ctx *ctx);
 
 RT_EXPORT extern int rt_pipe_get_i_seg(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps);
 RT_EXPORT extern struct wdb_pipe_pnt *rt_pipe_get_seg_i(struct rt_pipe_internal *pipeip, int seg_i);

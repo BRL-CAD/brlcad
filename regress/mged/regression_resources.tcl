@@ -199,7 +199,158 @@ if {![info exists make_primitives_list]} {
      }
   }
 
+  # orot all combinations (object edit rotation via orot command)
+  proc orot_all_combs {cmdname coord1 coord2 coord3} {
+     global make_primitives_list
+     foreach x $make_primitives_list {
+      # for now, in nmg isn't producing sensible results
+      if {![string match nmg $x]} {
+	e [format %s_%s.c $cmdname $x]
+	oed / [format %s_%s.c/%s_%s.s $cmdname $x $cmdname $x]
+	orot $coord1 $coord2 $coord3
+	accept
+	puts "orot $x combination"
+	d [format %s_%s.c $cmdname $x]
+       }
+     }
+  }
+
+  # translate all combinations via oed translate (object edit translate)
+  proc oed_translate_all_combs {cmdname coord1 coord2 coord3} {
+     global make_primitives_list
+     foreach x $make_primitives_list {
+      # for now, in nmg isn't producing sensible results
+      if {![string match nmg $x]} {
+	e [format %s_%s.c $cmdname $x]
+	oed / [format %s_%s.c/%s_%s.s $cmdname $x $cmdname $x]
+	translate $coord1 $coord2 $coord3
+	accept
+	puts "oed translate $x combination"
+	d [format %s_%s.c $cmdname $x]
+       }
+     }
+  }
+
 
   puts "Regression testing definitions loaded.\n"
+
+  # Helper proc for primitive parameter editing regression tests (prim_edit.mged)
+  # Tests that sed/press/p/accept correctly sets primitive parameters via rt_edit_process()
+  # idx: component index for vector attributes (-1 for scalar, 0/1/2 for x/y/z)
+  proc prim_edit_check {prim menu_item param_val attr_name expected_val idx} {
+      set tolerance 0.001
+      e $prim
+      sed $prim
+      press $menu_item
+      p $param_val
+      press accept
+      d $prim
+      if {$idx >= 0} {
+          set raw [db get $prim $attr_name]
+          if {[llength $raw] <= $idx} {
+              puts "  FAIL: \[$prim\] $menu_item -> $param_val  ($attr_name list too short: $raw)"
+              return
+          }
+          set got [lindex $raw $idx]
+      } else {
+          set got [db get $prim $attr_name]
+      }
+      if {![string is double -strict $got]} {
+          puts "  FAIL: \[$prim\] $menu_item -> $param_val  ($attr_name returned non-numeric: $got)"
+          return
+      }
+      set diff [expr {abs($got - $expected_val)}]
+      if {$diff < $tolerance} {
+          puts "  PASS: \[$prim\] $menu_item -> $param_val"
+      } else {
+          puts "  FAIL: \[$prim\] $menu_item -> $param_val  ($attr_name expected $expected_val, got $got)"
+      }
+  }
+
+  # Mouse-simulation helper for prim_edit.mged
+  # Tests the graphical sedit_mouse path: M command simulates mouse Y-axis drag
+  # which calls sedit_mouse() -> sedit() -> rt_edit_process() -> DM callbacks.
+  # At M 1 0 2047 (max Y), mousevec[Y] = 2047*INV_BV ≈ 0.9995, so
+  # es_scale = 1 + 0.25*0.9995 = ~1.2499 (scale up ~25%).
+  # Checks that: (a) value changed, and (b) new value ≈ init_val * MOUSE_SCALE_UP.
+  # idx: component index for vector attributes (-1 for scalar, 0/1/2 for x/y/z)
+  proc prim_edit_mouse_check {prim menu_item attr_name init_val idx} {
+      set tolerance    0.01
+      set MOUSE_SCALE_UP 1.24987793
+      e $prim
+      sed $prim
+      press $menu_item
+      M 1 0 2047
+      press accept
+      d $prim
+      if {$idx >= 0} {
+          set raw [db get $prim $attr_name]
+          if {[llength $raw] <= $idx} {
+              puts "  FAIL: \[$prim\] $menu_item mouse  ($attr_name list too short: $raw)"
+              return
+          }
+          set got [lindex $raw $idx]
+      } else {
+          set got [db get $prim $attr_name]
+      }
+      if {![string is double -strict $got]} {
+          puts "  FAIL: \[$prim\] $menu_item mouse  ($attr_name non-numeric: $got)"
+          return
+      }
+      set expected [expr {$init_val * $MOUSE_SCALE_UP}]
+      set rel_diff [expr {abs($got - $expected) / $expected}]
+      if {$rel_diff < $tolerance} {
+          puts "  PASS: \[$prim\] $menu_item (mouse M=2047, got=[format %.4f $got])"
+      } else {
+          puts "  FAIL: \[$prim\] $menu_item mouse  (expected≈[format %.4f $expected], got=[format %.4f $got])"
+      }
+  }
+
+  # NMG-specific edit check for prim_edit.mged
+  # NMG uses topological editing (Pick Edge + Move Edge) rather than scalar parameter
+  # scaling, so it requires a dedicated proc.  The vertex list returned by
+  # [db get $prim V] is a multi-token Tcl result that cannot be captured with `set`
+  # from the MGED command stream; it CAN be iterated with foreach inside a proc that
+  # is defined in a sourced .tcl file (this file), which is why this proc lives here.
+  #
+  # Workflow tested:
+  #   p-path:   sed -> press "Pick Edge" -> M 1 0 0 (pick nearest edge at screen
+  #             centre) -> press "Move Edge" -> p move_x move_y move_z -> accept
+  #             Verifies: first vertex X coordinate is within tolerance of expected_vx
+  #   nav-path: sed -> press "Pick Edge" -> M 1 0 0 -> press "Next EU" -> accept
+  #             Verifies: navigation completes without error (calls rt_edit_process)
+  proc prim_edit_nmg_check {prim move_x move_y move_z expected_vx} {
+      set tolerance 1.0
+      # p-path: pick edge via mouse, move to known 3-D position
+      e $prim
+      sed $prim
+      press "Pick Edge"
+      M 1 0 0
+      press "Move Edge"
+      p $move_x $move_y $move_z
+      press accept
+      d $prim
+      set found 0
+      foreach v [db get $prim V] {
+          set x [lindex $v 0]
+          if {[string is double $x] && [expr {abs($x - $expected_vx)}] < $tolerance} {
+              set found 1
+          }
+      }
+      if {$found} {
+          puts "  PASS: \[$prim\] NMG Move Edge p $move_x $move_y $move_z"
+      } else {
+          puts "  FAIL: \[$prim\] NMG Move Edge (no vertex with X near $expected_vx)"
+      }
+      # nav-path: pick edge, navigate to next edgeuse (calls rt_edit_process)
+      e $prim
+      sed $prim
+      press "Pick Edge"
+      M 1 0 0
+      press "Next EU"
+      press accept
+      d $prim
+      puts "  PASS: \[$prim\] NMG Next EU (navigation)"
+  }
 
 }

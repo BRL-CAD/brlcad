@@ -18,4 +18,10 @@ accept
 l tra.c
 Z
 
+puts "--- Testing 'translate' via oed for all primitives (exercises RT_MATRIX_EDIT_TRANS_MODEL_XYZ path) ---"
+in_all_prims oed_tra
+comb_all oed_tra
+Z
+oed_translate_all_combs oed_tra 50 -20 10
+
 puts "*** 'tra' testing in edit mode completed ***"

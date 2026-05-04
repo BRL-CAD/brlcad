@@ -26,14 +26,18 @@
 #ifndef MGED_MGED_DM_H
 #define MGED_MGED_DM_H
 
+
 #include "common.h"
 
 #include "dm.h"	/* struct dm */
 
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
+#include "menu.h"
 
 #include "mged.h"
+
+__BEGIN_DECLS
 
 struct scroll_item {
     char *scroll_string;
@@ -339,7 +343,7 @@ struct _menu_state {
     int	ms_top;
     int	ms_cur_menu;
     int	ms_cur_item;
-    struct menu_item	*ms_menus[NMENU];    /* base of menu items array */
+    struct rt_edit_menu_item	*ms_menus[NMENU];    /* base of menu items array */
 };
 
 
@@ -516,6 +520,7 @@ __END_DECLS
     \
 }
 
+/* Ew.  Globals. */
 extern double frametime;		/* defined in mged.c */
 extern int dm_pipe[];			/* defined in mged.c */
 extern int update_views;		/* defined in mged.c */
@@ -557,6 +562,7 @@ extern void *set_hook_data(struct mged_state *s, struct mged_view_hook_state *hs
 
 int dm_commands(int argc, const char *argv[], void *data);
 
+__END_DECLS
 
 #endif /* MGED_MGED_DM_H */
 

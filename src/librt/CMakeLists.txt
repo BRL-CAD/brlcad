@@ -114,6 +114,7 @@ set(
   comb/edcomb.c
   material/material.c
   constraint.c
+  edit_constraint.c
   cut.c
   cut_hlbvh.c
   db5_alloc.c

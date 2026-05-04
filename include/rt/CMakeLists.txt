@@ -23,6 +23,7 @@ set(
   directory.h
   dspline.h
   edit.h
+  edit_constraint.h
   func.h
   functab.h
   geom.h

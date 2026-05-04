@@ -94,7 +94,7 @@ extern void draw_m_axes(struct mged_state *);
 extern void draw_v_axes(struct mged_state *);
 
 /* defined in chgmodel.c */
-extern void set_localunit_TclVar(void);
+extern void set_localunit_TclVar(struct mged_state *s);
 
 /* defined in history.c */
 extern struct bu_vls *history_prev(const char *);
@@ -1236,7 +1236,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		MEDIT(s)->edit_flag = SROT;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_ROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1270,7 +1270,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		MEDIT(s)->edit_flag = SROT;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_ROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1304,7 +1304,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_ROTATE)
-		MEDIT(s)->edit_flag = SROT;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_ROT;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
@@ -1338,7 +1338,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_TRAN)
-		MEDIT(s)->edit_flag = STRANS;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_TRANS;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1371,7 +1371,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_TRAN)
-		MEDIT(s)->edit_flag = STRANS;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_TRANS;
 	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
@@ -1399,7 +1399,7 @@ event_check(struct mged_state *s, int non_blocking)
 	if (s->global_editing_state == ST_S_EDIT) {
 	    save_edflag = MEDIT(s)->edit_flag;
 	    if (!SEDIT_SCALE)
-		MEDIT(s)->edit_flag = SSCALE;
+		MEDIT(s)->edit_flag = RT_PARAMS_EDIT_SCALE;
 	} else {
 	    save_edflag = edobj;
 	    if (!OEDIT_SCALE)
@@ -2023,6 +2023,7 @@ mged_finish(struct mged_state *s, int exitcode)
     bu_vls_free(&s-> mged_prompt);
     rt_edit_destroy(s->s_edit->e);
     BU_PUT(s->s_edit, struct mged_edit_state);
+    mged_state_destroy_internals(s);
     BU_PUT(s, struct mged_state);
     MGED_STATE = NULL; // sanity
 
@@ -2270,6 +2271,11 @@ main(int argc, char *argv[])
     s->cmd_running = 0;
     s->log_drain_timer = NULL;
     s->pipe_mode = 0;
+
+    /* Initialize s->i (MGED_Internal C++ callback map) and register all
+     * default callbacks.  This must happen before any solid/object editing
+     * is attempted so that mged_edit_clbk_sync() has valid maps to copy. */
+    mged_state_init_internals(s);
 
     /* Set up linked lists */
     s->vlfree = &rt_vlfree;
@@ -2669,7 +2675,7 @@ main(int argc, char *argv[])
     s->global_editing_state = ST_VIEW;
     MEDIT(s)->edit_flag = -1;
     s->s_edit->es_edclass = EDIT_CLASS_NULL;
-    MEDIT(s)->e_inpara = newedge = 0;
+    MEDIT(s)->e_inpara = 0;
 
     /* These values match old GED.  Use 'tol' command to change them. */
     s->tol.tol.magic = BN_TOL_MAGIC;
@@ -2693,7 +2699,7 @@ main(int argc, char *argv[])
     new_mats(s);
 
     mmenu_init(s);
-    btn_head_menu(s, 0, 0, 0);
+    btn_head_menu(MEDIT(s), 0, 0, 0, s);
     mged_link_vars(s->mged_curr_dm);
 
     bu_vls_printf(&s->input_str, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));
