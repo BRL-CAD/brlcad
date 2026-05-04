@@ -1654,10 +1654,6 @@ namespace GEOBRL {
         // during this loop.
         index_t nb_cells0 = nb();
 
-        // Keep track of the number of invalid configurations (does
-        // not seem to happen anymore, but I keep the code just in case).
-        index_t weird=0;
-
         // For each quadrangular face, we compute the list of candidate
         // triangular faces to be connected with it (a vector of
         // (cell index, facet index) pairs).
@@ -1722,9 +1718,7 @@ namespace GEOBRL {
                 if(
                     matches.size() != 0 &&
                     !create_connector(c1,lf1,matches)
-                ) {
-                    ++weird;
-                }
+                )
 
                 if(remove_trivial_slivers) {
                     for(index_t i=0; i<matches.size(); ++i) {
