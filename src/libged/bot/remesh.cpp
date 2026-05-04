@@ -193,28 +193,11 @@ bot_remesh_geogram(struct rt_bot_internal **obot, struct ged *gedp, struct rt_bo
     }
 
     /* Check if the remeshed result is a solid. */
-    int bmode = RT_BOT_SURFACE;
-    {
-	manifold::MeshGL gmm;
-	for (int i = 0; i < n_opnts; i++) {
-	    gmm.vertProperties.push_back(opnts[i][X]);
-	    gmm.vertProperties.push_back(opnts[i][Y]);
-	    gmm.vertProperties.push_back(opnts[i][Z]);
-	}
-	for (int i = 0; i < n_ofaces; i++) {
-	    gmm.triVerts.push_back((uint32_t)ofaces[3*i+0]);
-	    gmm.triVerts.push_back((uint32_t)ofaces[3*i+1]);
-	    gmm.triVerts.push_back((uint32_t)ofaces[3*i+2]);
-	}
-	manifold::Manifold gmanifold(gmm);
-	if (gmanifold.Status() == manifold::Manifold::Error::NoError)
-	    bmode = RT_BOT_SOLID;
-    }
+
 
     struct rt_bot_internal *nbot;
     BU_GET(nbot, struct rt_bot_internal);
     nbot->magic = RT_BOT_INTERNAL_MAGIC;
-    nbot->mode = bmode;
     nbot->orientation = RT_BOT_CCW;
     nbot->thickness = NULL;
     nbot->face_mode = (struct bu_bitv *)NULL;
@@ -223,6 +206,15 @@ bot_remesh_geogram(struct rt_bot_internal **obot, struct ged *gedp, struct rt_bo
     nbot->num_faces = n_ofaces;
     nbot->vertices = (double *)calloc((size_t)n_opnts * 3, sizeof(double));
     nbot->faces = (int *)calloc((size_t)n_ofaces * 3, sizeof(int));
+
+    // Remeshing shouldn't change the mode - that's a modeling intent question.
+    // If we explicitly tag a non-solid remesh as surface, then bot repair
+    // won't try to work on it by default - that may not be what we want if the
+    // original input was supposed to be a solid.  For the flip side, if a
+    // surface bot is supposed to graduate to solid, that needs to be an
+    // explicit type change - a topologically closed mesh may still be intended
+    // as a surface or plate mode BoT.
+    nbot->mode = bot->mode;
 
     for (int i = 0; i < n_opnts; i++) {
 	nbot->vertices[3*i+0] = opnts[i][X];

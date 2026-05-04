@@ -86,6 +86,27 @@ bg_trimesh_remesh(
 	gm.facets.set_vertex(f, 2, (GEOBRL::index_t)ifaces[3*i+2]);
     }
 
+    // Make sure we are CCW
+    {
+	GEOBRL::compute_normals(gm);
+	fastf_t sarea = GEOBRL::Geom::mesh_area(gm);
+	if (sarea < 0) {
+	    for (GEOBRL::index_t f = 0; f < gm.facets.nb(); ++f) {
+		// Geogram supports arbitrary polygons, so ensure it's a triangle
+		if (gm.facets.nb_vertices(f) == 3) {
+		    // Get the current vertex indices at local positions 0 and 2
+		    GEOBRL::index_t v0 = gm.facets.vertex(f, 0);
+		    GEOBRL::index_t v2 = gm.facets.vertex(f, 2);
+
+		    // Swap them to reverse the winding order (CW <-> CCW)
+		    gm.facets.set_vertex(f, 0, v2);
+		    gm.facets.set_vertex(f, 2, v0);
+		}
+	    }
+	    GEOBRL::compute_normals(gm);
+	}
+    }
+
     /* Geogram options – enable multi-nerve support for complex topology */
     GEOBRL::GeoOptions geo_opts;
     geo_opts.remesh_multi_nerve = true;
@@ -124,6 +145,28 @@ bg_trimesh_remesh(
     if (remesh.vertices.nb() == 0 || remesh.facets.nb() == 0)
 	return -1;
 
+
+    // Make sure we are CCW
+    {
+	GEOBRL::compute_normals(remesh);
+	fastf_t sarea = GEOBRL::Geom::mesh_area(remesh);
+	if (sarea < 0) {
+	    for (GEOBRL::index_t f = 0; f < remesh.facets.nb(); ++f) {
+		// Geogram supports arbitrary polygons, so ensure it's a triangle
+		if (remesh.facets.nb_vertices(f) == 3) {
+		    // Get the current vertex indices at local positions 0 and 2
+		    GEOBRL::index_t v0 = remesh.facets.vertex(f, 0);
+		    GEOBRL::index_t v2 = remesh.facets.vertex(f, 2);
+
+		    // Swap them to reverse the winding order (CW <-> CCW)
+		    remesh.facets.set_vertex(f, 0, v2);
+		    remesh.facets.set_vertex(f, 2, v0);
+		}
+	    }
+	    GEOBRL::compute_normals(remesh);
+	}
+    }
+
     /* Convert Geogram output mesh back to caller-owned arrays */
     int nv = (int)remesh.vertices.nb();
     int nf = (int)remesh.facets.nb();
@@ -141,8 +184,8 @@ bg_trimesh_remesh(
     }
     for (int i = 0; i < nf; i++) {
 	out_faces[3*i+0] = (int)remesh.facets.vertex((GEOBRL::index_t)i, 0);
-	out_faces[3*i+1] = (int)remesh.facets.vertex((GEOBRL::index_t)i, 1);
-	out_faces[3*i+2] = (int)remesh.facets.vertex((GEOBRL::index_t)i, 2);
+	out_faces[3*i+1] = (int)remesh.facets.vertex((GEOBRL::index_t)i, 2);
+	out_faces[3*i+2] = (int)remesh.facets.vertex((GEOBRL::index_t)i, 1);
     }
 
     *opnts   = out_pts;
