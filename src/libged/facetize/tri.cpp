@@ -282,8 +282,7 @@ _booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	    struct directory *vdp =
 		db_lookup(tsp->ts_dbip, it->second.c_str(), LOOKUP_QUIET);
 	    if (vdp && vdp->d_minor_type == ID_BOT) {
-		if (rt_db_get_internal(&var_intern, vdp, tsp->ts_dbip,
-				       NULL, tsp->ts_resp) >= 0) {
+		if (rt_db_get_internal(&var_intern, vdp, tsp->ts_dbip, NULL) >= 0) {
 		    effective_ip = &var_intern;
 		    var_loaded = true;
 		}

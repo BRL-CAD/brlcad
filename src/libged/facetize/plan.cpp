@@ -189,8 +189,7 @@ plan_walk_dp(PlanWalkCtx *ctx, struct directory *dp, bool in_sub)
 	if (dp->d_flags & RT_DIR_COMB) {
 		struct rt_db_internal intern;
 		RT_DB_INTERNAL_INIT(&intern);
-		if (rt_db_get_internal(&intern, dp, ctx->dbip, NULL,
-				&rt_uniresource) >= 0) {
+		if (rt_db_get_internal(&intern, dp, ctx->dbip, NULL) >= 0) {
 			struct rt_comb_internal *comb =
 				(struct rt_comb_internal *)intern.idb_ptr;
 			if (comb->tree)
@@ -331,8 +330,7 @@ create_variant_in_working_g(struct db_i       *wdbip,
 
 	struct rt_db_internal src_intern;
 	RT_DB_INTERNAL_INIT(&src_intern);
-	if (rt_db_get_internal(&src_intern, src_dp, wdbip, NULL,
-				&rt_uniresource) < 0)
+	if (rt_db_get_internal(&src_intern, src_dp, wdbip, NULL) < 0)
 		return BRLCAD_ERROR;
 
 	int prim_type = src_intern.idb_type;
@@ -377,8 +375,7 @@ create_variant_in_working_g(struct db_i       *wdbip,
 						(void *)&vtype);
 	int write_ret = BRLCAD_ERROR;
 	if (var_dp) {
-		write_ret = (rt_db_put_internal(var_dp, wdbip, var_intern,
-						&rt_uniresource) >= 0)
+		write_ret = (rt_db_put_internal(var_dp, wdbip, var_intern) >= 0)
 				? BRLCAD_OK : BRLCAD_ERROR;
 	}
 
@@ -437,7 +434,7 @@ _ged_facetize_build_variant_plan(struct _ged_facetize_state *s,
 		delete plan;
 		return NULL;
 	}
-	db_update_nref(wdbip, &rt_uniresource);
+	db_update_nref(wdbip);
 
 	/* Pre-collect all names currently in the working .g */
 	std::set<std::string> dbnames;
