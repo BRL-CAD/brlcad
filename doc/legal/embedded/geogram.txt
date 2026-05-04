@@ -28,7 +28,6 @@ file:/src/libbg/GTE/Mathematics/MeshHoleFilling.h
 file:/src/libbg/GTE/Mathematics/MeshPreprocessing.h
 file:/src/libbg/GTE/Mathematics/MeshRepair.h
 file:/src/libbg/geogram/CMakeLists.txt
-file:/src/libbg/geogram/NL/.nl_os.c.swp
 file:/src/libbg/geogram/NL/nl.h
 file:/src/libbg/geogram/NL/nl_64.h
 file:/src/libbg/geogram/NL/nl_amgcl.cpp
